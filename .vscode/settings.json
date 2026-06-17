@@ -1,0 +1,7 @@
+{
+  "terminal.integrated.env.windows": {
+    "DOCKER_HOST": "tcp://localhost:2375"
+  },
+  "dev.containers.executeInWSL": true,
+  "dev.containers.executeInWSLDistro": "Ubuntu-24.04"
+}
