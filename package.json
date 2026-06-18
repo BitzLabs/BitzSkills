@@ -1,0 +1,20 @@
+{
+  "name": "bitz-skills",
+  "version": "1.0.0",
+  "description": "Antigravity 2.0 Agent Skills repository",
+  "main": "install.ts",
+  "scripts": {
+    "install-skills": "tsx install.ts"
+  },
+  "dependencies": {
+    "fs-extra": "^11.2.0",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.11.24",
+    "tsx": "^4.7.1",
+    "typescript": "^5.3.3"
+  }
+}
