@@ -2,8 +2,8 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
 
-const SRC_DIR = path.join(__dirname, 'src', 'skills');
-const DEST_DIR = path.join(__dirname, '.agents', 'skills');
+const SRC_DIR = path.join(__dirname, '..', 'src', 'skills');
+const DEST_DIR = path.join(__dirname, '..', '.agents', 'skills');
 
 interface SkillFrontmatter {
   name: string;

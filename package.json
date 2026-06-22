@@ -2,9 +2,10 @@
   "name": "bitz-skills",
   "version": "1.0.0",
   "description": "Antigravity 2.0 Agent Skills repository",
-  "main": "install.ts",
+  "main": "tools/install.ts",
   "scripts": {
-    "install-skills": "tsx install.ts"
+    "install-skills": "tsx tools/install.ts",
+    "uninstall-skills": "tsx tools/uninstall.ts"
   },
   "dependencies": {
     "fs-extra": "^11.2.0",
