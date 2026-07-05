@@ -4,23 +4,49 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## リポジトリの役割
 
-[Agent Skills](https://agentskills.io/specification) オープン標準に準拠したスキルの
-**ライブラリ**。ここの `skills/` に置いただけではどのエージェントにも認識されず、
-実環境で使うには `skill-packager` で各プラットフォームのパスへ配置する。
+[Agent Skills](https://agentskills.io/specification) オープン標準に準拠したスキルを
+Claude Code / Antigravity 2.0 向けの**プラグイン**として開発・配布する**モノレポ**。
+リポジトリルートはマーケットプレイス `bitzskills` で、`plugins/` 配下の各フォルダが
+1つのプラグイン。導入方法は2系統:
+
+- プラグイン一括インストール（推奨）: Claude Code は
+  `/plugin marketplace add <このリポジトリ>` → `/plugin install <plugin名>@bitzskills`、
+  Antigravity 2.0 は `agy plugin install <リポジトリ>/plugins/<plugin名>`。手順の正は
+  `plugins/skill-creator/skills/skill-packager/references/platform-paths.md`
+- スキル単体の直接配置: `skill-packager` で各プラットフォームのパスへコピー
 
 ## 構成
 
 ```
-skills/
-├── skill-creator/      # 新規スキルの設計・雛形作成
-├── skill-validator/    # 仕様準拠チェック（lint）
-├── skill-optimizer/    # description最適化・本文分離・構造改善
-├── skill-tester/       # テストケース設計と実行
-├── skill-evaluator/    # 実行結果の採点・レポート作成
-├── skill-packager/     # 実環境への配置・配布用zip化
-└── skill-pipeline/     # 全工程を案内する統括スキル
-evals/                  # tester/evaluator の作業成果物（cases.md, runs/, report.md）
+.claude-plugin/
+└── marketplace.json        # マーケットプレイス定義（全プラグインを列挙）
+plugins/
+└── skill-creator/          # プラグイン: スキル開発ツール群
+    ├── .claude-plugin/
+    │   └── plugin.json     # Claude Code プラグインマニフェスト
+    ├── plugin.json         # Antigravity 2.0 プラグインマニフェスト
+    └── skills/             # プラグインに含まれる7スキル（両プラットフォーム共通）
+        ├── skill-creator/      # 新規スキルの設計・雛形作成
+        ├── skill-validator/    # 仕様準拠チェック（lint）
+        ├── skill-optimizer/    # description最適化・本文分離・構造改善
+        ├── skill-tester/       # テストケース設計と実行
+        ├── skill-evaluator/    # 実行結果の採点・レポート作成
+        ├── skill-packager/     # 実環境への配置・配布用zip化
+        └── skill-pipeline/     # 全工程を案内する統括スキル
+evals/                      # tester/evaluator の作業成果物（全プラグイン共用）
 ```
+
+## 新しいプラグインの追加手順
+
+1. `plugins/<name>/` を作成し、マニフェストを2つ置く:
+   - `.claude-plugin/plugin.json`（Claude Code 用。name / description / version / author）
+   - `plugin.json`（Antigravity 2.0 用。name / version / description）
+   - 両マニフェストの `version` は**常に同じ値**に保つ
+2. `plugins/<name>/skills/<skill-name>/SKILL.md` を追加する
+   （スキル開発フロー・規約は既存のものをそのまま適用）
+3. `.claude-plugin/marketplace.json` の `plugins[]` にエントリを追加する
+   （`"source": "./plugins/<name>"`）
+4. `claude plugin validate .` と `agy plugin validate plugins/<name>` で検証する
 
 スキル開発の標準フロー: creator → validator → tester → evaluator →
 （不合格なら optimizer で改善して反復）→ packager。全体は `skill-pipeline` が統括する。
@@ -29,13 +55,19 @@ evals/                  # tester/evaluator の作業成果物（cases.md, runs/,
 
 - 各スキルは自己完結させる（フォルダ単位でコピーされるため、他スキルの
   `references/` を相対パスで参照しない。連携はスキル名の言及で行う）
-- SKILL.md の frontmatter 仕様は `skills/skill-creator/references/spec.md` が正
+- SKILL.md の frontmatter 仕様は
+  `plugins/skill-creator/skills/skill-creator/references/spec.md` が正
 - テスト成果物はスキルフォルダ内ではなく `evals/<skill-name>/` に置く
-  （書式は `skills/skill-tester/references/test-design.md` で定義）
+  （書式は `plugins/skill-creator/skills/skill-tester/references/test-design.md` で定義）
 - スキルを追加・変更したら `skill-validator` のチェックリスト
-  （`skills/skill-validator/references/checklist.md`）で検証する
+  （`plugins/skill-creator/skills/skill-validator/references/checklist.md`）で検証する
 - 全スキルの frontmatter に `metadata`（version/author/created/updated）を必須で
   持たせる。内容を変更したら semver で version を bump し updated を更新する
-  （規則は `skills/skill-creator/references/spec.md` の「metadata運用規約」）
+  （規則は `plugins/skill-creator/skills/skill-creator/references/spec.md` の
+  「metadata運用規約」）
 - インストール状態は配置先 frontmatter の `installed-at` / `installed-from` で
-  自己記述する（`skill-packager` が管理。ライブラリ側には書かない）
+  自己記述する（`skill-packager` が管理。ライブラリ側には書かない）。
+  プラグイン経由の導入分には stamp しない
+- プラグイン配下のスキルを変更したら、そのプラグインの version
+  （`plugins/<name>/.claude-plugin/plugin.json` と `plugins/<name>/plugin.json`、
+  **両方を同じ値に**）も semver で bump する
