@@ -6,8 +6,8 @@ allowed-tools: ["Read", "Write", "Grep", "Glob", "Bash", "TodoWrite", "AskUserQu
 
 # プラグイン作成ワークフロー
 
-初期構想からテスト済みの実装まで、完全で高品質な Claude Code プラグインの
-作成をユーザーとともに進める。体系的なアプローチに従う: 要件の理解 →
+初期構想からテスト済みの実装まで、完全で高品質な Claude Code /
+Antigravity 2.0 プラグインの作成をユーザーとともに進める。体系的なアプローチに従う: 要件の理解 →
 コンポーネント設計 → 詳細の明確化 → ベストプラクティスに沿った実装 →
 検証 → テスト。
 
@@ -42,7 +42,11 @@ allowed-tools: ["Read", "Write", "Grep", "Glob", "Bash", "TodoWrite", "AskUserQu
    - 誰がいつ使うか？
    - 何をすべきか？
    - 参考になる類似プラグインはあるか？
-4. 理解を要約し、ユーザーの確認を得てから進む
+4. **対象プラットフォームを確認する**: Claude Code のみ / Antigravity 2.0 のみ /
+   両対応。両対応ならコンポーネント選定に制約が入る
+   （スキル中心・コマンドはスキル変換されても成立する内容・
+   フック/MCPは設定ファイル2系統）ことを伝える
+5. 理解を要約し、ユーザーの確認を得てから進む
 
 **成果**: プラグインの目的と対象ユーザーの明確な記述
 
@@ -129,7 +133,7 @@ allowed-tools: ["Read", "Write", "Grep", "Glob", "Bash", "TodoWrite", "AskUserQu
    mkdir -p plugin-name/hooks      # 必要なら
    ```
 
-4. Write ツールで plugin.json マニフェストを作る:
+4. Write ツールで `.claude-plugin/plugin.json` マニフェストを作る:
 
    ```json
    {
@@ -142,6 +146,10 @@ allowed-tools: ["Read", "Write", "Grep", "Glob", "Bash", "TodoWrite", "AskUserQu
      }
    }
    ```
+
+   **Antigravity 対応の場合**はルートにも `plugin.json` を作る
+   （name / version / description。version は
+   `.claude-plugin/plugin.json` と常に同じ値に保つ）
 
 5. README.md のテンプレートを作る
 6. 必要なら .gitignore を作る（`.claude/*.local.md` 等）
@@ -191,13 +199,18 @@ MCP→mcp-integration / 設定→plugin-settings
 2. hooks/hooks.json を作る。複雑なロジックにはプロンプトベースフックを
    優先し、`${CLAUDE_PLUGIN_ROOT}` でポータブルにする。
    validate-hook-schema.sh と test-hook.sh でテストする
+3. **Antigravity 対応の場合**はルートに Antigravity 書式の `hooks.json` も
+   作る（イベント・matcher・入出力契約が別物。
+   hook-development の `references/antigravity-hooks.md` に従う）
 
 ### MCPの場合
 
 1. mcp-integration スキルを読み込む
 2. `.mcp.json` を作る（ローカルは stdio、ホスト型は SSE。
    `${CLAUDE_PLUGIN_ROOT}` を使用）
-3. 必要な環境変数を README に文書化し、セットアップ手順を書く
+3. **Antigravity 対応の場合**はルートに `mcp_config.json` も作る
+   （stdio / SSE のみ。SSE は `serverUrl` キー）
+4. 必要な環境変数を README に文書化し、セットアップ手順を書く
 
 ### 設定の場合
 
@@ -236,14 +249,19 @@ MCP→mcp-integration / 設定→plugin-settings
 
 ## Phase 7: テストと動作確認
 
-**目標**: Claude Code 上でプラグインが正しく動くことを確認する
+**目標**: 対象プラットフォーム上でプラグインが正しく動くことを確認する
 
 **アクション**:
 
 1. **導入手順を示す**:
 
    ```bash
+   # Claude Code
    claude --plugin-dir /path/to/plugin-name
+
+   # Antigravity 2.0（対応する場合）
+   agy plugin validate /path/to/plugin-name
+   agy plugin install /path/to/plugin-name
    ```
 
 2. **確認チェックリスト**をユーザーに提示する:

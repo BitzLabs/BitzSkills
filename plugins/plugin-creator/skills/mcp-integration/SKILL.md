@@ -1,11 +1,11 @@
 ---
 name: mcp-integration
-description: Claude CodeプラグインへのMCP（Model Context Protocol）サーバー統合を支援する。「MCPサーバーを追加したい」「MCPを統合したい」「.mcp.jsonの設定」「外部サービスと連携したい」と言われたときや、MCPサーバー種別（stdio, SSE, HTTP, WebSocket）・認証・MCPツールの使い方について指針が必要なときに使用する。
+description: Claude Code / Antigravity 2.0 プラグインへのMCP（Model Context Protocol）サーバー統合を支援する。「MCPサーバーを追加したい」「MCPを統合したい」「.mcp.jsonの設定」「mcp_config.jsonの設定」「外部サービスと連携したい」と言われたときや、MCPサーバー種別（stdio, SSE, HTTP, WebSocket）・認証・MCPツールの使い方について指針が必要なときに使用する。
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
   author: br7.hide
   created: "2026-07-05"
-  updated: "2026-07-05"
+  updated: "2026-07-06"
 ---
 
 # mcp-integration
@@ -14,10 +14,13 @@ metadata:
 
 MCP（Model Context Protocol）により、プラグインは外部サービス・APIを
 構造化されたツールとして統合できる。データベース・API・ファイルシステム
-などの機能を Claude Code 内のツールとして公開する。
+などの機能をエージェントのツールとして公開する。
 
 **主な能力:** 外部サービスへの接続、1サービスから複数ツールの提供、
 OAuth等の認証フローの処理、プラグインへのMCPサーバー同梱による自動セットアップ。
+
+本文は Claude Code の設定方法。Antigravity 2.0 は設定ファイル名と
+対応トランスポートが異なる（「Antigravity 2.0 での設定」を参照）。
 
 ## 設定方法
 
@@ -56,14 +59,41 @@ OAuth等の認証フローの処理、プラグインへのMCPサーバー同梱
 
 設定ファイルが1つで済む。単一サーバーの単純なプラグイン向け。
 
+### Antigravity 2.0 での設定
+
+Antigravity はプラグイン**ルート直下の `mcp_config.json`** を読む
+（`.mcp.json` とマニフェストの `mcpServers` は検出されない）。
+グローバル設定は `~/.gemini/config/mcp_config.json`。
+
+```json
+{
+  "mcpServers": {
+    "database-tools": {
+      "command": "./servers/db-server",
+      "args": ["--config", "./config.json"],
+      "env": { "DB_URL": "${DB_URL}" }
+    },
+    "remote-service": { "serverUrl": "https://mcp.mycompany.com/sse" }
+  }
+}
+```
+
+- 対応トランスポートは **stdio**（`command` / `args` / `env`）と
+  **SSE**（`serverUrl`）の2種のみ。`type: http` / `ws` はない
+- `${CLAUDE_PLUGIN_ROOT}` はないため、パスは相対または絶対で書く
+- 両対応プラグインは `.mcp.json`（Claude Code 用）と `mcp_config.json`
+  （Antigravity 用）を両方置く。SSE サーバーなら中身はほぼ共通化できる
+  （Claude Code は `type: "sse"` + `url`、Antigravity は `serverUrl` と
+  キー名が異なる点に注意）
+
 ## サーバー種別
 
-| 種別 | 通信 | 適する用途 | 認証 |
-| --- | --- | --- | --- |
-| stdio | 子プロセス | ローカルツール・自作サーバー | 環境変数 |
-| SSE | HTTP | ホスト型サービス・クラウドAPI | OAuth |
-| HTTP | REST | APIバックエンド | トークン |
-| ws | WebSocket | リアルタイム・ストリーミング | トークン |
+| 種別 | 通信 | 適する用途 | 認証 | 対応 |
+| --- | --- | --- | --- | --- |
+| stdio | 子プロセス | ローカルツール・自作サーバー | 環境変数 | 両方 |
+| SSE | HTTP | ホスト型サービス・クラウドAPI | OAuth | 両方 |
+| HTTP | REST | APIバックエンド | トークン | Claude Code のみ |
+| ws | WebSocket | リアルタイム・ストリーミング | トークン | Claude Code のみ |
 
 ### stdio（ローカルプロセス）
 

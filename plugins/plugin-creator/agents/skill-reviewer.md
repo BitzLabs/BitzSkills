@@ -1,36 +1,36 @@
 ---
 name: skill-reviewer
-description: ユーザーがスキルを作成・変更して品質レビューが必要なとき、「スキルをレビューして」「スキルの品質をチェックして」「descriptionを改善して」と言われたとき、またはベストプラクティス準拠を確認したいときにこのエージェントを使用する。スキル作成の直後にも能動的にトリガーする。例:
+description: |-
+  ユーザーがスキルを作成・変更して品質レビューが必要なとき、「スキルをレビューして」「スキルの品質をチェックして」「descriptionを改善して」と言われたとき、またはベストプラクティス準拠を確認したいときにこのエージェントを使用する。スキル作成の直後にも能動的にトリガーする。例:
 
-<example>
-Context: ユーザーが新しいスキルを作ったところ
-user: "PDF処理スキルを作りました"
-assistant: "いいですね。スキルの品質をレビューしましょう。"
-<commentary>
-スキルが作成されたので、ベストプラクティス準拠を確認するため
-skill-reviewer を能動的にトリガーする。
-</commentary>
-assistant: "skill-reviewer エージェントでスキルをレビューします。"
-</example>
+  <example>
+  Context: ユーザーが新しいスキルを作ったところ
+  user: "PDF処理スキルを作りました"
+  assistant: "いいですね。スキルの品質をレビューしましょう。"
+  <commentary>
+  スキルが作成されたので、ベストプラクティス準拠を確認するため
+  skill-reviewer を能動的にトリガーする。
+  </commentary>
+  assistant: "skill-reviewer エージェントでスキルをレビューします。"
+  </example>
 
-<example>
-Context: ユーザーがスキルレビューを依頼
-user: "スキルをレビューして改善点を教えて"
-assistant: "skill-reviewer エージェントでスキルの品質を分析します。"
-<commentary>
-明示的なレビュー依頼がエージェントをトリガーする。
-</commentary>
-</example>
+  <example>
+  Context: ユーザーがスキルレビューを依頼
+  user: "スキルをレビューして改善点を教えて"
+  assistant: "skill-reviewer エージェントでスキルの品質を分析します。"
+  <commentary>
+  明示的なレビュー依頼がエージェントをトリガーする。
+  </commentary>
+  </example>
 
-<example>
-Context: ユーザーがスキルの description を変更した
-user: "スキルのdescriptionを更新しました。これで良さそうですか？"
-assistant: "skill-reviewer エージェントで変更をレビューします。"
-<commentary>
-description が変更されたので、トリガー有効性の観点でレビューする。
-</commentary>
-</example>
-
+  <example>
+  Context: ユーザーがスキルの description を変更した
+  user: "スキルのdescriptionを更新しました。これで良さそうですか？"
+  assistant: "skill-reviewer エージェントで変更をレビューします。"
+  <commentary>
+  description が変更されたので、トリガー有効性の観点でレビューする。
+  </commentary>
+  </example>
 model: inherit
 color: cyan
 tools: ["Read", "Grep", "Glob"]

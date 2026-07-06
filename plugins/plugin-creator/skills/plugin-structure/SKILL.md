@@ -1,28 +1,30 @@
 ---
 name: plugin-structure
-description: Claude Codeプラグインのディレクトリ構造・plugin.jsonマニフェスト・コンポーネント（commands/agents/skills/hooks）の自動発見・${CLAUDE_PLUGIN_ROOT}の使い方を案内する。「プラグインを作りたい」「プラグインの構成を知りたい」「plugin.jsonの書き方」「コンポーネントの配置」「自動発見の仕組み」について聞かれたとき、または新規プラグインの雛形を作るときに使用する。
+description: Claude Code / Antigravity 2.0 プラグインのディレクトリ構造・plugin.jsonマニフェスト・コンポーネント（commands/agents/skills/hooks/rules）の自動発見・${CLAUDE_PLUGIN_ROOT}の使い方を案内する。「プラグインを作りたい」「プラグインの構成を知りたい」「plugin.jsonの書き方」「コンポーネントの配置」「自動発見の仕組み」「両対応プラグインにしたい」について聞かれたとき、または新規プラグインの雛形を作るときに使用する。
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
   author: br7.hide
   created: "2026-07-05"
-  updated: "2026-07-05"
+  updated: "2026-07-06"
 ---
 
 # plugin-structure
 
 ## 目的
 
-Claude Code プラグインの標準ディレクトリ構造と自動発見（auto-discovery）の仕組みを
-理解し、整理された保守しやすいプラグインを設計・作成できるようにする。
+Claude Code / Antigravity 2.0 プラグインの標準ディレクトリ構造と自動発見
+（auto-discovery）の仕組みを理解し、整理された保守しやすいプラグインを
+設計・作成できるようにする。
 
 **中心概念:**
 
 - 規約に従ったディレクトリ配置による自動発見
-- `.claude-plugin/plugin.json` によるマニフェスト駆動の設定
-- コンポーネント単位の整理（commands / agents / skills / hooks）
-- `${CLAUDE_PLUGIN_ROOT}` によるポータブルなパス参照
+- マニフェスト駆動の設定（Claude Code は `.claude-plugin/plugin.json`、
+  Antigravity はルートの `plugin.json`。両対応プラグインは**両方を置く**）
+- コンポーネント単位の整理（commands / agents / skills / hooks / rules）
+- `${CLAUDE_PLUGIN_ROOT}` によるポータブルなパス参照（Claude Code のみ）
 
-## ディレクトリ構造
+## ディレクトリ構造（Claude Code）
 
 ```
 plugin-name/
@@ -47,7 +49,51 @@ plugin-name/
 3. **必要なものだけ作る**: 実際に使うコンポーネントのフォルダだけ作成する
 4. **命名規則**: フォルダ名・ファイル名はすべて kebab-case
 
-## マニフェスト（plugin.json）
+## ディレクトリ構造（Antigravity 2.0）
+
+Antigravity のプラグインは customization root（プロジェクトの
+`.agents/plugins/` またはグローバルの `~/.gemini/config/plugins/`）配下に置く:
+
+```
+plugin-name/
+├── plugin.json          # 必須: ルート直下（このファイルの存在がプラグインの印）
+├── mcp_config.json      # 任意: MCPサーバー定義
+├── hooks.json           # 任意: フック（ルート直下。hooks/ フォルダではない）
+├── rules/               # 任意: プラグイン有効時にマージされるルール（*.md）
+└── skills/              # スキル（Claude Code と同形式）
+    └── skill-name/
+        └── SKILL.md
+```
+
+**Claude Code との主な違い:**
+
+- マニフェストは**ルート直下**の `plugin.json`（`.claude-plugin/` は読まれない）。
+  必須フィールドはなく、`name` 省略時はフォルダ名が使われる
+- ネイティブのコンポーネントは skills / rules / hooks / MCP。
+  `commands/` は agy CLI がインストール時に**スキルへ変換**し、
+  `agents/*.md` はサブエージェントとして処理される（Claude 互換レイヤー）
+- フックは `hooks.json`（書式も異なる。`hook-development` スキル参照）、
+  MCP は `mcp_config.json`（`.mcp.json` は読まれない）
+- `${CLAUDE_PLUGIN_ROOT}` に相当する環境変数はない
+
+### 両対応（クロスプラットフォーム）プラグインの作り方
+
+1. **マニフェストを2つ置く**: `.claude-plugin/plugin.json`（Claude Code 用）と
+   ルートの `plugin.json`（Antigravity 用）。`version` は常に同じ値に保つ
+2. **中核はスキルで作る**: `skills/<name>/SKILL.md` は両プラットフォーム共通
+   （Agent Skills 標準）で、最もポータブルなコンポーネント
+3. **コマンドは「スキルに変換されても成立する」内容にする**: Claude Code 固有
+   機能（`!` bash実行・`${CLAUDE_PLUGIN_ROOT}` 参照）に依存しすぎない
+4. **フック・MCP を両対応させる場合はファイルを2系統置く**:
+   `hooks/hooks.json` + `.mcp.json`（Claude Code）と
+   `hooks.json` + `mcp_config.json`（Antigravity）
+5. **両方で検証する**: `claude plugin validate <path>` と
+   `agy plugin validate <path>`
+
+配置場所・優先順位・plugins.json による宣言的登録などの詳細は
+`references/antigravity-structure.md` を参照。
+
+## マニフェスト（plugin.json / Claude Code）
 
 最小構成は `name` のみ:
 
@@ -77,7 +123,8 @@ plugin-name/
 - カスタムパス指定（`commands` / `agents` / `hooks` / `mcpServers` フィールド）は
   デフォルトフォルダを**置き換えず補完する**。パスは `./` 始まりの相対パスのみ
 
-全フィールドの詳細は `references/manifest-reference.md` を参照。
+全フィールドの詳細は `references/manifest-reference.md` を参照
+（Antigravity 用マニフェストの仕様も同ファイルに記載）。
 
 ## コンポーネントの整理
 
@@ -132,10 +179,10 @@ skills/
 （またはマニフェスト内インライン）で定義する。プラグイン有効化時に自動起動する。
 詳細は `mcp-integration` スキルが担当。
 
-## ${CLAUDE_PLUGIN_ROOT}
+## ${CLAUDE_PLUGIN_ROOT}（Claude Code のみ）
 
-プラグイン内のファイルを参照するパスには必ず `${CLAUDE_PLUGIN_ROOT}`
-環境変数を使う。プラグインのインストール先は導入方法・OS・ユーザー設定によって
+Claude Code でプラグイン内のファイルを参照するパスには必ず
+`${CLAUDE_PLUGIN_ROOT}` 環境変数を使う。プラグインのインストール先は導入方法・OS・ユーザー設定によって
 変わるため、絶対パスの決め打ちは動かなくなる。
 
 **使う場所**: フックのコマンドパス、MCPサーバーの引数、スクリプト実行の参照、
@@ -153,6 +200,9 @@ skills/
 #!/bin/bash
 source "${CLAUDE_PLUGIN_ROOT}/lib/common.sh"
 ```
+
+Antigravity には相当する変数がない。フックの cwd は `hooks.json` のある
+ディレクトリになるため、相対パスで書く（詳細は `hook-development` スキル）。
 
 ## 自動発見の仕組み
 

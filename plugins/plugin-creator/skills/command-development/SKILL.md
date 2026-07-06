@@ -1,11 +1,11 @@
 ---
 name: command-development
-description: Claude Codeのスラッシュコマンド（commands/*.md）の作成を支援する。「スラッシュコマンドを作りたい」「コマンドを追加したい」「コマンドの引数を定義したい」「frontmatterの書き方」「対話的なコマンド」と言われたときや、コマンド構造・動的引数・ファイル参照・bash実行・コマンド整理の指針が必要なときに使用する。
+description: Claude Codeのスラッシュコマンド（commands/*.md）の作成を支援する。「スラッシュコマンドを作りたい」「コマンドを追加したい」「コマンドの引数を定義したい」「frontmatterの書き方」「対話的なコマンド」と言われたときや、コマンド構造・動的引数・ファイル参照・bash実行・コマンド整理の指針が必要なときに使用する。Antigravity 2.0 でのコマンドの扱い（スキルへの変換）もカバーする。
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
   author: br7.hide
   created: "2026-07-05"
-  updated: "2026-07-05"
+  updated: "2026-07-06"
 ---
 
 # command-development
@@ -34,6 +34,23 @@ metadata:
 このコマンドはコードのセキュリティ問題をレビューします。
 脆弱性の詳細レポートが得られます。
 ```
+
+## プラットフォーム互換性（Antigravity 2.0）
+
+スラッシュコマンドは **Claude Code 固有**のコンポーネント。
+Antigravity 2.0 にプラグイン同梱のスラッシュコマンドという概念はなく、
+`agy plugin install` は `commands/*.md` を**スキルに変換**して取り込む
+（エージェントが description を見て自律的に発動する形になる）。
+
+両対応プラグインのコマンドを書くときの指針:
+
+- **本文単体で成立させる**: `!` によるインラインbash実行・
+  `${CLAUDE_PLUGIN_ROOT}`・AskUserQuestion 等の Claude Code 固有機能に
+  中核ロジックを依存させない（使う場合は代替手順も本文に書く）
+- **description を強くする**: スキルとして扱われたときの発動材料になるため、
+  「いつ使うか」をトリガーフレーズ込みで書く
+- **引数に頼りすぎない**: `$ARGUMENTS` / `$1` は Antigravity 側では展開されない
+  前提で、引数がない場合の振る舞いを本文に書く
 
 ## コマンドの配置場所
 

@@ -1,20 +1,24 @@
 ---
 name: hook-development
-description: Claude Codeプラグインのフック（hooks/hooks.json）の作成を支援する。「フックを作りたい」「PreToolUse/PostToolUse/Stopフックを追加したい」「ツール使用を検証したい」「危険なコマンドをブロックしたい」と言われたときや、フックイベント（PreToolUse, PostToolUse, Stop, SubagentStop, SessionStart, SessionEnd, UserPromptSubmit, PreCompact, Notification）に言及されたときに使用する。プロンプトベースフックを中心に包括的なガイダンスを提供する。
+description: Claude Code / Antigravity 2.0 プラグインのフック（hooks/hooks.json / hooks.json）の作成を支援する。「フックを作りたい」「PreToolUse/PostToolUse/Stopフックを追加したい」「ツール使用を検証したい」「危険なコマンドをブロックしたい」と言われたときや、フックイベント（PreToolUse, PostToolUse, Stop, SubagentStop, SessionStart, SessionEnd, UserPromptSubmit, PreCompact, Notification, PreInvocation, PostInvocation）に言及されたときに使用する。プロンプトベースフックを中心に包括的なガイダンスを提供する。
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
   author: br7.hide
   created: "2026-07-05"
-  updated: "2026-07-05"
+  updated: "2026-07-06"
 ---
 
 # hook-development
 
 ## 目的
 
-フックは Claude Code のイベントに反応して実行されるイベント駆動の自動化
+フックはエージェントのイベントに反応して実行されるイベント駆動の自動化
 スクリプト。操作の検証・ポリシーの強制・コンテキストの追加・外部ツールの
 統合に使う。
+
+本文は Claude Code のフック仕様。**Antigravity 2.0 はイベント体系・
+ファイル配置・書式・入出力契約がすべて異なる**（本文末尾の
+「Antigravity 2.0 のフック」と `references/antigravity-hooks.md` を参照）。
 
 ## フックの種類
 
@@ -335,6 +339,50 @@ output=$(./your-hook.sh < test-input.json)
 echo "$output" | jq .
 ```
 
+## Antigravity 2.0 のフック
+
+Antigravity のフックは別仕様。要点:
+
+- **配置**: プラグイン**ルート直下**の `hooks.json`（`hooks/` フォルダではない）。
+  customization root（`.agents/` や `~/.gemini/config/`）にも置ける
+- **書式**: トップレベルは「フック名 → 設定」のマップ。
+  `{"hooks": {...}}` ラッパーは使わない
+
+```json
+{
+  "lint-checker": {
+    "enabled": true,
+    "PostToolUse": [
+      {
+        "matcher": "run_command",
+        "hooks": [
+          { "type": "command", "command": "./scripts/lint.sh", "timeout": 10 }
+        ]
+      }
+    ]
+  }
+}
+```
+
+- **イベントは5種のみ**: `PreToolUse` / `PostToolUse`（matcher + hooks の
+  グループ形式）、`PreInvocation` / `PostInvocation` / `Stop`（ハンドラ配列を
+  直接書くフラット形式）。SessionStart / UserPromptSubmit 等はない
+- **matcher は Antigravity のツール名**（`run_command`, `view_file`,
+  `browser_.*` 等）に対する正規表現。Claude Code の `Write|Edit` は一致しない
+- **コマンドフックのみ**（`type: "command"`。プロンプトベースフックはない）。
+  timeout の既定は30秒。フックは同期実行でループをブロックする
+- **cwd は hooks.json のあるディレクトリ**。`${CLAUDE_PLUGIN_ROOT}` は
+  存在しないため、スクリプトは相対パス（`./scripts/...`）で参照する
+- **入出力契約が異なる**: stdin/stdout の JSON キーは camelCase。
+  PreToolUse の出力は `{"decision": "allow|deny|ask|force_ask"}`、
+  Stop は `{"decision": "continue"}` で停止をブロック、
+  PreInvocation / PostInvocation は `injectSteps` でステップ注入が可能
+
+両対応プラグインでは、フックスクリプト本体（検証ロジック）を共通化し、
+Claude Code 用 `hooks/hooks.json` と Antigravity 用 `hooks.json` の2つの
+設定ファイルからそれぞれの入出力契約に合わせた薄いラッパーで呼び出す。
+イベント一覧・全契約の詳細は `references/antigravity-hooks.md` を参照。
+
 ## 追加リソース
 
 ### リファレンス
@@ -342,6 +390,7 @@ echo "$output" | jq .
 - **`references/patterns.md`** — 実績あるフックパターン集
 - **`references/migration.md`** — 基本フックから発展フックへの移行
 - **`references/advanced.md`** — 発展的なユースケースとテクニック
+- **`references/antigravity-hooks.md`** — Antigravity 2.0 フックの完全仕様
 
 ### 実例
 

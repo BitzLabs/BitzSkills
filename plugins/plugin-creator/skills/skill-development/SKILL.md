@@ -1,22 +1,27 @@
 ---
 name: skill-development
-description: Claude Codeプラグインに同梱するスキル（SKILL.md）の作成・改善を支援する。「プラグインにスキルを追加したい」「スキルを書きたい」「descriptionを改善したい」「スキルの構成を整理したい」と言われたときや、progressive disclosure・トリガー設計・スキル記述スタイルの指針が必要なときに使用する。
+description: Claude Code / Antigravity 2.0 プラグインに同梱するスキル（SKILL.md）の作成・改善を支援する。「プラグインにスキルを追加したい」「スキルを書きたい」「descriptionを改善したい」「スキルの構成を整理したい」と言われたときや、progressive disclosure・トリガー設計・スキル記述スタイルの指針が必要なときに使用する。
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
   author: br7.hide
   created: "2026-07-05"
-  updated: "2026-07-05"
+  updated: "2026-07-06"
 ---
 
 # skill-development
 
 ## 目的
 
-Claude Code プラグインに同梱する効果的なスキルを作成するための指針を提供する。
+プラグインに同梱する効果的なスキルを作成するための指針を提供する。
 
 スキルとは、専門知識・ワークフロー・ツールを提供してエージェントの能力を拡張する
 自己完結型パッケージである。特定ドメインの「オンボーディングガイド」として、
 汎用エージェントを手続き的知識を備えた専門エージェントに変える。
+
+SKILL.md の形式（frontmatter の name / description、progressive disclosure、
+`scripts/` `references/` `examples/` の同梱）は Agent Skills 標準として
+**Claude Code と Antigravity 2.0 で共通**。スキルは最もポータブルな
+コンポーネントであり、両対応プラグインの中核はスキルで作るのが原則。
 
 **注**: スキル開発の全工程（作成→検証→テスト→評価→最適化→配置）を体系的に
 進めたい場合は、`skill-creator` プラグインのスキル群（skill-creator /
@@ -139,8 +144,13 @@ touch plugin-name/skills/skill-name/SKILL.md
 ローカルでのトリガーテスト:
 
 ```bash
+# Claude Code
 claude --plugin-dir /path/to/plugin
 # スキルがトリガーされるはずの質問をして、読み込まれるか確認する
+
+# Antigravity 2.0
+agy plugin install /path/to/plugin && agy
+# 確認後は agy plugin uninstall <name> で戻せる
 ```
 
 ### Step 6: 反復改善

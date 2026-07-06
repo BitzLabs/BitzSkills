@@ -1,11 +1,11 @@
 ---
 name: plugin-settings
-description: Claude Codeプラグインのユーザー設定・状態を .claude/plugin-name.local.md に保存するパターンを支援する。「プラグイン設定を保存したい」「設定可能なプラグインにしたい」「.local.mdファイル」「YAML frontmatterの読み取り」「プロジェクトごとのプラグイン設定」と言われたときに使用する。YAML frontmatter + マークダウン本文による設定管理を扱う。
+description: プラグインのユーザー設定・状態を .claude/plugin-name.local.md に保存するパターンを支援する。「プラグイン設定を保存したい」「設定可能なプラグインにしたい」「.local.mdファイル」「YAML frontmatterの読み取り」「プロジェクトごとのプラグイン設定」と言われたときに使用する。YAML frontmatter + マークダウン本文による設定管理を扱う（Claude Code の慣習だが Antigravity 2.0 にも応用可能）。
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
   author: br7.hide
   created: "2026-07-05"
-  updated: "2026-07-05"
+  updated: "2026-07-06"
 ---
 
 # plugin-settings
@@ -23,6 +23,11 @@ metadata:
 - **目的**: プロジェクト単位のプラグイン設定・状態
 - **利用**: フック・コマンド・エージェントから読む
 - **ライフサイクル**: ユーザー管理（gitに入れない。`.gitignore` に追加する）
+
+`.claude/` 配下に置くのは Claude Code の慣習。Antigravity 2.0 に公式の
+プラグイン設定機構はないため、両対応プラグインで同パターンを使う場合は
+`.agents/plugin-name.local.md` など**プラットフォーム側の root** に置き、
+読み取りスクリプトが両方のパスを順に探すようにする。
 
 ## ファイル構造
 

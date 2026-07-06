@@ -1,22 +1,36 @@
 # plugin-creator
 
-Claude Code / Antigravity プラグイン開発の全領域を支援するツールキット。
+Claude Code / Antigravity 2.0 プラグイン開発の全領域を支援するツールキット。
 フック・MCP統合・プラグイン構造・設定管理・コマンド/エージェント/スキル開発の
-専門ガイダンスを提供する。
+専門ガイダンスを、両プラットフォームの仕様差を踏まえて提供する。
 （[anthropics/claude-code の plugin-dev](https://github.com/anthropics/claude-code/tree/main/plugins/plugin-dev)
-を参考に、全編日本語で作成）
+を参考に、全編日本語で作成。Antigravity 側の仕様は agy CLI 組み込み
+ドキュメントと実測に基づく）
 
 ## 概要
 
 高品質なプラグインを作るための7つの専門スキルを提供する:
 
-1. **plugin-structure** — プラグインの構成・plugin.jsonマニフェスト・自動発見
+1. **plugin-structure** — プラグインの構成・マニフェスト・自動発見（両対応の作り方を含む）
 2. **skill-development** — progressive disclosure と強いトリガーを持つスキル作成
 3. **command-development** — frontmatter・引数・対話機能を持つスラッシュコマンド作成
 4. **agent-development** — AI支援生成を含む自律エージェント作成
-5. **hook-development** — フックAPIとイベント駆動自動化
+5. **hook-development** — フックAPIとイベント駆動自動化（Antigravity 別仕様を含む）
 6. **mcp-integration** — MCP（Model Context Protocol）サーバー統合
 7. **plugin-settings** — `.claude/plugin-name.local.md` による設定管理
+
+## プラットフォーム互換性
+
+| コンポーネント | Claude Code | Antigravity 2.0 |
+| --- | --- | --- |
+| マニフェスト | `.claude-plugin/plugin.json` | ルートの `plugin.json`（両対応は両方置く） |
+| スキル | `skills/<name>/SKILL.md` | 同形式（最もポータブル） |
+| コマンド | `commands/*.md` | ネイティブ非対応（agy がスキルに変換） |
+| エージェント | `agents/*.md` | agy が同形式を取り込む（`model: inherit` 推奨） |
+| フック | `hooks/hooks.json` | ルートの `hooks.json`（**書式・イベント別物**） |
+| MCP | `.mcp.json` | ルートの `mcp_config.json`（stdio / SSE のみ） |
+| ルール | — | `rules/*.md` を同梱可 |
+| パス変数 | `${CLAUDE_PLUGIN_ROOT}` | なし（フックの cwd = hooks.json の場所） |
 
 各スキルは progressive disclosure（リーンな本体 + 詳細リファレンス +
 動く実例 + ユーティリティスクリプト）に従う。
@@ -114,7 +128,10 @@ examples 3本 + scripts 2本（validate-settings / parse-frontmatter）
 /plugin marketplace add BitzLabs/BitzSkills
 /plugin install plugin-creator@bitzskills
 
-# 開発時（ローカル直接指定）
+# Antigravity 2.0
+agy plugin install /path/to/BitzSkills/plugins/plugin-creator
+
+# 開発時（Claude Code ローカル直接指定）
 claude --plugin-dir /path/to/BitzSkills/plugins/plugin-creator
 ```
 
@@ -139,6 +156,8 @@ claude --plugin-dir /path/to/BitzSkills/plugins/plugin-creator
 ## ベストプラクティス（全スキル共通）
 
 - **セキュリティ第一**: フックでの入力検証、MCPは HTTPS/WSS、認証情報は環境変数
-- **ポータビリティ**: どこでも `${CLAUDE_PLUGIN_ROOT}` を使い、相対パスのみ
-- **テスト**: デプロイ前の設定検証、サンプル入力でのフックテスト、`claude --debug`
+- **ポータビリティ**: Claude Code では `${CLAUDE_PLUGIN_ROOT}` を使い、相対パスのみ。
+  両対応プラグインは中核をスキルで作り、マニフェストを2つ置き version を同期する
+- **テスト**: デプロイ前の設定検証、サンプル入力でのフックテスト、
+  `claude --debug` と `agy plugin validate`
 - **ドキュメント**: 明確なREADME、環境変数の文書化、使用例の提供

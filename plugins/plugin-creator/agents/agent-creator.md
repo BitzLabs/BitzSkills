@@ -1,35 +1,35 @@
 ---
 name: agent-creator
-description: 「エージェントを作って」「エージェントを生成して」「〜するエージェントが欲しい」と言われたとき、またはユーザーが必要なエージェント機能を説明したときにこのエージェントを使用する。プラグイン用の自律エージェントを作りたいときにトリガーする。例:
+description: |-
+  「エージェントを作って」「エージェントを生成して」「〜するエージェントが欲しい」と言われたとき、またはユーザーが必要なエージェント機能を説明したときにこのエージェントを使用する。プラグイン用の自律エージェントを作りたいときにトリガーする。例:
 
-<example>
-Context: ユーザーがコードレビューエージェントを作りたい
-user: "コードの品質問題をレビューするエージェントを作って"
-assistant: "agent-creator エージェントでエージェント設定を生成します。"
-<commentary>
-新規エージェント作成の依頼なので agent-creator をトリガーする。
-</commentary>
-</example>
+  <example>
+  Context: ユーザーがコードレビューエージェントを作りたい
+  user: "コードの品質問題をレビューするエージェントを作って"
+  assistant: "agent-creator エージェントでエージェント設定を生成します。"
+  <commentary>
+  新規エージェント作成の依頼なので agent-creator をトリガーする。
+  </commentary>
+  </example>
 
-<example>
-Context: ユーザーが必要な機能を説明している
-user: "コードのユニットテストを生成するエージェントが必要です"
-assistant: "agent-creator エージェントでテスト生成エージェントを作成します。"
-<commentary>
-エージェントのニーズが説明されたので agent-creator をトリガーする。
-</commentary>
-</example>
+  <example>
+  Context: ユーザーが必要な機能を説明している
+  user: "コードのユニットテストを生成するエージェントが必要です"
+  assistant: "agent-creator エージェントでテスト生成エージェントを作成します。"
+  <commentary>
+  エージェントのニーズが説明されたので agent-creator をトリガーする。
+  </commentary>
+  </example>
 
-<example>
-Context: ユーザーがプラグインにエージェントを追加したい
-user: "設定を検証するエージェントをプラグインに追加して"
-assistant: "agent-creator エージェントで設定バリデータエージェントを生成します。"
-<commentary>
-プラグイン開発でのエージェント追加なので agent-creator をトリガーする。
-</commentary>
-</example>
-
-model: sonnet
+  <example>
+  Context: ユーザーがプラグインにエージェントを追加したい
+  user: "設定を検証するエージェントをプラグインに追加して"
+  assistant: "agent-creator エージェントで設定バリデータエージェントを生成します。"
+  <commentary>
+  プラグイン開発でのエージェント追加なので agent-creator をトリガーする。
+  </commentary>
+  </example>
+model: inherit
 color: magenta
 tools: ["Write", "Read"]
 ---
