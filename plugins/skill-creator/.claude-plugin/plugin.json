@@ -1,7 +1,7 @@
 {
   "name": "skill-creator",
   "description": "エージェントスキル開発の全工程（作成→検証→テスト→評価→最適化→配置）を支援する7つのスキルを提供するプラグイン",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": {
     "name": "br7.hide",
     "email": "br7.hide@gmail.com"

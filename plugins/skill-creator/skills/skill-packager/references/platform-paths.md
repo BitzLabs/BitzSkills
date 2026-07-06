@@ -29,8 +29,9 @@
 | `~/.gemini/config/skills/<skill-folder>/` | グローバル（全プロジェクト共通） |
 
 補足:
-- Antigravityは現在 `.agents/skills`（複数形）をデフォルトとしているが、
-  旧仕様の `.agent/skills`（単数形）も後方互換として引き続きサポートされている。
+- ワークスペースの customization root は `.agents/` が標準だが、
+  `.agent/` `_agents/` `_agent/` も同格の別名として許容される
+  （組み込みドキュメント準拠。どれを使っても `<root>/skills/` 配下に置く）。
 
 ## プラグインとしての配布
 

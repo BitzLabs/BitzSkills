@@ -2,10 +2,10 @@
 name: skill-creator
 description: 新しいエージェントスキル（SKILL.mdとフォルダ一式）を対話的に設計・作成する。ユーザーが「新しいスキルを作りたい」「SKILL.mdを作成したい」「エージェントに新しい能力を教えたい」と言った場合に使用する。既存スキルの検証はskill-validator、改善はskill-optimizerを使う。
 metadata:
-  version: "0.2.0"
+  version: "0.2.1"
   author: br7.hide
   created: "2026-07-05"
-  updated: "2026-07-05"
+  updated: "2026-07-06"
 ---
 
 # skill-creator
