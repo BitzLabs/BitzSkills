@@ -1,0 +1,19 @@
+{
+  "_comment": "ホスト型クラウドサービス向けSSE MCPサーバー設定の例",
+  "asana": {
+    "type": "sse",
+    "url": "https://mcp.asana.com/sse"
+  },
+  "github": {
+    "type": "sse",
+    "url": "https://mcp.github.com/sse"
+  },
+  "custom-service": {
+    "type": "sse",
+    "url": "https://mcp.example.com/sse",
+    "headers": {
+      "X-API-Version": "v1",
+      "X-Client-ID": "${CLIENT_ID}"
+    }
+  }
+}

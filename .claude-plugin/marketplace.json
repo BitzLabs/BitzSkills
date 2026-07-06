@@ -12,6 +12,11 @@
       "name": "skill-creator",
       "source": "./plugins/skill-creator",
       "description": "エージェントスキル開発の全工程（作成→検証→テスト→評価→最適化→配置）を支援する7つのスキルを提供するプラグイン"
+    },
+    {
+      "name": "plugin-creator",
+      "source": "./plugins/plugin-creator",
+      "description": "Claude Code / Antigravity プラグイン開発の全領域（構造設計・スキル/コマンド/エージェント/フック開発・MCP統合・設定管理）を支援する7つのスキルと、作成ワークフローを統括する create-plugin コマンドを提供するプラグイン"
     }
   ]
 }
