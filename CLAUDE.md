@@ -25,14 +25,17 @@ plugins/
 │   ├── .claude-plugin/
 │   │   └── plugin.json     # Claude Code プラグインマニフェスト
 │   ├── plugin.json         # Antigravity 2.0 プラグインマニフェスト
-│   └── skills/             # プラグインに含まれる7スキル（両プラットフォーム共通）
+│   └── skills/             # プラグインに含まれる10スキル（両プラットフォーム共通）
 │       ├── skill-creator/      # 新規スキルの設計・雛形作成
 │       ├── skill-validator/    # 仕様準拠チェック（lint）
 │       ├── skill-optimizer/    # description最適化・本文分離・構造改善
 │       ├── skill-tester/       # テストケース設計と実行
 │       ├── skill-evaluator/    # 実行結果の採点・レポート作成
 │       ├── skill-packager/     # 実環境への配置・配布用zip化
-│       └── skill-pipeline/     # 全工程を案内する統括スキル
+│       ├── skill-pipeline/     # 全工程を案内する統括スキル
+│       ├── skill-instrumenter/ # 監視対象スキルへの観察ステップ注入（計装）
+│       ├── skill-observer/     # 実行直後の自己観察・観察ログ記録
+│       └── skill-improver/     # 観察ログ分析→スキル修正（自己改善）
 └── plugin-creator/         # プラグイン: プラグイン開発ツール群（plugin-dev の日本語版）
     ├── .claude-plugin/plugin.json
     ├── plugin.json
@@ -46,7 +49,7 @@ plugins/
         ├── hook-development/       # フックとイベント駆動自動化
         ├── mcp-integration/        # MCPサーバー統合
         └── plugin-settings/        # .local.md による設定管理
-evals/                      # tester/evaluator の作業成果物（全プラグイン共用）
+evals/                      # tester/evaluator の作業成果物と observer の観察ログ（全プラグイン共用）
 ```
 
 ## 新しいプラグインの追加手順
@@ -63,6 +66,9 @@ evals/                      # tester/evaluator の作業成果物（全プラグ
 
 スキル開発の標準フロー: creator → validator → tester → evaluator →
 （不合格なら optimizer で改善して反復）→ packager。全体は `skill-pipeline` が統括する。
+配置後の自己改善ループ: instrumenter で計装したスキルを実行のたびに observer が
+自己観察（問題のみ `evals/observations/observations.jsonl` に記録）→ 溜まったログを
+improver が分析してスキルを修正する。
 
 ## 規約
 
@@ -72,6 +78,8 @@ evals/                      # tester/evaluator の作業成果物（全プラグ
   `plugins/skill-creator/skills/skill-creator/references/spec.md` が正
 - テスト成果物はスキルフォルダ内ではなく `evals/<skill-name>/` に置く
   （書式は `plugins/skill-creator/skills/skill-tester/references/test-design.md` で定義）
+- 観察ログは `evals/observations/observations.jsonl` に置く（書式は
+  `plugins/skill-creator/skills/skill-observer/references/observation-schema.md` で定義）
 - スキルを追加・変更したら `skill-validator` のチェックリスト
   （`plugins/skill-creator/skills/skill-validator/references/checklist.md`）で検証する
 - 全スキルの frontmatter に `metadata`（version/author/created/updated）を必須で
