@@ -17,6 +17,11 @@
       "name": "plugin-creator",
       "source": "./plugins/plugin-creator",
       "description": "Claude Code / Antigravity プラグイン開発の全領域（構造設計・スキル/コマンド/エージェント/フック開発・MCP統合・設定管理）を支援する7つのスキルと、作成ワークフローを統括する create-plugin コマンドを提供するプラグイン"
+    },
+    {
+      "name": "bitz-sdd",
+      "source": "./plugins/bitz-sdd",
+      "description": "BitzSDD — 仕様駆動開発（SDD）の運用ワークフロー。EARS要件・検証中心・権限分離の規律を担う bitz-sdd スキルと、docs/（人間ナラティブ層）の初期化・検証を行う sdd-docs スキルを提供するプラグイン"
     }
   ]
 }

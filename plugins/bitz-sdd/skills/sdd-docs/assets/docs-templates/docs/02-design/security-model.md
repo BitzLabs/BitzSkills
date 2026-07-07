@@ -1,0 +1,27 @@
+---
+id: DOC-design-security-model
+title: Security Model
+status: active
+version: 0.1.0
+changeImpact: low
+project_type: app
+updated: 2026-07-07
+owner: <担当ハンドル>
+superseded_by: null
+---
+
+<!-- 信頼境界・脅威・データ分類の方針。具体の検証は .planning/。 -->
+
+# Security Model
+
+## 信頼境界とデータ分類
+- <どこが境界か。機微データの分類と扱い>
+
+## 想定脅威と緩和方針
+| 脅威 | 影響 | 緩和 |
+|---|---|---|
+| <...> | <...> | <...> |
+
+## library 固有
+- 入力検証・安全なデフォルト・依存の供給網（supply chain）方針。
+- 秘密情報をログ/例外メッセージに載せない契約。

@@ -1,0 +1,9 @@
+{
+  "name": "bitz-sdd",
+  "description": "BitzSDD — 仕様駆動開発（SDD）の運用ワークフロー。EARS要件・検証中心・権限分離の規律を担う bitz-sdd スキルと、docs/（人間ナラティブ層）の初期化・検証を行う sdd-docs スキルを提供するプラグイン",
+  "version": "0.1.0",
+  "author": {
+    "name": "br7.hide",
+    "email": "br7.hide@gmail.com"
+  }
+}

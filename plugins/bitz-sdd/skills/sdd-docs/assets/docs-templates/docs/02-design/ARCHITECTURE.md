@@ -1,0 +1,85 @@
+---
+id: DOC-design-architecture
+title: Architecture
+status: active
+version: 0.1.0
+changeImpact: low
+project_type: app            # app | library
+updated: 2026-07-07
+owner: <担当ハンドル>
+superseded_by: null
+---
+
+<!--
+  構造・境界・技術設計の「なぜそうしたか」を語る。
+  - 個々の決定の理由と不採用案は ADR に切り出し、ここからはリンクで参照する。
+  - 実装の詳細な手順やタスクは書かない → .planning/。
+  - library はこの後に必ず public-api.md を持つ（公開契約はそちらが正）。
+-->
+
+# Architecture
+
+## 全体像
+
+<!-- 1段落 + 図（ASCII / mermaid いずれか）。俯瞰が目的。 -->
+
+```
+<コンポーネント境界の図>
+```
+
+## モジュール境界（言語別マッピング）
+
+<!--
+  「何が公開で、何が内部で、境界はどこか」を言語の単位に落とす。
+  library は特にこの境界が SemVer 契約と一致するように設計する。
+-->
+
+| 論理境界 | C# | TypeScript (Web) | Rust |
+|---|---|---|---|
+| 配布単位 | NuGet パッケージ / assembly | npm パッケージ (workspace) | crate (cargo workspace member) |
+| 公開面の単位 | `public` 型・メンバ / namespace | `exports` マップ・公開 `.d.ts` | `pub` items / `pub mod` |
+| 内部境界 | `internal` / `InternalsVisibleTo` | 非 export / `internal` エントリ | `pub(crate)` / 非 `pub` |
+| 機能分割 | 複数 project | サブパス export / 複数 package | feature flags / 複数 crate |
+
+<!-- 上記を本プロジェクトの実体で埋める。例: -->
+- **<境界名>**: <C#: Foo.Core assembly / TS: @scope/core / Rust: foo-core crate>。責務: <...>
+- **<境界名>**: <...>
+
+## レイヤと依存方向
+
+<!-- 依存の向きを明示（循環禁止）。app なら層構造、library なら公開→内部の一方向。 -->
+```
+<上位> ─▶ <下位>   （矢印は「依存」）
+```
+
+## 主要な設計決定
+
+<!-- ここでは要約のみ。理由・代替案は ADR へ。 -->
+- <決定の要約> → 詳細: [ADR-0001](decisions/ADR-0001-<slug>.md)
+
+---
+
+## app 固有（project_type: app のとき）
+
+<!-- library では削除してよい。 -->
+- **ランタイム/デプロイ**: <ホスティング、実行環境、ビルド成果物>
+- **データフロー**: <入力→処理→永続化→出力>
+- **外部依存**: <API・DB・キュー。障害時の想定>
+- **状態管理**: <セッション・キャッシュ・整合性>
+
+## library 固有（project_type: library のとき）
+
+<!-- app では削除してよい。詳細な公開契約は public-api.md が正。ここは構造の要点のみ。 -->
+- **公開面の設計方針**: <最小公開・追加的拡張・trait/interface による拡張点>
+- **拡張ポイント**: <C#: interface/abstract / TS: 型パラメータ・プラグイン / Rust: trait・feature>
+- **副作用と純粋性**: <I/O・グローバル状態の有無。library は副作用を境界に閉じ込める>
+- **スレッド/非同期モデル**:
+  - C#: `Task`/`ValueTask`、`ConfigureAwait`、キャンセレーション方針
+  - TS: Promise/async、同期版の有無、Web/Node 両対応か
+  - Rust: `async` ランタイム非依存か（`tokio` 前提を避けるか）、`Send`/`Sync` 保証
+
+---
+### Revision History
+| version | date | change | impact |
+|---|---|---|---|
+| 0.1.0 | 2026-07-07 | 初版 | — |
