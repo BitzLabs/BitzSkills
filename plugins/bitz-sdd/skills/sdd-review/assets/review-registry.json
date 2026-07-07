@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "comment": "sdd-review の観点レジストリ。プロジェクト側で調整するときは .planning/review/registry.json にコピーして編集する（そちらが優先される）",
+  "perspectives": [
+    {
+      "name": "consistency",
+      "reference": "perspective-consistency.md",
+      "weight": 0.15,
+      "id_prefix": "CON",
+      "conditions": "always"
+    },
+    {
+      "name": "data-integrity",
+      "reference": "perspective-data-integrity.md",
+      "weight": 0.25,
+      "id_prefix": "DIN",
+      "conditions": "persistent-data"
+    },
+    {
+      "name": "operations",
+      "reference": "perspective-operations.md",
+      "weight": 0.20,
+      "id_prefix": "OPS",
+      "conditions": "always"
+    },
+    {
+      "name": "risk",
+      "reference": "perspective-risk.md",
+      "weight": 0.25,
+      "id_prefix": "RSK",
+      "conditions": "always",
+      "model_hint": "最高性能モデル/最大思考量を推奨（敵対的分析）"
+    },
+    {
+      "name": "business",
+      "reference": "perspective-business.md",
+      "weight": 0.15,
+      "id_prefix": "BIZ",
+      "conditions": "always"
+    }
+  ],
+  "quality_gates": {
+    "PASS": {
+      "min_aggregate": 3.5,
+      "max_critical": 0,
+      "max_major": 3,
+      "all_perspectives_min": 3.0
+    },
+    "CONDITIONAL_PASS": {
+      "min_aggregate": 2.5,
+      "max_critical": 2,
+      "max_major": 8,
+      "min_perspective_floor": 2.0
+    },
+    "FAIL": "CONDITIONAL_PASS のしきい値未満"
+  },
+  "severity_definitions": {
+    "critical": "進行をブロックする。データ損失・セキュリティ侵害・システム障害を招く",
+    "major": "実装前に必ず修正。重大なリスクまたは不整合",
+    "minor": "修正すべき。リスクは低いが品質を下げる",
+    "info": "改善提案。リスクなし"
+  }
+}

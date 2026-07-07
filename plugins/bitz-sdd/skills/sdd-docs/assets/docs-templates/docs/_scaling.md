@@ -69,6 +69,7 @@ docs/
 | 追加する層 | 追加の合図 |
 |---|---|
 | 起点: 01 / 02 / 08（library は +public-api） | プロジェクト開始時 |
+| 01-context の拡張3点（success-metrics / personas-journeys / positioning） | `sdd-discovery` スキルで上流探索を行うとき（proposed で追加し Design Gate で active 化） |
 | 03-implementation | 実装パターンが繰り返し現れ、標準化する価値が出たとき |
 | 04-quality | テスト戦略を feature を越えて共有・強制したくなったとき |
 | 05-operations | 定期的にデプロイ／公開し、再現可能な手順が要るとき |

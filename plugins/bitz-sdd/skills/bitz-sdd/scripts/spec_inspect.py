@@ -4,13 +4,17 @@
 使い方:
   python spec_inspect.py <repo-root>                 # 全検証 → .planning/inspection-report.md
   python spec_inspect.py <repo-root> --impact FR-012 # 変更影響分析（stale候補の列挙）
+  python spec_inspect.py <repo-root> --impact-docs docs/02-design/ARCHITECTURE.md
+                                                     # docs変更の影響要件（derived_from 逆引き）
 """
 import re
+import subprocess
 import sys
 from datetime import date
 from pathlib import Path
 
 ID_RE = re.compile(r"\b(?:FR|NFR|CON)-\d{3}\b")
+DOCS_REF_RE = re.compile(r"(docs/[^\s@]+)(?:@([0-9a-fA-F]{7,40}))?")
 PREFIXES = ("FR", "NFR", "CON")
 STATUSES = {"draft", "approved", "implementing", "verified", "promoted", "deprecated"}
 VMETHODS = {"pbt", "example-test", "benchmark", "sast", "dep-audit", "load-test", "manual-check"}
@@ -99,6 +103,35 @@ def scan_refs(root: Path, subdirs, exclude_names=()):
     return refs
 
 
+_sha_cache = {}
+
+
+def git_head_sha(root: Path, rel_path: str):
+    """rel_path を最後に変更したコミットSHA。git 不在/リポジトリ外/未コミットは None（縮退）"""
+    if rel_path in _sha_cache:
+        return _sha_cache[rel_path]
+    sha = None
+    try:
+        out = subprocess.run(["git", "log", "-1", "--format=%H", "--", rel_path],
+                             cwd=root, capture_output=True, text=True, timeout=10)
+        if out.returncode == 0:
+            sha = out.stdout.strip() or None
+    except (OSError, subprocess.SubprocessError):
+        sha = None
+    _sha_cache[rel_path] = sha
+    return sha
+
+
+def derived_docs_ref(fm: dict):
+    """frontmatter の derived_from から (docsパス, 記録SHA) を取り出す"""
+    m = DOCS_REF_RE.search(fm.get("derived_from", ""))
+    return (m.group(1), m.group(2)) if m else (None, None)
+
+
+def sha_matches(a: str, b: str) -> bool:
+    return a.startswith(b) or b.startswith(a)
+
+
 def implements_map(root: Path):
     """tasks/ の implements: 行から 要件ID → タスクファイル を集める"""
     impl = {}
@@ -166,6 +199,18 @@ def inspect(root: Path) -> str:
     lines.append("## テスト/実装からの参照がない要件（approved以降）")
     lines += [f"- {rid}" for rid in untested] or ["- なし ✅"]
     lines.append("")
+    diverged = []
+    for rid, r in sorted(reqs.items()):
+        path, recorded = derived_docs_ref(r["fm"])
+        if not path or not recorded:
+            continue
+        current = git_head_sha(root, path)
+        if current and not sha_matches(current, recorded):
+            diverged.append(f"{rid} ← {path} ({recorded[:7]} → {current[:7]})")
+    lines.append("## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）")
+    lines.append("※ 乖離は候補提示のみ。stale 付与は references/lifecycle.md の再伝播プロトコル（判定パス→人間確認）を経ること")
+    lines += [f"- {d}" for d in diverged] or ["- なし ✅"]
+    lines.append("")
     lines.append("## Traceability Matrix")
     lines.append("| ID | status | domain | v-method | tasks | 参照元数 |")
     lines.append("|----|--------|--------|----------|-------|----------|")
@@ -197,12 +242,47 @@ def impact(root: Path, target: str) -> str:
     return "\n".join(lines)
 
 
+def impact_docs(root: Path, target: str) -> str:
+    """docs/ 文書の変更が影響する要件を derived_from の逆引きで列挙する（再伝播プロトコルの候補列挙）"""
+    req_dir = root / ".planning" / "requirements"
+    if not req_dir.exists():
+        return f"ERROR: {req_dir} が存在しません（BitzSDD レイアウト未初期化）"
+    reqs, _ = load_requirements(req_dir)
+    target = target.strip().lstrip("./")
+    current = git_head_sha(root, target)
+    rows = []
+    for rid, r in sorted(reqs.items()):
+        path, recorded = derived_docs_ref(r["fm"])
+        if path != target:
+            continue
+        if current is None:
+            state = "SHA比較不可（git 不在/未コミット）— 内容を目視確認"
+        elif recorded is None:
+            state = "派生時SHA未記録 — 内容を目視確認"
+        elif sha_matches(current, recorded):
+            state = "一致（派生後の変更なし）"
+        else:
+            state = f"乖離 {recorded[:7]} → {current[:7]} — stale 候補"
+        rows.append(f"- [ ] {rid} (status: {r['fm'].get('status', '')}) — {state}")
+    lines = [f"# impact-docs: {target}", ""]
+    if current:
+        lines.append(f"現行コミット: {current[:12]}")
+    lines.append(f"派生要件: {len(rows)} 件。乖離のあるものは references/lifecycle.md の"
+                 "再伝播プロトコル（判定パス→人間確認→最小再実行）に従い stale を付与すること。")
+    lines.append("")
+    lines += rows or ["- この文書から派生した要件はありません"]
+    return "\n".join(lines)
+
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
         sys.exit(1)
     root = Path(sys.argv[1]).resolve()
-    if "--impact" in sys.argv:
+    if "--impact-docs" in sys.argv:
+        target = sys.argv[sys.argv.index("--impact-docs") + 1]
+        print(impact_docs(root, target))
+    elif "--impact" in sys.argv:
         target = sys.argv[sys.argv.index("--impact") + 1]
         print(impact(root, target))
     else:

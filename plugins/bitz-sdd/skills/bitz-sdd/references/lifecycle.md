@@ -37,15 +37,33 @@
 
 IDは「契約の同一性」を指す。意味が変わったのに同じIDを使うと「このテストはどの契約に対して緑だったか」の履歴が壊れる。
 
-## 変更伝播（impact 分析）
+## 変更伝播（再伝播プロトコル）
 
-要件が bump / supersede されたら必ず実行:
+変更の入口は2系統。どちらも同じ5ステップで処理する。
+
+- **(a) 要件起点** — 要件が bump / supersede された: `--impact FR-012` で依存成果物を列挙
+- **(b) docs 起点** — 人間が active な docs/ 文書を改訂した: `--impact-docs docs/…` で `derived_from` を逆引きし、派生要件（記録 SHA と現行 SHA の乖離）を列挙
 
 ```bash
 python scripts/spec_inspect.py <repo-root> --impact FR-012
+python scripts/spec_inspect.py <repo-root> --impact-docs docs/02-design/ARCHITECTURE.md
 ```
 
-`implements:` / `refs:` / 本文参照で FR-012 に依存する全成果物が列挙される。各成果物に `stale: FR-012@<新version>` マークを付け、取り込み更新が済んだものから外す。**stale が1つでも残る feature は verified に進めない。**
+### 5ステップ
+
+1. **intake** — 変更内容・種別（要件起点/docs 起点）・docs のコミット SHA を STATE.md に記録する
+2. **候補列挙（決定的）** — 上記コマンドで影響候補を機械列挙する。**グラフは候補を提案するだけ**で、影響の確定はしない
+3. **判定パス** — 各候補について「上流参照（derived_from / implements / refs）は変更後も依然成立するか」を個別に判定し、候補集合を**拡張または縮小**する。判定と理由を STATE.md に記録する
+4. **人間確認** — 確定した影響集合を提示し裁定を受ける。要件の意味的変更を伴うなら「緑を赤にし得るか」基準で bump / supersede を人間が裁定する（エージェントは spec-issue 起票まで）
+5. **最小再実行** — 確定した影響成果物**のみ**に `stale: <ID>@<新version>`（docs 起点は `stale: docs/…@<新SHA>`）を付与し、取り込み更新が済んだものから外す。各更新の before/after 要約を STATE.md に記録する（可逆性の担保）
+
+**stale が1つでも残る feature は verified に進めない。** 影響が広範囲（3ファイル以上の docs/ 改訂等）に及んだ場合は、整合確認として `sdd-review` の consistency 観点を実行する。
+
+### 再伝播の原則
+
+- **最小再実行** — 変更が届かない成果物には触れない。過剰伝播（無関係な更新）も過少伝播（依存の見落とし）も判定パスで防ぐ
+- **可逆性** — すべての再実行は before/after が STATE.md から追えること
+- **人間チェックポイント** — 影響集合の確定と要件改訂の裁定は人間を通す。機械列挙だけで書き換えを始めない
 
 ## deprecated 要件のテスト — tombstone 方式
 

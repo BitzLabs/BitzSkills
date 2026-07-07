@@ -40,6 +40,9 @@ superseded_by: null
 | ★ DOC-context-non-goals | [Non-Goals](01-context/non-goals.md) | context | active | 0.1.0 | やらないことの境界 |
 | DOC-context-constraints | [Constraints](01-context/constraints.md) | context | active | 0.1.0 | 変えられない前提・制約 |
 | DOC-context-stakeholders | [Stakeholders / Consumers](01-context/stakeholders.md) | context | active | 0.1.0 | 関係者 / 想定コンシューマ |
+| DOC-context-success-metrics | [Success Metrics](01-context/success-metrics.md) | context | proposed | 0.1.0 | NSM・入力指標・ガードレール（sdd-discovery 使用時） |
+| DOC-context-personas | [Personas & Journeys](01-context/personas-journeys.md) | context | proposed | 0.1.0 | ペルソナ・ジャーニー（sdd-discovery 使用時） |
+| DOC-context-positioning | [Positioning](01-context/positioning.md) | context | proposed | 0.1.0 | 差別化の宣言（sdd-discovery 使用時） |
 | ★ DOC-design-architecture | [Architecture](02-design/ARCHITECTURE.md) | design | active | 0.1.0 | 構造と境界 |
 | DOC-design-domain-model | [Domain Model](02-design/domain-model.md) | design | active | 0.1.0 | 中核概念と不変条件 |
 | ☆ DOC-design-public-api | [Public API & Compatibility](02-design/public-api.md) | design | active | 0.1.0 | **library 専用**: 公開面と互換性 |
