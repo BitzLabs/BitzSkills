@@ -69,17 +69,3 @@ Antigravity のフック契約が camelCase なのは、Go バイナリの Proto
 3. それ以外 → **プロジェクトのリポジトリルート（`.git` のあるディレクトリ）相対**（カレントディレクトリ相対ではない）
 
 `inherits[]` は別の設定ファイルを配列順にマージする継承機構で、`include_only` / `exclude` は正規表現によるフォルダ名フィルタです。
-
----
-
-## 6.7 既存章の正誤・補足（今回の裏取りで判明）
-
-| 該当箇所 | 旧記述 | 補足・修正 |
-| --- | --- | --- |
-| 全体 | Gemini 系モデルのみ（`gemini-2.5-pro` 等） | 2026年時点の Antigravity は **Gemini 3 系**を主軸に、Claude Sonnet/Opus・GPT-OSS 等を含む**マルチモデル**対応。`gemini-2.5-*` は古い |
-| 01章 | Desktop IDE / CLI / SDK の3面のみ | **Manager view / Editor view、Artifacts（タスクリスト・実装計画・ブラウザ録画等の検証可能な成果物）、ブラウザサブエージェント** という中核 UX 概念が欠落（第1章に追補推奨） |
-| 04章 MCP | stdio / SSE / HTTP / WebSocket の4種 | ワークスペース資料では Antigravity 対応は **stdio と SSE の2種のみ**（HTTP/WebSocket は Claude Code 側の仕様） |
-| 04章 `mcp_config.json` の SSE 例 | `"type": "sse", "url": "..."` | Antigravity は `type` を使わず **`serverUrl` キー1本**で SSE を表す |
-| 05章 | `toolPermission` は 2系統 | 実際は `request-review`（既定）/ `proceed-in-sandbox` / `strict` / `always-proceed` の**4段階**の可能性が高い（要確認） |
-| 05章 | `enableTerminalSandbox` 既定 `true` | 外部情報では `false` 既定の記述もあり相違（要確認） |
-| 09章 出典 | 一部の Claude Code 系 references を Antigravity の出典として列挙 | それらは Antigravity への言及を含まない Claude Code 専用資料。位置づけの注記が必要 |

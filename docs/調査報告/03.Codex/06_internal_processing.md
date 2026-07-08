@@ -1,6 +1,6 @@
 # 6. 内部処理とアーキテクチャ詳細 (Internal Processing)
 
-本章は、OpenAI Codex CLI / SDK の内部動作を、2026年7月時点の公式ドキュメント（developers.openai.com/codex、openai/codex GitHub、OpenAI Blog）で裏取りした内容に基づいて解説します。あわせて、既存章に含まれていた旧世代・不正確な記述の正誤を明記します。
+本章は、OpenAI Codex CLI / SDK の内部動作を、2026年7月時点の公式ドキュメント（developers.openai.com/codex、openai/codex GitHub、OpenAI Blog）で裏取りした内容に基づいて解説します。過去の資料に混在していた誤解や旧称を整理し、Codex の実際の動作に直結する構造に絞って説明します。
 
 ---
 
@@ -46,28 +46,3 @@ OpenAI が Subagents の導入理由として明示するのは、"context pollu
 ## 6.5 ネットワーク制御の実態
 
 サンドボックス下のネットワークは `features.network_proxy` サブシステムで制御されます。`domains` マップで `example.com`（完全一致）/ `*.example.com`（サブドメインのみ）/ `**.example.com`（親＋サブ）/ `*`（全許可、非推奨）のワイルドカードを allow/deny 指定でき、**deny が常に allow より優先**されます。SOCKS5・アップストリームプロキシ連鎖等も設定可能です。既定ではネットワークは未設定＝**外部宛先は一切許可されません**。
-
----
-
-## 6.6 OS 別サンドボックスの実装詳細（既存4章の訂正）
-
-- **macOS: Seatbelt（`sandbox-exec`）** — 既存記述はほぼ正確。
-- **Linux / WSL2** — 「Landlock & Bubblewrap の対等併記」は不正確。**実態は Bubblewrap（bwrap）＋ seccomp が既定**（読み取り専用ルートに `--ro-bind`、書き込み許可ルートに `--bind`、ネットワーク遮断に `--unshare-net`、`PR_SET_NO_NEW_PRIVS`）。**Landlock はレガシーフォールバック**として残存。Ubuntu 24.04 では AppArmor の unprivileged user namespace 制限により追加設定が必要という落とし穴があります。
-- **Windows** — 「Restricted Tokens & ACLs」という一般論は不正確。実際は AppContainer 方式を**明示的に不採用**とし、独自実装として **専用の低権限ローカル Windows ユーザーアカウント（`CodexSandboxOffline` / `CodexSandboxOnline`）を作成してコマンドをそのユーザーとして実行**し、ファイル ACL 境界・ファイアウォールルール・ローカルセキュリティポリシーを組み合わせます。
-
----
-
-## 6.7 既存章の正誤一覧（重要）
-
-| 該当箇所 | 旧記述 | 現行の正しい情報 |
-| --- | --- | --- |
-| 02章 `/mode`・05章 `approval_mode` | 値 `suggest` / `auto-edit` / `full-auto` | 設定キーは **`approval_policy`**、値は `untrusted` / `on-request` / `never` / `{granular=...}`。TUI 切替は **`/permissions`**（UI は Default / Auto-review / Full access / Custom の4プリセット） |
-| 05章 | `sandbox_workspace_write.network_access` / `allowed_write_paths` | 書き込み拡張は `sandbox_workspace_write.writable_roots`。ネットワークは `features.network_proxy.*` サブシステム |
-| 05章 `[features]` | `plugins=true` / `mcp=true` / `telemetry=false` | 実在キーは `features.hooks`（旧 `codex_hooks`）・`features.apps`・`features.multi_agent`・`features.network_proxy` 等。テレメトリは `otel.*` / `analytics.enabled` |
-| 02/05章 モデル | `gpt-5.2-codex` / `gpt-5.1-codex-max` | 現行は `gpt-5.5`（推奨）/ `gpt-5.4` / `gpt-5.4-mini` / `gpt-5.3-codex` 等。旧値は撤去済み |
-| 03章 Python SDK | `codex.start_thread()` → `turn.summary`/`turn.diffs` | `from openai_codex import Codex, Sandbox`、`codex.thread_start(sandbox=Sandbox.workspace_write)`、結果は `result.final_response`。非同期 `AsyncCodex` あり |
-| 04章 サブエージェント | `delegate_to_subagent` | `spawn_agent` / `send_input` / `resume_agent` / `wait_agent` / `close_agent`（第6.3節） |
-| 04章 Hooks | 任意ツール全般を捕捉 | **Experimental**、Windows 無効。`PreToolUse`/`PostToolUse` は現状 **Bash ツールのみ**を対象 |
-| 04章 組み込みツール | `view_file` / `write_to_file` / `replace_file_content` | 未確認。実在は `features.shell_tool`（`shell`）・`features.unified_exec`・`Apply Patch` 等（正確な名称は `codex-rs` 要参照） |
-| 09章 AGENTS.md 仕様 | `github.com/agents-md/specification` | 公式は **`https://agents.md`** |
-| 環境変数 | `CODEX_LOG_LEVEL` / `CODEX_TRUSTED_PROJECTS` | 公式で未確認（要確認）。確実なのは `CODEX_HOME` / `OPENAI_API_KEY` |

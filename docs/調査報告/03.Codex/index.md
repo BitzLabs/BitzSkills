@@ -3,7 +3,7 @@
 本書は、OpenAI が提供するターミナルベースの自律型コーディングエージェント「OpenAI Codex CLI（`codex` コマンド）」および SDK の仕様、アーキテクチャ、拡張性、設定、内部処理について調査した包括的な報告書です。
 
 > [!NOTE]
-> 第6〜8章は 2026年7月時点の公式ドキュメント（developers.openai.com/codex、openai/codex GitHub、OpenAI Blog）で裏取りしています。第1〜5章に含まれる旧世代・不正確な記述（承認モードの用語、モデル名、SDK API、サンドボックス実装、サブエージェント内部ツール名など）の正誤は、第6章末尾の「正誤一覧」に集約しています。
+> 本書は 2026年7月時点の公式ドキュメント（developers.openai.com/codex、openai/codex GitHub、OpenAI Blog）で裏取りしています。これまでの資料で混在していた旧称・誤解（承認モードの用語、モデル名、SDK API、サンドボックス実装、サブエージェント内部ツール名など）を整理し、承認ポリシーは第2・5章、モデル名は第2・5章、SDK API は第3章、フックと Matcher・サブエージェント・サンドボックス実装・組み込みツールは第4章へ最新仕様として反映済みです。
 
 ---
 
@@ -25,7 +25,7 @@
 - `config.toml` の優先順位と項目 / 環境変数 / 承認モード / ルールファイル
 
 ### [6. 内部処理とアーキテクチャ詳細 (Internal Processing)](./06_internal_processing.md)
-- AGENTS.md マージ / コンパクション / サブエージェントと context rot / Auto-review / ネットワーク制御 / OS 別サンドボックス実装 / **正誤一覧**
+- AGENTS.md マージ / コンパクション / サブエージェントと context rot / Auto-review / ネットワーク制御
 
 ### [7. ベストプラクティス (Best Practices)](./07_best_practices.md)
 - 承認モード / `--yolo` 運用 / AGENTS.md 設計 / Auto-review / サブエージェント / MCP / CI/CD / コスト / セキュリティ

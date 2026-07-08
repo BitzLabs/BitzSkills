@@ -119,34 +119,33 @@ async function runStreaming() {
 
 ## 3.4 Python SDK 基本コード例
 
-Python SDK も TypeScript SDK と同様のオブジェクト指向設計を踏襲しています。
+Python SDK も TypeScript SDK と同様のオブジェクト指向設計を踏襲しています。サンドボックスモードは文字列ではなく `Sandbox` 列挙型で明示的に指定し、スレッド開始は `thread_start(...)`、ターン結果は `result.final_response` で取得します。`Sandbox.workspace_write` のように列挙値を渡すことで、実行権限の範囲を明確に表現できます。
 
 ```python
 import os
-from openai_codex import Codex
+from openai_codex import Codex, Sandbox
 
 def main():
     # クライアント初期化
     codex = Codex(api_key=os.getenv("OPENAI_API_KEY"))
-    
-    # スレッド開始
-    thread = codex.start_thread(sandbox_mode="workspace-write")
+
+    # スレッド開始（サンドボックスは Sandbox 列挙型で指定）
+    thread = codex.thread_start(sandbox=Sandbox.workspace_write)
     print(f"Thread started: {thread.id}")
-    
+
     # ターンの実行
-    turn = thread.run("List all TODOs in the source files.")
-    print("Agent Response Summary:")
-    print(turn.summary)
-    
-    # 差分の確認
-    if turn.diffs:
-        for diff in turn.diffs:
-            print(f"Suggested patch in {diff.file_path}:")
-            print(diff.patch)
+    result = thread.run("List all TODOs in the source files.")
+
+    # 最終応答の確認
+    print("Agent Final Response:")
+    print(result.final_response)
 
 if __name__ == "__main__":
     main()
 ```
+
+> [!NOTE]
+> 非同期処理が必要な場合は `AsyncCodex` クラスを使用します（`await codex.thread_start(...)` / `await thread.run(...)`）。旧 API の `codex.start_thread()` や `turn.summary` / `turn.diffs` は現行では上記に置き換わっています。
 
 ---
 

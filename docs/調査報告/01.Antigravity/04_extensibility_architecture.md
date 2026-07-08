@@ -202,12 +202,12 @@ Antigravity Runtime は、デフォルトで以下のセキュアな基礎ツー
 
 ### 2. MCP サーバー接続方式の比較
 
+Antigravity が対応する MCP 接続方式は **stdio と SSE の2種のみ**です（HTTP / WebSocket は Claude Code 側の仕様であり、Antigravity では利用できません）。
+
 | 方式 | 通信プロトコル | 認証方法 | 主なユースケース | 特徴・レイテンシ |
 | --- | --- | --- | --- | --- |
 | **stdio** | 標準入出力 (stdin/stdout) | 環境変数 / 引数 | ローカルスクリプト、同梱DB、CLI | 最小レイテンシ、ローカル完結 |
 | **SSE** | Server-Sent Events + HTTP | OAuth / カスタムヘッダー | クラウドサービス (Git, Asana) | 中レイテンシ、自動再接続サポート |
-| **HTTP** | RESTful HTTP POST/GET | APIトークンヘッダー | ステートレス外部 API 連携 | 中レイテンシ、ステートレス |
-| **WebSocket** | 永続双方向 WebSocket | APIトークンヘッダー | 双方向ストリーミング、低遅延同期 | 低レイテンシ、双方向通信 |
 
 ### 3. 設定書式 (`mcp_config.json`)
 マニフェストと同じく、customization root またはプラグイン直下に配置します。
@@ -223,8 +223,7 @@ Antigravity Runtime は、デフォルトで以下のセキュアな基礎ツー
       }
     },
     "external-service": {
-      "type": "sse",
-      "url": "https://api.example.com/mcp/sse",
+      "serverUrl": "https://api.example.com/mcp/sse",
       "headers": {
         "Authorization": "Bearer ${SECRET_TOKEN}"
       }
@@ -232,6 +231,9 @@ Antigravity Runtime は、デフォルトで以下のセキュアな基礎ツー
   }
 }
 ```
+
+> [!NOTE]
+> Antigravity の SSE サーバーは Claude Code のように `"type": "sse"` を使わず、**`serverUrl` キー1本**で表します（`url` / `type` キーではない点に注意）。`serverUrl` を持つエントリが SSE、`command` を持つエントリが stdio として解釈されます。
 
 ### 4. ツール命名規則
 MCP を通じて提供されるツールの名称は、以下のルールで自動的に一意の名前空間へとマッピングされます。

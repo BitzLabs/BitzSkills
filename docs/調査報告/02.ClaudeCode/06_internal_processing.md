@@ -57,18 +57,3 @@ Claude Code は単一の「`/compact` で丸ごと要約」だけでなく、コ
 
 > [!NOTE]
 > 実務上の注意として、Todo に登録するステップ数が7以上になると、モデルが効率化のためにステップをまとめて実行し、途中経過を可視化するという Todo 本来の意図が損なわれる傾向が報告されています。
-
----
-
-## 6.6 既存章の正誤補足（内部処理の観点から）
-
-本調査で、既存章の一部に旧世代の情報が含まれていることが判明しました。第7〜8章および本章は最新仕様に基づいて記述しています。
-
-| 該当箇所 | 旧記述 | 現行の正しい情報 |
-| --- | --- | --- |
-| 01章 | 主力モデル「Claude 3.5 Sonnet」 | 2026年7月時点は Claude Haiku 4.5 / **Claude Sonnet 5**（Free・Pro 既定）/ Claude Opus 4.8 / 最上位 Claude Fable 5 |
-| 03章 SDK | `maxSteps` オプション | 正しくは **`maxTurns`**（暴走防止の主要ガードレール） |
-| 03章 SDK | （記載なし） | SDK は既定でファイルシステム設定（CLAUDE.md・settings.json 等）を**読み込まない**。読ませるには `settingSources: ['project']` の明示指定が必要 |
-| 04章 フック | フックイベント「9種類」 | 現行 Hooks reference では **29種類**（PreToolUse, PostToolUse, UserPromptSubmit, Notification, SubagentStart/Stop, PreCompact/PostCompact, SessionStart/End, InstructionsLoaded ほか）。`type` も command/prompt の2種から **command / http / mcp_tool / prompt / agent の5種**に拡張 |
-| 05章 settings | `telemetry` / `maxThinkingTokens` トップレベルキー | 一次情報で未確認。テレメトリ無効化は `env.DISABLE_TELEMETRY="1"` が公式手段 |
-| 02章 コマンド | `/verify`, `/workflows` | 実在を確認できず（要削除または「未確認」明記）。実在するのは `/permissions`, `/doctor`, `/agents`, `/hooks` など |
