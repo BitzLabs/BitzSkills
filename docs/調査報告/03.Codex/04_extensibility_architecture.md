@@ -1,4 +1,4 @@
-# 4. 拡張機能とアーキテクチャ (Extensibility & Architecture)
+﻿# 4. 拡張機能とアーキテクチャ (Extensibility & Architecture)
 
 OpenAI Codex は、設計段階から「拡張性」が強く意識されており、開発者が好みのツールやルール、自動スクリプトをエージェントに組み込めるようにするための様々なアーキテクチャが用意されています。
 

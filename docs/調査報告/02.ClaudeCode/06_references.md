@@ -1,42 +1,25 @@
-# 第6章 引用・参考リンク (References)
-
-本調査報告書の作成にあたり、以下の公式ドキュメントおよびワークスペース内の関連資材を参照しました。
-
----
+# 6. 引用・参考リンク (References)
 
 ## 6.1 公式情報ソース
-
-- **Claude Code 開発者向け公式ドキュメント (code.claude.com)**
-  - URL: [https://code.claude.com](https://code.claude.com)
-  - 参照内容: CLI インストール手順、認証コマンド、CLI 起動オプション、Agent SDK の Python/TypeScript 向け API 仕様。
-- **Claude Code MCP ドキュメント**
-  - URL: [https://docs.claude.com/en/docs/claude-code/mcp](https://docs.claude.com/en/docs/claude-code/mcp)
-  - 参照内容: Model Context Protocol (MCP) を用いた外部ツールの統合、SSE / Stdio トランスポートの設定例。
-- **Model Context Protocol (MCP) 公式仕様サイト**
-  - URL: [https://modelcontextprotocol.io](https://modelcontextprotocol.io)
-  - 参照内容: MCP サーバースキーマ、プロトコルの基本構造およびライフサイクル。
-
----
+- **Claude Platform & API Documentation**:
+  - [Anthropic Developer Platform](https://platform.claude.com)
+  - [Claude Code Introduction & Setup Guide](https://code.claude.com)
+- **Agent Skills**:
+  - [Agent Skills Specification](https://agentskills.io/specification)
+  - [Agent Skills Reference Repository](https://github.com/anthropics/skills)
+- **Model Context Protocol (MCP)**:
+  - [Model Context Protocol Specification](https://modelcontextprotocol.io)
 
 ## 6.2 ワークスペース内参照資材
-
-ワークスペース内のプラグイン開発補助ツールキット `plugin-creator` および関連リファレンスドキュメントの記述を参考にしています。
-
-- **プラグイン構成設計**
-  - ファイル: [plugins/plugin-creator/README.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/README.md)
-  - 参照内容: プラットフォーム間互換表、スラッシュコマンドおよびエージェントの作成ワークフロー。
-- **マニフェスト定義仕様**
-  - ファイル: [plugins/plugin-creator/skills/plugin-structure/references/manifest-reference.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-structure/references/manifest-reference.md)
-  - 参照内容: `plugin.json` 内の全フィールドの定義および検証パターン、Antigravity 2.0 マニフェスト仕様。
-- **フック開発ガイド**
-  - ファイル: [plugins/plugin-creator/skills/hook-development/SKILL.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/hook-development/SKILL.md)
-  - 参照内容: 各種フックイベントのタイミング、入出力 JSON データのスキーマ構造、プロンプトベースフックの設計。
-- **Antigravity フック仕様**
-  - ファイル: [plugins/plugin-creator/skills/hook-development/references/antigravity-hooks.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/hook-development/references/antigravity-hooks.md)
-  - 参照内容: Antigravity 2.0 における `hooks.json` の設定書式、ツール matcher、および camelCase での入出力契約。
-- **MCP サーバー統合ガイド**
-  - ファイル: [plugins/plugin-creator/skills/mcp-integration/SKILL.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/mcp-integration/SKILL.md)
-  - 参照内容: stdio, SSE, HTTP, WebSocket トランスポート別の設定定義とツールのプレフィックス命名規則。
-- **プラグイン設定管理パターン**
-  - ファイル: [plugins/plugin-creator/skills/plugin-settings/SKILL.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-settings/SKILL.md)
-  - 参照内容: `.claude/plugin-name.local.md` ファイルを用いた状態管理、および bash フックでの YAML frontmatter パース。
+- **プラグイン構造 & マニフェスト仕様**:
+  - [Manifest Reference](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-structure/references/manifest-reference.md)
+  - [Antigravity Structure Reference](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-structure/references/antigravity-structure.md)
+- **フック仕様 & 開発ガイド**:
+  - [Antigravity Hooks complete spec](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/hook-development/references/antigravity-hooks.md)
+  - [Hook Pattern Reference](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/hook-development/references/patterns.md)
+- **サブエージェント & プロンプト設計**:
+  - [System Prompt Design Reference](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/agent-development/references/system-prompt-design.md)
+  - [Agent triggering example spec](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/agent-development/references/triggering-examples.md)
+- **スキル仕様 & プラットフォームパス**:
+  - [Agent Skills specification](file:///d:/44.BitzLabs/BitzSkills/plugins/skill-creator/skills/skill-creator/references/spec.md)
+  - [Platform installation paths](file:///d:/44.BitzLabs/BitzSkills/plugins/skill-creator/skills/skill-packager/references/platform-paths.md)

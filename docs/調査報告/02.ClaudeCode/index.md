@@ -1,38 +1,39 @@
-# Claude Code 調査報告書
+# Claude Code 仕様・機能 調査報告書
 
-本ドキュメントは、Anthropic 社が提供する自律型コーディング支援ツール **Claude Code** の CLI、SDK、拡張機能（プラグイン、フック、スキル、ツール、サブエージェント）、および設定ファイルなどの仕様と動作についての詳細な調査報告書です。
-
-ワークスペース内のプラグイン構成や定義ファイルを分析し、さらに最新の公式ドキュメント情報を補完して作成されています。
-
----
+本書は、Anthropic社が提供する自律型コーディングアシスタント **Claude Code** の CLI、SDK、拡張機能（プラグイン、フック、スキル、ツール、サブエージェント）、設定ファイル、および Google Antigravity 2.0 との互換性について詳細に調査した結果をまとめたものです。
 
 ## 目次
 
-1. [**第1章: 概要 (Overview)**](./01_overview.md)
-   - エージェントのコンセプト、基本設計、特徴、他ツールとの違い
-2. [**第2章: CLI リファレンス (CLI Reference)**](./02_cli_reference.md)
-   - コマンドライン引数、オプション、サブコマンド詳細、認証方法、非インタラクティブ実行
-3. [**第3章: SDK リファレンス (SDK Reference)**](./03_sdk_reference.md)
-   - 対応言語、インストール、認証設定、主要API、基本コード例、CI/CD・外部システムとの統合方法
-4. [**第4章: 拡張機能とアーキテクチャ (Extensibility & Architecture)**](./04_extensibility_architecture.md)
-   - スキル（Skills）の Progressive Disclosure 設計
-   - プラグイン（Plugins）構造とマニフェスト（`plugin.json`）の仕様
-   - ライフサイクルフック（Hooks）のイベント体系と入出力JSON契約
-   - MCP統合（Tools）の接続方式と命名規則
-   - サブエージェント（Subagents）のトリガー設計とシステムプロンプト
-   - プラットフォーム間互換性（Antigravity 2.0）
-5. [**第5章: 設定項目とカスタマイズ (Configuration & Customization)**](./05_configuration_customization.md)
-   - 設定ファイル（`settings.json`）の階層構造と優先順位
-   - 環境変数と動作モード of 変更
-   - 独自のプラグイン設定パターン（`.local.md` 駆動型設定）
-6. [**第6章: 引用・参考リンク (References)**](./06_references.md)
-   - 公式ドキュメントの引用元、参照URL
-
----
-
-## 調査の要点と背景
-
-- **自律型エージェントの仕組み**: Claude Code は、ファイルを検索し、編集し、コマンドを実行するループ（Agentic Loop）を自律的に繰り返すことで、ユーザーの要求を実現します。
-- **高い拡張性**: 単なるチャットインターフェースではなく、プラグインシステムを通じて、プロジェクト固有のルール（スキル）、コマンド、フック、および MCP サーバー（外部ツール）をシームレスに統合できます。
-- **段階的開示 (Progressive Disclosure)**: エージェントのコンテキスト制限（Token長）を節約するため、スキルのメタデータのみを常時読込み、トリガーされた時だけ詳細手順やスクリプトを読み込む高度な設計が採用されています。
-- **マルチプラットフォーム互換性**: ワークスペース内のコードや仕様には、Claude Code と Antigravity 2.0 の両プラットフォームで動くプラグインの設計が含まれており、両者の微妙な仕様差（フック形式や MCP 設定ファイル名など）を考慮した開発プラクティスが確認できます。
+1. [概要 (Overview)](./01_overview.md)
+   - 1.1 コンセプトと基本設計
+   - 1.2 主な特徴
+   - 1.3 既存のコーディングアシスタントとの違い
+   - 1.4 セキュリティとプライバシー設計
+2. [CLI リファレンス (CLI Reference)](./02_cli_reference.md)
+   - 2.1 インストール方法
+   - 2.2 認証 (Authentication)
+   - 2.3 基本的な実行方法
+   - 2.4 CLI 引数とオプション
+   - 2.5 主要なサブコマンド
+3. [SDK リファレンス (SDK Reference)](./03_sdk_reference.md)
+   - 3.1 インストール方法
+   - 3.2 認証設定 (Authentication)
+   - 3.3 主要 API とオプション
+   - 3.4 基本コード例
+   - 3.5 CI/CD および外部システムとの統合方法
+4. [拡張機能とアーキテクチャ (Extensibility & Architecture)](./04_extensibility_architecture.md)
+   - 4.1 プラグイン (Plugins)
+   - 4.2 スキル (Skills)
+   - 4.3 コマンド (Slash Commands)
+   - 4.4 サブエージェント (Subagents)
+   - 4.5 ライフサイクルフック (Hooks)
+   - 4.6 MCP 統合 (Tools)
+   - 4.7 プラットフォーム互換性 (Antigravity 2.0 との違い)
+5. [設定項目とカスタマイズ (Configuration & Customization)](./05_configuration_customization.md)
+   - 5.1 設定の階層構造と優先順位 (Settings Hierarchy)
+   - 5.2 settings.json の主要設定項目
+   - 5.3 設定の変更方法
+   - 5.4 独自のプラグイン設定パターン (local.md駆動)
+6. [引用・参考リンク (References)](./06_references.md)
+   - 6.1 公式情報ソース
+   - 6.2 ワークスペース内参照資材

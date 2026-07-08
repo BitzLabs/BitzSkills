@@ -1,172 +1,153 @@
-# 第3章 SDK リファレンス (SDK Reference)
-
-**Claude Agent SDK** は、Claude Code CLI を支えている自律型エージェントループ、コンテキスト管理、およびツール実行の仕組みを、Python や Node.js/TypeScript からプログラムとして呼び出すための SDK です。
-
-> [!NOTE]
-> 本 SDK は、生の LLM API を叩くための一般的な `anthropic` パッケージとは異なります。
-> エージェントとしてファイルの操作や Bash の実行、計画立案を自動的に行うループをプログラムに内包させるためのものです。
-
----
+# 3. SDK リファレンス (SDK Reference)
 
 ## 3.1 インストール方法
+Claude の自律エージェントループを自作アプリケーションに組み込むための **Claude Agent SDK** は、TypeScript/Node.js および Python 環境向けに提供されています。
 
-### Node.js / TypeScript (Node.js 18+)
-
+### TypeScript/Node.js
 ```bash
 npm install @anthropic-ai/claude-agent-sdk
 ```
 
-### Python (Python 3.10+)
-
+### Python
 ```bash
 pip install claude-agent-sdk
 ```
 
----
-
 ## 3.2 認証設定 (Authentication)
+SDK の実行には、認証情報（API キー）が必須です。基本的には環境変数から読み込まれます。
 
-SDKを使用する際には、非インタラクティブ環境で実行されることが多いため、環境変数を通じた認証を行います。
+```bash
+export ANTHROPIC_API_KEY="sk-ant-..."
+```
 
-### 標準的な API キーの利用
-
-環境変数 `ANTHROPIC_API_KEY` に、Anthropic Console から発行した API キーを設定します。
-
-- **Linux / macOS:**
-  ```bash
-  export ANTHROPIC_API_KEY="your-api-key-here"
-  ```
-- **Windows (PowerShell):**
-  ```powershell
-  $env:ANTHROPIC_API_KEY="your-api-key-here"
-  ```
-
-### クラウドプロバイダー経由の認証
-
-APIキーの代わりに AWS や Google Cloud などのマネージドサービス経由でモデルを利用する場合は、以下の環境変数を設定します。
-
-- **Amazon Bedrock 経由の利用:**
+また、Bedrock または Vertex AI 経由で Claude を利用する場合は、以下の環境変数を設定して統合します。
+- **Bedrock の場合**:
   ```bash
   export CLAUDE_CODE_USE_BEDROCK=1
-  # AWS 認証情報（AWS_ACCESS_KEY_ID、AWS_SECRET_ACCESS_KEY、AWS_REGION 等）を設定
+  export AWS_ACCESS_KEY_ID="your-access-key"
+  export AWS_SECRET_ACCESS_KEY="your-secret-key"
+  export AWS_DEFAULT_REGION="us-east-1"
   ```
-- **Google Cloud Vertex AI 経由の利用:**
+- **Vertex AI の場合**:
   ```bash
   export CLAUDE_CODE_USE_VERTEX=1
-  # Google Application Credentials (JSONファイルのパスなど) を設定
+  export CLOUD_SDK_PROJECT="your-gcp-project-id"
+  export GOOGLE_APPLICATION_CREDENTIALS="/path/to/key.json"
   ```
-- **Anthropic Platform on AWS 経由の利用:**
-  ```bash
-  export CLAUDE_CODE_USE_ANTHROPIC_AWS=1
-  export ANTHROPIC_AWS_WORKSPACE_ID="your-workspace-id"
-  ```
-
----
 
 ## 3.3 主要 API とオプション
+SDK の最も中心的なインターフェースは、自律ツール実行ループを制御する `query` 関数です。
 
-主要な API エントリポイントは `query()` 関数です。また、セッションの対話を継続して維持するために `ClaudeSDKClient`（または `ClaudeAgentSession`）を使用できます。
-
-### `ClaudeAgentOptions` の主要プロパティ
-
-エージェントの挙動をカスタマイズするためのオプション引数です。
-
-| プロパティ (TypeScript) | プロパティ (Python) | 説明 | 例 |
-| :--- | :--- | :--- | :--- |
-| `systemPrompt` | `system_prompt` | エージェントの基本指示（ペルソナ） | `"You are a security auditor."` |
-| `model` | `model` | 使用する Claude モデル | `"claude-3-5-sonnet"` |
-| `maxTurns` | `max_turns` | ツール実行ループの最大往復回数 | `10` |
-| `cwd` | `cwd` | エージェントの作業ディレクトリパス | `"/path/to/project"` |
-| `cliPath` | `cli_path` | 使用する claude CLI のカスタムパス | `"/usr/local/bin/claude"` |
-| `allowedTools` | `allowed_tools` | ユーザー承認なしに実行を自動許可するツール | `["Read", "Grep", "Bash"]` |
-| `disallowedTools` | `disallowed_tools` | 使用を明示的に禁止するツール | `["Write"]` |
-| `permissionMode` | `permission_mode` | ツール実行の許可モード（`default`/`acceptEdits`/`bypassPermissions`） | `"acceptEdits"` |
-| `settingSources` | `setting_sources` | `CLAUDE.md` やカスタムスキルなど、プロジェクト設定の読込制御 | `["local", "project"]` |
-
----
+### `query(prompt, options)` の基本オプション:
+- **`prompt`** (必須): エージェントに与える指示テキスト。
+- **`model`** (任意): 使用するモデル。省略した場合は `claude-3-5-sonnet-latest` が使用されます。
+- **`maxSteps`** (任意): エージェントが 1 回のクエリで自律的に繰り返すツールの最大ステップ数（デフォルトは 30 前後）。
+- **`allowedTools`** (任意): 実行を許可するツールのリスト。
+- **`mcpServers`** (任意): 接続する MCP サーバーのリストとその引数。
 
 ## 3.4 基本コード例
-
-### Node.js / TypeScript の実装例
-
-非同期イテレータを使用し、エージェントから送信される出力をストリーミングで受け取るコード例です。
-
+### TypeScript の例
 ```typescript
-import { query } from "@anthropic-ai/claude-agent-sdk";
+import { query } from '@anthropic-ai/claude-agent-sdk';
 
-async function runAgent() {
+async function run() {
+  const prompt = "src/utils.ts に含まれる不正な例外処理を修正してテストをパスさせてください。";
+  
   try {
-    const stream = query({
-      prompt: "package.json を確認して、セキュリティ脆弱性のある古い依存パッケージを特定し、npm update を実行してください",
-      options: {
-        cwd: process.cwd(),
-        permissionMode: "acceptEdits", // ファイル編集は自動承認
-        allowedTools: ["Read", "Bash"], // ReadとBashの使用を許可
-        maxTurns: 8,
-      }
+    // query は非同期イテレータを返し、エージェントからの途中メッセージを逐次取得できる
+    const stream = await query(prompt, {
+      model: "claude-3-5-sonnet-latest",
+      maxSteps: 15
     });
 
-    for await (const message of stream) {
-      // メッセージのストリーミング出力を順次ターミナルへ表示
-      process.stdout.write(message);
+    for await (const chunk of stream) {
+      if (chunk.type === 'message') {
+        console.log(`[Claude]: ${chunk.content}`);
+      } else if (chunk.type === 'tool_use') {
+        console.log(`[Tool Use]: Running ${chunk.toolName} with args:`, chunk.args);
+      } else if (chunk.type === 'tool_result') {
+        console.log(`[Tool Result]: ${chunk.status}`);
+      }
     }
+    console.log("エージェントの処理が完了しました。");
   } catch (error) {
-    console.error("Agent execution failed:", error);
+    console.error("エラーが発生しました:", error);
   }
 }
 
-runAgent();
+run();
 ```
 
-### Python の実装例
-
-Python 3.10 以降で `asyncio` を使用した非同期ストリーミングの例です。
-
+### Python の例
 ```python
 import asyncio
-from claude_agent_sdk import query, ClaudeAgentOptions
+from claude_agent_sdk import query
 
-async def run_agent():
-    options = ClaudeAgentOptions(
-        cwd=".",
-        permission_mode="acceptEdits",
-        allowed_tools=["Read", "Bash"],
-        max_turns=10
-    )
+async def main():
+    prompt = "auth.py のバグを特定し、修正してください。"
     
-    # queryは非同期ジェネレータを返すため、async for で受ける
-    async for message in query(
-        prompt="Find all Python files in the src/ directory and add docstrings to functions that lack them.",
-        options=options
-    ):
-        print(message, end="", flush=True)
+    # Python の非同期ジェネレータを用いた実装
+    async for event in query(prompt=prompt, max_steps=20):
+        if event.type == "message":
+            print(f"[Claude]: {event.content}")
+        elif event.type == "tool_use":
+            print(f"[Tool Call]: {event.tool_name} (Args: {event.args})")
+        elif event.type == "tool_result":
+            print(f"[Tool Result]: {event.status}")
 
 if __name__ == "__main__":
-    asyncio.run(run_agent())
+    asyncio.run(main())
 ```
-
----
 
 ## 3.5 CI/CD および外部システムとの統合方法
+### 1. GitHub Actions による自動 PR レビュー
+プルリクエストが作成された際に、Claude Code を使って自動的にコードレビューを行い、PR 内に直接コメントを投稿するワークフローの構築例です。
 
-自律エージェントを GitHub Actions などの CI/CD パイプラインやバッチジョブに統合する際のベストプラクティスです。
+```yaml
+name: Claude Code PR Reviewer
 
-### 1. 非インタラクティブ（Headless）モードの徹底
-パイプラインがユーザー入力を待ってフリーズしないように、必ず `permissionMode: "bypassPermissions"`（または CLI の `-p`）を指定します。
-> [!IMPORTANT]
-> 承認スキップを許可するには、設定で `allowDangerouslySkipPermissions` を `true` にするか、環境変数 `CLAUDE_ALLOW_DANGEROUSLY_SKIP_PERMISSIONS=1` を指定する必要があります。
+on:
+  pull_request:
+    types: [opened, synchronize]
 
-### 2. 最小権限の原則 (Least Privilege)
-CIのコンテキストでは、破壊的な操作を防ぐために `allowedTools` を `["Read", "Grep", "Glob"]`（読み取り専用）に制限するか、実行可能な Bash コマンドのスコープを `Bash(npm test)` や `Bash(git diff)` のように限定します。
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-### 3. OpenTelemetry を使った監視とコスト追跡
-SDK は OpenTelemetry をサポートしています。長時間の自律ループによって発生するトークン消費量やエラー発生率を、Datadog や Honeycomb などの外部の監視バックエンドへ送信できます。
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-```bash
-# OpenTelemetry エクスポートを有効にする環境変数例
-export OTEL_EXPORTER_OTLP_ENDPOINT="https://otlp.telemetry.example.com"
-export OTEL_SERVICE_NAME="claude-ci-agent"
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run Review Task
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Git の変更差分を取得
+          git diff origin/${{ github.base_ref }}...HEAD > pr_diff.patch
+          
+          # Claude Code に差分を流し込んでレビューさせ、その結果をマークダウンとして取得
+          claude -p "添付のパッチファイル pr_diff.patch を分析し、バグの懸念、スタイル違反、セキュリティ脆弱性があれば指摘してください。指摘は GitHub コメント用にマークダウン形式で簡潔に出力してください。" > review_result.md
+          
+          # GitHub API を使って PR にコメントを投稿
+          gh pr comment ${{ github.event.number }} --body-file=review_result.md
 ```
 
-### 4. べき等性（Idempotency）とブランチ保護
-自律エージェントはバグの修正などで予期せぬ破壊的変更を行う可能性があります。CI上で動かす場合は、**直接 main ブランチに変更をコミットさせず**、専用のトピックブランチを作成させ、そこから Pull Request を作成するようなワークフローをエージェントに命令してください。
+### 2. 監視システム（アラート）との統合
+プロダクション環境でのエラーログや Sentry の警告を検知した際、SDK を介して障害原因の調査からパッチの自動生成までを自律的に開始させることができます。
+```python
+# 疑似コード: アラートフックによる自動修復エージェント
+def on_sentry_alert(issue_id, error_message, file_path):
+    prompt = f"Sentry アラートが発生しました。エラー: {error_message}。対象ファイル: {file_path}。原因を調査し、バグ修正のプルリクエストを作成してください。"
+    # SDK を呼び出してバックグラウンドで解決させる
+    asyncio.run(run_auto_healer_agent(prompt))
+```

@@ -1,4 +1,4 @@
-# 2. CLI リファレンス (CLI Reference)
+﻿# 2. CLI リファレンス (CLI Reference)
 
 Codex CLI（`codex` コマンド）は、ターミナル上で自律型コーディングエージェントを操作するための主要なインターフェースです。
 

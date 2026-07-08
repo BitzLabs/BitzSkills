@@ -1,4 +1,4 @@
-# OpenAI Codex CLI & SDK 調査報告
+﻿# OpenAI Codex CLI & SDK 調査報告
 
 このドキュメントは、OpenAI が提供するターミナルベースの自律型コーディングエージェント「OpenAI Codex CLI（`codex` コマンド）」および「SDK」の仕様、アーキテクチャ、拡張性、設定方法について調査した包括的な報告書です。
 
