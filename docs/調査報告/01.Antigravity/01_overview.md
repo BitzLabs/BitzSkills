@@ -38,6 +38,9 @@ graph TD
 
 ## 1.4 プラットフォームの主要な特徴
 
+> [!NOTE]
+> 2026年時点の Antigravity は Gemini 3 系を主軸に Claude / GPT-OSS 等を含むマルチモデル対応です。本章以降でモデル名を `gemini-2.5-*` としている箇所を含む正誤・補足は第6章末尾に集約しています。
+
 *   **共有状態管理 (Stateful Session)**:
     CLI と IDE、あるいは SDK の間でセッション状態を共有でき、開発者がターミナルで行った指示の続きを IDE で引き取るなどの柔軟な連携が可能です。
 *   **Progressive Disclosure (段階的開示)**:

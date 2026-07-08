@@ -1,6 +1,6 @@
-# 6. 引用・参考リンク (References)
+# 9. 引用・参考リンク (References)
 
-## 6.1 公式情報ソース
+## 9.1 公式情報ソース
 - **Claude Platform & API Documentation**:
   - [Anthropic Developer Platform](https://platform.claude.com)
   - [Claude Code Introduction & Setup Guide](https://code.claude.com)
@@ -10,7 +10,7 @@
 - **Model Context Protocol (MCP)**:
   - [Model Context Protocol Specification](https://modelcontextprotocol.io)
 
-## 6.2 ワークスペース内参照資材
+## 9.2 ワークスペース内参照資材
 - **プラグイン構造 & マニフェスト仕様**:
   - [Manifest Reference](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-structure/references/manifest-reference.md)
   - [Antigravity Structure Reference](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-structure/references/antigravity-structure.md)

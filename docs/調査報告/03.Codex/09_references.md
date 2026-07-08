@@ -1,10 +1,10 @@
-﻿# 6. 引用・参考リンク (References)
+# 9. 引用・参考リンク (References)
 
 本ドキュメントの作成にあたり、以下の公式ドキュメント、リポジトリ、コミュニティ活動を参照しました。
 
 ---
 
-## 6.1 公式ドキュメントおよびライブラリ
+## 9.1 公式ドキュメントおよびライブラリ
 
 * **OpenAI Codex 開発者ポータル / 公式ドキュメント**
   - [OpenAI Developers - Codex](https://developers.openai.com/codex)
@@ -19,10 +19,10 @@
 
 ---
 
-## 6.2 コミュニティ・セキュリティ情報
+## 9.2 コミュニティ・セキュリティ情報
 
 * **コミュニティリソース**
   - [Awesome Codex CLI GitHub Repository (by RoggeOhta)](https://github.com/RoggeOhta/awesome-codex-cli) — Codex CLI 用の 150 以上のサブエージェント、プラグイン、MCPサーバーのキュレーションリスト。
-  - [AGENTS.md Standard Specification](https://github.com/agents-md/specification) — 各種 AI 開発エージェントがプロジェクトのコンテキストとルールを解釈するための、プレーンテキスト形式の標準規格。
+  - [AGENTS.md Standard Specification](https://agents.md) — 各種 AI 開発エージェントがプロジェクトのコンテキストとルールを解釈するための、プレーンテキスト形式の標準規格。
 * **安全対策に関するセキュリティレポート**
   - [VibeAudits - Malicious npm packages targeting Codex tokens](https://vibeaudits.com/) — 公式 `@openai/codex` パッケージを装った偽パッケージ（認証情報 `auth.json` の窃盗を狙うもの）に対する注意喚起。
