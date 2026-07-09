@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Conversation Guidelines
+
+- 常に日本語で会話してください。
+- 技術的な説明も日本語で行ってください。
+- エラーメッセージの解説やドキュメント生成も日本語で行ってください。
+
 ## リポジトリの役割
 
 [Agent Skills](https://agentskills.io/specification) オープン標準に準拠したスキルを
@@ -36,20 +42,31 @@ plugins/
 │       ├── skill-instrumenter/ # 監視対象スキルへの観察ステップ注入（計装）
 │       ├── skill-observer/     # 実行直後の自己観察・観察ログ記録
 │       └── skill-improver/     # 観察ログ分析→スキル修正（自己改善）
-└── plugin-creator/         # プラグイン: プラグイン開発ツール群（plugin-dev の日本語版）
+├── plugin-creator/         # プラグイン: プラグイン開発ツール群（plugin-dev の日本語版）
+│   ├── .claude-plugin/plugin.json
+│   ├── plugin.json
+│   ├── commands/create-plugin.md   # ガイド付きプラグイン作成ワークフロー
+│   ├── agents/                     # agent-creator / plugin-validator / skill-reviewer
+│   └── skills/             # プラグイン開発の7スキル
+│       ├── plugin-structure/       # 構造・マニフェスト・自動発見
+│       ├── skill-development/      # プラグイン同梱スキルの作成
+│       ├── command-development/    # スラッシュコマンドの作成
+│       ├── agent-development/      # サブエージェントの作成
+│       ├── hook-development/       # フックとイベント駆動自動化
+│       ├── mcp-integration/        # MCPサーバー統合
+│       └── plugin-settings/        # .local.md による設定管理
+└── bitz-sdd/               # プラグイン: 仕様駆動開発（SDD）ワークフロー
     ├── .claude-plugin/plugin.json
     ├── plugin.json
-    ├── commands/create-plugin.md   # ガイド付きプラグイン作成ワークフロー
-    ├── agents/                     # agent-creator / plugin-validator / skill-reviewer
-    └── skills/             # プラグイン開発の7スキル
-        ├── plugin-structure/       # 構造・マニフェスト・自動発見
-        ├── skill-development/      # プラグイン同梱スキルの作成
-        ├── command-development/    # スラッシュコマンドの作成
-        ├── agent-development/      # サブエージェントの作成
-        ├── hook-development/       # フックとイベント駆動自動化
-        ├── mcp-integration/        # MCPサーバー統合
-        └── plugin-settings/        # .local.md による設定管理
+    └── skills/             # SDD の6スキル
+        ├── bitz-sdd/           # SDD常時運用（EARS検証・3ゲート・spec_inspect.py）
+        ├── sdd-docs/           # docs/（人間ナラティブ層）の初期化・検証（docs_inspect.py）
+        ├── sdd-discovery/      # 上流探索（ビジョン→成功指標→スコープ→ペルソナ）
+        ├── sdd-design/         # 設計（ドメインモデル・API・アーキテクチャ）
+        ├── sdd-review/         # 設計ドキュメントの多観点並列レビューと統合判定
+        └── sdd-infra/          # インフラ・運用設計（IaC生成はしない）
 evals/                      # tester/evaluator の作業成果物と observer の観察ログ（全プラグイン共用）
+docs/                       # リポジトリ自身の解説と調査メモ
 ```
 
 ## 新しいプラグインの追加手順
@@ -92,3 +109,6 @@ improver が分析してスキルを修正する。
 - プラグイン配下のスキルを変更したら、そのプラグインの version
   （`plugins/<name>/.claude-plugin/plugin.json` と `plugins/<name>/plugin.json`、
   **両方を同じ値に**）も semver で bump する
+- Antigravity 2.0 のプラグイン仕様で迷ったら
+  `docs/Antigravityプラグイン仕様（検証済み）.md` が正（公式組み込み docs と
+  agy CLI の実測に基づく。Gemini 生成の解説文書は実仕様と食い違うため参照しない）
