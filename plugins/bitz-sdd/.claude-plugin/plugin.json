@@ -1,7 +1,7 @@
 {
   "name": "bitz-sdd",
   "description": "BitzSDD — 仕様駆動開発（SDD）の運用ワークフロー。上流探索（sdd-discovery）→設計（sdd-design）→多観点レビュー（sdd-review）→インフラ設計（sdd-infra）→EARS要件・検証中心・権限分離の規律（bitz-sdd）を、docs/ 初期化・検証（sdd-docs）とともに提供する6スキル構成のプラグイン",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": {
     "name": "br7.hide",
     "email": "br7.hide@gmail.com"

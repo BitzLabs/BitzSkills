@@ -1,7 +1,7 @@
 {
   "name": "plugin-creator",
   "description": "Claude Code / Antigravity 2.0 プラグイン開発の全領域（構造設計・スキル/コマンド/エージェント/フック開発・MCP統合・設定管理）を両プラットフォームの仕様差を踏まえて支援する7つのスキルと、作成ワークフローを統括する create-plugin コマンドを提供するプラグイン",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": {
     "name": "br7.hide",
     "email": "br7.hide@gmail.com"
