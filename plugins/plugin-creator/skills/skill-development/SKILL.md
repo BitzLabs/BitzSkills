@@ -1,11 +1,11 @@
 ---
 name: skill-development
-description: Claude Code / Antigravity 2.0 プラグインに同梱するスキル（SKILL.md）の作成・改善を支援する。「プラグインにスキルを追加したい」「スキルを書きたい」「descriptionを改善したい」「スキルの構成を整理したい」と言われたときや、progressive disclosure・トリガー設計・スキル記述スタイルの指針が必要なときに使用する。
+description: Claude Code / Antigravity 2.0 プラグインに同梱するスキル（SKILL.md）の記述指針（progressive disclosure・トリガー設計・記述スタイル）を提供する。プラグイン開発の文脈でスキルの書き方の指針が必要なときに使用する。スキルの新規作成・検証・テスト・最適化の実作業は skill-creator プラグイン（skill-creator / skill-validator / skill-optimizer 等）が担当するため、そちらへ誘導する。
 metadata:
-  version: "0.2.0"
+  version: "0.2.1"
   author: br7.hide
   created: "2026-07-05"
-  updated: "2026-07-06"
+  updated: "2026-07-09"
 ---
 
 # skill-development
