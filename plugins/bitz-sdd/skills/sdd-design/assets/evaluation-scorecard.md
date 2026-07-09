@@ -1,4 +1,13 @@
-# ブラウンフィールド評価採点表（.planning/design/evaluation/scorecard.md にコピーして使う）
+---
+id: DSN-000
+title: "ブラウンフィールド評価採点表"
+status: draft
+version: 1.0
+updated: YYYY-MM-DD
+owner:
+---
+
+# ブラウンフィールド評価採点表（.spec/design/evaluation/scorecard.md にコピーして使う）
 
 採点尺度: 5=模範的 / 4=良好 / 3=許容 / 2=懸念 / 1=致命的（詳細は references/brownfield-evaluation.md）
 

@@ -1,4 +1,13 @@
-# ディスカバリー作業台帳（.planning/discovery/worksheet.md にコピーして使う）
+---
+id: DSC-000
+title: "ディスカバリー作業台帳"
+status: draft
+version: 1.0
+updated: YYYY-MM-DD
+owner:
+---
+
+# ディスカバリー作業台帳（.spec/discovery/worksheet.md にコピーして使う）
 
 短命の作業成果物。人間向けの結論は docs/01-context/ の proposed ドラフトへ落とす。
 

@@ -1,4 +1,13 @@
-# 設計作業台帳（.planning/design/worksheet.md にコピーして使う）
+---
+id: DSN-000
+title: "設計作業台帳"
+status: draft
+version: 1.0
+updated: YYYY-MM-DD
+owner:
+---
+
+# 設計作業台帳（.spec/design/worksheet.md にコピーして使う）
 
 短命の作業成果物。人間向けの結論は docs/02-design/ の proposed ドラフトへ落とし、この台帳は feature 完了時にアーカイブされる。
 

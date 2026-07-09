@@ -1,12 +1,12 @@
 # 統合手順（synthesizer）
 
-観点別 JSON（`.planning/review/individual/*.json`）を単一の統合判定にまとめる。2〜5観点の可変入力で動作する。
+観点別 JSON（`.spec/review/individual/*.json`）を単一の統合判定にまとめる。2〜5観点の可変入力で動作する。
 
 ## Step 1: 重複排除
 
 複数の観点が同じ根本原因を別角度から指摘することがある。
 
-- **同一箇所 + 同一根本原因** → 1件にマージし、元の全 ID を `source_ids` に記録（例: "CON-201, BIZ-102"）。severity は最高値を採用し、recommendation は1つの実行可能な項目に統合する
+- **同一箇所 + 同一根本原因** → 1件にマージし、元の全 ID を `source_ids` に記録（例: "RVC-201, BIZ-102"）。severity は最高値を採用し、recommendation は1つの実行可能な項目に統合する
 - **同一根本原因 + 別箇所** → 別件のまま `related_to` でリンク
 - **別根本原因 + 同一箇所** → 別件のまま
 
@@ -21,7 +21,7 @@
 
 ## Step 3: ゲート判定
 
-レジストリ（assets/review-registry.json、プロジェクト側 `.planning/review/registry.json` があればそちら）の `quality_gates` に照らす。**有効だった観点の重みを再正規化**（合計1.0に）してから加重集計スコアを計算する:
+レジストリ（assets/review-registry.json、プロジェクト側 `.spec/review/registry.json` があればそちら）の `quality_gates` に照らす。**有効だった観点の重みを再正規化**（合計1.0に）してから加重集計スコアを計算する:
 
 ```
 aggregate = Σ( 正規化重み_i × weighted_score_i )
@@ -35,7 +35,7 @@ CONDITIONAL_PASS の場合、通過条件（critical/major への軽減策）を
 
 ## Step 4: レポート生成
 
-- `.planning/review/review-synthesis.json`:
+- `.spec/review/review-synthesis.json`:
 
 ```
 {
@@ -49,6 +49,6 @@ CONDITIONAL_PASS の場合、通過条件（critical/major への軽減策）を
 }
 ```
 
-- `.planning/review/review-synthesis.md`: 書式は assets/review-report.md をコピーして使う（記憶から書き起こさない）
+- `.spec/review/review-synthesis.md`: 書式は assets/review-report.md をコピーして使う（記憶から書き起こさない）
 
 判定・レポートを人間に提示して終了。裁定（Design Gate / Promotion Gate の通過）は人間が行う。

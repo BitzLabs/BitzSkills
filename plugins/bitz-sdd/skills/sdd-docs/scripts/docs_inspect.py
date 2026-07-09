@@ -2,7 +2,7 @@
 """
 docs_inspect.py — docs/ 側（人間ナラティブ層）の構造検証。
 
-spec_inspect.py（.planning/ 側）と対になる。stdlib のみ。
+spec_inspect.py（.spec/ 側）と対になる。stdlib のみ。
 検査対象:
   - frontmatter 必須項目・enum・id 形式・semver・日付
   - id 重複、フォルダ番号と area の一致（03-implementation → area=implementation 等）
@@ -266,13 +266,21 @@ def check_project_type(docs_dir, docs, master_fm):
 
 
 def check_adr_bridge(root, docs_dir):
-    """任意: requirements.yaml の decided_by ADR が decisions/ に存在するか。"""
+    """任意: .spec/requirements/ 内の md ファイルの decided_by ADR が decisions/ に存在するか。"""
     fs = []
-    req = os.path.join(root, ".planning", "requirements.yaml")
-    if not os.path.isfile(req):
+    req_dir = os.path.join(root, ".spec", "requirements")
+    if not os.path.isdir(req_dir):
         return fs
-    text = open(req, encoding="utf-8").read()
-    referenced = set(DECIDED_BY.findall(text))
+    referenced = set()
+    for f in os.listdir(req_dir):
+        if not f.endswith(".md") or f.startswith("_"):
+            continue
+        try:
+            text = open(os.path.join(req_dir, f), encoding="utf-8").read()
+            for adr in DECIDED_BY.findall(text):
+                referenced.add(adr)
+        except Exception:
+            continue
     dec_dir = os.path.join(docs_dir, "02-design", "decisions")
     present = set()
     if os.path.isdir(dec_dir):
@@ -281,7 +289,7 @@ def check_adr_bridge(root, docs_dir):
             if m:
                 present.add(m.group(1))
     for adr in sorted(referenced - present):
-        fs.append(Finding("WARN", "ADR_BRIDGE", ".planning/requirements.yaml",
+        fs.append(Finding("WARN", "ADR_BRIDGE", ".spec/requirements/",
                           f"decided_by {adr} に対応する docs/02-design/decisions/{adr}-*.md が無い"))
     return fs
 

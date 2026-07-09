@@ -8,7 +8,7 @@
 
 reverse-derived 要件は「仕様が意図を表す」保証がないため、traceability matrix 上で区別表示する。
 
-## メトリクス（.planning/metrics.md に feature ごと1行、planエージェントが自動記録）
+## メトリクス（.spec/metrics.md に feature ごと1行、planエージェントが自動記録）
 
 | 指標 | 定義 | 悪化時に疑う場所 |
 |------|------|------------------|

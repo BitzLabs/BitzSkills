@@ -1,11 +1,11 @@
 <!--
   _conventions.md — HOW docs/ works. Not a project document itself; it governs the others.
-  Keep this in sync with ADR-template.md and the .planning/requirements/ registry (bitz-sdd skill).
+  Keep this in sync with ADR-template.md and the .spec/requirements/ registry (bitz-sdd skill).
 -->
 # docs/ 運用規約 (Conventions)
 
 このツリー (`docs/`) は **人間ナラティブ / 遅く変わる意図 (WHY と人間向け WHAT)** を持つ。
-実行状態・検証可能な契約は持たない。それらは `.planning/` の責務。
+実行状態・検証可能な契約は持たない。それらは `.spec/` の責務。
 
 ## 責務の非重複（どちらが真実か）
 
@@ -14,20 +14,20 @@
 | 意図・背景・なぜ (WHY) | `docs/` |
 | 人間向けの WHAT（何を作るか／何を作らないか） | `docs/` |
 | 恒久的な知見・決定の履歴 | `docs/`（LESSONS_LEARNED / ADR） |
-| 検証可能な受入基準 (EARS) ・契約 | `.planning/requirements/`（1要件1ファイル） |
-| 実行状態・タスク・進捗 | `.planning/`（STATE.md 等） |
+| 検証可能な受入基準 (EARS) ・契約 | `.spec/requirements/`（1要件1ファイル） |
+| 実行状態・タスク・進捗 | `.spec/`（STATE.md 等） |
 
-同じ事実が両方にあったら、**意図は `docs/`、契約と状態は `.planning/` が勝つ**。
+同じ事実が両方にあったら、**意図は `docs/`、契約と状態は `.spec/` が勝つ**。
 
 ## 派生方向は一方向
 
 ```
-docs/（人が書く意図・遅い） ──derive──▶ .planning/（生成される契約・速い）
+docs/（人が書く意図・遅い） ──derive──▶ .spec/（生成される契約・速い）
         ▲                                              │
         └──────────── promotion gate（閉じ戻し）────────┘
 ```
 
-エージェントは `docs/` へ書き込まない。フィーチャ完了時のみ、`.planning/STATE.md` の
+エージェントは `docs/` へ書き込まない。フィーチャ完了時のみ、`.spec/STATE.md` の
 durable な学びを `docs/08-knowledge/LESSONS_LEARNED.md` と ADR に**人間承認で昇格**させる。
 
 ## 共通 frontmatter
@@ -74,7 +74,7 @@ ADR の "Considered Options" に理由付きで記録する。
 
 新しい情報をどこに置くか迷ったら、上から順に answer:
 
-1. **検証可能な契約 / 実行状態か？** → Yes: `.planning/` へ。No: 2へ
+1. **検証可能な契約 / 実行状態か？** → Yes: `.spec/` へ。No: 2へ
 2. **決定の理由・不採用案・試行錯誤か？** → Yes: `02-design/decisions/ADR-*.md`
 3. **恒久的な学び（再発防止・教訓）か？** → Yes: `08-knowledge/LESSONS_LEARNED.md`
 4. **背景・目的・用語・スコープ境界か？** → Yes: `01-context/`

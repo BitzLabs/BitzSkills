@@ -12,7 +12,7 @@ superseded_by: null
 
 <!--
   運用・リリースの「恒久手順とポリシー」。
-  ドリフト境界: リリース回ごとのチェックリスト・実行状態は .planning/（STATE）。
+  ドリフト境界: リリース回ごとのチェックリスト・実行状態は .spec/（STATE）。
                 ここは再現可能な手順・方針（毎回同じもの）を持つ。
   分割時: app は runbooks/・slo.md・incident-response.md、
           library は release-process.md・support-matrix.md・deprecation-calendar.md を兄弟に。

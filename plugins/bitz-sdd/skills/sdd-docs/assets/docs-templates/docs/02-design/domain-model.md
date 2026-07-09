@@ -20,7 +20,7 @@ superseded_by: null
 ```
 
 ## 不変条件 (Invariants)
-- <常に成り立つべき規則。検証可能な受入基準は .planning/ へ>
+- <常に成り立つべき規則。検証可能な受入基準は .spec/ へ>
 
 ## library 固有
 - ドメイン概念を公開型にどう写像するか（型が利用者の語彙になる）。public-api.md と整合。

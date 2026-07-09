@@ -1,6 +1,15 @@
+---
+id: DSN-000
+title: "ドメインストーリー: <ペルソナ> — <ジョブ>"
+status: draft
+version: 1.0
+updated: YYYY-MM-DD
+owner:
+---
+
 # ドメインストーリー: <ペルソナ> — <ジョブ>
 
-（.planning/design/stories/story-<ペルソナ>-<ジョブ>.md にコピーして使う）
+（.spec/design/stories/story-<ペルソナ>-<ジョブ>.md にコピーして使う）
 
 ## 概要
 

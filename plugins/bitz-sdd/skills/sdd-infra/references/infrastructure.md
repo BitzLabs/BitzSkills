@@ -33,4 +33,4 @@
 
 - 各設計判断をアーキテクチャの根拠（どのコンテキスト/NFR がそれを要求するか）に紐づける。根拠を引用できない構成要素は入れない
 - 恒久判断（オーケストレーション採否・IaC ツール・環境構成）は ADR ドラフトへ
-- 結論は docs/05-operations/OPERATIONS.md の proposed ドラフトに、作業表は `.planning/design/infra/` に置く
+- 結論は docs/05-operations/OPERATIONS.md の proposed ドラフトに、作業表は `.spec/design/infra/` に置く

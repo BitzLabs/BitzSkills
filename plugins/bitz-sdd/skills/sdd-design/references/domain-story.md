@@ -17,7 +17,7 @@
 
 ## 書式
 
-assets/domain-story.md をコピーして `.planning/design/stories/story-<ペルソナ>-<ジョブ>.md` として書く。構成: 概要（2〜3文）→ Actors 表 → Work Items 表 → Main Flow（番号付き、各行に根拠のジョブ/ジャーニー段階を付記）→ mermaid `sequenceDiagram`（番号を Main Flow と一致させる。ハッピーパスのみ）→ 例外シナリオ → Open Questions。
+assets/domain-story.md をコピーして `.spec/design/stories/story-<ペルソナ>-<ジョブ>.md` として書く。構成: 概要（2〜3文）→ Actors 表 → Work Items 表 → Main Flow（番号付き、各行に根拠のジョブ/ジャーニー段階を付記）→ mermaid `sequenceDiagram`（番号を Main Flow と一致させる。ハッピーパスのみ）→ 例外シナリオ → Open Questions。
 
 ## 停止条件
 

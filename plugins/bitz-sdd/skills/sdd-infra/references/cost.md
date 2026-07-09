@@ -1,6 +1,6 @@
 # コスト見積もり
 
-多次元のコスト見積もりを作る。結論と前提は `.planning/design/infra/cost-estimate.md`（assets/cost-estimate.md をコピー）へ。**単価・数量の根拠がないコストは書かない** — 前提を `TBD` として人間に確認する。
+多次元のコスト見積もりを作る。結論と前提は `.spec/design/infra/cost-estimate.md`（assets/cost-estimate.md をコピー）へ。**単価・数量の根拠がないコストは書かない** — 前提を `TBD` として人間に確認する。
 
 ## 最初に確認する前提（人間へのヒアリング項目）
 
