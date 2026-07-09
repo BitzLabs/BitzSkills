@@ -12,7 +12,7 @@ superseded_by: null
 
 <!--
   恒久的な実装規約。フィーチャを越えて残る「どう作るか」の標準を持つ。
-  ドリフト境界: フィーチャ単位の実装タスク・依存グラフは .planning/（tasks/）。
+  ドリフト境界: フィーチャ単位の実装タスク・依存グラフは .spec/（tasks/）。
                 ここに書くのは feature を越えて再利用される規約・パターンのみ。
   この層で分割が必要になったら: error-handling.md / dependency-policy.md を兄弟に足す。
 -->

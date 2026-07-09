@@ -39,7 +39,7 @@ superseded_by: null
 
 ## 崩壊クリティカルな差別化仮説
 
-<反証可能な形で。仮説表（.planning/discovery/）と対応させる>
+<反証可能な形で。仮説表（.spec/discovery/）と対応させる>
 
 ## Open Questions
 

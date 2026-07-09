@@ -13,7 +13,7 @@ superseded_by: null
 <!--
   テストの「戦略」= 何を、どの層で、どこまで検証するかの方針と「緑の定義」。
   ドリフト境界: 要件別の verification_method や個々のテスト仕様・PBT マッピングは
-                .planning/（requirements の verification_method / specs/）。
+                .spec/（requirements の verification_method / specs/）。
                 ここは feature を越える戦略・ゲートの意味づけのみ。
 -->
 

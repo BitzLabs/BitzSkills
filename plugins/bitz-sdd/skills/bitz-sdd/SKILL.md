@@ -1,119 +1,82 @@
 ---
 name: bitz-sdd
-description: BitzSDD — 仕様駆動開発（SDD）ワークフローを運用するスキル。要件定義・仕様作成・実装・検証・完了処理のすべてをこの規律に従って実行する。ユーザーが「仕様駆動」「SDD」「要件」「EARS」「spec」「タスク分解」「feature実装」に言及したとき、リポジトリに .planning/ や AGENTS.md が存在するとき、または新機能の設計・実装・検証・リリース処理を依頼されたときは、明示的な指示がなくても必ずこのスキルを使うこと。要件の変更・廃止・番号管理・テスト失敗時の対応・ドキュメント更新もすべて本スキルの管轄。
+description: BitzSDD — 仕様駆動開発（SDD）ワークフローを運用するメインスキル。要件定義・仕様作成・実装・検証・完了処理のすべてをこの規律に従って実行する。ユーザーが「仕様駆動」「SDD」「要件」「EARS」「spec」「タスク分解」「feature実装」に言及したとき、リポジトリに .spec/ や AGENTS.md が存在するとき、または新機能の設計・実装・検証・リリース処理を依頼されたときは、明示的な指示がなくても必ずこのスキルを使うこと。要件の変更・廃止・番号管理・テスト失敗時の対応・ドキュメント更新もすべて本スキルの管轄。
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
   author: br7.hide
   created: "2026-07-07"
-  updated: "2026-07-08"
+  updated: "2026-07-09"
 ---
 
-# BitzSDD Workflow
+# BitzSDD Workflow (spec駆動開発)
 
-個人用の仕様駆動開発フレームワーク。docs/（人間の意図・永続）と .planning/（AI実行契約・短命）を分離し、EARS記法の要件を機械検証で充足させる。対象スタック: Antigravity 2.0 / cc-sdd / GSD / Claude Code。
+個人用の仕様駆動開発フレームワーク。`.spec/`（仕様・設計・検証のマスター）を中心とし、`docs/`（人間ナラティブ層）との双方向同期を維持しながら、EARS記法の要件を機械検証で充足させます。
 
 ## 憲法（5原則）
 
-規則同士が衝突したら番号の小さい原則が勝つ。
-
-1. **spec-anchored** — 仕様とコードは共存。仕様が実行を駆動するが、動くコードが最終的な真実
-2. **一方向派生** — docs/ → .planning/ → code の順にのみ派生。逆流は Promotion Gate のみ
-3. **検証中心** — 人間は行をレビューしない。合否は機械が出し、人間はゲートと例外だけを見る
-4. **権限分離** — エージェントは契約を実装できるが、書き換えられない。仕様の変更権は常に人間
-5. **短命と永続の分離** — .planning/ は feature 単位で使い捨て。docs/ と LESSONS_LEARNED は永続
-
-## 絶対規則（すべてのフェーズで適用）
-
-これらは references を読まなくても常に守ること:
-
-- **requirements/ 配下のファイルを編集しない**（人間専権）。仕様の矛盾・曖昧を発見したら `spec-issues/` に提案を起票する
-- **実装中にID採番しない**。新要件が必要なら spec-issue（仮番号 `SI-<branch>-<n>`）を起票
-- **docs/ の active 文書を書き換えない**。エージェントが docs/ に書けるのは `status: proposed` のドラフト（新規作成・proposed の更新）と、対応する MASTER.md レジストリ行の追記のみ。proposed → active の裁定は人間専権（Promotion Gate・`sdd-discovery`・`sdd-design` のドラフト生成はすべてこの機構で行う）
-- **status が implementing 以降の要件のEARS節は不変**。変更は人間の bump/supersede 裁定を経る
-- 検証 red のとき、通したいがために仕様・テスト・閾値を緩めることは絶対にしない
-- コスト予算（tasks/ メタデータ宣言）を超過したら停止して報告する
+1.  **spec-centered** — `.spec/` が開発の真実の源 (SSOT) であり、仕様・設計・検証はすべてここに集約される。
+2.  **双方向同期 (docs ⇄ .spec)** — `docs/` と `.spec/` は `sdd_sync.py` によって双方向に同期され、手動修正の逆反映が可能。
+3.  **検証中心** — 人間は行をレビューしない。要件やテストの合否は機械（`spec_inspect.py`）が排出し、人間はゲートと例外だけを見る。
+4.  **権限分離** — エージェントは契約を実装できるが、書き換えられない。仕様の変更権は常に人間が持つ。
+5.  **短命と永続の分離** — 要件仕様はライフサイクルによって管理され、docs/ および LESSONS_LEARNED は永続。
 
 ## ディレクトリ構成
 
-```
-docs/                        永続・人間ナラティブ（WHY と人間向けWHAT）
+```text
+docs/                        永続・人間ナラティブ（.spec から自動生成 / 逆同期対象）
   MASTER.md / 01-context/ / 02-design/(ARCHITECTURE, DECISIONS) / 06-reference/ / 08-knowledge/LESSONS_LEARNED.md
-.planning/                   短命・AI実行仕様（検証可能なWHAT と HOW）
+.spec/                       仕様・設計・検証のマスター
   PROJECT.md / ROADMAP.md
-  requirements/              1要件1ファイル。_index.md と _counter.md は自動生成（手編集禁止）
-    FR-*.md NFR-*.md CON-*.md / domains.md / _lint-rules.md
+  discovery/                 上流探索成果物 (DSC-*.md)
+  requirements/              1要件1ファイル。FR-*.md NFR-*.md CON-*.md
+  design/                    設計成果物 (DSN-*.md, INF-*.md)
+    stories/                 ドメインストーリー個別ファイル
+  reviews/                   多観点レビュー結果 (REV-*.md など)
   spec-issues/SI-*.md        エージェント発の仕様変更提案
   specs/<feature>/           EARS→検証マッピング、boundary×checks×depends_on
   tasks/                     タスク分解+依存グラフ
   STATE.md                   ブランチローカルの生きたメモリ
   metrics.md                 ワークフロー計測
+reports/                     進捗・ヘルスレポート (sdd-report により自動生成)
+  status-report.md           統合進捗状況レポート
 AGENTS.md                    読み込みプロトコル+権限マトリクス
 ```
 
-同一事実が両ツリーにある場合: 意図は docs/ が勝ち、契約と状態は .planning/ が勝つ。
-
-## 読み込みプロトコル
-
-起動時は最小ロード: `PROJECT.md` → 担当タスク → タスクの `implements:` が指す要件ファイルのみ。docs/ の全読みは禁止（必要な節だけ参照）。
-
 ## フェーズ・ルーティング
 
-GSDの5フェーズ + Gate。**今どのフェーズかを判定し、対応する reference を読んでから作業する**:
+今どのフェーズかを判定し、対応するスキルまたは reference を読んでから作業します：
 
-| いまやること | フェーズ | 読むファイル |
+| いまやること | フェーズ | 連携スキル |
 |---|---|---|
-| プロジェクト把握・docs/整備 | Map / Discuss | references/lifecycle.md |
-| docs/ が未整備（MASTER.md がない等） | Map | （`sdd-docs` スキルで docs/ を初期化・検証する） |
-| ビジョン・成功指標・スコープ・ペルソナ・仮説検証（上流探索） | Map / Discuss | （`sdd-discovery` スキル） |
-| ドメイン・API・アーキテクチャ設計、既存コードの MMI/DDD 評価 | Discuss | （`sdd-design` スキル） |
-| インフラ・セキュリティ・SLO・DR・コスト設計 | Discuss | （`sdd-infra` スキル） |
-| 設計ドキュメントの多観点レビュー | Discuss / Gate 前 | （`sdd-review` スキル） |
-| 要件起票・採番・変更・廃止 | Plan | references/lifecycle.md |
-| 仕様→タスク分解・並列投入 | Plan / Execute | references/parallel-git.md |
-| 実装・テスト作成 | Execute | references/verification.md |
-| 検証 red・エラー・矛盾発見 | Execute / Verify | references/failure-protocol.md |
-| 検証・カバレッジ確認 | Verify | references/verification.md（+ scripts/spec_inspect.py 実行） |
-| feature完了・docs/更新 | Promotion Gate | references/gates.md |
-| 既存コードへの導入 | 導入 | references/adoption-metrics.md |
-| ワークフロー自体の見直し | 定期 | references/adoption-metrics.md |
+| プロジェクト把握・docs/整備・同期 | Map / Discuss | `sdd-docs` (初期化・検証・双方向同期) |
+| ビジョン・成功指標・スコープ・仮説検証 | Map / Discuss | `sdd-discovery` (.spec/discovery/ 作成) |
+| ドメイン・API・アーキテクチャ設計 | Discuss | `sdd-design` (.spec/design/ 作成) |
+| インフラ・セキュリティ・SLO・DR・コスト設計 | Discuss | `sdd-infra` (.spec/design/ 作成) |
+| 設計ドキュメント・仕様の多観点レビュー | Discuss / Gate前 | `sdd-review` (.spec/reviews/ 作成) |
+| 要件起票・採番・変更・廃止 | Plan | `bitz-sdd` (requirements/ 更新) |
+| 進捗・検証・レビュー状況のレポート作成 | 報告 | `sdd-report` (reports/ 作成) |
+| 仕様→タスク分解・並列投入 | Plan / Execute | `bitz-sdd` (tasks/ 分解) |
+| 実装・テスト作成 | Execute | `bitz-sdd` (code & tests) |
+| 検証 red・エラー・矛盾発見 | Execute / Verify | `bitz-sdd` (failure-protocol.md) |
+| 検証・カバレッジ確認 | Verify | `bitz-sdd` (spec_inspect.py 実行) |
+| feature完了・docs/同期・昇格 | Promotion Gate | `bitz-sdd` / `sdd-docs` (push/pull) |
 
-## 要件ステータス（状態機械の要約）
+## モノリポ運用とクロスリファレンス (Monorepo & Workspaces)
 
-`draft → approved → implementing → verified → promoted`、廃止は `deprecated`（`superseded_by:` 必須）。
+複数のプラグインやサービスを1つのリポジトリで管理する場合、以下のベストプラクティスに従います：
 
-- draft→approved と verified→promoted と deprecated 裁定は**人間のみ**
-- approved には spec-lint 合格と `verification_method:` 記入が前提条件
-- implementing→verified は機械判定（全検証 green + stale マークゼロ）
-
-詳細な遷移規則・改訂vs継承の判定（「緑を赤にし得るか」基準）・変更伝播は references/lifecycle.md。
+1. **分散配置**: 各パッケージディレクトリの直下に `.spec/` と `docs/` を配置し、独立した BitzSDD プロジェクトとして扱います。
+2. **名前空間の分離**: グローバルなID衝突を避けるため、プロジェクト固有のプレフィックスを使用します（例: `PLG-FR-001`）。
+3. **クロスリファレンス**: プラグイン間で要件を参照することが可能です。検証ツールに `--workspace <dir>` を渡すことで、グローバルな名前空間として参照が解決されます。
+4. **ルートとプラグインの混在 (Root Workspace)**: リポジトリのルートにも `.spec/` が存在する場合（全プラグイン共通のグローバル要件やアーキテクチャ定義など）、ルートディレクトリ自体も1つのワークスペースとして扱います。ツールには `--workspace . plugins/*` のように複数指定可能とし、プラグインからルートの要件（例: `CORE-NFR-001`）をクロスリファレンスできるようにします。
+5. **一括検証**: `python scripts/spec_inspect.py --workspace . plugins/*/` を実行することで、ルートと全プロジェクトを一括で検証できます。
 
 ## 検証ツール
 
-構造検証・孤児/幽霊検出・カバレッジ・変更影響分析は同梱スクリプトで実行する:
+構造検証・孤児/幽霊検出・カバレッジ・変更影響分析は同梱スクリプトで実行します:
 
 ```bash
-python scripts/spec_inspect.py <repo-root>              # 全検証 → inspection-report.md
-python scripts/spec_inspect.py <repo-root> --impact FR-012   # FR-012変更の影響成果物を列挙
-python scripts/spec_inspect.py <repo-root> --impact-docs docs/02-design/ARCHITECTURE.md
-                                                        # docs変更の影響要件を列挙（derived_from 逆引き）
+python3 scripts/spec_inspect.py <repo-root>              # 全検証 → inspection-report.md
+python3 scripts/spec_inspect.py --workspace . plugins/*  # モノリポ一括検証（クロスリファレンス解決）
+python3 scripts/spec_inspect.py <repo-root> --impact FR-012   # FR-012変更の影響成果物を列挙
 ```
-
-Verify フェーズと Promotion Gate では必ず実行し、レポートを人間に提示する。
-docs/ 側の構造検証（docs_inspect.py）は `sdd-docs` スキルが担うので、Promotion Gate では両方を実行する。
-
-## テンプレート
-
-新規作成時は assets/ のテンプレートをコピーして使う（書式ドリフト防止のため、記憶から書き起こさない）:
-
-- assets/requirement.md — 要件ファイル（frontmatter必須項目つき）
-- assets/spec-issue.md — 仕様変更提案
-- assets/domains.md — ドメインコード統制語彙
-- assets/lint-rules.md — EARS lint と禁止語辞書
-- assets/AGENTS.md — 新規リポジトリ初期化用
-- assets/metrics.md — 計測台帳
-
-## ユーザーへの応答姿勢
-
-- 裁定が必要な遷移（承認・supersede・Gate）では、機械チェック結果と推奨を添えて人間に判断を求める。勝手に進めない
-- spec-issue を起票したら、要点（何が矛盾し、bump/supersede どちらを提案するか）を会話でも報告する
-- フェーズをまたぐ長い作業では、STATE.md に進捗と判断根拠を追記しながら進める

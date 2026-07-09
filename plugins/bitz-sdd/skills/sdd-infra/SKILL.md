@@ -1,47 +1,39 @@
 ---
 name: sdd-infra
-description: BitzSDD のインフラ・運用設計を行うスキル。インフラ構成（コンテナ/ネットワーク/IaC 方針/マルチ環境）、セキュリティ（認証認可・シークレット・ゼロトラスト・監査）、可観測性（SLI/SLO・エラーバジェット・トレーシング・アラート）、災害復旧（RTO/RPO・バックアップ・ランブック）、コスト見積もりの5領域を設計ドキュメントとして確立する。「インフラを設計して」「セキュリティ設計」「SLO を決めたい」「監視・アラート設計」「DR・バックアップ」「コストを見積もって」と言われたとき、または sdd-design のアーキテクチャ確定後に運用面の設計が必要なときに使用する。IaC コードの生成は行わない（実装は bitz-sdd の要件・タスク規律で行う）。NFR の要件化・採番は bitz-sdd の管轄。
+description: BitzSDD のインフラ・運用設計を行うスキル。インフラ構成、セキュリティ、可観測性・SLO、災害復旧、コスト見積もりを設計する。成果物はすべて .spec/design/ 配下に作成し、docs/05-operations/ 側などへは sdd-docs の pull コマンドを用いて同期・展開する。
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
   author: br7.hide
   created: "2026-07-08"
-  updated: "2026-07-08"
+  updated: "2026-07-09"
 ---
 
 # SDD Infra — インフラ・運用設計
 
-アーキテクチャ（docs/02-design/ARCHITECTURE.md、active または proposed ドラフト）を前提に、運用面の設計を確立する。**設計ドキュメントまで**が責務 — IaC コードの生成はしない（実装は要件→タスク→機械検証の規律に乗せるべき対象であり、生成でその規律を迂回しない）。
+BitzSDDにおけるインフラおよび運用の設計を担当します。
+アーキテクチャ設計を前提に、運用面の設計（構成・セキュリティ・SLO・DR・コスト）を `.spec/design/` 内の成果物として記述・作成し、最終的に `sdd-docs` スキルの同期（pull）機能で `docs/05-operations/` などへ展開します。
 
-## 絶対規則
+## 1. 前提
+*   作業成果物（サイジング、コスト見積もり内訳、セキュリティモデル等）は `.spec/design/` の配下に直接作成・修正します。
+*   IaCコードなどの実装は行いません（それは要件→タスク→機械検証の通常の開発規律に乗せて行います）。
 
-- docs/ に書けるのは `status: proposed` のドラフトのみ。active 文書は書き換えない
-- 要件（NFR/CON）の採番はしない。数値目標は docs/ ドラフトに書き、要件化は Design Gate 後の bitz-sdd の派生に委ねる
-- 根拠のない数値（SLO・容量・コスト単価）は発明せず `TBD` と明記する
-- 詳細な作業表（サイジング・見積もり内訳）は `.planning/design/infra/` に置き、結論だけを docs/ ドラフトへ
+## 2. 絶対規則
+*   数値目標（SLO、バックアップ頻度、コスト上限など）はでっち上げず、根拠のないものは `TBD` と明示します。
+*   数値目標は検証可能な形式（p95/p99、期間、閾値の明示）で記述します。
+*   **ID体系とFrontmatter**: マスターファイルは `INF-NNN` のIDを持ち、必ず共通のYAML frontmatterを含めて作成します。
 
-## 5領域 — 必要な分だけ選択的に実行する
+## 3. 領域と成果物定義
 
-全領域を機械的に埋めない。feature とプロジェクトの段階に必要な領域だけ、対応する reference を読んでから設計する:
-
-| 領域 | 読むファイル | 結論の行き先 |
+| 領域 | 成果物 (マスターファイル) | docs/ 同期先 |
 |---|---|---|
-| インフラ構成 | references/infrastructure.md | docs/05-operations/OPERATIONS.md（proposed）+ 恒久判断は ADR ドラフト |
-| セキュリティ | references/security.md | docs/02-design/security-model.md（proposed） |
-| 可観測性・SLO | references/observability.md | docs/05-operations/OPERATIONS.md（proposed） |
-| 災害復旧 | references/disaster-recovery.md | docs/05-operations/OPERATIONS.md（proposed） |
-| コスト見積もり | references/cost.md | `.planning/design/infra/cost-estimate.md`（短命。前提が固まったら ADR に要約） |
+| インフラ構成 | `.spec/design/infrastructure.md` | `docs/05-operations/OPERATIONS.md` (インフラ部) |
+| セキュリティ | `.spec/design/security-model.md` | `docs/02-design/security-model.md` |
+| 可観測性・SLO | `.spec/design/observability.md` | `docs/05-operations/OPERATIONS.md` (可観測性部) |
+| 災害復旧 (DR) | `.spec/design/dr.md` | `docs/05-operations/OPERATIONS.md` (DR部) |
+| コスト見積もり | `.spec/design/cost-estimate.md` | - (レビュー/レポート集計対象) |
 
-対象文書が対象リポジトリに未展開なら、`sdd-docs` の `_scaling.md` 拡張トリガーに従って先に足す（05-operations は「定期的にデプロイし再現可能な手順が要るとき」）。
+設計成果物を作成・更新したら、`python3 scripts/sdd_sync.py pull` を実行して `docs/` に展開します。
 
-## NFR への接続
-
-SLO・エラーバジェット・RTO/RPO・セキュリティ統制の数値は、Design Gate で active 化された後に bitz-sdd の半自動派生で NFR になる（benchmark / load-test / sast / dep-audit、数値必須）。このスキルでは**検証可能な形**（p95/p99・期間・母集団・閾値の明示）で書くところまでを行い、採番・EARS 化はしない。実装済みシステムの数値要件に矛盾を見つけたら `.planning/spec-issues/` に起票する。
-
-## 連携
-
-- 前段のアーキテクチャは `sdd-design`、レビュー（operations / risk 観点）は `sdd-review`
-- docs/ の構造・テンプレは `sdd-docs`、要件派生・ゲートは `bitz-sdd`
-
-## 出典
-
-本スキルの手法群は [nexus-architect](https://github.com/wfukatsu/nexus-architect)（MIT License, Copyright (c) 2026 Wataru Fukatsu）の design-infrastructure / design-security / design-observability / design-disaster-recovery / estimate-cost / design-sla / define-nfr から ScalarDB 固有部分を除いて翻案・圧縮したもの。
+## 4. 連携
+*   前段のドメイン・API・アーキテクチャ設計は `sdd-design`、レビューは `sdd-review`、要件・検証・ゲートは `bitz-sdd` が担当します。
+*   ドキュメントの双方向同期や初期化は `sdd-docs` が担当します。

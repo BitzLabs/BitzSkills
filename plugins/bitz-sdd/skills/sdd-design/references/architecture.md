@@ -38,4 +38,4 @@ docs/02-design/ARCHITECTURE.md の proposed ドラフトを作るための手法
 
 - docs/02-design/ARCHITECTURE.md（proposed）: 3ビュー + 対応表 + 採用技術の要約
 - 技術採用・境界の裁定など恒久判断は ADR ドラフト（対象リポジトリの docs/02-design/decisions/ADR-template.md をコピー、`status: proposed`）
-- 技術適合性マトリクスの作業表は `.planning/design/worksheet.md` に残す
+- 技術適合性マトリクスの作業表は `.spec/design/worksheet.md` に残す

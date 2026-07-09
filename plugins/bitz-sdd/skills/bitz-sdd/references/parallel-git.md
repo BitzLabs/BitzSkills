@@ -2,7 +2,7 @@
 
 ## ブランチ規約
 
-- feature ブランチ = `.planning/specs/<feature>/` と1対1対応
+- feature ブランチ = `.spec/specs/<feature>/` と1対1対応
 - **STATE.md はブランチローカル**（`.gitattributes` で `merge=ours`）。living memory のブランチ間共有は文脈汚染を招く
 - requirements/ への変更（採番・状態遷移）は main 直コミットまたは最優先マージ。契約は全ブランチから同一に見えること
 

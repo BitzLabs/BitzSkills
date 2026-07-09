@@ -1,4 +1,13 @@
-# コスト見積もり（.planning/design/infra/cost-estimate.md にコピーして使う）
+---
+id: INF-000
+title: "コスト見積もり"
+status: draft
+version: 1.0
+updated: YYYY-MM-DD
+owner:
+---
+
+# コスト見積もり（.spec/design/infra/cost-estimate.md にコピーして使う）
 
 - **前提**: 環境 <dev/staging/prod の構成> / 想定負荷 <TPS・データ量・成長率> / 可用性目標 <SLO> / 通貨・期間 <USD/JPY・月次/年次>
 - **幅**: 楽観 / 悲観（または ±%）で出す。単一の数字にしない

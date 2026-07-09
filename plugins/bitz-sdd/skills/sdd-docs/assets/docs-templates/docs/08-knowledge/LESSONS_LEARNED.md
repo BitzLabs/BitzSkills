@@ -11,7 +11,7 @@ superseded_by: null
 ---
 
 <!--
-  append-only の恒久知識。フィーチャ完了時に .planning/STATE.md の durable な学びを
+  append-only の恒久知識。フィーチャ完了時に .spec/STATE.md の durable な学びを
   人間承認で昇格させる先（promotion gate の出力）。
   - 過去エントリは編集しない（訂正は新エントリで打ち消す）。
   - 決定そのものは ADR。ここは「教訓・再発防止・気づき」を残す。

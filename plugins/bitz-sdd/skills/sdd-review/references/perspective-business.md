@@ -1,6 +1,6 @@
 # レビュー観点: business — 要件トレース・NFR定量化・整合（BIZ）
 
-観点サブエージェントに渡すプロンプト本体。`{FILE_LIST}` を対象ファイル一覧（1行1パス）に置換してそのまま渡す。docs/01-context/（ビジョン・ステークホルダー・non-goals）と .planning/requirements/ を照合元に含めること。
+観点サブエージェントに渡すプロンプト本体。`{FILE_LIST}` を対象ファイル一覧（1行1パス）に置換してそのまま渡す。docs/01-context/（ビジョン・ステークホルダー・non-goals）と .spec/requirements/ を照合元に含めること。
 
 ---
 

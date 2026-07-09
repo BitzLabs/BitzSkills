@@ -10,7 +10,7 @@ owner: <担当ハンドル>
 superseded_by: null
 ---
 
-<!-- 信頼境界・脅威・データ分類の方針。具体の検証は .planning/。 -->
+<!-- 信頼境界・脅威・データ分類の方針。具体の検証は .spec/。 -->
 
 # Security Model
 

@@ -8,7 +8,7 @@ project_type: both
 updated: 2026-07-07
 owner: <担当ハンドル>
 superseded_by: null          # 置換されたら ADR-... を入れる
-decides: []                  # このADRが確定させる要件ID（.planning/requirements/ の FR/NFR/CON と対応）
+decides: []                  # このADRが確定させる要件ID（.spec/requirements/ の FR/NFR/CON と対応）
 ---
 
 <!--

@@ -1,6 +1,6 @@
 # docs/ テンプレート一式 (app / library 両対応)
 
-`docs/`（人間ナラティブ / 遅く変わる意図）側の起動テンプレート。既存の `.planning/` 側
+`docs/`（人間ナラティブ / 遅く変わる意図）側の起動テンプレート。既存の `.spec/` 側
 （EARS 契約・実行状態）、ADR、`bitz-sdd` スキルと整合する設計。
 
 ## 収録物（最大規模構成）
@@ -8,7 +8,7 @@
 ```
 docs/
   _conventions.md         ← frontmatter・ライフサイクル・配置ルール（最初に読む）
-  _scaling.md             ← 最小→最大規模の拡張と docs↔.planning 境界
+  _scaling.md             ← 最小→最大規模の拡張と docs↔.spec 境界
   MASTER.md               ← 索引。ここで project_type を宣言（★=最小起動 / ☆=library必須）
   01-context/             mission-vision★ / glossary★ / non-goals★ / constraints / stakeholders
   02-design/              ARCHITECTURE★ / domain-model / public-api☆ / security-model / decisions/
@@ -38,6 +38,6 @@ docs/
 
 ## 既存フレームワークとの接続
 
-- 意図は `docs/`、契約と状態は `.planning/`。同じ事実が両方にあれば意図=docs、契約=planning が勝つ。
-- 派生は `docs/` → `.planning/` の一方向。閉じ戻し（昇格）は人間承認のみ。
+- 意図は `docs/`、契約と状態は `.spec/`。同じ事実が両方にあれば意図=docs、契約=spec が勝つ。
+- 派生は `docs/` → `.spec/` の一方向。閉じ戻し（昇格）は人間承認のみ。
 - changeImpact に応じた version bump は `_conventions.md` の表に従う。

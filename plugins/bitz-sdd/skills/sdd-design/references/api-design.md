@@ -33,4 +33,4 @@ Experience（チャネル最適化）
 
 ## ドラフトへの落とし込み
 
-docs/02-design/public-api.md（proposed）には層別カタログ（表）+ 依存グラフ + 主要 API の OAS スケッチを書く。導出の作業表（エンティティ×CRUD 対応など）は `.planning/design/` に残す。エンドポイント契約は後段で FR（example-test / pbt）に派生する前提で、入出力を観測可能に書く。
+docs/02-design/public-api.md（proposed）には層別カタログ（表）+ 依存グラフ + 主要 API の OAS スケッチを書く。導出の作業表（エンティティ×CRUD 対応など）は `.spec/design/` に残す。エンドポイント契約は後段で FR（example-test / pbt）に派生する前提で、入出力を観測可能に書く。

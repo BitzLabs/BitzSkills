@@ -24,13 +24,13 @@ superseded_by: null
 - **種別**: `<app | library>`
 - **主要技術**: <C# / TypeScript(Web) / Rust など>
 - **配布形態**: <library の場合: NuGet / npm / crates.io。app の場合: デプロイ先>
-- **正 (source of truth)**: 意図=このツリー / 契約・状態=`.planning/`
+- **正 (source of truth)**: 意図=このツリー / 契約・状態=`.spec/`
 
 ## 文書レジストリ
 
 <!--
   最小起動時は ★ の行だけで開始し、成長に応じて他行を有効化する。
-  拡張の合図と各層の docs↔.planning 境界は _scaling.md を参照。
+  拡張の合図と各層の docs↔.spec 境界は _scaling.md を参照。
 -->
 
 | id | 文書 | area | status | version | 概要 |
@@ -66,12 +66,12 @@ superseded_by: null
 
 ## このツリーの読み方
 
-規約は [`_conventions.md`](_conventions.md)、最小→最大規模の拡張と各層の docs↔.planning 境界は
+規約は [`_conventions.md`](_conventions.md)、最小→最大規模の拡張と各層の docs↔.spec 境界は
 [`_scaling.md`](_scaling.md) を参照。要点だけ再掲:
 
 - `docs/` = 意図（WHY / 人間向け WHAT）。実行状態は持たない。
 - 新しい情報の置き場所は `_conventions.md` の Decision Matrix で決める。
-- `docs/` から `.planning/` へは一方向派生。閉じ戻しは人間承認のみ。
+- `docs/` から `.spec/` へは一方向派生。閉じ戻しは人間承認のみ。
 
 <!-- 最小起動セット: MASTER + mission-vision + glossary + non-goals + ARCHITECTURE + LESSONS。
      library はこれに public-api を必須で加える。成長したら 06-reference/ 等を足す。 -->

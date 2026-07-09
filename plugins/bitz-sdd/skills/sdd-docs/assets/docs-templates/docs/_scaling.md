@@ -1,7 +1,7 @@
 <!--
   _scaling.md — 最小起動セットから「最大規模」までの docs/ 構成と拡張規約。
-  最大規模で戻ってくる 03/04/05/07 は .planning/ と役割が重なりやすい「ドリフト危険地帯」。
-  各層で「docs/ に何が残り、.planning/ に何が行くか」を必ず守ること。
+  最大規模で戻ってくる 03/04/05/07 は .spec/ と役割が重なりやすい「ドリフト危険地帯」。
+  各層で「docs/ に何が残り、.spec/ に何が行くか」を必ず守ること。
 -->
 # docs/ スケーリング規約（最小 → 最大規模）
 
@@ -24,11 +24,11 @@ docs/
     public-api.md                 library 専用: 公開契約と互換性
     security-model.md             信頼境界・脅威・データ分類
     decisions/ADR-*.md            決定記録（不採用案・試行錯誤）
-  03-implementation/              恒久的な実装規約（per-feature タスクは .planning/）
+  03-implementation/              恒久的な実装規約（per-feature タスクは .spec/）
     PATTERNS.md
     error-handling.md
     dependency-policy.md
-  04-quality/                     品質・検証の「戦略」（per-req 検証は .planning/）
+  04-quality/                     品質・検証の「戦略」（per-req 検証は .spec/）
     TESTING.md
     quality-gates.md
     performance-budgets.md
@@ -40,7 +40,7 @@ docs/
     EXTERNAL-APIS.md
     migration/<version>.md
     integrations.md
-  07-governance/                  プロセス・ロードマップの意図（実行は .planning/ROADMAP）
+  07-governance/                  プロセス・ロードマップの意図（実行は .spec/ROADMAP）
     GOVERNANCE.md
     contribution.md
     versioning-policy.md
@@ -51,18 +51,18 @@ docs/
 
 ## ドリフト危険地帯（03 / 04 / 05 / 07）の境界規則
 
-これらは `.planning/` に鏡像がある。**同じ名前でも中身の粒度が違う**。判定は一つ:
+これらは `.spec/` に鏡像がある。**同じ名前でも中身の粒度が違う**。判定は一つ:
 
-> **フィーチャ／スプリントごとに変わるなら `.planning/`。フィーチャを越えて残る標準・方針なら `docs/`。**
+> **フィーチャ／スプリントごとに変わるなら `.spec/`。フィーチャを越えて残る標準・方針なら `docs/`。**
 
-| 層 | `docs/`（恒久・方針・WHY） | `.planning/`（使い捨て・実行・状態） |
+| 層 | `docs/`（恒久・方針・WHY） | `.spec/`（使い捨て・実行・状態） |
 |---|---|---|
 | 03-implementation | コーディング規約・採用パターン・命名・エラー方針 | フィーチャ単位の実装タスク・依存グラフ (tasks/) |
 | 04-quality | テスト戦略・「緑」の定義・品質ゲートの意味 | 要件別の verification_method・PBT マッピング (specs/) |
 | 05-operations | リリース手順・ランブック・SLO 方針・非推奨カレンダー | リリース回ごとのチェックリスト・実行状態 (STATE) |
 | 07-governance | プロセス規約・バージョニング方針・ロードマップの意図 | 実行可能なロードマップ・マイルストーン (ROADMAP) |
 
-同じ事実が両方に出たら、**方針は docs/、実行と状態は .planning/ が勝つ**。
+同じ事実が両方に出たら、**方針は docs/、実行と状態は .spec/ が勝つ**。
 
 ## 段階拡張のトリガー（増やしすぎない）
 

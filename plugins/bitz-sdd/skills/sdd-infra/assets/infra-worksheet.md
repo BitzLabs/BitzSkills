@@ -1,4 +1,13 @@
-# インフラ設計作業台帳（.planning/design/infra/worksheet.md にコピーして使う）
+---
+id: INF-000
+title: "インフラ設計作業台帳"
+status: draft
+version: 1.0
+updated: YYYY-MM-DD
+owner:
+---
+
+# インフラ設計作業台帳（.spec/design/infra/worksheet.md にコピーして使う）
 
 短命の作業成果物。結論は docs/（OPERATIONS.md / security-model.md / ADR）の proposed ドラフトへ。
 

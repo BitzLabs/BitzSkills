@@ -1,3 +1,12 @@
+---
+id: REV-000
+title: "設計レビュー統合レポート"
+status: pending
+version: 1.0
+updated: YYYY-MM-DD
+owner:
+---
+
 # 設計レビュー統合レポート
 
 - **review_id**: <日付-連番>

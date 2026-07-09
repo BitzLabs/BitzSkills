@@ -40,6 +40,6 @@ docs/02-design/domain-model.md の proposed ドラフトを作るための手法
 
 ## ドラフトへの落とし込み
 
-docs/02-design/domain-model.md（proposed）に書くのは: 中核エンティティと関係（ER 図）・集約境界と不変条件・コンテキストマップ・サブドメイン分類。CRUD マトリクスと導出根拠の詳細は `.planning/design/` の作業台帳に残す。
+docs/02-design/domain-model.md（proposed）に書くのは: 中核エンティティと関係（ER 図）・集約境界と不変条件・コンテキストマップ・サブドメイン分類。CRUD マトリクスと導出根拠の詳細は `.spec/design/` の作業台帳に残す。
 
 Mermaid の注意: ノード ID は ASCII 短縮名、日本語ラベルは必ず引用符で囲む（`A["注文サービス"]`）。1図 20 ノード以内、超えるなら分割して相互参照する。

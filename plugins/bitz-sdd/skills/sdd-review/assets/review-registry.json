@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "comment": "sdd-review の観点レジストリ。プロジェクト側で調整するときは .planning/review/registry.json にコピーして編集する（そちらが優先される）",
+  "comment": "sdd-review の観点レジストリ。プロジェクト側で調整するときは .spec/review/registry.json にコピーして編集する（そちらが優先される）",
   "perspectives": [
     {
       "name": "consistency",
       "reference": "perspective-consistency.md",
       "weight": 0.15,
-      "id_prefix": "CON",
+      "id_prefix": "RVC",
       "conditions": "always"
     },
     {

@@ -1,63 +1,57 @@
 ---
 name: sdd-docs
-description: BitzSDD の docs/（人間ナラティブ層）を初期化・検証するスキル。同梱テンプレートから docs/ ツリー（MASTER.md・01-context〜08-knowledge・ADR）を立ち上げ、docs_inspect.py で構造検証する。「docs/ を初期化して」「ドキュメント構成を作って」「ADR を書きたい」「docs を検証して」と言われたとき、または bitz-sdd スキル導入時に docs/ が未整備のときに使用する。.planning/ 側の運用（要件・EARS・タスク）は bitz-sdd スキルの管轄。
+description: BitzSDD の docs/（人間ナラティブ層）を初期化・検証し、.spec/（仕様マスター）と双方向同期（pull/push/diff）するスキル。同梱テンプレートから docs/ ツリー（MASTER.md・01-context〜08-knowledge・ADR）を立ち上げ、docs_inspect.py で構造検証し、sdd_sync.py で .spec/ との間を同期する。「docs/ を初期化して」「同期して」「docsの変更を spec に反映して」「docs を検証して」と言われたときに使用する。
 metadata:
   version: "0.2.0"
   author: br7.hide
   created: "2026-07-07"
-  updated: "2026-07-08"
+  updated: "2026-07-09"
 ---
 
 # sdd-docs
 
-BitzSDD の docs/ 層（人間の意図・永続ナラティブ）を立ち上げ、健全に保つ。
-docs/ が持つのは WHY と人間向け WHAT のみ。検証可能な契約・実行状態は `.planning/`
-（`bitz-sdd` スキルの管轄）に置き、docs/ → .planning/ → code の一方向派生を守る。
+BitzSDD の docs/ 層（人間の意図・永続ナラティブ）を管理し、マスターである `.spec/` との間で双方向同期を行います。
 
-## 初期化ワークフロー
+## 1. 責務
+1.  **初期化**: `docs/` テンプレートから必要なナラティブドキュメントをセットアップ。
+2.  **双方向同期**:
+    *   **Pull**: `.spec/` にある最新の設計やディスカバリー成果物を `docs/` に展開する。
+    *   **Push**: 人間が `docs/` で編集した設計変更などを検知し、`.spec/` 側のソースファイルに逆反映（マージ）する。
+3.  **検証**: `docs_inspect.py` を実行して、docs 側の frontmatter や MASTER.md との乖離、`.spec/requirements.yaml` と ADR の一貫性を検証。
 
-1. **project_type の確認**: `app` / `library` / `both` をユーザーに確認する
-   （library は公開APIの互換性管理が必須になり、必要文書が1つ増える）
-2. **テンプレート展開**: `assets/docs-templates/docs/` を対象リポジトリの `docs/` へ
-   コピーする。記憶から書き起こさない（書式ドリフト防止）
-3. **最小起動セットに絞る**: まず ★6点だけを残す — MASTER.md /
-   01-context/mission-vision / glossary / non-goals / 02-design/ARCHITECTURE /
-   08-knowledge/LESSONS_LEARNED。library は ☆ 02-design/public-api.md を加えて7点。
-   残りのテンプレートは削除し、後から必要になった層だけ `_scaling.md` の拡張トリガーに
-   従って足す。空フォルダを先に切らない（01-context の拡張3点
-   success-metrics / personas-journeys / positioning は `sdd-discovery` 使用時に足す）
-4. **app/library 分岐の解決**: 各文書 frontmatter の `project_type` を設定し、本文中の
-   `<!-- app 固有 -->` / `<!-- library 固有 -->` ブロックは該当しない側を削除する
-5. **プレースホルダ埋め**: `<Project Name>` 等をヒアリングで埋め、MASTER.md の
-   文書レジストリを実際に残した文書と一致させる
-6. **検証**: docs_inspect.py を実行し 0 件通過を確認する
+## 2. 実行手順
 
-## 検証
+### 初期化
+1.  **project_type の確認**: `app` / `library` / `both` をユーザーに確認する。
+2.  **テンプレート展開**: `assets/docs-templates/docs/` を対象リポジトリの `docs/` へコピーする。
+3.  **最小起動セットに絞る**: MASTER.md、01-context/mission-vision、glossary、non-goals、02-design/ARCHITECTURE、08-knowledge/LESSONS_LEARNED の6点（library の場合は 02-design/public-api.md を加えた7点）に絞る。
+4.  **検証**: `docs_inspect.py` を実行し 0 件通過を確認する。
+
+### 双方向同期
+`.spec/` ⇄ `docs/` 間の差分同期には、`sdd_sync.py` スクリプトを使用します。
 
 ```bash
-python scripts/docs_inspect.py <repo-root>            # → docs-inspection-report.md
-python scripts/docs_inspect.py <repo-root> --json     # 機械可読出力
-python scripts/docs_inspect.py <repo-root> --strict   # WARN も失敗扱い
+# 1. 差分・同期ステータスの確認
+python3 scripts/sdd_sync.py diff
+
+# 2. マスターからドキュメントへの同期 (.spec -> docs)
+python3 scripts/sdd_sync.py pull
+
+# 3. ドキュメントの手動修正をマスターへ逆反映 (docs -> .spec)
+python3 scripts/sdd_sync.py push
 ```
 
-ERROR があれば終了コード 1（CI ゲート用）。チェック一覧と exempt 規則は
-`scripts/README.md` を参照。`bitz-sdd` の Verify フェーズと Promotion Gate では、
-.planning/ 側の spec_inspect.py（bitz-sdd 同梱）と本スクリプトの両方を実行する。
+### ドキュメントの構造検証
+```bash
+python3 scripts/docs_inspect.py <repo-root>            # → docs-inspection-report.md
+python3 scripts/docs_inspect.py <repo-root> --json     # 機械可読出力
+python3 scripts/docs_inspect.py <repo-root> --strict   # WARN も失敗扱い
+```
 
-## 運用規約の要点
-
-展開後は `docs/_conventions.md` が正。ここでは判断に必要な要点のみ:
-
-- 全文書に共通 frontmatter（id / title / status / version / changeImpact /
-  project_type / updated / owner）。id は `DOC-<area>-<slug>` 形式
-- changeImpact → version bump: low=patch / medium=minor+CHANGELOG /
-  high=major+CHANGELOG+Revision History+レビュー
-- 新しい情報の置き場所は Decision Matrix で決める: 検証可能な契約→`.planning/`、
-  決定の理由・不採用案→ADR、恒久的な学び→LESSONS_LEARNED、背景・用語→01-context、
-  構造・設計→02-design
-- ADR は `02-design/decisions/ADR-NNNN-<slug>.md`（4桁ゼロ埋め）。テンプレートは
-  `assets/docs-templates/docs/02-design/decisions/ADR-template.md`
-- エージェントが docs/ に書けるのは `status: proposed` のドラフト（`sdd-discovery` /
-  `sdd-design` / Promotion Gate のドラフト生成）と対応するレジストリ行のみ。
-  proposed → active の裁定は人間専権。active 文書の書き換え・閉じ戻しは
-  Promotion Gate（人間承認）のみ
+## 3. 同期マッピングのルール
+*   `.spec/discovery/vision.md` ⇄ `docs/01-context/mission-vision.md`
+*   `.spec/discovery/scope.md` ⇄ `docs/01-context/non-goals.md`
+*   `.spec/design/domain-model.md` ⇄ `docs/02-design/domain-model.md`
+*   `.spec/design/api-design.md` ⇄ `docs/02-design/public-api.md`
+*   `.spec/design/architecture.md` ⇄ `docs/02-design/ARCHITECTURE.md`
+*   `.spec/design/stories/` の個別ファイルは自動集計され `docs/02-design/domain-story.md` へ Pull 展開されます（Push による逆書き戻しは非対応）。

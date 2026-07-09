@@ -2,21 +2,23 @@
 """spec_inspect.py — BitzSDD（bitz-sdd スキル）の構造検証・影響分析ツール（stdlib のみ）
 
 使い方:
-  python spec_inspect.py <repo-root>                 # 全検証 → .planning/inspection-report.md
+  python spec_inspect.py <repo-root>                 # 全検証 → .spec/inspection-report.md
+  python spec_inspect.py --workspace plugins/* .     # モノリポ一括検証（クロスリファレンス解決）
   python spec_inspect.py <repo-root> --impact FR-012 # 変更影響分析（stale候補の列挙）
   python spec_inspect.py <repo-root> --impact-docs docs/02-design/ARCHITECTURE.md
                                                      # docs変更の影響要件（derived_from 逆引き）
 """
+import argparse
 import re
 import subprocess
 import sys
 from datetime import date
 from pathlib import Path
 
-ID_RE = re.compile(r"\b(?:FR|NFR|CON)-\d{3}\b")
+ID_RE = re.compile(r"\b(?:[A-Z0-9]{2,4}-)?(?:FR|NFR|CON|DSC|DSN|INF|REV|TSK)-\d{3}\b")
 DOCS_REF_RE = re.compile(r"(docs/[^\s@]+)(?:@([0-9a-fA-F]{7,40}))?")
-PREFIXES = ("FR", "NFR", "CON")
-STATUSES = {"draft", "approved", "implementing", "verified", "promoted", "deprecated"}
+PREFIXES = ("FR", "NFR", "CON", "DSC", "DSN", "INF", "REV", "TSK")
+STATUSES = {"draft", "approved", "implementing", "verified", "promoted", "deprecated", "in-review", "active", "revised", "archived", "pending", "complete", "superseded"}
 VMETHODS = {"pbt", "example-test", "benchmark", "sast", "dep-audit", "load-test", "manual-check"}
 ACTIVE = {"approved", "implementing", "verified", "promoted"}  # 検証対象ステータス
 
@@ -32,25 +34,37 @@ def parse_frontmatter(text: str) -> dict:
     return fm
 
 
-def load_requirements(req_dir: Path):
+def load_requirements(root: Path):
     reqs = {}
     problems = []
-    for f in sorted(req_dir.glob("*.md")):
-        if f.name.startswith("_") or f.name in ("domains.md",):
+    dirs_to_scan = [
+        root / ".spec" / "requirements",
+        root / ".spec" / "discovery",
+        root / ".spec" / "design",
+        root / ".spec" / "design" / "infra",
+        root / ".spec" / "reviews"
+    ]
+    for d in dirs_to_scan:
+        if not d.exists():
             continue
-        text = f.read_text(encoding="utf-8")
-        fm = parse_frontmatter(text)
-        rid = fm.get("id", "")
-        if not rid:
-            problems.append(f"[構造] {f.name}: frontmatter に id がない")
-            continue
-        if f.stem != rid:
-            problems.append(f"[構造] {f.name}: ファイル名と id ({rid}) が不一致")
-        if not rid.split("-")[0] in PREFIXES:
-            problems.append(f"[構造] {rid}: プレフィックスが FR/NFR/CON 以外")
-        if rid in reqs:
-            problems.append(f"[重複] {rid}: IDが重複している")
-        reqs[rid] = {"fm": fm, "text": text, "path": f}
+        for f in sorted(d.glob("*.md")):
+            if f.name.startswith("_") or f.name in ("domains.md",):
+                continue
+            text = f.read_text(encoding="utf-8")
+            fm = parse_frontmatter(text)
+            rid = fm.get("id", "")
+            if not rid:
+                problems.append(f"[構造] {f.relative_to(root)}: frontmatter に id がない")
+                continue
+            if d.name == "requirements" and f.stem != rid:
+                problems.append(f"[構造] {f.relative_to(root)}: ファイル名と id ({rid}) が不一致")
+            prefix_part = rid.split("-")
+            core_prefix = prefix_part[1] if len(prefix_part) > 2 else prefix_part[0]
+            if core_prefix not in PREFIXES:
+                problems.append(f"[構造] {rid}: プレフィックスが正規外")
+            if rid in reqs:
+                problems.append(f"[重複] {rid}: IDが重複している")
+            reqs[rid] = {"fm": fm, "text": text, "path": f}
     return reqs, problems
 
 
@@ -135,7 +149,7 @@ def sha_matches(a: str, b: str) -> bool:
 def implements_map(root: Path):
     """tasks/ の implements: 行から 要件ID → タスクファイル を集める"""
     impl = {}
-    tasks = root / ".planning" / "tasks"
+    tasks = root / ".spec" / "tasks"
     if not tasks.exists():
         return impl
     for f in tasks.rglob("*.md"):
@@ -147,15 +161,17 @@ def implements_map(root: Path):
     return impl
 
 
-def inspect(root: Path) -> str:
-    req_dir = root / ".planning" / "requirements"
+def inspect(root: Path, global_reqs: dict = None) -> str:
+    req_dir = root / ".spec" / "requirements"
     if not req_dir.exists():
         return f"ERROR: {req_dir} が存在しません（BitzSDD レイアウト未初期化）"
-    reqs, problems = load_requirements(req_dir)
+    reqs, problems = load_requirements(root)
+    if global_reqs is None:
+        global_reqs = reqs
     domains = load_domains(req_dir)
     forbidden = load_forbidden_words(req_dir)
     impl = implements_map(root)
-    all_refs = scan_refs(root, [".planning/specs", ".planning/tasks", "tests", "test", "src"],
+    all_refs = scan_refs(root, [".spec/specs", ".spec/tasks", "tests", "test", "src"],
                          exclude_names=("inspection-report.md",))
 
     for rid, r in reqs.items():
@@ -163,29 +179,32 @@ def inspect(root: Path) -> str:
         st = fm.get("status", "")
         if st not in STATUSES:
             problems.append(f"[frontmatter] {rid}: status '{st}' は語彙外")
-        if st in ACTIVE and fm.get("verification_method", "") not in VMETHODS:
-            problems.append(f"[frontmatter] {rid}: verification_method が未記入/語彙外（approved 以降は必須）")
-        if st == "deprecated" and not fm.get("superseded_by") and "廃止" not in r["text"]:
-            problems.append(f"[frontmatter] {rid}: deprecated だが superseded_by が空（純粋廃止なら本文に理由を明記）")
-        if domains is not None and fm.get("domain") and fm["domain"] not in domains:
-            problems.append(f"[domain] {rid}: '{fm['domain']}' は domains.md 未登録")
-        body = re.sub(r"^---.*?---", "", r["text"], flags=re.S)
-        for w in forbidden:
-            if w and w in body:
-                problems.append(f"[lint] {rid}: 禁止語『{w}』（測定不能）を含む — 数値/閾値へ書き換え")
-        for line in body.splitlines():
-            if "WHEN" in line and "SHALL" not in line:
-                problems.append(f"[lint] {rid}: EARS不完全（WHEN があるのに SHALL がない行）")
+        prefix_part = rid.split("-")
+        core_prefix = prefix_part[1] if len(prefix_part) > 2 else prefix_part[0]
+        if core_prefix in ("FR", "NFR", "CON"):
+            if st in ACTIVE and fm.get("verification_method", "") not in VMETHODS:
+                problems.append(f"[frontmatter] {rid}: verification_method が未記入/語彙外（approved 以降は必須）")
+            if st == "deprecated" and not fm.get("superseded_by") and "廃止" not in r["text"]:
+                problems.append(f"[frontmatter] {rid}: deprecated だが superseded_by が空（純粋廃止なら本文に理由を明記）")
+            if domains is not None and fm.get("domain") and fm["domain"] not in domains:
+                problems.append(f"[domain] {rid}: '{fm['domain']}' は domains.md 未登録")
+            body = re.sub(r"^---.*?---", "", r["text"], flags=re.S)
+            for w in forbidden:
+                if w and w in body:
+                    problems.append(f"[lint] {rid}: 禁止語『{w}』（測定不能）を含む — 数値/閾値へ書き換え")
+            for line in body.splitlines():
+                if "WHEN" in line and "SHALL" not in line:
+                    problems.append(f"[lint] {rid}: EARS不完全（WHEN があるのに SHALL がない行）")
 
-    ghosts = {rid: srcs for rid, srcs in all_refs.items() if rid not in reqs}
+    ghosts = {rid: srcs for rid, srcs in all_refs.items() if rid not in global_reqs}
     orphans = [rid for rid, r in reqs.items()
-               if r["fm"].get("status") in ACTIVE and rid not in impl]
+               if r["fm"].get("status") in ACTIVE and (rid.split("-")[1] if len(rid.split("-"))>2 else rid.split("-")[0]) in ("FR", "NFR", "CON") and rid not in impl]
     untested = [rid for rid, r in reqs.items()
-                if r["fm"].get("status") in ACTIVE
+                if r["fm"].get("status") in ACTIVE and (rid.split("-")[1] if len(rid.split("-"))>2 else rid.split("-")[0]) in ("FR", "NFR", "CON")
                 and not any(s.startswith(("tests", "test", "src")) for s in all_refs.get(rid, []))]
 
     lines = [f"# inspection-report.md ({date.today().isoformat()})", ""]
-    lines.append(f"要件数: {len(reqs)} / 問題: {len(problems)} / 幽霊参照: {len(ghosts)} / 孤児要件: {len(orphans)}")
+    lines.append(f"成果物数: {len(reqs)} / 問題: {len(problems)} / 幽霊参照: {len(ghosts)} / 孤児要件: {len(orphans)}")
     lines.append("")
     lines.append("## 問題一覧")
     lines += [f"- {p}" for p in problems] or ["- なし ✅"]
@@ -224,13 +243,14 @@ def inspect(root: Path) -> str:
     return "\n".join(lines)
 
 
-def impact(root: Path, target: str) -> str:
-    req_dir = root / ".planning" / "requirements"
-    reqs, _ = load_requirements(req_dir)
-    if target not in reqs:
+def impact(root: Path, target: str, global_reqs: dict = None) -> str:
+    reqs, _ = load_requirements(root)
+    if global_reqs is None:
+        global_reqs = reqs
+    if target not in global_reqs:
         return f"ERROR: {target} は登録簿に存在しません"
-    ver = reqs[target]["fm"].get("version", "?")
-    all_refs = scan_refs(root, [".planning/specs", ".planning/tasks", "tests", "test", "src", "docs"],
+    ver = global_reqs[target]["fm"].get("version", "?")
+    all_refs = scan_refs(root, [".spec/specs", ".spec/tasks", "tests", "test", "src", "docs"],
                          exclude_names=("inspection-report.md",))
     hits = sorted(set(all_refs.get(target, [])))
     lines = [f"# impact: {target}@{ver}", "",
@@ -242,12 +262,14 @@ def impact(root: Path, target: str) -> str:
     return "\n".join(lines)
 
 
-def impact_docs(root: Path, target: str) -> str:
+def impact_docs(root: Path, target: str, global_reqs: dict = None) -> str:
     """docs/ 文書の変更が影響する要件を derived_from の逆引きで列挙する（再伝播プロトコルの候補列挙）"""
-    req_dir = root / ".planning" / "requirements"
+    req_dir = root / ".spec" / "requirements"
     if not req_dir.exists():
         return f"ERROR: {req_dir} が存在しません（BitzSDD レイアウト未初期化）"
-    reqs, _ = load_requirements(req_dir)
+    reqs, _ = load_requirements(root)
+    if global_reqs is None:
+        global_reqs = reqs
     target = target.strip().lstrip("./")
     current = git_head_sha(root, target)
     rows = []
@@ -275,27 +297,51 @@ def impact_docs(root: Path, target: str) -> str:
 
 
 def main():
-    if len(sys.argv) < 2:
-        print(__doc__)
-        sys.exit(1)
-    root = Path(sys.argv[1]).resolve()
-    if "--impact-docs" in sys.argv:
-        target = sys.argv[sys.argv.index("--impact-docs") + 1]
-        print(impact_docs(root, target))
-    elif "--impact" in sys.argv:
-        target = sys.argv[sys.argv.index("--impact") + 1]
-        print(impact(root, target))
-    else:
-        report = inspect(root)
-        out = root / ".planning" / "inspection-report.md"
-        if not report.startswith("ERROR"):
-            out.write_text(report + "\n", encoding="utf-8")
-            print(report)
-            print(f"\n→ {out} に保存しました")
-        else:
-            print(report)
-            sys.exit(1)
+    parser = argparse.ArgumentParser(description="BitzSDD inspection tool")
+    parser.add_argument("roots", nargs="*", default=["."], help="Workspace roots")
+    parser.add_argument("--workspace", nargs="+", help="Explicitly specify workspace roots (overrides positional roots)")
+    parser.add_argument("--impact", help="ID for impact analysis")
+    parser.add_argument("--impact-docs", help="docs path for impact analysis")
+    args = parser.parse_args()
 
+    workspaces = [Path(p).resolve() for p in (args.workspace if args.workspace else args.roots)]
+    workspaces = [w for w in workspaces if w.is_dir() and (w / ".spec").exists()]
+    
+    if not workspaces:
+        print("ERROR: No valid BitzSDD workspaces found.")
+        sys.exit(1)
+
+    global_reqs = {}
+    for w in workspaces:
+        reqs, _ = load_requirements(w)
+        global_reqs.update(reqs)
+
+    has_error = False
+    for w in workspaces:
+        if len(workspaces) > 1:
+            print(f"=== Workspace: {w.name} ===")
+            
+        if args.impact_docs:
+            print(impact_docs(w, args.impact_docs, global_reqs))
+        elif args.impact:
+            print(impact(w, args.impact, global_reqs))
+        else:
+            report = inspect(w, global_reqs)
+            out = w / ".spec" / "inspection-report.md"
+            if not report.startswith("ERROR"):
+                out.write_text(report + "\n", encoding="utf-8")
+                print(report)
+                if "FAIL ❌" in report:
+                    has_error = True
+            else:
+                print(report)
+                has_error = True
+                
+        if len(workspaces) > 1:
+            print()
+
+    if has_error:
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
