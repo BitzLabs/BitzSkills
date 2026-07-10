@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-11)
 
-成果物数: 7 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
+成果物数: 8 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -19,6 +19,7 @@
 - CORE-CON-005
 - CORE-CON-006
 - CORE-FR-001
+- CORE-FR-002
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
 ※ 乖離は候補提示のみ。stale 付与は references/lifecycle.md の再伝播プロトコル（判定パス→人間確認）を経ること
@@ -34,5 +35,6 @@
 | CORE-CON-005 | approved | governance | manual-check | 1 | 1 |
 | CORE-CON-006 | approved | governance | example-test | 1 | 1 |
 | CORE-FR-001 | verified | governance | manual-check | 1 | 1 |
+| CORE-FR-002 | verified | tooling | example-test | 1 | 1 |
 
 **判定: PASS ✅**

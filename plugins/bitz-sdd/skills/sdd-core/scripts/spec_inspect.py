@@ -113,6 +113,9 @@ def scan_refs(root: Path, subdirs, exclude_names=()):
             except OSError:
                 continue
             for rid in set(ID_RE.findall(text)):
+                if rid == f.stem:
+                    # ファイル自身の ID は自己言及であって参照ではない（タスクが自分の ID を名乗れるように）
+                    continue
                 refs.setdefault(rid, []).append(str(f.relative_to(root)))
     return refs
 
