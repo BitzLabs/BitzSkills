@@ -2,7 +2,7 @@
 name: sdd-core
 description: BitzSDD — 仕様駆動開発（SDD）ワークフローを運用するメインスキル。要件定義・仕様作成・実装・検証・完了処理のすべてをこの規律に従って実行する。ユーザーが「仕様駆動」「SDD」「要件」「EARS」「spec」「タスク分解」「feature実装」に言及したとき、リポジトリに .spec/ や AGENTS.md が存在するとき、または新機能の設計・実装・検証・リリース処理を依頼されたときは、明示的な指示がなくても必ずこのスキルを使うこと。要件の変更・廃止・番号管理・テスト失敗時の対応・ドキュメント更新もすべて本スキルの管轄。
 metadata:
-  version: "1.6.0"
+  version: "1.7.0"
   author: br7.hide
   created: "2026-07-07"
   updated: "2026-07-11"
@@ -63,6 +63,19 @@ AGENTS.md                    読み込みプロトコル+権限マトリクス
 | 検証 red・エラー・矛盾発見 | Execute / Verify | `sdd-core` (failure-protocol.md) |
 | 検証・カバレッジ確認 | Verify | `sdd-test` + `sdd-core` (spec_inspect.py 実行) |
 | feature完了・docs/同期・昇格 | Promotion Gate | `sdd-core` / `sdd-docs` (push/pull) |
+
+## 軽量レーン（小さな変更のためのショートカット）
+
+小さな修正（1スキルの軽微な変更・記載漏れの修正・文言調整など）は、フルワークフローの
+オーバーヘッドを避けるため **spec-issue → 要件（draft → approved は人間）→ タスク** だけで回してよい:
+
+1. `.spec/spec-issues/` に起票（変更の必要性と影響範囲）
+2. 要件化が必要なら `.spec/requirements/` に draft 起票 → 人間が approved 化。
+   既存要件の範囲内なら要件追加も不要
+3. `sdd-implement` のタスク分解（1タスクで可）→ 実装 → `sdd-test` 検証
+
+**discovery / design はスキップしてよい**。ただし契約（公開 API・`.spec` スキーマ・
+frontmatter 書式）に触れる変更はショートカット禁止 — 通常フローと Design Gate を通すこと。
 
 ## モノリポ運用とクロスリファレンス (Monorepo & Workspaces)
 
