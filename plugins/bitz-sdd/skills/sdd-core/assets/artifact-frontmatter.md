@@ -28,3 +28,9 @@ BitzSDDの `.spec/` 内のファイル（Requirementsを除く）は、一貫し
 | Tasks | `TSK` | 実行タスク |
 
 *Requirements (`FR`, `NFR`, `CON`) は独自のより詳細なfrontmatterを持つため、この共通仕様の対象外ですが、ID体系の規律は共有します。*
+
+## 領域固有の追加キー
+
+| 領域 | キー | 値 | 用途 |
+|---|---|---|---|
+| Review（統合報告書 `review-synthesis.md`） | `decision` | `PASS` \| `CONDITIONAL_PASS` \| `FAIL` | **必須**。`sdd_report.py` がこのキーを集計してステータスレポートのレビュー判定欄に反映する。欠落時は `PENDING` として扱われる |

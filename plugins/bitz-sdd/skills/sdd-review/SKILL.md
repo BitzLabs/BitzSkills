@@ -2,10 +2,10 @@
 name: sdd-review
 description: BitzSDD の設計ドキュメントや要件定義を多観点（consistency/data-integrity/operations/risk/business）で並列レビューするスキル。結果はすべて .spec/reviews/ 配下に格納し、レポート自動生成およびゲート判定の材料とする。
 metadata:
-  version: "0.2.1"
+  version: "0.2.2"
   author: br7.hide
   created: "2026-07-08"
-  updated: "2026-07-10"
+  updated: "2026-07-11"
 ---
 
 # SDD Review — 多観点並列レビュー
@@ -29,4 +29,4 @@ BitzSDDの設計と仕様の検証レビューを担当します。
 *   判定（`PASS` / `CONDITIONAL_PASS` / `FAIL`）は `sdd-report` による自動集計の対象となり、統合進捗レポート `.spec/reports/status-report.md` に反映されます。
 *   `FAIL` または `CONDITIONAL_PASS` の場合は、指摘事項を修正するか、条件を消化するまで Design Gate / Promotion Gate を通過することはできません。
 *   レビューで見つかった要件や設計の根本的な問題は、`.spec/spec-issues/` に起票します。
-*   **ID体系**: 統合報告書 (`review-synthesis.md`) は `REV-NNN` のIDを持ち、YAML frontmatterを含みます。Consistency観点の指摘事項は、制約要件(CON)との衝突を避けるため `RVC-` プレフィックスを使用します。
+*   **ID体系**: 統合報告書 (`review-synthesis.md`) は `REV-NNN` のIDを持ち、YAML frontmatterを含みます。frontmatter には共通キーに加えて **`decision: PASS | CONDITIONAL_PASS | FAIL` を必須**で含めます（`sdd-report` の自動集計が参照する。書式の正は `sdd-core` の assets/artifact-frontmatter.md「領域固有の追加キー」）。Consistency観点の指摘事項は、制約要件(CON)との衝突を避けるため `RVC-` プレフィックスを使用します。
