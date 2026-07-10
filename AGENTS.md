@@ -52,6 +52,18 @@ scripts/             # エージェント共用の運用スクリプト（bump /
   `python3 scripts/release_check.py` を自分で再実行して確認する
 - skill-improver によるスキル自動修正は、コミット前に人間が diff を確認する
 
+## コミット・PR 規約
+
+- **コミットタイトル**: Conventional Commits に従う —
+  `<type>(<scope>): <説明>`。type は `feat` / `fix` / `docs` / `refactor` / `test` / `chore`
+  （破壊的変更は `!` を付ける。例: `refactor!:`）。scope はプラグイン名（リポジトリ横断なら省略可）。
+  説明・本文は日本語可
+- **マージ**: PR は squash merge とし、マージコミットのタイトル = PR タイトル
+  （つまり PR タイトルも Conventional Commits 準拠。CI が機械検査する）
+- **PR 本文**: 目的 / 変更点 / 検証結果（`release_check.py` と pytest の実出力）を含める
+  （`.github/PULL_REQUEST_TEMPLATE.md` 参照）
+- **1 PR = 1 関心事**: `git revert` で丸ごと戻せる粒度を保つ。version bump は PR の最終コミットに含める
+
 ## 定型手順（手作業せずスクリプトを使う）
 
 - **version bump**: `python3 scripts/bump_version.py <plugin名> [major|minor|patch]`
