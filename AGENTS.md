@@ -82,6 +82,11 @@ scripts/             # エージェント共用の運用スクリプト（bump /
 
 ## 規約
 
+> 主要規約は EARS 要件としてルート `.spec/requirements/`（`CORE-CON-*`）に起票済み。
+> 機械検証可能な形の正はそちら（`spec_inspect.py` で検証）で、本節は人間向けナラティブ。
+> このリポジトリ自身の開発も sdd-core 準拠で行う（ドッグフーディング。
+> 適用する bitz-sdd はリリース済み版に固定 — `.spec/PROJECT.md` 参照）
+
 - 各スキルは自己完結させる（フォルダ単位でコピーされるため、他スキルの
   `references/` を相対パスで参照しない。連携はスキル名の言及で行う）
 - SKILL.md の frontmatter 仕様は
