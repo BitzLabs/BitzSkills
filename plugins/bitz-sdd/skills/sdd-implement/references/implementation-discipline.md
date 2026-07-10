@@ -70,7 +70,9 @@
 
 1つの実装タスクは、原則として1つの独立した Git コミット（またはプルリクエストのマージ時に Squash された単一の論理的コミット）として記録されなければなりません。
 コミットメッセージには必ずタスク ID と関連する要件 ID を含め、変更の意図を機械的に検索可能にします。
-- **推奨フォーマット例**: `feat(domain): [TASK-042] implement user validation (implements FR-012)`
+- **推奨フォーマット**: タイトルは Conventional Commits + タスク ID、要件 ID はフッター `Implements:` 行で宣言する
+  （例: タイトル `feat(domain): [TSK-042] ユーザー検証を実装`、フッター `Implements: FR-012`）。
+  ブランチ・worktree・PR まで含めた Git フローの正式な規定は `sdd-git` スキルが正
 
 ### 4.2 文脈汚染（Context Pollution）の徹底防止
 
