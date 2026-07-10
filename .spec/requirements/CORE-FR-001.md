@@ -1,7 +1,7 @@
 ---
 id: CORE-FR-001
 version: 1.0
-status: draft
+status: verified
 domain: governance
 priority: low
 origin: SI-CORE-001（evals/bitz-sdd/report.md 改善提案2 由来）
@@ -20,3 +20,4 @@ confidence: high
 - **検証手段**: SKILL.md の目視確認（表に必須/任意列または注記があること）
 - **Revision History**:
   - 1.0 (2026-07-11) 初版（SI-CORE-001 の要件化ドラフト）
+  - 1.0 (2026-07-11) 人間裁定により approved 化（チャット指示）→ 実装済み（PR #16）のため manual-check（成果物表の必須/任意列の存在確認）を経て verified

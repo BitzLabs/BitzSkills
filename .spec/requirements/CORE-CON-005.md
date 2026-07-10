@@ -1,7 +1,7 @@
 ---
 id: CORE-CON-005
 version: 1.0
-status: draft
+status: approved
 domain: governance
 priority: high
 origin: AGENTS.md（リポジトリ共通規約からの reverse-derived）
@@ -20,3 +20,4 @@ confidence: high
 - **検証手段**: PR レビュー + skill-validator チェックリスト B 群
 - **Revision History**:
   - 1.0 (2026-07-11) 初版（AGENTS.md の既存規約を要件化）
+  - 1.0 (2026-07-11) 人間裁定により approved 化（チャット指示）

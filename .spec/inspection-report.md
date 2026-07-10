@@ -12,7 +12,13 @@
 - なし ✅
 
 ## テスト/実装からの参照がない要件（approved以降）
-- なし ✅
+- CORE-CON-001
+- CORE-CON-002
+- CORE-CON-003
+- CORE-CON-004
+- CORE-CON-005
+- CORE-CON-006
+- CORE-FR-001
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
 ※ 乖離は候補提示のみ。stale 付与は references/lifecycle.md の再伝播プロトコル（判定パス→人間確認）を経ること
@@ -21,12 +27,12 @@
 ## Traceability Matrix
 | ID | status | domain | v-method | tasks | 参照元数 |
 |----|--------|--------|----------|-------|----------|
-| CORE-CON-001 | draft | governance | example-test | 0 | 0 |
-| CORE-CON-002 | draft | governance | example-test | 0 | 0 |
-| CORE-CON-003 | draft | governance | example-test | 0 | 0 |
-| CORE-CON-004 | draft | governance | manual-check | 0 | 0 |
-| CORE-CON-005 | draft | governance | manual-check | 0 | 0 |
-| CORE-CON-006 | draft | governance | example-test | 0 | 0 |
-| CORE-FR-001 | draft | governance | manual-check | 1 | 1 |
+| CORE-CON-001 | approved | governance | example-test | 1 | 1 |
+| CORE-CON-002 | approved | governance | example-test | 1 | 1 |
+| CORE-CON-003 | approved | governance | example-test | 1 | 1 |
+| CORE-CON-004 | approved | governance | manual-check | 1 | 1 |
+| CORE-CON-005 | approved | governance | manual-check | 1 | 1 |
+| CORE-CON-006 | approved | governance | example-test | 1 | 1 |
+| CORE-FR-001 | verified | governance | manual-check | 1 | 1 |
 
 **判定: PASS ✅**
