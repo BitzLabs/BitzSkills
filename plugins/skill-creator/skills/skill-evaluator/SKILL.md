@@ -2,10 +2,10 @@
 name: skill-evaluator
 description: skill-testerが実行したテスト結果（evals/<skill-name>/配下）をアサーションに照らして採点し、スキルあり/なしの比較と改善提案を含むreport.mdを作成する。「テスト結果を評価して」「スキルの効果を測って」「レポートを作って」と言われた場合や、skill-testerの実行後に使用する。
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
   author: br7.hide
   created: "2026-07-05"
-  updated: "2026-07-05"
+  updated: "2026-07-11"
 ---
 
 # skill-evaluator
@@ -57,8 +57,18 @@ metadata:
 改善提案は**一般化を優先**する。特定のテストケースを通すためだけの文言追加は
 提案せず、「同種の入力全般で挙動が良くなる修正」を提案する。
 
+### 4.5 spec-issue への起票（.spec/ があるリポジトリの場合）
+
+対象リポジトリのルートに `.spec/` がある場合、**実装を要する改善提案は
+`.spec/spec-issues/` に1件ずつ起票**し、report.md からそのファイル名を参照する
+（書式は bitz-sdd `sdd-core` の assets/spec-issue.md。`raised_by: skill-evaluator`、
+根拠として `evals/<skill-name>/report.md` の該当節を明記）。
+評価者はスキルを直接修正しない — 人間が spec-issue を裁定し要件化（draft → approved）
+して初めて実装に進む（権限分離）。`.spec/` がなければ従来どおり report の提案のみでよい。
+
 ### 5. 次工程の提案
 
-- 不合格・改善点があった場合: `skill-optimizer` での改善と、改善後の
+- 不合格・改善点があった場合: spec-issue を起票済みなら人間の裁定を待つ。
+  `.spec/` がないリポジトリでは `skill-optimizer` での改善と、改善後の
   `skill-tester` 再実行を提案する
 - 全て合格の場合: `skill-packager` での配置を提案する

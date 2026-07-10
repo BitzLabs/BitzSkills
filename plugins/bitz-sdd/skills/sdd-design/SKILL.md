@@ -2,7 +2,7 @@
 name: sdd-design
 description: BitzSDD の設計工程を行うスキル（軽量デフォルト設計）。ドメイン概要、API 設計（3層）、アーキテクチャ統合（3ビュー + 技術適合性評価）を確立し、成果物を .spec/design/ 内に記述・作成する。docs/02-design/ 側へは sdd-docs の pull コマンドを用いて同期・展開する。本格的な DDD 手法（ドメインストーリーテリング・戦略設計・成熟度評価）は bitz-ddd プラグインが提供し、導入されていればそちらを優先する。
 metadata:
-  version: "0.4.0"
+  version: "0.4.1"
   author: br7.hide
   created: "2026-07-08"
   updated: "2026-07-11"
@@ -34,12 +34,12 @@ BitzSDDにおける設計フェーズを担当します。
 
 ## 4. 成果物定義と同期
 
-| # | ステップ | 成果物 (マスターファイル) | docs/ 同期先 | 担当 |
-|---|---|---|---|---|
-| 1 | ドメインストーリー | `.spec/design/stories/` | `docs/02-design/domain-story.md` (自動集約) | `ddd-story`（任意） |
-| 2 | ドメインモデル | `.spec/design/domain-model.md` | `docs/02-design/domain-model.md` | `ddd-model` または本スキルの軽量スケッチ |
-| 3 | API 設計 | `.spec/design/api-design.md` | `docs/02-design/public-api.md` | 本スキル |
-| 4 | アーキテクチャ統合 | `.spec/design/architecture.md` | `docs/02-design/ARCHITECTURE.md` | 本スキル |
+| # | ステップ | 成果物 (マスターファイル) | docs/ 同期先 | 担当 | 必須/任意 |
+|---|---|---|---|---|---|
+| 1 | ドメインストーリー | `.spec/design/stories/` | `docs/02-design/domain-story.md` (自動集約) | `ddd-story`（任意） | 任意（bitz-ddd 導入時のみ） |
+| 2 | ドメインモデル | `.spec/design/domain-model.md` | `docs/02-design/domain-model.md` | `ddd-model` または本スキルの軽量スケッチ | 必須 |
+| 3 | API 設計 | `.spec/design/api-design.md` | `docs/02-design/public-api.md` | 本スキル | 任意（API を公開するシステムのみ。未作成なら同期は SKIP される） |
+| 4 | アーキテクチャ統合 | `.spec/design/architecture.md` | `docs/02-design/ARCHITECTURE.md` | 本スキル | 必須 |
 
 設計成果物を作成・更新したら、`python3 scripts/sdd_sync.py pull` を実行して `docs/` に展開します。
 外部プラグイン（`bitz-ddd` 等）が生成した成果物も、この表の配置と frontmatter 書式に従っていれば同一に扱われます。
