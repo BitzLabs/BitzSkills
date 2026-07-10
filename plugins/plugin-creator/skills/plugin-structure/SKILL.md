@@ -2,7 +2,7 @@
 name: plugin-structure
 description: Claude Code / Antigravity 2.0 プラグインのディレクトリ構造・plugin.jsonマニフェスト・コンポーネント（commands/agents/skills/hooks/rules）の自動発見・${CLAUDE_PLUGIN_ROOT}の使い方を案内する。「プラグインを作りたい」「プラグインの構成を知りたい」「plugin.jsonの書き方」「コンポーネントの配置」「自動発見の仕組み」「両対応プラグインにしたい」について聞かれたとき、または新規プラグインの雛形を作るときに使用する。
 metadata:
-  version: "0.2.3"
+  version: "0.3.0"
   author: br7.hide
   created: "2026-07-05"
   updated: "2026-07-11"
@@ -52,44 +52,15 @@ plugin-name/
 ## ディレクトリ構造（Antigravity 2.0）
 
 Antigravity のプラグインは customization root（プロジェクトの
-`.agents/plugins/` またはグローバルの `~/.gemini/config/plugins/`）配下に置く:
+`.agents/plugins/` またはグローバルの `~/.gemini/config/plugins/`）配下に置く。
+マニフェストは**ルート直下**の `plugin.json`（`.claude-plugin/` は読まれない）で、
+ネイティブのコンポーネントは skills / rules / hooks / MCP。
+`commands/` はスキルへ、`agents/*.md` はサブエージェントへ変換される
+（Claude 互換レイヤー）。`${CLAUDE_PLUGIN_ROOT}` に相当する環境変数はない。
 
-```
-plugin-name/
-├── plugin.json          # 必須: ルート直下（このファイルの存在がプラグインの印）
-├── mcp_config.json      # 任意: MCPサーバー定義
-├── hooks.json           # 任意: フック（ルート直下。hooks/ フォルダではない）
-├── rules/               # 任意: プラグイン有効時にマージされるルール（*.md）
-└── skills/              # スキル（Claude Code と同形式）
-    └── skill-name/
-        └── SKILL.md
-```
-
-**Claude Code との主な違い:**
-
-- マニフェストは**ルート直下**の `plugin.json`（`.claude-plugin/` は読まれない）。
-  必須フィールドはなく、`name` 省略時はフォルダ名が使われる
-- ネイティブのコンポーネントは skills / rules / hooks / MCP。
-  `commands/` は agy CLI がインストール時に**スキルへ変換**し、
-  `agents/*.md` はサブエージェントとして処理される（Claude 互換レイヤー）
-- フックは `hooks.json`（書式も異なる。`plugin-hooks` スキル参照）、
-  MCP は `mcp_config.json`（`.mcp.json` は読まれない）
-- `${CLAUDE_PLUGIN_ROOT}` に相当する環境変数はない
-
-### 両対応（クロスプラットフォーム）プラグインの作り方
-
-1. **マニフェストを2つ置く**: `.claude-plugin/plugin.json`（Claude Code 用）と
-   ルートの `plugin.json`（Antigravity 用）。`version` は常に同じ値に保つ
-2. **中核はスキルで作る**: `skills/<name>/SKILL.md` は両プラットフォーム共通
-   （Agent Skills 標準）で、最もポータブルなコンポーネント
-3. **コマンドは「スキルに変換されても成立する」内容にする**: Claude Code 固有
-   機能（`!` bash実行・`${CLAUDE_PLUGIN_ROOT}` 参照）に依存しすぎない
-4. **フック・MCP を両対応させる場合はファイルを2系統置く**:
-   `hooks/hooks.json` + `.mcp.json`（Claude Code）と
-   `hooks.json` + `mcp_config.json`（Antigravity）
-5. **両方で検証する**: `claude plugin validate <path>` と
-   `agy plugin validate <path>`
-
+ディレクトリツリー・Claude Code との主な違いの一覧・両対応
+（クロスプラットフォーム）プラグインの作り方は
+`references/antigravity-directory-structure.md` を参照。
 配置場所・優先順位・plugins.json による宣言的登録などの詳細は
 `references/antigravity-structure.md` を参照。
 
@@ -145,31 +116,14 @@ plugin-name/
 `scripts/` `references/` `examples/` `assets/` などの補助ファイルを同フォルダに
 バンドルできる。同梱時の考慮事項は `plugin-skills` スキル、作り方の方法論は skill-creator プラグインが担当。
 
-```
-skills/
-└── api-testing/
-    ├── SKILL.md
-    ├── scripts/test-runner.py
-    └── references/api-spec.md
-```
+`skills/` フォルダの構成例は `references/component-examples.md` を参照。
 
 ### フック（hooks/hooks.json）
 
 イベント（PreToolUse / PostToolUse / Stop / SessionStart 等）に対する
 ハンドラを JSON で定義する。プラグイン有効化時に自動登録される。
 
-```json
-{
-  "PreToolUse": [{
-    "matcher": "Write|Edit",
-    "hooks": [{
-      "type": "command",
-      "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/validate.sh",
-      "timeout": 30
-    }]
-  }]
-}
-```
+設定例は `references/component-examples.md` を参照。
 
 詳細は `plugin-hooks` スキルが担当。
 
@@ -233,21 +187,8 @@ Antigravity には相当する変数がない。フックの cwd は `hooks.json
 
 ## トラブルシューティング
 
-**コンポーネントが読み込まれない**:
-正しいフォルダ・拡張子か、frontmatter の YAML が正しいか、スキルのファイル名が
-`SKILL.md` か（README.md 等は不可）、プラグインが有効化されているかを確認。
-
-**パス解決エラー**:
-決め打ちパスを `${CLAUDE_PLUGIN_ROOT}` に置き換える。マニフェスト内のパスが
-`./` 始まりの相対パスかを確認。
-
-**自動発見が働かない**:
-コンポーネントフォルダがプラグインルート直下にあるか（`.claude-plugin/` 内は不可）、
-命名が規約どおりかを確認し、Claude Code を再起動する。
-
-**プラグイン間の競合**:
-一意で説明的なコンポーネント名を使う。必要ならコマンドにプラグイン名の
-プレフィックスを付ける。
+コンポーネント未読み込み・パス解決エラー・自動発見の不具合・
+プラグイン間の競合の対処は `references/troubleshooting.md` を参照。
 
 ## ベストプラクティス
 
@@ -258,3 +199,20 @@ Antigravity には相当する変数がない。フックの cwd は `hooks.json
   `test-runner-agent` など）
 - **バージョン管理**: リリースごとに `version` を semver で更新する
 - **README を置く**: プラグインルートに目的と使い方を書く
+
+## 追加リソース
+
+### リファレンス
+
+- **`references/antigravity-directory-structure.md`** — Antigravity のディレクトリ構造と両対応プラグインの作り方
+- **`references/antigravity-structure.md`** — Antigravity の配置場所・優先順位・宣言的登録
+- **`references/component-examples.md`** — skills/hooks のコード例
+- **`references/component-patterns.md`** — コンポーネント整理の発展パターン
+- **`references/manifest-reference.md`** — plugin.json 全フィールドの詳細
+- **`references/troubleshooting.md`** — よくある不具合の対処
+
+### 実例
+
+- **`examples/minimal-plugin.md`** — 最小構成
+- **`examples/standard-plugin.md`** — 標準構成
+- **`examples/advanced-plugin.md`** — フル装備構成

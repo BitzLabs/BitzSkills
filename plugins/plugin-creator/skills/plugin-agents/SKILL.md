@@ -2,10 +2,10 @@
 name: plugin-agents
 description: Claude Code / Antigravity 2.0 プラグインのサブエージェント（agents/*.md）の作成を支援する。「エージェントを作りたい」「サブエージェントを追加したい」「エージェントのfrontmatter」「エージェントの例」「自律エージェント」と言われたときや、エージェント構造・システムプロンプト設計・トリガー条件の指針が必要なときに使用する。
 metadata:
-  version: "0.3.0"
+  version: "0.4.0"
   author: br7.hide
   created: "2026-07-05"
-  updated: "2026-07-10"
+  updated: "2026-07-11"
 ---
 
 # plugin-agents
@@ -121,30 +121,8 @@ red = 重大・セキュリティ、magenta = 創造・生成。
 
 ### 標準テンプレート
 
-```markdown
-あなたは[ドメイン]を専門とする[役割]です。
-
-**中心的な責務:**
-1. [主要な責務]
-2. [副次的な責務]
-
-**分析プロセス:**
-1. [ステップ1]
-2. [ステップ2]
-
-**品質基準:**
-- [基準1]
-- [基準2]
-
-**出力形式:**
-以下の形式で結果を提示する:
-- [含める内容]
-- [構造]
-
-**エッジケース:**
-- [ケース1]: [対処法]
-- [ケース2]: [対処法]
-```
+システムプロンプトの標準テンプレート（責務・分析プロセス・品質基準・
+出力形式・エッジケース）は `references/system-prompt-template.md` を参照。
 
 ### ルール
 
@@ -159,25 +137,7 @@ red = 重大・セキュリティ、magenta = 創造・生成。
 
 Claude Code 本体から抽出されたプロンプトパターンを使う:
 
-```
-次の要望に基づいてエージェント設定を作成する: "[要望の説明]"
-
-要件:
-1. 中心的な意図と責務を抽出する
-2. そのドメインの専門家ペルソナを設計する
-3. 包括的なシステムプロンプトを作成する
-   （行動境界・具体的な方法論・エッジケース処理・出力形式）
-4. 識別子を作成する（英小文字・ハイフン・3〜50文字）
-5. トリガー条件付きの description を書く
-6. 使用場面を示す <example> ブロックを2〜3個含める
-
-JSON で返す:
-{
-  "identifier": "agent-name",
-  "whenToUse": "〜のときに使用する。例: <example>...</example>",
-  "systemPrompt": "あなたは..."
-}
-```
+要約版のプロンプトは `references/ai-assisted-creation-prompt.md` を参照。
 
 完全なテンプレートは `examples/agent-creation-prompt.md`、
 元のシステムプロンプトは `references/agent-creation-system-prompt.md` を参照。
@@ -214,6 +174,8 @@ JSON で返す:
 
 ### リファレンス
 
+- **`references/system-prompt-template.md`** — システムプロンプトの標準テンプレート
+- **`references/ai-assisted-creation-prompt.md`** — AI支援生成の呼び出しプロンプト（要約版）
 - **`references/system-prompt-design.md`** — システムプロンプトの設計パターン全集
 - **`references/triggering-examples.md`** — example の書式とベストプラクティス
 - **`references/agent-creation-system-prompt.md`** — Claude Code 由来の生成プロンプト
