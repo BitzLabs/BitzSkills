@@ -16,4 +16,4 @@ AGENTS.md の「新しいプラグインの追加手順」に従い、$ARGUMENTS
    `{"name": "<name>", "source": "./plugins/<name>", "description": "..."}` を追加
 5. `python3 scripts/release_check.py` を実行して整合性を確認し、結果を報告する
 
-スキルの追加は skill-creator スキル（または plugin-creator の skill-development）へ誘導する。
+スキルの追加は skill-creator スキル（プラグイン同梱の考慮事項は plugin-creator の plugin-skills）へ誘導する。
