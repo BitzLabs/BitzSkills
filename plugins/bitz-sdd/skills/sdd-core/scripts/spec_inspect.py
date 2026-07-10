@@ -30,7 +30,11 @@ def parse_frontmatter(text: str) -> dict:
         for line in m.group(1).splitlines():
             kv = re.match(r"^(\w[\w-]*):\s*(.*?)\s*(?:#.*)?$", line)
             if kv:
-                fm[kv.group(1)] = kv.group(2).strip()
+                val = kv.group(2).strip()
+                # クォート除去（docs_inspect / sdd_report と同挙動）
+                if len(val) >= 2 and val[0] in "\"'" and val[-1] == val[0]:
+                    val = val[1:-1]
+                fm[kv.group(1)] = val
     return fm
 
 
