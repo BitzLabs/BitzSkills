@@ -15,11 +15,11 @@
   - [Manifest Reference](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-structure/references/manifest-reference.md)
   - [Antigravity Structure Reference](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-structure/references/antigravity-structure.md)
 - **フック仕様 & 開発ガイド**:
-  - [Antigravity Hooks complete spec](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/hook-development/references/antigravity-hooks.md)
-  - [Hook Pattern Reference](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/hook-development/references/patterns.md)
+  - [Antigravity Hooks complete spec](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-hooks/references/antigravity-hooks.md)
+  - [Hook Pattern Reference](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-hooks/references/patterns.md)
 - **サブエージェント & プロンプト設計**:
-  - [System Prompt Design Reference](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/agent-development/references/system-prompt-design.md)
-  - [Agent triggering example spec](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/agent-development/references/triggering-examples.md)
+  - [System Prompt Design Reference](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-agents/references/system-prompt-design.md)
+  - [Agent triggering example spec](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-agents/references/triggering-examples.md)
 - **スキル仕様 & プラットフォームパス**:
   - [Agent Skills specification](file:///d:/44.BitzLabs/BitzSkills/plugins/skill-creator/skills/skill-creator/references/spec.md)
   - [Platform installation paths](file:///d:/44.BitzLabs/BitzSkills/plugins/skill-creator/skills/skill-packager/references/platform-paths.md)

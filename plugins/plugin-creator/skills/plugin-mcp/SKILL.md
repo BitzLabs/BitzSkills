@@ -1,14 +1,14 @@
 ---
-name: mcp-integration
+name: plugin-mcp
 description: Claude Code / Antigravity 2.0 プラグインへのMCP（Model Context Protocol）サーバー統合を支援する。「MCPサーバーを追加したい」「MCPを統合したい」「.mcp.jsonの設定」「mcp_config.jsonの設定」「外部サービスと連携したい」と言われたときや、MCPサーバー種別（stdio, SSE, HTTP, WebSocket）・認証・MCPツールの使い方について指針が必要なときに使用する。
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
   author: br7.hide
   created: "2026-07-05"
-  updated: "2026-07-06"
+  updated: "2026-07-10"
 ---
 
-# mcp-integration
+# plugin-mcp
 
 ## 目的
 

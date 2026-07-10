@@ -1,8 +1,8 @@
 ---
-name: bitz-sdd
+name: sdd-core
 description: BitzSDD — 仕様駆動開発（SDD）ワークフローを運用するメインスキル。要件定義・仕様作成・実装・検証・完了処理のすべてをこの規律に従って実行する。ユーザーが「仕様駆動」「SDD」「要件」「EARS」「spec」「タスク分解」「feature実装」に言及したとき、リポジトリに .spec/ や AGENTS.md が存在するとき、または新機能の設計・実装・検証・リリース処理を依頼されたときは、明示的な指示がなくても必ずこのスキルを使うこと。要件の変更・廃止・番号管理・テスト失敗時の対応・ドキュメント更新もすべて本スキルの管轄。
 metadata:
-  version: "1.2.1"
+  version: "1.3.0"
   author: br7.hide
   created: "2026-07-07"
   updated: "2026-07-10"
@@ -50,16 +50,16 @@ AGENTS.md                    読み込みプロトコル+権限マトリクス
 |---|---|---|
 | プロジェクト把握・docs/整備・同期 | Map / Discuss | `sdd-docs` (初期化・検証・双方向同期) |
 | ビジョン・成功指標・スコープ・仮説検証 | Map / Discuss | `sdd-discovery` (.spec/discovery/ 作成) |
-| ドメイン・API・アーキテクチャ設計 | Discuss | `sdd-design` (.spec/design/ 作成) |
-| インフラ・セキュリティ・SLO・DR・コスト設計 | Discuss | `sdd-infra` (.spec/design/ 作成) |
+| ドメイン・API・アーキテクチャ設計 | Discuss | `sdd-design` (.spec/design/ 作成。DDD 手法は bitz-ddd の `ddd-story`/`ddd-model` が任意で提供) |
+| インフラ・セキュリティ・SLO・DR・コスト設計 | Discuss | `sdd-ops` (.spec/design/ 作成) |
 | 設計ドキュメント・仕様の多観点レビュー | Discuss / Gate前 | `sdd-review` (.spec/reviews/ 作成) |
-| 要件起票・採番・変更・廃止 | Plan | `bitz-sdd` (requirements/ 更新) |
+| 要件起票・採番・変更・廃止 | Plan | `sdd-core` (requirements/ 更新) |
 | 進捗・検証・レビュー状況のレポート作成 | 報告 | `sdd-report` (.spec/reports/ 作成) |
-| 仕様→タスク分解・並列投入 | Plan / Execute | `bitz-sdd` (tasks/ 分解) |
-| 実装・テスト作成 | Execute | `bitz-sdd` (code & tests) |
-| 検証 red・エラー・矛盾発見 | Execute / Verify | `bitz-sdd` (failure-protocol.md) |
-| 検証・カバレッジ確認 | Verify | `bitz-sdd` (spec_inspect.py 実行) |
-| feature完了・docs/同期・昇格 | Promotion Gate | `bitz-sdd` / `sdd-docs` (push/pull) |
+| 仕様→タスク分解・並列投入 | Plan / Execute | `sdd-core` (tasks/ 分解) |
+| 実装・テスト作成 | Execute | `sdd-core` (code & tests) |
+| 検証 red・エラー・矛盾発見 | Execute / Verify | `sdd-core` (failure-protocol.md) |
+| 検証・カバレッジ確認 | Verify | `sdd-core` (spec_inspect.py 実行) |
+| feature完了・docs/同期・昇格 | Promotion Gate | `sdd-core` / `sdd-docs` (push/pull) |
 
 ## モノリポ運用とクロスリファレンス (Monorepo & Workspaces)
 

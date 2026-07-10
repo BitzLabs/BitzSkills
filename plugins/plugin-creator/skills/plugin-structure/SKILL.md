@@ -2,7 +2,7 @@
 name: plugin-structure
 description: Claude Code / Antigravity 2.0 プラグインのディレクトリ構造・plugin.jsonマニフェスト・コンポーネント（commands/agents/skills/hooks/rules）の自動発見・${CLAUDE_PLUGIN_ROOT}の使い方を案内する。「プラグインを作りたい」「プラグインの構成を知りたい」「plugin.jsonの書き方」「コンポーネントの配置」「自動発見の仕組み」「両対応プラグインにしたい」について聞かれたとき、または新規プラグインの雛形を作るときに使用する。
 metadata:
-  version: "0.2.1"
+  version: "0.2.2"
   author: br7.hide
   created: "2026-07-05"
   updated: "2026-07-10"
@@ -72,7 +72,7 @@ plugin-name/
 - ネイティブのコンポーネントは skills / rules / hooks / MCP。
   `commands/` は agy CLI がインストール時に**スキルへ変換**し、
   `agents/*.md` はサブエージェントとして処理される（Claude 互換レイヤー）
-- フックは `hooks.json`（書式も異なる。`hook-development` スキル参照）、
+- フックは `hooks.json`（書式も異なる。`plugin-hooks` スキル参照）、
   MCP は `mcp_config.json`（`.mcp.json` は読まれない）
 - `${CLAUDE_PLUGIN_ROOT}` に相当する環境変数はない
 
@@ -132,12 +132,12 @@ plugin-name/
 
 `.md` ファイル1つが1コマンド。ファイル名がコマンド名になる
 （`review.md` → `/review`）。YAML frontmatter（`description` 等）+ 本文が
-実行時の指示になる。詳細は `command-development` スキルが担当。
+実行時の指示になる。詳細は `plugin-commands` スキルが担当。
 
 ### エージェント（agents/）
 
 `.md` ファイル1つが1サブエージェント。frontmatter に `description`（いつ使うか）
-を書き、本文がシステムプロンプトになる。詳細は `agent-development` スキルが担当。
+を書き、本文がシステムプロンプトになる。詳細は `plugin-agents` スキルが担当。
 
 ### スキル（skills/）
 
@@ -171,13 +171,13 @@ skills/
 }
 ```
 
-詳細は `hook-development` スキルが担当。
+詳細は `plugin-hooks` スキルが担当。
 
 ### MCPサーバー（.mcp.json）
 
 外部サービス連携のための MCP サーバーをプラグインルートの `.mcp.json`
 （またはマニフェスト内インライン）で定義する。プラグイン有効化時に自動起動する。
-詳細は `mcp-integration` スキルが担当。
+詳細は `plugin-mcp` スキルが担当。
 
 ## ${CLAUDE_PLUGIN_ROOT}（Claude Code のみ）
 
@@ -202,7 +202,7 @@ source "${CLAUDE_PLUGIN_ROOT}/lib/common.sh"
 ```
 
 Antigravity には相当する変数がない。フックの cwd は `hooks.json` のある
-ディレクトリになるため、相対パスで書く（詳細は `hook-development` スキル）。
+ディレクトリになるため、相対パスで書く（詳細は `plugin-hooks` スキル）。
 
 ## 自動発見の仕組み
 

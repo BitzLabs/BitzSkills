@@ -1,14 +1,14 @@
 ---
-name: agent-development
+name: plugin-agents
 description: Claude Code / Antigravity 2.0 プラグインのサブエージェント（agents/*.md）の作成を支援する。「エージェントを作りたい」「サブエージェントを追加したい」「エージェントのfrontmatter」「エージェントの例」「自律エージェント」と言われたときや、エージェント構造・システムプロンプト設計・トリガー条件の指針が必要なときに使用する。
 metadata:
-  version: "0.2.1"
+  version: "0.3.0"
   author: br7.hide
   created: "2026-07-05"
   updated: "2026-07-10"
 ---
 
-# agent-development
+# plugin-agents
 
 ## 目的
 

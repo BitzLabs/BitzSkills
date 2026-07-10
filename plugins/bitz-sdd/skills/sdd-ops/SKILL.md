@@ -1,11 +1,11 @@
 ---
-name: sdd-infra
+name: sdd-ops
 description: BitzSDD のインフラ・運用設計を行うスキル。インフラ構成、セキュリティ、可観測性・SLO、災害復旧、コスト見積もりを設計する。成果物はすべて .spec/design/ 配下に作成し、docs/05-operations/ 側などへは sdd-docs の pull コマンドを用いて同期・展開する。
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
   author: br7.hide
   created: "2026-07-08"
-  updated: "2026-07-09"
+  updated: "2026-07-10"
 ---
 
 # SDD Infra — インフラ・運用設計
@@ -35,5 +35,5 @@ BitzSDDにおけるインフラおよび運用の設計を担当します。
 設計成果物を作成・更新したら、`python3 scripts/sdd_sync.py pull` を実行して `docs/` に展開します。
 
 ## 4. 連携
-*   前段のドメイン・API・アーキテクチャ設計は `sdd-design`、レビューは `sdd-review`、要件・検証・ゲートは `bitz-sdd` が担当します。
+*   前段のドメイン・API・アーキテクチャ設計は `sdd-design`、レビューは `sdd-review`、要件・検証・ゲートは `sdd-core` が担当します。
 *   ドキュメントの双方向同期や初期化は `sdd-docs` が担当します。

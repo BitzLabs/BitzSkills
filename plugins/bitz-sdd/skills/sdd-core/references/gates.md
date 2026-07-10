@@ -13,10 +13,11 @@
 |---|---|
 | success-metrics のガードレール指標（`sdd-discovery`） | NFR（benchmark / load-test、数値必須） |
 | non-goals / constraints（`sdd-discovery`） | CON |
-| ドメインストーリーのハッピーパス（`sdd-design`） | FR（1 Activity ≒ 1 EARS 節の粒度） |
+| ドメインストーリーのハッピーパス（bitz-ddd の `ddd-story`） | FR（1 Activity ≒ 1 EARS 節の粒度） |
+| 軽量ドメインスケッチの主要ユースケース（bitz-ddd 未導入時の `sdd-design`） | FR（1 ユースケース ≒ 1 EARS 節の粒度） |
 | public-api のエンドポイント契約（`sdd-design`） | FR（example-test / pbt） |
-| SLO・エラーバジェット（`sdd-infra`） | NFR（benchmark / load-test、数値必須） |
-| security-model の統制（`sdd-infra`） | NFR（sast / dep-audit） |
+| SLO・エラーバジェット（`sdd-ops`） | NFR（benchmark / load-test、数値必須） |
+| security-model の統制（`sdd-ops`） | NFR（sast / dep-audit） |
 
 ## ゲート一覧 — 人間裁定点は3つ
 

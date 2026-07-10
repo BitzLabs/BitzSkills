@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""spec_inspect.py — BitzSDD（bitz-sdd スキル）の構造検証・影響分析ツール（stdlib のみ）
+"""spec_inspect.py — BitzSDD（sdd-core スキル）の構造検証・影響分析ツール（stdlib のみ）
 
 使い方:
   python spec_inspect.py <repo-root>                 # 全検証 → .spec/inspection-report.md
