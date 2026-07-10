@@ -25,6 +25,9 @@ def parse_frontmatter(text: str):
             q = val[0]
             end = val.find(q, 1)
             val = val[1:end] if end != -1 else val[1:]
+        else:
+            # 非クォート値の YAML インラインコメントを除去（docs_inspect と同挙動）
+            val = re.split(r"\s+#", val, 1)[0].strip()
         fm[key] = val
     return None
 
