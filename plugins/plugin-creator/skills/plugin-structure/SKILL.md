@@ -2,10 +2,10 @@
 name: plugin-structure
 description: Claude Code / Antigravity 2.0 プラグインのディレクトリ構造・plugin.jsonマニフェスト・コンポーネント（commands/agents/skills/hooks/rules）の自動発見・${CLAUDE_PLUGIN_ROOT}の使い方を案内する。「プラグインを作りたい」「プラグインの構成を知りたい」「plugin.jsonの書き方」「コンポーネントの配置」「自動発見の仕組み」「両対応プラグインにしたい」について聞かれたとき、または新規プラグインの雛形を作るときに使用する。
 metadata:
-  version: "0.2.2"
+  version: "0.2.3"
   author: br7.hide
   created: "2026-07-05"
-  updated: "2026-07-10"
+  updated: "2026-07-11"
 ---
 
 # plugin-structure
@@ -143,7 +143,7 @@ plugin-name/
 
 スキルごとにサブフォルダを作り、中に `SKILL.md`（必須）を置く。
 `scripts/` `references/` `examples/` `assets/` などの補助ファイルを同フォルダに
-バンドルできる。詳細は `skill-development` スキルが担当。
+バンドルできる。同梱時の考慮事項は `plugin-skills` スキル、作り方の方法論は skill-creator プラグインが担当。
 
 ```
 skills/

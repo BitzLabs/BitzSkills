@@ -2,10 +2,10 @@
 name: skill-validator
 description: 既存のエージェントスキル（SKILL.mdとフォルダ）がAgent Skills仕様に準拠しているかを検査し、チェックリスト形式で報告する。「スキルを検証して」「SKILL.mdをチェックして」「仕様に合っているか確認して」と言われた場合や、skill-creatorでスキルを作成した直後に使用する。
 metadata:
-  version: "0.1.0"
+  version: "0.4.0"
   author: br7.hide
   created: "2026-07-05"
-  updated: "2026-07-05"
+  updated: "2026-07-11"
 ---
 
 # skill-validator
