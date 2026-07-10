@@ -3,7 +3,7 @@ id: SI-CORE-001
 raised_by: skill-evaluator（Phase 5b eval / evals/bitz-sdd/report.md 改善提案2）
 target: plugins/bitz-sdd/skills/sdd-design/SKILL.md（成果物定義と同期の表）
 proposed_change_type: bump
-status: open
+status: accepted
 ---
 - **矛盾/曖昧の内容**: sdd-design の成果物表では api-design.md が必須に見えるが、
   実際には API を持たないシステムでは未作成のまま `sdd_sync.py pull` が正しく SKIP する
