@@ -168,7 +168,7 @@ Antigravity 2.0 は `antigravity/`、IDE は `antigravity-ide/`。
 
 - `type: "command"` のみ（HTTP・プロンプトフックはない）
 - フックは同期実行でエージェントループをブロックする（非同期はない）
-- PreToolUse での入力の上書き（overwrite）は未実装
+- PreToolUse での入力の overwrite（上書き）は未実装
 
 ## Claude Code フックとの対応表
 

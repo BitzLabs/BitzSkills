@@ -2,10 +2,10 @@
 name: sdd-design
 description: BitzSDD の設計工程を行うスキル。ドメインストーリー、ドメインモデル（DDD 戦略設計・集約・境界づけられたコンテキスト）、API 設計（3層）、アーキテクチャ統合（3ビュー + 技術適合性評価）を確立し、成果物を .spec/design/ 内に記述・作成する。docs/02-design/ 側へは sdd-docs の pull コマンドを用いて同期・展開する。
 metadata:
-  version: "0.2.0"
+  version: "0.2.1"
   author: br7.hide
   created: "2026-07-08"
-  updated: "2026-07-09"
+  updated: "2026-07-10"
 ---
 
 # SDD Design — 設計工程

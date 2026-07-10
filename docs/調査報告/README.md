@@ -30,7 +30,7 @@
 
 ### 3. [OpenAI Codex 調査報告書](./03.Codex/index.md)
 *   **特徴**: 自律型開発エージェント。TUI と自動化（`exec`）モード、OS カーネルレベルの強固なサンドボックス、ChatGPT 契約連携。主力モデルは `gpt-5.5` 系（2026年7月時点）。
-*   **拡張仕様**: `SKILL.md`（YAML フロントマター）、`.codex-plugin/plugin.json`、`config.toml` / `hooks.json`（Experimental フック）、MCP サーバー、`spawn_agent` 系のマルチエージェント。
+*   **拡張仕様**: `SKILL.md`（YAML frontmatter）、`.codex-plugin/plugin.json`、`config.toml` / `hooks.json`（Experimental フック）、MCP サーバー、`spawn_agent` 系のマルチエージェント。
 
 ### 4. [nexus-architect 退避スナップショット](./04.nexus-architect/_provenance.md)
 *   **位置づけ**: 本報告書シリーズとは別枠の**参照資料**。bitz-sdd プラグインの蒸留元

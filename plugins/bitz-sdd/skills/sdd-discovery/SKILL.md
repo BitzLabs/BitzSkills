@@ -2,10 +2,10 @@
 name: sdd-discovery
 description: BitzSDD の上流探索（ディスカバリー）を行うスキル。プロダクトビジョン（Vision Board / PR-FAQ）・成功指標（North Star Metric）・スコープ（MoSCoW / RICE）・ペルソナとジャーニー（JTBD）・ポジショニングを順に確立し、仮説検証ゲート（Go / No-Go）で設計着手可否を裁定する。成果物はすべて .spec/discovery/ 配下に作成し、docs/01-context/ へは sdd-docs の pull コマンドを用いて同期・展開する。
 metadata:
-  version: "0.2.0"
+  version: "0.2.1"
   author: br7.hide
   created: "2026-07-08"
-  updated: "2026-07-09"
+  updated: "2026-07-10"
 ---
 
 # SDD Discovery — 上流探索

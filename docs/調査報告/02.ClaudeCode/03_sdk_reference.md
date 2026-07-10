@@ -13,7 +13,7 @@ npm install @anthropic-ai/claude-agent-sdk
 pip install claude-agent-sdk
 ```
 
-## 3.2 認証設定 (Authentication)
+## 3.2 Authentication（認証設定）
 SDK の実行には、認証情報（API キー）が必須です。基本的には環境変数から読み込まれます。
 
 ```bash

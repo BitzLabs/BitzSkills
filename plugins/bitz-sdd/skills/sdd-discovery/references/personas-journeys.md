@@ -1,6 +1,6 @@
 # ペルソナとジャーニー（JTBD → ペルソナカード → 段階×レイヤー）
 
-人口統計ではなく **Jobs-to-be-Done** を軸にペルソナを作り、主要ペルソナごとにジャーニーをマップする。結論は docs/01-context/personas-journeys.md（proposed、テンプレは assets/docs-draft-personas-journeys.md）へ。
+人口統計ではなく **Jobs-to-be-Done（ジョブ理論）** を軸にペルソナを作り、主要ペルソナごとにジャーニーをマップする。結論は docs/01-context/personas-journeys.md（proposed、テンプレは assets/docs-draft-personas-journeys.md）へ。
 
 ## Jobs-to-be-Done（JTBD）
 

@@ -67,7 +67,7 @@ agy plugin import [gemini|claude]
 
 ---
 
-## 2.5 認証フロー (Authentication Flow)
+## 2.5 Authentication Flow（認証フロー）
 Antigravity CLI は安全な認証およびトークンストアを提供します。
 
 ### 1. ローカルブラウザによる OAuth 認証

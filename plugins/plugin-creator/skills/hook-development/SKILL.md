@@ -2,10 +2,10 @@
 name: hook-development
 description: Claude Code / Antigravity 2.0 プラグインのフック（hooks/hooks.json / hooks.json）の作成を支援する。「フックを作りたい」「PreToolUse/PostToolUse/Stopフックを追加したい」「ツール使用を検証したい」「危険なコマンドをブロックしたい」と言われたときや、フックイベント（PreToolUse, PostToolUse, Stop, SubagentStop, SessionStart, SessionEnd, UserPromptSubmit, PreCompact, Notification, PreInvocation, PostInvocation）に言及されたときに使用する。プロンプトベースフックを中心に包括的なガイダンスを提供する。
 metadata:
-  version: "0.2.0"
+  version: "0.2.1"
   author: br7.hide
   created: "2026-07-05"
-  updated: "2026-07-06"
+  updated: "2026-07-10"
 ---
 
 # hook-development

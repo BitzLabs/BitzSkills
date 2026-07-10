@@ -11,7 +11,7 @@ npm install -g @anthropic-ai/claude-code
 > [!NOTE]
 > 最新の安定版 Node.js (LTS 推奨) がローカル環境にインストールされていることを確認してください。
 
-## 2.2 認証 (Authentication)
+## 2.2 Authentication（認証）
 初めて `claude` コマンドを実行する際、または認証の期限が切れた際、CLI は自動的に OAuth ブラウザフローまたはワンタイムピンを介した認証を求めます。
 - **対話型認証**: ターミナルに表示される URL にブラウザでアクセスし、Anthropic アカウントでログインして認証を完了します。
 - **環境変数による認証**: CI/CD 環境や非対話型のヘッドレス環境では、環境変数 `ANTHROPIC_API_KEY` または `ANTHROPIC_AUTH_TOKEN` を設定することで、認証フローをスキップできます。
