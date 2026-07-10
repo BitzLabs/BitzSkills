@@ -2,7 +2,7 @@
 name: sdd-core
 description: BitzSDD — 仕様駆動開発（SDD）ワークフローを運用するメインスキル。要件定義・仕様作成・実装・検証・完了処理のすべてをこの規律に従って実行する。ユーザーが「仕様駆動」「SDD」「要件」「EARS」「spec」「タスク分解」「feature実装」に言及したとき、リポジトリに .spec/ や AGENTS.md が存在するとき、または新機能の設計・実装・検証・リリース処理を依頼されたときは、明示的な指示がなくても必ずこのスキルを使うこと。要件の変更・廃止・番号管理・テスト失敗時の対応・ドキュメント更新もすべて本スキルの管轄。
 metadata:
-  version: "1.4.0"
+  version: "1.5.0"
   author: br7.hide
   created: "2026-07-07"
   updated: "2026-07-11"
@@ -56,10 +56,11 @@ AGENTS.md                    読み込みプロトコル+権限マトリクス
 | 設計ドキュメント・仕様の多観点レビュー | Discuss / Gate前 | `sdd-review` (.spec/reviews/ 作成) |
 | 要件起票・採番・変更・廃止 | Plan | `sdd-core` (requirements/ 更新) |
 | 進捗・検証・レビュー状況のレポート作成 | 報告 | `sdd-report` (.spec/reports/ 作成) |
-| 仕様→タスク分解・並列投入 | Plan / Execute | `sdd-core` (tasks/ 分解) |
-| 実装・テスト作成 | Execute | `sdd-core` (code & tests) |
+| 仕様→タスク分解・並列投入 | Plan / Execute | `sdd-implement` (.spec/tasks/ 分解。implements / depends_on / boundary 宣言) |
+| 実装（要件 ID 紐づけ・契約保護） | Execute | `sdd-implement` (implementation-discipline) |
+| テスト仕様の導出・テスト作成 | Execute / Verify | `sdd-test` (EARS→テスト導出、.spec/specs/ 記録) |
 | 検証 red・エラー・矛盾発見 | Execute / Verify | `sdd-core` (failure-protocol.md) |
-| 検証・カバレッジ確認 | Verify | `sdd-core` (spec_inspect.py 実行) |
+| 検証・カバレッジ確認 | Verify | `sdd-test` + `sdd-core` (spec_inspect.py 実行) |
 | feature完了・docs/同期・昇格 | Promotion Gate | `sdd-core` / `sdd-docs` (push/pull) |
 
 ## モノリポ運用とクロスリファレンス (Monorepo & Workspaces)
