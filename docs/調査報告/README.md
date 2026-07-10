@@ -32,6 +32,11 @@
 *   **特徴**: 自律型開発エージェント。TUI と自動化（`exec`）モード、OS カーネルレベルの強固なサンドボックス、ChatGPT 契約連携。主力モデルは `gpt-5.5` 系（2026年7月時点）。
 *   **拡張仕様**: `SKILL.md`（YAML フロントマター）、`.codex-plugin/plugin.json`、`config.toml` / `hooks.json`（Experimental フック）、MCP サーバー、`spawn_agent` 系のマルチエージェント。
 
+### 4. [nexus-architect 退避スナップショット](./04.nexus-architect/_provenance.md)
+*   **位置づけ**: 本報告書シリーズとは別枠の**参照資料**。bitz-sdd プラグインの蒸留元
+    （MIT License）で、ローカル日本語訳 `*_ja.md` と Database 系スキル群の保全が目的。
+    詳細は `_provenance.md` を参照。編集禁止のスナップショット。
+
 ---
 
 ## 📊 3大エージェント主要機能比較表

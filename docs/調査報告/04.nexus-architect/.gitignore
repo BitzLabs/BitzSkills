@@ -1,0 +1,34 @@
+# Pipeline outputs (generated per project)
+reports/
+generated/
+work/
+knowledge.ryugraph/
+
+# QA artifacts (browser snapshots, console logs, rendered diagrams)
+.playwright-mcp/
+domain-stories-*.png
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Tool-generated local dirs
+.pi/
+.polly/
+.worktrees/
