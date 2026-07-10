@@ -6,6 +6,22 @@ on:
   pull_request:
 
 jobs:
+  pr-title:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR タイトルの Conventional Commits 検査
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "PR title: $TITLE"
+          if echo "$TITLE" | grep -qE '^(feat|fix|docs|refactor|test|chore)(\([a-z0-9-]+\))?!?: .+'; then
+            echo "OK: Conventional Commits 準拠"
+          else
+            echo "NG: PR タイトルが Conventional Commits に準拠していません（AGENTS.md のコミット・PR 規約を参照）"
+            exit 1
+          fi
+
   test:
     runs-on: ubuntu-latest
     steps:
