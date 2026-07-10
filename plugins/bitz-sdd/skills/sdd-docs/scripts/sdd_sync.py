@@ -14,6 +14,7 @@ DEFAULT_MAPPING = {
     ".spec/design/domain-model.md": "docs/02-design/domain-model.md",
     ".spec/design/api-design.md": "docs/02-design/public-api.md",
     ".spec/design/architecture.md": "docs/02-design/ARCHITECTURE.md",
+    ".spec/design/data-model.md": "docs/02-design/data-model.md",
 }
 
 def get_mtime(path: Path) -> float:

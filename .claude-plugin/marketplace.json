@@ -21,7 +21,7 @@
     {
       "name": "bitz-sdd",
       "source": "./plugins/bitz-sdd",
-      "description": "BitzSDD — 仕様駆動開発（SDD）の運用ワークフロー。上流探索（sdd-discovery）→設計（sdd-design）→多観点レビュー（sdd-review）→運用設計（sdd-ops）→進捗レポート（sdd-report）→EARS要件・検証中心・権限分離の規律（sdd-core）を、docs/ 初期化・検証・双方向同期（sdd-docs）とともに提供する7スキル構成のプラグイン"
+      "description": "BitzSDD — 仕様駆動開発（SDD）の運用ワークフロー。上流探索（sdd-discovery）→設計（sdd-design）→データ格納設計（sdd-data）→多観点レビュー（sdd-review）→運用設計（sdd-ops）→進捗レポート（sdd-report）→EARS要件・検証中心・権限分離の規律（sdd-core）を、docs/ 初期化・検証・双方向同期（sdd-docs）とともに提供する8スキル構成のプラグイン"
     },
     {
       "name": "bitz-ddd",

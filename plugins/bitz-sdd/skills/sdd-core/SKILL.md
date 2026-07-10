@@ -2,10 +2,10 @@
 name: sdd-core
 description: BitzSDD — 仕様駆動開発（SDD）ワークフローを運用するメインスキル。要件定義・仕様作成・実装・検証・完了処理のすべてをこの規律に従って実行する。ユーザーが「仕様駆動」「SDD」「要件」「EARS」「spec」「タスク分解」「feature実装」に言及したとき、リポジトリに .spec/ や AGENTS.md が存在するとき、または新機能の設計・実装・検証・リリース処理を依頼されたときは、明示的な指示がなくても必ずこのスキルを使うこと。要件の変更・廃止・番号管理・テスト失敗時の対応・ドキュメント更新もすべて本スキルの管轄。
 metadata:
-  version: "1.3.0"
+  version: "1.4.0"
   author: br7.hide
   created: "2026-07-07"
-  updated: "2026-07-10"
+  updated: "2026-07-11"
 ---
 
 # BitzSDD Workflow (spec駆動開発)
@@ -51,6 +51,7 @@ AGENTS.md                    読み込みプロトコル+権限マトリクス
 | プロジェクト把握・docs/整備・同期 | Map / Discuss | `sdd-docs` (初期化・検証・双方向同期) |
 | ビジョン・成功指標・スコープ・仮説検証 | Map / Discuss | `sdd-discovery` (.spec/discovery/ 作成) |
 | ドメイン・API・アーキテクチャ設計 | Discuss | `sdd-design` (.spec/design/ 作成。DDD 手法は bitz-ddd の `ddd-story`/`ddd-model` が任意で提供) |
+| データ格納設計（永続データを扱う場合のみ） | Discuss | `sdd-data` (.spec/design/data-model.md ほか作成) |
 | インフラ・セキュリティ・SLO・DR・コスト設計 | Discuss | `sdd-ops` (.spec/design/ 作成) |
 | 設計ドキュメント・仕様の多観点レビュー | Discuss / Gate前 | `sdd-review` (.spec/reviews/ 作成) |
 | 要件起票・採番・変更・廃止 | Plan | `sdd-core` (requirements/ 更新) |
