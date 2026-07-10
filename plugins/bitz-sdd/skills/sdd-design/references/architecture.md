@@ -34,8 +34,25 @@ docs/02-design/ARCHITECTURE.md の proposed ドラフトを作るための手法
 - 判断は可逆な入力として理由ごと記録する（変更再伝播で再検討できるように）
 - どのシグナルも支持しない技術でリストを水増ししない
 
+## Part 3 — レイヤリングとデータ層の対応
+
+MVC / レイヤードアーキテクチャを採るシステムでは、レイヤ構造とデータ層の対応を明示する。
+
+| レイヤ | 責務 | データ層との関係 |
+|---|---|---|
+| Presentation（View / Controller） | 入出力・画面遷移・リクエスト整形 | 永続化の詳細を知らない。DTO / ViewModel 経由 |
+| Application（ユースケース） | ユースケースの調整・トランザクション開始 | **トランザクション境界をここで宣言**（境界の実体は集約/エンティティ整合性に従う） |
+| Domain（Model） | ビジネスルール・不変条件 | ストレージ非依存。domain-model.md が正 |
+| Infrastructure（データ層） | 永続化・外部 I/O の実装 | Repository 等で抽象化し、依存は常に内向き（Domain がデータ層に依存しない） |
+
+規律:
+
+- **ドメインモデルが先、スキーマは後**。データ層の設計は `sdd-data` スキルが担当し、成果物は `.spec/design/data-model.md` / `data-storage.md`
+- ランタイムビューのデータストアノードは、`sdd-data` の格納方式選定（証拠駆動）と一致させる
+- レイヤ間の依存方向違反（例: Domain から SQL 直叩き）はギャップとして明示する
+
 ## ドラフトへの落とし込み
 
-- docs/02-design/ARCHITECTURE.md（proposed）: 3ビュー + 対応表 + 採用技術の要約
+- docs/02-design/ARCHITECTURE.md（proposed）: 3ビュー + 対応表 + 採用技術の要約 + レイヤリング（該当時）
 - 技術採用・境界の裁定など恒久判断は ADR ドラフト（対象リポジトリの docs/02-design/decisions/ADR-template.md をコピー、`status: proposed`）
 - 技術適合性マトリクスの作業表は `.spec/design/worksheet.md` に残す

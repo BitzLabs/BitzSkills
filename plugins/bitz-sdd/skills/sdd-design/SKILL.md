@@ -2,10 +2,10 @@
 name: sdd-design
 description: BitzSDD の設計工程を行うスキル（軽量デフォルト設計）。ドメイン概要、API 設計（3層）、アーキテクチャ統合（3ビュー + 技術適合性評価）を確立し、成果物を .spec/design/ 内に記述・作成する。docs/02-design/ 側へは sdd-docs の pull コマンドを用いて同期・展開する。本格的な DDD 手法（ドメインストーリーテリング・戦略設計・成熟度評価）は bitz-ddd プラグインが提供し、導入されていればそちらを優先する。
 metadata:
-  version: "0.3.0"
+  version: "0.4.0"
   author: br7.hide
   created: "2026-07-08"
-  updated: "2026-07-10"
+  updated: "2026-07-11"
 ---
 
 # SDD Design — 設計工程（軽量デフォルト）
