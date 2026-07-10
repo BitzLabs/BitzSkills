@@ -2,10 +2,10 @@
 name: bitz-sdd
 description: BitzSDD — 仕様駆動開発（SDD）ワークフローを運用するメインスキル。要件定義・仕様作成・実装・検証・完了処理のすべてをこの規律に従って実行する。ユーザーが「仕様駆動」「SDD」「要件」「EARS」「spec」「タスク分解」「feature実装」に言及したとき、リポジトリに .spec/ や AGENTS.md が存在するとき、または新機能の設計・実装・検証・リリース処理を依頼されたときは、明示的な指示がなくても必ずこのスキルを使うこと。要件の変更・廃止・番号管理・テスト失敗時の対応・ドキュメント更新もすべて本スキルの管轄。
 metadata:
-  version: "1.2.0"
+  version: "1.2.1"
   author: br7.hide
   created: "2026-07-07"
-  updated: "2026-07-09"
+  updated: "2026-07-10"
 ---
 
 # BitzSDD Workflow (spec駆動開発)
@@ -37,8 +37,8 @@ docs/                        永続・人間ナラティブ（.spec から自動
   tasks/                     タスク分解+依存グラフ
   STATE.md                   ブランチローカルの生きたメモリ
   metrics.md                 ワークフロー計測
-reports/                     進捗・ヘルスレポート (sdd-report により自動生成)
-  status-report.md           統合進捗状況レポート
+  reports/                   進捗・ヘルスレポート (sdd-report により自動生成)
+    status-report.md         統合進捗状況レポート
 AGENTS.md                    読み込みプロトコル+権限マトリクス
 ```
 
@@ -54,7 +54,7 @@ AGENTS.md                    読み込みプロトコル+権限マトリクス
 | インフラ・セキュリティ・SLO・DR・コスト設計 | Discuss | `sdd-infra` (.spec/design/ 作成) |
 | 設計ドキュメント・仕様の多観点レビュー | Discuss / Gate前 | `sdd-review` (.spec/reviews/ 作成) |
 | 要件起票・採番・変更・廃止 | Plan | `bitz-sdd` (requirements/ 更新) |
-| 進捗・検証・レビュー状況のレポート作成 | 報告 | `sdd-report` (reports/ 作成) |
+| 進捗・検証・レビュー状況のレポート作成 | 報告 | `sdd-report` (.spec/reports/ 作成) |
 | 仕様→タスク分解・並列投入 | Plan / Execute | `bitz-sdd` (tasks/ 分解) |
 | 実装・テスト作成 | Execute | `bitz-sdd` (code & tests) |
 | 検証 red・エラー・矛盾発見 | Execute / Verify | `bitz-sdd` (failure-protocol.md) |

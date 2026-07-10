@@ -2,10 +2,10 @@
 name: sdd-review
 description: BitzSDD の設計ドキュメントや要件定義を多観点（consistency/data-integrity/operations/risk/business）で並列レビューするスキル。結果はすべて .spec/reviews/ 配下に格納し、レポート自動生成およびゲート判定の材料とする。
 metadata:
-  version: "0.2.0"
+  version: "0.2.1"
   author: br7.hide
   created: "2026-07-08"
-  updated: "2026-07-09"
+  updated: "2026-07-10"
 ---
 
 # SDD Review — 多観点並列レビュー
@@ -26,7 +26,7 @@ BitzSDDの設計と仕様の検証レビューを担当します。
 4.  **統合判定 (synthesis)**: 重複排除、P0〜P3 分類、重み正規化を行い、`.spec/reviews/review-synthesis.json` および統合報告書 `.spec/reviews/review-synthesis.md` を生成する。
 
 ## 3. 判定結果の扱いとライフサイクル
-*   判定（`PASS` / `CONDITIONAL_PASS` / `FAIL`）は `sdd-report` による自動集計の対象となり、統合進捗レポート `reports/status-report.md` に反映されます。
+*   判定（`PASS` / `CONDITIONAL_PASS` / `FAIL`）は `sdd-report` による自動集計の対象となり、統合進捗レポート `.spec/reports/status-report.md` に反映されます。
 *   `FAIL` または `CONDITIONAL_PASS` の場合は、指摘事項を修正するか、条件を消化するまで Design Gate / Promotion Gate を通過することはできません。
 *   レビューで見つかった要件や設計の根本的な問題は、`.spec/spec-issues/` に起票します。
 *   **ID体系**: 統合報告書 (`review-synthesis.md`) は `REV-NNN` のIDを持ち、YAML frontmatterを含みます。Consistency観点の指摘事項は、制約要件(CON)との衝突を避けるため `RVC-` プレフィックスを使用します。

@@ -30,7 +30,7 @@ def parse_frontmatter(text: str):
 
 def generate_report(root_path: Path) -> Path:
     spec_dir = root_path / ".spec"
-    reports_dir = root_path / "reports"
+    reports_dir = root_path / ".spec" / "reports"
     reports_dir.mkdir(parents=True, exist_ok=True)
     report_file = reports_dir / "status-report.md"
 
