@@ -2,7 +2,7 @@
 name: sdd-core
 description: BitzSDD — 仕様駆動開発（SDD）ワークフローを運用するメインスキル。要件定義・仕様作成・実装・検証・完了処理のすべてをこの規律に従って実行する。ユーザーが「仕様駆動」「SDD」「要件」「EARS」「spec」「タスク分解」「feature実装」に言及したとき、リポジトリに .spec/ や AGENTS.md が存在するとき、または新機能の設計・実装・検証・リリース処理を依頼されたときは、明示的な指示がなくても必ずこのスキルを使うこと。要件の変更・廃止・番号管理・テスト失敗時の対応・ドキュメント更新もすべて本スキルの管轄。
 metadata:
-  version: "1.5.1"
+  version: "1.6.0"
   author: br7.hide
   created: "2026-07-07"
   updated: "2026-07-11"
@@ -57,6 +57,7 @@ AGENTS.md                    読み込みプロトコル+権限マトリクス
 | 要件起票・採番・変更・廃止 | Plan | `sdd-core` (requirements/ 更新) |
 | 進捗・検証・レビュー状況のレポート作成 | 報告 | `sdd-report` (.spec/reports/ 作成) |
 | 仕様→タスク分解・並列投入 | Plan / Execute | `sdd-implement` (.spec/tasks/ 分解。implements / depends_on / boundary 宣言) |
+| ブランチ・worktree・PR の Git 運用 | Execute | `sdd-git` (フロー選択 / worktree 並列 / Issue 駆動。parallel-git.md を拡張) |
 | 実装（要件 ID 紐づけ・契約保護） | Execute | `sdd-implement` (implementation-discipline) |
 | テスト仕様の導出・テスト作成 | Execute / Verify | `sdd-test` (EARS→テスト導出、.spec/specs/ 記録) |
 | 検証 red・エラー・矛盾発見 | Execute / Verify | `sdd-core` (failure-protocol.md) |
