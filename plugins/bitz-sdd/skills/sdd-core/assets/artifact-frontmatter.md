@@ -7,7 +7,13 @@ updated: YYYY-MM-DD            # ISO 8601
 owner: <担当者ハンドル>
 ---
 
-# BitzSDD Artifact Frontmatter 共通仕様
+# BitzSDD Artifact Frontmatter 共通仕様（公開契約）
+
+> **公開契約**: 本書式は、外部プラグイン（設計手法プロバイダ bitz-ddd など）が
+> `.spec/` に成果物を書き込む際の公開仕様である。依存方向は
+> 外部プラグイン → `.spec` → bitz-sdd の一方向で、bitz-sdd は外部プラグインを知らない。
+> 本書式と `.spec/` のファイル配置に従う成果物は、書き手を問わず
+> sdd-review / sdd-report / sdd-docs の処理対象として同一に扱われる。
 
 BitzSDDの `.spec/` 内のファイル（Requirementsを除く）は、一貫したトレーサビリティと機械的検証を可能にするため、上記のYAML frontmatterを必須とします。
 

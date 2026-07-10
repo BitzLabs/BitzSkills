@@ -2,10 +2,10 @@
 name: sdd-docs
 description: BitzSDD の docs/（人間ナラティブ層）を初期化・検証し、.spec/（仕様マスター）と双方向同期（pull/push/diff）するスキル。同梱テンプレートから docs/ ツリー（MASTER.md・01-context〜08-knowledge・ADR）を立ち上げ、docs_inspect.py で構造検証し、sdd_sync.py で .spec/ との間を同期する。「docs/ を初期化して」「同期して」「docsの変更を spec に反映して」「docs を検証して」と言われたときに使用する。
 metadata:
-  version: "0.2.0"
+  version: "0.2.1"
   author: br7.hide
   created: "2026-07-07"
-  updated: "2026-07-09"
+  updated: "2026-07-10"
 ---
 
 # sdd-docs

@@ -81,7 +81,7 @@ tools: ["Read", "Grep", "Glob", "Bash"]
 
 5. **エージェントの検証**（`agents/` がある場合）:
    - Glob で `agents/**/*.md` を見つけ、各ファイルについて:
-     agent-development スキルの validate-agent.sh を使うか、手動で確認する:
+     plugin-agents スキルの validate-agent.sh を使うか、手動で確認する:
      - frontmatter に `name` / `description` / `model` / `color` がある
      - name の形式（英小文字・ハイフン・3〜50文字）
      - description に `<example>` ブロックがある
@@ -96,7 +96,7 @@ tools: ["Read", "Grep", "Glob", "Bash"]
      参照先ファイルの実在を確認する
 
 7. **フックの検証**（`hooks/hooks.json` がある場合）:
-   - hook-development スキルの validate-hook-schema.sh を使うか、手動で確認する:
+   - plugin-hooks スキルの validate-hook-schema.sh を使うか、手動で確認する:
      JSON構文、イベント名の妥当性（PreToolUse, PostToolUse, Stop 等）、
      各フックの `matcher` と `hooks` 配列、type が `command` か `prompt` か、
      コマンドが `${CLAUDE_PLUGIN_ROOT}` で実在スクリプトを参照しているか

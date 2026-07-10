@@ -1,6 +1,6 @@
 # 7. ベストプラクティス (Best Practices)
 
-本章は、Claude Code と Antigravity の両対応プラグイン／スキルを設計するための実務指針を、ワークスペース内の一次資料（`plugin-structure`・`hook-development`・`agent-development`・`mcp-integration`・`command-development` の各 SKILL.md / references）から抽出したものです。本リポジトリ（`bitzskills`）が両プラットフォーム配布を目的とするため、互換性を軸に整理します。
+本章は、Claude Code と Antigravity の両対応プラグイン／スキルを設計するための実務指針を、ワークスペース内の一次資料（`plugin-structure`・`plugin-hooks`・`plugin-agents`・`plugin-mcp`・`plugin-commands` の各 SKILL.md / references）から抽出したものです。本リポジトリ（`bitzskills`）が両プラットフォーム配布を目的とするため、互換性を軸に整理します。
 
 ---
 

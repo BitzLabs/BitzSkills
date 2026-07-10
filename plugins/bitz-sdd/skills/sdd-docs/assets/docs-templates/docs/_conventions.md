@@ -1,6 +1,6 @@
 <!--
   _conventions.md — HOW docs/ works. Not a project document itself; it governs the others.
-  Keep this in sync with ADR-template.md and the .spec/requirements/ registry (bitz-sdd skill).
+  Keep this in sync with ADR-template.md and the .spec/requirements/ registry (sdd-core skill).
 -->
 # docs/ 運用規約 (Conventions)
 

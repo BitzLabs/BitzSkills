@@ -1,14 +1,14 @@
 ---
-name: command-development
+name: plugin-commands
 description: Claude Codeのスラッシュコマンド（commands/*.md）の作成を支援する。「スラッシュコマンドを作りたい」「コマンドを追加したい」「コマンドの引数を定義したい」「frontmatterの書き方」「対話的なコマンド」と言われたときや、コマンド構造・動的引数・ファイル参照・bash実行・コマンド整理の指針が必要なときに使用する。Antigravity 2.0 でのコマンドの扱い（スキルへの変換）もカバーする。
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
   author: br7.hide
   created: "2026-07-05"
-  updated: "2026-07-06"
+  updated: "2026-07-10"
 ---
 
-# command-development
+# plugin-commands
 
 ## 目的
 

@@ -10,21 +10,21 @@
 1.  **Antigravity プラグイン構造リファレンス**:
     [antigravity-structure.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-structure/references/antigravity-structure.md)
 2.  **Antigravity ライフサイクルフック仕様**:
-    [antigravity-hooks.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/hook-development/references/antigravity-hooks.md)
+    [antigravity-hooks.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-hooks/references/antigravity-hooks.md)
 3.  **プラットフォーム別配置パス**:
     [platform-paths.md](file:///d:/44.BitzLabs/BitzSkills/plugins/skill-creator/skills/skill-packager/references/platform-paths.md)
 4.  **プラグイン・マニフェスト（plugin.json）リファレンス**:
     [manifest-reference.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-structure/references/manifest-reference.md)
 5.  **プラグイン固有コマンド機能リファレンス**:
-    [plugin-features-reference.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/command-development/references/plugin-features-reference.md)
+    [plugin-features-reference.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-commands/references/plugin-features-reference.md)
 6.  **エージェント生成システムプロンプト定義**:
-    [agent-creation-system-prompt.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/agent-development/references/agent-creation-system-prompt.md)
+    [agent-creation-system-prompt.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-agents/references/agent-creation-system-prompt.md)
 7.  **エージェントトリガー（example）の書き方**:
-    [triggering-examples.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/agent-development/references/triggering-examples.md)
+    [triggering-examples.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-agents/references/triggering-examples.md)
 8.  **MCPツール利用ガイド**:
-    [tool-usage.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/mcp-integration/references/tool-usage.md)
+    [tool-usage.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-mcp/references/tool-usage.md)
 9.  **MCPサーバー種別の詳細**:
-    [server-types.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/mcp-integration/references/server-types.md)
+    [server-types.md](file:///d:/44.BitzLabs/BitzSkills/plugins/plugin-creator/skills/plugin-mcp/references/server-types.md)
 
 ---
 

@@ -13,6 +13,8 @@ owner:
 
 ## CRUD マトリクス（Pass 2 用）
 
+> bitz-ddd（`ddd-model`）導入時のみ記入。未導入（軽量デフォルト設計）ならこの節はスキップしてよい。
+
 | 機能 \ エンティティ | <Ent1> | <Ent2> | … |
 |---|---|---|---|
 | <機能1> | CR | R | |
@@ -24,10 +26,14 @@ owner:
 
 ## サブドメイン分類
 
+> bitz-ddd（`ddd-model`）導入時のみ記入。未導入（軽量デフォルト設計）ならこの節はスキップしてよい。
+
 | サブドメイン | 分類（Core/Supporting/Generic） | 投資判断 | 理由 |
 |---|---|---|---|
 
 ## コンテキストマップ
+
+> bitz-ddd（`ddd-model`）導入時のみ記入。未導入（軽量デフォルト設計）ならこの節はスキップしてよい。
 
 | From | To | 関係型（ACL/OHS-PL/Shared Kernel/Customer-Supplier/Conformist/Partnership） | 備考 |
 |---|---|---|---|

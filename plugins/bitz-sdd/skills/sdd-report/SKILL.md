@@ -1,8 +1,8 @@
 ---
 name: sdd-report
-description: BitzSDD — .spec/（仕様・設計・検証のマスター）から人間向けの開発進捗・品質レポート（.spec/reports/status-report.md）を自動生成するスキル。ユーザーが「進捗を教えて」「レポートを出力して」「status-report」「報告書」「検証状況」に言及したとき、または bitz-sdd のマイルストーン完了時に使用する。
+description: BitzSDD — .spec/（仕様・設計・検証のマスター）から人間向けの開発進捗・品質レポート（.spec/reports/status-report.md）を自動生成するスキル。ユーザーが「進捗を教えて」「レポートを出力して」「status-report」「報告書」「検証状況」に言及したとき、または sdd-core のマイルストーン完了時に使用する。
 metadata:
-  version: "0.2.0"
+  version: "0.2.1"
   author: br7.hide
   created: "2026-07-09"
   updated: "2026-07-10"

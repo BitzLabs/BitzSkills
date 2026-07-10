@@ -157,7 +157,7 @@ tools: ["Write", "Read"]
 テスト方法: [テストシナリオの提案]
 
 検証: `bash scripts/validate-agent.sh agents/[identifier].md`
-（agent-development スキルのスクリプト）
+（plugin-agents スキルのスクリプト）
 
 ### 次のステップ
 [テスト・統合・改善の提案]
