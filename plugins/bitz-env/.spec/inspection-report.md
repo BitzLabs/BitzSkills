@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-11)
 
-成果物数: 11 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
+成果物数: 12 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -22,6 +22,7 @@
 - ENV-FR-005
 - ENV-FR-006
 - ENV-FR-007
+- ENV-FR-008
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
 ※ 乖離は候補提示のみ。stale 付与は references/lifecycle.md の再伝播プロトコル（判定パス→人間確認）を経ること
@@ -41,5 +42,6 @@
 | ENV-FR-005 | approved | collab | example-test | 1 | 1 |
 | ENV-FR-006 | approved | collab | example-test | 1 | 1 |
 | ENV-FR-007 | approved | deploy | example-test | 1 | 1 |
+| ENV-FR-008 | approved | guardrail | example-test | 1 | 1 |
 
 **判定: PASS ✅**

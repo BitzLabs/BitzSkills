@@ -109,3 +109,29 @@ def test_unknown_shape_still_denies_destructive():
     # 形状不明でも破壊的パターンは全文走査で deny される（保守的側に倒す）
     out = run_guard(json.dumps({"unexpected": {"cmd": "git reset --hard"}}))
     assert out != {}
+
+
+# --- ENV-FR-008: rules/*.md の SessionStart 注入（Claude Code 経路） ---
+
+PLUGIN_ROOT = GUARD.parents[1]
+
+
+def test_hooks_json_defines_sessionstart_rules_injection():
+    hooks = json.loads((PLUGIN_ROOT / "hooks" / "hooks.json").read_text())
+    session_start = hooks["hooks"]["SessionStart"]
+    commands = [h["command"] for entry in session_start for h in entry["hooks"]]
+    assert any("rules" in c and "${CLAUDE_PLUGIN_ROOT}" in c for c in commands)
+
+
+def test_sessionstart_command_outputs_rules_content():
+    # ${CLAUDE_PLUGIN_ROOT} をプラグイン実体に解決して注入コマンドを実行し、
+    # rules/*.md の内容が stdout（= コンテキスト注入内容）に含まれることを確認する
+    proc = subprocess.run(
+        ["bash", "-c", f'cat "{PLUGIN_ROOT}"/rules/*.md'],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert proc.returncode == 0
+    assert "ガードレール" in proc.stdout
+    assert "rm -rf" in proc.stdout

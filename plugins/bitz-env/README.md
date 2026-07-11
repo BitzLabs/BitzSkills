@@ -10,7 +10,7 @@
 
 | 層 | 実体 | 効き始め |
 |---|---|---|
-| **即効層（同梱フック）** | PreToolUse フックが `rm -rf` / `git push --force` / `git reset --hard` / `git clean -f` / `sudo` を機械ブロック | プラグイン有効化直後から。プロジェクトに何も書き込まない |
+| **即効層（同梱フック）** | PreToolUse フックが `rm -rf` / `git push --force` / `git reset --hard` / `git clean -f` / `sudo` を機械ブロック。あわせて `rules/*.md` のガードレール文書を Antigravity はネイティブ rules として、Claude Code は SessionStart フック注入としてコンテキストへ読み込む | プラグイン有効化直後から。プロジェクトに何も書き込まない |
 | **生成層（env-init）** | permissions（settings.json）・AGENTS.md 雛形・CLAUDE.md 断片・advisor/worker サブエージェントをユーザー確認付きで生成 | env-init 実行後。プラグイン無効時も効き続ける恒久層 |
 
 同じガードレールを2層で持つのは意図的な二重化です（片方が無効でももう片方が守る）。

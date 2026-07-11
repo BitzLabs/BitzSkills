@@ -1,6 +1,8 @@
-# bitz-env ガードレール（Antigravity ルール）
+# bitz-env ガードレール（共通ルール）
 
 このワークスペースには bitz-env プラグインのガードレールが適用されている。
+（Antigravity はネイティブ rules/ として、Claude Code は SessionStart フックの
+コンテキスト注入として、どちらのプラットフォームでも本文書が読み込まれる）
 
 ## 禁止（実行しない）
 
