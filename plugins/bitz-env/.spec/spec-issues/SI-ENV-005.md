@@ -3,7 +3,7 @@ id: SI-ENV-005
 raised_by: sdd-review 第2ラウンド クロスモデル（agy/Gemini）AGY-5
 target: plugins/bitz-env/skills/env-orchestration/references/collab-contract.md + ENV-FR-006
 proposed_change_type: bump
-status: proposed
+status: accepted
 ---
 - **矛盾/曖昧の内容**: 協調アダプタ契約 第1項は標準スキルセットを固定名（delegate / review /
   status）で要求するが、複数のアダプタプラグイン（agy 用・codex 用など）が同名ツールを

@@ -1,7 +1,7 @@
 ---
 id: ENV-NFR-002
 version: 1.0
-status: draft
+status: approved
 domain: guardrail
 priority: low
 origin: SI-ENV-004（REV-001 business BIZ-201）
@@ -22,3 +22,4 @@ confidence: medium
 - **検証手段**: rules/ の内容レビュー（manual-check。注入サイズの目視確認）
 - **Revision History**:
   - 1.0 (2026-07-11) 初版（SI-ENV-004 accepted による）
+  - 1.0 (2026-07-11) 人間裁定により approved 化（チャット指示）

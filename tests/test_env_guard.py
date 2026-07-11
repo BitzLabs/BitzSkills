@@ -6,6 +6,7 @@ fail-open）/ ENV-CON-001（pass ケース = 普遍的最小集合の維持）
 import json
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -135,3 +136,48 @@ def test_sessionstart_command_outputs_rules_content():
     assert proc.returncode == 0
     assert "ガードレール" in proc.stdout
     assert "rm -rf" in proc.stdout
+
+
+# --- ENV-NFR-001: フック応答時間ベンチマーク ---
+#
+# 受入基準 (EARS): WHEN env_guard.py が1回のフック呼び出しを処理する THEN
+# システムは通常環境で 200ms 以内に応答を返す SHALL
+#
+# CI 環境のジッタ（他プロセスとの競合・初回起動コストなど）で flaky にならないよう、
+# 複数回計測した経過時間の最小値（min）で判定する。最小値は「外れ値による遅延」を
+# 除去した、その環境が出せる最速の応答時間を表すため、恒常的な性能劣化の検知には
+# 有効でありながら偶発的な揺らぎには強い。
+
+NFR_001_THRESHOLD_SECONDS = 0.2
+BENCHMARK_REPEATS = 7
+
+
+def _min_elapsed_seconds(stdin_text: str, repeats: int = BENCHMARK_REPEATS) -> float:
+    elapsed = []
+    for _ in range(repeats):
+        start = time.perf_counter()
+        subprocess.run(
+            [sys.executable, str(GUARD)],
+            input=stdin_text,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        elapsed.append(time.perf_counter() - start)
+    return min(elapsed)
+
+
+@pytest.mark.parametrize(
+    "label,stdin_text",
+    [
+        ("allow", claude_payload("git status")),
+        ("deny", claude_payload("rm -rf /tmp/x")),
+        ("invalid_json", "not-json"),
+    ],
+)
+def test_env_nfr_001_hook_response_time_within_200ms(label, stdin_text):
+    min_elapsed = _min_elapsed_seconds(stdin_text)
+    assert min_elapsed < NFR_001_THRESHOLD_SECONDS, (
+        f"ENV-NFR-001 違反（{label}）: 最小経過時間 {min_elapsed * 1000:.1f}ms "
+        f"が閾値 {NFR_001_THRESHOLD_SECONDS * 1000:.0f}ms を超過"
+    )

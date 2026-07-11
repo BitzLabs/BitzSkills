@@ -1,7 +1,7 @@
 ---
 id: ENV-CON-004
 version: 1.0
-status: draft
+status: approved
 domain: guardrail
 priority: high
 origin: SI-ENV-001（REV-001 risk RSK-201/RSK-202）
@@ -25,3 +25,4 @@ confidence: high
 - **検証手段**: README / ENV-DSN-001 / env-doctor SKILL.md の記述レビュー（manual-check）
 - **Revision History**:
   - 1.0 (2026-07-11) 初版（SI-ENV-001 accepted による）
+  - 1.0 (2026-07-11) 人間裁定により approved 化（チャット指示）

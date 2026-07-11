@@ -10,11 +10,15 @@
 
 | 層 | 実体 | 効き始め |
 |---|---|---|
-| **即効層（同梱フック）** | PreToolUse フックが `rm -rf` / `git push --force` / `git reset --hard` / `git clean -f` / `sudo` を機械ブロック。あわせて `rules/*.md` のガードレール文書を Antigravity はネイティブ rules として、Claude Code は SessionStart フック注入としてコンテキストへ読み込む | プラグイン有効化直後から。プロジェクトに何も書き込まない |
+| **即効層（同梱フック）** | PreToolUse フックが `rm -rf` / `git push --force` / `git reset --hard` / `git clean -f` / `sudo` を機械ブロック。あわせて `rules/*.md` のガードレール文書を Antigravity はネイティブ rules として、Claude Code は SessionStart フック注入としてコンテキストへ読み込む（注入対象はガードレール本文に限定し、肥大化を避ける。過大になったら要約・分割を検討する） | プラグイン有効化直後から。プロジェクトに何も書き込まない |
 | **生成層（env-init）** | permissions（settings.json）・AGENTS.md 雛形・CLAUDE.md 断片・advisor/worker サブエージェントをユーザー確認付きで生成 | env-init 実行後。プラグイン無効時も効き続ける恒久層 |
 
 同じガードレールを2層で持つのは意図的な二重化です（片方が無効でももう片方が守る）。
 3層（permissions ⇔ フック ⇔ ナラティブ）の同期ズレは `env-doctor` が検出します。
+
+同梱フックは「誤操作の抑止」であり、悪意ある回避を防ぐセキュリティ境界ではありません。
+正規表現ベースの検出はコマンド置換・エンコード・環境変数展開などで回避可能です。
+恒久的な防御は env-init が生成する permissions 層が担います。
 
 ## モデル非依存の協調運用
 
@@ -37,6 +41,7 @@ advisor が使えない環境では相談をスキップして劣化動作しま
 | `env-orchestration` | 協調パターンの選択と実行の案内（決定木・検収義務・合議の進め方） |
 | `env-register` | 協調アダプタ（外部エージェント連携プラグイン）の検出・レジストリ登録・委譲マトリクス更新 |
 | `env-doctor` | ガードレール3層と協調構成の同期ズレ診断 |
+| `env-destroy` | env-init 生成物のトラッキング記録に基づくユーザー確認付き撤去（マーカー区間のみ除去） |
 
 ## 協調アダプタ
 

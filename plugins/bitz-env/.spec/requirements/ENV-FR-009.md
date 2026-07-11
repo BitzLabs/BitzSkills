@@ -1,7 +1,7 @@
 ---
 id: ENV-FR-009
 version: 1.0
-status: draft
+status: approved
 domain: deploy
 priority: medium
 origin: SI-ENV-003（REV-001 operations OPS-201）
@@ -24,3 +24,4 @@ confidence: high
 - **検証手段**: evals/env-init/（git 管理下/管理外での書き込み前状態のアサーション）
 - **Revision History**:
   - 1.0 (2026-07-11) 初版（SI-ENV-003 accepted による）
+  - 1.0 (2026-07-11) 人間裁定により approved 化（チャット指示）

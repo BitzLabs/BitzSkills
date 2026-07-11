@@ -1,7 +1,7 @@
 ---
 id: ENV-NFR-001
 version: 1.0
-status: draft
+status: approved
 domain: guardrail
 priority: medium
 origin: SI-ENV-004（REV-001 business BIZ-201）
@@ -21,3 +21,4 @@ confidence: medium
 - **検証手段**: tests/ での実行時間計測（benchmark。代表入力での経過時間アサーション）
 - **Revision History**:
   - 1.0 (2026-07-11) 初版（SI-ENV-004 accepted による）
+  - 1.0 (2026-07-11) 人間裁定により approved 化（チャット指示）

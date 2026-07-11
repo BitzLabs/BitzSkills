@@ -3,7 +3,7 @@ id: SI-ENV-007
 raised_by: sdd-review 第2ラウンド クロスモデル（agy/Gemini）AGY-3 + AGY-4
 target: plugins/bitz-env/.spec/requirements/ENV-FR-005 + collab-contract.md
 proposed_change_type: bump
-status: proposed
+status: accepted
 ---
 - **矛盾/曖昧の内容**: LLM をコンポーネントとして委譲・協調に組み込む際の防御的設計が2点欠落。
   (1) 盲目的な検収: Worker が返す DIGEST（自己申告の要約）のみで Center が検収すると、

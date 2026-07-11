@@ -3,7 +3,7 @@ id: SI-ENV-006
 raised_by: sdd-review 第2ラウンド クロスモデル（agy/Gemini）AGY-7
 target: plugins/bitz-env/skills/（新スキル env-destroy）+ ENV-DSN-001
 proposed_change_type: new
-status: proposed
+status: accepted
 ---
 - **矛盾/曖昧の内容**: フック（即効層）はプラグイン無効化で消えるが、env-init が生成した
   恒久層（settings.json の permissions・AGENTS.md / CLAUDE.md のマーカー区間・
