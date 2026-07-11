@@ -1,0 +1,13 @@
+{
+  "name": "second-adapter",
+  "version": "1.0.0",
+  "description": "後発の協調アダプタ",
+  "metadata": {
+    "collab": {
+      "agent": "second-adapter-agent",
+      "skills": {
+        "delegate": "ex-delegate"
+      }
+    }
+  }
+}

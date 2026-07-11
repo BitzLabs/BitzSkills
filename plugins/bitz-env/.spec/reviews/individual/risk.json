@@ -1,0 +1,32 @@
+{
+  "perspective": "risk",
+  "dimensions": [
+    {"name": "分散システムリスク", "weight": 0.30, "score": "N/A", "findings": []},
+    {"name": "障害モード分析", "weight": 0.30, "score": 2, "findings": [
+      {"id": "RSK-201", "severity": "major",
+       "location": "ENV-DSN-001:ガード共通ロジック / scripts/env_guard.py",
+       "title": "env-init 未実行環境では fail-open が唯一の防御層になる",
+       "description": "設計は『フックの故障は素通し（fail-open）、恒久層 permissions が二重に守る』を根拠に可用性を優先している。しかしプラグインを入れただけで env-init を未実行の環境には permissions 層が存在せず、フックが二重化の前提を欠いた単独防御になる。この状態でガードがクラッシュ・タイムアウトすると破壊的操作が素通しする。",
+       "recommendation": "『フック単独では完全な防御にならない・env-init での permissions 生成が本来の恒久層』を README とスキルの案内に明記し、ENV-CON として二重化の前提を要件化する。あるいは env-init 未実行を env-doctor が検出して警告する。"},
+      {"id": "RSK-202", "severity": "major",
+       "location": "scripts/env_guard.py:DENY_PATTERNS",
+       "title": "正規表現フィルタはバイパス可能で、セキュリティ境界と誤解される恐れ",
+       "description": "`\\bsudo\\b` 等の正規表現は $(printf sudo)、base64 デコード実行、エイリアス、環境変数展開などで容易に回避できる。これは『誤操作の抑止』には有効だが『悪意ある回避の防止』にはならない。ガードをセキュリティ境界と誤認すると過信につながる。",
+       "recommendation": "設計文書に『本ガードは誤操作抑止であり悪意ある回避を防ぐセキュリティ境界ではない』と位置づけを明記する（ENV-CON-001 の脚注か新 CON）。plugin-agents の『tools 制限にセキュリティを依存させない』と同じ思想。"},
+      {"id": "RSK-203", "severity": "minor",
+       "location": "hooks/hooks.json:PreToolUse timeout / SessionStart",
+       "title": "フックのタイムアウト時・SessionStart cat 失敗時の挙動が未定義",
+       "description": "PreToolUse フックが timeout(10s) した場合に deny 側に倒れるか素通しかが未文書化。SessionStart の `cat rules/*.md` は rules/ が空だと glob 未展開でエラー終了し得る（ENV-FR-008 の『妨げない』が実装で担保されているか未検証）。",
+       "recommendation": "タイムアウト時のプラットフォーム挙動を実測して設計に記録。SessionStart は空でも失敗しない実装（nullglob 相当・存在チェック）に要件を具体化。"}
+    ]},
+    {"name": "Saga設計の妥当性", "weight": 0.25, "score": "N/A", "findings": []},
+    {"name": "データ整合性リスク", "weight": 0.15, "score": 3, "findings": [
+      {"id": "RSK-401", "severity": "minor",
+       "location": "ENV-FR-004 / env-register",
+       "title": "レジストリと CLAUDE.md マトリクスの二重書き込みが部分失敗で不整合化",
+       "description": "env-register はレジストリ(.claude/bitz-env.local.md)と CLAUDE.md マトリクスの両方を更新する。片方だけ成功した場合の一貫性回復が未設計（env-doctor は事後検出のみ）。マーカー区間をユーザーが破損させた場合の再生成挙動も未定義。",
+       "recommendation": "env-doctor の検査に『レジストリ⇔マトリクスの不一致』を明示追加（既にほぼ在る）。マーカー破損時は再生成せず警告する分岐を ENV-FR-004 に追記。"}
+    ]}
+  ],
+  "weighted_score": 2.33,
+  "summary": "critical なし（ローカルツールで破壊は起きにくい設計）。最大の懸念は防御の二重化の前提が『env-init 実行済み』に暗黙依存している点(RSK-201)と、正規表現ガードがセキュリティ境界と誤解されやすい点(RSK-202)。いずれも文書化と要件化で解消できる設計レベルの穴。"}

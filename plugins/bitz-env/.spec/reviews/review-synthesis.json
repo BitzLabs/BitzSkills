@@ -1,0 +1,22 @@
+{
+  "id": "REV-001",
+  "decision": "CONDITIONAL_PASS",
+  "target": "ENV-DSN-001 + ENV-FR-001〜008 + ENV-CON-001〜003 (bitz-env v0.2.0)",
+  "perspectives_run": ["risk", "consistency", "operations", "business"],
+  "perspectives_skipped": ["data-integrity（永続データ無しのため N/A）"],
+  "weighted_scores": {"risk": 2.33, "consistency": 3.65, "operations": 2.70, "business": 3.20},
+  "aggregate": 2.87,
+  "counts": {"critical": 0, "major": 5, "minor": 6, "info": 4},
+  "gate_rationale": "aggregate 2.87 ≥ 2.5、critical 0、major 5 ≤ 8、全観点 ≥ 2.0（最低 risk 2.33）→ CONDITIONAL_PASS。PASS 条件(max_major 3)は major 5 で未達。",
+  "priorities": {
+    "P1_major": ["RSK-201", "RSK-202", "RVC-201", "OPS-201", "BIZ-201"],
+    "P2_minor": ["RSK-203", "RSK-401", "RVC-202", "RVC-301", "OPS-101", "OPS-401"],
+    "P3_info": ["RVC-101", "OPS-301", "BIZ-101", "BIZ-401"]
+  },
+  "spec_issue_candidates": [
+    {"si": "SI-ENV-001", "covers": ["RSK-201", "RSK-202", "BIZ-301"], "theme": "防御の二重化前提と fail-open/正規表現ガードの位置づけ明文化（ADR化）"},
+    {"si": "SI-ENV-002", "covers": ["RVC-201"], "theme": "example-test 検証実体(evals/)の未接続 — verified 到達不能"},
+    {"si": "SI-ENV-003", "covers": ["OPS-201"], "theme": "env-init 生成物のロールバック/バックアップ手段"},
+    {"si": "SI-ENV-004", "covers": ["BIZ-201"], "theme": "非機能要件(NFR)の起票 — ガード性能・注入サイズ"}
+  ]
+}

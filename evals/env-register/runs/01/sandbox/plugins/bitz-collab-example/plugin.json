@@ -1,0 +1,14 @@
+{
+  "name": "bitz-collab-example",
+  "version": "1.0.0",
+  "description": "協調アダプタの例示プラグイン",
+  "metadata": {
+    "collab": {
+      "agent": "bitz-collab-example-agent",
+      "skills": {
+        "delegate": "ex-delegate",
+        "review": "ex-review"
+      }
+    }
+  }
+}

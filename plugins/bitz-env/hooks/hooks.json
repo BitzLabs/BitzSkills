@@ -1,0 +1,28 @@
+{
+  "description": "bitz-env ガードレール: 破壊的操作（rm -rf / git push --force / git reset --hard / git clean -f / sudo）を PreToolUse でブロックし、SessionStart で rules/*.md をコンテキストへ注入する",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/env_guard.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat \"${CLAUDE_PLUGIN_ROOT}\"/rules/*.md",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

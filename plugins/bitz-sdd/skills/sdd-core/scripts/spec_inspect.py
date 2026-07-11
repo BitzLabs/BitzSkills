@@ -203,7 +203,12 @@ def inspect(root: Path, global_reqs: dict = None) -> str:
                 if "WHEN" in line and "SHALL" not in line:
                     problems.append(f"[lint] {rid}: EARS不完全（WHEN があるのに SHALL がない行）")
 
-    ghosts = {rid: srcs for rid, srcs in all_refs.items() if rid not in global_reqs}
+    # タスク ID（.spec/tasks/ のファイル名 stem）は既知 ID として幽霊判定から除外する
+    # （depends_on / specs からのタスク参照を許すため。成果物レジストリには登録しない — SI-CORE-003）
+    tasks_dir = root / ".spec" / "tasks"
+    task_ids = {f.stem for f in tasks_dir.rglob("*.md")} if tasks_dir.exists() else set()
+    ghosts = {rid: srcs for rid, srcs in all_refs.items()
+              if rid not in global_reqs and rid not in task_ids}
     orphans = [rid for rid, r in reqs.items()
                if r["fm"].get("status") in ACTIVE and (rid.split("-")[1] if len(rid.split("-"))>2 else rid.split("-")[0]) in ("FR", "NFR", "CON") and rid not in impl]
     untested = [rid for rid, r in reqs.items()

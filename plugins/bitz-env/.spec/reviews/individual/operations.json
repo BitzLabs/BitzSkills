@@ -1,0 +1,34 @@
+{
+  "perspective": "operations",
+  "dimensions": [
+    {"name": "監視・可観測性", "weight": 0.30, "score": 2, "findings": [
+      {"id": "OPS-101", "severity": "minor",
+       "location": "scripts/env_guard.py / 各スキル",
+       "title": "ガード発火・生成操作の記録が無くデバッグ困難",
+       "description": "フックが何を deny したか、env-init が何を生成/マージしたかのログが残らない。ユーザーが『なぜブロックされたか』『何を書き換えたか』を後から追えず、誤爆時の切り分けや監査ができない。",
+       "recommendation": "deny 時に systemMessage で理由を返す実装は既にある（可視性は最低限確保）。env-init は生成サマリを標準出力で残す。任意で evals/observations 相当の軽量ログを検討。"}
+    ]},
+    {"name": "災害復旧", "weight": 0.30, "score": 3, "findings": [
+      {"id": "OPS-201", "severity": "major",
+       "location": "ENV-FR-003 / env-init",
+       "title": "env-init 生成物のロールバック・バックアップ手段が無い",
+       "description": "env-init は settings.json / AGENTS.md / CLAUDE.md をユーザー確認のうえ書き換えるが、書き込み後に元へ戻す手段（バックアップ・undo）が設計に無い。マージ判断を誤ると復旧はユーザーの git 頼み。展開先が git 管理外だと復旧不能。",
+       "recommendation": "書き込み前に対象ファイルのバックアップ（.bak か diff の保存）を取る要件を ENV-FR-003 に追加。または『展開先が git 管理下であること』を前提条件として明示。"}
+    ]},
+    {"name": "セキュリティ態勢", "weight": 0.20, "score": 3, "findings": [
+      {"id": "OPS-301", "severity": "info",
+       "location": "permissions.md / env_guard.py",
+       "title": "シークレット読み取り deny と資格情報ハードコード無しは妥当",
+       "description": "生成 permissions は .env / credentials.json の Read を deny し、スクリプトに資格情報のハードコードは無い。正規表現ガードの限界は RSK-202 で別途指摘済み。",
+       "recommendation": "現状維持。RSK-202 の位置づけ明記と合わせる。"}
+    ]},
+    {"name": "デプロイ安全性", "weight": 0.20, "score": 3, "findings": [
+      {"id": "OPS-401", "severity": "minor",
+       "location": "hooks/hooks.json / 展開先の既存フック",
+       "title": "既存フックとの共存（二重発火）が未検証（要検証項目#3）",
+       "description": "展開先が独自 PreToolUse フックを持つ場合、bitz-env フックと二重発火・順序依存・矛盾する decision が起きうるが挙動が未確認。",
+       "recommendation": "実環境で共存パターンを実測し、複数フックの評価順序と decision 合成規則を設計に記録する。"}
+    ]}
+  ],
+  "weighted_score": 2.70,
+  "summary": "最大の運用リスクは env-init 生成物のロールバック手段の欠如(OPS-201)。git 管理外の展開先で誤マージすると復旧できない。可観測性(ログ)の薄さ(OPS-101)と既存フック共存の未検証(OPS-401)も運用時に効いてくる。"}
