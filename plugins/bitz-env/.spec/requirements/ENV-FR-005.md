@@ -1,7 +1,7 @@
 ---
 id: ENV-FR-005
 version: 1.0
-status: draft
+status: approved
 domain: collab
 priority: high
 origin: 製作プラン + 実装 v0.1.0（reverse-derived）
@@ -25,3 +25,4 @@ confidence: high
 - **検証手段**: evals/env-init/・evals/env-orchestration/（割り当て分岐・劣化動作シナリオ）
 - **Revision History**:
   - 1.0 (2026-07-11) 初版（実装 v0.1.0 からの reverse-derived）
+  - 1.0 (2026-07-11) 人間裁定により approved 化（チャット指示）

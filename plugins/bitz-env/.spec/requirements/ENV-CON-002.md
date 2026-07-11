@@ -1,11 +1,11 @@
 ---
 id: ENV-CON-002
 version: 1.0
-status: draft
+status: approved
 domain: collab
 priority: medium
 origin: 製作プラン（契約の先行固定リスクへの対処）
-verification_method: inspection
+verification_method: manual-check
 derived_from:
 supersedes:
 superseded_by:
@@ -24,3 +24,4 @@ confidence: high
 - **検証手段**: コードレビュー（PR。契約変更は Design Gate 対象・軽量レーン禁止）
 - **Revision History**:
   - 1.0 (2026-07-11) 初版
+  - 1.0 (2026-07-11) 人間裁定により approved 化（チャット指示）

@@ -1,11 +1,11 @@
 ---
 id: ENV-CON-001
 version: 1.0
-status: draft
+status: approved
 domain: guardrail
 priority: high
 origin: 製作プラン（一般公開の前提条件）
-verification_method: inspection
+verification_method: manual-check
 derived_from:
 supersedes:
 superseded_by:
@@ -25,3 +25,4 @@ confidence: high
 - **検証手段**: コードレビュー（PR）+ tests/test_env_guard.py の pass ケース維持
 - **Revision History**:
   - 1.0 (2026-07-11) 初版
+  - 1.0 (2026-07-11) 人間裁定により approved 化（チャット指示）

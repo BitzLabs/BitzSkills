@@ -1,11 +1,11 @@
 ---
 id: ENV-CON-003
 version: 1.0
-status: draft
+status: approved
 domain: deploy
 priority: high
 origin: 製作プラン + 実装 v0.1.0（reverse-derived）
-verification_method: inspection
+verification_method: manual-check
 derived_from:
 supersedes:
 superseded_by:
@@ -23,3 +23,4 @@ confidence: high
 - **検証手段**: evals/ のシナリオテスト（書き出し先パスのアサーション）+ コードレビュー
 - **Revision History**:
   - 1.0 (2026-07-11) 初版（実装 v0.1.0 からの reverse-derived）
+  - 1.0 (2026-07-11) 人間裁定により approved 化（チャット指示）

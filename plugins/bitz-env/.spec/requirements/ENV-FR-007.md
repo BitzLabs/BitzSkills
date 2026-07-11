@@ -1,7 +1,7 @@
 ---
 id: ENV-FR-007
 version: 1.0
-status: draft
+status: approved
 domain: deploy
 priority: medium
 origin: 製作プラン + 実装 v0.1.0（reverse-derived）
@@ -26,3 +26,4 @@ confidence: high
 - **検証手段**: evals/env-doctor/（ズレ注入 → 検出・提案方向のアサーション）
 - **Revision History**:
   - 1.0 (2026-07-11) 初版（実装 v0.1.0 からの reverse-derived）
+  - 1.0 (2026-07-11) 人間裁定により approved 化（チャット指示）
