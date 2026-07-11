@@ -1,7 +1,7 @@
 ---
 id: ENV-FR-010
 version: 1.0
-status: implementing
+status: verified
 domain: deploy
 priority: high
 origin: SI-ENV-006（sdd-review 第2ラウンド クロスモデル AGY-7）
@@ -31,3 +31,4 @@ confidence: high
   - 1.0 (2026-07-11) 初版（SI-ENV-006 accepted による）
   - 1.0 (2026-07-11) 人間裁定により approved 化（チャット指示）
   - 1.0 (2026-07-11) implementing 遷移（実装タスク done 確認・sdd-test 工程開始）
+  - 1.0 (2026-07-12) verified 遷移（evals/env-init TC-01・env-destroy TC-01〜03 green + spec_inspect PASS、人間承認）

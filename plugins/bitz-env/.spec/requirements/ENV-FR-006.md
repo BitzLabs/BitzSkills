@@ -1,7 +1,7 @@
 ---
 id: ENV-FR-006
 version: 1.1
-status: implementing
+status: verified
 domain: collab
 priority: medium
 origin: 製作プラン + 実装 v0.1.0（reverse-derived）
@@ -34,3 +34,4 @@ confidence: high
   - 1.1 (2026-07-11) SI-ENV-005 accepted による改訂: 役割ルーティングテーブル・名前衝突解決を追加、契約 v2 前提
   - 1.1 (2026-07-11) 人間裁定により approved 化（チャット指示）
   - 1.1 (2026-07-11) implementing 遷移（実装タスク done 確認・sdd-test 工程開始）
+  - 1.1 (2026-07-12) verified 遷移（evals/env-register TC-01〜03/05・env-orchestration TC-01 green + spec_inspect PASS、人間承認）

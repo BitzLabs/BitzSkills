@@ -1,7 +1,7 @@
 ---
 id: ENV-FR-005
 version: 1.1
-status: implementing
+status: verified
 domain: collab
 priority: high
 origin: 製作プラン + 実装 v0.1.0（reverse-derived）
@@ -33,3 +33,4 @@ confidence: high
   - 1.1 (2026-07-11) SI-ENV-007 accepted による改訂: 客観的検収・ネスト委譲禁止を追加
   - 1.1 (2026-07-11) 人間裁定により approved 化（チャット指示）
   - 1.1 (2026-07-11) implementing 遷移（実装タスク done 確認・sdd-test 工程開始）
+  - 1.1 (2026-07-12) verified 遷移（evals/env-orchestration TC-02〜05・env-init TC-01 green + spec_inspect PASS、人間承認）

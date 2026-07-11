@@ -1,7 +1,7 @@
 ---
 id: ENV-FR-007
 version: 1.0
-status: implementing
+status: verified
 domain: deploy
 priority: medium
 origin: 製作プラン + 実装 v0.1.0（reverse-derived）
@@ -28,3 +28,4 @@ confidence: high
   - 1.0 (2026-07-11) 初版（実装 v0.1.0 からの reverse-derived）
   - 1.0 (2026-07-11) 人間裁定により approved 化（チャット指示）
   - 1.0 (2026-07-11) implementing 遷移（実装タスク done 確認・sdd-test 工程開始）
+  - 1.0 (2026-07-12) verified 遷移（evals/env-doctor TC-01〜03 green + spec_inspect PASS、人間承認）
