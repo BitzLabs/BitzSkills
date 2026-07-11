@@ -1,0 +1,13 @@
+{
+  "name": "live-adapter",
+  "version": "1.0.0",
+  "description": "現存する協調アダプタ",
+  "metadata": {
+    "collab": {
+      "agent": "live-adapter-agent",
+      "skills": {
+        "delegate": "ex-delegate"
+      }
+    }
+  }
+}

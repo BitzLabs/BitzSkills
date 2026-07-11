@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(npm publish:*)"
+    ],
+    "ask": [
+      "Bash(git push:*)"
+    ]
+  }
+}
