@@ -1,0 +1,32 @@
+{
+  "perspective": "consistency",
+  "dimensions": [
+    {"name": "構造整合", "weight": 0.35, "score": 4, "findings": [
+      {"id": "RVC-101", "severity": "info",
+       "location": "plugins/bitz-env/.spec/",
+       "title": "設計文書が ENV-DSN-001 の1枚に集約",
+       "description": "アーキ・ガード・協調・アダプタ・要検証を1文書に収めており、文書間リンク切れは無い。規模的には妥当だが、アダプタ契約が increase したら分割候補。",
+       "recommendation": "現状維持。契約詳細は collab-contract.md に既に分離済みで健全。"}
+    ]},
+    {"name": "トレーサビリティ", "weight": 0.35, "score": 3, "findings": [
+      {"id": "RVC-201", "severity": "major",
+       "location": "ENV-FR-003〜007:検証手段",
+       "title": "example-test の検証実体(evals/)が未作成で verified に到達不能",
+       "description": "6要件が verification_method: example-test で evals/env-* を参照するが、evals/ 配下の実体が存在しない。approved だが検証手段が空のため verified に進めず、トレーサビリティは『要件→設計→実装』までで『→検証』が切れている。spec_inspect は example-test の実体有無まではチェックしないため PASS をすり抜けている。",
+       "recommendation": "skill-tester でシナリオテストを evals/env-*/ に作成し検証を接続する。着手前は各要件に『検証未実装（verified 保留）』を明示（黙って抜けを避ける）。"},
+      {"id": "RVC-202", "severity": "minor",
+       "location": "ENV-FR-005",
+       "title": "1要件が2スキルにまたがりタスク紐づけが粗い",
+       "description": "ENV-FR-005（モデル非依存・劣化動作）は env-init と env-orchestration の両方で実現されるが、implements は ENV-TSK-002 のみ。orchestration 側の劣化動作の実装位置が追跡しづらい。",
+       "recommendation": "orchestration の劣化動作を別タスクに分けるか、ENV-TSK-002 の boundary を明示的に両スキルへ広げる。"}
+    ]},
+    {"name": "用語一貫性", "weight": 0.30, "score": 4, "findings": [
+      {"id": "RVC-301", "severity": "minor",
+       "location": "plugins/bitz-env/ 全体",
+       "title": "中核用語の glossary が無い",
+       "description": "中心/司令塔/advisor/worker/協調アダプタ/委譲型/相談型/合議型 は一貫使用されているが定義集が無い。『中心』と『司令塔』が同義で併用されており、初見の展開先ユーザーに揺れて見える恐れ。",
+       "recommendation": ".spec/design か README に用語集を1つ置き、『中心（=司令塔）』と明示的に別名関係を宣言する。"}
+    ]}
+  ],
+  "weighted_score": 3.65,
+  "summary": "構造と用語は良好。最大の穴は example-test 系6要件の検証実体(evals/)が未作成で、approved 済みなのに verified に到達できないトレーサビリティの断絶(RVC-201)。spec_inspect が実体不在を検出しないため PASS に隠れている点に注意。"}

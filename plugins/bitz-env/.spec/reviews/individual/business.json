@@ -1,0 +1,34 @@
+{
+  "perspective": "business",
+  "dimensions": [
+    {"name": "要件トレーサビリティ", "weight": 0.35, "score": 4, "findings": [
+      {"id": "BIZ-101", "severity": "info",
+       "location": "ENV-FR-005 合議型 / env-orchestration",
+       "title": "合議型はアダプタ2つ以上が前提で、初期価値に対し先行実装気味（YAGNI）",
+       "description": "合議型は advisor 単独＋アダプタ0では相談型に格下げされ実質発動しない。一般公開初期の利用者はアダプタ未導入が大半で、合議は当面『使えない機能』になりうる。設計思想としての先行定義は妥当だが、価値提供順序としては後回しでよい。",
+       "recommendation": "合議型を『将来スコープ』と位置づけ、初期ドキュメントは委譲型・相談型を主軸に据える。合議の詳細検証はアダプタ第1号と同時でよい。"}
+    ]},
+    {"name": "NFR定量化", "weight": 0.30, "score": 2, "findings": [
+      {"id": "BIZ-201", "severity": "major",
+       "location": "plugins/bitz-env/.spec/requirements/",
+       "title": "非機能要件(NFR)が1件も無い",
+       "description": "フック実行のオーバーヘッド上限、SessionStart 注入サイズの上限、env_guard の応答時間など、体感・性能に関わる NFR が未定義。ガードは全 Bash 実行に割り込むため、遅ければ開発体験を直接損なう。定量目標が無いと『遅い』の判定基準が持てない。",
+       "recommendation": "最低限のNFRを起票: 例『env_guard は1呼び出し当たり通常環境で 200ms 以内に応答する』『SessionStart 注入は rules 合計サイズを対象とし過大な注入をしない』。p99 等の重い指標は不要。"}
+    ]},
+    {"name": "ステークホルダー整合", "weight": 0.20, "score": 3, "findings": [
+      {"id": "BIZ-301", "severity": "minor",
+       "location": "ENV-DSN-001",
+       "title": "主要トレードオフが ADR 形式で残っていない",
+       "description": "fail-open vs fail-safe、permissions 直接配布不可の回避、rules の二経路化、モデル非依存化など重要判断は設計文書に散在するが、判断の選択肢・却下理由を残す ADR 形式ではない。後の変更者が『なぜこうしたか』を追いにくい。",
+       "recommendation": "主要判断を ADR（docs/02-design/DECISIONS 相当か .spec/design の決定節）に集約。特に fail-open の選択根拠は RSK-201 と対で残す。"}
+    ]},
+    {"name": "ROI・実現可能性", "weight": 0.15, "score": 4, "findings": [
+      {"id": "BIZ-401", "severity": "info",
+       "location": "plugins/bitz-env 全体",
+       "title": "quick win が明確・実装済みで実現可能性は実証済み",
+       "description": "即効層フックはインストール直後から価値を出し、v0.2.0 が動作・全検証 PASS。価値提供の早さは良好。",
+       "recommendation": "現状維持。"}
+    ]}
+  ],
+  "weighted_score": 3.20,
+  "summary": "要件トレースと価値提供順序は良好だが、NFR が皆無(BIZ-201)なのが最大のギャップ。全 Bash 実行に割り込むガードの性能目標が無いのは公開ツールとして弱い。トレードオフの ADR 化(BIZ-301)と合議型の後回し(BIZ-101)も整えたい。"}
