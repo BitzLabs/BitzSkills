@@ -1,7 +1,7 @@
 ---
 id: ENV-CON-002
 version: 1.0
-status: approved
+status: implementing
 domain: collab
 priority: medium
 origin: 製作プラン（契約の先行固定リスクへの対処）
@@ -25,3 +25,4 @@ confidence: high
 - **Revision History**:
   - 1.0 (2026-07-11) 初版
   - 1.0 (2026-07-11) 人間裁定により approved 化（チャット指示）
+  - 1.0 (2026-07-11) implementing 遷移（実装タスク done 確認・sdd-test 工程開始）

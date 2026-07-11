@@ -1,7 +1,7 @@
 ---
 id: ENV-FR-008
 version: 1.0
-status: approved
+status: implementing
 domain: guardrail
 priority: medium
 origin: 人間裁定（チャット指示 2026-07-11。要検証項目#2 の設計解決）
@@ -28,3 +28,4 @@ confidence: high
   - 1.0 (2026-07-11) 初版。人間裁定により approved で起票（チャット指示。
     根拠: code.claude.com/docs hooks-guide「stdout is added to Claude's context」。
     プラグインの rules/ ネイティブ対応は Claude Code に無いことを公式 docs で確認済み）
+  - 1.0 (2026-07-11) implementing 遷移（実装タスク done 確認・sdd-test 工程開始）
