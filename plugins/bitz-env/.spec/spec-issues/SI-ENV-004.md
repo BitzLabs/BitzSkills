@@ -3,7 +3,7 @@ id: SI-ENV-004
 raised_by: sdd-review REV-001（business BIZ-201）
 target: plugins/bitz-env/.spec/requirements/（NFR 新規）
 proposed_change_type: new
-status: proposed
+status: accepted
 ---
 - **矛盾/曖昧の内容**: 非機能要件(NFR)が1件も無い。env_guard は全 Bash 実行に PreToolUse で
   割り込むため、応答が遅ければ開発体験を直接損なう。SessionStart の注入サイズにも上限が無い。

@@ -3,7 +3,7 @@ id: SI-ENV-001
 raised_by: sdd-review REV-001（risk RSK-201/RSK-202, business BIZ-301）
 target: plugins/bitz-env/.spec/design/ENV-DSN-001.md + ENV-CON-001.md（+ README / rules）
 proposed_change_type: bump
-status: proposed
+status: accepted
 ---
 - **矛盾/曖昧の内容**: ガードレールの防御思想に2つの暗黙前提がある。
   (1) 設計は「フック（即効層）＋permissions（恒久層）の二重の守り」を謳うが、

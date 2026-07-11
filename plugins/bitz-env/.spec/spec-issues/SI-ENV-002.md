@@ -3,7 +3,7 @@ id: SI-ENV-002
 raised_by: sdd-review REV-001（consistency RVC-201）
 target: plugins/bitz-env/.spec/requirements/ENV-FR-003〜007（検証手段）+ evals/env-*/
 proposed_change_type: bump
-status: proposed
+status: accepted
 ---
 - **矛盾/曖昧の内容**: ENV-FR-003〜007 の6要件は verification_method: example-test で
   evals/env-* を参照するが、evals/ 配下の実体が存在しない。approved 済みだが検証手段が

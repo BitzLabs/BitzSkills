@@ -3,7 +3,7 @@ id: SI-ENV-003
 raised_by: sdd-review REV-001（operations OPS-201）
 target: plugins/bitz-env/.spec/requirements/ENV-FR-003.md + skills/env-init/SKILL.md
 proposed_change_type: bump
-status: proposed
+status: accepted
 ---
 - **矛盾/曖昧の内容**: env-init は settings.json / AGENTS.md / CLAUDE.md をユーザー確認の
   うえ書き換えるが、書き込み後に元へ戻す手段（バックアップ・undo）が設計に無い。

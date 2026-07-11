@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-11)
 
-成果物数: 13 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
+成果物数: 17 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -34,6 +34,7 @@
 | ENV-CON-001 | approved | guardrail | manual-check | 1 | 1 |
 | ENV-CON-002 | approved | collab | manual-check | 1 | 1 |
 | ENV-CON-003 | approved | deploy | manual-check | 1 | 1 |
+| ENV-CON-004 | draft | guardrail | manual-check | 0 | 0 |
 | ENV-DSN-001 | approved | deploy |  | 0 | 0 |
 | ENV-FR-001 | approved | guardrail | example-test | 2 | 2 |
 | ENV-FR-002 | approved | guardrail | example-test | 2 | 2 |
@@ -43,6 +44,9 @@
 | ENV-FR-006 | approved | collab | example-test | 1 | 1 |
 | ENV-FR-007 | approved | deploy | example-test | 1 | 1 |
 | ENV-FR-008 | approved | guardrail | example-test | 1 | 1 |
+| ENV-FR-009 | draft | deploy | example-test | 0 | 0 |
+| ENV-NFR-001 | draft | guardrail | benchmark | 0 | 0 |
+| ENV-NFR-002 | draft | guardrail | manual-check | 0 | 0 |
 | REV-001 | approved | governance |  | 0 | 0 |
 
 **判定: PASS ✅**
