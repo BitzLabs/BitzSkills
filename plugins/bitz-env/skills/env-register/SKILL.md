@@ -2,10 +2,10 @@
 name: env-register
 description: bitz-env の協調アダプタ（外部エージェント連携プラグイン）を検出してプロジェクトのレジストリ（.claude/bitz-env.local.md）へ登録し、CLAUDE.md の委譲マトリクスを更新する。「アダプタを登録して」「協調プラグインを追加した」「委譲先を増やしたい」「レジストリを更新して」「env-register」と言われたとき、または契約準拠プラグインの導入後に使用する。契約（v2）の仕様は env-orchestration の collab-contract.md が正。
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
   author: br7.hide
   created: "2026-07-11"
-  updated: "2026-07-11"
+  updated: "2026-07-12"
 ---
 
 # env-register
@@ -87,6 +87,9 @@ adapters:
 この自明ルーティングで満たされるため、アダプタ側の変更は不要。
 
 ### 3. 委譲マトリクスの更新
+
+レジストリの登録・更新・削除が完了するたびに、ユーザーの明示依頼の有無にかかわらず
+このステップを実行する（レジストリと委譲マトリクスを常に同期させる）。
 
 CLAUDE.md の `<!-- bitz-env:begin -->` 〜 `<!-- bitz-env:end -->` 区間内にある
 「今回の割り当て」表の**協調アダプタ行だけ**をレジストリの `routes` から再生成する。
