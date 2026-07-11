@@ -44,7 +44,17 @@ Antigravity 2.0:
 agy plugin install <このリポジトリ>/plugins/bitz-sdd
 ```
 
-## 使い方の流れ
+## 使い方の流れ（一気通貫フロー）
+
+```
+sdd-docs（初期化）
+  → sdd-discovery（上流探索）──── Discovery Gate（Go/No-Go、人間）
+  → sdd-design（+ 任意で sdd-data / sdd-ops、DDD 手法は bitz-ddd）
+  → sdd-review（多観点レビュー）── Design Gate（proposed → active、人間）
+  → sdd-implement（タスク分解 → 実装。並列は sdd-git の worktree 運用）
+  → sdd-test（EARS → テスト導出 → 検証）
+  → sdd-report（進捗集計）──────── Promotion Gate（verified → promoted、人間）
+```
 
 1. 新しいプロジェクトではまず `sdd-docs` で docs/ を初期化（最小6点、library は7点）
 2. 「何を作るか」が未確立なら `sdd-discovery` で上流探索 → Discovery Gate（Go/No-Go）
@@ -55,6 +65,21 @@ agy plugin install <このリポジトリ>/plugins/bitz-sdd
 
 エージェントが docs/ に書けるのは `status: proposed` のドラフトのみ。proposed → active の
 裁定は常に人間が行う（権限分離）。
+
+### 軽量レーン
+
+小さな修正はフルワークフローを回さず、**spec-issue → 要件（approved は人間）→ タスク**だけで
+進めてよい（discovery / design スキップ可。契約に触れる変更は除く）。規定は `sdd-core` の
+軽量レーン節が正。
+
+## 同梱ツール
+
+| ツール | 置き場所 | 役割 |
+|---|---|---|
+| `spec_inspect.py` | sdd-core | `.spec/` の構造検証・幽霊参照/孤児検出・traceability・変更影響分析 |
+| `sdd_sync.py` | sdd-docs | `.spec/` ⇄ `docs/` の双方向同期（pull / push / diff） |
+| `docs_inspect.py` | sdd-docs | docs/ 側の構造検証 |
+| `sdd_report.py` | sdd-report | `.spec/reports/status-report.md` の自動生成 |
 
 ## v1.0.0 移行注記（スキル名変更）
 
