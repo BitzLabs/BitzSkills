@@ -13,6 +13,8 @@ INSPECT_SCRIPT = (
 REQ_ID = "FR-" + "001"
 GHOST_ID = "FR-" + "999"
 TASK_ID = "TSK-" + "001"
+TASK_ID2 = "TSK-" + "002"
+GHOST_TASK_ID = "TSK-" + "999"
 
 
 def make_spec(tmp_path: Path):
@@ -48,6 +50,57 @@ def test_task_self_id_is_not_ghost(tmp_path: Path):
     report = (tmp_path / ".spec" / "inspection-report.md").read_text(encoding="utf-8")
     assert "PASS" in report
     assert f"{TASK_ID} ←" not in report  # 自己言及が幽霊参照として列挙されないこと
+
+
+def test_task_to_task_depends_on_is_not_ghost(tmp_path: Path):
+    """タスクが depends_on で他の実在タスクを参照しても幽霊参照にならない（SI-CORE-003）"""
+    tasks_dir = make_spec(tmp_path)
+    (tasks_dir / f"{TASK_ID}.md").write_text(
+        f"---\nid: {TASK_ID}\nimplements: {REQ_ID}\ndepends_on: []\n---\n\n### {TASK_ID} 先行タスク\n",
+        encoding="utf-8",
+    )
+    (tasks_dir / f"{TASK_ID2}.md").write_text(
+        f"---\nid: {TASK_ID2}\nimplements: {REQ_ID}\ndepends_on: [{TASK_ID}]\n---\n\n### {TASK_ID2} 後続タスク\n",
+        encoding="utf-8",
+    )
+    res = run_inspect(tmp_path)
+    assert res.returncode == 0
+    report = (tmp_path / ".spec" / "inspection-report.md").read_text(encoding="utf-8")
+    assert "PASS" in report
+    assert f"{TASK_ID} ←" not in report  # タスク間参照が幽霊参照として列挙されないこと
+
+
+def test_spec_doc_referencing_task_id_is_not_ghost(tmp_path: Path):
+    """.spec/specs/ の文書が実在タスク ID に言及しても幽霊参照にならない（SI-CORE-003）"""
+    tasks_dir = make_spec(tmp_path)
+    (tasks_dir / f"{TASK_ID}.md").write_text(
+        f"---\nid: {TASK_ID}\nimplements: {REQ_ID}\ndepends_on: []\n---\n\n### {TASK_ID} タスク\n",
+        encoding="utf-8",
+    )
+    specs_dir = tmp_path / ".spec" / "specs" / "feature"
+    specs_dir.mkdir(parents=True)
+    (specs_dir / "test-spec.md").write_text(
+        f"# テスト仕様\n\n{REQ_ID} の検証。実装は {TASK_ID} を参照。\n",
+        encoding="utf-8",
+    )
+    res = run_inspect(tmp_path)
+    assert res.returncode == 0
+    report = (tmp_path / ".spec" / "inspection-report.md").read_text(encoding="utf-8")
+    assert "PASS" in report
+
+
+def test_missing_task_reference_still_detected(tmp_path: Path):
+    """存在しないタスク ID への参照は引き続き幽霊参照として FAIL になる"""
+    tasks_dir = make_spec(tmp_path)
+    (tasks_dir / f"{TASK_ID}.md").write_text(
+        f"---\nid: {TASK_ID}\nimplements: {REQ_ID}\ndepends_on: [{GHOST_TASK_ID}]\n---\n\n### {TASK_ID} タスク\n",
+        encoding="utf-8",
+    )
+    res = run_inspect(tmp_path)
+    assert res.returncode == 1
+    report = (tmp_path / ".spec" / "inspection-report.md").read_text(encoding="utf-8")
+    assert GHOST_TASK_ID in report
+    assert "FAIL" in report
 
 
 def test_true_ghost_reference_still_detected(tmp_path: Path):

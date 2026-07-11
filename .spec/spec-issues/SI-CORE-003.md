@@ -3,7 +3,7 @@ id: SI-CORE-003
 raised_by: sdd-core 準拠運用（bitz-env のタスク分解 ENV-TSK-006〜012 で発見）
 target: plugins/bitz-sdd/skills/sdd-core/scripts/spec_inspect.py（幽霊参照検出）
 proposed_change_type: bump
-status: proposed
+status: accepted
 ---
 - **矛盾/曖昧の内容**: SI-CORE-002 の修正は「ファイル自身の ID」の自己言及除外に
   留まったため、タスクファイルが `depends_on: [TSK-xxx]` で**他タスク**を参照すると
@@ -16,3 +16,6 @@ status: proposed
 - **影響推定**: spec_inspect.py の inspect（ghosts 判定）のみ。誤検知の解消方向で、
   既存 PASS を FAIL に変えない。tests/test_spec_inspect.py にタスク間 depends_on の
   回帰ケースを追加する。
+- **裁定**: 2026-07-11 人間裁定により accepted 化（チャット指示）。提案どおり
+  `.spec/tasks/` のファイル名 stem を既知 ID として幽霊判定から除外する
+  （成果物レジストリへの登録はしない）。同日修正実施・回帰テスト追加。
