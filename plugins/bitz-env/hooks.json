@@ -1,0 +1,12 @@
+{
+  "bitz-env-guard": {
+    "PreToolUse": [
+      {
+        "matcher": "run_command",
+        "hooks": [
+          { "type": "command", "command": "python3 scripts/env_guard.py", "timeout": 10 }
+        ]
+      }
+    ]
+  }
+}
