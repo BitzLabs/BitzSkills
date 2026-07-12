@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-12)
 
-成果物数: 0 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
+成果物数: 6 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -21,5 +21,11 @@
 ## Traceability Matrix
 | ID | status | domain | v-method | tasks | 参照元数 |
 |----|--------|--------|----------|-------|----------|
+| SKC-DSC-001 | draft |  |  | 0 | 0 |
+| SKC-DSC-002 | draft |  |  | 0 | 0 |
+| SKC-DSC-003 | draft |  |  | 0 | 0 |
+| SKC-DSC-004 | draft |  |  | 0 | 0 |
+| SKC-DSC-005 | draft |  |  | 0 | 0 |
+| SKC-DSC-006 | draft |  |  | 0 | 0 |
 
 **判定: PASS ✅**
