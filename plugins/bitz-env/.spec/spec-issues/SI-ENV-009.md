@@ -3,7 +3,7 @@ id: SI-ENV-009
 raised_by: skill-evaluator（evals/env-init/report.md 改善提案2節）
 target: plugins/bitz-env/skills/env-init/SKILL.md + references/templates/
 proposed_change_type: bump
-status: open
+status: accepted
 ---
 - **矛盾/曖昧の内容**: env-init のテンプレート（AGENTS-template.md 等）が持つ
   `{{project}}` プレースホルダの決定方法が SKILL.md に明記されていない。
@@ -19,3 +19,5 @@ status: open
   「プロンプトにプロジェクト名の明示がない場合」というカテゴリ全体に効く規則とする。
 - **影響推定**: SKILL.md 手順（生成ステップ）に決定規則の追記1件。テンプレート自体の
   変更は不要。既存の生成済み成果物への遡及的な影響はなし。
+- **裁定記録**: 2026-07-12 人間裁定（チャット指示「残りのISSUEを進めましょう」）により accepted。提案どおり反映する（既存要件の範囲内の記述明確化のため新規要件は起票しない = 軽量レーン）。
+- **実施**: 2026-07-12 対象 SKILL.md へ反映済み（スキル metadata version を patch bump）。

@@ -3,7 +3,7 @@ id: SI-ENV-012
 raised_by: skill-evaluator（evals/env-register/report.md 改善提案2、TC-04 節）
 target: plugins/bitz-env/skills/env-register/SKILL.md（ステップ2「レジストリへの登録」/ ステップ3 L93）
 proposed_change_type: bump
-status: open
+status: accepted
 ---
 - **矛盾/曖昧の内容**: 「マーカー区間が無い場合は env-init の実行を先に案内する」という
   規定は SKILL.md ステップ3（L93）にのみ存在し、ステップ2（レジストリへの登録）には
@@ -28,3 +28,4 @@ status: open
   **(a) 独立実行可**（契約チェック・レジストリ登録はマーカー区間の有無に依存せず
   実行してよく、マーカー区間に依存するのはステップ3のみ）と決定。
   ただし着手は保留（status は open のまま）。対応時はこの裁定に従うこと。
+- **実施**: 2026-07-12 裁定済みの (a) 案（契約チェック・レジストリ登録はマーカー区間の有無に依存せず独立実行可、依存はステップ3のみ）を SKILL.md ステップ2冒頭とステップ3へ反映済み。status を accepted 化。

@@ -3,7 +3,7 @@ id: SI-ENV-010
 raised_by: skill-evaluator（evals/env-init/report.md 改善提案3節）
 target: plugins/bitz-env/skills/env-init/SKILL.md + references/permissions.md
 proposed_change_type: bump
-status: open
+status: accepted
 ---
 - **矛盾/曖昧の内容**: env-init が既存 .claude/settings.json の permissions
   （deny/ask）をテンプレートとマージする際、値が完全一致するエントリの重複は
@@ -21,3 +21,5 @@ status: open
 - **影響推定**: SKILL.md のマージ手順に規則1件を追記。実装（マージロジック）の
   正規化処理の追加が必要な場合がある。既存の受入基準（ENVFR003-S3: 既存エントリを
   削除しない）とは矛盾しない形で拡張する。
+- **裁定記録**: 2026-07-12 人間裁定（チャット指示「残りのISSUEを進めましょう」）により accepted。提案どおり反映する（既存要件の範囲内の記述明確化のため新規要件は起票しない = 軽量レーン）。
+- **実施**: 2026-07-12 対象 SKILL.md へ反映済み（スキル metadata version を patch bump）。

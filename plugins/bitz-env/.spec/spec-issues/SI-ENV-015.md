@@ -3,7 +3,7 @@ id: SI-ENV-015
 raised_by: skill-evaluator（evals/env-orchestration/report.md TC-03 節・改善提案2）
 target: plugins/bitz-env/skills/env-orchestration/SKILL.md（合議型の進め方）
 proposed_change_type: bump
-status: open
+status: accepted
 ---
 - **矛盾/曖昧の内容**: 「合議型の進め方」節は合議メンバーを「advisor、アダプタの review
   役割、必要なら worker」と記述するが、「必要なら」の判定基準が SKILL.md 本文に定義されて
@@ -22,3 +22,5 @@ status: open
 - **影響推定**: SKILL.md「合議型の進め方」節の記述追加（軽微・後方互換）。
   evals/env-orchestration/cases.md TC-03 に「worker を含めるか否かの判断過程を成果物に
   明記しているか」のアサーションを追加する余地がある（要件化後、skill-tester 側の対応）。
+- **裁定記録**: 2026-07-12 人間裁定（チャット指示「残りのISSUEを進めましょう」）により accepted。提案どおり反映する（既存要件の範囲内の記述明確化のため新規要件は起票しない = 軽量レーン）。
+- **実施**: 2026-07-12 対象 SKILL.md へ反映済み（スキル metadata version を patch bump）。
