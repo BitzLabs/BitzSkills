@@ -1,11 +1,11 @@
 ---
 name: env-destroy
-description: env-init が対象プロジェクトへ展開した生成物（settings.json の permissions・AGENTS.md / CLAUDE.md のマーカー区間・.claude/agents/ の advisor / worker）を、レジストリの記録に基づきユーザー確認付きで安全に撤去する。「bitz-env を片付けて」「環境を撤去して」「アンインストールの後始末」「生成物を消して」「env-destroy」と言われたとき、または bitz-env プラグインを無効化・アンインストールする前後に使用する。環境の展開は env-init、診断は env-doctor が担当する。
+description: env-init が対象プロジェクトへ展開した生成物（settings.json の permissions・AGENTS.md / CLAUDE.md のマーカー区間・.claude/agents/ の advisor / worker）を、レジストリの記録に基づきユーザー確認付きで安全に撤去する。「bitz-env を片付けて」「bitz-env の環境を撤去して」「bitz-env アンインストールの後始末」「bitz-env の生成物を消して」「env-destroy」と言われたとき、または bitz-env プラグインを無効化・アンインストールする前後に使用する。bitz-env 以外のプラグインのアンインストール・後始末は対象外。環境の展開は env-init、診断は env-doctor が担当する。
 metadata:
-  version: "0.1.0"
+  version: "0.1.1"
   author: br7.hide
   created: "2026-07-11"
-  updated: "2026-07-11"
+  updated: "2026-07-12"
 ---
 
 # env-destroy
@@ -64,6 +64,10 @@ metadata:
   `.bak` を作成してから実行する（env-init の書き込み前チェックと同じ規律）
 - すべての撤去が完了したら、最後にレジストリ `.claude/bitz-env.local.md` 自体の
   削除を確認して実行する（部分撤去の場合は残し、撤去済み項目を記録から消す）
+- **部分撤去時のレジストリ記録書式**: レジストリを残す場合、各エントリの状態は
+  機械可読な2値で統一して付記する — 撤去済みは `status: removed`（撤去日時を併記）、
+  意図的な残置は `status: retained`（残置理由を併記）。取り消し線などの装飾や
+  自由記述だけで状態を表現しない（env-doctor 等が機械的に解析できる形を保つ）
 
 ### 5. 報告
 

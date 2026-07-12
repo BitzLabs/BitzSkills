@@ -3,7 +3,7 @@ id: SI-ENV-013
 raised_by: skill-evaluator（evals/env-register/report.md 改善提案3、TC-03 節）
 target: plugins/bitz-env/skills/env-register/SKILL.md（「#### 名前衝突の検出と解決」L68-80、特に例示 L76）
 proposed_change_type: bump
-status: open
+status: accepted
 ---
 - **矛盾/曖昧の内容**: SKILL.md L76 の例（「`delegate` が衝突するなら
   `bitz-collab-example-delegate` として routes に記録」）は `<アダプタ名>-<役割名>` 形式の
@@ -19,3 +19,5 @@ status: open
   衝突解決全般に適用される命名規則の明文化であり、過学習リスクは低い。
 - **影響推定**: SKILL.md 本文の記述追加のみ（既存の挙動・例は変更しない、曖昧さの解消）。
   version bump（patch）。優先度低のため他の SI-ENV-011/012 と合わせて着手する形でよい。
+- **裁定記録**: 2026-07-12 人間裁定（チャット指示「残りのISSUEを進めましょう」）により accepted。提案どおり反映する（既存要件の範囲内の記述明確化のため新規要件は起票しない = 軽量レーン）。
+- **実施**: 2026-07-12 対象 SKILL.md へ反映済み（スキル metadata version を patch bump）。

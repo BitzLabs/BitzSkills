@@ -3,7 +3,7 @@ id: SI-ENV-021
 raised_by: skill-evaluator（evals/env-destroy/report.md TC-04 節・run13 気づき）
 target: plugins/bitz-env/skills/env-destroy/SKILL.md frontmatter description
 proposed_change_type: bump
-status: open
+status: accepted
 ---
 - **矛盾/曖昧の内容**: description のトリガー例「bitz-env プラグインを無効化・
   アンインストールする前後に使用する」は文脈上 bitz-env に限定した記述だが、
@@ -25,3 +25,5 @@ status: open
   **過学習リスクの注記**: 現時点の TC-04 では誤発動は未観測であり、あくまで
   複数プラグイン共存環境における将来リスクへの予防的措置である。優先度は
   低〜中とし、人間の裁定に委ねる。
+- **裁定記録**: 2026-07-12 人間裁定（チャット指示「残りのISSUEを進めましょう」）により accepted。提案どおり反映する（既存要件の範囲内の記述明確化のため新規要件は起票しない = 軽量レーン）。
+- **実施**: 2026-07-12 description のトリガー例を bitz-env 名指しに限定する形へ変更済み。

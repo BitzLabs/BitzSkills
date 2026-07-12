@@ -3,7 +3,7 @@ id: SI-ENV-020
 raised_by: skill-evaluator（evals/env-destroy/report.md TC-03 節・run12 気づき）
 target: plugins/bitz-env/skills/env-destroy/SKILL.md 手順4（レジストリ更新）
 proposed_change_type: bump
-status: open
+status: accepted
 ---
 - **矛盾/曖昧の内容**: SKILL.md 手順4は部分撤去時に「レジストリを残し、撤去済み
   項目を記録から消す」ことを求めるが、記録から消す際の書式（取り消し線の有無、
@@ -26,3 +26,5 @@ status: open
   削除）には影響しない。env-doctor がレジストリをパースする実装を持つ場合、
   フォーマット変更に追従が必要になる可能性がある（現時点で env-doctor 側の
   レジストリパース実装の有無は本評価の範囲外のため未確認）。
+- **裁定記録**: 2026-07-12 人間裁定（チャット指示「残りのISSUEを進めましょう」）により accepted。提案どおり反映する（既存要件の範囲内の記述明確化のため新規要件は起票しない = 軽量レーン）。
+- **実施**: 2026-07-12 対象 SKILL.md へ反映済み（スキル metadata version を patch bump）。

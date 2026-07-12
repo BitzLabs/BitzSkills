@@ -3,7 +3,7 @@ id: SI-ENV-017
 raised_by: skill-evaluator
 target: plugins/bitz-env/skills/env-doctor/SKILL.md（協調構成の診断項目節）
 proposed_change_type: refine
-status: open
+status: accepted
 ---
 - **矛盾/曖昧の内容**: env-doctor の協調構成診断（レジストリ登録済みアダプタの実体確認）には、
   「実体が確認できない」場合の深刻度分類（FAIL とするか WARN とするか）の基準が
@@ -29,3 +29,5 @@ status: open
   TC-01（`evals/env-doctor/cases.md`）のアサーションは現行のまま合格するが、
   分類基準を検証する新アサーション追加を本レポートで別途提案している
   （`evals/env-doctor/report.md` の「テストケース自体への提案」節）。
+- **裁定記録**: 2026-07-12 人間裁定（チャット指示「残りのISSUEを進めましょう」）により accepted。提案どおり反映する（既存要件の範囲内の記述明確化のため新規要件は起票しない = 軽量レーン）。
+- **実施**: 2026-07-12 対象 SKILL.md へ反映済み（スキル metadata version を patch bump）。
