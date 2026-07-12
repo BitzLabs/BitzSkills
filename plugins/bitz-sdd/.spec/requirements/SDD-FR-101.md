@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-101
 version: 1.0
-status: draft
+status: approved
 domain: sync
 priority: medium
 origin: skills/sdd-docs/SKILL.md v0.3.0（reverse-derived）
@@ -21,3 +21,4 @@ confidence: high
 - **検証手段**: tests/test_sdd_sync.py
 - **Revision History**:
   - 1.0 (2026-07-12) 初版（実装 v1.4.5 からの reverse-derived。ワークスペース新設に伴う逆起票）
+  - 1.0 (2026-07-12) 人間裁定により approved 化（チャット指示）

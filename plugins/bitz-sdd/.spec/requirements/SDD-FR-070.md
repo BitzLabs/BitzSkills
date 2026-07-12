@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-070
 version: 1.0
-status: draft
+status: approved
 domain: execution
 priority: high
 origin: skills/sdd-implement/SKILL.md v0.1.1（reverse-derived）
@@ -20,3 +20,4 @@ confidence: high
 - **検証手段**: SKILL.md / references の目視確認 + skill-validator チェックリスト
 - **Revision History**:
   - 1.0 (2026-07-12) 初版（実装 v0.1.1 からの reverse-derived。ワークスペース新設に伴う逆起票）
+  - 1.0 (2026-07-12) 人間裁定により approved 化（チャット指示）

@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-001
 version: 1.0
-status: draft
+status: approved
 domain: verification
 priority: medium
 origin: SI-CORE-003（ルート .spec/spec-issues/、実装 v1.4.x からの reverse-derived）
@@ -26,3 +26,4 @@ confidence: high
 - **Revision History**:
   - 1.0 (2026-07-12) 初版（SI-CORE-003 の実装済み修正からの reverse-derived。
     ワークスペース新設に伴うペーパートレイル補完）
+  - 1.0 (2026-07-12) 人間裁定により approved 化（チャット指示）

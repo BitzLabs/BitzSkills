@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-010
 version: 1.0
-status: draft
+status: approved
 domain: verification
 priority: high
 origin: skills/sdd-core/SKILL.md v1.7.3（reverse-derived）
@@ -22,3 +22,4 @@ confidence: high
 - **検証手段**: tests/test_spec_inspect.py
 - **Revision History**:
   - 1.0 (2026-07-12) 初版（実装 v1.4.5 からの reverse-derived。ワークスペース新設に伴う逆起票）
+  - 1.0 (2026-07-12) 人間裁定により approved 化（チャット指示）
