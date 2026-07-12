@@ -3,7 +3,7 @@ id: SI-CORE-005
 raised_by: プロジェクト改修計画（2026-07-12 ユーザー要望。docs/improvement_master_plan.md）
 target: plugins/*/.spec/discovery/（全プラグインの上流探索成果物）
 proposed_change_type: new
-status: open
+status: accepted
 ---
 - **目的**: 各開発プラグインの目的・成功指標・スコープを明文化し、以後の改修
   （bitz-flow 切り出し・共通スキル抽出・3段階化）の判断根拠を discovery 成果物として残す。
