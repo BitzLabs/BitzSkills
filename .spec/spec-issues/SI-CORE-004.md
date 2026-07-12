@@ -3,7 +3,7 @@ id: SI-CORE-004
 raised_by: プロジェクト改修計画（2026-07-12 ユーザー要望。docs/improvement_master_plan.md）
 target: plugins/bitz-ddd / plugins/plugin-creator / plugins/skill-creator（個別 .spec 未設置）
 proposed_change_type: new
-status: open
+status: accepted
 ---
 - **目的**: 全プラグインへの sdd-discovery 実施（SI-CORE-005）の前提として、
   個別 SDD ワークスペースが無い3プラグインに `.spec/` を新設する。
