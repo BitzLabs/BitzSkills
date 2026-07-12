@@ -31,6 +31,20 @@ def parse_frontmatter(text: str):
         fm[key] = val
     return None
 
+def extract_title(text: str, req_id: str) -> str:
+    """本文の最初の「### <ID> <タイトル>」見出しから ID 以降をタイトルとして返す。"""
+    for line in text.splitlines():
+        m = re.match(r"^#{1,6}\s+(.*)$", line)
+        if not m:
+            continue
+        heading = m.group(1).strip()
+        if heading.startswith(req_id):
+            title = heading[len(req_id):].strip()
+            return title if title else heading
+        return heading
+    return "No Title"
+
+
 def generate_report(root_path: Path) -> Path:
     spec_dir = root_path / ".spec"
     reports_dir = root_path / ".spec" / "reports"
@@ -59,14 +73,18 @@ def generate_report(root_path: Path) -> Path:
     
     if req_dir.exists():
         for f in req_dir.glob("*.md"):
-            if f.name == "README.md":
+            # spec_inspect.py の load_requirements と同じ判定基準:
+            # _ 始まり・domains.md・README.md と、frontmatter に id が無いファイルは要件ではない
+            if f.name.startswith("_") or f.name in ("domains.md", "README.md"):
                 continue
             try:
                 text = f.read_text(encoding="utf-8")
                 fm = parse_frontmatter(text) or {}
+                req_id = fm.get("id", "")
+                if not req_id:
+                    continue
                 status = fm.get("status", "draft").lower()
-                req_id = fm.get("id", f.stem)
-                title = fm.get("title", "No Title")
+                title = fm.get("title", "") or extract_title(text, req_id)
                 if status in req_stats:
                     req_stats[status] += 1
                 else:
