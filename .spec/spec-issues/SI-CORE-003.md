@@ -19,3 +19,5 @@ status: accepted
 - **裁定**: 2026-07-11 人間裁定により accepted 化（チャット指示）。提案どおり
   `.spec/tasks/` のファイル名 stem を既知 ID として幽霊判定から除外する
   （成果物レジストリへの登録はしない）。同日修正実施・回帰テスト追加。
+- **要件化**: 2026-07-12 bitz-sdd 個別ワークスペース新設に伴い、本 issue の要件化は
+  plugins/bitz-sdd/.spec/ の SDD-FR-001 が引き継いだ（実装済み修正の reverse-derived）。
