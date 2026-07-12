@@ -80,7 +80,7 @@
 | SDD-FR-091 | approved | verification | manual-check | 1 | 1 |
 | SDD-FR-100 | approved | sync | example-test | 1 | 1 |
 | SDD-FR-101 | approved | sync | example-test | 1 | 1 |
-| SDD-FR-110 | approved | reporting | manual-check | 1 | 1 |
-| SDD-FR-111 | approved | reporting | manual-check | 1 | 1 |
+| SDD-FR-110 | approved | reporting | manual-check | 2 | 2 |
+| SDD-FR-111 | approved | reporting | manual-check | 2 | 2 |
 
 **判定: PASS ✅**
