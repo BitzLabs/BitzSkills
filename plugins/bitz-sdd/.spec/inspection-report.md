@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-12)
 
-成果物数: 31 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
+成果物数: 37 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -57,6 +57,12 @@
 | SDD-CON-043 | approved | upstream | manual-check | 1 | 1 |
 | SDD-CON-050 | approved | upstream | manual-check | 1 | 1 |
 | SDD-CON-052 | approved | upstream | manual-check | 1 | 1 |
+| SDD-DSC-001 | draft |  |  | 0 | 0 |
+| SDD-DSC-002 | draft |  |  | 0 | 0 |
+| SDD-DSC-003 | draft |  |  | 0 | 0 |
+| SDD-DSC-004 | draft |  |  | 0 | 0 |
+| SDD-DSC-005 | draft |  |  | 0 | 0 |
+| SDD-DSC-006 | draft |  |  | 0 | 0 |
 | SDD-FR-001 | approved | verification | example-test | 1 | 1 |
 | SDD-FR-010 | approved | verification | example-test | 1 | 1 |
 | SDD-FR-011 | approved | workflow | manual-check | 1 | 1 |
