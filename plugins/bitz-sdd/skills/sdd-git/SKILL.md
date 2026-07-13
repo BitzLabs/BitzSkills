@@ -2,10 +2,10 @@
 name: sdd-git
 description: BitzSDD 利用プロジェクトの Git / GitHub 開発フローを規定・実行するスキル。状況に応じたフロー選択（単独開発=ブランチ / 複数エージェント並列=worktree / チーム・別リポジトリ開発=GitHub Issue 駆動 + PR）、worktree の作成・破棄・マージバック、コミットコメント規定（Conventional Commits + Implements フッター）、失敗時の復元（worktree 破棄 → タスク再投入）を扱う。ユーザーが「worktree」「並列で開発」「ブランチ運用」「コミット規約」「Issue 駆動」「PR フロー」「失敗したからやり直したい」に言及したとき、または sdd-implement で depends_on が空のタスク群を並列投入するときに使用する。
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
   author: br7.hide
   created: "2026-07-11"
-  updated: "2026-07-11"
+  updated: "2026-07-13"
 ---
 
 # SDD Git — Git / GitHub 開発フロー
