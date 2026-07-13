@@ -9,6 +9,8 @@
   3. 全 SKILL.md の frontmatter 必須項目（name / description / metadata の version・author・created・updated）
   4. claude plugin validate .（claude CLI があれば）
   5. agy plugin validate plugins/<name>（agy CLI があれば）
+  6. CLAUDE.md「委譲レジストリ」節（SSOT）と .claude/agents/*.md の整合
+     （agent 実在・ティア整合・ティアはしご健全性・モデル名直書き禁止）
 
 すべて合格なら exit 0、1つでも FAIL があれば exit 1。
 """
@@ -34,6 +36,103 @@ def check(label: str, ok: bool, detail: str = "") -> None:
 def frontmatter(text: str) -> str:
     m = re.match(r"\A---\n(.*?)\n---\n", text, re.DOTALL)
     return m.group(1) if m else ""
+
+
+def check_delegation_registry(repo: Path) -> list[str]:
+    """CLAUDE.md の「委譲レジストリ」節（委譲判断の SSOT）と実体の整合を検証する。
+
+    検証内容:
+      1. 表の委譲先セル（プレーンな agent 名）が .claude/agents/<name>.md として実在するか
+      2. そのティア列の値が agent frontmatter の model と大文字小文字無視で一致し、
+         かつティアはしご上に存在するか
+      3. ティアはしごのトークンに重複がないか
+      4. delegation-routing.md にモデル名が直書きされていないか（存在する場合のみ）
+    """
+    violations: list[str] = []
+
+    claude_md = repo / "CLAUDE.md"
+    if not claude_md.exists():
+        return ["CLAUDE.md が見つからない"]
+    lines = claude_md.read_text(encoding="utf-8").splitlines()
+
+    # 「委譲レジストリ」見出しから次の見出しまでを抽出
+    start = None
+    for i, line in enumerate(lines):
+        if re.match(r"^#{2,6}\s", line) and "委譲レジストリ" in line:
+            start = i
+            break
+    if start is None:
+        return ["CLAUDE.md に「委譲レジストリ」見出しが見つからない"]
+    end = len(lines)
+    for i in range(start + 1, len(lines)):
+        if re.match(r"^#{2,6}\s", lines[i]):
+            end = i
+            break
+    section = lines[start:end]
+
+    # ティアはしご抽出
+    ladder_tokens: list[str] = []
+    for line in section:
+        if "ティアはしご" in line:
+            m = re.search(r"`([^`]+)`", line)
+            if m:
+                ladder_tokens = [t.strip() for t in m.group(1).split(">")]
+            break
+    if not ladder_tokens:
+        violations.append("ティアはしごが見つからない")
+    lower_ladder = [t.lower() for t in ladder_tokens]
+    if len(lower_ladder) != len(set(lower_ladder)):
+        violations.append(f"ティアはしごに重複がある: {ladder_tokens}")
+
+    # 表行抽出（ヘッダ・区切り行を除く）
+    rows: list[list[str]] = []
+    for line in section:
+        s = line.strip()
+        if not s.startswith("|") or "---" in s:
+            continue
+        cols = [c.strip() for c in s.strip("|").split("|")]
+        if len(cols) < 3 or cols[0] == "役割":
+            continue
+        rows.append(cols)
+
+    for cols in rows:
+        dest, tier = cols[1], cols[2]
+        if tier == "—":
+            continue
+        for token in re.findall(r"`([^`]+)`", dest):
+            if "/" in token or "antigravity" in token.lower():
+                continue
+            agent_path = repo / ".claude" / "agents" / f"{token}.md"
+            if not agent_path.exists():
+                violations.append(
+                    f"委譲先 agent が実在しない: `{token}`"
+                    f"（{agent_path.relative_to(repo)} が無い）")
+                continue
+            fm = frontmatter(agent_path.read_text(encoding="utf-8"))
+            mm = re.search(r"^model:\s*(\S+)", fm, re.MULTILINE)
+            model = mm.group(1) if mm else None
+            if model is None:
+                violations.append(f"agent frontmatter に model が無い: `{token}`")
+                continue
+            if tier.lower() != model.lower():
+                violations.append(
+                    f"ティア不一致: 表は「{tier}」だが `{token}` の frontmatter model は"
+                    f"「{model}」")
+            elif tier.lower() not in lower_ladder:
+                violations.append(f"ティア「{tier}」がティアはしご上に存在しない（`{token}`）")
+
+    # モデル名の外部直書き禁止
+    routing_path = (repo / "plugins" / "bitz-sdd" / "skills" / "sdd-implement"
+                     / "references" / "delegation-routing.md")
+    if routing_path.exists():
+        rtext = routing_path.read_text(encoding="utf-8")
+        found = set(re.findall(r"\b(opus|sonnet|haiku|fable|gemini)\b", rtext, re.IGNORECASE))
+        found |= set(re.findall(r"claude-[a-z0-9-]+", rtext, re.IGNORECASE))
+        if found:
+            violations.append(
+                f"delegation-routing.md にモデル名の直書きがある: {sorted(found)}")
+
+    return violations
 
 
 def main() -> None:
@@ -83,6 +182,14 @@ def main() -> None:
             r = subprocess.run(cmd, cwd=REPO, capture_output=True, text=True, timeout=120)
             tail = (r.stdout + r.stderr).strip().splitlines()
             check(" ".join(cmd), r.returncode == 0, tail[-1] if tail and r.returncode != 0 else "")
+
+    # 6. 委譲レジストリ（CLAUDE.md の SSOT）と実体の整合
+    registry_violations = check_delegation_registry(REPO)
+    if registry_violations:
+        for v in registry_violations:
+            check("委譲レジストリ: " + v, False)
+    else:
+        check("委譲レジストリ整合", True)
 
     print()
     for w in warnings:
