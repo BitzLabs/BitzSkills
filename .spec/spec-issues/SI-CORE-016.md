@@ -3,7 +3,7 @@ id: SI-CORE-016
 raised_by: プロジェクト改修計画 追加要望（2026-07-12 ユーザー提案: sdd-plan 新設）
 target: plugins/bitz-sdd/skills/sdd-plan（新設。spec 現状把握と次アクション提案）
 proposed_change_type: new
-status: open
+status: accepted
 ---
 - **目的**: 「いまどこまで進んでいて、次に何をすべきか」を対話で答えるナビゲーション
   スキル sdd-plan を新設する。現状この役割は sdd-core のフェーズ・ルーティング表を

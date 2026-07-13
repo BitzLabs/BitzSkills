@@ -3,7 +3,7 @@ id: SI-CORE-009
 raised_by: プロジェクト改修計画（2026-07-12 ユーザー要望 3。docs/improvement_master_plan.md）
 target: plugins/bitz-flow/skills/*/scripts/（定型処理スクリプトの不在）
 proposed_change_type: bump
-status: open
+status: accepted
 ---
 - **目的**: Git フローの定型処理を毎回エージェントが生成するトークン浪費と操作ミスを
   なくす。スキル本文は「判断」だけを残し、決定的な操作はスクリプトに固定する。

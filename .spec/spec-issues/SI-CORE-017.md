@@ -3,7 +3,7 @@ id: SI-CORE-017
 raised_by: プロジェクト改修計画 追加要望（2026-07-12 ユーザー提案: sdd-issue 新設）
 target: plugins/bitz-sdd/skills/sdd-issue（新設。要望インテーク→予備判定→SI 起票）
 proposed_change_type: new
-status: open
+status: accepted
 ---
 - **目的**: ばらばらに届く要望を整理し、可否の**予備判定**を付けて spec-issue に登録する
   インテークスキル sdd-issue を新設する。現状の起票は sdd-core の軽量レーン節の

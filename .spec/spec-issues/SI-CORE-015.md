@@ -3,7 +3,7 @@ id: SI-CORE-015
 raised_by: プロジェクト改修計画（2026-07-12 ユーザー要望 5。docs/improvement_master_plan.md）
 target: sdd-core の spec-issue 運用（ルート/サブ SPEC 間の委託フローが未規定）
 proposed_change_type: bump
-status: open
+status: accepted
 ---
 - **目的**: ルート SPEC とサブ（ワークスペース）SPEC 間の issue 委託を正式なフローにする。
   現状は SI-CORE-003 →SDD-FR-001 の引き継ぎのように本文の自由記述で行われており、

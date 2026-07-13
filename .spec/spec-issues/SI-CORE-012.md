@@ -3,7 +3,7 @@ id: SI-CORE-012
 raised_by: プロジェクト改修計画（2026-07-12 ユーザー要望 3。docs/improvement_master_plan.md）
 target: plugins/bitz-sdd/skills/sdd-core/scripts/（起票・status 更新の定型処理が未スクリプト化）
 proposed_change_type: bump
-status: open
+status: accepted
 ---
 - **目的**: 要件 / spec-issue / タスクの採番・雛形生成と status 遷移を毎回エージェントが
   手書きしている定型処理をスクリプト化し、書式ブレ・採番衝突・権限逸脱を構造的に防ぐ。
