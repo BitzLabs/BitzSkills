@@ -1,5 +1,19 @@
 {
   "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(wc:*)",
+      "Bash(claude plugin validate:*)",
+      "Bash(agy plugin validate:*)",
+      "Bash(python3 scripts/bump_version.py:*)",
+      "Bash(python3 scripts/release_check.py:*)"
+    ],
     "deny": [
       "Bash(rm -rf:*)",
       "Bash(sudo:*)",
@@ -17,20 +31,13 @@
       "Write(~/.gemini/config/skills/**)",
       "Edit(~/.gemini/config/skills/**)",
       "Bash(git push:*)"
-    ],
-    "allow": [
-      "Bash(git status:*)",
-      "Bash(git diff:*)",
-      "Bash(git log:*)",
-      "Bash(git branch:*)",
-      "Bash(ls:*)",
-      "Bash(find:*)",
-      "Bash(grep:*)",
-      "Bash(wc:*)",
-      "Bash(claude plugin validate:*)",
-      "Bash(agy plugin validate:*)",
-      "Bash(python3 scripts/bump_version.py:*)",
-      "Bash(python3 scripts/release_check.py:*)"
     ]
+  },
+  "enabledPlugins": {
+    "bitz-env@bitzskills": true,
+    "bitz-sdd@bitzskills": true,
+    "plugin-creator@bitzskills": true,
+    "skill-creator@bitzskills": true,
+    "bitz-ddd@bitzskills": true
   }
 }
