@@ -8,3 +8,4 @@
 - 2026-07-13 CORE-FR-004: implementing → verified (機械判定)
 - 2026-07-13 CORE-FR-005: approved → implementing (planエージェント)
 - 2026-07-13 CORE-FR-005: implementing → verified (機械判定)
+- 2026-07-13 SI-CORE-020: open → accepted (人間（チャット裁定）)

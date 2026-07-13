@@ -44,6 +44,23 @@ Issue 起票 → feat/<issue#>-<slug> ブランチ → Draft PR → CI ゲート
 - マージコミットのフッターに `Implements: <要件ID>` を残す（`spec_inspect.py` の
   implements マップと突合するため。書式は SKILL.md のコミット規定）
 
+## 未マージ依存の原則 — 前提を先に land する（SI-CORE-020）
+
+着手対象のタスク／要件が「**まだ main にマージされていない別 PR**」に依存する場合
+（例: 実装が、未マージの裁定 PR で accepted 化された spec-issue を前提とする）、
+**依存先 PR を先に main へ land し、更新後の main からブランチを切る**のを既定とする。
+本フローは「1 PR = main 分岐 = squash merge」のフラット構成を前提にしており、この前提を崩さない。
+
+- **やってはいけない**: 未マージ PR のブランチを base にした**スタック PR** を安易に作ること。
+  上段 PR を `gh pr merge --delete-branch` すると base ブランチが消え、
+  下段 PR は retarget されず **GitHub により自動クローズ**される（実事故: PR #30/#31）。
+- **どうしてもスタックが必要な例外時**:
+  - 上段マージ時に **`--delete-branch` を付けない**（下段が巻き添えで close される）
+  - 上段マージ後は下段を **main へ retarget（`git rebase --onto origin/main <旧base先頭>`）** してから独立にマージする
+  - force-push はガードレール対象。履歴書き換えが要るなら**新ブランチ＋新 PR** で出し直す方が安全
+- **sdd-implement との整合**: タスクの `depends_on` が未マージ成果物に及ぶ場合は、
+  着手前にその依存を main へ land し終えるのを待つ（並列投入の対象にしない）。
+
 ## worktree 運用との組み合わせ
 
 複数エージェントで並列に Issue を消化する場合は、worktree 運用（references/worktree-operations.md）を
