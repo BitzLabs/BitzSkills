@@ -23,3 +23,5 @@ status: accepted
   - 生成物が既存の手書きファイル（SI-CORE-001〜003 等）と書式互換であること
 - **影響推定・ロールバック**: 追加のみ（既存ファイルの変換はしない）。削除で戻る。
 - **依存**: SI-CORE-011（status 集計ロジックの共用。同一 PR 化は不可、順に積む）。
+- **実装完了（2026-07-13）**: CORE-FR-004（spec_scaffold.py）/ CORE-FR-005（spec_update.py）へ
+  要件化 → テスト先行 → 実装 → verified。tasks: CORE-TSK-005 / CORE-TSK-006。bitz-sdd 1.6.0。

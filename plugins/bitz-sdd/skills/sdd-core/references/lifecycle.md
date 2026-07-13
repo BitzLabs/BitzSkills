@@ -23,8 +23,25 @@
 
 - プレフィックスは型分類 `FR` / `NFR` / `CON` で**起票時に凍結**。type フィールドは持たない（二重管理禁止）
 - domain・priority 等の他属性はすべて frontmatter（可変）。domain は domains.md の統制語彙のみ
-- ID払い出しは Plan フェーズ（直列区間）でのみ `_counter.md` を read→increment→commit
+- ID払い出しは Plan フェーズ（直列区間）でのみ行う。採番・雛形生成は `scripts/spec_scaffold.py`
+  が担い（プレフィックスの既存最大番号 + 1 を決定的に採番。spec_inspect PASS の雛形を生成）、
+  手書きの採番・書式ブレを排除する（CORE-FR-004）
 - **実装中の並列エージェントは採番禁止**。新要件の発見は spec-issue（仮番号 `SI-<branch>-<n>`）で起票し、人間裁定時に正式IDへ変換する。これで採番衝突は構造的にゼロ
+
+## status 遷移の実行 — スクリプトによる権限強制
+
+status 遷移は上表の権限マトリクスを `scripts/spec_update.py` がコードで強制する（CORE-FR-005）:
+
+```bash
+python3 scripts/spec_update.py <workspace> <ID> --to <status> [--by-human] [--actor 名前]
+```
+
+- **人間専用遷移**（draft→approved / open→accepted / verified→promoted / 任意→deprecated）は
+  `--by-human` の明示がない限り拒否される
+- **エージェント許容遷移**（approved→implementing / implementing→verified 等）は無フラグで適用
+- **権限マトリクス未定義の遷移**は誰の権限でも拒否（不正遷移）
+- 遷移適用時に対象 frontmatter の `status` を書き換え、`.spec/STATE.md` に
+  遷移記録（対象 ID・旧→新 status・実行主体）を追記する
 
 ## 改訂 vs 継承の判定 — 「緑を赤にし得るか」
 
