@@ -2,15 +2,21 @@
 name: sdd-report
 description: BitzSDD — .spec/（仕様・設計・検証のマスター）から人間向けの開発進捗・品質レポート（.spec/reports/status-report.md）を自動生成するスキル。ユーザーが「進捗を教えて」「レポートを出力して」「status-report」「報告書」「検証状況」に言及したとき、または sdd-core のマイルストーン完了時に使用する。
 metadata:
-  version: "0.2.3"
+  version: "0.2.4"
   author: br7.hide
   created: "2026-07-09"
-  updated: "2026-07-12"
+  updated: "2026-07-13"
 ---
 
 # sdd-report
 
 BitzSDD の仕様・検証マスターである `.spec/` ディレクトリから、開発の進捗状況、要件の検証状況、設計レビュー結果などを集計した統合レポート（`.spec/reports/status-report.md`）を生成します。
+
+> **`spec_status.py` との使い分け**: 本スキル（`sdd_report.py`）は人間向けの**詳細レポートを
+> `.spec/reports/` に生成**する（ファイル出力あり）。一方、フェーズ・status 件数・次アクションの
+> **軽量な即時照会**（標準出力のみ・ファイル生成なし）は sdd-core の `spec_status.py` を使う。
+> 両者は重複実装しない。「レポート成果物が欲しい」→ `sdd_report.py`、
+> 「いま何件どの status か今すぐ知りたい」→ `spec_status.py`。
 
 ## 1. 責務
 1.  `.spec/` ディレクトリ内の全成果物の状態を走査。

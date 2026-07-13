@@ -2,10 +2,10 @@
 name: sdd-core
 description: BitzSDD — 仕様駆動開発（SDD）ワークフローを運用するメインスキル。要件定義・仕様作成・実装・検証・完了処理のすべてをこの規律に従って実行する。ユーザーが「仕様駆動」「SDD」「要件」「EARS」「spec」「タスク分解」「feature実装」に言及したとき、リポジトリに .spec/ や AGENTS.md が存在するとき、または新機能の設計・実装・検証・リリース処理を依頼されたときは、明示的な指示がなくても必ずこのスキルを使うこと。要件の変更・廃止・番号管理・テスト失敗時の対応・ドキュメント更新もすべて本スキルの管轄。
 metadata:
-  version: "1.7.3"
+  version: "1.8.0"
   author: br7.hide
   created: "2026-07-07"
-  updated: "2026-07-11"
+  updated: "2026-07-13"
 ---
 
 # BitzSDD Workflow (spec駆動開発)
@@ -96,3 +96,19 @@ python3 scripts/spec_inspect.py <repo-root>              # 全検証 → inspect
 python3 scripts/spec_inspect.py --workspace . plugins/*  # モノリポ一括検証（クロスリファレンス解決）
 python3 scripts/spec_inspect.py <repo-root> --impact FR-012   # FR-012変更の影響成果物を列挙
 ```
+
+## 状況照会（軽量）
+
+セッション冒頭に「いま何フェーズか・要件/spec-issue/タスクが何件どの status か・次に何をすべきか」を
+`.spec/` を読み歩かずに1コマンドで得るには、読み取り専用の `spec_status.py` を使います
+（**`.spec/` へは一切書き込まない**）:
+
+```bash
+python3 scripts/spec_status.py <repo-root>              # 人間向けテキストサマリ
+python3 scripts/spec_status.py <repo-root> --json       # エージェント向け JSON
+python3 scripts/spec_status.py --workspace . plugins/*  # 複数ワークスペースを一括照会
+```
+
+**`sdd_report.py` との使い分け**: `spec_status.py` は軽量な即時照会（標準出力のみ・ファイル生成なし）。
+人間向けの詳細レポートを `.spec/reports/` に生成するのは `sdd-report` スキルの `sdd_report.py`。
+両者は重複実装せず、照会は `spec_status.py`、レポート成果物は `sdd_report.py` に役割を分ける。

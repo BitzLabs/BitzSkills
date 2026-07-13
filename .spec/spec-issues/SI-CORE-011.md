@@ -3,7 +3,8 @@ id: SI-CORE-011
 raised_by: プロジェクト改修計画（2026-07-12 ユーザー要望 3。docs/improvement_master_plan.md）
 target: plugins/bitz-sdd/skills/sdd-core/scripts/（状況確認の定型処理が未スクリプト化）
 proposed_change_type: bump
-status: open
+status: accepted
+requirement: CORE-FR-003
 ---
 - **目的**: 「いま何フェーズか・要件/issue/タスクが何件どの status か・次に何をすべきか」の
   状況確認を、エージェントが .spec/ 配下を読み歩く代わりに1コマンドで得られるようにし、
