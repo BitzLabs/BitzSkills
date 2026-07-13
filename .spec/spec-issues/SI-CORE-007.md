@@ -3,7 +3,7 @@ id: SI-CORE-007
 raised_by: プロジェクト改修計画（2026-07-12 ユーザー要望 4-3。docs/improvement_master_plan.md）
 target: scripts/release_check.py（プラグイン間依存の検証機構の不在）
 proposed_change_type: bump
-status: open
+status: accepted
 ---
 - **目的**: 並行開発するプラグイン間の依存関係（例: bitz-ddd → bitz-sdd、将来の
   bitz-sdd → bitz-flow）を機械可読に宣言し、release_check で存在・循環を検証できるようにする。

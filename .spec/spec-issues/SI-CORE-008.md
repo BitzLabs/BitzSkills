@@ -3,7 +3,7 @@ id: SI-CORE-008
 raised_by: プロジェクト改修計画（2026-07-12 ユーザー要望 1。docs/improvement_master_plan.md）
 target: plugins/bitz-flow（新設）と .claude-plugin/marketplace.json
 proposed_change_type: new
-status: open
+status: accepted
 ---
 - **目的**: Git / GitHub 開発フローを SDD 非採用プロジェクトでも使える独立プラグイン
   bitz-flow として切り出す。本 ISSUE は**構造の新設のみ**（sdd-git の内容転記）で、

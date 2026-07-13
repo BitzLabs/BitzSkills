@@ -3,7 +3,7 @@ id: SI-CORE-014
 raised_by: プロジェクト改修計画（2026-07-12 ユーザー要望 3・5。docs/improvement_master_plan.md）
 target: plugins/bitz-ddd/skills/*（3段階読み込みと定型スクリプト化）
 proposed_change_type: bump
-status: open
+status: accepted
 ---
 - **目的**: bitz-ddd にも bitz-sdd と同じ3段階読み込み構造と定型処理スクリプト化を適用し、
   DDD 評価・モデリングの再現性とトークン効率を上げる。

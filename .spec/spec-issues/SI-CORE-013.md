@@ -3,7 +3,7 @@ id: SI-CORE-013
 raised_by: プロジェクト改修計画（2026-07-12 ユーザー要望 5。docs/improvement_master_plan.md）
 target: plugins/bitz-sdd/skills/*/SKILL.md（3段階読み込み構造への再整理）
 proposed_change_type: bump
-status: open
+status: accepted
 ---
 - **目的**: bitz-sdd の全スキルを3段階読み込み構造
   （①frontmatter description=常時ロード → ②SKILL.md 本文=薄い判断層 →

@@ -3,7 +3,7 @@ id: SI-CORE-010
 raised_by: プロジェクト改修計画（2026-07-12 ユーザー要望 1。docs/improvement_master_plan.md）
 target: plugins/bitz-sdd/skills/sdd-git（bitz-flow との二重規定の解消）
 proposed_change_type: bump
-status: open
+status: accepted
 ---
 - **目的**: SI-CORE-008/009 で bitz-flow が実用可能になった後、bitz-sdd 側の sdd-git を
   bitz-flow への委譲に切り替え、Git フローの正を bitz-flow に一本化する（動作変更のみ）。
@@ -24,3 +24,4 @@ status: open
 - **影響推定・ロールバック**: bitz-sdd の版を1つ戻し bitz-flow を残せば旧構成に戻る。
   SI-CORE-008/009 より後に revert しないこと（依存の向きが逆転するため）。
 - **依存**: SI-CORE-007（依存宣言機構）、SI-CORE-009（bitz-flow の実用性）。
+- **裁定（2026-07-13, 人間）**: **縮退維持（minor bump）** を採用。sdd-git は薄い委譲ポインタに縮退し、SDD 固有の接続点（Implements フッター・.spec/tasks 連携）だけ残す。完全廃止（major）は不採用。

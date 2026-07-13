@@ -3,7 +3,7 @@ id: SI-CORE-019
 raised_by: SI-CORE-011 実装中の spec_inspect 実行で発見（2026-07-13 チャットセッション）
 target: plugins/bitz-sdd/skills/sdd-core/scripts/spec_inspect.py（単体実行時のクロスワークスペース参照の扱い）と検証運用ドキュメント
 proposed_change_type: bump
-status: open
+status: accepted
 ---
 - **目的**: `spec_inspect.py` を**リポジトリルート単体**（`spec_inspect.py .`）で実行したとき、
   ルートの `tests/` から `plugins/*/.spec/` の要件（例: `tests/test_env_guard.py` → `ENV-FR-001` ほか）への
@@ -33,3 +33,4 @@ status: open
 - **影響推定・ロールバック**: 案1は文書変更のみ・単独 revert 可。案2はツール追加変更＋テストで revert 可。
 - **依存**: なし。SI-CORE-007（プラグイン間依存の検証機構）と論点が隣接するため、
   採用時は整合を取る（クロスワークスペース参照の解決方針を共通化）。
+- **裁定（2026-07-13, 人間）**: **案1（運用・ドキュメント明確化）** を採用。正典 inspect コマンドを `--workspace . plugins/*` と SKILL.md / AGENTS.md に明記する。案2（ツール改修）は当面見送り。
