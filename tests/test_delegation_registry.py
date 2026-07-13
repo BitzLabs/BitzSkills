@@ -110,3 +110,15 @@ def test_routing_doc_absent_is_skipped(tmp_path):
     assert not (repo / "plugins" / "bitz-sdd" / "skills" / "sdd-implement"
                 / "references" / "delegation-routing.md").exists()
     assert check_delegation_registry(repo) == []
+
+
+def test_claude_md_absent_is_skipped(tmp_path):
+    """CLAUDE.md（委譲レジストリの置き場）が無い環境 → 検査対象外＝違反ゼロ"""
+    assert not (tmp_path / "CLAUDE.md").exists()
+    assert check_delegation_registry(tmp_path) == []
+
+
+def test_registry_section_absent_is_skipped(tmp_path):
+    """CLAUDE.md はあるが委譲レジストリ節が無い → 検査対象外＝違反ゼロ"""
+    _write(tmp_path / "CLAUDE.md", "# CLAUDE.md\n\n## 別の節\n\n本文のみ。\n")
+    assert check_delegation_registry(tmp_path) == []

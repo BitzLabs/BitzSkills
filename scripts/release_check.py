@@ -52,7 +52,7 @@ def check_delegation_registry(repo: Path) -> list[str]:
 
     claude_md = repo / "CLAUDE.md"
     if not claude_md.exists():
-        return ["CLAUDE.md が見つからない"]
+        return []  # CLAUDE.md（委譲レジストリの置き場）が無い環境は検査対象外＝スキップ
     lines = claude_md.read_text(encoding="utf-8").splitlines()
 
     # 「委譲レジストリ」見出しから次の見出しまでを抽出
@@ -62,7 +62,7 @@ def check_delegation_registry(repo: Path) -> list[str]:
             start = i
             break
     if start is None:
-        return ["CLAUDE.md に「委譲レジストリ」見出しが見つからない"]
+        return []  # 委譲レジストリ節を持たない環境は検査対象外＝スキップ
     end = len(lines)
     for i in range(start + 1, len(lines)):
         if re.match(r"^#{2,6}\s", lines[i]):
