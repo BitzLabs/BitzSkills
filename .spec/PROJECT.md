@@ -5,7 +5,9 @@ BitzSkills リポジトリ自身のスキル・プラグイン開発を bitz-sdd
 **ルート = 全プラグイン共通のリポジトリ規約要件**、`plugins/*` = 将来の個別ワークスペースとする。
 
 - ID プレフィックス: `CORE-`（例: `CORE-CON-001`）
-- 検証: `python3 plugins/bitz-sdd/skills/sdd-core/scripts/spec_inspect.py .`
+- 検証（正規コマンド）: `python3 plugins/bitz-sdd/skills/sdd-core/scripts/spec_inspect.py --workspace . plugins/*`
+  — このモノリポでは常にこの形を使う。ルート単体（末尾 `.`）は `tests/` が参照する他ワークスペースの
+  ID（例: `tests/test_env_guard.py` の `ENV-*`）を解決できず幽霊参照で常時 FAIL するため（SI-CORE-023）。
   （CI の release_check / pytest が要件の実効的な検証手段）
 
 ## ブートストラップ対策（重要）

@@ -72,6 +72,11 @@ scripts/             # エージェント共用の運用スクリプト（bump /
   `.codex-plugin/plugin.json`）を必ず同じ値に保つ
 - **リリース前検証**: `python3 scripts/release_check.py`
   — version 整合・marketplace 整合・frontmatter 必須項目・プラグイン validate を一括チェック
+- **仕様（.spec）検証の正規コマンド**:
+  `python3 plugins/bitz-sdd/skills/sdd-core/scripts/spec_inspect.py --workspace . plugins/*`
+  — このモノリポでは常に `--workspace . plugins/*` を使う（ルートと全プラグインを一括検証し
+  クロスリファレンスを解決する）。ルート単体（末尾 `.`）は `tests/` が参照する他ワークスペースの
+  `ENV-*` 等を解決できず幽霊参照で FAIL するため使わない（SI-CORE-023）
 
 ## 新しいプラグインの追加手順
 
