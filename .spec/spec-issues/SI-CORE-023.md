@@ -3,7 +3,7 @@ id: SI-CORE-023
 raised_by: 2026-07-14 SI-CORE-021 開発の振り返り（毎回 --workspace で回避）
 target: ルート単体 spec_inspect が ENV-* 幽霊参照で常時 FAIL（--workspace でのみ PASS）
 proposed_change_type: fix
-status: open
+status: accepted
 ---
 - **目的**: ルート単体の `spec_inspect .` が `ENV-*` 幽霊参照で**常時 FAIL** し、`--workspace . plugins/*`
   でのみ PASS になる。既定の実行が誤った赤を出し、root の `inspection-report.md` が実行モードで

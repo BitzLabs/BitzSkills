@@ -29,3 +29,4 @@
 - 2026-07-15 CORE-FR-010: implementing → verified (agent)
 - 2026-07-15 CORE-TSK-011: pending → implementing (agent)
 - 2026-07-15 CORE-TSK-011: implementing → done (agent)
+- 2026-07-15 SI-CORE-023: open → accepted (human)
