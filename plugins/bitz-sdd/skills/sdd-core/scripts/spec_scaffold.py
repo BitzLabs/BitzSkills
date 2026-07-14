@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """spec_scaffold.py — BitzSDD（sdd-core スキル）の採番付き雛形生成ツール（stdlib のみ）
 
-要件 / spec-issue / タスクの新規起票時に、プレフィックスごとの次番号を決定的に採番し、
-spec_inspect.py の検証を PASS する frontmatter 付き雛形を生成する。エージェントが毎回
-手書きしていた採番・雛形生成を機械化し、書式ブレと採番衝突を構造的に防ぐ（CORE-FR-004）。
+要件 / spec-issue / タスク / 設計ノート(DSN) の新規起票時に、プレフィックスごとの次番号を
+決定的に採番し、spec_inspect.py の検証を PASS する frontmatter 付き雛形を生成する。
+エージェントが毎回手書きしていた採番・雛形生成を機械化し、書式ブレと採番衝突を構造的に防ぐ
+（CORE-FR-004）。あわせて生成時に統制語彙（verification_method / domain / status）を検証し、
+語彙外の値は生成前に非ゼロで失敗させて承認後の手戻りを防ぐ（CORE-FR-010）。
 
 副作用は指定ワークスペースの .spec/ 配下への新規ファイル生成のみ。既存ファイルは上書きしない。
 
@@ -11,6 +13,7 @@ spec_inspect.py の検証を PASS する frontmatter 付き雛形を生成する
   python spec_scaffold.py <workspace> requirement --prefix CORE-FR [--domain tooling] [--title T]
   python spec_scaffold.py <workspace> spec-issue  --prefix SI-CORE [--target T] [--raised-by R]
   python spec_scaffold.py <workspace> task --implements CORE-FR-004 --prefix CORE-TSK [--boundary B]
+  python spec_scaffold.py <workspace> design --prefix DSN [--title T] [--status draft] [--implements ID]
 """
 import argparse
 import re
@@ -18,10 +21,17 @@ import sys
 from datetime import date
 from pathlib import Path
 
+# 統制語彙は spec_inspect.py を単一の正として共有する（scaffold 側で二重定義しない。CORE-FR-010）。
+# spec_inspect はモジュールレベルで定数・関数を定義するだけで __main__ ガード下でのみ実行するため
+# import に副作用はない。スクリプト直実行時もラッパー経由でも解決できるよう自ディレクトリを追加。
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from spec_inspect import STATUSES, VMETHODS, load_domains  # noqa: E402
+
 KIND_DIR = {
     "requirement": "requirements",
     "spec-issue": "spec-issues",
     "task": "tasks",
+    "design": "design",
 }
 
 
@@ -95,6 +105,47 @@ def render_task(tid: str, args) -> str:
     )
 
 
+def render_design(did: str, args) -> str:
+    # DSN の書式は公開契約 assets/artifact-frontmatter.md が正（id/title/status/version/updated/owner）。
+    # 追跡用に implements / origin も持たせる（DSN-001 の先例）。status 既定は DSN 有効語彙の draft。
+    return (
+        f"---\n"
+        f"id: {did}\n"
+        f"title: \"{args.title or 'TODO タイトル'}\"\n"
+        f"status: {args.status or 'draft'}\n"
+        f"version: 1.0\n"
+        f"updated: {date.today().isoformat()}\n"
+        f"owner: {args.owner or 'TODO（担当者ハンドル）'}\n"
+        f"implements: {args.implements or ''}\n"
+        f"origin: {args.origin or ''}\n"
+        f"---\n\n"
+        f"# {did} {args.title or 'TODO タイトル'}\n\n"
+        f"- **背景 / 課題**: TODO\n"
+        f"- **設計判断**: TODO\n"
+        f"- **代替案と却下理由**: TODO\n"
+        f"- **影響範囲・ロールバック**: TODO\n"
+    )
+
+
+def validate_vocab(args, req_dir: Path) -> "str | None":
+    """統制語彙を生成前に検証する。語彙外ならエラーメッセージを返す（正常なら None）。
+
+    語彙は spec_inspect と共有（VMETHODS / STATUSES）。domain はワークスペース固有のため
+    domains.md を実行時に読む。domains.md が無ければ domain 検証はスキップ（縮退挙動）。
+    """
+    if args.verification_method is not None and args.verification_method not in VMETHODS:
+        return (f"verification_method '{args.verification_method}' は語彙外です"
+                f"（有効: {sorted(VMETHODS)}）")
+    if args.domain:
+        domains = load_domains(req_dir)
+        if domains is not None and args.domain not in domains:
+            return (f"domain '{args.domain}' は {req_dir / 'domains.md'} の語彙にありません"
+                    f"（有効: {sorted(domains)}）")
+    if getattr(args, "status", None) is not None and args.status not in STATUSES:
+        return f"status '{args.status}' は語彙外です（有効: {sorted(STATUSES)}）"
+    return None
+
+
 def main():
     parser = argparse.ArgumentParser(description="BitzSDD 採番付き雛形生成ツール")
     parser.add_argument("workspace", help="ワークスペースルート（.spec/ を含む）")
@@ -112,10 +163,13 @@ def main():
     parser.add_argument("--target", help="変更対象（spec-issue）")
     parser.add_argument("--raised-by", dest="raised_by", help="発見元（spec-issue）")
     parser.add_argument("--change-type", dest="change_type", help="proposed_change_type（spec-issue）")
-    # task 用
-    parser.add_argument("--implements", help="実装対象の要件 ID（task では必須）")
+    # task 用（design でも implements を任意で使える）
+    parser.add_argument("--implements", help="実装対象の要件 ID（task では必須 / design では任意）")
     parser.add_argument("--depends-on", dest="depends_on", help="依存タスク（task。例: [] や [CORE-TSK-001]）")
     parser.add_argument("--boundary", help="触れてよいパス（task）")
+    # design(DSN) 用
+    parser.add_argument("--status", help="status（design。既定 draft。STATUSES 語彙で検証）")
+    parser.add_argument("--owner", help="担当者ハンドル（design）")
     args = parser.parse_args()
 
     if args.kind == "task" and not args.implements:
@@ -123,6 +177,13 @@ def main():
         return 2
 
     root = Path(args.workspace).resolve()
+
+    # 統制語彙の検証（CORE-FR-010）: ファイル書き込み前に fail させ承認後の手戻りを防ぐ
+    vocab_error = validate_vocab(args, root / ".spec" / "requirements")
+    if vocab_error is not None:
+        print(f"ERROR: {vocab_error}", file=sys.stderr)
+        return 2
+
     directory = root / ".spec" / KIND_DIR[args.kind]
 
     num = args.number if args.number is not None else next_number(directory, args.prefix)
@@ -137,6 +198,8 @@ def main():
         body = render_requirement(ident, args)
     elif args.kind == "spec-issue":
         body = render_spec_issue(ident, args)
+    elif args.kind == "design":
+        body = render_design(ident, args)
     else:
         body = render_task(ident, args)
 

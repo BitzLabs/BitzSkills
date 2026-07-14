@@ -3,7 +3,7 @@ id: SI-SDD-003
 raised_by: 2026-07-14 SI-CORE-021 開発の振り返り（語彙外値が approved 後に spec_inspect FAIL）
 target: spec_scaffold.py の frontmatter 語彙検証（verification_method/domain/DSN status）
 proposed_change_type: fix
-status: open
+status: accepted
 ---
 - **目的**: `spec_scaffold.py` が frontmatter の統制語彙を生成時に検証しないため、語彙外の値が
   そのまま雛形に入り、**人間が approved 化した後**に `spec_inspect.py` が初めて FAIL する。

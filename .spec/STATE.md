@@ -24,3 +24,8 @@
 - 2026-07-14 CORE-TSK-009: implementing → done (agent)
 - 2026-07-14 CORE-TSK-010: pending → implementing (agent)
 - 2026-07-14 CORE-TSK-010: implementing → done (agent)
+- 2026-07-15 CORE-FR-010: draft → approved (human)
+- 2026-07-15 CORE-FR-010: approved → implementing (agent)
+- 2026-07-15 CORE-FR-010: implementing → verified (agent)
+- 2026-07-15 CORE-TSK-011: pending → implementing (agent)
+- 2026-07-15 CORE-TSK-011: implementing → done (agent)
