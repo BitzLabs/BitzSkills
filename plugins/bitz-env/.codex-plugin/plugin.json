@@ -1,0 +1,25 @@
+{
+  "name": "bitz-env",
+  "version": "0.5.1",
+  "description": "BitzEnv — ガードレールとモデル非依存の協調運用をプロジェクトへ展開する開発環境プラグイン",
+  "author": {
+    "name": "br7.hide",
+    "email": "br7.hide@gmail.com"
+  },
+  "repository": "https://github.com/BitzLabs/BitzSkills",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Bitz Env",
+    "shortDescription": "安全なエージェント開発環境を展開・診断",
+    "longDescription": "危険操作を防ぐガードレールと、委譲型・相談型・合議型の協調運用をプロジェクトへ展開します。",
+    "developerName": "BitzLabs",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "このプロジェクトに BitzEnv のガードレールを導入してください。"
+    ]
+  }
+}

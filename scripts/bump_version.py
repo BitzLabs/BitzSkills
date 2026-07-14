@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""プラグインの version を2つのマニフェストで同時に bump する。
+"""プラグインの version を3つのマニフェストで同時に bump する。
 
 使い方: python3 scripts/bump_version.py <plugin名> [major|minor|patch]
 
 対象:
   plugins/<name>/.claude-plugin/plugin.json  (Claude Code 用)
   plugins/<name>/plugin.json                 (Antigravity 2.0 用)
+  plugins/<name>/.codex-plugin/plugin.json   (Codex CLI 用)
 
-両ファイルは常に同じ version でなければならない (AGENTS.md 規約)。
+3ファイルは常に同じ version でなければならない (AGENTS.md 規約)。
 bump 後、配下スキルの metadata.updated が古いままの場合は警告する。
 """
 import json
@@ -40,7 +41,11 @@ def main() -> None:
         sys.exit(f"エラー: bump 種別は major|minor|patch のいずれか: {part}")
 
     plugin_dir = REPO / "plugins" / name
-    manifests = [plugin_dir / ".claude-plugin" / "plugin.json", plugin_dir / "plugin.json"]
+    manifests = [
+        plugin_dir / ".claude-plugin" / "plugin.json",
+        plugin_dir / "plugin.json",
+        plugin_dir / ".codex-plugin" / "plugin.json",
+    ]
     for p in manifests:
         if not p.exists():
             sys.exit(f"エラー: マニフェストがありません: {p.relative_to(REPO)}")
@@ -48,7 +53,7 @@ def main() -> None:
     data = {p: json.loads(p.read_text(encoding="utf-8")) for p in manifests}
     versions = {d.get("version") for d in data.values()}
     if len(versions) > 1:
-        print(f"警告: 2マニフェストの version が不一致でした {sorted(versions)} — 大きい方を基準にします")
+        print(f"警告: 3マニフェストの version が不一致でした {sorted(versions)} — 大きい方を基準にします")
     base = max(versions, key=lambda v: [int(x) for x in v.split(".")])
     new = bump(base, part)
 
@@ -69,7 +74,7 @@ def main() -> None:
         for s in stale:
             print(f"  - {s}")
 
-    print(f"\n完了: {name} を {new} に bump しました（2マニフェスト同値）")
+    print(f"\n完了: {name} を {new} に bump しました（3マニフェスト同値）")
 
 
 if __name__ == "__main__":

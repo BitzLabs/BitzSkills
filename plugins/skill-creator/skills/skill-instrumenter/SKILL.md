@@ -2,10 +2,10 @@
 name: skill-instrumenter
 description: 監視したいエージェントスキルのSKILL.mdに、skill-observerによる自己観察ステップを注入（計装）または除去する。「このスキルにobserverを追加して」「スキルを監視対象にして」「自己観察を組み込んで」「計装して」「計装を外して」と言われた場合に使用する。観察の実行はskill-observer、蓄積ログの分析・改善はskill-improverが行う。
 metadata:
-  version: "0.1.0"
+  version: "0.1.1"
   author: br7.hide
   created: "2026-07-07"
-  updated: "2026-07-07"
+  updated: "2026-07-15"
 ---
 
 # skill-instrumenter
@@ -46,7 +46,8 @@ SKILL.md のパスを探して提示し、合意してから進める。
 **patch** で bump し、`metadata.updated` を当日にする。
 
 対象がプラグイン配下（`plugins/<name>/skills/` 内）の場合は、そのプラグインの
-version（`.claude-plugin/plugin.json` と `plugin.json` の両方、同じ値）の
+version（`.claude-plugin/plugin.json`、`plugin.json`、`.codex-plugin/plugin.json` の
+3つで同じ値）の
 bump が必要なことをユーザーに伝える。
 
 ### 5. 完了報告

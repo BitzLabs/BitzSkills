@@ -33,6 +33,10 @@
 
 # Antigravity 2.0
 agy plugin install <このリポジトリ>/plugins/bitz-ddd
+
+# OpenAI Codex CLI
+codex plugin marketplace add BitzLabs/BitzSkills
+codex plugin add bitz-ddd@bitzskills       # bitz-sdd も併せて導入すること
 ```
 
 ## bitz-sdd 工程との対応

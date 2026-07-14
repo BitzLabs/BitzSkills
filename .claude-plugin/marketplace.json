@@ -1,7 +1,7 @@
 {
   "name": "bitzskills",
   "metadata": {
-    "description": "BitzSkills — エージェントスキル開発ライブラリのマーケットプレイス"
+    "description": "BitzSkills — Claude Code / Codex CLI 共有のエージェントプラグイン・マーケットプレイス"
   },
   "owner": {
     "name": "br7.hide",

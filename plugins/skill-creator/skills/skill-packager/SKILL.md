@@ -2,10 +2,10 @@
 name: skill-packager
 description: エージェントスキルのパッケージ管理を行う。ライブラリから実環境へのインストール（コピー/シンボリックリンク/プラグイン一括）、frontmatterのversion比較によるバージョンアップ、アンインストール、配布（zip化・skill-creatorプラグイン）を担当する。「スキルを配置して」「インストールして」「アップデートして」「アンインストールして」「配布用にまとめて」「プラグインとして入れたい」と言われた場合に使用する。スキルの作成・修正は行わない。
 metadata:
-  version: "0.3.1"
+  version: "0.3.2"
   author: br7.hide
   created: "2026-07-05"
-  updated: "2026-07-06"
+  updated: "2026-07-15"
 ---
 
 # skill-packager
@@ -73,10 +73,10 @@ metadata:
 
 ## プラグイン一括インストール
 
-このリポジトリはモノレポで、`plugins/skill-creator/` が両プラットフォーム対応の
+このリポジトリはモノレポで、`plugins/skill-creator/` が3プラットフォーム対応の
 プラグインになっている（Claude Code: `plugins/skill-creator/.claude-plugin/plugin.json`、
-Antigravity 2.0: `plugins/skill-creator/plugin.json`。どちらもプラグイン内 `skills/`
-配下の7スキルを読む）。
+Antigravity 2.0: `plugins/skill-creator/plugin.json`、Codex CLI:
+`plugins/skill-creator/.codex-plugin/plugin.json`。いずれもプラグイン内 `skills/` を読む）。
 
 1. プラットフォームを確認し、`references/platform-paths.md` の
    「プラグインとしての配布」のコマンドを案内・実行する

@@ -1,7 +1,7 @@
 # BitzSkills — エージェントプラグインのモノレポ
 
 [Agent Skills](https://agentskills.io/specification) オープン標準に準拠したスキルを、
-Claude Code と Google Antigravity 2.0 の両方で使える**プラグイン**として開発・配布する
+Claude Code、Google Antigravity 2.0、OpenAI Codex CLI で使える**プラグイン**として開発・配布する
 モノレポです。リポジトリルートがマーケットプレイス `bitzskills`、`plugins/` 配下の
 各フォルダが1つのプラグインです。
 
@@ -44,6 +44,17 @@ agy plugin list    # 確認
 `~/.gemini/config/skills/`（グローバル）または `<project>/.agents/skills/`
 （ワークスペース）へ直接コピーしてください。
 
+### OpenAI Codex CLI
+
+```bash
+codex plugin marketplace add BitzLabs/BitzSkills
+codex plugin add bitz-sdd@bitzskills        # 使いたいプラグインを個別に
+codex plugin add skill-creator@bitzskills
+```
+
+インストール後は新しい Codex セッションを開始してください。Codex CLI は各プラグインの
+`.codex-plugin/plugin.json` から `skills/` を読み込みます。
+
 ## まず読むもの
 
 - **[使い方ガイド](docs/使い方ガイド.md)** — インストールから最初のプロジェクトまで
@@ -53,8 +64,8 @@ agy plugin list    # 確認
 ## リポジトリ構成
 
 ```
-.claude-plugin/marketplace.json  # マーケットプレイス定義（全プラグインを列挙）
-plugins/                         # 各プラグイン（マニフェスト2つ + skills/）
+.claude-plugin/marketplace.json  # Claude Code / Codex CLI 共有マーケットプレイス
+plugins/                         # 各プラグイン（マニフェスト3つ + skills/）
 .spec/                           # このリポジトリ自身の要件・タスク（sdd-core 準拠のドッグフーディング）
 evals/                           # skill-tester / evaluator の成果物と観察ログ
 docs/                            # 使い方ガイド・ユースケース・調査報告・翻訳規約

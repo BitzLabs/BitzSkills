@@ -135,6 +135,10 @@ examples 3本 + scripts 2本（validate-settings / parse-frontmatter）
 # Antigravity 2.0
 agy plugin install /path/to/BitzSkills/plugins/plugin-creator
 
+# OpenAI Codex CLI（収録スキルを Codex から利用）
+codex plugin marketplace add BitzLabs/BitzSkills
+codex plugin add plugin-creator@bitzskills
+
 # 開発時（Claude Code ローカル直接指定）
 claude --plugin-dir /path/to/BitzSkills/plugins/plugin-creator
 ```

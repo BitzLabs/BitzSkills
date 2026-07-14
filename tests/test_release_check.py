@@ -31,7 +31,7 @@ def test_release_check_pass(make_repo, copy_script):
 
 
 def test_release_check_mismatched_versions(make_repo, copy_script):
-    """2マニフェストの version 不一致の場合、exit 1 になり該当 FAIL 行が出ること"""
+    """3マニフェストの version 不一致の場合、exit 1 になり該当 FAIL 行が出ること"""
     repo = make_repo()
     script = copy_script(repo, CHECK_SCRIPT)
     
@@ -42,6 +42,32 @@ def test_release_check_mismatched_versions(make_repo, copy_script):
     assert res.returncode == 1
     assert "FAIL" in res.stdout
     assert "version 一致" in res.stdout
+
+
+def test_release_check_missing_codex_manifest(make_repo, copy_script):
+    """Codex マニフェストが欠落している場合、exit 1 になること"""
+    repo = make_repo()
+    script = copy_script(repo, CHECK_SCRIPT)
+    (repo / "plugins/demo/.codex-plugin/plugin.json").unlink()
+
+    res = run_check(script)
+    assert res.returncode == 1
+    assert "マニフェスト3つの存在" in res.stdout
+
+
+def test_release_check_invalid_codex_skills_path(make_repo, copy_script):
+    """Codex マニフェストが skills/ を公開しない場合、exit 1 になること"""
+    repo = make_repo()
+    script = copy_script(repo, CHECK_SCRIPT)
+    codex_file = repo / "plugins/demo/.codex-plugin/plugin.json"
+    codex_file.write_text(
+        '{"name":"demo","version":"0.1.0","skills":"skills"}',
+        encoding="utf-8",
+    )
+
+    res = run_check(script)
+    assert res.returncode == 1
+    assert "Codex skills パス" in res.stdout
 
 
 def test_release_check_ghost_plugin(make_repo, copy_script):

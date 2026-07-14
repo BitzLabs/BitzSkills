@@ -20,12 +20,18 @@ def make_repo(tmp_path: Path):
             encoding="utf-8"
         )
         
-        # plugins/demo/.claude-plugin/plugin.json & plugins/demo/plugin.json
+        # plugins/demo の Claude Code / Antigravity / Codex 向けマニフェスト
         demo_dir = tmp_path / "plugins" / "demo"
         demo_cc_dir = demo_dir / ".claude-plugin"
         demo_cc_dir.mkdir(parents=True)
+        demo_codex_dir = demo_dir / ".codex-plugin"
+        demo_codex_dir.mkdir()
         (demo_cc_dir / "plugin.json").write_text('{"name":"demo","version":"0.1.0"}', encoding="utf-8")
         (demo_dir / "plugin.json").write_text('{"name":"demo","version":"0.1.0"}', encoding="utf-8")
+        (demo_codex_dir / "plugin.json").write_text(
+            '{"name":"demo","version":"0.1.0","skills":"./skills/"}',
+            encoding="utf-8"
+        )
         
         # plugins/demo/skills/demo-skill/SKILL.md
         skill_dir = demo_dir / "skills" / "demo-skill"

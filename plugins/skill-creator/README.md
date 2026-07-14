@@ -54,6 +54,10 @@ skill-creator → skill-validator → skill-tester → skill-evaluator
 
 # Antigravity 2.0
 agy plugin install <このリポジトリ>/plugins/skill-creator
+
+# OpenAI Codex CLI
+codex plugin marketplace add BitzLabs/BitzSkills
+codex plugin add skill-creator@bitzskills
 ```
 
 ## 使い方の例
