@@ -1,8 +1,9 @@
-"""CORE-FR-004 spec_scaffold.py の回帰テスト（テスト先行）。
+"""CORE-FR-004 / CORE-FR-010 spec_scaffold.py の回帰テスト（テスト先行）。
 
-採番付き雛形生成スクリプトの
-採番の一意性・連番・001 起番、生成物の spec_inspect PASS（書式互換）、
+CORE-FR-004: 採番の一意性・連番・001 起番、生成物の spec_inspect PASS（書式互換）、
 既存ファイル非上書き、副作用の限定（.spec/ 配下のみ）を検証する。
+CORE-FR-010: 生成時の統制語彙検証（verification_method / domain / status）と
+DSN（design）種別の追加。語彙外は exit≠0・雛形非生成、語彙は spec_inspect と単一定義。
 """
 import subprocess
 import sys
@@ -138,3 +139,81 @@ def test_side_effect_only_under_spec(tmp_path):
     run(tmp_path, "requirement", "--prefix", "CORE-" + FR[:-1])
     after_outside = snapshot(tmp_path / "docs")
     assert before_outside == after_outside
+
+
+# --- 生成時語彙検証（CORE-FR-010）------------------------------------------
+
+def test_invalid_verification_method_fails(tmp_path):
+    """語彙外の --verification-method は非ゼロで失敗し雛形を生成しない。"""
+    (tmp_path / ".spec" / "requirements").mkdir(parents=True)
+    before = snapshot(tmp_path)
+    res = run(tmp_path, "requirement", "--prefix", "CORE-" + FR[:-1],
+              "--verification-method", "inspection")  # 語彙外（正は example-test）
+    assert res.returncode != 0, "語彙外の verification_method を弾くべき"
+    assert snapshot(tmp_path) == before, "失敗時は雛形を生成しない"
+
+
+def test_valid_verification_method_succeeds(tmp_path):
+    """語彙内の --verification-method は従来どおり生成できる（後方互換）。"""
+    (tmp_path / ".spec" / "requirements").mkdir(parents=True)
+    res = run(tmp_path, "requirement", "--prefix", "CORE-" + FR[:-1],
+              "--verification-method", "manual-check")
+    assert res.returncode == 0, res.stderr
+
+
+def test_invalid_domain_fails_when_domains_present(tmp_path):
+    """domains.md がある時、語彙外の --domain は非ゼロで失敗し雛形を生成しない。"""
+    req_dir = tmp_path / ".spec" / "requirements"
+    req_dir.mkdir(parents=True)
+    (req_dir / "domains.md").write_text(
+        "| code | 意味 |\n|---|---|\n| tooling | ツール |\n", encoding="utf-8")
+    before = snapshot(tmp_path)
+    res = run(tmp_path, "requirement", "--prefix", "CORE-" + FR[:-1],
+              "--domain", "nonexistent")
+    assert res.returncode != 0, "domains.md 語彙外の domain を弾くべき"
+    assert snapshot(tmp_path) == before, "失敗時は雛形を生成しない"
+
+
+def test_domain_skipped_when_no_domains_file(tmp_path):
+    """domains.md が無ければ domain 検証はスキップして生成する（縮退挙動）。"""
+    (tmp_path / ".spec" / "requirements").mkdir(parents=True)
+    res = run(tmp_path, "requirement", "--prefix", "CORE-" + FR[:-1],
+              "--domain", "anything")
+    assert res.returncode == 0, res.stderr
+
+
+def test_vocab_single_source_with_inspect(tmp_path):
+    """語彙は spec_inspect と単一定義を共有する（scaffold 側で二重定義しない）。"""
+    src = SCAFFOLD.read_text(encoding="utf-8")
+    assert "from spec_inspect import" in src or "import spec_inspect" in src, \
+        "spec_inspect から語彙を import すべき"
+    assert "VMETHODS =" not in src and "STATUSES =" not in src, \
+        "scaffold 側に語彙をリテラル再定義してはならない（単一の正）"
+
+
+# --- DSN（design）種別（CORE-FR-010）---------------------------------------
+
+def test_design_scaffold_passes_inspect(tmp_path):
+    """design 種別は id と既定 status:draft を持ち spec_inspect を PASS する。"""
+    (tmp_path / ".spec" / "design").mkdir(parents=True)
+    res = run(tmp_path, "design", "--prefix", "DSN", "--title", "サンプル設計")
+    assert res.returncode == 0, res.stderr
+    f = tmp_path / ".spec" / "design" / "DSN-001.md"
+    assert f.exists()
+    text = f.read_text(encoding="utf-8")
+    assert "id: DSN-001" in text
+    assert "status: draft" in text
+    insp = subprocess.run([sys.executable, str(INSPECT), str(tmp_path)],
+                          capture_output=True, text=True)
+    problem = [ln for ln in insp.stdout.splitlines()
+               if "DSN-001" in ln and ("[構造]" in ln or "[frontmatter]" in ln)]
+    assert not problem, f"DSN 生成物が spec_inspect で問題検出: {problem}"
+
+
+def test_design_invalid_status_fails(tmp_path):
+    """design の --status が STATUSES 語彙外なら非ゼロで失敗し雛形を生成しない。"""
+    (tmp_path / ".spec" / "design").mkdir(parents=True)
+    before = snapshot(tmp_path)
+    res = run(tmp_path, "design", "--prefix", "DSN", "--status", "bogus")
+    assert res.returncode != 0, "語彙外の status を弾くべき"
+    assert snapshot(tmp_path) == before, "失敗時は雛形を生成しない"
