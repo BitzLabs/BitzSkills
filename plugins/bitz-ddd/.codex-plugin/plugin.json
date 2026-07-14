@@ -1,0 +1,24 @@
+{
+  "name": "bitz-ddd",
+  "version": "0.1.2",
+  "description": "BitzDDD — ドメインストーリーテリング、戦略設計、DDD/MMI 成熟度評価を提供する DDD 設計手法プラグイン",
+  "author": {
+    "name": "BitzLabs"
+  },
+  "repository": "https://github.com/BitzLabs/BitzSkills",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Bitz DDD",
+    "shortDescription": "DDD の設計手法を仕様駆動開発へ導入",
+    "longDescription": "ドメインストーリーテリング、戦略設計、集約・境界づけられたコンテキスト、DDD/MMI 成熟度評価を提供します。",
+    "developerName": "BitzLabs",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "このシステムのドメインを DDD の観点で設計してください。"
+    ]
+  }
+}

@@ -6,25 +6,25 @@ Claude Code は CLAUDE.md のインポート経由で、Codex と Antigravity(ag
 ## リポジトリの役割
 
 [Agent Skills](https://agentskills.io/specification) オープン標準に準拠したスキルを
-Claude Code / Antigravity 2.0 向けの**プラグイン**として開発・配布する**モノレポ**。
+Claude Code / Antigravity 2.0 / OpenAI Codex CLI 向けの**プラグイン**として開発・配布する**モノレポ**。
 リポジトリルートはマーケットプレイス `bitzskills` で、`plugins/` 配下の各フォルダが1つのプラグイン。
 
 導入方法は2系統:
 
 - プラグイン一括インストール（推奨）: Claude Code は
   `/plugin marketplace add <このリポジトリ>` → `/plugin install <plugin名>@bitzskills`、
-  Antigravity 2.0 は `agy plugin install <リポジトリ>/plugins/<plugin名>`。手順の正は
+  Antigravity 2.0 は `agy plugin install <リポジトリ>/plugins/<plugin名>`、Codex CLI は
+  `codex plugin marketplace add <このリポジトリ>` →
+  `codex plugin add <plugin名>@bitzskills`。手順の正は
   `plugins/skill-creator/skills/skill-packager/references/platform-paths.md`
 - スキル単体の直接配置: `skill-packager` で各プラットフォームのパスへコピー
 
 ## 構成
 
 ```
-.claude-plugin/marketplace.json  # マーケットプレイス定義（全プラグインを列挙）
+.claude-plugin/marketplace.json  # Claude Code / Codex CLI 共有マーケットプレイス
 plugins/
-├── skill-creator/   # スキル開発ツール群（creator→validator→tester→evaluator→packager と自己改善ループ）
-├── plugin-creator/  # プラグイン開発ツール群（構造/コマンド/エージェント/フック/MCP + create-plugin コマンド）
-└── bitz-sdd/        # 仕様駆動開発（SDD）ワークフロー（discovery→design→review→infra、docs同期、レポート）
+└── */               # 各プラグイン（3マニフェスト + skills/、実体が正）
 evals/               # tester/evaluator の作業成果物と observer の観察ログ（全プラグイン共用）
 docs/                # リポジトリ自身の解説と調査メモ（調査報告/ は3エージェントの検証済み仕様）
 scripts/             # エージェント共用の運用スクリプト（bump / release check）
@@ -42,7 +42,8 @@ scripts/             # エージェント共用の運用スクリプト（bump /
 
 ### 事前確認が必要（ユーザーの明示承認なしに実行しない）
 
-- リポジトリ外への書き込み（`~/.claude/skills/`・`~/.gemini/config/skills/` 等への
+- リポジトリ外への書き込み（`~/.claude/skills/`・`~/.gemini/config/skills/`・
+  `~/.agents/skills/` 等への
   skill-packager による配置・上書き・削除を含む）
 - `evals/` 配下の既存成果物の削除・上書き
 
@@ -67,17 +68,20 @@ scripts/             # エージェント共用の運用スクリプト（bump /
 ## 定型手順（手作業せずスクリプトを使う）
 
 - **version bump**: `python3 scripts/bump_version.py <plugin名> [major|minor|patch]`
-  — 2つのマニフェスト（`.claude-plugin/plugin.json` と `plugin.json`）を必ず同じ値に保つ
+  — 3つのマニフェスト（`.claude-plugin/plugin.json`、`plugin.json`、
+  `.codex-plugin/plugin.json`）を必ず同じ値に保つ
 - **リリース前検証**: `python3 scripts/release_check.py`
   — version 整合・marketplace 整合・frontmatter 必須項目・プラグイン validate を一括チェック
 
 ## 新しいプラグインの追加手順
 
-1. `plugins/<name>/` を作成し、マニフェストを2つ置く:
-   `.claude-plugin/plugin.json`（Claude Code 用）と `plugin.json`（Antigravity 2.0 用）。
-   両者の `version` は常に同じ値（以後の bump は `scripts/bump_version.py` で行う）
+1. `plugins/<name>/` を作成し、マニフェストを3つ置く:
+   `.claude-plugin/plugin.json`（Claude Code 用）、`plugin.json`（Antigravity 2.0 用）、
+   `.codex-plugin/plugin.json`（Codex CLI 用）。3者の `version` は常に同じ値
+   （以後の bump は `scripts/bump_version.py` で行う）
 2. `plugins/<name>/skills/<skill-name>/SKILL.md` を追加する
-3. `.claude-plugin/marketplace.json` の `plugins[]` にエントリを追加する（`"source": "./plugins/<name>"`）
+3. Claude Code / Codex CLI 共有の `.claude-plugin/marketplace.json` の `plugins[]` に
+   エントリを追加する（`"source": "./plugins/<name>"`）
 4. `python3 scripts/release_check.py` で検証する
 
 ## 規約

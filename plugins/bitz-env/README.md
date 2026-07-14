@@ -59,6 +59,10 @@ advisor が使えない環境では相談をスキップして劣化動作しま
 
 # Antigravity 2.0
 agy plugin install <リポジトリ>/plugins/bitz-env
+
+# OpenAI Codex CLI
+codex plugin marketplace add BitzLabs/BitzSkills
+codex plugin add bitz-env@bitzskills
 ```
 
 導入後、対象プロジェクトで「開発環境を展開して」（env-init）から始めてください。

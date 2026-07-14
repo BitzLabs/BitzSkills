@@ -36,7 +36,9 @@
   `model:` と一致させる。`release_check.py` が整合を機械検証する（委譲先 agent の実在・
   ティアはしごとの整合・モデル名のルーティング文書への直書き禁止）。
 - Antigravity（Gemini）のモデルルーティングは antigravity プラグインが別途所有し、本表とは**分離管理**。
-- Codex（OpenAI プラグイン）は**使用しない**。別視点の検証は antigravity（Gemini）で行う。
+- Codex（OpenAI CLI）は**第3の配布対象かつ利用可能なプラットフォーム**（SI-CORE-024）。
+  ただし本表（委譲レジストリ）の**クロスモデル検証の既定は引き続き antigravity（Gemini）**とし、
+  Codex は antigravity と同様に本表の相対階層と**直交**する（分離管理。`/codex:review` 等で併用は可）。
 
 ### 相対選択（司令塔ティア基準）
 

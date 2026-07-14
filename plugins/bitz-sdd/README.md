@@ -2,7 +2,8 @@
 
 個人用の仕様駆動開発（SDD）ワークフロー。docs/（人間の意図・永続）と
 .spec/（AI実行契約・短命）を分離し、EARS記法の要件を機械検証で充足させる。
-SDD運用仕様書 v1.0 を Claude Code / Antigravity 2.0 のスキルとして実装したもの。
+SDD運用仕様書 v1.0 を Claude Code / Antigravity 2.0 / OpenAI Codex CLI の
+スキルとして実装したもの。
 
 ## 5原則（憲法）
 
@@ -42,6 +43,13 @@ Antigravity 2.0:
 
 ```
 agy plugin install <このリポジトリ>/plugins/bitz-sdd
+```
+
+OpenAI Codex CLI:
+
+```
+codex plugin marketplace add BitzLabs/BitzSkills
+codex plugin add bitz-sdd@bitzskills
 ```
 
 ## 使い方の流れ（一気通貫フロー）
