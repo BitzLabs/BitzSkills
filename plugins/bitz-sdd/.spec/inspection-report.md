@@ -92,7 +92,7 @@
 | SDD-FR-110 | verified | reporting | manual-check | 2 | 2 |
 | SDD-FR-111 | verified | reporting | manual-check | 2 | 2 |
 | SDD-FR-112 | verified | execution | manual-check | 1 | 2 |
-| SDD-FR-120 | implementing | workflow | manual-check | 2 | 3 |
-| SDD-FR-121 | implementing | workflow | manual-check | 2 | 3 |
+| SDD-FR-120 | verified | workflow | manual-check | 2 | 3 |
+| SDD-FR-121 | verified | workflow | manual-check | 2 | 3 |
 
 **判定: PASS ✅**

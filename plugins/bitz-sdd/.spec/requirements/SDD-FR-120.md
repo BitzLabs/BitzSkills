@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-120
 version: 1.0
-status: implementing
+status: verified
 domain: workflow
 priority: medium
 origin: SI-CORE-016（ルート .spec/spec-issues/。2026-07-12 ユーザー提案: sdd-plan 新設）
