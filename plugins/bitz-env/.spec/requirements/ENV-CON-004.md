@@ -1,7 +1,7 @@
 ---
 id: ENV-CON-004
 version: 1.0
-status: implementing
+status: verified
 domain: guardrail
 priority: high
 origin: SI-ENV-001（REV-001 risk RSK-201/RSK-202）
