@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-090
 version: 1.0
-status: approved
+status: verified
 domain: verification
 priority: high
 origin: skills/sdd-test/SKILL.md v0.1.0（reverse-derived）

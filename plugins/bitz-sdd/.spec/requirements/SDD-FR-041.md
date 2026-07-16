@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-041
 version: 1.0
-status: approved
+status: verified
 domain: upstream
 priority: medium
 origin: skills/sdd-data/SKILL.md v0.1.0（reverse-derived）

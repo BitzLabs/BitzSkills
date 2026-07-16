@@ -1,7 +1,7 @@
 ---
 id: SDD-CON-032
 version: 1.0
-status: approved
+status: verified
 domain: upstream
 priority: high
 origin: skills/sdd-design/SKILL.md v0.4.1（reverse-derived）
