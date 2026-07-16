@@ -34,25 +34,25 @@
 ## Traceability Matrix
 | ID | status | domain | v-method | tasks | 参照元数 |
 |----|--------|--------|----------|-------|----------|
-| CORE-CON-001 | approved | governance | example-test | 1 | 1 |
-| CORE-CON-002 | approved | governance | example-test | 1 | 1 |
-| CORE-CON-003 | approved | governance | example-test | 1 | 1 |
-| CORE-CON-004 | approved | governance | manual-check | 1 | 1 |
-| CORE-CON-005 | approved | governance | manual-check | 1 | 1 |
-| CORE-CON-006 | approved | governance | example-test | 1 | 1 |
-| CORE-CON-007 | approved | governance | manual-check | 1 | 1 |
+| CORE-CON-001 | verified | governance | example-test | 1 | 1 |
+| CORE-CON-002 | verified | governance | example-test | 1 | 1 |
+| CORE-CON-003 | verified | governance | example-test | 1 | 1 |
+| CORE-CON-004 | verified | governance | manual-check | 1 | 1 |
+| CORE-CON-005 | verified | governance | manual-check | 1 | 1 |
+| CORE-CON-006 | verified | governance | example-test | 1 | 1 |
+| CORE-CON-007 | verified | governance | manual-check | 1 | 1 |
 | CORE-FR-001 | verified | governance | manual-check | 1 | 1 |
 | CORE-FR-002 | verified | tooling | example-test | 1 | 1 |
 | CORE-FR-003 | verified | tooling | example-test | 1 | 2 |
 | CORE-FR-004 | verified | tooling | example-test | 1 | 2 |
 | CORE-FR-005 | verified | tooling | example-test | 1 | 2 |
-| CORE-FR-006 | approved | governance | manual-check | 2 | 2 |
-| CORE-FR-007 | approved | governance | manual-check | 1 | 1 |
-| CORE-FR-008 | approved | governance | manual-check | 1 | 1 |
-| CORE-FR-009 | approved | governance | manual-check | 1 | 1 |
+| CORE-FR-006 | verified | governance | manual-check | 2 | 2 |
+| CORE-FR-007 | verified | governance | manual-check | 1 | 1 |
+| CORE-FR-008 | verified | governance | manual-check | 1 | 1 |
+| CORE-FR-009 | verified | governance | manual-check | 1 | 1 |
 | CORE-FR-010 | verified | tooling | example-test | 1 | 2 |
 | CORE-FR-011 | verified | tooling | example-test | 1 | 2 |
-| CORE-NFR-001 | approved | tooling | example-test | 1 | 1 |
+| CORE-NFR-001 | verified | tooling | example-test | 1 | 1 |
 | DSN-001 | active |  |  | 0 | 5 |
 
 **判定: PASS ✅**

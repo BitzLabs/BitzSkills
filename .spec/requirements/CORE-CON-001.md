@@ -1,7 +1,7 @@
 ---
 id: CORE-CON-001
 version: 1.1
-status: approved
+status: verified
 domain: governance
 priority: high
 origin: AGENTS.md（リポジトリ共通規約からの reverse-derived）
