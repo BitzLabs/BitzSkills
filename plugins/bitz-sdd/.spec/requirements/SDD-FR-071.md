@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-071
 version: 1.0
-status: approved
+status: verified
 domain: execution
 priority: high
 origin: skills/sdd-implement/SKILL.md v0.1.1（reverse-derived）

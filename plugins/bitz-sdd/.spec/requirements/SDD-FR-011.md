@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-011
 version: 1.0
-status: approved
+status: verified
 domain: workflow
 priority: medium
 origin: skills/sdd-core/SKILL.md v1.7.3（reverse-derived）

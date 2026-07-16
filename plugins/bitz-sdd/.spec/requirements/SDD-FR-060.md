@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-060
 version: 1.0
-status: approved
+status: verified
 domain: verification
 priority: high
 origin: skills/sdd-review/SKILL.md v0.2.2（reverse-derived）

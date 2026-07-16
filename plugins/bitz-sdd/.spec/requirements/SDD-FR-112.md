@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-112
 version: 1.0
-status: approved
+status: verified
 domain: execution
 priority: medium
 origin: SI-SDD-004（2026-07-14 SI-CORE-021 開発の振り返り。部分検収でマージ後 CI 回帰）

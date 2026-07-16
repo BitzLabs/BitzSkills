@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-110
 version: 1.0
-status: approved
+status: verified
 domain: reporting
 priority: high
 origin: skills/sdd-report/SKILL.md v0.2.2（reverse-derived）

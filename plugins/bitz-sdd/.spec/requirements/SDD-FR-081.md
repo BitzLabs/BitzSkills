@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-081
 version: 1.0
-status: approved
+status: verified
 domain: execution
 priority: high
 origin: skills/sdd-git/SKILL.md v0.1.0（reverse-derived）

@@ -52,43 +52,43 @@
 ## Traceability Matrix
 | ID | status | domain | v-method | tasks | 参照元数 |
 |----|--------|--------|----------|-------|----------|
-| SDD-CON-022 | approved | upstream | manual-check | 1 | 1 |
-| SDD-CON-032 | approved | upstream | manual-check | 1 | 1 |
-| SDD-CON-042 | approved | upstream | manual-check | 1 | 1 |
-| SDD-CON-043 | approved | upstream | manual-check | 1 | 1 |
-| SDD-CON-050 | approved | upstream | manual-check | 1 | 1 |
-| SDD-CON-052 | approved | upstream | manual-check | 1 | 1 |
+| SDD-CON-022 | verified | upstream | manual-check | 1 | 1 |
+| SDD-CON-032 | verified | upstream | manual-check | 1 | 1 |
+| SDD-CON-042 | verified | upstream | manual-check | 1 | 1 |
+| SDD-CON-043 | verified | upstream | manual-check | 1 | 1 |
+| SDD-CON-050 | verified | upstream | manual-check | 1 | 1 |
+| SDD-CON-052 | verified | upstream | manual-check | 1 | 1 |
 | SDD-DSC-001 | draft |  |  | 0 | 0 |
 | SDD-DSC-002 | draft |  |  | 0 | 0 |
 | SDD-DSC-003 | draft |  |  | 0 | 0 |
 | SDD-DSC-004 | draft |  |  | 0 | 0 |
 | SDD-DSC-005 | draft |  |  | 0 | 0 |
 | SDD-DSC-006 | draft |  |  | 0 | 0 |
-| SDD-FR-001 | approved | verification | example-test | 1 | 1 |
-| SDD-FR-010 | approved | verification | example-test | 1 | 1 |
-| SDD-FR-011 | approved | workflow | manual-check | 1 | 1 |
-| SDD-FR-020 | approved | upstream | example-test | 1 | 1 |
-| SDD-FR-021 | approved | upstream | manual-check | 1 | 1 |
-| SDD-FR-030 | approved | upstream | example-test | 1 | 1 |
-| SDD-FR-031 | approved | upstream | manual-check | 1 | 1 |
-| SDD-FR-033 | approved | upstream | manual-check | 1 | 1 |
-| SDD-FR-040 | approved | upstream | example-test | 1 | 1 |
-| SDD-FR-041 | approved | upstream | example-test | 1 | 1 |
-| SDD-FR-051 | approved | upstream | manual-check | 1 | 1 |
-| SDD-FR-053 | approved | upstream | manual-check | 1 | 1 |
-| SDD-FR-060 | approved | verification | manual-check | 1 | 1 |
-| SDD-FR-061 | approved | verification | manual-check | 1 | 1 |
-| SDD-FR-070 | approved | execution | manual-check | 1 | 1 |
-| SDD-FR-071 | approved | execution | manual-check | 1 | 1 |
-| SDD-FR-080 | approved | execution | manual-check | 1 | 1 |
-| SDD-FR-081 | approved | execution | manual-check | 1 | 1 |
-| SDD-FR-082 | approved | execution | manual-check | 1 | 1 |
-| SDD-FR-090 | approved | verification | manual-check | 1 | 1 |
-| SDD-FR-091 | approved | verification | manual-check | 1 | 1 |
-| SDD-FR-100 | approved | sync | example-test | 1 | 1 |
-| SDD-FR-101 | approved | sync | example-test | 1 | 1 |
-| SDD-FR-110 | approved | reporting | manual-check | 2 | 2 |
-| SDD-FR-111 | approved | reporting | manual-check | 2 | 2 |
-| SDD-FR-112 | approved | execution | manual-check | 1 | 1 |
+| SDD-FR-001 | verified | verification | example-test | 1 | 1 |
+| SDD-FR-010 | verified | verification | example-test | 1 | 1 |
+| SDD-FR-011 | verified | workflow | manual-check | 1 | 1 |
+| SDD-FR-020 | verified | upstream | example-test | 1 | 1 |
+| SDD-FR-021 | verified | upstream | manual-check | 1 | 1 |
+| SDD-FR-030 | verified | upstream | example-test | 1 | 1 |
+| SDD-FR-031 | verified | upstream | manual-check | 1 | 1 |
+| SDD-FR-033 | verified | upstream | manual-check | 1 | 1 |
+| SDD-FR-040 | verified | upstream | example-test | 1 | 1 |
+| SDD-FR-041 | verified | upstream | example-test | 1 | 1 |
+| SDD-FR-051 | verified | upstream | manual-check | 1 | 1 |
+| SDD-FR-053 | verified | upstream | manual-check | 1 | 1 |
+| SDD-FR-060 | verified | verification | manual-check | 1 | 1 |
+| SDD-FR-061 | verified | verification | manual-check | 1 | 1 |
+| SDD-FR-070 | verified | execution | manual-check | 1 | 1 |
+| SDD-FR-071 | verified | execution | manual-check | 1 | 1 |
+| SDD-FR-080 | verified | execution | manual-check | 1 | 1 |
+| SDD-FR-081 | verified | execution | manual-check | 1 | 1 |
+| SDD-FR-082 | verified | execution | manual-check | 1 | 1 |
+| SDD-FR-090 | verified | verification | manual-check | 1 | 1 |
+| SDD-FR-091 | verified | verification | manual-check | 1 | 1 |
+| SDD-FR-100 | verified | sync | example-test | 1 | 1 |
+| SDD-FR-101 | verified | sync | example-test | 1 | 1 |
+| SDD-FR-110 | verified | reporting | manual-check | 2 | 2 |
+| SDD-FR-111 | verified | reporting | manual-check | 2 | 2 |
+| SDD-FR-112 | verified | execution | manual-check | 1 | 1 |
 
 **判定: PASS ✅**

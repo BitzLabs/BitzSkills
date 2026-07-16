@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-100
 version: 1.0
-status: approved
+status: verified
 domain: sync
 priority: high
 origin: skills/sdd-docs/SKILL.md v0.3.0（reverse-derived）

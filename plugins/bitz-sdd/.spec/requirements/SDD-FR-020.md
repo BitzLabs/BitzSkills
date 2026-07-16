@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-020
 version: 1.0
-status: approved
+status: verified
 domain: upstream
 priority: high
 origin: skills/sdd-discovery/SKILL.md v0.2.2（reverse-derived）
