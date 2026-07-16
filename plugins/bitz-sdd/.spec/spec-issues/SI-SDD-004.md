@@ -3,7 +3,7 @@ id: SI-SDD-004
 raised_by: 2026-07-14 SI-CORE-021 開発の振り返り（部分検収でマージ後 CI 回帰）
 target: sdd-implement/sdd-test の検収規律：共有スクリプト変更時の全テストスイート実行
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: 実装タスクの検収規律が「対象テスト＋部分実行」で足りると読める曖昧さがあり、
   共有スクリプト変更時に**全テストスイート未実行**で回帰を見逃す事故が起きた。検収の最小要件を明文化する。
