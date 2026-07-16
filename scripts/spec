@@ -1,0 +1,137 @@
+#!/usr/bin/env python3
+"""scripts/spec — bitz-sdd の SDD ツールをバージョン非依存に解決して委譲するラッパー。
+
+本リポジトリは bitz-sdd を「インストール済みプラグイン」として消費（ドッグフーディング）する
+ため、SDD ツール（inspect/scaffold/status/update）の実体は `scripts/` ではなくプラグイン
+キャッシュ側にある。案内どおりの `python3 scripts/<tool>.py` では実行できず、毎回バージョン
+込みの絶対パスをハードコードする摩擦（SI-CORE-022）が生じていた。本ラッパーはバージョン番号を
+直書きせず、インストール記録の固定版を優先解決し、無ければキャッシュの semver 最大版へ委譲する。
+
+使い方:
+    scripts/spec inspect  --workspace . plugins/*
+    scripts/spec scaffold <workspace> requirement --prefix CORE-FR ...
+    scripts/spec status   <repo-root> --json
+    scripts/spec update   <workspace> CORE-FR-011 --to approved --by-human
+
+解決順序（CORE-FR-011）:
+    1. $BITZSKILLS_PLUGINS_DIR（既定 ~/.claude/plugins）の installed_plugins.json から
+       bitz-sdd のエントリを探し、projectPath がこのリポジトリルートに一致する installPath を使う。
+       固定版が該当ツールを欠く場合は（黙ってフォールバックせず）非ゼロで失敗する。
+    2. 該当エントリが無ければ、プラグインキャッシュを走査し当該ツールを備える semver 最大版を使う。
+"""
+import json
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+# サブコマンド名 → 実スクリプト名
+TOOLS = {
+    "inspect": "spec_inspect.py",
+    "scaffold": "spec_scaffold.py",
+    "status": "spec_status.py",
+    "update": "spec_update.py",
+}
+PLUGIN_KEY = "bitz-sdd@bitzskills"
+# 版ディレクトリ（installPath）からツールスクリプトまでの相対パス
+REL = ("skills", "sdd-core", "scripts")
+
+EXIT_USAGE = 2
+EXIT_UNRESOLVED = 3
+
+
+def repo_root() -> Path:
+    """このラッパー（scripts/spec）を含むリポジトリのルート。"""
+    return Path(__file__).resolve().parent.parent
+
+
+def plugins_dir() -> Path:
+    env = os.environ.get("BITZSKILLS_PLUGINS_DIR")
+    if env:
+        return Path(env)
+    return Path.home() / ".claude" / "plugins"
+
+
+def _semver_key(name: str):
+    """版名を比較可能な数値タプルへ（マイナー二桁がパッチ一桁より新しく並ぶ）。非数値要素は 0 に丸める。"""
+    key = []
+    for part in name.split("."):
+        m = re.match(r"(\d+)", part)
+        key.append(int(m.group(1)) if m else 0)
+    return tuple(key)
+
+
+def resolve_from_installed(tool_script: str):
+    """installed_plugins.json の projectPath==repo_root エントリの installPath から解決した
+    パスを返す（存在確認はしない）。該当エントリが無ければ None。"""
+    manifest = plugins_dir() / "installed_plugins.json"
+    if not manifest.exists():
+        return None
+    try:
+        data = json.loads(manifest.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+    entries = (data.get("plugins") or {}).get(PLUGIN_KEY) or []
+    root = str(repo_root())
+    for entry in entries:
+        install_path = entry.get("installPath")
+        if entry.get("projectPath") == root and install_path:
+            return Path(install_path).joinpath(*REL, tool_script)
+    return None
+
+
+def resolve_from_cache(tool_script: str):
+    """プラグインキャッシュを走査し、当該ツールを備える semver 最大版のスクリプトを返す。
+    見つからなければ None。"""
+    cache = plugins_dir() / "cache"
+    candidates = []
+    if cache.is_dir():
+        for marketplace in cache.iterdir():
+            base = marketplace / "bitz-sdd"
+            if not base.is_dir():
+                continue
+            for ver in base.iterdir():
+                script = ver.joinpath(*REL, tool_script)
+                if script.exists():
+                    candidates.append((_semver_key(ver.name), script))
+    if not candidates:
+        return None
+    candidates.sort(key=lambda c: c[0])
+    return candidates[-1][1]
+
+
+def main(argv):
+    valid = ", ".join(sorted(TOOLS))
+    if not argv:
+        sys.stderr.write(f"使い方: spec <tool> [args...]\n有効なツール: {valid}\n")
+        return EXIT_USAGE
+    tool = argv[0]
+    if tool not in TOOLS:
+        sys.stderr.write(f"未知のツール: {tool}\n有効なツール: {valid}\n")
+        return EXIT_USAGE
+
+    tool_script = TOOLS[tool]
+    pinned = resolve_from_installed(tool_script)
+    if pinned is not None:
+        # 固定版が該当。壊れている（スクリプト欠落）なら黙ってフォールバックせず失敗させる。
+        target = pinned
+    else:
+        target = resolve_from_cache(tool_script)
+        if target is None:
+            sys.stderr.write(
+                f"解決不能: {tool_script} を備える bitz-sdd がプラグインキャッシュに"
+                f"見つかりません（BITZSKILLS_PLUGINS_DIR={plugins_dir()}）\n"
+            )
+            return EXIT_UNRESOLVED
+
+    if not target.exists():
+        sys.stderr.write(f"解決先スクリプトが存在しません: {target}\n")
+        return EXIT_UNRESOLVED
+
+    completed = subprocess.run([sys.executable, str(target), *argv[1:]])
+    return completed.returncode
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
