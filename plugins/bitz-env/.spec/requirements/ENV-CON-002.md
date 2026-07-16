@@ -1,7 +1,7 @@
 ---
 id: ENV-CON-002
 version: 1.0
-status: implementing
+status: verified
 domain: collab
 priority: medium
 origin: 製作プラン（契約の先行固定リスクへの対処）

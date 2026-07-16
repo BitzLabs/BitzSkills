@@ -1,7 +1,7 @@
 ---
 id: ENV-CON-001
 version: 1.0
-status: implementing
+status: verified
 domain: guardrail
 priority: high
 origin: 製作プラン（一般公開の前提条件）

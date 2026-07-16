@@ -1,7 +1,7 @@
 ---
 id: ENV-FR-008
 version: 1.0
-status: implementing
+status: verified
 domain: guardrail
 priority: medium
 origin: 人間裁定（チャット指示 2026-07-11。要検証項目#2 の設計解決）

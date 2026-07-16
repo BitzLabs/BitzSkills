@@ -1,7 +1,7 @@
 ---
 id: ENV-NFR-002
 version: 1.0
-status: implementing
+status: verified
 domain: guardrail
 priority: low
 origin: SI-ENV-004（REV-001 business BIZ-201）
