@@ -1,6 +1,6 @@
-# inspection-report.md (2026-07-15)
+# inspection-report.md (2026-07-16)
 
-成果物数: 19 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
+成果物数: 20 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -51,6 +51,7 @@
 | CORE-FR-008 | approved | governance | manual-check | 1 | 1 |
 | CORE-FR-009 | approved | governance | manual-check | 1 | 1 |
 | CORE-FR-010 | verified | tooling | example-test | 1 | 2 |
+| CORE-FR-011 | verified | tooling | example-test | 1 | 2 |
 | CORE-NFR-001 | approved | tooling | example-test | 1 | 1 |
 | DSN-001 | active |  |  | 0 | 5 |
 

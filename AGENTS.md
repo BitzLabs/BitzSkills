@@ -72,8 +72,13 @@ scripts/             # エージェント共用の運用スクリプト（bump /
   `.codex-plugin/plugin.json`）を必ず同じ値に保つ
 - **リリース前検証**: `python3 scripts/release_check.py`
   — version 整合・marketplace 整合・frontmatter 必須項目・プラグイン validate を一括チェック
+- **SDD ツールの実行**: `scripts/spec <tool> [args...]`（`tool` は `inspect`/`scaffold`/`status`/`update`）。
+  本リポは bitz-sdd を**インストール済みプラグインとして消費**（ドッグフーディング）するため
+  ツール実体は `scripts/` ではなくプラグインキャッシュ側にある。ラッパー `scripts/spec` が
+  `installed_plugins.json` の固定版を**バージョン非依存に**解決して委譲する（SI-CORE-022 / CORE-FR-011）。
+  例: `python3 scripts/spec status .` / `python3 scripts/spec scaffold . requirement --prefix CORE-FR ...`
 - **仕様（.spec）検証の正規コマンド**:
-  `python3 plugins/bitz-sdd/skills/sdd-core/scripts/spec_inspect.py --workspace . plugins/*`
+  `python3 scripts/spec inspect --workspace . plugins/*`
   — このモノリポでは常に `--workspace . plugins/*` を使う（ルートと全プラグインを一括検証し
   クロスリファレンスを解決する）。ルート単体（末尾 `.`）は `tests/` が参照する他ワークスペースの
   `ENV-*` 等を解決できず幽霊参照で FAIL するため使わない（SI-CORE-023）

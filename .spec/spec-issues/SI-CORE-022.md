@@ -3,7 +3,7 @@ id: SI-CORE-022
 raised_by: 2026-07-14 SI-CORE-021 開発の振り返り（plugin cache パスを毎回ハードコードして回避）
 target: 検証ツールの実行パス案内（scripts/ 前提 vs プラグイン消費側 dogfooding の食い違い）
 proposed_change_type: fix
-status: open
+status: accepted
 ---
 - **目的**: SDD 検証ツールの実行案内が `python3 scripts/<tool>.py` 前提だが、bitz-sdd を
   **インストール済みプラグインとして消費**する本リポ（ドッグフーディング）ではスクリプト実体が
