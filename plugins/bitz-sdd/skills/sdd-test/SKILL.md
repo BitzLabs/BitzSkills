@@ -2,10 +2,10 @@
 name: sdd-test
 description: BitzSDD のテスト・検証工程を行うスキル。EARS 記法の要件からテスト仕様を導出（節種別ごとの導出パターン、verification_method との対応）し、テストを実装・実行して、検証結果とトレース情報を .spec/specs/<feature>/ に記録する。ユーザーが「テストを書いて」「テスト仕様」「EARS からテスト」「検証して」「verified にして」と言及したとき、または sdd-implement の実装完了後に検証フェーズへ移行するときに使用する。
 metadata:
-  version: "0.1.0"
+  version: "0.1.1"
   author: br7.hide
   created: "2026-07-11"
-  updated: "2026-07-11"
+  updated: "2026-07-16"
 ---
 
 # SDD Test — EARS 要件からのテスト導出と検証
@@ -30,6 +30,17 @@ metadata:
 4.  **実行と判定**: テストを実行し、red の場合は `sdd-core` の references/failure-protocol.md に従う
     （テストを黙って弱めない）。全 green + `spec_inspect.py` の traceability 検証 PASS で
     要件の `verified` 遷移を人間に提案する。
+
+## 検収規律（実行範囲の最小要件）
+
+テストの green は「実行した範囲での green」に過ぎない。検収（`done` / `verified` 提案）の前に、
+変更の**影響範囲に見合った実行範囲**を確保する（sdd-implement の implementation-discipline.md 6章と同一基準。SDD-FR-112）:
+
+*   **共有スクリプト変更時は全スイート実行**: 変更が共有スクリプト（`scripts/` 配下・プラグイン同梱スクリプト・
+    複数の呼び出し元から参照される契約）に触れる場合、対象要件のテストのみの部分実行で検収を完了とせず、
+    **全テストスイートの実行**を必須とする。広く参照される変更は他 fixture の回帰を招くため、実行範囲を影響範囲に合わせる。
+*   **環境固有前提の不在はスキップ**: 検査が特定ファイル（例: `CLAUDE.md`）の実在を前提とする場合、
+    その前提を持たない環境・fixture では不在を検査違反ではなく**スキップ**として扱う。
 
 ## 後続工程
 
