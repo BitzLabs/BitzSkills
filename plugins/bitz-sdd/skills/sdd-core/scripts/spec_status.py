@@ -59,6 +59,46 @@ def _statuses_in(directory: Path, *, skip=frozenset()) -> Counter:
     return counter
 
 
+IMPLEMENTED_MARKER_RE = re.compile(r"^\s*-\s*\*\*実施\*\*:", re.M)
+
+
+def _accepted_issue_ids(directory: Path) -> list:
+    """status: accepted の spec-issue のうち、本文に実施マーカーが無いものの ID を返す（読み取り専用）。
+
+    `**実施**:` マーカー（軽量レーンでの直接反映済みを示す）を持つものは、CORE-FR-012 の
+    受入基準により最初から対応済み扱いとしてここには含めない。
+    """
+    ids = []
+    if not directory.exists():
+        return ids
+    for f in sorted(directory.glob("*.md")):
+        if f.name.startswith("_"):
+            continue
+        text = f.read_text(encoding="utf-8")
+        fm = parse_frontmatter(text)
+        if fm.get("status") != "accepted":
+            continue
+        if IMPLEMENTED_MARKER_RE.search(text):
+            continue
+        ids.append(fm.get("id") or f.stem)
+    return ids
+
+
+def _origin_texts(directory: Path) -> list:
+    """requirements/*.md の origin: フィールドのテキストを集める（読み取り専用）。"""
+    texts = []
+    if not directory.exists():
+        return texts
+    for f in sorted(directory.glob("*.md")):
+        if f.name.startswith("_") or f.name in NON_REQUIREMENT_FILES:
+            continue
+        fm = parse_frontmatter(f.read_text(encoding="utf-8"))
+        origin = fm.get("origin")
+        if origin:
+            texts.append(origin)
+    return texts
+
+
 def determine_phase(reqs: Counter, tasks: Counter, has_discovery: bool):
     """成果物の有無から現在フェーズを機械的に推定する。
 
@@ -85,7 +125,8 @@ def determine_phase(reqs: Counter, tasks: Counter, has_discovery: bool):
     return ("done", "Done（検証完了）")
 
 
-def next_actions(reqs: Counter, issues: Counter, tasks: Counter, phase_code: str):
+def next_actions(reqs: Counter, issues: Counter, tasks: Counter, phase_code: str,
+                  accepted_unaddressed=()):
     """状況から次アクション候補を単純ヒューリスティックで導く。"""
     actions = []
     n_open = issues.get("open", 0)
@@ -98,6 +139,12 @@ def next_actions(reqs: Counter, issues: Counter, tasks: Counter, phase_code: str
 
     if n_open:
         actions.append(f"未裁定の spec-issue が {n_open} 件 — 人間裁定（accept/reject）を行う")
+    if accepted_unaddressed:
+        ids = "、".join(accepted_unaddressed)
+        actions.append(
+            f"accepted のまま未着手の spec-issue が {len(accepted_unaddressed)} 件"
+            f"（{ids}） — 要件化 or 軽量レーンでの実施を検討する"
+        )
     if n_draft:
         actions.append(f"draft 要件が {n_draft} 件 — 承認（approved 化）を行う")
     if phase_code == "plan" and n_appr and n_tasks == 0:
@@ -111,13 +158,24 @@ def next_actions(reqs: Counter, issues: Counter, tasks: Counter, phase_code: str
     return actions
 
 
-def collect(root: Path) -> dict:
-    """1ワークスペースの状況を集計して dict を返す（読み取り専用）。"""
+def collect(root: Path, all_origin_texts=()) -> dict:
+    """1ワークスペースの状況を集計して dict を返す（読み取り専用）。
+
+    all_origin_texts: 同一起動で対象になっている全 workspace（自身を含む）の
+    requirements origin: テキスト一覧。accepted spec-issue の未着手判定に使う
+    （CORE-FR-012 — workspace 間の委託を許容するため単一 workspace には閉じない）。
+    """
     spec = root / ".spec"
     reqs = _statuses_in(spec / "requirements", skip=NON_REQUIREMENT_FILES)
     issues = _statuses_in(spec / "spec-issues")
     tasks = _statuses_in(spec / "tasks")
     has_discovery = (spec / "discovery").exists() and any((spec / "discovery").glob("*.md"))
+
+    accepted_ids = _accepted_issue_ids(spec / "spec-issues")
+    accepted_unaddressed = [
+        iid for iid in accepted_ids
+        if not any(iid in origin for origin in all_origin_texts)
+    ]
 
     phase_code, phase_label = determine_phase(reqs, tasks, has_discovery)
     return {
@@ -127,7 +185,8 @@ def collect(root: Path) -> dict:
         "requirements": {"total": sum(reqs.values()), "by_status": dict(reqs)},
         "spec_issues": {"total": sum(issues.values()), "by_status": dict(issues)},
         "tasks": {"total": sum(tasks.values()), "by_status": dict(tasks)},
-        "next_actions": next_actions(reqs, issues, tasks, phase_code),
+        "accepted_unaddressed": accepted_unaddressed,
+        "next_actions": next_actions(reqs, issues, tasks, phase_code, accepted_unaddressed),
     }
 
 
@@ -169,7 +228,11 @@ def main():
         print("ERROR: No valid BitzSDD workspaces found (.spec/ が見つからない)", file=sys.stderr)
         return 1
 
-    results = [collect(w) for w in workspaces]
+    all_origin_texts = []
+    for w in workspaces:
+        all_origin_texts.extend(_origin_texts(w / ".spec" / "requirements"))
+
+    results = [collect(w, all_origin_texts) for w in workspaces]
 
     if args.json:
         print(json.dumps({"workspaces": results}, ensure_ascii=False, indent=2))

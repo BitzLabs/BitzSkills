@@ -51,6 +51,9 @@ status: accepted
 
 **採否**: accept。Codex を第3の配布対象として正式サポートする。上記「提案する修正」1〜5 を確定。
 
+- **実施**: 2026-07-18（SI-CORE-026）全5プラグインに `.codex-plugin/plugin.json` が存在し、
+  `marketplace.json` のエントリ数（5件）と一致することを実地確認済み。
+
 **確定事項**:
 
 1. **共有カタログ方式を採用**: Codex 専用カタログ（公式推奨位置 `.agents/plugins/marketplace.json`）は

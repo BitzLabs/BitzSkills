@@ -26,3 +26,5 @@ status: accepted
   version bump（patch〜minor）。evals/env-register の TC-03/TC-05 相当ケースの再テストを
   推奨（挙動が変わる可能性があるため）。
 - **裁定記録**: 2026-07-12 人間裁定（チャット指示「highの3件について進めましょう」）により accepted。提案どおり反映する。
+- **実施**: 2026-07-18（事後確認・SI-ENV-022）`env-register/SKILL.md`「### 3. 委譲マトリクスの
+  更新」節に、提案文とほぼ同一の同期規則が実在することを確認済み。

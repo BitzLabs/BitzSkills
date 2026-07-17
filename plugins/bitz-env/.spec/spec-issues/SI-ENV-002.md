@@ -15,3 +15,6 @@ status: accepted
 - **影響推定**: evals/env-init/・env-orchestration/・env-register/・env-doctor/ の新規作成。
   要件本文は verification_method 据え置き、状態遷移（approved→verified）は検証完了後。
   実装コードへの影響なし（テスト成果物の追加）。
+- **実施**: 2026-07-18（事後確認・SI-ENV-022）`evals/env-init/`、`evals/env-orchestration/`、
+  `evals/env-register/`、`evals/env-doctor/` の4ディレクトリが全て新設済みであることを
+  実体確認済み。

@@ -18,3 +18,5 @@ status: accepted
       追加委譲を禁止（中心が判断）。あるいは「サブエージェントからのネスト委譲は禁止」を制約化。
 - **影響推定**: ENV-FR-005 の受入基準追加、collab-contract の検収・再帰条項追加、
   env-orchestration SKILL.md の手順反映。契約変更を含むため Design Gate 対象。
+- **実施**: 2026-07-18（事後確認・SI-ENV-022）`collab-contract.md` に客観的状態変化に基づく
+  検収規定が実在することを確認済み。

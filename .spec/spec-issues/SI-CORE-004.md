@@ -19,3 +19,7 @@ status: accepted
   - プレフィックスがルート・他ワークスペースと衝突しないこと
 - **影響推定・ロールバック**: 追加のみで挙動変更なし。ディレクトリ削除で完全に戻せる。
 - **依存**: なし（最初に実施可能）。
+- **実施**: 2026-07-18（事後確認・SI-CORE-026）`plugins/bitz-ddd/.spec/`、
+  `plugins/plugin-creator/.spec/`、`plugins/skill-creator/.spec/` が全て新設済みであることを
+  実体確認済み（対応 requirement の reverse-derived 起票が無いため origin: 記録先が存在せず、
+  本マーカーのみで記録漏れを解消する）。
