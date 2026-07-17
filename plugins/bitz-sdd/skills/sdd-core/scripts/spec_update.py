@@ -6,8 +6,8 @@
 
   - エージェントが実行できる遷移（起票→open / approved→implementing / implementing→verified 等）
     … `--by-human` なしで適用
-  - 人間専用遷移（draft→approved / open→accepted / verified→promoted / 任意→deprecated）
-    … `--by-human` の明示がない限り拒否
+  - 人間専用遷移（draft→approved / open→accepted / verified→promoted / 任意→deprecated /
+    spec-issue の accepted→superseded）… `--by-human` の明示がない限り拒否
   - 権限マトリクスに定義されていない遷移（不正遷移）
     … 誰の権限であっても拒否
 
@@ -41,6 +41,7 @@ TRANSITIONS = {
     "spec-issue": {
         ("open", "accepted"): "human",
         ("open", "rejected"): "human",
+        ("accepted", "superseded"): "human",  # 重複解消（SI-SDD-005）。superseded_by: は人間が手動で記入
     },
     "task": {
         ("pending", "implementing"): "agent",
