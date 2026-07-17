@@ -43,6 +43,38 @@ python3 scripts/spec_update.py <workspace> <ID> --to <status> [--by-human] [--ac
 - 遷移適用時に対象 frontmatter の `status` を書き換え、`.spec/STATE.md` に
   遷移記録（対象 ID・旧→新 status・実行主体）を追記する
 
+## spec-issue のライフサイクル補足
+
+spec-issue の状態遷移は要件と別建てで、`spec_update.py` の `TRANSITIONS["spec-issue"]` が正:
+
+```
+[*] → open → accepted → (実施) → 要件化 or 軽量レーンで反映済み
+              │
+              └→ superseded（重複解消。人間専用）
+            open → rejected
+```
+
+- `open → accepted` / `open → rejected` は人間専用（sdd-issue の推薦を受けて人間が裁定）
+- `accepted → superseded` も人間専用。重複が判明した spec-issue を統合先へ寄せて正式クローズする
+  ときに使う。`superseded_by:` frontmatter への統合先 ID 記入は人間が手動で行う
+  （`spec_update.py` は status 行のみを書き換え、他 frontmatter には触れない）
+
+### 完了記録の語彙統一（CORE-FR-012 検知との対応）
+
+spec-issue が実際に実装された時点（軽量レーンでの直接反映、または要件化パスで対応する
+requirement が `verified` に達した時点）で、当該 spec-issue 本文に
+`- **実施**: <日付> <根拠>` を追記する。この語彙は固定とし、「実装完了」等の類義語は使わない
+（`spec_status.py` の accepted 未着手検知（CORE-FR-012）は `**実施**:` の固定パターンでのみ
+完了を検知するため、表記ゆれがあると誤検知の原因になる）。
+
+### origin: の限界
+
+要件の `origin:` frontmatter は**初回起票元の spec-issue のみ**を記録する構造的な割り切りで、
+後続の改訂・追加起票を追跡しない。ある要件を後から改訂した spec-issue がある場合、その記録先は
+`origin:` ではなく**改訂側の spec-issue 本文の `**実施**:` マーカー**で行う。CORE-FR-012 の
+未着手検知が `origin:` と実施マーカーの両方を突き合わせる設計になっているのはこのため
+（`origin:` だけでは改訂の実施記録を追えない）。
+
 ## 改訂 vs 継承の判定 — 「緑を赤にし得るか」
 
 要件を変更したいとき、判定基準はこの1つだけ:

@@ -2,10 +2,10 @@
 name: sdd-issue
 description: BitzSDD — ばらばらに届く要望・不具合報告・改善アイデアを整理し、可否の予備判定（推薦）を付けて .spec/spec-issues/ に起票するインテークスキル。1要望 = 1 spec-issue への分割、既存 spec-issue・要件との重複チェック、影響範囲分析、委託先ワークスペース判定、spec_scaffold.py による採番・起票、裁定材料の提示までを定型化する。ユーザーが「この要望を整理して」「spec-issue にして」「起票して」「インテーク」「要望がいくつかある」と言及したとき、または作業中に仕様変更が必要だと気づいて起票が必要になったときに使用する。裁定（accepted / rejected 化）は人間専用で本スキルは行わない。要件のライフサイクル・規律の正は sdd-core が担当する。
 metadata:
-  version: "0.1.0"
+  version: "0.1.1"
   author: br7.hide
   created: "2026-07-16"
-  updated: "2026-07-16"
+  updated: "2026-07-18"
 ---
 
 # sdd-issue
@@ -59,10 +59,16 @@ metadata:
    結果）を記載し、人間へ「裁定待ち」として一覧提示する。裁定の実行はユーザー自身または
    ユーザーの明示指示による `spec_update.py --to accepted --by-human` で行う。
 
+7. **完了記録**: spec-issue が実際に実装された時点（軽量レーンでの直接反映、または要件化パス
+   で対応する requirement が `verified` に達した時点）で、当該 spec-issue 本文に
+   `- **実施**: <日付> <根拠>` を追記する。語彙は `**実施**:` に統一し、「実装完了」等の
+   類義語は使わない（表記ゆれは CORE-FR-012 の完了検知を取りこぼす原因になる。語彙統一・
+   `origin:` との関係は sdd-core の `lifecycle.md` を参照）。
+
 ## 後続工程
 
 - accepted になった spec-issue は、軽量レーン（sdd-core）または要件化（draft 起票 → 人間 approve）
-  を経て sdd-implement のタスク分解へ進む。
+  を経て sdd-implement のタスク分解へ進む。実装完了後は手順7の完了記録を必ず行う。
 - 「いま裁定待ちの spec-issue は何か」の照会は sdd-plan が担当する。
 
 ## してはいけないこと

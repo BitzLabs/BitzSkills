@@ -81,3 +81,4 @@
 - 2026-07-16 SDD-TSK-007: implementing → done (agent)
 - 2026-07-16 SDD-FR-120: implementing → verified (agent)
 - 2026-07-16 SDD-FR-121: implementing → verified (agent)
+- 2026-07-18 SI-SDD-005: open → accepted (human)

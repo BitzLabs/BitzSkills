@@ -3,7 +3,7 @@ id: SI-SDD-005
 raised_by: CORE-FR-012（accepted未着手検知）の実地運用で発覚した記録漏れ・表記ゆれ・重複放置の再発防止（2026-07-18 セッション）
 target: plugins/bitz-sdd/skills/sdd-core/references/lifecycle.md + skills/sdd-issue/SKILL.md（完了記録ステップの不在）
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: 2026-07-18 セッションで CORE-FR-012（accepted 未着手検知）を実地運用した結果、
   ルート15件・bitz-env6件が「未着手」として検出されたが、実体照合すると大半（12件）は
@@ -72,3 +72,12 @@ status: open
 
 **推薦: accept**（根拠: 今回発覚した4つの根本原因はいずれも低リスクな恒久対策があり、放置すると同種のノイズ・重複放置が再発し続けるため）。
 最終裁定はユーザー自身の明示指示による `spec_update.py --to accepted --by-human` で行うこと。
+
+- **実施**: 2026-07-18 ユーザー明示指示により accepted へ昇格の上、1〜4を全件実装。
+  1: `sdd-issue/SKILL.md` インテークフローに手順7（完了記録）を追加。
+  2・3: `sdd-core/references/lifecycle.md` に「spec-issue のライフサイクル補足」節を新設し、
+  語彙統一（`**実施**:` 固定）と `origin:` の限界を明記。
+  4: `spec_update.py` の `TRANSITIONS["spec-issue"]` に `("accepted","superseded")` を人間専用で追加し、
+  `tests/test_spec_update.py` に先行テスト2件（拒否/許可）を追加。
+  `.venv/bin/pytest` 158件 green、`spec_inspect.py --workspace . plugins/*` 全6ワークスペース PASS。
+  bitz-sdd を 1.11.1、sdd-core を 1.13.1、sdd-issue を 0.1.1 に bump。

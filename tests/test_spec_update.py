@@ -82,6 +82,15 @@ def test_agent_cannot_accept_issue(tmp_path):
     assert status_of(tmp_path, "spec-issues", iid) == "open"
 
 
+def test_agent_cannot_supersede_issue(tmp_path):
+    """accepted→superseded（重複解消）はエージェントでは拒否される（SI-SDD-005）。"""
+    iid = make_issue(tmp_path, 1, "accepted")
+    res = run(tmp_path, iid, "superseded")
+    assert res.returncode != 0
+    assert status_of(tmp_path, "spec-issues", iid) == "accepted"
+    assert iid not in state_text(tmp_path), "拒否時は STATE.md に書かない"
+
+
 def test_agent_cannot_promote(tmp_path):
     """verified→promoted は人間専用。"""
     rid = make_req(tmp_path, 1, "verified")
@@ -114,6 +123,14 @@ def test_human_can_accept_issue(tmp_path):
     res = run(tmp_path, iid, "accepted", "--by-human")
     assert res.returncode == 0, res.stderr
     assert status_of(tmp_path, "spec-issues", iid) == "accepted"
+
+
+def test_human_can_supersede_issue(tmp_path):
+    """--by-human 明示なら accepted→superseded を適用する（重複解消。SI-SDD-005）。"""
+    iid = make_issue(tmp_path, 1, "accepted")
+    res = run(tmp_path, iid, "superseded", "--by-human")
+    assert res.returncode == 0, res.stderr
+    assert status_of(tmp_path, "spec-issues", iid) == "superseded"
 
 
 # --- エージェント許容遷移 ----------------------------------------------------
