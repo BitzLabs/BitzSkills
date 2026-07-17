@@ -1,4 +1,4 @@
-# inspection-report.md (2026-07-16)
+# inspection-report.md (2026-07-18)
 
 成果物数: 24 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
@@ -36,10 +36,10 @@
 ## Traceability Matrix
 | ID | status | domain | v-method | tasks | 参照元数 |
 |----|--------|--------|----------|-------|----------|
-| ENV-CON-001 | implementing | guardrail | manual-check | 1 | 2 |
-| ENV-CON-002 | implementing | collab | manual-check | 1 | 3 |
+| ENV-CON-001 | verified | guardrail | manual-check | 1 | 2 |
+| ENV-CON-002 | verified | collab | manual-check | 1 | 3 |
 | ENV-CON-003 | verified | deploy | manual-check | 1 | 3 |
-| ENV-CON-004 | implementing | guardrail | manual-check | 1 | 2 |
+| ENV-CON-004 | verified | guardrail | manual-check | 1 | 2 |
 | ENV-DSC-001 | draft |  |  | 0 | 0 |
 | ENV-DSC-002 | draft |  |  | 0 | 0 |
 | ENV-DSC-003 | draft |  |  | 0 | 0 |
@@ -54,11 +54,11 @@
 | ENV-FR-005 | verified | collab | example-test | 3 | 4 |
 | ENV-FR-006 | verified | collab | example-test | 4 | 5 |
 | ENV-FR-007 | verified | deploy | example-test | 1 | 2 |
-| ENV-FR-008 | implementing | guardrail | example-test | 1 | 2 |
+| ENV-FR-008 | verified | guardrail | example-test | 1 | 2 |
 | ENV-FR-009 | verified | deploy | example-test | 1 | 2 |
 | ENV-FR-010 | verified | deploy | example-test | 2 | 3 |
 | ENV-NFR-001 | verified | guardrail | benchmark | 1 | 2 |
-| ENV-NFR-002 | implementing | guardrail | manual-check | 1 | 2 |
+| ENV-NFR-002 | verified | guardrail | manual-check | 1 | 2 |
 | REV-001 | approved | governance |  | 0 | 0 |
 
 **判定: PASS ✅**

@@ -1,6 +1,6 @@
-# inspection-report.md (2026-07-16)
+# inspection-report.md (2026-07-18)
 
-成果物数: 20 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
+成果物数: 21 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -43,7 +43,7 @@
 | CORE-CON-007 | verified | governance | manual-check | 1 | 1 |
 | CORE-FR-001 | verified | governance | manual-check | 1 | 1 |
 | CORE-FR-002 | verified | tooling | example-test | 1 | 1 |
-| CORE-FR-003 | verified | tooling | example-test | 1 | 2 |
+| CORE-FR-003 | verified | tooling | example-test | 1 | 3 |
 | CORE-FR-004 | verified | tooling | example-test | 1 | 2 |
 | CORE-FR-005 | verified | tooling | example-test | 1 | 2 |
 | CORE-FR-006 | verified | governance | manual-check | 2 | 2 |
@@ -52,6 +52,7 @@
 | CORE-FR-009 | verified | governance | manual-check | 1 | 1 |
 | CORE-FR-010 | verified | tooling | example-test | 1 | 2 |
 | CORE-FR-011 | verified | tooling | example-test | 1 | 2 |
+| CORE-FR-012 | verified | tooling | example-test | 1 | 2 |
 | CORE-NFR-001 | verified | tooling | example-test | 1 | 1 |
 | DSN-001 | active |  |  | 0 | 5 |
 

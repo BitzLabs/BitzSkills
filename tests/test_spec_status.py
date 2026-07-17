@@ -26,21 +26,30 @@ def _write(path: Path, text: str):
     path.write_text(text, encoding="utf-8")
 
 
-def make_spec(root: Path, *, reqs=None, issues=None, tasks=None, discovery=False):
+def make_spec(root: Path, *, reqs=None, issues=None, tasks=None, discovery=False,
+              req_origins=None, issue_implemented=None):
     """指定した status を持つ要件/spec-issue/タスクで最小 .spec ツリーを構築する。
 
     reqs/issues/tasks は (連番, status) のタプルのリスト。
+    req_origins: {連番: "origin文字列"} — 要件の origin: フィールドを差し込む。
+    issue_implemented: 本文に `**実施**:` マーカーを付与する spec-issue 連番の集合。
     """
     spec = root / ".spec"
     (spec / "requirements").mkdir(parents=True, exist_ok=True)
+    req_origins = req_origins or {}
+    issue_implemented = issue_implemented or set()
     for i, status in (reqs or []):
         rid = f"{FR}{i:03d}"
+        origin_line = f"\norigin: {req_origins[i]}" if i in req_origins else ""
         _write(spec / "requirements" / f"{rid}.md",
-                f"---\nid: {rid}\nversion: 1.0\nstatus: {status}\n---\n\n### {rid} サンプル要件\n")
+                f"---\nid: {rid}\nversion: 1.0\nstatus: {status}{origin_line}\n---\n\n### {rid} サンプル要件\n")
     for i, status in (issues or []):
         iid = f"SI-CORE-{i:03d}"
+        body = "- 目的: サンプル\n"
+        if i in issue_implemented:
+            body += "- **実施**: 2026-07-18 対象 SKILL.md へ反映済み。\n"
         _write(spec / "spec-issues" / f"{iid}.md",
-                f"---\nid: {iid}\nstatus: {status}\n---\n- 目的: サンプル\n")
+                f"---\nid: {iid}\nstatus: {status}\n---\n{body}")
     for i, status in (tasks or []):
         tid = f"{TSK}{i:03d}"
         _write(spec / "tasks" / f"{tid}.md",
@@ -107,6 +116,61 @@ def test_json_structure_and_counts(tmp_path):
     assert ws["tasks"]["by_status"]["todo"] == 1
     assert "phase" in ws and "phase_code" in ws
     assert isinstance(ws["next_actions"], list)
+
+
+# --- accepted 未着手検知 (CORE-FR-012) ---------------------------------------
+
+def test_accepted_unaddressed_detected_when_no_origin_reference(tmp_path):
+    """accepted だが origin: にも実施マーカーにも言及が無ければ未着手として検出する。"""
+    make_spec(tmp_path, issues=[(11, "accepted")])
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    assert ws["accepted_unaddressed"] == ["SI-CORE-011"]
+    joined = "".join(ws["next_actions"])
+    assert "accepted" in joined and "1" in joined
+
+
+def test_accepted_unaddressed_excluded_when_origin_references(tmp_path):
+    """要件の origin: に spec-issue ID への言及があれば未着手に含めない。"""
+    make_spec(tmp_path,
+              reqs=[(1, "draft")],
+              issues=[(11, "accepted")],
+              req_origins={1: "SI-CORE-011"})
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    assert ws["accepted_unaddressed"] == []
+
+
+def test_accepted_unaddressed_excluded_when_implemented_marker(tmp_path):
+    """spec-issue 本文に **実施**: マーカーがあれば origin: 未参照でも未着手に含めない（軽量レーン）。"""
+    make_spec(tmp_path, issues=[(11, "accepted")], issue_implemented={11})
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    assert ws["accepted_unaddressed"] == []
+
+
+def test_accepted_unaddressed_ignores_open_issues(tmp_path):
+    """open な spec-issue は accepted ではないため未着手集計の対象外。"""
+    make_spec(tmp_path, issues=[(11, "open")])
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    assert ws["accepted_unaddressed"] == []
+
+
+def test_accepted_unaddressed_cross_workspace_origin(tmp_path):
+    """--workspace 複数指定時、別 workspace の requirement の origin: 参照でも解消と認める。"""
+    a = make_spec(tmp_path / "a", issues=[(11, "accepted")])
+    b = make_spec(tmp_path / "b", reqs=[(1, "draft")], req_origins={1: "SI-CORE-011"})
+    data = json.loads(run_status(json_out=True, workspace=[a, b]).stdout)
+    ws_a = next(w for w in data["workspaces"] if Path(w["root"]).name == "a")
+    assert ws_a["accepted_unaddressed"] == []
+
+
+def test_accepted_unaddressed_absent_from_existing_fixture(tmp_path):
+    """既存フィクスチャ（accepted issue が origin 未参照）でも既存アサーションは崩れず新フィールドのみ追加される。"""
+    make_spec(tmp_path,
+              reqs=[(1, "draft"), (2, "approved"), (3, "approved")],
+              issues=[(11, "open"), (12, "accepted")],
+              tasks=[(1, "done"), (2, "todo")])
+    res = run_status(tmp_path, json_out=True)
+    ws = json.loads(res.stdout)["workspaces"][0]
+    assert ws["accepted_unaddressed"] == ["SI-CORE-012"]
 
 
 # --- 読み取り専用性 ----------------------------------------------------------

@@ -25,3 +25,5 @@ status: accepted
   collab-contract.md の break-even フィールドとの参照関係が明示されるため、
   ENV-FR-005/006 の記述と整合するか確認が必要。
 - **裁定記録**: 2026-07-12 人間裁定（チャット指示「highの3件について進めましょう」）により accepted。提案どおり反映する。
+- **実施**: 2026-07-18（事後確認・SI-ENV-022）`env-orchestration/SKILL.md` に break-even
+  基準との接続記述が実在することを確認済み。

@@ -29,3 +29,8 @@ status: accepted
   - クロスリファレンス検証（--workspace）の意図を壊さないこと
 - **影響推定・ロールバック**: 参照整理 or doc 明記が中心。単独 revert 可能。
 - **依存**: なし。SI-CORE-021 の検証運用で表面化。
+- **実施**: 2026-07-18（SI-CORE-026・SI-CORE-027）提案2（既定実行の明確化）を採用。
+  AGENTS.md「仕様（.spec）検証の正規コマンド」節に `--workspace . plugins/*` を正規コマンドと
+  明記済み（実体確認済み）。内容が完全一致する重複issue SI-CORE-019 は、spec-issue に
+  `deprecated` 遷移が存在しないため status はそのまま、`superseded_by: SI-CORE-023` の
+  記録と実施マーカーで本ISSUEへの統合を記録した（SI-CORE-027）。
