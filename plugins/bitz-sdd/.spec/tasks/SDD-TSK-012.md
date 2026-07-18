@@ -2,7 +2,7 @@
 implements: SDD-FR-126, SDD-FR-127, SDD-FR-128
 depends_on: [SDD-TSK-011]
 boundary: plugins/bitz-sdd/skills/sdd-docs/scripts/sdd_sync.py, tests/test_sdd_sync.py
-status: pending
+status: done
 ---
 
 ### 日本語章への双方向同期マッピング

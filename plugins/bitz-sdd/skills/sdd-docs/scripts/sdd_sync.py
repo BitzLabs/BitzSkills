@@ -9,12 +9,12 @@ from datetime import datetime
 # 同期するデフォルトのマッピング定義 (spec_file_path -> docs_file_path)
 # 全てリポジトリルートからの相対パス
 DEFAULT_MAPPING = {
-    ".spec/discovery/vision.md": "docs/01-context/mission-vision.md",
-    ".spec/discovery/scope.md": "docs/01-context/non-goals.md",
-    ".spec/design/domain-model.md": "docs/02-design/domain-model.md",
-    ".spec/design/api-design.md": "docs/02-design/public-api.md",
-    ".spec/design/architecture.md": "docs/02-design/ARCHITECTURE.md",
-    ".spec/design/data-model.md": "docs/02-design/data-model.md",
+    ".spec/discovery/vision.md": "docs/00_はじめに/ミッション・ビジョン.md",
+    ".spec/discovery/scope.md": "docs/00_はじめに/対象外.md",
+    ".spec/design/domain-model.md": "docs/03_設計仕様/ドメインモデル.md",
+    ".spec/design/api-design.md": "docs/03_設計仕様/公開API.md",
+    ".spec/design/architecture.md": "docs/03_設計仕様/アーキテクチャ.md",
+    ".spec/design/data-model.md": "docs/03_設計仕様/データモデル.md",
 }
 
 def get_mtime(path: Path) -> float:
@@ -40,7 +40,7 @@ def sync_file(src: Path, dst: Path, direction: str) -> bool:
         return False
 
 def build_stories_summary(spec_stories_dir: Path, target_docs_story: Path):
-    """.spec/design/stories/ の個別ストーリーファイルを統合して docs/02-design/domain-story.md を作成する"""
+    """.spec/design/stories/ を docs/03_設計仕様/ドメインストーリー.md へ集約する。"""
     if not spec_stories_dir.exists():
         return
     
@@ -108,7 +108,7 @@ def do_pull(root: Path):
             
     # 特殊な統合ルール: ドメインストーリーの集約
     spec_stories_dir = root / ".spec/design/stories"
-    target_docs_story = root / "docs/02-design/domain-story.md"
+    target_docs_story = root / "docs/03_設計仕様/ドメインストーリー.md"
     if spec_stories_dir.exists():
         build_stories_summary(spec_stories_dir, target_docs_story)
         success_count += 1
