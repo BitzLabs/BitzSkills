@@ -5,9 +5,15 @@ Claude Code は CLAUDE.md のインポート経由で、Codex と Antigravity(ag
 
 ## リポジトリの役割
 
-[Agent Skills](https://agentskills.io/specification) オープン標準に準拠したスキルを
-Claude Code / Antigravity 2.0 / OpenAI Codex CLI 向けの**プラグイン**として開発・配布する**モノレポ**。
+**BitzLabs でAIエージェントを用いて開発する際の標準作業環境**を、
+[Agent Skills](https://agentskills.io/specification) オープン標準に準拠した
+Claude Code / Antigravity 2.0 / OpenAI Codex CLI 向けのプラグインとして定義・検証・配布するモノレポ。
 リポジトリルートはマーケットプレイス `bitzskills` で、`plugins/` 配下の各フォルダが1つのプラグイン。
+
+標準環境の対象は、AIエージェント向けガードレール、Git運用、仕様・設計・実装・検証の規律、
+スキル／プラグイン開発、配布・更新である。OS、IDE本体、言語ランタイム、クラウド基盤、
+アプリ固有雛形、認証情報管理は対象外。全プラグインを強制導入せず、用途別プロファイルで構成する。
+ビジョン・スコープ・成功指標の正はルート `.spec/discovery/`、共通契約の正は `.spec/requirements/`。
 
 導入方法は2系統:
 
