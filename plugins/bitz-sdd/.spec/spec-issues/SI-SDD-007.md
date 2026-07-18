@@ -3,7 +3,7 @@ id: SI-SDD-007
 raised_by: 開発フロー振り返り（2026-07-18 セッション、SI-CORE-007 実装サイクルの実地観察）
 target: plugins/bitz-sdd/skills/sdd-implement（accepted spec-issue 着手時の前提再検証ステップの不在)
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: accepted のまま在庫化した spec-issue は、実装着手時点でリポジトリの前提が
   起票時から変わっていることがある（実例: SI-CORE-007 は起票時「2マニフェスト同値」だったが、
@@ -23,3 +23,6 @@ status: open
   矛盾しないこと。release_check / spec_inspect PASS。
 - **影響推定・ロールバック**: ドキュメント追記のみ。該当節の revert で戻る。
 - **依存**: なし。
+- **実施**: 2026-07-18 SDD-FR-122 として要件化し、sdd-implement 0.2.2 に起票時前提の
+  再検証および乖離時の2分岐を追加。bitz-sdd 1.11.3。release_check / pytest 165件 /
+  spec inspect 一括検証がすべて PASS。
