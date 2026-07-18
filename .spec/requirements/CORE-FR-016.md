@@ -32,11 +32,11 @@ confidence: high
   - THEN `grep -rn "sdd-git" plugins/ .spec/ docs/` の結果が、更新済みの参照または
     意図を明記した残置のみであること SHALL（sdd-core の parallel-git.md・sdd-implement 等の
     参照先記述の更新を含む）
-  - WHEN `python3 scripts/release_check.py` を実行する THEN 依存グラフ検証
-    （依存先実在・semver 制約・3マニフェスト同値）を含む全チェックが PASS すること SHALL
+  - WHEN `python3 scripts/release_check.py` を実行する THEN 依存グラフ検証（依存先実在・semver 制約・3マニフェスト同値）を含む全チェックが PASS すること SHALL
   - WHEN bitz-sdd を bump する THEN minor bump であること SHALL（裁定: 縮退維持）
 - **検証手段**: release_check.py の実行で依存宣言と bump を確認し、
   `grep -rn "sdd-git"` の全ヒットを目視分類（更新済み / 意図した残置）して記録する。
   sdd-git SKILL.md の縮退後 diff で判断表と接続点の残存・実行手順の参照化を確認する（example-test）。
 - **Revision History**:
   - 1.0 (2026-07-18) 初版（draft 起票。起票時前提の補正1件 — 2→3マニフェスト — を説明欄に明記。縮退維持・minor bump の人間裁定 2026-07-13 を反映）
+  - 1.0 (2026-07-18) EARS 行の折返しを解消（spec_inspect lint 対応。文言・内容の変更なし）

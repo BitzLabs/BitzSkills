@@ -40,13 +40,12 @@ confidence: high
     `python3 <script> --help` が単体で動作すること SHALL
   - THEN flow-worktree / flow-core / flow-pr の各 SKILL.md が同梱スクリプトの使い方
     （呼び出し例と責務境界）を参照する節を持つこと SHALL
-  - WHEN `.venv/bin/pytest tests/` を実行する THEN 3スクリプトのテストを含む全件が green で
-    あり、テストがスクリプト実装より先にコミットされていること SHALL
-  - WHEN `python3 scripts/release_check.py` を実行する THEN bitz-flow の minor bump を含め
-    全チェックが PASS すること SHALL
+  - WHEN `.venv/bin/pytest tests/` を実行する THEN 3スクリプトのテストを含む全件が green であり、テストがスクリプト実装より先にコミットされていること SHALL
+  - WHEN `python3 scripts/release_check.py` を実行する THEN bitz-flow の minor bump を含め全チェックが PASS すること SHALL
 - **検証手段**: `tests/test_worktree_ops.py` / `tests/test_commit_lint.py` /
   `tests/test_pr_helper.py` を先行コミットし、`.venv/bin/pytest` 全件 green を確認する
   （dry-run 既定・確認フラグ・禁止操作不在・終了コード・雛形生成を網羅）。
   release_check.py PASS。テスト先行はコミット順（git log）で確認する（unit-test）。
 - **Revision History**:
   - 1.0 (2026-07-18) 初版（draft 起票。起票時前提の補正1件 — スクリプトの担当スキル別配置の確定 — を説明欄に明記）
+  - 1.0 (2026-07-18) EARS 行の折返しを解消（spec_inspect lint 対応。文言・内容の変更なし）

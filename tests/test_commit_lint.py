@@ -72,7 +72,7 @@ def test_require_task_id():
     """--require-task-id: 作業 ID の有無で結果が分かれること。"""
     without = run("--message", "feat: 説明", "--require-task-id")
     assert without.returncode == 1
-    with_id = run("--message", "feat: [TSK-042] 説明", "--require-task-id")
+    with_id = run("--message", "feat: [#123] 説明", "--require-task-id")
     assert with_id.returncode == 0
 
 
