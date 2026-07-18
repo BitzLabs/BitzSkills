@@ -40,5 +40,6 @@ codex plugin add bitz-flow@bitzskills
 ## 経緯
 
 `bitz-sdd` の `sdd-git` スキルから汎用部分を切り出して新設されました（SI-CORE-008）。
-新設時点では sdd-git が無変更のまま併存し、二重規定の解消（sdd-git の委譲ポインタ化）は
-SI-CORE-010 が扱います。
+その後 SI-CORE-010 で sdd-git は薄い委譲ポインタに縮退され、Git フローの実行手順の正は
+本プラグイン（flow-core / flow-worktree / flow-pr）に一本化されています
+（bitz-sdd は `metadata.dependencies` で `bitz-flow>=0.2` を宣言）。

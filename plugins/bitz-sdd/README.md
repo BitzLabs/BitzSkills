@@ -28,7 +28,7 @@ SDD運用仕様書 v1.0 を Claude Code / Antigravity 2.0 / OpenAI Codex CLI の
 | `sdd-ops` | インフラ・運用設計（インフラ構成 / セキュリティ / 可観測性・SLO / 災害復旧 / コスト見積もり）。設計ドキュメントまでが責務（IaC 生成はしない） |
 | `sdd-implement` | 実装工程。approved 要件を .spec/tasks/ へ分解（implements / depends_on / boundary 宣言）し、契約保護・境界厳守・タスク単位コミットの規律で実装 |
 | `sdd-test` | テスト・検証工程。EARS 節種別ごとのテスト導出、verification_method 対応、検証結果の .spec/specs/ への記録、verified 遷移の提案 |
-| `sdd-git` | Git / GitHub 開発フロー。フロー選択（ブランチ / worktree 並列 / Issue 駆動 + PR）、コミット規定（Conventional Commits + Implements フッター）、失敗時は worktree 破棄で復元 |
+| `sdd-git` | Git フローの入口（薄い委譲ポインタ）。フロー選択の判断表と SDD 接続点（Implements フッター・タスク並列投入条件・worktree 破棄復元）のみ規定し、実行手順の正は bitz-flow（要 `bitz-flow>=0.2`） |
 
 ## インストール
 
@@ -59,7 +59,7 @@ sdd-docs（初期化）
   → sdd-discovery（上流探索）──── Discovery Gate（Go/No-Go、人間）
   → sdd-design（+ 任意で sdd-data / sdd-ops、DDD 手法は bitz-ddd）
   → sdd-review（多観点レビュー）── Design Gate（proposed → active、人間）
-  → sdd-implement（タスク分解 → 実装。並列は sdd-git の worktree 運用）
+  → sdd-implement（タスク分解 → 実装。並列は sdd-git 経由で bitz-flow の worktree 運用）
   → sdd-test（EARS → テスト導出 → 検証）
   → sdd-report（進捗集計）──────── Promotion Gate（verified → promoted、人間）
 ```

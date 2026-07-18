@@ -2,7 +2,7 @@
 name: sdd-implement
 description: BitzSDD の実装工程を行うスキル。承認済み（approved）要件を .spec/tasks/ のタスクへ分解（1タスク1ファイル、implements / depends_on / boundary 宣言）し、要件 ID に紐づけた実装を規律（契約保護・境界厳守・タスク単位コミット）に従って進める。ユーザーが「実装して」「タスクに分解して」「タスク分解」「並列で実装」「implements」と言及したとき、または Design Gate 通過後に実装フェーズへ移行するときに使用する。テスト仕様の導出と検証は sdd-test が担当する。
 metadata:
-  version: "0.2.2"
+  version: "0.2.3"
   author: br7.hide
   created: "2026-07-11"
   updated: "2026-07-18"
