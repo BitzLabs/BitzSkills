@@ -108,3 +108,7 @@
 - 2026-07-18 CORE-TSK-023: implementing → done (agent)
 - 2026-07-18 CORE-FR-015: approved → implementing (agent)
 - 2026-07-18 CORE-FR-015: implementing → verified (agent (claude-fable-5): 対象リビジョン af4bcb1（feat/si-core-009-flow-scripts、working tree clean 状態で全ゲート再実行）。.venv/bin/pytest tests/ → 200 passed / 0 failed / 0 skipped（新規33件含む・未許容スキップなし・rc0）。python3 scripts/release_check.py → PASS（rc0、bitz-flow 0.2.0 の3マニフェスト同値を含む）。python3 scripts/spec inspect --workspace . plugins/* → 全ワークスペース PASS・FAIL 0。テスト先行のコミット順は git log（643f40a test → 4f195bc feat）で確認。commit_lint 自己検査: --range origin/main..HEAD 実装3コミットは Implements フッター適合。実行日 2026-07-18)
+- 2026-07-18 CORE-TSK-024: pending → implementing (agent)
+- 2026-07-18 CORE-FR-016: approved → implementing (agent)
+- 2026-07-18 CORE-TSK-024: implementing → done (agent)
+- 2026-07-18 CORE-FR-016: implementing → verified (agent (claude-fable-5): 対象リビジョン 374ac98（feat/si-core-010-sdd-git-slim）。python3 scripts/release_check.py → PASS（rc0。依存グラフ検証: bitz-sdd 3マニフェスト同値の dependencies [bitz-flow>=0.2]・依存先 bitz-flow 0.2.0 実在・semver 制約充足）。.venv/bin/pytest tests/ → 200 passed / 0 failed / 0 skipped。spec inspect --workspace . plugins/* → 全WS PASS・FAIL 0。grep -rn sdd-git の全ヒットを目視分類: 更新済み=sdd-git SKILL（縮退・0.3.0）/sdd-core ルーティング表/sdd-implement 実装規律/bitz-sdd README/bitz-flow README、意図した残置=discovery・PROJECT・spec-issue・要件・docs の経緯記述と SDD-FR-080〜082（挙動要件は縮退後も SKILL.md の規範で充足、manual-check 目視確認済み）。bump は minor（1.11.4→1.12.0、裁定どおり）。実行日 2026-07-18)

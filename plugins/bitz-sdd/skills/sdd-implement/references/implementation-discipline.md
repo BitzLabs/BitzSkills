@@ -72,7 +72,8 @@
 コミットメッセージには必ずタスク ID と関連する要件 ID を含め、変更の意図を機械的に検索可能にします。
 - **推奨フォーマット**: タイトルは Conventional Commits + タスク ID、要件 ID はフッター `Implements:` 行で宣言する
   （例: タイトル `feat(domain): [TSK-042] ユーザー検証を実装`、フッター `Implements: FR-012`）。
-  ブランチ・worktree・PR まで含めた Git フローの正式な規定は `sdd-git` スキルが正
+  ブランチ・worktree・PR まで含めた Git フローの実行手順の正は bitz-flow プラグイン
+  （flow-core / flow-worktree / flow-pr）。SDD 固有の接続点は `sdd-git` スキルが正
 
 ### 4.2 文脈汚染（Context Pollution）の徹底防止
 

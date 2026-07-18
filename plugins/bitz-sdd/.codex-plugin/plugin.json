@@ -1,6 +1,6 @@
 {
   "name": "bitz-sdd",
-  "version": "1.11.4",
+  "version": "1.12.0",
   "description": "BitzSDD — 探索・設計・実装・検証を一貫して進める仕様駆動開発ワークフロープラグイン",
   "author": {
     "name": "br7.hide",
@@ -8,6 +8,11 @@
   },
   "repository": "https://github.com/BitzLabs/BitzSkills",
   "skills": "./skills/",
+  "metadata": {
+    "dependencies": [
+      "bitz-flow>=0.2"
+    ]
+  },
   "interface": {
     "displayName": "Bitz SDD",
     "shortDescription": "仕様駆動開発を探索から検証まで一貫運用",
