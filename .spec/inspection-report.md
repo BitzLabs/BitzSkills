@@ -58,7 +58,7 @@
 | CORE-FR-010 | verified | tooling | example-test | 1 | 2 |
 | CORE-FR-011 | verified | tooling | example-test | 1 | 2 |
 | CORE-FR-012 | verified | tooling | example-test | 1 | 2 |
-| CORE-FR-013 | implementing | tooling | example-test | 1 | 1 |
+| CORE-FR-013 | verified | tooling | example-test | 1 | 1 |
 | CORE-NFR-001 | verified | tooling | example-test | 1 | 1 |
 | DSN-001 | active |  |  | 0 | 5 |
 | DSN-002 | approved |  |  | 0 | 1 |
