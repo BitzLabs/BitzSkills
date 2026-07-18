@@ -68,3 +68,6 @@
 - 2026-07-18 CORE-FR-012: implementing → verified (エージェント（tests/test_spec_status.py 26件green・実リポジトリでSI-CORE-007/008/009/010/013/014/018検出確認）)
 - 2026-07-18 SI-CORE-026: open → accepted (ユーザー（チャット指示: 進めましょう）)
 - 2026-07-18 SI-CORE-027: open → accepted (ユーザー（チャット指示: 進めましょう）)
+- 2026-07-18 CORE-CON-008: draft → approved (human)
+- 2026-07-18 CORE-CON-008: approved → implementing (agent)
+- 2026-07-18 CORE-CON-008: implementing → verified (agent)

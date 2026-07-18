@@ -36,8 +36,11 @@ KIND_DIR = {
 
 
 def next_number(directory: Path, prefix: str) -> int:
-    """directory 直下の `<prefix>-NNN.md` を走査し「最大番号 + 1」を返す（無ければ 1）。"""
-    pat = re.compile(rf"^{re.escape(prefix)}-(\d+)\.md$")
+    """directory 直下の `<prefix>-NNN.md` / `<prefix>-NNN-説明.md` を走査し「最大番号 + 1」を返す
+    （無ければ 1）。design 種別は `DSN-001-delegation-registry.md` のように説明的サフィックスを
+    付けて保存する慣行があるため、サフィックス付きファイル名も番号抽出の対象に含める
+    （SI-SDD-006: サフィックス未対応による採番衝突の修正）。"""
+    pat = re.compile(rf"^{re.escape(prefix)}-(\d+)(-.*)?\.md$")
     nums = []
     if directory.exists():
         for f in directory.glob(f"{prefix}-*.md"):

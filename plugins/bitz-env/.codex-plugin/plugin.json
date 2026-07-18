@@ -1,6 +1,6 @@
 {
   "name": "bitz-env",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "BitzEnv — ガードレールとモデル非依存の協調運用をプロジェクトへ展開する開発環境プラグイン",
   "author": {
     "name": "br7.hide",

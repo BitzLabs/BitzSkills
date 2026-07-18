@@ -2,10 +2,10 @@
 name: plugin-structure
 description: Claude Code / Antigravity 2.0 プラグインのディレクトリ構造・plugin.jsonマニフェスト・コンポーネント（commands/agents/skills/hooks/rules）の自動発見・${CLAUDE_PLUGIN_ROOT}の使い方を案内する。「プラグインを作りたい」「プラグインの構成を知りたい」「plugin.jsonの書き方」「コンポーネントの配置」「自動発見の仕組み」「両対応プラグインにしたい」について聞かれたとき、または新規プラグインの雛形を作るときに使用する。
 metadata:
-  version: "0.3.0"
+  version: "0.4.0"
   author: br7.hide
   created: "2026-07-05"
-  updated: "2026-07-11"
+  updated: "2026-07-18"
 ---
 
 # plugin-structure
@@ -118,6 +118,10 @@ Antigravity のプラグインは customization root（プロジェクトの
 
 `skills/` フォルダの構成例は `references/component-examples.md` を参照。
 
+プラグイン間で共通するライフサイクル操作（初期設定・診断・更新・撤去）を提供する場合は、
+独自命名ではなく標準スキル名 `<plugin名>:init` / `doctor` / `update` / `uninstall` に従う。
+各スキルの最小契約は `references/lifecycle-skills.md` を参照。
+
 ### フック（hooks/hooks.json）
 
 イベント（PreToolUse / PostToolUse / Stop / SessionStart 等）に対する
@@ -210,6 +214,7 @@ Antigravity には相当する変数がない。フックの cwd は `hooks.json
 - **`references/component-patterns.md`** — コンポーネント整理の発展パターン
 - **`references/manifest-reference.md`** — plugin.json 全フィールドの詳細
 - **`references/troubleshooting.md`** — よくある不具合の対処
+- **`references/lifecycle-skills.md`** — 標準ライフサイクルスキル名 `init`/`doctor`/`update`/`uninstall` の最小契約（CORE-CON-008）
 
 ### 実例
 

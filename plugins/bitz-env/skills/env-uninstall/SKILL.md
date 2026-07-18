@@ -1,14 +1,14 @@
 ---
-name: env-destroy
-description: env-init が対象プロジェクトへ展開した生成物（settings.json の permissions・AGENTS.md / CLAUDE.md のマーカー区間・.claude/agents/ の advisor / worker）を、レジストリの記録に基づきユーザー確認付きで安全に撤去する。「bitz-env を片付けて」「bitz-env の環境を撤去して」「bitz-env アンインストールの後始末」「bitz-env の生成物を消して」「env-destroy」と言われたとき、または bitz-env プラグインを無効化・アンインストールする前後に使用する。bitz-env 以外のプラグインのアンインストール・後始末は対象外。環境の展開は env-init、診断は env-doctor が担当する。
+name: env-uninstall
+description: env-init が対象プロジェクトへ展開した生成物（settings.json の permissions・AGENTS.md / CLAUDE.md のマーカー区間・.claude/agents/ の advisor / worker）を、レジストリの記録に基づきユーザー確認付きで安全に撤去する。「bitz-env を片付けて」「bitz-env の環境を撤去して」「bitz-env アンインストールの後始末」「bitz-env の生成物を消して」「env-uninstall」と言われたとき、または bitz-env プラグインを無効化・アンインストールする前後に使用する。bitz-env 以外のプラグインのアンインストール・後始末は対象外。環境の展開は env-init、診断は env-doctor が担当する。
 metadata:
-  version: "0.1.1"
+  version: "0.2.0"
   author: br7.hide
   created: "2026-07-11"
-  updated: "2026-07-12"
+  updated: "2026-07-18"
 ---
 
-# env-destroy
+# env-uninstall
 
 ## 目的
 

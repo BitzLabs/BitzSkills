@@ -82,3 +82,4 @@
 - 2026-07-16 SDD-FR-120: implementing → verified (agent)
 - 2026-07-16 SDD-FR-121: implementing → verified (agent)
 - 2026-07-18 SI-SDD-005: open → accepted (human)
+- 2026-07-18 SI-SDD-006: open → accepted (human)
