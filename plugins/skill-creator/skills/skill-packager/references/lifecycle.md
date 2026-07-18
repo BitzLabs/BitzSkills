@@ -60,6 +60,16 @@ metadata:
 `installed-at` 以降に配置先ファイルの更新日時が新しくなっていないか
 （`ls -l` 等）を目安にし、確信が持てなければユーザーに確認する。
 
+### 責務境界（プラグインの update マイグレーションとの関係）
+
+本節の安全判定が規定するのは**スキルファイル自体の置き換え可否**のみ。置き換え後
+（または置き換えに伴って）必要になる**配置先の状態・設定の形式変換**（frontmatter
+スキーマ・`.spec` 系書式・`.claude/<plugin>.local.md` 等の移行）は、各プラグインの
+`<plugin名>:update` が持つマイグレーション機構が担う（規約は plugin-creator の
+`plugin-structure/references/migration-steps.md` が正。バージョン軸もスキル単位の
+`metadata.version` ではなくプラグイン version で別管理）。packager 側では規定しない
+（二重規定の禁止）。
+
 ## 操作チェックリスト
 
 ### インストール

@@ -1,6 +1,6 @@
 {
   "name": "skill-creator",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Agent Skills の作成・検証・テスト・評価・最適化・配置・自己改善を支援するツールキット",
   "author": {
     "name": "br7.hide",
