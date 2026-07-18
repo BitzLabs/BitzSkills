@@ -3,7 +3,7 @@ id: SI-CORE-029
 raised_by: 開発フロー振り返り（2026-07-18 セッション、SI-CORE-007 実装サイクルの実地観察）
 target: AGENTS.md コミット・PR 規約（version bump の位置規定が実態と乖離）
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: AGENTS.md の「1 PR = 1 関心事」節は「version bump は PR の最終コミットに含める」と
   規定しているが、実態はテスト先行フロー（red コミット → green 実装コミット → status 遷移
@@ -18,3 +18,5 @@ status: open
   （コミット位置の規定は機械検査対象外＝ナラティブのみの変更）。
 - **影響推定・ロールバック**: 規約文言1文の変更。revert で戻る。
 - **依存**: なし。
+- **実施**: 2026-07-18 CORE-CON-010 / CORE-TSK-020 として要件化・実装。
+  version bump は同一 PR に含め、実装コミット同梱を推奨しつつ位置を固定しない規約へ更新。
