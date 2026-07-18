@@ -2,14 +2,14 @@
 id: DDD-DSC-001
 title: "bitz-ddd プロダクトビジョン（Vision Board + PR-FAQ 圧力試験）"
 status: draft
-version: 1.0
-updated: 2026-07-12
+version: 1.1
+updated: 2026-07-18
 owner: hide
 ---
 
 # ビジョン（Vision Board + PR-FAQ）
 
-> 遡及 discovery。bitz-ddd はリリース済み（plugin v0.1.1 / 各スキル v0.1.0、created 2026-07-10）。
+> 遡及 discovery。bitz-ddd はリリース済み（plugin v0.1.2 / 各スキル v0.1.0、created 2026-07-10）。
 > ここでは「なぜこのプラグインが存在するか」を後付けで明文化し、以後の DDD- 起票の錨とする。
 
 ## Product Vision Board（Roman Pichler）— 5要素

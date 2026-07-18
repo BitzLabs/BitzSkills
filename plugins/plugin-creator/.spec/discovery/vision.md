@@ -2,14 +2,14 @@
 id: PLG-DSC-001
 title: "plugin-creator プロダクトビジョン（Vision Board + PR-FAQ 圧力試験）"
 status: draft
-version: 1.0
-updated: 2026-07-12
+version: 1.1
+updated: 2026-07-18
 owner: hide
 ---
 
 # ビジョン — plugin-creator
 
-> 遡及的ディスカバリー。plugin-creator は既にリリース済み（v1.2.1、7スキル + create-plugin コマンド + agent-creator/plugin-validator エージェント）であり、本ファイルは実装から逆算してビジョンを言語化したもの。根拠のない数値・ユーザー調査結果は `TBD` または `[proto / 未検証]` と明示する。
+> 遡及的ディスカバリー。plugin-creator は既にリリース済み（v1.4.0、7スキル + create-plugin コマンド + agent-creator/plugin-validator エージェント）であり、本ファイルは実装から逆算してビジョンを言語化したもの。根拠のない数値・ユーザー調査結果は `TBD` または `[proto / 未検証]` と明示する。
 
 ## Product Vision Board（Roman Pichler）— 5要素
 
