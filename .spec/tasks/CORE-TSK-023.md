@@ -2,7 +2,7 @@
 implements: CORE-FR-015
 depends_on: [CORE-TSK-022]
 boundary: plugins/bitz-flow/skills/*/SKILL.md, plugins/bitz-flow/*plugin.json
-status: pending
+status: done
 ---
 
 ### SKILL.md スクリプト参照節と bitz-flow minor bump

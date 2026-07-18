@@ -2,7 +2,7 @@
 implements: CORE-FR-015
 depends_on: []
 boundary: tests/test_worktree_ops.py, tests/test_commit_lint.py, tests/test_pr_helper.py
-status: pending
+status: done
 ---
 
 ### flow スクリプト3本のテスト先行作成

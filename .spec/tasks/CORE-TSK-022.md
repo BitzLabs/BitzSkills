@@ -2,7 +2,7 @@
 implements: CORE-FR-015
 depends_on: [CORE-TSK-021]
 boundary: plugins/bitz-flow/skills/*/scripts/
-status: pending
+status: done
 ---
 
 ### worktree_ops / commit_lint / pr_helper の実装

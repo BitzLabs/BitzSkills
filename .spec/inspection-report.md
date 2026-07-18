@@ -70,7 +70,7 @@
 | CORE-FR-012 | verified | tooling | example-test | 1 | 2 |
 | CORE-FR-013 | verified | tooling | example-test | 1 | 1 |
 | CORE-FR-014 | verified | governance | example-test | 3 | 3 |
-| CORE-FR-015 | approved | tooling | unit-test | 3 | 5 |
+| CORE-FR-015 | verified | tooling | unit-test | 3 | 5 |
 | CORE-FR-016 | approved | governance | example-test | 1 | 2 |
 | CORE-NFR-001 | verified | tooling | example-test | 1 | 1 |
 | DSN-001 | active |  |  | 0 | 5 |
