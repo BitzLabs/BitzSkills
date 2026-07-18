@@ -1,6 +1,6 @@
 {
   "name": "bitz-flow",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "BitzFlow — Git / GitHub 開発フローの独立プラグイン。状況に応じたフロー選択とコミット規約（flow-core）、worktree による並列開発運用（flow-worktree）、GitHub Issue 駆動 + Draft PR + squash merge（flow-pr）を提供する。SDD 非採用プロジェクトでも単体で使える（bitz-sdd 併用時は各スキルの併用節が接続点を規定）",
   "author": {
     "name": "BitzLabs"

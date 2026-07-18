@@ -3,7 +3,7 @@ id: SI-FLW-001
 raised_by: PR #56/#57/#58 とマージ後ブランチ整理の振り返り（2026-07-18）
 target: plugins/bitz-flow/skills/flow-pr・flow-worktree（squash merge後のブランチライフサイクル）
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: squash merge 済みの作業ブランチを次の作業へ再利用すると、元コミットが
   デフォルトブランチの squash commit と祖先関係を持たないため、既反映差分が次の PR に再出現し得る。

@@ -3,6 +3,8 @@
 dry-run 既定・確認フラグ（--yes）・禁止操作の不在・終了コード・実行時の実副作用を検証する。
 git が要るテストは tmp_path に実リポジトリを作って検証する。
 """
+import importlib.util
+import json
 import re
 import subprocess
 import sys
@@ -49,6 +51,73 @@ def repo(tmp_path: Path) -> Path:
 def branch_exists(repo: Path, name: str) -> bool:
     res = git(repo, "branch", "--list", name)
     return bool(res.stdout.strip())
+
+
+def load_module():
+    spec = importlib.util.spec_from_file_location("worktree_ops", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+class FakeSquashRunner:
+    """guarded cleanup の git / gh 応答を決定的に返す。"""
+
+    def __init__(
+        self,
+        repo: Path,
+        *,
+        state="initial",
+        pr_state="MERGED",
+        remote_oid="headsha",
+        worktree_oid="headsha",
+        gh_fails=False,
+        timeout_on=None,
+    ):
+        self.repo = repo
+        self.state = state
+        self.pr_state = pr_state
+        self.remote_oid = remote_oid
+        self.worktree_oid = worktree_oid
+        self.gh_fails = gh_fails
+        self.timeout_on = timeout_on
+        self.commands = []
+
+    def __call__(self, command, *, timeout):
+        self.commands.append(tuple(command))
+        joined = " ".join(command)
+        if self.timeout_on and self.timeout_on in joined:
+            raise subprocess.TimeoutExpired(command, timeout)
+        wt = self.repo.parent / f"{self.repo.name}-wt" / "500"
+        if "worktree list --porcelain" in joined:
+            if self.state == "initial":
+                text = f"worktree {wt}\nHEAD {self.worktree_oid}\nbranch refs/heads/feat/500-x\n\n"
+            else:
+                text = f"worktree {self.repo}\nHEAD defaultsha\nbranch refs/heads/main\n\n"
+            return subprocess.CompletedProcess(command, 0, text, "")
+        if "rev-parse --verify refs/heads/feat/500-x" in joined:
+            if self.state == "local-cleaned":
+                return subprocess.CompletedProcess(command, 128, "", "missing")
+            return subprocess.CompletedProcess(command, 0, "headsha\n", "")
+        if "branch --show-current" in joined:
+            return subprocess.CompletedProcess(command, 0, "main\n", "")
+        if "status --porcelain" in joined:
+            return subprocess.CompletedProcess(command, 0, "", "")
+        if command[:3] == ["gh", "pr", "view"]:
+            if self.gh_fails:
+                return subprocess.CompletedProcess(command, 1, "", "not authenticated")
+            payload = {
+                "state": self.pr_state,
+                "headRefName": "feat/500-x",
+                "headRefOid": "headsha",
+                "mergeCommit": {"oid": "mergesha"},
+            }
+            return subprocess.CompletedProcess(command, 0, json.dumps(payload), "")
+        if "ls-remote --heads" in joined:
+            text = f"{self.remote_oid}\trefs/heads/feat/500-x\n" if self.remote_oid else ""
+            return subprocess.CompletedProcess(command, 0, text, "")
+        return subprocess.CompletedProcess(command, 0, "", "")
 
 
 def test_help_standalone():
@@ -129,6 +198,160 @@ def test_cleanup_execute_yes_removes_merged(repo: Path, tmp_path: Path):
     assert res.returncode == 0, res.stderr
     assert not wt.exists()
     assert not branch_exists(repo, "feat/400-x")
+
+
+def test_flw_fr_001_squash_cleanup_requires_merged_evidence(repo: Path):
+    module = load_module()
+    runner = FakeSquashRunner(repo, pr_state="OPEN")
+    code, report = module.guarded_squash_cleanup(
+        repo=repo,
+        work_id="500",
+        branch="feat/500-x",
+        pr_number=56,
+        default_branch="main",
+        timeout_seconds=30,
+        actor="test",
+        runner=runner,
+    )
+    assert code == module.EXIT_INDETERMINATE
+    assert report["decision"] == "INDETERMINATE"
+    assert not any("worktree remove" in " ".join(cmd) for cmd in runner.commands)
+    assert not any("branch -D" in " ".join(cmd) for cmd in runner.commands)
+
+
+def test_flw_fr_001_squash_cleanup_initial_and_remote_candidate(repo: Path):
+    module = load_module()
+    runner = FakeSquashRunner(repo)
+    code, report = module.guarded_squash_cleanup(
+        repo=repo,
+        work_id="500",
+        branch="feat/500-x",
+        pr_number=56,
+        default_branch="main",
+        timeout_seconds=30,
+        actor="test",
+        runner=runner,
+    )
+    joined = [" ".join(cmd) for cmd in runner.commands]
+    assert code == 0
+    assert report["cleanup_state"] == "initial"
+    assert report["remote_candidate"]["expected_sha"] == "headsha"
+    assert any("worktree remove" in cmd for cmd in joined)
+    assert any("branch -D" in cmd for cmd in joined)
+    assert not any(" push " in f" {cmd} " for cmd in joined)
+    assert "再照会" in report["remote_candidate"]["warning"]
+    assert next(i for i, cmd in enumerate(joined) if "merge --ff-only" in cmd) < next(
+        i for i, cmd in enumerate(joined) if "worktree remove" in cmd
+    ) < next(i for i, cmd in enumerate(joined) if "branch -D" in cmd)
+
+
+@pytest.mark.parametrize(
+    ("state", "expected_skips"),
+    [
+        ("cleanup-partial", ["worktree-remove", "remote-candidate"]),
+        ("local-cleaned", ["worktree-remove", "local-branch-delete", "remote-candidate"]),
+    ],
+)
+def test_flw_fr_001_squash_cleanup_idempotent_resume(repo: Path, state: str, expected_skips: list[str]):
+    module = load_module()
+    runner = FakeSquashRunner(repo, state=state, remote_oid="")
+    code, report = module.guarded_squash_cleanup(
+        repo=repo,
+        work_id="500",
+        branch="feat/500-x",
+        pr_number=56,
+        default_branch="main",
+        timeout_seconds=30,
+        actor=None,
+        runner=runner,
+    )
+    assert code == 0
+    assert report["cleanup_state"] == state
+    assert report["skipped"] == expected_skips
+    assert report["remote_status"] == "absent"
+
+
+def test_flw_fr_001_squash_cleanup_preserves_advanced_remote(repo: Path):
+    module = load_module()
+    runner = FakeSquashRunner(repo, remote_oid="newsha")
+    code, report = module.guarded_squash_cleanup(
+        repo=repo,
+        work_id="500",
+        branch="feat/500-x",
+        pr_number=56,
+        default_branch="main",
+        timeout_seconds=30,
+        actor=None,
+        runner=runner,
+    )
+    assert code == module.EXIT_INDETERMINATE
+    assert report["failed_check"] == "remote-head-sha"
+    assert not any("worktree remove" in " ".join(cmd) for cmd in runner.commands)
+
+
+def test_flw_fr_001_squash_cleanup_rejects_path_escape(repo: Path):
+    module = load_module()
+    runner = FakeSquashRunner(repo)
+    code, report = module.guarded_squash_cleanup(
+        repo=repo,
+        work_id="../escape",
+        branch="feat/500-x",
+        pr_number=56,
+        default_branch="main",
+        timeout_seconds=30,
+        actor=None,
+        runner=runner,
+    )
+    assert code == module.EXIT_INDETERMINATE
+    assert report["failed_check"] == "work-id"
+    assert runner.commands == []
+
+
+@pytest.mark.parametrize(
+    ("runner_kwargs", "failed_check"),
+    [
+        ({"worktree_oid": "stale"}, "worktree-head-sha"),
+        ({"gh_fails": True}, "pr-evidence"),
+    ],
+)
+def test_flw_fr_001_squash_cleanup_evidence_failure_has_no_delete(
+    repo: Path, runner_kwargs: dict, failed_check: str
+):
+    module = load_module()
+    runner = FakeSquashRunner(repo, **runner_kwargs)
+    code, report = module.guarded_squash_cleanup(
+        repo=repo,
+        work_id="500",
+        branch="feat/500-x",
+        pr_number=56,
+        default_branch="main",
+        timeout_seconds=30,
+        actor=None,
+        runner=runner,
+    )
+    assert code == module.EXIT_INDETERMINATE
+    assert report["failed_check"] == failed_check
+    assert not any("worktree remove" in " ".join(cmd) for cmd in runner.commands)
+    assert not any("branch -D" in " ".join(cmd) for cmd in runner.commands)
+
+
+def test_flw_fr_001_squash_cleanup_timeout_reports_completed_stage(repo: Path):
+    module = load_module()
+    runner = FakeSquashRunner(repo, timeout_on="worktree remove")
+    code, report = module.guarded_squash_cleanup(
+        repo=repo,
+        work_id="500",
+        branch="feat/500-x",
+        pr_number=56,
+        default_branch="main",
+        timeout_seconds=30,
+        actor=None,
+        runner=runner,
+    )
+    assert code == module.EXIT_INDETERMINATE
+    assert report["failed_check"] == "command-timeout"
+    assert report["completed"] == ["default-fast-forward"]
+    assert not any("branch -D" in " ".join(cmd) for cmd in runner.commands)
 
 
 def test_no_forbidden_operations_in_source():

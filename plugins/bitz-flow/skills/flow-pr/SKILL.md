@@ -2,7 +2,7 @@
 name: flow-pr
 description: BitzFlow の GitHub Issue 駆動 PR フロースキル。Issue 起票 → feature ブランチ → Draft PR → CI ゲート → レビュー → squash merge の基本フロー、PR タイトル規約、未マージ依存の原則（スタック PR の禁止と例外時の安全手順）を規定する。ユーザーが「Issue 駆動」「PR フロー」「Draft PR」「squash merge」「プルリクの運用」「スタック PR」に言及したとき、またはチーム開発・公開リポジトリでの開発フローが必要になったときに使用する。フロー全体の選択とコミット規約は flow-core、worktree 並列は flow-worktree が担当する。
 metadata:
-  version: "0.2.0"
+  version: "0.2.1"
   author: br7.hide
   created: "2026-07-18"
   updated: "2026-07-18"
@@ -28,6 +28,16 @@ Issue 起票 → feat/<issue#>-<slug> ブランチ → Draft PR → CI ゲート
 
 - ブランチ名: `feat/<issue#>-<slug>`（例: `feat/123-task-completion-validation`）。
   type が fix / docs 等なら接頭辞も合わせる（flow-core のコミット規定と揃える）
+- `git fetch origin` 後、Draft PR 作成前に同梱の preflight を実行する:
+
+  ```bash
+  python3 scripts/branch_preflight.py --branch feat/123-task-completion-validation --default-branch main
+  ```
+
+  `READY`（exit 0）のときだけ続行する。`REUSE_BLOCKED`（exit 3）は同じ head の merged PR、
+  空差分、base 不一致、競合を表す。`INDETERMINATE`（exit 2）は git / GitHub の照会失敗や
+  mergeability 未確定を表し、どちらも安全側停止する。CI 連携には `--json` を使えるが、
+  git / gh の生出力や資格情報は含まれない
 - 着手したら早めに **Draft PR** を開く（進行の可視化と CI の早期実行）。
   PR 本文の末尾に `Closes #<issue#>` を入れ、マージで Issue が自動クローズされるようにする
 
@@ -42,6 +52,20 @@ Issue 起票 → feat/<issue#>-<slug> ブランチ → Draft PR → CI ゲート
 
 - **squash merge に統一**し「1 Issue（1 作業単位）= 1 コミット」を保つ
 - マージコミットのタイトル = PR タイトル（Conventional Commits 準拠を CI で担保）
+- squash merge 済みの head ブランチは**終端**として扱い、後続作業へ再利用しない。
+  後続作業は最新の `origin/<default>` から別名のブランチを作る
+
+## ブランチ再利用を検出したときの復旧
+
+preflight が `REUSE_BLOCKED` を返した場合、自動 cherry-pick や自動 push は行わない。
+
+1. `git fetch origin` でデフォルトブランチを更新する
+2. `origin/<default>` から新しい一意なブランチを作る
+3. 旧ブランチの履歴と tree diff を確認し、未反映と確認できたコミットだけを明示 SHA で移す
+4. 新ブランチで preflight を再実行し、`READY` を確認してから Draft PR を作る
+
+旧ブランチ上のコミットは squash merge 後も祖先判定では未マージに見えるため、履歴だけで
+一括移送すると既反映差分が再混入しうる。選別根拠を確認できない場合は移送せず人間へ戻す。
 
 ## 同梱スクリプト（pr_helper.py）
 

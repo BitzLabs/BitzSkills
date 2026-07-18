@@ -1,0 +1,11 @@
+{
+  "perspective": "business",
+  "dimensions": [
+    {"name": "要件トレーサビリティ", "weight": 0.35, "score": 5, "findings": [{"id": "BIZ-101", "severity": "info", "location": "SI-FLW-001 / FLW-FR-001 / FLW-DSN-001", "title": "実事故から設計・検証まで追跡可能", "description": "PR #56〜#58の事故原因から要件、状態モデル、テストケースまで双方向に辿れる。", "recommendation": "実装コミットとテスト名にもFLW-FR-001を残す。"}]},
+    {"name": "NFR定量化", "weight": 0.30, "score": 4, "findings": []},
+    {"name": "ステークホルダー整合", "weight": 0.20, "score": 5, "findings": []},
+    {"name": "ROI・実現可能性", "weight": 0.15, "score": 4, "findings": [{"id": "BIZ-401", "severity": "info", "location": "FLW-DSN-001:5/8", "title": "安全性を優先したremote削除の縮退", "description": "完全自動cleanupより未マージデータ保全を優先し、remoteは候補報告までとした。", "recommendation": "Design Gateでこのトレードオフを明示承認する。"}]}
+  ],
+  "weighted_score": 4.55,
+  "summary": "実事故と主要ペルソナの課題に直結し、過剰設計を避けながら高リスク操作だけを機械化している。remote自動削除を行わないトレードオフはDesign Gateで明示裁定すべきである。"
+}

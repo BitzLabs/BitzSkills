@@ -1,0 +1,11 @@
+{
+  "perspective": "risk",
+  "dimensions": [
+    {"name": "分散システムリスク", "weight": 0.30, "score": "N/A", "findings": []},
+    {"name": "障害モード分析", "weight": 0.30, "score": 4, "findings": []},
+    {"name": "Saga設計の妥当性", "weight": 0.25, "score": "N/A", "findings": []},
+    {"name": "データ整合性リスク", "weight": 0.15, "score": 4, "findings": [{"id": "RSK-403", "severity": "minor", "location": "FLW-DSN-001:3.2/4", "title": "remote削除候補は報告後に陳腐化し得る", "description": "期待SHA付き候補も時点情報であり、人間の操作前にrefが進行し得る。", "recommendation": "検査時刻と操作直前の再照会を明記し、削除コマンドは生成しない。"}]}
+  ],
+  "weighted_score": 4.0,
+  "summary": "単一プロセスCLIのため分散・Saga次元はN/A。critical・majorは解消され、remote候補の陳腐化だけがminorとして残るが、設計へ軽減策を反映済みである。"
+}

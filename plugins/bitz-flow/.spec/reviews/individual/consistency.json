@@ -1,0 +1,10 @@
+{
+  "perspective": "consistency",
+  "dimensions": [
+    {"name": "構造整合", "weight": 0.35, "score": 5, "findings": []},
+    {"name": "トレーサビリティ", "weight": 0.35, "score": 5, "findings": []},
+    {"name": "用語一貫性", "weight": 0.30, "score": 5, "findings": []}
+  ],
+  "weighted_score": 5.0,
+  "summary": "merged PR・差分・mergeability、状態別検証、timeout・JSON診断が要件・設計・検証設計で一貫し、新たな構造・トレース・用語上の矛盾は検出されなかった。"
+}

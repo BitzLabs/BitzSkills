@@ -1,0 +1,13 @@
+{
+  "review_id": "FLW-REV-001",
+  "verdict": "PASS",
+  "aggregate_score": 4.58,
+  "perspective_scores": {"consistency": 5.0, "operations": 5.0, "risk": 4.0, "business": 4.55},
+  "findings_summary": {"total": 10, "after_dedup": 3, "by_priority": {"P0": 0, "P1": 0, "P2": 0, "P3": 3}, "by_severity": {"critical": 0, "major": 0, "minor": 1, "info": 9}},
+  "findings": [
+    {"id": "SYN-001", "priority": "P3", "source_ids": ["RSK-403", "BIZ-401"], "perspectives": ["risk", "business"], "title": "remote削除候補の陳腐化と安全側縮退", "recommendation": "検査時刻と操作直前の再照会を明示し、削除コマンドを生成しない。"},
+    {"id": "SYN-002", "priority": "P3", "source_ids": ["OPS-101", "OPS-302"], "perspectives": ["operations"], "title": "構造化診断契約の回帰固定", "recommendation": "許可リストJSON、timeout境界、機密情報非転記を自動テストで固定する。"},
+    {"id": "SYN-003", "priority": "P3", "source_ids": ["OPS-201", "OPS-202", "OPS-301", "OPS-401", "OPS-402", "BIZ-101"], "perspectives": ["operations", "business"], "title": "状態機械とトレーサビリティの実装確認", "recommendation": "故障注入・入力境界・既存CLI互換性をFLW-FR-001へ紐づけて検証する。"}
+  ],
+  "conditional_items": []
+}
