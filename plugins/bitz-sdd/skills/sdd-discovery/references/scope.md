@@ -1,6 +1,6 @@
 # スコープ（制約 → Kano → RICE → MoSCoW → In/Out 境界）
 
-推奨順: 制約の棚卸し → Kano（情緒的価値の分類）→ RICE（定量ランク）→ MoSCoW（帯域分け）→ In/Out-of-Scope 境界の明文化。作業表は `.spec/discovery/worksheet.md`、結論（Won't と制約）は docs/01-context/non-goals.md と constraints.md の proposed 更新へ。
+推奨順: 制約の棚卸し → Kano（情緒的価値の分類）→ RICE（定量ランク）→ MoSCoW（帯域分け）→ In/Out-of-Scope 境界の明文化。作業表は `.spec/discovery/worksheet.md`、結論（Won't と制約）は docs/00_はじめに/対象外.md と 制約.md の proposed 更新へ。
 
 ## 制約の棚卸し（最初にやる）
 
@@ -39,4 +39,4 @@ RICE = (Reach × Impact × Confidence) ÷ Effort
 
 ## In-Scope / Out-of-Scope 境界（必須）
 
-明示的な表を作る。**Out-of-Scope（Won't）リストは必須** — スコープクリープに対する最も効果的なガードであり、関係者合意の最も明確な成果物。Won't の結論は non-goals.md ドラフトに「なぜやらないか」つきで転記する。
+明示的な表を作る。**Out-of-Scope（Won't）リストは必須** — スコープクリープに対する最も効果的なガードであり、関係者合意の最も明確な成果物。Won't の結論は 対象外.md ドラフトに「なぜやらないか」つきで転記する。

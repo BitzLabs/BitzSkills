@@ -9,7 +9,7 @@ owner:
 
 # インフラ設計作業台帳（.spec/design/infra/worksheet.md にコピーして使う）
 
-短命の作業成果物。結論は docs/（OPERATIONS.md / security-model.md / ADR）の proposed ドラフトへ。
+短命の作業成果物。結論は docs/（運用・リリース.md / セキュリティモデル.md / ADR）の proposed ドラフトへ。
 
 ## 実行した領域
 

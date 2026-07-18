@@ -5,7 +5,7 @@
   python spec_inspect.py <repo-root>                 # 全検証 → .spec/inspection-report.md
   python spec_inspect.py --workspace plugins/* .     # モノリポ一括検証（クロスリファレンス解決）
   python spec_inspect.py <repo-root> --impact FR-012 # 変更影響分析（stale候補の列挙）
-  python spec_inspect.py <repo-root> --impact-docs docs/02-design/ARCHITECTURE.md
+  python spec_inspect.py <repo-root> --impact-docs docs/03_設計仕様/アーキテクチャ.md
                                                      # docs変更の影響要件（derived_from 逆引き）
 """
 import argparse

@@ -9,7 +9,7 @@ owner:
 
 # ディスカバリー作業台帳（.spec/discovery/worksheet.md にコピーして使う）
 
-短命の作業成果物。人間向けの結論は docs/01-context/ の proposed ドラフトへ落とす。
+短命の作業成果物。人間向けの結論は docs/00_はじめに/ の proposed ドラフトへ落とす。
 
 ## 仮説表（assumptions — ゲート判定の本体。独立させるなら assumptions.md へ）
 
@@ -37,7 +37,7 @@ owner:
 | In-Scope | 根拠（指標/ジョブ） |
 |---|---|
 
-| Out-of-Scope（Won't） | なぜやらないか | non-goals.md へ転記済み? |
+| Out-of-Scope（Won't） | なぜやらないか | 対象外.md へ転記済み? |
 |---|---|---|
 
 ## 競合代替 intake

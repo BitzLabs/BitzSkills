@@ -1,6 +1,6 @@
 # API 設計（API-Led Connectivity 3層）
 
-docs/02-design/public-api.md の proposed ドラフトを作るための手法。データ・ビジネスロジック・チャネルの関心を分離し再利用可能にする**論理**設計。すべての API に3層が要るわけではない。
+docs/03_設計仕様/公開API.md の proposed ドラフトを作るための手法。データ・ビジネスロジック・チャネルの関心を分離し再利用可能にする**論理**設計。すべての API に3層が要るわけではない。
 
 ## 3層
 
@@ -33,4 +33,4 @@ Experience（チャネル最適化）
 
 ## ドラフトへの落とし込み
 
-docs/02-design/public-api.md（proposed）には層別カタログ（表）+ 依存グラフ + 主要 API の OAS スケッチを書く。導出の作業表（エンティティ×CRUD 対応など）は `.spec/design/` に残す。エンドポイント契約は後段で FR（example-test / pbt）に派生する前提で、入出力を観測可能に書く。
+docs/03_設計仕様/公開API.md（proposed）には層別カタログ（表）+ 依存グラフ + 主要 API の OAS スケッチを書く。導出の作業表（エンティティ×CRUD 対応など）は `.spec/design/` に残す。エンドポイント契約は後段で FR（example-test / pbt）に派生する前提で、入出力を観測可能に書く。

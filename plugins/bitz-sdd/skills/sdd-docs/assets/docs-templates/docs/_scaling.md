@@ -1,88 +1,72 @@
 <!--
-  _scaling.md — 最小起動セットから「最大規模」までの docs/ 構成と拡張規約。
-  最大規模で戻ってくる 03/04/05/07 は .spec/ と役割が重なりやすい「ドリフト危険地帯」。
-  各層で「docs/ に何が残り、.spec/ に何が行くか」を必ず守ること。
+  _scaling.md — 日本語6章を保ったまま、文書の密度を段階的に高める規約。
+  各章で「docs/ に残す恒久方針」と「.spec/ が持つ契約・状態」を混同しないこと。
 -->
-# docs/ スケーリング規約（最小 → 最大規模）
+# docs/ スケーリング規約（必須6章 + 宣言式の任意章）
 
-## 最大規模の全体構成
+## 正規構成
 
 ```
 docs/
-  MASTER.md                       索引・project_type 宣言
-  _conventions.md                 frontmatter・ライフサイクル・配置ルール
-  _scaling.md                     このファイル
-  01-context/                     意図（WHY / 人間向け WHAT）— 最も遅く変わる
-    mission-vision.md
-    glossary.md
-    non-goals.md
-    constraints.md                技術的・組織的制約（旧 FeelFlow CONSTRAINTS）
-    stakeholders.md               app: 関係者 / library: 想定コンシューマ像
-  02-design/                      構造・設計判断
-    ARCHITECTURE.md
-    domain-model.md               ドメインモデル（旧 FeelFlow DOMAIN）
-    public-api.md                 library 専用: 公開契約と互換性
-    security-model.md             信頼境界・脅威・データ分類
-    decisions/ADR-*.md            決定記録（不採用案・試行錯誤）
-  03-implementation/              恒久的な実装規約（per-feature タスクは .spec/）
-    PATTERNS.md
-    error-handling.md
-    dependency-policy.md
-  04-quality/                     品質・検証の「戦略」（per-req 検証は .spec/）
-    TESTING.md
-    quality-gates.md
-    performance-budgets.md
-  05-operations/                  運用・リリースの恒久手順とポリシー
-    OPERATIONS.md
-    (app) runbooks/ , slo.md , incident-response.md
-    (library) release-process.md , support-matrix.md , deprecation-calendar.md
-  06-reference/                   外部参照・移行ガイド
-    EXTERNAL-APIS.md
-    migration/<version>.md
-    integrations.md
-  07-governance/                  プロセス・ロードマップの意図（実行は .spec/ROADMAP）
-    GOVERNANCE.md
-    contribution.md
-    versioning-policy.md
-  08-knowledge/                   恒久知識
-    LESSONS_LEARNED.md
-    postmortems/<date>-<slug>.md
+  MASTER.md                         索引・project_type・拡張宣言
+  _conventions.md                   frontmatter・配置ルール
+  _scaling.md                       このファイル
+  00_はじめに/                      WHY・利用者・用語・スコープ・統制
+  01_システム仕様/                  機能・非機能・制約の人間向け説明
+  02_ユースケース/                  アクターとシステムの対話
+  03_設計仕様/                      構造・API・データ・セキュリティ・ADR・実装規約
+  04_テスト仕様/                    テスト戦略・品質ゲート
+  05_リリース・運用/                リリース・SLO・runbook・postmortem・教訓
+  06_リファレンス/                  外部API・CLI/SDK・移行ガイド（宣言時のみ）
 ```
 
-## ドリフト危険地帯（03 / 04 / 05 / 07）の境界規則
+必須6章は常に存在させる。任意章は `MASTER.md` の `optional_chapters: reference` と
+実ディレクトリを同時に追加する。調査メモ・アーカイブは `excluded_paths` で管理外にできるが、
+必須6章・任意章・MASTER・運用規約自身を除外してはならない。
 
-これらは `.spec/` に鏡像がある。**同じ名前でも中身の粒度が違う**。判定は一つ:
+## 章と機械areaの対応
 
-> **フィーチャ／スプリントごとに変わるなら `.spec/`。フィーチャを越えて残る標準・方針なら `docs/`。**
+文書IDを安定させるため、章とareaは1対1にしない。`docs_inspect.py` もこの表を検査する。
 
-| 層 | `docs/`（恒久・方針・WHY） | `.spec/`（使い捨て・実行・状態） |
+| 章 | 許容area | 主な内容 |
 |---|---|---|
-| 03-implementation | コーディング規約・採用パターン・命名・エラー方針 | フィーチャ単位の実装タスク・依存グラフ (tasks/) |
-| 04-quality | テスト戦略・「緑」の定義・品質ゲートの意味 | 要件別の verification_method・PBT マッピング (specs/) |
-| 05-operations | リリース手順・ランブック・SLO 方針・非推奨カレンダー | リリース回ごとのチェックリスト・実行状態 (STATE) |
-| 07-governance | プロセス規約・バージョニング方針・ロードマップの意図 | 実行可能なロードマップ・マイルストーン (ROADMAP) |
+| `00_はじめに` | `context`, `governance` | ビジョン、スコープ、用語、指標、ペルソナ、統制 |
+| `01_システム仕様` | `system` | 機能・非機能・制約の索引 |
+| `02_ユースケース` | `usecase` | UC索引、基本・代替フロー |
+| `03_設計仕様` | `design`, `implementation` | architecture、API、data、security、patterns、ADR |
+| `04_テスト仕様` | `quality` | テスト戦略、greenの定義、品質ゲート |
+| `05_リリース・運用` | `operations`, `knowledge` | release、SLO、runbook、postmortem、教訓 |
+| `06_リファレンス` | `reference` | 外部参照、CLI/SDK、移行ガイド |
 
-同じ事実が両方に出たら、**方針は docs/、実行と状態は .spec/ が勝つ**。
+## docs ⇄ .spec の境界
 
-## 段階拡張のトリガー（増やしすぎない）
+> **フィーチャごとに変わる契約・状態は `.spec/`。フィーチャを越えて残る意図・方針は `docs/`。**
 
-| 追加する層 | 追加の合図 |
+| 章 | `docs/`（恒久・方針・WHY） | `.spec/`（契約・実行・状態） |
+|---|---|---|
+| 00 | ビジョン、用語、スコープ理由、ガバナンス | discovery成果物、ROADMAP、STATE |
+| 01 | 機能・品質・制約の人間向け全体像 | EARS要件、version、status |
+| 02 | 利用シナリオのナラティブ | UCマスター、要件トレース、検証入力 |
+| 03 | 構造、境界、採用理由、恒久実装規約 | design成果物、タスク、依存グラフ |
+| 04 | テスト戦略、品質ゲートの意味 | verification_method、test-spec、実行結果 |
+| 05 | 再現可能な運用・リリース方針、恒久的教訓 | リリース回ごとの状態、障害調査の作業記録 |
+| 06 | 利用者向け参照資料 | 参照資料の生成元となる契約 |
+
+同じ事実が両方に出たら、**意図はdocs、検証可能な契約と状態は.specが勝つ**。
+
+## 段階拡張のトリガー
+
+| 追加する文書 | 追加の合図 |
 |---|---|
-| 起点: 01 / 02 / 08（library は +public-api） | プロジェクト開始時 |
-| 01-context の拡張3点（success-metrics / personas-journeys / positioning） | `sdd-discovery` スキルで上流探索を行うとき（proposed で追加し Design Gate で active 化） |
-| 03-implementation | 実装パターンが繰り返し現れ、標準化する価値が出たとき |
-| 04-quality | テスト戦略を feature を越えて共有・強制したくなったとき |
-| 05-operations | 定期的にデプロイ／公開し、再現可能な手順が要るとき |
-| 06-reference | 外部 API に依存、または破壊的変更で移行ガイドが要るとき |
-| 07-governance | 貢献者が増え、プロセスとロードマップの明文化が要るとき |
-
-> 原則: **空フォルダを先に切らない**。必要になった層だけを、その時点で MASTER.md の
-> レジストリに登録して足す。AI ツールは情報の散在に弱いので、密度を保つことが精度に効く。
+| 成功指標・ペルソナ・ポジショニング | sdd-discoveryで上流探索を行う |
+| 個別ユースケース | 標準UCフローを採用し、要件・テストへ追跡する |
+| 実装パターン | 同じパターンが複数featureで反復する |
+| 詳細テスト方針 | 品質ゲートをfeature横断で共有する |
+| runbook / SLO / support matrix | 定期運用・公開を再現可能にする必要がある |
+| `06_リファレンス` | 外部API、CLI/SDK、破壊的変更の移行ガイドが増える |
 
 ## app / library での重みの違い
 
-- **app**: 05-operations が厚くなる（デプロイ・SLO・インシデント・オンコール）。
-  02 に data-model / security-model が効く。
-- **library**: 02-design/public-api と 05-operations/release-process・support-matrix・
-  deprecation-calendar が中核。07 の versioning-policy が SemVer 契約と直結する。
-  逆にランタイム運用系（SLO・オンコール）は基本不要。
+- **app**: `05_リリース・運用` が厚くなる。公開API文書は任意。
+- **library**: `03_設計仕様/公開API.md` は必須。互換性、support matrix、移行ガイドが中核。
+- **both**: appの運用面とlibraryの公開契約面を両方維持する。

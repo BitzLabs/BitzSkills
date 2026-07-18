@@ -12,7 +12,7 @@ superseded_by: null
 
 <!--
   sdd-discovery が生成する proposed ドラフト。
-  同一テンプレが sdd-docs の docs-templates/01-context/ にもある（変更時は両方を同期すること）。
+  同一テンプレが sdd-docs の docs-templates/docs/00_はじめに/ にもある（変更時は両方を同期すること）。
   価値（顧客の成果）を主張する。機能リストを主張しない。
 -->
 

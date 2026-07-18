@@ -1,11 +1,11 @@
 ---
 name: sdd-review
-description: BitzSDD の設計ドキュメントや要件定義を多観点（consistency/data-integrity/operations/risk/business）で並列レビューするスキル。結果はすべて .spec/reviews/ 配下に格納し、レポート自動生成およびゲート判定の材料とする。
+description: BitzSDD の設計ドキュメントや要件定義を多観点（consistency/data-integrity/operations/risk/business）で並列レビューするスキル。結果はすべて .spec/reviews/ 配下に格納し、レポート自動生成およびゲート判定の材料とする。ユーザーが「設計レビュー」「要件レビュー」「多観点レビュー」に言及したとき、または Design Gate 前に使用する。
 metadata:
-  version: "0.2.2"
+  version: "0.2.3"
   author: br7.hide
   created: "2026-07-08"
-  updated: "2026-07-11"
+  updated: "2026-07-18"
 ---
 
 # SDD Review — 多観点並列レビュー

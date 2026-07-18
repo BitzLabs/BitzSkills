@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-18)
 
-成果物数: 45 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
+成果物数: 52 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -21,12 +21,9 @@
 - SDD-FR-001
 - SDD-FR-010
 - SDD-FR-011
-- SDD-FR-020
 - SDD-FR-021
-- SDD-FR-030
 - SDD-FR-031
 - SDD-FR-033
-- SDD-FR-040
 - SDD-FR-041
 - SDD-FR-051
 - SDD-FR-053
@@ -40,7 +37,6 @@
 - SDD-FR-090
 - SDD-FR-091
 - SDD-FR-100
-- SDD-FR-101
 - SDD-FR-110
 - SDD-FR-111
 - SDD-FR-112
@@ -49,6 +45,11 @@
 - SDD-FR-122
 - SDD-FR-123
 - SDD-FR-124
+- SDD-FR-125
+- SDD-FR-126
+- SDD-FR-127
+- SDD-FR-128
+- SDD-FR-129
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
 ※ 乖離は候補提示のみ。stale 付与は references/lifecycle.md の再伝播プロトコル（判定パス→人間確認）を経ること
@@ -70,15 +71,16 @@
 | SDD-DSC-005 | draft |  |  | 0 | 0 |
 | SDD-DSC-006 | draft |  |  | 0 | 0 |
 | SDD-DSN-001 | active |  |  | 0 | 0 |
+| SDD-DSN-002 | active |  |  | 0 | 0 |
 | SDD-FR-001 | verified | verification | example-test | 1 | 1 |
 | SDD-FR-010 | verified | verification | example-test | 1 | 1 |
 | SDD-FR-011 | verified | workflow | manual-check | 1 | 1 |
-| SDD-FR-020 | verified | upstream | example-test | 1 | 1 |
+| SDD-FR-020 | deprecated | upstream | example-test | 1 | 1 |
 | SDD-FR-021 | verified | upstream | manual-check | 1 | 1 |
-| SDD-FR-030 | verified | upstream | example-test | 1 | 1 |
+| SDD-FR-030 | deprecated | upstream | example-test | 1 | 1 |
 | SDD-FR-031 | verified | upstream | manual-check | 1 | 1 |
 | SDD-FR-033 | verified | upstream | manual-check | 1 | 1 |
-| SDD-FR-040 | verified | upstream | example-test | 1 | 1 |
+| SDD-FR-040 | deprecated | upstream | example-test | 1 | 1 |
 | SDD-FR-041 | verified | upstream | example-test | 1 | 1 |
 | SDD-FR-051 | verified | upstream | manual-check | 1 | 1 |
 | SDD-FR-053 | verified | upstream | manual-check | 1 | 1 |
@@ -92,7 +94,7 @@
 | SDD-FR-090 | verified | verification | manual-check | 1 | 1 |
 | SDD-FR-091 | verified | verification | manual-check | 1 | 1 |
 | SDD-FR-100 | verified | sync | example-test | 1 | 1 |
-| SDD-FR-101 | verified | sync | example-test | 1 | 1 |
+| SDD-FR-101 | deprecated | sync | example-test | 1 | 1 |
 | SDD-FR-110 | verified | reporting | manual-check | 2 | 2 |
 | SDD-FR-111 | verified | reporting | manual-check | 2 | 2 |
 | SDD-FR-112 | verified | execution | manual-check | 1 | 2 |
@@ -101,6 +103,12 @@
 | SDD-FR-122 | verified | execution | manual-check | 1 | 2 |
 | SDD-FR-123 | verified | verification | manual-check | 1 | 2 |
 | SDD-FR-124 | verified | verification | example-test | 1 | 2 |
+| SDD-FR-125 | verified | sync | unit-test | 2 | 3 |
+| SDD-FR-126 | verified | sync | unit-test | 2 | 3 |
+| SDD-FR-127 | verified | sync | unit-test | 2 | 3 |
+| SDD-FR-128 | verified | sync | unit-test | 2 | 3 |
+| SDD-FR-129 | verified | sync | unit-test | 2 | 3 |
 | SDD-REV-001 | active |  |  | 0 | 1 |
+| SDD-REV-002 | active |  |  | 0 | 1 |
 
 **判定: PASS ✅**

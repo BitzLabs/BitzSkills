@@ -1,0 +1,10 @@
+{
+  "perspective": "consistency",
+  "dimensions": [
+    {"name": "構造整合", "weight": 0.35, "score": 5, "findings": []},
+    {"name": "トレーサビリティ", "weight": 0.35, "score": 5, "findings": []},
+    {"name": "用語一貫性", "weight": 0.30, "score": 4, "findings": [{"id": "RVC-301", "severity": "info", "location": "SDD-DSN-002:設計判断4", "title": "章とareaは意図的に多対多", "description": "日本語の章名と既存の英語DOC-id areaは同義ではない。", "recommendation": "許容集合を検査コードと運用規約の双方に同じ表で固定する。"}]}
+  ],
+  "weighted_score": 4.70,
+  "summary": "6章、任意章、管理対象外の境界が明確で、旧要件から後継要件へのトレースも定義されている。章とareaの許容集合をコードと文書で同期する必要がある。"
+}

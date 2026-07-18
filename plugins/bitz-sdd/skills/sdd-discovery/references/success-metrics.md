@@ -1,6 +1,6 @@
 # 成功指標（North Star Metric + 入力指標 + ガードレール）
 
-ビジョンの「勝利の定義」を測定可能な形に変える。下流の優先順位付け（RICE の Impact・MoSCoW・ポジショニング）の錨になる。結論は docs/01-context/success-metrics.md（proposed、テンプレは assets/docs-draft-success-metrics.md）へ。
+ビジョンの「勝利の定義」を測定可能な形に変える。下流の優先順位付け（RICE の Impact・MoSCoW・ポジショニング）の錨になる。結論は docs/00_はじめに/成功指標.md（proposed、テンプレは assets/docs-draft-success-metrics.md）へ。
 
 ## North Star Metric（NSM）— 1つだけ
 

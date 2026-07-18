@@ -1,0 +1,11 @@
+{
+  "perspective": "business",
+  "dimensions": [
+    {"name": "要件トレーサビリティ", "weight": 0.35, "score": 5, "findings": []},
+    {"name": "NFR定量化", "weight": 0.30, "score": 4, "findings": []},
+    {"name": "ステークホルダー整合", "weight": 0.20, "score": 5, "findings": []},
+    {"name": "ROI・実現可能性", "weight": 0.15, "score": 4, "findings": [{"id": "BIZ-401", "severity": "info", "location": "SDD-DSN-002:影響範囲", "title": "破壊的既定値の明示", "description": "既存利用者にはパス変更の移行コストが発生する。", "recommendation": "semver major、移行ガイド、dry-run例をリリースノートに明記する。"}]}
+  ],
+  "weighted_score": 4.60,
+  "summary": "BasicPlanとの二重標準を解消しつつ、別issueの責務を取り込まない境界が明確である。major releaseと移行ガイドにより既存利用者の切替コストを明示する必要がある。"
+}

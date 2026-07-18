@@ -21,7 +21,7 @@ SDD運用仕様書 v1.0 を Claude Code / Antigravity 2.0 / OpenAI Codex CLI の
 |---|---|
 | `sdd-core` | SDDワークフローの常時運用。要件ライフサイクル（draft→approved→implementing→verified→promoted）、EARS検証、失敗プロトコル、並列実行、変更再伝播、3ゲート（Discovery/Design/Promotion）。spec_inspect.py（.spec/ 側の構造検証・影響分析・docs乖離検出）同梱 |
 | `sdd-docs` | docs/（人間ナラティブ層）の初期化と検証。docs/ ツリーのテンプレート一式と docs_inspect.py（docs/ 側の構造検証）同梱。プロジェクトごとに最初に1回使う |
-| `sdd-discovery` | 上流探索。ビジョン（Vision Board / PR-FAQ）→成功指標（NSM）→スコープ（MoSCoW / RICE）→ペルソナ・ジャーニー（JTBD）→ポジショニング→仮説検証ゲート（Go/No-Go）。成果物は docs/01-context/ の proposed ドラフト |
+| `sdd-discovery` | 上流探索。ビジョン（Vision Board / PR-FAQ）→成功指標（NSM）→スコープ（MoSCoW / RICE）→ペルソナ・ジャーニー（JTBD）→ポジショニング→仮説検証ゲート（Go/No-Go）。成果物は docs/00_はじめに/ の proposed ドラフト |
 | `sdd-design` | 設計工程（軽量デフォルト）。ドメイン概要→API（3層）→アーキテクチャ（3ビュー+技術適合性）。本格的な DDD 手法（ドメインストーリー・戦略設計・MMI/DDD 成熟度評価）は `bitz-ddd` プラグインが提供 |
 | `sdd-data` | データ格納設計（永続データを扱う場合のみ）。論理データモデル（ER 図）→格納方式選定（RDB / NoSQL / ファイル / オブジェクトストレージ）→物理スキーマ・形式→永続化戦略→マイグレーション計画 |
 | `sdd-review` | 設計ドキュメントの多観点並列レビュー（consistency / data-integrity / operations / risk / business）と統合判定（P0〜P3・PASS/CONDITIONAL_PASS/FAIL）。Design Gate / Promotion Gate への推奨を生成 |

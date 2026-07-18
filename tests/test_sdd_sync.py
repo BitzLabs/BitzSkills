@@ -27,7 +27,7 @@ def test_pull_new_file(tmp_path: Path):
     
     res = run_sync(tmp_path, "pull")
     assert res.returncode == 0
-    docs = tmp_path / "docs" / "01-context" / "mission-vision.md"
+    docs = tmp_path / "docs" / "00_はじめに" / "ミッション・ビジョン.md"
     assert docs.exists()
     assert docs.read_text(encoding="utf-8") == "vision content"
 
@@ -35,7 +35,7 @@ def test_pull_new_file(tmp_path: Path):
 def test_pull_docs_newer_no_overwrite(tmp_path: Path):
     """pull: docs 側の mtime が新しい -> 上書きされない（docs の内容が保持される）"""
     spec = tmp_path / ".spec" / "discovery" / "vision.md"
-    docs = tmp_path / "docs" / "01-context" / "mission-vision.md"
+    docs = tmp_path / "docs" / "00_はじめに" / "ミッション・ビジョン.md"
     
     spec.parent.mkdir(parents=True)
     spec.write_text("spec content", encoding="utf-8")
@@ -54,7 +54,7 @@ def test_pull_docs_newer_no_overwrite(tmp_path: Path):
 def test_pull_spec_newer_overwrites(tmp_path: Path):
     """pull: spec 側が新しい -> docs が更新される"""
     spec = tmp_path / ".spec" / "discovery" / "vision.md"
-    docs = tmp_path / "docs" / "01-context" / "mission-vision.md"
+    docs = tmp_path / "docs" / "00_はじめに" / "ミッション・ビジョン.md"
     
     spec.parent.mkdir(parents=True)
     spec.write_text("spec content new", encoding="utf-8")
@@ -81,7 +81,7 @@ def test_pull_stories_aggregation(tmp_path: Path):
     res = run_sync(tmp_path, "pull")
     assert res.returncode == 0
     
-    docs_story = tmp_path / "docs" / "02-design" / "domain-story.md"
+    docs_story = tmp_path / "docs" / "03_設計仕様" / "ドメインストーリー.md"
     assert docs_story.exists()
     content = docs_story.read_text(encoding="utf-8")
     
@@ -96,7 +96,7 @@ def test_pull_stories_aggregation(tmp_path: Path):
 def test_push_docs_newer_reverses_sync(tmp_path: Path):
     """push: docs 側が新しい -> .spec へ逆反映される"""
     spec = tmp_path / ".spec" / "discovery" / "vision.md"
-    docs = tmp_path / "docs" / "01-context" / "mission-vision.md"
+    docs = tmp_path / "docs" / "00_はじめに" / "ミッション・ビジョン.md"
     
     spec.parent.mkdir(parents=True)
     spec.write_text("spec content old", encoding="utf-8")
@@ -115,7 +115,7 @@ def test_push_docs_newer_reverses_sync(tmp_path: Path):
 def test_push_spec_newer_no_reverse_sync(tmp_path: Path):
     """push: spec 側が新しい -> 逆反映されない"""
     spec = tmp_path / ".spec" / "discovery" / "vision.md"
-    docs = tmp_path / "docs" / "01-context" / "mission-vision.md"
+    docs = tmp_path / "docs" / "00_はじめに" / "ミッション・ビジョン.md"
     
     spec.parent.mkdir(parents=True)
     spec.write_text("spec content new", encoding="utf-8")
@@ -146,8 +146,47 @@ def test_diff_is_readonly(tmp_path: Path):
     assert spec.exists()
     assert spec.stat().st_mtime == pytest.approx(now, abs=1)
     
-    docs = tmp_path / "docs" / "01-context" / "mission-vision.md"
+    docs = tmp_path / "docs" / "00_はじめに" / "ミッション・ビジョン.md"
     assert not docs.exists()
+
+
+@pytest.mark.parametrize(
+    ("spec_rel", "docs_rel"),
+    [
+        (".spec/discovery/vision.md", "docs/00_はじめに/ミッション・ビジョン.md"),
+        (".spec/discovery/scope.md", "docs/00_はじめに/対象外.md"),
+        (".spec/design/domain-model.md", "docs/03_設計仕様/ドメインモデル.md"),
+        (".spec/design/api-design.md", "docs/03_設計仕様/公開API.md"),
+        (".spec/design/architecture.md", "docs/03_設計仕様/アーキテクチャ.md"),
+        (".spec/design/data-model.md", "docs/03_設計仕様/データモデル.md"),
+    ],
+)
+def test_pull_uses_japanese_mapping(tmp_path: Path, spec_rel: str, docs_rel: str):
+    spec = tmp_path / spec_rel
+    spec.parent.mkdir(parents=True, exist_ok=True)
+    spec.write_text(spec_rel, encoding="utf-8")
+
+    res = run_sync(tmp_path, "pull")
+
+    assert res.returncode == 0
+    assert (tmp_path / docs_rel).read_text(encoding="utf-8") == spec_rel
+
+
+def test_push_design_doc_uses_japanese_mapping(tmp_path: Path):
+    spec = tmp_path / ".spec" / "design" / "architecture.md"
+    docs = tmp_path / "docs" / "03_設計仕様" / "アーキテクチャ.md"
+    spec.parent.mkdir(parents=True)
+    spec.write_text("old", encoding="utf-8")
+    docs.parent.mkdir(parents=True)
+    docs.write_text("new", encoding="utf-8")
+    now = time.time()
+    os.utime(spec, (now - 10, now - 10))
+    os.utime(docs, (now, now))
+
+    res = run_sync(tmp_path, "push")
+
+    assert res.returncode == 0
+    assert spec.read_text(encoding="utf-8") == "new"
 
 
 def test_pull_does_not_modify_unrelated_docs(tmp_path: Path):
