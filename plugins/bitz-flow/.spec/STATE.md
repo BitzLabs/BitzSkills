@@ -7,3 +7,6 @@
 - 2026-07-18 FLW-TSK-001: implementing → done (codex)
 - 2026-07-18 FLW-TSK-002: pending → implementing (codex)
 - 2026-07-18 FLW-TSK-002: implementing → done (codex)
+- 2026-07-18 FLW-TSK-003: pending → implementing (codex)
+- 2026-07-18 FLW-TSK-003: implementing → done (codex)
+- 2026-07-18 FLW-FR-001: implementing → verified (codex)

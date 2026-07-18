@@ -28,7 +28,7 @@
 | FLW-DSC-005 | draft |  |  | 0 | 0 |
 | FLW-DSC-006 | draft |  |  | 0 | 0 |
 | FLW-DSN-001 | active |  |  | 0 | 0 |
-| FLW-FR-001 | implementing | governance | unit-test | 3 | 3 |
+| FLW-FR-001 | verified | governance | unit-test | 3 | 4 |
 | FLW-REV-001 | active |  |  | 0 | 0 |
 
 **判定: PASS ✅**

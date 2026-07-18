@@ -1,8 +1,8 @@
 ---
 implements: FLW-FR-001
 depends_on: [FLW-TSK-001, FLW-TSK-002]
-boundary: plugins/bitz-flow/.spec/, plugins/bitz-flow/**/plugin.json, .claude-plugin/marketplace.json, plugins/bitz-flow/README.md
-status: pending
+boundary: plugins/bitz-flow/.spec/, plugins/bitz-flow/**/plugin.json, .claude-plugin/marketplace.json, plugins/bitz-flow/README.md, tests/test_worktree_ops.py
+status: done
 ---
 
 ### 統合検証とリリース整合

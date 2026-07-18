@@ -13,8 +13,8 @@ Issue 駆動 PR フローを規定する**独立プラグイン**です。
 | スキル | 役割 |
 |---|---|
 | `flow-core` | フロー選択の判断表（単独=feature ブランチ / 並列=worktree / チーム=Issue 駆動 PR）、ブランチ規約、Conventional Commits のコミット規定、失敗時の復元方針 |
-| `flow-worktree` | 複数エージェント並列の分離手段。1エージェント = 1 worktree = 1ブランチの原則と、作成・マージバック・後片付け・失敗時破棄の定型手順 |
-| `flow-pr` | GitHub Issue 駆動フロー。Issue 起票 → Draft PR → CI ゲート → squash merge、未マージ依存の原則（スタック PR の禁止と例外時の安全手順） |
+| `flow-worktree` | 複数エージェント並列の分離手段。1エージェント = 1 worktree = 1ブランチの原則、作成・マージバック、squash merge 証跡付き cleanup、失敗時破棄の定型手順 |
+| `flow-pr` | GitHub Issue 駆動フロー。Issue 起票 → branch preflight → Draft PR → CI ゲート → squash merge、マージ済み head の終端化、未マージ依存の原則 |
 
 ### 発動の例
 

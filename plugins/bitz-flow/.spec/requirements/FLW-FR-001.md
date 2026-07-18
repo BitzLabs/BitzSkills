@@ -1,7 +1,7 @@
 ---
 id: FLW-FR-001
 version: 1.0
-status: implementing
+status: verified
 domain: governance
 priority: high
 origin: SI-FLW-001
