@@ -2,14 +2,14 @@
 id: PLG-DSC-003
 title: "plugin-creator スコープ（制約 → MoSCoW → In/Out 境界）"
 status: draft
-version: 1.0
-updated: 2026-07-12
+version: 1.1
+updated: 2026-07-18
 owner: hide
 ---
 
 # スコープ — plugin-creator
 
-> 遡及的ディスカバリー。現行リリース（v1.2.1、7スキル + create-plugin コマンド + agent-creator/plugin-validator エージェント）の実体をスコープとして言語化しつつ、SI-CORE-006（共通ライフサイクルスキル標準）の将来スコープを反映する。
+> 遡及的ディスカバリー。現行リリース（v1.4.0、7スキル + create-plugin コマンド + agent-creator/plugin-validator エージェント）の実体をスコープとして言語化する。SI-CORE-006 の共通ライフサイクルスキル標準は実装済み。
 
 ## 制約の棚卸し（最初にやる）
 
@@ -44,7 +44,7 @@ owner: hide
 
 ### Could（あれば嬉しい磨き込み）
 
-- **共通ライフサイクルスキル標準** reference（SI-CORE-006）: `<plugin>:init` / `doctor` / `update` / `uninstall` の標準仕様 reference と雛形の同梱
+- **共通ライフサイクルスキル標準** reference（SI-CORE-006 / CORE-CON-008、実装済み）: `<plugin>:init` / `doctor` / `update` / `uninstall` の標準仕様 reference の同梱
 - **依存関係管理** ガイド（マニフェスト `metadata.dependencies` の宣言と検証、SI-CORE-006 4-3）
 - スクリプト化できる定型処理を references/ でなく scripts/ に置く設計チェック項目化（SI-CORE-006 4-2）
 
@@ -67,7 +67,7 @@ owner: hide
 | コマンド / エージェント / フック / MCP / 設定 / スキル同梱の各設計支援 | **In** | コンポーネント別6スキル |
 | プラグイン構造・マニフェストの機械検証 | **In** | plugin-validator |
 | 両プラットフォーム仕様差の一次情報保守 | **In** | 全スキルの横断責務 |
-| 共通ライフサイクルスキル標準の reference 化 | **In（Could / 将来 = SI-CORE-006）** | 標準名 init/doctor/update/uninstall |
+| 共通ライフサイクルスキル標準の reference 化 | **In（Could / 実装済み）** | 標準名 init/doctor/update/uninstall（SI-CORE-006 / CORE-CON-008） |
 | スキル本体の作成・検証・配置の実作業 | **Out** | skill-creator が正 |
 | リリース検証 / version bump スクリプト | **Out** | リポジトリ共用 scripts が正 |
 | ホスティング / 配信インフラ | **Out** | プラットフォーム CLI・marketplace の責務 |

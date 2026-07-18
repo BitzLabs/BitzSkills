@@ -2,14 +2,14 @@
 id: PLG-DSC-006
 title: "plugin-creator 仮説検証ゲート（Go/No-Go 裁定案）"
 status: draft
-version: 1.0
-updated: 2026-07-12
+version: 1.1
+updated: 2026-07-18
 owner: hide
 ---
 
 # 仮説検証ゲート — plugin-creator
 
-> 遡及的ディスカバリー。plugin-creator は既にリリース済み（v1.2.1）で「出荷継続」という実績が存在する。本ファイルは戦略を反証可能な仮説に分解し、崩壊クリティカル性を判定して Go/No-Go の**裁定案**を示す。**最終裁定は人間が PR レビューで行う。**
+> 遡及的ディスカバリー。plugin-creator は既にリリース済み（v1.4.0）で「出荷継続」という実績が存在する。本ファイルは戦略を反証可能な仮説に分解し、崩壊クリティカル性を判定して Go/No-Go の**裁定案**を示す。**最終裁定は人間が PR レビューで行う。**
 
 ## 仮説表（3分類）
 
@@ -21,7 +21,7 @@ owner: hide
 | H4 | Feasibility | Claude Code / Antigravity 2.0 双方の仕様差を、実測ベースで正確に保守し続けられる | **高（PoD 1 の根幹。偽ならガイドが陳腐化し価値が消える）** | **Yes** | `docs/調査報告/01.Antigravity/` を一次情報の正とする運用が確立済み。ただし将来の仕様変更追随の持続性は `[proto / 未検証]` | 定期的な調査報告との突き合わせレビュー（乖離ゼロを閾値）。追随プロセスは SI-CORE 系で継続 |
 | H5 | Feasibility | 出荷前の構造・マニフェスト検証を機械化でき、「発見されず動かない」を実効的に防げる | 中（PoD 3。偽でも手動レビューで代替可） | No | plugin-validator エージェント + `release_check.py` が稼働。CI で機械検査される規約あり | release_check.py の実行で検証（既に運用中） |
 | H6 | Viability | 個人開発 OSS として、両対応保守の負荷が持続可能な範囲に収まる | 中（偽なら Should/Could をさらに絞る） | No（現時点） | 収益非目標。負荷の定量値は `TBD` | 保守工数のトラッキング（閾値: `TBD`） |
-| H7 | Feasibility | 共通ライフサイクルスキル標準（init/doctor/update/uninstall, SI-CORE-006）を plugin-creator に reference 化できる | 低（将来 Could スコープ。偽でも現行価値は不変） | No | 未着手（SI-CORE-006 open、人間裁定待ち） | 標準名制定 + 雛形追加 + CORE-CON 要件化（別 ISSUE で扱う） |
+| H7 | Feasibility | 共通ライフサイクルスキル標準（init/doctor/update/uninstall, SI-CORE-006）を plugin-creator に reference 化できる | 低（Could スコープ。偽でも中核価値は不変） | No | **検証済み**（CORE-CON-008 verified、`lifecycle-skills.md` 実装済み） | `release_check.py` と spec inspection で継続検証 |
 
 ## 崩壊クリティカル判定
 
@@ -38,7 +38,7 @@ owner: hide
 
 **根拠（3行以内）**:
 1. 崩壊クリティカルな H1（問題の実在）は主要ペルソナの実利用で検証済み、H4（両対応保守）は実測ベースの運用とテスト・閾値が定義済みで、No-Go 条件（崩壊クリティカルが未検証かつテスト未定義）に該当しない。
-2. plugin-creator は既に v1.2.1 として出荷・CI 検証下で稼働しており、Go は実績と整合する。
+2. plugin-creator は既に v1.4.0 として出荷・CI 検証下で稼働しており、Go は実績と整合する。
 3. 外部利用者に関する H1/H2/H3 と保守持続性の H4/H6 は未検証の open 仮説として追跡し、観察ログ蓄積後にゲートを再訪する。
 
 > **最終裁定は人間が PR レビューで行う。** 本ファイルは判定材料（仮説一覧・崩壊クリティカル判定・エビデンス・裁定案）を提示するものであり、Discovery Gate の正式裁定は `sdd-core` のゲート規約に従い人間が確定する。
@@ -47,4 +47,12 @@ owner: hide
 
 - H1（外部利用者側）・H2・H3: 観察ログ（`evals/observations/`）とインタビューで検証。閾値 `TBD`
 - H4（追随持続性）・H6（保守負荷）: 工数トラッキングで検証。閾値 `TBD`
-- H7: SI-CORE-006 の別 ISSUE で要件化・実装
+- H7 は CORE-CON-008 verified として完了。継続検証のみ行う
+
+## Discovery Gate 裁定記録
+
+- **裁定**: Go
+- **裁定者**: hide（人間）
+- **裁定日**: 2026-07-18
+- **継続追跡**: H1〜H3 の外部利用者側と H4 / H6 の保守持続性は open 仮説として観察する
+- **設計移行**: 許可（遡及 Discovery のため、要件逆起票へ進行可）

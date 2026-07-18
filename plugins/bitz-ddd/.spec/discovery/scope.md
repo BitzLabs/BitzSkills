@@ -2,8 +2,8 @@
 id: DDD-DSC-003
 title: "bitz-ddd スコープ（制約 → MoSCoW → In/Out-of-Scope 境界）"
 status: draft
-version: 1.0
-updated: 2026-07-12
+version: 1.1
+updated: 2026-07-18
 owner: hide
 ---
 
@@ -27,7 +27,7 @@ owner: hide
 
 ## MoSCoW（帯域分け）
 
-現行リリース（v0.1.1）の機能を追認しつつ、今後の帯を分ける。判定基準:
+現行リリース（v0.1.2）の機能を追認しつつ、今後の帯を分ける。判定基準:
 「これ以外を全部出荷したら成功指標（DDD-DSC-002）を達成できるか?」
 
 | 帯 | 項目 | 根拠 |
