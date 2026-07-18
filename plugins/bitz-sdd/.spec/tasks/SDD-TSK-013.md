@@ -2,7 +2,7 @@
 implements: SDD-FR-129
 depends_on: [SDD-TSK-011]
 boundary: plugins/bitz-sdd/skills/sdd-docs/scripts/migrate_docs.py, tests/test_migrate_docs.py
-status: pending
+status: done
 ---
 
 ### 旧8章の安全な移行CLI

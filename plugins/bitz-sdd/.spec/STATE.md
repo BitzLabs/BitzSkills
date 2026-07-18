@@ -116,3 +116,5 @@
 - 2026-07-18 SDD-TSK-011: implementing → done (codex（7 tests passed、template strict 0 findings）)
 - 2026-07-18 SDD-TSK-012: pending → implementing (codex)
 - 2026-07-18 SDD-TSK-012: implementing → done (codex（15 sync tests passed、関連22 tests passed）)
+- 2026-07-18 SDD-TSK-013: pending → implementing (codex)
+- 2026-07-18 SDD-TSK-013: implementing → done (codex（6 migration tests、関連28 tests passed）)
