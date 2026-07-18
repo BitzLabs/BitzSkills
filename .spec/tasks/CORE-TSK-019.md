@@ -2,7 +2,7 @@
 implements: CORE-FR-014
 depends_on: [CORE-TSK-017]
 boundary: plugins/bitz-flow/.spec/discovery/**
-status: implementing
+status: done
 ---
 
 ### bitz-flow の sdd-discovery 実施（FLW- 6成果物）

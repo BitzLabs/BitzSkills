@@ -1,7 +1,7 @@
 ---
 id: CORE-FR-014
 version: 1.0
-status: implementing
+status: verified
 domain: governance
 priority: medium
 origin: SI-CORE-008

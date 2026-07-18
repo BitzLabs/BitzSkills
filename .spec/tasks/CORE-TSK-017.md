@@ -2,7 +2,7 @@
 implements: CORE-FR-014
 depends_on: []
 boundary: plugins/bitz-flow/**, .claude-plugin/marketplace.json
-status: implementing
+status: done
 ---
 
 ### bitz-flow プラグイン構造の新設（3マニフェスト + marketplace + .spec/PROJECT.md）

@@ -2,7 +2,7 @@
 implements: CORE-FR-014
 depends_on: [CORE-TSK-017]
 boundary: plugins/bitz-flow/skills/**
-status: implementing
+status: done
 ---
 
 ### sdd-git 内容の汎用化転記（flow-core / flow-worktree / flow-pr）

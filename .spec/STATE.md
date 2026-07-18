@@ -88,3 +88,7 @@
 - 2026-07-18 CORE-TSK-017: pending → implementing (agent)
 - 2026-07-18 CORE-TSK-018: pending → implementing (agent)
 - 2026-07-18 CORE-TSK-019: pending → implementing (agent)
+- 2026-07-18 CORE-TSK-017: implementing → done (agent)
+- 2026-07-18 CORE-TSK-018: implementing → done (agent)
+- 2026-07-18 CORE-TSK-019: implementing → done (agent)
+- 2026-07-18 CORE-FR-014: implementing → verified (agent（release_check PASS・spec inspect一括PASS・pytest 165件green・plugin-validator PASS・既存5プラグインdiffゼロ確認）)
