@@ -2,7 +2,7 @@
 implements: FLW-FR-001
 depends_on: []
 boundary: plugins/bitz-flow/skills/flow-pr/scripts/branch_preflight.py, plugins/bitz-flow/skills/flow-pr/SKILL.md, tests/test_branch_preflight.py
-status: implementing
+status: done
 ---
 
 ### branch preflight の実装
