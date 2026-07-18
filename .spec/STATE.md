@@ -98,3 +98,5 @@
 - 2026-07-18 CORE-TSK-020: pending → implementing (codex)
 - 2026-07-18 CORE-TSK-020: implementing → done (codex)
 - 2026-07-18 CORE-CON-010: implementing → verified (codex（target=9407e3d+working-tree; date=2026-07-18; pytest collected=167 passed=167 failed=0 skipped=0 exit=0; release_check=PASS exit=0; spec_inspect=7/7 PASS exit=0; PR=未作成）)
+- 2026-07-18 CORE-FR-015: draft → approved (human)
+- 2026-07-18 CORE-FR-016: draft → approved (human)
