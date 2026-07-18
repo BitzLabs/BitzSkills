@@ -14,5 +14,5 @@ status: implementing
   2. `scripts/release_check.py` に `metadata.dependencies` の依存グラフ検証を追加して green にする
   3. `metadata.dependencies` の書式を plugin-structure の references に、
      init / doctor / update 時の依存確認手順を lifecycle-skills.md（CORE-CON-008）に追記する
-  4. plugin-creator の version bump（ドキュメント変更のため patch）
+  4. plugin-creator の version bump（依存宣言書式という新規記載の追加のため minor）
 - **備考**: 本文にタスク自身の ID を書くと spec_inspect が幽霊参照として検出するため記載しない（SI-CORE-002 参照）。

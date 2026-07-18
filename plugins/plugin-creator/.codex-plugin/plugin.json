@@ -1,6 +1,6 @@
 {
   "name": "plugin-creator",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Claude Code / Antigravity 2.0 向けプラグインの構造・スキル・フック・MCP 開発を支援するツールキット",
   "author": {
     "name": "br7.hide",

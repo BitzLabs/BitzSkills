@@ -103,6 +103,28 @@
 `"UNLICENSED"`（プロプライエタリ）。一覧は https://spdx.org/licenses/ 。
 複数ライセンスは `"(MIT OR Apache-2.0)"` のように書く。
 
+### metadata.dependencies
+
+**型**: 文字列の配列（`metadata` オブジェクト配下）
+
+他プラグインへの依存を機械可読に宣言する（CORE-FR-013）。各要素は
+`<プラグイン名>` または `<プラグイン名><制約><バージョン>`
+（制約は `>=` / `<=` / `==` / `>` / `<`。バージョンは `1.4` のような部分指定も可）。
+
+```json
+{
+  "name": "bitz-ddd",
+  "version": "0.3.0",
+  "metadata": { "dependencies": ["bitz-sdd>=1.4"] }
+}
+```
+
+- 宣言する場合は3マニフェスト（`.claude-plugin/plugin.json` / `plugin.json` /
+  `.codex-plugin/plugin.json`）で**同値**にする
+- モノレポでは `scripts/release_check.py` が依存先の実在・semver 制約の充足・
+  循環依存の不在を機械検証する
+- init / doctor / update 時の依存確認手順は `lifecycle-skills.md` を参照
+
 ### keywords
 
 **型**: 文字列の配列
