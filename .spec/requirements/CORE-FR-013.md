@@ -1,7 +1,7 @@
 ---
 id: CORE-FR-013
 version: 1.0
-status: implementing
+status: verified
 domain: tooling
 priority: medium
 origin: SI-CORE-007

@@ -2,7 +2,7 @@
 implements: CORE-FR-013
 depends_on: []
 boundary: tests/test_release_check.py, scripts/release_check.py, plugins/plugin-creator/skills/plugin-structure/**, plugins/plugin-creator/**/plugin.json
-status: implementing
+status: done
 ---
 
 ### release_check への依存グラフ検証の追加（テスト先行）
