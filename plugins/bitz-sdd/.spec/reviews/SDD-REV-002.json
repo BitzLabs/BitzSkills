@@ -1,0 +1,14 @@
+{
+  "review_id": "SDD-REV-002",
+  "verdict": "PASS",
+  "aggregate_score": 4.62,
+  "perspective_scores": {"consistency": 4.70, "operations": 4.50, "risk": 4.67, "business": 4.60},
+  "findings_summary": {"total": 4, "after_dedup": 4, "by_priority": {"P0": 0, "P1": 0, "P2": 0, "P3": 4}, "by_severity": {"critical": 0, "major": 0, "minor": 1, "info": 3}},
+  "findings": [
+    {"id": "SYN-001", "priority": "P3", "source_ids": ["RVC-301"], "perspectives": ["consistency"], "title": "章とareaの許容集合を単一表で固定", "recommendation": "docs_inspectと運用規約に同一の許容集合を記述する。"},
+    {"id": "SYN-002", "priority": "P3", "source_ids": ["OPS-401"], "perspectives": ["operations"], "title": "apply後の検収", "recommendation": "strict検査とgit diff確認を移行手順に含める。"},
+    {"id": "SYN-003", "priority": "P3", "source_ids": ["RSK-401"], "perspectives": ["risk"], "title": "全移動計画の一意性検査", "recommendation": "移行元・移行先の重複と既存先衝突を変更前に一括検査する。"},
+    {"id": "SYN-004", "priority": "P3", "source_ids": ["BIZ-401"], "perspectives": ["business"], "title": "major releaseの利用者告知", "recommendation": "移行手順とdry-run例をリリースノートへ記載する。"}
+  ],
+  "conditional_items": []
+}

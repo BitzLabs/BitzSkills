@@ -1,0 +1,11 @@
+{
+  "perspective": "operations",
+  "dimensions": [
+    {"name": "監視・可観測性", "weight": 0.30, "score": 4, "findings": []},
+    {"name": "災害復旧", "weight": 0.30, "score": 5, "findings": []},
+    {"name": "セキュリティ態勢", "weight": 0.20, "score": 5, "findings": []},
+    {"name": "デプロイ安全性", "weight": 0.20, "score": 4, "findings": [{"id": "OPS-401", "severity": "info", "location": "SDD-DSN-002:設計判断6", "title": "移行結果の利用者確認", "description": "機械的な移行成功だけでは文書リンクの意味的妥当性までは保証できない。", "recommendation": "apply後にstrict検査とgit diff確認を手順へ明記する。"}]}
+  ],
+  "weighted_score": 4.50,
+  "summary": "dry-run、全件preflight、hash付き逐次manifest、rollbackにより移行の運用安全性は高い。apply後のstrict検査とdiff確認を検収手順に含める。"
+}

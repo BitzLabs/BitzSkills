@@ -1,0 +1,11 @@
+{
+  "perspective": "risk",
+  "dimensions": [
+    {"name": "分散システムリスク", "weight": 0.30, "score": "N/A", "findings": []},
+    {"name": "障害モード分析", "weight": 0.30, "score": 5, "findings": []},
+    {"name": "Saga設計の妥当性", "weight": 0.25, "score": "N/A", "findings": []},
+    {"name": "データ整合性リスク", "weight": 0.15, "score": 4, "findings": [{"id": "RSK-401", "severity": "minor", "location": "SDD-FR-129:移行", "title": "移行先衝突の完全な事前検出", "description": "既知ファイル名の日本語化と未知ファイルの章移動が同じ移行先を生成すると衝突し得る。", "recommendation": "全移動計画を先に構築し、移行元重複・移行先重複・既存先衝突を変更前に一括検査する。"}]}
+  ],
+  "weighted_score": 4.67,
+  "summary": "単一プロセス・単一ファイルシステムのため分散系とSagaは対象外。全移動計画の一意性検査を実装すれば、主要な文書損失リスクは抑制できる。"
+}
