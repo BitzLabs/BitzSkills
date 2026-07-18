@@ -1,6 +1,9 @@
 # Claude Code のローカル設定（個人環境の権限設定のため共有しない）
 .claude/settings.local.json
 
+# プラグインのプロジェクトローカル状態（env-register のレジストリ等。個人環境のため共有しない）
+.claude/*.local.md
+
 # Python 開発環境（tests/ 実行用。CI では都度インストールする）
 .venv/
 __pycache__/

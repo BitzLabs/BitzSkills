@@ -38,6 +38,7 @@
     "bitz-sdd@bitzskills": true,
     "plugin-creator@bitzskills": true,
     "skill-creator@bitzskills": true,
-    "bitz-ddd@bitzskills": true
+    "bitz-ddd@bitzskills": true,
+    "bitz-flow@bitzskills": true
   }
 }
