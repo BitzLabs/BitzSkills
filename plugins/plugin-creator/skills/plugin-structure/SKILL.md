@@ -2,7 +2,7 @@
 name: plugin-structure
 description: Claude Code / Antigravity 2.0 プラグインのディレクトリ構造・plugin.jsonマニフェスト・コンポーネント（commands/agents/skills/hooks/rules）の自動発見・${CLAUDE_PLUGIN_ROOT}の使い方を案内する。「プラグインを作りたい」「プラグインの構成を知りたい」「plugin.jsonの書き方」「コンポーネントの配置」「自動発見の仕組み」「両対応プラグインにしたい」について聞かれたとき、または新規プラグインの雛形を作るときに使用する。
 metadata:
-  version: "0.5.0"
+  version: "0.6.0"
   author: br7.hide
   created: "2026-07-05"
   updated: "2026-07-18"

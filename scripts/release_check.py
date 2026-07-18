@@ -11,6 +11,8 @@
   5. agy plugin validate plugins/<name>（agy CLI があれば）
   6. CLAUDE.md「委譲レジストリ」節（SSOT）と .claude/agents/*.md の整合
      （agent 実在・ティア整合・ティアはしご健全性・モデル名直書き禁止）
+  7. マニフェスト metadata.dependencies のプラグイン間依存グラフ検証
+     （3マニフェスト同値・依存先の実在・semver 制約の充足・循環の不在。CORE-FR-013）
 
 すべて合格なら exit 0、1つでも FAIL があれば exit 1。
 """
@@ -135,8 +137,91 @@ def check_delegation_registry(repo: Path) -> list[str]:
     return violations
 
 
+DEP_RE = re.compile(r"^(?P<name>[A-Za-z0-9_-]+)(?:(?P<op>>=|<=|==|>|<)(?P<ver>[0-9][0-9A-Za-z.-]*))?$")
+
+
+def parse_version(text: str) -> tuple[int, ...]:
+    """semver 文字列を比較用タプルへ変換する（"1.4" のような部分指定も受理）"""
+    return tuple(int(p) for p in re.findall(r"\d+", text)) or (0,)
+
+
+def constraint_satisfied(op: str, actual: str, required: str) -> bool:
+    a, r = parse_version(actual), parse_version(required)
+    # 部分指定（例 >=1.4）は指定された桁までで比較する
+    a_cmp = a[: len(r)] if len(a) > len(r) else a
+    ops = {
+        ">=": a_cmp >= r, "<=": a_cmp <= r, "==": a_cmp == r,
+        ">": a_cmp > r, "<": a_cmp < r,
+    }
+    return ops[op]
+
+
+def check_dependencies(plugin_manifests: dict[str, dict[str, dict]]) -> None:
+    """metadata.dependencies のプラグイン間依存グラフを検証する（CORE-FR-013）。
+
+    plugin_manifests: {plugin名: {runtime: マニフェスト dict}}
+    依存宣言を持たないプラグインについては何も報告しない（後方互換）。
+    """
+    graph: dict[str, list[str]] = {}
+    for name, manifests in sorted(plugin_manifests.items()):
+        declared = {
+            runtime: (manifest.get("metadata") or {}).get("dependencies")
+            for runtime, manifest in manifests.items()
+        }
+        if all(deps is None for deps in declared.values()):
+            continue  # 宣言なし＝検証対象外（後方互換）
+        values = list(declared.values())
+        check(
+            f"{name}: metadata.dependencies 一致",
+            all(v == values[0] for v in values),
+            " / ".join(f"{rt}={deps}" for rt, deps in declared.items()),
+        )
+        deps = next((v for v in values if v is not None), [])
+        graph[name] = []
+        for entry in deps:
+            m = DEP_RE.match(entry)
+            if not m:
+                check(f"{name}: 依存宣言の書式", False, f"解釈不能: {entry!r}")
+                continue
+            dep_name = m.group("name")
+            graph[name].append(dep_name)
+            target = plugin_manifests.get(dep_name)
+            check(
+                f"{name}: 依存先 {dep_name} の実在",
+                target is not None,
+                "" if target else f"plugins/{dep_name} が無い",
+            )
+            if target and m.group("op"):
+                actual = target["claude"].get("version") or ""
+                check(
+                    f"{name}: 依存 {entry} の semver 制約",
+                    constraint_satisfied(m.group("op"), actual, m.group("ver")),
+                    f"{dep_name} の現行 version は {actual}",
+                )
+
+    # 循環検出（DFS。宣言を持つプラグインから辿る）
+    def find_cycle(node: str, path: list[str]) -> list[str] | None:
+        if node in path:
+            return path[path.index(node):] + [node]
+        for nxt in graph.get(node, []):
+            found = find_cycle(nxt, path + [node])
+            if found:
+                return found
+        return None
+
+    for start in graph:
+        cycle = find_cycle(start, [])
+        if cycle:
+            check("依存グラフ: 循環なし", False, " → ".join(cycle))
+            break
+    else:
+        if graph:
+            check("依存グラフ: 循環なし", True)
+
+
 def main() -> None:
     plugin_dirs = sorted(p for p in (REPO / "plugins").iterdir() if p.is_dir())
+    plugin_manifests: dict[str, dict[str, dict]] = {}
 
     # 1. 3マニフェストの存在・name・version 整合
     for d in plugin_dirs:
@@ -153,6 +238,7 @@ def main() -> None:
             runtime: json.loads(path.read_text(encoding="utf-8"))
             for runtime, path in manifests.items()
         }
+        plugin_manifests[d.name] = data
         names = {runtime: manifest.get("name") for runtime, manifest in data.items()}
         versions = {runtime: manifest.get("version") for runtime, manifest in data.items()}
         check(
@@ -213,6 +299,9 @@ def main() -> None:
             check("委譲レジストリ: " + v, False)
     else:
         check("委譲レジストリ整合", True)
+
+    # 7. プラグイン間依存グラフ（metadata.dependencies）
+    check_dependencies(plugin_manifests)
 
     print()
     for w in warnings:

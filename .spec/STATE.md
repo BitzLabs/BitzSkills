@@ -78,3 +78,8 @@
 - 2026-07-18 CORE-CON-009: approved → implementing (agent（タスク着手に伴う遷移）)
 - 2026-07-18 CORE-TSK-015: implementing → done (agent（release_check PASS・spec_inspect 全6WS PASS・pytest 159 green）)
 - 2026-07-18 CORE-CON-009: implementing → verified (agent（reference 目視確認 + 機械チェック PASS）)
+- 2026-07-18 CORE-FR-013: draft → approved (human)
+- 2026-07-18 CORE-FR-013: approved → implementing (agent)
+- 2026-07-18 CORE-TSK-016: pending → implementing (agent)
+- 2026-07-18 CORE-FR-013: implementing → verified (agent（tests/test_release_check.py 14件green・実リポジトリ release_check PASS・全pytest 165件green）)
+- 2026-07-18 CORE-TSK-016: implementing → done (agent)
