@@ -2,7 +2,7 @@
 name: flow-worktree
 description: BitzFlow の worktree 並列運用スキル。複数エージェント（または複数作業）を並列で走らせるときの「1エージェント = 1 worktree = 1ブランチ」原則と、worktree の作成・マージバック・後片付け・失敗時破棄の定型手順を規定する。ユーザーが「worktree」「並列で開発」「複数エージェントで作業」「失敗したからやり直したい」に言及したとき、または並列作業の分離手段が必要になったときに使用する。フロー全体の選択とコミット規約は flow-core、Issue 駆動 PR は flow-pr が担当する。
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
   author: br7.hide
   created: "2026-07-18"
   updated: "2026-07-18"
@@ -68,6 +68,24 @@ git branch -D feat/123-topic                    # マージしていないので
   `git reset --hard` も `git push --force` も**一切不要**（ガードレールとも衝突しない）
 - 再投入時は作業単位の定義を見直してから新しい worktree を作り直す。
   同じ失敗を繰り返す場合は作業の粒度か前提に問題がある — 分割し直すか人間に相談する
+
+## 同梱スクリプト（worktree_ops.py）
+
+上記1〜4の定型手順は同梱の `scripts/worktree_ops.py` で決定的に実行できる
+（Python 標準ライブラリのみ・スキル本文の読み込み不要。本文は「いつ・何を」の判断を担い、
+コマンド列の組み立てはスクリプトに固定する）:
+
+```bash
+python3 scripts/worktree_ops.py add 123 --branch feat/123-topic          # 既定は dry-run（表示のみ）
+python3 scripts/worktree_ops.py add 123 --branch feat/123-topic --execute
+python3 scripts/worktree_ops.py list
+python3 scripts/worktree_ops.py cleanup 123 --branch feat/123-topic --execute --yes   # 破棄・削除系は --yes 必須
+python3 scripts/worktree_ops.py discard 123 --branch feat/123-topic --execute --yes
+```
+
+- 状態変更系（add / cleanup / discard）は**既定で dry-run**。`--execute` で実行し、
+  破棄・削除を伴う cleanup / discard はさらに `--yes` が無ければ何も実行しない（終了コード 2）
+- ガードレール禁止操作（`git reset --hard` / `git push --force` 等）は実装に含まれない
 
 ## 並列度の管理
 

@@ -2,7 +2,7 @@
 name: flow-pr
 description: BitzFlow の GitHub Issue 駆動 PR フロースキル。Issue 起票 → feature ブランチ → Draft PR → CI ゲート → レビュー → squash merge の基本フロー、PR タイトル規約、未マージ依存の原則（スタック PR の禁止と例外時の安全手順）を規定する。ユーザーが「Issue 駆動」「PR フロー」「Draft PR」「squash merge」「プルリクの運用」「スタック PR」に言及したとき、またはチーム開発・公開リポジトリでの開発フローが必要になったときに使用する。フロー全体の選択とコミット規約は flow-core、worktree 並列は flow-worktree が担当する。
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
   author: br7.hide
   created: "2026-07-18"
   updated: "2026-07-18"
@@ -42,6 +42,19 @@ Issue 起票 → feat/<issue#>-<slug> ブランチ → Draft PR → CI ゲート
 
 - **squash merge に統一**し「1 Issue（1 作業単位）= 1 コミット」を保つ
 - マージコミットのタイトル = PR タイトル（Conventional Commits 準拠を CI で担保）
+
+## 同梱スクリプト（pr_helper.py）
+
+PR 本文（目的 / 変更点 / 検証結果）の雛形は同梱の `scripts/pr_helper.py` で生成できる
+（生成のみで `gh` 等の外部コマンドは実行しない・Python 標準ライブラリのみ・スキル本文の読み込み不要）:
+
+```bash
+python3 scripts/pr_helper.py --purpose "認証を実装" --change "トークン更新" --verification "pytest 全件 green"
+python3 scripts/pr_helper.py --title "feat(auth): 実装" --closes 123 --implements CORE-FR-015 --output PR.md
+```
+
+- 未指定の節は `TODO` プレースホルダになる。`Closes #N` / `Implements:` は指定時のみ末尾に出す
+- 生成した本文の確認と `gh pr create` の実行は人間またはエージェントの判断で行う
 
 ## 未マージ依存の原則 — 前提を先に land する
 
