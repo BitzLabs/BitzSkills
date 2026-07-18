@@ -1,0 +1,24 @@
+{
+  "name": "bitz-flow",
+  "version": "0.1.0",
+  "description": "BitzFlow — フロー選択・コミット規約、worktree 並列運用、Issue 駆動 PR フローを提供する Git / GitHub 開発フロープラグイン",
+  "author": {
+    "name": "BitzLabs"
+  },
+  "repository": "https://github.com/BitzLabs/BitzSkills",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Bitz Flow",
+    "shortDescription": "Git / GitHub 開発フローの規定と実行",
+    "longDescription": "状況に応じたフロー選択（ブランチ / worktree 並列 / Issue 駆動 PR）、Conventional Commits のコミット規約、worktree の作成・破棄・マージバック、squash merge 運用を提供します。",
+    "developerName": "BitzLabs",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "このプロジェクトに合った Git 開発フローを選んで運用してください。"
+    ]
+  }
+}

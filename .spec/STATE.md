@@ -83,3 +83,8 @@
 - 2026-07-18 CORE-TSK-016: pending → implementing (agent)
 - 2026-07-18 CORE-FR-013: implementing → verified (agent（tests/test_release_check.py 14件green・実リポジトリ release_check PASS・全pytest 165件green）)
 - 2026-07-18 CORE-TSK-016: implementing → done (agent)
+- 2026-07-18 CORE-FR-014: draft → approved (human)
+- 2026-07-18 CORE-FR-014: approved → implementing (agent)
+- 2026-07-18 CORE-TSK-017: pending → implementing (agent)
+- 2026-07-18 CORE-TSK-018: pending → implementing (agent)
+- 2026-07-18 CORE-TSK-019: pending → implementing (agent)
