@@ -12,7 +12,7 @@ superseded_by: null
 
 <!--
   非難なし (blameless) のポストモーテム。事象ごとに1ファイル。
-  恒久的な教訓は LESSONS_LEARNED.md に1行で昇格させ、相互リンクする。
+  恒久的な教訓は 教訓.md に1行で昇格させ、相互リンクする。
 -->
 
 # Postmortem: <一行タイトル>
@@ -31,7 +31,7 @@ superseded_by: null
 <どう気づき、どう収束させたか>
 
 ## 再発防止
-- [ ] <アクション>（→ 恒久教訓は LESSONS_LEARNED.md / 契約変更は ADR / 検証は .spec/）
+- [ ] <アクション>（→ 恒久教訓は 教訓.md / 契約変更は ADR / 検証は .spec/）
 
 ## 学び
-<LESSONS_LEARNED.md に昇格する1行の要約>
+<教訓.md に昇格する1行の要約>

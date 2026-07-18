@@ -12,7 +12,7 @@ superseded_by: null
 
 <!--
   sdd-discovery が生成する proposed ドラフト。
-  同一テンプレが sdd-docs の docs-templates/01-context/ にもある（変更時は両方を同期すること）。
+  同一テンプレが sdd-docs の docs-templates/docs/00_はじめに/ にもある（変更時は両方を同期すること）。
   ガードレールの数値は後段で NFR（benchmark/load-test）に派生する — 検証可能な形で書く。
 -->
 

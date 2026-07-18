@@ -1,17 +1,17 @@
 ---
 name: sdd-discovery
-description: BitzSDD の上流探索（ディスカバリー）を行うスキル。プロダクトビジョン（Vision Board / PR-FAQ）・成功指標（North Star Metric）・スコープ（MoSCoW / RICE）・ペルソナとジャーニー（JTBD）・ポジショニングを順に確立し、仮説検証ゲート（Go / No-Go）で設計着手可否を裁定する。成果物はすべて .spec/discovery/ 配下に作成し、docs/01-context/ へは sdd-docs の pull コマンドを用いて同期・展開する。
+description: BitzSDD の上流探索（ディスカバリー）を行うスキル。プロダクトビジョン（Vision Board / PR-FAQ）・成功指標（North Star Metric）・スコープ（MoSCoW / RICE）・ペルソナとジャーニー（JTBD）・ポジショニングを順に確立し、仮説検証ゲート（Go / No-Go）で設計着手可否を裁定する。成果物はすべて .spec/discovery/ 配下に作成し、docs/00_はじめに/ へは sdd-docs の pull コマンドを用いて同期・展開する。ユーザーが「ディスカバリー」「ビジョン」「成功指標」「ペルソナ」「スコープ」に言及したときに使用する。
 metadata:
-  version: "0.2.2"
+  version: "1.0.0"
   author: br7.hide
   created: "2026-07-08"
-  updated: "2026-07-10"
+  updated: "2026-07-18"
 ---
 
 # SDD Discovery — 上流探索
 
 BitzSDDにおける上流探索フェーズを担当します。
-「なぜ作るか・誰のためか・何をやらないか」を定義したマスターファイルを `.spec/discovery/` 内に記述・検証し、最終的に `sdd-docs` スキルの同期（pull）機能で `docs/01-context/` へ展開します。
+「なぜ作るか・誰のためか・何をやらないか」を定義したマスターファイルを `.spec/discovery/` 内に記述・検証し、最終的に `sdd-docs` スキルの同期（pull）機能で `docs/00_はじめに/` へ展開します。
 
 ## 1. 前提
 *   作業台帳は `assets/discovery-worksheet.md` をコピーして `.spec/discovery/worksheet.md` として使用します。
@@ -26,11 +26,11 @@ BitzSDDにおける上流探索フェーズを担当します。
 
 | # | ステップ | 成果物（マスターファイル） | docs/ 同期先 |
 |---|---|---|---|
-| 1 | ビジョン（Vision Board + PR-FAQ 圧力試験） | `.spec/discovery/vision.md` | `docs/01-context/mission-vision.md` |
-| 2 | 成功指標（NSM + 入力指標 + ガードレール） | `.spec/discovery/metrics.md` | `docs/01-context/success-metrics.md` |
-| 3 | スコープ（制約 → Kano → RICE → MoSCoW） | `.spec/discovery/scope.md` | `docs/01-context/non-goals.md` / `constraints.md` |
-| 4 | ペルソナとジャーニー（JTBD → カード） | `.spec/discovery/personas.md` | `docs/01-context/personas-journeys.md` |
-| 5 | ポジショニング（競合代替 → PoD/PoP） | `.spec/discovery/positioning.md` | `docs/01-context/positioning.md` |
+| 1 | ビジョン（Vision Board + PR-FAQ 圧力試験） | `.spec/discovery/vision.md` | `docs/00_はじめに/ミッション・ビジョン.md` |
+| 2 | 成功指標（NSM + 入力指標 + ガードレール） | `.spec/discovery/metrics.md` | `docs/00_はじめに/成功指標.md` |
+| 3 | スコープ（制約 → Kano → RICE → MoSCoW） | `.spec/discovery/scope.md` | `docs/00_はじめに/対象外.md` / `制約.md` |
+| 4 | ペルソナとジャーニー（JTBD → カード） | `.spec/discovery/personas.md` | `docs/00_はじめに/ペルソナ・ジャーニー.md` |
+| 5 | ポジショニング（競合代替 → PoD/PoP） | `.spec/discovery/positioning.md` | `docs/00_はじめに/ポジショニング.md` |
 | 6 | 仮説検証ゲート（Go / No-Go 裁定） | `.spec/discovery/assumptions.md` | - (レビュー/レポート集計対象) |
 
 各ステップの完了後、`python3 scripts/sdd_sync.py pull` を実行して `docs/` ディレクトリにドキュメントとして展開します。

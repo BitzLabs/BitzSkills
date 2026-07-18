@@ -1,14 +1,14 @@
 ---
 id: SDD-FR-020
 version: 1.0
-status: verified
+status: deprecated
 domain: upstream
 priority: high
 origin: skills/sdd-discovery/SKILL.md v0.2.2（reverse-derived）
 verification_method: example-test
 derived_from:
 supersedes:
-superseded_by:
+superseded_by: SDD-FR-126
 confidence: high
 ---
 
@@ -22,3 +22,4 @@ confidence: high
 - **Revision History**:
   - 1.0 (2026-07-12) 初版（実装 v1.4.5 からの reverse-derived。ワークスペース新設に伴う逆起票）
   - 1.0 (2026-07-12) 人間裁定により approved 化（チャット指示）
+  - 1.0 (2026-07-18) 日本語章への後継 SDD-FR-126 がgreenとなり、人間裁定でdeprecated化

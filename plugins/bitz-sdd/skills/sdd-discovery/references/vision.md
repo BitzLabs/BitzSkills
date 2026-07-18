@@ -1,6 +1,6 @@
 # ビジョン（Vision Board + PR-FAQ）
 
-両方使う: Vision Board が核を定め、PR-FAQ が圧力試験する。結論は docs/01-context/mission-vision.md の proposed 更新に落とす。
+両方使う: Vision Board が核を定め、PR-FAQ が圧力試験する。結論は docs/00_はじめに/ミッション・ビジョン.md の proposed 更新に落とす。
 
 ## Product Vision Board（Roman Pichler）— 5要素
 
@@ -35,7 +35,7 @@ FAQ（2層）:
 
 ## ドラフトへの落とし込み
 
-- Mission / Vision / Values の結論 → mission-vision.md（proposed 更新）
+- Mission / Vision / Values の結論 → ミッション・ビジョン.md（proposed 更新）
 - PR-FAQ 全文と TAM/SAM/SOM 等の作業内容 → `.spec/discovery/pr-faq.md`（短命）
 - Go/No-Go 基準 → 仮説として `.spec/discovery/worksheet.md` の仮説表に転記
 - 根拠のない数値は書かず `TBD` として Open Questions に残す

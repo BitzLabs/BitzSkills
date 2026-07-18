@@ -1,6 +1,6 @@
 # 可観測性・SLO 設計（Google SRE）
 
-サービスレベル目標を顧客期待から導き、監視・アラートに落とす。結論は docs/05-operations/OPERATIONS.md の proposed ドラフトへ。
+サービスレベル目標を顧客期待から導き、監視・アラートに落とす。結論は docs/05_リリース・運用/運用・リリース.md の proposed ドラフトへ。
 
 ## SLI / SLO / SLA — この順で導出する
 

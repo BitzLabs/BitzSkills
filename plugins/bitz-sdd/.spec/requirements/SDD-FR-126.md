@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-126
 version: 1.0
-status: implementing
+status: verified
 domain: sync
 priority: high
 origin: SI-SDD-012

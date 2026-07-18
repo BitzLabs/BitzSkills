@@ -2,7 +2,7 @@
 implements: SDD-FR-125, SDD-FR-126, SDD-FR-127, SDD-FR-128, SDD-FR-129
 depends_on: [SDD-TSK-012, SDD-TSK-013]
 boundary: plugins/bitz-sdd/skills, plugins/bitz-sdd/.spec, plugins/bitz-sdd/.claude-plugin/plugin.json, plugins/bitz-sdd/plugin.json, plugins/bitz-sdd/.codex-plugin/plugin.json, .claude-plugin/marketplace.json
-status: pending
+status: done
 ---
 
 ### 文書契約の結線とmajor release

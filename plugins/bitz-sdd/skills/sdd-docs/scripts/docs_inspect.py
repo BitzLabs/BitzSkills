@@ -8,8 +8,8 @@ spec_inspect.py（.spec/ 側）と対になる。stdlib のみ。
   - 日本語6章、宣言式の任意章・管理対象外、章と機械 area の対応
   - status: superseded のとき superseded_by 必須、かつ実在 DOC-id を指すこと
   - MASTER.md レジストリ ⇔ 実ファイルの照合（ghost / orphan）
-  - project_type 整合（MASTER が library/both のとき public-api.md 必須 ほか）
-  - （任意）requirements.yaml の decided_by ADR ⇔ decisions/ADR-*.md のブリッジ
+  - project_type 整合（MASTER が library/both のとき 公開API.md 必須 ほか）
+  - （任意）requirements の decided_by ADR ⇔ 意思決定/ADR-*.md のブリッジ
 
 使い方:
   python docs_inspect.py <repo-root>            # → docs-inspection-report.md
@@ -315,7 +315,8 @@ def check_registry(docs_dir, docs, registry, excluded_paths=()):
         if base == "MASTER.md":   # レジストリ本体は自身に載らない
             continue
         # ADR 実体・postmortem 実体は別表/別管理のため orphan 対象外
-        if "/decisions/" in ("/" + rel.replace("\\", "/")) or "/postmortems/" in ("/" + rel.replace("\\", "/")):
+        normalized_rel = "/" + rel.replace("\\", "/")
+        if "/意思決定/" in normalized_rel or "/ポストモーテム/" in normalized_rel:
             continue
         if os.path.normpath(rel) not in listed:
             fs.append(Finding("WARN", "REG_ORPHAN", rel,

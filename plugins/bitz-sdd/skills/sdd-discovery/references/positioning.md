@@ -1,6 +1,6 @@
 # ポジショニング（競合代替 → PoD/PoP → ステートメント）
 
-差別化の宣言を導出する。結論は docs/01-context/positioning.md（proposed、テンプレは assets/docs-draft-positioning.md）へ。競合の詳細調査はこのスキルの範囲外 — ここでは**簡易 intake** で足りる分だけ確認する。
+差別化の宣言を導出する。結論は docs/00_はじめに/ポジショニング.md（proposed、テンプレは assets/docs-draft-positioning.md）へ。競合の詳細調査はこのスキルの範囲外 — ここでは**簡易 intake** で足りる分だけ確認する。
 
 ## 競合代替の簡易 intake（5行で足りる）
 

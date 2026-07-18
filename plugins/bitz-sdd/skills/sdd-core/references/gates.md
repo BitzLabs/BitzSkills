@@ -29,7 +29,7 @@
 
 ### 2. Design Gate（proposed → active）
 
-docs/ の proposed ドラフト（01-context / 02-design）を人間が active 化する裁定点。`sdd-review` の統合判定（PASS / CONDITIONAL_PASS / FAIL）とレポートを添えて提示する。CONDITIONAL_PASS の条件リストは STATE.md で消化を追跡し、未消化のまま該当節から要件を派生しない。FAIL の設計から派生を始めない。
+docs/ の proposed ドラフト（`00_はじめに` / `01_システム仕様` / `02_ユースケース` / `03_設計仕様`）を人間が active 化する裁定点。`sdd-review` の統合判定（PASS / CONDITIONAL_PASS / FAIL）とレポートを添えて提示する。CONDITIONAL_PASS の条件リストは STATE.md で消化を追跡し、未消化のまま該当節から要件を派生しない。FAIL の設計から派生を始めない。
 
 ### 3. Promotion Gate（verified → promoted）
 

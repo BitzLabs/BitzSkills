@@ -30,7 +30,7 @@ superseded_by: null
 - [<version> migration](migration/<version>.md) — <要点>
 
 <!--
-  library では利用者向けの移行手順が特に重要。public-api.md の非推奨→削除に対応させる。
+  library では利用者向けの移行手順が特に重要。`../03_設計仕様/公開API.md` の非推奨→削除に対応させる。
   app では外部 API 更新への追随手順をここに集約する。
 -->
 

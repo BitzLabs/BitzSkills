@@ -2,7 +2,7 @@
 name: sdd-core
 description: BitzSDD — 仕様駆動開発（SDD）ワークフローを運用するメインスキル。要件定義・仕様作成・実装・検証・完了処理のすべてをこの規律に従って実行する。ユーザーが「仕様駆動」「SDD」「要件」「EARS」「spec」「タスク分解」「feature実装」に言及したとき、リポジトリに .spec/ や AGENTS.md が存在するとき、または新機能の設計・実装・検証・リリース処理を依頼されたときは、明示的な指示がなくても必ずこのスキルを使うこと。要件の変更・廃止・番号管理・テスト失敗時の対応・ドキュメント更新もすべて本スキルの管轄。
 metadata:
-  version: "1.13.4"
+  version: "2.0.0"
   author: br7.hide
   created: "2026-07-07"
   updated: "2026-07-18"
@@ -24,7 +24,7 @@ metadata:
 
 ```text
 docs/                        永続・人間ナラティブ（.spec から自動生成 / 逆同期対象）
-  MASTER.md / 01-context/ / 02-design/(ARCHITECTURE, DECISIONS) / 06-reference/ / 08-knowledge/LESSONS_LEARNED.md
+  MASTER.md / 00_はじめに/ / 01_システム仕様/ / 02_ユースケース/ / 03_設計仕様/ / 04_テスト仕様/ / 05_リリース・運用/
 .spec/                       仕様・設計・検証のマスター
   PROJECT.md / ROADMAP.md
   discovery/                 上流探索成果物 (DSC-*.md)
