@@ -36,7 +36,7 @@ scripts/             # エージェント共用の運用スクリプト（bump /
 
 ### 禁止（実行しない）
 
-- `rm -rf` / `git push --force` / `git reset --hard` / `git clean -f`
+- `rm -rf` / `git push --force` / `git reset --hard` / `git clean -f` / `sudo`
 - `main` への直接コミット（変更時は必ずブランチを切る）
 - 認証情報・トークン類（`~/.claude/.credentials.json` 等）の読み取り・出力
 
