@@ -2,10 +2,10 @@
 name: skill-packager
 description: エージェントスキルのパッケージ管理を行う。ライブラリから実環境へのインストール（コピー/シンボリックリンク/プラグイン一括）、frontmatterのversion比較によるバージョンアップ、アンインストール、配布（zip化・skill-creatorプラグイン）を担当する。「スキルを配置して」「インストールして」「アップデートして」「アンインストールして」「配布用にまとめて」「プラグインとして入れたい」と言われた場合に使用する。スキルの作成・修正は行わない。
 metadata:
-  version: "0.3.2"
+  version: "0.3.3"
   author: br7.hide
   created: "2026-07-05"
-  updated: "2026-07-15"
+  updated: "2026-07-18"
 ---
 
 # skill-packager
