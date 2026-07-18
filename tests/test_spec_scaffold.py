@@ -217,3 +217,19 @@ def test_design_invalid_status_fails(tmp_path):
     res = run(tmp_path, "design", "--prefix", "DSN", "--status", "bogus")
     assert res.returncode != 0, "語彙外の status を弾くべき"
     assert snapshot(tmp_path) == before, "失敗時は雛形を生成しない"
+
+
+def test_design_number_skips_suffixed_existing_file(tmp_path):
+    """既存の DSN ファイルが説明的サフィックス付き（例: DSN-001-delegation-registry.md）でも、
+    採番はそれを走査対象に含め番号が重複しない（SI-SDD-006 の回帰）。"""
+    design_dir = tmp_path / ".spec" / "design"
+    design_dir.mkdir(parents=True)
+    (design_dir / "DSN-001-delegation-registry.md").write_text(
+        "---\nid: DSN-001\ntitle: \"既存\"\nstatus: active\n---\n", encoding="utf-8")
+    res = run(tmp_path, "design", "--prefix", "DSN", "--title", "新規設計")
+    assert res.returncode == 0, res.stderr
+    # 期待ファイル名を直書きすると spec_inspect がリポジトリに実在しない設計 ID への
+    # 幽霊参照として検出するため、番号から組み立てる
+    expected = design_dir / f"DSN-{2:03d}.md"
+    assert expected.exists(), "サフィックス付き既存ファイルの番号を見逃してはならない"
+    assert not (design_dir / "DSN-001.md").exists(), "既存の DSN-001 と ID が重複してはならない"

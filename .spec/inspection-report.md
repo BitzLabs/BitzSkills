@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-18)
 
-成果物数: 21 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
+成果物数: 22 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -19,6 +19,7 @@
 - CORE-CON-005
 - CORE-CON-006
 - CORE-CON-007
+- CORE-CON-008
 - CORE-FR-001
 - CORE-FR-002
 - CORE-FR-006
@@ -41,6 +42,7 @@
 | CORE-CON-005 | verified | governance | manual-check | 1 | 1 |
 | CORE-CON-006 | verified | governance | example-test | 1 | 1 |
 | CORE-CON-007 | verified | governance | manual-check | 1 | 1 |
+| CORE-CON-008 | verified | governance | manual-check | 1 | 1 |
 | CORE-FR-001 | verified | governance | manual-check | 1 | 1 |
 | CORE-FR-002 | verified | tooling | example-test | 1 | 1 |
 | CORE-FR-003 | verified | tooling | example-test | 1 | 3 |

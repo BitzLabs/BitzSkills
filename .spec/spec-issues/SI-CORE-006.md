@@ -23,3 +23,5 @@ status: accepted
 - **影響推定・ロールバック**: 規約文書と draft 要件の追加のみ。単独 revert 可能。
 - **依存**: なし（SI-CORE-004/005 と並行可）。
 - **裁定（2026-07-13, 人間）**: bitz-env の **env-destroy → env-uninstall へ改名**を採用（本文の「改名しない」方針から変更）。標準名 uninstall に合わせる。改名は bitz-env への波及（参照・ドキュメント更新＋bump）を伴うため、006 実装時に bitz-env ワークスペースへ委任して扱う。
+- **実施**: 2026-07-18 CORE-CON-008 として要件化・verified 済み（CORE-TSK-014: plugin-creator に
+  `references/lifecycle-skills.md` 新設 / ENV-TSK-013: bitz-env の env-destroy → env-uninstall 改名）。

@@ -46,7 +46,7 @@
 | ENV-DSC-004 | draft |  |  | 0 | 0 |
 | ENV-DSC-005 | draft |  |  | 0 | 0 |
 | ENV-DSC-006 | draft |  |  | 0 | 0 |
-| ENV-DSN-001 | approved | deploy |  | 0 | 1 |
+| ENV-DSN-001 | approved | deploy |  | 0 | 2 |
 | ENV-FR-001 | verified | guardrail | example-test | 2 | 3 |
 | ENV-FR-002 | verified | guardrail | example-test | 2 | 3 |
 | ENV-FR-003 | verified | deploy | example-test | 1 | 2 |
@@ -56,7 +56,7 @@
 | ENV-FR-007 | verified | deploy | example-test | 1 | 2 |
 | ENV-FR-008 | verified | guardrail | example-test | 1 | 2 |
 | ENV-FR-009 | verified | deploy | example-test | 1 | 2 |
-| ENV-FR-010 | verified | deploy | example-test | 2 | 3 |
+| ENV-FR-010 | verified | deploy | example-test | 2 | 4 |
 | ENV-NFR-001 | verified | guardrail | benchmark | 1 | 2 |
 | ENV-NFR-002 | verified | guardrail | manual-check | 1 | 2 |
 | REV-001 | approved | governance |  | 0 | 0 |
