@@ -3,38 +3,39 @@
 `docs/`（人間ナラティブ / 遅く変わる意図）側の起動テンプレート。既存の `.spec/` 側
 （EARS 契約・実行状態）、ADR、`sdd-core` スキルと整合する設計。
 
-## 収録物（最大規模構成）
+## 収録物（必須6章 + 任意1章）
 
 ```
 docs/
   _conventions.md         ← frontmatter・ライフサイクル・配置ルール（最初に読む）
   _scaling.md             ← 最小→最大規模の拡張と docs↔.spec 境界
-  MASTER.md               ← 索引。ここで project_type を宣言（★=最小起動 / ☆=library必須）
-  01-context/             mission-vision★ / glossary★ / non-goals★ / constraints / stakeholders
-  02-design/              ARCHITECTURE★ / domain-model / public-api☆ / security-model / decisions/
-  03-implementation/      PATTERNS（恒久実装規約）
-  04-quality/             TESTING（テスト戦略）
-  05-operations/          OPERATIONS（運用・リリース）
-  06-reference/           EXTERNAL-APIS / migration/
-  07-governance/          GOVERNANCE（プロセス・方針・ロードマップ意図）
-  08-knowledge/           LESSONS_LEARNED★ / postmortems/
+  MASTER.md               ← 索引。project_type / optional_chapters / excluded_paths を宣言
+  00_はじめに/            ビジョン・スコープ・指標・ペルソナ・用語・ガバナンス
+  01_システム仕様/        機能・非機能・制約の人間向け索引
+  02_ユースケース/        利用シナリオと個別ユースケース
+  03_設計仕様/            アーキテクチャ・API・データ・セキュリティ・ADR・実装規約
+  04_テスト仕様/          テスト戦略・品質ゲート
+  05_リリース・運用/      リリース・SLO・runbook・postmortem・教訓
+
+optional/
+  06_リファレンス/        外部API・CLI/SDK・移行ガイド（必要な場合のみdocs/へコピー）
 ```
 
-最小起動は ★ の6点（library は ☆ public-api を足して7点）。03〜07 は必要になった層だけ
-`_scaling.md` の拡張トリガーに従って足す。空フォルダを先に切らない。
+必須6章は常に維持する。個々の文書は必要性に応じて増減できるが、各章の索引文書は残す。
+`06_リファレンス` は `MASTER.md` に `optional_chapters: reference` を宣言した場合だけ追加する。
 
 ## app と library の使い分け
 
 - 各テンプレの frontmatter `project_type` を `app` / `library` に設定する。
 - 本文中の `<!-- app 固有 -->` / `<!-- library 固有 -->` ブロックは、該当しない側を削除。
-- **app**: `public-api.md` は不要（削除可）。ARCHITECTURE の app ブロックを使う。
-- **library**: `public-api.md` は**必須**。C#/TS/Rust の互換性項を埋める。
+- **app**: `公開API.md` は不要（削除可）。`アーキテクチャ.md` の app ブロックを使う。
+- **library**: `公開API.md` は**必須**。C#/TS/Rust の互換性項を埋める。
 
-## 最小起動セット → 段階拡張
+## 管理対象外と段階拡張
 
-まずは MASTER + mission-vision + glossary + non-goals + ARCHITECTURE + LESSONS の6点で開始
-（library はこれに public-api を足して7点）。成長したら `06-reference/`（外部 API・移行ガイド）
-などを追加する。「増やしすぎない」ことがドリフト防止の要。
+調査メモやアーカイブを正式ナラティブと分ける場合は、docsルート相対パスを
+`MASTER.md` の `excluded_paths` にカンマ区切りで宣言する。必須6章と任意章自身は除外できない。
+外部API・CLI/SDK・移行ガイドが増えた時だけoptionalテンプレートを展開する。
 
 ## 既存フレームワークとの接続
 

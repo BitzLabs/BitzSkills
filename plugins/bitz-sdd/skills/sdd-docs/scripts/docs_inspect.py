@@ -5,7 +5,7 @@ docs_inspect.py — docs/ 側（人間ナラティブ層）の構造検証。
 spec_inspect.py（.spec/ 側）と対になる。stdlib のみ。
 検査対象:
   - frontmatter 必須項目・enum・id 形式・semver・日付
-  - id 重複、フォルダ番号と area の一致（03-implementation → area=implementation 等）
+  - 日本語6章、宣言式の任意章・管理対象外、章と機械 area の対応
   - status: superseded のとき superseded_by 必須、かつ実在 DOC-id を指すこと
   - MASTER.md レジストリ ⇔ 実ファイルの照合（ghost / orphan）
   - project_type 整合（MASTER が library/both のとき public-api.md 必須 ほか）
@@ -36,18 +36,24 @@ PTYPE_ENUM = {"app", "library", "both"}
 REQUIRED_FM = ["id", "title", "status", "version", "changeImpact",
                "project_type", "updated", "owner"]
 
-# フォルダ番号プレフィックス → area 名
-FOLDER_AREA = {
-    "01-context": "context",
-    "02-design": "design",
-    "03-implementation": "implementation",
-    "04-quality": "quality",
-    "05-operations": "operations",
-    "06-reference": "reference",
-    "07-governance": "governance",
-    "08-knowledge": "knowledge",
+# 日本語の章と、既存 DOC-id で維持する英語 area の許容集合。
+# 章と area は意図的に多対多であり、SDD-DSN-002 の表と一致させること。
+FOLDER_AREAS = {
+    "00_はじめに": {"context", "governance"},
+    "01_システム仕様": {"system"},
+    "02_ユースケース": {"usecase"},
+    "03_設計仕様": {"design", "implementation"},
+    "04_テスト仕様": {"quality"},
+    "05_リリース・運用": {"operations", "knowledge"},
+    "06_リファレンス": {"reference"},
 }
-VALID_AREAS = set(FOLDER_AREA.values())
+MANDATORY_FOLDERS = tuple(list(FOLDER_AREAS)[:6])
+OPTIONAL_FOLDERS = {"reference": "06_リファレンス"}
+LEGACY_FOLDERS = {
+    "01-context", "02-design", "03-implementation", "04-quality",
+    "05-operations", "06-reference", "07-governance", "08-knowledge",
+}
+VALID_AREAS = set().union(*FOLDER_AREAS.values())
 
 ID_RE = re.compile(r"^DOC-(?:master|[a-z0-9]+(?:-[a-z0-9]+)*)$")
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
@@ -87,7 +93,9 @@ def parse_frontmatter(text: str):
         if not m:
             continue
         key, val = m.group(1), m.group(2).strip()
-        if val and val[0] in "\"'":
+        if val.startswith("#"):
+            val = None
+        elif val and val[0] in "\"'":
             # クォート文字列: 閉じクォートまでを値とし、以降（コメント）は捨てる
             q = val[0]
             end = val.find(q, 1)
@@ -118,15 +126,32 @@ def is_exempt(basename: str) -> bool:
 
 
 def folder_key(rel_path: str) -> str | None:
-    """rel_path の先頭ディレクトリが FOLDER_AREA のキーなら返す。"""
+    """rel_path の先頭ディレクトリが正規章なら返す。"""
     parts = rel_path.replace("\\", "/").split("/")
-    return parts[0] if parts and parts[0] in FOLDER_AREA else None
+    return parts[0] if parts and parts[0] in FOLDER_AREAS else None
 
 
-def collect_docs(docs_dir: str):
+def parse_csv(value) -> list[str]:
+    if not value:
+        return []
+    return [item.strip() for item in str(value).split(",") if item.strip()]
+
+
+def is_under(rel_path: str, parents) -> bool:
+    rel = rel_path.replace("\\", "/").strip("/")
+    return any(rel == parent or rel.startswith(parent + "/") for parent in parents)
+
+
+def collect_docs(docs_dir: str, excluded_paths=()):
     """[(rel_path, abs_path, frontmatter_or_None, exempt_bool)] を返す。"""
     out = []
-    for dirpath, _dirs, files in os.walk(docs_dir):
+    for dirpath, dirs, files in os.walk(docs_dir):
+        rel_dir = os.path.relpath(dirpath, docs_dir)
+        rel_dir = "" if rel_dir == "." else rel_dir.replace("\\", "/")
+        dirs[:] = [
+            name for name in dirs
+            if not is_under("/".join(filter(None, (rel_dir, name))), excluded_paths)
+        ]
         for f in sorted(files):
             if not f.endswith(".md"):
                 continue
@@ -166,15 +191,73 @@ def check_frontmatter(rel, fm, docid_area):
     did = fm.get("id")
     if did is not None and not ID_RE.match(str(did)):
         fs.append(Finding("ERROR", "ID_FORMAT", rel, f"id '{did}' は DOC-<area>-<slug> 形式でない"))
-    # id の area 部と実フォルダの一致
+    # id の area 部と実フォルダの許容集合との一致
     fk = folder_key(rel)
     if did and fk and did != "DOC-master":
         m = re.match(r"^DOC-([a-z0-9]+)-", str(did))
         area = m.group(1) if m else None
-        if area and area in VALID_AREAS and area != FOLDER_AREA[fk]:
+        if area and area in VALID_AREAS and area not in FOLDER_AREAS[fk]:
             fs.append(Finding("ERROR", "AREA_MISMATCH", rel,
-                              f"id area '{area}' がフォルダ {fk}(→{FOLDER_AREA[fk]}) と不一致"))
+                              f"id area '{area}' が章 {fk}(許容: {sorted(FOLDER_AREAS[fk])}) と不一致"))
     return fs
+
+
+def check_layout(docs_dir, master_fm):
+    fs = []
+    declared = set(parse_csv((master_fm or {}).get("optional_chapters")))
+    unknown = declared - set(OPTIONAL_FOLDERS)
+    for name in sorted(unknown):
+        fs.append(Finding("ERROR", "OPTIONAL_UNKNOWN", "MASTER.md",
+                          f"optional_chapters '{name}' は未対応"))
+
+    for folder in MANDATORY_FOLDERS:
+        if not os.path.isdir(os.path.join(docs_dir, folder)):
+            fs.append(Finding("ERROR", "LAYOUT_MISSING", folder,
+                              "必須章が存在しない"))
+    for folder in sorted(LEGACY_FOLDERS):
+        if os.path.isdir(os.path.join(docs_dir, folder)):
+            fs.append(Finding("ERROR", "LAYOUT_LEGACY", folder,
+                              "旧英語8章が日本語6章と混在している"))
+
+    for name, folder in OPTIONAL_FOLDERS.items():
+        exists = os.path.isdir(os.path.join(docs_dir, folder))
+        if exists and name not in declared:
+            fs.append(Finding("ERROR", "OPTIONAL_UNDECLARED", folder,
+                              f"MASTER.md に optional_chapters: {name} の宣言がない"))
+        if name in declared and not exists:
+            fs.append(Finding("ERROR", "OPTIONAL_MISSING", folder,
+                              f"optional_chapters: {name} を宣言したが章が存在しない"))
+
+    allowed = set(MANDATORY_FOLDERS) | {
+        folder for name, folder in OPTIONAL_FOLDERS.items() if name in declared
+    }
+    for name in sorted(os.listdir(docs_dir)):
+        if re.match(r"^\d{2}[-_]", name) and name not in allowed and name not in LEGACY_FOLDERS:
+            fs.append(Finding("ERROR", "LAYOUT_UNKNOWN", name,
+                              "未定義の番号章。必須6章または宣言済み任意章だけを使用する"))
+    return fs
+
+
+def validate_excluded_paths(master_fm):
+    valid = []
+    fs = []
+    protected = set(MANDATORY_FOLDERS) | set(OPTIONAL_FOLDERS.values())
+    for raw in parse_csv((master_fm or {}).get("excluded_paths")):
+        normalized = os.path.normpath(raw).replace("\\", "/")
+        first = normalized.split("/", 1)[0]
+        invalid = (
+            os.path.isabs(raw)
+            or normalized in (".", "..")
+            or normalized.startswith("../")
+            or first in protected
+            or first in {"MASTER.md", "_conventions.md", "_scaling.md"}
+        )
+        if invalid:
+            fs.append(Finding("ERROR", "EXCLUDED_INVALID", "MASTER.md",
+                              f"excluded_paths '{raw}' は管理章またはdocs外を隠し得る"))
+        else:
+            valid.append(normalized.strip("/"))
+    return valid, fs
 
 
 def check_supersede(all_by_id):
@@ -211,12 +294,15 @@ def parse_master_registry(docs_dir):
     return entries, master_fm
 
 
-def check_registry(docs_dir, docs, registry):
+def check_registry(docs_dir, docs, registry, excluded_paths=()):
     fs = []
     reg_paths = {}
     for rid, rpath in registry:
         norm = os.path.normpath(rpath)
         reg_paths[norm] = rid
+        if is_under(norm, excluded_paths):
+            fs.append(Finding("ERROR", "REG_EXCLUDED", "MASTER.md",
+                              f"レジストリ行 {rid} が管理対象外パス {rpath} を指している"))
         if not os.path.isfile(os.path.join(docs_dir, rpath)):
             fs.append(Finding("ERROR", "REG_GHOST", "MASTER.md",
                               f"レジストリ行 {rid} → {rpath} の実ファイルが無い"))
@@ -246,13 +332,13 @@ def check_project_type(docs_dir, docs, master_fm):
         return fs
     if proj not in PTYPE_ENUM:
         return fs  # 形式エラーは check_frontmatter 側で拾う
-    has_public_api = os.path.isfile(os.path.join(docs_dir, "02-design", "public-api.md"))
+    has_public_api = os.path.isfile(os.path.join(docs_dir, "03_設計仕様", "公開API.md"))
     if proj in ("library", "both") and not has_public_api:
-        fs.append(Finding("ERROR", "PT_NO_PUBLIC_API", "02-design/",
-                          f"project_type={proj} だが public-api.md が無い（library は必須）"))
+        fs.append(Finding("ERROR", "PT_NO_PUBLIC_API", "03_設計仕様/",
+                          f"project_type={proj} だが 公開API.md が無い（library は必須）"))
     if proj == "app" and has_public_api:
-        fs.append(Finding("WARN", "PT_APP_HAS_PUBLIC_API", "02-design/public-api.md",
-                          "project_type=app に library 専用の public-api.md がある"))
+        fs.append(Finding("WARN", "PT_APP_HAS_PUBLIC_API", "03_設計仕様/公開API.md",
+                          "project_type=app に library 専用の 公開API.md がある"))
     # 各文書の project_type が MASTER(app/library) と矛盾していないか
     if proj in ("app", "library"):
         for rel, _ab, fm, exempt in docs:
@@ -281,7 +367,7 @@ def check_adr_bridge(root, docs_dir):
                 referenced.add(adr)
         except Exception:
             continue
-    dec_dir = os.path.join(docs_dir, "02-design", "decisions")
+    dec_dir = os.path.join(docs_dir, "03_設計仕様", "意思決定")
     present = set()
     if os.path.isdir(dec_dir):
         for f in os.listdir(dec_dir):
@@ -290,7 +376,7 @@ def check_adr_bridge(root, docs_dir):
                 present.add(m.group(1))
     for adr in sorted(referenced - present):
         fs.append(Finding("WARN", "ADR_BRIDGE", ".spec/requirements/",
-                          f"decided_by {adr} に対応する docs/02-design/decisions/{adr}-*.md が無い"))
+                          f"decided_by {adr} に対応する docs/03_設計仕様/意思決定/{adr}-*.md が無い"))
     return fs
 
 
@@ -301,9 +387,14 @@ def run_docs_checks(root: str):
     if not docs_dir:
         return [Finding("ERROR", "NO_DOCS", root, "docs/ ディレクトリが見つからない")]
 
-    docs = collect_docs(docs_dir)
     findings: list[Finding] = []
     all_by_id: dict[str, tuple] = {}
+
+    registry, master_fm = parse_master_registry(docs_dir)
+    excluded_paths, excluded_findings = validate_excluded_paths(master_fm)
+    findings += excluded_findings
+    findings += check_layout(docs_dir, master_fm)
+    docs = collect_docs(docs_dir, excluded_paths)
 
     for rel, _ab, fm, exempt in docs:
         if exempt:
@@ -321,8 +412,7 @@ def run_docs_checks(root: str):
                 all_by_id[did] = (rel, fm)
 
     findings += check_supersede(all_by_id)
-    registry, master_fm = parse_master_registry(docs_dir)
-    findings += check_registry(docs_dir, docs, registry)
+    findings += check_registry(docs_dir, docs, registry, excluded_paths)
     findings += check_project_type(docs_dir, docs, master_fm)
     findings += check_adr_bridge(root, docs_dir)
     return findings

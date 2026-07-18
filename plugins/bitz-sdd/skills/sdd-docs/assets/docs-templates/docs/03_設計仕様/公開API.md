@@ -1,6 +1,6 @@
 ---
 id: DOC-design-public-api
-title: Public API & Compatibility
+title: 公開APIと互換性
 status: active
 version: 0.1.0
 changeImpact: low
@@ -16,7 +16,7 @@ superseded_by: null
   パッケージの互換性ルールは本文の「互換性ポリシー」で規定する。
 -->
 
-# Public API & Compatibility
+# 公開APIと互換性
 
 ## 公開面 (Public Surface)
 
@@ -74,7 +74,7 @@ superseded_by: null
 ## 移行ガイドの置き場
 
 - 破壊的変更 (major) ごとに CHANGELOG に移行手順を記載。
-- 大きな移行は `06-reference/migration-<version>.md` に切り出す（成長フェーズ）。
+- 大きな移行は宣言済みの `06_リファレンス/移行-<version>.md` に切り出す（成長フェーズ）。
 
 ---
 ### Revision History

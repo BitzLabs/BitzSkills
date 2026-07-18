@@ -2,7 +2,7 @@
 implements: SDD-FR-125
 depends_on: []
 boundary: plugins/bitz-sdd/skills/sdd-docs/assets/docs-templates, plugins/bitz-sdd/skills/sdd-docs/scripts/docs_inspect.py, tests/test_docs_inspect.py
-status: implementing
+status: done
 ---
 
 ### 日本語6章テンプレートと構造検査

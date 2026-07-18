@@ -1,6 +1,6 @@
 ---
 id: DOC-reference-external-apis
-title: External APIs & References
+title: 外部APIとリファレンス
 status: active
 version: 0.1.0
 changeImpact: low
@@ -12,10 +12,10 @@ superseded_by: null
 
 <!--
   外部依存の契約・参照と移行ガイドの索引。
-  自プロジェクトが「利用する側」の外部 API を記録する（自分が提供する契約は public-api.md）。
+  自プロジェクトが「利用する側」の外部 API を記録する（自分が提供する契約は 公開API.md）。
 -->
 
-# External APIs & References
+# 外部APIとリファレンス
 
 ## 依存する外部 API / サービス
 

@@ -113,3 +113,4 @@
 - 2026-07-18 SDD-FR-128: approved → implementing (codex)
 - 2026-07-18 SDD-FR-129: approved → implementing (codex)
 - 2026-07-18 SDD-TSK-011: pending → implementing (codex)
+- 2026-07-18 SDD-TSK-011: implementing → done (codex（7 tests passed、template strict 0 findings）)
