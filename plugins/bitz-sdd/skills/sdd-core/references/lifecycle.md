@@ -19,6 +19,32 @@
 
 **不変条件**: implementing 以降の要件のEARS節は書き換え不可。
 
+## 軽量レーンの verified 検証証跡
+
+軽量レーンでは `.spec/specs/<feature>/test-spec.md` を必須としない。version 管理される
+`.spec/STATE.md` の遷移記録を検証判定の正本とし、actor には次をすべて記録する:
+
+- 対象リビジョン（commit SHA。未コミットなら base HEAD と working tree である旨）
+- 秘匿情報を除いた実行コマンド、収集した期待件数、成功・失敗・スキップ件数、終了コード
+- release_check / spec inspect 等の機械チェック結果と実行日
+- スキップがある場合は、各理由と要件または検収規律が許容する根拠
+
+失敗・中断・結果欠落・期待件数不一致・未許容スキップが1件でもあれば verified へ遷移しない。
+PR がある場合は秘匿情報を除いた実出力を PR 本文にも記録し、STATE.md と不一致なら STATE.md を
+正として PR を訂正する。verified 後に PR を提出・更新した場合も reviewer が再照合し、不一致が
+解消するまでマージしない。PR がない場合は STATE.md だけで検証結果を再判定できなければならない。
+
+token・credential・その他の秘密値は、STATE.md と PR 本文を含む version 管理証跡へ記録しない。
+秘密値を含み得る引数はプレースホルダー化し、完全ログが必要なら安全な CI run または保護ログへの
+参照だけを残す。通常フローは従来どおり `.spec/specs/<feature>/` にテスト仕様を記録する。
+本規律は導入後の遷移に適用し、既存の verified 要件へ証跡の遡及追加を要求しない。
+
+## verification_method の語彙補足
+
+統制語彙と green 定義の正は `verification.md` とする。`unit-test` は自動ユニット／回帰テストを、
+`example-test` は有限の入出力例を表す。`unit-test` は bitz-sdd 1.11.4 以降で利用可能であり、
+既存の `example-test` 要件は遡及変更しない。
+
 ## 採番規則 — 仕様フェーズのみ・直列
 
 - プレフィックスは型分類 `FR` / `NFR` / `CON` で**起票時に凍結**。type フィールドは持たない（二重管理禁止）

@@ -1,0 +1,15 @@
+{
+  "perspective": "operations",
+  "dimensions": [
+    {"name": "監視・可観測性", "weight": 0.30, "score": 4, "findings": [
+      {"id": "OPS-101", "severity": "info", "location": "SDD-DSN-001.md:設計判断 5", "title": "証跡監査は当面チェックリスト依存", "description": "STATE.md の自由記述に対する欠落検知は手動チェックリストに依存する。", "recommendation": "差し戻しが反復した場合は自動検査を別 spec-issue として起票する。"}
+    ]},
+    {"name": "災害復旧", "weight": 0.30, "score": 4, "findings": []},
+    {"name": "セキュリティ態勢", "weight": 0.20, "score": 4, "findings": [
+      {"id": "OPS-302", "severity": "info", "location": "SDD-DSN-001.md:設計判断 1", "title": "保護ログの運用属性は実装時に具体化可能", "description": "全 version 管理証跡への秘密値プレースホルダー化は規定済み。", "recommendation": "保護ログ参照時は最小権限と監査可能な保持期間を確認する。"}
+    ]},
+    {"name": "デプロイ安全性", "weight": 0.20, "score": 5, "findings": []}
+  ],
+  "weighted_score": 4.2,
+  "summary": "証跡判定、秘密値除去、後方互換、原子的リリース、段階的ロールバックが具体化されている。"
+}

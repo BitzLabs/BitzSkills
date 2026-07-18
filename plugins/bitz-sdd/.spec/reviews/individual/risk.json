@@ -1,0 +1,13 @@
+{
+  "perspective": "risk",
+  "dimensions": [
+    {"name": "分散システムリスク", "weight": 0.30, "score": "N/A", "findings": []},
+    {"name": "障害モード分析", "weight": 0.30, "score": 4, "findings": [
+      {"id": "RSK-201", "severity": "info", "location": "SDD-DSN-001.md:設計判断 5", "title": "証跡完全性の検査は手動統制", "description": "自由記述証跡の検査はチェックリストへ依存する。", "recommendation": "欠落や誤遷移が反復した場合は機械的ゲートを別 spec-issue として追加する。"}
+    ]},
+    {"name": "Saga設計の妥当性", "weight": 0.25, "score": "N/A", "findings": []},
+    {"name": "データ整合性リスク", "weight": 0.15, "score": 5, "findings": []}
+  ],
+  "weighted_score": 4.33,
+  "summary": "非分散変更として縮退評価。期待件数、スキップ、正本、PR 再照合、版ずれ、撤回手順が明確で重大リスクはない。"
+}

@@ -1,0 +1,12 @@
+{
+  "id": "SDD-REV-001",
+  "decision": "PASS",
+  "aggregate_score": 4.50,
+  "active_perspectives": ["consistency", "operations", "risk", "business"],
+  "skipped_perspectives": {"data-integrity": "永続データを扱わない変更のため対象外"},
+  "critical_findings": 0,
+  "major_findings": 0,
+  "minor_findings": 1,
+  "info_findings": 3,
+  "gate_blockers": []
+}

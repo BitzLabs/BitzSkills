@@ -3,7 +3,7 @@ id: SI-SDD-008
 raised_by: 開発フロー振り返り（2026-07-18 セッション、SI-CORE-007 実装サイクルの実地観察）
 target: plugins/bitz-sdd/skills/sdd-core references/lifecycle.md・sdd-test（軽量レーンの検証記録基準が未規定）
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: 検証証跡の置き場がワークスペース間で非対称になっている。bitz-sdd ワークスペースは
   `.spec/specs/<feature>/test-spec.md` に検証記録を残すが、ルートワークスペースの
@@ -23,3 +23,5 @@ status: open
   release_check / spec_inspect PASS。
 - **影響推定・ロールバック**: ドキュメント追記のみ。該当節の revert で戻る。
 - **依存**: なし。
+- **実施**: 2026-07-18 案Aを SDD-FR-123 / SDD-TSK-010 として実装。
+  STATE.md 正本の必須証跡、PR の有無、green・スキップ・秘密値統制、非遡及を明文化。
