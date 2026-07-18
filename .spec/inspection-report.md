@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-18)
 
-成果物数: 25 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
+成果物数: 26 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -28,6 +28,7 @@
 - CORE-FR-008
 - CORE-FR-009
 - CORE-FR-013
+- CORE-FR-014
 - CORE-NFR-001
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
@@ -59,6 +60,7 @@
 | CORE-FR-011 | verified | tooling | example-test | 1 | 2 |
 | CORE-FR-012 | verified | tooling | example-test | 1 | 2 |
 | CORE-FR-013 | verified | tooling | example-test | 1 | 1 |
+| CORE-FR-014 | verified | governance | example-test | 3 | 3 |
 | CORE-NFR-001 | verified | tooling | example-test | 1 | 1 |
 | DSN-001 | active |  |  | 0 | 5 |
 | DSN-002 | approved |  |  | 0 | 1 |

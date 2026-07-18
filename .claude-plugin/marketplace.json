@@ -32,6 +32,11 @@
       "name": "bitz-env",
       "source": "./plugins/bitz-env",
       "description": "BitzEnv — 開発環境展開プラグイン。ガードレール（PreToolUse フックによる危険操作の常時ブロック + permissions/AGENTS.md 雛形の生成）とモデル非依存の協調運用（委譲型・相談型・合議型、advisor/worker サブエージェント生成、協調アダプタ連携）を任意のプロジェクトへ展開する（env-init / env-doctor / env-orchestration / env-register の4スキル構成）"
+    },
+    {
+      "name": "bitz-flow",
+      "source": "./plugins/bitz-flow",
+      "description": "BitzFlow — Git / GitHub 開発フローの独立プラグイン。状況に応じたフロー選択とコミット規約（flow-core）、worktree による並列開発運用（flow-worktree）、GitHub Issue 駆動 + Draft PR + squash merge（flow-pr）を提供する。SDD 非採用プロジェクトでも単体で使える（bitz-sdd 併用時は各スキルの併用節が接続点を規定）"
     }
   ]
 }
