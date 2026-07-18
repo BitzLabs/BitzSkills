@@ -2,7 +2,7 @@
 name: flow-worktree
 description: BitzFlow の worktree 並列運用スキル。複数エージェント（または複数作業）を並列で走らせるときの「1エージェント = 1 worktree = 1ブランチ」原則と、worktree の作成・マージバック・後片付け・失敗時破棄の定型手順を規定する。ユーザーが「worktree」「並列で開発」「複数エージェントで作業」「失敗したからやり直したい」に言及したとき、または並列作業の分離手段が必要になったときに使用する。フロー全体の選択とコミット規約は flow-core、Issue 駆動 PR は flow-pr が担当する。
 metadata:
-  version: "0.2.0"
+  version: "0.2.1"
   author: br7.hide
   created: "2026-07-18"
   updated: "2026-07-18"
@@ -49,11 +49,27 @@ git push origin feat/123-topic
 
 ### 3. 後片付け（マージ後）
 
+PR を squash merge した場合、元ブランチのコミットはデフォルトブランチの祖先にならない。
+そのため通常の `git branch -d` 成否をマージ証跡にせず、PR 番号を指定した guarded cleanup を使う。
+
 ```bash
-git worktree remove ../<repo>-wt/123
-git branch -d feat/123-topic          # マージ済みなので -d で消える
-git push origin --delete feat/123-topic
+python3 scripts/worktree_ops.py cleanup 123 \
+  --branch feat/123-topic --squash-pr 456 --default-branch main \
+  --execute --yes
 ```
+
+- GitHub の PR state が `MERGED` であること、PR の最終 head SHA が存在する
+  worktree / local / remote ref と一致すること、merge commit が `origin/<default>` から到達可能なことを
+  削除操作より先に検査する。照会失敗や不一致では何も削除せず停止する
+- worktree 除去済み・local branch 残存、または両方除去済みの再実行を状態から判定し、
+  完了済み段階を skip して前進再開する。削除済み ref は再生成しない
+- remote branch は自動削除しない。prune 後に実在と期待 SHA を確認し、同じ場合だけ
+  検査時刻・期待 SHA・直前再照会の警告を持つ削除候補として報告する。削除コマンド自体も生成しない
+- JSON 監査出力が必要なら `--json`、外部コマンドの上限時間は
+  `--timeout-seconds 1..300`、任意の非機密ラベルは `--actor` で指定する
+
+非 squash merge の互換経路では、従来どおり `cleanup`（`--squash-pr` なし）が
+`worktree remove` と `git branch -d` を使う。remote 削除オプションもこの経路にだけ残す。
 
 ### 4. 失敗時の復元（checkpoint は使わない）
 
@@ -79,12 +95,14 @@ git branch -D feat/123-topic                    # マージしていないので
 python3 scripts/worktree_ops.py add 123 --branch feat/123-topic          # 既定は dry-run（表示のみ）
 python3 scripts/worktree_ops.py add 123 --branch feat/123-topic --execute
 python3 scripts/worktree_ops.py list
-python3 scripts/worktree_ops.py cleanup 123 --branch feat/123-topic --execute --yes   # 破棄・削除系は --yes 必須
+python3 scripts/worktree_ops.py cleanup 123 --branch feat/123-topic --squash-pr 456 --execute --yes
 python3 scripts/worktree_ops.py discard 123 --branch feat/123-topic --execute --yes
 ```
 
 - 状態変更系（add / cleanup / discard）は**既定で dry-run**。`--execute` で実行し、
   破棄・削除を伴う cleanup / discard はさらに `--yes` が無ければ何も実行しない（終了コード 2）
+- squash cleanup は `--delete-remote` と併用できない。GitHub 証跡を取得できない、または
+  SHA・到達性・worktree 境界を確認できない場合は INDETERMINATE として安全側停止する
 - ガードレール禁止操作（`git reset --hard` / `git push --force` 等）は実装に含まれない
 
 ## 並列度の管理

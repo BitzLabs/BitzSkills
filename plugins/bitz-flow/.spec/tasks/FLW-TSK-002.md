@@ -2,7 +2,7 @@
 implements: FLW-FR-001
 depends_on: []
 boundary: plugins/bitz-flow/skills/flow-worktree/scripts/worktree_ops.py, plugins/bitz-flow/skills/flow-worktree/SKILL.md, tests/test_worktree_ops.py
-status: pending
+status: done
 ---
 
 ### guarded squash cleanup の実装
