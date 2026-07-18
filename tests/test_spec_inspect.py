@@ -115,3 +115,28 @@ def test_true_ghost_reference_still_detected(tmp_path: Path):
     report = (tmp_path / ".spec" / "inspection-report.md").read_text(encoding="utf-8")
     assert GHOST_ID in report
     assert "FAIL" in report
+
+
+def test_SDD_FR_124_active_requirement_accepts_unit_test(tmp_path: Path):
+    """SDD-FR-124: active 要件の unit-test を語彙外として報告しない。"""
+    req_id = "SDD-FR-" + "124"
+    req_dir = tmp_path / ".spec" / "requirements"
+    req_dir.mkdir(parents=True)
+    (req_dir / f"{req_id}.md").write_text(
+        f"---\nid: {req_id}\nversion: 1.0\nstatus: approved\n"
+        f"domain: verification\nverification_method: unit-test\n---\n\n"
+        f"### {req_id} unit-test 語彙\n",
+        encoding="utf-8",
+    )
+    tasks_dir = tmp_path / ".spec" / "tasks"
+    tasks_dir.mkdir(parents=True)
+    task_id = "SDD-TSK-" + "010"
+    (tasks_dir / f"{task_id}.md").write_text(
+        f"---\nimplements: {req_id}\ndepends_on: []\nstatus: done\n---\n",
+        encoding="utf-8",
+    )
+
+    res = run_inspect(tmp_path)
+    report = (tmp_path / ".spec" / "inspection-report.md").read_text(encoding="utf-8")
+    assert res.returncode == 0, report
+    assert "verification_method が未記入/語彙外" not in report

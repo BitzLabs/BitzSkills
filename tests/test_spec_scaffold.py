@@ -161,6 +161,16 @@ def test_valid_verification_method_succeeds(tmp_path):
     assert res.returncode == 0, res.stderr
 
 
+def test_SDD_FR_124_unit_test_verification_method_succeeds(tmp_path):
+    """SDD-FR-124: unit-test は統制語彙として要件雛形へ指定できる。"""
+    (tmp_path / ".spec" / "requirements").mkdir(parents=True)
+    res = run(tmp_path, "requirement", "--prefix", "CORE-" + FR[:-1],
+              "--verification-method", "unit-test")
+    assert res.returncode == 0, res.stderr
+    generated = tmp_path / ".spec" / "requirements" / f"CORE-{FR}001.md"
+    assert "verification_method: unit-test" in generated.read_text(encoding="utf-8")
+
+
 def test_invalid_domain_fails_when_domains_present(tmp_path):
     """domains.md がある時、語彙外の --domain は非ゼロで失敗し雛形を生成しない。"""
     req_dir = tmp_path / ".spec" / "requirements"

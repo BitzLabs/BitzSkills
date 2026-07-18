@@ -63,7 +63,8 @@ scripts/             # エージェント共用の運用スクリプト（bump /
   （つまり PR タイトルも Conventional Commits 準拠。CI が機械検査する）
 - **PR 本文**: 目的 / 変更点 / 検証結果（`release_check.py` と pytest の実出力）を含める
   （`.github/PULL_REQUEST_TEMPLATE.md` 参照）
-- **1 PR = 1 関心事**: `git revert` で丸ごと戻せる粒度を保つ。version bump は PR の最終コミットに含める
+- **1 PR = 1 関心事**: `git revert` で丸ごと戻せる粒度を保つ。version bump は同一 PR 内に含める
+  （推奨: 実装コミットに同梱。bump 単独コミットでもよく、コミット位置は問わない）
 
 ## 定型手順（手作業せずスクリプトを使う）
 
