@@ -1,0 +1,11 @@
+{
+  "perspective": "operations",
+  "dimensions": [
+    {"name": "監視・可観測性", "weight": 0.30, "score": 5, "findings": [{"id": "OPS-101", "severity": "info", "location": "FLW-DSN-001:3.1/3.2", "title": "構造化診断と監査情報が完備", "description": "許可リストJSON、UTC時刻、任意actor、機密情報除外が定義された。", "recommendation": "JSONスキーマと機密情報非出力をテストで固定する。"}]},
+    {"name": "災害復旧", "weight": 0.30, "score": 5, "findings": [{"id": "OPS-201", "severity": "info", "location": "FLW-DSN-001:2/3.2/3.3", "title": "状態別の前進再開契約が成立", "description": "initial・cleanup-partial・local-cleaned・invalidを分類し、存在対象だけをSHA照合する。", "recommendation": "各段階の故障注入と再実行を回帰テストする。"}, {"id": "OPS-202", "severity": "info", "location": "FLW-DSN-001:3.2/4", "title": "未マージデータの保全条件が十分", "description": "PR head SHAと存在refを照合し、remote自動削除を停止した。", "recommendation": "worktree・local・remoteの進行ケースを否定テストにする。"}]},
+    {"name": "セキュリティ態勢", "weight": 0.20, "score": 5, "findings": [{"id": "OPS-301", "severity": "info", "location": "FLW-DSN-001:3.2", "title": "削除対象の境界と同一性を確立", "description": "work-id、path、ref、default branch、worktree対応を副作用前に検証する。", "recommendation": "パストラバーサル・不正ref・別worktreeを否定テストにする。"}, {"id": "OPS-302", "severity": "info", "location": "FLW-DSN-001:3.1/3.2", "title": "外部コマンドと診断出力の安全境界が明確", "description": "timeoutを1〜300秒へ制限し、raw外部出力をJSONへ含めない。", "recommendation": "境界値と機密文字列非転記をテストする。"}]},
+    {"name": "デプロイ安全性", "weight": 0.20, "score": 5, "findings": [{"id": "OPS-401", "severity": "info", "location": "FLW-DSN-001:3.2/5/6", "title": "段階導入と安全側ロールバックが成立", "description": "squash経路はopt-inで、既存経路を維持し、途中状態は前進再開する。", "recommendation": "限定利用後に標準手順へ昇格する。"}, {"id": "OPS-402", "severity": "info", "location": "FLW-DSN-001:7", "title": "リリース回帰範囲が十分", "description": "異常系、入力境界、故障注入、既存CLI互換性を検証対象に含む。", "recommendation": "全検証の実出力をPromotion Gate証跡にする。"}]}
+  ],
+  "weighted_score": 5.0,
+  "summary": "PR head SHA照合、状態別再開、入力境界、timeout、構造化診断、remote自動削除停止により未解決のoperations指摘はない。"
+}
