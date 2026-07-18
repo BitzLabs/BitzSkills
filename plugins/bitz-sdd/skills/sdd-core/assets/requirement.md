@@ -5,7 +5,7 @@ status: draft         # draft|approved|implementing|verified|promoted|deprecated
 domain: core          # domains.md の統制語彙のみ
 priority: medium      # high|medium|low
 origin:               # docs/…@SHA / 会話ログ日付 / reverse-derived
-verification_method:  # pbt|example-test|benchmark|sast|dep-audit|load-test|manual-check（必須）
+verification_method:  # pbt|example-test|unit-test|benchmark|sast|dep-audit|load-test|manual-check（必須）
 derived_from:         # docs/…@SHA
 supersedes:           # 継承時: 旧ID
 superseded_by:        # deprecated 時に記入

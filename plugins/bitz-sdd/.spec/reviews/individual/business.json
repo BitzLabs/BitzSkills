@@ -1,0 +1,13 @@
+{
+  "perspective": "business",
+  "dimensions": [
+    {"name": "要件トレーサビリティ", "weight": 0.35, "score": 5, "findings": []},
+    {"name": "NFR定量化", "weight": 0.30, "score": 4, "findings": [
+      {"id": "BIZ-201", "severity": "minor", "location": "SDD-FR-123.md・SDD-FR-124.md:受入基準", "title": "導入後の改善効果指標は未設定", "description": "判断ぶれが減ったかを測る運用指標は未設定。", "recommendation": "証跡不足差し戻し・分類不能・旧版停止の件数を継続改善指標として観察する。"}
+    ]},
+    {"name": "ステークホルダー整合", "weight": 0.20, "score": 5, "findings": []},
+    {"name": "ROI・実現可能性", "weight": 0.15, "score": 5, "findings": []}
+  ],
+  "weighted_score": 4.7,
+  "summary": "双方向トレース、責任分担、完了条件、一括実装の理由が明確で、重大なビジネス整合ギャップはない。"
+}

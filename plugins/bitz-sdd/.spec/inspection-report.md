@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-18)
 
-成果物数: 41 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
+成果物数: 45 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -47,6 +47,8 @@
 - SDD-FR-120
 - SDD-FR-121
 - SDD-FR-122
+- SDD-FR-123
+- SDD-FR-124
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
 ※ 乖離は候補提示のみ。stale 付与は references/lifecycle.md の再伝播プロトコル（判定パス→人間確認）を経ること
@@ -67,6 +69,7 @@
 | SDD-DSC-004 | draft |  |  | 0 | 0 |
 | SDD-DSC-005 | draft |  |  | 0 | 0 |
 | SDD-DSC-006 | draft |  |  | 0 | 0 |
+| SDD-DSN-001 | active |  |  | 0 | 0 |
 | SDD-FR-001 | verified | verification | example-test | 1 | 1 |
 | SDD-FR-010 | verified | verification | example-test | 1 | 1 |
 | SDD-FR-011 | verified | workflow | manual-check | 1 | 1 |
@@ -96,5 +99,8 @@
 | SDD-FR-120 | verified | workflow | manual-check | 2 | 3 |
 | SDD-FR-121 | verified | workflow | manual-check | 2 | 3 |
 | SDD-FR-122 | verified | execution | manual-check | 1 | 2 |
+| SDD-FR-123 | verified | verification | manual-check | 1 | 2 |
+| SDD-FR-124 | verified | verification | example-test | 1 | 2 |
+| SDD-REV-001 | active |  |  | 0 | 1 |
 
 **判定: PASS ✅**

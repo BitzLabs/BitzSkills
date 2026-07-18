@@ -3,7 +3,7 @@ id: SI-SDD-009
 raised_by: 開発フロー振り返り（2026-07-18 セッション、SI-CORE-007 実装サイクルの実地観察）
 target: plugins/bitz-sdd/skills/sdd-core の統制語彙（verification_method に unit-test 相当が無い）
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: テスト先行（red → green）が実装規律の標準になっているのに、verification_method の
   統制語彙（benchmark / dep-audit / example-test / load-test / manual-check / pbt / sast）に
@@ -23,3 +23,5 @@ status: open
   案Aの場合、語彙追加が spec_scaffold / spec_inspect の両方で受理されることをテストで確認。
 - **影響推定・ロールバック**: 語彙1件の追加または定義文の追記。revert で戻る。
 - **依存**: なし。
+- **実施**: 2026-07-18 案Aを SDD-FR-124 / SDD-TSK-010 として実装。
+  `unit-test` を単一の統制語彙定義へ追加し、scaffold / inspect の回帰テストを追加。
