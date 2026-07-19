@@ -65,3 +65,6 @@ delegated_to: bitz-env:ENV-FR-011
   推薦どおり doctor 先行（SI-CORE-031）→ update 後続の2段構成を採用しつつ、実装は並列で進める。
   対象は bitz-env のみ（ENV-FR-011 として委任）。bitz-sdd の sdd-update は
   「形式変更の発生時に実装」として保留（根拠は DSN-003 の代替案節）。
+- **実施**: 2026-07-19 ENV-FR-011 / ENV-TSK-014 として実装完了・verified 到達（PR #74）。
+  env-update + CORE-CON-009 準拠マイグレーション機構、合成フィクスチャ検証2件 PASS
+  （チェーン断裂の安全側停止・二重適用 no-op）、migrations/ は空出荷が正。

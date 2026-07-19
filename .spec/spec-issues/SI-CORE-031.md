@@ -55,3 +55,6 @@ delegated_to: bitz-sdd:SDD-FR-130, bitz-ddd:DDD-FR-001, bitz-flow:FLW-FR-002
   必要操作マトリクスは DSN-003 で確定し、bitz-sdd / bitz-ddd / bitz-flow の doctor を
   SDD-FR-130 / DDD-FR-001 / FLW-FR-002 として各ワークスペースへ委任。
   plugin-creator / skill-creator は「実装しない」判定（根拠は DSN-003）。
+- **実施**: 2026-07-19 DSN-003 のマトリクスどおり実装完了・全要件 verified 到達
+  （SDD-FR-130 / SDD-TSK-015 = PR #71、FLW-FR-002 / FLW-TSK-004 = PR #72、
+  DDD-FR-001 / DDD-TSK-001 = PR #73。plugin-creator / skill-creator は「実装しない」判定）。
