@@ -1,6 +1,6 @@
 {
   "name": "bitz-flow",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "BitzFlow — フロー選択・コミット規約、worktree 並列運用、Issue 駆動 PR フローを提供する Git / GitHub 開発フロープラグイン",
   "author": {
     "name": "BitzLabs"
