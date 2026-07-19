@@ -2,10 +2,10 @@
 name: sdd-issue
 description: BitzSDD — ばらばらに届く要望・不具合報告・改善アイデアを整理し、可否の予備判定（推薦）を付けて .spec/spec-issues/ に起票するインテークスキル。1要望 = 1 spec-issue への分割、既存 spec-issue・要件との重複チェック、影響範囲分析、委託先ワークスペース判定、spec_scaffold.py による採番・起票、裁定材料の提示までを定型化する。ユーザーが「この要望を整理して」「spec-issue にして」「起票して」「インテーク」「要望がいくつかある」と言及したとき、または作業中に仕様変更が必要だと気づいて起票が必要になったときに使用する。裁定（accepted / rejected 化）は人間専用で本スキルは行わない。要件のライフサイクル・規律の正は sdd-core が担当する。
 metadata:
-  version: "0.1.1"
+  version: "0.2.0"
   author: br7.hide
   created: "2026-07-16"
-  updated: "2026-07-18"
+  updated: "2026-07-19"
 ---
 
 # sdd-issue
@@ -43,8 +43,10 @@ metadata:
 
 4. **委託先ワークスペース判定**（モノリポの場合）: 変更が単一パッケージに閉じるならそのサブ
    ワークスペース、共通規約・複数パッケージに跨るならルートの `.spec/` に起票する。
-   委託関係が生じる場合は frontmatter の `origin:` / `delegated_to:` に双方向の対応を記録する
-   （委託フローの正は sdd-core の lifecycle.md。未規定の項目は本文の自由記述で補う）。
+   サブ間の直接委託は行わず常にルート経由とする。委託関係が生じる場合は frontmatter の
+   `origin:` / `delegated_to:` に双方向の対応を記録する（起票時は `--origin` /
+   `--delegated-to` オプションで指定できる。委託方向・書式・機械検証の正は
+   sdd-core の lifecycle.md「ワークスペース間の spec-issue 委託」節）。
 
 5. **採番・起票**: sdd-core の `spec_scaffold.py` で起票する（手書きしない — 書式・採番衝突を構造的に防ぐ）。
 

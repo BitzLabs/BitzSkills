@@ -72,6 +72,72 @@ def load_requirements(root: Path):
     return reqs, problems
 
 
+def load_spec_issues(root: Path):
+    """spec-issues/*.md の frontmatter を集める（委託チェック用。SDD-FR-132）。
+
+    spec-issue は status 語彙（open/accepted 等）と ID 書式が要件と異なるため、
+    load_requirements のレジストリには混ぜず専用に読む（誤検知の防止）。
+    """
+    issues = {}
+    d = root / ".spec" / "spec-issues"
+    if not d.exists():
+        return issues
+    for f in sorted(d.glob("*.md")):
+        fm = parse_frontmatter(f.read_text(encoding="utf-8", errors="ignore"))
+        iid = fm.get("id") or f.stem
+        issues[iid] = {"fm": fm, "path": f}
+    return issues
+
+
+def build_delegation_context(workspaces):
+    """委託チェック用の横断レジストリを構築する（SDD-FR-132）。
+
+    返り値: (known_ids, origin_by_id)
+      known_ids   : 全 ws の 要件 ∪ spec-issue ∪ タスク（ファイル名 stem）の ID 集合
+      origin_by_id: ID → frontmatter origin: テキスト（要件・spec-issue。双方向言及の検査用）
+    """
+    known_ids = set()
+    origin_by_id = {}
+    for w in workspaces:
+        reqs, _ = load_requirements(w)
+        for rid, r in reqs.items():
+            known_ids.add(rid)
+            origin_by_id[rid] = r["fm"].get("origin", "")
+        for iid, issue in load_spec_issues(w).items():
+            known_ids.add(iid)
+            origin_by_id[iid] = issue["fm"].get("origin", "")
+        tasks_dir = w / ".spec" / "tasks"
+        if tasks_dir.exists():
+            known_ids.update(f.stem for f in tasks_dir.rglob("*.md"))
+    return known_ids, origin_by_id
+
+
+def check_delegations(root: Path, known_ids: set, origin_by_id: dict) -> list:
+    """spec-issue の delegated_to（`<ws>:<ID>` カンマ区切り）を横断検証する（SDD-FR-132）。
+
+    - ID 部が known_ids に実在すること（`<ws>:` 修飾部は人間向け情報として検証しない）
+    - 委託先 frontmatter の origin: テキストに委託元 spec-issue ID への言及があること
+      （注記付きの自由記述を容認するため「言及」ベースで突合する。CORE-FR-012 と同じ流儀）
+    origin / delegated_to を持たない既存 spec-issue はチェック対象外（後方互換）。
+    """
+    problems = []
+    for iid, issue in load_spec_issues(root).items():
+        raw = issue["fm"].get("delegated_to", "")
+        if not raw:
+            continue
+        for entry in raw.split(","):
+            entry = entry.strip()
+            if not entry:
+                continue
+            target = entry.rsplit(":", 1)[-1].strip()
+            if target not in known_ids:
+                problems.append(f"[委託] {iid}: delegated_to の {entry} が実在しない（リンク切れ）")
+            elif iid not in origin_by_id.get(target, ""):
+                problems.append(
+                    f"[委託] {iid}: 委託先 {target} の origin: に {iid} への言及がない（双方向リンク欠如）")
+    return problems
+
+
 def load_domains(req_dir: Path):
     dom_file = req_dir / "domains.md"
     if not dom_file.exists():
@@ -168,13 +234,16 @@ def implements_map(root: Path):
     return impl
 
 
-def inspect(root: Path, global_reqs: dict = None) -> str:
+def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None) -> str:
     req_dir = root / ".spec" / "requirements"
     if not req_dir.exists():
         return f"ERROR: {req_dir} が存在しません（BitzSDD レイアウト未初期化）"
     reqs, problems = load_requirements(root)
     if global_reqs is None:
         global_reqs = reqs
+    if delegation_ctx is None:
+        delegation_ctx = build_delegation_context([root])
+    problems += check_delegations(root, *delegation_ctx)
     domains = load_domains(req_dir)
     forbidden = load_forbidden_words(req_dir)
     impl = implements_map(root)
@@ -327,6 +396,7 @@ def main():
     for w in workspaces:
         reqs, _ = load_requirements(w)
         global_reqs.update(reqs)
+    delegation_ctx = build_delegation_context(workspaces)
 
     has_error = False
     for w in workspaces:
@@ -338,7 +408,7 @@ def main():
         elif args.impact:
             print(impact(w, args.impact, global_reqs))
         else:
-            report = inspect(w, global_reqs)
+            report = inspect(w, global_reqs, delegation_ctx)
             out = w / ".spec" / "inspection-report.md"
             if not report.startswith("ERROR"):
                 out.write_text(report + "\n", encoding="utf-8")

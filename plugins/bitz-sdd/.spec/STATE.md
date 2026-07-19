@@ -140,3 +140,8 @@
 - 2026-07-19 SDD-FR-131: approved → implementing (agent)
 - 2026-07-19 SDD-FR-131: implementing → verified (agent)
 - 2026-07-19 SDD-TSK-016: implementing → done (agent)
+- 2026-07-19 SDD-FR-132: draft → approved (hide（チャット裁定 2026-07-19）)
+- 2026-07-19 SDD-FR-132: approved → implementing (agent)
+- 2026-07-19 SDD-FR-132: implementing → verified (agent)
+- 2026-07-19 SDD-TSK-017: pending → implementing (agent)
+- 2026-07-19 SDD-TSK-017: implementing → done (agent)

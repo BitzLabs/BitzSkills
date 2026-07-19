@@ -1,6 +1,6 @@
 {
   "name": "bitz-sdd",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "BitzSDD — 探索・設計・実装・検証を一貫して進める仕様駆動開発ワークフロープラグイン",
   "author": {
     "name": "br7.hide",
