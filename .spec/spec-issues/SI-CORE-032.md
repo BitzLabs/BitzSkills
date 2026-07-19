@@ -3,7 +3,9 @@ id: SI-CORE-032
 raised_by: SI-CORE-028 実施後のフォローアップ（2026-07-19 ユーザー要望: CORE-CON-009 の実装横展開）
 target: 配置先に状態を残すプラグイン（bitz-env / bitz-sdd 等）の update スキルとマイグレーション機構の未実装
 proposed_change_type: new
-status: open
+status: accepted
+origin: root
+delegated_to: bitz-env:ENV-FR-011
 ---
 - **目的**: CORE-CON-009（SI-CORE-028 由来）で制定した update のバージョン移行
   （累積マイグレーション）機構は現状**規約のみ**で、`update` スキルを実装した
@@ -59,3 +61,7 @@ status: open
   - 裁定時の論点: SI-CORE-031 と統合して1本で進めるか、doctor 先行（031）→ update 後続（032）の
     2段で進めるか。推薦は**2段**（doctor は読み取り専用で低リスク・即効、update は
     マイグレーション検証を伴い重いため）
+- **裁定（2026-07-19, 人間）**: チャット指示により accept（「031 と 032 を accepted にして進めましょう」）。
+  推薦どおり doctor 先行（SI-CORE-031）→ update 後続の2段構成を採用しつつ、実装は並列で進める。
+  対象は bitz-env のみ（ENV-FR-011 として委任）。bitz-sdd の sdd-update は
+  「形式変更の発生時に実装」として保留（根拠は DSN-003 の代替案節）。

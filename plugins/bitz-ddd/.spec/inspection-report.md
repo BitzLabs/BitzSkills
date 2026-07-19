@@ -1,6 +1,6 @@
-# inspection-report.md (2026-07-18)
+# inspection-report.md (2026-07-19)
 
-成果物数: 6 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
+成果物数: 7 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 1
 
 ## 問題一覧
 - なし ✅
@@ -9,10 +9,10 @@
 - なし ✅
 
 ## 孤児要件（approved以降なのに implements するタスクがない）
-- なし ✅
+- DDD-FR-001
 
 ## テスト/実装からの参照がない要件（approved以降）
-- なし ✅
+- DDD-FR-001
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
 ※ 乖離は候補提示のみ。stale 付与は references/lifecycle.md の再伝播プロトコル（判定パス→人間確認）を経ること
@@ -27,5 +27,6 @@
 | DDD-DSC-004 | draft |  |  | 0 | 0 |
 | DDD-DSC-005 | draft |  |  | 0 | 0 |
 | DDD-DSC-006 | draft |  |  | 0 | 0 |
+| DDD-FR-001 | approved | tooling | manual-check | 0 | 0 |
 
-**判定: PASS ✅**
+**判定: FAIL ❌（上記を解消するまで verified に進めない）**

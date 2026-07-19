@@ -1,6 +1,6 @@
-# inspection-report.md (2026-07-18)
+# inspection-report.md (2026-07-19)
 
-成果物数: 52 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
+成果物数: 53 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 1
 
 ## 問題一覧
 - なし ✅
@@ -9,7 +9,7 @@
 - なし ✅
 
 ## 孤児要件（approved以降なのに implements するタスクがない）
-- なし ✅
+- SDD-FR-130
 
 ## テスト/実装からの参照がない要件（approved以降）
 - SDD-CON-022
@@ -50,6 +50,7 @@
 - SDD-FR-127
 - SDD-FR-128
 - SDD-FR-129
+- SDD-FR-130
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
 ※ 乖離は候補提示のみ。stale 付与は references/lifecycle.md の再伝播プロトコル（判定パス→人間確認）を経ること
@@ -108,7 +109,8 @@
 | SDD-FR-127 | verified | sync | unit-test | 2 | 3 |
 | SDD-FR-128 | verified | sync | unit-test | 2 | 3 |
 | SDD-FR-129 | verified | sync | unit-test | 2 | 3 |
+| SDD-FR-130 | approved | workflow | manual-check | 0 | 0 |
 | SDD-REV-001 | active |  |  | 0 | 1 |
 | SDD-REV-002 | active |  |  | 0 | 1 |
 
-**判定: PASS ✅**
+**判定: FAIL ❌（上記を解消するまで verified に進めない）**
