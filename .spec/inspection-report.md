@@ -1,6 +1,6 @@
-# inspection-report.md (2026-07-18)
+# inspection-report.md (2026-07-19)
 
-成果物数: 36 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
+成果物数: 37 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -75,5 +75,6 @@
 | CORE-NFR-001 | verified | tooling | example-test | 1 | 1 |
 | DSN-001 | active |  |  | 0 | 5 |
 | DSN-002 | approved |  |  | 0 | 1 |
+| DSN-003 | approved |  |  | 0 | 0 |
 
 **判定: PASS ✅**

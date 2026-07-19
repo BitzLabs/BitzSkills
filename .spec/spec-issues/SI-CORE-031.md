@@ -3,7 +3,9 @@ id: SI-CORE-031
 raised_by: SI-CORE-006 実施後のフォローアップ（2026-07-19 ユーザー要望: 標準の横展開）
 target: 全プラグイン（bitz-sdd / bitz-ddd / bitz-flow / plugin-creator / skill-creator）のライフサイクルスキル未整備
 proposed_change_type: new
-status: open
+status: accepted
+origin: root
+delegated_to: bitz-sdd:SDD-FR-130, bitz-ddd:DDD-FR-001, bitz-flow:FLW-FR-002
 ---
 - **目的**: CORE-CON-008 で制定した標準ライフサイクルスキル
   （init / doctor / update / uninstall。仕様は plugin-creator の
@@ -49,3 +51,7 @@ status: open
     CORE-TSK-014 / CORE-TSK-016 / ENV-TSK-013 のみで、標準文書を変更しない本件では波及なし
   - 軽量レーン適否: 各プラグインの公開スキル面（契約）が増えるため**通常フロー**
     （要件化 + Design Gate で必要操作マトリクスを確定）を推薦
+- **裁定（2026-07-19, 人間）**: チャット指示により accept（「031 と 032 を accepted にして進めましょう」）。
+  必要操作マトリクスは DSN-003 で確定し、bitz-sdd / bitz-ddd / bitz-flow の doctor を
+  SDD-FR-130 / DDD-FR-001 / FLW-FR-002 として各ワークスペースへ委任。
+  plugin-creator / skill-creator は「実装しない」判定（根拠は DSN-003）。
