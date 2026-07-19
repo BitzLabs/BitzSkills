@@ -4,6 +4,7 @@
 使い方:
   python spec_inspect.py <repo-root>                 # 全検証 → .spec/inspection-report.md
   python spec_inspect.py --workspace plugins/* .     # モノリポ一括検証（クロスリファレンス解決）
+  python spec_inspect.py <repo-root> --check-only    # レポートを書き込まず全検証
   python spec_inspect.py <repo-root> --impact FR-012 # 変更影響分析（stale候補の列挙）
   python spec_inspect.py <repo-root> --impact-docs docs/03_設計仕様/アーキテクチャ.md
                                                      # docs変更の影響要件（derived_from 逆引き）
@@ -21,6 +22,7 @@ PREFIXES = ("FR", "NFR", "CON", "DSC", "DSN", "INF", "REV", "TSK")
 STATUSES = {"draft", "approved", "implementing", "verified", "promoted", "deprecated", "in-review", "active", "revised", "archived", "pending", "complete", "superseded"}
 VMETHODS = {"pbt", "example-test", "unit-test", "benchmark", "sast", "dep-audit", "load-test", "manual-check"}
 ACTIVE = {"approved", "implementing", "verified", "promoted"}  # 検証対象ステータス
+ORPHAN_STATUSES = {"implementing", "verified", "promoted"}
 
 
 def parse_frontmatter(text: str) -> dict:
@@ -278,14 +280,16 @@ def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None) 
     task_ids = {f.stem for f in tasks_dir.rglob("*.md")} if tasks_dir.exists() else set()
     ghosts = {rid: srcs for rid, srcs in all_refs.items()
               if rid not in global_reqs and rid not in task_ids}
+    waiting = [rid for rid, r in reqs.items()
+               if r["fm"].get("status") == "approved" and (rid.split("-")[1] if len(rid.split("-"))>2 else rid.split("-")[0]) in ("FR", "NFR", "CON") and rid not in impl]
     orphans = [rid for rid, r in reqs.items()
-               if r["fm"].get("status") in ACTIVE and (rid.split("-")[1] if len(rid.split("-"))>2 else rid.split("-")[0]) in ("FR", "NFR", "CON") and rid not in impl]
+               if r["fm"].get("status") in ORPHAN_STATUSES and (rid.split("-")[1] if len(rid.split("-"))>2 else rid.split("-")[0]) in ("FR", "NFR", "CON") and rid not in impl]
     untested = [rid for rid, r in reqs.items()
                 if r["fm"].get("status") in ACTIVE and (rid.split("-")[1] if len(rid.split("-"))>2 else rid.split("-")[0]) in ("FR", "NFR", "CON")
                 and not any(s.startswith(("tests", "test", "src")) for s in all_refs.get(rid, []))]
 
     lines = [f"# inspection-report.md ({date.today().isoformat()})", ""]
-    lines.append(f"成果物数: {len(reqs)} / 問題: {len(problems)} / 幽霊参照: {len(ghosts)} / 孤児要件: {len(orphans)}")
+    lines.append(f"成果物数: {len(reqs)} / 問題: {len(problems)} / 幽霊参照: {len(ghosts)} / 実装待ち: {len(waiting)} / 孤児要件: {len(orphans)}")
     lines.append("")
     lines.append("## 問題一覧")
     lines += [f"- {p}" for p in problems] or ["- なし ✅"]
@@ -293,7 +297,10 @@ def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None) 
     lines.append("## 幽霊参照（存在しないIDへの参照）")
     lines += [f"- {rid} ← {', '.join(srcs)}" for rid, srcs in sorted(ghosts.items())] or ["- なし ✅"]
     lines.append("")
-    lines.append("## 孤児要件（approved以降なのに implements するタスクがない）")
+    lines.append("## 実装待ち要件（approved だが implements するタスクがない — WARN）")
+    lines += [f"- {rid}" for rid in waiting] or ["- なし ✅"]
+    lines.append("")
+    lines.append("## 孤児要件（implementing以降なのに implements するタスクがない）")
     lines += [f"- {rid}" for rid in orphans] or ["- なし ✅"]
     lines.append("")
     lines.append("## テスト/実装からの参照がない要件（approved以降）")
@@ -381,6 +388,8 @@ def main():
     parser = argparse.ArgumentParser(description="BitzSDD inspection tool")
     parser.add_argument("roots", nargs="*", default=["."], help="Workspace roots")
     parser.add_argument("--workspace", nargs="+", help="Explicitly specify workspace roots (overrides positional roots)")
+    parser.add_argument("--check-only", action="store_true",
+                        help="Run inspection without creating or updating inspection-report.md")
     parser.add_argument("--impact", help="ID for impact analysis")
     parser.add_argument("--impact-docs", help="docs path for impact analysis")
     args = parser.parse_args()
@@ -411,7 +420,8 @@ def main():
             report = inspect(w, global_reqs, delegation_ctx)
             out = w / ".spec" / "inspection-report.md"
             if not report.startswith("ERROR"):
-                out.write_text(report + "\n", encoding="utf-8")
+                if not args.check_only:
+                    out.write_text(report + "\n", encoding="utf-8")
                 print(report)
                 if "FAIL ❌" in report:
                     has_error = True

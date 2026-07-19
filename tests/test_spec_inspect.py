@@ -30,9 +30,9 @@ def make_spec(tmp_path: Path):
     return tasks_dir
 
 
-def run_inspect(root: Path):
+def run_inspect(root: Path, *extra_args: str):
     return subprocess.run(
-        [sys.executable, str(INSPECT_SCRIPT), str(root)],
+        [sys.executable, str(INSPECT_SCRIPT), str(root), *extra_args],
         capture_output=True,
         text=True,
     )
@@ -115,6 +115,147 @@ def test_true_ghost_reference_still_detected(tmp_path: Path):
     report = (tmp_path / ".spec" / "inspection-report.md").read_text(encoding="utf-8")
     assert GHOST_ID in report
     assert "FAIL" in report
+
+
+# ---- SDD-FR-133: check-only 読み取り専用検査 ----
+
+
+def test_SDD_FR_133_check_only_preserves_existing_report_and_matches_output(tmp_path: Path):
+    """check-only は通常検査と同じ出力・終了コードを返し、既存レポートを変更しない。"""
+    make_spec(tmp_path)
+    normal = run_inspect(tmp_path)
+    assert normal.returncode == 0
+
+    report_path = tmp_path / ".spec" / "inspection-report.md"
+    sentinel = b"existing report\n"
+    report_path.write_bytes(sentinel)
+
+    check_only = run_inspect(tmp_path, "--check-only")
+    assert check_only.returncode == normal.returncode
+    assert check_only.stdout == normal.stdout
+    assert report_path.read_bytes() == sentinel
+
+
+def test_SDD_FR_133_check_only_does_not_create_missing_report(tmp_path: Path):
+    """check-only 実行前にレポートが無ければ、検査後も生成しない。"""
+    make_spec(tmp_path)
+    report_path = tmp_path / ".spec" / "inspection-report.md"
+
+    result = run_inspect(tmp_path, "--check-only")
+
+    assert result.returncode == 0
+    assert "PASS" in result.stdout
+    assert not report_path.exists()
+
+
+def test_SDD_FR_133_check_only_failure_does_not_write_report(tmp_path: Path):
+    """check-only がFAILを返す場合もレポートを生成しない。"""
+    make_spec(tmp_path)
+    req_path = tmp_path / ".spec" / "requirements" / f"{REQ_ID}.md"
+    req_path.write_text(
+        f"---\nid: {REQ_ID}\nversion: 1.0\nstatus: implementing\n"
+        "domain: verification\nverification_method: unit-test\n---\n\n"
+        f"### {REQ_ID} 実装中要件\n",
+        encoding="utf-8",
+    )
+
+    result = run_inspect(tmp_path, "--check-only")
+
+    assert result.returncode == 1
+    assert "FAIL" in result.stdout
+    assert not (tmp_path / ".spec" / "inspection-report.md").exists()
+
+
+def test_SDD_FR_133_check_only_preserves_all_workspace_reports(tmp_path: Path):
+    """複数workspaceのcheck-onlyでも全レポートを不変に保ち、通常検査と同じ出力を返す。"""
+    roots = [tmp_path / "one", tmp_path / "two"]
+    for root in roots:
+        make_spec(root)
+    command = [
+        sys.executable,
+        str(INSPECT_SCRIPT),
+        "--workspace",
+        *[str(root) for root in roots],
+    ]
+    normal = subprocess.run(command, capture_output=True, text=True)
+    assert normal.returncode == 0
+
+    sentinels = {}
+    for index, root in enumerate(roots):
+        report_path = root / ".spec" / "inspection-report.md"
+        sentinels[report_path] = f"existing report {index}\n".encode()
+        report_path.write_bytes(sentinels[report_path])
+
+    check_only = subprocess.run(
+        [*command, "--check-only"], capture_output=True, text=True
+    )
+
+    assert check_only.returncode == normal.returncode
+    assert check_only.stdout == normal.stdout
+    for report_path, sentinel in sentinels.items():
+        assert report_path.read_bytes() == sentinel
+
+
+# ---- SDD-FR-134: approved 実装待ちと孤児FAILの分離 ----
+
+
+def write_active_requirement(root: Path, status: str):
+    req_path = root / ".spec" / "requirements" / f"{REQ_ID}.md"
+    req_path.write_text(
+        f"---\nid: {REQ_ID}\nversion: 1.0\nstatus: {status}\n"
+        "domain: verification\nverification_method: unit-test\n---\n\n"
+        f"### {REQ_ID} {status} 要件\n",
+        encoding="utf-8",
+    )
+
+
+def test_SDD_FR_134_approved_without_task_is_warning_and_passes(tmp_path: Path):
+    """approved のタスク未紐付けは実装待ち警告であり、単独ではFAILにしない。"""
+    make_spec(tmp_path)
+    write_active_requirement(tmp_path, "approved")
+
+    result = run_inspect(tmp_path)
+    report = (tmp_path / ".spec" / "inspection-report.md").read_text(encoding="utf-8")
+
+    assert result.returncode == 0, report
+    assert "実装待ち要件（approved" in report
+    assert f"- {REQ_ID}" in report
+    assert "孤児要件: 0" in report
+    assert "PASS" in report
+
+
+def test_SDD_FR_134_post_approval_without_task_is_orphan_and_fails(tmp_path: Path):
+    """implementing 以降のタスク未紐付けは孤児要件としてFAILを維持する。"""
+    for status in ("implementing", "verified", "promoted"):
+        root = tmp_path / status
+        make_spec(root)
+        write_active_requirement(root, status)
+
+        result = run_inspect(root)
+        report = (root / ".spec" / "inspection-report.md").read_text(encoding="utf-8")
+
+        assert result.returncode == 1
+        assert "孤児要件（implementing以降" in report
+        assert f"- {REQ_ID}" in report
+        assert "FAIL" in report
+
+
+def test_SDD_FR_134_approved_with_task_is_not_waiting(tmp_path: Path):
+    """approved でも実装タスクがあれば実装待ち警告へ列挙しない。"""
+    tasks_dir = make_spec(tmp_path)
+    write_active_requirement(tmp_path, "approved")
+    (tasks_dir / f"{TASK_ID}.md").write_text(
+        f"---\nimplements: {REQ_ID}\ndepends_on: []\nstatus: pending\n---\n",
+        encoding="utf-8",
+    )
+
+    result = run_inspect(tmp_path)
+    report = (tmp_path / ".spec" / "inspection-report.md").read_text(encoding="utf-8")
+
+    assert result.returncode == 0, report
+    waiting_section = report.split("## 実装待ち要件", 1)[1].split("##", 1)[0]
+    assert REQ_ID not in waiting_section
+    assert "PASS" in report
 
 
 # ---- SDD-FR-132: ワークスペース間 spec-issue 委託の横断検証 ----

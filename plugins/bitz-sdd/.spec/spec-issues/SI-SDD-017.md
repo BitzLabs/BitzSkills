@@ -3,8 +3,9 @@ id: SI-SDD-017
 raised_by: SI-CORE-031/032 実装キャンペーン（PR #70〜#75）の振り返り（2026-07-19）
 target: approved 要件がタスク未紐付けの間 spec_inspect が孤児 FAIL になり要件化先行フローと干渉する
 proposed_change_type: modify
-status: open
+status: accepted
 origin: root（SI-CORE-031/032 の実装振り返り）
+github_issue: https://github.com/BitzLabs/BitzSkills/issues/82
 ---
 - **目的**: 「要件化 PR を先に land → 実装 PR を並列で後続」という推奨フロー
   （sdd-implement の並列投入・flow-pr の未マージ依存の原則に沿った運用）を取ると、
@@ -32,3 +33,5 @@ origin: root（SI-CORE-031/032 の実装振り返り）
   「人間が承認した実装待ち」と定義する現行ライフサイクルと、タスク紐付けを要求する
   検査の間に意味論の不整合がある。案1はライフサイクル定義に検査を合わせる最小修正。
   検査ツールの判定変更＝契約変更のため軽量レーン不可、通常フロー + テスト先行を推奨。
+- **実施**: 2026-07-19 SDD-FR-134 / SDD-TSK-018 で推奨案1を実装し、
+  approved未紐付けを実装待ちWARN、implementing以降を孤児FAILとしてverifiedへ遷移。

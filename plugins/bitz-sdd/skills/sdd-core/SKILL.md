@@ -2,7 +2,7 @@
 name: sdd-core
 description: BitzSDD — 仕様駆動開発（SDD）ワークフローを運用するメインスキル。要件定義・仕様作成・実装・検証・完了処理のすべてをこの規律に従って実行する。ユーザーが「仕様駆動」「SDD」「要件」「EARS」「spec」「タスク分解」「feature実装」に言及したとき、リポジトリに .spec/ や AGENTS.md が存在するとき、または新機能の設計・実装・検証・リリース処理を依頼されたときは、明示的な指示がなくても必ずこのスキルを使うこと。要件の変更・廃止・番号管理・テスト失敗時の対応・ドキュメント更新もすべて本スキルの管轄。
 metadata:
-  version: "2.2.0"
+  version: "2.3.0"
   author: br7.hide
   created: "2026-07-07"
   updated: "2026-07-19"
@@ -99,8 +99,12 @@ frontmatter 書式）に触れる変更はショートカット禁止 — 通常
 ```bash
 python3 scripts/spec_inspect.py <repo-root>              # 全検証 → inspection-report.md
 python3 scripts/spec_inspect.py --workspace . plugins/*  # モノリポ一括検証（クロスリファレンス解決）
+python3 scripts/spec_inspect.py --workspace . plugins/* --check-only  # 判定のみ（レポート不変）
 python3 scripts/spec_inspect.py <repo-root> --impact FR-012   # FR-012変更の影響成果物を列挙
 ```
+
+並列PR・worktreeでは `--check-only` を使い、各ブランチが全ワークスペースの
+`inspection-report.md` 差分を持たないようにする。レポート更新は統合後の締め工程で行う。
 
 ## 状況照会（軽量）
 

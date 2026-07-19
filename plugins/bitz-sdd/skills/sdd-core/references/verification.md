@@ -38,9 +38,11 @@
 
 ## L3: プロセスの検証 — traceability matrix
 
-Verify フェーズで spec_inspect.py を実行し `inspection-report.md` を生成。green の定義:
+Verify フェーズで spec_inspect.py を実行する。単独・締め工程では `inspection-report.md` を生成し、
+並列PR・worktreeでは `--check-only` によりレポートを変更せず同じ判定を得る。green の定義:
 
-- approved 以降の全要件が「≥1タスク ∧ verification_method に応じた ≥1検証」で覆われている
+- implementing 以降の全要件が「≥1タスク ∧ verification_method に応じた ≥1検証」で覆われている
+- approved でタスク未紐付けの要件は実装待ちWARNとして可視化される（単独ではFAILにしない）
 - 幽霊参照ゼロ、stale マークゼロ
 
 レポートは人間に提示する。機械判定を上書きしない（人間も上書きしない — 例外は仕様変更として正規の手続きへ）。

@@ -3,8 +3,9 @@ id: SI-SDD-018
 raised_by: SI-CORE-031/032 実装キャンペーン（PR #70〜#75）の振り返り（2026-07-19）
 target: spec_inspect にレポートを書き込まない読み取り専用モードが無く並列 PR 運用と干渉する
 proposed_change_type: modify
-status: open
+status: accepted
 origin: root（SI-CORE-031/032 の実装振り返り）
+github_issue: https://github.com/BitzLabs/BitzSkills/issues/82
 ---
 - **目的**: `spec_inspect.py` は検証のたびに全対象ワークスペースの
   `inspection-report.md` を書き換える。並列 PR 運用（worktree ごとに検証を実行）では
@@ -31,3 +32,5 @@ origin: root（SI-CORE-031/032 の実装振り返り）
   毎回の場当たり指示は漏れると即競合事故になる。追加は後方互換なフラグ1つで
   リスクが小さい。CLI インターフェース（契約）の拡張のため通常フローを推奨
   （実装自体は小さく、要件1件 + タスク1件で足りる見込み）。
+- **実施**: 2026-07-19 SDD-FR-133 / SDD-TSK-018 で `--check-only` と
+  単一・複数workspaceの非書き込み回帰テストを実装し、verifiedへ遷移。
