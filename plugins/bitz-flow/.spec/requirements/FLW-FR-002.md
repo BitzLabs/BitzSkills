@@ -1,7 +1,7 @@
 ---
 id: FLW-FR-002
 version: 1.0
-status: approved
+status: verified
 domain: tooling
 priority: medium
 origin: SI-CORE-031

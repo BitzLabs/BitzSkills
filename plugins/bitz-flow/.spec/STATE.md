@@ -11,3 +11,7 @@
 - 2026-07-18 FLW-TSK-003: implementing → done (codex)
 - 2026-07-18 FLW-FR-001: implementing → verified (codex)
 - 2026-07-19 FLW-FR-002: draft → approved (human)
+- 2026-07-19 FLW-FR-002: approved → implementing (agent)
+- 2026-07-19 FLW-FR-002: implementing → verified (agent)
+- 2026-07-19 FLW-TSK-004: pending → implementing (agent)
+- 2026-07-19 FLW-TSK-004: implementing → done (agent)
