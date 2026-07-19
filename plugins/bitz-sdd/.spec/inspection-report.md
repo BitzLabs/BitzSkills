@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-19)
 
-成果物数: 53 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 1
+成果物数: 53 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -9,7 +9,7 @@
 - なし ✅
 
 ## 孤児要件（approved以降なのに implements するタスクがない）
-- SDD-FR-130
+- なし ✅
 
 ## テスト/実装からの参照がない要件（approved以降）
 - SDD-CON-022
@@ -109,8 +109,8 @@
 | SDD-FR-127 | verified | sync | unit-test | 2 | 3 |
 | SDD-FR-128 | verified | sync | unit-test | 2 | 3 |
 | SDD-FR-129 | verified | sync | unit-test | 2 | 3 |
-| SDD-FR-130 | approved | workflow | manual-check | 0 | 0 |
+| SDD-FR-130 | verified | workflow | manual-check | 1 | 1 |
 | SDD-REV-001 | active |  |  | 0 | 1 |
 | SDD-REV-002 | active |  |  | 0 | 1 |
 
-**判定: FAIL ❌（上記を解消するまで verified に進めない）**
+**判定: PASS ✅**

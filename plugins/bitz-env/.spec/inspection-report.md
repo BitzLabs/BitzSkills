@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-19)
 
-成果物数: 25 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 1
+成果物数: 25 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -9,7 +9,7 @@
 - なし ✅
 
 ## 孤児要件（approved以降なのに implements するタスクがない）
-- ENV-FR-011
+- なし ✅
 
 ## テスト/実装からの参照がない要件（approved以降）
 - ENV-CON-001
@@ -58,9 +58,9 @@
 | ENV-FR-008 | verified | guardrail | example-test | 1 | 2 |
 | ENV-FR-009 | verified | deploy | example-test | 1 | 2 |
 | ENV-FR-010 | verified | deploy | example-test | 2 | 4 |
-| ENV-FR-011 | approved | deploy | manual-check | 0 | 0 |
+| ENV-FR-011 | verified | deploy | manual-check | 1 | 1 |
 | ENV-NFR-001 | verified | guardrail | benchmark | 1 | 2 |
 | ENV-NFR-002 | verified | guardrail | manual-check | 1 | 2 |
 | REV-001 | approved | governance |  | 0 | 0 |
 
-**判定: FAIL ❌（上記を解消するまで verified に進めない）**
+**判定: PASS ✅**

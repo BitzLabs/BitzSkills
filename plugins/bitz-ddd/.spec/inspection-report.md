@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-19)
 
-成果物数: 7 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 1
+成果物数: 7 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -9,7 +9,7 @@
 - なし ✅
 
 ## 孤児要件（approved以降なのに implements するタスクがない）
-- DDD-FR-001
+- なし ✅
 
 ## テスト/実装からの参照がない要件（approved以降）
 - DDD-FR-001
@@ -27,6 +27,6 @@
 | DDD-DSC-004 | draft |  |  | 0 | 0 |
 | DDD-DSC-005 | draft |  |  | 0 | 0 |
 | DDD-DSC-006 | draft |  |  | 0 | 0 |
-| DDD-FR-001 | approved | tooling | manual-check | 0 | 0 |
+| DDD-FR-001 | verified | tooling | manual-check | 1 | 1 |
 
-**判定: FAIL ❌（上記を解消するまで verified に進めない）**
+**判定: PASS ✅**
