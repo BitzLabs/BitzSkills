@@ -145,3 +145,15 @@
 - 2026-07-19 SDD-FR-132: implementing → verified (agent)
 - 2026-07-19 SDD-TSK-017: pending → implementing (agent)
 - 2026-07-19 SDD-TSK-017: implementing → done (agent)
+- 2026-07-19 SI-SDD-018: open → accepted (ユーザー裁定（018,017を進める）)
+- 2026-07-19 SI-SDD-017: open → accepted (ユーザー裁定（018,017を進める、案1）)
+- 2026-07-19 SDD-FR-133: draft → approved (ユーザー裁定（SI-SDD-018を進める）)
+- 2026-07-19 SDD-FR-134: draft → approved (ユーザー裁定（SI-SDD-017案1を進める）)
+- 2026-07-19 SDD-FR-133: approved → implementing (agent（実装タスク起票）)
+- 2026-07-19 SDD-FR-134: approved → implementing (agent（実装タスク起票）)
+- 2026-07-19 SDD-TSK-018: pending → implementing (agent)
+- 2026-07-19 SDD-TSK-018 検証環境: `pytest` はPATH不在、`python3 -m pytest` はmodule不在でenv-failure。リポジトリ内 `.venv/bin/pytest` を正規入口として採用し、対象6件のRED（6 failed）を確認後、実装後green（6 passed）を確認。
+- 2026-07-19 SDD-TSK-018 ドッグフーディング版差: `scripts/spec` はinstalled bitz-sdd 2.3.0を解決するため新規`--check-only`を認識せずexit 2。新機能はリポジトリ内2.4.0の`spec_inspect.py`で検証し、正規ラッパーは従来のcanonical検査を別途実行する。
+- 2026-07-19 SDD-TSK-018: implementing → done (agent（対象7件・全254件green、spec/release PASS）)
+- 2026-07-19 SDD-FR-133: implementing → verified (agent（7対象tests・254全tests・local check-only・canonical inspect・release_check PASS）)
+- 2026-07-19 SDD-FR-134: implementing → verified (agent（7対象tests・254全tests・local check-only・canonical inspect・release_check PASS）)

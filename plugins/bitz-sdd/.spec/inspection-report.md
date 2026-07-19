@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-19)
 
-成果物数: 55 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
+成果物数: 57 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -53,6 +53,8 @@
 - SDD-FR-130
 - SDD-FR-131
 - SDD-FR-132
+- SDD-FR-133
+- SDD-FR-134
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
 ※ 乖離は候補提示のみ。stale 付与は references/lifecycle.md の再伝播プロトコル（判定パス→人間確認）を経ること
@@ -114,6 +116,8 @@
 | SDD-FR-130 | verified | workflow | manual-check | 1 | 1 |
 | SDD-FR-131 | verified | workflow | unit-test | 1 | 1 |
 | SDD-FR-132 | verified | verification | example-test | 1 | 1 |
+| SDD-FR-133 | verified | verification | unit-test | 1 | 2 |
+| SDD-FR-134 | verified | verification | unit-test | 1 | 2 |
 | SDD-REV-001 | active |  |  | 0 | 1 |
 | SDD-REV-002 | active |  |  | 0 | 1 |
 
