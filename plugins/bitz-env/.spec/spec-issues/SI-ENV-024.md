@@ -3,7 +3,7 @@ id: SI-ENV-024
 raised_by: SI-CORE-032 実装（PR #74）の振り返り（2026-07-19）
 target: 既展開環境のレジストリに展開時バージョン記録が無く env-update が常に安全側停止する
 proposed_change_type: modify
-status: open
+status: accepted
 origin: root（SI-CORE-032 の実装振り返り）
 ---
 - **目的**: env-update（ENV-FR-011）が読むバージョン記録 `bitz-env-version` は
@@ -30,6 +30,8 @@ origin: root（SI-CORE-032 の実装振り返り）
   - doctor の読み取り専用が維持されること
 - **影響推定・ロールバック**: 既存スキルへの診断項目・文言の追加が中心。単独 revert 可能。
 - **依存**: ENV-FR-011（実装済み・前提）。関連: CORE-CON-008/009。
+- **実施**: 2026-07-19 ENV-FR-012 として要件化（案 (a) 採用・ENV-DSN-002 設計記録）し、
+  ENV-TSK-015 で実装・verified 到達（`evals/env-update/stamp-rescue/` R1〜R4 PASS）。
 - **予備判定（推薦・裁定は人間）**: **accept を推薦**。既展開環境で env-update が
   機能しないという実害があり、放置すると「update があるのに使えない」状態が続く。
   ガードレール抵触なし（stamp 書き込みはユーザー確認つき・対象プロジェクト内）。
