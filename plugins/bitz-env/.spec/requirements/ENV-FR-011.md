@@ -1,7 +1,7 @@
 ---
 id: ENV-FR-011
 version: 1.0
-status: approved
+status: verified
 domain: deploy
 priority: medium
 origin: SI-CORE-032
@@ -33,3 +33,7 @@ confidence: high
   skill-validator チェックリスト通過 + release_check / spec_inspect PASS。
 - **Revision History**:
   - 1.0 (2026-07-19) 初版（draft 起票。SI-CORE-032 / DSN-003 / DSN-002 由来）
+  - 1.0 (2026-07-19) implementing 遷移（ENV-TSK-014 投入。env-update スキル実装）
+  - 1.0 (2026-07-19) verified 遷移（ENV-TSK-014 done、EARS 8項目実装、
+    合成フィクスチャ検証2件 PASS（`evals/env-update/`）、release_check PASS、
+    spec_inspect bitz-env PASS、pytest 236 green）

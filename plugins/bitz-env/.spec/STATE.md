@@ -7,3 +7,7 @@
 - 2026-07-16 ENV-NFR-002: implementing → verified (human)
 - 2026-07-18 SI-ENV-022: open → accepted (ユーザー（チャット指示: 進めましょう）)
 - 2026-07-19 ENV-FR-011: draft → approved (human)
+- 2026-07-19 ENV-FR-011: approved → implementing (agent)
+- 2026-07-19 ENV-TSK-014: pending → implementing (agent)
+- 2026-07-19 ENV-TSK-014: implementing → done (agent)
+- 2026-07-19 ENV-FR-011: implementing → verified (agent)
