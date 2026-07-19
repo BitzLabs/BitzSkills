@@ -76,6 +76,13 @@ def render_requirement(rid: str, args) -> str:
 
 
 def render_spec_issue(iid: str, args) -> str:
+    # 委託フィールド（SDD-FR-132）は指定時のみ出力する（既存書式の後方互換を保つ。
+    # 委託フローの規定は sdd-core references/lifecycle.md の「ワークスペース間委託」節が正）
+    delegation = ""
+    if args.origin:
+        delegation += f"origin: {args.origin}\n"
+    if args.delegated_to:
+        delegation += f"delegated_to: {args.delegated_to}\n"
     return (
         f"---\n"
         f"id: {iid}\n"
@@ -83,6 +90,7 @@ def render_spec_issue(iid: str, args) -> str:
         f"target: {args.target or 'TODO（変更対象）'}\n"
         f"proposed_change_type: {args.change_type or 'new'}\n"
         f"status: open\n"
+        f"{delegation}"
         f"---\n"
         f"- **目的**: TODO\n"
         f"- **提案する修正**: TODO\n"
@@ -159,13 +167,15 @@ def main():
     # requirement 用
     parser.add_argument("--domain", help="ドメイン（requirement）")
     parser.add_argument("--priority", help="優先度（requirement）")
-    parser.add_argument("--origin", help="起票の由来（requirement）")
+    parser.add_argument("--origin", help="起票の由来（requirement）/ 起票ワークスペース（spec-issue）")
     parser.add_argument("--verification-method", dest="verification_method",
                         help="検証手段（requirement）")
     # spec-issue 用
     parser.add_argument("--target", help="変更対象（spec-issue）")
     parser.add_argument("--raised-by", dest="raised_by", help="発見元（spec-issue）")
     parser.add_argument("--change-type", dest="change_type", help="proposed_change_type（spec-issue）")
+    parser.add_argument("--delegated-to", dest="delegated_to",
+                        help="委託先（spec-issue。`<ws>:<ID>` カンマ区切り。SDD-FR-132）")
     # task 用（design でも implements を任意で使える）
     parser.add_argument("--implements", help="実装対象の要件 ID（task では必須 / design では任意）")
     parser.add_argument("--depends-on", dest="depends_on", help="依存タスク（task。例: [] や [CORE-TSK-001]）")

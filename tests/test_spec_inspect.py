@@ -117,6 +117,131 @@ def test_true_ghost_reference_still_detected(tmp_path: Path):
     assert "FAIL" in report
 
 
+# ---- SDD-FR-132: ワークスペース間 spec-issue 委託の横断検証 ----
+
+SI_ID = "SI-T-" + "001"
+DELEGATED_REQ_ID = "FR-" + "101"
+GHOST_DELEGATED_ID = "FR-" + "888"
+
+
+def make_delegation_workspaces(tmp_path: Path, delegated_to: str, sub_origin: str):
+    """ルート ws（spec-issue 1件）+ サブ ws（要件1件）の委託 fixture を構築する"""
+    root = tmp_path / "root"
+    make_spec(root)
+    si_dir = root / ".spec" / "spec-issues"
+    si_dir.mkdir(parents=True)
+    (si_dir / f"{SI_ID}.md").write_text(
+        f"---\nid: {SI_ID}\nraised_by: test\ntarget: sub\n"
+        f"proposed_change_type: bump\nstatus: accepted\norigin: root\n"
+        f"delegated_to: {delegated_to}\n---\n- **目的**: テスト\n",
+        encoding="utf-8",
+    )
+    sub = tmp_path / "sub"
+    sub_req_dir = sub / ".spec" / "requirements"
+    sub_req_dir.mkdir(parents=True)
+    (sub_req_dir / f"{DELEGATED_REQ_ID}.md").write_text(
+        f"---\nid: {DELEGATED_REQ_ID}\nversion: 1.0\nstatus: draft\n"
+        f"origin: {sub_origin}\n---\n\n### {DELEGATED_REQ_ID} 委任先要件\n",
+        encoding="utf-8",
+    )
+    (sub / ".spec" / "tasks").mkdir(parents=True)
+    return root, sub
+
+
+def run_inspect_multi(*roots: Path):
+    return subprocess.run(
+        [sys.executable, str(INSPECT_SCRIPT), "--workspace", *[str(r) for r in roots]],
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_spec_issue_without_delegation_fields_passes(tmp_path: Path):
+    """origin / delegated_to を持たない既存書式の spec-issue は委託チェック対象外で PASS（後方互換）"""
+    make_spec(tmp_path)
+    si_dir = tmp_path / ".spec" / "spec-issues"
+    si_dir.mkdir(parents=True)
+    (si_dir / f"{SI_ID}.md").write_text(
+        f"---\nid: {SI_ID}\nraised_by: test\ntarget: t\n"
+        f"proposed_change_type: bump\nstatus: open\n---\n- **目的**: テスト\n",
+        encoding="utf-8",
+    )
+    res = run_inspect(tmp_path)
+    assert res.returncode == 0, res.stdout
+    assert "[委託]" not in res.stdout
+
+
+def test_delegation_valid_bidirectional_passes(tmp_path: Path):
+    """delegated_to の先が実在し origin: が委託元へ言及していれば PASS"""
+    root, sub = make_delegation_workspaces(
+        tmp_path, f"sub:{DELEGATED_REQ_ID}", SI_ID
+    )
+    res = run_inspect_multi(root, sub)
+    assert res.returncode == 0, res.stdout
+    assert "[委託]" not in res.stdout
+
+
+def test_delegation_broken_link_fails(tmp_path: Path):
+    """delegated_to の先の ID がどこにも実在しなければ FAIL"""
+    root, sub = make_delegation_workspaces(
+        tmp_path, f"sub:{GHOST_DELEGATED_ID}", SI_ID
+    )
+    res = run_inspect_multi(root, sub)
+    assert res.returncode == 1
+    assert "[委託]" in res.stdout
+    assert GHOST_DELEGATED_ID in res.stdout
+
+
+def test_delegation_missing_backlink_fails(tmp_path: Path):
+    """委託先は実在するが origin: に委託元 spec-issue への言及が無ければ FAIL（双方向リンク欠如）"""
+    root, sub = make_delegation_workspaces(
+        tmp_path, f"sub:{DELEGATED_REQ_ID}", "別の由来"
+    )
+    res = run_inspect_multi(root, sub)
+    assert res.returncode == 1
+    assert "[委託]" in res.stdout
+    assert "双方向" in res.stdout
+
+
+def test_delegation_backlink_with_annotation_passes(tmp_path: Path):
+    """origin: が注記付き（例: root（SI-... の実装振り返り）相当）でも言及ベースで PASS"""
+    root, sub = make_delegation_workspaces(
+        tmp_path, f"sub:{DELEGATED_REQ_ID}", f"root ws（{SI_ID} の委任）"
+    )
+    res = run_inspect_multi(root, sub)
+    assert res.returncode == 0, res.stdout
+    assert "[委託]" not in res.stdout
+
+
+def test_delegation_multiple_targets(tmp_path: Path):
+    """delegated_to のカンマ区切り複数エントリを個別に検証する（1件でもリンク切れなら FAIL）"""
+    root, sub = make_delegation_workspaces(
+        tmp_path,
+        f"sub:{DELEGATED_REQ_ID}, sub:{GHOST_DELEGATED_ID}",
+        SI_ID,
+    )
+    res = run_inspect_multi(root, sub)
+    assert res.returncode == 1
+    assert GHOST_DELEGATED_ID in res.stdout
+
+
+def test_delegation_to_sub_spec_issue_passes(tmp_path: Path):
+    """委託先が spec-issue（サブ ws の SI）でも実在 + 双方向言及で PASS する"""
+    sub_si_id = "SI-S-" + "001"
+    root, sub = make_delegation_workspaces(tmp_path, f"sub:{sub_si_id}", SI_ID)
+    sub_si_dir = sub / ".spec" / "spec-issues"
+    sub_si_dir.mkdir(parents=True)
+    (sub_si_dir / f"{sub_si_id}.md").write_text(
+        f"---\nid: {sub_si_id}\nraised_by: 委任\ntarget: t\n"
+        f"proposed_change_type: bump\nstatus: open\norigin: root（{SI_ID} の委任）\n"
+        f"---\n- **目的**: テスト\n",
+        encoding="utf-8",
+    )
+    res = run_inspect_multi(root, sub)
+    assert res.returncode == 0, res.stdout
+    assert "[委託]" not in res.stdout
+
+
 def test_SDD_FR_124_active_requirement_accepts_unit_test(tmp_path: Path):
     """SDD-FR-124: active 要件の unit-test を語彙外として報告しない。"""
     req_id = "SDD-FR-" + "124"

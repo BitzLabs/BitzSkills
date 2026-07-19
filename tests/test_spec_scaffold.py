@@ -119,6 +119,26 @@ def test_generated_spec_issue_has_open_status(tmp_path):
     assert "status: open" in f.read_text(encoding="utf-8")
 
 
+def test_spec_issue_with_delegation_fields(tmp_path):
+    """SDD-FR-132: --origin / --delegated-to 指定時は spec-issue の frontmatter に反映される。"""
+    delegated = "sub:" + FR + "101"
+    res = run(tmp_path, "spec-issue", "--prefix", "SI-CORE",
+              "--origin", "root", "--delegated-to", delegated)
+    assert res.returncode == 0, res.stderr
+    text = (tmp_path / ".spec" / "spec-issues" / "SI-CORE-001.md").read_text(encoding="utf-8")
+    assert "origin: root" in text
+    assert f"delegated_to: {delegated}" in text
+
+
+def test_spec_issue_without_delegation_fields_omits_them(tmp_path):
+    """SDD-FR-132: 委託フィールド未指定なら frontmatter に出力しない（既存書式の後方互換）。"""
+    res = run(tmp_path, "spec-issue", "--prefix", "SI-CORE")
+    assert res.returncode == 0, res.stderr
+    text = (tmp_path / ".spec" / "spec-issues" / "SI-CORE-001.md").read_text(encoding="utf-8")
+    assert "delegated_to" not in text
+    assert "origin" not in text.split("---")[1]  # frontmatter 部に origin 行が無い
+
+
 # --- 非上書き・副作用の限定 --------------------------------------------------
 
 def test_refuses_overwrite(tmp_path):
