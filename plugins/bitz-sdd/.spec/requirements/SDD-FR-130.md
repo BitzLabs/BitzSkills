@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-130
 version: 1.0
-status: approved
+status: verified
 domain: workflow
 priority: medium
 origin: SI-CORE-031
