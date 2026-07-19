@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-19)
 
-成果物数: 27 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
+成果物数: 28 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -28,6 +28,7 @@
 - ENV-FR-010
 - ENV-FR-011
 - ENV-FR-012
+- ENV-FR-013
 - ENV-NFR-001
 - ENV-NFR-002
 
@@ -62,6 +63,7 @@
 | ENV-FR-010 | verified | deploy | example-test | 2 | 4 |
 | ENV-FR-011 | verified | deploy | manual-check | 1 | 2 |
 | ENV-FR-012 | verified | deploy | manual-check | 1 | 1 |
+| ENV-FR-013 | implementing | deploy | manual-check | 1 | 1 |
 | ENV-NFR-001 | verified | guardrail | benchmark | 1 | 2 |
 | ENV-NFR-002 | verified | guardrail | manual-check | 1 | 2 |
 | REV-001 | approved | governance |  | 0 | 0 |

@@ -3,7 +3,7 @@ id: SI-ENV-025
 raised_by: ENV-FR-012 救済フローの実地試行（2026-07-19 本リポジトリへの stamp 後付け）
 target: plugins/bitz-env/skills/env-update/SKILL.md 手順4（書き込み前の承認フロー）
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: env-update の dry-run（手順4）は rollback 用バックアップ先の提示を求めるが、
   **書き込み対象が git 管理下かどうかの確認手順が無い**。ENV-FR-012 救済フローの実地試行
@@ -30,6 +30,9 @@ status: open
 - **影響推定・ロールバック**: SKILL.md の手順追記が中心で契約（レジストリ書式・
   CORE-CON-008/009）には触れない。単独 revert 可能。
 - **依存**: ENV-FR-011 / ENV-FR-012（手順4・5 の現行規定）。関連: SI-ENV-024（発見元の実地試行）。
+- **実施**: 2026-07-19 ENV-FR-013 起票 → ENV-TSK-016 で SKILL.md 手順4・5.1 の接続と
+  migration-runbook.md 同期を実装、合成フィクスチャ検証 G1〜G4 PASS
+  （`evals/env-update/dryrun-rollback/`）で verified。
 - **予備判定（推薦・裁定は人間）**: **accept を推薦**。実地試行で実際に発生した提示誤りで、
   再現条件（gitignore されたレジストリ）は env-init の既定配置そのものであり全展開先で起こりうる。
   既存要件との矛盾なし（ENV-FR-011/012 の安全原則をむしろ強化）。ガードレール抵触なし。

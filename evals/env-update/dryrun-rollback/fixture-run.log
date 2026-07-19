@@ -1,0 +1,5 @@
+G1: PASS — gitignore されたレジストリの rollback 手段は .bak（誤提示 git の再発なし）
+G2: PASS — git 管理下の AGENTS.md の rollback 手段は git
+G3: PASS — 未追跡（ignore 対象外）の advisor.md の rollback 手段は .bak
+G4: PASS — SKILL.md 手順4（実確認・対提示・推測禁止・レジストリ注記）と手順5.1 の接続、runbook の同期が明文化されている
+総合: PASS（4/4）

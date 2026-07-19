@@ -2,7 +2,7 @@
 name: env-update
 description: env-init で展開済みの bitz-env 環境（settings.json の permissions・AGENTS.md / CLAUDE.md のマーカー区間・.claude/agents/ の advisor / worker・.claude/bitz-env.local.md レジストリ）を、ライブラリ側の最新バージョンへ安全に更新する。レジストリ記録の展開時バージョン D とライブラリ版 T を比較して差分のある生成物のみを更新し、CORE-CON-009 の累積マイグレーション機構でレジストリ・frontmatter 等の形式変更を移行する。展開時バージョン記録（bitz-env-version）が無い旧環境には、D を保守的に推定しユーザー確認のうえ stamp を後付けする救済フローを提供する。「bitz-env を更新して」「環境を最新版に上げて」「env-update」「マイグレーションを適用して」「stamp を後付けして」と言われたとき、または bitz-env プラグインをバージョンアップした後に使用する。環境の展開は env-init、診断は env-doctor、撤去は env-uninstall が担当する。
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
   author: br7.hide
   created: "2026-07-19"
   updated: "2026-07-19"
@@ -106,15 +106,26 @@ plugin-creator の `migration-steps.md`）。要点:
 
 1. dry-run で変換対象ファイル一覧と before/after 差分プレビューを提示する。
 2. 書き込み先の絶対パスと、それがリポジトリ内 / 外のいずれかを明示する。
-3. 失敗時 rollback 用のバックアップ先を提示する。
-4. **ユーザー承認を得るまで一切書き込まない**（バックアップ取得を含む実書き込みは承認後）。
+3. **変換対象ファイルごとに git 管理状態を実際に確認する**:
+   `git ls-files --error-unmatch <path>`（追跡判定）・`git check-ignore <path>`
+   （ignore 判定）等のコマンドで確認する。推測や既定値での判定
+   （「リポジトリ内のパスだから git 管理下」等）は禁止。
+4. 確認結果に応じた失敗時 rollback 手段を、**対象ファイルごとに確認結果と対にして**提示する:
+   git 管理下 = git を復旧手段とする / git 管理外（未追跡・ignore 対象）=
+   承認後の適用（手順5.1）で `<ファイル名>.bak` バックアップを必ず取得する。
+5. **ユーザー承認を得るまで一切書き込まない**（バックアップ取得を含む実書き込みは承認後）。
+
+> **注記**: レジストリ `.claude/bitz-env.local.md` は env-init の既定で gitignore 対象
+> （`.claude/*.local.md`）のローカルファイルになる。「リポジトリ内のパス = git 管理下」の
+> 推定は成り立たないため、必ず手順4.3 の実確認で判定する。
 
 書き込み先が作業中リポジトリ内（ドッグフーディング）の場合もリポジトリ外承認と同様に
 dry-run 差分を提示し、デフォルトブランチへの直接コミット禁止のブランチ規律に従う。
 
 ### 5. 適用と stamp（承認後）
 
-1. バックアップを取得する（git 管理外の対象は `<ファイル名>.bak`、git 管理下は git を復旧手段とする）。
+1. **手順4.3 で実確認した git 管理状態に従い**バックアップを取得する（git 管理外の対象は
+   `<ファイル名>.bak` を必ず取得、git 管理下は git を復旧手段とする）。
 2. 救済フロー（手順 1b）経由の場合は、**最初に**レジストリ frontmatter へ
    `bitz-env-version: "D̂"` を stamp する。
 3. 手順2の差分更新と手順3のマイグレーションを適用する。
