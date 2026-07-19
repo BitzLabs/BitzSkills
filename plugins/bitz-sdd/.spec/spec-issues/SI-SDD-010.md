@@ -4,6 +4,7 @@ raised_by: 4プラグインの Discovery docs 同期（2026-07-18）
 target: sdd-docs の sdd_sync.py pull と docs_inspect.py の frontmatter 契約不整合
 proposed_change_type: modify
 status: accepted
+github_issue: https://github.com/BitzLabs/BitzSkills/issues/84
 ---
 - **目的**: `sdd_sync.py pull` が `.spec/discovery/*.md` を frontmatter ごと `docs/` へコピーする一方、
   `docs_inspect.py` は docs 文書に `DOC-*` ID、`proposed|active` status、semver、`changeImpact`、
