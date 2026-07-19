@@ -63,7 +63,7 @@
 | ENV-FR-010 | verified | deploy | example-test | 2 | 4 |
 | ENV-FR-011 | verified | deploy | manual-check | 1 | 2 |
 | ENV-FR-012 | verified | deploy | manual-check | 1 | 1 |
-| ENV-FR-013 | implementing | deploy | manual-check | 1 | 1 |
+| ENV-FR-013 | verified | deploy | manual-check | 1 | 1 |
 | ENV-NFR-001 | verified | guardrail | benchmark | 1 | 2 |
 | ENV-NFR-002 | verified | guardrail | manual-check | 1 | 2 |
 | REV-001 | approved | governance |  | 0 | 0 |

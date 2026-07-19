@@ -76,7 +76,8 @@ spec-issue の状態遷移は要件と別建てで、`spec_update.py` の `TRANS
 ```
 [*] → open → accepted → (実施) → 要件化 or 軽量レーンで反映済み
               │
-              └→ superseded（重複解消。人間専用）
+              ├→ superseded（重複解消。人間専用）
+              └→ rejected（再裁定の不採用。人間専用。SDD-FR-131）
             open → rejected
 ```
 
@@ -84,6 +85,11 @@ spec-issue の状態遷移は要件と別建てで、`spec_update.py` の `TRANS
 - `accepted → superseded` も人間専用。重複が判明した spec-issue を統合先へ寄せて正式クローズする
   ときに使う。`superseded_by:` frontmatter への統合先 ID 記入は人間が手動で行う
   （`spec_update.py` は status 行のみを書き換え、他 frontmatter には触れない）
+- `accepted → rejected` も人間専用（SDD-FR-131）。SDD-FR-122 の着手時前提再検証で
+  「乖離が提案の趣旨自体を変える」と判定され人間の再裁定へ戻された spec-issue を、
+  再裁定の結果**不採用**としてクローズするときに使う。遷移前に当該 spec-issue 本文へ
+  `- **再裁定**: <日付> <理由>` を記録する（完了記録 `- **実施**:` と同格の固定語彙。
+  類義語は使わない）
 
 ### 完了記録の語彙統一（CORE-FR-012 検知との対応）
 

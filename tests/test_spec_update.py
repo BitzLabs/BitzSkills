@@ -133,6 +133,26 @@ def test_human_can_supersede_issue(tmp_path):
     assert status_of(tmp_path, "spec-issues", iid) == "superseded"
 
 
+def test_agent_cannot_reject_accepted_issue(tmp_path):
+    """accepted→rejected（再裁定の不採用）はエージェントでは拒否される（SDD-FR-131）。"""
+    iid = make_issue(tmp_path, 1, "accepted")
+    res = run(tmp_path, iid, "rejected")
+    assert res.returncode != 0
+    assert status_of(tmp_path, "spec-issues", iid) == "accepted"
+    assert iid not in state_text(tmp_path), "拒否時は STATE.md に書かない"
+
+
+def test_human_can_reject_accepted_issue(tmp_path):
+    """--by-human 明示なら accepted→rejected を適用し STATE.md に記録する（SDD-FR-131）。"""
+    iid = make_issue(tmp_path, 1, "accepted")
+    res = run(tmp_path, iid, "rejected", "--by-human")
+    assert res.returncode == 0, res.stderr
+    assert status_of(tmp_path, "spec-issues", iid) == "rejected"
+    st = state_text(tmp_path)
+    assert iid in st
+    assert "accepted" in st and "rejected" in st
+
+
 # --- エージェント許容遷移 ----------------------------------------------------
 
 def test_agent_can_start_implementing(tmp_path):

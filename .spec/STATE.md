@@ -114,3 +114,5 @@
 - 2026-07-18 CORE-FR-016: implementing → verified (agent (claude-fable-5): 対象リビジョン 374ac98（feat/si-core-010-sdd-git-slim）。python3 scripts/release_check.py → PASS（rc0。依存グラフ検証: bitz-sdd 3マニフェスト同値の dependencies [bitz-flow>=0.2]・依存先 bitz-flow 0.2.0 実在・semver 制約充足）。.venv/bin/pytest tests/ → 200 passed / 0 failed / 0 skipped。spec inspect --workspace . plugins/* → 全WS PASS・FAIL 0。grep -rn sdd-git の全ヒットを目視分類: 更新済み=sdd-git SKILL（縮退・0.3.0）/sdd-core ルーティング表/sdd-implement 実装規律/bitz-sdd README/bitz-flow README、意図した残置=discovery・PROJECT・spec-issue・要件・docs の経緯記述と SDD-FR-080〜082（挙動要件は縮退後も SKILL.md の規範で充足、manual-check 目視確認済み）。bump は minor（1.11.4→1.12.0、裁定どおり）。実行日 2026-07-18)
 - 2026-07-19 SI-CORE-031: open → accepted (human)
 - 2026-07-19 SI-CORE-032: open → accepted (human)
+- 2026-07-19 SI-CORE-013: accepted → rejected (hide（再裁定 2026-07-19）)
+- 2026-07-19 SI-CORE-014: accepted → rejected (hide（再裁定 2026-07-19）)
