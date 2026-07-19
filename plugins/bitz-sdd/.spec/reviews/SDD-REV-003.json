@@ -1,0 +1,12 @@
+{
+  "review_id": "SDD-REV-003",
+  "verdict": "PASS",
+  "aggregate_score": 4.69,
+  "perspective_scores": {"consistency": 5.00, "operations": 4.80, "risk": 4.33, "business": 4.85},
+  "findings_summary": {"total": 3, "after_dedup": 2, "by_priority": {"P0": 0, "P1": 0, "P2": 0, "P3": 2}, "by_severity": {"critical": 0, "major": 0, "minor": 1, "info": 2}},
+  "findings": [
+    {"id": "SYN-001", "priority": "P3", "source_ids": ["OPS-401", "RSK-201"], "perspectives": ["operations", "risk"], "title": "複数ファイル同期の部分成功を明示", "recommendation": "成功・失敗件数、非0終了、再実行要求を出力しSKILL.mdへ記載する。"},
+    {"id": "SYN-002", "priority": "P3", "source_ids": ["BIZ-401"], "perspectives": ["business"], "title": "push先欠如時の契約を文書化", "recommendation": "pushは既存.spec本文への逆反映で、欠如時はエラーになることをSKILL.mdへ記載する。"}
+  ],
+  "conditional_items": []
+}

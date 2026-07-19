@@ -1,0 +1,11 @@
+{
+  "perspective": "operations",
+  "dimensions": [
+    {"name": "監視・可観測性", "weight": 0.30, "score": 5, "findings": []},
+    {"name": "災害復旧", "weight": 0.30, "score": 5, "findings": []},
+    {"name": "セキュリティ態勢", "weight": 0.20, "score": 5, "findings": []},
+    {"name": "デプロイ安全性", "weight": 0.20, "score": 4, "findings": [{"id": "OPS-401", "severity": "info", "location": "SDD-DSN-003:設計判断5", "title": "複数ファイル同期はバッチ原子的ではない", "description": "各ファイルは原子的に置換されるが、後続マッピングの失敗時に先行成功分は残る。", "recommendation": "非0終了と成功・失敗件数を明示し、再実行で収束する運用をSKILL.mdへ記載する。"}]}
+  ],
+  "weighted_score": 4.80,
+  "summary": "ファイル単位の原子置換、非0終了、mtime同値化、revert可能な変更境界により運用安全性は高い。バッチ途中失敗時の再実行手順を利用者向けに明示すれば十分である。"
+}

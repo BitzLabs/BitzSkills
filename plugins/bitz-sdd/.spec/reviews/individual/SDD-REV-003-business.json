@@ -1,0 +1,11 @@
+{
+  "perspective": "business",
+  "dimensions": [
+    {"name": "要件トレーサビリティ", "weight": 0.35, "score": 5, "findings": []},
+    {"name": "NFR定量化", "weight": 0.30, "score": 5, "findings": []},
+    {"name": "ステークホルダー整合", "weight": 0.20, "score": 5, "findings": []},
+    {"name": "ROI・実現可能性", "weight": 0.15, "score": 4, "findings": [{"id": "BIZ-401", "severity": "info", "location": "SDD-DSN-003:設計判断3", "title": "push先欠如をエラーへ変更", "description": "無効なDOC frontmatterの逆流防止を優先し、存在しない.specをpushで暗黙作成しない。既存利用者には挙動差となる。", "recommendation": "sdd-docs SKILL.mdにpushは既存.specへの本文逆反映であることと、欠如時の復旧手順を明記する。"}]}
+  ],
+  "weighted_score": 4.85,
+  "summary": "実地で再現したstrict不整合を直接解消し、後続SI-SDD-011を解放する価値が高い。既存pushの欠如時挙動だけ利用手順へ明記すれば実装規模と効果は釣り合う。"
+}

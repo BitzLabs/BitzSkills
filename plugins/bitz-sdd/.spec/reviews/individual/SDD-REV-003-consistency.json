@@ -1,0 +1,10 @@
+{
+  "perspective": "consistency",
+  "dimensions": [
+    {"name": "構造整合", "weight": 0.35, "score": 5, "findings": []},
+    {"name": "トレーサビリティ", "weight": 0.35, "score": 5, "findings": []},
+    {"name": "用語一貫性", "weight": 0.30, "score": 5, "findings": []}
+  ],
+  "weighted_score": 5.00,
+  "summary": "SI-SDD-010→SDD-FR-135→SDD-DSN-003の双方向トレースが成立し、SDD-FR-100/126/128との責務境界も明確である。frontmatter、本文、mtime、strictの用語は要件と設計で一貫している。"
+}
