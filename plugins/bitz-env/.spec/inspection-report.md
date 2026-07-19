@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-19)
 
-成果物数: 25 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
+成果物数: 27 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -27,6 +27,7 @@
 - ENV-FR-009
 - ENV-FR-010
 - ENV-FR-011
+- ENV-FR-012
 - ENV-NFR-001
 - ENV-NFR-002
 
@@ -48,6 +49,7 @@
 | ENV-DSC-005 | draft |  |  | 0 | 0 |
 | ENV-DSC-006 | draft |  |  | 0 | 0 |
 | ENV-DSN-001 | approved | deploy |  | 0 | 2 |
+| ENV-DSN-002 | approved |  |  | 0 | 1 |
 | ENV-FR-001 | verified | guardrail | example-test | 2 | 3 |
 | ENV-FR-002 | verified | guardrail | example-test | 2 | 3 |
 | ENV-FR-003 | verified | deploy | example-test | 1 | 2 |
@@ -58,7 +60,8 @@
 | ENV-FR-008 | verified | guardrail | example-test | 1 | 2 |
 | ENV-FR-009 | verified | deploy | example-test | 1 | 2 |
 | ENV-FR-010 | verified | deploy | example-test | 2 | 4 |
-| ENV-FR-011 | verified | deploy | manual-check | 1 | 1 |
+| ENV-FR-011 | verified | deploy | manual-check | 1 | 2 |
+| ENV-FR-012 | verified | deploy | manual-check | 1 | 1 |
 | ENV-NFR-001 | verified | guardrail | benchmark | 1 | 2 |
 | ENV-NFR-002 | verified | guardrail | manual-check | 1 | 2 |
 | REV-001 | approved | governance |  | 0 | 0 |

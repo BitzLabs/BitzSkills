@@ -1,11 +1,11 @@
 ---
 name: env-doctor
-description: bitz-env で展開した開発環境の健全性を診断する。ガードレール3層（.claude/settings.json の permissions ⇔ プラグイン同梱フック ⇔ AGENTS.md のナラティブ）の同期ズレ、レジストリと実際に有効なプラグインの食い違い、CLAUDE.md 委譲マトリクスの陳腐化を検出して修正案を出す。「環境を診断して」「ガードレールがずれていないか確認して」「env-doctor」「環境の健全性チェック」と言われたとき、またはガードレール・permissions を変更した後に使用する。
+description: bitz-env で展開した開発環境の健全性を診断する。ガードレール3層（.claude/settings.json の permissions ⇔ プラグイン同梱フック ⇔ AGENTS.md のナラティブ）の同期ズレ、レジストリと実際に有効なプラグインの食い違い、CLAUDE.md 委譲マトリクスの陳腐化、展開時バージョン記録（bitz-env-version stamp）の欠如を検出して修正案を出す。「環境を診断して」「ガードレールがずれていないか確認して」「env-doctor」「環境の健全性チェック」と言われたとき、またはガードレール・permissions を変更した後や env-update が安全側停止したときに使用する。
 metadata:
-  version: "0.2.1"
+  version: "0.3.0"
   author: br7.hide
   created: "2026-07-11"
-  updated: "2026-07-12"
+  updated: "2026-07-19"
 ---
 
 # env-doctor
@@ -57,6 +57,17 @@ permissions 層の不在を積極的に検出する（診断項目1参照）。
 
 - env-init のテンプレート（プラグイン側）と生成物（プロジェクト側）の
   マーカー区間を比較し、テンプレート更新に取り残された差分を報告する
+
+### 4. 展開時バージョン記録（stamp）の有無
+
+| 検査 | 方法 |
+| --- | --- |
+| レジストリ（`.claude/bitz-env.local.md`）の frontmatter に `bitz-env-version` があるか | レジストリを読む。レジストリは存在するが記録が無い場合（stamp 機構 v0.7.0 導入前の展開）は **WARN** とし、修正案として **env-update の救済フロー（stamp 後付け。SKILL.md 手順 1b）** の実施を提示する（ENV-FR-012） |
+
+stamp が無いと env-update（ENV-FR-011）が D 不明で安全側停止し実質使えないため、
+検出時は必ず救済手順へ誘導する。**stamp の書き込みは本スキルでは行わない**
+（doctor は読み取り専用。書き込みは承認フローを持つ env-update に集約する）。
+レジストリ自体が無い場合は env-init 未実行であり、本項目ではなく env-init の実行を案内する。
 
 ## 出力形式
 

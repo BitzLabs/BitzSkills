@@ -11,3 +11,7 @@
 - 2026-07-19 ENV-TSK-014: pending → implementing (agent)
 - 2026-07-19 ENV-TSK-014: implementing → done (agent)
 - 2026-07-19 ENV-FR-011: implementing → verified (agent)
+- 2026-07-19 SI-ENV-024: open → accepted (hide)
+- 2026-07-19 ENV-FR-012: draft → approved (hide)
+- 2026-07-19 ENV-FR-012: approved → implementing (claude-fable)
+- 2026-07-19 ENV-FR-012: implementing → verified (claude-fable)
