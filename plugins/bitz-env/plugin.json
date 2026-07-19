@@ -1,5 +1,5 @@
 {
   "name": "bitz-env",
-  "version": "0.6.0",
-  "description": "BitzEnv — 開発環境展開プラグイン。ガードレール（PreToolUse フックによる危険操作の常時ブロック + permissions/AGENTS.md 雛形の生成）とモデル非依存の協調運用（委譲型・相談型・合議型、advisor/worker サブエージェント生成、協調アダプタ連携）を任意のプロジェクトへ展開する（env-init / env-doctor / env-orchestration / env-register の4スキル構成）"
+  "version": "0.7.0",
+  "description": "BitzEnv — 開発環境展開プラグイン。ガードレール（PreToolUse フックによる危険操作の常時ブロック + permissions/AGENTS.md 雛形の生成）とモデル非依存の協調運用（委譲型・相談型・合議型、advisor/worker サブエージェント生成、協調アダプタ連携）を任意のプロジェクトへ展開する（env-init / env-doctor / env-update / env-orchestration / env-register / env-uninstall の6スキル構成）"
 }
