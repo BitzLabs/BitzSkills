@@ -1,0 +1,11 @@
+{
+  "perspective": "risk",
+  "dimensions": [
+    {"name": "分散システムリスク", "weight": 0.30, "score": "N/A", "findings": []},
+    {"name": "障害モード分析", "weight": 0.30, "score": 4, "findings": [{"id": "RSK-201", "severity": "minor", "location": "SDD-DSN-003:設計判断5", "title": "後続失敗時の部分成功", "description": "複数マッピングの後半で入力不正が見つかると、前半の同期済みファイルと未同期ファイルが混在する。終了コードを見落とすと利用者が全件成功と誤認し得る。", "recommendation": "出力末尾に成功・失敗件数と再実行要求を表示し、失敗が1件でもあれば非0終了する。"}]},
+    {"name": "Saga設計の妥当性", "weight": 0.25, "score": "N/A", "findings": []},
+    {"name": "データ整合性リスク", "weight": 0.15, "score": 5, "findings": []}
+  ],
+  "weighted_score": 4.33,
+  "summary": "単一プロセス・単一ファイルシステムのため分散系とSagaは対象外。frontmatter境界とファイル単位原子性は十分で、部分成功を明示して再実行可能にすれば重大リスクはない。"
+}

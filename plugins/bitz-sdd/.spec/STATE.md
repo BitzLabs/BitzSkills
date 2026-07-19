@@ -157,3 +157,11 @@
 - 2026-07-19 SDD-TSK-018: implementing → done (agent（対象7件・全254件green、spec/release PASS）)
 - 2026-07-19 SDD-FR-133: implementing → verified (agent（7対象tests・254全tests・local check-only・canonical inspect・release_check PASS）)
 - 2026-07-19 SDD-FR-134: implementing → verified (agent（7対象tests・254全tests・local check-only・canonical inspect・release_check PASS）)
+- 2026-07-19 SI-SDD-010: open → accepted (ユーザー裁定（2026-07-19）)
+- 2026-07-19 SDD-FR-135: draft → approved (ユーザー裁定（SI-SDD-010の提案内容で進める）)
+- 2026-07-19 SDD-DSN-003 Design Gate: PASS（SDD-REV-003 4.69/5.00、critical 0 / major 0。ユーザー裁定「提案内容で進める」）
+- 2026-07-19 SDD-FR-135 RED: `.venv/bin/pytest -q tests/test_sdd_sync.py` → 18 failed / 6 passed / exit 1（現行raw copyでfrontmatter境界・異常系・strict契約が未実装）
+- 2026-07-19 SDD-FR-135: approved → implementing (agent（実装タスク起票）)
+- 2026-07-19 SDD-TSK-019: pending → implementing (agent)
+- 2026-07-19 SDD-TSK-019: implementing → done (agent（対象24件・全263件green、docs strict・skill-validator・local check-only・release_check PASS）)
+- 2026-07-19 SDD-FR-135: implementing → verified (agent（対象24件・全263件green、docs strict・skill-validator・local check-only・release_check PASS）)

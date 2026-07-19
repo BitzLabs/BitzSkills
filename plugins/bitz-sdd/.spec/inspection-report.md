@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-19)
 
-成果物数: 57 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
+成果物数: 60 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -55,6 +55,7 @@
 - SDD-FR-132
 - SDD-FR-133
 - SDD-FR-134
+- SDD-FR-135
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
 ※ 乖離は候補提示のみ。stale 付与は references/lifecycle.md の再伝播プロトコル（判定パス→人間確認）を経ること
@@ -77,6 +78,7 @@
 | SDD-DSC-006 | draft |  |  | 0 | 0 |
 | SDD-DSN-001 | active |  |  | 0 | 0 |
 | SDD-DSN-002 | active |  |  | 0 | 0 |
+| SDD-DSN-003 | active |  |  | 0 | 0 |
 | SDD-FR-001 | verified | verification | example-test | 1 | 1 |
 | SDD-FR-010 | verified | verification | example-test | 1 | 1 |
 | SDD-FR-011 | verified | workflow | manual-check | 1 | 1 |
@@ -98,7 +100,7 @@
 | SDD-FR-082 | verified | execution | manual-check | 1 | 1 |
 | SDD-FR-090 | verified | verification | manual-check | 1 | 1 |
 | SDD-FR-091 | verified | verification | manual-check | 1 | 1 |
-| SDD-FR-100 | verified | sync | example-test | 1 | 1 |
+| SDD-FR-100 | verified | sync | example-test | 1 | 2 |
 | SDD-FR-101 | deprecated | sync | example-test | 1 | 1 |
 | SDD-FR-110 | verified | reporting | manual-check | 2 | 2 |
 | SDD-FR-111 | verified | reporting | manual-check | 2 | 2 |
@@ -109,8 +111,8 @@
 | SDD-FR-123 | verified | verification | manual-check | 1 | 2 |
 | SDD-FR-124 | verified | verification | example-test | 1 | 2 |
 | SDD-FR-125 | verified | sync | unit-test | 2 | 3 |
-| SDD-FR-126 | verified | sync | unit-test | 2 | 3 |
-| SDD-FR-127 | verified | sync | unit-test | 2 | 3 |
+| SDD-FR-126 | verified | sync | unit-test | 2 | 4 |
+| SDD-FR-127 | verified | sync | unit-test | 2 | 4 |
 | SDD-FR-128 | verified | sync | unit-test | 2 | 3 |
 | SDD-FR-129 | verified | sync | unit-test | 2 | 3 |
 | SDD-FR-130 | verified | workflow | manual-check | 1 | 1 |
@@ -118,7 +120,9 @@
 | SDD-FR-132 | verified | verification | example-test | 1 | 1 |
 | SDD-FR-133 | verified | verification | unit-test | 1 | 2 |
 | SDD-FR-134 | verified | verification | unit-test | 1 | 2 |
+| SDD-FR-135 | verified | sync | unit-test | 1 | 2 |
 | SDD-REV-001 | active |  |  | 0 | 1 |
 | SDD-REV-002 | active |  |  | 0 | 1 |
+| SDD-REV-003 | active |  |  | 0 | 0 |
 
 **判定: PASS ✅**

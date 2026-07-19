@@ -2,10 +2,10 @@
 name: sdd-docs
 description: BitzSDD の docs/（人間ナラティブ層）を日本語6章で初期化・検証し、.spec/（仕様マスター）と双方向同期（pull/push/diff）するスキル。必須6章、宣言式の任意リファレンス章、管理対象外パス、安全な旧8章移行を扱う。「docs/ を初期化して」「同期して」「docsを日本語化して」「旧8章を移行して」「docs を検証して」と言われたときに使用する。
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   author: br7.hide
   created: "2026-07-07"
-  updated: "2026-07-18"
+  updated: "2026-07-19"
 ---
 
 # sdd-docs
@@ -66,6 +66,16 @@ python3 scripts/sdd_sync.py pull
 # 3. ドキュメントの手動修正をマスターへ逆反映 (docs -> .spec)
 python3 scripts/sdd_sync.py push
 ```
+
+同期単位はファイル全体ではなく**本文**です。`.spec` と `docs` は異なるfrontmatter契約を
+持つため、pullは既存docsのfrontmatterを保持し、pushは既存`.spec`のfrontmatterを保持します。
+同期先docsにfrontmatterが無い場合は同梱テンプレートから生成し、`docs/MASTER.md` の
+`project_type`へ合わせます。同期後はmtimeを同期元と同値にし、直後の逆方向同期を防ぎます。
+
+pushは既存`.spec`本文への逆反映です。対応する`.spec`文書が無い、または同期元・同期先の
+frontmatterが不正な場合は、機械IDを推測せず対象ファイルを変更しないまま非0終了します。
+複数マッピングの一部だけ成功して終了する場合があるため、出力の成功・失敗件数を確認し、
+失敗が1件でもあれば原因を修正して同じコマンドを再実行してください。
 
 ### ドキュメントの構造検証
 ```bash
