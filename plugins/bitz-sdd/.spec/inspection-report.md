@@ -59,6 +59,7 @@
 - SDD-FR-133
 - SDD-FR-134
 - SDD-FR-135
+- SDD-FR-136
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
 ※ 乖離は候補提示のみ。stale 付与は references/lifecycle.md の再伝播プロトコル（判定パス→人間確認）を経ること
@@ -124,7 +125,7 @@
 | SDD-FR-133 | verified | verification | unit-test | 1 | 2 |
 | SDD-FR-134 | verified | verification | unit-test | 1 | 2 |
 | SDD-FR-135 | verified | sync | unit-test | 1 | 2 |
-| SDD-FR-136 | draft | workflow | unit-test | 1 | 1 |
+| SDD-FR-136 | verified | workflow | unit-test | 1 | 1 |
 | SDD-REV-001 | active |  |  | 0 | 1 |
 | SDD-REV-002 | active |  |  | 0 | 1 |
 | SDD-REV-003 | active |  |  | 0 | 0 |

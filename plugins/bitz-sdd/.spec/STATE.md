@@ -168,3 +168,6 @@
 - 2026-07-21 SI-SDD-020: open → accepted (hide)
 - 2026-07-21 SDD-TSK-020: pending → implementing (agent)
 - 2026-07-21 SDD-TSK-020: implementing → done (agent)
+- 2026-07-21 SDD-FR-136: draft → approved (hide)
+- 2026-07-21 SDD-FR-136: approved → implementing (agent)
+- 2026-07-21 SDD-FR-136: implementing → verified (agent)

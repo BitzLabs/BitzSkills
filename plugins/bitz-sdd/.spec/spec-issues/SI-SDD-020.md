@@ -73,3 +73,5 @@ status: accepted
     `map` の優先順位で判定し、要件が1件でも存在すれば既存の `plan` 以降の判定をそのまま適用する。
     根拠: 「要件の起票をもって Plan フェーズ入りとみなす」現行の暗黙ルールを維持でき、
     既存の全テストケースの挙動が変わらないため。
+- **実施**: 2026-07-21 SDD-FR-136 が verified に到達（テスト先行7件追加・全270 pytest PASS・
+  spec inspect 7ワークスペース PASS・release_check PASS。bitz-sdd 2.6.0 / sdd-core 2.4.0）。

@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-136
 version: 1.0
-status: draft
+status: verified
 domain: workflow
 priority: high
 origin: SI-SDD-020（bitz-sdd .spec/spec-issues/。2026-07-21 SI-CORE-018 の対訳表作成時に発見）
