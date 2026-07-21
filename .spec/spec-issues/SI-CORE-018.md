@@ -41,7 +41,9 @@ status: accepted
 - **裁定（2026-07-13, 人間）**: **表示層のみ日本語化** を採用。frontmatter の機械値は英語のまま維持し、レポート・表示のみ対訳辞書で日本語化する（値の日本語化＝機械値移行は不採用）。
 - **裁定（2026-07-21, 人間）**: **status の対訳表を確定**（フェーズ行は保留。次項参照）。
   - 要件: `draft`=起草中 / `approved`=承認済み / `implementing`=実装中 / `verified`=検証済み /
-    `promoted`=正式版 / `deprecated`=廃止
+    `promoted`=確定 / `deprecated`=廃止
+    （`promoted` は当初 `正式版` で確定していたが 2026-07-21 の再検討で `確定` に改めた。
+    後述「フェーズ対訳の確定」の脚注を参照）
   - spec-issue: `open`=裁定待ち / `accepted`=採用 / `rejected`=不採用 / `superseded`=統合済み
   - タスク: `pending`=着手待ち / `implementing`=実装中 / `blocked`=介入待ち / `done`=完了
   - **`superseded` は本 issue 起票時の対訳案に欠落していた**。`spec_update.py` の
@@ -78,3 +80,33 @@ status: accepted
   **推奨案**: sdd-core の `scripts/spec_labels.py` を SSOT とし、sdd-report は同内容の複製を持ち、
   両者の一致を `scripts/release_check.py` が機械検証する。確認観点「訳語変更が1 PR で済む」を
   自己完結原則を破らずに満たせる。
+- **裁定（2026-07-21, 人間）— フェーズ対訳の確定**: `bitz-sdd:SI-SDD-020` が main へ land し
+  （PR #86 / `SDD-FR-136` verified）フェーズ正規語彙が7語に確定したため、保留していた
+  フェーズ行を次のとおり確定する。併記は英語主。
+
+  | phase_code | 表示ラベル |
+  |---|---|
+  | `map` | `Map（未着手）` |
+  | `discovery` | `Discovery（企画）` |
+  | `design` | `Design（設計）` |
+  | `plan` | `Plan（要件定義）` |
+  | `execute` | `Execute（実装）` |
+  | `verify` | `Verify（検証）` |
+  | `done` | `Done（確定待ち: Promotion Gate）` |
+
+  - **`done` に Gate 名を併記する理由**: `SDD-FR-136` の受入基準に「`done` の表示ラベルは
+    Promotion Gate 待ちであることを示す」があり、回帰テストがラベル中の `Promotion Gate` を
+    検査している。訳語「確定待ち」だけでは当該条文を満たさないため、辞書の訳語に Gate 名を
+    合成して表示する（辞書自体は `done`=`確定待ち` を持つ）。
+  - **`promoted` を `正式版` から `確定` に改めた理由（脚注）**: ①`正式版` は文書の版数や
+    製品エディションを想起させるが、Promotion Gate が行うのは永続層（`docs/`）への書き戻しと
+    feature の畳み込みであり「版」ではない ②フェーズ `確定待ち` → status `確定` で語が連結し、
+    Gate の前後関係が表示から読み取れる ③検討過程で挙がった `採用待ち`/`正式採用` は
+    spec-issue の `採用`/`不採用` と語族が衝突し、`リリース待ち`/`リリース` は
+    `release_check.py`・`docs/05_リリース・運用/` が指す配布の概念と衝突するため不採用。
+  - **逆引きの一意性を再確認**: 新語 `確定`（promoted）と `確定待ち`（フェーズ done）は
+    文字列として別。フェーズは英語主表記のため正規化入力の対象外で、status 側と競合しない。
+- **裁定（2026-07-21, 人間）— 対訳辞書の配置**: 上記「設計上の論点」の**推奨案を採用**する。
+  sdd-core の `scripts/spec_labels.py` を SSOT とし、sdd-report は同内容の複製を持ち、
+  両者の一致を `scripts/release_check.py` が機械検証する（乖離があれば CI が落ちる）。
+  スキル自己完結原則を破らずに「訳語変更が1 PR で済む」を満たすため。
