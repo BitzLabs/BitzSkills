@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-21)
 
-成果物数: 7 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0
+成果物数: 8 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -31,5 +31,6 @@
 | DDD-DSC-005 | draft |  |  | 0 | 0 |
 | DDD-DSC-006 | draft |  |  | 0 | 0 |
 | DDD-FR-001 | verified | tooling | manual-check | 1 | 1 |
+| DDD-FR-002 | draft | tooling | manual-check | 0 | 0 |
 
 **判定: PASS ✅**

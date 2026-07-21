@@ -4,6 +4,8 @@ raised_by: プロジェクト改修計画 追加要望（2026-07-12 ユーザー
 target: bitz-sdd / bitz-ddd のフェーズ・ステータス表記（表示層）
 proposed_change_type: bump
 status: accepted
+origin: root
+delegated_to: bitz-sdd:SDD-FR-137, bitz-sdd:SDD-FR-138, bitz-ddd:DDD-FR-002
 ---
 - **目的**: bitz-sdd / bitz-ddd のフェーズとステータスを「採用・未採用・開発中・
   ○○待機中」のような日本語表記にし、人間が状態を直読できるようにする。

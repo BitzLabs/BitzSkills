@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-21)
 
-成果物数: 61 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0
+成果物数: 63 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -126,6 +126,8 @@
 | SDD-FR-134 | verified | verification | unit-test | 1 | 2 |
 | SDD-FR-135 | verified | sync | unit-test | 1 | 2 |
 | SDD-FR-136 | verified | workflow | unit-test | 1 | 1 |
+| SDD-FR-137 | draft | workflow | unit-test | 0 | 0 |
+| SDD-FR-138 | draft | workflow | unit-test | 0 | 0 |
 | SDD-REV-001 | active |  |  | 0 | 1 |
 | SDD-REV-002 | active |  |  | 0 | 1 |
 | SDD-REV-003 | active |  |  | 0 | 0 |
