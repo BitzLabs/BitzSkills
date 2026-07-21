@@ -1,6 +1,6 @@
 {
   "name": "bitz-ddd",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "BitzDDD — ドメイン駆動設計（DDD）の設計手法プロバイダ。ドメインストーリーテリング（ddd-story）、戦略設計・集約・境界づけられたコンテキスト（ddd-model）、DDD/MMI 成熟度評価（ddd-evaluate）を提供し、成果物を .spec/design/ に書き込む（bitz-sdd との併用前提。契約は sdd-core の artifact-frontmatter 書式）",
   "author": {
     "name": "BitzLabs"

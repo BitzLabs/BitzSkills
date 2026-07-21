@@ -16,6 +16,9 @@ import sys
 from datetime import date
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from spec_labels import status_label  # noqa: E402
+
 ID_RE = re.compile(r"\b(?:[A-Z0-9]{2,4}-)?(?:FR|NFR|CON|DSC|DSN|INF|REV|TSK)-\d{3}\b")
 DOCS_REF_RE = re.compile(r"(docs/[^\s@]+)(?:@([0-9a-fA-F]{7,40}))?")
 PREFIXES = ("FR", "NFR", "CON", "DSC", "DSN", "INF", "REV", "TSK")
@@ -323,7 +326,7 @@ def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None) 
     lines.append("|----|--------|--------|----------|-------|----------|")
     for rid, r in sorted(reqs.items()):
         fm = r["fm"]
-        lines.append(f"| {rid} | {fm.get('status','')} | {fm.get('domain','')} | "
+        lines.append(f"| {rid} | {status_label('requirement', fm.get('status',''))} | {fm.get('domain','')} | "
                      f"{fm.get('verification_method','')} | {len(impl.get(rid, []))} | {len(all_refs.get(rid, []))} |")
     ok = not problems and not ghosts and not orphans
     lines.append("")
@@ -373,7 +376,7 @@ def impact_docs(root: Path, target: str, global_reqs: dict = None) -> str:
             state = "一致（派生後の変更なし）"
         else:
             state = f"乖離 {recorded[:7]} → {current[:7]} — stale 候補"
-        rows.append(f"- [ ] {rid} (status: {r['fm'].get('status', '')}) — {state}")
+        rows.append(f"- [ ] {rid} (status: {status_label('requirement', r['fm'].get('status', ''))}) — {state}")
     lines = [f"# impact-docs: {target}", ""]
     if current:
         lines.append(f"現行コミット: {current[:12]}")

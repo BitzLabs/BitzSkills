@@ -20,6 +20,9 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from spec_labels import phase_label, status_label  # noqa: E402
+
 # 要件が「承認済み以降（検証対象）」とみなされる status
 APPROVED_PLUS = {"approved", "implementing", "verified", "promoted"}
 # 要件が「検証済み」とみなされる status
@@ -120,19 +123,21 @@ def determine_phase(reqs: Counter, tasks: Counter, has_discovery: bool,
 
     if n_reqs == 0 and n_tasks == 0:
         if has_design:
-            return ("design", "Design（設計中）")
-        if has_discovery:
-            return ("discovery", "Discovery（上流探索）")
-        return ("map", "Map（未着手）")
-    if n_appr == 0:
-        return ("plan", "Plan（要件承認待ち）")
-    if n_tasks == 0:
-        return ("plan", "Plan（タスク分解待ち）")
-    if n_done < n_tasks:
-        return ("execute", "Execute（実装中）")
-    if n_ver < n_appr:
-        return ("verify", "Verify（検証待ち）")
-    return ("done", "Done（Promotion Gate 待ち）")
+            code = "design"
+        elif has_discovery:
+            code = "discovery"
+        else:
+            code = "map"
+    elif n_appr == 0 or n_tasks == 0:
+        # 要件未承認・タスク未分解のいずれも Plan。どちらであるかは next_actions が示す
+        code = "plan"
+    elif n_done < n_tasks:
+        code = "execute"
+    elif n_ver < n_appr:
+        code = "verify"
+    else:
+        code = "done"
+    return (code, phase_label(code))
 
 
 def next_actions(reqs: Counter, issues: Counter, tasks: Counter, phase_code: str,
@@ -204,10 +209,11 @@ def collect(root: Path, all_origin_texts=()) -> dict:
     }
 
 
-def _fmt_counts(section: dict) -> str:
+def _fmt_counts(section: dict, kind: str) -> str:
     if not section["by_status"]:
         return "  （0 件）"
-    return "\n".join(f"  - {status}: {n}" for status, n in sorted(section["by_status"].items()))
+    return "\n".join(f"  - {status_label(kind, status)}: {n}"
+                     for status, n in sorted(section["by_status"].items()))
 
 
 def render_text(results) -> str:
@@ -216,11 +222,11 @@ def render_text(results) -> str:
         out.append(f"# ワークスペース: {ws['root']}")
         out.append(f"- フェーズ: {ws['phase']}")
         out.append(f"## 要件 (requirements) — 合計 {ws['requirements']['total']}")
-        out.append(_fmt_counts(ws["requirements"]))
+        out.append(_fmt_counts(ws["requirements"], "requirement"))
         out.append(f"## spec-issue — 合計 {ws['spec_issues']['total']}")
-        out.append(_fmt_counts(ws["spec_issues"]))
+        out.append(_fmt_counts(ws["spec_issues"], "spec-issue"))
         out.append(f"## タスク (tasks) — 合計 {ws['tasks']['total']}")
-        out.append(_fmt_counts(ws["tasks"]))
+        out.append(_fmt_counts(ws["tasks"], "task"))
         out.append("## 次アクション候補")
         out.extend(f"  - {a}" for a in ws["next_actions"])
         out.append("")

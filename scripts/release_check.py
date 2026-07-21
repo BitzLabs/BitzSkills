@@ -140,6 +140,35 @@ def check_delegation_registry(repo: Path) -> list[str]:
 DEP_RE = re.compile(r"^(?P<name>[A-Za-z0-9_-]+)(?:(?P<op>>=|<=|==|>|<)(?P<ver>[0-9][0-9A-Za-z.-]*))?$")
 
 
+def check_label_dictionary_copies(repo: Path) -> None:
+    """対訳辞書 spec_labels.py の SSOT（sdd-core）と複製（sdd-report）の一致を検証する。
+
+    AGENTS.md のスキル自己完結原則により sdd-report は sdd-core を相対参照せず複製を持つ
+    （SI-CORE-018 の辞書配置裁定）。複製が乖離すると表示が種別ごとに食い違うため、
+    ここで機械検証して乖離を CI で落とす（SDD-FR-137）。
+    """
+    ssot = repo / "plugins/bitz-sdd/skills/sdd-core/scripts/spec_labels.py"
+    copies = [repo / "plugins/bitz-sdd/skills/sdd-report/scripts/spec_labels.py"]
+
+    if not (repo / "plugins" / "bitz-sdd").exists():
+        print("[SKIP] 対訳辞書の複製一致 — bitz-sdd プラグイン未配置")
+        return
+
+    if not ssot.exists():
+        check("対訳辞書 SSOT の存在", False, f"{ssot.relative_to(repo)} が無い")
+        return
+
+    for copy in copies:
+        rel = copy.relative_to(repo)
+        if not copy.exists():
+            check(f"対訳辞書の複製: {rel}", False, "複製が存在しない")
+        elif copy.read_bytes() != ssot.read_bytes():
+            check(f"対訳辞書の複製: {rel}", False,
+                  "SSOT（sdd-core/scripts/spec_labels.py）と内容が一致しない — 両方を同時に更新すること")
+        else:
+            check(f"対訳辞書の複製: {rel}", True, "SSOT と一致")
+
+
 def parse_version(text: str) -> tuple[int, ...]:
     """semver 文字列を比較用タプルへ変換する（"1.4" のような部分指定も受理）"""
     return tuple(int(p) for p in re.findall(r"\d+", text)) or (0,)
@@ -302,6 +331,9 @@ def main() -> None:
 
     # 7. プラグイン間依存グラフ（metadata.dependencies）
     check_dependencies(plugin_manifests)
+
+    # 8. 対訳辞書 SSOT と複製の一致（SDD-FR-137）
+    check_label_dictionary_copies(REPO)
 
     print()
     for w in warnings:
