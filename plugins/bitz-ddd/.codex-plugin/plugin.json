@@ -1,6 +1,6 @@
 {
   "name": "bitz-ddd",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "BitzDDD — ドメインストーリーテリング、戦略設計、DDD/MMI 成熟度評価を提供する DDD 設計手法プラグイン",
   "author": {
     "name": "BitzLabs"
