@@ -124,7 +124,7 @@
 | SDD-FR-133 | verified | verification | unit-test | 1 | 2 |
 | SDD-FR-134 | verified | verification | unit-test | 1 | 2 |
 | SDD-FR-135 | verified | sync | unit-test | 1 | 2 |
-| SDD-FR-136 | draft | workflow | unit-test | 0 | 0 |
+| SDD-FR-136 | draft | workflow | unit-test | 1 | 1 |
 | SDD-REV-001 | active |  |  | 0 | 1 |
 | SDD-REV-002 | active |  |  | 0 | 1 |
 | SDD-REV-003 | active |  |  | 0 | 0 |

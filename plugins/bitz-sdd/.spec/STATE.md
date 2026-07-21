@@ -166,3 +166,5 @@
 - 2026-07-19 SDD-TSK-019: implementing → done (agent（対象24件・全263件green、docs strict・skill-validator・local check-only・release_check PASS）)
 - 2026-07-19 SDD-FR-135: implementing → verified (agent（対象24件・全263件green、docs strict・skill-validator・local check-only・release_check PASS）)
 - 2026-07-21 SI-SDD-020: open → accepted (hide)
+- 2026-07-21 SDD-TSK-020: pending → implementing (agent)
+- 2026-07-21 SDD-TSK-020: implementing → done (agent)
