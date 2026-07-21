@@ -22,18 +22,22 @@
 ## ゲート一覧 — 人間裁定点は3つ
 
 いずれもエージェントは**証跡とドラフトを揃えてチェックリスト形式で提示するだけ**。自分でチェックを付けて通過させない。
+フェーズ語彙（`map / discovery / design / plan / execute / verify / done` の7語）は
+`spec_status.py` の `PHASE_CODES` が正（SDD-FR-136）。ゲートとフェーズの対応:
+Discovery Gate = Discovery の出口（Design へ）、Design Gate = Design の出口（Plan へ）、
+Promotion Gate = Done の出口（promoted へ）。
 
-### 1. Discovery Gate（Map/Discuss の出口）
+### 1. Discovery Gate（Map / Discovery の出口）
 
-`sdd-discovery` の仮説検証（Go / No-Go / Pivot）。証跡は `.spec/discovery/assumptions.md`。No-Go / Pivot のまま Plan フェーズに進まない。
+`sdd-discovery` の仮説検証（Go / No-Go / Pivot）。証跡は `.spec/discovery/assumptions.md`。No-Go / Pivot のまま Design 以降のフェーズに進まない。
 
 ### 2. Design Gate（proposed → active）
 
-docs/ の proposed ドラフト（`00_はじめに` / `01_システム仕様` / `02_ユースケース` / `03_設計仕様`）を人間が active 化する裁定点。`sdd-review` の統合判定（PASS / CONDITIONAL_PASS / FAIL）とレポートを添えて提示する。CONDITIONAL_PASS の条件リストは STATE.md で消化を追跡し、未消化のまま該当節から要件を派生しない。FAIL の設計から派生を始めない。
+Design フェーズの出口。docs/ の proposed ドラフト（`00_はじめに` / `01_システム仕様` / `02_ユースケース` / `03_設計仕様`）を人間が active 化する裁定点。`sdd-review` の統合判定（PASS / CONDITIONAL_PASS / FAIL）とレポートを添えて提示する。CONDITIONAL_PASS の条件リストは STATE.md で消化を追跡し、未消化のまま該当節から要件を派生しない。FAIL の設計から派生を始めない。
 
 ### 3. Promotion Gate（verified → promoted）
 
-feature 完了時の唯一の逆流点。planエージェントがドラフト一式を用意し、人間が以下のチェックリストで裁定する:
+Done フェーズ（全検証 green）の出口であり、feature 完了時の唯一の逆流点。planエージェントがドラフト一式を用意し、人間が以下のチェックリストで裁定する:
 
 1. □ docs/ 更新ドラフトの承認（ARCHITECTURE 変更・ADR 追記・glossary 新語 — proposed で用意し、承認で active 化）
 2. □ LESSONS_LEARNED 候補の取捨選択

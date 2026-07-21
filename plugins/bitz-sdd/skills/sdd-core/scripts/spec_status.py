@@ -30,6 +30,11 @@ TASK_DONE = {"done", "complete", "completed", "verified", "promoted"}
 # requirements/ で要件ファイルとして数えない補助ファイル
 NON_REQUIREMENT_FILES = {"domains.md"}
 
+# determine_phase() が返しうるフェーズ語彙の正（SDD-FR-136）。
+# phase_code は JSON 出力の公開契約 — 既存値の削除・改名は後方互換違反（変更は加算のみ）。
+# SKILL.md のフェーズ・ルーティング表と references/gates.md はこの7語に従う。
+PHASE_CODES = ("map", "discovery", "design", "plan", "execute", "verify", "done")
+
 
 def parse_frontmatter(text: str) -> dict:
     """spec_inspect.py と同一挙動の軽量 frontmatter パーサ。"""
@@ -99,10 +104,13 @@ def _origin_texts(directory: Path) -> list:
     return texts
 
 
-def determine_phase(reqs: Counter, tasks: Counter, has_discovery: bool):
+def determine_phase(reqs: Counter, tasks: Counter, has_discovery: bool,
+                    has_design: bool = False):
     """成果物の有無から現在フェーズを機械的に推定する。
 
-    Returns: (phase_code, phase_label)
+    Returns: (phase_code, phase_label) — phase_code は PHASE_CODES の7語のいずれか。
+    要件が1件でもあれば設計成果物の有無にかかわらず plan 以降の判定を適用する
+    （要件の起票をもって Plan フェーズ入りとみなす。SDD-FR-136）。
     """
     n_reqs = sum(reqs.values())
     n_appr = sum(v for s, v in reqs.items() if s in APPROVED_PLUS)
@@ -111,6 +119,8 @@ def determine_phase(reqs: Counter, tasks: Counter, has_discovery: bool):
     n_done = sum(v for s, v in tasks.items() if s in TASK_DONE)
 
     if n_reqs == 0 and n_tasks == 0:
+        if has_design:
+            return ("design", "Design（設計中）")
         if has_discovery:
             return ("discovery", "Discovery（上流探索）")
         return ("map", "Map（未着手）")
@@ -122,7 +132,7 @@ def determine_phase(reqs: Counter, tasks: Counter, has_discovery: bool):
         return ("execute", "Execute（実装中）")
     if n_ver < n_appr:
         return ("verify", "Verify（検証待ち）")
-    return ("done", "Done（検証完了）")
+    return ("done", "Done（Promotion Gate 待ち）")
 
 
 def next_actions(reqs: Counter, issues: Counter, tasks: Counter, phase_code: str,
@@ -147,6 +157,8 @@ def next_actions(reqs: Counter, issues: Counter, tasks: Counter, phase_code: str
         )
     if n_draft:
         actions.append(f"draft 要件が {n_draft} 件 — 承認（approved 化）を行う")
+    if phase_code == "design":
+        actions.append("設計成果物あり — sdd-review の実施と統合判定の取得で Design Gate 通過を準備する")
     if phase_code == "plan" and n_appr and n_tasks == 0:
         actions.append("承認済み要件を sdd-implement でタスクへ分解する")
     if n_pending_tasks > 0:
@@ -170,6 +182,8 @@ def collect(root: Path, all_origin_texts=()) -> dict:
     issues = _statuses_in(spec / "spec-issues")
     tasks = _statuses_in(spec / "tasks")
     has_discovery = (spec / "discovery").exists() and any((spec / "discovery").glob("*.md"))
+    # design は stories/ 等のサブディレクトリ成果物も設計中とみなすため再帰で検出する（SDD-FR-136）
+    has_design = (spec / "design").exists() and any((spec / "design").rglob("*.md"))
 
     accepted_ids = _accepted_issue_ids(spec / "spec-issues")
     accepted_unaddressed = [
@@ -177,7 +191,7 @@ def collect(root: Path, all_origin_texts=()) -> dict:
         if not any(iid in origin for origin in all_origin_texts)
     ]
 
-    phase_code, phase_label = determine_phase(reqs, tasks, has_discovery)
+    phase_code, phase_label = determine_phase(reqs, tasks, has_discovery, has_design)
     return {
         "root": str(root),
         "phase": phase_label,

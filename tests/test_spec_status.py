@@ -19,6 +19,7 @@ STATUS_SCRIPT = (
 FR = "FR-"
 TSK = "TSK-"
 DSC = "DSC-"
+DSN = "DSN-"
 
 
 def _write(path: Path, text: str):
@@ -27,10 +28,13 @@ def _write(path: Path, text: str):
 
 
 def make_spec(root: Path, *, reqs=None, issues=None, tasks=None, discovery=False,
+              design=False, design_in_stories=False,
               req_origins=None, issue_implemented=None):
     """指定した status を持つ要件/spec-issue/タスクで最小 .spec ツリーを構築する。
 
     reqs/issues/tasks は (連番, status) のタプルのリスト。
+    design: .spec/design/ 直下に設計成果物 (DSN-*.md) を置く。
+    design_in_stories: .spec/design/stories/ サブディレクトリのみに成果物を置く。
     req_origins: {連番: "origin文字列"} — 要件の origin: フィールドを差し込む。
     issue_implemented: 本文に `**実施**:` マーカーを付与する spec-issue 連番の集合。
     """
@@ -58,6 +62,13 @@ def make_spec(root: Path, *, reqs=None, issues=None, tasks=None, discovery=False
         did = f"{DSC}001"
         _write(spec / "discovery" / f"{did}.md",
                f"---\nid: {did}\nstatus: draft\n---\n\n### {did} 探索\n")
+    if design:
+        did = f"{DSN}001"
+        _write(spec / "design" / f"{did}.md",
+               f"---\nid: {did}\nstatus: draft\n---\n\n### {did} 設計\n")
+    if design_in_stories:
+        _write(spec / "design" / "stories" / "story-001.md",
+               "---\nid: story-001\nstatus: draft\n---\n\n### ドメインストーリー\n")
     return root
 
 
@@ -269,6 +280,68 @@ def test_phase_done_when_all_verified(tmp_path):
     make_spec(tmp_path, reqs=[(1, "verified")], tasks=[(1, "done")])
     ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
     assert ws["phase_code"] == "done"
+
+
+# --- フェーズ判定: design フェーズ (SDD-FR-136) --------------------------------
+
+def _load_status_module():
+    """spec_status.py をモジュールとして読み込む（PHASE_CODES 定数の検査用）。"""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("spec_status", STATUS_SCRIPT)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_phase_design_when_design_artifacts_only(tmp_path):
+    """設計成果物のみ（要件・タスク0件）は Design。"""
+    make_spec(tmp_path, design=True)
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    assert ws["phase_code"] == "design"
+
+
+def test_phase_design_wins_over_discovery(tmp_path):
+    """discovery と design の両方に成果物があれば Design（優先順位 design > discovery）。"""
+    make_spec(tmp_path, discovery=True, design=True)
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    assert ws["phase_code"] == "design"
+
+
+def test_phase_design_detects_stories_subdir(tmp_path):
+    """design/stories/ サブディレクトリのみの成果物でも Design と判定する（再帰検出）。"""
+    make_spec(tmp_path, design_in_stories=True)
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    assert ws["phase_code"] == "design"
+
+
+def test_phase_plan_when_design_and_draft_req(tmp_path):
+    """設計成果物があっても要件が1件でもあれば Plan 以降の判定（既存挙動の維持）。"""
+    make_spec(tmp_path, design=True, reqs=[(1, "draft")])
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    assert ws["phase_code"] == "plan"
+
+
+def test_phase_code_vocabulary_is_seven_words():
+    """phase_code の値集合は7語で固定（公開契約。既存値の削除・改名は後方互換違反）。"""
+    mod = _load_status_module()
+    assert tuple(mod.PHASE_CODES) == (
+        "map", "discovery", "design", "plan", "execute", "verify", "done")
+
+
+def test_design_next_action_mentions_design_gate(tmp_path):
+    """Design フェーズでは next_actions が Design Gate 通過準備（sdd-review）を提示する。"""
+    make_spec(tmp_path, design=True)
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    joined = "".join(ws["next_actions"])
+    assert "Design Gate" in joined and "sdd-review" in joined
+
+
+def test_done_label_indicates_promotion_gate(tmp_path):
+    """Done の表示ラベルは Promotion Gate 待ちであることを示す。"""
+    make_spec(tmp_path, reqs=[(1, "verified")], tasks=[(1, "done")])
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    assert ws["phase_code"] == "done"
+    assert "Promotion Gate" in ws["phase"]
 
 
 def test_next_action_flags_open_issues(tmp_path):

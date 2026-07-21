@@ -2,10 +2,10 @@
 name: sdd-core
 description: BitzSDD — 仕様駆動開発（SDD）ワークフローを運用するメインスキル。要件定義・仕様作成・実装・検証・完了処理のすべてをこの規律に従って実行する。ユーザーが「仕様駆動」「SDD」「要件」「EARS」「spec」「タスク分解」「feature実装」に言及したとき、リポジトリに .spec/ や AGENTS.md が存在するとき、または新機能の設計・実装・検証・リリース処理を依頼されたときは、明示的な指示がなくても必ずこのスキルを使うこと。要件の変更・廃止・番号管理・テスト失敗時の対応・ドキュメント更新もすべて本スキルの管轄。
 metadata:
-  version: "2.3.0"
+  version: "2.4.0"
   author: br7.hide
   created: "2026-07-07"
-  updated: "2026-07-19"
+  updated: "2026-07-21"
 ---
 
 # BitzSDD Workflow (spec駆動開発)
@@ -44,20 +44,23 @@ AGENTS.md                    読み込みプロトコル+権限マトリクス
 
 ## フェーズ・ルーティング
 
-今どのフェーズかを判定し、対応するスキルまたは reference を読んでから作業します：
+今どのフェーズかを判定し、対応するスキルまたは reference を読んでから作業します。
+フェーズの正規語彙は `spec_status.py` の `PHASE_CODES`（`map / discovery / design / plan /
+execute / verify / done` の7語）が正で、本表と `references/gates.md` はそれに従います
+（SDD-FR-136。`phase_code` は JSON 出力の公開契約 — 変更は加算のみ）：
 
 | いまやること | フェーズ | 連携スキル |
 |---|---|---|
 | 現状把握・次アクション提案 | 全フェーズ | `sdd-plan` (spec_status.py の実行と解釈。対話ナビゲーション) |
 | 要望のインテーク・spec-issue 起票 | 全フェーズ | `sdd-issue` (整理→重複チェック→予備判定→起票→裁定材料提示) |
-| プロジェクト把握・docs/整備・同期 | Map / Discuss | `sdd-docs` (初期化・検証・双方向同期) |
-| ビジョン・成功指標・スコープ・仮説検証 | Map / Discuss | `sdd-discovery` (.spec/discovery/ 作成) |
-| ドメイン・API・アーキテクチャ設計 | Discuss | `sdd-design` (.spec/design/ 作成。DDD 手法は bitz-ddd の `ddd-story`/`ddd-model` が任意で提供) |
-| データ格納設計（永続データを扱う場合のみ） | Discuss | `sdd-data` (.spec/design/data-model.md ほか作成) |
-| インフラ・セキュリティ・SLO・DR・コスト設計 | Discuss | `sdd-ops` (.spec/design/ 作成) |
-| 設計ドキュメント・仕様の多観点レビュー | Discuss / Gate前 | `sdd-review` (.spec/reviews/ 作成) |
+| プロジェクト把握・docs/整備・同期 | Map / Discovery | `sdd-docs` (初期化・検証・双方向同期) |
+| ビジョン・成功指標・スコープ・仮説検証 | Map / Discovery | `sdd-discovery` (.spec/discovery/ 作成) |
+| ドメイン・API・アーキテクチャ設計 | Design | `sdd-design` (.spec/design/ 作成。DDD 手法は bitz-ddd の `ddd-story`/`ddd-model` が任意で提供) |
+| データ格納設計（永続データを扱う場合のみ） | Design | `sdd-data` (.spec/design/data-model.md ほか作成) |
+| インフラ・セキュリティ・SLO・DR・コスト設計 | Design | `sdd-ops` (.spec/design/ 作成) |
+| 設計ドキュメント・仕様の多観点レビュー | Design / Gate前 | `sdd-review` (.spec/reviews/ 作成) |
 | 要件起票・採番・変更・廃止 | Plan | `sdd-core` (requirements/ 更新) |
-| 進捗・検証・レビュー状況のレポート作成 | 報告 | `sdd-report` (.spec/reports/ 作成) |
+| 進捗・検証・レビュー状況のレポート作成 | 全フェーズ | `sdd-report` (.spec/reports/ 作成) |
 | 仕様→タスク分解・並列投入 | Plan / Execute | `sdd-implement` (.spec/tasks/ 分解。implements / depends_on / boundary 宣言) |
 | ブランチ・worktree・PR の Git 運用 | Execute | `sdd-git` (SDD 接続点のみ。実行手順の正は bitz-flow の flow-core / flow-worktree / flow-pr) |
 | 実装（要件 ID 紐づけ・契約保護） | Execute | `sdd-implement` (implementation-discipline。着手前に委譲ゲート＝delegation-routing.md で委譲判定) |
@@ -65,7 +68,7 @@ AGENTS.md                    読み込みプロトコル+権限マトリクス
 | テスト仕様の導出・テスト作成 | Execute / Verify | `sdd-test` (EARS→テスト導出、.spec/specs/ 記録) |
 | 検証 red・エラー・矛盾発見 | Execute / Verify | `sdd-core` (failure-protocol.md) |
 | 検証・カバレッジ確認 | Verify | `sdd-test` + `sdd-core` (spec_inspect.py 実行) |
-| feature完了・docs/同期・昇格 | Promotion Gate | `sdd-core` / `sdd-docs` (push/pull) |
+| feature完了・docs/同期・昇格 | Done（Promotion Gate） | `sdd-core` / `sdd-docs` (push/pull) |
 
 ## 軽量レーン（小さな変更のためのショートカット）
 
