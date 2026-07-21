@@ -2,8 +2,14 @@
 import argparse
 import os
 import re
+import sys
 from pathlib import Path
 from datetime import datetime
+
+# 対訳辞書は sdd-core の spec_labels.py が SSOT だが、スキル自己完結原則により
+# 本スキル配下の複製を参照する（両者の一致は release_check.py が機械検証する）
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from spec_labels import status_label  # noqa: E402
 
 # 簡易フロントマターパーサ
 def parse_frontmatter(text: str):
@@ -187,11 +193,11 @@ def generate_report(root_path: Path) -> Path:
 ---
 
 ## 2. 要件ライフサイクル状況 ({total_reqs} 件)
-*   **Draft**: {req_stats["draft"]} 件
-*   **Approved**: {req_stats["approved"]} 件
-*   **Implementing**: {req_stats["implementing"]} 件
-*   **Verified**: {req_stats["verified"]} 件
-*   **Promoted**: {req_stats["promoted"]} 件
+*   **{status_label("requirement", "draft")}**: {req_stats["draft"]} 件
+*   **{status_label("requirement", "approved")}**: {req_stats["approved"]} 件
+*   **{status_label("requirement", "implementing")}**: {req_stats["implementing"]} 件
+*   **{status_label("requirement", "verified")}**: {req_stats["verified"]} 件
+*   **{status_label("requirement", "promoted")}**: {req_stats["promoted"]} 件
 
 ### 要件一覧
 | 要件ID | タイトル | ステータス |
@@ -199,7 +205,7 @@ def generate_report(root_path: Path) -> Path:
 """
     if req_details:
         for r_id, r_title, r_status in sorted(req_details):
-            report_content += f"| {r_id} | {r_title} | `{r_status}` |\n"
+            report_content += f"| {r_id} | {r_title} | {status_label('requirement', r_status)} |\n"
     else:
         report_content += "| - | 要件が登録されていません | - |\n"
 

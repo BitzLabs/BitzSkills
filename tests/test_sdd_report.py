@@ -52,7 +52,7 @@ def test_domains_md_is_not_counted_as_requirement(tmp_path: Path):
     )
     report = run_report(tmp_path)
     assert "(1 件)" in report          # 実要件1件のみ
-    assert "**Draft**: 0 件" in report  # domains.md が draft 扱いされない
+    assert "**起草中（draft）**: 0 件" in report  # domains.md が draft 扱いされない
     assert "YELLOW" not in report       # ヘルスが誤って YELLOW にならない
     assert "domains" not in report.split("### 要件一覧")[1].split("---")[0]
 
@@ -67,7 +67,7 @@ def test_underscore_and_no_id_files_are_skipped(tmp_path: Path):
     )
     report = run_report(tmp_path)
     assert "(1 件)" in report
-    assert "**Draft**: 0 件" in report
+    assert "**起草中（draft）**: 0 件" in report
 
 
 def test_title_extracted_from_heading(tmp_path: Path):
@@ -75,7 +75,7 @@ def test_title_extracted_from_heading(tmp_path: Path):
     req_dir = make_spec(tmp_path)
     write_req(req_dir, REQ_ID1, "approved", "レポートの自動生成")
     report = run_report(tmp_path)
-    assert f"| {REQ_ID1} | レポートの自動生成 | `approved` |" in report
+    assert f"| {REQ_ID1} | レポートの自動生成 | 承認済み（approved） |" in report
     assert "No Title" not in report
 
 
@@ -85,7 +85,7 @@ def test_frontmatter_title_takes_precedence(tmp_path: Path):
     write_req(req_dir, REQ_ID1, "approved", "見出し側タイトル",
               extra_fm="title: FM側タイトル\n")
     report = run_report(tmp_path)
-    assert f"| {REQ_ID1} | FM側タイトル | `approved` |" in report
+    assert f"| {REQ_ID1} | FM側タイトル | 承認済み（approved） |" in report
 
 
 def test_status_counting_still_works(tmp_path: Path):
@@ -95,6 +95,6 @@ def test_status_counting_still_works(tmp_path: Path):
     write_req(req_dir, REQ_ID2, "verified", "要件その2")
     report = run_report(tmp_path)
     assert "(2 件)" in report
-    assert "**Approved**: 1 件" in report
-    assert "**Verified**: 1 件" in report
+    assert "**承認済み（approved）**: 1 件" in report
+    assert "**検証済み（verified）**: 1 件" in report
     assert "**50%** (1 / 2 要件)" in report

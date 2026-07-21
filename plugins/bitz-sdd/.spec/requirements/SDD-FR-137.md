@@ -1,6 +1,6 @@
 ---
 id: SDD-FR-137
-version: 1.0
+version: 1.1
 status: draft
 domain: workflow
 priority: medium
@@ -27,7 +27,8 @@ confidence: high
   - THE sdd-core は `scripts/spec_labels.py` に status とフェーズの対訳辞書を定義し、これをリポジトリ内の対訳の唯一の正（SSOT）とする SHALL
   - THE `spec_labels.py` の status 対訳は 要件（`draft`=起草中 / `approved`=承認済み / `implementing`=実装中 / `verified`=検証済み / `promoted`=確定 / `deprecated`=廃止）・spec-issue（`open`=裁定待ち / `accepted`=採用 / `rejected`=不採用 / `superseded`=統合済み）・タスク（`pending`=着手待ち / `implementing`=実装中 / `blocked`=介入待ち / `done`=完了）を過不足なく含む SHALL
   - THE `spec_labels.py` のフェーズ対訳は `spec_status.py` の `PHASE_CODES` 7語すべて（`map`=未着手 / `discovery`=企画 / `design`=設計 / `plan`=要件定義 / `execute`=実装 / `verify`=検証 / `done`=確定待ち）を含み、`PHASE_CODES` との過不足は機械検証で検出される SHALL
-  - WHEN status を表示するとき THEN 日本語主の併記形（例: `採用（accepted）`）で表示する SHALL
+  - WHEN 要件・spec-issue の status を表示するとき THEN 日本語主の併記形（例: `採用（accepted）`）で表示する SHALL
+  - WHERE `sdd_report.py` のタスク集計は正規語彙（`pending` / `implementing` / `blocked` / `done`）ではなく独自語彙（`todo` / `doing` / `done`）を用いている THE 当該箇所の日本語化は本要件の範囲外とし SI-SDD-021 の集計語彙修正後に行う SHALL（語彙が正規化される前に表示だけ翻訳すると誤った語彙を対訳表に固定してしまうため）
   - WHEN フェーズを表示するとき THEN 英語主の併記形（例: `Execute（実装）`）で表示する SHALL
   - WHEN `phase_code` が `done` と判定されたとき THEN 表示ラベルは訳語「確定待ち」に Gate 名を合成し Promotion Gate 待ちであることを示す SHALL（SDD-FR-136 の受入基準を維持するため）
   - THE sdd-report は自スキル配下に `spec_labels.py` の複製を持ち、sdd-core のファイルを相対パスで参照しない SHALL（AGENTS.md のスキル自己完結原則）
@@ -43,4 +44,6 @@ confidence: high
   PASS と、`.spec/` 配下 frontmatter に diff が出ないことを確認する。
 
 - **Revision History**:
+  - 1.1 (2026-07-21) `sdd_report.py` のタスク集計語彙が正規語彙と食い違う既存不整合
+    （SI-SDD-021 として起票）を発見したため、当該箇所の日本語化を範囲外とする条文を追加
   - 1.0 (2026-07-21) 初版（draft 起票）

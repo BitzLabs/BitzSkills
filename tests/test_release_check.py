@@ -246,3 +246,53 @@ def test_release_check_missing_frontmatter(make_repo, copy_script):
     res = run_check(script)
     assert res.returncode == 1
     assert "欠落" in res.stdout
+
+
+# --- 対訳辞書 SSOT と複製の一致 (SDD-FR-137) -----------------------------------
+
+def _make_label_repo(make_repo, body_ssot: str, body_copy=None):
+    """bitz-sdd の spec_labels.py（SSOT と複製）を持つ fixture を組み立てる。"""
+    repo = make_repo()
+    core = repo / "plugins" / "bitz-sdd" / "skills" / "sdd-core" / "scripts"
+    report = repo / "plugins" / "bitz-sdd" / "skills" / "sdd-report" / "scripts"
+    core.mkdir(parents=True)
+    report.mkdir(parents=True)
+    (core / "spec_labels.py").write_text(body_ssot, encoding="utf-8")
+    if body_copy is not None:
+        (report / "spec_labels.py").write_text(body_copy, encoding="utf-8")
+    return repo
+
+
+def test_label_dictionary_copy_identical_passes(make_repo, copy_script):
+    """SSOT と複製が完全一致していれば当該チェックは PASS。
+
+    fixture の bitz-sdd はマニフェストを持たない最小構成のため他チェックは FAIL する。
+    ここでは対訳辞書チェックの判定行だけを検査する。
+    """
+    repo = _make_label_repo(make_repo, "LABELS = {'a': 'あ'}\n", "LABELS = {'a': 'あ'}\n")
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert "[PASS] 対訳辞書の複製" in res.stdout
+
+
+def test_label_dictionary_drift_fails(make_repo, copy_script):
+    """SSOT と複製が乖離していたら FAIL（訳語が種別ごとに食い違うのを防ぐ）。"""
+    repo = _make_label_repo(make_repo, "LABELS = {'a': 'あ'}\n", "LABELS = {'a': 'い'}\n")
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.returncode != 0
+    assert "一致しない" in res.stdout
+
+
+def test_label_dictionary_missing_copy_fails(make_repo, copy_script):
+    """複製が存在しなければ FAIL。"""
+    repo = _make_label_repo(make_repo, "LABELS = {'a': 'あ'}\n", None)
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.returncode != 0
+    assert "複製が存在しない" in res.stdout
+
+
+def test_label_dictionary_skipped_without_bitz_sdd(make_repo, copy_script):
+    """bitz-sdd を含まないリポジトリでは SKIP し、既存の検査結果に影響しない。"""
+    repo = make_repo()
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.returncode == 0, res.stdout
+    assert "[SKIP] 対訳辞書の複製一致" in res.stdout
