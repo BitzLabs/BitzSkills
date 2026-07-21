@@ -108,6 +108,12 @@ delegated_to: bitz-sdd:SDD-FR-137, bitz-sdd:SDD-FR-138, bitz-ddd:DDD-FR-002
     `release_check.py`・`docs/05_リリース・運用/` が指す配布の概念と衝突するため不採用。
   - **逆引きの一意性を再確認**: 新語 `確定`（promoted）と `確定待ち`（フェーズ done）は
     文字列として別。フェーズは英語主表記のため正規化入力の対象外で、status 側と競合しない。
+- **実施**: 2026-07-21 委任先3要件がいずれも verified に到達
+  （`bitz-sdd:SDD-FR-137` / `bitz-sdd:SDD-FR-138` / `bitz-ddd:DDD-FR-002`）。
+  全295 pytest PASS・spec inspect 7ワークスペース PASS・release_check PASS。
+  bitz-sdd 2.7.0 / bitz-ddd 0.3.0。
+  なお修正2 のうち `sdd_report.py` のタスク集計節は語彙不整合のため範囲外とし
+  `bitz-sdd:SI-SDD-021` へ切り出した（SDD-FR-137 v1.1 の条文に明記）。
 - **裁定（2026-07-21, 人間）— 対訳辞書の配置**: 上記「設計上の論点」の**推奨案を採用**する。
   sdd-core の `scripts/spec_labels.py` を SSOT とし、sdd-report は同内容の複製を持ち、
   両者の一致を `scripts/release_check.py` が機械検証する（乖離があれば CI が落ちる）。

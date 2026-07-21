@@ -1,7 +1,7 @@
 ---
 id: DDD-FR-002
 version: 1.0
-status: draft
+status: verified
 domain: tooling
 priority: medium
 origin: SI-CORE-018（ルート .spec/spec-issues/。ルート→サブ委任）

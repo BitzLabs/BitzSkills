@@ -16,6 +16,7 @@
 
 ## テスト/実装からの参照がない要件（approved以降）
 - DDD-FR-001
+- DDD-FR-002
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
 ※ 乖離は候補提示のみ。stale 付与は references/lifecycle.md の再伝播プロトコル（判定パス→人間確認）を経ること
@@ -31,6 +32,6 @@
 | DDD-DSC-005 | draft |  |  | 0 | 0 |
 | DDD-DSC-006 | draft |  |  | 0 | 0 |
 | DDD-FR-001 | verified | tooling | manual-check | 1 | 1 |
-| DDD-FR-002 | draft | tooling | manual-check | 0 | 0 |
+| DDD-FR-002 | verified | tooling | manual-check | 1 | 1 |
 
 **判定: PASS ✅**

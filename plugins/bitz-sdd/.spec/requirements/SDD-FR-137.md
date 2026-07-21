@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-137
 version: 1.1
-status: draft
+status: verified
 domain: workflow
 priority: medium
 origin: SI-CORE-018（ルート .spec/spec-issues/。ルート→サブ委任）
