@@ -1,6 +1,6 @@
-# inspection-report.md (2026-07-19)
+# inspection-report.md (2026-07-21)
 
-成果物数: 7 / 問題: 0 / 幽霊参照: 0 / 孤児要件: 0
+成果物数: 7 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -8,7 +8,10 @@
 ## 幽霊参照（存在しないIDへの参照）
 - なし ✅
 
-## 孤児要件（approved以降なのに implements するタスクがない）
+## 実装待ち要件（approved だが implements するタスクがない — WARN）
+- なし ✅
+
+## 孤児要件（implementing以降なのに implements するタスクがない）
 - なし ✅
 
 ## テスト/実装からの参照がない要件（approved以降）
