@@ -23,6 +23,9 @@ import sys
 from datetime import date
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from spec_labels import normalize_status  # noqa: E402
+
 # 種別ごとの許可された遷移 → 実行権限（"agent" / "human"）。
 # ここに無い (from, to) は不正遷移として誰でも拒否する。
 TRANSITIONS = {
@@ -121,7 +124,9 @@ def main():
 
     text = path.read_text(encoding="utf-8")
     cur = read_status(text)
-    new = args.to
+    # 日本語ラベル入力を機械値へ正規化する（SDD-FR-138）。
+    # 同値判定より前に行う — 後段に置くと「遷移不要」であるべき入力が「不正遷移」になる。
+    new = normalize_status(kind, args.to)
 
     if cur == new:
         print(f"ERROR: {args.ident} は既に status '{new}' です（遷移不要）", file=sys.stderr)

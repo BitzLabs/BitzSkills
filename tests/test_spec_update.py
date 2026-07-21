@@ -199,3 +199,73 @@ def test_records_transition_in_state(tmp_path):
     st = state_text(tmp_path)
     assert rid in st
     assert "approved" in st and "implementing" in st
+
+
+# --- 日本語ラベル入力の正規化 (SDD-FR-138) --------------------------------------
+
+def test_japanese_label_normalized_for_requirement(tmp_path):
+    """日本語ラベル『承認済み』が approved へ正規化され、機械値と同じ結果になる。"""
+    rid = make_req(tmp_path, 1, "draft")
+    res = run(tmp_path, rid, "承認済み", "--by-human")
+    assert res.returncode == 0, res.stderr
+    assert status_of(tmp_path, "requirements", rid) == "approved"
+
+
+def test_japanese_label_normalized_for_issue(tmp_path):
+    """spec-issue の『採用』が accepted へ正規化される。"""
+    iid = make_issue(tmp_path, 11, "open")
+    res = run(tmp_path, iid, "採用", "--by-human")
+    assert res.returncode == 0, res.stderr
+    assert status_of(tmp_path, "spec-issues", iid) == "accepted"
+
+
+def test_japanese_label_still_enforces_permission(tmp_path):
+    """日本語入力でも権限マトリクスは同じく効く（エージェントは承認できない）。"""
+    rid = make_req(tmp_path, 1, "draft")
+    res = run(tmp_path, rid, "承認済み")
+    assert res.returncode == 3
+    assert status_of(tmp_path, "requirements", rid) == "draft"
+
+
+def test_japanese_label_for_task_transition(tmp_path):
+    """タスクの『実装中』が implementing へ正規化される（種別ごとの辞書引き）。"""
+    tid = make_task(tmp_path, 1, "pending")
+    res = run(tmp_path, tid, "実装中")
+    assert res.returncode == 0, res.stderr
+    assert status_of(tmp_path, "tasks", tid) == "implementing"
+
+
+def test_combined_form_is_rejected(tmp_path):
+    """併記形は受理しない（機械値と純粋な日本語ラベルの2種のみ）。"""
+    iid = make_issue(tmp_path, 11, "open")
+    res = run(tmp_path, iid, "採用（accepted）", "--by-human")
+    assert res.returncode == 2
+    assert status_of(tmp_path, "spec-issues", iid) == "open"
+
+
+def test_unknown_word_rejected_as_invalid_transition(tmp_path):
+    """未知語は不正遷移として非ゼロ終了する（曖昧な状態値の混入防止）。"""
+    rid = make_req(tmp_path, 1, "draft")
+    res = run(tmp_path, rid, "でたらめ", "--by-human")
+    assert res.returncode == 2
+    assert status_of(tmp_path, "requirements", rid) == "draft"
+
+
+def test_same_status_in_japanese_reports_no_transition_needed(tmp_path):
+    """正規化は同値判定より前に行う — 現在と同じ status の日本語入力は『遷移不要』になる。
+
+    正規化を後段に置くと、この入力が『不正遷移』という誤ったエラーになる。
+    """
+    rid = make_req(tmp_path, 1, "approved")
+    res = run(tmp_path, rid, "承認済み")
+    assert res.returncode == 2
+    assert "遷移不要" in res.stderr
+
+
+def test_state_log_records_machine_values(tmp_path):
+    """STATE.md の遷移記録は日本語入力でも機械値で書かれる。"""
+    rid = make_req(tmp_path, 1, "draft")
+    run(tmp_path, rid, "承認済み", "--by-human", "--actor", "hide")
+    log = state_text(tmp_path)
+    assert "draft → approved" in log
+    assert "承認済み" not in log
