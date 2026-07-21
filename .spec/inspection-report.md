@@ -42,42 +42,42 @@
 ## Traceability Matrix
 | ID | status | domain | v-method | tasks | 参照元数 |
 |----|--------|--------|----------|-------|----------|
-| CORE-CON-001 | verified | governance | example-test | 1 | 1 |
-| CORE-CON-002 | verified | governance | example-test | 1 | 1 |
-| CORE-CON-003 | verified | governance | example-test | 1 | 1 |
-| CORE-CON-004 | verified | governance | manual-check | 1 | 1 |
-| CORE-CON-005 | verified | governance | manual-check | 1 | 1 |
-| CORE-CON-006 | verified | governance | example-test | 1 | 1 |
-| CORE-CON-007 | verified | governance | manual-check | 1 | 1 |
-| CORE-CON-008 | verified | governance | manual-check | 1 | 2 |
-| CORE-CON-009 | verified | governance | manual-check | 1 | 1 |
-| CORE-CON-010 | verified | governance | manual-check | 1 | 1 |
-| CORE-DSC-000 | draft |  |  | 0 | 0 |
-| CORE-DSC-001 | draft |  |  | 0 | 0 |
-| CORE-DSC-002 | draft |  |  | 0 | 0 |
-| CORE-DSC-003 | draft |  |  | 0 | 0 |
-| CORE-DSC-004 | draft |  |  | 0 | 0 |
-| CORE-DSC-005 | draft |  |  | 0 | 0 |
-| CORE-DSC-006 | draft |  |  | 0 | 0 |
-| CORE-FR-001 | verified | governance | manual-check | 1 | 1 |
-| CORE-FR-002 | verified | tooling | example-test | 1 | 1 |
-| CORE-FR-003 | verified | tooling | example-test | 1 | 3 |
-| CORE-FR-004 | verified | tooling | example-test | 1 | 2 |
-| CORE-FR-005 | verified | tooling | example-test | 1 | 2 |
-| CORE-FR-006 | verified | governance | manual-check | 2 | 2 |
-| CORE-FR-007 | verified | governance | manual-check | 1 | 1 |
-| CORE-FR-008 | verified | governance | manual-check | 1 | 1 |
-| CORE-FR-009 | verified | governance | manual-check | 1 | 1 |
-| CORE-FR-010 | verified | tooling | example-test | 1 | 2 |
-| CORE-FR-011 | verified | tooling | example-test | 1 | 2 |
-| CORE-FR-012 | verified | tooling | example-test | 1 | 2 |
-| CORE-FR-013 | verified | tooling | example-test | 1 | 1 |
-| CORE-FR-014 | verified | governance | example-test | 3 | 3 |
-| CORE-FR-015 | verified | tooling | unit-test | 3 | 5 |
-| CORE-FR-016 | verified | governance | example-test | 1 | 2 |
-| CORE-NFR-001 | verified | tooling | example-test | 1 | 1 |
+| CORE-CON-001 | 検証済み（verified） | governance | example-test | 1 | 1 |
+| CORE-CON-002 | 検証済み（verified） | governance | example-test | 1 | 1 |
+| CORE-CON-003 | 検証済み（verified） | governance | example-test | 1 | 1 |
+| CORE-CON-004 | 検証済み（verified） | governance | manual-check | 1 | 1 |
+| CORE-CON-005 | 検証済み（verified） | governance | manual-check | 1 | 1 |
+| CORE-CON-006 | 検証済み（verified） | governance | example-test | 1 | 1 |
+| CORE-CON-007 | 検証済み（verified） | governance | manual-check | 1 | 1 |
+| CORE-CON-008 | 検証済み（verified） | governance | manual-check | 1 | 2 |
+| CORE-CON-009 | 検証済み（verified） | governance | manual-check | 1 | 1 |
+| CORE-CON-010 | 検証済み（verified） | governance | manual-check | 1 | 1 |
+| CORE-DSC-000 | 起草中（draft） |  |  | 0 | 0 |
+| CORE-DSC-001 | 起草中（draft） |  |  | 0 | 0 |
+| CORE-DSC-002 | 起草中（draft） |  |  | 0 | 0 |
+| CORE-DSC-003 | 起草中（draft） |  |  | 0 | 0 |
+| CORE-DSC-004 | 起草中（draft） |  |  | 0 | 0 |
+| CORE-DSC-005 | 起草中（draft） |  |  | 0 | 0 |
+| CORE-DSC-006 | 起草中（draft） |  |  | 0 | 0 |
+| CORE-FR-001 | 検証済み（verified） | governance | manual-check | 1 | 1 |
+| CORE-FR-002 | 検証済み（verified） | tooling | example-test | 1 | 1 |
+| CORE-FR-003 | 検証済み（verified） | tooling | example-test | 1 | 3 |
+| CORE-FR-004 | 検証済み（verified） | tooling | example-test | 1 | 2 |
+| CORE-FR-005 | 検証済み（verified） | tooling | example-test | 1 | 2 |
+| CORE-FR-006 | 検証済み（verified） | governance | manual-check | 2 | 2 |
+| CORE-FR-007 | 検証済み（verified） | governance | manual-check | 1 | 1 |
+| CORE-FR-008 | 検証済み（verified） | governance | manual-check | 1 | 1 |
+| CORE-FR-009 | 検証済み（verified） | governance | manual-check | 1 | 1 |
+| CORE-FR-010 | 検証済み（verified） | tooling | example-test | 1 | 2 |
+| CORE-FR-011 | 検証済み（verified） | tooling | example-test | 1 | 2 |
+| CORE-FR-012 | 検証済み（verified） | tooling | example-test | 1 | 2 |
+| CORE-FR-013 | 検証済み（verified） | tooling | example-test | 1 | 1 |
+| CORE-FR-014 | 検証済み（verified） | governance | example-test | 3 | 3 |
+| CORE-FR-015 | 検証済み（verified） | tooling | unit-test | 3 | 5 |
+| CORE-FR-016 | 検証済み（verified） | governance | example-test | 1 | 2 |
+| CORE-NFR-001 | 検証済み（verified） | tooling | example-test | 1 | 1 |
 | DSN-001 | active |  |  | 0 | 5 |
-| DSN-002 | approved |  |  | 0 | 1 |
-| DSN-003 | approved |  |  | 0 | 0 |
+| DSN-002 | 承認済み（approved） |  |  | 0 | 1 |
+| DSN-003 | 承認済み（approved） |  |  | 0 | 0 |
 
 **判定: PASS ✅**

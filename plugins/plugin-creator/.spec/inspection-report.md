@@ -24,11 +24,11 @@
 ## Traceability Matrix
 | ID | status | domain | v-method | tasks | 参照元数 |
 |----|--------|--------|----------|-------|----------|
-| PLG-DSC-001 | draft |  |  | 0 | 0 |
-| PLG-DSC-002 | draft |  |  | 0 | 0 |
-| PLG-DSC-003 | draft |  |  | 0 | 0 |
-| PLG-DSC-004 | draft |  |  | 0 | 0 |
-| PLG-DSC-005 | draft |  |  | 0 | 0 |
-| PLG-DSC-006 | draft |  |  | 0 | 0 |
+| PLG-DSC-001 | 起草中（draft） |  |  | 0 | 0 |
+| PLG-DSC-002 | 起草中（draft） |  |  | 0 | 0 |
+| PLG-DSC-003 | 起草中（draft） |  |  | 0 | 0 |
+| PLG-DSC-004 | 起草中（draft） |  |  | 0 | 0 |
+| PLG-DSC-005 | 起草中（draft） |  |  | 0 | 0 |
+| PLG-DSC-006 | 起草中（draft） |  |  | 0 | 0 |
 
 **判定: PASS ✅**

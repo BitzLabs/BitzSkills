@@ -25,13 +25,13 @@
 ## Traceability Matrix
 | ID | status | domain | v-method | tasks | 参照元数 |
 |----|--------|--------|----------|-------|----------|
-| DDD-DSC-001 | draft |  |  | 0 | 0 |
-| DDD-DSC-002 | draft |  |  | 0 | 0 |
-| DDD-DSC-003 | draft |  |  | 0 | 0 |
-| DDD-DSC-004 | draft |  |  | 0 | 0 |
-| DDD-DSC-005 | draft |  |  | 0 | 0 |
-| DDD-DSC-006 | draft |  |  | 0 | 0 |
-| DDD-FR-001 | verified | tooling | manual-check | 1 | 1 |
-| DDD-FR-002 | verified | tooling | manual-check | 1 | 1 |
+| DDD-DSC-001 | 起草中（draft） |  |  | 0 | 0 |
+| DDD-DSC-002 | 起草中（draft） |  |  | 0 | 0 |
+| DDD-DSC-003 | 起草中（draft） |  |  | 0 | 0 |
+| DDD-DSC-004 | 起草中（draft） |  |  | 0 | 0 |
+| DDD-DSC-005 | 起草中（draft） |  |  | 0 | 0 |
+| DDD-DSC-006 | 起草中（draft） |  |  | 0 | 0 |
+| DDD-FR-001 | 検証済み（verified） | tooling | manual-check | 1 | 1 |
+| DDD-FR-002 | 検証済み（verified） | tooling | manual-check | 1 | 1 |
 
 **判定: PASS ✅**

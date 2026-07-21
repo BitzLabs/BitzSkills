@@ -70,66 +70,66 @@
 ## Traceability Matrix
 | ID | status | domain | v-method | tasks | 参照元数 |
 |----|--------|--------|----------|-------|----------|
-| SDD-CON-022 | verified | upstream | manual-check | 1 | 1 |
-| SDD-CON-032 | verified | upstream | manual-check | 1 | 1 |
-| SDD-CON-042 | verified | upstream | manual-check | 1 | 1 |
-| SDD-CON-043 | verified | upstream | manual-check | 1 | 1 |
-| SDD-CON-050 | verified | upstream | manual-check | 1 | 1 |
-| SDD-CON-052 | verified | upstream | manual-check | 1 | 1 |
-| SDD-DSC-001 | draft |  |  | 0 | 0 |
-| SDD-DSC-002 | draft |  |  | 0 | 0 |
-| SDD-DSC-003 | draft |  |  | 0 | 0 |
-| SDD-DSC-004 | draft |  |  | 0 | 0 |
-| SDD-DSC-005 | draft |  |  | 0 | 0 |
-| SDD-DSC-006 | draft |  |  | 0 | 0 |
+| SDD-CON-022 | 検証済み（verified） | upstream | manual-check | 1 | 1 |
+| SDD-CON-032 | 検証済み（verified） | upstream | manual-check | 1 | 1 |
+| SDD-CON-042 | 検証済み（verified） | upstream | manual-check | 1 | 1 |
+| SDD-CON-043 | 検証済み（verified） | upstream | manual-check | 1 | 1 |
+| SDD-CON-050 | 検証済み（verified） | upstream | manual-check | 1 | 1 |
+| SDD-CON-052 | 検証済み（verified） | upstream | manual-check | 1 | 1 |
+| SDD-DSC-001 | 起草中（draft） |  |  | 0 | 0 |
+| SDD-DSC-002 | 起草中（draft） |  |  | 0 | 0 |
+| SDD-DSC-003 | 起草中（draft） |  |  | 0 | 0 |
+| SDD-DSC-004 | 起草中（draft） |  |  | 0 | 0 |
+| SDD-DSC-005 | 起草中（draft） |  |  | 0 | 0 |
+| SDD-DSC-006 | 起草中（draft） |  |  | 0 | 0 |
 | SDD-DSN-001 | active |  |  | 0 | 0 |
 | SDD-DSN-002 | active |  |  | 0 | 0 |
 | SDD-DSN-003 | active |  |  | 0 | 0 |
-| SDD-FR-001 | verified | verification | example-test | 1 | 1 |
-| SDD-FR-010 | verified | verification | example-test | 1 | 1 |
-| SDD-FR-011 | verified | workflow | manual-check | 1 | 1 |
-| SDD-FR-020 | deprecated | upstream | example-test | 1 | 1 |
-| SDD-FR-021 | verified | upstream | manual-check | 1 | 1 |
-| SDD-FR-030 | deprecated | upstream | example-test | 1 | 1 |
-| SDD-FR-031 | verified | upstream | manual-check | 1 | 1 |
-| SDD-FR-033 | verified | upstream | manual-check | 1 | 1 |
-| SDD-FR-040 | deprecated | upstream | example-test | 1 | 1 |
-| SDD-FR-041 | verified | upstream | example-test | 1 | 1 |
-| SDD-FR-051 | verified | upstream | manual-check | 1 | 1 |
-| SDD-FR-053 | verified | upstream | manual-check | 1 | 1 |
-| SDD-FR-060 | verified | verification | manual-check | 1 | 1 |
-| SDD-FR-061 | verified | verification | manual-check | 1 | 1 |
-| SDD-FR-070 | verified | execution | manual-check | 1 | 1 |
-| SDD-FR-071 | verified | execution | manual-check | 1 | 1 |
-| SDD-FR-080 | verified | execution | manual-check | 1 | 1 |
-| SDD-FR-081 | verified | execution | manual-check | 1 | 1 |
-| SDD-FR-082 | verified | execution | manual-check | 1 | 1 |
-| SDD-FR-090 | verified | verification | manual-check | 1 | 1 |
-| SDD-FR-091 | verified | verification | manual-check | 1 | 1 |
-| SDD-FR-100 | verified | sync | example-test | 1 | 2 |
-| SDD-FR-101 | deprecated | sync | example-test | 1 | 1 |
-| SDD-FR-110 | verified | reporting | manual-check | 2 | 2 |
-| SDD-FR-111 | verified | reporting | manual-check | 2 | 2 |
-| SDD-FR-112 | verified | execution | manual-check | 1 | 2 |
-| SDD-FR-120 | verified | workflow | manual-check | 2 | 3 |
-| SDD-FR-121 | verified | workflow | manual-check | 2 | 3 |
-| SDD-FR-122 | verified | execution | manual-check | 1 | 2 |
-| SDD-FR-123 | verified | verification | manual-check | 1 | 2 |
-| SDD-FR-124 | verified | verification | example-test | 1 | 2 |
-| SDD-FR-125 | verified | sync | unit-test | 2 | 3 |
-| SDD-FR-126 | verified | sync | unit-test | 2 | 4 |
-| SDD-FR-127 | verified | sync | unit-test | 2 | 4 |
-| SDD-FR-128 | verified | sync | unit-test | 2 | 3 |
-| SDD-FR-129 | verified | sync | unit-test | 2 | 3 |
-| SDD-FR-130 | verified | workflow | manual-check | 1 | 1 |
-| SDD-FR-131 | verified | workflow | unit-test | 1 | 1 |
-| SDD-FR-132 | verified | verification | example-test | 1 | 1 |
-| SDD-FR-133 | verified | verification | unit-test | 1 | 2 |
-| SDD-FR-134 | verified | verification | unit-test | 1 | 2 |
-| SDD-FR-135 | verified | sync | unit-test | 1 | 2 |
-| SDD-FR-136 | verified | workflow | unit-test | 1 | 1 |
-| SDD-FR-137 | verified | workflow | unit-test | 1 | 1 |
-| SDD-FR-138 | verified | workflow | unit-test | 1 | 1 |
+| SDD-FR-001 | 検証済み（verified） | verification | example-test | 1 | 1 |
+| SDD-FR-010 | 検証済み（verified） | verification | example-test | 1 | 1 |
+| SDD-FR-011 | 検証済み（verified） | workflow | manual-check | 1 | 1 |
+| SDD-FR-020 | 廃止（deprecated） | upstream | example-test | 1 | 1 |
+| SDD-FR-021 | 検証済み（verified） | upstream | manual-check | 1 | 1 |
+| SDD-FR-030 | 廃止（deprecated） | upstream | example-test | 1 | 1 |
+| SDD-FR-031 | 検証済み（verified） | upstream | manual-check | 1 | 1 |
+| SDD-FR-033 | 検証済み（verified） | upstream | manual-check | 1 | 1 |
+| SDD-FR-040 | 廃止（deprecated） | upstream | example-test | 1 | 1 |
+| SDD-FR-041 | 検証済み（verified） | upstream | example-test | 1 | 1 |
+| SDD-FR-051 | 検証済み（verified） | upstream | manual-check | 1 | 1 |
+| SDD-FR-053 | 検証済み（verified） | upstream | manual-check | 1 | 1 |
+| SDD-FR-060 | 検証済み（verified） | verification | manual-check | 1 | 1 |
+| SDD-FR-061 | 検証済み（verified） | verification | manual-check | 1 | 1 |
+| SDD-FR-070 | 検証済み（verified） | execution | manual-check | 1 | 1 |
+| SDD-FR-071 | 検証済み（verified） | execution | manual-check | 1 | 1 |
+| SDD-FR-080 | 検証済み（verified） | execution | manual-check | 1 | 1 |
+| SDD-FR-081 | 検証済み（verified） | execution | manual-check | 1 | 1 |
+| SDD-FR-082 | 検証済み（verified） | execution | manual-check | 1 | 1 |
+| SDD-FR-090 | 検証済み（verified） | verification | manual-check | 1 | 1 |
+| SDD-FR-091 | 検証済み（verified） | verification | manual-check | 1 | 1 |
+| SDD-FR-100 | 検証済み（verified） | sync | example-test | 1 | 2 |
+| SDD-FR-101 | 廃止（deprecated） | sync | example-test | 1 | 1 |
+| SDD-FR-110 | 検証済み（verified） | reporting | manual-check | 2 | 2 |
+| SDD-FR-111 | 検証済み（verified） | reporting | manual-check | 2 | 2 |
+| SDD-FR-112 | 検証済み（verified） | execution | manual-check | 1 | 2 |
+| SDD-FR-120 | 検証済み（verified） | workflow | manual-check | 2 | 3 |
+| SDD-FR-121 | 検証済み（verified） | workflow | manual-check | 2 | 3 |
+| SDD-FR-122 | 検証済み（verified） | execution | manual-check | 1 | 2 |
+| SDD-FR-123 | 検証済み（verified） | verification | manual-check | 1 | 2 |
+| SDD-FR-124 | 検証済み（verified） | verification | example-test | 1 | 2 |
+| SDD-FR-125 | 検証済み（verified） | sync | unit-test | 2 | 3 |
+| SDD-FR-126 | 検証済み（verified） | sync | unit-test | 2 | 4 |
+| SDD-FR-127 | 検証済み（verified） | sync | unit-test | 2 | 4 |
+| SDD-FR-128 | 検証済み（verified） | sync | unit-test | 2 | 3 |
+| SDD-FR-129 | 検証済み（verified） | sync | unit-test | 2 | 3 |
+| SDD-FR-130 | 検証済み（verified） | workflow | manual-check | 1 | 1 |
+| SDD-FR-131 | 検証済み（verified） | workflow | unit-test | 1 | 1 |
+| SDD-FR-132 | 検証済み（verified） | verification | example-test | 1 | 1 |
+| SDD-FR-133 | 検証済み（verified） | verification | unit-test | 1 | 2 |
+| SDD-FR-134 | 検証済み（verified） | verification | unit-test | 1 | 2 |
+| SDD-FR-135 | 検証済み（verified） | sync | unit-test | 1 | 2 |
+| SDD-FR-136 | 検証済み（verified） | workflow | unit-test | 1 | 1 |
+| SDD-FR-137 | 検証済み（verified） | workflow | unit-test | 1 | 1 |
+| SDD-FR-138 | 検証済み（verified） | workflow | unit-test | 1 | 1 |
 | SDD-REV-001 | active |  |  | 0 | 1 |
 | SDD-REV-002 | active |  |  | 0 | 1 |
 | SDD-REV-003 | active |  |  | 0 | 0 |
