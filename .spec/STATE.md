@@ -116,3 +116,4 @@
 - 2026-07-19 SI-CORE-032: open → accepted (human)
 - 2026-07-19 SI-CORE-013: accepted → rejected (hide（再裁定 2026-07-19）)
 - 2026-07-19 SI-CORE-014: accepted → rejected (hide（再裁定 2026-07-19）)
+- 2026-07-22 SI-CORE-033: open → accepted (human)

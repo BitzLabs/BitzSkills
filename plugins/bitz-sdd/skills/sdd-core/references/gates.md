@@ -24,6 +24,8 @@
 いずれもエージェントは**証跡とドラフトを揃えてチェックリスト形式で提示するだけ**。自分でチェックを付けて通過させない。
 フェーズ語彙（`map / discovery / design / plan / execute / verify / done` の7語）は
 `spec_status.py` の `PHASE_CODES` が正（SDD-FR-136）。ゲートとフェーズの対応:
+<!-- phase-vocabulary: map, discovery, design, plan, execute, verify, done -->
+<!-- ↑ 機械検証用マーカー。上の散文リストと同一で、release_check.py が PHASE_CODES との一致を検査する（SDD-FR-140）。語を増減するときは PHASE_CODES・散文リスト・本マーカーを同時に更新する。 -->
 Discovery Gate = Discovery の出口（Design へ）、Design Gate = Design の出口（Plan へ）、
 Promotion Gate = Done の出口（promoted へ）。
 

@@ -13,6 +13,9 @@
      （agent 実在・ティア整合・ティアはしご健全性・モデル名直書き禁止）
   7. マニフェスト metadata.dependencies のプラグイン間依存グラフ検証
      （3マニフェスト同値・依存先の実在・semver 制約の充足・循環の不在。CORE-FR-013）
+  8. 対訳辞書 spec_labels.py の SSOT（sdd-core）と複製（sdd-report）の一致（SDD-FR-137）
+  9. フェーズ正規語彙 PHASE_CODES（spec_status.py）と文書側マーカーの一致（SDD-FR-140）
+     （sdd-core SKILL.md / gates.md の phase-vocabulary マーカー・散文リストとの一致）
 
 すべて合格なら exit 0、1つでも FAIL があれば exit 1。
 """
@@ -167,6 +170,75 @@ def check_label_dictionary_copies(repo: Path) -> None:
                   "SSOT（sdd-core/scripts/spec_labels.py）と内容が一致しない — 両方を同時に更新すること")
         else:
             check(f"対訳辞書の複製: {rel}", True, "SSOT と一致")
+
+
+PHASE_MARKER_RE = re.compile(r"<!--\s*phase-vocabulary:\s*(.*?)-->", re.DOTALL)
+
+
+def _phase_codes_from_source(status_py: Path) -> list[str] | None:
+    """spec_status.py のソースから PHASE_CODES の語を抽出する（import せず副作用を避ける）。"""
+    m = re.search(r"PHASE_CODES\s*=\s*\(([^)]*)\)", status_py.read_text(encoding="utf-8"))
+    if not m:
+        return None
+    return [w.strip().strip("\"'") for w in m.group(1).split(",") if w.strip().strip("\"'")]
+
+
+def check_phase_vocabulary(repo: Path) -> None:
+    """フェーズ正規語彙 PHASE_CODES（コード）と文書側マーカーの一致を検証する（SDD-FR-140）。
+
+    sdd-core/SKILL.md と references/gates.md に置いた HTML コメントマーカー
+    `<!-- phase-vocabulary: ... -->` から語集合を抽出し、`spec_status.py` の PHASE_CODES と
+    過不足なく一致することを検査する。加えて、各文書に人間可読で併記された散文リスト
+    （バッククォートのスラッシュ区切り）がマーカーと一致することを境界付き文字列比較で確認し、
+    可視リストの静かなドリフトも検出する（自由文からの語推定はしない。SI-CORE-033 の裁定）。
+    """
+    if not (repo / "plugins" / "bitz-sdd").exists():
+        print("[SKIP] フェーズ語彙の一致 — bitz-sdd プラグイン未配置")
+        return
+
+    status_py = repo / "plugins/bitz-sdd/skills/sdd-core/scripts/spec_status.py"
+    if not status_py.exists():
+        check("フェーズ語彙 SSOT の存在", False, f"{status_py.relative_to(repo)} が無い")
+        return
+    phase_codes = _phase_codes_from_source(status_py)
+    if not phase_codes:
+        check("PHASE_CODES 抽出", False, "spec_status.py から PHASE_CODES を抽出できない")
+        return
+    canonical = set(phase_codes)
+
+    docs = [
+        repo / "plugins/bitz-sdd/skills/sdd-core/SKILL.md",
+        repo / "plugins/bitz-sdd/skills/sdd-core/references/gates.md",
+    ]
+    for doc in docs:
+        rel = doc.relative_to(repo)
+        if not doc.exists():
+            check(f"フェーズ語彙マーカー: {rel}", False, "対象文書が無い")
+            continue
+        text = doc.read_text(encoding="utf-8")
+        mk = PHASE_MARKER_RE.search(text)
+        if not mk:
+            check(f"フェーズ語彙マーカー: {rel}", False,
+                  "<!-- phase-vocabulary: ... --> マーカーが無い")
+            continue
+        words = [w.strip() for w in mk.group(1).replace("\n", " ").split(",") if w.strip()]
+        marker_set = set(words)
+        if len(words) != len(marker_set):
+            check(f"フェーズ語彙マーカー: {rel}", False, "マーカー内に重複語がある")
+        elif marker_set != canonical:
+            missing = sorted(canonical - marker_set)
+            extra = sorted(marker_set - canonical)
+            check(f"フェーズ語彙マーカー: {rel}", False,
+                  f"PHASE_CODES と不一致 — 欠落{missing} 余剰{extra}（PHASE_CODES と同時に更新すること）")
+        else:
+            # 可視の散文リスト（`w / w / ...`）がマーカーと一致するか（境界付き・語推定なし）
+            normalized = re.sub(r"\s+", " ", text)
+            expected_span = "`" + " / ".join(words) + "`"
+            if expected_span not in normalized:
+                check(f"フェーズ語彙マーカー: {rel}", False,
+                      f"可視の散文リストがマーカーと不一致（期待: {expected_span}）")
+            else:
+                check(f"フェーズ語彙マーカー: {rel}", True, "PHASE_CODES・散文リストと一致")
 
 
 def parse_version(text: str) -> tuple[int, ...]:
@@ -334,6 +406,9 @@ def main() -> None:
 
     # 8. 対訳辞書 SSOT と複製の一致（SDD-FR-137）
     check_label_dictionary_copies(REPO)
+
+    # 9. フェーズ正規語彙 PHASE_CODES と文書側マーカーの一致（SDD-FR-140）
+    check_phase_vocabulary(REPO)
 
     print()
     for w in warnings:

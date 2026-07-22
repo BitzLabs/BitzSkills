@@ -296,3 +296,133 @@ def test_label_dictionary_skipped_without_bitz_sdd(make_repo, copy_script):
     res = run_check(copy_script(repo, CHECK_SCRIPT))
     assert res.returncode == 0, res.stdout
     assert "[SKIP] 対訳辞書の複製一致" in res.stdout
+
+
+# ────────────────────────────────────────────────────────────────
+# フェーズ正規語彙 PHASE_CODES ⇔ 文書マーカーの一致検査（SDD-FR-140）
+# ────────────────────────────────────────────────────────────────
+
+CANON = ["map", "discovery", "design", "plan", "execute", "verify", "done"]
+_PHASE_STATUS_PY = (
+    'PHASE_CODES = ("map", "discovery", "design", "plan", '
+    '"execute", "verify", "done")\n'
+)
+
+
+def _phase_doc(prefix: str, marker_words, prose_words) -> str:
+    """散文リスト（`w / w / ...`）とマーカーを持つ文書本文を組み立てる。
+
+    marker_words が None のときはマーカーを省く（マーカー欠落ケース用）。
+    """
+    prose = "`" + " / ".join(prose_words) + "`"
+    body = f"{prefix}\n\nフェーズ語彙は {prose} が正（PHASE_CODES）。\n"
+    if marker_words is not None:
+        body += "<!-- phase-vocabulary: " + ", ".join(marker_words) + " -->\n"
+    return body
+
+
+def _skill_md(marker_words, prose_words) -> str:
+    fm = (
+        "---\nname: sdd-core\ndescription: demo\nmetadata:\n  version: 1.0.0\n"
+        "  author: test\n  created: 2026-01-01\n  updated: 2026-01-01\n---\n"
+    )
+    return fm + _phase_doc("# sdd-core", marker_words, prose_words)
+
+
+def _make_phase_repo(make_repo, *, status_py=_PHASE_STATUS_PY,
+                     skill_marker=CANON, skill_prose=CANON,
+                     gates_marker=CANON, gates_prose=CANON):
+    """フェーズ語彙検査に必要な bitz-sdd 相当（spec_status.py + SKILL.md + gates.md）を組む。
+
+    対訳辞書検査（SDD-FR-137）の巻き添え FAIL を避けるため、spec_labels.py の
+    SSOT と複製（同一）も用意する。
+    """
+    repo = make_repo()
+    core = repo / "plugins" / "bitz-sdd" / "skills" / "sdd-core"
+    (core / "scripts").mkdir(parents=True)
+    (core / "references").mkdir(parents=True)
+    (core / "scripts" / "spec_status.py").write_text(status_py, encoding="utf-8")
+    (core / "SKILL.md").write_text(_skill_md(skill_marker, skill_prose), encoding="utf-8")
+    (core / "references" / "gates.md").write_text(
+        _phase_doc("# gates", gates_marker, gates_prose), encoding="utf-8")
+    report = repo / "plugins" / "bitz-sdd" / "skills" / "sdd-report" / "scripts"
+    report.mkdir(parents=True)
+    (core / "scripts" / "spec_labels.py").write_text("LABELS = {}\n", encoding="utf-8")
+    (report / "spec_labels.py").write_text("LABELS = {}\n", encoding="utf-8")
+    return repo
+
+
+def test_phase_vocab_pass(make_repo, copy_script):
+    """正しいマーカー・散文リストなら両文書とも PASS 行が出る。"""
+    repo = _make_phase_repo(make_repo)
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.stdout.count("[PASS] フェーズ語彙マーカー") == 2, res.stdout
+
+
+def test_phase_vocab_marker_word_tampered(make_repo, copy_script):
+    """マーカー内の語を1つ改竄すると FAIL（PHASE_CODES と不一致）。"""
+    tampered = ["map", "discovery", "designX", "plan", "execute", "verify", "done"]
+    repo = _make_phase_repo(make_repo, skill_marker=tampered)
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.returncode != 0
+    assert "[FAIL] フェーズ語彙マーカー" in res.stdout
+    assert "不一致" in res.stdout
+
+
+def test_phase_vocab_marker_missing_word(make_repo, copy_script):
+    """マーカーから語が欠落すると FAIL し、欠落語が示される。"""
+    repo = _make_phase_repo(make_repo, gates_marker=CANON[:-1])  # done 欠落
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.returncode != 0
+    assert "[FAIL] フェーズ語彙マーカー" in res.stdout
+    assert "done" in res.stdout
+
+
+def test_phase_vocab_marker_extra_word(make_repo, copy_script):
+    """マーカーに余剰語があると FAIL（加算は PHASE_CODES 側と同時でなければ通さない）。"""
+    repo = _make_phase_repo(make_repo, skill_marker=CANON + ["review"])
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.returncode != 0
+    assert "余剰" in res.stdout
+    assert "review" in res.stdout
+
+
+def test_phase_vocab_prose_drift(make_repo, copy_script):
+    """マーカーは正しいが可視の散文リストがドリフトしたら FAIL。"""
+    drifted = ["map", "discovery", "design", "plan", "execute", "verify", "gone"]
+    repo = _make_phase_repo(make_repo, skill_marker=CANON, skill_prose=drifted)
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.returncode != 0
+    assert "散文リストがマーカーと不一致" in res.stdout
+
+
+def test_phase_vocab_marker_absent(make_repo, copy_script):
+    """マーカーが無い文書は FAIL。"""
+    repo = _make_phase_repo(make_repo, skill_marker=None)
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.returncode != 0
+    assert "マーカーが無い" in res.stdout
+
+
+def test_phase_vocab_additive_change_passes(make_repo, copy_script):
+    """PHASE_CODES への加算とマーカー・散文の同時更新は FAIL しない（加算的変更を妨げない）。"""
+    extended = CANON + ["archive"]
+    status_py = (
+        'PHASE_CODES = ("map", "discovery", "design", "plan", '
+        '"execute", "verify", "done", "archive")\n'
+    )
+    repo = _make_phase_repo(
+        make_repo, status_py=status_py,
+        skill_marker=extended, skill_prose=extended,
+        gates_marker=extended, gates_prose=extended,
+    )
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.stdout.count("[PASS] フェーズ語彙マーカー") == 2, res.stdout
+
+
+def test_phase_vocab_skipped_without_bitz_sdd(make_repo, copy_script):
+    """bitz-sdd を含まないリポジトリでは SKIP し、既存の検査結果に影響しない。"""
+    repo = make_repo()
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.returncode == 0, res.stdout
+    assert "[SKIP] フェーズ語彙の一致" in res.stdout
