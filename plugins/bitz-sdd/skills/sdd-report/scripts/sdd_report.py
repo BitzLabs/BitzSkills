@@ -3,8 +3,12 @@ import argparse
 import os
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 from datetime import datetime
+
+# タスク status の正規語彙と表示順（spec_update.py の TRANSITIONS["task"] と一致。SDD-FR-139）
+TASK_STATUS_ORDER = ("pending", "implementing", "blocked", "done")
 
 # 対訳辞書は sdd-core の spec_labels.py が SSOT だが、スキル自己完結原則により
 # 本スキル配下の複製を参照する（両者の一致は release_check.py が機械検証する）
@@ -141,24 +145,31 @@ def generate_report(root_path: Path) -> Path:
                 except Exception:
                     pass
 
-    # 5. Tasks 集計
+    # 5. Tasks 集計 — 正規語彙（pending / implementing / blocked / done）で集計する（SDD-FR-139）。
+    # spec_status.py の _statuses_in と同じ挙動: 語彙外・欠落 status は (none) として立て、
+    # 正規区分へ黙って吸収しない（blocked / implementing がレポート上で不可視になるのを防ぐ）。
     tasks_dir = spec_dir / "tasks"
-    task_stats = {"todo": 0, "doing": 0, "done": 0}
-    total_tasks = 0
-    
+    task_counter = Counter()
     if tasks_dir.exists():
-        for f in tasks_dir.glob("*.md"):
+        for f in sorted(tasks_dir.glob("*.md")):
+            if f.name.startswith("_"):
+                continue
             try:
-                text = f.read_text(encoding="utf-8")
-                fm = parse_frontmatter(text) or {}
-                status = fm.get("status", "todo").lower()
-                if status in task_stats:
-                    task_stats[status] += 1
-                else:
-                    task_stats["todo"] += 1
-                total_tasks += 1
+                fm = parse_frontmatter(f.read_text(encoding="utf-8")) or {}
+                task_counter[fm.get("status") or "(none)"] += 1
             except Exception:
                 pass
+    total_tasks = sum(task_counter.values())
+
+    # タスク集計の表示行を組み立てる: 正規語彙を固定順で日本語主併記表示し、
+    # 語彙外（(none) 等）は独立区分として末尾に可視化する（正規区分へ吸収しない）。
+    task_lines = [
+        f'*   **{status_label("task", s)}**: {task_counter.get(s, 0)} 件'
+        for s in TASK_STATUS_ORDER
+    ]
+    for s in sorted(k for k in task_counter if k not in TASK_STATUS_ORDER):
+        task_lines.append(f'*   **{status_label("task", s)}**: {task_counter[s]} 件')
+    task_section = "\n".join(task_lines)
 
     # 進捗計算
     progress = 0
@@ -237,9 +248,7 @@ def generate_report(root_path: Path) -> Path:
 ---
 
 ## 5. タスク実行状況 (.spec/tasks/ - {total_tasks} 件)
-*   **Todo**: {task_stats["todo"]} 件
-*   **Doing**: {task_stats["doing"]} 件
-*   **Done**: {task_stats["done"]} 件
+{task_section}
 """
 
     report_file.write_text(report_content, encoding="utf-8")
