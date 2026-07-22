@@ -4,6 +4,7 @@ raised_by: プロジェクト改修計画 追加要望（2026-07-12 ユーザー
 target: plugins/bitz-sdd/skills/sdd-plan（新設。spec 現状把握と次アクション提案）
 proposed_change_type: new
 status: accepted
+delegated_to: bitz-sdd:SDD-FR-120
 ---
 - **目的**: 「いまどこまで進んでいて、次に何をすべきか」を対話で答えるナビゲーション
   スキル sdd-plan を新設する。現状この役割は sdd-core のフェーズ・ルーティング表を
@@ -27,3 +28,5 @@ status: accepted
   - skill-validator / release_check PASS
 - **影響推定・ロールバック**: スキル追加と参照追記のみ。フォルダ削除 + 追記 revert で戻る。
 - **依存**: SI-CORE-011（spec_status.py が実体。本スキルはその判断層）。
+- **実施**: bitz-sdd ワークスペースの SDD-FR-120（sdd-plan スキル新設）へ委譲・要件化し実装。
+  PR #45 でマージ、SDD-FR-120 verified 済み（クロス WS 委譲。`delegated_to: bitz-sdd:SDD-FR-120`）。

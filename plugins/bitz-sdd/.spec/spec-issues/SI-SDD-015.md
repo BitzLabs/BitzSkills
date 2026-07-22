@@ -3,7 +3,7 @@ id: SI-SDD-015
 raised_by: SI-FLW-001の実施マーカー未記録振り返り（2026-07-18）
 target: verified要件に対応するspec-issue実施記録漏れの機械検出
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: SI-SDD-005でspec-issue完了記録を `- **実施**:` に統一し、sdd-issueの手順7へ
   明文化済みである。一方、SI-FLW-001はorigin要件FLW-FR-001がverifiedへ到達しても実施マーカーがなく、
@@ -35,3 +35,6 @@ status: open
 | 軽量レーン適否 | 不適。公開JSON出力と完了判定補助の契約追加 |
 
 **推薦: accept**。既に制度化した必須記録が実運用直後に漏れ、手順だけでは再発を防げなかったため。
+
+- **実施**: 2026-07-22 accepted 化（人間裁定）。SDD-FR-142（`completion_record_missing` 機械警告）へ
+  要件化し実装・検証（SDD-DSN-004 と co-design、SDD-FR-141 と同一 PR）。SDD-FR-142 verified 済み。

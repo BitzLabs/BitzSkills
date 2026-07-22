@@ -3,7 +3,7 @@ id: SI-SDD-025
 raised_by: 2026-07-22 セッション冒頭の現状把握で発見（root SI-CORE-016/017/003 の恒常的な誤報告）
 target: spec_status.py の accepted_unaddressed がクロスワークスペース委譲済み spec-issue を永久に未着手と誤報告する
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **優先度（推薦）**: **中**。誤報告であり実データは壊れないが、`spec status` / `sdd-plan` の
   次アクション提案が恒常的にノイズを出し、「本当に未着手の accepted」を覆い隠す。
@@ -51,3 +51,8 @@ status: open
 - **予備判定（推薦）**: **accept 推薦**。根拠 — 恒常的な false-positive が次アクション提案の信頼性を
   下げ、本当に着手すべき accepted を覆い隠す。`SI-SDD-015` と同時に設計すれば追加コストは小さい。
   裁定は人間専用、本 issue は `open` のままとする。
+- **実施**: 2026-07-22 accepted 化（人間裁定）。SDD-FR-141（委譲済み accepted を
+  `accepted_delegated_unresolved` へ分離集計）へ要件化し実装・検証。設計着手時の実測で
+  「欠陥は単一スコープ実行時のみ」と前提を補正（一括実行は既存のクロス WS origin 集約で解決済み）。
+  ルート CORE-FR-012 は v1.2 で例外節を追加、SI-CORE-016/017/003 のデータ後付けで実データの誤報告を
+  解消。SDD-DSN-004 と co-design、SDD-FR-141 verified 済み。

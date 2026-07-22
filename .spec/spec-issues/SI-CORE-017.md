@@ -4,6 +4,7 @@ raised_by: プロジェクト改修計画 追加要望（2026-07-12 ユーザー
 target: plugins/bitz-sdd/skills/sdd-issue（新設。要望インテーク→予備判定→SI 起票）
 proposed_change_type: new
 status: accepted
+delegated_to: bitz-sdd:SDD-FR-121
 ---
 - **目的**: ばらばらに届く要望を整理し、可否の**予備判定**を付けて spec-issue に登録する
   インテークスキル sdd-issue を新設する。現状の起票は sdd-core の軽量レーン節の
@@ -31,3 +32,5 @@ status: accepted
 - **影響推定・ロールバック**: スキル追加と参照追記のみ。フォルダ削除 + 追記 revert で戻る。
 - **依存**: SI-CORE-012（spec_scaffold / spec_update）、SI-CORE-015（委託フィールド）、
   SI-CORE-016（重複チェックで spec_status.py の集計を共用）。
+- **実施**: bitz-sdd ワークスペースの SDD-FR-121（sdd-issue スキル新設）へ委譲・要件化し実装。
+  PR #45 でマージ、SDD-FR-121 verified 済み（クロス WS 委譲。`delegated_to: bitz-sdd:SDD-FR-121`）。

@@ -29,7 +29,7 @@ def _write(path: Path, text: str):
 
 def make_spec(root: Path, *, reqs=None, issues=None, tasks=None, discovery=False,
               design=False, design_in_stories=False,
-              req_origins=None, issue_implemented=None):
+              req_origins=None, issue_implemented=None, issue_delegated=None):
     """指定した status を持つ要件/spec-issue/タスクで最小 .spec ツリーを構築する。
 
     reqs/issues/tasks は (連番, status) のタプルのリスト。
@@ -37,11 +37,13 @@ def make_spec(root: Path, *, reqs=None, issues=None, tasks=None, discovery=False
     design_in_stories: .spec/design/stories/ サブディレクトリのみに成果物を置く。
     req_origins: {連番: "origin文字列"} — 要件の origin: フィールドを差し込む。
     issue_implemented: 本文に `**実施**:` マーカーを付与する spec-issue 連番の集合。
+    issue_delegated: {連番: "delegated_to文字列"} — spec-issue の delegated_to: を差し込む。
     """
     spec = root / ".spec"
     (spec / "requirements").mkdir(parents=True, exist_ok=True)
     req_origins = req_origins or {}
     issue_implemented = issue_implemented or set()
+    issue_delegated = issue_delegated or {}
     for i, status in (reqs or []):
         rid = f"{FR}{i:03d}"
         origin_line = f"\norigin: {req_origins[i]}" if i in req_origins else ""
@@ -49,11 +51,12 @@ def make_spec(root: Path, *, reqs=None, issues=None, tasks=None, discovery=False
                 f"---\nid: {rid}\nversion: 1.0\nstatus: {status}{origin_line}\n---\n\n### {rid} サンプル要件\n")
     for i, status in (issues or []):
         iid = f"SI-CORE-{i:03d}"
+        delegated_line = f"\ndelegated_to: {issue_delegated[i]}" if i in issue_delegated else ""
         body = "- 目的: サンプル\n"
         if i in issue_implemented:
             body += "- **実施**: 2026-07-18 対象 SKILL.md へ反映済み。\n"
         _write(spec / "spec-issues" / f"{iid}.md",
-                f"---\nid: {iid}\nstatus: {status}\n---\n{body}")
+                f"---\nid: {iid}\nstatus: {status}{delegated_line}\n---\n{body}")
     for i, status in (tasks or []):
         tid = f"{TSK}{i:03d}"
         _write(spec / "tasks" / f"{tid}.md",
@@ -182,6 +185,112 @@ def test_accepted_unaddressed_absent_from_existing_fixture(tmp_path):
     res = run_status(tmp_path, json_out=True)
     ws = json.loads(res.stdout)["workspaces"][0]
     assert ws["accepted_unaddressed"] == ["SI-CORE-012"]
+
+
+# --- 委譲済み accepted の分離集計 (SDD-FR-141) --------------------------------
+
+def test_SDD_FR_141_delegated_unresolved_separated_from_unaddressed(tmp_path):
+    """delegated_to を持ち origin 参照が無い accepted は、未着手ではなく委譲済み・未解決に計上する。"""
+    make_spec(tmp_path, issues=[(11, "accepted")],
+              issue_delegated={11: "bitz-sdd:SDD-FR-999"})
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    assert ws["accepted_unaddressed"] == []
+    assert ws["accepted_delegated_unresolved"] == ["SI-CORE-011"]
+    joined = "".join(ws["next_actions"])
+    assert "委譲" in joined and "SI-CORE-011" in joined
+
+
+def test_SDD_FR_141_delegated_but_addressed_by_origin_not_flagged(tmp_path):
+    """delegated_to があってもスコープ内 origin 参照で対応済みなら、どの未解決リストにも入れない。"""
+    make_spec(tmp_path,
+              reqs=[(1, "approved")],
+              issues=[(11, "accepted")],
+              req_origins={1: "SI-CORE-011"},
+              issue_delegated={11: "bitz-sdd:SDD-FR-999"})
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    assert ws["accepted_unaddressed"] == []
+    assert ws["accepted_delegated_unresolved"] == []
+
+
+def test_SDD_FR_141_non_delegated_still_unaddressed(tmp_path):
+    """delegated_to を持たず origin 参照も実施マーカーも無いものは従来どおり未着手に計上する。"""
+    make_spec(tmp_path, issues=[(11, "accepted")])
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    assert ws["accepted_unaddressed"] == ["SI-CORE-011"]
+    assert ws["accepted_delegated_unresolved"] == []
+
+
+def test_SDD_FR_141_delegated_unresolved_across_scopes(tmp_path):
+    """一括実行でも委譲先 origin が無ければ委譲済み・未解決として計上する（単一/一括で意味は同じ）。"""
+    a = make_spec(tmp_path / "a", issues=[(11, "accepted")],
+                  issue_delegated={11: "bitz-sdd:SDD-FR-999"})
+    b = make_spec(tmp_path / "b", reqs=[(1, "draft")])  # SI-CORE-011 を参照しない
+    data = json.loads(run_status(json_out=True, workspace=[a, b]).stdout)
+    ws_a = next(w for w in data["workspaces"] if Path(w["root"]).name == "a")
+    assert ws_a["accepted_delegated_unresolved"] == ["SI-CORE-011"]
+    assert ws_a["accepted_unaddressed"] == []
+
+
+# --- 実施記録欠落の機械警告 (SDD-FR-142) -------------------------------------
+
+def test_SDD_FR_142_completion_record_missing_when_verified_origin_no_marker(tmp_path):
+    """origin 参照元要件が verified かつ実施マーカーが無い accepted を記録欠落として警告する。"""
+    make_spec(tmp_path,
+              reqs=[(1, "verified")],
+              issues=[(11, "accepted")],
+              req_origins={1: "SI-CORE-011"})
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    assert ws["completion_record_missing"] == ["SI-CORE-011"]
+    assert ws["accepted_unaddressed"] == []  # 別フィールド・別警告（accepted_unaddressed は不変）
+    joined = "".join(ws["next_actions"])
+    assert "実施" in joined and "SI-CORE-011" in joined
+
+
+def test_SDD_FR_142_no_warning_when_origin_requirement_not_verified(tmp_path):
+    """origin 参照元要件が verified/promoted 未満なら記録欠落として警告しない（実装未完了）。"""
+    make_spec(tmp_path,
+              reqs=[(1, "approved")],
+              issues=[(11, "accepted")],
+              req_origins={1: "SI-CORE-011"})
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    assert ws["completion_record_missing"] == []
+
+
+def test_SDD_FR_142_no_warning_when_marker_present(tmp_path):
+    """実施マーカーがあれば origin 要件が verified でも記録欠落に含めない。"""
+    make_spec(tmp_path,
+              reqs=[(1, "verified")],
+              issues=[(11, "accepted")],
+              req_origins={1: "SI-CORE-011"},
+              issue_implemented={11})
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    assert ws["completion_record_missing"] == []
+
+
+def test_SDD_FR_141_142_ignore_open_and_terminal_issues(tmp_path):
+    """open / deprecated / superseded の spec-issue は新フィールドいずれにも計上しない。"""
+    make_spec(tmp_path,
+              reqs=[(1, "verified")],
+              issues=[(11, "open"), (12, "deprecated"), (13, "superseded")],
+              req_origins={1: "SI-CORE-011"},
+              issue_delegated={12: "bitz-sdd:SDD-FR-999"})
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    assert ws["accepted_delegated_unresolved"] == []
+    assert ws["completion_record_missing"] == []
+    assert ws["accepted_unaddressed"] == []
+
+
+def test_SDD_FR_141_142_json_keys_additive(tmp_path):
+    """新フィールドは加算のみ。既存 JSON フィールドのキー・型は不変（公開契約の回帰）。"""
+    make_spec(tmp_path, reqs=[(1, "draft")], issues=[(11, "accepted")], tasks=[(1, "done")])
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    # 既存キー（型）
+    assert isinstance(ws["accepted_unaddressed"], list)
+    assert isinstance(ws["next_actions"], list)
+    assert isinstance(ws["requirements"]["by_status"], dict)
+    # 新規キー（型）
+    assert isinstance(ws["accepted_delegated_unresolved"], list)
+    assert isinstance(ws["completion_record_missing"], list)
 
 
 # --- 読み取り専用性 ----------------------------------------------------------
