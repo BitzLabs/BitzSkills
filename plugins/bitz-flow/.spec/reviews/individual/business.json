@@ -1,11 +1,17 @@
 {
   "perspective": "business",
   "dimensions": [
-    {"name": "要件トレーサビリティ", "weight": 0.35, "score": 5, "findings": [{"id": "BIZ-101", "severity": "info", "location": "SI-FLW-001 / FLW-FR-001 / FLW-DSN-001", "title": "実事故から設計・検証まで追跡可能", "description": "PR #56〜#58の事故原因から要件、状態モデル、テストケースまで双方向に辿れる。", "recommendation": "実装コミットとテスト名にもFLW-FR-001を残す。"}]},
+    {"name": "要件トレーサビリティ", "weight": 0.35, "score": 4, "findings": [
+      {"id": "BIZ-101", "severity": "info", "location": "SI-FLW-001 / FLW-FR-001 / FLW-DSN-001", "title": "実事故から設計・検証まで追跡可能", "description": "PR #56〜#58の事故原因から要件、状態モデル、テストケースまで双方向に辿れる。", "recommendation": "実装コミットとテスト名にもFLW-FR-001を残す。"},
+      {"id": "BIZ-102", "severity": "minor", "location": "plugins/bitz-flow/.spec/discovery/scope.md（MoSCoW表） と FLW-FR-002.md", "title": "discovery のスコープ表に flow-doctor（FLW-FR-002）が追記されていない", "description": "scope.md の MoSCoW 表は flow-core / flow-worktree / flow-pr と『SDD非依存で単体完結』のみを Must として列挙し、SI-CORE-031（CORE-CON-008 のリポジトリ横断 doctor 標準）から派生した flow-doctor には触れていない。要件側は origin: SI-CORE-031 / derived_from: CORE-CON-008 で正しく遡れるが、discovery 側のスコープ文書は更新されておらず、『このプラグインが何を提供するか』を discovery だけ読んでも把握できない。", "recommendation": "scope.md の Must 帯に『doctor 系ライフサイクルスキル（CORE-CON-008 準拠）』を追記するか、CORE-CON-008 由来の横展開要件は discovery 更新を必須としない旨を明記する。"}
+    ]},
     {"name": "NFR定量化", "weight": 0.30, "score": 4, "findings": []},
     {"name": "ステークホルダー整合", "weight": 0.20, "score": 5, "findings": []},
-    {"name": "ROI・実現可能性", "weight": 0.15, "score": 4, "findings": [{"id": "BIZ-401", "severity": "info", "location": "FLW-DSN-001:5/8", "title": "安全性を優先したremote削除の縮退", "description": "完全自動cleanupより未マージデータ保全を優先し、remoteは候補報告までとした。", "recommendation": "Design Gateでこのトレードオフを明示承認する。"}]}
+    {"name": "ROI・実現可能性", "weight": 0.15, "score": 4, "findings": [
+      {"id": "BIZ-401", "severity": "info", "location": "FLW-DSN-001:5/8", "title": "安全性を優先したremote削除の縮退", "description": "完全自動cleanupより未マージデータ保全を優先し、remoteは候補報告までとした。", "recommendation": "Design Gateでこのトレードオフを明示承認する。"},
+      {"id": "BIZ-402", "severity": "minor", "location": "plugins/bitz-flow/.spec/discovery/assumptions.md:H-D1 / Go/No-Go裁定材料", "title": "崩壊クリティカルな H-D1（SDD非採用の単体需要）の再検証期限が『一定期間』のまま未確定", "description": "Discovery Gate は『Go（条件付き）』で H-D1 を open 追跡としたが、継続条件は『一定期間利用実績がゼロなら再検討』とあるだけで具体的な期間・判定者・判定タイミングが定義されていない。プラグイン全体の存在意義（sdd-git 内包に戻すか独立継続か）を左右する仮説であるにもかかわらず、無期限に open のまま放置されるリスクがある。", "recommendation": "『一定期間』を具体的な期日または見直しイベント（例: 次回 Discovery レビュー、N ヶ月経過、bitz-flow の外部インストール実績が得られた時点）に置き換え、STATE.md 相当で追跡可能にする。"}
+    ]}
   ],
-  "weighted_score": 4.55,
-  "summary": "実事故と主要ペルソナの課題に直結し、過剰設計を避けながら高リスク操作だけを機械化している。remote自動削除を行わないトレードオフはDesign Gateで明示裁定すべきである。"
+  "weighted_score": 4.20,
+  "summary": "実事故と主要ペルソナの課題に直結し、過剰設計を避けながら高リスク操作だけを機械化している点は評価できる。一方で (1) discovery のスコープ表が後発の flow-doctor を反映しておらず、(2) 崩壊クリティカルな H-D1 仮説の再検証期限が『一定期間』のまま未確定という2件のminorがあり、ビジネス整合の説明責任にわずかな緩みがある。"
 }

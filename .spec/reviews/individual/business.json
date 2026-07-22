@@ -1,0 +1,75 @@
+{
+  "perspective": "business",
+  "dimensions": [
+    {
+      "name": "要件トレーサビリティ",
+      "weight": 0.35,
+      "score": 3,
+      "findings": [
+        {
+          "id": "BIZ-101",
+          "severity": "minor",
+          "location": ".spec/discovery/vision.md:1-8 / scope.md:1-8（status: draft） vs .spec/requirements/CORE-CON-001〜010, CORE-FR-001〜016（status: verified） / .spec/design/DSN-002.md, DSN-003.md（status: approved）",
+          "title": "上流（discovery）が draft のまま、下流（requirements/design）が verified/approved まで進行",
+          "description": "CORE-DSC-001（ビジョン）・CORE-DSC-003（スコープ）は status: draft のままだが、そこから派生したはずの CORE-CON/CORE-FR は全件 verified、DSN-001〜003 は active/approved まで到達している。sdd-discovery の想定する『仮説検証ゲート（Go/No-Go）で設計着手可否を裁定』という順序に対し、実態は上流ゲートが正式通過（active化）する前に下流が完了している逆転が生じている。ビジョン自体が誤っていた場合、既に verified 済みの要件群まで手戻りするリスクがある。",
+          "recommendation": "vision.md / scope.md の Go/No-Go 判定を明示的に行い status を active へ遷移させるか、『継続的な生きたドラフトとして意図的に draft を維持する』方針であることを discovery 側に一文で明記して、逆転が設計判断であることを追跡可能にする。"
+        },
+        {
+          "id": "BIZ-102",
+          "severity": "info",
+          "location": ".spec/discovery/vision.md:36-44（Product節） / .spec/requirements/CORE-FR-014.md, CORE-FR-016.md",
+          "title": "ビジョンに列挙されたプロダクト（bitz-flow 等）と要件の対応は良好",
+          "description": "vision.md の Product 節が列挙する bitz-env/bitz-sdd/bitz-ddd/bitz-flow/skill-creator/plugin-creator は、CORE-FR-014（bitz-flow新設）・CORE-FR-016（sdd-git縮退）などの要件と整合しており、過剰設計（対応要件のないコンポーネント）は見当たらない。",
+          "recommendation": "なし。"
+        }
+      ]
+    },
+    {
+      "name": "NFR定量化",
+      "weight": 0.30,
+      "score": 2,
+      "findings": [
+        {
+          "id": "BIZ-201",
+          "severity": "minor",
+          "location": ".spec/discovery/metrics.md:20-36（入力指標 I1〜I5）",
+          "title": "プロダクト全体の NFR/成功指標がほぼ全て TBD",
+          "description": "North Star Metric 配下の入力指標 I1〜I5（適用プロジェクト数・導入リードタイム・検証完走率・規約再説明削減・更新追従率）は全て『現状/目標 TBD』であり、測定可能な具体値を持つのは CORE-NFR-001 のような個別要件レベルの合否基準に限られる。文書自身が『テレメトリと利用台帳は未整備』『根拠のない目標値は置かない』と明言しており意図的な先送りだが、ビジネス整合の定量的検証可能性という観点では弱い。",
+          "recommendation": "計測計画（metrics.md 末尾）に『3件以上の適用プロジェクトで目標値を設定する』とあるトリガー条件を spec-issue として起票し、次の裁定機会（適用3件目到達時）に自動的に想起される仕掛け（sdd-plan の次アクション候補等）を用意する。"
+        }
+      ]
+    },
+    {
+      "name": "ステークホルダー整合",
+      "weight": 0.20,
+      "score": 4,
+      "findings": [
+        {
+          "id": "BIZ-301",
+          "severity": "info",
+          "location": ".spec/design/DSN-002-update-migration.md:160-211（第6〜8節 裁定記録） / DSN-003.md:42-49（代替案と却下理由）",
+          "title": "トレードオフ判断が理由付きで記録されている（ADR 相当）",
+          "description": "DSN-002 の CORE-CON-008 との統合/独立の判断、DSN-003 の bitz-sdd への sdd-update 同時実装見送りなど、代替案・却下理由・裁定日・裁定者が明記されており、事業・運用双方のステークホルダーの関心事（verified要件を壊さない・YAGNI）に対する説明責任が果たされている。",
+          "recommendation": "なし。"
+        }
+      ]
+    },
+    {
+      "name": "ROI・実現可能性",
+      "weight": 0.15,
+      "score": 4,
+      "findings": [
+        {
+          "id": "BIZ-401",
+          "severity": "info",
+          "location": ".spec/design/DSN-003.md:20-30（必要操作マトリクス）",
+          "title": "フェーズ分けが優先度と整合し、過剰実装を避ける quick win 指向",
+          "description": "DSN-003 は『提供する操作だけを標準名で命名』の原則の下、bitz-sdd への sdd-update 実装を『形式変更が実際に発生した時点で実装』として延期し、診断対象のないプラグイン（plugin-creator/skill-creator）には doctor を作らないなど、価値の低い先行投資を避けている。",
+          "recommendation": "なし。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 3.05,
+  "summary": "設計コンポーネントと要件（FR/CON）の対応自体は健全だが、上流の discovery（ビジョン・スコープ）が draft のまま下流が verified/approved まで進む順序の逆転と、プロダクト全体の NFR/成功指標がほぼ全て TBD（意図的だが未検証）である点が主要な弱点。ステークホルダー整合とROI判断（フェーズ分け・YAGNI）は裁定記録つきで強い。"
+}

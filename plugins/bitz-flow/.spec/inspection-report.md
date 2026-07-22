@@ -1,4 +1,4 @@
-# inspection-report.md (2026-07-21)
+# inspection-report.md (2026-07-22)
 
 成果物数: 10 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0
 
@@ -25,15 +25,15 @@
 ## Traceability Matrix
 | ID | status | domain | v-method | tasks | 参照元数 |
 |----|--------|--------|----------|-------|----------|
-| FLW-DSC-001 | draft |  |  | 0 | 0 |
-| FLW-DSC-002 | draft |  |  | 0 | 0 |
-| FLW-DSC-003 | draft |  |  | 0 | 0 |
-| FLW-DSC-004 | draft |  |  | 0 | 0 |
-| FLW-DSC-005 | draft |  |  | 0 | 0 |
-| FLW-DSC-006 | draft |  |  | 0 | 0 |
+| FLW-DSC-001 | 起草中（draft） |  |  | 0 | 0 |
+| FLW-DSC-002 | 起草中（draft） |  |  | 0 | 0 |
+| FLW-DSC-003 | 起草中（draft） |  |  | 0 | 0 |
+| FLW-DSC-004 | 起草中（draft） |  |  | 0 | 0 |
+| FLW-DSC-005 | 起草中（draft） |  |  | 0 | 0 |
+| FLW-DSC-006 | 起草中（draft） |  |  | 0 | 0 |
 | FLW-DSN-001 | active |  |  | 0 | 0 |
-| FLW-FR-001 | verified | governance | unit-test | 3 | 4 |
-| FLW-FR-002 | verified | tooling | manual-check | 1 | 1 |
-| FLW-REV-001 | active |  |  | 0 | 0 |
+| FLW-FR-001 | 検証済み（verified） | governance | unit-test | 3 | 4 |
+| FLW-FR-002 | 検証済み（verified） | tooling | manual-check | 1 | 1 |
+| FLW-REV-002 | active |  |  | 0 | 0 |
 
 **判定: PASS ✅**

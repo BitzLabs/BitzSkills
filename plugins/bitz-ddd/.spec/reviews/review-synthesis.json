@@ -1,0 +1,85 @@
+{
+  "review_id": "2026-07-22-DDD-01",
+  "workspace": "plugins/bitz-ddd",
+  "scope_note": ".spec/design/ は0件のため対象外。.spec/requirements/（DDD-FR-001, DDD-FR-002）と .spec/discovery/（DDD-DSC-001〜006）をレビュー対象とした。",
+  "perspectives_evaluated": ["consistency", "operations", "risk", "business"],
+  "perspectives_excluded": [
+    {"name": "data-integrity", "reason": "永続データストア（DB・ファイルストア等）を扱わないドキュメント/スキル配布プラグインのため対象外（registry conditions: persistent-data 不成立）"}
+  ],
+  "verdict": "CONDITIONAL_PASS",
+  "aggregate_score": 3.81,
+  "perspective_scores": {
+    "consistency": {"score": 3.95, "weight_raw": 0.15, "weight_normalized": 0.20},
+    "operations": {"score": 3.90, "weight_raw": 0.20, "weight_normalized": 0.2667},
+    "risk": {"score": 4.33, "weight_raw": 0.25, "weight_normalized": 0.3333},
+    "business": {"score": 2.70, "weight_raw": 0.15, "weight_normalized": 0.20}
+  },
+  "findings_summary": {
+    "total": 8,
+    "after_dedup": 7,
+    "by_priority": {"P0": 0, "P1": 1, "P2": 1, "P3": 5},
+    "by_severity": {"critical": 0, "major": 2, "minor": 2, "info": 3}
+  },
+  "findings": [
+    {
+      "id": "SYN-001",
+      "priority": "P1",
+      "source_ids": ["RVC-201", "BIZ-101"],
+      "perspectives": ["consistency", "business"],
+      "title": "中核差別化3スキル（ddd-story/ddd-model/ddd-evaluate）にFR/NFR要件が皆無で、ビジネス上の差別化主張（PoD D1-D3）とトレース可能な要件が存在しない",
+      "recommendation": "中核3スキルの主要挙動（2パス導出必須、DDD12基準+MMI4軸採点ロジック等）を遡及的にEARS要件として起票し、DDD-名前空間でトレース可能にする。"
+    },
+    {
+      "id": "SYN-002",
+      "priority": "P2",
+      "source_ids": ["BIZ-201"],
+      "perspectives": ["business"],
+      "title": "North Star Metric・入力指標(I1-I4)が全てTBDで計測基盤が存在しない",
+      "recommendation": "少なくともガードレール指標G3（根拠づけ率）の機械検証手段の目処をspec-issueとして検討する。"
+    },
+    {
+      "id": "SYN-003",
+      "priority": "P3",
+      "source_ids": ["RVC-101"],
+      "perspectives": ["consistency"],
+      "title": "Discovery Gate裁定済みなのに discovery 6件の frontmatter status が draft のまま",
+      "recommendation": "Discovery Gate裁定に合わせてstatusを更新する。"
+    },
+    {
+      "id": "SYN-004",
+      "priority": "P3",
+      "source_ids": ["RVC-202"],
+      "perspectives": ["consistency"],
+      "title": ".spec/design/ が0件のまま要件がverifiedに到達している",
+      "recommendation": "現状は是正不要。今後、設計判断を要する規模の変更が来た際は.spec/design/作成を検討する運用ルールを明文化する。"
+    },
+    {
+      "id": "SYN-005",
+      "priority": "P3",
+      "source_ids": ["OPS-101"],
+      "perspectives": ["operations"],
+      "title": "ddd-doctorの診断結果が傾向計測に残らない",
+      "recommendation": "任意。将来的にobserver相当の記録を検討。"
+    },
+    {
+      "id": "SYN-006",
+      "priority": "P3",
+      "source_ids": ["OPS-201"],
+      "perspectives": ["operations"],
+      "title": "git以外の明示的バックアップ/リストア戦略の記述がない",
+      "recommendation": "是正不要。将来ops系文書があれば一言明記。"
+    },
+    {
+      "id": "SYN-007",
+      "priority": "P3",
+      "source_ids": ["RSK-201"],
+      "perspectives": ["risk"],
+      "title": "DDD-FR-002の「値不変」不変条件の検証が目視確認のみ",
+      "recommendation": "値部分を抽出して変更前後を比較する簡易diffスクリプトの追加を検討。"
+    }
+  ],
+  "conditional_items": [
+    "SYN-001（P1）: 中核3スキルの遡及要件化に着手する、または着手時期の方針を人間が裁定する",
+    "SYN-002（P2）: NSM/入力指標の計測方針（少なくともG3）を人間が裁定する"
+  ]
+}

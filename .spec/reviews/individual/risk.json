@@ -1,0 +1,57 @@
+{
+  "perspective": "risk",
+  "dimensions": [
+    {
+      "name": "分散システムリスク",
+      "weight": 0.30,
+      "score": "N/A",
+      "findings": []
+    },
+    {
+      "name": "障害モード分析",
+      "weight": 0.6667,
+      "score": 4,
+      "findings": [
+        {
+          "id": "RSK-201",
+          "severity": "minor",
+          "location": ".spec/design/DSN-002-update-migration.md:96-107（第3.3節 安全側動作の具体的判定条件）",
+          "title": "並行実行（複数エージェント/セッションによる同時 update）のレース条件が未定義",
+          "description": "DSN-002 は D→T のチェーン解決・逐次適用・失敗時ロールバックを詳細に規定しているが、『同一配置先に対して2つの update プロセスが同時に走った場合』の排他制御（ロック・先着優先）には触れていない。状態記録バージョン（D）の stamp はステップ8で最後に行われるため、並行実行時は片方の変換が失われる、または二重適用が guard で吸収されずに競合する可能性がある。",
+          "recommendation": "DSN-002 に『update はシングルライタ前提（同時実行は未サポート）』と明記するか、状態ファイルへの簡易ロック（例: lockfile の存在チェック）を安全側停止条件 (f) として追加する。"
+        },
+        {
+          "id": "RSK-202",
+          "severity": "info",
+          "location": ".spec/design/DSN-002-update-migration.md:23-51（第2節 マイグレーションステップの最小契約）",
+          "title": "個々のステップは冪等性・ロールバック・verify を必須項目化しており堅牢",
+          "description": "ステップ属性に idempotency（guard 必須）・rollback（バックアップ復元）・verify（機械確認）を必須列として要求しており、部分失敗時のグレースフルデグラデーション（=停止して人間に提示）が明確に設計されている。",
+          "recommendation": "なし。"
+        }
+      ]
+    },
+    {
+      "name": "Saga設計の妥当性",
+      "weight": 0.25,
+      "score": "N/A",
+      "findings": []
+    },
+    {
+      "name": "データ整合性リスク",
+      "weight": 0.3333,
+      "score": 4,
+      "findings": [
+        {
+          "id": "RSK-401",
+          "severity": "info",
+          "location": ".spec/design/DSN-002-update-migration.md:69-107（第3節 解決アルゴリズム）",
+          "title": "状態（.spec 系 frontmatter・配置先設定）の整合性検査が連続性検査として設計されている",
+          "description": "チェーン断裂検出（`step[i].to != step[i+1].from`）、baseline より古い D の検出、D/T の semver 不正の検出をすべて『適用前』に検出し安全側停止する設計であり、結果整合性ウィンドウやコンフリクト解決の考慮が本リポジトリの『Markdown 命令文＋guard』という実行モデルに対して妥当な水準で行われている。",
+          "recommendation": "なし。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 4.0,
+  "summary": "本リポジトリは単一プロセス・非分散（サービス間通信や複数データストアを持たない）ため、縮退規則に従い分散システムリスク（次元1）と Saga設計（次元3）は N/A とし、障害モード分析（重み再正規化 0.667）とデータ整合性リスク（同 0.333）の2軸で評価した。DSN-002 のマイグレーション機構は失敗時停止・冪等 guard・ロールバックが堅牢に設計されている一方、並行 update 実行のレース条件は未検討。"
+}

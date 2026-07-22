@@ -1,10 +1,44 @@
 {
   "perspective": "consistency",
+  "review_scope": "SDD-REV-004 (2026-07-22 全体再レビュー): plugins/bitz-sdd/.spec/design/*.md, requirements/*.md, discovery/*.md",
   "dimensions": [
-    {"name": "構造整合", "weight": 0.35, "score": 5, "findings": []},
-    {"name": "トレーサビリティ", "weight": 0.35, "score": 5, "findings": []},
-    {"name": "用語一貫性", "weight": 0.30, "score": 5, "findings": []}
+    {
+      "name": "構造整合",
+      "weight": 0.35,
+      "score": 5,
+      "findings": []
+    },
+    {
+      "name": "トレーサビリティ",
+      "weight": 0.35,
+      "score": 4,
+      "findings": [
+        {
+          "id": "RVC-201",
+          "severity": "minor",
+          "location": "SDD-FR-136.md / SDD-FR-137.md / SDD-FR-138.md / SDD-FR-139.md / SDD-FR-140.md（design 欠如）",
+          "title": "公開JSON/表示契約に触れる要件群がSDD-DSN無しで進んでいる",
+          "description": "SDD-FR-136〜140は phase_code・spec_labels.py・タスク集計語彙・release_check機械検証など、いずれも公開契約（JSON出力・CLI表示）を変更するが、対応するSDD-DSN設計文書が無い。同じ07-21〜22の変更群のうちSDD-FR-141/142だけはSDD-DSN-004（co-design）を持ち、扱いが非対称。各要件本文に代替案検討相当の記述（後方互換方針・非破壊性の論拠）が個別に埋め込まれているため実質的な設計判断は追跡できるが、'公開契約に触れる変更は通常フロー+Design Gateを通す'（SDD-FR-011）の適用線引きが要件間で一貫していない。",
+          "recommendation": "SDD-FR-011のDesign Gate要否判断基準（'契約に触れる'の定義）に、JSON出力への加算的フィールド追加は要旨SKIP可・意味変更や複数要件のcross-cutting変更はDesign Gate必須、のような明確な閾値を追記し、今回のFR-136〜140とFR-141/142の扱いの違いを事後的に正当化するか、揃える。"
+        }
+      ]
+    },
+    {
+      "name": "用語一貫性",
+      "weight": 0.30,
+      "score": 5,
+      "findings": [
+        {
+          "id": "RVC-301",
+          "severity": "minor",
+          "location": "SDD-FR-123.md / SDD-FR-124.md（'対応設計'フィールドあり） vs SDD-FR-135.md / SDD-FR-141.md / SDD-FR-142.md（同フィールド無し・Revision History内の散文のみで設計文書へ言及）",
+          "title": "'対応設計'明示フィールドの使用が要件間で不統一",
+          "description": "SDD-FR-123/124は本文冒頭に '- **対応設計**: SDD-DSN-001' という定型行で設計文書への逆リンクを明示するが、同じくSDD-DSNを持つSDD-FR-135（DSN-003実装）やSDD-FR-141/142（DSN-004実装）はこの定型フィールドを持たず、Revision History内の自由文（例:'設計は SDD-DSN-004'）でのみ言及する。用語自体は矛盾しないが、機械可読な逆参照の形式が要件により異なる。",
+          "recommendation": "'対応設計'フィールドを要件本文の定型項目として明文化するか（sdd-core/references等）、使わない方針に統一するかをlifecycle.md等で裁定し、今後の新規要件で揺れないようにする。"
+        }
+      ]
+    }
   ],
-  "weighted_score": 5.0,
-  "summary": "Issue→要件→設計の参照、Gate 順序、実装・検証境界、unit-test と example-test の用語が一貫している。"
+  "weighted_score": 4.65,
+  "summary": "構造・用語は模範的に一貫している。トレーサビリティは今回レビュー対象（SDD-DSN-001〜004とSDD-FR-*）の主要な実装対応関係（implements/origin）は完全に双方向で辿れ幽霊参照や孤児は無いが、契約に触れる要件群の一部（FR-136〜140）にSDD-DSN設計文書が伴っていない非対称性と、'対応設計'逆リンクフィールドの記法揺れが軽微な改善余地として残る。"
 }

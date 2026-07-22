@@ -1,0 +1,60 @@
+{
+  "perspective": "business",
+  "reviewed_files": [
+    "plugins/bitz-ddd/.spec/discovery/vision.md",
+    "plugins/bitz-ddd/.spec/discovery/scope.md",
+    "plugins/bitz-ddd/.spec/discovery/metrics.md",
+    "plugins/bitz-ddd/.spec/discovery/personas.md",
+    "plugins/bitz-ddd/.spec/discovery/positioning.md",
+    "plugins/bitz-ddd/.spec/discovery/assumptions.md",
+    "plugins/bitz-ddd/.spec/requirements/DDD-FR-001.md",
+    "plugins/bitz-ddd/.spec/requirements/DDD-FR-002.md"
+  ],
+  "note": "docs/00_はじめに/ 相当の一次資料が本ワークスペースには無いため、discovery/ 配下（DDD-DSC-001〜006）をビジネス要件の一次資料として照合した。",
+  "dimensions": [
+    {
+      "name": "要件トレーサビリティ",
+      "weight": 0.35,
+      "score": 2,
+      "findings": [
+        {
+          "id": "BIZ-101",
+          "severity": "major",
+          "location": "plugins/bitz-ddd/.spec/discovery/positioning.md:29-37 (PoD D1-D3) / plugins/bitz-ddd/.spec/requirements/ (2件のみ)",
+          "title": "PoD（差別化のポイント D1-D3）が要件レベルの成果物に一切接続されていない",
+          "description": "positioning.md の PoD（29-37行: 契約準拠D1、AI主導の規律強制D2、差し替え可能プロバイダD3）はプラグインの存在意義そのものだが、これらを裏付けるFR/NFRが存在しない。要件は DDD-FR-001（doctor新設）・DDD-FR-002（表示日本語化）という周辺変更のみで、ビジネス上の差別化主張と検証可能な要件の間に対応が無い。RVC-201と根本原因が同一（要件網羅性の不足）。",
+          "recommendation": "RVC-201と同じ是正（中核3スキルの遡及的要件化）で解消する。"
+        }
+      ]
+    },
+    {
+      "name": "NFR定量化",
+      "weight": 0.30,
+      "score": 2,
+      "findings": [
+        {
+          "id": "BIZ-201",
+          "severity": "major",
+          "location": "plugins/bitz-ddd/.spec/discovery/metrics.md:15-49 (NSM・入力指標・ガードレール指標)",
+          "title": "North Star Metric・入力指標(I1-I4)がすべて目標値TBDで計測基盤も存在しない",
+          "description": "metrics.md は NSM の定義自体は明確だが、目標値は「TBD」（31-34行）ばかりで、「計測基盤（テレメトリ）は現状なし。指標収集の仕組み自体が未実装のため、当面は作者の手集計 [proto / 未検証]」（54行）と明記されている。ガードレール指標G1（契約準拠率）はrelease_check.py/spec_inspect.pyで機械検証可能だが、G3（根拠づけ率）は依然手動・未実装。",
+          "recommendation": "個人開発・OSSという性質上ただちに対応必須ではないが、少なくともG3（根拠づけ率）の機械検証手段の目処を今後のspec-issueとして検討する価値がある。"
+        }
+      ]
+    },
+    {
+      "name": "ステークホルダー整合",
+      "weight": 0.20,
+      "score": 4,
+      "findings": []
+    },
+    {
+      "name": "ROI・実現可能性",
+      "weight": 0.15,
+      "score": 4,
+      "findings": []
+    }
+  ],
+  "weighted_score": 2.7,
+  "summary": "discovery文書自体の記述密度・自己批判的な透明性（TBD/protoの明示）は高く評価できるが、ビジネス価値（PoD差別化・NSM）を要件レベルで検証する経路が構造的に欠落している。ステークホルダー整合・ROI妥当性は良好。"
+}

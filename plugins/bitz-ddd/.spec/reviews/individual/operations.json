@@ -1,0 +1,56 @@
+{
+  "perspective": "operations",
+  "reviewed_files": [
+    "plugins/bitz-ddd/.spec/requirements/DDD-FR-001.md",
+    "plugins/bitz-ddd/.spec/requirements/DDD-FR-002.md",
+    "plugins/bitz-ddd/.spec/discovery/vision.md",
+    "plugins/bitz-ddd/.spec/discovery/scope.md"
+  ],
+  "note": "対象はデプロイされるサービスではなく、エージェントスキル・ドキュメント成果物（.spec/design 0件）。監視・DR・セキュリティ・デプロイの各観点は文字通りのサービス運用ではなく、スキル配布・実行という文脈で読み替えて評価した。",
+  "dimensions": [
+    {
+      "name": "監視・可観測性",
+      "weight": 0.30,
+      "score": 3,
+      "findings": [
+        {
+          "id": "OPS-101",
+          "severity": "info",
+          "location": "plugins/bitz-ddd/.spec/requirements/DDD-FR-001.md:24 (ddd-doctor の診断結果報告)",
+          "title": "ddd-doctor の診断結果がその場の報告のみで、傾向計測に残らない",
+          "description": "DDD-FR-001 は診断結果をその都度報告することのみを要求しており、診断結果の記録・蓄積（例: evals/ や観察ログへの記録）は求めていない。非サービス型のツールであるため必須ではないが、繰り返し発生する診断NGの傾向を追う手段が無い。",
+          "recommendation": "必須ではないが、将来的に skill-observer 相当の観察ログへの記録を検討してもよい（優先度低）。"
+        }
+      ]
+    },
+    {
+      "name": "災害復旧",
+      "weight": 0.30,
+      "score": 4,
+      "findings": [
+        {
+          "id": "OPS-201",
+          "severity": "info",
+          "location": "plugins/bitz-ddd/.spec/discovery/scope.md:19 (技術制約表)",
+          "title": "git 以外の明示的なバックアップ/リストア戦略の記述がない",
+          "description": "成果物はすべて git 管理下のテキストファイルであり、実質的なバックアップ・リストア手段は git 履歴そのものである。これは妥当だが、discovery/scope.md 等にその旨が明記されていないため、レビュー時に前提として推測する必要があった。",
+          "recommendation": "運用上の是正不要。将来 discovery か ops 系ドキュメントを書く機会があれば「git 履歴がDRの代替」である旨を一言明記すると監査性が上がる。"
+        }
+      ]
+    },
+    {
+      "name": "セキュリティ態勢",
+      "weight": 0.20,
+      "score": 5,
+      "findings": []
+    },
+    {
+      "name": "デプロイ安全性",
+      "weight": 0.20,
+      "score": 4,
+      "findings": []
+    }
+  ],
+  "weighted_score": 3.9,
+  "summary": "ddd-doctor の読み取り専用制約（DDD-FR-001）は最小権限の原則が明確に文書化されており、セキュリティ態勢は良好。監視・DR は非サービス型ツールの文脈では大きな問題はないが、傾向計測やDR前提の明文化は今後の改善余地としてinfoに留めた。デプロイはbump_version.py/release_check.pyによる規律ある運用が既に機能している。"
+}

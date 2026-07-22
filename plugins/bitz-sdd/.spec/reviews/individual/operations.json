@@ -1,15 +1,41 @@
 {
   "perspective": "operations",
+  "review_scope": "SDD-REV-004 (2026-07-22 全体再レビュー): plugins/bitz-sdd/.spec/design/*.md, requirements/*.md, discovery/*.md",
   "dimensions": [
-    {"name": "監視・可観測性", "weight": 0.30, "score": 4, "findings": [
-      {"id": "OPS-101", "severity": "info", "location": "SDD-DSN-001.md:設計判断 5", "title": "証跡監査は当面チェックリスト依存", "description": "STATE.md の自由記述に対する欠落検知は手動チェックリストに依存する。", "recommendation": "差し戻しが反復した場合は自動検査を別 spec-issue として起票する。"}
-    ]},
-    {"name": "災害復旧", "weight": 0.30, "score": 4, "findings": []},
-    {"name": "セキュリティ態勢", "weight": 0.20, "score": 4, "findings": [
-      {"id": "OPS-302", "severity": "info", "location": "SDD-DSN-001.md:設計判断 1", "title": "保護ログの運用属性は実装時に具体化可能", "description": "全 version 管理証跡への秘密値プレースホルダー化は規定済み。", "recommendation": "保護ログ参照時は最小権限と監査可能な保持期間を確認する。"}
-    ]},
-    {"name": "デプロイ安全性", "weight": 0.20, "score": 5, "findings": []}
+    {
+      "name": "監視・可観測性",
+      "weight": 0.30,
+      "score": 3,
+      "findings": [
+        {
+          "id": "OPS-101",
+          "severity": "minor",
+          "location": "SDD-DSN-004.md:設計判断4「CORE-FR-012 の改訂」",
+          "title": "CORE-FR-012 v1.2 例外節と bitz-sdd 実装の一致検証がSDD-FR-140方式で機械化されていない",
+          "description": "SDD-FR-140はフェーズ正規語彙のコード⇔文書一致をHTMLコメントマーカー+release_check.pyで機械検証する仕組みを新設した（SI-CORE-033由来）。一方、同時期に裁定されたCORE-FR-012 v1.2の例外節（'delegated_to: を持ち origin 参照が無い THEN accepted_delegated_unresolved に計上'）とbitz-sdd側の実装契約（SDD-FR-141）の一致は、目視確認と人間承認に留まり、同種の機械検証パターンが適用されていない。将来spec_status.pyの実装がCORE-FR-012の文言から乖離しても検出されない。",
+          "recommendation": "SDD-FR-140と同じ考え方（SSOT＋release_check機械検証）をCORE-FR-012⇔spec_status.py実装の対応関係にも適用するか、適用しない場合はその理由（変更頻度が低い等）を明記する。"
+        }
+      ]
+    },
+    {
+      "name": "災害復旧",
+      "weight": 0.30,
+      "score": 5,
+      "findings": []
+    },
+    {
+      "name": "セキュリティ態勢",
+      "weight": 0.20,
+      "score": 4,
+      "findings": []
+    },
+    {
+      "name": "デプロイ安全性",
+      "weight": 0.20,
+      "score": 4,
+      "findings": []
+    }
   ],
-  "weighted_score": 4.2,
-  "summary": "証跡判定、秘密値除去、後方互換、原子的リリース、段階的ロールバックが具体化されている。"
+  "weighted_score": 4.0,
+  "summary": "全設計（DSN-001〜004）が原子的置換・manifestベースのロールバック・秘密値プレースホルダー化・release_checkゲートを一貫して備え、災害復旧・デプロイ安全性は良好。監視・可観測性は、07-22分のSI-SDD-025裁定でCORE-FR-012とbitz-sdd実装の一致を機械検証する仕組みが、隣接するSDD-FR-140の先例に比べ手薄い点が改善余地として残る。"
 }

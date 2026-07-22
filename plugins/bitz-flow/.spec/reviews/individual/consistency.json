@@ -1,10 +1,30 @@
 {
   "perspective": "consistency",
   "dimensions": [
-    {"name": "構造整合", "weight": 0.35, "score": 5, "findings": []},
-    {"name": "トレーサビリティ", "weight": 0.35, "score": 5, "findings": []},
-    {"name": "用語一貫性", "weight": 0.30, "score": 5, "findings": []}
+    {
+      "name": "構造整合",
+      "weight": 0.35,
+      "score": 4,
+      "findings": [
+        {"id": "RVC-101", "severity": "info", "location": "plugins/bitz-flow/.spec/requirements/FLW-FR-002.md", "title": "FLW-FR-002 に対応する FLW-DSN-* が存在しない", "description": "FLW-FR-001 は FLW-DSN-001 と implements で双方向に結び付くが、FLW-FR-002（flow-doctor）には設計文書が無い。ただしリポジトリ全体で CORE-CON-008 由来の doctor 系要件（bitz-env の ENV-FR-007 等）は設計文書を作らない運用が確認でき、本件はその慣行に沿う。孤立というより意図的な軽量経路である。", "recommendation": "軽量経路であることを FLW-FR-002 の説明に一行明記し、以後の doctor 系起票で毎回同じ判断を繰り返さないようにする。"}
+      ]
+    },
+    {
+      "name": "トレーサビリティ",
+      "weight": 0.35,
+      "score": 4,
+      "findings": [
+        {"id": "RVC-201", "severity": "minor", "location": "plugins/bitz-flow/.spec/reviews/review-synthesis.md（旧 version 1.0） / FLW-FR-002.md", "title": "旧 synthesis が FLW-FR-002 を対象外のまま PASS 判定していた", "description": "旧 review-synthesis.md（FLW-REV-001, 2026-07-18）の対象は「SI-FLW-001 / FLW-FR-001 / FLW-DSN-001 / 現行 flow-pr・flow-worktree・worktree_ops.py」のみで、翌日 2026-07-19 に draft→approved→verified となった FLW-FR-002（flow-doctor）を含んでいなかった。ワークスペースの全要件を代表しないレビューが最新として残っていた。", "recommendation": "本レビュー（統合版）で FLW-FR-002 を対象に含めたことを synthesis の対象範囲に明記し、以後ワークスペースに verified 要件が増えるたびレビュー対象を更新する運用を徹底する。"},
+        {"id": "RVC-202", "severity": "info", "location": "plugins/bitz-flow/.spec/spec-issues/SI-FLW-002.md〜005.md", "title": "open な spec-issue 4件が要件・設計へ未反映（意図的）", "description": "SI-FLW-002〜005 は open のままで、FLW-FR-001/FLW-DSN-001 の記述はこれらの改善提案を含まない。起票 → 裁定待ちの通常フローであり幽霊参照ではないが、次回改訂の入力として要参照。", "recommendation": "次回 FLW-FR-00x 起票時に SI-FLW-002〜005 の対応状況を一括で棚卸しする。"}
+      ]
+    },
+    {
+      "name": "用語一貫性",
+      "weight": 0.30,
+      "score": 5,
+      "findings": []
+    }
   ],
-  "weighted_score": 5.0,
-  "summary": "merged PR・差分・mergeability、状態別検証、timeout・JSON診断が要件・設計・検証設計で一貫し、新たな構造・トレース・用語上の矛盾は検出されなかった。"
+  "weighted_score": 4.30,
+  "summary": "要件↔設計の対応、状態モデル、用語は一貫しており致命的な矛盾は無い。実質的な指摘は、既存 synthesis が新設された FLW-FR-002 を対象に含めていなかった点（本レビューで解消）のみ。FLW-DSN-002 の不在は repo 全体の doctor 系要件の慣行と整合しており孤立ではない。"
 }

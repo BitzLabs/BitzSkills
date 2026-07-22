@@ -1,0 +1,68 @@
+{
+  "perspective": "consistency",
+  "dimensions": [
+    {
+      "name": "構造整合",
+      "weight": 0.35,
+      "score": 3,
+      "findings": [
+        {
+          "id": "RVC-101",
+          "severity": "minor",
+          "location": ".spec/design/DSN-001-delegation-registry.md:1-7 / DSN-002-update-migration.md:1-7 / DSN-003.md:1-10",
+          "title": "DSN frontmatter のキー集合が文書間で不揃い",
+          "description": "DSN-001 と DSN-002 の frontmatter は id/title/implements/origin/status のみで version・updated・owner を欠くが、DSN-003 は id/title/status/version/updated/owner/implements/origin を全て持つ。同じ『DSN（設計ノート）』種別内でスキーマが不統一で、機械的な鮮度管理（updated 比較）や owner 追跡が DSN-001/002 では行えない。",
+          "recommendation": "DSN テンプレート（spec_scaffold.py の design サブコマンド）に version/updated/owner を必須化し、DSN-001/002 に追記して既存3件のフォーマットを揃える。"
+        }
+      ]
+    },
+    {
+      "name": "トレーサビリティ",
+      "weight": 0.35,
+      "score": 4,
+      "findings": [
+        {
+          "id": "RVC-201",
+          "severity": "info",
+          "location": "tests/test_spec_status.py:195,209,226,276（参照元は root workspace の 'BitzSkills'）",
+          "title": "spec_inspect のルートワークスペース判定が幽霊参照1件で FAIL",
+          "description": "`python3 scripts/spec inspect --workspace . plugins/*` を実行すると、ルートワークスペースの判定は『FAIL ❌』であり、原因は tests/test_spec_status.py が固定文字列 `bitz-sdd:SDD-FR-999` をテストフィクスチャとして参照していること。レビュー対象ファイル（.spec/design・.spec/requirements・.spec/discovery）自体には幽霊参照は無く、design/requirements/discovery の内容は健全だが、機械ゲートの全体判定はこの1件で FAIL のままになっている。",
+          "recommendation": "意図的なテストフィクスチャであれば tests 側でコメントを付すか、ID を存在しない体系だと明示するリネーム（例 `SDD-FR-XXX-FIXTURE`）で幽霊参照カウントから除外する。除外できないなら spec-issue として起票し既知差分として記録する。"
+        },
+        {
+          "id": "RVC-202",
+          "severity": "info",
+          "location": ".spec/design/DSN-001-delegation-registry.md:4 / DSN-002-update-migration.md:4 / .spec/requirements/CORE-FR-006〜009.md, CORE-CON-009.md",
+          "title": "DSN → CORE-FR/CON の implements 対応は良好",
+          "description": "DSN-001 の implements（CORE-FR-006/007/008/009, CORE-NFR-001, CORE-CON-007）と DSN-002 の implements（CORE-CON-009）はいずれも実在し、spec_inspect のトレーサビリティ表でも DSN-001 参照元数5・DSN-002 参照元数1が確認できる。DSN-003 は frontmatter implements が空だが、本文で SI-CORE-031/032 の `delegated_to:` を正の追跡先と明記しており（他ワークスペースへの委任パターンとして整合）、これは欠落ではなく設計判断として妥当。",
+          "recommendation": "なし（現状維持で良い）。"
+        }
+      ]
+    },
+    {
+      "name": "用語一貫性",
+      "weight": 0.30,
+      "score": 4,
+      "findings": [
+        {
+          "id": "RVC-301",
+          "severity": "info",
+          "location": "CLAUDE.md 委譲レジストリ節 / .spec/design/DSN-001-delegation-registry.md:25-58 / .spec/requirements/CORE-FR-006〜009.md",
+          "title": "委譲用語（司令塔・ティアはしご・委譲ゲート・相対選択）の用法が一貫",
+          "description": "『司令塔』『ティアはしご』『委譲ゲート』『相対選択（下位委託/上位相談）』の語は CLAUDE.md・DSN-001・CORE-FR-006〜009 で同一の意味・同一表記で使われており、別名や表記揺れは検出されなかった。",
+          "recommendation": "なし。"
+        },
+        {
+          "id": "RVC-302",
+          "severity": "minor",
+          "location": ".spec/requirements/domains.md",
+          "title": "ドメイン統制語彙が governance / tooling の2種のみで粒度が粗い",
+          "description": "全17件の CORE-FR/CON が governance か tooling のいずれかに分類されているが、実際には『委譲』『マイグレーション』『レジストリ』など性質の異なる規約が governance に混在しており、用語の意味範囲がやや広すぎる。",
+          "recommendation": "必須ではないが、要件数が増えた場合は domain を細分化（例: delegation, lifecycle）し、domains.md に追記することを検討。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 3.65,
+  "summary": "DSN 系設計ノートの frontmatter スキーマがファイルごとに不揃いな点を除けば、要件↔設計のトレーサビリティと用語の一貫性は良好。ルートワークスペースの spec_inspect 全体判定はテストフィクスチャ由来の幽霊参照1件でFAILしているが、レビュー対象の design/requirements/discovery 自体には幽霊参照・孤児要件は無い。"
+}

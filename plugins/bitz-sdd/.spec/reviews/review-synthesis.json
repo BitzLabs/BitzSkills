@@ -1,12 +1,74 @@
 {
-  "id": "SDD-REV-001",
-  "decision": "PASS",
-  "aggregate_score": 4.50,
-  "active_perspectives": ["consistency", "operations", "risk", "business"],
-  "skipped_perspectives": {"data-integrity": "永続データを扱わない変更のため対象外"},
-  "critical_findings": 0,
-  "major_findings": 0,
-  "minor_findings": 1,
-  "info_findings": 3,
-  "gate_blockers": []
+  "review_id": "SDD-REV-004",
+  "verdict": "PASS",
+  "aggregate_score": 4.10,
+  "perspective_scores": {"consistency": 4.65, "operations": 4.00, "risk": 3.67, "business": 4.40},
+  "skipped_perspectives": {"data-integrity": "DB等の永続トランザクションデータを扱わない（git管理下のMarkdown/JSONファイル同期のみ）ため対象外。SDD-REV-001/002/003と同一理由"},
+  "findings_summary": {
+    "total": 7,
+    "after_dedup": 7,
+    "by_priority": {"P0": 0, "P1": 1, "P2": 0, "P3": 6},
+    "by_severity": {"critical": 0, "major": 1, "minor": 5, "info": 1}
+  },
+  "findings": [
+    {
+      "id": "SYN-001",
+      "priority": "P1",
+      "source_ids": ["RSK-401"],
+      "perspectives": ["risk"],
+      "title": "mtime秒精度による同期の無音データ損失リスク（SDD-FR-100/135）",
+      "recommendation": "pull/push実行前後でcontent hashまたはサイズ差分を記録し、mtimeが同値・僅差の場合に警告する機構を検討するか、既知の未対処リスクとしてSDD-FR-100/135またはSKILL.mdに明記する。"
+    },
+    {
+      "id": "SYN-002",
+      "priority": "P3",
+      "source_ids": ["RVC-201"],
+      "perspectives": ["consistency"],
+      "title": "契約変更要件の一部（SDD-FR-136〜140）にSDD-DSN設計文書が無い非対称性",
+      "recommendation": "SDD-FR-011のDesign Gate要否判断基準にJSON加算的変更等の閾値を明記し、FR-141/142との扱いの差を整理する。"
+    },
+    {
+      "id": "SYN-003",
+      "priority": "P3",
+      "source_ids": ["RVC-301"],
+      "perspectives": ["consistency"],
+      "related_to": ["SYN-002"],
+      "title": "'対応設計'逆リンクフィールドの記法が要件間で不統一",
+      "recommendation": "'対応設計'フィールドを定型項目として明文化するか使用しない方針かをlifecycle.md等で裁定する。"
+    },
+    {
+      "id": "SYN-004",
+      "priority": "P3",
+      "source_ids": ["OPS-101"],
+      "perspectives": ["operations"],
+      "related_to": ["SYN-001"],
+      "title": "CORE-FR-012 v1.2例外節とbitz-sdd実装の一致がSDD-FR-140方式で機械検証されていない",
+      "recommendation": "SDD-FR-140と同型のSSOT+release_check機械検証パターンをCORE-FR-012⇔spec_status.pyにも適用するか、適用しない理由を明記する。"
+    },
+    {
+      "id": "SYN-005",
+      "priority": "P3",
+      "source_ids": ["RSK-201"],
+      "perspectives": ["risk"],
+      "title": "同一ワークスペースでのsdd_sync/migrate_docs並行実行に対するロック機構が未設計",
+      "recommendation": "運用手順に同時実行回避を明記するか、簡易ロックファイルによる排他を検討する。"
+    },
+    {
+      "id": "SYN-006",
+      "priority": "P3",
+      "source_ids": ["BIZ-201"],
+      "perspectives": ["business"],
+      "title": "07-21/22分の要件群にNFRの'該当なし'明示が無い",
+      "recommendation": "読み取り専用CLI等NFR非該当のカテゴリでは明示不要とガイドするか、要件テンプレートに非該当の一文を残す運用を検討する。"
+    },
+    {
+      "id": "SYN-007",
+      "priority": "P3",
+      "source_ids": ["BIZ-401"],
+      "perspectives": ["business"],
+      "title": "discovery（scope.md）が07-22時点の新規機能を反映していない（意図的な遡及的ベースラインのため許容）",
+      "recommendation": "特に対応不要。discoveryを定期更新運用に切り替える場合のみ反映ルールを検討する。"
+    }
+  ],
+  "conditional_items": []
 }
