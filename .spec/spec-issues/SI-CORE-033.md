@@ -3,7 +3,7 @@ id: SI-CORE-033
 raised_by: 2026-07-21 SI-CORE-018 完了後の振り返りで発見
 target: sdd-core の正規語彙（PHASE_CODES 等）と SKILL.md / references 記載の一致検証
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **優先度（推薦）**: **中**。実害は既に2件発生しているが、いずれも個別には修正済み
   または起票済み。本 issue はその**再発を止める型**の話であり、緊急度より重要度が高い。
@@ -61,3 +61,15 @@ status: open
   - 影響範囲: `release_check.py` と sdd-core の文書2ファイル
   - 軽量レーン適否: **不可**。文書への目印の付与形式が設計判断であり Design Gate を要する
     （目印なしの自由文推定は誤検出で形骸化するため、形式の裁定が本 issue の核心）
+- **裁定**: 2026-07-22 人間裁定により accepted 化（チャット指示）。Design Gate で目印形式＝HTML コメントマーカー、
+  検査範囲＝フェーズ語彙のみ（status 語彙は後続 issue）に裁定。
+- **実施**: 2026-07-22 サブ（bitz-sdd）へ委任し **SDD-FR-140** として要件化（derived_from: SDD-FR-136, SDD-FR-137）
+  → **SDD-TSK-024** で実装・検証。`scripts/release_check.py` に `check_phase_vocabulary` を追加し、
+  `sdd-core/SKILL.md` と `references/gates.md` に `<!-- phase-vocabulary: ... -->` マーカーを付与。
+  マーカー語集合が `spec_status.py` の `PHASE_CODES` と過不足なく一致すること、加えて可視の散文リスト
+  （バッククォートのスラッシュ区切り）がマーカーと一致することを境界付き文字列比較で検証（自由文推定なし）。
+  bitz-sdd 不在では SKIP。回帰テスト8件を `tests/test_release_check.py` に追加（改竄・欠落・余剰・散文ドリフト・
+  マーカー欠落・加算的変更・SKIP を網羅）。全 pytest(303) / release_check / spec inspect PASS。
+  bitz-sdd を 2.7.2 に、sdd-core スキルを 2.5.1 に bump。
+- **status 語彙への拡張（提案3）**: 本 PR の範囲外。必要なら後続 spec-issue で
+  `spec_update.py` の TRANSITIONS ⇔ `lifecycle.md` の一致検査として裁定する。

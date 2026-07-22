@@ -2,10 +2,10 @@
 name: sdd-core
 description: BitzSDD — 仕様駆動開発（SDD）ワークフローを運用するメインスキル。要件定義・仕様作成・実装・検証・完了処理のすべてをこの規律に従って実行する。ユーザーが「仕様駆動」「SDD」「要件」「EARS」「spec」「タスク分解」「feature実装」に言及したとき、リポジトリに .spec/ や AGENTS.md が存在するとき、または新機能の設計・実装・検証・リリース処理を依頼されたときは、明示的な指示がなくても必ずこのスキルを使うこと。要件の変更・廃止・番号管理・テスト失敗時の対応・ドキュメント更新もすべて本スキルの管轄。
 metadata:
-  version: "2.5.0"
+  version: "2.5.1"
   author: br7.hide
   created: "2026-07-07"
-  updated: "2026-07-21"
+  updated: "2026-07-22"
 ---
 
 # BitzSDD Workflow (spec駆動開発)
@@ -48,6 +48,8 @@ AGENTS.md                    読み込みプロトコル+権限マトリクス
 フェーズの正規語彙は `spec_status.py` の `PHASE_CODES`（`map / discovery / design / plan /
 execute / verify / done` の7語）が正で、本表と `references/gates.md` はそれに従います
 （SDD-FR-136。`phase_code` は JSON 出力の公開契約 — 変更は加算のみ）：
+<!-- phase-vocabulary: map, discovery, design, plan, execute, verify, done -->
+<!-- ↑ 機械検証用マーカー。上の散文リストと同一で、release_check.py が PHASE_CODES との一致を検査する（SDD-FR-140）。語を増減するときは PHASE_CODES・散文リスト・本マーカーを同時に更新する。 -->
 
 | いまやること | フェーズ | 連携スキル |
 |---|---|---|
