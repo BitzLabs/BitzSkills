@@ -1,0 +1,30 @@
+{
+  "perspective": "data-integrity",
+  "round": 2,
+  "applicability_note": "REV-001（v0.2.0）時点では対象外(N/A)と判定されていたが、v0.7.0(PR#74)〜0.8.1でレジストリ .claude/bitz-env.local.md に bitz-env-version（配置先バージョン D）の frontmatter stamp と CORE-CON-009 準拠の累積マイグレーション機構（ENV-FR-011/012/013）が追加され、永続データの状態管理（版数比較・マイグレーションチェーン解決・冪等性guard・stamp書き込み）を持つに至ったため、本ラウンドから対象に含める。",
+  "dimensions": [
+    {"name": "トランザクション安全性", "weight": 0.40, "score": 4, "findings": [
+      {"id": "DIN-101", "severity": "info",
+       "location": "skills/env-update/SKILL.md:1b救済フロー, references/migrations/README.md",
+       "title": "stamp書き込みと後続適用の順序設計は途中失敗に対して頑健",
+       "description": "D̂ の stamp は『承認後の適用の最初』に行われ、以降の差分更新・マイグレーション適用が失敗しても D̂ は残るため再実行は正常系（guard による冪等 no-op）で収束する設計になっている。厳密な単一トランザクションではないが、各ステップに guard（適用済み判定）を必須化することで疑似冪等性を担保しており、ファイルベースの生成物更新としては妥当な設計。",
+       "recommendation": "現状維持。migrations/ にステップが追加された際、guard の網羅性（適用途中に落ちても再実行で完全収束するか）を migration-runbook.md の合成フィクスチャで毎回確認する運用を継続する。"}
+    ]},
+    {"name": "データ整合性", "weight": 0.35, "score": 3, "findings": [
+      {"id": "DIN-201", "severity": "minor",
+       "location": ".claude/bitz-env.local.md（レジストリ）/ env-init, env-register, env-update の書き込み経路",
+       "title": "レジストリへの同時書き込み（複数エージェント・複数 worktree）の競合制御が未設計",
+       "description": "env-init / env-register / env-update はいずれもレジストリ frontmatter を読み取り→判断→書き込みするが、排他制御（ロック・楽観的並行性制御）が無い。本リポジトリ自身が CLAUDE.md で複数サブエージェント・worktree 並列運用を前提としており、同一プロジェクトに対して env-register とenv-update が並行実行されるシナリオは現実的にありうる。競合すると片方の書き込みが失われる（lost update）可能性がある。",
+       "recommendation": "『同一プロジェクトへの env-init/register/update の同時実行はユーザー責任で避ける』旨を各 SKILL.md に明記するか、書き込み前後で frontmatter のハッシュ・updated タイムスタンプを比較し変化があれば安全側停止する簡易な楽観的ロックを検討する。"}
+    ]},
+    {"name": "スキーマ設計品質", "weight": 0.25, "score": 4, "findings": [
+      {"id": "DIN-301", "severity": "info",
+       "location": "skills/env-update/references/migrations/README.md",
+       "title": "スキーマ（配置先状態の形式）変更をプラグインバージョンと1軸に固定した設計は単純で堅牢",
+       "description": "配置先状態の形式変更は bitz-env プラグイン version（D/T）とチェーン解決でのみ移行され、スキーマバージョンを独立採番しない単純な設計。初回出荷時 migrations/ 空を正とする明文化もあり、過剰設計を避けつつ将来の形式変更に備えている。",
+       "recommendation": "現状維持。"}
+    ]}
+  ],
+  "weighted_score": 3.65,
+  "summary": "本ラウンドで初めて対象化。stamp書き込みの順序設計とguard冪等性によりトランザクション面は堅牢(4)。一方、複数エージェント・worktree並列運用を前提とするこのリポジトリ自身の開発スタイルに対し、レジストリへの同時書き込み競合制御が未設計な点(DIN-201)が唯一の実質的なギャップ。スキーマ設計は単純で妥当。"
+}

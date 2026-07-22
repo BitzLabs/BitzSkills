@@ -1,13 +1,24 @@
 {
-  "review_id": "FLW-REV-001",
+  "review_id": "FLW-REV-002",
   "verdict": "PASS",
-  "aggregate_score": 4.58,
-  "perspective_scores": {"consistency": 5.0, "operations": 5.0, "risk": 4.0, "business": 4.55},
-  "findings_summary": {"total": 10, "after_dedup": 3, "by_priority": {"P0": 0, "P1": 0, "P2": 0, "P3": 3}, "by_severity": {"critical": 0, "major": 0, "minor": 1, "info": 9}},
+  "aggregate_score": 4.29,
+  "perspective_scores": {"consistency": 4.30, "operations": 4.70, "risk": 4.0, "business": 4.20},
+  "findings_summary": {
+    "total": 17,
+    "after_dedup": 9,
+    "by_priority": {"P0": 0, "P1": 0, "P2": 0, "P3": 9},
+    "by_severity": {"critical": 0, "major": 0, "minor": 6, "info": 11}
+  },
   "findings": [
-    {"id": "SYN-001", "priority": "P3", "source_ids": ["RSK-403", "BIZ-401"], "perspectives": ["risk", "business"], "title": "remote削除候補の陳腐化と安全側縮退", "recommendation": "検査時刻と操作直前の再照会を明示し、削除コマンドを生成しない。"},
+    {"id": "SYN-001", "priority": "P3", "source_ids": ["RSK-403", "BIZ-401"], "perspectives": ["risk", "business"], "title": "remote削除候補の陳腐化と安全側縮退（設計へ反映済み）", "recommendation": "検査時刻と操作直前の再照会を明示し、削除コマンドを生成しない現行方針を維持する。"},
     {"id": "SYN-002", "priority": "P3", "source_ids": ["OPS-101", "OPS-302"], "perspectives": ["operations"], "title": "構造化診断契約の回帰固定", "recommendation": "許可リストJSON、timeout境界、機密情報非転記を自動テストで固定する。"},
-    {"id": "SYN-003", "priority": "P3", "source_ids": ["OPS-201", "OPS-202", "OPS-301", "OPS-401", "OPS-402", "BIZ-101"], "perspectives": ["operations", "business"], "title": "状態機械とトレーサビリティの実装確認", "recommendation": "故障注入・入力境界・既存CLI互換性をFLW-FR-001へ紐づけて検証する。"}
+    {"id": "SYN-003", "priority": "P3", "source_ids": ["OPS-201", "OPS-202", "OPS-301", "OPS-401", "OPS-402", "BIZ-101"], "perspectives": ["operations", "business"], "title": "状態機械とトレーサビリティの実装確認", "recommendation": "故障注入・入力境界・既存CLI互換性をFLW-FR-001へ紐づけて検証する。"},
+    {"id": "SYN-004", "priority": "P3", "source_ids": ["RVC-101", "BIZ-102"], "perspectives": ["consistency", "business"], "title": "FLW-FR-002（flow-doctor）が discovery のスコープ表・設計文書へ後追い反映されていない", "recommendation": "scope.md の Must 帯に doctor 系ライフサイクルスキル（CORE-CON-008 準拠）を追記するか、CORE-CON-008 由来の横展開要件は discovery 更新を必須としない旨を明記する。設計文書を作らない doctor 系の運用は repo 全体の慣行と整合しており、要件側のみで完結して良い。"},
+    {"id": "SYN-005", "priority": "P3", "source_ids": ["RVC-201"], "perspectives": ["consistency"], "title": "旧 synthesis（FLW-REV-001）が FLW-FR-002 を対象外のまま PASS 判定していた", "recommendation": "本レビュー（FLW-REV-002）で対象範囲を全要件へ拡張して解消済み。以後ワークスペースに verified 要件が増えるたびレビュー対象を更新する運用をチェックリスト化する。"},
+    {"id": "SYN-006", "priority": "P3", "source_ids": ["OPS-102"], "perspectives": ["operations"], "title": "flow-doctor の『読み取り専用』主張を裏付ける機械テストが無い", "recommendation": "flow-doctor が実行するコマンド一覧を SKILL.md に列挙し非破壊性を明示するか、SI-FLW-002 の fetch分離パターンを doctor 系にも横展開する。branch_preflight.py で実際に起きた読み取り専用の看板と実装の乖離の再発を防ぐ。"},
+    {"id": "SYN-007", "priority": "P3", "source_ids": ["RSK-201"], "perspectives": ["risk"], "title": "worktree 未使用の squash merged branch が cleanup-partial に誤分類され得る（SI-FLW-004, open）", "recommendation": "SI-FLW-004 の cleanup-branch 専用入口の設計に優先度を付ける。それまでは cleanup-partial ログに『worktree 未使用の可能性』の注記を追加する。"},
+    {"id": "SYN-008", "priority": "P3", "source_ids": ["BIZ-402"], "perspectives": ["business"], "title": "崩壊クリティカルな H-D1 仮説の再検証期限が『一定期間』のまま未確定", "recommendation": "『一定期間』を具体的な期日または見直しイベントに置き換え、STATE.md 相当で追跡可能にする。"},
+    {"id": "SYN-009", "priority": "P3", "source_ids": ["RVC-202"], "perspectives": ["consistency"], "title": "open な spec-issue 4件（SI-FLW-002〜005）が要件・設計へ未反映", "recommendation": "次回 FLW-FR-00x 起票時に SI-FLW-002〜005 の対応状況を一括で棚卸しする。"}
   ],
   "conditional_items": []
 }

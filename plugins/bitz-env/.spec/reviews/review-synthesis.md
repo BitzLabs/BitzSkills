@@ -1,13 +1,77 @@
 ---
-id: REV-001
+id: REV-002
 version: 1.0
-status: approved
+status: active
 domain: governance
-decision: CONDITIONAL_PASS
-origin: sdd-review 多観点並列レビュー（bitz-env v0.2.0）
+decision: PASS
+owner: hide
+updated: 2026-07-22
+origin: sdd-review 多観点並列レビュー 第2ラウンド（bitz-env v0.8.1、REV-001 の再訪）
 ---
 
-# REV-001 bitz-env 設計・要件レビュー統合報告
+# REV-002 bitz-env 設計・要件レビュー統合報告（第2ラウンド）
+
+**判定: PASS**（aggregate 3.76 / critical 0 / major 1 / minor 6 / info 6）
+
+対象: ENV-DSN-001, ENV-DSN-002 + ENV-FR-001〜013 + ENV-CON-001〜004 + ENV-NFR-001〜002
+（実装済み v0.8.1）。REV-001（v0.2.0時点・CONDITIONAL_PASS）の再レビュー。
+
+観点: consistency 3.65 / data-integrity 3.65 / operations 3.50 / risk 4.00 / business 4.00。
+
+> data-integrity は本ラウンドから対象化した（v0.7.0〜0.8.1 で `.claude/bitz-env.local.md` への
+> `bitz-env-version` stamp と CORE-CON-009 準拠の累積マイグレーション機構
+> [ENV-FR-011/012/013] が追加され、永続データの版数状態管理を持つに至ったため）。
+> risk は非分散のため分散・Saga 次元は引き続き N/A 縮退。
+
+## REV-001 からの解消状況
+
+| 元ID | 解消根拠 |
+|---|---|
+| RSK-201 | ENV-CON-004（env-init 未実行時の env-doctor WARN を要件化） |
+| RSK-202 | ENV-CON-004 / ENV-DSN-001:ADR-2（誤操作抑止であることを明記） |
+| RSK-401 | ENV-FR-007（診断スコープにレジストリ⇔CLAUDE.mdマトリクスの不一致検出を明示） |
+| RVC-201 | evals/env-init, env-doctor, env-register, env-orchestration, env-update の実体作成 |
+| OPS-201 | ENV-FR-009（バックアップ）/ ENV-FR-013（git管理状態の実確認強化） |
+| BIZ-201 | ENV-NFR-001（応答時間200ms）/ ENV-NFR-002（rules注入サイズ） |
+| BIZ-301 | ENV-DSN-001:ADR-1/ADR-2 / ENV-DSN-002:設計判断節（ADR形式のトレードオフ記録） |
+
+REV-001 の P1(major) 5件（RSK-201/202, RVC-201, OPS-201, BIZ-201）と P3 で指摘のあった
+BIZ-301、P2 の RSK-401 を含め、計7件が解消済み。
+
+## P1（major・要対応）
+
+| ID | 場所 | 指摘 | 是正の方向 |
+|---|---|---|---|
+| RVC-203 | ENV-FR-008（verified）/ hooks/hooks.json:SessionStart / tests/test_env_guard.py | verified 済み ENV-FR-008 の「rules/ が空または読めない場合にエラーでセッションを妨げない」受入基準に対応する実装・テストが無い。`cat "${CLAUDE_PLUGIN_ROOT}"/rules/*.md` は glob 不一致でエラー終了しうる | SessionStart コマンドを nullglob 相当に変更し、rules/ 空ケースを tests/test_env_guard.py に追加。対応しないなら要件を implementing へ差し戻す |
+
+## P2（minor・修正推奨）
+
+- **RVC-202**: ENV-FR-005 が2スキルにまたがるがタスク紐づけが粗い（boundary 明示 or タスク分割）
+- **RVC-301**: 中核用語(中心/司令塔/advisor/worker/3パターン)の glossary が依然無い
+- **OPS-101**: ガード発火・生成操作の恒久ログが依然無い（systemMessageのみで部分緩和）
+- **OPS-401**: 展開先の既存フックとの共存(二重発火)が2ラウンド連続で未検証（要検証項目#3）
+- **RSK-203**: フックのタイムアウト時に deny/fail-open どちらへ倒れるかが未定義（範囲を絞って継続）
+- **DIN-201**（新規）: レジストリ `.claude/bitz-env.local.md` への同時書き込み（複数エージェント・
+  worktree並列運用時）の競合制御が未設計。lost update の可能性
+
+## P3（info・任意）
+
+- **RVC-101**: 設計文書が1枚集約（現状妥当）
+- **OPS-301**: シークレット read deny・資格情報ハードコード無しは妥当
+- **BIZ-101**: 合議型はアダプタ2つ以上前提で先行実装気味（discovery文書のopenリストと整合済み）
+- **BIZ-401**: quick win 明確・v0.8.1 まで継続的な verified 要件の積み上げで実現可能性は良好
+- **DIN-101**（新規）: stamp書き込み順序とguard冪等性によりトランザクション面は堅牢
+- **DIN-301**（新規）: スキーマ変更をプラグインversionと1軸に固定した設計は単純で堅牢
+
+## 人間への裁定依頼
+
+この判定は推奨です。PASS のため Design Gate 自体は通過可能と判断しますが、
+P1（RVC-203）は「verified 表示の信頼性」に関わる指摘のため、次の小さな修正PRでの解消を推奨します。
+P2 は蓄積のうえ SI-ENV-XXX として起票判断を検討してください（本レビューでは起票していません）。
+
+---
+
+# 履歴: REV-001（第1ラウンド、v0.2.0時点）
 
 **判定: CONDITIONAL_PASS**（aggregate 2.87 / critical 0 / major 5 / minor 6 / info 4）
 
@@ -68,8 +132,6 @@ agy 総合判定は **REVISION_REQUIRED**。REV-001 が見落とした「LLM を
 - **SI-ENV-007**（AGY-3+AGY-4）: 委譲の客観的検収と再帰防止
 - AGY-1/2/6 は既存要件への追記で対応（ENV-FR-002 / ENV-CON-004 / collab-contract）
 
-## 推奨する次の反復
-
-第1ラウンド P1（SI-ENV-001〜004・accepted 済み）＋第2ラウンド P1（SI-ENV-005〜007・proposed）を
-人間裁定（要件化）を経て設計へ反映する。agy の REVISION_REQUIRED は名前空間衝突(AGY-5)と
-ライフサイクル欠落(AGY-7)の構造性を踏まえたもので、協調機能・配布の実装前に固めるべき。
+（注: 上記 SI-ENV-005〜007 はいずれも本ワークスペースで既に accepted・実装済み。
+ENV-FR-006 v1.1、ENV-FR-010、ENV-FR-005 v1.1 が対応する。AGY-1/2/6 も ENV-CON-004・
+ENV-FR-002 に反映済み。）

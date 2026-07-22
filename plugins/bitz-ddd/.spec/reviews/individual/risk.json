@@ -1,0 +1,37 @@
+{
+  "perspective": "risk",
+  "reviewed_files": [
+    "plugins/bitz-ddd/.spec/requirements/DDD-FR-001.md",
+    "plugins/bitz-ddd/.spec/requirements/DDD-FR-002.md",
+    "plugins/bitz-ddd/.spec/discovery/assumptions.md"
+  ],
+  "degradation_applied": true,
+  "degradation_reason": "bitz-ddd は単一プロセスのエージェントスキル群であり、サービス間通信・複数データストア・分散状態を持たない。縮退規則に従い次元1（分散システムリスク）と次元3（Saga設計の妥当性）をN/Aとし、次元2・4の重みを再正規化（0.30/0.45=0.667, 0.15/0.45=0.333）して weighted_score を算出した。",
+  "dimensions": [
+    {"name": "分散システムリスク", "weight": 0.30, "score": "N/A", "findings": []},
+    {
+      "name": "障害モード分析",
+      "weight": 0.30,
+      "score": 4,
+      "findings": [
+        {
+          "id": "RSK-201",
+          "severity": "minor",
+          "location": "plugins/bitz-ddd/.spec/requirements/DDD-FR-002.md:30,33-36 (検証手段)",
+          "title": "「スコア・レベル番号に diff が無い」という不変条件の検証が目視確認のみ",
+          "description": "DDD-FR-002 の受入基準は「機械可読な値（レベル番号・スコア）は変更しない」ことを SHALL としているが、検証手段は「対象4ファイルの目視確認」（33-36行）のみで、機械的な diff テストではない。表示層のみの変更を謳う要件において、この不変条件が唯一の安全網であるにもかかわらず人手依存であり、将来の再修正時に見落とすリスクがある。",
+          "recommendation": "軽微な追加で足りるため、対象ファイルの値部分（レベル番号・スコア）を抽出して変更前後で比較する簡易スクリプト、または既存のテストへの追加を検討する。"
+        }
+      ]
+    },
+    {"name": "Saga設計の妥当性", "weight": 0.25, "score": "N/A", "findings": []},
+    {
+      "name": "データ整合性リスク",
+      "weight": 0.15,
+      "score": 5,
+      "findings": []
+    }
+  ],
+  "weighted_score": 4.33,
+  "summary": "分散システム特有のリスク（次元1・3）はアーキテクチャ上N/A。障害モードは概ね手当てされているが、DDD-FR-002の「値不変」条件が目視確認のみに依存する点をminorとして指摘した。永続データストアを持たないためデータ整合性リスクは低い。"
+}

@@ -1,13 +1,41 @@
 {
   "perspective": "risk",
+  "review_scope": "SDD-REV-004 (2026-07-22 全体再レビュー): plugins/bitz-sdd/.spec/design/*.md, requirements/*.md, discovery/*.md",
+  "degradation_note": "対象は非分散（単一プロセスの Python CLI ツール群・git 管理下のファイル同期）。次元1（分散システムリスク）と次元3（Saga設計の妥当性）は N/A とし、残る次元2・4の重みを再正規化（0.30/0.45=0.667, 0.15/0.45=0.333）して weighted_score を算出した。",
   "dimensions": [
     {"name": "分散システムリスク", "weight": 0.30, "score": "N/A", "findings": []},
-    {"name": "障害モード分析", "weight": 0.30, "score": 4, "findings": [
-      {"id": "RSK-201", "severity": "info", "location": "SDD-DSN-001.md:設計判断 5", "title": "証跡完全性の検査は手動統制", "description": "自由記述証跡の検査はチェックリストへ依存する。", "recommendation": "欠落や誤遷移が反復した場合は機械的ゲートを別 spec-issue として追加する。"}
-    ]},
+    {
+      "name": "障害モード分析",
+      "weight": 0.30,
+      "score": 4,
+      "findings": [
+        {
+          "id": "RSK-201",
+          "severity": "minor",
+          "location": "SDD-DSN-002.md:設計判断6 / SDD-DSN-003.md:設計判断5",
+          "title": "複数エージェントによる同一 docs/.spec ツリーへの並行実行に対するロック機構が未設計",
+          "description": "sdd_sync.py・migrate_docs はいずれもmanifestベースの原子的操作・失敗時ロールバックを備えるが、同一ワークスペース内で複数エージェントが同時に pull/push/migrate を実行するケース（ファイルロックや排他制御）は想定外である。worktree並列開発は別ディレクトリ・別チェックアウトが前提のため通常は発生しないが、単一ワークスペースを複数セッションが操作する運用（例: 人間とエージェントの同時作業）では manifest の同時書き込みや部分的な os.replace の競合が起こり得る。",
+          "recommendation": "運用手順（SKILL.md）に'同一ワークスペースでのsdd_sync/migrate_docs同時実行は避ける'旨を明記するか、簡易ロックファイルによる排他を検討する。"
+        }
+      ]
+    },
     {"name": "Saga設計の妥当性", "weight": 0.25, "score": "N/A", "findings": []},
-    {"name": "データ整合性リスク", "weight": 0.15, "score": 5, "findings": []}
+    {
+      "name": "データ整合性リスク",
+      "weight": 0.15,
+      "score": 3,
+      "findings": [
+        {
+          "id": "RSK-401",
+          "severity": "major",
+          "location": "SDD-FR-100.md:受入基準 / SDD-FR-135.md:設計判断4「mtime 契約を維持する」",
+          "title": "mtime比較による新旧判定は秒未満・同秒編集での無音上書きに対して脆弱",
+          "description": "sdd_sync.py の pull/push は '同値なら更新しない・新しい側だけ反映' という mtime 比較だけで完全性を担保しており、コンテンツハッシュや世代番号による照合を持たない。多くのファイルシステムのmtime分解能（秒単位）内で.specとdocsの双方が編集された場合、後勝ち判定にすらならず「同値だから更新しない」側に倒れ、一方の編集内容が検出も警告もされずに失われ得る。SDD-DSN-002の移行manifestはcontent hashで整合を確認するのに対し、通常のpull/push経路（SDD-FR-100/135）にはこの保護が無く、設計間で整合性検査の厳密さに差がある。",
+          "recommendation": "pull/push実行前後で同期先・同期元のcontent hashまたはサイズ差分を記録し、mtimeが同値または僅差の場合は警告を出す（または--forceを要求する）機構の追加を検討し、少なくとも既知のリスクとしてSDD-FR-100/135またはSKILL.mdに明記する。"
+        }
+      ]
+    }
   ],
-  "weighted_score": 4.33,
-  "summary": "非分散変更として縮退評価。期待件数、スキップ、正本、PR 再照合、版ずれ、撤回手順が明確で重大リスクはない。"
+  "weighted_score": 3.67,
+  "summary": "非分散システムとして次元1・3をN/A縮退。原子的置換・fail-closed設計・manifestロールバックにより障害モードは概ね良好に手当てされているが、mtime秒精度に依存した新旧判定（SDD-FR-100/135）が同秒編集時に無音でデータを失い得る点は未対処の重大リスクとして残る。並行実行時のロック不在も軽微なリスクとして指摘する。"
 }

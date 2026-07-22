@@ -1,34 +1,37 @@
 {
   "perspective": "business",
+  "round": 2,
+  "compared_to": "REV-001 (bitz-env v0.2.0)",
   "dimensions": [
     {"name": "要件トレーサビリティ", "weight": 0.35, "score": 4, "findings": [
-      {"id": "BIZ-101", "severity": "info",
+      {"id": "BIZ-101", "severity": "info", "status": "open（REV-001から継続）",
        "location": "ENV-FR-005 合議型 / env-orchestration",
        "title": "合議型はアダプタ2つ以上が前提で、初期価値に対し先行実装気味（YAGNI）",
-       "description": "合議型は advisor 単独＋アダプタ0では相談型に格下げされ実質発動しない。一般公開初期の利用者はアダプタ未導入が大半で、合議は当面『使えない機能』になりうる。設計思想としての先行定義は妥当だが、価値提供順序としては後回しでよい。",
-       "recommendation": "合議型を『将来スコープ』と位置づけ、初期ドキュメントは委譲型・相談型を主軸に据える。合議の詳細検証はアダプタ第1号と同時でよい。"}
+       "description": "合議型は advisor 単独＋アダプタ0では相談型に格下げされ実質発動しない。一般公開初期はアダプタ未導入が大半で、合議は当面『使えない機能』になりうる。discovery（ENV-DSC-006）でも D2/D3 は広域未検証の open リストとして扱われており、位置づけ自体はスコープ文書と整合している。",
+       "recommendation": "合議型を『将来スコープ』と位置づけ、初期ドキュメントは委譲型・相談型を主軸に据える。"}
     ]},
-    {"name": "NFR定量化", "weight": 0.30, "score": 2, "findings": [
-      {"id": "BIZ-201", "severity": "major",
-       "location": "plugins/bitz-env/.spec/requirements/",
-       "title": "非機能要件(NFR)が1件も無い",
-       "description": "フック実行のオーバーヘッド上限、SessionStart 注入サイズの上限、env_guard の応答時間など、体感・性能に関わる NFR が未定義。ガードは全 Bash 実行に割り込むため、遅ければ開発体験を直接損なう。定量目標が無いと『遅い』の判定基準が持てない。",
-       "recommendation": "最低限のNFRを起票: 例『env_guard は1呼び出し当たり通常環境で 200ms 以内に応答する』『SessionStart 注入は rules 合計サイズを対象とし過大な注入をしない』。p99 等の重い指標は不要。"}
+    {"name": "NFR定量化", "weight": 0.30, "score": 4, "findings": [
+      {"id": "BIZ-201", "severity": "info", "status": "解消済み（REV-001以降）",
+       "location": "ENV-NFR-001, ENV-NFR-002",
+       "title": "（解消）NFR が2件起票・検証済み",
+       "description": "ENV-NFR-001『env_guard.py は通常環境で200ms以内に応答する』が benchmark で verified、ENV-NFR-002『rules 注入は肥大化を避ける』が manual-check で検証済み。ガード応答性能の判定基準が持てる状態になった。",
+       "recommendation": "無し（維持のみ）。"}
     ]},
-    {"name": "ステークホルダー整合", "weight": 0.20, "score": 3, "findings": [
-      {"id": "BIZ-301", "severity": "minor",
-       "location": "ENV-DSN-001",
-       "title": "主要トレードオフが ADR 形式で残っていない",
-       "description": "fail-open vs fail-safe、permissions 直接配布不可の回避、rules の二経路化、モデル非依存化など重要判断は設計文書に散在するが、判断の選択肢・却下理由を残す ADR 形式ではない。後の変更者が『なぜこうしたか』を追いにくい。",
-       "recommendation": "主要判断を ADR（docs/02-design/DECISIONS 相当か .spec/design の決定節）に集約。特に fail-open の選択根拠は RSK-201 と対で残す。"}
+    {"name": "ステークホルダー整合", "weight": 0.20, "score": 4, "findings": [
+      {"id": "BIZ-301", "severity": "info", "status": "解消済み（REV-001以降）",
+       "location": "ENV-DSN-001:ADR-1/ADR-2/検証接続の方針, ENV-DSN-002:設計判断・代替案と却下理由",
+       "title": "（解消）主要トレードオフが ADR 形式で残るようになった",
+       "description": "ENV-DSN-001 に fail-open（ADR-1）・ガードの位置づけ（ADR-2）を却下案つきで明記。ENV-DSN-002 にも stamp 救済フローの設計判断・代替案(b)の却下理由・影響範囲が ADR 相当の書式で記録されている。",
+       "recommendation": "無し（維持のみ）。新規の重要判断も同じ書式で継続する。"}
     ]},
     {"name": "ROI・実現可能性", "weight": 0.15, "score": 4, "findings": [
-      {"id": "BIZ-401", "severity": "info",
+      {"id": "BIZ-401", "severity": "info", "status": "open（REV-001から継続、肯定的所見）",
        "location": "plugins/bitz-env 全体",
-       "title": "quick win が明確・実装済みで実現可能性は実証済み",
-       "description": "即効層フックはインストール直後から価値を出し、v0.2.0 が動作・全検証 PASS。価値提供の早さは良好。",
+       "title": "quick win が明確・実装が継続進展し実現可能性は引き続き良好",
+       "description": "v0.2.0 から v0.8.1 まで継続的に verified 要件が積み上がっており（ENV-FR-009〜013 追加）、価値提供の早さと持続的な改善サイクルの両方が確認できる。",
        "recommendation": "現状維持。"}
     ]}
   ],
-  "weighted_score": 3.20,
-  "summary": "要件トレースと価値提供順序は良好だが、NFR が皆無(BIZ-201)なのが最大のギャップ。全 Bash 実行に割り込むガードの性能目標が無いのは公開ツールとして弱い。トレードオフの ADR 化(BIZ-301)と合議型の後回し(BIZ-101)も整えたい。"}
+  "weighted_score": 4.00,
+  "summary": "REV-001 の major 1件（BIZ-201: NFR皆無）は ENV-NFR-001/002 の起票・verified で解消。ステークホルダー整合の弱点（BIZ-301: ADR不在）も ENV-DSN-001/002 の ADR 節追加で解消し、4次元すべてが良好水準に到達した。"
+}

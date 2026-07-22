@@ -2,10 +2,12 @@
   "perspective": "risk",
   "dimensions": [
     {"name": "分散システムリスク", "weight": 0.30, "score": "N/A", "findings": []},
-    {"name": "障害モード分析", "weight": 0.30, "score": 4, "findings": []},
+    {"name": "障害モード分析", "weight": 0.30, "score": 4, "findings": [
+      {"id": "RSK-201", "severity": "minor", "location": "plugins/bitz-flow/.spec/spec-issues/SI-FLW-004.md と FLW-DSN-001:3.2", "title": "worktree を伴わない squash merged branch は cleanup-partial に誤分類され得る（open で追跡済み）", "description": "現行 guarded cleanup は positional `work-id` を必須とし、通常 checkout で管理された branch（worktree 未使用）に対しても実在しない work-id を渡すと『cleanup-partial（worktree除去済み）』として処理される。証跡検証自体は成立するため誤削除には至らないが、監査ログ上『除去したはずの worktree が最初から存在しなかった』ケースと区別が付かず、事後調査を誤らせる障害モードになり得る。SI-FLW-004（open）として既に起票済みで、設計側の解決はまだ反映されていない。", "recommendation": "SI-FLW-004 の cleanup-branch 専用入口を優先度付けて設計し、それまでは cleanup-partial 判定ログに『worktree 未使用の可能性』の注記を追加する運用でギャップを埋める。"}
+    ]},
     {"name": "Saga設計の妥当性", "weight": 0.25, "score": "N/A", "findings": []},
     {"name": "データ整合性リスク", "weight": 0.15, "score": 4, "findings": [{"id": "RSK-403", "severity": "minor", "location": "FLW-DSN-001:3.2/4", "title": "remote削除候補は報告後に陳腐化し得る", "description": "期待SHA付き候補も時点情報であり、人間の操作前にrefが進行し得る。", "recommendation": "検査時刻と操作直前の再照会を明記し、削除コマンドは生成しない。"}]}
   ],
   "weighted_score": 4.0,
-  "summary": "単一プロセスCLIのため分散・Saga次元はN/A。critical・majorは解消され、remote候補の陳腐化だけがminorとして残るが、設計へ軽減策を反映済みである。"
+  "summary": "単一プロセスCLIのため分散・Saga次元はN/A（重み再正規化: 障害モード0.53・データ整合性0.27相当 → 加重平均4.0で不変）。critical/majorは無い。remote候補の陳腐化（設計へ反映済み）と、worktree未使用branchのcleanup-partial誤分類（SI-FLW-004でopen追跡中・未反映）の2件がminorとして残る。"
 }

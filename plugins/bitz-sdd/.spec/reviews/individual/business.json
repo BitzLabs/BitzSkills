@@ -1,13 +1,40 @@
 {
   "perspective": "business",
+  "review_scope": "SDD-REV-004 (2026-07-22 全体再レビュー): plugins/bitz-sdd/.spec/design/*.md, requirements/*.md, discovery/*.md",
   "dimensions": [
     {"name": "要件トレーサビリティ", "weight": 0.35, "score": 5, "findings": []},
-    {"name": "NFR定量化", "weight": 0.30, "score": 4, "findings": [
-      {"id": "BIZ-201", "severity": "minor", "location": "SDD-FR-123.md・SDD-FR-124.md:受入基準", "title": "導入後の改善効果指標は未設定", "description": "判断ぶれが減ったかを測る運用指標は未設定。", "recommendation": "証跡不足差し戻し・分類不能・旧版停止の件数を継続改善指標として観察する。"}
-    ]},
+    {
+      "name": "NFR定量化",
+      "weight": 0.30,
+      "score": 3,
+      "findings": [
+        {
+          "id": "BIZ-201",
+          "severity": "minor",
+          "location": "SDD-FR-136.md〜SDD-FR-142.md 全体",
+          "title": "07-21/22分の要件群に定量NFRが一切なく、discovery側の'TBD明示'原則との対応が本文に無い",
+          "description": "SDD-CON-050は運用指標に'根拠のない数値はTBDと明示するSHALL'を課すが、今回の対象（spec_status/spec_labels/release_check等のワークフローツール要件）には性能・スケール等のNFRが存在せず、それが意図的な非該当なのか単に未検討なのかが要件本文からは判別できない（discovery/vision.mdやscope.mdにも直接の言及がない）。実害は小さいが、'NFRの不在'と'NFRのTBD化'は文書上区別されないままになっている。",
+          "recommendation": "ワークフローCLIツール（読み取り専用照会等）についてはNFR記載を要求しない旨をsdd-core/sdd-designのガイドに明記するか、該当なしの場合は要件テンプレートに簡潔な一文（例:'本要件に定量NFRは無い（対象:読み取り専用CLI）'）を残す運用を検討する。"
+        }
+      ]
+    },
     {"name": "ステークホルダー整合", "weight": 0.20, "score": 5, "findings": []},
-    {"name": "ROI・実現可能性", "weight": 0.15, "score": 5, "findings": []}
+    {
+      "name": "ROI・実現可能性",
+      "weight": 0.15,
+      "score": 5,
+      "findings": [
+        {
+          "id": "BIZ-401",
+          "severity": "info",
+          "location": "discovery/scope.md（2026-07-12時点）",
+          "title": "discoveryのCould/Should欄が07-22時点の新規機能を反映していない",
+          "description": "scope.mdのCould欄はSI-CORE-016/017/018など07-12時点で見えていた項目のみを記載し、その後accepted・実装されたSI-SDD-015/025（spec_status警告2種）やSI-CORE-033（フェーズ語彙機械検証）には言及がない。discoveryは'遡及的'な一回限りのベースライン文書という位置づけであるため、これは意図的な設計であり欠陥ではないが、将来discoveryを更新する運用があるなら反映漏れとして扱われ得る。",
+          "recommendation": "特に対応不要。discoveryを定期更新する運用に切り替える場合のみ、scope.mdへの反映ルールを別途検討する。"
+        }
+      ]
+    }
   ],
-  "weighted_score": 4.7,
-  "summary": "双方向トレース、責任分担、完了条件、一括実装の理由が明確で、重大なビジネス整合ギャップはない。"
+  "weighted_score": 4.4,
+  "summary": "要件→設計→spec-issue起票までの双方向トレーサビリティ、代替案検討（ADR相当）、実装可能性は模範的。NFR定量化は対象がワークフローCLIツールのため該当項目が少なく、'該当なし'の明示が徹底されていない点のみ軽微な改善余地がある。"
 }

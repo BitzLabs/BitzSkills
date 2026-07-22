@@ -1,0 +1,64 @@
+{
+  "perspective": "consistency",
+  "reviewed_files": [
+    "plugins/bitz-ddd/.spec/requirements/DDD-FR-001.md",
+    "plugins/bitz-ddd/.spec/requirements/DDD-FR-002.md",
+    "plugins/bitz-ddd/.spec/discovery/vision.md",
+    "plugins/bitz-ddd/.spec/discovery/scope.md",
+    "plugins/bitz-ddd/.spec/discovery/metrics.md",
+    "plugins/bitz-ddd/.spec/discovery/personas.md",
+    "plugins/bitz-ddd/.spec/discovery/positioning.md",
+    "plugins/bitz-ddd/.spec/discovery/assumptions.md",
+    "plugins/bitz-ddd/.spec/STATE.md",
+    "plugins/bitz-ddd/.spec/inspection-report.md"
+  ],
+  "note": ".spec/design/ は0件のため対象外（requirements + discovery のみでレビュー実施）",
+  "dimensions": [
+    {
+      "name": "構造整合",
+      "weight": 0.35,
+      "score": 4,
+      "findings": [
+        {
+          "id": "RVC-101",
+          "severity": "minor",
+          "location": "plugins/bitz-ddd/.spec/discovery/assumptions.md:56-62 / vision.md:6,scope.md:6 等 frontmatter status",
+          "title": "Discovery Gate 裁定済みなのに discovery 6件の frontmatter status が draft のまま",
+          "description": "assumptions.md の「Discovery Gate 裁定記録」（56-62行）には裁定=Go（条件付き）・裁定者hide・裁定日2026-07-18 が明記されているが、vision.md/scope.md/metrics.md/personas.md/positioning.md/assumptions.md 6件すべての frontmatter は `status: draft` のまま（例: vision.md 6行目）。ゲート通過の事実が文書の状態フィールドに反映されておらず、機械集計（inspection-report.md の Traceability Matrix）でも全件「起草中（draft）」と表示され続ける。",
+          "recommendation": "Discovery Gate 裁定に合わせ、6件の discovery frontmatter の status を sdd-discovery の規約に沿った値（例: active/accepted 相当）へ更新する。更新規約が未定なら sdd-discovery 側の規約確認をあわせて行う。"
+        }
+      ]
+    },
+    {
+      "name": "トレーサビリティ",
+      "weight": 0.35,
+      "score": 3,
+      "findings": [
+        {
+          "id": "RVC-201",
+          "severity": "major",
+          "location": "plugins/bitz-ddd/.spec/requirements/ (DDD-FR-001, DDD-FR-002 の2件のみ) / discovery/scope.md:35-38 Must帯",
+          "title": "プラグインの中核差別化3スキル（ddd-story/ddd-model/ddd-evaluate）にFR/NFR要件が一切存在しない",
+          "description": "scope.md の MoSCoW（35-38行）で Must と明記される ddd-story・ddd-model と、Should の ddd-evaluate はいずれも「実装済み」と注記されるのみで、対応する EARS 形式の要件（DDD-FR-*/DDD-NFR-*）が .spec/requirements/ に1件も無い。現存する要件は DDD-FR-001（ddd-doctor 新設）・DDD-FR-002（表示日本語化）という周辺的な変更のみで、プラグインの存在理由そのものである「2パス導出必須」「DDD 12基準+MMI 4軸採点」の正しさを検証可能な要件として辿る経路が無い。",
+          "recommendation": "既存3スキルの中核挙動（2パス導出の強制、境界づけられたコンテキストの導出規律、DDD/MMI採点ロジック）を遡及的にEARS要件として起票し、DDD- 名前空間の要件からトレース可能にする（ワークスペースREADMEが述べる「以後の変更は起票」だけでなく、中核機能自体の逆起票も検討）。"
+        },
+        {
+          "id": "RVC-202",
+          "severity": "info",
+          "location": "plugins/bitz-ddd/.spec/design/ (0件) / STATE.md 全行",
+          "title": ".spec/design/ が0件のまま要件が直接 verified に到達している",
+          "description": "STATE.md の遷移ログでは DDD-FR-001/002 とも draft→approved→implementing→verified と遷移しており、設計工程（Design Gate）を経た形跡が無い。DDD-FR-001（新規スキル+依存宣言の追加）程度の変更規模なら軽微でも許容範囲だが、Design Gate 自体が一度も機能していない点は記録として残しておく価値がある。",
+          "recommendation": "現状は info 扱いで是正不要。今後、設計判断を要する規模の変更（例: 新スキル追加）が来た際は .spec/design/ 作成を検討する運用ルールを明文化するとよい。"
+        }
+      ]
+    },
+    {
+      "name": "用語一貫性",
+      "weight": 0.30,
+      "score": 5,
+      "findings": []
+    }
+  ],
+  "weighted_score": 3.95,
+  "summary": "用語（2パス導出・境界づけられたコンテキスト・DSN-体系・MMI 4軸）は文書間で一貫している。構造も概ね健全だが、Discovery Gate裁定がstatusに反映されていない点（minor）と、プラグインの中核差別化機能に要件レベルのトレースが一切無い点（major）が主要な懸念。design 0件自体は現状の変更規模では致命的ではない。"
+}

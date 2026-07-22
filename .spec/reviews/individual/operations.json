@@ -1,0 +1,67 @@
+{
+  "perspective": "operations",
+  "dimensions": [
+    {
+      "name": "監視・可観測性",
+      "weight": 0.30,
+      "score": 3,
+      "findings": [
+        {
+          "id": "OPS-101",
+          "severity": "minor",
+          "location": ".spec/discovery/metrics.md:20-28（I3 検証完走率）",
+          "title": "『健全性』を示す監視指標が定義のみで測定計画が TBD",
+          "description": "本リポジトリはデプロイされたサービスではなく、release_check.py / spec_inspect.py の green/red がヘルスチェックに相当するが、metrics.md の I3（検証完走率）・I5（更新追従率）は現状 `TBD` のままで、いつ・どう計測するかの具体的な収集方法が未記述（『当面は PR 本文と .spec/reports/ を手集計』という宣言のみ）。",
+          "recommendation": "release_check.py / spec_inspect.py の実行結果を .spec/reports/status-report.md（sdd-report）に自動集計させ、I3/I5 の実測値を継続的に埋める仕組みを最小実装として追加する。"
+        }
+      ]
+    },
+    {
+      "name": "災害復旧",
+      "weight": 0.30,
+      "score": 3,
+      "findings": [
+        {
+          "id": "OPS-201",
+          "severity": "minor",
+          "location": ".spec/design/DSN-002-update-migration.md:120-142（実行順序・擬似トランザクション）",
+          "title": "RTO/RPO の明示目標値がない（git 由来の暗黙復旧のみ）",
+          "description": "DSN-002 はマイグレーション失敗時のロールバック手順（バックアップ復元・再実行可能性）を詳細に規定しているが、『どれだけの時間で復旧できるべきか』という目標値（RTO）や『どこまでデータ損失を許容するか』（RPO）は明記されていない。git 管理下にあるため実質的な RPO はほぼゼロだが、それが暗黙の前提として文書化されていない。",
+          "recommendation": "DSN-002 か AGENTS.md に『本リポジトリの RPO は git コミット粒度、RTO は revert 1操作』である旨を一文で明記し、暗黙の前提を文書化する。"
+        }
+      ]
+    },
+    {
+      "name": "セキュリティ態勢",
+      "weight": 0.20,
+      "score": 4,
+      "findings": [
+        {
+          "id": "OPS-301",
+          "severity": "info",
+          "location": "AGENTS.md ガードレール節 / .spec/design/DSN-002-update-migration.md:144-158（第5節 リポジトリ外書き込みへの配慮）",
+          "title": "最小権限・承認フローが具体的に設計されている",
+          "description": "認証情報の読み取り禁止、リポジトリ外書き込みの事前承認、DSN-002 の dry-run→書き込み範囲明示→承認取得→バックアップ提示という4段階承認フローが明文化されており、最小権限とシークレット非保持の原則が一貫している。",
+          "recommendation": "なし。"
+        }
+      ]
+    },
+    {
+      "name": "デプロイ安全性",
+      "weight": 0.20,
+      "score": 4,
+      "findings": [
+        {
+          "id": "OPS-401",
+          "severity": "info",
+          "location": "AGENTS.md コミット・PR規約（1PR=1関心事） / .spec/requirements/CORE-CON-010.md / .spec/design/DSN-002-update-migration.md:23-107",
+          "title": "リリース単位のロールバック粒度と移行の安全側停止が明確",
+          "description": "『1 PR = 1 関心事、git revert で丸ごと戻せる粒度』（AGENTS.md）、version bump の同一PR内配置（CORE-CON-010）、DSN-002 の安全側停止条件(a)〜(e)・冪等 guard・verify/rollback という設計は、段階的リリースとロールバックの観点で高い水準にある。",
+          "recommendation": "なし。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 3.4,
+  "summary": "本リポジトリはデプロイされたサービスを持たないため SLO/RTO/RPO のような定量目標は薄いが、git 由来の暗黙の復旧粒度とリリース検査（release_check/spec_inspect）がそれに代わる形で機能しており、セキュリティ態勢・デプロイ安全性（マイグレーションの安全側停止設計）は特に強い。監視指標と復旧目標を明文化すれば更に改善する。"
+}

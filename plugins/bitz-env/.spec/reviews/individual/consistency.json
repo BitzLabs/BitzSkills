@@ -1,32 +1,40 @@
 {
   "perspective": "consistency",
+  "round": 2,
+  "compared_to": "REV-001 (bitz-env v0.2.0)",
   "dimensions": [
     {"name": "構造整合", "weight": 0.35, "score": 4, "findings": [
-      {"id": "RVC-101", "severity": "info",
-       "location": "plugins/bitz-env/.spec/",
-       "title": "設計文書が ENV-DSN-001 の1枚に集約",
-       "description": "アーキ・ガード・協調・アダプタ・要検証を1文書に収めており、文書間リンク切れは無い。規模的には妥当だが、アダプタ契約が increase したら分割候補。",
-       "recommendation": "現状維持。契約詳細は collab-contract.md に既に分離済みで健全。"}
+      {"id": "RVC-101", "severity": "info", "status": "open（REV-001から継続）",
+       "location": "plugins/bitz-env/.spec/design/ENV-DSN-001.md",
+       "title": "設計文書が1枚に集約（ADR節追加後も規模は妥当）",
+       "description": "ENV-DSN-001 に ADR-1/ADR-2/検証接続の方針が追記され分量は増えたが、節構成は論理的で見出し階層も健全。ENV-DSN-002（stamp救済）は別ファイルに分離済みで肥大化の兆候は無い。",
+       "recommendation": "現状維持。次にアダプタ契約や新規スキルが増える際は分割を検討。"}
     ]},
     {"name": "トレーサビリティ", "weight": 0.35, "score": 3, "findings": [
-      {"id": "RVC-201", "severity": "major",
-       "location": "ENV-FR-003〜007:検証手段",
-       "title": "example-test の検証実体(evals/)が未作成で verified に到達不能",
-       "description": "6要件が verification_method: example-test で evals/env-* を参照するが、evals/ 配下の実体が存在しない。approved だが検証手段が空のため verified に進めず、トレーサビリティは『要件→設計→実装』までで『→検証』が切れている。spec_inspect は example-test の実体有無まではチェックしないため PASS をすり抜けている。",
-       "recommendation": "skill-tester でシナリオテストを evals/env-*/ に作成し検証を接続する。着手前は各要件に『検証未実装（verified 保留）』を明示（黙って抜けを避ける）。"},
-      {"id": "RVC-202", "severity": "minor",
+      {"id": "RVC-201", "severity": "info", "status": "解消済み（REV-001以降）",
+       "location": "evals/env-init/, evals/env-doctor/, evals/env-register/, evals/env-orchestration/, evals/env-update/",
+       "title": "（解消）example-test の検証実体が作成された",
+       "description": "REV-001 時点で欠落していた evals/env-*/ が全て作成され（cases.md + report.md + runs/）、ENV-FR-003〜007 は verified へ到達。ENV-FR-011〜013 も evals/env-update/{dryrun-rollback,stamp-rescue}/ に合成フィクスチャ記録がある。",
+       "recommendation": "無し（維持のみ）。"},
+      {"id": "RVC-202", "severity": "minor", "status": "open（REV-001から継続）",
        "location": "ENV-FR-005",
-       "title": "1要件が2スキルにまたがりタスク紐づけが粗い",
-       "description": "ENV-FR-005（モデル非依存・劣化動作）は env-init と env-orchestration の両方で実現されるが、implements は ENV-TSK-002 のみ。orchestration 側の劣化動作の実装位置が追跡しづらい。",
-       "recommendation": "orchestration の劣化動作を別タスクに分けるか、ENV-TSK-002 の boundary を明示的に両スキルへ広げる。"}
+       "title": "1要件が2スキル（env-init / env-orchestration）にまたがりタスク紐づけが粗い",
+       "description": "ENV-FR-005（モデル非依存・劣化動作・防御的協調）は依然 implements が単一タスクに集約され、orchestration 側（劣化動作・ネスト委譲禁止）の実装位置が要件本文から直接辿りにくい。",
+       "recommendation": "orchestration 側の受入基準を別タスク化するか、boundary 宣言を両スキルに明示する。"},
+      {"id": "RVC-203", "severity": "major", "status": "new",
+       "location": "ENV-FR-008（verified）受入基準3項目目 / plugins/bitz-env/hooks/hooks.json:SessionStart / tests/test_env_guard.py:115-140",
+       "title": "verified 済み ENV-FR-008 の『rules/ が空または読めない場合にエラーでセッションを妨げない』分岐が未実装・未テストのまま検証済み扱い",
+       "description": "ENV-FR-008 の受入基準に『IF rules/ が空または読めない THEN フックはエラーでセッションを妨げない SHALL』とあるが、実装（SessionStart コマンド `cat \"${CLAUDE_PLUGIN_ROOT}\"/rules/*.md`）は glob が1件もマッチしない場合、bash が未展開の `*.md` をそのまま渡し `cat: ...*.md: No such file or directory` で非ゼロ終了する典型的な失敗経路を持つ。tests/test_env_guard.py の該当2テスト（test_hooks_json_defines_sessionstart_rules_injection / test_sessionstart_command_outputs_rules_content）はいずれも rules/ にファイルが存在する前提のみを検証しており、空・読めないケースはカバーされていない。REV-001 の RVC-201（『spec_inspect は example-test の実体不在を検出しない』）と同型の穴が、実体はあるのに分岐カバレッジが漏れている形で再発している。",
+       "recommendation": "SessionStart コマンドを nullglob 相当（または存在チェック付きラッパースクリプト）に変更してエラー終了しないことを保証し、rules/ 空ケースを tests/test_env_guard.py に追加する。直さない場合は ENV-FR-008 を implementing へ差し戻す。"}
     ]},
     {"name": "用語一貫性", "weight": 0.30, "score": 4, "findings": [
-      {"id": "RVC-301", "severity": "minor",
+      {"id": "RVC-301", "severity": "minor", "status": "open（REV-001から継続）",
        "location": "plugins/bitz-env/ 全体",
-       "title": "中核用語の glossary が無い",
-       "description": "中心/司令塔/advisor/worker/協調アダプタ/委譲型/相談型/合議型 は一貫使用されているが定義集が無い。『中心』と『司令塔』が同義で併用されており、初見の展開先ユーザーに揺れて見える恐れ。",
-       "recommendation": ".spec/design か README に用語集を1つ置き、『中心（=司令塔）』と明示的に別名関係を宣言する。"}
+       "title": "中核用語（中心/司令塔/advisor/worker/委譲型・相談型・合議型）の glossary が依然無い",
+       "description": "ENV-DSN-001・CLAUDE.md・discovery 文書間で『中心』『司令塔』が同義で併用され続けている。使用自体は一貫しているが定義集は追加されていない。",
+       "recommendation": ".spec/design か README に用語集を1つ置き、『中心（=司令塔）』の別名関係を宣言する。"}
     ]}
   ],
   "weighted_score": 3.65,
-  "summary": "構造と用語は良好。最大の穴は example-test 系6要件の検証実体(evals/)が未作成で、approved 済みなのに verified に到達できないトレーサビリティの断絶(RVC-201)。spec_inspect が実体不在を検出しないため PASS に隠れている点に注意。"}
+  "summary": "REV-001 最大の穴だった example-test 実体欠落（RVC-201）は解消。ただし verified 化した ENV-FR-008 に未テストの受入基準分岐（rules/ 空時のエラー回避）が新たに見つかり（RVC-203, major）、『検証手段は存在するが分岐カバレッジが漏れている』という同型の問題が形を変えて残る。用語集の欠如（RVC-301）と ENV-FR-005 のタスク粒度（RVC-202）は未着手。"
+}
