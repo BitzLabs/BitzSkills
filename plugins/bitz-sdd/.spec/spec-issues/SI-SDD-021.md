@@ -3,7 +3,7 @@ id: SI-SDD-021
 raised_by: SI-CORE-018（表示層日本語化）の実装中に発見（2026-07-21）
 target: plugins/bitz-sdd/skills/sdd-report/scripts/sdd_report.py のタスク status 集計語彙
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **優先度（推薦）**: **中**。`blocked` タスクの取りこぼしという実害があるが、
   SI-CORE-018 の表示層日本語化とは独立に修正でき、ブロック関係にはない。
@@ -42,3 +42,10 @@ status: open
   - 影響範囲: `sdd_report.py` の集計部とそのテストに閉じる
   - 軽量レーン適否: **可**。公開契約（`.spec` スキーマ・frontmatter 書式）に触れず、
     `status-report.md` の表示内容に閉じるため
+- **裁定**: 2026-07-22 人間裁定により accepted 化（チャット指示）。提案どおり集計語彙を正規化する。
+- **実施**: 2026-07-22 SDD-FR-139 として要件化（derived_from: SDD-FR-137）→ SDD-TSK-023 で実装・検証。
+  `sdd_report.py` のタスク集計を正規語彙（pending / implementing / blocked / done）へ整合し、
+  語彙外・欠落 status を `(none)` 等の独立区分として可視化（spec_status.py の `_statuses_in` と同挙動）。
+  表示は `spec_labels.py` の `status_label("task", ...)` による日本語主併記。回帰テスト2件を
+  `tests/test_sdd_report.py` に先行追加。全 pytest(297) / release_check / spec inspect PASS。
+  bitz-sdd を 2.7.1 に bump、sdd-report スキルを 0.4.1 に bump。
