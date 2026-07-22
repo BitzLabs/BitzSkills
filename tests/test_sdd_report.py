@@ -1,9 +1,11 @@
-"""sdd_report.py の回帰テスト（SI-SDD-001 / SI-SDD-002）。
+"""sdd_report.py の回帰テスト（SI-SDD-001 / SI-SDD-002 / SI-SDD-021）。
 
 - SI-SDD-001: 要件走査が spec_inspect.py の load_requirements と同じ判定基準であること
   （_ 始まり・domains.md を除外し、frontmatter に id が無いファイルは数えない）
 - SI-SDD-002: 要件タイトルを本文見出し「### <ID> <タイトル>」から抽出すること
   （frontmatter title があればそちらを優先）
+- SI-SDD-021 (SDD-FR-139): タスク集計を正規語彙（pending / implementing / blocked / done）で行い、
+  語彙外 status を正規区分へ吸収せず (none) 等で可視化すること。表示は日本語主併記。
 """
 import subprocess
 import sys
@@ -41,6 +43,14 @@ def make_spec(tmp_path: Path) -> Path:
     req_dir = tmp_path / ".spec" / "requirements"
     req_dir.mkdir(parents=True)
     return req_dir
+
+
+def write_task(tmp_path: Path, task_id: str, status: str):
+    tasks_dir = tmp_path / ".spec" / "tasks"
+    tasks_dir.mkdir(parents=True, exist_ok=True)
+    body = f"---\nid: {task_id}\nstatus: {status}\n---\n" if status is not None \
+        else f"---\nid: {task_id}\n---\n"
+    (tasks_dir / f"{task_id}.md").write_text(body + f"\n### {task_id}\n", encoding="utf-8")
 
 
 def test_domains_md_is_not_counted_as_requirement(tmp_path: Path):
@@ -98,3 +108,45 @@ def test_status_counting_still_works(tmp_path: Path):
     assert "**承認済み（approved）**: 1 件" in report
     assert "**検証済み（verified）**: 1 件" in report
     assert "**50%** (1 / 2 要件)" in report
+
+
+# --- SI-SDD-021 (SDD-FR-139): タスク集計の正規語彙化 ---
+
+def _task_section(report: str) -> str:
+    """レポートから「## 5. タスク実行状況」節だけを取り出す。"""
+    return report.split("## 5. タスク実行状況")[1].split("##")[0]
+
+
+def test_blocked_and_implementing_are_counted_independently(tmp_path: Path):
+    """SDD-FR-139: blocked / implementing が独立区分で計上され Todo に吸収されない"""
+    make_spec(tmp_path)
+    write_task(tmp_path, "TSK-" + "001", "blocked")
+    write_task(tmp_path, "TSK-" + "002", "implementing")
+    write_task(tmp_path, "TSK-" + "003", "done")
+    report = run_report(tmp_path)
+    section = _task_section(report)
+    # 旧語彙は消えている
+    assert "Todo" not in section
+    assert "Doing" not in section
+    # 正規語彙が日本語主併記で独立計上される
+    assert "**介入待ち（blocked）**: 1 件" in section
+    assert "**実装中（implementing）**: 1 件" in section
+    assert "**完了（done）**: 1 件" in section
+    assert "**着手待ち（pending）**: 0 件" in section
+    assert "(.spec/tasks/ - 3 件)" in report
+
+
+def test_unknown_and_missing_status_not_absorbed_into_pending(tmp_path: Path):
+    """SDD-FR-139: 語彙外・欠落 status は正規区分へ吸収せず独立可視化する"""
+    make_spec(tmp_path)
+    write_task(tmp_path, "TSK-" + "004", "pending")
+    write_task(tmp_path, "TSK-" + "005", "wip")   # 語彙外の未知値
+    write_task(tmp_path, "TSK-" + "006", None)     # status 欠落
+    report = run_report(tmp_path)
+    section = _task_section(report)
+    # 正規区分の pending は 1 件のみ（wip / 欠落を吸収しない）
+    assert "**着手待ち（pending）**: 1 件" in section
+    # 語彙外は独立区分として現れる（未知語は機械値のまま）
+    assert "**wip**: 1 件" in section
+    assert "**(none)**: 1 件" in section
+    assert "(.spec/tasks/ - 3 件)" in report
