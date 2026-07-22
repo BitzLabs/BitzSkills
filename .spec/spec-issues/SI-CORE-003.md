@@ -4,6 +4,7 @@ raised_by: sdd-core 準拠運用（bitz-env のタスク分解 ENV-TSK-006〜012
 target: plugins/bitz-sdd/skills/sdd-core/scripts/spec_inspect.py（幽霊参照検出）
 proposed_change_type: bump
 status: accepted
+delegated_to: bitz-sdd:SDD-FR-001
 ---
 - **矛盾/曖昧の内容**: SI-CORE-002 の修正は「ファイル自身の ID」の自己言及除外に
   留まったため、タスクファイルが `depends_on: [TSK-xxx]` で**他タスク**を参照すると
@@ -21,3 +22,5 @@ status: accepted
   （成果物レジストリへの登録はしない）。同日修正実施・回帰テスト追加。
 - **要件化**: 2026-07-12 bitz-sdd 個別ワークスペース新設に伴い、本 issue の要件化は
   plugins/bitz-sdd/.spec/ の SDD-FR-001 が引き継いだ（実装済み修正の reverse-derived）。
+- **実施**: bitz-sdd ワークスペースの SDD-FR-001 へ委譲・要件化し実装済み（reverse-derived）。
+  SDD-FR-001 verified 済み（クロス WS 委譲。`delegated_to: bitz-sdd:SDD-FR-001`）。

@@ -70,15 +70,18 @@ def _statuses_in(directory: Path, *, skip=frozenset()) -> Counter:
 IMPLEMENTED_MARKER_RE = re.compile(r"^\s*-\s*\*\*実施\*\*:", re.M)
 
 
-def _accepted_issue_ids(directory: Path) -> list:
-    """status: accepted の spec-issue のうち、本文に実施マーカーが無いものの ID を返す（読み取り専用）。
+def _accepted_issue_records(directory: Path) -> list:
+    """status: accepted の spec-issue の構造化レコードを返す（読み取り専用）。
 
-    `**実施**:` マーカー（軽量レーンでの直接反映済みを示す）を持つものは、CORE-FR-012 の
-    受入基準により最初から対応済み扱いとしてここには含めない。
+    各レコードは {"id", "has_marker", "delegated"}:
+      - has_marker: 本文に `**実施**:` マーカー（軽量レーンでの直接反映済み）を持つ
+      - delegated:  frontmatter に `delegated_to:` を持つ（クロス WS 委譲済み。SDD-FR-141）
+    accepted 分類（対応済み / 委譲済み・未解決 / 未着手）と実施記録欠落検出（SDD-FR-142）は
+    呼び出し側の collect() が origin 参照と突き合わせて判定する。
     """
-    ids = []
+    records = []
     if not directory.exists():
-        return ids
+        return records
     for f in sorted(directory.glob("*.md")):
         if f.name.startswith("_"):
             continue
@@ -86,25 +89,31 @@ def _accepted_issue_ids(directory: Path) -> list:
         fm = parse_frontmatter(text)
         if fm.get("status") != "accepted":
             continue
-        if IMPLEMENTED_MARKER_RE.search(text):
-            continue
-        ids.append(fm.get("id") or f.stem)
-    return ids
+        records.append({
+            "id": fm.get("id") or f.stem,
+            "has_marker": bool(IMPLEMENTED_MARKER_RE.search(text)),
+            "delegated": bool(fm.get("delegated_to")),
+        })
+    return records
 
 
-def _origin_texts(directory: Path) -> list:
-    """requirements/*.md の origin: フィールドのテキストを集める（読み取り専用）。"""
-    texts = []
+def _origin_records(directory: Path) -> list:
+    """requirements/*.md の (origin テキスト, 要件 status) ペアを集める（読み取り専用）。
+
+    origin テキストは accepted spec-issue の対応済み判定（部分一致）に、status は
+    実施記録欠落警告（参照元要件が verified/promoted か。SDD-FR-142）に使う。
+    """
+    records = []
     if not directory.exists():
-        return texts
+        return records
     for f in sorted(directory.glob("*.md")):
         if f.name.startswith("_") or f.name in NON_REQUIREMENT_FILES:
             continue
         fm = parse_frontmatter(f.read_text(encoding="utf-8"))
         origin = fm.get("origin")
         if origin:
-            texts.append(origin)
-    return texts
+            records.append((origin, fm.get("status") or "(none)"))
+    return records
 
 
 def determine_phase(reqs: Counter, tasks: Counter, has_discovery: bool,
@@ -141,7 +150,8 @@ def determine_phase(reqs: Counter, tasks: Counter, has_discovery: bool,
 
 
 def next_actions(reqs: Counter, issues: Counter, tasks: Counter, phase_code: str,
-                  accepted_unaddressed=()):
+                  accepted_unaddressed=(), accepted_delegated_unresolved=(),
+                  completion_record_missing=()):
     """状況から次アクション候補を単純ヒューリスティックで導く。"""
     actions = []
     n_open = issues.get("open", 0)
@@ -160,6 +170,19 @@ def next_actions(reqs: Counter, issues: Counter, tasks: Counter, phase_code: str
             f"accepted のまま未着手の spec-issue が {len(accepted_unaddressed)} 件"
             f"（{ids}） — 要件化 or 軽量レーンでの実施を検討する"
         )
+    if accepted_delegated_unresolved:
+        ids = "、".join(accepted_delegated_unresolved)
+        actions.append(
+            f"委譲済み（delegated_to）で未解決の accepted spec-issue が "
+            f"{len(accepted_delegated_unresolved)} 件（{ids}） — 委譲先 workspace を含む "
+            f"`--workspace` 一括実行で判定するか、委譲先の要件化状況を確認する"
+        )
+    if completion_record_missing:
+        ids = "、".join(completion_record_missing)
+        actions.append(
+            f"実施記録（`- **実施**:`）の欠落が {len(completion_record_missing)} 件"
+            f"（{ids}） — 対象 spec-issue に参照要件 ID・PR 等を添えた実施マーカーを追記する"
+        )
     if n_draft:
         actions.append(f"draft 要件が {n_draft} 件 — 承認（approved 化）を行う")
     if phase_code == "design":
@@ -175,11 +198,12 @@ def next_actions(reqs: Counter, issues: Counter, tasks: Counter, phase_code: str
     return actions
 
 
-def collect(root: Path, all_origin_texts=()) -> dict:
+def collect(root: Path, all_origin_records=()) -> dict:
     """1ワークスペースの状況を集計して dict を返す（読み取り専用）。
 
-    all_origin_texts: 同一起動で対象になっている全 workspace（自身を含む）の
-    requirements origin: テキスト一覧。accepted spec-issue の未着手判定に使う
+    all_origin_records: 同一起動で対象になっている全 workspace（自身を含む）の
+    requirements の (origin テキスト, 要件 status) ペア一覧。accepted spec-issue の
+    対応済み判定・委譲済み分離（SDD-FR-141）・実施記録欠落検出（SDD-FR-142）に使う
     （CORE-FR-012 — workspace 間の委託を許容するため単一 workspace には閉じない）。
     """
     spec = root / ".spec"
@@ -190,11 +214,29 @@ def collect(root: Path, all_origin_texts=()) -> dict:
     # design は stories/ 等のサブディレクトリ成果物も設計中とみなすため再帰で検出する（SDD-FR-136）
     has_design = (spec / "design").exists() and any((spec / "design").rglob("*.md"))
 
-    accepted_ids = _accepted_issue_ids(spec / "spec-issues")
-    accepted_unaddressed = [
-        iid for iid in accepted_ids
-        if not any(iid in origin for origin in all_origin_texts)
-    ]
+    # accepted spec-issue を3分類する（SDD-FR-141）:
+    #   ①対応済み（実施マーカー or スコープ内 origin 参照）→ どのリストにも入れない
+    #   ②委譲済み・未解決（delegated_to あり かつ ①非該当）→ accepted_delegated_unresolved
+    #   ③未着手（それ以外）→ accepted_unaddressed（従来どおり）
+    # あわせて、①のうち origin 参照元要件が verified/promoted かつ実施マーカー欠落のものを
+    # completion_record_missing に計上する（SDD-FR-142。記録の督促。判定・件数は①に影響しない）。
+    accepted_unaddressed = []
+    accepted_delegated_unresolved = []
+    completion_record_missing = []
+    for rec in _accepted_issue_records(spec / "spec-issues"):
+        iid = rec["id"]
+        matching_statuses = [st for (text, st) in all_origin_records if iid in text]
+        if rec["has_marker"]:
+            continue  # 実施マーカーで対応済み。記録も揃っており警告不要
+        if matching_statuses:
+            # origin 参照で対応済みだが実施マーカーが無い。参照元が verified/promoted なら記録欠落
+            if any(st in VERIFIED for st in matching_statuses):
+                completion_record_missing.append(iid)
+            continue
+        if rec["delegated"]:
+            accepted_delegated_unresolved.append(iid)
+        else:
+            accepted_unaddressed.append(iid)
 
     phase_code, phase_label = determine_phase(reqs, tasks, has_discovery, has_design)
     return {
@@ -205,7 +247,12 @@ def collect(root: Path, all_origin_texts=()) -> dict:
         "spec_issues": {"total": sum(issues.values()), "by_status": dict(issues)},
         "tasks": {"total": sum(tasks.values()), "by_status": dict(tasks)},
         "accepted_unaddressed": accepted_unaddressed,
-        "next_actions": next_actions(reqs, issues, tasks, phase_code, accepted_unaddressed),
+        "accepted_delegated_unresolved": accepted_delegated_unresolved,
+        "completion_record_missing": completion_record_missing,
+        "next_actions": next_actions(
+            reqs, issues, tasks, phase_code, accepted_unaddressed,
+            accepted_delegated_unresolved, completion_record_missing,
+        ),
     }
 
 
@@ -248,11 +295,11 @@ def main():
         print("ERROR: No valid BitzSDD workspaces found (.spec/ が見つからない)", file=sys.stderr)
         return 1
 
-    all_origin_texts = []
+    all_origin_records = []
     for w in workspaces:
-        all_origin_texts.extend(_origin_texts(w / ".spec" / "requirements"))
+        all_origin_records.extend(_origin_records(w / ".spec" / "requirements"))
 
-    results = [collect(w, all_origin_texts) for w in workspaces]
+    results = [collect(w, all_origin_records) for w in workspaces]
 
     if args.json:
         print(json.dumps({"workspaces": results}, ensure_ascii=False, indent=2))
