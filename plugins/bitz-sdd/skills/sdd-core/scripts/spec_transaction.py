@@ -29,6 +29,18 @@ class MutationError(RuntimeError):
         self.exit_code = exit_code
 
 
+class BatchMutationError(MutationError):
+    """SDD-FR-145: batch failure after zero or more committed transactions.
+
+    `applied` holds (event_id, metadata) for transactions already durable;
+    they stay valid — fail-fast stops before touching later targets.
+    """
+
+    def __init__(self, error: MutationError, applied):
+        super().__init__(error.code, str(error), error.exit_code)
+        self.applied = tuple(applied)
+
+
 @dataclass(frozen=True)
 class FileChange:
     path: Path
@@ -254,6 +266,39 @@ def _apply(change: FileChange) -> None:
         _replace_durable(change.path, change.after)
 
 
+def _commit_transaction(
+    root: Path,
+    owner: dict,
+    prepare: Callable[[dict], TransactionPlan],
+    *,
+    release_before_cleanup: bool,
+) -> tuple[str, dict]:
+    """Journal, apply, verify, and commit one plan under the held lock."""
+    plan = prepare(owner)
+    if not plan.changes:
+        raise MutationError("precondition-failed", "変更対象がありません", 4)
+    document = _journal_document(owner, plan)
+    journal_path = _spec_dir(root) / TRANSACTIONS_DIR / f"{owner['event_id']}.json"
+    _write_journal_new(journal_path, document)
+    for change in plan.changes:
+        _apply(change)
+    for change in plan.changes:
+        current = _current(change.path)
+        if current is None or sha256(current) != sha256(change.after):
+            raise MutationError("recovery-ambiguous", f"after hash不一致: {change.path}", 7)
+    _write_journal_phase(journal_path, document, "APPLIED")
+    _write_journal_phase(journal_path, document, "COMMITTED")
+    if release_before_cleanup:
+        release_lock(root)
+    journal_path.unlink()
+    _fsync_dir(journal_path.parent)
+    return owner["event_id"], plan.metadata
+
+
+def _journal_path_for(root: Path, owner: dict) -> Path:
+    return _spec_dir(root) / TRANSACTIONS_DIR / f"{owner['event_id']}.json"
+
+
 def mutate(
     root: Path,
     command: str,
@@ -264,28 +309,52 @@ def mutate(
     root = root.resolve()
     owner = acquire_lock(root, command, lock_paths)
     owner["workspace_root"] = str(root)
-    journal_path: Optional[Path] = None
     try:
-        plan = prepare(owner)
-        if not plan.changes:
-            raise MutationError("precondition-failed", "変更対象がありません", 4)
-        document = _journal_document(owner, plan)
-        journal_path = _spec_dir(root) / TRANSACTIONS_DIR / f"{owner['event_id']}.json"
-        _write_journal_new(journal_path, document)
-        for change in plan.changes:
-            _apply(change)
-        for change in plan.changes:
-            current = _current(change.path)
-            if current is None or sha256(current) != sha256(change.after):
-                raise MutationError("recovery-ambiguous", f"after hash不一致: {change.path}", 7)
-        _write_journal_phase(journal_path, document, "APPLIED")
-        _write_journal_phase(journal_path, document, "COMMITTED")
-        release_lock(root)
-        journal_path.unlink()
-        _fsync_dir(journal_path.parent)
-        return owner["event_id"], plan.metadata
+        return _commit_transaction(root, owner, prepare, release_before_cleanup=True)
     except BaseException:
-        if journal_path is None or not journal_path.exists():
+        if not _journal_path_for(root, owner).exists():
+            release_lock(root)
+        raise
+
+
+def mutate_many(
+    root: Path,
+    command: str,
+    lock_paths: tuple[Path, ...],
+    prepares: list[Callable[[dict], TransactionPlan]],
+) -> list[tuple[str, dict]]:
+    """SDD-FR-145: one lock acquisition, one independent transaction per prepare.
+
+    Applies prepares serially and fail-fast: on failure, already-committed
+    transactions remain valid and the error is re-raised as BatchMutationError
+    carrying them. Between transactions the lock owner file is refreshed with
+    a new event_id and current target hashes so lock/journal correspondence
+    holds for recovery. The narrow window between a transaction's journal
+    cleanup and the next owner refresh leaves a stale-hash lock on crash;
+    that residual requires manual `--recover-lock` adjudication by design.
+    """
+    root = root.resolve()
+    applied: list[tuple[str, dict]] = []
+    owner = acquire_lock(root, command, lock_paths)
+    owner["workspace_root"] = str(root)
+    try:
+        for index, prepare in enumerate(prepares):
+            if index:
+                fresh = _owner(root, command, lock_paths)
+                _replace_durable(_spec_dir(root) / LOCK_NAME, canonical_json(fresh))
+                fresh["workspace_root"] = str(root)
+                owner = fresh
+            applied.append(
+                _commit_transaction(root, owner, prepare, release_before_cleanup=False)
+            )
+        release_lock(root)
+        return applied
+    except MutationError as error:
+        if not _journal_path_for(root, owner).exists():
+            release_lock(root)
+        raise BatchMutationError(error, applied) from error
+    except BaseException:
+        if not _journal_path_for(root, owner).exists():
             release_lock(root)
         raise
 

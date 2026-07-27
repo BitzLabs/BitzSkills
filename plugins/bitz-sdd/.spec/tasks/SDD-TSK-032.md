@@ -2,7 +2,7 @@
 implements: SDD-FR-145
 depends_on: []
 boundary: skills/sdd-core/scripts/spec_update.py, spec_transaction.py, tests/test_spec_update.py, tests/test_spec_transaction.py
-status: pending
+status: done
 ---
 
 ### 代行可視化経路のCLI実装（update・transaction・schema v2）
