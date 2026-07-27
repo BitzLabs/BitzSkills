@@ -1,7 +1,7 @@
 ---
 id: CORE-FR-003
 version: 1.1
-status: promoted
+status: verified
 domain: tooling
 priority: medium
 origin: SI-CORE-011（プロジェクト改修計画 2026-07-12 ユーザー要望3）

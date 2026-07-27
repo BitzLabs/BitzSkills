@@ -1,7 +1,7 @@
 ---
 id: CORE-FR-002
 version: 1.0
-status: promoted
+status: verified
 domain: tooling
 priority: medium
 origin: SI-CORE-002（Phase 8b 実演サイクル中の発見）

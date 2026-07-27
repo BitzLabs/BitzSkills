@@ -1,7 +1,7 @@
 ---
 id: CORE-FR-001
 version: 1.0
-status: promoted
+status: verified
 domain: governance
 priority: low
 origin: SI-CORE-001（evals/bitz-sdd/report.md 改善提案2 由来）

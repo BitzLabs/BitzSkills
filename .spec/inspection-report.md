@@ -43,16 +43,16 @@
 ## Traceability Matrix
 | ID | status | domain | v-method | tasks | 参照元数 |
 |----|--------|--------|----------|-------|----------|
-| CORE-CON-001 | 確定（promoted） | governance | example-test | 1 | 1 |
-| CORE-CON-002 | 確定（promoted） | governance | example-test | 1 | 1 |
-| CORE-CON-003 | 確定（promoted） | governance | example-test | 1 | 1 |
-| CORE-CON-004 | 確定（promoted） | governance | manual-check | 1 | 1 |
-| CORE-CON-005 | 確定（promoted） | governance | manual-check | 1 | 1 |
-| CORE-CON-006 | 確定（promoted） | governance | example-test | 1 | 1 |
-| CORE-CON-007 | 確定（promoted） | governance | manual-check | 1 | 1 |
-| CORE-CON-008 | 確定（promoted） | governance | manual-check | 1 | 2 |
-| CORE-CON-009 | 確定（promoted） | governance | manual-check | 1 | 1 |
-| CORE-CON-010 | 確定（promoted） | governance | manual-check | 1 | 1 |
+| CORE-CON-001 | 検証済み（verified） | governance | example-test | 1 | 1 |
+| CORE-CON-002 | 検証済み（verified） | governance | example-test | 1 | 1 |
+| CORE-CON-003 | 検証済み（verified） | governance | example-test | 1 | 1 |
+| CORE-CON-004 | 検証済み（verified） | governance | manual-check | 1 | 1 |
+| CORE-CON-005 | 検証済み（verified） | governance | manual-check | 1 | 1 |
+| CORE-CON-006 | 検証済み（verified） | governance | example-test | 1 | 1 |
+| CORE-CON-007 | 検証済み（verified） | governance | manual-check | 1 | 1 |
+| CORE-CON-008 | 検証済み（verified） | governance | manual-check | 1 | 2 |
+| CORE-CON-009 | 検証済み（verified） | governance | manual-check | 1 | 1 |
+| CORE-CON-010 | 検証済み（verified） | governance | manual-check | 1 | 1 |
 | CORE-DSC-000 | 起草中（draft） |  |  | 0 | 0 |
 | CORE-DSC-001 | 起草中（draft） |  |  | 0 | 0 |
 | CORE-DSC-002 | 起草中（draft） |  |  | 0 | 0 |
@@ -60,24 +60,24 @@
 | CORE-DSC-004 | 起草中（draft） |  |  | 0 | 0 |
 | CORE-DSC-005 | 起草中（draft） |  |  | 0 | 0 |
 | CORE-DSC-006 | 起草中（draft） |  |  | 0 | 0 |
-| CORE-FR-001 | 確定（promoted） | governance | manual-check | 1 | 1 |
-| CORE-FR-002 | 確定（promoted） | tooling | example-test | 1 | 1 |
-| CORE-FR-003 | 確定（promoted） | tooling | example-test | 1 | 3 |
+| CORE-FR-001 | 検証済み（verified） | governance | manual-check | 1 | 1 |
+| CORE-FR-002 | 検証済み（verified） | tooling | example-test | 1 | 1 |
+| CORE-FR-003 | 検証済み（verified） | tooling | example-test | 1 | 3 |
 | CORE-FR-004 | 廃止（deprecated） | tooling | example-test | 1 | 2 |
 | CORE-FR-005 | 廃止（deprecated） | tooling | example-test | 1 | 1 |
-| CORE-FR-006 | 確定（promoted） | governance | manual-check | 2 | 2 |
-| CORE-FR-007 | 確定（promoted） | governance | manual-check | 1 | 1 |
-| CORE-FR-008 | 確定（promoted） | governance | manual-check | 1 | 1 |
-| CORE-FR-009 | 確定（promoted） | governance | manual-check | 1 | 1 |
-| CORE-FR-010 | 確定（promoted） | tooling | example-test | 1 | 2 |
+| CORE-FR-006 | 検証済み（verified） | governance | manual-check | 2 | 2 |
+| CORE-FR-007 | 検証済み（verified） | governance | manual-check | 1 | 1 |
+| CORE-FR-008 | 検証済み（verified） | governance | manual-check | 1 | 1 |
+| CORE-FR-009 | 検証済み（verified） | governance | manual-check | 1 | 1 |
+| CORE-FR-010 | 検証済み（verified） | tooling | example-test | 1 | 2 |
 | CORE-FR-011 | 確定（promoted） | tooling | example-test | 2 | 3 |
-| CORE-FR-012 | 確定（promoted） | tooling | example-test | 1 | 2 |
-| CORE-FR-013 | 確定（promoted） | tooling | example-test | 1 | 1 |
-| CORE-FR-014 | 確定（promoted） | governance | example-test | 3 | 3 |
-| CORE-FR-015 | 確定（promoted） | tooling | unit-test | 3 | 5 |
-| CORE-FR-016 | 確定（promoted） | governance | example-test | 1 | 2 |
-| CORE-FR-017 | 確定（promoted） | tooling | example-test | 3 | 3 |
-| CORE-NFR-001 | 確定（promoted） | tooling | example-test | 1 | 1 |
+| CORE-FR-012 | 検証済み（verified） | tooling | example-test | 1 | 2 |
+| CORE-FR-013 | 検証済み（verified） | tooling | example-test | 1 | 1 |
+| CORE-FR-014 | 検証済み（verified） | governance | example-test | 3 | 3 |
+| CORE-FR-015 | 検証済み（verified） | tooling | unit-test | 3 | 5 |
+| CORE-FR-016 | 検証済み（verified） | governance | example-test | 1 | 2 |
+| CORE-FR-017 | 検証済み（verified） | tooling | example-test | 3 | 3 |
+| CORE-NFR-001 | 検証済み（verified） | tooling | example-test | 1 | 1 |
 | CORE-REV-002 | active |  |  | 0 | 0 |
 | DSN-001 | active |  |  | 0 | 5 |
 | DSN-002 | 承認済み（approved） |  |  | 0 | 1 |
