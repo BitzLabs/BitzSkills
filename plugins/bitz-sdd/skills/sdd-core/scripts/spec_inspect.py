@@ -256,9 +256,13 @@ def local_task_statuses(root: Path) -> dict[str, list[tuple[str, str]]]:
     return result
 
 
-def check_state_events(root: Path) -> list[str]:
-    """Validate structured STATE events and incomplete transactions (SDD-FR-143)."""
+def check_state_events(root: Path) -> tuple[list[str], list[str]]:
+    """Validate structured STATE events and incomplete transactions (SDD-FR-143/145).
+
+    Returns (problems, warnings). warnings は FAIL にしない（decision-ref 参照先消失など）。
+    """
     problems = []
+    warnings = []
     spec_dir = root / ".spec"
     journals = sorted((spec_dir / ".transactions").glob("*.json")) \
         if (spec_dir / ".transactions").exists() else []
@@ -272,7 +276,7 @@ def check_state_events(root: Path) -> list[str]:
 
     state = spec_dir / "STATE.md"
     if not state.exists():
-        return problems
+        return problems, warnings
     lines = state.read_text(encoding="utf-8", errors="replace").splitlines()
     event_ids = set()
     events_by_artifact: dict[str, list[dict]] = {}
@@ -299,7 +303,8 @@ def check_state_events(root: Path) -> list[str]:
                 "schema_version", "event_id", "timestamp", "path", "artifact_id",
                 "old", "new", "provenance", "artifact_before_hash", "artifact_after_hash",
             }
-            if event.get("schema_version") != 1 or not required.issubset(event):
+            schema_version = event.get("schema_version")
+            if schema_version not in (1, 2) or not required.issubset(event):
                 raise ValueError("schema mismatch")
             if (
                 not all(isinstance(event.get(key), str) and event[key]
@@ -309,6 +314,33 @@ def check_state_events(root: Path) -> list[str]:
                 or not re.fullmatch(r"[0-9a-f]{64}", event.get("artifact_after_hash", ""))
             ):
                 raise ValueError("schema type mismatch")
+            provenance = event["provenance"]
+            kind = provenance.get("kind")
+            if not isinstance(kind, str) or not kind:
+                raise ValueError("provenance kind missing")
+            if kind == "agent-proxy-unverified":
+                # SDD-FR-145: 代行遷移は schema v2 と裁定所在参照を必須とする
+                if schema_version != 2:
+                    raise ValueError("proxy event requires schema_version 2")
+                for key in ("actor", "on_behalf_of", "decision_ref"):
+                    if not isinstance(provenance.get(key), str) or not provenance[key]:
+                        raise ValueError(f"proxy provenance missing {key}")
+                ref = provenance["decision_ref"]
+                if not ref.startswith("https://"):
+                    ref_target = ref.split("#", 1)[0]
+                    try:
+                        ref_exists = (root / ref_target).exists()
+                    except OSError:
+                        ref_exists = False
+                    if not ref_exists:
+                        warnings.append(
+                            f"[audit] WARN: {event.get('artifact_id', '?')}の"
+                            f"decision-ref参照先が見つかりません: {ref}"
+                        )
+            elif schema_version != 2:
+                pass  # v1 の既存kind（agent / interactive-confirmation-unverified）は従来どおり
+            else:
+                raise ValueError("schema_version 2 requires proxy provenance")
             event_id = event["event_id"]
             if event_id in event_ids:
                 raise ValueError("duplicate event_id")
@@ -344,7 +376,7 @@ def check_state_events(root: Path) -> list[str]:
                 f"[audit] audit-corruption: {artifact_id}の現status "
                 f"({current_status or 'missing'}) が最終event ({last['new']}) と不一致"
             )
-    return problems
+    return problems, warnings
 
 
 def integration_preflight(root: Path, target_ref: str) -> tuple[bool, str]:
@@ -485,7 +517,8 @@ def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None) 
     task_statuses = local_task_statuses(root)
     all_refs = scan_refs(root, [".spec/specs", ".spec/tasks", "tests", "test", "src"],
                          exclude_names=("inspection-report.md",))
-    problems += check_state_events(root)
+    state_problems, state_warnings = check_state_events(root)
+    problems += state_problems
 
     for rid, r in reqs.items():
         fm = r["fm"]
@@ -560,6 +593,9 @@ def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None) 
     lines.append("")
     lines.append("## 幽霊参照（存在しないIDへの参照）")
     lines += [f"- {rid} ← {', '.join(srcs)}" for rid, srcs in sorted(ghosts.items())] or ["- なし ✅"]
+    lines.append("")
+    lines.append("## 監査 WARN（代行遷移の裁定参照など — FAIL にしない）")
+    lines += [f"- {w}" for w in state_warnings] or ["- なし ✅"]
     lines.append("")
     lines.append("## 実装待ち要件（approved だが implements するタスクがない — WARN）")
     lines += [f"- {rid}" for rid in waiting] or ["- なし ✅"]

@@ -2,11 +2,11 @@
 id: SDD-DSN-005
 title: "仕様変更の完全性境界（裁定・遷移・採番）"
 status: active
-version: 1.1
+version: 2.0
 updated: 2026-07-27
 owner: codex
 implements:
-origin: SI-SDD-022, SI-SDD-023, SI-SDD-024, SI-CORE-035
+origin: SI-SDD-022, SI-SDD-023, SI-SDD-024, SI-CORE-035, SI-SDD-027
 ---
 
 # SDD-DSN-005 仕様変更の完全性境界（裁定・遷移・採番）
@@ -22,6 +22,14 @@ BitzSDDの変更系CLIには、互いに独立して見える3つの完全性欠
 3. `spec_scaffold.py` の `max + 1` は現在のworktreeしか観測できず、並行ブランチ間で同じIDを
    払い出す。さらに同一worktree内にも `exists()` と `write_text()` の間に競合窓がある
    （SI-SDD-024）。
+
+（v2.0 追補）さらに v1.1 の実装リリース当日、第4の欠陥が実運用で顕在化した。
+
+4. 人間裁定必須遷移の正規経路を TTY 対話確認（1実行1ID×完全一致再入力）だけに限定した結果、
+   CORE 要件26件の一括 promoted 昇格が frontmatter 手編集で迂回され、STATE 記録ゼロのまま
+   全ゲートを PASS して main へマージされた（PR #107→#108 で revert。検出漏れは SI-SDD-026、
+   経路の再設計は SI-SDD-027）。正直な代行経路の不在が、最悪の迂回（無記録手編集）を
+   誘発することが実証された。
 
 3件を「仕様成果物への書込みを許可する境界」の一つの設計として扱う。目的は、変更前に
 局所的な不整合を拒否し、変更後に誰のどの裁定で書き込まれたかを追跡可能にし、
@@ -45,12 +53,14 @@ BitzSDDの変更系CLIには、互いに独立して見える3つの完全性欠
 
 ## 設計判断
 
-### 1. 人間裁定必須遷移は対話確認だけを受理する（SI-SDD-022）
+### 1. 人間裁定必須遷移は対話確認または可視化された代行を受理する（SI-SDD-022 / SI-SDD-027 で改訂）
 
 契約語彙を次のように分ける。
 
 - **人間裁定必須遷移**: draft→approved等、人間の判断なしに成立させてはならない遷移。
-- **対話確認経路**: 人間裁定必須遷移を適用できる唯一のBitzSDD CLI経路。
+- **対話確認経路**: 人間裁定必須遷移を人間が直接適用するBitzSDD CLI経路（v1.1では唯一の経路）。
+- **代行可視化経路**: 人間の裁定を、その所在参照つきでエージェントが代行適用するCLI経路
+  （v2.0で追加。SI-SDD-027）。
 - **エージェント許容遷移**: lifecycle上、エージェントが無人実行できる遷移。
 
 ```text
@@ -72,11 +82,49 @@ TTY確認は本人認証ではなく、CLIが保証するのは遷移表と明�
 approval・sandbox・監査規律に残る。この残余リスクを後継要件、CLI help、STATE表示へ明記し、
 旧CORE-FR-005の「構造的に人間性を強制する」という過大な主張を継承しない。
 
-検証不能な `--on-behalf-of` / 自由記述authorization referenceは設けない。エージェント実行面の
-通常ツール呼出しは非TTYのため拒否され、エージェントは対象コマンドを提示して人間に通常シェルまたは
-対話端末での実行を依頼する。Claude Code / Codex / Antigravity 2.0のいずれでも同じ縮退経路とする。
-将来、ホストがworkspace・ID・old/new・human・有効期限・nonceに束縛した検証可能なreceiptを
-提供した場合だけ、別issueでadapter契約と一回消費を設計する。
+#### 1b. 代行可視化経路（v2.0 追加。SI-SDD-027）
+
+v1.1 は「検証不能な `--on-behalf-of` は自己申告能力になる」として代行経路を却下したが、
+この判断は比較対象を誤っていた。実運用で発生した比較は「人間の直接TTY実行 vs 代行」ではなく
+「正直に記録された代行 vs 無記録の手編集」であり、後者が実際に選択され全ゲートを通過した
+（背景4）。TTY確認自体が本人認証でない以上（前節）、ゲートの実価値は証跡の正直さと
+エージェント単独実行への摩擦にある。よって**無条件の代行は引き続き却下**しつつ、
+**裁定の所在参照（decision-ref）を必須とする可視化された代行**を第2の経路として設ける。
+
+```text
+spec update <workspace> <ID...> --to <status> \
+  --on-behalf-of <human> --decision-ref <参照> --actor <実行エージェント>
+```
+
+- **必須3項**: `--on-behalf-of`（裁定した人間）、`--decision-ref`（裁定の所在）、
+  `--actor`（実行主体＝エージェント名）。いずれか欠落は `authorization-required`（exit 3）。
+  actor / on-behalf-of には対話経路と同じ長さ・制御文字検査を適用する。
+- **decision-ref の要求水準**: 1〜512文字・制御文字なし。リポジトリ相対パス
+  （任意で `#fragment` 付き。例: `.spec/spec-issues/SI-SDD-027.md`）または `https://` URL。
+  パス形式は update 時に**ファイルの実在を必須**とし（非実在は exit 3）、URL 形式は
+  形式検査のみとする。裁定の**真正性**（その裁定が本当に当該遷移を許可したか）は機械検証せず、
+  残余リスクとして要件・CLI help・STATE 表示に明記する。
+- **provenance**: 構造化 event の kind を `agent-proxy-unverified` とし、`on_behalf_of` /
+  `decision_ref` フィールドを追加する。schema_version は 2 へ上げ、inspect は v1 / v2 の両方を
+  受理し、v2 では kind に応じた必須フィールドを検査する。STATE 表示行は
+  `(<actor> on behalf of <human>; 代行実行・実行者未検証・裁定参照: <ref>)` とし、
+  対話確認経路（`対話入力確認済み`）と一見で区別できるようにする。
+- **バッチ**: 複数 ID を1呼出しで受理する（26件事故の直接原因はバッチ経路の不在）。
+  workspace lock を1回取得し、ID ごとに独立した transaction を直列適用する。失敗時は
+  fail-fast とし、適用済み分は有効（STATE 記録済み）・未適用分を診断に列挙する。
+  複数 artifact の all-or-nothing は journal 設計を複雑化するため採らない。
+  同一呼出しの event 群は同じ decision_ref を共有する。
+- **適用範囲**: 全人間裁定必須遷移に開く（推奨）。一部遷移だけ TTY 限定を残すと、
+  その遷移に同じ迂回圧力が再発するため。対話確認経路は第一級経路として維持し廃止しない。
+- **抑止・可視化**: `spec_status.py` / `sdd_report.py` が経路別（対話 / 代行）の遷移数を
+  集計表示する。Promotion Gate チェックリストへ「代行遷移の decision-ref を人間が確認」を
+  追加し、裁定参照の形骸化を運用側で検査する。
+- **inspect の継続検査**: パス形式 decision-ref の参照先が後日消失した場合は WARN とする
+  （ファイル移動で壊れ得るため FAIL にしない。裁定時点の実在は update が保証済み）。
+
+エージェント実行面からの人間裁定必須遷移は、この代行可視化経路によって初めて可能になる。
+ホストが workspace・ID・old/new・human・有効期限・nonce に束縛した検証可能な receipt を
+提供した場合に adapter 契約と一回消費を設計する方針（v1.1）は、将来の強化案として維持する。
 
 誤認を招く`--by-human`は廃止し、互換aliasも設けない。`--actor`だけで対話経路を主張する
 現行形式も、人間裁定必須遷移では拒否する。
@@ -303,7 +351,8 @@ sequenceDiagram
 | エージェント許容遷移 | 既存CLIを維持。task前提を満たさない呼出しだけ新たに失敗 |
 | `--by-human` | 人間性を保証する誤解を避けるため廃止 |
 | `--interactive-decision` | 対話入力だけを保証する置換CLI |
-| エージェントによる人間裁定の代行 | 検証可能なhost receiptが無いため不可。対話端末用コマンドを提示 |
+| `--on-behalf-of` / `--decision-ref` | 加算CLI（v2.0）。裁定所在参照つきの代行可視化経路 |
+| エージェントによる人間裁定の代行 | decision-ref 必須の可視化経路でのみ可（v2.0で改訂）。無条件代行は引き続き不可 |
 | `--recover` / JSON診断 | 加算CLI |
 | STATEの新規行 | schema付きeventを加算。旧行はlegacyとして読取可能なまま |
 | `spec scaffold` | 正常系の採番と出力を維持。競合時だけ安全側停止 |
@@ -317,8 +366,12 @@ Antigravity 2.0ごとに対話端末への引継ぎ例を載せる。根拠の�
 ## 代替案と却下理由
 
 - **TTY確認を本人認証とみなす**: エージェントもPTYを確保できるため却下。誤操作防止に限定する。
-- **自由記述の人間裁定代行**: 参照の実在・遷移との束縛・一回性を検証できず、自己申告能力に
-  なるため却下。検証可能なhost receipt契約が成立するまでfail-closedとする。
+- **自由記述の人間裁定代行**: v1.1 で却下したが、SI-SDD-027 の裁定により **decision-ref 必須の
+  可視化代行に限って撤回**（設計判断1b）。無条件の `--on-behalf-of`（参照なしの自己申告）は
+  引き続き却下。v1.1 の「fail-closed で代行ゼロ」は、無記録手編集という検出不能な迂回を
+  誘発した実績（背景4）により、比較対象を誤った過剰防御だったと判定した。
+- **TTY 限定を維持して迂回の事後検出だけ足す**: SI-SDD-026 の検出強化は必要だが、それだけでは
+  迂回の発生源（正規経路の運用コスト）が残るため、経路追加と組み合わせる。
 - **`--actor` を人間性の証明に使う**: 任意文字列で偽装できるため却下。
 - **`--allow-orphan`**: 軽量レーンにも1taskが必要で、恒久迂回路の根拠がないため却下。
 - **`spec_update.py` から毎回full inspectを起動する**: 遷移局所条件とworkspace全体監査を混同し、
@@ -354,6 +407,21 @@ greenになった段階で、`superseded_by`を相互に結び人間裁定でdep
    `--interactive-decision`と局所前提を有効化する。3環境の移行例を更新し、CORE-FR-005を後継化する。
 5. **Release B（中優先度、minor）**: `spec_scaffold.py`を同じtransaction基盤＋atomic no-replaceへ
    載せ、target head照合とsdd-git接続を実装してCORE-FR-004を後継化する。
+6. **Release C（高優先度、minor。v2.0 追加 = SI-SDD-027）**: 代行可視化経路を実装する。
+   - 契約の載せ方（Design Gate 裁定点）:
+     - **案A**: SDD-FR-143 全体を後継 SDD-FR-145 へ supersede（認可節を改訂し
+       transaction 節を継承）。CORE-FR-005→143/144 の前例に忠実だが文書量が大きい。
+     - **案B（推奨）**: 認可経路契約を新規 SDD-FR-145 として起票し、SDD-FR-143 は
+       認可節を「対話確認経路を要求した場合」へ限定する major bump（2.0）とする。
+       1要件1関心事（認可=145、transaction・監査=143）になり、SI-SDD-026 の bump 対象
+       （143 の監査節）とも衝突しない。既存 unit-test は全件 green のまま。
+   - 実装対象: `spec_update.py`（経路追加・バッチ・decision-ref 検査）、
+     `spec_transaction.py`（event schema v2）、`spec_inspect.py`（v2 検査・参照先 WARN）、
+     `spec_status.py` / `sdd_report.py`（経路別集計）、`references/lifecycle.md`
+     （権限マトリクス・記録語彙・Promotion Gate チェックリスト）、対応 unit-test。
+   - semver: 加算 CLI のため bitz-sdd **minor**（既存経路の挙動不変。破壊なし）。
+   - 順序: Release C を SI-SDD-026（迂回の事後検出）より先に実施する。026 は改訂後の
+     契約（案Bなら 143 v2.0）を対象に裁定・実装する。
 
 Release Aを先に出す理由は、裁定証跡と遷移前提の高優先度修正を採番改善から分離するためである。
 一方、transaction基盤をRelease Aから外す小案（lock＋逐次二重書込み）は、成功応答した遷移で
@@ -376,6 +444,10 @@ statusと監査が乖離し得るため、権限監査の後継要件を満た�
 
 Release Aは「transaction基盤」「共有索引」「遷移前提」「対話確認」を同一majorとして戻し、
 Release Bは「排他生成」「target head gate」を独立して戻せるようにする。
+Release C（代行可視化経路）は加算のため独立して revert でき、STATE に残った
+`agent-proxy-unverified` event（schema v2）は legacy として読取保持する（遡及変更しない。
+revert 後の inspect は v2 event を既知 legacy として受理する版に留めるか、revert 範囲から
+inspect の v2 受理を除外する）。
 各release内では機能フラグで新旧write pathを混在させない。
 ロールバックしても新STATE行は履歴として保持し、旧ツールは人間向けMarkdown行を読める。
 新しい外部データストアやデータ移行はない。downgrade前に新majorのrecover/inspectで
@@ -389,7 +461,21 @@ major版を撤回する場合は直前majorへ固定し、旧`--by-human`の自�
 
 - 人間裁定: 2026-07-27、SI-SDD-022 / 023 / 024をaccepted。
 - ルート契約裁定: 2026-07-27、SI-CORE-035をaccepted。
-- Design Gate: 2026-07-27、ユーザーが本設計を承認し実装継続を指示。
+- Design Gate: 2026-07-27、ユーザーが本設計（v1.1）を承認し実装継続を指示。
+- 人間裁定: 2026-07-27、SI-SDD-027をaccepted（対話確認経路で記録済み）。
+- **v2.0（代行可視化経路）の Design Gate: 2026-07-27 承認**。ユーザーが以下の裁定点を
+  1件ずつ個別に裁定し、全点で推奨案を採択した（1: 経路採用、2: decision-ref 設計案どおり、
+  3: 全人間裁定必須遷移へ適用、4: バッチ＋fail-fast、5: 案B、6: schema_version 2、
+  7: minor・SI-SDD-026 より先に実施）。裁定点の内訳:
+  1. 代行可視化経路の採用（v1.1 裁定点2「host receipt なき代行は設けない」の部分撤回。
+     無条件代行の却下は維持し、decision-ref 必須の可視化代行のみ許可する）。
+  2. decision-ref の要求水準（パス形式は update 時実在必須・URL は形式検査のみ・
+     真正性は機械検証しない残余リスクとして明記）。
+  3. 適用範囲は全人間裁定必須遷移とする（推奨。一部限定の代替あり — 設計判断1b）。
+  4. バッチ受理（1裁定参照×複数 ID、fail-fast 逐次 transaction）。
+  5. 契約の載せ方は案B（SDD-FR-145 新設＋SDD-FR-143 major bump）を推奨（Release C 節）。
+  6. event schema_version 2 への昇格（v1 併存受理）。
+  7. semver は bitz-sdd minor。SI-SDD-026 より先に実施する。
 - 本設計の裁定点:
   1. CLI保証を「遷移表＋明示的な対話入力」に限定し、人間性の認証はできない残余リスクを明記する。
   2. 誤認を招く`--by-human`を廃止して`--interactive-decision`へ置換し、

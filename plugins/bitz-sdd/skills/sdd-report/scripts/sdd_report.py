@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import argparse
+import base64
+import json
 import os
 import re
 import sys
@@ -148,6 +150,22 @@ def generate_report(root_path: Path) -> Path:
     # 5. Tasks 集計 — 正規語彙（pending / implementing / blocked / done）で集計する（SDD-FR-139）。
     # spec_status.py の _statuses_in と同じ挙動: 語彙外・欠落 status は (none) として立て、
     # 正規区分へ黙って吸収しない（blocked / implementing がレポート上で不可視になるのを防ぐ）。
+    # 5.5 人間裁定遷移の経路別集計（SDD-FR-145。spec_status.py と同じ判定）
+    decision_counts = {"interactive": 0, "proxy": 0}
+    state_file = spec_dir / "STATE.md"
+    if state_file.exists():
+        for m in re.finditer(r"<!-- sdd-event:([A-Za-z0-9+/=]+) -->",
+                             state_file.read_text(encoding="utf-8", errors="replace")):
+            try:
+                event = json.loads(base64.b64decode(m.group(1), validate=True))
+                kind = (event.get("provenance") or {}).get("kind")
+            except Exception:
+                continue
+            if kind == "interactive-confirmation-unverified":
+                decision_counts["interactive"] += 1
+            elif kind == "agent-proxy-unverified":
+                decision_counts["proxy"] += 1
+
     tasks_dir = spec_dir / "tasks"
     task_counter = Counter()
     if tasks_dir.exists():
@@ -249,6 +267,14 @@ def generate_report(root_path: Path) -> Path:
 
 ## 5. タスク実行状況 (.spec/tasks/ - {total_tasks} 件)
 {task_section}
+
+---
+
+## 6. 人間裁定遷移の経路別内訳 (STATE.md)
+*   **対話確認経路 (interactive-confirmation-unverified)**: {decision_counts["interactive"]} 件
+*   **代行可視化経路 (agent-proxy-unverified)**: {decision_counts["proxy"]} 件
+
+※ 代行遷移は decision-ref（裁定所在参照）を持つ。Promotion Gate で参照先の裁定を人間が確認すること。
 """
 
     report_file.write_text(report_content, encoding="utf-8")

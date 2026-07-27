@@ -173,3 +173,61 @@ def test_SDD_FR_143_recover_rejects_active_transaction_owner(tmp_path):
         tx.recover(root, owner["event_id"])
 
     assert error.value.code == "mutation-conflict"
+
+
+# --- SDD-FR-145: mutate_many（lock 1回・独立transaction・fail-fast） ---
+
+def test_SDD_FR_145_mutate_many_commits_each_transaction_under_one_lock(tmp_path):
+    root = _workspace(tmp_path)
+    first = root / ".spec" / "a.md"
+    second = root / ".spec" / "b.md"
+    first.write_bytes(b"a0")
+    second.write_bytes(b"b0")
+    lock_seen = []
+
+    def make_prepare(path, before, after):
+        def prepare(_owner):
+            lock_seen.append((root / ".spec" / ".mutation-lock").exists())
+            return tx.TransactionPlan(
+                changes=(tx.FileChange(path, before, after),),
+                metadata={"path": path.name},
+            )
+        return prepare
+
+    results = tx.mutate_many(
+        root, "batch", (first, second),
+        [make_prepare(first, b"a0", b"a1"), make_prepare(second, b"b0", b"b1")],
+    )
+    assert [meta["path"] for _, meta in results] == ["a.md", "b.md"]
+    assert len({event_id for event_id, _ in results}) == 2
+    assert first.read_bytes() == b"a1"
+    assert second.read_bytes() == b"b1"
+    assert lock_seen == [True, True]
+    assert not (root / ".spec" / ".mutation-lock").exists()
+    assert not list((root / ".spec" / ".transactions").glob("*.json"))
+
+
+def test_SDD_FR_145_mutate_many_fail_fast_keeps_applied_and_releases_lock(tmp_path):
+    root = _workspace(tmp_path)
+    first = root / ".spec" / "a.md"
+    second = root / ".spec" / "b.md"
+    first.write_bytes(b"a0")
+    second.write_bytes(b"b0")
+
+    def ok(_owner):
+        return tx.TransactionPlan(
+            changes=(tx.FileChange(first, b"a0", b"a1"),), metadata={"id": "one"},
+        )
+
+    def fail(_owner):
+        raise tx.MutationError("precondition-failed", "boom", 4)
+
+    with pytest.raises(tx.BatchMutationError) as error:
+        tx.mutate_many(root, "batch", (first, second), [ok, fail])
+    assert error.value.code == "precondition-failed"
+    assert error.value.exit_code == 4
+    assert len(error.value.applied) == 1
+    assert first.read_bytes() == b"a1"
+    assert second.read_bytes() == b"b0"
+    assert not (root / ".spec" / ".mutation-lock").exists()
+    assert not list((root / ".spec" / ".transactions").glob("*.json"))

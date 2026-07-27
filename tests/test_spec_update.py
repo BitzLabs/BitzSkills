@@ -231,3 +231,153 @@ def test_SDD_FR_143_issue_accept_is_not_agent_allowed(tmp_path):
     result = run(tmp_path, iid, "accepted")
     assert result.returncode == 3
     assert status_of(tmp_path, "spec-issues", iid) == "open"
+
+
+# --- SDD-FR-145: 代行可視化経路（on-behalf-of + decision-ref） ---
+
+REF_ISSUE_ID = "SI-CORE-" + "099"  # 直書きすると本リポジトリのspec_inspectが幽霊参照として誤検知する
+
+
+def make_ref(root: Path) -> str:
+    _write(root / ".spec" / "spec-issues" / f"{REF_ISSUE_ID}.md",
+           f"---\nid: {REF_ISSUE_ID}\nstatus: accepted\n---\n- 裁定記録\n")
+    return f".spec/spec-issues/{REF_ISSUE_ID}.md"
+
+
+def run_proxy(root, idents, to, *extra):
+    command = [sys.executable, str(UPDATE), str(root), *idents, "--to", to, *extra]
+    return subprocess.run(command, capture_output=True, text=True)
+
+
+def proxy_args(ref):
+    return ("--on-behalf-of", "hide", "--decision-ref", ref, "--actor", "claude")
+
+
+def test_SDD_FR_145_proxy_transition_succeeds_without_tty(tmp_path):
+    rid = make_req(tmp_path, 1, "draft")
+    ref = make_ref(tmp_path)
+    result = run_proxy(tmp_path, [rid], "approved", *proxy_args(ref))
+    assert result.returncode == 0, result.stderr
+    assert status_of(tmp_path, "requirements", rid) == "approved"
+    state = state_text(tmp_path)
+    assert "claude on behalf of hide" in state
+    assert "裁定参照" in state
+    assert "実行者未検証" in state
+
+
+def test_SDD_FR_145_proxy_requires_all_three_fields(tmp_path):
+    rid = make_req(tmp_path, 1, "draft")
+    ref = make_ref(tmp_path)
+    for extra in (
+        ("--on-behalf-of", "hide", "--decision-ref", ref),
+        ("--on-behalf-of", "hide", "--actor", "claude"),
+        ("--decision-ref", ref, "--actor", "claude"),
+    ):
+        result = run_proxy(tmp_path, [rid], "approved", *extra)
+        assert result.returncode == 3, result.stderr
+        assert status_of(tmp_path, "requirements", rid) == "draft"
+
+
+def test_SDD_FR_145_proxy_rejects_missing_decision_ref_path(tmp_path):
+    rid = make_req(tmp_path, 1, "draft")
+    result = run_proxy(
+        tmp_path, [rid], "approved",
+        "--on-behalf-of", "hide",
+        "--decision-ref", ".spec/spec-issues/NOPE.md",
+        "--actor", "claude",
+    )
+    assert result.returncode == 3
+    assert "存在しません" in result.stderr
+    assert status_of(tmp_path, "requirements", rid) == "draft"
+
+
+def test_SDD_FR_145_proxy_rejects_escaping_decision_ref(tmp_path):
+    rid = make_req(tmp_path, 1, "draft")
+    (tmp_path.parent / "outside.md").write_text("x", encoding="utf-8")
+    result = run_proxy(
+        tmp_path, [rid], "approved",
+        "--on-behalf-of", "hide", "--decision-ref", "../outside.md", "--actor", "claude",
+    )
+    assert result.returncode == 3
+    assert status_of(tmp_path, "requirements", rid) == "draft"
+
+
+def test_SDD_FR_145_proxy_accepts_https_decision_ref(tmp_path):
+    rid = make_req(tmp_path, 1, "draft")
+    result = run_proxy(
+        tmp_path, [rid], "approved",
+        "--on-behalf-of", "hide",
+        "--decision-ref", "https://github.com/BitzLabs/BitzSkills/pull/109",
+        "--actor", "claude",
+    )
+    assert result.returncode == 0, result.stderr
+    assert status_of(tmp_path, "requirements", rid) == "approved"
+
+
+def test_SDD_FR_145_proxy_rejects_agent_transition(tmp_path):
+    rid = make_req(tmp_path, 1, "approved")
+    make_task(tmp_path, 1, rid, "pending")
+    ref = make_ref(tmp_path)
+    result = run_proxy(tmp_path, [rid], "implementing", *proxy_args(ref))
+    assert result.returncode == 3
+    assert status_of(tmp_path, "requirements", rid) == "approved"
+
+
+def test_SDD_FR_145_proxy_with_interactive_flag_is_rejected(tmp_path):
+    rid = make_req(tmp_path, 1, "draft")
+    ref = make_ref(tmp_path)
+    result = run_proxy(
+        tmp_path, [rid], "approved", "--interactive-decision", *proxy_args(ref),
+    )
+    assert result.returncode == 3
+    assert status_of(tmp_path, "requirements", rid) == "draft"
+
+
+def test_SDD_FR_145_proxy_event_is_schema_v2_with_reference(tmp_path):
+    rid = make_req(tmp_path, 1, "draft")
+    ref = make_ref(tmp_path)
+    result = run_proxy(tmp_path, [rid], "approved", *proxy_args(ref))
+    assert result.returncode == 0
+    markers = re.findall(r"<!-- sdd-event:([A-Za-z0-9+/=]+) -->", state_text(tmp_path))
+    event = json.loads(base64.b64decode(markers[-1], validate=True))
+    assert event["schema_version"] == 2
+    assert event["provenance"]["kind"] == "agent-proxy-unverified"
+    assert event["provenance"]["actor"] == "claude"
+    assert event["provenance"]["on_behalf_of"] == "hide"
+    assert event["provenance"]["decision_ref"] == ref
+
+
+def test_SDD_FR_145_batch_shares_decision_ref_across_events(tmp_path):
+    r1 = make_req(tmp_path, 1, "draft")
+    r2 = make_req(tmp_path, 2, "draft")
+    ref = make_ref(tmp_path)
+    result = run_proxy(tmp_path, [r1, r2], "approved", *proxy_args(ref))
+    assert result.returncode == 0, result.stderr
+    assert status_of(tmp_path, "requirements", r1) == "approved"
+    assert status_of(tmp_path, "requirements", r2) == "approved"
+    markers = re.findall(r"<!-- sdd-event:([A-Za-z0-9+/=]+) -->", state_text(tmp_path))
+    events = [json.loads(base64.b64decode(m, validate=True)) for m in markers]
+    assert len(events) == 2
+    assert {e["artifact_id"] for e in events} == {r1, r2}
+    assert {e["provenance"]["decision_ref"] for e in events} == {ref}
+    assert len({e["event_id"] for e in events}) == 2
+    assert not (tmp_path / ".spec" / ".mutation-lock").exists()
+    transactions = tmp_path / ".spec" / ".transactions"
+    assert not transactions.exists() or not list(transactions.glob("*.json"))
+
+
+def test_SDD_FR_145_batch_rejects_unknown_id_upfront(tmp_path):
+    r1 = make_req(tmp_path, 1, "draft")
+    ref = make_ref(tmp_path)
+    result = run_proxy(tmp_path, [r1, f"CORE-{FR}999"], "approved", *proxy_args(ref))
+    assert result.returncode == 2
+    assert status_of(tmp_path, "requirements", r1) == "draft"
+
+
+def test_SDD_FR_145_batch_requires_proxy_route(tmp_path):
+    r1 = make_req(tmp_path, 1, "draft")
+    r2 = make_req(tmp_path, 2, "draft")
+    result = run_proxy(tmp_path, [r1, r2], "approved", "--actor", "agent")
+    assert result.returncode == 3
+    assert status_of(tmp_path, "requirements", r1) == "draft"
+    assert status_of(tmp_path, "requirements", r2) == "draft"
