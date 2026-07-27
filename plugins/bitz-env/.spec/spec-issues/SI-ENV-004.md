@@ -15,3 +15,6 @@ status: accepted
   検証手段は benchmark または manual-check。
 - **影響推定**: 要件ファイル 1〜2件の新規追加（ENV-NFR-*）。domains.md の統制語彙は据え置きで足りる。
   既存 FR/CON への影響なし。実装は現状が満たしている見込みで、計測で確認する。
+- **実施**: 2026-07-12 ENV-NFR-001（ガードの応答時間）と ENV-NFR-002（rules 注入サイズの節度）へ
+  要件化し実装（ENV-TSK-012 / ENV-TSK-011）。PR #22 で反映。ENV-NFR-001 は 2026-07-11 に
+  verified、ENV-NFR-002 は 2026-07-16 の PR #46 で verified 昇格。
