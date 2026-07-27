@@ -1,7 +1,7 @@
 ---
 id: CORE-FR-007
 version: 1.0
-status: verified
+status: promoted
 domain: governance
 priority: medium
 origin: SI-CORE-021
