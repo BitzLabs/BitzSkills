@@ -125,3 +125,5 @@
 - 2026-07-27 CORE-FR-011 v1.1 再伝播: `--impact CORE-FR-011` の候補4件を判定。旧CORE-TSK-012はv1.0実装履歴として参照継続（再実行対象外）、CORE-TSK-025とtest-specはv1.1から新規作成、tests/test_spec_wrapper.pyは25件へ更新・green確認してstale解消。確定影響集合のstale残数0。
 - 2026-07-27 CORE-TSK-025: implementing → done (codex)
 - 2026-07-27 CORE-FR-011: implementing → verified (codex（対象25件・全328件・release_check・Codex実地status green。全workspace inspectは既知baselineのみ）)
+- 2026-07-27 CORE-FR-011 Promotion Gate: 人間裁定「Promotionします」。docs更新はAGENTS.mdのClaude/Codex横断解決説明をactive反映（sdd_sync対象のDSN-004マッピングなし。既存discovery→docs未同期は本feature外）、LESSONS_LEARNED新規採用なし（設計・レビューに恒久知識を収録済み）、tombstoneなし、stale 0、CORE-REV-002 PASS、全workspace inspectの既知baseline例外を認識して昇格承認、test-specを `.spec/archive/2026-07-27-spec-wrapper-codex-resolution/` へアーカイブ。
+- 2026-07-27 CORE-FR-011: verified → promoted (三ツ井 秀和（チャット指示「Promotionします」）)

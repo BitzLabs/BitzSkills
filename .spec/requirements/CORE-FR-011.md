@@ -1,7 +1,7 @@
 ---
 id: CORE-FR-011
 version: 1.1
-status: verified
+status: promoted
 domain: tooling
 priority: medium
 origin: SI-CORE-022（初版）、SI-CORE-034（Claude/Codex横断解決への改版）
@@ -39,3 +39,4 @@ confidence: high
 - **Revision History**:
   - 1.0 (2026-07-15) 初版（draft 起票。SI-CORE-022 の要件化）
   - 1.1 (2026-07-27) verified（対象pytest 25件・全pytest 328件・release_check・overrideなしCodex実地statusがgreen。全workspace inspectは既知baselineのみ残存）
+  - 1.1 (2026-07-27) promoted（人間裁定「Promotionします」。CORE-REV-002 PASS、stale 0、test-specをarchiveへ移動）

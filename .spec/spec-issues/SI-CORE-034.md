@@ -4,6 +4,7 @@ raised_by: 2026-07-27 Codex 実行時に既定の ~/.claude/plugins だけを参
 target: scripts/spec の Claude/Codex 横断プラグイン解決
 proposed_change_type: bump
 status: accepted
+github_issue: https://github.com/BitzLabs/BitzSkills/issues/98
 ---
 - **目的**: `scripts/spec` は `BITZSKILLS_PLUGINS_DIR` 未指定時に
   `~/.claude/plugins` だけを参照するため、Codexへ `bitz-sdd` が正常にインストールされていても
