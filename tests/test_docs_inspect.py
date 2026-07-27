@@ -101,3 +101,18 @@ def test_excluded_path_cannot_hide_managed_chapter(tmp_path: Path):
     )
 
     assert "EXCLUDED_INVALID" in codes(module.run_docs_checks(str(root)))
+
+
+def test_excluded_path_skips_unmanaged_file(tmp_path: Path):
+    module = load_module()
+    root = copy_template(tmp_path)
+    unmanaged_file = root / "docs" / "plan.md"
+    unmanaged_file.write_text("frontmatterなし", encoding="utf-8")
+    master = root / "docs" / "MASTER.md"
+    master.write_text(
+        master.read_text(encoding="utf-8").replace("excluded_paths:", "excluded_paths: plan.md"),
+        encoding="utf-8",
+    )
+
+    assert module.run_docs_checks(str(root)) == []
+
