@@ -117,3 +117,13 @@
 - 2026-07-19 SI-CORE-013: accepted → rejected (hide（再裁定 2026-07-19）)
 - 2026-07-19 SI-CORE-014: accepted → rejected (hide（再裁定 2026-07-19）)
 - 2026-07-22 SI-CORE-033: open → accepted (human)
+- 2026-07-27 SI-CORE-034: open → accepted (三ツ井 秀和（Codex経由）)
+- 2026-07-27 CORE-FR-011 v1.1: verified(v1.0) → approved (三ツ井 秀和（チャット指示「SI-CORE-034の解決を進めましょう」）)
+- 2026-07-27 DSN-004: draft → approved (三ツ井 秀和（CORE-REV-002 PASS後、チャット指示に基づくDesign Gate裁定）)
+- 2026-07-27 CORE-TSK-025: pending → implementing (codex)
+- 2026-07-27 CORE-FR-011: approved → implementing (codex)
+- 2026-07-27 CORE-FR-011 v1.1 再伝播: `--impact CORE-FR-011` の候補4件を判定。旧CORE-TSK-012はv1.0実装履歴として参照継続（再実行対象外）、CORE-TSK-025とtest-specはv1.1から新規作成、tests/test_spec_wrapper.pyは25件へ更新・green確認してstale解消。確定影響集合のstale残数0。
+- 2026-07-27 CORE-TSK-025: implementing → done (codex)
+- 2026-07-27 CORE-FR-011: implementing → verified (codex（対象25件・全328件・release_check・Codex実地status green。全workspace inspectは既知baselineのみ）)
+- 2026-07-27 CORE-FR-011 Promotion Gate: 人間裁定「Promotionします」。docs更新はAGENTS.mdのClaude/Codex横断解決説明をactive反映（sdd_sync対象のDSN-004マッピングなし。既存discovery→docs未同期は本feature外）、LESSONS_LEARNED新規採用なし（設計・レビューに恒久知識を収録済み）、tombstoneなし、stale 0、CORE-REV-002 PASS、全workspace inspectの既知baseline例外を認識して昇格承認、test-specを `.spec/archive/2026-07-27-spec-wrapper-codex-resolution/` へアーカイブ。
+- 2026-07-27 CORE-FR-011: verified → promoted (三ツ井 秀和（チャット指示「Promotionします」）)

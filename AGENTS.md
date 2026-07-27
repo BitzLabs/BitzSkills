@@ -82,7 +82,9 @@ scripts/             # エージェント共用の運用スクリプト（bump /
 - **SDD ツールの実行**: `scripts/spec <tool> [args...]`（`tool` は `inspect`/`scaffold`/`status`/`update`）。
   本リポは bitz-sdd を**インストール済みプラグインとして消費**（ドッグフーディング）するため
   ツール実体は `scripts/` ではなくプラグインキャッシュ側にある。ラッパー `scripts/spec` が
-  `installed_plugins.json` の固定版を**バージョン非依存に**解決して委譲する（SI-CORE-022 / CORE-FR-011）。
+  Claude の `installed_plugins.json` と Codex CLI の有効な固定版を優先し、検証済みの
+  Claude / Codex キャッシュを**バージョン非依存に**解決して委譲する
+  （SI-CORE-022 / SI-CORE-034 / CORE-FR-011）。
   例: `python3 scripts/spec status .` / `python3 scripts/spec scaffold . requirement --prefix CORE-FR ...`
 - **仕様（.spec）検証の正規コマンド**:
   `python3 scripts/spec inspect --workspace . plugins/*`
