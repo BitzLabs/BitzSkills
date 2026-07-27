@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""scripts/spec — bitz-sdd の SDD ツールをバージョン非依存に解決して委譲するラッパー。
-
-本リポジトリは bitz-sdd を「インストール済みプラグイン」として消費（ドッグフーディング）する
-ため、SDD ツール（inspect/scaffold/status/update）の実体は `scripts/` ではなくプラグイン
-キャッシュ側にある。案内どおりの `python3 scripts/<tool>.py` では実行できず、毎回バージョン
-込みの絶対パスをハードコードする摩擦（SI-CORE-022）が生じていた。本ラッパーはバージョン番号を
-直書きせず、インストール記録の固定版を優先解決し、無ければキャッシュの semver 最大版へ委譲する。
+"""bitz-sddのSDDツールをClaude/Codex横断で解決して委譲する。
 
 使い方:
     scripts/spec inspect  --workspace . plugins/*
@@ -14,19 +8,25 @@
     scripts/spec update   <workspace> CORE-FR-011 --to approved --by-human
 
 解決順序（CORE-FR-011）:
-    1. $BITZSKILLS_PLUGINS_DIR（既定 ~/.claude/plugins）の installed_plugins.json から
-       bitz-sdd のエントリを探し、projectPath がこのリポジトリルートに一致する installPath を使う。
-       固定版が該当ツールを欠く場合は（黙ってフォールバックせず）非ゼロで失敗する。
-    2. 該当エントリが無ければ、プラグインキャッシュを走査し当該ツールを備える semver 最大版を使う。
+    1. BITZSKILLS_PLUGINS_DIR指定時は、その単一ルートだけを使う。
+    2. 未指定時はCodex CLIの有効な固定版とClaudeのproject固定版を検証する。
+    3. 固定版がなければ、許可されたClaude/Codex cacheから全ツールを備える
+       厳格SemVer最大の単一plugin版を選ぶ。
 """
+from __future__ import annotations
+
+import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
+from dataclasses import dataclass
+from functools import total_ordering
 from pathlib import Path
+from typing import Any, Iterable, Optional
 
-# サブコマンド名 → 実スクリプト名
 TOOLS = {
     "inspect": "spec_inspect.py",
     "scaffold": "spec_scaffold.py",
@@ -34,102 +34,572 @@ TOOLS = {
     "update": "spec_update.py",
 }
 PLUGIN_KEY = "bitz-sdd@bitzskills"
-# 版ディレクトリ（installPath）からツールスクリプトまでの相対パス
+PLUGIN_NAME = "bitz-sdd"
 REL = ("skills", "sdd-core", "scripts")
 
 EXIT_USAGE = 2
 EXIT_UNRESOLVED = 3
+CODEX_TIMEOUT_SECONDS = 5
+CODEX_STDOUT_LIMIT = 1024 * 1024
+
+SEMVER_PATTERN = re.compile(
+    r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
+    r"(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?"
+    r"(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$"
+)
+
+
+class ResolutionError(Exception):
+    """安全に解決できない候補・状態を表す。"""
+
+
+@total_ordering
+@dataclass(frozen=True)
+class SemVer:
+    major: int
+    minor: int
+    patch: int
+    prerelease: Optional[tuple[str, ...]]
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, SemVer):
+            return NotImplemented
+        return (
+            self.major,
+            self.minor,
+            self.patch,
+            self.prerelease,
+        ) == (
+            other.major,
+            other.minor,
+            other.patch,
+            other.prerelease,
+        )
+
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, SemVer):
+            return NotImplemented
+        own_core = (self.major, self.minor, self.patch)
+        other_core = (other.major, other.minor, other.patch)
+        if own_core != other_core:
+            return own_core < other_core
+        if self.prerelease is None:
+            return False
+        if other.prerelease is None:
+            return True
+        for own_part, other_part in zip(self.prerelease, other.prerelease):
+            if own_part == other_part:
+                continue
+            own_numeric = own_part.isdigit()
+            other_numeric = other_part.isdigit()
+            if own_numeric and other_numeric:
+                return int(own_part) < int(other_part)
+            if own_numeric != other_numeric:
+                return own_numeric
+            return own_part < other_part
+        return len(self.prerelease) < len(other.prerelease)
+
+
+@dataclass(frozen=True)
+class Candidate:
+    platform: str
+    discovery_kind: str
+    version: str
+    plugin_root: Path
+    tool_path: Path
+    fingerprint: str
+    semver: SemVer
+
+
+@dataclass(frozen=True)
+class CodexDiscovery:
+    state: str
+    reason: str
+    entry: Optional[dict[str, Any]] = None
 
 
 def repo_root() -> Path:
-    """このラッパー（scripts/spec）を含むリポジトリのルート。"""
     return Path(__file__).resolve().parent.parent
 
 
-def plugins_dir() -> Path:
-    env = os.environ.get("BITZSKILLS_PLUGINS_DIR")
-    if env:
-        return Path(env)
+def codex_plugins_dir() -> Path:
+    codex_root = os.environ.get("CODEX_HOME")
+    if codex_root:
+        return Path(codex_root).expanduser() / "plugins"
+    return Path.home() / ".codex" / "plugins"
+
+
+def claude_plugins_dir() -> Path:
     return Path.home() / ".claude" / "plugins"
 
 
-def _semver_key(name: str):
-    """版名を比較可能な数値タプルへ（マイナー二桁がパッチ一桁より新しく並ぶ）。非数値要素は 0 に丸める。"""
-    key = []
-    for part in name.split("."):
-        m = re.match(r"(\d+)", part)
-        key.append(int(m.group(1)) if m else 0)
-    return tuple(key)
+def parse_semver(value: str) -> SemVer:
+    match = SEMVER_PATTERN.fullmatch(value)
+    if not match:
+        raise ValueError(f"不正なSemVer: {value}")
+    prerelease_text = match.group(4)
+    prerelease = None
+    if prerelease_text is not None:
+        parts = tuple(prerelease_text.split("."))
+        if any(part.isdigit() and len(part) > 1 and part.startswith("0") for part in parts):
+            raise ValueError(f"不正なSemVer prerelease: {value}")
+        prerelease = parts
+    return SemVer(
+        major=int(match.group(1)),
+        minor=int(match.group(2)),
+        patch=int(match.group(3)),
+        prerelease=prerelease,
+    )
 
 
-def resolve_from_installed(tool_script: str):
-    """installed_plugins.json の projectPath==repo_root エントリの installPath から解決した
-    パスを返す（存在確認はしない）。該当エントリが無ければ None。"""
-    manifest = plugins_dir() / "installed_plugins.json"
-    if not manifest.exists():
-        return None
+def _read_required(path: Path, label: str) -> bytes:
+    if not path.is_file() or not os.access(path, os.R_OK):
+        raise ResolutionError(f"{label}が存在しないか読取不能です: {path}")
     try:
-        data = json.loads(manifest.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        return None
-    entries = (data.get("plugins") or {}).get(PLUGIN_KEY) or []
-    root = str(repo_root())
+        return path.read_bytes()
+    except OSError as exc:
+        raise ResolutionError(f"{label}を読み取れません: {path}") from exc
+
+
+def build_candidate(
+    platform: str,
+    discovery_kind: str,
+    version: str,
+    plugin_root: Path,
+    tool_script: str,
+) -> Candidate:
+    """manifestと全ツールを検証し、同一性fingerprint付き候補を返す。"""
+    try:
+        parsed_version = parse_semver(version)
+    except ValueError as exc:
+        raise ResolutionError(str(exc)) from exc
+
+    manifest_path = plugin_root / "plugin.json"
+    manifest_bytes = _read_required(manifest_path, "plugin manifest")
+    try:
+        manifest = json.loads(manifest_bytes.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ResolutionError(f"plugin manifestが不正です: {manifest_path}") from exc
+    if not isinstance(manifest, dict):
+        raise ResolutionError(f"plugin manifestの形式が不正です: {manifest_path}")
+    if manifest.get("name") != PLUGIN_NAME:
+        raise ResolutionError(
+            f"plugin名が一致しません: expected={PLUGIN_NAME}, actual={manifest.get('name')}"
+        )
+    if manifest.get("version") != version:
+        raise ResolutionError(
+            "plugin manifestのversionが一致しません: "
+            f"expected={version}, actual={manifest.get('version')}"
+        )
+
+    digest = hashlib.sha256()
+    digest.update(b"plugin.json\0")
+    digest.update(manifest_bytes)
+    tool_paths: dict[str, Path] = {}
+    for script_name in sorted(TOOLS.values()):
+        script_path = plugin_root.joinpath(*REL, script_name)
+        script_bytes = _read_required(script_path, f"SDDツール {script_name}")
+        digest.update(script_name.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(script_bytes)
+        tool_paths[script_name] = script_path
+
+    return Candidate(
+        platform=platform,
+        discovery_kind=discovery_kind,
+        version=version,
+        plugin_root=plugin_root,
+        tool_path=tool_paths[tool_script],
+        fingerprint=digest.hexdigest(),
+        semver=parsed_version,
+    )
+
+
+def _validate_pinned(
+    platform: str,
+    discovery_kind: str,
+    version: str,
+    plugin_root: Path,
+    tool_script: str,
+) -> Candidate:
+    try:
+        return build_candidate(
+            platform,
+            discovery_kind,
+            version,
+            plugin_root,
+            tool_script,
+        )
+    except ResolutionError as exc:
+        raise ResolutionError(
+            f"{platform}固定版の検証に失敗しました（fallbackしません）: {exc}"
+        ) from exc
+
+
+def discover_codex(cwd: Path) -> CodexDiscovery:
+    """Codex CLIからbitz-sddの有効状態と固定versionを読み取る。"""
+    executable = shutil.which("codex")
+    if executable is None:
+        return CodexDiscovery("unavailable", "cli-not-found")
+    try:
+        completed = subprocess.run(
+            [executable, "plugin", "list", "--json"],
+            cwd=str(cwd),
+            capture_output=True,
+            text=True,
+            timeout=CODEX_TIMEOUT_SECONDS,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        return CodexDiscovery("unavailable", "timeout")
+    except OSError:
+        return CodexDiscovery("unavailable", "launch-error")
+
+    if completed.returncode != 0:
+        return CodexDiscovery("unavailable", "exit-nonzero")
+    if len(completed.stdout.encode("utf-8", errors="replace")) > CODEX_STDOUT_LIMIT:
+        return CodexDiscovery("corrupt", "stdout-too-large")
+    try:
+        payload = json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        return CodexDiscovery("corrupt", "invalid-json")
+    if not isinstance(payload, dict) or not isinstance(payload.get("installed"), list):
+        return CodexDiscovery("corrupt", "invalid-schema")
+
+    entries = [
+        entry
+        for entry in payload["installed"]
+        if isinstance(entry, dict) and entry.get("pluginId") == PLUGIN_KEY
+    ]
+    if not entries:
+        return CodexDiscovery("authoritative-negative", "no-entry")
+
+    enabled_entries = [
+        entry
+        for entry in entries
+        if entry.get("installed") is True and entry.get("enabled") is True
+    ]
+    if len(enabled_entries) > 1:
+        return CodexDiscovery("corrupt", "duplicate-enabled-entry")
+    if not enabled_entries:
+        reason = (
+            "uninstalled"
+            if all(entry.get("installed") is not True for entry in entries)
+            else "disabled"
+        )
+        return CodexDiscovery("authoritative-negative", reason)
+
+    entry = enabled_entries[0]
+    required = ("name", "marketplaceName", "version")
+    if any(not isinstance(entry.get(key), str) or not entry[key] for key in required):
+        return CodexDiscovery("corrupt", "invalid-entry")
+    if entry["name"] != PLUGIN_NAME:
+        return CodexDiscovery("corrupt", "name-mismatch")
+    marketplace = entry["marketplaceName"]
+    if marketplace in {".", ".."} or Path(marketplace).name != marketplace:
+        return CodexDiscovery("corrupt", "invalid-marketplace")
+    try:
+        parse_semver(entry["version"])
+    except ValueError:
+        return CodexDiscovery("corrupt", "invalid-version")
+    return CodexDiscovery("valid", "installed-enabled", entry)
+
+
+def _claude_pinned_candidates(
+    plugins_root: Path,
+    tool_script: str,
+    expected_repo_root: Path,
+    *,
+    platform: str = "claude",
+) -> list[Candidate]:
+    manifest_path = plugins_root / "installed_plugins.json"
+    if not manifest_path.is_file():
+        return []
+    try:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    if not isinstance(payload, dict):
+        return []
+    entries = (payload.get("plugins") or {}).get(PLUGIN_KEY) or []
+    if not isinstance(entries, list):
+        return []
+
+    result = []
     for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("projectPath") != str(expected_repo_root):
+            continue
         install_path = entry.get("installPath")
-        if entry.get("projectPath") == root and install_path:
-            return Path(install_path).joinpath(*REL, tool_script)
-    return None
+        if not isinstance(install_path, str) or not install_path:
+            continue
+        plugin_root = Path(install_path)
+        version = entry.get("version")
+        if not isinstance(version, str) or not version:
+            version = plugin_root.name
+        result.append(
+            _validate_pinned(
+                platform,
+                "manifest-pinned",
+                version,
+                plugin_root,
+                tool_script,
+            )
+        )
+    return result
 
 
-def resolve_from_cache(tool_script: str):
-    """プラグインキャッシュを走査し、当該ツールを備える semver 最大版のスクリプトを返す。
-    見つからなければ None。"""
-    cache = plugins_dir() / "cache"
+def _codex_pinned_candidate(
+    plugins_root: Path,
+    tool_script: str,
+    discovery: CodexDiscovery,
+) -> Candidate:
+    entry = discovery.entry or {}
+    plugin_root = (
+        plugins_root
+        / "cache"
+        / entry["marketplaceName"]
+        / entry["name"]
+        / entry["version"]
+    )
+    return _validate_pinned(
+        "codex",
+        "cli-pinned",
+        entry["version"],
+        plugin_root,
+        tool_script,
+    )
+
+
+def scan_cache(
+    plugins_root: Path,
+    platform: str,
+    tool_script: str,
+) -> list[Candidate]:
+    """完全なplugin版だけをcache候補として返す。破損版・非SemVer版は除外する。"""
+    cache_root = plugins_root / "cache"
+    if not cache_root.is_dir():
+        return []
     candidates = []
-    if cache.is_dir():
-        for marketplace in cache.iterdir():
-            base = marketplace / "bitz-sdd"
-            if not base.is_dir():
+    try:
+        marketplaces = sorted(cache_root.iterdir(), key=lambda path: path.name)
+    except OSError:
+        return []
+    for marketplace in marketplaces:
+        plugin_base = marketplace / PLUGIN_NAME
+        if not plugin_base.is_dir():
+            continue
+        try:
+            versions = sorted(plugin_base.iterdir(), key=lambda path: path.name)
+        except OSError:
+            continue
+        for plugin_root in versions:
+            if not plugin_root.is_dir():
                 continue
-            for ver in base.iterdir():
-                script = ver.joinpath(*REL, tool_script)
-                if script.exists():
-                    candidates.append((_semver_key(ver.name), script))
+            try:
+                candidate = build_candidate(
+                    platform,
+                    "cache",
+                    plugin_root.name,
+                    plugin_root,
+                    tool_script,
+                )
+            except ResolutionError:
+                continue
+            candidates.append(candidate)
+    return candidates
+
+
+def _preferred(candidates: Iterable[Candidate]) -> Candidate:
+    priority = {"override": 0, "codex": 1, "claude": 2}
+    return sorted(
+        candidates,
+        key=lambda candidate: (
+            priority.get(candidate.platform, 9),
+            str(candidate.plugin_root),
+        ),
+    )[0]
+
+
+def select_pinned(candidates: list[Candidate]) -> Optional[Candidate]:
     if not candidates:
         return None
-    candidates.sort(key=lambda c: c[0])
-    return candidates[-1][1]
+    versions = {candidate.version for candidate in candidates}
+    if len(versions) != 1:
+        detail = ", ".join(
+            f"{candidate.platform}={candidate.version}" for candidate in candidates
+        )
+        raise ResolutionError(f"固定版のversion競合を検出しました: {detail}")
+    fingerprints = {candidate.fingerprint for candidate in candidates}
+    if len(fingerprints) != 1:
+        raise ResolutionError(
+            "同一versionの固定版でfingerprint競合を検出しました"
+        )
+    return _preferred(candidates)
 
 
-def main(argv):
+def select_cache(candidates: list[Candidate]) -> Optional[Candidate]:
+    if not candidates:
+        return None
+    highest = max(candidate.semver for candidate in candidates)
+    top = [candidate for candidate in candidates if candidate.semver == highest]
+    fingerprints = {candidate.fingerprint for candidate in top}
+    if len(fingerprints) != 1:
+        versions = ", ".join(
+            sorted({candidate.version for candidate in top})
+        )
+        raise ResolutionError(
+            f"SemVer最大版（{versions}）でfingerprint競合を検出しました"
+        )
+    return _preferred(top)
+
+
+def resolve_override(
+    tool_script: str,
+    plugins_root: Path,
+    expected_repo_root: Path,
+) -> Candidate:
+    pinned = select_pinned(
+        _claude_pinned_candidates(
+            plugins_root,
+            tool_script,
+            expected_repo_root,
+            platform="override",
+        )
+    )
+    if pinned is not None:
+        return pinned
+    cached = select_cache(scan_cache(plugins_root, "override", tool_script))
+    if cached is None:
+        raise ResolutionError("指定ルートに完全なbitz-sdd版がありません")
+    return cached
+
+
+def resolve_default(
+    tool_script: str,
+    codex_root: Path,
+    claude_root: Path,
+    discovery: CodexDiscovery,
+    expected_repo_root: Path,
+) -> Candidate:
+    pinned_candidates = _claude_pinned_candidates(
+        claude_root,
+        tool_script,
+        expected_repo_root,
+    )
+    if discovery.state == "valid":
+        pinned_candidates.append(
+            _codex_pinned_candidate(codex_root, tool_script, discovery)
+        )
+    pinned = select_pinned(pinned_candidates)
+    if pinned is not None:
+        return pinned
+
+    cache_candidates = scan_cache(claude_root, "claude", tool_script)
+    if discovery.state == "unavailable":
+        cache_candidates.extend(scan_cache(codex_root, "codex", tool_script))
+    cached = select_cache(cache_candidates)
+    if cached is None:
+        raise ResolutionError("許可されたcacheに完全なbitz-sdd版がありません")
+    return cached
+
+
+def _diagnostic(
+    error: ResolutionError,
+    roots: list[Path],
+    discovery: CodexDiscovery,
+) -> str:
+    root_text = ", ".join(str(root / "cache") for root in roots)
+    return (
+        f"解決不能: {error}\n"
+        f"探索ルート: {root_text}\n"
+        f"codex-discovery={discovery.state}:{discovery.reason}\n"
+        "復旧: BITZSKILLS_PLUGINS_DIR=<plugins-root> を明示してください。"
+        "並行更新中の場合は完了後に再試行してください。\n"
+    )
+
+
+def _revalidate(candidate: Candidate, tool_script: str) -> None:
+    current = build_candidate(
+        candidate.platform,
+        candidate.discovery_kind,
+        candidate.version,
+        candidate.plugin_root,
+        tool_script,
+    )
+    if current.fingerprint != candidate.fingerprint:
+        raise ResolutionError(
+            "解決後にplugin実体が変更されました。更新完了後に再試行してください"
+        )
+
+
+def main(argv: list[str]) -> int:
     valid = ", ".join(sorted(TOOLS))
     if not argv:
-        sys.stderr.write(f"使い方: spec <tool> [args...]\n有効なツール: {valid}\n")
+        sys.stderr.write(
+            f"使い方: spec <tool> [args...]\n有効なツール: {valid}\n"
+        )
         return EXIT_USAGE
     tool = argv[0]
     if tool not in TOOLS:
-        sys.stderr.write(f"未知のツール: {tool}\n有効なツール: {valid}\n")
+        sys.stderr.write(
+            f"未知のツール: {tool}\n有効なツール: {valid}\n"
+        )
         return EXIT_USAGE
 
     tool_script = TOOLS[tool]
-    pinned = resolve_from_installed(tool_script)
-    if pinned is not None:
-        # 固定版が該当。壊れている（スクリプト欠落）なら黙ってフォールバックせず失敗させる。
-        target = pinned
+    current_repo = repo_root()
+    explicit_root = os.environ.get("BITZSKILLS_PLUGINS_DIR")
+    if explicit_root:
+        roots = [Path(explicit_root).expanduser()]
+        discovery = CodexDiscovery("override", "explicit-root")
+        try:
+            candidate = resolve_override(tool_script, roots[0], current_repo)
+        except ResolutionError as exc:
+            sys.stderr.write(_diagnostic(exc, roots, discovery))
+            return EXIT_UNRESOLVED
     else:
-        target = resolve_from_cache(tool_script)
-        if target is None:
-            sys.stderr.write(
-                f"解決不能: {tool_script} を備える bitz-sdd がプラグインキャッシュに"
-                f"見つかりません（BITZSKILLS_PLUGINS_DIR={plugins_dir()}）\n"
+        codex_root = codex_plugins_dir()
+        claude_root = claude_plugins_dir()
+        discovery = discover_codex(current_repo)
+        roots = [claude_root]
+        if discovery.state in {"valid", "unavailable"}:
+            roots.insert(0, codex_root)
+        try:
+            candidate = resolve_default(
+                tool_script,
+                codex_root,
+                claude_root,
+                discovery,
+                current_repo,
             )
+        except ResolutionError as exc:
+            sys.stderr.write(_diagnostic(exc, roots, discovery))
             return EXIT_UNRESOLVED
 
-    if not target.exists():
-        sys.stderr.write(f"解決先スクリプトが存在しません: {target}\n")
+    try:
+        _revalidate(candidate, tool_script)
+    except ResolutionError as exc:
+        sys.stderr.write(_diagnostic(exc, roots, discovery))
         return EXIT_UNRESOLVED
 
-    completed = subprocess.run([sys.executable, str(target), *argv[1:]])
+    try:
+        completed = subprocess.run(
+            [sys.executable, str(candidate.tool_path), *argv[1:]],
+            check=False,
+        )
+    except OSError:
+        sys.stderr.write(
+            _diagnostic(
+                ResolutionError(
+                    "解決先を実行できません。更新完了後に再試行してください"
+                ),
+                roots,
+                discovery,
+            )
+        )
+        return EXIT_UNRESOLVED
     return completed.returncode
 
 
