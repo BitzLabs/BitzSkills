@@ -39,7 +39,7 @@ sdd-test 工程で SDD-FR-123 / SDD-FR-124 の EARS 要件から導出した検�
 
 ## Design Review / Skill Validation
 
-- SDD-REV-001: consistency 5.00 / operations 4.20 / risk 4.33 / business 4.70、
+- 旧初回レビュー（現行レジストリ外）: consistency 5.00 / operations 4.20 / risk 4.33 / business 4.70、
   正規化総合 4.50、critical 0 / major 0、統合判定 **PASS**。
 - skill-validator（sdd-core / sdd-test）:
   - A: SKILL.md・YAML frontmatter・標準ディレクトリ構成 ✅

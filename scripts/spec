@@ -5,7 +5,8 @@
     scripts/spec inspect  --workspace . plugins/*
     scripts/spec scaffold <workspace> requirement --prefix CORE-FR ...
     scripts/spec status   <repo-root> --json
-    scripts/spec update   <workspace> CORE-FR-011 --to approved --by-human
+    scripts/spec update   <workspace> CORE-FR-011 --to approved \
+      --interactive-decision --actor <decision-operator>
 
 解決順序（CORE-FR-011）:
     1. BITZSKILLS_PLUGINS_DIR指定時は、その単一ルートだけを使う。
@@ -33,6 +34,7 @@ TOOLS = {
     "status": "spec_status.py",
     "update": "spec_update.py",
 }
+V3_SUPPORT_SCRIPTS = ("spec_labels.py", "spec_trace.py", "spec_transaction.py")
 PLUGIN_KEY = "bitz-sdd@bitzskills"
 PLUGIN_NAME = "bitz-sdd"
 REL = ("skills", "sdd-core", "scripts")
@@ -196,13 +198,17 @@ def build_candidate(
     digest.update(b"plugin.json\0")
     digest.update(manifest_bytes)
     tool_paths: dict[str, Path] = {}
-    for script_name in sorted(TOOLS.values()):
+    required_scripts = set(TOOLS.values())
+    if parsed_version.major >= 3:
+        required_scripts.update(V3_SUPPORT_SCRIPTS)
+    for script_name in sorted(required_scripts):
         script_path = plugin_root.joinpath(*REL, script_name)
         script_bytes = _read_required(script_path, f"SDDツール {script_name}")
         digest.update(script_name.encode("utf-8"))
         digest.update(b"\0")
         digest.update(script_bytes)
-        tool_paths[script_name] = script_path
+        if script_name in TOOLS.values():
+            tool_paths[script_name] = script_path
 
     return Candidate(
         platform=platform,

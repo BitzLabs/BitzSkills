@@ -127,3 +127,4 @@
 - 2026-07-27 CORE-FR-011: implementing → verified (codex（対象25件・全328件・release_check・Codex実地status green。全workspace inspectは既知baselineのみ）)
 - 2026-07-27 CORE-FR-011 Promotion Gate: 人間裁定「Promotionします」。docs更新はAGENTS.mdのClaude/Codex横断解決説明をactive反映（sdd_sync対象のDSN-004マッピングなし。既存discovery→docs未同期は本feature外）、LESSONS_LEARNED新規採用なし（設計・レビューに恒久知識を収録済み）、tombstoneなし、stale 0、CORE-REV-002 PASS、全workspace inspectの既知baseline例外を認識して昇格承認、test-specを `.spec/archive/2026-07-27-spec-wrapper-codex-resolution/` へアーカイブ。
 - 2026-07-27 CORE-FR-011: verified → promoted (三ツ井 秀和（チャット指示「Promotionします」）)
+- 2026-07-27 SI-CORE-035: open → accepted (user（チャット裁定 2026-07-27）)

@@ -10,6 +10,9 @@
                                                      # docs変更の影響要件（derived_from 逆引き）
 """
 import argparse
+import base64
+import binascii
+import json
 import re
 import subprocess
 import sys
@@ -18,8 +21,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from spec_labels import status_label  # noqa: E402
+from spec_trace import build_task_index  # noqa: E402
 
 ID_RE = re.compile(r"\b(?:[A-Z0-9]{2,4}-)?(?:FR|NFR|CON|DSC|DSN|INF|REV|TSK)-\d{3}\b")
+ISSUE_ID_RE = re.compile(r"\bSI-[A-Z0-9]{2,4}-\d{3}\b")
 DOCS_REF_RE = re.compile(r"(docs/[^\s@]+)(?:@([0-9a-fA-F]{7,40}))?")
 PREFIXES = ("FR", "NFR", "CON", "DSC", "DSN", "INF", "REV", "TSK")
 STATUSES = {"draft", "approved", "implementing", "verified", "promoted", "deprecated", "in-review", "active", "revised", "archived", "pending", "complete", "superseded"}
@@ -239,6 +244,231 @@ def implements_map(root: Path):
     return impl
 
 
+def local_task_statuses(root: Path) -> dict[str, list[tuple[str, str]]]:
+    """Shared spec_trace index projected for inspect diagnostics (SDD-FR-143)."""
+    result = {}
+    for (workspace, requirement_id), bindings in build_task_index(root).items():
+        if workspace != root.resolve():
+            continue
+        result[requirement_id] = [
+            (str(binding.path.relative_to(root)), binding.status) for binding in bindings
+        ]
+    return result
+
+
+def check_state_events(root: Path) -> list[str]:
+    """Validate structured STATE events and incomplete transactions (SDD-FR-143)."""
+    problems = []
+    spec_dir = root / ".spec"
+    journals = sorted((spec_dir / ".transactions").glob("*.json")) \
+        if (spec_dir / ".transactions").exists() else []
+    if journals:
+        problems.append(
+            "[transaction] incomplete-transaction: "
+            + ", ".join(path.stem for path in journals)
+        )
+    if (spec_dir / ".mutation-lock").exists():
+        problems.append("[transaction] mutation lockが残っています")
+
+    state = spec_dir / "STATE.md"
+    if not state.exists():
+        return problems
+    lines = state.read_text(encoding="utf-8", errors="replace").splitlines()
+    event_ids = set()
+    events_by_artifact: dict[str, list[dict]] = {}
+    for index, line in enumerate(lines):
+        marker = re.fullmatch(r"<!-- sdd-event:([A-Za-z0-9+/=]+) -->", line)
+        if not marker:
+            if line.startswith("<!-- sdd-event:"):
+                problems.append(f"[audit] audit-corruption: STATE line {index + 1}: marker format")
+            continue
+        if index == 0 or not lines[index - 1].startswith("- "):
+            problems.append("[audit] structured STATE eventに直前の表示行がありません")
+        encoded = marker.group(1)
+        try:
+            payload = base64.b64decode(encoded, validate=True)
+            if base64.b64encode(payload).decode("ascii") != encoded:
+                raise ValueError("non-canonical base64")
+            event = json.loads(payload)
+            canonical = json.dumps(
+                event, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+            ).encode("utf-8")
+            if canonical != payload:
+                raise ValueError("non-canonical JSON")
+            required = {
+                "schema_version", "event_id", "timestamp", "path", "artifact_id",
+                "old", "new", "provenance", "artifact_before_hash", "artifact_after_hash",
+            }
+            if event.get("schema_version") != 1 or not required.issubset(event):
+                raise ValueError("schema mismatch")
+            if (
+                not all(isinstance(event.get(key), str) and event[key]
+                        for key in ("event_id", "path", "artifact_id", "old", "new"))
+                or not isinstance(event.get("provenance"), dict)
+                or not re.fullmatch(r"[0-9a-f]{64}", event.get("artifact_before_hash", ""))
+                or not re.fullmatch(r"[0-9a-f]{64}", event.get("artifact_after_hash", ""))
+            ):
+                raise ValueError("schema type mismatch")
+            event_id = event["event_id"]
+            if event_id in event_ids:
+                raise ValueError("duplicate event_id")
+            event_ids.add(event_id)
+            display = lines[index - 1] if index else ""
+            transition = f"{event['artifact_id']}: {event['old']} → {event['new']}"
+            if transition not in display:
+                raise ValueError("display line mismatch")
+            artifact_path = (root / event["path"]).resolve()
+            if not artifact_path.is_relative_to(root.resolve()):
+                raise ValueError("artifact path escapes workspace")
+            events_by_artifact.setdefault(event["artifact_id"], []).append(event)
+        except (ValueError, TypeError, json.JSONDecodeError, binascii.Error) as exc:
+            problems.append(f"[audit] audit-corruption: STATE line {index + 1}: {exc}")
+
+    for artifact_id, events in events_by_artifact.items():
+        for previous, current in zip(events, events[1:]):
+            if previous["new"] != current["old"]:
+                problems.append(
+                    f"[audit] audit-corruption: {artifact_id}の遷移連鎖が不正: "
+                    f"{previous['new']} != {current['old']}"
+                )
+        last = events[-1]
+        artifact_path = (root / last["path"]).resolve()
+        try:
+            current_status = parse_frontmatter(
+                artifact_path.read_text(encoding="utf-8")
+            ).get("status", "")
+        except OSError:
+            current_status = ""
+        if current_status != last["new"]:
+            problems.append(
+                f"[audit] audit-corruption: {artifact_id}の現status "
+                f"({current_status or 'missing'}) が最終event ({last['new']}) と不一致"
+            )
+    return problems
+
+
+def integration_preflight(root: Path, target_ref: str) -> tuple[bool, str]:
+    """Bind ID collision preflight to an exact target commit SHA (SDD-FR-144)."""
+    try:
+        top_result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        sha_result = subprocess.run(
+            ["git", "rev-parse", "--verify", f"{target_ref}^{{commit}}"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if top_result.returncode or sha_result.returncode:
+            return False, "integration-preflight: target SHAを証明できません"
+        repo = Path(top_result.stdout.strip()).resolve()
+        target_sha = sha_result.stdout.strip()
+        ancestry = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", target_sha, "HEAD"],
+            cwd=repo,
+            capture_output=True,
+            timeout=10,
+        )
+        if ancestry.returncode != 0:
+            return False, f"integration-preflight: target_sha={target_sha} はHEADのancestorではありません"
+
+        workspace_rel = root.resolve().relative_to(repo)
+        scope = str(workspace_rel / ".spec") if str(workspace_rel) != "." else ".spec"
+        tree = subprocess.run(
+            ["git", "ls-tree", "-r", "--name-only", target_sha, "--", scope],
+            cwd=repo,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        target_id_paths: dict[str, set[str]] = {}
+        target_accepted_issues = set()
+        target_origin_issues = set()
+        target_paths = set(tree.stdout.splitlines())
+        for relpath in target_paths:
+            shown = subprocess.run(
+                ["git", "show", f"{target_sha}:{relpath}"],
+                cwd=repo,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            if shown.returncode == 0:
+                target_meta = parse_frontmatter(shown.stdout)
+                if "/spec-issues/" in f"/{relpath}":
+                    if target_meta.get("status") == "accepted":
+                        target_accepted_issues.add(target_meta.get("id") or Path(relpath).stem)
+                else:
+                    target_origin_issues.update(
+                        ISSUE_ID_RE.findall(target_meta.get("origin", ""))
+                    )
+                if target_meta.get("id"):
+                    target_id_paths.setdefault(target_meta["id"], set()).add(relpath)
+                elif "/tasks/" in f"/{relpath}":
+                    target_id_paths.setdefault(Path(relpath).stem, set()).add(relpath)
+
+        collisions = []
+        for directory in ("requirements", "design", "reviews", "tasks"):
+            current_dir = root / ".spec" / directory
+            if not current_dir.exists():
+                continue
+            for path in current_dir.rglob("*.md"):
+                relpath = str(path.resolve().relative_to(repo))
+                if relpath in target_paths:
+                    continue
+                meta = parse_frontmatter(path.read_text(encoding="utf-8", errors="ignore"))
+                artifact_id = meta.get("id") or path.stem
+                target_holders = target_id_paths.get(artifact_id, set())
+                target_id_still_present = False
+                for holder in target_holders:
+                    current_holder = repo / holder
+                    if not current_holder.exists():
+                        continue
+                    holder_meta = parse_frontmatter(
+                        current_holder.read_text(encoding="utf-8", errors="ignore")
+                    )
+                    current_holder_id = holder_meta.get("id")
+                    if not current_holder_id and "/tasks/" in f"/{holder}":
+                        current_holder_id = current_holder.stem
+                    if current_holder_id == artifact_id:
+                        target_id_still_present = True
+                        break
+                if target_id_still_present:
+                    collisions.append(f"{artifact_id} ({relpath})")
+        protected_origins = target_accepted_issues & target_origin_issues
+        current_origin_issues = set()
+        for directory in ("requirements", "design", "reviews", "discovery"):
+            current_dir = root / ".spec" / directory
+            if not current_dir.exists():
+                continue
+            for path in current_dir.rglob("*.md"):
+                meta = parse_frontmatter(
+                    path.read_text(encoding="utf-8", errors="ignore")
+                )
+                current_origin_issues.update(
+                    ISSUE_ID_RE.findall(meta.get("origin", ""))
+                )
+        missing_origins = sorted(protected_origins - current_origin_issues)
+        failures = []
+        if collisions:
+            failures.append("ID衝突: " + ", ".join(sorted(collisions)))
+        if missing_origins:
+            failures.append("accepted issueのorigin成果物消失: " + ", ".join(missing_origins))
+        if failures:
+            return False, (
+                f"integration-preflight: target_sha={target_sha} "
+                + " / ".join(failures)
+            )
+        return True, f"integration-preflight: PASS target_sha={target_sha}"
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        return False, f"integration-preflight: target SHAを証明できません: {exc}"
+
+
 def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None) -> str:
     req_dir = root / ".spec" / "requirements"
     if not req_dir.exists():
@@ -252,8 +482,10 @@ def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None) 
     domains = load_domains(req_dir)
     forbidden = load_forbidden_words(req_dir)
     impl = implements_map(root)
+    task_statuses = local_task_statuses(root)
     all_refs = scan_refs(root, [".spec/specs", ".spec/tasks", "tests", "test", "src"],
                          exclude_names=("inspection-report.md",))
+    problems += check_state_events(root)
 
     for rid, r in reqs.items():
         fm = r["fm"]
@@ -273,9 +505,38 @@ def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None) 
             for w in forbidden:
                 if w and w in body:
                     problems.append(f"[lint] {rid}: 禁止語『{w}』（測定不能）を含む — 数値/閾値へ書き換え")
-            for line in body.splitlines():
-                if "WHEN" in line and "SHALL" not in line:
-                    problems.append(f"[lint] {rid}: EARS不完全（WHEN があるのに SHALL がない行）")
+            ears_clause = ""
+            for line in body.splitlines() + [""]:
+                stripped = line.strip()
+                if stripped.startswith("- WHEN"):
+                    if ears_clause and "SHALL" not in ears_clause:
+                        problems.append(
+                            f"[lint] {rid}: EARS不完全（WHEN 節に SHALL がない）"
+                        )
+                    ears_clause = stripped[2:].strip()
+                elif ears_clause and (
+                    not stripped
+                    or stripped.startswith("- ")
+                    or stripped.startswith("#")
+                ):
+                    if "SHALL" not in ears_clause:
+                        problems.append(
+                            f"[lint] {rid}: EARS不完全（WHEN 節に SHALL がない）"
+                        )
+                    ears_clause = ""
+                elif ears_clause:
+                    ears_clause += " " + stripped
+            if st in {"verified", "promoted"}:
+                bindings = task_statuses.get(rid, [])
+                incomplete = [f"{path} ({status or 'missing'})"
+                              for path, status in bindings if status != "done"]
+                if not bindings:
+                    problems.append(f"[trace] {rid}: verified/promotedだがlocal taskがない")
+                elif incomplete:
+                    problems.append(
+                        f"[trace] {rid}: verified/promotedだが未完了local taskがある: "
+                        + ", ".join(incomplete)
+                    )
 
     # タスク ID（.spec/tasks/ のファイル名 stem）は既知 ID として幽霊判定から除外する
     # （depends_on / specs からのタスク参照を許すため。成果物レジストリには登録しない — SI-CORE-003）
@@ -395,6 +656,8 @@ def main():
                         help="Run inspection without creating or updating inspection-report.md")
     parser.add_argument("--impact", help="ID for impact analysis")
     parser.add_argument("--impact-docs", help="docs path for impact analysis")
+    parser.add_argument("--target-ref",
+                        help="integration preflightを束縛するtarget ref（SDD-FR-144）")
     args = parser.parse_args()
 
     workspaces = [Path(p).resolve() for p in (args.workspace if args.workspace else args.roots)]
@@ -411,6 +674,12 @@ def main():
     delegation_ctx = build_delegation_context(workspaces)
 
     has_error = False
+    if args.target_ref:
+        for workspace in workspaces:
+            passed, message = integration_preflight(workspace, args.target_ref)
+            print(message)
+            if not passed:
+                has_error = True
     for w in workspaces:
         if len(workspaces) > 1:
             print(f"=== Workspace: {w.name} ===")

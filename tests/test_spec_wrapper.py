@@ -17,6 +17,7 @@ SPEC_TOOLS = {
     "status": "spec_status.py",
     "update": "spec_update.py",
 }
+V3_SUPPORT_SCRIPTS = ("spec_labels.py", "spec_trace.py", "spec_transaction.py")
 REL = ("skills", "sdd-core", "scripts")
 FAKE_TEMPLATE = (
     "import sys, os, json\n"
@@ -47,6 +48,7 @@ def make_version(
     *,
     manifest_version=None,
     content_tag=None,
+    v3_support=False,
 ) -> Path:
     """完全または意図的に破損したbitz-sdd cache版を作る。"""
     ver_root = cache_root / marketplace / "bitz-sdd" / version
@@ -64,6 +66,11 @@ def make_version(
         (scripts_dir / SPEC_TOOLS[tool]).write_text(
             FAKE_TEMPLATE.format(marker=f"{tag}:{tool}"), encoding="utf-8"
         )
+    if v3_support:
+        for script_name in V3_SUPPORT_SCRIPTS:
+            (scripts_dir / script_name).write_text(
+                f"# support {tag}:{script_name}\n", encoding="utf-8"
+            )
     return ver_root
 
 
@@ -465,3 +472,32 @@ def test_CORE_FR_011_source_has_no_hardcoded_plugin_version():
     src = SPEC_WRAPPER.read_text(encoding="utf-8")
     hits = re.findall(r"\b\d+\.\d+\.\d+\b", src)
     assert not hits, f"プラグインversionが直書きされている: {hits}"
+
+
+def test_SDD_FR_143_v3_candidate_requires_transaction_support_scripts(tmp_path):
+    repo = make_repo(tmp_path)
+    plugins = tmp_path / "plugins"
+    make_version(plugins / "cache", "bitzskills", "2.9.0")
+    make_version(plugins / "cache", "bitzskills", "3.0.0")
+
+    result = run_spec(repo, plugins, "update")
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout)["marker"] == "2.9.0:update"
+
+
+def test_SDD_FR_143_complete_v3_candidate_is_selectable(tmp_path):
+    repo = make_repo(tmp_path)
+    plugins = tmp_path / "plugins"
+    make_version(plugins / "cache", "bitzskills", "2.9.0")
+    make_version(
+        plugins / "cache",
+        "bitzskills",
+        "3.0.0",
+        v3_support=True,
+    )
+
+    result = run_spec(repo, plugins, "update")
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout)["marker"] == "3.0.0:update"

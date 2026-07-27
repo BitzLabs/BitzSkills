@@ -2,10 +2,10 @@
 name: sdd-core
 description: BitzSDD — 仕様駆動開発（SDD）ワークフローを運用するメインスキル。要件定義・仕様作成・実装・検証・完了処理のすべてをこの規律に従って実行する。ユーザーが「仕様駆動」「SDD」「要件」「EARS」「spec」「タスク分解」「feature実装」に言及したとき、リポジトリに .spec/ や AGENTS.md が存在するとき、または新機能の設計・実装・検証・リリース処理を依頼されたときは、明示的な指示がなくても必ずこのスキルを使うこと。要件の変更・廃止・番号管理・テスト失敗時の対応・ドキュメント更新もすべて本スキルの管轄。
 metadata:
-  version: "2.6.0"
+  version: "3.0.0"
   author: br7.hide
   created: "2026-07-07"
-  updated: "2026-07-22"
+  updated: "2026-07-27"
 ---
 
 # BitzSDD Workflow (spec駆動開発)
@@ -81,7 +81,8 @@ execute / verify / done` の7語）が正で、本表と `references/gates.md` �
    要望の整理・重複チェック・可否の予備判定を含むインテーク運用フローは `sdd-issue` が定型化する
    （規律・ライフサイクルの正は本スキル sdd-core のまま。裁定は人間専用）
 2. 要件化が必要なら `.spec/requirements/` に draft 起票（`spec_scaffold.py`）→ 人間が approved 化
-   （`spec_update.py --by-human`）。既存要件の範囲内なら要件追加も不要
+   （`spec_update.py --interactive-decision --actor <decision-operator>`）。
+   既存要件の範囲内なら要件追加も不要
 3. `sdd-implement` のタスク分解（1タスクで可、`spec_scaffold.py`）→ 実装 → `sdd-test` 検証
 
 **discovery / design はスキップしてよい**。ただし契約（公開 API・`.spec` スキーマ・
@@ -147,10 +148,18 @@ python3 scripts/spec_scaffold.py <workspace> design --prefix DSN --title "..." [
 
 # status 遷移（権限マトリクス強制）
 python3 scripts/spec_update.py <workspace> CORE-FR-004 --to implementing            # エージェント許容遷移
-python3 scripts/spec_update.py <workspace> CORE-FR-004 --to approved --by-human      # 人間専用遷移は要フラグ
+python3 scripts/spec_update.py <workspace> CORE-FR-004 --to approved \
+  --interactive-decision --actor <decision-operator>  # 対話入力を要求（本人性は未検証）
+python3 scripts/spec_update.py <workspace> --recover <event-id>                     # 未完了transaction復旧
+python3 scripts/spec_update.py <workspace> --recover-lock                           # 未開始lock復旧
 ```
 
 **権限の分離**: `draft→approved` / `open→accepted` / `verified→promoted` / `任意→deprecated` は
-人間専用で、`--by-human` が無ければ拒否される。権限マトリクスに無い遷移は誰でも拒否。
-遷移は対象の frontmatter を書き換え、`.spec/STATE.md` に記録を残す。詳細は
-`references/lifecycle.md` の状態遷移表が正。
+人間裁定必須で、`--interactive-decision`によるTTYと確認文字列の再入力がなければ拒否する。
+これは明示的な対話入力の強制であり、人間本人の認証ではない。STATEには
+`interactive-confirmation-unverified`として記録する。旧`--by-human`は誤認防止のため廃止した。
+権限マトリクスに無い遷移は誰でも拒否する。詳細は`references/lifecycle.md`が正。
+
+全変更CLIはworkspace mutation lockへ参加し、statusとSTATEまたは新規成果物をwrite-ahead
+journalで回復可能に永続化する。`.spec/.transactions/`または`.spec/.mutation-lock`が残る場合は
+通常変更を続行せず、上記recoverコマンドでhash照合できる場合だけ復旧する。

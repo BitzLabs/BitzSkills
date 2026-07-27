@@ -263,3 +263,31 @@ def test_design_number_skips_suffixed_existing_file(tmp_path):
     expected = design_dir / f"DSN-{2:03d}.md"
     assert expected.exists(), "サフィックス付き既存ファイルの番号を見逃してはならない"
     assert not (design_dir / "DSN-001.md").exists(), "既存の DSN-001 と ID が重複してはならない"
+
+
+# --- SDD-FR-144: 排他的・回復可能な公開 -------------------------------------
+
+
+def test_SDD_FR_144_existing_workspace_lock_fails_without_output(tmp_path):
+    req_dir = tmp_path / ".spec" / "requirements"
+    req_dir.mkdir(parents=True)
+    (tmp_path / ".spec" / ".mutation-lock").write_text("{}", encoding="utf-8")
+
+    result = run(tmp_path, "requirement", "--prefix", "CORE-" + FR[:-1])
+
+    assert result.returncode != 0
+    assert "mutation-conflict" in result.stderr
+    assert not list(req_dir.glob("CORE-*.md"))
+
+
+def test_SDD_FR_144_success_cleans_lock_and_journal(tmp_path):
+    req_dir = tmp_path / ".spec" / "requirements"
+    req_dir.mkdir(parents=True)
+
+    result = run(tmp_path, "requirement", "--prefix", "CORE-" + FR[:-1])
+
+    assert result.returncode == 0, result.stderr
+    assert not (tmp_path / ".spec" / ".mutation-lock").exists()
+    transactions = tmp_path / ".spec" / ".transactions"
+    assert not list(transactions.glob("*.json"))
+    assert (req_dir / f"CORE-{FR}001.md").read_text(encoding="utf-8").endswith("\n")

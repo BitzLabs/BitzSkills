@@ -1,5 +1,8 @@
 import subprocess
 import sys
+import base64
+import hashlib
+import json
 from pathlib import Path
 
 # プロジェクトルートにある元のスクリプト
@@ -15,6 +18,7 @@ GHOST_ID = "FR-" + "999"
 TASK_ID = "TSK-" + "001"
 TASK_ID2 = "TSK-" + "002"
 GHOST_TASK_ID = "TSK-" + "999"
+ISSUE_ID = "SI-" + "TEST-" + "001"
 
 
 def make_spec(tmp_path: Path):
@@ -115,6 +119,44 @@ def test_true_ghost_reference_still_detected(tmp_path: Path):
     report = (tmp_path / ".spec" / "inspection-report.md").read_text(encoding="utf-8")
     assert GHOST_ID in report
     assert "FAIL" in report
+
+
+def test_wrapped_ears_clause_accepts_shall_on_continuation_line(tmp_path: Path):
+    """EARS 節は物理行ではなく箇条書き全体で SHALL の有無を検査する。"""
+    make_spec(tmp_path)
+    req_path = tmp_path / ".spec" / "requirements" / f"{REQ_ID}.md"
+    req_path.write_text(
+        f"---\nid: {REQ_ID}\nversion: 1.0\nstatus: draft\n---\n\n"
+        f"### {REQ_ID} 折り返し EARS\n\n"
+        "- **受入基準 (EARS)**:\n"
+        "  - WHEN 入力が複数行に折り返される\n"
+        "    THEN 箇条書き全体を一つの節として検査すること SHALL\n",
+        encoding="utf-8",
+    )
+
+    result = run_inspect(tmp_path, "--check-only")
+
+    assert result.returncode == 0, result.stdout
+    assert "EARS不完全" not in result.stdout
+
+
+def test_ears_clause_without_shall_still_fails(tmp_path: Path):
+    """論理的な WHEN 節全体に SHALL が無ければ引き続き FAIL にする。"""
+    make_spec(tmp_path)
+    req_path = tmp_path / ".spec" / "requirements" / f"{REQ_ID}.md"
+    req_path.write_text(
+        f"---\nid: {REQ_ID}\nversion: 1.0\nstatus: draft\n---\n\n"
+        f"### {REQ_ID} 不完全 EARS\n\n"
+        "- **受入基準 (EARS)**:\n"
+        "  - WHEN 入力を受け取る\n"
+        "    THEN 処理する\n",
+        encoding="utf-8",
+    )
+
+    result = run_inspect(tmp_path, "--check-only")
+
+    assert result.returncode == 1
+    assert "EARS不完全" in result.stdout
 
 
 # ---- SDD-FR-133: check-only 読み取り専用検査 ----
@@ -406,3 +448,251 @@ def test_SDD_FR_124_active_requirement_accepts_unit_test(tmp_path: Path):
     report = (tmp_path / ".spec" / "inspection-report.md").read_text(encoding="utf-8")
     assert res.returncode == 0, report
     assert "verification_method が未記入/語彙外" not in report
+
+
+# ---- SDD-FR-143: local task completion / audit integrity --------------------
+
+
+def test_SDD_FR_143_verified_with_incomplete_local_task_fails(tmp_path: Path):
+    tasks_dir = make_spec(tmp_path)
+    write_active_requirement(tmp_path, "verified")
+    (tasks_dir / f"{TASK_ID}.md").write_text(
+        f"---\nimplements: {REQ_ID}\ndepends_on: []\nstatus: implementing\n---\n",
+        encoding="utf-8",
+    )
+
+    result = run_inspect(tmp_path)
+    assert result.returncode == 1
+    assert "[trace]" in result.stdout
+    assert "未完了local task" in result.stdout
+
+
+def test_SDD_FR_143_corrupt_structured_state_event_fails(tmp_path: Path):
+    make_spec(tmp_path)
+    (tmp_path / ".spec" / "STATE.md").write_text(
+        "- 2026-07-27 sample\n<!-- sdd-event:not-base64! -->\n",
+        encoding="utf-8",
+    )
+
+    result = run_inspect(tmp_path)
+    assert result.returncode == 1
+    assert "audit-corruption" in result.stdout
+
+
+def test_SDD_FR_143_incomplete_journal_fails_inspect(tmp_path: Path):
+    make_spec(tmp_path)
+    transactions = tmp_path / ".spec" / ".transactions"
+    transactions.mkdir()
+    (transactions / "event.json").write_text("{}", encoding="utf-8")
+
+    result = run_inspect(tmp_path)
+    assert result.returncode == 1
+    assert "incomplete-transaction" in result.stdout
+
+
+def _state_event(
+    artifact_id: str,
+    path: str,
+    old: str,
+    new: str,
+    event_id: str,
+) -> str:
+    event = {
+        "schema_version": 1,
+        "event_id": event_id,
+        "timestamp": "2026-07-27T00:00:00Z",
+        "path": path,
+        "artifact_id": artifact_id,
+        "old": old,
+        "new": new,
+        "provenance": {"kind": "agent", "actor": "test"},
+        "artifact_before_hash": hashlib.sha256(old.encode()).hexdigest(),
+        "artifact_after_hash": hashlib.sha256(new.encode()).hexdigest(),
+    }
+    payload = json.dumps(
+        event, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode()
+    encoded = base64.b64encode(payload).decode()
+    return (
+        f"- 2026-07-27 {artifact_id}: {old} → {new} (test)\n"
+        f"<!-- sdd-event:{encoded} -->\n"
+    )
+
+
+def test_SDD_FR_143_transition_chain_mismatch_fails_inspect(tmp_path: Path):
+    make_spec(tmp_path)
+    req_path = tmp_path / ".spec" / "requirements" / f"{REQ_ID}.md"
+    req_path.write_text(
+        f"---\nid: {REQ_ID}\nversion: 1.0\nstatus: verified\n"
+        "domain: verification\nverification_method: unit-test\n---\n",
+        encoding="utf-8",
+    )
+    task = tmp_path / ".spec" / "tasks" / f"{TASK_ID}.md"
+    task.write_text(
+        f"---\nimplements: {REQ_ID}\nstatus: done\n---\n",
+        encoding="utf-8",
+    )
+    relative = f".spec/requirements/{REQ_ID}.md"
+    state = tmp_path / ".spec" / "STATE.md"
+    state.write_text(
+        "# STATE\n\n"
+        + _state_event(REQ_ID, relative, "draft", "approved", "event-1")
+        + _state_event(REQ_ID, relative, "implementing", "verified", "event-2"),
+        encoding="utf-8",
+    )
+
+    result = run_inspect(tmp_path, "--check-only")
+
+    assert result.returncode == 1
+    assert "遷移連鎖が不正" in result.stdout
+
+
+def test_SDD_FR_143_current_status_must_match_last_event(tmp_path: Path):
+    make_spec(tmp_path)
+    state = tmp_path / ".spec" / "STATE.md"
+    state.write_text(
+        "# STATE\n\n"
+        + _state_event(
+            REQ_ID,
+            f".spec/requirements/{REQ_ID}.md",
+            "draft",
+            "approved",
+            "event-1",
+        ),
+        encoding="utf-8",
+    )
+
+    result = run_inspect(tmp_path, "--check-only")
+
+    assert result.returncode == 1
+    assert "現status" in result.stdout
+
+
+# ---- SDD-FR-144: target SHA bound integration preflight ---------------------
+
+
+def _git(root: Path, *args: str):
+    return subprocess.run(
+        ["git", *args],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+
+def _init_git_workspace(root: Path):
+    make_spec(root)
+    _git(root, "init", "-q")
+    _git(root, "config", "user.name", "test")
+    _git(root, "config", "user.email", "test@example.invalid")
+    _git(root, "add", ".")
+    _git(root, "commit", "-qm", "baseline")
+    branch = _git(root, "branch", "--show-current").stdout.strip()
+    return branch
+
+
+def test_SDD_FR_144_target_ref_preflight_reports_exact_sha(tmp_path: Path):
+    branch = _init_git_workspace(tmp_path)
+    _git(tmp_path, "switch", "-qc", "feature")
+    second_id = "FR-" + "002"
+    (tmp_path / ".spec" / "requirements" / f"{second_id}.md").write_text(
+        f"---\nid: {second_id}\nversion: 1.0\nstatus: draft\n---\n",
+        encoding="utf-8",
+    )
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-qm", "feature")
+    target_sha = _git(tmp_path, "rev-parse", branch).stdout.strip()
+
+    result = run_inspect(tmp_path, "--check-only", "--target-ref", branch)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert f"target_sha={target_sha}" in result.stdout
+
+
+def test_SDD_FR_144_target_ref_collision_fails(tmp_path: Path):
+    make_spec(tmp_path)
+    collision_id = "FR-" + "002"
+    legacy = tmp_path / ".spec" / "requirements" / "legacy.md"
+    legacy.write_text(
+        f"---\nid: {collision_id}\nversion: 1.0\nstatus: draft\n---\n",
+        encoding="utf-8",
+    )
+    _git(tmp_path, "init", "-q")
+    _git(tmp_path, "config", "user.name", "test")
+    _git(tmp_path, "config", "user.email", "test@example.invalid")
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-qm", "baseline")
+    branch = _git(tmp_path, "branch", "--show-current").stdout.strip()
+    _git(tmp_path, "switch", "-qc", "feature")
+    (tmp_path / ".spec" / "requirements" / f"{collision_id}.md").write_text(
+        f"---\nid: {collision_id}\nversion: 1.0\nstatus: draft\n---\n",
+        encoding="utf-8",
+    )
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-qm", "renumbered")
+
+    result = run_inspect(tmp_path, "--check-only", "--target-ref", branch)
+    assert result.returncode == 1
+    assert "ID衝突" in result.stdout
+    assert collision_id in result.stdout
+
+
+def test_SDD_FR_144_target_ref_allows_id_preserving_relocation(tmp_path: Path):
+    """target上の旧pathからIDを除去して新pathへ移すだけなら再採番衝突ではない。"""
+    make_spec(tmp_path)
+    relocated_id = "FR-" + "002"
+    legacy = tmp_path / ".spec" / "requirements" / "legacy.md"
+    legacy.write_text(
+        f"---\nid: {relocated_id}\nversion: 1.0\nstatus: draft\n---\n",
+        encoding="utf-8",
+    )
+    _git(tmp_path, "init", "-q")
+    _git(tmp_path, "config", "user.name", "test")
+    _git(tmp_path, "config", "user.email", "test@example.invalid")
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-qm", "baseline")
+    branch = _git(tmp_path, "branch", "--show-current").stdout.strip()
+    _git(tmp_path, "switch", "-qc", "feature")
+    legacy.unlink()
+    (tmp_path / ".spec" / "requirements" / f"{relocated_id}.md").write_text(
+        f"---\nid: {relocated_id}\nversion: 1.0\nstatus: draft\n---\n",
+        encoding="utf-8",
+    )
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-qm", "relocated")
+
+    result = run_inspect(tmp_path, "--check-only", "--target-ref", branch)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_SDD_FR_144_target_ref_detects_accepted_origin_disappearance(tmp_path: Path):
+    make_spec(tmp_path)
+    req_path = tmp_path / ".spec" / "requirements" / f"{REQ_ID}.md"
+    req_path.write_text(
+        f"---\nid: {REQ_ID}\nversion: 1.0\nstatus: draft\n"
+        f"origin: {ISSUE_ID}\n---\n",
+        encoding="utf-8",
+    )
+    issues = tmp_path / ".spec" / "spec-issues"
+    issues.mkdir()
+    (issues / f"{ISSUE_ID}.md").write_text(
+        f"---\nid: {ISSUE_ID}\nstatus: accepted\n---\n",
+        encoding="utf-8",
+    )
+    _git(tmp_path, "init", "-q")
+    _git(tmp_path, "config", "user.name", "test")
+    _git(tmp_path, "config", "user.email", "test@example.invalid")
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-qm", "baseline")
+    branch = _git(tmp_path, "branch", "--show-current").stdout.strip()
+    _git(tmp_path, "switch", "-qc", "feature")
+    req_path.unlink()
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-qm", "lost origin")
+
+    result = run_inspect(tmp_path, "--check-only", "--target-ref", branch)
+
+    assert result.returncode == 1
+    assert "origin成果物消失" in result.stdout
+    assert ISSUE_ID in result.stdout

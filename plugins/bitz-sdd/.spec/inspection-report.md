@@ -1,21 +1,12 @@
-# inspection-report.md (2026-07-22)
+# inspection-report.md (2026-07-27)
 
-成果物数: 68 / 問題: 10 / 幽霊参照: 1 / 実装待ち: 0 / 孤児要件: 0
+成果物数: 73 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0
 
 ## 問題一覧
-- [lint] SDD-FR-141: EARS不完全（WHEN があるのに SHALL がない行）
-- [lint] SDD-FR-141: EARS不完全（WHEN があるのに SHALL がない行）
-- [lint] SDD-FR-141: EARS不完全（WHEN があるのに SHALL がない行）
-- [lint] SDD-FR-141: EARS不完全（WHEN があるのに SHALL がない行）
-- [lint] SDD-FR-141: EARS不完全（WHEN があるのに SHALL がない行）
-- [lint] SDD-FR-142: EARS不完全（WHEN があるのに SHALL がない行）
-- [lint] SDD-FR-142: EARS不完全（WHEN があるのに SHALL がない行）
-- [lint] SDD-FR-142: EARS不完全（WHEN があるのに SHALL がない行）
-- [lint] SDD-FR-142: EARS不完全（WHEN があるのに SHALL がない行）
-- [lint] SDD-FR-142: EARS不完全（WHEN があるのに SHALL がない行）
+- なし ✅
 
 ## 幽霊参照（存在しないIDへの参照）
-- SDD-REV-001 ← .spec/specs/sdd-verification-governance/test-spec.md
+- なし ✅
 
 ## 実装待ち要件（approved だが implements するタスクがない — WARN）
 - なし ✅
@@ -75,6 +66,8 @@
 - SDD-FR-140
 - SDD-FR-141
 - SDD-FR-142
+- SDD-FR-143
+- SDD-FR-144
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
 ※ 乖離は候補提示のみ。stale 付与は references/lifecycle.md の再伝播プロトコル（判定パス→人間確認）を経ること
@@ -95,10 +88,12 @@
 | SDD-DSC-004 | 起草中（draft） |  |  | 0 | 0 |
 | SDD-DSC-005 | 起草中（draft） |  |  | 0 | 0 |
 | SDD-DSC-006 | 起草中（draft） |  |  | 0 | 0 |
+| SDD-DSN-000 | active |  |  | 0 | 0 |
 | SDD-DSN-001 | active |  |  | 0 | 0 |
 | SDD-DSN-002 | active |  |  | 0 | 0 |
 | SDD-DSN-003 | active |  |  | 0 | 0 |
 | SDD-DSN-004 | active |  |  | 0 | 3 |
+| SDD-DSN-005 | active |  |  | 0 | 1 |
 | SDD-FR-001 | 検証済み（verified） | verification | example-test | 1 | 2 |
 | SDD-FR-010 | 検証済み（verified） | verification | example-test | 1 | 1 |
 | SDD-FR-011 | 検証済み（verified） | workflow | manual-check | 1 | 1 |
@@ -148,8 +143,11 @@
 | SDD-FR-140 | 検証済み（verified） | workflow | unit-test | 1 | 1 |
 | SDD-FR-141 | 検証済み（verified） | reporting | example-test | 3 | 3 |
 | SDD-FR-142 | 検証済み（verified） | reporting | example-test | 3 | 3 |
+| SDD-FR-143 | 検証済み（verified） | workflow | unit-test | 2 | 3 |
+| SDD-FR-144 | 検証済み（verified） | workflow | unit-test | 2 | 3 |
 | SDD-REV-002 | active |  |  | 0 | 1 |
 | SDD-REV-003 | active |  |  | 0 | 0 |
 | SDD-REV-004 | active |  |  | 0 | 0 |
+| SDD-REV-005 | active |  |  | 0 | 1 |
 
-**判定: FAIL ❌（上記を解消するまで verified に進めない）**
+**判定: PASS ✅**
