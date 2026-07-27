@@ -2,10 +2,10 @@
 name: sdd-docs
 description: BitzSDD の docs/（人間ナラティブ層）を日本語6章で初期化・検証し、.spec/（仕様マスター）と双方向同期（pull/push/diff）するスキル。必須6章、宣言式の任意リファレンス章、管理対象外パス、安全な旧8章移行を扱う。「docs/ を初期化して」「同期して」「docsを日本語化して」「旧8章を移行して」「docs を検証して」と言われたときに使用する。
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   author: br7.hide
   created: "2026-07-07"
-  updated: "2026-07-19"
+  updated: "2026-07-27"
 ---
 
 # sdd-docs

@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-27)
 
-成果物数: 39 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0
+成果物数: 41 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -27,13 +27,13 @@
 - CORE-CON-010
 - CORE-FR-001
 - CORE-FR-002
-- CORE-FR-005
 - CORE-FR-006
 - CORE-FR-007
 - CORE-FR-008
 - CORE-FR-009
 - CORE-FR-013
 - CORE-FR-014
+- CORE-FR-017
 - CORE-NFR-001
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
@@ -63,8 +63,8 @@
 | CORE-FR-001 | 検証済み（verified） | governance | manual-check | 1 | 1 |
 | CORE-FR-002 | 検証済み（verified） | tooling | example-test | 1 | 1 |
 | CORE-FR-003 | 検証済み（verified） | tooling | example-test | 1 | 3 |
-| CORE-FR-004 | 検証済み（verified） | tooling | example-test | 1 | 2 |
-| CORE-FR-005 | 検証済み（verified） | tooling | example-test | 1 | 1 |
+| CORE-FR-004 | 廃止（deprecated） | tooling | example-test | 1 | 2 |
+| CORE-FR-005 | 廃止（deprecated） | tooling | example-test | 1 | 1 |
 | CORE-FR-006 | 検証済み（verified） | governance | manual-check | 2 | 2 |
 | CORE-FR-007 | 検証済み（verified） | governance | manual-check | 1 | 1 |
 | CORE-FR-008 | 検証済み（verified） | governance | manual-check | 1 | 1 |
@@ -76,11 +76,13 @@
 | CORE-FR-014 | 検証済み（verified） | governance | example-test | 3 | 3 |
 | CORE-FR-015 | 検証済み（verified） | tooling | unit-test | 3 | 5 |
 | CORE-FR-016 | 検証済み（verified） | governance | example-test | 1 | 2 |
+| CORE-FR-017 | 検証済み（verified） | tooling | example-test | 3 | 3 |
 | CORE-NFR-001 | 検証済み（verified） | tooling | example-test | 1 | 1 |
 | CORE-REV-002 | active |  |  | 0 | 0 |
 | DSN-001 | active |  |  | 0 | 5 |
 | DSN-002 | 承認済み（approved） |  |  | 0 | 1 |
 | DSN-003 | 承認済み（approved） |  |  | 0 | 0 |
 | DSN-004 | 承認済み（approved） |  |  | 0 | 1 |
+| DSN-005 | 承認済み（approved） |  |  | 0 | 0 |
 
 **判定: PASS ✅**
