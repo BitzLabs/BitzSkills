@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-145
 version: 1.0
-status: draft
+status: approved
 domain: workflow
 priority: high
 origin: SI-SDD-027
