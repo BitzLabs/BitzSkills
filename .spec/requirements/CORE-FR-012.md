@@ -1,7 +1,7 @@
 ---
 id: CORE-FR-012
 version: 1.2
-status: verified
+status: promoted
 domain: tooling
 priority: medium
 origin: SI-CORE-025
