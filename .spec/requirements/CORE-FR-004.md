@@ -1,14 +1,14 @@
 ---
 id: CORE-FR-004
 version: 1.0
-status: verified
+status: deprecated
 domain: tooling
 priority: medium
 origin: SI-CORE-012（プロジェクト改修計画 2026-07-12 ユーザー要望3。定型処理のスクリプト化）
 verification_method: example-test
 derived_from:
 supersedes:
-superseded_by:
+superseded_by: SDD-FR-144
 confidence: high
 ---
 
@@ -28,3 +28,4 @@ confidence: high
 - **Revision History**:
   - 1.0 (2026-07-13) 初版（SI-CORE-012 の要件化ドラフト。テスト先行）
   - 1.0 (2026-07-13) 人間裁定により approved 化（チャット指示）
+  - 1.0 (2026-07-27) 後継 SDD-FR-144 が verified となり、人間裁定で deprecated 化

@@ -7,7 +7,7 @@ priority: medium
 origin: SI-SDD-024, SI-CORE-035
 verification_method: unit-test
 derived_from:
-supersedes:
+supersedes: CORE-FR-004
 superseded_by:
 confidence: high
 ---
