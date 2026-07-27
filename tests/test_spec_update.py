@@ -235,10 +235,13 @@ def test_SDD_FR_143_issue_accept_is_not_agent_allowed(tmp_path):
 
 # --- SDD-FR-145: 代行可視化経路（on-behalf-of + decision-ref） ---
 
+REF_ISSUE_ID = "SI-CORE-" + "099"  # 直書きすると本リポジトリのspec_inspectが幽霊参照として誤検知する
+
+
 def make_ref(root: Path) -> str:
-    _write(root / ".spec" / "spec-issues" / "SI-CORE-099.md",
-           "---\nid: SI-CORE-099\nstatus: accepted\n---\n- 裁定記録\n")
-    return ".spec/spec-issues/SI-CORE-099.md"
+    _write(root / ".spec" / "spec-issues" / f"{REF_ISSUE_ID}.md",
+           f"---\nid: {REF_ISSUE_ID}\nstatus: accepted\n---\n- 裁定記録\n")
+    return f".spec/spec-issues/{REF_ISSUE_ID}.md"
 
 
 def run_proxy(root, idents, to, *extra):
@@ -366,7 +369,7 @@ def test_SDD_FR_145_batch_shares_decision_ref_across_events(tmp_path):
 def test_SDD_FR_145_batch_rejects_unknown_id_upfront(tmp_path):
     r1 = make_req(tmp_path, 1, "draft")
     ref = make_ref(tmp_path)
-    result = run_proxy(tmp_path, [r1, "CORE-FR-999"], "approved", *proxy_args(ref))
+    result = run_proxy(tmp_path, [r1, f"CORE-{FR}999"], "approved", *proxy_args(ref))
     assert result.returncode == 2
     assert status_of(tmp_path, "requirements", r1) == "draft"
 

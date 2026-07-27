@@ -696,3 +696,134 @@ def test_SDD_FR_144_target_ref_detects_accepted_origin_disappearance(tmp_path: P
     assert result.returncode == 1
     assert "origin成果物消失" in result.stdout
     assert ISSUE_ID in result.stdout
+
+
+# ---- SDD-FR-145: schema v2 proxy event audit --------------------------------
+
+
+def _proxy_event(
+    artifact_id: str,
+    path: str,
+    old: str,
+    new: str,
+    event_id: str,
+    decision_ref: str,
+    schema_version: int = 2,
+    kind: str = "agent-proxy-unverified",
+    drop: tuple = (),
+) -> str:
+    provenance = {
+        "kind": kind,
+        "actor": "claude",
+        "on_behalf_of": "hide",
+        "decision_ref": decision_ref,
+    }
+    for key in drop:
+        provenance.pop(key, None)
+    event = {
+        "schema_version": schema_version,
+        "event_id": event_id,
+        "timestamp": "2026-07-27T00:00:00Z",
+        "path": path,
+        "artifact_id": artifact_id,
+        "old": old,
+        "new": new,
+        "provenance": provenance,
+        "artifact_before_hash": hashlib.sha256(old.encode()).hexdigest(),
+        "artifact_after_hash": hashlib.sha256(new.encode()).hexdigest(),
+    }
+    payload = json.dumps(
+        event, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode()
+    encoded = base64.b64encode(payload).decode()
+    return (
+        f"- 2026-07-27 {artifact_id}: {old} → {new} (claude on behalf of hide)\n"
+        f"<!-- sdd-event:{encoded} -->\n"
+    )
+
+
+def _approved_requirement(tmp_path: Path) -> str:
+    req_path = tmp_path / ".spec" / "requirements" / f"{REQ_ID}.md"
+    req_path.write_text(
+        f"---\nid: {REQ_ID}\nversion: 1.0\nstatus: approved\n"
+        "domain: verification\nverification_method: unit-test\n---\n\n"
+        f"### {REQ_ID} サンプル要件\n- WHEN x THEN y SHALL\n",
+        encoding="utf-8",
+    )
+    return f".spec/requirements/{REQ_ID}.md"
+
+
+def test_SDD_FR_145_valid_proxy_event_passes_inspect(tmp_path: Path):
+    make_spec(tmp_path)
+    relative = _approved_requirement(tmp_path)
+    ref = f".spec/spec-issues/{ISSUE_ID}.md"
+    issue = tmp_path / ref
+    issue.parent.mkdir(parents=True, exist_ok=True)
+    issue.write_text(f"---\nid: {ISSUE_ID}\nstatus: accepted\n---\n- 裁定\n", encoding="utf-8")
+    (tmp_path / ".spec" / "STATE.md").write_text(
+        "# STATE\n\n" + _proxy_event(REQ_ID, relative, "draft", "approved", "event-1", ref),
+        encoding="utf-8",
+    )
+    result = run_inspect(tmp_path)
+    report = (tmp_path / ".spec" / "inspection-report.md").read_text(encoding="utf-8")
+    assert result.returncode == 0, report
+    assert "audit-corruption" not in report
+    assert "decision-ref参照先が見つかりません" not in report
+
+
+def test_SDD_FR_145_proxy_event_missing_reference_field_fails(tmp_path: Path):
+    make_spec(tmp_path)
+    relative = _approved_requirement(tmp_path)
+    (tmp_path / ".spec" / "STATE.md").write_text(
+        "# STATE\n\n"
+        + _proxy_event(REQ_ID, relative, "draft", "approved", "event-1",
+                       "unused", drop=("decision_ref",)),
+        encoding="utf-8",
+    )
+    result = run_inspect(tmp_path)
+    assert result.returncode == 1
+    assert "audit-corruption" in result.stdout
+
+
+def test_SDD_FR_145_proxy_event_requires_schema_v2(tmp_path: Path):
+    make_spec(tmp_path)
+    relative = _approved_requirement(tmp_path)
+    (tmp_path / ".spec" / "STATE.md").write_text(
+        "# STATE\n\n"
+        + _proxy_event(REQ_ID, relative, "draft", "approved", "event-1",
+                       ".spec/STATE.md", schema_version=1),
+        encoding="utf-8",
+    )
+    result = run_inspect(tmp_path)
+    assert result.returncode == 1
+    assert "audit-corruption" in result.stdout
+
+
+def test_SDD_FR_145_schema_v2_requires_proxy_kind(tmp_path: Path):
+    make_spec(tmp_path)
+    relative = _approved_requirement(tmp_path)
+    (tmp_path / ".spec" / "STATE.md").write_text(
+        "# STATE\n\n"
+        + _proxy_event(REQ_ID, relative, "draft", "approved", "event-1",
+                       ".spec/STATE.md", kind="agent"),
+        encoding="utf-8",
+    )
+    result = run_inspect(tmp_path)
+    assert result.returncode == 1
+    assert "audit-corruption" in result.stdout
+
+
+def test_SDD_FR_145_missing_decision_ref_file_warns_but_passes(tmp_path: Path):
+    make_spec(tmp_path)
+    relative = _approved_requirement(tmp_path)
+    (tmp_path / ".spec" / "STATE.md").write_text(
+        "# STATE\n\n"
+        + _proxy_event(REQ_ID, relative, "draft", "approved", "event-1",
+                       ".spec/spec-issues/GONE.md"),
+        encoding="utf-8",
+    )
+    result = run_inspect(tmp_path)
+    report = (tmp_path / ".spec" / "inspection-report.md").read_text(encoding="utf-8")
+    assert result.returncode == 0, report
+    assert "decision-ref参照先が見つかりません" in report
+    assert "PASS" in report

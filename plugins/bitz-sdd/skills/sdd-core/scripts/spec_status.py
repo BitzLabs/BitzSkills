@@ -14,6 +14,7 @@ sdd_report.py との棲み分け:
   python spec_status.py --workspace . plugins/*     # 複数ワークスペースを一括照会
 """
 import argparse
+import base64
 import json
 import re
 import sys
@@ -68,6 +69,30 @@ def _statuses_in(directory: Path, *, skip=frozenset()) -> Counter:
 
 
 IMPLEMENTED_MARKER_RE = re.compile(r"^\s*-\s*\*\*実施\*\*:", re.M)
+
+
+def _decision_route_counts(spec: Path) -> dict:
+    """STATE.md の構造化 event から人間裁定必須遷移の経路別件数を集計する（SDD-FR-145）。
+
+    対話確認経路（interactive-confirmation-unverified）と代行可視化経路
+    （agent-proxy-unverified）を分離集計する。壊れた event は inspect の管轄なので黙って読み飛ばす。
+    """
+    counts = {"interactive": 0, "proxy": 0}
+    state = spec / "STATE.md"
+    if not state.exists():
+        return counts
+    text = state.read_text(encoding="utf-8", errors="replace")
+    for match in re.finditer(r"<!-- sdd-event:([A-Za-z0-9+/=]+) -->", text):
+        try:
+            event = json.loads(base64.b64decode(match.group(1), validate=True))
+            kind = (event.get("provenance") or {}).get("kind")
+        except Exception:
+            continue
+        if kind == "interactive-confirmation-unverified":
+            counts["interactive"] += 1
+        elif kind == "agent-proxy-unverified":
+            counts["proxy"] += 1
+    return counts
 
 
 def _accepted_issue_records(directory: Path) -> list:
@@ -246,6 +271,7 @@ def collect(root: Path, all_origin_records=()) -> dict:
         "requirements": {"total": sum(reqs.values()), "by_status": dict(reqs)},
         "spec_issues": {"total": sum(issues.values()), "by_status": dict(issues)},
         "tasks": {"total": sum(tasks.values()), "by_status": dict(tasks)},
+        "human_decisions": _decision_route_counts(spec),
         "accepted_unaddressed": accepted_unaddressed,
         "accepted_delegated_unresolved": accepted_delegated_unresolved,
         "completion_record_missing": completion_record_missing,
@@ -274,6 +300,11 @@ def render_text(results) -> str:
         out.append(_fmt_counts(ws["spec_issues"], "spec-issue"))
         out.append(f"## タスク (tasks) — 合計 {ws['tasks']['total']}")
         out.append(_fmt_counts(ws["tasks"], "task"))
+        decisions = ws.get("human_decisions", {})
+        out.append(
+            f"## 人間裁定遷移（経路別） — 対話確認 {decisions.get('interactive', 0)} / "
+            f"代行 {decisions.get('proxy', 0)}"
+        )
         out.append("## 次アクション候補")
         out.extend(f"  - {a}" for a in ws["next_actions"])
         out.append("")

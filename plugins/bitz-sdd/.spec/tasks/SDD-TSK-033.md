@@ -2,7 +2,7 @@
 implements: SDD-FR-145
 depends_on: [SDD-TSK-032]
 boundary: skills/sdd-core/scripts/spec_inspect.py, spec_status.py, skills/sdd-report/scripts/sdd_report.py, tests/test_spec_inspect.py
-status: pending
+status: done
 ---
 
 ### schema v2 検査と経路別集計（inspect・status・report）
