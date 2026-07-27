@@ -50,6 +50,9 @@ status: accepted
   ISSUE の直接の依存ではなく、検知漏れの実例（再現ケース）として引用するのみ — それら自体の
   実装スケジューリングは本 ISSUE の範囲外（人間裁定 or 別途 sdd-implement で扱う）。
 
+- **実施**: 2026-07-18 CORE-FR-012（accepted 未着手 spec-issue の検知）へ要件化し実装
+  （CORE-TSK-013）。PR #47 でマージ、example-test により CORE-FR-012 verified 済み。
+
 ## 予備判定（推薦） — 裁定は人間専用
 
 | 判定軸 | 確認結果 |

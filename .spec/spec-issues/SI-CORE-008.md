@@ -25,3 +25,6 @@ status: accepted
   - 既存プラグインの diff がゼロであること（marketplace.json を除く）
 - **影響推定・ロールバック**: フォルダと marketplace エントリの削除で完全に戻せる。
 - **依存**: SI-CORE-006（スキル命名は共通ライフサイクル標準に従うため）。
+- **実施**: 2026-07-18 CORE-FR-014（bitz-flow プラグインの新設 — sdd-git の汎用化転記）へ
+  要件化し実装（CORE-TSK-017/018/019）。PR #54 でマージ、example-test により
+  CORE-FR-014 verified 済み。

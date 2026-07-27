@@ -16,3 +16,5 @@ status: accepted
   「タスクが自分の ID を名乗れる」状態にする。
 - **影響推定**: spec_inspect.py の scan_refs / load_requirements のみ。既存 PASS 判定を
   FAIL に変える方向の変更ではない（誤検知の解消）。
+- **実施**: 2026-07-11 CORE-FR-002（spec_inspect の自己言及 ID の幽霊参照除外）へ要件化し実装
+  （CORE-TSK-003）。PR #18 でマージ、example-test により CORE-FR-002 verified 済み。

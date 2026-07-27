@@ -22,3 +22,6 @@ status: accepted
   - 状態変更系（worktree_ops）が dry-run をデフォルトとし、破壊的操作を含まないこと
 - **影響推定・ロールバック**: bitz-flow 内で完結。スクリプトとテストの削除で戻る。
 - **依存**: SI-CORE-008（bitz-flow の存在）。
+- **実施**: 2026-07-18 CORE-FR-015（bitz-flow 定型処理スクリプト worktree_ops / commit_lint /
+  pr_helper）へ要件化し実装（CORE-TSK-021/022/023）。PR #62 でマージ、unit-test により
+  CORE-FR-015 verified 済み。

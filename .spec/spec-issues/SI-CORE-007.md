@@ -24,3 +24,5 @@ status: accepted
   - `.venv/bin/pytest` 全件 green、release_check PASS
 - **影響推定・ロールバック**: release_check の追加検証のみ。検証部と書式規定を revert すれば戻る。
 - **依存**: SI-CORE-006（標準契約への追記先）。
+- **実施**: 2026-07-18 CORE-FR-013（release_check.py によるプラグイン間依存の宣言と検証）へ
+  要件化し実装（CORE-TSK-016）。PR #52 でマージ、example-test により CORE-FR-013 verified 済み。
