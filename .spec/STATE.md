@@ -132,3 +132,16 @@
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiM2M4M2Y0MzRhODY1YzFhYmU3MjA1ZGI1MzAwMWJmYTVhZWNjNjIzMTBlYjRhZjM2NzAxODU4ODQ2ZTRiMDExZSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiOWQzOGU1YzUxNWE0OTM4YjEzY2E4YzJjNzBiYjExZjcyZDM0ZDUwMmQyMzczNmFhNmQ2MDg4NTA2OTJmZjQyZCIsImFydGlmYWN0X2lkIjoiQ09SRS1GUi0wMDQiLCJldmVudF9pZCI6Ijk5MDY0Zjk1LWYxOGYtNDBlZS05ZDdhLWZiNThhYzgxOTJiYiIsIm5ldyI6ImRlcHJlY2F0ZWQiLCJvbGQiOiJ2ZXJpZmllZCIsInBhdGgiOiIuc3BlYy9yZXF1aXJlbWVudHMvQ09SRS1GUi0wMDQubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiaW5vdWUzMzIiLCJraW5kIjoiaW50ZXJhY3RpdmUtY29uZmlybWF0aW9uLXVudmVyaWZpZWQifSwic2NoZW1hX3ZlcnNpb24iOjEsInRpbWVzdGFtcCI6IjIwMjYtMDctMjdUMDU6MDI6MjYuNzAwMDc0WiJ9 -->
 - 2026-07-27 CORE-FR-005: verified → deprecated (inoue33; 対話入力確認済み（実行者未検証）)
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiOTI5MjYyOWM1MTIxOWZmZWFmNDY1OTJkODVmZTQ0NTgwZGJmMDY4YjJmNTk2MGFhODRlOWFiNDAxZjNmM2VjYSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiM2E1OTRjOTdkMTYwYmFiZDEyYzE0NTI5MDhhMTU3MWE4OGM5MDk1MmUyMTk2ZTA3NjUyZWJhOWEwNzQxMzY0MiIsImFydGlmYWN0X2lkIjoiQ09SRS1GUi0wMDUiLCJldmVudF9pZCI6IjhmMGVlMzg5LTE1ZGUtNGZkNi04OTU3LTA4ZjhhZjM0NDM5ZSIsIm5ldyI6ImRlcHJlY2F0ZWQiLCJvbGQiOiJ2ZXJpZmllZCIsInBhdGgiOiIuc3BlYy9yZXF1aXJlbWVudHMvQ09SRS1GUi0wMDUubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiaW5vdWUzMyIsImtpbmQiOiJpbnRlcmFjdGl2ZS1jb25maXJtYXRpb24tdW52ZXJpZmllZCJ9LCJzY2hlbWFfdmVyc2lvbiI6MSwidGltZXN0YW1wIjoiMjAyNi0wNy0yN1QwNTowMjo1NS4wMzIzOTFaIn0= -->
+- 2026-07-27 SI-CORE-030: open → accepted (ユーザー（チャット裁定）)
+- 2026-07-27 CORE-FR-017: draft → approved (ユーザー（チャット裁定: 承認します。設計しましょう）)
+- 2026-07-27 DSN-005: draft → approved (ユーザー（Design Gate 裁定完了）)
+- 2026-07-27 CORE-TSK-026: pending → implementing (agent（タスク分解・着手）)
+- 2026-07-27 CORE-FR-017: approved → implementing (agent（タスク着手に伴う自動遷移）)
+- 2026-07-27 CORE-TSK-026: implementing → done (agent（docs/MASTER.md 作成・excluded_paths 設定完了）)
+- 2026-07-27 CORE-TSK-027: pending → done (agent（docs_inspect.py ファイルレベル除外追加・テスト更新完了）)
+- 2026-07-27 CORE-TSK-028: pending → done (agent（検証完了）)
+- 2026-07-27 CORE-FR-017: implementing → verified (agent（全タスク完了・単体テスト適合確認）)
+
+
+
+

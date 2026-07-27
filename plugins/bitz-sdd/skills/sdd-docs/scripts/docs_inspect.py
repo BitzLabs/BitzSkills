@@ -156,7 +156,9 @@ def collect_docs(docs_dir: str, excluded_paths=()):
             if not f.endswith(".md"):
                 continue
             ab = os.path.join(dirpath, f)
-            rel = os.path.relpath(ab, docs_dir)
+            rel = os.path.relpath(ab, docs_dir).replace("\\", "/")
+            if is_under(rel, excluded_paths):
+                continue
             try:
                 text = open(ab, encoding="utf-8").read()
             except Exception:

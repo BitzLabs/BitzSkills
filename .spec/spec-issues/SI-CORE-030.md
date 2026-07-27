@@ -3,7 +3,7 @@ id: SI-CORE-030
 raised_by: 標準環境ビジョン反映時の docs_inspect 実行
 target: docs/ 構造と sdd-docs docs_inspect の適用境界
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: ルート `docs/` は使い方ガイド・過去計画・3プラットフォーム調査・外部資料保全を含む
   大規模資料庫として運用されている一方、`sdd-docs` の `docs_inspect.py` は `docs/` 全体を
@@ -35,4 +35,6 @@ status: open
 - **依存**: CORE-DSC-001〜006（標準環境ビジョンと文書層の位置づけ）、sdd-docsの同期契約。
 - **予備判定（推薦）**: **accept 推薦**。標準環境のSSOTを `.spec` としながら、対応する人間向け
   docsを正規検査できない状態は継続的なドリフト検出を妨げる。ただし既存資料が大規模なため、
-  直ちに一括修正せず、適用境界の設計を先行する。裁定は人間専用で、本issueは `open` のままとする。
+  直ちに一括修正せず、適用境界の設計を先行する。
+- **実施**: 2026-07-27 CORE-FR-017 および DSN-005 を承認。docs/MASTER.md の excluded_paths 設定と docs_inspect.py の個別ファイル除外ロジックを追加し、既存の調査資料・下書きドキュメントを検査除外境界へ隔離。
+
