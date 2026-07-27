@@ -1,7 +1,7 @@
 ---
 id: CORE-FR-010
 version: 1.0
-status: promoted
+status: verified
 domain: tooling
 priority: medium
 origin: SI-SDD-003（scaffold 生成時語彙検証・DSN 種別。SI-CORE-021 振り返り由来）
