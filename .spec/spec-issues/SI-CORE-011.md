@@ -25,3 +25,6 @@ requirement: CORE-FR-003
   - 本リポジトリのルート + 全ワークスペースで実行して妥当な出力が得られること
 - **影響推定・ロールバック**: 追加のみ。スクリプトとテストの削除で戻る。
 - **依存**: なし（bitz-flow 系と並行可）。
+- **実施**: 2026-07-13 CORE-FR-003（spec_status.py による軽量状況照会）へ要件化し実装
+  （CORE-TSK-004）。PR #29 でマージ、example-test（tests/test_spec_status.py）により
+  CORE-FR-003 verified 済み。

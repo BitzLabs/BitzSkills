@@ -20,3 +20,5 @@ status: accepted
   (c) env-init 未実行（permissions 層の不在）を env-doctor が WARN として検出する要件を追加。
 - **影響推定**: ENV-DSN-001・ENV-CON-001 の記述追加、env-doctor 診断項目1件追加、
   README の注意事項補強。env_guard.py の挙動自体は変えない（文書・要件・診断の追加）。
+- **実施**: 2026-07-12 ENV-CON-004（ガードの位置づけ — 誤操作抑止・二重化前提）へ要件化し実装
+  （ENV-TSK-011）。PR #22（bitz-env v0.4.0）で反映、2026-07-16 に PR #46 で verified 昇格。

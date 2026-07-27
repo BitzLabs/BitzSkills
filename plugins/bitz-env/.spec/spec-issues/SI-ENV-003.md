@@ -15,3 +15,5 @@ status: accepted
       未管理なら git init を先に案内する（ENV-FR-003 か新 CON）。
 - **影響推定**: ENV-FR-003 に受入基準1〜2項追加、env-init/SKILL.md のワークフロー修正。
   ENV-CON-003（プロジェクト内書き込み限定）と整合。既存の生成挙動は保持したまま安全策を上乗せ。
+- **実施**: 2026-07-12 ENV-FR-009（env-init 生成物の復旧可能性）へ要件化し実装（ENV-TSK-009）。
+  PR #22 でマージ、evals/env-init TC-03 green + spec_inspect PASS により verified 済み。

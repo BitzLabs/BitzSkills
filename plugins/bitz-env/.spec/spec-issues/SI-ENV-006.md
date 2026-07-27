@@ -16,3 +16,7 @@ status: accepted
   と対で設計し、パージもユーザー確認付き・マーカー区間のみ除去とする。
 - **影響推定**: 新スキル env-destroy の追加（SKILL.md）。env-init に生成物トラッキングの
   受入基準追加。ENV-DSN-001 にライフサイクル節を追加。ENV-CON-003（プロジェクト内限定）と整合。
+- **実施**: 2026-07-12 ENV-FR-010（生成物のトラッキングと env-uninstall による撤去）へ要件化し実装
+  （ENV-TSK-009/010）。PR #22 でマージ、evals/env-init TC-01・env-destroy TC-01〜03 green により
+  verified 済み。起票時の env-destroy は CORE-CON-008（標準ライフサイクルスキル名）に追随して
+  env-uninstall へ改称（PR #49、ENV-FR-010 v1.1）。

@@ -29,3 +29,6 @@ status: accepted
   - DSN 生成物が spec_inspect PASS の書式互換であること
 - **影響推定・ロールバック**: 検証の追加（生成の厳格化）。既存の正しい呼び出しには非破壊。単独 revert 可能。
 - **依存**: なし（CORE-FR-004 の spec_scaffold 実装を前提に拡張）。
+- **実施**: 2026-07-15 CORE-FR-010（spec_scaffold.py の生成時語彙検証と DSN 種別の追加）へ要件化し
+  実装（CORE-TSK-011）。PR #39 でマージ、example-test により verified 済み。要件はルート
+  workspace 側に起票（`origin: SI-SDD-003`。クロス WS 委譲）。

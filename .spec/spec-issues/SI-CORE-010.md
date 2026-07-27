@@ -25,3 +25,6 @@ status: accepted
   SI-CORE-008/009 より後に revert しないこと（依存の向きが逆転するため）。
 - **依存**: SI-CORE-007（依存宣言機構）、SI-CORE-009（bitz-flow の実用性）。
 - **裁定（2026-07-13, 人間）**: **縮退維持（minor bump）** を採用。sdd-git は薄い委譲ポインタに縮退し、SDD 固有の接続点（Implements フッター・.spec/tasks 連携）だけ残す。完全廃止（major）は不採用。
+- **実施**: 2026-07-18 CORE-FR-016（sdd-git の縮退 — Git フローの正を bitz-flow へ一本化）へ
+  要件化し実装（CORE-TSK-024。裁定どおり縮退維持 = minor bump）。PR #63 でマージ、
+  example-test により CORE-FR-016 verified 済み。
