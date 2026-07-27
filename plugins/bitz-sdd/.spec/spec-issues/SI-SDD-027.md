@@ -72,3 +72,6 @@ origin: BitzSkills root（26件無記録promotion事故と、SI-SDD-022 案3の�
   - 条件: decision-ref の要求水準・適用範囲・バッチ可否の設計裁定が前提。無条件の
     `--on-behalf-of` は 2026-07-21 事故の再来となるため不可。
   - 軽量レーン適否: **不可**。公開 CLI・監査契約・Design Gate 済み設計判断の変更に触れる。
+- **実施**: 2026-07-27 SDD-DSN-005 v2.0（Design Gate 裁定点1〜7承認）に基づき SDD-FR-145 で
+  代行可視化経路（on-behalf-of + decision-ref、schema v2、バッチ、経路別集計、Promotion Gate
+  確認）を実装・検証した。SDD-FR-143 は 2.0 bump。bitz-sdd 3.1.0。

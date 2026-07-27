@@ -59,17 +59,33 @@ token・credential・その他の秘密値は、STATE.md と PR 本文を含む 
 
 ## status 遷移の実行 — スクリプトによる権限強制
 
-status 遷移は上表の権限マトリクスを `scripts/spec_update.py` がコードで強制する（CORE-FR-005）:
+status 遷移は上表の権限マトリクスを `scripts/spec_update.py` がコードで強制する
+（SDD-FR-143 / SDD-FR-145。旧CORE-FR-005の後継）:
 
 ```bash
 python3 scripts/spec_update.py <workspace> <ID> --to <status> \
   [--interactive-decision --actor decision-operator]
+python3 scripts/spec_update.py <workspace> <ID...> --to <status> \
+  [--on-behalf-of <human> --decision-ref <参照> --actor <実行エージェント>]
 ```
 
 - **人間裁定必須遷移**（draft→approved / open→accepted / verified→promoted / 任意→deprecated）は
-  `--interactive-decision`、stdin/stderr TTY、`<ID> <old>-><new>`の完全一致再入力、
-  形式検査を通るactor入力が無い限り拒否される。TTYとactorは本人認証ではなく、STATE provenanceは
-  `interactive-confirmation-unverified`とする
+  次の2経路のいずれかが無い限り拒否される（SDD-FR-145）:
+  - **対話確認経路** `--interactive-decision`: stdin/stderr TTY、`<ID> <old>-><new>`の
+    完全一致再入力、形式検査を通るactor入力を要求。STATE provenanceは
+    `interactive-confirmation-unverified`
+  - **代行可視化経路** `--on-behalf-of`: 人間の裁定をエージェントが代行実行する経路。
+    `--on-behalf-of`（裁定した人間）・`--decision-ref`（裁定の所在参照）・`--actor`
+    （実行エージェント）の3項が必須。decision-refはworkspace相対パス（updateが実在を検査）
+    または`https://` URL（形式検査のみ）。STATE provenanceは`agent-proxy-unverified`
+    （schema v2。`on_behalf_of` / `decision_ref`を保存）で、表示行は
+    `(<actor> on behalf of <human>; 代行実行・実行者未検証・裁定参照: <ref>)`
+- TTY・actor・decision-refのいずれも**本人認証や裁定の真正性証明ではない**。代行経路が
+  保証するのは「裁定の所在が正直に記録されること」までで、参照先の裁定が当該遷移を本当に
+  許可したかの確認は Promotion Gate の人間確認とレビューに残る（残余リスク）
+- **バッチ遷移**は代行可視化経路のみ複数IDを1呼出しで受理する（workspace lockを1回取得し
+  IDごとに独立transactionを直列適用。失敗時はfail-fastで停止し、適用済み遷移は有効のまま
+  未適用IDを診断に列挙する。同一呼出しのevent群は同じdecision_refを共有する）
 - **エージェント許容遷移**（approved→implementing / implementing→verified 等）は無フラグで適用
 - **local task前提**: approved→implementingは所有workspace内task 1件以上、
   implementing→verifiedは同task 1件以上かつ全件doneを要求し、脱出口は設けない

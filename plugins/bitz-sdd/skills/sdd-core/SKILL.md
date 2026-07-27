@@ -2,7 +2,7 @@
 name: sdd-core
 description: BitzSDD — 仕様駆動開発（SDD）ワークフローを運用するメインスキル。要件定義・仕様作成・実装・検証・完了処理のすべてをこの規律に従って実行する。ユーザーが「仕様駆動」「SDD」「要件」「EARS」「spec」「タスク分解」「feature実装」に言及したとき、リポジトリに .spec/ や AGENTS.md が存在するとき、または新機能の設計・実装・検証・リリース処理を依頼されたときは、明示的な指示がなくても必ずこのスキルを使うこと。要件の変更・廃止・番号管理・テスト失敗時の対応・ドキュメント更新もすべて本スキルの管轄。
 metadata:
-  version: "3.0.0"
+  version: "3.1.0"
   author: br7.hide
   created: "2026-07-07"
   updated: "2026-07-27"
@@ -149,15 +149,20 @@ python3 scripts/spec_scaffold.py <workspace> design --prefix DSN --title "..." [
 # status 遷移（権限マトリクス強制）
 python3 scripts/spec_update.py <workspace> CORE-FR-004 --to implementing            # エージェント許容遷移
 python3 scripts/spec_update.py <workspace> CORE-FR-004 --to approved \
-  --interactive-decision --actor <decision-operator>  # 対話入力を要求（本人性は未検証）
+  --interactive-decision --actor <decision-operator>  # 対話確認経路（本人性は未検証）
+python3 scripts/spec_update.py <workspace> CORE-FR-004 CORE-FR-005 --to promoted \
+  --on-behalf-of <human> --decision-ref <裁定の所在> --actor <agent>  # 代行可視化経路（バッチ可）
 python3 scripts/spec_update.py <workspace> --recover <event-id>                     # 未完了transaction復旧
 python3 scripts/spec_update.py <workspace> --recover-lock                           # 未開始lock復旧
 ```
 
 **権限の分離**: `draft→approved` / `open→accepted` / `verified→promoted` / `任意→deprecated` は
-人間裁定必須で、`--interactive-decision`によるTTYと確認文字列の再入力がなければ拒否する。
-これは明示的な対話入力の強制であり、人間本人の認証ではない。STATEには
-`interactive-confirmation-unverified`として記録する。旧`--by-human`は誤認防止のため廃止した。
+人間裁定必須で、次の2経路のいずれかがなければ拒否する（SDD-FR-145）:
+`--interactive-decision`（対話確認経路 — TTYと確認文字列の再入力。STATE provenanceは
+`interactive-confirmation-unverified`）、または `--on-behalf-of`（代行可視化経路 —
+人間の裁定の所在を `--decision-ref` で必須参照し、エージェントが代行実行。STATE provenanceは
+`agent-proxy-unverified`）。いずれも人間本人の認証ではなく、代行の裁定真正性は機械検証されない
+（Promotion Gate で人間が decision-ref を確認する）。旧`--by-human`は誤認防止のため廃止した。
 権限マトリクスに無い遷移は誰でも拒否する。詳細は`references/lifecycle.md`が正。
 
 全変更CLIはworkspace mutation lockへ参加し、statusとSTATEまたは新規成果物をwrite-ahead

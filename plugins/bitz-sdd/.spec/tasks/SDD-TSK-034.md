@@ -2,7 +2,7 @@
 implements: SDD-FR-145
 depends_on: [SDD-TSK-032, SDD-TSK-033]
 boundary: skills/sdd-core/SKILL.md, references/lifecycle.md, references/gates.md, .spec/requirements/SDD-FR-143.md, 3マニフェスト
-status: pending
+status: done
 ---
 
 ### 運用文書・権限マトリクス・契約整合とリリース（minor）

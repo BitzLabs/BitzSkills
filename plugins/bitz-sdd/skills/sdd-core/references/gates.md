@@ -45,7 +45,10 @@ Done フェーズ（全検証 green）の出口であり、feature 完了時の�
 2. □ LESSONS_LEARNED 候補の取捨選択
 3. □ tombstone テストの削除可否判定（後継テスト green を確認）
 4. □ stale マークゼロの確認（spec_inspect.py レポートの目視）
-5. □ （任意）docs/ 更新ドラフトが大きい場合は `sdd-review` を実行し判定を添付
-6. □ specs/<feature>/ を `.spec/archive/<date>-<feature>/` へアーカイブ
+5. □ 代行遷移（agent-proxy-unverified）の decision-ref を人間が確認
+   （STATE.md の代行実行行と参照先の裁定記録を突き合わせ、裁定の真正性を目視で担保する。
+   経路別件数は spec_status.py / sdd_report.py が集計する — SDD-FR-145）
+6. □ （任意）docs/ 更新ドラフトが大きい場合は `sdd-review` を実行し判定を添付
+7. □ specs/<feature>/ を `.spec/archive/<date>-<feature>/` へアーカイブ
 
 Gate を自動化しない理由: ここが緩むと docs/ が「エージェントの作業ログ置き場」に劣化し、永続層の信頼が死ぬ。
