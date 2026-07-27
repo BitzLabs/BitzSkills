@@ -3,7 +3,8 @@ id: SI-SDD-022
 raised_by: 2026-07-21 SI-CORE-018 完了後の振り返りで発見
 target: plugins/bitz-sdd/skills/sdd-core/scripts/spec_update.py の --by-human フラグ（人間専用遷移の強制）
 proposed_change_type: modify
-status: open
+status: accepted
+origin: root（SI-CORE-035からの委任）
 ---
 - **優先度（推薦）**: **高**。sdd-core 憲法4「仕様の変更権は常に人間が持つ」の実効性そのものに
   関わる。監査証跡の信頼性が損なわれている状態で、他の規律の前提を崩す。
@@ -51,3 +52,5 @@ status: open
   - 影響範囲: `spec_update.py` と運用文書
   - 軽量レーン適否: **不可**。人間専用遷移の実行契約に触れるため通常フロー + Design Gate を要する
     （採用案の選択自体が Design Gate の論点）
+- **実施**: 2026-07-27 SDD-FR-143で`--by-human`を廃止し、TTY上の完全一致再入力、
+  actor形式検査、`interactive-confirmation-unverified`監査eventを実装・検証した。

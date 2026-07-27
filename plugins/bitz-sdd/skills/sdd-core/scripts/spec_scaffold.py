@@ -26,6 +26,12 @@ from pathlib import Path
 # import に副作用はない。スクリプト直実行時もラッパー経由でも解決できるよう自ディレクトリを追加。
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from spec_inspect import STATUSES, VMETHODS, load_domains  # noqa: E402
+from spec_transaction import (  # noqa: E402
+    FileChange,
+    MutationError,
+    TransactionPlan,
+    mutate,
+)
 
 KIND_DIR = {
     "requirement": "requirements",
@@ -199,27 +205,47 @@ def main():
 
     directory = root / ".spec" / KIND_DIR[args.kind]
 
-    num = args.number if args.number is not None else next_number(directory, args.prefix)
-    ident = f"{args.prefix}-{num:03d}"
-    dest = directory / f"{ident}.md"
+    provisional_num = args.number if args.number is not None else next_number(directory, args.prefix)
+    provisional = directory / f"{args.prefix}-{provisional_num:03d}.md"
+    selected = {}
 
-    if dest.exists():
-        print(f"ERROR: {dest} は既に存在します（上書きしません）", file=sys.stderr)
-        return 1
+    def prepare(_owner):
+        # SDD-FR-144: workspace lock取得後に採番候補を必ず再計算する。
+        num = args.number if args.number is not None else next_number(directory, args.prefix)
+        ident = f"{args.prefix}-{num:03d}"
+        dest = directory / f"{ident}.md"
+        if dest.exists():
+            raise MutationError(
+                "mutation-conflict",
+                f"{dest} は既に存在します（上書き・自動再採番しません）",
+                1,
+            )
+        if args.kind == "requirement":
+            body = render_requirement(ident, args)
+        elif args.kind == "spec-issue":
+            body = render_spec_issue(ident, args)
+        elif args.kind == "design":
+            body = render_design(ident, args)
+        else:
+            body = render_task(ident, args)
+        selected.update({"ident": ident, "dest": dest})
+        return TransactionPlan(
+            changes=(FileChange(dest, None, body.encode("utf-8")),),
+            metadata={"kind": args.kind, "artifact_id": ident},
+        )
 
-    if args.kind == "requirement":
-        body = render_requirement(ident, args)
-    elif args.kind == "spec-issue":
-        body = render_spec_issue(ident, args)
-    elif args.kind == "design":
-        body = render_design(ident, args)
-    else:
-        body = render_task(ident, args)
+    try:
+        mutate(
+            root,
+            f"scaffold {args.kind} {args.prefix}",
+            (provisional,),
+            prepare,
+        )
+    except MutationError as error:
+        print(f"ERROR [{error.code}]: {error}", file=sys.stderr)
+        return error.exit_code
 
-    directory.mkdir(parents=True, exist_ok=True)
-    dest.write_text(body, encoding="utf-8")
-
-    print(f"生成: {ident} → {dest}")
+    print(f"生成: {selected['ident']} → {selected['dest']}")
     return 0
 
 

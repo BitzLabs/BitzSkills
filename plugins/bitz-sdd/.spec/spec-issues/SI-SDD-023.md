@@ -3,7 +3,8 @@ id: SI-SDD-023
 raised_by: 2026-07-21 SI-CORE-018 完了後の振り返りで発見
 target: plugins/bitz-sdd/skills/sdd-core/scripts/spec_update.py の遷移事前条件検査
 proposed_change_type: modify
-status: open
+status: accepted
+origin: root（SI-CORE-035からの委任）
 ---
 - **優先度（推薦）**: **高**。不正な状態が一度書き込まれてから後段で検出される構造のため、
   検出時には既に手戻り（遡及的な辻褄合わせ）が発生している。
@@ -52,3 +53,5 @@ status: open
   - 影響範囲: `spec_update.py` と運用文書。`spec_inspect.py` とは責務境界の整理が要る
   - 軽量レーン適否: **不可**。遷移の成立条件という契約に触れ、脱出口の設計判断を伴うため
     通常フロー + Design Gate を要する
+- **実施**: 2026-07-27 SDD-FR-143でlocal task前提、workspace lock、
+  write-ahead journal、hash拘束付きrecoveryを実装・検証した。Design Gate裁定により脱出口は設けない。

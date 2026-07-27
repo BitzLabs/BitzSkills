@@ -2,10 +2,10 @@
 name: sdd-git
 description: BitzSDD 利用プロジェクトの Git / GitHub 開発フローの入口スキル（薄い委譲ポインタ）。フロー選択（単独開発=ブランチ / 複数エージェント並列=worktree / チーム・別リポジトリ開発=GitHub Issue 駆動 + PR）の判断表と、SDD 固有の接続点（コミットの Implements フッター、.spec/tasks のタスク並列投入条件、失敗時の worktree 破棄復元）だけを規定し、実行手順の正は bitz-flow プラグイン（flow-core / flow-worktree / flow-pr）に委譲する。ユーザーが「worktree」「並列で開発」「ブランチ運用」「コミット規約」「Issue 駆動」「PR フロー」「失敗したからやり直したい」に言及したとき、または sdd-implement で depends_on が空のタスク群を並列投入するときに使用する。
 metadata:
-  version: "0.4.0"
+  version: "0.5.0"
   author: br7.hide
   created: "2026-07-11"
-  updated: "2026-07-19"
+  updated: "2026-07-27"
 ---
 
 # SDD Git — Git フローの入口（正は bitz-flow）
@@ -56,6 +56,17 @@ Implements: TODO-FR-012
 `inspection-report.md` を変更しない。レポートの永続更新は全PR統合後の締め工程で通常検査を
 1回実行して行う。`--check-only` でも標準出力と終了コードは通常検査と同じため、CIゲートの
 判定能力は維持される。
+
+正式IDを追加するPRは最新targetを取り込み、次のpreflightを必須にする。
+
+```bash
+python3 scripts/spec inspect --workspace . plugins/* --check-only --target-ref <target-ref>
+```
+
+出力された`target_sha`をrequired checkの証跡とし、merge queueまたはmerge直前のtarget SHAと
+完全一致する場合だけ統合する。target更新時は判定を失効させ、fetch/rebase後に再実行する。
+target SHAを証明できない環境、targetがHEADのancestorでない状態、target側IDとの衝突は
+fail-closedとする。採番自体はPlan coordinatorの単一ブランチで直列化し、実装workerは行わない。
 
 ### 失敗時の復元 — worktree 破棄に一本化
 

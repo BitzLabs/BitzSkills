@@ -3,7 +3,8 @@ id: SI-SDD-024
 raised_by: 2026-07-22 PR #90/#91 並行作成時の採番衝突（開発中に発見）
 target: spec_scaffold.py の next_number が並行ブランチで同一 ID を再発行する（採番衝突）
 proposed_change_type: modify
-status: open
+status: accepted
+origin: root（SI-CORE-035からの委任）
 ---
 - **優先度（推薦）**: **中**。実害は発生済みだが個別には手動採番で回避可能。並行開発
   （worktree / 複数エージェント）を推奨する本リポでは再発頻度が上がるため、重要度は中〜高。
@@ -42,4 +43,6 @@ status: open
   `flow-worktree`（並列運用の実手順）。
 - **予備判定（推薦）**: **accept 推薦**。根拠 — 実害が発生済みで、並行開発を推奨する本リポの運用
   方針と直接衝突する再発型の不備。まずは軽量な案1（重複 ID の機械検出）＋案2（直列化ルール明文化）で
-  費用対効果が高い。裁定は人間専用、本 issue は `open` のままとする。
+  費用対効果が高い。2026-07-27のユーザー裁定でaccepted。
+- **実施**: 2026-07-27 SDD-FR-144でlock取得後採番、atomic no-replace、Plan直列採番、
+  target commit SHA拘束付きintegration preflightを実装・検証した。

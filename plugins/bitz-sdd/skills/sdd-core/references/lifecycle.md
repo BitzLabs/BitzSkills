@@ -12,8 +12,8 @@
 |------|--------|----------|--------|
 | → draft | 起票 | 人間 / planエージェント | `_counter.md` からID払い出し |
 | draft → approved | 承認 | **人間のみ** | spec-lint 合格 + verification_method 記入が前提 |
-| approved → implementing | tasks/ に `implements:` 出現 | planエージェント | traceability matrix に行追加 |
-| implementing → verified | 全検証 green + stale ゼロ | 機械判定 | matrix 緑化 |
+| approved → implementing | 所有workspace内tasks/ に `implements:` 出現 | planエージェント | traceability matrix に行追加 |
+| implementing → verified | 所有workspace内task全件done + 全検証 green + stale ゼロ | 機械判定 | matrix 緑化 |
 | verified → promoted | Promotion Gate | **人間のみ** | docs/ 更新・アーカイブ（references/gates.md） |
 | * → deprecated | 廃止 or supersede | **人間のみ** | `superseded_by:` 記入、テストは tombstone 化 |
 
@@ -51,23 +51,33 @@ token・credential・その他の秘密値は、STATE.md と PR 本文を含む 
 - domain・priority 等の他属性はすべて frontmatter（可変）。domain は domains.md の統制語彙のみ
 - ID払い出しは Plan フェーズ（直列区間）でのみ行う。採番・雛形生成は `scripts/spec_scaffold.py`
   が担い（プレフィックスの既存最大番号 + 1 を決定的に採番。spec_inspect PASS の雛形を生成）、
-  手書きの採番・書式ブレを排除する（CORE-FR-004）
-- **実装中の並列エージェントは採番禁止**。新要件の発見は spec-issue（仮番号 `SI-<branch>-<n>`）で起票し、人間裁定時に正式IDへ変換する。これで採番衝突は構造的にゼロ
+  手書きの採番・書式ブレを排除する。accepted issueの正式採番はcoordinatorの単一ブランチで
+  直列実行し、採番commitを統合してからそのcommitを共通baseとして実装worktreeを分岐する
+- **実装中の並列エージェントは正式採番禁止**。新要件の発見はbranch-localなspec-issue候補として
+  coordinatorへ戻す。cross-branch衝突はローカルCLIだけではゼロにできないため、
+  target SHA拘束付きpreflightとcanonical inspectをmerge gateにする（SDD-FR-144）
 
 ## status 遷移の実行 — スクリプトによる権限強制
 
 status 遷移は上表の権限マトリクスを `scripts/spec_update.py` がコードで強制する（CORE-FR-005）:
 
 ```bash
-python3 scripts/spec_update.py <workspace> <ID> --to <status> [--by-human] [--actor 名前]
+python3 scripts/spec_update.py <workspace> <ID> --to <status> \
+  [--interactive-decision --actor decision-operator]
 ```
 
-- **人間専用遷移**（draft→approved / open→accepted / verified→promoted / 任意→deprecated）は
-  `--by-human` の明示がない限り拒否される
+- **人間裁定必須遷移**（draft→approved / open→accepted / verified→promoted / 任意→deprecated）は
+  `--interactive-decision`、stdin/stderr TTY、`<ID> <old>-><new>`の完全一致再入力、
+  形式検査を通るactor入力が無い限り拒否される。TTYとactorは本人認証ではなく、STATE provenanceは
+  `interactive-confirmation-unverified`とする
 - **エージェント許容遷移**（approved→implementing / implementing→verified 等）は無フラグで適用
+- **local task前提**: approved→implementingは所有workspace内task 1件以上、
+  implementing→verifiedは同task 1件以上かつ全件doneを要求し、脱出口は設けない
 - **権限マトリクス未定義の遷移**は誰の権限でも拒否（不正遷移）
-- 遷移適用時に対象 frontmatter の `status` を書き換え、`.spec/STATE.md` に
-  遷移記録（対象 ID・旧→新 status・実行主体）を追記する
+- 遷移適用時はworkspace lockとPREPARED/APPLIED/COMMITTED journalを使い、対象frontmatterと
+  STATEの人間向け行＋Base64 canonical JSON eventを一貫して更新する
+- status / STATEの手編集と旧版CLIとの並行実行は禁止する。未完了transactionは
+  `--recover <event-id>`、owner死亡を確認できる未開始lockは`--recover-lock`でのみ清掃する
 
 ## spec-issue のライフサイクル補足
 

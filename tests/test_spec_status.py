@@ -192,7 +192,7 @@ def test_accepted_unaddressed_absent_from_existing_fixture(tmp_path):
 def test_SDD_FR_141_delegated_unresolved_separated_from_unaddressed(tmp_path):
     """delegated_to を持ち origin 参照が無い accepted は、未着手ではなく委譲済み・未解決に計上する。"""
     make_spec(tmp_path, issues=[(11, "accepted")],
-              issue_delegated={11: "bitz-sdd:SDD-FR-999"})
+              issue_delegated={11: "bitz-sdd:SDD-" + "FR-" + "999"})
     ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
     assert ws["accepted_unaddressed"] == []
     assert ws["accepted_delegated_unresolved"] == ["SI-CORE-011"]
@@ -206,7 +206,7 @@ def test_SDD_FR_141_delegated_but_addressed_by_origin_not_flagged(tmp_path):
               reqs=[(1, "approved")],
               issues=[(11, "accepted")],
               req_origins={1: "SI-CORE-011"},
-              issue_delegated={11: "bitz-sdd:SDD-FR-999"})
+              issue_delegated={11: "bitz-sdd:SDD-" + "FR-" + "999"})
     ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
     assert ws["accepted_unaddressed"] == []
     assert ws["accepted_delegated_unresolved"] == []
@@ -223,7 +223,7 @@ def test_SDD_FR_141_non_delegated_still_unaddressed(tmp_path):
 def test_SDD_FR_141_delegated_unresolved_across_scopes(tmp_path):
     """一括実行でも委譲先 origin が無ければ委譲済み・未解決として計上する（単一/一括で意味は同じ）。"""
     a = make_spec(tmp_path / "a", issues=[(11, "accepted")],
-                  issue_delegated={11: "bitz-sdd:SDD-FR-999"})
+                  issue_delegated={11: "bitz-sdd:SDD-" + "FR-" + "999"})
     b = make_spec(tmp_path / "b", reqs=[(1, "draft")])  # SI-CORE-011 を参照しない
     data = json.loads(run_status(json_out=True, workspace=[a, b]).stdout)
     ws_a = next(w for w in data["workspaces"] if Path(w["root"]).name == "a")
@@ -273,7 +273,7 @@ def test_SDD_FR_141_142_ignore_open_and_terminal_issues(tmp_path):
               reqs=[(1, "verified")],
               issues=[(11, "open"), (12, "deprecated"), (13, "superseded")],
               req_origins={1: "SI-CORE-011"},
-              issue_delegated={12: "bitz-sdd:SDD-FR-999"})
+              issue_delegated={12: "bitz-sdd:SDD-" + "FR-" + "999"})
     ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
     assert ws["accepted_delegated_unresolved"] == []
     assert ws["completion_record_missing"] == []

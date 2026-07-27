@@ -1,4 +1,4 @@
-# inspection-report.md (2026-07-22)
+# inspection-report.md (2026-07-27)
 
 成果物数: 10 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0
 

@@ -2,10 +2,10 @@
 name: sdd-issue
 description: BitzSDD — ばらばらに届く要望・不具合報告・改善アイデアを整理し、可否の予備判定（推薦）を付けて .spec/spec-issues/ に起票するインテークスキル。1要望 = 1 spec-issue への分割、既存 spec-issue・要件との重複チェック、影響範囲分析、委託先ワークスペース判定、spec_scaffold.py による採番・起票、裁定材料の提示までを定型化する。ユーザーが「この要望を整理して」「spec-issue にして」「起票して」「インテーク」「要望がいくつかある」と言及したとき、または作業中に仕様変更が必要だと気づいて起票が必要になったときに使用する。裁定（accepted / rejected 化）は人間専用で本スキルは行わない。要件のライフサイクル・規律の正は sdd-core が担当する。
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
   author: br7.hide
   created: "2026-07-16"
-  updated: "2026-07-19"
+  updated: "2026-07-27"
 ---
 
 # sdd-issue
@@ -17,7 +17,9 @@ metadata:
 
 - 本スキルが行うのは**予備判定と推薦まで**。spec-issue は**常に `status: open` で起票**する。
 - `open → accepted / rejected` の**裁定は人間のみ**（sdd-core 憲法4「仕様の変更権は常に人間が持つ」）。
-  エージェントが sdd-core の `spec_update.py` で裁定を試みても `--by-human` 強制で拒否される。
+  エージェントが通常の非TTYツール呼出しで裁定を試みても、sdd-coreの`spec_update.py`が
+  `--interactive-decision`、TTY、確認文字列の再入力を要求して拒否する。
+  この対話確認は人間本人の認証ではなく、最終的な実行主体統制はホスト規律も担う。
 - 本文に書く「可否の判定」は**推薦**であり、裁定ではない。提示の際もそのように表現する。
 - 規律・ライフサイクル・番号管理の**正は sdd-core** のまま。本スキルはその上のインテーク運用
   フローだけを担い、ライフサイクル規則を再定義しない。
@@ -59,7 +61,8 @@ metadata:
 
 6. **裁定材料の提示**: 起票した spec-issue の本文に **accept / reject の推薦と根拠**（判定軸ごとの
    結果）を記載し、人間へ「裁定待ち」として一覧提示する。裁定の実行はユーザー自身または
-   ユーザーの明示指示による `spec_update.py --to accepted --by-human` で行う。
+   ユーザーが対話端末で
+   `spec_update.py --to accepted --interactive-decision --actor <decision-operator>`を実行して行う。
 
 7. **完了記録**: spec-issue が実際に実装された時点（軽量レーンでの直接反映、または要件化パス
    で対応する requirement が `verified` に達した時点）で、当該 spec-issue 本文に

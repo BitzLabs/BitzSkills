@@ -1,0 +1,11 @@
+{
+  "perspective": "data-integrity",
+  "review_scope": "SDD-REV-005: Markdown成果物、STATE event、workspace transaction journal、採番",
+  "dimensions": [
+    {"name": "トランザクション安全性", "weight": 0.40, "score": 4, "findings": []},
+    {"name": "データ整合性", "weight": 0.35, "score": 4, "findings": []},
+    {"name": "スキーマ設計品質", "weight": 0.25, "score": 4, "findings": []}
+  ],
+  "weighted_score": 4.00,
+  "summary": "workspace lock、CAS再確認、完全payload WAL、三相journal、atomic no-replace、Base64構造化eventにより主要な原子性・競合・復旧リスクを解消した。レビュー中の軽微な指摘を反映し、cleanupのfsync順序、SHA-256/raw byte契約、canonical JSONとBase64規約、OS横断golden vectorを固定した。"
+}
