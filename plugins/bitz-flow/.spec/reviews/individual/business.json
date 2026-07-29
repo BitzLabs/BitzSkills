@@ -16,17 +16,8 @@
     {
       "name": "ステークホルダー整合",
       "weight": 0.2,
-      "score": 4,
-      "findings": [
-        {
-          "id": "BIZ-301",
-          "severity": "minor",
-          "location": "discovery/worksheet.md:Open Questions",
-          "title": "「200UE」の意味が未裁定",
-          "description": "GitHub Issueを指す仮定で設計が進んでいるが、原意が異なる場合はM3のIssue・Project運用が利用者期待からずれる。",
-          "recommendation": "Design Gateの必須条件にはせず、遅くともM3要件承認前に用語の原意を人間が裁定して記録する。"
-        }
-      ]
+      "score": 5,
+      "findings": []
     },
     {
       "name": "ROI・実現可能性",
@@ -44,6 +35,6 @@
       ]
     }
   ],
-  "weighted_score": 4.65,
-  "summary": "v1/v2規範移行、rejectされたspec-issueの除去・独立根拠への付替え、Design Gate後にEARS要件を派生するトレース順序が明確になった。M0のInvocation 95%・baseline比20ポイント改善・SFCR 90%、status 70%・diff-summary 80%も成功指標と一致し、事業整合上の主要ブロッカーは解消されている。"
+  "weighted_score": 4.85,
+  "summary": "v1/v2規範移行、rejectされたspec-issueの除去・独立根拠への付替え、Design Gate後にEARS要件を派生するトレース順序が明確になった。「200UE」は「ISSUE」の誤記と人間裁定され、M3の用語リスクも解消した。M0のInvocation 95%・baseline比20ポイント改善・SFCR 90%、status 70%・diff-summary 80%も成功指標と一致している。"
 }

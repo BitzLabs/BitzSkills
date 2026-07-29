@@ -2,7 +2,7 @@
 id: FLW-REV-003
 title: "bitz-flow v2 システムエンジニアリングレビュー"
 status: active
-version: 2.0
+version: 2.1
 updated: 2026-07-29
 owner: hide
 decision: PASS
@@ -48,18 +48,18 @@ operation ID、preconditions、effects上限であり、`explicit-human`はSKILL
 オーケストレーション層の前提統制である。この境界は制約の隠蔽ではなく、実装可能性に即した判断である。
 3platform evalで「人間応答前apply 0件」を出荷条件にし、規律外callerはthreat modelへ残す。
 
-### Python継続の条件
+### Python 3固定と継続条件
 
-初期実装はPython標準ライブラリでよい。ただし「Pythonだから採用」ではなく、次を満たす間だけ継続する。
+実装言語はPython 3.10+標準ライブラリに固定する。次の条件は言語移行条件ではなく、
+Python実装を次milestoneへ進めるための出荷条件である。
 
 - M0でplatform別Dispatcher Invocation Rate 95%以上、SFCR 90%以上。
 - 必須field・golden schema・decision parity 100%。
 - timeout後のprocess tree収束とatomic replaceを各platformのfixtureで証明。
-- 1条件でも満たせなければ後続機能を増やさず、入口、契約、実装方式を再評価。
+- 1条件でも満たせなければ後続機能を増やさず、scope縮小、入口・契約の再設計、またはNo-Goを裁定。
 
-Goは現時点で導入しない。Pythonでprocess tree、locking、atomic I/O、配布一貫性のいずれかを
-3platformで安定して満たせず、その失敗が局所修正では解決しない場合だけ、Contract Kernelの
-実装言語候補として比較する。MCP、Rust、hook、透過proxyは選択肢へ戻さない。
+Goは実装、部分置換、再実装、移行比較のすべてを行わない。MCP、Rust、hook、透過proxyも
+選択肢へ戻さない。
 
 ## 残余リスク
 
@@ -67,7 +67,6 @@ Goは現時点で導入しない。Pythonでprocess tree、locking、atomic I/O�
 |---|---|---|
 | 別hostの同一WorkUnit競合 | 重複Issue/PR | single coordinator、marker重複検出、canary即時停止 |
 | flow-doctorのschema drift | モデル間結果差 | 共通golden fixtureをM1 release gate化 |
-| 「200UE」の原意未確定 | M3の運用期待ずれ | M3要件承認前に人間裁定 |
 | M1〜M5の膨張 | 投資超過・完了遅延 | 要件・task分解時にtimeboxと縮退出荷境界を設定 |
 | explicit-humanの規律外caller | 無承認apply | CLI保証外と明記、SKILL eval、host権限管理 |
 

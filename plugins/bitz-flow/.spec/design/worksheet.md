@@ -2,7 +2,7 @@
 id: FLW-DSN-000
 title: "bitz-flow v2 設計作業台帳"
 status: draft
-version: 1.0
+version: 1.1
 updated: 2026-07-29
 owner: hide
 ---
@@ -37,6 +37,7 @@ owner: hide
 | 候補 | 適合性 | 判断 | 根拠 |
 |---|---|---|---|
 | Python 3.10+標準ライブラリ | High | Adopt | 3platform共通、スキル内自己完結、既存資産 |
+| Go言語 | None | Reject | ユーザー制約。実装・部分置換・移行比較の対象外 |
 | Git machine-readable output | High | Adopt | porcelain / NUL区切りで決定論的 |
 | `gh --json` | High | Adopt | allowlist field取得、認証をghへ委譲 |
 | SQLite等の内部DB | Low | Reject | 外部状態から再開でき、内部SSOTを増やす必要がない |
@@ -51,3 +52,4 @@ owner: hide
 | repo外worktree rootの継続承認 | rejected | 設定は配置既定値だけ。実行時権限を代替しない（FLW-DSN-006/013） |
 | 固定GitHub endpoint adapter | adopted with constraint | Must不足機能だけをsource allowlistで実行（FLW-DSN-014） |
 | release publish初期提供 | staged | M5前半draft、fault fixture通過後の後半で有効化（FLW-DSN-009/014） |
+| 実装言語 | adopted | Python 3.10+のみ。成立しない場合はscope縮小・再設計・No-Go |
