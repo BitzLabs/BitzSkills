@@ -36,3 +36,10 @@ status: accepted
 | 軽量レーン適否 | 不適。新しい仕様成果物schemaと検証ゲート接続を追加する |
 
 **推薦: accept**。反復検証のたびに手動証跡が揺れ、最終結果との同期を人手に依存しているため。
+
+- **実施**: 2026-07-29 SDD-FR-151（実出力からの証跡記録）/ SDD-FR-152（秘密値・環境固有情報の
+  非保存）/ SDD-FR-153（spec_inspect による構造検証と参照切れ検出）/ SDD-FR-154（統合レポートへの
+  集計）として要件化し、PR #120 で実装・verified。提案1〜4 を実施し、提案5（test-spec の手動数値を
+  任意ナラティブへ縮退）は sdd-test SKILL.md と sdd-core references/verification.md に明文化した。
+  Design Gate 裁定は `.spec/reports/decision-2026-07-29-si-sdd-016.md`。
+  既存 verified 要件への遡及記録は裁定点3により対象外（WARN として可視化するに留める）。
