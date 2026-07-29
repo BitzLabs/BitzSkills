@@ -26,3 +26,4 @@
 - 2026-07-29 bitz-flow v2 Design Gate: PASS（hideのチャット裁定。FLW-REV-002 PASS 4.74、FLW-REV-003 PASS。FLW-DSN-000/002〜014をactive化。裁定参照: .spec/reports/decision-2026-07-29-bitz-flow-v2-design-gate.md）
 - 2026-07-29 FLW-NFR-003: draftの責務過多を解消し、Forward Recoveryを維持、GitHub冪等性をFLW-NFR-005、同一host排他をFLW-NFR-006、cross-host境界をFLW-CON-004へ分離（codex）
 - 2026-07-29 FLW-NFR-004: draftの責務過多を解消し、process実行可搬性を維持、atomic file I/OをFLW-NFR-007へ分離（codex）
+- 2026-07-29 FLW-CON-002: draftの責務過多を解消し、Operation Contractを維持、明示的人間承認をFLW-CON-005、破壊操作とcleanupをFLW-CON-006へ分離、出力安全をFLW-NFR-002へ一本化（codex）
