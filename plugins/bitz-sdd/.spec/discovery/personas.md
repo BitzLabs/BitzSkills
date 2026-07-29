@@ -2,12 +2,18 @@
 id: SDD-DSC-004
 title: "bitz-sdd ペルソナとジョブ（JTBD → ペルソナカード → 主要ペルソナ）"
 status: draft
-version: 1.0
-updated: 2026-07-12
+version: 1.1
+updated: 2026-07-29
 owner: hide
 ---
 
 # ペルソナとジョブ — bitz-sdd
+
+
+> **改訂 1.1（2026-07-29）**: SDD-REV-006 の GP-004（Discovery を実体へ追随させる）による改訂。
+> 初版 1.0（2026-07-12）以降の実体変化を反映する。破棄せず改訂であり、判断の骨格は変えていない。
+> **bitz-flow との依存境界と sdd-git 移管に関する記述は意図的に据え置く**
+> （bitz-flow の設計が並行進行中のため、決定は同プラグイン完了後の最終合わせで行う。人間裁定）。
 
 > 遡及的 discovery。生の声・感情・台詞はユーザーリサーチ未実施のため、開発者本人
 > （hide）の実体験に基づくもの以外はすべて `[proto / 未検証]` と明示する。捏造しない。
@@ -30,7 +36,7 @@ owner: hide
 ## ペルソナカード
 
 ### P1: 個人開発者「hide」（主要ペルソナ・アーキタイプ = ドッグフーダー）
-- **1行**: Claude Code / Antigravity を日常使いする個人開発者。BitzSkills のメンテナ本人。
+- **1行**: Claude Code / Antigravity / Codex CLI を日常使いする個人開発者。BitzSkills のメンテナ本人。
 - **文脈と行動**: モノレポで複数プラグインを開発。uv で Python ツールを回す。司令塔
   （オーケストレーター）＋サブエージェント運用でトークンを節約しながら開発する。
 - **Jobs**: J1・J2・J3・J4・J5。
@@ -49,7 +55,7 @@ owner: hide
 - **生の声**: `[proto / 未検証]`（リサーチ未実施のため台詞は捏造しない）。
 
 ### P3: served — AI コーディングエージェント（アーキタイプ = 規律の受け手）
-- **1行**: Claude Code / Antigravity 2.0 のエージェント。SKILL.md の description/本文で行動が規定される。
+- **1行**: Claude Code / Antigravity 2.0 / Codex CLI のエージェント。SKILL.md の description/本文で行動が規定される。
 - **Jobs**: 「曖昧な指示でも `.spec/` を正として正しい工程・権限・検証に従いたい」。
 - **Pains**: 発動条件が曖昧だとスキルが起動しない・本文が長いとトークンを浪費する。
 - **Gains**: 明確な description による確実な発動・薄い本文・スクリプトへの委譲。

@@ -2,14 +2,20 @@
 id: SDD-DSC-001
 title: "bitz-sdd プロダクトビジョン（Vision Board + PR-FAQ 圧力試験）"
 status: draft
-version: 1.0
-updated: 2026-07-12
+version: 1.1
+updated: 2026-07-29
 owner: hide
 ---
 
 # ビジョン — bitz-sdd
 
-> 遡及的 discovery。bitz-sdd は v1.4.6 時点で 11 スキルを実装・リリース済みであり、
+
+> **改訂 1.1（2026-07-29）**: SDD-REV-006 の GP-004（Discovery を実体へ追随させる）による改訂。
+> 初版 1.0（2026-07-12）以降の実体変化を反映する。破棄せず改訂であり、判断の骨格は変えていない。
+> **bitz-flow との依存境界と sdd-git 移管に関する記述は意図的に据え置く**
+> （bitz-flow の設計が並行進行中のため、決定は同プラグイン完了後の最終合わせで行う。人間裁定）。
+
+> 遡及的 discovery。bitz-sdd は初版執筆時点（v1.4.6・11 スキル）で実装・リリース済みであり、
 > 本ビジョンは既存実装の「なぜ・誰のため・何を差別化するか」を後追いで言語化したもの。
 > 未検証の主張には `[proto / 未検証]` を、根拠のない数値には `TBD` を明示する。
 
@@ -23,7 +29,7 @@ owner: hide
 反証可能な要件を書き、検証で裏づけてから完了する」規律を守らせられる世界を作る。
 
 ### 2. Target Group（ユーザー・顧客 — セグメント必須）
-- **主要**: AI コーディングエージェント（Claude Code / Antigravity 2.0）を日常的に使う
+- **主要**: AI コーディングエージェント（Claude Code / Antigravity 2.0 / Codex CLI）を日常的に使う
   **個人開発者・小規模チーム**。まず開発者本人（hide）自身がドッグフーディングする。
 - **副次**: OSS として BitzSkills マーケットプレイスから導入する外部開発者
   （SDD/EARS に関心があるが重厚な RUP/形式手法は避けたい層）。
@@ -45,19 +51,24 @@ owner: hide
 - **EARS 要件 + 機械検証**（`spec_inspect.py`：カバレッジ/孤児/幽霊参照/クロスワークスペース解決）。
 - **`.spec/` ⇄ `docs/` 双方向同期**（マスターと人間ナラティブを分離しつつ整合を保つ）。
 - **権限分離の status ライフサイクル**（draft→approved→…→verified/done。誰が何を遷移できるか規定）。
-- **Claude Code / Antigravity 2.0 両対応のプラグイン配布**（2マニフェスト構成）。
-- 機能全リストではない。11 スキルの網羅は差別化要素ではなく、上記の規律が核。
+- **人間裁定の権限分離を2経路で可視化**（対話確認経路 / 代行可視化経路。裁定の真正性は
+  機械検証しないことを明示し、provenance を構造化 event として残す）。
+- **検証結果の機械可読証跡**（`.spec/verification/`。安定情報と観測値を分離し、
+  実行時間の揺れが判定に影響しない）。
+- **Claude Code / Antigravity 2.0 / OpenAI Codex CLI の3エージェント対応**（3マニフェスト構成）。
+- 機能全リストではない。14 スキルの網羅は差別化要素ではなく、上記の規律が核。
 
 ### 5. Business Goals（提供側の便益）
 - 収益は目標にしない（OSS）。狙いは **BitzSkills エコシステムの中核規律の確立**。
-  bitz-ddd / bitz-env / 将来の bitz-flow が bitz-sdd の `.spec/`・EARS・検証規約に相乗りする。
+  bitz-ddd / bitz-env / bitz-flow が bitz-sdd の `.spec/`・EARS・検証規約に相乗りする
+  （いずれも実在し、bitz-ddd は `metadata.dependencies` で bitz-sdd へ依存宣言している）。
 - 開発者本人の生産性向上（ドッグフーディングによる自己利用価値）。
 - OSS 採用による規約の外部検証とフィードバック獲得。定量目標は `TBD`。
 
 ## Mission / Vision / Values
 
 - **Vision（目的地）**: 上記 = AI 開発を規律ある営みへ。
-- **Mission（日々の方法）**: Claude Code / Antigravity 向けスキルとして、EARS 要件・
+- **Mission（日々の方法）**: Claude Code / Antigravity / Codex CLI 向けスキルとして、EARS 要件・
   機械検証・`.spec`⇄`docs` 同期を提供し、エージェントに SDD の規律を守らせる。
 - **Values（判断原則）**:
   1. **検証が自己申告に勝つ** — 「成功しました」より `spec_inspect.py` の出力。
@@ -69,10 +80,10 @@ owner: hide
 
 ### プレスリリース（要約）
 - **見出し**: bitz-sdd — AI エージェントのための仕様駆動開発ワークフロー。
-- **小見出し**: Claude Code / Antigravity 2.0 で、要件から検証までをトレースする規律を
+- **小見出し**: Claude Code / Antigravity 2.0 / Codex CLI で、要件から検証までをトレースする規律を
   エージェントに守らせる。
 - **要約**: bitz-sdd は、`.spec/` を単一の正として EARS 要件・設計・実装・検証・レポートを
-  一貫運用させる 11 スキルのプラグイン。個人開発者が AI エージェントに「規律ある SDD」を
+  一貫運用させる 14 スキルのプラグイン。個人開発者が AI エージェントに「規律ある SDD」を
   実行させられる。
 - **問題（顧客の言葉）**: 「エージェントは勝手に実装を進めて、あとで仕様と食い違う。
   テストしたと言うが本当に検証されたのか分からない」。
@@ -84,10 +95,13 @@ owner: hide
 - **市場規模（TAM/SAM/SOM）**: `TBD`（OSS・非収益。定量調査未実施）。
 - **競合状況**: spec-kit 系・kiro 系・素の CLAUDE.md 運用など。詳細は positioning.md。
 - **ユニットエコノミクス**: 非該当（無償 OSS）。コストはメンテナ工数のみ。
-- **主要リスク**: OSS 外部採用が伸びない可能性、Antigravity 2.0 仕様変更、スキル本文肥大化。
+- **主要リスク**: OSS 外部採用が伸びない可能性、対応エージェント（Claude Code /
+  Antigravity 2.0 / Codex CLI）の仕様変更、スキル本文肥大化。
 - **Go/No-Go 基準**（後段 assumptions.md が執行）:
-  - 「開発者本人がドッグフーディングで実利用を継続できているか」（Desirability の実証）。
-  - 「`spec_inspect.py` 等の機械検証が誤検知なく回るか」（Feasibility）。
+  - 「開発者本人がドッグフーディングで実利用を継続できているか」（Desirability の実証）
+    — 2026-07-29 時点で継続中。bitz-sdd 自身の `.spec/` は要件67件・タスク43件を保持する。
+  - 「`spec_inspect.py` 等の機械検証が誤検知なく回るか」（Feasibility）— 継続 PASS 中。
+    ただし SDD-REV-006 は Design 層の欠落と、レビュー指摘が消化されない構造を指摘している。
   - 「OSS 利用者がインストールから最初の `.spec/` 起票まで到達できるか」= `[proto / 未検証]`。
 
 ## Open Questions
