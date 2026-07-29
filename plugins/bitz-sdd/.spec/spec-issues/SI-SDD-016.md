@@ -3,7 +3,7 @@ id: SI-SDD-016
 raised_by: FLW-FR-001の反復検証と実行時間差分振り返り（2026-07-18）
 target: 検証コマンド結果の安定した機械可読証跡
 proposed_change_type: new
-status: open
+status: accepted
 ---
 - **目的**: FLW-FR-001の検証では同じ236件のpytestを複数回実行し、3.66秒・3.96秒・3.80秒と
   実行時間が変動した。test-specへ手作業で結果を書いた後にも最終検証を再実行したため、会話上の最新値と
