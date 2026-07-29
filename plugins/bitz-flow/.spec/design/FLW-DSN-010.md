@@ -1,11 +1,11 @@
 ---
 id: FLW-DSN-010
 title: "スキル実行遵守設計"
-status: draft
+status: active
 version: 1.0
 updated: 2026-07-29
 owner: hide
-implements: 
+implements: FLW-FR-003, FLW-FR-011, FLW-NFR-001, FLW-NFR-002, FLW-CON-001
 origin: FLW-DSC-002
 ---
 

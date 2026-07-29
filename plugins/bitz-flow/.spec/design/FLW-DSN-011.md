@@ -1,11 +1,11 @@
 ---
 id: FLW-DSN-011
 title: "v1からv2への規範移行設計"
-status: draft
+status: active
 version: 1.0
 updated: 2026-07-29
 owner: hide
-implements: 
+implements: FLW-FR-012, FLW-CON-001
 origin: FLW-REV-002
 ---
 

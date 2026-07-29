@@ -1,11 +1,11 @@
 ---
 id: FLW-DSN-004
 title: "bitz-flow v2 アーキテクチャ"
-status: draft
+status: active
 version: 1.1
 updated: 2026-07-29
 owner: hide
-implements: 
+implements: FLW-FR-003, FLW-NFR-003, FLW-NFR-004, FLW-CON-001, FLW-CON-002, FLW-CON-003
 origin: FLW-DSC-001
 ---
 

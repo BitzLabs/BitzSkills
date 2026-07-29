@@ -3,7 +3,8 @@ id: SI-FLW-004
 raised_by: PR #61/#66/#67のguarded cleanup実運用（2026-07-18）
 target: worktreeを伴わないsquash merged branch専用cleanup
 proposed_change_type: modify
-status: open
+status: accepted
+github_issue: https://github.com/BitzLabs/BitzSkills/issues/126
 ---
 - **目的**: 現行のsquash cleanupはworktree用のpositional `work-id`を必須とする。PR #61/#66/#67の
   branchは通常checkoutで管理されており、mainへ切替後に実在しない `pr-61` / `pr-66` /

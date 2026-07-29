@@ -1,11 +1,11 @@
 ---
 id: FLW-DSN-009
 title: "release・CHANGELOG詳細設計"
-status: draft
+status: active
 version: 1.0
 updated: 2026-07-29
 owner: hide
-implements: 
+implements: FLW-FR-010, FLW-NFR-003, FLW-NFR-004, FLW-CON-002
 origin: FLW-DSC-003
 ---
 

@@ -1,11 +1,11 @@
 ---
 id: FLW-DSN-013
 title: "Forward Recovery・承認・I/O安全設計"
-status: draft
+status: active
 version: 1.1
 updated: 2026-07-29
 owner: hide
-implements: 
+implements: FLW-NFR-003, FLW-NFR-004, FLW-CON-002
 origin: FLW-REV-002
 ---
 

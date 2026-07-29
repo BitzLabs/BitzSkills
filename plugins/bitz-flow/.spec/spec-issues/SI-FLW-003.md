@@ -3,7 +3,8 @@ id: SI-FLW-003
 raised_by: PR #61/#66/#67の不要ブランチ棚卸し（2026-07-18）
 target: local/remoteブランチのマージ証跡付き監査コマンド
 proposed_change_type: new
-status: open
+status: accepted
+github_issue: https://github.com/BitzLabs/BitzSkills/issues/126
 ---
 - **目的**: PR #67 マージ後の不要ブランチ整理では、local/remote一覧、open PR、merged PRの
   head SHA、worktree占有、remote ref実在を複数コマンドで手動照合した。PR #61/#66も同条件の
