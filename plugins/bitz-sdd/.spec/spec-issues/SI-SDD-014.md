@@ -35,3 +35,11 @@ status: accepted
 | 軽量レーン適否 | 不適。検査結果の意味論を変更する |
 
 **推薦: accept**。verified要件に誤解を招く警告が残り、トレース率指標の信頼性を下げるため。
+
+- **実施**: 2026-07-29 SDD-FR-146（canonical実行時のworkspace横断集約）/ SDD-FR-147
+  （実装コードディレクトリの走査対象拡張、v1.1で幽霊参照判定から除外）/ SDD-FR-148
+  （manual-check要件の未参照報告分離）として要件化し、いずれもverified化。
+  Design Gateの裁定は `.spec/reports/decision-2026-07-29-si-sdd-014.md`、
+  テスト仕様は `.spec/specs/trace-reference-accuracy/test-spec.md`。
+  canonical実行の未参照警告は97件→自動26件・manual-check別掲50件・外部参照で解消9件となり、
+  起票の契機であったFLW-FR-001の誤警告は解消した。

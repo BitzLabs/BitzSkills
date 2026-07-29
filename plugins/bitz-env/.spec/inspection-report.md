@@ -18,25 +18,29 @@
 - なし ✅
 
 ## テスト/実装からの参照がない要件（approved以降）
-- ENV-CON-001
-- ENV-CON-002
-- ENV-CON-003
-- ENV-CON-004
-- ENV-FR-001
-- ENV-FR-002
 - ENV-FR-003
 - ENV-FR-004
 - ENV-FR-005
 - ENV-FR-006
 - ENV-FR-007
-- ENV-FR-008
 - ENV-FR-009
 - ENV-FR-010
+
+## 参照がない manual-check 要件（テスト参照は原理的に生じない — 検証記録で担保）
+- ENV-CON-002
+- ENV-CON-003
+- ENV-CON-004
 - ENV-FR-011
 - ENV-FR-012
 - ENV-FR-013
-- ENV-NFR-001
 - ENV-NFR-002
+
+## 他ワークスペースのテスト/実装から参照されている要件
+- ENV-CON-001 ← BitzSkills/tests/test_env_guard.py
+- ENV-FR-001 ← BitzSkills/tests/test_env_guard.py
+- ENV-FR-002 ← BitzSkills/tests/test_env_guard.py
+- ENV-FR-008 ← BitzSkills/tests/test_env_guard.py
+- ENV-NFR-001 ← BitzSkills/tests/test_env_guard.py
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
 ※ 乖離は候補提示のみ。stale 付与は references/lifecycle.md の再伝播プロトコル（判定パス→人間確認）を経ること

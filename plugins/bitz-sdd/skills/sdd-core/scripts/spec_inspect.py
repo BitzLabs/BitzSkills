@@ -37,6 +37,12 @@ HUMAN_ONLY_STATES = {
     "approved", "promoted", "deprecated",       # requirement
     "accepted", "rejected", "superseded",       # spec-issue
 }
+# 参照走査の拡張子（SDD-FR-147）。実装ディレクトリはコードだけを「実装からの参照」と数え、
+# 解説文書（SKILL.md 等）の言及で未参照が解消しないようにする。
+DOC_SUFFIXES = {".md", ".yaml", ".yml", ".toml", ".txt"}
+CODE_SUFFIXES = {".py", ".ts", ".js", ".rs", ".go", ".java"}
+# 「テスト/実装からの参照」と見なすワークスペース相対パスの接頭辞（SDD-FR-147）
+TRACE_PREFIXES = ("tests", "test", "src", "scripts", "hooks", "skills")
 
 
 def parse_frontmatter(text: str) -> dict:
@@ -182,17 +188,35 @@ def load_forbidden_words(req_dir: Path):
     return [w for w in words if w]
 
 
-def scan_refs(root: Path, subdirs, exclude_names=()):
-    """subdirs 内の md/コード類から 要件ID → 参照元ファイル一覧 を集める"""
+def impl_code_subdirs(root: Path):
+    """実装コードの置き場（コード拡張子だけを走査する追加対象。SDD-FR-147）
+
+    `src` 決め打ちでは拾えない配置を補う。`skills/` 直下は解説文書が主体のため、
+    その配下の `scripts/` ディレクトリだけを対象にする。
+    """
+    subs = [s for s in ("scripts", "hooks") if (root / s).is_dir()]
+    skills_dir = root / "skills"
+    if skills_dir.is_dir():
+        subs += [str(d.relative_to(root))
+                 for d in sorted(skills_dir.glob("*/scripts")) if d.is_dir()]
+    return subs
+
+
+def scan_refs(root: Path, subdirs, exclude_names=(), code_only_subdirs=()):
+    """subdirs 内の md/コード類から 要件ID → 参照元ファイル一覧 を集める
+
+    code_only_subdirs はコード拡張子のファイルだけを走査する（SDD-FR-147）。
+    """
     refs = {}
-    for sub in subdirs:
+    for sub in list(subdirs) + list(code_only_subdirs):
+        allowed = CODE_SUFFIXES if sub in code_only_subdirs else DOC_SUFFIXES | CODE_SUFFIXES
         d = root / sub
         if not d.exists():
             continue
         for f in d.rglob("*"):
             if not f.is_file() or f.name in exclude_names:
                 continue
-            if f.suffix not in {".md", ".py", ".ts", ".js", ".rs", ".go", ".java", ".yaml", ".yml", ".toml", ".txt"}:
+            if f.suffix not in allowed:
                 continue
             try:
                 text = f.read_text(encoding="utf-8", errors="ignore")
@@ -204,6 +228,32 @@ def scan_refs(root: Path, subdirs, exclude_names=()):
                     continue
                 refs.setdefault(rid, []).append(str(f.relative_to(root)))
     return refs
+
+
+def collect_trace_refs(root: Path) -> dict:
+    """テスト/実装ディレクトリからの参照だけを集める（ワークスペース横断集約の入力。SDD-FR-146）"""
+    return scan_refs(root, ["tests", "test", "src"],
+                     exclude_names=("inspection-report.md",),
+                     code_only_subdirs=impl_code_subdirs(root))
+
+
+def build_trace_context(workspaces) -> dict:
+    """検査対象の全ワークスペースについて {workspace: {ID: [参照元]}} を作る（SDD-FR-146）"""
+    return {w: collect_trace_refs(w) for w in workspaces}
+
+
+def external_refs_for(root: Path, trace_ctx: dict) -> dict:
+    """root 以外のワークスペースが持つ参照を {ID: ["<ワークスペース名>/<相対パス>"]} へ畳む
+
+    単一ワークスペース検査では呼ばれず（trace_ctx が None）、既存の判定を変えない。
+    """
+    merged = {}
+    for w, refs in (trace_ctx or {}).items():
+        if w == root:
+            continue
+        for rid, srcs in refs.items():
+            merged.setdefault(rid, []).extend(f"{w.name}/{s}" for s in srcs)
+    return merged
 
 
 _sha_cache = {}
@@ -599,7 +649,8 @@ def integration_preflight(root: Path, target_ref: str) -> tuple[bool, str]:
         return False, f"integration-preflight: target SHAを証明できません: {exc}"
 
 
-def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None) -> str:
+def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None,
+            trace_ctx: dict = None) -> str:
     req_dir = root / ".spec" / "requirements"
     if not req_dir.exists():
         return f"ERROR: {req_dir} が存在しません（BitzSDD レイアウト未初期化）"
@@ -615,6 +666,11 @@ def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None) 
     task_statuses = local_task_statuses(root)
     all_refs = scan_refs(root, [".spec/specs", ".spec/tasks", "tests", "test", "src"],
                          exclude_names=("inspection-report.md",))
+    # 実装コードからの参照は未参照判定にだけ使い、幽霊参照判定には入れない（SDD-FR-147 v1.1）。
+    # docstring や --help の使用例として書かれた ID を幽霊と誤検知しないため。
+    impl_refs = scan_refs(root, [], exclude_names=("inspection-report.md",),
+                          code_only_subdirs=impl_code_subdirs(root))
+    external_refs = external_refs_for(root, trace_ctx)
     state_problems, state_warnings = check_state_events(root)
     problems += state_problems
 
@@ -679,9 +735,26 @@ def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None) 
                if r["fm"].get("status") == "approved" and (rid.split("-")[1] if len(rid.split("-"))>2 else rid.split("-")[0]) in ("FR", "NFR", "CON") and rid not in impl]
     orphans = [rid for rid, r in reqs.items()
                if r["fm"].get("status") in ORPHAN_STATUSES and (rid.split("-")[1] if len(rid.split("-"))>2 else rid.split("-")[0]) in ("FR", "NFR", "CON") and rid not in impl]
-    untested = [rid for rid, r in reqs.items()
-                if r["fm"].get("status") in ACTIVE and (rid.split("-")[1] if len(rid.split("-"))>2 else rid.split("-")[0]) in ("FR", "NFR", "CON")
-                and not any(s.startswith(("tests", "test", "src")) for s in all_refs.get(rid, []))]
+    # 未参照判定（SDD-FR-146 / SDD-FR-147 / SDD-FR-148）:
+    # 自ワークスペースのテスト/実装参照 → 外部ワークスペースの参照 → 検証手段の順に振り分ける
+    untested_auto, untested_manual, externally_traced = [], [], {}
+    for rid, r in reqs.items():
+        if r["fm"].get("status") not in ACTIVE:
+            continue
+        parts = rid.split("-")
+        if (parts[1] if len(parts) > 2 else parts[0]) not in ("FR", "NFR", "CON"):
+            continue
+        own = all_refs.get(rid, []) + impl_refs.get(rid, [])
+        if any(s.startswith(TRACE_PREFIXES) for s in own):
+            continue
+        ext = external_refs.get(rid, [])
+        if ext:
+            externally_traced[rid] = ext
+            continue
+        if r["fm"].get("verification_method") == "manual-check":
+            untested_manual.append(rid)
+        else:
+            untested_auto.append(rid)
 
     lines = [f"# inspection-report.md ({date.today().isoformat()})", ""]
     lines.append(f"成果物数: {len(reqs)} / 問題: {len(problems)} / 幽霊参照: {len(ghosts)} / 実装待ち: {len(waiting)} / 孤児要件: {len(orphans)}")
@@ -702,7 +775,14 @@ def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None) 
     lines += [f"- {rid}" for rid in orphans] or ["- なし ✅"]
     lines.append("")
     lines.append("## テスト/実装からの参照がない要件（approved以降）")
-    lines += [f"- {rid}" for rid in untested] or ["- なし ✅"]
+    lines += [f"- {rid}" for rid in untested_auto] or ["- なし ✅"]
+    lines.append("")
+    lines.append("## 参照がない manual-check 要件（テスト参照は原理的に生じない — 検証記録で担保）")
+    lines += [f"- {rid}" for rid in untested_manual] or ["- なし ✅"]
+    lines.append("")
+    lines.append("## 他ワークスペースのテスト/実装から参照されている要件")
+    lines += [f"- {rid} ← {', '.join(sorted(srcs))}"
+              for rid, srcs in sorted(externally_traced.items())] or ["- なし ✅"]
     lines.append("")
     diverged = []
     for rid, r in sorted(reqs.items()):
@@ -722,7 +802,8 @@ def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None) 
     for rid, r in sorted(reqs.items()):
         fm = r["fm"]
         lines.append(f"| {rid} | {status_label('requirement', fm.get('status',''))} | {fm.get('domain','')} | "
-                     f"{fm.get('verification_method','')} | {len(impl.get(rid, []))} | {len(all_refs.get(rid, []))} |")
+                     f"{fm.get('verification_method','')} | {len(impl.get(rid, []))} | "
+                     f"{len(all_refs.get(rid, [])) + len(impl_refs.get(rid, []))} |")
     ok = not problems and not ghosts and not orphans
     lines.append("")
     lines.append("**判定: " + ("PASS ✅" if ok else "FAIL ❌（上記を解消するまで verified に進めない）") + "**")
@@ -806,6 +887,9 @@ def main():
         reqs, _ = load_requirements(w)
         global_reqs.update(reqs)
     delegation_ctx = build_delegation_context(workspaces)
+    # 複数ワークスペース検査のときだけ、テスト/実装参照をグローバルに集約する（SDD-FR-146）。
+    # 単一検査では None のままとし、既存の判定と結果を変えない。
+    trace_ctx = build_trace_context(workspaces) if len(workspaces) > 1 else None
 
     has_error = False
     if args.target_ref:
@@ -823,7 +907,7 @@ def main():
         elif args.impact:
             print(impact(w, args.impact, global_reqs))
         else:
-            report = inspect(w, global_reqs, delegation_ctx)
+            report = inspect(w, global_reqs, delegation_ctx, trace_ctx)
             out = w / ".spec" / "inspection-report.md"
             if not report.startswith("ERROR"):
                 if not args.check_only:
