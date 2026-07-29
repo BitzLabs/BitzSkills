@@ -349,6 +349,8 @@ def _make_phase_repo(make_repo, *, status_py=_PHASE_STATUS_PY,
     report.mkdir(parents=True)
     (core / "scripts" / "spec_labels.py").write_text("LABELS = {}\n", encoding="utf-8")
     (report / "spec_labels.py").write_text("LABELS = {}\n", encoding="utf-8")
+    # 同期マッピング検査（SDD-FR-150）の巻き添え FAIL を避けるため、整合した一式も置く
+    _seed_sync_files(repo)
     return repo
 
 
@@ -426,3 +428,176 @@ def test_phase_vocab_skipped_without_bitz_sdd(make_repo, copy_script):
     res = run_check(copy_script(repo, CHECK_SCRIPT))
     assert res.returncode == 0, res.stdout
     assert "[SKIP] フェーズ語彙の一致" in res.stdout
+
+
+# ────────────────────────────────────────────────────────────────
+# 同期マッピング SSOT（DEFAULT_MAPPING）⇔ SKILL.md 同期表の一致検査（SDD-FR-150）
+# ────────────────────────────────────────────────────────────────
+
+SYNC_PAIRS = [
+    (".spec/discovery/vision.md", "docs/00_はじめに/ミッション・ビジョン.md"),
+    (".spec/discovery/constraints.md", "docs/00_はじめに/制約.md"),
+    (".spec/design/architecture.md", "docs/03_設計仕様/アーキテクチャ.md"),
+]
+
+
+def _discovery_only(pairs):
+    return [p for p in pairs if p[0].startswith(".spec/discovery/")]
+
+
+def _sync_py(pairs) -> str:
+    body = "".join(f'    "{spec}": "{docs}",\n' for spec, docs in pairs)
+    return "DEFAULT_MAPPING = {\n" + body + "}\n"
+
+
+def _sync_doc(prefix: str, marker_pairs, visible_pairs) -> str:
+    """可読の同期表とマーカーを持つ文書本文を組み立てる。
+
+    marker_pairs が None のときはマーカーを省く（マーカー欠落ケース用）。
+    """
+    body = f"{prefix}\n\n## 同期マッピングのルール\n\n"
+    body += "".join(f"*   `{spec}` ⇄ `{docs}`\n" for spec, docs in visible_pairs)
+    if marker_pairs is not None:
+        body += "\n<!-- sync-mapping:\n"
+        body += "".join(f"{spec}={docs}\n" for spec, docs in marker_pairs)
+        body += "-->\n"
+    return body
+
+
+def _sync_skill_md(name: str, marker_pairs, visible_pairs) -> str:
+    fm = (
+        f"---\nname: {name}\ndescription: demo\nmetadata:\n  version: 1.0.0\n"
+        "  author: test\n  created: 2026-01-01\n  updated: 2026-01-01\n---\n"
+    )
+    return fm + _sync_doc(f"# {name}", marker_pairs, visible_pairs)
+
+
+_UNSET = object()
+
+
+def _seed_sync_files(repo: Path, *, pairs=None, docs_marker=_UNSET, docs_visible=_UNSET,
+                     disc_marker=_UNSET, disc_visible=_UNSET) -> None:
+    """同期マッピング検査に必要な sdd_sync.py と2つの SKILL.md を配置する。
+
+    省略された引数は DEFAULT_MAPPING と整合する既定値（＝検査 PASS の状態）になる。
+    """
+    pairs = SYNC_PAIRS if pairs is None else pairs
+    discovery = _discovery_only(pairs)
+    docs_skill = repo / "plugins/bitz-sdd/skills/sdd-docs"
+    disc_skill = repo / "plugins/bitz-sdd/skills/sdd-discovery"
+    (docs_skill / "scripts").mkdir(parents=True, exist_ok=True)
+    disc_skill.mkdir(parents=True, exist_ok=True)
+    (docs_skill / "scripts" / "sdd_sync.py").write_text(_sync_py(pairs), encoding="utf-8")
+    (docs_skill / "SKILL.md").write_text(
+        _sync_skill_md(
+            "sdd-docs",
+            pairs if docs_marker is _UNSET else docs_marker,
+            pairs if docs_visible is _UNSET else docs_visible,
+        ),
+        encoding="utf-8",
+    )
+    (disc_skill / "SKILL.md").write_text(
+        _sync_skill_md(
+            "sdd-discovery",
+            discovery if disc_marker is _UNSET else disc_marker,
+            discovery if disc_visible is _UNSET else disc_visible,
+        ),
+        encoding="utf-8",
+    )
+
+
+def _make_sync_repo(make_repo, **kwargs):
+    """フェーズ語彙検査も通る土台の上に、同期マッピング一式を（指定内容で）置き直す。"""
+    repo = _make_phase_repo(make_repo)
+    _seed_sync_files(repo, **kwargs)
+    return repo
+
+
+def test_sync_mapping_pass(make_repo, copy_script):
+    """マーカー・可読表・DEFAULT_MAPPING が一致すれば両文書とも PASS になる。"""
+    repo = _make_sync_repo(make_repo)
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.stdout.count("[PASS] 同期マッピングマーカー") == 2, res.stdout
+    assert "[PASS] 同期マッピングの 1:1 性" in res.stdout
+
+
+def test_sync_mapping_marker_missing_pair(make_repo, copy_script):
+    """マーカーから対が欠落すると FAIL し、欠落した対が示される。"""
+    repo = _make_sync_repo(make_repo, docs_marker=SYNC_PAIRS[:-1])
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.returncode != 0
+    assert "[FAIL] 同期マッピングマーカー" in res.stdout
+    assert "欠落" in res.stdout
+    assert ".spec/design/architecture.md" in res.stdout
+
+
+def test_sync_mapping_marker_extra_pair(make_repo, copy_script):
+    """DEFAULT_MAPPING に無い対がマーカーにあると FAIL（余剰として示される）。"""
+    extra = SYNC_PAIRS + [(".spec/discovery/personas.md", "docs/00_はじめに/ペルソナ・ジャーニー.md")]
+    repo = _make_sync_repo(make_repo, docs_marker=extra, docs_visible=extra)
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.returncode != 0
+    assert "余剰" in res.stdout
+    assert "personas.md" in res.stdout
+
+
+def test_sync_mapping_marker_target_tampered(make_repo, copy_script):
+    """同期先だけを差し替えた改竄も不一致として検出される。"""
+    tampered = [(SYNC_PAIRS[0][0], "docs/00_はじめに/対象外.md")] + SYNC_PAIRS[1:]
+    repo = _make_sync_repo(make_repo, docs_marker=tampered, docs_visible=tampered)
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.returncode != 0
+    assert "[FAIL] 同期マッピングマーカー" in res.stdout
+    assert "不一致" in res.stdout
+
+
+def test_sync_mapping_visible_table_drift(make_repo, copy_script):
+    """マーカーは正しいが可読の同期表がドリフトしたら FAIL。"""
+    drifted = [(SYNC_PAIRS[0][0], "docs/00_はじめに/成功指標.md")] + SYNC_PAIRS[1:]
+    repo = _make_sync_repo(make_repo, docs_visible=drifted)
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.returncode != 0
+    assert "可読の同期表にマーカーと対になる記載がない" in res.stdout
+
+
+def test_sync_mapping_marker_absent(make_repo, copy_script):
+    """マーカーが無い文書は FAIL。"""
+    repo = _make_sync_repo(make_repo, disc_marker=None)
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.returncode != 0
+    assert "マーカーが無い" in res.stdout
+
+
+def test_sync_mapping_discovery_scope_is_subset(make_repo, copy_script):
+    """sdd-discovery のマーカーに設計マッピングが混ざると FAIL（担当範囲外は余剰）。"""
+    repo = _make_sync_repo(make_repo, disc_marker=SYNC_PAIRS, disc_visible=SYNC_PAIRS)
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.returncode != 0
+    assert "余剰" in res.stdout
+    assert "architecture.md" in res.stdout
+
+
+def test_sync_mapping_rejects_one_to_many(make_repo, copy_script):
+    """複数の .spec 文書が同じ docs 文書を指す 1:N 定義は FAIL（push の逆反映先が決まらない）。"""
+    one_to_many = SYNC_PAIRS + [(".spec/discovery/scope.md", "docs/00_はじめに/制約.md")]
+    repo = _make_sync_repo(make_repo, pairs=one_to_many)
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.returncode != 0
+    assert "[FAIL] 同期マッピングの 1:1 性" in res.stdout
+    assert "docs/00_はじめに/制約.md" in res.stdout
+
+
+def test_sync_mapping_additive_change_passes(make_repo, copy_script):
+    """マッピング追加をコードと2文書で同時に行えば FAIL しない（加算的変更を妨げない）。"""
+    extended = SYNC_PAIRS + [(".spec/discovery/metrics.md", "docs/00_はじめに/成功指標.md")]
+    repo = _make_sync_repo(make_repo, pairs=extended)
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.stdout.count("[PASS] 同期マッピングマーカー") == 2, res.stdout
+
+
+def test_sync_mapping_skipped_without_bitz_sdd(make_repo, copy_script):
+    """bitz-sdd を含まないリポジトリでは SKIP し、既存の検査結果に影響しない。"""
+    repo = make_repo()
+    res = run_check(copy_script(repo, CHECK_SCRIPT))
+    assert res.returncode == 0, res.stdout
+    assert "[SKIP] 同期マッピングの一致" in res.stdout

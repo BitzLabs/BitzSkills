@@ -16,6 +16,8 @@
   8. 対訳辞書 spec_labels.py の SSOT（sdd-core）と複製（sdd-report）の一致（SDD-FR-137）
   9. フェーズ正規語彙 PHASE_CODES（spec_status.py）と文書側マーカーの一致（SDD-FR-140）
      （sdd-core SKILL.md / gates.md の phase-vocabulary マーカー・散文リストとの一致）
+ 10. 同期マッピング SSOT（sdd_sync.py の DEFAULT_MAPPING）と SKILL.md 同期表の一致（SDD-FR-150）
+     （sdd-docs / sdd-discovery の sync-mapping マーカー・可読表との一致と 1:1 性）
 
 すべて合格なら exit 0、1つでも FAIL があれば exit 1。
 """
@@ -242,6 +244,98 @@ def check_phase_vocabulary(repo: Path) -> None:
                 check(f"フェーズ語彙マーカー: {rel}", True, "PHASE_CODES・散文リストと一致")
 
 
+SYNC_MARKER_RE = re.compile(r"<!--\s*sync-mapping:\s*(.*?)-->", re.DOTALL)
+
+
+def _default_mapping_from_source(sync_py: Path) -> list[tuple[str, str]] | None:
+    """sdd_sync.py のソースから DEFAULT_MAPPING の対を抽出する（import せず副作用を避ける）。"""
+    m = re.search(
+        r"DEFAULT_MAPPING\s*=\s*\{(.*?)^\}", sync_py.read_text(encoding="utf-8"),
+        re.DOTALL | re.MULTILINE,
+    )
+    if not m:
+        return None
+    return re.findall(r'"([^"]+)"\s*:\s*"([^"]+)"', m.group(1))
+
+
+def _visible_pair_present(text: str, spec_rel: str, docs_rel: str) -> bool:
+    """可読の同期表に「同一行で対になった」記載があるか（語推定はしない）。"""
+    return any(
+        f"`{spec_rel}`" in line and f"`{docs_rel}`" in line for line in text.splitlines()
+    )
+
+
+def check_sync_mapping(repo: Path) -> None:
+    """同期マッピングの SSOT（DEFAULT_MAPPING）と SKILL.md 側の同期表の一致を検証する（SDD-FR-150）。
+
+    sdd-docs / sdd-discovery の SKILL.md に置いた HTML コメントマーカー
+    `<!-- sync-mapping: <spec>=<docs> ... -->` から対応表を抽出し、`sdd_sync.py` の
+    DEFAULT_MAPPING と過不足なく一致することを検査する。加えて、各文書に人間可読で併記された
+    同期表に同じ対が同一行で現れることを確認し、可視表の静かなドリフトも検出する。
+    sdd-discovery は Discovery 成果物だけを扱うため、その部分集合と照合する。
+    """
+    if not (repo / "plugins" / "bitz-sdd").exists():
+        print("[SKIP] 同期マッピングの一致 — bitz-sdd プラグイン未配置")
+        return
+
+    sync_py = repo / "plugins/bitz-sdd/skills/sdd-docs/scripts/sdd_sync.py"
+    if not sync_py.exists():
+        check("同期マッピング SSOT の存在", False, f"{sync_py.relative_to(repo)} が無い")
+        return
+    pairs = _default_mapping_from_source(sync_py)
+    if not pairs:
+        check("DEFAULT_MAPPING 抽出", False, "sdd_sync.py から DEFAULT_MAPPING を抽出できない")
+        return
+
+    docs_targets = [p[1] for p in pairs]
+    if len(set(docs_targets)) != len(docs_targets):
+        dup = sorted({d for d in docs_targets if docs_targets.count(d) > 1})
+        check("同期マッピングの 1:1 性", False,
+              f"複数の .spec 文書が同じ docs 文書を同期先にしている: {dup}")
+    else:
+        check("同期マッピングの 1:1 性", True, f"{len(pairs)} 件すべて 1:1")
+
+    scopes = {
+        "plugins/bitz-sdd/skills/sdd-docs/SKILL.md": pairs,
+        "plugins/bitz-sdd/skills/sdd-discovery/SKILL.md":
+            [p for p in pairs if p[0].startswith(".spec/discovery/")],
+    }
+    for rel, expected in scopes.items():
+        doc = repo / rel
+        if not doc.exists():
+            check(f"同期マッピングマーカー: {rel}", False, "対象文書が無い")
+            continue
+        text = doc.read_text(encoding="utf-8")
+        mk = SYNC_MARKER_RE.search(text)
+        if not mk:
+            check(f"同期マッピングマーカー: {rel}", False,
+                  "<!-- sync-mapping: ... --> マーカーが無い")
+            continue
+        marker_pairs = [
+            tuple(line.strip().split("=", 1))
+            for line in mk.group(1).splitlines() if "=" in line
+        ]
+        marker_set, expected_set = set(marker_pairs), set(expected)
+        if len(marker_pairs) != len(marker_set):
+            check(f"同期マッピングマーカー: {rel}", False, "マーカー内に重複行がある")
+        elif marker_set != expected_set:
+            missing = sorted(f"{s} -> {d}" for s, d in expected_set - marker_set)
+            extra = sorted(f"{s} -> {d}" for s, d in marker_set - expected_set)
+            check(f"同期マッピングマーカー: {rel}", False,
+                  f"DEFAULT_MAPPING と不一致 — 欠落{missing} 余剰{extra}"
+                  "（DEFAULT_MAPPING と同時に更新すること）")
+        else:
+            drifted = sorted(
+                f"{s} -> {d}" for s, d in expected if not _visible_pair_present(text, s, d)
+            )
+            if drifted:
+                check(f"同期マッピングマーカー: {rel}", False,
+                      f"可読の同期表にマーカーと対になる記載がない: {drifted}")
+            else:
+                check(f"同期マッピングマーカー: {rel}", True,
+                      f"DEFAULT_MAPPING・可読表と一致（{len(expected)} 件）")
+
+
 def parse_version(text: str) -> tuple[int, ...]:
     """semver 文字列を比較用タプルへ変換する（"1.4" のような部分指定も受理）"""
     return tuple(int(p) for p in re.findall(r"\d+", text)) or (0,)
@@ -415,6 +509,9 @@ def main() -> None:
 
     # 9. フェーズ正規語彙 PHASE_CODES と文書側マーカーの一致（SDD-FR-140）
     check_phase_vocabulary(REPO)
+
+    # 10. 同期マッピング SSOT（DEFAULT_MAPPING）と SKILL.md 同期表の一致（SDD-FR-150）
+    check_sync_mapping(REPO)
 
     print()
     for w in warnings:

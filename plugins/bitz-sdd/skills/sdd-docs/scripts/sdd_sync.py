@@ -10,10 +10,17 @@ from pathlib import Path
 
 
 # 同期するデフォルトのマッピング定義 (spec_file_path -> docs_file_path)
-# 全てリポジトリルートからの相対パス。この対応表が同期元追跡の正となる。
+# 全てリポジトリルートからの相対パス。この対応表が同期元追跡の正（SSOT）となる。
+# 対応は常に 1:1 に保つ（pull と push を対称に保つため。1つの .spec 文書を複数の docs 文書へ
+# 分割すると push の逆反映先が決まらない）。SKILL.md 側の同期表は sync-mapping マーカーで
+# 本定義と機械照合される（release_check.py。SDD-FR-150）ため、変更時は両方を同時に更新する。
 DEFAULT_MAPPING = {
     ".spec/discovery/vision.md": "docs/00_はじめに/ミッション・ビジョン.md",
+    ".spec/discovery/metrics.md": "docs/00_はじめに/成功指標.md",
+    ".spec/discovery/constraints.md": "docs/00_はじめに/制約.md",
     ".spec/discovery/scope.md": "docs/00_はじめに/対象外.md",
+    ".spec/discovery/personas.md": "docs/00_はじめに/ペルソナ・ジャーニー.md",
+    ".spec/discovery/positioning.md": "docs/00_はじめに/ポジショニング.md",
     ".spec/design/domain-model.md": "docs/03_設計仕様/ドメインモデル.md",
     ".spec/design/api-design.md": "docs/03_設計仕様/公開API.md",
     ".spec/design/architecture.md": "docs/03_設計仕様/アーキテクチャ.md",
