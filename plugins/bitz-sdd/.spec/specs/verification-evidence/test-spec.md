@@ -3,13 +3,15 @@
 sdd-test 工程で SDD-FR-151 / 152 / 153 / 154 の EARS 要件から導出した検証仕様。
 
 - 実行日: 2026-07-29
-- 対象リビジョン: base HEAD `6d04825` + working tree
+- 対象リビジョン: base HEAD `6d04825`
+- **機械証跡**: `.spec/verification/pytest--d5a446c.json`（本要件群を覆う実行の正）
 - 最終実行コマンド: `.venv/bin/pytest -q` / `python3 scripts/release_check.py` /
   `python3 plugins/bitz-sdd/skills/sdd-core/scripts/spec_inspect.py --workspace . plugins/* --check-only`
 
 > **本テスト仕様書の件数はナラティブである**（SDD-FR-151 の趣旨）。green 判定の正は
 > `.spec/verification/` の証跡であり、本文の数値と食い違った場合は証跡が正。
-> 再実行のたびに本文の数値を手で追随させる必要はない。
+> 再実行のたびに本文の数値を手で追随させる必要はない。本要件群は自分自身の仕組みで
+> 証跡を記録しており、この test-spec が「手書き数値を正としない」最初の実例になる。
 
 > 注: 本リポジトリは bitz-sdd をインストール済みプラグインとして消費するため、
 > `scripts/spec inspect` はプラグインキャッシュ側の版へ委譲する。作業ツリーの変更を
