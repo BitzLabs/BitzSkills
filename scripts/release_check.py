@@ -19,6 +19,7 @@
 
 すべて合格なら exit 0、1つでも FAIL があれば exit 1。
 """
+import argparse
 import json
 import re
 import shutil
@@ -321,6 +322,11 @@ def check_dependencies(plugin_manifests: dict[str, dict[str, dict]]) -> None:
 
 
 def main() -> None:
+    # 引数は取らない。未知の引数を黙認すると「フラグが効いた」誤認を作るため拒否する（CORE-CON-011）
+    argparse.ArgumentParser(
+        description="リリース前の横断検証ゲート（引数なしで実行する）"
+    ).parse_args()
+
     plugin_dirs = sorted(p for p in (REPO / "plugins").iterdir() if p.is_dir())
     plugin_manifests: dict[str, dict[str, dict]] = {}
 

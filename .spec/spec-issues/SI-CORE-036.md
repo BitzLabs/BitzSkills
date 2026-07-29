@@ -92,3 +92,12 @@ status: accepted
   意図表明（`--help` / `--dry-run`）を無視して実行するのは、ガードレール規律の前提を
   崩す。実害が既に1件発生しており、修正コストは小さく後方互換も保てる。
   ただし hook スクリプトの厳格化はプラットフォーム側の起動形を確認するまで含めない。
+
+- **実施**: 2026-07-29 提案4項目すべてを完了。項目1は CORE-FR-018（`bump_version.py` の
+  argparse 化と `--dry-run`、PR #113）、項目2・3・4 は CORE-CON-011（CLI スクリプトの
+  未知引数拒否を共通契約として要件化。`release_check.py` を argparse 化し、
+  `tests/test_cli_contract.py` がスクリプトを動的収集して機械検証する）として実施し、
+  いずれも verified 化。hook スクリプト（`agy_guard.py` / `env_guard.py`）は
+  stdin 駆動で CLI 引数契約を持たないため対象外と裁定した。
+  裁定は `.spec/reports/decision-2026-07-29-si-core-036.md`（残項目の裁定）、
+  テスト仕様は `.spec/specs/cli-argument-contract/test-spec.md`。
