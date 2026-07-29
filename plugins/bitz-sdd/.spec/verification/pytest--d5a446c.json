@@ -1,0 +1,32 @@
+{
+  "command": [
+    ".venv/bin/pytest",
+    "-q"
+  ],
+  "command_id": "pytest",
+  "commit": "d5a446c32245907f543de92814fee8dd251d4cd5",
+  "counts": {
+    "errors": 0,
+    "failed": 0,
+    "passed": 480,
+    "skipped": 0
+  },
+  "cwd": ".",
+  "dirty": false,
+  "exit_code": 0,
+  "observed": {
+    "duration_seconds": 12.68
+  },
+  "recorded_at": "2026-07-29T12:42:18Z",
+  "requirements": [
+    "SDD-FR-151",
+    "SDD-FR-152",
+    "SDD-FR-153",
+    "SDD-FR-154"
+  ],
+  "schema": "bitzsdd/verification-evidence@1",
+  "tool": {
+    "name": "pytest",
+    "version": "9.1.1"
+  }
+}
