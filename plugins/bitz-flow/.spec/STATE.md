@@ -29,3 +29,4 @@
 - 2026-07-29 FLW-CON-002: draftの責務過多を解消し、Operation Contractを維持、明示的人間承認をFLW-CON-005、破壊操作とcleanupをFLW-CON-006へ分離、出力安全をFLW-NFR-002へ一本化（codex）
 - 2026-07-29 v2 draft要件: `origin`を起票契機、設計側`implements`を要件対応として役割分離し、`origin: FLW-DSN-*`と同一設計の`implements`による循環を解消（codex）
 - 2026-07-29 v2後継候補: draft段階の`supersedes`を解除し、Promotion Gate後のdeprecated裁定と同じ変更セットで両方向relationを発効する規則へ統一（codex）
+- 2026-07-29 Discovery成果物: Gate Goはフェーズ進行裁定でありDSCのactive化ではないため、draftを維持し裁定記録を完了根拠とする解釈を明文化（codex）

@@ -27,6 +27,16 @@
 - Pythonで必須安全契約を成立させられない場合は、scope縮小、再設計、またはNo-Goを裁定する。
 - MCP、Rust、プラットフォーム固有hook、透過proxyは実装対象外のままとする。
 
+## Discovery成果物のstatus解釈
+
+Discovery GateのGoはDiscoveryからDesignへの進行裁定であり、FLW-DSC-000〜006の
+frontmatterを`active`へ変える裁定ではない。`sdd-discovery`の成果物は`draft`を維持し、
+Goの正は`assumptions.md`と`worksheet.md`のDiscovery Gate記録とする。
+
+このため、Design Gate通過後もFLW-DSC-000〜006が`draft`であることは未裁定や後戻りを
+意味しない。フェーズの機械判定はDSCのstatusだけへ依存させず、Gate裁定と後続成果物を扱う
+bitz-sdd側の責務とする。
+
 ## 残余条件
 
 - cross-host競合はsingle coordinator、marker重複検出、canary即時停止で統制する。

@@ -2,7 +2,7 @@
 id: FLW-DSN-011
 title: "v1からv2への規範移行設計"
 status: active
-version: 1.1
+version: 1.2
 updated: 2026-07-29
 owner: hide
 implements: FLW-FR-011, FLW-FR-012, FLW-CON-001, FLW-CON-006
@@ -22,9 +22,15 @@ FLW-REV-002は、現行v1のactive/verified契約とv2 draftが相互排他的�
 | set | 適用期間 | 正となる成果物 | 状態 |
 |---|---|---|---|
 | v1-current | v2 Promotion Gate完了まで | FLW-FR-001/002、FLW-DSN-001、現行4skills/scripts | 現在の実行契約 |
-| v2-proposed | Design Gate裁定まで | FLW-DSC-000〜006、FLW-DSN-002〜014 | 設計候補。実行契約ではない |
+| v2-discovery-evidence | Discovery Gate Go後も保持 | FLW-DSC-000〜006とGate裁定 | 探索根拠。実行契約ではない |
+| v2-proposed | Design Gate裁定まで | FLW-DSN-000/002〜014 | 設計候補。実行契約ではない |
 | v2-approved | Design Gate通過後〜実装完了 | active化した設計、後続のv2 draft/approved要件 | 実装対象契約 |
 | v2-current | v2 Promotion Gate完了後 | promoted v2要件、active v2設計、v2 skills/scripts | 新しい実行契約 |
+
+Discovery GateはDiscoveryからDesignへのフェーズ遷移を許可する人間裁定であり、
+FLW-DSC-000〜006を`active`へ遷移させるゲートではない。Discovery成果物は`draft`を維持し、
+Goの正は`assumptions.md`と`worksheet.md`の裁定記録とする。したがって、DSCの`draft`は
+Gate未裁定や設計未着手を意味しない。
 
 v2 draftの`implements`はDesign Gate後に要件を派生するまで空欄とする。Design Gate前の
 トレースは`origin`でDiscovery・reviewへ結ぶ。FAIL設計から要件を派生しない。
