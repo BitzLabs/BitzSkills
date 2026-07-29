@@ -1,0 +1,31 @@
+{
+  "perspective": "business",
+  "dimensions": [
+    {
+      "name": "要件トレーサビリティ",
+      "weight": 0.35,
+      "score": 5,
+      "findings": []
+    },
+    {
+      "name": "NFR定量化",
+      "weight": 0.30,
+      "score": 5,
+      "findings": []
+    },
+    {
+      "name": "ステークホルダー整合",
+      "weight": 0.20,
+      "score": 5,
+      "findings": []
+    },
+    {
+      "name": "ROI・実現可能性",
+      "weight": 0.15,
+      "score": 5,
+      "findings": []
+    }
+  ],
+  "weighted_score": 5.00,
+  "summary": "accepted spec-issueから設計・要件への対応を訂正し、M1〜M5の予算を実績で再校正する初期budgetとして定義した。成功指標、縮退出荷、ステークホルダー裁定、早期M0価値実証が一貫しており、要件承認を妨げるビジネス上の問題はない。"
+}

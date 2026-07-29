@@ -1,0 +1,40 @@
+{
+  "perspective": "risk",
+  "dimensions": [
+    {
+      "name": "分散システムリスク",
+      "weight": 0.30,
+      "score": 4,
+      "findings": [
+        {
+          "id": "RSK-101",
+          "severity": "minor",
+          "location": "requirements/FLW-CON-004.md",
+          "title": "cross-host排他は技術強制ではなく運用統制である",
+          "description": "単一coordinatorの誤割当時には重複Issue/PRが作られる可能性が残るが、markerをlockと誤認せず、重複検出時は自動close/deleteせずPromotionを停止する。",
+          "recommendation": "M3/M4の独立canaryでcoordinator重複割当とmarker重複を各0件に保ち、違反時はscope縮小またはNo-Goを裁定する。"
+        }
+      ]
+    },
+    {
+      "name": "障害モード分析",
+      "weight": 0.30,
+      "score": 5,
+      "findings": []
+    },
+    {
+      "name": "Saga設計の妥当性",
+      "weight": 0.25,
+      "score": 5,
+      "findings": []
+    },
+    {
+      "name": "データ整合性リスク",
+      "weight": 0.15,
+      "score": 5,
+      "findings": []
+    }
+  ],
+  "weighted_score": 4.70,
+  "summary": "外部GitHub状態を扱うため分散リスクとSaga観点は有効である。cross-host排他は意図的な運用残余リスクだが、安全を証明できない操作のUNSUPPORTED、Forward Recovery、独立canary即時停止により許容可能である。"
+}

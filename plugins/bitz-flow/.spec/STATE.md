@@ -34,3 +34,5 @@
 - 2026-07-29 多観点再レビュー指摘: SI-FLW-002〜005の継承表誤対応を訂正し、milestone予算を実績で再校正する初期budgetとして明確化（codex）
 - 2026-07-29 運用再レビュー指摘: remote削除ABA安全、atomic replace commit point、M3/M4独立canary、PR/milestone rollback境界、draft要件versionを是正（codex）
 - 2026-07-29 atomic durability再確認: commit pointをreplace時点からparent directory同期・最終digest検証完了時点へ修正（codex）
+- 2026-07-29 FLW-REV-004: draft要件の多観点再レビュー PASS 4.84、critical 0・major 0・残余P2 1（codex）
+- 2026-07-29 FLW-REV-005: システムエンジニアリング再レビュー PASS、要件承認ゲートへ提示可能（codex）

@@ -1,0 +1,45 @@
+{
+  "review_id": "FLW-REV-004",
+  "verdict": "PASS",
+  "aggregate_score": 4.84,
+  "perspective_scores": {
+    "consistency": 5.00,
+    "data-integrity": 4.65,
+    "operations": 5.00,
+    "risk": 4.70,
+    "business": 5.00
+  },
+  "findings_summary": {
+    "total": 2,
+    "after_dedup": 1,
+    "by_priority": {"P0": 0, "P1": 0, "P2": 1, "P3": 0},
+    "by_severity": {"critical": 0, "major": 0, "minor": 1, "info": 1}
+  },
+  "findings": [
+    {
+      "id": "SYN-201",
+      "priority": "P2",
+      "source_ids": ["DIN-201", "RSK-101"],
+      "perspectives": ["data-integrity", "risk"],
+      "title": "cross-host排他は単一coordinator運用に依存する",
+      "recommendation": "FLW-CON-004どおりM3/M4の独立canaryでcoordinator identityと重複0件を検査し、違反時はPromotionを停止する。"
+    }
+  ],
+  "resolved_during_review": [
+    "BIZ-101: accepted spec-issue継承表の誤対応",
+    "BIZ-401: milestone予算の根拠と再校正",
+    "RVC-101: milestoneとPRのrollback境界",
+    "RVC-201: spec-issueから要件へのトレース",
+    "RVC-202: 責務分割後のversion",
+    "OPS-201: remote削除応答喪失時のexpected SHA残存",
+    "OPS-202: atomic replaceとdurability commit point",
+    "OPS-401: FLW-FR-009を含むv1複合後継",
+    "OPS-402: M3/M4の独立canary"
+  ],
+  "conditional_items": [
+    "SYN-201はFLW-CON-004のM3/M4実装・canaryで検証する"
+  ],
+  "re_review_conditions": [
+    "Operation Catalog、明示的人間承認境界、cross-host統制、milestone縮退出荷境界を変更した場合"
+  ]
+}
