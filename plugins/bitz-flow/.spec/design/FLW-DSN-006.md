@@ -5,7 +5,7 @@ status: active
 version: 1.0
 updated: 2026-07-29
 owner: hide
-implements: FLW-FR-006, FLW-FR-007, FLW-NFR-003, FLW-CON-002
+implements: FLW-FR-006, FLW-FR-007, FLW-NFR-003, FLW-NFR-006, FLW-CON-002
 origin: SI-FLW-001
 ---
 

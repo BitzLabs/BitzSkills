@@ -12,17 +12,17 @@ superseded_by:
 confidence: high
 ---
 
-### FLW-NFR-003 障害復旧と重複副作用防止
+### FLW-NFR-003 Forward Recoveryの安全な収束
 
-- **説明**: write応答喪失、timeout、部分完了、並行実行から外部状態を破壊せず収束する。
+- **説明**: write応答喪失、timeout、部分完了時に、確認済みの外部状態を破壊せず前進再開へ収束する。
 - **受入基準 (EARS)**:
-  - WHEN write operationを登録する THEN bitz-flowは1件以上の安定Recovery ID、postcondition、retry方針をoperation schemaへ要求すること SHALL
-  - WHEN write応答を喪失する THEN bitz-flowはRecovery Matrixの外部証跡を照会して`DONE`、`PARTIAL`、`INDETERMINATE`、`STALE`、`BLOCKED`のいずれかを返すこと SHALL
-  - WHEN 副作用の成否を一意に判定できない THEN bitz-flowは同じtargetへの後続mutationを停止すること SHALL
-  - WHEN GitHub createまたはcommentを再実行する THEN bitz-flowはidempotency markerを全page照会して重複副作用を防止すること SHALL
-  - WHEN 同一concurrency keyのwriteを同一hostで実行する THEN bitz-flowはOS advisory lockで直列化すること SHALL
-  - WHEN cross-host createの直列化を証明できない THEN bitz-flowはsingle coordinator前提をplanへ表示するかoperationを`UNSUPPORTED`にすること SHALL
-  - WHEN Recovery Matrixのfault fixtureを実行する THEN bitz-flowは重複副作用0件、誤補償0件、INDETERMINATE後のmutation継続0件を記録すること SHALL
-- **検証手段**: 全writeの副作用直前、直後、post-check中へfault injectionするunit testで検証する。
+  - WHEN write operationを登録する THEN bitz-flowは1件の安定Recovery ID、外部状態で判定可能なpostcondition、retry方針をoperation schemaへ要求すること SHALL
+  - WHEN write応答を喪失する、timeoutする、またはpost-checkに失敗する THEN bitz-flowはRecovery Matrixが指定する外部証跡を照会して`DONE`、`PARTIAL`、`INDETERMINATE`、`STALE`、`BLOCKED`のいずれかを返すこと SHALL
+  - WHEN recovery結果が`PARTIAL`である THEN bitz-flowは確認済みの`completed_steps`と未完了の`remaining_steps`を返し、確認済み副作用を再実行しないこと SHALL
+  - WHEN recovery結果が`INDETERMINATE`である THEN bitz-flowはread-only reconcileだけを許可し、同じcanonical targetへの後続mutationを停止すること SHALL
+  - WHEN 部分完了した副作用を外部証跡で確認する THEN bitz-flowは当該副作用を自動削除、自動上書き、または補償操作で巻き戻さないこと SHALL
+  - WHEN Recovery Matrixのfault fixtureを実行する THEN bitz-flowはwrite operationのRecovery ID対応率100%、誤補償0件、`INDETERMINATE`後のmutation継続0件を記録すること SHALL
+- **検証手段**: 全writeの副作用直前、直後、post-check中へfault injectionし、終了状態、完了段階、後続mutation、補償操作をunit testで検証する。
 - **Revision History**:
   - 1.0 (2026-07-29) FLW-DSN-012/013とFLW-REV-002の残余リスクからdraft起票
+  - 1.0 (2026-07-29) draftレビューで冪等性、同一host排他、cross-host制約をFLW-NFR-005/006、FLW-CON-004へ分離
