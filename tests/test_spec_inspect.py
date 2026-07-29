@@ -939,3 +939,226 @@ def test_SDD_FR_143_audit_baseline_unresolvable_is_warning_not_failure(tmp_path:
     assert result.returncode == 0, report
     assert "baseline監査を実行できません" in report
     assert "PASS" in report
+
+
+# ---- SDD-FR-146 / 147 / 148: 未参照判定の正確化（SI-SDD-014） ----
+
+TRACE_REQ_ID = "TR-FR-" + "001"
+TRACE_GHOST_ID = "TR-FR-" + "902"
+
+AUTO_SECTION = "## テスト/実装からの参照がない要件（approved以降）"
+MANUAL_SECTION = "## 参照がない manual-check 要件"
+EXTERNAL_SECTION = "## 他ワークスペースのテスト/実装から参照されている要件"
+GHOST_SECTION = "## 幽霊参照（存在しないIDへの参照）"
+
+
+def section_body(report: str, heading: str) -> str:
+    """レポートから見出し直下のブロックを取り出す（次の見出しまで）"""
+    lines = report.splitlines()
+    for i, line in enumerate(lines):
+        if line.startswith(heading):
+            body = []
+            for rest in lines[i + 1:]:
+                if rest.startswith("## "):
+                    break
+                body.append(rest)
+            return "\n".join(body)
+    raise AssertionError(f"見出しが見つかりません: {heading}\n---\n{report}")
+
+
+def make_plugin_workspace(tmp_path: Path, vmethod: str = "unit-test"):
+    """ルート ws（tests/ を持つ）+ プラグイン ws（要件1件）の fixture を構築する"""
+    root = tmp_path / "root"
+    make_spec(root)
+    plugin = tmp_path / "plugin"
+    req_dir = plugin / ".spec" / "requirements"
+    req_dir.mkdir(parents=True)
+    (req_dir / f"{TRACE_REQ_ID}.md").write_text(
+        f"---\nid: {TRACE_REQ_ID}\nversion: 1.0\nstatus: approved\n"
+        f"domain: verification\nverification_method: {vmethod}\n---\n\n"
+        f"### {TRACE_REQ_ID} 参照判定の対象要件\n",
+        encoding="utf-8",
+    )
+    (plugin / ".spec" / "tasks").mkdir(parents=True)
+    return root, plugin
+
+
+def write_root_test(root: Path, body: str):
+    tests_dir = root / "tests"
+    tests_dir.mkdir(parents=True, exist_ok=True)
+    (tests_dir / "test_plugin_feature.py").write_text(body, encoding="utf-8")
+
+
+def report_of(root: Path) -> str:
+    return (root / ".spec" / "inspection-report.md").read_text(encoding="utf-8")
+
+
+def test_SDD_FR_146_root_test_reference_resolves_plugin_requirement(tmp_path: Path):
+    """canonical 実行では、ルート tests からの参照でプラグイン要件の未参照が解消する。"""
+    root, plugin = make_plugin_workspace(tmp_path)
+    write_root_test(root, f'"""{TRACE_REQ_ID}: プラグイン要件の検証。"""\n')
+
+    res = run_inspect_multi(root, plugin)
+
+    assert res.returncode == 0, res.stdout
+    report = report_of(plugin)
+    assert TRACE_REQ_ID not in section_body(report, AUTO_SECTION)
+    external = section_body(report, EXTERNAL_SECTION)
+    assert TRACE_REQ_ID in external
+    # 参照元のワークスペース名と相対パスを識別できること
+    assert "root/tests/test_plugin_feature.py" in external
+
+
+def test_SDD_FR_146_single_workspace_inspection_is_unchanged(tmp_path: Path):
+    """同じ配置でも単一ワークスペース検査では集約せず、未参照のまま報告する。"""
+    root, plugin = make_plugin_workspace(tmp_path)
+    write_root_test(root, f'"""{TRACE_REQ_ID}: プラグイン要件の検証。"""\n')
+
+    res = run_inspect(plugin)
+
+    assert res.returncode == 0, res.stdout
+    report = report_of(plugin)
+    assert TRACE_REQ_ID in section_body(report, AUTO_SECTION)
+    assert section_body(report, EXTERNAL_SECTION).strip() == "- なし ✅"
+
+
+def test_SDD_FR_146_unreferenced_requirement_still_reported(tmp_path: Path):
+    """どのワークスペースからも参照されない要件は、集約後も未参照として残る。"""
+    root, plugin = make_plugin_workspace(tmp_path)
+    write_root_test(root, '"""無関係なテスト。"""\n')
+
+    res = run_inspect_multi(root, plugin)
+
+    assert res.returncode == 0, res.stdout
+    assert TRACE_REQ_ID in section_body(report_of(plugin), AUTO_SECTION)
+
+
+def test_SDD_FR_146_aggregation_keeps_ghost_detection_and_exit_code(tmp_path: Path):
+    """集約は幽霊参照の検出と終了コードを変えない。"""
+    root, plugin = make_plugin_workspace(tmp_path)
+    write_root_test(root, f'"""{TRACE_REQ_ID}: 検証。"""\n')
+    (plugin / ".spec" / "tasks" / f"{TASK_ID}.md").write_text(
+        f"---\nimplements: {TRACE_GHOST_ID}\ndepends_on: []\n---\n\n### 幽霊を参照するタスク\n",
+        encoding="utf-8",
+    )
+
+    res = run_inspect_multi(root, plugin)
+
+    assert res.returncode == 1, res.stdout
+    report = report_of(plugin)
+    assert TRACE_GHOST_ID in section_body(report, GHOST_SECTION)
+    assert "FAIL" in report
+
+
+def test_SDD_FR_147_implementation_script_reference_resolves(tmp_path: Path):
+    """skills/<name>/scripts/ のコードによる参照で未参照が解消する。"""
+    root, plugin = make_plugin_workspace(tmp_path)
+    scripts = plugin / "skills" / "demo" / "scripts"
+    scripts.mkdir(parents=True)
+    (scripts / "demo_tool.py").write_text(
+        f'"""{TRACE_REQ_ID} を実装するツール。"""\n', encoding="utf-8"
+    )
+
+    res = run_inspect(plugin)
+
+    assert res.returncode == 0, res.stdout
+    assert TRACE_REQ_ID not in section_body(report_of(plugin), AUTO_SECTION)
+
+
+def test_SDD_FR_147_markdown_in_scripts_dir_is_not_implementation_reference(tmp_path: Path):
+    """追加走査対象の Markdown による言及は実装参照として数えない。"""
+    root, plugin = make_plugin_workspace(tmp_path)
+    scripts = plugin / "skills" / "demo" / "scripts"
+    scripts.mkdir(parents=True)
+    (scripts / "README.md").write_text(f"{TRACE_REQ_ID} の解説。\n", encoding="utf-8")
+
+    res = run_inspect(plugin)
+
+    assert res.returncode == 0, res.stdout
+    assert TRACE_REQ_ID in section_body(report_of(plugin), AUTO_SECTION)
+
+
+def test_SDD_FR_147_example_id_in_implementation_code_is_not_ghost(tmp_path: Path):
+    """実装コードの docstring に書かれた使用例の ID を幽霊参照にしない。"""
+    root, plugin = make_plugin_workspace(tmp_path)
+    scripts = plugin / "skills" / "demo" / "scripts"
+    scripts.mkdir(parents=True)
+    (scripts / "demo_tool.py").write_text(
+        f'"""使用例: demo_tool.py --impact {TRACE_GHOST_ID}"""\n', encoding="utf-8"
+    )
+
+    res = run_inspect(plugin)
+
+    assert res.returncode == 0, res.stdout
+    report = report_of(plugin)
+    assert TRACE_GHOST_ID not in section_body(report, GHOST_SECTION)
+    assert "PASS" in report
+
+
+def test_SDD_FR_147_ghost_detection_in_existing_subdirs_unchanged(tmp_path: Path):
+    """従来の走査対象での幽霊参照の検出は変わらない。"""
+    root, plugin = make_plugin_workspace(tmp_path)
+    (plugin / ".spec" / "tasks" / f"{TASK_ID}.md").write_text(
+        f"---\nimplements: {TRACE_GHOST_ID}\ndepends_on: []\n---\n\n### 幽霊を参照するタスク\n",
+        encoding="utf-8",
+    )
+
+    res = run_inspect(plugin)
+
+    assert res.returncode == 1, res.stdout
+    assert TRACE_GHOST_ID in section_body(report_of(plugin), GHOST_SECTION)
+
+
+def test_SDD_FR_147_workspace_without_extra_dirs_is_unchanged(tmp_path: Path):
+    """追加走査対象を持たないワークスペースの結果は従来どおり。"""
+    root, plugin = make_plugin_workspace(tmp_path)
+
+    res = run_inspect(plugin)
+
+    assert res.returncode == 0, res.stdout
+    report = report_of(plugin)
+    assert TRACE_REQ_ID in section_body(report, AUTO_SECTION)
+    assert "PASS" in report
+
+
+def test_SDD_FR_148_manual_check_requirement_is_listed_separately(tmp_path: Path):
+    """manual-check 要件は自動検証要件の未参照リストへ入れず、専用見出しへ分離する。"""
+    root, plugin = make_plugin_workspace(tmp_path, vmethod="manual-check")
+
+    res = run_inspect(plugin)
+
+    assert res.returncode == 0, res.stdout
+    report = report_of(plugin)
+    assert TRACE_REQ_ID not in section_body(report, AUTO_SECTION)
+    assert TRACE_REQ_ID in section_body(report, MANUAL_SECTION)
+    assert "検証記録で担保" in report
+
+
+def test_SDD_FR_148_automated_requirement_stays_in_original_section(tmp_path: Path):
+    """自動検証要件は従来どおりの見出しへ列挙され、manual-check 側へ移らない。"""
+    root, plugin = make_plugin_workspace(tmp_path, vmethod="unit-test")
+
+    res = run_inspect(plugin)
+
+    assert res.returncode == 0, res.stdout
+    report = report_of(plugin)
+    assert TRACE_REQ_ID in section_body(report, AUTO_SECTION)
+    assert TRACE_REQ_ID not in section_body(report, MANUAL_SECTION)
+
+
+def test_SDD_FR_148_separation_does_not_change_exit_code(tmp_path: Path):
+    """未参照の分離報告は PASS / FAIL 判定を変えない。"""
+    root, manual_ws = make_plugin_workspace(tmp_path, vmethod="manual-check")
+    auto_ws = tmp_path / "auto"
+    auto_req = auto_ws / ".spec" / "requirements"
+    auto_req.mkdir(parents=True)
+    (auto_req / f"{REQ_ID}.md").write_text(
+        f"---\nid: {REQ_ID}\nversion: 1.0\nstatus: approved\n"
+        "domain: verification\nverification_method: unit-test\n---\n\n"
+        f"### {REQ_ID} 自動検証要件\n",
+        encoding="utf-8",
+    )
+    (auto_ws / ".spec" / "tasks").mkdir(parents=True)
+
+    assert run_inspect(manual_ws).returncode == 0
+    assert run_inspect(auto_ws).returncode == 0

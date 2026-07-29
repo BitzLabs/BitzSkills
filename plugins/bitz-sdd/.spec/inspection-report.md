@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-29)
 
-成果物数: 74 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0
+成果物数: 77 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0
 
 ## 問題一覧
 - なし ✅
@@ -18,19 +18,29 @@
 - なし ✅
 
 ## テスト/実装からの参照がない要件（approved以降）
+- SDD-FR-001
+- SDD-FR-010
+- SDD-FR-041
+- SDD-FR-100
+- SDD-FR-125
+- SDD-FR-126
+- SDD-FR-127
+- SDD-FR-128
+- SDD-FR-129
+- SDD-FR-131
+- SDD-FR-135
+
+## 参照がない manual-check 要件（テスト参照は原理的に生じない — 検証記録で担保）
 - SDD-CON-022
 - SDD-CON-032
 - SDD-CON-042
 - SDD-CON-043
 - SDD-CON-050
 - SDD-CON-052
-- SDD-FR-001
-- SDD-FR-010
 - SDD-FR-011
 - SDD-FR-021
 - SDD-FR-031
 - SDD-FR-033
-- SDD-FR-041
 - SDD-FR-051
 - SDD-FR-053
 - SDD-FR-060
@@ -42,7 +52,6 @@
 - SDD-FR-082
 - SDD-FR-090
 - SDD-FR-091
-- SDD-FR-100
 - SDD-FR-110
 - SDD-FR-111
 - SDD-FR-112
@@ -50,28 +59,13 @@
 - SDD-FR-121
 - SDD-FR-122
 - SDD-FR-123
-- SDD-FR-124
-- SDD-FR-125
-- SDD-FR-126
-- SDD-FR-127
-- SDD-FR-128
-- SDD-FR-129
 - SDD-FR-130
-- SDD-FR-131
-- SDD-FR-132
-- SDD-FR-133
-- SDD-FR-134
-- SDD-FR-135
-- SDD-FR-136
-- SDD-FR-137
-- SDD-FR-138
-- SDD-FR-139
-- SDD-FR-140
-- SDD-FR-141
-- SDD-FR-142
-- SDD-FR-143
-- SDD-FR-144
-- SDD-FR-145
+
+## 他ワークスペースのテスト/実装から参照されている要件
+- SDD-FR-124 ← BitzSkills/tests/test_spec_inspect.py, BitzSkills/tests/test_spec_scaffold.py
+- SDD-FR-133 ← BitzSkills/tests/test_spec_inspect.py
+- SDD-FR-134 ← BitzSkills/tests/test_spec_inspect.py
+- SDD-FR-140 ← BitzSkills/scripts/release_check.py, BitzSkills/tests/test_release_check.py
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
 ※ 乖離は候補提示のみ。stale 付与は references/lifecycle.md の再伝播プロトコル（判定パス→人間確認）を経ること
@@ -94,7 +88,7 @@
 | SDD-DSC-006 | 起草中（draft） |  |  | 0 | 0 |
 | SDD-DSN-000 | active |  |  | 0 | 0 |
 | SDD-DSN-001 | active |  |  | 0 | 0 |
-| SDD-DSN-002 | active |  |  | 0 | 0 |
+| SDD-DSN-002 | active |  |  | 0 | 1 |
 | SDD-DSN-003 | active |  |  | 0 | 0 |
 | SDD-DSN-004 | active |  |  | 0 | 3 |
 | SDD-DSN-005 | active |  |  | 0 | 1 |
@@ -136,20 +130,23 @@
 | SDD-FR-129 | 検証済み（verified） | sync | unit-test | 2 | 3 |
 | SDD-FR-130 | 検証済み（verified） | workflow | manual-check | 1 | 1 |
 | SDD-FR-131 | 検証済み（verified） | workflow | unit-test | 1 | 1 |
-| SDD-FR-132 | 検証済み（verified） | verification | example-test | 1 | 1 |
+| SDD-FR-132 | 検証済み（verified） | verification | example-test | 1 | 3 |
 | SDD-FR-133 | 検証済み（verified） | verification | unit-test | 1 | 2 |
 | SDD-FR-134 | 検証済み（verified） | verification | unit-test | 1 | 2 |
 | SDD-FR-135 | 検証済み（verified） | sync | unit-test | 1 | 2 |
-| SDD-FR-136 | 検証済み（verified） | workflow | unit-test | 1 | 1 |
-| SDD-FR-137 | 検証済み（verified） | workflow | unit-test | 1 | 1 |
-| SDD-FR-138 | 検証済み（verified） | workflow | unit-test | 1 | 1 |
-| SDD-FR-139 | 検証済み（verified） | workflow | unit-test | 1 | 1 |
+| SDD-FR-136 | 検証済み（verified） | workflow | unit-test | 1 | 4 |
+| SDD-FR-137 | 検証済み（verified） | workflow | unit-test | 1 | 3 |
+| SDD-FR-138 | 検証済み（verified） | workflow | unit-test | 1 | 3 |
+| SDD-FR-139 | 検証済み（verified） | workflow | unit-test | 1 | 2 |
 | SDD-FR-140 | 検証済み（verified） | workflow | unit-test | 1 | 1 |
-| SDD-FR-141 | 検証済み（verified） | reporting | example-test | 3 | 3 |
-| SDD-FR-142 | 検証済み（verified） | reporting | example-test | 3 | 3 |
-| SDD-FR-143 | 検証済み（verified） | workflow | unit-test | 3 | 5 |
-| SDD-FR-144 | 検証済み（verified） | workflow | unit-test | 2 | 3 |
-| SDD-FR-145 | 検証済み（verified） | workflow | unit-test | 3 | 3 |
+| SDD-FR-141 | 検証済み（verified） | reporting | example-test | 3 | 4 |
+| SDD-FR-142 | 検証済み（verified） | reporting | example-test | 3 | 4 |
+| SDD-FR-143 | 検証済み（verified） | workflow | unit-test | 3 | 9 |
+| SDD-FR-144 | 検証済み（verified） | workflow | unit-test | 2 | 5 |
+| SDD-FR-145 | 検証済み（verified） | workflow | unit-test | 3 | 8 |
+| SDD-FR-146 | 検証済み（verified） | verification | unit-test | 1 | 3 |
+| SDD-FR-147 | 検証済み（verified） | verification | unit-test | 1 | 3 |
+| SDD-FR-148 | 検証済み（verified） | verification | unit-test | 1 | 3 |
 | SDD-REV-002 | active |  |  | 0 | 1 |
 | SDD-REV-003 | active |  |  | 0 | 0 |
 | SDD-REV-004 | active |  |  | 0 | 0 |

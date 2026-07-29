@@ -21,23 +21,27 @@
 - CORE-CON-001
 - CORE-CON-002
 - CORE-CON-003
+- CORE-CON-006
+- CORE-FR-002
+- CORE-FR-014
+- CORE-FR-017
+- CORE-NFR-001
+
+## 参照がない manual-check 要件（テスト参照は原理的に生じない — 検証記録で担保）
 - CORE-CON-004
 - CORE-CON-005
-- CORE-CON-006
 - CORE-CON-007
 - CORE-CON-008
 - CORE-CON-009
 - CORE-CON-010
 - CORE-FR-001
-- CORE-FR-002
 - CORE-FR-006
 - CORE-FR-007
 - CORE-FR-008
 - CORE-FR-009
-- CORE-FR-013
-- CORE-FR-014
-- CORE-FR-017
-- CORE-NFR-001
+
+## 他ワークスペースのテスト/実装から参照されている要件
+- なし ✅
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
 ※ 乖離は候補提示のみ。stale 付与は references/lifecycle.md の再伝播プロトコル（判定パス→人間確認）を経ること
@@ -75,12 +79,12 @@
 | CORE-FR-010 | 確定（promoted） | tooling | example-test | 1 | 2 |
 | CORE-FR-011 | 確定（promoted） | tooling | example-test | 2 | 3 |
 | CORE-FR-012 | 確定（promoted） | tooling | example-test | 1 | 2 |
-| CORE-FR-013 | 確定（promoted） | tooling | example-test | 1 | 1 |
+| CORE-FR-013 | 確定（promoted） | tooling | example-test | 1 | 2 |
 | CORE-FR-014 | 確定（promoted） | governance | example-test | 3 | 3 |
 | CORE-FR-015 | 確定（promoted） | tooling | unit-test | 3 | 5 |
 | CORE-FR-016 | 確定（promoted） | governance | example-test | 1 | 2 |
 | CORE-FR-017 | 確定（promoted） | tooling | example-test | 3 | 3 |
-| CORE-FR-018 | 検証済み（verified） | tooling | unit-test | 1 | 2 |
+| CORE-FR-018 | 検証済み（verified） | tooling | unit-test | 1 | 3 |
 | CORE-NFR-001 | 確定（promoted） | tooling | example-test | 1 | 1 |
 | CORE-REV-002 | active |  |  | 0 | 0 |
 | DSN-001 | active |  |  | 0 | 5 |

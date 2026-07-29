@@ -18,8 +18,13 @@
 - なし ✅
 
 ## テスト/実装からの参照がない要件（approved以降）
-- FLW-FR-001
+- なし ✅
+
+## 参照がない manual-check 要件（テスト参照は原理的に生じない — 検証記録で担保）
 - FLW-FR-002
+
+## 他ワークスペースのテスト/実装から参照されている要件
+- なし ✅
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
 ※ 乖離は候補提示のみ。stale 付与は references/lifecycle.md の再伝播プロトコル（判定パス→人間確認）を経ること
@@ -35,7 +40,7 @@
 | FLW-DSC-005 | 起草中（draft） |  |  | 0 | 0 |
 | FLW-DSC-006 | 起草中（draft） |  |  | 0 | 0 |
 | FLW-DSN-001 | active |  |  | 0 | 0 |
-| FLW-FR-001 | 検証済み（verified） | governance | unit-test | 3 | 4 |
+| FLW-FR-001 | 検証済み（verified） | governance | unit-test | 3 | 5 |
 | FLW-FR-002 | 検証済み（verified） | tooling | manual-check | 1 | 1 |
 | FLW-REV-002 | active |  |  | 0 | 0 |
 
