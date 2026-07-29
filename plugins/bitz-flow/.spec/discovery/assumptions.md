@@ -1,63 +1,48 @@
 ---
 id: FLW-DSC-006
-title: "bitz-flow 仮説検証ゲート（分類 → 崩壊影響 → テスト+閾値 → Go/No-Go）"
+title: "bitz-flow v2 仮説検証ゲート"
 status: draft
-version: 1.1
-updated: 2026-07-18
+version: 2.0
+updated: 2026-07-29
 owner: hide
 ---
 
-# 仮説検証ゲート（Desirability / Viability / Feasibility → Go/No-Go）
+# bitz-flow v2 仮説検証ゲート
 
-> 切り出し discovery。内容は sdd-git で実証済みのため Feasibility は高いが、SDD 非依存化に伴う
-> **単体需要（Desirability）が最大の未検証点**。作者自身が SDD 採用者のため、SDD 非採用の実利用は n=0。
-> **最終裁定は人間が PR レビューで行う。** 以下は裁定材料であり、open のまま追跡してよい。
+## 仮説表
 
-## 仮説表（3分類 × 崩壊影響 × テスト+事前閾値）
-
-| ID | 分類 | 仮説 | 崩壊影響 | 状態 | テスト + 事前閾値 |
+| ID | 分類 | 仮説 | 崩壊影響 | 状態 | テストと事前閾値 |
 |---|---|---|---|---|---|
-| H-D1 | Desirability | **SDD 非採用**プロジェクトに、Git フロー規約だけを単体で使う需要がある | **崩壊クリティカル**（無ければ「独立プラグイン化」の存在理由が消え、sdd-git のままでよい） | **未検証**（作者は SDD 採用者。SDD 非採用の実利用は n=0） | SDD 非採用リポで bitz-flow 単体が使われた実績を観察／閾値: 一定期間ゼロなら独立化を再考（sdd-git 内包へ差し戻し） |
-| H-D2 | Desirability | エージェント開発者は worktree 並列・PR 規約を「毎回考えず委ねたい」 | 高（主要ペルソナ A の核） | **部分検証**（作者のドッグフーディングで並列投入・PR 運用は実運用中） | 作者利用で worktree 並列 or Issue 駆動 PR が実運用で最低1回使われる／閾値: 使われなければ Vision 再考 |
-| H-D3 | Desirability | エージェント向け規約（破棄→再投入・未マージ依存の原則）が git-flow / 汎用プロンプトより選ばれる | 高（PoD の中核 D2/D3） | **部分検証**（未マージ依存の原則は実事故 PR #30/#31 の反省から実導入済み） | 作者が両者を比較し事故回避・再現性で優位を体感／閾値: 優位を感じなければ差別化見直し |
-| H-V1 | Viability | メンテナ1名で3スキル＋SI-CORE-010（sdd-git 委譲化）を保守し続けられる | 高（放棄すれば価値ゼロ） | **未検証**（新設直後） | 保守が破綻せず SI-CORE-010 まで到達／閾値: 破綻したらスコープ縮小 |
-| H-V2 | Viability | sdd-git との二重規定が委譲ポインタ化まで許容範囲で併存できる | 中〜高（二重規定リスク） | **部分検証**（新設時点で無変更併存を許容する設計。SI-CORE-010 で解消予定） | 併存期間に規定の食い違いが起きない／閾値: 食い違いが出たら委譲化を前倒し |
-| H-F1 | Feasibility | 3スキルが SDD 非依存で自己完結して機能する | 崩壊クリティカル | **部分検証**（sdd-git で実証済みだが、SDD 依存記述を抜いた転記の破綻有無は要検証） | `release_check.py` / `spec_inspect.py` で frontmatter・自己完結性を機械検証／閾値: 検証 green |
-| H-F2 | Feasibility | GitHub（`git worktree` / `gh` CLI）前提で規約が実行可能 | 中 | **検証済み**（sdd-git で実運用） | 既存リポでの worktree / PR 運用実績／閾値: 破綻なく回る |
+| H-F1 | Feasibility | 1つのdispatcherへ集約すると3プラットフォームで同じCLI契約を使える | クリティカル | 未検証 | M0でplatform×task各10trial。各SFCR 90%またはparity 100%未満ならM1へ進まない |
+| H-D1 | Desirability | 生コマンド例を通常経路から除くとscript実行率が上がる | クリティカル | 未検証 | skillあり/なし比較。SFCR 90%未満、または改善幅20pt未満ならskill構成を再検討 |
+| H-F2 | Feasibility | Python標準ライブラリで必要なGit / gh出力を安全にparseできる | 高 | 部分支持 | status/diff/log/Issue/PR/releaseのgolden fixture。必須field保持100%未満なら対象操作を縮小 |
+| H-F3 | Feasibility | byte上限と段階取得でtokenを減らしつつ判断を保てる | 高 | 未検証 | 必須field保持100%かつ対象操作のmedian byte削減が目標未達ならschemaを再設計 |
+| H-D2 | Desirability | 単独作業でもworktree-firstの利点が作成コストを上回る | 高 | 部分支持 | 本リポジトリで連続10作業を運用。例外率30%以上なら単独作業の既定を再検討 |
+| H-V1 | Viability | 2スキル + 1dispatcherは現行4スキルより保守しやすい | 高 | 未検証 | workflow追加時の変更ファイル数、重複関数、skill参照逸脱を比較。重複が増えるなら分割を再検討 |
+| H-F4 | Feasibility | `.spec`とGitHub IssueをSSOT競合なしに双方向接続できる | クリティカル | 部分支持 | accepted spec-issue→parent Issue、task→sub-issueをfixture化。重複・リンク切れ0件 |
+| H-F5 | Feasibility | PR / releaseを段階化すれば中断後に副作用なく再開できる | クリティカル | 部分支持 | 各段階へ故障注入。Issue/PR/release重複0件、stale head merge 0件 |
+| H-V2 | Viability | GitHubのIssue type / sub-issue / dependency / Projects差異をcapability検出で吸収できる | 中 | 部分支持 | 高水準ghとallowlist固定endpointのfixture。権限不足を機能欠如と誤判定したらM3を停止 |
 
-## 崩壊影響ランク（Riskiest Assumption 順）
+## 崩壊クリティカル仮説
 
-1. **H-D1**（崩壊クリティカル・**未検証**）— 独立プラグイン化の存在理由。SDD 非採用の単体需要は n=0。最大のリスク。
-2. **H-F1**（崩壊クリティカル・部分検証）— SDD 非依存の自己完結。転記の破綻を機械検証で潰せる。リスク中。
-3. **H-D2 / H-D3**（高・部分検証）— 委ねたい需要と規約の優位。作者利用で部分的に支えられる。
-4. **H-V1 / H-V2**（保守持続性・二重規定）— 1名運用と sdd-git 併存の追従コスト。
+1. **H-F1 / H-D1**: 単一dispatcherがモデル横断の実行率を改善しなければ、v2の主目的を満たさない。
+2. **H-F4**: SDD接続が二重SSOTを作るなら、GitHub連携を分離しなければならない。
+3. **H-F5**: 外部状態変更を冪等に再開できなければ、PR / release のapply機能は出荷しない。
 
-## Go/No-Go 判定基準（sdd-core ゲート規約が正）
+すべてテストと kill / pivot 条件を定義済みであり、未検証であること自体は Discovery Gate の
+No-Go 条件に当たらない。ただし実装 milestone ごとに閾値を満たさなければ後続を止める。
 
-- **No-Go**: 崩壊クリティカルな仮説のいずれかが「未検証」かつ「テスト+閾値も未定義」。
-- **Go**: それ以外。未解決仮説は open リストで追跡。
-
-## Go/No-Go 裁定材料（最終裁定は人間が PR レビューで行う。open のまま追跡してよい）
-
-**裁定案 = 条件付き Go（Conditional Go）だが、H-D1 は open のまま残す。**
-
-- **根拠1（F1 が機械検証可能）**: 崩壊クリティカルな Feasibility 仮説 H-F1 は sdd-git で実証済みの内容の転記であり、
-  `release_check.py` / `spec_inspect.py` で自己完結性・frontmatter を機械検証できる（No-Go 条件のテスト未定義に当たらない）。
-- **根拠2（D1 に事前閾値あり）**: もう一つの崩壊クリティカル仮説 H-D1（SDD 非採用の単体需要）は**未検証**だが、
-  「一定期間ゼロなら独立化を再考」という事前閾値を定義済み＝No-Go 条件（テスト未定義）には当たらない。
-  ただし n=0 のため、これは**最も慎重に扱うべき open 仮説**として明示的に追跡する。
-- **条件（open で追跡）**: H-D1（SDD 非採用の単体需要）は設計続行を許容するが、外部エビデンスが届くまで
-  open のままとし、ゲートを一度きりにしない。SI-CORE-010（sdd-git 委譲化）は二重規定の解消であり
-  本 discovery の結論を変えない見込み。
-
-> 補足: bitz-ddd（併用前提が明確）と異なり、bitz-flow の存在理由は「SDD からの独立」にある。
-> その中核 H-D1 が n=0 で未検証である点は Go/No-Go の重心であり、**裁定自体は人間に残す（要ユーザー判断）**。
-> 独立プラグインとして出すか、sdd-git 内包のままにするかは、単体需要のエビデンス到達を待って再訪してよい。
-
-## Discovery Gate 裁定記録
+## Discovery Gate 提示
 
 - **裁定**: Go（条件付き）
+- **条件**:
+  1. 公開契約の最初の成果物をM0のresult schema、終了コード、read-only 3操作にする。
+  2. M0でcross-model evalを行い、script実行率が改善しなければM1以降へ進まない。
+  3. MCP、Rust化、プラットフォーム固有hook、透過proxyは将来候補を含め実装対象外とする。
+  4. `.spec` status をGitHubから変更しない。
+  5. destructive discard とrelease publishは明示的な人間承認を残す。
 - **裁定者**: hide（人間）
-- **裁定日**: 2026-07-18
-- **継続条件**: H-D1（SDD 非採用プロジェクトでの単体需要）を最優先の open 仮説として追跡し、一定期間利用実績がゼロなら独立プラグイン化を再検討する
+- **裁定日**: 2026-07-29
 - **設計移行**: 許可
+
+上記条件を設計の制約として維持し、基本設計・詳細設計へ進む。

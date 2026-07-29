@@ -47,7 +47,7 @@ TRACE_PREFIXES = ("tests", "test", "src", "scripts", "hooks", "skills")
 VERIFICATION_DIRNAME = "verification"
 EVIDENCE_SCHEMA = "bitzsdd/verification-evidence@1"
 EVIDENCE_REQUIRED_KEYS = (
-    "command_id", "command", "commit", "recorded_at", "exit_code", "requirements",
+    "command_id", "command", "cwd", "commit", "recorded_at", "exit_code", "requirements",
 )
 
 

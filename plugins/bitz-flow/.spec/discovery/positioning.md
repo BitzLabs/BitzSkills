@@ -1,65 +1,60 @@
 ---
 id: FLW-DSC-005
-title: "bitz-flow ポジショニング（競合代替 → PoD/PoP → ステートメント）"
+title: "bitz-flow v2 ポジショニング"
 status: draft
-version: 1.0
-updated: 2026-07-18
+version: 2.0
+updated: 2026-07-29
 owner: hide
 ---
 
-# ポジショニング（競合代替 → PoD/PoP → ステートメント）
+# bitz-flow v2 ポジショニング
 
-> 切り出し discovery。競合の詳細調査は範囲外。簡易 intake で空白地帯だけ確認する。
-> 焦点は (a) sdd-git（bitz-sdd 同梱）との棲み分けと (b) git-flow 等の一般手法との違い。
-> 出典が取れないものは `TBD`。
+## 競合代替
 
-## 競合代替の簡易 intake（顧客が bitz-flow 無しでやること）
-
-| 区分 | 代替 | 効く次元での比較 |
+| 代替 | 強み | bitz-flow v2 が埋める差 |
 |---|---|---|
-| 同梱代替 | **sdd-git（bitz-sdd 同梱）を使う** | 機能はほぼ同一だが**bitz-sdd 導入が前提**。SDD 非採用者は使えない。bitz-flow はここを SDD 非依存化 |
-| 現状維持 | エージェントに毎回 worktree / PR 手順を口頭指示する | 導入ゼロだが再現性がなく、セッション／エージェントごとに運用がブレる |
-| 一般手法 | **git-flow**（develop/release/hotfix ブランチモデル）を手で運用 | 分岐モデルとしては確立だが重厚。エージェント向けの worktree 並列・失敗時破棄の規約はない |
-| 一般手法 | **GitHub Flow**（main + feature + PR）を手で運用 | 軽量で bitz-flow と親和的だが、worktree 並列・未マージ依存の事故回避・Implements 規約は自前 |
-| 間接競合 | 汎用 AI に「worktree で並列開発して」と都度プロンプト | 手軽だが、命名規約・破棄手順・ガードレール準拠復元の強制がなく再現性が弱い `[proto / 未検証]` |
+| 生の `git` / `gh` をエージェントが実行 | 完全な機能、追加導入なし | 入力検証、共通診断、圧縮出力、再開状態機械がモデル依存 |
+| 現行 bitz-flow v1 | worktree / PR の重要事故を既にガード | スキルとCLIが分散し、release・Issue階層・共通schema・圧縮指標が不足 |
+| GitHub Flow の手運用 | 単純で広く理解される | エージェント向け実行契約、worktree-first、圧縮結果、再開可能性を自前で用意する必要 |
+| 自作shell / Python script | プロジェクトに最適化可能 | 毎回の再発明、モデル間差、テスト・配布・保守の重複 |
 
-**目的は空白地帯の発見**: 「エージェント向けに、SDD 非依存で、worktree 並列・PR・失敗時復元まで
-規約として自己完結提供する」領域が空白。git-flow / GitHub Flow は分岐モデルであって
-エージェント運用規約ではなく、sdd-git は SDD 前提である。
+## Points of Parity
 
-## PoP / PoD
+- Git feature branch、worktree、GitHub Issue、Draft PR、CI、squash merge、release を扱う。
+- Conventional Commits と明示的な作業 ID を利用できる。
+- Git / `gh` CLI の既存認証・設定・branch protection を尊重する。
 
-- **PoP（同等性のポイント、過剰投資しない）**
-  - feature ブランチ・PR・squash merge という現代的 Git フローの標準作法を扱える（当たり前品質）。
-  - Conventional Commits に準拠したコミット規約を持つ。
-- **PoD（差別化のポイント、資源集中）**
-  - **D1: SDD 非依存で単体完結**。bitz-sdd を導入しなくても Git フロー規約として機能する。
-    sdd-git との決定的な棲み分けであり、bitz-flow の存在理由そのもの。
-  - **D2: エージェント運用に特化した規約**。1エージェント=1worktree=1ブランチ、失敗時は破棄→再投入
-    （ガードレール準拠、`reset --hard`/`--force` 不使用）。git-flow / GitHub Flow は分岐モデルで、ここを規定しない。
-  - **D3: 未マージ依存の原則（SI-CORE-020）**。前提を先に land しフラットな PR 構成を保つ。
-    スタック PR の巻き添えクローズ（実事故 PR #30/#31）を規約で防ぐ。汎用手法にはこの事故対策がない。
+## Points of Difference
 
-## ポジショニング・キャンバス（April Dunford）
+1. **Single Gateway** — 通常操作を1つの dispatcher に集約し、SKILL.md から生コマンドの
+   選択肢を除く。
+2. **Decision-preserving Compression** — LLM要約ではなく Git / GitHub の構造化出力を
+   決定論的に圧縮し、省略を明示する。
+3. **Worktree-first** — 単独作業も物理分離し、並列化を後付け可能にする。
+4. **Plan / Apply / Resume** — 外部状態変更を dry-run 既定、明示実行、再照会による
+   冪等再開に統一する。
+5. **SDD Boundary** — `.spec` の裁定・契約と GitHub の協調・実行状態を混ぜずに
+   双方向リンクする。
+6. **Evidence over prose** — エージェントの成功報告ではなく、短い機械出力と検証結果を
+   merge / cleanup / release の根拠にする。
 
-1. **競合代替**: sdd-git（SDD 前提）／git-flow・GitHub Flow の手運用／汎用 AI プロンプト。
-2. **独自の属性**: SDD 非依存の自己完結・エージェント向け worktree 並列規約・未マージ依存の事故回避・ガードレール準拠復元。
-3. **価値（成果）**: エージェントで開発する個人・小規模チームが、フローを毎回考えず再現可能に運用でき、
-   失敗しても main を汚さず安全にやり直せる。
-4. **ターゲットセグメント**: エージェント（Claude Code / Antigravity / Codex CLI）で開発する個人〜小規模チーム
-   （SDD 採用・非採用の両方。主要ペルソナ A）。
-5. **市場カテゴリ**: 「AI エージェント向け Git / GitHub 開発フロー規約プラグイン」。
+## Category
 
-## ポジショニング・ステートメント（Moore 短形式）
+**AIエージェント向け Git / GitHub 操作カーネル兼開発フロー**
 
-> **エージェントで開発する個人〜小規模チーム**のための **bitz-flow** は、Git / GitHub のフローを
-> 毎回考えず再現可能に運用したいという**ニーズ**に対する **AI エージェント向け開発フロー規約プラグイン**であり、
-> フロー選択・worktree 並列・コミット規約・PR・失敗時復元を自己完結で提供する。**sdd-git（bitz-sdd 前提）や
-> git-flow / GitHub Flow（分岐モデル）**と違い、**SDD 非依存で単体完結し、エージェント運用と未マージ依存の
-> 事故回避まで規約化する**。
+単なる「Gitの使い方スキル」ではなく、既存CLIの上に安全な操作契約を置き、その契約を使って
+開発ライフサイクルを組み立てる。
 
-## 規律
+## Positioning Statement
 
-- 主張するのは**価値（再現可能な運用・安全な復元・事故回避）**であって機能リストではない。
-- 崩壊クリティカルな差別化仮説（D1 の SDD 非依存単体価値が本当に採用理由になるか、
-  D2/D3 のエージェント向け規約が一般手法より選ばれるか）は assumptions.md（FLW-DSC-006）の仮説表へ転記する。
+> 複数のAIエージェント／モデルで GitHub 開発を行う個人・小規模チームのための bitz-flow v2 は、
+> Git / GitHub 操作を毎回再発明せず、少ないトークンで安全に完了したいという課題に対する
+> 操作カーネル兼開発フローである。生CLIや個別の自作scriptと異なり、単一dispatcher、
+> worktree-first、段階的な状態変更、BitzSDD接続、Issueからreleaseまでの再開可能な契約を
+> Agent Skillとして自己完結で提供する。
+
+## 採用技術の位置づけ
+
+- Python 標準ライブラリ版は配布互換性を検証する reference implementation。
+- Git / `gh` CLI が事実取得と状態変更の実行エンジン。
+- 研究資料にある外部製品の削減率は方向性の参考であり、bitz-flow の性能主張には使わない。

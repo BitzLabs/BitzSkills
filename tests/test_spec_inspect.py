@@ -1216,6 +1216,7 @@ def write_evidence(root: Path, name: str = "pytest", **overrides):
         "schema": EVIDENCE_SCHEMA,
         "command_id": name,
         "command": ["pytest", "-q"],
+        "cwd": ".",
         "commit": overrides.pop("commit", "0" * 40),
         "dirty": False,
         "recorded_at": "2026-07-29T00:00:00Z",

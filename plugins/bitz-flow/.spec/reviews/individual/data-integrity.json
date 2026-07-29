@@ -1,0 +1,44 @@
+{
+  "perspective": "data-integrity",
+  "applicability": "内部DBは持たないが、Git refs/index/worktree、設定・CHANGELOG、GitHub Issue/PR/Releaseという永続状態を変更するため適用",
+  "dimensions": [
+    {
+      "name": "トランザクション安全性",
+      "weight": 0.4,
+      "score": 4,
+      "findings": [
+        {
+          "id": "DIN-101",
+          "severity": "minor",
+          "location": "design/FLW-DSN-012.md:concurrency",
+          "title": "別host間の直列化は運用前提に依存する",
+          "description": "同一hostではOS advisory lockで安全に直列化できるが、別clone・別host間は単一coordinator割当を前提とする。安全を証明できないcreateはUNSUPPORTEDへ縮退するため誤更新は防げるが、可用性は運用規律に依存する。",
+          "recommendation": "M3以降のrun manifestへcoordinator identityを記録し、同一WorkUnitの重複割当をcanaryで検出する。分散lockは初期スコープへ追加しない。"
+        }
+      ]
+    },
+    {
+      "name": "データ整合性",
+      "weight": 0.35,
+      "score": 5,
+      "findings": []
+    },
+    {
+      "name": "スキーマ設計品質",
+      "weight": 0.25,
+      "score": 4,
+      "findings": [
+        {
+          "id": "DIN-301",
+          "severity": "minor",
+          "location": "design/architecture.md:flow-doctor",
+          "title": "自己完結doctorとの共通schema同期はgolden testに依存する",
+          "description": "flow-doctorを単体コピー可能にするためflow-coreをimportせず、共通result部分の一致をgolden testで強制する。意図した独立性との交換条件だが、fixture未更新時にschema driftを生じ得る。",
+          "recommendation": "M1出口でflow-coreとflow-doctorの共通envelope fixtureを同じtest suiteから検査し、不一致時はreleaseを停止する。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 4.35,
+  "summary": "Forward Recovery、安定Recovery ID、PARTIAL/INDETERMINATE、atomic file I/O、IssueLink cardinality、snapshot-bound cursorにより主要な完全性リスクは閉じた。残る課題は別host直列化と自己完結doctorのschema同期という、fail-closedで管理可能な運用上の残余リスクである。"
+}

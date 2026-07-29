@@ -15,7 +15,7 @@ VERIFY_SCRIPT = ROOT / "plugins/bitz-sdd/skills/sdd-test/scripts/spec_verify.py"
 
 # 証跡へ保存してよいトップレベルキー（許可リスト。SDD-FR-152）
 ALLOWED_KEYS = {
-    "schema", "command_id", "command", "commit", "dirty", "recorded_at",
+    "schema", "command_id", "command", "cwd", "commit", "dirty", "recorded_at",
     "tool", "exit_code", "counts", "requirements", "observed",
 }
 

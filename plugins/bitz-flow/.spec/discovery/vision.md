@@ -1,78 +1,96 @@
 ---
 id: FLW-DSC-001
-title: "bitz-flow プロダクトビジョン（Vision Board + PR-FAQ 圧力試験）"
+title: "bitz-flow v2 プロダクトビジョン"
 status: draft
-version: 1.0
-updated: 2026-07-18
+version: 2.0
+updated: 2026-07-29
 owner: hide
 ---
 
-# ビジョン（Vision Board + PR-FAQ）
+# bitz-flow v2 プロダクトビジョン
 
-> 切り出し discovery。bitz-flow は bitz-sdd の sdd-git から Git / GitHub 開発フローを
-> SDD 非依存に汎用化して切り出した新設プラグイン（SI-CORE-008 / CORE-FR-014、2026-07-18）。
-> 内容は sdd-git で実証済みだが、新設時点では sdd-git が無変更で併存する。
-> ここで「なぜ独立プラグインとして存在するか」を明文化し、以後の FLW- 起票の錨とする。
+## Vision
 
-## Product Vision Board（Roman Pichler）— 5要素
+Claude Code、OpenAI Codex CLI、Antigravity 2.0 のいずれを使っても、エージェントが
+Git / GitHub のコマンド列を毎回即興で組み立てず、同じ入口・同じ安全判定・同じ圧縮出力で
+開発作業を進められる状態を作る。
 
-1. **Vision** — AI エージェントで開発する個人〜小規模チームが、Git / GitHub の開発フロー
-   （フロー選択・worktree 並列・コミット規約・PR・失敗時復元）を**毎回ゼロから考えずに済む**世界。
-   規約を「エージェントの即興判断」から「プラグインが規定する再現可能な作法」へ移す。
-2. **Target Group**（セグメント必須）
-   - **主要**: AI エージェント（Claude Code / Antigravity / Codex CLI）で開発する個人開発者
-     （現時点では作者 hide 本人。ドッグフーディング）。SDD 採用・非採用の**両方**を含む。
-   - **二次**: 小規模チームで、worktree 並列と GitHub Issue 駆動 PR フローの規約を揃えたい開発者。
-   - **除外**: 独自の確立した Git 運用（GitLab Flow / trunk-based の社内標準等）を既に持ち、
-     エージェント向けの規約注入を必要としないチーム。
-3. **Needs**（解決する問題）
-   - エージェントに並列開発をさせるたび、worktree の作り方・命名・破棄・マージバックを毎回指示するのは高コスト。
-   - コミット規約（Conventional Commits + Implements フッター）や squash merge・未マージ依存の扱いが
-     エージェント／セッションごとにブレると履歴と PR が汚れる。
-   - 失敗したタスクを「巻き戻す」際にガードレール（`git reset --hard` / `--force` 禁止）と衝突しがち。
-     破棄→再投入という安全な復元パターンを規約として持ちたい。
-4. **Product**（際立つ少数の差別化要素、機能全リストではない）
-   - **flow-core**: 状況別フロー選択（単独=ブランチ / 並列=worktree / チーム=Issue 駆動 PR）・
-     コミット規約・失敗時復元（worktree 破棄に一本化、checkpoint を置かない）を規定。
-   - **flow-worktree**: **1エージェント = 1 worktree = 1ブランチ**の並列運用（作成・マージバック・破棄）。
-   - **flow-pr**: GitHub Issue 駆動 + Draft PR + squash merge + **未マージ依存の原則**（前提を先に land）。
-   - 共通の差別化: **SDD 非依存で単体完結**する。bitz-sdd を導入していなくても Git フローだけ使える。
-     bitz-sdd 併用時のみ、各スキルの「併用節」が接続点（Implements フッター・`.spec/tasks` 連携）を規定する。
-5. **Business Goals**
-   - 直接の収益目標なし（OSS / 個人開発）。ゴールは **BitzSkills エコシステムの開発フロー品質の底上げ**と、
-     SDD を採らないユーザーにも届く**入口プラグイン**としての裾野拡大。
-   - 将来的な間接便益: bitzskills マーケットプレイスの魅力向上。数値目標は `TBD`。
+bitz-flow v2 は Git の別実装でも GitHub の汎用 API クライアントでもない。Git / `gh` CLI を
+決定論的な実行エンジンとして使い、AI エージェント向けに次の不足を補う
+「操作カーネル + 開発フロー」である。
 
-**Mission**: Git / GitHub フローの規約を自己完結スキルとして提供し、エージェントが毎回考えずに
-再現可能な運用（並列・PR・復元）を実行できるようにする。SDD の有無に依存しない。
-**Values**: (1) 単体で価値が立つこと（bitz-sdd 非依存を主張の核にする）。(2) ガードレール
-（破壊的操作の禁止）と衝突しない復元パターンのみ規定する。(3) 手法は自己完結、連携はスキル名の言及で行う。
+1. 操作前提と入力を検証する。
+2. 生出力を判断に必要な情報へ正規化する。
+3. 状態変更を dry-run、明示実行、再照会の段階に分ける。
+4. 中断後も外部状態から安全に再開する。
+5. Git / GitHub / BitzSDD の責務境界を固定する。
 
-## PR-FAQ（圧力試験）
+## Target Group
 
-**プレスリリース（要約）**
-見出し: 「BitzFlow — AI エージェント向けの Git / GitHub 開発フロー規約プラグイン」。
-エージェントで開発する個人・小規模チームは、フロー選択・worktree 並列・コミット規約・PR・失敗時復元を
-bitz-flow に委ね、毎回の即興指示なしに再現可能な運用ができる。差別化は「SDD 非採用でも単体で使え、
-bitz-sdd 併用時だけ SDD 連携が接続される」点。
+- **主要**: Claude Code / Codex CLI / Antigravity 2.0 で GitHub リポジトリを開発する個人・
+  小規模チーム。AI モデルが変わっても同じ操作品質を求める利用者。
+- **主要**: 複数エージェントの並列作業を前提に、単独作業も worktree で隔離したい利用者。
+- **二次**: BitzSDD を使い、`.spec` の裁定・要件・タスクと GitHub Issue / PR を
+  二重管理せず接続したい利用者。
+- **除外**: GitHub 以外の forge を主要な遠隔台帳として使うチーム、独自 Git 基盤を
+  強制する大規模組織、Git / `gh` CLI を導入できない環境。
 
-**外部 FAQ（抜粋）**
-- 価格: 無償（OSS、bitzskills マーケットプレイス経由）。
-- 使い方: `agy plugin install` / `/plugin install bitz-flow@bitzskills` / `codex plugin add`。
-- 単体で使えるか: **はい**。bitz-sdd 非導入でも Git フロー規約として機能する。これが存在意義。
+## Needs
 
-**内部 FAQ（荷重を受ける部材）**
-- 市場規模: TAM/SAM/SOM とも `TBD`（OSS のため厳密な市場定義は未実施。実利用者は現状1名＝作者）。
-- 競合状況: 詳細は positioning.md（FLW-DSC-005）。特に sdd-git（bitz-sdd 同梱）との棲み分けが焦点。
-- リスク: (1) SDD 非採用プロジェクトでの**単体需要が未検証**（作者は SDD 採用ユーザーであり n=1 も SDD 側）。
-  (2) sdd-git との二重規定（SI-CORE-010 で sdd-git を委譲ポインタ化するまで併存）。
-  (3) 一般的な Git フロー手法（git-flow / GitHub Flow）に対する優位が「エージェント向け規約」に限られる。
-- **Go/No-Go 基準**（後段 assumptions.md が執行）:
-  - D1: エージェント開発で「Git フロー規約をプラグインに委ねたい」場面が実在する
-    → **作者のドッグフーディングで worktree 並列 or Issue 駆動 PR が実運用で最低1回使われたら Go 寄り**。
-  - F1: 3スキルが SDD 非依存で自己完結して機能する → sdd-git で実証済み。転記の破綻がないことを検証可能。
+- モデルごとに Git / `gh` のコマンド、例外処理、出力解釈が揺れる。
+- SKILL.md にスクリプトと生コマンドの両方があると、エージェントが生コマンドを選び、
+  スクリプトの安全判定と構造化出力を迂回する。
+- `git status`、diff、PR、CI などの生出力が会話へ蓄積し、判断に不要なトークンを消費する。
+- worktree の置き場所、命名、再開、完了後 cleanup、失敗時保全が毎回即興になる。
+- `.spec/spec-issues`、requirements、tasks と GitHub Issue の役割が曖昧だと、
+  どちらが正か分からない二重台帳になる。
+- PR 作成から merge、release、CHANGELOG までの各段階が中断可能である一方、
+  現行スキルには共通の再開状態機械がない。
 
-## Open Questions
+## Product
 
-- SDD **非採用**プロジェクトでの単体需要（Desirability）は未検証。作者自身が SDD 採用者のため n=1 も偏る。`TBD`。
-- sdd-git の委譲ポインタ化（SI-CORE-010）後も本ビジョンが不変か（規定の正が bitz-flow に移るだけで不変の見込み）。
+v2 の利用者向け構成は次の2スキルとする。
+
+| スキル | 責務 |
+|---|---|
+| `flow-core` | Git / GitHub の全通常操作と、worktree・Issue・PR・release のフローを扱う唯一の入口 |
+| `flow-doctor` | Git / `gh` / Python / remote / 権限スコープを変更せず診断する独立ライフサイクルスキル |
+
+`flow-core` はエージェントが直接実行する単一 dispatcher
+`python3 scripts/flow.py <domain> <action>` を持つ。dispatcher の内部は Git 読取、Git 状態変更、
+GitHub 読取、GitHub 状態変更、worktree、Issue、PR、release のモジュールへ分割する。
+SKILL.md と workflow reference に通常経路の生 `git` / `gh` コマンドは掲載しない。
+
+## Goals
+
+- 同じ入力状態に対し、3プラットフォームで同じ判定コードと許可リスト出力を返す。
+- 通常の Git / GitHub 作業で最初にdispatcherを使う割合を評価可能にし、95%以上を目標にする。
+- 既定出力を生 CLI より大幅に小さくしながら、次の行動に必要な情報を欠落させない。
+- 書込み作業は単独でも worktree を既定とし、後から並列化できる構造にする。
+- GitHub Issue は実行・協調台帳、`.spec` は仕様・裁定の SSOT として役割を分ける。
+- PR と release を一発自動化せず、再開可能な段階として決定論的に実行する。
+
+## Non-goals
+
+- Git / GitHub API の完全なラッパー。
+- 任意の `git` / `gh api` を無検査で通す escape hatch。
+- LLM の会話履歴そのものを圧縮・削除するコンテキスト管理システム。
+- プロジェクト固有の version bump、ビルド、署名、配布処理を汎用スクリプトが推測して実行すること。
+
+## PR-FAQ 圧力試験
+
+### なぜスキルを細かく分けないのか
+
+現行は `flow-core`、`flow-worktree`、`flow-pr` に操作手順とスクリプトが分散し、発動した
+スキルによってスクリプトを使うか生コマンドを使うかが変わる。利用者向け入口を1つにし、
+内部実装だけを分割する方が、実行率と出力契約を揃えやすい。
+
+### なぜ worktree を単独作業にも使うのか
+
+共有 checkout を変更しないため、途中から別エージェントを追加でき、失敗した作業を
+既定ブランチから物理的に隔離できる。作成コストより並列可能性と復旧容易性を優先する。
+
+### 何をもって「均一」とするのか
+
+モデルの説明文が同一であることではなく、同一 fixture に対する dispatcher の
+終了コード、判定、許可リスト JSON、状態変更の有無が一致することを意味する。

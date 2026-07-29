@@ -72,6 +72,12 @@ def git_output(cwd: Path, *args: str) -> str | None:
     return result.stdout.strip()
 
 
+def repo_root_of(workspace: Path) -> Path:
+    """ワークスペースを含む git リポジトリのルート。解決できなければワークスペース自身。"""
+    top = git_output(workspace, "rev-parse", "--show-toplevel")
+    return Path(top) if top else workspace
+
+
 def resolve_commit(workspace: Path) -> tuple[str, bool]:
     """HEAD の commit SHA と作業ツリーが dirty かを返す。
 
@@ -196,10 +202,23 @@ def do_record(args) -> int:
     if invalid:
         raise VerifyError(f"要件 ID の書式が不正です: {', '.join(invalid)}")
 
+    # 実行位置と記録パスの基準は repo ルート（モノリポではワークスペースが sub-directory であり、
+    # テストコマンドは repo ルートから起動するのが通常のため）
+    repo_root = repo_root_of(workspace)
+    run_cwd = (repo_root / args.cwd).resolve() if args.cwd else repo_root
+    if not run_cwd.is_dir():
+        raise VerifyError(f"--cwd が存在しません: {run_cwd}")
+    try:
+        cwd_relative = run_cwd.relative_to(repo_root).as_posix() or "."
+    except ValueError:
+        raise VerifyError(
+            f"--cwd は repo ルート配下を指してください: {run_cwd}"
+        ) from None
+
     command = list(args.command)
     if command and command[0] == "--":
         command = command[1:]
-    command = sanitize_command(command, workspace)
+    command = sanitize_command(command, repo_root)
 
     commit, dirty = resolve_commit(workspace)
     if dirty and not args.allow_dirty:
@@ -210,7 +229,7 @@ def do_record(args) -> int:
 
     started = time.monotonic()
     completed = subprocess.run(
-        command, cwd=str(workspace), capture_output=True, text=True
+        command, cwd=str(run_cwd), capture_output=True, text=True
     )
     elapsed = round(time.monotonic() - started, 2)
     # 実出力は端末へそのまま流す（証跡には保存しない。SDD-FR-152）
@@ -228,10 +247,11 @@ def do_record(args) -> int:
         "schema": SCHEMA,
         "command_id": args.command_id,
         "command": command,
+        "cwd": cwd_relative,
         "commit": commit,
         "dirty": dirty,
         "recorded_at": utc_now(),
-        "tool": {"name": tool_name, "version": detect_tool_version(command[0], workspace)},
+        "tool": {"name": tool_name, "version": detect_tool_version(command[0], run_cwd)},
         "exit_code": completed.returncode,
         "counts": counts,
         "requirements": requirements,
@@ -246,7 +266,7 @@ def do_record(args) -> int:
         f"{key}={value}" for key, value in sorted(counts.items())
     )
     print(f"記録: {relative}")
-    print(f"  commit={commit[:7]}{' (dirty)' if dirty else ''} "
+    print(f"  commit={commit[:7]}{' (dirty)' if dirty else ''} cwd={cwd_relative} "
           f"exit_code={completed.returncode} {summary}")
     print(f"  対象要件: {', '.join(requirements)}")
     if completed.returncode != 0:
@@ -279,6 +299,8 @@ def main() -> int:
     record.add_argument("--tool-name", help="記録する tool 名（既定: 実行ファイル名）")
     record.add_argument("--parser", choices=["auto", "pytest", "none"], default="auto",
                         help="件数の解析器（既定: auto）")
+    record.add_argument("--cwd", metavar="PATH",
+                        help="検証コマンドの実行位置（repo ルート相対。既定: repo ルート）")
     record.add_argument("--allow-dirty", action="store_true",
                         help="未コミットの変更がある状態でも記録する（暫定記録）")
 

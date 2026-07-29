@@ -165,6 +165,7 @@ def write_evidence(tmp_path: Path, name: str, **overrides):
         "schema": "bitzsdd/verification-evidence@1",
         "command_id": name,
         "command": ["pytest", "-q"],
+        "cwd": ".",
         "commit": "a" * 40,
         "dirty": False,
         "recorded_at": "2026-07-29T00:00:00Z",

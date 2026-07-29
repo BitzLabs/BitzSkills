@@ -1,72 +1,75 @@
 ---
 id: FLW-DSC-004
-title: "bitz-flow ペルソナ（JTBD ジョブストーリー + ペルソナカード）"
+title: "bitz-flow v2 ペルソナとJTBD"
 status: draft
-version: 1.0
-updated: 2026-07-18
+version: 2.0
+updated: 2026-07-29
 owner: hide
 ---
 
-# ペルソナとジョブ（JTBD → ペルソナカード → 主要ペルソナ）
+# bitz-flow v2 ペルソナと JTBD
 
-> 切り出し discovery。実ユーザー調査は未実施。作者本人（1名・SDD 採用者）以外の感情・生の声は
-> すべて **[proto / 未検証]**。人口統計・台詞は捏造しない。SDD 採用者と非採用者の両方を想定する。
+ペルソナの感情や利用頻度は未調査のため `[proto / 未検証]` とする。ここでは操作契約を
+導くために、利用者と実行主体を分けて記述する。
 
-## Jobs-to-be-Done（ジョブストーリー）
+## Persona A — 開発を委ねる人間
 
-- **J1（機能的・主）**: エージェントに並列で開発させるとき、worktree の作成・命名・破棄・マージバックを
-  毎回指示するのは面倒なので、規約に委ねて安全に並列運用したい。
-  → 「独立した複数タスクを並列投入する**とき**、共有チェックアウトの競合を避けたいので、
-  1エージェント=1worktree=1ブランチで分離**したい**、失敗しても main に波及しない**ように**」。
-- **J2（機能的）**: チーム・別リポジトリで開発するとき、Issue 駆動 + Draft PR + squash merge の作法を
-  揃えて履歴と PR を綺麗に保ちたい。未マージ依存で事故（スタック PR 巻き添えクローズ）を起こしたくない。
-  → 「複数の関心事を並行して land する**とき**、前提が未マージの依存を持つ**とき**、依存を先に land して
-  フラットな PR 構成を保てる**ように**」。
-- **J3（感情的）**: `git reset --hard` や `--force` を思い出す不安なしに、失敗タスクを安全にやり直したい
-  （破棄→再投入で main を汚さず巻き戻せる安心）。
-- **J4（社会的）**: コミット規約（Conventional Commits）と PR 運用が揃った「規律ある開発フロー」として
-  見られたい（我流でないフロー運用の証跡）。
+- **状況**: 複数のAIエージェント／モデルを切り替えてリポジトリを開発する。
+- **Job**: モデルごとに Git / GitHub 手順を教え直さず、安全で追跡可能な成果を得たい。
+- **Pain**: コマンドの即興、長い出力、確認漏れ、worktree の残骸、PR / Issue / SPEC の二重管理。
+- **成功**: 実行前 plan と実行後 evidence が短い同一形式で示され、必要な裁定だけを行える。
 
-## ペルソナカード
+## Persona B — AIエージェント
 
-### ペルソナ A — 「ドッグフーディングする個人開発者（SDD 採用）」（主要ペルソナ）
-- **1行要約**: BitzSkills 自身を BitzSDD で開発する作者（hide）。1人で設計〜実装〜検証を回す。
-- **文脈と行動**: モノレポで複数プラグインを SDD 準拠で開発。depends_on が空のタスク群を worktree 並列投入し、
-  PR は squash merge。トークン/手間の節約に敏感（司令塔＋委譲運用）。
-- **Jobs**: J1, J2, J3, J4。
-- **Pains**: 並列運用の手順を毎回指示する手間／未マージ依存でのスタック PR 事故（実事故 PR #30/#31）／
-  巻き戻しがガードレールと衝突。
-- **Gains**: フロー規約で並列投入が定型化／未マージ依存の原則で事故回避／破棄→再投入で安全に復元。
-- **生の声**: 「並列投入のたびに worktree の作法を思い出したくない」`[proto / 未検証：作者の運用に基づく推定]`。
+- **状況**: 限られたコンテキストで、ローカル Git と GitHub の状態を判断する。
+- **Job**: 次の安全な一手に必要な情報を少ないトークンで取得し、定型操作を再発明せず実行したい。
+- **Pain**: 生出力の揺れ、例外分類不足、スクリプトの所在分散、長い SKILL.md、途中失敗後の再開判断。
+- **成功**: どの作業も `flow.py` から始まり、結果に判定コード、根拠、次の許可操作が含まれる。
 
-### ペルソナ B — 「SDD を採らないエージェント開発者」（二次ペルソナ・存在意義の検証対象）
-- **1行要約**: SDD ワークフローは重いと感じるが、Git フロー規約だけは揃えたい個人開発者。`.spec/` を持たない。
-- **文脈と行動**: Claude Code / Antigravity / Codex CLI で開発。worktree 並列とコミット規約が欲しいが、
-  要件定義・EARS までは要らない。`[proto / 未検証]`。
-- **Jobs**: J1, J3（J4 も）。J2 は GitHub 運用する場合のみ。
-- **Pains**: SDD を入れずに Git フローだけ揃える手段がない／エージェントごとに運用がブレる。`[proto / 未検証]`。
-- **Gains**: bitz-flow を単体導入すれば SDD 非依存でフロー規約が手に入る（想定）。`[proto / 未検証]`。
-- **生の声**: `TBD`（SDD 非採用の外部ユーザー調査なし。存在意義の核だが n=0）。
+## Persona C — BitzSDD 利用者
 
-### ペルソナ C — 「小規模チームのリード」（served ペルソナ）
-- **1行要約**: 数人のチームで Issue 駆動 + Draft PR + squash merge の作法を揃えたい開発者。A/B と重なりうる。
-- **Jobs**: J2, J4。
-- **Pains**: メンバー／エージェント間で PR 運用と未マージ依存の扱いがバラつく。`[proto / 未検証]`。
-- **生の声**: `TBD`。
+- **状況**: `.spec/spec-issues`、requirements、tasks を仕様の正として運用しつつ、
+  GitHub で実行状況を共有する。
+- **Job**: 人間専用の裁定権を維持し、GitHub Issue / PR から SPEC へ双方向に辿りたい。
+- **Pain**: status の二重管理、spec-issue と GitHub Issue の1対1誤解、要件と作業Issueの混同。
+- **成功**: `.spec` が契約、GitHub が協調台帳という境界が機械検証される。
 
-### アンチペルソナ — 「確立した社内 Git 標準を持つチーム」
-- GitLab Flow / trunk-based 等の社内標準を既に運用し、エージェント向け規約注入を必要としないチーム。
-  本プラグイン（規約の外部注入）は不適合。スコープ（FLW-DSC-003）の Won't に対応。
+## Persona D — 小規模チームのメンテナ
 
-## 主要ペルソナの特定
+- **状況**: Issue、PR、release、CHANGELOG を一貫した分類で維持する。
+- **Job**: merge 条件と release 内容を短時間でレビューし、中断した自動化を安全に再開したい。
+- **Pain**: ラベル増殖、PR title と squash subject の不一致、CI pending の誤merge、release notes の漏れ。
+- **成功**: 種別・依存・release category が同じ語彙で連携し、外部状態を再照会して続行できる。
 
-**主要ペルソナ = A（ドッグフーディングする個人開発者・SDD 採用）**。下流はまず A に最適化する。
-ただし bitz-flow の**存在意義は B（SDD 非採用）に単体価値が立つこと**にあり、A のみ実在（1名・SDD 側）で
-B は n=0 という偏りが最大の未検証点。A 向け最適化が B にも効く（SDD 連携を接続点に隔離した）設計とする。
+## JTBD
 
-## 優先順位付き機会リスト（下流入力）
+| ID | When | I want to | So I can |
+|---|---|---|---|
+| J1 | 作業を開始するとき | 最新 default SHA から規約どおりの worktree を作る | 単独作業でも並列化と失敗隔離に備えられる |
+| J2 | 変更状況を確認するとき | status / diff を段階的に圧縮取得する | 生出力でコンテキストを埋めず安全に判断できる |
+| J3 | 仕様変更をGitHubへ公開するとき | accepted spec-issue と実行 Issue を双方向リンクする | 裁定と実行を混同せず追跡できる |
+| J4 | 複数タスクを進めるとき | task を sub-issue、depends_on を dependency として表す | worktree 投入可能性を人とGitHubで共有できる |
+| J5 | PRを出すとき | Draft、CI、review、ready、merge を段階実行する | 中断や再試行でPRを重複作成しない |
+| J6 | mergeするとき | head SHA と必須checksを再照会してsquashする | stale head や未完了CIを誤ってmergeしない |
+| J7 | merge後 | worktree / local / remote branch を証跡つきで片付ける | 作業残骸を減らし、ブランチ再利用事故を防げる |
+| J8 | releaseするとき | merged PRからCHANGELOGとrelease notesを作る | 変更履歴をリポジトリとGitHubの双方に残せる |
+| J9 | 操作が失敗したとき | 診断分類と外部状態から再開点を得る | 生ログを読み直さず副作用を重複させない |
 
-1. J1 の「worktree 並列を規約で定型化」体験の担保（最高レバレッジ、主要ペルソナの核）。
-2. J2 の未マージ依存の原則（実事故 PR #30/#31 の再発防止、SI-CORE-020 準拠）。
-3. J3 のガードレール準拠な失敗復元（破棄→再投入、`reset --hard` 不使用）。
-4. B の SDD 非依存単体価値の検証（存在意義。外部エビデンスが届いたら優先度が跳ね上がる。現状 `TBD`）。
+## Journey
+
+```text
+repo inspect / repo capabilities / flow-doctor（利用意図に応じて選択）
+  → intake
+  → Issue または SDD task の作業ID確定
+  → worktree plan
+  → ユーザー承認（リポジトリ外書込み）
+  → worktree create / resume
+  → implement
+  → status / diff / verification evidence
+  → stage / commit
+  → PR prepare / Draft publish
+  → checks / review / ready
+  → merge plan / head再照会 / squash
+  → post-merge audit / cleanup
+  → release plan / CHANGELOG PR / release publish
+```
