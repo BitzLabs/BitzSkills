@@ -1162,3 +1162,280 @@ def test_SDD_FR_148_separation_does_not_change_exit_code(tmp_path: Path):
 
     assert run_inspect(manual_ws).returncode == 0
     assert run_inspect(auto_ws).returncode == 0
+
+
+# ────────────────────────────────────────────────────────────────
+# SDD-FR-153: 検証証跡の構造検証と参照切れ検出
+# ────────────────────────────────────────────────────────────────
+
+EVIDENCE_SECTION = "## 検証証跡（.spec/verification/"
+EVIDENCE_WARN_SECTION = "## 検証証跡の WARN"
+EVIDENCE_SCHEMA = "bitzsdd/verification-evidence@1"
+VERIFIED_REQ_ID = "FR-" + "010"
+
+
+def init_git(root: Path) -> str:
+    """fixture を git リポジトリにして HEAD の SHA を返す"""
+    def git(*args: str):
+        return subprocess.run(["git", *args], cwd=str(root),
+                              capture_output=True, text=True, check=True)
+    git("init", "-q", ".")
+    git("config", "user.email", "test@example.invalid")
+    git("config", "user.name", "test")
+    git("add", "-A")
+    git("commit", "-qm", "init")
+    return git("rev-parse", "HEAD").stdout.strip()
+
+
+def make_evidence_workspace(tmp_path: Path, *, vmethod: str = "unit-test",
+                            status: str = "verified"):
+    """verified 要件 + 完了タスクを持つ、証跡検査用のワークスペース"""
+    make_spec(tmp_path)
+    req_dir = tmp_path / ".spec" / "requirements"
+    (req_dir / f"{VERIFIED_REQ_ID}.md").write_text(
+        f"---\nid: {VERIFIED_REQ_ID}\nversion: 1.0\nstatus: {status}\n"
+        f"domain: verification\nverification_method: {vmethod}\n---\n\n"
+        f"### {VERIFIED_REQ_ID} 証跡検査の対象要件\n",
+        encoding="utf-8",
+    )
+    (tmp_path / ".spec" / "tasks" / f"{TASK_ID2}.md").write_text(
+        f"---\nimplements: {VERIFIED_REQ_ID}\ndepends_on: []\nstatus: done\n---\n\n"
+        "### 証跡検査の対象タスク\n",
+        encoding="utf-8",
+    )
+    tests_dir = tmp_path / "tests"
+    tests_dir.mkdir(parents=True, exist_ok=True)
+    (tests_dir / "test_evidence_target.py").write_text(
+        f'"""{VERIFIED_REQ_ID}: 対象要件の検証。"""\n', encoding="utf-8"
+    )
+    return init_git(tmp_path)
+
+
+def write_evidence(root: Path, name: str = "pytest", **overrides):
+    payload = {
+        "schema": EVIDENCE_SCHEMA,
+        "command_id": name,
+        "command": ["pytest", "-q"],
+        "commit": overrides.pop("commit", "0" * 40),
+        "dirty": False,
+        "recorded_at": "2026-07-29T00:00:00Z",
+        "tool": {"name": "pytest", "version": "8.0.0"},
+        "exit_code": 0,
+        "counts": {"passed": 1, "failed": 0, "errors": 0, "skipped": 0},
+        "requirements": [VERIFIED_REQ_ID],
+        "observed": {"duration_seconds": 1.23},
+    }
+    payload.update(overrides)
+    for key in [k for k, v in payload.items() if v is _DROP]:
+        del payload[key]
+    directory = root / ".spec" / "verification"
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f"{name}--abcdef1.json"
+    path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    return path
+
+
+class _Drop:
+    pass
+
+
+_DROP = _Drop()
+
+
+def test_SDD_FR_153_workspace_without_evidence_dir_is_unchanged(tmp_path: Path):
+    """証跡ディレクトリが無いワークスペースは従来どおり無検査で PASS する"""
+    make_evidence_workspace(tmp_path)
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+    report = report_of(tmp_path)
+    assert "PASS ✅" in report
+    assert EVIDENCE_SECTION not in report
+
+
+def test_SDD_FR_153_valid_evidence_is_listed_and_passes(tmp_path: Path):
+    """正しい証跡は FAIL にならず、専用セクションへ一覧される"""
+    head = make_evidence_workspace(tmp_path)
+    write_evidence(tmp_path, commit=head)
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+    report = report_of(tmp_path)
+    assert "PASS ✅" in report
+    assert VERIFIED_REQ_ID in section_body(report, EVIDENCE_SECTION)
+    assert "検証証跡: 1" in report
+
+
+def test_SDD_FR_153_unreadable_evidence_fails(tmp_path: Path):
+    """JSON として読めない証跡は FAIL"""
+    make_evidence_workspace(tmp_path)
+    directory = tmp_path / ".spec" / "verification"
+    directory.mkdir(parents=True)
+    (directory / "broken--abcdef1.json").write_text("{ not json", encoding="utf-8")
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 1
+    assert "読み取れません" in report_of(tmp_path)
+
+
+def test_SDD_FR_153_unknown_schema_fails(tmp_path: Path):
+    """想定外の schema 識別子は FAIL"""
+    head = make_evidence_workspace(tmp_path)
+    write_evidence(tmp_path, commit=head, schema="something/else@9")
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 1
+    assert "schema" in report_of(tmp_path)
+
+
+def test_SDD_FR_153_missing_required_key_fails(tmp_path: Path):
+    """必須キーの欠落は欠落名つきで FAIL"""
+    head = make_evidence_workspace(tmp_path)
+    write_evidence(tmp_path, commit=head, recorded_at=_DROP)
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 1
+    report = report_of(tmp_path)
+    assert "必須キー" in report
+    assert "recorded_at" in report
+
+
+def test_SDD_FR_153_nonzero_exit_code_fails(tmp_path: Path):
+    """失敗した実行の証跡は FAIL（記録しただけで通してはいけない）"""
+    head = make_evidence_workspace(tmp_path)
+    write_evidence(tmp_path, commit=head, exit_code=1)
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 1
+    assert "exit_code=1" in report_of(tmp_path)
+
+
+def test_SDD_FR_153_failed_counts_fail(tmp_path: Path):
+    """終了コードが 0 でも failed 件数があれば FAIL"""
+    head = make_evidence_workspace(tmp_path)
+    write_evidence(tmp_path, commit=head,
+                   counts={"passed": 1, "failed": 2, "errors": 0, "skipped": 0})
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 1
+    assert "失敗・エラーが 2 件" in report_of(tmp_path)
+
+
+def test_SDD_FR_153_dangling_requirement_reference_fails(tmp_path: Path):
+    """存在しない要件を指す証跡は参照切れとして FAIL"""
+    head = make_evidence_workspace(tmp_path)
+    write_evidence(tmp_path, commit=head, requirements=[GHOST_ID])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 1
+    report = report_of(tmp_path)
+    assert "参照切れ" in report
+    assert GHOST_ID in report
+
+
+def test_SDD_FR_153_empty_requirements_fails(tmp_path: Path):
+    """検証対象が空の証跡は FAIL（何を担保したのか不明なため）"""
+    head = make_evidence_workspace(tmp_path)
+    write_evidence(tmp_path, commit=head, requirements=[])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 1
+    assert "requirements が空" in report_of(tmp_path)
+
+
+def test_SDD_FR_153_unresolvable_commit_is_warn_not_fail(tmp_path: Path):
+    """解決できない commit の証跡は安全側で WARN に留める（FAIL にはしない）"""
+    make_evidence_workspace(tmp_path)
+    write_evidence(tmp_path, commit="1" * 40)
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+    report = report_of(tmp_path)
+    assert "PASS ✅" in report
+    assert "以降にソースが変更されています" in section_body(report, EVIDENCE_WARN_SECTION)
+
+
+def test_SDD_FR_153_evidence_from_earlier_commit_is_current_when_only_evidence_changed(
+    tmp_path: Path,
+):
+    """証跡ファイルをコミットしただけで古い扱いにしない（HEAD 一致は原理的に不可能なため）"""
+    previous = make_evidence_workspace(tmp_path)
+    write_evidence(tmp_path, commit=previous)
+    subprocess.run(["git", "add", "-A"], cwd=str(tmp_path), check=True,
+                   capture_output=True, text=True)
+    subprocess.run(["git", "commit", "-qm", "record evidence"], cwd=str(tmp_path),
+                   check=True, capture_output=True, text=True)
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+    report = report_of(tmp_path)
+    assert "PASS ✅" in report
+    assert "以降にソースが変更" not in section_body(report, EVIDENCE_WARN_SECTION)
+
+
+def test_SDD_FR_153_evidence_is_stale_when_source_changed_after_recording(tmp_path: Path):
+    """証跡の commit 以降にソースが変わったら WARN（再記録が必要）"""
+    previous = make_evidence_workspace(tmp_path)
+    write_evidence(tmp_path, commit=previous)
+    (tmp_path / "tests" / "test_evidence_target.py").write_text(
+        f'"""{VERIFIED_REQ_ID}: 変更後の検証。"""\n', encoding="utf-8"
+    )
+    subprocess.run(["git", "add", "-A"], cwd=str(tmp_path), check=True,
+                   capture_output=True, text=True)
+    subprocess.run(["git", "commit", "-qm", "change source"], cwd=str(tmp_path),
+                   check=True, capture_output=True, text=True)
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+    assert "以降にソースが変更されています" in section_body(
+        report_of(tmp_path), EVIDENCE_WARN_SECTION
+    )
+
+
+def test_SDD_FR_153_dirty_evidence_is_warn_not_fail(tmp_path: Path):
+    """未コミット状態で記録された暫定証跡は WARN に留める"""
+    head = make_evidence_workspace(tmp_path)
+    write_evidence(tmp_path, commit=head, dirty=True)
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+    assert "暫定証跡" in section_body(report_of(tmp_path), EVIDENCE_WARN_SECTION)
+
+
+def test_SDD_FR_153_verified_without_evidence_is_warn_not_fail(tmp_path: Path):
+    """証跡ディレクトリがあるのに証跡が無い verified 要件は WARN（加法的導入）"""
+    head = make_evidence_workspace(tmp_path)
+    write_evidence(tmp_path, name="other", commit=head, requirements=[REQ_ID])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+    report = report_of(tmp_path)
+    assert "PASS ✅" in report
+    warn_body = section_body(report, EVIDENCE_WARN_SECTION)
+    assert VERIFIED_REQ_ID in warn_body
+    assert "検証証跡がありません" in warn_body
+
+
+def test_SDD_FR_153_manual_check_requirement_needs_no_evidence(tmp_path: Path):
+    """manual-check 要件は証跡が無くても WARN を出さない"""
+    head = make_evidence_workspace(tmp_path, vmethod="manual-check")
+    write_evidence(tmp_path, commit=head, requirements=[REQ_ID])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+    assert VERIFIED_REQ_ID not in section_body(report_of(tmp_path), EVIDENCE_WARN_SECTION)

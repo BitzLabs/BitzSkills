@@ -64,4 +64,23 @@ Verify フェーズで spec_inspect.py を実行する。単独・締め工程�
 集約しない。`verification_method: manual-check` の要件はテスト参照が原理的に生じないため、
 未参照の報告を専用の見出しへ分けて表示する（SDD-FR-148）。
 
+### 検証証跡（`.spec/verification/`）
+
+green 判定の根拠は、実行のたびに手で書き写す数値ではなく、コマンド実出力から生成した
+機械可読証跡を正とする（SDD-FR-151）。証跡は `sdd-test` の `spec_verify.py record` が書き、
+`spec_inspect.py` が検査する:
+
+| 区分 | 項目 | 扱い |
+|---|---|---|
+| 安定項目 | schema / command_id / command / commit / recorded_at / tool / exit_code / counts / requirements | 一致判定の対象 |
+| 観測値 | `observed.duration_seconds` | 非正規。再実行で変動するため判定に使わない |
+
+- 1 実行 = 1 ファイル（`<command-id>--<commit短縮>.json`）。同一 commit・同一 command-id の
+  再実行は同じファイルを上書きするため冪等で、実行時間の揺れだけでは diff が出ない
+- raw stdout/stderr・環境変数・秘密値・実行者のホームパスは保存しない（SDD-FR-152）
+- `spec_inspect.py` の判定（SDD-FR-153）: schema 不正・必須キー欠落・非ゼロ終了・
+  failed 件数・参照切れは **FAIL**。HEAD と違う commit の証跡、証跡が無い verified 要件は
+  **WARN** に留める。`.spec/verification/` を持たないワークスペースは従来どおり無検査
+- `manual-check` の要件は自動証跡が生じないため、証跡欠落の WARN 対象から外す
+
 レポートは人間に提示する。機械判定を上書きしない（人間も上書きしない — 例外は仕様変更として正規の手続きへ）。

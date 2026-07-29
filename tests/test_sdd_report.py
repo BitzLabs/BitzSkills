@@ -7,6 +7,7 @@
 - SI-SDD-021 (SDD-FR-139): タスク集計を正規語彙（pending / implementing / blocked / done）で行い、
   語彙外 status を正規区分へ吸収せず (none) 等で可視化すること。表示は日本語主併記。
 """
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -150,3 +151,95 @@ def test_unknown_and_missing_status_not_absorbed_into_pending(tmp_path: Path):
     assert "**wip**: 1 件" in section
     assert "**(none)**: 1 件" in section
     assert "(.spec/tasks/ - 3 件)" in report
+
+
+# ────────────────────────────────────────────────────────────────
+# SDD-FR-154: 統合レポートへの検証証跡集計
+# ────────────────────────────────────────────────────────────────
+
+EVIDENCE_HEADING = "## 7. 検証証跡"
+
+
+def write_evidence(tmp_path: Path, name: str, **overrides):
+    payload = {
+        "schema": "bitzsdd/verification-evidence@1",
+        "command_id": name,
+        "command": ["pytest", "-q"],
+        "commit": "a" * 40,
+        "dirty": False,
+        "recorded_at": "2026-07-29T00:00:00Z",
+        "tool": {"name": "pytest", "version": "8.0.0"},
+        "exit_code": 0,
+        "counts": {"passed": 3, "failed": 0, "errors": 0, "skipped": 0},
+        "requirements": [REQ_ID1],
+        "observed": {"duration_seconds": 1.23},
+    }
+    payload.update(overrides)
+    directory = tmp_path / ".spec" / "verification"
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / f"{name}--aaaaaaa.json").write_text(
+        json.dumps(payload, ensure_ascii=False), encoding="utf-8"
+    )
+
+
+def test_SDD_FR_154_section_absent_without_evidence_dir(tmp_path: Path):
+    """証跡ディレクトリが無ければ節を出さない（既存レポート構成を変えない）"""
+    req_dir = make_spec(tmp_path)
+    write_req(req_dir, REQ_ID1, "verified", "対象要件")
+
+    report = run_report(tmp_path)
+
+    assert EVIDENCE_HEADING not in report
+
+
+def test_SDD_FR_154_evidence_rows_are_reported(tmp_path: Path):
+    """証跡ごとにファイル名・commit・終了コード・対象要件を表へ出す"""
+    req_dir = make_spec(tmp_path)
+    write_req(req_dir, REQ_ID1, "verified", "対象要件")
+    write_evidence(tmp_path, "pytest")
+
+    report = run_report(tmp_path)
+
+    assert EVIDENCE_HEADING in report
+    assert "pytest--aaaaaaa.json" in report
+    assert "aaaaaaa" in report
+    assert REQ_ID1 in report
+
+
+def test_SDD_FR_154_counts_covered_requirements_and_failures(tmp_path: Path):
+    """証跡が覆う要件数と失敗件数を集計する"""
+    req_dir = make_spec(tmp_path)
+    write_req(req_dir, REQ_ID1, "verified", "対象要件1")
+    write_req(req_dir, REQ_ID2, "verified", "対象要件2")
+    write_evidence(tmp_path, "pytest", requirements=[REQ_ID1, REQ_ID2])
+
+    report = run_report(tmp_path)
+
+    assert "**証跡が覆う要件**: 2 件" in report
+    assert "**失敗・不正な証跡**: 0 件" in report
+
+
+def test_SDD_FR_154_failed_evidence_turns_health_red(tmp_path: Path):
+    """失敗した証跡があれば総合ヘルスを RED にする"""
+    req_dir = make_spec(tmp_path)
+    write_req(req_dir, REQ_ID1, "verified", "対象要件")
+    write_evidence(tmp_path, "pytest", exit_code=1)
+
+    report = run_report(tmp_path)
+
+    assert "RED (失敗した検証証跡あり)" in report
+    assert "**失敗・不正な証跡**: 1 件" in report
+
+
+def test_SDD_FR_154_unreadable_evidence_is_counted_as_failure(tmp_path: Path):
+    """読み取れない証跡も失敗として数え、黙って無視しない"""
+    req_dir = make_spec(tmp_path)
+    write_req(req_dir, REQ_ID1, "verified", "対象要件")
+    directory = tmp_path / ".spec" / "verification"
+    directory.mkdir(parents=True)
+    (directory / "broken--aaaaaaa.json").write_text("{ not json", encoding="utf-8")
+
+    report = run_report(tmp_path)
+
+    assert "読取不能" in report
+    assert "**失敗・不正な証跡**: 1 件" in report
