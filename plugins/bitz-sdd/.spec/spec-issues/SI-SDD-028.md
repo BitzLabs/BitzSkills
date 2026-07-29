@@ -3,7 +3,7 @@ id: SI-SDD-028
 raised_by: SI-SDD-011/014/016 実装後の振り返り（2026-07-29）
 target: 代行遷移の担保である Promotion Gate が運用されていない
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: 代行可視化経路（`--on-behalf-of`）は「裁定の真正性は機械検証されない。
   Promotion Gate で人間が decision-ref を確認する」ことを唯一の担保として設計されている

@@ -3,7 +3,7 @@ id: SI-SDD-029
 raised_by: SI-SDD-011/014/016 実装後の振り返り（2026-07-29）
 target: manual-check 比率の監視未実装と機械検査からの二重免除
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `adoption-metrics.md` は「verification_method の `manual-check` 比率（20%超で見直し）」を
   補助監視項目として宣言しているが、**比率を計算する実装がどこにも無い**。実測では全ワークスペース
