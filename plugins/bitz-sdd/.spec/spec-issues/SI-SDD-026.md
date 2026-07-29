@@ -3,7 +3,7 @@ id: SI-SDD-026
 raised_by: BitzSkills root workspace（CORE要件26件の無記録promotion事故）
 target: SDD-FR-143（監査chain検査の適用範囲）/ spec_inspect.py audit_state
 proposed_change_type: bump
-status: open
+status: accepted
 origin: BitzSkills（ルートworkspaceでの実事故からのエスカレーション）
 ---
 - **目的**: `spec update` を通さず frontmatter の `status` を直接書き換えた遷移を、
@@ -62,3 +62,9 @@ origin: BitzSkills（ルートworkspaceでの実事故からのエスカレー�
   SDD-FR-143 の中核価値が、CLIを迂回した場合に事後検出すらできず、実際に本リポジトリで
   無記録のpromotionがCI含む全ゲートを通過した実績があるため。ただし実装は baseline 設計の
   裁定が前提で、それ無しに検査だけ追加してはならない。
+- **実施**: 2026-07-29 案A（`.spec/PROJECT.md` の `audit_baseline` 宣言によるgitベース監査）で
+  SDD-FR-143 を 2.1 bump し、`spec_inspect.py` の `audit_baseline_gap()` を実装・検証した。
+  未宣言workspaceは無検査（git非呼出）、baseline解決不能はWARN、検出範囲は人間裁定必須の
+  到達状態のみ。判定は「未記録の到達状態」（baseline時点のstatus vs 記録済みeventの始点、
+  eventが無ければ現status）の突き合わせで行う。設計裁定は
+  `.spec/reports/decision-2026-07-29-si-sdd-026.md`。bitz-sdd 3.2.0。

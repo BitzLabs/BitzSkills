@@ -31,6 +31,12 @@ STATUSES = {"draft", "approved", "implementing", "verified", "promoted", "deprec
 VMETHODS = {"pbt", "example-test", "unit-test", "benchmark", "sast", "dep-audit", "load-test", "manual-check"}
 ACTIVE = {"approved", "implementing", "verified", "promoted"}  # 検証対象ステータス
 ORPHAN_STATUSES = {"implementing", "verified", "promoted"}
+# 権限マトリクス上エージェント単独では到達できない状態（SDD-FR-143 / SI-SDD-026）。
+# 到達の証跡が無い＝CLIを迂回した規律違反と断定できる範囲に限定する。
+HUMAN_ONLY_STATES = {
+    "approved", "promoted", "deprecated",       # requirement
+    "accepted", "rejected", "superseded",       # spec-issue
+}
 
 
 def parse_frontmatter(text: str) -> dict:
@@ -256,6 +262,91 @@ def local_task_statuses(root: Path) -> dict[str, list[tuple[str, str]]]:
     return result
 
 
+def _git(args: list[str], cwd: Path, timeout: int = 10):
+    return subprocess.run(
+        ["git", *args], cwd=cwd, capture_output=True, text=True, timeout=timeout
+    )
+
+
+def audit_baseline_gap(
+    root: Path, events_by_artifact: dict[str, list[dict]]
+) -> tuple[list[str], list[str]]:
+    """Detect human-only transitions that bypassed `spec update` (SDD-FR-143 / SI-SDD-026).
+
+    `.spec/PROJECT.md` が `audit_baseline: <commit-ish>` を宣言した workspace だけで作動する
+    opt-in 監査。未宣言なら git を一切呼ばず何も報告しない（通常の inspect 経路を git 必須に
+    しないため）。判定は「未記録の到達状態」で行う: baseline 時点の status と、STATE の
+    記録済み event の始点（event が無ければ現 status）が食い違い、その到達状態が
+    HUMAN_ONLY_STATES なら証跡不在＝規律違反と断定する。
+
+    Returns (problems, warnings). baseline を解決できない環境は FAIL させず WARN に落とす。
+    """
+    problems: list[str] = []
+    warnings: list[str] = []
+    project = root / ".spec" / "PROJECT.md"
+    if not project.exists():
+        return problems, warnings
+    baseline = parse_frontmatter(
+        project.read_text(encoding="utf-8", errors="replace")
+    ).get("audit_baseline", "")
+    if not baseline:
+        return problems, warnings  # 未宣言 = 従来どおり無検査
+
+    try:
+        top = _git(["rev-parse", "--show-toplevel"], root)
+        sha = _git(["rev-parse", "--verify", f"{baseline}^{{commit}}"], root)
+        if top.returncode or sha.returncode:
+            warnings.append(
+                f"[audit] WARN: audit_baseline '{baseline}' を解決できず baseline監査を実行できません"
+            )
+            return problems, warnings
+        repo = Path(top.stdout.strip()).resolve()
+        baseline_sha = sha.stdout.strip()
+        rel = root.resolve().relative_to(repo)
+        scope = str(rel / ".spec") if str(rel) != "." else ".spec"
+        changed = _git(["diff", "--name-only", baseline_sha, "--", scope], repo)
+        if changed.returncode:
+            warnings.append(
+                f"[audit] WARN: baseline {baseline_sha[:7]} との差分を取得できず baseline監査を実行できません"
+            )
+            return problems, warnings
+
+        for relpath in changed.stdout.splitlines():
+            if not relpath.endswith(".md"):
+                continue
+            try:
+                current_fm = parse_frontmatter(
+                    (repo / relpath).read_text(encoding="utf-8", errors="replace")
+                )
+            except OSError:
+                continue  # baseline 以降に削除された成果物は監査対象外
+            artifact_id = current_fm.get("id", "")
+            current_status = current_fm.get("status", "")
+            if not artifact_id or not current_status:
+                continue
+            events = events_by_artifact.get(artifact_id, [])
+            # 記録済み遷移より前の「未記録の到達状態」
+            reached = events[0]["old"] if events else current_status
+            if reached not in HUMAN_ONLY_STATES:
+                continue
+            shown = _git(["show", f"{baseline_sha}:{relpath}"], repo)
+            baseline_status = (
+                parse_frontmatter(shown.stdout).get("status", "")
+                if shown.returncode == 0
+                else ""
+            )
+            if baseline_status == reached:
+                continue  # baseline 時点で既にその状態 = 監査開始前の遷移
+            problems.append(
+                f"[audit] audit-corruption: {artifact_id} が "
+                f"'{baseline_status or '（baseline時点で不在）'}' から '{reached}' へ遷移した記録が "
+                f"STATEにありません（baseline {baseline_sha[:7]} 以降。spec update を迂回した手編集の疑い）"
+            )
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        warnings.append(f"[audit] WARN: baseline監査を実行できません: {exc}")
+    return problems, warnings
+
+
 def check_state_events(root: Path) -> tuple[list[str], list[str]]:
     """Validate structured STATE events and incomplete transactions (SDD-FR-143/145).
 
@@ -276,7 +367,10 @@ def check_state_events(root: Path) -> tuple[list[str], list[str]]:
 
     state = spec_dir / "STATE.md"
     if not state.exists():
-        return problems, warnings
+        # STATE.md 自体が無い workspace でも baseline 監査は行う
+        # （記録の器が無い＝全遷移が未記録であり、監査を素通りさせてはならない）
+        baseline_problems, baseline_warnings = audit_baseline_gap(root, {})
+        return problems + baseline_problems, warnings + baseline_warnings
     lines = state.read_text(encoding="utf-8", errors="replace").splitlines()
     event_ids = set()
     events_by_artifact: dict[str, list[dict]] = {}
@@ -376,6 +470,10 @@ def check_state_events(root: Path) -> tuple[list[str], list[str]]:
                 f"[audit] audit-corruption: {artifact_id}の現status "
                 f"({current_status or 'missing'}) が最終event ({last['new']}) と不一致"
             )
+
+    baseline_problems, baseline_warnings = audit_baseline_gap(root, events_by_artifact)
+    problems += baseline_problems
+    warnings += baseline_warnings
     return problems, warnings
 
 

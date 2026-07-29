@@ -827,3 +827,115 @@ def test_SDD_FR_145_missing_decision_ref_file_warns_but_passes(tmp_path: Path):
     assert result.returncode == 0, report
     assert "decision-ref参照先が見つかりません" in report
     assert "PASS" in report
+
+
+# ---- SDD-FR-143 / SI-SDD-026: baseline 監査（CLI迂回の事後検出） ---------------
+
+
+def _audit_workspace(tmp_path: Path, baseline_status: str) -> str:
+    """git 管理下の workspace を作り、baseline コミットの SHA を返す。"""
+    make_spec(tmp_path)
+    write_active_requirement(tmp_path, baseline_status)
+    (tmp_path / ".spec" / "tasks" / f"{TASK_ID}.md").write_text(
+        f"---\nimplements: {REQ_ID}\ndepends_on: []\nstatus: done\n---\n",
+        encoding="utf-8",
+    )
+    _git(tmp_path, "init", "-q")
+    _git(tmp_path, "config", "user.name", "test")
+    _git(tmp_path, "config", "user.email", "test@example.invalid")
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-qm", "baseline")
+    return _git(tmp_path, "rev-parse", "HEAD").stdout.strip()
+
+
+def _declare_baseline(tmp_path: Path, baseline: str):
+    (tmp_path / ".spec" / "PROJECT.md").write_text(
+        f"---\naudit_baseline: {baseline}\n---\n\n# テスト用ワークスペース\n",
+        encoding="utf-8",
+    )
+
+
+def test_SDD_FR_143_audit_baseline_undeclared_skips_audit(tmp_path: Path):
+    """audit_baseline 未宣言なら、無記録の promotion があっても従来どおり PASS する。"""
+    _audit_workspace(tmp_path, "verified")
+    write_active_requirement(tmp_path, "promoted")  # spec update を通さない手編集
+
+    result = run_inspect(tmp_path)
+    report = (tmp_path / ".spec" / "inspection-report.md").read_text(encoding="utf-8")
+
+    assert result.returncode == 0, report
+    assert "audit-corruption" not in report
+    assert "PASS" in report
+
+
+def test_SDD_FR_143_audit_baseline_detects_unrecorded_promotion(tmp_path: Path):
+    """宣言済み workspace では、event を伴わない verified→promoted を検出して FAIL する。"""
+    baseline = _audit_workspace(tmp_path, "verified")
+    write_active_requirement(tmp_path, "promoted")
+    _declare_baseline(tmp_path, baseline)
+
+    result = run_inspect(tmp_path, "--check-only")
+
+    assert result.returncode == 1
+    assert "audit-corruption" in result.stdout
+    assert REQ_ID in result.stdout
+    assert "spec update を迂回した手編集の疑い" in result.stdout
+
+
+def test_SDD_FR_143_audit_baseline_detects_unrecorded_chain_start(tmp_path: Path):
+    """記録済み event より前に未記録の approved 到達があれば検出する。"""
+    baseline = _audit_workspace(tmp_path, "draft")
+    write_active_requirement(tmp_path, "verified")
+    relative = f".spec/requirements/{REQ_ID}.md"
+    (tmp_path / ".spec" / "STATE.md").write_text(
+        "# STATE\n\n"
+        + _state_event(REQ_ID, relative, "approved", "implementing", "event-1")
+        + _state_event(REQ_ID, relative, "implementing", "verified", "event-2"),
+        encoding="utf-8",
+    )
+    _declare_baseline(tmp_path, baseline)
+
+    result = run_inspect(tmp_path, "--check-only")
+
+    assert result.returncode == 1
+    assert "audit-corruption" in result.stdout
+    assert "'draft' から 'approved' へ" in result.stdout
+
+
+def test_SDD_FR_143_audit_baseline_accepts_recorded_transition(tmp_path: Path):
+    """正規CLI経由で記録された遷移は baseline 監査を通過する。"""
+    baseline = _audit_workspace(tmp_path, "verified")
+    write_active_requirement(tmp_path, "promoted")
+    ref = f".spec/spec-issues/{ISSUE_ID}.md"
+    issue = tmp_path / ref
+    issue.parent.mkdir(parents=True, exist_ok=True)
+    issue.write_text(f"---\nid: {ISSUE_ID}\nstatus: accepted\n---\n- 裁定\n", encoding="utf-8")
+    (tmp_path / ".spec" / "STATE.md").write_text(
+        "# STATE\n\n"
+        + _proxy_event(
+            REQ_ID, f".spec/requirements/{REQ_ID}.md", "verified", "promoted", "event-1", ref
+        ),
+        encoding="utf-8",
+    )
+    _declare_baseline(tmp_path, baseline)
+
+    result = run_inspect(tmp_path)
+    report = (tmp_path / ".spec" / "inspection-report.md").read_text(encoding="utf-8")
+
+    assert result.returncode == 0, report
+    assert "audit-corruption" not in report
+    assert "PASS" in report
+
+
+def test_SDD_FR_143_audit_baseline_unresolvable_is_warning_not_failure(tmp_path: Path):
+    """baseline commit を解決できない環境では FAIL させず WARN に落とす。"""
+    _audit_workspace(tmp_path, "verified")
+    write_active_requirement(tmp_path, "promoted")
+    _declare_baseline(tmp_path, "0" * 40)
+
+    result = run_inspect(tmp_path)
+    report = (tmp_path / ".spec" / "inspection-report.md").read_text(encoding="utf-8")
+
+    assert result.returncode == 0, report
+    assert "baseline監査を実行できません" in report
+    assert "PASS" in report

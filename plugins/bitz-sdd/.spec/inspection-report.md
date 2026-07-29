@@ -1,4 +1,4 @@
-# inspection-report.md (2026-07-27)
+# inspection-report.md (2026-07-29)
 
 成果物数: 74 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0
 
@@ -147,7 +147,7 @@
 | SDD-FR-140 | 検証済み（verified） | workflow | unit-test | 1 | 1 |
 | SDD-FR-141 | 検証済み（verified） | reporting | example-test | 3 | 3 |
 | SDD-FR-142 | 検証済み（verified） | reporting | example-test | 3 | 3 |
-| SDD-FR-143 | 検証済み（verified） | workflow | unit-test | 2 | 4 |
+| SDD-FR-143 | 検証済み（verified） | workflow | unit-test | 3 | 5 |
 | SDD-FR-144 | 検証済み（verified） | workflow | unit-test | 2 | 3 |
 | SDD-FR-145 | 検証済み（verified） | workflow | unit-test | 3 | 3 |
 | SDD-REV-002 | active |  |  | 0 | 1 |
