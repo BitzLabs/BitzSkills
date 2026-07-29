@@ -124,6 +124,10 @@ scripts/             # エージェント共用の運用スクリプト（bump /
 - 全スキルの frontmatter に `metadata`（version/author/created/updated）を必須で持たせる。
   内容を変更したら semver で version を bump し updated を更新する
 - スキルを変更したら、そのプラグインの version も `scripts/bump_version.py` で bump する
+- CLI スクリプトは解釈できない引数を黙認せず非ゼロ終了させる（`argparse` を使えば既定で満たす）。
+  読み取り専用ツールも対象。対象外は stdin 駆動の hook・`__main__` を持たないライブラリ・
+  ディスパッチャ `scripts/spec` のみ（正は `CORE-CON-011`。`tests/test_cli_contract.py` が
+  スクリプトを動的収集して機械検証するため、新規スクリプトは自動で対象に入る）
 - インストール状態は配置先 frontmatter の `installed-at` / `installed-from` で自己記述する
   （skill-packager が管理。ライブラリ側には書かない。プラグイン経由の導入分には stamp しない）
 - Antigravity 2.0 の仕様で迷ったら `docs/調査報告/01.Antigravity/` が正
