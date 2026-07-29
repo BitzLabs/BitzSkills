@@ -3,7 +3,7 @@ id: SI-SDD-014
 raised_by: FLW-FR-001のspec inspect警告振り返り（2026-07-18）
 target: monorepoのworkspace外テスト参照を含むトレース集計
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: canonicalな `spec inspect --workspace . plugins/*` では全workspaceを同時に検査するが、
   「テスト/実装からの参照がない要件」の判定は各workspace配下の `tests` / `test` / `src` だけを見る。

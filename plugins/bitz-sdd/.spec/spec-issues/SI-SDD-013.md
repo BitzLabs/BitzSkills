@@ -3,7 +3,7 @@ id: SI-SDD-013
 raised_by: BasicPlan 02.ユースケース構成との比較調査（2026-07-18）
 target: BitzSDD のユースケース作成・トレース・docs同期フロー
 proposed_change_type: new
-status: open
+status: accepted
 ---
 - **目的**: BasicPlan は各パッケージに `02.ユースケース/UCNNN_名称.md` を置き、アクター、
   事前・事後条件、基本フロー、代替フロー、関連機能要件を記述して、要件妥当性とテスト設計の

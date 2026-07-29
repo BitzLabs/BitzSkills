@@ -3,7 +3,7 @@ id: SI-SDD-011
 raised_by: 4プラグインの Discovery docs 同期（2026-07-18）
 target: sdd-docs の Discovery 成果物同期マッピング不足
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: sdd-discovery は vision / metrics / scope / personas / positioning の5つを
   `docs/01-context/` へ同期すると規定するが、`sdd_sync.py` の `DEFAULT_MAPPING` は vision と scope のみで、
