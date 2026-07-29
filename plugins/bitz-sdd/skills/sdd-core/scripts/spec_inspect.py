@@ -43,6 +43,12 @@ DOC_SUFFIXES = {".md", ".yaml", ".yml", ".toml", ".txt"}
 CODE_SUFFIXES = {".py", ".ts", ".js", ".rs", ".go", ".java"}
 # 「テスト/実装からの参照」と見なすワークスペース相対パスの接頭辞（SDD-FR-147）
 TRACE_PREFIXES = ("tests", "test", "src", "scripts", "hooks", "skills")
+# 検証証跡（SDD-FR-151 / SDD-FR-153）。sdd-test の spec_verify.py が書き、本ツールが検査する
+VERIFICATION_DIRNAME = "verification"
+EVIDENCE_SCHEMA = "bitzsdd/verification-evidence@1"
+EVIDENCE_REQUIRED_KEYS = (
+    "command_id", "command", "cwd", "commit", "recorded_at", "exit_code", "requirements",
+)
 
 
 def parse_frontmatter(text: str) -> dict:
@@ -273,6 +279,123 @@ def git_head_sha(root: Path, rel_path: str):
         sha = None
     _sha_cache[rel_path] = sha
     return sha
+
+
+def git_head_commit(root: Path):
+    """ワークスペースの HEAD コミット SHA。git 不在/リポジトリ外は None（縮退）"""
+    try:
+        out = subprocess.run(["git", "rev-parse", "HEAD"],
+                             cwd=root, capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if out.returncode != 0:
+        return None
+    sha = out.stdout.strip()
+    return sha if re.fullmatch(r"[0-9a-f]{40}", sha) else None
+
+
+def evidence_is_stale(root: Path, commit: str, cache: dict) -> bool:
+    """証跡の commit 以降に、証跡以外のファイルが変更されたか（＝証跡が古いか）。
+
+    HEAD との単純比較は使えない。証跡ファイル自身をコミットすると HEAD が進むため、
+    証跡の commit が HEAD と一致することは原理的にありえないため。
+    証跡ディレクトリ配下の差分は「ソースの変更」と見なさない。
+    """
+    if commit in cache:
+        return cache[commit]
+    stale = True
+    try:
+        out = subprocess.run(["git", "diff", "--name-only", commit, "HEAD", "--", "."],
+                             cwd=root, capture_output=True, text=True, timeout=15)
+        if out.returncode == 0:
+            segment = f".spec/{VERIFICATION_DIRNAME}/"
+            stale = any(
+                segment not in line.strip()
+                for line in out.stdout.splitlines() if line.strip()
+            )
+    except (OSError, subprocess.SubprocessError):
+        stale = True  # 判定できないときは安全側（WARN を出す）
+    cache[commit] = stale
+    return stale
+
+
+def load_verification_evidence(root: Path, global_reqs: dict, reqs: dict):
+    """`.spec/verification/` の検証証跡を読み、問題・WARN・要件別の索引を返す（SDD-FR-153）。
+
+    証跡ディレクトリが無いワークスペースは従来どおり無検査（加法的導入）。
+    存在する証跡が壊れている・失敗している・存在しない要件を指しているのは FAIL。
+    証跡が HEAD と違う commit のもの、verified なのに証跡が無い要件は WARN に留める。
+    """
+    evidence_dir = root / ".spec" / VERIFICATION_DIRNAME
+    if not evidence_dir.is_dir():
+        return [], [], {}, []
+
+    problems, warnings, by_requirement, records = [], [], {}, []
+    head = git_head_commit(root)
+    stale_cache: dict = {}
+    for path in sorted(evidence_dir.glob("*.json")):
+        rel = path.relative_to(root).as_posix()
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError) as error:
+            problems.append(f"[verify] {rel}: 証跡を読み取れません（{error}）")
+            continue
+        if not isinstance(payload, dict):
+            problems.append(f"[verify] {rel}: 証跡の形式が不正です（オブジェクトではない）")
+            continue
+        if payload.get("schema") != EVIDENCE_SCHEMA:
+            problems.append(
+                f"[verify] {rel}: schema が {EVIDENCE_SCHEMA} ではありません "
+                f"（actual: {payload.get('schema')!r}）")
+            continue
+        missing = [key for key in EVIDENCE_REQUIRED_KEYS if key not in payload]
+        if missing:
+            problems.append(f"[verify] {rel}: 必須キーがありません: {', '.join(missing)}")
+            continue
+
+        exit_code = payload.get("exit_code")
+        if not isinstance(exit_code, int):
+            problems.append(f"[verify] {rel}: exit_code が整数ではありません")
+        elif exit_code != 0:
+            problems.append(f"[verify] {rel}: 失敗した実行の証跡です（exit_code={exit_code}）")
+
+        counts = payload.get("counts")
+        if isinstance(counts, dict):
+            failed = (counts.get("failed") or 0) + (counts.get("errors") or 0)
+            if failed:
+                problems.append(f"[verify] {rel}: 失敗・エラーが {failed} 件記録されています")
+
+        requirement_ids = payload.get("requirements")
+        if not isinstance(requirement_ids, list) or not requirement_ids:
+            problems.append(f"[verify] {rel}: requirements が空です（検証対象が不明）")
+            requirement_ids = []
+        for rid in requirement_ids:
+            if not isinstance(rid, str) or rid not in global_reqs:
+                problems.append(f"[verify] {rel}: 参照切れ — 存在しない要件 {rid!r} を指しています")
+                continue
+            by_requirement.setdefault(rid, []).append(rel)
+
+        commit = payload.get("commit")
+        if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-f]{40}", commit or ""):
+            problems.append(f"[verify] {rel}: commit が 40 桁の SHA ではありません")
+        elif head and commit != head and evidence_is_stale(root, commit, stale_cache):
+            warnings.append(
+                f"[verify] {rel}: 記録時の commit({commit[:7]}) 以降にソースが変更されています"
+                "（再記録が必要な可能性）")
+        if payload.get("dirty") is True:
+            warnings.append(f"[verify] {rel}: 未コミットの変更がある状態で記録された暫定証跡です")
+
+        records.append((rel, payload))
+
+    for rid, r in sorted(reqs.items()):
+        if r["fm"].get("status") not in {"verified", "promoted"}:
+            continue
+        if r["fm"].get("verification_method") == "manual-check":
+            continue
+        if rid not in by_requirement:
+            warnings.append(f"[verify] {rid}: verified/promoted だが検証証跡がありません")
+
+    return problems, warnings, by_requirement, records
 
 
 def derived_docs_ref(fm: dict):
@@ -756,8 +879,14 @@ def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None,
         else:
             untested_auto.append(rid)
 
+    # 検証証跡（SDD-FR-153）。`.spec/verification/` が無ければ従来どおり無検査
+    verify_problems, verify_warnings, evidence_by_req, evidence_records = (
+        load_verification_evidence(root, global_reqs, reqs)
+    )
+    problems += verify_problems
+
     lines = [f"# inspection-report.md ({date.today().isoformat()})", ""]
-    lines.append(f"成果物数: {len(reqs)} / 問題: {len(problems)} / 幽霊参照: {len(ghosts)} / 実装待ち: {len(waiting)} / 孤児要件: {len(orphans)}")
+    lines.append(f"成果物数: {len(reqs)} / 問題: {len(problems)} / 幽霊参照: {len(ghosts)} / 実装待ち: {len(waiting)} / 孤児要件: {len(orphans)} / 検証証跡: {len(evidence_records)}")
     lines.append("")
     lines.append("## 問題一覧")
     lines += [f"- {p}" for p in problems] or ["- なし ✅"]
@@ -784,6 +913,19 @@ def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None,
     lines += [f"- {rid} ← {', '.join(sorted(srcs))}"
               for rid, srcs in sorted(externally_traced.items())] or ["- なし ✅"]
     lines.append("")
+    if evidence_records or verify_warnings:
+        lines.append("## 検証証跡（.spec/verification/ — 実出力に基づく機械可読証跡）")
+        lines.append("※ 実行時間は observed（非正規）であり一致判定に使わない。判定は exit_code と件数が正")
+        lines += [
+            f"- {rel} — commit {payload.get('commit', '')[:7]} / "
+            f"exit_code {payload.get('exit_code')} / 対象 "
+            f"{', '.join(payload.get('requirements') or []) or 'なし'}"
+            for rel, payload in evidence_records
+        ] or ["- なし"]
+        lines.append("")
+        lines.append("## 検証証跡の WARN（古い commit・証跡なしの verified 要件 — FAIL にしない）")
+        lines += [f"- {w}" for w in verify_warnings] or ["- なし ✅"]
+        lines.append("")
     diverged = []
     for rid, r in sorted(reqs.items()):
         path, recorded = derived_docs_ref(r["fm"])

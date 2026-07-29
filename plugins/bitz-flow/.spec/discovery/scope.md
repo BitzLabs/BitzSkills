@@ -1,59 +1,112 @@
 ---
 id: FLW-DSC-003
-title: "bitz-flow スコープ（制約 → MoSCoW → In/Out-of-Scope 境界）"
+title: "bitz-flow v2 スコープ"
 status: draft
-version: 1.0
-updated: 2026-07-18
+version: 2.0
+updated: 2026-07-29
 owner: hide
 ---
 
-# スコープ（制約 → MoSCoW → In/Out-of-Scope 境界）
+# bitz-flow v2 スコープ
 
-> 切り出し discovery。sdd-git から転記した機能セットを MoSCoW で追認しつつ、SDD 非依存化に伴う
-> 帯域を明示する。Out-of-Scope（Won't）リストがスコープクリープに対する主ガード。
-> **SDD 連携（Implements 突合・`.spec/tasks` 分解）の規定の正は bitz-sdd 側に残す**のが最重要の境界。
+## 制約
 
-## 制約の棚卸し（最初にやる）
+- Agent Skills のフォルダ単体コピーで動作する自己完結性を守る。
+- Python 3.10+、Git、必要時のみ GitHub CLI を外部前提とし、Python の追加依存は持たない。
+- Claude Code / Codex CLI / Antigravity 2.0 に共通する最小能力である「スキル読込 + CLI実行」
+  を正規経路にする。
+- GitHub 認証情報は `gh` に委ね、bitz-flow は token・credential を読み取らない。
+- 禁止操作（`git reset --hard`、force push、`git clean -f`、`rm -rf`、`sudo`）を
+  実装・提案しない。
+- リポジトリ外に worktree を作る場合は、実行前にパスを提示してユーザー承認を得る。
 
-| 種別 | 制約 |
-|---|---|
-| 技術 | 各スキルはフォルダ単位で自己完結（他スキルの references を相対参照しない。連携はスキル名の言及） |
-| 技術 | 失敗時復元はガードレール準拠のみ（`git reset --hard` / `git push --force` / `git clean -f` を規定しない） |
-| 技術 | SDD 連携の正は bitz-sdd（sdd-implement / sdd-core parallel-git.md）にある。bitz-flow は接続点のみ持つ |
-| 技術 | Git / GitHub（`git worktree` / `gh` CLI）に依存。ホスティングは GitHub を主対象とする |
-| 組織 | メンテナは実質1名（作者 hide）。運用・保守コストは1人分に収める |
-| プロセス | 開発は sdd-core 準拠（ドッグフーディング）。適用する bitz-sdd はリリース済み版に固定（PROJECT.md） |
-| 法規制 | Agent Skills オープン標準／OSS ライセンス準拠。特段の追加規制なし |
+## MoSCoW
 
-**スコープ項目は上記制約に違反してはならない。** 違反するものは Won't に落とす。
+### Must — v2 初期版
 
-## MoSCoW（帯域分け）
+1. **単一 dispatcher**
+   - `flow-core/scripts/flow.py` を通常操作の唯一の入口にする。
+   - `--format compact|json`、共通終了コード、timeout、許可リスト診断を全操作で共有する。
+2. **Git 読取**
+   - repo context、status、diff summary/detail、log、branch/worktree audit、conflict 検出。
+   - Git の安定した machine-readable 出力を parse し、上限と絞込み導線を持つ。
+3. **Git 状態変更**
+   - fetch、worktree create/resume、明示 path の stage、commit、ff-only sync。
+   - branch publishと、merged evidence付きの独立remote branch削除。
+   - 状態変更は plan と apply を分離し、stale snapshot を拒否する。
+4. **worktree-first**
+   - 書込み作業は単独でも worktree が既定。
+   - 作成、再開、一覧、完了 cleanup、失敗保全、明示 discard を状態機械化する。
+5. **GitHub Issue**
+   - list/view/search/prepare/publish/edit/comment/close/verify-link/reconcile-link。
+   - issue type、sub-issue、dependency を capability 検出つきで扱う。
+   - 高水準`gh`で不足するMust機能は、method/path/fieldをsource codeへ固定した内部adapterで扱う。
+   - BitzSDD の spec-issue / task との双方向リンクを検証する。
+6. **PR**
+   - prepare、push、Draft publish、checks、ready、merge plan/apply、post-merge audit。
+   - squash、expected head SHA、CI/review/base 条件、冪等再開を契約化する。
+7. **release**
+   - 前回 tag 以降の merged PR 収集、分類、CHANGELOG draft、release notes draft、
+     tag 検証、GitHub Release draft / publish。
+   - プロジェクト固有 version bump・build・sign は外部工程として証跡だけ受け取る。
+8. **独立 doctor**
+   - Git、GitHub CLI、Python、remote/default branch、認証・必要 scope を読み取り専用診断する。
+9. **検証**
+   - unit / fault injection / golden output / token-byte benchmark / cross-platform path test。
+   - skill-tester で script invocation rate を計測する。
+   - M0 read-only thin sliceで3platformの価値を実証してからwrite operationへ進む。
 
-sdd-git から転記した機能を追認しつつ、SDD 非依存化の帯を分ける。判定基準:
-「これ以外を全部出荷したら成功指標（FLW-DSC-002）を達成できるか?」
+### Should — 初期版に余力があれば
 
-| 帯 | 項目 | 根拠 |
-|---|---|---|
-| **Must** | flow-core（フロー選択・コミット規約・失敗時復元） | フローの入口。単独開発でもこれだけで完結。SDD 非依存の核 |
-| **Must** | flow-worktree（1エージェント=1worktree=1ブランチの並列運用） | 並列開発の物理分離。エージェント運用の中核価値 |
-| **Must** | flow-pr（Issue 駆動 + Draft PR + squash merge + 未マージ依存の原則） | チーム・別リポジトリ開発の要。SI-CORE-020 の事故防止規約を含む |
-| **Must** | SDD 非依存で単体完結すること | 存在意義。bitz-sdd 無しで機能する条件。ガードレール G3 と表裏 |
-| **Should** | 各スキルの「bitz-sdd 併用節」（Implements フッター・`.spec/tasks` 連携の接続点） | 併用時の価値を繋ぐが、規定の**正は bitz-sdd 側**に置き二重化しない |
-| **Should** | 各スキルの references による progressive disclosure | 品質保守に効くが機能の本質ではない |
-| **Could** | SI-CORE-010: sdd-git の委譲ポインタ化（二重規定の解消） | 転記直後は sdd-git が併存。委譲化は磨き込み。未着手（open） |
-| **Won't（今回は）** | Git フローそのものの正規定を bitz-flow に一元化（SDD 側の parallel-git.md を吸収） | SDD 連携の正は bitz-sdd に残す。吸収は境界違反 |
-| **Won't（今回は）** | GitHub 以外のホスティング（GitLab / Bitbucket）固有フローの網羅 | GitHub を主対象に絞る。他は将来 `TBD` |
-| **Won't（今回は）** | CI/CD パイプライン自体の構築・デプロイ自動化 | フロー規約に徹する。デプロイ・運用は sdd-ops 等の管轄 |
-| **Won't（今回は）** | `git reset --hard` / `--force` / checkpoint 巻き戻しの規定 | ガードレールと衝突。復元は worktree 破棄→再投入に一本化 |
-| **Won't（今回は）** | 要件・タスク・テスト設計（各 sdd-* の管轄） | フロー実行手段に徹する。仕様の正は `.spec/`（bitz-sdd） |
+- GitHub Projects への item add と Status / Priority / Size 更新。
+- Issue type が使えない repository 向けの fallback label 初期化。
+- branch protection / merge queue の capability 読取と merge 待機。
+- monorepo component 単位の CHANGELOG / release notes（repository modeの後に昇格）。
+- `flow.py explain <code>` による短い復旧案。
 
-## In-Scope / Out-of-Scope 境界（必須）
+### Could — 後続
 
-| 区分 | 内容 |
-|---|---|
-| **In-Scope** | 状況別フロー選択 / worktree 並列運用（作成・マージバック・破棄） / Conventional Commits + Implements フッター規約 / Issue 駆動 Draft PR + squash merge / 未マージ依存の原則 / 失敗時の破棄→再投入 / bitz-sdd 併用時の接続点提示 |
-| **Out-of-Scope（Won't）** | SDD 連携の正規定の吸収 / GitHub 以外のホスティング網羅 / CI/CD・デプロイ構築 / 破壊的巻き戻しの規定 / 要件・タスク・テスト・インフラ設計（各 sdd-* の管轄） |
+- output cache / cursor cache。初期版は再計算 + snapshot fingerprint を使う。
+- GitLab / Forgejo adapter。
 
-**Won't を名指しすることがスコープクリープを止める。** 特に「SDD 連携の正の吸収」と
-「破壊的巻き戻しの規定」は要望が来やすいが、前者は bitz-sdd との境界を、後者はガードレールを壊すため
-明示的に除外する。
+### Won't — v2 初期版では行わない
+
+- 任意 shell / 任意 `gh api` passthrough。
+- rebase、履歴書換え、force push、stash を通常フローに含める。
+- GitHub token の保存・注入。
+- LLM による diff の意味要約を安全判定の入力にする。
+- 自動 version bump、任意 build command の実行、署名鍵操作。
+- GitHub Project を `.spec` status の SSOT にする。
+- 失敗 worktree を自動削除する。
+
+## リリース分割
+
+### M0: Contract Kernel
+
+`repo inspect`、`git status`、`git diff-summary`、result schema、renderer、process runner、
+3platform evalだけを独立PRで実装する。platform別Invocation 95%、SFCR 90%、skillなし比20pt改善、
+parity 100%、危険操作0を満たさなければM1へ進まない。
+
+### M1: Git operations
+
+残るGit read、fetch、stage、commit、sync、publish-branch、doctorのOperation Contractとfault fixture。
+
+### M2: worktree-first
+
+worktree の配置・命名・作成・再開・audit・cleanup・保全・discard、独立remote branch削除。
+
+### M3: Issue / SDD
+
+Issue CRUD、sub-issue / dependency、`.spec` 双方向リンク、fallback label、reconcile-link。
+
+### M4: PR
+
+Draft publish、CI/review gate、expected head squash merge、post-merge cleanup。
+
+### M5: Release
+
+repository modeのCHANGELOG、release notes、tag / release gate。draftまでを前半、
+fault fixture通過後にpublishを後半で有効化する。component modeはShouldとして別途昇格する。
+
+各milestoneは独立PRで戻せる境界にし、M0をlandしてから後続を開始する。
+詳細な出口条件はFLW-DSN-014を正とする。

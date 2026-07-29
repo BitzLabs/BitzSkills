@@ -2,10 +2,10 @@
 name: sdd-test
 description: BitzSDD のテスト・検証工程を行うスキル。EARS 記法の要件からテスト仕様を導出（節種別ごとの導出パターン、verification_method との対応）し、テストを実装・実行して、検証結果とトレース情報を .spec/specs/<feature>/ に記録する。ユーザーが「テストを書いて」「テスト仕様」「EARS からテスト」「検証して」「verified にして」と言及したとき、または sdd-implement の実装完了後に検証フェーズへ移行するときに使用する。
 metadata:
-  version: "0.1.2"
+  version: "0.2.0"
   author: br7.hide
   created: "2026-07-11"
-  updated: "2026-07-18"
+  updated: "2026-07-29"
 ---
 
 # SDD Test — EARS 要件からのテスト導出と検証
@@ -29,9 +29,36 @@ metadata:
     （対象要件・EARS 節・導出元種別・verification_method・テストケース一覧・検証ステータス）。
     軽量レーンは `sdd-core` の lifecycle.md に定める STATE.md 正本 + PR がある場合の実出力で
     代替でき、既存の verified 要件へ遡及追加しない。
-4.  **実行と判定**: テストを実行し、red の場合は `sdd-core` の references/failure-protocol.md に従う
+4.  **実行と判定**: テストを `spec_verify.py record` 経由で実行し、実出力から機械可読証跡を
+    生成する（下記）。red の場合は `sdd-core` の references/failure-protocol.md に従う
     （テストを黙って弱めない）。全 green + `spec_inspect.py` の traceability 検証 PASS で
     要件の `verified` 遷移を人間に提案する。
+
+## 検証証跡の記録（機械判定の正）
+
+green 判定の正は **`.spec/verification/` の証跡**であり、test-spec 本文の数値ではない
+（SDD-FR-151）。検証コマンドはラッパー経由で実行し、実出力から証跡を生成する:
+
+```bash
+python3 scripts/spec_verify.py record <workspace> \
+  --command-id pytest --implements XX-FR-001 --implements XX-FR-002 \
+  -- .venv/bin/pytest -q
+```
+
+- 証跡は `.spec/verification/<command-id>--<commit短縮>.json` に書かれ、
+  **同一 commit・同一 command-id の再実行は同じファイルを上書き**する（冪等）
+- 安定項目（commit・終了コード・件数・tool version）と観測値（実行時間）を分離し、
+  実行時間は `observed` に隔離する。**実行時間の揺れだけでは diff が出ない**
+- raw stdout/stderr・環境変数は保存しない。秘密値らしき引数や実行者のホームを含む
+  絶対パスが渡された場合はコマンドを実行せず拒否する（SDD-FR-152）
+- 未コミットの変更がある状態では拒否する。暫定記録が要るときだけ `--allow-dirty` を明示する
+- `spec_inspect.py` が証跡を検査する（SDD-FR-153）。schema 不正・必須キー欠落・
+  非ゼロ終了・failed 件数・参照切れは **FAIL**。HEAD と違う commit の証跡、
+  証跡が無い verified 要件は **WARN**（加法的導入のため FAIL にしない）
+- 集計は `sdd-report` が status-report.md の「検証証跡」節へ反映する（SDD-FR-154）
+
+test-spec 本文の件数はナラティブであり、証跡と食い違っても**証跡が正**。
+再実行のたびに test-spec の数値を手で追随させる必要はない。
 
 ## 軽量レーンの証跡チェックリスト
 

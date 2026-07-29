@@ -197,8 +197,37 @@ def generate_report(root_path: Path) -> Path:
         progress = int((completed / total_reqs) * 100)
 
     # 総合ヘルスメトリクス
+    # 7. 検証証跡 集計（SDD-FR-154）。`.spec/verification/` が無ければ節ごと出さない
+    evidence_dir = spec_dir / "verification"
+    evidence_rows = []
+    evidence_covered = set()
+    evidence_failed = 0
+    if evidence_dir.is_dir():
+        for f in sorted(evidence_dir.glob("*.json")):
+            try:
+                payload = json.loads(f.read_text(encoding="utf-8"))
+            except (OSError, UnicodeError, json.JSONDecodeError):
+                evidence_rows.append((f.name, "-", "読取不能", "-"))
+                evidence_failed += 1
+                continue
+            if not isinstance(payload, dict):
+                evidence_rows.append((f.name, "-", "形式不正", "-"))
+                evidence_failed += 1
+                continue
+            exit_code = payload.get("exit_code")
+            targets = [r for r in (payload.get("requirements") or []) if isinstance(r, str)]
+            evidence_covered.update(targets)
+            if exit_code != 0:
+                evidence_failed += 1
+            commit = payload.get("commit") or ""
+            evidence_rows.append(
+                (f.name, commit[:7] or "-", str(exit_code), ", ".join(targets) or "-")
+            )
+
     health = "GREEN"
-    if "FAIL" in latest_decision:
+    if evidence_failed:
+        health = "RED (失敗した検証証跡あり)"
+    elif "FAIL" in latest_decision:
         health = "RED (レビュー失敗)"
     elif discovery_status == "検証ゲート不合格 (No-Go)":
         health = "RED (Discovery検証失敗)"
@@ -276,6 +305,27 @@ def generate_report(root_path: Path) -> Path:
 
 ※ 代行遷移は decision-ref（裁定所在参照）を持つ。Promotion Gate で参照先の裁定を人間が確認すること。
 """
+
+    if evidence_dir.is_dir():
+        report_content += f"""
+---
+
+## 7. 検証証跡 (.spec/verification/ - {len(evidence_rows)} 件)
+*   **証跡が覆う要件**: {len(evidence_covered)} 件
+*   **失敗・不正な証跡**: {evidence_failed} 件
+
+| 証跡ファイル | commit | exit_code | 対象要件 |
+| :--- | :--- | :--- | :--- |
+"""
+        if evidence_rows:
+            for e_name, e_commit, e_exit, e_targets in evidence_rows:
+                report_content += f"| {e_name} | `{e_commit}` | {e_exit} | {e_targets} |\n"
+        else:
+            report_content += "| - | - | - | 証跡がありません |\n"
+        report_content += (
+            "\n※ 実行時間は observed（非正規の観測値）であり、本表の判定には使わない。"
+            "green 判定の正は exit_code と件数（SDD-FR-151）。\n"
+        )
 
     report_file.write_text(report_content, encoding="utf-8")
     return report_file

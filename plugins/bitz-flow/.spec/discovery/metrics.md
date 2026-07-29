@@ -1,53 +1,87 @@
 ---
 id: FLW-DSC-002
-title: "bitz-flow 成功指標（North Star Metric + 入力指標 + ガードレール）"
+title: "bitz-flow v2 成功指標"
 status: draft
-version: 1.0
-updated: 2026-07-18
+version: 2.0
+updated: 2026-07-29
 owner: hide
 ---
 
-# 成功指標（North Star Metric + 入力指標 + ガードレール）
+# bitz-flow v2 成功指標
 
-> 切り出し discovery。OSS / 個人開発のため計測基盤は未整備。目標値の大半は `TBD`。
-> ビジョン（FLW-DSC-001）の「勝利の定義」を測定可能な形にし、スコープ（FLW-DSC-003）の錨とする。
+数値は現時点では `[proto / 未検証]` であり、実装前に fixture と計測方法を固定してから
+ベースラインを取得する。モデル横断のトークン数は tokenizer に依存するため、機械ゲートは
+UTF-8 byte 数と項目数を正とし、モデル別 token 数は補助指標にする。
 
-## North Star Metric（NSM）— 1つだけ
+## North Star Metric
 
-**「bitz-flow の規約に従って完了した開発サイクル（フロー選択 → 実装 → コミット規約準拠 →
-squash merge / worktree 破棄）の数」**（= 規約どおりに land または安全に復元されたタスク／Issue の数）。
+**Scripted Flow Completion Rate (SFCR)**:
 
-- 収益に先行しない（OSS なので収益は指標外）が、**「規約が実運用で回った」= 中核価値が届いた**を捉える先行指標。
-- 顧客が受け取った価値を顧客の言葉で測る: 「スキルを起動したこと」ではなく「フローが最後まで規約どおり回ったこと」。
-- バニティ指標（インストール数・スキル起動回数）を NSM にしない。
+> Git / GitHub 操作を含む評価タスクのうち、エージェントが `flow.py` を入口に使い、
+> 必須ゲートを迂回せず、期待する終了状態まで到達した割合。
 
-## 入力指標（3〜5個）
+- 初期目標: 各プラットフォームで **90%以上** `[proto / 未検証]`。総計平均で相殺しない。
+- 代表タスク: status、diff、worktree作成、Issue起票、Draft PR、CI確認、squash merge、
+  cleanup、release draft
+- 失敗扱い: 生コマンドによる通常経路の迂回、危険操作の実行、必須再照会の欠落、
+  期待終了状態との不一致
 
-分解レンズ: **広さ × 深さ × 頻度 × 効率**。
+## Input Metrics
 
-| # | 入力指標 | 定義 | 目標値 |
-|---|---|---|---|
-| I1（広さ） | bitz-flow を1回以上使ったプロジェクト数 | フロー規約に従った履歴を持つリポジトリ数 | `TBD`（現状: 作者の 1 系統） |
-| I2（深さ） | 1サイクルあたり並列投入した worktree 数 | flow-worktree で同時運用したブランチ数 | `TBD` |
-| I3（頻度） | Conventional Commits + Implements フッター準拠率 | 規約準拠コミット ÷ 全コミット | `TBD`（併用時は spec_inspect で突合可能） |
-| I4（効率） | 失敗時の worktree 破棄→再投入で復元できた率 | 破棄再投入で回復した失敗 ÷ 全失敗（`reset --hard` 不使用の証跡） | `TBD` |
+| 指標 | 定義 | 初期目標 |
+|---|---|---:|
+| Dispatcher Invocation Rate | Git / GitHub 操作タスクで最初に `flow.py` を実行した割合 | 95%以上 |
+| Raw Fallback Rate | 理由を問わず生 `git` / `gh`へ迂回した割合 | 0% |
+| Unsupported Operation Rate | 評価taskで`UNSUPPORTED`停止した割合 | M0 0%、以後はoperation別に記録 |
+| Resume Success Rate | 中断 fixture を再実行し、重複副作用なく次段階へ進めた割合 | 100% |
+| Cross-model Decision Parity | 同じ fixture の判定コード・状態変更が3プラットフォームで一致する割合 | 100% |
+| SDD Link Integrity | 公開した GitHub Issue と `.spec` の双方向リンクが一意に照合できる割合 | 100% |
 
-## マッピング枠組み（HEART を採用）
+## Token / Output Efficiency
 
-開発体験中心のツールのため **HEART**（Adoption / Retention / Task success）を採用:
-- Adoption: 新規プロジェクトで最初の並列開発／PR フローに bitz-flow が使われた率。
-- Retention: 同一利用者が複数プロジェクト／複数サイクルで再利用した率。
-- Task success: フロー選択 → 実装 → マージバック（or 破棄復元）が規約どおり破綻なく完走した率。
+| 操作群 | 比較対象 | 初期目標 |
+|---|---|---:|
+| status / branch / log / Issue / PR list | 同じ情報を得る生 CLI の UTF-8 bytes | median 70%以上削減 |
+| diff summary | 生 unified diff | median 80%以上削減 |
+| diff detail | `--unified=3` の対象 hunk | median 40%以上削減 |
+| 書込み結果 | 生 commit / push / gh 出力 | median 80%以上削減 |
 
-## ガードレール指標（NSM 最適化で劣化させない対抗指標）
+圧縮率だけを最適化しない。各 fixture について「次の安全な行動を決める必須フィールド」を定義し、
+その保持率を **100%** とする。情報が上限を超えた場合は黙って切り捨てず、
+`truncated: true`、総件数、次の絞込み条件を返す。
 
-- **G1: ガードレール非違反率** — 失敗時復元で `git reset --hard` / `git push --force` /
-  `git worktree remove` 以外の破壊的操作を使わないこと。目標: 違反0（AGENTS.md ガードレールが正）。
-- **G2: スキルの自己完結性** — 他スキルの references を相対参照しない（AGENTS.md 規約）。目標: 違反0。
-- **G3: SDD 連携の非侵食** — bitz-flow は `.spec/` の仕様・タスクの**正を持たない**。Implements フッターや
-  `.spec/tasks` 連携の規定の正は bitz-sdd 側に残す。bitz-flow は接続点（併用節）だけを持つ。目標: 二重規定0。
+## Guardrail Metrics
 
-## 下流への接続
+| 指標 | 許容値 |
+|---|---:|
+| 誤った破壊的状態変更 | 0件 |
+| stale head / stale snapshot を使った commit・merge・cleanup | 0件 |
+| process環境値・認証出力・raw stderr の構造化出力混入 | 0件 |
+| dry-run での外部状態変更 | 0件 |
+| CI failure / pending を green と誤判定 | 0件 |
+| `.spec` の人間専用 status を GitHub 側から自動変更 | 0件 |
 
-- G1/G2/G3 は Design Gate 後に NFR（verification_method: 静的検査 / レビュー）へ派生する第一候補。
-- 計測基盤（テレメトリ）は現状なし。指標収集の仕組み自体が未実装のため、当面は作者の手集計 `[proto / 未検証]`。
+## Performance
+
+- 読み取り専用のローカル Git 操作: fixture の p95 で **500ms以内** `[proto / 未検証]`
+- dispatcher 自身の上乗せ: 生コマンド実行時間を除き p95 **100ms以内** `[proto / 未検証]`
+- GitHub 操作: ネットワーク時間を除外した parse / normalize 処理 p95 **100ms以内**
+- すべての外部コマンドに 1〜300秒の明示 timeout を適用し、timeout は安全側停止にする。
+
+benchmarkは保存fixtureを使い、warm-up 5回後に最低30回計測する。計測区間はprocess runner呼出前後と
+parse/normalize単体を分け、OS、Python、Git、gh、filesystem、fixture件数・bytesをmanifestへ記録する。
+CIでは同一基準環境の直近baselineに対する20%超の回帰をFAILとする。
+
+## 計測設計
+
+1. `tests/fixtures/bitz_flow/` にraw baseline command、入力、生出力、期待圧縮出力、
+   operation別必須field、truncation合否を保存する。
+2. unit test で終了コード・JSON Schema・副作用・median/p90/absolute bytesを測る。
+3. `evals/flow-core/` でskillなし、v1、v2を同一promptで比較する。
+4. platform×taskごとに10trial実施し、provider/model/version/date、prompt version、成功oracle、
+   retry有無をrun manifestへ記録する。
+5. agent自身のretryは最初のtrial失敗として数え、harness再実行は別trialにする。
+6. 各platformでSFCR 90%以上を要求し、全体平均で相殺しない。
+7. 実測値が揃うまで外部事例の削減率を本製品の達成値として主張しない。
+
+M0のtask、trial、baseline、出口条件の完全な正はFLW-DSN-014とする。
