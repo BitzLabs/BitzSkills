@@ -1,13 +1,13 @@
 ---
 id: FLW-FR-011
-version: 1.0
+version: 1.1
 status: draft
 domain: tooling
 priority: medium
 origin: .spec/reports/decision-2026-07-29-bitz-flow-v2-design-gate.md
 verification_method: unit-test
 derived_from:
-supersedes: FLW-FR-002
+supersedes:
 superseded_by:
 confidence: high
 ---
@@ -23,5 +23,8 @@ confidence: high
   - WHEN flow-doctor resultを生成する THEN flow-doctorはflow-coreと同じ共通envelope schemaを満たすこと SHALL
   - WHEN flow-doctorを実行する THEN flow-doctorは対象project、Git ref、GitHub状態を変更しないこと SHALL
 - **検証手段**: 依存欠如、未認証、remote欠如、unsupported filesystem、schema golden一致、副作用ゼロをunit testで検証する。
+- **後継候補**: FLW-FR-002のv2後継候補である。Promotion Gate後に人間がFLW-FR-002を
+  deprecatedへ遷移させる同じ変更セットまで`supersedes`を発効しない。
 - **Revision History**:
+  - 1.1 (2026-07-29) Promotion前のsupersedesを解除し、後継候補と発効条件を明記
   - 1.0 (2026-07-29) FLW-FR-002のv2後継としてdraft起票

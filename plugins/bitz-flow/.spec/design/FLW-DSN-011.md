@@ -2,10 +2,10 @@
 id: FLW-DSN-011
 title: "v1からv2への規範移行設計"
 status: active
-version: 1.0
+version: 1.1
 updated: 2026-07-29
 owner: hide
-implements: FLW-FR-012, FLW-CON-001, FLW-CON-006
+implements: FLW-FR-011, FLW-FR-012, FLW-CON-001, FLW-CON-006
 origin: FLW-REV-002
 ---
 
@@ -39,28 +39,33 @@ v2は実装名を継承しないが、次を破棄しない。
 4. remote branch削除をmergeやlocal cleanupへ自動連結しない。
 5. doctorは対象projectへ書き込まない。
 
-これらはDesign Gate後に新しいFR/CONへ派生し、旧FLW-FR-001/002の後継候補とする。
-後継IDは正式採番時まで本文へ予約しない。
+これらは次の複合的な後継候補へ分割して継承する。
+
+| v1要件 | v2後継候補 | 継承する責務 |
+|---|---|---|
+| FLW-FR-001 | FLW-FR-004 | Git read、診断、fetchの副作用分離 |
+| FLW-FR-001 | FLW-FR-006 | worktree-first lifecycleとfinish |
+| FLW-FR-001 | FLW-FR-007 | branch audit |
+| FLW-FR-001 | FLW-CON-006 | 破壊操作とcleanupの安全境界 |
+| FLW-FR-002 | FLW-FR-011 | read-onlyなv2環境診断 |
+
+この表はDesign Gate後の追跡候補であり、置換関係そのものではない。候補要件がdraftまたは
+approvedの間は、候補側の`supersedes`と旧要件側の`superseded_by`を空欄に保つ。
+Promotion Gate承認後、人間が旧要件をdeprecatedへ遷移させる同じ変更セットで、完全性を再確認した対応だけを両方向のrelation fieldへ記録する。
 
 ## spec-issue継承
 
 | issue | v2で参照する設計 | 現時点の扱い |
 |---|---|---|
 | SI-FLW-001 | FLW-DSN-006/008/011 | accepted・v1実施済み。安全不変条件を継承 |
-| SI-FLW-002 | FLW-DSN-012/013 | reference-only。openのため採用裁定は未了 |
-| SI-FLW-003 | FLW-DSN-006/012 | reference-only。openのため採用裁定は未了 |
-| SI-FLW-004 | FLW-DSN-006/012 | reference-only。openのため採用裁定は未了 |
-| SI-FLW-005 | FLW-DSN-008/013 | reference-only。openのため採用裁定は未了 |
+| SI-FLW-002 | FLW-DSN-012/013 | accepted。Issue起票・ラベル・PR連携へ継承 |
+| SI-FLW-003 | FLW-DSN-006/012 | accepted。worktree命名・配置へ継承 |
+| SI-FLW-004 | FLW-DSN-006/012 | accepted。worktree後始末へ継承 |
+| SI-FLW-005 | FLW-DSN-008/013 | accepted。releaseとChangelogへ継承 |
 
-Design Gateの承認はopen spec-issueのacceptを兼ねない。SI-FLW-002〜005は別途、
-人間がaccept/rejectを裁定し、acceptしたissueだけを後継要件の`origin`または実施記録へ接続する。
-reject時は次のいずれかを裁定記録へ明記する。
-
-- 提案固有の設計要素をv2 designから除去する。
-- 同じ設計判断をDiscovery/reviewから独立導出したと確認し、`origin`または本文の由来を
-  spec-issueではない根拠へ付け替える。
-
-rejectされたissueを根拠のまま残してDesign Gateを通さない。
+SI-FLW-002〜005は2026-07-29の人間裁定を代理記録したaccepted issueであり、裁定参照は
+`.spec/reports/decision-2026-07-29-bitz-flow-v2-design-gate.md`とする。Design Gate自体が
+spec-issueのacceptを暗黙に兼ねたのではなく、同じユーザー指示に含まれた二つの明示裁定を別イベントとして記録している。
 
 ## 切替シーケンス
 
@@ -71,10 +76,13 @@ rejectされたissueを根拠のまま残してDesign Gateを通さない。
 5. M1〜M5を出口条件ごとに実装・検証する。
 6. bitz-sddの委譲先、README、migration noteを同じrelease系列で更新する。
 7. v2 Promotion Gateで人間が後継要件をpromotedへ進める。
-8. 人間専用遷移で旧要件をdeprecatedへ進め、`superseded_by`を記録する。
+8. 人間専用遷移で旧要件をdeprecatedへ進め、同じ変更セットで候補側`supersedes`と
+   旧要件側`superseded_by`を記録する。
 9. v1 design/skills/scriptsを撤去し、doctorで旧参照ゼロを確認する。
 
-手順8より前はv1が正であり、v2 scriptを安定版入口として案内しない。
+手順8より前はv1が正であり、relation fieldは空欄に保ち、v2 scriptを安定版入口として
+案内しない。候補の一部がPromotion Gateを満たさない場合は、旧要件をdeprecatedへ進めず、
+候補表を更新して再審査する。
 
 ## 移行検査
 

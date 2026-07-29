@@ -1,13 +1,13 @@
 ---
 id: FLW-CON-006
-version: 1.0
+version: 1.1
 status: draft
 domain: governance
 priority: high
 origin: 2026-07-29 ユーザー指示（draft要件をFLW-NFR-003から順番に解決）
 verification_method: unit-test
 derived_from:
-supersedes: FLW-FR-001
+supersedes:
 superseded_by:
 confidence: high
 ---
@@ -24,5 +24,9 @@ confidence: high
   - WHEN command policyを検査する THEN bitz-flowは`git reset --hard`、force push、`git clean -f`、`rm -rf`、`sudo`の実装、提案、next actionを各0件にすること SHALL
   - WHEN 破壊操作のnegative fixtureを実行する THEN bitz-flowは証跡不一致時の削除0件、plan外targetの変更0件、禁止commandの出力0件を記録すること SHALL
 - **検証手段**: MERGED証跡、head/default到達性、worktree/ref対応、target境界、remote SHA競合、自動連結、禁止commandをunit testで検証する。
+- **後継候補**: FLW-FR-001のうち破壊操作とcleanupの安全境界を継承する候補である。
+  FLW-FR-004/006/007と合わせた複合後継であり、Promotion Gate後のdeprecated裁定まで
+  `supersedes`を発効しない。
 - **Revision History**:
+  - 1.1 (2026-07-29) 複合後継の一部であることを明記し、Promotion前のsupersedesを解除
   - 1.0 (2026-07-29) FLW-CON-002とFLW-DSN-011から破壊操作とcleanup境界を分離してdraft起票
