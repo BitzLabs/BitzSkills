@@ -95,6 +95,31 @@ python3 scripts/spec_update.py <workspace> <ID...> --to <status> \
 - status / STATEの手編集と旧版CLIとの並行実行は禁止する。未完了transactionは
   `--recover <event-id>`、owner死亡を確認できる未開始lockは`--recover-lock`でのみ清掃する
 
+## baseline 監査（CLI迂回の事後検出）
+
+`spec update` を通さない status 手編集は、STATE に event が1件も無い artifact では
+検査を素通りしていた（SI-SDD-026。ルートで無記録のpromotion 26件が全ゲートを通過した実績がある）。
+これを事後検出するのが baseline 監査で、workspace の `.spec/PROJECT.md` frontmatter に
+監査開始点を宣言した場合のみ作動する（SDD-FR-143）:
+
+```yaml
+---
+audit_baseline: 8731ce7   # このコミット以降のstatus変更にevent記録を要求する
+---
+```
+
+- **宣言が無い workspace は従来どおり無検査**。inspect は git を一切呼ばない
+  （通常の inspect 経路を git 必須にしないため）。監査はオプトイン
+- 判定は「未記録の到達状態」で行う。baseline 時点の status と、記録済み event の始点
+  （event が無ければ現 status）が食い違い、その到達状態が
+  `approved` / `promoted` / `deprecated` / `accepted` / `rejected` / `superseded`
+  （＝エージェント単独では到達できない状態）なら `audit-corruption` として FAIL する
+- `implementing` / `verified` への遷移はエージェント権限で正当に到達できるため対象外
+- baseline commit を git から解決できない場合（git 不在・shallow clone・SHA 失効）は
+  FAIL させず **WARN** に落とす。「監査したつもりで空振り」を黙って通さないため
+- baseline は main 上の到達可能な SHA を指定する。squash merge 運用で失効した SHA は WARN になる
+- 監査は宣言以降の遷移だけを見る。宣言前に既に起きていた無記録遷移は検出しない（残余リスク）
+
 ## spec-issue のライフサイクル補足
 
 spec-issue の状態遷移は要件と別建てで、`spec_update.py` の `TRANSITIONS["spec-issue"]` が正:

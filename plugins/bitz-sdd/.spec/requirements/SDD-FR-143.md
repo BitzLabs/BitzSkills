@@ -1,10 +1,10 @@
 ---
 id: SDD-FR-143
-version: 2.0
+version: 2.1
 status: verified
 domain: workflow
 priority: high
-origin: SI-SDD-022, SI-SDD-023, SI-CORE-035
+origin: SI-SDD-022, SI-SDD-023, SI-CORE-035, SI-SDD-026
 verification_method: unit-test
 derived_from:
 supersedes: CORE-FR-005
@@ -30,10 +30,17 @@ confidence: high
   - WHEN artifactとSTATEを更新した THEN journalはschema version・event ID・SHA-256 before/after hash・完全after payload・PREPARED/APPLIED/COMMITTED phaseを保持し、成功応答前に両対象とdirectoryをdurableに永続化すること SHALL
   - WHEN mutationが任意の書込み境界で中断した THEN 次回mutationまたはinspectは未完了transactionを検出し、hashで一意に判定できる場合だけ`--recover`または`--recover-lock`で完了・清掃すること SHALL
   - WHEN STATEへ機械eventを保存した THEN canonical JSONをRFC 4648標準Base64でHTML commentへ格納し、inspectはschema・event ID一意性・表示行との対応・遷移連鎖を検査すること SHALL
+  - WHEN workspaceの`.spec/PROJECT.md`が`audit_baseline`を宣言していない THEN inspectはbaseline監査を実行せずgitを一切呼び出さないこと SHALL
+  - WHEN `audit_baseline`を宣言したworkspaceでbaseline時点のstatusと記録済みeventの始点が食い違い、その未記録の到達状態が人間裁定必須状態（`approved`/`promoted`/`deprecated`/`accepted`/`rejected`/`superseded`）である THEN inspectは`audit-corruption`として非ゼロ終了すること SHALL
+  - WHEN `audit_baseline`を宣言したworkspaceでbaseline commitをgitから解決できない THEN inspectは監査未実行をWARNとして報告しFAILさせないこと SHALL
 - **検証手段**: `tests/test_spec_transaction.py`、`tests/test_spec_update.py`、
   `tests/test_spec_inspect.py`で認可、local task前提、競合、各phaseの障害注入、復旧、
-  structured event破損をunit-testする。共有スクリプト変更のため全pytestとrelease checkを実行する。
+  structured event破損、baseline監査（未宣言時の無検査・未記録到達状態の検出・git解決失敗時のWARN）を
+  unit-testする。共有スクリプト変更のため全pytestとrelease checkを実行する。
 - **Revision History**:
+  - 2.1 (2026-07-29) CLI迂回（`spec update`を通さないstatus手編集）の事後検出をbaseline監査として追加
+    （SI-SDD-026）。既存9節の意味は不変で、eventを持つartifactの検査挙動も変えないため既存unit-testは
+    全件greenのまま。追加3節は`audit_baseline`宣言時のみ作動するオプトイン契約。
   - 2.0 (2026-07-27) TTY節の適用範囲を対話確認経路の指定時に限定（SI-SDD-027 / SDD-FR-145）。
     保証内容は不変で、限定により除外される代行可視化経路の契約は SDD-FR-145 が引き受ける。
     既存unit-testは全件greenのまま（対話確認経路の挙動変更なし）。
