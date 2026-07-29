@@ -24,3 +24,9 @@ status: accepted
 - **依存**: SI-SDD-010（docs frontmatter と本文同期の契約統一）。
 - **予備判定（推薦）**: **accept 推奨**。スキル手順と実装が乖離し、利用者が正常終了しても
   Discovery 成果物の一部が docs に現れない。SI-SDD-010 後に通常フローで実装する。
+- **実施**: 2026-07-29 SDD-FR-149（Discovery成果物のdocs同期マッピング網羅）/ SDD-FR-150
+  （同期マッピングSSOTと文書側同期表の一致検証）として要件化し、PR #117 で実装・verified。
+  提案2は `.spec` 側成果物を分ける契約（`constraints.md` の独立）を採用し、対応を 1:1 に保った。
+  提案4は `release_check.py` の sync-mapping マーカー照合で機械検証する。
+  Design Gate 裁定は `.spec/reports/decision-2026-07-29-si-sdd-011.md`。
+  既存ワークスペースの `scope.md` にある制約節の切り出しは裁定点3により対象外。
