@@ -356,16 +356,26 @@ def test_diff_is_readonly(tmp_path: Path):
     assert not (tmp_path / "docs" / "00_はじめに" / "ミッション・ビジョン.md").exists()
 
 
+# SDD-FR-149: Discovery 5ステップの全成果物（制約は constraints.md として独立）
+DISCOVERY_MAPPING = [
+    (".spec/discovery/vision.md", "docs/00_はじめに/ミッション・ビジョン.md"),
+    (".spec/discovery/metrics.md", "docs/00_はじめに/成功指標.md"),
+    (".spec/discovery/constraints.md", "docs/00_はじめに/制約.md"),
+    (".spec/discovery/scope.md", "docs/00_はじめに/対象外.md"),
+    (".spec/discovery/personas.md", "docs/00_はじめに/ペルソナ・ジャーニー.md"),
+    (".spec/discovery/positioning.md", "docs/00_はじめに/ポジショニング.md"),
+]
+
+DESIGN_MAPPING = [
+    (".spec/design/domain-model.md", "docs/03_設計仕様/ドメインモデル.md"),
+    (".spec/design/api-design.md", "docs/03_設計仕様/公開API.md"),
+    (".spec/design/architecture.md", "docs/03_設計仕様/アーキテクチャ.md"),
+    (".spec/design/data-model.md", "docs/03_設計仕様/データモデル.md"),
+]
+
+
 @pytest.mark.parametrize(
-    ("spec_rel", "docs_rel"),
-    [
-        (".spec/discovery/vision.md", "docs/00_はじめに/ミッション・ビジョン.md"),
-        (".spec/discovery/scope.md", "docs/00_はじめに/対象外.md"),
-        (".spec/design/domain-model.md", "docs/03_設計仕様/ドメインモデル.md"),
-        (".spec/design/api-design.md", "docs/03_設計仕様/公開API.md"),
-        (".spec/design/architecture.md", "docs/03_設計仕様/アーキテクチャ.md"),
-        (".spec/design/data-model.md", "docs/03_設計仕様/データモデル.md"),
-    ],
+    ("spec_rel", "docs_rel"), DISCOVERY_MAPPING + DESIGN_MAPPING
 )
 def test_pull_uses_japanese_mapping(tmp_path: Path, spec_rel: str, docs_rel: str):
     init_docs(tmp_path)
@@ -412,3 +422,141 @@ def test_pull_does_not_modify_unrelated_docs(tmp_path: Path):
     assert res.returncode == 0
     assert docs.read_text(encoding="utf-8") == "unrelated content"
     assert docs.stat().st_mtime_ns == now_ns
+
+
+# ────────────────────────────────────────────────────────────────
+# SDD-FR-149: Discovery 成果物の同期マッピング網羅
+# ────────────────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(("spec_rel", "docs_rel"), DISCOVERY_MAPPING)
+def test_SDD_FR_149_push_reverse_syncs_discovery_document(
+    tmp_path: Path, spec_rel: str, docs_rel: str
+):
+    """Discovery 成果物は docs 側の手直しを .spec へ逆反映できる（1:1 なので push が成立する）"""
+    spec = tmp_path / spec_rel
+    docs = tmp_path / docs_rel
+    spec.parent.mkdir(parents=True, exist_ok=True)
+    docs.parent.mkdir(parents=True, exist_ok=True)
+    spec.write_text(spec_document("旧本文\n", ident="fixture-discovery-001"), encoding="utf-8")
+    original_frontmatter, _ = split_document(spec.read_text(encoding="utf-8"))
+    docs.write_text(docs_document("人手で直した本文\n"), encoding="utf-8")
+    set_newer(docs, spec)
+
+    res = run_sync(tmp_path, "push")
+
+    assert res.returncode == 0, res.stderr
+    actual_frontmatter, actual_body = split_document(spec.read_text(encoding="utf-8"))
+    assert actual_frontmatter == original_frontmatter
+    assert actual_body == "人手で直した本文\n"
+
+
+def test_SDD_FR_149_pull_skips_missing_discovery_sources_without_failing(tmp_path: Path):
+    """途中のステップまでしか作っていなくても pull は失敗せず、未作成分だけ SKIP する"""
+    init_docs(tmp_path)
+    spec = tmp_path / ".spec" / "discovery" / "metrics.md"
+    spec.parent.mkdir(parents=True)
+    spec.write_text(spec_document("# 成功指標\n", ident="fixture-metrics-001"), encoding="utf-8")
+    docs = tmp_path / "docs" / "00_はじめに" / "成功指標.md"
+    set_newer(spec, docs)
+
+    res = run_sync(tmp_path, "pull")
+
+    assert res.returncode == 0, res.stderr
+    assert "失敗: 0" in res.stdout
+    _, body = split_document(docs.read_text(encoding="utf-8"))
+    assert body == "# 成功指標\n"
+    for spec_rel, _docs_rel in DISCOVERY_MAPPING:
+        if spec_rel.endswith("metrics.md"):
+            continue
+        assert f"SKIP: ソース仕様 {spec_rel}" in res.stdout
+
+
+def test_SDD_FR_149_push_skips_missing_docs_targets_without_failing(tmp_path: Path):
+    """docs 側が未作成のマッピングは push で SKIP され、他の逆反映を妨げない"""
+    spec = tmp_path / ".spec" / "discovery" / "positioning.md"
+    docs = tmp_path / "docs" / "00_はじめに" / "ポジショニング.md"
+    spec.parent.mkdir(parents=True)
+    docs.parent.mkdir(parents=True)
+    spec.write_text(spec_document("旧\n", ident="fixture-positioning-001"), encoding="utf-8")
+    docs.write_text(docs_document("新\n", ident="DOC-context-positioning"), encoding="utf-8")
+    set_newer(docs, spec)
+
+    res = run_sync(tmp_path, "push")
+
+    assert res.returncode == 0, res.stderr
+    assert "失敗: 0" in res.stdout
+    _, body = split_document(spec.read_text(encoding="utf-8"))
+    assert body == "新\n"
+    assert "SKIP: ドキュメント docs/00_はじめに/制約.md" in res.stdout
+
+
+def test_SDD_FR_149_diff_reports_every_discovery_mapping(tmp_path: Path):
+    """diff は Discovery 6成果物すべての同期状態を報告する（読み取り専用）"""
+    res = run_sync(tmp_path, "diff")
+
+    assert res.returncode == 0, res.stderr
+    for _spec_rel, docs_rel in DISCOVERY_MAPPING:
+        assert docs_rel in res.stdout
+    assert not (tmp_path / ".spec").exists()
+    assert not (tmp_path / "docs").exists()
+
+
+def test_SDD_FR_149_constraints_and_scope_sync_independently(tmp_path: Path):
+    """制約と対象外は別々の .spec 成果物から同期され、互いを上書きしない（1:1 契約）"""
+    init_docs(tmp_path)
+    discovery = tmp_path / ".spec" / "discovery"
+    discovery.mkdir(parents=True)
+    (discovery / "constraints.md").write_text(
+        spec_document("# 制約の棚卸し\n", ident="fixture-constraints-001"), encoding="utf-8"
+    )
+    (discovery / "scope.md").write_text(
+        spec_document("# Won't リスト\n", ident="fixture-scope-001"), encoding="utf-8"
+    )
+    constraints_docs = tmp_path / "docs" / "00_はじめに" / "制約.md"
+    non_goals_docs = tmp_path / "docs" / "00_はじめに" / "対象外.md"
+    set_newer(discovery / "constraints.md", constraints_docs)
+    set_newer(discovery / "scope.md", non_goals_docs)
+
+    res = run_sync(tmp_path, "pull")
+
+    assert res.returncode == 0, res.stderr
+    _, constraints_body = split_document(constraints_docs.read_text(encoding="utf-8"))
+    _, non_goals_body = split_document(non_goals_docs.read_text(encoding="utf-8"))
+    assert constraints_body == "# 制約の棚卸し\n"
+    assert non_goals_body == "# Won't リスト\n"
+
+
+def test_SDD_FR_149_pull_all_discovery_then_docs_inspect_strict_passes(tmp_path: Path):
+    """Discovery 全成果物を pull した直後の docs は --strict を通る"""
+    init_docs(tmp_path)
+    discovery = tmp_path / ".spec" / "discovery"
+    discovery.mkdir(parents=True)
+    for index, (spec_rel, docs_rel) in enumerate(DISCOVERY_MAPPING):
+        spec = tmp_path / spec_rel
+        spec.write_text(
+            spec_document(f"# 見出し{index}\n\n本文{index}\n", ident=f"DSC-{index:03d}"),
+            encoding="utf-8",
+        )
+        set_newer(spec, tmp_path / docs_rel)
+
+    res = run_sync(tmp_path, "pull")
+    assert res.returncode == 0, res.stderr
+    assert "失敗: 0" in res.stdout
+    for index, (_spec_rel, docs_rel) in enumerate(DISCOVERY_MAPPING):
+        _, body = split_document((tmp_path / docs_rel).read_text(encoding="utf-8"))
+        assert body == f"# 見出し{index}\n\n本文{index}\n", docs_rel
+
+    inspected = subprocess.run(
+        [
+            sys.executable,
+            str(DOCS_INSPECT_SCRIPT),
+            str(tmp_path),
+            "--strict",
+            "--out",
+            str(tmp_path / "docs-inspection-report.md"),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert inspected.returncode == 0, inspected.stdout + inspected.stderr

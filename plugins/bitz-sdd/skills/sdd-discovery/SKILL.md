@@ -2,10 +2,10 @@
 name: sdd-discovery
 description: BitzSDD の上流探索（ディスカバリー）を行うスキル。プロダクトビジョン（Vision Board / PR-FAQ）・成功指標（North Star Metric）・スコープ（MoSCoW / RICE）・ペルソナとジャーニー（JTBD）・ポジショニングを順に確立し、仮説検証ゲート（Go / No-Go）で設計着手可否を裁定する。成果物はすべて .spec/discovery/ 配下に作成し、docs/00_はじめに/ へは sdd-docs の pull コマンドを用いて同期・展開する。ユーザーが「ディスカバリー」「ビジョン」「成功指標」「ペルソナ」「スコープ」に言及したときに使用する。
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   author: br7.hide
   created: "2026-07-08"
-  updated: "2026-07-18"
+  updated: "2026-07-29"
 ---
 
 # SDD Discovery — 上流探索
@@ -28,12 +28,29 @@ BitzSDDにおける上流探索フェーズを担当します。
 |---|---|---|---|
 | 1 | ビジョン（Vision Board + PR-FAQ 圧力試験） | `.spec/discovery/vision.md` | `docs/00_はじめに/ミッション・ビジョン.md` |
 | 2 | 成功指標（NSM + 入力指標 + ガードレール） | `.spec/discovery/metrics.md` | `docs/00_はじめに/成功指標.md` |
-| 3 | スコープ（制約 → Kano → RICE → MoSCoW） | `.spec/discovery/scope.md` | `docs/00_はじめに/対象外.md` / `制約.md` |
+| 3a | スコープ①: 制約の棚卸し（予算/期限/技術/法規制/組織） | `.spec/discovery/constraints.md` | `docs/00_はじめに/制約.md` |
+| 3b | スコープ②: Kano → RICE → MoSCoW → In/Out 境界 | `.spec/discovery/scope.md` | `docs/00_はじめに/対象外.md` |
 | 4 | ペルソナとジャーニー（JTBD → カード） | `.spec/discovery/personas.md` | `docs/00_はじめに/ペルソナ・ジャーニー.md` |
 | 5 | ポジショニング（競合代替 → PoD/PoP） | `.spec/discovery/positioning.md` | `docs/00_はじめに/ポジショニング.md` |
 | 6 | 仮説検証ゲート（Go / No-Go 裁定） | `.spec/discovery/assumptions.md` | - (レビュー/レポート集計対象) |
 
+<!-- sync-mapping:
+.spec/discovery/vision.md=docs/00_はじめに/ミッション・ビジョン.md
+.spec/discovery/metrics.md=docs/00_はじめに/成功指標.md
+.spec/discovery/constraints.md=docs/00_はじめに/制約.md
+.spec/discovery/scope.md=docs/00_はじめに/対象外.md
+.spec/discovery/personas.md=docs/00_はじめに/ペルソナ・ジャーニー.md
+.spec/discovery/positioning.md=docs/00_はじめに/ポジショニング.md
+-->
+<!-- ↑ 機械検証用マーカー。上表の Discovery 行と sdd-docs の DEFAULT_MAPPING との三者一致を release_check.py が検査する（SDD-FR-150）。 -->
+
+制約は 3a で `constraints.md` として独立させます。スコープ項目は制約に違反してはならないため
+最初に棚卸ししますが、`scope.md` に同居させると docs 側の `制約.md` と `対象外.md` へ
+1つの成果物を分割することになり、逆同期（push）の反映先が決まらなくなるためです。
+`.spec/discovery/assumptions.md` は判定エビデンスであり docs へは同期しません。
+
 各ステップの完了後、`python3 scripts/sdd_sync.py pull` を実行して `docs/` ディレクトリにドキュメントとして展開します。
+未作成の成果物は SKIP されるため、途中のステップまでで pull を実行しても失敗しません。
 
 ## 4. Discovery Gate（人間裁定）
 ステップ6の判定材料（仮説一覧・テスト結果・未検証の崩壊クリティカル仮説）を揃えて人間に提示します。

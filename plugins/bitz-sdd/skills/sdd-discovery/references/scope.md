@@ -1,10 +1,10 @@
 # スコープ（制約 → Kano → RICE → MoSCoW → In/Out 境界）
 
-推奨順: 制約の棚卸し → Kano（情緒的価値の分類）→ RICE（定量ランク）→ MoSCoW（帯域分け）→ In/Out-of-Scope 境界の明文化。作業表は `.spec/discovery/worksheet.md`、結論（Won't と制約）は docs/00_はじめに/対象外.md と 制約.md の proposed 更新へ。
+推奨順: 制約の棚卸し → Kano（情緒的価値の分類）→ RICE（定量ランク）→ MoSCoW（帯域分け）→ In/Out-of-Scope 境界の明文化。作業表は `.spec/discovery/worksheet.md`、結論は制約を `.spec/discovery/constraints.md`、Won't を `.spec/discovery/scope.md` へ書き、`sdd_sync.py pull` で docs/00_はじめに/制約.md と 対象外.md へ展開する。
 
 ## 制約の棚卸し（最初にやる）
 
-各制約を分類する: 予算 / 期限 / 技術 / 法規制 / 組織。**スコープ項目は制約に違反してはならない** — 違反するなら理由を明示して却下または延期。制約の結論は constraints.md ドラフトへ（要件 CON への採番は Design Gate 後の派生で行う。ここでは採番しない）。
+各制約を分類する: 予算 / 期限 / 技術 / 法規制 / 組織。**スコープ項目は制約に違反してはならない** — 違反するなら理由を明示して却下または延期。制約の結論は `.spec/discovery/constraints.md` へ（scope.md に同居させない — docs 側で 制約.md と 対象外.md に分かれ、逆同期の反映先が決まらなくなるため。要件 CON への採番は Design Gate 後の派生で行い、ここでは採番しない）。
 
 ## Kano（情緒的価値の分類）
 

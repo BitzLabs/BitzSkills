@@ -2,10 +2,10 @@
 name: sdd-docs
 description: BitzSDD の docs/（人間ナラティブ層）を日本語6章で初期化・検証し、.spec/（仕様マスター）と双方向同期（pull/push/diff）するスキル。必須6章、宣言式の任意リファレンス章、管理対象外パス、安全な旧8章移行を扱う。「docs/ を初期化して」「同期して」「docsを日本語化して」「旧8章を移行して」「docs を検証して」と言われたときに使用する。
 metadata:
-  version: "1.1.1"
+  version: "1.2.0"
   author: br7.hide
   created: "2026-07-07"
-  updated: "2026-07-27"
+  updated: "2026-07-29"
 ---
 
 # sdd-docs
@@ -85,10 +85,42 @@ python3 scripts/docs_inspect.py <repo-root> --strict   # WARN も失敗扱い
 ```
 
 ## 3. 同期マッピングのルール
+
+対応表の正（SSOT）は `sdd_sync.py` の `DEFAULT_MAPPING`。下の一覧はその人間可読な写しで、
+`release_check.py` が sync-mapping マーカー経由で両者の一致を機械検証する（SDD-FR-150）。
+マッピングを増減するときは `DEFAULT_MAPPING`・下の一覧・マーカーを同時に更新する。
+
+対応は常に **1:1**。1つの `.spec` 文書を複数の docs 文書へ分割すると push（逆同期）の
+反映先が決まらないため、分割が必要なら docs 側ではなく `.spec` 側の成果物を分ける
+（例: 制約は `scope.md` から切り出して `constraints.md` に置く）。
+
 *   `.spec/discovery/vision.md` ⇄ `docs/00_はじめに/ミッション・ビジョン.md`
+*   `.spec/discovery/metrics.md` ⇄ `docs/00_はじめに/成功指標.md`
+*   `.spec/discovery/constraints.md` ⇄ `docs/00_はじめに/制約.md`
 *   `.spec/discovery/scope.md` ⇄ `docs/00_はじめに/対象外.md`
+*   `.spec/discovery/personas.md` ⇄ `docs/00_はじめに/ペルソナ・ジャーニー.md`
+*   `.spec/discovery/positioning.md` ⇄ `docs/00_はじめに/ポジショニング.md`
 *   `.spec/design/domain-model.md` ⇄ `docs/03_設計仕様/ドメインモデル.md`
 *   `.spec/design/api-design.md` ⇄ `docs/03_設計仕様/公開API.md`
 *   `.spec/design/architecture.md` ⇄ `docs/03_設計仕様/アーキテクチャ.md`
 *   `.spec/design/data-model.md` ⇄ `docs/03_設計仕様/データモデル.md`
-*   `.spec/design/stories/` の個別ファイルは自動集計され `docs/03_設計仕様/ドメインストーリー.md` へ Pull 展開されます（Push による逆書き戻しは非対応）。
+
+<!-- sync-mapping:
+.spec/discovery/vision.md=docs/00_はじめに/ミッション・ビジョン.md
+.spec/discovery/metrics.md=docs/00_はじめに/成功指標.md
+.spec/discovery/constraints.md=docs/00_はじめに/制約.md
+.spec/discovery/scope.md=docs/00_はじめに/対象外.md
+.spec/discovery/personas.md=docs/00_はじめに/ペルソナ・ジャーニー.md
+.spec/discovery/positioning.md=docs/00_はじめに/ポジショニング.md
+.spec/design/domain-model.md=docs/03_設計仕様/ドメインモデル.md
+.spec/design/api-design.md=docs/03_設計仕様/公開API.md
+.spec/design/architecture.md=docs/03_設計仕様/アーキテクチャ.md
+.spec/design/data-model.md=docs/03_設計仕様/データモデル.md
+-->
+<!-- ↑ 機械検証用マーカー。上の可読一覧と DEFAULT_MAPPING の三者一致を release_check.py が検査する（SDD-FR-150）。 -->
+
+同期元が存在しないマッピングは pull で、同期先が存在しないマッピングは push で
+それぞれ SKIP し、他のマッピングの処理は続行します（欠損は失敗として数えません）。
+
+`.spec/design/stories/` の個別ファイルは 1:1 対応を持たないため上表には含めず、自動集計して
+`docs/03_設計仕様/ドメインストーリー.md` へ Pull 展開します（Push による逆書き戻しは非対応）。
