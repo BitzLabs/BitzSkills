@@ -2,7 +2,7 @@
 id: FLW-DSC-003
 title: "bitz-flow v2 スコープ"
 status: draft
-version: 2.0
+version: 2.1
 updated: 2026-07-29
 owner: hide
 ---
@@ -13,6 +13,8 @@ owner: hide
 
 - Agent Skills のフォルダ単体コピーで動作する自己完結性を守る。
 - Python 3.10+、Git、必要時のみ GitHub CLI を外部前提とし、Python の追加依存は持たない。
+- 実装言語はPython 3.10+に固定する。Goによる実装、再実装、部分置換、移行比較を行わない。
+  Pythonで必須安全契約を満たせない場合はscope縮小、設計変更、またはNo-Goを裁定する。
 - Claude Code / Codex CLI / Antigravity 2.0 に共通する最小能力である「スキル読込 + CLI実行」
   を正規経路にする。
 - GitHub 認証情報は `gh` に委ね、bitz-flow は token・credential を読み取らない。

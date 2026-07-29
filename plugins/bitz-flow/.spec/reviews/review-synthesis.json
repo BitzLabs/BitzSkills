@@ -1,19 +1,19 @@
 {
   "review_id": "FLW-REV-002",
   "verdict": "PASS",
-  "aggregate_score": 4.71,
+  "aggregate_score": 4.74,
   "perspective_scores": {
     "consistency": 5.0,
     "data-integrity": 4.35,
     "operations": 5.0,
     "risk": 4.7,
-    "business": 4.65
+    "business": 4.85
   },
   "findings_summary": {
-    "total": 5,
-    "after_dedup": 4,
-    "by_priority": {"P0": 0, "P1": 0, "P2": 4, "P3": 0},
-    "by_severity": {"critical": 0, "major": 0, "minor": 5, "info": 0}
+    "total": 4,
+    "after_dedup": 3,
+    "by_priority": {"P0": 0, "P1": 0, "P2": 3, "P3": 0},
+    "by_severity": {"critical": 0, "major": 0, "minor": 4, "info": 0}
   },
   "findings": [
     {
@@ -33,14 +33,6 @@
       "recommendation": "M1出口でflow-coreとflow-doctorの共通envelope fixtureを同じtest suiteから検査し、不一致時はreleaseを停止する。"
     },
     {
-      "id": "SYN-103",
-      "priority": "P2",
-      "source_ids": ["BIZ-301"],
-      "perspectives": ["business"],
-      "title": "「200UE」の意味が未裁定である",
-      "recommendation": "Design Gateの必須条件にはせず、遅くともM3要件承認前に原意を人間が裁定して記録する。"
-    },
-    {
       "id": "SYN-104",
       "priority": "P2",
       "source_ids": ["BIZ-401"],
@@ -51,7 +43,6 @@
   ],
   "conditional_items": [
     "SYN-101とSYN-102をM1以降の検証要件へ派生する",
-    "SYN-103をM3要件承認前に裁定する",
     "SYN-104を要件・タスク分解時に定量化する"
   ],
   "re_review_conditions": []

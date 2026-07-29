@@ -2,7 +2,7 @@
 id: FLW-DSC-000
 title: "bitz-flow v2 ディスカバリー作業台帳"
 status: draft
-version: 1.0
+version: 1.1
 updated: 2026-07-29
 owner: hide
 ---
@@ -137,7 +137,8 @@ GitHubから `.spec` の人間専用statusを変更しない。ラベルにIDを
 
 | 論点 | 状態 | 裁定 |
 |---|---|---|
-| 「200UE」の意味 | open | GitHub Issueを指す前提で進めた。異なる場合は再裁定 |
+| 「200UE」の意味 | resolved | ユーザー裁定により「ISSUE」の誤記として確定（2026-07-29） |
+| 実装言語 | resolved | Python 3.10+に固定。Go言語は使用・移行候補ともにNG（2026-07-29） |
 | CHANGELOG単位 | resolved | repository modeをMust、component modeをShould |
 | GitHub Projects | resolved | 初期Should。M3 Must後に昇格 |
 | repo外worktree承認 | resolved | 設定は権限を代替せず、createごとに外部確認 |
@@ -145,7 +146,7 @@ GitHubから `.spec` の人間専用statusを変更しない。ラベルにIDを
 
 ## Discovery Gate
 
-- 裁定: Go（条件付き）
+- 裁定: Go（進行可・条件付き。プログラミング言語のGoを指さない）
 - 裁定者: hide
 - 裁定日: 2026-07-29
 - 条件: MCP、Rust化、プラットフォーム固有hook、透過proxyを実装対象から恒久的に除外する

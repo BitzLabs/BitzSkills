@@ -2,7 +2,7 @@
 id: FLW-DSN-004
 title: "bitz-flow v2 アーキテクチャ"
 status: draft
-version: 1.0
+version: 1.1
 updated: 2026-07-29
 owner: hide
 implements: 
@@ -131,7 +131,9 @@ canonical Git common-dirまたはremote identityから得る短いrepo identity 
 
 ## 技術判断
 
-- Python標準ライブラリのみ。
+- Python 3.10+標準ライブラリのみ。Go実装、部分置換、再実装、移行比較は行わない。
+- Pythonで必須のprocess tree収束、locking、atomic I/O、配布一貫性を成立させられない場合は、
+  対象operationを縮小するかv2をNo-Goとし、別言語への移行でDesign Gateを迂回しない。
 - 内部永続DB・journalなし。
 - Git machine-readable output、`gh --json`、allowlist固定endpointのJSONだけをparse入力にする。
 - 設計条件で除外された実装方式をarchitecture optionとして残さない。
