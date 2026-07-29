@@ -1,22 +1,22 @@
 # BitzSDD status-report
 
-生成日時: 2026-07-27 13:31:20
+生成日時: 2026-07-29 22:22:35
 
 ## 1. 総合サマリー
 | メトリクス | 現在のステータス |
 | :--- | :--- |
 | **総合ヘルス** | **YELLOW (ドラフト状態の要件あり)** |
-| **要件進捗率 (Verified/Promoted)** | **92%** (53 / 57 要件) |
+| **要件進捗率 (Verified/Promoted)** | **94%** (63 / 67 要件) |
 | **ディスカバリー状況** | 検証ゲート合格 (Go) |
-| **設計レビュー結果** | PASS (合格) |
+| **設計レビュー結果** | CONDITIONAL_PASS (条件付き合格) |
 
 ---
 
-## 2. 要件ライフサイクル状況 (57 件)
+## 2. 要件ライフサイクル状況 (67 件)
 *   **起草中（draft）**: 4 件
 *   **承認済み（approved）**: 0 件
 *   **実装中（implementing）**: 0 件
-*   **検証済み（verified）**: 53 件
+*   **検証済み（verified）**: 63 件
 *   **確定（promoted）**: 0 件
 
 ### 要件一覧
@@ -79,6 +79,16 @@
 | SDD-FR-142 | spec_status による実施記録欠落の機械警告 | 検証済み（verified） |
 | SDD-FR-143 | 仕様遷移の認可・前提・永続化を一貫して保護する | 検証済み（verified） |
 | SDD-FR-144 | 並行環境で仕様IDの生成と統合を安全側に制御する | 検証済み（verified） |
+| SDD-FR-145 | 人間裁定必須遷移の認可経路（対話確認・代行可視化）を規定する | 検証済み（verified） |
+| SDD-FR-146 | canonical実行時のworkspace横断テスト参照集約 | 検証済み（verified） |
+| SDD-FR-147 | 実装コードディレクトリの参照走査対象拡張 | 検証済み（verified） |
+| SDD-FR-148 | manual-check要件の未参照報告分離 | 検証済み（verified） |
+| SDD-FR-149 | Discovery成果物のdocs同期マッピング網羅 | 検証済み（verified） |
+| SDD-FR-150 | 同期マッピングSSOTと文書側同期表の一致検証 | 検証済み（verified） |
+| SDD-FR-151 | 検証コマンド実出力からの機械可読証跡の記録 | 検証済み（verified） |
+| SDD-FR-152 | 検証証跡における秘密値と環境固有情報の非保存 | 検証済み（verified） |
+| SDD-FR-153 | 検証証跡の構造検証と参照切れ検出 | 検証済み（verified） |
+| SDD-FR-154 | 統合レポートへの検証証跡集計 | 検証済み（verified） |
 
 ---
 
@@ -90,21 +100,42 @@
 ---
 
 ## 4. レビュー状況 (.spec/reviews/)
-*   **統合ステータス**: 4 件のレビューが存在
-*   **判定結果**: PASS (合格)
+*   **統合ステータス**: 5 件のレビューが存在
+*   **判定結果**: CONDITIONAL_PASS (条件付き合格)
 
 ### レビュー報告書一覧
 | ファイル名 | レビュー判定 |
 | :--- | :--- |
 | SDD-REV-003.md | `PASS` |
+| review-synthesis.md | `CONDITIONAL_PASS` |
+| SDD-REV-005.md | `PASS` |
 | SDD-REV-002.md | `PASS` |
 | SDD-REV-004.md | `PASS` |
-| review-synthesis.md | `PASS` |
 
 ---
 
-## 5. タスク実行状況 (.spec/tasks/ - 31 件)
+## 5. タスク実行状況 (.spec/tasks/ - 43 件)
 *   **着手待ち（pending）**: 0 件
 *   **実装中（implementing）**: 0 件
 *   **介入待ち（blocked）**: 0 件
-*   **完了（done）**: 31 件
+*   **完了（done）**: 43 件
+
+---
+
+## 6. 人間裁定遷移の経路別内訳 (STATE.md)
+*   **対話確認経路 (interactive-confirmation-unverified)**: 2 件
+*   **代行可視化経路 (agent-proxy-unverified)**: 14 件
+
+※ 代行遷移は decision-ref（裁定所在参照）を持つ。Promotion Gate で参照先の裁定を人間が確認すること。
+
+---
+
+## 7. 検証証跡 (.spec/verification/ - 1 件)
+*   **証跡が覆う要件**: 4 件
+*   **失敗・不正な証跡**: 0 件
+
+| 証跡ファイル | commit | exit_code | 対象要件 |
+| :--- | :--- | :--- | :--- |
+| pytest--d5a446c.json | `d5a446c` | 0 | SDD-FR-151, SDD-FR-152, SDD-FR-153, SDD-FR-154 |
+
+※ 実行時間は observed（非正規の観測値）であり、本表の判定には使わない。green 判定の正は exit_code と件数（SDD-FR-151）。

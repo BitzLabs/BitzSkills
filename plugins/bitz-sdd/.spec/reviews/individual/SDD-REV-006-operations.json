@@ -1,0 +1,65 @@
+{
+  "perspective": "operations",
+  "review_scope": "SDD-REV-006: bitz-sdd 全体の振り返り（Design 層の欠落・逆起票要件・ライフサイクル運用実績・過去レビュー指摘の消化状況）",
+  "dimensions": [
+    {
+      "name": "監視・可観測性",
+      "weight": 0.3,
+      "score": 2,
+      "findings": [
+        {
+          "id": "OPS-601",
+          "severity": "critical",
+          "location": ".spec/reviews/SDD-REV-004.md · review-synthesis.json",
+          "title": "レビュー指摘の消化が追跡されず、P1 が起票されないまま消えた",
+          "description": "SDD-REV-004（2026-07-22）は SYN-001（P1・mtime精度による無音データ損失リスク）について『別途 spec-issue 化を推奨』と明記して PASS した。しかし該当の spec-issue は起票されず、実装も現在まで未変更である（sdd_sync.py は書き込みに st_mtime_ns を使う一方、比較は st_mtime のままで非対称）。次のレビュー SDD-REV-005 は別スコープのため拾わず、gate_preconditions は空配列であった。指摘を持ち越す仕組みが存在しないため、レビューは実施されても効果が消える。SYN-005（sdd_sync が mutation-lock に不参加。現在も grep 0件）、SYN-007（discovery が 2026-07-12 で停止。現在も同日のまま）も同様に未消化である。",
+          "recommendation": "レビュー指摘の spec-issue 化を機械的に追跡する。少なくとも P0/P1 は spec-issue への紐づけを synthesis の必須項目とし、未紐づけのまま PASS できないようにする。既存の gate_preconditions フィールドを実際に運用する。"
+        },
+        {
+          "id": "OPS-602",
+          "severity": "major",
+          "location": "skills/sdd-core/references/adoption-metrics.md",
+          "title": "宣言した計測項目に実装がない",
+          "description": "adoption-metrics.md は manual-check 比率の 20% 閾値を補助監視項目として宣言するが、比率を計算する実装はリポジトリに存在しない（grep 0件）。実測は42.5%で宣言閾値の2倍を超えているが、誰も気づけない状態が続いていた。SI-SDD-029 として起票済み。",
+          "recommendation": "宣言した計測項目に実装を伴わせる。実装しない項目は adoption-metrics.md から削除し、宣言と実体を一致させる。"
+        }
+      ]
+    },
+    {
+      "name": "災害復旧",
+      "weight": 0.3,
+      "score": 4,
+      "findings": []
+    },
+    {
+      "name": "セキュリティ態勢",
+      "weight": 0.2,
+      "score": 4,
+      "findings": [
+        {
+          "id": "OPS-603",
+          "severity": "minor",
+          "location": "skills/sdd-test/scripts/spec_verify.py",
+          "title": "証跡の秘密値混入防止は許可リスト方式で設計されている",
+          "description": "SDD-FR-152 により raw 出力・環境変数を保存せず、秘密値らしき引数と実行者ホームの絶対パスは記録を拒否する。ガードレール（認証情報を出力しない）と整合する。",
+          "recommendation": "manual-check の実施記録形式を新設する際も同じ許可リスト制約を継承すること。"
+        }
+      ]
+    },
+    {
+      "name": "デプロイ安全性",
+      "weight": 0.2,
+      "score": 3,
+      "findings": [
+        {
+          "id": "OPS-604",
+          "severity": "major",
+          "location": "scripts/spec · skills/sdd-test/scripts/spec_verify.py",
+          "title": "SDD ツールの呼び出し規約が2系統に分かれている",
+          "description": "scripts/spec ラッパー経由（inspect / scaffold / status / update）と、スキル同梱スクリプトの直接実行（sdd_sync.py / docs_inspect.py / sdd_report.py / spec_verify.py）が併存する。ラッパーは sdd-core の4ツールすべてを必須解決する設計のため新ツールを追加できず、SI-SDD-016 では直接実行を選ばざるを得なかった。利用者から見た一貫性が失われている。",
+          "recommendation": "ラッパーに任意ツールの概念を導入するか、全ツールを直接実行へ統一するかを設計フェーズで裁定する。CORE-FR-011 の改訂を伴う。"
+        }
+      ]
+    }
+  ]
+}

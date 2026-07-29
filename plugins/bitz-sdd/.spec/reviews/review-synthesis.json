@@ -1,50 +1,200 @@
 {
-  "review_id": "SDD-REV-005",
-  "verdict": "PASS",
-  "aggregate_score": 3.94,
+  "review_id": "SDD-REV-006",
+  "verdict": "CONDITIONAL_PASS",
+  "aggregate_score": 3.03,
   "perspective_scores": {
-    "consistency": 4.35,
-    "data-integrity": 4.00,
-    "operations": 4.00,
-    "risk": 3.33,
-    "business": 4.35
+    "consistency": 3.0,
+    "operations": 3.2,
+    "risk": 2.33,
+    "business": 3.3,
+    "data-integrity": 3.4
+  },
+  "perspective_weights": {
+    "consistency": 0.2,
+    "operations": 0.27,
+    "risk": 0.2,
+    "business": 0.2,
+    "data-integrity": 0.13
   },
   "findings_summary": {
-    "total": 2,
-    "after_dedup": 2,
-    "by_priority": {"P0": 0, "P1": 1, "P2": 0, "P3": 1},
-    "by_severity": {"critical": 0, "major": 1, "minor": 1, "info": 0}
+    "total": 16,
+    "after_dedup": 10,
+    "by_priority": {
+      "P0": 2,
+      "P1": 6,
+      "P2": 1,
+      "P3": 1
+    },
+    "by_severity": {
+      "critical": 2,
+      "major": 9,
+      "minor": 3,
+      "info": 2
+    }
   },
   "findings": [
     {
       "id": "SYN-001",
-      "priority": "P1",
-      "source_ids": ["RSK-201"],
-      "perspectives": ["risk"],
-      "title": "人間裁定はCLI外部の統制に依存する",
-      "recommendation": "SI-CORE-035で保証downgradeを明示的に受容するまでCORE-FR-005をsupersedeしない。必要な環境ではhost permissionsまたは検証可能なreceiptを別要件化する。"
+      "source": [
+        "OPS-601"
+      ],
+      "priority": "P0",
+      "severity": "critical",
+      "title": "レビュー指摘の消化が追跡されず P1 が起票されないまま消えた",
+      "tracked_by": "SI-SDD-031",
+      "note": "SDD-REV-004 は SYN-001 を『別途 spec-issue 化を推奨』として PASS したが起票されず、7日後の現在も未対応。gate_preconditions は空配列であった"
     },
     {
       "id": "SYN-002",
+      "source": [
+        "RSK-601"
+      ],
+      "priority": "P0",
+      "severity": "critical",
+      "title": "代行遷移の唯一の担保である Promotion Gate が一度も動いていない",
+      "tracked_by": "SI-SDD-028",
+      "note": "bitz-sdd 63件すべて verified 止まり・promoted 0件。代行遷移は bitz-sdd 14件・ルート28件"
+    },
+    {
+      "id": "SYN-003",
+      "source": [
+        "RVC-601",
+        "RVC-602"
+      ],
+      "priority": "P1",
+      "severity": "major",
+      "title": "Design 層が欠落し、要件の46%が実装からの逆起票である",
+      "tracked_by": "SDD-REV-006:GP-003",
+      "note": "domain-model.md と ROADMAP.md が無く、design/ は spec-issue 対応の個別ノート5件のみ。対応設計を持つ要件は2件"
+    },
+    {
+      "id": "SYN-004",
+      "source": [
+        "RSK-602",
+        "RSK-603"
+      ],
+      "priority": "P1",
+      "severity": "major",
+      "title": "SDD-REV-004 の未消化指摘（mtime 精度の非対称・sdd_sync の lock 不参加）",
+      "tracked_by": "SI-SDD-032",
+      "note": "SYN-001 の具体的な帰結。書き込みは st_mtime_ns、比較は st_mtime。lock 参加は grep 0件"
+    },
+    {
+      "id": "SYN-005",
+      "source": [
+        "OPS-602",
+        "RVC-604"
+      ],
+      "priority": "P1",
+      "severity": "major",
+      "title": "manual-check が42.5%を占めるが監視実装も実施記録形式も無い",
+      "tracked_by": "SI-SDD-029",
+      "note": "宣言閾値20%の2倍超。比率計算の実装は grep 0件"
+    },
+    {
+      "id": "SYN-006",
+      "source": [
+        "RVC-606",
+        "RVC-605"
+      ],
+      "priority": "P1",
+      "severity": "major",
+      "title": "verification_method（要件単位）と証跡（実行単位）の集約境界が不一致",
+      "tracked_by": "SI-SDD-030",
+      "note": "schema 利用実績が1件のうちに直せば移行不要。時間依存のコストがある"
+    },
+    {
+      "id": "SYN-007",
+      "source": [
+        "BIZ-603"
+      ],
+      "priority": "P1",
+      "severity": "major",
+      "title": "Discovery が 2026-07-12 で停止し宣言と実体が乖離している",
+      "tracked_by": "SDD-REV-006:GP-004",
+      "note": "SDD-REV-004 の SYN-007 が指摘済みで未対応。sdd-git 移管予定が未実施のまま bitz-flow は実在"
+    },
+    {
+      "id": "SYN-008",
+      "source": [
+        "BIZ-604"
+      ],
+      "priority": "P1",
+      "severity": "major",
+      "title": "14スキルの責務分界が未定義のまま15個目を追加しようとしている",
+      "tracked_by": "SI-SDD-013",
+      "note": "accepted 未着手。境界づけられたコンテキストの定義が前提条件"
+    },
+    {
+      "id": "SYN-009",
+      "source": [
+        "OPS-604"
+      ],
+      "priority": "P2",
+      "severity": "major",
+      "title": "SDD ツールの呼び出し規約が2系統に分かれている",
+      "tracked_by": "SI-CORE-038",
+      "note": "ラッパーが4ツール必須解決のため新ツールを追加できない。CORE-FR-011 の改訂を伴う"
+    },
+    {
+      "id": "SYN-010",
+      "source": [
+        "BIZ-601",
+        "BIZ-605",
+        "RVC-603",
+        "OPS-603"
+      ],
       "priority": "P3",
-      "source_ids": ["RSK-402"],
-      "perspectives": ["risk"],
-      "title": "非協調writerの最終競合窓は保証外として残る",
-      "recommendation": "全対応writerの共通lock参加、status・STATEの手編集禁止、旧版CLIとの並行実行禁止をlifecycleとテストへ反映する。"
+      "severity": "info",
+      "title": "保全すべき資産（63件の verified・下流トレース・Discovery 6成果物）",
+      "tracked_by": null,
+      "note": "設計の後付けは置き換えではなく照合として行うこと"
     }
   ],
-  "resolved_during_review": [
-    "STATE hashの自己参照とjournal payload不足",
-    "scaffold生成中断時の部分ファイル",
-    "lock公開・cleanupのdurability順序",
-    "hash・canonical JSON・Base64のbyte契約",
-    "target head照合のTOCTOU",
-    "媒体喪失とrepository writerの信頼境界"
+  "gate_preconditions": [
+    {
+      "id": "GP-001",
+      "from": "SYN-001",
+      "condition": "レビュー指摘の spec-issue 化を機械的に追跡する仕組みを設計フェーズの対象に含める。少なくとも P0/P1 は spec-issue への紐づけを synthesis の必須項目とし、未紐づけのまま PASS できないようにする",
+      "status": "open"
+    },
+    {
+      "id": "GP-002",
+      "from": "SYN-004",
+      "condition": "SDD-REV-004 の未消化指摘（mtime 精度・mutation lock 不参加）を spec-issue として起票する",
+      "status": "satisfied",
+      "satisfied_by": "SI-SDD-032（2026-07-29 起票）"
+    },
+    {
+      "id": "GP-003",
+      "from": "SYN-003",
+      "condition": "Design 層を後付けする（domain-model.md と ROADMAP.md の作成、逆起票31件の分類）",
+      "status": "open"
+    },
+    {
+      "id": "GP-004",
+      "from": "SYN-007",
+      "condition": "Discovery を実体へ追随させる（破棄せず改訂）。bitz-flow との境界決定は同プラグインの設計完了後へ回す",
+      "status": "open"
+    },
+    {
+      "id": "GP-005",
+      "from": "SYN-009",
+      "condition": "SDD ツール呼び出し規約の統一方針を裁定する（CORE-FR-011 の改訂可否を含む）",
+      "status": "open"
+    }
   ],
-  "gate_preconditions": [],
   "gate_decision": {
-    "status": "approved",
-    "date": "2026-07-27",
-    "actor": "user（チャット裁定）"
-  }
+    "status": "pending",
+    "date": null,
+    "actor": "未裁定（人間裁定待ち）"
+  },
+  "deferred": [
+    {
+      "topic": "bitz-sdd ↔ bitz-flow の依存境界と sdd-git 移管",
+      "reason": "bitz-flow の discovery / design が並行進行中のため、決定は同プラグイン完了後の最終合わせで行う（人間裁定 2026-07-29）"
+    }
+  ],
+  "breaking_change_policy": "許容（人間裁定 2026-07-29）。設計の結論が公開契約の破壊的変更を要する場合、bitz-ddd の bitz-sdd>=2.0 依存と本リポジトリの固定版消費への波及を移行計画として明示すること",
+  "untracked_p0_p1": []
 }
