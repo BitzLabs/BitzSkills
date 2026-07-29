@@ -175,7 +175,8 @@
       "id": "GP-004",
       "from": "SYN-007",
       "condition": "Discovery を実体へ追随させる（破棄せず改訂）。bitz-flow との境界決定は同プラグインの設計完了後へ回す",
-      "status": "open"
+      "status": "satisfied",
+      "satisfied_by": "Discovery 6成果物を 1.1 へ改訂（2026-07-29）。bitz-flow 境界の記述は人間裁定により据え置き"
     },
     {
       "id": "GP-005",
