@@ -2,12 +2,18 @@
 id: SDD-DSC-005
 title: "bitz-sdd ポジショニング（競合代替 → PoD/PoP → ステートメント）"
 status: draft
-version: 1.0
-updated: 2026-07-12
+version: 1.1
+updated: 2026-07-29
 owner: hide
 ---
 
 # ポジショニング — bitz-sdd
+
+
+> **改訂 1.1（2026-07-29）**: SDD-REV-006 の GP-004（Discovery を実体へ追随させる）による改訂。
+> 初版 1.0（2026-07-12）以降の実体変化を反映する。破棄せず改訂であり、判断の骨格は変えていない。
+> **bitz-flow との依存境界と sdd-git 移管に関する記述は意図的に据え置く**
+> （bitz-flow の設計が並行進行中のため、決定は同プラグイン完了後の最終合わせで行う。人間裁定）。
 
 > 遡及的 discovery。競合の詳細調査は本スキルの範囲外。簡易 intake で足りる分だけ確認し、
 > 事実が取れないものは `TBD` / `[proto / 未検証]` とする。
@@ -18,7 +24,7 @@ owner: hide
 |---|---|---|---|
 | 素の `CLAUDE.md` / `AGENTS.md` 運用 | 現状維持 | 規約は書けるが**機械検証・トレース・status ライフサイクルがない**。乖離検出は人手 | 一般的慣行 `[proto]` |
 | spec-kit 系（spec 駆動テンプレ） | 直接競合 | spec の型は提供するが、EARS の節種別×テスト導出・幽霊参照/孤児要件検出・`.spec`⇄`docs` 同期の一体運用は `TBD`（未精査） | `TBD`（要出典確認） |
-| kiro 系 / IDE 内蔵 spec 機能 | 間接競合 | 特定 IDE/エージェント前提。Claude Code + Antigravity **両対応のプラグイン配布**は差別化余地 | `TBD` |
+| kiro 系 / IDE 内蔵 spec 機能 | 間接競合 | 特定 IDE/エージェント前提。Claude Code + Antigravity + Codex CLI の **3エージェント対応プラグイン配布**は差別化余地 | `TBD` |
 | 手書き要件 + 手動テスト | 現状維持 | エージェントに規律を強制する仕組みがなく、暴走・自己申告問題が残る | — |
 | 重量級 ALM / 形式手法 | 別カテゴリ | 個人開発には過剰（anti-persona 向け）。bitz-sdd は軽量デフォルトで棲み分け | — |
 
@@ -35,7 +41,7 @@ owner: hide
 1. **機械検証された規律** — EARS の節種別からのテスト導出 + `spec_inspect.py` による
    カバレッジ/孤児/幽霊参照検出。「自己申告を検収する」ことが核の優位。
 2. **`.spec/`（機械の正）⇄ `docs/`（人間ナラティブ）双方向同期** — 正の二重管理を排除。
-3. **Claude Code / Antigravity 2.0 両対応** — 単一エージェント縛りでない配布。
+3. **Claude Code / Antigravity 2.0 / Codex CLI 対応** — 単一エージェント縛りでない配布（3マニフェスト）。
 4. **軽量デフォルト + 明示的な責務分離** — 本格 DDD は bitz-ddd、環境は bitz-env、Git フローは
    将来 bitz-flow へ委ね、bitz-sdd は肥大化しない。エコシステムとして相乗りできる。
 
@@ -56,7 +62,7 @@ owner: hide
 > **bitz-sdd** は、**エージェントの暴走・自己申告・仕様乖離を規律で抑えたいという課題**に対する
 > **仕様駆動開発（SDD）ワークフロー**であり、**EARS 要件・機械検証・`.spec`⇄`docs` 同期による
 > 「検証で裏づいた完了」**を提供する。**素の CLAUDE.md 運用や単一 IDE 依存の spec 機能**と違い、
-> **EARS からのテスト導出と `spec_inspect.py` による機械検証を、Claude Code と Antigravity 2.0 の
+> **EARS からのテスト導出と `spec_inspect.py` による機械検証を、Claude Code / Antigravity 2.0 / Codex CLI の
 > 両方に、軽量デフォルトで束ねている**。
 
 ## 崩壊クリティカルな差別化仮説（assumptions.md へ転記）

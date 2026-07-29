@@ -117,8 +117,15 @@ SDD-FR-153 が manual-check を機械検査から二重に免除しており、*
 ### SYN-007 [BIZ-603] Discovery が 2026-07-12 で停止し宣言と実体が乖離している
 
 SDD-REV-004 が指摘済みで未対応。とくに `scope.md` は sdd-git を
-「bitz-flow へ移管予定」と宣言するが、**bitz-flow は 0.3.0・19要件で実在するのに
-sdd-git は bitz-sdd 内に残る**。Open Question「bitz-sdd↔bitz-flow 依存境界の粒度」も未決。
+「bitz-flow へ移管予定」と宣言するが、**bitz-flow は 0.3.0 のプラグインとして実在し
+main 上に要件2件・設計成果物15件を持つのに、sdd-git は bitz-sdd 内に残る**。
+Open Question「bitz-sdd↔bitz-flow 依存境界の粒度」も未決。
+
+> **訂正（2026-07-29）**: 初版は要件数を「19件」と記載していたが、これは並行作業中の
+> worktree（`BitzSkills-wt/bitz-flow-v2`）の未コミット状態を、共有された作業ツリー越しに
+> 読んだ誤りだった。main の実体は2件である。**測定値を作業ツリーから読むと、
+> 並行作業の途中状態を確定値として記録してしまう** — 本訂正自体が SI-SDD-033 の実例である。
+> 指摘の実質（bitz-flow は実在するのに sdd-git が未移管）は変わらない。
 
 ### SYN-008 [BIZ-604] 14スキルの責務分界が未定義のまま15個目を追加しようとしている
 
@@ -157,11 +164,22 @@ SYN-001 の指摘を本レビュー自身に適用し、`gate_preconditions` を
 
 | ID | 由来 | 条件 | 状態 |
 |---|---|---|---|
-| GP-001 | SYN-001 | レビュー指摘の spec-issue 化を機械的に追跡する仕組みを設計フェーズの対象に含める | open |
+| GP-001 | SYN-001 | レビュー指摘の spec-issue 化を機械的に追跡する仕組みを設計フェーズの対象に含める | **Gate で裁定済**（裁定3 → SI-SDD-031） |
 | GP-002 | SYN-004 | SDD-REV-004 の未消化指摘（mtime 精度・mutation lock 不参加）を spec-issue として起票する | **satisfied**（SI-SDD-032） |
-| GP-003 | SYN-003 | Design 層を後付けする（`domain-model.md` と `ROADMAP.md` の作成、逆起票31件の分類） | open |
-| GP-004 | SYN-007 | Discovery を実体へ追随させる（破棄せず改訂） | open |
-| GP-005 | SYN-009 | SDD ツール呼び出し規約の統一方針を裁定する（CORE-FR-011 の改訂可否を含む） | open |
+| GP-003 | SYN-003 | Design 層を後付けする（`domain-model.md` と `ROADMAP.md` の作成、逆起票31件の分類） | **partial**（モデルと ROADMAP は作成。分類は Design Gate 後） |
+| GP-004 | SYN-007 | Discovery を実体へ追随させる（破棄せず改訂） | **satisfied**（6成果物を 1.1 へ改訂） |
+| GP-005 | SYN-009 | SDD ツール呼び出し規約の統一方針を裁定する（CORE-FR-011 の改訂可否を含む） | **Gate の帰結として前提条件化**（裁定1 → SI-CORE-038） |
+
+## Design Gate の実行結果（2026-07-29 追記）
+
+本レビューは「GP-001〜GP-005 の消化前に Design Gate を通さない」と推奨したが、
+実際に Gate を実行したところ **GP-001 と GP-005 は Gate の前に済ませるものではなく、
+Gate で決めること**だった（裁定3 が GP-001 の答え、裁定1 が GP-005 を前提条件へ引き上げた）。
+`gate_preconditions` が「Gate 通過前に消化する条件」と「Gate で決める論点」を
+区別していなかったという、本レビュー自身の設計上の誤りである。
+この区別は裁定3（ReviewFinding の設計）で扱う。
+
+6件の裁定結果と実装順序は `.spec/reports/decision-2026-07-29-design-gate.md` が正。
 
 ## 保留（本レビューでは決定しない）
 

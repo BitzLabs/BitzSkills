@@ -2,15 +2,25 @@
 id: SDD-DSC-002
 title: "bitz-sdd 成功指標（North Star Metric + 入力指標 + ガードレール）"
 status: draft
-version: 1.0
-updated: 2026-07-12
+version: 1.1
+updated: 2026-07-29
 owner: hide
 ---
 
 # 成功指標 — bitz-sdd
 
+
+> **改訂 1.1（2026-07-29）**: SDD-REV-006 の GP-004（Discovery を実体へ追随させる）による改訂。
+> 初版 1.0（2026-07-12）以降の実体変化を反映する。破棄せず改訂であり、判断の骨格は変えていない。
+> **bitz-flow との依存境界と sdd-git 移管に関する記述は意図的に据え置く**
+> （bitz-flow の設計が並行進行中のため、決定は同プラグイン完了後の最終合わせで行う。人間裁定）。
+
 > 遡及的 discovery。目標値の多くは計測基盤が未整備のため `TBD`。
 > でっち上げず、定義・測定方法・ガードレールの枠組みを先に確立する。
+>
+> 1.1 時点では計測基盤の一部が整備された（`spec_status.py` の集計、`sdd_report.py` の
+> status レポート、`.spec/verification/` の実行証跡）。一方で **NSM と入力指標の目標値は
+> 依然 `TBD`** であり、宣言した閾値に実装が伴っていない項目が実在する（下記ガードレール）。
 
 ## North Star Metric（NSM）— 1つ
 
@@ -25,6 +35,9 @@ owner: hide
 - **顧客が動かせる**: エージェント＋開発者の実作業（要件承認・実装・検証）で直接引ける。
 - **測定方法**: `spec_inspect.py` のカバレッジ集計 / `sdd_report.py` の status 集計から
   `verified` / `done` 件数を数える。ワークスペース横断は `--workspace` 解決で合算。
+  1.1 以降は `.spec/verification/` の実行証跡が「検証された」ことの機械可読な裏づけになる
+  （SDD-FR-151〜154）。ただし **`verified` の先の `promoted` は全ワークスペースで 0 件**であり、
+  NSM が捉えたい「規律を通しきった単位」に到達していない（SDD-REV-006 の SYN-002）。
 
 ## 入力指標（3〜5個）— 広さ × 深さ × 頻度 × 効率
 
@@ -32,7 +45,7 @@ owner: hide
 |---|---|---|---|---|---|
 | I1 | discovery を起票したワークスペース数 | 広さ | `.spec/discovery/` を持つ WS 数 | `TBD` | — |
 | I2 | approved まで到達した要件数 | 深さ | status=approved 以上の要件件数（`spec_inspect`） | `TBD` | 未検証 approved の滞留を増やさない |
-| I3 | 要件→テストのトレース率 | 効率 | verification_method を持ち検証に紐づく要件の割合 | 100% を志向 | カバレッジ偽装（空テスト）を作らない |
+| I3 | 要件→テストのトレース率 | 効率 | verification_method を持ち検証に紐づく要件の割合 | 100% を志向 | カバレッジ偽装（空テスト）を作らない。`manual-check` を逃げ道にしない |
 | I4 | ドッグフーディング利用頻度 | 頻度 | 本人が bitz-sdd スキルを起動した週次回数 | `TBD` | 惰性利用でなく実タスクに紐づくこと |
 | I5 | 機械検証（release_check / spec_inspect）成功率 | 効率 | CI/ローカルでの PASS 率 | 高位安定 | 誤検知で開発を止めない |
 
@@ -47,6 +60,9 @@ owner: hide
   肥大化はトークンコスト＝顧客負担の劣化）。
 - **同期の齟齬**: `.spec/` ⇄ `docs/` の `sdd_sync.py diff` が未解消ドリフトを残さないこと。
 - **オンボーディング摩擦**: OSS 利用者が最初の成果物到達までに離脱しないこと = `[proto / 未検証]`。
+- **検証手段の偏り**: `manual-check` 比率が閾値（20%、`adoption-metrics.md` の宣言）を
+  超えないこと。**2026-07-29 実測 42.5%（51/120）で閾値の2倍を超過**しており、
+  比率を計算する実装も存在しない（SI-SDD-029）。自動検証の弱い領域が監視から外れる罠。
 
 ## 下流への接続
 
@@ -56,4 +72,5 @@ owner: hide
 
 ## Open Questions
 - NSM/入力指標の実測を自動収集する仕組み（`sdd_report.py` 拡張か observations ログ活用か）— `TBD`。
+- 宣言した計測項目に実装が伴っていない問題の解消（`manual-check` 比率が実例）— SI-SDD-029。
 - OSS 採用の観測手段（marketplace 導入数の可視化可否）— `TBD`。

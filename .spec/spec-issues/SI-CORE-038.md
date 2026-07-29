@@ -3,7 +3,7 @@ id: SI-CORE-038
 raised_by: SDD-REV-006（2026-07-29）SYN-009
 target: SDD ツール呼び出し規約の2系統併存
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: SDD ツールの起動方法が2系統に分かれている。`scripts/spec <tool>` のラッパー経由
   （`inspect` / `scaffold` / `status` / `update`）と、スキル同梱スクリプトの直接実行

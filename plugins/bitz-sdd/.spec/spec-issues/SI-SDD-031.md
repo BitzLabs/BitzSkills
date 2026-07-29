@@ -3,7 +3,7 @@ id: SI-SDD-031
 raised_by: SDD-REV-006（2026-07-29）SYN-001
 target: レビュー指摘の消化が追跡されない
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: SDD-REV-004（2026-07-22）は自身の P1 指摘（`sdd_sync` の mtime 精度による無音データ
   損失リスク）について「別途 spec-issue 化を推奨」と明記したうえで `decision: PASS` とした。

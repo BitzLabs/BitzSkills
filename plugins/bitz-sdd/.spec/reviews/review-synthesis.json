@@ -156,7 +156,8 @@
       "id": "GP-001",
       "from": "SYN-001",
       "condition": "レビュー指摘の spec-issue 化を機械的に追跡する仕組みを設計フェーズの対象に含める。少なくとも P0/P1 は spec-issue への紐づけを synthesis の必須項目とし、未紐づけのまま PASS できないようにする",
-      "status": "open"
+      "status": "ruled-at-gate",
+      "satisfied_by": "Design Gate の裁定3（ReviewFinding の独立と tracked_by 必須化）で方針を確定。実装は SI-SDD-031。前提条件ではなく Gate の論点だった"
     },
     {
       "id": "GP-002",
@@ -169,19 +170,22 @@
       "id": "GP-003",
       "from": "SYN-003",
       "condition": "Design 層を後付けする（domain-model.md と ROADMAP.md の作成、逆起票31件の分類）",
-      "status": "open"
+      "status": "partial",
+      "satisfied_by": "ドメインストーリー SDD-DSN-006〜008 と ドメインモデル SDD-DSN-009、.spec/ROADMAP.md を作成（2026-07-29）。残: 逆起票31件の分類（Design Gate の裁定後に実施）"
     },
     {
       "id": "GP-004",
       "from": "SYN-007",
       "condition": "Discovery を実体へ追随させる（破棄せず改訂）。bitz-flow との境界決定は同プラグインの設計完了後へ回す",
-      "status": "open"
+      "status": "satisfied",
+      "satisfied_by": "Discovery 6成果物を 1.1 へ改訂（2026-07-29）。bitz-flow 境界の記述は人間裁定により据え置き"
     },
     {
       "id": "GP-005",
       "from": "SYN-009",
       "condition": "SDD ツール呼び出し規約の統一方針を裁定する（CORE-FR-011 の改訂可否を含む）",
-      "status": "open"
+      "status": "prerequisite-of-ruling",
+      "satisfied_by": "Design Gate の裁定1（判定機能を sdd-test へ移設）により、Gate の帰結として実装前提へ引き上がった。追跡は SI-CORE-038"
     }
   ],
   "gate_decision": {
@@ -196,5 +200,11 @@
     }
   ],
   "breaking_change_policy": "許容（人間裁定 2026-07-29）。設計の結論が公開契約の破壊的変更を要する場合、bitz-ddd の bitz-sdd>=2.0 依存と本リポジトリの固定版消費への波及を移行計画として明示すること",
-  "untracked_p0_p1": []
+  "untracked_p0_p1": [],
+  "design_gate": {
+    "date": "2026-07-29",
+    "form": "対話裁定（6件すべて個別に選択。裁定1は推奨と異なる案が選ばれた）",
+    "decision_ref": ".spec/reports/decision-2026-07-29-design-gate.md",
+    "note": "gate_preconditions は「Gate 通過前に消化する条件」と「Gate で決める論点」を区別していなかった。GP-001 と GP-005 は後者であり、前提条件の定義が循環していた。この区別は裁定3（ReviewFinding の設計）で扱う"
+  }
 }
