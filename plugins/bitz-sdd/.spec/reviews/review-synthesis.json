@@ -169,7 +169,8 @@
       "id": "GP-003",
       "from": "SYN-003",
       "condition": "Design 層を後付けする（domain-model.md と ROADMAP.md の作成、逆起票31件の分類）",
-      "status": "open"
+      "status": "partial",
+      "satisfied_by": "ドメインストーリー SDD-DSN-006〜008 と ドメインモデル SDD-DSN-009、.spec/ROADMAP.md を作成（2026-07-29）。残: 逆起票31件の分類（Design Gate の裁定後に実施）"
     },
     {
       "id": "GP-004",
