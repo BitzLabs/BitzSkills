@@ -2,7 +2,7 @@
 id: FLW-DSN-014
 title: "GitHub capability・M0検証設計"
 status: active
-version: 1.1
+version: 1.3
 updated: 2026-07-29
 owner: hide
 implements: FLW-FR-003, FLW-FR-008, FLW-FR-012, FLW-NFR-001, FLW-NFR-002, FLW-NFR-004
@@ -102,12 +102,17 @@ write operation、GitHub network operation、worktree作成はM0に含めない�
 生成する連続作業単位」とする。各milestoneはPR予算またはsession予算のどちらかを先に
 使い切った時点で停止し、継続、scope縮小、またはNo-Goを人間へ再提示する。
 
+下表は見積実績がない段階の**初期budget**である。各milestone開始時に、直前までの
+実績PR数、実績session数、レビュー修正回数、出口未達理由をrun manifestへ記録し、
+人間が次budgetの維持または変更を確認する。進行中milestoneの上限を暗黙に延長せず、
+変更はdecision reference付きで記録する。
+
 | milestone | 最大予算 | 出口 | 予算超過時の安全な縮退出荷境界 |
 |---|---:|---|---|
-| M1 Git operations | 3 PR / 12 session | 残るGit read/writeとdoctor、operation contract全行、fault fixture、重複commit 0 | M0 read-only prereleaseだけを維持。Git writeとdoctor v2は公開しない |
+| M1 Git operations | 3 PR / 12 session | 残るGit read/writeとdoctor、M1所属operationのcontract全行、fault fixture、重複commit 0 | M0 read-only prereleaseだけを維持。Git writeとdoctor v2は公開しない |
 | M2 worktree | 2 PR / 8 session | repo identity衝突0、repo外承認、finish/discard fault全通過 | M0 read-only prereleaseへ縮退。worktree-first未完了のためM1 Git writeも公開しない |
-| M3 Issue/SDD | 3 PR / 12 session | capability matrix、marker重複0、link reconcile全通過 | M2までをprerelease出荷し、全`issue.*`を`UNSUPPORTED`にする |
-| M4 PR | 3 PR / 12 session | push/PR/merge各partialから収束、CI/head誤判定0 | M3までをprerelease出荷し、全`pr.*`を`UNSUPPORTED`にする |
+| M3 Issue/SDD | 3 PR / 12 session | capability matrix、marker重複0、link reconcile全通過、独立10 Issue/SDD flow canary green | M2までをprerelease出荷し、全`issue.*`を`UNSUPPORTED`にする |
+| M4 PR | 3 PR / 12 session | push/PR/merge各partialから収束、CI/head誤判定0、独立10 PR flow canary green | M3までをprerelease出荷し、全`pr.*`を`UNSUPPORTED`にする |
 | M5 Release | 2 PR / 8 session | changelog atomicity、tag/draft収束後にpublishを段階有効化 | M4までを出荷。release draftだけがgreenならprerelease限定で公開し、publishは`UNSUPPORTED`にする |
 
 PR予算はmilestone内の実装・fixture・文書・version bumpを含む。レビュー修正は元PRへ含め、
@@ -122,6 +127,7 @@ PR予算はmilestone内の実装・fixture・文書・version bumpを含む。�
 4. M5前半のdraft機能はprerelease限定とし、publishをv2完成条件から黙って除外しない。
 5. 縮退版をv2-currentへ昇格する場合は、scope/要件/operation catalogを改訂して
    Design GateとPromotion Gateを再裁定する。
+6. 各縮退出荷境界は、その境界自身までの独立canaryがgreenの場合だけ公開する。
 
 component release、Projects、merge queueはMust出口を満たした後に個別昇格する。
 

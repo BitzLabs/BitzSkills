@@ -1,6 +1,6 @@
 ---
 id: FLW-NFR-003
-version: 1.0
+version: 1.1
 status: draft
 domain: execution
 priority: high
@@ -25,4 +25,4 @@ confidence: high
 - **検証手段**: 全writeの副作用直前、直後、post-check中へfault injectionし、終了状態、完了段階、後続mutation、補償操作をunit testで検証する。
 - **Revision History**:
   - 1.0 (2026-07-29) FLW-DSN-012/013とFLW-REV-002の残余リスクからdraft起票
-  - 1.0 (2026-07-29) draftレビューで冪等性、同一host排他、cross-host制約をFLW-NFR-005/006、FLW-CON-004へ分離
+  - 1.1 (2026-07-29) draftレビューで冪等性、同一host排他、cross-host制約をFLW-NFR-005/006、FLW-CON-004へ分離

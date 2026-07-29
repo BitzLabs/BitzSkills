@@ -42,7 +42,8 @@ bitz-sdd側の責務とする。
 - cross-host競合はsingle coordinator、marker重複検出、canary即時停止で統制する。
 - flow-doctorとflow-coreの共通result envelopeをM1のgolden release gateで検査する。
 - M1〜M5の最大PR数、最大作業session数、縮退可能な出荷境界をFLW-DSN-014 v1.1と
-  FLW-FR-012 v1.2で定量化し、上限到達時は人間の継続・scope縮小・No-Go裁定を要求する。
+  FLW-FR-012 v1.2で定量化した。FLW-DSN-014 v1.2とFLW-FR-012 v1.3では初期budgetと位置づけ、
+  milestone開始時の実績記録と人間による予算再確認、上限到達時の継続・scope縮小・No-Go裁定を要求する。
 
 ## 次工程
 

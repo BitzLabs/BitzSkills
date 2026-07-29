@@ -1,6 +1,6 @@
 ---
 id: FLW-CON-002
-version: 1.0
+version: 1.1
 status: draft
 domain: governance
 priority: high
@@ -26,4 +26,4 @@ confidence: high
 - **検証手段**: schema欠落、plan副作用、snapshot変化、operation ID不一致、effects逸脱、未登録actionをunit testで検証する。
 - **Revision History**:
   - 1.0 (2026-07-29) FLW-FR-001のv2後継安全境界としてdraft起票
-  - 1.0 (2026-07-29) draftレビューで明示承認をFLW-CON-005、破壊操作とcleanupをFLW-CON-006へ分離し、出力安全はFLW-NFR-002へ一本化
+  - 1.1 (2026-07-29) draftレビューで明示承認をFLW-CON-005、破壊操作とcleanupをFLW-CON-006へ分離し、出力安全はFLW-NFR-002へ一本化

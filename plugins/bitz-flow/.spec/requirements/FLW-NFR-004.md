@@ -1,6 +1,6 @@
 ---
 id: FLW-NFR-004
-version: 1.0
+version: 1.1
 status: draft
 domain: tooling
 priority: high
@@ -27,4 +27,4 @@ confidence: high
 - **検証手段**: Linux、macOS、Windowsの正常終了、timeout、grace超過、孫process、output overflow、postcondition reserve、未対応capabilityをunit testで検証する。
 - **Revision History**:
   - 1.0 (2026-07-29) FLW-DSN-004/013とPython 3固定裁定からdraft起票
-  - 1.0 (2026-07-29) draftレビューでatomic file I/OをFLW-NFR-007へ分離し、process実行可搬性へ限定
+  - 1.1 (2026-07-29) draftレビューでatomic file I/OをFLW-NFR-007へ分離し、process実行可搬性へ限定

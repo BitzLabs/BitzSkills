@@ -1,6 +1,6 @@
 ---
 id: FLW-CON-004
-version: 1.0
+version: 1.1
 status: draft
 domain: governance
 priority: high
@@ -23,6 +23,7 @@ confidence: high
   - WHEN M3またはM4のcanaryを実行する THEN bitz-flowはWorkUnitごとのcoordinator重複割当0件とmarker重複0件を記録すること SHALL
   - WHEN canaryでcoordinator重複割当またはmarker重複を1件以上検出する THEN bitz-flowは当該milestoneのPromotion Gateを`BLOCKED`にすること SHALL
 - **検証閾値**: coordinator重複割当0件、marker重複0件。1件でも検出した場合はPromotion Gateを停止する。
-- **検証手段**: 2つのhostまたはcloneを模擬した競合fixtureとM3/M4 canary manifestを用い、plan表示、UNSUPPORTED縮退、重複検出、Promotion Gate停止をbenchmarkで検証する。
+- **検証手段**: 2つのhostまたはcloneを模擬した競合fixtureと独立したM3 Issue/SDD・M4 PR canary manifestを用い、plan表示、UNSUPPORTED縮退、重複検出、milestone別Promotion Gate停止をbenchmarkで検証する。
 - **Revision History**:
+  - 1.1 (2026-07-29) M3とM4のcanary manifestを独立した縮退出荷証跡へ分離
   - 1.0 (2026-07-29) FLW-NFR-003とFLW-REV-002 SYN-101からcross-host運用境界を分離してdraft起票

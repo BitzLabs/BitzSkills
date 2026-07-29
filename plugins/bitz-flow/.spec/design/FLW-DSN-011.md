@@ -2,7 +2,7 @@
 id: FLW-DSN-011
 title: "v1からv2への規範移行設計"
 status: active
-version: 1.2
+version: 1.4
 updated: 2026-07-29
 owner: hide
 implements: FLW-FR-011, FLW-FR-012, FLW-CON-001, FLW-CON-006
@@ -52,6 +52,7 @@ v2は実装名を継承しないが、次を破棄しない。
 | FLW-FR-001 | FLW-FR-004 | Git read、診断、fetchの副作用分離 |
 | FLW-FR-001 | FLW-FR-006 | worktree-first lifecycleとfinish |
 | FLW-FR-001 | FLW-FR-007 | branch audit |
+| FLW-FR-001 | FLW-FR-009 | PR preflightと段階的PRライフサイクル |
 | FLW-FR-001 | FLW-CON-006 | 破壊操作とcleanupの安全境界 |
 | FLW-FR-002 | FLW-FR-011 | read-onlyなv2環境診断 |
 
@@ -61,13 +62,13 @@ Promotion Gate承認後、人間が旧要件をdeprecatedへ遷移させる同�
 
 ## spec-issue継承
 
-| issue | v2で参照する設計 | 現時点の扱い |
-|---|---|---|
-| SI-FLW-001 | FLW-DSN-006/008/011 | accepted・v1実施済み。安全不変条件を継承 |
-| SI-FLW-002 | FLW-DSN-012/013 | accepted。Issue起票・ラベル・PR連携へ継承 |
-| SI-FLW-003 | FLW-DSN-006/012 | accepted。worktree命名・配置へ継承 |
-| SI-FLW-004 | FLW-DSN-006/012 | accepted。worktree後始末へ継承 |
-| SI-FLW-005 | FLW-DSN-008/013 | accepted。releaseとChangelogへ継承 |
+| issue | v2で参照する設計 | v2要件 | accepted内容 |
+|---|---|---|---|
+| SI-FLW-001 | FLW-DSN-006/008/011 | 複合後継候補 | v1実施済みの安全不変条件 |
+| SI-FLW-002 | FLW-DSN-005/012/013 | FLW-FR-004 | fetchとinspectの分離、鮮度証跡、工程別診断 |
+| SI-FLW-003 | FLW-DSN-006/012 | FLW-FR-007 | 状態変更を行わないbranch audit |
+| SI-FLW-004 | FLW-DSN-006/012 | FLW-FR-006 / FLW-CON-006 | branch-only WorkUnitと安全なcleanup |
+| SI-FLW-005 | FLW-DSN-008/013 | FLW-FR-009 | prepareからpost-mergeまでの段階的PRライフサイクル |
 
 SI-FLW-002〜005は2026-07-29の人間裁定を代理記録したaccepted issueであり、裁定参照は
 `.spec/reports/decision-2026-07-29-bitz-flow-v2-design-gate.md`とする。Design Gate自体が
@@ -105,11 +106,14 @@ spec-issueのacceptを暗黙に兼ねたのではなく、同じユーザー指�
 |---|---|---|---|
 | M0 | 3platformの保存fixture + 本repo read-only | 10trial/operation | raw fallback、状態変更、秘密値出力が1件 |
 | M1/M2 | 本repoの専用worktree、10 WorkUnit | 各operationのDONE/PARTIAL/INDETERMINATE | 誤変更1件、未収束INDETERMINATE1件 |
-| M3/M4 | 専用GitHub canary repo、10 Issue/PR flow | marker重複、CI/head判定、復旧時間 | 重複・誤merge・raw fallback各1件 |
+| M3 | 専用GitHub canary repo、10 Issue/SDD flow | capability、Issue marker、link reconcile、復旧時間 | 重複Issue・marker重複・link誤判定・raw fallback各1件 |
+| M4 | 専用GitHub canary repo、10 PR flow | PR marker、CI/head判定、partialからの復旧時間 | 重複PR・誤merge・CI/head誤判定・raw fallback各1件 |
 | M5 | canary repoのdraft 10件 + prerelease publish 1件 | tag/notes/target一致 | 誤tag・誤publish・notes不一致各1件 |
 
 - canary owner/rollback ownerはbitz-flow maintainer（初期owner: hide）。
 - write canaryは各milestone最低7日または10 flowの長い方を観測する。
+- 縮退出荷境界は、その境界自身の独立canaryがgreenの場合だけ公開できる。M3のgreenを
+  M4の一部実行で代用せず、M4未完了でもM3の10 Issue/SDD flowだけで判定できるようにする。
 - SFCR/InvocationはFLW-DSN-014閾値を下回った時点でpromotionを停止する。
 - canaryで作成したIssue/PR/release/worktreeは自動削除せず`bitz-flow-canary`として保全・一覧化する。
 - rollbackは3platformそれぞれでmarketplace/repository revisionとplugin versionを直前v1へpinし、
