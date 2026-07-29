@@ -111,3 +111,71 @@ def test_bump_invalid_semver(make_repo, copy_script):
     assert cc_file.read_text(encoding="utf-8") == content
     assert agy_file.read_text(encoding="utf-8") == content
     assert codex_file.read_text(encoding="utf-8") == content
+
+
+# ---- CORE-FR-018: 副作用を持つ運用スクリプトの引数契約 ----------------------
+
+
+def _versions(repo: Path) -> set[str]:
+    return {
+        json.loads((repo / "plugins/demo" / rel).read_text(encoding="utf-8"))["version"]
+        for rel in (".claude-plugin/plugin.json", "plugin.json", ".codex-plugin/plugin.json")
+    }
+
+
+def test_bump_unknown_argument_is_rejected_without_mutating(make_repo, copy_script):
+    """未知引数は拒否し、マニフェストを一切書き換えない"""
+    repo = make_repo()
+    script = copy_script(repo, BUMP_SCRIPT)
+
+    res = subprocess.run(
+        [sys.executable, str(script), "demo", "minor", "--bogus-flag"],
+        capture_output=True, text=True,
+    )
+
+    assert res.returncode != 0
+    assert "unrecognized arguments" in res.stderr
+    assert _versions(repo) == {"0.1.0"}
+
+
+def test_bump_help_after_positional_args_does_not_bump(make_repo, copy_script):
+    """--help は引数位置に関わらず効き、bump を実行しない（SI-CORE-036 の事故形状）"""
+    repo = make_repo()
+    script = copy_script(repo, BUMP_SCRIPT)
+
+    res = subprocess.run(
+        [sys.executable, str(script), "demo", "minor", "--help"],
+        capture_output=True, text=True,
+    )
+
+    assert res.returncode == 0
+    assert "usage:" in res.stdout
+    assert _versions(repo) == {"0.1.0"}
+
+
+def test_bump_short_help_does_not_bump(make_repo, copy_script):
+    repo = make_repo()
+    script = copy_script(repo, BUMP_SCRIPT)
+
+    res = subprocess.run(
+        [sys.executable, str(script), "demo", "-h"], capture_output=True, text=True
+    )
+
+    assert res.returncode == 0
+    assert _versions(repo) == {"0.1.0"}
+
+
+def test_bump_dry_run_reports_without_writing(make_repo, copy_script):
+    """--dry-run は新旧 version を出すだけで3マニフェストを書き換えない"""
+    repo = make_repo()
+    script = copy_script(repo, BUMP_SCRIPT)
+
+    res = subprocess.run(
+        [sys.executable, str(script), "demo", "minor", "--dry-run"],
+        capture_output=True, text=True,
+    )
+
+    assert res.returncode == 0, res.stderr
+    assert "0.1.0 -> 0.2.0" in res.stdout
+    assert "書き換えは行っていません" in res.stdout
+    assert _versions(repo) == {"0.1.0"}

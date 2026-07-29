@@ -3,7 +3,7 @@ id: SI-CORE-036
 raised_by: SI-SDD-026 実装時の実事故（bump_version.py が --help を無視して bump を実行）
 target: 全リポジトリスクリプトの引数解析（argparse への統一と未知引数の拒否）
 proposed_change_type: new
-status: open
+status: accepted
 ---
 - **目的**: 副作用のあるスクリプトが、ユーザーが安全のために付けたフラグを黙って無視して
   変更を実行する。`scripts/bump_version.py` は `sys.argv[1]` でしか `-h` / `--help` を見ておらず、

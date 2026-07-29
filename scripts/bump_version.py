@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """プラグインの version を3つのマニフェストで同時に bump する。
 
-使い方: python3 scripts/bump_version.py <plugin名> [major|minor|patch]
+使い方: python3 scripts/bump_version.py <plugin名> [major|minor|patch] [--dry-run]
 
 対象:
   plugins/<name>/.claude-plugin/plugin.json  (Claude Code 用)
@@ -11,6 +11,7 @@
 3ファイルは常に同じ version でなければならない (AGENTS.md 規約)。
 bump 後、配下スキルの metadata.updated が古いままの場合は警告する。
 """
+import argparse
 import json
 import re
 import sys
@@ -32,13 +33,38 @@ def bump(version: str, part: str) -> str:
     return f"{major}.{minor}.{patch + 1}"
 
 
-def main() -> None:
-    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
-        sys.exit(__doc__)
-    name = sys.argv[1]
-    part = sys.argv[2] if len(sys.argv) > 2 else "patch"
-    if part not in ("major", "minor", "patch"):
-        sys.exit(f"エラー: bump 種別は major|minor|patch のいずれか: {part}")
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """引数を解析する（CORE-FR-018）。
+
+    argparse を使うのは、未知引数を黙って無視したまま bump を適用しないため。
+    手書きの sys.argv 解析では `<name> minor --help` が help を出さずに
+    マニフェストを書き換えていた（SI-CORE-036）。
+    """
+    parser = argparse.ArgumentParser(
+        prog="bump_version.py",
+        description="プラグインの version を3つのマニフェストで同時に bump する。",
+        epilog="3ファイルは常に同じ version でなければならない (AGENTS.md 規約)。",
+    )
+    parser.add_argument("name", help="プラグイン名（plugins/<name>/）")
+    parser.add_argument(
+        "part",
+        nargs="?",
+        default="patch",
+        choices=("major", "minor", "patch"),
+        help="bump 種別（既定: patch）",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="新旧 version を表示するだけでマニフェストを書き換えない",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> None:
+    args = parse_args(argv)
+    name = args.name
+    part = args.part
 
     plugin_dir = REPO / "plugins" / name
     manifests = [
@@ -56,6 +82,12 @@ def main() -> None:
         print(f"警告: 3マニフェストの version が不一致でした {sorted(versions)} — 大きい方を基準にします")
     base = max(versions, key=lambda v: [int(x) for x in v.split(".")])
     new = bump(base, part)
+
+    if args.dry_run:
+        for p in data:
+            print(f"  {p.relative_to(REPO)}: {base} -> {new}")
+        print(f"\ndry-run: {name} は {new} に bump されます（書き換えは行っていません）")
+        return
 
     for p, d in data.items():
         d["version"] = new
