@@ -4,7 +4,7 @@ version: 1.0
 status: draft
 domain: execution
 priority: high
-origin: FLW-DSN-013
+origin: 2026-07-29 ユーザー指示（draft要件をFLW-NFR-003から順番に解決）
 verification_method: unit-test
 derived_from:
 supersedes:

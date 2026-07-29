@@ -4,7 +4,7 @@ version: 1.0
 status: draft
 domain: tooling
 priority: high
-origin: FLW-DSN-003
+origin: .spec/reports/decision-2026-07-29-bitz-flow-v2-design-gate.md
 verification_method: unit-test
 derived_from:
 supersedes:
