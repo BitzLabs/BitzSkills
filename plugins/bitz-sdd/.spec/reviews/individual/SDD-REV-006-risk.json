@@ -1,0 +1,56 @@
+{
+  "perspective": "risk",
+  "review_scope": "SDD-REV-006: bitz-sdd 全体の振り返り（Design 層の欠落・逆起票要件・ライフサイクル運用実績・過去レビュー指摘の消化状況）",
+  "dimensions": [
+    {
+      "name": "分散システムリスク",
+      "weight": 0.3,
+      "score": "N/A",
+      "findings": []
+    },
+    {
+      "name": "障害モード分析",
+      "weight": 0.3,
+      "score": 2,
+      "findings": [
+        {
+          "id": "RSK-601",
+          "severity": "critical",
+          "location": ".spec/STATE.md · 全ワークスペースの requirements",
+          "title": "代行遷移の唯一の担保である Promotion Gate が一度も動いていない",
+          "description": "代行可視化経路は『裁定の真正性は機械検証されない。Promotion Gate で人間が decision-ref を確認する』ことを唯一の担保として設計されている（SDD-FR-145）。実測では bitz-sdd は63件すべて verified 止まりで promoted 0件、bitz-env 19件・bitz-flow 2件・bitz-ddd 2件も0件である。promoted 実績はルートの26件のみ。一方で代行遷移は bitz-sdd で14件・ルートで28件まで蓄積した。担保が設計上1点に集約されているのに、その1点が動作していない。SI-SDD-028 として起票済み。",
+          "recommendation": "未検分の代行遷移を滞留として可視化し、滞留件数と最古の滞留日数を計測する。verified のまま滞留し続けることが正常状態でないことを lifecycle.md に明記する。"
+        },
+        {
+          "id": "RSK-602",
+          "severity": "major",
+          "location": "skills/sdd-docs/scripts/sdd_sync.py:42",
+          "title": "SDD-REV-004 の P1（mtime 精度）が未解消のまま残存する",
+          "description": "get_mtime は st_mtime（float 秒）で比較する一方、atomic_write_document は st_mtime_ns で書き込む。同一実装内で精度が非対称であり、粗い粒度のファイルシステムでは同一秒内の変更を検出できない。SDD-REV-004 が P1 として指摘してから7日経過したが、spec-issue 化も実装変更も行われていない。",
+          "recommendation": "比較側を st_mtime_ns へ揃える。または mtime 依存をやめて内容ハッシュ比較へ移行する。いずれも公開契約（SDD-FR-100）の改訂を伴うため設計フェーズで裁定する。"
+        }
+      ]
+    },
+    {
+      "name": "Saga設計の妥当性",
+      "weight": 0.25,
+      "score": "N/A",
+      "findings": []
+    },
+    {
+      "name": "データ整合性リスク",
+      "weight": 0.15,
+      "score": 3,
+      "findings": [
+        {
+          "id": "RSK-603",
+          "severity": "major",
+          "location": "skills/sdd-docs/scripts/sdd_sync.py",
+          "title": "sdd_sync と migrate_docs が workspace mutation lock に参加しない",
+          "description": "spec_update 等の変更 CLI は workspace mutation lock へ参加して直列化されるが、sdd_sync.py は lock に一切参加していない（grep 0件）。SDD-REV-004 の SYN-005 が指摘済みで、現在も未対応。並行実行で lost update が起こりうる。",
+          "recommendation": "sdd_sync / migrate_docs を mutation lock へ参加させるか、参加しないことを設計判断として明記し適用範囲を限定する。"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "perspective": "data-integrity",
+  "review_scope": "SDD-REV-006: bitz-sdd 全体の振り返り（Design 層の欠落・逆起票要件・ライフサイクル運用実績・過去レビュー指摘の消化状況）",
+  "dimensions": [
+    {
+      "name": "トランザクション安全性",
+      "weight": 0.4,
+      "score": 4,
+      "findings": []
+    },
+    {
+      "name": "データ整合性",
+      "weight": 0.35,
+      "score": 3,
+      "findings": [
+        {
+          "id": "RVC-605",
+          "severity": "minor",
+          "location": "plugins/bitz-sdd/.spec/verification/",
+          "title": "検証証跡の真正性は commit 紐づけのみに依存する",
+          "description": "証跡は誰が記録したかを検証せず、記録時 commit との紐づけと CI での再実行可能性が担保になる。設計上の意図的な限界だが、SDD-FR-153 は証跡が宣言どおりの検証手段で得られたかも検査しないため、宣言と実測の突合が1段欠けている。SI-SDD-030 として起票済み。",
+          "recommendation": "証跡 schema に検証手段を持たせ verification_method と突合する。schema の利用実績が1件のうちに行えば移行不要である。"
+        }
+      ]
+    },
+    {
+      "name": "スキーマ設計品質",
+      "weight": 0.25,
+      "score": 3,
+      "findings": [
+        {
+          "id": "RVC-606",
+          "severity": "major",
+          "location": "skills/sdd-test/scripts/spec_verify.py · skills/sdd-core/scripts/spec_inspect.py",
+          "title": "verification_method は要件単位、証跡は実行単位でカーディナリティが一致しない",
+          "description": "要件は自身の検証手段を1つ宣言するが、実際の検証は1回の実行が複数要件を同時に覆う。証跡の requirements は単なる配列であり、検証手段の異なる要件を同一実行へ束ねられる。集約境界の設計が行われないまま実装された結果である。",
+          "recommendation": "設計フェーズで要件と証跡の集約境界を定義する。SI-SDD-030 の裁定材料とする。"
+        }
+      ]
+    }
+  ]
+}

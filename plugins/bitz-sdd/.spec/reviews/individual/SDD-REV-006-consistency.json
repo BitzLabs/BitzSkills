@@ -1,0 +1,59 @@
+{
+  "perspective": "consistency",
+  "review_scope": "SDD-REV-006: bitz-sdd 全体の振り返り（Design 層の欠落・逆起票要件・ライフサイクル運用実績・過去レビュー指摘の消化状況）",
+  "dimensions": [
+    {
+      "name": "構造整合",
+      "weight": 0.35,
+      "score": 2,
+      "findings": [
+        {
+          "id": "RVC-601",
+          "severity": "major",
+          "location": "plugins/bitz-sdd/.spec/design/ · .spec/",
+          "title": "sdd-core が定義する .spec 構成に対し domain-model.md と ROADMAP.md が欠落する",
+          "description": "sdd-core SKILL.md はディレクトリ構成として .spec/ROADMAP.md と design/（domain-model 等）を定義するが、bitz-sdd 自身の .spec には ROADMAP.md が無く、design/ は SDD-DSN-001〜005 の個別ノート5件と worksheet.md だけで domain-model.md を持たない。構成の定義者が自らの構成を満たしていない。",
+          "recommendation": "Design フェーズを後付けし domain-model.md と ROADMAP.md を作成する。作成しない選択をする場合は PROJECT.md に理由と適用範囲を明記して、欠落と意図的除外を区別可能にする。"
+        },
+        {
+          "id": "RVC-602",
+          "severity": "major",
+          "location": "plugins/bitz-sdd/.spec/requirements/（67件中31件）",
+          "title": "要件の46%が SKILL.md からの逆起票で、設計を経由していない",
+          "description": "origin に reverse-derived を持つ要件が31件（全67件の46%）ある。実装から起票されたため、要件が実装の写像になり、設計判断の記録を伴わない。SDD-REV-004 の RVC-201/301 が指摘した『対応設計の逆リンクが一部要件にしかない』状態の根本原因でもあり、現在も対応設計を持つ要件は2件のみである。",
+          "recommendation": "逆起票31件を『契約として妥当 / 実装詳細を要件化してしまっている / 廃止すべき』に分類する。書き直しではなく分類とし、後2者を deprecated へ送る。"
+        }
+      ]
+    },
+    {
+      "name": "トレーサビリティ",
+      "weight": 0.35,
+      "score": 4,
+      "findings": [
+        {
+          "id": "RVC-603",
+          "severity": "minor",
+          "location": "plugins/bitz-sdd/.spec/requirements/",
+          "title": "要件→タスク→テスト→証跡のトレースは確立している",
+          "description": "spec_inspect による孤児・幽霊・未参照検出、SDD-FR-146〜148 のトレース精度改善、SDD-FR-151〜154 の検証証跡により、下流のトレースは機械検証されている。63件の verified はいずれも実行された検証に裏づけられる。欠けているのは上流（設計→要件）の一方向のみである。",
+          "recommendation": "既存の下流トレースは資産として保全し、作り直さない。設計層の追加は既存要件への逆リンク付与で接続する。"
+        }
+      ]
+    },
+    {
+      "name": "用語一貫性",
+      "weight": 0.3,
+      "score": 3,
+      "findings": [
+        {
+          "id": "RVC-604",
+          "severity": "major",
+          "location": "skills/sdd-core/references/verification.md · adoption-metrics.md",
+          "title": "manual-check が統制語彙にあるが実施記録の形式が未定義",
+          "description": "verification_method の統制語彙に manual-check があり全体の42.5%（51/120）を占めるが、verification.md は『要件内に列挙した手順を人間が実施し記録』とだけ述べ、記録先も書式も定義していない。実施したか否かを機械はもちろん人間も判定できない。SI-SDD-029 として起票済み。",
+          "recommendation": "SI-SDD-029 の裁定で実施記録の形式を定義する。定義しない場合は manual-check を統制語彙から外し、検証手段として宣言できないようにする。"
+        }
+      ]
+    }
+  ]
+}

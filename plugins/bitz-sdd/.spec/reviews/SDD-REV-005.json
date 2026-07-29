@@ -1,0 +1,50 @@
+{
+  "review_id": "SDD-REV-005",
+  "verdict": "PASS",
+  "aggregate_score": 3.94,
+  "perspective_scores": {
+    "consistency": 4.35,
+    "data-integrity": 4.00,
+    "operations": 4.00,
+    "risk": 3.33,
+    "business": 4.35
+  },
+  "findings_summary": {
+    "total": 2,
+    "after_dedup": 2,
+    "by_priority": {"P0": 0, "P1": 1, "P2": 0, "P3": 1},
+    "by_severity": {"critical": 0, "major": 1, "minor": 1, "info": 0}
+  },
+  "findings": [
+    {
+      "id": "SYN-001",
+      "priority": "P1",
+      "source_ids": ["RSK-201"],
+      "perspectives": ["risk"],
+      "title": "人間裁定はCLI外部の統制に依存する",
+      "recommendation": "SI-CORE-035で保証downgradeを明示的に受容するまでCORE-FR-005をsupersedeしない。必要な環境ではhost permissionsまたは検証可能なreceiptを別要件化する。"
+    },
+    {
+      "id": "SYN-002",
+      "priority": "P3",
+      "source_ids": ["RSK-402"],
+      "perspectives": ["risk"],
+      "title": "非協調writerの最終競合窓は保証外として残る",
+      "recommendation": "全対応writerの共通lock参加、status・STATEの手編集禁止、旧版CLIとの並行実行禁止をlifecycleとテストへ反映する。"
+    }
+  ],
+  "resolved_during_review": [
+    "STATE hashの自己参照とjournal payload不足",
+    "scaffold生成中断時の部分ファイル",
+    "lock公開・cleanupのdurability順序",
+    "hash・canonical JSON・Base64のbyte契約",
+    "target head照合のTOCTOU",
+    "媒体喪失とrepository writerの信頼境界"
+  ],
+  "gate_preconditions": [],
+  "gate_decision": {
+    "status": "approved",
+    "date": "2026-07-27",
+    "actor": "user（チャット裁定）"
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "perspective": "business",
+  "review_scope": "SDD-REV-006: bitz-sdd 全体の振り返り（Design 層の欠落・逆起票要件・ライフサイクル運用実績・過去レビュー指摘の消化状況）",
+  "dimensions": [
+    {
+      "name": "要件トレーサビリティ",
+      "weight": 0.35,
+      "score": 4,
+      "findings": [
+        {
+          "id": "BIZ-601",
+          "severity": "info",
+          "location": "plugins/bitz-sdd/.spec/requirements/ · .spec/verification/",
+          "title": "63件の verified は機械検証つきの資産であり、作り直しは価値破壊になる",
+          "description": "要件はタスク・テスト・（新規に）実行証跡へ接続され、spec_inspect が孤児・幽霊・未参照を機械検出する。設計層を後付けする作業において、この下流トレースを破棄すると検証済みの状態がゼロに戻る。",
+          "recommendation": "設計の後付けは既存要件の置き換えではなく照合として行う。乖離が判明した要件のみ deprecated へ送る。"
+        }
+      ]
+    },
+    {
+      "name": "NFR定量化",
+      "weight": 0.3,
+      "score": 3,
+      "findings": [
+        {
+          "id": "BIZ-602",
+          "severity": "minor",
+          "location": "plugins/bitz-sdd/.spec/requirements/",
+          "title": "verification_method の分布が自動検証から偏っている",
+          "description": "全ワークスペース合計120件のうち manual-check 51件（42.5%）・example-test 38件・unit-test 30件・benchmark 1件。定量閾値を要求する benchmark / load-test はほぼ使われておらず、NFR の定量化が進んでいない。",
+          "recommendation": "SI-SDD-029 の棚卸しで、manual-check のうち自動化可能なものを他の検証手段へ移す。"
+        }
+      ]
+    },
+    {
+      "name": "ステークホルダー整合",
+      "weight": 0.2,
+      "score": 2,
+      "findings": [
+        {
+          "id": "BIZ-603",
+          "severity": "major",
+          "location": "plugins/bitz-sdd/.spec/discovery/scope.md",
+          "title": "Discovery の宣言と実体が乖離し、更新が停止している",
+          "description": "discovery の最終更新は 2026-07-12 で、SDD-REV-004（07-22）が SYN-007 として『07-22 の新規機能を反映していない』と指摘したまま、07-29 現在も同じ状態にある。とくに scope.md は sdd-git を『bitz-flow へ移管予定』と宣言するが、bitz-flow は 0.3.0・19要件で実在するのに sdd-git は bitz-sdd 内に残る。Open Question『bitz-sdd↔bitz-flow 依存境界の粒度』も未決である。",
+          "recommendation": "Discovery を実体へ追随させる（破棄せず改訂）。bitz-flow との境界は同プラグインの設計が並行進行中のため、決定は後段へ回す。"
+        },
+        {
+          "id": "BIZ-604",
+          "severity": "major",
+          "location": "plugins/bitz-sdd/skills/（14スキル）",
+          "title": "14スキルの責務分界が未定義のまま15個目を追加しようとしている",
+          "description": "bitz-sdd は14スキルを持つが、スキル間の責務境界を定義した設計成果物が無い。唯一 accepted 未着手の SI-SDD-013 は『新 sdd-usecase スキルの責務分界を Design Gate で確定する』であり、境界の定義なしに追加すると分界問題が15スキルに拡大する。",
+          "recommendation": "境界づけられたコンテキストとして14スキルを分類してから SI-SDD-013 を裁定する。scope.md が『本格 DDD 手法は bitz-ddd の責務』と宣言しているため、モデリングの道具として bitz-ddd を用いること自体は宣言と整合する。"
+        }
+      ]
+    },
+    {
+      "name": "ROI・実現可能性",
+      "weight": 0.15,
+      "score": 4,
+      "findings": [
+        {
+          "id": "BIZ-605",
+          "severity": "info",
+          "location": "plugins/bitz-sdd/.spec/discovery/（456行・6成果物）",
+          "title": "Discovery への投資は無駄になっていない",
+          "description": "vision / metrics / scope / personas / positioning / assumptions の6成果物が揃い、仮説検証ゲートまで存在する。内容も具体で、bitz-ddd・bitz-env への責務委譲や sdd-git 移管方針を既に予見している。欠けているのは Discovery ではなく Design である。",
+          "recommendation": "『駆け足だった』という認識を Design 層に限定し、Discovery は改訂して再利用する。"
+        }
+      ]
+    }
+  ]
+}
