@@ -42,8 +42,9 @@
           "severity": "major",
           "location": "plugins/bitz-sdd/.spec/discovery/scope.md",
           "title": "Discovery の宣言と実体が乖離し、更新が停止している",
-          "description": "discovery の最終更新は 2026-07-12 で、SDD-REV-004（07-22）が SYN-007 として『07-22 の新規機能を反映していない』と指摘したまま、07-29 現在も同じ状態にある。とくに scope.md は sdd-git を『bitz-flow へ移管予定』と宣言するが、bitz-flow は 0.3.0・19要件で実在するのに sdd-git は bitz-sdd 内に残る。Open Question『bitz-sdd↔bitz-flow 依存境界の粒度』も未決である。",
-          "recommendation": "Discovery を実体へ追随させる（破棄せず改訂）。bitz-flow との境界は同プラグインの設計が並行進行中のため、決定は後段へ回す。"
+          "description": "discovery の最終更新は 2026-07-12 で、SDD-REV-004（07-22）が SYN-007 として『07-22 の新規機能を反映していない』と指摘したまま、07-29 現在も同じ状態にある。とくに scope.md は sdd-git を『bitz-flow へ移管予定』と宣言するが、bitz-flow は 0.3.0 のプラグインとして実在し main 上に要件2件・設計成果物15件を持つのに sdd-git は bitz-sdd 内に残る。Open Question『bitz-sdd↔bitz-flow 依存境界の粒度』も未決である。",
+          "recommendation": "Discovery を実体へ追随させる（破棄せず改訂）。bitz-flow との境界は同プラグインの設計が並行進行中のため、決定は後段へ回す。",
+          "correction": "2026-07-29 訂正: 初版は要件数を19件としていたが、これは並行作業中の worktree の未コミット状態を作業ツリー越しに読んだ誤りだった。main の実体は2件。指摘の実質（bitz-flow は実在するのに sdd-git が未移管）は変わらない。"
         },
         {
           "id": "BIZ-604",

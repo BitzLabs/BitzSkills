@@ -117,8 +117,15 @@ SDD-FR-153 が manual-check を機械検査から二重に免除しており、*
 ### SYN-007 [BIZ-603] Discovery が 2026-07-12 で停止し宣言と実体が乖離している
 
 SDD-REV-004 が指摘済みで未対応。とくに `scope.md` は sdd-git を
-「bitz-flow へ移管予定」と宣言するが、**bitz-flow は 0.3.0・19要件で実在するのに
-sdd-git は bitz-sdd 内に残る**。Open Question「bitz-sdd↔bitz-flow 依存境界の粒度」も未決。
+「bitz-flow へ移管予定」と宣言するが、**bitz-flow は 0.3.0 のプラグインとして実在し
+main 上に要件2件・設計成果物15件を持つのに、sdd-git は bitz-sdd 内に残る**。
+Open Question「bitz-sdd↔bitz-flow 依存境界の粒度」も未決。
+
+> **訂正（2026-07-29）**: 初版は要件数を「19件」と記載していたが、これは並行作業中の
+> worktree（`BitzSkills-wt/bitz-flow-v2`）の未コミット状態を、共有された作業ツリー越しに
+> 読んだ誤りだった。main の実体は2件である。**測定値を作業ツリーから読むと、
+> 並行作業の途中状態を確定値として記録してしまう** — 本訂正自体が SI-SDD-033 の実例である。
+> 指摘の実質（bitz-flow は実在するのに sdd-git が未移管）は変わらない。
 
 ### SYN-008 [BIZ-604] 14スキルの責務分界が未定義のまま15個目を追加しようとしている
 
