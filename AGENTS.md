@@ -74,9 +74,10 @@ scripts/             # エージェント共用の運用スクリプト（bump /
 
 ## 定型手順（手作業せずスクリプトを使う）
 
-- **version bump**: `python3 scripts/bump_version.py <plugin名> [major|minor|patch]`
+- **version bump**: `python3 scripts/bump_version.py <plugin名> [major|minor|patch] [--dry-run]`
   — 3つのマニフェスト（`.claude-plugin/plugin.json`、`plugin.json`、
-  `.codex-plugin/plugin.json`）を必ず同じ値に保つ
+  `.codex-plugin/plugin.json`）を必ず同じ値に保つ。
+  `--dry-run` は新旧 version を表示するだけで書き換えない（CORE-FR-018）
 - **リリース前検証**: `python3 scripts/release_check.py`
   — version 整合・marketplace 整合・frontmatter 必須項目・プラグイン validate を一括チェック
 - **SDD ツールの実行**: `scripts/spec <tool> [args...]`（`tool` は `inspect`/`scaffold`/`status`/`update`）。
