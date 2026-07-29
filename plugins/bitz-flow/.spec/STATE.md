@@ -30,3 +30,4 @@
 - 2026-07-29 v2 draft要件: `origin`を起票契機、設計側`implements`を要件対応として役割分離し、`origin: FLW-DSN-*`と同一設計の`implements`による循環を解消（codex）
 - 2026-07-29 v2後継候補: draft段階の`supersedes`を解除し、Promotion Gate後のdeprecated裁定と同じ変更セットで両方向relationを発効する規則へ統一（codex）
 - 2026-07-29 Discovery成果物: Gate Goはフェーズ進行裁定でありDSCのactive化ではないため、draftを維持し裁定記録を完了根拠とする解釈を明文化（codex）
+- 2026-07-29 M1〜M5 timebox: 最大PR/session予算、上限到達時の人間再裁定、M2未完了時はM0へ戻す安全な縮退出荷境界を定量化（codex）

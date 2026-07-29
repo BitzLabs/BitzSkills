@@ -1,6 +1,6 @@
 ---
 id: FLW-FR-012
-version: 1.1
+version: 1.2
 status: draft
 domain: governance
 priority: high
@@ -19,6 +19,9 @@ confidence: high
   - WHEN v2 Promotion Gateが未完了である THEN bitz-flowはFLW-FR-001/002とFLW-DSN-001をcurrent契約として扱うこと SHALL
   - WHILE v2後継候補がdraftまたはapprovedである THE SYSTEM SHALL 後継関係を設計本文だけに保持し、候補側`supersedes`と旧要件側`superseded_by`を空欄に保つ
   - WHEN v2 prereleaseを検証する THEN bitz-flowはM0からM5の各出口条件と即時停止条件をmilestone順に適用すること SHALL
+  - WHEN M1からM5の各milestoneを開始する THEN bitz-flowはFLW-DSN-014で定めた最大PR数、最大作業session数、出口、縮退出荷境界をrun manifestへ記録すること SHALL
+  - WHEN PR数または作業session数のいずれかが出口未達のまま上限に達する THEN bitz-flowは後続作業を`BLOCKED`にして継続、scope縮小、No-Goの人間裁定を要求すること SHALL
+  - WHEN 人間が縮退出荷を裁定する THEN bitz-flowは直前の安全な境界だけを公開し、未完了operationを`UNSUPPORTED`にして生コマンドfallbackを返さないこと SHALL
   - WHEN migration診断を実行する THEN bitz-flowは旧skill名、旧script名、bitz-sdd委譲先、plugin version、result schemaの参照を列挙すること SHALL
   - WHEN v2 canaryが停止条件に達する THEN bitz-flowは後続promotionを停止して直前v1のpin手順を返すこと SHALL
   - WHEN rollbackを実行する THEN bitz-flowはv2が作成したIssue、PR、release、worktreeを自動削除しないこと SHALL
@@ -27,5 +30,6 @@ confidence: high
   - WHEN 人間が旧要件をdeprecatedへ遷移させる THEN bitz-flowは同じ変更セットで完全性を確認した候補側`supersedes`と旧要件側`superseded_by`を記録すること SHALL
 - **検証手段**: version/schema誤起動、旧参照検出、milestone停止、v1 pin、往復canary、外部成果物保全をunit testとmigration fixtureで検証する。
 - **Revision History**:
+  - 1.2 (2026-07-29) M1〜M5のPR/session予算、上限到達時の再裁定、縮退出荷境界を追加
   - 1.1 (2026-07-29) 後継候補とsupersedes/superseded_byの発効時点を分離
   - 1.0 (2026-07-29) Design Gate承認済みFLW-DSN-011からdraft起票

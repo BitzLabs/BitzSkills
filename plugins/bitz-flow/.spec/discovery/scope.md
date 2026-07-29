@@ -2,7 +2,7 @@
 id: FLW-DSC-003
 title: "bitz-flow v2 スコープ"
 status: draft
-version: 2.1
+version: 2.2
 updated: 2026-07-29
 owner: hide
 ---
@@ -111,4 +111,7 @@ repository modeのCHANGELOG、release notes、tag / release gate。draftまで�
 fault fixture通過後にpublishを後半で有効化する。component modeはShouldとして別途昇格する。
 
 各milestoneは独立PRで戻せる境界にし、M0をlandしてから後続を開始する。
-詳細な出口条件はFLW-DSN-014を正とする。
+詳細な出口条件、最大PR/session予算、予算超過時の縮退出荷境界はFLW-DSN-014を正とする。
+M2未完了ではworktree-first境界が閉じないためM1 Git writeを公開せずM0へ縮退する。
+M3以降は直前milestoneまでをprerelease出荷できるが、未完了operationは`UNSUPPORTED`とする。
+縮退版をcurrentへ昇格する場合はscope変更としてDesign GateとPromotion Gateを再裁定する。
