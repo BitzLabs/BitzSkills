@@ -33,3 +33,4 @@
 - 2026-07-29 M1〜M5 timebox: 最大PR/session予算、上限到達時の人間再裁定、M2未完了時はM0へ戻す安全な縮退出荷境界を定量化（codex）
 - 2026-07-29 多観点再レビュー指摘: SI-FLW-002〜005の継承表誤対応を訂正し、milestone予算を実績で再校正する初期budgetとして明確化（codex）
 - 2026-07-29 運用再レビュー指摘: remote削除ABA安全、atomic replace commit point、M3/M4独立canary、PR/milestone rollback境界、draft要件versionを是正（codex）
+- 2026-07-29 atomic durability再確認: commit pointをreplace時点からparent directory同期・最終digest検証完了時点へ修正（codex）

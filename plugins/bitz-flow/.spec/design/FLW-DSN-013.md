@@ -2,7 +2,7 @@
 id: FLW-DSN-013
 title: "Forward Recovery・承認・I/O安全設計"
 status: active
-version: 1.2
+version: 1.3
 updated: 2026-07-29
 owner: hide
 implements: FLW-NFR-002, FLW-NFR-003, FLW-NFR-004, FLW-NFR-005, FLW-NFR-006, FLW-NFR-007, FLW-CON-002, FLW-CON-004, FLW-CON-005
@@ -126,8 +126,11 @@ CLIを直接呼べる悪意ある／規律外のcallerへの認可境界では�
 - Windowsは`ReplaceFileW`またはwrite-through相当を`ctypes`で利用し、原子性・durabilityを
   capability検証できないfilesystemでは永続file writeを`UNSUPPORTED`。
 - 元fileのmode、改行形式、末尾改行を保持する。
-- atomic replaceをcommit pointとする。commit point前のcrashではplan時digestの完全な旧版、
-  commit point後のcrashではexpected digestの完全な新版が公開pathに存在し、部分内容を許容しない。
+- atomic replaceはpublication point、replace後のparent directory durability同期と最終fileの
+  parse/digest検証完了をdurability commit pointとする。
+- durability commit point前（replace後・directory同期前を含む）のcrashではplan時digestの完全な
+  旧版またはexpected digestの完全な新版、commit point後では完全な新版が公開pathに存在し、
+  いずれも部分内容を許容しない。
 - 再起動時にexpected digestなら`DONE`、plan時の旧digestなら`STALE`として新しいplanを要求し、
   どちらでもなければ`INDETERMINATE`として後続mutationを停止する。
 - temp pathをresultへ公開しない。
