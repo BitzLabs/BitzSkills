@@ -3,7 +3,7 @@ id: SI-SDD-030
 raised_by: SI-SDD-016 実装後の振り返り（2026-07-29）
 target: 検証証跡と verification_method の突合欠落
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: SDD-FR-153 の証跡検査は `exit_code` と件数、参照切れ、記録時 commit は見るが、
   **証跡が要件の宣言した検証手段で得られたものかを一切見ない**。`command_id` は自由文字列であり、
