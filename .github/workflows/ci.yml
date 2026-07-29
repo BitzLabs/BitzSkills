@@ -3,7 +3,11 @@ name: CI
 on:
   push:
     branches: [main]
+  # edited を明示する（既定は opened/synchronize/reopened のみ）。CORE-CON-006 は
+  # 「PR を作成・更新するとき」の検査を求めており、タイトル修正後に再検査できないと
+  # 非準拠を直しても FAIL のままゲートを通せない
   pull_request:
+    types: [opened, synchronize, reopened, edited]
 
 jobs:
   pr-title:
