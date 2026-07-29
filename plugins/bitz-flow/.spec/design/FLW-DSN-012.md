@@ -1,11 +1,11 @@
 ---
 id: FLW-DSN-012
 title: "Operation Contract詳細設計"
-status: draft
+status: active
 version: 1.1
 updated: 2026-07-29
 owner: hide
-implements: 
+implements: FLW-FR-003, FLW-FR-004, FLW-FR-005, FLW-FR-006, FLW-FR-007, FLW-FR-008, FLW-FR-009, FLW-FR-010, FLW-NFR-003, FLW-NFR-005, FLW-NFR-006, FLW-CON-002, FLW-CON-004, FLW-CON-005, FLW-CON-006
 origin: FLW-REV-002
 ---
 

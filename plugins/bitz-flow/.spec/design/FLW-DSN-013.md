@@ -1,11 +1,11 @@
 ---
 id: FLW-DSN-013
 title: "Forward Recovery・承認・I/O安全設計"
-status: draft
-version: 1.1
+status: active
+version: 1.3
 updated: 2026-07-29
 owner: hide
-implements: 
+implements: FLW-NFR-002, FLW-NFR-003, FLW-NFR-004, FLW-NFR-005, FLW-NFR-006, FLW-NFR-007, FLW-CON-002, FLW-CON-004, FLW-CON-005
 origin: FLW-REV-002
 ---
 
@@ -37,7 +37,7 @@ origin: FLW-REV-002
 | `REC-COMMIT` | commit応答喪失 | parent/tree/message digest | 一意commitならDONE、複数ならINDETERMINATE |
 | `REC-SYNC` | sync応答喪失 | branch/upstream/dirty | expected upstreamへff一致ならDONE |
 | `REC-PUSH` | push応答喪失 | remote branch SHA | expected HEADならDONE |
-| `REC-REMOTE-DELETE` | remote branch削除応答喪失 | remote refを全page再照会 | 不存在ならDONE、別SHA存在ならSTALE |
+| `REC-REMOTE-DELETE` | remote branch削除応答喪失 | remote refを全page再照会 | 不存在ならDONE、expected SHA残存ならBLOCKEDとして新snapshotのplanと再承認を要求、別SHA存在ならSTALE |
 | `REC-WORKTREE-CREATE` | worktree create/resume応答喪失 | worktree list/path/branch/HEAD/common-dir | 全一致ならDONE、一部一致はBLOCKED |
 | `REC-WORKTREE-FINISH` | worktree finish応答喪失またはworktree remove後branch削除失敗 | worktree list/local ref | 消えた段階をcompleted_stepsへ入れ、残存branchだけ再開 |
 | `REC-WORKTREE-DISCARD` | worktree discard応答喪失 | manifest target/worktree list/ref | 列挙targetだけ不存在ならDONE、未知残存はBLOCKED |
@@ -49,7 +49,7 @@ origin: FLW-REV-002
 | `REC-ISSUE-CLOSE` | Issue close応答喪失 | Issue state/updatedAt | CLOSEDならDONE、更新競合はSTALE |
 | `REC-PR-READY` | PR ready応答喪失 | draft/head/check/review | draft=falseかつhead一致ならDONE |
 | `REC-PR-MERGE` | merge応答喪失 | PR state/head/merge commit | MERGEDかつplanned head一致ならDONE、head進行ならSTALE |
-| `REC-CHANGELOG-APPLY` | CHANGELOG apply応答喪失 | path identity/file digest | expected digestならDONE、原本なら再apply |
+| `REC-CHANGELOG-APPLY` | CHANGELOG apply応答喪失 | path identity/file digest | expected digestならDONE、plan時の旧digestならSTALEとして再plan、どちらでもなければINDETERMINATE |
 | `REC-TAG-CREATE` | local tag作成応答喪失 | local annotated tag target | expected target一致ならDONE、不存在なら再作成、別targetならBLOCKED |
 | `REC-TAG-PUSH` | tag push応答喪失 | local/remote tag target | remote expected targetならDONE、不存在かつlocal一致ならpushから再開、別targetならBLOCKED |
 | `REC-RELEASE-DRAFT` | release draft応答喪失またはremote tag後draft失敗 | tag target + marker付きdraft + notes digestを全page照会 | 1件一致ならURLを復元してDONE、0件かつtag一致ならdraftから再開、複数/不一致はBLOCKED |
@@ -126,7 +126,14 @@ CLIを直接呼べる悪意ある／規律外のcallerへの認可境界では�
 - Windowsは`ReplaceFileW`またはwrite-through相当を`ctypes`で利用し、原子性・durabilityを
   capability検証できないfilesystemでは永続file writeを`UNSUPPORTED`。
 - 元fileのmode、改行形式、末尾改行を保持する。
-- 異常終了時も原本を残し、temp pathをresultへ公開しない。
+- atomic replaceはpublication point、replace後のparent directory durability同期と最終fileの
+  parse/digest検証完了をdurability commit pointとする。
+- durability commit point前（replace後・directory同期前を含む）のcrashではplan時digestの完全な
+  旧版またはexpected digestの完全な新版、commit point後では完全な新版が公開pathに存在し、
+  いずれも部分内容を許容しない。
+- 再起動時にexpected digestなら`DONE`、plan時の旧digestなら`STALE`として新しいplanを要求し、
+  どちらでもなければ`INDETERMINATE`として後続mutationを停止する。
+- temp pathをresultへ公開しない。
 - cleanup失敗はwarningとし、秘密本文をwarningへ含めない。
 
 ## 代替案

@@ -3,7 +3,8 @@ id: SI-FLW-002
 raised_by: SI-FLW-001〜PR #67の実運用振り返り（2026-07-18）
 target: flow-pr branch_preflight のfetch分離・鮮度検査・工程別診断
 proposed_change_type: modify
-status: open
+status: accepted
+github_issue: https://github.com/BitzLabs/BitzSkills/issues/126
 ---
 - **目的**: `branch_preflight.py` は「読み取り専用検査」を名乗りながら内部で `git fetch origin` を
   実行し、remote-tracking ref と `.git/FETCH_HEAD` を更新する。PR #67 の作成前検査では、通常の

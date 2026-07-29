@@ -1,11 +1,11 @@
 ---
 id: FLW-DSN-002
 title: "bitz-flow v2 ドメインモデル"
-status: draft
+status: active
 version: 1.0
 updated: 2026-07-29
 owner: hide
-implements: 
+implements: FLW-FR-003, FLW-FR-006, FLW-FR-008, FLW-FR-009, FLW-FR-010, FLW-CON-003
 origin: FLW-DSC-001
 ---
 

@@ -1,0 +1,34 @@
+{
+  "perspective": "data-integrity",
+  "dimensions": [
+    {
+      "name": "トランザクション安全性",
+      "weight": 0.40,
+      "score": 5,
+      "findings": []
+    },
+    {
+      "name": "データ整合性",
+      "weight": 0.35,
+      "score": 4,
+      "findings": [
+        {
+          "id": "DIN-201",
+          "severity": "info",
+          "location": "requirements/FLW-CON-004.md、design/FLW-DSN-012.md:concurrency",
+          "title": "cross-host createは単一coordinator運用を前提とする",
+          "description": "分散lockを実装しないため別host間の排他は運用前提だが、証明不能時のUNSUPPORTED、marker重複検出、自動補償禁止、独立M3/M4 canaryによりfail-closedとなっている。",
+          "recommendation": "実装時にrun manifestのcoordinator identityと重複0件を各canaryの必須oracleとして維持する。"
+        }
+      ]
+    },
+    {
+      "name": "スキーマ設計品質",
+      "weight": 0.25,
+      "score": 5,
+      "findings": []
+    }
+  ],
+  "weighted_score": 4.65,
+  "summary": "Git ref、index、worktree、永続file、GitHub状態の競合・応答喪失・crash分岐は外部証跡から収束できる。atomic replaceはpublication pointとdurability commit pointを分離し、remote削除のABA安全も再plan・再承認で閉じた。"
+}

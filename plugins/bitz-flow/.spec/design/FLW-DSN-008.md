@@ -1,11 +1,11 @@
 ---
 id: FLW-DSN-008
 title: "PRライフサイクル詳細設計"
-status: draft
+status: active
 version: 1.0
 updated: 2026-07-29
 owner: hide
-implements: 
+implements: FLW-FR-009, FLW-NFR-003, FLW-NFR-005, FLW-NFR-006, FLW-CON-002, FLW-CON-004, FLW-CON-005, FLW-CON-006
 origin: SI-FLW-005
 ---
 

@@ -1,0 +1,25 @@
+{
+  "perspective": "consistency",
+  "dimensions": [
+    {
+      "name": "構造整合",
+      "weight": 0.35,
+      "score": 5,
+      "findings": []
+    },
+    {
+      "name": "トレーサビリティ",
+      "weight": 0.35,
+      "score": 5,
+      "findings": []
+    },
+    {
+      "name": "用語一貫性",
+      "weight": 0.30,
+      "score": 5,
+      "findings": []
+    }
+  ],
+  "weighted_score": 5.00,
+  "summary": "責務分割、originとimplements、後継候補とsupersedes発効、Discovery Gateの状態解釈、milestoneとPRの境界が整合した。全23件のv2 draft要件は1件以上の設計からimplementsされ、spec inspectも問題0・幽霊参照0・孤児要件0でPASSした。"
+}

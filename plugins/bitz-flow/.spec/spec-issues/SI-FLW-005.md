@@ -3,7 +3,8 @@ id: SI-FLW-005
 raised_by: PR #67のpublish/ready/check/merge実運用（2026-07-18）
 target: PR公開・CI待機・squash mergeの段階別再開可能ランブック
 proposed_change_type: new
-status: open
+status: accepted
+github_issue: https://github.com/BitzLabs/BitzSkills/issues/126
 ---
 - **目的**: PR #67ではpreflight、push、Draft PR作成、ready化、CI待機、squash merge、main同期、
   cleanupを個別コマンドで実施した。PR本文は既存 `pr_helper.py` を使わずshell引数へ直接記述し、

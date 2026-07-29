@@ -1,11 +1,11 @@
 ---
 id: FLW-DSN-007
 title: "GitHub Issue・BitzSDD接続詳細設計"
-status: draft
+status: active
 version: 1.0
 updated: 2026-07-29
 owner: hide
-implements: 
+implements: FLW-FR-008, FLW-NFR-003, FLW-NFR-005, FLW-NFR-006, FLW-CON-003, FLW-CON-004
 origin: FLW-DSC-003
 ---
 
