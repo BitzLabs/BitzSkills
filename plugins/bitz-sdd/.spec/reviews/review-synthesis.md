@@ -166,7 +166,7 @@ SYN-001 の指摘を本レビュー自身に適用し、`gate_preconditions` を
 |---|---|---|---|
 | GP-001 | SYN-001 | レビュー指摘の spec-issue 化を機械的に追跡する仕組みを設計フェーズの対象に含める | open |
 | GP-002 | SYN-004 | SDD-REV-004 の未消化指摘（mtime 精度・mutation lock 不参加）を spec-issue として起票する | **satisfied**（SI-SDD-032） |
-| GP-003 | SYN-003 | Design 層を後付けする（`domain-model.md` と `ROADMAP.md` の作成、逆起票31件の分類） | open |
+| GP-003 | SYN-003 | Design 層を後付けする（`domain-model.md` と `ROADMAP.md` の作成、逆起票31件の分類） | **partial**（モデルと ROADMAP は作成。分類は Design Gate 後） |
 | GP-004 | SYN-007 | Discovery を実体へ追随させる（破棄せず改訂） | **satisfied**（6成果物を 1.1 へ改訂） |
 | GP-005 | SYN-009 | SDD ツール呼び出し規約の統一方針を裁定する（CORE-FR-011 の改訂可否を含む） | open |
 
