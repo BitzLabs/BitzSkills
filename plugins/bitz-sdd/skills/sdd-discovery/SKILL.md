@@ -2,10 +2,10 @@
 name: sdd-discovery
 description: BitzSDD の上流探索（ディスカバリー）を行うスキル。プロダクトビジョン（Vision Board / PR-FAQ）・成功指標（North Star Metric）・スコープ（MoSCoW / RICE）・ペルソナとジャーニー（JTBD）・ポジショニングを順に確立し、仮説検証ゲート（Go / No-Go）で設計着手可否を裁定する。成果物はすべて .spec/discovery/ 配下に作成し、docs/00_はじめに/ へは sdd-docs の pull コマンドを用いて同期・展開する。ユーザーが「ディスカバリー」「ビジョン」「成功指標」「ペルソナ」「スコープ」に言及したときに使用する。
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   author: br7.hide
   created: "2026-07-08"
-  updated: "2026-07-29"
+  updated: "2026-07-30"
 ---
 
 # SDD Discovery — 上流探索
@@ -49,7 +49,7 @@ BitzSDDにおける上流探索フェーズを担当します。
 1つの成果物を分割することになり、逆同期（push）の反映先が決まらなくなるためです。
 `.spec/discovery/assumptions.md` は判定エビデンスであり docs へは同期しません。
 
-各ステップの完了後、`python3 scripts/sdd_sync.py pull` を実行して `docs/` ディレクトリにドキュメントとして展開します。
+各ステップの完了後、`python3 <sdd-docs スキル>/scripts/sdd_sync.py pull` を実行して `docs/` ディレクトリにドキュメントとして展開します。
 未作成の成果物は SKIP されるため、途中のステップまでで pull を実行しても失敗しません。
 
 ## 4. Discovery Gate（人間裁定）

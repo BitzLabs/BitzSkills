@@ -2,10 +2,10 @@
 name: sdd-docs
 description: BitzSDD の docs/（人間ナラティブ層）を日本語6章で初期化・検証し、.spec/（仕様マスター）と双方向同期（pull/push/diff）するスキル。必須6章、宣言式の任意リファレンス章、管理対象外パス、安全な旧8章移行を扱う。「docs/ を初期化して」「同期して」「docsを日本語化して」「旧8章を移行して」「docs を検証して」と言われたときに使用する。
 metadata:
-  version: "1.2.0"
+  version: "1.2.1"
   author: br7.hide
   created: "2026-07-07"
-  updated: "2026-07-29"
+  updated: "2026-07-30"
 ---
 
 # sdd-docs
@@ -41,13 +41,13 @@ BitzSDD の docs/ 層（人間の意図・永続ナラティブ）を管理し�
 
 ```bash
 # 予定・衝突だけを表示（変更なし）
-python3 scripts/migrate_docs.py --root <repo-root>
+python3 <このスキル>/scripts/migrate_docs.py --root <repo-root>
 
 # 全preflight成功後に適用。hash付きmanifestをdocs/へ保存
-python3 scripts/migrate_docs.py --root <repo-root> --apply
+python3 <このスキル>/scripts/migrate_docs.py --root <repo-root> --apply
 
 # manifestと移行後hashを照合して旧章へ戻す
-python3 scripts/migrate_docs.py --root <repo-root> --rollback
+python3 <このスキル>/scripts/migrate_docs.py --root <repo-root> --rollback
 ```
 
 apply後は必ず `docs_inspect.py --strict` と `git diff` を確認する。衝突、旧新混在、
@@ -58,13 +58,13 @@ apply後は必ず `docs_inspect.py --strict` と `git diff` を確認する。�
 
 ```bash
 # 1. 差分・同期ステータスの確認
-python3 scripts/sdd_sync.py diff
+python3 <このスキル>/scripts/sdd_sync.py diff
 
 # 2. マスターからドキュメントへの同期 (.spec -> docs)
-python3 scripts/sdd_sync.py pull
+python3 <このスキル>/scripts/sdd_sync.py pull
 
 # 3. ドキュメントの手動修正をマスターへ逆反映 (docs -> .spec)
-python3 scripts/sdd_sync.py push
+python3 <このスキル>/scripts/sdd_sync.py push
 ```
 
 同期単位はファイル全体ではなく**本文**です。`.spec` と `docs` は異なるfrontmatter契約を
@@ -79,9 +79,9 @@ frontmatterが不正な場合は、機械IDを推測せず対象ファイルを�
 
 ### ドキュメントの構造検証
 ```bash
-python3 scripts/docs_inspect.py <repo-root>            # → docs-inspection-report.md
-python3 scripts/docs_inspect.py <repo-root> --json     # 機械可読出力
-python3 scripts/docs_inspect.py <repo-root> --strict   # WARN も失敗扱い
+python3 <このスキル>/scripts/docs_inspect.py <repo-root>            # → docs-inspection-report.md
+python3 <このスキル>/scripts/docs_inspect.py <repo-root> --json     # 機械可読出力
+python3 <このスキル>/scripts/docs_inspect.py <repo-root> --strict   # WARN も失敗扱い
 ```
 
 ## 3. 同期マッピングのルール

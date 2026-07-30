@@ -2,10 +2,10 @@
 name: flow-core
 description: BitzFlow のメインスキル。プロジェクト状況に応じた Git / GitHub 開発フローの選択（単独開発=feature ブランチ / 複数エージェント並列=worktree / チーム・公開開発=GitHub Issue 駆動 + PR）、Conventional Commits のコミット規定、失敗時の復元方針を規定する。ユーザーが「Git フロー」「ブランチ運用」「コミット規約」「開発フローを決めたい」「並列で開発したい」に言及したとき、または開発作業の開始時にフローが未確定のときに使用する。worktree の実手順は flow-worktree、Issue 駆動 PR の実手順は flow-pr が担当する。
 metadata:
-  version: "0.2.0"
+  version: "0.2.1"
   author: br7.hide
   created: "2026-07-18"
-  updated: "2026-07-18"
+  updated: "2026-07-30"
 ---
 
 # flow-core — Git / GitHub 開発フローの選択とコミット規約
@@ -43,9 +43,9 @@ SDD（仕様駆動開発）を採用していないプロジェクトでも単�
 （読み取り専用・Python 標準ライブラリのみ・スキル本文の読み込み不要。CI からも呼べる）:
 
 ```bash
-python3 scripts/commit_lint.py --message "feat(auth): [#123] トークン更新を実装"   # 単一メッセージ
-git log -1 --format=%B | python3 scripts/commit_lint.py --file -                  # 標準入力
-python3 scripts/commit_lint.py --range origin/main..HEAD --require-implements     # 範囲検査（マージコミット除外）
+python3 <このスキル>/scripts/commit_lint.py --message "feat(auth): [#123] トークン更新を実装"   # 単一メッセージ
+git log -1 --format=%B | python3 <このスキル>/scripts/commit_lint.py --file -                  # 標準入力
+python3 <このスキル>/scripts/commit_lint.py --range origin/main..HEAD --require-implements     # 範囲検査（マージコミット除外）
 ```
 
 - 終了コード: 適合 0 / 違反 1（`NG` 行で理由を表示）/ 使用法エラー 2
