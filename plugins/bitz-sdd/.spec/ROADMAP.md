@@ -324,8 +324,10 @@ SDD-REV-006（2026-07-29、判定 **CONDITIONAL_PASS**）を起点とした設�
 （`SI-SDD-032` / `033` / `034` / `036`）を**すべて accept** し、V4設計との順序を確定した
 （P1 節と `.spec/reports/decision-2026-07-30-order8-design-foundation.md`）。
 続けて順序9（設計toolchainの安全化）を同日に完了させ、4件の裁定を `SDD-FR-162`〜`SDD-FR-165`
-として実装・検証した。次は順序10（V4設計Ready canary — Root / Component Workspace fixture での
-設計成果物の作成・検査の実測）である。
+として実装・検証した。続けて順序10（V4設計Ready canary）を同日に完了させ、
+Root / Component Workspace fixture で設計成果物の作成・検査を実測した。
+**R0 の残りは`sdd-doctor`によるV4設計Ready診断（条文は「検討する」）のみ**であり、
+次はフェーズ4（bitz-flow V2 のM0〜M5とPromotion Gate）である。
 
 | GP | 条件 | 状態 |
 |---|---|---|
@@ -376,14 +378,17 @@ V4のモジュール配置、依存方向、公開CLI契約までは定義して
 V4の正式なCharter・設計成果物を増やす前に、現行bitz-sdd 3.xを
 「V4を安全に設計できる道具」として整える。この段階ではV4の公開契約を実装しない。
 
-- SI-SDD-036を裁定・解消し、`.spec/design/`配下の再帰走査、DSN ID一意性、
-  frontmatter基準の採番を信頼できる状態にする。
-- design scaffold → recursive inspect → status / review参照のcanaryを追加し、
-  Root / Component Workspaceを含む複数workspaceで実測する。
-- SI-SDD-032 / 034のうち、設計中のデータ損失またはフェーズ誤判定につながる部分を
-  V4設計開始前に解消するか、人間が許容可能な制約として明記する。
-- `sdd-doctor`がV4設計Ready条件を読み取り専用で診断できる形を検討する。
-- 本ROADMAPとV4設計Ready条件を確定refへ保存し、V4設計中に基盤契約を同時変更しない。
+- ✅ SI-SDD-036を裁定・解消し、`.spec/design/`配下の再帰走査、DSN ID一意性、
+  frontmatter基準の採番を信頼できる状態にする（`SDD-FR-162`）。
+- ✅ design scaffold → recursive inspect → status / review参照のcanaryを追加し、
+  Root / Component Workspaceを含む複数workspaceで実測する
+  （順序10。`tests/test_design_canary.py`。review参照の欠落は`SI-SDD-038`へ）。
+- ✅ SI-SDD-032 / 034のうち、設計中のデータ損失またはフェーズ誤判定につながる部分を
+  V4設計開始前に解消するか、人間が許容可能な制約として明記する
+  （`SDD-FR-163` / `SDD-FR-164`。mutation lock不参加は`SDD-FR-164`に設計判断として明記）。
+- ⬜ `sdd-doctor`がV4設計Ready条件を読み取り専用で診断できる形を検討する
+  （条文は「検討する」。canaryが機械検査を担うため、診断の追加要否はV4 Charterで判断してよい）。
+- ✅ 本ROADMAPとV4設計Ready条件を確定refへ保存し、V4設計中に基盤契約を同時変更しない（PR #150）。
 
 R0を通過した後、bitz-flow V2をM0〜M5とPromotion Gateまで進める。
 bitz-flow V2の公開operation / result / SDD opaque ID接続が安定してから、
@@ -536,7 +541,27 @@ graph TD
    実装中に `SI-SDD-037`（`parallel-git.md` の既定ブランチ直接コミット記述と
    bitz-env ガードレールの矛盾）を起票した — V4 テーマ4 の再編と対象が重なるため、
    先行解消するかは裁定点。
-10. **V4設計Ready canary** — Root / Component Workspace fixtureで設計成果物の作成・検査を実測
+10. **V4設計Ready canary** — **完了（2026-07-30）**。Root Workspace 1つ + Component Workspace 2つの
+    fixtureで、design scaffold → recursive inspect → statusの連鎖を実測し、
+    `tests/test_design_canary.py`（7ケース）として固定した。
+    退行検出力は変異試験で確認済み（`RECURSIVE_ARTIFACT_DIRS`を空にすると3ケース、
+    scaffoldの再帰採番を切ると1ケースが落ちる）。
+
+    | 実測項目 | 結果 |
+    |---|---|
+    | Root / Componentのどこでもdesign scaffoldが採番生成できる | ✅ |
+    | `design/`サブディレクトリの成果物が採番根拠に入る（`SDD-FR-162`） | ✅ |
+    | サブディレクトリの成果物がレジストリへ登録される | ✅ |
+    | 重複DSN IDが両方のパス付きでFAILする | ✅ |
+    | 複数ワークスペース一括検査で各ワークスペースが独立にPASSする | ✅ |
+    | 兄弟ワークスペースのDSN IDが幽霊参照にならない | ✅ |
+    | `phase_code`がワークスペースごとに正しい（design / plan / map） | ✅ |
+    | **設計・レビュー成果物の発信参照が幽霊参照検査に掛かる** | ❌ **`SI-SDD-038`を起票** |
+
+    設計成果物とレビュー成果物は**参照元として走査されない**ため、存在しないIDを参照しても
+    検出されない（対照群の`.spec/specs/`は検出する）。V4のP4（要件の後継化・ID再編）と
+    P5（設計成果物の大量追加）が重なる工程で参照切れを見逃す経路であり、
+    P4・P5より前の解消を推奨する。裁定は`SI-SDD-038`。
 
 ### フェーズ4 — bitz-flow V2（別workspaceで実施）
 
