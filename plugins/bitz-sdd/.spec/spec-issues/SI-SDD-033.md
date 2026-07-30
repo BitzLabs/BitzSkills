@@ -3,7 +3,7 @@ id: SI-SDD-033
 raised_by: SDD-REV-006 実施中に発生した並行作業の巻き込み事故（2026-07-29）
 target: parallel-git.md が共有作業ツリーの汚染経路を扱っていない
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `sdd-core` の `references/parallel-git.md` は「ブランチ規約」「マージ競合の構造的回避」
   「並列サブエージェントのスコープ」「権限マトリクス」を定めるが、いずれも**各作業者が
@@ -51,3 +51,20 @@ status: open
 **推薦: accept**。実際に事故が起きた経路であり、再発すれば他者の作業を破壊しうる。
 ただし **4（機械強制）は bitz-flow への Git 運用移管が決まるまで着手しない**ことを推奨する。
 移管後に強制層の所有者が変わるため、いま bitz-sdd 側へ実装すると二重管理になる。
+
+## 実施
+
+2026-07-30 に **accept（提案1〜3 のみ）**。裁定記録は
+`.spec/reports/decision-2026-07-30-order8-design-foundation.md`（裁定K）。
+
+- **提案1〜3**（共有作業ツリー節・測定値は確定 ref から読む規律・他セッション作業中ファイルの
+  読み取り専用原則）— 実装対象。再発防止はリポジトリ固有の `AGENTS.md` へ反映済みだが、
+  **配布物であるプラグイン側の規律には入っていない**ため、`AGENTS.md` 側だけで足りるとはしない。
+- **提案4**（pre-commit による boundary 逸脱の機械強制）— **見送り**。ROADMAP 順序4 で
+  `sdd-git` 廃止と `parallel-git.md` の再編（Git 手順を bitz-flow へ移す）が第一候補であり、
+  強制層の所有者が移る前提で bitz-sdd 側へ実装すると二重管理になる。bitz-flow V2 の
+  Promotion Gate 通過後に所有者と併せて裁定する。
+- `parallel-git.md` は V4 で再編対象だが、**再編を待たず今回追記する** — V4 設計そのものが
+  複数セッション並行で進むため、規律が先に要る。再編時に責任に沿った文書へ移送する。
+- 残余リスク: 機械強制を見送るため、共有作業ツリーの汚染は規律の遵守に依存する。
+  bitz-flow V2 の Promotion Gate まで文書だけで塞がれた状態が続く。
