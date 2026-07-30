@@ -225,8 +225,13 @@ def determine_phase(reqs: Counter, tasks: Counter, has_discovery: bool,
     Returns: (phase_code, phase_label) — phase_code は PHASE_CODES の7語のいずれか。
     要件が1件でもあれば設計成果物の有無にかかわらず plan 以降の判定を適用する
     （要件の起票をもって Plan フェーズ入りとみなす。SDD-FR-136）。
+
+    `done` は**未完了成果物が存在しないときだけ**返す（SDD-FR-163）。draft 要件が残る限り
+    done へ落ちないため、完了済み系列へ次期版の draft を足した状態を Promotion Gate 待ちと
+    誤表示しない。返す語彙は SDD-FR-136 の7語のまま（加算的変更で削除・改名はしない）。
     """
     n_reqs = sum(reqs.values())
+    n_draft = reqs.get("draft", 0)
     n_appr = sum(v for s, v in reqs.items() if s in APPROVED_PLUS)
     n_ver = sum(v for s, v in reqs.items() if s in VERIFIED)
     n_tasks = sum(tasks.values())
@@ -246,6 +251,10 @@ def determine_phase(reqs: Counter, tasks: Counter, has_discovery: bool,
         code = "execute"
     elif n_ver < n_appr:
         code = "verify"
+    elif n_draft:
+        # 完了済み系列（verified 要件 + done タスク）へ新しい draft 要件が加わった状態。
+        # 次の工程は承認であり Promotion Gate ではない（SDD-FR-163）
+        code = "plan"
     else:
         code = "done"
     return (code, phase_label(code))
