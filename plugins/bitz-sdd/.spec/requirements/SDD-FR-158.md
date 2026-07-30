@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-158
 version: 1.0
-status: draft
+status: approved
 domain: verification
 priority: high
 origin: SI-SDD-031
