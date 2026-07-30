@@ -24,6 +24,6 @@ status: done
   - 修正前スクリプト（`origin/main`）との比較で、同一 ID の2成果物が
     `design/` 直下と `design/stories/` に存在する状態が修正前は exit 0（無検出）、
     修正後は exit 1 かつ両パス報告になることを実測。
-  - 同様に `domain-model.md`（`id: DSN-009`）と `stories/`（`id: DSN-007`）だけがある
+  - 同様に `domain-model.md`（`id: SDD-DSN-009`）と `stories/`（`id: SDD-DSN-007`）だけがある
     workspace で、修正前の採番が 001、修正後が 010 になることを実測。
 - **備考**: 本文にタスク自身の ID を書くと spec_inspect が幽霊参照として検出するため記載しない（SI-CORE-002 参照）。

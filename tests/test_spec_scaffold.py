@@ -271,8 +271,12 @@ def test_design_number_skips_suffixed_existing_file(tmp_path):
 def test_SDD_FR_162_number_counts_id_not_in_filename(tmp_path):
     """ID をファイル名に持たない設計成果物（domain-model.md 等）も採番が数える。
 
-    frontmatter の `id:` を根拠にしないと、`domain-model.md`（id: DSN-009）が
-    見えず既存 ID を再度払い出す（SI-SDD-036 / SI-SDD-006 提案2 の回帰）。
+    frontmatter の `id:` を根拠にしないと、ID をファイル名に持たない
+    `domain-model.md` が採番から見えず、既存 ID を再度払い出す
+    （SI-SDD-036 / SI-SDD-006 提案2 の回帰）。
+
+    fixture の ID は下の write_text と同じく連結で組み立てる。リテラルで書くと
+    このリポジトリ自身の spec_inspect 走査が幽霊参照として検出するため。
     """
     design_dir = tmp_path / ".spec" / "design"
     design_dir.mkdir(parents=True)

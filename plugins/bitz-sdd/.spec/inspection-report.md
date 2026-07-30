@@ -1,13 +1,12 @@
 # inspection-report.md (2026-07-30)
 
-成果物数: 101 / 問題: 0 / 幽霊参照: 2 / 実装待ち: 0 / 孤児要件: 0 / 検証証跡: 4
+成果物数: 101 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0 / 検証証跡: 4
 
 ## 問題一覧
 - なし ✅
 
 ## 幽霊参照（存在しないIDへの参照）
-- DSN-007 ← .spec/tasks/SDD-TSK-051.md
-- DSN-009 ← .spec/tasks/SDD-TSK-051.md
+- なし ✅
 
 ## 監査 WARN（代行遷移の裁定参照など — FAIL にしない）
 - なし ✅
@@ -145,9 +144,9 @@
 | SDD-DSN-004 | active |  |  | 0 | 3 |
 | SDD-DSN-005 | active |  |  | 0 | 1 |
 | SDD-DSN-006 | 起草中（draft） |  |  | 0 | 0 |
-| SDD-DSN-007 | 起草中（draft） |  |  | 0 | 0 |
+| SDD-DSN-007 | 起草中（draft） |  |  | 0 | 1 |
 | SDD-DSN-008 | 起草中（draft） |  |  | 0 | 0 |
-| SDD-DSN-009 | 起草中（draft） |  |  | 0 | 1 |
+| SDD-DSN-009 | 起草中（draft） |  |  | 0 | 2 |
 | SDD-DSN-010 | active |  |  | 0 | 1 |
 | SDD-DSN-011 | active |  |  | 0 | 0 |
 | SDD-FR-001 | 検証済み（verified） | verification | example-test | 1 | 3 |
@@ -228,4 +227,4 @@
 | SDD-REV-005 | active |  |  | 0 | 1 |
 | SDD-REV-006 | active |  |  | 0 | 0 |
 
-**判定: FAIL ❌（上記を解消するまで verified に進めない）**
+**判定: PASS ✅**

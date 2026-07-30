@@ -1,6 +1,6 @@
-# inspection-report.md (2026-07-29)
+# inspection-report.md (2026-07-30)
 
-成果物数: 43 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0
+成果物数: 45 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0 / 検証証跡: 0
 
 ## 問題一覧
 - なし ✅
@@ -28,7 +28,6 @@
 - CORE-NFR-001
 
 ## 参照がない manual-check 要件（テスト参照は原理的に生じない — 検証記録で担保）
-- CORE-CON-004
 - CORE-CON-005
 - CORE-CON-007
 - CORE-CON-008
@@ -53,14 +52,16 @@
 | CORE-CON-001 | 確定（promoted） | governance | example-test | 1 | 1 |
 | CORE-CON-002 | 確定（promoted） | governance | example-test | 1 | 1 |
 | CORE-CON-003 | 確定（promoted） | governance | example-test | 1 | 1 |
-| CORE-CON-004 | 確定（promoted） | governance | manual-check | 1 | 1 |
+| CORE-CON-004 | 確定（promoted） | governance | manual-check | 1 | 3 |
 | CORE-CON-005 | 確定（promoted） | governance | manual-check | 1 | 1 |
 | CORE-CON-006 | 確定（promoted） | governance | example-test | 1 | 1 |
 | CORE-CON-007 | 確定（promoted） | governance | manual-check | 1 | 1 |
 | CORE-CON-008 | 確定（promoted） | governance | manual-check | 1 | 2 |
 | CORE-CON-009 | 確定（promoted） | governance | manual-check | 1 | 1 |
 | CORE-CON-010 | 確定（promoted） | governance | manual-check | 1 | 1 |
-| CORE-CON-011 | 検証済み（verified） | tooling | unit-test | 1 | 4 |
+| CORE-CON-011 | 検証済み（verified） | tooling | unit-test | 1 | 5 |
+| CORE-CON-012 | 検証済み（verified） | governance | unit-test | 1 | 2 |
+| CORE-CON-013 | 検証済み（verified） | tooling | unit-test | 1 | 2 |
 | CORE-DSC-000 | 起草中（draft） |  |  | 0 | 0 |
 | CORE-DSC-001 | 起草中（draft） |  |  | 0 | 0 |
 | CORE-DSC-002 | 起草中（draft） |  |  | 0 | 0 |
@@ -78,7 +79,7 @@
 | CORE-FR-008 | 確定（promoted） | governance | manual-check | 1 | 1 |
 | CORE-FR-009 | 確定（promoted） | governance | manual-check | 1 | 1 |
 | CORE-FR-010 | 確定（promoted） | tooling | example-test | 1 | 2 |
-| CORE-FR-011 | 確定（promoted） | tooling | example-test | 2 | 3 |
+| CORE-FR-011 | 確定（promoted） | tooling | example-test | 2 | 4 |
 | CORE-FR-012 | 確定（promoted） | tooling | example-test | 1 | 2 |
 | CORE-FR-013 | 確定（promoted） | tooling | example-test | 1 | 2 |
 | CORE-FR-014 | 確定（promoted） | governance | example-test | 3 | 3 |
