@@ -2,7 +2,7 @@
 id: SDD-DSN-011
 title: "ReviewFinding の独立と tracked_by 必須化・未消化指摘の持ち越し"
 status: active
-version: 1.2
+version: 1.3
 updated: 2026-07-30
 owner: hide
 implements: 
@@ -118,8 +118,16 @@ ROADMAP フェーズ3 順序6。SDD-DSN-010（GatePassage）と並行実装可�
     `sdd-core`（`spec_inspect.py` / `references/gates.md`）、関連テスト、bitz-sdd マニフェスト。
   - ロールバック: 検査は3種それぞれ独立に無効化できる。schema だけ残して検査を止めても
     成果物は壊れない（SI-SDD-031 の「検査だけ無効化して schema は残せる」に一致）。
-  - 他プラグインへの波及: `sdd-review` を使うワークスペースのみ。bitz-env / bitz-flow / bitz-ddd に
-    レビュー成果物は無いため、当面は bitz-sdd とルートだけが対象。
+  - 他プラグインへの波及: `sdd-review` を使うワークスペースのみ。
+
+  > **訂正（2026-07-30、実装時の実測）**: 上記の波及範囲は「bitz-env / bitz-flow / bitz-ddd に
+  > レビュー成果物は無いため、当面は bitz-sdd とルートだけが対象」と書いていたが**事実誤認**で
+  > あった。実測では**全5ワークスペース**（ルート / bitz-sdd / bitz-ddd / bitz-env / bitz-flow）が
+  > `review-synthesis.json` を持ち、bitz-sdd 以外の4件は一度もアーカイブされていなかった
+  > （bitz-env に至っては `review_id` すら無い）。アーカイブ漏れ検査の導入で4件が検出されたため、
+  > 実装時に4ワークスペースのレビューを番号付きへ退避した。SI-SDD-035 と同じく
+  > **未検証の想定を設計ノートに書いた**もので、`basis: verified` / `assumed` の区別
+  > （設計判断6）はまさにこの種の誤りを止めるための仕組みである。
 
 - **実装順序**:
   1. **`review-synthesis.*` の「ビュー」への格下げ**（自前の `id:` を持たせない、または

@@ -1,49 +1,6 @@
 {
+  "view_of": "FLW-REV-002",
   "review_id": "FLW-REV-002",
-  "verdict": "PASS",
-  "aggregate_score": 4.74,
-  "perspective_scores": {
-    "consistency": 5.0,
-    "data-integrity": 4.35,
-    "operations": 5.0,
-    "risk": 4.7,
-    "business": 4.85
-  },
-  "findings_summary": {
-    "total": 4,
-    "after_dedup": 3,
-    "by_priority": {"P0": 0, "P1": 0, "P2": 3, "P3": 0},
-    "by_severity": {"critical": 0, "major": 0, "minor": 4, "info": 0}
-  },
-  "findings": [
-    {
-      "id": "SYN-101",
-      "priority": "P2",
-      "source_ids": ["DIN-101", "RSK-101"],
-      "perspectives": ["data-integrity", "risk"],
-      "title": "cross-host競合の防止はsingle coordinator運用に依存する",
-      "recommendation": "M3/M4のrun manifestへcoordinator identityを記録し、重複割当またはmarker重複が1件でもあればpromotionを停止する。"
-    },
-    {
-      "id": "SYN-102",
-      "priority": "P2",
-      "source_ids": ["DIN-301"],
-      "perspectives": ["data-integrity"],
-      "title": "自己完結flow-doctorとのschema同期はgolden testに依存する",
-      "recommendation": "M1出口でflow-coreとflow-doctorの共通envelope fixtureを同じtest suiteから検査し、不一致時はreleaseを停止する。"
-    },
-    {
-      "id": "SYN-104",
-      "priority": "P2",
-      "source_ids": ["BIZ-401"],
-      "perspectives": ["business"],
-      "title": "M1〜M5の継続判断timeboxが未定義である",
-      "recommendation": "Design Gate後の要件・タスク分解で、各milestoneの最大PR数または作業session数と縮退可能な出荷境界を定める。"
-    }
-  ],
-  "conditional_items": [
-    "SYN-101とSYN-102をM1以降の検証要件へ派生する",
-    "SYN-104を要件・タスク分解時に定量化する"
-  ],
-  "re_review_conditions": []
+  "path": "FLW-REV-002.json",
+  "note": "最新のレビュー統合結果へのビュー。成果物の正は path が指す番号付きファイル。自前の finding や判定を持たない（SDD-FR-160）"
 }

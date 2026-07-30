@@ -1571,3 +1571,281 @@ def test_SDD_FR_155_checklist_ref_anchor_is_not_truncated(tmp_path: Path):
 
     assert fm["checklist_ref"] == "refs/gates.md#3-promotion-gate"
     assert fm["note"] == "value"
+
+
+# --- ReviewFinding（SDD-FR-158 / 159 / 160 / 161） ----------------------------
+
+REV_ID = "XX-" + "REV-" + "001"
+SYN = "SYN-" + "001"
+
+
+def base_finding(**overrides):
+    finding = {
+        "id": f"{REV_ID}:{SYN}",
+        "priority": "P1",
+        "severity": "major",
+        "source": ["OPS-601"],
+        "title": "サンプル指摘",
+        "recommendation": "サンプルの是正内容",
+        "tracked_by": ISSUE_ID,
+        "status": "tracked",
+    }
+    finding.update(overrides)
+    return finding
+
+
+def base_precondition(**overrides):
+    precondition = {
+        "id": "GP-001",
+        "from": f"{REV_ID}:{SYN}",
+        "condition": "サンプル前提条件",
+        "kind": "blocking",
+        "basis": "verified",
+        "evidence": ".spec/reviews/individual/operations.json",
+    }
+    precondition.update(overrides)
+    return precondition
+
+
+def make_review_workspace(tmp_path: Path, *, findings=None, preconditions=None,
+                          verdict="CONDITIONAL_PASS", carried_over=None,
+                          schema_version=2, archived=True, view_id=REV_ID):
+    """spec-issue 1件を持つ WS に番号付きレビューと review-synthesis ビューを置く"""
+    make_spec(tmp_path)
+    (tmp_path / ".spec" / "spec-issues").mkdir(parents=True, exist_ok=True)
+    (tmp_path / ".spec" / "spec-issues" / f"{ISSUE_ID}.md").write_text(
+        f"---\nid: {ISSUE_ID}\nstatus: open\n---\n- 目的: サンプル\n", encoding="utf-8")
+    reviews = tmp_path / ".spec" / "reviews"
+    reviews.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "review_id": REV_ID,
+        "verdict": verdict,
+        "findings": [base_finding()] if findings is None else findings,
+        "gate_preconditions": ([base_precondition()] if preconditions is None
+                               else preconditions),
+    }
+    if schema_version is not None:
+        payload["schema_version"] = schema_version
+    if carried_over is not None:
+        payload["carried_over"] = carried_over
+    if archived:
+        (reviews / f"{REV_ID}.json").write_text(
+            json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+        (reviews / f"{REV_ID}.md").write_text(
+            f"---\nid: {REV_ID}\nstatus: active\ndecision: {verdict}\n---\n\n# レビュー\n",
+            encoding="utf-8")
+    (reviews / "review-synthesis.json").write_text(
+        json.dumps({"view_of": view_id, "review_id": view_id,
+                    "path": f"{view_id}.json"}, ensure_ascii=False), encoding="utf-8")
+    (reviews / "review-synthesis.md").write_text(
+        f"---\nview_of: {view_id}\npath: {view_id}.md\n---\n\n# ビュー\n", encoding="utf-8")
+    return reviews
+
+
+def test_SDD_FR_160_missing_archive_fails(tmp_path: Path):
+    """ビューが指す番号付きファイルが無ければアーカイブ漏れとして FAIL する"""
+    make_review_workspace(tmp_path, archived=False)
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert f"アーカイブ漏れ: .spec/reviews/review-synthesis.json が指す {REV_ID}.json" \
+        in report_of(tmp_path)
+
+
+def test_SDD_FR_160_view_without_review_id_fails(tmp_path: Path):
+    """ビューが review_id を持たなければ FAIL する"""
+    reviews = make_review_workspace(tmp_path)
+    (reviews / "review-synthesis.json").write_text("{}", encoding="utf-8")
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "review_id がない" in report_of(tmp_path)
+
+
+def test_SDD_FR_160_view_and_archive_coexist_without_duplicate_id(tmp_path: Path):
+    """ビューと番号付きファイルが併存しても ID 重複にならない"""
+    make_review_workspace(tmp_path)
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+    report = report_of(tmp_path)
+    assert "PASS ✅" in report
+    assert "[重複]" not in report
+
+
+def test_SDD_FR_160_carried_over_ghost_reference_fails(tmp_path: Path):
+    """carried_over の取り込み元 finding が実在しなければ幽霊参照として FAIL する"""
+    make_review_workspace(tmp_path, carried_over=[f"{REV_ID}:SYN-" + "099"])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "取り込み元に" in report_of(tmp_path)
+
+
+def test_SDD_FR_160_carried_over_existing_finding_passes(tmp_path: Path):
+    """実在する finding を指す carried_over は通る"""
+    make_review_workspace(tmp_path, carried_over=[f"{REV_ID}:{SYN}"])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+
+
+def test_SDD_FR_158_missing_required_finding_key_fails(tmp_path: Path):
+    """findings の必須キー欠落を finding ID 付きで報告する"""
+    finding = base_finding()
+    del finding["recommendation"]
+    make_review_workspace(tmp_path, findings=[finding])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "必須キー 'recommendation' が無い" in report_of(tmp_path)
+
+
+def test_SDD_FR_158_unqualified_finding_id_fails(tmp_path: Path):
+    """レビュー内連番のままの finding ID は形式違反として報告する"""
+    make_review_workspace(tmp_path, findings=[base_finding(id=SYN)])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "<REV-ID>:SYN-NNN 形式" in report_of(tmp_path)
+
+
+def test_SDD_FR_158_controlled_vocabulary_is_enforced(tmp_path: Path):
+    """priority / severity / status の語彙外を検出する"""
+    make_review_workspace(tmp_path, findings=[base_finding(status="wip")])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "status 'wip' は語彙外" in report_of(tmp_path)
+
+
+def test_SDD_FR_158_legacy_review_without_schema_version_is_skipped(tmp_path: Path):
+    """schema_version を持たないレビューは遡及的に不整合としない"""
+    make_review_workspace(tmp_path, schema_version=None,
+                          findings=[{"id": SYN, "priority": "P0", "title": "旧書式"}])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+    assert "PASS ✅" in report_of(tmp_path)
+
+
+def test_SDD_FR_159_untracked_p0_fails(tmp_path: Path):
+    """tracked_by が空の P0 は未紐づけとして FAIL する"""
+    make_review_workspace(tmp_path, findings=[base_finding(priority="P0", tracked_by="")])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "未紐づけの P0/P1 finding がある" in report_of(tmp_path)
+
+
+def test_SDD_FR_159_untracked_p3_is_allowed(tmp_path: Path):
+    """P2/P3 は tracked_by が空でもよい（キーは置く）"""
+    make_review_workspace(tmp_path,
+                          findings=[base_finding(priority="P3", severity="info",
+                                                 tracked_by="", status="open")])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+
+
+def test_SDD_FR_159_pass_verdict_with_untracked_p1_fails(tmp_path: Path):
+    """未紐づけの P0/P1 がある状態で verdict: PASS を出せない"""
+    make_review_workspace(tmp_path, verdict="PASS",
+                          findings=[base_finding(tracked_by="")])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "verdict: PASS を出せない" in report_of(tmp_path)
+
+
+def test_SDD_FR_159_tracked_by_ghost_spec_issue_fails(tmp_path: Path):
+    """tracked_by が実在しない spec-issue を指せば幽霊参照として FAIL する"""
+    make_review_workspace(tmp_path,
+                          findings=[base_finding(tracked_by="SI-" + "TEST-" + "999")])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "が存在しない（幽霊参照）" in report_of(tmp_path)
+
+
+def test_SDD_FR_159_tracked_by_gate_precondition_resolves(tmp_path: Path):
+    """tracked_by が <REV-ID>:GP-NNN 形式なら同一レビューの gate_preconditions で解決する"""
+    make_review_workspace(tmp_path,
+                          findings=[base_finding(tracked_by=f"{REV_ID}:GP-001")])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+
+
+def test_SDD_FR_159_tracked_by_unknown_gate_precondition_fails(tmp_path: Path):
+    """存在しない GP を指す tracked_by は幽霊参照として FAIL する"""
+    make_review_workspace(tmp_path,
+                          findings=[base_finding(tracked_by=f"{REV_ID}:GP-" + "099")])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "gate_preconditions に無い" in report_of(tmp_path)
+
+
+def test_SDD_FR_161_missing_kind_or_basis_fails(tmp_path: Path):
+    """gate_preconditions の kind / basis 欠落を検出する"""
+    precondition = base_precondition()
+    del precondition["kind"]
+    make_review_workspace(tmp_path, preconditions=[precondition])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "kind は blocking / agenda のいずれか" in report_of(tmp_path)
+
+
+def test_SDD_FR_161_assumed_blocking_violates_invariant(tmp_path: Path):
+    """basis: assumed を根拠に kind: blocking は立てられない（不変条件）"""
+    make_review_workspace(tmp_path,
+                          preconditions=[base_precondition(basis="assumed",
+                                                           kind="blocking")])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "不変条件違反" in report_of(tmp_path)
+
+
+def test_SDD_FR_161_assumed_agenda_is_allowed(tmp_path: Path):
+    """未検証の想定は agenda（Gate で決める論点）としてなら置ける"""
+    make_review_workspace(tmp_path,
+                          findings=[base_finding(tracked_by=f"{REV_ID}:GP-001")],
+                          preconditions=[base_precondition(basis="assumed",
+                                                           kind="agenda",
+                                                           evidence=None)])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+
+
+def test_SDD_FR_161_verified_basis_requires_evidence(tmp_path: Path):
+    """basis: verified には実測の所在が必要"""
+    precondition = base_precondition()
+    del precondition["evidence"]
+    make_review_workspace(tmp_path, preconditions=[precondition])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "実測の所在（evidence）が必要" in report_of(tmp_path)

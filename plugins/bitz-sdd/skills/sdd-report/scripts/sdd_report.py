@@ -127,7 +127,9 @@ def generate_report(root_path: Path) -> Path:
     reviews_found = []
     
     if reviews_dir.exists():
-        review_files = list(reviews_dir.glob("*.md"))
+        # `_` 始まりは成果物ではない（`_review-synthesis.md` は最新へのビュー。SDD-FR-160）。
+        # 数え上げると件数が水増しされ、decision を持たないため PENDING として集計されてしまう
+        review_files = [f for f in reviews_dir.glob("*.md") if not f.name.startswith("_")]
         if review_files:
             review_status = f"{len(review_files)} 件のレビューが存在"
             # 最新のレビュー結果を解析

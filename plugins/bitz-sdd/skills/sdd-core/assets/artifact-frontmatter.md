@@ -33,4 +33,4 @@ BitzSDDの `.spec/` 内のファイル（Requirementsを除く）は、一貫し
 
 | 領域 | キー | 値 | 用途 |
 |---|---|---|---|
-| Review（統合報告書 `review-synthesis.md`） | `decision` | `PASS` \| `CONDITIONAL_PASS` \| `FAIL` | **必須**。`sdd_report.py` がこのキーを集計してステータスレポートのレビュー判定欄に反映する。欠落時は `PENDING` として扱われる |
+| Review（統合報告書 `<REV-ID>.md`。`_review-synthesis.md` は最新へのビューで ID を持たない） | `decision` | `PASS` \| `CONDITIONAL_PASS` \| `FAIL` | **必須**。`sdd_report.py` がこのキーを集計してステータスレポートのレビュー判定欄に反映する。欠落時は `PENDING` として扱われる |
