@@ -459,3 +459,151 @@ def test_next_action_flags_open_issues(tmp_path):
     ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
     joined = "".join(ws["next_actions"])
     assert "spec-issue" in joined or "裁定" in joined
+
+
+# --- 未検分の代行遷移（SDD-FR-156） -------------------------------------------
+
+import base64  # noqa: E402  （本節でのみ使う）
+from datetime import datetime, timedelta, timezone  # noqa: E402
+
+GATE = "GATE-"
+DECISION_A = ".spec/reports/decision-a.md"
+DECISION_B = ".spec/reports/decision-b.md"
+
+
+def write_proxy_state(root: Path, entries):
+    """(decision_ref, 何日前) の一覧から代行遷移 event を並べた STATE.md を書く"""
+    lines = ["# STATE — status 遷移ログ", ""]
+    for index, (ref, days_ago) in enumerate(entries):
+        moment = datetime.now(timezone.utc) - timedelta(days=days_ago)
+        event = {
+            "schema_version": 2,
+            "event_id": f"event-{index:03d}",
+            "timestamp": moment.isoformat().replace("+00:00", "Z"),
+            "path": f".spec/requirements/{FR}{index:03d}.md",
+            "artifact_id": f"{FR}{index:03d}",
+            "old": "verified",
+            "new": "promoted",
+            "provenance": {
+                "kind": "agent-proxy-unverified",
+                "actor": "agent",
+                "on_behalf_of": "hide",
+                "decision_ref": ref,
+            },
+        }
+        payload = json.dumps(event, ensure_ascii=False, sort_keys=True,
+                             separators=(",", ":")).encode("utf-8")
+        lines.append(f"- {FR}{index:03d}: verified → promoted")
+        lines.append(f"<!-- sdd-event:{base64.b64encode(payload).decode('ascii')} -->")
+    _write(root / ".spec" / "STATE.md", "\n".join(lines) + "\n")
+
+
+def write_gate(root: Path, refs, *, gate="promotion", gate_id=None):
+    gate_id = gate_id or f"CORE-{GATE}001"
+    body = ["---", f"id: {gate_id}", f"gate: {gate}", "date: 2026-07-30",
+            "arbiter: hide", "scope: []", "confirmed_decision_refs:"]
+    body += [f"  - {ref}" for ref in refs]
+    body += ["checklist_ref: refs/gates.md#3-promotion-gate", "---", "", "# 通過記録"]
+    _write(root / ".spec" / "gates" / f"{gate_id}.md", "\n".join(body) + "\n")
+
+
+def status_of(root: Path) -> dict:
+    return json.loads(run_status(root, json_out=True).stdout)["workspaces"][0]
+
+
+def test_SDD_FR_156_all_proxy_transitions_unreviewed_without_gates(tmp_path):
+    """.spec/gates/ が無ければ全代行遷移が未検分になる（失敗させず劣化動作する）"""
+    make_spec(tmp_path, reqs=[(1, "verified")])
+    write_proxy_state(tmp_path, [(DECISION_A, 3), (DECISION_A, 1), (DECISION_B, 5)])
+
+    stalled = status_of(tmp_path)["unreviewed_proxy_decisions"]
+
+    assert stalled["count"] == 3
+    assert stalled["decision_refs"] == sorted([DECISION_A, DECISION_B])
+    assert stalled["oldest_age_days"] == 5
+
+
+def test_SDD_FR_156_gate_passage_clears_matching_decision_ref(tmp_path):
+    """GatePassage が確認した裁定記録の遷移は未検分から外れる"""
+    make_spec(tmp_path, reqs=[(1, "verified")])
+    write_proxy_state(tmp_path, [(DECISION_A, 3), (DECISION_B, 5)])
+    write_gate(tmp_path, [DECISION_A])
+
+    stalled = status_of(tmp_path)["unreviewed_proxy_decisions"]
+
+    assert stalled["count"] == 1
+    assert stalled["decision_refs"] == [DECISION_B]
+    assert stalled["oldest_age_days"] == 5
+
+
+def test_SDD_FR_156_whole_file_confirmation_covers_anchors(tmp_path):
+    """フラグメント無しで裁定記録を確認した GatePassage は同一ファイルのアンカーも覆う"""
+    make_spec(tmp_path, reqs=[(1, "verified")])
+    write_proxy_state(tmp_path, [(DECISION_A + "#裁定3", 2)])
+    write_gate(tmp_path, [DECISION_A])
+
+    assert status_of(tmp_path)["unreviewed_proxy_decisions"]["count"] == 0
+
+
+def test_SDD_FR_156_zero_stall_is_silent_in_next_actions(tmp_path):
+    """滞留ゼロのワークスペースでは次アクション候補にノイズを出さない"""
+    make_spec(tmp_path, reqs=[(1, "verified")])
+    write_proxy_state(tmp_path, [(DECISION_A, 1)])
+    write_gate(tmp_path, [DECISION_A])
+
+    ws = status_of(tmp_path)
+
+    assert ws["unreviewed_proxy_decisions"]["count"] == 0
+    assert not any("未検分の代行遷移" in action for action in ws["next_actions"])
+    assert "未検分の代行遷移" not in run_status(tmp_path).stdout
+
+
+def test_SDD_FR_156_stall_appears_in_next_actions_and_text(tmp_path):
+    """滞留があれば次アクション候補とテキスト出力の双方に件数と最古日数が出る"""
+    make_spec(tmp_path, reqs=[(1, "verified")])
+    write_proxy_state(tmp_path, [(DECISION_A, 9)])
+
+    ws = status_of(tmp_path)
+
+    assert any("未検分の代行遷移が 1 件" in action and "最古 9 日" in action
+               for action in ws["next_actions"])
+    assert "未検分の代行遷移 — 1 件" in run_status(tmp_path).stdout
+
+
+def test_SDD_FR_156_spec_issue_transitions_are_judged_by_decision_ref(tmp_path):
+    """promoted を持たない spec-issue の代行遷移も decision_ref だけで検分判定できる"""
+    make_spec(tmp_path, issues=[(1, "accepted")])
+    _write(tmp_path / ".spec" / "reports" / "decision-a.md", "# 裁定\n")
+    event = {
+        "schema_version": 2, "event_id": "e1",
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "path": ".spec/spec-issues/SI-CORE-001.md", "artifact_id": "SI-CORE-001",
+        "old": "open", "new": "accepted",
+        "provenance": {"kind": "agent-proxy-unverified", "actor": "agent",
+                       "on_behalf_of": "hide", "decision_ref": DECISION_A},
+    }
+    payload = json.dumps(event, ensure_ascii=False, sort_keys=True,
+                         separators=(",", ":")).encode("utf-8")
+    _write(tmp_path / ".spec" / "STATE.md",
+           "# STATE\n\n- SI-CORE-001: open → accepted\n"
+           f"<!-- sdd-event:{base64.b64encode(payload).decode('ascii')} -->\n")
+
+    assert status_of(tmp_path)["unreviewed_proxy_decisions"]["count"] == 1
+
+    write_gate(tmp_path, [DECISION_A])
+
+    assert status_of(tmp_path)["unreviewed_proxy_decisions"]["count"] == 0
+
+
+def test_SDD_FR_156_existing_json_keys_are_unchanged(tmp_path):
+    """加算のみ — 既存の公開キーは名称も型も変わらない"""
+    make_spec(tmp_path, reqs=[(1, "verified")])
+    write_proxy_state(tmp_path, [(DECISION_A, 1)])
+
+    ws = status_of(tmp_path)
+
+    for key in ("phase", "phase_code", "requirements", "spec_issues", "tasks",
+                "human_decisions", "next_actions"):
+        assert key in ws
+    assert ws["human_decisions"]["proxy"] == 1
+    assert set(ws["unreviewed_proxy_decisions"]) == {"count", "oldest_age_days", "decision_refs"}

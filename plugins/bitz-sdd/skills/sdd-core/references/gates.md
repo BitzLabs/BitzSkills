@@ -50,5 +50,26 @@ Done フェーズ（全検証 green）の出口であり、feature 完了時の�
    経路別件数は spec_status.py / sdd_report.py が集計する — SDD-FR-145）
 6. □ （任意）docs/ 更新ドラフトが大きい場合は `sdd-review` を実行し判定を添付
 7. □ specs/<feature>/ を `.spec/archive/<date>-<feature>/` へアーカイブ
+8. □ **GatePassage を起票し、昇格を `--gate-passage` で紐づける**（SDD-FR-155 / SDD-FR-157）
+
+### Gate 通過の記録（GatePassage）
+
+手順としてのチェックリストだけでは「Gate が一度も実行されていない」ことを機械が言えない。
+通過そのものを `.spec/gates/<NS>-GATE-NNN.md` の**不変記録**として残す:
+
+```bash
+python3 scripts/spec scaffold <ws> gate --prefix <NS>-GATE --gate promotion \
+    --arbiter <裁定者> --scope "<ID>,<ID>,..." --decision-ref <裁定記録の所在>
+python3 scripts/spec update <ws> <ID> <ID> ... --to promoted --gate-passage <NS>-GATE-NNN \
+    --on-behalf-of <人間> --decision-ref <裁定記録の所在> --actor <実行者>
+```
+
+- frontmatter の必須項目は `id` / `gate`（`discovery` | `design` | `promotion`）/ `date` /
+  `arbiter` / `scope` / `confirmed_decision_refs` / `checklist_ref`。`spec inspect` が検査する
+- 裁定の理由と経緯は `.spec/reports/decision-*.md` が持つ。GatePassage は
+  `confirmed_decision_refs` でそれを参照し**二重管理しない**
+- `scope` の ID と `confirmed_decision_refs` の参照先は実在検査の対象（幽霊参照を許さない）
+- Discovery / Design Gate でも同じ形式で記録できる（`--gate discovery` / `--gate design`）
 
 Gate を自動化しない理由: ここが緩むと docs/ が「エージェントの作業ログ置き場」に劣化し、永続層の信頼が死ぬ。
+GatePassage は裁定を自動化するものではなく、**人間が裁定した事実を機械可読に残す**ためのもの。

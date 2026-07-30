@@ -11,6 +11,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from spec_inspect import gate_field_list, parse_frontmatter_full  # noqa: E402
 from spec_labels import normalize_status  # noqa: E402
 from spec_trace import tasks_for_requirement  # noqa: E402
 from spec_transaction import (  # noqa: E402
@@ -143,6 +144,37 @@ def validate_decision_ref(root: Path, value: str) -> str:
     return value
 
 
+def validate_gate_passage(root: Path, gate_id: str, idents: list) -> None:
+    """SDD-FR-157: promoted 遷移が参照する GatePassage の実在・種別・scope 包含を検査する。
+
+    Gate の実行単位は「1 GatePassage = 1回の Gate 実行」であり、対象は scope に明示列挙する
+    （feature 単位に固定しない）。scope に無い ID を1件でも含む要求は適用前に拒否する。
+    """
+    validate_name(gate_id, "gate-passage")
+    path = root / ".spec" / "gates" / f"{gate_id}.md"
+    if not path.is_file():
+        raise MutationError(
+            "precondition-failed",
+            f"GatePassageが見つかりません: {gate_id}（.spec/gates/{gate_id}.md）",
+            4,
+        )
+    fm = parse_frontmatter_full(path.read_text(encoding="utf-8"))
+    if fm.get("gate") != "promotion":
+        raise MutationError(
+            "precondition-failed",
+            f"{gate_id}のgateは'promotion'である必要があります: {fm.get('gate') or 'missing'}",
+            4,
+        )
+    scope = set(gate_field_list(fm, "scope"))
+    missing = [ident for ident in idents if ident not in scope]
+    if missing:
+        raise MutationError(
+            "precondition-failed",
+            f"{gate_id}のscopeに含まれないIDがあります: " + ", ".join(missing),
+            4,
+        )
+
+
 def confirm_interactively(ident: str, old: str, new: str) -> None:
     if not sys.stdin.isatty() or not sys.stderr.isatty():
         raise MutationError(
@@ -203,6 +235,7 @@ def _state_after(
     root: Path,
     on_behalf_of: str = "",
     decision_ref: str = "",
+    gate_passage: str = "",
 ) -> bytes:
     if provenance == "agent-proxy-unverified":
         schema_version = 2
@@ -223,6 +256,8 @@ def _state_after(
             else ""
         )
         provenance_field = {"kind": provenance, "actor": actor}
+    if gate_passage:
+        human_suffix += f"; Gate\u901a\u904e\u8a18\u9332: {gate_passage}"
     display = (
         f"- {date.today().isoformat()} {ident}: {old} \u2192 {new} "
         f"({display_actor}{human_suffix})\n"
@@ -239,6 +274,10 @@ def _state_after(
         "artifact_before_hash": sha256(artifact_before),
         "artifact_after_hash": sha256(artifact_after),
     }
+    if gate_passage:
+        # SDD-FR-157: 検分の証跡を遷移そのものに残す。schema_version は変更しない
+        # （必須キー集合は不変で、追加キーは既存の検査を通る — 順序6 を加法的に保つ）
+        event["gate_passage"] = gate_passage
     encoded = base64.b64encode(canonical_json(event)).decode("ascii")
     prefix = before if before.endswith(b"\n") else before + b"\n"
     return prefix + display.encode("utf-8") + f"<!-- sdd-event:{encoded} -->\n".encode("ascii")
@@ -264,6 +303,7 @@ def _prepare_transition(
     provenance: str,
     on_behalf_of: str = "",
     decision_ref: str = "",
+    gate_passage: str = "",
 ):
     def prepare(owner: dict) -> TransactionPlan:
         current_bytes = path.read_bytes()
@@ -292,6 +332,7 @@ def _prepare_transition(
             root,
             on_behalf_of,
             decision_ref,
+            gate_passage,
         )
         return TransactionPlan(
             changes=(
@@ -323,6 +364,8 @@ def main() -> int:
     parser.add_argument("--actor")
     parser.add_argument("--on-behalf-of", dest="on_behalf_of")
     parser.add_argument("--decision-ref", dest="decision_ref")
+    parser.add_argument("--gate-passage", dest="gate_passage",
+                        help="verified→promoted で参照する GatePassage ID（SDD-FR-157。必須）")
     parser.add_argument("--recover", metavar="EVENT_ID")
     parser.add_argument("--recover-lock", action="store_true")
     parser.add_argument("--json", action="store_true", dest="json_output")
@@ -374,6 +417,27 @@ def main() -> int:
                 raise MutationError("precondition-failed", f"不正遷移: {old} -> {new}", 2)
             entries.append((ident, kind, path, old, new, required))
 
+        # SDD-FR-157: verified→promoted は GatePassage の参照を必須とする。
+        # 本規律は導入後の遷移にだけ適用し、既存の promoted 済み成果物へは遡及しない。
+        promoted = [entry[0] for entry in entries
+                    if (entry[3], entry[4]) == ("verified", "promoted")]
+        gate_passage = args.gate_passage or ""
+        if promoted:
+            if not gate_passage:
+                raise MutationError(
+                    "authorization-required",
+                    "verified→promoted遷移には--gate-passage <GatePassage ID>が必要です"
+                    "（.spec/gates/ の通過記録に decision-ref の検分を残す）",
+                    3,
+                )
+            validate_gate_passage(root, gate_passage, promoted)
+        elif gate_passage:
+            raise MutationError(
+                "authorization-required",
+                "--gate-passageはverified→promoted遷移にだけ使用できます",
+                3,
+            )
+
         state_path = root / ".spec" / "STATE.md"
 
         if proxy:
@@ -398,7 +462,7 @@ def main() -> int:
             prepares = [
                 _prepare_transition(
                     root, state_path, kind, path, ident, old, new,
-                    actor, provenance, on_behalf_of, decision_ref,
+                    actor, provenance, on_behalf_of, decision_ref, gate_passage,
                 )
                 for ident, kind, path, old, new, _ in entries
             ]
@@ -452,6 +516,7 @@ def main() -> int:
 
         prepare = _prepare_transition(
             root, state_path, kind, path, ident, old, new, actor, provenance,
+            gate_passage=gate_passage,
         )
         event_id, _ = mutate(root, f"update {ident} {old}->{new}", (path, state_path), prepare)
         result = {

@@ -381,3 +381,153 @@ def test_SDD_FR_145_batch_requires_proxy_route(tmp_path):
     assert result.returncode == 3
     assert status_of(tmp_path, "requirements", r1) == "draft"
     assert status_of(tmp_path, "requirements", r2) == "draft"
+
+
+# --- promoted 遷移の GatePassage 必須化（SDD-FR-157） --------------------------
+
+GATE = "GATE-"
+GATE_ID = f"CORE-{GATE}001"
+DECISION_REF = ".spec/reports/decision-sample.md"
+
+
+def make_gate(root: Path, scope, *, gate="promotion", gate_id=GATE_ID):
+    _write(root / DECISION_REF, "# 裁定記録\n")
+    body = ["---", f"id: {gate_id}", f"gate: {gate}", "date: 2026-07-30",
+            "arbiter: hide", "scope: [" + ", ".join(scope) + "]",
+            "confirmed_decision_refs:", f"  - {DECISION_REF}",
+            "checklist_ref: refs/gates.md#3-promotion-gate", "---", "", "# 通過記録"]
+    _write(root / ".spec" / "gates" / f"{gate_id}.md", "\n".join(body) + "\n")
+    return gate_id
+
+
+def promote(root, *idents, gate_passage=None, actor="agent"):
+    extra = ["--on-behalf-of", "hide", "--decision-ref", DECISION_REF, "--actor", actor]
+    if gate_passage is not None:
+        extra += ["--gate-passage", gate_passage]
+    command = [sys.executable, str(UPDATE), str(root), *idents, "--to", "promoted", *extra]
+    return subprocess.run(command, capture_output=True, text=True)
+
+
+def setup_promotable(root: Path, count=1):
+    idents = []
+    for index in range(1, count + 1):
+        rid = make_req(root, index, "verified")
+        make_task(root, index, rid, "done")
+        idents.append(rid)
+    _write(root / DECISION_REF, "# 裁定記録\n")
+    return idents
+
+
+def req_status(root: Path, ident: str) -> str:
+    return status_of(root, "requirements", ident)
+
+
+def test_SDD_FR_157_promotion_without_gate_passage_is_rejected(tmp_path):
+    """--gate-passage が無い verified→promoted は対象を変更せず非ゼロで終了する"""
+    (ident,) = setup_promotable(tmp_path)
+
+    result = promote(tmp_path, ident)
+
+    assert result.returncode != 0
+    assert "--gate-passage" in result.stderr
+    assert req_status(tmp_path, ident) == "verified"
+    assert not (tmp_path / ".spec" / "STATE.md").exists()
+
+
+def test_SDD_FR_157_promotion_with_valid_gate_passage_succeeds(tmp_path):
+    """scope に含まれる ID は GatePassage を参照して promoted へ遷移できる"""
+    (ident,) = setup_promotable(tmp_path)
+    gate_id = make_gate(tmp_path, [ident])
+
+    result = promote(tmp_path, ident, gate_passage=gate_id)
+
+    assert result.returncode == 0, result.stderr
+    assert req_status(tmp_path, ident) == "promoted"
+
+
+def test_SDD_FR_157_gate_passage_is_recorded_in_state_event(tmp_path):
+    """検分の証跡が STATE の構造化 event に残り、schema_version は 2 のまま"""
+    (ident,) = setup_promotable(tmp_path)
+    gate_id = make_gate(tmp_path, [ident])
+
+    assert promote(tmp_path, ident, gate_passage=gate_id).returncode == 0
+
+    state = (tmp_path / ".spec" / "STATE.md").read_text(encoding="utf-8")
+    marker = re.search(r"<!-- sdd-event:([A-Za-z0-9+/=]+) -->", state)
+    event = json.loads(base64.b64decode(marker.group(1)))
+    assert event["gate_passage"] == gate_id
+    assert event["schema_version"] == 2
+    assert f"Gate通過記録: {gate_id}" in state
+
+
+def test_SDD_FR_157_unknown_gate_passage_is_rejected(tmp_path):
+    """実在しない GatePassage を指す要求は適用前に拒否する"""
+    (ident,) = setup_promotable(tmp_path)
+
+    result = promote(tmp_path, ident, gate_passage=GATE_ID)
+
+    assert result.returncode != 0
+    assert "GatePassageが見つかりません" in result.stderr
+    assert req_status(tmp_path, ident) == "verified"
+
+
+def test_SDD_FR_157_non_promotion_gate_kind_is_rejected(tmp_path):
+    """gate 種別が promotion でない GatePassage は promoted 遷移に使えない"""
+    (ident,) = setup_promotable(tmp_path)
+    gate_id = make_gate(tmp_path, [ident], gate="design")
+
+    result = promote(tmp_path, ident, gate_passage=gate_id)
+
+    assert result.returncode != 0
+    assert "'promotion'である必要があります" in result.stderr
+    assert req_status(tmp_path, ident) == "verified"
+
+
+def test_SDD_FR_157_id_outside_scope_is_rejected(tmp_path):
+    """scope に1件でも欠けがあれば全体を適用せず拒否する"""
+    first, second = setup_promotable(tmp_path, count=2)
+    gate_id = make_gate(tmp_path, [first])
+
+    result = promote(tmp_path, first, second, gate_passage=gate_id)
+
+    assert result.returncode != 0
+    assert second in result.stderr
+    assert req_status(tmp_path, first) == "verified"
+    assert req_status(tmp_path, second) == "verified"
+
+
+def test_SDD_FR_157_scope_as_id_set_allows_batch_promotion(tmp_path):
+    """1つの GatePassage が ID の集合を scope に列挙して一括昇格できる"""
+    first, second = setup_promotable(tmp_path, count=2)
+    gate_id = make_gate(tmp_path, [first, second])
+
+    result = promote(tmp_path, first, second, gate_passage=gate_id)
+
+    assert result.returncode == 0, result.stderr
+    assert req_status(tmp_path, first) == "promoted"
+    assert req_status(tmp_path, second) == "promoted"
+
+
+def test_SDD_FR_157_gate_passage_rejected_on_other_transitions(tmp_path):
+    """--gate-passage は verified→promoted 以外では黙認せず拒否する"""
+    rid = make_req(tmp_path, 1, "draft")
+    make_gate(tmp_path, [rid])
+
+    result = run(tmp_path, rid, "approved", "--on-behalf-of", "hide",
+                 "--decision-ref", DECISION_REF, "--actor", "agent",
+                 "--gate-passage", GATE_ID)
+
+    assert result.returncode != 0
+    assert "verified→promoted遷移にだけ" in result.stderr
+    assert req_status(tmp_path, rid) == "draft"
+
+
+def test_SDD_FR_157_other_transitions_need_no_gate_passage(tmp_path):
+    """promoted 以外の遷移は従来どおり GatePassage 無しで通る"""
+    rid = make_req(tmp_path, 1, "approved")
+    make_task(tmp_path, 1, rid, "pending")
+
+    result = run(tmp_path, rid, "implementing", "--actor", "agent")
+
+    assert result.returncode == 0, result.stderr
+    assert req_status(tmp_path, rid) == "implementing"

@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-155
 version: 1.0
-status: approved
+status: verified
 domain: workflow
 priority: high
 origin: SI-SDD-028

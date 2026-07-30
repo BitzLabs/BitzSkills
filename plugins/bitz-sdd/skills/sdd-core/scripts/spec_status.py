@@ -19,10 +19,14 @@ import json
 import re
 import sys
 from collections import Counter
+from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from spec_labels import phase_label, status_label  # noqa: E402
+# GatePassage の読み取りは spec_inspect を単一の正として共有する（scaffold と同じ方針）。
+# spec_inspect は import 時に副作用を持たない（実行は __main__ ガード下のみ）。
+from spec_inspect import gate_field_list, load_gate_passages  # noqa: E402
 
 # 要件が「承認済み以降（検証対象）」とみなされる status
 APPROVED_PLUS = {"approved", "implementing", "verified", "promoted"}
@@ -93,6 +97,79 @@ def _decision_route_counts(spec: Path) -> dict:
         elif kind == "agent-proxy-unverified":
             counts["proxy"] += 1
     return counts
+
+
+def _proxy_events(spec: Path) -> list:
+    """STATE.md の代行遷移 event を (decision_ref, timestamp) の一覧で返す（読み取り専用）。"""
+    events = []
+    state = spec / "STATE.md"
+    if not state.exists():
+        return events
+    text = state.read_text(encoding="utf-8", errors="replace")
+    for match in re.finditer(r"<!-- sdd-event:([A-Za-z0-9+/=]+) -->", text):
+        try:
+            event = json.loads(base64.b64decode(match.group(1), validate=True))
+            provenance = event.get("provenance") or {}
+        except Exception:
+            continue
+        if provenance.get("kind") != "agent-proxy-unverified":
+            continue
+        events.append((provenance.get("decision_ref") or "", event.get("timestamp") or ""))
+    return events
+
+
+def _is_reviewed(ref: str, confirmed: set, confirmed_files: set) -> bool:
+    """代行遷移の decision_ref が GatePassage で検分済みかを判定する（SDD-FR-156）。
+
+    完全一致に加え、GatePassage が**フラグメント無しで裁定記録そのもの**を確認している場合は
+    同一ファイル内の任意のアンカーを指す遷移も検分済みとみなす（人間は記録を1件として読むため）。
+    """
+    if ref in confirmed:
+        return True
+    return ref.split("#", 1)[0] in confirmed_files
+
+
+def _age_days(timestamp: str) -> int:
+    """ISO8601 (…Z) から現在までの日数。解釈できない値は 0 日として扱う。"""
+    try:
+        moment = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+    except ValueError:
+        return 0
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=timezone.utc)
+    return max(0, (datetime.now(timezone.utc) - moment).days)
+
+
+def unreviewed_proxy_decisions(root: Path) -> dict:
+    """未検分の代行遷移を decision_ref 単位で判定し集計する（SDD-FR-156）。
+
+    未検分 ＝ provenance.kind が `agent-proxy-unverified` の STATE event のうち、その
+    `decision_ref` がどの GatePassage の `confirmed_decision_refs` にも現れないもの。
+    **対象成果物が promoted に到達したかは判定に使わない** — 代行遷移は spec-issue の
+    `open → accepted` にも起きており、spec-issue は promoted 状態を持たないため、
+    要件基準では永久に滞留扱いになってしまう（SDD-DSN-010 裁定 D2）。
+
+    `.spec/gates/` が無いワークスペースでは全代行遷移が未検分になる（失敗させない）。
+    返り値は count（未検分の遷移件数）/ oldest_age_days（最古の滞留日数）/
+    decision_refs（未検分の裁定記録。重複排除・ソート済み）。
+    """
+    gates, _ = load_gate_passages(root)
+    confirmed = set()
+    for gate in gates.values():
+        confirmed.update(gate_field_list(gate["fm"], "confirmed_decision_refs"))
+    confirmed_files = {ref for ref in confirmed if "#" not in ref}
+
+    refs, ages = set(), []
+    for ref, timestamp in _proxy_events(root / ".spec"):
+        if _is_reviewed(ref, confirmed, confirmed_files):
+            continue
+        refs.add(ref)
+        ages.append(_age_days(timestamp))
+    return {
+        "count": len(ages),
+        "oldest_age_days": max(ages) if ages else 0,
+        "decision_refs": sorted(refs),
+    }
 
 
 def _accepted_issue_records(directory: Path) -> list:
@@ -176,7 +253,7 @@ def determine_phase(reqs: Counter, tasks: Counter, has_discovery: bool,
 
 def next_actions(reqs: Counter, issues: Counter, tasks: Counter, phase_code: str,
                   accepted_unaddressed=(), accepted_delegated_unresolved=(),
-                  completion_record_missing=()):
+                  completion_record_missing=(), unreviewed_proxy=None):
     """状況から次アクション候補を単純ヒューリスティックで導く。"""
     actions = []
     n_open = issues.get("open", 0)
@@ -207,6 +284,14 @@ def next_actions(reqs: Counter, issues: Counter, tasks: Counter, phase_code: str
         actions.append(
             f"実施記録（`- **実施**:`）の欠落が {len(completion_record_missing)} 件"
             f"（{ids}） — 対象 spec-issue に参照要件 ID・PR 等を添えた実施マーカーを追記する"
+        )
+    # 滞留ゼロのワークスペースでは出力しない（ノイズを出さない。SDD-FR-156）
+    if unreviewed_proxy and unreviewed_proxy.get("count"):
+        actions.append(
+            f"未検分の代行遷移が {unreviewed_proxy['count']} 件"
+            f"（裁定記録 {len(unreviewed_proxy['decision_refs'])} 件・"
+            f"最古 {unreviewed_proxy['oldest_age_days']} 日） — Promotion Gate で decision-ref を"
+            f"確認し `.spec/gates/` に GatePassage を起票する"
         )
     if n_draft:
         actions.append(f"draft 要件が {n_draft} 件 — 承認（approved 化）を行う")
@@ -264,6 +349,7 @@ def collect(root: Path, all_origin_records=()) -> dict:
             accepted_unaddressed.append(iid)
 
     phase_code, phase_label = determine_phase(reqs, tasks, has_discovery, has_design)
+    unreviewed_proxy = unreviewed_proxy_decisions(root)
     return {
         "root": str(root),
         "phase": phase_label,
@@ -272,12 +358,14 @@ def collect(root: Path, all_origin_records=()) -> dict:
         "spec_issues": {"total": sum(issues.values()), "by_status": dict(issues)},
         "tasks": {"total": sum(tasks.values()), "by_status": dict(tasks)},
         "human_decisions": _decision_route_counts(spec),
+        # SDD-FR-156: 加算のみの公開キー。既存キーの名称・意味・型は変えない
+        "unreviewed_proxy_decisions": unreviewed_proxy,
         "accepted_unaddressed": accepted_unaddressed,
         "accepted_delegated_unresolved": accepted_delegated_unresolved,
         "completion_record_missing": completion_record_missing,
         "next_actions": next_actions(
             reqs, issues, tasks, phase_code, accepted_unaddressed,
-            accepted_delegated_unresolved, completion_record_missing,
+            accepted_delegated_unresolved, completion_record_missing, unreviewed_proxy,
         ),
     }
 
@@ -305,6 +393,14 @@ def render_text(results) -> str:
             f"## 人間裁定遷移（経路別） — 対話確認 {decisions.get('interactive', 0)} / "
             f"代行 {decisions.get('proxy', 0)}"
         )
+        unreviewed = ws.get("unreviewed_proxy_decisions") or {}
+        if unreviewed.get("count"):
+            out.append(
+                f"## 未検分の代行遷移 — {unreviewed['count']} 件 / "
+                f"裁定記録 {len(unreviewed['decision_refs'])} 件 / "
+                f"最古 {unreviewed['oldest_age_days']} 日"
+            )
+            out.extend(f"  - {ref}" for ref in unreviewed["decision_refs"])
         out.append("## 次アクション候補")
         out.extend(f"  - {a}" for a in ws["next_actions"])
         out.append("")

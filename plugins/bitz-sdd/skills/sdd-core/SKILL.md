@@ -2,10 +2,10 @@
 name: sdd-core
 description: BitzSDD — 仕様駆動開発（SDD）ワークフローを運用するメインスキル。要件定義・仕様作成・実装・検証・完了処理のすべてをこの規律に従って実行する。ユーザーが「仕様駆動」「SDD」「要件」「EARS」「spec」「タスク分解」「feature実装」に言及したとき、リポジトリに .spec/ や AGENTS.md が存在するとき、または新機能の設計・実装・検証・リリース処理を依頼されたときは、明示的な指示がなくても必ずこのスキルを使うこと。要件の変更・廃止・番号管理・テスト失敗時の対応・ドキュメント更新もすべて本スキルの管轄。
 metadata:
-  version: "3.3.0"
+  version: "3.4.0"
   author: br7.hide
   created: "2026-07-07"
-  updated: "2026-07-29"
+  updated: "2026-07-30"
 ---
 
 # BitzSDD Workflow (spec駆動開発)
@@ -137,11 +137,13 @@ python3 scripts/spec_status.py --workspace . plugins/*  # 複数ワークスペ�
 lifecycle.md の権限マトリクスをコードで強制する）:
 
 ```bash
-# 採番付き雛形生成（要件 / spec-issue / task / 設計ノート DSN）
+# 採番付き雛形生成（要件 / spec-issue / task / 設計ノート DSN / Gate 通過記録）
 python3 scripts/spec_scaffold.py <workspace> requirement --prefix CORE-FR --domain tooling --title "..."
 python3 scripts/spec_scaffold.py <workspace> spec-issue  --prefix SI-CORE --target "..."
 python3 scripts/spec_scaffold.py <workspace> task --implements CORE-FR-004 --prefix CORE-TSK --boundary "..."
 python3 scripts/spec_scaffold.py <workspace> design --prefix DSN --title "..." [--status draft] [--implements CORE-FR-006]
+python3 scripts/spec_scaffold.py <workspace> gate --prefix CORE-GATE --gate promotion \
+  --arbiter <裁定者> --scope "CORE-FR-004,CORE-FR-005" --decision-ref <裁定記録の所在>
 
 # 生成時に統制語彙を検証（verification_method / domain / status が語彙外なら非ゼロで失敗し雛形を
 # 生成しない。語彙は spec_inspect と単一の正を共有。domains.md 不在時 domain 検証はスキップ。CORE-FR-010）
@@ -151,6 +153,7 @@ python3 scripts/spec_update.py <workspace> CORE-FR-004 --to implementing        
 python3 scripts/spec_update.py <workspace> CORE-FR-004 --to approved \
   --interactive-decision --actor <decision-operator>  # 対話確認経路（本人性は未検証）
 python3 scripts/spec_update.py <workspace> CORE-FR-004 CORE-FR-005 --to promoted \
+  --gate-passage CORE-GATE-001 \
   --on-behalf-of <human> --decision-ref <裁定の所在> --actor <agent>  # 代行可視化経路（バッチ可）
 python3 scripts/spec_update.py <workspace> --recover <event-id>                     # 未完了transaction復旧
 python3 scripts/spec_update.py <workspace> --recover-lock                           # 未開始lock復旧
@@ -164,6 +167,13 @@ python3 scripts/spec_update.py <workspace> --recover-lock                       
 `agent-proxy-unverified`）。いずれも人間本人の認証ではなく、代行の裁定真正性は機械検証されない
 （Promotion Gate で人間が decision-ref を確認する）。旧`--by-human`は誤認防止のため廃止した。
 権限マトリクスに無い遷移は誰でも拒否する。詳細は`references/lifecycle.md`が正。
+
+**Gate 通過の記録**: `verified→promoted` は上記の認可経路に加えて `--gate-passage <GatePassage ID>`
+を必須とする（SDD-FR-157）。GatePassage は `.spec/gates/` に置く status 遷移を持たない不変記録で、
+`scope` に対象 ID を明示列挙し `confirmed_decision_refs` で検分した裁定記録を参照する。
+未検分の代行遷移（`decision_ref` がどの GatePassage にも現れないもの）は `spec status` が
+`unreviewed_proxy_decisions` として滞留集計する（SDD-FR-156）。本規律は**導入後の遷移にのみ適用**し、
+既存の promoted 済み成果物へは遡及しない。詳細は `references/gates.md` が正。
 
 全変更CLIはworkspace mutation lockへ参加し、statusとSTATEまたは新規成果物をwrite-ahead
 journalで回復可能に永続化する。`.spec/.transactions/`または`.spec/.mutation-lock`が残る場合は

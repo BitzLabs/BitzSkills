@@ -14,10 +14,29 @@
 | draft → approved | 承認 | **人間のみ** | spec-lint 合格 + verification_method 記入が前提 |
 | approved → implementing | 所有workspace内tasks/ に `implements:` 出現 | planエージェント | traceability matrix に行追加 |
 | implementing → verified | 所有workspace内task全件done + 全検証 green + stale ゼロ | 機械判定 | matrix 緑化 |
-| verified → promoted | Promotion Gate | **人間のみ** | docs/ 更新・アーカイブ（references/gates.md） |
+| verified → promoted | Promotion Gate | **人間のみ** | docs/ 更新・アーカイブ（references/gates.md）、`--gate-passage` で GatePassage を参照 |
 | * → deprecated | 廃止 or supersede | **人間のみ** | `superseded_by:` 記入、テストは tombstone 化 |
 
 **不変条件**: implementing 以降の要件のEARS節は書き換え不可。
+
+### verified は完了ではない（SDD-FR-156 / SDD-FR-157）
+
+**verified のまま滞留し続けることは正常状態ではない**。verified は「機械検証が通った」状態であり、
+人間が裁定を検分して初めて promoted になる。代行可視化経路（`--on-behalf-of`）は
+「Promotion Gate で人間が decision-ref を確認する」ことを**唯一の担保**として設計されているため、
+promoted へ進まない限りその担保は一度も行使されない。
+
+- `verified → promoted` は `spec update <ws> <IDs...> --to promoted --gate-passage <GatePassage ID>`
+  で行う。`--gate-passage` が無い要求は対象と STATE を変更せず `authorization-required` で終了する
+- GatePassage は `.spec/gates/<NS>-GATE-NNN.md` に置く**不変記録**で、status 遷移を持たない。
+  `spec scaffold <ws> gate --gate promotion --arbiter <人間> --scope <ID,...> --decision-ref <所在>`
+  で起票する。Gate の実行単位は「1 GatePassage = 1回の Gate 実行」であり、対象は `scope` に
+  明示列挙する（feature 単位に固定しない）
+- 未検分の代行遷移（`decision_ref` がどの GatePassage の `confirmed_decision_refs` にも
+  現れないもの）は `spec status` が滞留として集計する。判定は **`decision_ref` 単位**であり、
+  対象成果物が promoted に到達したかは使わない — 代行遷移は spec-issue の `open → accepted` にも
+  起きており、spec-issue は promoted 状態を持たないため
+- **本規律は導入後の遷移に適用し、既存の promoted 済み成果物へ GatePassage の遡及追加を要求しない**
 
 ## 軽量レーンの verified 検証証跡
 

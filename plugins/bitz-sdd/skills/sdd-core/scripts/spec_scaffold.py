@@ -14,6 +14,8 @@
   python spec_scaffold.py <workspace> spec-issue  --prefix SI-CORE [--target T] [--raised-by R]
   python spec_scaffold.py <workspace> task --implements CORE-FR-004 --prefix CORE-TSK [--boundary B]
   python spec_scaffold.py <workspace> design --prefix DSN [--title T] [--status draft] [--implements ID]
+  python spec_scaffold.py <workspace> gate --prefix SDD-GATE --gate promotion --arbiter hide \
+      --scope "SDD-FR-001,SDD-FR-002" --decision-ref .spec/reports/decision-YYYY-MM-DD-....md
 """
 import argparse
 import re
@@ -38,6 +40,7 @@ KIND_DIR = {
     "spec-issue": "spec-issues",
     "task": "tasks",
     "design": "design",
+    "gate": "gates",
 }
 
 
@@ -144,6 +147,41 @@ def render_design(did: str, args) -> str:
     )
 
 
+GATE_CHECKLIST_REF = {
+    "discovery": "skills/sdd-core/references/gates.md#1-discovery-gatemap--discovery-の出口",
+    "design": "skills/sdd-core/references/gates.md#2-design-gateproposed--active",
+    "promotion": "skills/sdd-core/references/gates.md#3-promotion-gateverified--promoted",
+}
+
+
+def render_gate(gid: str, args) -> str:
+    """GatePassage の雛形（SDD-FR-155）。
+
+    裁定の理由と経緯は `.spec/reports/decision-*.md` が持つため、本文は薄くし
+    `confirmed_decision_refs` で参照する（二重管理しない）。status 遷移は持たない。
+    """
+    scope = [s.strip() for s in (args.scope or "").split(",") if s.strip()]
+    refs = "".join(f"  - {ref}\n" for ref in (args.decision_ref or []))
+    return (
+        f"---\n"
+        f"id: {gid}\n"
+        f"gate: {args.gate}\n"
+        f"date: {date.today().isoformat()}\n"
+        f"arbiter: {args.arbiter}\n"
+        f"scope: [{', '.join(scope)}]\n"
+        f"confirmed_decision_refs:\n"
+        f"{refs}"
+        f"checklist_ref: {args.checklist_ref or GATE_CHECKLIST_REF[args.gate]}\n"
+        f"---\n\n"
+        f"# {gid} {args.title or (args.gate + ' Gate 通過記録')}\n\n"
+        f"- **裁定者**: {args.arbiter}\n"
+        f"- **対象**: 上記 `scope` の {len(scope)} 件\n"
+        f"- **確認した裁定記録**: 上記 `confirmed_decision_refs`\n"
+        f"- **チェックリスト**: `{args.checklist_ref or GATE_CHECKLIST_REF[args.gate]}`\n"
+        f"- **備考**: TODO（チェックリストの消化で特記があれば記す）\n"
+    )
+
+
 def validate_vocab(args, req_dir: Path) -> "str | None":
     """統制語彙を生成前に検証する。語彙外ならエラーメッセージを返す（正常なら None）。
 
@@ -189,11 +227,30 @@ def main():
     # design(DSN) 用
     parser.add_argument("--status", help="status（design。既定 draft。STATUSES 語彙で検証）")
     parser.add_argument("--owner", help="担当者ハンドル（design）")
+    # gate(GatePassage) 用
+    parser.add_argument("--gate", choices=sorted(GATE_CHECKLIST_REF),
+                        help="Gate 種別（gate。discovery / design / promotion）")
+    parser.add_argument("--arbiter", help="裁定者（gate）")
+    parser.add_argument("--scope", help="対象成果物 ID のカンマ区切り（gate）")
+    parser.add_argument("--decision-ref", dest="decision_ref", action="append",
+                        help="確認した裁定記録の所在（gate。複数回指定可）")
+    parser.add_argument("--checklist-ref", dest="checklist_ref",
+                        help="チェックリストの所在（gate。既定は gate 種別ごとの gates.md アンカー）")
     args = parser.parse_args()
 
     if args.kind == "task" and not args.implements:
         print("ERROR: task の生成には --implements <要件ID> が必須です", file=sys.stderr)
         return 2
+    if args.kind == "gate":
+        # GatePassage は必須項目が揃わないと spec_inspect を PASS しない。
+        # 空の雛形を作って FAIL させるより、生成前に不足を告げる（CORE-FR-004 の雛形契約）
+        missing = [flag for flag, value in (
+            ("--gate", args.gate), ("--arbiter", args.arbiter), ("--scope", args.scope),
+            ("--decision-ref", args.decision_ref),
+        ) if not value]
+        if missing:
+            print(f"ERROR: gate の生成には {' / '.join(missing)} が必須です", file=sys.stderr)
+            return 2
 
     root = Path(args.workspace).resolve()
 
@@ -226,6 +283,8 @@ def main():
             body = render_spec_issue(ident, args)
         elif args.kind == "design":
             body = render_design(ident, args)
+        elif args.kind == "gate":
+            body = render_gate(ident, args)
         else:
             body = render_task(ident, args)
         selected.update({"ident": ident, "dest": dest})
