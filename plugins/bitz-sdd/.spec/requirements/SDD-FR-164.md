@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-164
 version: 1.0
-status: approved
+status: verified
 domain: sync
 priority: high
 origin: SI-SDD-032（裁定I。.spec/reports/decision-2026-07-30-order8-design-foundation.md）
@@ -54,3 +54,7 @@ confidence: high
 - **Revision History**:
   - 1.0 (2026-07-30) 初版（draft 起票）。SI-SDD-032 と裁定I から導出。
     lock 参加は追加裁定（2026-07-30）により V4 へ送り、本要件では設計判断として明記する。
+  - 1.0 (2026-07-30) 代行可視化経路で approved 化
+    （裁定記録 `.spec/reports/decision-2026-07-30-order8-design-foundation.md` 裁定I）。
+  - 1.0 (2026-07-30) 実装・検証完了により verified 化。証跡
+    `.spec/verification/pytest--f0aed06.json`（exit_code 0 / 43 passed）。
