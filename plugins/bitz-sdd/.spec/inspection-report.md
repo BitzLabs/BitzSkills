@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-30)
 
-成果物数: 100 / 問題: 0 / 幽霊参照: 2 / 実装待ち: 0 / 孤児要件: 0 / 検証証跡: 3
+成果物数: 101 / 問題: 0 / 幽霊参照: 2 / 実装待ち: 0 / 孤児要件: 0 / 検証証跡: 4
 
 ## 問題一覧
 - なし ✅
@@ -60,6 +60,7 @@
 - SDD-FR-122
 - SDD-FR-123
 - SDD-FR-130
+- SDD-FR-165
 
 ## 他ワークスペースのテスト/実装から参照されている要件
 - SDD-FR-124 ← BitzSkills/tests/test_spec_inspect.py, BitzSkills/tests/test_spec_scaffold.py
@@ -73,11 +74,13 @@
 - .spec/verification/pytest--0ee41c9.json — commit 0ee41c9 / exit_code 0 / 対象 SDD-FR-163
 - .spec/verification/pytest--5526358.json — commit 5526358 / exit_code 0 / 対象 SDD-FR-162
 - .spec/verification/pytest--d5a446c.json — commit d5a446c / exit_code 0 / 対象 SDD-FR-151, SDD-FR-152, SDD-FR-153, SDD-FR-154
+- .spec/verification/pytest--f0aed06.json — commit f0aed06 / exit_code 0 / 対象 SDD-FR-164
 
 ## 検証証跡の WARN（古い commit・証跡なしの verified 要件 — FAIL にしない）
 - [verify] .spec/verification/pytest--0ee41c9.json: 記録時の commit(0ee41c9) 以降にソースが変更されています（再記録が必要な可能性）
 - [verify] .spec/verification/pytest--5526358.json: 記録時の commit(5526358) 以降にソースが変更されています（再記録が必要な可能性）
 - [verify] .spec/verification/pytest--d5a446c.json: 記録時の commit(d5a446c) 以降にソースが変更されています（再記録が必要な可能性）
+- [verify] .spec/verification/pytest--f0aed06.json: 記録時の commit(f0aed06) 以降にソースが変更されています（再記録が必要な可能性）
 - [verify] SDD-FR-001: verified/promoted だが検証証跡がありません
 - [verify] SDD-FR-010: verified/promoted だが検証証跡がありません
 - [verify] SDD-FR-041: verified/promoted だが検証証跡がありません
@@ -217,7 +220,8 @@
 | SDD-FR-161 | 検証済み（verified） | verification | unit-test | 1 | 2 |
 | SDD-FR-162 | 検証済み（verified） | verification | unit-test | 1 | 3 |
 | SDD-FR-163 | 検証済み（verified） | reporting | unit-test | 1 | 2 |
-| SDD-FR-164 | 承認済み（approved） | sync | unit-test | 1 | 2 |
+| SDD-FR-164 | 検証済み（verified） | sync | unit-test | 1 | 2 |
+| SDD-FR-165 | 検証済み（verified） | workflow | manual-check | 1 | 1 |
 | SDD-REV-002 | active |  |  | 0 | 1 |
 | SDD-REV-003 | active |  |  | 0 | 0 |
 | SDD-REV-004 | active |  |  | 0 | 0 |

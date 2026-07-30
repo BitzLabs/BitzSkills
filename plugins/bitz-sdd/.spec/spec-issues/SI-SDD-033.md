@@ -57,10 +57,14 @@ status: accepted
 2026-07-30 に **accept（提案1〜3 のみ）**。裁定記録は
 `.spec/reports/decision-2026-07-30-order8-design-foundation.md`（裁定K）。
 
+**要件化・実装完了（2026-07-30）**: 提案1〜3 を `SDD-FR-165` として起票し、`SDD-TSK-054` で
+実装した（verification_method は manual-check）。
+
 - **提案1〜3**（共有作業ツリー節・測定値は確定 ref から読む規律・他セッション作業中ファイルの
-  読み取り専用原則）— 実装対象。再発防止はリポジトリ固有の `AGENTS.md` へ反映済みだが、
+  読み取り専用原則）— **実装済**（`SDD-FR-165`）。再発防止はリポジトリ固有の `AGENTS.md` へ反映済みだが、
   **配布物であるプラグイン側の規律には入っていない**ため、`AGENTS.md` 側だけで足りるとはしない。
-- **提案4**（pre-commit による boundary 逸脱の機械強制）— **見送り**。ROADMAP 順序4 で
+- **提案4**（pre-commit による boundary 逸脱の機械強制）— **見送り**（`parallel-git.md` 末尾に
+  範囲外であることと理由を明記した）。ROADMAP 順序4 で
   `sdd-git` 廃止と `parallel-git.md` の再編（Git 手順を bitz-flow へ移す）が第一候補であり、
   強制層の所有者が移る前提で bitz-sdd 側へ実装すると二重管理になる。bitz-flow V2 の
   Promotion Gate 通過後に所有者と併せて裁定する。
