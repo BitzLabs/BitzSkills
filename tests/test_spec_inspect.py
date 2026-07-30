@@ -1440,3 +1440,134 @@ def test_SDD_FR_153_manual_check_requirement_needs_no_evidence(tmp_path: Path):
 
     assert res.returncode == 0, res.stdout
     assert VERIFIED_REQ_ID not in section_body(report_of(tmp_path), EVIDENCE_WARN_SECTION)
+
+
+# --- GatePassage（SDD-FR-155） -----------------------------------------------
+
+GATE_ID = "X-" + "GATE-" + "001"
+GATE_SECTION = "## Gate 通過記録"
+
+
+def make_gate_workspace(tmp_path: Path, *, gate="promotion", scope=None,
+                        decision_refs=(".spec/reports/decision-sample.md",),
+                        omit=(), gate_id=GATE_ID):
+    """要件1件と裁定記録1件を持つ WS に GatePassage を1件置く"""
+    make_spec(tmp_path)
+    (tmp_path / ".spec" / "reports").mkdir(parents=True, exist_ok=True)
+    (tmp_path / ".spec" / "reports" / "decision-sample.md").write_text(
+        "# 裁定記録\n", encoding="utf-8")
+    scope = [REQ_ID] if scope is None else scope
+    fields = {
+        "id": gate_id,
+        "gate": gate,
+        "date": "2026-07-30",
+        "arbiter": "hide",
+        "scope": "[" + ", ".join(scope) + "]",
+        "checklist_ref": "skills/sdd-core/references/gates.md#3-promotion-gate",
+    }
+    lines = [f"{key}: {value}" for key, value in fields.items() if key not in omit]
+    if "confirmed_decision_refs" not in omit:
+        lines.append("confirmed_decision_refs:")
+        lines += [f"  - {ref}" for ref in decision_refs]
+    path = tmp_path / ".spec" / "gates" / f"{gate_id}.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("---\n" + "\n".join(lines) + "\n---\n\n# 通過記録\n", encoding="utf-8")
+    return path
+
+
+def test_SDD_FR_155_absent_gates_dir_is_silent(tmp_path: Path):
+    """.spec/gates/ が無いワークスペースでは何も報告しない（既存 WS を遡及的に FAIL させない）"""
+    make_spec(tmp_path)
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+    report = report_of(tmp_path)
+    assert "PASS ✅" in report
+    assert GATE_SECTION not in report
+
+
+def test_SDD_FR_155_valid_gate_passage_passes_and_is_listed(tmp_path: Path):
+    """必須項目の揃った GatePassage は PASS し、レポートの専用節に現れる"""
+    make_gate_workspace(tmp_path)
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+    report = report_of(tmp_path)
+    assert "PASS ✅" in report
+    assert GATE_ID in section_body(report, GATE_SECTION)
+
+
+def test_SDD_FR_155_missing_required_key_fails(tmp_path: Path):
+    """必須 frontmatter（arbiter）の欠落を検出して FAIL する"""
+    make_gate_workspace(tmp_path, omit=("arbiter",))
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert f"[gate] {GATE_ID}: arbiter が未記入" in report_of(tmp_path)
+
+
+def test_SDD_FR_155_unknown_gate_kind_fails(tmp_path: Path):
+    """gate の値が統制語彙（discovery / design / promotion）の外なら FAIL する"""
+    make_gate_workspace(tmp_path, gate="release")
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "gate 'release' は語彙外" in report_of(tmp_path)
+
+
+def test_SDD_FR_155_scope_ghost_reference_fails(tmp_path: Path):
+    """scope が存在しない ID を指していれば幽霊参照として FAIL する"""
+    make_gate_workspace(tmp_path, scope=[GHOST_ID])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert f"scope の {GHOST_ID} が存在しない" in report_of(tmp_path)
+
+
+def test_SDD_FR_155_missing_decision_ref_target_fails(tmp_path: Path):
+    """confirmed_decision_refs の参照先が実在しなければ FAIL する"""
+    make_gate_workspace(tmp_path, decision_refs=[".spec/reports/decision-missing.md"])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "confirmed_decision_refs の参照先が存在しない" in report_of(tmp_path)
+
+
+def test_SDD_FR_155_decision_ref_outside_workspace_fails(tmp_path: Path):
+    """confirmed_decision_refs がワークスペース外を指していれば FAIL する"""
+    make_gate_workspace(tmp_path, decision_refs=["/etc/hosts"])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "confirmed_decision_refs は" in report_of(tmp_path)
+
+
+def test_SDD_FR_155_filename_id_mismatch_fails(tmp_path: Path):
+    """ファイル名と id の不一致を検出する"""
+    path = make_gate_workspace(tmp_path)
+    path.rename(path.parent / "other-name.md")
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "ファイル名と id" in report_of(tmp_path)
+
+
+def test_SDD_FR_155_checklist_ref_anchor_is_not_truncated(tmp_path: Path):
+    """checklist_ref の `#アンカー` をコメントとして切り落とさない"""
+    sys.path.insert(0, str(INSPECT_SCRIPT.parent))
+    import spec_inspect
+
+    fm = spec_inspect.parse_frontmatter_full(
+        "---\nchecklist_ref: refs/gates.md#3-promotion-gate\nnote: value # 注記\n---\n"
+    )
+
+    assert fm["checklist_ref"] == "refs/gates.md#3-promotion-gate"
+    assert fm["note"] == "value"

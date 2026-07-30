@@ -45,6 +45,11 @@ CODE_SUFFIXES = {".py", ".ts", ".js", ".rs", ".go", ".java"}
 TRACE_PREFIXES = ("tests", "test", "src", "scripts", "hooks", "skills")
 # 検証証跡（SDD-FR-151 / SDD-FR-153）。sdd-test の spec_verify.py が書き、本ツールが検査する
 VERIFICATION_DIRNAME = "verification"
+# Gate 通過記録（SDD-FR-155）。`.spec/gates/` に置く不変記録で、status 遷移を持たない
+GATE_KINDS = {"discovery", "design", "promotion"}
+GATE_REQUIRED_KEYS = (
+    "id", "gate", "date", "arbiter", "scope", "confirmed_decision_refs", "checklist_ref",
+)
 EVIDENCE_SCHEMA = "bitzsdd/verification-evidence@1"
 EVIDENCE_REQUIRED_KEYS = (
     "command_id", "command", "cwd", "commit", "recorded_at", "exit_code", "requirements",
@@ -64,6 +69,124 @@ def parse_frontmatter(text: str) -> dict:
                     val = val[1:-1]
                 fm[kv.group(1)] = val
     return fm
+
+
+def parse_frontmatter_full(text: str) -> dict:
+    """parse_frontmatter の拡張版。YAML シーケンス（ブロック / フロー）を list として返す。
+
+    GatePassage の scope / confirmed_decision_refs のように複数値を取る frontmatter を読む。
+    スカラーの挙動は parse_frontmatter と同じだが、`#` は**前に空白がある場合だけ**コメントと
+    みなす — `checklist_ref` の `path#anchor` を切り落とさないため（SDD-FR-155）。
+    """
+    m = re.match(r"^---\s*\n(.*?)\n---", text, re.S)
+    fm = {}
+    if not m:
+        return fm
+
+    def unquote(val: str) -> str:
+        val = val.strip()
+        if len(val) >= 2 and val[0] in "\"'" and val[-1] == val[0]:
+            val = val[1:-1]
+        return val
+
+    key = None
+    for line in m.group(1).splitlines():
+        item = re.match(r"^\s+-\s+(.*)$", line)
+        if item is not None and key is not None:
+            if not isinstance(fm.get(key), list):
+                fm[key] = []
+            fm[key].append(unquote(re.sub(r"\s+#.*$", "", item.group(1))))
+            continue
+        kv = re.match(r"^(\w[\w-]*):\s*(.*)$", line)
+        if kv is None:
+            key = None
+            continue
+        key = kv.group(1)
+        val = unquote(re.sub(r"\s+#.*$", "", kv.group(2)))
+        if val.startswith("[") and val.endswith("]"):
+            inner = val[1:-1].strip()
+            fm[key] = [unquote(part) for part in inner.split(",") if part.strip()]
+        else:
+            fm[key] = val
+    return fm
+
+
+def load_gate_passages(root: Path):
+    """`.spec/gates/*.md` の GatePassage を読む（SDD-FR-155）。
+
+    GatePassage は status 遷移を持たない不変記録であり、ID 書式もライフサイクルも要件と
+    異なるため load_requirements のレジストリには混ぜない（spec-issue と同じ扱い）。
+    ディレクトリが無いワークスペースでは何も返さず問題も出さない（既存 WS を遡及的に
+    FAIL させない）。scope / confirmed_decision_refs の実在検査は check_gate_passages が行う。
+    """
+    gates, problems = {}, []
+    directory = root / ".spec" / "gates"
+    if not directory.exists():
+        return gates, problems
+    for f in sorted(directory.glob("*.md")):
+        if f.name.startswith("_"):
+            continue
+        fm = parse_frontmatter_full(f.read_text(encoding="utf-8"))
+        rel = f.relative_to(root)
+        gid = fm.get("id")
+        if not isinstance(gid, str) or not gid:
+            problems.append(f"[gate] {rel}: frontmatter に id がない")
+            continue
+        if f.stem != gid:
+            problems.append(f"[gate] {rel}: ファイル名と id ({gid}) が不一致")
+        for required_key in GATE_REQUIRED_KEYS:
+            if not fm.get(required_key):
+                problems.append(f"[gate] {gid}: {required_key} が未記入")
+        kind = fm.get("gate")
+        if kind and kind not in GATE_KINDS:
+            problems.append(
+                f"[gate] {gid}: gate '{kind}' は語彙外（{' / '.join(sorted(GATE_KINDS))}）"
+            )
+        if gid in gates:
+            problems.append(f"[重複] {gid}: IDが重複している")
+        gates[gid] = {"fm": fm, "path": f}
+    return gates, problems
+
+
+def gate_field_list(fm: dict, key: str) -> list:
+    """frontmatter の複数値フィールドを list に正規化する（単一値のスカラー記法も許す）。"""
+    value = fm.get(key)
+    if isinstance(value, list):
+        return value
+    return [value] if value else []
+
+
+def check_gate_passages(root: Path, gates: dict, global_reqs: dict) -> list:
+    """GatePassage の scope と confirmed_decision_refs の実在を検査する（SDD-FR-155）。"""
+    problems = []
+    resolved_root = root.resolve()
+    for gid, gate in sorted(gates.items()):
+        for target in gate_field_list(gate["fm"], "scope"):
+            if target not in global_reqs:
+                problems.append(f"[gate] {gid}: scope の {target} が存在しない（幽霊参照）")
+        for ref in gate_field_list(gate["fm"], "confirmed_decision_refs"):
+            if ref.startswith("https://"):
+                continue
+            target = ref.split("#", 1)[0]
+            if not target or target.startswith(("/", "~")) or "\\" in target:
+                problems.append(
+                    f"[gate] {gid}: confirmed_decision_refs はワークスペース相対パスまたは "
+                    f"https:// URL を指定する: {ref}"
+                )
+                continue
+            try:
+                resolved = (root / target).resolve()
+            except OSError:
+                resolved = None
+            if resolved is None or not resolved.is_relative_to(resolved_root):
+                problems.append(
+                    f"[gate] {gid}: confirmed_decision_refs がワークスペース外を指している: {ref}"
+                )
+            elif not resolved.is_file():
+                problems.append(
+                    f"[gate] {gid}: confirmed_decision_refs の参照先が存在しない: {ref}"
+                )
+    return problems
 
 
 def load_requirements(root: Path):
@@ -783,6 +906,8 @@ def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None,
     if delegation_ctx is None:
         delegation_ctx = build_delegation_context([root])
     problems += check_delegations(root, *delegation_ctx)
+    gates, gate_problems = load_gate_passages(root)
+    problems += gate_problems + check_gate_passages(root, gates, global_reqs)
     domains = load_domains(req_dir)
     forbidden = load_forbidden_words(req_dir)
     impl = implements_map(root)
@@ -897,6 +1022,16 @@ def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None,
     lines.append("## 監査 WARN（代行遷移の裁定参照など — FAIL にしない）")
     lines += [f"- {w}" for w in state_warnings] or ["- なし ✅"]
     lines.append("")
+    if gates:
+        lines.append("## Gate 通過記録（.spec/gates/ — 人間裁定の検分証跡）")
+        lines += [
+            f"- {gid} — {g['fm'].get('gate', '')} / {g['fm'].get('date', '')} / "
+            f"裁定者 {g['fm'].get('arbiter', '')} / 対象 "
+            f"{len(gate_field_list(g['fm'], 'scope'))} 件 / 確認した裁定記録 "
+            f"{len(gate_field_list(g['fm'], 'confirmed_decision_refs'))} 件"
+            for gid, g in sorted(gates.items())
+        ]
+        lines.append("")
     lines.append("## 実装待ち要件（approved だが implements するタスクがない — WARN）")
     lines += [f"- {rid}" for rid in waiting] or ["- なし ✅"]
     lines.append("")

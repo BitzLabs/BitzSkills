@@ -291,3 +291,101 @@ def test_SDD_FR_144_success_cleans_lock_and_journal(tmp_path):
     transactions = tmp_path / ".spec" / ".transactions"
     assert not list(transactions.glob("*.json"))
     assert (req_dir / f"CORE-{FR}001.md").read_text(encoding="utf-8").endswith("\n")
+
+
+# --- GatePassage 種別（SDD-FR-155） -------------------------------------------
+
+GATE = "GATE-"
+
+
+def make_decision_record(root: Path, name="decision-sample.md") -> str:
+    rel = f".spec/reports/{name}"
+    _write(root / rel, "# 裁定記録\n")
+    return rel
+
+
+def run_gate(root, *extra):
+    return run(root, "gate", "--prefix", "CORE-" + GATE[:-1], *extra)
+
+
+def test_SDD_FR_155_gate_scaffold_produces_inspect_pass(tmp_path):
+    """gate 種別の雛形は spec_inspect を PASS する（CORE-FR-004 の雛形契約）"""
+    rid = make_req(tmp_path, 1)
+    ref = make_decision_record(tmp_path)
+
+    res = run_gate(tmp_path, "--gate", "promotion", "--arbiter", "hide",
+                   "--scope", rid, "--decision-ref", ref)
+
+    assert res.returncode == 0, res.stderr
+    generated = tmp_path / ".spec" / "gates" / f"CORE-{GATE}001.md"
+    assert generated.exists()
+    inspect = subprocess.run([sys.executable, str(INSPECT), str(tmp_path)],
+                             capture_output=True, text=True)
+    assert inspect.returncode == 0, inspect.stdout
+    report = (tmp_path / ".spec" / "inspection-report.md").read_text(encoding="utf-8")
+    assert "PASS ✅" in report
+    assert f"CORE-{GATE}001" in report
+
+
+def test_SDD_FR_155_gate_scaffold_writes_expected_frontmatter(tmp_path):
+    """scope / confirmed_decision_refs / checklist_ref が雛形に載る"""
+    rid = make_req(tmp_path, 1)
+    rid2 = make_req(tmp_path, 2)
+    ref = make_decision_record(tmp_path)
+
+    res = run_gate(tmp_path, "--gate", "promotion", "--arbiter", "hide",
+                   "--scope", f"{rid},{rid2}", "--decision-ref", ref)
+
+    assert res.returncode == 0, res.stderr
+    text = (tmp_path / ".spec" / "gates" / f"CORE-{GATE}001.md").read_text(encoding="utf-8")
+    assert f"scope: [{rid}, {rid2}]" in text
+    assert f"  - {ref}" in text
+    assert "checklist_ref: skills/sdd-core/references/gates.md#3-promotion-gate" in text
+
+
+def test_SDD_FR_155_gate_scaffold_accepts_multiple_decision_refs(tmp_path):
+    """--decision-ref は複数回指定できる（1回の Gate が複数の裁定記録を確認する）"""
+    rid = make_req(tmp_path, 1)
+    first = make_decision_record(tmp_path, "decision-a.md")
+    second = make_decision_record(tmp_path, "decision-b.md")
+
+    res = run_gate(tmp_path, "--gate", "design", "--arbiter", "hide", "--scope", rid,
+                   "--decision-ref", first, "--decision-ref", second)
+
+    assert res.returncode == 0, res.stderr
+    text = (tmp_path / ".spec" / "gates" / f"CORE-{GATE}001.md").read_text(encoding="utf-8")
+    assert f"  - {first}" in text and f"  - {second}" in text
+
+
+def test_SDD_FR_155_gate_scaffold_requires_mandatory_flags(tmp_path):
+    """必須フラグが欠けたら生成前に非ゼロで失敗する（空の雛形を作らない）"""
+    make_req(tmp_path, 1)
+
+    res = run_gate(tmp_path, "--gate", "promotion", "--arbiter", "hide")
+
+    assert res.returncode != 0
+    assert "--scope" in res.stderr and "--decision-ref" in res.stderr
+    assert not (tmp_path / ".spec" / "gates").exists()
+
+
+def test_SDD_FR_155_gate_scaffold_rejects_unknown_gate_kind(tmp_path):
+    """gate 種別が統制語彙の外なら argparse が拒否する"""
+    make_req(tmp_path, 1)
+
+    res = run_gate(tmp_path, "--gate", "release", "--arbiter", "hide", "--scope", "X")
+
+    assert res.returncode != 0
+    assert not (tmp_path / ".spec" / "gates").exists()
+
+
+def test_SDD_FR_155_gate_scaffold_numbers_sequentially(tmp_path):
+    """同一プレフィックスの GatePassage は連番で採番される"""
+    rid = make_req(tmp_path, 1)
+    ref = make_decision_record(tmp_path)
+    args = ("--gate", "promotion", "--arbiter", "hide", "--scope", rid, "--decision-ref", ref)
+
+    assert run_gate(tmp_path, *args).returncode == 0
+    assert run_gate(tmp_path, *args).returncode == 0
+
+    gates = sorted(p.name for p in (tmp_path / ".spec" / "gates").glob("*.md"))
+    assert gates == [f"CORE-{GATE}001.md", f"CORE-{GATE}002.md"]

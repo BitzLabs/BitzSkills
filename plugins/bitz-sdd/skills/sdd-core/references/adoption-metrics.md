@@ -19,6 +19,18 @@ reverse-derived 要件は「仕様が意図を表す」保証がないため、t
 
 補助監視: verification_method の `manual-check` 比率（20%超で見直し）。
 
+### 未検分の代行遷移（SDD-FR-156）
+
+| 指標 | 定義 | 集計元 |
+|------|------|--------|
+| 未検分の代行遷移件数 | `provenance.kind` が `agent-proxy-unverified` の STATE event のうち、`decision_ref` がどの GatePassage の `confirmed_decision_refs` にも現れないものの件数 | `spec_status.py` の `unreviewed_proxy_decisions.count` |
+| 最古の滞留日数 | 上記のうち最も古い event の timestamp から現在までの日数 | 同 `unreviewed_proxy_decisions.oldest_age_days` |
+
+**閾値は宣言しない**。件数の可視化を先行させ、運用実績が溜まってから閾値を検討する
+（`manual-check` 比率 20% のように、宣言だけして機械集計が無い指標を増やさないため）。
+本節の2指標は宣言と同時に機械集計されており、`spec status` の次アクション候補にも出る
+（滞留ゼロのワークスペースでは出力しない）。
+
 ## 改善ループ
 
 3〜5 feature ごと（または月次）に metrics.md をレビューし、効いていない規律を削り、効いている規律を本スキルに固める。**本ワークフロー自体を semver 管理し、変更は docs/ の ADR として記録する** — ワークフロー自体がSDDの適用対象。
