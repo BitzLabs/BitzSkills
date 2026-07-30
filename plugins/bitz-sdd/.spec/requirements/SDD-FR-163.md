@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-163
 version: 1.0
-status: implementing
+status: verified
 domain: reporting
 priority: high
 origin: SI-SDD-034（裁定J。.spec/reports/decision-2026-07-30-order8-design-foundation.md）
@@ -49,3 +49,7 @@ confidence: high
 - **Revision History**:
   - 1.0 (2026-07-30) 初版（draft 起票）。SI-SDD-034 と裁定J から導出。
     `SDD-FR-136` のフェーズ語彙・後方互換方針を維持したまま判定を厳密化する。
+  - 1.0 (2026-07-30) 代行可視化経路で approved 化
+    （裁定記録 `.spec/reports/decision-2026-07-30-order8-design-foundation.md` 裁定J）。
+  - 1.0 (2026-07-30) 実装・検証完了により verified 化。証跡
+    `.spec/verification/pytest--0ee41c9.json`（exit_code 0 / 61 passed）。

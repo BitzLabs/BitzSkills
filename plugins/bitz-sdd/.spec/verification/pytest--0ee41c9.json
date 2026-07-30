@@ -1,0 +1,31 @@
+{
+  "command": [
+    ".venv/bin/pytest",
+    "-q",
+    "tests/test_spec_status.py",
+    "tests/test_spec_labels.py"
+  ],
+  "command_id": "pytest",
+  "commit": "0ee41c978701a459a50473a6e27150c67cfcf8d8",
+  "counts": {
+    "errors": 0,
+    "failed": 0,
+    "passed": 61,
+    "skipped": 0
+  },
+  "cwd": ".",
+  "dirty": false,
+  "exit_code": 0,
+  "observed": {
+    "duration_seconds": 2.33
+  },
+  "recorded_at": "2026-07-30T12:10:15Z",
+  "requirements": [
+    "SDD-FR-163"
+  ],
+  "schema": "bitzsdd/verification-evidence@1",
+  "tool": {
+    "name": "pytest",
+    "version": "9.1.1"
+  }
+}
