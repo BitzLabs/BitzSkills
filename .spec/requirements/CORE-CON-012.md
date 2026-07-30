@@ -1,7 +1,7 @@
 ---
 id: CORE-CON-012
 version: 1.0
-status: draft
+status: approved
 domain: governance
 priority: high
 origin: SI-CORE-038

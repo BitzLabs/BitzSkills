@@ -1,7 +1,7 @@
 ---
 id: CORE-CON-013
 version: 1.0
-status: draft
+status: approved
 domain: tooling
 priority: medium
 origin: SI-CORE-038
