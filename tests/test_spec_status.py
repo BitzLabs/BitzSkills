@@ -391,6 +391,60 @@ def test_phase_done_when_all_verified(tmp_path):
     assert ws["phase_code"] == "done"
 
 
+# --- done の抑止（SDD-FR-163） -----------------------------------------------
+
+def test_SDD_FR_163_draft_added_to_completed_baseline_is_not_done(tmp_path):
+    """完了済みベースライン（verified 要件 + done タスク）へ draft 要件を足しても Done にしない。
+
+    旧系列がすべて完了していると n_ver == n_appr が成立し、新系列の draft 要件が
+    判定へ入らないまま Promotion Gate 待ちと表示されていた（SI-SDD-034）。
+    """
+    make_spec(tmp_path, reqs=[(1, "verified"), (2, "draft")], tasks=[(1, "done")])
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    assert ws["phase_code"] == "plan", ws["phase_code"]
+    assert "Promotion Gate" not in ws["phase"]
+
+
+def test_SDD_FR_163_completed_baseline_without_draft_stays_done(tmp_path):
+    """draft が無い従来の完了状態は Done を維持する（後方互換）。"""
+    make_spec(tmp_path, reqs=[(1, "verified"), (2, "promoted")], tasks=[(1, "done")])
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    assert ws["phase_code"] == "done"
+
+
+def test_SDD_FR_163_phase_and_next_actions_agree(tmp_path):
+    """draft 併存時、フェーズ表示と next_actions が同じ工程（承認）を案内する。"""
+    make_spec(tmp_path, reqs=[(1, "verified"), (2, "draft")], tasks=[(1, "done")])
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    joined = "".join(ws["next_actions"])
+    assert ws["phase_code"] == "plan"
+    assert "承認" in joined, joined
+    assert "Promotion Gate" not in joined, joined
+
+
+def test_SDD_FR_163_done_has_no_unfinished_next_actions(tmp_path):
+    """done を返すときは承認・実装・検証の未処理を促す次アクションを含まない。"""
+    make_spec(tmp_path, reqs=[(1, "verified")], tasks=[(1, "done")])
+    ws = json.loads(run_status(tmp_path, json_out=True).stdout)["workspaces"][0]
+    joined = "".join(ws["next_actions"])
+    assert ws["phase_code"] == "done"
+    for unfinished in ("承認（approved 化）", "実装を進める", "verified に昇格"):
+        assert unfinished not in joined, joined
+
+
+def test_SDD_FR_163_phase_progresses_without_regression(tmp_path):
+    """draft → approved → タスク完了 → verified でフェーズが順序どおり進む。"""
+    def phase_for(reqs, tasks):
+        root = tmp_path / f"ws-{len(list(tmp_path.iterdir()))}"
+        make_spec(root, reqs=reqs, tasks=tasks)
+        return json.loads(run_status(root, json_out=True).stdout)["workspaces"][0]["phase_code"]
+
+    assert phase_for([(1, "draft")], None) == "plan"
+    assert phase_for([(1, "approved")], [(1, "todo")]) == "execute"
+    assert phase_for([(1, "approved")], [(1, "done")]) == "verify"
+    assert phase_for([(1, "verified")], [(1, "done")]) == "done"
+
+
 # --- フェーズ判定: design フェーズ (SDD-FR-136) --------------------------------
 
 def _load_status_module():
