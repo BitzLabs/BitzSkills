@@ -80,6 +80,74 @@ star topologyとの互換性を確認し、責任分解をWorkspace Manifest、�
 - review profile、最低点、指摘の重要度、Gate判定、`ReviewFinding`への追跡を
   `sdd-review`へ追加すべきか検討する。
 
+### 4. `sdd-git`の廃止とbitz-flow V2への直接接続
+
+V4では、Git / GitHub実行の正をbitz-flow V2の`flow-core`へ完全に一本化し、
+実行機能を持たない委譲ポインタ`sdd-git`を廃止する案を第一候補とする。
+名前だけを変えた後継ポインタスキルは作らない。
+
+| 責任 | V4の所有候補 |
+|---|---|
+| Git、worktree、branch、commit、Issue、PR、release、cleanup / discard | bitz-flow `flow-core` |
+| `.spec`のSSOT、権限、status、Gate、target SHAと採番の整合 | `sdd-core` |
+| `implements` / `depends_on` / `boundary`、並列投入、コミットtraceの意味 | `sdd-implement` |
+| spec-issueとGitHub Issueを接続する判断、SDD側URL記録 | `sdd-issue` |
+| taskとIssue / PRを接続する判断、SDD側URL記録 | `sdd-implement` |
+| GitHub側のmarker、URL、Issue / PR操作、リンク照合 | bitz-flow `flow-core` |
+| 失敗原因を仕様へ戻す判断 | `sdd-core`のfailure protocol |
+| 失敗worktreeの保全と、明示判断後のdiscard | bitz-flow `flow-core` |
+
+`sdd-core`へ残すのはGit操作手順ではなく、次のSDD統合契約に限定する。
+
+- Git / GitHub操作はbitz-flow `flow-core`へ直接委譲する。
+- bitz-flowは`.spec`の本文・status・人間裁定を変更しない。
+- SDD側が渡すspec-issue / requirement / task ID、URL、期待状態の意味を定める。
+- 並列時の`spec_inspect --check-only`、target SHA鮮度、採番・status変更の直列化を定める。
+- bitz-flowの結果をどのSDD成果物へ記録し、どの失敗をspec-issueへ戻すかを定める。
+
+完全廃止は、従来の「縮退維持・完全廃止しない」という`CORE-FR-016`の人間裁定を変更する
+破壊的変更である。V4の後継要件と意思決定記録を作り、3.xではdeprecated入口として残した後、
+4.0.0で削除する段階移行を候補とする。
+
+既存の逆起票要件はV4設計で次のように分類する。
+
+- `SDD-FR-080` — worktree隔離の実行責任はbitz-flowへ移し、SDD側には並列投入条件だけを残す。
+- `SDD-FR-081` — `Implements:`の意味規約は`sdd-implement`、書式検査とcommit操作はbitz-flowへ分ける。
+- `SDD-FR-082` — 「失敗時に直ちにworktreeを破棄」を見直し、bitz-flow V2に合わせて
+  失敗状態を既定で保全し、明示判断後にdiscardする契約へ後継化する。
+
+`sdd-core/references/parallel-git.md`はGit手順、SDD並列規律、権限マトリクスが混在している。
+V4ではSDD固有部分を`concurrent-execution`等の責任に沿った文書へ再編し、
+Git操作手順をbitz-flowへ移す。デフォルトブランチへの直接コミットを許す古い記述は、
+現行ガードレールに合わせて廃止する。
+
+### 5. V3 workspaceからV4への移行・再構築
+
+V4本体を旧`.spec`形式の実行時互換で複雑化しない。V4 runtimeはV4形式だけを読み書きし、
+V3形式の解釈は移行専用境界へ隔離する案を第一候補とする。
+
+- 読み取り専用の`sdd-doctor`を、環境診断に加えてworkspace形式・移行可否・欠損・
+  旧参照を診断できるよう拡張する。
+- 既存の`spec update`はartifactのstatus遷移を意味するため、workspace形式の移行は
+  `sdd-migrate`（仮称）として分離し、用語の衝突を避ける。
+- 診断結果は`COMPATIBLE` / `MIGRATABLE` / `REBUILD_RECOMMENDED` /
+  `BLOCKED` / `UNSUPPORTED`の候補語彙で、人間向け日本語説明と機械可読JSONを返す。
+- `sdd-migrate`は`plan`を既定とし、人間確認後の`apply`、適用後の`verify`を分離する。
+- 機械的に意味を保持できる場合だけ`convert`し、それ以外はV4 workspaceを新しく構築する
+  `rebuild`を正式な移行戦略として提供する。
+- 旧`.spec`は自動削除せず、source hash、旧ID→新ID、保全・変換・後継化・除外・再生成の
+  対応表と、変換できなかった項目を必ず残す。
+- rebuildしたartifactを自動的にapproved / verified / promotedへ昇格しない。
+  裁定と証跡を検分できないstatusはdraftまたは未検証として人間Gateへ戻す。
+- inspection report、status report、索引、docs等の派生成果物は変換せず、
+  V4の正から再生成する。
+- V4で自動変換を保証する対象は原則として最新V3→V4に限定し、
+  それ以前は段階移行またはrebuildを案内する。
+
+workspace自身が形式を自己記述できるよう、プラグインsemverとは独立した
+`workspace_schema`、workspace種別、所有者、依存、capability等を持つ
+Workspace ManifestをV4設計対象とする。
+
 ## 現在地
 
 SDD-REV-006（2026-07-29、判定 **CONDITIONAL_PASS**）を起点とした設計後付けのうち、
@@ -130,6 +198,24 @@ V4のモジュール配置、依存方向、公開CLI契約までは定義して
 
 ## V4着手前の前提条件（仮）
 
+### R0 — bitz-sdd 3.xをV4設計Readyにする
+
+V4の正式なCharter・設計成果物を増やす前に、現行bitz-sdd 3.xを
+「V4を安全に設計できる道具」として整える。この段階ではV4の公開契約を実装しない。
+
+- SI-SDD-036を裁定・解消し、`.spec/design/`配下の再帰走査、DSN ID一意性、
+  frontmatter基準の採番を信頼できる状態にする。
+- design scaffold → recursive inspect → status / review参照のcanaryを追加し、
+  Root / Component Workspaceを含む複数workspaceで実測する。
+- SI-SDD-032 / 034のうち、設計中のデータ損失またはフェーズ誤判定につながる部分を
+  V4設計開始前に解消するか、人間が許容可能な制約として明記する。
+- `sdd-doctor`がV4設計Ready条件を読み取り専用で診断できる形を検討する。
+- 本ROADMAPとV4設計Ready条件を確定refへ保存し、V4設計中に基盤契約を同時変更しない。
+
+R0を通過した後、bitz-flow V2をM0〜M5とPromotion Gateまで進める。
+bitz-flow V2の公開operation / result / SDD opaque ID接続が安定してから、
+bitz-sdd V4 Charterと正式設計を開始する。
+
 ### P0 — V4 Charter とスコープ裁定
 
 - 本書の「V4の目的」を確認し、V4で解決する問題と解決しない問題を人間が裁定する。
@@ -139,6 +225,10 @@ V4のモジュール配置、依存方向、公開CLI契約までは定義して
 - V4の成功条件とNo-Go条件を、実装前に測定可能な形で定める。
 - ユビキタス言語、Workspace責任分解、レビュー品質目標をV4の必須スコープ、
   準備項目、V4後の改善候補のいずれに置くか裁定する。
+- `sdd-git`の3.x deprecated化、4.0.0削除、bitz-flow V2との直接接続を
+  V4の破壊的変更スコープへ含めるか裁定する。
+- V4 runtimeはV4形式だけを扱い、V3互換を`sdd-doctor` / `sdd-migrate`へ隔離する方針と、
+  convert / rebuildの選択条件を裁定する。
 
 ### P1 — 安全に設計を続けるための欠陥裁定
 
@@ -160,6 +250,9 @@ V4の本格設計より先に解消する案を第一候補とする。
 - 既存Design Gateの裁定と `domain-model.md` のstatusの関係を整理する。
 - 本ROADMAP、Discovery、ドメインモデル間の保留事項・完了事項を一致させる。
 - 現行3.xの公開契約と、内部実装上の偶発的な依存を区別する。
+- `sdd-git`、`parallel-git.md`、`sdd-implement`、README / docs / evalsに分散した
+  SDD・Git接続規律を棚卸しし、bitz-flow V2の責務境界と照合する。
+- `CORE-FR-016`と`SDD-FR-080〜082`を、維持、後継化、deprecatedのどれに置くか整理する。
 
 ### P3 — ブラウンフィールド現状分析
 
@@ -198,6 +291,11 @@ SDD-REV-006で特定した逆起票要件を、V4ターゲット設計の前に�
 - 共通用語集 — 正式英語名、略称、正式日本語名、日本語定義、専門用語の説明
 - Workspace責任モデル — Root / Componentの権限、委託、エスカレーション、分割条件
 - Workspace Manifest / 依存契約 — 所有者、名前空間、公開契約、依存方向、検証範囲
+- workspace schema / Artifact Registry — workspace形式、artifact種別、必須field、
+  status、配置、inspect / scaffold / docs同期の共通定義
+- bitz-flow V2統合契約 — SDD側ID / URL / statusとflow-core operation / resultの対応
+- `sdd-git`移行計画 — 3.x deprecated、直接接続canary、4.0.0削除、旧参照検出
+- V3→V4移行・再構築設計 — doctor判定、convert / rebuild、対応表、status再裁定、旧資産保全
 - `architecture.md` — モジュール配置、レイヤ、依存方向、実行・配布ビュー
 - `api-design.md` — CLI、終了コード、JSON、schema version、互換性
 - V4 review quality profile — 4.5目標、観点別下限、指摘上限、SE Review、Gate接続
@@ -218,6 +316,8 @@ SDD-REV-006で特定した逆起票要件を、V4ターゲット設計の前に�
 - V4固有quality profileとして、総合4.5以上、各観点4.0以上、
   critical / major指摘0件、未追跡P0/P1指摘0件を満たすか確認する。
 - System Engineering Reviewを実施し、V4設計が全体として実装・運用・移行可能かを判定する。
+- bitz-flow V2の単一dispatcherからSDD連携が成立し、`sdd-git`なしで
+  Issue / task / commit / PRのtraceと失敗時復旧が閉じることを確認する。
 - DDD/MMI評価の改善対象がターゲット設計へ反映されていることを確認する。
 - 公開契約、移行、rollback、スキル自己完結性の未解決P0/P1を残さない。
 - 人間がV4スコープと設計を裁定した後にのみ、V4要件をdraft起票・approveする。
@@ -226,9 +326,10 @@ SDD-REV-006で特定した逆起票要件を、V4ターゲット設計の前に�
 
 ```mermaid
 graph TD
-    A["完了: 振り返り・設計初版・順序6/7"] --> C["V4 Charter"]
-    C --> S["安全性欠陥の裁定・SI-SDD-036優先判断"]
-    S --> B["ブラウンフィールド分析 + DDD/MMI"]
+    A["完了: 振り返り・設計初版・順序6/7"] --> S["bitz-sdd 3.x V4設計Ready化"]
+    S --> F["bitz-flow V2 M0〜M5 + Promotion Gate"]
+    F --> C["bitz-sdd V4 Charter"]
+    C --> B["ブラウンフィールド分析 + DDD/MMI"]
     B --> R["逆起票要件の分類"]
     R --> D["ドメイン/API/アーキテクチャ再設計"]
     D --> G["V4 Design Gate（人間裁定）"]
@@ -238,34 +339,48 @@ graph TD
     Q --> M["Promotion Gate"]
 ```
 
-### フェーズ3 — V4準備（provisional）
+### フェーズ3 — bitz-sdd 3.x V4設計Ready化（provisional）
 
-8. **V4 Charter** — 目的、スコープ、非目標、成功条件を裁定
-9. **安全性基盤** — open issueを裁定し、SI-SDD-036等の先行修正を判断
-10. **ブラウンフィールド分析** — モジュール構造、DDD成熟度、MMI、公開契約を測定
-11. **逆起票要件の分類** — 契約と実装詳細を分離
-12. **V4ターゲット設計** — domain / API / architecture / migration / rollback
-13. **V4 Design Gate** — 多観点レビューと人間裁定
+8. **設計基盤の欠陥裁定** — SI-SDD-036を最優先とし、SI-SDD-032 / 034の設計阻害範囲を確定
+9. **設計toolchainの安全化** — design scaffold、再帰inspect、ID一意性、status / review参照を修正
+10. **V4設計Ready canary** — Root / Component Workspace fixtureで設計成果物の作成・検査を実測
 
-### フェーズ4 — 3.xでの無破壊準備（provisional）
+### フェーズ4 — bitz-flow V2（別workspaceで実施）
 
-14. **characterization / golden testの固定** — 現行CLI、JSON、終了コード、生成ファイルを保護
-15. **内部モジュール抽出** — 公開挙動を変えず、parser、query、policy、adapter等を分離
-16. **薄いCLIへの段階的縮退** — 各PRを単独revert可能にし、mainを常に利用可能に保つ
-17. **4.0.0 cutover readiness review** — 未完了transaction、互換表、移行手順、依存先を確認
+11. **bitz-flow V2 M0〜M5** — bitz-flow ROADMAPと承認済み設計に従って段階実装
+12. **bitz-flow V2 Promotion Gate** — 単一dispatcher、SDD opaque ID、result契約を確定
 
-### フェーズ5 — V4カットオーバー（provisional）
+### フェーズ5 — bitz-sdd V4準備（provisional）
 
-18. **証跡schemaと検証責務** — SI-SDD-029 / 030の裁定内容を実装
-19. **artifact種別ごとのポリシー分割** — 従来の裁定4をターゲット設計どおり実装
-20. **必要なCLI / JSON契約の切替** — V4対象として承認された破壊的変更を同時に反映
-21. **4.0.0へ一括bump** — 3マニフェスト、marketplace、移行文書、依存検査を同一変更系列で更新
+13. **V4 Charter** — 目的、スコープ、非目標、成功条件、破壊的変更方針を裁定
+14. **ブラウンフィールド分析** — モジュール構造、DDD成熟度、MMI、公開契約を測定
+15. **逆起票要件の分類** — 契約と実装詳細を分離し、`SDD-FR-080〜082`の後継先を確定
+16. **V4ターゲット設計** — domain / API / architecture / migration / rebuild / rollback
+17. **V4 Design Gate** — 多観点レビューと人間裁定
 
-### フェーズ6 — 検収（provisional）
+### フェーズ6 — 3.xでの無破壊準備（provisional）
 
-22. **全検証・移行確認** — characterization、V4要件、canonical inspect、
+18. **characterization / golden testの固定** — 現行CLI、JSON、終了コード、生成ファイルを保護
+19. **内部モジュール抽出** — 公開挙動を変えず、parser、query、policy、adapter等を分離
+20. **薄いCLIへの段階的縮退** — 各PRを単独revert可能にし、mainを常に利用可能に保つ
+21. **doctor / migrate準備** — V3診断、移行plan、rebuild、対応表の独立境界を用意
+22. **3.x deprecated入口と直接接続canary** — `sdd-git`の新規利用を止め、
+    sdd-core / sdd-issue / sdd-implementからbitz-flow V2 `flow-core`へ直接接続
+23. **4.0.0 cutover readiness review** — 未完了transaction、schema、移行・rebuild手順、依存先を確認
+
+### フェーズ7 — V4カットオーバー（provisional）
+
+24. **証跡schemaと検証責務** — SI-SDD-029 / 030の裁定内容を実装
+25. **artifact種別ごとのポリシー分割** — 従来の裁定4をターゲット設計どおり実装
+26. **`sdd-git`削除** — skill、ルーティング、旧参照を削除し、SDD固有契約を各所有先へ移す
+27. **必要なCLI / JSON契約の切替** — V4対象として承認された破壊的変更を同時に反映
+28. **4.0.0へ一括bump** — 3マニフェスト、marketplace、移行文書、依存検査を同一変更系列で更新
+
+### フェーズ8 — 検収（provisional）
+
+29. **全検証・移行・rebuild確認** — characterization、V4要件、canonical inspect、
     release check、依存プラグイン、旧workspace fixtureを検証
-23. **Promotion Gate** — GatePassageを作成し、未検分の代行遷移と裁定記録を人間が確認
+30. **Promotion Gate** — GatePassageを作成し、未検分の代行遷移と裁定記録を人間が確認
 
 ## 今後の進め方と成果物への昇格
 
@@ -274,19 +389,21 @@ graph TD
 
 1. **ROADMAPへ仮登録** — 新しい案を目的、依存、未裁定論点として追記する。
    詳細定義や実装契約は持たせず、検討の入口と順序を保つ。
-2. **V4 Charterを作成** — アイデア出しが一段落したら、目的、問題、設計原則、
-   対象・対象外、成功条件、No-Go条件、未決事項をdraft成果物へ移す。
-3. **設計基盤を安全化** — SI-SDD-036を先行裁定し、DSN IDの採番と再帰走査を
+2. **V4設計基盤を安全化** — SI-SDD-036を先行裁定し、DSN IDの採番と再帰走査を
    信頼できる状態にしてから正式な設計成果物を増やす。
-4. **テーマ別設計へ分離** — 共通用語集、Workspace責任モデル、公開契約、
+3. **bitz-flow V2を先行完成** — bitz-sddがV4設計Readyになった後、
+   bitz-flow V2をPromotion Gateまで進め、直接接続する公開契約を固定する。
+4. **V4 Charterを作成** — bitz-flow V2の契約確定後、目的、問題、設計原則、
+   対象・対象外、成功条件、No-Go条件、未決事項をdraft成果物へ移す。
+5. **テーマ別設計へ分離** — 共通用語集、Workspace責任モデル、公開契約、
    architecture / API、review quality profileをそれぞれの正へ記述する。
-5. **重要判断を意思決定記録へ残す** — Workspaceの最大階層、用語集の所有者、
+6. **重要判断を意思決定記録へ残す** — Workspaceの最大階層、用語集の所有者、
    4.5品質Gate、共有コードの配置、互換性等について、採用案、代替案、
    判断理由、影響範囲を1関心事単位で記録する。
-6. **要望と要件へ変換** — 設計で判明した追加・変更はspec-issueへ起票し、
+7. **要望と要件へ変換** — 設計で判明した追加・変更はspec-issueへ起票し、
    人間裁定後に検証可能なEARS要件をdraft作成する。ROADMAPの記述を直接、
    approved要件として扱わない。
-7. **Design Gate後に実装計画へ進む** — 多観点レビューとSystem Engineering Review、
+8. **Design Gate後に実装計画へ進む** — 多観点レビューとSystem Engineering Review、
    人間裁定を通過してからタスク分解、3.x無破壊準備、4.0.0切替へ進む。
 
 成果物の責任分担は次を暫定原則とする。
@@ -296,7 +413,7 @@ graph TD
 | `ROADMAP.md` | 目的、順序、依存、ゲート、未裁定論点 |
 | V4 Charter | 問題、スコープ、非目標、設計原則、成功・No-Go条件 |
 | 共通用語集 / ドメイン・Workspace設計 | 正式な語彙、責任境界、不変条件、Published Language |
-| architecture / API / migration | 構造、依存方向、公開契約、移行・rollback |
+| architecture / API / migration | 構造、依存方向、公開契約、convert / rebuild / rollback |
 | review quality profile | 採点基準、最低品質、SE Review、Gate条件 |
 | 意思決定記録 | 裁定、代替案、理由、影響 |
 | spec-issue / requirements | 変更提案と、人間が承認する検証可能な契約 |
@@ -324,7 +441,8 @@ graph TD
    どの公開契約で接続するか。
 3. **共有語彙の正** — frontmatter parser、status、domain、schema等をどこが所有するか。
 4. **CLI公開範囲** — `scripts/spec` が公開するツール集合と、直接実行ツールの境界。
-5. **互換性** — 旧CLI、旧JSON、旧証跡schemaをどこまで読み取り互換として残すか。
+5. **移行境界** — V4 runtimeへ旧形式互換を持たせず、sdd-doctor / sdd-migrateだけが
+   最新V3を読む方針の例外を認めるか。
 6. **sdd-usecase** — V4へ含めるか、V4後の独立featureとするか。
 7. **SI-SDD-032 / 034 / 036の順序** — V4前修正、3.x準備、V4同梱のどれに置くか。
 8. **モジュール分割粒度** — コンテキスト、スキル、Python packageの境界を一致させるか。
@@ -336,12 +454,25 @@ graph TD
 14. **Workspace間変更プロトコル** — Published Language変更、依存更新、横断issueをどう交通整理するか。
 15. **レビュー4.5の適用範囲** — V4固有Gate、bitz-sdd全体、全プラグイン共通のどこまで適用するか。
 16. **System Engineering Reviewの実装形態** — review profile、独立成果物、共通観点追加のどれにするか。
+17. **`sdd-git`廃止の裁定** — `CORE-FR-016`の縮退維持裁定をV4で後継化するか。
+18. **SDD・flow直接接続の所有者** — spec-issue URLは`sdd-issue`、task / PR URLは
+    `sdd-implement`が持つ案で、status変更とmutation lockをどう扱うか。
+19. **bitz-flow V2とのリリース順序** — V2 Promotion GateをV4削除の必須前提にするか、
+    互換可能な最小operationを先行契約とするか。
+20. **失敗worktreeの扱い** — 既定保全、明示discard、再投入、spec-issueへの
+    エスカレーション条件をどこまでSDD契約に含めるか。
+21. **convert / rebuild判定** — 自動変換できるartifact、statusを再裁定する条件、
+    rebuildを推奨・強制する条件をどう定めるか。
+22. **Workspace Manifest** — workspace schemaとプラグインsemverをどう分離し、
+    Root / Componentのcapabilityをどう自己記述するか。
 
 ## バージョン・リリース方針（仮）
 
 - **V4 Design Gateを通るまで4.0.0へbumpしない。**
 - 3.xでは公開契約を壊さない準備、テスト固定、内部抽出だけを行う。
 - V4に含める破壊的変更は4.0.0の単一カットオーバーまでに揃える。
+- `sdd-git`は3.xでdeprecated入口と直接接続canaryを提供し、削除は4.0.0で行う。
+- bitz-sddのbitz-flow依存宣言は`sdd-git`削除後も直接統合契約のため維持する。
 - 4.0.0公開後に別の破壊的変更を順次加えない。必要ならV4スコープへ戻すか、将来majorへ送る。
 - marketplaceは `"source": "./plugins/bitz-sdd"` でmainへのマージが即配布になるため、
   各準備PRは単独で利用可能・検証可能・revert可能な状態を保つ。
@@ -349,7 +480,9 @@ graph TD
 
 ## 保全する資産と制約
 
-- **verified / promoted済み要件を作り直さない。** V4設計との照合・分類・後継化で扱う。
+- verified / promoted済み要件は可能な限り照合・分類・後継化するが、
+  V4の整合性を損なう場合はrebuildを許容し、statusを人間Gateへ戻す。
+- 旧`.spec`は自動削除せず、Git履歴と移行対応表から追跡できる状態を保つ。
 - Discovery成果物は破棄せず、実体とのドリフトだけを改訂する。
 - `.spec` SSOT、権限分離、検証中心、履歴保持の原則を維持する。
 - stdlib中心、オフライン動作、スキル単体コピー時の自己完結性を設計制約として評価する。
@@ -366,7 +499,11 @@ graph TD
 - [ ] domain-model / api-design / architecture / migration / rollbackが揃っている
 - [ ] 共通用語集とWorkspace責任モデルが揃い、bitz-sdd / bitz-ddd間のPublished Languageが明確
 - [ ] Workspace階層、分割条件、委託・エスカレーション、変更調整手順が裁定済み
-- [ ] 公開契約の互換表とcharacterization test計画がある
+- [ ] `sdd-git`廃止と`CORE-FR-016`後継化が人間裁定済み
+- [ ] `SDD-FR-080〜082`の移管・後継・deprecated方針が確定
+- [ ] bitz-flow V2直接接続契約と3.x canary計画がある
+- [ ] V4 runtime非互換、sdd-doctor / sdd-migrate、convert / rebuild方針が裁定済み
+- [ ] workspace schema、Artifact Registry、移行対応表とcharacterization test計画がある
 - [ ] V4 review quality profileが裁定済み
 - [ ] sdd-reviewがV4品質目標を満たし、System Engineering ReviewがPASS
 - [ ] 人間がV4 Design Gateを通過させている
@@ -378,7 +515,10 @@ graph TD
 - [ ] コンテキスト間の依存方向とPublished Languageが設計・コード・テストで一致
 - [ ] Root / Component Workspaceの責任と変更調整が機械検証またはテストで確認できる
 - [ ] bitz-sdd / bitz-dddの正式英語名・略称・正式日本語名と日本語説明が一致
-- [ ] 旧3.x workspaceの移行fixtureがgreen
+- [ ] `sdd-git`が削除され、通常のGit / GitHub操作入口がbitz-flow `flow-core`に一本化
+- [ ] SDDのID / URL / statusとIssue / task / commit / PRのtraceが直接接続canaryでgreen
+- [ ] `parallel-git.md`の混在責任とデフォルトブランチ直接コミット記述が解消
+- [ ] 旧3.x workspaceのconvert / rebuild fixtureがgreenで、未変換項目がすべて列挙される
 - [ ] bitz-ddd / bitz-flowとの依存・接続検査がgreen
 - [ ] canonical spec inspectとrelease checkがgreen
 - [ ] rollback / downgrade条件が実測済み
