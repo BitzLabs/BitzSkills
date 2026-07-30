@@ -2,7 +2,7 @@
 name: sdd-docs
 description: BitzSDD の docs/（人間ナラティブ層）を日本語6章で初期化・検証し、.spec/（仕様マスター）と双方向同期（pull/push/diff）するスキル。必須6章、宣言式の任意リファレンス章、管理対象外パス、安全な旧8章移行を扱う。「docs/ を初期化して」「同期して」「docsを日本語化して」「旧8章を移行して」「docs を検証して」と言われたときに使用する。
 metadata:
-  version: "1.2.1"
+  version: "1.3.0"
   author: br7.hide
   created: "2026-07-07"
   updated: "2026-07-30"
@@ -76,6 +76,19 @@ pushは既存`.spec`本文への逆反映です。対応する`.spec`文書が�
 frontmatterが不正な場合は、機械IDを推測せず対象ファイルを変更しないまま非0終了します。
 複数マッピングの一部だけ成功して終了する場合があるため、出力の成功・失敗件数を確認し、
 失敗が1件でもあれば原因を修正して同じコマンドを再実行してください。
+
+新旧の判定は**ナノ秒精度**（`st_mtime_ns`）で行います。書き込み側の `os.utime(..., ns=...)` と
+比較側の精度を揃えることで、同一秒内の変更や粗い粒度の環境でも「新しい方」を取り違えず、
+無音の上書き・無音のスキップを防ぎます（SDD-FR-164）。
+
+**並行実行の制約（設計判断・SDD-FR-164）**: `sdd_sync.py` は sdd-core の workspace mutation
+lock（`.spec/.mutation-lock`）へ**参加しません**。lock 機構の実体は sdd-core の
+`spec_transaction.py` にあり、スキル自己完結原則（`CORE-CON-004` — 他スキルのファイルを
+相対パスで参照しない）により sdd-docs から直接は使えないためです。共有 Python コードの
+配置は V4 の未裁定論点として扱います（`.spec/ROADMAP.md` 未裁定の設計論点1）。
+**適用範囲と残余リスク**: `sdd_sync` / `migrate_docs` を `spec_update` / `spec_scaffold` 等の
+変更 CLI と**同時に実行しないでください**。同時実行時は lost update が起こりえます
+（単独実行なら本制約は影響しません）。
 
 ### ドキュメントの構造検証
 ```bash

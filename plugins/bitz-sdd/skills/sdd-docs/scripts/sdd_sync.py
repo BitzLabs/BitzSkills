@@ -36,16 +36,23 @@ class SyncError(ValueError):
     """同期契約を満たさない入力を表す。"""
 
 
-def get_mtime(path: Path) -> float:
+def get_mtime(path: Path) -> int:
+    """mtime を**ナノ秒**で返す（存在しなければ 0）。
+
+    比較側と書き込み側で精度を揃える（SDD-FR-164）。`atomic_write_document` は
+    `os.utime(..., ns=...)` で `st_mtime_ns` を書き込むのに、比較が `st_mtime`
+    （float 秒）だと、粗い粒度のファイルシステムや同一秒内の変更で「新しい方」を
+    判別できず、pull / push が無音で上書きをスキップまたは実施しうる（SI-SDD-032）。
+    """
     if not path.exists():
-        return 0.0
-    return path.stat().st_mtime
+        return 0
+    return path.stat().st_mtime_ns
 
 
-def format_mtime(mtime: float) -> str:
-    if mtime == 0.0:
+def format_mtime(mtime_ns: int) -> str:
+    if mtime_ns == 0:
         return "なし"
-    return datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.fromtimestamp(mtime_ns / 1_000_000_000).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def split_frontmatter(text: str, label: str) -> tuple[str, str]:
@@ -230,7 +237,7 @@ def do_pull(root: Path) -> int:
 
         spec_mtime = get_mtime(spec_path)
         docs_mtime = get_mtime(docs_path)
-        if spec_mtime <= docs_mtime and docs_mtime != 0.0:
+        if spec_mtime <= docs_mtime and docs_mtime != 0:
             print(f"UP-TO-DATE: {docs_rel} は最新です。")
             continue
 
@@ -270,7 +277,7 @@ def do_push(root: Path) -> int:
 
         spec_mtime = get_mtime(spec_path)
         docs_mtime = get_mtime(docs_path)
-        if docs_mtime <= spec_mtime and spec_mtime != 0.0:
+        if docs_mtime <= spec_mtime and spec_mtime != 0:
             print(f"UP-TO-DATE: {spec_rel} は最新です（docsの変更はありません）。")
             continue
 
@@ -296,11 +303,11 @@ def do_diff(root: Path) -> int:
         docs_mtime = get_mtime(root / docs_rel)
 
         status = "同期済み"
-        if spec_mtime == 0.0 and docs_mtime == 0.0:
+        if spec_mtime == 0 and docs_mtime == 0:
             status = "両方未作成"
-        elif spec_mtime == 0.0:
+        elif spec_mtime == 0:
             status = "docs側のみ存在 (push前に.spec作成が必要)"
-        elif docs_mtime == 0.0:
+        elif docs_mtime == 0:
             status = "spec側のみ存在 (pullが必要)"
         elif spec_mtime > docs_mtime:
             status = "spec側が新しい (pullが必要)"

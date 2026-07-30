@@ -1,0 +1,30 @@
+{
+  "command": [
+    ".venv/bin/pytest",
+    "-q",
+    "tests/test_sdd_sync.py"
+  ],
+  "command_id": "pytest",
+  "commit": "f0aed06d506f9812b780beea9044642247276d4b",
+  "counts": {
+    "errors": 0,
+    "failed": 0,
+    "passed": 43,
+    "skipped": 0
+  },
+  "cwd": ".",
+  "dirty": false,
+  "exit_code": 0,
+  "observed": {
+    "duration_seconds": 0.96
+  },
+  "recorded_at": "2026-07-30T12:23:28Z",
+  "requirements": [
+    "SDD-FR-164"
+  ],
+  "schema": "bitzsdd/verification-evidence@1",
+  "tool": {
+    "name": "pytest",
+    "version": "9.1.1"
+  }
+}
