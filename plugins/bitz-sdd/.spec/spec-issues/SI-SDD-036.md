@@ -4,6 +4,7 @@ raised_by: SDD-DSN-010/011 起票時に実測（2026-07-30）
 target: spec_inspect が design/stories/ を走査せず、spec_scaffold がファイル名で採番するため DSN の ID 衝突が無検出になる
 proposed_change_type: modify
 status: open
+github_issue: https://github.com/BitzLabs/BitzSkills/issues/134
 ---
 - **目的**: `spec_scaffold.py design` が既存の `SDD-DSN-006` / `SDD-DSN-007`（ドメインストーリー）と
   **同一 ID を払い出した**。sdd-core は「`spec_scaffold.py` は採番衝突を構造的に防ぐ」と規定するが、
