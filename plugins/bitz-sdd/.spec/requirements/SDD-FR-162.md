@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-162
 version: 1.0
-status: implementing
+status: verified
 domain: verification
 priority: high
 origin: SI-SDD-036（裁定H。.spec/reports/decision-2026-07-30-order8-design-foundation.md）
@@ -50,3 +50,7 @@ confidence: high
 - **Revision History**:
   - 1.0 (2026-07-30) 初版（draft 起票）。SI-SDD-036 と裁定H から導出。
     `SI-SDD-006` 提案2（frontmatter の `id:` を正とする採番）の実装を兼ねる。
+  - 1.0 (2026-07-30) 代行可視化経路で approved 化
+    （裁定記録 `.spec/reports/decision-2026-07-30-order8-design-foundation.md` 裁定H）。
+  - 1.0 (2026-07-30) 実装・検証完了により verified 化。証跡
+    `.spec/verification/pytest--5526358.json`（exit_code 0 / 132 passed）。

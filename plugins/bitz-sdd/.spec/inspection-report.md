@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-30)
 
-成果物数: 98 / 問題: 0 / 幽霊参照: 2 / 実装待ち: 0 / 孤児要件: 0 / 検証証跡: 1
+成果物数: 98 / 問題: 0 / 幽霊参照: 2 / 実装待ち: 0 / 孤児要件: 0 / 検証証跡: 2
 
 ## 問題一覧
 - なし ✅
@@ -70,6 +70,7 @@
 
 ## 検証証跡（.spec/verification/ — 実出力に基づく機械可読証跡）
 ※ 実行時間は observed（非正規）であり一致判定に使わない。判定は exit_code と件数が正
+- .spec/verification/pytest--5526358.json — commit 5526358 / exit_code 0 / 対象 SDD-FR-162
 - .spec/verification/pytest--d5a446c.json — commit d5a446c / exit_code 0 / 対象 SDD-FR-151, SDD-FR-152, SDD-FR-153, SDD-FR-154
 
 ## 検証証跡の WARN（古い commit・証跡なしの verified 要件 — FAIL にしない）
@@ -211,7 +212,7 @@
 | SDD-FR-159 | 検証済み（verified） | verification | unit-test | 1 | 2 |
 | SDD-FR-160 | 検証済み（verified） | verification | unit-test | 1 | 3 |
 | SDD-FR-161 | 検証済み（verified） | verification | unit-test | 1 | 2 |
-| SDD-FR-162 | 承認済み（approved） | verification | unit-test | 1 | 3 |
+| SDD-FR-162 | 検証済み（verified） | verification | unit-test | 1 | 3 |
 | SDD-REV-002 | active |  |  | 0 | 1 |
 | SDD-REV-003 | active |  |  | 0 | 0 |
 | SDD-REV-004 | active |  |  | 0 | 0 |
