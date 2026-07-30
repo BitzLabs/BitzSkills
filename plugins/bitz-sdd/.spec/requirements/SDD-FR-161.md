@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-161
 version: 1.0
-status: approved
+status: verified
 domain: verification
 priority: high
 origin: SI-SDD-031

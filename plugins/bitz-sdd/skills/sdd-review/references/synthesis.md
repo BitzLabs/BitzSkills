@@ -35,20 +35,71 @@ CONDITIONAL_PASS の場合、通過条件（critical/major への軽減策）を
 
 ## Step 4: レポート生成
 
-- `.spec/review/review-synthesis.json`:
+**成果物の正は番号付きの `.spec/reviews/<REV-ID>.json` / `.md`**。
+`review-synthesis.json` と `_review-synthesis.md` は最新へのビューであり、自前の成果物 ID も
+finding も持たない（SDD-FR-160）。Markdown 側を `_` 始まりにするのは、`_` 始まりを成果物として
+走査しないという既存規約に乗せて、**古い bitz-sdd を固定版として消費しているワークスペースでも
+「id が無い」FAIL を起こさない**ため。
+先に番号付きファイルを作り、そのあとビューのリンクを差し替える。順序を逆にすると
+`spec_inspect` が**アーカイブ漏れ**として FAIL させる。
+
+- `.spec/reviews/<REV-ID>.json`（`schema_version: 2`。この schema は機械検証される）:
 
 ```
 {
-  "review_id": "<日付-連番>",
+  "schema_version": 2,
+  "review_id": "<REV-ID>",
   "verdict": "PASS|CONDITIONAL_PASS|FAIL",
   "aggregate_score": <小数2桁>,
   "perspective_scores": {"<観点>": <score>, ...},
   "findings_summary": {"total": <統合前件数>, "after_dedup": <統合後>, "by_priority": {}, "by_severity": {}},
-  "findings": [{"id": "SYN-001", "priority": "P0|P1|P2|P3", "source_ids": [], "perspectives": [], "title": "", "recommendation": ""}],
+  "findings": [...],            // 下表の必須キー
+  "gate_preconditions": [...],  // 下表の必須キー
+  "carried_over": [],           // 過去レビューから引き継いだ未消化の P0/P1
   "conditional_items": []
 }
 ```
 
-- `.spec/review/review-synthesis.md`: 書式は assets/review-report.md をコピーして使う（記憶から書き起こさない）
+### findings[] の必須キー（SDD-FR-158）
+
+| キー | 値 |
+|---|---|
+| `id` | **`<REV-ID>:SYN-NNN`** — レビュー横断で一意にする（レビュー内連番だけでは別レビューの同番号と区別できない） |
+| `priority` | `P0` / `P1` / `P2` / `P3` |
+| `severity` | `critical` / `major` / `minor` / `info` |
+| `source` | 観点別 finding ID の配列（旧 `source_ids` を統一） |
+| `title` | 短い要約 |
+| `recommendation` | 実行可能な是正内容 |
+| `tracked_by` | SpecIssue ID または `<REV-ID>:GP-NNN`。**P0/P1 は必須**（P2/P3 は空文字でよいがキーは置く） |
+| `status` | `open` / `tracked` / `resolved`（持ち越し判定に使う） |
+
+**未紐づけの P0/P1 がある状態で `verdict: PASS` を出せない**（SDD-FR-159）。`tracked_by` は
+実在検査の対象で、spec-issue は全ワークスペース横断で、`<REV-ID>:GP-NNN` は同一レビューの
+`gate_preconditions` に対して解決される。
+
+### gate_preconditions[] の必須キー（SDD-FR-161）
+
+| キー | 値 |
+|---|---|
+| `kind` | **`blocking`**（Gate 通過前に消化する条件）/ **`agenda`**（Gate で決める論点） |
+| `basis` | **`verified`**（実測で確認済み）/ **`assumed`**（未検証の想定） |
+| `evidence` | `basis: verified` のとき必須。実測の所在 |
+
+**不変条件: `basis: assumed` を根拠に `kind: blocking` は立てられない**。Gate 通過の阻止に
+使うのは `kind: blocking` かつ未消化のものだけで、`agenda` は阻止に使わない。
+この区別が無いと「前提条件なのに Gate で決めること」という循環が起きる。
+
+### 持ち越し（carried_over）
+
+新しい synthesis を生成するときは、過去の全 `.spec/reviews/<REV-ID>.json` から
+`status` が `resolved` でない `P0` / `P1` の finding を `carried_over[]` へ取り込む
+（要素は `<REV-ID>:SYN-NNN`。取り込み元の実在が検査される）。手作業の追跡表に頼らない。
+
+- `.spec/reviews/<REV-ID>.md`: 書式は assets/review-report.md をコピーして使う（記憶から書き起こさない）
 
 判定・レポートを人間に提示して終了。裁定（Design Gate / Promotion Gate の通過）は人間が行う。
+
+### 既存レビューの扱い
+
+`schema_version` を持たないレビューは本 schema の検査対象外とし、遡及的に不整合としない。
+アーカイブ漏れの検査だけは `schema_version` の有無にかかわらず適用される。

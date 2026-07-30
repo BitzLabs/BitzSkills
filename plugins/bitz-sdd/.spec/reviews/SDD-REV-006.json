@@ -1,0 +1,246 @@
+{
+  "schema_version": 2,
+  "review_id": "SDD-REV-006",
+  "verdict": "CONDITIONAL_PASS",
+  "aggregate_score": 3.03,
+  "perspective_scores": {
+    "consistency": 3.0,
+    "operations": 3.2,
+    "risk": 2.33,
+    "business": 3.3,
+    "data-integrity": 3.4
+  },
+  "perspective_weights": {
+    "consistency": 0.2,
+    "operations": 0.27,
+    "risk": 0.2,
+    "business": 0.2,
+    "data-integrity": 0.13
+  },
+  "findings_summary": {
+    "total": 16,
+    "after_dedup": 10,
+    "by_priority": {
+      "P0": 2,
+      "P1": 6,
+      "P2": 1,
+      "P3": 1
+    },
+    "by_severity": {
+      "critical": 2,
+      "major": 9,
+      "minor": 3,
+      "info": 2
+    }
+  },
+  "findings": [
+    {
+      "id": "SDD-REV-006:SYN-001",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "OPS-601"
+      ],
+      "title": "レビュー指摘の消化が追跡されず P1 が起票されないまま消えた",
+      "recommendation": "ReviewFinding を独立エンティティとして定義し、P0/P1 に tracked_by を必須化する。未紐づけの P0/P1 がある状態で verdict: PASS を出せないよう spec_inspect で機械検証する",
+      "tracked_by": "SI-SDD-031",
+      "status": "tracked",
+      "note": "SDD-REV-004 は SYN-001 を『別途 spec-issue 化を推奨』として PASS したが起票されず、7日後の現在も未対応。gate_preconditions は空配列であった"
+    },
+    {
+      "id": "SDD-REV-006:SYN-002",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "RSK-601"
+      ],
+      "title": "代行遷移の唯一の担保である Promotion Gate が一度も動いていない",
+      "recommendation": "Gate 通過を GatePassage として成果物化し、verified→promoted に GatePassage の参照を必須化する。未検分の代行遷移を decision_ref 単位で滞留集計する",
+      "tracked_by": "SI-SDD-028",
+      "status": "tracked",
+      "note": "bitz-sdd 63件すべて verified 止まり・promoted 0件。代行遷移は bitz-sdd 14件・ルート28件"
+    },
+    {
+      "id": "SDD-REV-006:SYN-003",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RVC-601",
+        "RVC-602"
+      ],
+      "title": "Design 層が欠落し、要件の46%が実装からの逆起票である",
+      "recommendation": "ドメインストーリーとドメインモデルを後付けし、ROADMAP で順序と依存を管理する。逆起票31件は境界確定後に分類として照合する（置き換えない）",
+      "tracked_by": "SDD-REV-006:GP-003",
+      "status": "tracked",
+      "note": "domain-model.md と ROADMAP.md が無く、design/ は spec-issue 対応の個別ノート5件のみ。対応設計を持つ要件は2件"
+    },
+    {
+      "id": "SDD-REV-006:SYN-004",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RSK-602",
+        "RSK-603"
+      ],
+      "title": "SDD-REV-004 の未消化指摘（mtime 精度の非対称・sdd_sync の lock 不参加）",
+      "recommendation": "書き込みと比較の mtime 精度を揃え、sdd_sync を workspace mutation lock へ参加させる",
+      "tracked_by": "SI-SDD-032",
+      "status": "tracked",
+      "note": "SYN-001 の具体的な帰結。書き込みは st_mtime_ns、比較は st_mtime。lock 参加は grep 0件"
+    },
+    {
+      "id": "SDD-REV-006:SYN-005",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "OPS-602",
+        "RVC-604"
+      ],
+      "title": "manual-check が42.5%を占めるが監視実装も実施記録形式も無い",
+      "recommendation": "manual-check の実施記録を成果物として定義し証跡の一種へ格上げする。比率の機械集計を実装と同時に置く",
+      "tracked_by": "SI-SDD-029",
+      "status": "tracked",
+      "note": "宣言閾値20%の2倍超。比率計算の実装は grep 0件"
+    },
+    {
+      "id": "SDD-REV-006:SYN-006",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RVC-606",
+        "RVC-605"
+      ],
+      "title": "verification_method（要件単位）と証跡（実行単位）の集約境界が不一致",
+      "recommendation": "検証判定を sdd-test へ移設し、証跡 schema に検証手段を持たせて不変条件の所有者を1か所にする",
+      "tracked_by": "SI-SDD-030",
+      "status": "tracked",
+      "note": "schema 利用実績が1件のうちに直せば移行不要。時間依存のコストがある"
+    },
+    {
+      "id": "SDD-REV-006:SYN-007",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "BIZ-603"
+      ],
+      "title": "Discovery が 2026-07-12 で停止し宣言と実体が乖離している",
+      "recommendation": "Discovery 6成果物を実体へ追随させて改訂する。bitz-flow との境界決定は同プラグインの設計完了後へ回す",
+      "tracked_by": "SDD-REV-006:GP-004",
+      "status": "tracked",
+      "note": "SDD-REV-004 の SYN-007 が指摘済みで未対応。sdd-git 移管予定が未実施のまま bitz-flow は実在"
+    },
+    {
+      "id": "SDD-REV-006:SYN-008",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "BIZ-604"
+      ],
+      "title": "14スキルの責務分界が未定義のまま15個目を追加しようとしている",
+      "recommendation": "境界づけられたコンテキストを定義したうえで14スキルの責務分界を確定し、新スキルの追加はその後に行う",
+      "tracked_by": "SI-SDD-013",
+      "status": "tracked",
+      "note": "accepted 未着手。境界づけられたコンテキストの定義が前提条件"
+    },
+    {
+      "id": "SDD-REV-006:SYN-009",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "OPS-604"
+      ],
+      "title": "SDD ツールの呼び出し規約が2系統に分かれている",
+      "recommendation": "ラッパーの必須解決を任意ツールへ拡張し、SDD ツールの呼び出し規約を1系統へ統一する",
+      "tracked_by": "SI-CORE-038",
+      "status": "tracked",
+      "note": "ラッパーが4ツール必須解決のため新ツールを追加できない。CORE-FR-011 の改訂を伴う"
+    },
+    {
+      "id": "SDD-REV-006:SYN-010",
+      "priority": "P3",
+      "severity": "info",
+      "source": [
+        "BIZ-601",
+        "BIZ-605",
+        "RVC-603",
+        "OPS-603"
+      ],
+      "title": "保全すべき資産（63件の verified・下流トレース・Discovery 6成果物）",
+      "recommendation": "設計の後付けは置き換えではなく照合として行い、63件の verified・下流トレース・Discovery 6成果物を書き直さない",
+      "tracked_by": "",
+      "status": "open",
+      "note": "設計の後付けは置き換えではなく照合として行うこと"
+    }
+  ],
+  "gate_preconditions": [
+    {
+      "id": "GP-001",
+      "from": "SYN-001",
+      "condition": "レビュー指摘の spec-issue 化を機械的に追跡する仕組みを設計フェーズの対象に含める。少なくとも P0/P1 は spec-issue への紐づけを synthesis の必須項目とし、未紐づけのまま PASS できないようにする",
+      "status": "ruled-at-gate",
+      "satisfied_by": "Design Gate の裁定3（ReviewFinding の独立と tracked_by 必須化）で方針を確定。実装は SI-SDD-031。前提条件ではなく Gate の論点だった",
+      "kind": "agenda",
+      "basis": "verified",
+      "evidence": ".spec/reviews/SDD-REV-004.json（SYN-001 が未起票のまま PASS した実測）"
+    },
+    {
+      "id": "GP-002",
+      "from": "SYN-004",
+      "condition": "SDD-REV-004 の未消化指摘（mtime 精度・mutation lock 不参加）を spec-issue として起票する",
+      "status": "satisfied",
+      "satisfied_by": "SI-SDD-032（2026-07-29 起票）",
+      "kind": "blocking",
+      "basis": "verified",
+      "evidence": ".spec/spec-issues/SI-SDD-032.md（2026-07-29 起票）"
+    },
+    {
+      "id": "GP-003",
+      "from": "SYN-003",
+      "condition": "Design 層を後付けする（domain-model.md と ROADMAP.md の作成、逆起票31件の分類）",
+      "status": "partial",
+      "satisfied_by": "ドメインストーリー SDD-DSN-006〜008 と ドメインモデル SDD-DSN-009、.spec/ROADMAP.md を作成（2026-07-29）。残: 逆起票31件の分類（Design Gate の裁定後に実施）",
+      "kind": "blocking",
+      "basis": "verified",
+      "evidence": ".spec/design/domain-model.md と .spec/ROADMAP.md（2026-07-29 作成）"
+    },
+    {
+      "id": "GP-004",
+      "from": "SYN-007",
+      "condition": "Discovery を実体へ追随させる（破棄せず改訂）。bitz-flow との境界決定は同プラグインの設計完了後へ回す",
+      "status": "satisfied",
+      "satisfied_by": "Discovery 6成果物を 1.1 へ改訂（2026-07-29）。bitz-flow 境界の記述は人間裁定により据え置き",
+      "kind": "blocking",
+      "basis": "verified",
+      "evidence": ".spec/discovery/（6成果物を 1.1 へ改訂。2026-07-29）"
+    },
+    {
+      "id": "GP-005",
+      "from": "SYN-009",
+      "condition": "SDD ツール呼び出し規約の統一方針を裁定する（CORE-FR-011 の改訂可否を含む）",
+      "status": "prerequisite-of-ruling",
+      "satisfied_by": "Design Gate の裁定1（判定機能を sdd-test へ移設）により、Gate の帰結として実装前提へ引き上がった。追跡は SI-CORE-038",
+      "kind": "agenda",
+      "basis": "assumed"
+    }
+  ],
+  "gate_decision": {
+    "status": "pending",
+    "date": null,
+    "actor": "未裁定（人間裁定待ち）"
+  },
+  "deferred": [
+    {
+      "topic": "bitz-sdd ↔ bitz-flow の依存境界と sdd-git 移管",
+      "reason": "bitz-flow の discovery / design が並行進行中のため、決定は同プラグイン完了後の最終合わせで行う（人間裁定 2026-07-29）"
+    }
+  ],
+  "breaking_change_policy": "許容（人間裁定 2026-07-29）。設計の結論が公開契約の破壊的変更を要する場合、bitz-ddd の bitz-sdd>=2.0 依存と本リポジトリの固定版消費への波及を移行計画として明示すること",
+  "untracked_p0_p1": [],
+  "design_gate": {
+    "date": "2026-07-29",
+    "form": "対話裁定（6件すべて個別に選択。裁定1は推奨と異なる案が選ばれた）",
+    "decision_ref": ".spec/reports/decision-2026-07-29-design-gate.md",
+    "note": "gate_preconditions は「Gate 通過前に消化する条件」と「Gate で決める論点」を区別していなかった。GP-001 と GP-005 は後者であり、前提条件の定義が循環していた。この区別は裁定3（ReviewFinding の設計）で扱う"
+  },
+  "carried_over": []
+}

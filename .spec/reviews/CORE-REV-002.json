@@ -1,0 +1,88 @@
+{
+  "review_id": "CORE-REV-002",
+  "workspace": "BitzSkills（SI-CORE-034 / CORE-FR-011 v1.1 / DSN-004）",
+  "verdict": "PASS",
+  "aggregate_score": 4.58,
+  "perspective_scores": {
+    "consistency": 4.65,
+    "data-integrity": "対象外（永続データストアを変更しないローカルCLI解決）",
+    "operations": 4.5,
+    "risk": 4.67,
+    "business": 4.5
+  },
+  "perspective_weights_normalized": {
+    "consistency": 0.2,
+    "operations": 0.2667,
+    "risk": 0.3333,
+    "business": 0.2
+  },
+  "findings_summary": {
+    "total": 11,
+    "after_dedup": 4,
+    "by_priority": {
+      "P0": 0,
+      "P1": 0,
+      "P2": 0,
+      "P3": 4
+    },
+    "by_severity": {
+      "critical": 0,
+      "major": 0,
+      "minor": 1,
+      "info": 3
+    }
+  },
+  "findings": [
+    {
+      "id": "SYN-001",
+      "priority": "P3",
+      "source_ids": [
+        "RVC-201"
+      ],
+      "perspectives": [
+        "consistency"
+      ],
+      "title": "後続task・test-specはDesign Gate通過後に作成する",
+      "recommendation": "CORE-FR-011 v1.1とDSN-004へ紐付けて実装着手する"
+    },
+    {
+      "id": "SYN-002",
+      "priority": "P3",
+      "source_ids": [
+        "OPS-101",
+        "BIZ-201"
+      ],
+      "perspectives": [
+        "operations",
+        "business"
+      ],
+      "title": "discovery状態・timeout・出力上限の診断契約をテストで固定する",
+      "recommendation": "状態別fixtureでstderrの安全な分類と定数を検証する"
+    },
+    {
+      "id": "SYN-003",
+      "priority": "P3",
+      "source_ids": [
+        "RSK-402"
+      ],
+      "perspectives": [
+        "risk"
+      ],
+      "title": "実行直前再検証後にも極小のTOCTOU残留リスクがある",
+      "recommendation": "再検証とOSError正規化を実装し、並行更新時は再試行を案内する"
+    },
+    {
+      "id": "SYN-004",
+      "priority": "P3",
+      "source_ids": [
+        "BIZ-401"
+      ],
+      "perspectives": [
+        "business"
+      ],
+      "title": "sdd-doctorの公開診断拡張は別関心事として除外する",
+      "recommendation": "必要性が生じた場合は別spec-issueへ委託する"
+    }
+  ],
+  "conditional_items": []
+}

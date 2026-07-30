@@ -50,6 +50,28 @@ GATE_KINDS = {"discovery", "design", "promotion"}
 GATE_REQUIRED_KEYS = (
     "id", "gate", "date", "arbiter", "scope", "confirmed_decision_refs", "checklist_ref",
 )
+# レビュー統合成果物（SDD-FR-158〜161）。`review-synthesis.*` は最新へのビューであり
+# 成果物の正は番号付きの `<REV-ID>.json` / `.md`。schema_version を持つ synthesis だけが
+# schema 検査の対象で、既存レビューは遡及的に不整合としない
+REVIEW_VIEW_JSON = "review-synthesis.json"
+# Markdown 側のビューは `_` 始まり（`_review-synthesis.md`）で置く。`_` 始まりは成果物として
+# 走査しないという既存の規約であり、**古い bitz-sdd を固定版として消費しているワークスペースでも
+# 「id が無い」FAIL を起こさない**（本リポジトリ自身がその状態にある）。ここでは旧名も
+# 明示的に除外し、名称の移行期でもレジストリに入らないようにする
+REVIEW_VIEW_MD = "review-synthesis.md"
+FINDING_REQUIRED_KEYS = (
+    "id", "priority", "severity", "source", "title", "recommendation", "tracked_by", "status",
+)
+FINDING_PRIORITIES = {"P0", "P1", "P2", "P3"}
+FINDING_SEVERITIES = {"critical", "major", "minor", "info"}
+FINDING_STATUSES = {"open", "tracked", "resolved"}
+# tracked_by が必須になる優先度（未紐づけのままでは verdict: PASS を出せない）
+BLOCKING_PRIORITIES = {"P0", "P1"}
+PRECONDITION_KINDS = {"blocking", "agenda"}
+PRECONDITION_BASES = {"verified", "assumed"}
+REV_PART = r"(?:[A-Z0-9]{2,4}-)?REV-\d{3}"
+FINDING_ID_RE = re.compile(rf"^{REV_PART}:SYN-\d{{3}}$")
+GP_REF_RE = re.compile(rf"^({REV_PART}):(GP-\d{{3}})$")
 EVIDENCE_SCHEMA = "bitzsdd/verification-evidence@1"
 EVIDENCE_REQUIRED_KEYS = (
     "command_id", "command", "cwd", "commit", "recorded_at", "exit_code", "requirements",
@@ -189,6 +211,161 @@ def check_gate_passages(root: Path, gates: dict, global_reqs: dict) -> list:
     return problems
 
 
+def _check_gate_preconditions(rel, preconditions: list) -> tuple[list, set]:
+    """gate_preconditions の kind / basis を検査する（SDD-FR-161）。(problems, gp_ids) を返す。
+
+    不変条件: **`basis: assumed` を根拠に `kind: blocking` は立てられない**。未検証の想定が
+    Gate 通過の阻止条件として据えられる事故（実装順序を誤って規定した実例）の再発防止。
+    """
+    problems, gp_ids = [], set()
+    for index, precondition in enumerate(preconditions):
+        label = f"{rel} gate_preconditions[{index}]"
+        if not isinstance(precondition, dict):
+            problems.append(f"[review] {label}: オブジェクトではない")
+            continue
+        gp_id = precondition.get("id")
+        if gp_id:
+            gp_ids.add(gp_id)
+        label = f"{label} ({gp_id or '?'})"
+        kind = precondition.get("kind")
+        basis = precondition.get("basis")
+        if kind not in PRECONDITION_KINDS:
+            problems.append(
+                f"[review] {label}: kind は blocking / agenda のいずれか（現在: {kind or '未記入'}）"
+            )
+        if basis not in PRECONDITION_BASES:
+            problems.append(
+                f"[review] {label}: basis は verified / assumed のいずれか（現在: {basis or '未記入'}）"
+            )
+        if kind == "blocking" and basis == "assumed":
+            problems.append(
+                f"[review] {label}: 不変条件違反 — basis: assumed を根拠に kind: blocking は立てられない"
+            )
+        if basis == "verified" and not precondition.get("evidence"):
+            problems.append(f"[review] {label}: basis: verified には実測の所在（evidence）が必要")
+    return problems, gp_ids
+
+
+def _check_findings(rel, review_id: str, payload: dict, gp_ids: set, known_ids: set) -> list:
+    """findings[] の schema・ID 形式・tracked_by の実在・未紐づけ P0/P1 を検査する
+    （SDD-FR-158 / SDD-FR-159）。"""
+    problems, untracked = [], []
+    for index, finding in enumerate(payload.get("findings") or []):
+        label = f"{rel} findings[{index}]"
+        if not isinstance(finding, dict):
+            problems.append(f"[review] {label}: オブジェクトではない")
+            continue
+        fid = finding.get("id")
+        label = f"{label} ({fid or '?'})"
+        for key in FINDING_REQUIRED_KEYS:
+            # tracked_by はキーの存在のみ必須（P2/P3 は空でよい。未紐づけ判定は下で行う）
+            if key not in finding or (key != "tracked_by" and not finding.get(key)):
+                problems.append(f"[review] {label}: 必須キー '{key}' が無い")
+        if fid and not FINDING_ID_RE.match(str(fid)):
+            problems.append(f"[review] {label}: finding ID は <REV-ID>:SYN-NNN 形式にする")
+        for key, vocabulary in (("priority", FINDING_PRIORITIES),
+                                ("severity", FINDING_SEVERITIES),
+                                ("status", FINDING_STATUSES)):
+            value = finding.get(key)
+            if value is not None and value not in vocabulary:
+                problems.append(
+                    f"[review] {label}: {key} '{value}' は語彙外（{' / '.join(sorted(vocabulary))}）"
+                )
+        tracked = finding.get("tracked_by")
+        if finding.get("priority") in BLOCKING_PRIORITIES and not tracked:
+            untracked.append(str(fid or f"findings[{index}]"))
+        elif tracked:
+            gp_match = GP_REF_RE.match(str(tracked))
+            if gp_match:
+                if gp_match.group(1) != review_id or gp_match.group(2) not in gp_ids:
+                    problems.append(
+                        f"[review] {label}: tracked_by の {tracked} が gate_preconditions に無い（幽霊参照）"
+                    )
+            elif tracked not in known_ids:
+                problems.append(
+                    f"[review] {label}: tracked_by の {tracked} が存在しない（幽霊参照）"
+                )
+    if untracked:
+        problems.append(
+            f"[review] {rel}: 未紐づけの P0/P1 finding がある: " + ", ".join(untracked)
+        )
+        if payload.get("verdict") == "PASS":
+            problems.append(
+                f"[review] {rel}: 未紐づけの P0/P1 があるため verdict: PASS を出せない"
+            )
+    return problems
+
+
+def _check_carried_over(root: Path, rel, payload: dict) -> list:
+    """carried_over[] の取り込み元 finding が実在するかを検査する（SDD-FR-160）。"""
+    problems = []
+    for index, item in enumerate(payload.get("carried_over") or []):
+        ref = item.get("id") if isinstance(item, dict) else item
+        label = f"{rel} carried_over[{index}]"
+        if not ref or not FINDING_ID_RE.match(str(ref)):
+            problems.append(f"[review] {label}: <REV-ID>:SYN-NNN 形式の finding ID にする")
+            continue
+        source_id = str(ref).split(":", 1)[0]
+        source = root / ".spec" / "reviews" / f"{source_id}.json"
+        try:
+            source_payload = json.loads(source.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            problems.append(f"[review] {label}: 取り込み元 {source_id}.json を読めない（幽霊参照）")
+            continue
+        known = {f.get("id") for f in (source_payload.get("findings") or [])
+                 if isinstance(f, dict)}
+        if ref not in known:
+            problems.append(f"[review] {label}: 取り込み元に {ref} が存在しない（幽霊参照）")
+    return problems
+
+
+def check_reviews(root: Path, known_ids: set) -> list:
+    """レビュー成果物のアーカイブ漏れと synthesis schema を検査する（SDD-FR-158〜161）。
+
+    アーカイブ漏れ検査は `schema_version` の有無にかかわらず行う。schema 検査は
+    `schema_version` を持つ synthesis だけを対象とし、既存レビューを遡及的に不整合としない。
+    """
+    problems = []
+    directory = root / ".spec" / "reviews"
+    if not directory.exists():
+        return problems
+    documents = []
+    for path in sorted(directory.glob("*.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            problems.append(f"[review] {path.relative_to(root)}: JSON を読めない ({exc})")
+            continue
+        if not isinstance(payload, dict):
+            problems.append(f"[review] {path.relative_to(root)}: JSON オブジェクトではない")
+            continue
+        documents.append((path, payload))
+
+    for path, payload in documents:
+        rel = path.relative_to(root)
+        if path.name == REVIEW_VIEW_JSON:
+            # SDD-FR-160: ビューが指す番号付きファイルが無い＝アーカイブ漏れ
+            review_id = payload.get("review_id")
+            if not review_id:
+                problems.append(f"[review] {rel}: review_id がない（最新へのビューとして必須）")
+            elif not (directory / f"{review_id}.json").exists():
+                problems.append(
+                    f"[review] アーカイブ漏れ: {rel} が指す {review_id}.json が存在しない"
+                )
+            continue
+        if "schema_version" not in payload:
+            continue  # 既存レビューは検査対象外（遡及しない）
+        gp_problems, gp_ids = _check_gate_preconditions(
+            rel, payload.get("gate_preconditions") or []
+        )
+        problems += gp_problems
+        problems += _check_findings(
+            rel, payload.get("review_id") or path.stem, payload, gp_ids, known_ids
+        )
+        problems += _check_carried_over(root, rel, payload)
+    return problems
+
+
 def load_requirements(root: Path):
     reqs = {}
     problems = []
@@ -203,7 +380,9 @@ def load_requirements(root: Path):
         if not d.exists():
             continue
         for f in sorted(d.glob("*.md")):
-            if f.name.startswith("_") or f.name in ("domains.md",):
+            # review-synthesis.md は最新へのビューであり成果物 ID を持たない（SDD-FR-160）。
+            # 正は番号付きの <REV-ID>.md 側なので、レジストリにも構造検査にも入れない
+            if f.name.startswith("_") or f.name in ("domains.md", REVIEW_VIEW_MD):
                 continue
             text = f.read_text(encoding="utf-8")
             fm = parse_frontmatter(text)
@@ -908,6 +1087,7 @@ def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None,
     problems += check_delegations(root, *delegation_ctx)
     gates, gate_problems = load_gate_passages(root)
     problems += gate_problems + check_gate_passages(root, gates, global_reqs)
+    problems += check_reviews(root, delegation_ctx[0])
     domains = load_domains(req_dir)
     forbidden = load_forbidden_words(req_dir)
     impl = implements_map(root)

@@ -244,3 +244,24 @@ def test_SDD_FR_154_unreadable_evidence_is_counted_as_failure(tmp_path: Path):
 
     assert "読取不能" in report
     assert "**失敗・不正な証跡**: 1 件" in report
+
+
+# --- レビュー集計はビューを数えない（SDD-FR-160） -----------------------------
+
+def test_SDD_FR_160_review_view_is_not_counted(tmp_path: Path):
+    """`_` 始まりのビュー（_review-synthesis.md）はレビュー件数にも判定にも入らない"""
+    make_spec(tmp_path)
+    reviews = tmp_path / ".spec" / "reviews"
+    reviews.mkdir(parents=True)
+    review_id = "XX-" + "REV-" + "001"
+    (reviews / f"{review_id}.md").write_text(
+        f"---\nid: {review_id}\nstatus: active\ndecision: PASS\n---\n\n# レビュー\n",
+        encoding="utf-8")
+    (reviews / "_review-synthesis.md").write_text(
+        f"---\nview_of: {review_id}\npath: {review_id}.md\n---\n\n# ビュー\n",
+        encoding="utf-8")
+
+    report = run_report(tmp_path)
+
+    assert "1 件のレビューが存在" in report
+    assert "PENDING" not in report
