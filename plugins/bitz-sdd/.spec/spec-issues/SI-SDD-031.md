@@ -30,6 +30,13 @@ status: accepted
 - **影響推定・ロールバック**: レビュー成果物の schema と Gate 判定に触れるため軽量レーン不可・
   Design Gate 必須。検査の追加は加法的で、問題時は検査だけ無効化して schema は残せる。
 - **依存**: SDD-FR-060（統合報告書の decision 必須出力）、SI-SDD-028（Promotion Gate の運用）。
+- **実施**: 2026-07-30 SDD-DSN-011 で設計（Design Gate 裁定 D5〜D8）し、SDD-FR-158 / 159 / 160 / 161
+  として要件化・実装（SDD-TSK-047〜050）。PR #137 で起票・承認、PR #140 で実装し verified 昇格。
+  finding schema の固定と ID の横断一意化が SDD-FR-158、未紐づけ P0/P1 での PASS 阻止と
+  `tracked_by` の実在検査が SDD-FR-159、アーカイブ強制と `carried_over[]` が SDD-FR-160、
+  `gate_preconditions` の `kind` / `basis` が SDD-FR-161。
+  実データ移行として SDD-REV-006 を番号付きへアーカイブし `schema_version: 2` へ正規化、
+  あわせて未アーカイブだった4ワークスペースのレビューも退避した。
 
 ## 予備判定（推薦）— 裁定は人間専用
 

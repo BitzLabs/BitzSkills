@@ -30,6 +30,13 @@ status: accepted
   計測と可視化の追加は加法的で、問題時は当該セクションごと revert できる。
   3（Gate の実行単位と記録先）は契約変更のため Design Gate 必須。
 - **依存**: SDD-FR-145（人間裁定必須遷移の2経路）、SI-SDD-027（代行可視化経路の導入）。
+- **実施**: 2026-07-30 SDD-DSN-010 で設計（Design Gate 裁定 D1〜D4）し、SDD-FR-155 / 156 / 157
+  として要件化・実装（SDD-TSK-044〜046）。PR #137 で起票・承認、PR #138 で実装し verified 昇格。
+  提案1・2 は SDD-FR-156（`unreviewed_proxy_decisions` の集計と `adoption-metrics.md` の2指標）、
+  提案3 は SDD-FR-155 / 157（GatePassage の新設と `--gate-passage` の必須化）、
+  提案4 は SDD-FR-157（`lifecycle.md` の「verified は完了ではない」節）で消化した。
+  **提案1 の「対象要件が promoted に達していないもの」という滞留の定義は D2 により
+  `decision_ref` 単位へ上書きされた**（spec-issue の代行遷移を永久滞留にしないため）。
 
 ## 予備判定（推薦）— 裁定は人間専用
 

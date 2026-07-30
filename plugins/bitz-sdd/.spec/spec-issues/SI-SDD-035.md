@@ -3,7 +3,7 @@ id: SI-SDD-035
 raised_by: SI-CORE-038 着手時の実測（2026-07-30）
 target: Design Gate 裁定記録の前提が検証されず実装順序を拘束した（SI-CORE-038 の位置づけ）
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: 2026-07-29 の Design Gate は裁定1（検証判定を sdd-test へ移設）の帰結として
   「`SI-CORE-038`（ラッパーの任意ツール対応）が裁定1の実装前提になる」「**これが無いと
@@ -46,3 +46,17 @@ status: open
   ただし提案2 は `SI-CORE-038` の実装スコープを変更するため、同 spec-issue の再裁定を伴う。
 - **依存**: `SI-CORE-038`（スコープ縮小の対象）、`SI-SDD-031`（`ReviewFinding` — 裁定の帰結の追跡）、
   2026-07-29 Design Gate 裁定1（`decision-2026-07-29-design-gate.md`）。
+- **実施**: 2026-07-30 に accept。裁定記録は `.spec/reports/decision-2026-07-30-order7-scope.md`
+  （裁定E・F・G）。
+  - **提案1**（裁定記録への訂正の追記）— 実施済。PR #135 で
+    `decision-2026-07-29-design-gate.md` に訂正ブロックを2箇所追記（記録は書き換えず訂正として残した）。
+  - **提案2**（ROADMAP の順序見直しとスコープ縮小）— 実施済。PR #135 で ROADMAP を、
+    本 PR で `SI-CORE-038.md` へスコープ確定を追記。あわせて裁定E により
+    `REL` 一般化も順序7 から順序8 へ移し、順序7 は呼び出し規約の明文化だけに再縮小した。
+  - **提案3**（前提条件の `verified` / `assumed` の区別）— 実施済。Design Gate D7 で決着し、
+    `SDD-DSN-011` 設計判断6 →`SDD-FR-161` として要件化・実装（PR #140）。
+    **`basis: assumed` を根拠に `kind: blocking` を立てられない**を不変条件として機械検証する。
+  - **提案4**（呼び出し規約の明文化）— 裁定G により **`SI-CORE-038` へ委譲**。同 spec-issue の
+    提案4 と同一の作業であり、対象ファイル `AGENTS.md` の管轄と一致する側で実装する。
+    規約は AGENTS.md への明記に加えて `CORE-CON-*` 要件として機械検証する（裁定F）。
+  - 確認観点にあった「提案4 を `CORE-CON-*` 要件として起票すべきか」は**裁定F で起票すると決定**。
