@@ -157,7 +157,9 @@ SDD-REV-006（2026-07-29、判定 **CONDITIONAL_PASS**）を起点とした設�
 2026-07-30、フェーズ3 の順序8（設計基盤の欠陥裁定）を実施した。open spec-issue 4件
 （`SI-SDD-032` / `033` / `034` / `036`）を**すべて accept** し、V4設計との順序を確定した
 （P1 節と `.spec/reports/decision-2026-07-30-order8-design-foundation.md`）。
-次は順序9（設計toolchainの安全化）として `SI-SDD-036` を実装する。
+続けて順序9（設計toolchainの安全化）を同日に完了させ、4件の裁定を `SDD-FR-162`〜`SDD-FR-165`
+として実装・検証した。次は順序10（V4設計Ready canary — Root / Component Workspace fixture での
+設計成果物の作成・検査の実測）である。
 
 | GP | 条件 | 状態 |
 |---|---|---|
@@ -350,9 +352,21 @@ graph TD
 
 8. **設計基盤の欠陥裁定** — **完了（2026-07-30）**。SI-SDD-032 / 033 / 034 / 036 を accept し、
    4件とも V4設計前修正へ配置（裁定H〜K）
-9. **設計toolchainの安全化** — 再帰inspect、重複ID時の両パス表示、frontmatter基準の採番
-   （SI-SDD-036 = 最優先）、フェーズ判定の `done` 抑止（SI-SDD-034）、
-   sdd_sync の mtime 統一と lock 参加（SI-SDD-032）、共有作業ツリー規律（SI-SDD-033）
+9. **設計toolchainの安全化** — **完了（2026-07-30）**。裁定H〜K を4本の PR で実装した。
+
+   | 要件 | 内容 | 由来 |
+   |---|---|---|
+   | `SDD-FR-162` | 再帰inspect・重複ID時の両パス表示・frontmatter基準の採番 | SI-SDD-036（最優先） |
+   | `SDD-FR-163` | フェーズ判定の `done` 抑止（`draft` 併存時） | SI-SDD-034 |
+   | `SDD-FR-164` | sdd_sync の mtime を `st_mtime_ns` へ統一 | SI-SDD-032 |
+   | `SDD-FR-165` | 共有作業ツリー規律・測定値の出典・権限マトリクス | SI-SDD-033 |
+
+   **V4 へ送った残件**: `sdd_sync` / `migrate_docs` の mutation lock 参加（SI-SDD-032 提案2 と
+   提案3 の並行実行テスト）— lock 機構が sdd-core にあり `CORE-CON-004` により sdd-docs から
+   参照できないため、未裁定論点1（配布単位）の裁定後に後続要件として実装する。
+   実装中に `SI-SDD-037`（`parallel-git.md` の既定ブランチ直接コミット記述と
+   bitz-env ガードレールの矛盾）を起票した — V4 テーマ4 の再編と対象が重なるため、
+   先行解消するかは裁定点。
 10. **V4設計Ready canary** — Root / Component Workspace fixtureで設計成果物の作成・検査を実測
 
 ### フェーズ4 — bitz-flow V2（別workspaceで実施）
