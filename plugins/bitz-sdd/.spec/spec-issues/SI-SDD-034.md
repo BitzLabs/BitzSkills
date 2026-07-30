@@ -3,7 +3,7 @@ id: SI-SDD-034
 raised_by: bitz-flow v2再設計の振り返り（GitHub Issue #123）
 target: spec_status.pyの完了済み要件とdraft要件併存時のフェーズ判定
 proposed_change_type: modify
-status: open
+status: accepted
 github_issue: https://github.com/BitzLabs/BitzSkills/issues/123
 ---
 - **目的**: `spec_status.py` の `determine_phase()` は、完了済みの要件・タスク群と新しい
@@ -58,3 +58,22 @@ github_issue: https://github.com/BitzLabs/BitzSkills/issues/123
 **推薦: accept**。再設計・次期版の要件追加という通常の運用で再現し、誤ったGateへ誘導するため、
 単なる表示上の問題ではない。ただし、修正方式は単一 `plan` への回帰だけで確定せず、
 複数変更系列をどう表現するかを Design Gate で裁定する。
+
+## 実施
+
+2026-07-30 に **accept**。裁定記録は
+`.spec/reports/decision-2026-07-30-order8-design-foundation.md`（裁定J）。
+**加算的修正を V4 設計前に実施する**。bitz-sdd 自身が requirements 74件 verified /
+tasks 50件 done の完了済みベースラインを持ち、V4 要件は draft として起票されるため、
+本件は V4 設計中にそのまま踏む。
+
+- **提案1**（`done` の不変条件）— 実装対象。「`done` は未完了成果物が存在しないときだけ返す」を
+  定義し、少なくとも `draft` 要件が1件以上あれば `done` を抑止する。
+- **提案2**（修正方式の選定）— **既存 `phase_code` を保ったままの加算（候補 (c) 相当）を採用**。
+  `phase_code` の既存値は削除・改名しない（`SDD-FR-136` の公開契約を維持）。
+  feature・世代単位の集計（候補 (b)）は V4 の Workspace 責任モデルと接する論点であり、
+  いま構造を増やさない。
+- **提案3**（`phase_code` と `next_actions` の整合条件）— 実装対象。
+- **提案4**（完了済みベースラインへ `draft` を追加する回帰テスト）— 実装対象。
+- 残余リスク: 公開契約（語彙）は維持するが、**同じワークスペースが返す `phase_code` の値は
+  変わる**。`phase_code` を条件分岐に使っているスキル・スクリプトの棚卸しを実装時に行う。

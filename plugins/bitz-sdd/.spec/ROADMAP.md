@@ -154,6 +154,11 @@ SDD-REV-006（2026-07-29、判定 **CONDITIONAL_PASS**）を起点とした設�
 順序6（GatePassage / ReviewFinding）と順序7（スクリプト呼び出し規約）は完了した。
 現在は、従来の順序8へ直行せず、**V4の目的とターゲット設計を確定する前段階**にいる。
 
+2026-07-30、フェーズ3 の順序8（設計基盤の欠陥裁定）を実施した。open spec-issue 4件
+（`SI-SDD-032` / `033` / `034` / `036`）を**すべて accept** し、V4設計との順序を確定した
+（P1 節と `.spec/reports/decision-2026-07-30-order8-design-foundation.md`）。
+次は順序9（設計toolchainの安全化）として `SI-SDD-036` を実装する。
+
 | GP | 条件 | 状態 |
 |---|---|---|
 | GP-001 | レビュー指摘の spec-issue 化を機械的に追跡する仕組み | satisfied（ReviewFinding を実装） |
@@ -230,19 +235,21 @@ bitz-sdd V4 Charterと正式設計を開始する。
 - V4 runtimeはV4形式だけを扱い、V3互換を`sdd-doctor` / `sdd-migrate`へ隔離する方針と、
   convert / rebuildの選択条件を裁定する。
 
-### P1 — 安全に設計を続けるための欠陥裁定
+### P1 — 安全に設計を続けるための欠陥裁定 — **裁定済み（2026-07-30）**
 
-次のopen spec-issueを人間がaccept/rejectし、V4設計との順序を確定する。
+4件すべてを **accept** した。裁定記録は
+`.spec/reports/decision-2026-07-30-order8-design-foundation.md`（裁定H〜K）。
 
-| issue | 論点 | 暫定位置づけ |
+| issue | 論点 | 裁定 |
 |---|---|---|
-| SI-SDD-032 | sdd_syncのmtime精度・mutation lock不参加 | データ損失防止。V4前または無破壊準備候補 |
-| SI-SDD-033 | 共有作業ツリーの汚染経路 | 文書規律と機械強制を分離して裁定 |
-| SI-SDD-034 | 完了済み系列とdraft系列併存時のフェーズ誤判定 | V4計画・状態表示の信頼性に関わる |
-| SI-SDD-036 | design/stories走査漏れとfrontmatter非依存採番 | 設計成果物のID一意性に関わるため最優先候補 |
+| SI-SDD-036 | design/stories走査漏れとfrontmatter非依存採番 | accept（提案1〜3）。**最優先で先にland**。提案4（ブランチ跨ぎ事前防止）は見送り |
+| SI-SDD-032 | sdd_syncのmtime精度・mutation lock不参加 | accept。V4設計前に解消。`st_mtime_ns`統一＋lock参加。内容ハッシュ比較へは進まない |
+| SI-SDD-034 | 完了済み系列とdraft系列併存時のフェーズ誤判定 | accept。V4設計前に加算的修正（`phase_code`の既存値は削除・改名しない） |
+| SI-SDD-033 | 共有作業ツリーの汚染経路 | accept（提案1〜3の文書のみ）。提案4の機械強制はbitz-flow移管後 |
 
-特にSI-SDD-036は、以後の設計成果物を安全に採番・検査する前提として、
-V4の本格設計より先に解消する案を第一候補とする。
+SI-SDD-036 は、以後の設計成果物を安全に採番・検査する前提として他3件より先に実装・land する。
+SI-SDD-032 / 034 はいずれも**V4設計中にそのまま踏む**欠陥であるため、3.x無破壊準備フェーズ
+（順序18〜）へ後回しにせず設計着手前に解消する。
 
 ### P2 — 現行設計と実体の同期
 
@@ -341,8 +348,11 @@ graph TD
 
 ### フェーズ3 — bitz-sdd 3.x V4設計Ready化（provisional）
 
-8. **設計基盤の欠陥裁定** — SI-SDD-036を最優先とし、SI-SDD-032 / 034の設計阻害範囲を確定
-9. **設計toolchainの安全化** — design scaffold、再帰inspect、ID一意性、status / review参照を修正
+8. **設計基盤の欠陥裁定** — **完了（2026-07-30）**。SI-SDD-032 / 033 / 034 / 036 を accept し、
+   4件とも V4設計前修正へ配置（裁定H〜K）
+9. **設計toolchainの安全化** — 再帰inspect、重複ID時の両パス表示、frontmatter基準の採番
+   （SI-SDD-036 = 最優先）、フェーズ判定の `done` 抑止（SI-SDD-034）、
+   sdd_sync の mtime 統一と lock 参加（SI-SDD-032）、共有作業ツリー規律（SI-SDD-033）
 10. **V4設計Ready canary** — Root / Component Workspace fixtureで設計成果物の作成・検査を実測
 
 ### フェーズ4 — bitz-flow V2（別workspaceで実施）
@@ -444,7 +454,9 @@ graph TD
 5. **移行境界** — V4 runtimeへ旧形式互換を持たせず、sdd-doctor / sdd-migrateだけが
    最新V3を読む方針の例外を認めるか。
 6. **sdd-usecase** — V4へ含めるか、V4後の独立featureとするか。
-7. **SI-SDD-032 / 034 / 036の順序** — V4前修正、3.x準備、V4同梱のどれに置くか。
+7. ~~**SI-SDD-032 / 034 / 036の順序**~~ — **裁定済み（2026-07-30、裁定H〜J）**。3件とも
+   accept・**V4前修正**へ置く。SI-SDD-036 を最優先で land し、SI-SDD-032 は `st_mtime_ns`
+   統一＋lock参加まで（内容ハッシュ比較は不採用）、SI-SDD-034 は `phase_code` を保つ加算的修正。
 8. **モジュール分割粒度** — コンテキスト、スキル、Python packageの境界を一致させるか。
 9. **V4の出荷単位** — 4.0.0切替を1PRにまとめるか、非公開の統合手段を設けるか。
 10. **用語集の所有権** — bitz-sdd / bitz-dddのどちらが正を持ち、どう同期・検証するか。

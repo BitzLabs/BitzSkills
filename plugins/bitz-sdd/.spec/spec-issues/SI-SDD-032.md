@@ -3,7 +3,7 @@ id: SI-SDD-032
 raised_by: SDD-REV-006（2026-07-29）SYN-004。SDD-REV-004 からの積み残し
 target: sdd_sync の mtime 精度非対称と mutation lock 不参加
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: SDD-REV-004（2026-07-22）が指摘しながら spec-issue 化されず、7日以上放置された
   2件を起票する（SI-SDD-031 が扱う追跡機構の欠落の、具体的な帰結）。
@@ -43,3 +43,19 @@ status: open
 **推薦: accept**。無音のデータ損失は検証で気づけない種類の欠陥であり、
 `.spec` と `docs` の双方向同期という中核機能に存在する。7日以上放置された経緯自体が
 SI-SDD-031 の必要性の実例でもある。
+
+## 実施
+
+2026-07-30 に **accept**。裁定記録は
+`.spec/reports/decision-2026-07-30-order8-design-foundation.md`（裁定I）。
+**V4 設計前に解消する**（3.x 無破壊準備フェーズへ後回しにしない）。V4 設計は `.spec` と
+`docs` の同期を多用し、無音のデータ損失は成果物の信頼性そのものを崩すためである。
+
+- **提案1**（mtime 精度の統一）— **比較側を `st_mtime_ns` へ揃える案を採用**。
+  選択肢にあった**内容ハッシュ比較への移行は採らない** — 公開契約 `SDD-FR-100` の破壊的変更に
+  なり、V4 Design Gate 必須の論点を順序8 へ持ち込むことになる。必要性が生じたら V4
+  ターゲット設計で再検討する。
+- **提案2**（mutation lock 参加）— 実装対象。`sdd_sync` / `migrate_docs` を参加させる。
+- **提案3**（同一秒内・並行実行の unit-test）— 実装対象。
+- 残余リスク: lock 参加により長時間の同期が他の変更 CLI をロック待ちさせうる。
+  粒度・タイムアウトは実装時に実測する。
