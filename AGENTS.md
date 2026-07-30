@@ -100,6 +100,8 @@ scripts/             # エージェント共用の運用スクリプト（bump /
 - **リリース前検証**: `python3 scripts/release_check.py`
   — version 整合・marketplace 整合・frontmatter 必須項目・プラグイン validate を一括チェック
 - **SDD ツールの実行**: `scripts/spec <tool> [args...]`（`tool` は `inspect`/`scaffold`/`status`/`update`）。
+<!-- spec-wrapper-tools: inspect, scaffold, status, update -->
+<!-- ↑ 機械検証用マーカー。上の散文リストと同一で、tests/test_cli_contract.py が scripts/spec の TOOLS との一致を検査する（CORE-CON-013）。ツールを増減するときは TOOLS・散文リスト・本マーカーを同時に更新する。 -->
   本リポは bitz-sdd を**インストール済みプラグインとして消費**（ドッグフーディング）するため
   ツール実体は `scripts/` ではなくプラグインキャッシュ側にある。ラッパー `scripts/spec` が
   Claude の `installed_plugins.json` と Codex CLI の有効な固定版を優先し、検証済みの
@@ -111,6 +113,28 @@ scripts/             # エージェント共用の運用スクリプト（bump /
   — このモノリポでは常に `--workspace . plugins/*` を使う（ルートと全プラグインを一括検証し
   クロスリファレンスを解決する）。ルート単体（末尾 `.`）は `tests/` が参照する他ワークスペースの
   `ENV-*` 等を解決できず幽霊参照で FAIL するため使わない（SI-CORE-023）
+
+### スクリプトの呼び出し規約（CORE-CON-012 / CORE-CON-013）
+
+スクリプトは置き場所によって呼び出し方が違う。**SKILL.md に実行例を書くときは、どこ基準の
+相対パスかを表記から判別できる形にする**（スキルはフォルダ単位で任意のプロジェクトへ配置され、
+読み手が基準を推測できないため）。許容するのは次の3形式だけで、裸の `scripts/<name>.py` は使わない。
+
+| 参照先 | 表記 | 例 |
+|---|---|---|
+| 自スキル同梱のスクリプト | `<このスキル>/scripts/<name>.py` | `python3 <このスキル>/scripts/spec_inspect.py` |
+| 他スキル同梱のスクリプト | `<NAME スキル>/scripts/<name>.py` | `python3 <sdd-docs スキル>/scripts/sdd_sync.py` |
+| 消費先リポジトリのスクリプト | `<リポジトリ>/scripts/<name>.py` | `python3 <リポジトリ>/scripts/bump_version.py` |
+
+他スキルのスクリプトを**自スキル相対に見える形で書かない**（`CORE-CON-004` スキルの自己完結）。
+`tests/test_skill_script_reference.py` が `plugins/*/skills/*/SKILL.md` を動的収集して検査するため、
+新規スキルも登録なしで対象に入る。
+
+ラッパー `scripts/spec` が公開するのは上のマーカーが示す4ツール（sdd-core 同梱）だけである。
+`sdd_sync` / `docs_inspect` / `sdd_report` / `spec_verify` は**直接実行**する
+（ラッパーの必須解決集合が sdd-core の4ツールであるため。`CORE-FR-011`）。
+`tests/` と `scripts/release_check.py` は作業ツリーを検査する側であり、リポジトリ相対で
+実体を直接指す — **ラッパー経由にしてはならない**（固定版ではなく作業ツリーを見る必要がある）。
 
 ## 新しいプラグインの追加手順
 

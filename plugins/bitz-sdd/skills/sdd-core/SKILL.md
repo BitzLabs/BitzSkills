@@ -2,7 +2,7 @@
 name: sdd-core
 description: BitzSDD — 仕様駆動開発（SDD）ワークフローを運用するメインスキル。要件定義・仕様作成・実装・検証・完了処理のすべてをこの規律に従って実行する。ユーザーが「仕様駆動」「SDD」「要件」「EARS」「spec」「タスク分解」「feature実装」に言及したとき、リポジトリに .spec/ や AGENTS.md が存在するとき、または新機能の設計・実装・検証・リリース処理を依頼されたときは、明示的な指示がなくても必ずこのスキルを使うこと。要件の変更・廃止・番号管理・テスト失敗時の対応・ドキュメント更新もすべて本スキルの管轄。
 metadata:
-  version: "3.4.0"
+  version: "3.4.1"
   author: br7.hide
   created: "2026-07-07"
   updated: "2026-07-30"
@@ -96,17 +96,17 @@ frontmatter 書式）に触れる変更はショートカット禁止 — 通常
 2. **名前空間の分離**: グローバルなID衝突を避けるため、プロジェクト固有のプレフィックスを使用します（例: `PLG-FR-001`）。
 3. **クロスリファレンス**: プラグイン間で要件を参照することが可能です。検証ツールに `--workspace <dir>` を渡すことで、グローバルな名前空間として参照が解決されます。
 4. **ルートとプラグインの混在 (Root Workspace)**: リポジトリのルートにも `.spec/` が存在する場合（全プラグイン共通のグローバル要件やアーキテクチャ定義など）、ルートディレクトリ自体も1つのワークスペースとして扱います。ツールには `--workspace . plugins/*` のように複数指定可能とし、プラグインからルートの要件（例: `CORE-NFR-001`）をクロスリファレンスできるようにします。
-5. **一括検証**: `python scripts/spec_inspect.py --workspace . plugins/*/` を実行することで、ルートと全プロジェクトを一括で検証できます。
+5. **一括検証**: `python3 <このスキル>/scripts/spec_inspect.py --workspace . plugins/*/` を実行することで、ルートと全プロジェクトを一括で検証できます。
 
 ## 検証ツール
 
 構造検証・孤児/幽霊検出・カバレッジ・変更影響分析は同梱スクリプトで実行します:
 
 ```bash
-python3 scripts/spec_inspect.py <repo-root>              # 全検証 → inspection-report.md
-python3 scripts/spec_inspect.py --workspace . plugins/*  # モノリポ一括検証（クロスリファレンス解決）
-python3 scripts/spec_inspect.py --workspace . plugins/* --check-only  # 判定のみ（レポート不変）
-python3 scripts/spec_inspect.py <repo-root> --impact FR-012   # FR-012変更の影響成果物を列挙
+python3 <このスキル>/scripts/spec_inspect.py <repo-root>              # 全検証 → inspection-report.md
+python3 <このスキル>/scripts/spec_inspect.py --workspace . plugins/*  # モノリポ一括検証（クロスリファレンス解決）
+python3 <このスキル>/scripts/spec_inspect.py --workspace . plugins/* --check-only  # 判定のみ（レポート不変）
+python3 <このスキル>/scripts/spec_inspect.py <repo-root> --impact FR-012   # FR-012変更の影響成果物を列挙
 ```
 
 並列PR・worktreeでは `--check-only` を使い、各ブランチが全ワークスペースの
@@ -119,9 +119,9 @@ python3 scripts/spec_inspect.py <repo-root> --impact FR-012   # FR-012変更の�
 （**`.spec/` へは一切書き込まない**）:
 
 ```bash
-python3 scripts/spec_status.py <repo-root>              # 人間向けテキストサマリ
-python3 scripts/spec_status.py <repo-root> --json       # エージェント向け JSON
-python3 scripts/spec_status.py --workspace . plugins/*  # 複数ワークスペースを一括照会
+python3 <このスキル>/scripts/spec_status.py <repo-root>              # 人間向けテキストサマリ
+python3 <このスキル>/scripts/spec_status.py <repo-root> --json       # エージェント向け JSON
+python3 <このスキル>/scripts/spec_status.py --workspace . plugins/*  # 複数ワークスペースを一括照会
 ```
 
 **`sdd_report.py` との使い分け**: `spec_status.py` は軽量な即時照会（標準出力のみ・ファイル生成なし）。
@@ -138,25 +138,25 @@ lifecycle.md の権限マトリクスをコードで強制する）:
 
 ```bash
 # 採番付き雛形生成（要件 / spec-issue / task / 設計ノート DSN / Gate 通過記録）
-python3 scripts/spec_scaffold.py <workspace> requirement --prefix CORE-FR --domain tooling --title "..."
-python3 scripts/spec_scaffold.py <workspace> spec-issue  --prefix SI-CORE --target "..."
-python3 scripts/spec_scaffold.py <workspace> task --implements CORE-FR-004 --prefix CORE-TSK --boundary "..."
-python3 scripts/spec_scaffold.py <workspace> design --prefix DSN --title "..." [--status draft] [--implements CORE-FR-006]
-python3 scripts/spec_scaffold.py <workspace> gate --prefix CORE-GATE --gate promotion \
+python3 <このスキル>/scripts/spec_scaffold.py <workspace> requirement --prefix CORE-FR --domain tooling --title "..."
+python3 <このスキル>/scripts/spec_scaffold.py <workspace> spec-issue  --prefix SI-CORE --target "..."
+python3 <このスキル>/scripts/spec_scaffold.py <workspace> task --implements CORE-FR-004 --prefix CORE-TSK --boundary "..."
+python3 <このスキル>/scripts/spec_scaffold.py <workspace> design --prefix DSN --title "..." [--status draft] [--implements CORE-FR-006]
+python3 <このスキル>/scripts/spec_scaffold.py <workspace> gate --prefix CORE-GATE --gate promotion \
   --arbiter <裁定者> --scope "CORE-FR-004,CORE-FR-005" --decision-ref <裁定記録の所在>
 
 # 生成時に統制語彙を検証（verification_method / domain / status が語彙外なら非ゼロで失敗し雛形を
 # 生成しない。語彙は spec_inspect と単一の正を共有。domains.md 不在時 domain 検証はスキップ。CORE-FR-010）
 
 # status 遷移（権限マトリクス強制）
-python3 scripts/spec_update.py <workspace> CORE-FR-004 --to implementing            # エージェント許容遷移
-python3 scripts/spec_update.py <workspace> CORE-FR-004 --to approved \
+python3 <このスキル>/scripts/spec_update.py <workspace> CORE-FR-004 --to implementing            # エージェント許容遷移
+python3 <このスキル>/scripts/spec_update.py <workspace> CORE-FR-004 --to approved \
   --interactive-decision --actor <decision-operator>  # 対話確認経路（本人性は未検証）
-python3 scripts/spec_update.py <workspace> CORE-FR-004 CORE-FR-005 --to promoted \
+python3 <このスキル>/scripts/spec_update.py <workspace> CORE-FR-004 CORE-FR-005 --to promoted \
   --gate-passage CORE-GATE-001 \
   --on-behalf-of <human> --decision-ref <裁定の所在> --actor <agent>  # 代行可視化経路（バッチ可）
-python3 scripts/spec_update.py <workspace> --recover <event-id>                     # 未完了transaction復旧
-python3 scripts/spec_update.py <workspace> --recover-lock                           # 未開始lock復旧
+python3 <このスキル>/scripts/spec_update.py <workspace> --recover <event-id>                     # 未完了transaction復旧
+python3 <このスキル>/scripts/spec_update.py <workspace> --recover-lock                           # 未開始lock復旧
 ```
 
 **権限の分離**: `draft→approved` / `open→accepted` / `verified→promoted` / `任意→deprecated` は

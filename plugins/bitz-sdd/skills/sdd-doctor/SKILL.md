@@ -2,10 +2,10 @@
 name: sdd-doctor
 description: bitz-sdd を導入したプロジェクト環境の健全性を読み取り専用で診断する。依存プラグイン bitz-flow>=0.2 の有効性・semver 制約充足、scripts/spec ラッパーによる installed_plugins.json からのバージョン非依存解決（SI-CORE-022 方式）、.spec/ ワークスペースがある場合の spec_status.py 実行可否をチェックし、問題があれば導入手順つきの修正案を報告する。「bitz-sdd の診断」「sdd-doctor」「環境診断」「SDD 環境の健全性チェック」「依存プラグインが揃っているか確認して」と言われたとき、または bitz-sdd 導入直後や依存関係を変更した後に使用する。
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
   author: br7.hide
   created: "2026-07-19"
-  updated: "2026-07-19"
+  updated: "2026-07-30"
 ---
 
 # sdd-doctor
@@ -39,7 +39,7 @@ bitz-sdd は「単体インストール時に依存プラグイン（bitz-flow�
 
 - 欠如または制約不満足の場合は **FAIL** とし、導入手順つきの修正案を示す
   （例: `/plugin install bitz-flow@bitzskills` で導入、または
-  `python3 scripts/bump_version.py bitz-flow minor` 等でのバージョン更新を促す）。
+  `python3 <リポジトリ>/scripts/bump_version.py bitz-flow minor` 等でのバージョン更新を促す）。
 - 確認手段が利用できず有効性を確定できない場合は **WARN** とし、
   「確認不能である」旨と、確認可能な環境（本体環境）での再確認を促す文言を明記する。
 

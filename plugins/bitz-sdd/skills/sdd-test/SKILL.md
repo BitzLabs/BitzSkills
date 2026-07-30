@@ -2,10 +2,10 @@
 name: sdd-test
 description: BitzSDD のテスト・検証工程を行うスキル。EARS 記法の要件からテスト仕様を導出（節種別ごとの導出パターン、verification_method との対応）し、テストを実装・実行して、検証結果とトレース情報を .spec/specs/<feature>/ に記録する。ユーザーが「テストを書いて」「テスト仕様」「EARS からテスト」「検証して」「verified にして」と言及したとき、または sdd-implement の実装完了後に検証フェーズへ移行するときに使用する。
 metadata:
-  version: "0.2.0"
+  version: "0.2.1"
   author: br7.hide
   created: "2026-07-11"
-  updated: "2026-07-29"
+  updated: "2026-07-30"
 ---
 
 # SDD Test — EARS 要件からのテスト導出と検証
@@ -40,7 +40,7 @@ green 判定の正は **`.spec/verification/` の証跡**であり、test-spec �
 （SDD-FR-151）。検証コマンドはラッパー経由で実行し、実出力から証跡を生成する:
 
 ```bash
-python3 scripts/spec_verify.py record <workspace> \
+python3 <このスキル>/scripts/spec_verify.py record <workspace> \
   --command-id pytest --implements XX-FR-001 --implements XX-FR-002 \
   -- .venv/bin/pytest -q
 ```
