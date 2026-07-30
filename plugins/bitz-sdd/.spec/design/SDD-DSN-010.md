@@ -1,8 +1,8 @@
 ---
 id: SDD-DSN-010
 title: "GatePassage — Gate 通過の成果物化と未検分な代行遷移の滞留可視化"
-status: draft
-version: 1.0
+status: active
+version: 1.1
 updated: 2026-07-30
 owner: hide
 implements: 
@@ -125,4 +125,14 @@ SDD-DSN-011（ReviewFinding）と並行実装可能。
   | D3 | promoted 遷移での GatePassage | 必須 / 任意（警告のみ） | **必須**（担保が1点しかないため） |
   | D4 | 滞留の閾値宣言 | 宣言する（機械集計とセット） / 件数の可視化のみ | **可視化のみ先行**（SI-SDD-029 の轍を踏まない） |
 
-- **Design Gate 裁定**: 未実施（本ノートは draft）。
+- **Design Gate 裁定**: **2026-07-30・対話裁定で D1〜D4 すべて裁定済み**。裁定者 hide、
+  裁定記録は `.spec/reports/decision-2026-07-30-design-gate-order6.md`。
+
+  | # | 裁定 | 推奨との異同 |
+  |---|---|---|
+  | D1 | `.spec/gates/` を新設する | 推奨どおり |
+  | D2 | 検分の単位は `decision_ref` | 推奨どおり（SI-SDD-028 提案1 の定義を上書き） |
+  | D3 | promoted 遷移で `--gate-passage` を必須にする | 推奨どおり |
+  | D4 | 閾値は宣言せず可視化のみ先行する | 推奨どおり |
+
+  本ノートは裁定を受けて `draft → active`。実装は要件化（Plan フェーズ）から開始する。

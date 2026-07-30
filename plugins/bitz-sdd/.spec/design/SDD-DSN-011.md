@@ -1,8 +1,8 @@
 ---
 id: SDD-DSN-011
 title: "ReviewFinding の独立と tracked_by 必須化・未消化指摘の持ち越し"
-status: draft
-version: 1.0
+status: active
+version: 1.1
 updated: 2026-07-30
 owner: hide
 implements: 
@@ -134,4 +134,16 @@ ROADMAP フェーズ3 順序6。SDD-DSN-010（GatePassage）と並行実装可�
   | D7 | `gate_preconditions.basis` の必須化 | 必須化する（SI-SDD-035 と合流） / 本ノートでは扱わない | **必須化**（ただし SI-SDD-035 の裁定に従う） |
   | D8 | 既存レビューの扱い | SDD-REV-002〜005 を検査対象外 / 遡及して schema を揃える | **対象外**（確認観点どおり） |
 
-- **Design Gate 裁定**: 未実施（本ノートは draft）。
+- **Design Gate 裁定**: **2026-07-30・対話裁定で D5〜D8 すべて裁定済み**。裁定者 hide、
+  裁定記録は `.spec/reports/decision-2026-07-30-design-gate-order6.md`。
+
+  | # | 裁定 | 推奨との異同 |
+  |---|---|---|
+  | D5 | findings は JSON 内の配列のまま | 推奨どおり |
+  | D6 | 検査は `spec_inspect` に置く | 推奨どおり |
+  | D7 | `gate_preconditions.basis` を必須化する | 推奨どおり。**SI-SDD-035 提案3 の論点はここで決着** |
+  | D8 | SDD-REV-002〜005 は検査対象外 | 推奨どおり |
+
+  本ノートは裁定を受けて `draft → active`。実装は要件化（Plan フェーズ）から開始する。
+  実装順序1（`SDD-REV-006.json` のアーカイブ）は要件化を待たずに実施してよい
+  （消えかけているデータの保全であり、schema 変更を伴わないため）。
