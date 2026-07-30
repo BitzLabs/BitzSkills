@@ -1849,3 +1849,92 @@ def test_SDD_FR_161_verified_basis_requires_evidence(tmp_path: Path):
 
     assert res.returncode != 0
     assert "実測の所在（evidence）が必要" in report_of(tmp_path)
+
+
+# --- 設計成果物の走査範囲と ID 一意性（SDD-FR-162） ---------------------------
+
+# fixture 用の設計 ID は連結で組み立てる（このリポジトリ自身の走査が
+# 本ファイルを幽霊参照として誤検知しないように。ファイル冒頭の流儀に合わせる）
+DSN = "DSN-"
+
+
+def write_design(root: Path, relpath: str, did: str, status: str = "draft"):
+    path = root / ".spec" / "design" / relpath
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        f"---\nid: {did}\ntitle: \"設計\"\nstatus: {status}\n---\n\n# {did} 設計\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def test_SDD_FR_162_design_subdirectory_artifact_is_scanned(tmp_path: Path):
+    """design のサブディレクトリ（stories/ 等）の成果物が Traceability Matrix に現れる。
+
+    非再帰 glob では `design/stories/` の成果物が機械検証の対象外だった（SI-SDD-036）。
+    """
+    make_spec(tmp_path)
+    did = DSN + "006"
+    write_design(tmp_path, "stories/story-p1-sample.md", did)
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+    assert did in report_of(tmp_path), \
+        "design のサブディレクトリの成果物が Matrix に現れなければならない"
+
+
+def test_SDD_FR_162_duplicate_id_across_subdirectory_fails(tmp_path: Path):
+    """design 直下とサブディレクトリで ID が重複したら FAIL する。"""
+    make_spec(tmp_path)
+    did = DSN + "006"
+    write_design(tmp_path, f"{did}.md", did)
+    write_design(tmp_path, "stories/story-p1-sample.md", did)
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0, "重複 ID は無検出のままにしてはならない"
+    assert "IDが重複している" in report_of(tmp_path)
+
+
+def test_SDD_FR_162_duplicate_id_report_shows_both_paths(tmp_path: Path):
+    """重複 ID の報告に衝突した両方のパスが含まれる（どちらを改番するか判断できる）。"""
+    make_spec(tmp_path)
+    did = DSN + "006"
+    write_design(tmp_path, f"{did}.md", did)
+    write_design(tmp_path, "stories/story-p1-sample.md", did)
+
+    run_inspect(tmp_path)
+    report = report_of(tmp_path)
+
+    duplicate_lines = [ln for ln in report.splitlines() if "IDが重複している" in ln]
+    assert duplicate_lines, report
+    line = duplicate_lines[0]
+    assert f"design/{did}.md" in line, line
+    assert "design/stories/story-p1-sample.md" in line, line
+
+
+def test_SDD_FR_162_underscore_prefixed_design_file_is_ignored(tmp_path: Path):
+    """`_` 始まりのファイルは走査範囲の拡大後も検査対象外（作業メモ用の逃げ道）。"""
+    make_spec(tmp_path)
+    path = tmp_path / ".spec" / "design" / "stories" / "_wip.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("本文だけで frontmatter を持たない作業メモ\n", encoding="utf-8")
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+    assert "_wip.md" not in report_of(tmp_path)
+
+
+def test_SDD_FR_162_requirements_scan_stays_non_recursive(tmp_path: Path):
+    """requirements は再帰しない（design 以外の走査範囲は変えない）。"""
+    make_spec(tmp_path)
+    nested = tmp_path / ".spec" / "requirements" / "archive"
+    nested.mkdir(parents=True)
+    (nested / "old.md").write_text("frontmatter を持たない旧稿\n", encoding="utf-8")
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+    assert "archive/old.md" not in report_of(tmp_path)

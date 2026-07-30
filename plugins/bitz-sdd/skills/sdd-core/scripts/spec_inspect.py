@@ -59,6 +59,12 @@ REVIEW_VIEW_JSON = "review-synthesis.json"
 # 「id が無い」FAIL を起こさない**（本リポジトリ自身がその状態にある）。ここでは旧名も
 # 明示的に除外し、名称の移行期でもレジストリに入らないようにする
 REVIEW_VIEW_MD = "review-synthesis.md"
+# 成果物レジストリの走査対象（SDD-FR-162）。design だけはサブディレクトリを持つため再帰する。
+# 走査範囲は spec_scaffold の採番と共有する（scaffold 側で二重定義しない。CORE-FR-010 と同じ方針）
+ARTIFACT_DIRS = ("requirements", "discovery", "design", "reviews")
+RECURSIVE_ARTIFACT_DIRS = frozenset({"design"})
+# 成果物 ID を持たない管理ファイル（レジストリにも構造検査にも入れない）
+NON_ARTIFACT_NAMES = frozenset({"domains.md", REVIEW_VIEW_MD})
 FINDING_REQUIRED_KEYS = (
     "id", "priority", "severity", "source", "title", "recommendation", "tracked_by", "status",
 )
@@ -366,38 +372,49 @@ def check_reviews(root: Path, known_ids: set) -> list:
     return problems
 
 
+def iter_artifact_files(root: Path, dirname: str):
+    """`.spec/<dirname>` 配下の成果物 md を返す（SDD-FR-162）。
+
+    `design` だけは `stories/` のようなサブディレクトリを持つ（sdd-core のディレクトリ構成）
+    ため再帰する。非再帰 glob ではそこにある成果物が重複 ID 検査と Traceability Matrix の
+    両方から見えなかった（SI-SDD-036）。統合 preflight（SDD-FR-144）は元から `rglob` で
+    あり、レジストリ走査だけが非再帰であった不整合を解消する。
+    `_` 始まりのファイルは走査範囲の拡大後も従来どおり対象外（作業メモ用の逃げ道）。
+    """
+    d = root / ".spec" / dirname
+    if not d.exists():
+        return
+    for f in sorted(d.glob("**/*.md" if dirname in RECURSIVE_ARTIFACT_DIRS else "*.md")):
+        # review-synthesis.md は最新へのビューであり成果物 ID を持たない（SDD-FR-160）。
+        # 正は番号付きの <REV-ID>.md 側なので、レジストリにも構造検査にも入れない
+        if f.name.startswith("_") or f.name in NON_ARTIFACT_NAMES:
+            continue
+        yield f
+
+
 def load_requirements(root: Path):
     reqs = {}
     problems = []
-    dirs_to_scan = [
-        root / ".spec" / "requirements",
-        root / ".spec" / "discovery",
-        root / ".spec" / "design",
-        root / ".spec" / "design" / "infra",
-        root / ".spec" / "reviews"
-    ]
-    for d in dirs_to_scan:
-        if not d.exists():
-            continue
-        for f in sorted(d.glob("*.md")):
-            # review-synthesis.md は最新へのビューであり成果物 ID を持たない（SDD-FR-160）。
-            # 正は番号付きの <REV-ID>.md 側なので、レジストリにも構造検査にも入れない
-            if f.name.startswith("_") or f.name in ("domains.md", REVIEW_VIEW_MD):
-                continue
+    for dirname in ARTIFACT_DIRS:
+        for f in iter_artifact_files(root, dirname):
             text = f.read_text(encoding="utf-8")
             fm = parse_frontmatter(text)
             rid = fm.get("id", "")
             if not rid:
                 problems.append(f"[構造] {f.relative_to(root)}: frontmatter に id がない")
                 continue
-            if d.name == "requirements" and f.stem != rid:
+            if dirname == "requirements" and f.stem != rid:
                 problems.append(f"[構造] {f.relative_to(root)}: ファイル名と id ({rid}) が不一致")
             prefix_part = rid.split("-")
             core_prefix = prefix_part[1] if len(prefix_part) > 2 else prefix_part[0]
             if core_prefix not in PREFIXES:
                 problems.append(f"[構造] {rid}: プレフィックスが正規外")
             if rid in reqs:
-                problems.append(f"[重複] {rid}: IDが重複している")
+                # どのファイルが衝突したか分からないと改番できないため両方のパスを示す（SDD-FR-162）
+                problems.append(
+                    f"[重複] {rid}: IDが重複している "
+                    f"({reqs[rid]['path'].relative_to(root)} / {f.relative_to(root)})"
+                )
             reqs[rid] = {"fm": fm, "text": text, "path": f}
     return reqs, problems
 

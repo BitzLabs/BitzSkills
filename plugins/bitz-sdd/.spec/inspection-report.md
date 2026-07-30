@@ -1,12 +1,13 @@
-# inspection-report.md (2026-07-29)
+# inspection-report.md (2026-07-30)
 
-成果物数: 77 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0
+成果物数: 98 / 問題: 0 / 幽霊参照: 2 / 実装待ち: 0 / 孤児要件: 0 / 検証証跡: 1
 
 ## 問題一覧
 - なし ✅
 
 ## 幽霊参照（存在しないIDへの参照）
-- なし ✅
+- DSN-007 ← .spec/tasks/SDD-TSK-051.md
+- DSN-009 ← .spec/tasks/SDD-TSK-051.md
 
 ## 監査 WARN（代行遷移の裁定参照など — FAIL にしない）
 - なし ✅
@@ -18,7 +19,6 @@
 - なし ✅
 
 ## テスト/実装からの参照がない要件（approved以降）
-- SDD-FR-001
 - SDD-FR-010
 - SDD-FR-041
 - SDD-FR-100
@@ -66,6 +66,51 @@
 - SDD-FR-133 ← BitzSkills/tests/test_spec_inspect.py
 - SDD-FR-134 ← BitzSkills/tests/test_spec_inspect.py
 - SDD-FR-140 ← BitzSkills/scripts/release_check.py, BitzSkills/tests/test_release_check.py
+- SDD-FR-149 ← BitzSkills/tests/test_sdd_sync.py
+
+## 検証証跡（.spec/verification/ — 実出力に基づく機械可読証跡）
+※ 実行時間は observed（非正規）であり一致判定に使わない。判定は exit_code と件数が正
+- .spec/verification/pytest--d5a446c.json — commit d5a446c / exit_code 0 / 対象 SDD-FR-151, SDD-FR-152, SDD-FR-153, SDD-FR-154
+
+## 検証証跡の WARN（古い commit・証跡なしの verified 要件 — FAIL にしない）
+- [verify] .spec/verification/pytest--d5a446c.json: 記録時の commit(d5a446c) 以降にソースが変更されています（再記録が必要な可能性）
+- [verify] SDD-FR-001: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-010: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-041: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-100: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-124: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-125: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-126: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-127: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-128: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-129: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-131: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-132: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-133: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-134: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-135: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-136: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-137: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-138: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-139: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-140: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-141: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-142: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-143: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-144: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-145: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-146: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-147: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-148: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-149: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-150: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-155: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-156: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-157: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-158: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-159: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-160: verified/promoted だが検証証跡がありません
+- [verify] SDD-FR-161: verified/promoted だが検証証跡がありません
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
 ※ 乖離は候補提示のみ。stale 付与は references/lifecycle.md の再伝播プロトコル（判定パス→人間確認）を経ること
@@ -92,7 +137,13 @@
 | SDD-DSN-003 | active |  |  | 0 | 0 |
 | SDD-DSN-004 | active |  |  | 0 | 3 |
 | SDD-DSN-005 | active |  |  | 0 | 1 |
-| SDD-FR-001 | 検証済み（verified） | verification | example-test | 1 | 2 |
+| SDD-DSN-006 | 起草中（draft） |  |  | 0 | 0 |
+| SDD-DSN-007 | 起草中（draft） |  |  | 0 | 0 |
+| SDD-DSN-008 | 起草中（draft） |  |  | 0 | 0 |
+| SDD-DSN-009 | 起草中（draft） |  |  | 0 | 1 |
+| SDD-DSN-010 | active |  |  | 0 | 1 |
+| SDD-DSN-011 | active |  |  | 0 | 0 |
+| SDD-FR-001 | 検証済み（verified） | verification | example-test | 1 | 3 |
 | SDD-FR-010 | 検証済み（verified） | verification | example-test | 1 | 1 |
 | SDD-FR-011 | 検証済み（verified） | workflow | manual-check | 1 | 1 |
 | SDD-FR-020 | 廃止（deprecated） | upstream | example-test | 1 | 1 |
@@ -138,7 +189,7 @@
 | SDD-FR-137 | 検証済み（verified） | workflow | unit-test | 1 | 3 |
 | SDD-FR-138 | 検証済み（verified） | workflow | unit-test | 1 | 3 |
 | SDD-FR-139 | 検証済み（verified） | workflow | unit-test | 1 | 2 |
-| SDD-FR-140 | 検証済み（verified） | workflow | unit-test | 1 | 1 |
+| SDD-FR-140 | 検証済み（verified） | workflow | unit-test | 1 | 2 |
 | SDD-FR-141 | 検証済み（verified） | reporting | example-test | 3 | 4 |
 | SDD-FR-142 | 検証済み（verified） | reporting | example-test | 3 | 4 |
 | SDD-FR-143 | 検証済み（verified） | workflow | unit-test | 3 | 9 |
@@ -147,9 +198,24 @@
 | SDD-FR-146 | 検証済み（verified） | verification | unit-test | 1 | 3 |
 | SDD-FR-147 | 検証済み（verified） | verification | unit-test | 1 | 3 |
 | SDD-FR-148 | 検証済み（verified） | verification | unit-test | 1 | 3 |
+| SDD-FR-149 | 検証済み（verified） | sync | unit-test | 1 | 2 |
+| SDD-FR-150 | 検証済み（verified） | sync | unit-test | 1 | 3 |
+| SDD-FR-151 | 検証済み（verified） | verification | unit-test | 1 | 5 |
+| SDD-FR-152 | 検証済み（verified） | verification | unit-test | 1 | 3 |
+| SDD-FR-153 | 検証済み（verified） | verification | unit-test | 1 | 3 |
+| SDD-FR-154 | 検証済み（verified） | reporting | unit-test | 1 | 3 |
+| SDD-FR-155 | 検証済み（verified） | workflow | unit-test | 1 | 3 |
+| SDD-FR-156 | 検証済み（verified） | workflow | unit-test | 1 | 2 |
+| SDD-FR-157 | 検証済み（verified） | workflow | unit-test | 1 | 2 |
+| SDD-FR-158 | 検証済み（verified） | verification | unit-test | 1 | 2 |
+| SDD-FR-159 | 検証済み（verified） | verification | unit-test | 1 | 2 |
+| SDD-FR-160 | 検証済み（verified） | verification | unit-test | 1 | 3 |
+| SDD-FR-161 | 検証済み（verified） | verification | unit-test | 1 | 2 |
+| SDD-FR-162 | 承認済み（approved） | verification | unit-test | 1 | 3 |
 | SDD-REV-002 | active |  |  | 0 | 1 |
 | SDD-REV-003 | active |  |  | 0 | 0 |
 | SDD-REV-004 | active |  |  | 0 | 0 |
 | SDD-REV-005 | active |  |  | 0 | 1 |
+| SDD-REV-006 | active |  |  | 0 | 0 |
 
-**判定: PASS ✅**
+**判定: FAIL ❌（上記を解消するまで verified に進めない）**

@@ -265,6 +265,68 @@ def test_design_number_skips_suffixed_existing_file(tmp_path):
     assert not (design_dir / "DSN-001.md").exists(), "既存の DSN-001 と ID が重複してはならない"
 
 
+# --- SDD-FR-162: 採番根拠は frontmatter の id、走査範囲は inspect と一致 -----
+
+
+def test_SDD_FR_162_number_counts_id_not_in_filename(tmp_path):
+    """ID をファイル名に持たない設計成果物（domain-model.md 等）も採番が数える。
+
+    frontmatter の `id:` を根拠にしないと、`domain-model.md`（id: DSN-009）が
+    見えず既存 ID を再度払い出す（SI-SDD-036 / SI-SDD-006 提案2 の回帰）。
+    """
+    design_dir = tmp_path / ".spec" / "design"
+    design_dir.mkdir(parents=True)
+    (design_dir / "domain-model.md").write_text(
+        f"---\nid: DSN-{9:03d}\ntitle: \"ドメインモデル\"\nstatus: active\n---\n",
+        encoding="utf-8")
+    res = run(tmp_path, "design", "--prefix", "DSN", "--title", "新規設計")
+    assert res.returncode == 0, res.stderr
+    assert (design_dir / f"DSN-{10:03d}.md").exists(), \
+        "ファイル名に ID を持たない成果物を採番が見落としてはならない"
+
+
+def test_SDD_FR_162_number_counts_subdirectory_artifacts(tmp_path):
+    """design のサブディレクトリ（stories/ 等）にある成果物も採番が数える。
+
+    走査範囲は spec_inspect のレジストリ走査と一致させる（SDD-FR-162）。
+    """
+    stories = tmp_path / ".spec" / "design" / "stories"
+    stories.mkdir(parents=True)
+    (stories / "story-p1-sample.md").write_text(
+        f"---\nid: DSN-{7:03d}\ntitle: \"ストーリー\"\nstatus: draft\n---\n",
+        encoding="utf-8")
+    res = run(tmp_path, "design", "--prefix", "DSN", "--title", "新規設計")
+    assert res.returncode == 0, res.stderr
+    assert (tmp_path / ".spec" / "design" / f"DSN-{8:03d}.md").exists(), \
+        "サブディレクトリの成果物を採番が見落としてはならない"
+
+
+def test_SDD_FR_162_underscore_prefixed_file_is_ignored_by_numbering(tmp_path):
+    """`_` 始まりのファイルは走査範囲の拡大後も採番の対象外である。"""
+    design_dir = tmp_path / ".spec" / "design"
+    design_dir.mkdir(parents=True)
+    (design_dir / "_scratch.md").write_text(
+        f"---\nid: DSN-{50:03d}\nstatus: draft\n---\n", encoding="utf-8")
+    res = run(tmp_path, "design", "--prefix", "DSN", "--title", "新規設計")
+    assert res.returncode == 0, res.stderr
+    assert (design_dir / f"DSN-{1:03d}.md").exists(), \
+        "`_` 始まりの作業メモを採番に含めてはならない"
+
+
+def test_SDD_FR_162_requirements_numbering_stays_non_recursive(tmp_path):
+    """requirements は再帰しない（design 以外の走査範囲は変えない）。"""
+    req_dir = tmp_path / ".spec" / "requirements"
+    make_req(tmp_path, 1)
+    nested = req_dir / "archive"
+    nested.mkdir(parents=True)
+    (nested / "old.md").write_text(
+        f"---\nid: CORE-{FR}{80:03d}\nstatus: deprecated\n---\n", encoding="utf-8")
+    res = run(tmp_path, "requirement", "--prefix", "CORE-" + FR[:-1])
+    assert res.returncode == 0, res.stderr
+    assert (req_dir / f"CORE-{FR}{2:03d}.md").exists(), \
+        "requirements の採番はサブディレクトリを走査しない"
+
+
 # --- SDD-FR-144: 排他的・回復可能な公開 -------------------------------------
 
 

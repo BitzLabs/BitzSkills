@@ -2,7 +2,7 @@
 name: sdd-core
 description: BitzSDD — 仕様駆動開発（SDD）ワークフローを運用するメインスキル。要件定義・仕様作成・実装・検証・完了処理のすべてをこの規律に従って実行する。ユーザーが「仕様駆動」「SDD」「要件」「EARS」「spec」「タスク分解」「feature実装」に言及したとき、リポジトリに .spec/ や AGENTS.md が存在するとき、または新機能の設計・実装・検証・リリース処理を依頼されたときは、明示的な指示がなくても必ずこのスキルを使うこと。要件の変更・廃止・番号管理・テスト失敗時の対応・ドキュメント更新もすべて本スキルの管轄。
 metadata:
-  version: "3.4.1"
+  version: "3.5.0"
   author: br7.hide
   created: "2026-07-07"
   updated: "2026-07-30"
@@ -29,7 +29,7 @@ docs/                        永続・人間ナラティブ（.spec から自動
   PROJECT.md / ROADMAP.md
   discovery/                 上流探索成果物 (DSC-*.md)
   requirements/              1要件1ファイル。FR-*.md NFR-*.md CON-*.md
-  design/                    設計成果物 (DSN-*.md, INF-*.md)
+  design/                    設計成果物 (DSN-*.md, INF-*.md)。サブディレクトリまで再帰検査
     stories/                 ドメインストーリー個別ファイル
   reviews/                   多観点レビュー結果 (REV-*.md など)
   spec-issues/SI-*.md        エージェント発の仕様変更提案
@@ -147,6 +147,10 @@ python3 <このスキル>/scripts/spec_scaffold.py <workspace> gate --prefix COR
 
 # 生成時に統制語彙を検証（verification_method / domain / status が語彙外なら非ゼロで失敗し雛形を
 # 生成しない。語彙は spec_inspect と単一の正を共有。domains.md 不在時 domain 検証はスキップ。CORE-FR-010）
+
+# 採番の根拠は frontmatter の `id:`（ファイル名ではない）。`domain-model.md` のように ID を
+# ファイル名に持たない成果物も数える。design 配下は stories/ 等のサブディレクトリまで再帰し、
+# 走査範囲は spec_inspect のレジストリ走査と一致する（SDD-FR-162）
 
 # status 遷移（権限マトリクス強制）
 python3 <このスキル>/scripts/spec_update.py <workspace> CORE-FR-004 --to implementing            # エージェント許容遷移
