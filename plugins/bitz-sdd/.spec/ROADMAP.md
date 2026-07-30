@@ -447,6 +447,13 @@ graph TD
 以下は本ROADMAP更新では決めない。現状分析と選択肢比較を添えてDesign Gateで裁定する。
 
 1. **配布単位** — スキル単体の自己完結性を維持しながら、共有Pythonコードをどこに置くか。
+   **本論点は2026-07-30 に実務上のブロッカーになった** — `SI-SDD-032` 提案2（`sdd_sync` /
+   `migrate_docs` の workspace mutation lock 参加）は、lock 機構が sdd-core の
+   `spec_transaction.py` にあり `CORE-CON-004`（スキル自己完結）により sdd-docs から
+   参照できないため実装できず、V4 へ送った（`SDD-FR-164` に設計判断として明記）。
+   既存の前例は `spec_labels.py` の「SSOT＋複製＋`release_check` による一致検証」。
+   V4ではこの前例を一般解として採るか、別の配置（共有パッケージ・プラグイン内共有層）を
+   採るかを裁定し、**lock 参加を後続要件として実装する**。
 2. **検証境界** — semanticな判定をsdd-testへ移した後、sdd-coreのcanonical inspectと
    どの公開契約で接続するか。
 3. **共有語彙の正** — frontmatter parser、status、domain、schema等をどこが所有するか。

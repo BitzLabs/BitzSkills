@@ -560,3 +560,109 @@ def test_SDD_FR_149_pull_all_discovery_then_docs_inspect_strict_passes(tmp_path:
         text=True,
     )
     assert inspected.returncode == 0, inspected.stdout + inspected.stderr
+
+
+# --- mtime 精度の対称性（SDD-FR-164） -----------------------------------------
+
+
+def _float_seconds_collide(a_ns: int, b_ns: int) -> bool:
+    """2つの ns 値が float 秒へ落とすと同値になるか（旧比較が判別できない領域か）。"""
+    return (a_ns / 1_000_000_000) == (b_ns / 1_000_000_000)
+
+
+def _set_mtime_ns(path: Path, mtime_ns: int) -> int:
+    os.utime(path, ns=(mtime_ns, mtime_ns))
+    return path.stat().st_mtime_ns
+
+
+def test_SDD_FR_164_pull_detects_sub_float_resolution_newer_spec(tmp_path: Path):
+    """float 秒では判別できない差でも、spec が新しければ pull が上書きする。
+
+    書き込み側は st_mtime_ns、比較側は st_mtime（float 秒）という非対称があると、
+    ns 差が float の丸めで消えて pull が無音でスキップしうる（SI-SDD-032）。
+    """
+    spec = tmp_path / ".spec" / "discovery" / "vision.md"
+    docs = tmp_path / "docs" / "00_はじめに" / "ミッション・ビジョン.md"
+    spec.parent.mkdir(parents=True)
+    docs.parent.mkdir(parents=True)
+    spec.write_text(spec_document("# 新しい本文\n"), encoding="utf-8")
+    docs.write_text(docs_document("# 古い本文\n", ident="DOC-context-mission"), encoding="utf-8")
+
+    base_ns = 1_700_000_000_000_000_000
+    docs_ns = _set_mtime_ns(docs, base_ns)
+    spec_ns = _set_mtime_ns(spec, base_ns + 1)
+    if spec_ns == docs_ns:
+        pytest.skip("このファイルシステムは ns 粒度の mtime を保持しない")
+    assert _float_seconds_collide(spec_ns, docs_ns), (
+        "前提: float 秒へ落とすと同値になる差であること（旧比較が判別できない領域）"
+    )
+
+    res = run_sync(tmp_path, "pull")
+
+    assert res.returncode == 0, res.stderr
+    _, body = split_document(docs.read_text(encoding="utf-8"))
+    assert body == "# 新しい本文\n", "ns 差を判別できず無音でスキップしてはならない"
+
+
+def test_SDD_FR_164_push_detects_sub_float_resolution_newer_docs(tmp_path: Path):
+    """同じ非対称は push 側にも効く — docs が ns 単位で新しければ逆反映する。"""
+    spec = tmp_path / ".spec" / "discovery" / "vision.md"
+    docs = tmp_path / "docs" / "00_はじめに" / "ミッション・ビジョン.md"
+    spec.parent.mkdir(parents=True)
+    docs.parent.mkdir(parents=True)
+    spec.write_text(spec_document("# 古い本文\n"), encoding="utf-8")
+    docs.write_text(docs_document("# 手で直した本文\n", ident="DOC-context-mission"),
+                    encoding="utf-8")
+
+    base_ns = 1_700_000_000_000_000_000
+    spec_ns = _set_mtime_ns(spec, base_ns)
+    docs_ns = _set_mtime_ns(docs, base_ns + 1)
+    if spec_ns == docs_ns:
+        pytest.skip("このファイルシステムは ns 粒度の mtime を保持しない")
+    assert _float_seconds_collide(spec_ns, docs_ns)
+
+    res = run_sync(tmp_path, "push")
+
+    assert res.returncode == 0, res.stderr
+    _, body = split_document(spec.read_text(encoding="utf-8"))
+    assert body == "# 手で直した本文\n", "ns 差を判別できず無音でスキップしてはならない"
+
+
+def test_SDD_FR_164_pull_keeps_mtime_equalization_after_sync(tmp_path: Path):
+    """同期直後は mtime が ns 単位で同値になり、逆方向同期が起きない（既存契約の維持）。"""
+    spec = tmp_path / ".spec" / "discovery" / "vision.md"
+    docs = tmp_path / "docs" / "00_はじめに" / "ミッション・ビジョン.md"
+    spec.parent.mkdir(parents=True)
+    docs.parent.mkdir(parents=True)
+    spec.write_text(spec_document("# 本文\n"), encoding="utf-8")
+    docs.write_text(docs_document("# 古い本文\n", ident="DOC-context-mission"), encoding="utf-8")
+    set_newer(spec, docs)
+
+    assert run_sync(tmp_path, "pull").returncode == 0
+    assert spec.stat().st_mtime_ns == docs.stat().st_mtime_ns
+
+    res = run_sync(tmp_path, "push")
+
+    assert res.returncode == 0, res.stderr
+    assert "UP-TO-DATE" in res.stdout, "同期直後の逆方向同期は起きてはならない"
+
+
+def test_SDD_FR_164_diff_reports_ns_difference_as_out_of_sync(tmp_path: Path):
+    """diff も同じ精度で判定する（表示だけ float 秒でも判定は ns）。"""
+    spec = tmp_path / ".spec" / "discovery" / "vision.md"
+    docs = tmp_path / "docs" / "00_はじめに" / "ミッション・ビジョン.md"
+    spec.parent.mkdir(parents=True)
+    docs.parent.mkdir(parents=True)
+    spec.write_text(spec_document("# 本文\n"), encoding="utf-8")
+    docs.write_text(docs_document("# 本文\n", ident="DOC-context-mission"), encoding="utf-8")
+
+    base_ns = 1_700_000_000_000_000_000
+    docs_ns = _set_mtime_ns(docs, base_ns)
+    spec_ns = _set_mtime_ns(spec, base_ns + 1)
+    if spec_ns == docs_ns:
+        pytest.skip("このファイルシステムは ns 粒度の mtime を保持しない")
+
+    res = run_sync(tmp_path, "diff")
+
+    assert res.returncode == 0, res.stderr
+    assert "pullが必要" in res.stdout, res.stdout
