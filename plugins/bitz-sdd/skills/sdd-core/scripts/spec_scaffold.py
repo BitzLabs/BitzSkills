@@ -27,7 +27,13 @@ from pathlib import Path
 # spec_inspect はモジュールレベルで定数・関数を定義するだけで __main__ ガード下でのみ実行するため
 # import に副作用はない。スクリプト直実行時もラッパー経由でも解決できるよう自ディレクトリを追加。
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from spec_inspect import STATUSES, VMETHODS, load_domains  # noqa: E402
+from spec_inspect import (  # noqa: E402
+    RECURSIVE_ARTIFACT_DIRS,
+    STATUSES,
+    VMETHODS,
+    load_domains,
+    parse_frontmatter,
+)
 from spec_transaction import (  # noqa: E402
     FileChange,
     MutationError,
@@ -44,16 +50,30 @@ KIND_DIR = {
 }
 
 
-def next_number(directory: Path, prefix: str) -> int:
-    """directory 直下の `<prefix>-NNN.md` / `<prefix>-NNN-説明.md` を走査し「最大番号 + 1」を返す
-    （無ければ 1）。design 種別は `DSN-001-delegation-registry.md` のように説明的サフィックスを
-    付けて保存する慣行があるため、サフィックス付きファイル名も番号抽出の対象に含める
-    （SI-SDD-006: サフィックス未対応による採番衝突の修正）。"""
+def next_number(directory: Path, prefix: str, recursive: bool = False) -> int:
+    """directory 配下の成果物を走査し「最大番号 + 1」を返す（無ければ 1）。
+
+    番号の根拠は **frontmatter の `id:`** であり、ファイル名ではない（SDD-FR-162）。
+    `domain-model.md`（`id: SDD-DSN-009`）や `stories/story-p1-*.md` のように ID を
+    ファイル名に持たない成果物が採番から見えず、既存 ID を再度払い出したためである
+    （SI-SDD-036。`SI-SDD-006` 提案2 の実装）。frontmatter に `id:` を持たない成果物は
+    ファイル名からの番号抽出へフォールバックする — `DSN-001-delegation-registry.md` のような
+    説明的サフィックス付きの慣行を落とさないため（`SI-SDD-006` 提案1 の維持）。
+    `recursive` は spec_inspect のレジストリ走査と範囲を揃えるために使う（design 配下）。
+    """
     pat = re.compile(rf"^{re.escape(prefix)}-(\d+)(-.*)?\.md$")
+    id_pat = re.compile(rf"^{re.escape(prefix)}-(\d+)$")
     nums = []
     if directory.exists():
-        for f in directory.glob(f"{prefix}-*.md"):
-            m = pat.match(f.name)
+        for f in directory.glob("**/*.md" if recursive else "*.md"):
+            if f.name.startswith("_"):
+                continue
+            rid = ""
+            try:
+                rid = parse_frontmatter(f.read_text(encoding="utf-8", errors="ignore")).get("id", "")
+            except OSError:
+                pass
+            m = id_pat.match(rid.strip()) or pat.match(f.name)
             if m:
                 nums.append(int(m.group(1)))
     return (max(nums) + 1) if nums else 1
@@ -261,14 +281,18 @@ def main():
         return 2
 
     directory = root / ".spec" / KIND_DIR[args.kind]
+    # 採番の走査範囲は spec_inspect のレジストリ走査と一致させる（SDD-FR-162）
+    recursive = KIND_DIR[args.kind] in RECURSIVE_ARTIFACT_DIRS
 
-    provisional_num = args.number if args.number is not None else next_number(directory, args.prefix)
+    provisional_num = (args.number if args.number is not None
+                       else next_number(directory, args.prefix, recursive))
     provisional = directory / f"{args.prefix}-{provisional_num:03d}.md"
     selected = {}
 
     def prepare(_owner):
         # SDD-FR-144: workspace lock取得後に採番候補を必ず再計算する。
-        num = args.number if args.number is not None else next_number(directory, args.prefix)
+        num = (args.number if args.number is not None
+               else next_number(directory, args.prefix, recursive))
         ident = f"{args.prefix}-{num:03d}"
         dest = directory / f"{ident}.md"
         if dest.exists():
