@@ -1,7 +1,7 @@
 ---
 id: FLW-CON-004
 version: 1.1
-status: draft
+status: approved
 domain: governance
 priority: high
 origin: FLW-REV-002

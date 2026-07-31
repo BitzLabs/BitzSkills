@@ -1,7 +1,7 @@
 ---
 id: FLW-FR-006
 version: 1.0
-status: draft
+status: approved
 domain: workflow
 priority: high
 origin: SI-FLW-004

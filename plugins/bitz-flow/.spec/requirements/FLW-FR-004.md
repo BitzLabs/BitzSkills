@@ -1,7 +1,7 @@
 ---
 id: FLW-FR-004
 version: 1.0
-status: draft
+status: approved
 domain: tooling
 priority: high
 origin: SI-FLW-002

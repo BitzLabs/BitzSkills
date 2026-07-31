@@ -1,7 +1,7 @@
 ---
 id: FLW-NFR-004
 version: 1.1
-status: draft
+status: approved
 domain: tooling
 priority: high
 origin: .spec/reports/decision-2026-07-29-bitz-flow-v2-design-gate.md
