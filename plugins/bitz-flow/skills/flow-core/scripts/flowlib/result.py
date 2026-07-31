@@ -282,9 +282,10 @@ def render_compact(result: Mapping[str, Any], view: CompactView | None = None) -
         head.append(f"{key}={_compact_value(value)}")
 
     lines = [" ".join(head)]
-    lines.extend(view.blocking)
-    lines.extend(view.changed)
-    lines.extend(view.normal)
+    # 1項目1行を renderer が保証する（呼出側の組み立てに依存しない）。
+    lines.extend(escape_line(line) for line in view.blocking)
+    lines.extend(escape_line(line) for line in view.changed)
+    lines.extend(escape_line(line) for line in view.normal)
 
     page = result["data"].get("page") or {}
     if result.get("truncated"):
@@ -305,12 +306,36 @@ def render_compact(result: Mapping[str, Any], view: CompactView | None = None) -
     return "\n".join(lines)
 
 
+_CONTROL_ESCAPES = {
+    "\n": "\\n",
+    "\r": "\\r",
+    "\t": "\\t",
+    "\v": "\\v",
+    "\f": "\\f",
+    "\0": "\\0",
+}
+
+
+def escape_line(text: str) -> str:
+    """1項目1行を機械的に守る。
+
+    パスやブランチ名には改行・タブを含められる。素通しすると compact 出力の
+    行数がずれるだけでなく、**別の判定行を偽装できる**（例: 改行のあとに
+    ``OK git.status ...`` を含むファイル名）。renderer 側で必ずエスケープする。
+    """
+    if not isinstance(text, str):
+        return text
+    for raw, escaped in _CONTROL_ESCAPES.items():
+        text = text.replace(raw, escaped)
+    return "".join(char if char.isprintable() or char == " " else repr(char)[1:-1] for char in text)
+
+
 def _compact_value(value: Any) -> str:
     """compact 表示用に値を短くする（digest は短縮、bool は小文字）。"""
     if isinstance(value, bool):
         return "true" if value else "false"
     if isinstance(value, str):
-        return abbrev_digest(value)
+        return escape_line(abbrev_digest(value))
     return str(value)
 
 
