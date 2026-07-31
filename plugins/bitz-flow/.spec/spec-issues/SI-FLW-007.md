@@ -3,7 +3,7 @@ id: SI-FLW-007
 raised_by: M0 eval harness の予備計測（TSK-012、2026-07-31）
 target: FLW-NFR-002 が前提とする fixture corpus と raw baseline command が未定義で、byte 削減率の合否が測定条件の選び方で反転する
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `FLW-NFR-002` は受入基準で「**status fixture corpus** を compact renderer で測定する」
   「**raw baseline 比** median byte 削減 70%以上」と書き、検証手段でも「固定 fixture corpus、
@@ -84,6 +84,54 @@ status: open
 
 - **依存**: `FLW-TSK-012` の実測開始前に裁定が必要。裁定前に実測すると、測定条件が
   後から動いたときに全 trial を取り直すことになる（3platform × 3条件 × 3task × 10 trial）。
+
+- **実測データ（2026-07-31 追記）**: 規模の異なる3 fixture で baseline 候補ごとの削減率を実測した。
+  合否が baseline の選び方で完全に反転することを数値で確認した。
+
+  | 規模 | 変更件数 | compact status（全件） | compact status（既定 limit 50） | compact diff（全件） | compact diff（既定 50） |
+  |---|---:|---:|---:|---:|---:|
+  | 小 | 7 | 220 B | 220 B | 220 B | 220 B |
+  | 中 | 33 | 657 B | 657 B | 789 B | 789 B |
+  | 大 | 123 | 2208 B | 1045 B | 2792 B | 1292 B |
+
+  `git.status` の baseline 候補（閾値 70%）
+
+  | baseline | 小(7) | 中(33) | 大(123) | 判定 |
+  |---|---:|---:|---:|:--:|
+  | `git status`（長形式） | 59.6% | 47.0% | 40.2% | ❌ |
+  | `git status --short --branch` | -71.9% | -16.5% | -4.4% | ❌ |
+  | `git status --porcelain=v2 --branch` | 74.2% | 84.2% | 85.8% | ✅ |
+
+  `git.diff-summary` の baseline 候補（閾値 80%）
+
+  | baseline | 小 | 中 | 大 | 判定 |
+  |---|---:|---:|---:|:--:|
+  | `git diff HEAD`（生 unified diff） | 81.7% | 89.0% | 90.0% | ✅ |
+  | `git diff --stat HEAD` | 17.6% | 31.6% | 33.8% | ❌ |
+  | `git diff --numstat HEAD` | -101.8% | -38.2% | -26.3% | ❌ |
+  | `git diff --name-status HEAD` | -126.8% | -55.6% | -41.9% | ❌ |
+
+  読み取り:
+
+  1. diff は `metrics.md` が既に明記する「生 unified diff」比で全規模 80% を超える。
+  2. status は最も自然な `git status`（長形式）では達成できず、**規模が大きいほど悪化する**
+     （59.6% → 40.2%）。長形式の per-file 行が既に短く compact との差が小さいため。
+  3. `--porcelain=v2` なら 85% 出るが、これは `flow.py` 自身が parse に使う形式であり、
+     自分の入力を分母にするのは公正さを欠く。
+  4. **truncation が数値を大きく動かす**。大 fixture では既定 limit 50 のとき
+     `git status` 比が 40.2% → 71.7% へ跳ねるが、123 件中 50 件しか出しておらず同じ情報ではない。
+
+- **裁定（2026-07-31、hide）**: **accepted。案A を採用する**
+  （裁定記録: `.spec/reports/decision-2026-07-31-byte-baseline-measurement.md`）。
+
+  1. status 系の baseline は固定コマンドにせず、eval の `no-skill` 条件でエージェントが
+     実際に消費した出力の UTF-8 byte 数を分母とし、platform ごとに median を取る。
+  2. `diff-summary` の baseline は生 unified diff（`git diff <base>`）で確定する。
+  3. byte 比較は `truncated: false`（全件表示）の trial だけで行う。
+  4. corpus は規模の異なる3 fixture（小 / 中 / 大）とし、median はその横断で取る。
+  5. 閾値（70% / 80%）は変更しない。**提案3 は保留**とし、案A の実測後に
+     `FLW-NFR-002` の supersede が必要かを改めて裁定する。
+  6. 削減率を将来緩める場合でも、必須 field 保持 100% と blocking 項目保持 100% は緩めない。
 
 - **予備判定（推薦）**: **accept 推奨（提案1・2・4 を先行、提案3 は実測後に再裁定）**。
   測定条件の未定義は「実装の良し悪し」と「測り方の選択」を分離できない状態であり、

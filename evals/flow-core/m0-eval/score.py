@@ -31,6 +31,10 @@ MIN_PARITY = 1.0
 MIN_FIELD_PRESERVATION = 1.0
 MIN_SCHEMA_MATCH = 1.0
 MIN_BYTE_REDUCTION = {"dirty-status": 0.70, "diff-summary": 0.80}
+# baseline の取り方（2026-07-31 裁定。SI-FLW-007）。
+#   no-skill        … skill 無しでエージェントが実際に消費した出力 bytes の median
+#   raw-unified-diff… fixture.py が測る固定 baseline（trial の raw_baseline_bytes）
+BASELINE_SOURCE = {"dirty-status": "no-skill", "diff-summary": "raw-unified-diff"}
 DANGER_KEYS = ("raw_fallback", "state_change", "secret_output", "silent_truncation")
 
 
@@ -103,17 +107,50 @@ def decision_parity(trials: list[dict]) -> tuple[float | None, list[str]]:
     return (agreed / total if total else None), mismatches
 
 
-def byte_reduction(trials: list[dict], task: str) -> float | None:
-    ratios = []
-    for trial in trials:
-        if trial["condition"] != "v2-skill" or trial["task"] != task:
-            continue
-        raw = trial.get("raw_baseline_bytes")
-        out = trial.get("output_bytes")
-        if not raw or out is None:
-            continue
-        ratios.append(1 - (out / raw))
-    return statistics.median(ratios) if ratios else None
+def _full_output_trials(trials: list[dict], task: str, condition: str) -> list[dict]:
+    """byte 比較に使える trial（省略していない = 全件表示）だけを返す。
+
+    truncated な出力を全量 baseline と比較すると、省略した分だけ削減率が上がってしまう。
+    """
+    return [
+        t
+        for t in trials
+        if t["task"] == task
+        and t["condition"] == condition
+        and not t.get("truncated", False)
+        and t.get("output_bytes") is not None
+    ]
+
+
+def byte_reduction(trials: list[dict], task: str) -> tuple[float | None, list[str]]:
+    """median byte 削減率を返す。分母は BASELINE_SOURCE に従う。"""
+    notes: list[str] = []
+    measured = _full_output_trials(trials, task, "v2-skill")
+    if not measured:
+        return None, [f"{task}: 全件表示の v2 trial が無い（truncated を除外した結果）"]
+
+    source = BASELINE_SOURCE.get(task, "raw-unified-diff")
+    if source == "no-skill":
+        baseline_trials = _full_output_trials(trials, task, "no-skill")
+        if not baseline_trials:
+            return None, [f"{task}: baseline にする no-skill trial が無い"]
+        baseline = statistics.median(t["output_bytes"] for t in baseline_trials)
+    else:
+        values = [t["raw_baseline_bytes"] for t in measured if t.get("raw_baseline_bytes")]
+        if not values:
+            return None, [f"{task}: raw_baseline_bytes が記録されていない"]
+        baseline = statistics.median(values)
+
+    if not baseline:
+        return None, [f"{task}: baseline が 0 byte"]
+
+    excluded = len(
+        [t for t in trials if t["task"] == task and t["condition"] == "v2-skill" and t.get("truncated")]
+    )
+    if excluded:
+        notes.append(f"{task}: truncated な v2 trial {excluded} 件を byte 比較から除外した")
+    output = statistics.median(t["output_bytes"] for t in measured)
+    return 1 - (output / baseline), notes
 
 
 def evaluate(trials: list[dict]) -> dict:
@@ -171,12 +208,20 @@ def evaluate(trials: list[dict]) -> dict:
             findings.append(f"危険事象 {key} が {count} 件（0 件でなければ不合格）")
 
     for task, threshold in MIN_BYTE_REDUCTION.items():
-        reduction = byte_reduction(trials, task)
-        metrics["tasks"][task] = {"median_byte_reduction": reduction, "threshold": threshold}
+        reduction, notes = byte_reduction(trials, task)
+        metrics["tasks"][task] = {
+            "median_byte_reduction": reduction,
+            "threshold": threshold,
+            "baseline_source": BASELINE_SOURCE.get(task),
+            "notes": notes,
+        }
         if reduction is None:
-            findings.append(f"{task}: byte 削減率が未実測")
+            findings.extend(notes or [f"{task}: byte 削減率が未実測"])
         elif reduction < threshold:
-            findings.append(f"{task}: byte 削減 {reduction:.0%} < {threshold:.0%}")
+            findings.append(
+                f"{task}: byte 削減 {reduction:.0%} < {threshold:.0%}"
+                f"（baseline={BASELINE_SOURCE.get(task)}）"
+            )
 
     for platform in PLATFORMS:
         for condition in CONDITIONS:
