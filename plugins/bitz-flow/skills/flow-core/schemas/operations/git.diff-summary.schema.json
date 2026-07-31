@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bitz-flow/result/v1/data/git.diff-summary",
+  "title": "git.diff-summary data",
+  "description": "result envelope の data field を refine する。class=read / approval=none / retry=safe / recovery なし（FLW-DSN-012）。入力は diff --name-status -z と diff --numstat -z（FLW-DSN-005）。詳細は git.diff-detail（M1）が返す。",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "target",
+    "preconditions",
+    "effects",
+    "postconditions",
+    "concurrency_key",
+    "evidence",
+    "completed_steps",
+    "remaining_steps",
+    "cause",
+    "items",
+    "page",
+    "totals"
+  ],
+  "properties": {
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repo_root", "range"],
+      "properties": {
+        "repo_root": { "type": "string", "minLength": 1 },
+        "range": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["base", "compare"],
+          "description": "比較対象。既定は working tree と HEAD。",
+          "properties": {
+            "base": { "type": "string", "minLength": 1 },
+            "compare": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "effects": { "type": "array", "maxItems": 0 },
+    "concurrency_key": { "type": "null" },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["files", "added", "deleted", "binary"],
+      "properties": {
+        "files": { "type": "integer", "minimum": 0 },
+        "added": { "type": "integer", "minimum": 0 },
+        "deleted": { "type": "integer", "minimum": 0 },
+        "binary": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "binary と判定した file 数。added / deleted には算入しない。"
+        }
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "orig_path", "kind", "added", "deleted", "binary"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "orig_path": {
+            "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["added", "modified", "deleted", "renamed", "copied", "type-changed", "unmerged"]
+          },
+          "added": {
+            "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }],
+            "description": "binary が true の場合は null（numstat が - を返すため）。"
+          },
+          "deleted": {
+            "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }]
+          },
+          "binary": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

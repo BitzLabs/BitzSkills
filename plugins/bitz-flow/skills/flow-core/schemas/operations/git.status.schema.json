@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bitz-flow/result/v1/data/git.status",
+  "title": "git.status data",
+  "description": "result envelope の data field を refine する。class=read / approval=none / retry=safe / recovery なし（FLW-DSN-012）。入力は status --porcelain=v2 --branch -z（FLW-DSN-005）。",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "target",
+    "preconditions",
+    "effects",
+    "postconditions",
+    "concurrency_key",
+    "evidence",
+    "completed_steps",
+    "remaining_steps",
+    "cause",
+    "items",
+    "page",
+    "branch",
+    "counts"
+  ],
+  "properties": {
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repo_root"],
+      "properties": {
+        "repo_root": { "type": "string", "minLength": 1 }
+      }
+    },
+    "effects": { "type": "array", "maxItems": 0 },
+    "concurrency_key": { "type": "null" },
+    "branch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "upstream", "ahead", "behind", "detached"],
+      "properties": {
+        "name": {
+          "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+        },
+        "upstream": {
+          "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+        },
+        "ahead": {
+          "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }],
+          "description": "upstream が無い場合は null。"
+        },
+        "behind": {
+          "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }]
+        },
+        "detached": { "type": "boolean" }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["staged", "unstaged", "untracked", "conflicted"],
+      "properties": {
+        "staged": { "type": "integer", "minimum": 0 },
+        "unstaged": { "type": "integer", "minimum": 0 },
+        "untracked": { "type": "integer", "minimum": 0 },
+        "conflicted": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["xy", "path", "orig_path", "state"],
+        "properties": {
+          "xy": {
+            "type": "string",
+            "pattern": "^[ MADRCU?!][ MADRCU?!]$",
+            "description": "porcelain v2 の index / worktree 状態 2 文字。"
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "repo 相対パス。NUL 区切りで取得し、改行・空白・非 ASCII を損なわない。"
+          },
+          "orig_path": {
+            "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }],
+            "description": "rename / copy の元パス。それ以外は null。"
+          },
+          "state": {
+            "type": "string",
+            "enum": ["staged", "unstaged", "both", "untracked", "ignored", "conflicted"]
+          }
+        }
+      }
+    }
+  }
+}

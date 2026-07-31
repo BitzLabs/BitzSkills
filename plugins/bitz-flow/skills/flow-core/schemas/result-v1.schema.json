@@ -1,0 +1,310 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bitz-flow/result/v1",
+  "title": "bitz-flow result envelope v1",
+  "description": "bitz-flow の全 operation が返す共通 result envelope。key 集合は加算のみで、既存 key の意味を変える場合は schema major を上げる（bitz-flow/result/v2）。credential・environment・raw stdout/stderr を追加してはならないため additionalProperties は false とする。正は FLW-DSN-003 と FLW-DSN-012。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "result_digest",
+    "operation",
+    "ok",
+    "code",
+    "exit_code",
+    "repo",
+    "snapshot",
+    "operation_id",
+    "idempotency_id",
+    "approval",
+    "summary",
+    "data",
+    "audit",
+    "invocation",
+    "warnings",
+    "truncated",
+    "next_actions"
+  ],
+  "properties": {
+    "schema": {
+      "const": "bitz-flow/result/v1"
+    },
+    "result_digest": {
+      "$ref": "#/$defs/sha256",
+      "description": "自身（result_digest key）を除く result object を UTF-8・key 辞書順・余分な空白なし・schema が許可した整数表現へ正規化した byte 列の SHA-256。保存・転送時の破損検出用であり、耐改ざん性は保証しない。"
+    },
+    "operation": {
+      "$ref": "#/$defs/operation_name"
+    },
+    "ok": {
+      "type": "boolean",
+      "description": "exit_code が 0 のときだけ true。"
+    },
+    "code": {
+      "$ref": "#/$defs/code"
+    },
+    "exit_code": {
+      "type": "integer",
+      "enum": [0, 2, 3, 4, 5, 6, 7, 8, 9]
+    },
+    "repo": {
+      "type": "string",
+      "minLength": 1,
+      "description": "canonical repo root。"
+    },
+    "snapshot": {
+      "oneOf": [
+        { "$ref": "#/$defs/sha256" },
+        { "type": "null" }
+      ],
+      "description": "operation が観測した事実の fingerprint。cursor はこの値へ拘束され、変化していれば STALE。"
+    },
+    "operation_id": {
+      "oneOf": [
+        { "$ref": "#/$defs/sha256" },
+        { "type": "null" }
+      ],
+      "description": "sha256(schema + operation + canonical target + expected snapshot + planned effects)。承認 token ではない。read operation では null。"
+    },
+    "idempotency_id": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "null" }
+      ],
+      "description": "同じ副作用を外部状態から識別する operation 別 ID。read operation では null。"
+    },
+    "approval": {
+      "$ref": "#/$defs/approval"
+    },
+    "summary": {
+      "type": "string",
+      "description": "事実だけを述べる 1 行。推奨判断は next_actions へ分離する。"
+    },
+    "data": {
+      "$ref": "#/$defs/data"
+    },
+    "audit": {
+      "$ref": "#/$defs/audit"
+    },
+    "invocation": {
+      "$ref": "#/$defs/invocation"
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "秘密値・本文を含めない。"
+    },
+    "truncated": {
+      "type": "boolean",
+      "description": "件数上限で items を省略した場合に true。true なら data.page が shown / total / cursor を持つ。"
+    },
+    "next_actions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/next_action" }
+    }
+  },
+  "allOf": [
+    {
+      "description": "ok は exit_code 0 と一致する。",
+      "if": { "properties": { "ok": { "const": true } }, "required": ["ok"] },
+      "then": { "properties": { "exit_code": { "const": 0 } } },
+      "else": { "properties": { "exit_code": { "not": { "const": 0 } } } }
+    },
+    {
+      "description": "truncated が true なら page は cursor を持つ。",
+      "if": { "properties": { "truncated": { "const": true } }, "required": ["truncated"] },
+      "then": {
+        "properties": {
+          "data": {
+            "properties": {
+              "page": { "required": ["shown", "total", "cursor"], "properties": { "cursor": { "type": "string" } } }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "operation_name": {
+      "type": "string",
+      "pattern": "^[a-z]+\\.[a-z][a-z-]*[a-z]$",
+      "description": "<domain>.<action> の安定名。"
+    },
+    "code": {
+      "type": "string",
+      "enum": [
+        "OK",
+        "READY",
+        "DONE",
+        "INVALID_INPUT",
+        "BLOCKED",
+        "APPROVAL_REQUIRED",
+        "UNAVAILABLE",
+        "STALE",
+        "PARTIAL",
+        "UNSUPPORTED",
+        "INDETERMINATE"
+      ]
+    },
+    "cause": {
+      "type": "string",
+      "enum": [
+        "not-repository",
+        "invalid-ref",
+        "invalid-path",
+        "dirty",
+        "detached-head",
+        "no-upstream",
+        "non-fast-forward",
+        "conflict",
+        "timeout",
+        "command-unavailable",
+        "permission-denied",
+        "snapshot-mismatch",
+        "remote-unavailable",
+        "result-indeterminate"
+      ],
+      "description": "下位 Git / gh の終了コードやメッセージをそのまま公開せず、この許可語彙へ正規化する（FLW-DSN-005 診断 cause）。"
+    },
+    "stage": {
+      "type": "string",
+      "enum": ["inspect", "parse", "validate", "plan", "apply", "post-check"],
+      "description": "失敗した工程を区別する。network operation と local operation を別 stage にする。"
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "source", "reference"],
+      "description": "実行前に必要な外部裁定の強さ。CLI が人間本人を認証したことは表さない。",
+      "properties": {
+        "required": {
+          "type": "string",
+          "enum": ["none", "mutation", "external-write", "explicit-human"]
+        },
+        "source": {
+          "oneOf": [{ "type": "string" }, { "type": "null" }]
+        },
+        "reference": {
+          "oneOf": [{ "type": "string" }, { "type": "null" }],
+          "description": "外部で得た裁定への任意の参照。真正性は主張しない。"
+        }
+      }
+    },
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool_version", "started_at", "finished_at"],
+      "description": "actor 本人性を主張せず、秘密値を含まない。",
+      "properties": {
+        "tool_version": { "type": "string", "minLength": 1 },
+        "started_at": { "type": "string", "format": "date-time" },
+        "finished_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "invocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "parent_id", "attempt", "stage"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "description": "試行ごとのランダム識別子。operation_id とは分離する。"
+        },
+        "parent_id": {
+          "oneOf": [
+            { "type": "string", "pattern": "^uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" },
+            { "type": "null" }
+          ]
+        },
+        "attempt": { "type": "integer", "minimum": 1 },
+        "stage": { "$ref": "#/$defs/stage" }
+      }
+    },
+    "next_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["domain", "action", "args"],
+      "description": "許可された domain / action と必要引数だけを返す。shell 文字列や生コマンドを返さない。",
+      "properties": {
+        "domain": { "type": "string", "pattern": "^[a-z]+$" },
+        "action": { "type": "string", "pattern": "^[a-z][a-z-]*[a-z]$" },
+        "args": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "integer" },
+              { "type": "boolean" },
+              { "type": "null" }
+            ]
+          }
+        }
+      }
+    },
+    "page": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shown", "total"],
+      "properties": {
+        "shown": { "type": "integer", "minimum": 0 },
+        "total": { "type": "integer", "minimum": 0 },
+        "cursor": {
+          "oneOf": [{ "type": "string" }, { "type": "null" }],
+          "description": "snapshot へ拘束された継続位置。snapshot が変われば STALE。"
+        }
+      }
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "operation 別 JSON Schema（schemas/operations/）が必須 field・型・enum・cardinality を定める。未知 field は許容するが既存 field の意味を変えない。",
+      "required": [
+        "target",
+        "preconditions",
+        "effects",
+        "postconditions",
+        "concurrency_key",
+        "evidence",
+        "completed_steps",
+        "remaining_steps",
+        "cause",
+        "items",
+        "page"
+      ],
+      "properties": {
+        "target": {
+          "type": "object",
+          "description": "repo identity、ref、path 等の canonical target。"
+        },
+        "preconditions": { "type": "array", "items": { "type": "string" } },
+        "effects": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "許可された副作用の上限。列挙外は実行しない。read operation では空配列。"
+        },
+        "postconditions": { "type": "array", "items": { "type": "string" } },
+        "concurrency_key": {
+          "oneOf": [{ "type": "string" }, { "type": "null" }],
+          "description": "同じ target へ同時 write させない直列化キー。read operation では null。"
+        },
+        "evidence": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "秘密値を含まない証跡。"
+        },
+        "completed_steps": { "type": "array", "items": { "type": "string" } },
+        "remaining_steps": { "type": "array", "items": { "type": "string" } },
+        "cause": {
+          "oneOf": [{ "$ref": "#/$defs/cause" }, { "type": "null" }]
+        },
+        "items": { "type": "array" },
+        "page": { "$ref": "#/$defs/page" }
+      }
+    }
+  }
+}
