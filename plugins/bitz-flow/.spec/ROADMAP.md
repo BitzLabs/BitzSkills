@@ -33,11 +33,12 @@ v2 はこれを、3プラットフォーム（Claude Code / Codex CLI / Antigrav
   裁定記録 `.spec/reports/decision-2026-07-29-bitz-flow-v2-design-gate.md`）
 - 多観点再レビュー **PASS 4.84**（critical 0 / major 0）、System Engineering Review **PASS**
 - v2 の FR / NFR / CON は **approved**（2026-07-31 に一括承認。裁定2）
-- 実装: **未着手**（v2 のタスクは 0）
+- **M0 のタスク分解済み**（8タスク。契約固定 → runner / result / adapter → dispatcher 結線 →
+  SKILL.md / test → eval）。M0 が implements する8要件は implementing、残る15要件は approved のまま
 - 2026-07-31、本書が洗い出した未裁定論点7件を裁定
   （`.spec/reports/decision-2026-07-31-bitz-flow-roadmap-open-issues.md`）
 
-次は **M0 Contract Kernel のタスク分解と実装**である。承認によって生じた23件の未検分の
+次は **M0 Contract Kernel の実装**である。承認によって生じた23件の未検分の
 代行遷移は、`verified → promoted` を経て Promotion Gate の GatePassage で検分される
 （2026-07-29 分と違い、放置ではなく通常のライフサイクルで解消する滞留）。
 上流側の前提だった bitz-sdd 3.x の V4設計Ready化（`plugins/bitz-sdd/.spec/ROADMAP.md` の R0）は

@@ -2,8 +2,8 @@
 id: FLW-DSN-011
 title: "v1からv2への規範移行設計"
 status: active
-version: 1.4
-updated: 2026-07-29
+version: 1.5
+updated: 2026-07-31
 owner: hide
 implements: FLW-FR-011, FLW-FR-012, FLW-CON-001, FLW-CON-006
 origin: FLW-REV-002
@@ -91,8 +91,23 @@ spec-issueのacceptを暗黙に兼ねたのではなく、同じユーザー指�
 案内しない。候補の一部がPromotion Gateを満たさない場合は、旧要件をdeprecatedへ進めず、
 候補表を更新して再審査する。
 
+### skillの据え置きとeval fixture（2026-07-31裁定）
+
+手順4〜5の間、稼働中の`flow-core/SKILL.md`はv1の内容を保持する。v2のMandatory entry protocolを
+持つSKILL.mdは`evals/flow-core/fixtures/v2-skill/SKILL.md`へeval fixtureとして置き、
+稼働ファイルの切替は手順9のv1撤去と同じ変更セットで行う。
+
+理由は、稼働SKILL.mdをM0で置き換えるとv1-currentの案内が失われ、逆にv1手順を残したまま
+v2節を加法的に足すとDispatcher Invocation Rateが設計と無関係な理由で低下し、M0出口条件の
+測定が成立しないためである。M0 evalの3条件（skillなし / v1 skill / v2 skill fixture）は、
+v1条件を稼働SKILL.md、v2条件を上記fixtureへ束縛する。
+
+裁定参照: `.spec/reports/decision-2026-07-31-m0-skill-fixture-separation.md`。
+
 ## 移行検査
 
+- Promotion Gateで稼働`flow-core/SKILL.md`をv2へ切り替える際、M0 evalで測定したfixtureと
+  同一内容であることを照合する（fixtureと稼働ファイルの乖離を検出する）。
 - repository内の`flow-pr`、`flow-worktree`、旧script名の参照を分類する。
 - 旧→新action対応表をmigration noteへ生成する。
 - bitz-sddの依存versionと委譲先を検査する。
