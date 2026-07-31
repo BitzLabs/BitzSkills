@@ -2,7 +2,7 @@
 implements: FLW-FR-004
 depends_on: [FLW-TSK-005, FLW-TSK-006]
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/git_read.py
-status: pending
+status: done
 ---
 
 ### M0 Git read adapter の実装（machine-readable 出力の parse）

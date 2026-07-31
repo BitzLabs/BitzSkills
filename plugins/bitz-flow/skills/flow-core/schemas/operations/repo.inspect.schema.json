@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bitz-flow/result/v1/data/repo.inspect",
+  "title": "repo.inspect data",
+  "description": "result envelope の data field を refine する。class=read / approval=none / retry=safe / recovery なし（FLW-DSN-012）。出力 field の正は FLW-DSN-005 の Read operations 表。",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "target",
+    "preconditions",
+    "effects",
+    "postconditions",
+    "concurrency_key",
+    "evidence",
+    "completed_steps",
+    "remaining_steps",
+    "cause",
+    "items",
+    "page",
+    "repository"
+  ],
+  "properties": {
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repo_root"],
+      "properties": {
+        "repo_root": {
+          "type": "string",
+          "minLength": 1,
+          "description": "canonical 検証済みの repo root（絶対パス）。"
+        }
+      }
+    },
+    "effects": {
+      "type": "array",
+      "maxItems": 0,
+      "description": "read operation のため副作用は許可されない。"
+    },
+    "concurrency_key": { "type": "null" },
+    "items": {
+      "type": "array",
+      "maxItems": 0,
+      "description": "repo.inspect は一覧を返さない。事実は repository に置く。"
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["head", "branch", "upstream", "dirty", "remotes"],
+      "properties": {
+        "head": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sha", "detached"],
+          "properties": {
+            "sha": {
+              "oneOf": [
+                { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+                { "type": "null" }
+              ],
+              "description": "commit が 1 件もない初期リポジトリでは null。"
+            },
+            "detached": { "type": "boolean" }
+          }
+        },
+        "branch": {
+          "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }],
+          "description": "detached HEAD では null。"
+        },
+        "upstream": {
+          "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+        },
+        "dirty": {
+          "type": "boolean",
+          "description": "staged / unstaged / untracked のいずれかが存在すれば true。"
+        },
+        "remotes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "host", "owner", "repo"],
+            "description": "remote URL をそのまま公開しない（credential を埋め込んだ URL を出力しないため）。canonical identity へ正規化する。",
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "host": {
+                "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+              },
+              "owner": {
+                "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+              },
+              "repo": {
+                "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -2,7 +2,7 @@
 implements: FLW-FR-003, FLW-CON-002
 depends_on: []
 boundary: plugins/bitz-flow/skills/flow-core/schemas/, plugins/bitz-flow/skills/flow-core/references/operation-catalog.md, plugins/bitz-flow/skills/flow-core/references/output-contract.md
-status: pending
+status: done
 ---
 
 ### M0 公開結果契約の凍結（result envelope と operation 別 JSON Schema）

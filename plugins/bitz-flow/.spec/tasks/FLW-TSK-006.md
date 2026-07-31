@@ -2,7 +2,7 @@
 implements: FLW-NFR-004, FLW-CON-001
 depends_on: [FLW-TSK-005]
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/process.py
-status: pending
+status: done
 ---
 
 ### M0 process runner の実装（3プラットフォーム可搬な外部プロセス実行）

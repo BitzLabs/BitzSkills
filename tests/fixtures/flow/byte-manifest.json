@@ -1,0 +1,33 @@
+{
+  "note": "M0 の compact 出力の絶対 byte 上限。FLW-NFR-002 の回帰判定に使う。上限は実測値の約1.5倍とし、超えたら renderer が冗長化した合図とする。削減率そのものの判定は FLW-TSK-012 の 3platform 実測が行う。",
+  "fixture": "tests/test_flow_contract.py の rich_repo（dirty / rename / binary / 非 ASCII path を含む）",
+  "measured_at": "2026-07-31",
+  "operations": {
+    "repo.inspect": {
+      "args": [
+        "repo",
+        "inspect"
+      ],
+      "measured_bytes": 120,
+      "absolute_max_bytes": 180
+    },
+    "git.status": {
+      "args": [
+        "git",
+        "status"
+      ],
+      "measured_bytes": 156,
+      "absolute_max_bytes": 240
+    },
+    "git.diff-summary": {
+      "args": [
+        "git",
+        "diff-summary",
+        "--base",
+        "HEAD"
+      ],
+      "measured_bytes": 136,
+      "absolute_max_bytes": 210
+    }
+  }
+}

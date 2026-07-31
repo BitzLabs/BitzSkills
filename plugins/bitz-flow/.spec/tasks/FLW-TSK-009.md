@@ -2,7 +2,7 @@
 implements: FLW-FR-003, FLW-FR-004, FLW-CON-001, FLW-CON-002
 depends_on: [FLW-TSK-007, FLW-TSK-008]
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flow.py, plugins/bitz-flow/skills/flow-core/scripts/flowlib/cli.py, plugins/bitz-flow/skills/flow-core/scripts/flowlib/__init__.py
-status: pending
+status: done
 ---
 
 ### M0 単一 dispatcher の結線（flow.py と3 operation）

@@ -2,7 +2,7 @@
 implements: FLW-FR-003, FLW-NFR-002
 depends_on: [FLW-TSK-005]
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/result.py
-status: pending
+status: done
 ---
 
 ### M0 result object と compact renderer の実装
