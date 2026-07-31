@@ -2,7 +2,7 @@
 implements: FLW-FR-003, FLW-CON-002
 depends_on: [FLW-TSK-009]
 boundary: tests/test_flow_contract.py, tests/fixtures/flow/
-status: pending
+status: done
 ---
 
 ### M0 golden fixture と契約 unit test

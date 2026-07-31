@@ -2,7 +2,7 @@
 implements: FLW-NFR-001
 depends_on: [FLW-TSK-009]
 boundary: evals/flow-core/fixtures/v2-skill/
-status: pending
+status: done
 ---
 
 ### M0 v2 flow-core SKILL.md（eval fixture）の Mandatory entry protocol
