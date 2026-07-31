@@ -1,4 +1,4 @@
-# inspection-report.md (2026-07-30)
+# inspection-report.md (2026-07-31)
 
 成果物数: 51 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0 / 検証証跡: 0
 
@@ -10,6 +10,9 @@
 
 ## 監査 WARN（代行遷移の裁定参照など — FAIL にしない）
 - なし ✅
+
+## Gate 通過記録（.spec/gates/ — 人間裁定の検分証跡）
+- FLW-GATE-001 — design / 2026-07-29 / 裁定者 hide / 対象 14 件 / 確認した裁定記録 1 件
 
 ## 実装待ち要件（approved だが implements するタスクがない — WARN）
 - なし ✅

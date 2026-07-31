@@ -34,6 +34,8 @@ v2 はこれを、3プラットフォーム（Claude Code / Codex CLI / Antigrav
 - 多観点再レビュー **PASS 4.84**（critical 0 / major 0）、System Engineering Review **PASS**
 - v2 の FR / NFR / CON は EARS 形式で **draft 起票済み**
 - 実装: **未着手**（v2 のタスクは 0）
+- 2026-07-31、本書が洗い出した未裁定論点7件を裁定
+  （`.spec/reports/decision-2026-07-31-bitz-flow-roadmap-open-issues.md`）
 
 次は **要件承認ゲート（人間裁定）** であり、その後に M0 だけをタスク分解する。
 上流側の前提だった bitz-sdd 3.x の V4設計Ready化（`plugins/bitz-sdd/.spec/ROADMAP.md` の R0）は
@@ -55,7 +57,7 @@ v2 はこれを、3プラットフォーム（Claude Code / Codex CLI / Antigrav
 | ゲート | 判定者 | 根拠 | 状態 |
 |---|---|---|---|
 | Discovery Gate | 人間 | assumptions / worksheet の裁定記録 | Go（2026-07-29） |
-| Design Gate | 人間 | FLW-REV-002 多観点 PASS、FLW-REV-003 SE PASS | PASS（2026-07-29） |
+| Design Gate | 人間 | FLW-REV-002 多観点 PASS、FLW-REV-003 SE PASS | PASS（2026-07-29。記録 `FLW-GATE-001`） |
 | **要件承認ゲート** | **人間** | FLW-REV-004 / FLW-REV-005 と draft 要件の diff | **未実施（次のアクション）** |
 | M0 出口 | 機械（eval）+ 人間確認 | FLW-DSN-014 の M0 出口条件 | 未実施 |
 | M1〜M5 出口 | 機械（fixture / canary）+ 人間確認 | FLW-DSN-014 の出口・予算・縮退境界 | 未実施 |
@@ -90,9 +92,11 @@ M2 が未完了のままでは worktree-first の安全境界が閉じないた�
 
 - 入口: Design Gate PASS、v2 要件の draft 起票、FLW-REV-004 / FLW-REV-005 の PASS
 - 作業: draft 要件と 07-29 以降の diff、両レビューの残余指摘を人間へ提示し、approved を裁定する
-- 出口: v2 要件が approved（段階承認とする場合は承認範囲を裁定記録へ明記）
-- 併せて扱う: 2026-07-29 の代行遷移（SI-FLW-002〜005 の accepted）の検分方法。
-  GatePassage 機構は当該裁定より後に bitz-sdd へ導入されたため bitz-flow には未適用 → 未裁定論点6
+- 出口: v2 要件が **一括で** approved（裁定2）。`--gate-passage` は不要
+  （必須なのは verified → promoted のみ）
+- 承認後も **M0 スコープだけをタスク分解**する。M1 以降の要件が `spec inspect` の
+  「実装待ち WARN」に M5 まで並ぶことは、事実の可視化として許容する（裁定2）
+- 2026-07-29 の代行遷移（SI-FLW-002〜005 の accepted）は `FLW-GATE-001` の遡及起票で検分済み（裁定6）
 
 ### フェーズ1 — M0 Contract Kernel
 
@@ -137,7 +141,12 @@ M2 が未完了のままでは worktree-first の安全境界が閉じないた�
 
 - repository mode の CHANGELOG、release notes、tag / release gate。
   draft までを前半、fault fixture 通過後に publish を後半で有効化
-- 出口: changelog atomicity、tag / draft 収束後の段階的 publish 有効化
+- **前半 → 後半の入口条件**（裁定5 で fixture 名まで固定）:
+  unit fault fixture 7件（pagination / PR 重複 / CHANGELOG atomicity / tag 応答喪失 /
+  draft 重複 / target 不一致 / publish 承認）が green、かつ canary repo で draft 10件 +
+  prerelease publish 1件を実測し誤 tag・誤 publish・notes 不一致が各0件
+- 出口: changelog atomicity、tag / draft 収束後の段階的 publish 有効化。
+  publish は v2 完成条件に含めたままとする（黙って除外しない）
 - 縮退境界: M4 までを出荷。draft だけが green なら prerelease 限定公開とし publish は `UNSUPPORTED`
 
 ### フェーズ7 — Promotion Gate と v1 撤去
@@ -146,10 +155,27 @@ M2 が未完了のままでは worktree-first の安全境界が閉じないた�
 2. 人間専用遷移で v1 要件を deprecated へ進め、**同じ変更セットで** 候補側 `supersedes` と
    旧要件側 `superseded_by` を記録する
 3. v1 の design / skills / scripts を撤去し、doctor で旧参照ゼロを確認する
-4. bitz-sdd の委譲先・依存宣言（現在 `bitz-flow>=0.2`）、README、migration note を
-   同じ release 系列で更新する
+4. 同じ変更セットで `1.0.0` へ上げ、bitz-sdd の依存宣言を `bitz-flow>=0.2` から
+   `bitz-flow>=1.0` へ更新する。README と migration note も同じ release 系列で更新する
 
 候補の一部が Promotion Gate を満たさない場合は、v1 要件を deprecated へ進めず候補表を更新して再審査する。
+
+**本フェーズに含めないもの**（裁定7）: `sdd-git` の削除。`CORE-FR-016`（promoted。
+2026-07-13 裁定で「縮退維持・完全廃止はしない」）の後継化と、SDD 固有の接続点の移設先は
+bitz-sdd V4 Charter が、同 ROADMAP 未裁定論点18 と一体で扱う。
+
+## Should 機能の扱い
+
+v2 完成条件は **Must のみ**とする（裁定4）。次は M0〜M5 の予算に含めず、Promotion Gate 後に
+spec-issue → 要件化を経て `1.1.0` 以降で個別昇格する。順序は実需要順とし本書では固定しない。
+
+| Should 機能 | Must 側の安全な代替 |
+|---|---|
+| GitHub Projects（item add / field 更新） | 無効化して `DEGRADED` |
+| branch protection の capability 読取 | 読取不能なら merge を `BLOCKED` |
+| merge queue | queue 投入を `UNSUPPORTED` |
+| component 単位の CHANGELOG / release notes | repository mode で出荷可能 |
+| `flow.py explain <code>` | result の next actions で代替 |
 
 ## 予算と縮退の運用
 
@@ -181,29 +207,46 @@ M5: 2PR/8session）と各縮退境界の**正は `FLW-DSN-014` v1.3**であり�
 
 ## バージョン・リリース方針
 
-- 現行 `0.3.1` が v1-current。M0〜M5 の各 PR は v1 の稼働契約を壊さない範囲で bump する
+**1.0.0 カットオーバー**（裁定1）。
+
+| version | 位置づけ |
+|---|---|
+| `0.3.1` | v1-current（現在） |
+| `0.4.0` 〜 `0.9.x` | M0〜M5 の prerelease。**v1 が正**であり v2 script を安定版入口として案内しない |
+| `1.0.0` | Promotion Gate と同一変更セット。v2-current へ切替 + bitz-sdd 依存を `bitz-flow>=1.0` へ |
+| `1.1.0` 以降 | Should 機能の個別昇格 |
+
 - v2 の実行契約は Promotion Gate 完了時に一度だけ切り替える（v1 と v2 を同じ major で
   段階混在させない — `FLW-DSN-011` 代替案で不採用済み）
-- v2 を prerelease 出荷する系列と、v2-current 昇格時の version 番号は **未裁定**（未裁定論点1）
+- **prerelease 識別子（`1.0.0-alpha.1` 等）は採用しない**。`scripts/bump_version.py` が
+  `\d+\.\d+\.\d+` しか受理せず、`release_check.py` の `parse_version` が `re.findall(r"\d+")` で
+  プレリリースを誤順序比較するため、採用にはルート側のツール改修が前提になる（裁定1で不採用）
+- plugin version と `FLW-DSN-011` の「result schema major」は別物。後者は起動時 result に出して
+  v1 / v2 の誤起動を検出する用途
 - rollback は3プラットフォームそれぞれで marketplace / repository revision と plugin version を
   直前 v1 へ pin し、doctor で version / schema / path を確認後に read-only smoke test を行う
 
-## 未裁定論点
+## 裁定済みの論点（2026-07-31）
 
-1. **v2 の version 番号** — prerelease をどの系列で出し、v2-current 昇格を `1.0.0` とするか。
-   bitz-sdd の依存宣言 `bitz-flow>=0.2` の更新時期と併せて裁定する。
-2. **要件の承認単位** — v2 要件を一括 approved にするか、M0 スコープから段階承認にするか。
-3. **cross-host GitHub create** — 分散 lock を持たず単一 coordinator 運用に依存する残余リスク
-   （FLW-REV-004 の残余 P2）。FLW-CON-004 で検証するため承認ブロッカーではないが、
-   安全を証明できない場合は `UNSUPPORTED` / `BLOCKED` として M3/M4 Promotion を停止する。
-4. **Should 機能の昇格順** — GitHub Projects、branch protection / merge queue、
-   component mode の CHANGELOG は Must 出口を満たした後に個別昇格する（順序は未定）。
-5. **release publish の有効化条件** — M5 後半の fault fixture 通過をどこまで要求するか。
-6. **Design Gate の GatePassage 起票** — 2026-07-29 の代行遷移（SI-FLW-002〜005）は
-   GatePassage 機構の導入前に行われたため `.spec/gates/` に記録がない。
-   遡って起票するか、Promotion Gate でまとめて検分するか。
-7. **`sdd-git` 廃止の裁定** — bitz-sdd 側 `CORE-FR-016` の縮退維持裁定を V4 で後継化するか
-   （bitz-sdd ROADMAP 未裁定論点17 と対）。
+正は `.spec/reports/decision-2026-07-31-bitz-flow-roadmap-open-issues.md`。本節は索引。
+
+| # | 論点 | 裁定 |
+|---|---|---|
+| 1 | v2 の version 番号 | **1.0.0 カットオーバー**。M0〜M5 は 0.4.0 以降で prerelease、Promotion Gate と同一変更セットで 1.0.0 + `bitz-flow>=1.0`。prerelease 識別子は不採用 |
+| 2 | 要件の承認単位 | **一括承認**。タスク分解は M0 のみ。実装待ち WARN は許容 |
+| 3 | cross-host GitHub create | **スコープ境界として受入れ**。分散 lock は v2 外。coordinator 証明手段は M3 設計へ委譲 |
+| 4 | Should 機能の昇格 | **1.0.0 到達後に個別昇格**。v2 完成条件は Must のみ |
+| 5 | release publish の有効化条件 | **unit fault fixture 7件 + canary publish 1件**を M5 後半の入口条件に固定 |
+| 6 | Design Gate の GatePassage | **遡及起票**（`FLW-GATE-001`。`date: 2026-07-29`） |
+| 7 | `sdd-git` 廃止 | **V4 で後継化**。bitz-flow フェーズ7 には含めない |
+
+## 残る未裁定論点
+
+1. **coordinator 証明手段の具体形** — M3 着手時に設計する（裁定3 で委譲）。
+   `.bitz-flow.json` への宣言方式にするか、WorkUnit 割当を外部状態から導出するか。
+2. **Should 機能の昇格順** — 実需要順とし、Promotion Gate 後に spec-issue 単位で裁定する（裁定4）。
+3. **M1 以降の budget 再校正** — 各 milestone 開始時に実績を run manifest へ記録し、
+   人間が次 budget を確認する（`FLW-DSN-014`）。初期 budget の妥当性は M0 実績が出るまで未知。
 
 ## v2 完了条件
 
