@@ -1,7 +1,7 @@
 ---
 id: FLW-FR-012
 version: 1.4
-status: approved
+status: implementing
 domain: governance
 priority: high
 origin: .spec/reports/decision-2026-07-29-bitz-flow-v2-design-gate.md

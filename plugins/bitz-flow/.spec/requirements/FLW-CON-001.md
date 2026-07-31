@@ -1,7 +1,7 @@
 ---
 id: FLW-CON-001
 version: 1.0
-status: approved
+status: implementing
 domain: governance
 priority: high
 origin: FLW-DSC-003
