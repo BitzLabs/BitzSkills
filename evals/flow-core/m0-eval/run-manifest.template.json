@@ -1,0 +1,35 @@
+{
+  "milestone": "M0",
+  "status": "not-measured",
+  "note": "実測前のテンプレート。実測時にコピーして値を埋め、score.py --manifest で result を追記する。",
+  "prompt_version": "2026-07-31.1",
+  "fixture": {
+    "builder": "evals/flow-core/m0-eval/fixture.py",
+    "raw_baseline_bytes": {
+      "repo-inspect": null,
+      "dirty-status": null,
+      "diff-summary": null
+    }
+  },
+  "conditions": {
+    "no-skill": "SKILL.md を配置しない",
+    "v1-skill": "plugins/bitz-flow/skills/flow-core/SKILL.md（稼働中の v1）",
+    "v2-skill": "evals/flow-core/fixtures/v2-skill/SKILL.md"
+  },
+  "platforms": {
+    "claude-code": {"model_provider": null, "model_id": null, "model_version": null, "measured_at": null},
+    "codex-cli": {"model_provider": null, "model_id": null, "model_version": null, "measured_at": null},
+    "antigravity": {"model_provider": null, "model_id": null, "model_version": null, "measured_at": null}
+  },
+  "budget": {
+    "note": "FLW-DSN-014 の初期 budget。milestone 開始時に実績を記録し、人間が次 budget を確認する。",
+    "max_prs": 1,
+    "max_sessions": 5,
+    "actual_prs": null,
+    "actual_sessions": null,
+    "review_fix_rounds": null,
+    "exit_miss_reasons": [],
+    "budget_reconfirmation_ref": null
+  },
+  "result": null
+}

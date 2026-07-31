@@ -2,7 +2,7 @@
 implements: FLW-NFR-001, FLW-NFR-002, FLW-FR-012
 depends_on: [FLW-TSK-010, FLW-TSK-011]
 boundary: evals/flow-core/m0-eval/, plugins/bitz-flow/.claude-plugin/plugin.json, plugins/bitz-flow/plugin.json, plugins/bitz-flow/.codex-plugin/plugin.json
-status: pending
+status: implementing
 ---
 
 ### M0 の3プラットフォーム eval と出口判定
@@ -35,3 +35,12 @@ status: pending
 - **備考**: 本タスクの完了が M0 出口＝M1 の入口条件になる。version bump は M0 の PR 内に含める
   （AGENTS.md の「version bump は同一 PR 内」規約。コミット位置は問わない）。
   v2 script はこの時点でも prerelease であり、安定版入口として案内しない（FLW-DSN-011）。
+- **進捗（2026-07-31）**: harness（`evals/flow-core/m0-eval/`）まで実装済み、**実測は未実施**。
+  3platform × 3条件 × 3task × 10 trial の実行は別途行う。したがって version bump も未実施で、
+  3マニフェストと `flowlib/__init__.py` の `__version__` は `0.3.1` のまま揃えている
+  （出口条件を満たした時点で同じ変更セットで 0.4.0 へ上げる）。
+  harness の予備計測で **byte 削減率が閾値未達**（`dirty-status` 63% / 70%、
+  `diff-summary` 66% / 80%）であることが判明した。数値を通すための fixture 差し替えや
+  baseline の弱体化は行っていない。実測開始前に (1) baseline コマンドの定義、
+  (2) fixture の代表性、(3) 閾値そのものの再校正を人間が裁定する必要がある
+  （詳細と実測値は `evals/flow-core/m0-eval/README.md` の予備計測節）。
