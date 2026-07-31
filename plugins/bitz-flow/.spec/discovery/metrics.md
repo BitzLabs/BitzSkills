@@ -2,8 +2,8 @@
 id: FLW-DSC-002
 title: "bitz-flow v2 成功指標"
 status: draft
-version: 2.0
-updated: 2026-07-29
+version: 2.1
+updated: 2026-07-31
 owner: hide
 ---
 
@@ -41,14 +41,32 @@ UTF-8 byte 数と項目数を正とし、モデル別 token 数は補助指標�
 
 | 操作群 | 比較対象 | 初期目標 |
 |---|---|---:|
-| status / branch / log / Issue / PR list | 同じ情報を得る生 CLI の UTF-8 bytes | median 70%以上削減 |
-| diff summary | 生 unified diff | median 80%以上削減 |
+| status / branch / log / Issue / PR list | **no-skill 条件で実際に消費された出力**の UTF-8 bytes | median 70%以上削減 |
+| diff summary | 生 unified diff（`git diff <base>`） | median 80%以上削減 |
 | diff detail | `--unified=3` の対象 hunk | median 40%以上削減 |
 | 書込み結果 | 生 commit / push / gh 出力 | median 80%以上削減 |
 
 圧縮率だけを最適化しない。各 fixture について「次の安全な行動を決める必須フィールド」を定義し、
 その保持率を **100%** とする。情報が上限を超えた場合は黙って切り捨てず、
 `truncated: true`、総件数、次の絞込み条件を返す。
+
+### 測定条件（2026-07-31 裁定。`SI-FLW-007`）
+
+閾値だけを定めても、baseline の選び方で合否が反転する（実測で確認済み。
+裁定記録 `.spec/reports/decision-2026-07-31-byte-baseline-measurement.md`）。次を固定する。
+
+1. **status 系の baseline は固定コマンドにしない。** eval の `no-skill` 条件で
+   エージェントが実際に消費した出力の UTF-8 byte 数を分母とし、platform ごとに median を取る。
+   「skill が無いときに実際いくら消費するか」が本来測りたい量であり、比較対象の選択で
+   結果を動かせないようにするためである。
+2. **`diff summary` の baseline は生 unified diff**（`git diff <base>`）で確定する。
+3. **truncation で削減率を稼がない。** byte 比較は `truncated: false`（全件表示）の trial
+   だけで行い、省略された出力を全量 baseline と比較しない。
+4. **corpus は規模の異なる3 fixture**（小 / 中 / 大）とし、median はその横断で取る。
+   corpus は決定論的に構築できる形で version 管理する（`evals/flow-core/m0-eval/fixture.py`）。
+
+70% / 80% の閾値は本裁定では変更しない。案A での実測後に、必要なら `FLW-NFR-002` の
+supersede として別途裁定する。
 
 ## Guardrail Metrics
 

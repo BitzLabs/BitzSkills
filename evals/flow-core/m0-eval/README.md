@@ -28,14 +28,14 @@ prompt は `flow.py` に言及しない。言及すると Dispatcher Invocation 
 
 ## 手順
 
-1. **fixture を作る**（全 platform で同一状態を観測するため必須）
+1. **corpus を作る**（全 platform で同一状態を観測するため必須）
 
    ```bash
-   python3 evals/flow-core/m0-eval/fixture.py --path /tmp/m0-fixture --baseline --format json
+   python3 evals/flow-core/m0-eval/fixture.py --path /tmp/m0-corpus --size all --baseline --format json
    ```
 
-   出力の `raw_baseline_bytes` を run manifest と各 trial の `raw_baseline_bytes` に使う。
-   これが byte 削減率の分母（生 CLI で同じ情報を得たときの UTF-8 byte 数）になる。
+   出力の `raw_baseline_bytes` は **`diff-summary` の分母**として各 trial へ記録する。
+   `dirty-status` の分母は `no-skill` 条件の実測値なので、ここでは測らない。
 
 2. **条件ごとにスキルを配置する**
 
@@ -52,6 +52,8 @@ prompt は `flow.py` に言及しない。言及すると Dispatcher Invocation 
    観測は harness 側で行い、エージェントの自己申告を使わない
    （`first_git_action` は実行されたコマンドの観測、`schema_match` は
    `tests/test_flow_contract.py` と同じ検査で判定する）。
+   `truncated` は result の同名 field をそのまま記録する。byte 比較の対象になるため、
+   全件を見せる設定（`--limit` を件数以上）で測ること。
 
 4. **採点する**
 
@@ -69,7 +71,8 @@ prompt は `flow.py` に言及しない。言及すると Dispatcher Invocation 
 - Cross-model Decision Parity **100%**
 - 必須 field 保持 **100%**、golden schema 一致 **100%**
 - raw fallback / 状態変更 / 秘密値出力 / 黙った truncation が **各 0 件**
-- `dirty-status` の median byte 削減 **70%以上**、`diff-summary` は **80%以上**
+- `dirty-status` の median byte 削減 **70%以上**（分母 = `no-skill` の実測 median）、
+  `diff-summary` は **80%以上**（分母 = 生 unified diff）。いずれも `truncated: false` の trial のみ
 - 各セル（platform × condition × task）が **10 trial** 揃っている
 
 SFCR は `discovery/metrics.md` の North Star Metric の定義に従い、
@@ -82,35 +85,41 @@ SFCR は `discovery/metrics.md` の North Star Metric の定義に従い、
 5回の作業 session または 1 PR で出口に到達しない場合は、scope / pivot を人間へ再提示する
 （`FLW-DSN-014` の timebox）。
 
-## 予備計測（harness 検証用。出口判定ではない）
+## 測定条件（2026-07-31 裁定。`SI-FLW-007`）
 
-harness が動くことを確かめるため、fixture 上で v2 dispatcher の compact 出力と
-生 CLI baseline を1回だけ測った（エージェントを介さない直接実行）。
+閾値だけを定めても baseline の選び方で合否が反転することを実測で確認したため、次を固定した
+（裁定記録: `plugins/bitz-flow/.spec/reports/decision-2026-07-31-byte-baseline-measurement.md`）。
 
-| task | 生 CLI baseline | v2 compact | 削減率 | 閾値 |
-|---|---:|---:|---:|---:|
-| `repo-inspect` | 78 B（`git status --short --branch`） | 120 B | **-54%** | 規定なし |
-| `dirty-status` | 464 B（`git status`） | 170 B | **63%** | 70% |
-| `diff-summary` | 458 B（`git diff HEAD`） | 155 B | **66%** | 80% |
+1. **`dirty-status` の baseline は固定コマンドにしない。** `no-skill` 条件でエージェントが
+   実際に消費した出力の byte 数を分母とし、platform ごとに median を取る。
+2. **`diff-summary` の baseline は生 unified diff**（`git diff <base>`）。`fixture.py` が測る。
+3. **byte 比較は `truncated: false` の trial だけ**で行う。省略した出力を全量 baseline と
+   比較しない（`score.py` が truncated を除外し、全件 trial が無ければ未達として扱う）。
+4. **corpus は規模の異なる3 fixture**（小 4 / 中 30 / 大 120 モジュール相当）。median は横断で取る。
 
-**現時点の fixture では byte 削減の閾値を満たさない。** 数値を通すために fixture を
-差し替えたり baseline コマンドを弱いものへ変えたりはしていない。実測前に次を裁定する必要がある。
+### 裁定の根拠になった実測（2026-07-31）
 
-1. **baseline コマンドの定義** — `discovery/metrics.md` は「同じ情報を得る生 CLI の
-   UTF-8 bytes」としか定めておらず、`git status`（長形式）と `git status --short` の
-   どちらを基準にするかで結果が反転する。`--short` を基準にすると compact のほうが
-   大きくなる（`repo-inspect` 行が -54% なのはこれと同じ理由で、短縮形の baseline と
-   比較しているため）。
-2. **fixture の代表性** — 変更 4 件の小さな fixture では、compact の固定部分
-   （判定行・`NEXT` 行）の比重が大きい。削減率は変更件数が増えるほど有利になるため、
-   実運用に近い規模の fixture で測るべきか裁定する。
-3. **閾値そのもの** — 70% / 80% は `[proto / 未検証]` として起票された初期目標であり、
-   実測後に再校正する余地があると `discovery/metrics.md` に明記されている。
+| baseline 候補 | 小(7 件) | 中(33 件) | 大(123 件) |
+|---|---:|---:|---:|
+| `git status`（長形式） | 59.6% | 47.0% | 40.2% |
+| `git status --short --branch` | -71.9% | -16.5% | -4.4% |
+| `git status --porcelain=v2 --branch` | 74.2% | 84.2% | 85.8% |
+| `git diff HEAD`（生 unified diff） | 81.7% | 89.0% | 90.0% |
+| `git diff --stat HEAD` | 17.6% | 31.6% | 33.8% |
 
-いずれも M0 の合否を左右するため、**実測を始める前に人間が裁定する**。
+- diff は生 unified diff 比なら全規模で 80% を超える。
+- status は `git status`（長形式）では達成できず、**規模が大きいほど悪化する**。
+- `--porcelain=v2` なら 85% 出るが、これは `flow.py` 自身が parse に使う形式であり、
+  自分の入力を分母にするのは公正さを欠くため採らなかった。
+- 大 fixture では既定 limit 50 のとき `git status` 比が 40.2% → 71.7% へ跳ねる。
+  123 件中 50 件しか出していないため**同じ情報ではない**。これが条件3 の理由である。
+
+閾値（70% / 80%）は本裁定では変更していない。案A の実測後に、必要なら `FLW-NFR-002` の
+supersede として別途裁定する。
 
 ## 現況
 
-**未実測**。3プラットフォームでの実行は本 harness を用いて別途行う。
+**未実測**。測定条件は 2026-07-31 の裁定で確定済み。3プラットフォームでの実行は
+本 harness を用いて別途行う。
 実測後、`run-manifest.template.json` をコピーした run manifest と trial JSONL を
 本ディレクトリへ追加し、`score.py` の判定を M0 出口の証跡とする。

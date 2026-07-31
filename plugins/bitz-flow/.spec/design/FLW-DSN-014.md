@@ -2,8 +2,8 @@
 id: FLW-DSN-014
 title: "GitHub capability・M0検証設計"
 status: active
-version: 1.3
-updated: 2026-07-29
+version: 1.4
+updated: 2026-07-31
 owner: hide
 implements: FLW-FR-003, FLW-FR-008, FLW-FR-012, FLW-NFR-001, FLW-NFR-002, FLW-NFR-004
 origin: FLW-REV-002
@@ -92,6 +92,13 @@ write operation、GitHub network operation、worktree作成はM0に含めない�
 - raw fallback、状態変更、秘密値出力、黙ったtruncationが各0件。
 - statusのmedian byte削減70%以上、diff-summaryのmedian byte削減80%以上。
 - 操作別p90とabsolute byte上限をfixture manifestへ固定し、以後の回帰判定に使う。
+
+byte削減の測定条件は2026-07-31の裁定（`SI-FLW-007`）で固定した。statusのbaselineは
+固定commandではなく**no-skill条件で実際に消費された出力**のbyte数とし、platformごとにmedianを取る。
+diff-summaryのbaselineは生unified diff（`git diff <base>`）とする。byte比較は`truncated: false`の
+trialだけで行い、省略した出力を全量baselineと比較しない。corpusは規模の異なる3 fixtureとし、
+medianはその横断で取る。詳細は`.spec/discovery/metrics.md`の測定条件節と
+`.spec/reports/decision-2026-07-31-byte-baseline-measurement.md`。
 
 1条件でも未達ならM1へ進まず、description、入口名、schema、rendererを修正してM0を再実行する。
 5回の作業sessionまたは1PRで出口に到達しない場合はscope/pivotを人間へ再提示する。
