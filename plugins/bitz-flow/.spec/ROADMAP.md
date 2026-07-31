@@ -32,12 +32,14 @@ v2 はこれを、3プラットフォーム（Claude Code / Codex CLI / Antigrav
 - Design Gate: **PASS**（2026-07-29。FLW-DSN-000 および FLW-DSN-002〜014 を active 化。
   裁定記録 `.spec/reports/decision-2026-07-29-bitz-flow-v2-design-gate.md`）
 - 多観点再レビュー **PASS 4.84**（critical 0 / major 0）、System Engineering Review **PASS**
-- v2 の FR / NFR / CON は EARS 形式で **draft 起票済み**
+- v2 の FR / NFR / CON は **approved**（2026-07-31 に一括承認。裁定2）
 - 実装: **未着手**（v2 のタスクは 0）
 - 2026-07-31、本書が洗い出した未裁定論点7件を裁定
   （`.spec/reports/decision-2026-07-31-bitz-flow-roadmap-open-issues.md`）
 
-次は **要件承認ゲート（人間裁定）** であり、その後に M0 だけをタスク分解する。
+次は **M0 Contract Kernel のタスク分解と実装**である。承認によって生じた23件の未検分の
+代行遷移は、`verified → promoted` を経て Promotion Gate の GatePassage で検分される
+（2026-07-29 分と違い、放置ではなく通常のライフサイクルで解消する滞留）。
 上流側の前提だった bitz-sdd 3.x の V4設計Ready化（`plugins/bitz-sdd/.spec/ROADMAP.md` の R0）は
 2026-07-30 に完了しており、bitz-flow V2 の着手を妨げる外部依存はない。
 
@@ -58,8 +60,8 @@ v2 はこれを、3プラットフォーム（Claude Code / Codex CLI / Antigrav
 |---|---|---|---|
 | Discovery Gate | 人間 | assumptions / worksheet の裁定記録 | Go（2026-07-29） |
 | Design Gate | 人間 | FLW-REV-002 多観点 PASS、FLW-REV-003 SE PASS | PASS（2026-07-29。記録 `FLW-GATE-001`） |
-| **要件承認ゲート** | **人間** | FLW-REV-004 / FLW-REV-005 と draft 要件の diff | **未実施（次のアクション）** |
-| M0 出口 | 機械（eval）+ 人間確認 | FLW-DSN-014 の M0 出口条件 | 未実施 |
+| 要件承認ゲート | 人間 | FLW-REV-004 / FLW-REV-005 と draft 要件の diff | 完了（2026-07-31。一括承認） |
+| **M0 出口** | 機械（eval）+ 人間確認 | FLW-DSN-014 の M0 出口条件 | **未実施（次のアクション）** |
 | M1〜M5 出口 | 機械（fixture / canary）+ 人間確認 | FLW-DSN-014 の出口・予算・縮退境界 | 未実施 |
 | Promotion Gate | 人間 | 全 milestone green、canary、代行遷移の検分 | 未実施 |
 

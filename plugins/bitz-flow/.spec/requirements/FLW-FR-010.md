@@ -1,7 +1,7 @@
 ---
 id: FLW-FR-010
 version: 1.0
-status: draft
+status: approved
 domain: workflow
 priority: high
 origin: .spec/reports/decision-2026-07-29-bitz-flow-v2-design-gate.md

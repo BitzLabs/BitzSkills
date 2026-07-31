@@ -1,6 +1,6 @@
 # inspection-report.md (2026-07-31)
 
-成果物数: 51 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0 / 検証証跡: 0
+成果物数: 51 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 23 / 孤児要件: 0 / 検証証跡: 0
 
 ## 問題一覧
 - なし ✅
@@ -15,15 +15,59 @@
 - FLW-GATE-001 — design / 2026-07-29 / 裁定者 hide / 対象 14 件 / 確認した裁定記録 1 件
 
 ## 実装待ち要件（approved だが implements するタスクがない — WARN）
-- なし ✅
+- FLW-CON-001
+- FLW-CON-002
+- FLW-CON-003
+- FLW-CON-004
+- FLW-CON-005
+- FLW-CON-006
+- FLW-FR-003
+- FLW-FR-004
+- FLW-FR-005
+- FLW-FR-006
+- FLW-FR-007
+- FLW-FR-008
+- FLW-FR-009
+- FLW-FR-010
+- FLW-FR-011
+- FLW-FR-012
+- FLW-NFR-001
+- FLW-NFR-002
+- FLW-NFR-003
+- FLW-NFR-004
+- FLW-NFR-005
+- FLW-NFR-006
+- FLW-NFR-007
 
 ## 孤児要件（implementing以降なのに implements するタスクがない）
 - なし ✅
 
 ## テスト/実装からの参照がない要件（approved以降）
-- なし ✅
+- FLW-CON-002
+- FLW-CON-003
+- FLW-CON-004
+- FLW-CON-005
+- FLW-CON-006
+- FLW-FR-003
+- FLW-FR-004
+- FLW-FR-005
+- FLW-FR-006
+- FLW-FR-007
+- FLW-FR-008
+- FLW-FR-009
+- FLW-FR-010
+- FLW-FR-011
+- FLW-FR-012
+- FLW-NFR-001
+- FLW-NFR-002
+- FLW-NFR-003
+- FLW-NFR-004
+- FLW-NFR-005
+- FLW-NFR-006
+- FLW-NFR-007
 
 ## 参照がない manual-check 要件（テスト参照は原理的に生じない — 検証記録で担保）
+- FLW-CON-001
 - FLW-FR-002
 
 ## 他ワークスペースのテスト/実装から参照されている要件
@@ -36,12 +80,12 @@
 ## Traceability Matrix
 | ID | status | domain | v-method | tasks | 参照元数 |
 |----|--------|--------|----------|-------|----------|
-| FLW-CON-001 | 起草中（draft） | governance | manual-check | 0 | 0 |
-| FLW-CON-002 | 起草中（draft） | governance | unit-test | 0 | 0 |
-| FLW-CON-003 | 起草中（draft） | governance | unit-test | 0 | 0 |
-| FLW-CON-004 | 起草中（draft） | governance | benchmark | 0 | 0 |
-| FLW-CON-005 | 起草中（draft） | governance | benchmark | 0 | 0 |
-| FLW-CON-006 | 起草中（draft） | governance | unit-test | 0 | 0 |
+| FLW-CON-001 | 承認済み（approved） | governance | manual-check | 0 | 0 |
+| FLW-CON-002 | 承認済み（approved） | governance | unit-test | 0 | 0 |
+| FLW-CON-003 | 承認済み（approved） | governance | unit-test | 0 | 0 |
+| FLW-CON-004 | 承認済み（approved） | governance | benchmark | 0 | 0 |
+| FLW-CON-005 | 承認済み（approved） | governance | benchmark | 0 | 0 |
+| FLW-CON-006 | 承認済み（approved） | governance | unit-test | 0 | 0 |
 | FLW-DSC-000 | 起草中（draft） |  |  | 0 | 0 |
 | FLW-DSC-001 | 起草中（draft） |  |  | 0 | 0 |
 | FLW-DSC-002 | 起草中（draft） |  |  | 0 | 0 |
@@ -66,23 +110,23 @@
 | FLW-DSN-014 | active |  |  | 0 | 0 |
 | FLW-FR-001 | 検証済み（verified） | governance | unit-test | 3 | 5 |
 | FLW-FR-002 | 検証済み（verified） | tooling | manual-check | 1 | 1 |
-| FLW-FR-003 | 起草中（draft） | tooling | unit-test | 0 | 0 |
-| FLW-FR-004 | 起草中（draft） | tooling | unit-test | 0 | 0 |
-| FLW-FR-005 | 起草中（draft） | execution | unit-test | 0 | 0 |
-| FLW-FR-006 | 起草中（draft） | workflow | unit-test | 0 | 0 |
-| FLW-FR-007 | 起草中（draft） | tooling | unit-test | 0 | 0 |
-| FLW-FR-008 | 起草中（draft） | sync | unit-test | 0 | 0 |
-| FLW-FR-009 | 起草中（draft） | workflow | unit-test | 0 | 0 |
-| FLW-FR-010 | 起草中（draft） | workflow | unit-test | 0 | 0 |
-| FLW-FR-011 | 起草中（draft） | tooling | unit-test | 0 | 0 |
-| FLW-FR-012 | 起草中（draft） | governance | unit-test | 0 | 0 |
-| FLW-NFR-001 | 起草中（draft） | verification | benchmark | 0 | 0 |
-| FLW-NFR-002 | 起草中（draft） | verification | benchmark | 0 | 0 |
-| FLW-NFR-003 | 起草中（draft） | execution | unit-test | 0 | 0 |
-| FLW-NFR-004 | 起草中（draft） | tooling | unit-test | 0 | 0 |
-| FLW-NFR-005 | 起草中（draft） | execution | unit-test | 0 | 0 |
-| FLW-NFR-006 | 起草中（draft） | execution | unit-test | 0 | 0 |
-| FLW-NFR-007 | 起草中（draft） | tooling | unit-test | 0 | 0 |
+| FLW-FR-003 | 承認済み（approved） | tooling | unit-test | 0 | 0 |
+| FLW-FR-004 | 承認済み（approved） | tooling | unit-test | 0 | 0 |
+| FLW-FR-005 | 承認済み（approved） | execution | unit-test | 0 | 0 |
+| FLW-FR-006 | 承認済み（approved） | workflow | unit-test | 0 | 0 |
+| FLW-FR-007 | 承認済み（approved） | tooling | unit-test | 0 | 0 |
+| FLW-FR-008 | 承認済み（approved） | sync | unit-test | 0 | 0 |
+| FLW-FR-009 | 承認済み（approved） | workflow | unit-test | 0 | 0 |
+| FLW-FR-010 | 承認済み（approved） | workflow | unit-test | 0 | 0 |
+| FLW-FR-011 | 承認済み（approved） | tooling | unit-test | 0 | 0 |
+| FLW-FR-012 | 承認済み（approved） | governance | unit-test | 0 | 0 |
+| FLW-NFR-001 | 承認済み（approved） | verification | benchmark | 0 | 0 |
+| FLW-NFR-002 | 承認済み（approved） | verification | benchmark | 0 | 0 |
+| FLW-NFR-003 | 承認済み（approved） | execution | unit-test | 0 | 0 |
+| FLW-NFR-004 | 承認済み（approved） | tooling | unit-test | 0 | 0 |
+| FLW-NFR-005 | 承認済み（approved） | execution | unit-test | 0 | 0 |
+| FLW-NFR-006 | 承認済み（approved） | execution | unit-test | 0 | 0 |
+| FLW-NFR-007 | 承認済み（approved） | tooling | unit-test | 0 | 0 |
 | FLW-REV-002 | active |  |  | 0 | 0 |
 | FLW-REV-003 | active |  |  | 0 | 0 |
 | FLW-REV-004 | active |  |  | 0 | 0 |

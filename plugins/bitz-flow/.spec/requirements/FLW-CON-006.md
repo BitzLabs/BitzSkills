@@ -1,7 +1,7 @@
 ---
 id: FLW-CON-006
 version: 1.2
-status: draft
+status: approved
 domain: governance
 priority: high
 origin: 2026-07-29 ユーザー指示（draft要件をFLW-NFR-003から順番に解決）
