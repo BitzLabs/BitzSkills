@@ -1,13 +1,15 @@
 ---
 implements: FLW-NFR-001
 depends_on: [FLW-TSK-009]
-boundary: plugins/bitz-flow/skills/flow-core/SKILL.md
-status: blocked
+boundary: evals/flow-core/fixtures/v2-skill/
+status: pending
 ---
 
-### M0 flow-core SKILL.md の Mandatory entry protocol
+### M0 v2 flow-core SKILL.md（eval fixture）の Mandatory entry protocol
 
-- **作業内容**: FLW-DSN-010 のスキル構成に従い、`flow-core/SKILL.md` の本文を次の順序へ固定する。
+- **作業内容**: FLW-DSN-010 のスキル構成に従い、v2 の `flow-core` SKILL.md を
+  `evals/flow-core/fixtures/v2-skill/SKILL.md` として作成する（2026-07-31 裁定により
+  稼働中の SKILL.md は M0〜M5 の間 v1 のまま据え置く）。本文は次の順序へ固定する。
 
   1. Mandatory entry protocol — Git / GitHub 操作は `flow.py` を使う。raw fallback をしない。
      `UNSUPPORTED` なら停止して不足操作を報告する。
@@ -27,13 +29,9 @@ status: blocked
 - **完了条件**: FLW-DSN-010 の機械検査項目（禁止 raw command block の不在、public invocation が
   `flow.py` だけ、`UNSUPPORTED` 時の fallback 禁止の明記）を満たすこと。
   skill-validator のチェックリストを通過すること。
-- **備考**: **着手前に人間の確認が必要**（`status: blocked`）。FLW-DSN-011 は Promotion Gate まで
-  v1-current（現行4スキル）を実行契約とし「v2 script を安定版入口として案内しない」と定めるが、
-  Mandatory entry protocol は「必ず `flow.py` を使う」と宣言するもので、稼働中の
-  `flow-core/SKILL.md` を M0 時点で置き換えると v1-current の案内が失われる。
-  一方 FLW-DSN-014 の M0 eval は skill なし・v1 skill・v2 skill の3条件を比較するため、
-  同一時点で v1 と v2 の両方が必要になる。
-  FLW-DSN-011 の canary が M0 cohort を「3platform の保存 fixture」と表現していることから、
-  v2 SKILL.md を eval fixture として分離し、稼働中の SKILL.md は Promotion Gate で切り替える
-  解釈を第一候補とする。稼働ファイルを直接書き換える解釈を採る場合は boundary と
-  v1-current の定義が変わるため、着手前に裁定する。
+- **備考**: 稼働中の `plugins/bitz-flow/skills/flow-core/SKILL.md` を本タスクで変更しない
+  （boundary 外）。v1-current を M0 の時点で壊さないための分離であり、稼働ファイルへの反映は
+  FLW-DSN-011 の切替シーケンス手順9（v1 撤去）と同じ変更セットで行う。
+  Promotion Gate では、稼働 SKILL.md が eval で測定した fixture と同一内容であることを
+  照合する（fixture と稼働ファイルの乖離検出）。
+  裁定参照: `.spec/reports/decision-2026-07-31-m0-skill-fixture-separation.md`。

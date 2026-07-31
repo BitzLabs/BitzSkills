@@ -1,7 +1,7 @@
 ---
 implements: FLW-NFR-001, FLW-NFR-002, FLW-FR-012
 depends_on: [FLW-TSK-010, FLW-TSK-011]
-boundary: evals/flow-core/, plugins/bitz-flow/.claude-plugin/plugin.json, plugins/bitz-flow/plugin.json, plugins/bitz-flow/.codex-plugin/plugin.json
+boundary: evals/flow-core/m0-eval/, plugins/bitz-flow/.claude-plugin/plugin.json, plugins/bitz-flow/plugin.json, plugins/bitz-flow/.codex-plugin/plugin.json
 status: pending
 ---
 
@@ -17,7 +17,7 @@ status: pending
   | trials | platform × task ごとに10回 |
   | prompt | version 管理した同一 prompt |
   | oracle | 最初の Git 操作が `flow.py`、schema 一致、期待 snapshot / field 一致 |
-  | baseline | skill なしと v1 skill の両方 |
+  | baseline | skill なしと v1 skill の両方（v1 = 稼働中の SKILL.md、v2 = `evals/flow-core/fixtures/v2-skill/`） |
   | retry | agent による自己再試行は失敗。harness 再実行は別 trial |
 
   出口条件を判定する。platform ごとの Dispatcher Invocation Rate 95%以上かつ skill なし baseline 比

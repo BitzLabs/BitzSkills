@@ -99,7 +99,7 @@
 | FLW-DSN-011 | active |  |  | 0 | 2 |
 | FLW-DSN-012 | active |  |  | 0 | 2 |
 | FLW-DSN-013 | active |  |  | 0 | 1 |
-| FLW-DSN-014 | active |  |  | 0 | 2 |
+| FLW-DSN-014 | active |  |  | 0 | 1 |
 | FLW-FR-001 | 検証済み（verified） | governance | unit-test | 3 | 5 |
 | FLW-FR-002 | 検証済み（verified） | tooling | manual-check | 1 | 1 |
 | FLW-FR-003 | 実装中（implementing） | tooling | unit-test | 4 | 4 |
