@@ -1,0 +1,193 @@
+{
+  "budget": {
+    "actual_prs": 0,
+    "actual_sessions": 2,
+    "budget_reconfirmation_ref": null,
+    "exit_miss_reasons": [
+      "codex-cli 単独では Invocation 100% / SFCR 100% / 必須 field 100% / golden schema 100% / 危険事象0件 / diff-summary 89.0% / dirty-status 75.0% と全閾値を満たす。",
+      "Decision Parity の揺れは score.py の既知の制約（corpus を grouping key に含めず small/medium/large の正当な件数差を揺れと誤検出する）。",
+      "antigravity は第2ラウンド未実測のため M0 出口は未達のまま。"
+    ],
+    "max_prs": 1,
+    "max_sessions": 5,
+    "review_fix_rounds": 0
+  },
+  "conditions": {
+    "no-skill": "--ignore-user-config + repo skill なし",
+    "v1-skill": "repo .agents/skills に現行 v1 SKILL.md を配置",
+    "v2-skill": "repo .agents/skills に v2 fixture + scripts/references/schemas を配置"
+  },
+  "fixture": {
+    "builder": "evals/flow-core/m0-eval/fixture.py",
+    "raw_baseline_bytes": {
+      "no-skill": {
+        "large": {
+          "diff-summary": 27940
+        },
+        "medium": {
+          "diff-summary": 7160
+        },
+        "small": {
+          "diff-summary": 1204
+        }
+      },
+      "v1-skill": {
+        "large": {
+          "diff-summary": 27940
+        },
+        "medium": {
+          "diff-summary": 7160
+        },
+        "small": {
+          "diff-summary": 1204
+        }
+      },
+      "v2-skill": {
+        "large": {
+          "diff-summary": 27940
+        },
+        "medium": {
+          "diff-summary": 7160
+        },
+        "small": {
+          "diff-summary": 1204
+        }
+      }
+    },
+    "schedule": "trial 1,4,7,10=small; 2,5,8=medium; 3,6,9=large"
+  },
+  "known_limitations": [
+    "score.py の Decision Parity は corpus を grouping key に含めず task 単位で比較するため、small / medium / large の正当な件数差を揺れとして誤検出する。",
+    "trial 10件を3 corpusへ均等配分できないため、固定順で small=4件、medium=3件、large=3件とした。",
+    "no-skill の dirty-status で codex は `git status --short` と `git status --branch --porcelain=v2` を続けて実行する。harness は no-skill 条件の raw コマンド出力を連結して分母にするため、同じ情報を2回取得した分だけ分母が膨らむ。claude-code（1コマンド）との差が byte 削減率の platform 差の主因である。",
+    "第1ラウンドで v2-skill/repo-inspect の 9/10 が output 0 byte になった事象は本ラウンドでは 0 件（10/10 が 120 byte）。"
+  ],
+  "milestone": "M0",
+  "note": "第2ラウンド（harness 欠陥・設計論点の修正後）。Codex CLI のみの部分実測。raw event log は --keep-logs でリポジトリ外へ保存し、成果物には要約だけを記録。",
+  "platforms": {
+    "antigravity": {
+      "status": "not-measured"
+    },
+    "claude-code": {
+      "status": "not-measured"
+    },
+    "codex-cli": {
+      "codex_cli": "codex-cli 0.146.0",
+      "completed_trials": 90,
+      "measured_at": "2026-08-03T12:18:49Z",
+      "model_id": "gpt-5.6-sol",
+      "model_provider": "openai",
+      "model_version": "2026-08-03 service snapshot",
+      "reasoning_effort": "low"
+    }
+  },
+  "prompt_version": "2026-07-31.1",
+  "result": {
+    "findings": [
+      "claude-code: v2 の trial が無い（未実測）",
+      "antigravity: v2 の trial が無い（未実測）",
+      "Decision Parity: diff-summary: codex-cli 内で判定が揺れている",
+      "Decision Parity: diff-summary: platform 間で判定が一致しない（3 種）",
+      "Decision Parity: dirty-status: codex-cli 内で判定が揺れている",
+      "Decision Parity: dirty-status: platform 間で判定が一致しない（3 種）",
+      "claude-code/no-skill/repo-inspect: 0/10 trial（不足）",
+      "claude-code/no-skill/dirty-status: 0/10 trial（不足）",
+      "claude-code/no-skill/diff-summary: 0/10 trial（不足）",
+      "claude-code/v1-skill/repo-inspect: 0/10 trial（不足）",
+      "claude-code/v1-skill/dirty-status: 0/10 trial（不足）",
+      "claude-code/v1-skill/diff-summary: 0/10 trial（不足）",
+      "claude-code/v2-skill/repo-inspect: 0/10 trial（不足）",
+      "claude-code/v2-skill/dirty-status: 0/10 trial（不足）",
+      "claude-code/v2-skill/diff-summary: 0/10 trial（不足）",
+      "antigravity/no-skill/repo-inspect: 0/10 trial（不足）",
+      "antigravity/no-skill/dirty-status: 0/10 trial（不足）",
+      "antigravity/no-skill/diff-summary: 0/10 trial（不足）",
+      "antigravity/v1-skill/repo-inspect: 0/10 trial（不足）",
+      "antigravity/v1-skill/dirty-status: 0/10 trial（不足）",
+      "antigravity/v1-skill/diff-summary: 0/10 trial（不足）",
+      "antigravity/v2-skill/repo-inspect: 0/10 trial（不足）",
+      "antigravity/v2-skill/dirty-status: 0/10 trial（不足）",
+      "antigravity/v2-skill/diff-summary: 0/10 trial（不足）"
+    ],
+    "metrics": {
+      "coverage": {
+        "antigravity/no-skill/diff-summary": 0,
+        "antigravity/no-skill/dirty-status": 0,
+        "antigravity/no-skill/repo-inspect": 0,
+        "antigravity/v1-skill/diff-summary": 0,
+        "antigravity/v1-skill/dirty-status": 0,
+        "antigravity/v1-skill/repo-inspect": 0,
+        "antigravity/v2-skill/diff-summary": 0,
+        "antigravity/v2-skill/dirty-status": 0,
+        "antigravity/v2-skill/repo-inspect": 0,
+        "claude-code/no-skill/diff-summary": 0,
+        "claude-code/no-skill/dirty-status": 0,
+        "claude-code/no-skill/repo-inspect": 0,
+        "claude-code/v1-skill/diff-summary": 0,
+        "claude-code/v1-skill/dirty-status": 0,
+        "claude-code/v1-skill/repo-inspect": 0,
+        "claude-code/v2-skill/diff-summary": 0,
+        "claude-code/v2-skill/dirty-status": 0,
+        "claude-code/v2-skill/repo-inspect": 0,
+        "codex-cli/no-skill/diff-summary": 10,
+        "codex-cli/no-skill/dirty-status": 10,
+        "codex-cli/no-skill/repo-inspect": 10,
+        "codex-cli/v1-skill/diff-summary": 10,
+        "codex-cli/v1-skill/dirty-status": 10,
+        "codex-cli/v1-skill/repo-inspect": 10,
+        "codex-cli/v2-skill/diff-summary": 10,
+        "codex-cli/v2-skill/dirty-status": 10,
+        "codex-cli/v2-skill/repo-inspect": 10
+      },
+      "danger_counts": {
+        "raw_fallback": 0,
+        "secret_output": 0,
+        "silent_truncation": 0,
+        "state_change": 0
+      },
+      "decision_parity": 0.3333333333333333,
+      "golden_schema_match": 1.0,
+      "platforms": {
+        "antigravity": {
+          "baseline_invocation_rate": null,
+          "improvement_pp": null,
+          "invocation_rate": null,
+          "sfcr": null,
+          "trials_v2": 0
+        },
+        "claude-code": {
+          "baseline_invocation_rate": null,
+          "improvement_pp": null,
+          "invocation_rate": null,
+          "sfcr": null,
+          "trials_v2": 0
+        },
+        "codex-cli": {
+          "baseline_invocation_rate": 0.0,
+          "improvement_pp": 100.0,
+          "invocation_rate": 1.0,
+          "sfcr": 1.0,
+          "trials_v2": 30
+        }
+      },
+      "required_field_preservation": 1.0,
+      "tasks": {
+        "diff-summary": {
+          "baseline_source": "raw-unified-diff",
+          "median_byte_reduction": 0.889804469273743,
+          "notes": [],
+          "threshold": 0.8
+        },
+        "dirty-status": {
+          "baseline_source": "no-skill",
+          "median_byte_reduction": 0.750187265917603,
+          "notes": [],
+          "threshold": 0.7
+        }
+      }
+    },
+    "passed": false
+  },
+  "round": 2,
+  "status": "partially-measured"
+}

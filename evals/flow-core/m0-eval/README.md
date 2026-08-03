@@ -119,48 +119,60 @@ supersede として別途裁定する。
 
 ## 現況
 
-**第2ラウンド（Claude Code のみ）実測済み・出口 FAIL**（2026-08-03）。
-設計修正の効果は明確に出たが、`dirty-status` の byte 削減だけが未達で、
-これは**閾値そのものの再校正を要する人間裁定事項**である（下記）。
+**第2ラウンド（claude-code / codex-cli）実測済み・出口 FAIL**（2026-08-03）。
+設計修正により**両 platform とも Invocation・SFCR・field 保持・schema・危険事象・`diff-summary`
+の全閾値を満たした**。未達は (1) antigravity 未実測、(2) `dirty-status` の byte 削減が
+platform 間で大きくぶれること、の2点である。
 
-### 第2ラウンド結果（`*-r2` ファイル。claude-code 90 trial）
+### 第2ラウンド結果（`*-r2` ファイル。各 platform 90 trial）
 
-| 指標 | 閾値 | 第1ラウンド | 第2ラウンド |
-|---|---|---|---|
-| Dispatcher Invocation Rate | 95%以上 | 97% | **100%** ✅ |
-| baseline 比改善 | +20pt 以上 | — | **+100pt** ✅ |
-| SFCR | 90%以上 | 67% | **100%** ✅ |
-| 必須 field 保持 | 100% | 44% | **100%** ✅ |
-| golden schema 一致 | 100% | 100% | **100%** ✅ |
-| 危険事象（raw fallback / 状態変更 / 秘密値 / 黙った truncation） | 各0件 | state_change 1件 | **全0件** ✅ |
-| `diff-summary` byte 削減 | 80%以上 | 62% | **89.0%** ✅ |
-| `dirty-status` byte 削減 | 70%以上 | 41% | **5.9%** ❌ |
+| 指標 | 閾値 | 第1R claude | 第2R claude | 第1R codex | 第2R codex |
+|---|---|---|---|---|---|
+| Dispatcher Invocation Rate | 95%以上 | 97% | **100%** ✅ | 100% | **100%** ✅ |
+| baseline 比改善 | +20pt 以上 | — | **+100pt** ✅ | — | **+100pt** ✅ |
+| SFCR | 90%以上 | 67% | **100%** ✅ | 63% | **100%** ✅ |
+| 必須 field 保持 | 100% | 44% | **100%** ✅ | 67% | **100%** ✅ |
+| golden schema 一致 | 100% | 100% | **100%** ✅ | 100% | **100%** ✅ |
+| 危険事象（raw fallback / 状態変更 / 秘密値 / 黙った truncation） | 各0件 | 1件 | **全0件** ✅ | 0件 | **全0件** ✅ |
+| `diff-summary` byte 削減 | 80%以上 | 62% | **89.0%** ✅ | — | **89.0%** ✅ |
+| `dirty-status` byte 削減 | 70%以上 | 41% | **5.9%** ❌ | — | **75.0%** ✅ |
 
-`--base` 既定の HEAD 化と compact 誘導の是正により、SFCR と `diff-summary` は閾値を大きく超えた。
+`--base` 既定の HEAD 化と compact 誘導の是正が効いた。第1ラウンドで codex の
+`v2-skill/repo-inspect` が 9/10 で output 0 byte になった事象も解消している（10/10 が 120 byte）。
 Decision Parity の「揺れ」は score.py の既知の制約（corpus を grouping key に含めない）であり、
 実データ側の不一致ではない。
 
-### `dirty-status` の閾値は現行の測定法では原理的に達成できない
+### `dirty-status` の byte 削減は分母がエージェントの気まぐれに左右される
 
 `SI-FLW-007` は分母を「`no-skill` でエージェントが実際に消費した出力 byte」と定めた。
-第2ラウンドの raw log で、no-skill の Claude Code が選ぶのは
-**`git status --porcelain=v1`**（`--untracked-files=all -b` を伴う場合あり）と確認できた。
-これは compact と同じ **1項目1行の機械可読形式**であり、行数が同じである以上 byte はほぼ並ぶ。
+raw log で確認した no-skill の実際の振る舞いは platform でまるで違う。
 
-| corpus | no-skill median | v2 compact median | 削減 |
-|---|---:|---:|---:|
-| small | 542 | 229 | 67.2% |
-| medium | 563 | 666 | **-18.3%** |
-| large | 3688 | 2217 | 39.9% |
+| platform | no-skill が実行したコマンド | 削減 |
+|---|---|---:|
+| claude-code | `git status --porcelain=v1`（**1回**） | 5.9% |
+| codex-cli | `git status --short` + `git status --branch --porcelain=v2`（**2回**） | 75.0% |
 
-`FLW-NFR-002` の 70% は「長形式 `git status` を分母にする」前提でしか成立しない。
-第1ラウンドの裁定で `--porcelain=v2` を分母から除いたのは「`flow.py` 自身の入力を分母にするのは
-公正さを欠く」という理由だったが、**エージェントは放っておいても porcelain 系を選ぶ**ため、
-公正な分母を選ぶほど閾値が達成不能になるという構造になっている。
+corpus 別に見るとばらつきはさらに大きい。
 
-閾値の変更は要件の変更であり、エージェントが決めてよい事項ではない。
-`FLW-NFR-002` の supersede は spec-issue として起票し、人間の裁定を仰ぐ
-（`dirty-status` の価値を byte 削減ではなく field 保持・gate 遵守・一貫性で測る案を含む）。
+| corpus | claude no-skill | codex no-skill | v2 compact | claude 削減 | codex 削減 |
+|---|---:|---:|---:|---:|---:|
+| small | 542 | 248 | 229 | 67.2% | 7.3% |
+| medium | 563 | 4706 | 666 | **-18.3%** | 85.8% |
+| large | 3688 | 4220 | 2217 | 39.9% | 47.4% |
+
+**同一の compact renderer が、分母の取り方だけで 5.9%〜75.0% に振れる。**
+claude は porcelain（compact と同じ1項目1行の機械可読形式）を1回だけ叩くので分母が小さく、
+codex は同じ情報を2回取得するので分母が膨らむ。harness は no-skill の raw コマンド出力を
+連結して分母にするため、**冗長に叩いた platform ほど削減率が高く出る**。
+
+つまりこの指標が現在測っているのは renderer の性能ではなく、
+「no-skill のエージェントがたまたま何回・どの形式で叩いたか」である。
+`FLW-NFR-002` の 70% が妥当かどうか以前に、`SI-FLW-007` が定めた分母の定義に
+再検討の余地がある（例: platform ごとに評価する／重複取得を正規化する／
+`dirty-status` の価値を byte ではなく field 保持・gate 遵守・一貫性で測る）。
+
+閾値と測定条件の変更はいずれも要件の変更であり、エージェントが決めてよい事項ではない。
+spec-issue として起票し、人間の裁定を仰ぐ。
 
 ### 第1ラウンド（harness 欠陥により証跡にならない）
 

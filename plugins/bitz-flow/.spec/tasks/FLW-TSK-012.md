@@ -39,10 +39,14 @@ status: implementing
   Invocation 100% / SFCR 100% / 必須 field 保持 100% / golden schema 100% / 危険事象 0件 /
   `diff-summary` byte 削減 89.0% と、**`dirty-status` を除く全指標が閾値を超えた**
   （第1ラウンドは SFCR 67% / field 44% / diff 62%）。
-  残る未達は `dirty-status` の byte 削減 5.9%（閾値 70%）のみ。no-skill の Claude Code は
-  `git status --porcelain=v1` を選ぶ（raw log で確認）ため、compact と同じ1項目1行形式が分母になり
-  **現行の測定法では原理的に達成できない**。閾値変更は要件変更のため `FLW-NFR-002` の supersede を
-  spec-issue へ起票して人間裁定を仰ぐ。codex-cli / antigravity は第2ラウンド未実測。
+  codex-cli も同様に全指標クリアで、`dirty-status` は **75.0%** と閾値を満たした
+  （第1ラウンドで 9/10 が output 0 byte だった `v2-skill/repo-inspect` も 10/10 が 120 byte へ解消）。
+  残る未達は (1) antigravity 未実測、(2) `dirty-status` の byte 削減が platform 間で
+  **5.9%（claude）〜75.0%（codex）** と振れること。raw log で原因を特定済みで、
+  claude は `git status --porcelain=v1` を1回、codex は `--short` と `--porcelain=v2` を2回叩き、
+  harness が no-skill の raw 出力を連結して分母にするため**冗長に叩いた platform ほど有利**になる。
+  同一 renderer が分母の取り方だけで振れるため、閾値以前に `SI-FLW-007` の分母定義に再検討の
+  余地がある。閾値・測定条件とも要件変更のため spec-issue へ起票して人間裁定を仰ぐ。
 - **進捗（2026-08-03, 第1ラウンド）**: 270 trial を実測したが、**出口 FAIL かつ結果は証跡にならない**。
   未達の大半が harness 欠陥に由来し、スキル設計を測れていないため。欠陥2件を修正した
   （agy の `--sandbox=false`、全 harness へ `--keep-logs`）が、agy 側は Gemini のクォータ上限により
