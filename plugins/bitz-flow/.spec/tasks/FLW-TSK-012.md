@@ -35,6 +35,14 @@ status: implementing
 - **備考**: 本タスクの完了が M0 出口＝M1 の入口条件になる。version bump は M0 の PR 内に含める
   （AGENTS.md の「version bump は同一 PR 内」規約。コミット位置は問わない）。
   v2 script はこの時点でも prerelease であり、安定版入口として案内しない（FLW-DSN-011）。
+- **進捗（2026-08-03）**: 第1ラウンド 270 trial を実測したが、**出口 FAIL かつ結果は証跡にならない**。
+  未達の大半が harness 欠陥に由来し、スキル設計を測れていないため。欠陥2件を修正した
+  （agy の `--sandbox=false`、全 harness へ `--keep-logs`）が、agy 側は Gemini のクォータ上限により
+  **実機未検証**。設計側の論点2件も `FLW-DSN-010` の許す手段で修正済み
+  （`diff-summary` の `--base` 既定を HEAD 化 + `NEXT` へ base 明示、v2 SKILL.md の
+  `--format json` 誘導を compact 既定へ是正）。効果の確認は再実測待ち。
+  詳細は `evals/flow-core/m0-eval/README.md` の現況節。
+  version bump は未実施のまま（3マニフェストと `flowlib/__init__.py` は `0.3.1`）。
 - **進捗（2026-07-31）**: harness（`evals/flow-core/m0-eval/`）まで実装済み、**実測は未実施**。
   3platform × 3条件 × 3task × 10 trial の実行は別途行う。したがって version bump も未実施で、
   3マニフェストと `flowlib/__init__.py` の `__version__` は `0.3.1` のまま揃えている

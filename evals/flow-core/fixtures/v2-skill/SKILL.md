@@ -2,10 +2,10 @@
 name: flow-core
 description: Git / GitHub 操作の唯一の実行入口。git status / diff / log / branch / commit / worktree、GitHub の Issue / PR / merge / CI / release / CHANGELOG に触れる前に必ず発動する。生の git・gh コマンドを直接実行せず、同梱の dispatcher（flow.py）を実行して結果を受け取る。リポジトリの状態取得と状態変更のどちらにも使う。「開発」一般ではなく、Git / GitHub の状態を読む・変えるときに使う。
 metadata:
-  version: "0.4.0"
+  version: "0.4.1"
   author: br7.hide
   created: "2026-07-31"
-  updated: "2026-07-31"
+  updated: "2026-08-03"
 ---
 
 # flow-core — Git / GitHub 操作の単一入口
@@ -105,5 +105,8 @@ NEXT git.diff-summary snapshot=sha256:ab12
 
 - 先頭行が判定。`code` と `operation`、失敗時は `cause` と `stage` が付く。
 - `NEXT` は次に呼べる操作。shell コマンドではなく domain / action と引数で示される。
+  `NEXT` が引数を示したらそのまま渡す（自分で組み立て直さない）。
 - `TRUNCATED shown=… total=… cursor=…` が出たら全件ではない。
-- 機械処理には `--format json` を使う。compact と JSON は同じ判定を返す。
+- **compact のまま読む。** 判断に必要な field はすべて compact に出る。
+  `--format json` は result を別のプログラムへ渡すときだけ使う。同じ判定を返すが
+  桁違いに長く、文脈を無駄に消費する。自分が読んで判断するなら compact を使う。

@@ -1,7 +1,7 @@
 # M0 eval — 3プラットフォーム実測 harness
 
-`FLW-DSN-014` の M0 eval protocol を実行するための道具一式。
-**本ディレクトリは harness であり、実測結果はまだ含まれていない**（`status: not-measured`）。
+`FLW-DSN-014` の M0 eval protocol を実行するための道具一式と、第1ラウンドの実測結果。
+**第1ラウンドは harness 欠陥により出口判定の証跡にならない**（下記「現況」）。
 
 ## なぜ M0 で測るのか
 
@@ -119,7 +119,35 @@ supersede として別途裁定する。
 
 ## 現況
 
-**未実測**。測定条件は 2026-07-31 の裁定で確定済み。3プラットフォームでの実行は
-本 harness を用いて別途行う。
-実測後、`run-manifest.template.json` をコピーした run manifest と trial JSONL を
-本ディレクトリへ追加し、`score.py` の判定を M0 出口の証跡とする。
+**第1ラウンド実測済み・出口 FAIL**（2026-08-03）。3 platform × 3条件 × 3 task × 10 trial =
+270 trial を実行し、`trials-<platform>-2026-08-03.jsonl` と platform ごとの部分 run manifest を
+本ディレクトリへ記録した。ただし**この結果は M0 出口判定の証跡として使えない**。
+未達の大半が harness 側の欠陥に由来し、スキル設計の良し悪しを測れていないためである。
+
+### 第1ラウンドで判明した harness 欠陥
+
+| 欠陥 | 影響 | 対処 |
+|---|---|---|
+| `agy --sandbox` を bare flag で渡していた。`--sandbox=<true\|false>` の bool で既定 true のため sandbox が解除されず、ターミナル隔離で `run_command` が実行できない | antigravity 90 trial 全件が `first_git_action=none` / `command_events=0`（`ask_permission` へ落ちる）＝**全滅** | `--sandbox=false` を明示（`run_antigravity.py`）。**実機未検証** — 検証時に Gemini のクォータ上限に当たったため、再実測時に最初の数 trial で `command_events>0` を確認すること |
+| raw event log を保存していなかった | codex `v2-skill/repo-inspect` の 9/10 で「`flow.py` が exit 0 なのに出力 0 byte」を観測したが、harness の欠陥か platform の挙動かを**事後に切り分けられない** | 全 harness へ `--keep-logs DIR` を追加。再実測は必ず指定する |
+
+再実測後、`score.py` の判定を M0 出口の証跡とする。
+
+### 第1ラウンドで判明した設計側の論点（harness 欠陥ではない）
+
+いずれも `FLW-DSN-010` の「文章を長くするのではなく description・入口名・command 命名・
+result の next action を直す」に沿って修正済み。効果の確認は再実測で行う。
+
+- **`diff-summary` で `--base` が指定されない**（claude-code の v2 10/10 が該当）。既定が
+  `base=index` で rename を検出せず、「リネームがあるか」を問う prompt に答えられていなかった。
+  prompt は「直前のコミットからの変更量」なので `--base HEAD` が正解であり、**正当な失敗**。
+  → `--base` の既定を `HEAD` へ変更し（生 git の慣習ではなくエージェントの意図側へ寄せる）、
+  `git status` の `NEXT git.diff-summary` にも `base=HEAD` を明示した。index 比較は
+  `--base index` で引き続き可能。`tests/test_flow_contract.py` が既定・退避路・NEXT を固定する。
+- **byte 削減率未達の主因は `--format json` への誘導**。v2 `SKILL.md` の
+  「機械処理には `--format json` を使う」により、エージェントが自分を「機械処理」と解釈して
+  JSON を選ぶ。同一 corpus で compact 120 byte に対し JSON 1920 byte（**約16倍**）であり、
+  `dirty-status` 41% / `diff-summary` 62% の未達に直結していた。
+  → 「compact のまま読む。`--format json` は別のプログラムへ渡すときだけ」へ改めた。
+  byte の分母・分子は `SI-FLW-007` の裁定により**エージェントが実際に消費した出力**なので、
+  JSON を選ぶこと自体が正当に減点される。閾値（70% / 80%）は変更しない。

@@ -80,7 +80,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--timeout-seconds", type=float, default=None, help="read の timeout 秒（1〜300、既定 30）"
     )
-    parser.add_argument("--base", help="git diff-summary の比較元（省略時は index）")
+    parser.add_argument(
+        "--base",
+        default="HEAD",
+        help="git diff-summary の比較元（既定 HEAD。index と比較するなら --base index）",
+    )
     parser.add_argument(
         "--limit", type=int, default=DEFAULT_ITEM_LIMIT, help="items の表示上限（既定 50）"
     )
@@ -200,7 +204,9 @@ def _op_git_status(root: str, args, started: str) -> tuple[dict, R.CompactView]:
     data["page"] = page
 
     changed_total = counts["staged"] + counts["unstaged"] + counts["untracked"] + counts["conflicted"]
-    next_actions = [R.next_action("git", "diff-summary", snapshot=snapshot)]
+    # base を明示して渡す。省略すると呼出側が「直前のコミットからの差分」を意図しながら
+    # index 比較を呼び、rename を取りこぼす（FLW-DSN-010 の next action 改善）。
+    next_actions = [R.next_action("git", "diff-summary", base="HEAD", snapshot=snapshot)]
     if truncated:
         next_actions.insert(0, R.next_action("git", "status", limit=page["total"], snapshot=snapshot))
 
@@ -239,7 +245,11 @@ def _op_git_status(root: str, args, started: str) -> tuple[dict, R.CompactView]:
 
 
 def _op_git_diff_summary(root: str, args, started: str) -> tuple[dict, R.CompactView]:
-    facts, failure = git_read.diff_summary(root, base=args.base, timeout_seconds=args.timeout_seconds)
+    # 既定は HEAD（「直前のコミットからの変更量」が既定の意図）。生 git の `git diff` は
+    # index 比較だが、dispatcher はエージェントの意図側に既定を寄せる。index 比較は
+    # `--base index` で明示する（git_read は base=None を index 比較として扱う）。
+    base = None if args.base == "index" else args.base
+    facts, failure = git_read.diff_summary(root, base=base, timeout_seconds=args.timeout_seconds)
     if failure:
         return _failure_result("git.diff-summary", root, failure, started), R.CompactView()
 
@@ -258,7 +268,11 @@ def _op_git_diff_summary(root: str, args, started: str) -> tuple[dict, R.Compact
 
     next_actions = []
     if truncated:
-        next_actions.append(R.next_action("git", "diff-summary", limit=page["total"], snapshot=snapshot))
+        next_actions.append(
+            R.next_action(
+                "git", "diff-summary", base=args.base, limit=page["total"], snapshot=snapshot
+            )
+        )
 
     result = R.build_result(
         operation="git.diff-summary",

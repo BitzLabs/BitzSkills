@@ -1,4 +1,4 @@
-# inspection-report.md (2026-07-30)
+# inspection-report.md (2026-08-03)
 
 成果物数: 45 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0 / 検証証跡: 0
 
@@ -59,7 +59,7 @@
 | CORE-CON-008 | 確定（promoted） | governance | manual-check | 1 | 2 |
 | CORE-CON-009 | 確定（promoted） | governance | manual-check | 1 | 1 |
 | CORE-CON-010 | 確定（promoted） | governance | manual-check | 1 | 1 |
-| CORE-CON-011 | 検証済み（verified） | tooling | unit-test | 1 | 5 |
+| CORE-CON-011 | 検証済み（verified） | tooling | unit-test | 1 | 6 |
 | CORE-CON-012 | 検証済み（verified） | governance | unit-test | 1 | 2 |
 | CORE-CON-013 | 検証済み（verified） | tooling | unit-test | 1 | 2 |
 | CORE-DSC-000 | 起草中（draft） |  |  | 0 | 0 |
