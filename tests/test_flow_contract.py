@@ -187,7 +187,9 @@ def test_compact_line_order(rich_repo: Path):
     out = flow("git", "status", repo=rich_repo).stdout.rstrip("\n")
     lines = out.split("\n")
     assert lines[0].startswith("OK git.status snapshot=sha256:")
-    assert lines[-1].startswith("NEXT git.diff-summary snapshot=sha256:")
+    # NEXT は domain / action に続けて必要引数を並べる（base は明示される）。
+    assert lines[-1].startswith("NEXT git.diff-summary ")
+    assert "snapshot=sha256:" in lines[-1]
     body = lines[1:-1]
     assert body, "変更対象の行が無い"
     assert all(not line.startswith(("OK ", "NEXT ", "TRUNCATED ")) for line in body)
@@ -224,6 +226,41 @@ def test_compact_keeps_zero_facts(rich_repo: Path):
     """0 は事実として残す（不明と区別できなくなるため落とさない）。"""
     out = flow("git", "diff-summary", "--base", "HEAD", repo=rich_repo).stdout
     assert "deleted=0" in out
+
+
+def test_diff_summary_defaults_to_head(rich_repo: Path):
+    """--base 省略時は HEAD と比較する。
+
+    生 git の `git diff` は index 比較だが、dispatcher は「直前のコミットからの
+    変更量」というエージェントの既定の意図へ寄せる。index 比較では rename を
+    検出できず、rename の有無を問われた呼出に答えられない（M0 第1ラウンドの実測で
+    claude-code の diff-summary が全 trial これを踏んだ）。
+    """
+    result, code = flow_json("git", "diff-summary", repo=rich_repo)
+    assert code == 0
+    assert result["data"]["target"]["range"]["base"] == "HEAD"
+    renamed = [item for item in result["data"]["items"] if item["orig_path"]]
+    assert renamed, "既定の比較元では rename を検出できていない"
+    assert renamed[0]["orig_path"] == "orig.txt"
+
+
+def test_diff_summary_index_base_stays_available(rich_repo: Path):
+    """index との比較は --base index で引き続き行える（機能を落とさない）。"""
+    result, code = flow_json("git", "diff-summary", "--base", "index", repo=rich_repo)
+    assert code == 0
+    assert result["data"]["target"]["range"]["base"] == "index"
+
+
+def test_status_next_action_carries_base(rich_repo: Path):
+    """status → diff-summary の誘導は base を明示する。
+
+    引数を省くと、呼出側が意図と違う比較元で diff-summary を呼ぶ余地が残る。
+    """
+    result, code = flow_json("git", "status", repo=rich_repo)
+    assert code == 0
+    follow = [item for item in result["next_actions"] if item["action"] == "diff-summary"]
+    assert follow, "diff-summary への next_action が無い"
+    assert follow[0]["args"].get("base") == "HEAD"
 
 
 # --- truncation --------------------------------------------------------------
