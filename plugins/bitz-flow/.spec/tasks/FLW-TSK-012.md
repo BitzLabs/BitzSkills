@@ -48,7 +48,9 @@ status: implementing
   agy の state_change 2件のうち1件は harness の誤検知（corpus を trial 間で共有しつつ
   workers=3 で並列実行するため、他 trial の副作用が before/after 比較へ混入する）。
   これは第2ラウンドで新たに判明した harness 欠陥で、corpus の trial 分離か直列化が必要。
-  残る未達は (1) antigravity の入口遵守、(2) `dirty-status` の byte 削減が platform 間で
+  残る未達は spec-issue として起票済み（`SI-FLW-008` agy の入口遵守 /
+  `SI-FLW-009` byte 削減の分母定義 / `SI-FLW-010` harness の corpus 共有）。いずれも人間裁定待ち。
+  内訳は (1) antigravity の入口遵守、(2) `dirty-status` の byte 削減が platform 間で
   **5.9%（claude）〜75.0%（codex）** と振れること。raw log で原因を特定済みで、
   claude は `git status --porcelain=v1` を1回、codex は `--short` と `--porcelain=v2` を2回叩き、
   harness が no-skill の raw 出力を連結して分母にするため**冗長に叩いた platform ほど有利**になる。
