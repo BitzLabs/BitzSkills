@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Codex CLI で M0 eval trial を実測し、要約 JSONL だけを保存する。
+"""Codex CLI で M0 eval trial を実測し、要約 JSONL を保存する。
 
-Codex の ``--json`` event stream はメモリ上で観測し、raw log は保存しない。
-保存するのは ``trials.example.jsonl`` と同じ再判定可能な要約値だけである。
+Codex の ``--json`` event stream はメモリ上で観測し、成果物へ書くのは
+``trials.example.jsonl`` と同じ再判定可能な要約値だけである。
+``--keep-logs DIR`` を指定した run に限り、失敗の事後解析用に raw stdout /
+stderr を DIR へ保存する（成果物ディレクトリとは別に置くこと）。
 """
 from __future__ import annotations
 
@@ -113,6 +115,26 @@ def _prepare_corpus(root: Path, condition: str, source_root: Path) -> dict[str, 
             "raw_baseline_bytes": fixture_builder.baselines(repo),
         }
     return result
+
+
+def _save_raw_log(platform: str, job: dict, proc: subprocess.CompletedProcess) -> str | None:
+    """trial の raw event log を保存し、保存先の相対パスを返す。
+
+    要約値だけでは「flow.py が exit 0 なのに出力 0 byte」のような観測を事後に
+    切り分けられない（harness の欠陥か platform の挙動かを判別できない）。
+    ``--keep-logs DIR`` を指定した run では raw stdout / stderr を残す。
+    """
+    directory = job.get("log_dir")
+    if directory is None:
+        return None
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    name = f"{platform}-{job['condition']}-{job['task']}-{job['trial']:02d}"
+    (directory / f"{name}.stdout.jsonl").write_text(proc.stdout or "", encoding="utf-8")
+    stderr = proc.stderr or ""
+    if stderr:
+        (directory / f"{name}.stderr.txt").write_text(stderr, encoding="utf-8")
+    return name
 
 
 def _events(stdout: str) -> list[dict]:
@@ -335,6 +357,7 @@ def _one_trial(job: dict) -> dict:
         timed_out = True
 
     after = _state(repo)
+    raw_log = _save_raw_log(PLATFORM, job, proc)
     events = _events(proc.stdout)
     commands = _commands(events)
     messages = _messages(events)
@@ -395,6 +418,7 @@ def _one_trial(job: dict) -> dict:
         },
         "observation": {
             "codex_exit_code": proc.returncode,
+            "raw_log": raw_log,
             "timed_out": timed_out,
             "command_events": len(commands),
             "command_kinds": [
@@ -475,6 +499,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--condition", choices=CONDITIONS, action="append")
     parser.add_argument("--task", choices=TASKS, action="append")
     parser.add_argument("--plan", action="store_true", help="実行予定だけを表示して終了する")
+    parser.add_argument(
+        "--keep-logs",
+        help="raw event log（stdout / stderr）の保存先。未指定なら保存しない",
+    )
     args = parser.parse_args(argv)
 
     source_root = Path(__file__).resolve().parents[3]
@@ -492,6 +520,7 @@ def main(argv: list[str] | None = None) -> int:
     if output.exists() or manifest.exists():
         raise SystemExit("既存の eval 成果物は上書きしない。新しい --output / --manifest を指定すること。")
 
+    log_dir = Path(args.keep_logs).expanduser().resolve() if args.keep_logs else None
     corpus = {
         condition: _prepare_corpus(corpus_root, condition, source_root) for condition in conditions
     }
@@ -515,6 +544,7 @@ def main(argv: list[str] | None = None) -> int:
                         "reasoning_effort": args.reasoning_effort,
                         "timeout": args.timeout,
                         "source_root": source_root,
+                        "log_dir": log_dir,
                     }
                 )
 

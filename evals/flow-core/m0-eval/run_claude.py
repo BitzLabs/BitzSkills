@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Claude Code CLI で M0 eval trial を実測し、要約 JSONL だけを保存する。
+"""Claude Code CLI で M0 eval trial を実測し、要約 JSONL を保存する。
 
-``claude -p --output-format stream-json`` の event stream はメモリ上で観測し、raw log は
-保存しない。保存するのは再判定可能な要約値だけである。
+``claude -p --output-format stream-json`` の event stream はメモリ上で観測し、
+成果物へ書くのは再判定可能な要約値だけである。``--keep-logs DIR`` を指定した
+run に限り、失敗の事後解析用に raw stdout / stderr を DIR へ保存する。
 """
 from __future__ import annotations
 
@@ -184,6 +185,7 @@ def _one_trial(job: dict) -> dict:
         timed_out = True
 
     after = common._state(repo)
+    raw_log = common._save_raw_log(PLATFORM, job, proc)
     events = common._events(proc.stdout)
     tools = _tools(events)
     commands = _commands(tools)
@@ -258,6 +260,7 @@ def _one_trial(job: dict) -> dict:
         },
         "observation": {
             "claude_exit_code": proc.returncode,
+            "raw_log": raw_log,
             "claude_result_subtype": result.get("subtype"),
             "claude_is_error": result.get("is_error"),
             "timed_out": timed_out,
@@ -403,6 +406,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--condition", choices=common.CONDITIONS, action="append")
     parser.add_argument("--task", choices=common.TASKS, action="append")
     parser.add_argument("--plan", action="store_true", help="実行予定だけを表示して終了する")
+    parser.add_argument(
+        "--keep-logs",
+        help="raw event log（stdout / stderr）の保存先。未指定なら保存しない",
+    )
     args = parser.parse_args(argv)
 
     source_root = Path(__file__).resolve().parents[3]
@@ -432,6 +439,7 @@ def main(argv: list[str] | None = None) -> int:
     if output.exists() or manifest.exists():
         raise SystemExit("既存の eval 成果物は上書きしない。新しい --output / --manifest を指定すること。")
 
+    log_dir = Path(args.keep_logs).expanduser().resolve() if args.keep_logs else None
     corpus = {
         condition: _prepare_corpus(corpus_root, condition, source_root)
         for condition in conditions
@@ -458,6 +466,7 @@ def main(argv: list[str] | None = None) -> int:
                         "reasoning_effort": args.reasoning_effort,
                         "timeout": args.timeout,
                         "source_root": source_root,
+                        "log_dir": log_dir,
                     }
                 )
 
