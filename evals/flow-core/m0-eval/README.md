@@ -119,9 +119,54 @@ supersede として別途裁定する。
 
 ## 現況
 
-**第1ラウンド実測済み・出口 FAIL**（2026-08-03）。3 platform × 3条件 × 3 task × 10 trial =
-270 trial を実行し、`trials-<platform>-2026-08-03.jsonl` と platform ごとの部分 run manifest を
-本ディレクトリへ記録した。ただし**この結果は M0 出口判定の証跡として使えない**。
+**第2ラウンド（Claude Code のみ）実測済み・出口 FAIL**（2026-08-03）。
+設計修正の効果は明確に出たが、`dirty-status` の byte 削減だけが未達で、
+これは**閾値そのものの再校正を要する人間裁定事項**である（下記）。
+
+### 第2ラウンド結果（`*-r2` ファイル。claude-code 90 trial）
+
+| 指標 | 閾値 | 第1ラウンド | 第2ラウンド |
+|---|---|---|---|
+| Dispatcher Invocation Rate | 95%以上 | 97% | **100%** ✅ |
+| baseline 比改善 | +20pt 以上 | — | **+100pt** ✅ |
+| SFCR | 90%以上 | 67% | **100%** ✅ |
+| 必須 field 保持 | 100% | 44% | **100%** ✅ |
+| golden schema 一致 | 100% | 100% | **100%** ✅ |
+| 危険事象（raw fallback / 状態変更 / 秘密値 / 黙った truncation） | 各0件 | state_change 1件 | **全0件** ✅ |
+| `diff-summary` byte 削減 | 80%以上 | 62% | **89.0%** ✅ |
+| `dirty-status` byte 削減 | 70%以上 | 41% | **5.9%** ❌ |
+
+`--base` 既定の HEAD 化と compact 誘導の是正により、SFCR と `diff-summary` は閾値を大きく超えた。
+Decision Parity の「揺れ」は score.py の既知の制約（corpus を grouping key に含めない）であり、
+実データ側の不一致ではない。
+
+### `dirty-status` の閾値は現行の測定法では原理的に達成できない
+
+`SI-FLW-007` は分母を「`no-skill` でエージェントが実際に消費した出力 byte」と定めた。
+第2ラウンドの raw log で、no-skill の Claude Code が選ぶのは
+**`git status --porcelain=v1`**（`--untracked-files=all -b` を伴う場合あり）と確認できた。
+これは compact と同じ **1項目1行の機械可読形式**であり、行数が同じである以上 byte はほぼ並ぶ。
+
+| corpus | no-skill median | v2 compact median | 削減 |
+|---|---:|---:|---:|
+| small | 542 | 229 | 67.2% |
+| medium | 563 | 666 | **-18.3%** |
+| large | 3688 | 2217 | 39.9% |
+
+`FLW-NFR-002` の 70% は「長形式 `git status` を分母にする」前提でしか成立しない。
+第1ラウンドの裁定で `--porcelain=v2` を分母から除いたのは「`flow.py` 自身の入力を分母にするのは
+公正さを欠く」という理由だったが、**エージェントは放っておいても porcelain 系を選ぶ**ため、
+公正な分母を選ぶほど閾値が達成不能になるという構造になっている。
+
+閾値の変更は要件の変更であり、エージェントが決めてよい事項ではない。
+`FLW-NFR-002` の supersede は spec-issue として起票し、人間の裁定を仰ぐ
+（`dirty-status` の価値を byte 削減ではなく field 保持・gate 遵守・一貫性で測る案を含む）。
+
+### 第1ラウンド（harness 欠陥により証跡にならない）
+
+3 platform × 3条件 × 3 task × 10 trial = 270 trial を実行し、
+`trials-<platform>-2026-08-03.jsonl` と platform ごとの部分 run manifest を本ディレクトリへ
+記録した（`-r2` の付かないファイル）。ただし**この結果は M0 出口判定の証跡として使えない**。
 未達の大半が harness 側の欠陥に由来し、スキル設計の良し悪しを測れていないためである。
 
 ### 第1ラウンドで判明した harness 欠陥

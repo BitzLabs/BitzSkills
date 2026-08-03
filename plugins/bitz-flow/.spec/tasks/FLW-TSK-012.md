@@ -35,7 +35,15 @@ status: implementing
 - **備考**: 本タスクの完了が M0 出口＝M1 の入口条件になる。version bump は M0 の PR 内に含める
   （AGENTS.md の「version bump は同一 PR 内」規約。コミット位置は問わない）。
   v2 script はこの時点でも prerelease であり、安定版入口として案内しない（FLW-DSN-011）。
-- **進捗（2026-08-03）**: 第1ラウンド 270 trial を実測したが、**出口 FAIL かつ結果は証跡にならない**。
+- **進捗（2026-08-03, 第2ラウンド）**: 修正後の Claude Code 90 trial を実測。設計修正の効果は明確で、
+  Invocation 100% / SFCR 100% / 必須 field 保持 100% / golden schema 100% / 危険事象 0件 /
+  `diff-summary` byte 削減 89.0% と、**`dirty-status` を除く全指標が閾値を超えた**
+  （第1ラウンドは SFCR 67% / field 44% / diff 62%）。
+  残る未達は `dirty-status` の byte 削減 5.9%（閾値 70%）のみ。no-skill の Claude Code は
+  `git status --porcelain=v1` を選ぶ（raw log で確認）ため、compact と同じ1項目1行形式が分母になり
+  **現行の測定法では原理的に達成できない**。閾値変更は要件変更のため `FLW-NFR-002` の supersede を
+  spec-issue へ起票して人間裁定を仰ぐ。codex-cli / antigravity は第2ラウンド未実測。
+- **進捗（2026-08-03, 第1ラウンド）**: 270 trial を実測したが、**出口 FAIL かつ結果は証跡にならない**。
   未達の大半が harness 欠陥に由来し、スキル設計を測れていないため。欠陥2件を修正した
   （agy の `--sandbox=false`、全 harness へ `--keep-logs`）が、agy 側は Gemini のクォータ上限により
   **実機未検証**。設計側の論点2件も `FLW-DSN-010` の許す手段で修正済み
