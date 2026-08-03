@@ -41,7 +41,14 @@ status: implementing
   （第1ラウンドは SFCR 67% / field 44% / diff 62%）。
   codex-cli も同様に全指標クリアで、`dirty-status` は **75.0%** と閾値を満たした
   （第1ラウンドで 9/10 が output 0 byte だった `v2-skill/repo-inspect` も 10/10 が 120 byte へ解消）。
-  残る未達は (1) antigravity 未実測、(2) `dirty-status` の byte 削減が platform 間で
+  **antigravity も `--sandbox=false` により初めて有効な測定が取れた**（第1ラウンドの全滅は解消）。
+  ただし agy は Invocation 83.3% / SFCR 80.0% / field 保持 83.3% で**未達**。v2 30 trial 中
+  5 件が生 git で開始し、うち1件は `git show ... > stats.txt` とファイル書き込みまで行った。
+  SKILL.md は同一なので platform 側の傾向であり、`FLW-DSN-010` に沿った次の一手が要る。
+  agy の state_change 2件のうち1件は harness の誤検知（corpus を trial 間で共有しつつ
+  workers=3 で並列実行するため、他 trial の副作用が before/after 比較へ混入する）。
+  これは第2ラウンドで新たに判明した harness 欠陥で、corpus の trial 分離か直列化が必要。
+  残る未達は (1) antigravity の入口遵守、(2) `dirty-status` の byte 削減が platform 間で
   **5.9%（claude）〜75.0%（codex）** と振れること。raw log で原因を特定済みで、
   claude は `git status --porcelain=v1` を1回、codex は `--short` と `--porcelain=v2` を2回叩き、
   harness が no-skill の raw 出力を連結して分母にするため**冗長に叩いた platform ほど有利**になる。
