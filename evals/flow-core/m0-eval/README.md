@@ -1,7 +1,8 @@
 # M0 eval — 3プラットフォーム実測 harness
 
-`FLW-DSN-014` の M0 eval protocol を実行するための道具一式と、第1ラウンドの実測結果。
-**第1ラウンドは harness 欠陥により出口判定の証跡にならない**（下記「現況」）。
+`FLW-DSN-014` の M0 eval protocol を実行するための道具一式と、実測結果。
+**第2ラウンド（`*-r2`）が有効な最新の測定**で、第1ラウンドは harness 欠陥により
+出口判定の証跡にならない（下記「現況」）。
 
 ## なぜ M0 で測るのか
 
@@ -119,9 +120,96 @@ supersede として別途裁定する。
 
 ## 現況
 
-**第1ラウンド実測済み・出口 FAIL**（2026-08-03）。3 platform × 3条件 × 3 task × 10 trial =
-270 trial を実行し、`trials-<platform>-2026-08-03.jsonl` と platform ごとの部分 run manifest を
-本ディレクトリへ記録した。ただし**この結果は M0 出口判定の証跡として使えない**。
+**第2ラウンド（3 platform 270 trial）実測済み・出口 FAIL**（2026-08-03）。
+設計修正により **claude-code / codex-cli は全閾値を満たした**が、**antigravity が未達**である。
+`--sandbox=false` の修正により第1ラウンドの全滅（`first_git_action=none` 90件）は解消し、
+agy でも初めて有効な測定が取れた。
+
+### 第2ラウンド結果（`*-r2` ファイル。各 platform 90 trial）
+
+| 指標 | 閾値 | claude-code | codex-cli | antigravity |
+|---|---|---|---|---|
+| Dispatcher Invocation Rate | 95%以上 | **100%** ✅ | **100%** ✅ | **83.3%** ❌ |
+| baseline 比改善 | +20pt 以上 | +100pt ✅ | +100pt ✅ | +83.3pt ✅ |
+| SFCR | 90%以上 | **100%** ✅ | **100%** ✅ | **80.0%** ❌ |
+| 必須 field 保持 | 100% | **100%** ✅ | **100%** ✅ | **83.3%** ❌ |
+| golden schema 一致 | 100% | 100% ✅ | 100% ✅ | 100% ✅ |
+| raw fallback | 0件 | **0件** ✅ | **0件** ✅ | **5件** ❌ |
+| 状態変更 | 0件 | **0件** ✅ | **0件** ✅ | **2件**（実質1件）❌ |
+| `diff-summary` byte 削減 | 80%以上 | **89.0%** ✅ | **89.0%** ✅ | **88.5%** ✅ |
+| `dirty-status` byte 削減 | 70%以上 | **5.9%** ❌ | **75.0%** ✅ | **25.1%** ❌ |
+
+第1ラウンド比では claude の SFCR 67%→100%・field 44%→100%・`diff-summary` 62%→89.0%、
+codex の SFCR 63%→100%・field 67%→100% と、`--base` 既定の HEAD 化と compact 誘導の是正が効いた。
+codex で `v2-skill/repo-inspect` の 9/10 が output 0 byte になった事象も解消（10/10 が 120 byte）。
+Decision Parity の「揺れ」は score.py の既知の制約（corpus を grouping key に含めない）であり、
+実データ側の不一致ではない。
+
+### antigravity だけが Mandatory entry protocol を守り切れない
+
+v2 条件 30 trial のうち **5 件が生 git で開始**した（claude / codex は 0 件）。
+raw log で確認した最悪例（`v2-skill/diff-summary#6`）は、生 git を4回叩いたうえで
+`git show --stat --summary HEAD > stats.txt` とファイル書き込みまで行っている。
+SKILL.md は同一で、差が出たのは platform 側の傾向である。
+「文章を長くするのではなく description・入口名・命名・next action を直す」（`FLW-DSN-010`）に
+沿った次の一手が要る論点で、`FLW-NFR-001` の platform 別 90% 要件に直接効く。
+
+state_change 2件のうち **1件は harness の誤検知**である（下記）。実質1件。
+
+### 第2ラウンドで判明した harness 欠陥（corpus の trial 間共有）
+
+harness は condition × corpus サイズごとに repo を**1つだけ**作り、その corpus を使う
+全 trial で共有する。しかも `--workers 3` で並列実行する。このため、ある trial が repo を
+変更すると同一 corpus の別 trial の `before` / `after` 比較へ混入し、**無実の trial が
+`state_change` として記録される**。
+
+第2ラウンドの `antigravity/v2-skill/diff-summary#9` が該当する。この trial は flow.py しか
+実行していない（raw log で6コマンドすべてを確認済み）にもかかわらず `state_change=true` と
+なった。原因は同じ large corpus を使う `#6` が並行実行中に `stats.txt` を作ったことで、
+実際に corpus へ `?? stats.txt` が残っている。
+
+したがって **antigravity の state_change は 2件ではなく実質1件**（`#6` のみが真の違反）。
+切り分けるには corpus を trial ごとに分離するか、書き込みを伴う trial を直列化する必要がある。
+現状は raw log と突き合わせないと真偽を判定できない。
+
+### `dirty-status` の byte 削減は分母がエージェントの気まぐれに左右される
+
+`SI-FLW-007` は分母を「`no-skill` でエージェントが実際に消費した出力 byte」と定めた。
+raw log で確認した no-skill の実際の振る舞いは platform でまるで違う。
+
+| platform | no-skill が実行したコマンド | 削減 |
+|---|---|---:|
+| claude-code | `git status --porcelain=v1`（**1回**） | 5.9% |
+| codex-cli | `git status --short` + `git status --branch --porcelain=v2`（**2回**） | 75.0% |
+| antigravity | `git status`（**長形式**）中心。`git status -s` も混在 | 25.1% |
+
+corpus 別に見るとばらつきはさらに大きい。
+
+| corpus | claude no-skill | codex no-skill | v2 compact | claude 削減 | codex 削減 |
+|---|---:|---:|---:|---:|---:|
+| small | 542 | 248 | 229 | 67.2% | 7.3% |
+| medium | 563 | 4706 | 666 | **-18.3%** | 85.8% |
+| large | 3688 | 4220 | 2217 | 39.9% | 47.4% |
+
+**同一の compact renderer が、分母の取り方だけで 5.9%〜75.0% に振れる。**
+claude は porcelain（compact と同じ1項目1行の機械可読形式）を1回だけ叩くので分母が小さく、
+codex は同じ情報を2回取得するので分母が膨らむ。harness は no-skill の raw コマンド出力を
+連結して分母にするため、**冗長に叩いた platform ほど削減率が高く出る**。
+
+つまりこの指標が現在測っているのは renderer の性能ではなく、
+「no-skill のエージェントがたまたま何回・どの形式で叩いたか」である。
+`FLW-NFR-002` の 70% が妥当かどうか以前に、`SI-FLW-007` が定めた分母の定義に
+再検討の余地がある（例: platform ごとに評価する／重複取得を正規化する／
+`dirty-status` の価値を byte ではなく field 保持・gate 遵守・一貫性で測る）。
+
+閾値と測定条件の変更はいずれも要件の変更であり、エージェントが決めてよい事項ではない。
+spec-issue として起票し、人間の裁定を仰ぐ。
+
+### 第1ラウンド（harness 欠陥により証跡にならない）
+
+3 platform × 3条件 × 3 task × 10 trial = 270 trial を実行し、
+`trials-<platform>-2026-08-03.jsonl` と platform ごとの部分 run manifest を本ディレクトリへ
+記録した（`-r2` の付かないファイル）。ただし**この結果は M0 出口判定の証跡として使えない**。
 未達の大半が harness 側の欠陥に由来し、スキル設計の良し悪しを測れていないためである。
 
 ### 第1ラウンドで判明した harness 欠陥
