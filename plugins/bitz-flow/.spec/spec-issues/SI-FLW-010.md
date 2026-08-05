@@ -3,7 +3,7 @@ id: SI-FLW-010
 raised_by: M0 eval 第2ラウンド実測（FLW-TSK-012、2026-08-03）
 target: M0 eval harness が corpus を trial 間で共有しつつ並列実行するため、他 trial の副作用が state_change として誤検知される
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: M0 eval harness は condition × corpus サイズごとに repo を**1つだけ**構築し、
   その corpus を使う全 trial で**共有**する。repo のキーに task が入らない
