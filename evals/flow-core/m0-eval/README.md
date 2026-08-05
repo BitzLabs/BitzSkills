@@ -86,17 +86,23 @@ SFCR は `discovery/metrics.md` の North Star Metric の定義に従い、
 5回の作業 session または 1 PR で出口に到達しない場合は、scope / pivot を人間へ再提示する
 （`FLW-DSN-014` の timebox）。
 
-## 測定条件（2026-07-31 裁定。`SI-FLW-007`）
+## 測定条件（2026-08-05 裁定。`SI-FLW-009` / `FLW-NFR-008`）
 
 閾値だけを定めても baseline の選び方で合否が反転することを実測で確認したため、次を固定した
-（裁定記録: `plugins/bitz-flow/.spec/reports/decision-2026-07-31-byte-baseline-measurement.md`）。
+（裁定記録: `plugins/bitz-flow/.spec/reports/decision-2026-08-05-si-flw-009-byte-denominator.md`）。
 
-1. **`dirty-status` の baseline は固定コマンドにしない。** `no-skill` 条件でエージェントが
-   実際に消費した出力の byte 数を分母とし、platform ごとに median を取る。
-2. **`diff-summary` の baseline は生 unified diff**（`git diff <base>`）。`fixture.py` が測る。
+1. **baseline は task ごとの固定コマンド**。`dirty-status` は `git status`（引数なしの長形式）、
+   `diff-summary` は生 unified diff（`git diff <base>`）。どちらも `fixture.py` が測り、
+   `score.py` は trial の記録ではなく fixture から分母を取る。
+2. **parse 入力を分母にしない。** `--porcelain` 系は `flow.py` 自身が parse に使う形式である。
 3. **byte 比較は `truncated: false` の trial だけ**で行う。省略した出力を全量 baseline と
    比較しない（`score.py` が truncated を除外し、全件 trial が無ければ未達として扱う）。
-4. **corpus は規模の異なる3 fixture**（小 4 / 中 30 / 大 120 モジュール相当）。median は横断で取る。
+4. **corpus は規模の異なる3 fixture**（小 4 / 中 30 / 大 120 モジュール相当）。trial ごとに
+   自分の corpus の baseline と比べた削減率を出し、その median を取る。
+5. **閾値**: `dirty-status` は median **40%** 以上（70% から再校正）、`diff-summary` は 80% 以上。
+
+旧測定条件（2026-07-31 裁定の案A = `no-skill` でエージェントが実際に消費した出力を分母にする）は
+`SI-FLW-009` の裁定で破棄した。下の「分母がエージェントの気まぐれに左右される」節が理由である。
 
 ### 裁定の根拠になった実測（2026-07-31）
 
@@ -115,8 +121,10 @@ SFCR は `discovery/metrics.md` の North Star Metric の定義に従い、
 - 大 fixture では既定 limit 50 のとき `git status` 比が 40.2% → 71.7% へ跳ねる。
   123 件中 50 件しか出していないため**同じ情報ではない**。これが条件3 の理由である。
 
-閾値（70% / 80%）は本裁定では変更していない。案A の実測後に、必要なら `FLW-NFR-002` の
-supersede として別途裁定する。
+この節は 2026-07-31 裁定（案A）当時の実測であり、**現在の測定条件ではない**。案A の実測結果を
+受けて `SI-FLW-009` で分母を固定 baseline へ戻し、`dirty-status` の閾値を 40% へ再校正した
+（`FLW-NFR-002` → `FLW-NFR-008`）。ここで「長形式では 70% に届かない」ことが既に見えていたにも
+かかわらず、閾値を所与として分母を選んだのが案A の誤りである。
 
 ## 現況
 
@@ -208,11 +216,28 @@ claude は porcelain（compact と同じ1項目1行の機械可読形式）を1�
 codex は同じ情報を2回取得するので分母が膨らむ。harness は no-skill の raw コマンド出力を
 連結して分母にするため、**冗長に叩いた platform ほど削減率が高く出る**。
 
-つまりこの指標が現在測っているのは renderer の性能ではなく、
+つまりこの指標が測っていたのは renderer の性能ではなく、
 「no-skill のエージェントがたまたま何回・どの形式で叩いたか」である。
-`FLW-NFR-002` の 70% が妥当かどうか以前に、`SI-FLW-007` が定めた分母の定義に
-再検討の余地がある（例: platform ごとに評価する／重複取得を正規化する／
-`dirty-status` の価値を byte ではなく field 保持・gate 遵守・一貫性で測る）。
+
+#### 裁定と再採点の結果（2026-08-05。`SI-FLW-009`）
+
+分母を固定 baseline（`git status` 長形式）へ戻し、閾値を median 70% → 40% へ再校正した
+（`FLW-NFR-002` → `FLW-NFR-008` の supersede）。**既存 270 trial をそのまま再採点**したところ、
+platform 間のばらつきが 69.1pt → 2.8pt に縮み、3 platform とも閾値を満たした。
+
+| platform | `dirty-status` 旧定義 | `dirty-status` 新定義 | `diff-summary`（変更なし） |
+|---|---:|---:|---:|
+| claude-code | 5.9% ❌ | **47.6%** ✅ | 89.0% ✅ |
+| codex-cli | 75.0% ✅ | **47.5%** ✅ | 89.0% ✅ |
+| antigravity | 25.1% ❌ | **44.8%** ✅ | 88.5% ✅ |
+
+固定 baseline（`fixture.py` 実測）は `dirty-status` が small 575 / medium 1271 / large 3721 B、
+`diff-summary` が small 1204 / medium 7160 / large 27940 B。
+
+閾値 40% の根拠は、compact が `--porcelain=v1` と同型式（1項目1行）で header 行のぶん必ず太り、
+**公正な分母では 70% が原理的に達成できない**ことである（compact 比 `--porcelain=v1` は
+small -91.7% / medium -20.0% / large -5.3%）。70% を満たせる分母は `--porcelain=v2` だけで、
+それは `flow.py` 自身の parse 入力である。
 
 閾値と測定条件の変更はいずれも要件の変更であり、エージェントが決めてよい事項ではない。
 spec-issue として起票し、人間の裁定を仰ぐ。

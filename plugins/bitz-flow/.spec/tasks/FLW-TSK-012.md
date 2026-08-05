@@ -1,5 +1,5 @@
 ---
-implements: FLW-NFR-001, FLW-NFR-002, FLW-FR-012
+implements: FLW-NFR-001, FLW-NFR-008, FLW-FR-012
 depends_on: [FLW-TSK-010, FLW-TSK-011]
 boundary: evals/flow-core/m0-eval/, plugins/bitz-flow/.claude-plugin/plugin.json, plugins/bitz-flow/plugin.json, plugins/bitz-flow/.codex-plugin/plugin.json
 status: implementing

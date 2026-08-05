@@ -408,7 +408,7 @@ def test_read_operations_have_no_side_effects(rich_repo: Path):
 def test_byte_manifest_is_not_regressed(rich_repo: Path):
     """operation 別の絶対 byte 上限を fixture manifest で固定する。
 
-    上限を超えたら renderer が冗長化した合図（FLW-NFR-002 の回帰判定に使う）。
+    上限を超えたら renderer が冗長化した合図（FLW-NFR-008 の回帰判定に使う）。
     """
     manifest = json.loads(BYTE_MANIFEST.read_text(encoding="utf-8"))
     measured = {}
