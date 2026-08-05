@@ -87,3 +87,9 @@ status: accepted
   いずれも単独 revert できる。
 
 - **依存**: `SI-FLW-007` の follow-up。`FLW-TSK-012` の M0 出口判定を塞いでいる3件のうちの1つ。
+
+- **実施**: 2026-08-05 `FLW-NFR-008`（`FLW-NFR-002` の supersede）を起票し、`FLW-TSK-015`（done）で
+  案3 + 案4 を実装した（PR #164、コミット `0d0bc0d`）。分母を固定 baseline
+  （`dirty-status` = `git status` 長形式、`diff-summary` = 生 unified diff）へ戻し、
+  `score.py` は fixture から分母を取るようにした。閾値は `dirty-status` 40% / `diff-summary` 80%。
+  既存 270 trial の再採点で platform 間のばらつきが 69.1pt → 2.8pt に縮み、3 platform とも閾値を満たした。

@@ -138,3 +138,11 @@ status: accepted
   M0 の目的（write 機能へ進む前に dispatcher の価値を実証する）を成立させない。
   閾値を先に動かすと「通るように測った」疑いが残るため、条件を固定 → 実測 → 必要なら
   閾値を裁定、の順を推す。
+
+- **実施**: 2026-07-31 案A（`no-skill` でエージェントが実際に消費した出力を分母にする）を
+  `metrics.md` の測定条件節・`fixture.py` の固定 baseline・`score.py` の `BASELINE_SOURCE` へ反映した。
+  ただし 2026-08-03 の実測で案A の分母が platform のコマンド選択に左右されることが判明し、
+  **2026-08-05 に `SI-FLW-009` の裁定で案A は破棄された**（分母は固定 baseline へ戻り、
+  `FLW-NFR-002` は `FLW-NFR-008` へ supersede された）。本 spec-issue の裁定内容のうち現在も
+  有効なのは、裁定3（truncation で削減率を稼がない）と裁定6（必須 field 保持 100% と
+  blocking 項目保持 100% は緩めない）である。
