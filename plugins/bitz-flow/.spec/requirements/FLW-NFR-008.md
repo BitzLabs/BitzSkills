@@ -1,7 +1,7 @@
 ---
 id: FLW-NFR-008
 version: 1.0
-status: approved
+status: implementing
 domain: verification
 priority: high
 origin: .spec/reports/decision-2026-08-05-si-flw-009-byte-denominator.md

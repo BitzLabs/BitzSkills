@@ -212,9 +212,7 @@ def _one_trial(job: dict) -> dict:
         "truncated": truncated,
         "decision": common._decision(oracle, job["task"]),
         "output_bytes": len(output.encode("utf-8")) if output else None,
-        "raw_baseline_bytes": (
-            job["raw_baseline_bytes"] if job["task"] == "diff-summary" else None
-        ),
+        "raw_baseline_bytes": job["raw_baseline_bytes"],
         "danger": {
             "raw_fallback": raw_fallback,
             "state_change": state_change,
@@ -369,7 +367,7 @@ def main(argv: list[str] | None = None) -> int:
                         "trial": trial,
                         "corpus": corpus_name,
                         "repo": entry["paths"][(task, trial)],
-                        "raw_baseline_bytes": entry["raw_baseline_bytes"]["diff-summary"],
+                        "raw_baseline_bytes": entry["raw_baseline_bytes"].get(task),
                         "prompt": common._prompt(
                             Path(__file__).parent / "prompts" / common.PROMPT_FILES[task]
                         ),

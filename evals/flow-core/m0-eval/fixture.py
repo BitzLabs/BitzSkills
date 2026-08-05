@@ -7,9 +7,10 @@ byte 削減率が比較できないため、corpus は本スクリプトだけ�
 corpus は規模の異なる3 fixture（小 / 中 / 大）で構成する。削減率の median は
 その横断で取る（2026-07-31 裁定。`SI-FLW-007`）。
 
-status 系の baseline は**固定コマンドではない**。eval の `no-skill` 条件で
-エージェントが実際に消費した出力の byte 数を分母にするため、本スクリプトは測らない。
-`diff-summary` の baseline だけが固定（生 unified diff）である。
+baseline は task ごとに**固定コマンド**である（2026-08-05 裁定。`SI-FLW-009` / `FLW-NFR-008`）。
+`dirty-status` は `git status`（引数なしの長形式）、`diff-summary` は生 unified diff。
+旧定義（`no-skill` でエージェントが実際に消費した出力を分母にする）は、選ぶ形式と
+叩いた回数が platform ごとに違うため同一 renderer が 5.9%〜75.0% に振れて破棄した。
 
 使い方:
 
@@ -25,9 +26,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-# 固定 baseline を持つのは diff だけ（生 unified diff）。
-# status 系は no-skill 条件の実測値を分母にするため、ここには置かない。
+# baseline は task ごとに固定する（SI-FLW-009 / FLW-NFR-008）。
+# status は parse 入力である --porcelain 系ではなく、エージェントが既定で打つ長形式を分母にする。
 BASELINE_COMMANDS = {
+    "dirty-status": ["status"],
     "diff-summary": ["diff", "HEAD"],
 }
 

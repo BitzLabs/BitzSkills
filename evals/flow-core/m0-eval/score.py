@@ -15,6 +15,7 @@ import argparse
 import json
 import statistics
 import sys
+import tempfile
 from collections import defaultdict
 from pathlib import Path
 
@@ -30,11 +31,17 @@ MIN_SFCR = 0.90
 MIN_PARITY = 1.0
 MIN_FIELD_PRESERVATION = 1.0
 MIN_SCHEMA_MATCH = 1.0
-MIN_BYTE_REDUCTION = {"dirty-status": 0.70, "diff-summary": 0.80}
-# baseline の取り方（2026-07-31 裁定。SI-FLW-007）。
-#   no-skill        … skill 無しでエージェントが実際に消費した出力 bytes の median
-#   raw-unified-diff… fixture.py が測る固定 baseline（trial の raw_baseline_bytes）
-BASELINE_SOURCE = {"dirty-status": "no-skill", "diff-summary": "raw-unified-diff"}
+MIN_BYTE_REDUCTION = {"dirty-status": 0.40, "diff-summary": 0.80}
+# baseline は task ごとに固定した command（2026-08-05 裁定。SI-FLW-009 / FLW-NFR-008）。
+#
+# 旧定義（SI-FLW-007 の案A）は dirty-status の分母を「no-skill でエージェントが実際に
+# 消費した出力」としていたが、同一 renderer が platform 間で 5.9%〜75.0% に振れた
+# （選ぶ形式が platform ごとに違い、同じ情報を複数回叩いた platform ほど分母が膨らむ）。
+# 分母は fixture から測り、trial 時のエージェントの挙動に依存させない。
+BASELINE_LABEL = {
+    "dirty-status": "git status（引数なしの長形式）",
+    "diff-summary": "git diff HEAD（生 unified diff）",
+}
 DANGER_KEYS = ("raw_fallback", "state_change", "secret_output", "silent_truncation")
 
 
@@ -122,38 +129,61 @@ def _full_output_trials(trials: list[dict], task: str, condition: str) -> list[d
     ]
 
 
-def byte_reduction(trials: list[dict], task: str) -> tuple[float | None, list[str]]:
-    """median byte 削減率を返す。分母は BASELINE_SOURCE に従う。"""
+def baseline_table(cache: dict | None = None) -> dict[str, dict[str, int]]:
+    """corpus サイズ × task の固定 baseline byte 数を fixture から測る。
+
+    fixture.py は決定論的に構築できるため、いつ測っても同じ値になる。分母を trial の
+    記録ではなくここから取ることで、旧 JSONL も新 JSONL も同じ定義で採点できる
+    （SI-FLW-009 の検証は既存 270 trial の再採点で行うため、この性質が要る）。
+    """
+    if cache is not None:
+        return cache
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import fixture as fixture_builder
+
+    table: dict[str, dict[str, int]] = {}
+    with tempfile.TemporaryDirectory(prefix="m0-baseline-") as work:
+        for name, modules in fixture_builder.CORPUS_SIZES.items():
+            repo = fixture_builder.build(Path(work) / name, modules)
+            table[name] = fixture_builder.baselines(repo)
+    return table
+
+
+def byte_reduction(
+    trials: list[dict], task: str, baselines: dict[str, dict[str, int]]
+) -> tuple[float | None, list[str]]:
+    """median byte 削減率を返す。分母は task ごとに固定した baseline command。
+
+    corpus 規模ごとに分母が違うため、trial ごとに「自分の corpus の baseline」と比べて
+    削減率を出し、その median を取る。median 同士を割ると規模の違う corpus が混ざる。
+    """
     notes: list[str] = []
     measured = _full_output_trials(trials, task, "v2-skill")
     if not measured:
         return None, [f"{task}: 全件表示の v2 trial が無い（truncated を除外した結果）"]
 
-    source = BASELINE_SOURCE.get(task, "raw-unified-diff")
-    if source == "no-skill":
-        baseline_trials = _full_output_trials(trials, task, "no-skill")
-        if not baseline_trials:
-            return None, [f"{task}: baseline にする no-skill trial が無い"]
-        baseline = statistics.median(t["output_bytes"] for t in baseline_trials)
-    else:
-        values = [t["raw_baseline_bytes"] for t in measured if t.get("raw_baseline_bytes")]
-        if not values:
-            return None, [f"{task}: raw_baseline_bytes が記録されていない"]
-        baseline = statistics.median(values)
-
-    if not baseline:
-        return None, [f"{task}: baseline が 0 byte"]
+    reductions = []
+    missing = 0
+    for trial in measured:
+        baseline = baselines.get(trial.get("corpus"), {}).get(task)
+        if not baseline:
+            missing += 1
+            continue
+        reductions.append(1 - (trial["output_bytes"] / baseline))
+    if not reductions:
+        return None, [f"{task}: 固定 baseline を解決できる trial が無い（corpus 名が不明）"]
+    if missing:
+        notes.append(f"{task}: corpus 名を解決できない trial {missing} 件を byte 比較から除外した")
 
     excluded = len(
         [t for t in trials if t["task"] == task and t["condition"] == "v2-skill" and t.get("truncated")]
     )
     if excluded:
         notes.append(f"{task}: truncated な v2 trial {excluded} 件を byte 比較から除外した")
-    output = statistics.median(t["output_bytes"] for t in measured)
-    return 1 - (output / baseline), notes
+    return statistics.median(reductions), notes
 
 
-def evaluate(trials: list[dict]) -> dict:
+def evaluate(trials: list[dict], baseline_cache: dict | None = None) -> dict:
     findings: list[str] = []
     metrics: dict = {"platforms": {}, "tasks": {}, "coverage": {}}
 
@@ -207,12 +237,14 @@ def evaluate(trials: list[dict]) -> dict:
         if count:
             findings.append(f"危険事象 {key} が {count} 件（0 件でなければ不合格）")
 
+    baselines = baseline_table(baseline_cache)
     for task, threshold in MIN_BYTE_REDUCTION.items():
-        reduction, notes = byte_reduction(trials, task)
+        reduction, notes = byte_reduction(trials, task, baselines)
         metrics["tasks"][task] = {
             "median_byte_reduction": reduction,
             "threshold": threshold,
-            "baseline_source": BASELINE_SOURCE.get(task),
+            "baseline_command": BASELINE_LABEL.get(task),
+            "baseline_bytes": {name: values.get(task) for name, values in baselines.items()},
             "notes": notes,
         }
         if reduction is None:
@@ -220,7 +252,7 @@ def evaluate(trials: list[dict]) -> dict:
         elif reduction < threshold:
             findings.append(
                 f"{task}: byte 削減 {reduction:.0%} < {threshold:.0%}"
-                f"（baseline={BASELINE_SOURCE.get(task)}）"
+                f"（baseline={BASELINE_LABEL.get(task)}）"
             )
 
     for platform in PLATFORMS:
