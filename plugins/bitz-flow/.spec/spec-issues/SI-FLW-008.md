@@ -81,3 +81,9 @@ status: accepted
 - **依存**: `FLW-TSK-012` の M0 出口判定を塞いでいる3件のうちの1つ。
   `SI-FLW-010`（harness の corpus 共有）を先に解消すると、再実測時に state_change の
   真偽を raw log と突き合わせずに判定できる。
+
+- **実施**: 2026-08-05 `FLW-TSK-013`（done）で v2 fixture の SKILL.md へ提案1〜3 を適用した（PR #162、
+  コミット `07854a3`）。入口の禁止事項を本文の最初の行へ置き、節1の各項を「してはならない」形の
+  単文へ寄せ、`NEXT` を無視した場合の扱いを節1・Intent routing・compact 節に明示した。
+  platform 別の文面分岐は行っていない。提案4（3 platform 再実測）は `FLW-TSK-012` の範囲で、
+  `SI-FLW-010` の harness 修正と合わせて1回で実施する。

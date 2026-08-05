@@ -4,7 +4,7 @@ version: 1.0
 status: implementing
 domain: verification
 priority: high
-origin: .spec/reports/decision-2026-08-05-si-flw-009-byte-denominator.md
+origin: SI-FLW-009
 verification_method: benchmark
 derived_from:
 supersedes: FLW-NFR-002

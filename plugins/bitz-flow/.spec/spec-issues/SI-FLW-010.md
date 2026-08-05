@@ -82,3 +82,9 @@ status: accepted
 
 - **依存**: `FLW-TSK-012` の M0 出口判定を塞いでいる3件のうちの1つ。
   `SI-FLW-008` の再実測と同時に実施すると 3 platform × 90 trial を1回で済ませられる。
+
+- **実施**: 2026-08-05 `FLW-TSK-014`（done）で harness へ案1 + 案3 を適用した（PR #163、
+  コミット `1a39016`）。`_prepare_corpus` の構築単位を condition × corpus サイズ × task × trial へ変え、
+  `assert_corpus_is_isolated` で repo path の重複を実測前に検査し、
+  `observation.state_change_reasons` に `repo_diff` / `command` / `tool` を分けて記録するようにした。
+  `before != after` は残している。案4（再実測での確認）は `FLW-TSK-012` の範囲。
