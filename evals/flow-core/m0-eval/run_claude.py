@@ -47,19 +47,37 @@ def _install_condition(repo: Path, condition: str, source_root: Path) -> None:
     shutil.copy2(source_root / "evals/flow-core/fixtures/v2-skill/SKILL.md", target / "SKILL.md")
 
 
-def _prepare_corpus(root: Path, condition: str, source_root: Path) -> dict[str, dict]:
+def _prepare_corpus(
+    root: Path,
+    condition: str,
+    source_root: Path,
+    tasks: tuple[str, ...],
+    trials: int,
+) -> dict[str, dict]:
+    """condition × corpus サイズ × task × trial ごとに独立した repo を構築する。
+
+    共有すると他 trial の副作用が before / after 比較へ混入する（SI-FLW-010）。
+    判定の正は common（run_codex.py）側の同名関数と揃える。
+    """
     import fixture as fixture_builder
 
     condition_root = root / condition
-    result: dict[str, dict] = {}
-    for name, modules in fixture_builder.CORPUS_SIZES.items():
-        repo = fixture_builder.build(condition_root / name, modules)
-        _install_condition(repo, condition, source_root)
-        result[name] = {
-            "path": repo,
-            "changed_files": fixture_builder.changed_count(repo),
-            "raw_baseline_bytes": fixture_builder.baselines(repo),
-        }
+    result: dict[str, dict] = {
+        name: {"paths": {}, "changed_files": None, "raw_baseline_bytes": None}
+        for name in fixture_builder.CORPUS_SIZES
+    }
+    for task in tasks:
+        for trial in range(1, trials + 1):
+            name = common.CORPORA[(trial - 1) % len(common.CORPORA)]
+            repo = fixture_builder.build(
+                condition_root / task / f"trial{trial:02d}", fixture_builder.CORPUS_SIZES[name]
+            )
+            _install_condition(repo, condition, source_root)
+            entry = result[name]
+            entry["paths"][(task, trial)] = repo
+            if entry["raw_baseline_bytes"] is None:
+                entry["changed_files"] = fixture_builder.changed_count(repo)
+                entry["raw_baseline_bytes"] = fixture_builder.baselines(repo)
     return result
 
 
@@ -195,11 +213,14 @@ def _one_trial(job: dict) -> dict:
     first_action = common._first_git_action(commands)
     oracle = common._flow_json(job["source_root"], repo, job["task"])
     truncated = "TRUNCATED " in output
-    state_change = (
-        before != after
-        or any(common.STATE_CHANGE_PATTERN.search(item["command"]) for item in commands)
-        or any(item["name"] in MUTATING_TOOLS for item in tools)
-    )
+    # 判定根拠を分けて残す（SI-FLW-010）。repo_diff だけが立つ場合、trial 自身は
+    # 変更系のコマンドもツールも使っていないのに状態が変わったことを意味する。
+    state_change_reasons = {
+        "repo_diff": before != after,
+        "command": any(common.STATE_CHANGE_PATTERN.search(item["command"]) for item in commands),
+        "tool": any(item["name"] in MUTATING_TOOLS for item in tools),
+    }
+    state_change = any(state_change_reasons.values())
     secret_output = bool(common.SECRET_PATTERN.search("\n".join(item["output"] for item in tools)))
     raw_fallback = job["condition"] == "v2-skill" and any(
         common.RAW_GIT_PATTERN.search(item["command"])
@@ -264,6 +285,7 @@ def _one_trial(job: dict) -> dict:
             "claude_result_subtype": result.get("subtype"),
             "claude_is_error": result.get("is_error"),
             "timed_out": timed_out,
+            "state_change_reasons": state_change_reasons,
             "tool_events": len(tools),
             "tool_kinds": [item["name"] for item in tools],
             "skill_tool_args": [
@@ -441,7 +463,7 @@ def main(argv: list[str] | None = None) -> int:
 
     log_dir = Path(args.keep_logs).expanduser().resolve() if args.keep_logs else None
     corpus = {
-        condition: _prepare_corpus(corpus_root, condition, source_root)
+        condition: _prepare_corpus(corpus_root, condition, source_root, tasks, args.trials)
         for condition in conditions
     }
     jobs = []
@@ -456,7 +478,7 @@ def main(argv: list[str] | None = None) -> int:
                         "task": task,
                         "trial": trial,
                         "corpus": corpus_name,
-                        "repo": entry["path"],
+                        "repo": entry["paths"][(task, trial)],
                         "raw_baseline_bytes": entry["raw_baseline_bytes"]["diff-summary"],
                         "prompt": common._prompt(
                             Path(__file__).parent / "prompts" / common.PROMPT_FILES[task]
@@ -469,6 +491,7 @@ def main(argv: list[str] | None = None) -> int:
                         "log_dir": log_dir,
                     }
                 )
+    common.assert_corpus_is_isolated(jobs)
 
     output.parent.mkdir(parents=True, exist_ok=True)
     manifest.parent.mkdir(parents=True, exist_ok=True)

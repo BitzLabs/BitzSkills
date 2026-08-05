@@ -103,18 +103,58 @@ def _install_condition(repo: Path, condition: str, source_root: Path) -> None:
     shutil.copy2(source_root / "evals/flow-core/fixtures/v2-skill/SKILL.md", target / "SKILL.md")
 
 
-def _prepare_corpus(root: Path, condition: str, source_root: Path) -> dict[str, dict]:
+def _prepare_corpus(
+    root: Path,
+    condition: str,
+    source_root: Path,
+    tasks: tuple[str, ...],
+    trials: int,
+) -> dict[str, dict]:
+    """condition × corpus サイズ × task × trial ごとに独立した repo を構築する。
+
+    corpus を trial 間で共有すると、ある trial の副作用が同じ repo を使う別 trial の
+    before / after 比較へ混入し、何も変更していない trial が state_change として
+    記録される（第2ラウンドの antigravity/v2-skill/diff-summary#9 が該当。SI-FLW-010）。
+    共有は task をまたいでも起きていた——repo のキーに task が入っていなかったため、
+    1 condition あたり small=12 / medium・large=各9 trial が同じ repo を使っていた。
+
+    fixture.py は決定論的に構築できるため、分離しても全 trial の内容は同一に保てる。
+    `changed_files` と `raw_baseline_bytes` は corpus サイズごとに一意であり、
+    同サイズの最初の repo で1回だけ測る。
+    """
     condition_root = root / condition
-    result: dict[str, dict] = {}
-    for name, modules in fixture_builder.CORPUS_SIZES.items():
-        repo = fixture_builder.build(condition_root / name, modules)
-        _install_condition(repo, condition, source_root)
-        result[name] = {
-            "path": repo,
-            "changed_files": fixture_builder.changed_count(repo),
-            "raw_baseline_bytes": fixture_builder.baselines(repo),
-        }
+    result: dict[str, dict] = {
+        name: {"paths": {}, "changed_files": None, "raw_baseline_bytes": None}
+        for name in fixture_builder.CORPUS_SIZES
+    }
+    for task in tasks:
+        for trial in range(1, trials + 1):
+            name = CORPORA[(trial - 1) % len(CORPORA)]
+            repo = fixture_builder.build(
+                condition_root / task / f"trial{trial:02d}", fixture_builder.CORPUS_SIZES[name]
+            )
+            _install_condition(repo, condition, source_root)
+            entry = result[name]
+            entry["paths"][(task, trial)] = repo
+            if entry["raw_baseline_bytes"] is None:
+                entry["changed_files"] = fixture_builder.changed_count(repo)
+                entry["raw_baseline_bytes"] = fixture_builder.baselines(repo)
     return result
+
+
+def assert_corpus_is_isolated(jobs: list[dict]) -> None:
+    """同一 run 内で2つの trial が同じ repo を使っていないことを機械的に確かめる。
+
+    trial 間の独立性は測定の前提であり、崩れると無実の trial が state_change として
+    計上される（SI-FLW-010）。回帰を実測前に落とすため、job 構築直後に検査する。
+    """
+    repos = [str(job["repo"]) for job in jobs]
+    if len(set(repos)) != len(repos):
+        raise SystemExit(
+            "corpus が trial 間で共有されている（SI-FLW-010 の回帰）。"
+            "_prepare_corpus が condition × corpus サイズ × task × trial 単位で"
+            "repo を作っているか確認すること。"
+        )
 
 
 def _save_raw_log(platform: str, job: dict, proc: subprocess.CompletedProcess) -> str | None:
@@ -365,7 +405,14 @@ def _one_trial(job: dict) -> dict:
     first_action = _first_git_action(commands)
     oracle = _flow_json(job["source_root"], repo, job["task"])
     truncated = "TRUNCATED " in output
-    state_change = before != after or any(STATE_CHANGE_PATTERN.search(item["command"]) for item in commands)
+    # 判定根拠を分けて残す。repo_diff だけが立つ場合、trial 自身は何も実行していないのに
+    # 状態が変わったことを意味する（corpus 分離後は起こらないはずの事象）。raw log と
+    # 突き合わせずに真偽を切り分けられるようにする（SI-FLW-010）。
+    state_change_reasons = {
+        "repo_diff": before != after,
+        "command": any(STATE_CHANGE_PATTERN.search(item["command"]) for item in commands),
+    }
+    state_change = any(state_change_reasons.values())
     secret_output = bool(SECRET_PATTERN.search("\n".join(item["output"] for item in commands)))
     raw_fallback = job["condition"] == "v2-skill" and any(
         RAW_GIT_PATTERN.search(item["command"]) for item in commands if "flow.py" not in item["command"]
@@ -420,6 +467,7 @@ def _one_trial(job: dict) -> dict:
             "codex_exit_code": proc.returncode,
             "raw_log": raw_log,
             "timed_out": timed_out,
+            "state_change_reasons": state_change_reasons,
             "command_events": len(commands),
             "command_kinds": [
                 "flow.py"
@@ -522,7 +570,8 @@ def main(argv: list[str] | None = None) -> int:
 
     log_dir = Path(args.keep_logs).expanduser().resolve() if args.keep_logs else None
     corpus = {
-        condition: _prepare_corpus(corpus_root, condition, source_root) for condition in conditions
+        condition: _prepare_corpus(corpus_root, condition, source_root, tasks, args.trials)
+        for condition in conditions
     }
     jobs = []
     for condition in conditions:
@@ -536,7 +585,7 @@ def main(argv: list[str] | None = None) -> int:
                         "task": task,
                         "trial": trial,
                         "corpus": corpus_name,
-                        "repo": entry["path"],
+                        "repo": entry["paths"][(task, trial)],
                         "raw_baseline_bytes": entry["raw_baseline_bytes"]["diff-summary"],
                         "prompt": _prompt(Path(__file__).parent / "prompts" / PROMPT_FILES[task]),
                         "model": args.model,
@@ -547,6 +596,7 @@ def main(argv: list[str] | None = None) -> int:
                         "log_dir": log_dir,
                     }
                 )
+    assert_corpus_is_isolated(jobs)
 
     output.parent.mkdir(parents=True, exist_ok=True)
     manifest.parent.mkdir(parents=True, exist_ok=True)

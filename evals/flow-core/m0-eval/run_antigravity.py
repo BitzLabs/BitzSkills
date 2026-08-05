@@ -147,11 +147,14 @@ def _one_trial(job: dict) -> dict:
     first_action = common._first_git_action(commands)
     oracle = common._flow_json(job["source_root"], repo, job["task"])
     truncated = "TRUNCATED " in output
-    state_change = (
-        before != after
-        or any(common.STATE_CHANGE_PATTERN.search(item["command"]) for item in commands)
-        or any(item["name"] in MUTATING_TOOLS for item in tools)
-    )
+    # 判定根拠を分けて残す（SI-FLW-010）。第2ラウンドの diff-summary#9 は
+    # repo_diff だけが立った誤検知で、真偽の切り分けに raw log が要った。
+    state_change_reasons = {
+        "repo_diff": before != after,
+        "command": any(common.STATE_CHANGE_PATTERN.search(item["command"]) for item in commands),
+        "tool": any(item["name"] in MUTATING_TOOLS for item in tools),
+    }
+    state_change = any(state_change_reasons.values())
     secret_output = bool(
         common.SECRET_PATTERN.search("\n".join(item["output"] for item in tools))
     )
@@ -223,6 +226,7 @@ def _one_trial(job: dict) -> dict:
             "raw_log": raw_log,
             "agy_result_status": result.get("status"),
             "timed_out": timed_out,
+            "state_change_reasons": state_change_reasons,
             "tool_events": len(tools),
             "tool_kinds": [item["name"] for item in tools],
             "error_events": error_events,
@@ -347,7 +351,9 @@ def main(argv: list[str] | None = None) -> int:
 
     log_dir = Path(args.keep_logs).expanduser().resolve() if args.keep_logs else None
     corpus = {
-        condition: common._prepare_corpus(corpus_root, condition, source_root)
+        condition: common._prepare_corpus(
+            corpus_root, condition, source_root, tasks, args.trials
+        )
         for condition in conditions
     }
     jobs = []
@@ -362,7 +368,7 @@ def main(argv: list[str] | None = None) -> int:
                         "task": task,
                         "trial": trial,
                         "corpus": corpus_name,
-                        "repo": entry["path"],
+                        "repo": entry["paths"][(task, trial)],
                         "raw_baseline_bytes": entry["raw_baseline_bytes"]["diff-summary"],
                         "prompt": common._prompt(
                             Path(__file__).parent / "prompts" / common.PROMPT_FILES[task]
@@ -375,6 +381,7 @@ def main(argv: list[str] | None = None) -> int:
                         "log_dir": log_dir,
                     }
                 )
+    common.assert_corpus_is_isolated(jobs)
 
     output.parent.mkdir(parents=True, exist_ok=True)
     manifest.parent.mkdir(parents=True, exist_ok=True)

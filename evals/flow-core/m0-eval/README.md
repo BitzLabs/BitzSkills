@@ -156,12 +156,13 @@ SKILL.md は同一で、差が出たのは platform 側の傾向である。
 
 state_change 2件のうち **1件は harness の誤検知**である（下記）。実質1件。
 
-### 第2ラウンドで判明した harness 欠陥（corpus の trial 間共有）
+### 第2ラウンドで判明した harness 欠陥（corpus の trial 間共有）— 修正済み
 
-harness は condition × corpus サイズごとに repo を**1つだけ**作り、その corpus を使う
-全 trial で共有する。しかも `--workers 3` で並列実行する。このため、ある trial が repo を
-変更すると同一 corpus の別 trial の `before` / `after` 比較へ混入し、**無実の trial が
-`state_change` として記録される**。
+第2ラウンド時点の harness は condition × corpus サイズごとに repo を**1つだけ**作り、
+その corpus を使う全 trial で共有していた。repo のキーに task が入らなかったため、共有範囲は
+1 condition あたり **small=12 / medium・large=各9 trial** に及ぶ。しかも `--workers 3` で
+並列実行する。このため、ある trial が repo を変更すると同一 corpus の別 trial の
+`before` / `after` 比較へ混入し、**無実の trial が `state_change` として記録された**。
 
 第2ラウンドの `antigravity/v2-skill/diff-summary#9` が該当する。この trial は flow.py しか
 実行していない（raw log で6コマンドすべてを確認済み）にもかかわらず `state_change=true` と
@@ -169,8 +170,19 @@ harness は condition × corpus サイズごとに repo を**1つだけ**作り�
 実際に corpus へ `?? stats.txt` が残っている。
 
 したがって **antigravity の state_change は 2件ではなく実質1件**（`#6` のみが真の違反）。
-切り分けるには corpus を trial ごとに分離するか、書き込みを伴う trial を直列化する必要がある。
-現状は raw log と突き合わせないと真偽を判定できない。
+
+`SI-FLW-010` の裁定（accept、案1 + 案3 併用）に基づき、次のとおり修正した。第2ラウンドの
+数値は修正前の実測であり、**再実測しないと本欠陥の影響を除いた値にはならない**
+（`state_change` は trial 実行時にしか観測できず、既存 JSONL の再採点では救えない）。
+
+| 修正 | 内容 |
+|---|---|
+| corpus の分離 | `_prepare_corpus` の構築単位を condition × corpus サイズ × **task × trial** へ変更。`fixture.py` は決定論的なので内容は同一（`changed_count` は small=7 / medium=33 / large=123 のまま） |
+| 回帰の機械検査 | `assert_corpus_is_isolated` が job 構築直後に repo path の重複を検査し、共有が残っていれば**実測前に**非ゼロ終了する |
+| 判定根拠の記録 | trial 行の `observation.state_change_reasons` に `repo_diff` / `command` / `tool` を分けて残す。`repo_diff` だけが立つ trial は「自分では何もしていないのに状態が変わった」を意味し、raw log と突き合わせずに誤検知を切り分けられる |
+
+`before != after` は**残している**。行為ベースの判定だけにするとリダイレクトや未知の変更手段を
+取りこぼすため、独立性の保証（案1）と判定の説明力（案3）を併用する方針である。
 
 ### `dirty-status` の byte 削減は分母がエージェントの気まぐれに左右される
 
