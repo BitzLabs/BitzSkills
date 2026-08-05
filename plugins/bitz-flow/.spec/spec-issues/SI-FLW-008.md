@@ -3,7 +3,7 @@ id: SI-FLW-008
 raised_by: M0 eval 第2ラウンド実測（FLW-TSK-012、2026-08-03）
 target: antigravity だけが Mandatory entry protocol を守り切れず、v2 条件で生 git へ迂回する
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: M0 eval 第2ラウンドで3 platform × 90 trial を実測したところ、
   **同一の v2 SKILL.md にもかかわらず antigravity だけが入口遵守を達成できなかった**。
