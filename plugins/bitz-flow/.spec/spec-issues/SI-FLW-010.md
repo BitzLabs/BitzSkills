@@ -6,8 +6,10 @@ proposed_change_type: modify
 status: open
 ---
 - **目的**: M0 eval harness は condition × corpus サイズごとに repo を**1つだけ**構築し、
-  その corpus を使う全 trial（同一 condition の同一サイズなら 3〜4 trial）で**共有**する。
-  さらに `--workers 3` で並列実行する。このため、ある trial が repo を変更すると
+  その corpus を使う全 trial で**共有**する。repo のキーに task が入らない
+  （`corpus[condition][corpus_name]` を3 task が共有する）ため、共有範囲は
+  **1 condition あたり small=12 trial（4 trial × 3 task）／ medium・large=各9 trial**
+  になる。さらに `--workers 3` で並列実行する。このため、ある trial が repo を変更すると
   同一 corpus の別 trial の `before` / `after` 比較へ混入し、
   **何も変更していない trial が `state_change` として記録される**。
 
@@ -27,6 +29,12 @@ status: open
   2. **真偽の判定に raw log との突き合わせが要る**。`--keep-logs`（`SI-FLW-008` 起票時に
      追加済み）が無ければ切り分け自体ができない。指標の自動判定が人手の確認に依存しており、
      `score.py` の非ゼロ終了をそのまま出口判定の証跡にできない。
+  3. **判定値と byte 分母も汚染され得る（潜在）**。oracle は trial 実行時に同じ repo から
+     取るため汚染後は「正しい答え」自体がずれ、`raw_baseline_bytes` は corpus 構築時に
+     1回だけ測るため汚染後の trial では実際の raw 出力と分母が食い違う（`SI-FLW-009` に直結）。
+     第2ラウンドの実データでは判定値の汚染は**起きていない**（3 platform 全 condition の
+     `dirty-status` の `changed` は large=123 / medium=33 / small=7 で一貫）。
+     `stats.txt` を作った `#6` より先に該当 trial が終わっていたためで、タイミング依存である。
 
   なお本件は harness の欠陥であり、スキル設計・実装の問題ではない。第1ラウンドの
   known_limitations にも corpus 共有に起因する記述があったが（no-skill/repo-inspect trial 5 の
