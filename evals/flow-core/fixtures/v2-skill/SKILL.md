@@ -2,13 +2,16 @@
 name: flow-core
 description: Git / GitHub 操作の唯一の実行入口。git status / diff / log / branch / commit / worktree、GitHub の Issue / PR / merge / CI / release / CHANGELOG に触れる前に必ず発動する。生の git・gh コマンドを直接実行せず、同梱の dispatcher（flow.py）を実行して結果を受け取る。リポジトリの状態取得と状態変更のどちらにも使う。「開発」一般ではなく、Git / GitHub の状態を読む・変えるときに使う。
 metadata:
-  version: "0.4.1"
+  version: "0.4.2"
   author: br7.hide
   created: "2026-07-31"
-  updated: "2026-08-03"
+  updated: "2026-08-05"
 ---
 
 # flow-core — Git / GitHub 操作の単一入口
+
+**この文書を読んだ時点で、`git` と `gh` を自分で実行することは禁止される。**
+Git / GitHub に触れる操作はすべて `flow.py` へ渡す。読んだうえで生コマンドを選ぶのは違反である。
 
 ## 1. Mandatory entry protocol
 
@@ -18,11 +21,13 @@ metadata:
    python3 <このスキル>/scripts/flow.py [--repo PATH] [--format compact|json] <domain> <action> [options]
    ```
 
-2. **生コマンドへ戻らない。** `git` / `gh` を直接実行しない。`flow.py` が扱えない操作を
-   自前のコマンドで代替しない。
+2. **`git` / `gh` を自分で実行してはならない。** `flow.py` が扱えない操作を自前のコマンドで
+   代替してはならない。短く済むという理由で生コマンドへ戻ってはならない。
 3. **`UNSUPPORTED` なら停止する。** 終了コード 8 が返ったら、その場で作業を止め、
-   「どの操作が未対応だったか」を利用者へ報告する。回避策を自作しない。
-4. 最初の操作はローカル Git の読取なら `repo inspect`、GitHub 側の書込みが要るなら
+   「どの操作が未対応だったか」を利用者へ報告する。回避策を自作してはならない。
+4. **`NEXT` が示した操作と引数は、そのまま渡す。** 比較元・ref・path を自分で組み立て直しては
+   ならない。別の比較元が要るなら、生コマンドではなく action の引数で指定する。
+5. 最初の操作はローカル Git の読取なら `repo inspect`、GitHub 側の書込みが要るなら
    `repo capabilities`、明示的な診断依頼なら flow-doctor を使う。
    毎回の操作前に診断を挟まない。
 
@@ -50,6 +55,9 @@ metadata:
 | CI とレビューを確認する | `pr` | `checks` / `ready` |
 | PR をマージする | `pr` | `merge-plan` → `merge` → `post-merge` |
 | リリースを作る | `release` | `plan` → `changelog` → `notes` → `tag-create` → `draft` |
+
+比較元・範囲・件数は action の引数で指定する（`diff-summary` の比較元は `--base <ref>`、
+既定は `HEAD`）。表にある意図を、引数を変えたいという理由で生コマンドへ移してはならない。
 
 表に無い意図は `flow.py` の対象外である。生コマンドで代替せず、利用者へ相談する。
 
@@ -105,7 +113,8 @@ NEXT git.diff-summary snapshot=sha256:ab12
 
 - 先頭行が判定。`code` と `operation`、失敗時は `cause` と `stage` が付く。
 - `NEXT` は次に呼べる操作。shell コマンドではなく domain / action と引数で示される。
-  `NEXT` が引数を示したらそのまま渡す（自分で組み立て直さない）。
+  **`NEXT` があるならそれを使う。** 示された引数はそのまま渡し、同じ情報を別の手段で
+  取り直してはならない。
 - `TRUNCATED shown=… total=… cursor=…` が出たら全件ではない。
 - **compact のまま読む。** 判断に必要な field はすべて compact に出る。
   `--format json` は result を別のプログラムへ渡すときだけ使う。同じ判定を返すが
