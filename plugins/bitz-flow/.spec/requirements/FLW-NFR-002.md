@@ -1,14 +1,14 @@
 ---
 id: FLW-NFR-002
 version: 1.0
-status: implementing
+status: deprecated
 domain: verification
 priority: high
 origin: .spec/reports/decision-2026-07-29-bitz-flow-v2-design-gate.md
 verification_method: benchmark
 derived_from:
 supersedes:
-superseded_by:
+superseded_by: FLW-NFR-008
 confidence: high
 ---
 
@@ -26,3 +26,4 @@ confidence: high
 - **検証手段**: 固定fixture corpus、raw baseline command、median/p90/absolute bytes、schema oracleを用いるbenchmarkで検証する。
 - **Revision History**:
   - 1.0 (2026-07-29) FLW-DSC-004とFLW-DSN-003/014からdraft起票
+  - deprecated (2026-08-05) SI-FLW-009 の裁定により FLW-NFR-008 へ supersede。status の byte 削減の分母（no-skill でエージェントが実際に消費した出力）が platform のコマンド選択に依存し、同一 renderer が 5.9%〜75.0% に振れることが実測で判明したため。裁定記録: .spec/reports/decision-2026-08-05-si-flw-009-byte-denominator.md

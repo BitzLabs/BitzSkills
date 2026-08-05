@@ -1,5 +1,5 @@
 ---
-implements: FLW-FR-003, FLW-NFR-002
+implements: FLW-FR-003, FLW-NFR-008
 depends_on: [FLW-TSK-005]
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/result.py
 status: done

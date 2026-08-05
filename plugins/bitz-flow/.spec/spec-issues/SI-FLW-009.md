@@ -3,7 +3,7 @@ id: SI-FLW-009
 raised_by: M0 eval 第2ラウンド実測（FLW-TSK-012、2026-08-03）
 target: dirty-status の byte 削減の分母が no-skill エージェントのコマンド選択に左右され、同一 renderer が platform 間で 5.9%〜75.0% に振れる
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `SI-FLW-007` の裁定（案A）は `dirty-status` の分母を
   「`no-skill` 条件でエージェントが実際に消費した出力の byte 数」と定めた。
