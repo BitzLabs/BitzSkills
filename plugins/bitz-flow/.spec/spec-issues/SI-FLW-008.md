@@ -26,8 +26,11 @@ status: open
   write_to_file                                 ← 状態変更
   ```
 
-  と、生 git を4回叩いたうえでファイル書き込みまで行っている。read-only の M0 で
-  `FLW-CON-001`（状態を変更しない）に抵触する振る舞いである。
+  と、生 git を4回叩いたうえでファイル書き込みまで行っている。`FLW-DSN-014` の M0 出口条件は
+  「raw fallback、状態変更、秘密値出力、黙った truncation が各0件」と定めており、これに抵触する。
+  dispatcher を通っていれば `FLW-FR-004`（read operation は暗黙の fetch / ref 更新を行わない）と
+  `FLW-CON-002`（catalog に無い action は副作用ゼロで `UNSUPPORTED`）により副作用ゼロが
+  保証されるが、入口を迂回したためその保証が効いていない。
 
   `FLW-NFR-001` は「platform 別 90% 未満を全体平均で相殺しない」と定めるため、
   agy 単独の未達がそのまま M0 出口を塞ぐ。`FLW-DSN-010` は SFCR 未達時に
@@ -59,8 +62,9 @@ status: open
 - **確認観点**:
   - 重複: `SI-FLW-009` は byte 削減の測定条件、`SI-FLW-010` は harness の corpus 共有で
     対象が異なる。入口遵守そのものを扱う spec-issue は他に無い。
-  - 既存要件との関係: `FLW-NFR-001`（Invocation / SFCR の閾値）と `FLW-CON-001`
-    （read-only）の条文は変更しない。**達成手段の改善**であり EARS の意味を変えない。
+  - 既存要件との関係: `FLW-NFR-001`（Invocation / SFCR の閾値）と `FLW-FR-004`
+    （read operation の副作用禁止）の条文は変更しない。**達成手段の改善**であり
+    EARS の意味を変えない。
     文面変更で閾値に届かない場合に限り、`FLW-NFR-001` の platform 別要件を
     見直すかどうかを別途裁定する（本 issue では提案しない）。
   - ガードレール: 数値を通すために prompt へ `flow.py` を書き足さない。prompt が
