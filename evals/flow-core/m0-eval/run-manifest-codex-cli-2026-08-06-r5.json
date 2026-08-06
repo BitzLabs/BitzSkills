@@ -1,0 +1,93 @@
+{
+  "budget": {
+    "actual_prs": 0,
+    "actual_sessions": 3,
+    "budget_reconfirmation_ref": null,
+    "exit_miss_reasons": [
+      "測定不能の検出条件が広すぎたため、採点上は SFCR 100%（trials=24）だが測定不能 6 件を除外している。うち 5 件は dirty-status で、欠落位置は全件が探索目的の最初の flow.py 呼び出し（position 2）であり、task 対象の呼び出しは観測できていた。過剰除外であり、本ラウンドの数値は条件を絞った r6 に置き換える。",
+      "claude-code / antigravity は本ラウンド未実測。"
+    ],
+    "max_prs": 1,
+    "max_sessions": 5,
+    "review_fix_rounds": 0
+  },
+  "conditions": {
+    "no-skill": "--ignore-user-config + repo skill なし",
+    "v1-skill": "repo .agents/skills に現行 v1 SKILL.md を配置",
+    "v2-skill": "repo .agents/skills に v2 fixture + scripts/references/schemas を配置"
+  },
+  "fixture": {
+    "builder": "evals/flow-core/m0-eval/fixture.py",
+    "raw_baseline_bytes": {
+      "no-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v1-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v2-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      }
+    },
+    "schedule": "trial 1,4,7,10=small; 2,5,8=medium; 3,6,9=large"
+  },
+  "known_limitations": [
+    "SI-FLW-012 の裁定に基づく harness 再試行の初回適用ラウンド。再試行機構自体は機能した（attempts 1:12 / 2:8 / 3:10。18 trial が再試行を要し 12 trial が回復）。",
+    "本ラウンドの結果を受けて、測定不能の判定を「task 対象の呼び出しの出力が失われた場合だけ」へ絞った。絞り込み後の条件を第4ラウンドのデータへ当てると、採点上の失敗 7 件と完全に一致する（過剰にも過少にも取らない）。"
+  ],
+  "milestone": "M0",
+  "note": "Codex CLI のみの部分実測（SI-FLW-012 対応の初回適用。検出条件が広すぎたため r6 で測り直した）。raw event log は --keep-logs でセッション作業領域へ保存したが、リポジトリへは trial 要約だけを記録。",
+  "platforms": {
+    "antigravity": {
+      "status": "not-measured"
+    },
+    "claude-code": {
+      "status": "not-measured"
+    },
+    "codex-cli": {
+      "codex_cli": "codex-cli 0.146.0",
+      "completed_trials": 90,
+      "measured_at": "2026-08-06T02:42:46Z",
+      "model_id": "gpt-5.6-sol",
+      "model_provider": "openai",
+      "model_version": "2026-08-06 service snapshot",
+      "reasoning_effort": "low"
+    }
+  },
+  "prompt_version": "2026-07-31.1",
+  "result": null,
+  "status": "partially-measured"
+}

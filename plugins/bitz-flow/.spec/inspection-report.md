@@ -111,7 +111,7 @@
 | FLW-FR-010 | 承認済み（approved） | workflow | unit-test | 0 | 0 |
 | FLW-FR-011 | 承認済み（approved） | tooling | unit-test | 0 | 0 |
 | FLW-FR-012 | 実装中（implementing） | governance | unit-test | 1 | 1 |
-| FLW-NFR-001 | 実装中（implementing） | verification | benchmark | 5 | 5 |
+| FLW-NFR-001 | 実装中（implementing） | verification | benchmark | 6 | 6 |
 | FLW-NFR-002 | 廃止（deprecated） | verification | benchmark | 0 | 0 |
 | FLW-NFR-003 | 承認済み（approved） | execution | unit-test | 0 | 0 |
 | FLW-NFR-004 | 実装中（implementing） | tooling | unit-test | 1 | 1 |
