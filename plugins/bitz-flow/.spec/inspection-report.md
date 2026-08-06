@@ -1,6 +1,6 @@
-# inspection-report.md (2026-08-03)
+# inspection-report.md (2026-08-06)
 
-成果物数: 51 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 15 / 孤児要件: 0 / 検証証跡: 0
+成果物数: 52 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 15 / 孤児要件: 0 / 検証証跡: 0
 
 ## 問題一覧
 - なし ✅
@@ -62,7 +62,7 @@
 - FLW-CON-002 ← BitzSkills/tests/test_flow_contract.py
 - FLW-FR-003 ← BitzSkills/tests/test_flow_contract.py
 - FLW-FR-004 ← BitzSkills/tests/test_flow_contract.py
-- FLW-NFR-002 ← BitzSkills/tests/test_flow_contract.py
+- FLW-NFR-008 ← BitzSkills/tests/test_flow_contract.py
 
 ## docs 乖離（派生元 docs が派生後に変更された要件 — stale 候補）
 ※ 乖離は候補提示のみ。stale 付与は references/lifecycle.md の再伝播プロトコル（判定パス→人間確認）を経ること
@@ -94,7 +94,7 @@
 | FLW-DSN-007 | active |  |  | 0 | 0 |
 | FLW-DSN-008 | active |  |  | 0 | 0 |
 | FLW-DSN-009 | active |  |  | 0 | 0 |
-| FLW-DSN-010 | active |  |  | 0 | 3 |
+| FLW-DSN-010 | active |  |  | 0 | 4 |
 | FLW-DSN-011 | active |  |  | 0 | 2 |
 | FLW-DSN-012 | active |  |  | 0 | 3 |
 | FLW-DSN-013 | active |  |  | 0 | 2 |
@@ -111,13 +111,14 @@
 | FLW-FR-010 | 承認済み（approved） | workflow | unit-test | 0 | 0 |
 | FLW-FR-011 | 承認済み（approved） | tooling | unit-test | 0 | 0 |
 | FLW-FR-012 | 実装中（implementing） | governance | unit-test | 1 | 1 |
-| FLW-NFR-001 | 実装中（implementing） | verification | benchmark | 2 | 2 |
-| FLW-NFR-002 | 実装中（implementing） | verification | benchmark | 2 | 2 |
+| FLW-NFR-001 | 実装中（implementing） | verification | benchmark | 4 | 4 |
+| FLW-NFR-002 | 廃止（deprecated） | verification | benchmark | 0 | 0 |
 | FLW-NFR-003 | 承認済み（approved） | execution | unit-test | 0 | 0 |
 | FLW-NFR-004 | 実装中（implementing） | tooling | unit-test | 1 | 1 |
 | FLW-NFR-005 | 承認済み（approved） | execution | unit-test | 0 | 0 |
 | FLW-NFR-006 | 承認済み（approved） | execution | unit-test | 0 | 0 |
 | FLW-NFR-007 | 承認済み（approved） | tooling | unit-test | 0 | 0 |
+| FLW-NFR-008 | 実装中（implementing） | verification | benchmark | 3 | 3 |
 | FLW-REV-002 | active |  |  | 0 | 0 |
 | FLW-REV-003 | active |  |  | 0 | 0 |
 | FLW-REV-004 | active |  |  | 0 | 0 |
