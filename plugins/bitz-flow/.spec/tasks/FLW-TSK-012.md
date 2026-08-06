@@ -35,6 +35,25 @@ status: implementing
 - **備考**: 本タスクの完了が M0 出口＝M1 の入口条件になる。version bump は M0 の PR 内に含める
   （AGENTS.md の「version bump は同一 PR 内」規約。コミット位置は問わない）。
   v2 script はこの時点でも prerelease であり、安定版入口として案内しない（FLW-DSN-011）。
+- **進捗（2026-08-06, 第3ラウンド）**: `SI-FLW-008` / `SI-FLW-009` / `SI-FLW-010` の裁定反映後、
+  **antigravity 90 trial のみ**を実測した（`trials-antigravity-2026-08-06-r3.jsonl`）。
+  第2ラウンドで未達だった入口遵守系5項目がすべて閾値超えとなった
+  （Invocation 83.3%→**100%** / SFCR 80.0%→**100%** / 必須 field 保持 83.3%→**100%** /
+  raw fallback 5件→**0件** / 状態変更 2件→**0件**）。残る未達は `dirty-status` の byte 削減
+  **37.0%**（閾値 40%）1件のみ。内訳は compact のみ3件（+44.8〜58.4%）、`--format json` での
+  再取得4件（-406〜-428%）、large corpus で `--limit` を付けた全件取得3件（+37.0%）で、
+  median を決めているのは3件目の群である。`silent_truncation` は0件で打ち切りは可視化されており、
+  ページング自体は正当な判断であるため、閾値が1回目の compact 出力基準で校正されている点に
+  論点が残る（`SI-FLW-009` と同種。閾値・測定条件の変更は人間裁定事項）。
+  **モデルを `gemini-3.1-pro-low` から `gemini-3.6-flash-low` へ変更したため、`SI-FLW-008` の
+  SKILL.md 修正の効果とモデル変更の効果は分離できない**（manifest の `known_limitations` に記録）。
+  また `SI-FLW-008` の修正は3 platform 共通 fixture の v2 SKILL.md を変更しているため、
+  claude-code / codex-cli の第2ラウンド値は現行 fixture での測定ではなく、
+  **M0 出口判定には3 platform を現行 fixture で揃えて測り直す必要がある**（manifest の
+  `status` は `partially-measured`）。
+  測定にあたり、agy のグローバルプラグイン **bitz-env の PreToolUse フックが全 `run_command` を
+  deny する欠陥**を発見し、測定前に一時無効化・測定後に再有効化した（詳細は eval README。
+  bitz-env 側の関心事として別途起票・対処する）。version bump は未実施のまま。
 - **進捗（2026-08-03, 第2ラウンド）**: 修正後の Claude Code 90 trial を実測。設計修正の効果は明確で、
   Invocation 100% / SFCR 100% / 必須 field 保持 100% / golden schema 100% / 危険事象 0件 /
   `diff-summary` byte 削減 89.0% と、**`dirty-status` を除く全指標が閾値を超えた**

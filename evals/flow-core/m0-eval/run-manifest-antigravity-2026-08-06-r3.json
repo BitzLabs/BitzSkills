@@ -1,0 +1,99 @@
+{
+  "budget": {
+    "actual_prs": 0,
+    "actual_sessions": 3,
+    "budget_reconfirmation_ref": null,
+    "exit_miss_reasons": [
+      "dirty-status の byte 削減 median 37.0% < 40%（FLW-NFR-008）。v2 10 trial の内訳は compact のみ3件（+44.8〜58.4%）、`--format json` での再取得4件（-406〜-428%）、large corpus で `--limit` を付けた全件取得3件（+37.0%）。median を決めているのは3件目の群であり、silent_truncation は0件で打ち切りは可視化されていたため、ページング自体はエージェントの正当な判断である。閾値40%が1回目の compact 出力を基準に校正されている点に論点が残る。",
+      "claude-code / codex-cli は本ラウンド未実測のため、3 platform を揃えた M0 出口判定は成立しない（status=partially-measured）。SI-FLW-008 の修正は3 platform 共通 fixture である evals/flow-core/fixtures/v2-skill/SKILL.md を変更しているため、第2ラウンドの claude / codex 値は現行 fixture での測定ではない。",
+      "Decision Parity は claude-code / codex-cli の欠測により判定不能。score.py が報告する「platform 間で一致しない」は欠測に由来する。"
+    ],
+    "max_prs": 1,
+    "max_sessions": 5,
+    "review_fix_rounds": 0
+  },
+  "conditions": {
+    "no-skill": "repo の flow-core skill なし（agy のグローバル非 flow skill は維持）",
+    "v1-skill": "repo .agents/skills に現行 v1 SKILL.md を配置",
+    "v2-skill": "repo .agents/skills に v2 fixture + scripts/references/schemas を配置"
+  },
+  "fixture": {
+    "builder": "evals/flow-core/m0-eval/fixture.py",
+    "raw_baseline_bytes": {
+      "no-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v1-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v2-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      }
+    },
+    "schedule": "trial 1,4,7,10=small; 2,5,8=medium; 3,6,9=large"
+  },
+  "known_limitations": [
+    "score.py の Decision Parity は corpus を grouping key に含めず task 単位で比較するため、small / medium / large の正当な件数差を揺れとして誤検出する。",
+    "trial 10件を3 corpusへ均等配分できないため、固定順で small=4件、medium=3件、large=3件とした。",
+    "agy は --new-project が無いと非対話セッションで workspace を認識しないため、各 trial に同 option を指定した。",
+    "no-skill は repo の flow-core skill を置かない条件であり、agy のグローバル非 flow skill は無効化できないため維持した。",
+    "本ラウンドは model を第2ラウンドの gemini-3.1-pro-low から gemini-3.6-flash-low へ変更した。したがって SI-FLW-008 の SKILL.md 修正の効果とモデル変更の効果を分離できない。",
+    "測定前に agy のグローバルプラグイン bitz-env を一時無効化した。bitz-env の PreToolUse フック（scripts/env_guard.py）は非該当時に {} を返すが、agy の PreToolUse は decision field を必須とするため invalid_args となり、全 run_command が deny されていた（エージェントは拒否を秘して出力を捏造する）。第2ラウンドの環境には本プラグインが導入されていなかった。測定後に再有効化済み。"
+  ],
+  "milestone": "M0",
+  "note": "Antigravity CLI のみの部分実測。raw event log は --keep-logs でセッション作業領域へ保存したが、リポジトリへは trial 要約だけを記録。",
+  "platforms": {
+    "antigravity": {
+      "agy_cli": "agy 1.1.10",
+      "completed_trials": 90,
+      "execution": "--new-project --mode accept-edits --sandbox --dangerously-skip-permissions",
+      "measured_at": "2026-08-06T00:23:54Z",
+      "model_id": "gemini-3.6-flash-low",
+      "model_provider": "google",
+      "model_version": "2026-08-06 service snapshot",
+      "reasoning_effort": "low"
+    },
+    "claude-code": {
+      "status": "not-measured"
+    },
+    "codex-cli": {
+      "status": "not-measured"
+    }
+  },
+  "prompt_version": "2026-07-31.1",
+  "result": null,
+  "status": "partially-measured"
+}

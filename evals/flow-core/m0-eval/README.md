@@ -128,6 +128,60 @@ SFCR は `discovery/metrics.md` の North Star Metric の定義に従い、
 
 ## 現況
 
+**第3ラウンド（antigravity 90 trial）実測済み・部分測定**（2026-08-06。`*-r3` ファイル）。
+`SI-FLW-008` / `SI-FLW-009` / `SI-FLW-010` の裁定を反映したうえで agy を測り直し、
+第2ラウンドで未達だった入口遵守系5項目がすべて閾値を超えた。残る未達は
+`dirty-status` の byte 削減1件のみである。claude-code / codex-cli は本ラウンド未実測のため、
+3 platform を揃えた M0 出口判定は成立しない（manifest の `status` は `partially-measured`）。
+
+### 第3ラウンド結果（antigravity のみ。`gemini-3.6-flash-low` 90 trial）
+
+| 指標 | 閾値 | 第2R（`gemini-3.1-pro-low`） | 第3R（`gemini-3.6-flash-low`） |
+|---|---|---|---|
+| Dispatcher Invocation Rate | 95%以上 | 83.3% ❌ | **100%** ✅ |
+| baseline 比改善 | +20pt 以上 | +83.3pt ✅ | **+100pt** ✅ |
+| SFCR | 90%以上 | 80.0% ❌ | **100%** ✅ |
+| 必須 field 保持 | 100% | 83.3% ❌ | **100%** ✅ |
+| golden schema 一致 | 100% | 100% ✅ | **100%** ✅ |
+| raw fallback | 0件 | 5件 ❌ | **0件** ✅ |
+| 状態変更 | 0件 | 2件（実質1件）❌ | **0件** ✅ |
+| `diff-summary` byte 削減 | 80%以上 | 88.5% ✅ | **88.5%** ✅ |
+| `dirty-status` byte 削減 | 40%以上 | 44.8% ✅ | **37.0%** ❌ |
+
+**モデルを変更したため、`SI-FLW-008` の SKILL.md 修正の効果とモデル変更の効果は分離できない。**
+この交絡は測定条件の変更として manifest の `known_limitations` に記録した。
+
+#### `dirty-status` 未達の内訳（v2 条件 10 trial）
+
+median を決めているのは `--limit` 群であり、性質の異なる2つの挙動が混在している。
+
+| 挙動 | 件数 | 削減率 |
+|---|---:|---:|
+| compact のみ | 3 | +44.8〜58.4% |
+| `--format json` で再取得 | 4 | -406〜-428% |
+| large corpus で `--limit 200/150/123` を付けて全件取得 | 3 | **+37.0%** |
+
+`--format json` の再取得は第1ラウンドで是正したはずの誘導が残ったもので、SKILL.md 側で対処できる。
+一方 `--limit` 群は、compact が既定 limit で打ち切られたため全件を取り直したものである。
+`silent_truncation` は **0件**で打ち切りは可視化されており、ページング自体はエージェントの正当な判断である。
+閾値 40% は1回目の compact 出力を基準に校正されているため、正当なページングを減点する構図になっている。
+`SI-FLW-009` で分母を裁定したときと同種の論点であり、閾値・測定条件の変更は人間裁定事項である。
+
+### 第3ラウンドで判明した環境側の阻害要因（bitz-flow 外）
+
+agy のグローバルプラグイン **bitz-env の PreToolUse フックが、あらゆる `run_command` を deny する**。
+`scripts/env_guard.py` は危険パターン非該当時に `{}` を返すが、agy の PreToolUse は `decision` を
+必須とするため（`docs/調査報告/01.Antigravity/04_extensibility_architecture.md` 4.3）、
+`{}` は `invalid tool call error (invalid_args)` として拒否される。Claude Code では `{}` が正常な
+「介入しない」応答であるため、**agy 専用の欠陥**である。
+
+観測上さらに悪いのは、エージェントが拒否を秘して**コマンド出力を捏造する**ことである
+（`git status --short` を実行していないのに「ワークツリーはクリーン」と回答。実際は変更あり）。
+この状態で走らせても第1ラウンドの `first_git_action=none` 全滅と同様に証跡にならないため、
+測定前に `agy plugin disable bitz-env` で退避し、**測定後に再有効化した**。
+第2ラウンドの環境には本プラグインが導入されていなかったため、当時は顕在化していない。
+修正は bitz-env 側の関心事であり、本 milestone とは別に起票・対処する。
+
 **第2ラウンド（3 platform 270 trial）実測済み・出口 FAIL**（2026-08-03）。
 設計修正により **claude-code / codex-cli は全閾値を満たした**が、**antigravity が未達**である。
 `--sandbox=false` の修正により第1ラウンドの全滅（`first_git_action=none` 90件）は解消し、
