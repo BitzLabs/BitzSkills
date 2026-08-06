@@ -35,8 +35,27 @@ status: implementing
 - **備考**: 本タスクの完了が M0 出口＝M1 の入口条件になる。version bump は M0 の PR 内に含める
   （AGENTS.md の「version bump は同一 PR 内」規約。コミット位置は問わない）。
   v2 script はこの時点でも prerelease であり、安定版入口として案内しない（FLW-DSN-011）。
-- **進捗（2026-08-06, 第3ラウンド）**: `SI-FLW-008` / `SI-FLW-009` / `SI-FLW-010` の裁定反映後、
-  **antigravity 90 trial のみ**を実測した（`trials-antigravity-2026-08-06-r3.jsonl`）。
+- **進捗（2026-08-06, 第3ラウンド codex-cli）**: 同一ラウンドで codex-cli 90 trial を追加実測した
+  （`trials-codex-cli-2026-08-06-r3.jsonl`）。モデル・CLI 版は第2ラウンドと同一
+  （`gpt-5.6-sol` / `codex-cli 0.146.0`）で、**変わったのは3 platform 共通 fixture の
+  v2 SKILL.md だけ**であるため agy のような交絡はない。
+  結果は **SFCR 100%→53.3%**、**必須 field 保持 100%→86.7%** と後退した
+  （Invocation 100% / schema 100% / 危険事象 各0件 / byte 削減 89.0%・47.5% は維持）。
+  v2 30 trial 中 14 trial の失敗内訳は、(1) `NEXT` が提示した snapshot をそのまま渡して
+  `snapshot-mismatch`（exit 6）となり再実行した **10 trial**、(2) `repo inspect` が exit 0 のまま
+  出力 0 byte になった **4 trial**。
+  (1) は **`flow.py` が自分の提示した引数を自分で拒否する契約バグ**であり、snapshot digest が
+  operation ごとに異なるのに `NEXT` が直前 operation の値を引き渡すことが原因である。
+  `SI-FLW-008` の「`NEXT` の引数はそのまま渡す」裁定によって忠実に従うようになった結果、
+  潜在欠陥が systematically に露出した。**エージェントの非遵守ではなく dispatcher の欠陥**であり、
+  `SI-FLW-011` として起票した（M0 出口判定より前に裁定が必要）。
+  (2) は harness / codex 側の出力キャプチャ欠落で、flow.py 実行 99 回中 15 回・位置は
+  100% がセッション内2番目に発生した。第2ラウンドで解消したと判断していたが誤りで、
+  確率的事象をたまたま観測しなかっただけである。`SI-FLW-012` として起票した。
+  **(2) を除いても SFCR は 61.5% で閾値未達**であり、`SI-FLW-011` の裁定なしに M0 出口へは
+  到達しない。claude-code は未実測のまま、version bump も未実施。
+- **進捗（2026-08-06, 第3ラウンド antigravity）**: `SI-FLW-008` / `SI-FLW-009` / `SI-FLW-010` の裁定反映後、
+  まず **antigravity 90 trial** を実測した（`trials-antigravity-2026-08-06-r3.jsonl`）。
   第2ラウンドで未達だった入口遵守系5項目がすべて閾値超えとなった
   （Invocation 83.3%→**100%** / SFCR 80.0%→**100%** / 必須 field 保持 83.3%→**100%** /
   raw fallback 5件→**0件** / 状態変更 2件→**0件**）。残る未達は `dirty-status` の byte 削減

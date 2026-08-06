@@ -1,0 +1,94 @@
+{
+  "budget": {
+    "actual_prs": 0,
+    "actual_sessions": 3,
+    "budget_reconfirmation_ref": null,
+    "exit_miss_reasons": [
+      "SFCR 53.3% < 90%（FLW-NFR-001）。v2 30 trial 中 14 trial が失敗。内訳は (1) NEXT が提示した snapshot をそのまま渡して snapshot-mismatch（exit 6）となり再実行した 10 trial（diff-summary 8 / dirty-status 2）、(2) repo inspect の出力が exit 0 のまま空になった 4 trial。(1) は SI-FLW-011、(2) は SI-FLW-012 として起票した。(2) を除いても SFCR は 61.5% で閾値未達である。",
+      "必須 field 保持 86.7% < 100%（FLW-NFR-001）。未保持の 4 trial はすべて SI-FLW-012 の出力欠落に該当する repo-inspect であり、エージェントの判断に起因しない。",
+      "claude-code は本ラウンド未実測のため、3 platform を揃えた M0 出口判定は成立しない（status=partially-measured）。"
+    ],
+    "max_prs": 1,
+    "max_sessions": 5,
+    "review_fix_rounds": 0
+  },
+  "conditions": {
+    "no-skill": "--ignore-user-config + repo skill なし",
+    "v1-skill": "repo .agents/skills に現行 v1 SKILL.md を配置",
+    "v2-skill": "repo .agents/skills に v2 fixture + scripts/references/schemas を配置"
+  },
+  "fixture": {
+    "builder": "evals/flow-core/m0-eval/fixture.py",
+    "raw_baseline_bytes": {
+      "no-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v1-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v2-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      }
+    },
+    "schedule": "trial 1,4,7,10=small; 2,5,8=medium; 3,6,9=large"
+  },
+  "known_limitations": [
+    "SI-FLW-008 の裁定で v2 SKILL.md へ「NEXT が示した操作と引数はそのまま渡す」を明記した結果、codex-cli が NEXT へ忠実に従うようになり、dispatcher 側の snapshot 契約バグ（SI-FLW-011）が systematically に露出した。第2ラウンド比の SFCR 後退（100%→53.3%）はエージェントの非遵守ではなく dispatcher の欠陥に起因する。",
+    "flow.py の実行 99 回中 15 回で exit 0 かつ出力 0 byte が発生し、その位置は 100% がセッション内2番目（＝最初の flow.py 呼び出し）であった（SI-FLW-012）。第2ラウンドで解消したと判断していたが、確率的事象をたまたま観測しなかっただけであった。"
+  ],
+  "milestone": "M0",
+  "note": "Codex CLI のみの部分実測。raw event log は --keep-logs でセッション作業領域へ保存したが、リポジトリへは trial 要約だけを記録。",
+  "platforms": {
+    "antigravity": {
+      "status": "not-measured"
+    },
+    "claude-code": {
+      "status": "not-measured"
+    },
+    "codex-cli": {
+      "codex_cli": "codex-cli 0.146.0",
+      "completed_trials": 90,
+      "measured_at": "2026-08-06T00:57:43Z",
+      "model_id": "gpt-5.6-sol",
+      "model_provider": "openai",
+      "model_version": "2026-08-06 service snapshot",
+      "reasoning_effort": "low"
+    }
+  },
+  "prompt_version": "2026-07-31.1",
+  "result": null,
+  "status": "partially-measured"
+}

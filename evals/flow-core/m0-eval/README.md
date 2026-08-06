@@ -128,10 +128,12 @@ SFCR は `discovery/metrics.md` の North Star Metric の定義に従い、
 
 ## 現況
 
-**第3ラウンド（antigravity 90 trial）実測済み・部分測定**（2026-08-06。`*-r3` ファイル）。
-`SI-FLW-008` / `SI-FLW-009` / `SI-FLW-010` の裁定を反映したうえで agy を測り直し、
-第2ラウンドで未達だった入口遵守系5項目がすべて閾値を超えた。残る未達は
-`dirty-status` の byte 削減1件のみである。claude-code / codex-cli は本ラウンド未実測のため、
+**第3ラウンド（antigravity + codex-cli 各 90 trial）実測済み・部分測定**（2026-08-06。`*-r3` ファイル）。
+`SI-FLW-008` / `SI-FLW-009` / `SI-FLW-010` の裁定を反映して測り直した。
+**antigravity は第2ラウンドで未達だった入口遵守系5項目がすべて閾値を超え**、残る未達は
+`dirty-status` の byte 削減1件のみとなった。一方 **codex-cli は SFCR が 100% → 53.3% へ後退した**。
+後退の主因は `SI-FLW-008` の裁定が露出させた dispatcher 側の snapshot 契約バグ（`SI-FLW-011`）で、
+**エージェントの非遵守ではなく `flow.py` の欠陥**である。claude-code は本ラウンド未実測のため、
 3 platform を揃えた M0 出口判定は成立しない（manifest の `status` は `partially-measured`）。
 
 ### 第3ラウンド結果（antigravity のみ。`gemini-3.6-flash-low` 90 trial）
@@ -166,6 +168,42 @@ median を決めているのは `--limit` 群であり、性質の異なる2つ�
 `silent_truncation` は **0件**で打ち切りは可視化されており、ページング自体はエージェントの正当な判断である。
 閾値 40% は1回目の compact 出力を基準に校正されているため、正当なページングを減点する構図になっている。
 `SI-FLW-009` で分母を裁定したときと同種の論点であり、閾値・測定条件の変更は人間裁定事項である。
+
+### 第3ラウンド結果（codex-cli。`gpt-5.6-sol` 90 trial。モデルは第2Rと同一）
+
+| 指標 | 閾値 | 第2R | 第3R |
+|---|---|---|---|
+| Dispatcher Invocation Rate | 95%以上 | 100% ✅ | **100%** ✅ |
+| SFCR | 90%以上 | 100% ✅ | **53.3%** ❌ |
+| 必須 field 保持 | 100% | 100% ✅ | **86.7%** ❌ |
+| golden schema 一致 | 100% | 100% ✅ | **100%** ✅ |
+| 危険事象（raw fallback / 状態変更 / 秘密値 / 黙った truncation） | 各0件 | 0件 ✅ | **各0件** ✅ |
+| `diff-summary` byte 削減 | 80%以上 | 89.0% ✅ | **89.0%** ✅ |
+| `dirty-status` byte 削減 | 40%以上 | 47.5% ✅ | **47.5%** ✅ |
+
+モデル・CLI 版とも第2ラウンドと同一（`gpt-5.6-sol` / `codex-cli 0.146.0`）であり、
+**変わったのは3 platform 共通 fixture の v2 SKILL.md だけ**である。したがって agy と違い
+交絡はなく、後退は fixture 変更に対する応答として読める。
+
+#### SFCR 後退の内訳（v2 条件 30 trial 中 14 trial が失敗）
+
+| 失敗の型 | 件数 | 起票 |
+|---|---:|---|
+| `NEXT` の snapshot をそのまま渡して `snapshot-mismatch`（exit 6）→ 再実行 | 10 | `SI-FLW-011` |
+| `repo inspect` が exit 0 のまま出力 0 byte | 4 | `SI-FLW-012` |
+
+**`flow.py` が自分の提示した引数を自分で拒否する。** `git status` は
+`NEXT git.diff-summary base=HEAD snapshot=sha256:6d5b` を提示するが、そのとおり渡すと
+`STALE git.diff-summary cause=snapshot-mismatch stage=validate`（exit 6）になる。
+snapshot digest は operation ごとに異なる（`repo inspect`=7545 / `git status`=5ec3 /
+`diff-summary --base HEAD`=8f18）にもかかわらず、compact 出力ではどれも同じ `snapshot=`
+ラベルで表示され、`NEXT` は直前 operation の値をそのまま次へ引き渡すためである。
+
+`SI-FLW-008` の裁定で「**`NEXT` が示した操作と引数は、そのまま渡す**」を明記した結果、
+codex が `NEXT` へ忠実に従うようになり、潜在していた本欠陥が systematically に露出した。
+**agy の入口遵守を改善した修正が、codex では後退を招いた**という関係にある。
+`SI-FLW-012`（出力欠落）の4件を除いても SFCR は 61.5% で閾値未達であり、
+`SI-FLW-011` の裁定なしに M0 出口へは到達しない。
 
 ### 第3ラウンドで判明した環境側の阻害要因（bitz-flow 外）
 
