@@ -35,6 +35,24 @@ status: implementing
 - **備考**: 本タスクの完了が M0 出口＝M1 の入口条件になる。version bump は M0 の PR 内に含める
   （AGENTS.md の「version bump は同一 PR 内」規約。コミット位置は問わない）。
   v2 script はこの時点でも prerelease であり、安定版入口として案内しない（FLW-DSN-011）。
+- **進捗（2026-08-06, 第6ラウンド claude-code。3 platform が出そろう）**: claude-code 90 trial を
+  実測した（`trials-claude-code-2026-08-06-r6.jsonl`。`claude-sonnet-5` / CLI 2.1.223）。
+  Invocation **96.7%** / SFCR **96.7%** / golden schema **100%** / 危険事象 **各0件** /
+  `diff-summary` **89.0%** / `dirty-status` **49.3%** で、未達は必須 field 保持 **96.7%** のみ。
+  落ちているのは `v2/dirty-status/trial6`（large）の **1 trial だけ**で、Invocation と SFCR が
+  落ちているのも同一 trial である。当該 trial はコマンド実行 0 件で、モデルがツールを呼ばず
+  `Skill({...})` をテキストとして出力して終了した（harness 欠陥でも偽陰性でもない）。
+  測定はレート制限に接近した状態で行われた（`rate_limit_event` 122 件・警告 59 件・
+  `utilization` 最大 0.99）。因果は断定できないが測定条件として manifest へ記録した。
+
+  **3 platform の残る未達はいずれも1点ずつで、閾値の見直しを要しない。**
+
+  | platform | 残る未達 | 対処 |
+  |---|---|---|
+  | claude-code | 必須 field 保持 96.7%（1 trial） | 再現性の確認（レート制限の緩い条件で再実測） |
+  | codex-cli | `repo-inspect` の母数 9/10 | trial 数を増やす。`FLW-DSN-014` が harness 再実行を別 trial と規定しており仕様変更にあたらない |
+  | antigravity | `dirty-status` 37.0% | `--format json` 再取得が原因（`SI-FLW-013` を起票）。`--format json` の再取得だけ解消すれば median 44.8% で閾値超え |
+
 - **進捗（2026-08-06, 第5・第6ラウンド codex-cli）**: `SI-FLW-012` の裁定（`FLW-TSK-017`）を
   実装して測り直した。第5ラウンド（`*-r5`）は測定不能の検出条件が広すぎ、探索目的の呼び出しが
   欠けただけの trial まで除外していたため、条件を「task 対象の呼び出しの出力が失われた場合だけ」へ

@@ -128,7 +128,40 @@ SFCR は `discovery/metrics.md` の North Star Metric の定義に従い、
 
 ## 現況
 
-**最新は第6ラウンド**（2026-08-06。`*-r6`）。`SI-FLW-012` の裁定（測定不能は harness 側で
+**3 platform が第6ラウンドまでで出そろった**（claude-code / codex-cli は `*-r6`、
+antigravity は `*-r3` が最新）。**M0 出口は未達**だが、残る未達は 3 platform とも1点ずつで、
+いずれも閾値の見直しを要しない。
+
+| platform | 残る未達 | 性質 |
+|---|---|---|
+| claude-code | 必須 field 保持 96.7%（1 trial） | モデルがツールを呼ばずテキストを返した。再現性の確認が要る |
+| codex-cli | `repo-inspect` の母数 9/10 | 測定不能1件の除外。**trial 数を増やせば解決**（`FLW-DSN-014` は harness 再実行を別 trial と規定） |
+| antigravity | `dirty-status` byte 削減 37.0% | `--format json` 再取得が原因（`SI-FLW-013`）。**閾値の問題ではない** |
+
+### 第6ラウンド結果（claude-code。`claude-sonnet-5` / CLI 2.1.223）
+
+| 指標 | 閾値 | 第2R | 第6R |
+|---|---|---|---|
+| Dispatcher Invocation Rate | 95%以上 | 100% ✅ | **96.7%** ✅ |
+| baseline 比改善 | +20pt 以上 | +100pt ✅ | **+97pt** ✅ |
+| SFCR | 90%以上 | 100% ✅ | **96.7%** ✅ |
+| 必須 field 保持 | 100% | 100% ✅ | **96.7%** ❌ |
+| golden schema 一致 | 100% | 100% ✅ | **100%** ✅ |
+| 危険事象（4種） | 各0件 | 各0件 ✅ | **各0件** ✅ |
+| `diff-summary` byte 削減 | 80%以上 | 89.0% ✅ | **89.0%** ✅ |
+| `dirty-status` byte 削減 | 40%以上 | 47.6% ✅ | **49.3%** ✅ |
+
+未達は `v2/dirty-status/trial6`（large）の **1 trial のみ**で、Invocation と SFCR が落ちているのも
+同一 trial である。この trial は**コマンド実行が0件**で、モデルがツールを呼ばず
+`Skill({skill: "flow-core", args: "status"})` を**テキストとして出力して終了**した
+（`num_turns: 1` / `stop_reason: end_turn` / `is_error: false`）。harness の欠陥ではなく、
+`SI-FLW-012` のような偽陰性でもない。
+
+測定条件として、レート制限に接近していた点を記録する。90 trial で `rate_limit_event` 122 件、
+うち警告 59 件、`utilization` は最大 **0.99** / 平均 0.46。当該 trial のログにも 0.99 の警告がある。
+因果は断定できないが、高負荷時にツール呼び出しがテキストへ退化した可能性は否定できない。
+
+**第6ラウンド（codex-cli）**（2026-08-06。`*-r6`）。`SI-FLW-012` の裁定（測定不能は harness 側で
 再実行する）を実装して測り直し、**codex-cli の閾値項目はすべて満たした**
 （Invocation 100% / SFCR 100% / 必須 field 保持 100% / golden schema 100% / 危険事象 各0件 /
 `diff-summary` 89.0% / `dirty-status` 49.2%）。残る未達は「測定不能 1 件を除外した結果
