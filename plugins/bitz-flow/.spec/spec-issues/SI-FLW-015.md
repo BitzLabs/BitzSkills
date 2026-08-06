@@ -3,7 +3,7 @@ id: SI-FLW-015
 raised_by: M0 第7ラウンド claude-code 実測（2026-08-06）
 target: flow-core dispatcher の truncation / cursor 契約
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `TRUNCATED` 行は `cursor=<snapshot>#<shown>` を提示するが、**その値を受け取る引数が
   存在しない**。エージェントは提示された値を使おうとして `INVALID_INPUT`（exit 2）で弾かれる。

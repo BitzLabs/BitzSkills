@@ -1,4 +1,4 @@
-# inspection-report.md (2026-08-06)
+# inspection-report.md (2026-08-07)
 
 成果物数: 52 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 15 / 孤児要件: 0 / 検証証跡: 0
 
@@ -101,7 +101,7 @@
 | FLW-DSN-014 | active |  |  | 0 | 1 |
 | FLW-FR-001 | 検証済み（verified） | governance | unit-test | 3 | 5 |
 | FLW-FR-002 | 検証済み（verified） | tooling | manual-check | 1 | 1 |
-| FLW-FR-003 | 実装中（implementing） | tooling | unit-test | 5 | 5 |
+| FLW-FR-003 | 実装中（implementing） | tooling | unit-test | 6 | 6 |
 | FLW-FR-004 | 実装中（implementing） | tooling | unit-test | 2 | 2 |
 | FLW-FR-005 | 承認済み（approved） | execution | unit-test | 0 | 0 |
 | FLW-FR-006 | 承認済み（approved） | workflow | unit-test | 0 | 0 |
@@ -111,7 +111,7 @@
 | FLW-FR-010 | 承認済み（approved） | workflow | unit-test | 0 | 0 |
 | FLW-FR-011 | 承認済み（approved） | tooling | unit-test | 0 | 0 |
 | FLW-FR-012 | 実装中（implementing） | governance | unit-test | 1 | 1 |
-| FLW-NFR-001 | 実装中（implementing） | verification | benchmark | 6 | 6 |
+| FLW-NFR-001 | 実装中（implementing） | verification | benchmark | 7 | 7 |
 | FLW-NFR-002 | 廃止（deprecated） | verification | benchmark | 0 | 0 |
 | FLW-NFR-003 | 承認済み（approved） | execution | unit-test | 0 | 0 |
 | FLW-NFR-004 | 実装中（implementing） | tooling | unit-test | 1 | 1 |

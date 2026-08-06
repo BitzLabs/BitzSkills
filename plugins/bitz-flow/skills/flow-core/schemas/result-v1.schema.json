@@ -57,7 +57,7 @@
         { "$ref": "#/$defs/sha256" },
         { "type": "null" }
       ],
-      "description": "operation が観測した事実の fingerprint。cursor はこの値へ拘束され、変化していれば STALE。"
+      "description": "operation が観測した事実の fingerprint。呼出時に --snapshot で渡した値と違えば STALE。"
     },
     "operation_id": {
       "oneOf": [
@@ -96,7 +96,7 @@
     },
     "truncated": {
       "type": "boolean",
-      "description": "件数上限で items を省略した場合に true。true なら data.page が shown / total / cursor を持つ。"
+      "description": "件数上限で items を省略した場合に true。true なら data.page が shown / total を持ち shown < total。"
     },
     "next_actions": {
       "type": "array",
@@ -111,13 +111,13 @@
       "else": { "properties": { "exit_code": { "not": { "const": 0 } } } }
     },
     {
-      "description": "truncated が true なら page は cursor を持つ。",
+      "description": "truncated が true なら page は shown / total を持つ（shown < total）。",
       "if": { "properties": { "truncated": { "const": true } }, "required": ["truncated"] },
       "then": {
         "properties": {
           "data": {
             "properties": {
-              "page": { "required": ["shown", "total", "cursor"], "properties": { "cursor": { "type": "string" } } }
+              "page": { "required": ["shown", "total"] }
             }
           }
         }
@@ -252,11 +252,7 @@
       "required": ["shown", "total"],
       "properties": {
         "shown": { "type": "integer", "minimum": 0 },
-        "total": { "type": "integer", "minimum": 0 },
-        "cursor": {
-          "oneOf": [{ "type": "string" }, { "type": "null" }],
-          "description": "snapshot へ拘束された継続位置。snapshot が変われば STALE。"
-        }
+        "total": { "type": "integer", "minimum": 0 }
       }
     },
     "data": {

@@ -128,7 +128,70 @@ SFCR は `discovery/metrics.md` の North Star Metric の定義に従い、
 
 ## 現況
 
-**最新は第7ラウンド**（2026-08-06。`*-r7`）。`SI-FLW-013` の裁定を適用した v2 SKILL.md で
+**最新は第8ラウンド**（`*-r8`。codex / agy は 2026-08-06、claude は 2026-08-07）。
+`SI-FLW-014` / `SI-FLW-015` と `SI-FLW-012` の対策強化を適用して 3 platform を測り直した。
+**codex-cli と antigravity は M0 出口条件を全項目クリア**した。**claude-code のみ未達**で、
+3 platform を揃えた M0 出口判定は**未成立**である。
+
+### 第8ラウンド 3 platform 比較
+
+| 指標 | 閾値 | claude-code | codex-cli | antigravity |
+|---|---|---|---|---|
+| Dispatcher Invocation Rate | 95%以上 | **100%** ✅ | **100%** ✅ | **100%** ✅ |
+| SFCR | 90%以上 | **93.3%** ✅ | **100%** ✅ | **100%** ✅ |
+| 必須 field 保持 | 100% | 96.7% ❌ | **100%** ✅ | **100%** ✅ |
+| golden schema 一致 | 100% | **100%** ✅ | **100%** ✅ | **100%** ✅ |
+| **raw fallback** | **0件** | **1件** ❌ | **0件** ✅ | **0件** ✅ |
+| 他の危険事象（3種） | 各0件 | **各0件** ✅ | **各0件** ✅ | **各0件** ✅ |
+| `diff-summary` byte 削減 | 80%以上 | **89.0%** ✅ | **89.0%** ✅ | **88.5%** ✅ |
+| `dirty-status` byte 削減 | 40%以上 | **49.3%** ✅ | **49.2%** ✅ | **46.4%** ✅ |
+| 母数（最小 cell） | 10 | **10** ✅ | **15** ✅ | **10** ✅ |
+
+### 適用した裁定の効果
+
+| 裁定 | 対象 | 効果 |
+|---|---|---|
+| `SI-FLW-014`（`--help` を採点対象から外す） | agy | 必須 field 保持 93.3% → **100%**、SFCR 93.3% → **100%** |
+| `SI-FLW-015`（`cursor` を出力から落とす） | claude | `--cursor` による `INVALID_INPUT` が消えた |
+| `SI-FLW-012` 対策強化（retries 2→5・trials 16） | codex | 測定不能 5 → **1**、`repo-inspect` の測定可能 7 → **15** |
+
+### claude-code の未達（`SI-FLW-016`）
+
+未達 2 点（raw fallback 1 件・必須 field 保持 96.7%）はいずれも v2 の 2 trial に由来し、
+**原因は同一**である。`flow.py` の配置場所を解決できず `find /` を実行してタイムアウトした。
+
+```text
+# repo-inspect#5 — 生 git へ退避（raw_fallback）
+python3 skills/flow-core/flow.py status          ← 誤ったパスを推測（exit 2）
+find / -iname 'flow.py'                          ← 120s タイムアウト
+git branch --show-current && git status -sb ...  ← 生 git
+
+# diff-summary#7 — 自己再試行
+python3 "$(find / -path '*/flow-core/scripts/flow.py' | head -1)" ...  ← 2m タイムアウト
+python3 .claude/skills/flow-core/scripts/flow.py git diff-summary --base HEAD  ← 成功
+```
+
+正しいパスは `.claude/skills/flow-core/scripts/flow.py` である。SKILL.md は
+`<このスキル>/scripts/flow.py` というプレースホルダで参照するため（`CORE-CON-012`）、
+解決はエージェントの推測に委ねられている。推測を外したときの回復手段が定義されておらず、
+`find /` という最悪の手段が選ばれた。
+
+**これは正当な失敗である**（`SI-FLW-012` / `SI-FLW-014` と違い測定系の取り違えではない）。
+`find /` を実行した trial は第7R 0 件・第8R 2 件と確率的に揺れるが、**通るまで再実測しない**。
+`SI-FLW-012` の裁定で自ら定めた「数値を通すための都合のよい操作をしない」方針に反するため、
+原因（`SI-FLW-016`）へ対処してから測り直す。
+
+### 2026-08-06 の claude-code 第8ラウンドは測定不成立
+
+v2 30 trial のうち 18 trial が Claude のセッション上限
+（`You've hit your session limit · resets 6:40pm (Asia/Tokyo)`）により synthetic エラー応答となり、
+`command_events` 0 件・exit code 1 で終了した。第6ラウンドで `utilization` 0.99 の警告が
+出ていたものが上限に達した形である。第1ラウンドの antigravity 全滅と同種の
+**「環境の制約により被測定物を測れていない」**事象であり、数値を出口判定へ持ち込まない。
+`trials-claude-code-2026-08-06-r8.jsonl` は失敗の証跡として残し、
+`trials-claude-code-2026-08-07-r8.jsonl` を有効な記録とする。
+
+**第7ラウンド**（2026-08-06。`*-r7`）。`SI-FLW-013` の裁定を適用した v2 SKILL.md で
 **3 platform を同一 fixture で測り直した**。**閾値項目は claude-code / codex-cli が全項目クリア**、
 antigravity も byte 削減が回復し、残る未達は 2 点のみとなった。
 

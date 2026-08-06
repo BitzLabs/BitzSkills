@@ -97,7 +97,7 @@ Git / GitHub に触れる操作はすべて `flow.py` へ渡す。読んだう�
 | 知りたいこと | 参照先 |
 |---|---|
 | 公開 operation の contract（対象・副作用・承認・再実行可能性） | `<このスキル>/references/operation-catalog.md` |
-| result の読み方、終了コード、cause 語彙、snapshot と cursor | `<このスキル>/references/output-contract.md` |
+| result の読み方、終了コード、cause 語彙、snapshot | `<このスキル>/references/output-contract.md` |
 | result の機械可読な形 | `<このスキル>/schemas/result-v1.schema.json` |
 
 ## 出力の読み方（compact）
@@ -115,7 +115,7 @@ NEXT git.diff-summary base=HEAD
 - `NEXT` は次に呼べる操作。shell コマンドではなく domain / action と引数で示される。
   **`NEXT` があるならそれを使う。** 示された引数はそのまま渡し、同じ情報を別の手段で
   取り直してはならない。
-- `TRUNCATED shown=… total=… cursor=…` が出たら全件ではない。残りが要るなら
+- `TRUNCATED shown=… total=…` が出たら全件ではない。残りが要るなら
   `--limit` で取り直してよい。
 - **compact のまま読む。** 判断に必要な field はすべて compact に出る。
 - **同じ operation を、出力形式を変えて呼び直してはならない。** 一度返った result が

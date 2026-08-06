@@ -1,0 +1,97 @@
+{
+  "budget": {
+    "actual_prs": 0,
+    "actual_sessions": 4,
+    "budget_reconfirmation_ref": null,
+    "exit_miss_reasons": [
+      "本ラウンドは測定不成立。v2 30 trial のうち 18 trial が Claude のセッション上限（\"You've hit your session limit · resets 6:40pm (Asia/Tokyo)\"）により synthetic エラー応答となり、command_events 0 件・exit code 1 で終了した。指標（Invocation 43.3% / SFCR 36.7% / 必須 field 保持 40.0%）はエージェントの挙動を測れていないため出口判定の証跡として使えない。2026-08-07 に同条件で測り直した（trials-claude-code-2026-08-07-r8.jsonl）。"
+    ],
+    "max_prs": 1,
+    "max_sessions": 5,
+    "review_fix_rounds": 0
+  },
+  "conditions": {
+    "no-skill": "--setting-sources project かつ repo に .claude/skills を置かない",
+    "v1-skill": "repo .claude/skills に現行 v1 SKILL.md を配置",
+    "v2-skill": "repo .claude/skills に v2 fixture + scripts/references/schemas を配置"
+  },
+  "fixture": {
+    "builder": "evals/flow-core/m0-eval/fixture.py",
+    "raw_baseline_bytes": {
+      "no-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v1-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v2-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      }
+    },
+    "schedule": "trial 1,4,7,10=small; 2,5,8=medium; 3,6,9=large"
+  },
+  "known_limitations": [
+    "score.py の Decision Parity は corpus を grouping key に含めず task 単位で比較するため、small / medium / large の正当な件数差を揺れとして誤検出する。",
+    "trial 10件を3 corpusへ均等配分できないため、固定順で small=4件、medium=3件、large=3件とした。",
+    "Claude Code は system prompt へ git status を自動注入するため、no-skill 条件ではコマンドを1度も実行せずに回答しうる。その trial は observation.answered_without_command=true となり output_bytes が null になる。SI-FLW-007 が定めた dirty-status の分母（no-skill でエージェントが実際に消費した出力 byte）は本 platform では観測できない。",
+    "no-skill でも Claude Code 組み込みの非 flow skill は無効化できないため維持した（--setting-sources project により user / local 由来の設定と skill は読まない）。",
+    "第6ラウンドで utilization 0.99 の警告が出ていたレート制限が、本ラウンドで上限に達した。第1ラウンドの antigravity 全滅（--sandbox 誤指定で command_events 0）と同種の『harness / 環境の欠陥により被測定物を測れていない』事象であり、数値を出口判定へ持ち込んではならない。",
+    "本ファイルは失敗の証跡として残す。削除・上書きは行わない。"
+  ],
+  "milestone": "M0",
+  "note": "Claude Code の部分実測（測定不成立。セッション上限により 18/30 trial が synthetic エラー）。2026-08-07 の再実測が有効な記録である。",
+  "platforms": {
+    "antigravity": {
+      "status": "not-measured"
+    },
+    "claude-code": {
+      "claude_cli": "claude-code 2.1.223",
+      "completed_trials": 90,
+      "execution": "-p --setting-sources project --strict-mcp-config --no-session-persistence --permission-mode bypassPermissions",
+      "measured_at": "2026-08-06T07:47:37Z",
+      "model_id": "claude-sonnet-5",
+      "model_provider": "anthropic",
+      "model_version": "2026-08-06 service snapshot",
+      "reasoning_effort": "low"
+    },
+    "codex-cli": {
+      "status": "not-measured"
+    }
+  },
+  "prompt_version": "2026-07-31.1",
+  "result": null,
+  "status": "partially-measured"
+}
