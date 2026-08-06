@@ -35,6 +35,39 @@ status: implementing
 - **備考**: 本タスクの完了が M0 出口＝M1 の入口条件になる。version bump は M0 の PR 内に含める
   （AGENTS.md の「version bump は同一 PR 内」規約。コミット位置は問わない）。
   v2 script はこの時点でも prerelease であり、安定版入口として案内しない（FLW-DSN-011）。
+- **進捗（2026-08-06〜07, 第8ラウンド。codex / agy が出口条件を達成）**: `SI-FLW-014` /
+  `SI-FLW-015` と `SI-FLW-012` の対策強化（`FLW-TSK-019`）を適用して 3 platform を測り直した
+  （codex 144 / agy 90 / claude 90 trial）。**codex-cli と antigravity は M0 出口条件を
+  全項目クリア**した。
+
+  | 指標 | 閾値 | claude | codex | agy |
+  |---|---|---|---|---|
+  | Invocation | 95% | 100% ✅ | 100% ✅ | 100% ✅ |
+  | SFCR | 90% | 93.3% ✅ | 100% ✅ | 100% ✅ |
+  | 必須 field 保持 | 100% | 96.7% ❌ | 100% ✅ | 100% ✅ |
+  | golden schema | 100% | 100% ✅ | 100% ✅ | 100% ✅ |
+  | raw fallback | 0件 | **1件** ❌ | 0件 ✅ | 0件 ✅ |
+  | 他の危険事象 | 各0件 | 各0件 ✅ | 各0件 ✅ | 各0件 ✅ |
+  | `diff-summary` byte | 80% | 89.0% ✅ | 89.0% ✅ | 88.5% ✅ |
+  | `dirty-status` byte | 40% | 49.3% ✅ | 49.2% ✅ | 46.4% ✅ |
+  | 母数（最小 cell） | 10 | 10 ✅ | 15 ✅ | 10 ✅ |
+
+  裁定の効果は明確である。`SI-FLW-014` で agy の必須 field 保持が 93.3% → **100%**、
+  `SI-FLW-015` で claude の `--cursor` 由来 `INVALID_INPUT` が解消、`SI-FLW-012` の対策強化で
+  codex の測定不能が 5 → **1**・`repo-inspect` の測定可能が 7 → **15** となった。
+
+  **未達は claude-code のみ**で、raw fallback 1 件と必須 field 保持 96.7% はいずれも v2 の
+  2 trial に由来し**原因は同一**である。`flow.py` の配置場所を解決できず `find /` を実行して
+  タイムアウトし、一方は生 git へ退避、一方は自己再試行となった。SKILL.md が
+  `<このスキル>/scripts/flow.py` というプレースホルダで参照するため（`CORE-CON-012`）
+  解決が推測に委ねられ、外したときの回復手段が定義されていないことが原因である。
+  **これは測定系の取り違えではなく正当な失敗**であり、`SI-FLW-016` として起票した。
+  `find /` の発生は第7R 0 件・第8R 2 件と確率的に揺れるが、**通るまで再実測はしない**
+  （`SI-FLW-012` の裁定で自ら定めた「数値を通すための都合のよい操作をしない」方針に反するため）。
+
+  なお 2026-08-06 の claude 第8ラウンドは Claude のセッション上限により 18/30 trial が
+  synthetic エラーとなり**測定不成立**であった。2026-08-07 に測り直した記録が有効である。
+  失敗した記録は証跡として残す。version bump は未実施。
 - **進捗（2026-08-06, 第7ラウンド。3 platform を同一 fixture で実測）**: `SI-FLW-013` の裁定
   （`FLW-TSK-018`）を適用した v2 SKILL.md で 3 platform を測り直した
   （agy 90 / codex 108（`--trials 12`）/ claude 90 trial）。

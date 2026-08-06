@@ -27,7 +27,7 @@ NEXT git.diff-summary base=HEAD
 | 2 | blocking / error 項目 | 1件1行 |
 | 3 | 変更対象 | 1件1行 |
 | 4 | 通常項目 | 1件1行 |
-| 5 | truncation 行 | `TRUNCATED shown=<n> total=<m> cursor=<snapshot-bound>` |
+| 5 | truncation 行 | `TRUNCATED shown=<n> total=<m>` |
 | 6 | next action | `NEXT <domain>.<action> <key>=<value> ...` |
 
 - blocking / error を最優先し、次に変更対象、通常項目の順で描画する。
@@ -68,7 +68,7 @@ remote-unavailable result-indeterminate
 失敗時は cause に加えて失敗 stage（`inspect` / `parse` / `validate` / `plan` / `apply` /
 `post-check`）を返し、どの工程で落ちたかを区別できるようにする。
 
-## snapshot と cursor
+## snapshot
 
 - `snapshot` は operation が観測した事実の canonical bytes から計算する fingerprint。
 - **`snapshot` は operation 固有である。** 観測対象が operation ごとに違うため、同一 repo・
@@ -78,7 +78,9 @@ remote-unavailable result-indeterminate
   （打ち切られた一覧を辿るページング）。operation をまたぐ誘導には載せない。
   楽観ロックを使いたい呼出側は、対象 operation を一度読んでからその operation 自身の
   `snapshot` を渡す。
-- `cursor` は `snapshot` へ拘束する。呼出時の snapshot と再計算値が違えば `STALE`（exit 6）。
+- 打ち切りは `TRUNCATED shown=<n> total=<m>` で可視化する。**継続位置（cursor）は返さない。**
+  受け取る引数が無いため、提示すると呼出側が渡そうとして `INVALID_INPUT` になる。
+  残りが要るなら `--limit` を大きくして取り直す。
 - `STALE` から回復するときは `--snapshot` を外して同じ operation を呼び直す。
 - 初期版は raw 出力の cache を持たない。working tree が変わった場合は古い結果を復元せず再取得する。
 

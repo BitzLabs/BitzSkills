@@ -1,0 +1,96 @@
+{
+  "budget": {
+    "actual_prs": 0,
+    "actual_sessions": 4,
+    "budget_reconfirmation_ref": null,
+    "exit_miss_reasons": [
+      "antigravity 単体では M0 出口条件を全項目満たした（Invocation 100% / SFCR 100% / 必須 field 保持 100% / golden schema 100% / 危険事象 各0件 / diff-summary 88.5% / dirty-status 46.4%）。3 platform を揃えた M0 出口判定は claude-code の未達により未成立。"
+    ],
+    "max_prs": 1,
+    "max_sessions": 5,
+    "review_fix_rounds": 0
+  },
+  "conditions": {
+    "no-skill": "repo の flow-core skill なし（agy のグローバル非 flow skill は維持）",
+    "v1-skill": "repo .agents/skills に現行 v1 SKILL.md を配置",
+    "v2-skill": "repo .agents/skills に v2 fixture + scripts/references/schemas を配置"
+  },
+  "fixture": {
+    "builder": "evals/flow-core/m0-eval/fixture.py",
+    "raw_baseline_bytes": {
+      "no-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v1-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v2-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      }
+    },
+    "schedule": "trial 1,4,7,10=small; 2,5,8=medium; 3,6,9=large"
+  },
+  "known_limitations": [
+    "score.py の Decision Parity は corpus を grouping key に含めず task 単位で比較するため、small / medium / large の正当な件数差を揺れとして誤検出する。",
+    "trial 10件を3 corpusへ均等配分できないため、固定順で small=4件、medium=3件、large=3件とした。",
+    "agy は --new-project が無いと非対話セッションで workspace を認識しないため、各 trial に同 option を指定した。",
+    "no-skill は repo の flow-core skill を置かない条件であり、agy のグローバル非 flow skill は無効化できないため維持した。",
+    "SI-FLW-014（--help を採点対象から外す）と SI-FLW-015（cursor を出力から落とす）を適用した後の実測である。第7Rで未達だった必須 field 保持は 93.3% → 100%、SFCR は 93.3% → 100% へ回復した。第7Rの未達 2 件のうち --help 由来の 1 件は SI-FLW-014 の除外で解消し、--base HEAD~1 の比較元誤り 1 件は本ラウンドでは再現しなかった。"
+  ],
+  "milestone": "M0",
+  "note": "Antigravity CLI のみの部分実測（SI-FLW-014 / SI-FLW-015 適用後）。raw event log は --keep-logs でセッション作業領域へ保存したが、リポジトリへは trial 要約だけを記録。",
+  "platforms": {
+    "antigravity": {
+      "agy_cli": "agy 1.1.10",
+      "completed_trials": 90,
+      "execution": "--new-project --mode accept-edits --sandbox --dangerously-skip-permissions",
+      "measured_at": "2026-08-06T07:41:57Z",
+      "model_id": "gemini-3.6-flash-low",
+      "model_provider": "google",
+      "model_version": "2026-08-06 service snapshot",
+      "reasoning_effort": "low"
+    },
+    "claude-code": {
+      "status": "not-measured"
+    },
+    "codex-cli": {
+      "status": "not-measured"
+    }
+  },
+  "prompt_version": "2026-07-31.1",
+  "result": null,
+  "status": "partially-measured"
+}

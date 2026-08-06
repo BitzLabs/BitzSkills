@@ -226,10 +226,28 @@ def _first_git_action(commands: list[dict]) -> str:
     return "none"
 
 
+HELP_PATTERN = re.compile(r"(?:^|\s)(?:--help|-h)(?:\s|$)")
+
+
+def _is_help(command: str) -> bool:
+    """`--help` / `-h` を伴う実行か。
+
+    `--help` が返すのは argparse の usage であり result envelope ではない。
+    operation の実行ではないため task の実行として採点してはならない（SI-FLW-014）。
+    """
+    return bool(HELP_PATTERN.search(command))
+
+
 def _task_output(commands: list[dict], condition: str, task: str) -> tuple[str, bool]:
     if condition == "v2-skill":
-        matches = [item for item in commands if TASK_FLOW_PATTERN[task].search(item["command"])]
+        matches = [
+            item
+            for item in commands
+            if TASK_FLOW_PATTERN[task].search(item["command"]) and not _is_help(item["command"])
+        ]
         if not matches:
+            # `--help` しか実行しなかった場合もここへ来る。task を実行していない以上、
+            # 従来どおり失敗として扱う（除外が「なかったこと」にならない）。
             return "", False
         complete = [item for item in matches if "TRUNCATED " not in item["output"]]
         selected = (complete or matches)[-1]
@@ -513,6 +531,10 @@ def _one_attempt(job: dict) -> dict:
             "task_flow_output_bytes": [len(item["output"].encode("utf-8")) for item in relevant],
             # 正常な空結果と測定不能を区別するために位置を残す（SI-FLW-012）。
             "empty_output_positions": _empty_output_positions(commands),
+            # 採点対象から外した `--help` 実行を残す。黙って捨てない（SI-FLW-014）。
+            "help_invocations": [
+                item["command"] for item in commands if _is_help(item["command"])
+            ],
             # 測定不能と見なすのは **task 対象の呼び出し**の出力が失われた場合だけ。
             # 探索目的の呼び出し（多くは position 2 の repo inspect）が欠けても、
             # task 対象の出力が観測できていれば採点はできる（SI-FLW-012）。
@@ -581,9 +603,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--harness-retries",
         type=int,
-        default=2,
+        default=5,
         help="測定不能（出力欠落。SI-FLW-012）を検出したときに harness 側でやり直す上限回数。"
-        "エージェントの自己再試行とは別物であり self_retried には計上しない",
+        "エージェントの自己再試行とは別物であり self_retried には計上しない。"
+        "出力欠落は必ずセッション内2番目のコマンドで起き、再試行しても同じ位置へ戻るため"
+        "（repo-inspect は task 対象の呼び出しがその位置に来る）、回数だけでは収束しない。"
+        "測定可能 10 件を確保するには --trials も併せて増やすこと",
     )
     parser.add_argument("--trials", type=int, default=10)
     parser.add_argument("--workers", type=int, default=3)

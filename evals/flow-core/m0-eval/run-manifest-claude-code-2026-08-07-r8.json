@@ -1,0 +1,99 @@
+{
+  "budget": {
+    "actual_prs": 0,
+    "actual_sessions": 4,
+    "budget_reconfirmation_ref": null,
+    "exit_miss_reasons": [
+      "raw fallback 1 件 > 0 件（FLW-DSN-014 の M0 出口条件）および必須 field 保持 96.7% < 100%。いずれも v2 の 2 trial に由来し、原因は同一である。flow.py の配置場所を解決できず `find /`（ファイルシステム全体の検索）を実行してタイムアウトし、repo-inspect#5 は生 git へ退避（raw_fallback）、diff-summary#7 は自己再試行となった。SI-FLW-016 として起票した。",
+      "3 platform を揃えた M0 出口判定は未成立（codex-cli / antigravity は同ラウンドで全条件クリア）。"
+    ],
+    "max_prs": 1,
+    "max_sessions": 5,
+    "review_fix_rounds": 0
+  },
+  "conditions": {
+    "no-skill": "--setting-sources project かつ repo に .claude/skills を置かない",
+    "v1-skill": "repo .claude/skills に現行 v1 SKILL.md を配置",
+    "v2-skill": "repo .claude/skills に v2 fixture + scripts/references/schemas を配置"
+  },
+  "fixture": {
+    "builder": "evals/flow-core/m0-eval/fixture.py",
+    "raw_baseline_bytes": {
+      "no-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v1-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v2-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      }
+    },
+    "schedule": "trial 1,4,7,10=small; 2,5,8=medium; 3,6,9=large"
+  },
+  "known_limitations": [
+    "score.py の Decision Parity は corpus を grouping key に含めず task 単位で比較するため、small / medium / large の正当な件数差を揺れとして誤検出する。",
+    "trial 10件を3 corpusへ均等配分できないため、固定順で small=4件、medium=3件、large=3件とした。",
+    "Claude Code は system prompt へ git status を自動注入するため、no-skill 条件ではコマンドを1度も実行せずに回答しうる。その trial は observation.answered_without_command=true となり output_bytes が null になる。SI-FLW-007 が定めた dirty-status の分母（no-skill でエージェントが実際に消費した出力 byte）は本 platform では観測できない。",
+    "no-skill でも Claude Code 組み込みの非 flow skill は無効化できないため維持した（--setting-sources project により user / local 由来の設定と skill は読まない）。",
+    "SI-FLW-014 / SI-FLW-015 適用後の実測。SFCR 93.3% / Invocation 100% / golden schema 100% / diff-summary 89.0% / dirty-status 49.3% / 母数 10 は満たしている。",
+    "`find /` を実行した trial は第7R 0 件・第8R 2 件と確率的に揺れる。通るまで再実測するのは SI-FLW-012 の裁定で自ら定めた『数値を通すための都合のよい操作をしない』方針に反するため、原因（SI-FLW-016）へ対処してから測り直す。",
+    "2026-08-06 の同名ラウンドはセッション上限により測定不成立であり、本ファイルが有効な記録である。"
+  ],
+  "milestone": "M0",
+  "note": "Claude Code のみの部分実測（SI-FLW-014 / SI-FLW-015 適用後。2026-08-06 分の再実測）。raw event log は --keep-logs でセッション作業領域へ保存したが、リポジトリへは trial 要約だけを記録。",
+  "platforms": {
+    "antigravity": {
+      "status": "not-measured"
+    },
+    "claude-code": {
+      "claude_cli": "claude-code 2.1.223",
+      "completed_trials": 90,
+      "execution": "-p --setting-sources project --strict-mcp-config --no-session-persistence --permission-mode bypassPermissions",
+      "measured_at": "2026-08-06T22:55:49Z",
+      "model_id": "claude-sonnet-5",
+      "model_provider": "anthropic",
+      "model_version": "2026-08-07 service snapshot",
+      "reasoning_effort": "low"
+    },
+    "codex-cli": {
+      "status": "not-measured"
+    }
+  },
+  "prompt_version": "2026-07-31.1",
+  "result": null,
+  "status": "partially-measured"
+}

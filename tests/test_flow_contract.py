@@ -123,7 +123,10 @@ def _check_envelope(result: dict, schema: dict) -> None:
     for key in defs["data"]["required"]:
         assert key in result["data"], f"data の必須 key 不足: {key}"
     if result["truncated"]:
-        assert result["data"]["page"]["cursor"], "truncated なのに cursor が無い"
+        page = result["data"]["page"]
+        assert page["shown"] < page["total"], "truncated なのに shown < total でない"
+        # 継続位置（cursor）は返さない。受け取る引数が無い値を見せない（SI-FLW-015）。
+        assert "cursor" not in page, "page が受け取れない cursor を公開している"
 
 
 @pytest.mark.parametrize(
@@ -328,18 +331,36 @@ def test_optimistic_lock_still_detects_change(rich_repo: Path):
 # --- truncation --------------------------------------------------------------
 
 
-def test_truncation_is_visible_and_snapshot_bound(rich_repo: Path):
+def test_truncation_is_visible_without_cursor(rich_repo: Path):
+    """打ち切りは shown / total で可視化し、継続位置は公開しない（SI-FLW-015）。
+
+    cursor を見せると呼出側が `--cursor` で渡そうとして INVALID_INPUT になる。
+    残りが要るなら `--limit` を大きくして取り直す。
+    """
     result, code = flow_json("git", "status", "--limit", "1", repo=rich_repo)
     assert code == 0
     assert result["truncated"] is True
     page = result["data"]["page"]
     assert page["shown"] == 1 and page["total"] > 1
-    assert page["cursor"].startswith(result["snapshot"]), "cursor が snapshot へ拘束されていない"
+    assert "cursor" not in page, "page が受け取れない cursor を公開している"
     assert len(result["data"]["items"]) == 1
     assert any(action["action"] == "status" for action in result["next_actions"])
 
     out = flow("git", "status", "--limit", "1", repo=rich_repo).stdout
     assert "TRUNCATED shown=1 total=" in out
+    assert "cursor=" not in out, "compact が受け取れない cursor を見せている"
+
+
+def test_truncated_items_are_reachable_by_limit(rich_repo: Path):
+    """打ち切られた残りは `--limit` を大きくして取り直せる（SI-FLW-015 の回復経路）。"""
+    first, code = flow_json("git", "status", "--limit", "1", repo=rich_repo)
+    assert code == 0 and first["truncated"] is True
+    total = first["data"]["page"]["total"]
+
+    full, code = flow_json("git", "status", "--limit", str(total), repo=rich_repo)
+    assert code == 0
+    assert full["truncated"] is False
+    assert len(full["data"]["items"]) == total
 
 
 # --- 終了コード --------------------------------------------------------------

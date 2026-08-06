@@ -3,7 +3,7 @@ id: SI-FLW-014
 raised_by: M0 第7ラウンド antigravity 実測（2026-08-06）
 target: M0 eval harness の TASK_FLOW_PATTERN と _task_output（採点対象の選び方）
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `flow.py <domain> <action> --help` の実行が **task の実行として拾われ**、
   その usage テキストが採点対象になる。エージェントは正しい実行を済ませたうえで

@@ -147,14 +147,15 @@ def empty_data() -> dict[str, Any]:
 def paginate(items: Sequence[Any], limit: int | None, snapshot: str | None) -> tuple[list, dict, bool]:
     """items を上限まで切り、page と truncated を返す。
 
-    cursor は snapshot へ拘束する。snapshot が変われば呼び出し側が STALE を返す。
+    継続位置を表す `cursor` は返さない。受け取る引数が無いため、提示すると呼出側が
+    渡そうとして `INVALID_INPUT` になる（SI-FLW-015）。残りが要るなら `--limit` を
+    大きくして取り直す。打ち切りの可視化は `shown` / `total` が担う。
     """
     total = len(items)
     if limit is None or total <= limit:
-        return list(items), {"shown": total, "total": total, "cursor": None}, False
+        return list(items), {"shown": total, "total": total}, False
     shown = max(0, limit)
-    cursor = f"{snapshot or 'sha256:unbound'}#{shown}"
-    return list(items[:shown]), {"shown": shown, "total": total, "cursor": cursor}, True
+    return list(items[:shown]), {"shown": shown, "total": total}, True
 
 
 def build_result(
@@ -289,9 +290,9 @@ def render_compact(result: Mapping[str, Any], view: CompactView | None = None) -
 
     page = result["data"].get("page") or {}
     if result.get("truncated"):
+        # cursor は出さない。受け取る引数が無い値を見せない（SI-FLW-015）。
         lines.append(
-            f"TRUNCATED shown={page.get('shown', 0)} total={page.get('total', 0)} "
-            f"cursor={_compact_cursor(page.get('cursor'))}"
+            f"TRUNCATED shown={page.get('shown', 0)} total={page.get('total', 0)}"
         )
     for action in result.get("next_actions", []):
         tokens = " ".join(
@@ -337,14 +338,6 @@ def _compact_value(value: Any) -> str:
     if isinstance(value, str):
         return escape_line(abbrev_digest(value))
     return str(value)
-
-
-def _compact_cursor(cursor: str | None) -> str:
-    """cursor の先頭 digest だけを短縮し、拘束関係は保つ。"""
-    if not cursor:
-        return "null"
-    head, sep, tail = cursor.partition("#")
-    return f"{abbrev_digest(head)}{sep}{tail}"
 
 
 def render_json(result: Mapping[str, Any]) -> str:
