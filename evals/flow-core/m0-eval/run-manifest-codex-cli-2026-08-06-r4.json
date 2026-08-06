@@ -1,0 +1,93 @@
+{
+  "budget": {
+    "actual_prs": 0,
+    "actual_sessions": 3,
+    "budget_reconfirmation_ref": null,
+    "exit_miss_reasons": [
+      "SFCR 76.7% < 90% / 必須 field 保持 76.7% < 100%（FLW-NFR-001）。失敗 7 trial は v2 の repo-inspect のみで、すべて SI-FLW-012（codex の出力キャプチャ欠落）に該当する。当該 7 trial を除くと SFCR・field 保持とも 23/23 = 100% であり、エージェントの判断に起因する失敗は 0 件である。",
+      "claude-code / antigravity は本ラウンド未実測のため、3 platform を揃えた M0 出口判定は成立しない（status=partially-measured）。antigravity は第3ラウンド（*-r3）で dirty-status の byte 削減 37.0% が未達のまま。"
+    ],
+    "max_prs": 1,
+    "max_sessions": 5,
+    "review_fix_rounds": 0
+  },
+  "conditions": {
+    "no-skill": "--ignore-user-config + repo skill なし",
+    "v1-skill": "repo .agents/skills に現行 v1 SKILL.md を配置",
+    "v2-skill": "repo .agents/skills に v2 fixture + scripts/references/schemas を配置"
+  },
+  "fixture": {
+    "builder": "evals/flow-core/m0-eval/fixture.py",
+    "raw_baseline_bytes": {
+      "no-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v1-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v2-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      }
+    },
+    "schedule": "trial 1,4,7,10=small; 2,5,8=medium; 3,6,9=large"
+  },
+  "known_limitations": [
+    "SI-FLW-011（NEXT が別 operation の snapshot を引き渡す契約バグ）の修正後の再実測である。修正前（*-r3）に 10 件あった exit 6（snapshot-mismatch）と self_retried は本ラウンドで 0 件となり、NEXT 起因の失敗は解消した。条件・モデル・CLI 版は第3ラウンドと同一（gpt-5.6-sol / codex-cli 0.146.0）。",
+    "SI-FLW-012 の出力欠落は本ラウンドでも再現した。flow.py 実行 81 回中 21 回（25.9%）で、発生位置は 100% がセッション内2番目。第3ラウンドの 15/99（15.2%）と発生率は振れており、確率的事象という読みと整合する。"
+  ],
+  "milestone": "M0",
+  "note": "Codex CLI のみの部分実測（SI-FLW-011 修正後の再実測）。raw event log は --keep-logs でセッション作業領域へ保存したが、リポジトリへは trial 要約だけを記録。",
+  "platforms": {
+    "antigravity": {
+      "status": "not-measured"
+    },
+    "claude-code": {
+      "status": "not-measured"
+    },
+    "codex-cli": {
+      "codex_cli": "codex-cli 0.146.0",
+      "completed_trials": 90,
+      "measured_at": "2026-08-06T01:56:15Z",
+      "model_id": "gpt-5.6-sol",
+      "model_provider": "openai",
+      "model_version": "2026-08-06 service snapshot",
+      "reasoning_effort": "low"
+    }
+  },
+  "prompt_version": "2026-07-31.1",
+  "result": null,
+  "status": "partially-measured"
+}

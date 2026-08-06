@@ -3,7 +3,7 @@ id: SI-FLW-011
 raised_by: M0 第3ラウンド codex-cli 実測（2026-08-06）
 target: flow-core dispatcher の NEXT ヒントと snapshot 検証の契約
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `flow.py` の `NEXT` 行が提示する引数を指示どおりそのまま渡すと、同じ `flow.py` が
   `snapshot-mismatch` で拒否する。**dispatcher が自分の提示した引数を自分で拒否する**状態である。
@@ -86,3 +86,16 @@ status: open
 
 - **依存**: `SI-FLW-008`（本欠陥を顕在化させた裁定）。`FLW-NFR-001`（platform 別 SFCR 90%）の
   達成可否に直結するため、**M0 出口判定より前に裁定が必要**である。
+
+- **裁定と実施記録（2026-08-06）**: **accept。案1を採用**し、実装上は
+  「次の操作が現在の操作と同じときだけ `snapshot` を載せる」形に精緻化した
+  （裁定記録 `.spec/reports/decision-2026-08-06-si-flw-011-next-snapshot.md`）。
+  `FLW-TSK-016` で次のとおり実施済み。
+
+  - `cli.py` の cross-operation な `next_action` 2箇所（`repo.inspect` → `git.status`、
+    `git.status` → `git.diff-summary`）から `snapshot` を落とした。ページング2箇所は温存
+  - `references/output-contract.md` へ snapshot が operation 固有であること、`NEXT` が
+    載せる条件、`STALE` からの回復手順を明記した
+  - `tests/test_flow_contract.py` に受け入れ条件3件を追加した。既存の
+    `test_compact_line_order` が**不具合側の挙動を固定していた**ため是正した
+  - 効果の確認（codex-cli の SFCR 回復）は M0 eval の再実測で行う

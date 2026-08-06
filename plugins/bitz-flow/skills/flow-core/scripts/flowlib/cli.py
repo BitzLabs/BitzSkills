@@ -162,7 +162,10 @@ def _op_repo_inspect(root: str, args, started: str) -> tuple[dict, R.CompactView
         snapshot=snapshot,
         data=data,
         warnings=facts.warnings,
-        next_actions=[R.next_action("git", "status", snapshot=snapshot)],
+        # snapshot は operation ごとに観測対象が違うため、別 operation へ引き渡すと必ず
+        # snapshot-mismatch になる。NEXT が snapshot を載せるのは「次も同じ operation」
+        # のとき（ページング）だけとする（SI-FLW-011）。
+        next_actions=[R.next_action("git", "status")],
     )
     view = R.CompactView(
         tokens={
@@ -206,8 +209,12 @@ def _op_git_status(root: str, args, started: str) -> tuple[dict, R.CompactView]:
     changed_total = counts["staged"] + counts["unstaged"] + counts["untracked"] + counts["conflicted"]
     # base を明示して渡す。省略すると呼出側が「直前のコミットからの差分」を意図しながら
     # index 比較を呼び、rename を取りこぼす（FLW-DSN-010 の next action 改善）。
-    next_actions = [R.next_action("git", "diff-summary", base="HEAD", snapshot=snapshot)]
+    # diff-summary は git.status とは別の事実（range + items）を観測するため snapshot が
+    # 一致しない。別 operation への NEXT には載せない（SI-FLW-011）。
+    next_actions = [R.next_action("git", "diff-summary", base="HEAD")]
     if truncated:
+        # ページングは同一 operation なので snapshot が一致する。打ち切られた一覧を辿る間の
+        # 変更を検出できる唯一の場面であり、ここは温存する（SI-FLW-011）。
         next_actions.insert(0, R.next_action("git", "status", limit=page["total"], snapshot=snapshot))
 
     result = R.build_result(

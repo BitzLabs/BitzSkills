@@ -16,7 +16,7 @@ result envelope は `additionalProperties: false` でこれを機械的に禁止
 OK git.status snapshot=sha256:ab12 branch=feat/x changed=2 ahead=1 behind=0
  M src/a.py
 ?? tests/test_a.py
-NEXT git.diff-summary snapshot=sha256:ab12
+NEXT git.diff-summary base=HEAD
 ```
 
 行の種類と順序は次に固定する。
@@ -71,7 +71,15 @@ remote-unavailable result-indeterminate
 ## snapshot と cursor
 
 - `snapshot` は operation が観測した事実の canonical bytes から計算する fingerprint。
+- **`snapshot` は operation 固有である。** 観測対象が operation ごとに違うため、同一 repo・
+  同一時点でも `repo.inspect` / `git.status` / `git.diff-summary` の値は一致しない。
+  **別 operation へ引き渡してはならない**（渡せば必ず `snapshot-mismatch` になる）。
+- したがって **`NEXT` が `snapshot` を載せるのは「次も同じ operation」のときだけ**である
+  （打ち切られた一覧を辿るページング）。operation をまたぐ誘導には載せない。
+  楽観ロックを使いたい呼出側は、対象 operation を一度読んでからその operation 自身の
+  `snapshot` を渡す。
 - `cursor` は `snapshot` へ拘束する。呼出時の snapshot と再計算値が違えば `STALE`（exit 6）。
+- `STALE` から回復するときは `--snapshot` を外して同じ operation を呼び直す。
 - 初期版は raw 出力の cache を持たない。working tree が変わった場合は古い結果を復元せず再取得する。
 
 ## `result_digest`
