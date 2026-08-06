@@ -128,7 +128,100 @@ SFCR は `discovery/metrics.md` の North Star Metric の定義に従い、
 
 ## 現況
 
-**最新は第6ラウンド**（2026-08-06。`*-r6`）。`SI-FLW-012` の裁定（測定不能は harness 側で
+**最新は第7ラウンド**（2026-08-06。`*-r7`）。`SI-FLW-013` の裁定を適用した v2 SKILL.md で
+**3 platform を同一 fixture で測り直した**。**閾値項目は claude-code / codex-cli が全項目クリア**、
+antigravity も byte 削減が回復し、残る未達は 2 点のみとなった。
+
+### 第7ラウンド 3 platform 比較
+
+| 指標 | 閾値 | claude-code | codex-cli | antigravity |
+|---|---|---|---|---|
+| Dispatcher Invocation Rate | 95%以上 | **100%** ✅ | **100%** ✅ | **100%** ✅ |
+| SFCR | 90%以上 | **96.7%** ✅ | **100%** ✅ | **93.3%** ✅ |
+| 必須 field 保持 | 100% | **100%** ✅ | **100%** ✅ | 93.3% ❌ |
+| golden schema 一致 | 100% | **100%** ✅ | **100%** ✅ | **100%** ✅ |
+| 危険事象（4種） | 各0件 | **各0件** ✅ | **各0件** ✅ | **各0件** ✅ |
+| `diff-summary` byte 削減 | 80%以上 | **89.0%** ✅ | **89.0%** ✅ | **88.5%** ✅ |
+| `dirty-status` byte 削減 | 40%以上 | **49.3%** ✅ | **49.2%** ✅ | **46.4%** ✅ |
+| 母数（`repo-inspect`） | 10 | 10 ✅ | 7 ❌ | 10 ✅ |
+
+### 残る未達は 2 点
+
+| platform | 未達 | 性質 |
+|---|---|---|
+| codex-cli | `repo-inspect` の母数 7/12 | **`SI-FLW-012` の再試行策が構造的に効かない**（下記） |
+| antigravity | 必須 field 保持 93.3%（2 trial） | 1 件は `--help` の採点（`SI-FLW-014`）、1 件は比較元の誤りで**正当な失敗** |
+
+### `SI-FLW-013` の効果（antigravity）
+
+| | 第3R | 第7R |
+|---|---:|---:|
+| `dirty-status` byte 削減 | 37.0% ❌ | **46.4%** ✅ |
+| `--format json` を実行した trial | 4 | **2** |
+
+「出力形式の選択肢を見せない」だけで閾値を超えた。**閾値（40%）の見直しは不要だった**ことが
+実測で確認できた。
+
+### `SI-FLW-012` の再試行策が `repo-inspect` に効かない（第7Rで判明）
+
+task 別に見ると構造がはっきりする。
+
+| task | trial | 測定不能 | `harness_attempts` 分布 |
+|---|---:|---:|---|
+| `repo-inspect` | 12 | **5** | 1:3 / 2:2 / **3:7** |
+| `dirty-status` | 12 | 0 | 1:12 |
+| `diff-summary` | 12 | 0 | 1:12 |
+
+出力欠落は**必ずセッション内2番目のコマンド**で起きる。`repo-inspect` は task 対象の呼び出しが
+ちょうどその位置に来るため、**再試行しても毎回同じ脆弱な位置に戻る**。12 trial 中 7 trial が
+3 回とも失敗したのがその証拠である（1 回あたりの失敗率が約 7 割なら 3 回でも 0.7³ ≒ 34% が残る）。
+他 2 task は task 対象の呼び出しが 3 番目以降のため 0 件であった。
+
+**位置依存の欠陥に対して位置を変えない対策であった**というのが `SI-FLW-012` の裁定時に
+見落としていた点である。対処方針の再検討が要る。
+
+### `TRUNCATED` の cursor を受け取る口が無い（第7Rで判明。`SI-FLW-015`）
+
+claude-code の SFCR 96.7%（閾値内）の未達 1 件は次の挙動による。
+
+```text
+flow.py git diff-summary --base HEAD
+  → TRUNCATED shown=50 total=122 cursor=sha256:1ec4#50
+flow.py git diff-summary --base HEAD --limit 122 --cursor sha256:1ec4#50
+  → INVALID_INPUT（exit 2）        ← --cursor 引数が存在しない
+flow.py git diff-summary --base HEAD --limit 122
+  → OK（--cursor を外して成功）
+```
+
+`SI-FLW-011`（`NEXT` が提示した snapshot を dispatcher 自身が拒否する）と同じ構図で、
+**出力が入力契約と噛み合っていない**。
+
+**第6ラウンド**（2026-08-06。`*-r6`）。
+
+### 第6ラウンド結果（claude-code。`claude-sonnet-5` / CLI 2.1.223）
+
+| 指標 | 閾値 | 第2R | 第6R |
+|---|---|---|---|
+| Dispatcher Invocation Rate | 95%以上 | 100% ✅ | **96.7%** ✅ |
+| baseline 比改善 | +20pt 以上 | +100pt ✅ | **+97pt** ✅ |
+| SFCR | 90%以上 | 100% ✅ | **96.7%** ✅ |
+| 必須 field 保持 | 100% | 100% ✅ | **96.7%** ❌ |
+| golden schema 一致 | 100% | 100% ✅ | **100%** ✅ |
+| 危険事象（4種） | 各0件 | 各0件 ✅ | **各0件** ✅ |
+| `diff-summary` byte 削減 | 80%以上 | 89.0% ✅ | **89.0%** ✅ |
+| `dirty-status` byte 削減 | 40%以上 | 47.6% ✅ | **49.3%** ✅ |
+
+未達は `v2/dirty-status/trial6`（large）の **1 trial のみ**で、Invocation と SFCR が落ちているのも
+同一 trial である。この trial は**コマンド実行が0件**で、モデルがツールを呼ばず
+`Skill({skill: "flow-core", args: "status"})` を**テキストとして出力して終了**した
+（`num_turns: 1` / `stop_reason: end_turn` / `is_error: false`）。harness の欠陥ではなく、
+`SI-FLW-012` のような偽陰性でもない。
+
+測定条件として、レート制限に接近していた点を記録する。90 trial で `rate_limit_event` 122 件、
+うち警告 59 件、`utilization` は最大 **0.99** / 平均 0.46。当該 trial のログにも 0.99 の警告がある。
+因果は断定できないが、高負荷時にツール呼び出しがテキストへ退化した可能性は否定できない。
+
+**第6ラウンド（codex-cli）**（2026-08-06。`*-r6`）。`SI-FLW-012` の裁定（測定不能は harness 側で
 再実行する）を実装して測り直し、**codex-cli の閾値項目はすべて満たした**
 （Invocation 100% / SFCR 100% / 必須 field 保持 100% / golden schema 100% / 危険事象 各0件 /
 `diff-summary` 89.0% / `dirty-status` 49.2%）。残る未達は「測定不能 1 件を除外した結果

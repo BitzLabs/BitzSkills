@@ -1,0 +1,99 @@
+{
+  "budget": {
+    "actual_prs": 0,
+    "actual_sessions": 3,
+    "budget_reconfirmation_ref": null,
+    "exit_miss_reasons": [
+      "必須 field 保持 96.7% < 100%。未達は v2/dirty-status/trial6（large）の 1 trial のみで、Dispatcher Invocation 96.7% と SFCR 96.7% が落ちているのも同一 trial である。当該 trial はコマンド実行が 0 件で、モデルがツールを呼ばず `Skill({skill: \"flow-core\", args: \"status\"})` をテキストとして出力して終了した（num_turns=1 / stop_reason=end_turn / is_error=false）。harness の欠陥ではなく、SI-FLW-012 のような偽陰性でもない。",
+      "codex-cli / antigravity は本ラウンド未実測のため、3 platform を揃えた M0 出口判定は成立しない（status=partially-measured）。"
+    ],
+    "max_prs": 1,
+    "max_sessions": 5,
+    "review_fix_rounds": 0
+  },
+  "conditions": {
+    "no-skill": "--setting-sources project かつ repo に .claude/skills を置かない",
+    "v1-skill": "repo .claude/skills に現行 v1 SKILL.md を配置",
+    "v2-skill": "repo .claude/skills に v2 fixture + scripts/references/schemas を配置"
+  },
+  "fixture": {
+    "builder": "evals/flow-core/m0-eval/fixture.py",
+    "raw_baseline_bytes": {
+      "no-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v1-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v2-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      }
+    },
+    "schedule": "trial 1,4,7,10=small; 2,5,8=medium; 3,6,9=large"
+  },
+  "known_limitations": [
+    "score.py の Decision Parity は corpus を grouping key に含めず task 単位で比較するため、small / medium / large の正当な件数差を揺れとして誤検出する。",
+    "trial 10件を3 corpusへ均等配分できないため、固定順で small=4件、medium=3件、large=3件とした。",
+    "Claude Code は system prompt へ git status を自動注入するため、no-skill 条件ではコマンドを1度も実行せずに回答しうる。その trial は observation.answered_without_command=true となり output_bytes が null になる。SI-FLW-007 が定めた dirty-status の分母（no-skill でエージェントが実際に消費した出力 byte）は本 platform では観測できない。",
+    "no-skill でも Claude Code 組み込みの非 flow skill は無効化できないため維持した（--setting-sources project により user / local 由来の設定と skill は読まない）。",
+    "測定はレート制限に接近した状態で行われた。90 trial で rate_limit_event 122 件、うち allowed 以外（警告）59 件、utilization は最大 0.99 / 平均 0.46。未達となった trial のログにも utilization 0.99 の警告がある。因果は断定できないが、高負荷時にツール呼び出しがテキストへ退化した可能性は否定できないため測定条件として記録する。",
+    "CLI 版が第2ラウンドの claude-code 2.1.220 から 2.1.223 へ上がっている（パッチ差分）。モデルは claude-sonnet-5 で第2ラウンドと同一。",
+    "SI-FLW-012 の harness 再試行は run_codex.py 固有の実装であり claude 側には入れていない。当該欠陥は codex の event stream 起因で claude では観測されていないため、claude の trial には measurable が付かず従来どおり測定可能として採点される。"
+  ],
+  "milestone": "M0",
+  "note": "Claude Code のみの部分実測。raw event log は --keep-logs でセッション作業領域へ保存したが、リポジトリへは trial 要約だけを記録。",
+  "platforms": {
+    "antigravity": {
+      "status": "not-measured"
+    },
+    "claude-code": {
+      "claude_cli": "claude-code 2.1.223",
+      "completed_trials": 90,
+      "execution": "-p --setting-sources project --strict-mcp-config --no-session-persistence --permission-mode bypassPermissions",
+      "measured_at": "2026-08-06T03:22:43Z",
+      "model_id": "claude-sonnet-5",
+      "model_provider": "anthropic",
+      "model_version": "2026-08-06 service snapshot",
+      "reasoning_effort": "low"
+    },
+    "codex-cli": {
+      "status": "not-measured"
+    }
+  },
+  "prompt_version": "2026-07-31.1",
+  "result": null,
+  "status": "partially-measured"
+}
