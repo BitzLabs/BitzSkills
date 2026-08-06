@@ -35,6 +35,18 @@ status: implementing
 - **備考**: 本タスクの完了が M0 出口＝M1 の入口条件になる。version bump は M0 の PR 内に含める
   （AGENTS.md の「version bump は同一 PR 内」規約。コミット位置は問わない）。
   v2 script はこの時点でも prerelease であり、安定版入口として案内しない（FLW-DSN-011）。
+- **進捗（2026-08-06, 第4ラウンド codex-cli）**: `SI-FLW-011` の修正（`FLW-TSK-016`）後、
+  同条件で codex-cli 90 trial を再実測した（`trials-codex-cli-2026-08-06-r4.jsonl`）。
+  **`NEXT` 起因の失敗は完全に解消**した（exit 6 を含む trial 10→**0**、`self_retried` 10→**0**）。
+  SFCR は 53.3%→**76.7%**、`dirty-status` byte 削減は 47.5%→**49.2%**、
+  Invocation 100% / schema 100% / 危険事象 各0件 / `diff-summary` 89.0% を維持。
+  ただし必須 field 保持は 86.7%→**76.7%** と下がった。**残る失敗7件はすべて `SI-FLW-012`**
+  （codex の出力キャプチャ欠落）に該当する v2 `repo-inspect` であり、
+  **7件を除くと SFCR・field 保持とも 23/23 = 100%**、エージェントの判断に起因する失敗は0件である。
+  出力欠落は flow.py 実行 81 回中 21 回（25.9%）・発生位置は 100% がセッション内2番目で、
+  第3ラウンド（15/99 = 15.2%）と発生率が振れることから確率的事象という読みと整合する。
+  **codex-cli の残る唯一の障害は `SI-FLW-012`** となった。antigravity は第3ラウンドの
+  `dirty-status` 37.0% 未達が残り、claude-code は未実測。version bump も未実施。
 - **進捗（2026-08-06, 第3ラウンド codex-cli）**: 同一ラウンドで codex-cli 90 trial を追加実測した
   （`trials-codex-cli-2026-08-06-r3.jsonl`）。モデル・CLI 版は第2ラウンドと同一
   （`gpt-5.6-sol` / `codex-cli 0.146.0`）で、**変わったのは3 platform 共通 fixture の
