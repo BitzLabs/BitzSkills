@@ -108,7 +108,7 @@ Git / GitHub に触れる操作はすべて `flow.py` へ渡す。読んだう�
 OK git.status snapshot=sha256:ab12 branch=feat/x changed=2 ahead=1 behind=0
  M src/a.py
 ?? tests/test_a.py
-NEXT git.diff-summary snapshot=sha256:ab12
+NEXT git.diff-summary base=HEAD
 ```
 
 - 先頭行が判定。`code` と `operation`、失敗時は `cause` と `stage` が付く。

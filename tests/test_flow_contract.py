@@ -189,7 +189,11 @@ def test_compact_line_order(rich_repo: Path):
     assert lines[0].startswith("OK git.status snapshot=sha256:")
     # NEXT は domain / action に続けて必要引数を並べる（base は明示される）。
     assert lines[-1].startswith("NEXT git.diff-summary ")
-    assert "snapshot=sha256:" in lines[-1]
+    assert "base=HEAD" in lines[-1]
+    # 別 operation への誘導に snapshot は載せない（SI-FLW-011）。同一 operation への
+    # 誘導（ページング）で載ることは test_next_action_carries_snapshot_only_within_same_operation
+    # が固定する。
+    assert "snapshot=" not in lines[-1]
     body = lines[1:-1]
     assert body, "変更対象の行が無い"
     assert all(not line.startswith(("OK ", "NEXT ", "TRUNCATED ")) for line in body)
@@ -261,6 +265,64 @@ def test_status_next_action_carries_base(rich_repo: Path):
     follow = [item for item in result["next_actions"] if item["action"] == "diff-summary"]
     assert follow, "diff-summary への next_action が無い"
     assert follow[0]["args"].get("base") == "HEAD"
+
+
+def _next_action_argv(action: dict) -> list[str]:
+    """next_action を、そのまま実行できる CLI 引数列へ写す。"""
+    argv = [action["domain"], action["action"]]
+    for key, value in action["args"].items():
+        argv += [f"--{key}", str(value)]
+    return argv
+
+
+def test_next_action_args_are_directly_executable(rich_repo: Path):
+    """NEXT が示した引数をそのまま渡すと成功する（SI-FLW-011 の受け入れ条件）。
+
+    snapshot は operation ごとに観測対象が違うため、別 operation の snapshot を
+    引き渡すと必ず snapshot-mismatch（exit 6）になる。dispatcher が自分の提示した
+    引数を自分で拒否する状態を回帰させない。
+    """
+    seen: set[tuple] = set()
+    queue = [["repo", "inspect"], ["git", "status"], ["git", "diff-summary"]]
+    walked = 0
+    while queue and walked < 12:
+        argv = queue.pop(0)
+        signature = tuple(argv)
+        if signature in seen:
+            continue
+        seen.add(signature)
+        walked += 1
+        result, code = flow_json(*argv, repo=rich_repo)
+        assert code == 0, f"NEXT が示した引数で失敗した: {argv} → {result.get('code')}"
+        for action in result["next_actions"]:
+            queue.append(_next_action_argv(action))
+    assert walked >= 3, "NEXT の連鎖を辿れていない"
+
+
+def test_next_action_carries_snapshot_only_within_same_operation(rich_repo: Path):
+    """NEXT が snapshot を載せてよいのは「次も同じ operation」のときだけ（SI-FLW-011）。
+
+    ページングは打ち切られた一覧を辿る間の変更を検出できる唯一の場面なので温存し、
+    operation をまたぐ誘導では載せない。
+    """
+    for argv in (["repo", "inspect"], ["git", "status"], ["git", "status", "--limit", "1"]):
+        result, code = flow_json(*argv, repo=rich_repo)
+        assert code == 0
+        operation = result["operation"]
+        for action in result["next_actions"]:
+            same_operation = f"{action['domain']}.{action['action']}" == operation
+            has_snapshot = "snapshot" in action["args"]
+            assert has_snapshot == same_operation, (
+                f"{operation} → {action['domain']}.{action['action']} の snapshot 添付が不正"
+            )
+
+
+def test_optimistic_lock_still_detects_change(rich_repo: Path):
+    """同一 operation へ渡した snapshot が食い違えば STALE を返す（SI-FLW-011 で失わせない）。"""
+    result, code = flow_json("git", "status", "--snapshot", "sha256:dead", repo=rich_repo)
+    assert code == 6
+    assert result["code"] == "STALE"
+    assert result["data"]["cause"] == "snapshot-mismatch"
 
 
 # --- truncation --------------------------------------------------------------
