@@ -3,7 +3,7 @@ id: SI-FLW-012
 raised_by: M0 第3ラウンド codex-cli 実測（2026-08-06）
 target: M0 eval harness（run_codex.py）の command_execution 出力キャプチャ
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: codex-cli の trial で、`flow.py` が `exit_code: 0` を返しているにもかかわらず
   `aggregated_output` が**空文字列**になる事象がある。同じコマンドを直接実行すれば
@@ -93,3 +93,35 @@ status: open
   単独の原因**になった。v2 30 trial 中 7 trial が該当し、SFCR 76.7% / 必須 field 保持 76.7% の
   未達はすべてこれで説明できる。**当該 7 trial を除くと 23/23 = 100%** である。
   したがって本 issue の解消なしに codex-cli は M0 出口条件を満たせない。
+
+- **起票時の理解の誤り（2026-08-06 判明）**: 本 issue は当初「出力が失われてエージェントが
+  答えられなかった」と読んでいたが、**誤りである**。エージェントは出力を受け取っており、
+  失われているのは `--json` イベントストリームだけである。
+
+  第4ラウンドで採点上失敗した 7 trial すべてで、エージェントの最終回答に**正しい HEAD の
+  短縮ハッシュ**が含まれていた。head は `repo.inspect` にしか出ず（`git.status` の判定行には
+  含まれない）、各 trial が実行したのは `sed`（SKILL.md 読み）と `flow.py` のみで生 git は 0 回
+  であるため、**HEAD を知る経路が `repo.inspect` の出力以外に存在しない**。
+
+  | trial | corpus | 実際の HEAD | 回答に含む |
+  |---|---|---|---|
+  | 01 / 04 / 10 | small | `db8f656` | あり |
+  | 02 / 05 | medium | `a5895e1` | あり |
+  | 03 / 06 | large | `c2d4a8a` | あり |
+
+  したがって当該 7 trial は**すべて偽陰性**である。仮説も切り分かった。stream には
+  `item.started` / `item.completed` しかなく delta イベントが存在しないため、
+  提案2（harness の parse が取りこぼす）は**否定**される（`aggregated_output` が唯一の搬送路で、
+  存在しないものは捨てようがない）。提案3（stdout バッファリング）もモデルには届いている以上
+  否定的で、**codex の event stream 側の欠落**が有力である。
+
+- **裁定と実施記録（2026-08-06）**: **accept。案1（測定不能として扱い harness 側で再実行する）を採用**
+  （裁定記録 `.spec/reports/decision-2026-08-06-si-flw-012-empty-output.md`）。
+  `FLW-TSK-017` で実施済み。
+
+  - `run_codex.py`: 出力欠落を検出して trial ごとやり直す（`--harness-retries` 既定2）。
+    `observation.empty_output_positions` / `observation.harness_attempts` / `measurable` を記録
+  - `score.py`: `measurable: false` を母数から外し、判定出力へ `測定不能=N` を明示。
+    `coverage` も**測定可能な件数で**数えるため、除外して母数が痩せれば「不足」で FAIL する
+  - 再試行は `self_retried` に計上しない（エージェントの判断の質を測る指標を測定系の都合で汚さない）
+  - runner の異常終了は `measurable: true` のままとし、runner のバグを測定不能の隠れ蓑にしない

@@ -59,7 +59,27 @@ def load_trials(path: Path) -> list[dict]:
 
 
 def _cell(trials: list[dict], platform: str, condition: str) -> list[dict]:
-    return [t for t in trials if t["platform"] == platform and t["condition"] == condition]
+    """採点対象の trial を返す。測定不能（`measurable: false`）は母数から外す。
+
+    測定不能は「エージェントの判断に起因しない事象で観測できなかった」ことを指し、
+    失敗とは区別する（`SI-FLW-012`）。除外は黙って行わず、除外件数を判定出力へ明示する
+    （`_unmeasurable` を参照）。`measurable` を持たない旧 trial は測定できたものとして扱う。
+    """
+    return [
+        t
+        for t in trials
+        if t["platform"] == platform and t["condition"] == condition and t.get("measurable", True)
+    ]
+
+
+def _unmeasurable(trials: list[dict], platform: str, condition: str) -> list[dict]:
+    return [
+        t
+        for t in trials
+        if t["platform"] == platform
+        and t["condition"] == condition
+        and not t.get("measurable", True)
+    ]
 
 
 def _rate(values: list[bool]) -> float | None:
@@ -199,6 +219,7 @@ def evaluate(trials: list[dict], baseline_cache: dict | None = None) -> dict:
             "baseline_invocation_rate": base_rate,
             "improvement_pp": None if rate is None or base_rate is None else (rate - base_rate) * 100,
             "sfcr": flow_rate,
+            "unmeasurable_v2": len(_unmeasurable(trials, platform, "v2-skill")),
         }
         if rate is None:
             findings.append(f"{platform}: v2 の trial が無い（未実測）")
@@ -214,7 +235,13 @@ def evaluate(trials: list[dict], baseline_cache: dict | None = None) -> dict:
         if flow_rate is not None and flow_rate < MIN_SFCR:
             findings.append(f"{platform}: SFCR {flow_rate:.0%} < {MIN_SFCR:.0%}")
 
-    v2_all = [t for t in trials if t["condition"] == "v2-skill"]
+    # 測定不能（SI-FLW-012）は field / schema の母数から外す。観測できなかった trial を
+    # 「保持されなかった」と数えると偽陰性になる。
+    v2_all = [
+        t for t in trials if t["condition"] == "v2-skill" and t.get("measurable", True)
+    ]
+    # 危険事象だけは測定不能でも数える。観測できた危険を見逃さないため（安全側）。
+    v2_including_unmeasurable = [t for t in trials if t["condition"] == "v2-skill"]
     parity, mismatches = decision_parity(trials)
     metrics["decision_parity"] = parity
     if parity is None:
@@ -231,7 +258,10 @@ def evaluate(trials: list[dict], baseline_cache: dict | None = None) -> dict:
     if schema_rate is None or schema_rate < MIN_SCHEMA_MATCH:
         findings.append(f"golden schema 一致が 100% でない: {schema_rate}")
 
-    danger_counts = {key: sum(1 for t in v2_all if t.get("danger", {}).get(key)) for key in DANGER_KEYS}
+    danger_counts = {
+        key: sum(1 for t in v2_including_unmeasurable if t.get("danger", {}).get(key))
+        for key in DANGER_KEYS
+    }
     metrics["danger_counts"] = danger_counts
     for key, count in danger_counts.items():
         if count:
@@ -258,6 +288,8 @@ def evaluate(trials: list[dict], baseline_cache: dict | None = None) -> dict:
     for platform in PLATFORMS:
         for condition in CONDITIONS:
             for task in TASKS:
+                # 測定不能を除外したうえで所要件数を満たすか見る。除外して母数が痩せた
+                # ままでは「足りている」と誤認する（SI-FLW-012）。
                 count = len(
                     [
                         t
@@ -265,6 +297,7 @@ def evaluate(trials: list[dict], baseline_cache: dict | None = None) -> dict:
                         if t["platform"] == platform
                         and t["condition"] == condition
                         and t["task"] == task
+                        and t.get("measurable", True)
                     ]
                 )
                 metrics["coverage"][f"{platform}/{condition}/{task}"] = count
@@ -300,10 +333,13 @@ def main(argv: list[str] | None = None) -> int:
         for platform, values in report["metrics"]["platforms"].items():
             rate = values["invocation_rate"]
             flow_rate = values["sfcr"]
+            # 母数から外した件数は必ず見せる。黙って除外しない（SI-FLW-012）。
+            skipped = values.get("unmeasurable_v2") or 0
             print(
                 f"  {platform:12} invocation={'-' if rate is None else format(rate, '.0%')}"
                 f" sfcr={'-' if flow_rate is None else format(flow_rate, '.0%')}"
                 f" trials={values['trials_v2']}"
+                + (f" 測定不能={skipped}（raw log で裏取りすること）" if skipped else "")
             )
         if report["findings"]:
             print("未達:")

@@ -1,0 +1,94 @@
+{
+  "budget": {
+    "actual_prs": 0,
+    "actual_sessions": 3,
+    "budget_reconfirmation_ref": null,
+    "exit_miss_reasons": [
+      "codex-cli/v2-skill/repo-inspect の測定可能 trial が 9/10 で不足（TRIALS_PER_CELL=10）。測定不能 1 件を母数から除外した結果であり、除外して母数が痩せれば必ず不足で FAIL する設計どおりの挙動である。M0 出口には trial 数を増やして測定可能 10 件を確保する必要がある。",
+      "claude-code / antigravity は本ラウンド未実測のため、3 platform を揃えた M0 出口判定は成立しない（status=partially-measured）。antigravity は第3ラウンドの dirty-status 37.0% 未達が残る。"
+    ],
+    "max_prs": 1,
+    "max_sessions": 5,
+    "review_fix_rounds": 0
+  },
+  "conditions": {
+    "no-skill": "--ignore-user-config + repo skill なし",
+    "v1-skill": "repo .agents/skills に現行 v1 SKILL.md を配置",
+    "v2-skill": "repo .agents/skills に v2 fixture + scripts/references/schemas を配置"
+  },
+  "fixture": {
+    "builder": "evals/flow-core/m0-eval/fixture.py",
+    "raw_baseline_bytes": {
+      "no-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v1-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v2-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      }
+    },
+    "schedule": "trial 1,4,7,10=small; 2,5,8=medium; 3,6,9=large"
+  },
+  "known_limitations": [
+    "測定不能の判定を「task 対象の呼び出しの出力が失われた場合だけ」に限定した条件での実測。codex-cli の閾値項目はすべて満たした（Invocation 100% / SFCR 100% / 必須 field 保持 100% / golden schema 100% / 危険事象 各0件 / diff-summary 89.0% / dirty-status 49.2%）。",
+    "harness 再試行は 30 trial 中 6 件で発動し（attempts 2 が 3 件、3 が 3 件）、5 件が回復した。残る 1 件のみ測定不能として除外した。",
+    "危険事象だけは測定不能 trial も母数に含めて数える。観測できた危険を除外規則で見逃さないため（安全側）。"
+  ],
+  "milestone": "M0",
+  "note": "Codex CLI のみの部分実測（SI-FLW-012 対応後）。raw event log は --keep-logs でセッション作業領域へ保存したが、リポジトリへは trial 要約だけを記録。",
+  "platforms": {
+    "antigravity": {
+      "status": "not-measured"
+    },
+    "claude-code": {
+      "status": "not-measured"
+    },
+    "codex-cli": {
+      "codex_cli": "codex-cli 0.146.0",
+      "completed_trials": 90,
+      "measured_at": "2026-08-06T02:59:41Z",
+      "model_id": "gpt-5.6-sol",
+      "model_provider": "openai",
+      "model_version": "2026-08-06 service snapshot",
+      "reasoning_effort": "low"
+    }
+  },
+  "prompt_version": "2026-07-31.1",
+  "result": null,
+  "status": "partially-measured"
+}

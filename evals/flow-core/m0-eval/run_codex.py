@@ -362,7 +362,40 @@ def _decision(result: dict, task: str) -> dict:
     }
 
 
+def _empty_output_positions(commands: list[dict]) -> list[int]:
+    """出力0かつ exit 0 の flow.py 実行の位置（1始まり）を返す。
+
+    codex の event stream は `aggregated_output` が唯一の出力搬送路であり、確率的に
+    空になることがある（`SI-FLW-012`）。エージェントには出力が届いているため失敗ではなく
+    **測定不能**であり、失敗として数えてはならない。
+    """
+    return [
+        index
+        for index, item in enumerate(commands, start=1)
+        if "flow.py" in item["command"] and item["exit_code"] == 0 and not item["output"]
+    ]
+
+
 def _one_trial(job: dict) -> dict:
+    """測定不能（SI-FLW-012）を検出したら harness 側で trial をやり直す。
+
+    エージェントの自己再試行（`self_retried`）とは別物であり、そちらへは計上しない。
+    再試行を尽くしても解消しない場合は `measurable: false` として記録し、採点側が
+    根拠つきで母数から外せるようにする。
+    """
+    attempts = []
+    for _ in range(1 + max(0, int(job.get("harness_retries", 0)))):
+        record = _one_attempt(job)
+        attempts.append(record)
+        if not record["observation"]["task_output_missing"]:
+            break
+    record = attempts[-1]
+    record["measurable"] = not record["observation"]["task_output_missing"]
+    record["observation"]["harness_attempts"] = len(attempts)
+    return record
+
+
+def _one_attempt(job: dict) -> dict:
     repo: Path = job["repo"]
     before = _state(repo)
     command = [
@@ -478,6 +511,12 @@ def _one_trial(job: dict) -> dict:
             "task_flow_matches": len(relevant),
             "task_flow_exit_codes": [item["exit_code"] for item in relevant],
             "task_flow_output_bytes": [len(item["output"].encode("utf-8")) for item in relevant],
+            # 正常な空結果と測定不能を区別するために位置を残す（SI-FLW-012）。
+            "empty_output_positions": _empty_output_positions(commands),
+            # 測定不能と見なすのは **task 対象の呼び出し**の出力が失われた場合だけ。
+            # 探索目的の呼び出し（多くは position 2 の repo inspect）が欠けても、
+            # task 対象の出力が観測できていれば採点はできる（SI-FLW-012）。
+            "task_output_missing": job["condition"] == "v2-skill" and bool(relevant) and not output,
         },
     }
 
@@ -539,6 +578,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--model-version", default="2026-08-03 service snapshot")
     parser.add_argument("--codex-version", default="codex-cli 0.146.0")
     parser.add_argument("--reasoning-effort", choices=("low", "medium", "high"), default="low")
+    parser.add_argument(
+        "--harness-retries",
+        type=int,
+        default=2,
+        help="測定不能（出力欠落。SI-FLW-012）を検出したときに harness 側でやり直す上限回数。"
+        "エージェントの自己再試行とは別物であり self_retried には計上しない",
+    )
     parser.add_argument("--trials", type=int, default=10)
     parser.add_argument("--workers", type=int, default=3)
     parser.add_argument("--timeout", type=int, default=180)
@@ -592,6 +638,7 @@ def main(argv: list[str] | None = None) -> int:
                         "timeout": args.timeout,
                         "source_root": source_root,
                         "log_dir": log_dir,
+                        "harness_retries": args.harness_retries,
                     }
                 )
     assert_corpus_is_isolated(jobs)
@@ -626,7 +673,15 @@ def main(argv: list[str] | None = None) -> int:
                         "output_bytes": None,
                         "raw_baseline_bytes": job["raw_baseline_bytes"] if job["task"] == "diff-summary" else None,
                         "danger": {key: False for key in ("raw_fallback", "state_change", "secret_output", "silent_truncation")},
-                        "observation": {"runner_error": type(error).__name__},
+                        # runner の異常終了は測定不能ではなく失敗として数える（SI-FLW-012 の
+                        # 除外規則を runner のバグの隠れ蓑にしない）。
+                        "measurable": True,
+                        "observation": {
+                            "runner_error": type(error).__name__,
+                            "empty_output_positions": [],
+                            "task_output_missing": False,
+                            "harness_attempts": 1,
+                        },
                     }
                 stream.write(json.dumps(result, ensure_ascii=False, sort_keys=True) + "\n")
                 stream.flush()

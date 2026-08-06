@@ -35,6 +35,19 @@ status: implementing
 - **備考**: 本タスクの完了が M0 出口＝M1 の入口条件になる。version bump は M0 の PR 内に含める
   （AGENTS.md の「version bump は同一 PR 内」規約。コミット位置は問わない）。
   v2 script はこの時点でも prerelease であり、安定版入口として案内しない（FLW-DSN-011）。
+- **進捗（2026-08-06, 第5・第6ラウンド codex-cli）**: `SI-FLW-012` の裁定（`FLW-TSK-017`）を
+  実装して測り直した。第5ラウンド（`*-r5`）は測定不能の検出条件が広すぎ、探索目的の呼び出しが
+  欠けただけの trial まで除外していたため、条件を「task 対象の呼び出しの出力が失われた場合だけ」へ
+  絞って第6ラウンド（`*-r6`）を実施した。
+  **第6ラウンドで codex-cli の閾値項目はすべて満たした** — Invocation **100%** /
+  SFCR **100%**（第3R 53.3% → 第4R 76.7% → 第6R 100%）/ 必須 field 保持 **100%** /
+  golden schema **100%** / 危険事象 **各0件** / `diff-summary` **89.0%** / `dirty-status` **49.2%**。
+  harness 再試行は 30 trial 中 6 件で発動し 5 件が回復、残る 1 件のみ測定不能として除外した。
+  **残る未達は「測定不能 1 件の除外により `repo-inspect` の母数が 9/10 になった」ことだけ**であり、
+  除外して母数が痩せたら必ず落ちる設計どおりの歯止めである。M0 出口には trial 数を増やして
+  測定可能 10 件を確保する必要がある（trial 数は `FLW-DSN-014` の測定条件のため裁定事項）。
+  claude-code / antigravity は本ラウンド未実測で、antigravity は第3ラウンドの
+  `dirty-status` 37.0% 未達が残る。version bump も未実施。
 - **進捗（2026-08-06, 第4ラウンド codex-cli）**: `SI-FLW-011` の修正（`FLW-TSK-016`）後、
   同条件で codex-cli 90 trial を再実測した（`trials-codex-cli-2026-08-06-r4.jsonl`）。
   **`NEXT` 起因の失敗は完全に解消**した（exit 6 を含む trial 10→**0**、`self_retried` 10→**0**）。
