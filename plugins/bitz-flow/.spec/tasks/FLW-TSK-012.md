@@ -35,6 +35,39 @@ status: implementing
 - **備考**: 本タスクの完了が M0 出口＝M1 の入口条件になる。version bump は M0 の PR 内に含める
   （AGENTS.md の「version bump は同一 PR 内」規約。コミット位置は問わない）。
   v2 script はこの時点でも prerelease であり、安定版入口として案内しない（FLW-DSN-011）。
+- **進捗（2026-08-06, 第7ラウンド。3 platform を同一 fixture で実測）**: `SI-FLW-013` の裁定
+  （`FLW-TSK-018`）を適用した v2 SKILL.md で 3 platform を測り直した
+  （agy 90 / codex 108（`--trials 12`）/ claude 90 trial）。
+  **claude-code と codex-cli は閾値項目を全項目クリア**、antigravity も byte 削減が回復した。
+
+  | 指標 | 閾値 | claude | codex | agy |
+  |---|---|---|---|---|
+  | Invocation | 95% | 100% ✅ | 100% ✅ | 100% ✅ |
+  | SFCR | 90% | 96.7% ✅ | 100% ✅ | 93.3% ✅ |
+  | 必須 field 保持 | 100% | 100% ✅ | 100% ✅ | 93.3% ❌ |
+  | golden schema | 100% | 100% ✅ | 100% ✅ | 100% ✅ |
+  | 危険事象 | 各0件 | 各0件 ✅ | 各0件 ✅ | 各0件 ✅ |
+  | `diff-summary` byte | 80% | 89.0% ✅ | 89.0% ✅ | 88.5% ✅ |
+  | `dirty-status` byte | 40% | 49.3% ✅ | 49.2% ✅ | 46.4% ✅ |
+  | 母数（`repo-inspect`） | 10 | 10 ✅ | **7** ❌ | 10 ✅ |
+
+  `SI-FLW-013` の効果は明確で、agy の `dirty-status` は **37.0% → 46.4%**、`--format json` の
+  再取得は 4 trial → 2 trial へ減った。**閾値 40% の見直しは不要だった**ことが実測で確認できた。
+  claude の第6ラウンドで field 保持を落としていた 1 trial（ツール未呼び出し）は**再現せず**、
+  レート制限に接近した状態での偶発と判断してよい。
+
+  **残る未達は 2 点のみ。**
+  (1) codex の `repo-inspect` 母数 7/12 — **`SI-FLW-012` の再試行策が構造的に効かない**。
+  出力欠落は必ずセッション内2番目のコマンドで起き、`repo-inspect` は task 対象の呼び出しが
+  その位置に来るため再試行しても同じ位置に戻る（12 trial 中 7 trial が3回とも失敗。
+  他 2 task は 0 件）。位置依存の欠陥に対して位置を変えない対策であった点が裁定時の見落としで、
+  対処方針の再検討が要る。
+  (2) agy の必須 field 保持 93.3% — 1 件は `--help` が採点対象になったもの（`SI-FLW-014`）、
+  1 件は `--base HEAD~1` という比較元の誤りで**正当な失敗**。
+
+  併せて `SI-FLW-015` を起票した。`TRUNCATED` が提示する `cursor` を受け取る引数が存在せず、
+  claude が `--cursor` を渡して `INVALID_INPUT`（exit 2）を受けた（`SI-FLW-011` と同じ
+  「出力が入力契約と噛み合っていない」構図）。SFCR は閾値内だが再発しうる。
 - **進捗（2026-08-06, 第6ラウンド claude-code。3 platform が出そろう）**: claude-code 90 trial を
   実測した（`trials-claude-code-2026-08-06-r6.jsonl`。`claude-sonnet-5` / CLI 2.1.223）。
   Invocation **96.7%** / SFCR **96.7%** / golden schema **100%** / 危険事象 **各0件** /

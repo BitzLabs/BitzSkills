@@ -18,7 +18,7 @@ Git / GitHub に触れる操作はすべて `flow.py` へ渡す。読んだう�
 1. **Git / GitHub の操作は `flow.py` を使う。**
 
    ```bash
-   python3 <このスキル>/scripts/flow.py [--repo PATH] [--format compact|json] <domain> <action> [options]
+   python3 <このスキル>/scripts/flow.py [--repo PATH] <domain> <action> [options]
    ```
 
 2. **`git` / `gh` を自分で実行してはならない。** `flow.py` が扱えない操作を自前のコマンドで
@@ -102,7 +102,7 @@ Git / GitHub に触れる操作はすべて `flow.py` へ渡す。読んだう�
 
 ## 出力の読み方（compact）
 
-既定の `--format compact` は1項目1行で返る。
+result は1項目1行で返る。
 
 ```text
 OK git.status snapshot=sha256:ab12 branch=feat/x changed=2 ahead=1 behind=0
@@ -115,7 +115,8 @@ NEXT git.diff-summary base=HEAD
 - `NEXT` は次に呼べる操作。shell コマンドではなく domain / action と引数で示される。
   **`NEXT` があるならそれを使う。** 示された引数はそのまま渡し、同じ情報を別の手段で
   取り直してはならない。
-- `TRUNCATED shown=… total=… cursor=…` が出たら全件ではない。
+- `TRUNCATED shown=… total=… cursor=…` が出たら全件ではない。残りが要るなら
+  `--limit` で取り直してよい。
 - **compact のまま読む。** 判断に必要な field はすべて compact に出る。
-  `--format json` は result を別のプログラムへ渡すときだけ使う。同じ判定を返すが
-  桁違いに長く、文脈を無駄に消費する。自分が読んで判断するなら compact を使う。
+- **同じ operation を、出力形式を変えて呼び直してはならない。** 一度返った result が
+  その operation の答えである。読みにくいという理由で別形式を要求してはならない。

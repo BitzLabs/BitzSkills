@@ -3,7 +3,7 @@ id: SI-FLW-013
 raised_by: M0 第3ラウンド antigravity 実測の再分析（2026-08-06）
 target: evals/flow-core/fixtures/v2-skill/SKILL.md の出力形式の誘導（compact 既定）
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: antigravity だけが v2 SKILL.md の compact 誘導に従わず、compact で取得した直後に
   **同じ operation を `--format json` で取り直す**。この再取得だけで `dirty-status` の
