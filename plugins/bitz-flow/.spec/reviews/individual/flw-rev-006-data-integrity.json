@@ -1,0 +1,92 @@
+{
+  "perspective": "data-integrity",
+  "dimensions": [
+    {
+      "name": "トランザクション安全性",
+      "weight": 0.4,
+      "score": 3,
+      "findings": [
+        {
+          "id": "DIN-101",
+          "severity": "major",
+          "location": "evals/flow-core/m0-eval/score.py:main（--manifest 書き込み）",
+          "title": "run manifest の result が破壊的更新であり、判定の履歴が残らない",
+          "description": "`manifest['result'] = report` のあと全体を書き戻すため、`result` は常に最後の score.py 実行で上書きされる。採点規則は SI-FLW-009 / 012 / 014 で3度変わっており、今後 SI-FLW-020 / 021 でさらに変わる。同じ trial JSONL から異なる判定が出る以上、`result` はどの規則の下で得られたかを保持しなければ意味を持たないが、その情報が無い。第8Rの agy 100% と第10Rの 93.3% を比較して議論している以上、この破壊的更新は比較の前提を壊す。",
+          "recommendation": "`result` を上書きではなく `results[]` の追記とし、各要素へ採点規則バージョン（score.py の内容ハッシュ）と採点時刻を持たせる。少なくとも規則バージョンを `result` へ含めることを最低線とする。"
+        },
+        {
+          "id": "DIN-102",
+          "severity": "minor",
+          "location": "evals/flow-core/m0-eval/run-manifest-*.json（platform 単位の部分実測）",
+          "title": "部分実測の manifest とラウンド全体の判定が同一形式で同居し区別できない",
+          "description": "manifest は platform ごとに出力され、それぞれに `passed: false` と『claude-code: v2 の trial が無い（未実測）』『coverage 0/10』が並ぶ。ラウンド全体の判定を得るには3ファイルの trial を結合して score.py を再実行する必要があるが、その結合結果を保存する場所が無い。結果として『ラウンドの判定』はどのファイルにも記録されていない。",
+          "recommendation": "ラウンド単位の統合 manifest（3 platform 結合の判定）を成果物として定義し、部分実測の manifest には `scope: partial` を明示する。README の各ラウンド節から統合 manifest を参照する。"
+        },
+        {
+          "id": "DIN-103",
+          "severity": "info",
+          "location": "evals/flow-core/m0-eval/fixture.py / run_*.py（corpus 分離）",
+          "title": "corpus の trial 単位分離は整合性設計として良好",
+          "description": "SI-FLW-010 の裁定で corpus を trial ごとに分離したことにより、`state_change_reasons.repo_diff` が他 trial の副作用を拾う問題が解消され、判定根拠も `repo_diff` / `command` に分けて記録されている。trial 間の干渉という最も検出しにくい汚染経路が構造的に塞がれている。",
+          "recommendation": "この分離を前提とした不変条件（『repo_diff だけが立つ場合は harness の欠陥である』）を測定量の定義節へ明記し、自己診断の項目にも加える。"
+        }
+      ]
+    },
+    {
+      "name": "データ整合性",
+      "weight": 0.35,
+      "score": 2,
+      "findings": [
+        {
+          "id": "DIN-201",
+          "severity": "major",
+          "location": "evals/flow-core/m0-eval/run_codex.py / run_claude.py / run_antigravity.py:observation",
+          "title": "trial 記録が platform 間で同一構造でなく、集計側が欠落を暗黙に許容している",
+          "description": "3 runner は同じ JSONL へ書き込むが observation の構造が異なる。`empty_output_positions` / `task_output_missing` / `help_invocations`（SI-FLW-012 / 014 で導入した歯止め）は codex にのみ存在し、`skill_tool_args` / `answered_without_command` は claude にのみ、`agy_result_status` は agy にのみ存在する。集計側は `t.get(key, default)` で欠落を吸収するため、『記録されていない』と『記録されたが偽』が区別されない。RSK-204 が指摘する『歯止めが1 platform でしか効いていない』状態が、データ構造のレベルで検出不能になっている。",
+          "recommendation": "observation を共通部と platform 固有部に分け、共通部の全 field を3 runner が必ず書く。集計側は共通部の欠落をエラーとして扱い、暗黙の既定値で埋めない。"
+        },
+        {
+          "id": "DIN-202",
+          "severity": "major",
+          "location": "evals/flow-core/m0-eval/run_*.py:observation.task_flow_exit_codes",
+          "title": "同一 field に意味の異なる値が混在し、platform 名を見ないと解釈できない",
+          "description": "`task_flow_exit_codes` は codex では実 exit code、claude では Bash tool の error flag の 0/1、agy では文字列ヒューリスティックの結果である。値の型は同じ整数だが意味が違い、レコード自身にその区別が無い。本レビューはこの列を platform 横断で集計して初めて『agy だけ非ゼロが1件も無い』という異常に気づいたが、逆に言えばレコードを素直に読む限り3者は同じものとして扱われる。",
+          "recommendation": "SI-FLW-020 案2 のとおり `exit_code_source`（`native` / `error-flag` / `heuristic`）を併記する。加えて RSK-402 のとおり per-call の result code（先頭トークン）を配列で保存すれば、platform 非依存で意味の定まった列が得られる。"
+        },
+        {
+          "id": "DIN-203",
+          "severity": "minor",
+          "location": "evals/flow-core/m0-eval/score.py:_cell / evaluate",
+          "title": "旧形式 trial の既定値が定義として文書化されていない",
+          "description": "`t.get('measurable', True)`（`measurable` を持たない旧 trial は測定できたものとして扱う）はコメントで説明されているが、他の暗黙既定（`truncated` 既定 false、`danger` 欠落時の扱い、`corpus` 欠落時の byte 比較除外）は散在している。旧ラウンドと新ラウンドを結合して採点する運用がある以上、既定値の集合が採点定義の一部になっている。",
+          "recommendation": "trial 記録の schema（DIN-301）へ必須／任意と欠落時の既定を持たせ、score.py はそこから読む。"
+        }
+      ]
+    },
+    {
+      "name": "スキーマ設計品質",
+      "weight": 0.25,
+      "score": 2,
+      "findings": [
+        {
+          "id": "DIN-301",
+          "severity": "major",
+          "location": "evals/flow-core/m0-eval/（trial 記録形式）",
+          "title": "trial 記録に schema が無く機械検証されていない",
+          "description": "flow.py の result には `schemas/result-v1.schema.json` と operation 別 schema があり `_schema_match` で機械検証されているのに対し、eval の trial 記録には schema が存在しない。score.py の docstring は『trial の記録形式は trials.example.jsonl を参照』とするが、そのファイルはリポジトリに存在せず、tests/ にも trial 記録を検証するテストが無い。M0 出口判定の一次証拠がこの JSONL であることを考えると、被測定物より計測データのほうが検証されていないという逆転が起きている。",
+          "recommendation": "trial 記録の JSON Schema を `evals/flow-core/m0-eval/schemas/trial-v1.schema.json` として定義し、score.py が読み込み時に検証する。共通 field と platform 固有 field を分けて表現し、DIN-201 / DIN-203 の是正をここに集約する。"
+        },
+        {
+          "id": "DIN-302",
+          "severity": "minor",
+          "location": "evals/flow-core/m0-eval/score.py:load_trials",
+          "title": "壊れた JSONL は検出するが、構造の妥当性は検出しない",
+          "description": "`load_trials` は JSONDecodeError を行番号つきで報告するが、必須キー（`platform` / `condition` / `task` / `corpus` / `trial`）の存在は検査しない。`_cell` などは `t['platform']` と直接添字するため、欠落すれば KeyError で落ちる。フォーマットの誤りが採点の途中で例外として現れ、どの trial が悪いかが分かりにくい。",
+          "recommendation": "DIN-301 の schema 検証を load_trials へ入れ、行番号つきで不正な trial を報告する。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 2.4,
+  "summary": "corpus の trial 単位分離（SI-FLW-010）は trial 間干渉という最も検出しにくい汚染を構造的に塞いでおり良好である。一方、M0 出口判定の一次証拠である trial JSONL に schema が無く機械検証もされていないのに対し、被測定物である flow.py の result は schema で検証されているという逆転が起きている。さらに observation の構造が3 runner で異なり、集計側が欠落を暗黙の既定値で吸収するため、『歯止めが1 platform でしか効いていない』状態がデータ構造上検出できない。run manifest の result も破壊的更新で採点規則バージョンを保持せず、ラウンド間比較の前提が保存されていない。"
+}

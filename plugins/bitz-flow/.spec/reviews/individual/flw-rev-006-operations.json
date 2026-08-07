@@ -1,0 +1,99 @@
+{
+  "perspective": "operations",
+  "dimensions": [
+    {
+      "name": "監視・可観測性",
+      "weight": 0.3,
+      "score": 2,
+      "findings": [
+        {
+          "id": "OPS-101",
+          "severity": "major",
+          "location": "evals/flow-core/m0-eval/score.py:evaluate / design/FLW-DSN-014.md:M0出口条件",
+          "title": "計測器自身の健全性を監視する指標が出口条件に無い",
+          "description": "score.py は被測定物のメトリクス（Invocation / SFCR / Parity / field / danger / byte）だけを判定し、計測器が正しく動いているかを一切見ない。結果、測定系の欠陥6件はすべて『数値が悪化して初めて』発見され、設計レビューで見つかったものは1件も無い。決定的な例が第8ラウンドの agy である。`--base HEAD~1` を試す挙動は当時も `task_flow_output_bytes` に 64B として**記録されていた**が、偶然すべて成功呼出より前に来たため 100% となり、`matches[-1]` を疑う者がいなかった。すなわち合格が計測器の健全性の証明になっていない。",
+          "recommendation": "SI-FLW-019 の案3を必須として入れる。最低限『採点候補が2件以上あった trial の割合』『採点対象が非 OK result だった件数（0であるべき）』『除外した呼出の件数と内訳』を計測し、被測定物の数値が良くても閾値超過なら FAIL とする。本レビューの再解析はこの3項目だけで r7 / r10 を即座に検出できた。"
+        },
+        {
+          "id": "OPS-102",
+          "severity": "major",
+          "location": "evals/flow-core/m0-eval/score.py:main（未達の出力）/ README.md",
+          "title": "恒常的に FAIL している条件を検出する仕組みが無く、10ラウンド背景化した",
+          "description": "Parity の8行の FAIL 出力（`diff-summary: antigravity 内で判定が揺れている` 等）は全10ラウンドで一度も欠けたことがない。しかし他の未達（必須 field・raw fallback）に紛れ、どの spec-issue にも起票されなかった。SI-FLW-019 は『良い数値が測定系の欠陥を隠す』と整理するが、本件はそれより悪い — 悪い数値が常時出続けたことで背景化した。判定出力が『今回変わった未達』と『前回から続く未達』を区別しないため、恒常 FAIL がノイズになる。",
+          "recommendation": "判定出力を前ラウンドとの差分で提示する（新規の未達 / 継続中の未達 / 解消した未達）。あわせて自己診断へ『N ラウンド連続で同じ未達が出ている条件』を警告として加える。条件が達成不能である可能性を能動的に疑わせる。"
+        },
+        {
+          "id": "OPS-103",
+          "severity": "minor",
+          "location": "evals/flow-core/m0-eval/score.py:decision_parity",
+          "title": "単一 platform の部分実測でも Parity が算出され未達に数えられる",
+          "description": "platform 単体の run manifest（例: run-manifest-antigravity-2026-08-07-r10.json）にも Parity 33% と Parity 由来の findings が記録される。cross-model 指標は2 platform 未満では定義されないが、実装は算出して `passed: false` の要因に数える。部分実測の manifest を見た人が『Parity が未達』と誤読する。",
+          "recommendation": "SI-FLW-021 の案3を採り、2 platform 未満では『未実測』とし達成・未達のいずれとも判定しない。"
+        }
+      ]
+    },
+    {
+      "name": "災害復旧",
+      "weight": 0.3,
+      "score": 3,
+      "findings": [
+        {
+          "id": "OPS-201",
+          "severity": "major",
+          "location": "design/FLW-DSN-014.md:M0出口条件（末尾の再実行規定）",
+          "title": "再実測が要る修正と再採点で足りる修正が区別されておらず、限りある実測予算を浪費する",
+          "description": "FLW-DSN-014 は『1条件でも未達なら M1 へ進まず、description、入口名、schema、renderer を修正して M0 を再実行する』とだけ定める。しかし測定系の欠陥（SI-FLW-012 / 014 / 017 / 020 / 021）は既存 trial の**再採点だけで検証できる**のに対し、被測定物の欠陥（SI-FLW-008 / 013 / 016 / 018）は再実測が要る。この区別が設計に無いため、再採点で足りる場面でも実測ラウンドが回されてきた。実測は有限な資源であり、第8R・第9R では実際にセッション上限へ2度到達している。",
+          "recommendation": "測定量の定義節（RVC-101 の是正）に『この修正は再採点で検証する / 再実測が要る』の区分を持たせ、spec-issue の確認観点にも明記する。SI-FLW-020 / 021 はいずれも再採点で検証できるため、次の実測ラウンドの前に消化する。"
+        },
+        {
+          "id": "OPS-202",
+          "severity": "info",
+          "location": "evals/flow-core/m0-eval/fixture.py / score.py:baseline_table",
+          "title": "fixture の決定論性により分母を後から再現できる設計は良好",
+          "description": "baseline を trial 記録ではなく fixture から測り直す設計（SI-FLW-009 の裁定）により、旧 JSONL も新 JSONL も同じ定義で採点できる。SI-FLW-009 の検証が既存 270 trial の再採点だけで済んだのはこの性質による。本レビューの再解析も同じ性質に依存した。",
+          "recommendation": "この方針を測定量の定義節へ一般則として昇格し、他のメトリクスにも適用する（『分母・期待値は fixture から再現でき、trial 時のエージェント挙動に依存させない』）。"
+        }
+      ]
+    },
+    {
+      "name": "セキュリティ態勢",
+      "weight": 0.2,
+      "score": 4,
+      "findings": [
+        {
+          "id": "OPS-301",
+          "severity": "minor",
+          "location": "evals/flow-core/m0-eval/run_codex.py:SECRET_PATTERN",
+          "title": "秘密値検出パターン自体の有効性が検証されていない",
+          "description": "『秘密値出力 0件』は出口条件だが、それを判定する SECRET_PATTERN が実際に秘密値を捕捉できるかは検証されていない。0件という結果が『混入が無かった』のか『パターンが当たらなかった』のかを区別できず、RSK-201 と同型の fail-silent 構造を持つ。",
+          "recommendation": "既知の秘密値形式を含む出力を1件人工的に流し、SECRET_PATTERN が検出することを確認する陽性対照を harness の自己診断へ入れる。"
+        }
+      ]
+    },
+    {
+      "name": "デプロイ安全性",
+      "weight": 0.2,
+      "score": 2,
+      "findings": [
+        {
+          "id": "OPS-401",
+          "severity": "major",
+          "location": "evals/flow-core/m0-eval/score.py / run manifest の result",
+          "title": "採点規則の変更にロールバック手順が無く、過去判定を復元できない",
+          "description": "run manifest の `result` は score.py 実行のたびに上書きされ、どの規則で出た判定かを保持しない。採点規則を revert しても、既に上書きされた過去ラウンドの manifest は元の判定へ戻らない。SI-FLW-019 自身も案4について『単独 revert では過去の判定を復元できない』と注記している。ラウンド間の数値比較を議論の根拠にしている以上、これは判定の追跡可能性の欠落である。",
+          "recommendation": "run manifest へ採点規則バージョン（score.py の内容ハッシュ等）を記録し、`result` を上書きではなく履歴として積む。規則変更 PR では影響ラウンドを再採点し、新旧を並べて README へ残す（RSK-401 と同一の是正）。"
+        },
+        {
+          "id": "OPS-402",
+          "severity": "minor",
+          "location": "evals/flow-core/m0-eval/（trial 記録形式）",
+          "title": "trial 記録形式に後方互換の方針が無い",
+          "description": "score.py は `t.get('measurable', True)` のように、field を持たない旧 trial を暗黙の既定値で扱う。個々の判断は妥当だが、形式の変更方針（どの field が必須か、欠落時の既定は何か、旧形式をいつまで採点対象にするか）が文書化されていない。field が増えるたびに暗黙の既定が積み上がる。",
+          "recommendation": "trial 記録の schema を明示し（DIN-301 と同一の是正）、必須／任意と欠落時の既定を schema 側に持たせる。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 2.7,
+  "summary": "被測定物に対する可観測性（danger flags、state_change_reasons の分離、measurable の導入）は丁寧に作られている一方、計測器自身を監視する指標が出口条件に一切無く、測定系の欠陥はすべて事後に数値の異常から発見されてきた。Parity の恒常 FAIL が10ラウンド背景化したのは、判定出力が『継続中の未達』を区別しないためである。また採点規則の変更が過去の判定を遡って書き換えるにもかかわらず、規則バージョンの記録もロールバック手順も無い。セキュリティ面は秘密値・raw 出力の混入を測っており良好だが、検出パターン自体の陽性対照が無い。"
+}

@@ -1,0 +1,351 @@
+{
+  "schema_version": 2,
+  "review_id": "FLW-REV-006",
+  "verdict": "FAIL",
+  "aggregate_score": 2.42,
+  "perspective_scores": {
+    "consistency": 2.65,
+    "data-integrity": 2.4,
+    "operations": 2.7,
+    "risk": 2.0,
+    "business": 2.55
+  },
+  "findings_summary": {
+    "total": 38,
+    "after_dedup": 21,
+    "by_priority": {
+      "P0": 3,
+      "P1": 6,
+      "P2": 4,
+      "P3": 8
+    },
+    "by_severity": {
+      "critical": 3,
+      "major": 10,
+      "minor": 5,
+      "info": 3
+    }
+  },
+  "findings": [
+    {
+      "id": "FLW-REV-006:SYN-001",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "RSK-201",
+        "RVC-301",
+        "DIN-202",
+        "RSK-205"
+      ],
+      "title": "計測器が沈黙して失敗する — agy の exit_code が flow.py の失敗を構造的に検出できない",
+      "recommendation": "採点と self_retried の判定を、platform の event contract ではなく compact 出力の先頭トークン（result-v1 の code enum 11 値）から行う。agy のヒューリスティックは撤去し None とする。exit_code には由来（native / error-flag / heuristic）を併記し、等価でない値を等価に扱わない。marker 文字列を増やす方向は採らない。",
+      "tracked_by": "SI-FLW-020",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-006:SYN-002",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "RVC-201",
+        "BIZ-102"
+      ],
+      "title": "Cross-model Decision Parity が corpus をまたいで判定を比較し、第1ラウンドから達成不能だった",
+      "recommendation": "グループ化キーへ corpus を加え、metrics.md の定義（同じ fixture の判定が一致した割合）と score.py の docstring に実装を一致させる。あわせて FLW-DSN-014 の出口条件へ測定単位を明記する。修正が恒真にならないこと（判定が実際に食い違う trial を混ぜたら 100% を割ること）を検証する。",
+      "tracked_by": "SI-FLW-021",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-006:SYN-003",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "BIZ-401",
+        "BIZ-402"
+      ],
+      "title": "設計自身が定めた M0 の timebox（1 PR / 5 session）を14 PR・10ラウンドで超過しながら安全弁が一度も発動していない",
+      "recommendation": "M0 の予算超過を人間へ正式に再提示し、(a) 予算改訂して継続 / (b) scope 縮小 / (c) 出口条件の見直し、のいずれかを decision reference 付きで裁定する。あわせて予算消費を run manifest から集計し超過時に警告する機構を入れ、M1 以降の budget を M0 実績で再校正する。",
+      "tracked_by": "FLW-REV-006:GP-001",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-006:SYN-004",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RVC-202",
+        "BIZ-101"
+      ],
+      "title": "SSOT と宣言された FLW-DSN-014 だけが破棄済みの裁定を参照し、要件・実装・discovery の三者と矛盾する",
+      "recommendation": "FLW-DSN-014 本文を FLW-NFR-008（固定 baseline・status 40%）へ追随させ version を上げる。要件の supersede 時に、それを implements する設計文書の本文を更新対象として列挙する手順を裁定記録テンプレートへ組み込む。",
+      "tracked_by": "FLW-REV-006:GP-002",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-006:SYN-005",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RSK-202"
+      ],
+      "title": "採点対象の選択が呼出順のみで決まり、合否が偶然に左右される",
+      "recommendation": "SI-FLW-020 へ統合して result code ベースの選択に切り替える。SI-FLW-017 の推奨案1（exit_code == 0 を優先）は agy では全 exit_code が 0 のため無効であり、そのまま採ると『修正したのに直らない』結果になる。全呼出が失敗した trial は引き続き不合格とする歯止めを残す。",
+      "tracked_by": "SI-FLW-020",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-006:SYN-006",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RSK-203",
+        "BIZ-201"
+      ],
+      "title": "『危険事象 各0件』が n=30 では検証不能で、測定可能な目標値になっていない",
+      "recommendation": "必要 n を確保する（95%で3%を検出するなら99 trial）か、確保できないなら『95%上側信頼限界が x% 未満』へ書き換える。数値を通すための緩和ではなく検証不能な条件の置き換えである旨を、byte 閾値再校正（BIZ-202）と同じ論法で裁定記録へ残す。検出力の計算を FLW-DSN-014 へ残す。",
+      "tracked_by": "SI-FLW-019",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-006:SYN-007",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RSK-204",
+        "DIN-201"
+      ],
+      "title": "裁定で置いた歯止め（SI-FLW-012 / 014）が codex-cli でしか効いておらず、その事実がデータ構造上検出できない",
+      "recommendation": "observation を共通部と platform 固有部に分け、共通部の全 field を3 runner が必ず書く。集計側は共通部の欠落をエラーとして扱い暗黙の既定値で埋めない。『歯止め用 field が3 runner すべてに存在すること』を harness 自己診断へ含める。",
+      "tracked_by": "FLW-REV-006:GP-003",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-006:SYN-008",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RSK-401",
+        "OPS-401",
+        "DIN-101",
+        "RVC-102"
+      ],
+      "title": "採点規則の変更が過去の判定を遡って書き換えるが、規則バージョンの記録もロールバック手順も無い",
+      "recommendation": "run manifest へ採点規則バージョン（score.py の内容ハッシュ）を記録し、result を上書きではなく履歴として積む。規則を変える PR では影響ラウンドを再採点し新旧を並べて README へ残す。README にラウンド×採点規則バージョンの対応表を置く。",
+      "tracked_by": "FLW-REV-006:GP-004",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-006:SYN-009",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RSK-402"
+      ],
+      "title": "per-call の出力テキストが保存されておらず、事後の切り分けが byte 長の近似に頼る",
+      "recommendation": "trial 記録へ per-call の result code（先頭トークン）を配列で保存する。全文を保存しなくても、code 列があれば本レビューの再解析はすべて厳密に実行できる。byte 長との併記で truncation 判定も維持できる。現状では repo-inspect と dirty-status の INVALID_INPUT 件数が確定できない。",
+      "tracked_by": "FLW-REV-006:GP-005",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-006:SYN-010",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "RVC-101"
+      ],
+      "title": "FLW-DSN-014 に measurand（何を答えとして採点するか）の定義節が無く、実装が事実上の仕様になっている",
+      "recommendation": "『測定量の定義』節を新設し、採点対象の選択規則・除外規則と歯止め・メトリクスごとの proxy 乖離条件を仕様側へ置く。harness 実装がそれを参照する向きへ反転させる。乖離条件を書けない proxy は採用しない。",
+      "tracked_by": "SI-FLW-019",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-006:SYN-011",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "OPS-101",
+        "OPS-102"
+      ],
+      "title": "計測器自身の健全性を監視する指標が出口条件に無く、恒常 FAIL が10ラウンド背景化した",
+      "recommendation": "『採点候補が2件以上あった trial の割合』『採点対象が非 OK result だった件数（0であるべき）』『除外した呼出の件数と内訳』を計測し、被測定物の数値が良くても閾値超過なら FAIL とする。判定出力を前ラウンドとの差分（新規／継続中／解消）で提示し、N ラウンド連続で同じ未達が出ている条件を警告する。",
+      "tracked_by": "SI-FLW-019",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-006:SYN-012",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "DIN-301",
+        "DIN-302",
+        "DIN-203",
+        "OPS-402"
+      ],
+      "title": "M0 出口判定の一次証拠である trial 記録に schema が無く機械検証されていない",
+      "recommendation": "trial 記録の JSON Schema を定義し score.py が読み込み時に検証する。共通 field と platform 固有 field を分けて表現し、必須／任意と欠落時の既定を schema 側に持たせる。被測定物の result は schema 検証されているのに計測データが検証されていない逆転を解消する。",
+      "tracked_by": "FLW-REV-006:GP-007",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-006:SYN-013",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "OPS-201"
+      ],
+      "title": "再採点で検証できる修正と再実測が要る修正が区別されておらず、限りある実測予算を浪費する",
+      "recommendation": "測定量の定義節へ『この修正は再採点で検証する / 再実測が要る』の区分を持たせ、spec-issue の確認観点にも明記する。SI-FLW-020 / 021 はいずれも再採点で検証できるため、次の実測ラウンドの前に消化する。",
+      "tracked_by": "FLW-REV-006:GP-006",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-006:SYN-014",
+      "priority": "P3",
+      "severity": "minor",
+      "source": [
+        "OPS-103"
+      ],
+      "title": "単一 platform の部分実測でも Parity が算出され未達に数えられる",
+      "recommendation": "2 platform 未満では『未実測』とし、達成・未達のいずれとも判定しない。",
+      "tracked_by": "SI-FLW-021",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-006:SYN-015",
+      "priority": "P3",
+      "severity": "minor",
+      "source": [
+        "OPS-301"
+      ],
+      "title": "秘密値検出パターン自体の有効性が検証されておらず、0件が fail-silent と区別できない",
+      "recommendation": "既知の秘密値形式を含む出力を1件流し SECRET_PATTERN が検出することを確認する陽性対照を自己診断へ入れる。",
+      "tracked_by": "",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-006:SYN-016",
+      "priority": "P3",
+      "severity": "minor",
+      "source": [
+        "RVC-203"
+      ],
+      "title": "status: draft の metrics.md が測定条件の照合元として運用されている",
+      "recommendation": "2026-07-29 に明文化済みの『Gate Go は DSC の active 化ではない』という解釈を metrics.md 自身へ1行明記する。",
+      "tracked_by": "",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-006:SYN-017",
+      "priority": "P3",
+      "severity": "minor",
+      "source": [
+        "RVC-302"
+      ],
+      "title": "『oracle』が合否条件と期待値生成器の2つの意味で使われている",
+      "recommendation": "harness 側を expected 等へ改名するか、測定量の定義節で両者を別語として定義する。",
+      "tracked_by": "",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-006:SYN-018",
+      "priority": "P3",
+      "severity": "minor",
+      "source": [
+        "BIZ-103"
+      ],
+      "title": "byte 削減が安定して閾値を満たしている FLW-NFR-008 が implementing のまま",
+      "recommendation": "この要件の検証は測定系の是正の影響を受けない（分母は fixture 由来）。M0 全体判定を待たず先に verified へ昇格できるか裁定する。",
+      "tracked_by": "",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-006:SYN-019",
+      "priority": "P3",
+      "severity": "info",
+      "source": [
+        "OPS-202"
+      ],
+      "title": "【良好】baseline を fixture から再現する設計により旧 trial も同じ定義で採点できる",
+      "recommendation": "この方針を測定量の定義節へ一般則として昇格し、他メトリクスにも適用する。",
+      "tracked_by": "",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-006:SYN-020",
+      "priority": "P3",
+      "severity": "info",
+      "source": [
+        "DIN-103"
+      ],
+      "title": "【良好】corpus の trial 単位分離が trial 間干渉を構造的に塞いでいる",
+      "recommendation": "『repo_diff だけが立つ場合は harness の欠陥である』という不変条件を測定量の定義節と自己診断へ明記する。",
+      "tracked_by": "",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-006:SYN-021",
+      "priority": "P3",
+      "severity": "info",
+      "source": [
+        "BIZ-202"
+      ],
+      "title": "【模範的】byte 閾値の再校正が原理的根拠を伴い、閾値を通すための分母選択を明示的に排除している",
+      "recommendation": "この論法を 0件条件の書き換え（SYN-006）にも適用し、同じ形の根拠を残す。",
+      "tracked_by": "",
+      "status": "open"
+    }
+  ],
+  "gate_preconditions": [
+    {
+      "id": "GP-001",
+      "kind": "blocking",
+      "basis": "verified",
+      "evidence": "git log origin/main: M0 Contract Kernel 実装 (#158) 以降 #171 まで 14 PR。evals/flow-core/m0-eval/README.md に第1〜第10ラウンドの実測記録。FLW-DSN-014 は『M0は独立PR 1件』『5回の作業sessionまたは1PRで出口に到達しない場合はscope/pivotを人間へ再提示する』と規定。",
+      "description": "M0 の予算超過を人間へ正式に再提示し、継続 / scope 縮小 / 出口条件見直しのいずれかを decision reference 付きで裁定する。"
+    },
+    {
+      "id": "GP-002",
+      "kind": "blocking",
+      "basis": "verified",
+      "evidence": "FLW-DSN-014 本文『statusのmedian byte削減70%以上』および SI-FLW-007 の分母説明段落 ↔ FLW-NFR-008『固定baseline比 median 40%以上』↔ score.py の MIN_BYTE_REDUCTION={'dirty-status': 0.40}。metrics.md は SI-FLW-007 の案Aを『破棄』と明記。",
+      "description": "FLW-DSN-014 本文を FLW-NFR-008 へ追随させ version を上げる。"
+    },
+    {
+      "id": "GP-003",
+      "kind": "blocking",
+      "basis": "verified",
+      "evidence": "run_codex.py / run_claude.py / run_antigravity.py の observation 辞書を比較。empty_output_positions・task_output_missing（SI-FLW-012）・help_invocations（SI-FLW-014）は run_codex.py にのみ存在し、r10 の antigravity trial の observation キー一覧に含まれない。",
+      "description": "observation の共通部を common へ引き上げ、3 runner が必ず書く形にする。集計側は共通部の欠落をエラーとする。"
+    },
+    {
+      "id": "GP-004",
+      "kind": "blocking",
+      "basis": "verified",
+      "evidence": "score.py main は manifest['result'] = report のあと全体を書き戻す（破壊的更新）。採点規則は SI-FLW-009 / 012 / 014 で3度変更済み。run-manifest-*.json の result に規則バージョンの記録が無い。",
+      "description": "run manifest へ採点規則バージョンを記録し、規則変更 PR で影響ラウンドを再採点して新旧を並記する。"
+    },
+    {
+      "id": "GP-005",
+      "kind": "blocking",
+      "basis": "verified",
+      "evidence": "trial 記録は observation.task_flow_output_bytes（byte 長）のみを持ち出力テキストを持たない。本レビューの INVALID_INPUT 同定は byte 長の近似に依存し、diff-summary（OK 最小220B vs INVALID 63〜64B）は分離できたが repo-inspect（OK 99B vs INVALID 61B）は分離できず件数を確定できなかった。",
+      "description": "trial 記録へ per-call の result code（先頭トークン）を配列で保存する。"
+    },
+    {
+      "id": "GP-006",
+      "kind": "agenda",
+      "basis": "verified",
+      "evidence": "測定系の欠陥（SI-FLW-012 / 014 / 017 / 020 / 021）は既存 trial の再採点で検証できるのに対し、被測定物の欠陥（SI-FLW-008 / 013 / 016 / 018）は再実測を要する。第8R・第9R でセッション上限に2度到達している。",
+      "description": "再採点で足りる修正と再実測が要る修正の区分を、測定量の定義節と spec-issue の確認観点へ持たせるかを Gate で決める。"
+    },
+    {
+      "id": "GP-007",
+      "kind": "agenda",
+      "basis": "verified",
+      "evidence": "flow.py の result は schemas/result-v1.schema.json と operation 別 schema で _schema_match により機械検証されている。一方 trial 記録に schema は存在せず、score.py が参照する trials.example.jsonl はリポジトリに無く、tests/ に trial 記録の検証も無い。",
+      "description": "trial 記録の JSON Schema を定義し score.py が検証する範囲と時期を Gate で決める。"
+    }
+  ],
+  "carried_over": [],
+  "conditional_items": []
+}
