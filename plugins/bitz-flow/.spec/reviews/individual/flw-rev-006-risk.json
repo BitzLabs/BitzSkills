@@ -1,0 +1,89 @@
+{
+  "perspective": "risk",
+  "dimensions": [
+    {
+      "name": "分散システムリスク",
+      "weight": 0.3,
+      "score": "N/A",
+      "findings": []
+    },
+    {
+      "name": "障害モード分析",
+      "weight": 0.3,
+      "score": 2,
+      "findings": [
+        {
+          "id": "RSK-201",
+          "severity": "critical",
+          "location": "evals/flow-core/m0-eval/run_antigravity.py:_commands",
+          "title": "計測器が沈黙して失敗する経路があり、その沈黙を検出する手段が無い",
+          "description": "agy runner の `exit_code` は出力文字列に `error` / `failed` / `exit code: 1` が含まれるかで決める。flow.py の失敗 result（`INVALID_INPUT git.diff-summary cause=invalid-ref stage=inspect`、実 exit 2）はどの marker も含まないため常に成功（0）と記録される。これは fail-loud ではなく fail-silent であり、計測器が壊れていること自体が観測不能である。実測: agy は v2 条件で 242 回 flow.py を呼びながら非ゼロ exit を一度も記録しておらず、一方で出力 byte 長から同定すると diff-summary だけで 38 回 INVALID_INPUT を受けている（r2:3 / r3:10 / r7:10 / r8:7 / r10:8）。影響は3つ。(1) 採点対象が失敗 result になった trial が r7 と r10 で計3件生じた。(2) `self_retried` の判定式 `any(exit_code not in (0, None)) and len(relevant) > 1` が agy で構造的に永久 false となり、SFCR がこの platform だけ過大評価されている。(3) Parity を platform 間で等価でない計装の上で比較している。",
+          "recommendation": "SI-FLW-020 の案1を採り、platform の event contract に依存しない判定へ切り替える（compact 出力の先頭トークンは result-v1 の `code` enum 11 値で一意に読める）。あわせて案3でヒューリスティックを撤去し `None`（不明）とする。marker 文字列を増やす方向（案4）は採らない — code 語彙が増えるたびに harness 側の一覧が腐り、同じ沈黙経路を再生産する。"
+        },
+        {
+          "id": "RSK-202",
+          "severity": "major",
+          "location": "evals/flow-core/m0-eval/run_codex.py:_task_output",
+          "title": "採点対象の選択が呼出順のみで決まり、合否が偶然に左右される",
+          "description": "`selected = (complete or matches)[-1]` は一致した呼出のうち最後を採る。エージェントが正解を得たあとに探索的呼出を1回足すと、その失敗結果が答えとして採点される。r10 の agy `diff-summary` は 10 trial 中 8 trial で `--base HEAD~1` を実行しており、差は『成功呼出の前か後か』だけである。SI-FLW-017 はこれを『第10ラウンドで表面化』としたが、再解析では r7 でも 1 件発生しており、r8 は INVALID_INPUT 呼出 7 件がありながら偶然すべて成功呼出より前に来ていた。同じ順序依存は3 platform すべてで起こり得る。",
+          "recommendation": "SI-FLW-020 へ統合して解決する。ただし SI-FLW-017 の推奨案1（`exit_code == 0` の一致を優先）は agy では全 exit_code が 0 のため無効であり、そのまま採ると『修正したのに直らない』結果になる。result code ベースの判定を採ること。全呼出が失敗した trial は引き続き不合格とする歯止め（SI-FLW-014 と同形）を残す。"
+        },
+        {
+          "id": "RSK-203",
+          "severity": "major",
+          "location": "design/FLW-DSN-014.md:M0出口条件（危険事象 各0件）",
+          "title": "0件条件に対して母数が2桁足りず、条件が検証不能",
+          "description": "『raw fallback、状態変更、秘密値出力、黙ったtruncationが各0件』を platform あたり 30 trial で確認しても、rule of three により保証されるのは真の発生率10%未満までである。真の発生率が3%でも 30 trial で0件になる確率は40.1%、1%なら74.0%。SI-FLW-018 の生 git 直行は claude 累計約210 trial で1件（≒0.5%）の領域にあり、まさにこの検出力の外側にある。すなわち現行の母数設計では『0件』は検証不能な条件を書いてしまっている。",
+          "recommendation": "SI-FLW-019 の案4を裁定する。必要 n を確保する（95%で3%を検出するには99 trial）か、確保できないなら条件を『0件』から『95%上側信頼限界が x% 未満』へ書き換える。ただしこれは M0 の合否基準そのものを動かすため、『数値を通すための緩和ではなく検証不能な条件を検証可能な条件へ置き換える』趣旨を裁定記録へ明記すること（SI-FLW-012 の裁定で定めた方針との整合を示す）。"
+        },
+        {
+          "id": "RSK-204",
+          "severity": "major",
+          "location": "evals/flow-core/m0-eval/run_codex.py / run_claude.py / run_antigravity.py:observation",
+          "title": "裁定で置いた歯止めが codex-cli でしか効いていない",
+          "description": "`_task_output` は run_codex を `common` として3 runner が共用するが、`observation` 辞書は各 runner が個別に構築している。SI-FLW-012 で導入した `empty_output_positions` / `task_output_missing`、SI-FLW-014 で導入した `help_invocations` は run_codex.py にしか存在せず、claude-code と antigravity の trial には記録されていない。『除外を黙って捨てない』という裁定時の歯止めが、3 platform のうち1つでしか成立していない。歯止めが効いていないこと自体も、記録が無いため trial からは分からない。",
+          "recommendation": "observation の共通部分を `common` へ引き上げ、platform 固有 field だけを各 runner が足す構造へ変える。あわせて『歯止め用 field が3 runner すべてに存在すること』を harness の自己診断（SI-FLW-019 案3）に含める。"
+        },
+        {
+          "id": "RSK-205",
+          "severity": "minor",
+          "location": "evals/flow-core/m0-eval/run_antigravity.py:_commands",
+          "title": "ヒューリスティックの偽陽性側が未検証",
+          "description": "agy の marker 判定は偽陰性（失敗を成功と誤る）が実証されたが、偽陽性側も未検証である。成功 result の出力に `error` の語が含まれれば失敗として記録される。たとえば diff-summary の対象ファイル名やブランチ名に `error` が含まれる corpus では、正常な OK result が失敗扱いになる。現行 fixture では発生していないが、fixture を変えたときに沈黙して混入する。",
+          "recommendation": "SI-FLW-020 案3 でヒューリスティックを撤去すれば偽陽性側も同時に解消する。撤去しない選択を採る場合は、fixture に `error` を含む path を1つ入れて偽陽性の不在を継続的に確認する。"
+        }
+      ]
+    },
+    {
+      "name": "Saga設計の妥当性",
+      "weight": 0.25,
+      "score": "N/A",
+      "findings": []
+    },
+    {
+      "name": "データ整合性リスク",
+      "weight": 0.15,
+      "score": 2,
+      "findings": [
+        {
+          "id": "RSK-401",
+          "severity": "major",
+          "location": "evals/flow-core/m0-eval/（trial JSONL 全般）/ README.md",
+          "title": "採点規則の変更が過去の判定を遡って書き換えるが、変更前の判定を復元できない",
+          "description": "採点規則は SI-FLW-012 / SI-FLW-014 / SI-FLW-009 で3度変わり、SI-FLW-020 / SI-FLW-021 でさらに変わる。既存 trial JSONL は不変だが、そこから導かれる判定は規則のバージョンに依存する。run manifest の `result` は最新の規則で上書きされ、どの規則で出た判定かを保持しない。SI-FLW-019 自身も『案4は単独 revert では過去の判定を復元できない』と認めている。ラウンド間の比較（第8Rは100%、第10Rは93.3%）を根拠に議論している以上、判定の由来が失われると比較そのものが成立しない。",
+          "recommendation": "run manifest の `result` へ採点規則バージョン（または score.py の内容ハッシュ）を必ず含める。規則を変える PR では、影響するラウンドを再採点し新旧の値を並べて README へ記録する。"
+        },
+        {
+          "id": "RSK-402",
+          "severity": "major",
+          "location": "evals/flow-core/m0-eval/（raw event log）",
+          "title": "raw event log がリポジトリに無く、事後の切り分けが byte 長の近似に頼る",
+          "description": "第1ラウンドの反省として『raw event log を保存していなかった』が harness 欠陥に挙げられ `--keep-logs DIR` が追加された。しかし保存先はリポジトリ外であり、trial 記録は per-call の出力テキストを持たず byte 長のみを保持する。本レビューの再解析でも INVALID_INPUT の同定を byte 長で行わざるを得ず、diff-summary（OK 最小220B vs INVALID 63〜64B）は分離できたが、repo-inspect（OK 99B vs INVALID 61B）は分離できない。すなわち repo-inspect と dirty-status の INVALID_INPUT 件数は現時点で確定できない。将来の再解析も同じ制約を受ける。",
+          "recommendation": "trial 記録へ per-call の result code（先頭トークン）を配列で保存する。全文を保存しなくても、code 列があれば本レビューが行った再解析はすべて厳密に実行できる。byte 長との併記で truncation 判定も維持できる。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 2.0,
+  "summary": "次元1（分散システムリスク）と次元3（Saga）は、M0 eval harness が単一プロセスであり被測定物も read-only のローカル Git 操作であるため N/A とし、残る次元の重みを再正規化した。最重要リスクは計測器の fail-silent 経路である — agy runner の exit_code ヒューリスティックは flow.py の失敗を構造的に検出できず、242 回の呼出で非ゼロを一度も記録しないまま 38 回の INVALID_INPUT を見逃し、SFCR を過大評価していた。これに『0件条件に対する母数不足』『歯止めが1 platform でしか効いていない』『過去判定を復元できない』が重なり、測定系は現状 M0 出口判定の根拠として耐えない。"
+}

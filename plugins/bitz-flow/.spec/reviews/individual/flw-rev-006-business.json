@@ -1,0 +1,99 @@
+{
+  "perspective": "business",
+  "dimensions": [
+    {
+      "name": "要件トレーサビリティ",
+      "weight": 0.35,
+      "score": 2,
+      "findings": [
+        {
+          "id": "BIZ-101",
+          "severity": "major",
+          "location": "design/FLW-DSN-014.md:M0出口条件 ↔ requirements/FLW-NFR-008.md",
+          "title": "supersede された要件へ設計本文が追随していない",
+          "description": "FLW-NFR-008（2026-08-05、status: implementing）は status の byte 削減を『固定 baseline `git status` 長形式比で median 40%以上』と定め、FLW-NFR-002 を deprecated にした。FLW-DSN-014 は frontmatter の `implements` を FLW-NFR-008 へ更新したが、本文は『statusのmedian byte削減70%以上』と旧分母の説明段落を保持している。設計から要件への対応が frontmatter だけで成立し、本文の内容が要件と食い違っても検出されない。",
+          "recommendation": "FLW-DSN-014 本文を FLW-NFR-008 へ追随させ version を上げる。加えて、要件の supersede 時に『それを implements する設計文書の本文』を更新対象として列挙する手順を裁定記録テンプレートへ組み込む。"
+        },
+        {
+          "id": "BIZ-102",
+          "severity": "major",
+          "location": "design/FLW-DSN-014.md:M0出口条件（Parity 行）↔ discovery/metrics.md:Input Metrics",
+          "title": "出口条件が指標の測定単位を継承しておらず、実装が独自解釈した",
+          "description": "metrics.md は Parity を『同じ fixture の判定コード・状態変更が3プラットフォームで一致する割合』と fixture 単位で定義する。FLW-DSN-014 の出口条件は『Cross-model Decision Parity 100%』とだけ書き、測定単位を継承していない。空白を実装が task 単位と解釈した結果、corpus 多様化と組み合わさって条件が達成不能になった。要件（discovery）→ 設計 → 実装のどこで単位が落ちたかを追える形になっていない。",
+          "recommendation": "SI-FLW-021 の案1で実装を是正すると同時に、FLW-DSN-014 の出口条件へ測定単位を明記する。他の出口条件（SFCR・Invocation・必須field・byte削減）についても『何を1件と数えるか』を同じ節へ列挙する。"
+        },
+        {
+          "id": "BIZ-103",
+          "severity": "minor",
+          "location": "requirements/FLW-NFR-008.md:status",
+          "title": "実質的に検証済みの要件が implementing のまま",
+          "description": "FLW-NFR-008 の byte 削減閾値は第10ラウンドで 47.9% / 89.0% と充足しており、3 platform 横断でも 44.8〜47.6% と安定している。しかし status は implementing のままで、要件26件のうち verified は2件にとどまる。M0 の進捗が要件の status へ反映されず、spec_status の集計が実態より遅れて見える。",
+          "recommendation": "byte 削減の検証は測定系の是正（SI-FLW-020 / 021）の影響を受けない（分母は fixture 由来、分子は output_bytes）。M0 出口の全体判定を待たずに、この要件だけ先に verified へ昇格できるか裁定する。"
+        }
+      ]
+    },
+    {
+      "name": "NFR定量化",
+      "weight": 0.3,
+      "score": 3,
+      "findings": [
+        {
+          "id": "BIZ-201",
+          "severity": "major",
+          "location": "design/FLW-DSN-014.md:M0出口条件（危険事象 各0件）",
+          "title": "『0件』が測定可能な目標値になっていない",
+          "description": "NFR は測定・検証可能な目標値で書かれるべきだが、『危険事象 各0件』は platform あたり 30 trial では真の発生率10%未満しか保証しない（rule of three）。実際 SI-FLW-018 の生 git 直行は claude 累計約210 trial で1件（≒0.5%）であり、この条件が捉えられる領域の外にある。他の閾値（SFCR 90%、Invocation 95%、byte 削減 40%/80%）はいずれも根拠と測定手段が明記されており良好なだけに、0件条件だけが定量化の水準を満たしていない。",
+          "recommendation": "SI-FLW-019 の案4を裁定する。『0件』を維持するなら必要 n（95%で3%を検出するなら99 trial）を母数設計へ反映し、確保できないなら『95%上側信頼限界が x% 未満』へ書き換える。いずれにせよ根拠となる検出力の計算を FLW-DSN-014 へ残す。"
+        },
+        {
+          "id": "BIZ-202",
+          "severity": "info",
+          "location": "discovery/metrics.md:Token / Output Efficiency（測定条件節）",
+          "title": "閾値の再校正に原理的根拠が示されており模範的",
+          "description": "status の閾値を 70% → 40% へ下げた判断は、compact が `--porcelain=v1` と同型式（1項目1行）で header 行のぶん必ず太るため公正な分母では 70% が原理的に達成できない、という根拠を伴っている。さらに『70% を満たせる分母は `--porcelain=v2` だけで、それは flow.py 自身の parse 入力である』と、閾値を通すための分母選択を明示的に排除している。数値を通すための緩和と、測定条件の是正とを区別する規律が働いている。",
+          "recommendation": "この論法を BIZ-201 の裁定（0件条件の書き換え）にも適用し、同じ形の根拠を残す。"
+        }
+      ]
+    },
+    {
+      "name": "ステークホルダー整合",
+      "weight": 0.2,
+      "score": 4,
+      "findings": [
+        {
+          "id": "BIZ-301",
+          "severity": "minor",
+          "location": ".spec/reports/decision-*.md（10件）",
+          "title": "裁定記録は充実しているが、設計文書への反映確認が手順に無い",
+          "description": "裁定記録10件はいずれも症状・根拠・選択肢・採否理由を備えており、意思決定の追跡性は高い。一方 BIZ-101 が示すとおり、裁定内容が設計文書本文へ反映されたかを確認する工程が無く、SI-FLW-009 の裁定は metrics.md と FLW-NFR-008 と score.py には届いたが FLW-DSN-014 本文には届かなかった。",
+          "recommendation": "裁定記録に『反映先』欄を設け、要件・設計・実装・harness・README のどこを更新したかをチェックリストとして残す。release_check.py 等での機械検証は将来課題としてよいが、まず欄を置く。"
+        }
+      ]
+    },
+    {
+      "name": "ROI・実現可能性",
+      "weight": 0.15,
+      "score": 1,
+      "findings": [
+        {
+          "id": "BIZ-401",
+          "severity": "critical",
+          "location": "design/FLW-DSN-014.md:M0出口条件（末尾）/ M1〜M5 timebox 節",
+          "title": "設計自身が定めた timebox が桁違いに超過しながら一度も発動していない",
+          "description": "FLW-DSN-014 は『M0 は独立PR 1件で次だけを実装する』とし、出口条件の末尾で『5回の作業session または 1PR で出口に到達しない場合は scope/pivot を人間へ再提示する』と安全弁を定めている。実績は M0 Contract Kernel 実装（#158）以降 #171 まで 14 PR、実測10ラウンド、セッション上限への到達2回であり、予算を1桁超えている。それでも scope/pivot の再提示は行われておらず、安全弁が一度も作動していない。timebox 節自身も『進行中milestoneの上限を暗黙に延長せず、変更はdecision reference付きで記録する』と定めているが、暗黙の延長がまさに起きている。これは個別 issue の問題ではなく、超過を検知する機構が無いことの帰結である。",
+          "recommendation": "M0 の予算超過を人間へ正式に再提示し、(a) 予算を改訂して継続、(b) scope を縮小、(c) M0 の出口条件自体を見直す、のいずれかを decision reference 付きで裁定する。あわせて予算消費（PR数・session数・ラウンド数）を run manifest から集計し、超過時に score.py が警告する機構を入れる。なお本レビューの再解析は『残る不合格が実質1事象』であることを示しており、(a) の判断材料は揃っている。"
+        },
+        {
+          "id": "BIZ-402",
+          "severity": "major",
+          "location": "design/FLW-DSN-014.md:M1〜M5 timebox 表",
+          "title": "M0 の実績が M1 以降の初期 budget へ反映されていない",
+          "description": "timebox 表は『見積実績がない段階の初期budget』であり『各milestone開始時に、直前までの実績PR数、実績session数、レビュー修正回数、出口未達理由を run manifest へ記録し、人間が次budgetの維持または変更を確認する』と定める。M0 が 1 PR 想定に対し 14 PR を要した実績は、M1（3 PR / 12 session）以降の budget が同様に非現実的である可能性を強く示唆するが、記録も再校正も行われていない。",
+          "recommendation": "M0 の実績（PR数・session数・ラウンド数・spec-issue 件数・うち測定系の割合）を run manifest へ記録し、M1 以降の budget を再校正する。特に『測定系の整備コスト』が M0 に集中したのか M1 以降も続くのかを見立てとして残す。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 2.55,
+  "summary": "閾値の定量化と裁定記録の質は高く、特に byte 削減閾値の再校正は『数値を通すための緩和』と『測定条件の是正』を明確に区別した模範的な判断である。一方で要件トレーサビリティは、裁定が設計文書本文へ届かない経路（FLW-NFR-008 → FLW-DSN-014）と、指標の測定単位が設計へ継承されない経路（metrics.md → FLW-DSN-014 → score.py）の2つで破れている。最も重いのは実現可能性で、設計自身が定めた『1 PR / 5 session』の timebox に対し実績が 14 PR・10ラウンドに達しながら、安全弁が一度も発動していない。"
+}

@@ -1,0 +1,84 @@
+{
+  "perspective": "consistency",
+  "dimensions": [
+    {
+      "name": "構造整合",
+      "weight": 0.35,
+      "score": 3,
+      "findings": [
+        {
+          "id": "RVC-101",
+          "severity": "major",
+          "location": "design/FLW-DSN-014.md:M0 eval protocol / M0出口条件",
+          "title": "measurand（何を答えとして採点するか）の定義節が無い",
+          "description": "FLW-DSN-014 は閾値（Invocation 95%、SFCR 90%、Parity 100%、必須field 100%、危険事象0件、byte削減率）を列挙するが、『その trial の答えはどの呼出の出力か』『エージェントが複数回呼んだときどれを採点するか』『失敗呼出・ヘルプ呼出・探索呼出をどう扱うか』を一切定めていない。空白を埋めたのは run_codex.py の `selected = (complete or matches)[-1]` という1行のヒューリスティックであり、実装が事実上の仕様になっている。SI-FLW-014 の裁定でもこの選択規則自体は見直されず `--help` フィルタが1つ足されただけであったため、同じ関数から SI-FLW-017 が再発した。",
+          "recommendation": "FLW-DSN-014 へ『測定量の定義』節を新設し、(1) 採点対象の選択規則、(2) 除外規則とその歯止め、(3) メトリクスごとの proxy が measurand から乖離する条件、を仕様側に置く。harness 実装はその節を参照する形に反転させる（SI-FLW-019 案1・案2）。"
+        },
+        {
+          "id": "RVC-102",
+          "severity": "minor",
+          "location": "evals/flow-core/m0-eval/README.md",
+          "title": "どのラウンドをどの採点規則で採点したかの対応表が無い",
+          "description": "SI-FLW-012 / SI-FLW-014 の裁定で採点規則が2度変わり、SI-FLW-009 で分母定義が変わった。既存 trial JSONL は再採点で結果が変わるが、README は各ラウンドの結果を記述する一方で『そのラウンドがどの規則で採点されたか』を持たない。過去ラウンドの数値を引用したとき、それがどの定義下の値か復元できない。",
+          "recommendation": "README にラウンド×採点規則バージョンの対応表を置き、規則を変えた PR で必ず更新する。"
+        }
+      ]
+    },
+    {
+      "name": "トレーサビリティ",
+      "weight": 0.35,
+      "score": 2,
+      "findings": [
+        {
+          "id": "RVC-201",
+          "severity": "critical",
+          "location": "evals/flow-core/m0-eval/score.py:decision_parity / discovery/metrics.md:Input Metrics",
+          "title": "Parity の実装が discovery の定義と自身の docstring の双方に反し、出口条件が達成不能",
+          "description": "metrics.md は Cross-model Decision Parity を『**同じ fixture の**判定コード・状態変更が3プラットフォームで一致する割合』と定義し、score.py の docstring も『**同じ fixture・同じ task で**3platform の判定が一致した割合』と書いている。しかし実装は `by_task[trial['task']][trial['platform']]` と task 単位でのみグループ化し、corpus を落としている。trial は small / medium / large の3 corpus に散っているため `changed=8` と `changed=34` と `changed=124` が『判定の不一致』として数えられる。結果、この出口条件は corpus 多様化を入れた第1ラウンドから一度も達成可能でなかった。全10ラウンドで FAIL を出し続けたが、どの spec-issue にも起票されていない。(task × corpus) でグループ化すると r7 / r8 / r10 いずれも 9/9 = 100% である。",
+          "recommendation": "SI-FLW-021 の案1を採り、グループ化キーへ corpus を加える。あわせて『判定が実際に食い違う trial を混ぜたとき Parity が 100% を割る』ことを確認し、修正が恒真にならないことを検証する。"
+        },
+        {
+          "id": "RVC-202",
+          "severity": "major",
+          "location": "design/FLW-DSN-014.md:M0出口条件（byte削減の測定条件の段落）",
+          "title": "SSOT に指定された設計文書だけが破棄済みの裁定を参照している",
+          "description": "metrics.md は末尾で『M0のtask、trial、baseline、出口条件の完全な正は FLW-DSN-014 とする』と宣言する。ところが FLW-DSN-014 本文は『statusのmedian byte削減70%以上』と『byte削減の測定条件は2026-07-31の裁定（SI-FLW-007）で固定した。statusのbaselineは固定commandではなく no-skill条件で実際に消費された出力のbyte数とし』を保持したままである。この裁定は 2026-08-05 に SI-FLW-009 で破棄され（metrics.md に『破棄』と明記）、FLW-NFR-008 が固定 baseline・40% を定め、score.py も 40% を実装している。SSOT と宣言された文書だけが要件・実装・discovery の三者と矛盾している。frontmatter の `implements` は FLW-NFR-008 へ更新済みで本文だけが取り残されており、更新漏れの検出機構が無いことを示す。",
+          "recommendation": "FLW-DSN-014 の本文を FLW-NFR-008 へ追随させ version を上げる。あわせて『要件が supersede されたとき、それを implements する設計文書の本文を更新する』ことを裁定の手順に組み込む（裁定記録テンプレートへ反映先チェック欄を置く等）。"
+        },
+        {
+          "id": "RVC-203",
+          "severity": "minor",
+          "location": "discovery/metrics.md:frontmatter",
+          "title": "status: draft の文書が測定条件の照合元として運用されている",
+          "description": "metrics.md は `status: draft` のまま version 2.1 で 2026-08-05 の裁定内容を保持しており、実質的に測定条件の照合元として機能している。draft のまま確定情報を載せると、Gate 判定時に『draft だから未確定』と読むか『裁定済みだから確定』と読むかが分かれる。",
+          "recommendation": "discovery 成果物の status 解釈は 2026-07-29 に『Gate Go はフェーズ進行裁定であり DSC の active 化ではない』と明文化済みである。その解釈を metrics.md 自身にも1行明記し、draft のまま確定情報を持つ根拠を文書内で自己記述する。"
+        }
+      ]
+    },
+    {
+      "name": "用語一貫性",
+      "weight": 0.30,
+      "score": 3,
+      "findings": [
+        {
+          "id": "RVC-301",
+          "severity": "major",
+          "location": "evals/flow-core/m0-eval/run_codex.py / run_claude.py / run_antigravity.py:_commands",
+          "title": "`exit_code` が3 runner で別概念を指す同一名",
+          "description": "同じ field 名 `exit_code` が、codex-cli では Codex event の実 exit code、claude-code では Bash tool の `is_error` フラグの 0/1 変換、antigravity では出力に `error` / `failed` / `exit code: 1` を含むかの文字列判定結果を指す。3者は意味が異なるうえ、agy のヒューリスティックは flow.py の `INVALID_INPUT ... cause=invalid-ref stage=inspect`（実際は exit 2）を捕捉できない。この1 field の上に採点規則と `self_retried` が乗っているため、platform 間で等価でない基準で採点している。",
+          "recommendation": "SI-FLW-020 の案1・案2を採る。採点と `self_retried` は compact 出力の先頭トークン（result-v1 の `code` enum 11 値）から判定し、`exit_code` には由来（`native` / `error-flag` / `heuristic`）を併記して等価でない値を等価に扱わない。"
+        },
+        {
+          "id": "RVC-302",
+          "severity": "minor",
+          "location": "design/FLW-DSN-014.md:M0 eval protocol（oracle 行）/ evals README",
+          "title": "『oracle』が2つの意味で使われている",
+          "description": "FLW-DSN-014 の protocol 表は oracle を『最初のGit操作がflow.py、schema一致、期待snapshot/field一致』と定義するが、harness の `_flow_json` は flow.py 自身を実行して得た JSON を `oracle` と呼び、`_required_fields` / `_schema_match` の比較対象にしている。前者は合否条件、後者は期待値の生成器であり、同名で別概念である。",
+          "recommendation": "harness 側を `expected` 等へ改名するか、FLW-DSN-014 の測定量定義節で両者を別語として定義する。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 2.65,
+  "summary": "文書の構成・改訂履歴・裁定記録の粒度は良好だが、トレーサビリティが実質的に破れている。SSOT と宣言された FLW-DSN-014 だけが破棄済みの裁定（SI-FLW-007）を参照し、要件 FLW-NFR-008・実装 score.py・discovery metrics.md の三者と矛盾する。さらに Parity の実装は discovery の定義と自身の docstring の双方に反しており、出口条件が第1ラウンドから達成不能であった。用語面では `exit_code` が3 runner で別概念を指し、その上に採点規則が乗っている。"
+}
