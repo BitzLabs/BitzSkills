@@ -3,7 +3,7 @@ id: SI-FLW-016
 raised_by: M0 第8ラウンド claude-code 実測（2026-08-07）
 target: evals/flow-core/fixtures/v2-skill/SKILL.md のスクリプト参照表記と回復手順
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `flow.py` の配置場所を解決できなかったエージェントが、回復手段として
   **`find /`（ファイルシステム全体の検索）**を選び、タイムアウトの末に生 git へ退避する。
