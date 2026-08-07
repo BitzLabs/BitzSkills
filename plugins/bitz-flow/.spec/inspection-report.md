@@ -94,7 +94,7 @@
 | FLW-DSN-007 | active |  |  | 0 | 0 |
 | FLW-DSN-008 | active |  |  | 0 | 0 |
 | FLW-DSN-009 | active |  |  | 0 | 0 |
-| FLW-DSN-010 | active |  |  | 0 | 5 |
+| FLW-DSN-010 | active |  |  | 0 | 6 |
 | FLW-DSN-011 | active |  |  | 0 | 3 |
 | FLW-DSN-012 | active |  |  | 0 | 3 |
 | FLW-DSN-013 | active |  |  | 0 | 2 |
@@ -111,7 +111,7 @@
 | FLW-FR-010 | 承認済み（approved） | workflow | unit-test | 0 | 0 |
 | FLW-FR-011 | 承認済み（approved） | tooling | unit-test | 0 | 0 |
 | FLW-FR-012 | 実装中（implementing） | governance | unit-test | 1 | 1 |
-| FLW-NFR-001 | 実装中（implementing） | verification | benchmark | 7 | 7 |
+| FLW-NFR-001 | 実装中（implementing） | verification | benchmark | 8 | 8 |
 | FLW-NFR-002 | 廃止（deprecated） | verification | benchmark | 0 | 0 |
 | FLW-NFR-003 | 承認済み（approved） | execution | unit-test | 0 | 0 |
 | FLW-NFR-004 | 実装中（implementing） | tooling | unit-test | 1 | 1 |
