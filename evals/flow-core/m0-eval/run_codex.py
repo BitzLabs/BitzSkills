@@ -496,16 +496,139 @@ def _empty_output_positions(commands: list[dict]) -> list[int]:
     ]
 
 
-def _one_trial(job: dict) -> dict:
-    """測定不能（SI-FLW-012）を検出したら harness 側で trial をやり直す。
+# 3 runner が必ず書く observation の共通部（`FLW-REV-006` GP-003）。
+#
+# 判定ロジック（`_task_output` 等）は共有していたのに `observation` は各 runner が個別に
+# 構築していたため、`SI-FLW-012` / `SI-FLW-014` の裁定で置いた歯止めが **codex-cli でしか
+# 効いていなかった**（`SI-FLW-025`）。集計側は `t.get(key, default)` で吸収するため
+# 「記録されていない」と「記録されたが偽」が区別できず、その事実がデータ構造上検出できない。
+# 共通部をここで一括生成し、欠けたら採点側がエラーにする。
+REQUIRED_OBSERVATION_KEYS = frozenset(
+    {
+        "runner_exit_code",
+        "exit_code_source",
+        "raw_log",
+        "timed_out",
+        "state_change_reasons",
+        "command_events",
+        "command_kinds",
+        "command_result_codes",
+        "task_flow_matches",
+        "task_flow_exit_codes",
+        "task_flow_result_codes",
+        "task_flow_output_bytes",
+        "empty_output_positions",
+        "help_invocations",
+        "task_output_missing",
+        "harness_attempts",
+    }
+)
+
+
+def build_observation(
+    *,
+    commands: list[dict],
+    relevant: list[dict],
+    output: str,
+    condition: str,
+    source_root: Path,
+    exit_code_source: str,
+    runner_exit_code: int | None,
+    raw_log: str | None,
+    timed_out: bool,
+    state_change_reasons: dict,
+    platform_fields: dict | None = None,
+) -> dict:
+    """observation の共通部を組み立てる。platform 固有 field は `platform_fields` で足す。
+
+    `harness_attempts` は `run_trial` が再試行回数を確定した時点で上書きする。
+    """
+    observation = {
+        # runner process の exit code。実体は runner ごとに違うため由来を必ず添える
+        # （`exit_code_source`。SI-FLW-020）。採点には使わない。
+        "runner_exit_code": runner_exit_code,
+        "exit_code_source": exit_code_source,
+        "raw_log": raw_log,
+        "timed_out": timed_out,
+        "state_change_reasons": state_change_reasons,
+        "command_events": len(commands),
+        "command_kinds": [
+            "flow.py"
+            if "flow.py" in item["command"]
+            else "raw-git"
+            if RAW_GIT_PATTERN.search(item["command"])
+            else "other"
+            for item in commands
+        ],
+        # per-call の result code。出力全文を残さずに事後の再解析を厳密に行うための
+        # 一次証拠である（`FLW-REV-006` GP-005）。byte 長による近似では
+        # `repo-inspect`（OK 99B / INVALID_INPUT 61B）を分離できなかった。
+        "command_result_codes": [result_code(item["output"], source_root) for item in commands],
+        "task_flow_matches": len(relevant),
+        "task_flow_exit_codes": [item["exit_code"] for item in relevant],
+        "task_flow_result_codes": [result_code(item["output"], source_root) for item in relevant],
+        "task_flow_output_bytes": [len(item["output"].encode("utf-8")) for item in relevant],
+        # 正常な空結果と測定不能を区別するために位置を残す（SI-FLW-012）。
+        "empty_output_positions": _empty_output_positions(commands),
+        # 採点対象から外した `--help` 実行を残す。黙って捨てない（SI-FLW-014）。
+        "help_invocations": [item["command"] for item in commands if _is_help(item["command"])],
+        # 測定不能と見なすのは **task 対象の呼び出し**の出力が失われた場合だけ。
+        # 探索目的の呼び出しが欠けても、task 対象の出力が観測できていれば採点はできる。
+        "task_output_missing": condition == "v2-skill" and bool(relevant) and not output,
+        "harness_attempts": 1,
+    }
+    observation.update(platform_fields or {})
+    missing = REQUIRED_OBSERVATION_KEYS - set(observation)
+    if missing:
+        raise SystemExit(f"observation の共通部が欠けている: {sorted(missing)}")
+    return observation
+
+
+def failed_observation(exit_code_source: str, error: Exception) -> dict:
+    """runner が例外で終わったときの observation。共通部の key は必ず埋める。
+
+    runner の異常終了は測定不能ではなく失敗として数える（SI-FLW-012 の除外規則を
+    runner のバグの隠れ蓑にしない）。
+    """
+    observation = {
+        "runner_error": type(error).__name__,
+        "runner_exit_code": None,
+        "exit_code_source": exit_code_source,
+        "raw_log": None,
+        "timed_out": False,
+        "state_change_reasons": {},
+        "command_events": 0,
+        "command_kinds": [],
+        "command_result_codes": [],
+        "task_flow_matches": 0,
+        "task_flow_exit_codes": [],
+        "task_flow_result_codes": [],
+        "task_flow_output_bytes": [],
+        "empty_output_positions": [],
+        "help_invocations": [],
+        "task_output_missing": False,
+        "harness_attempts": 1,
+    }
+    missing = REQUIRED_OBSERVATION_KEYS - set(observation)
+    if missing:
+        raise SystemExit(f"observation の共通部が欠けている: {sorted(missing)}")
+    return observation
+
+
+def run_trial(job: dict, attempt) -> dict:
+    """測定不能（SI-FLW-012）を検出したら harness 側で trial をやり直す（3 runner 共通）。
 
     エージェントの自己再試行（`self_retried`）とは別物であり、そちらへは計上しない。
     再試行を尽くしても解消しない場合は `measurable: false` として記録し、採点側が
     根拠つきで母数から外せるようにする。
+
+    この機構は `SI-FLW-012` の裁定で導入したが **codex-cli にしか入っていなかった**。
+    claude-code のレート制限拒否（第9ラウンド。v2 30 trial が全滅）が「測定不能」ではなく
+    素点の FAIL として集計されたのはこのためである（`SI-FLW-025` / GP-003）。
     """
     attempts = []
     for _ in range(1 + max(0, int(job.get("harness_retries", 0)))):
-        record = _one_attempt(job)
+        record = attempt(job)
         attempts.append(record)
         if not record["observation"]["task_output_missing"]:
             break
@@ -513,6 +636,10 @@ def _one_trial(job: dict) -> dict:
     record["measurable"] = not record["observation"]["task_output_missing"]
     record["observation"]["harness_attempts"] = len(attempts)
     return record
+
+
+def _one_trial(job: dict) -> dict:
+    return run_trial(job, _one_attempt)
 
 
 def _one_attempt(job: dict) -> dict:
@@ -616,40 +743,18 @@ def _one_attempt(job: dict) -> dict:
             "secret_output": secret_output,
             "silent_truncation": silent_truncation,
         },
-        "observation": {
-            "codex_exit_code": proc.returncode,
-            "raw_log": raw_log,
-            "timed_out": timed_out,
-            "state_change_reasons": state_change_reasons,
-            "command_events": len(commands),
-            "command_kinds": [
-                "flow.py"
-                if "flow.py" in item["command"]
-                else "raw-git"
-                if RAW_GIT_PATTERN.search(item["command"])
-                else "other"
-                for item in commands
-            ],
-            "task_flow_matches": len(relevant),
-            # `exit_code` は runner 間で等価でないため、由来を必ず添える（SI-FLW-020）。
-            # 採点は `task_flow_result_codes` 側で行う。
-            "exit_code_source": EXIT_CODE_SOURCE,
-            "task_flow_exit_codes": [item["exit_code"] for item in relevant],
-            "task_flow_result_codes": [
-                result_code(item["output"], job["source_root"]) for item in relevant
-            ],
-            "task_flow_output_bytes": [len(item["output"].encode("utf-8")) for item in relevant],
-            # 正常な空結果と測定不能を区別するために位置を残す（SI-FLW-012）。
-            "empty_output_positions": _empty_output_positions(commands),
-            # 採点対象から外した `--help` 実行を残す。黙って捨てない（SI-FLW-014）。
-            "help_invocations": [
-                item["command"] for item in commands if _is_help(item["command"])
-            ],
-            # 測定不能と見なすのは **task 対象の呼び出し**の出力が失われた場合だけ。
-            # 探索目的の呼び出し（多くは position 2 の repo inspect）が欠けても、
-            # task 対象の出力が観測できていれば採点はできる（SI-FLW-012）。
-            "task_output_missing": job["condition"] == "v2-skill" and bool(relevant) and not output,
-        },
+        "observation": build_observation(
+            commands=commands,
+            relevant=relevant,
+            output=output,
+            condition=job["condition"],
+            source_root=job["source_root"],
+            exit_code_source=EXIT_CODE_SOURCE,
+            runner_exit_code=proc.returncode,
+            raw_log=raw_log,
+            timed_out=timed_out,
+            state_change_reasons=state_change_reasons,
+        ),
     }
 
 
@@ -811,13 +916,7 @@ def main(argv: list[str] | None = None) -> int:
                         # runner の異常終了は測定不能ではなく失敗として数える（SI-FLW-012 の
                         # 除外規則を runner のバグの隠れ蓑にしない）。
                         "measurable": True,
-                        "observation": {
-                            "runner_error": type(error).__name__,
-                            "exit_code_source": EXIT_CODE_SOURCE,
-                            "empty_output_positions": [],
-                            "task_output_missing": False,
-                            "harness_attempts": 1,
-                        },
+                        "observation": failed_observation(EXIT_CODE_SOURCE, error),
                     }
                 stream.write(json.dumps(result, ensure_ascii=False, sort_keys=True) + "\n")
                 stream.flush()

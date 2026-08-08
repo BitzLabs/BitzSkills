@@ -376,6 +376,205 @@ def test_parity_ignores_baseline_conditions(harness):
     assert mismatches == []
 
 
+# --- 計装の等価性（FLW-REV-006 GP-003 / SI-FLW-025） ------------------------
+
+
+def _observation(source_root: Path, **overrides):
+    """共通部を組み立てた observation を返す（runner の呼び方に合わせる）。"""
+    import run_codex as common
+
+    commands = [
+        {"command": DIFF_CMD, "output": OK_DIFF, "exit_code": 0},
+        {"command": "git status", "output": "modified: a\n", "exit_code": 0},
+    ]
+    kwargs = dict(
+        commands=commands,
+        relevant=[commands[0]],
+        output=OK_DIFF,
+        condition="v2-skill",
+        source_root=source_root,
+        exit_code_source="native",
+        runner_exit_code=0,
+        raw_log=None,
+        timed_out=False,
+        state_change_reasons={"repo_diff": False, "command": False},
+    )
+    kwargs.update(overrides)
+    return common.build_observation(**kwargs)
+
+
+def test_every_runner_shares_the_same_observation_builder(harness):
+    """3 runner が `common.build_observation` を通す（個別構築へ戻っていないこと）。"""
+    common, _ = harness
+    sources = {
+        name: (HARNESS / name).read_text(encoding="utf-8")
+        for name in ("run_codex.py", "run_claude.py", "run_antigravity.py")
+    }
+    assert "def build_observation(" in sources["run_codex.py"]
+    for name in ("run_claude.py", "run_antigravity.py"):
+        assert "common.build_observation(" in sources[name], name
+        assert "common.failed_observation(" in sources[name], name
+        assert "common.run_trial(" in sources[name], name
+
+
+def test_common_observation_carries_every_required_key(harness):
+    common, _ = harness
+    observation = _observation(REPO_ROOT)
+    assert common.REQUIRED_OBSERVATION_KEYS <= set(observation)
+
+
+def test_platform_fields_cannot_drop_the_common_part(harness):
+    """platform 固有 field で共通部を上書きして消せないこと。"""
+    common, _ = harness
+    observation = _observation(REPO_ROOT, platform_fields={"agy_result_status": "DONE"})
+    assert common.REQUIRED_OBSERVATION_KEYS <= set(observation)
+    assert observation["agy_result_status"] == "DONE"
+
+
+def test_failed_observation_fills_the_common_part(harness):
+    """runner が例外で終わっても共通部は埋まる（測定不能の隠れ蓑にしない）。"""
+    common, _ = harness
+    observation = common.failed_observation("native", RuntimeError("boom"))
+    assert common.REQUIRED_OBSERVATION_KEYS <= set(observation)
+    assert observation["runner_error"] == "RuntimeError"
+    assert observation["task_output_missing"] is False
+
+
+def test_run_trial_retries_only_while_task_output_is_missing(harness):
+    """測定不能なら harness 側でやり直し、解消したら止める（自己再試行には計上しない）。"""
+    common, _ = harness
+    attempts = []
+
+    def attempt(job):
+        attempts.append(1)
+        missing = len(attempts) == 1
+        return {"observation": {"task_output_missing": missing}}
+
+    record = common.run_trial({"harness_retries": 2}, attempt)
+    assert len(attempts) == 2
+    assert record["measurable"] is True
+    assert record["observation"]["harness_attempts"] == 2
+
+
+def test_run_trial_marks_unmeasurable_after_exhausting_retries(harness):
+    common, _ = harness
+    record = common.run_trial(
+        {"harness_retries": 1}, lambda job: {"observation": {"task_output_missing": True}}
+    )
+    assert record["measurable"] is False
+    assert record["observation"]["harness_attempts"] == 2
+
+
+def test_score_reports_missing_common_instrumentation(harness):
+    """共通部が欠けた trial を集計側が検出する（黙って `get(key, default)` で吸収しない）。"""
+    _, score = harness
+    trial = _trial("antigravity", "dirty-status", "small", {"code": "OK"})
+    trial["observation"] = {"agy_result_status": "DONE"}
+    gaps = score.instrumentation_gaps([trial])
+    assert len(gaps) == 1
+    assert "antigravity" in gaps[0]
+    assert "task_output_missing" in gaps[0]
+
+
+def test_score_accepts_the_documented_example_records(harness):
+    """`trials.example.jsonl` が現行の共通部を満たす（形式例が腐らないこと）。"""
+    _, score = harness
+    trials = score.load_trials(HARNESS / "trials.example.jsonl")
+    assert trials
+    assert score.instrumentation_gaps(trials) == []
+
+
+def test_score_required_keys_are_a_subset_of_runner_keys(harness):
+    """集計側の検査対象が runner 側の必須集合を超えない（写し間違いを防ぐ）。"""
+    common, score = harness
+    assert set(score.REQUIRED_OBSERVATION_KEYS) <= common.REQUIRED_OBSERVATION_KEYS
+
+
+# --- per-call の result code（FLW-REV-006 GP-005） --------------------------
+
+
+def test_command_result_codes_cover_every_call(harness):
+    """全 command の result code を並びを保って残す（flow.py 以外は None）。"""
+    _, _ = harness
+    observation = _observation(REPO_ROOT)
+    assert observation["command_result_codes"] == ["OK", None]
+    assert len(observation["command_result_codes"]) == observation["command_events"]
+
+
+def test_command_result_codes_separate_repo_inspect_failures(harness):
+    """byte 長では分離できなかった `repo-inspect` の失敗を code で同定できる。
+
+    `FLW-REV-006` GP-005 の根拠（OK 99B / INVALID_INPUT 61B は byte 長で分離できない）。
+    """
+    _, _ = harness
+    ok = "OK repo.inspect branch=main head=abc1234 dirty=true remotes=1\n"
+    invalid = "INVALID_INPUT repo.inspect cause=not-repository stage=inspect\n"
+    commands = [
+        {"command": "flow.py repo inspect", "output": invalid, "exit_code": None},
+        {"command": "flow.py repo inspect", "output": ok, "exit_code": None},
+    ]
+    observation = _observation(REPO_ROOT, commands=commands, relevant=commands, output=ok)
+    assert observation["command_result_codes"] == ["INVALID_INPUT", "OK"]
+
+
+# --- 採点規則バージョン（FLW-REV-006 GP-004） ------------------------------
+
+
+def test_report_carries_the_scoring_rule_version(harness, baseline_cache):
+    """判定結果自身が、どの規則で出たかを持つ。"""
+    _, score = harness
+    report = score.evaluate(_platform_trials("codex-cli", 60), baseline_cache=baseline_cache)
+    assert report["scoring_rule_version"] == score.scoring_rule_version()
+    assert len(report["scoring_rule_version"]) == 12
+
+
+def test_scoring_rule_version_tracks_the_scoring_code(harness):
+    """規則バージョンは score.py の内容ハッシュである（規則を変えれば必ず変わる）。"""
+    import hashlib
+
+    _, score = harness
+    expected = hashlib.sha256((HARNESS / "score.py").read_bytes()).hexdigest()[:12]
+    assert score.scoring_rule_version() == expected
+
+
+def test_manifest_keeps_a_history_of_judgments(harness, tmp_path):
+    """`--manifest` は判定を履歴として積む（破壊的更新でどの規則の判定か失わない）。"""
+    _, score = harness
+    trials_path = tmp_path / "trials.jsonl"
+    trials_path.write_text(
+        "\n".join(json.dumps(t, ensure_ascii=False) for t in _platform_trials("codex-cli", 3)) + "\n",
+        encoding="utf-8",
+    )
+    manifest = tmp_path / "run-manifest.json"
+    manifest.write_text(
+        json.dumps({"milestone": "M0", "result": {"passed": False, "scoring_rule_version": "old0"}}),
+        encoding="utf-8",
+    )
+    score.main(["--trials", str(trials_path), "--format", "json", "--manifest", str(manifest)])
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    versions = [entry.get("scoring_rule_version") for entry in payload["results"]]
+    assert "old0" in versions
+    assert score.scoring_rule_version() in versions
+    assert payload["result"]["scoring_rule_version"] == score.scoring_rule_version()
+    assert payload["milestone"] == "M0"
+    assert "scored_at" in payload["result"]
+
+
+def test_manifest_history_replaces_same_rule_version(harness, tmp_path):
+    """同じ規則で採点し直したら履歴を増やさず置き換える（重複で埋めない）。"""
+    _, score = harness
+    trials_path = tmp_path / "trials.jsonl"
+    trials_path.write_text(
+        "\n".join(json.dumps(t, ensure_ascii=False) for t in _platform_trials("codex-cli", 3)) + "\n",
+        encoding="utf-8",
+    )
+    manifest = tmp_path / "run-manifest.json"
+    for _ in range(2):
+        score.main(["--trials", str(trials_path), "--format", "json", "--manifest", str(manifest)])
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    assert len(payload["results"]) == 1
+
+
 # --- 実測記録での再採点（再実測なし） ---------------------------------------
 
 

@@ -3,7 +3,7 @@ id: SI-FLW-025
 raised_by: M0 測定系の是正（SI-FLW-020 / 021）実施中の発見（2026-08-08）
 target: evals/flow-core/m0-eval/run_claude.py / run_antigravity.py の observation と測定不能の扱い
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `SI-FLW-012` / `SI-FLW-014` の裁定で導入した**除外の歯止め**が、
   **codex-cli でしか効いていない**。3 runner は `_task_output` 等の判定ロジックを
