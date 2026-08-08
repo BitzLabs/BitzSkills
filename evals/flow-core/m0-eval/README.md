@@ -132,15 +132,50 @@ SFCR は `discovery/metrics.md` の North Star Metric の定義に従い、
 
 ### どのラウンドをどの規則で採点したか
 
+判定結果は**どの規則で出たかを自分で持つ**。`score.py` は判定へ `scoring_rule_version`
+（`score.py` の内容ハッシュ先頭12桁）を付け、`--manifest` は判定を `results` 配列へ
+**履歴として積む**（`result` は最新判定への後方互換の別名）。規則を変えれば必ず版が変わり、
+同じ版で採点し直したときは履歴を増やさず置き換える。
+
+これが無いと、ラウンド間の数値比較（第8R 100% ↔ 第10R 93.3%）の**前提が保存されない**
+（`FLW-REV-006` GP-004）。採点規則は `SI-FLW-009` / `012` / `014` / `020` / `021` / `026` で
+6度変わっている。
+
 | ラウンド | 採点規則 |
 |---|---|
-| 第1〜10R | `exit_code` ベースの旧規則。agy では失敗が構造的に不可視。Parity は task 単位（corpus をまたぐ比較のため**達成不能**） |
-| 第11R 以降 | 本節の規則 |
+| 第1〜10R | `exit_code` ベースの旧規則。agy では失敗が構造的に不可視。Parity は task 単位（corpus をまたぐ比較のため**達成不能**）。危険事象は母数を書かない「各0件」 |
+| 第11R 以降 | 本節の規則。result code ベース、Parity は task × corpus、危険事象は 95% 上側信頼限界つき |
 
 過去ラウンドの記録を本規則で**再採点すると数値が変わる**。Parity は `score.py` だけで
 再採点でき、r7 / r8 / r10 はいずれも 33% → **100%** になる
 （`tests/test_m0_eval_scoring.py` が記録から機械検証する）。採点対象の選択と `self_retried`
 は runner が trial 記録を作る時点で確定するため、**再実測しないと確定値は得られない**。
+
+## 計装の共通部（`FLW-REV-006` GP-003 / `SI-FLW-025`）
+
+判定ロジック（`_task_output` 等）は3 runner で共有していたのに、`observation` は各 runner が
+個別に構築していた。そのため `SI-FLW-012` / `SI-FLW-014` の裁定で置いた**歯止めが
+codex-cli でしか効いていなかった**。集計側は `t.get(key, default)` で吸収するため、
+「記録されていない」と「記録されたが偽」が区別できず、その事実がデータ構造上検出できない。
+
+- 共通部は `run_codex.py` の `build_observation()` が一括生成する。正は
+  `REQUIRED_OBSERVATION_KEYS`。platform 固有 field は `platform_fields` で足す
+- runner が例外で終わった場合も `failed_observation()` が共通部を必ず埋める
+  （runner の異常終了は測定不能ではなく**失敗**として数える）
+- 測定不能の検出と harness 再試行（`measurable` / `harness_attempts`）は `run_trial()` に
+  一本化した。従来 codex-cli にしか無く、claude-code のレート制限拒否（第9ラウンドで
+  v2 30 trial が全滅）が「測定不能」ではなく素点の FAIL として集計された原因である
+- `score.py` の `instrumentation_gaps()` が**共通部の欠落を未達として列挙**する。
+  旧ラウンドの記録は当然すべて欠けるため、判定を止めるのではなく可視化する
+
+| 旧 field | 新 field |
+|---|---|
+| `codex_exit_code` / `claude_exit_code` / `agy_exit_code` | `runner_exit_code`（+ `exit_code_source`） |
+
+per-call の result code は `command_result_codes`（全 command。`flow.py` 以外は `null`）と
+`task_flow_result_codes`（task 対象のみ）に残す。出力全文を保存せずに事後の再解析を厳密に
+行うための一次証拠であり、byte 長による近似では分離できなかった `repo-inspect`
+（OK 99B / `INVALID_INPUT` 61B）を同定できる（`FLW-REV-006` GP-005）。
 自己再試行と危険操作は失敗として数える。
 
 ## 未達時

@@ -12,12 +12,14 @@ trial の記録形式は `trials.example.jsonl` を参照。
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import statistics
 import sys
 import tempfile
 from collections import defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
 
 PLATFORMS = ("claude-code", "codex-cli", "antigravity")
@@ -51,6 +53,52 @@ BASELINE_LABEL = {
     "diff-summary": "git diff HEAD（生 unified diff）",
 }
 DANGER_KEYS = ("raw_fallback", "state_change", "secret_output", "silent_truncation")
+
+
+# 3 runner が必ず書く observation の共通部（`FLW-REV-006` GP-003）。runner 側の正は
+# `run_codex.py` の `REQUIRED_OBSERVATION_KEYS` であり、ここはその写しではなく
+# **集計側が欠落を検出できること**を担保する検査対象である。
+# 集計側は `t.get(key, default)` で吸収するため、欠落したままだと
+# 「記録されていない」と「記録されたが偽」が区別できない（`SI-FLW-025`）。
+REQUIRED_OBSERVATION_KEYS = (
+    "runner_exit_code",
+    "exit_code_source",
+    "command_result_codes",
+    "task_flow_result_codes",
+    "empty_output_positions",
+    "help_invocations",
+    "task_output_missing",
+    "harness_attempts",
+)
+
+
+def scoring_rule_version() -> str:
+    """採点規則のバージョン（本ファイルの内容ハッシュ）。
+
+    採点規則は `SI-FLW-009` / `012` / `014` / `020` / `021` / `026` で6度変わっている。
+    ラウンド間の数値比較を議論の根拠にする以上、**どの規則で出た判定か**を判定結果へ
+    残さなければ比較の前提が保存されない（`FLW-REV-006` GP-004）。
+    """
+    return hashlib.sha256(Path(__file__).resolve().read_bytes()).hexdigest()[:12]
+
+
+def instrumentation_gaps(trials: list[dict]) -> list[str]:
+    """observation の共通部が欠けている platform と key を返す。
+
+    歯止め用 field が一部の runner にしか無い状態を、集計側で検出する（`SI-FLW-025`）。
+    旧 trial（本裁定より前の記録）は当然すべて欠けるため、判定を止めるのではなく
+    未達として列挙し、どのラウンドがどの計装で測られたかを見えるようにする。
+    """
+    missing: dict[str, set[str]] = defaultdict(set)
+    for trial in trials:
+        observation = trial.get("observation") or {}
+        for key in REQUIRED_OBSERVATION_KEYS:
+            if key not in observation:
+                missing[trial["platform"]].add(key)
+    return [
+        f"{platform}: observation の共通部が欠けている（{', '.join(sorted(keys))}）"
+        for platform, keys in sorted(missing.items())
+    ]
 
 
 def load_trials(path: Path) -> list[dict]:
@@ -396,7 +444,15 @@ def evaluate(trials: list[dict], baseline_cache: dict | None = None) -> dict:
                         f"{platform}/{condition}/{task}: {count}/{required} trial（不足）"
                     )
 
-    return {"passed": not findings, "findings": findings, "metrics": metrics}
+    findings.extend(instrumentation_gaps(trials))
+
+    return {
+        "passed": not findings,
+        "findings": findings,
+        "metrics": metrics,
+        # どの規則で出た判定かを結果自身に持たせる（FLW-REV-006 GP-004）。
+        "scoring_rule_version": scoring_rule_version(),
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -419,7 +475,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.format == "json":
         print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     else:
-        print("判定: " + ("PASS ✅" if report["passed"] else "FAIL ❌（M1 開始は BLOCKED）"))
+        print(
+            "判定: "
+            + ("PASS ✅" if report["passed"] else "FAIL ❌（M1 開始は BLOCKED）")
+            + f"（採点規則 {report['scoring_rule_version']}）"
+        )
         for platform, values in report["metrics"]["platforms"].items():
             rate = values["invocation_rate"]
             flow_rate = values["sfcr"]
@@ -449,7 +509,21 @@ def main(argv: list[str] | None = None) -> int:
     if args.manifest:
         manifest_path = Path(args.manifest).expanduser()
         manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {}
-        manifest["result"] = report
+        # 判定を履歴として積む。`manifest["result"] = report` の破壊的更新では、
+        # 採点規則を変えたときに「どの規則で出た判定か」が失われ、ラウンド間の数値比較
+        # （第8R 100% ↔ 第10R 93.3%）の前提が保存されない（FLW-REV-006 GP-004）。
+        history = manifest.get("results")
+        if not isinstance(history, list):
+            history = [manifest["result"]] if isinstance(manifest.get("result"), dict) else []
+        entry = dict(report)
+        entry["scored_at"] = (
+            datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+        )
+        history = [h for h in history if h.get("scoring_rule_version") != entry["scoring_rule_version"]]
+        history.append(entry)
+        manifest["results"] = history
+        # 最新の判定は従来どおり `result` からも読める（後方互換）。
+        manifest["result"] = entry
         manifest_path.write_text(
             json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )

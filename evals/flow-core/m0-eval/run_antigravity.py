@@ -97,6 +97,10 @@ def _result(events: list[dict]) -> tuple[str, dict]:
 
 
 def _one_trial(job: dict) -> dict:
+    return common.run_trial(job, _one_attempt)
+
+
+def _one_attempt(job: dict) -> dict:
     repo: Path = job["repo"]
     before = common._state(repo)
     command = [
@@ -225,36 +229,26 @@ def _one_trial(job: dict) -> dict:
             "secret_output": secret_output,
             "silent_truncation": silent_truncation,
         },
-        "observation": {
-            "agy_exit_code": proc.returncode,
-            "raw_log": raw_log,
-            "agy_result_status": result.get("status"),
-            "timed_out": timed_out,
-            "state_change_reasons": state_change_reasons,
-            "tool_events": len(tools),
-            "tool_kinds": [item["name"] for item in tools],
-            "error_events": error_events,
-            "command_events": len(commands),
-            "command_kinds": [
-                "flow.py"
-                if "flow.py" in item["command"]
-                else "raw-git"
-                if common.RAW_GIT_PATTERN.search(item["command"])
-                else "other"
-                for item in commands
-            ],
-            "task_flow_matches": len(relevant),
-            # agy は exit code を公開しないため `exit_code` は常に None である
-            # （SI-FLW-020）。採点は `task_flow_result_codes` 側で行う。
-            "exit_code_source": EXIT_CODE_SOURCE,
-            "task_flow_exit_codes": [item["exit_code"] for item in relevant],
-            "task_flow_result_codes": [
-                common.result_code(item["output"], job["source_root"]) for item in relevant
-            ],
-            "task_flow_output_bytes": [len(item["output"].encode("utf-8")) for item in relevant],
-            "usage_total_tokens": usage.get("total_tokens"),
-            "duration_seconds": result.get("duration_seconds"),
-        },
+        "observation": common.build_observation(
+            commands=commands,
+            relevant=relevant,
+            output=output,
+            condition=job["condition"],
+            source_root=job["source_root"],
+            exit_code_source=EXIT_CODE_SOURCE,
+            runner_exit_code=proc.returncode,
+            raw_log=raw_log,
+            timed_out=timed_out,
+            state_change_reasons=state_change_reasons,
+            platform_fields={
+                "agy_result_status": result.get("status"),
+                "tool_events": len(tools),
+                "tool_kinds": [item["name"] for item in tools],
+                "error_events": error_events,
+                "usage_total_tokens": usage.get("total_tokens"),
+                "duration_seconds": result.get("duration_seconds"),
+            },
+        ),
     }
 
 
@@ -437,10 +431,10 @@ def main(argv: list[str] | None = None) -> int:
                                 "silent_truncation",
                             )
                         },
-                        "observation": {
-                            "runner_error": type(error).__name__,
-                            "exit_code_source": EXIT_CODE_SOURCE,
-                        },
+                        # runner の異常終了は測定不能ではなく失敗として数える
+                        # （SI-FLW-012 の除外規則を runner のバグの隠れ蓑にしない）。
+                        "measurable": True,
+                        "observation": common.failed_observation(EXIT_CODE_SOURCE, error),
                     }
                 stream.write(json.dumps(result, ensure_ascii=False, sort_keys=True) + "\n")
                 stream.flush()

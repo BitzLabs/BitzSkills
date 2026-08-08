@@ -165,6 +165,10 @@ def _result(events: list[dict]) -> dict:
 
 
 def _one_trial(job: dict) -> dict:
+    return common.run_trial(job, _one_attempt)
+
+
+def _one_attempt(job: dict) -> dict:
     repo: Path = job["repo"]
     before = common._state(repo)
     command = [
@@ -283,45 +287,35 @@ def _one_trial(job: dict) -> dict:
             "secret_output": secret_output,
             "silent_truncation": silent_truncation,
         },
-        "observation": {
-            "claude_exit_code": proc.returncode,
-            "raw_log": raw_log,
-            "claude_result_subtype": result.get("subtype"),
-            "claude_is_error": result.get("is_error"),
-            "timed_out": timed_out,
-            "state_change_reasons": state_change_reasons,
-            "tool_events": len(tools),
-            "tool_kinds": [item["name"] for item in tools],
-            "skill_tool_args": [
-                item["input"].get("skill") for item in tools if item["name"] == "Skill"
-            ],
-            "command_events": len(commands),
-            "command_kinds": [
-                "flow.py"
-                if "flow.py" in item["command"]
-                else "raw-git"
-                if common.RAW_GIT_PATTERN.search(item["command"])
-                else "other"
-                for item in commands
-            ],
-            # Claude Code は system prompt へ git status を自動注入するため、コマンドを
-            # 1度も実行せずに回答しうる。その事実を trial 単位で残す。
-            "answered_without_command": not commands,
-            "task_flow_matches": len(relevant),
-            # `exit_code` は Bash tool の error flag 由来であり実 exit code ではない
-            # （SI-FLW-020）。採点は `task_flow_result_codes` 側で行う。
-            "exit_code_source": EXIT_CODE_SOURCE,
-            "task_flow_exit_codes": [item["exit_code"] for item in relevant],
-            "task_flow_result_codes": [
-                common.result_code(item["output"], job["source_root"]) for item in relevant
-            ],
-            "task_flow_output_bytes": [len(item["output"].encode("utf-8")) for item in relevant],
-            "usage_total_tokens": (usage.get("input_tokens", 0) or 0)
-            + (usage.get("output_tokens", 0) or 0),
-            "total_cost_usd": result.get("total_cost_usd"),
-            "num_turns": result.get("num_turns"),
-            "duration_seconds": (result.get("duration_ms") or 0) / 1000 or None,
-        },
+        "observation": common.build_observation(
+            commands=commands,
+            relevant=relevant,
+            output=output,
+            condition=job["condition"],
+            source_root=job["source_root"],
+            exit_code_source=EXIT_CODE_SOURCE,
+            runner_exit_code=proc.returncode,
+            raw_log=raw_log,
+            timed_out=timed_out,
+            state_change_reasons=state_change_reasons,
+            platform_fields={
+                "claude_result_subtype": result.get("subtype"),
+                "claude_is_error": result.get("is_error"),
+                "tool_events": len(tools),
+                "tool_kinds": [item["name"] for item in tools],
+                "skill_tool_args": [
+                    item["input"].get("skill") for item in tools if item["name"] == "Skill"
+                ],
+                # Claude Code は system prompt へ git status を自動注入するため、コマンドを
+                # 1度も実行せずに回答しうる。その事実を trial 単位で残す。
+                "answered_without_command": not commands,
+                "usage_total_tokens": (usage.get("input_tokens", 0) or 0)
+                + (usage.get("output_tokens", 0) or 0),
+                "total_cost_usd": result.get("total_cost_usd"),
+                "num_turns": result.get("num_turns"),
+                "duration_seconds": (result.get("duration_ms") or 0) / 1000 or None,
+            },
+        ),
     }
 
 
@@ -415,10 +409,10 @@ def _failed_trial(job: dict, args: argparse.Namespace, error: Exception) -> dict
             key: False
             for key in ("raw_fallback", "state_change", "secret_output", "silent_truncation")
         },
-        "observation": {
-            "runner_error": type(error).__name__,
-            "exit_code_source": EXIT_CODE_SOURCE,
-        },
+        # runner の異常終了は測定不能ではなく失敗として数える（SI-FLW-012 の
+        # 除外規則を runner のバグの隠れ蓑にしない）。
+        "measurable": True,
+        "observation": common.failed_observation(EXIT_CODE_SOURCE, error),
     }
 
 
