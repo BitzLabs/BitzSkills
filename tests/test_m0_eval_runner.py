@@ -219,7 +219,7 @@ def test_manifest_carries_the_recalibrated_budget(harness, tmp_path, name):
     """
     payload = _write(harness[name], tmp_path / name, {"v2-skill": 21})
     budget = payload["budget"]
-    assert budget["max_prs"] == 4
+    assert budget["max_prs"] == 6
     assert budget["max_sessions"] == 14
     assert budget["consumed_prs_before_recalibration"] == 17
     # 予算を再確認した裁定が古い順に積まれ、最後が現行の根拠になる。
@@ -227,7 +227,7 @@ def test_manifest_carries_the_recalibrated_budget(harness, tmp_path, name):
         "decision-2026-08-08-gp-001-m0-budget-exit-criteria.md"
     )
     assert budget["budget_reconfirmation_refs"][-1].endswith(
-        "decision-2026-08-08-m0-budget-overrun.md"
+        "decision-2026-08-08-m0-budget-overrun-2.md"
     )
 
 

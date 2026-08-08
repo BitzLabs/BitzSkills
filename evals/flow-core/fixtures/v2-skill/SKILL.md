@@ -2,7 +2,7 @@
 name: flow-core
 description: git / gh を実行する前に必ず開く。Git / GitHub 操作の唯一の実行入口であり、生の git・gh を直接実行せず同梱の dispatcher（flow.py）を実行して結果を受け取る。リポジトリの状態・変更・差分・履歴・ブランチ・コミット・worktree、GitHub の Issue / PR / merge / CI / release / CHANGELOG を読む・調べる・変えるときに発動する。「何が変わったか」「変更量を教えて」「直前のコミットから」「いまどのブランチか」のように git / gh という語を含まない依頼でも発動する。「開発」一般ではなく、リポジトリの状態を読む・変えるときに使う。
 metadata:
-  version: "0.5.0"
+  version: "0.6.0"
   author: br7.hide
   created: "2026-07-31"
   updated: "2026-08-08"
@@ -35,10 +35,12 @@ Git / GitHub に触れる操作はすべて `flow.py` へ渡す。読んだう�
    代替してはならない。短く済むという理由で生コマンドへ戻ってはならない。
 3. **`UNSUPPORTED` なら停止する。** 終了コード 8 が返ったら、その場で作業を止め、
    「どの操作が未対応だったか」を利用者へ報告する。回避策を自作してはならない。
-4. **`NEXT` が示した操作と引数は、そのまま渡す。** 比較元・ref・path を自分で組み立て直しては
-   ならない。別の比較元が要るなら、生コマンドではなく action の引数で指定する。
-5. 最初の操作はローカル Git の読取なら `repo inspect`、GitHub 側の書込みが要るなら
-   `repo capabilities`、明示的な診断依頼なら flow-doctor を使う。
+4. **`NEXT` が示した操作と引数は、そのまま渡す。** 比較対象・ref・path を自分で組み立て直しては
+   ならない。別の比較対象が要るなら、生コマンドではなく action の引数で指定する。
+5. **ローカル Git の読取は `repo inspect` か `git status` から始める。**
+   いきなり `git diff-summary` を呼ばない。先行する操作の result が `NEXT` で
+   次の操作と引数を配るため、それに従えば引数を自分で決めずに済む。
+   GitHub 側の書込みが要るなら `repo capabilities`、明示的な診断依頼なら flow-doctor を使う。
    毎回の操作前に診断を挟まない。
 
 ## 2. Intent routing
@@ -66,8 +68,10 @@ Git / GitHub に触れる操作はすべて `flow.py` へ渡す。読んだう�
 | PR をマージする | `pr` | `merge-plan` → `merge` → `post-merge` |
 | リリースを作る | `release` | `plan` → `changelog` → `notes` → `tag-create` → `draft` |
 
-比較元・範囲・件数は action の引数で指定する（`diff-summary` の比較元は `--base <ref>`、
-既定は `HEAD`）。表にある意図を、引数を変えたいという理由で生コマンドへ移してはならない。
+比較対象・範囲・件数は action の引数で指定する。`diff-summary` は**作業ツリーを
+`--base <ref>` と比較する**（既定 `HEAD` ＝ 直前のコミット以降の変更。`ref..ref` の比較ではない。
+index と比較するなら `--base index`）。
+表にある意図を、引数を変えたいという理由で生コマンドへ移してはならない。
 
 表に無い意図は `flow.py` の対象外である。生コマンドで代替せず、利用者へ相談する。
 
