@@ -1,11 +1,11 @@
 ---
 name: flow-core
-description: Git / GitHub 操作の唯一の実行入口。git status / diff / log / branch / commit / worktree、GitHub の Issue / PR / merge / CI / release / CHANGELOG に触れる前に必ず発動する。生の git・gh コマンドを直接実行せず、同梱の dispatcher（flow.py）を実行して結果を受け取る。リポジトリの状態取得と状態変更のどちらにも使う。「開発」一般ではなく、Git / GitHub の状態を読む・変えるときに使う。
+description: git / gh を実行する前に必ず開く。Git / GitHub 操作の唯一の実行入口であり、生の git・gh を直接実行せず同梱の dispatcher（flow.py）を実行して結果を受け取る。リポジトリの状態・変更・差分・履歴・ブランチ・コミット・worktree、GitHub の Issue / PR / merge / CI / release / CHANGELOG を読む・調べる・変えるときに発動する。「何が変わったか」「変更量を教えて」「直前のコミットから」「いまどのブランチか」のように git / gh という語を含まない依頼でも発動する。「開発」一般ではなく、リポジトリの状態を読む・変えるときに使う。
 metadata:
-  version: "0.4.2"
+  version: "0.5.0"
   author: br7.hide
   created: "2026-07-31"
-  updated: "2026-08-05"
+  updated: "2026-08-08"
 ---
 
 # flow-core — Git / GitHub 操作の単一入口

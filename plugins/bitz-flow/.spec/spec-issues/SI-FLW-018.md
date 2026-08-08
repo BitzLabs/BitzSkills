@@ -3,7 +3,7 @@ id: SI-FLW-018
 raised_by: M0 第10ラウンド claude-code 実測（2026-08-07）
 target: plugins/bitz-flow/skills/flow-core/SKILL.md の description（発動条件）
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: claude-code が「Skill を使う」と**宣言しながら Skill tool を呼ばず**、
   そのまま生 git を実行する。SKILL.md 本文が一度も読み込まれないため、
