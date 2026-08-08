@@ -219,11 +219,15 @@ def test_manifest_carries_the_recalibrated_budget(harness, tmp_path, name):
     """
     payload = _write(harness[name], tmp_path / name, {"v2-skill": 21})
     budget = payload["budget"]
-    assert budget["max_prs"] == 3
-    assert budget["max_sessions"] == 10
+    assert budget["max_prs"] == 4
+    assert budget["max_sessions"] == 14
     assert budget["consumed_prs_before_recalibration"] == 17
-    assert budget["budget_reconfirmation_ref"].endswith(
+    # 予算を再確認した裁定が古い順に積まれ、最後が現行の根拠になる。
+    assert budget["budget_reconfirmation_refs"][0].endswith(
         "decision-2026-08-08-gp-001-m0-budget-exit-criteria.md"
+    )
+    assert budget["budget_reconfirmation_refs"][-1].endswith(
+        "decision-2026-08-08-m0-budget-overrun.md"
     )
 
 
@@ -238,6 +242,10 @@ def test_manifest_records_unknown_actuals_as_null(harness, tmp_path, name):
 
 
 @pytest.mark.parametrize("name", RUNNERS)
-def test_budget_reconfirmation_ref_points_at_an_existing_file(harness, tmp_path, name):
+def test_budget_reconfirmation_refs_point_at_existing_files(harness, tmp_path, name):
+    """予算の根拠が実在する裁定記録を指す（追随漏れをテストで落とす）。"""
     payload = _write(harness[name], tmp_path / name, {"v2-skill": 21})
-    assert (REPO_ROOT / payload["budget"]["budget_reconfirmation_ref"]).exists()
+    refs = payload["budget"]["budget_reconfirmation_refs"]
+    assert refs
+    for ref in refs:
+        assert (REPO_ROOT / ref).exists(), ref

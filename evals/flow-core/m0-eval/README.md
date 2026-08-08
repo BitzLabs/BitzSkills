@@ -184,7 +184,9 @@ run manifest には `trials_per_condition` と `harness_retries` を記録する
 （`actual_prs` は 17 PR 消費時点でも `0`、`budget_reconfirmation_ref` は `null`）。
 これが GP-001「安全弁が一度も発動しなかった」の機械的な理由である（`SI-FLW-027`）。
 
-- 予算値と裁定記録の参照は共有定数 `M0_BUDGET` が持つ（GP-001 の再校正値）
+- 予算値と裁定記録の参照は共有定数 `M0_BUDGET` が持つ。**予算を再確認する裁定のたびに
+  ここを追随させる**（`budget_reconfirmation_refs` は古い順に積み、最後が現行の根拠）。
+  追随を怠れば `SI-FLW-027` で是正したばかりの欠陥を再生産するため、テストで落とす
 - 実績値は runner が知り得ないため**既定は `null`**。`--actual-prs` / `--actual-sessions` /
   `--review-fix-rounds` を与えたときだけ記録する。**`0` のような事実でない値を書かない**
 
