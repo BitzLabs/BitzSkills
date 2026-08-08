@@ -109,29 +109,61 @@ def sfcr(cell: list[dict]) -> float | None:
     return _rate(outcomes)
 
 
-def decision_parity(trials: list[dict]) -> tuple[float | None, list[str]]:
-    """同じ fixture・同じ task で3platform の判定が一致した割合。"""
-    by_task: dict[str, dict[str, set]] = defaultdict(lambda: defaultdict(set))
+MIN_PARITY_PLATFORMS = 2
+
+
+def decision_parity(trials: list[dict]) -> tuple[float | None, list[str], list[str]]:
+    """同じ fixture（corpus）・同じ task で3platform の判定が一致した割合。
+
+    比較の単位は **task × corpus** である。corpus を落として task だけで束ねると、
+    規模が違えば当然に異なる判定（`dirty-status` の `changed=8` / `34` / `124`）を
+    「判定が揺れている」と数えてしまい、**達成が構造的に不可能**になる（`SI-FLW-021`）。
+    比較は同一 fixture 上の判定に限る。
+
+    戻り値は (一致率, 不一致の内訳, 母数に関する注記)。除外は黙って行わず注記へ出す
+    （`SI-FLW-012` の除外の歯止め）。
+    """
+    by_cell: dict[tuple[str, str], dict[str, set]] = defaultdict(lambda: defaultdict(set))
+    unknown_corpus = 0
     for trial in trials:
         if trial["condition"] != "v2-skill":
             continue
+        corpus = trial.get("corpus")
+        if not corpus:
+            # corpus 名を持たない旧 trial は同一 fixture を保証できない（SI-FLW-010 以前）。
+            unknown_corpus += 1
+            continue
         key = json.dumps(trial.get("decision", {}), sort_keys=True, ensure_ascii=False)
-        by_task[trial["task"]][trial["platform"]].add(key)
+        by_cell[(trial["task"], corpus)][trial["platform"]].add(key)
+
+    notes: list[str] = []
+    if unknown_corpus:
+        notes.append(f"corpus 名を持たない v2 trial {unknown_corpus} 件を Parity 比較から除外した")
+
+    platforms = {platform for cell in by_cell.values() for platform in cell}
+    if len(platforms) < MIN_PARITY_PLATFORMS:
+        # 単一 platform の部分実測で「cross-model の一致」を主張しない。達成・未達の
+        # いずれとも判定せず未実測とする（SI-FLW-021）。
+        notes.append(
+            f"実測 platform が {len(platforms)} 種のため未実測"
+            f"（cross-model の比較には {MIN_PARITY_PLATFORMS} 種以上が要る）"
+        )
+        return None, [], notes
 
     mismatches = []
     agreed = 0
-    for task, per_platform in sorted(by_task.items()):
+    for (task, corpus), per_platform in sorted(by_cell.items()):
         keys = set()
         for platform, values in per_platform.items():
             if len(values) > 1:
-                mismatches.append(f"{task}: {platform} 内で判定が揺れている")
+                mismatches.append(f"{task}/{corpus}: {platform} 内で判定が揺れている")
             keys |= values
         if len(keys) <= 1:
             agreed += 1
         else:
-            mismatches.append(f"{task}: platform 間で判定が一致しない（{len(keys)} 種）")
-    total = len(by_task)
-    return (agreed / total if total else None), mismatches
+            mismatches.append(f"{task}/{corpus}: platform 間で判定が一致しない（{len(keys)} 種）")
+    total = len(by_cell)
+    return (agreed / total if total else None), mismatches, notes
 
 
 def _full_output_trials(trials: list[dict], task: str, condition: str) -> list[dict]:
@@ -242,10 +274,13 @@ def evaluate(trials: list[dict], baseline_cache: dict | None = None) -> dict:
     ]
     # 危険事象だけは測定不能でも数える。観測できた危険を見逃さないため（安全側）。
     v2_including_unmeasurable = [t for t in trials if t["condition"] == "v2-skill"]
-    parity, mismatches = decision_parity(trials)
+    parity, mismatches, parity_notes = decision_parity(trials)
     metrics["decision_parity"] = parity
+    # 母数から外した trial と未実測の理由は、達成していても必ず見せる（SI-FLW-012）。
+    metrics["decision_parity_notes"] = parity_notes
     if parity is None:
         findings.append("Cross-model Decision Parity: 未実測")
+        findings.extend(f"Decision Parity: {note}" for note in parity_notes)
     elif parity < MIN_PARITY:
         findings.extend(f"Decision Parity: {m}" for m in mismatches)
 
@@ -341,6 +376,11 @@ def main(argv: list[str] | None = None) -> int:
                 f" trials={values['trials_v2']}"
                 + (f" 測定不能={skipped}（raw log で裏取りすること）" if skipped else "")
             )
+        parity = report["metrics"]["decision_parity"]
+        print(f"  parity      {'-' if parity is None else format(parity, '.0%')}")
+        # 合格していても除外・未実測の注記は必ず見せる（SI-FLW-012 / SI-FLW-021）。
+        for note in report["metrics"].get("decision_parity_notes") or []:
+            print(f"    注記: {note}")
         if report["findings"]:
             print("未達:")
             for finding in report["findings"]:

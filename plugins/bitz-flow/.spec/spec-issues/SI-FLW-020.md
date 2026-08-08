@@ -3,7 +3,7 @@ id: SI-FLW-020
 raised_by: M0 全10ラウンドの再解析（2026-08-07）
 target: evals/flow-core/m0-eval/run_antigravity.py の _commands / run_codex.py の _task_output・self_retried
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: harness の `exit_code` は3 runner で**実体が別物**であり、antigravity では
   flow.py の失敗結果を**構造的に検出できない**。この1 field の上に採点規則

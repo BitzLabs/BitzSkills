@@ -3,7 +3,7 @@ id: SI-FLW-017
 raised_by: M0 第10ラウンド antigravity 実測（2026-08-07）
 target: evals/flow-core/m0-eval/run_codex.py の _task_output
 proposed_change_type: modify
-status: open
+status: rejected
 ---
 - **目的**: harness は task の答えとして採点する flow.py 呼出を「一致した呼出のうち**最後の
   もの**」で選ぶ。エージェントが正解を得たあとに探索的な呼出を1回足すと、その**失敗結果**が

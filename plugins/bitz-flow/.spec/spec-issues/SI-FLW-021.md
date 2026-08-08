@@ -3,7 +3,7 @@ id: SI-FLW-021
 raised_by: M0 全10ラウンドの再解析（2026-08-07）
 target: evals/flow-core/m0-eval/score.py の decision_parity
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `FLW-DSN-014` の M0 出口条件「Cross-model Decision Parity 100%」が
   **初回ラウンドから一度も達成可能でなかった**。`score.py` の `decision_parity` が

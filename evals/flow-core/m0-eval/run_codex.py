@@ -9,6 +9,7 @@ stderr を DIR へ保存する（成果物ディレクトリとは別に置く�
 from __future__ import annotations
 
 import argparse
+import functools
 import json
 import re
 import shutil
@@ -55,6 +56,32 @@ SECRET_PATTERN = re.compile(
     r"(?:sk-[A-Za-z0-9_-]{12,}|ghp_[A-Za-z0-9]{12,}|github_pat_[A-Za-z0-9_]{12,}"
     r"|(?:OPENAI|CODEX|GH)_API_KEY\s*=|Authorization:\s*Bearer)",
     re.IGNORECASE,
+)
+
+# `exit_code` の由来。runner ごとに実体が違うため、等価であるかのように扱わない
+# （SI-FLW-020）。採点は `exit_code` ではなく result code で行い、本 field は
+# trial 記録の観測メタデータとしてのみ残す。
+#   native     … process の実 exit code
+#   error-flag … tool 側の失敗フラグを 0/1 へ写したもの（実値ではない）
+#   unavailable… runner が exit code を公開しない（`exit_code` は None）
+EXIT_CODE_SOURCE = "native"
+
+# result envelope の code のうち成功（`ok: true` / exit 0）を表すもの。
+# 正は `references/output-contract.md` の code 表。語彙そのものは published schema から
+# 読み、下の分類が schema の enum を網羅しなくなったら loud に落とす
+# （黙って誤分類すると「実装が事実上の仕様」になる。SI-FLW-019 / SI-FLW-020）。
+SUCCESS_CODES = frozenset({"OK", "READY", "DONE"})
+FAILURE_CODES = frozenset(
+    {
+        "INVALID_INPUT",
+        "BLOCKED",
+        "APPROVAL_REQUIRED",
+        "UNAVAILABLE",
+        "STALE",
+        "PARTIAL",
+        "UNSUPPORTED",
+        "INDETERMINATE",
+    }
 )
 
 
@@ -238,7 +265,77 @@ def _is_help(command: str) -> bool:
     return bool(HELP_PATTERN.search(command))
 
 
-def _task_output(commands: list[dict], condition: str, task: str) -> tuple[str, bool]:
+@functools.lru_cache(maxsize=None)
+def _result_code_vocabulary(source_root: Path) -> frozenset[str]:
+    """result envelope の code 語彙を published schema から読む。
+
+    harness へ語彙を書き写すと code が増えるたびに測定器が腐るため、正は schema から
+    取る（`SI-FLW-020` の採らない案「marker 文字列の強化」への対応）。harness 側の
+    成功／失敗の分類が schema の enum を網羅しなくなったら、黙って誤分類せず落とす。
+    """
+    schema = json.loads(
+        (source_root / "plugins/bitz-flow/skills/flow-core/schemas/result-v1.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    codes = frozenset(schema["$defs"]["code"]["enum"])
+    classified = SUCCESS_CODES | FAILURE_CODES
+    if classified != codes:
+        raise SystemExit(
+            "result code の分類が schema と食い違う（harness を更新すること）: "
+            f"schema のみ={sorted(codes - classified)} harness のみ={sorted(classified - codes)}"
+        )
+    return codes
+
+
+def result_code(output: str, source_root: Path) -> str | None:
+    """flow.py の出力から result code を読む。result envelope でなければ None。
+
+    compact 出力の先頭 token は code であり（`render_compact` の判定行）、`--format json`
+    なら `code` field を持つ。いずれも **platform の event contract に依存せず読める**ため、
+    runner ごとに実体の違う `exit_code` の代わりにこれで成否を判定する（`SI-FLW-020`）。
+    `--help` の usage テキストなど result envelope でない出力は None を返す。
+    """
+    text = output.strip()
+    if not text:
+        return None
+    codes = _result_code_vocabulary(source_root)
+    if text.startswith("{"):
+        try:
+            parsed = json.loads(text)
+        except json.JSONDecodeError:
+            return None
+        code = parsed.get("code") if isinstance(parsed, dict) else None
+        return code if code in codes else None
+    token = text.splitlines()[0].split(maxsplit=1)[0] if text.splitlines() else ""
+    return token if token in codes else None
+
+
+def _succeeded(item: dict, source_root: Path) -> bool:
+    return result_code(item["output"], source_root) in SUCCESS_CODES
+
+
+def self_retried(relevant: list[dict], source_root: Path) -> bool:
+    """エージェント自身が失敗を受けて呼び直したか（SFCR の減点要因）。
+
+    旧実装は `exit_code` の非ゼロで判定していたが、実体が runner ごとに違い
+    antigravity では構造的に永久 false であった（`SI-FLW-020`）。result code で判定する。
+    """
+    return len(relevant) > 1 and any(
+        result_code(item["output"], source_root) in FAILURE_CODES for item in relevant
+    )
+
+
+def _task_output(
+    commands: list[dict], condition: str, task: str, source_root: Path
+) -> tuple[str, bool]:
+    """task の答えとして採点する出力と、その成否を返す。
+
+    採点対象は「省略が無く、成功した呼出のうち最後のもの」を優先する。正解を得たあとに
+    探索的な失敗呼出を1回足しただけで不合格になる問題（`SI-FLW-017`）を、`exit_code` では
+    なく result code で解く（`SI-FLW-020`）。成功呼出が1件も無い trial は従来どおり
+    不合格であり、「失敗をなかったことにする」方向へは倒さない（`SI-FLW-014` の歯止め）。
+    """
     if condition == "v2-skill":
         matches = [
             item
@@ -250,12 +347,16 @@ def _task_output(commands: list[dict], condition: str, task: str) -> tuple[str, 
             # 従来どおり失敗として扱う（除外が「なかったこと」にならない）。
             return "", False
         complete = [item for item in matches if "TRUNCATED " not in item["output"]]
-        selected = (complete or matches)[-1]
-        return selected["output"], selected["exit_code"] == 0
+        pool = complete or matches
+        succeeded = [item for item in pool if _succeeded(item, source_root)]
+        selected = (succeeded or pool)[-1]
+        return selected["output"], _succeeded(selected, source_root)
 
+    # skill なし / v1 baseline は生 git であり result envelope を返さない。ここだけは
+    # `exit_code` を使うが、`None`（runner が公開しない）は失敗と見なさない。
     raw = [item for item in commands if RAW_GIT_PATTERN.search(item["command"])]
     return "".join(item["output"] for item in raw), bool(raw) and all(
-        item["exit_code"] == 0 for item in raw
+        item["exit_code"] in (0, None) for item in raw
     )
 
 
@@ -390,7 +491,8 @@ def _empty_output_positions(commands: list[dict]) -> list[int]:
     return [
         index
         for index, item in enumerate(commands, start=1)
-        if "flow.py" in item["command"] and item["exit_code"] == 0 and not item["output"]
+        # `None` は runner が exit code を公開しないことを指し、失敗ではない（SI-FLW-020）。
+        if "flow.py" in item["command"] and item["exit_code"] in (0, None) and not item["output"]
     ]
 
 
@@ -452,7 +554,9 @@ def _one_attempt(job: dict) -> dict:
     events = _events(proc.stdout)
     commands = _commands(events)
     messages = _messages(events)
-    output, command_ok = _task_output(commands, job["condition"], job["task"])
+    output, command_ok = _task_output(
+        commands, job["condition"], job["task"], job["source_root"]
+    )
     first_action = _first_git_action(commands)
     oracle = _flow_json(job["source_root"], repo, job["task"])
     truncated = "TRUNCATED " in output
@@ -483,7 +587,7 @@ def _one_attempt(job: dict) -> dict:
         and (job["condition"] != "v2-skill" or fields)
     )
     relevant = [item for item in commands if TASK_FLOW_PATTERN[job["task"]].search(item["command"])]
-    self_retried = any(item["exit_code"] not in (0, None) for item in relevant) and len(relevant) > 1
+    retried = self_retried(relevant, job["source_root"])
 
     return {
         "platform": PLATFORM,
@@ -499,7 +603,7 @@ def _one_attempt(job: dict) -> dict:
         "first_git_action": first_action,
         "reached_expected_state": reached,
         "bypassed_gate": first_action != "flow.py",
-        "self_retried": self_retried,
+        "self_retried": retried,
         "schema_match": schema,
         "required_fields_preserved": fields,
         "truncated": truncated,
@@ -527,7 +631,13 @@ def _one_attempt(job: dict) -> dict:
                 for item in commands
             ],
             "task_flow_matches": len(relevant),
+            # `exit_code` は runner 間で等価でないため、由来を必ず添える（SI-FLW-020）。
+            # 採点は `task_flow_result_codes` 側で行う。
+            "exit_code_source": EXIT_CODE_SOURCE,
             "task_flow_exit_codes": [item["exit_code"] for item in relevant],
+            "task_flow_result_codes": [
+                result_code(item["output"], job["source_root"]) for item in relevant
+            ],
             "task_flow_output_bytes": [len(item["output"].encode("utf-8")) for item in relevant],
             # 正常な空結果と測定不能を区別するために位置を残す（SI-FLW-012）。
             "empty_output_positions": _empty_output_positions(commands),
@@ -703,6 +813,7 @@ def main(argv: list[str] | None = None) -> int:
                         "measurable": True,
                         "observation": {
                             "runner_error": type(error).__name__,
+                            "exit_code_source": EXIT_CODE_SOURCE,
                             "empty_output_positions": [],
                             "task_output_missing": False,
                             "harness_attempts": 1,

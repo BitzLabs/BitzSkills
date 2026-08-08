@@ -69,15 +69,54 @@ prompt は `flow.py` に言及しない。言及すると Dispatcher Invocation 
 
 - platform ごとの Dispatcher Invocation Rate **95%以上**、かつ skill なし baseline 比 **+20pt 以上**
 - platform ごとの SFCR **90%以上**（全体平均で相殺しない）
-- Cross-model Decision Parity **100%**
+- Cross-model Decision Parity **100%**（比較単位は **task × corpus**。下記「採点規則」参照）
 - 必須 field 保持 **100%**、golden schema 一致 **100%**
 - raw fallback / 状態変更 / 秘密値出力 / 黙った truncation が **各 0 件**
-- `dirty-status` の median byte 削減 **70%以上**（分母 = `no-skill` の実測 median）、
-  `diff-summary` は **80%以上**（分母 = 生 unified diff）。いずれも `truncated: false` の trial のみ
+- `dirty-status` の median byte 削減 **40%以上**（分母 = fixture から測る固定 baseline
+  `git status` 長形式。`SI-FLW-009` / `FLW-NFR-008`）、`diff-summary` は **80%以上**
+  （分母 = 生 unified diff）。いずれも `truncated: false` の trial のみ
 - 各セル（platform × condition × task）が **10 trial** 揃っている
 
 SFCR は `discovery/metrics.md` の North Star Metric の定義に従い、
 「入口が `flow.py` で、必須ゲートを迂回せず、期待終了状態へ到達した割合」とする。
+
+## 採点規則（`SI-FLW-020` / `SI-FLW-021` の裁定。2026-08-08 以降）
+
+測定量の定義を実装の副作用に委ねず、ここに明記する。ラウンドごとにどの規則で採点したかは
+「どのラウンドをどの規則で採点したか」の表を見ること。
+
+| 対象 | 規則 |
+|---|---|
+| trial の「答え」 | task に一致する `flow.py` 呼出のうち、**省略が無く成功した最後のもの**。成功呼出が1件も無ければ最後の呼出を採り不合格とする |
+| 成否の判定 | 出力の **result code**（compact 先頭 token / JSON の `code`）。語彙は `result-v1.schema.json` から読む |
+| `--help` | operation の実行ではないため採点対象外（`SI-FLW-014`）。`observation.help_invocations` に残す |
+| 自己再試行 | task 対象の呼出が2件以上あり、うち1件以上が **失敗 result code** を返したとき |
+| `exit_code` | **採点に使わない**。runner ごとに実体が違うため観測メタデータとしてのみ記録し、由来を `observation.exit_code_source` に添える |
+| Decision Parity | **同一 task × 同一 corpus** の中でのみ platform 間の判定を比較する。corpus 名を持たない trial は除外し件数を注記へ出す。実測 platform が2種未満なら「未実測」とし合否を判定しない |
+
+`exit_code` の由来（`exit_code_source`）は3 runner で等価でない。
+
+| runner | 実体 | `exit_code_source` |
+|---|---|---|
+| codex-cli | Codex event の `item.exit_code`（実値） | `native` |
+| claude-code | Bash tool の `is_error` を 0/1 へ写したもの | `error-flag` |
+| antigravity | agy は exit code を公開しない（常に `None`） | `unavailable` |
+
+> 旧実装は agy でだけ出力の文字列（`error` / `failed` / `exit code: 1`）から exit code を
+> 推測していた。`flow.py` の失敗行はどの marker にも一致しないため、242 回の呼出に対し
+> **一度も失敗を検出できていなかった**（計測器の fail-silent 経路。`SI-FLW-020`）。
+
+### どのラウンドをどの規則で採点したか
+
+| ラウンド | 採点規則 |
+|---|---|
+| 第1〜10R | `exit_code` ベースの旧規則。agy では失敗が構造的に不可視。Parity は task 単位（corpus をまたぐ比較のため**達成不能**） |
+| 第11R 以降 | 本節の規則 |
+
+過去ラウンドの記録を本規則で**再採点すると数値が変わる**。Parity は `score.py` だけで
+再採点でき、r7 / r8 / r10 はいずれも 33% → **100%** になる
+（`tests/test_m0_eval_scoring.py` が記録から機械検証する）。採点対象の選択と `self_retried`
+は runner が trial 記録を作る時点で確定するため、**再実測しないと確定値は得られない**。
 自己再試行と危険操作は失敗として数える。
 
 ## 未達時
@@ -169,21 +208,26 @@ SFCR は `discovery/metrics.md` の North Star Metric の定義に従い、
 
 | 未達 | platform | 種別 | 起票 |
 |---|---|---|---|
-| 必須 field 保持 93.3% | antigravity | **測定系の欠陥** | `SI-FLW-017` |
+| 必須 field 保持 93.3% | antigravity | **測定系の欠陥** | `SI-FLW-017` → `SI-FLW-020` へ統合 |
 | raw fallback 1 件・必須 field 96.7% | claude-code | 正当な失敗 | `SI-FLW-018` |
 
 **`SI-FLW-017`（agy）は退行ではない。** harness が採点対象を「一致した呼出のうち最後のもの」で
 選ぶため、正解を得たあとの探索的な失敗呼出が task の答えとして採点された。`--base HEAD~1` は
 agy の v2 `diff-summary` 10 trial 中 **8 trial**で実行されており、差は成功呼出の前か後かだけである。
-第8ラウンドが 100% だったのは**たまたま失敗呼出が先に来ていた**ためで、どちらの数値も
-出口判定の根拠として弱い。
+
+> **2026-08-07 の再解析による訂正**（`.spec/reports/analysis-2026-08-07-m0-measurement-system.md`）。
+> 「第10ラウンドで表面化」「第8Rはたまたま失敗呼出が先に来ていた」は不正確である。順序依存の
+> 露出は **r7 と r10 の 2 ラウンド**で、r8 は `INVALID_INPUT` 呼出が 7 件あったものの採点対象には
+> ならなかった。また `SI-FLW-017` の推奨案（`exit_code == 0` を優先）は **agy では効かない**
+> （全 `exit_code` が 0 に記録されるため。`SI-FLW-020`）。本件は `SI-FLW-020` へ統合し、
+> 採点対象の選択は result code で行う。
 
 **`SI-FLW-018`（claude）は正当な失敗。** `diff-summary#2` で claude は「Skill を使って…」と
 宣言しながら **Skill tool を一度も呼ばず**生 git を実行した。SKILL.md 本文が読み込まれないため
 入口拘束も `SI-FLW-016` のパス解決手順も効かない。claude の v2 累計約 210 trial で
 **生 git 直行は今回が初観測**であり、1 件では発生率を決められない。
 
-### 測定系の欠陥が 6 件再発した構造的原因（`SI-FLW-019`）
+### 測定系の欠陥が繰り返し再発した構造的原因（`SI-FLW-019`）
 
 M0 eval 期の spec-issue 13 件のうち **6 件が測定系**（007 / 009 / 010 / 012 / 014 / 017）で、
 うち 2 件は**同一関数 `_task_output`** から出ている。個別対処では再発が止まらないため
@@ -198,6 +242,15 @@ M0 eval 期の spec-issue 13 件のうち **6 件が測定系**（007 / 009 / 01
    95% で検出するには **99 trial** が要る
 5. **`required_fields_preserved` に「dispatcher 欠陥 / エージェント挙動 / 測定不能」が
    畳み込まれている**
+
+> **2026-08-07 の全10ラウンド再解析で件数が増えた。** 未起票の測定系欠陥がさらに 2 件
+> （`SI-FLW-020` の `exit_code` 非等価、`SI-FLW-021` の Parity 比較単位）と、runner 間で
+> 計装が不均一である事実（`empty_output_positions` / `task_output_missing` /
+> `help_invocations` が `run_codex.py` にしか無い）が見つかった。測定系 **9 件**に対し
+> 被測定物は 7 件で、測定系が被測定物の 1.3 倍である。上記 3 の「良い数値が欠陥を隠す」より
+> 悪い形も見つかった — `SI-FLW-021` は**数値の悪化すら伴わず**、10 ラウンド同じ FAIL 行を
+> 出し続けながら起票されなかった。`SI-FLW-019` の自己診断案は「**常に FAIL している条件**の
+> 検出」を含める必要がある。
 
 ### 2026-08-07 の claude-code 第9ラウンドは測定不成立
 
@@ -584,8 +637,9 @@ agy でも初めて有効な測定が取れた。
 第1ラウンド比では claude の SFCR 67%→100%・field 44%→100%・`diff-summary` 62%→89.0%、
 codex の SFCR 63%→100%・field 67%→100% と、`--base` 既定の HEAD 化と compact 誘導の是正が効いた。
 codex で `v2-skill/repo-inspect` の 9/10 が output 0 byte になった事象も解消（10/10 が 120 byte）。
-Decision Parity の「揺れ」は score.py の既知の制約（corpus を grouping key に含めない）であり、
-実データ側の不一致ではない。
+Decision Parity の「揺れ」は score.py の欠陥（corpus を grouping key に含めない）であり、
+実データ側の不一致ではない。この FAIL 行は**第1〜10ラウンドで一度も消えず**、
+どの spec-issue にも起票されないまま背景化していた（`SI-FLW-021` で是正）。
 
 ### antigravity だけが Mandatory entry protocol を守り切れない
 

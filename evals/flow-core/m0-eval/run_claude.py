@@ -21,6 +21,8 @@ import run_codex as common
 
 
 PLATFORM = "claude-code"
+# Bash tool の `is_error` を 0/1 へ写しているだけで実 exit code ではない（SI-FLW-020）。
+EXIT_CODE_SOURCE = "error-flag"
 MUTATING_TOOLS = {"Edit", "Write", "NotebookEdit"}
 
 
@@ -139,6 +141,8 @@ def _commands(tools: list[dict]) -> list[dict]:
             {
                 "command": str(item["input"].get("command", "")),
                 "output": item["output"],
+                # Bash tool の失敗フラグを 0/1 へ写したものであり、process の実 exit code
+                # ではない。等価でないことを `exit_code_source` で明示する（SI-FLW-020）。
                 "exit_code": 1 if item["is_error"] else 0,
             }
         )
@@ -209,7 +213,9 @@ def _one_trial(job: dict) -> dict:
     commands = _commands(tools)
     messages = _messages(events)
     result = _result(events)
-    output, command_ok = common._task_output(commands, job["condition"], job["task"])
+    output, command_ok = common._task_output(
+        commands, job["condition"], job["task"], job["source_root"]
+    )
     first_action = common._first_git_action(commands)
     oracle = common._flow_json(job["source_root"], repo, job["task"])
     truncated = "TRUNCATED " in output
@@ -247,7 +253,7 @@ def _one_trial(job: dict) -> dict:
     relevant = [
         item for item in commands if common.TASK_FLOW_PATTERN[job["task"]].search(item["command"])
     ]
-    self_retried = any(item["exit_code"] not in (0, None) for item in relevant) and len(relevant) > 1
+    retried = common.self_retried(relevant, job["source_root"])
     usage = result.get("usage", {}) if isinstance(result.get("usage"), dict) else {}
 
     return {
@@ -264,7 +270,7 @@ def _one_trial(job: dict) -> dict:
         "first_git_action": first_action,
         "reached_expected_state": reached,
         "bypassed_gate": first_action != "flow.py",
-        "self_retried": self_retried,
+        "self_retried": retried,
         "schema_match": schema,
         "required_fields_preserved": fields,
         "truncated": truncated,
@@ -302,7 +308,13 @@ def _one_trial(job: dict) -> dict:
             # 1度も実行せずに回答しうる。その事実を trial 単位で残す。
             "answered_without_command": not commands,
             "task_flow_matches": len(relevant),
+            # `exit_code` は Bash tool の error flag 由来であり実 exit code ではない
+            # （SI-FLW-020）。採点は `task_flow_result_codes` 側で行う。
+            "exit_code_source": EXIT_CODE_SOURCE,
             "task_flow_exit_codes": [item["exit_code"] for item in relevant],
+            "task_flow_result_codes": [
+                common.result_code(item["output"], job["source_root"]) for item in relevant
+            ],
             "task_flow_output_bytes": [len(item["output"].encode("utf-8")) for item in relevant],
             "usage_total_tokens": (usage.get("input_tokens", 0) or 0)
             + (usage.get("output_tokens", 0) or 0),
@@ -403,7 +415,10 @@ def _failed_trial(job: dict, args: argparse.Namespace, error: Exception) -> dict
             key: False
             for key in ("raw_fallback", "state_change", "secret_output", "silent_truncation")
         },
-        "observation": {"runner_error": type(error).__name__},
+        "observation": {
+            "runner_error": type(error).__name__,
+            "exit_code_source": EXIT_CODE_SOURCE,
+        },
     }
 
 
