@@ -1,0 +1,286 @@
+"""M0 eval の測定系（harness と採点規則）の回帰テスト。
+
+`FLW-DSN-014` の M0 出口条件は `evals/flow-core/m0-eval/` の採点系が測る。この測定系
+自体には10ラウンド回すまでテストが無く、測定系の欠陥が9件（`SI-FLW-007` / `009` /
+`010` / `012` / `014` / `017` / `020` / `021` ほか）出て被測定物の件数を上回った。
+測定量の定義を機械検証で固定し、同じ場所からの再発を止める。
+
+対象は決定的に検証できる2点に絞る。
+
+- 採点対象の選択と自己再試行の判定（`run_codex.py` の `_task_output` / `self_retried`）
+  — platform の event contract に依存せず result code で判定すること（`SI-FLW-020`）
+- Cross-model Decision Parity の比較単位（`score.py` の `decision_parity`）
+  — 同一 fixture 上でのみ比較すること（`SI-FLW-021`）
+"""
+import json
+import sys
+from pathlib import Path
+
+import pytest
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+HARNESS = REPO_ROOT / "evals" / "flow-core" / "m0-eval"
+
+
+@pytest.fixture(scope="module")
+def harness():
+    """m0-eval の runner / score を import する（sys.path を汚さずに戻す）。"""
+    original = list(sys.path)
+    sys.path.insert(0, str(HARNESS))
+    try:
+        import run_codex
+        import score
+
+        yield run_codex, score
+    finally:
+        sys.path[:] = original
+
+
+def _command(command: str, output: str, exit_code: int | None = 0) -> dict:
+    return {"command": command, "output": output, "exit_code": exit_code}
+
+
+def _trial(platform: str, task: str, corpus: str, decision: dict, condition="v2-skill") -> dict:
+    return {
+        "platform": platform,
+        "condition": condition,
+        "task": task,
+        "corpus": corpus,
+        "decision": decision,
+    }
+
+
+OK_DIFF = "OK git.diff-summary files=6 added=5 deleted=4 binary=1\nsrc/a.py\nsrc/b.py\n"
+INVALID_DIFF = "INVALID_INPUT git.diff-summary cause=invalid-ref stage=inspect\n"
+HELP_TEXT = "usage: flow.py git diff-summary [-h] [--base BASE]\n\noptions:\n  -h, --help\n"
+DIFF_CMD = "python3 flow.py git diff-summary --base HEAD"
+
+
+# --- result code の読み取り（SI-FLW-020） -----------------------------------
+
+
+def test_result_code_reads_compact_head_token(harness):
+    """compact 出力の先頭 token が result code である。"""
+    common, _ = harness
+    assert common.result_code(OK_DIFF, REPO_ROOT) == "OK"
+    assert common.result_code(INVALID_DIFF, REPO_ROOT) == "INVALID_INPUT"
+
+
+def test_result_code_reads_json_format(harness):
+    common, _ = harness
+    payload = json.dumps({"code": "INVALID_INPUT", "operation": "git.diff-summary"})
+    assert common.result_code(payload, REPO_ROOT) == "INVALID_INPUT"
+
+
+def test_result_code_is_none_for_non_envelope_output(harness):
+    """`--help` の usage や空出力は result envelope ではない。"""
+    common, _ = harness
+    assert common.result_code(HELP_TEXT, REPO_ROOT) is None
+    assert common.result_code("", REPO_ROOT) is None
+    assert common.result_code("modified: src/a.py\n", REPO_ROOT) is None
+
+
+def test_result_code_classification_covers_published_schema(harness):
+    """harness の成功／失敗の分類が schema の code enum を網羅する。
+
+    網羅しなくなったら黙って誤分類せず落ちること（`SI-FLW-019` の原因1 への歯止め）。
+    """
+    common, _ = harness
+    schema = json.loads(
+        (
+            REPO_ROOT / "plugins/bitz-flow/skills/flow-core/schemas/result-v1.schema.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert common.SUCCESS_CODES | common.FAILURE_CODES == set(schema["$defs"]["code"]["enum"])
+    assert not common.SUCCESS_CODES & common.FAILURE_CODES
+
+
+# --- 採点対象の選択（SI-FLW-017 / SI-FLW-020） ------------------------------
+
+
+def test_task_output_prefers_successful_call_over_trailing_failure(harness):
+    """正解のあとに探索的な失敗呼出が来ても、成功呼出を採点対象にする。
+
+    第10ラウンドの `antigravity / diff-summary#1` の形（`SI-FLW-017`）。
+    """
+    common, _ = harness
+    commands = [
+        _command(DIFF_CMD, OK_DIFF, exit_code=None),
+        _command("python3 flow.py git diff-summary --base HEAD~1", INVALID_DIFF, exit_code=None),
+    ]
+    output, ok = common._task_output(commands, "v2-skill", "diff-summary", REPO_ROOT)
+    assert output == OK_DIFF
+    assert ok is True
+
+
+def test_task_output_detects_failure_without_exit_code(harness):
+    """`exit_code` が None（agy）でも失敗を検出する。
+
+    旧実装は `exit_code` の非ゼロで判定していたため、agy では失敗が構造的に不可視だった
+    （`SI-FLW-020`）。
+    """
+    common, _ = harness
+    commands = [_command(DIFF_CMD, INVALID_DIFF, exit_code=None)]
+    output, ok = common._task_output(commands, "v2-skill", "diff-summary", REPO_ROOT)
+    assert output == INVALID_DIFF
+    assert ok is False
+
+
+def test_task_output_fails_when_every_call_failed(harness):
+    """成功呼出が1件も無い trial は不合格のまま（除外が「なかったこと」にならない）。"""
+    common, _ = harness
+    commands = [
+        _command(DIFF_CMD, INVALID_DIFF, exit_code=None),
+        _command(DIFF_CMD, INVALID_DIFF, exit_code=None),
+    ]
+    _, ok = common._task_output(commands, "v2-skill", "diff-summary", REPO_ROOT)
+    assert ok is False
+
+
+def test_task_output_excludes_help_invocations(harness):
+    """`--help` は operation の実行ではない（`SI-FLW-014`）。"""
+    common, _ = harness
+    commands = [_command("python3 flow.py git diff-summary --help", HELP_TEXT, exit_code=0)]
+    output, ok = common._task_output(commands, "v2-skill", "diff-summary", REPO_ROOT)
+    assert output == ""
+    assert ok is False
+
+
+def test_task_output_prefers_complete_over_truncated(harness):
+    """省略のある出力より全件表示を優先する。"""
+    common, _ = harness
+    truncated = OK_DIFF + "TRUNCATED shown=2 total=6\n"
+    commands = [_command(DIFF_CMD, truncated), _command(DIFF_CMD, OK_DIFF)]
+    output, _ = common._task_output(commands, "v2-skill", "diff-summary", REPO_ROOT)
+    assert "TRUNCATED " not in output
+
+
+def test_baseline_condition_treats_unknown_exit_code_as_non_failure(harness):
+    """生 git の baseline は `exit_code` を使うが、None（不明）は失敗にしない。"""
+    common, _ = harness
+    commands = [_command("git status", "modified: src/a.py\n", exit_code=None)]
+    _, ok = common._task_output(commands, "no-skill", "dirty-status", REPO_ROOT)
+    assert ok is True
+
+
+# --- 自己再試行（SI-FLW-020） ----------------------------------------------
+
+
+def test_self_retried_detected_from_result_code(harness):
+    """失敗を受けて呼び直した trial を、`exit_code` 非公開でも検出する。"""
+    common, _ = harness
+    relevant = [
+        _command(DIFF_CMD, INVALID_DIFF, exit_code=None),
+        _command(DIFF_CMD, OK_DIFF, exit_code=None),
+    ]
+    assert common.self_retried(relevant, REPO_ROOT) is True
+
+
+def test_self_retried_false_for_single_successful_call(harness):
+    common, _ = harness
+    assert common.self_retried([_command(DIFF_CMD, OK_DIFF)], REPO_ROOT) is False
+
+
+def test_self_retried_false_for_repeated_success(harness):
+    """成功呼出を複数回しただけでは自己再試行ではない。"""
+    common, _ = harness
+    relevant = [_command(DIFF_CMD, OK_DIFF), _command(DIFF_CMD, OK_DIFF)]
+    assert common.self_retried(relevant, REPO_ROOT) is False
+
+
+# --- Decision Parity の比較単位（SI-FLW-021） -------------------------------
+
+
+def _parity_cell(task: str, corpus: str, decision: dict) -> list[dict]:
+    return [_trial(platform, task, corpus, decision) for platform in ("claude-code", "codex-cli", "antigravity")]
+
+
+def test_parity_compares_within_same_corpus(harness):
+    """corpus ごとに判定が違っても、同一 fixture 内で一致していれば 100%。
+
+    旧実装は corpus を落として比較していたため、`changed=8` / `34` / `124` を
+    「判定が揺れている」と数え、達成が構造的に不可能だった（`SI-FLW-021`）。
+    """
+    _, score = harness
+    trials = (
+        _parity_cell("dirty-status", "small", {"code": "OK", "changed": 8})
+        + _parity_cell("dirty-status", "medium", {"code": "OK", "changed": 34})
+        + _parity_cell("dirty-status", "large", {"code": "OK", "changed": 124})
+    )
+    parity, mismatches, notes = score.decision_parity(trials)
+    assert parity == 1.0
+    assert mismatches == []
+    assert notes == []
+
+
+def test_parity_detects_genuine_disagreement(harness):
+    """同一 fixture 上で判定が食い違えば 100% を割る（常に 100% を返す実装でない）。"""
+    _, score = harness
+    trials = _parity_cell("dirty-status", "small", {"code": "OK", "changed": 8})
+    trials.append(_trial("antigravity", "dirty-status", "small", {"code": "OK", "changed": 9}))
+    trials += _parity_cell("repo-inspect", "small", {"code": "OK", "dirty": True})
+    parity, mismatches, _ = score.decision_parity(trials)
+    assert parity == 0.5
+    assert any("判定が揺れている" in m or "一致しない" in m for m in mismatches)
+
+
+def test_parity_excludes_trials_without_corpus_and_reports_it(harness):
+    """corpus 名を持たない旧 trial は除外し、除外件数を注記へ出す（黙って捨てない）。"""
+    _, score = harness
+    trials = _parity_cell("dirty-status", "small", {"code": "OK", "changed": 8})
+    orphan = _trial("codex-cli", "dirty-status", "", {"code": "OK", "changed": 999})
+    orphan.pop("corpus")
+    trials.append(orphan)
+    parity, _, notes = score.decision_parity(trials)
+    assert parity == 1.0
+    assert any("corpus 名を持たない" in note and "1 件" in note for note in notes)
+
+
+def test_parity_is_unmeasured_for_single_platform(harness):
+    """単一 platform の部分実測で cross-model の一致を主張しない。"""
+    _, score = harness
+    trials = [_trial("codex-cli", "dirty-status", "small", {"code": "OK", "changed": 8})]
+    parity, mismatches, notes = score.decision_parity(trials)
+    assert parity is None
+    assert mismatches == []
+    assert any("未実測" in note for note in notes)
+
+
+def test_parity_ignores_baseline_conditions(harness):
+    """Parity は v2-skill 条件だけで測る。"""
+    _, score = harness
+    trials = _parity_cell("dirty-status", "small", {"code": "OK", "changed": 8})
+    trials.append(
+        _trial("codex-cli", "dirty-status", "small", {"changed": 999}, condition="no-skill")
+    )
+    parity, mismatches, _ = score.decision_parity(trials)
+    assert parity == 1.0
+    assert mismatches == []
+
+
+# --- 実測記録での再採点（再実測なし） ---------------------------------------
+
+
+@pytest.mark.parametrize("round_name", ("r7", "r8", "r10"))
+def test_recorded_rounds_reach_full_parity_after_fix(harness, round_name):
+    """確定済みの trial 記録を再採点し、Parity が 100% になることを確認する。
+
+    `SI-FLW-021` の主張（実際のパリティは全ラウンドで 100%）を、再実測せずに
+    リポジトリ内の記録だけで検証する。r8 の claude-code は同日再実行分
+    （2026-08-07）を採る。
+    """
+    _, score = harness
+    files = {
+        "r7": ("antigravity-2026-08-06-r7", "codex-cli-2026-08-06-r7", "claude-code-2026-08-06-r7"),
+        "r8": ("antigravity-2026-08-06-r8", "codex-cli-2026-08-06-r8", "claude-code-2026-08-07-r8"),
+        "r10": (
+            "antigravity-2026-08-07-r10",
+            "codex-cli-2026-08-07-r10",
+            "claude-code-2026-08-07-r10",
+        ),
+    }[round_name]
+    trials: list[dict] = []
+    for stem in files:
+        trials += score.load_trials(HARNESS / f"trials-{stem}.jsonl")
+    parity, mismatches, _ = score.decision_parity(trials)
+    assert parity == 1.0, mismatches

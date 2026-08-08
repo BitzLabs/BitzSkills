@@ -2,8 +2,8 @@
 id: FLW-DSN-014
 title: "GitHub capability・M0検証設計"
 status: active
-version: 1.4
-updated: 2026-07-31
+version: 1.5
+updated: 2026-08-08
 owner: hide
 implements: FLW-FR-003, FLW-FR-008, FLW-FR-012, FLW-NFR-001, FLW-NFR-008, FLW-NFR-004
 origin: FLW-REV-002
@@ -87,18 +87,38 @@ write operation、GitHub network operation、worktree作成はM0に含めない�
 
 - platformごとのDispatcher Invocation Rate 95%以上、かつskillなしbaseline比20ポイント以上改善。
 - platformごとのSFCR 90%以上。全体平均で相殺しない。
-- Cross-model Decision Parity 100%。
+- Cross-model Decision Parity 100%。比較単位は**task×corpus**とする（下記「測定量の定義」）。
 - 必須field保持100%、golden schema一致100%。
 - raw fallback、状態変更、秘密値出力、黙ったtruncationが各0件。
-- statusのmedian byte削減70%以上、diff-summaryのmedian byte削減80%以上。
+- statusのmedian byte削減40%以上、diff-summaryのmedian byte削減80%以上。
 - 操作別p90とabsolute byte上限をfixture manifestへ固定し、以後の回帰判定に使う。
 
-byte削減の測定条件は2026-07-31の裁定（`SI-FLW-007`）で固定した。statusのbaselineは
-固定commandではなく**no-skill条件で実際に消費された出力**のbyte数とし、platformごとにmedianを取る。
+byte削減の測定条件は2026-08-05の裁定（`SI-FLW-009`→`FLW-NFR-008`）で再固定した。statusのbaselineは
+**fixtureから測る固定command**（`git status`の引数なし長形式）とし、trial時のagentの挙動に
+依存させない。旧定義（`SI-FLW-007`の案A。no-skill条件で実際に消費された出力のmedian、閾値70%）は
+同一rendererがplatform間で5.9%〜75.0%に振れたため破棄した。
 diff-summaryのbaselineは生unified diff（`git diff <base>`）とする。byte比較は`truncated: false`の
 trialだけで行い、省略した出力を全量baselineと比較しない。corpusは規模の異なる3 fixtureとし、
-medianはその横断で取る。詳細は`.spec/discovery/metrics.md`の測定条件節と
-`.spec/reports/decision-2026-07-31-byte-baseline-measurement.md`。
+削減率はtrialごとに自corpusのbaselineと比べて算出し、そのmedianを取る。詳細は
+`.spec/discovery/metrics.md`の測定条件節と
+`.spec/reports/decision-2026-08-05-si-flw-009-byte-denominator.md`。
+
+### 測定量の定義
+
+出口条件は閾値だけでは判定できない。**何をもってその値とするか**を設計側で定める
+（定めなかった結果、harnessの実装が事実上の仕様になり測定系の欠陥が繰り返した。`SI-FLW-019`）。
+
+| 測定量 | 定義 |
+|---|---|
+| trialの「答え」 | taskに一致するflow.py呼出のうち、省略が無く**成功した最後のもの**。成功呼出が1件も無ければ不合格とする |
+| 呼出の成否 | 出力の**result code**（compact先頭token / JSONの`code`。語彙は`result-v1.schema.json`が正）で判定する。process の exit codeはplatformごとに実体が異なるため採点に使わない |
+| `--help`呼出 | operationの実行ではないため採点対象外とし、除外件数を観測記録へ残す |
+| agentの自己再試行 | task対象の呼出が2件以上あり、うち1件以上が失敗result codeを返したとき |
+| Decision Parity | **同一task×同一corpus**の中でのみplatform間の判定を比較する。corpusをまたいだ比較は、規模が違えば当然に異なる判定を不一致と数えるため行わない。実測platformが2種未満なら「未実測」とし合否を判定しない |
+
+裁定の参照は`.spec/reports/decision-2026-08-08-si-flw-020-021-measurement.md`。
+harness側の実装と対応する回帰テストは`evals/flow-core/m0-eval/README.md`の「採点規則」節と
+`tests/test_m0_eval_scoring.py`。
 
 1条件でも未達ならM1へ進まず、description、入口名、schema、rendererを修正してM0を再実行する。
 5回の作業sessionまたは1PRで出口に到達しない場合はscope/pivotを人間へ再提示する。

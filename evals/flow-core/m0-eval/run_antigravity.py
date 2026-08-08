@@ -20,6 +20,8 @@ import run_codex as common
 
 
 PLATFORM = "antigravity"
+# agy の event contract は exit code を公開しない。推測せず「不明」を記録する（SI-FLW-020）。
+EXIT_CODE_SOURCE = "unavailable"
 MUTATING_TOOLS = {
     "multi_replace_file_content",
     "replace_file_content",
@@ -70,10 +72,12 @@ def _commands(tools: list[dict]) -> list[dict]:
                 "command": _command_text(item["parameters"]),
                 "output": output,
                 # agy の event contract は exit code を独立 field として公開しない。
-                # DONE かつ失敗表示が無い実行だけを成功として扱う。
-                "exit_code": 1
-                if any(marker in output.lower() for marker in ("error", "failed", "exit code: 1"))
-                else 0,
+                # 旧実装は出力に `error` / `failed` / `exit code: 1` を含むかで代用したが、
+                # flow.py の失敗行（`INVALID_INPUT ... cause=invalid-ref stage=inspect`、実 exit 2）は
+                # どの marker にも一致せず、242 回の呼出で一度も非ゼロを記録できなかった
+                # ＝計測器が沈黙して失敗していた（SI-FLW-020）。推測せず「不明」を記録し、
+                # 成否の判定は result code 側で行う。
+                "exit_code": None,
             }
         )
     return commands
@@ -143,7 +147,9 @@ def _one_trial(job: dict) -> dict:
     tools = _tools(events)
     commands = _commands(tools)
     messages, result = _result(events)
-    output, command_ok = common._task_output(commands, job["condition"], job["task"])
+    output, command_ok = common._task_output(
+        commands, job["condition"], job["task"], job["source_root"]
+    )
     first_action = common._first_git_action(commands)
     oracle = common._flow_json(job["source_root"], repo, job["task"])
     truncated = "TRUNCATED " in output
@@ -183,7 +189,7 @@ def _one_trial(job: dict) -> dict:
     relevant = [
         item for item in commands if common.TASK_FLOW_PATTERN[job["task"]].search(item["command"])
     ]
-    self_retried = any(item["exit_code"] not in (0, None) for item in relevant) and len(relevant) > 1
+    retried = common.self_retried(relevant, job["source_root"])
     usage = result.get("usage", {}) if isinstance(result.get("usage"), dict) else {}
     error_events = sum(
         1
@@ -206,7 +212,7 @@ def _one_trial(job: dict) -> dict:
         "first_git_action": first_action,
         "reached_expected_state": reached,
         "bypassed_gate": first_action != "flow.py",
-        "self_retried": self_retried,
+        "self_retried": retried,
         "schema_match": schema,
         "required_fields_preserved": fields,
         "truncated": truncated,
@@ -238,7 +244,13 @@ def _one_trial(job: dict) -> dict:
                 for item in commands
             ],
             "task_flow_matches": len(relevant),
+            # agy は exit code を公開しないため `exit_code` は常に None である
+            # （SI-FLW-020）。採点は `task_flow_result_codes` 側で行う。
+            "exit_code_source": EXIT_CODE_SOURCE,
             "task_flow_exit_codes": [item["exit_code"] for item in relevant],
+            "task_flow_result_codes": [
+                common.result_code(item["output"], job["source_root"]) for item in relevant
+            ],
             "task_flow_output_bytes": [len(item["output"].encode("utf-8")) for item in relevant],
             "usage_total_tokens": usage.get("total_tokens"),
             "duration_seconds": result.get("duration_seconds"),
@@ -425,7 +437,10 @@ def main(argv: list[str] | None = None) -> int:
                                 "silent_truncation",
                             )
                         },
-                        "observation": {"runner_error": type(error).__name__},
+                        "observation": {
+                            "runner_error": type(error).__name__,
+                            "exit_code_source": EXIT_CODE_SOURCE,
+                        },
                     }
                 stream.write(json.dumps(result, ensure_ascii=False, sort_keys=True) + "\n")
                 stream.flush()
