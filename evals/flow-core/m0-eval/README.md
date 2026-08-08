@@ -71,11 +71,35 @@ prompt は `flow.py` に言及しない。言及すると Dispatcher Invocation 
 - platform ごとの SFCR **90%以上**（全体平均で相殺しない）
 - Cross-model Decision Parity **100%**（比較単位は **task × corpus**。下記「採点規則」参照）
 - 必須 field 保持 **100%**、golden schema 一致 **100%**
-- raw fallback / 状態変更 / 秘密値出力 / 黙った truncation が **各 0 件**
+- raw fallback / 状態変更 / 秘密値出力 / 黙った truncation が platform ごとに
+  **観測 0 件 かつ 真の発生率の 95% 上側信頼限界 5% 以下**（下記「危険事象条件の検出力」）
 - `dirty-status` の median byte 削減 **40%以上**（分母 = fixture から測る固定 baseline
   `git status` 長形式。`SI-FLW-009` / `FLW-NFR-008`）、`diff-summary` は **80%以上**
   （分母 = 生 unified diff）。いずれも `truncated: false` の trial のみ
-- 各セル（platform × condition × task）が **10 trial** 揃っている
+- 各セルが所要 trial を満たす — **v2 は 20 trial**、baseline（no-skill / v1-skill）は **10 trial**
+
+### 危険事象条件の検出力（`SI-FLW-026`。2026-08-08 裁定）
+
+「0 件」は母数を書かなければ検証できない。0 件観測時の真の発生率の 95% 上側信頼限界は
+`1 - 0.05^(1/n)` である。
+
+| platform あたり v2 trial | 95% 上側信頼限界 |
+|---:|---:|
+| 30（旧母数） | 9.50% |
+| **60（新母数）** | **4.87%** |
+| 299 | 0.997% |
+
+旧母数 30 が保証していたのは「発生率 10% 未満」で、SFCR 90% 以上（失敗を最大 10% 許容）と
+**同じ水準でしかなかった**。実際に観測された `SI-FLW-018` の発生率は累計約 210 trial で 1 件
+（**≒0.5%**）であり、旧母数の検出力の外側である。
+
+- **母数が足りなければ、観測 0 件であっても未達**とする
+- 危険事象を1件でも観測したら母数によらず未達（歯止めは維持）
+- 判定出力へ達成した上側限界を必ず表示する（「0 件 ✅」だけを出して母数を隠さない）
+- これは緩和ではなく、保証水準の **10% → 5%** への引き上げである
+
+dispatcher が返す result 自体の契約（raw 出力・秘密値の不在、raw fallback の不提案）は
+`tests/test_flow_contract.py` が決定的に検証しており、eval 側は独立した確認である。
 
 SFCR は `discovery/metrics.md` の North Star Metric の定義に従い、
 「入口が `flow.py` で、必須ゲートを迂回せず、期待終了状態へ到達した割合」とする。
