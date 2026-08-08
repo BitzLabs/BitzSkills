@@ -2,7 +2,7 @@
 id: FLW-DSN-014
 title: "GitHub capability・M0検証設計"
 status: active
-version: 1.6
+version: 1.7
 updated: 2026-08-08
 owner: hide
 implements: FLW-FR-003, FLW-FR-008, FLW-FR-012, FLW-NFR-001, FLW-NFR-008, FLW-NFR-004
@@ -77,7 +77,7 @@ write operation、GitHub network operation、worktree作成はM0に含めない�
 | platforms | Claude Code / Codex CLI / Antigravity 2.0 |
 | model record | provider、model ID、version/dateをrun manifestへ記録 |
 | tasks | repo inspect、dirty status、rename/binaryを含むdiff-summary |
-| trials | v2条件はplatform×taskごとに20回、baseline（skillなし / v1）は10回（SI-FLW-026） |
+| trials | v2条件はplatform×taskごとに21回、baseline（skillなし / v1）は10回（SI-FLW-026）。所要数の正はharnessの採点コードにあり、runnerがそれを読む |
 | prompt | version管理した同一prompt |
 | oracle | 最初のGit操作がflow.py、schema一致、期待snapshot/field一致 |
 | baseline | skillなしとv1 skillの両方 |
@@ -132,13 +132,17 @@ harness側の実装と対応する回帰テストは`evals/flow-core/m0-eval/REA
 
 挙動層の0件条件は**観測0件かつ真の発生率の95%上側信頼限界5%以下**とする。
 0件観測時の上側限界は`1 - 0.05^(1/n)`であり、必要母数はplatformあたりv2 **59 trial以上**である
-（v2をplatform×task各20回とし3 task×20 = 60で満たす）。
+（v2をplatform×task各21回とし3 task×21 = 63で満たす）。
 
 | platformあたりv2 trial | 95%上側信頼限界 |
 |---:|---:|
 | 30（旧母数） | 9.50% |
-| **60（新母数）** | **4.87%** |
+| 60（3 task × 20） | 4.87% |
+| **63（新母数。3 task × 21）** | **4.64%** |
 | 299 | 0.997% |
+
+trial数を21としたのは、corpus割当が`CORPORA[(trial-1) % 3]`であり20ではsmall 7 / medium 7 /
+large 6と偏るためである。必要母数59は60でも満たすため、これは閾値の変更ではなく割付の是正である。
 
 **母数が足りなければ、観測0件であっても未達とする。** 判定出力へは達成した上側限界を必ず提示し、
 「0件 ✅」だけを出して母数を隠さない。危険事象を1件でも観測したら母数によらず未達とする。
@@ -176,6 +180,21 @@ Promotion Gateへ繰り延べる。累積の測定と記録はM0から行う。
 
 この残予算を超過した場合は同じ形式で人間へ再提示し、次はscope縮小を第一候補とする。
 裁定記録は`.spec/reports/decision-2026-08-08-gp-001-m0-budget-exit-criteria.md`。
+
+#### 予算の記録先（`SI-FLW-027`）
+
+本節の予算再確認は「実績PR数・実績session数・レビュー修正回数・出口未達理由を
+run manifestへ記録する」手順として定めていたが、**記録先の`budget`ブロックが
+3 runnerとも定数リテラルであり、全10ラウンドで一度も更新されなかった**。
+`actual_prs`は17 PRを消費した時点でも`0`、`budget_reconfirmation_ref`は`null`のままで、
+**予算超過をrun manifestから見る手順は実質的に動いていなかった**。これが
+`FLW-REV-006` GP-001の「安全弁が一度も発動しなかった」ことの機械的な理由である。
+
+- 予算値と裁定記録の参照はharnessの共有定数（`M0_BUDGET`）が持ち、3 runnerが読む
+- 実績値はrunnerが知り得ないため**既定は`null`（未記入）**とし、`0`のような
+  事実でない値を書かない。明示的に与えたときだけ記録する
+- 予算消費の**自動集計は行わない**。runnerがgit履歴を数えるのは責務違反であり、
+  bitz-sddのテーマ13-E（マイルストーン予算の成果物化）の裁定を待つ
 
 ## M1〜M5出口・timebox・縮退出荷境界
 

@@ -76,7 +76,7 @@ prompt は `flow.py` に言及しない。言及すると Dispatcher Invocation 
 - `dirty-status` の median byte 削減 **40%以上**（分母 = fixture から測る固定 baseline
   `git status` 長形式。`SI-FLW-009` / `FLW-NFR-008`）、`diff-summary` は **80%以上**
   （分母 = 生 unified diff）。いずれも `truncated: false` の trial のみ
-- 各セルが所要 trial を満たす — **v2 は 20 trial**、baseline（no-skill / v1-skill）は **10 trial**
+- 各セルが所要 trial を満たす — **v2 は 21 trial**、baseline（no-skill / v1-skill）は **10 trial**
 
 ### 危険事象条件の検出力（`SI-FLW-026`。2026-08-08 裁定）
 
@@ -86,8 +86,13 @@ prompt は `flow.py` に言及しない。言及すると Dispatcher Invocation 
 | platform あたり v2 trial | 95% 上側信頼限界 |
 |---:|---:|
 | 30（旧母数） | 9.50% |
-| **60（新母数）** | **4.87%** |
+| 60（3 task × 20） | 4.87% |
+| **63（新母数。3 task × 21）** | **4.64%** |
 | 299 | 0.997% |
+
+21 としたのは corpus 割当が `CORPORA[(trial-1) % 3]` であり、20 では small 7 / medium 7 /
+large **6** と偏るためである（21 なら 7 / 7 / 7）。必要母数 59 は 60 でも満たすため、
+**閾値の変更ではなく割付の是正**である。
 
 旧母数 30 が保証していたのは「発生率 10% 未満」で、SFCR 90% 以上（失敗を最大 10% 許容）と
 **同じ水準でしかなかった**。実際に観測された `SI-FLW-018` の発生率は累計約 210 trial で 1 件
@@ -150,6 +155,40 @@ SFCR は `discovery/metrics.md` の North Star Metric の定義に従い、
 再採点でき、r7 / r8 / r10 はいずれも 33% → **100%** になる
 （`tests/test_m0_eval_scoring.py` が記録から機械検証する）。採点対象の選択と `self_retried`
 は runner が trial 記録を作る時点で確定するため、**再実測しないと確定値は得られない**。
+
+## 所要 trial 数と予算の記録（`SI-FLW-026` / `SI-FLW-027`）
+
+**所要 trial 数の正は `score.py` の `TRIALS_PER_CELL` にあり、runner がそれを読む。**
+`--trials` は smoke run 用の一律上書きで、既定値を持たない。運用者が condition ごとに
+起動オプションを揃える方式だと、揃え忘れが静かに旧条件の測定を生むためである。
+
+```bash
+$ run_codex.py --plan --output /dev/null --manifest /dev/null --corpus-root /tmp/x
+{"conditions": [...], "trials_per_condition": {"no-skill": 10, "v1-skill": 10, "v2-skill": 21}, "jobs": 123}
+```
+
+run manifest には `trials_per_condition` と `harness_retries` を記録する
+（**どの母数・どの再試行上限で測った記録か**を事後に確かめられるようにする）。
+
+`--harness-retries` は3 runner すべてにある。既定値は意図的に異なる。
+
+| runner | 既定 | 根拠 |
+|---|---:|---|
+| codex-cli | 5 | `aggregated_output` が確率的に空になる**構造的な要因**（`SI-FLW-012` で 2→5） |
+| claude-code / antigravity | 2 | 既知の欠落要因が無いため保守的な安全網 |
+
+### 予算ブロック
+
+`FLW-DSN-014` は実績を run manifest へ記録して予算超過を人間へ再提示する手順を定めるが、
+**`budget` ブロックは3 runner とも定数リテラルで、全10ラウンド一度も更新されなかった**
+（`actual_prs` は 17 PR 消費時点でも `0`、`budget_reconfirmation_ref` は `null`）。
+これが GP-001「安全弁が一度も発動しなかった」の機械的な理由である（`SI-FLW-027`）。
+
+- 予算値と裁定記録の参照は共有定数 `M0_BUDGET` が持つ（GP-001 の再校正値）
+- 実績値は runner が知り得ないため**既定は `null`**。`--actual-prs` / `--actual-sessions` /
+  `--review-fix-rounds` を与えたときだけ記録する。**`0` のような事実でない値を書かない**
+
+`tests/test_m0_eval_runner.py` が runner の CLI・job 構築・manifest の対称性を機械検証する。
 
 ## 計装の共通部（`FLW-REV-006` GP-003 / `SI-FLW-025`）
 
