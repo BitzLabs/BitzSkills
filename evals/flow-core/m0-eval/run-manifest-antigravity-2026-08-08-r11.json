@@ -1,0 +1,103 @@
+{
+  "budget": {
+    "actual_prs": 22,
+    "actual_sessions": 2,
+    "budget_reconfirmation_refs": [
+      "plugins/bitz-flow/.spec/reports/decision-2026-08-08-gp-001-m0-budget-exit-criteria.md",
+      "plugins/bitz-flow/.spec/reports/decision-2026-08-08-m0-budget-overrun.md"
+    ],
+    "consumed_prs_before_recalibration": 17,
+    "exit_miss_reasons": [],
+    "max_prs": 4,
+    "max_sessions": 14,
+    "review_fix_rounds": null
+  },
+  "conditions": {
+    "no-skill": "repo の flow-core skill なし（agy のグローバル非 flow skill は維持）",
+    "v1-skill": "repo .agents/skills に現行 v1 SKILL.md を配置",
+    "v2-skill": "repo .agents/skills に v2 fixture + scripts/references/schemas を配置"
+  },
+  "fixture": {
+    "builder": "evals/flow-core/m0-eval/fixture.py",
+    "raw_baseline_bytes": {
+      "no-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v1-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      },
+      "v2-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3721
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1271
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 575
+        }
+      }
+    },
+    "schedule": "corpus は trial 番号の 3 剰余で割当（1=small, 2=medium, 0=large）"
+  },
+  "harness_retries": 2,
+  "known_limitations": [
+    "score.py の Decision Parity は corpus を grouping key に含めず task 単位で比較するため、small / medium / large の正当な件数差を揺れとして誤検出する。",
+    "trial 10件を3 corpusへ均等配分できないため、固定順で small=4件、medium=3件、large=3件とした。",
+    "agy は --new-project が無いと非対話セッションで workspace を認識しないため、各 trial に同 option を指定した。",
+    "no-skill は repo の flow-core skill を置かない条件であり、agy のグローバル非 flow skill は無効化できないため維持した。"
+  ],
+  "milestone": "M0",
+  "note": "Antigravity CLI のみの部分実測。raw event log は保存せず、trial 要約だけを記録。",
+  "platforms": {
+    "antigravity": {
+      "agy_cli": "agy 1.1.11",
+      "completed_trials": 123,
+      "execution": "--new-project --mode accept-edits --sandbox --dangerously-skip-permissions",
+      "measured_at": "2026-08-08T06:32:13Z",
+      "model_id": "gemini-3.6-flash-low",
+      "model_provider": "google",
+      "model_version": "2026-08-08 service snapshot",
+      "reasoning_effort": "low"
+    },
+    "claude-code": {
+      "status": "not-measured"
+    },
+    "codex-cli": {
+      "status": "not-measured"
+    }
+  },
+  "prompt_version": "2026-07-31.1",
+  "result": null,
+  "status": "partially-measured",
+  "trials_per_condition": {
+    "no-skill": 10,
+    "v1-skill": 10,
+    "v2-skill": 21
+  }
+}

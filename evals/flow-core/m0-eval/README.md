@@ -267,9 +267,58 @@ per-call の result code は `command_result_codes`（全 command。`flow.py` �
 
 ## 現況
 
-**最新は第10ラウンド**（`*-r10`。2026-08-07。3 platform 同日・同一 fixture）。
-`SI-FLW-016` の裁定（パス解決手順）を適用して測り直した。**`SI-FLW-016` は所期の効果を得た**が、
-別原因の未達が 2 点残り、3 platform を揃えた M0 出口判定は**未成立**である。
+**最新は第11ラウンド**（`*-r11`。2026-08-08。codex-cli / antigravity の 2 platform。
+claude-code は未実測）。`SI-FLW-020` / `021` / `025` / `026` / `027` の裁定を適用した
+**新採点規則での最初のラウンド**であり、所要母数（v2 各 21 trial）も初めて満たした。
+**未達は antigravity の SFCR ただ 1 点**である。
+
+### 第11ラウンド 2 platform 比較（採点規則 `c40572dcf330`）
+
+| 指標 | 閾値 | claude-code | codex-cli | antigravity |
+|---|---|---|---|---|
+| Dispatcher Invocation Rate | 95%以上 | 未実測 | **100%** ✅ | **100%** ✅ |
+| baseline 比 | +20pt 以上 | 未実測 | +100pt ✅ | +100pt ✅ |
+| SFCR | 90%以上 | 未実測 | **100%** ✅ | **71%** ❌ |
+| 必須 field 保持 | 100% | 未実測 | **100%** ✅ | **100%** ✅ |
+| golden schema 一致 | 100% | 未実測 | **100%** ✅ | **100%** ✅ |
+| 危険事象 4 種 | 各0件かつ上側限界 5%以下 | 未実測 | **各0件 / 63 trial（4.64%）** ✅ | **各0件 / 63 trial（4.64%）** ✅ |
+| **Cross-model Decision Parity** | 100% | — | **100%** ✅ ||
+| `diff-summary` byte 削減 | 80%以上 | 2 platform 合算 **88.8%** ✅ |||
+| `dirty-status` byte 削減 | 40%以上 | 2 platform 合算 **46.4%** ✅ |||
+| 母数（v2 / baseline） | 21 / 10 | 0 ❌ | **21 / 10** ✅ | **21 / 10** ✅ |
+
+**Decision Parity 100% は初めてである。** `SI-FLW-021` の task × corpus 単位への是正が効いた
+（旧規則は corpus をまたいで比較するため構造的に達成不能で、r7 / r8 / r10 はいずれも 33%）。
+危険事象も「0 件」だけでなく母数 63 による 95% 上側限界 4.64% を伴って初めて主張が成立した。
+
+### antigravity の未達は `diff-summary` に 100% 集中している（`SI-FLW-028` / `SI-FLW-029`）
+
+v2 の self-retry 18 件はすべて `diff-summary`（21 trial 中 18。`repo-inspect` /
+`dirty-status` は 0）。raw log から flow.py 呼出順序を復元した結果が次である。
+
+| | `git status` を先に呼んだ | 最初の diff-summary 呼出 | self-retry |
+|---|---:|---|---:|
+| codex-cli | **21/21** | `--base HEAD`（21/21） | **0/21** |
+| antigravity | **1/21** | `--help` 15 / `--base HEAD~1` 5 | **18/21** |
+
+`--base HEAD~1` は corpus（コミット1個）に実在しない ref であり、
+`INVALID_INPUT cause=invalid-ref` を返すのは**正しい挙動**である（手で再現済み）。
+問題は 2 点に分かれる。
+
+1. **`--base` の意味論が記述から一意に読めない**（`SI-FLW-028`）。help も SKILL.md も
+   既定値だけを述べ、**比較の左辺（作業ツリー）を書いていない**。実際 **13/21 は `--help` を
+   読んだ上で `HEAD~1` を選んでおり**、既定値の追記では直らない。
+   codex が 100% なのは引数を自力で当てたからではなく、`git.status` が返す
+   `NEXT git.diff-summary base=HEAD` に載っただけである（**正解の引数は NEXT 経由でしか
+   流通していない**）。
+2. **失敗 result に復帰経路が無い**（`SI-FLW-029`）。`_failure_result()` は `next_actions` を
+   渡さず、出力は `INVALID_INPUT git.diff-summary cause=invalid-ref stage=inspect` の 1 行のみ。
+   契約内に戻り道が無いため `--help`（契約外）へ退避する。今回 raw fallback は 0 件だったが、
+   **生コマンドへの圧力は構造的に残る**。
+
+**agy の失敗が可視化されたのは本ラウンドが初めてである。** 第10ラウンドまでは
+`exit_code` 推測が全 marker に一致せず、242 回の呼出で一度も失敗を検出できていなかった
+（`SI-FLW-020`）。第10R の agy SFCR 93.3% と本ラウンドの 71% は**規則が違うため比較できない**。
 
 ### 第10ラウンド 3 platform 比較
 
