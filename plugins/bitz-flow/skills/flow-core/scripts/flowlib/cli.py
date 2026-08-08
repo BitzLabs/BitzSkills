@@ -83,7 +83,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--base",
         default="HEAD",
-        help="git diff-summary の比較元（既定 HEAD。index と比較するなら --base index）",
+        # 「比較元」とだけ書くと git diff A B 型の ref..ref 比較と読まれ、
+        # 「直前のコミットからの変更」を HEAD~1 と解釈されて invalid-ref で落ちる（SI-FLW-028）。
+        help=(
+            "git diff-summary の比較対象。作業ツリーを <base> と比較する"
+            "（既定 HEAD ＝ 直前のコミット以降の変更）。ref..ref の比較ではないため "
+            "HEAD~1 等を渡す必要はない。index と比較するなら --base index"
+        ),
     )
     parser.add_argument(
         "--limit", type=int, default=DEFAULT_ITEM_LIMIT, help="items の表示上限（既定 50）"
