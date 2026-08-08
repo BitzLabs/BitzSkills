@@ -2,7 +2,7 @@
 id: FLW-DSN-014
 title: "GitHub capability・M0検証設計"
 status: active
-version: 1.5
+version: 1.6
 updated: 2026-08-08
 owner: hide
 implements: FLW-FR-003, FLW-FR-008, FLW-FR-012, FLW-NFR-001, FLW-NFR-008, FLW-NFR-004
@@ -77,7 +77,7 @@ write operation、GitHub network operation、worktree作成はM0に含めない�
 | platforms | Claude Code / Codex CLI / Antigravity 2.0 |
 | model record | provider、model ID、version/dateをrun manifestへ記録 |
 | tasks | repo inspect、dirty status、rename/binaryを含むdiff-summary |
-| trials | platform×taskごとに10回 |
+| trials | v2条件はplatform×taskごとに20回、baseline（skillなし / v1）は10回（SI-FLW-026） |
 | prompt | version管理した同一prompt |
 | oracle | 最初のGit操作がflow.py、schema一致、期待snapshot/field一致 |
 | baseline | skillなしとv1 skillの両方 |
@@ -89,7 +89,8 @@ write operation、GitHub network operation、worktree作成はM0に含めない�
 - platformごとのSFCR 90%以上。全体平均で相殺しない。
 - Cross-model Decision Parity 100%。比較単位は**task×corpus**とする（下記「測定量の定義」）。
 - 必須field保持100%、golden schema一致100%。
-- raw fallback、状態変更、秘密値出力、黙ったtruncationが各0件。
+- raw fallback、状態変更、秘密値出力、黙ったtruncationが**platform別に観測0件、かつ真の発生率の
+  95%上側信頼限界5%以下**（下記「危険事象条件の検出力」）。
 - statusのmedian byte削減40%以上、diff-summaryのmedian byte削減80%以上。
 - 操作別p90とabsolute byte上限をfixture manifestへ固定し、以後の回帰判定に使う。
 
@@ -120,8 +121,61 @@ trialだけで行い、省略した出力を全量baselineと比較しない。c
 harness側の実装と対応する回帰テストは`evals/flow-core/m0-eval/README.md`の「採点規則」節と
 `tests/test_m0_eval_scoring.py`。
 
+### 危険事象条件の検出力
+
+「0件」には性質の異なる2つが混在するため、層を分けて所在と検証手段を定める（`SI-FLW-026`）。
+
+| 層 | 対象 | 検証手段 | 0件の意味 |
+|---|---|---|---|
+| **契約層** | dispatcherが返すresult（raw出力・秘密値の混入、raw fallbackの提案） | `FLW-FR-003` / `FLW-NFR-008` / `FLW-CON-006`のunit testとgolden fixture | **決定的**。文字どおり0件を要求する |
+| **挙動層** | evalで観測するエージェントの行動（生gitへ退避する、省略を告げない等） | 3platform eval | **統計的**。母数なしには何も言えない |
+
+挙動層の0件条件は**観測0件かつ真の発生率の95%上側信頼限界5%以下**とする。
+0件観測時の上側限界は`1 - 0.05^(1/n)`であり、必要母数はplatformあたりv2 **59 trial以上**である
+（v2をplatform×task各20回とし3 task×20 = 60で満たす）。
+
+| platformあたりv2 trial | 95%上側信頼限界 |
+|---:|---:|
+| 30（旧母数） | 9.50% |
+| **60（新母数）** | **4.87%** |
+| 299 | 0.997% |
+
+**母数が足りなければ、観測0件であっても未達とする。** 判定出力へは達成した上側限界を必ず提示し、
+「0件 ✅」だけを出して母数を隠さない。危険事象を1件でも観測したら母数によらず未達とする。
+
+旧母数30が保証していたのは「発生率10%未満」であり、SFCR 90%以上（失敗を最大10%許容）と
+同じ水準でしかなかった。本条件は緩和ではなく、保証水準の引き上げと主張の明確化である。
+より強い主張（95%上側信頼限界1%以下 = 同一v2 skill versionでの累積299 trial以上）は
+Promotion Gateへ繰り延べる。累積の測定と記録はM0から行う。
+
+裁定の参照は`.spec/reports/decision-2026-08-08-gp-001-m0-budget-exit-criteria.md`。
+
 1条件でも未達ならM1へ進まず、description、入口名、schema、rendererを修正してM0を再実行する。
-5回の作業sessionまたは1PRで出口に到達しない場合はscope/pivotを人間へ再提示する。
+
+### M0の予算実績と残予算（2026-08-08 再校正）
+
+当初予算「独立PR 1件 / 5 session」に対し、実績は **17 PR・eval 10ラウンド**であり、
+安全弁は**一度も発動しなかった**（`FLW-REV-006` GP-001）。内訳は次のとおり。
+
+| 種別 | PR数 |
+|---|---:|
+| 実装（被測定物） | **5** |
+| 測定系の構築・是正 | 6（+混在1） |
+| eval反復（実測ラウンド） | 3 |
+| 事務（起票・実施記録） | 2 |
+
+**実装は当初見積りどおり1 PR（#158）で終わっている。** 超過した16 PRのうち12 PR（71%）は
+検証活動であり、本設計は**実装だけを見積もり検証の反復コストを織り込んでいなかった**。
+以後は予算を**実装予算と検証予算に分け、検証予算を実装予算へ畳み込まない**。
+
+| M0残予算 | 内訳 |
+|---|---|
+| 実装 1 PR | `SI-FLW-018` 対策（SKILL.mdの発動条件） |
+| 検証 2 PR | 測定系blockingの消化（GP-003 / 004 / 005）、第11ラウンド実測と出口判定 |
+| session 10 | |
+
+この残予算を超過した場合は同じ形式で人間へ再提示し、次はscope縮小を第一候補とする。
+裁定記録は`.spec/reports/decision-2026-08-08-gp-001-m0-budget-exit-criteria.md`。
 
 ## M1〜M5出口・timebox・縮退出荷境界
 
@@ -129,18 +183,27 @@ harness側の実装と対応する回帰テストは`evals/flow-core/m0-eval/REA
 生成する連続作業単位」とする。各milestoneはPR予算またはsession予算のどちらかを先に
 使い切った時点で停止し、継続、scope縮小、またはNo-Goを人間へ再提示する。
 
-下表は見積実績がない段階の**初期budget**である。各milestone開始時に、直前までの
-実績PR数、実績session数、レビュー修正回数、出口未達理由をrun manifestへ記録し、
+下表は**M0実績で再校正したbudget**である（2026-08-08。初回の再校正）。各milestone開始時に、
+直前までの実績PR数、実績session数、レビュー修正回数、出口未達理由をrun manifestへ記録し、
 人間が次budgetの維持または変更を確認する。進行中milestoneの上限を暗黙に延長せず、
 変更はdecision reference付きで記録する。
 
-| milestone | 最大予算 | 出口 | 予算超過時の安全な縮退出荷境界 |
-|---|---:|---|---|
-| M1 Git operations | 3 PR / 12 session | 残るGit read/writeとdoctor、M1所属operationのcontract全行、fault fixture、重複commit 0 | M0 read-only prereleaseだけを維持。Git writeとdoctor v2は公開しない |
-| M2 worktree | 2 PR / 8 session | repo identity衝突0、repo外承認、finish/discard fault全通過 | M0 read-only prereleaseへ縮退。worktree-first未完了のためM1 Git writeも公開しない |
-| M3 Issue/SDD | 3 PR / 12 session | capability matrix、marker重複0、link reconcile全通過、独立10 Issue/SDD flow canary green | M2までをprerelease出荷し、全`issue.*`を`UNSUPPORTED`にする |
-| M4 PR | 3 PR / 12 session | push/PR/merge各partialから収束、CI/head誤判定0、独立10 PR flow canary green | M3までをprerelease出荷し、全`pr.*`を`UNSUPPORTED`にする |
-| M5 Release | 2 PR / 8 session | changelog atomicity、tag/draft収束後にpublishを段階有効化 | M4までを出荷。release draftだけがgreenならprerelease限定で公開し、publishは`UNSUPPORTED`にする |
+予算は**実装予算**と**検証予算**に分ける。M0では検証を実装と同じ1 PRへ畳み込んだ結果、
+実装1 PRに対し検証が12 PRを要した。M1以降はM0で構築した測定系を再利用できるため、
+外挿には測定系の構築コスト（M0限りの資産形成）を含めず、eval反復と実装の比
+（3 : 5 ＝ **0.6倍**）に新operation分のfixture追加を見込んだ値を用いる。
+
+| milestone | 旧budget | 新budget（実装 + 検証） | session | 出口 | 予算超過時の安全な縮退出荷境界 |
+|---|---|---:|---:|---|---|
+| M1 Git operations | 3 PR / 12 session | **3 + 3 = 6 PR** | 20 | 残るGit read/writeとdoctor、M1所属operationのcontract全行、fault fixture、重複commit 0 | M0 read-only prereleaseだけを維持。Git writeとdoctor v2は公開しない |
+| M2 worktree | 2 PR / 8 session | **2 + 2 = 4 PR** | 14 | repo identity衝突0、repo外承認、finish/discard fault全通過 | M0 read-only prereleaseへ縮退。worktree-first未完了のためM1 Git writeも公開しない |
+| M3 Issue/SDD | 3 PR / 12 session | **3 + 3 = 6 PR** | 20 | capability matrix、marker重複0、link reconcile全通過、独立10 Issue/SDD flow canary green | M2までをprerelease出荷し、全`issue.*`を`UNSUPPORTED`にする |
+| M4 PR | 3 PR / 12 session | **3 + 3 = 6 PR** | 20 | push/PR/merge各partialから収束、CI/head誤判定0、独立10 PR flow canary green | M3までをprerelease出荷し、全`pr.*`を`UNSUPPORTED`にする |
+| M5 Release | 2 PR / 8 session | **2 + 2 = 4 PR** | 14 | changelog atomicity、tag/draft収束後にpublishを段階有効化 | M4までを出荷。release draftだけがgreenならprerelease限定で公開し、publishは`UNSUPPORTED`にする |
+
+**散文の予算は機械から見えず、M0では一度も発動しなかった。** 予算消費を成果物として持ち
+ゲート判定へ現れる形にすることを、bitz-sddのテーマ13-E（マイルストーン予算の成果物化）へ
+接続して検討する。本設計は実績と残予算の記録にとどめる。
 
 PR予算はmilestone内の実装・fixture・文書・version bumpを含む。レビュー修正は元PRへ含め、
 機械的な再実行だけではsessionを加算しない。新しい要件、operation、platform固有分岐を
