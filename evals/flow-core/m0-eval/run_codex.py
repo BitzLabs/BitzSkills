@@ -87,14 +87,18 @@ EXIT_CODE_SOURCE = "native"
 # 実績値は runner が知り得ない。**既定は `None`（未記入）**とし、`0` のような
 # 事実でない値を書かない。`--actual-prs` / `--actual-sessions` で明示的に与える。
 M0_BUDGET = {
-    # GP-001 裁定の M0 残予算（実装 1 PR + 検証 2 PR）。
-    "max_prs": 3,
-    "max_sessions": 10,
+    # GP-001 裁定の M0 残予算（実装 1 PR + 検証 2 PR）に、2026-08-08 の再提示・第1回で
+    # 検証 +1 PR を加えた改訂値。**裁定のたびにここを追随させる** — 追随を怠ると
+    # `SI-FLW-027` で是正したばかりの「予算定数が更新されない」を再生産する。
+    "max_prs": 4,
+    "max_sessions": 14,
     # 再校正の時点で既に消費していた PR 数（#158〜#178）。
     "consumed_prs_before_recalibration": 17,
-    "budget_reconfirmation_ref": (
-        "plugins/bitz-flow/.spec/reports/decision-2026-08-08-gp-001-m0-budget-exit-criteria.md"
-    ),
+    # 予算を再確認した裁定を古い順に並べる。最後の要素が現行の根拠。
+    "budget_reconfirmation_refs": [
+        "plugins/bitz-flow/.spec/reports/decision-2026-08-08-gp-001-m0-budget-exit-criteria.md",
+        "plugins/bitz-flow/.spec/reports/decision-2026-08-08-m0-budget-overrun.md",
+    ],
 }
 
 SUCCESS_CODES = frozenset({"OK", "READY", "DONE"})
