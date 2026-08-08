@@ -252,7 +252,13 @@ def _one_attempt(job: dict) -> dict:
     }
 
 
-def _write_manifest(path: Path, args: argparse.Namespace, corpus: dict, completed: int) -> None:
+def _write_manifest(
+    path: Path,
+    args: argparse.Namespace,
+    corpus: dict,
+    completed: int,
+    trials_per_condition: dict[str, int],
+) -> None:
     payload = {
         "milestone": "M0",
         "status": "partially-measured" if completed else "measuring",
@@ -260,7 +266,7 @@ def _write_manifest(path: Path, args: argparse.Namespace, corpus: dict, complete
         "prompt_version": "2026-07-31.1",
         "fixture": {
             "builder": "evals/flow-core/m0-eval/fixture.py",
-            "schedule": "trial 1,4,7,10=small; 2,5,8=medium; 3,6,9=large",
+            "schedule": "corpus は trial 番号の 3 剰余で割当（1=small, 2=medium, 0=large）",
             "raw_baseline_bytes": {
                 condition: {
                     name: values["raw_baseline_bytes"] for name, values in per_condition.items()
@@ -268,6 +274,10 @@ def _write_manifest(path: Path, args: argparse.Namespace, corpus: dict, complete
                 for condition, per_condition in corpus.items()
             },
         },
+        # ラウンドの母数と再試行上限を証跡として残す。どの条件で測った記録かを
+        # 事後に確かめられるようにする（SI-FLW-026 / SI-FLW-025）。
+        "trials_per_condition": trials_per_condition,
+        "harness_retries": args.harness_retries,
         "conditions": {
             "no-skill": "repo の flow-core skill なし（agy のグローバル非 flow skill は維持）",
             "v1-skill": "repo .agents/skills に現行 v1 SKILL.md を配置",
@@ -288,13 +298,12 @@ def _write_manifest(path: Path, args: argparse.Namespace, corpus: dict, complete
             },
         },
         "budget": {
-            "max_prs": 1,
-            "max_sessions": 5,
-            "actual_prs": 0,
-            "actual_sessions": 1,
-            "review_fix_rounds": 0,
+            **common.M0_BUDGET,
+            # 実績は runner が知り得ないため未指定なら null を書く（0 は事実でない）。
+            "actual_prs": args.actual_prs,
+            "actual_sessions": args.actual_sessions,
+            "review_fix_rounds": args.review_fix_rounds,
             "exit_miss_reasons": [],
-            "budget_reconfirmation_ref": None,
         },
         "known_limitations": [
             "score.py の Decision Parity は corpus を grouping key に含めず task 単位で比較するため、small / medium / large の正当な件数差を揺れとして誤検出する。",
@@ -319,11 +328,33 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--model-version", default="2026-08-03 service snapshot")
     parser.add_argument("--agy-version", default="agy 1.1.10")
     parser.add_argument("--reasoning-effort", choices=("low", "medium", "high"), default="low")
-    parser.add_argument("--trials", type=int, default=10)
+    parser.add_argument(
+        "--harness-retries",
+        type=int,
+        default=2,
+        help="測定不能（task 対象の flow.py 呼出の出力が失われた事象。SI-FLW-012）を"
+        "検出したときに harness 側でやり直す上限回数。エージェントの自己再試行とは別物であり"
+        "self_retried には計上しない。codex-cli は aggregated_output が確率的に空になる"
+        "構造的な要因を持つため既定 5、本 runner は既知の欠落要因が無いため保守的な安全網として 2 とする",
+    )
+    parser.add_argument(
+        "--trials",
+        type=int,
+        help="全 condition へ一律に適用する trial 数。既定は condition ごとの所要数"
+        f"（{common.TRIALS_PER_CELL}）を使う。smoke run で少なく回すとき以外は指定しないこと",
+    )
     parser.add_argument("--workers", type=int, default=3)
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--condition", choices=common.CONDITIONS, action="append")
     parser.add_argument("--task", choices=common.TASKS, action="append")
+    parser.add_argument(
+        "--actual-prs",
+        type=int,
+        help="本ラウンド時点の milestone 実績 PR 数。未指定なら null を記録する"
+        "（0 のような事実でない既定値を書かない。FLW-REV-006 GP-001）",
+    )
+    parser.add_argument("--actual-sessions", type=int, help="同・実績 session 数")
+    parser.add_argument("--review-fix-rounds", type=int, help="同・レビュー修正回数")
     parser.add_argument("--plan", action="store_true", help="実行予定だけを表示して終了する")
     parser.add_argument(
         "--keep-logs",
@@ -337,15 +368,24 @@ def main(argv: list[str] | None = None) -> int:
     corpus_root = Path(args.corpus_root).expanduser().resolve()
     conditions = tuple(args.condition or common.CONDITIONS)
     tasks = tuple(args.task or common.TASKS)
-    if args.trials < 1:
+    if args.trials is not None and args.trials < 1:
         parser.error("--trials は1以上")
     if args.workers < 1:
         parser.error("--workers は1以上")
-    jobs_count = len(conditions) * len(tasks) * args.trials
+    trials_per_condition = {
+        condition: (args.trials if args.trials is not None else common.TRIALS_PER_CELL[condition])
+        for condition in conditions
+    }
+    jobs_count = sum(len(tasks) * count for count in trials_per_condition.values())
     if args.plan:
         print(
             json.dumps(
-                {"conditions": conditions, "tasks": tasks, "trials": args.trials, "jobs": jobs_count},
+                {
+                    "conditions": conditions,
+                    "tasks": tasks,
+                    "trials_per_condition": trials_per_condition,
+                    "jobs": jobs_count,
+                },
                 ensure_ascii=False,
             )
         )
@@ -356,14 +396,14 @@ def main(argv: list[str] | None = None) -> int:
     log_dir = Path(args.keep_logs).expanduser().resolve() if args.keep_logs else None
     corpus = {
         condition: common._prepare_corpus(
-            corpus_root, condition, source_root, tasks, args.trials
+            corpus_root, condition, source_root, tasks, trials_per_condition[condition]
         )
         for condition in conditions
     }
     jobs = []
     for condition in conditions:
         for task in tasks:
-            for trial in range(1, args.trials + 1):
+            for trial in range(1, trials_per_condition[condition] + 1):
                 corpus_name = common.CORPORA[(trial - 1) % len(common.CORPORA)]
                 entry = corpus[condition][corpus_name]
                 jobs.append(
@@ -383,6 +423,7 @@ def main(argv: list[str] | None = None) -> int:
                         "timeout": args.timeout,
                         "source_root": source_root,
                         "log_dir": log_dir,
+                        "harness_retries": args.harness_retries,
                     }
                 )
     common.assert_corpus_is_isolated(jobs)
@@ -390,7 +431,7 @@ def main(argv: list[str] | None = None) -> int:
     output.parent.mkdir(parents=True, exist_ok=True)
     manifest.parent.mkdir(parents=True, exist_ok=True)
     completed = 0
-    _write_manifest(manifest, args, corpus, completed)
+    _write_manifest(manifest, args, corpus, completed, trials_per_condition)
     with output.open("x", encoding="utf-8") as stream:
         with ThreadPoolExecutor(max_workers=args.workers) as pool:
             futures = {pool.submit(_one_trial, job): job for job in jobs}
@@ -439,7 +480,7 @@ def main(argv: list[str] | None = None) -> int:
                 stream.write(json.dumps(result, ensure_ascii=False, sort_keys=True) + "\n")
                 stream.flush()
                 completed += 1
-                _write_manifest(manifest, args, corpus, completed)
+                _write_manifest(manifest, args, corpus, completed, trials_per_condition)
                 print(
                     f"[{completed}/{jobs_count}] {result['condition']}/{result['task']}"
                     f"#{result['trial']} {result['corpus']} first={result['first_git_action']}"

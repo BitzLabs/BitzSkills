@@ -358,10 +358,17 @@ def test_upper_bound_is_reported_per_platform(harness, baseline_cache):
 
 
 def test_v2_requires_more_trials_per_cell_than_baseline(harness):
-    """baseline は 10 のまま、v2 だけ 20 を要求する（SI-FLW-026 案2）。"""
+    """baseline は 10 のまま、v2 だけ厚くする（SI-FLW-026 案2）。
+
+    具体値ではなく性質を検証する — v2 の母数は検出力の要求から決まるものであり、
+    corpus の割付などで正当に動く（21 への調整は `SI-FLW-027` の裁定）。
+    具体値は `tests/test_m0_eval_runner.py` が仕様側と突き合わせる。
+    """
     _, score = harness
-    assert score.TRIALS_PER_CELL == {"no-skill": 10, "v1-skill": 10, "v2-skill": 20}
-    assert score.TRIALS_PER_CELL["v2-skill"] * len(score.TASKS) >= score.required_trials_for_bound()
+    per_cell = score.TRIALS_PER_CELL
+    assert per_cell["no-skill"] == per_cell["v1-skill"] == 10
+    assert per_cell["v2-skill"] > per_cell["no-skill"]
+    assert per_cell["v2-skill"] * len(score.TASKS) >= score.required_trials_for_bound()
 
 
 def test_parity_ignores_baseline_conditions(harness):

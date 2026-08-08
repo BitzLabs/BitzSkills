@@ -20,6 +20,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import fixture as fixture_builder
+# condition ごとの所要 trial 数の正は採点側（M0 出口条件の実装）にある。runner が
+# それを読むことで、起動オプションの揃え忘れが旧条件の測定を生むことを防ぐ
+# （SI-FLW-026 / FLW-NFR-001）。
+from score import TRIALS_PER_CELL
 
 
 PLATFORM = "codex-cli"
@@ -70,6 +74,29 @@ EXIT_CODE_SOURCE = "native"
 # 正は `references/output-contract.md` の code 表。語彙そのものは published schema から
 # 読み、下の分類が schema の enum を網羅しなくなったら loud に落とす
 # （黙って誤分類すると「実装が事実上の仕様」になる。SI-FLW-019 / SI-FLW-020）。
+# M0 の予算。2026-08-08 の GP-001 裁定で再校正した値であり、正は `FLW-DSN-014` の
+# 「M0の予算実績と残予算」節である。
+#
+# 旧実装はここを `max_prs: 1 / max_sessions: 5 / actual_prs: 0 / actual_sessions: 1 /
+# budget_reconfirmation_ref: None` のリテラルで書いており、**全10ラウンドで一度も
+# 更新されなかった**。`FLW-DSN-014` は「実績PR数・実績session数・レビュー修正回数・
+# 出口未達理由を run manifest へ記録し、人間が次budgetの維持または変更を確認する」と
+# 定めているが、記録先が定数だったため手順は実質的に動いていなかった
+# （`FLW-REV-006` SYN-003 / GP-001 が「安全弁が一度も発動しなかった」とした機械的な理由）。
+#
+# 実績値は runner が知り得ない。**既定は `None`（未記入）**とし、`0` のような
+# 事実でない値を書かない。`--actual-prs` / `--actual-sessions` で明示的に与える。
+M0_BUDGET = {
+    # GP-001 裁定の M0 残予算（実装 1 PR + 検証 2 PR）。
+    "max_prs": 3,
+    "max_sessions": 10,
+    # 再校正の時点で既に消費していた PR 数（#158〜#178）。
+    "consumed_prs_before_recalibration": 17,
+    "budget_reconfirmation_ref": (
+        "plugins/bitz-flow/.spec/reports/decision-2026-08-08-gp-001-m0-budget-exit-criteria.md"
+    ),
+}
+
 SUCCESS_CODES = frozenset({"OK", "READY", "DONE"})
 FAILURE_CODES = frozenset(
     {
@@ -758,7 +785,13 @@ def _one_attempt(job: dict) -> dict:
     }
 
 
-def _write_manifest(path: Path, args: argparse.Namespace, corpus: dict, completed: int) -> None:
+def _write_manifest(
+    path: Path,
+    args: argparse.Namespace,
+    corpus: dict,
+    completed: int,
+    trials_per_condition: dict[str, int],
+) -> None:
     payload = {
         "milestone": "M0",
         "status": "partially-measured" if completed else "measuring",
@@ -766,7 +799,7 @@ def _write_manifest(path: Path, args: argparse.Namespace, corpus: dict, complete
         "prompt_version": "2026-07-31.1",
         "fixture": {
             "builder": "evals/flow-core/m0-eval/fixture.py",
-            "schedule": "trial 1,4,7,10=small; 2,5,8=medium; 3,6,9=large",
+            "schedule": "corpus は trial 番号の 3 剰余で割当（1=small, 2=medium, 0=large）",
             "raw_baseline_bytes": {
                 condition: {
                     name: values["raw_baseline_bytes"] for name, values in per_condition.items()
@@ -774,6 +807,10 @@ def _write_manifest(path: Path, args: argparse.Namespace, corpus: dict, complete
                 for condition, per_condition in corpus.items()
             },
         },
+        # ラウンドの母数と再試行上限を証跡として残す。どの条件で測った記録かを
+        # 事後に確かめられるようにする（SI-FLW-026 / SI-FLW-025）。
+        "trials_per_condition": trials_per_condition,
+        "harness_retries": args.harness_retries,
         "conditions": {
             "no-skill": "--ignore-user-config + repo skill なし",
             "v1-skill": "repo .agents/skills に現行 v1 SKILL.md を配置",
@@ -793,13 +830,12 @@ def _write_manifest(path: Path, args: argparse.Namespace, corpus: dict, complete
             "antigravity": {"status": "not-measured"},
         },
         "budget": {
-            "max_prs": 1,
-            "max_sessions": 5,
-            "actual_prs": 0,
-            "actual_sessions": 1,
-            "review_fix_rounds": 0,
+            **M0_BUDGET,
+            # 実績は runner が知り得ないため未指定なら null を書く（0 は事実でない）。
+            "actual_prs": args.actual_prs,
+            "actual_sessions": args.actual_sessions,
+            "review_fix_rounds": args.review_fix_rounds,
             "exit_miss_reasons": [],
-            "budget_reconfirmation_ref": None,
         },
         "result": None,
     }
@@ -825,11 +861,24 @@ def main(argv: list[str] | None = None) -> int:
         "（repo-inspect は task 対象の呼び出しがその位置に来る）、回数だけでは収束しない。"
         "測定可能 10 件を確保するには --trials も併せて増やすこと",
     )
-    parser.add_argument("--trials", type=int, default=10)
+    parser.add_argument(
+        "--trials",
+        type=int,
+        help="全 condition へ一律に適用する trial 数。既定は condition ごとの所要数"
+        f"（{TRIALS_PER_CELL}）を使う。smoke run で少なく回すとき以外は指定しないこと",
+    )
     parser.add_argument("--workers", type=int, default=3)
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--condition", choices=CONDITIONS, action="append")
     parser.add_argument("--task", choices=TASKS, action="append")
+    parser.add_argument(
+        "--actual-prs",
+        type=int,
+        help="本ラウンド時点の milestone 実績 PR 数。未指定なら null を記録する"
+        "（0 のような事実でない既定値を書かない。FLW-REV-006 GP-001）",
+    )
+    parser.add_argument("--actual-sessions", type=int, help="同・実績 session 数")
+    parser.add_argument("--review-fix-rounds", type=int, help="同・レビュー修正回数")
     parser.add_argument("--plan", action="store_true", help="実行予定だけを表示して終了する")
     parser.add_argument(
         "--keep-logs",
@@ -843,24 +892,40 @@ def main(argv: list[str] | None = None) -> int:
     corpus_root = Path(args.corpus_root).expanduser().resolve()
     conditions = tuple(args.condition or CONDITIONS)
     tasks = tuple(args.task or TASKS)
-    if args.trials < 1:
+    if args.trials is not None and args.trials < 1:
         parser.error("--trials は1以上")
-    jobs_count = len(conditions) * len(tasks) * args.trials
+    trials_per_condition = {
+        condition: (args.trials if args.trials is not None else TRIALS_PER_CELL[condition])
+        for condition in conditions
+    }
+    jobs_count = sum(len(tasks) * count for count in trials_per_condition.values())
     if args.plan:
-        print(json.dumps({"conditions": conditions, "tasks": tasks, "trials": args.trials, "jobs": jobs_count}, ensure_ascii=False))
+        print(
+            json.dumps(
+                {
+                    "conditions": conditions,
+                    "tasks": tasks,
+                    "trials_per_condition": trials_per_condition,
+                    "jobs": jobs_count,
+                },
+                ensure_ascii=False,
+            )
+        )
         return 0
     if output.exists() or manifest.exists():
         raise SystemExit("既存の eval 成果物は上書きしない。新しい --output / --manifest を指定すること。")
 
     log_dir = Path(args.keep_logs).expanduser().resolve() if args.keep_logs else None
     corpus = {
-        condition: _prepare_corpus(corpus_root, condition, source_root, tasks, args.trials)
+        condition: _prepare_corpus(
+            corpus_root, condition, source_root, tasks, trials_per_condition[condition]
+        )
         for condition in conditions
     }
     jobs = []
     for condition in conditions:
         for task in tasks:
-            for trial in range(1, args.trials + 1):
+            for trial in range(1, trials_per_condition[condition] + 1):
                 corpus_name = CORPORA[(trial - 1) % len(CORPORA)]
                 entry = corpus[condition][corpus_name]
                 jobs.append(
@@ -886,7 +951,7 @@ def main(argv: list[str] | None = None) -> int:
     output.parent.mkdir(parents=True, exist_ok=True)
     manifest.parent.mkdir(parents=True, exist_ok=True)
     completed = 0
-    _write_manifest(manifest, args, corpus, completed)
+    _write_manifest(manifest, args, corpus, completed, trials_per_condition)
     with output.open("x", encoding="utf-8") as stream:
         with ThreadPoolExecutor(max_workers=args.workers) as pool:
             futures = {pool.submit(_one_trial, job): job for job in jobs}
@@ -921,7 +986,7 @@ def main(argv: list[str] | None = None) -> int:
                 stream.write(json.dumps(result, ensure_ascii=False, sort_keys=True) + "\n")
                 stream.flush()
                 completed += 1
-                _write_manifest(manifest, args, corpus, completed)
+                _write_manifest(manifest, args, corpus, completed, trials_per_condition)
                 print(
                     f"[{completed}/{jobs_count}] {result['condition']}/{result['task']}"
                     f"#{result['trial']} {result['corpus']} first={result['first_git_action']}"
