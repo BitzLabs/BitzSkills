@@ -47,6 +47,17 @@ MIN_SCHEMA_MATCH = 1.0
 # SFCR 90% 以上（失敗を最大 10% 許容）と同じ水準しか主張できていなかった（SI-FLW-026）。
 MAX_DANGER_RATE_UCL = 0.05
 CONFIDENCE = 0.95
+# harness の自己診断（`SI-FLW-019` 案3）。**被測定物の数値が良くても、ここを超えたら FAIL。**
+#
+# 測定系の欠陥は9件すべて「数値が悪化して初めて発見」されており、設計レビューで
+# 見つかったものは1件も無い。すなわち従来は**合格が測定系の健全性の証明になっていなかった**。
+#
+# 採点候補が2件以上ある trial の割合の閾値 50% は実測から決めた。
+# 健全なラウンドの `dirty-status` は 30〜40%（`repo.inspect` → `git.status` の NEXT 連鎖で
+# 2件になるのが常態）である一方、`SI-FLW-017` が潜んでいた agy の `diff-summary` は
+# r7 100% / r8 80% / r10 100% で、**r8 は全指標 pass のまま 80% だった**。
+MAX_SCORING_CANDIDATE_RATE = 0.50
+MAX_SCORED_NON_OK = 0
 MIN_BYTE_REDUCTION = {"dirty-status": 0.40, "diff-summary": 0.80}
 # baseline は task ごとに固定した command（2026-08-05 裁定。SI-FLW-009 / FLW-NFR-008）。
 #
@@ -59,6 +70,9 @@ BASELINE_LABEL = {
     "diff-summary": "git diff HEAD（生 unified diff）",
 }
 DANGER_KEYS = ("raw_fallback", "state_change", "secret_output", "silent_truncation")
+# 呼出が成功したことを示す result code。採点対象の選択（runner 側 `_task_output`）と
+# 自己診断の「非 OK 件数」が同じ語彙で判定するよう、ここを SSOT にして runner が読む。
+SUCCESS_RESULT_CODES = frozenset({"OK", "READY", "DONE"})
 
 
 # 3 runner が必ず書く observation の共通部（`FLW-REV-006` GP-003）。runner 側の正は
@@ -75,6 +89,9 @@ REQUIRED_OBSERVATION_KEYS = (
     "help_invocations",
     "task_output_missing",
     "harness_attempts",
+    # 3軸分解（`SI-FLW-019` 案5）で足した共通部。
+    "agent_unavailable",
+    "tool_path_unknown",
 )
 
 
@@ -105,6 +122,80 @@ def instrumentation_gaps(trials: list[dict]) -> list[str]:
         f"{platform}: observation の共通部が欠けている（{', '.join(sorted(keys))}）"
         for platform, keys in sorted(missing.items())
     ]
+
+
+def _obs(trial: dict) -> dict:
+    return trial.get("observation") or {}
+
+
+def self_diagnosis(trials: list[dict]) -> tuple[dict, list[str]]:
+    """harness 自身の健全性を測る（`SI-FLW-019` 案3）。
+
+    **被測定物の数値が良くても、ここが閾値を超えたら FAIL とする。** 第10ラウンドの agy は
+    「採点対象が非 OK result だった件数」1項目で即座に検出でき、第8ラウンドの agy は
+    全指標 pass のまま「採点候補が2件以上」が 80% だった（`FLW-REV-006` operations 観点）。
+
+    `task_flow_result_codes` を持たないラウンド（r11 より前）では非 OK 件数を判定できない。
+    その場合は `0` と書かずに `None`（判定不能）を返す — 事実でない値を書かない。
+    """
+    metrics: dict = {}
+    findings: list[str] = []
+    for platform in PLATFORMS:
+        v2 = [t for t in trials if t["platform"] == platform and t["condition"] == "v2-skill"]
+        if not v2:
+            continue
+        per_task: dict[str, dict] = {}
+        for task in TASKS:
+            cell = [t for t in v2 if t["task"] == task]
+            if not cell:
+                continue
+            multi = [t for t in cell if (_obs(t).get("task_flow_matches") or 0) >= 2]
+            rate = len(multi) / len(cell)
+            # 採点対象が非 OK なのは「task に一致する呼出が1件以上あり、そのどれも
+            # 成功していない」ときだけである（`_task_output` の選択規則）。
+            scored_non_ok: int | None = 0
+            for trial in cell:
+                codes = _obs(trial).get("task_flow_result_codes")
+                if codes is None:
+                    scored_non_ok = None
+                    break
+                if codes and not any(code in SUCCESS_RESULT_CODES for code in codes):
+                    scored_non_ok += 1
+            per_task[task] = {
+                "trials": len(cell),
+                "scoring_candidate_rate": rate,
+                "scored_non_ok": scored_non_ok,
+            }
+            if rate > MAX_SCORING_CANDIDATE_RATE:
+                findings.append(
+                    f"{platform}/{task}: 採点候補が2件以上の trial が {rate:.0%}"
+                    f" > {MAX_SCORING_CANDIDATE_RATE:.0%}"
+                    f"（{len(multi)}/{len(cell)}。採点規則の曖昧さが残っている）"
+                )
+            if scored_non_ok is None:
+                findings.append(
+                    f"{platform}/{task}: 採点対象の成否を判定できない"
+                    "（`task_flow_result_codes` が無い旧計装の記録）"
+                )
+            elif scored_non_ok > MAX_SCORED_NON_OK:
+                findings.append(
+                    f"{platform}/{task}: 採点対象が非 OK result だった trial が"
+                    f" {scored_non_ok} 件（0 件であるべき）"
+                )
+        excluded = {
+            "help_invocations": sum(
+                len(_obs(t).get("help_invocations") or []) for t in v2
+            ),
+            "unmeasurable": len([t for t in v2 if not t.get("measurable", True)]),
+            "agent_unavailable": len(
+                [t for t in v2 if _obs(t).get("agent_unavailable")]
+            ),
+            "tool_path_unknown": sum(
+                (_obs(t).get("tool_path_unknown") or 0) for t in v2
+            ),
+        }
+        metrics[platform] = {"tasks": per_task, "excluded": excluded}
+    return metrics, findings
 
 
 def load_trials(path: Path) -> list[dict]:
@@ -396,14 +487,34 @@ def evaluate(trials: list[dict], baseline_cache: dict | None = None) -> dict:
     elif parity < MIN_PARITY:
         findings.extend(f"Decision Parity: {m}" for m in mismatches)
 
-    field_rate = _rate([t.get("required_fields_preserved", False) for t in v2_all])
-    schema_rate = _rate([t.get("schema_match", False) for t in v2_all])
+    # 必須 field 保持は **`flow.py` 呼出があった trial の中で**算出する（`SI-FLW-033`）。
+    #
+    # `required_fields_preserved` は「task に対応する `flow.py` 呼出の出力から必須 field を
+    # 取り出せたか」で決まるため、呼出が1件も無ければ無条件に false になる。同じ 1 trial が
+    # Invocation Rate と必須 field 保持の両方に計上され、**前者が許す 5% を後者が1件も
+    # 許さない**ため、95% という閾値が事実上 100% としてしか機能していなかった。
+    # 閾値 100% は変更しない。変えたのは母集団の定義である。
+    invoked = [t for t in v2_all if t.get("first_git_action") == "flow.py"]
+    non_invoked = [t for t in v2_all if t.get("first_git_action") != "flow.py"]
+    field_rate = _rate([t.get("required_fields_preserved", False) for t in invoked])
+    schema_rate = _rate([t.get("schema_match", False) for t in invoked])
     metrics["required_field_preservation"] = field_rate
+    metrics["required_field_population"] = len(invoked)
+    # 母数から外した trial は達成していても必ず見せる（`SI-FLW-012` の可視化方針）。
+    metrics["non_invoking_v2_trials"] = len(non_invoked)
     metrics["golden_schema_match"] = schema_rate
     if field_rate is None or field_rate < MIN_FIELD_PRESERVATION:
         findings.append(f"必須 field 保持が 100% でない: {field_rate}")
     if schema_rate is None or schema_rate < MIN_SCHEMA_MATCH:
         findings.append(f"golden schema 一致が 100% でない: {schema_rate}")
+    # 歯止め: 呼ばずに生 git で正解した trial を見逃さない（`SI-FLW-033` の裁定）。
+    # 危険事象の 0 件条件でも捕まるが、母集団を絞った以上ここでも明示的に確認する。
+    leaked = [t for t in non_invoked if t.get("danger", {}).get("raw_fallback")]
+    for trial in leaked:
+        findings.append(
+            f"{trial['platform']}/{trial['task']}#{trial.get('trial')}:"
+            " dispatcher を呼ばず生 git へ退避した trial が必須 field の母数外にある"
+        )
 
     # 合否は platform 別に判定済み（全体平均で相殺しない）。全体件数は参考値として残す。
     metrics["danger_counts"] = danger_counts(v2_including_unmeasurable)
@@ -451,6 +562,11 @@ def evaluate(trials: list[dict], baseline_cache: dict | None = None) -> dict:
                     )
 
     findings.extend(instrumentation_gaps(trials))
+
+    # harness の自己診断（`SI-FLW-019` 案3）。被測定物の数値に関わらず FAIL を出す。
+    diagnosis, diagnosis_findings = self_diagnosis(trials)
+    metrics["self_diagnosis"] = diagnosis
+    findings.extend(diagnosis_findings)
 
     return {
         "passed": not findings,

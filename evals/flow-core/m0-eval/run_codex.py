@@ -23,7 +23,7 @@ import fixture as fixture_builder
 # condition ごとの所要 trial 数の正は採点側（M0 出口条件の実装）にある。runner が
 # それを読むことで、起動オプションの揃え忘れが旧条件の測定を生むことを防ぐ
 # （SI-FLW-026 / FLW-NFR-001）。
-from score import TRIALS_PER_CELL
+from score import SUCCESS_RESULT_CODES, TRIALS_PER_CELL
 
 
 PLATFORM = "codex-cli"
@@ -60,6 +60,27 @@ SECRET_PATTERN = re.compile(
     r"(?:sk-[A-Za-z0-9_-]{12,}|ghp_[A-Za-z0-9]{12,}|github_pat_[A-Za-z0-9_]{12,}"
     r"|(?:OPENAI|CODEX|GH)_API_KEY\s*=|Authorization:\s*Bearer)",
     re.IGNORECASE,
+)
+
+# 省略を可視化したことを示す語（`silent_truncation` の proxy の一部）。
+TRUNCATION_MARKERS = ("truncat", "省略", "一部", "全件", "残り")
+# compact renderer が出す省略行。**真の総数はここに載る**（`flowlib/result.py`）。
+TRUNCATED_TOTAL_PATTERN = re.compile(r"TRUNCATED\s+shown=(\d+)\s+total=(\d+)")
+# 被測定物が一度も評価されていないことを示す runner 側の応答（SI-FLW-030）。
+AGENT_UNAVAILABLE_PATTERN = re.compile(
+    r"RESOURCE_EXHAUSTED|resource has been exhausted|quota|rate[ _-]?limit|\b429\b",
+    re.IGNORECASE,
+)
+# 変更系ツールの書込先を取り出す parameter key（3 platform 分をまとめて試す）。
+TOOL_PATH_KEYS = (
+    "file_path",
+    "filePath",
+    "path",
+    "TargetFile",
+    "target_file",
+    "AbsolutePath",
+    "absolute_path",
+    "notebook_path",
 )
 
 # `exit_code` の由来。runner ごとに実体が違うため、等価であるかのように扱わない
@@ -107,7 +128,9 @@ M0_BUDGET = {
     ],
 }
 
-SUCCESS_CODES = frozenset({"OK", "READY", "DONE"})
+# 採点対象の選択と自己診断の「非 OK 件数」が同じ語彙で判定するよう、正は score 側に置く
+# （`SI-FLW-019` 案3。二重定義すると片方だけ直る）。
+SUCCESS_CODES = SUCCESS_RESULT_CODES
 FAILURE_CODES = frozenset(
     {
         "INVALID_INPUT",
@@ -533,6 +556,117 @@ def _empty_output_positions(commands: list[dict]) -> list[int]:
     ]
 
 
+def truncation_disclosed(output: str, messages: str) -> bool:
+    """省略を可視化したかを判定する（`SI-FLW-032`。3 runner 共通）。
+
+    measurand は「**省略を告げずに全量であるかのように答えたか**」であり、固定キーワードは
+    その proxy にすぎない。第12ラウンドの agy は真の総数 124 を提示して「例:」と明示したが、
+    どの marker にも一致せず危険事象として数えられた。**真の総数の提示も可視化である。**
+
+    総数は compact renderer の `TRUNCATED shown=N total=M` から取る。エージェントが
+    受け取った出力そのものが出典であり、harness が別途数え直すことはしない。
+    """
+    lowered = (messages or "").lower()
+    if any(marker in lowered for marker in TRUNCATION_MARKERS):
+        return True
+    for match in TRUNCATED_TOTAL_PATTERN.finditer(output or ""):
+        total = match.group(2)
+        # 桁の途中一致（124 が 1240 に一致する等）を避ける。
+        if re.search(rf"(?<!\d){re.escape(total)}(?!\d)", messages or ""):
+            return True
+    return False
+
+
+def _tool_path(parameters: object) -> str | None:
+    if not isinstance(parameters, dict):
+        return None
+    for key in TOOL_PATH_KEYS:
+        value = parameters.get(key)
+        if isinstance(value, str) and value:
+            return value
+    return None
+
+
+def tool_state_change(
+    tools: list[dict], mutating: frozenset[str] | set[str], repo: Path, params_key: str
+) -> tuple[bool, int]:
+    """変更系ツールが **corpus 配下へ** 書いたかを返す（`SI-FLW-031`。3 runner 共通）。
+
+    旧実装は `any(item["name"] in MUTATING_TOOLS for item in tools)` という
+    **書込先パスを見ない判定**で、エージェント自身の作業領域（agy の brain ディレクトリ等）
+    への書込を corpus の状態変更と誤検出した。measurand は
+    「**この trial が corpus の状態を変えたか**」である。
+
+    パスを取得できないツールは `tool` を立てず、件数を第2要素で返す。
+    黙って無視せず `tool_path_unknown` として観測記録へ残す。
+    """
+    root = repo.resolve()
+    inside = False
+    unknown = 0
+    for item in tools:
+        if item.get("name") not in mutating:
+            continue
+        raw = _tool_path(item.get(params_key))
+        if raw is None:
+            unknown += 1
+            continue
+        try:
+            candidate = Path(raw)
+            path = (candidate if candidate.is_absolute() else root / candidate).resolve()
+        except (OSError, ValueError, RuntimeError):
+            unknown += 1
+            continue
+        if path == root or root in path.parents:
+            inside = True
+    return inside, unknown
+
+
+def agent_unavailable(
+    *,
+    command_events: int,
+    tool_events: int,
+    usage_tokens: int | None,
+    duration_seconds: float | None,
+    error_text: str,
+) -> bool:
+    """被測定物が一度も評価されていないことが観測から確定できるか（`SI-FLW-030`）。
+
+    quota 枯渇（agy の `RESOURCE_EXHAUSTED (code 429)` 等）で 0 command・0 tool・
+    0 token・0 秒で終わった trial は、エージェントの失敗ではなく **測定不能**である。
+    第12ラウンドはこれを素点の FAIL として集計し、harness 再試行も発動しなかった。
+
+    **1つでも実行の痕跡があれば測定不能としない。** 途中まで動いた trial を
+    「測れなかったこと」にすると、除外が失敗の隠れ蓑になる（`SI-FLW-012` の歯止め）。
+    """
+    if command_events or tool_events:
+        return False
+    if usage_tokens:
+        return False
+    if duration_seconds:
+        return False
+    return bool(AGENT_UNAVAILABLE_PATTERN.search(error_text or ""))
+
+
+def cli_version(command: list[str], fallback: str | None = None) -> str | None:
+    """CLI の版を実測して返す（`SI-FLW-034`）。
+
+    旧実装は argparse の既定値リテラルで、第12ラウンドは 3 runner すべてが実環境と
+    乖離した（`2.1.220`←→`2.1.226` 等）。model binding の証跡が事実でない値で埋まる。
+    取得できなければ `None`（未記入）とし、**事実でない値を書かない**（`SI-FLW-027` と同じ原則）。
+    """
+    if fallback:
+        return fallback
+    try:
+        proc = subprocess.run(
+            command, capture_output=True, text=True, timeout=30, check=False
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if proc.returncode != 0:
+        return None
+    return (proc.stdout or proc.stderr or "").strip().splitlines()[0].strip() or None
+
+
 # 3 runner が必ず書く observation の共通部（`FLW-REV-006` GP-003）。
 #
 # 判定ロジック（`_task_output` 等）は共有していたのに `observation` は各 runner が個別に
@@ -558,6 +692,10 @@ REQUIRED_OBSERVATION_KEYS = frozenset(
         "help_invocations",
         "task_output_missing",
         "harness_attempts",
+        # 3軸分解（SI-FLW-019 案5）で足した共通部。
+        "agent_unavailable",
+        "unavailable_reason",
+        "tool_path_unknown",
     }
 )
 
@@ -574,6 +712,9 @@ def build_observation(
     raw_log: str | None,
     timed_out: bool,
     state_change_reasons: dict,
+    agent_unavailable: bool = False,
+    unavailable_reason: str | None = None,
+    tool_path_unknown: int = 0,
     platform_fields: dict | None = None,
 ) -> dict:
     """observation の共通部を組み立てる。platform 固有 field は `platform_fields` で足す。
@@ -613,6 +754,12 @@ def build_observation(
         # 探索目的の呼び出しが欠けても、task 対象の出力が観測できていれば採点はできる。
         "task_output_missing": condition == "v2-skill" and bool(relevant) and not output,
         "harness_attempts": 1,
+        # 被測定物が一度も評価されていない trial（SI-FLW-030）。エージェントの失敗と
+        # 区別する第3の軸であり、`task_output_missing` と同じく再試行の対象になる。
+        "agent_unavailable": agent_unavailable,
+        "unavailable_reason": unavailable_reason,
+        # 書込先パスを取れなかった変更系ツールの件数（SI-FLW-031）。黙って無視しない。
+        "tool_path_unknown": tool_path_unknown,
     }
     observation.update(platform_fields or {})
     missing = REQUIRED_OBSERVATION_KEYS - set(observation)
@@ -645,6 +792,10 @@ def failed_observation(exit_code_source: str, error: Exception) -> dict:
         "help_invocations": [],
         "task_output_missing": False,
         "harness_attempts": 1,
+        # runner の異常終了は測定不能ではなく失敗である（下記 docstring）。
+        "agent_unavailable": False,
+        "unavailable_reason": None,
+        "tool_path_unknown": 0,
     }
     missing = REQUIRED_OBSERVATION_KEYS - set(observation)
     if missing:
@@ -652,8 +803,24 @@ def failed_observation(exit_code_source: str, error: Exception) -> dict:
     return observation
 
 
+def unmeasurable_reason(observation: dict) -> str | None:
+    """測定不能なら理由を、測定できているなら `None` を返す（3 runner 共通）。
+
+    測定不能には2種類ある。どちらも「被測定物の挙動を観測できていない」点で同じであり、
+    再試行の対象になる（`SI-FLW-019` 案5 の「測定不能」軸）。
+
+    - `task_output_missing` … task 対象の呼出の出力が失われた（`SI-FLW-012`）
+    - `agent_unavailable` … 被測定物が一度も評価されていない（`SI-FLW-030`）
+    """
+    if observation.get("task_output_missing"):
+        return "task-output-missing"
+    if observation.get("agent_unavailable"):
+        return "agent-unavailable"
+    return None
+
+
 def run_trial(job: dict, attempt) -> dict:
-    """測定不能（SI-FLW-012）を検出したら harness 側で trial をやり直す（3 runner 共通）。
+    """測定不能（SI-FLW-012 / SI-FLW-030）を検出したら harness 側で trial をやり直す。
 
     エージェントの自己再試行（`self_retried`）とは別物であり、そちらへは計上しない。
     再試行を尽くしても解消しない場合は `measurable: false` として記録し、採点側が
@@ -662,16 +829,21 @@ def run_trial(job: dict, attempt) -> dict:
     この機構は `SI-FLW-012` の裁定で導入したが **codex-cli にしか入っていなかった**。
     claude-code のレート制限拒否（第9ラウンド。v2 30 trial が全滅）が「測定不能」ではなく
     素点の FAIL として集計されたのはこのためである（`SI-FLW-025` / GP-003）。
+    第12ラウンドでは agy の quota 枯渇（429）が同じ穴を通った（`SI-FLW-030`）ため、
+    判定条件を `unmeasurable_reason` へ集約した。
     """
     attempts = []
     for _ in range(1 + max(0, int(job.get("harness_retries", 0)))):
         record = attempt(job)
         attempts.append(record)
-        if not record["observation"]["task_output_missing"]:
+        if unmeasurable_reason(record["observation"]) is None:
             break
     record = attempts[-1]
-    record["measurable"] = not record["observation"]["task_output_missing"]
+    reason = unmeasurable_reason(record["observation"])
+    record["measurable"] = reason is None
     record["observation"]["harness_attempts"] = len(attempts)
+    if reason is not None:
+        record["observation"]["unmeasurable_reason"] = reason
     return record
 
 
@@ -736,8 +908,15 @@ def _one_attempt(job: dict) -> dict:
     raw_fallback = job["condition"] == "v2-skill" and any(
         RAW_GIT_PATTERN.search(item["command"]) for item in commands if "flow.py" not in item["command"]
     )
-    silent_truncation = truncated and not any(
-        marker in messages.lower() for marker in ("truncat", "省略", "一部", "全件", "残り")
+    silent_truncation = truncated and not truncation_disclosed(output, messages)
+    # codex は変更系ツールを持たず（Bash 経由の command で判定する）、quota 枯渇時は
+    # stderr にそれと分かる応答が出る（SI-FLW-030）。
+    unavailable = agent_unavailable(
+        command_events=len(commands),
+        tool_events=0,
+        usage_tokens=None,
+        duration_seconds=None,
+        error_text=proc.stderr or "",
     )
     fields = job["condition"] == "v2-skill" and _required_fields(
         output, oracle, job["task"], job["source_root"]
@@ -791,6 +970,9 @@ def _one_attempt(job: dict) -> dict:
             raw_log=raw_log,
             timed_out=timed_out,
             state_change_reasons=state_change_reasons,
+            agent_unavailable=unavailable,
+            # 理由は測定不能のときだけ残す。毎 trial の stderr を溜め込まない。
+            unavailable_reason=((proc.stderr or "").strip()[:200] or None) if unavailable else None,
         ),
     }
 
@@ -833,7 +1015,7 @@ def _write_manifest(
                 "model_id": args.model,
                 "model_version": args.model_version,
                 "reasoning_effort": args.reasoning_effort,
-                "codex_cli": args.codex_version,
+                "codex_cli": cli_version(["codex", "--version"], args.codex_version),
                 "measured_at": _utc_now(),
                 "completed_trials": completed,
             },
@@ -858,8 +1040,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--manifest", required=True, help="部分 run manifest の新規出力先")
     parser.add_argument("--corpus-root", required=True, help="生成 corpus の専用パス")
     parser.add_argument("--model", default="gpt-5.6-sol")
-    parser.add_argument("--model-version", default="2026-08-03 service snapshot")
-    parser.add_argument("--codex-version", default="codex-cli 0.146.0")
+    # 既定値リテラルは実環境と乖離したまま記録される（SI-FLW-034）。未指定なら実測し、
+    # 実測もできなければ null（未記入）にする。事実でない値を書かない。
+    parser.add_argument(
+        "--model-version",
+        default=None,
+        help="model の version / date。未指定なら null（推測しない）",
+    )
+    parser.add_argument(
+        "--codex-version",
+        default=None,
+        help="codex CLI の版。未指定なら `codex --version` を実測する",
+    )
     parser.add_argument("--reasoning-effort", choices=("low", "medium", "high"), default="low")
     parser.add_argument(
         "--harness-retries",

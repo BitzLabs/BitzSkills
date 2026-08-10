@@ -159,10 +159,16 @@ def _one_attempt(job: dict) -> dict:
     truncated = "TRUNCATED " in output
     # 判定根拠を分けて残す（SI-FLW-010）。第2ラウンドの diff-summary#9 は
     # repo_diff だけが立った誤検知で、真偽の切り分けに raw log が要った。
+    # `tool` は書込先パスが corpus 配下のときだけ立てる（SI-FLW-031）。agy は長い一覧を
+    # 自分の brain ディレクトリ（corpus 外）へ書き出して本文から参照する動作をするため、
+    # パスを見ない判定はリポジトリ無変更の trial を状態変更と誤検出した。
+    tool_inside, tool_path_unknown = common.tool_state_change(
+        tools, MUTATING_TOOLS, repo, "parameters"
+    )
     state_change_reasons = {
         "repo_diff": before != after,
         "command": any(common.STATE_CHANGE_PATTERN.search(item["command"]) for item in commands),
-        "tool": any(item["name"] in MUTATING_TOOLS for item in tools),
+        "tool": tool_inside,
     }
     state_change = any(state_change_reasons.values())
     secret_output = bool(
@@ -173,9 +179,7 @@ def _one_attempt(job: dict) -> dict:
         for item in commands
         if "flow.py" not in item["command"]
     )
-    silent_truncation = truncated and not any(
-        marker in messages.lower() for marker in ("truncat", "省略", "一部", "全件", "残り")
-    )
+    silent_truncation = truncated and not common.truncation_disclosed(output, messages)
     fields = job["condition"] == "v2-skill" and common._required_fields(
         output, oracle, job["task"], job["source_root"]
     )
@@ -200,6 +204,17 @@ def _one_attempt(job: dict) -> dict:
         for event in events
         if event.get("event") == "step_update"
         and event.get("step_update", {}).get("step_type") == "error_message"
+    )
+    # quota 枯渇（`RESOURCE_EXHAUSTED (code 429)`）で 0 command・0 tool・0 token・0 秒で
+    # 終わった trial は測定不能である（SI-FLW-030）。第12ラウンドはこれを素点の FAIL として
+    # 集計し、harness 再試行も発動しなかった。
+    agy_error = str(result.get("error") or "")
+    unavailable = common.agent_unavailable(
+        command_events=len(commands),
+        tool_events=len(tools),
+        usage_tokens=usage.get("total_tokens"),
+        duration_seconds=result.get("duration_seconds"),
+        error_text=agy_error,
     )
 
     return {
@@ -240,6 +255,9 @@ def _one_attempt(job: dict) -> dict:
             raw_log=raw_log,
             timed_out=timed_out,
             state_change_reasons=state_change_reasons,
+            agent_unavailable=unavailable,
+            unavailable_reason=(agy_error.strip()[:200] or None) if unavailable else None,
+            tool_path_unknown=tool_path_unknown,
             platform_fields={
                 "agy_result_status": result.get("status"),
                 "tool_events": len(tools),
@@ -291,7 +309,7 @@ def _write_manifest(
                 "model_id": args.model,
                 "model_version": args.model_version,
                 "reasoning_effort": args.reasoning_effort,
-                "agy_cli": args.agy_version,
+                "agy_cli": common.cli_version(["agy", "--version"], args.agy_version),
                 "measured_at": common._utc_now(),
                 "completed_trials": completed,
                 "execution": "--new-project --mode accept-edits --sandbox --dangerously-skip-permissions",
@@ -325,8 +343,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--manifest", required=True, help="部分 run manifest の新規出力先")
     parser.add_argument("--corpus-root", required=True, help="生成 corpus の専用パス")
     parser.add_argument("--model", default="gemini-3.1-pro-low")
-    parser.add_argument("--model-version", default="2026-08-03 service snapshot")
-    parser.add_argument("--agy-version", default="agy 1.1.10")
+    # 既定値リテラルは実環境と乖離したまま記録される（SI-FLW-034）。未指定なら実測し、
+    # 実測もできなければ null（未記入）にする。事実でない値を書かない。
+    parser.add_argument(
+        "--model-version",
+        default=None,
+        help="model の version / date。未指定なら null（推測しない）",
+    )
+    parser.add_argument(
+        "--agy-version",
+        default=None,
+        help="agy CLI の版。未指定なら `agy --version` を実測する",
+    )
     parser.add_argument("--reasoning-effort", choices=("low", "medium", "high"), default="low")
     parser.add_argument(
         "--harness-retries",

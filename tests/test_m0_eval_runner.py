@@ -249,3 +249,44 @@ def test_budget_reconfirmation_refs_point_at_existing_files(harness, tmp_path, n
     assert refs
     for ref in refs:
         assert (REPO_ROOT / ref).exists(), ref
+
+
+# --- platform metadata を実測から取る（SI-FLW-034） -------------------------
+
+
+@pytest.mark.parametrize("name", RUNNERS)
+def test_cli_version_defaults_are_not_literals(name):
+    """CLI 版 / model version の既定値が固定文字列でない（SI-FLW-034）。
+
+    旧実装は argparse の既定値リテラルで、第12ラウンドは 3 runner すべてが実環境と
+    乖離した（`claude-code 2.1.220`←→`2.1.226` 等）。model binding の証跡が
+    事実でない値で埋まる。未指定なら実測し、実測もできなければ null にする。
+    """
+    flags = _cli_flags(name)
+    version_flags = {
+        flag: default
+        for flag, default in flags.items()
+        if flag in PLATFORM_SPECIFIC_FLAGS or flag == "--model-version"
+    }
+    assert version_flags, name
+    for flag, default in version_flags.items():
+        assert default is None, f"{name} {flag} に既定値リテラルが残っている: {default!r}"
+
+
+def test_cli_version_probes_the_real_binary(harness):
+    """未指定なら実際の CLI へ問い合わせる。"""
+    run_codex = harness["run_codex.py"]
+    version = run_codex.cli_version([sys.executable, "--version"])
+    assert version and version.startswith("Python")
+
+
+def test_cli_version_returns_none_when_the_binary_is_missing(harness):
+    """取得できなければ null。推測値を書かない（SI-FLW-027 と同じ原則）。"""
+    run_codex = harness["run_codex.py"]
+    assert run_codex.cli_version(["definitely-not-a-real-binary-xyz", "--version"]) is None
+
+
+def test_cli_version_prefers_an_explicit_value(harness):
+    """明示指定があればそれを使う（再現実行のため上書きは残す）。"""
+    run_codex = harness["run_codex.py"]
+    assert run_codex.cli_version(["definitely-not-a-real-binary-xyz"], "agy 1.1.11") == "agy 1.1.11"

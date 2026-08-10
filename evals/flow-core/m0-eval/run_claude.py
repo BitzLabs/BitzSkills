@@ -225,10 +225,15 @@ def _one_attempt(job: dict) -> dict:
     truncated = "TRUNCATED " in output
     # 判定根拠を分けて残す（SI-FLW-010）。repo_diff だけが立つ場合、trial 自身は
     # 変更系のコマンドもツールも使っていないのに状態が変わったことを意味する。
+    # `tool` は書込先パスが corpus 配下のときだけ立てる（SI-FLW-031）。corpus 外
+    # （エージェント自身の作業領域）への書込は corpus の状態変更ではない。
+    tool_inside, tool_path_unknown = common.tool_state_change(
+        tools, MUTATING_TOOLS, repo, "input"
+    )
     state_change_reasons = {
         "repo_diff": before != after,
         "command": any(common.STATE_CHANGE_PATTERN.search(item["command"]) for item in commands),
-        "tool": any(item["name"] in MUTATING_TOOLS for item in tools),
+        "tool": tool_inside,
     }
     state_change = any(state_change_reasons.values())
     secret_output = bool(common.SECRET_PATTERN.search("\n".join(item["output"] for item in tools)))
@@ -237,9 +242,7 @@ def _one_attempt(job: dict) -> dict:
         for item in commands
         if "flow.py" not in item["command"]
     )
-    silent_truncation = truncated and not any(
-        marker in messages.lower() for marker in ("truncat", "省略", "一部", "全件", "残り")
-    )
+    silent_truncation = truncated and not common.truncation_disclosed(output, messages)
     fields = job["condition"] == "v2-skill" and common._required_fields(
         output, oracle, job["task"], job["source_root"]
     )
@@ -259,6 +262,22 @@ def _one_attempt(job: dict) -> dict:
     ]
     retried = common.self_retried(relevant, job["source_root"])
     usage = result.get("usage", {}) if isinstance(result.get("usage"), dict) else {}
+    # レート制限拒否で 0 command・0 tool・0 token・0 秒で終わった trial は測定不能である
+    # （SI-FLW-030）。第9ラウンドで v2 30 trial が全滅した事象と同型で、当時は
+    # 「測定不能」ではなく素点の FAIL として集計された。
+    claude_error = " ".join(
+        str(part)
+        for part in (result.get("subtype"), result.get("result"), proc.stderr)
+        if part
+    )
+    total_tokens = (usage.get("input_tokens", 0) or 0) + (usage.get("output_tokens", 0) or 0)
+    unavailable = common.agent_unavailable(
+        command_events=len(commands),
+        tool_events=len(tools),
+        usage_tokens=total_tokens,
+        duration_seconds=(result.get("duration_ms") or 0) / 1000 or None,
+        error_text=claude_error,
+    )
 
     return {
         "platform": PLATFORM,
@@ -298,6 +317,9 @@ def _one_attempt(job: dict) -> dict:
             raw_log=raw_log,
             timed_out=timed_out,
             state_change_reasons=state_change_reasons,
+            agent_unavailable=unavailable,
+            unavailable_reason=(claude_error.strip()[:200] or None) if unavailable else None,
+            tool_path_unknown=tool_path_unknown,
             platform_fields={
                 "claude_result_subtype": result.get("subtype"),
                 "claude_is_error": result.get("is_error"),
@@ -309,8 +331,7 @@ def _one_attempt(job: dict) -> dict:
                 # Claude Code は system prompt へ git status を自動注入するため、コマンドを
                 # 1度も実行せずに回答しうる。その事実を trial 単位で残す。
                 "answered_without_command": not commands,
-                "usage_total_tokens": (usage.get("input_tokens", 0) or 0)
-                + (usage.get("output_tokens", 0) or 0),
+                "usage_total_tokens": total_tokens,
                 "total_cost_usd": result.get("total_cost_usd"),
                 "num_turns": result.get("num_turns"),
                 "duration_seconds": (result.get("duration_ms") or 0) / 1000 or None,
@@ -356,7 +377,7 @@ def _write_manifest(
                 "model_id": args.model,
                 "model_version": args.model_version,
                 "reasoning_effort": args.reasoning_effort,
-                "claude_cli": args.claude_version,
+                "claude_cli": common.cli_version(["claude", "--version"], args.claude_version),
                 "measured_at": common._utc_now(),
                 "completed_trials": completed,
                 "execution": "-p --setting-sources project --strict-mcp-config"
@@ -431,8 +452,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--manifest", required=True, help="部分 run manifest の新規出力先")
     parser.add_argument("--corpus-root", required=True, help="生成 corpus の専用パス")
     parser.add_argument("--model", default="claude-sonnet-5")
-    parser.add_argument("--model-version", default="2026-08-03 service snapshot")
-    parser.add_argument("--claude-version", default="claude-code 2.1.220")
+    # 既定値リテラルは実環境と乖離したまま記録される（SI-FLW-034）。未指定なら実測し、
+    # 実測もできなければ null（未記入）にする。事実でない値を書かない。
+    parser.add_argument(
+        "--model-version",
+        default=None,
+        help="model の version / date。未指定なら null（推測しない）",
+    )
+    parser.add_argument(
+        "--claude-version",
+        default=None,
+        help="claude CLI の版。未指定なら `claude --version` を実測する",
+    )
     parser.add_argument(
         "--reasoning-effort", choices=("low", "medium", "high", "xhigh", "max"), default="low"
     )
