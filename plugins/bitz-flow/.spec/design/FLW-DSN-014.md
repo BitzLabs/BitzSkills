@@ -2,7 +2,7 @@
 id: FLW-DSN-014
 title: "GitHub capability・M0検証設計"
 status: active
-version: 1.9
+version: 1.10
 updated: 2026-08-11
 owner: hide
 implements: FLW-FR-003, FLW-FR-008, FLW-FR-012, FLW-NFR-001, FLW-NFR-008, FLW-NFR-004
@@ -186,12 +186,18 @@ Invocation Rate側だけに計上する。**歯止め**として、非呼出tria
 
 | 自己診断メトリクス | 閾値 |
 |---|---|
-| 採点候補が2件以上あったtrialの割合 | 記録し、増加を検知する |
-| **採点対象が非OK resultだった件数** | **0** |
-| 除外した呼出の件数と内訳（`--help` / 失敗呼出 / 測定不能） | 記録し、内訳を提示する |
-| `instrumentation_gaps`（observation共通部の欠落） | **0**（現状は列挙のみ。出口条件へ昇格する） |
+| **採点候補が2件以上あったtrialの割合** | platform×taskごとに **50%以下** |
+| **採点対象が非OK resultだった件数** | **0**（判定できない旧計装の記録は`0`と書かず「判定不能」を未達として出す） |
+| 除外した呼出の件数と内訳（`--help` / 測定不能 / `tool_path_unknown`） | 記録し、内訳を提示する |
+| `instrumentation_gaps`（observation共通部の欠落） | **0**（`SI-FLW-025`で導入済み。本裁定で3軸分解の共通部を追加した） |
 
 第10ラウンドのagyは2項目めだけで即座に検出できた（`FLW-REV-006` operations観点の再解析）。
+
+閾値50%は実測から決めた。健全なラウンドの`dirty-status`は30〜40%
+（`repo.inspect`→`git.status`のNEXT連鎖で2件になるのが常態）である一方、`SI-FLW-017`が
+潜んでいたagyの`diff-summary`は **r7 100% / r8 80% / r10 100%** であった。
+**r8はagyが全指標passだったラウンドである**（`SI-FLW-019`原因3の「合格が測定系の
+健全性の証明になっていない」の実例）。是正後の第12ラウンドは3 platformとも指摘が出ない。
 
 ### 危険事象条件の検出力
 
