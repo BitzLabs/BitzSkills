@@ -37,6 +37,12 @@ v2 はこれを、3プラットフォーム（Claude Code / Codex CLI / Antigrav
   SKILL.md / test → eval）。M0 が implements する8要件は implementing、残る15要件は approved のまま
 - 2026-07-31、本書が洗い出した未裁定論点7件を裁定
   （`.spec/reports/decision-2026-07-31-bitz-flow-roadmap-open-issues.md`）
+- **M0 eval を第12ラウンドまで実施**（2026-08-10。3 platform）。**被測定物は全指標で閾値を超えた**
+  （Invocation Rate・SFCR・golden schema 一致・byte 削減が 3 platform すべてで達成、
+  Decision Parity 100%。いずれも初）。**未達は計器（harness と出口条件）の側だけに残る**
+- 2026-08-11、`SI-FLW-019`（測定系欠陥の構造的原因）を親として一括裁定し、
+  検証予算 +3 PR を裁定（`.spec/reports/decision-2026-08-11-si-flw-019-measurement-system.md`）。
+  **第13ラウンドが未達なら scope 縮小を無条件で実行する**（再提示なし）
 
 次は **M0 Contract Kernel の実装**である。承認によって生じた23件の未検分の
 代行遷移は、`verified → promoted` を経て Promotion Gate の GatePassage で検分される
@@ -166,6 +172,24 @@ M2 が未完了のままでは worktree-first の安全境界が閉じないた�
 **本フェーズに含めないもの**（裁定7）: `sdd-git` の削除。`CORE-FR-016`（promoted。
 2026-07-13 裁定で「縮退維持・完全廃止はしない」）の後継化と、SDD 固有の接続点の移設先は
 bitz-sdd V4 Charter が、同 ROADMAP 未裁定論点18 と一体で扱う。
+
+## 未裁定 spec-issue の裁定適時
+
+裁定していない spec-issue が「いつ裁定されるのか」を持たないまま滞留すると、
+`SI-FLW-019` のように**構造的な是正が未着手のまま個別の対症だけが続く**状態になる
+（第12ラウンドの未達5件のうち4件がその再発だった）。中身の裁定は各適時に行うが、
+**適時そのものは本書が持つ**（2026-08-11 裁定・裁定7）。
+
+| ID | 内容 | 裁定の適時 | 理由 |
+|---|---|---|---|
+| `SI-FLW-006` | 診断 cause 語彙に byte 上限超過を表す語が無い | **M1 着手前** | 公開契約（`FLW-DSN-005` の許可語彙14種）の変更。M0 実装は暫定割当で回避済み |
+| `SI-FLW-029` | 失敗 result に `next_actions` が無く契約内に復帰経路が無い | **M1 着手前** | 第12R で `--help` 退避は 0 になり緊急度は下がったが、**write 系で復帰経路が無いのは読取系より危険** |
+| `SI-FLW-024` | GitHub ネイティブ stacked PR 公開を受けた「スタック PR 禁止」の再検分 | **M4 着手前** | M4（PR ライフサイクル）の設計に直結。放置すると `FLW-DSN-008` と `SI-CORE-020` の両方が陸に上がる |
+| `SI-FLW-022` | repository / organization の read-only settings audit | **Promotion Gate 後** | v2 scope（Must）外の新規要望。下記「Should 機能の扱い」に従い `1.1.0` 以降で個別昇格 |
+| `SI-FLW-023` | 同 settings の write（plan / apply） | **Promotion Gate 後**（`022` の後） | write の安全境界が全く異なる。audit が先、write が後 |
+
+`SI-FLW-019` 案6（再現性を出口条件にする）は 2026-08-11 に M0 では reject した。
+write 系は失敗の再現性が読取系より重要になるため、**M1 開始時の budget 確認とあわせて再度裁定する**。
 
 ## Should 機能の扱い
 

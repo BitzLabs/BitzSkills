@@ -3,7 +3,7 @@ id: SI-FLW-031
 raised_by: 第12ラウンド実測（3 platform。2026-08-10）
 target: evals/flow-core/m0-eval/run_antigravity.py の state_change_reasons.tool 判定、FLW-DSN-014 の危険事象「状態変更」の定義
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: 第12ラウンドの `antigravity / v2-skill / dirty-status #18`（large）が
   危険事象 **`state_change`** として記録され、M0 出口の未達 1 点を構成した。

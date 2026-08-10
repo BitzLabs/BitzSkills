@@ -3,7 +3,7 @@ id: SI-FLW-030
 raised_by: 第12ラウンド実測（3 platform。2026-08-10）
 target: evals/flow-core/m0-eval/run_antigravity.py の測定不能判定（common.run_trial の measurable 判定）
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: 第12ラウンドの `antigravity / v2-skill / diff-summary #21`（large）が
   **agy CLI の quota 枯渇**で 1 件も command を実行できずに終わったにもかかわらず、

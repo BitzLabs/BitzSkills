@@ -3,7 +3,7 @@ id: SI-FLW-019
 raised_by: M0 第10ラウンド後の測定系レビュー（2026-08-07）
 target: plugins/bitz-flow/.spec/designs/FLW-DSN-014 の M0 出口条件と採点規則
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: M0 eval 期の spec-issue 13 件（`SI-FLW-006`〜`SI-FLW-018`）のうち **6 件が
   測定系の欠陥**であり、うち 2 件（`SI-FLW-014` / `SI-FLW-017`）は**同一関数

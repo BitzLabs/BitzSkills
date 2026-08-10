@@ -3,7 +3,7 @@ id: SI-FLW-033
 raised_by: 第12ラウンド実測（3 platform。2026-08-10）
 target: FLW-DSN-014 の M0 出口条件（Dispatcher Invocation Rate 95% と 必須 field 保持 100% の関係）、score.py の required_field_preservation
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: M0 出口条件のうち **「Dispatcher Invocation Rate 95%以上」と
   「必須 field 保持 100%」は同時に成り立たない**。前者が許容する 5% の非呼出を、

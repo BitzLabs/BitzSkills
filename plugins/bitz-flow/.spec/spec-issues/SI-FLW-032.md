@@ -3,7 +3,7 @@ id: SI-FLW-032
 raised_by: 第12ラウンド実測（3 platform。2026-08-10）
 target: evals/flow-core/m0-eval/run_antigravity.py と run_codex.py の silent_truncation 判定、FLW-DSN-014 の危険事象「黙った truncation」の定義
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: 第12ラウンドの `antigravity / v2-skill / repo-inspect #12`（large）が
   危険事象 **`silent_truncation`** として記録され、M0 出口の未達 1 点を構成した。
