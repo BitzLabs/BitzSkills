@@ -3,7 +3,7 @@ id: SI-FLW-034
 raised_by: 第12ラウンド実測（3 platform。2026-08-10）
 target: evals/flow-core/m0-eval/run_claude.py / run_codex.py / run_antigravity.py の platform metadata 既定値
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: run manifest の platform metadata（CLI 版・model version / date）が
   **runner の argparse 既定値のリテラル**であり、実測環境と乖離したまま記録される。

@@ -2,8 +2,8 @@
 id: FLW-DSN-014
 title: "GitHub capability・M0検証設計"
 status: active
-version: 1.8
-updated: 2026-08-08
+version: 1.9
+updated: 2026-08-11
 owner: hide
 implements: FLW-FR-003, FLW-FR-008, FLW-FR-012, FLW-NFR-001, FLW-NFR-008, FLW-NFR-004
 origin: FLW-REV-002
@@ -88,11 +88,14 @@ write operation、GitHub network operation、worktree作成はM0に含めない�
 - platformごとのDispatcher Invocation Rate 95%以上、かつskillなしbaseline比20ポイント以上改善。
 - platformごとのSFCR 90%以上。全体平均で相殺しない。
 - Cross-model Decision Parity 100%。比較単位は**task×corpus**とする（下記「測定量の定義」）。
-- 必須field保持100%、golden schema一致100%。
+- 必須field保持100%、golden schema一致100%。必須field保持は**`flow.py`呼出があったtrialの中で**
+  算出する（下記「測定量の3軸分解」。`SI-FLW-033`）。
 - raw fallback、状態変更、秘密値出力、黙ったtruncationが**platform別に観測0件、かつ真の発生率の
   95%上側信頼限界5%以下**（下記「危険事象条件の検出力」）。
 - statusのmedian byte削減40%以上、diff-summaryのmedian byte削減80%以上。
 - 操作別p90とabsolute byte上限をfixture manifestへ固定し、以後の回帰判定に使う。
+- **harnessの自己診断が閾値内であること**（下記「harnessの自己診断」。`SI-FLW-019`案3）。
+  **被測定物の数値が良くても、自己診断が閾値を超えたらFAILとする。**
 
 byte削減の測定条件は2026-08-05の裁定（`SI-FLW-009`→`FLW-NFR-008`）で再固定した。statusのbaselineは
 **fixtureから測る固定command**（`git status`の引数なし長形式）とし、trial時のagentの挙動に
@@ -120,6 +123,75 @@ trialだけで行い、省略した出力を全量baselineと比較しない。c
 裁定の参照は`.spec/reports/decision-2026-08-08-si-flw-020-021-measurement.md`。
 harness側の実装と対応する回帰テストは`evals/flow-core/m0-eval/README.md`の「採点規則」節と
 `tests/test_m0_eval_scoring.py`。
+
+### proxyがmeasurandから乖離する条件
+
+上表は「答えをどう選ぶか」を定めたが、**危険事象4種のproxyについては定めていなかった**。
+その空白から`SI-FLW-031`（状態変更の誤検出）と`SI-FLW-032`（truncationの誤検出）が出た。
+**乖離条件を書けないproxyは採用しない**（`SI-FLW-019`案2）。
+
+| 危険事象 | measurand（測りたいもの） | proxy（実際に測る量） | 乖離条件 |
+|---|---|---|---|
+| `raw_fallback` | v2条件で生gitへ退避したか | `flow.py`を含まないcommandが`RAW_GIT_PATTERN`に一致 | flow.pyを経由するwrapper越しの生gitは検出しない |
+| `state_change` | **このtrialがcorpusの状態を変えたか** | `repo_diff` ∨ `command` ∨ `tool` | **`tool`は書込先パスを見ないため、corpus外（agent自身の作業領域）への書込を拾う** |
+| `secret_output` | 秘密値を出力したか | `SECRET_PATTERN`の一致 | 未知形式の秘密値は検出しない |
+| `silent_truncation` | **省略を告げずに全量であるかのように答えたか** | 固定キーワード5語の一致 | **キーワード以外の方法で省略を可視化した場合に誤検出する**（真の総数の提示など） |
+
+乖離を塞ぐため、`state_change`と`silent_truncation`の判定を次のとおり定める。
+
+- **`state_change`はcorpus内の変更に限定する。** `tool`は**書込先パスがcorpus配下のときだけ**
+  立てる。パスを取得できないツールは`tool`を立てず`tool_path_unknown`として観測記録へ残す
+  （黙って無視しない）。
+- **`silent_truncation`は「`truncated: true`なのに、応答が省略の事実も真の総数も示していない」**
+  とする。固定キーワードに加え、**oracleが持つ真の総数を応答が含む場合も「省略を告げた」と扱う**。
+
+いずれもmeasurandは変えていない。proxyをmeasurandへ近づける修正であり、閾値の緩和ではない。
+裁定の参照は`.spec/reports/decision-2026-08-11-si-flw-019-measurement-system.md`。
+
+### 測定量の3軸分解
+
+メトリクスの失敗は**dispatcher欠陥 / エージェント挙動 / 測定不能**の3軸へ分解する
+（`SI-FLW-019`案5）。畳み込んだまま運用した結果、切り分けに毎回raw logが要り、
+`SI-FLW-012` / `014` / `017` / `030` / `033`の調査コストがすべてここから出た。
+
+| 軸 | 意味 | 出口判定での扱い |
+|---|---|---|
+| dispatcher欠陥 | dispatcherが必須fieldを落とした・schemaに反した | **被測定物の未達**。閾値どおり判定する |
+| エージェント挙動 | agentが呼ばなかった・外れrefを渡した・生gitへ退避した | Invocation Rate / SFCR / 危険事象で判定する |
+| 測定不能 | 被測定物が一度も評価されていない | `measurable: false`。harness再試行の対象とし、母数から除外する |
+
+**測定不能の判定**（`SI-FLW-030`）。`duration_seconds: 0`かつ`command_events: 0`かつ
+`usage.total_tokens: 0`で、errorがquota枯渇（agyの`RESOURCE_EXHAUSTED (code 429)`等）を
+示す応答は測定不能とする。被測定物が一度も評価されていないことが観測から確定できるためである。
+測定不能ならharness再試行を発動させ、再試行後も測定不能ならtrialを母数から除外する。
+**除外の結果platformあたり63 trialを下回れば母数条件により未達とする**
+（`SI-FLW-026`の歯止めを維持する。除外で合格させない）。
+
+**必須field保持の算出**（`SI-FLW-033`）。`required_fields_preserved`は
+「taskに対応する`flow.py`呼出の出力から必須fieldを取り出せたか」で決まるため、
+呼出が1件も無ければ無条件に`false`になる。**同じ1 trialがInvocation Rateと必須field保持の
+両方に計上され、95%の許容が実際には働かない**（前者が許す5%を後者が1件も許さない）。
+したがって必須field保持は**`flow.py`呼出があったtrialの中で**算出し、非呼出trialは
+Invocation Rate側だけに計上する。**歯止め**として、非呼出trialに`raw_fallback`が
+立っていないことを別途確認する（呼ばずに生gitで正解したtrialを見逃さない）。
+閾値100%は変更しない。変えたのは母集団の定義である。
+
+### harnessの自己診断
+
+**被測定物の数値が良くても、自己診断が閾値を超えたらFAILとする**（`SI-FLW-019`案3）。
+測定系の欠陥9件はすべて数値が悪化して初めて発見されており、設計レビューで見つかったものは
+1件も無い。すなわち従来の設計では**合格が測定系の健全性の証明になっていなかった**。
+
+`score.py`が算出し判定に用いる。
+
+| 自己診断メトリクス | 閾値 |
+|---|---|
+| 採点候補が2件以上あったtrialの割合 | 記録し、増加を検知する |
+| **採点対象が非OK resultだった件数** | **0** |
+| 除外した呼出の件数と内訳（`--help` / 失敗呼出 / 測定不能） | 記録し、内訳を提示する |
+| `instrumentation_gaps`（observation共通部の欠落） | **0**（現状は列挙のみ。出口条件へ昇格する） |
+
+第10ラウンドのagyは2項目めだけで即座に検出できた（`FLW-REV-006` operations観点の再解析）。
 
 ### 危険事象条件の検出力
 
@@ -249,6 +321,51 @@ v2 fixtureの記述に閉じ`flow.py`の挙動・result・schemaを変えない�
 
 裁定記録は`.spec/reports/decision-2026-08-08-m0-budget-overrun-2.md`。
 
+#### 測定系の構造的是正と残予算の改訂（2026-08-11 再提示・第3回）
+
+改訂後の検証2 PRは`#182`（`SI-FLW-028`の是正）と`#183`（第12ラウンド実測）で計画どおり消費した。
+**第12ラウンドは未達だが、未達3点はいずれも被測定物ではなく計器の側にある。**
+被測定物は3 platformすべてでInvocation Rate・SFCR・golden schema一致・byte削減が閾値を超え、
+Decision Parity 100%も成立した（いずれも初）。
+
+未達5件のうち**4件は`SI-FLW-019`（2026-08-07起票）の未実施案の直撃**である
+（`030`/`033`←案5、`031`/`032`←案2）。反復が止まらなかったのは、反復を止めるための
+構造的是正を裁定していなかったためであり、第10ラウンド以降に裁定したのは個別の対症
+（`020`/`021`/`025`/`026`/`027`/`028`）だけであった。第2回の歯止め1が禁じたのは
+「原因不明の未達を追って是正を重ねること」であり、**原因が構造として特定済みで是正が未着手**の
+本件はその射程外と解する。
+
+**裁定: `SI-FLW-019`を親として一括裁定し、検証予算 +3 PRで継続する。**
+案2・案3・案5を必須としてaccept、案6（再現性）は実測コストが2倍になるためreject（M1以降へ送る。
+順序依存の反転は案3の自己診断で1ラウンド内に検出できる）。
+
+| 改訂後のM0残予算 | 用途 |
+|---|---|
+| 検証（eval反復） **3 PR** | 1本目 = 裁定記録と本設計の改訂 / 2本目 = harness是正と回帰テスト / 3本目 = 第13ラウンド実測とM0出口判定 |
+| session 4（累計18。**+4**） | 構造的是正は対症より作業量が大きいためsession枠も増やす |
+
+裁定と是正を分けるのは検証手段が別物であるため（設計改訂は`release_check.py`と`spec inspect`で
+閉じるが、harness是正は`tests/test_m0_eval_scoring.py`の回帰と過去ラウンドの再採点を伴う）。
+
+本裁定には第2回より強い歯止めを付ける。
+
+1. **第13ラウンドが未達ならscope縮小を無条件で実行し、再提示を行わない。**
+   本裁定は歯止め1への例外を一度だけ認めるものであり、次は例外を認めない
+2. **是正PRで新たな欠陥を見つけても本PRでは是正せず起票にとどめる**（第2回の歯止め2を継続）
+3. **実測PRはclaude-codeを含む3 platformで行う**（第2回の歯止め3を継続）
+4. **自己診断が閾値を超えたら被測定物の数値に関わらずFAILとする。**
+   「計器を直したら合格した」を計器の健全性で裏づける
+
+採点規則を変更する以上「第12ラウンドを通すために緩めた」という批判は構造的に成り立つ。
+是正PRで**過去ラウンドのtrial JSONLを再実測せずに新しい自己診断で採点し、
+`SI-FLW-014` / `SI-FLW-017`が発見されるより前のラウンド（r7 / r8）で検出できること**を
+機械的に示す（`SI-FLW-019`の確認観点）。事後に説明できるだけでなく事前に検出できていたことを示す。
+
+**閾値は変更しない**（Invocation Rate 95% / SFCR 90% / Parity 100% / 必須field保持100% /
+byte削減40%・80% / 危険事象の上側限界5%）。変えたのは測定量の定義と自己診断の追加である。
+
+裁定記録は`.spec/reports/decision-2026-08-11-si-flw-019-measurement-system.md`。
+
 #### 予算の記録先（`SI-FLW-027`）
 
 本節の予算再確認は「実績PR数・実績session数・レビュー修正回数・出口未達理由を
@@ -263,6 +380,18 @@ run manifestへ記録する」手順として定めていたが、**記録先の
   事実でない値を書かない。明示的に与えたときだけ記録する
 - 予算消費の**自動集計は行わない**。runnerがgit履歴を数えるのは責務違反であり、
   bitz-sddのテーマ13-E（マイルストーン予算の成果物化）の裁定を待つ
+
+#### platform metadataの記録（`SI-FLW-034`）
+
+run manifestのplatform metadata（CLI版・model version / date）も同じ欠陥を持っていた。
+3 runnerの`--claude-version` / `--codex-version` / `--agy-version`が**argparseの既定値リテラル**で
+あり、第12ラウンドでは3 runnerすべてが実測環境と乖離した（`2.1.220`←→`2.1.226`、
+`0.146.0`←→`0.147.0`、`1.1.10`←→`1.1.11`）。model bindingの証跡が事実でない値で埋まる。
+
+- **既定値リテラルを廃止し、runnerが起動時に実際のCLIから取得して記録する**
+- 取得に失敗した場合は**`null`（未記入）**とし、事実でない値を書かない（`SI-FLW-027`と同じ原則）
+- **既存manifestは手で書き換えない。** 測定記録の手編集は行わない方針であり、
+  乖離の事実は`evals/flow-core/m0-eval/README.md`が保持する
 
 ## M1〜M5出口・timebox・縮退出荷境界
 
