@@ -35,6 +35,40 @@ status: implementing
 - **備考**: 本タスクの完了が M0 出口＝M1 の入口条件になる。version bump は M0 の PR 内に含める
   （AGENTS.md の「version bump は同一 PR 内」規約。コミット位置は問わない）。
   v2 script はこの時点でも prerelease であり、安定版入口として案内しない（FLW-DSN-011）。
+- **進捗（2026-08-10, 第12ラウンド。`SI-FLW-028` は奏功・出口は未成立）**: 第11ラウンドで
+  唯一の未達だった antigravity の SFCR を、`SI-FLW-028` の裁定（`--base` の意味論の記述と
+  読取の入口拘束。PR #182）を適用して **3 platform 同日・同一 fixture** で測り直した
+  （各 123 trial。v2 は platform あたり 63 trial で所要母数を満たす）。
+
+  **`SI-FLW-028` は確認観点をすべて満たした。** agy `diff-summary` の self-retry は
+  **18/21 → 0/21**、`--help` 退避は **15 件 → 0 件**、SFCR は **71% → 95.24%** である。
+  codex-cli は SFCR / Parity とも 100% で退行が無く、
+  `--base HEAD~1` に対する `INVALID_INPUT cause=invalid-ref` も維持されている
+  （案3 を採らなかったことの確認）。
+
+  **3 platform すべてが SFCR 閾値を超えたのは初めてであり、Decision Parity 100% を
+  3 platform で成立させたのも初めてである。** byte 削減も
+  `diff-summary` 88.98% / `dirty-status` 47.90% で閾値を超えた。
+
+  **それでも M0 出口は未達（`passed: false`）で、未達 3 点はいずれも
+  被測定物ではなく測定系・出口条件の側にある。**
+
+  | 未達 | platform | 種別 | 起票 |
+  |---|---|---|---|
+  | 危険事象 `state_change` 1 件 | antigravity | **測定系の誤検出**（corpus 外への agent 自身の書込。`repo_diff` は false） | `SI-FLW-031` |
+  | 危険事象 `silent_truncation` 1 件 | antigravity | **測定系の誤検出**（真の総数 124 を伝えているがキーワード不一致） | `SI-FLW-032` |
+  | 必須 field 保持 98.94% | claude-code / antigravity 各 1 件 | **出口条件の内部矛盾**（非呼出の二重計上）＋ **測定不能の未検出**（agy の 429） | `SI-FLW-033` / `SI-FLW-030` |
+
+  必須 field 保持を割った 2 trial は、claude が Skill tool 呼出を本文テキストとして出力した
+  プラットフォーム flake（63 trial 中 1 件。`SI-FLW-018` と同系）と、agy CLI の
+  `RESOURCE_EXHAUSTED (429)` による 0 秒終了である。後者は**被測定物が一度も
+  評価されていない**にもかかわらず素点の失敗として集計された（`SI-FLW-030`）。
+
+  加えて run manifest の platform metadata が runner の既定値で実環境と乖離していることを
+  `SI-FLW-034` として起票した。**測定記録は手で書き換えていない。**
+
+  version bump は未実施のまま（3マニフェストと `flowlib/__init__.py` は `0.3.2`）。
+  詳細は `evals/flow-core/m0-eval/README.md` の現況節。
 - **進捗（2026-08-07, 第10ラウンド。`SI-FLW-016` は奏功・出口は未成立）**: `SI-FLW-016` の裁定
   （パス解決手順の追加。`FLW-TSK-020`）を適用し、3 platform を**同日・同一 fixture**で
   測り直した（claude 90 / codex 144 / agy 90 trial）。

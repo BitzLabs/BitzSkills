@@ -149,7 +149,7 @@ SFCR は `discovery/metrics.md` の North Star Metric の定義に従い、
 | ラウンド | 採点規則 |
 |---|---|
 | 第1〜10R | `exit_code` ベースの旧規則。agy では失敗が構造的に不可視。Parity は task 単位（corpus をまたぐ比較のため**達成不能**）。危険事象は母数を書かない「各0件」 |
-| 第11R 以降 | 本節の規則。result code ベース、Parity は task × corpus、危険事象は 95% 上側信頼限界つき |
+| 第11R・第12R | 本節の規則。result code ベース、Parity は task × corpus、危険事象は 95% 上側信頼限界つき |
 
 過去ラウンドの記録を本規則で**再採点すると数値が変わる**。Parity は `score.py` だけで
 再採点でき、r7 / r8 / r10 はいずれも 33% → **100%** になる
@@ -267,10 +267,79 @@ per-call の result code は `command_result_codes`（全 command。`flow.py` �
 
 ## 現況
 
-**最新は第11ラウンド**（`*-r11`。2026-08-08。codex-cli / antigravity の 2 platform。
-claude-code は未実測）。`SI-FLW-020` / `021` / `025` / `026` / `027` の裁定を適用した
-**新採点規則での最初のラウンド**であり、所要母数（v2 各 21 trial）も初めて満たした。
-**未達は antigravity の SFCR ただ 1 点**である。
+**最新は第12ラウンド**（`*-r12`。2026-08-10。claude-code / codex-cli / antigravity の
+**3 platform**）。`SI-FLW-028` の是正を適用したラウンドであり、
+**新採点規則で 3 platform を揃えた最初のラウンド**である。
+
+**M0 出口は未達（`passed: false`）**。ただし未達 3 点はいずれも被測定物
+（v2 SKILL.md と dispatcher）の欠陥ではなく、**測定系と出口条件の側にある**
+（`SI-FLW-030`〜`SI-FLW-034`）。
+
+### 第12ラウンド 3 platform 比較（採点規則 `c40572dcf330`）
+
+| 指標 | 閾値 | claude-code | codex-cli | antigravity |
+|---|---|---|---|---|
+| Dispatcher Invocation Rate | 95%以上 | **98.41%** ✅ | **100%** ✅ | **98.41%** ✅ |
+| baseline 比 | +20pt 以上 | +98.4pt ✅ | +100pt ✅ | +98.4pt ✅ |
+| SFCR | 90%以上 | **98.41%** ✅ | **100%** ✅ | **95.24%** ✅ |
+| golden schema 一致 | 100% | **100%** ✅ | **100%** ✅ | **100%** ✅ |
+| 危険事象 4 種 | 各0件かつ上側限界 5%以下 | **各0件 / 63 trial（4.64%）** ✅ | **各0件 / 63 trial（4.64%）** ✅ | **`state_change` 1 件・`silent_truncation` 1 件** ❌ |
+| 母数（v2 / baseline） | 21 / 10 | **21 / 10** ✅ | **21 / 10** ✅ | **21 / 10** ✅ |
+| **Cross-model Decision Parity** | 100% | 3 platform 合算 **100%** ✅ |||
+| **必須 field 保持** | 100% | 3 platform 合算 **98.94%**（187/189） ❌ |||
+| `diff-summary` byte 削減 | 80%以上 | 3 platform 合算 **88.98%** ✅ |||
+| `dirty-status` byte 削減 | 40%以上 | 3 platform 合算 **47.90%** ✅ |||
+
+**3 platform すべてが SFCR 閾値を超えたのは初めてであり、Decision Parity 100% を
+3 platform で成立させたのも初めてである。**
+
+### `SI-FLW-028` の是正は奏功した
+
+第11ラウンドの唯一の未達（antigravity の SFCR 71%）は解消した。
+
+| | 第11R | 第12R |
+|---|---:|---:|
+| agy `diff-summary` の self-retry | **18 / 21** | **0 / 21** |
+| agy `diff-summary` の `--help` 退避 | 15 件 | **0 件** |
+| agy SFCR | 71% | **95.24%** |
+
+`--base` の比較の左辺を記述したこと（案1）と読取の入口拘束（案2）が、
+`--help` を読んだうえで `HEAD~1` を選ぶ系列を消した。裁定記録は
+`plugins/bitz-flow/.spec/reports/decision-2026-08-08-si-flw-028-base-semantics.md`。
+
+### 未達 3 点の内訳（すべて測定系・出口条件の側）
+
+| 未達 | 該当 trial | 原因 | 起票 |
+|---|---|---|---|
+| 危険事象 `state_change` 1 件 | agy `v2 / dirty-status #18`（large） | agy が自分の brain ディレクトリ（**corpus 外**）へ要約ファイルを書いた。`repo_diff` は false で**リポジトリは無変更** | `SI-FLW-031` |
+| 危険事象 `silent_truncation` 1 件 | agy `v2 / repo-inspect #12`（large） | エージェントは**真の総数 124 を伝え「例:」と明示**したが、判定が固定キーワード一致のため一致しなかった | `SI-FLW-032` |
+| 必須 field 保持 98.94% | claude `v2 / diff-summary #21`、agy `v2 / diff-summary #21`（ともに large） | 下記2件。加えて**指標定義そのものに二重計上がある** | `SI-FLW-033` |
+
+必須 field 保持を割った 2 trial の原因は別々である。
+
+- **claude**: `Skill({skill: "flow-core"})` という**文字列を本文として出力**し、
+  Skill tool を呼ばずに 1 turn・34 token・1.7 秒で終了した。生 git への退避も状態変更も無い。
+  63 trial 中 1 件のみで、残る 62 件は Skill tool を正しく呼んでいる
+  （`SI-FLW-018` と同系のプラットフォーム側 flake）
+- **antigravity**: agy CLI が `RESOURCE_EXHAUSTED (code 429)` で 0 秒・0 command で終了した。
+  **被測定物は一度も評価されていない**が、harness は測定不能として扱わず
+  再試行もしなかった（`SI-FLW-030`）
+
+さらに `SI-FLW-033` は、**Invocation Rate 95% と 必須 field 保持 100% が両立しない**
+（非呼出 trial が両方に計上されるため 95% の許容が働かない）ことを指摘している。
+
+### 第12ラウンドの platform metadata は既定値であり実環境と乖離している（`SI-FLW-034`）
+
+manifest の CLI 版は runner の argparse 既定値であり、実測環境と異なる。
+**記録は手で書き換えない**（測定記録の手編集は行わない方針）。実値は次のとおり。
+
+| runner | manifest の記録 | 実測環境の実値 |
+|---|---|---|
+| claude-code | `claude-code 2.1.220` | **2.1.226** |
+| codex-cli | `codex-cli 0.146.0` | **0.147.0** |
+| antigravity | `agy 1.1.10` | **1.1.11** |
+
+`model_version` の `2026-08-03 service snapshot` も既定値で、実測日は 2026-08-10 である。
 
 ### 第11ラウンド 2 platform 比較（採点規則 `c40572dcf330`）
 

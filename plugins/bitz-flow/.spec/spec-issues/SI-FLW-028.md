@@ -3,7 +3,7 @@ id: SI-FLW-028
 raised_by: 第11ラウンド実測（agy 21 trial 中 18 で self-retry。2026-08-08）
 target: plugins/bitz-flow/skills/flow-core/scripts/flowlib/cli.py の --base help、v2 SKILL.md の引数記述と入口規定
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: 第11ラウンドで antigravity の SFCR が **71%（45/63）** となり、M0 出口条件
   （90%以上）に対する**唯一の未達**になった。失敗は `git.diff-summary` に 100% 集中しており
