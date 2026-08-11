@@ -2,7 +2,7 @@
 implements: FLW-NFR-003, FLW-NFR-007, FLW-NFR-012, FLW-FR-013
 depends_on: [FLW-TSK-037, FLW-TSK-038, FLW-TSK-039, FLW-TSK-040]
 boundary: tests/test_flow_m1_write_faults.py
-status: pending
+status: done
 ---
 
 ### M1-3のfault fixture 17件と統合検証
