@@ -181,15 +181,33 @@
     ],
     "go_condition": "削減が1 PR以上または3 session以上",
     "no_go_degradation": "M1-1 coreは維持し、M1-5の合成拡張だけを実装せず、M1-6を単一platformの非合成証跡保全とactive manifest非昇格へ縮退して、残予算とM1出口を人間へ再提示する",
-    "status": "pending",
-    "decision_ref": null
+    "status": "go",
+    "decision_ref": ".spec/reports/decision-2026-08-12-m1-5-roi.md"
   },
   "consumption": {
-    "pr_used": 4,
-    "sessions_used": 5,
+    "pr_used": 5,
+    "sessions_used": 6,
     "review_iterations": 0,
     "exit_shortfalls": [],
     "entries": [
+      {
+        "partition_id": "M1-5",
+        "pr": 1,
+        "sessions": 1,
+        "session_purposes": [
+          "M1-5 の ROI 算定・裁定と evidence 合成の実装"
+        ],
+        "tasks": [
+          "FLW-TSK-047",
+          "FLW-TSK-048",
+          "FLW-TSK-049",
+          "FLW-TSK-050"
+        ],
+        "exit_met": true,
+        "exit_evidence": "ROI decision が Go。fault fixture 13件（FLT-010〜015, 017, 018, 021〜023, 028, 030）すべてに対応するテストが PASS。M1-3 の17件と合わせ catalog の30件を漏れなく分担。変異試験4種（candidate 固定・retry 1回制限・未知 field の blocked・RPO 0 の欠落検出）で検出力を確認",
+        "remaining_sessions_in_partition": 2,
+        "notes": "ROI 算定は M0 実測に基づく（harness を触った18 commit のうち単一 platform の adapter 修正が4件=22%）。合成自体の運用コストは見積もりに含めていないため、M1-6 完了時に実績を記録して M2 以降の budget 再校正の材料とする"
+      },
       {
         "partition_id": "M1-4",
         "pr": 1,
