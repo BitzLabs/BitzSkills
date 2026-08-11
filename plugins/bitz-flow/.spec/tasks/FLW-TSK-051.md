@@ -2,7 +2,7 @@
 implements: FLW-NFR-011
 depends_on: []
 boundary: evals/flow-core/m1-eval/run_qualification.py, tests/test_flow_m1_qualification_runner.py
-status: pending
+status: done
 ---
 
 ### 3 platform qualification runner（実CLI起動）
