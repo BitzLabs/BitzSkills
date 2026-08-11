@@ -2,7 +2,7 @@
 implements: FLW-NFR-011
 depends_on: []
 boundary: plugins/bitz-flow/skills/flow-core/schemas/qualification-manifest-v1.schema.json, plugins/bitz-flow/skills/flow-core/references/qualification-protocol.md
-status: pending
+status: done
 ---
 
 ### qualification manifest契約の凍結（必須field・合格条件・保存境界）
