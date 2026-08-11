@@ -2,7 +2,7 @@
 implements: FLW-FR-013, FLW-NFR-007, FLW-NFR-011, FLW-NFR-012
 depends_on: [FLW-TSK-027, FLW-TSK-028, FLW-TSK-029, FLW-TSK-030]
 boundary: tests/test_flow_m1_core.py, tests/fixtures/flow/m1/
-status: pending
+status: done
 ---
 
 ### M1-1 coreのfault testと負の対照（変異試験）
