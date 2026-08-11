@@ -2,7 +2,7 @@
 implements: FLW-FR-005, FLW-CON-005, FLW-CON-006
 depends_on: [FLW-TSK-043]
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/git_publish.py, tests/test_flow_m1_git_publish.py
-status: pending
+status: done
 ---
 
 ### git.publish-branch / delete-remote-branchとREC-PUSH
