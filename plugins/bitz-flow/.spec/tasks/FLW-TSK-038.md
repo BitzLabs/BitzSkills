@@ -2,7 +2,7 @@
 implements: FLW-NFR-007, FLW-FR-013
 depends_on: [FLW-TSK-037]
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/intent.py, tests/test_flow_m1_intent.py
-status: pending
+status: done
 ---
 
 ### intent storeとquarantineライフサイクル
