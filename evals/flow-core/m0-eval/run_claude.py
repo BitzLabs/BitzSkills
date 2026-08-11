@@ -164,6 +164,25 @@ def _result(events: list[dict]) -> dict:
     return {}
 
 
+def _rate_limit_rejected(events: list[dict]) -> bool:
+    """レート制限で**拒否された**か（`SI-FLW-035`）。
+
+    Claude Code は `rate_limit_event` を構造化して流す。`status` は
+    `allowed` / `allowed_warning` / `rejected` を取り、**拒否は `rejected` だけ**である
+    （第13ラウンドの 123 trial 中 `allowed` 80 / `allowed_warning` 15 / 混在 4 / `rejected` 26）。
+
+    これが一次情報である。`result.subtype` は拒否時も `"success"` を返すため成否の判定に
+    使えず、文言（`"You've hit your session limit"`）は言い回しが変わりうる。
+    """
+    for event in events:
+        if event.get("type") != "rate_limit_event":
+            continue
+        info = event.get("rate_limit_info")
+        if isinstance(info, dict) and info.get("status") == "rejected":
+            return True
+    return False
+
+
 def _one_trial(job: dict) -> dict:
     return common.run_trial(job, _one_attempt)
 
@@ -265,18 +284,23 @@ def _one_attempt(job: dict) -> dict:
     # レート制限拒否で 0 command・0 tool・0 token・0 秒で終わった trial は測定不能である
     # （SI-FLW-030）。第9ラウンドで v2 30 trial が全滅した事象と同型で、当時は
     # 「測定不能」ではなく素点の FAIL として集計された。
+    #
+    # 署名の一次情報は `rate_limit_event.status == "rejected"` とする（SI-FLW-035）。
+    # **`result.subtype` は拒否時も `"success"` を返すため成否の判定に使わない。**
+    # 第13ラウンドは agy の署名に合わせた文言パターンを共通部へ置いていたため、
+    # claude の `"You've hit your session limit"` を捕捉できず v2 26 trial を取りこぼした。
     claude_error = " ".join(
-        str(part)
-        for part in (result.get("subtype"), result.get("result"), proc.stderr)
-        if part
+        str(part) for part in (result.get("result"), proc.stderr) if part
     )
+    rejected = _rate_limit_rejected(events)
     total_tokens = (usage.get("input_tokens", 0) or 0) + (usage.get("output_tokens", 0) or 0)
     unavailable = common.agent_unavailable(
         command_events=len(commands),
         tool_events=len(tools),
         usage_tokens=total_tokens,
-        duration_seconds=(result.get("duration_ms") or 0) / 1000 or None,
-        error_text=claude_error,
+        # 構造化信号を一次情報にし、文言一致は `is_error` を伴うときだけの補助にする。
+        unavailable_signal=rejected
+        or (bool(result.get("is_error")) and common.unavailable_text(claude_error)),
     )
 
     return {
@@ -318,7 +342,12 @@ def _one_attempt(job: dict) -> dict:
             timed_out=timed_out,
             state_change_reasons=state_change_reasons,
             agent_unavailable=unavailable,
-            unavailable_reason=(claude_error.strip()[:200] or None) if unavailable else None,
+            unavailable_reason=(
+                (("rate-limit-rejected: " if rejected else "") + claude_error.strip())[:200]
+                or None
+            )
+            if unavailable
+            else None,
             tool_path_unknown=tool_path_unknown,
             platform_fields={
                 "claude_result_subtype": result.get("subtype"),

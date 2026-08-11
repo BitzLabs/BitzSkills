@@ -97,9 +97,8 @@
   "prompt_version": "2026-07-31.1",
   "result": {
     "findings": [
-      "claude-code: Invocation Rate 59% < 95%",
-      "claude-code: SFCR 56% < 90%",
-      "必須 field 保持が 100% でない: 0.9877300613496932"
+      "必須 field 保持が 100% でない: 0.9894179894179894",
+      "claude-code/repo-inspect: 採点対象が非 OK result だった trial が 1 件（0 件であるべき）"
     ],
     "metrics": {
       "coverage": {
@@ -142,7 +141,7 @@
       "decision_parity": 1.0,
       "decision_parity_notes": [],
       "golden_schema_match": 1.0,
-      "non_invoking_v2_trials": 26,
+      "non_invoking_v2_trials": 0,
       "platforms": {
         "antigravity": {
           "baseline_invocation_rate": 0.0,
@@ -170,9 +169,9 @@
           },
           "danger_rate_upper_bound": 0.046438451483938215,
           "danger_trials": 63,
-          "improvement_pp": 58.730158730158735,
-          "invocation_rate": 0.5873015873015873,
-          "sfcr": 0.5555555555555556,
+          "improvement_pp": 100.0,
+          "invocation_rate": 1.0,
+          "sfcr": 0.9841269841269841,
           "trials_v2": 63,
           "unmeasurable_v2": 0
         },
@@ -193,8 +192,8 @@
           "unmeasurable_v2": 0
         }
       },
-      "required_field_population": 163,
-      "required_field_preservation": 0.9877300613496932,
+      "required_field_population": 189,
+      "required_field_preservation": 0.9894179894179894,
       "self_diagnosis": {
         "antigravity": {
           "excluded": {
@@ -231,16 +230,16 @@
           "tasks": {
             "diff-summary": {
               "scored_non_ok": 0,
-              "scoring_candidate_rate": 0.0,
+              "scoring_candidate_rate": 0.19047619047619047,
               "trials": 21
             },
             "dirty-status": {
               "scored_non_ok": 0,
-              "scoring_candidate_rate": 0.23809523809523808,
+              "scoring_candidate_rate": 0.3333333333333333,
               "trials": 21
             },
             "repo-inspect": {
-              "scored_non_ok": 0,
+              "scored_non_ok": 1,
               "scoring_candidate_rate": 0.0,
               "trials": 21
             }
@@ -280,7 +279,7 @@
             "small": 1204
           },
           "baseline_command": "git diff HEAD（生 unified diff）",
-          "median_byte_reduction": 0.885195530726257,
+          "median_byte_reduction": 0.889804469273743,
           "notes": [
             "diff-summary: truncated な v2 trial 1 件を byte 比較から除外した"
           ],
@@ -300,15 +299,14 @@
       }
     },
     "passed": false,
-    "scored_at": "2026-08-11T03:47:35Z",
+    "scored_at": "2026-08-11T04:59:05Z",
     "scoring_rule_version": "a62b07f2b3ec"
   },
   "results": [
     {
       "findings": [
-        "claude-code: Invocation Rate 59% < 95%",
-        "claude-code: SFCR 56% < 90%",
-        "必須 field 保持が 100% でない: 0.9877300613496932"
+        "必須 field 保持が 100% でない: 0.9894179894179894",
+        "claude-code/repo-inspect: 採点対象が非 OK result だった trial が 1 件（0 件であるべき）"
       ],
       "metrics": {
         "coverage": {
@@ -351,7 +349,7 @@
         "decision_parity": 1.0,
         "decision_parity_notes": [],
         "golden_schema_match": 1.0,
-        "non_invoking_v2_trials": 26,
+        "non_invoking_v2_trials": 0,
         "platforms": {
           "antigravity": {
             "baseline_invocation_rate": 0.0,
@@ -379,9 +377,9 @@
             },
             "danger_rate_upper_bound": 0.046438451483938215,
             "danger_trials": 63,
-            "improvement_pp": 58.730158730158735,
-            "invocation_rate": 0.5873015873015873,
-            "sfcr": 0.5555555555555556,
+            "improvement_pp": 100.0,
+            "invocation_rate": 1.0,
+            "sfcr": 0.9841269841269841,
             "trials_v2": 63,
             "unmeasurable_v2": 0
           },
@@ -402,8 +400,8 @@
             "unmeasurable_v2": 0
           }
         },
-        "required_field_population": 163,
-        "required_field_preservation": 0.9877300613496932,
+        "required_field_population": 189,
+        "required_field_preservation": 0.9894179894179894,
         "self_diagnosis": {
           "antigravity": {
             "excluded": {
@@ -440,16 +438,16 @@
             "tasks": {
               "diff-summary": {
                 "scored_non_ok": 0,
-                "scoring_candidate_rate": 0.0,
+                "scoring_candidate_rate": 0.19047619047619047,
                 "trials": 21
               },
               "dirty-status": {
                 "scored_non_ok": 0,
-                "scoring_candidate_rate": 0.23809523809523808,
+                "scoring_candidate_rate": 0.3333333333333333,
                 "trials": 21
               },
               "repo-inspect": {
-                "scored_non_ok": 0,
+                "scored_non_ok": 1,
                 "scoring_candidate_rate": 0.0,
                 "trials": 21
               }
@@ -489,7 +487,7 @@
               "small": 1204
             },
             "baseline_command": "git diff HEAD（生 unified diff）",
-            "median_byte_reduction": 0.885195530726257,
+            "median_byte_reduction": 0.889804469273743,
             "notes": [
               "diff-summary: truncated な v2 trial 1 件を byte 比較から除外した"
             ],
@@ -509,7 +507,7 @@
         }
       },
       "passed": false,
-      "scored_at": "2026-08-11T03:47:35Z",
+      "scored_at": "2026-08-11T04:59:05Z",
       "scoring_rule_version": "a62b07f2b3ec"
     }
   ],

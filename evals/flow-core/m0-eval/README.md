@@ -318,37 +318,39 @@ per-call の result code は `command_result_codes`（全 command。`flow.py` �
 
 ## 現況
 
-**最新は第13ラウンド**（`*-r13`。2026-08-11。3 platform）。`SI-FLW-019` を親とする
-測定系の構造的是正（PR #185）を適用した最初のラウンドである。
+**最新は第13ラウンド**（codex-cli / antigravity は `*-r13`、claude-code は
+`SI-FLW-035` 是正後の再実測 `*-r13b`。いずれも 2026-08-11）。
+`SI-FLW-019` を親とする測定系の構造的是正（PR #185）を適用した最初のラウンドである。
 
 ### 第13ラウンド 3 platform 比較（採点規則 `a62b07f2b3ec`）
 
-| 指標 | 閾値 | claude-code | codex-cli | antigravity |
+| 指標 | 閾値 | claude-code（r13b） | codex-cli | antigravity |
 |---|---|---|---|---|
-| Dispatcher Invocation Rate | 95%以上 | **59%** ❌ | **100%** ✅ | **100%** ✅ |
-| SFCR | 90%以上 | **56%** ❌ | **100%** ✅ | **95.24%** ✅ |
+| Dispatcher Invocation Rate | 95%以上 | **100%** ✅ | **100%** ✅ | **100%** ✅ |
+| SFCR | 90%以上 | **98.41%** ✅ | **100%** ✅ | **95.24%** ✅ |
 | 危険事象 4 種 | 各0件かつ上側限界5%以下 | **各0件 / 63 trial（4.64%）** ✅ | **各0件 / 63 trial（4.64%）** ✅ | **各0件 / 63 trial（4.64%）** ✅ |
 | 母数（v2 / baseline） | 21 / 10 | 21 / 10 ✅ | 21 / 10 ✅ | 21 / 10 ✅ |
 | **Cross-model Decision Parity** | 100% | 3 platform 合算 **100%** ✅ |||
-| **必須 field 保持** | 100% | 3 platform 合算 **98.77%**（161/163） ❌ |||
-| **harness 自己診断** | 閾値内 | **指摘なし** ✅ | **指摘なし** ✅ | **指摘なし** ✅ |
+| **必須 field 保持** | 100% | 3 platform 合算 **98.94%**（187/189） ❌ |||
+| **harness 自己診断** | 閾値内 | **1 件指摘**（`repo-inspect`） ❌ | 指摘なし ✅ | 指摘なし ✅ |
 
-### 是正は3件とも奏功した
+**Invocation Rate・SFCR・危険事象・Parity・母数は 3 platform すべてで閾値を超えた。**
+危険事象が 3 platform とも 0 件になったのは初である。
 
-| 是正 | 第12R | 第13R |
+### 残る未達 2 点はいずれも `_required_fields` の proxy 乖離（`SI-FLW-036`）
+
+| 未達 trial | 実際に起きたこと | 乖離した前提 |
 |---|---|---|
-| `SI-FLW-031`（`state_change` の誤検出） | agy 1 件 | **0 件** |
-| `SI-FLW-032`（`silent_truncation` の誤検出） | agy 1 件 | **0 件** |
-| `SI-FLW-033`（必須 field 保持の母集団） | 非呼出 trial が二重計上 | **母数 163 = 呼出があった trial のみ** |
-| `SI-FLW-034`（platform metadata） | 既定値リテラルで実環境と乖離 | **実測値を記録**（`claude-code 2.1.227` / `codex-cli 0.147.0` / `agy 1.1.11`） |
+| `claude-code / repo-inspect#6`（large） | 呼出は成功し `OK repo.inspect ... branch=main head=09aca6a dirty=true remotes=0` を返した。ただしエージェントが `echo "$SKILL_DIR"; python3 "$SKILL_DIR" repo inspect` と組み立てたため **1行目が echo したパス**になった | **envelope は1行目**（`output.splitlines()[0]`） |
+| `antigravity / diff-summary#15`（large） | 1行目は正しく、出力は `TRUNCATED` 付きで**省略は契約どおり可視化されている**（`silent_truncation: false`） | **`data.items` の全 path が出力に現れる**（compact 経路に truncation の分岐が無い） |
 
-**antigravity は初めて全指標を達成した。** codex-cli も全指標達成である。
+claude-code の 1 件は **harness 自己診断が「採点対象が非 OK result」として検出した**。
+自己診断（`SI-FLW-019` 案3）は設計どおり機能しており、`SI-FLW-036` はその指摘の中身である。
 
-### claude-code は測定不成立（`SI-FLW-035`）
+### 第13ラウンドの claude-code 初回（`*-r13`）は測定不成立
 
-**claude-code の 59% / 56% は被測定物の成績ではない。**
-`v2-skill` 63 trial のうち **26 trial が Claude Code のレート制限（`five_hour` session limit）で
-拒否され、被測定物を一度も評価していない**。
+初回実測では **v2 63 trial のうち 26 trial が Claude Code のレート制限
+（`five_hour` session limit）で拒否され、被測定物を一度も評価しなかった**。
 
 ```json
 {"type":"rate_limit_event","rate_limit_info":{"status":"rejected","rateLimitType":"five_hour"}}
@@ -357,19 +359,27 @@ per-call の result code は `command_result_codes`（全 command。`flow.py` �
  "num_turns":1,"duration_ms":843,"usage":{"input_tokens":0,"output_tokens":0}}
 ```
 
-26 trial はいずれも `command_events: 0` / `tool_events: 0` / `usage.total_tokens: 0` /
-`duration_seconds: 0.3〜0.9` である。**拒否を除いた 37 trial では 36 件（97.3%）が
-`flow.py` 起点**であり、第12ラウンドの 98.41% と整合する。
+`SI-FLW-030` の是正で導入した `agent_unavailable` がこの署名を捕捉できず
+（`result.subtype` が `"success"`、文言が `"session limit"`、
+`rate_limit_event` を未参照）、**素点の FAIL として集計された**（`SI-FLW-035`）。
+是正後、raw log を**再実測せずに再生**して 24 件を測定不能として検出することを確認した。
+残る 2 件は拒否の前に実行が進んでおり（313 token / 53 token）、
+歯止め（痕跡が1つでもあれば測定不能にしない）どおり実観測として残している。
 
-`SI-FLW-030` の是正で導入した `agent_unavailable` は、この署名を捕捉できなかった。
-`result.subtype` が `"success"`（`is_error: true` と矛盾）で、文言が
-`"session limit"` のため `RESOURCE_EXHAUSTED|quota|rate[ _-]?limit|429` のどれにも一致せず、
-最も確実な信号である `rate_limit_event.status == "rejected"` を読んでいない。
-**`SI-FLW-019` 原因2（proxy の乖離条件を洗い出していない）の再発**であり、
-`SI-FLW-035` として起票した。
+`trials-claude-code-2026-08-11-r13.jsonl` は失敗の証跡として残し、
+**`trials-claude-code-2026-08-11-r13b.jsonl` を有効な記録とする**
+（第8ラウンドの claude-code と同じ扱い）。
 
-**したがって第13ラウンドは 3 platform 揃った M0 出口判定として成立していない**
-（第9ラウンドの claude-code、第11ラウンドの claude-code 未実測と同じ扱い）。
+### 是正は4件とも奏功した
+
+| 是正 | 第12R | 第13R |
+|---|---|---|
+| `SI-FLW-031`（`state_change` の誤検出） | agy 1 件 | **0 件** |
+| `SI-FLW-032`（`silent_truncation` の誤検出） | agy 1 件 | **0 件** |
+| `SI-FLW-033`（必須 field 保持の母集団） | 非呼出 trial が二重計上 | **母数 189 = 呼出があった trial のみ** |
+| `SI-FLW-034`（platform metadata） | 既定値リテラルで実環境と乖離 | **実測値を記録**（`claude-code 2.1.227` / `codex-cli 0.147.0` / `agy 1.1.11`） |
+
+**codex-cli と antigravity は全指標を達成した**（antigravity は初）。
 
 ### 第12ラウンド（`*-r12`。2026-08-10。3 platform）
 
