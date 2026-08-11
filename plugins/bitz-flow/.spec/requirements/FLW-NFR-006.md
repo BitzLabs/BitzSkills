@@ -1,7 +1,7 @@
 ---
 id: FLW-NFR-006
 version: 1.0
-status: approved
+status: implementing
 domain: execution
 priority: high
 origin: 2026-07-29 ユーザー指示（draft要件をFLW-NFR-003から順番に解決）

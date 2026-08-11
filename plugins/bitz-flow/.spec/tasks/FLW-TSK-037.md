@@ -2,7 +2,7 @@
 implements: FLW-NFR-012, FLW-NFR-006
 depends_on: []
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/guard.py, tests/test_flow_m1_guard.py
-status: pending
+status: done
 ---
 
 ### target guardプロトコル（canonical化・昇順CAS取得・fencing照合・family lock順序）
