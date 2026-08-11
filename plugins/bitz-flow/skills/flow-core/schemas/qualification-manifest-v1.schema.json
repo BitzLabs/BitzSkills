@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bitz-flow/qualification-manifest/v1",
+  "title": "bitz-flow qualification manifest v1",
+  "description": "計測器（harness）の適格化記録（FLW-DSN-015 / FLW-NFR-011）。confirmation は qualification が PASS した場合にだけ起動できる。空集合を 100% として扱わないため、必須 check の denominator が 0 の manifest は FAIL である。credential は class だけを記録し、値を書ける経路を持たない。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifest_schema",
+    "qualification_id",
+    "platform",
+    "operation",
+    "trials",
+    "gate_status",
+    "issued_at",
+    "completed_at",
+    "expires_at",
+    "retention",
+    "execution_limits"
+  ],
+  "properties": {
+    "manifest_schema": { "const": 1 },
+    "qualification_id": { "type": "string", "minLength": 1 },
+    "platform": { "type": "string", "enum": ["claude", "codex", "antigravity"] },
+    "operation": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*$"
+    },
+    "trials": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "description": "Q-NORMAL / Q-REJECT / Q-CORRUPT を各ちょうど1件。0 件でも 2 件でも FAIL とする。",
+      "items": { "$ref": "#/$defs/trial" }
+    },
+    "gate_status": { "$ref": "#/$defs/gate_status" },
+    "gate_reasons": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "PASS でない場合の理由。空集合を PASS の根拠にしない。"
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "coordinator の authoritative clock 由来。runner の local clock を正にしない。"
+    },
+    "completed_at": {
+      "oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }]
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "TTL 24 時間。trial 開始時と confirmation mutation 直前の2点で再検査する。実行中または境界時刻での期限切れは不適格として Gate を BLOCKED にする。"
+    },
+    "execution_limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_seconds", "max_harness_retries", "elapsed_seconds", "harness_retries"],
+      "properties": {
+        "max_seconds": { "const": 600 },
+        "max_harness_retries": { "const": 1 },
+        "elapsed_seconds": { "type": "number", "minimum": 0 },
+        "harness_retries": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "retention": { "$ref": "#/$defs/retention" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "gate_status": {
+      "type": "string",
+      "enum": ["PASS", "FAIL", "BLOCKED"],
+      "description": "語彙の正は schemas/evidence-ledger-entry-v1.schema.json の $defs.gate_status。ここでは同じ値集合を参照用に再掲するだけで、意味を変えない。"
+    },
+    "trial_kind": {
+      "type": "string",
+      "enum": ["Q-NORMAL", "Q-REJECT", "Q-CORRUPT"],
+      "description": "Q-NORMAL は正常入口（CLI / event / envelope / schema / raw log / 終了 code が全一致）、Q-REJECT は既知拒否（構造化 failure code と陽性対照 oracle が 100% 検出）、Q-CORRUPT は観測破損（event 欠落・flush 失敗・schema 矛盾を blocked に分類）。"
+    },
+    "credential_class": {
+      "type": "string",
+      "enum": ["none", "local-only", "read-scoped", "write-scoped"],
+      "description": "credential の**種別だけ**を記録する。値・token・path を記録する field は存在しない。"
+    },
+    "check_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["check_id", "denominator", "detected"],
+      "description": "denominator が 0 の check は「検出率 100%」ではなく FAIL の材料である。",
+      "properties": {
+        "check_id": { "type": "string", "minLength": 1 },
+        "denominator": { "type": "integer", "minimum": 0 },
+        "detected": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "trial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "credential_class",
+        "capability",
+        "fixture_initial_digest",
+        "fixture_final_digest",
+        "sandbox_boundary",
+        "cli_identity",
+        "model_identity",
+        "host_event_contract",
+        "raw_log_digest",
+        "residual_side_effects",
+        "required_check_ids",
+        "checks",
+        "positive_control_ids",
+        "positive_controls_detected",
+        "oracle_digest",
+        "hazardous_events"
+      ],
+      "properties": {
+        "kind": { "$ref": "#/$defs/trial_kind" },
+        "credential_class": { "$ref": "#/$defs/credential_class" },
+        "capability": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "この trial が前提とする capability（必要 version、scope、filesystem、locking、process tree 収束）。"
+        },
+        "fixture_initial_digest": { "$ref": "#/$defs/sha256" },
+        "fixture_final_digest": { "$ref": "#/$defs/sha256" },
+        "sandbox_boundary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "隔離 namespace の識別子。推測不能な run ID を含み、他 trial と共有しない。"
+        },
+        "cli_identity": { "type": "string", "minLength": 1 },
+        "model_identity": { "type": "string", "minLength": 1 },
+        "host_event_contract": { "type": "string", "minLength": 1 },
+        "raw_log_digest": { "$ref": "#/$defs/sha256" },
+        "residual_side_effects": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "終了時に初期状態へ戻っていない事象。1件でもあれば PASS にしない。"
+        },
+        "required_check_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "結果取得より前に拘束する必須 check の閉じた集合。"
+        },
+        "checks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/check_result" }
+        },
+        "positive_control_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "陽性対照の閉じた ID 集合。空集合を 100% として扱わないため minItems は 1。"
+        },
+        "positive_controls_detected": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "oracle_digest": { "$ref": "#/$defs/sha256" },
+        "hazardous_events": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "raw fallback・状態変更・秘密値出力・黙った truncation 等。1件でもあれば PASS にしない。"
+        }
+      }
+    },
+    "retention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "storage_boundary",
+        "allowed_roles",
+        "redaction_version",
+        "max_retention_days",
+        "delete_by",
+        "delete_owner",
+        "canary_detected",
+        "deletion_receipts"
+      ],
+      "description": "raw log の保存境界とライフサイクル。未許可 role・期限超過・canary 未検出はいずれも Gate 停止事由。",
+      "properties": {
+        "storage_boundary": { "type": "string", "minLength": 1 },
+        "allowed_roles": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "enum": ["owner", "evaluation-reviewer"] },
+          "description": "この2つ以外に読み取りを許さない。"
+        },
+        "redaction_version": { "type": "string", "minLength": 1 },
+        "max_retention_days": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30,
+          "description": "最大 30 日。legal hold は別 record がある場合のみで、自動延長しない。"
+        },
+        "delete_by": { "type": "string", "format": "date-time" },
+        "delete_owner": { "type": "string", "minLength": 1 },
+        "canary_detected": {
+          "type": "boolean",
+          "description": "canary を検出できたか。false は「redaction が効きすぎて観測不能」または「log 欠落」であり、どちらも Gate 停止事由（未検出を安全と読み替えない）。"
+        },
+        "deletion_receipts": {
+          "type": "array",
+          "description": "削除の証跡。証跡の無い削除を認めない。",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["target_digest", "deleted_at", "deleted_by"],
+            "properties": {
+              "target_digest": { "$ref": "#/$defs/sha256" },
+              "deleted_at": { "type": "string", "format": "date-time" },
+              "deleted_by": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    }
+  }
+}
