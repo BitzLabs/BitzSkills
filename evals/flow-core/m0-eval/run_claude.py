@@ -183,6 +183,14 @@ def _rate_limit_rejected(events: list[dict]) -> bool:
     return False
 
 
+def _unavailable_signal(events: list[dict], result: dict, stderr: str) -> bool:
+    """Claude固有の拒否署名。構造化eventを一次、is_error付き文言を補助にする。"""
+    text = " ".join(str(part) for part in (result.get("result"), stderr) if part)
+    return _rate_limit_rejected(events) or (
+        bool(result.get("is_error")) and common.unavailable_text(text)
+    )
+
+
 def _one_trial(job: dict) -> dict:
     return common.run_trial(job, _one_attempt)
 
@@ -289,18 +297,13 @@ def _one_attempt(job: dict) -> dict:
     # **`result.subtype` は拒否時も `"success"` を返すため成否の判定に使わない。**
     # 第13ラウンドは agy の署名に合わせた文言パターンを共通部へ置いていたため、
     # claude の `"You've hit your session limit"` を捕捉できず v2 26 trial を取りこぼした。
-    claude_error = " ".join(
-        str(part) for part in (result.get("result"), proc.stderr) if part
-    )
-    rejected = _rate_limit_rejected(events)
     total_tokens = (usage.get("input_tokens", 0) or 0) + (usage.get("output_tokens", 0) or 0)
     unavailable = common.agent_unavailable(
         command_events=len(commands),
         tool_events=len(tools),
         usage_tokens=total_tokens,
         # 構造化信号を一次情報にし、文言一致は `is_error` を伴うときだけの補助にする。
-        unavailable_signal=rejected
-        or (bool(result.get("is_error")) and common.unavailable_text(claude_error)),
+        unavailable_signal=_unavailable_signal(events, result, proc.stderr or ""),
     )
 
     return {
@@ -527,7 +530,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--plan", action="store_true", help="実行予定だけを表示して終了する")
     parser.add_argument(
         "--keep-logs",
-        help="raw event log（stdout / stderr）の保存先。未指定なら保存しない",
+        help="raw event log（stdout / stderr）の保存先。未指定時はtrial JSONL隣接DIRへ保存",
     )
     args = parser.parse_args(argv)
 
@@ -562,7 +565,7 @@ def main(argv: list[str] | None = None) -> int:
     if output.exists() or manifest.exists():
         raise SystemExit("既存の eval 成果物は上書きしない。新しい --output / --manifest を指定すること。")
 
-    log_dir = Path(args.keep_logs).expanduser().resolve() if args.keep_logs else None
+    log_dir = common.raw_log_directory(output, args.keep_logs)
     corpus = {
         condition: _prepare_corpus(
             corpus_root, condition, source_root, tasks, trials_per_condition[condition]
@@ -592,6 +595,7 @@ def main(argv: list[str] | None = None) -> int:
                         "timeout": args.timeout,
                         "source_root": source_root,
                         "log_dir": log_dir,
+                        "artifact_root": output.parent,
                         "harness_retries": args.harness_retries,
                     }
                 )

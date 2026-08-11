@@ -226,6 +226,10 @@ baseline生成に新しいPython moduleを追加した場合、上記集合へ�
 `unknown`と理由を記録し、`false`・候補0件・成功のいずれにも暗黙変換しない。原trialと旧versionの
 結果は不変で保持し、新versionの結果を履歴へ追加する。`unknown`を含む再採点は合格根拠に使わない。
 
+新規runではraw stdout/stderrをtrial JSONL隣接の`<stem>-raw/`へ単一JSONとして既定保存する。
+observationの`raw_log`はtrial JSONLの親から解決できる相対path（明示保存先が親の外なら絶対path）を持つ。
+`--keep-logs`は保存の有無ではなく保存先の上書きであり、未指定を「保存しない」の意味に戻してはならない。
+
 新規則を既定のGate判定へ切り替える前に、旧・新規則を同じ保存済みtrialへ並行適用し、trial単位の
 差分を出す。`SI-FLW-036`で説明済みの差分以外、`unknown`、自己診断異常が1件でもあれば切替を止め、
 旧versionを既定として維持する。

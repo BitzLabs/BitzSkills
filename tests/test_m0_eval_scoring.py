@@ -10,6 +10,7 @@
 """
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -854,6 +855,68 @@ QUOTA_ERROR = (
 )
 
 
+def test_FLW_NFR_010_claude_rejected_event_is_unavailable_despite_success_subtype(harness):
+    """Claudeは拒否時もsubtype=successを返すため、構造化eventを一次情報にする。"""
+    import run_claude
+
+    events = [
+        {"type": "rate_limit_event", "rate_limit_info": {"status": "rejected"}},
+        {"type": "result", "subtype": "success", "is_error": True},
+    ]
+    result = events[-1]
+    assert run_claude._unavailable_signal(events, result, "")
+
+
+def test_FLW_NFR_010_claude_text_without_error_or_rejection_is_not_unavailable(harness):
+    """session limitという文言だけでは測定不能にしない。"""
+    import run_claude
+
+    events = [{"type": "rate_limit_event", "rate_limit_info": {"status": "allowed"}}]
+    result = {"subtype": "success", "is_error": False, "result": "session limit documentation"}
+    assert not run_claude._unavailable_signal(events, result, "")
+
+
+def test_FLW_NFR_010_platform_specific_unavailable_signals(harness):
+    """CodexとAntigravityも各platform固有の入力fieldから拒否を読む。"""
+    import run_antigravity
+
+    run_codex, _ = harness
+    assert run_codex.codex_unavailable_signal("HTTP 429 rate limit")
+    assert run_antigravity.antigravity_unavailable_signal({"error": QUOTA_ERROR})
+    assert not run_antigravity.antigravity_unavailable_signal(
+        {"status": "FAILED", "message": QUOTA_ERROR}
+    )
+
+
+def test_FLW_NFR_010_raw_log_is_defaulted_and_resolvable(harness, tmp_path):
+    """raw stdout/stderrをtrial JSONL隣接DIRへ単一JSONとして保存する。"""
+    run_codex, score = harness
+    output = tmp_path / "trials-round14.jsonl"
+    log_dir = run_codex.raw_log_directory(output, None)
+    job = {
+        "condition": "v2-skill",
+        "task": "repo-inspect",
+        "trial": 1,
+        "log_dir": log_dir,
+        "artifact_root": output.parent,
+    }
+    proc = subprocess.CompletedProcess(["agent"], 1, '{"type":"result"}\n', "HTTP 429")
+
+    raw_log = run_codex._save_raw_log("codex-cli", job, proc)
+
+    assert raw_log == "trials-round14-raw/codex-cli-v2-skill-repo-inspect-01.raw.json"
+    payload = json.loads((output.parent / raw_log).read_text(encoding="utf-8"))
+    assert payload == {
+        "platform": "codex-cli",
+        "stderr": "HTTP 429",
+        "stdout": '{"type":"result"}\n',
+    }
+    details = score.trial_input_details(
+        [{"observation": {"raw_log": raw_log}}], output
+    )
+    assert details["raw_log_digests"][0]["sha256"] is not None
+
+
 def test_quota_exhaustion_without_any_execution_is_unmeasurable(harness):
     """被測定物が一度も評価されていない trial は測定不能である（SI-FLW-030）。"""
     run_codex, _ = harness
@@ -873,7 +936,7 @@ def test_quota_exhaustion_without_any_execution_is_unmeasurable(harness):
         {"usage_tokens": 42},
     ),
 )
-def test_quota_error_with_execution_traces_is_a_real_failure(harness, trace):
+def test_FLW_NFR_010_quota_error_with_execution_traces_is_a_real_failure(harness, trace):
     """歯止め: 実行の痕跡が1つでもあれば測定不能にしない。
 
     途中まで動いた trial を「測れなかったこと」にすると、除外が失敗の隠れ蓑になる
