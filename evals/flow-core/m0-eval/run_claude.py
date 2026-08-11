@@ -335,6 +335,7 @@ def _one_attempt(job: dict) -> dict:
             relevant=relevant,
             output=output,
             condition=job["condition"],
+            task=job["task"],
             source_root=job["source_root"],
             exit_code_source=EXIT_CODE_SOURCE,
             runner_exit_code=proc.returncode,

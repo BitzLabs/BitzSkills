@@ -1,0 +1,11 @@
+{
+  "perspective": "business",
+  "dimensions": [
+    {"name": "要件トレーサビリティ", "weight": 0.35, "score": 5, "findings": []},
+    {"name": "NFR定量化", "weight": 0.30, "score": 5, "findings": []},
+    {"name": "ステークホルダー整合", "weight": 0.20, "score": 4, "findings": []},
+    {"name": "ROI・実現可能性", "weight": 0.15, "score": 4, "findings": []}
+  ],
+  "weighted_score": 4.65,
+  "summary": "SI-FLW-036からFLW-NFR-009、FLW-DSN-014へ双方向に追跡でき、既存閾値を変えず測定の信頼性を上げる。配布物と再実測を範囲外に保ち、保存済みtrialで価値を確認するため実現可能性も妥当である。"
+}

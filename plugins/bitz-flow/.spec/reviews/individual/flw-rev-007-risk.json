@@ -1,0 +1,11 @@
+{
+  "perspective": "risk",
+  "dimensions": [
+    {"name": "分散システムリスク", "weight": 0.30, "score": "N/A", "findings": []},
+    {"name": "障害モード分析", "weight": 0.30, "score": 5, "findings": []},
+    {"name": "Saga設計の妥当性", "weight": 0.25, "score": "N/A", "findings": []},
+    {"name": "データ整合性リスク", "weight": 0.15, "score": 5, "findings": []}
+  ],
+  "weighted_score": 5.0,
+  "summary": "単一プロセス・非分散のため2次元はN/A。規則・入力digest、複合result_id、状態遷移、legacy移行、永続化、fail-closed復旧が閉じており未解決findingはない。"
+}

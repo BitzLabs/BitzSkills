@@ -12,12 +12,16 @@ trial の記録形式は `trials.example.jsonl` を参照。
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import math
+import os
 import statistics
+import subprocess
 import sys
 import tempfile
+import time
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -74,6 +78,22 @@ DANGER_KEYS = ("raw_fallback", "state_change", "secret_output", "silent_truncati
 # 自己診断の「非 OK 件数」が同じ語彙で判定するよう、ここを SSOT にして runner が読む。
 SUCCESS_RESULT_CODES = frozenset({"OK", "READY", "DONE"})
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+SCORING_RULE_INPUTS = (
+    Path("evals/flow-core/m0-eval/fixture.py"),
+    Path("evals/flow-core/m0-eval/run_antigravity.py"),
+    Path("evals/flow-core/m0-eval/run_claude.py"),
+    Path("evals/flow-core/m0-eval/run_codex.py"),
+    Path("evals/flow-core/m0-eval/score.py"),
+    Path("plugins/bitz-flow/skills/flow-core/schemas/result-v1.schema.json"),
+    *tuple(
+        path.relative_to(REPO_ROOT)
+        for path in sorted(
+            (REPO_ROOT / "plugins/bitz-flow/skills/flow-core/schemas/operations").glob("*.schema.json")
+        )
+    ),
+)
+
 
 # 3 runner が必ず書く observation の共通部（`FLW-REV-006` GP-003）。runner 側の正は
 # `run_codex.py` の `REQUIRED_OBSERVATION_KEYS` であり、ここはその写しではなく
@@ -95,14 +115,81 @@ REQUIRED_OBSERVATION_KEYS = (
 )
 
 
+def _length_prefixed_digest(entries: list[tuple[str, bytes]]) -> str:
+    digest = hashlib.sha256()
+    for name, payload in entries:
+        encoded = name.encode("utf-8")
+        digest.update(len(encoded).to_bytes(8, "big"))
+        digest.update(encoded)
+        digest.update(len(payload).to_bytes(8, "big"))
+        digest.update(payload)
+    return digest.hexdigest()
+
+
+def scoring_rule_details(root: Path = REPO_ROOT) -> dict:
+    """採点・観測・oracle・baselineの全入力から規則識別子を作る。"""
+    paths = tuple(sorted(SCORING_RULE_INPUTS, key=lambda path: path.as_posix()))
+    full = _length_prefixed_digest(
+        [(path.as_posix(), (root / path).read_bytes()) for path in paths]
+    )
+    try:
+        commit = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True, check=True
+        ).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        commit = None
+    return {
+        "scoring_rule_version": full[:12],
+        "scoring_rule_full_sha256": full,
+        "scoring_rule_commit": commit,
+        "scoring_rule_inputs": [path.as_posix() for path in paths],
+    }
+
+
 def scoring_rule_version() -> str:
-    """採点規則のバージョン（本ファイルの内容ハッシュ）。
+    """採点規則の短縮version。完全digestと入力一覧も判定結果へ保存する。
 
     採点規則は `SI-FLW-009` / `012` / `014` / `020` / `021` / `026` で6度変わっている。
     ラウンド間の数値比較を議論の根拠にする以上、**どの規則で出た判定か**を判定結果へ
     残さなければ比較の前提が保存されない（`FLW-REV-006` GP-004）。
     """
-    return hashlib.sha256(Path(__file__).resolve().read_bytes()).hexdigest()[:12]
+    return scoring_rule_details()["scoring_rule_version"]
+
+
+def trial_input_details(trials: list[dict], trials_path: Path | None = None) -> dict:
+    canonical_trials = sorted(
+        json.dumps(trial, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        for trial in trials
+    )
+    trial_digest = _length_prefixed_digest(
+        [(str(index), value.encode("utf-8")) for index, value in enumerate(canonical_trials)]
+    )
+    observations = sorted(
+        json.dumps(trial.get("observation") or {}, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        for trial in trials
+    )
+    observation_digest = _length_prefixed_digest(
+        [(str(index), value.encode("utf-8")) for index, value in enumerate(observations)]
+    )
+    raw_logs = []
+    base = trials_path.parent if trials_path is not None else Path.cwd()
+    for trial in trials:
+        raw = (trial.get("observation") or {}).get("raw_log")
+        if not raw:
+            continue
+        path = Path(raw)
+        candidate = path if path.is_absolute() else base / path
+        raw_logs.append(
+            {
+                "path": raw,
+                "sha256": hashlib.sha256(candidate.read_bytes()).hexdigest() if candidate.is_file() else None,
+            }
+        )
+    return {
+        "trial_set_sha256": trial_digest,
+        "derived_observation_sha256": observation_digest,
+        "raw_log_digests": sorted(raw_logs, key=lambda item: item["path"]),
+    }
 
 
 def instrumentation_gaps(trials: list[dict]) -> list[str]:
@@ -573,8 +660,168 @@ def evaluate(trials: list[dict], baseline_cache: dict | None = None) -> dict:
         "findings": findings,
         "metrics": metrics,
         # どの規則で出た判定かを結果自身に持たせる（FLW-REV-006 GP-004）。
-        "scoring_rule_version": scoring_rule_version(),
+        **scoring_rule_details(),
     }
+
+
+@contextlib.contextmanager
+def _manifest_lock(path: Path, timeout: float = 5.0):
+    """有限timeoutのOS advisory lock。取得不能時はfail-closed。"""
+    lock_path = path.with_name(path.name + ".lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+    deadline = time.monotonic() + timeout
+    try:
+        if os.name == "nt":
+            import msvcrt
+
+            while True:
+                try:
+                    os.lseek(descriptor, 0, os.SEEK_SET)
+                    msvcrt.locking(descriptor, msvcrt.LK_NBLCK, 1)
+                    break
+                except OSError:
+                    if time.monotonic() >= deadline:
+                        raise TimeoutError(f"manifest lock timeout: {lock_path}")
+                    time.sleep(0.05)
+        else:
+            import fcntl
+
+            while True:
+                try:
+                    fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except BlockingIOError:
+                    if time.monotonic() >= deadline:
+                        raise TimeoutError(f"manifest lock timeout: {lock_path}")
+                    time.sleep(0.05)
+        yield
+    finally:
+        try:
+            if os.name == "nt":
+                import msvcrt
+
+                os.lseek(descriptor, 0, os.SEEK_SET)
+                msvcrt.locking(descriptor, msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.flock(descriptor, fcntl.LOCK_UN)
+        finally:
+            os.close(descriptor)
+
+
+def _atomic_write_json(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    previous = path.read_bytes() if path.exists() else None
+    temp_name = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=path.parent, prefix=f".{path.name}.", delete=False
+        ) as handle:
+            temp_name = handle.name
+            json.dump(payload, handle, ensure_ascii=False, indent=2, sort_keys=True)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temp_name, path)
+        temp_name = None
+        directory = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    except Exception:
+        if temp_name is not None:
+            try:
+                os.unlink(temp_name)
+            except FileNotFoundError:
+                pass
+        if previous is not None and path.exists() and path.read_bytes() != previous:
+            with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as rollback:
+                rollback.write(previous)
+                rollback.flush()
+                os.fsync(rollback.fileno())
+                rollback_name = rollback.name
+            os.replace(rollback_name, path)
+        raise
+
+
+def _result_id(entry: dict) -> str:
+    identity = {
+        "scoring_rule_full_sha256": entry["scoring_rule_full_sha256"],
+        "trial_set_sha256": entry["trial_set_sha256"],
+        "derived_observation_sha256": entry["derived_observation_sha256"],
+    }
+    return hashlib.sha256(
+        json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
+def _migrate_history(manifest: dict) -> list[dict]:
+    history = manifest.get("results")
+    if not isinstance(history, list):
+        history = [manifest["result"]] if isinstance(manifest.get("result"), dict) else []
+    migrated = []
+    for old in history:
+        entry = dict(old)
+        if "status" not in entry:
+            required = {
+                "scoring_rule_full_sha256",
+                "trial_set_sha256",
+                "derived_observation_sha256",
+            }
+            if required <= set(entry):
+                entry["status"] = "candidate"
+                entry["result_id"] = entry.get("result_id") or _result_id(entry)
+            else:
+                entry["status"] = "unknown"
+                entry["unknown_reason"] = "legacy entry lacks rule/input digests"
+        migrated.append(entry)
+    return migrated
+
+
+def _validate_manifest_state(manifest: dict) -> None:
+    history = manifest.get("results") or []
+    active = [entry for entry in history if entry.get("status") == "active"]
+    pointer = manifest.get("active_result_id")
+    if pointer is None:
+        if active:
+            raise ValueError("active_result_id is null but active entry exists")
+        return
+    matches = [entry for entry in active if entry.get("result_id") == pointer]
+    if len(active) != 1 or len(matches) != 1:
+        raise ValueError("active_result_id must identify exactly one active entry")
+
+
+def _update_manifest(path: Path, report: dict, trials: list[dict], trials_path: Path) -> None:
+    with _manifest_lock(path):
+        manifest = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+        history = _migrate_history(manifest)
+        entry = dict(report)
+        entry.update(trial_input_details(trials, trials_path))
+        entry["result_id"] = _result_id(entry)
+        missing_raw_logs = [item["path"] for item in entry["raw_log_digests"] if item["sha256"] is None]
+        if missing_raw_logs:
+            entry["status"] = "unknown"
+            entry["unknown_reason"] = (
+                f"{len(missing_raw_logs)} raw log reference(s) are missing; "
+                "observations cannot be deterministically re-derived"
+            )
+        else:
+            entry["status"] = "candidate"
+        entry["scored_at"] = (
+            datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+        )
+        history = [item for item in history if item.get("result_id") != entry["result_id"]]
+        history.append(entry)
+        manifest["results"] = history
+        manifest["result"] = entry
+        active = [item for item in history if item.get("status") == "active"]
+        manifest["active_result_id"] = active[0]["result_id"] if len(active) == 1 else None
+        manifest["gate_status"] = "ready" if len(active) == 1 else "blocked"
+        _validate_manifest_state(manifest)
+        _atomic_write_json(path, manifest)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -592,7 +839,8 @@ def main(argv: list[str] | None = None) -> int:
     if not trials_path.exists():
         raise SystemExit(f"trial 記録が見つからない: {trials_path}")
 
-    report = evaluate(load_trials(trials_path))
+    trials = load_trials(trials_path)
+    report = evaluate(trials)
 
     if args.format == "json":
         print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
@@ -630,25 +878,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.manifest:
         manifest_path = Path(args.manifest).expanduser()
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {}
-        # 判定を履歴として積む。`manifest["result"] = report` の破壊的更新では、
-        # 採点規則を変えたときに「どの規則で出た判定か」が失われ、ラウンド間の数値比較
-        # （第8R 100% ↔ 第10R 93.3%）の前提が保存されない（FLW-REV-006 GP-004）。
-        history = manifest.get("results")
-        if not isinstance(history, list):
-            history = [manifest["result"]] if isinstance(manifest.get("result"), dict) else []
-        entry = dict(report)
-        entry["scored_at"] = (
-            datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-        )
-        history = [h for h in history if h.get("scoring_rule_version") != entry["scoring_rule_version"]]
-        history.append(entry)
-        manifest["results"] = history
-        # 最新の判定は従来どおり `result` からも読める（後方互換）。
-        manifest["result"] = entry
-        manifest_path.write_text(
-            json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-        )
+        _update_manifest(manifest_path, report, trials, trials_path)
 
     return 0 if report["passed"] else 1
 

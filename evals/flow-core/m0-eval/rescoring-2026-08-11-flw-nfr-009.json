@@ -1,0 +1,53 @@
+{
+  "requirement": "FLW-NFR-009",
+  "scoring_rule_version": "ee3b9a5dcad0",
+  "scoring_rule_full_sha256": "ee3b9a5dcad0179d19bbae770965d49f0fced9599ff68ebd1fd8182544441d63",
+  "scoring_rule_commit": "c4d516b27d928fa864b6107a91410bba86cfe2a2",
+  "status": "blocked",
+  "active_result_id": null,
+  "reason": "All 369 saved trial records reference unavailable raw logs, so command envelopes and required fields cannot be deterministically re-derived.",
+  "expected_differences": [
+    {
+      "trial": "antigravity-v2-skill-diff-summary-15",
+      "expected_change": "required_fields_preserved false -> true for a valid compact TRUNCATED envelope",
+      "actual": "unknown",
+      "reason": "raw log reference is unavailable"
+    },
+    {
+      "trial": "claude-code-v2-skill-repo-inspect-06",
+      "expected_change": "select the unique repo.inspect envelope after a preamble",
+      "actual": "unknown",
+      "reason": "raw log reference is unavailable"
+    }
+  ],
+  "unexpected_differences": "not_evaluable",
+  "runs": [
+    {
+      "platform_round": "antigravity-2026-08-11-r13",
+      "trial_count": 123,
+      "missing_raw_logs": 123,
+      "trial_set_sha256": "1b022df81c5c4f5aad4bda447f7fabf38440ef99a70bc1fd29151060fd4982ce",
+      "derived_observation_sha256": "60a222a5743886abd5c0f151f75107a722779e9dbb968a40373d6b14cff9fafa",
+      "result_id": "e50578de7b3aa76da79ac822805831b8933d72d7f98ce3ca4c25a51f0f0a8577",
+      "status": "unknown"
+    },
+    {
+      "platform_round": "claude-code-2026-08-11-r13b",
+      "trial_count": 123,
+      "missing_raw_logs": 123,
+      "trial_set_sha256": "b87244497e42c3afd1daa371e7f1a70c9324b73da286f0f56e126567114743fa",
+      "derived_observation_sha256": "e4fc37d660a96ee14a45e637dc407d7c15b1c0894e30bea337382b2112780a13",
+      "result_id": "07a6834383048ee18a8e391e20e679fb9229a42fd6118aba4586ff2a23ee0509",
+      "status": "unknown"
+    },
+    {
+      "platform_round": "codex-cli-2026-08-11-r13",
+      "trial_count": 123,
+      "missing_raw_logs": 123,
+      "trial_set_sha256": "261ebf7a8fa04a5da950adb1ea8022e74c423cbb117c8f39217d2a917ce02ae8",
+      "derived_observation_sha256": "6fe2a2241cd0ec078648e8254bf429b715c701fd49c1bd7cb8fad2cdfe74e3b5",
+      "result_id": "2d2c72ee1401c6209cb373ef595baf5e195878706a813893c077f2fc66e7f09d",
+      "status": "unknown"
+    }
+  ]
+}
