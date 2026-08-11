@@ -185,11 +185,27 @@
     "decision_ref": ".spec/reports/decision-2026-08-12-m1-5-roi.md"
   },
   "consumption": {
-    "pr_used": 5,
-    "sessions_used": 6,
+    "pr_used": 6,
+    "sessions_used": 7,
     "review_iterations": 0,
     "exit_shortfalls": [],
     "entries": [
+      {
+        "partition_id": "M1-6",
+        "pr": 1,
+        "sessions": 1,
+        "session_purposes": [
+          "M1-6 の範囲裁定と 3 platform qualification の実走"
+        ],
+        "tasks": [
+          "FLW-TSK-051",
+          "FLW-TSK-052"
+        ],
+        "exit_met": true,
+        "exit_evidence": "3 platform（claude 2.1.228 / codex-cli 0.147.0 / agy 1.1.12）で qualification を実走し全て PASS、合成 PASS。各 platform 3 trial・実行制約内・隔離解放漏れ 0・canary 検出済み。active manifest を qualification-runs/ へ発行した",
+        "remaining_sessions_in_partition": 2,
+        "notes": "裁定（decision-2026-08-12-m1-6-scope.md）により被測定物の confirmation は含まない。縮退規則3で M2 未完了の間は Git write を公開せず、cross-host 予約・lease を証明できないため remote-write confirmation は成立しないことによる。M1 出口条件は M1-3/M1-4/M1-5 で機械検証済み"
+      },
       {
         "partition_id": "M1-5",
         "pr": 1,
@@ -287,6 +303,13 @@
         "remaining_sessions_in_partition": 1,
         "notes": "分解時に boundary と完了条件が不整合だった点（027〜030 の単体テストが境界外）を実装前に是正した"
       }
-    ]
+    ],
+    "synthesis_operating_cost": {
+      "note": "M1-5 の ROI 見積もりで積み残した「合成自体の運用コスト」の実績",
+      "ledger_consistency_checks": "reconcile は双方向照合1回で判定でき、追加の手作業は発生しなかった",
+      "invalidation_maintenance": "失効判定は compatibility key の差分比較で完結し、platform ごとの手当ては不要だった",
+      "measured_in_partition": "M1-6",
+      "carry_to": "M2 以降の budget 再校正"
+    }
   }
 }

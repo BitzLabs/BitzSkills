@@ -52,7 +52,7 @@
 - FLW-FR-003 ← BitzSkills/tests/test_flow_contract.py
 - FLW-NFR-007 ← BitzSkills/tests/test_flow_m1_core.py, BitzSkills/tests/test_flow_m1_durable.py, BitzSkills/tests/test_flow_m1_intent.py, BitzSkills/tests/test_flow_m1_recovery_ops.py
 - FLW-NFR-008 ← BitzSkills/tests/test_flow_contract.py
-- FLW-NFR-011 ← BitzSkills/tests/test_flow_m1_compatibility.py, BitzSkills/tests/test_flow_m1_coordinator.py, BitzSkills/tests/test_flow_m1_core.py, BitzSkills/tests/test_flow_m1_durable.py, BitzSkills/tests/test_flow_m1_isolation.py, BitzSkills/tests/test_flow_m1_ledger.py, BitzSkills/tests/test_flow_m1_qualification.py, BitzSkills/tests/test_flow_m1_qualification_fixture.py, BitzSkills/tests/test_flow_m1_raw_log_guard.py, BitzSkills/tests/test_flow_m1_recovery_ops.py
+- FLW-NFR-011 ← BitzSkills/tests/test_flow_m1_compatibility.py, BitzSkills/tests/test_flow_m1_coordinator.py, BitzSkills/tests/test_flow_m1_core.py, BitzSkills/tests/test_flow_m1_durable.py, BitzSkills/tests/test_flow_m1_isolation.py, BitzSkills/tests/test_flow_m1_ledger.py, BitzSkills/tests/test_flow_m1_qualification.py, BitzSkills/tests/test_flow_m1_qualification_fixture.py, BitzSkills/tests/test_flow_m1_qualification_runner.py, BitzSkills/tests/test_flow_m1_raw_log_guard.py, BitzSkills/tests/test_flow_m1_recovery_ops.py
 
 ## 検証証跡（.spec/verification/ — 実出力に基づく機械可読証跡）
 ※ 実行時間は observed（非正規）であり一致判定に使わない。判定は exit_code と件数が正
@@ -129,7 +129,7 @@
 | FLW-NFR-008 | 検証済み（verified） | verification | benchmark | 4 | 4 |
 | FLW-NFR-009 | 検証済み（verified） | verification | unit-test | 3 | 4 |
 | FLW-NFR-010 | 検証済み（verified） | verification | unit-test | 1 | 2 |
-| FLW-NFR-011 | 実装中（implementing） | verification | benchmark | 14 | 14 |
+| FLW-NFR-011 | 実装中（implementing） | verification | benchmark | 16 | 16 |
 | FLW-NFR-012 | 実装中（implementing） | safety | unit-test | 5 | 6 |
 | FLW-REV-002 | active |  |  | 0 | 0 |
 | FLW-REV-003 | active |  |  | 0 | 0 |
