@@ -57,19 +57,22 @@ stateDiagram-v2
   HumanReview --> [*]: reconcile証跡と解除理由で解除
 ```
 
+上図のノード名（`Planned` / `PendingIntent` 等）は**図の表示ラベル**であり enum 値ではない。
+**`write_state` の enum 値の正は下の namespace 表**とする（`SI-FLW-039`）。
+
 状態の不変条件:
 
 | state | durable intent | mutation許可 | 次回同target write |
 |---|---|---|---|
-| `planned` | なし | 禁止 | plan再生成可 |
-| `guarded` | なし | 禁止 | guard競合で待機またはBLOCKED |
-| `pending-intent` | 必須 | CAS再照合後だけ可 | BLOCKED |
-| `mutating` / `reconciling` | 必須 | 現operationだけ | BLOCKED |
-| `done` | 解除receiptを保持 | 完了 | 新plan可 |
-| `partial` / `stale` | 必須 | 自動再apply禁止 | read-only reconcileまたは新planの人間確認 |
-| `quarantined` | 必須 | 禁止 | 人間解除までBLOCKED |
+| `PLANNED` | なし | 禁止 | plan再生成可 |
+| `GUARDED` | なし | 禁止 | guard競合で待機またはBLOCKED |
+| `PENDING_INTENT` | 必須 | CAS再照合後だけ可 | BLOCKED |
+| `MUTATING` / `RECONCILING` | 必須 | 現operationだけ | BLOCKED |
+| `DONE` | 解除receiptを保持 | 完了 | 新plan可 |
+| `PARTIAL` / `STALE` | 必須 | 自動再apply禁止 | read-only reconcileまたは新planの人間確認 |
+| `QUARANTINED` | 必須 | 禁止 | 人間解除までBLOCKED |
 
-`pending-intent`の永続化前に副作用を開始してはならない。副作用前crashでもintentが残る設計を採るのは、
+`PENDING_INTENT`の永続化前に副作用を開始してはならない。副作用前crashでもintentが残る設計を採るのは、
 「無駄にBLOCKEDになる」方を「記録なしの重複write」より優先するためである。
 
 同名語の混同を避け、schemaは次のenum namespaceを別fieldで持つ。
