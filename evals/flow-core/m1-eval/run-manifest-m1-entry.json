@@ -161,10 +161,30 @@
   },
 
   "consumption": {
-    "pr_used": 0,
-    "sessions_used": 0,
+    "pr_used": 1,
+    "sessions_used": 2,
     "review_iterations": 0,
     "exit_shortfalls": [],
-    "entries": []
+    "entries": [
+      {
+        "partition_id": "M1-1",
+        "pr": 1,
+        "sessions": 2,
+        "session_purposes": ["M1-1 のタスク分解", "M1-1 core の実装と検証"],
+        "tasks": [
+          "FLW-TSK-025",
+          "FLW-TSK-026",
+          "FLW-TSK-027",
+          "FLW-TSK-028",
+          "FLW-TSK-029",
+          "FLW-TSK-030",
+          "FLW-TSK-031"
+        ],
+        "exit_met": true,
+        "exit_evidence": "core の単体 fault test と契約表・負の対照が PASS。変異試験4種で検出力を確認。write operation は未公開のまま",
+        "remaining_sessions_in_partition": 1,
+        "notes": "分解時に boundary と完了条件が不整合だった点（027〜030 の単体テストが境界外）を実装前に是正した"
+      }
+    ]
   }
 }
