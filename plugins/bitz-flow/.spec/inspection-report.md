@@ -64,8 +64,8 @@
 - FLW-NFR-003 ← BitzSkills/tests/test_flow_m1_recovery.py
 - FLW-NFR-007 ← BitzSkills/tests/test_flow_m1_core.py, BitzSkills/tests/test_flow_m1_durable.py
 - FLW-NFR-008 ← BitzSkills/tests/test_flow_contract.py
-- FLW-NFR-011 ← BitzSkills/tests/test_flow_m1_coordinator.py, BitzSkills/tests/test_flow_m1_core.py, BitzSkills/tests/test_flow_m1_durable.py
-- FLW-NFR-012 ← BitzSkills/tests/test_flow_m1_core.py
+- FLW-NFR-011 ← BitzSkills/tests/test_flow_m1_coordinator.py, BitzSkills/tests/test_flow_m1_core.py, BitzSkills/tests/test_flow_m1_durable.py, BitzSkills/tests/test_flow_m1_isolation.py, BitzSkills/tests/test_flow_m1_qualification.py, BitzSkills/tests/test_flow_m1_qualification_fixture.py, BitzSkills/tests/test_flow_m1_raw_log_guard.py
+- FLW-NFR-012 ← BitzSkills/tests/test_flow_m1_core.py, BitzSkills/tests/test_flow_m1_isolation.py
 
 ## 検証証跡（.spec/verification/ — 実出力に基づく機械可読証跡）
 ※ 実行時間は observed（非正規）であり一致判定に使わない。判定は exit_code と件数が正
@@ -119,7 +119,7 @@
 | FLW-DSN-012 | active |  |  | 0 | 3 |
 | FLW-DSN-013 | active |  |  | 0 | 2 |
 | FLW-DSN-014 | active |  |  | 0 | 3 |
-| FLW-DSN-015 | active |  |  | 0 | 6 |
+| FLW-DSN-015 | active |  |  | 0 | 7 |
 | FLW-FR-001 | 検証済み（verified） | governance | unit-test | 3 | 5 |
 | FLW-FR-002 | 検証済み（verified） | tooling | manual-check | 1 | 1 |
 | FLW-FR-003 | 検証済み（verified） | tooling | unit-test | 6 | 6 |
@@ -132,7 +132,7 @@
 | FLW-FR-010 | 承認済み（approved） | workflow | unit-test | 0 | 0 |
 | FLW-FR-011 | 承認済み（approved） | tooling | unit-test | 0 | 0 |
 | FLW-FR-012 | 検証済み（verified） | governance | unit-test | 1 | 2 |
-| FLW-FR-013 | 実装中（implementing） | workflow | unit-test | 4 | 5 |
+| FLW-FR-013 | 実装中（implementing） | workflow | unit-test | 5 | 6 |
 | FLW-NFR-001 | 検証済み（verified） | verification | benchmark | 8 | 8 |
 | FLW-NFR-002 | 廃止（deprecated） | verification | benchmark | 0 | 0 |
 | FLW-NFR-003 | 実装中（implementing） | execution | unit-test | 1 | 1 |
@@ -143,8 +143,8 @@
 | FLW-NFR-008 | 検証済み（verified） | verification | benchmark | 4 | 4 |
 | FLW-NFR-009 | 検証済み（verified） | verification | unit-test | 3 | 4 |
 | FLW-NFR-010 | 検証済み（verified） | verification | unit-test | 1 | 2 |
-| FLW-NFR-011 | 実装中（implementing） | verification | benchmark | 5 | 5 |
-| FLW-NFR-012 | 実装中（implementing） | safety | unit-test | 2 | 2 |
+| FLW-NFR-011 | 実装中（implementing） | verification | benchmark | 10 | 10 |
+| FLW-NFR-012 | 実装中（implementing） | safety | unit-test | 3 | 3 |
 | FLW-REV-002 | active |  |  | 0 | 0 |
 | FLW-REV-003 | active |  |  | 0 | 0 |
 | FLW-REV-004 | active |  |  | 0 | 0 |
