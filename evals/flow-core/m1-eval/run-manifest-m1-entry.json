@@ -161,11 +161,28 @@
   },
 
   "consumption": {
-    "pr_used": 1,
-    "sessions_used": 2,
+    "pr_used": 2,
+    "sessions_used": 3,
     "review_iterations": 0,
     "exit_shortfalls": [],
     "entries": [
+      {
+        "partition_id": "M1-2",
+        "pr": 1,
+        "sessions": 1,
+        "session_purposes": ["M1-2 のタスク分解と qualification 機構の実装"],
+        "tasks": [
+          "FLW-TSK-032",
+          "FLW-TSK-033",
+          "FLW-TSK-034",
+          "FLW-TSK-035",
+          "FLW-TSK-036"
+        ],
+        "exit_met": true,
+        "exit_evidence": "3 platform（claude / codex / antigravity）の qualification fixture がすべて PASS。破損系の派生（denominator 0・残存副作用・陽性対照未検出）は 3 platform とも FAIL になることを確認。統合 fault（lease 切替・TTL 超過・canary 未検出）は BLOCKED、いずれも confirmation を起動しない",
+        "remaining_sessions_in_partition": 3,
+        "notes": "M1-2 の範囲は計測器（harness）の適格化機構とし、実 platform CLI を起動する 3 platform 実測は M1-6 confirmation の担当と解釈した（完了条件が qualification fixture PASS であること、区分予算が 4 session であることによる）。blocking Go/No-Go を PASS したため M1-3 以降へ進める"
+      },
       {
         "partition_id": "M1-1",
         "pr": 1,

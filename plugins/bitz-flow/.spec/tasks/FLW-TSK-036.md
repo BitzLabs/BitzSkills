@@ -2,7 +2,7 @@
 implements: FLW-NFR-011
 depends_on: [FLW-TSK-033, FLW-TSK-034, FLW-TSK-035]
 boundary: evals/flow-core/m1-eval/fixtures/, tests/test_flow_m1_qualification_fixture.py
-status: pending
+status: done
 ---
 
 ### 3 platform qualification fixtureと統合fault
