@@ -33,7 +33,7 @@ v2 はこれを、3プラットフォーム（Claude Code / Codex CLI / Antigrav
   （2026-08-11、FLW-REV-009 4.20。裁定記録
   `.spec/reports/decision-2026-08-11-m1-entry-four-issues-review.md`）
 - M1 write safety詳細設計 `FLW-DSN-015` は多観点レビュー **PASS 4.00**
-  （2026-08-11、FLW-REV-010、critical/major 0）を経てactive。次はM1-1のタスク分解
+  （2026-08-11、FLW-REV-010、critical/major 0）を経てactive
 - 多観点再レビュー **PASS 4.84**（critical 0 / major 0）、System Engineering Review **PASS**
 - 2026-07-31時点のv2 FR / NFR / CONは **approved**（裁定2）。M1開始前補強の
   `FLW-FR-013` / `FLW-NFR-011` / `FLW-NFR-012`も2026-08-11にapprovedとなり、
@@ -49,13 +49,27 @@ v2 はこれを、3プラットフォーム（Claude Code / Codex CLI / Antigrav
 - `SI-FLW-019`配下の測定系是正、`FLW-NFR-009`の全proxy台帳、`FLW-NFR-010`の
   platform固有測定不能判定を適用し、未達0件でM0を正式完了した。
 
-M1 Git operationsの開始前裁定と要件化は完了した。次は **`FLW-DSN-015`の詳細設計レビュー／承認**を
-完了し、write状態機械、REC-COMMIT因果証跡、qualification、evidence ledger、6 PR / 20 sessionの
-区分境界を正としてM1をタスク分解する。M1-2 qualificationを最初のblocking Go/No-Goとし、
-PASS前にM1-3以降へ進まない。
-承認によって生じた代行遷移は、`verified → promoted`を経てPromotion GateのGatePassageで検分される。
-上流側の前提だったbitz-sdd 3.xのV4設計Ready化は完了しており、bitz-flow V2のM1着手を妨げる
-外部依存はない。
+- **M1 Git operations 完了**（2026-08-12）。6区分すべてが出口条件を満たした。
+  - M1-1 安全core＋最小公開契約（#196）／M1-2 qualification（#197。**最初のblocking Go/No-Go をPASS**）
+  - M1-3 write基盤（#198。fault fixture 17件）／M1-4 Git operation（#200。contract全行・重複commit 0）
+  - M1-5 evidence合成（#201。**ROI裁定 Go**。fault fixture 13件）／M1-6 confirmation（3 platform実走）
+  - 消費は **6 PR / 7 session**（総枠 6 PR / 20 session）。実績の正は
+    `evals/flow-core/m1-eval/run-manifest-m1-entry.json`
+  - fault fixture は M1-3 の17件と M1-5 の13件で **catalog の30件を漏れなく分担**した
+  - 3 platform qualification 実走（claude 2.1.228 / codex-cli 0.147.0 / agy 1.1.12）は全て PASS、
+    合成 PASS。active manifest は `evals/flow-core/m1-eval/qualification-runs/` を正とする
+
+M1-6 の範囲は裁定により **qualification のみ**とし、被測定物の confirmation は M2 以降へ送った
+（`.spec/reports/decision-2026-08-12-m1-6-scope.md`）。縮退規則3で M2 未完了の間は Git write を
+公開せず、cross-host 予約・lease を証明できないため remote-write confirmation が成立しないことによる。
+**M1 operation は引き続き `UNSUPPORTED`** であり、dispatcher の公開集合は M0 の3 operation のままである。
+
+途中で bitz-sdd のライフサイクルに `verified → implementing`（人間裁定必須）を追加した（#199）。
+M0 で read の一部だけを検証して verified になった要件の残りを実装できない行き止まりを解いたもので、
+起票は `SI-FLW-040` → `SI-SDD-040` の委託による。
+
+次は **M2 worktree-first**。承認によって生じた代行遷移は、`verified → promoted`を経て
+Promotion GateのGatePassageで検分される。
 
 ## 規範セットの時間軸
 
@@ -76,7 +90,8 @@ PASS前にM1-3以降へ進まない。
 | Design Gate | 人間 | FLW-REV-002 多観点 PASS、FLW-REV-003 SE PASS | PASS（2026-07-29。記録 `FLW-GATE-001`） |
 | 要件承認ゲート | 人間 | FLW-REV-004 / FLW-REV-005 と draft 要件の diff | 完了（2026-07-31。一括承認） |
 | **M0 出口** | 機械（eval）+ 人間確認 | FLW-DSN-014 の M0 出口条件 | **PASS（2026-08-11、第14ラウンド）** |
-| M1〜M5 出口 | 機械（fixture / canary）+ 人間確認 | FLW-DSN-014 の出口・予算・縮退境界 | 未実施 |
+| **M1 出口** | 機械（fixture）+ 人間確認 | FLW-DSN-014 の出口・予算・縮退境界 | **PASS（2026-08-12）** |
+| M2〜M5 出口 | 機械（fixture / canary）+ 人間確認 | FLW-DSN-014 の出口・予算・縮退境界 | 未実施 |
 | Promotion Gate | 人間 | 全 milestone green、canary、代行遷移の検分 | 未実施 |
 
 レビュー PASS は人間による要件承認を代替しない（FLW-REV-004 のゲート勧告）。
