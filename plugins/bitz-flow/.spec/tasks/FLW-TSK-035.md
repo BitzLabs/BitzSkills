@@ -2,7 +2,7 @@
 implements: FLW-NFR-011
 depends_on: [FLW-TSK-032]
 boundary: evals/flow-core/m1-eval/qualification.py, tests/test_flow_m1_qualification.py
-status: pending
+status: done
 ---
 
 ### 3 trial実行とqualification Gate判定
