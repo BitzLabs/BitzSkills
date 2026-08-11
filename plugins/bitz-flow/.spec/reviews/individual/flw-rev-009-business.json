@@ -1,0 +1,1 @@
+{"perspective":"business","dimensions":[{"name":"要件トレーサビリティ","weight":0.35,"score":4,"findings":[]},{"name":"NFR定量化","weight":0.30,"score":4,"findings":[]},{"name":"ステークホルダー整合","weight":0.20,"score":4,"findings":[]},{"name":"ROI・実現可能性","weight":0.15,"score":4,"findings":[]}],"weighted_score":4.0,"summary":"閉compatibility key、6PR/20sessionの単一予算、ROI閾値が明示され、未解消P0/P1はない。"}

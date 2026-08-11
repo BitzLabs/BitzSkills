@@ -3,7 +3,7 @@ id: SI-FLW-038
 raised_by: M0全14ラウンド振り返り（platform固有失敗による再実測コスト）
 target: FLW-DSN-014・score.py・run manifest・M1以降の検証プロトコル
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: M0ではplatform固有のレート制限・quota・sandbox・ホーム書込み制限により、正常だった
   platformまで再実測する判断が繰り返された。第14ラウンドではplatform別123件を独立実行して最後に
@@ -33,3 +33,15 @@ status: open
 - **依存**: `FLW-NFR-009`の採点規則入力hash・result履歴、`FLW-NFR-010`のraw log永続性、
   `SI-FLW-037`のqualification result、bitz-sdd V4 ROADMAPテーマ13-A。**推薦: accept**。
   テーマ13-Aを重複起票せず、platform証跡の合成・invalidate境界だけを具体化する補強とする。
+
+## FLW-REV-008によるaccept前補強
+
+- 再利用可否を決める正規化済み静的入力の`compatibility_key`と、raw log digest・run固有metadataを持つ`evidence_id`を分離する。動的前提は合成直前の再qualification対象としkeyへ埋め込まない。
+- platform×operation×trialを隔離し、qualificationとconfirmationのfingerprint不一致をfail-closedにする。
+- attempt開始時に予定keyと単調増加IDをappend-only台帳へ先行登録し、PASS / FAIL / ABORTED / UNKNOWNを削除不能で記録する。wall clockではなく台帳順を使う。
+- candidateは事前宣言したretry policyだけで決める。欠番、未完了、未登録raw log、未知field、期限切れ、metadata不一致があれば合成を`blocked`にし、FAILを除外してPASSだけ選ぶ操作を拒否する。
+- scoring rule、fixture、prompt、schema、runner共通部の変更は全platformを、adapterだけの変更は当該platformをinvalidateするfixtureで固定する。
+- この補強は`FLW-REV-008:SYN-004`を解消するaccept条件である。
+- attemptは単一authoritative coordinatorのleaseとhash-chain台帳へ登録後だけ開始する。最初の適格attemptを採用し、instrument/environment failureだけ1回再試行可、被測定物FAILは新epoch/keyへ分離する。
+- compatibility keyはversion付き閉集合とし、model、CLI、host event契約、推移的依存を含める。qualificationは24時間、evidenceは7日で失効する。
+- eligibilityと再試行可能failure code/oracleを結果取得前にkeyへ拘束する。被測定物eventあり、unknown、複数軸競合は再試行不可とし、再分類は旧entryを上書きせず台帳へ追記する。

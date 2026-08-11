@@ -1,0 +1,1 @@
+{"perspective":"consistency","dimensions":[{"name":"要件・設計整合","weight":0.5,"score":4,"findings":[]},{"name":"状態・schema整合","weight":0.5,"score":4,"findings":[]}],"weighted_score":4.0,"summary":"operation catalog、状態namespace、recovery、ROADMAPの整合を確認。未解消critical/majorはない。"}

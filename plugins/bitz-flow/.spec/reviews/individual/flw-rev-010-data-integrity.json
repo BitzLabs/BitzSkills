@@ -1,0 +1,1 @@
+{"perspective":"data-integrity","dimensions":[{"name":"mutation target整合性","weight":0.5,"score":4,"findings":[]},{"name":"永続記録・復旧整合性","weight":0.5,"score":4,"findings":[]}],"weighted_score":4.0,"summary":"local/remote別guard identity、intent publication point、atomic ledgerとRPO 0契約を確認。未解消critical/majorはない。"}

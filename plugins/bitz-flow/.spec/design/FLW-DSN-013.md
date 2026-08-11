@@ -2,10 +2,10 @@
 id: FLW-DSN-013
 title: "Forward Recovery・承認・I/O安全設計"
 status: active
-version: 1.3
-updated: 2026-07-29
+version: 1.4
+updated: 2026-08-11
 owner: hide
-implements: FLW-NFR-008, FLW-NFR-003, FLW-NFR-004, FLW-NFR-005, FLW-NFR-006, FLW-NFR-007, FLW-CON-002, FLW-CON-004, FLW-CON-005
+implements: FLW-FR-013, FLW-NFR-008, FLW-NFR-003, FLW-NFR-004, FLW-NFR-005, FLW-NFR-006, FLW-NFR-007, FLW-NFR-012, FLW-CON-002, FLW-CON-004, FLW-CON-005
 origin: FLW-REV-002
 ---
 
@@ -14,7 +14,9 @@ origin: FLW-REV-002
 ## 基本方針
 
 複数のGit/GitHub状態を自動補償で巻き戻さず、確認できた副作用を保全して前進再開する。
-内部journalは持たず、operation固有marker、digest、ref、SHA、URLから状態を再構成する。
+汎用的な補償・自動再実行journalは持たず、operation固有marker、digest、ref、SHA、URLから状態を再構成する。
+ただしM1 Git writeでは、未確定な副作用を重複実行しないためのdurable intent／CAS receipt hash-chainを
+安全記録として持つ。これは補償やblind retryを駆動するjournalではなく、reconcileと人間停止の根拠である。
 
 ## 終了状態
 
@@ -34,7 +36,7 @@ origin: FLW-REV-002
 |---|---|---|---|
 | `REC-FETCH` | fetch応答喪失 | remote ref/FETCH_HEAD | expected refならDONE、違えばSTALE |
 | `REC-STAGE` | stage応答喪失 | index tree/path set | plan digest一致ならDONE |
-| `REC-COMMIT` | commit応答喪失 | parent/tree/message digest | 一意commitならDONE、複数ならINDETERMINATE |
+| `REC-COMMIT` | commit応答喪失 | plan時HEAD、予定commit OID、expected ref、operation intent/CAS receipt | tree、parent、message、author条件からcommit objectを先に作り予定OIDを確定する。CAS前にoperation ID、旧OID、予定OIDをdurable intentへ記録し、refを単一CASで更新したwriterが同じrecordへCAS結果と前後OIDを追記する。receiptとrefを復元できる場合だけDONE。intentだけ、receipt欠落、refだけ予定OIDならINDETERMINATE |
 | `REC-SYNC` | sync応答喪失 | branch/upstream/dirty | expected upstreamへff一致ならDONE |
 | `REC-PUSH` | push応答喪失 | remote branch SHA | expected HEADならDONE |
 | `REC-REMOTE-DELETE` | remote branch削除応答喪失 | remote refを全page再照会 | 不存在ならDONE、expected SHA残存ならBLOCKEDとして新snapshotのplanと再承認を要求、別SHA存在ならSTALE |
@@ -103,12 +105,24 @@ CLIを直接呼べる悪意ある／規律外のcallerへの認可境界では�
 - write deadlineはexecution最大60%、termination grace最大10%（1〜5秒）、
   reconciliation reserve最低30%（3秒以上）へ分割し、executionがreserveを消費しない。
 - stdout/stderrはoperation別byte上限までmemoryへ読み、超過時はprocessを終了して`UNAVAILABLE`。
+- 前項の`UNAVAILABLE`はreadの最終codeに限る。writeの出力上限超過は観測causeとして保持しつつ、
+  必ずpostcondition/reconcileで最終codeを決める。一意に収束すれば`DONE` / `PARTIAL` / `STALE`、
+  照合不能なら`INDETERMINATE`としてmutationを閉じ、再applyを許可しない。
 - timeout時はprocess groupへterminate、短い猶予後kill、必ずwaitする。
 - 終了後は必ずoperation別postconditionを照会する。
 - POSIXは新規session + process group signal、WindowsはPython `ctypes`のJob Objectでprocess treeを
   所有・終了する。安全なtree収束を提供できないplatformではwriteを`UNSUPPORTED`。
 - reconciliation reserve内のread-only照会は最大2回まで。2回ともtimeout/UNAVAILABLEなら
   `INDETERMINATE`でmutationを閉じ、再applyを許可しない。
+- 全writeはlock保持中かつmutation前に、repo identity、operation family、canonical target、operation ID、
+  snapshot、expected effect、evidence digestを持つowner-onlyの`pending` intention/quarantine recordを
+  durable化し、flush/digest検証後だけ副作用を開始する。DONEまたは副作用不成立を証明できた場合だけ
+  同じlock内で解除する。crash、UNKNOWN、receipt欠落、reconcile失敗ではpendingを保持し、人間が
+  reconcile証跡と解除理由を記録するまで同targetのwriteを`BLOCKED`にする。process再起動、別process、
+  result喪失後も保持し、副作用前crash、CAS直後crash、reconcile中crashをfault fixtureへ含める。
+- pending intentionのcheck-and-createにはfamily別lockを使わない。全writeはfamily別lockより先に
+  `repo identity × canonical mutation target`のtarget guardを取得し、pending検査・作成・mutation・
+  reconcile・解除まで保持する。複数targetはcanonical key昇順で全guardを取得しdeadlockを防ぐ。
 - read-only network操作だけ、rate limit/一時障害に対して上限回数・総deadline内のbackoffを許可する。
 - writeは応答エラーだけを根拠にblind retryせず、必ずreconcileを先に行う。
 - exception、traceback、resultへraw stdout/stderrを連結しない。

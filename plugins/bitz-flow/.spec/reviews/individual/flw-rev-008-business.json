@@ -1,0 +1,11 @@
+{
+  "perspective": "business",
+  "dimensions": [
+    {"name": "要件トレーサビリティ", "weight": 0.35, "score": 3, "findings": [{"id": "BIZ-101", "severity": "major", "location": "SI-FLW-037.md・SI-FLW-038.md", "title": "M1測定改善が承認済み要件へ未昇格", "description": "qualificationとplatform evidence合成を直接要求するEARS要件がない。", "recommendation": "milestone横断verification要件へ昇格し、M1入口・出口へ接続する。"}]},
+    {"name": "NFR定量化", "weight": 0.30, "score": 2, "findings": [{"id": "BIZ-201", "severity": "major", "location": "SI-FLW-037.md・SI-FLW-038.md", "title": "qualificationと証跡再利用の合格値が未定量", "description": "最小trial、最大時間、鮮度、互換条件、candidate選択順が未定義である。", "recommendation": "必須チェック100%、陽性対照、時間・再試行上限、最大証跡年齢、決定的選択順を固定する。"}]},
+    {"name": "ステークホルダー整合", "weight": 0.20, "score": 4, "findings": [{"id": "BIZ-301", "severity": "minor", "location": "ROADMAP.md:予算", "title": "Gate運用責任者が抽象的", "description": "evaluation ownerとGate approverの責任境界がない。", "recommendation": "M1 manifestへ役割を記録する。"}]},
+    {"name": "ROI・実現可能性", "weight": 0.15, "score": 2, "findings": [{"id": "BIZ-401", "severity": "major", "location": "FLW-DSN-014.md:M1予算", "title": "新測定基盤の費用がM1予算へ未反映", "description": "qualificationとevidence合成の開発費が6 PR・20 sessionの根拠へ含まれていない。", "recommendation": "qualificationを先行quick winとし、evidence合成は独立予算とROIを裁定する。"}]}
+  ],
+  "weighted_score": 2.75,
+  "summary": "安全価値は高いが、要件化、定量Gate、追加予算を確定するまでM1実装へ進めない。"
+}

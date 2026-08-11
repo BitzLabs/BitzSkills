@@ -1,0 +1,1 @@
+{"perspective":"operations","dimensions":[{"name":"監視・可観測性","weight":0.30,"score":4,"findings":[]},{"name":"災害復旧","weight":0.30,"score":4,"findings":[]},{"name":"セキュリティ態勢","weight":0.20,"score":4,"findings":[]},{"name":"デプロイ安全性","weight":0.20,"score":4,"findings":[]}],"weighted_score":4.0,"summary":"qualification非空性、期限、role、削除証跡、台帳耐久性が規範化され、未解消P0/P1はない。"}

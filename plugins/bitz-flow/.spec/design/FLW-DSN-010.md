@@ -2,10 +2,10 @@
 id: FLW-DSN-010
 title: "スキル実行遵守設計"
 status: active
-version: 1.0
-updated: 2026-07-29
+version: 1.1
+updated: 2026-08-11
 owner: hide
-implements: FLW-FR-003, FLW-FR-011, FLW-NFR-001, FLW-NFR-008, FLW-CON-001, FLW-CON-005, FLW-CON-006
+implements: FLW-FR-003, FLW-FR-011, FLW-FR-013, FLW-NFR-001, FLW-NFR-008, FLW-CON-001, FLW-CON-005, FLW-CON-006
 origin: FLW-DSC-002
 ---
 
@@ -75,6 +75,28 @@ SKILL.md自身のdirectoryを基準に`./scripts/flow.py`を示す。実行環�
 resultの`next_actions`は許可されたdomain/actionと必要引数だけを返す。shell文字列を返さず、
 エージェントがFLW-DSN-012のOperation Contractに沿って次の呼出を組み立てる。
 `explicit-human`と`INDETERMINATE`から危険操作を自動連鎖しない。
+
+失敗時はcauseだけで候補を決めず、`operation × phase × stage × code × reconcile state`を
+recovery classへ写像する。read-onlyで安全に回復できるclassだけが次のoperationを返す。
+writeの`PARTIAL` / `INDETERMINATE` / `STALE`と副作用不明classはread-only inspect/reconcileまたは
+人間停止だけを許し、apply、代替ref/path補完、blind retryを返さない。安全な候補が無い場合は
+空の`next_actions`と`stop_reason`、`required_human_input`を返す。
+
+失敗入力は引数名、repo相対の安全表現、長さ、digest、許容候補だけを共通sanitizer経由で返す。
+絶対path、URL userinfo、token pattern、改行・制御文字をresult、compact表示、raw logへ流さない。
+
+M1のrecovery classは閉集合`retry-read` / `reconcile-only` / `replan-human` / `human-stop`とする。
+
+| 入力tuple | recovery class | 許可action |
+|---|---|---|
+| read + INVALID_INPUT + inspect前 | `retry-read` | 同じread operationへの正規化済み入力候補 |
+| write + apply前 + STALE | `replan-human` | read-only inspectと新plan。applyへの自動連結は禁止 |
+| write + apply後 + PARTIAL | `reconcile-only` | operation固有のread-only reconcileだけ |
+| write + INDETERMINATE、quarantine有効 | `human-stop` | 空NEXT、解除に必要な人間入力だけ |
+| unknown field、未登録tuple、語彙矛盾 | `human-stop` | 空NEXT、診断報告だけ |
+
+NEXTは1段だけでなく連鎖全体を検査し、`PARTIAL` / `INDETERMINATE` / `STALE`からmutationへ到達する
+経路を不正とする。
 
 ## 評価
 

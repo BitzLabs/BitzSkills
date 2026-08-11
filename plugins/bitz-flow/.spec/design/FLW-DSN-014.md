@@ -2,10 +2,10 @@
 id: FLW-DSN-014
 title: "GitHub capability・M0検証設計"
 status: active
-version: 1.13
+version: 1.14
 updated: 2026-08-11
 owner: hide
-implements: FLW-FR-003, FLW-FR-008, FLW-FR-012, FLW-NFR-001, FLW-NFR-008, FLW-NFR-004, FLW-NFR-009
+implements: FLW-FR-003, FLW-FR-008, FLW-FR-012, FLW-NFR-001, FLW-NFR-008, FLW-NFR-004, FLW-NFR-009, FLW-NFR-010, FLW-NFR-011
 origin: FLW-REV-002
 ---
 
@@ -571,6 +571,39 @@ run manifestのplatform metadata（CLI版・model version / date）も同じ欠�
 - **既存manifestは手で書き換えない。** 測定記録の手編集は行わない方針であり、
   乖離の事実は`evals/flow-core/m0-eval/README.md`が保持する
 
+## M1〜M5のqualification・platform証跡合成
+
+M1以降は`qualification → confirmation`の二段階とし、qualification PASSなしで正式母数を
+起動しない。platform×operationごとに正常、既知拒否、観測破損を各ちょうど1 trial実行し、denominator 0をFAIL、必須checkと
+陽性対照100%、危険事象0件、10分以内、harness再試行1回以内を合格条件とする。
+
+write trialは単一authoritative coordinatorが原子的に予約した推測不能run ID、owner、24時間lease付きの
+platform×operation×trial別repo/remote namespaceへ隔離する。cross-hostで予約とleaseを証明できなければ
+write confirmationを`UNSUPPORTED`にする。fixture生成、fingerprint確定、write開始を同じleaseへ拘束し、
+各mutation直前にも対象ref/HEADをCASで再検証する。confirmation直前に
+credential、capability、fixture snapshot、sandbox、CLI/model、raw log flushを再照合し、未知field、
+取得不能、期限切れ、event矛盾、残存副作用を検出した場合は`blocked`にする。raw logはowner-only、
+共通redaction、最大30日保持、owner/`evaluation-reviewer` role、期限到来時の削除証跡、秘密値canaryを必須にする。
+
+証跡は次の二層へ分離する。
+
+- `compatibility_key`: version付き閉集合schemaに従うscoring rule、runner、adapter、oracle、fixture、
+  prompt、skill、result/event schema、推移的実行依存、model identity/date、CLI・host event-contract version、
+  trial割付。欠落・未知fieldは`blocked`にする。
+- `evidence_id`: raw log digest、attempt ID、run固有metadataなど、個別証跡の同一性。
+
+attemptは開始時に単一authoritative coordinatorからIDとleaseを取得し、予定keyをhash-chain付き台帳へ
+atomic append、flush、digest検証してからrunnerを起動する。crash時は未完了を`UNKNOWN`へ確定し、
+platform部分台帳と正本を双方向照合する。candidateはkeyごとの最初の適格attemptに固定する。
+qualificationで証明されたinstrument/environment failureだけを1回再試行でき、元attemptもGateへ併記する。
+被測定物FAIL後は新confirmation epoch/keyを要求し、同じGateでPASSへ置換しない。欠番、未完了、未登録raw log、
+partition、lease不一致、動的前提不一致はGateを`blocked`にする。qualification TTLは24時間、evidence TTLは7日。
+eligibility条件、再試行可能な構造化failure code、陽性対照、oracleはattempt開始前にkeyへ拘束する。
+被測定物eventが1件以上ある、unknown分類、複数failure軸の競合は再試行不可としFAIL/UNKNOWNでGateを止める。
+failure再分類は旧entryを上書きせずhash-chainへ追記する。
+共通入力変更は全platform、adapter変更は当該platformだけを
+invalidateする。legacy単一JSONLはread-only互換入口とし、新旧Gateをshadow比較してから切り替える。
+
 ## M1〜M5出口・timebox・縮退出荷境界
 
 作業sessionは「1エージェントが1つの明示目的に対し、review可能なcommitまたは検証証跡を
@@ -594,6 +627,13 @@ run manifestのplatform metadata（CLI版・model version / date）も同じ欠�
 | M3 Issue/SDD | 3 PR / 12 session | **3 + 3 = 6 PR** | 20 | capability matrix、marker重複0、link reconcile全通過、独立10 Issue/SDD flow canary green | M2までをprerelease出荷し、全`issue.*`を`UNSUPPORTED`にする |
 | M4 PR | 3 PR / 12 session | **3 + 3 = 6 PR** | 20 | push/PR/merge各partialから収束、CI/head誤判定0、独立10 PR flow canary green | M3までをprerelease出荷し、全`pr.*`を`UNSUPPORTED`にする |
 | M5 Release | 2 PR / 8 session | **2 + 2 = 4 PR** | 14 | changelog atomicity、tag/draft収束後にpublishを段階有効化 | M4までを出荷。release draftだけがgreenならprerelease限定で公開し、publishは`UNSUPPORTED`にする |
+
+M1の6 PR / 20 sessionは、公開契約1 PR / 3 session、qualification 1 / 4、Git実装2 / 7、
+evidence合成1 / 3、confirmation 1 / 3へ割り当てる。区分間の未使用分だけを移送でき、超過時は
+総枠内でも人間へ再提示する。qualificationを最初のblocking quick winとし、evidence合成は
+compatibility modelとM0再実測回避実績によるROIを確認してから着手する。
+ROIのGo条件は、予測再実測削減が1 PRまたは3 session以上であることとし、未達なら合成最適化を延期して
+qualificationと単一platform証跡の保全だけを実装する。
 
 **散文の予算は機械から見えず、M0では一度も発動しなかった。** 予算消費を成果物として持ち
 ゲート判定へ現れる形にすることを、bitz-sddのテーマ13-E（マイルストーン予算の成果物化）へ
