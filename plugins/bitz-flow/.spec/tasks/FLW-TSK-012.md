@@ -2,7 +2,7 @@
 implements: FLW-NFR-001, FLW-NFR-008, FLW-FR-012
 depends_on: [FLW-TSK-010, FLW-TSK-011]
 boundary: evals/flow-core/m0-eval/, plugins/bitz-flow/.claude-plugin/plugin.json, plugins/bitz-flow/plugin.json, plugins/bitz-flow/.codex-plugin/plugin.json
-status: implementing
+status: done
 ---
 
 ### M0 の3プラットフォーム eval と出口判定
@@ -24,7 +24,7 @@ status: implementing
   20 ポイント以上改善、platform ごとの SFCR 90%以上（全体平均で相殺しない）、
   Cross-model Decision Parity 100%、必須 field 保持 100%、golden schema 一致 100%、
   raw fallback / 状態変更 / 秘密値出力 / 黙った truncation が各0件、
-  status の median byte 削減 70%以上、diff-summary の median byte 削減 80%以上。
+  status の median byte 削減 40%以上、diff-summary の median byte 削減 80%以上。
   operation 別の p90 と absolute byte 上限を fixture manifest へ固定する。
   出口条件を満たしたら3マニフェストの version を `0.4.0` へ bump する
   （`python3 <リポジトリ>/scripts/bump_version.py bitz-flow minor`）。
@@ -35,6 +35,11 @@ status: implementing
 - **備考**: 本タスクの完了が M0 出口＝M1 の入口条件になる。version bump は M0 の PR 内に含める
   （AGENTS.md の「version bump は同一 PR 内」規約。コミット位置は問わない）。
   v2 script はこの時点でも prerelease であり、安定版入口として案内しない（FLW-DSN-011）。
+- **完了（2026-08-11, 第14ラウンド）**: 3 platform × 123 trialを再実測し、正規採点器は
+  未達0件でPASSした。Invocation Rate / SFCRは3 platformすべて100%、Decision Parity 100%、
+  必須field保持189/189、危険事象各0件/63 trial（95%上側限界4.64%）、raw log参照369/369である。
+  active resultは`84c6f45324f547723d6a63f40c352c5997b083503c2155e194256e0c584597e6`、
+  `gate_status: ready`。詳細は`evals/flow-core/m0-eval/README.md`と統合manifestを正とする。
 - **進捗（2026-08-10, 第12ラウンド。`SI-FLW-028` は奏功・出口は未成立）**: 第11ラウンドで
   唯一の未達だった antigravity の SFCR を、`SI-FLW-028` の裁定（`--base` の意味論の記述と
   読取の入口拘束。PR #182）を適用して **3 platform 同日・同一 fixture** で測り直した

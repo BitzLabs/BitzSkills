@@ -33,22 +33,22 @@ v2 はこれを、3プラットフォーム（Claude Code / Codex CLI / Antigrav
   裁定記録 `.spec/reports/decision-2026-07-29-bitz-flow-v2-design-gate.md`）
 - 多観点再レビュー **PASS 4.84**（critical 0 / major 0）、System Engineering Review **PASS**
 - v2 の FR / NFR / CON は **approved**（2026-07-31 に一括承認。裁定2）
-- **M0 のタスク分解済み**（8タスク。契約固定 → runner / result / adapter → dispatcher 結線 →
-  SKILL.md / test → eval）。M0 が implements する8要件は implementing、残る15要件は approved のまま
+- **M0 Contract Kernel完了**（契約固定 → runner / result / adapter → dispatcher結線 →
+  SKILL.md / test → eval）。M0がimplementsする8要件はverified、残る15要件はapprovedのまま
 - 2026-07-31、本書が洗い出した未裁定論点7件を裁定
   （`.spec/reports/decision-2026-07-31-bitz-flow-roadmap-open-issues.md`）
-- **M0 eval を第12ラウンドまで実施**（2026-08-10。3 platform）。**被測定物は全指標で閾値を超えた**
-  （Invocation Rate・SFCR・golden schema 一致・byte 削減が 3 platform すべてで達成、
-  Decision Parity 100%。いずれも初）。**未達は計器（harness と出口条件）の側だけに残る**
-- 2026-08-11、`SI-FLW-019`（測定系欠陥の構造的原因）を親として一括裁定し、
-  検証予算 +3 PR を裁定（`.spec/reports/decision-2026-08-11-si-flw-019-measurement-system.md`）。
-  **第13ラウンドが未達なら scope 縮小を無条件で実行する**（再提示なし）
+- **M0 eval第14ラウンドPASS**（2026-08-11。3 platform × 123 trial）。Invocation Rate / SFCRは
+  3 platformすべて100%、Decision Parity 100%、必須field保持189/189、危険事象各0件、
+  raw log参照369/369である。active resultと`gate_status: ready`は
+  `evals/flow-core/m0-eval/run-manifest-3platform-2026-08-11-r14.json`を正とする。
+- `SI-FLW-019`配下の測定系是正、`FLW-NFR-009`の全proxy台帳、`FLW-NFR-010`の
+  platform固有測定不能判定を適用し、未達0件でM0を正式完了した。
 
-次は **M0 Contract Kernel の実装**である。承認によって生じた23件の未検分の
-代行遷移は、`verified → promoted` を経て Promotion Gate の GatePassage で検分される
-（2026-07-29 分と違い、放置ではなく通常のライフサイクルで解消する滞留）。
-上流側の前提だった bitz-sdd 3.x の V4設計Ready化（`plugins/bitz-sdd/.spec/ROADMAP.md` の R0）は
-2026-07-30 に完了しており、bitz-flow V2 の着手を妨げる外部依存はない。
+次は **M1 Git operationsの開始前裁定**である。`SI-FLW-006` / `SI-FLW-029`、write系の
+再現性条件、M1の実装・計測器適格化・正式確認予算を確定してからM1をタスク分解する。
+承認によって生じた代行遷移は、`verified → promoted`を経てPromotion GateのGatePassageで検分される。
+上流側の前提だったbitz-sdd 3.xのV4設計Ready化は完了しており、bitz-flow V2のM1着手を妨げる
+外部依存はない。
 
 ## 規範セットの時間軸
 
@@ -68,7 +68,7 @@ v2 はこれを、3プラットフォーム（Claude Code / Codex CLI / Antigrav
 | Discovery Gate | 人間 | assumptions / worksheet の裁定記録 | Go（2026-07-29） |
 | Design Gate | 人間 | FLW-REV-002 多観点 PASS、FLW-REV-003 SE PASS | PASS（2026-07-29。記録 `FLW-GATE-001`） |
 | 要件承認ゲート | 人間 | FLW-REV-004 / FLW-REV-005 と draft 要件の diff | 完了（2026-07-31。一括承認） |
-| **M0 出口** | 機械（eval）+ 人間確認 | FLW-DSN-014 の M0 出口条件 | **未実施（次のアクション）** |
+| **M0 出口** | 機械（eval）+ 人間確認 | FLW-DSN-014 の M0 出口条件 | **PASS（2026-08-11、第14ラウンド）** |
 | M1〜M5 出口 | 機械（fixture / canary）+ 人間確認 | FLW-DSN-014 の出口・予算・縮退境界 | 未実施 |
 | Promotion Gate | 人間 | 全 milestone green、canary、代行遷移の検分 | 未実施 |
 

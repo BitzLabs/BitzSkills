@@ -1,7 +1,7 @@
 ---
 id: FLW-NFR-008
 version: 1.0
-status: implementing
+status: verified
 domain: verification
 priority: high
 origin: SI-FLW-009

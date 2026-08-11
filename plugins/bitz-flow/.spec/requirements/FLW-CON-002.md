@@ -1,7 +1,7 @@
 ---
 id: FLW-CON-002
 version: 1.1
-status: implementing
+status: verified
 domain: governance
 priority: high
 origin: .spec/reports/decision-2026-07-29-bitz-flow-v2-design-gate.md
