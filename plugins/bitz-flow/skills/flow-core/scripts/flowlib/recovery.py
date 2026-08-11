@@ -277,8 +277,8 @@ def validate_next_actions(
 def project_write_state(write_state: str) -> str:
     """応答喪失時の write_state を決定表の phase へ射影する（未分類のまま返さない）。"""
     mapping = {
-        "pending-intent": "pre-object-save",
-        "mutating": "post-apply",
-        "reconciling": "post-apply",
+        "PENDING_INTENT": "pre-object-save",
+        "MUTATING": "post-apply",
+        "RECONCILING": "post-apply",
     }
     return mapping.get(write_state, "reconcile-impossible")

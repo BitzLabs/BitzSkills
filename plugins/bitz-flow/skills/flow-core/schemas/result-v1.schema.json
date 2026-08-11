@@ -178,15 +178,15 @@
     "write_state": {
       "type": "string",
       "enum": [
-        "planned",
-        "guarded",
-        "pending-intent",
-        "mutating",
-        "reconciling",
-        "done",
-        "partial",
-        "stale",
-        "quarantined"
+        "PLANNED",
+        "GUARDED",
+        "PENDING_INTENT",
+        "MUTATING",
+        "RECONCILING",
+        "DONE",
+        "PARTIAL",
+        "STALE",
+        "QUARANTINED"
       ],
       "description": "write 状態機械の状態（FLW-DSN-015）。code（result_code）・intent_record_state・gate_status・attempt_status とは別 namespace であり、同名語が現れても相互に読み替えない。read operation では現れない。"
     },
