@@ -2,7 +2,7 @@
 implements: FLW-NFR-011
 depends_on: []
 boundary: evals/flow-core/m1-eval/
-status: pending
+status: done
 ---
 
 ### M1開始時の予算・実績・出口条件・縮退境界をrun manifestへ記録する
