@@ -2,7 +2,7 @@
 implements: FLW-FR-013
 depends_on: [FLW-TSK-026]
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/sanitize.py, tests/test_flow_m1_sanitize.py
-status: pending
+status: done
 ---
 
 ### 診断出力sanitizer（安全表現への正規化と秘密値・絶対pathの遮断）
