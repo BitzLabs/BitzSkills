@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bitz-flow/evidence-ledger-entry/v1",
+  "title": "bitz-flow evidence ledger entry v1",
+  "description": "計測 attempt の正本台帳 entry（FLW-DSN-015）。単一 authoritative coordinator だけが attempt ID と 24 時間 lease を発行し、runner は開始 entry を atomic append・flush・digest 検証できた場合だけ起動する。entry は hash-chain で追記のみ。既存 entry を書き換えず、訂正は訂正 entry の追記で表す。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ledger_schema",
+    "attempt_id",
+    "epoch_id",
+    "evaluation_objective_id",
+    "leader_epoch",
+    "fencing_token",
+    "platform",
+    "operation",
+    "compatibility_key",
+    "lease_id",
+    "eligibility_rule_id",
+    "positive_control_ids",
+    "oracle_digest",
+    "retryable_failure_codes",
+    "retry_slot_nonce",
+    "attempt_status",
+    "issued_at",
+    "completed_at",
+    "expires_at",
+    "evidence_id",
+    "previous_entry_digest"
+  ],
+  "properties": {
+    "ledger_schema": { "const": 1 },
+    "attempt_id": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "coordinator が linearizable CAS で採番する単調増加 ID。platform ごとの独立採番と partition 中の offline 採番を禁止する。欠番を作らない。"
+    },
+    "epoch_id": { "type": "string", "minLength": 1 },
+    "evaluation_objective_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "不変。この ID ごとに最初の適格 attempt を Gate candidate に固定する。compatibility key や epoch の変更だけで失敗履歴をリセットしない。"
+    },
+    "leader_epoch": { "type": "integer", "minimum": 0 },
+    "fencing_token": { "type": "integer", "minimum": 0 },
+    "platform": {
+      "type": "string",
+      "enum": ["claude", "codex", "antigravity"]
+    },
+    "operation": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*$"
+    },
+    "compatibility_key": {
+      "$ref": "#/$defs/sha256",
+      "description": "閉集合（scoring rule / runner / adapter / oracle / fixture / prompt / skill / result・event schema / 推移的依存 / model identity・date / CLI version / host event-contract version / trial 割付）を canonical JSON 化した digest。欠落・未知 field は非互換として扱う。credential や rate-limit 残量のような短命状態は含めず、合成直前の dynamic fingerprint で再照合する。evidence_id とは分離する。"
+    },
+    "lease_id": { "type": "string", "minLength": 1 },
+    "eligibility_rule_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "STARTED より前に compatibility key へ拘束する。事後変更を認めない。"
+    },
+    "positive_control_ids": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "陽性対照の閉じた ID 集合。STARTED より前に拘束する。空集合を検出率 100% として扱わない。"
+    },
+    "oracle_digest": { "$ref": "#/$defs/sha256" },
+    "retryable_failure_codes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "再試行を許す instrument / environment failure code。STARTED より前に拘束する。被測定物の event が1件以上ある場合・unknown・複数 failure 軸が競合する場合は再試行不可。"
+    },
+    "retry_slot_nonce": {
+      "type": "string",
+      "minLength": 1,
+      "description": "単回使用。linearizable CAS で UNUSED → USED_PENDING → USED_DONE / QUARANTINED と遷移する。二重消費は不可で、後継 attempt は最大1件。"
+    },
+    "attempt_status": { "$ref": "#/$defs/attempt_status" },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "coordinator の authoritative clock 由来。evidence TTL 7 日はこの時刻から数え、runner 開始時と Gate commit 直前に検査する。"
+    },
+    "completed_at": {
+      "oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+      "description": "中断で終了 entry を持たない attempt は UNKNOWN を追記する（既存 entry は書き換えない）。"
+    },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "evidence_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "raw log digest・attempt ID・run 固有 metadata から作る識別子。compatibility_key と混同しない。"
+    },
+    "retry_of": {
+      "oneOf": [{ "type": "integer", "minimum": 1 }, { "type": "null" }],
+      "description": "再試行元の attempt ID。事前拘束した failure code に一致し、かつ被測定物の event が 0 件の場合だけ発行できる。"
+    },
+    "previous_entry_digest": {
+      "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }],
+      "description": "直前 entry の digest。chain の先頭だけが null。chain 破損・欠番・重複 ID を検出したら Gate を blocked にする。"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "attempt_status": {
+      "type": "string",
+      "enum": ["STARTED", "PASS", "FAIL", "ABORTED", "UNKNOWN"],
+      "description": "attempt の状態（FLW-DSN-015）。result の code、write_state、intent_record_state、gate_status とは別 namespace であり、同名語が現れても相互に読み替えない。"
+    },
+    "gate_status": {
+      "type": "string",
+      "enum": ["PASS", "FAIL", "BLOCKED"],
+      "description": "Gate 判定の語彙（FLW-DSN-015）。qualification manifest（M1-2 で追加）と Gate 判定がこの語彙を使う。欠落 field・未知 enum・denominator 0 は FAIL とし、台帳の不整合・TTL 超過・partition は BLOCKED とする。attempt_status と混同しない。"
+    }
+  }
+}

@@ -2,7 +2,7 @@
 implements: FLW-FR-013, FLW-NFR-011, FLW-NFR-012
 depends_on: []
 boundary: plugins/bitz-flow/skills/flow-core/schemas/, plugins/bitz-flow/skills/flow-core/references/operation-catalog.md, plugins/bitz-flow/skills/flow-core/references/output-contract.md, plugins/bitz-flow/skills/flow-core/references/recovery-matrix.md
-status: pending
+status: done
 ---
 
 ### M1公開契約の凍結（enum namespace・intent record・evidence ledger entry・recovery matrix）
