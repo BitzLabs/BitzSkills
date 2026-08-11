@@ -1,0 +1,161 @@
+{
+  "manifest_schema": 1,
+  "qualification_id": "m1-6-antigravity-1",
+  "platform": "antigravity",
+  "operation": "repo.inspect",
+  "trials": [
+    {
+      "kind": "Q-NORMAL",
+      "credential_class": "local-only",
+      "capability": [
+        "cli-available",
+        "raw-log-guard",
+        "isolation"
+      ],
+      "fixture_initial_digest": "sha256:dc6b87e5fba48f88bb64b2042c339534488314cf8b7c83c0bf5acfd4c0fdbf80",
+      "fixture_final_digest": "sha256:dc6b87e5fba48f88bb64b2042c339534488314cf8b7c83c0bf5acfd4c0fdbf80",
+      "sandbox_boundary": "4655a87b",
+      "cli_identity": "1.1.12",
+      "model_identity": "antigravity-default",
+      "host_event_contract": "antigravity/event-contract/v1",
+      "raw_log_digest": "sha256:e315a22c553f64d7078f7ce4e188903bcf2166eebeb24798d80b27f69ac976ee",
+      "required_check_ids": [
+        "CHK-CLI-STARTED",
+        "CHK-EVENT-OBSERVED",
+        "CHK-EXIT-CODE"
+      ],
+      "checks": [
+        {
+          "check_id": "CHK-CLI-STARTED",
+          "denominator": 1,
+          "detected": 1
+        },
+        {
+          "check_id": "CHK-EVENT-OBSERVED",
+          "denominator": 1,
+          "detected": 1
+        },
+        {
+          "check_id": "CHK-EXIT-CODE",
+          "denominator": 1,
+          "detected": 1
+        }
+      ],
+      "positive_control_ids": [
+        "PC-NORMAL-ENVELOPE"
+      ],
+      "positive_controls_detected": [
+        "PC-NORMAL-ENVELOPE"
+      ],
+      "oracle_digest": "sha256:2d54474792fbbf83e37a95ea8402dcfb97c6aec87a371532a1bb08b8f9a88d2f",
+      "residual_side_effects": [],
+      "hazardous_events": []
+    },
+    {
+      "kind": "Q-REJECT",
+      "credential_class": "local-only",
+      "capability": [
+        "cli-available",
+        "raw-log-guard",
+        "isolation"
+      ],
+      "fixture_initial_digest": "sha256:71c6f6d3a873f90dde9ab7554b7704737a42625b4c5514509337ea787b6abc4d",
+      "fixture_final_digest": "sha256:71c6f6d3a873f90dde9ab7554b7704737a42625b4c5514509337ea787b6abc4d",
+      "sandbox_boundary": "84e839a7",
+      "cli_identity": "1.1.12",
+      "model_identity": "antigravity-default",
+      "host_event_contract": "antigravity/event-contract/v1",
+      "raw_log_digest": "sha256:244142d27bec0867d3058cdaed1b6fad1650441be1660972648caa38d7db2428",
+      "required_check_ids": [
+        "CHK-FAILURE-CODE",
+        "CHK-ORACLE-DETECT"
+      ],
+      "checks": [
+        {
+          "check_id": "CHK-FAILURE-CODE",
+          "denominator": 1,
+          "detected": 1
+        },
+        {
+          "check_id": "CHK-ORACLE-DETECT",
+          "denominator": 1,
+          "detected": 1
+        }
+      ],
+      "positive_control_ids": [
+        "PC-REJECT-KNOWN-FAILURE"
+      ],
+      "positive_controls_detected": [
+        "PC-REJECT-KNOWN-FAILURE"
+      ],
+      "oracle_digest": "sha256:6b5f5e7431d501527f582d119d509e8f8445361c67bfc1da64593c5175156465",
+      "residual_side_effects": [],
+      "hazardous_events": []
+    },
+    {
+      "kind": "Q-CORRUPT",
+      "credential_class": "local-only",
+      "capability": [
+        "cli-available",
+        "raw-log-guard",
+        "isolation"
+      ],
+      "fixture_initial_digest": "sha256:08dede3d6b4a7f47c55f7cd5bb78039a44daa8d0d74eba407d2f80178e28f5dd",
+      "fixture_final_digest": "sha256:08dede3d6b4a7f47c55f7cd5bb78039a44daa8d0d74eba407d2f80178e28f5dd",
+      "sandbox_boundary": "d51d40a7",
+      "cli_identity": "1.1.12",
+      "model_identity": "antigravity-default",
+      "host_event_contract": "antigravity/event-contract/v1",
+      "raw_log_digest": "sha256:f24f0debea121850d701006fd6d86c8a08b1304fe614ef512fc96167f76e6296",
+      "required_check_ids": [
+        "CHK-EVENT-MISSING",
+        "CHK-SCHEMA-CONFLICT"
+      ],
+      "checks": [
+        {
+          "check_id": "CHK-EVENT-MISSING",
+          "denominator": 1,
+          "detected": 1
+        },
+        {
+          "check_id": "CHK-SCHEMA-CONFLICT",
+          "denominator": 1,
+          "detected": 1
+        }
+      ],
+      "positive_control_ids": [
+        "PC-CORRUPT-BLOCKED"
+      ],
+      "positive_controls_detected": [
+        "PC-CORRUPT-BLOCKED"
+      ],
+      "oracle_digest": "sha256:ef95f8aeb47f3796b288e7463e15d77862d4cb55a2d9304cfbc9611c906aa2de",
+      "residual_side_effects": [],
+      "hazardous_events": []
+    }
+  ],
+  "gate_status": "PASS",
+  "gate_reasons": [],
+  "issued_at": "2026-08-11T22:55:27.918684Z",
+  "completed_at": "2026-08-11T22:56:25.211675Z",
+  "expires_at": "2026-08-12T22:55:27.918684Z",
+  "execution_limits": {
+    "max_seconds": 600,
+    "max_harness_retries": 1,
+    "elapsed_seconds": 57.29287289999775,
+    "harness_retries": 0
+  },
+  "retention": {
+    "storage_boundary": "antigravity",
+    "allowed_roles": [
+      "owner",
+      "evaluation-reviewer"
+    ],
+    "redaction_version": "1",
+    "max_retention_days": 30,
+    "delete_by": "2026-09-10T22:55:27.918684Z",
+    "delete_owner": "coordinator-operator",
+    "canary_detected": true,
+    "deletion_receipts": []
+  }
+}

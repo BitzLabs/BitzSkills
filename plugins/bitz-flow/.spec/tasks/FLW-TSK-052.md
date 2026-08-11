@@ -2,7 +2,7 @@
 implements: FLW-NFR-011
 depends_on: [FLW-TSK-051]
 boundary: evals/flow-core/m1-eval/qualification-runs/, evals/flow-core/m1-eval/README.md
-status: pending
+status: done
 ---
 
 ### 3 platformでqualificationを実走しactive manifestを発行する
