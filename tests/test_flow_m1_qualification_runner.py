@@ -145,7 +145,14 @@ def test_dry_run_never_launches_a_trial(repo, tmp_path, monkeypatch):
     assert len(manifest["trials"]) == 3
 
 
-def test_timeout_is_blocked(repo, tmp_path, monkeypatch):
+@pytest.fixture
+def cli_present(monkeypatch):
+    """CLI があることにする（CI には 3 platform の CLI が無い）。"""
+    monkeypatch.setattr(RQ, "cli_available", lambda platform: True)
+    monkeypatch.setattr(RQ, "cli_version", lambda platform: "stub 1.0")
+
+
+def test_timeout_is_blocked(repo, tmp_path, monkeypatch, cli_present):
     def _boom(*args, **kwargs):
         raise subprocess.TimeoutExpired(cmd="x", timeout=1)
 
@@ -156,7 +163,7 @@ def test_timeout_is_blocked(repo, tmp_path, monkeypatch):
     assert outcome is None and "timeout" in reason
 
 
-def test_launch_failure_is_blocked(repo, tmp_path, monkeypatch):
+def test_launch_failure_is_blocked(repo, tmp_path, monkeypatch, cli_present):
     monkeypatch.setattr(RQ.subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(OSError("nope")))
     outcome, reason = RQ.run_trial(
         "codex", "Q-REJECT", repo=repo, workdir=tmp_path / "w", dry_run=False
