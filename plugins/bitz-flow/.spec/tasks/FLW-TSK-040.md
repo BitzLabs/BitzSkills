@@ -2,7 +2,7 @@
 implements: FLW-FR-005, FLW-NFR-003
 depends_on: [FLW-TSK-039]
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/commit_causality.py, tests/test_flow_m1_commit_causality.py
-status: pending
+status: done
 ---
 
 ### git.commitのREC-COMMIT因果証跡
