@@ -2,7 +2,7 @@
 id: FLW-DSN-014
 title: "GitHub capability・M0検証設計"
 status: active
-version: 1.10
+version: 1.11
 updated: 2026-08-11
 owner: hide
 implements: FLW-FR-003, FLW-FR-008, FLW-FR-012, FLW-NFR-001, FLW-NFR-008, FLW-NFR-004
@@ -160,12 +160,32 @@ harness側の実装と対応する回帰テストは`evals/flow-core/m0-eval/REA
 | エージェント挙動 | agentが呼ばなかった・外れrefを渡した・生gitへ退避した | Invocation Rate / SFCR / 危険事象で判定する |
 | 測定不能 | 被測定物が一度も評価されていない | `measurable: false`。harness再試行の対象とし、母数から除外する |
 
-**測定不能の判定**（`SI-FLW-030`）。`duration_seconds: 0`かつ`command_events: 0`かつ
-`usage.total_tokens: 0`で、errorがquota枯渇（agyの`RESOURCE_EXHAUSTED (code 429)`等）を
-示す応答は測定不能とする。被測定物が一度も評価されていないことが観測から確定できるためである。
+**測定不能の判定**（`SI-FLW-030` / `SI-FLW-035`）。次の2条件をともに満たす trial を
+測定不能とする。被測定物が一度も評価されていないことが観測から確定できるためである。
+
+1. **実行の痕跡が無い** — `command_events: 0` かつ `tool_events: 0` かつ
+   `usage.total_tokens: 0`。**`duration_seconds`は使わない** — 拒否応答にも往復の実時間は
+   かかるため、所要時間は「被測定物が評価されたか」の証拠にならない（下表参照）
+2. **platform固有の測定不能署名が立っている** — 判定は各runnerが自platformの
+   event contractで行い、共通部は1の確認に徹する
+
+| platform | 一次情報（測定不能の署名） | 使ってはならないもの |
+|---|---|---|
+| claude-code | `rate_limit_event`の`status == "rejected"` | **`result.subtype`**（拒否時も`"success"`を返す。`is_error`を見る） |
+| antigravity | resultの`error`（`RESOURCE_EXHAUSTED (code 429)`） | — |
+| codex-cli | stderrの文言（構造化信号を公開しないため） | — |
+
+**文言一致は最後の手段であり単独で使わない。** 言い回しはplatformごとに異なり、
+第13ラウンドではclaudeの`"You've hit your session limit"`が
+`RESOURCE_EXHAUSTED|quota|rate limit|429`のどれにも一致せず、v2 63 trial中26 trialを
+取りこぼした（`SI-FLW-035`）。**agyの署名から作ったproxyを署名の違うplatformへ
+そのまま適用したことが原因**であり、`SI-FLW-019`原因2の再発である。
+
 測定不能ならharness再試行を発動させ、再試行後も測定不能ならtrialを母数から除外する。
 **除外の結果platformあたり63 trialを下回れば母数条件により未達とする**
 （`SI-FLW-026`の歯止めを維持する。除外で合格させない）。
+**痕跡が1つでもあれば測定不能にしない** — 第13ラウンドで拒否が立った26 trialのうち2件は
+拒否の前に実行が進んでおり（313 token / 53 token）、実観測として残す。
 
 **必須field保持の算出**（`SI-FLW-033`）。`required_fields_preserved`は
 「taskに対応する`flow.py`呼出の出力から必須fieldを取り出せたか」で決まるため、

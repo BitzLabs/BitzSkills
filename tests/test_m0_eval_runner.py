@@ -290,3 +290,79 @@ def test_cli_version_prefers_an_explicit_value(harness):
     """明示指定があればそれを使う（再現実行のため上書きは残す）。"""
     run_codex = harness["run_codex.py"]
     assert run_codex.cli_version(["definitely-not-a-real-binary-xyz"], "agy 1.1.11") == "agy 1.1.11"
+
+
+# --- レート制限拒否の測定不能判定（SI-FLW-035） -----------------------------
+
+
+def _rl(status: str) -> dict:
+    return {"type": "rate_limit_event", "rate_limit_info": {"status": status,
+            "rateLimitType": "five_hour"}}
+
+
+@pytest.mark.parametrize(
+    "statuses,expected",
+    (
+        (["rejected"], True),
+        (["allowed"], False),
+        (["allowed_warning"], False),
+        (["allowed", "allowed_warning"], False),
+        (["allowed_warning", "rejected"], True),
+        ([], False),
+    ),
+)
+def test_rate_limit_rejection_is_read_from_the_structured_event(harness, statuses, expected):
+    """一次情報は `rate_limit_event.status == "rejected"` である（SI-FLW-035）。
+
+    第13ラウンドの 123 trial の分布は allowed 80 / allowed_warning 15 / 混在 4 /
+    rejected 26 であり、拒否は `rejected` だけである。
+    """
+    run_claude = harness["run_claude.py"]
+    assert run_claude._rate_limit_rejected([_rl(s) for s in statuses]) is expected
+
+
+def test_unavailable_text_matches_the_claude_wording(harness):
+    """claude の言い回しが文言パターンから漏れないこと（SI-FLW-035）。"""
+    run_codex = harness["run_codex.py"]
+    assert run_codex.unavailable_text("You've hit your session limit · resets 12:40pm (Asia/Tokyo)")
+    assert run_codex.unavailable_text("RESOURCE_EXHAUSTED (code 429)")
+    assert not run_codex.unavailable_text("model refused to answer")
+
+
+def test_unavailability_ignores_duration(harness):
+    """所要時間は「被測定物が評価されたか」の証拠にならない（SI-FLW-035）。
+
+    第13ラウンドの claude のレート制限拒否は `duration_ms: 843` であり、
+    agy の 429（`duration_seconds: 0`）から作った「0 秒」条件では捕捉できなかった。
+    拒否応答にも往復の実時間はかかる。
+    """
+    run_codex = harness["run_codex.py"]
+    assert run_codex.no_execution_trace(command_events=0, tool_events=0, usage_tokens=0)
+    assert run_codex.agent_unavailable(
+        command_events=0, tool_events=0, usage_tokens=0, unavailable_signal=True
+    )
+
+
+@pytest.mark.parametrize(
+    "trace",
+    ({"command_events": 2}, {"tool_events": 1}, {"usage_tokens": 53}),
+)
+def test_partially_executed_trial_is_not_unmeasurable(harness, trace):
+    """歯止め: 痕跡が1つでもあれば測定不能にしない（SI-FLW-012）。
+
+    第13ラウンドで `rejected` が立った 26 trial のうち 2 件は、拒否の前に
+    実行が進んでいた（313 token / 53 token）。これらは実観測であり除外しない。
+    """
+    run_codex = harness["run_codex.py"]
+    kwargs = {"command_events": 0, "tool_events": 0, "usage_tokens": 0,
+              "unavailable_signal": True}
+    kwargs.update(trace)
+    assert not run_codex.agent_unavailable(**kwargs)
+
+
+def test_unavailability_requires_a_platform_signal(harness):
+    """署名が無ければ測定不能にしない（痕跡が無いだけでは agent の失敗）。"""
+    run_codex = harness["run_codex.py"]
+    assert not run_codex.agent_unavailable(
+        command_events=0, tool_events=0, usage_tokens=0, unavailable_signal=False
+    )

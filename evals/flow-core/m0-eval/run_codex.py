@@ -66,9 +66,12 @@ SECRET_PATTERN = re.compile(
 TRUNCATION_MARKERS = ("truncat", "省略", "一部", "全件", "残り")
 # compact renderer が出す省略行。**真の総数はここに載る**（`flowlib/result.py`）。
 TRUNCATED_TOTAL_PATTERN = re.compile(r"TRUNCATED\s+shown=(\d+)\s+total=(\d+)")
-# 被測定物が一度も評価されていないことを示す runner 側の応答（SI-FLW-030）。
+# 被測定物が一度も評価されていないことを示す runner 側の応答（SI-FLW-030 / SI-FLW-035）。
+# **文言一致は最後の手段**であり、構造化された信号を持つ platform ではそちらを使う。
+# `session limit` は第13ラウンドで claude が返した言い回しで、旧パターンから漏れていた。
 AGENT_UNAVAILABLE_PATTERN = re.compile(
-    r"RESOURCE_EXHAUSTED|resource has been exhausted|quota|rate[ _-]?limit|\b429\b",
+    r"RESOURCE_EXHAUSTED|resource has been exhausted|quota"
+    r"|rate[ _-]?limit|\b429\b|session limit|usage limit",
     re.IGNORECASE,
 )
 # 変更系ツールの書込先を取り出す parameter key（3 platform 分をまとめて試す）。
@@ -621,30 +624,65 @@ def tool_state_change(
     return inside, unknown
 
 
-def agent_unavailable(
+def no_execution_trace(
     *,
     command_events: int,
     tool_events: int,
     usage_tokens: int | None,
-    duration_seconds: float | None,
-    error_text: str,
 ) -> bool:
-    """被測定物が一度も評価されていないことが観測から確定できるか（`SI-FLW-030`）。
+    """実行の痕跡が1つも無いか（3 runner 共通）。
 
-    quota 枯渇（agy の `RESOURCE_EXHAUSTED (code 429)` 等）で 0 command・0 tool・
-    0 token・0 秒で終わった trial は、エージェントの失敗ではなく **測定不能**である。
-    第12ラウンドはこれを素点の FAIL として集計し、harness 再試行も発動しなかった。
-
-    **1つでも実行の痕跡があれば測定不能としない。** 途中まで動いた trial を
+    **1つでも痕跡があれば測定不能としない。** 途中まで動いた trial を
     「測れなかったこと」にすると、除外が失敗の隠れ蓑になる（`SI-FLW-012` の歯止め）。
+
+    痕跡は **command / tool / token** で見る。**`duration_seconds` は使わない**
+    （`SI-FLW-035`）。所要時間は「被測定物が評価されたか」の証拠ではない — 拒否応答にも
+    往復の実時間はかかる。第13ラウンドの claude のレート制限拒否は
+    `duration_ms: 843` であり、agy の 429（`duration_seconds: 0`）から作った条件では
+    捕捉できなかった。0 秒はたまたま agy の署名だっただけである。
     """
     if command_events or tool_events:
         return False
     if usage_tokens:
         return False
-    if duration_seconds:
+    return True
+
+
+def unavailable_text(text: str) -> bool:
+    """応答の文言が測定不能を示すか。**最後の手段であり単独で使わない**（`SI-FLW-035`）。
+
+    構造化された信号（claude の `rate_limit_event`、agy の `error`）を持つ platform では
+    そちらを一次情報にする。文言一致は platform ごとに言い回しが違い、
+    第13ラウンドでは claude の `"You've hit your session limit"` が
+    `RESOURCE_EXHAUSTED|quota|rate limit|429` のどれにも一致しなかった。
+    """
+    return bool(AGENT_UNAVAILABLE_PATTERN.search(text or ""))
+
+
+def agent_unavailable(
+    *,
+    command_events: int,
+    tool_events: int,
+    usage_tokens: int | None,
+    unavailable_signal: bool,
+) -> bool:
+    """被測定物が一度も評価されていないことが観測から確定できるか（`SI-FLW-030` / `SI-FLW-035`）。
+
+    quota 枯渇・レート制限拒否で 0 command・0 tool・0 token・0 秒で終わった trial は、
+    エージェントの失敗ではなく **測定不能**である。第12ラウンドは agy の 429 を、
+    第13ラウンドは claude のレート制限拒否を、いずれも素点の FAIL として集計した。
+
+    **署名の判定は runner が自 platform の event contract で行い、本関数は
+    「実行の痕跡が無いこと」の確認に徹する**（`SI-FLW-035`）。旧実装は agy の署名に
+    合わせた文言パターンを共通部へ置いたため、署名の違う claude を捕捉できなかった。
+    """
+    if not unavailable_signal:
         return False
-    return bool(AGENT_UNAVAILABLE_PATTERN.search(error_text or ""))
+    return no_execution_trace(
+        command_events=command_events,
+        tool_events=tool_events,
+        usage_tokens=usage_tokens,
+    )
 
 
 def cli_version(command: list[str], fallback: str | None = None) -> str | None:
@@ -911,12 +949,13 @@ def _one_attempt(job: dict) -> dict:
     silent_truncation = truncated and not truncation_disclosed(output, messages)
     # codex は変更系ツールを持たず（Bash 経由の command で判定する）、quota 枯渇時は
     # stderr にそれと分かる応答が出る（SI-FLW-030）。
+    # codex は構造化された quota 信号を公開しないため stderr の文言が一次情報になる
+    # （SI-FLW-035 の「文言一致は最後の手段」に該当する唯一の runner）。
     unavailable = agent_unavailable(
         command_events=len(commands),
         tool_events=0,
         usage_tokens=None,
-        duration_seconds=None,
-        error_text=proc.stderr or "",
+        unavailable_signal=unavailable_text(proc.stderr or ""),
     )
     fields = job["condition"] == "v2-skill" and _required_fields(
         output, oracle, job["task"], job["source_root"]

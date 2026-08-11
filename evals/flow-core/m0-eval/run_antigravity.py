@@ -208,13 +208,14 @@ def _one_attempt(job: dict) -> dict:
     # quota 枯渇（`RESOURCE_EXHAUSTED (code 429)`）で 0 command・0 tool・0 token・0 秒で
     # 終わった trial は測定不能である（SI-FLW-030）。第12ラウンドはこれを素点の FAIL として
     # 集計し、harness 再試行も発動しなかった。
+    # agy の一次情報は result の `error` field である（`RESOURCE_EXHAUSTED (code 429)`）。
+    # 署名の判定は runner 側で行う（SI-FLW-035）。
     agy_error = str(result.get("error") or "")
     unavailable = common.agent_unavailable(
         command_events=len(commands),
         tool_events=len(tools),
         usage_tokens=usage.get("total_tokens"),
-        duration_seconds=result.get("duration_seconds"),
-        error_text=agy_error,
+        unavailable_signal=common.unavailable_text(agy_error),
     )
 
     return {

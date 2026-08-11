@@ -723,8 +723,7 @@ def test_quota_exhaustion_without_any_execution_is_unmeasurable(harness):
         command_events=0,
         tool_events=0,
         usage_tokens=0,
-        duration_seconds=0,
-        error_text=QUOTA_ERROR,
+        unavailable_signal=run_codex.unavailable_text(QUOTA_ERROR),
     )
 
 
@@ -734,7 +733,6 @@ def test_quota_exhaustion_without_any_execution_is_unmeasurable(harness):
         {"command_events": 1},
         {"tool_events": 1},
         {"usage_tokens": 42},
-        {"duration_seconds": 3.2},
     ),
 )
 def test_quota_error_with_execution_traces_is_a_real_failure(harness, trace):
@@ -742,14 +740,17 @@ def test_quota_error_with_execution_traces_is_a_real_failure(harness, trace):
 
     途中まで動いた trial を「測れなかったこと」にすると、除外が失敗の隠れ蓑になる
     （`SI-FLW-012` の裁定で定めた方針）。
+
+    痕跡は command / tool / token で見る。**`duration_seconds` は含めない**
+    （`SI-FLW-035`）— 拒否応答にも実時間はかかるため、所要時間は
+    「被測定物が評価されたか」の証拠にならない。
     """
     run_codex, _ = harness
     kwargs = {
         "command_events": 0,
         "tool_events": 0,
         "usage_tokens": 0,
-        "duration_seconds": 0,
-        "error_text": QUOTA_ERROR,
+        "unavailable_signal": run_codex.unavailable_text(QUOTA_ERROR),
     }
     kwargs.update(trace)
     assert not run_codex.agent_unavailable(**kwargs)
@@ -761,8 +762,7 @@ def test_unrelated_error_is_not_unmeasurable(harness):
         command_events=0,
         tool_events=0,
         usage_tokens=0,
-        duration_seconds=0,
-        error_text="model refused to answer",
+        unavailable_signal=run_codex.unavailable_text("model refused to answer"),
     )
 
 
