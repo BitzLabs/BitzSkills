@@ -34,6 +34,9 @@ TRANSITIONS = {
         ("approved", "implementing"): "agent",
         ("implementing", "approved"): "agent",
         ("implementing", "verified"): "agent",
+        # 適用範囲が後続の作業で広がった要件を実装へ結び付け直す経路（SDD-FR-166）。
+        # 機械が verified を勝手に取り消せないよう人間裁定必須にする。
+        ("verified", "implementing"): "human",
         ("verified", "promoted"): "human",
         ("draft", "deprecated"): "human",
         ("approved", "deprecated"): "human",

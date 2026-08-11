@@ -6,6 +6,8 @@
 [*] → draft → approved → implementing → verified → promoted
                  ↓            ↓ (中断で approved に戻る)
              deprecated ← verified / promoted (supersede)
+                              ↑ (適用範囲が広がったとき人間裁定で戻る)
+                          verified
 ```
 
 | 遷移 | トリガ | 実行権限 | 副作用 |
@@ -14,10 +16,27 @@
 | draft → approved | 承認 | **人間のみ** | spec-lint 合格 + verification_method 記入が前提 |
 | approved → implementing | 所有workspace内tasks/ に `implements:` 出現 | planエージェント | traceability matrix に行追加 |
 | implementing → verified | 所有workspace内task全件done + 全検証 green + stale ゼロ | 機械判定 | matrix 緑化 |
+| verified → implementing | 適用範囲が後続の作業で広がった要件の再着手 | **人間のみ** | 既存の検証証跡は保持したまま matrix を再オープン |
 | verified → promoted | Promotion Gate | **人間のみ** | docs/ 更新・アーカイブ（references/gates.md）、`--gate-passage` で GatePassage を参照 |
 | * → deprecated | 廃止 or supersede | **人間のみ** | `superseded_by:` 記入、テストは tombstone 化 |
 
 **不変条件**: implementing 以降の要件のEARS節は書き換え不可。
+
+### verified からの再着手（SDD-FR-166）
+
+要件本文がもともと広い範囲を含み、先行フェーズではその一部だけを検証して verified にした場合、
+残りを実装するタスクを起票できない（`implements` に書くと spec_inspect が
+「verified だが未完了 local task がある」で FAIL する）。この行き止まりを解くのが
+`verified → implementing` である。
+
+**この遷移は人間裁定必須**（`--interactive-decision` または `--on-behalf-of` + `--decision-ref`）とする。
+無条件に開くと「verified を取り消してやり直す」ことが常態化し、verified の意味が薄れるためである。
+機械が勝手に取り消すことはできない。
+
+- 戻した理由は裁定参照として STATE から辿れるようにする。
+- **既存の検証証跡（`.spec/verification/`）は削除も改変もしない**。再び verified になるときに
+  新しい証跡が追加される。
+- **`promoted` からの戻りは無い**。Promotion Gate を通ったものは deprecated 経由でのみ変更する。
 
 ### verified は完了ではない（SDD-FR-156 / SDD-FR-157）
 
