@@ -2,7 +2,7 @@
 implements: FLW-NFR-011, FLW-NFR-012
 depends_on: [FLW-TSK-032]
 boundary: evals/flow-core/m1-eval/isolation.py, tests/test_flow_m1_isolation.py
-status: pending
+status: done
 ---
 
 ### 隔離namespaceの割り当てと残存副作用検査
