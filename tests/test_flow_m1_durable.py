@@ -1,4 +1,4 @@
-"""FLW-TSK-028: durable append-only store の単体テストと crash 注入。
+"""durable append-only store（FLW-NFR-007 / FLW-NFR-011）の単体テストと crash 注入。
 
 不変条件（これが破れたら write 全体が信用できない）:
   - durability commit point（directory fsync）に到達しない限り Commit を返さない

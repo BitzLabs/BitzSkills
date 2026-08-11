@@ -1,4 +1,4 @@
-"""FLW-TSK-030: 診断出力 sanitizer の単体テストと負の対照。
+"""診断出力 sanitizer（FLW-FR-013）の単体テストと負の対照。
 
 負の対照（通してはならないもの）: 絶対 path、URL userinfo、token 様文字列、制御文字、
 非 ASCII path の生バイト、repo 外の path。

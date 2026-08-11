@@ -1,4 +1,4 @@
-"""FLW-TSK-029: recovery class 決定器と、決定表 markdown との機械照合。
+"""recovery class 決定器（FLW-FR-013 / FLW-NFR-003）と、決定表 markdown との機械照合。
 
 `references/recovery-matrix.md`（人間向け）と `flowlib/recovery.py` の MATRIX（機械可読）が
 同じ決定表を表すことをここで固定する。片方だけを変更したら落ちる。

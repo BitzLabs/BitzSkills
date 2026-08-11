@@ -1,4 +1,4 @@
-"""FLW-TSK-027: coordinator core の単体テストと負の対照。
+"""coordinator core（FLW-NFR-011）の単体テストと負の対照。
 
 負の対照（拒否されなければならないもの）:
   - stale leader による採番

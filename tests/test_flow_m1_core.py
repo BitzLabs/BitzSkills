@@ -1,4 +1,5 @@
-"""FLW-TSK-031: M1-1 core の統合 fault test・契約表照合・変異試験。
+"""M1-1 core（FLW-FR-013 / FLW-NFR-007 / FLW-NFR-011 / FLW-NFR-012）の統合 fault test・
+契約表照合・変異試験。
 
 各モジュールの単体テストは実装タスク側（coordinator / durable / recovery / sanitize）が持つ。
 ここが持つのは次の3つに限る。
