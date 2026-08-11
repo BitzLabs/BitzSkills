@@ -2,7 +2,7 @@
 implements: FLW-NFR-011
 depends_on: []
 boundary: evals/flow-core/m1-eval/compatibility.py, tests/test_flow_m1_compatibility.py
-status: pending
+status: done
 ---
 
 ### compatibility key v1と失効規則
