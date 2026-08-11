@@ -2,7 +2,7 @@
 implements: FLW-FR-011
 depends_on: [FLW-TSK-044]
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/doctor.py, tests/test_flow_m1_doctor.py
-status: pending
+status: done
 ---
 
 ### repo.doctor v2（operation別capability診断）
