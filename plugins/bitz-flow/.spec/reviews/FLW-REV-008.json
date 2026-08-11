@@ -1,0 +1,37 @@
+{
+  "schema_version": 2,
+  "review_id": "FLW-REV-008",
+  "verdict": "FAIL",
+  "aggregate_score": 2.5,
+  "perspective_scores": {
+    "consistency": 2.0,
+    "operations": 3.3,
+    "risk": 2.0,
+    "business": 2.75
+  },
+  "findings_summary": {
+    "total": 17,
+    "after_dedup": 8,
+    "by_priority": {"P0": 4, "P1": 4, "P2": 0, "P3": 0},
+    "by_severity": {"critical": 4, "major": 4, "minor": 0, "info": 0}
+  },
+  "findings": [
+    {"id": "FLW-REV-008:SYN-001", "priority": "P1", "severity": "major", "source": ["RVC-101", "RVC-201", "OPS-101", "BIZ-101"], "title": "M1横断のqualification・証跡要件と裁定順が未固定", "recommendation": "SI-FLW-037を先に、SI-FLW-038を次に要件化し、006/029を含む4件をM1タスク分解前の必須裁定としてROADMAPへ固定する。", "tracked_by": "SI-FLW-037", "status": "resolved"},
+    {"id": "FLW-REV-008:SYN-002", "priority": "P0", "severity": "critical", "source": ["RVC-301", "RSK-201"], "title": "write出力上限超過がblind retryを誘発し得る", "recommendation": "output-limitは観測causeとし、writeの最終codeはreconcile結果で決定して照合不能時はINDETERMINATE・再apply禁止とする。", "tracked_by": "SI-FLW-006", "status": "resolved"},
+    {"id": "FLW-REV-008:SYN-003", "priority": "P0", "severity": "critical", "source": ["RVC-301", "RSK-202"], "title": "失敗時NEXTが危険なwrite再実行へ連鎖し得る", "recommendation": "cause単位ではなくoperation×phase×stage×code×reconcile状態の許可表でNEXTを生成し、安全停止時は空配列とhuman guidanceを許す。", "tracked_by": "SI-FLW-029", "status": "resolved"},
+    {"id": "FLW-REV-008:SYN-004", "priority": "P0", "severity": "critical", "source": ["OPS-101", "RSK-101", "RSK-401", "BIZ-201"], "title": "証跡再利用にTOCTOUと選択バイアスが残る", "recommendation": "compatibility keyとevidence IDを分離し、隔離namespace、直前再qualification、append-only attempt台帳、決定的retry・candidate規則を固定する。", "tracked_by": "SI-FLW-038", "status": "resolved"},
+    {"id": "FLW-REV-008:SYN-005", "priority": "P0", "severity": "critical", "source": ["RSK-301"], "title": "commit成功を今回のapplyへ誤帰属し得る", "recommendation": "REC-COMMITへplan時HEAD、ref CAS、予定parentからの第一子、expected tree/message/metadataによる因果証跡を追加する。", "tracked_by": "FLW-REV-008:GP-001", "status": "resolved"},
+    {"id": "FLW-REV-008:SYN-006", "priority": "P1", "severity": "major", "source": ["OPS-301"], "title": "write評価raw logの秘密値運用が不足", "recommendation": "owner-only保存、共通redaction、保持期限、アクセス・廃棄規則、秘密値陽性対照をqualification契約へ含める。", "tracked_by": "SI-FLW-037", "status": "resolved"},
+    {"id": "FLW-REV-008:SYN-007", "priority": "P1", "severity": "major", "source": ["BIZ-201", "BIZ-401"], "title": "qualification・証跡再利用の定量Gateと予算がない", "recommendation": "qualificationの母数・時間・再試行上限を固定し、evidence合成を独立予算とROIで裁定する。", "tracked_by": "SI-FLW-037", "status": "resolved"},
+    {"id": "FLW-REV-008:SYN-008", "priority": "P1", "severity": "major", "source": ["RVC-202"], "title": "verified FLW-FR-004の直接改訂手順が未定義", "recommendation": "失敗時復帰を独立FRへ起票するか、FLW-FR-004の改訂・再承認・再検証を明示する。", "tracked_by": "SI-FLW-029", "status": "resolved"}
+  ],
+  "gate_preconditions": [
+    {"id": "GP-001", "kind": "blocking", "basis": "verified", "evidence": "plugins/bitz-flow/.spec/design/FLW-DSN-013.md の REC-COMMIT は parent/tree/message digest の一意一致だけをDONE条件としており、apply因果証跡を持たない。", "description": "M1 commit実装前にREC-COMMITの因果証跡を設計し、既存同一commit・並行actor・応答喪失後HEAD進行fixtureを定義する。"}
+  ],
+  "carried_over": [
+    "FLW-REV-006:SYN-001", "FLW-REV-006:SYN-002", "FLW-REV-006:SYN-003",
+    "FLW-REV-006:SYN-004", "FLW-REV-006:SYN-005", "FLW-REV-006:SYN-006",
+    "FLW-REV-006:SYN-007", "FLW-REV-006:SYN-008", "FLW-REV-006:SYN-009"
+  ],
+  "conditional_items": []
+}

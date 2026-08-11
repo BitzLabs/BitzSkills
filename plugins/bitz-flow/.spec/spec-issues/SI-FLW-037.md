@@ -3,7 +3,7 @@ id: SI-FLW-037
 raised_by: M0第14ラウンド振り返り（agy r14環境エラーで123 trial無効）
 target: FLW-DSN-014・M1以降のeval/canary runner・run manifest
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: M0第14ラウンドのantigravity初回実測では、CLIがホーム配下へログを書けない環境を
   正式母数123件の完走後に検出し、全件を無効化した。既存の`--trials` smoke機能、runner自己診断、
@@ -34,3 +34,13 @@ status: open
 - **依存**: `SI-FLW-019`案3、`FLW-NFR-009`、`FLW-NFR-010`、`FLW-REV-006:SYN-015`、
   bitz-sdd V4 ROADMAPテーマ13-C。**推薦: accept**。個別の陽性対照案を重複実装せず、
   既存自己診断を正式測定の入口Gateへ昇格する補強として扱う。
+
+## FLW-REV-008によるaccept前補強
+
+- M0限定NFRを改訂せず、M1〜M5横断契約を新規`FLW-NFR-011`へ分離する。
+- qualificationはplatform×operationごとに正常1、既知拒否1、観測破損1 trial、必須checkと陽性対照100%、危険事象0件、10分以内、harness再試行1回以内とする。
+- write trialは独立repo/remote namespaceへ隔離し、confirmation直前にcredential、capability、fixture、sandbox、CLI/model、raw log flushを再照合する。未知・不一致・期限切れは`blocked`にする。
+- raw logはowner-only保存、共通redaction、保持期限、access role、廃棄記録、秘密値canaryを必須にする。
+- qualificationをM1のblocking quick winとして先行し、M1予算を公開契約、qualification、Git実装、evidence合成、confirmationへ分割してから実装する。
+- この補強は`FLW-REV-008:SYN-001/006/007`を解消するaccept条件である。
+- 3種trialは各ちょうど1件で空集合をFAIL、qualification TTLは24時間、raw logはowner/`evaluation-reviewer`だけが最大30日保持し、期限到来時の削除証跡を必須にする。

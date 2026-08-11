@@ -3,7 +3,7 @@ id: SI-FLW-029
 raised_by: 第11ラウンド実測（agy が INVALID_INPUT 後に --help へ退避。2026-08-08）
 target: plugins/bitz-flow/skills/flow-core/scripts/flowlib/cli.py の _failure_result、FLW-FR-004 の失敗節、FLW-DSN-010
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: 失敗 result は `next_actions` を持たず、**契約の中に復帰経路が無い**。
   v2 SKILL.md は「`NEXT` があるならそれを使う。示された引数はそのまま渡し、同じ情報を
@@ -90,3 +90,13 @@ status: open
   `SI-FLW-014`（`--help` を採点対象外とした裁定）。
   `FLW-FR-004` / `FLW-DSN-010`（正の所在）。
   実測記録は `evals/flow-core/m0-eval/trials-antigravity-2026-08-08-r11.jsonl`。
+
+## FLW-REV-008によるaccept前補強
+
+- `FLW-FR-004`はverifiedのまま改訂せず、失敗時復帰契約を新規`FLW-FR-013`へ分離する。
+- `next_actions`はcauseだけで生成せず、`operation × phase × stage × code × reconcile state`のrecovery class許可表から生成する。
+- writeの`PARTIAL` / `INDETERMINATE` / `STALE`と副作用不明時は、read-only inspect/reconcileまたは人間停止だけを許し、apply、代替ref/pathの自動補完、blind retryを禁止する。
+- 安全な候補が無い失敗では空配列を許し、`stop_reason`と`required_human_input`を返す。
+- 入力値そのものはechoせず、引数名、repo相対の安全表現、長さ、digest、許容候補だけを共通sanitizer経由で返す。
+- この補強は`FLW-REV-008:SYN-003/008`を解消するaccept条件である。
+- recovery classは閉集合とし、未登録tupleをhuman-stopへfail-closedにする。NEXT連鎖全体で`PARTIAL` / `INDETERMINATE` / `STALE`からmutationへ到達不能であることを検証する。

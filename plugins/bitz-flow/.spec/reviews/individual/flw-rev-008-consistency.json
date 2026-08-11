@@ -1,0 +1,10 @@
+{
+  "perspective": "consistency",
+  "dimensions": [
+    {"name": "構造整合", "weight": 0.35, "score": 2, "findings": [{"id": "RVC-101", "severity": "major", "location": "ROADMAP.md:現在地・裁定適時", "title": "M1入口4件の順序が未固定", "description": "SI-FLW-037から038への依存と、006/029を含むM1前裁定順がROADMAPへ明示されていない。", "recommendation": "006、029、037、038をM1タスク分解前に裁定し、037を038より先に要件化する順序を固定する。"}]},
+    {"name": "トレーサビリティ", "weight": 0.35, "score": 2, "findings": [{"id": "RVC-201", "severity": "major", "location": "SI-FLW-037.md・SI-FLW-038.md:依存", "title": "M1横断の測定要件がない", "description": "M0限定のFLW-NFR-009/010だけではM1以降のqualificationと証跡再利用を要求できない。", "recommendation": "milestone横断NFRを新設し、DSN-014、task、test-specへ接続する。"}, {"id": "RVC-202", "severity": "major", "location": "SI-FLW-029.md:提案3", "title": "verified要件の直接改訂手順がない", "description": "verifiedのFLW-FR-004へEARSを追加する場合の再承認・再検証が定義されていない。", "recommendation": "独立FRを起票するか、正規の改訂・再承認・再検証手順を裁定する。"}]},
+    {"name": "用語一貫性", "weight": 0.30, "score": 2, "findings": [{"id": "RVC-301", "severity": "major", "location": "SI-FLW-006.md・SI-FLW-029.md", "title": "診断語彙と復帰語彙の境界が曖昧", "description": "result-indeterminateの三用途混在と、全失敗でnext_actionsを非空にする案が安全停止契約と衝突する。", "recommendation": "causeからrecovery classへの対応表を設け、安全な復帰可能状態だけNEXTを返す。"}]}
+  ],
+  "weighted_score": 2.0,
+  "summary": "4件の方向性は妥当だが、M1横断要件、裁定順、verified要件の改訂手順を先に固定する必要がある。"
+}

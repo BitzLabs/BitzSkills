@@ -23,16 +23,21 @@ v2 はこれを、3プラットフォーム（Claude Code / Codex CLI / Antigrav
    capability contract で扱う。
 5. **低 token な結果契約** — compact と JSON で同じ判定を返し、省略は必ず可視化する。
 
-目的の正は `.spec/discovery/`（FLW-DSC-000〜006）と `.spec/design/`（FLW-DSN-000/002〜014）。
+目的の正は `.spec/discovery/`（FLW-DSC-000〜006）と `.spec/design/`（FLW-DSN-000/002〜015）。
 
 ## 現在地
 
 - Discovery Gate: **Go**（正は `discovery/assumptions.md` と `discovery/worksheet.md` の裁定記録。
   FLW-DSC-* の frontmatter は `draft` を維持するのが正しい状態）
-- Design Gate: **PASS**（2026-07-29。FLW-DSN-000 および FLW-DSN-002〜014 を active 化。
-  裁定記録 `.spec/reports/decision-2026-07-29-bitz-flow-v2-design-gate.md`）
+- Design Gate: **PASS**（2026-07-29）に加え、M1開始前補強の再Design Gateも**PASS**
+  （2026-08-11、FLW-REV-009 4.20。裁定記録
+  `.spec/reports/decision-2026-08-11-m1-entry-four-issues-review.md`）
+- M1 write safety詳細設計 `FLW-DSN-015` は多観点レビュー **PASS 4.00**
+  （2026-08-11、FLW-REV-010、critical/major 0）を経てactive。次はM1-1のタスク分解
 - 多観点再レビュー **PASS 4.84**（critical 0 / major 0）、System Engineering Review **PASS**
-- v2 の FR / NFR / CON は **approved**（2026-07-31 に一括承認。裁定2）
+- 2026-07-31時点のv2 FR / NFR / CONは **approved**（裁定2）。M1開始前補強の
+  `FLW-FR-013` / `FLW-NFR-011` / `FLW-NFR-012`も2026-08-11にapprovedとなり、
+  FLW-DSN-010/013/014の補強差分は再Design Gate PASSで確定した
 - **M0 Contract Kernel完了**（契約固定 → runner / result / adapter → dispatcher結線 →
   SKILL.md / test → eval）。M0がimplementsする8要件はverified、残る15要件はapprovedのまま
 - 2026-07-31、本書が洗い出した未裁定論点7件を裁定
@@ -44,8 +49,10 @@ v2 はこれを、3プラットフォーム（Claude Code / Codex CLI / Antigrav
 - `SI-FLW-019`配下の測定系是正、`FLW-NFR-009`の全proxy台帳、`FLW-NFR-010`の
   platform固有測定不能判定を適用し、未達0件でM0を正式完了した。
 
-次は **M1 Git operationsの開始前裁定**である。`SI-FLW-006` / `SI-FLW-029`、write系の
-再現性条件、M1の実装・計測器適格化・正式確認予算を確定してからM1をタスク分解する。
+M1 Git operationsの開始前裁定と要件化は完了した。次は **`FLW-DSN-015`の詳細設計レビュー／承認**を
+完了し、write状態機械、REC-COMMIT因果証跡、qualification、evidence ledger、6 PR / 20 sessionの
+区分境界を正としてM1をタスク分解する。M1-2 qualificationを最初のblocking Go/No-Goとし、
+PASS前にM1-3以降へ進まない。
 承認によって生じた代行遷移は、`verified → promoted`を経てPromotion GateのGatePassageで検分される。
 上流側の前提だったbitz-sdd 3.xのV4設計Ready化は完了しており、bitz-flow V2のM1着手を妨げる
 外部依存はない。
@@ -184,6 +191,8 @@ bitz-sdd V4 Charter が、同 ROADMAP 未裁定論点18 と一体で扱う。
 |---|---|---|---|
 | `SI-FLW-006` | 診断 cause 語彙に byte 上限超過を表す語が無い | **M1 着手前** | 公開契約（`FLW-DSN-005` の許可語彙14種）の変更。M0 実装は暫定割当で回避済み |
 | `SI-FLW-029` | 失敗 result に `next_actions` が無く契約内に復帰経路が無い | **M1 着手前** | 第12R で `--help` 退避は 0 になり緊急度は下がったが、**write 系で復帰経路が無いのは読取系より危険** |
+| `SI-FLW-037` | 正式測定前の計測器qualification Gate | **M1 タスク分解前（038より先）** | M0で環境不適格を正式母数完走後に検出した再発を防ぐblocking quick win |
+| `SI-FLW-038` | platform証跡のhash拘束付き合成・再利用 | **M1 タスク分解前（037要件化後）** | qualification証跡へ依存し、結果選択を防いだ再利用境界をconfirmation前に固定する必要がある |
 | `SI-FLW-024` | GitHub ネイティブ stacked PR 公開を受けた「スタック PR 禁止」の再検分 | **M4 着手前** | M4（PR ライフサイクル）の設計に直結。放置すると `FLW-DSN-008` と `SI-CORE-020` の両方が陸に上がる |
 | `SI-FLW-022` | repository / organization の read-only settings audit | **Promotion Gate 後** | v2 scope（Must）外の新規要望。下記「Should 機能の扱い」に従い `1.1.0` 以降で個別昇格 |
 | `SI-FLW-023` | 同 settings の write（plan / apply） | **Promotion Gate 後**（`022` の後） | write の安全境界が全く異なる。audit が先、write が後 |
@@ -206,8 +215,9 @@ spec-issue → 要件化を経て `1.1.0` 以降で個別昇格する。順序�
 
 ## 予算と縮退の運用
 
-初期 budget（M1: 3PR/12session、M2: 2PR/8session、M3: 3PR/12session、M4: 3PR/12session、
-M5: 2PR/8session）と各縮退境界の**正は `FLW-DSN-014` v1.3**であり、本書では複製しない。
+M0実績で再校正したbudget（M1: 6PR/20session、M2: 4PR/14session、M3: 6PR/20session、
+M4: 6PR/20session、M5: 4PR/14session）と各縮退境界の**正は `FLW-DSN-014` v1.14**であり、
+裁定根拠は`.spec/reports/decision-2026-08-11-m1-entry-four-issues-review.md`とFLW-REV-008/009に置く。
 運用上の要点だけを再掲する。
 
 - 各 milestone は PR 予算か session 予算のどちらかを先に使い切った時点で停止し、
@@ -273,7 +283,8 @@ M5: 2PR/8session）と各縮退境界の**正は `FLW-DSN-014` v1.3**であり�
    `.bitz-flow.json` への宣言方式にするか、WorkUnit 割当を外部状態から導出するか。
 2. **Should 機能の昇格順** — 実需要順とし、Promotion Gate 後に spec-issue 単位で裁定する（裁定4）。
 3. **M1 以降の budget 再校正** — 各 milestone 開始時に実績を run manifest へ記録し、
-   人間が次 budget を確認する（`FLW-DSN-014`）。初期 budget の妥当性は M0 実績が出るまで未知。
+   人間が次 budget を確認する（`FLW-DSN-014`）。M1は公開契約、qualification、Git実装、
+   evidence合成、confirmationへ6 PR / 20 sessionを区分配賦する。
 
 ## v2 完了条件
 

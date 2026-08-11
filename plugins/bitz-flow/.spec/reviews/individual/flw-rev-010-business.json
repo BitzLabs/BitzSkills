@@ -1,0 +1,1 @@
+{"perspective":"business","dimensions":[{"name":"要件トレーサビリティ","weight":0.35,"score":4,"findings":[]},{"name":"NFR定量化","weight":0.30,"score":4,"findings":[]},{"name":"ステークホルダー整合","weight":0.20,"score":4,"findings":[]},{"name":"ROI・実現可能性","weight":0.15,"score":4,"findings":[]}],"weighted_score":4.0,"summary":"coordinator coreとROI対象の分離、6 PR依存、No-Go分岐を確認。未解消critical/majorはない。"}

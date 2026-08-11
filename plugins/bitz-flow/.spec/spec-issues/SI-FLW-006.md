@@ -3,7 +3,7 @@ id: SI-FLW-006
 raised_by: M0 TSK-006 process runner の実装（2026-07-31）
 target: 観測できなかった事象（byte 上限超過・分類不能な失敗）に対応する cause が診断 cause の許可語彙に存在しない
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `FLW-DSN-013` の process runner は「stdout / stderr は operation 別 byte 上限まで
   memory へ読み、超過時は process を終了して `UNAVAILABLE`」と定める。しかし
@@ -114,3 +114,12 @@ status: open
   fallback に `not-repository` を使い、無関係な失敗をリポジトリ不在と偽って報告していた
   事実が、逃げ場の不在が誤報を生むことを示している。提案5（頻度の観測導線）を伴わない
   導入には反対する。
+
+## FLW-REV-008によるaccept前補強
+
+- `output-limit-exceeded`は観測障害のcauseであり、writeの最終codeを一律`UNAVAILABLE`にしない。writeは必ずpostcondition/reconcileを行い、一意に収束した場合だけ`DONE` / `PARTIAL` / `STALE`、照合不能なら`INDETERMINATE`として再applyを禁止する。readだけ`UNAVAILABLE`を許す。
+- `unclassified-failure`はreadでは診断語彙として許す。writeでは必ず`INDETERMINATE`かreconcile-onlyへ写像し、M1 canaryで1件でも発生したらGateを`blocked`にする。
+- 出力超過直前、副作用直後、reconcile失敗、既知causeがunclassifiedへ退化する変異をfault fixtureへ入れる。
+- この補強は`FLW-REV-008:SYN-002`を解消するaccept条件である。
+- `INDETERMINATE`ではtarget quarantineを永続化し、人間がreconcile証跡付きで解除するまで、再起動後や別processからの同target writeも`BLOCKED`にする。
+- quarantineは副作用後ではなくlock保持中のmutation前に`pending` intentとしてdurable化し、成功または副作用不成立を証明できた場合だけ同じlock内で解除する。

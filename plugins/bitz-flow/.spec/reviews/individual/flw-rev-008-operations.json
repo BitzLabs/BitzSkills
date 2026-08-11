@@ -1,0 +1,11 @@
+{
+  "perspective": "operations",
+  "dimensions": [
+    {"name": "監視・可観測性", "weight": 0.30, "score": 3, "findings": [{"id": "OPS-101", "severity": "major", "location": "SI-FLW-037.md・SI-FLW-038.md", "title": "qualificationと証跡互換性がGateへ未結線", "description": "confirmation開始条件とcompatibility key/evidence IDの分離が未定義である。", "recommendation": "qualification失敗時の起動禁止と、互換性入力・run固有識別子を分離したmanifest契約を固定する。"}]},
+    {"name": "災害復旧", "weight": 0.30, "score": 4, "findings": [{"id": "OPS-201", "severity": "minor", "location": "FLW-DSN-013.md:Recovery Matrix", "title": "復旧運用の責任境界が薄い", "description": "reconcile設計はあるがowner、期限、演習頻度が未定義である。", "recommendation": "M1 runbookへowner、再照会期限、fixture実施時期を定義する。"}]},
+    {"name": "セキュリティ態勢", "weight": 0.20, "score": 3, "findings": [{"id": "OPS-301", "severity": "major", "location": "FLW-NFR-010.md:raw log", "title": "write評価ログの秘密値管理が不足", "description": "保存権限、redaction、保持期限、アクセス主体、廃棄規則が未定義である。", "recommendation": "owner-only境界、秘密値陽性対照、保持・アクセス・廃棄規則をM1前に固定する。"}]},
+    {"name": "デプロイ安全性", "weight": 0.20, "score": 3, "findings": [{"id": "OPS-401", "severity": "minor", "location": "FLW-DSN-014.md:縮退", "title": "新旧manifest切替手順が未定義", "description": "legacy evidenceからcomposite evidenceへのshadow比較とrollback条件がない。", "recommendation": "新旧Gateのshadow比較、切替条件、active evidence pointer検査を定義する。"}]}
+  ],
+  "weighted_score": 3.3,
+  "summary": "縮退境界は堅牢だが、qualification入口Gate、証跡互換モデル、raw log運用を先に確定する必要がある。"
+}
