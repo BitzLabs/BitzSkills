@@ -2,7 +2,7 @@
 implements: FLW-NFR-011
 depends_on: [FLW-TSK-047]
 boundary: evals/flow-core/m1-eval/ledger.py, tests/test_flow_m1_ledger.py
-status: pending
+status: done
 ---
 
 ### evidence ledgerの合成とcandidate選択
