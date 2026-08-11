@@ -2,7 +2,7 @@
 implements: FLW-NFR-007, FLW-NFR-011
 depends_on: [FLW-TSK-047, FLW-TSK-048, FLW-TSK-049]
 boundary: tests/test_flow_m1_ledger_faults.py
-status: pending
+status: done
 ---
 
 ### M1-5のfault fixture 13件と統合検証
