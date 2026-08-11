@@ -56,6 +56,60 @@ NEXT git.diff-summary base=HEAD
 M0（read-only）で到達し得るのは 0 / 2 / 3 / 5 / 6 / 8 だけである。
 4 / 7 / 9 は write operation を導入する M1 以降で使う。
 
+### M1 で新たに到達するコード
+
+write を公開する M1-3 以降、次の3つが到達可能になる。到達した場合の扱いは
+`references/recovery-matrix.md` が正で、そこに登録の無い組み合わせは `human-stop` へ fail-closed する。
+
+| exit | code | write での意味 | 自動継続 |
+|---:|---|---|---|
+| 4 | `APPROVAL_REQUIRED` | plan 済みで、必要な外部裁定（`explicit-human`）を待っている | 不可。人間の承認が要る |
+| 7 | `PARTIAL` | 一部副作用が完了し、外部状態から completed / remaining を確定できる | 残 step の自動 apply は禁止。read-only reconcile のみ |
+| 9 | `INDETERMINATE` | 副作用の成否を一意に判定できない | mutation 全般を停止し、空 `next_actions` と `required_human_input` を返す |
+
+`git.commit` の `PARTIAL` は**到達不能**である（単一 ref の CAS は原子的で部分完了が無い）。
+receipt を欠く場合は `DONE` と推定せず `INDETERMINATE` とする。
+
+write operation が返す `code` は次の7つに限る（`OK` / `READY` / `UNAVAILABLE` は read 側の語彙）。
+
+```text
+DONE  PARTIAL  INDETERMINATE  STALE  BLOCKED  INVALID_INPUT  UNSUPPORTED
+```
+
+## 状態語彙の namespace 分離
+
+同じ語（`PASS` / `PARTIAL` / `STALE` 等）が別の意味で現れるため、**5つの enum を別 field として持ち、
+相互に読み替えない**（`FLW-DSN-015`）。
+
+| namespace | 置き場 | 値 |
+|---|---|---|
+| `code`（result code） | result envelope | `OK` / `READY` / `DONE` / `INVALID_INPUT` / `BLOCKED` / `APPROVAL_REQUIRED` / `UNAVAILABLE` / `STALE` / `PARTIAL` / `UNSUPPORTED` / `INDETERMINATE` |
+| `write_state` | `data.write_state` | `planned` / `guarded` / `pending-intent` / `mutating` / `reconciling` / `done` / `partial` / `stale` / `quarantined` |
+| `intent_record_state` | intent record | `PENDING` / `RECONCILING` / `PARTIAL` / `STALE` / `QUARANTINED` / `RELEASED` |
+| `gate_status` | qualification manifest と Gate 判定 | `PASS` / `FAIL` / `BLOCKED` |
+| `attempt_status` | evidence ledger entry | `STARTED` / `PASS` / `FAIL` / `ABORTED` / `UNKNOWN` |
+
+schema の正は `schemas/result-v1.schema.json`（`code` / `write_state`）、
+`schemas/intent-record-v1.schema.json`（`intent_record_state`）、
+`schemas/evidence-ledger-entry-v1.schema.json`（`attempt_status` / `gate_status`）。
+
+## write operation の出力（M1-3 以降）
+
+write の result は read と同じ envelope を使い、次を追加で持つ。
+
+- `data.write_state` — 状態機械上の位置。read では省略または null。
+- `data.guard_targets` — target guard を取得した canonical mutation target。canonical key の昇順。
+  raw path を含めない（`index` / `local-ref` / `remote-tracking-ref` / `fetch-head` / `remote-ref` の閉集合）。
+- `invocation.stage` — `plan` / `apply` / `post-check` を区別する。
+- `approval` — `required` が `explicit-human` の場合、`source` と `reference` に裁定の所在を載せる。
+  CLI が人間本人を認証したことは表さない。
+- `operation_id` — plan と apply を結ぶ安定 ID。apply は plan 時の `operation_id` と `snapshot` の
+  一致を要求し、不一致なら**副作用 0 で** `STALE` を返す。quarantine 解除後の mutation には
+  新しい `operation_id` を要求する（旧 ID の再利用は拒否）。
+
+compact では判定行に `write_state=` と `stage=` を載せ、変更対象の行に guard target を 1件1行で描画する。
+mutation の判断に全件確認が必要なのに項目が上限超過した場合、apply を `BLOCKED` にする。
+
 ## `data.cause` の許可語彙
 
 ```text

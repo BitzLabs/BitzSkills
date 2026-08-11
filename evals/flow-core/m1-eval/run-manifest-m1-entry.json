@@ -1,0 +1,190 @@
+{
+  "schema": "bitz-flow/milestone-budget/v1",
+  "milestone": "M1",
+  "milestone_title": "Git operations",
+  "recorded_at": "2026-08-11",
+  "recorded_by": "claude",
+  "sources": {
+    "budget": "plugins/bitz-flow/.spec/design/FLW-DSN-014.md",
+    "pr_partition": "plugins/bitz-flow/.spec/design/FLW-DSN-015.md",
+    "requirement": "FLW-FR-012",
+    "decision_refs": [
+      ".spec/reports/decision-2026-08-11-m1-write-safety-detail-design.md",
+      ".spec/reports/decision-2026-08-11-m1-entry-four-issues-review.md"
+    ]
+  },
+
+  "totals": {
+    "pr_budget": 6,
+    "implementation_pr": 3,
+    "verification_pr": 3,
+    "session_budget": 20,
+    "previous_budget": {
+      "pr_budget": 3,
+      "session_budget": 12,
+      "recalibrated_at": "2026-08-08",
+      "recalibration_round": 1
+    }
+  },
+
+  "allocations": [
+    {
+      "id": "M1-1",
+      "partition": "公開契約",
+      "concern": "安全core＋最小公開契約",
+      "pr": 1,
+      "sessions": 3,
+      "exit": "coreの単体fault test、契約表と負の対照PASS。write実装へは進まない",
+      "roi_gated": false,
+      "blocking_gate": false
+    },
+    {
+      "id": "M1-2",
+      "partition": "qualification",
+      "concern": "最初のblocking Go/No-Go",
+      "pr": 1,
+      "sessions": 4,
+      "exit": "M1-1 coreを使用して全platform qualification fixture PASS。未達時M1-3以降停止",
+      "roi_gated": false,
+      "blocking_gate": true
+    },
+    {
+      "id": "M1-3",
+      "partition": "Git実装",
+      "concern": "write基盤（target guard、intent/quarantine、stage/commit）",
+      "pr": 1,
+      "sessions": 4,
+      "exit": "FLT-001〜009、016、019、020、024〜027、029 PASS",
+      "roi_gated": false,
+      "blocking_gate": false
+    },
+    {
+      "id": "M1-4",
+      "partition": "Git実装",
+      "concern": "Git operation（fetch/sync/publish/doctor、operation別reconcile）",
+      "pr": 1,
+      "sessions": 3,
+      "exit": "M1 contract全行PASS",
+      "roi_gated": false,
+      "blocking_gate": false
+    },
+    {
+      "id": "M1-5",
+      "partition": "evidence合成",
+      "concern": "ROI条件付きevidence再利用・合成",
+      "pr": 1,
+      "sessions": 3,
+      "exit": "ROI decisionがGo、FLT-010〜015、017、018、021〜023、028、030 PASS",
+      "roi_gated": true,
+      "blocking_gate": false
+    },
+    {
+      "id": "M1-6",
+      "partition": "confirmation",
+      "concern": "3platform正式確認、active manifest",
+      "pr": 1,
+      "sessions": 3,
+      "exit": "M1出口、重複commit 0",
+      "roi_gated": false,
+      "blocking_gate": false
+    }
+  ],
+
+  "partition_totals": {
+    "公開契約": { "pr": 1, "sessions": 3 },
+    "qualification": { "pr": 1, "sessions": 4 },
+    "Git実装": { "pr": 2, "sessions": 7 },
+    "evidence合成": { "pr": 1, "sessions": 3 },
+    "confirmation": { "pr": 1, "sessions": 3 }
+  },
+
+  "dependency": {
+    "order": ["M1-1", "M1-2", "M1-3", "M1-4", "M1-5", "M1-6"],
+    "kind": "serial",
+    "branching_rule": "各PRは直前PRをmainへlandしてから最新mainから分岐する。未マージ依存のstack PRは作らない"
+  },
+
+  "m0_actuals": {
+    "implementation_pr": 1,
+    "verification_pr": 12,
+    "eval_rounds": 14,
+    "final_round_manifest": "evals/flow-core/m0-eval/run-manifest-3platform-2026-08-11-r14.json",
+    "extrapolation_note": "M1以降はM0で構築した測定系を再利用できるため、外挿に測定系の構築コスト（M0限りの資産形成）を含めない",
+    "eval_to_implementation_ratio": { "eval": 3, "implementation": 5, "factor": 0.6 }
+  },
+
+  "exit_criteria": [
+    "残るGit read/writeとdoctorが実装されていること",
+    "M1所属operationのcontract全行がPASSすること",
+    "fault fixture（M1-FLT-001〜030）がPASSすること",
+    "重複commit 0であること"
+  ],
+
+  "degraded_shipping_boundary": {
+    "summary": "M0 read-only prereleaseだけを維持。Git writeとdoctor v2は公開しない",
+    "rules": [
+      "直前milestoneの公開schemaと挙動を変更しない",
+      "未完了operationは部分公開せず UNSUPPORTED とし、生コマンドfallbackを提示しない",
+      "M2未完了ではworktree-first安全境界が閉じないため、M1 Git writeを公開しない",
+      "縮退版をv2-currentへ昇格する場合はscope/要件/operation catalogを改訂しDesign GateとPromotion Gateを再裁定する",
+      "各縮退出荷境界は、その境界自身までの独立canaryがgreenの場合だけ公開する"
+    ],
+    "forbidden_degradation": "ledger/qualificationを無効化してwriteだけ公開する縮退は認めない"
+  },
+
+  "stop_rules": [
+    "PR予算かsession予算のどちらかを先に使い切った時点で停止し、継続・scope縮小・No-Goを人間へ再提示する",
+    "進行中milestoneの上限を暗黙に延長しない。変更はdecision reference付きで記録する",
+    "区分超過は総枠内であっても人間へ再提示する",
+    "M1-1のcoreを3 session内に収められない見積りになった時点で着手せず、区分超過として人間へ再提示する",
+    "新しい要件・operation・platform固有分岐の追加は予算内であってもscope変更として人間へ提示する"
+  ],
+
+  "transfer_rule": "区分間は未使用session分だけを後続へ移送できる。総枠6 PR / 20 sessionは不変",
+
+  "counting_rule": {
+    "session_definition": "1エージェントが1つの明示目的に対し、review可能なcommitまたは検証証跡を生成する連続作業単位",
+    "pr_budget_includes": ["実装", "fixture", "文書", "version bump"],
+    "review_fix": "レビュー修正は元PRへ含める",
+    "mechanical_rerun": "機械的な再実行だけではsessionを加算しない"
+  },
+
+  "roi_gate": {
+    "applies_to": "M1-5",
+    "recorded_by": "implementation-owner",
+    "approved_by": "budget-approver",
+    "required_record": ["予測再実測削減PR数", "予測再実測削減session数", "算定根拠", "実装費"],
+    "go_condition": "削減が1 PR以上または3 session以上",
+    "no_go_degradation": "M1-1 coreは維持し、M1-5の合成拡張だけを実装せず、M1-6を単一platformの非合成証跡保全とactive manifest非昇格へ縮退して、残予算とM1出口を人間へ再提示する",
+    "status": "pending",
+    "decision_ref": null
+  },
+
+  "consumption": {
+    "pr_used": 1,
+    "sessions_used": 2,
+    "review_iterations": 0,
+    "exit_shortfalls": [],
+    "entries": [
+      {
+        "partition_id": "M1-1",
+        "pr": 1,
+        "sessions": 2,
+        "session_purposes": ["M1-1 のタスク分解", "M1-1 core の実装と検証"],
+        "tasks": [
+          "FLW-TSK-025",
+          "FLW-TSK-026",
+          "FLW-TSK-027",
+          "FLW-TSK-028",
+          "FLW-TSK-029",
+          "FLW-TSK-030",
+          "FLW-TSK-031"
+        ],
+        "exit_met": true,
+        "exit_evidence": "core の単体 fault test と契約表・負の対照が PASS。変異試験4種で検出力を確認。write operation は未公開のまま",
+        "remaining_sessions_in_partition": 1,
+        "notes": "分解時に boundary と完了条件が不整合だった点（027〜030 の単体テストが境界外）を実装前に是正した"
+      }
+    ]
+  }
+}

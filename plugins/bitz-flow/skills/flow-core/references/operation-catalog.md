@@ -3,8 +3,12 @@
 公開 operation の contract。**この表にない operation は `UNSUPPORTED`**（exit 8）を返して停止し、
 生の `git` / `gh` コマンドを代替案として提示しない。
 
-現在公開されているのは M0 の read-only 3 operation だけである。M1 以降の operation は
-実装と fault fixture が揃った milestone で追加する（設計上の配分は `FLW-DSN-012` が正）。
+現在**公開**されているのは M0 の read-only 3 operation だけである。M1 以降の operation は
+実装と fault fixture が揃った milestone で公開する（設計上の配分は `FLW-DSN-012` が正）。
+
+M1 の operation は**契約だけを凍結済み**で、まだ公開しない（下の「M1 で凍結した契約（未公開）」節）。
+凍結は「後から意味を変えないための固定」であって公開予告ではない。実装と fault fixture が
+揃うまで、これらの operation は `UNSUPPORTED` を返す。
 
 ## 共通 contract の field
 
@@ -83,6 +87,83 @@ Git 入力は `status --porcelain=v2 --branch -z`。path は NUL 区切りで取
 Git 入力は `diff --name-status -z` と `diff --numstat -z`。
 変更行の内容は返さない（必要なら M1 の `git.diff-detail` を使う）。
 data schema は `schemas/operations/git.diff-summary.schema.json`。
+
+## M1 で凍結した契約（未公開）
+
+`FLW-DSN-015` と `FLW-DSN-005` を正として contract を固定する。**公開は M1-3 / M1-4 以降**であり、
+それまでは `UNSUPPORTED`（exit 8）を返す。write の状態機械・target guard・intent record の規律は
+`FLW-DSN-015`、recovery class の決定表は `references/recovery-matrix.md` が正。
+
+### class / approval / retry / concurrency_key
+
+| operation | class | approval | retry | concurrency_key | 公開 milestone |
+|---|---|---|---|---|---|
+| `git.diff-detail` | `read` | `none` | `safe` | `null` | M1-4 |
+| `git.log` | `read` | `none` | `safe` | `null` | M1-4 |
+| `git.branches` | `read` | `none` | `safe` | `null` | M1-4 |
+| `git.conflicts` | `read` | `none` | `safe` | `null` | M1-4 |
+| `worktree.list` | `read` | `none` | `safe` | `null` | M1-4 |
+| `repo.doctor` | `read` | `none` | `safe` | `null` | M1-4 |
+| `git.fetch` | `local-write` | `mutation` | `reconcile-first` | remote-tracking ref 集合 + `FETCH_HEAD` | M1-4 |
+| `git.stage` | `local-write` | `mutation` | `reconcile-first` | common-dir + worktree ID で識別した index | M1-3 |
+| `git.commit` | `local-write` | `mutation` | `reconcile-first` | branch ref と同一 worktree の index | M1-3 |
+| `git.sync` | `local-write` | `mutation` | `reconcile-first` | branch ref、index、remote-tracking ref 集合 | M1-4 |
+| `git.publish-branch` | `remote-write` | `explicit-human` | `manual-only` | repository ID + remote branch ref | M1-4 |
+| `git.delete-remote-branch` | `destructive` | `explicit-human` | `manual-only` | repository ID + remote branch ref | M1-4 |
+
+`repo.doctor` の operation 名は `FLW-FR-011`（flow-doctor v2）から起こした。設計側が
+domain を明示していないため、既存の domain 閉集合（`repo` / `git` / `worktree` / `issue` / `pr` /
+`release`）のうち診断対象（repository と実行環境）に最も整合する `repo` を採った。
+M1-4 実装時に設計と齟齬が出た場合は spec-issue を起票して裁定を仰ぐ。
+
+### 追加 read operation
+
+`target` は canonical repo root（`worktree.list` は共通 common-dir）、`preconditions` は
+「対象パスが Git work tree に属する」、`effects` は空配列、`postconditions` は
+「snapshot 付き result を返す」、`partial` はなし（単一段階）で M0 の read と共通である。
+`evidence` だけが operation ごとに異なる。
+
+| operation | Git 入力 | `evidence` |
+|---|---|---|
+| `git.diff-detail` | `diff --no-ext-diff --unified=1` | 指定 path / hunk の変更行、最大 bytes・最大 hunks と超過の明示 |
+| `git.log` | `log --format` + NUL separator | short SHA、subject、author date、parents |
+| `git.branches` | `for-each-ref --format` | local / remote、SHA、upstream、ahead / behind |
+| `git.conflicts` | `diff --name-only --diff-filter=U -z` | conflict path 一覧 |
+| `worktree.list` | `worktree list --porcelain` | path、HEAD、branch、locked / prunable |
+| `repo.doctor` | 各 CLI の version / capability 照会 | operation 別 capability（必要 version、scope、filesystem、locking、process tree 収束）、不足 stage と許可語彙 cause |
+
+`git.diff-detail` は `diff-summary` と同じ snapshot fingerprint 規約に従い、呼出時の `--snapshot` と
+再計算値が違えば `STALE` を返す。`repo.doctor` は対象 project・Git ref・GitHub 状態を変更せず、
+GitHub を使わない対象での `gh` 欠如は warning として返す。
+
+### write operation
+
+すべて plan / apply を分離し、plan は副作用なしで `target` / `preconditions` / `effects` /
+`postconditions` / `approval` / `operation_id` を返す。plan が列挙した `effects` が apply の上限であり、
+列挙外は実行しない。apply は `operation_id` と `snapshot` の一致を要求し、不一致なら**副作用 0 で**
+`STALE` を返す。
+
+| operation | `target` | `preconditions` | `effects`（上限） | `postconditions` | `partial` | `recovery` |
+|---|---|---|---|---|---|---|
+| `git.fetch` | 明示 remote と refspec | remote が到達可能 | remote-tracking ref 集合と `FETCH_HEAD` の更新 | 更新後の ref 集合と鮮度証跡 | ref 集合の一部更新 | `REC-FETCH` |
+| `git.stage` | explicit pathspec と現在 snapshot | index digest が plan snapshot と一致 | 当該 worktree の index 更新のみ | index digest が予定値と一致 | なし（index は単一 CAS） | `REC-STAGE` |
+| `git.commit` | staged snapshot、lint 済 message、expected branch | expected parent / tree と一致 | commit object 1件と branch ref の CAS 更新 | ref が planned OID かつ receipt が存在 | **到達不能**（単一 ref CAS） | `REC-COMMIT` |
+| `git.sync` | default / upstream、ahead / behind、dirty | fast-forward 可能 | fetch と `merge --ff-only` | branch が upstream に一致 | fetch 済み・branch 未更新 | `REC-SYNC` |
+| `git.publish-branch` | remote、branch、expected HEAD、upstream | remote ref が expected HEAD と一致 | force なし push 1件 | remote ref が expected 値へ更新 | なし | `REC-PUSH` |
+| `git.delete-remote-branch` | remote、branch、expected remote SHA、merged evidence | expected remote SHA を再照会して一致 | exact ref 1件の削除のみ | remote ref が存在しない | なし | `REC-PUSH` |
+
+- `evidence` は秘密値を含まない証跡（operation ID、target canonical key、before / after OID、
+  fencing token、receipt digest）とする。remote URL・credential・raw stderr を含めない。
+- `git.commit` の message は Conventional Commits と任意の WorkUnit / Implements footer を事前検査する。
+  stdin 渡しを優先し、file を要する下位 CLI では owner-only の temp 規約（`FLW-DSN-013`）に従う。
+- `git.stage` は `git add .` 相当を提供しない。path を明示する。
+- `git.delete-remote-branch` は独立 operation とし、finish / merge へ自動連結しない。
+
+### 明示的な非対応
+
+`reset`、`clean`、force push、rebase および公開 branch の履歴書き換え、stash による暗黙退避、
+任意 Git subcommand の passthrough、`git config` / remote の add・remove は**提供しない**。
+これらは実装しないだけでなく、`next_actions` や診断メッセージで**提案もしない**（`FLW-CON-006`）。
 
 ## read operation の共通規律
 

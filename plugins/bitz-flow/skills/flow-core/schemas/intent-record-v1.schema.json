@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bitz-flow/intent-record/v1",
+  "title": "bitz-flow intent record v1",
+  "description": "write operation の durable intent（FLW-DSN-015）。副作用を開始する前に必ず永続化する。既存 record を上書きせず、状態変更は同じ operation ID の hash-chain entry として追記する。副作用前に中断しても intent が残る設計であり、「無駄な BLOCKED」を「記録なしの重複 write」より優先する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "operation_id",
+    "repo_identity",
+    "targets",
+    "fencing_tokens",
+    "snapshot_digest",
+    "expected_effect_digest",
+    "intent_record_state",
+    "created_at",
+    "owner_process",
+    "receipt_digest",
+    "previous_record_digest"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "operation_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "不透明な operation 識別子。invocation ID とは分離する。quarantine 解除後の mutation は新しい operation ID を要求する。"
+    },
+    "repo_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["local_common_dir", "remote_repository"],
+      "description": "監査のため local common-dir identity と remote repository identity を併記する。remote 側の識別に local identity を混ぜない。",
+      "properties": {
+        "local_common_dir": { "$ref": "#/$defs/sha256" },
+        "remote_repository": {
+          "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }],
+          "description": "canonical host + provider repository ID。URL をそのまま記録しない（credential を埋め込んだ URL を残さないため）。"
+        }
+      }
+    },
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "description": "canonical mutation target の集合。canonical key の bytewise 昇順で並べる。",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "canonical_key"],
+        "properties": {
+          "kind": { "$ref": "#/$defs/guard_identity_kind" },
+          "canonical_key": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "fencing_tokens": {
+      "type": "object",
+      "description": "canonical key ごとの fencing token。Git storage 自体が token を原子的に検証するとは主張しない — local は OS exclusive lock と Git expected-OID / index digest CAS、remote は provider の server-side expected remote OID CAS が実際の強制手段である。",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "snapshot_digest": { "$ref": "#/$defs/sha256" },
+    "expected_effect_digest": {
+      "$ref": "#/$defs/sha256",
+      "description": "plan が列挙した effects の canonical digest。apply がこの上限を超えないことの照合に使う。"
+    },
+    "intent_record_state": { "$ref": "#/$defs/intent_record_state" },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "coordinator の authoritative clock 由来。runner の local clock を正にしない。"
+    },
+    "owner_process": {
+      "type": "string",
+      "minLength": 1,
+      "description": "秘密値を含まない不透明な owner process 識別子。"
+    },
+    "receipt_digest": {
+      "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }],
+      "description": "CAS result（before / after OID）を記録した receipt の digest。ref が planned OID になっていても receipt が無ければ DONE へ昇格させない（INDETERMINATE とする）。"
+    },
+    "previous_record_digest": {
+      "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }],
+      "description": "同一 operation ID の直前 entry の digest。chain の先頭だけが null。"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "intent_record_state": {
+      "type": "string",
+      "enum": ["PENDING", "RECONCILING", "PARTIAL", "STALE", "QUARANTINED", "RELEASED"],
+      "description": "intent record の状態（FLW-DSN-015）。result の code、write_state、gate_status、attempt_status とは別 namespace であり、同名語が現れても相互に読み替えない。"
+    },
+    "guard_identity_kind": {
+      "type": "string",
+      "enum": ["index", "local-ref", "remote-tracking-ref", "fetch-head", "remote-ref"],
+      "description": "target guard が識別する canonical mutation target の種別（閉集合）。`schemas/result-v1.schema.json` の同名 $defs と同一の値集合でなければならない。"
+    }
+  }
+}
