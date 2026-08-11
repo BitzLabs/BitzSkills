@@ -1,7 +1,7 @@
 ---
 id: FLW-FR-003
 version: 1.0
-status: implementing
+status: verified
 domain: tooling
 priority: high
 origin: .spec/reports/decision-2026-07-29-bitz-flow-v2-design-gate.md

@@ -39,3 +39,5 @@ github_issue: https://github.com/BitzLabs/BitzSkills/issues/126
 | 軽量レーン適否 | 不適。公開CLIと診断JSONの契約追加を伴う |
 
 **推薦: accept**。実運用で安全側停止自体は成功したが、原因特定に手動分解が必要だったため。
+
+- **実施**: 2026-08-11 FLW-FR-004をM0 Contract Kernel（PR #158、FLW-TSK-008/009）で実装し、第14ラウンドのactive PASS証跡（PR #192）でverifiedへ遷移した。
