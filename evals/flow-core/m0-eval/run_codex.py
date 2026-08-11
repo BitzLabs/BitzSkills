@@ -253,7 +253,8 @@ def _save_raw_log(platform: str, job: dict, proc: subprocess.CompletedProcess) -
 
     要約値だけでは「flow.py が exit 0 なのに出力 0 byte」のような観測を事後に
     切り分けられない（harness の欠陥か platform の挙動かを判別できない）。
-    ``--keep-logs DIR`` を指定した run では raw stdout / stderr を残す。
+    raw stdout / stderr は単一JSONへ保存する。保存は既定で有効であり、trial JSONLから
+    解決できる相対pathを返す（`FLW-NFR-010`）。
     """
     directory = job.get("log_dir")
     if directory is None:
@@ -261,11 +262,28 @@ def _save_raw_log(platform: str, job: dict, proc: subprocess.CompletedProcess) -
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     name = f"{platform}-{job['condition']}-{job['task']}-{job['trial']:02d}"
-    (directory / f"{name}.stdout.jsonl").write_text(proc.stdout or "", encoding="utf-8")
-    stderr = proc.stderr or ""
-    if stderr:
-        (directory / f"{name}.stderr.txt").write_text(stderr, encoding="utf-8")
-    return name
+    path = directory / f"{name}.raw.json"
+    path.write_text(
+        json.dumps(
+            {"platform": platform, "stdout": proc.stdout or "", "stderr": proc.stderr or ""},
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    artifact_root = Path(job.get("artifact_root") or directory.parent)
+    try:
+        return path.relative_to(artifact_root).as_posix()
+    except ValueError:
+        return str(path)
+
+
+def raw_log_directory(output: Path, requested: str | None) -> Path:
+    """raw log保存先を決める。未指定でもtrial JSONLの隣へ必ず永続化する。"""
+    if requested:
+        return Path(requested).expanduser().resolve()
+    return output.with_name(f"{output.stem}-raw")
 
 
 def _events(stdout: str) -> list[dict]:
@@ -789,6 +807,11 @@ def unavailable_text(text: str) -> bool:
     return bool(AGENT_UNAVAILABLE_PATTERN.search(text or ""))
 
 
+def codex_unavailable_signal(stderr: str) -> bool:
+    """Codex CLIの拒否署名。stderrの容量・rate limit応答を一次入力にする。"""
+    return unavailable_text(stderr)
+
+
 def agent_unavailable(
     *,
     command_events: int,
@@ -1127,7 +1150,7 @@ def _one_attempt(job: dict) -> dict:
         command_events=len(commands),
         tool_events=0,
         usage_tokens=None,
-        unavailable_signal=unavailable_text(proc.stderr or ""),
+        unavailable_signal=codex_unavailable_signal(proc.stderr or ""),
     )
     fields = job["condition"] == "v2-skill" and _required_fields(
         output, oracle, job["task"], job["source_root"]
@@ -1296,7 +1319,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--plan", action="store_true", help="実行予定だけを表示して終了する")
     parser.add_argument(
         "--keep-logs",
-        help="raw event log（stdout / stderr）の保存先。未指定なら保存しない",
+        help="raw event log（stdout / stderr）の保存先。未指定時はtrial JSONL隣接DIRへ保存",
     )
     args = parser.parse_args(argv)
 
@@ -1329,7 +1352,7 @@ def main(argv: list[str] | None = None) -> int:
     if output.exists() or manifest.exists():
         raise SystemExit("既存の eval 成果物は上書きしない。新しい --output / --manifest を指定すること。")
 
-    log_dir = Path(args.keep_logs).expanduser().resolve() if args.keep_logs else None
+    log_dir = raw_log_directory(output, args.keep_logs)
     corpus = {
         condition: _prepare_corpus(
             corpus_root, condition, source_root, tasks, trials_per_condition[condition]
@@ -1357,6 +1380,7 @@ def main(argv: list[str] | None = None) -> int:
                         "timeout": args.timeout,
                         "source_root": source_root,
                         "log_dir": log_dir,
+                        "artifact_root": output.parent,
                         "harness_retries": args.harness_retries,
                     }
                 )

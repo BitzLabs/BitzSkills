@@ -3,7 +3,8 @@ id: SI-FLW-035
 raised_by: 第13ラウンド実測（3 platform。2026-08-11）
 target: evals/flow-core/m0-eval/run_claude.py の agent_unavailable 判定、run_codex.py の AGENT_UNAVAILABLE_PATTERN
 proposed_change_type: modify
-status: open
+status: accepted
+github_issue: https://github.com/BitzLabs/BitzSkills/issues/189
 ---
 - **目的**: 第13ラウンドの `claude-code / v2-skill` **63 trial 中 26 trial**が
   Claude Code の**レート制限拒否**で被測定物を一度も評価しなかったにもかかわらず、
@@ -84,3 +85,9 @@ status: open
   `SI-FLW-019` 案2（proxy の乖離条件。本件はその適用範囲の不足）。
   `SI-FLW-025`（歯止め機構が一部 runner にしか入らない再発パターン）。
   `FLW-DSN-014`（変更対象）。
+
+- **推薦**: accept。構造化イベントを一次情報にする修正は既存のmeasurandを変えず、
+  `FLW-NFR-009`のproxy乖離防止をplatform固有署名へ具体化する。公開契約に影響しないため軽量レーン可。
+
+- **実施**: 2026-08-11 `FLW-NFR-010`として要件化し、platform固有拒否署名、実行痕跡の歯止め、
+  raw event logの既定永続化を実装・検証した。対応タスクは`FLW-TSK-024`。

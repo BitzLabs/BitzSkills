@@ -100,6 +100,11 @@ def _one_trial(job: dict) -> dict:
     return common.run_trial(job, _one_attempt)
 
 
+def antigravity_unavailable_signal(result: dict) -> bool:
+    """Antigravity固有の拒否署名。構造化resultのerror fieldだけを読む。"""
+    return common.unavailable_text(str(result.get("error") or ""))
+
+
 def _one_attempt(job: dict) -> dict:
     repo: Path = job["repo"]
     before = common._state(repo)
@@ -210,12 +215,11 @@ def _one_attempt(job: dict) -> dict:
     # 集計し、harness 再試行も発動しなかった。
     # agy の一次情報は result の `error` field である（`RESOURCE_EXHAUSTED (code 429)`）。
     # 署名の判定は runner 側で行う（SI-FLW-035）。
-    agy_error = str(result.get("error") or "")
     unavailable = common.agent_unavailable(
         command_events=len(commands),
         tool_events=len(tools),
         usage_tokens=usage.get("total_tokens"),
-        unavailable_signal=common.unavailable_text(agy_error),
+        unavailable_signal=antigravity_unavailable_signal(result),
     )
 
     return {
@@ -388,7 +392,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--plan", action="store_true", help="実行予定だけを表示して終了する")
     parser.add_argument(
         "--keep-logs",
-        help="raw event log（stdout / stderr）の保存先。未指定なら保存しない",
+        help="raw event log（stdout / stderr）の保存先。未指定時はtrial JSONL隣接DIRへ保存",
     )
     args = parser.parse_args(argv)
 
@@ -423,7 +427,7 @@ def main(argv: list[str] | None = None) -> int:
     if output.exists() or manifest.exists():
         raise SystemExit("既存の eval 成果物は上書きしない。新しい --output / --manifest を指定すること。")
 
-    log_dir = Path(args.keep_logs).expanduser().resolve() if args.keep_logs else None
+    log_dir = common.raw_log_directory(output, args.keep_logs)
     corpus = {
         condition: common._prepare_corpus(
             corpus_root, condition, source_root, tasks, trials_per_condition[condition]
@@ -453,6 +457,7 @@ def main(argv: list[str] | None = None) -> int:
                         "timeout": args.timeout,
                         "source_root": source_root,
                         "log_dir": log_dir,
+                        "artifact_root": output.parent,
                         "harness_retries": args.harness_retries,
                     }
                 )

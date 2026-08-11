@@ -1,0 +1,32 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/test_m0_eval_scoring.py",
+    "-q"
+  ],
+  "command_id": "pytest-flw-nfr-010",
+  "commit": "82ec1ef9113ca7d82d6e94732e02574921928fda",
+  "counts": {
+    "errors": 0,
+    "failed": 0,
+    "passed": 88,
+    "skipped": 0
+  },
+  "cwd": ".",
+  "dirty": true,
+  "exit_code": 0,
+  "observed": {
+    "duration_seconds": 0.32
+  },
+  "recorded_at": "2026-08-11T07:26:54Z",
+  "requirements": [
+    "FLW-NFR-010"
+  ],
+  "schema": "bitzsdd/verification-evidence@1",
+  "tool": {
+    "name": "python",
+    "version": "3.12.3"
+  }
+}

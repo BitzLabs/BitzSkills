@@ -70,3 +70,6 @@ github_issue: https://github.com/BitzLabs/BitzSkills/issues/187
 - **依存**: `SI-FLW-019` 案2（proxy の乖離条件。本件はその3度目の再発）。
   `SI-FLW-035`（同じ構図の直前の事例）。`SI-FLW-033`（必須 field 保持の母集団。
   本件は同じ指標の proxy 側）。`FLW-DSN-014`（変更対象）。
+
+- **実施**: 2026-08-11 `FLW-NFR-009` として要件化・検証し、PR #188
+  （https://github.com/BitzLabs/BitzSkills/pull/188、merge commit `82ec1ef`）で反映した。
