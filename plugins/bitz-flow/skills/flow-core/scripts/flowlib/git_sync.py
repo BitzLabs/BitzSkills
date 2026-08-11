@@ -107,13 +107,26 @@ def _run(root: Path, args: Sequence[str]) -> subprocess.CompletedProcess:
 
 
 def tracking_refs(root: Path, remote: str) -> dict[str, str]:
-    """remote-tracking ref 集合の現在値。"""
-    proc = _run(root, ["for-each-ref", "--format=%(refname)%09%(objectname)", f"refs/remotes/{remote}"])
+    """remote-tracking ref 集合の現在値。
+
+    **symbolic ref（`refs/remotes/<remote>/HEAD` 等）は除く。** これは既定 branch を指す
+    別名であって mutation target ではない。新しめの Git は初回 fetch でこれを自動作成するため、
+    含めてしまうと「何も更新が無い fetch」でも ref が動いたように見え、sync が不必要に
+    PARTIAL へ倒れる。
+    """
+    proc = _run(
+        root,
+        ["for-each-ref", "--format=%(refname)%09%(objectname)%09%(symref)", f"refs/remotes/{remote}"],
+    )
     result: dict[str, str] = {}
     for line in proc.stdout.decode("utf-8", "surrogateescape").splitlines():
-        if "\t" in line:
-            ref, oid = line.split("\t", 1)
-            result[ref] = oid
+        fields = line.split("\t")
+        if len(fields) < 2:
+            continue
+        symref = fields[2] if len(fields) > 2 else ""
+        if symref:
+            continue
+        result[fields[0]] = fields[1]
     return result
 
 
@@ -253,11 +266,16 @@ def apply_sync(
         )
 
     if before == after:
+        # branch が動かなかった。残作業があるかは「upstream が branch より先にいるか」で決める。
+        # fetch で ref が動いたか否かでは判定しない（別 branch の更新や symbolic ref の作成を
+        # 「この branch の残作業」と誤って数えるため）。
+        behind = _run(root, ["rev-list", "--count", f"{branch}..{upstream}"])
+        pending = behind.returncode == 0 and behind.stdout.decode().strip() not in ("", "0")
         return (
             SyncOutcome(
-                code=CODE_PARTIAL if outcome.updated_refs else CODE_DONE,
+                code=CODE_PARTIAL if pending else CODE_DONE,
                 completed_steps=("fetch",),
-                remaining_steps=("branch-update",) if outcome.updated_refs else (),
+                remaining_steps=("branch-update",) if pending else (),
                 recovery=REC_SYNC,
             ),
             None,

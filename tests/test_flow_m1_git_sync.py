@@ -136,6 +136,43 @@ def test_fetch_with_nothing_to_do_is_done(repo, common):
     assert outcome.updated_refs == ()
 
 
+def test_symbolic_ref_is_not_a_mutation_target(repo, common):
+    """`refs/remotes/origin/HEAD` は既定 branch の別名であって mutation target ではない。
+
+    新しめの Git は初回 fetch でこれを自動作成する。含めてしまうと「何も更新が無い fetch」でも
+    ref が動いたように見え、sync が不必要に PARTIAL へ倒れる（CI の Git で実際に起きた）。
+    """
+    _git(repo, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
+    refs = S.tracking_refs(repo, "origin")
+    assert "refs/remotes/origin/HEAD" not in refs
+    assert "refs/remotes/origin/main" in refs
+
+    plan, _ = S.plan_fetch(repo, common, remote="origin")
+    outcome, failure = S.apply_fetch(repo, common, plan)
+    assert failure is None and outcome.code == S.CODE_DONE
+    assert outcome.updated_refs == ()
+
+
+def test_sync_is_done_when_symbolic_ref_appears(repo, common):
+    """symbolic ref の出現を「この branch の残作業」と数えない。"""
+    _git(repo, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
+    plan, _ = S.plan_fetch(repo, common, remote="origin")
+    outcome, failure = S.apply_sync(repo, common, plan, branch="main", upstream="origin/main")
+    assert failure is None
+    assert outcome.code == S.CODE_DONE
+    assert outcome.remaining_steps == ()
+
+
+def test_other_branch_update_is_not_this_branch_remaining(repo, common, remote, tmp_path):
+    """別 branch が更新されても、追従済みの branch の残作業にはしない。"""
+    _advance_remote(remote, tmp_path, branch="side", message="chore: side branch")
+    plan, _ = S.plan_fetch(repo, common, remote="origin")
+    outcome, failure = S.apply_sync(repo, common, plan, branch="main", upstream="origin/main")
+    assert failure is None
+    assert outcome.code == S.CODE_DONE
+    assert outcome.remaining_steps == ()
+
+
 def test_partial_ref_set_reports_completed_and_remaining(repo, common, remote, tmp_path):
     """M1-FLT 相当: 期待した ref のうち一部しか更新されなかった場合。"""
     _advance_remote(remote, tmp_path)
