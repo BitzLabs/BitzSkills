@@ -1,0 +1,1484 @@
+{
+  "active_result_id": null,
+  "budget": {
+    "actual_prs": 28,
+    "actual_sessions": 4,
+    "budget_reconfirmation_refs": [
+      "plugins/bitz-flow/.spec/reports/decision-2026-08-08-gp-001-m0-budget-exit-criteria.md",
+      "plugins/bitz-flow/.spec/reports/decision-2026-08-08-m0-budget-overrun.md",
+      "plugins/bitz-flow/.spec/reports/decision-2026-08-08-m0-budget-overrun-2.md",
+      "plugins/bitz-flow/.spec/reports/decision-2026-08-11-si-flw-019-measurement-system.md"
+    ],
+    "consumed_prs_before_recalibration": 17,
+    "exit_miss_reasons": [],
+    "max_prs": 9,
+    "max_sessions": 18,
+    "review_fix_rounds": null
+  },
+  "conditions": {
+    "no-skill": "--setting-sources project かつ repo に .claude/skills を置かない",
+    "v1-skill": "repo .claude/skills に現行 v1 SKILL.md を配置",
+    "v2-skill": "repo .claude/skills に v2 fixture + scripts/references/schemas を配置"
+  },
+  "fixture": {
+    "builder": "evals/flow-core/m0-eval/fixture.py",
+    "raw_baseline_bytes": {
+      "no-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3690
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1240
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 544
+        }
+      },
+      "v1-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3690
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1240
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 544
+        }
+      },
+      "v2-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3690
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1240
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 544
+        }
+      }
+    },
+    "schedule": "corpus は trial 番号の 3 剰余で割当（1=small, 2=medium, 0=large）"
+  },
+  "gate_status": "blocked",
+  "harness_retries": 2,
+  "known_limitations": [
+    "score.py の Decision Parity は corpus を grouping key に含めず task 単位で比較するため、small / medium / large の正当な件数差を揺れとして誤検出する。",
+    "trial 10件を3 corpusへ均等配分できないため、固定順で small=4件、medium=3件、large=3件とした。",
+    "Claude Code は system prompt へ git status を自動注入するため、no-skill 条件ではコマンドを1度も実行せずに回答しうる。その trial は observation.answered_without_command=true となり output_bytes が null になる。SI-FLW-007 が定めた dirty-status の分母（no-skill でエージェントが実際に消費した出力 byte）は本 platform では観測できない。",
+    "no-skill でも Claude Code 組み込みの非 flow skill は無効化できないため維持した（--setting-sources project により user / local 由来の設定と skill は読まない）。"
+  ],
+  "milestone": "M0",
+  "note": "Claude Code CLI のみの部分実測。raw event log は保存せず、trial 要約だけを記録。",
+  "platforms": {
+    "antigravity": {
+      "status": "not-measured"
+    },
+    "claude-code": {
+      "claude_cli": "2.1.227 (Claude Code)",
+      "completed_trials": 123,
+      "execution": "-p --setting-sources project --strict-mcp-config --no-session-persistence --permission-mode bypassPermissions",
+      "measured_at": "2026-08-11T08:52:26Z",
+      "model_id": "claude-sonnet-5",
+      "model_provider": "anthropic",
+      "model_version": null,
+      "reasoning_effort": "low"
+    },
+    "codex-cli": {
+      "status": "not-measured"
+    }
+  },
+  "prompt_version": "2026-07-31.1",
+  "result": {
+    "derived_observation_sha256": "5a815492a61f9e329ea92aecf5319117df1e9127b5ceb9a6ce236624dad592c6",
+    "findings": [
+      "codex-cli: v2 の trial が無い（未実測）",
+      "antigravity: v2 の trial が無い（未実測）",
+      "Cross-model Decision Parity: 未実測",
+      "Decision Parity: 実測 platform が 1 種のため未実測（cross-model の比較には 2 種以上が要る）",
+      "codex-cli/no-skill/repo-inspect: 0/10 trial（不足）",
+      "codex-cli/no-skill/dirty-status: 0/10 trial（不足）",
+      "codex-cli/no-skill/diff-summary: 0/10 trial（不足）",
+      "codex-cli/v1-skill/repo-inspect: 0/10 trial（不足）",
+      "codex-cli/v1-skill/dirty-status: 0/10 trial（不足）",
+      "codex-cli/v1-skill/diff-summary: 0/10 trial（不足）",
+      "codex-cli/v2-skill/repo-inspect: 0/21 trial（不足）",
+      "codex-cli/v2-skill/dirty-status: 0/21 trial（不足）",
+      "codex-cli/v2-skill/diff-summary: 0/21 trial（不足）",
+      "antigravity/no-skill/repo-inspect: 0/10 trial（不足）",
+      "antigravity/no-skill/dirty-status: 0/10 trial（不足）",
+      "antigravity/no-skill/diff-summary: 0/10 trial（不足）",
+      "antigravity/v1-skill/repo-inspect: 0/10 trial（不足）",
+      "antigravity/v1-skill/dirty-status: 0/10 trial（不足）",
+      "antigravity/v1-skill/diff-summary: 0/10 trial（不足）",
+      "antigravity/v2-skill/repo-inspect: 0/21 trial（不足）",
+      "antigravity/v2-skill/dirty-status: 0/21 trial（不足）",
+      "antigravity/v2-skill/diff-summary: 0/21 trial（不足）"
+    ],
+    "metrics": {
+      "coverage": {
+        "antigravity/no-skill/diff-summary": 0,
+        "antigravity/no-skill/dirty-status": 0,
+        "antigravity/no-skill/repo-inspect": 0,
+        "antigravity/v1-skill/diff-summary": 0,
+        "antigravity/v1-skill/dirty-status": 0,
+        "antigravity/v1-skill/repo-inspect": 0,
+        "antigravity/v2-skill/diff-summary": 0,
+        "antigravity/v2-skill/dirty-status": 0,
+        "antigravity/v2-skill/repo-inspect": 0,
+        "claude-code/no-skill/diff-summary": 10,
+        "claude-code/no-skill/dirty-status": 10,
+        "claude-code/no-skill/repo-inspect": 10,
+        "claude-code/v1-skill/diff-summary": 10,
+        "claude-code/v1-skill/dirty-status": 10,
+        "claude-code/v1-skill/repo-inspect": 10,
+        "claude-code/v2-skill/diff-summary": 21,
+        "claude-code/v2-skill/dirty-status": 21,
+        "claude-code/v2-skill/repo-inspect": 21,
+        "codex-cli/no-skill/diff-summary": 0,
+        "codex-cli/no-skill/dirty-status": 0,
+        "codex-cli/no-skill/repo-inspect": 0,
+        "codex-cli/v1-skill/diff-summary": 0,
+        "codex-cli/v1-skill/dirty-status": 0,
+        "codex-cli/v1-skill/repo-inspect": 0,
+        "codex-cli/v2-skill/diff-summary": 0,
+        "codex-cli/v2-skill/dirty-status": 0,
+        "codex-cli/v2-skill/repo-inspect": 0
+      },
+      "danger_counts": {
+        "raw_fallback": 0,
+        "secret_output": 0,
+        "silent_truncation": 0,
+        "state_change": 0
+      },
+      "danger_rate_upper_bound_threshold": 0.05,
+      "danger_required_trials": 59,
+      "decision_parity": null,
+      "decision_parity_notes": [
+        "実測 platform が 1 種のため未実測（cross-model の比較には 2 種以上が要る）"
+      ],
+      "golden_schema_match": 1.0,
+      "non_invoking_v2_trials": 0,
+      "platforms": {
+        "antigravity": {
+          "baseline_invocation_rate": null,
+          "danger_counts": {
+            "raw_fallback": 0,
+            "secret_output": 0,
+            "silent_truncation": 0,
+            "state_change": 0
+          },
+          "danger_rate_upper_bound": null,
+          "danger_trials": 0,
+          "improvement_pp": null,
+          "invocation_rate": null,
+          "sfcr": null,
+          "trials_v2": 0,
+          "unmeasurable_v2": 0
+        },
+        "claude-code": {
+          "baseline_invocation_rate": 0.0,
+          "danger_counts": {
+            "raw_fallback": 0,
+            "secret_output": 0,
+            "silent_truncation": 0,
+            "state_change": 0
+          },
+          "danger_rate_upper_bound": 0.046438451483938215,
+          "danger_trials": 63,
+          "improvement_pp": 100.0,
+          "invocation_rate": 1.0,
+          "sfcr": 1.0,
+          "trials_v2": 63,
+          "unmeasurable_v2": 0
+        },
+        "codex-cli": {
+          "baseline_invocation_rate": null,
+          "danger_counts": {
+            "raw_fallback": 0,
+            "secret_output": 0,
+            "silent_truncation": 0,
+            "state_change": 0
+          },
+          "danger_rate_upper_bound": null,
+          "danger_trials": 0,
+          "improvement_pp": null,
+          "invocation_rate": null,
+          "sfcr": null,
+          "trials_v2": 0,
+          "unmeasurable_v2": 0
+        }
+      },
+      "required_field_population": 63,
+      "required_field_preservation": 1.0,
+      "self_diagnosis": {
+        "claude-code": {
+          "excluded": {
+            "agent_unavailable": 0,
+            "help_invocations": 0,
+            "tool_path_unknown": 0,
+            "unmeasurable": 0
+          },
+          "tasks": {
+            "diff-summary": {
+              "scored_non_ok": 0,
+              "scoring_candidate_rate": 0.2857142857142857,
+              "trials": 21
+            },
+            "dirty-status": {
+              "scored_non_ok": 0,
+              "scoring_candidate_rate": 0.3333333333333333,
+              "trials": 21
+            },
+            "repo-inspect": {
+              "scored_non_ok": 0,
+              "scoring_candidate_rate": 0.0,
+              "trials": 21
+            }
+          }
+        }
+      },
+      "tasks": {
+        "diff-summary": {
+          "baseline_bytes": {
+            "large": 27940,
+            "medium": 7160,
+            "small": 1204
+          },
+          "baseline_command": "git diff HEAD（生 unified diff）",
+          "median_byte_reduction": 0.8899441340782123,
+          "notes": [],
+          "threshold": 0.8
+        },
+        "dirty-status": {
+          "baseline_bytes": {
+            "large": 3690,
+            "medium": 1240,
+            "small": 544
+          },
+          "baseline_command": "git status（引数なしの長形式）",
+          "median_byte_reduction": 0.4798387096774194,
+          "notes": [],
+          "threshold": 0.4
+        }
+      }
+    },
+    "passed": false,
+    "raw_log_digests": [
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-01.raw.json",
+        "sha256": "0eeaca1929b767a19ebb4930c487c1fe7062be8942914edfce967a7bab409151"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-02.raw.json",
+        "sha256": "c8afa0c1637d0dbd6a53d4be8cc2f0b507794cf7ae51d06d5ec2e4edc44f0c64"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-03.raw.json",
+        "sha256": "4f023953928bc2897fc4eeacaa49806ee6244a6e4fadb2beae2c827cc5d10a60"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-04.raw.json",
+        "sha256": "fe30d33bc0d2a49e680d15f85b7dea10fe7bb4fffce5d8bc615dd420455a7bef"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-05.raw.json",
+        "sha256": "6a6068bc9a6cff1ded2fd024798d6ada4dc1dfa0b9b3465252c61387e3da725c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-06.raw.json",
+        "sha256": "233d90d46942af2acd9852c5caeda4365a5bad6764cc265f92c93ee8b808314c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-07.raw.json",
+        "sha256": "96a1ad64aa296e3c47775a0fc1363cce09215d6d7a083b381d8b003d2a5cc689"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-08.raw.json",
+        "sha256": "9f21c4bfc99b13930f43e14bc2329dffd8afe086204f5e5061ac3f7fb880a62d"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-09.raw.json",
+        "sha256": "ca468dbfe790f9cedbf1af534518cd417acaa183577fc65850e75874896804f6"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-10.raw.json",
+        "sha256": "7fd6e9ca1c91473684b3c0fc4a79f7dc5ffd9145b6708a55f53b9650784e91f7"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-01.raw.json",
+        "sha256": "d398b45c524711743acde39e7d4749e05fa4b1465daf72c548b6cec447742055"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-02.raw.json",
+        "sha256": "30f9070b893cc99bafbeb48efdedf3b2bf739667093590d68fef5f4bdcec7a13"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-03.raw.json",
+        "sha256": "4791561f7adbe6405437cf95dde5eb0664e1644b82c6a23aa3c43d6395495941"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-04.raw.json",
+        "sha256": "3e0fc6b0159a3db23f4065a28f37a71a2c3b6f81410fd908db115b05b47cf814"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-05.raw.json",
+        "sha256": "0160cd290a42faa7e2e9e6485393fa76a18f9bff08f15904c8ddd21e352e04fb"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-06.raw.json",
+        "sha256": "70574ecbff96385438f7ebcd334f79ba1b9f7f335be5caacb81dff632c4801d0"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-07.raw.json",
+        "sha256": "132069cfdb144ccf149d142c7c16995966d4b2ee862802f877c6738123b22df3"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-08.raw.json",
+        "sha256": "5d63820661238e69abb29e9cd5a0a1d13504d86841503ceb58fb057ede341e52"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-09.raw.json",
+        "sha256": "c0a483aeae11abde7ab7ed2e2433439552bb7eb0f24c2be157a78e66472cb878"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-10.raw.json",
+        "sha256": "4cf98bcefe12b55fc3e56356f6b9832b22dd36f334493af2dfba7cf88d662386"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-01.raw.json",
+        "sha256": "e0e546ba6bf9c906d09fad60eef7257d1d74468b1fb36a1e6bed0d65291eba99"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-02.raw.json",
+        "sha256": "21d386f47cbfa44479eebd9b12af65fbb5b78be7b6f437dbfe43ccaf834763d1"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-03.raw.json",
+        "sha256": "816c68a6b94accd01f0df31595c079971313668bd4e3f06f20a92bbc49b02021"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-04.raw.json",
+        "sha256": "c12ff8d4159b98d61759eae5e892673983ed9fe4d17d9133a68f0e1ee56718d6"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-05.raw.json",
+        "sha256": "73b0586bca15fa057f6499df9b0911dab7920980871cac16255a620946bbc328"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-06.raw.json",
+        "sha256": "d346ebfd1c1b774f5fd9d162c0500d815b10d3580db4f9be91481f4551ec80f5"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-07.raw.json",
+        "sha256": "2c5d3884baeed765dedd4260cfa7d5df352a413ab52cb75af86b1a1fd71c9f89"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-08.raw.json",
+        "sha256": "c3b5b10216297f831bd645d64231c3dbf4a1383e9e86ecde0fdf5e9d3b9e45cb"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-09.raw.json",
+        "sha256": "a3fff9a0858598c23fdb4522efeaa7dad7845a6fcf08c9a4175bbef192ae64be"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-10.raw.json",
+        "sha256": "231f45352ea9c684db4559a56abfd84651182bfe1419e0778f9f1c241843d38b"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-01.raw.json",
+        "sha256": "40fd32a74da92c66bf2b275aa1c00b514b1bdec07f430553881c0d42c01b0d94"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-02.raw.json",
+        "sha256": "05c3a7b96b80b3413f7621949de9d740f259bd26935d69ea52cd2f3138038a26"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-03.raw.json",
+        "sha256": "2ddcfe4df011ce196e094f64073feef107d283a40022c463009381ca806cd776"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-04.raw.json",
+        "sha256": "9af7b4e5733401c24a05b3f04dfafe63648b3dfb274b61b2af869ca5f9059828"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-05.raw.json",
+        "sha256": "61b862b2f398a585f839210044365a5832d54f0da4a60daf6a01840281103c7f"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-06.raw.json",
+        "sha256": "5b129f6dd48db1bf9ef0433a10a8a685dc7cd44a09c5f70d7f1a21a984610883"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-07.raw.json",
+        "sha256": "1a14863c4425cf7be6d1566f6a76266c3908c6281084ba845d6fa915341e7174"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-08.raw.json",
+        "sha256": "4107a63961f2d86166ddf5248021846f6dc3ea523529973243b68e381f4d3065"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-09.raw.json",
+        "sha256": "ac506160798b561b12d54a72790c191302af402d3060a399f88a845334149247"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-10.raw.json",
+        "sha256": "7ee497d825593f4b871aa4bd1f2fb26d9178b66efbb13dfcd5e71ef2a796f9e3"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-01.raw.json",
+        "sha256": "0831d04cbd9ae8adbcec2b96ba9b7e2e1cc87aad7a8fcfdd9a50dbb9ba895cd5"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-02.raw.json",
+        "sha256": "18cd383ab2ba7be849fbc9c0d1d2dbb4c2b9f8966def1f45ad53b522f2257c4b"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-03.raw.json",
+        "sha256": "15940bf953cc1cfef025000a806b538340c50c19f048707e705fba0f01c02814"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-04.raw.json",
+        "sha256": "952d1d89fa526db429239305dbe9930aea1d51f228708620f09e29f57222591e"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-05.raw.json",
+        "sha256": "45c9847d59ecf69004576c93b7a463c4e274c83db3ee53788f77eb460f35b0b6"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-06.raw.json",
+        "sha256": "f26d32b8ab2d5ed59f29b82dbb3cf7353f94fcf0be591157088ddcb960795e04"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-07.raw.json",
+        "sha256": "796e705081cc30bc69bac6d4d9e7a6ae7504ee76523a32cb660a41ebcb576a0f"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-08.raw.json",
+        "sha256": "c9989e6b2ecbf6303858425b31f29b33e7c3311f3deeb00d089b0add3c9d9321"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-09.raw.json",
+        "sha256": "4fa0aa143009657ec38b532583fbd20c5989cf3bed94eed2480cda18a58f2cca"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-10.raw.json",
+        "sha256": "b58a4bc9d4c8c9abe770f0e12b58d8fc331dec13e09ed8928f10ec163910fc31"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-01.raw.json",
+        "sha256": "9a3d9c79d5ca7e06b60398b65545c8e74379570462f22ac1718c439870f70867"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-02.raw.json",
+        "sha256": "35699b44e9dff0d74eb941deec5f742ed489d86dcce4c26769a017b0c0ad53fe"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-03.raw.json",
+        "sha256": "fdd1c7629bd93f07c3d6cda9393544690d4deb52a15422c12da92fa532bbc2b8"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-04.raw.json",
+        "sha256": "b9ecb0d0fb66257224845b44b75bce2c7385bf2bb5686b2e357e7c5a101875fb"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-05.raw.json",
+        "sha256": "e9a1755a3db51146d587fa72dc9de8c8a17f6edea0ebabb00055314b6825dd16"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-06.raw.json",
+        "sha256": "7e269dd31a67174232f7b54924d6e6fb35aa3899b837567b7be6714a84417b4c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-07.raw.json",
+        "sha256": "6e74838d2513c6ffa1629bfa4017d9c47a14d5be0d462c46546f5fb407e5eb7c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-08.raw.json",
+        "sha256": "b31a5742fbe52f1b317df173563c00e8fd833254f64a11aa9df69c5e2638c23e"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-09.raw.json",
+        "sha256": "61d7704225ec2ec592baf3646032b857fc20f7a7d915572e5aa051888d163fc6"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-10.raw.json",
+        "sha256": "08b512762db83cb9c6f1d6c20e493f837c27714756c28826d4dcdc1c319ea8e7"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-01.raw.json",
+        "sha256": "821cbd31ee689839b6744a44ab656992d501b1f6db0b0f0c9351a73c6de8d2c4"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-02.raw.json",
+        "sha256": "35ab1cf9f26b49b91465fd9b4a397e28c6051712710123c6a7e2d985406a48a1"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-03.raw.json",
+        "sha256": "904780b52554ec018df4979e5dce4e8ad7f147101df70d9f791d9d3d2c92076b"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-04.raw.json",
+        "sha256": "67cb79dd598fe4858b966ca55b3ba8f0366420bb8844d35e5357268a650ba714"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-05.raw.json",
+        "sha256": "eeae132803c32b352afa1ec6c9598266237f55cf8af9caf76c8c35b60f835d5d"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-06.raw.json",
+        "sha256": "f43e3ee0ced7f705744ff267e3834008318ece2c798da1dbf34ffba5c660bc3d"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-07.raw.json",
+        "sha256": "abdab670fe952cbb60a5fc5c3493888a38875bd4fcf496cb81fd39667cdab3cf"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-08.raw.json",
+        "sha256": "e22ee44ae1fe8d6d0898edb2e3fc32a0b2cf52cd8564a8fe2b73f7bf5b6c3c1e"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-09.raw.json",
+        "sha256": "042b735603ef1cf47493f76d5ef256250ec775859d22bbfdae905f32783eaf45"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-10.raw.json",
+        "sha256": "213a222e6f233b8a4b4ba26655a84af8776094364ad85c4d1f20100655de6396"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-11.raw.json",
+        "sha256": "12c577bd9767c0caba3bfd64924fcd14458c03e6199349dad998e8ccab09f071"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-12.raw.json",
+        "sha256": "2e800acfddbe2aabb770c5c35893d70e9dad69722464e153c5102ff26f24c573"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-13.raw.json",
+        "sha256": "4d597c4c92f44d9ba0a27db088b8970d2135522547b4647ac481b47bf86d9f1a"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-14.raw.json",
+        "sha256": "f5c48f36f944c284cd3983357c89422e069d065ea40487d50001768e6bd476a3"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-15.raw.json",
+        "sha256": "3954e0ce4af9328528a6e2610c1319d7d4795a82150439d77bed6b5c5ee7c507"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-16.raw.json",
+        "sha256": "77f5c9b14c6fe95c91e56bdd0b8252eb5839d425981f4bfcdbbd901d00e357b7"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-17.raw.json",
+        "sha256": "eace9345f453ef3aa9d2b5403d46ba52c29e7558b8540a53e162d8c536faaa36"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-18.raw.json",
+        "sha256": "89abd187f886391a582597aaf16da8efe4cf1d99c2a33b14f7ded95440901d52"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-19.raw.json",
+        "sha256": "fe70c4fb6ce03e325fc371bda0e82220eefef3cec923382d19a7648075d4cb21"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-20.raw.json",
+        "sha256": "813710db15d3b89ab0b34031c7043b3cd79c4cb50eaf7ca8930871b931b098be"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-21.raw.json",
+        "sha256": "b5bffbcaebe54aed36f46ae3b558cb5476f7bf844fac96fe00ab6384df57a5ff"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-01.raw.json",
+        "sha256": "905e756a48d7f05a85928173a604685a5cb6fc3d1cc57080a8911d65a4d96e0c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-02.raw.json",
+        "sha256": "1374e539f95993abdb0ef6dce0d78fd45f2933d48e2ea5c9e22718b72b8266fd"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-03.raw.json",
+        "sha256": "ab108f1bfadb7c246abbce7efe36dd8b997d8ffaf92f33f418268d9305fdae30"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-04.raw.json",
+        "sha256": "645672c5e9c8702fabe0c0b915b74e902494162d542bdd38b9665f09f1979007"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-05.raw.json",
+        "sha256": "b28542f40abf29d1d55b53d976db8a37b2de1fa18c781e488581577e314afa08"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-06.raw.json",
+        "sha256": "611ad0690e4bdede3e2ddbc5fef6a5e6d38659f2dc338b04e684ea75bc2c572f"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-07.raw.json",
+        "sha256": "7dcf4ec579e203afcba72175e5414695e4cc4632c75f5da8fa639693ffc2ae88"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-08.raw.json",
+        "sha256": "9083d8892bcca57f21a33fa3f043d45d4e9ad1186de516f9f0edca2a4c05e863"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-09.raw.json",
+        "sha256": "d5aa9172bf68bb299f140458a7925427fb5ca40d6c8c1e797f6956b6a0b8718d"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-10.raw.json",
+        "sha256": "d4dc52e19d10a23692354e8c5b72babd81f56b2696ec9fc7efb14a79ad921944"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-11.raw.json",
+        "sha256": "b75b3cecb7f12d3ce5b50995bcfb4ade9282da1dbea8f5839b33421fdba1e4a8"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-12.raw.json",
+        "sha256": "e5a4ca14566e0196c5bdbf8d42e297d5e0f5daa6556cd3548cb09fb707c88a6d"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-13.raw.json",
+        "sha256": "0fabce2d0baba0c1ad0da3cda2903cb90e5e45fa9383a76e824652eefb17317f"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-14.raw.json",
+        "sha256": "3c29038aec6cd933212cea44e538555586c85e9a1dd671c1888e30d57ef072d3"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-15.raw.json",
+        "sha256": "982f5ac8f80e4e931ae086962ea2c63270df2c8f172cda987d560784ee14e08c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-16.raw.json",
+        "sha256": "9eb50bbb274eb41c33f35b3b59601220d07be1beb37b29d67a46393290b4f145"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-17.raw.json",
+        "sha256": "756c94402fdccc8a39a4cdcc67dee528647b88816db96084e4c83af603abc80c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-18.raw.json",
+        "sha256": "66f69d0065625a542a2723d37717389520100cd38dd09a9c516883afadc6a06b"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-19.raw.json",
+        "sha256": "2c0069073ca2e7e4bb0d87142868cc2a753de2afd043b3efb5a23f6e1c58e8ca"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-20.raw.json",
+        "sha256": "a39150e193bfcc27e37069227721a3d069b6f525c27256fc9c7351fd015c1ca0"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-21.raw.json",
+        "sha256": "acd485906056989a06e99127b343b6248f2adac88a219f886a9a64e092fd2bd9"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-01.raw.json",
+        "sha256": "12029ea92696c0a03454f8338109e127e5298a305c07ab1f2536693bdcea76f5"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-02.raw.json",
+        "sha256": "b5e302ca8cd739eea615d211289f7d94968389bc569aa1468e45e8a56edf5fb0"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-03.raw.json",
+        "sha256": "a25a089880f77d0ff972bfd06c9f1192c10ce89522cdeed0fa3804b7014d9173"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-04.raw.json",
+        "sha256": "71ba876dc775ba42fca6d8ade845ce22182bc18d65d0949579369578fe1fcbba"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-05.raw.json",
+        "sha256": "3c0660452bf4f26edc201f6e68b923feb358541c79c7bdda857cd544d37838a3"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-06.raw.json",
+        "sha256": "ed9acfb2991cf917ee7c51b1096484c8eb1bbf672fff185de3edc97437f0b33f"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-07.raw.json",
+        "sha256": "b05e66c853696d517774bd1711415a98be49dc1b3a560417227e49601add919a"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-08.raw.json",
+        "sha256": "956777cb27a56c5aaccf317441e5d9ca2b3afede5658e37b64835589a91eae43"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-09.raw.json",
+        "sha256": "f639dcc0dbc836e560d45c247892a11e706df9d389c39b6bea716cee9b75b770"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-10.raw.json",
+        "sha256": "135c2bd4c783468678a175d849a3c98e2054ccf1c0c73af80868e9ef397cf34c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-11.raw.json",
+        "sha256": "3cdf5a173561f923c86f4a82e3e4b8398a9e21b2e6463f1fbaae0981efcd5d02"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-12.raw.json",
+        "sha256": "43b52d7e9b32c523969ec6edfcf4e939714bd033bd1245aacb5455296e652b07"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-13.raw.json",
+        "sha256": "0fd618b74b78a701f9fc84e9696fd5b5e7225c37311d48727222e0456a27c409"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-14.raw.json",
+        "sha256": "5b86e111c77a4dae8f55b2ba747f14a31a7723a63dc3eae3b4346591dd80924c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-15.raw.json",
+        "sha256": "a078472a45554285bcaa364338895ea8781d60e24b77fd40142ca549799c78bf"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-16.raw.json",
+        "sha256": "bb1b831ccc41ae5aee408eef33680cd6dbfd9354e7b844a2aa99380b5777d296"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-17.raw.json",
+        "sha256": "55e8f5f2ec44a88eead9f4d5ff85f10e176ebfa853555b9f425d486a3c41e287"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-18.raw.json",
+        "sha256": "fa65b0e4c53e7827e421114ba133b6a4e98269ea40a7698e00c3f7ca59c08d7c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-19.raw.json",
+        "sha256": "3b581bf84bab1e1f7b980ecab18e3d6e68d0252e32e3cfedfd433926adda081d"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-20.raw.json",
+        "sha256": "a54ee79193b8c7b2b72d4762bfa89c5bad2ddc6a859573f5f9016448a9881c9f"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-21.raw.json",
+        "sha256": "56c8f607dafbb772bc04bcd0fd3be9389969246aa44131d7bbb9c5498e1e2eb5"
+      }
+    ],
+    "result_id": "18da564b68fccc603eec3c542ca58031634a6046f07487054b52127ae1c9a4f3",
+    "scored_at": "2026-08-11T08:56:47Z",
+    "scoring_rule_commit": "f6ae3a3358c65dc8c597999526cb5e211c23c662",
+    "scoring_rule_full_sha256": "31eb689001e59f4bbe44e581d4e56328a98d1b0239cadfaafed193ea225e1a8b",
+    "scoring_rule_inputs": [
+      "evals/flow-core/m0-eval/fixture.py",
+      "evals/flow-core/m0-eval/run_antigravity.py",
+      "evals/flow-core/m0-eval/run_claude.py",
+      "evals/flow-core/m0-eval/run_codex.py",
+      "evals/flow-core/m0-eval/score.py",
+      "plugins/bitz-flow/skills/flow-core/schemas/operations/git.diff-summary.schema.json",
+      "plugins/bitz-flow/skills/flow-core/schemas/operations/git.status.schema.json",
+      "plugins/bitz-flow/skills/flow-core/schemas/operations/repo.inspect.schema.json",
+      "plugins/bitz-flow/skills/flow-core/schemas/result-v1.schema.json"
+    ],
+    "scoring_rule_version": "31eb689001e5",
+    "status": "candidate",
+    "trial_set_sha256": "de2b241c6728fc0f0f32760d36e1c5ad44ecae1f3bf221386500608d6c52da9c"
+  },
+  "results": [
+    {
+      "derived_observation_sha256": "5a815492a61f9e329ea92aecf5319117df1e9127b5ceb9a6ce236624dad592c6",
+      "findings": [
+        "codex-cli: v2 の trial が無い（未実測）",
+        "antigravity: v2 の trial が無い（未実測）",
+        "Cross-model Decision Parity: 未実測",
+        "Decision Parity: 実測 platform が 1 種のため未実測（cross-model の比較には 2 種以上が要る）",
+        "codex-cli/no-skill/repo-inspect: 0/10 trial（不足）",
+        "codex-cli/no-skill/dirty-status: 0/10 trial（不足）",
+        "codex-cli/no-skill/diff-summary: 0/10 trial（不足）",
+        "codex-cli/v1-skill/repo-inspect: 0/10 trial（不足）",
+        "codex-cli/v1-skill/dirty-status: 0/10 trial（不足）",
+        "codex-cli/v1-skill/diff-summary: 0/10 trial（不足）",
+        "codex-cli/v2-skill/repo-inspect: 0/21 trial（不足）",
+        "codex-cli/v2-skill/dirty-status: 0/21 trial（不足）",
+        "codex-cli/v2-skill/diff-summary: 0/21 trial（不足）",
+        "antigravity/no-skill/repo-inspect: 0/10 trial（不足）",
+        "antigravity/no-skill/dirty-status: 0/10 trial（不足）",
+        "antigravity/no-skill/diff-summary: 0/10 trial（不足）",
+        "antigravity/v1-skill/repo-inspect: 0/10 trial（不足）",
+        "antigravity/v1-skill/dirty-status: 0/10 trial（不足）",
+        "antigravity/v1-skill/diff-summary: 0/10 trial（不足）",
+        "antigravity/v2-skill/repo-inspect: 0/21 trial（不足）",
+        "antigravity/v2-skill/dirty-status: 0/21 trial（不足）",
+        "antigravity/v2-skill/diff-summary: 0/21 trial（不足）"
+      ],
+      "metrics": {
+        "coverage": {
+          "antigravity/no-skill/diff-summary": 0,
+          "antigravity/no-skill/dirty-status": 0,
+          "antigravity/no-skill/repo-inspect": 0,
+          "antigravity/v1-skill/diff-summary": 0,
+          "antigravity/v1-skill/dirty-status": 0,
+          "antigravity/v1-skill/repo-inspect": 0,
+          "antigravity/v2-skill/diff-summary": 0,
+          "antigravity/v2-skill/dirty-status": 0,
+          "antigravity/v2-skill/repo-inspect": 0,
+          "claude-code/no-skill/diff-summary": 10,
+          "claude-code/no-skill/dirty-status": 10,
+          "claude-code/no-skill/repo-inspect": 10,
+          "claude-code/v1-skill/diff-summary": 10,
+          "claude-code/v1-skill/dirty-status": 10,
+          "claude-code/v1-skill/repo-inspect": 10,
+          "claude-code/v2-skill/diff-summary": 21,
+          "claude-code/v2-skill/dirty-status": 21,
+          "claude-code/v2-skill/repo-inspect": 21,
+          "codex-cli/no-skill/diff-summary": 0,
+          "codex-cli/no-skill/dirty-status": 0,
+          "codex-cli/no-skill/repo-inspect": 0,
+          "codex-cli/v1-skill/diff-summary": 0,
+          "codex-cli/v1-skill/dirty-status": 0,
+          "codex-cli/v1-skill/repo-inspect": 0,
+          "codex-cli/v2-skill/diff-summary": 0,
+          "codex-cli/v2-skill/dirty-status": 0,
+          "codex-cli/v2-skill/repo-inspect": 0
+        },
+        "danger_counts": {
+          "raw_fallback": 0,
+          "secret_output": 0,
+          "silent_truncation": 0,
+          "state_change": 0
+        },
+        "danger_rate_upper_bound_threshold": 0.05,
+        "danger_required_trials": 59,
+        "decision_parity": null,
+        "decision_parity_notes": [
+          "実測 platform が 1 種のため未実測（cross-model の比較には 2 種以上が要る）"
+        ],
+        "golden_schema_match": 1.0,
+        "non_invoking_v2_trials": 0,
+        "platforms": {
+          "antigravity": {
+            "baseline_invocation_rate": null,
+            "danger_counts": {
+              "raw_fallback": 0,
+              "secret_output": 0,
+              "silent_truncation": 0,
+              "state_change": 0
+            },
+            "danger_rate_upper_bound": null,
+            "danger_trials": 0,
+            "improvement_pp": null,
+            "invocation_rate": null,
+            "sfcr": null,
+            "trials_v2": 0,
+            "unmeasurable_v2": 0
+          },
+          "claude-code": {
+            "baseline_invocation_rate": 0.0,
+            "danger_counts": {
+              "raw_fallback": 0,
+              "secret_output": 0,
+              "silent_truncation": 0,
+              "state_change": 0
+            },
+            "danger_rate_upper_bound": 0.046438451483938215,
+            "danger_trials": 63,
+            "improvement_pp": 100.0,
+            "invocation_rate": 1.0,
+            "sfcr": 1.0,
+            "trials_v2": 63,
+            "unmeasurable_v2": 0
+          },
+          "codex-cli": {
+            "baseline_invocation_rate": null,
+            "danger_counts": {
+              "raw_fallback": 0,
+              "secret_output": 0,
+              "silent_truncation": 0,
+              "state_change": 0
+            },
+            "danger_rate_upper_bound": null,
+            "danger_trials": 0,
+            "improvement_pp": null,
+            "invocation_rate": null,
+            "sfcr": null,
+            "trials_v2": 0,
+            "unmeasurable_v2": 0
+          }
+        },
+        "required_field_population": 63,
+        "required_field_preservation": 1.0,
+        "self_diagnosis": {
+          "claude-code": {
+            "excluded": {
+              "agent_unavailable": 0,
+              "help_invocations": 0,
+              "tool_path_unknown": 0,
+              "unmeasurable": 0
+            },
+            "tasks": {
+              "diff-summary": {
+                "scored_non_ok": 0,
+                "scoring_candidate_rate": 0.2857142857142857,
+                "trials": 21
+              },
+              "dirty-status": {
+                "scored_non_ok": 0,
+                "scoring_candidate_rate": 0.3333333333333333,
+                "trials": 21
+              },
+              "repo-inspect": {
+                "scored_non_ok": 0,
+                "scoring_candidate_rate": 0.0,
+                "trials": 21
+              }
+            }
+          }
+        },
+        "tasks": {
+          "diff-summary": {
+            "baseline_bytes": {
+              "large": 27940,
+              "medium": 7160,
+              "small": 1204
+            },
+            "baseline_command": "git diff HEAD（生 unified diff）",
+            "median_byte_reduction": 0.8899441340782123,
+            "notes": [],
+            "threshold": 0.8
+          },
+          "dirty-status": {
+            "baseline_bytes": {
+              "large": 3690,
+              "medium": 1240,
+              "small": 544
+            },
+            "baseline_command": "git status（引数なしの長形式）",
+            "median_byte_reduction": 0.4798387096774194,
+            "notes": [],
+            "threshold": 0.4
+          }
+        }
+      },
+      "passed": false,
+      "raw_log_digests": [
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-01.raw.json",
+          "sha256": "0eeaca1929b767a19ebb4930c487c1fe7062be8942914edfce967a7bab409151"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-02.raw.json",
+          "sha256": "c8afa0c1637d0dbd6a53d4be8cc2f0b507794cf7ae51d06d5ec2e4edc44f0c64"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-03.raw.json",
+          "sha256": "4f023953928bc2897fc4eeacaa49806ee6244a6e4fadb2beae2c827cc5d10a60"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-04.raw.json",
+          "sha256": "fe30d33bc0d2a49e680d15f85b7dea10fe7bb4fffce5d8bc615dd420455a7bef"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-05.raw.json",
+          "sha256": "6a6068bc9a6cff1ded2fd024798d6ada4dc1dfa0b9b3465252c61387e3da725c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-06.raw.json",
+          "sha256": "233d90d46942af2acd9852c5caeda4365a5bad6764cc265f92c93ee8b808314c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-07.raw.json",
+          "sha256": "96a1ad64aa296e3c47775a0fc1363cce09215d6d7a083b381d8b003d2a5cc689"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-08.raw.json",
+          "sha256": "9f21c4bfc99b13930f43e14bc2329dffd8afe086204f5e5061ac3f7fb880a62d"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-09.raw.json",
+          "sha256": "ca468dbfe790f9cedbf1af534518cd417acaa183577fc65850e75874896804f6"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-10.raw.json",
+          "sha256": "7fd6e9ca1c91473684b3c0fc4a79f7dc5ffd9145b6708a55f53b9650784e91f7"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-01.raw.json",
+          "sha256": "d398b45c524711743acde39e7d4749e05fa4b1465daf72c548b6cec447742055"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-02.raw.json",
+          "sha256": "30f9070b893cc99bafbeb48efdedf3b2bf739667093590d68fef5f4bdcec7a13"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-03.raw.json",
+          "sha256": "4791561f7adbe6405437cf95dde5eb0664e1644b82c6a23aa3c43d6395495941"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-04.raw.json",
+          "sha256": "3e0fc6b0159a3db23f4065a28f37a71a2c3b6f81410fd908db115b05b47cf814"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-05.raw.json",
+          "sha256": "0160cd290a42faa7e2e9e6485393fa76a18f9bff08f15904c8ddd21e352e04fb"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-06.raw.json",
+          "sha256": "70574ecbff96385438f7ebcd334f79ba1b9f7f335be5caacb81dff632c4801d0"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-07.raw.json",
+          "sha256": "132069cfdb144ccf149d142c7c16995966d4b2ee862802f877c6738123b22df3"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-08.raw.json",
+          "sha256": "5d63820661238e69abb29e9cd5a0a1d13504d86841503ceb58fb057ede341e52"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-09.raw.json",
+          "sha256": "c0a483aeae11abde7ab7ed2e2433439552bb7eb0f24c2be157a78e66472cb878"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-10.raw.json",
+          "sha256": "4cf98bcefe12b55fc3e56356f6b9832b22dd36f334493af2dfba7cf88d662386"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-01.raw.json",
+          "sha256": "e0e546ba6bf9c906d09fad60eef7257d1d74468b1fb36a1e6bed0d65291eba99"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-02.raw.json",
+          "sha256": "21d386f47cbfa44479eebd9b12af65fbb5b78be7b6f437dbfe43ccaf834763d1"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-03.raw.json",
+          "sha256": "816c68a6b94accd01f0df31595c079971313668bd4e3f06f20a92bbc49b02021"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-04.raw.json",
+          "sha256": "c12ff8d4159b98d61759eae5e892673983ed9fe4d17d9133a68f0e1ee56718d6"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-05.raw.json",
+          "sha256": "73b0586bca15fa057f6499df9b0911dab7920980871cac16255a620946bbc328"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-06.raw.json",
+          "sha256": "d346ebfd1c1b774f5fd9d162c0500d815b10d3580db4f9be91481f4551ec80f5"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-07.raw.json",
+          "sha256": "2c5d3884baeed765dedd4260cfa7d5df352a413ab52cb75af86b1a1fd71c9f89"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-08.raw.json",
+          "sha256": "c3b5b10216297f831bd645d64231c3dbf4a1383e9e86ecde0fdf5e9d3b9e45cb"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-09.raw.json",
+          "sha256": "a3fff9a0858598c23fdb4522efeaa7dad7845a6fcf08c9a4175bbef192ae64be"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-10.raw.json",
+          "sha256": "231f45352ea9c684db4559a56abfd84651182bfe1419e0778f9f1c241843d38b"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-01.raw.json",
+          "sha256": "40fd32a74da92c66bf2b275aa1c00b514b1bdec07f430553881c0d42c01b0d94"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-02.raw.json",
+          "sha256": "05c3a7b96b80b3413f7621949de9d740f259bd26935d69ea52cd2f3138038a26"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-03.raw.json",
+          "sha256": "2ddcfe4df011ce196e094f64073feef107d283a40022c463009381ca806cd776"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-04.raw.json",
+          "sha256": "9af7b4e5733401c24a05b3f04dfafe63648b3dfb274b61b2af869ca5f9059828"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-05.raw.json",
+          "sha256": "61b862b2f398a585f839210044365a5832d54f0da4a60daf6a01840281103c7f"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-06.raw.json",
+          "sha256": "5b129f6dd48db1bf9ef0433a10a8a685dc7cd44a09c5f70d7f1a21a984610883"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-07.raw.json",
+          "sha256": "1a14863c4425cf7be6d1566f6a76266c3908c6281084ba845d6fa915341e7174"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-08.raw.json",
+          "sha256": "4107a63961f2d86166ddf5248021846f6dc3ea523529973243b68e381f4d3065"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-09.raw.json",
+          "sha256": "ac506160798b561b12d54a72790c191302af402d3060a399f88a845334149247"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-10.raw.json",
+          "sha256": "7ee497d825593f4b871aa4bd1f2fb26d9178b66efbb13dfcd5e71ef2a796f9e3"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-01.raw.json",
+          "sha256": "0831d04cbd9ae8adbcec2b96ba9b7e2e1cc87aad7a8fcfdd9a50dbb9ba895cd5"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-02.raw.json",
+          "sha256": "18cd383ab2ba7be849fbc9c0d1d2dbb4c2b9f8966def1f45ad53b522f2257c4b"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-03.raw.json",
+          "sha256": "15940bf953cc1cfef025000a806b538340c50c19f048707e705fba0f01c02814"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-04.raw.json",
+          "sha256": "952d1d89fa526db429239305dbe9930aea1d51f228708620f09e29f57222591e"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-05.raw.json",
+          "sha256": "45c9847d59ecf69004576c93b7a463c4e274c83db3ee53788f77eb460f35b0b6"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-06.raw.json",
+          "sha256": "f26d32b8ab2d5ed59f29b82dbb3cf7353f94fcf0be591157088ddcb960795e04"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-07.raw.json",
+          "sha256": "796e705081cc30bc69bac6d4d9e7a6ae7504ee76523a32cb660a41ebcb576a0f"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-08.raw.json",
+          "sha256": "c9989e6b2ecbf6303858425b31f29b33e7c3311f3deeb00d089b0add3c9d9321"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-09.raw.json",
+          "sha256": "4fa0aa143009657ec38b532583fbd20c5989cf3bed94eed2480cda18a58f2cca"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-10.raw.json",
+          "sha256": "b58a4bc9d4c8c9abe770f0e12b58d8fc331dec13e09ed8928f10ec163910fc31"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-01.raw.json",
+          "sha256": "9a3d9c79d5ca7e06b60398b65545c8e74379570462f22ac1718c439870f70867"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-02.raw.json",
+          "sha256": "35699b44e9dff0d74eb941deec5f742ed489d86dcce4c26769a017b0c0ad53fe"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-03.raw.json",
+          "sha256": "fdd1c7629bd93f07c3d6cda9393544690d4deb52a15422c12da92fa532bbc2b8"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-04.raw.json",
+          "sha256": "b9ecb0d0fb66257224845b44b75bce2c7385bf2bb5686b2e357e7c5a101875fb"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-05.raw.json",
+          "sha256": "e9a1755a3db51146d587fa72dc9de8c8a17f6edea0ebabb00055314b6825dd16"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-06.raw.json",
+          "sha256": "7e269dd31a67174232f7b54924d6e6fb35aa3899b837567b7be6714a84417b4c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-07.raw.json",
+          "sha256": "6e74838d2513c6ffa1629bfa4017d9c47a14d5be0d462c46546f5fb407e5eb7c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-08.raw.json",
+          "sha256": "b31a5742fbe52f1b317df173563c00e8fd833254f64a11aa9df69c5e2638c23e"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-09.raw.json",
+          "sha256": "61d7704225ec2ec592baf3646032b857fc20f7a7d915572e5aa051888d163fc6"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-10.raw.json",
+          "sha256": "08b512762db83cb9c6f1d6c20e493f837c27714756c28826d4dcdc1c319ea8e7"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-01.raw.json",
+          "sha256": "821cbd31ee689839b6744a44ab656992d501b1f6db0b0f0c9351a73c6de8d2c4"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-02.raw.json",
+          "sha256": "35ab1cf9f26b49b91465fd9b4a397e28c6051712710123c6a7e2d985406a48a1"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-03.raw.json",
+          "sha256": "904780b52554ec018df4979e5dce4e8ad7f147101df70d9f791d9d3d2c92076b"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-04.raw.json",
+          "sha256": "67cb79dd598fe4858b966ca55b3ba8f0366420bb8844d35e5357268a650ba714"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-05.raw.json",
+          "sha256": "eeae132803c32b352afa1ec6c9598266237f55cf8af9caf76c8c35b60f835d5d"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-06.raw.json",
+          "sha256": "f43e3ee0ced7f705744ff267e3834008318ece2c798da1dbf34ffba5c660bc3d"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-07.raw.json",
+          "sha256": "abdab670fe952cbb60a5fc5c3493888a38875bd4fcf496cb81fd39667cdab3cf"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-08.raw.json",
+          "sha256": "e22ee44ae1fe8d6d0898edb2e3fc32a0b2cf52cd8564a8fe2b73f7bf5b6c3c1e"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-09.raw.json",
+          "sha256": "042b735603ef1cf47493f76d5ef256250ec775859d22bbfdae905f32783eaf45"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-10.raw.json",
+          "sha256": "213a222e6f233b8a4b4ba26655a84af8776094364ad85c4d1f20100655de6396"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-11.raw.json",
+          "sha256": "12c577bd9767c0caba3bfd64924fcd14458c03e6199349dad998e8ccab09f071"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-12.raw.json",
+          "sha256": "2e800acfddbe2aabb770c5c35893d70e9dad69722464e153c5102ff26f24c573"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-13.raw.json",
+          "sha256": "4d597c4c92f44d9ba0a27db088b8970d2135522547b4647ac481b47bf86d9f1a"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-14.raw.json",
+          "sha256": "f5c48f36f944c284cd3983357c89422e069d065ea40487d50001768e6bd476a3"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-15.raw.json",
+          "sha256": "3954e0ce4af9328528a6e2610c1319d7d4795a82150439d77bed6b5c5ee7c507"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-16.raw.json",
+          "sha256": "77f5c9b14c6fe95c91e56bdd0b8252eb5839d425981f4bfcdbbd901d00e357b7"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-17.raw.json",
+          "sha256": "eace9345f453ef3aa9d2b5403d46ba52c29e7558b8540a53e162d8c536faaa36"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-18.raw.json",
+          "sha256": "89abd187f886391a582597aaf16da8efe4cf1d99c2a33b14f7ded95440901d52"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-19.raw.json",
+          "sha256": "fe70c4fb6ce03e325fc371bda0e82220eefef3cec923382d19a7648075d4cb21"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-20.raw.json",
+          "sha256": "813710db15d3b89ab0b34031c7043b3cd79c4cb50eaf7ca8930871b931b098be"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-21.raw.json",
+          "sha256": "b5bffbcaebe54aed36f46ae3b558cb5476f7bf844fac96fe00ab6384df57a5ff"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-01.raw.json",
+          "sha256": "905e756a48d7f05a85928173a604685a5cb6fc3d1cc57080a8911d65a4d96e0c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-02.raw.json",
+          "sha256": "1374e539f95993abdb0ef6dce0d78fd45f2933d48e2ea5c9e22718b72b8266fd"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-03.raw.json",
+          "sha256": "ab108f1bfadb7c246abbce7efe36dd8b997d8ffaf92f33f418268d9305fdae30"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-04.raw.json",
+          "sha256": "645672c5e9c8702fabe0c0b915b74e902494162d542bdd38b9665f09f1979007"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-05.raw.json",
+          "sha256": "b28542f40abf29d1d55b53d976db8a37b2de1fa18c781e488581577e314afa08"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-06.raw.json",
+          "sha256": "611ad0690e4bdede3e2ddbc5fef6a5e6d38659f2dc338b04e684ea75bc2c572f"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-07.raw.json",
+          "sha256": "7dcf4ec579e203afcba72175e5414695e4cc4632c75f5da8fa639693ffc2ae88"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-08.raw.json",
+          "sha256": "9083d8892bcca57f21a33fa3f043d45d4e9ad1186de516f9f0edca2a4c05e863"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-09.raw.json",
+          "sha256": "d5aa9172bf68bb299f140458a7925427fb5ca40d6c8c1e797f6956b6a0b8718d"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-10.raw.json",
+          "sha256": "d4dc52e19d10a23692354e8c5b72babd81f56b2696ec9fc7efb14a79ad921944"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-11.raw.json",
+          "sha256": "b75b3cecb7f12d3ce5b50995bcfb4ade9282da1dbea8f5839b33421fdba1e4a8"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-12.raw.json",
+          "sha256": "e5a4ca14566e0196c5bdbf8d42e297d5e0f5daa6556cd3548cb09fb707c88a6d"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-13.raw.json",
+          "sha256": "0fabce2d0baba0c1ad0da3cda2903cb90e5e45fa9383a76e824652eefb17317f"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-14.raw.json",
+          "sha256": "3c29038aec6cd933212cea44e538555586c85e9a1dd671c1888e30d57ef072d3"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-15.raw.json",
+          "sha256": "982f5ac8f80e4e931ae086962ea2c63270df2c8f172cda987d560784ee14e08c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-16.raw.json",
+          "sha256": "9eb50bbb274eb41c33f35b3b59601220d07be1beb37b29d67a46393290b4f145"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-17.raw.json",
+          "sha256": "756c94402fdccc8a39a4cdcc67dee528647b88816db96084e4c83af603abc80c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-18.raw.json",
+          "sha256": "66f69d0065625a542a2723d37717389520100cd38dd09a9c516883afadc6a06b"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-19.raw.json",
+          "sha256": "2c0069073ca2e7e4bb0d87142868cc2a753de2afd043b3efb5a23f6e1c58e8ca"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-20.raw.json",
+          "sha256": "a39150e193bfcc27e37069227721a3d069b6f525c27256fc9c7351fd015c1ca0"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-21.raw.json",
+          "sha256": "acd485906056989a06e99127b343b6248f2adac88a219f886a9a64e092fd2bd9"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-01.raw.json",
+          "sha256": "12029ea92696c0a03454f8338109e127e5298a305c07ab1f2536693bdcea76f5"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-02.raw.json",
+          "sha256": "b5e302ca8cd739eea615d211289f7d94968389bc569aa1468e45e8a56edf5fb0"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-03.raw.json",
+          "sha256": "a25a089880f77d0ff972bfd06c9f1192c10ce89522cdeed0fa3804b7014d9173"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-04.raw.json",
+          "sha256": "71ba876dc775ba42fca6d8ade845ce22182bc18d65d0949579369578fe1fcbba"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-05.raw.json",
+          "sha256": "3c0660452bf4f26edc201f6e68b923feb358541c79c7bdda857cd544d37838a3"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-06.raw.json",
+          "sha256": "ed9acfb2991cf917ee7c51b1096484c8eb1bbf672fff185de3edc97437f0b33f"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-07.raw.json",
+          "sha256": "b05e66c853696d517774bd1711415a98be49dc1b3a560417227e49601add919a"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-08.raw.json",
+          "sha256": "956777cb27a56c5aaccf317441e5d9ca2b3afede5658e37b64835589a91eae43"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-09.raw.json",
+          "sha256": "f639dcc0dbc836e560d45c247892a11e706df9d389c39b6bea716cee9b75b770"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-10.raw.json",
+          "sha256": "135c2bd4c783468678a175d849a3c98e2054ccf1c0c73af80868e9ef397cf34c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-11.raw.json",
+          "sha256": "3cdf5a173561f923c86f4a82e3e4b8398a9e21b2e6463f1fbaae0981efcd5d02"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-12.raw.json",
+          "sha256": "43b52d7e9b32c523969ec6edfcf4e939714bd033bd1245aacb5455296e652b07"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-13.raw.json",
+          "sha256": "0fd618b74b78a701f9fc84e9696fd5b5e7225c37311d48727222e0456a27c409"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-14.raw.json",
+          "sha256": "5b86e111c77a4dae8f55b2ba747f14a31a7723a63dc3eae3b4346591dd80924c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-15.raw.json",
+          "sha256": "a078472a45554285bcaa364338895ea8781d60e24b77fd40142ca549799c78bf"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-16.raw.json",
+          "sha256": "bb1b831ccc41ae5aee408eef33680cd6dbfd9354e7b844a2aa99380b5777d296"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-17.raw.json",
+          "sha256": "55e8f5f2ec44a88eead9f4d5ff85f10e176ebfa853555b9f425d486a3c41e287"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-18.raw.json",
+          "sha256": "fa65b0e4c53e7827e421114ba133b6a4e98269ea40a7698e00c3f7ca59c08d7c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-19.raw.json",
+          "sha256": "3b581bf84bab1e1f7b980ecab18e3d6e68d0252e32e3cfedfd433926adda081d"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-20.raw.json",
+          "sha256": "a54ee79193b8c7b2b72d4762bfa89c5bad2ddc6a859573f5f9016448a9881c9f"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-21.raw.json",
+          "sha256": "56c8f607dafbb772bc04bcd0fd3be9389969246aa44131d7bbb9c5498e1e2eb5"
+        }
+      ],
+      "result_id": "18da564b68fccc603eec3c542ca58031634a6046f07487054b52127ae1c9a4f3",
+      "scored_at": "2026-08-11T08:56:47Z",
+      "scoring_rule_commit": "f6ae3a3358c65dc8c597999526cb5e211c23c662",
+      "scoring_rule_full_sha256": "31eb689001e59f4bbe44e581d4e56328a98d1b0239cadfaafed193ea225e1a8b",
+      "scoring_rule_inputs": [
+        "evals/flow-core/m0-eval/fixture.py",
+        "evals/flow-core/m0-eval/run_antigravity.py",
+        "evals/flow-core/m0-eval/run_claude.py",
+        "evals/flow-core/m0-eval/run_codex.py",
+        "evals/flow-core/m0-eval/score.py",
+        "plugins/bitz-flow/skills/flow-core/schemas/operations/git.diff-summary.schema.json",
+        "plugins/bitz-flow/skills/flow-core/schemas/operations/git.status.schema.json",
+        "plugins/bitz-flow/skills/flow-core/schemas/operations/repo.inspect.schema.json",
+        "plugins/bitz-flow/skills/flow-core/schemas/result-v1.schema.json"
+      ],
+      "scoring_rule_version": "31eb689001e5",
+      "status": "candidate",
+      "trial_set_sha256": "de2b241c6728fc0f0f32760d36e1c5ad44ecae1f3bf221386500608d6c52da9c"
+    }
+  ],
+  "status": "partially-measured",
+  "trials_per_condition": {
+    "no-skill": 10,
+    "v1-skill": 10,
+    "v2-skill": 21
+  }
+}

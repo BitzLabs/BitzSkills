@@ -18,3 +18,8 @@
   - `test_FLW_NFR_009_missing_raw_log_rescore_is_unknown`
 - **検証ステータス**: `spec_verify.py record` が生成する `.spec/verification/` の機械可読証跡を正とする。
 - **再採点監査**: `evals/flow-core/m0-eval/rescoring-2026-08-11-flw-nfr-009.json`。保存済みraw logが全件参照切れのため説明済み2差分も`unknown`とし、Gate切替をblockedに保った。
+- **是正後の再実測**: 第14ラウンドでは3 platform × 123件を新規実測し、必須field保持は
+  189/189、Cross-model Decision Parityは100%となった。統合証跡は
+  `evals/flow-core/m0-eval/run-manifest-3platform-2026-08-11-r14.json`。全369件のraw log
+  digestを解決でき、正規採点器は終了コード0でPASSした。人間裁定により結果ID
+  `84c6f45324f547723d6a63f40c352c5997b083503c2155e194256e0c584597e6`を`active`に選択した。
