@@ -318,8 +318,62 @@ per-call の result code は `command_result_codes`（全 command。`flow.py` �
 
 ## 現況
 
-**最新は第12ラウンド**（`*-r12`。2026-08-10。claude-code / codex-cli / antigravity の
-**3 platform**）。`SI-FLW-028` の是正を適用したラウンドであり、
+**最新は第13ラウンド**（`*-r13`。2026-08-11。3 platform）。`SI-FLW-019` を親とする
+測定系の構造的是正（PR #185）を適用した最初のラウンドである。
+
+### 第13ラウンド 3 platform 比較（採点規則 `a62b07f2b3ec`）
+
+| 指標 | 閾値 | claude-code | codex-cli | antigravity |
+|---|---|---|---|---|
+| Dispatcher Invocation Rate | 95%以上 | **59%** ❌ | **100%** ✅ | **100%** ✅ |
+| SFCR | 90%以上 | **56%** ❌ | **100%** ✅ | **95.24%** ✅ |
+| 危険事象 4 種 | 各0件かつ上側限界5%以下 | **各0件 / 63 trial（4.64%）** ✅ | **各0件 / 63 trial（4.64%）** ✅ | **各0件 / 63 trial（4.64%）** ✅ |
+| 母数（v2 / baseline） | 21 / 10 | 21 / 10 ✅ | 21 / 10 ✅ | 21 / 10 ✅ |
+| **Cross-model Decision Parity** | 100% | 3 platform 合算 **100%** ✅ |||
+| **必須 field 保持** | 100% | 3 platform 合算 **98.77%**（161/163） ❌ |||
+| **harness 自己診断** | 閾値内 | **指摘なし** ✅ | **指摘なし** ✅ | **指摘なし** ✅ |
+
+### 是正は3件とも奏功した
+
+| 是正 | 第12R | 第13R |
+|---|---|---|
+| `SI-FLW-031`（`state_change` の誤検出） | agy 1 件 | **0 件** |
+| `SI-FLW-032`（`silent_truncation` の誤検出） | agy 1 件 | **0 件** |
+| `SI-FLW-033`（必須 field 保持の母集団） | 非呼出 trial が二重計上 | **母数 163 = 呼出があった trial のみ** |
+| `SI-FLW-034`（platform metadata） | 既定値リテラルで実環境と乖離 | **実測値を記録**（`claude-code 2.1.227` / `codex-cli 0.147.0` / `agy 1.1.11`） |
+
+**antigravity は初めて全指標を達成した。** codex-cli も全指標達成である。
+
+### claude-code は測定不成立（`SI-FLW-035`）
+
+**claude-code の 59% / 56% は被測定物の成績ではない。**
+`v2-skill` 63 trial のうち **26 trial が Claude Code のレート制限（`five_hour` session limit）で
+拒否され、被測定物を一度も評価していない**。
+
+```json
+{"type":"rate_limit_event","rate_limit_info":{"status":"rejected","rateLimitType":"five_hour"}}
+{"type":"result","subtype":"success","is_error":true,
+ "result":"You've hit your session limit · resets 12:40pm (Asia/Tokyo)",
+ "num_turns":1,"duration_ms":843,"usage":{"input_tokens":0,"output_tokens":0}}
+```
+
+26 trial はいずれも `command_events: 0` / `tool_events: 0` / `usage.total_tokens: 0` /
+`duration_seconds: 0.3〜0.9` である。**拒否を除いた 37 trial では 36 件（97.3%）が
+`flow.py` 起点**であり、第12ラウンドの 98.41% と整合する。
+
+`SI-FLW-030` の是正で導入した `agent_unavailable` は、この署名を捕捉できなかった。
+`result.subtype` が `"success"`（`is_error: true` と矛盾）で、文言が
+`"session limit"` のため `RESOURCE_EXHAUSTED|quota|rate[ _-]?limit|429` のどれにも一致せず、
+最も確実な信号である `rate_limit_event.status == "rejected"` を読んでいない。
+**`SI-FLW-019` 原因2（proxy の乖離条件を洗い出していない）の再発**であり、
+`SI-FLW-035` として起票した。
+
+**したがって第13ラウンドは 3 platform 揃った M0 出口判定として成立していない**
+（第9ラウンドの claude-code、第11ラウンドの claude-code 未実測と同じ扱い）。
+
+### 第12ラウンド（`*-r12`。2026-08-10。3 platform）
+
+`SI-FLW-028` の是正を適用したラウンドであり、
 **新採点規則で 3 platform を揃えた最初のラウンド**である。
 
 **M0 出口は未達（`passed: false`）**。ただし未達 3 点はいずれも被測定物
