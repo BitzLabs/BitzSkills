@@ -2,7 +2,7 @@
 implements: FLW-FR-004
 depends_on: []
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/git_read_ext.py, tests/test_flow_m1_git_read_ext.py
-status: pending
+status: done
 ---
 
 ### 残るGit read operation（diff-detail・log・branches・conflicts・worktree list）
