@@ -2,7 +2,7 @@
 implements: FLW-NFR-007, FLW-NFR-011
 depends_on: [FLW-TSK-048]
 boundary: evals/flow-core/m1-eval/recovery_ops.py, tests/test_flow_m1_recovery_ops.py
-status: pending
+status: done
 ---
 
 ### 台帳のbackup / restore（RPO 0・RTO 4時間）
