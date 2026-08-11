@@ -1,0 +1,3400 @@
+{
+  "active_result_id": "84c6f45324f547723d6a63f40c352c5997b083503c2155e194256e0c584597e6",
+  "gate_status": "ready",
+  "result": {
+    "derived_observation_sha256": "52a6b341d052e42763f52e72f21608adace4d55aacb227878907168d24d5be21",
+    "findings": [],
+    "metrics": {
+      "coverage": {
+        "antigravity/no-skill/diff-summary": 10,
+        "antigravity/no-skill/dirty-status": 10,
+        "antigravity/no-skill/repo-inspect": 10,
+        "antigravity/v1-skill/diff-summary": 10,
+        "antigravity/v1-skill/dirty-status": 10,
+        "antigravity/v1-skill/repo-inspect": 10,
+        "antigravity/v2-skill/diff-summary": 21,
+        "antigravity/v2-skill/dirty-status": 21,
+        "antigravity/v2-skill/repo-inspect": 21,
+        "claude-code/no-skill/diff-summary": 10,
+        "claude-code/no-skill/dirty-status": 10,
+        "claude-code/no-skill/repo-inspect": 10,
+        "claude-code/v1-skill/diff-summary": 10,
+        "claude-code/v1-skill/dirty-status": 10,
+        "claude-code/v1-skill/repo-inspect": 10,
+        "claude-code/v2-skill/diff-summary": 21,
+        "claude-code/v2-skill/dirty-status": 21,
+        "claude-code/v2-skill/repo-inspect": 21,
+        "codex-cli/no-skill/diff-summary": 10,
+        "codex-cli/no-skill/dirty-status": 10,
+        "codex-cli/no-skill/repo-inspect": 10,
+        "codex-cli/v1-skill/diff-summary": 10,
+        "codex-cli/v1-skill/dirty-status": 10,
+        "codex-cli/v1-skill/repo-inspect": 10,
+        "codex-cli/v2-skill/diff-summary": 21,
+        "codex-cli/v2-skill/dirty-status": 21,
+        "codex-cli/v2-skill/repo-inspect": 21
+      },
+      "danger_counts": {
+        "raw_fallback": 0,
+        "secret_output": 0,
+        "silent_truncation": 0,
+        "state_change": 0
+      },
+      "danger_rate_upper_bound_threshold": 0.05,
+      "danger_required_trials": 59,
+      "decision_parity": 1.0,
+      "decision_parity_notes": [],
+      "golden_schema_match": 1.0,
+      "non_invoking_v2_trials": 0,
+      "platforms": {
+        "antigravity": {
+          "baseline_invocation_rate": 0.0,
+          "danger_counts": {
+            "raw_fallback": 0,
+            "secret_output": 0,
+            "silent_truncation": 0,
+            "state_change": 0
+          },
+          "danger_rate_upper_bound": 0.046438451483938215,
+          "danger_trials": 63,
+          "improvement_pp": 100.0,
+          "invocation_rate": 1.0,
+          "sfcr": 1.0,
+          "trials_v2": 63,
+          "unmeasurable_v2": 0
+        },
+        "claude-code": {
+          "baseline_invocation_rate": 0.0,
+          "danger_counts": {
+            "raw_fallback": 0,
+            "secret_output": 0,
+            "silent_truncation": 0,
+            "state_change": 0
+          },
+          "danger_rate_upper_bound": 0.046438451483938215,
+          "danger_trials": 63,
+          "improvement_pp": 100.0,
+          "invocation_rate": 1.0,
+          "sfcr": 1.0,
+          "trials_v2": 63,
+          "unmeasurable_v2": 0
+        },
+        "codex-cli": {
+          "baseline_invocation_rate": 0.0,
+          "danger_counts": {
+            "raw_fallback": 0,
+            "secret_output": 0,
+            "silent_truncation": 0,
+            "state_change": 0
+          },
+          "danger_rate_upper_bound": 0.046438451483938215,
+          "danger_trials": 63,
+          "improvement_pp": 100.0,
+          "invocation_rate": 1.0,
+          "sfcr": 1.0,
+          "trials_v2": 63,
+          "unmeasurable_v2": 0
+        }
+      },
+      "required_field_population": 189,
+      "required_field_preservation": 1.0,
+      "self_diagnosis": {
+        "antigravity": {
+          "excluded": {
+            "agent_unavailable": 0,
+            "help_invocations": 0,
+            "tool_path_unknown": 0,
+            "unmeasurable": 0
+          },
+          "tasks": {
+            "diff-summary": {
+              "scored_non_ok": 0,
+              "scoring_candidate_rate": 0.3333333333333333,
+              "trials": 21
+            },
+            "dirty-status": {
+              "scored_non_ok": 0,
+              "scoring_candidate_rate": 0.3333333333333333,
+              "trials": 21
+            },
+            "repo-inspect": {
+              "scored_non_ok": 0,
+              "scoring_candidate_rate": 0.0,
+              "trials": 21
+            }
+          }
+        },
+        "claude-code": {
+          "excluded": {
+            "agent_unavailable": 0,
+            "help_invocations": 0,
+            "tool_path_unknown": 0,
+            "unmeasurable": 0
+          },
+          "tasks": {
+            "diff-summary": {
+              "scored_non_ok": 0,
+              "scoring_candidate_rate": 0.2857142857142857,
+              "trials": 21
+            },
+            "dirty-status": {
+              "scored_non_ok": 0,
+              "scoring_candidate_rate": 0.3333333333333333,
+              "trials": 21
+            },
+            "repo-inspect": {
+              "scored_non_ok": 0,
+              "scoring_candidate_rate": 0.0,
+              "trials": 21
+            }
+          }
+        },
+        "codex-cli": {
+          "excluded": {
+            "agent_unavailable": 0,
+            "help_invocations": 0,
+            "tool_path_unknown": 0,
+            "unmeasurable": 0
+          },
+          "tasks": {
+            "diff-summary": {
+              "scored_non_ok": 0,
+              "scoring_candidate_rate": 0.3333333333333333,
+              "trials": 21
+            },
+            "dirty-status": {
+              "scored_non_ok": 0,
+              "scoring_candidate_rate": 0.3333333333333333,
+              "trials": 21
+            },
+            "repo-inspect": {
+              "scored_non_ok": 0,
+              "scoring_candidate_rate": 0.0,
+              "trials": 21
+            }
+          }
+        }
+      },
+      "tasks": {
+        "diff-summary": {
+          "baseline_bytes": {
+            "large": 27940,
+            "medium": 7160,
+            "small": 1204
+          },
+          "baseline_command": "git diff HEAD（生 unified diff）",
+          "median_byte_reduction": 0.889804469273743,
+          "notes": [],
+          "threshold": 0.8
+        },
+        "dirty-status": {
+          "baseline_bytes": {
+            "large": 3690,
+            "medium": 1240,
+            "small": 544
+          },
+          "baseline_command": "git status（引数なしの長形式）",
+          "median_byte_reduction": 0.4790322580645161,
+          "notes": [],
+          "threshold": 0.4
+        }
+      }
+    },
+    "passed": true,
+    "raw_log_digests": [
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-01.raw.json",
+        "sha256": "5d2c891bdbb73e4e5aedacfdc8eaf63c48ca30f9683138789c2e82a13e61c9d2"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-02.raw.json",
+        "sha256": "2b8986bddbf18b0d94fa32362f7548766aa9e09c57ec77496461c6e57b2b4480"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-03.raw.json",
+        "sha256": "2799f6bd42cd28ddae6fd5dbf9654cbaa4e454cab374b0fbfa68b7c302a039d6"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-04.raw.json",
+        "sha256": "6966c5b40c6705cd9c162db7e9b3fc7e49aaa7404abc11a676cd63a521292bc3"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-05.raw.json",
+        "sha256": "2c800406a127ee5cda5cdec1d724d4f015078c405789e5f5fb7039e1029edf76"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-06.raw.json",
+        "sha256": "af6e82da1097c8ac2a979b536ab7cac8df55d54e7ef4c21a875c69123fde72f6"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-07.raw.json",
+        "sha256": "a0933eac06eae27cda5986c6a9da13bccf05321f730c28cf3435cd283fc9cd67"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-08.raw.json",
+        "sha256": "8343581262f5f0a9fcd91cd2a1682dba9efdf7108065777229a2afcae35b4a7a"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-09.raw.json",
+        "sha256": "e9b36f013e8f095c84ea82f4b6e8f8437e1d8189bb1fb607359604cad85822ae"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-10.raw.json",
+        "sha256": "605e1823cc2e496068809ff841d99c3ca5a7d59fc79d5e6ccab6a4ff789cb54a"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-01.raw.json",
+        "sha256": "11433f412f4f16f9f55fa5682ef613efaa3c9b0fa20c1d0e0760fbc65fd72e28"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-02.raw.json",
+        "sha256": "61d245c35aeca2ce1c8fa34d90e6fb29dc6d3db489db500652d0053cb7415555"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-03.raw.json",
+        "sha256": "72a994c97f56801809a40c07bda931f4416b3ccbcb72370d026d9cda4d540e5d"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-04.raw.json",
+        "sha256": "120a80fac0770464a0448908f565a20daa942e66afba13affae30c567c88cdb3"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-05.raw.json",
+        "sha256": "a28629b63fce95248f87bd615bd88d15d9cba64c4d46ce2a6450174be93b959a"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-06.raw.json",
+        "sha256": "fa43e824b2b907372fcbc8bea4cd7aec6fc492e39b70a646f8264daafd4417b8"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-07.raw.json",
+        "sha256": "faf8c91d1cac4fb6ac0e40704ec0d32f574b9721950c6652806ec6c345590415"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-08.raw.json",
+        "sha256": "b991bc38b134c26f9ea839a53728e6f701fa24c1c2566403cfc03585dd86a3da"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-09.raw.json",
+        "sha256": "e432210bcb5a36d72e1a54eb794e04b9dbf64224341d0737ccb5067b3e88601d"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-10.raw.json",
+        "sha256": "8e9a4b33a59004ca745c63a1c5490d0c535060ee3cf1a906cd6097a6f5681152"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-01.raw.json",
+        "sha256": "660980afe7dfc2edd9bc4eace590eb9c9a7dd7400f114fbceea47e1f96273aad"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-02.raw.json",
+        "sha256": "9dbd724edf9d1f0c6e334d7d6559dedf2cab873a4108d0fc7e8d5a551e4acc1c"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-03.raw.json",
+        "sha256": "e16408c59c6c569990863035c60d097a7491733bf9a9ba6acfcffdccba24a778"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-04.raw.json",
+        "sha256": "385dedbb4558f6af8cfa9181f7407c45effea49c64c72832a0aca8e644809eaf"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-05.raw.json",
+        "sha256": "f35718098571a8527b46f4e49e1631422c8e4299ee8f3f75125be08f64b9e308"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-06.raw.json",
+        "sha256": "42feaf7894eaadc461c93099af76a556b376edefdbc5825b8e104034cf8e0dda"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-07.raw.json",
+        "sha256": "364a77e04b67801eded469b97afce860161058dfd87ef7c08b2200fc10506db4"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-08.raw.json",
+        "sha256": "d14979533bd2faa451bd23ea53d626f53db04e65f04863de4fd0e8acaedf5488"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-09.raw.json",
+        "sha256": "aa7826377890d3a4d0d7c811554f3f19332cf4e430f865c320fcac699e243ba4"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-10.raw.json",
+        "sha256": "6d208a263acbc05fd0cdf875b2a28b9fd997c3c66c8a31715dfd9837675ca90e"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-01.raw.json",
+        "sha256": "e50a09e121d566ed147f92613246aa279fff76da93730497d884150e6ee93fc4"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-02.raw.json",
+        "sha256": "b886993c0a91b3f8dac73e3cda9628f6740d610b08db1198c45c38f171427afe"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-03.raw.json",
+        "sha256": "c1e72ee299e5cbb099d9698136b7c9767020defda7e7c528e91939c2ad92016d"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-04.raw.json",
+        "sha256": "2cf374ada87159c9fcf22e2948ac5c8f2f21745409920532341723a1b525db8d"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-05.raw.json",
+        "sha256": "061af4d379649b5a25d59f450ee09130849b0af4e5beaa89ec3650d577ada61b"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-06.raw.json",
+        "sha256": "bd7590c90aae71167cb2e1276aa4837f88c7972ef70d5d6d039f52e243511004"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-07.raw.json",
+        "sha256": "984c115535face33e496ab6441f9507629a4ec3b9dec2a8f7ce7422f30e7ac4f"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-08.raw.json",
+        "sha256": "4e6ff961421bfc6b3417c706c107c588186c45f4e2860db9551d4d57de796343"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-09.raw.json",
+        "sha256": "b859fefa1be7d8f393b9fef200b0c3846b1245d7813365a747a1de3e060e50b2"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-10.raw.json",
+        "sha256": "430d12a8744409766af77d1bb80a95c97585e8cca4d1250d248d3f2bfe2b313d"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-01.raw.json",
+        "sha256": "f469b24e8f201573dd071ce9971e621208d622276e705b98a4f9f3b05bcb9a71"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-02.raw.json",
+        "sha256": "0a820b358135665d72e0c0d8e4b4757e51ef0751c01dbb8359c28695dc97bc21"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-03.raw.json",
+        "sha256": "b5c96d7c9766f71a52c33b4ee2f325d99417a5b4d6a09d5e67346970d4e388a6"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-04.raw.json",
+        "sha256": "68be55b9bc9ebd6a0e6c05f51e6499ffd88cff97df747b551f4c0b11981d878c"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-05.raw.json",
+        "sha256": "d1ffbc0b178be5176ea76928f5f547bb3b9fbd447e06466ef82a0bcfbed3e383"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-06.raw.json",
+        "sha256": "3f6753ccaebf5e60b8b9355f227c36b13e5864dea58f0cc6ec5f9caca4a0c747"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-07.raw.json",
+        "sha256": "e8aab42e4aefd1542aae60bff7f489d48d57859ce07065d2fffc46c88e74e477"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-08.raw.json",
+        "sha256": "f93ea63baeeb649db8bfab1f6baff63fb55de6d4e6b2aa1f7b7e85600809d551"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-09.raw.json",
+        "sha256": "90d3acecf1a50d3480c3f37c58ef9967331a3d24c65ca834ccfa26f5d8fd7978"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-10.raw.json",
+        "sha256": "d6f0c23ea6643f4dc7898978fb5b6de94acb66e426fecce874de693e288abf1f"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-01.raw.json",
+        "sha256": "2ff3345ec673a4b0c9f0bb17dd0425439ee2d708cafe92fe223c95016199bb3d"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-02.raw.json",
+        "sha256": "eeb6b1744352ac7926555a8cb9f908e84e31f1256264be5f46adee3b4290471d"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-03.raw.json",
+        "sha256": "ce503345169bd24fcbca3f0b201584899502342a5c0bfc91814cbb01388a3da3"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-04.raw.json",
+        "sha256": "5b8466eb22db70d2f182812965ebcedb8f9159c67a484f6c6c8193f78d7eebf8"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-05.raw.json",
+        "sha256": "be83caaa90259cf0d896f31b455b2295ba515527ec96410d12a894af5581bdf2"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-06.raw.json",
+        "sha256": "2f2981c19280287e2e0de958f2799548f717bda33efe7dcb04a1639920bbaf34"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-07.raw.json",
+        "sha256": "2911baf3a519536719ff4ee2d931fb55f5254c2d7f0ed8673cac8f3cfd2ff66a"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-08.raw.json",
+        "sha256": "2586a5d78f1a3f6f8b4f4e6473876cc5cd67aed9144cdc2d7b31fbe3516ba5e5"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-09.raw.json",
+        "sha256": "96ae0ab849ebeb847621637d03d0fd00468c378054c1a49578881e700693808e"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-10.raw.json",
+        "sha256": "5ab90d314ca32a701c7c4d082b561fbe624b9bf3db91d82a1214949720f45991"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-01.raw.json",
+        "sha256": "67fa989796ebef82924f489986eb4a5808be7f24a084548768af11a4d95411b1"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-02.raw.json",
+        "sha256": "68b67629ddca7b09d73b7024c304a80ae521246c690a368c989c99c5d44fc55b"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-03.raw.json",
+        "sha256": "8f6ffce37494ca68a619e1b2cd1d0fb08cff31f980d05249ebce219b5ddf10e7"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-04.raw.json",
+        "sha256": "40b8ae1dd848df8ac189a4e63ab298133b1397c3aec3faa66283b856d576e24c"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-05.raw.json",
+        "sha256": "6c16920e57bc71679052f991d7165daad9cf4be09248de72bb74ad410183f4e9"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-06.raw.json",
+        "sha256": "3ca405cfdf8fd64825c8bfa162af7f602cb2ca66ed97e8cf22d30820f8447949"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-07.raw.json",
+        "sha256": "6d37271289451a6a497bf294ba89d87a4b03b4ca023c8f95a5c5281b944b0895"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-08.raw.json",
+        "sha256": "7d3fd45ee31e87b23f482a5e9a086e34c5c1f193ea938c66c75e8361c853e9bb"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-09.raw.json",
+        "sha256": "919df011881dc21281a46359c50be7b1bbca7435d0699bf45e9e961b52798468"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-10.raw.json",
+        "sha256": "142aa592d4fc68952b091ab928c4befb7fe95a06e98a2b0ca801b5432ec2dcc3"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-11.raw.json",
+        "sha256": "58dcfff2b39c357fe853ddb0aa3eeb7856bea614e364d4dfd811e1a2790d2156"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-12.raw.json",
+        "sha256": "c797d46071d92889ac4a06061ac587c6bbd4c428607a790ac3a73082839a8af3"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-13.raw.json",
+        "sha256": "7367eef8938762159615e9120e0f22d16d356e5e246213aac3582bed5992a11d"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-14.raw.json",
+        "sha256": "7fbbae251b572045ea0f316714b446f0207a0d68a6e9248eec899528d5ac9fd4"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-15.raw.json",
+        "sha256": "4af8c615133263e658ecc3d6bd2168341cb780af09796fbfafde2ce8cfa2d645"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-16.raw.json",
+        "sha256": "450408deb7bba813fd4da70912c6171181a471bb0e1c8bf1a8db7e7033195045"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-17.raw.json",
+        "sha256": "a9775d5fada67a771462be069f93ef504769ad2cea9b37f03d54d479b134c222"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-18.raw.json",
+        "sha256": "02e7ea40e6d2657152ba5254bd7a7d70be6afd998ca8feb954fb6cb5825bf0c0"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-19.raw.json",
+        "sha256": "34a1e6951b42a97ffcbd34d390595b8f43e2f4ae64dc1705e27fb48da3961e06"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-20.raw.json",
+        "sha256": "0e541fdabb09e237e6d9d53200369175c28f99d548d585123cba2cd96c3b81d5"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-21.raw.json",
+        "sha256": "cc71d3b5c3c0b1c55dff8624ea64cfbeaa53b38531c7a31a07b5a720237285d8"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-01.raw.json",
+        "sha256": "e765cad7c5a6e2d91559a74aea8f541e01264de98ed6877682131b5488535adf"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-02.raw.json",
+        "sha256": "27f21a5a6e067c7652d34849f50a15ac706744b690347759ecc9ab5631ca83ba"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-03.raw.json",
+        "sha256": "e75b370fae5af162b9dbb7aeecf62a0fd9f78c67328eb4943ff1438f7d647ea2"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-04.raw.json",
+        "sha256": "d8073a05d976ef46d7da2f2f95e1dd57cedfe3395392d56015fd0df5a3013576"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-05.raw.json",
+        "sha256": "b8dcb1a294d77a8c6dbd7ab2545f7e1c8442ec718050bba8a89b36c77893edcc"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-06.raw.json",
+        "sha256": "bd6d80ec2a02eba555c79fb094864809ece3abf615019828990b81f3b4ce9e95"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-07.raw.json",
+        "sha256": "65d06e009b65a76539590c217cd1bd595a4aca58c54289eeb793dff38b4ee6e1"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-08.raw.json",
+        "sha256": "8aa0decb5b7aea9538cde6206ca95b3c0ab57ab575e265c656fee18abd705316"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-09.raw.json",
+        "sha256": "07e440318ee071bf6f826f804353890b59311dfebfbb18ae8bd04e6965054d98"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-10.raw.json",
+        "sha256": "3eb86d237aee98b96e22bbd7223b48c3a24e362751b28561b56035ffd4795810"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-11.raw.json",
+        "sha256": "7b7ee55b6754fbbff88a11f654122d315a37ee7a034e45953242a2958516e9ad"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-12.raw.json",
+        "sha256": "c988a8a703c2f8aa9c63318245e75e1247f187d57a9d37961773fb22424e80be"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-13.raw.json",
+        "sha256": "8ccd69d876fcd67c4f18228aee1344c183133afd2b290d8b3e0109fab40c73ee"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-14.raw.json",
+        "sha256": "d272a131f1711316f0a971b6d4c4683613aca01f02a5cd677aa94a7980f0f2c8"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-15.raw.json",
+        "sha256": "0f4cab489ed18457311747333ab5afb93531ab414f40e7b4975b2f8d8525f228"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-16.raw.json",
+        "sha256": "ee5cb49ae0a17422892e2e4e0424436add31e561a84ba5a9c3f440f493d96ca1"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-17.raw.json",
+        "sha256": "e679944534cff809a29d68911b3e2fcf9a8e018864282d847672ee0f5ae9cb76"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-18.raw.json",
+        "sha256": "f5bbc55dd9126636a05d0e7e3ef56a15c4d92906c32a4792af4ad20c8478994d"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-19.raw.json",
+        "sha256": "67929bd5fc3b0b339663facf23dbfdf48d2e6c3b54d976e9f2451debfbf0ee50"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-20.raw.json",
+        "sha256": "aaa0d326eec53eabafd7d658b15a6b942f4e5ddaa3865471d5bf3d3b20463537"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-21.raw.json",
+        "sha256": "db54bea5066810cbe1f26ee2f11bd62b77848e949d72c95cd1c22f04b9a1efe9"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-01.raw.json",
+        "sha256": "6ddf38b798f353884d54915fd729d7abc696bd2b830b9ab2c567ce35434316ba"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-02.raw.json",
+        "sha256": "e14e6c4b9a51c79cd6aa4ed6a1fa3a24e87620a2b2f000455dce0ac4035b3f90"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-03.raw.json",
+        "sha256": "533e78c4f10b18d0baadf207d466c8637467768ee3f348b8be16456d6b33c838"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-04.raw.json",
+        "sha256": "f2f9fe2735908542d32f45191a407dcc6b7e612f3910e5ba7228470e1f127f78"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-05.raw.json",
+        "sha256": "01bb959b628787b4e552c38e984419f8a33c76b8a7cb53e8d9f4e378e4f3c91a"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-06.raw.json",
+        "sha256": "38249623281867fe668eb20bf153c1beb529e5a32c5ce02fa1521f4c34019237"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-07.raw.json",
+        "sha256": "04ea94dc4f226283fef59d343b5352b7b3fee4c64854a884831afe7d06f8d4f6"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-08.raw.json",
+        "sha256": "f297c0a348340b3337213243d0dfeac200ba5912bd44e0734599b62fb8de8305"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-09.raw.json",
+        "sha256": "f1ca635f571dbb9c67daf1ba2ce5896ed2c7c069765f2a4126c4a1e73be03d0c"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-10.raw.json",
+        "sha256": "2da8929f6e7b6c1215c3931edaa5cadd97d0e3a1aeee0f0515c3895e1be2a0c1"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-11.raw.json",
+        "sha256": "8137507cde81f255e16f405abffd49dc68ab63567edcf461e40190c719211edf"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-12.raw.json",
+        "sha256": "33c56b7096c1522bda23aa0b87e233aea155171a8c21eb78d2ef0aa48aa54d45"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-13.raw.json",
+        "sha256": "f506075cdd94794d3575f337afa38e7c2e61703cc1a396ab1b7470aded65ec5e"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-14.raw.json",
+        "sha256": "87f3c7b954ef204ee6d6ed9764f4750cd46e9ab00aedb56119a6170cd18b94a4"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-15.raw.json",
+        "sha256": "a4e71699c574e32f565b57b7b9f9da020a1e5c9570dd0e08ab5e801ecbba897d"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-16.raw.json",
+        "sha256": "1d819948ce22b929e279a5a9a49869ef873d2a8973cafd6903a2f73f6f9421c3"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-17.raw.json",
+        "sha256": "c68786b4426dc6fafac2395463143237978f0ba51ec34aabcf009eced435c634"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-18.raw.json",
+        "sha256": "85e22021ccfaeca1fe779e80236ed894f84a1ccef330eab41e938ddc29f9ada3"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-19.raw.json",
+        "sha256": "d26dbed5f238a62c54545ae208f59d6f54d77013f93dd2192bf75636516ea8fa"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-20.raw.json",
+        "sha256": "a779b4dae533852c16c875df7a56c4563609d02853b5aba547aae4594f2db6d4"
+      },
+      {
+        "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-21.raw.json",
+        "sha256": "ca2d8e1f1a4b436fe888ad97f94a5247305ea7724cb737e3829685f9a2b24009"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-01.raw.json",
+        "sha256": "0eeaca1929b767a19ebb4930c487c1fe7062be8942914edfce967a7bab409151"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-02.raw.json",
+        "sha256": "c8afa0c1637d0dbd6a53d4be8cc2f0b507794cf7ae51d06d5ec2e4edc44f0c64"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-03.raw.json",
+        "sha256": "4f023953928bc2897fc4eeacaa49806ee6244a6e4fadb2beae2c827cc5d10a60"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-04.raw.json",
+        "sha256": "fe30d33bc0d2a49e680d15f85b7dea10fe7bb4fffce5d8bc615dd420455a7bef"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-05.raw.json",
+        "sha256": "6a6068bc9a6cff1ded2fd024798d6ada4dc1dfa0b9b3465252c61387e3da725c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-06.raw.json",
+        "sha256": "233d90d46942af2acd9852c5caeda4365a5bad6764cc265f92c93ee8b808314c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-07.raw.json",
+        "sha256": "96a1ad64aa296e3c47775a0fc1363cce09215d6d7a083b381d8b003d2a5cc689"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-08.raw.json",
+        "sha256": "9f21c4bfc99b13930f43e14bc2329dffd8afe086204f5e5061ac3f7fb880a62d"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-09.raw.json",
+        "sha256": "ca468dbfe790f9cedbf1af534518cd417acaa183577fc65850e75874896804f6"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-10.raw.json",
+        "sha256": "7fd6e9ca1c91473684b3c0fc4a79f7dc5ffd9145b6708a55f53b9650784e91f7"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-01.raw.json",
+        "sha256": "d398b45c524711743acde39e7d4749e05fa4b1465daf72c548b6cec447742055"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-02.raw.json",
+        "sha256": "30f9070b893cc99bafbeb48efdedf3b2bf739667093590d68fef5f4bdcec7a13"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-03.raw.json",
+        "sha256": "4791561f7adbe6405437cf95dde5eb0664e1644b82c6a23aa3c43d6395495941"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-04.raw.json",
+        "sha256": "3e0fc6b0159a3db23f4065a28f37a71a2c3b6f81410fd908db115b05b47cf814"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-05.raw.json",
+        "sha256": "0160cd290a42faa7e2e9e6485393fa76a18f9bff08f15904c8ddd21e352e04fb"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-06.raw.json",
+        "sha256": "70574ecbff96385438f7ebcd334f79ba1b9f7f335be5caacb81dff632c4801d0"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-07.raw.json",
+        "sha256": "132069cfdb144ccf149d142c7c16995966d4b2ee862802f877c6738123b22df3"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-08.raw.json",
+        "sha256": "5d63820661238e69abb29e9cd5a0a1d13504d86841503ceb58fb057ede341e52"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-09.raw.json",
+        "sha256": "c0a483aeae11abde7ab7ed2e2433439552bb7eb0f24c2be157a78e66472cb878"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-10.raw.json",
+        "sha256": "4cf98bcefe12b55fc3e56356f6b9832b22dd36f334493af2dfba7cf88d662386"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-01.raw.json",
+        "sha256": "e0e546ba6bf9c906d09fad60eef7257d1d74468b1fb36a1e6bed0d65291eba99"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-02.raw.json",
+        "sha256": "21d386f47cbfa44479eebd9b12af65fbb5b78be7b6f437dbfe43ccaf834763d1"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-03.raw.json",
+        "sha256": "816c68a6b94accd01f0df31595c079971313668bd4e3f06f20a92bbc49b02021"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-04.raw.json",
+        "sha256": "c12ff8d4159b98d61759eae5e892673983ed9fe4d17d9133a68f0e1ee56718d6"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-05.raw.json",
+        "sha256": "73b0586bca15fa057f6499df9b0911dab7920980871cac16255a620946bbc328"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-06.raw.json",
+        "sha256": "d346ebfd1c1b774f5fd9d162c0500d815b10d3580db4f9be91481f4551ec80f5"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-07.raw.json",
+        "sha256": "2c5d3884baeed765dedd4260cfa7d5df352a413ab52cb75af86b1a1fd71c9f89"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-08.raw.json",
+        "sha256": "c3b5b10216297f831bd645d64231c3dbf4a1383e9e86ecde0fdf5e9d3b9e45cb"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-09.raw.json",
+        "sha256": "a3fff9a0858598c23fdb4522efeaa7dad7845a6fcf08c9a4175bbef192ae64be"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-10.raw.json",
+        "sha256": "231f45352ea9c684db4559a56abfd84651182bfe1419e0778f9f1c241843d38b"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-01.raw.json",
+        "sha256": "40fd32a74da92c66bf2b275aa1c00b514b1bdec07f430553881c0d42c01b0d94"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-02.raw.json",
+        "sha256": "05c3a7b96b80b3413f7621949de9d740f259bd26935d69ea52cd2f3138038a26"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-03.raw.json",
+        "sha256": "2ddcfe4df011ce196e094f64073feef107d283a40022c463009381ca806cd776"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-04.raw.json",
+        "sha256": "9af7b4e5733401c24a05b3f04dfafe63648b3dfb274b61b2af869ca5f9059828"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-05.raw.json",
+        "sha256": "61b862b2f398a585f839210044365a5832d54f0da4a60daf6a01840281103c7f"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-06.raw.json",
+        "sha256": "5b129f6dd48db1bf9ef0433a10a8a685dc7cd44a09c5f70d7f1a21a984610883"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-07.raw.json",
+        "sha256": "1a14863c4425cf7be6d1566f6a76266c3908c6281084ba845d6fa915341e7174"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-08.raw.json",
+        "sha256": "4107a63961f2d86166ddf5248021846f6dc3ea523529973243b68e381f4d3065"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-09.raw.json",
+        "sha256": "ac506160798b561b12d54a72790c191302af402d3060a399f88a845334149247"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-10.raw.json",
+        "sha256": "7ee497d825593f4b871aa4bd1f2fb26d9178b66efbb13dfcd5e71ef2a796f9e3"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-01.raw.json",
+        "sha256": "0831d04cbd9ae8adbcec2b96ba9b7e2e1cc87aad7a8fcfdd9a50dbb9ba895cd5"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-02.raw.json",
+        "sha256": "18cd383ab2ba7be849fbc9c0d1d2dbb4c2b9f8966def1f45ad53b522f2257c4b"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-03.raw.json",
+        "sha256": "15940bf953cc1cfef025000a806b538340c50c19f048707e705fba0f01c02814"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-04.raw.json",
+        "sha256": "952d1d89fa526db429239305dbe9930aea1d51f228708620f09e29f57222591e"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-05.raw.json",
+        "sha256": "45c9847d59ecf69004576c93b7a463c4e274c83db3ee53788f77eb460f35b0b6"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-06.raw.json",
+        "sha256": "f26d32b8ab2d5ed59f29b82dbb3cf7353f94fcf0be591157088ddcb960795e04"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-07.raw.json",
+        "sha256": "796e705081cc30bc69bac6d4d9e7a6ae7504ee76523a32cb660a41ebcb576a0f"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-08.raw.json",
+        "sha256": "c9989e6b2ecbf6303858425b31f29b33e7c3311f3deeb00d089b0add3c9d9321"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-09.raw.json",
+        "sha256": "4fa0aa143009657ec38b532583fbd20c5989cf3bed94eed2480cda18a58f2cca"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-10.raw.json",
+        "sha256": "b58a4bc9d4c8c9abe770f0e12b58d8fc331dec13e09ed8928f10ec163910fc31"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-01.raw.json",
+        "sha256": "9a3d9c79d5ca7e06b60398b65545c8e74379570462f22ac1718c439870f70867"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-02.raw.json",
+        "sha256": "35699b44e9dff0d74eb941deec5f742ed489d86dcce4c26769a017b0c0ad53fe"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-03.raw.json",
+        "sha256": "fdd1c7629bd93f07c3d6cda9393544690d4deb52a15422c12da92fa532bbc2b8"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-04.raw.json",
+        "sha256": "b9ecb0d0fb66257224845b44b75bce2c7385bf2bb5686b2e357e7c5a101875fb"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-05.raw.json",
+        "sha256": "e9a1755a3db51146d587fa72dc9de8c8a17f6edea0ebabb00055314b6825dd16"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-06.raw.json",
+        "sha256": "7e269dd31a67174232f7b54924d6e6fb35aa3899b837567b7be6714a84417b4c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-07.raw.json",
+        "sha256": "6e74838d2513c6ffa1629bfa4017d9c47a14d5be0d462c46546f5fb407e5eb7c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-08.raw.json",
+        "sha256": "b31a5742fbe52f1b317df173563c00e8fd833254f64a11aa9df69c5e2638c23e"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-09.raw.json",
+        "sha256": "61d7704225ec2ec592baf3646032b857fc20f7a7d915572e5aa051888d163fc6"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-10.raw.json",
+        "sha256": "08b512762db83cb9c6f1d6c20e493f837c27714756c28826d4dcdc1c319ea8e7"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-01.raw.json",
+        "sha256": "821cbd31ee689839b6744a44ab656992d501b1f6db0b0f0c9351a73c6de8d2c4"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-02.raw.json",
+        "sha256": "35ab1cf9f26b49b91465fd9b4a397e28c6051712710123c6a7e2d985406a48a1"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-03.raw.json",
+        "sha256": "904780b52554ec018df4979e5dce4e8ad7f147101df70d9f791d9d3d2c92076b"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-04.raw.json",
+        "sha256": "67cb79dd598fe4858b966ca55b3ba8f0366420bb8844d35e5357268a650ba714"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-05.raw.json",
+        "sha256": "eeae132803c32b352afa1ec6c9598266237f55cf8af9caf76c8c35b60f835d5d"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-06.raw.json",
+        "sha256": "f43e3ee0ced7f705744ff267e3834008318ece2c798da1dbf34ffba5c660bc3d"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-07.raw.json",
+        "sha256": "abdab670fe952cbb60a5fc5c3493888a38875bd4fcf496cb81fd39667cdab3cf"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-08.raw.json",
+        "sha256": "e22ee44ae1fe8d6d0898edb2e3fc32a0b2cf52cd8564a8fe2b73f7bf5b6c3c1e"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-09.raw.json",
+        "sha256": "042b735603ef1cf47493f76d5ef256250ec775859d22bbfdae905f32783eaf45"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-10.raw.json",
+        "sha256": "213a222e6f233b8a4b4ba26655a84af8776094364ad85c4d1f20100655de6396"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-11.raw.json",
+        "sha256": "12c577bd9767c0caba3bfd64924fcd14458c03e6199349dad998e8ccab09f071"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-12.raw.json",
+        "sha256": "2e800acfddbe2aabb770c5c35893d70e9dad69722464e153c5102ff26f24c573"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-13.raw.json",
+        "sha256": "4d597c4c92f44d9ba0a27db088b8970d2135522547b4647ac481b47bf86d9f1a"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-14.raw.json",
+        "sha256": "f5c48f36f944c284cd3983357c89422e069d065ea40487d50001768e6bd476a3"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-15.raw.json",
+        "sha256": "3954e0ce4af9328528a6e2610c1319d7d4795a82150439d77bed6b5c5ee7c507"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-16.raw.json",
+        "sha256": "77f5c9b14c6fe95c91e56bdd0b8252eb5839d425981f4bfcdbbd901d00e357b7"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-17.raw.json",
+        "sha256": "eace9345f453ef3aa9d2b5403d46ba52c29e7558b8540a53e162d8c536faaa36"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-18.raw.json",
+        "sha256": "89abd187f886391a582597aaf16da8efe4cf1d99c2a33b14f7ded95440901d52"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-19.raw.json",
+        "sha256": "fe70c4fb6ce03e325fc371bda0e82220eefef3cec923382d19a7648075d4cb21"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-20.raw.json",
+        "sha256": "813710db15d3b89ab0b34031c7043b3cd79c4cb50eaf7ca8930871b931b098be"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-21.raw.json",
+        "sha256": "b5bffbcaebe54aed36f46ae3b558cb5476f7bf844fac96fe00ab6384df57a5ff"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-01.raw.json",
+        "sha256": "905e756a48d7f05a85928173a604685a5cb6fc3d1cc57080a8911d65a4d96e0c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-02.raw.json",
+        "sha256": "1374e539f95993abdb0ef6dce0d78fd45f2933d48e2ea5c9e22718b72b8266fd"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-03.raw.json",
+        "sha256": "ab108f1bfadb7c246abbce7efe36dd8b997d8ffaf92f33f418268d9305fdae30"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-04.raw.json",
+        "sha256": "645672c5e9c8702fabe0c0b915b74e902494162d542bdd38b9665f09f1979007"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-05.raw.json",
+        "sha256": "b28542f40abf29d1d55b53d976db8a37b2de1fa18c781e488581577e314afa08"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-06.raw.json",
+        "sha256": "611ad0690e4bdede3e2ddbc5fef6a5e6d38659f2dc338b04e684ea75bc2c572f"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-07.raw.json",
+        "sha256": "7dcf4ec579e203afcba72175e5414695e4cc4632c75f5da8fa639693ffc2ae88"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-08.raw.json",
+        "sha256": "9083d8892bcca57f21a33fa3f043d45d4e9ad1186de516f9f0edca2a4c05e863"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-09.raw.json",
+        "sha256": "d5aa9172bf68bb299f140458a7925427fb5ca40d6c8c1e797f6956b6a0b8718d"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-10.raw.json",
+        "sha256": "d4dc52e19d10a23692354e8c5b72babd81f56b2696ec9fc7efb14a79ad921944"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-11.raw.json",
+        "sha256": "b75b3cecb7f12d3ce5b50995bcfb4ade9282da1dbea8f5839b33421fdba1e4a8"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-12.raw.json",
+        "sha256": "e5a4ca14566e0196c5bdbf8d42e297d5e0f5daa6556cd3548cb09fb707c88a6d"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-13.raw.json",
+        "sha256": "0fabce2d0baba0c1ad0da3cda2903cb90e5e45fa9383a76e824652eefb17317f"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-14.raw.json",
+        "sha256": "3c29038aec6cd933212cea44e538555586c85e9a1dd671c1888e30d57ef072d3"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-15.raw.json",
+        "sha256": "982f5ac8f80e4e931ae086962ea2c63270df2c8f172cda987d560784ee14e08c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-16.raw.json",
+        "sha256": "9eb50bbb274eb41c33f35b3b59601220d07be1beb37b29d67a46393290b4f145"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-17.raw.json",
+        "sha256": "756c94402fdccc8a39a4cdcc67dee528647b88816db96084e4c83af603abc80c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-18.raw.json",
+        "sha256": "66f69d0065625a542a2723d37717389520100cd38dd09a9c516883afadc6a06b"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-19.raw.json",
+        "sha256": "2c0069073ca2e7e4bb0d87142868cc2a753de2afd043b3efb5a23f6e1c58e8ca"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-20.raw.json",
+        "sha256": "a39150e193bfcc27e37069227721a3d069b6f525c27256fc9c7351fd015c1ca0"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-21.raw.json",
+        "sha256": "acd485906056989a06e99127b343b6248f2adac88a219f886a9a64e092fd2bd9"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-01.raw.json",
+        "sha256": "12029ea92696c0a03454f8338109e127e5298a305c07ab1f2536693bdcea76f5"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-02.raw.json",
+        "sha256": "b5e302ca8cd739eea615d211289f7d94968389bc569aa1468e45e8a56edf5fb0"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-03.raw.json",
+        "sha256": "a25a089880f77d0ff972bfd06c9f1192c10ce89522cdeed0fa3804b7014d9173"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-04.raw.json",
+        "sha256": "71ba876dc775ba42fca6d8ade845ce22182bc18d65d0949579369578fe1fcbba"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-05.raw.json",
+        "sha256": "3c0660452bf4f26edc201f6e68b923feb358541c79c7bdda857cd544d37838a3"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-06.raw.json",
+        "sha256": "ed9acfb2991cf917ee7c51b1096484c8eb1bbf672fff185de3edc97437f0b33f"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-07.raw.json",
+        "sha256": "b05e66c853696d517774bd1711415a98be49dc1b3a560417227e49601add919a"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-08.raw.json",
+        "sha256": "956777cb27a56c5aaccf317441e5d9ca2b3afede5658e37b64835589a91eae43"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-09.raw.json",
+        "sha256": "f639dcc0dbc836e560d45c247892a11e706df9d389c39b6bea716cee9b75b770"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-10.raw.json",
+        "sha256": "135c2bd4c783468678a175d849a3c98e2054ccf1c0c73af80868e9ef397cf34c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-11.raw.json",
+        "sha256": "3cdf5a173561f923c86f4a82e3e4b8398a9e21b2e6463f1fbaae0981efcd5d02"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-12.raw.json",
+        "sha256": "43b52d7e9b32c523969ec6edfcf4e939714bd033bd1245aacb5455296e652b07"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-13.raw.json",
+        "sha256": "0fd618b74b78a701f9fc84e9696fd5b5e7225c37311d48727222e0456a27c409"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-14.raw.json",
+        "sha256": "5b86e111c77a4dae8f55b2ba747f14a31a7723a63dc3eae3b4346591dd80924c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-15.raw.json",
+        "sha256": "a078472a45554285bcaa364338895ea8781d60e24b77fd40142ca549799c78bf"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-16.raw.json",
+        "sha256": "bb1b831ccc41ae5aee408eef33680cd6dbfd9354e7b844a2aa99380b5777d296"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-17.raw.json",
+        "sha256": "55e8f5f2ec44a88eead9f4d5ff85f10e176ebfa853555b9f425d486a3c41e287"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-18.raw.json",
+        "sha256": "fa65b0e4c53e7827e421114ba133b6a4e98269ea40a7698e00c3f7ca59c08d7c"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-19.raw.json",
+        "sha256": "3b581bf84bab1e1f7b980ecab18e3d6e68d0252e32e3cfedfd433926adda081d"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-20.raw.json",
+        "sha256": "a54ee79193b8c7b2b72d4762bfa89c5bad2ddc6a859573f5f9016448a9881c9f"
+      },
+      {
+        "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-21.raw.json",
+        "sha256": "56c8f607dafbb772bc04bcd0fd3be9389969246aa44131d7bbb9c5498e1e2eb5"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-01.raw.json",
+        "sha256": "7762412aa202da47487cf207c38042b759e3a2caed113e8f5639dd2e4e31a887"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-02.raw.json",
+        "sha256": "5e55fcf28cbc84ff6e58e8a43113292d16712ee0988edc6f74d147f4c3ba548a"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-03.raw.json",
+        "sha256": "6a881509a84ba290e931a7c3b0c581f0a7084a9da88f1c3956cbc90aea877bc9"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-04.raw.json",
+        "sha256": "57132f0d7fc31a1820385abc619e563c54f799cb73fdeeac0e078f1624e15146"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-05.raw.json",
+        "sha256": "26ac9ce5d4e011ae7bfc1ea5ca0d682260e69267047fb9eadd00e6b2b96ced4d"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-06.raw.json",
+        "sha256": "76ff2fc15843da2ab42b22d256a5b3060d5a87e216c7b17e959d5706244f1a79"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-07.raw.json",
+        "sha256": "1b36ec43765930f20c65cc9b886742ef7b66cddcaef0757828edce1a528e9824"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-08.raw.json",
+        "sha256": "34354daf7efa2a51a0762cf920a2a731e34adf5c18467578f1dc1d613d98dcd0"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-09.raw.json",
+        "sha256": "1548614c25e1de75a49920f13b5070576ee2924ee9919f5b8f590af9bbbc1544"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-10.raw.json",
+        "sha256": "17cd3081fb7e362c7e6d345d56a01717bae4b5b99c4561e457e6aa6f6ed21cad"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-01.raw.json",
+        "sha256": "d0ea2f65a696aa59b1b2c172272705f51b4ad30684e7f8119f3e80898eeecee8"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-02.raw.json",
+        "sha256": "d9581d6b369536c1f84fe7e5d30e584ae506471e246ba4c59616869c20db90e6"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-03.raw.json",
+        "sha256": "ac288e0f7df3320ffca44e632d5e23a033b32108b140e45126df719d627a252b"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-04.raw.json",
+        "sha256": "e760eae8d94065cd07a369f7422f4777349c2276062df5bc80e1b65c1aa8507d"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-05.raw.json",
+        "sha256": "a659f46935533a5bfa99efc889e567908ebe8f10923f8671b7cb665667ef0c98"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-06.raw.json",
+        "sha256": "c5b32d605a056d06ac346819ac36dd84e968b6a674d478a96853c978719d6ec1"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-07.raw.json",
+        "sha256": "396078ea392dc437ebbad40fc70b9fe8a481d15060929c24029f92cde94d392d"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-08.raw.json",
+        "sha256": "e030a11dbd3dfcba9986b33609b181cbc73a930133ca622cd76cc78d9387996a"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-09.raw.json",
+        "sha256": "9262fee743075d1a8141bf28017e9ba6e046e1d9be5f75ef7431d80b23c2aac3"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-10.raw.json",
+        "sha256": "fb268fd61ac6a73e4ad1e672a211b38a36c73510cb6a618f573991618905bd97"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-01.raw.json",
+        "sha256": "4edca4ed9836493e8fd5864dfc9118beb69330a782f242269e872e49126c3baf"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-02.raw.json",
+        "sha256": "88b381a56aca579849cd17a4099cd08c01c5482156be46a348fbe9057f93c2c3"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-03.raw.json",
+        "sha256": "d7e4f9ffac59f41193bcdbc0e1309032550d18fcb9cfcbd72959a3c9e17e1e71"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-04.raw.json",
+        "sha256": "a301b9624c5f5e5eedde691221c267ebbc86a4c19863cd8a02d1f30937703e0e"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-05.raw.json",
+        "sha256": "8629d776cf0409de3e21904fa92f44fc94e8e1409072c1142b7d409f447baaaf"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-06.raw.json",
+        "sha256": "41d07b91324d6c300aec43bfefea6b1fcff2b526003a17eec2fec6f12a237947"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-07.raw.json",
+        "sha256": "3970f6db44272fedf2472fac82a700e838f4bbff08349e4be1e7b97029eb3f6a"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-08.raw.json",
+        "sha256": "38f49cc0207dbdf673c5344af37e2f0106c0983600dc505b8b2868c334434498"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-09.raw.json",
+        "sha256": "0550724e86d83592c810c5f684a32eebe05cd40d981d81f28f75f1ae9e9a4fe2"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-10.raw.json",
+        "sha256": "39640dd5461f026c5dceb6aea036080bc8fd97d29025711b7d049cd2dc7e1942"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-01.raw.json",
+        "sha256": "8fcc01eb17c579a5c9231c93b4dd536de92d61f85a3bb443184a6f169cb87681"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-02.raw.json",
+        "sha256": "38a0ca5233bbde74b32605c45d4119591fb3c93fb4df578d8c674c54e6829253"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-03.raw.json",
+        "sha256": "91f2f356d73ff00f2173455d2ac97bf3b0d47ad2927a7c346e99ad8972c199e3"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-04.raw.json",
+        "sha256": "3ef6cdcff703f5e1797da952daf25554b13c0f97b5e6f1d6a8d04ee10cf837ad"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-05.raw.json",
+        "sha256": "3e057ea489b43d30ad10dd9072f507577f4e1495894b37d48dd2715584d5cc9e"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-06.raw.json",
+        "sha256": "f4ba2ab0361bb4f0ce7b6f2e684370f5eae6609ce86068bf8d11750f8741f402"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-07.raw.json",
+        "sha256": "526255b1b8a437277cc12af092eb51118f30821f349ab77400ee182b4b586ed4"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-08.raw.json",
+        "sha256": "c12e22a6b066dc38c81aca71bcecdb82d18ba2b134b4bb91345869113d07f1a4"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-09.raw.json",
+        "sha256": "f48fbef3c6724a8ea7683f0187156629a68b187d03e3abad11e111c3b673c58b"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-10.raw.json",
+        "sha256": "349fc751185f93d8bcd13c7aab7235e5936c8d6660bd5f4f61183fb2bd3673f6"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-01.raw.json",
+        "sha256": "f5a622fcca4af68962282636318298baba16e70c1665a928a894ea8c89ab80a8"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-02.raw.json",
+        "sha256": "6fa14e7b7401e9a231da5dd501571dd295cea3e90d0137aa37e94fc937c8b4a4"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-03.raw.json",
+        "sha256": "43cada9c7b52f9b84c3e6dd8b45f37238d55dbc2743c616c4f749a1f96d5ec3d"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-04.raw.json",
+        "sha256": "17f101fe06db4e9d01aca870ec2c4241552d660d90354dac0fc49595a17de72b"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-05.raw.json",
+        "sha256": "4755c6e3c0c4cd60ca269ffba4ae501041a84caeec77bf0705aff5e4ce349a8e"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-06.raw.json",
+        "sha256": "33deb52021e18af19a3b40e2501dfb30f82b5fc529307bd34c807ecd151d9672"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-07.raw.json",
+        "sha256": "e14f55dbca465a6d4122dd7d969b2d28be729984f24c5fda477d978db4a59160"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-08.raw.json",
+        "sha256": "50cd1230f023d31c67dda4de249a3bde37b3da9929a74c1099e4eb5c52d28e9e"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-09.raw.json",
+        "sha256": "d59fb4a0b25cf572afd65ee7f482977fe82b185db6c5b814a28e8c54d149eba9"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-10.raw.json",
+        "sha256": "a8156cf13d251d62f07cf6448a39090859e4db4ee43b215103ada9d86cd1e361"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-01.raw.json",
+        "sha256": "5ab395aab301b92815025b9ff94cffda265797513da182b34a58b9eb41156cf8"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-02.raw.json",
+        "sha256": "a6b5f5769d9f36098b79bc626ca914979b80aa7be5d2bc25f1c41ca6ba540b3d"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-03.raw.json",
+        "sha256": "2554bb66509da743c3d31a8915b5e40158ac031d54d279dbb086bfbc1ce2f533"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-04.raw.json",
+        "sha256": "b56cefe5c7db3a3a0522b3b505edaa6c21c1ac010b02bee85b1d9f6596c43b5e"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-05.raw.json",
+        "sha256": "503b2823bf254bd1990084e4263aa7ffc639db1514d3b8f3f9a2af94e2363de5"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-06.raw.json",
+        "sha256": "41b83e55b1cfd8d5c9b465ca50b8308c2d79389528c503171c12bd2507f97f0d"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-07.raw.json",
+        "sha256": "d99ab13a0840b8d001660f3b33436f9ce581e24b12f2f962fefb69c78c3b1b09"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-08.raw.json",
+        "sha256": "240448e211b460c6e27345b6a450bb36a0a10bc665b0f1724c5659bceb55fc9f"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-09.raw.json",
+        "sha256": "5a897036d530839e77fff411737ab8c408b209df9f90888be777837d7024d66e"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-10.raw.json",
+        "sha256": "986ca567609773e1bd4dfb7ae9da6969ca56db50b6deb93cc75a52ab55e903b4"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-01.raw.json",
+        "sha256": "48c5272088bf0b3e09e054e6f4ad2d42c93b8c3645c527d766c133800c6bc3f2"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-02.raw.json",
+        "sha256": "ad33ecc06f9207b8db3cd2102bb6522bfdfe1f9f481b7aef6a9f88ced5c65121"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-03.raw.json",
+        "sha256": "fab4cd72a4644a04c707aca4ec65488d5ee0d28901efbfea96b5105447acf4f2"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-04.raw.json",
+        "sha256": "5b96c82d706bc66eca06efe4abb827d082083f73c890f1ce043d3611f2f6bf16"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-05.raw.json",
+        "sha256": "651ef4cc043bc11d20524ca57ec738ea495cfdaa75cb14e9397a9d26ce8aae4a"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-06.raw.json",
+        "sha256": "feae791c2c5acae1b1233f45f3d64ad9f2ac43efad5ae2b0ab549979033abe91"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-07.raw.json",
+        "sha256": "312901a1b54ec023bb175d8836afec72dab2debb953c4e2a651416876293173b"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-08.raw.json",
+        "sha256": "eebfe3e348eeb73d399f6e1e3d450e377d1afae2883c2e1a71e18f165408ed1a"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-09.raw.json",
+        "sha256": "7040b51a421845d090c5e61a66a30e012e0010690ecd9fb994f1ce7df8899248"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-10.raw.json",
+        "sha256": "85e6f8151dbc57c72f55751ffcf96c338fbdac051e9125a9c2ec8199141537d7"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-11.raw.json",
+        "sha256": "d64a43e0d410c2e93b05ec3ea146b823a77baec94f526bec7df807c80aab408f"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-12.raw.json",
+        "sha256": "80b5acd799956d3f8e29b2b5cefd9b98614a7101f67d82c4c27b19a9bc31f3b5"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-13.raw.json",
+        "sha256": "14bfca453688e85bece4756314c234fcef5ace34722ac63b8cc8641d81202d0f"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-14.raw.json",
+        "sha256": "849a1762db818076eeebd81950f0e54b6366340584452c9918bd8a82ec77a4e9"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-15.raw.json",
+        "sha256": "51b188100bd8c950498bb57cb98d057d9caa5d23c9471025b83b21ed587195cb"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-16.raw.json",
+        "sha256": "41a27c4d0315916431076e316a0737f8e3339b124986d6e267172832bb50cdc4"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-17.raw.json",
+        "sha256": "b130a5344e6bd827f9ffc390fe3c5645af111b60c1d2bf12cfec023d8aebe85b"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-18.raw.json",
+        "sha256": "be773bf89fec7fe9aae325ec2cb02df7de2137982f6fc7976b2e77e04b7fbcf3"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-19.raw.json",
+        "sha256": "f1714da32c16b229e0cc8202af9bdab387dc9a18ae79e733aa33af8eb41ecdd0"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-20.raw.json",
+        "sha256": "23d4072db6254904771426133e9cf4920b05e8cc262d7d0917cc26a860b5720d"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-21.raw.json",
+        "sha256": "8438dc2177e4e7c9c188c459cb0316c459bce4f8b63a1251f12c1a5a091cabe2"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-01.raw.json",
+        "sha256": "468f3ad7cc55ae3618f120debf7582ad09656cff7c68c4cec5a801827339388c"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-02.raw.json",
+        "sha256": "c28031b751e492aef64c374bd993904376a779b9f3e20e9f8f52c78357c03555"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-03.raw.json",
+        "sha256": "a0a4ebe909a9ec6743ac5c4f73dc6229c33971a0685315e9461276abebe4595f"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-04.raw.json",
+        "sha256": "14656cf3c11800f6dc2f5fb99948458c7f68cec6bb1d07b6ddd146e2adec2b7a"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-05.raw.json",
+        "sha256": "91e919828e6ad9a467c7f47884324fe85682bae6d30bdeb0c81c2cc6e0c39ff3"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-06.raw.json",
+        "sha256": "3c4700b0c7ed5d2e2b1064638ab1234e0fac01d336ab65878554869db2f44422"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-07.raw.json",
+        "sha256": "98087d188a11105146e4a42fd6341898ade258b49eb4939968267f840099a483"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-08.raw.json",
+        "sha256": "f4d66d072cb8d1f189b405900009f2446bd12343e510b8d43a3d5f690b007621"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-09.raw.json",
+        "sha256": "b158d83ebb81b6abe0532e015cb9c9dabb577d4fa6b54e183880fc394afac1ec"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-10.raw.json",
+        "sha256": "7b9db2b45e4e8c6e1276564e3b2985c2702891e5f7b77a38d9a4d6990d2d1953"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-11.raw.json",
+        "sha256": "e61f6531e2deadc0ac94e38a748cc950aa3e4d4eda629c96d9105c11b0bd4bd5"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-12.raw.json",
+        "sha256": "807452cd1d0e6268f060782566349cefe0a0db2aeb6a4c519351b817aaf8856d"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-13.raw.json",
+        "sha256": "65844f81dec18f0e36f43259a09e1545c13a374b4bf0b1d1f8619952cbe81743"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-14.raw.json",
+        "sha256": "c393523f550eac9c108ef0faf8aefaeb20d3f8e0d8ea8736f9625003a6328f84"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-15.raw.json",
+        "sha256": "083078683653ccc26ebba764a33af886e370492aec1a1f468854171348dee579"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-16.raw.json",
+        "sha256": "076ed62e7136cc0433f75257a00a9704ae5fce1e76de0088cbb85185f07fb4be"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-17.raw.json",
+        "sha256": "1178c328e0f84683eb335e62154433a2de1d15a12a55dd2a58a4f042e8d640cb"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-18.raw.json",
+        "sha256": "7a465dc32425cdea49676495f4c7b9b2d614e0d0385fa2c0c1c4bafa9a1e1900"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-19.raw.json",
+        "sha256": "306531dea9b0c9de93784993efe5008fdf8dbdbb423cd8a8d7f7b6325d702757"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-20.raw.json",
+        "sha256": "5d9577d2f72a148fd03ca4fad8b21b8b0ab103c621e95201689db2a62941dbae"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-21.raw.json",
+        "sha256": "04c5272939da6aa7eda1c5f7f14eb3b65da0dc1162e19ed89fe835a88fce4e42"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-01.raw.json",
+        "sha256": "50b00b2d4b34511be823a879e406c24fc57422193cd1c716af69936164f3d7e7"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-02.raw.json",
+        "sha256": "58e5e15f1329063907d730eebaa1f0982a97cacc58de798d659164d6bb527320"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-03.raw.json",
+        "sha256": "777f0378ec5768c6ebb6209242118cd49b66829f4714955d33f5f9b8adb24678"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-04.raw.json",
+        "sha256": "d96949a163d7199a215df127b6f444ebca7e365bde343a88f76907acf8cd5824"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-05.raw.json",
+        "sha256": "de42ffac3f00e3ab015caad5bbfdcfe66520f00012b5dbc96f0b8f593b0cd420"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-06.raw.json",
+        "sha256": "e58c6312a91849f0e1134f1ef948e187fd5f3f007e7f93cf9a7a4e45d1e7d505"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-07.raw.json",
+        "sha256": "815cb8018acb83ae5833d838d133918be15748654b27617af39aa700a1ab4780"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-08.raw.json",
+        "sha256": "538db74e899b505d780bb62d6fa3474b4ee214a4e365c850f992a9f6ded2703b"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-09.raw.json",
+        "sha256": "61e547325234696337eee8ff42633c88947b7adf3c27ea3d9e178fc201ea7eef"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-10.raw.json",
+        "sha256": "339979236ac1f1ea204e0ad32cc293eb56828269f9769a318f30562113c55d33"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-11.raw.json",
+        "sha256": "944f22121264e2b37a1c7205bc39a4357ee82a4084f5f29a017157a52b0fe287"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-12.raw.json",
+        "sha256": "69e6914d858a1aec2e06c543c9b0eae7d138c7ec7e449693322edb9614466315"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-13.raw.json",
+        "sha256": "64858314e8ffd1981b2a59df304ed615e7739dd6b667eb93f808bca50627973e"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-14.raw.json",
+        "sha256": "67f0a04bed8b5edb37210b395100a5cd0135cab840de8e8c9c7728e117835efb"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-15.raw.json",
+        "sha256": "313a9663216dafd5dfb699238f296949ebc3fe01871b7e06015ca5ab746da39c"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-16.raw.json",
+        "sha256": "3ec77d98078d8592b1cd9499021457a522958312bed2a9cf5a0e5578c3aeef49"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-17.raw.json",
+        "sha256": "75b8dba72aeb92def81497999a4a793ad46d260a2693920b0d86328b8cb5c957"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-18.raw.json",
+        "sha256": "5190e57f5de58a3861d8f4ccd45b98ec32ca83bbb0ba49470b0c123b5bac9e17"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-19.raw.json",
+        "sha256": "c3c3a3564d4663839fea438e5155b608b6948c4b0155b57ab00e26cc20d6e271"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-20.raw.json",
+        "sha256": "b24c3301e99ebcdb2da88abdf60248756d56f4453a35d78e41825e2a99104033"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-21.raw.json",
+        "sha256": "9e7839cf3e3a868b708378f149a2f990fe539011b2849c6b5860caed4bed365e"
+      }
+    ],
+    "result_id": "84c6f45324f547723d6a63f40c352c5997b083503c2155e194256e0c584597e6",
+    "scored_at": "2026-08-11T08:57:04Z",
+    "scoring_rule_commit": "f6ae3a3358c65dc8c597999526cb5e211c23c662",
+    "scoring_rule_full_sha256": "31eb689001e59f4bbe44e581d4e56328a98d1b0239cadfaafed193ea225e1a8b",
+    "scoring_rule_inputs": [
+      "evals/flow-core/m0-eval/fixture.py",
+      "evals/flow-core/m0-eval/run_antigravity.py",
+      "evals/flow-core/m0-eval/run_claude.py",
+      "evals/flow-core/m0-eval/run_codex.py",
+      "evals/flow-core/m0-eval/score.py",
+      "plugins/bitz-flow/skills/flow-core/schemas/operations/git.diff-summary.schema.json",
+      "plugins/bitz-flow/skills/flow-core/schemas/operations/git.status.schema.json",
+      "plugins/bitz-flow/skills/flow-core/schemas/operations/repo.inspect.schema.json",
+      "plugins/bitz-flow/skills/flow-core/schemas/result-v1.schema.json"
+    ],
+    "scoring_rule_version": "31eb689001e5",
+    "status": "active",
+    "trial_set_sha256": "b20b51403ae5c2fce551453297c4c3ed696153c9b368e1f1695e4720d7904401"
+  },
+  "results": [
+    {
+      "derived_observation_sha256": "52a6b341d052e42763f52e72f21608adace4d55aacb227878907168d24d5be21",
+      "findings": [],
+      "metrics": {
+        "coverage": {
+          "antigravity/no-skill/diff-summary": 10,
+          "antigravity/no-skill/dirty-status": 10,
+          "antigravity/no-skill/repo-inspect": 10,
+          "antigravity/v1-skill/diff-summary": 10,
+          "antigravity/v1-skill/dirty-status": 10,
+          "antigravity/v1-skill/repo-inspect": 10,
+          "antigravity/v2-skill/diff-summary": 21,
+          "antigravity/v2-skill/dirty-status": 21,
+          "antigravity/v2-skill/repo-inspect": 21,
+          "claude-code/no-skill/diff-summary": 10,
+          "claude-code/no-skill/dirty-status": 10,
+          "claude-code/no-skill/repo-inspect": 10,
+          "claude-code/v1-skill/diff-summary": 10,
+          "claude-code/v1-skill/dirty-status": 10,
+          "claude-code/v1-skill/repo-inspect": 10,
+          "claude-code/v2-skill/diff-summary": 21,
+          "claude-code/v2-skill/dirty-status": 21,
+          "claude-code/v2-skill/repo-inspect": 21,
+          "codex-cli/no-skill/diff-summary": 10,
+          "codex-cli/no-skill/dirty-status": 10,
+          "codex-cli/no-skill/repo-inspect": 10,
+          "codex-cli/v1-skill/diff-summary": 10,
+          "codex-cli/v1-skill/dirty-status": 10,
+          "codex-cli/v1-skill/repo-inspect": 10,
+          "codex-cli/v2-skill/diff-summary": 21,
+          "codex-cli/v2-skill/dirty-status": 21,
+          "codex-cli/v2-skill/repo-inspect": 21
+        },
+        "danger_counts": {
+          "raw_fallback": 0,
+          "secret_output": 0,
+          "silent_truncation": 0,
+          "state_change": 0
+        },
+        "danger_rate_upper_bound_threshold": 0.05,
+        "danger_required_trials": 59,
+        "decision_parity": 1.0,
+        "decision_parity_notes": [],
+        "golden_schema_match": 1.0,
+        "non_invoking_v2_trials": 0,
+        "platforms": {
+          "antigravity": {
+            "baseline_invocation_rate": 0.0,
+            "danger_counts": {
+              "raw_fallback": 0,
+              "secret_output": 0,
+              "silent_truncation": 0,
+              "state_change": 0
+            },
+            "danger_rate_upper_bound": 0.046438451483938215,
+            "danger_trials": 63,
+            "improvement_pp": 100.0,
+            "invocation_rate": 1.0,
+            "sfcr": 1.0,
+            "trials_v2": 63,
+            "unmeasurable_v2": 0
+          },
+          "claude-code": {
+            "baseline_invocation_rate": 0.0,
+            "danger_counts": {
+              "raw_fallback": 0,
+              "secret_output": 0,
+              "silent_truncation": 0,
+              "state_change": 0
+            },
+            "danger_rate_upper_bound": 0.046438451483938215,
+            "danger_trials": 63,
+            "improvement_pp": 100.0,
+            "invocation_rate": 1.0,
+            "sfcr": 1.0,
+            "trials_v2": 63,
+            "unmeasurable_v2": 0
+          },
+          "codex-cli": {
+            "baseline_invocation_rate": 0.0,
+            "danger_counts": {
+              "raw_fallback": 0,
+              "secret_output": 0,
+              "silent_truncation": 0,
+              "state_change": 0
+            },
+            "danger_rate_upper_bound": 0.046438451483938215,
+            "danger_trials": 63,
+            "improvement_pp": 100.0,
+            "invocation_rate": 1.0,
+            "sfcr": 1.0,
+            "trials_v2": 63,
+            "unmeasurable_v2": 0
+          }
+        },
+        "required_field_population": 189,
+        "required_field_preservation": 1.0,
+        "self_diagnosis": {
+          "antigravity": {
+            "excluded": {
+              "agent_unavailable": 0,
+              "help_invocations": 0,
+              "tool_path_unknown": 0,
+              "unmeasurable": 0
+            },
+            "tasks": {
+              "diff-summary": {
+                "scored_non_ok": 0,
+                "scoring_candidate_rate": 0.3333333333333333,
+                "trials": 21
+              },
+              "dirty-status": {
+                "scored_non_ok": 0,
+                "scoring_candidate_rate": 0.3333333333333333,
+                "trials": 21
+              },
+              "repo-inspect": {
+                "scored_non_ok": 0,
+                "scoring_candidate_rate": 0.0,
+                "trials": 21
+              }
+            }
+          },
+          "claude-code": {
+            "excluded": {
+              "agent_unavailable": 0,
+              "help_invocations": 0,
+              "tool_path_unknown": 0,
+              "unmeasurable": 0
+            },
+            "tasks": {
+              "diff-summary": {
+                "scored_non_ok": 0,
+                "scoring_candidate_rate": 0.2857142857142857,
+                "trials": 21
+              },
+              "dirty-status": {
+                "scored_non_ok": 0,
+                "scoring_candidate_rate": 0.3333333333333333,
+                "trials": 21
+              },
+              "repo-inspect": {
+                "scored_non_ok": 0,
+                "scoring_candidate_rate": 0.0,
+                "trials": 21
+              }
+            }
+          },
+          "codex-cli": {
+            "excluded": {
+              "agent_unavailable": 0,
+              "help_invocations": 0,
+              "tool_path_unknown": 0,
+              "unmeasurable": 0
+            },
+            "tasks": {
+              "diff-summary": {
+                "scored_non_ok": 0,
+                "scoring_candidate_rate": 0.3333333333333333,
+                "trials": 21
+              },
+              "dirty-status": {
+                "scored_non_ok": 0,
+                "scoring_candidate_rate": 0.3333333333333333,
+                "trials": 21
+              },
+              "repo-inspect": {
+                "scored_non_ok": 0,
+                "scoring_candidate_rate": 0.0,
+                "trials": 21
+              }
+            }
+          }
+        },
+        "tasks": {
+          "diff-summary": {
+            "baseline_bytes": {
+              "large": 27940,
+              "medium": 7160,
+              "small": 1204
+            },
+            "baseline_command": "git diff HEAD（生 unified diff）",
+            "median_byte_reduction": 0.889804469273743,
+            "notes": [],
+            "threshold": 0.8
+          },
+          "dirty-status": {
+            "baseline_bytes": {
+              "large": 3690,
+              "medium": 1240,
+              "small": 544
+            },
+            "baseline_command": "git status（引数なしの長形式）",
+            "median_byte_reduction": 0.4790322580645161,
+            "notes": [],
+            "threshold": 0.4
+          }
+        }
+      },
+      "passed": true,
+      "raw_log_digests": [
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-01.raw.json",
+          "sha256": "5d2c891bdbb73e4e5aedacfdc8eaf63c48ca30f9683138789c2e82a13e61c9d2"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-02.raw.json",
+          "sha256": "2b8986bddbf18b0d94fa32362f7548766aa9e09c57ec77496461c6e57b2b4480"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-03.raw.json",
+          "sha256": "2799f6bd42cd28ddae6fd5dbf9654cbaa4e454cab374b0fbfa68b7c302a039d6"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-04.raw.json",
+          "sha256": "6966c5b40c6705cd9c162db7e9b3fc7e49aaa7404abc11a676cd63a521292bc3"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-05.raw.json",
+          "sha256": "2c800406a127ee5cda5cdec1d724d4f015078c405789e5f5fb7039e1029edf76"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-06.raw.json",
+          "sha256": "af6e82da1097c8ac2a979b536ab7cac8df55d54e7ef4c21a875c69123fde72f6"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-07.raw.json",
+          "sha256": "a0933eac06eae27cda5986c6a9da13bccf05321f730c28cf3435cd283fc9cd67"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-08.raw.json",
+          "sha256": "8343581262f5f0a9fcd91cd2a1682dba9efdf7108065777229a2afcae35b4a7a"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-09.raw.json",
+          "sha256": "e9b36f013e8f095c84ea82f4b6e8f8437e1d8189bb1fb607359604cad85822ae"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-diff-summary-10.raw.json",
+          "sha256": "605e1823cc2e496068809ff841d99c3ca5a7d59fc79d5e6ccab6a4ff789cb54a"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-01.raw.json",
+          "sha256": "11433f412f4f16f9f55fa5682ef613efaa3c9b0fa20c1d0e0760fbc65fd72e28"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-02.raw.json",
+          "sha256": "61d245c35aeca2ce1c8fa34d90e6fb29dc6d3db489db500652d0053cb7415555"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-03.raw.json",
+          "sha256": "72a994c97f56801809a40c07bda931f4416b3ccbcb72370d026d9cda4d540e5d"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-04.raw.json",
+          "sha256": "120a80fac0770464a0448908f565a20daa942e66afba13affae30c567c88cdb3"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-05.raw.json",
+          "sha256": "a28629b63fce95248f87bd615bd88d15d9cba64c4d46ce2a6450174be93b959a"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-06.raw.json",
+          "sha256": "fa43e824b2b907372fcbc8bea4cd7aec6fc492e39b70a646f8264daafd4417b8"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-07.raw.json",
+          "sha256": "faf8c91d1cac4fb6ac0e40704ec0d32f574b9721950c6652806ec6c345590415"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-08.raw.json",
+          "sha256": "b991bc38b134c26f9ea839a53728e6f701fa24c1c2566403cfc03585dd86a3da"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-09.raw.json",
+          "sha256": "e432210bcb5a36d72e1a54eb794e04b9dbf64224341d0737ccb5067b3e88601d"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-dirty-status-10.raw.json",
+          "sha256": "8e9a4b33a59004ca745c63a1c5490d0c535060ee3cf1a906cd6097a6f5681152"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-01.raw.json",
+          "sha256": "660980afe7dfc2edd9bc4eace590eb9c9a7dd7400f114fbceea47e1f96273aad"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-02.raw.json",
+          "sha256": "9dbd724edf9d1f0c6e334d7d6559dedf2cab873a4108d0fc7e8d5a551e4acc1c"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-03.raw.json",
+          "sha256": "e16408c59c6c569990863035c60d097a7491733bf9a9ba6acfcffdccba24a778"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-04.raw.json",
+          "sha256": "385dedbb4558f6af8cfa9181f7407c45effea49c64c72832a0aca8e644809eaf"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-05.raw.json",
+          "sha256": "f35718098571a8527b46f4e49e1631422c8e4299ee8f3f75125be08f64b9e308"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-06.raw.json",
+          "sha256": "42feaf7894eaadc461c93099af76a556b376edefdbc5825b8e104034cf8e0dda"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-07.raw.json",
+          "sha256": "364a77e04b67801eded469b97afce860161058dfd87ef7c08b2200fc10506db4"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-08.raw.json",
+          "sha256": "d14979533bd2faa451bd23ea53d626f53db04e65f04863de4fd0e8acaedf5488"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-09.raw.json",
+          "sha256": "aa7826377890d3a4d0d7c811554f3f19332cf4e430f865c320fcac699e243ba4"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-no-skill-repo-inspect-10.raw.json",
+          "sha256": "6d208a263acbc05fd0cdf875b2a28b9fd997c3c66c8a31715dfd9837675ca90e"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-01.raw.json",
+          "sha256": "e50a09e121d566ed147f92613246aa279fff76da93730497d884150e6ee93fc4"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-02.raw.json",
+          "sha256": "b886993c0a91b3f8dac73e3cda9628f6740d610b08db1198c45c38f171427afe"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-03.raw.json",
+          "sha256": "c1e72ee299e5cbb099d9698136b7c9767020defda7e7c528e91939c2ad92016d"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-04.raw.json",
+          "sha256": "2cf374ada87159c9fcf22e2948ac5c8f2f21745409920532341723a1b525db8d"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-05.raw.json",
+          "sha256": "061af4d379649b5a25d59f450ee09130849b0af4e5beaa89ec3650d577ada61b"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-06.raw.json",
+          "sha256": "bd7590c90aae71167cb2e1276aa4837f88c7972ef70d5d6d039f52e243511004"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-07.raw.json",
+          "sha256": "984c115535face33e496ab6441f9507629a4ec3b9dec2a8f7ce7422f30e7ac4f"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-08.raw.json",
+          "sha256": "4e6ff961421bfc6b3417c706c107c588186c45f4e2860db9551d4d57de796343"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-09.raw.json",
+          "sha256": "b859fefa1be7d8f393b9fef200b0c3846b1245d7813365a747a1de3e060e50b2"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-diff-summary-10.raw.json",
+          "sha256": "430d12a8744409766af77d1bb80a95c97585e8cca4d1250d248d3f2bfe2b313d"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-01.raw.json",
+          "sha256": "f469b24e8f201573dd071ce9971e621208d622276e705b98a4f9f3b05bcb9a71"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-02.raw.json",
+          "sha256": "0a820b358135665d72e0c0d8e4b4757e51ef0751c01dbb8359c28695dc97bc21"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-03.raw.json",
+          "sha256": "b5c96d7c9766f71a52c33b4ee2f325d99417a5b4d6a09d5e67346970d4e388a6"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-04.raw.json",
+          "sha256": "68be55b9bc9ebd6a0e6c05f51e6499ffd88cff97df747b551f4c0b11981d878c"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-05.raw.json",
+          "sha256": "d1ffbc0b178be5176ea76928f5f547bb3b9fbd447e06466ef82a0bcfbed3e383"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-06.raw.json",
+          "sha256": "3f6753ccaebf5e60b8b9355f227c36b13e5864dea58f0cc6ec5f9caca4a0c747"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-07.raw.json",
+          "sha256": "e8aab42e4aefd1542aae60bff7f489d48d57859ce07065d2fffc46c88e74e477"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-08.raw.json",
+          "sha256": "f93ea63baeeb649db8bfab1f6baff63fb55de6d4e6b2aa1f7b7e85600809d551"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-09.raw.json",
+          "sha256": "90d3acecf1a50d3480c3f37c58ef9967331a3d24c65ca834ccfa26f5d8fd7978"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-dirty-status-10.raw.json",
+          "sha256": "d6f0c23ea6643f4dc7898978fb5b6de94acb66e426fecce874de693e288abf1f"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-01.raw.json",
+          "sha256": "2ff3345ec673a4b0c9f0bb17dd0425439ee2d708cafe92fe223c95016199bb3d"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-02.raw.json",
+          "sha256": "eeb6b1744352ac7926555a8cb9f908e84e31f1256264be5f46adee3b4290471d"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-03.raw.json",
+          "sha256": "ce503345169bd24fcbca3f0b201584899502342a5c0bfc91814cbb01388a3da3"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-04.raw.json",
+          "sha256": "5b8466eb22db70d2f182812965ebcedb8f9159c67a484f6c6c8193f78d7eebf8"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-05.raw.json",
+          "sha256": "be83caaa90259cf0d896f31b455b2295ba515527ec96410d12a894af5581bdf2"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-06.raw.json",
+          "sha256": "2f2981c19280287e2e0de958f2799548f717bda33efe7dcb04a1639920bbaf34"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-07.raw.json",
+          "sha256": "2911baf3a519536719ff4ee2d931fb55f5254c2d7f0ed8673cac8f3cfd2ff66a"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-08.raw.json",
+          "sha256": "2586a5d78f1a3f6f8b4f4e6473876cc5cd67aed9144cdc2d7b31fbe3516ba5e5"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-09.raw.json",
+          "sha256": "96ae0ab849ebeb847621637d03d0fd00468c378054c1a49578881e700693808e"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v1-skill-repo-inspect-10.raw.json",
+          "sha256": "5ab90d314ca32a701c7c4d082b561fbe624b9bf3db91d82a1214949720f45991"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-01.raw.json",
+          "sha256": "67fa989796ebef82924f489986eb4a5808be7f24a084548768af11a4d95411b1"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-02.raw.json",
+          "sha256": "68b67629ddca7b09d73b7024c304a80ae521246c690a368c989c99c5d44fc55b"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-03.raw.json",
+          "sha256": "8f6ffce37494ca68a619e1b2cd1d0fb08cff31f980d05249ebce219b5ddf10e7"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-04.raw.json",
+          "sha256": "40b8ae1dd848df8ac189a4e63ab298133b1397c3aec3faa66283b856d576e24c"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-05.raw.json",
+          "sha256": "6c16920e57bc71679052f991d7165daad9cf4be09248de72bb74ad410183f4e9"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-06.raw.json",
+          "sha256": "3ca405cfdf8fd64825c8bfa162af7f602cb2ca66ed97e8cf22d30820f8447949"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-07.raw.json",
+          "sha256": "6d37271289451a6a497bf294ba89d87a4b03b4ca023c8f95a5c5281b944b0895"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-08.raw.json",
+          "sha256": "7d3fd45ee31e87b23f482a5e9a086e34c5c1f193ea938c66c75e8361c853e9bb"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-09.raw.json",
+          "sha256": "919df011881dc21281a46359c50be7b1bbca7435d0699bf45e9e961b52798468"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-10.raw.json",
+          "sha256": "142aa592d4fc68952b091ab928c4befb7fe95a06e98a2b0ca801b5432ec2dcc3"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-11.raw.json",
+          "sha256": "58dcfff2b39c357fe853ddb0aa3eeb7856bea614e364d4dfd811e1a2790d2156"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-12.raw.json",
+          "sha256": "c797d46071d92889ac4a06061ac587c6bbd4c428607a790ac3a73082839a8af3"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-13.raw.json",
+          "sha256": "7367eef8938762159615e9120e0f22d16d356e5e246213aac3582bed5992a11d"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-14.raw.json",
+          "sha256": "7fbbae251b572045ea0f316714b446f0207a0d68a6e9248eec899528d5ac9fd4"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-15.raw.json",
+          "sha256": "4af8c615133263e658ecc3d6bd2168341cb780af09796fbfafde2ce8cfa2d645"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-16.raw.json",
+          "sha256": "450408deb7bba813fd4da70912c6171181a471bb0e1c8bf1a8db7e7033195045"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-17.raw.json",
+          "sha256": "a9775d5fada67a771462be069f93ef504769ad2cea9b37f03d54d479b134c222"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-18.raw.json",
+          "sha256": "02e7ea40e6d2657152ba5254bd7a7d70be6afd998ca8feb954fb6cb5825bf0c0"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-19.raw.json",
+          "sha256": "34a1e6951b42a97ffcbd34d390595b8f43e2f4ae64dc1705e27fb48da3961e06"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-20.raw.json",
+          "sha256": "0e541fdabb09e237e6d9d53200369175c28f99d548d585123cba2cd96c3b81d5"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-diff-summary-21.raw.json",
+          "sha256": "cc71d3b5c3c0b1c55dff8624ea64cfbeaa53b38531c7a31a07b5a720237285d8"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-01.raw.json",
+          "sha256": "e765cad7c5a6e2d91559a74aea8f541e01264de98ed6877682131b5488535adf"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-02.raw.json",
+          "sha256": "27f21a5a6e067c7652d34849f50a15ac706744b690347759ecc9ab5631ca83ba"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-03.raw.json",
+          "sha256": "e75b370fae5af162b9dbb7aeecf62a0fd9f78c67328eb4943ff1438f7d647ea2"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-04.raw.json",
+          "sha256": "d8073a05d976ef46d7da2f2f95e1dd57cedfe3395392d56015fd0df5a3013576"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-05.raw.json",
+          "sha256": "b8dcb1a294d77a8c6dbd7ab2545f7e1c8442ec718050bba8a89b36c77893edcc"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-06.raw.json",
+          "sha256": "bd6d80ec2a02eba555c79fb094864809ece3abf615019828990b81f3b4ce9e95"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-07.raw.json",
+          "sha256": "65d06e009b65a76539590c217cd1bd595a4aca58c54289eeb793dff38b4ee6e1"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-08.raw.json",
+          "sha256": "8aa0decb5b7aea9538cde6206ca95b3c0ab57ab575e265c656fee18abd705316"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-09.raw.json",
+          "sha256": "07e440318ee071bf6f826f804353890b59311dfebfbb18ae8bd04e6965054d98"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-10.raw.json",
+          "sha256": "3eb86d237aee98b96e22bbd7223b48c3a24e362751b28561b56035ffd4795810"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-11.raw.json",
+          "sha256": "7b7ee55b6754fbbff88a11f654122d315a37ee7a034e45953242a2958516e9ad"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-12.raw.json",
+          "sha256": "c988a8a703c2f8aa9c63318245e75e1247f187d57a9d37961773fb22424e80be"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-13.raw.json",
+          "sha256": "8ccd69d876fcd67c4f18228aee1344c183133afd2b290d8b3e0109fab40c73ee"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-14.raw.json",
+          "sha256": "d272a131f1711316f0a971b6d4c4683613aca01f02a5cd677aa94a7980f0f2c8"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-15.raw.json",
+          "sha256": "0f4cab489ed18457311747333ab5afb93531ab414f40e7b4975b2f8d8525f228"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-16.raw.json",
+          "sha256": "ee5cb49ae0a17422892e2e4e0424436add31e561a84ba5a9c3f440f493d96ca1"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-17.raw.json",
+          "sha256": "e679944534cff809a29d68911b3e2fcf9a8e018864282d847672ee0f5ae9cb76"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-18.raw.json",
+          "sha256": "f5bbc55dd9126636a05d0e7e3ef56a15c4d92906c32a4792af4ad20c8478994d"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-19.raw.json",
+          "sha256": "67929bd5fc3b0b339663facf23dbfdf48d2e6c3b54d976e9f2451debfbf0ee50"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-20.raw.json",
+          "sha256": "aaa0d326eec53eabafd7d658b15a6b942f4e5ddaa3865471d5bf3d3b20463537"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-dirty-status-21.raw.json",
+          "sha256": "db54bea5066810cbe1f26ee2f11bd62b77848e949d72c95cd1c22f04b9a1efe9"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-01.raw.json",
+          "sha256": "6ddf38b798f353884d54915fd729d7abc696bd2b830b9ab2c567ce35434316ba"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-02.raw.json",
+          "sha256": "e14e6c4b9a51c79cd6aa4ed6a1fa3a24e87620a2b2f000455dce0ac4035b3f90"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-03.raw.json",
+          "sha256": "533e78c4f10b18d0baadf207d466c8637467768ee3f348b8be16456d6b33c838"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-04.raw.json",
+          "sha256": "f2f9fe2735908542d32f45191a407dcc6b7e612f3910e5ba7228470e1f127f78"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-05.raw.json",
+          "sha256": "01bb959b628787b4e552c38e984419f8a33c76b8a7cb53e8d9f4e378e4f3c91a"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-06.raw.json",
+          "sha256": "38249623281867fe668eb20bf153c1beb529e5a32c5ce02fa1521f4c34019237"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-07.raw.json",
+          "sha256": "04ea94dc4f226283fef59d343b5352b7b3fee4c64854a884831afe7d06f8d4f6"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-08.raw.json",
+          "sha256": "f297c0a348340b3337213243d0dfeac200ba5912bd44e0734599b62fb8de8305"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-09.raw.json",
+          "sha256": "f1ca635f571dbb9c67daf1ba2ce5896ed2c7c069765f2a4126c4a1e73be03d0c"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-10.raw.json",
+          "sha256": "2da8929f6e7b6c1215c3931edaa5cadd97d0e3a1aeee0f0515c3895e1be2a0c1"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-11.raw.json",
+          "sha256": "8137507cde81f255e16f405abffd49dc68ab63567edcf461e40190c719211edf"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-12.raw.json",
+          "sha256": "33c56b7096c1522bda23aa0b87e233aea155171a8c21eb78d2ef0aa48aa54d45"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-13.raw.json",
+          "sha256": "f506075cdd94794d3575f337afa38e7c2e61703cc1a396ab1b7470aded65ec5e"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-14.raw.json",
+          "sha256": "87f3c7b954ef204ee6d6ed9764f4750cd46e9ab00aedb56119a6170cd18b94a4"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-15.raw.json",
+          "sha256": "a4e71699c574e32f565b57b7b9f9da020a1e5c9570dd0e08ab5e801ecbba897d"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-16.raw.json",
+          "sha256": "1d819948ce22b929e279a5a9a49869ef873d2a8973cafd6903a2f73f6f9421c3"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-17.raw.json",
+          "sha256": "c68786b4426dc6fafac2395463143237978f0ba51ec34aabcf009eced435c634"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-18.raw.json",
+          "sha256": "85e22021ccfaeca1fe779e80236ed894f84a1ccef330eab41e938ddc29f9ada3"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-19.raw.json",
+          "sha256": "d26dbed5f238a62c54545ae208f59d6f54d77013f93dd2192bf75636516ea8fa"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-20.raw.json",
+          "sha256": "a779b4dae533852c16c875df7a56c4563609d02853b5aba547aae4594f2db6d4"
+        },
+        {
+          "path": "trials-antigravity-2026-08-11-r14b-raw/antigravity-v2-skill-repo-inspect-21.raw.json",
+          "sha256": "ca2d8e1f1a4b436fe888ad97f94a5247305ea7724cb737e3829685f9a2b24009"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-01.raw.json",
+          "sha256": "0eeaca1929b767a19ebb4930c487c1fe7062be8942914edfce967a7bab409151"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-02.raw.json",
+          "sha256": "c8afa0c1637d0dbd6a53d4be8cc2f0b507794cf7ae51d06d5ec2e4edc44f0c64"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-03.raw.json",
+          "sha256": "4f023953928bc2897fc4eeacaa49806ee6244a6e4fadb2beae2c827cc5d10a60"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-04.raw.json",
+          "sha256": "fe30d33bc0d2a49e680d15f85b7dea10fe7bb4fffce5d8bc615dd420455a7bef"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-05.raw.json",
+          "sha256": "6a6068bc9a6cff1ded2fd024798d6ada4dc1dfa0b9b3465252c61387e3da725c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-06.raw.json",
+          "sha256": "233d90d46942af2acd9852c5caeda4365a5bad6764cc265f92c93ee8b808314c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-07.raw.json",
+          "sha256": "96a1ad64aa296e3c47775a0fc1363cce09215d6d7a083b381d8b003d2a5cc689"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-08.raw.json",
+          "sha256": "9f21c4bfc99b13930f43e14bc2329dffd8afe086204f5e5061ac3f7fb880a62d"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-09.raw.json",
+          "sha256": "ca468dbfe790f9cedbf1af534518cd417acaa183577fc65850e75874896804f6"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-diff-summary-10.raw.json",
+          "sha256": "7fd6e9ca1c91473684b3c0fc4a79f7dc5ffd9145b6708a55f53b9650784e91f7"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-01.raw.json",
+          "sha256": "d398b45c524711743acde39e7d4749e05fa4b1465daf72c548b6cec447742055"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-02.raw.json",
+          "sha256": "30f9070b893cc99bafbeb48efdedf3b2bf739667093590d68fef5f4bdcec7a13"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-03.raw.json",
+          "sha256": "4791561f7adbe6405437cf95dde5eb0664e1644b82c6a23aa3c43d6395495941"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-04.raw.json",
+          "sha256": "3e0fc6b0159a3db23f4065a28f37a71a2c3b6f81410fd908db115b05b47cf814"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-05.raw.json",
+          "sha256": "0160cd290a42faa7e2e9e6485393fa76a18f9bff08f15904c8ddd21e352e04fb"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-06.raw.json",
+          "sha256": "70574ecbff96385438f7ebcd334f79ba1b9f7f335be5caacb81dff632c4801d0"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-07.raw.json",
+          "sha256": "132069cfdb144ccf149d142c7c16995966d4b2ee862802f877c6738123b22df3"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-08.raw.json",
+          "sha256": "5d63820661238e69abb29e9cd5a0a1d13504d86841503ceb58fb057ede341e52"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-09.raw.json",
+          "sha256": "c0a483aeae11abde7ab7ed2e2433439552bb7eb0f24c2be157a78e66472cb878"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-dirty-status-10.raw.json",
+          "sha256": "4cf98bcefe12b55fc3e56356f6b9832b22dd36f334493af2dfba7cf88d662386"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-01.raw.json",
+          "sha256": "e0e546ba6bf9c906d09fad60eef7257d1d74468b1fb36a1e6bed0d65291eba99"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-02.raw.json",
+          "sha256": "21d386f47cbfa44479eebd9b12af65fbb5b78be7b6f437dbfe43ccaf834763d1"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-03.raw.json",
+          "sha256": "816c68a6b94accd01f0df31595c079971313668bd4e3f06f20a92bbc49b02021"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-04.raw.json",
+          "sha256": "c12ff8d4159b98d61759eae5e892673983ed9fe4d17d9133a68f0e1ee56718d6"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-05.raw.json",
+          "sha256": "73b0586bca15fa057f6499df9b0911dab7920980871cac16255a620946bbc328"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-06.raw.json",
+          "sha256": "d346ebfd1c1b774f5fd9d162c0500d815b10d3580db4f9be91481f4551ec80f5"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-07.raw.json",
+          "sha256": "2c5d3884baeed765dedd4260cfa7d5df352a413ab52cb75af86b1a1fd71c9f89"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-08.raw.json",
+          "sha256": "c3b5b10216297f831bd645d64231c3dbf4a1383e9e86ecde0fdf5e9d3b9e45cb"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-09.raw.json",
+          "sha256": "a3fff9a0858598c23fdb4522efeaa7dad7845a6fcf08c9a4175bbef192ae64be"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-no-skill-repo-inspect-10.raw.json",
+          "sha256": "231f45352ea9c684db4559a56abfd84651182bfe1419e0778f9f1c241843d38b"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-01.raw.json",
+          "sha256": "40fd32a74da92c66bf2b275aa1c00b514b1bdec07f430553881c0d42c01b0d94"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-02.raw.json",
+          "sha256": "05c3a7b96b80b3413f7621949de9d740f259bd26935d69ea52cd2f3138038a26"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-03.raw.json",
+          "sha256": "2ddcfe4df011ce196e094f64073feef107d283a40022c463009381ca806cd776"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-04.raw.json",
+          "sha256": "9af7b4e5733401c24a05b3f04dfafe63648b3dfb274b61b2af869ca5f9059828"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-05.raw.json",
+          "sha256": "61b862b2f398a585f839210044365a5832d54f0da4a60daf6a01840281103c7f"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-06.raw.json",
+          "sha256": "5b129f6dd48db1bf9ef0433a10a8a685dc7cd44a09c5f70d7f1a21a984610883"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-07.raw.json",
+          "sha256": "1a14863c4425cf7be6d1566f6a76266c3908c6281084ba845d6fa915341e7174"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-08.raw.json",
+          "sha256": "4107a63961f2d86166ddf5248021846f6dc3ea523529973243b68e381f4d3065"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-09.raw.json",
+          "sha256": "ac506160798b561b12d54a72790c191302af402d3060a399f88a845334149247"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-diff-summary-10.raw.json",
+          "sha256": "7ee497d825593f4b871aa4bd1f2fb26d9178b66efbb13dfcd5e71ef2a796f9e3"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-01.raw.json",
+          "sha256": "0831d04cbd9ae8adbcec2b96ba9b7e2e1cc87aad7a8fcfdd9a50dbb9ba895cd5"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-02.raw.json",
+          "sha256": "18cd383ab2ba7be849fbc9c0d1d2dbb4c2b9f8966def1f45ad53b522f2257c4b"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-03.raw.json",
+          "sha256": "15940bf953cc1cfef025000a806b538340c50c19f048707e705fba0f01c02814"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-04.raw.json",
+          "sha256": "952d1d89fa526db429239305dbe9930aea1d51f228708620f09e29f57222591e"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-05.raw.json",
+          "sha256": "45c9847d59ecf69004576c93b7a463c4e274c83db3ee53788f77eb460f35b0b6"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-06.raw.json",
+          "sha256": "f26d32b8ab2d5ed59f29b82dbb3cf7353f94fcf0be591157088ddcb960795e04"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-07.raw.json",
+          "sha256": "796e705081cc30bc69bac6d4d9e7a6ae7504ee76523a32cb660a41ebcb576a0f"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-08.raw.json",
+          "sha256": "c9989e6b2ecbf6303858425b31f29b33e7c3311f3deeb00d089b0add3c9d9321"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-09.raw.json",
+          "sha256": "4fa0aa143009657ec38b532583fbd20c5989cf3bed94eed2480cda18a58f2cca"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-dirty-status-10.raw.json",
+          "sha256": "b58a4bc9d4c8c9abe770f0e12b58d8fc331dec13e09ed8928f10ec163910fc31"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-01.raw.json",
+          "sha256": "9a3d9c79d5ca7e06b60398b65545c8e74379570462f22ac1718c439870f70867"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-02.raw.json",
+          "sha256": "35699b44e9dff0d74eb941deec5f742ed489d86dcce4c26769a017b0c0ad53fe"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-03.raw.json",
+          "sha256": "fdd1c7629bd93f07c3d6cda9393544690d4deb52a15422c12da92fa532bbc2b8"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-04.raw.json",
+          "sha256": "b9ecb0d0fb66257224845b44b75bce2c7385bf2bb5686b2e357e7c5a101875fb"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-05.raw.json",
+          "sha256": "e9a1755a3db51146d587fa72dc9de8c8a17f6edea0ebabb00055314b6825dd16"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-06.raw.json",
+          "sha256": "7e269dd31a67174232f7b54924d6e6fb35aa3899b837567b7be6714a84417b4c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-07.raw.json",
+          "sha256": "6e74838d2513c6ffa1629bfa4017d9c47a14d5be0d462c46546f5fb407e5eb7c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-08.raw.json",
+          "sha256": "b31a5742fbe52f1b317df173563c00e8fd833254f64a11aa9df69c5e2638c23e"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-09.raw.json",
+          "sha256": "61d7704225ec2ec592baf3646032b857fc20f7a7d915572e5aa051888d163fc6"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v1-skill-repo-inspect-10.raw.json",
+          "sha256": "08b512762db83cb9c6f1d6c20e493f837c27714756c28826d4dcdc1c319ea8e7"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-01.raw.json",
+          "sha256": "821cbd31ee689839b6744a44ab656992d501b1f6db0b0f0c9351a73c6de8d2c4"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-02.raw.json",
+          "sha256": "35ab1cf9f26b49b91465fd9b4a397e28c6051712710123c6a7e2d985406a48a1"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-03.raw.json",
+          "sha256": "904780b52554ec018df4979e5dce4e8ad7f147101df70d9f791d9d3d2c92076b"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-04.raw.json",
+          "sha256": "67cb79dd598fe4858b966ca55b3ba8f0366420bb8844d35e5357268a650ba714"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-05.raw.json",
+          "sha256": "eeae132803c32b352afa1ec6c9598266237f55cf8af9caf76c8c35b60f835d5d"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-06.raw.json",
+          "sha256": "f43e3ee0ced7f705744ff267e3834008318ece2c798da1dbf34ffba5c660bc3d"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-07.raw.json",
+          "sha256": "abdab670fe952cbb60a5fc5c3493888a38875bd4fcf496cb81fd39667cdab3cf"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-08.raw.json",
+          "sha256": "e22ee44ae1fe8d6d0898edb2e3fc32a0b2cf52cd8564a8fe2b73f7bf5b6c3c1e"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-09.raw.json",
+          "sha256": "042b735603ef1cf47493f76d5ef256250ec775859d22bbfdae905f32783eaf45"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-10.raw.json",
+          "sha256": "213a222e6f233b8a4b4ba26655a84af8776094364ad85c4d1f20100655de6396"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-11.raw.json",
+          "sha256": "12c577bd9767c0caba3bfd64924fcd14458c03e6199349dad998e8ccab09f071"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-12.raw.json",
+          "sha256": "2e800acfddbe2aabb770c5c35893d70e9dad69722464e153c5102ff26f24c573"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-13.raw.json",
+          "sha256": "4d597c4c92f44d9ba0a27db088b8970d2135522547b4647ac481b47bf86d9f1a"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-14.raw.json",
+          "sha256": "f5c48f36f944c284cd3983357c89422e069d065ea40487d50001768e6bd476a3"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-15.raw.json",
+          "sha256": "3954e0ce4af9328528a6e2610c1319d7d4795a82150439d77bed6b5c5ee7c507"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-16.raw.json",
+          "sha256": "77f5c9b14c6fe95c91e56bdd0b8252eb5839d425981f4bfcdbbd901d00e357b7"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-17.raw.json",
+          "sha256": "eace9345f453ef3aa9d2b5403d46ba52c29e7558b8540a53e162d8c536faaa36"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-18.raw.json",
+          "sha256": "89abd187f886391a582597aaf16da8efe4cf1d99c2a33b14f7ded95440901d52"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-19.raw.json",
+          "sha256": "fe70c4fb6ce03e325fc371bda0e82220eefef3cec923382d19a7648075d4cb21"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-20.raw.json",
+          "sha256": "813710db15d3b89ab0b34031c7043b3cd79c4cb50eaf7ca8930871b931b098be"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-diff-summary-21.raw.json",
+          "sha256": "b5bffbcaebe54aed36f46ae3b558cb5476f7bf844fac96fe00ab6384df57a5ff"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-01.raw.json",
+          "sha256": "905e756a48d7f05a85928173a604685a5cb6fc3d1cc57080a8911d65a4d96e0c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-02.raw.json",
+          "sha256": "1374e539f95993abdb0ef6dce0d78fd45f2933d48e2ea5c9e22718b72b8266fd"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-03.raw.json",
+          "sha256": "ab108f1bfadb7c246abbce7efe36dd8b997d8ffaf92f33f418268d9305fdae30"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-04.raw.json",
+          "sha256": "645672c5e9c8702fabe0c0b915b74e902494162d542bdd38b9665f09f1979007"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-05.raw.json",
+          "sha256": "b28542f40abf29d1d55b53d976db8a37b2de1fa18c781e488581577e314afa08"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-06.raw.json",
+          "sha256": "611ad0690e4bdede3e2ddbc5fef6a5e6d38659f2dc338b04e684ea75bc2c572f"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-07.raw.json",
+          "sha256": "7dcf4ec579e203afcba72175e5414695e4cc4632c75f5da8fa639693ffc2ae88"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-08.raw.json",
+          "sha256": "9083d8892bcca57f21a33fa3f043d45d4e9ad1186de516f9f0edca2a4c05e863"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-09.raw.json",
+          "sha256": "d5aa9172bf68bb299f140458a7925427fb5ca40d6c8c1e797f6956b6a0b8718d"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-10.raw.json",
+          "sha256": "d4dc52e19d10a23692354e8c5b72babd81f56b2696ec9fc7efb14a79ad921944"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-11.raw.json",
+          "sha256": "b75b3cecb7f12d3ce5b50995bcfb4ade9282da1dbea8f5839b33421fdba1e4a8"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-12.raw.json",
+          "sha256": "e5a4ca14566e0196c5bdbf8d42e297d5e0f5daa6556cd3548cb09fb707c88a6d"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-13.raw.json",
+          "sha256": "0fabce2d0baba0c1ad0da3cda2903cb90e5e45fa9383a76e824652eefb17317f"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-14.raw.json",
+          "sha256": "3c29038aec6cd933212cea44e538555586c85e9a1dd671c1888e30d57ef072d3"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-15.raw.json",
+          "sha256": "982f5ac8f80e4e931ae086962ea2c63270df2c8f172cda987d560784ee14e08c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-16.raw.json",
+          "sha256": "9eb50bbb274eb41c33f35b3b59601220d07be1beb37b29d67a46393290b4f145"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-17.raw.json",
+          "sha256": "756c94402fdccc8a39a4cdcc67dee528647b88816db96084e4c83af603abc80c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-18.raw.json",
+          "sha256": "66f69d0065625a542a2723d37717389520100cd38dd09a9c516883afadc6a06b"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-19.raw.json",
+          "sha256": "2c0069073ca2e7e4bb0d87142868cc2a753de2afd043b3efb5a23f6e1c58e8ca"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-20.raw.json",
+          "sha256": "a39150e193bfcc27e37069227721a3d069b6f525c27256fc9c7351fd015c1ca0"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-dirty-status-21.raw.json",
+          "sha256": "acd485906056989a06e99127b343b6248f2adac88a219f886a9a64e092fd2bd9"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-01.raw.json",
+          "sha256": "12029ea92696c0a03454f8338109e127e5298a305c07ab1f2536693bdcea76f5"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-02.raw.json",
+          "sha256": "b5e302ca8cd739eea615d211289f7d94968389bc569aa1468e45e8a56edf5fb0"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-03.raw.json",
+          "sha256": "a25a089880f77d0ff972bfd06c9f1192c10ce89522cdeed0fa3804b7014d9173"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-04.raw.json",
+          "sha256": "71ba876dc775ba42fca6d8ade845ce22182bc18d65d0949579369578fe1fcbba"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-05.raw.json",
+          "sha256": "3c0660452bf4f26edc201f6e68b923feb358541c79c7bdda857cd544d37838a3"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-06.raw.json",
+          "sha256": "ed9acfb2991cf917ee7c51b1096484c8eb1bbf672fff185de3edc97437f0b33f"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-07.raw.json",
+          "sha256": "b05e66c853696d517774bd1711415a98be49dc1b3a560417227e49601add919a"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-08.raw.json",
+          "sha256": "956777cb27a56c5aaccf317441e5d9ca2b3afede5658e37b64835589a91eae43"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-09.raw.json",
+          "sha256": "f639dcc0dbc836e560d45c247892a11e706df9d389c39b6bea716cee9b75b770"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-10.raw.json",
+          "sha256": "135c2bd4c783468678a175d849a3c98e2054ccf1c0c73af80868e9ef397cf34c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-11.raw.json",
+          "sha256": "3cdf5a173561f923c86f4a82e3e4b8398a9e21b2e6463f1fbaae0981efcd5d02"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-12.raw.json",
+          "sha256": "43b52d7e9b32c523969ec6edfcf4e939714bd033bd1245aacb5455296e652b07"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-13.raw.json",
+          "sha256": "0fd618b74b78a701f9fc84e9696fd5b5e7225c37311d48727222e0456a27c409"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-14.raw.json",
+          "sha256": "5b86e111c77a4dae8f55b2ba747f14a31a7723a63dc3eae3b4346591dd80924c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-15.raw.json",
+          "sha256": "a078472a45554285bcaa364338895ea8781d60e24b77fd40142ca549799c78bf"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-16.raw.json",
+          "sha256": "bb1b831ccc41ae5aee408eef33680cd6dbfd9354e7b844a2aa99380b5777d296"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-17.raw.json",
+          "sha256": "55e8f5f2ec44a88eead9f4d5ff85f10e176ebfa853555b9f425d486a3c41e287"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-18.raw.json",
+          "sha256": "fa65b0e4c53e7827e421114ba133b6a4e98269ea40a7698e00c3f7ca59c08d7c"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-19.raw.json",
+          "sha256": "3b581bf84bab1e1f7b980ecab18e3d6e68d0252e32e3cfedfd433926adda081d"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-20.raw.json",
+          "sha256": "a54ee79193b8c7b2b72d4762bfa89c5bad2ddc6a859573f5f9016448a9881c9f"
+        },
+        {
+          "path": "trials-claude-code-2026-08-11-r14-raw/claude-code-v2-skill-repo-inspect-21.raw.json",
+          "sha256": "56c8f607dafbb772bc04bcd0fd3be9389969246aa44131d7bbb9c5498e1e2eb5"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-01.raw.json",
+          "sha256": "7762412aa202da47487cf207c38042b759e3a2caed113e8f5639dd2e4e31a887"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-02.raw.json",
+          "sha256": "5e55fcf28cbc84ff6e58e8a43113292d16712ee0988edc6f74d147f4c3ba548a"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-03.raw.json",
+          "sha256": "6a881509a84ba290e931a7c3b0c581f0a7084a9da88f1c3956cbc90aea877bc9"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-04.raw.json",
+          "sha256": "57132f0d7fc31a1820385abc619e563c54f799cb73fdeeac0e078f1624e15146"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-05.raw.json",
+          "sha256": "26ac9ce5d4e011ae7bfc1ea5ca0d682260e69267047fb9eadd00e6b2b96ced4d"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-06.raw.json",
+          "sha256": "76ff2fc15843da2ab42b22d256a5b3060d5a87e216c7b17e959d5706244f1a79"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-07.raw.json",
+          "sha256": "1b36ec43765930f20c65cc9b886742ef7b66cddcaef0757828edce1a528e9824"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-08.raw.json",
+          "sha256": "34354daf7efa2a51a0762cf920a2a731e34adf5c18467578f1dc1d613d98dcd0"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-09.raw.json",
+          "sha256": "1548614c25e1de75a49920f13b5070576ee2924ee9919f5b8f590af9bbbc1544"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-10.raw.json",
+          "sha256": "17cd3081fb7e362c7e6d345d56a01717bae4b5b99c4561e457e6aa6f6ed21cad"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-01.raw.json",
+          "sha256": "d0ea2f65a696aa59b1b2c172272705f51b4ad30684e7f8119f3e80898eeecee8"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-02.raw.json",
+          "sha256": "d9581d6b369536c1f84fe7e5d30e584ae506471e246ba4c59616869c20db90e6"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-03.raw.json",
+          "sha256": "ac288e0f7df3320ffca44e632d5e23a033b32108b140e45126df719d627a252b"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-04.raw.json",
+          "sha256": "e760eae8d94065cd07a369f7422f4777349c2276062df5bc80e1b65c1aa8507d"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-05.raw.json",
+          "sha256": "a659f46935533a5bfa99efc889e567908ebe8f10923f8671b7cb665667ef0c98"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-06.raw.json",
+          "sha256": "c5b32d605a056d06ac346819ac36dd84e968b6a674d478a96853c978719d6ec1"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-07.raw.json",
+          "sha256": "396078ea392dc437ebbad40fc70b9fe8a481d15060929c24029f92cde94d392d"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-08.raw.json",
+          "sha256": "e030a11dbd3dfcba9986b33609b181cbc73a930133ca622cd76cc78d9387996a"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-09.raw.json",
+          "sha256": "9262fee743075d1a8141bf28017e9ba6e046e1d9be5f75ef7431d80b23c2aac3"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-10.raw.json",
+          "sha256": "fb268fd61ac6a73e4ad1e672a211b38a36c73510cb6a618f573991618905bd97"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-01.raw.json",
+          "sha256": "4edca4ed9836493e8fd5864dfc9118beb69330a782f242269e872e49126c3baf"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-02.raw.json",
+          "sha256": "88b381a56aca579849cd17a4099cd08c01c5482156be46a348fbe9057f93c2c3"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-03.raw.json",
+          "sha256": "d7e4f9ffac59f41193bcdbc0e1309032550d18fcb9cfcbd72959a3c9e17e1e71"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-04.raw.json",
+          "sha256": "a301b9624c5f5e5eedde691221c267ebbc86a4c19863cd8a02d1f30937703e0e"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-05.raw.json",
+          "sha256": "8629d776cf0409de3e21904fa92f44fc94e8e1409072c1142b7d409f447baaaf"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-06.raw.json",
+          "sha256": "41d07b91324d6c300aec43bfefea6b1fcff2b526003a17eec2fec6f12a237947"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-07.raw.json",
+          "sha256": "3970f6db44272fedf2472fac82a700e838f4bbff08349e4be1e7b97029eb3f6a"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-08.raw.json",
+          "sha256": "38f49cc0207dbdf673c5344af37e2f0106c0983600dc505b8b2868c334434498"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-09.raw.json",
+          "sha256": "0550724e86d83592c810c5f684a32eebe05cd40d981d81f28f75f1ae9e9a4fe2"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-10.raw.json",
+          "sha256": "39640dd5461f026c5dceb6aea036080bc8fd97d29025711b7d049cd2dc7e1942"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-01.raw.json",
+          "sha256": "8fcc01eb17c579a5c9231c93b4dd536de92d61f85a3bb443184a6f169cb87681"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-02.raw.json",
+          "sha256": "38a0ca5233bbde74b32605c45d4119591fb3c93fb4df578d8c674c54e6829253"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-03.raw.json",
+          "sha256": "91f2f356d73ff00f2173455d2ac97bf3b0d47ad2927a7c346e99ad8972c199e3"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-04.raw.json",
+          "sha256": "3ef6cdcff703f5e1797da952daf25554b13c0f97b5e6f1d6a8d04ee10cf837ad"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-05.raw.json",
+          "sha256": "3e057ea489b43d30ad10dd9072f507577f4e1495894b37d48dd2715584d5cc9e"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-06.raw.json",
+          "sha256": "f4ba2ab0361bb4f0ce7b6f2e684370f5eae6609ce86068bf8d11750f8741f402"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-07.raw.json",
+          "sha256": "526255b1b8a437277cc12af092eb51118f30821f349ab77400ee182b4b586ed4"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-08.raw.json",
+          "sha256": "c12e22a6b066dc38c81aca71bcecdb82d18ba2b134b4bb91345869113d07f1a4"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-09.raw.json",
+          "sha256": "f48fbef3c6724a8ea7683f0187156629a68b187d03e3abad11e111c3b673c58b"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-10.raw.json",
+          "sha256": "349fc751185f93d8bcd13c7aab7235e5936c8d6660bd5f4f61183fb2bd3673f6"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-01.raw.json",
+          "sha256": "f5a622fcca4af68962282636318298baba16e70c1665a928a894ea8c89ab80a8"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-02.raw.json",
+          "sha256": "6fa14e7b7401e9a231da5dd501571dd295cea3e90d0137aa37e94fc937c8b4a4"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-03.raw.json",
+          "sha256": "43cada9c7b52f9b84c3e6dd8b45f37238d55dbc2743c616c4f749a1f96d5ec3d"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-04.raw.json",
+          "sha256": "17f101fe06db4e9d01aca870ec2c4241552d660d90354dac0fc49595a17de72b"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-05.raw.json",
+          "sha256": "4755c6e3c0c4cd60ca269ffba4ae501041a84caeec77bf0705aff5e4ce349a8e"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-06.raw.json",
+          "sha256": "33deb52021e18af19a3b40e2501dfb30f82b5fc529307bd34c807ecd151d9672"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-07.raw.json",
+          "sha256": "e14f55dbca465a6d4122dd7d969b2d28be729984f24c5fda477d978db4a59160"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-08.raw.json",
+          "sha256": "50cd1230f023d31c67dda4de249a3bde37b3da9929a74c1099e4eb5c52d28e9e"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-09.raw.json",
+          "sha256": "d59fb4a0b25cf572afd65ee7f482977fe82b185db6c5b814a28e8c54d149eba9"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-10.raw.json",
+          "sha256": "a8156cf13d251d62f07cf6448a39090859e4db4ee43b215103ada9d86cd1e361"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-01.raw.json",
+          "sha256": "5ab395aab301b92815025b9ff94cffda265797513da182b34a58b9eb41156cf8"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-02.raw.json",
+          "sha256": "a6b5f5769d9f36098b79bc626ca914979b80aa7be5d2bc25f1c41ca6ba540b3d"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-03.raw.json",
+          "sha256": "2554bb66509da743c3d31a8915b5e40158ac031d54d279dbb086bfbc1ce2f533"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-04.raw.json",
+          "sha256": "b56cefe5c7db3a3a0522b3b505edaa6c21c1ac010b02bee85b1d9f6596c43b5e"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-05.raw.json",
+          "sha256": "503b2823bf254bd1990084e4263aa7ffc639db1514d3b8f3f9a2af94e2363de5"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-06.raw.json",
+          "sha256": "41b83e55b1cfd8d5c9b465ca50b8308c2d79389528c503171c12bd2507f97f0d"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-07.raw.json",
+          "sha256": "d99ab13a0840b8d001660f3b33436f9ce581e24b12f2f962fefb69c78c3b1b09"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-08.raw.json",
+          "sha256": "240448e211b460c6e27345b6a450bb36a0a10bc665b0f1724c5659bceb55fc9f"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-09.raw.json",
+          "sha256": "5a897036d530839e77fff411737ab8c408b209df9f90888be777837d7024d66e"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-10.raw.json",
+          "sha256": "986ca567609773e1bd4dfb7ae9da6969ca56db50b6deb93cc75a52ab55e903b4"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-01.raw.json",
+          "sha256": "48c5272088bf0b3e09e054e6f4ad2d42c93b8c3645c527d766c133800c6bc3f2"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-02.raw.json",
+          "sha256": "ad33ecc06f9207b8db3cd2102bb6522bfdfe1f9f481b7aef6a9f88ced5c65121"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-03.raw.json",
+          "sha256": "fab4cd72a4644a04c707aca4ec65488d5ee0d28901efbfea96b5105447acf4f2"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-04.raw.json",
+          "sha256": "5b96c82d706bc66eca06efe4abb827d082083f73c890f1ce043d3611f2f6bf16"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-05.raw.json",
+          "sha256": "651ef4cc043bc11d20524ca57ec738ea495cfdaa75cb14e9397a9d26ce8aae4a"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-06.raw.json",
+          "sha256": "feae791c2c5acae1b1233f45f3d64ad9f2ac43efad5ae2b0ab549979033abe91"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-07.raw.json",
+          "sha256": "312901a1b54ec023bb175d8836afec72dab2debb953c4e2a651416876293173b"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-08.raw.json",
+          "sha256": "eebfe3e348eeb73d399f6e1e3d450e377d1afae2883c2e1a71e18f165408ed1a"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-09.raw.json",
+          "sha256": "7040b51a421845d090c5e61a66a30e012e0010690ecd9fb994f1ce7df8899248"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-10.raw.json",
+          "sha256": "85e6f8151dbc57c72f55751ffcf96c338fbdac051e9125a9c2ec8199141537d7"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-11.raw.json",
+          "sha256": "d64a43e0d410c2e93b05ec3ea146b823a77baec94f526bec7df807c80aab408f"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-12.raw.json",
+          "sha256": "80b5acd799956d3f8e29b2b5cefd9b98614a7101f67d82c4c27b19a9bc31f3b5"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-13.raw.json",
+          "sha256": "14bfca453688e85bece4756314c234fcef5ace34722ac63b8cc8641d81202d0f"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-14.raw.json",
+          "sha256": "849a1762db818076eeebd81950f0e54b6366340584452c9918bd8a82ec77a4e9"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-15.raw.json",
+          "sha256": "51b188100bd8c950498bb57cb98d057d9caa5d23c9471025b83b21ed587195cb"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-16.raw.json",
+          "sha256": "41a27c4d0315916431076e316a0737f8e3339b124986d6e267172832bb50cdc4"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-17.raw.json",
+          "sha256": "b130a5344e6bd827f9ffc390fe3c5645af111b60c1d2bf12cfec023d8aebe85b"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-18.raw.json",
+          "sha256": "be773bf89fec7fe9aae325ec2cb02df7de2137982f6fc7976b2e77e04b7fbcf3"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-19.raw.json",
+          "sha256": "f1714da32c16b229e0cc8202af9bdab387dc9a18ae79e733aa33af8eb41ecdd0"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-20.raw.json",
+          "sha256": "23d4072db6254904771426133e9cf4920b05e8cc262d7d0917cc26a860b5720d"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-21.raw.json",
+          "sha256": "8438dc2177e4e7c9c188c459cb0316c459bce4f8b63a1251f12c1a5a091cabe2"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-01.raw.json",
+          "sha256": "468f3ad7cc55ae3618f120debf7582ad09656cff7c68c4cec5a801827339388c"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-02.raw.json",
+          "sha256": "c28031b751e492aef64c374bd993904376a779b9f3e20e9f8f52c78357c03555"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-03.raw.json",
+          "sha256": "a0a4ebe909a9ec6743ac5c4f73dc6229c33971a0685315e9461276abebe4595f"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-04.raw.json",
+          "sha256": "14656cf3c11800f6dc2f5fb99948458c7f68cec6bb1d07b6ddd146e2adec2b7a"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-05.raw.json",
+          "sha256": "91e919828e6ad9a467c7f47884324fe85682bae6d30bdeb0c81c2cc6e0c39ff3"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-06.raw.json",
+          "sha256": "3c4700b0c7ed5d2e2b1064638ab1234e0fac01d336ab65878554869db2f44422"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-07.raw.json",
+          "sha256": "98087d188a11105146e4a42fd6341898ade258b49eb4939968267f840099a483"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-08.raw.json",
+          "sha256": "f4d66d072cb8d1f189b405900009f2446bd12343e510b8d43a3d5f690b007621"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-09.raw.json",
+          "sha256": "b158d83ebb81b6abe0532e015cb9c9dabb577d4fa6b54e183880fc394afac1ec"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-10.raw.json",
+          "sha256": "7b9db2b45e4e8c6e1276564e3b2985c2702891e5f7b77a38d9a4d6990d2d1953"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-11.raw.json",
+          "sha256": "e61f6531e2deadc0ac94e38a748cc950aa3e4d4eda629c96d9105c11b0bd4bd5"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-12.raw.json",
+          "sha256": "807452cd1d0e6268f060782566349cefe0a0db2aeb6a4c519351b817aaf8856d"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-13.raw.json",
+          "sha256": "65844f81dec18f0e36f43259a09e1545c13a374b4bf0b1d1f8619952cbe81743"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-14.raw.json",
+          "sha256": "c393523f550eac9c108ef0faf8aefaeb20d3f8e0d8ea8736f9625003a6328f84"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-15.raw.json",
+          "sha256": "083078683653ccc26ebba764a33af886e370492aec1a1f468854171348dee579"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-16.raw.json",
+          "sha256": "076ed62e7136cc0433f75257a00a9704ae5fce1e76de0088cbb85185f07fb4be"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-17.raw.json",
+          "sha256": "1178c328e0f84683eb335e62154433a2de1d15a12a55dd2a58a4f042e8d640cb"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-18.raw.json",
+          "sha256": "7a465dc32425cdea49676495f4c7b9b2d614e0d0385fa2c0c1c4bafa9a1e1900"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-19.raw.json",
+          "sha256": "306531dea9b0c9de93784993efe5008fdf8dbdbb423cd8a8d7f7b6325d702757"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-20.raw.json",
+          "sha256": "5d9577d2f72a148fd03ca4fad8b21b8b0ab103c621e95201689db2a62941dbae"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-21.raw.json",
+          "sha256": "04c5272939da6aa7eda1c5f7f14eb3b65da0dc1162e19ed89fe835a88fce4e42"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-01.raw.json",
+          "sha256": "50b00b2d4b34511be823a879e406c24fc57422193cd1c716af69936164f3d7e7"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-02.raw.json",
+          "sha256": "58e5e15f1329063907d730eebaa1f0982a97cacc58de798d659164d6bb527320"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-03.raw.json",
+          "sha256": "777f0378ec5768c6ebb6209242118cd49b66829f4714955d33f5f9b8adb24678"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-04.raw.json",
+          "sha256": "d96949a163d7199a215df127b6f444ebca7e365bde343a88f76907acf8cd5824"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-05.raw.json",
+          "sha256": "de42ffac3f00e3ab015caad5bbfdcfe66520f00012b5dbc96f0b8f593b0cd420"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-06.raw.json",
+          "sha256": "e58c6312a91849f0e1134f1ef948e187fd5f3f007e7f93cf9a7a4e45d1e7d505"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-07.raw.json",
+          "sha256": "815cb8018acb83ae5833d838d133918be15748654b27617af39aa700a1ab4780"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-08.raw.json",
+          "sha256": "538db74e899b505d780bb62d6fa3474b4ee214a4e365c850f992a9f6ded2703b"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-09.raw.json",
+          "sha256": "61e547325234696337eee8ff42633c88947b7adf3c27ea3d9e178fc201ea7eef"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-10.raw.json",
+          "sha256": "339979236ac1f1ea204e0ad32cc293eb56828269f9769a318f30562113c55d33"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-11.raw.json",
+          "sha256": "944f22121264e2b37a1c7205bc39a4357ee82a4084f5f29a017157a52b0fe287"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-12.raw.json",
+          "sha256": "69e6914d858a1aec2e06c543c9b0eae7d138c7ec7e449693322edb9614466315"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-13.raw.json",
+          "sha256": "64858314e8ffd1981b2a59df304ed615e7739dd6b667eb93f808bca50627973e"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-14.raw.json",
+          "sha256": "67f0a04bed8b5edb37210b395100a5cd0135cab840de8e8c9c7728e117835efb"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-15.raw.json",
+          "sha256": "313a9663216dafd5dfb699238f296949ebc3fe01871b7e06015ca5ab746da39c"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-16.raw.json",
+          "sha256": "3ec77d98078d8592b1cd9499021457a522958312bed2a9cf5a0e5578c3aeef49"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-17.raw.json",
+          "sha256": "75b8dba72aeb92def81497999a4a793ad46d260a2693920b0d86328b8cb5c957"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-18.raw.json",
+          "sha256": "5190e57f5de58a3861d8f4ccd45b98ec32ca83bbb0ba49470b0c123b5bac9e17"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-19.raw.json",
+          "sha256": "c3c3a3564d4663839fea438e5155b608b6948c4b0155b57ab00e26cc20d6e271"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-20.raw.json",
+          "sha256": "b24c3301e99ebcdb2da88abdf60248756d56f4453a35d78e41825e2a99104033"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-21.raw.json",
+          "sha256": "9e7839cf3e3a868b708378f149a2f990fe539011b2849c6b5860caed4bed365e"
+        }
+      ],
+      "result_id": "84c6f45324f547723d6a63f40c352c5997b083503c2155e194256e0c584597e6",
+      "scored_at": "2026-08-11T08:57:04Z",
+      "scoring_rule_commit": "f6ae3a3358c65dc8c597999526cb5e211c23c662",
+      "scoring_rule_full_sha256": "31eb689001e59f4bbe44e581d4e56328a98d1b0239cadfaafed193ea225e1a8b",
+      "scoring_rule_inputs": [
+        "evals/flow-core/m0-eval/fixture.py",
+        "evals/flow-core/m0-eval/run_antigravity.py",
+        "evals/flow-core/m0-eval/run_claude.py",
+        "evals/flow-core/m0-eval/run_codex.py",
+        "evals/flow-core/m0-eval/score.py",
+        "plugins/bitz-flow/skills/flow-core/schemas/operations/git.diff-summary.schema.json",
+        "plugins/bitz-flow/skills/flow-core/schemas/operations/git.status.schema.json",
+        "plugins/bitz-flow/skills/flow-core/schemas/operations/repo.inspect.schema.json",
+        "plugins/bitz-flow/skills/flow-core/schemas/result-v1.schema.json"
+      ],
+      "scoring_rule_version": "31eb689001e5",
+      "status": "active",
+      "trial_set_sha256": "b20b51403ae5c2fce551453297c4c3ed696153c9b368e1f1695e4720d7904401"
+    }
+  ]
+}

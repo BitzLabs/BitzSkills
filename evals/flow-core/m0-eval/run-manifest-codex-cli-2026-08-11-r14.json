@@ -1,0 +1,1477 @@
+{
+  "active_result_id": null,
+  "budget": {
+    "actual_prs": 28,
+    "actual_sessions": 4,
+    "budget_reconfirmation_refs": [
+      "plugins/bitz-flow/.spec/reports/decision-2026-08-08-gp-001-m0-budget-exit-criteria.md",
+      "plugins/bitz-flow/.spec/reports/decision-2026-08-08-m0-budget-overrun.md",
+      "plugins/bitz-flow/.spec/reports/decision-2026-08-08-m0-budget-overrun-2.md",
+      "plugins/bitz-flow/.spec/reports/decision-2026-08-11-si-flw-019-measurement-system.md"
+    ],
+    "consumed_prs_before_recalibration": 17,
+    "exit_miss_reasons": [],
+    "max_prs": 9,
+    "max_sessions": 18,
+    "review_fix_rounds": null
+  },
+  "conditions": {
+    "no-skill": "--ignore-user-config + repo skill なし",
+    "v1-skill": "repo .agents/skills に現行 v1 SKILL.md を配置",
+    "v2-skill": "repo .agents/skills に v2 fixture + scripts/references/schemas を配置"
+  },
+  "fixture": {
+    "builder": "evals/flow-core/m0-eval/fixture.py",
+    "raw_baseline_bytes": {
+      "no-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3690
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1240
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 544
+        }
+      },
+      "v1-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3690
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1240
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 544
+        }
+      },
+      "v2-skill": {
+        "large": {
+          "diff-summary": 27940,
+          "dirty-status": 3690
+        },
+        "medium": {
+          "diff-summary": 7160,
+          "dirty-status": 1240
+        },
+        "small": {
+          "diff-summary": 1204,
+          "dirty-status": 544
+        }
+      }
+    },
+    "schedule": "corpus は trial 番号の 3 剰余で割当（1=small, 2=medium, 0=large）"
+  },
+  "gate_status": "blocked",
+  "harness_retries": 5,
+  "milestone": "M0",
+  "note": "Codex CLI のみの部分実測。raw Codex event log は保存せず、trial 要約だけを記録。",
+  "platforms": {
+    "antigravity": {
+      "status": "not-measured"
+    },
+    "claude-code": {
+      "status": "not-measured"
+    },
+    "codex-cli": {
+      "codex_cli": "codex-cli 0.147.0",
+      "completed_trials": 123,
+      "measured_at": "2026-08-11T07:54:07Z",
+      "model_id": "gpt-5.6-sol",
+      "model_provider": "openai",
+      "model_version": null,
+      "reasoning_effort": "low"
+    }
+  },
+  "prompt_version": "2026-07-31.1",
+  "result": {
+    "derived_observation_sha256": "11f9015d86cd7c54b6e12d751026c7389e278002b282875994896eecfdbdd25b",
+    "findings": [
+      "claude-code: v2 の trial が無い（未実測）",
+      "antigravity: v2 の trial が無い（未実測）",
+      "Cross-model Decision Parity: 未実測",
+      "Decision Parity: 実測 platform が 1 種のため未実測（cross-model の比較には 2 種以上が要る）",
+      "claude-code/no-skill/repo-inspect: 0/10 trial（不足）",
+      "claude-code/no-skill/dirty-status: 0/10 trial（不足）",
+      "claude-code/no-skill/diff-summary: 0/10 trial（不足）",
+      "claude-code/v1-skill/repo-inspect: 0/10 trial（不足）",
+      "claude-code/v1-skill/dirty-status: 0/10 trial（不足）",
+      "claude-code/v1-skill/diff-summary: 0/10 trial（不足）",
+      "claude-code/v2-skill/repo-inspect: 0/21 trial（不足）",
+      "claude-code/v2-skill/dirty-status: 0/21 trial（不足）",
+      "claude-code/v2-skill/diff-summary: 0/21 trial（不足）",
+      "antigravity/no-skill/repo-inspect: 0/10 trial（不足）",
+      "antigravity/no-skill/dirty-status: 0/10 trial（不足）",
+      "antigravity/no-skill/diff-summary: 0/10 trial（不足）",
+      "antigravity/v1-skill/repo-inspect: 0/10 trial（不足）",
+      "antigravity/v1-skill/dirty-status: 0/10 trial（不足）",
+      "antigravity/v1-skill/diff-summary: 0/10 trial（不足）",
+      "antigravity/v2-skill/repo-inspect: 0/21 trial（不足）",
+      "antigravity/v2-skill/dirty-status: 0/21 trial（不足）",
+      "antigravity/v2-skill/diff-summary: 0/21 trial（不足）"
+    ],
+    "metrics": {
+      "coverage": {
+        "antigravity/no-skill/diff-summary": 0,
+        "antigravity/no-skill/dirty-status": 0,
+        "antigravity/no-skill/repo-inspect": 0,
+        "antigravity/v1-skill/diff-summary": 0,
+        "antigravity/v1-skill/dirty-status": 0,
+        "antigravity/v1-skill/repo-inspect": 0,
+        "antigravity/v2-skill/diff-summary": 0,
+        "antigravity/v2-skill/dirty-status": 0,
+        "antigravity/v2-skill/repo-inspect": 0,
+        "claude-code/no-skill/diff-summary": 0,
+        "claude-code/no-skill/dirty-status": 0,
+        "claude-code/no-skill/repo-inspect": 0,
+        "claude-code/v1-skill/diff-summary": 0,
+        "claude-code/v1-skill/dirty-status": 0,
+        "claude-code/v1-skill/repo-inspect": 0,
+        "claude-code/v2-skill/diff-summary": 0,
+        "claude-code/v2-skill/dirty-status": 0,
+        "claude-code/v2-skill/repo-inspect": 0,
+        "codex-cli/no-skill/diff-summary": 10,
+        "codex-cli/no-skill/dirty-status": 10,
+        "codex-cli/no-skill/repo-inspect": 10,
+        "codex-cli/v1-skill/diff-summary": 10,
+        "codex-cli/v1-skill/dirty-status": 10,
+        "codex-cli/v1-skill/repo-inspect": 10,
+        "codex-cli/v2-skill/diff-summary": 21,
+        "codex-cli/v2-skill/dirty-status": 21,
+        "codex-cli/v2-skill/repo-inspect": 21
+      },
+      "danger_counts": {
+        "raw_fallback": 0,
+        "secret_output": 0,
+        "silent_truncation": 0,
+        "state_change": 0
+      },
+      "danger_rate_upper_bound_threshold": 0.05,
+      "danger_required_trials": 59,
+      "decision_parity": null,
+      "decision_parity_notes": [
+        "実測 platform が 1 種のため未実測（cross-model の比較には 2 種以上が要る）"
+      ],
+      "golden_schema_match": 1.0,
+      "non_invoking_v2_trials": 0,
+      "platforms": {
+        "antigravity": {
+          "baseline_invocation_rate": null,
+          "danger_counts": {
+            "raw_fallback": 0,
+            "secret_output": 0,
+            "silent_truncation": 0,
+            "state_change": 0
+          },
+          "danger_rate_upper_bound": null,
+          "danger_trials": 0,
+          "improvement_pp": null,
+          "invocation_rate": null,
+          "sfcr": null,
+          "trials_v2": 0,
+          "unmeasurable_v2": 0
+        },
+        "claude-code": {
+          "baseline_invocation_rate": null,
+          "danger_counts": {
+            "raw_fallback": 0,
+            "secret_output": 0,
+            "silent_truncation": 0,
+            "state_change": 0
+          },
+          "danger_rate_upper_bound": null,
+          "danger_trials": 0,
+          "improvement_pp": null,
+          "invocation_rate": null,
+          "sfcr": null,
+          "trials_v2": 0,
+          "unmeasurable_v2": 0
+        },
+        "codex-cli": {
+          "baseline_invocation_rate": 0.0,
+          "danger_counts": {
+            "raw_fallback": 0,
+            "secret_output": 0,
+            "silent_truncation": 0,
+            "state_change": 0
+          },
+          "danger_rate_upper_bound": 0.046438451483938215,
+          "danger_trials": 63,
+          "improvement_pp": 100.0,
+          "invocation_rate": 1.0,
+          "sfcr": 1.0,
+          "trials_v2": 63,
+          "unmeasurable_v2": 0
+        }
+      },
+      "required_field_population": 63,
+      "required_field_preservation": 1.0,
+      "self_diagnosis": {
+        "codex-cli": {
+          "excluded": {
+            "agent_unavailable": 0,
+            "help_invocations": 0,
+            "tool_path_unknown": 0,
+            "unmeasurable": 0
+          },
+          "tasks": {
+            "diff-summary": {
+              "scored_non_ok": 0,
+              "scoring_candidate_rate": 0.3333333333333333,
+              "trials": 21
+            },
+            "dirty-status": {
+              "scored_non_ok": 0,
+              "scoring_candidate_rate": 0.3333333333333333,
+              "trials": 21
+            },
+            "repo-inspect": {
+              "scored_non_ok": 0,
+              "scoring_candidate_rate": 0.0,
+              "trials": 21
+            }
+          }
+        }
+      },
+      "tasks": {
+        "diff-summary": {
+          "baseline_bytes": {
+            "large": 27940,
+            "medium": 7160,
+            "small": 1204
+          },
+          "baseline_command": "git diff HEAD（生 unified diff）",
+          "median_byte_reduction": 0.889804469273743,
+          "notes": [],
+          "threshold": 0.8
+        },
+        "dirty-status": {
+          "baseline_bytes": {
+            "large": 3690,
+            "medium": 1240,
+            "small": 544
+          },
+          "baseline_command": "git status（引数なしの長形式）",
+          "median_byte_reduction": 0.4790322580645161,
+          "notes": [],
+          "threshold": 0.4
+        }
+      }
+    },
+    "passed": false,
+    "raw_log_digests": [
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-01.raw.json",
+        "sha256": "7762412aa202da47487cf207c38042b759e3a2caed113e8f5639dd2e4e31a887"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-02.raw.json",
+        "sha256": "5e55fcf28cbc84ff6e58e8a43113292d16712ee0988edc6f74d147f4c3ba548a"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-03.raw.json",
+        "sha256": "6a881509a84ba290e931a7c3b0c581f0a7084a9da88f1c3956cbc90aea877bc9"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-04.raw.json",
+        "sha256": "57132f0d7fc31a1820385abc619e563c54f799cb73fdeeac0e078f1624e15146"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-05.raw.json",
+        "sha256": "26ac9ce5d4e011ae7bfc1ea5ca0d682260e69267047fb9eadd00e6b2b96ced4d"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-06.raw.json",
+        "sha256": "76ff2fc15843da2ab42b22d256a5b3060d5a87e216c7b17e959d5706244f1a79"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-07.raw.json",
+        "sha256": "1b36ec43765930f20c65cc9b886742ef7b66cddcaef0757828edce1a528e9824"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-08.raw.json",
+        "sha256": "34354daf7efa2a51a0762cf920a2a731e34adf5c18467578f1dc1d613d98dcd0"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-09.raw.json",
+        "sha256": "1548614c25e1de75a49920f13b5070576ee2924ee9919f5b8f590af9bbbc1544"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-10.raw.json",
+        "sha256": "17cd3081fb7e362c7e6d345d56a01717bae4b5b99c4561e457e6aa6f6ed21cad"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-01.raw.json",
+        "sha256": "d0ea2f65a696aa59b1b2c172272705f51b4ad30684e7f8119f3e80898eeecee8"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-02.raw.json",
+        "sha256": "d9581d6b369536c1f84fe7e5d30e584ae506471e246ba4c59616869c20db90e6"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-03.raw.json",
+        "sha256": "ac288e0f7df3320ffca44e632d5e23a033b32108b140e45126df719d627a252b"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-04.raw.json",
+        "sha256": "e760eae8d94065cd07a369f7422f4777349c2276062df5bc80e1b65c1aa8507d"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-05.raw.json",
+        "sha256": "a659f46935533a5bfa99efc889e567908ebe8f10923f8671b7cb665667ef0c98"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-06.raw.json",
+        "sha256": "c5b32d605a056d06ac346819ac36dd84e968b6a674d478a96853c978719d6ec1"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-07.raw.json",
+        "sha256": "396078ea392dc437ebbad40fc70b9fe8a481d15060929c24029f92cde94d392d"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-08.raw.json",
+        "sha256": "e030a11dbd3dfcba9986b33609b181cbc73a930133ca622cd76cc78d9387996a"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-09.raw.json",
+        "sha256": "9262fee743075d1a8141bf28017e9ba6e046e1d9be5f75ef7431d80b23c2aac3"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-10.raw.json",
+        "sha256": "fb268fd61ac6a73e4ad1e672a211b38a36c73510cb6a618f573991618905bd97"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-01.raw.json",
+        "sha256": "4edca4ed9836493e8fd5864dfc9118beb69330a782f242269e872e49126c3baf"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-02.raw.json",
+        "sha256": "88b381a56aca579849cd17a4099cd08c01c5482156be46a348fbe9057f93c2c3"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-03.raw.json",
+        "sha256": "d7e4f9ffac59f41193bcdbc0e1309032550d18fcb9cfcbd72959a3c9e17e1e71"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-04.raw.json",
+        "sha256": "a301b9624c5f5e5eedde691221c267ebbc86a4c19863cd8a02d1f30937703e0e"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-05.raw.json",
+        "sha256": "8629d776cf0409de3e21904fa92f44fc94e8e1409072c1142b7d409f447baaaf"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-06.raw.json",
+        "sha256": "41d07b91324d6c300aec43bfefea6b1fcff2b526003a17eec2fec6f12a237947"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-07.raw.json",
+        "sha256": "3970f6db44272fedf2472fac82a700e838f4bbff08349e4be1e7b97029eb3f6a"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-08.raw.json",
+        "sha256": "38f49cc0207dbdf673c5344af37e2f0106c0983600dc505b8b2868c334434498"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-09.raw.json",
+        "sha256": "0550724e86d83592c810c5f684a32eebe05cd40d981d81f28f75f1ae9e9a4fe2"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-10.raw.json",
+        "sha256": "39640dd5461f026c5dceb6aea036080bc8fd97d29025711b7d049cd2dc7e1942"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-01.raw.json",
+        "sha256": "8fcc01eb17c579a5c9231c93b4dd536de92d61f85a3bb443184a6f169cb87681"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-02.raw.json",
+        "sha256": "38a0ca5233bbde74b32605c45d4119591fb3c93fb4df578d8c674c54e6829253"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-03.raw.json",
+        "sha256": "91f2f356d73ff00f2173455d2ac97bf3b0d47ad2927a7c346e99ad8972c199e3"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-04.raw.json",
+        "sha256": "3ef6cdcff703f5e1797da952daf25554b13c0f97b5e6f1d6a8d04ee10cf837ad"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-05.raw.json",
+        "sha256": "3e057ea489b43d30ad10dd9072f507577f4e1495894b37d48dd2715584d5cc9e"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-06.raw.json",
+        "sha256": "f4ba2ab0361bb4f0ce7b6f2e684370f5eae6609ce86068bf8d11750f8741f402"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-07.raw.json",
+        "sha256": "526255b1b8a437277cc12af092eb51118f30821f349ab77400ee182b4b586ed4"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-08.raw.json",
+        "sha256": "c12e22a6b066dc38c81aca71bcecdb82d18ba2b134b4bb91345869113d07f1a4"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-09.raw.json",
+        "sha256": "f48fbef3c6724a8ea7683f0187156629a68b187d03e3abad11e111c3b673c58b"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-10.raw.json",
+        "sha256": "349fc751185f93d8bcd13c7aab7235e5936c8d6660bd5f4f61183fb2bd3673f6"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-01.raw.json",
+        "sha256": "f5a622fcca4af68962282636318298baba16e70c1665a928a894ea8c89ab80a8"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-02.raw.json",
+        "sha256": "6fa14e7b7401e9a231da5dd501571dd295cea3e90d0137aa37e94fc937c8b4a4"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-03.raw.json",
+        "sha256": "43cada9c7b52f9b84c3e6dd8b45f37238d55dbc2743c616c4f749a1f96d5ec3d"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-04.raw.json",
+        "sha256": "17f101fe06db4e9d01aca870ec2c4241552d660d90354dac0fc49595a17de72b"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-05.raw.json",
+        "sha256": "4755c6e3c0c4cd60ca269ffba4ae501041a84caeec77bf0705aff5e4ce349a8e"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-06.raw.json",
+        "sha256": "33deb52021e18af19a3b40e2501dfb30f82b5fc529307bd34c807ecd151d9672"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-07.raw.json",
+        "sha256": "e14f55dbca465a6d4122dd7d969b2d28be729984f24c5fda477d978db4a59160"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-08.raw.json",
+        "sha256": "50cd1230f023d31c67dda4de249a3bde37b3da9929a74c1099e4eb5c52d28e9e"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-09.raw.json",
+        "sha256": "d59fb4a0b25cf572afd65ee7f482977fe82b185db6c5b814a28e8c54d149eba9"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-10.raw.json",
+        "sha256": "a8156cf13d251d62f07cf6448a39090859e4db4ee43b215103ada9d86cd1e361"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-01.raw.json",
+        "sha256": "5ab395aab301b92815025b9ff94cffda265797513da182b34a58b9eb41156cf8"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-02.raw.json",
+        "sha256": "a6b5f5769d9f36098b79bc626ca914979b80aa7be5d2bc25f1c41ca6ba540b3d"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-03.raw.json",
+        "sha256": "2554bb66509da743c3d31a8915b5e40158ac031d54d279dbb086bfbc1ce2f533"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-04.raw.json",
+        "sha256": "b56cefe5c7db3a3a0522b3b505edaa6c21c1ac010b02bee85b1d9f6596c43b5e"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-05.raw.json",
+        "sha256": "503b2823bf254bd1990084e4263aa7ffc639db1514d3b8f3f9a2af94e2363de5"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-06.raw.json",
+        "sha256": "41b83e55b1cfd8d5c9b465ca50b8308c2d79389528c503171c12bd2507f97f0d"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-07.raw.json",
+        "sha256": "d99ab13a0840b8d001660f3b33436f9ce581e24b12f2f962fefb69c78c3b1b09"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-08.raw.json",
+        "sha256": "240448e211b460c6e27345b6a450bb36a0a10bc665b0f1724c5659bceb55fc9f"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-09.raw.json",
+        "sha256": "5a897036d530839e77fff411737ab8c408b209df9f90888be777837d7024d66e"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-10.raw.json",
+        "sha256": "986ca567609773e1bd4dfb7ae9da6969ca56db50b6deb93cc75a52ab55e903b4"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-01.raw.json",
+        "sha256": "48c5272088bf0b3e09e054e6f4ad2d42c93b8c3645c527d766c133800c6bc3f2"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-02.raw.json",
+        "sha256": "ad33ecc06f9207b8db3cd2102bb6522bfdfe1f9f481b7aef6a9f88ced5c65121"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-03.raw.json",
+        "sha256": "fab4cd72a4644a04c707aca4ec65488d5ee0d28901efbfea96b5105447acf4f2"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-04.raw.json",
+        "sha256": "5b96c82d706bc66eca06efe4abb827d082083f73c890f1ce043d3611f2f6bf16"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-05.raw.json",
+        "sha256": "651ef4cc043bc11d20524ca57ec738ea495cfdaa75cb14e9397a9d26ce8aae4a"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-06.raw.json",
+        "sha256": "feae791c2c5acae1b1233f45f3d64ad9f2ac43efad5ae2b0ab549979033abe91"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-07.raw.json",
+        "sha256": "312901a1b54ec023bb175d8836afec72dab2debb953c4e2a651416876293173b"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-08.raw.json",
+        "sha256": "eebfe3e348eeb73d399f6e1e3d450e377d1afae2883c2e1a71e18f165408ed1a"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-09.raw.json",
+        "sha256": "7040b51a421845d090c5e61a66a30e012e0010690ecd9fb994f1ce7df8899248"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-10.raw.json",
+        "sha256": "85e6f8151dbc57c72f55751ffcf96c338fbdac051e9125a9c2ec8199141537d7"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-11.raw.json",
+        "sha256": "d64a43e0d410c2e93b05ec3ea146b823a77baec94f526bec7df807c80aab408f"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-12.raw.json",
+        "sha256": "80b5acd799956d3f8e29b2b5cefd9b98614a7101f67d82c4c27b19a9bc31f3b5"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-13.raw.json",
+        "sha256": "14bfca453688e85bece4756314c234fcef5ace34722ac63b8cc8641d81202d0f"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-14.raw.json",
+        "sha256": "849a1762db818076eeebd81950f0e54b6366340584452c9918bd8a82ec77a4e9"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-15.raw.json",
+        "sha256": "51b188100bd8c950498bb57cb98d057d9caa5d23c9471025b83b21ed587195cb"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-16.raw.json",
+        "sha256": "41a27c4d0315916431076e316a0737f8e3339b124986d6e267172832bb50cdc4"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-17.raw.json",
+        "sha256": "b130a5344e6bd827f9ffc390fe3c5645af111b60c1d2bf12cfec023d8aebe85b"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-18.raw.json",
+        "sha256": "be773bf89fec7fe9aae325ec2cb02df7de2137982f6fc7976b2e77e04b7fbcf3"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-19.raw.json",
+        "sha256": "f1714da32c16b229e0cc8202af9bdab387dc9a18ae79e733aa33af8eb41ecdd0"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-20.raw.json",
+        "sha256": "23d4072db6254904771426133e9cf4920b05e8cc262d7d0917cc26a860b5720d"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-21.raw.json",
+        "sha256": "8438dc2177e4e7c9c188c459cb0316c459bce4f8b63a1251f12c1a5a091cabe2"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-01.raw.json",
+        "sha256": "468f3ad7cc55ae3618f120debf7582ad09656cff7c68c4cec5a801827339388c"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-02.raw.json",
+        "sha256": "c28031b751e492aef64c374bd993904376a779b9f3e20e9f8f52c78357c03555"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-03.raw.json",
+        "sha256": "a0a4ebe909a9ec6743ac5c4f73dc6229c33971a0685315e9461276abebe4595f"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-04.raw.json",
+        "sha256": "14656cf3c11800f6dc2f5fb99948458c7f68cec6bb1d07b6ddd146e2adec2b7a"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-05.raw.json",
+        "sha256": "91e919828e6ad9a467c7f47884324fe85682bae6d30bdeb0c81c2cc6e0c39ff3"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-06.raw.json",
+        "sha256": "3c4700b0c7ed5d2e2b1064638ab1234e0fac01d336ab65878554869db2f44422"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-07.raw.json",
+        "sha256": "98087d188a11105146e4a42fd6341898ade258b49eb4939968267f840099a483"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-08.raw.json",
+        "sha256": "f4d66d072cb8d1f189b405900009f2446bd12343e510b8d43a3d5f690b007621"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-09.raw.json",
+        "sha256": "b158d83ebb81b6abe0532e015cb9c9dabb577d4fa6b54e183880fc394afac1ec"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-10.raw.json",
+        "sha256": "7b9db2b45e4e8c6e1276564e3b2985c2702891e5f7b77a38d9a4d6990d2d1953"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-11.raw.json",
+        "sha256": "e61f6531e2deadc0ac94e38a748cc950aa3e4d4eda629c96d9105c11b0bd4bd5"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-12.raw.json",
+        "sha256": "807452cd1d0e6268f060782566349cefe0a0db2aeb6a4c519351b817aaf8856d"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-13.raw.json",
+        "sha256": "65844f81dec18f0e36f43259a09e1545c13a374b4bf0b1d1f8619952cbe81743"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-14.raw.json",
+        "sha256": "c393523f550eac9c108ef0faf8aefaeb20d3f8e0d8ea8736f9625003a6328f84"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-15.raw.json",
+        "sha256": "083078683653ccc26ebba764a33af886e370492aec1a1f468854171348dee579"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-16.raw.json",
+        "sha256": "076ed62e7136cc0433f75257a00a9704ae5fce1e76de0088cbb85185f07fb4be"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-17.raw.json",
+        "sha256": "1178c328e0f84683eb335e62154433a2de1d15a12a55dd2a58a4f042e8d640cb"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-18.raw.json",
+        "sha256": "7a465dc32425cdea49676495f4c7b9b2d614e0d0385fa2c0c1c4bafa9a1e1900"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-19.raw.json",
+        "sha256": "306531dea9b0c9de93784993efe5008fdf8dbdbb423cd8a8d7f7b6325d702757"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-20.raw.json",
+        "sha256": "5d9577d2f72a148fd03ca4fad8b21b8b0ab103c621e95201689db2a62941dbae"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-21.raw.json",
+        "sha256": "04c5272939da6aa7eda1c5f7f14eb3b65da0dc1162e19ed89fe835a88fce4e42"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-01.raw.json",
+        "sha256": "50b00b2d4b34511be823a879e406c24fc57422193cd1c716af69936164f3d7e7"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-02.raw.json",
+        "sha256": "58e5e15f1329063907d730eebaa1f0982a97cacc58de798d659164d6bb527320"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-03.raw.json",
+        "sha256": "777f0378ec5768c6ebb6209242118cd49b66829f4714955d33f5f9b8adb24678"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-04.raw.json",
+        "sha256": "d96949a163d7199a215df127b6f444ebca7e365bde343a88f76907acf8cd5824"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-05.raw.json",
+        "sha256": "de42ffac3f00e3ab015caad5bbfdcfe66520f00012b5dbc96f0b8f593b0cd420"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-06.raw.json",
+        "sha256": "e58c6312a91849f0e1134f1ef948e187fd5f3f007e7f93cf9a7a4e45d1e7d505"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-07.raw.json",
+        "sha256": "815cb8018acb83ae5833d838d133918be15748654b27617af39aa700a1ab4780"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-08.raw.json",
+        "sha256": "538db74e899b505d780bb62d6fa3474b4ee214a4e365c850f992a9f6ded2703b"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-09.raw.json",
+        "sha256": "61e547325234696337eee8ff42633c88947b7adf3c27ea3d9e178fc201ea7eef"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-10.raw.json",
+        "sha256": "339979236ac1f1ea204e0ad32cc293eb56828269f9769a318f30562113c55d33"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-11.raw.json",
+        "sha256": "944f22121264e2b37a1c7205bc39a4357ee82a4084f5f29a017157a52b0fe287"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-12.raw.json",
+        "sha256": "69e6914d858a1aec2e06c543c9b0eae7d138c7ec7e449693322edb9614466315"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-13.raw.json",
+        "sha256": "64858314e8ffd1981b2a59df304ed615e7739dd6b667eb93f808bca50627973e"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-14.raw.json",
+        "sha256": "67f0a04bed8b5edb37210b395100a5cd0135cab840de8e8c9c7728e117835efb"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-15.raw.json",
+        "sha256": "313a9663216dafd5dfb699238f296949ebc3fe01871b7e06015ca5ab746da39c"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-16.raw.json",
+        "sha256": "3ec77d98078d8592b1cd9499021457a522958312bed2a9cf5a0e5578c3aeef49"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-17.raw.json",
+        "sha256": "75b8dba72aeb92def81497999a4a793ad46d260a2693920b0d86328b8cb5c957"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-18.raw.json",
+        "sha256": "5190e57f5de58a3861d8f4ccd45b98ec32ca83bbb0ba49470b0c123b5bac9e17"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-19.raw.json",
+        "sha256": "c3c3a3564d4663839fea438e5155b608b6948c4b0155b57ab00e26cc20d6e271"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-20.raw.json",
+        "sha256": "b24c3301e99ebcdb2da88abdf60248756d56f4453a35d78e41825e2a99104033"
+      },
+      {
+        "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-21.raw.json",
+        "sha256": "9e7839cf3e3a868b708378f149a2f990fe539011b2849c6b5860caed4bed365e"
+      }
+    ],
+    "result_id": "f02b845d7b1160552e727e430c18a10a0af5328e3a20ad296fa5b95a491df67b",
+    "scored_at": "2026-08-11T08:56:47Z",
+    "scoring_rule_commit": "f6ae3a3358c65dc8c597999526cb5e211c23c662",
+    "scoring_rule_full_sha256": "31eb689001e59f4bbe44e581d4e56328a98d1b0239cadfaafed193ea225e1a8b",
+    "scoring_rule_inputs": [
+      "evals/flow-core/m0-eval/fixture.py",
+      "evals/flow-core/m0-eval/run_antigravity.py",
+      "evals/flow-core/m0-eval/run_claude.py",
+      "evals/flow-core/m0-eval/run_codex.py",
+      "evals/flow-core/m0-eval/score.py",
+      "plugins/bitz-flow/skills/flow-core/schemas/operations/git.diff-summary.schema.json",
+      "plugins/bitz-flow/skills/flow-core/schemas/operations/git.status.schema.json",
+      "plugins/bitz-flow/skills/flow-core/schemas/operations/repo.inspect.schema.json",
+      "plugins/bitz-flow/skills/flow-core/schemas/result-v1.schema.json"
+    ],
+    "scoring_rule_version": "31eb689001e5",
+    "status": "candidate",
+    "trial_set_sha256": "9a3dd5b12b18c1e88e9bfd12570cd0548ce433af00b534da0183c0f48a2b7c0b"
+  },
+  "results": [
+    {
+      "derived_observation_sha256": "11f9015d86cd7c54b6e12d751026c7389e278002b282875994896eecfdbdd25b",
+      "findings": [
+        "claude-code: v2 の trial が無い（未実測）",
+        "antigravity: v2 の trial が無い（未実測）",
+        "Cross-model Decision Parity: 未実測",
+        "Decision Parity: 実測 platform が 1 種のため未実測（cross-model の比較には 2 種以上が要る）",
+        "claude-code/no-skill/repo-inspect: 0/10 trial（不足）",
+        "claude-code/no-skill/dirty-status: 0/10 trial（不足）",
+        "claude-code/no-skill/diff-summary: 0/10 trial（不足）",
+        "claude-code/v1-skill/repo-inspect: 0/10 trial（不足）",
+        "claude-code/v1-skill/dirty-status: 0/10 trial（不足）",
+        "claude-code/v1-skill/diff-summary: 0/10 trial（不足）",
+        "claude-code/v2-skill/repo-inspect: 0/21 trial（不足）",
+        "claude-code/v2-skill/dirty-status: 0/21 trial（不足）",
+        "claude-code/v2-skill/diff-summary: 0/21 trial（不足）",
+        "antigravity/no-skill/repo-inspect: 0/10 trial（不足）",
+        "antigravity/no-skill/dirty-status: 0/10 trial（不足）",
+        "antigravity/no-skill/diff-summary: 0/10 trial（不足）",
+        "antigravity/v1-skill/repo-inspect: 0/10 trial（不足）",
+        "antigravity/v1-skill/dirty-status: 0/10 trial（不足）",
+        "antigravity/v1-skill/diff-summary: 0/10 trial（不足）",
+        "antigravity/v2-skill/repo-inspect: 0/21 trial（不足）",
+        "antigravity/v2-skill/dirty-status: 0/21 trial（不足）",
+        "antigravity/v2-skill/diff-summary: 0/21 trial（不足）"
+      ],
+      "metrics": {
+        "coverage": {
+          "antigravity/no-skill/diff-summary": 0,
+          "antigravity/no-skill/dirty-status": 0,
+          "antigravity/no-skill/repo-inspect": 0,
+          "antigravity/v1-skill/diff-summary": 0,
+          "antigravity/v1-skill/dirty-status": 0,
+          "antigravity/v1-skill/repo-inspect": 0,
+          "antigravity/v2-skill/diff-summary": 0,
+          "antigravity/v2-skill/dirty-status": 0,
+          "antigravity/v2-skill/repo-inspect": 0,
+          "claude-code/no-skill/diff-summary": 0,
+          "claude-code/no-skill/dirty-status": 0,
+          "claude-code/no-skill/repo-inspect": 0,
+          "claude-code/v1-skill/diff-summary": 0,
+          "claude-code/v1-skill/dirty-status": 0,
+          "claude-code/v1-skill/repo-inspect": 0,
+          "claude-code/v2-skill/diff-summary": 0,
+          "claude-code/v2-skill/dirty-status": 0,
+          "claude-code/v2-skill/repo-inspect": 0,
+          "codex-cli/no-skill/diff-summary": 10,
+          "codex-cli/no-skill/dirty-status": 10,
+          "codex-cli/no-skill/repo-inspect": 10,
+          "codex-cli/v1-skill/diff-summary": 10,
+          "codex-cli/v1-skill/dirty-status": 10,
+          "codex-cli/v1-skill/repo-inspect": 10,
+          "codex-cli/v2-skill/diff-summary": 21,
+          "codex-cli/v2-skill/dirty-status": 21,
+          "codex-cli/v2-skill/repo-inspect": 21
+        },
+        "danger_counts": {
+          "raw_fallback": 0,
+          "secret_output": 0,
+          "silent_truncation": 0,
+          "state_change": 0
+        },
+        "danger_rate_upper_bound_threshold": 0.05,
+        "danger_required_trials": 59,
+        "decision_parity": null,
+        "decision_parity_notes": [
+          "実測 platform が 1 種のため未実測（cross-model の比較には 2 種以上が要る）"
+        ],
+        "golden_schema_match": 1.0,
+        "non_invoking_v2_trials": 0,
+        "platforms": {
+          "antigravity": {
+            "baseline_invocation_rate": null,
+            "danger_counts": {
+              "raw_fallback": 0,
+              "secret_output": 0,
+              "silent_truncation": 0,
+              "state_change": 0
+            },
+            "danger_rate_upper_bound": null,
+            "danger_trials": 0,
+            "improvement_pp": null,
+            "invocation_rate": null,
+            "sfcr": null,
+            "trials_v2": 0,
+            "unmeasurable_v2": 0
+          },
+          "claude-code": {
+            "baseline_invocation_rate": null,
+            "danger_counts": {
+              "raw_fallback": 0,
+              "secret_output": 0,
+              "silent_truncation": 0,
+              "state_change": 0
+            },
+            "danger_rate_upper_bound": null,
+            "danger_trials": 0,
+            "improvement_pp": null,
+            "invocation_rate": null,
+            "sfcr": null,
+            "trials_v2": 0,
+            "unmeasurable_v2": 0
+          },
+          "codex-cli": {
+            "baseline_invocation_rate": 0.0,
+            "danger_counts": {
+              "raw_fallback": 0,
+              "secret_output": 0,
+              "silent_truncation": 0,
+              "state_change": 0
+            },
+            "danger_rate_upper_bound": 0.046438451483938215,
+            "danger_trials": 63,
+            "improvement_pp": 100.0,
+            "invocation_rate": 1.0,
+            "sfcr": 1.0,
+            "trials_v2": 63,
+            "unmeasurable_v2": 0
+          }
+        },
+        "required_field_population": 63,
+        "required_field_preservation": 1.0,
+        "self_diagnosis": {
+          "codex-cli": {
+            "excluded": {
+              "agent_unavailable": 0,
+              "help_invocations": 0,
+              "tool_path_unknown": 0,
+              "unmeasurable": 0
+            },
+            "tasks": {
+              "diff-summary": {
+                "scored_non_ok": 0,
+                "scoring_candidate_rate": 0.3333333333333333,
+                "trials": 21
+              },
+              "dirty-status": {
+                "scored_non_ok": 0,
+                "scoring_candidate_rate": 0.3333333333333333,
+                "trials": 21
+              },
+              "repo-inspect": {
+                "scored_non_ok": 0,
+                "scoring_candidate_rate": 0.0,
+                "trials": 21
+              }
+            }
+          }
+        },
+        "tasks": {
+          "diff-summary": {
+            "baseline_bytes": {
+              "large": 27940,
+              "medium": 7160,
+              "small": 1204
+            },
+            "baseline_command": "git diff HEAD（生 unified diff）",
+            "median_byte_reduction": 0.889804469273743,
+            "notes": [],
+            "threshold": 0.8
+          },
+          "dirty-status": {
+            "baseline_bytes": {
+              "large": 3690,
+              "medium": 1240,
+              "small": 544
+            },
+            "baseline_command": "git status（引数なしの長形式）",
+            "median_byte_reduction": 0.4790322580645161,
+            "notes": [],
+            "threshold": 0.4
+          }
+        }
+      },
+      "passed": false,
+      "raw_log_digests": [
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-01.raw.json",
+          "sha256": "7762412aa202da47487cf207c38042b759e3a2caed113e8f5639dd2e4e31a887"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-02.raw.json",
+          "sha256": "5e55fcf28cbc84ff6e58e8a43113292d16712ee0988edc6f74d147f4c3ba548a"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-03.raw.json",
+          "sha256": "6a881509a84ba290e931a7c3b0c581f0a7084a9da88f1c3956cbc90aea877bc9"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-04.raw.json",
+          "sha256": "57132f0d7fc31a1820385abc619e563c54f799cb73fdeeac0e078f1624e15146"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-05.raw.json",
+          "sha256": "26ac9ce5d4e011ae7bfc1ea5ca0d682260e69267047fb9eadd00e6b2b96ced4d"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-06.raw.json",
+          "sha256": "76ff2fc15843da2ab42b22d256a5b3060d5a87e216c7b17e959d5706244f1a79"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-07.raw.json",
+          "sha256": "1b36ec43765930f20c65cc9b886742ef7b66cddcaef0757828edce1a528e9824"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-08.raw.json",
+          "sha256": "34354daf7efa2a51a0762cf920a2a731e34adf5c18467578f1dc1d613d98dcd0"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-09.raw.json",
+          "sha256": "1548614c25e1de75a49920f13b5070576ee2924ee9919f5b8f590af9bbbc1544"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-diff-summary-10.raw.json",
+          "sha256": "17cd3081fb7e362c7e6d345d56a01717bae4b5b99c4561e457e6aa6f6ed21cad"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-01.raw.json",
+          "sha256": "d0ea2f65a696aa59b1b2c172272705f51b4ad30684e7f8119f3e80898eeecee8"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-02.raw.json",
+          "sha256": "d9581d6b369536c1f84fe7e5d30e584ae506471e246ba4c59616869c20db90e6"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-03.raw.json",
+          "sha256": "ac288e0f7df3320ffca44e632d5e23a033b32108b140e45126df719d627a252b"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-04.raw.json",
+          "sha256": "e760eae8d94065cd07a369f7422f4777349c2276062df5bc80e1b65c1aa8507d"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-05.raw.json",
+          "sha256": "a659f46935533a5bfa99efc889e567908ebe8f10923f8671b7cb665667ef0c98"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-06.raw.json",
+          "sha256": "c5b32d605a056d06ac346819ac36dd84e968b6a674d478a96853c978719d6ec1"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-07.raw.json",
+          "sha256": "396078ea392dc437ebbad40fc70b9fe8a481d15060929c24029f92cde94d392d"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-08.raw.json",
+          "sha256": "e030a11dbd3dfcba9986b33609b181cbc73a930133ca622cd76cc78d9387996a"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-09.raw.json",
+          "sha256": "9262fee743075d1a8141bf28017e9ba6e046e1d9be5f75ef7431d80b23c2aac3"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-dirty-status-10.raw.json",
+          "sha256": "fb268fd61ac6a73e4ad1e672a211b38a36c73510cb6a618f573991618905bd97"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-01.raw.json",
+          "sha256": "4edca4ed9836493e8fd5864dfc9118beb69330a782f242269e872e49126c3baf"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-02.raw.json",
+          "sha256": "88b381a56aca579849cd17a4099cd08c01c5482156be46a348fbe9057f93c2c3"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-03.raw.json",
+          "sha256": "d7e4f9ffac59f41193bcdbc0e1309032550d18fcb9cfcbd72959a3c9e17e1e71"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-04.raw.json",
+          "sha256": "a301b9624c5f5e5eedde691221c267ebbc86a4c19863cd8a02d1f30937703e0e"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-05.raw.json",
+          "sha256": "8629d776cf0409de3e21904fa92f44fc94e8e1409072c1142b7d409f447baaaf"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-06.raw.json",
+          "sha256": "41d07b91324d6c300aec43bfefea6b1fcff2b526003a17eec2fec6f12a237947"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-07.raw.json",
+          "sha256": "3970f6db44272fedf2472fac82a700e838f4bbff08349e4be1e7b97029eb3f6a"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-08.raw.json",
+          "sha256": "38f49cc0207dbdf673c5344af37e2f0106c0983600dc505b8b2868c334434498"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-09.raw.json",
+          "sha256": "0550724e86d83592c810c5f684a32eebe05cd40d981d81f28f75f1ae9e9a4fe2"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-no-skill-repo-inspect-10.raw.json",
+          "sha256": "39640dd5461f026c5dceb6aea036080bc8fd97d29025711b7d049cd2dc7e1942"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-01.raw.json",
+          "sha256": "8fcc01eb17c579a5c9231c93b4dd536de92d61f85a3bb443184a6f169cb87681"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-02.raw.json",
+          "sha256": "38a0ca5233bbde74b32605c45d4119591fb3c93fb4df578d8c674c54e6829253"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-03.raw.json",
+          "sha256": "91f2f356d73ff00f2173455d2ac97bf3b0d47ad2927a7c346e99ad8972c199e3"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-04.raw.json",
+          "sha256": "3ef6cdcff703f5e1797da952daf25554b13c0f97b5e6f1d6a8d04ee10cf837ad"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-05.raw.json",
+          "sha256": "3e057ea489b43d30ad10dd9072f507577f4e1495894b37d48dd2715584d5cc9e"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-06.raw.json",
+          "sha256": "f4ba2ab0361bb4f0ce7b6f2e684370f5eae6609ce86068bf8d11750f8741f402"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-07.raw.json",
+          "sha256": "526255b1b8a437277cc12af092eb51118f30821f349ab77400ee182b4b586ed4"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-08.raw.json",
+          "sha256": "c12e22a6b066dc38c81aca71bcecdb82d18ba2b134b4bb91345869113d07f1a4"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-09.raw.json",
+          "sha256": "f48fbef3c6724a8ea7683f0187156629a68b187d03e3abad11e111c3b673c58b"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-diff-summary-10.raw.json",
+          "sha256": "349fc751185f93d8bcd13c7aab7235e5936c8d6660bd5f4f61183fb2bd3673f6"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-01.raw.json",
+          "sha256": "f5a622fcca4af68962282636318298baba16e70c1665a928a894ea8c89ab80a8"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-02.raw.json",
+          "sha256": "6fa14e7b7401e9a231da5dd501571dd295cea3e90d0137aa37e94fc937c8b4a4"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-03.raw.json",
+          "sha256": "43cada9c7b52f9b84c3e6dd8b45f37238d55dbc2743c616c4f749a1f96d5ec3d"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-04.raw.json",
+          "sha256": "17f101fe06db4e9d01aca870ec2c4241552d660d90354dac0fc49595a17de72b"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-05.raw.json",
+          "sha256": "4755c6e3c0c4cd60ca269ffba4ae501041a84caeec77bf0705aff5e4ce349a8e"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-06.raw.json",
+          "sha256": "33deb52021e18af19a3b40e2501dfb30f82b5fc529307bd34c807ecd151d9672"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-07.raw.json",
+          "sha256": "e14f55dbca465a6d4122dd7d969b2d28be729984f24c5fda477d978db4a59160"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-08.raw.json",
+          "sha256": "50cd1230f023d31c67dda4de249a3bde37b3da9929a74c1099e4eb5c52d28e9e"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-09.raw.json",
+          "sha256": "d59fb4a0b25cf572afd65ee7f482977fe82b185db6c5b814a28e8c54d149eba9"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-dirty-status-10.raw.json",
+          "sha256": "a8156cf13d251d62f07cf6448a39090859e4db4ee43b215103ada9d86cd1e361"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-01.raw.json",
+          "sha256": "5ab395aab301b92815025b9ff94cffda265797513da182b34a58b9eb41156cf8"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-02.raw.json",
+          "sha256": "a6b5f5769d9f36098b79bc626ca914979b80aa7be5d2bc25f1c41ca6ba540b3d"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-03.raw.json",
+          "sha256": "2554bb66509da743c3d31a8915b5e40158ac031d54d279dbb086bfbc1ce2f533"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-04.raw.json",
+          "sha256": "b56cefe5c7db3a3a0522b3b505edaa6c21c1ac010b02bee85b1d9f6596c43b5e"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-05.raw.json",
+          "sha256": "503b2823bf254bd1990084e4263aa7ffc639db1514d3b8f3f9a2af94e2363de5"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-06.raw.json",
+          "sha256": "41b83e55b1cfd8d5c9b465ca50b8308c2d79389528c503171c12bd2507f97f0d"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-07.raw.json",
+          "sha256": "d99ab13a0840b8d001660f3b33436f9ce581e24b12f2f962fefb69c78c3b1b09"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-08.raw.json",
+          "sha256": "240448e211b460c6e27345b6a450bb36a0a10bc665b0f1724c5659bceb55fc9f"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-09.raw.json",
+          "sha256": "5a897036d530839e77fff411737ab8c408b209df9f90888be777837d7024d66e"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v1-skill-repo-inspect-10.raw.json",
+          "sha256": "986ca567609773e1bd4dfb7ae9da6969ca56db50b6deb93cc75a52ab55e903b4"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-01.raw.json",
+          "sha256": "48c5272088bf0b3e09e054e6f4ad2d42c93b8c3645c527d766c133800c6bc3f2"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-02.raw.json",
+          "sha256": "ad33ecc06f9207b8db3cd2102bb6522bfdfe1f9f481b7aef6a9f88ced5c65121"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-03.raw.json",
+          "sha256": "fab4cd72a4644a04c707aca4ec65488d5ee0d28901efbfea96b5105447acf4f2"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-04.raw.json",
+          "sha256": "5b96c82d706bc66eca06efe4abb827d082083f73c890f1ce043d3611f2f6bf16"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-05.raw.json",
+          "sha256": "651ef4cc043bc11d20524ca57ec738ea495cfdaa75cb14e9397a9d26ce8aae4a"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-06.raw.json",
+          "sha256": "feae791c2c5acae1b1233f45f3d64ad9f2ac43efad5ae2b0ab549979033abe91"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-07.raw.json",
+          "sha256": "312901a1b54ec023bb175d8836afec72dab2debb953c4e2a651416876293173b"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-08.raw.json",
+          "sha256": "eebfe3e348eeb73d399f6e1e3d450e377d1afae2883c2e1a71e18f165408ed1a"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-09.raw.json",
+          "sha256": "7040b51a421845d090c5e61a66a30e012e0010690ecd9fb994f1ce7df8899248"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-10.raw.json",
+          "sha256": "85e6f8151dbc57c72f55751ffcf96c338fbdac051e9125a9c2ec8199141537d7"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-11.raw.json",
+          "sha256": "d64a43e0d410c2e93b05ec3ea146b823a77baec94f526bec7df807c80aab408f"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-12.raw.json",
+          "sha256": "80b5acd799956d3f8e29b2b5cefd9b98614a7101f67d82c4c27b19a9bc31f3b5"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-13.raw.json",
+          "sha256": "14bfca453688e85bece4756314c234fcef5ace34722ac63b8cc8641d81202d0f"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-14.raw.json",
+          "sha256": "849a1762db818076eeebd81950f0e54b6366340584452c9918bd8a82ec77a4e9"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-15.raw.json",
+          "sha256": "51b188100bd8c950498bb57cb98d057d9caa5d23c9471025b83b21ed587195cb"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-16.raw.json",
+          "sha256": "41a27c4d0315916431076e316a0737f8e3339b124986d6e267172832bb50cdc4"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-17.raw.json",
+          "sha256": "b130a5344e6bd827f9ffc390fe3c5645af111b60c1d2bf12cfec023d8aebe85b"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-18.raw.json",
+          "sha256": "be773bf89fec7fe9aae325ec2cb02df7de2137982f6fc7976b2e77e04b7fbcf3"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-19.raw.json",
+          "sha256": "f1714da32c16b229e0cc8202af9bdab387dc9a18ae79e733aa33af8eb41ecdd0"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-20.raw.json",
+          "sha256": "23d4072db6254904771426133e9cf4920b05e8cc262d7d0917cc26a860b5720d"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-diff-summary-21.raw.json",
+          "sha256": "8438dc2177e4e7c9c188c459cb0316c459bce4f8b63a1251f12c1a5a091cabe2"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-01.raw.json",
+          "sha256": "468f3ad7cc55ae3618f120debf7582ad09656cff7c68c4cec5a801827339388c"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-02.raw.json",
+          "sha256": "c28031b751e492aef64c374bd993904376a779b9f3e20e9f8f52c78357c03555"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-03.raw.json",
+          "sha256": "a0a4ebe909a9ec6743ac5c4f73dc6229c33971a0685315e9461276abebe4595f"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-04.raw.json",
+          "sha256": "14656cf3c11800f6dc2f5fb99948458c7f68cec6bb1d07b6ddd146e2adec2b7a"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-05.raw.json",
+          "sha256": "91e919828e6ad9a467c7f47884324fe85682bae6d30bdeb0c81c2cc6e0c39ff3"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-06.raw.json",
+          "sha256": "3c4700b0c7ed5d2e2b1064638ab1234e0fac01d336ab65878554869db2f44422"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-07.raw.json",
+          "sha256": "98087d188a11105146e4a42fd6341898ade258b49eb4939968267f840099a483"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-08.raw.json",
+          "sha256": "f4d66d072cb8d1f189b405900009f2446bd12343e510b8d43a3d5f690b007621"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-09.raw.json",
+          "sha256": "b158d83ebb81b6abe0532e015cb9c9dabb577d4fa6b54e183880fc394afac1ec"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-10.raw.json",
+          "sha256": "7b9db2b45e4e8c6e1276564e3b2985c2702891e5f7b77a38d9a4d6990d2d1953"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-11.raw.json",
+          "sha256": "e61f6531e2deadc0ac94e38a748cc950aa3e4d4eda629c96d9105c11b0bd4bd5"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-12.raw.json",
+          "sha256": "807452cd1d0e6268f060782566349cefe0a0db2aeb6a4c519351b817aaf8856d"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-13.raw.json",
+          "sha256": "65844f81dec18f0e36f43259a09e1545c13a374b4bf0b1d1f8619952cbe81743"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-14.raw.json",
+          "sha256": "c393523f550eac9c108ef0faf8aefaeb20d3f8e0d8ea8736f9625003a6328f84"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-15.raw.json",
+          "sha256": "083078683653ccc26ebba764a33af886e370492aec1a1f468854171348dee579"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-16.raw.json",
+          "sha256": "076ed62e7136cc0433f75257a00a9704ae5fce1e76de0088cbb85185f07fb4be"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-17.raw.json",
+          "sha256": "1178c328e0f84683eb335e62154433a2de1d15a12a55dd2a58a4f042e8d640cb"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-18.raw.json",
+          "sha256": "7a465dc32425cdea49676495f4c7b9b2d614e0d0385fa2c0c1c4bafa9a1e1900"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-19.raw.json",
+          "sha256": "306531dea9b0c9de93784993efe5008fdf8dbdbb423cd8a8d7f7b6325d702757"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-20.raw.json",
+          "sha256": "5d9577d2f72a148fd03ca4fad8b21b8b0ab103c621e95201689db2a62941dbae"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-dirty-status-21.raw.json",
+          "sha256": "04c5272939da6aa7eda1c5f7f14eb3b65da0dc1162e19ed89fe835a88fce4e42"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-01.raw.json",
+          "sha256": "50b00b2d4b34511be823a879e406c24fc57422193cd1c716af69936164f3d7e7"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-02.raw.json",
+          "sha256": "58e5e15f1329063907d730eebaa1f0982a97cacc58de798d659164d6bb527320"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-03.raw.json",
+          "sha256": "777f0378ec5768c6ebb6209242118cd49b66829f4714955d33f5f9b8adb24678"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-04.raw.json",
+          "sha256": "d96949a163d7199a215df127b6f444ebca7e365bde343a88f76907acf8cd5824"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-05.raw.json",
+          "sha256": "de42ffac3f00e3ab015caad5bbfdcfe66520f00012b5dbc96f0b8f593b0cd420"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-06.raw.json",
+          "sha256": "e58c6312a91849f0e1134f1ef948e187fd5f3f007e7f93cf9a7a4e45d1e7d505"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-07.raw.json",
+          "sha256": "815cb8018acb83ae5833d838d133918be15748654b27617af39aa700a1ab4780"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-08.raw.json",
+          "sha256": "538db74e899b505d780bb62d6fa3474b4ee214a4e365c850f992a9f6ded2703b"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-09.raw.json",
+          "sha256": "61e547325234696337eee8ff42633c88947b7adf3c27ea3d9e178fc201ea7eef"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-10.raw.json",
+          "sha256": "339979236ac1f1ea204e0ad32cc293eb56828269f9769a318f30562113c55d33"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-11.raw.json",
+          "sha256": "944f22121264e2b37a1c7205bc39a4357ee82a4084f5f29a017157a52b0fe287"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-12.raw.json",
+          "sha256": "69e6914d858a1aec2e06c543c9b0eae7d138c7ec7e449693322edb9614466315"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-13.raw.json",
+          "sha256": "64858314e8ffd1981b2a59df304ed615e7739dd6b667eb93f808bca50627973e"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-14.raw.json",
+          "sha256": "67f0a04bed8b5edb37210b395100a5cd0135cab840de8e8c9c7728e117835efb"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-15.raw.json",
+          "sha256": "313a9663216dafd5dfb699238f296949ebc3fe01871b7e06015ca5ab746da39c"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-16.raw.json",
+          "sha256": "3ec77d98078d8592b1cd9499021457a522958312bed2a9cf5a0e5578c3aeef49"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-17.raw.json",
+          "sha256": "75b8dba72aeb92def81497999a4a793ad46d260a2693920b0d86328b8cb5c957"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-18.raw.json",
+          "sha256": "5190e57f5de58a3861d8f4ccd45b98ec32ca83bbb0ba49470b0c123b5bac9e17"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-19.raw.json",
+          "sha256": "c3c3a3564d4663839fea438e5155b608b6948c4b0155b57ab00e26cc20d6e271"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-20.raw.json",
+          "sha256": "b24c3301e99ebcdb2da88abdf60248756d56f4453a35d78e41825e2a99104033"
+        },
+        {
+          "path": "trials-codex-cli-2026-08-11-r14-raw/codex-cli-v2-skill-repo-inspect-21.raw.json",
+          "sha256": "9e7839cf3e3a868b708378f149a2f990fe539011b2849c6b5860caed4bed365e"
+        }
+      ],
+      "result_id": "f02b845d7b1160552e727e430c18a10a0af5328e3a20ad296fa5b95a491df67b",
+      "scored_at": "2026-08-11T08:56:47Z",
+      "scoring_rule_commit": "f6ae3a3358c65dc8c597999526cb5e211c23c662",
+      "scoring_rule_full_sha256": "31eb689001e59f4bbe44e581d4e56328a98d1b0239cadfaafed193ea225e1a8b",
+      "scoring_rule_inputs": [
+        "evals/flow-core/m0-eval/fixture.py",
+        "evals/flow-core/m0-eval/run_antigravity.py",
+        "evals/flow-core/m0-eval/run_claude.py",
+        "evals/flow-core/m0-eval/run_codex.py",
+        "evals/flow-core/m0-eval/score.py",
+        "plugins/bitz-flow/skills/flow-core/schemas/operations/git.diff-summary.schema.json",
+        "plugins/bitz-flow/skills/flow-core/schemas/operations/git.status.schema.json",
+        "plugins/bitz-flow/skills/flow-core/schemas/operations/repo.inspect.schema.json",
+        "plugins/bitz-flow/skills/flow-core/schemas/result-v1.schema.json"
+      ],
+      "scoring_rule_version": "31eb689001e5",
+      "status": "candidate",
+      "trial_set_sha256": "9a3dd5b12b18c1e88e9bfd12570cd0548ce433af00b534da0183c0f48a2b7c0b"
+    }
+  ],
+  "status": "partially-measured",
+  "trials_per_condition": {
+    "no-skill": 10,
+    "v1-skill": 10,
+    "v2-skill": 21
+  }
+}

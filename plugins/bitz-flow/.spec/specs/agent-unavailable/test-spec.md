@@ -11,3 +11,7 @@
   - `test_FLW_NFR_010_raw_log_is_defaulted_and_resolvable`
   - `test_FLW_NFR_010_quota_error_with_execution_traces_is_a_real_failure`
 - **検証ステータス**: `.spec/verification/`の機械可読証跡を正とする。
+- **是正後の再実測**: 第14ラウンドの有効な3 platform × 123件では測定不能0件、
+  `runner_exit_code=0`、raw log参照解決369/369を確認した。antigravity初回`r14`は
+  サンドボックスのホーム書込み制限で全件終了コード1となったため環境エラー証跡として除外し、
+  制限を解消した`r14b`を採点対象とした。

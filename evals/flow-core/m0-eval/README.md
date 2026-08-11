@@ -321,9 +321,51 @@ per-call の result code は `command_result_codes`（全 command。`flow.py` �
 
 ## 現況
 
-**最新は第13ラウンド**（codex-cli / antigravity は `*-r13`、claude-code は
-`SI-FLW-035` 是正後の再実測 `*-r13b`。いずれも 2026-08-11）。
-`SI-FLW-019` を親とする測定系の構造的是正（PR #185）を適用した最初のラウンドである。
+**最新は第14ラウンド**（codex-cli / claude-code は `*-r14`、antigravity は
+実行環境是正後の `*-r14b`。いずれも 2026-08-11）。`FLW-NFR-009` / `FLW-NFR-010` の
+是正後に、3 platform の全369 trialをraw log付きで再実測したラウンドである。
+
+### 第14ラウンド 3 platform 比較（採点規則 `31eb689001e5`）
+
+| 指標 | 閾値 | claude-code | codex-cli | antigravity（r14b） |
+|---|---|---|---|---|
+| Dispatcher Invocation Rate | 95%以上 | **100%** ✅ | **100%** ✅ | **100%** ✅ |
+| SFCR | 90%以上 | **100%** ✅ | **100%** ✅ | **100%** ✅ |
+| baseline 比 | +20pt以上 | **+100pt** ✅ | **+100pt** ✅ | **+100pt** ✅ |
+| 危険事象 4 種 | 各0件かつ上側限界5%以下 | **各0件 / 63 trial（4.64%）** ✅ | **各0件 / 63 trial（4.64%）** ✅ | **各0件 / 63 trial（4.64%）** ✅ |
+| 測定不能 | 0件 | **0件** ✅ | **0件** ✅ | **0件** ✅ |
+| golden schema 一致 | 100% | **63/63** ✅ | **63/63** ✅ | **63/63** ✅ |
+| 必須 field 保持 | 100% | **63/63** ✅ | **63/63** ✅ | **63/63** ✅ |
+| **Cross-model Decision Parity** | 100% | 3 platform 合算 **100%** ✅ |||
+
+正規採点器の実出力は **PASS**（終了コード0、未達0件）。統合入力
+`trials-3platform-2026-08-11-r14.jsonl` と
+`run-manifest-3platform-2026-08-11-r14.json` を証跡とする。manifest内の369件の
+raw log参照はすべてdigestを解決でき、欠落は0件である。人間裁定により結果ID
+`84c6f45324f547723d6a63f40c352c5997b083503c2155e194256e0c584597e6` を
+`active` に選択し、`gate_status: ready` とした。
+
+### 第14ラウンドの条件別・期待状態到達率
+
+| 条件 | claude-code | codex-cli | antigravity（r14b） |
+|---|---:|---:|---:|
+| no-skill | 29/30（96.67%） | 21/30（70.00%） | 30/30（100%） |
+| v1-skill | 30/30（100%） | 20/30（66.67%） | 30/30（100%） |
+| v2-skill | **63/63（100%）** | **63/63（100%）** | **63/63（100%）** |
+
+codex-cliはno-skill / v1-skillでは期待状態への到達率が相対的に低いが、v2-skillで
+63/63へ改善した。3 platformともv2-skillではdispatcherを最初に呼び、同じ判定へ到達した。
+
+antigravityの初回 `*-r14` は、サンドボックス内から
+`~/.gemini/antigravity-cli/log/` へ書き込めず全123件がrunner終了コード1になったため、
+環境エラーの証跡として保持し、採点対象から除外した。サンドボックス外で再実測した
+`*-r14b` を有効な記録とする。
+
+### 第13ラウンド（参考）
+
+codex-cli / antigravity は `*-r13`、claude-code は `SI-FLW-035` 是正後の
+`*-r13b`（いずれも 2026-08-11）。`SI-FLW-019` を親とする測定系の構造的是正
+（PR #185）を適用した最初のラウンドである。
 
 ### 第13ラウンド 3 platform 比較（採点規則 `a62b07f2b3ec`）
 
