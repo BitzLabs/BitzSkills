@@ -2,7 +2,7 @@
 implements: FLW-NFR-011, FLW-FR-013
 depends_on: [FLW-TSK-032]
 boundary: evals/flow-core/m1-eval/raw_log_guard.py, tests/test_flow_m1_raw_log_guard.py
-status: pending
+status: done
 ---
 
 ### raw log guard（owner-only境界・redaction・canary・保持期限・削除証跡）
