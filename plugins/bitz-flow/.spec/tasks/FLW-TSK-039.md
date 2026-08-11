@@ -2,7 +2,7 @@
 implements: FLW-FR-005
 depends_on: [FLW-TSK-038]
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/git_write.py, tests/test_flow_m1_git_write.py
-status: pending
+status: done
 ---
 
 ### git.stageのindex CAS（native index.lock規約）
