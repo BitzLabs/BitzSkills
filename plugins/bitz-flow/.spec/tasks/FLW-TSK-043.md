@@ -2,7 +2,7 @@
 implements: FLW-FR-004, FLW-FR-005, FLW-NFR-003
 depends_on: [FLW-TSK-042]
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/git_sync.py, tests/test_flow_m1_git_sync.py
-status: pending
+status: done
 ---
 
 ### git.fetch / git.syncとREC-FETCH・REC-SYNC
