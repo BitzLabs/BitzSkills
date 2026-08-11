@@ -33,3 +33,6 @@ status: pending
   `python3 <リポジトリ>/scripts/release_check.py` が PASS すること。
 - **備考**: 本タスクは M1-1 の出口判定そのものであり、ここが PASS しない限り M1-2 qualification へ進まない。
   write operation の実測（3 trial・隔離 namespace）は M1-2 以降で行い、本タスクには含めない。
+  各モジュールの単体テストは実装タスク側（coordinator / durable / recovery / sanitize）が持つ。
+  本タスクが持つのは**モジュールをまたぐ統合 fault、契約表と schema の相互照合、変異試験**であり、
+  単体テストの再実装ではない。

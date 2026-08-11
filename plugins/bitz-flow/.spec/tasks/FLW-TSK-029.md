@@ -1,7 +1,7 @@
 ---
 implements: FLW-FR-013, FLW-NFR-003
 depends_on: [FLW-TSK-026]
-boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/recovery.py
+boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/recovery.py, tests/test_flow_m1_recovery.py
 status: pending
 ---
 

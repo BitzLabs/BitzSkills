@@ -1,8 +1,8 @@
 ---
 implements: FLW-NFR-011
 depends_on: [FLW-TSK-026]
-boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/coordinator.py
-status: pending
+boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/coordinator.py, tests/test_flow_m1_coordinator.py
+status: done
 ---
 
 ### coordinator core（attempt ID・lease・linearizable CAS・fencing token・authoritative clock）

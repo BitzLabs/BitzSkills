@@ -1,7 +1,7 @@
 ---
 implements: FLW-FR-013
 depends_on: [FLW-TSK-026]
-boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/sanitize.py
+boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/sanitize.py, tests/test_flow_m1_sanitize.py
 status: pending
 ---
 

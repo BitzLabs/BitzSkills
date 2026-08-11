@@ -1,7 +1,7 @@
 ---
 implements: FLW-NFR-007, FLW-NFR-011
 depends_on: [FLW-TSK-026]
-boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/durable.py
+boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/durable.py, tests/test_flow_m1_durable.py
 status: pending
 ---
 
