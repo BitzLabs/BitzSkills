@@ -10,8 +10,11 @@ status: done
 - **作業内容**: 実装より先に M1 の公開契約を固定する。FLW-DSN-015 を正として次を定義する。
 
   - **5つの enum namespace を別 field として分離**する（同名語の混同を避けるため）:
-    `write_state`（planned / guarded / pending-intent / mutating / reconciling / done / partial /
-    stale / quarantined）、`result_code`（DONE / PARTIAL / INDETERMINATE / STALE / BLOCKED /
+    `write_state`（**実装時の是正**: 本文は起票時点で設計の説明的表記＝小文字 kebab を
+    写していたが、closed enum の宣言は大文字スネークであり、実装・schema は
+    `PLANNED` / `GUARDED` / `PENDING_INTENT` / `MUTATING` / `RECONCILING` / `DONE` /
+    `PARTIAL` / `STALE` / `QUARANTINED` で凍結した。設計文書側の表記統一は `SI-FLW-039`）、
+    `result_code`（DONE / PARTIAL / INDETERMINATE / STALE / BLOCKED /
     INVALID_INPUT / UNSUPPORTED）、`intent_record_state`（PENDING / RECONCILING / PARTIAL / STALE /
     QUARANTINED / RELEASED）、`gate_status`（PASS / FAIL / BLOCKED）、
     `attempt_status`（STARTED / PASS / FAIL / ABORTED / UNKNOWN）。

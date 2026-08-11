@@ -3,7 +3,7 @@ id: SI-FLW-039
 raised_by: M1-3 着手時の実装者（claude）
 target: FLW-DSN-015（write状態機械の不変条件表と本文）
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `write_state` の表記が同一設計文書内で2通りあり、実装が誤った側を採る事故が実際に
   起きたため、正となる表記へ統一する。
