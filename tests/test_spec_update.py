@@ -531,3 +531,88 @@ def test_SDD_FR_157_other_transitions_need_no_gate_passage(tmp_path):
 
     assert result.returncode == 0, result.stderr
     assert req_status(tmp_path, rid) == "implementing"
+
+
+# --- SDD-FR-166: verified からの再着手（verified → implementing） ---
+
+
+def test_SDD_FR_166_verified_reentry_requires_human_decision(tmp_path):
+    """人間裁定経路なしでは拒否され、対象も STATE も変わらない。"""
+    rid = make_req(tmp_path, 1, "verified")
+    make_task(tmp_path, 1, rid, "pending")
+
+    result = run(tmp_path, rid, "implementing", "--actor", "agent")
+
+    assert result.returncode != 0
+    assert "authorization-required" in (result.stderr + result.stdout)
+    assert req_status(tmp_path, rid) == "verified"
+    assert rid not in state_text(tmp_path)
+
+
+def test_SDD_FR_166_verified_reentry_succeeds_via_proxy(tmp_path):
+    """代行可視化経路（--on-behalf-of + --decision-ref）なら遷移する。"""
+    rid = make_req(tmp_path, 1, "verified")
+    make_task(tmp_path, 1, rid, "pending")
+    ref = make_ref(tmp_path)
+
+    result = run_proxy(tmp_path, [rid], "implementing", *proxy_args(ref))
+
+    assert result.returncode == 0, result.stderr
+    assert req_status(tmp_path, rid) == "implementing"
+    state = state_text(tmp_path)
+    assert "claude on behalf of hide" in state
+    assert ref in state
+
+
+def test_SDD_FR_166_verified_reentry_records_provenance(tmp_path):
+    """裁定参照が STATE の構造化イベントに残る。"""
+    rid = make_req(tmp_path, 1, "verified")
+    make_task(tmp_path, 1, rid, "pending")
+    ref = make_ref(tmp_path)
+
+    run_proxy(tmp_path, [rid], "implementing", *proxy_args(ref))
+
+    events = re.findall(r"<!-- sdd-event:([A-Za-z0-9+/=]+) -->", state_text(tmp_path))
+    payload = json.loads(base64.b64decode(events[-1]))
+    assert payload["old"] == "verified" and payload["new"] == "implementing"
+    assert payload["provenance"]["kind"] == "agent-proxy-unverified"
+    assert payload["provenance"]["decision_ref"] == ref
+
+
+def test_SDD_FR_166_verified_reentry_keeps_verification_evidence(tmp_path):
+    """既存の検証証跡を削除も改変もしない。"""
+    rid = make_req(tmp_path, 1, "verified")
+    make_task(tmp_path, 1, rid, "pending")
+    ref = make_ref(tmp_path)
+    evidence = tmp_path / ".spec" / "verification" / "pytest--abc1234.json"
+    _write(evidence, '{"result": "green"}')
+    before = evidence.read_text(encoding="utf-8")
+
+    run_proxy(tmp_path, [rid], "implementing", *proxy_args(ref))
+
+    assert evidence.exists(), "検証証跡を削除してはならない"
+    assert evidence.read_text(encoding="utf-8") == before
+
+
+def test_SDD_FR_166_promoted_cannot_return_to_implementing(tmp_path):
+    """Promotion Gate を通ったものは deprecated 経由でのみ変更する。"""
+    rid = make_req(tmp_path, 1, "promoted")
+    make_task(tmp_path, 1, rid, "pending")
+    ref = make_ref(tmp_path)
+
+    result = run_proxy(tmp_path, [rid], "implementing", *proxy_args(ref))
+
+    assert result.returncode != 0
+    assert "precondition-failed" in (result.stderr + result.stdout)
+    assert req_status(tmp_path, rid) == "promoted"
+
+
+def test_SDD_FR_166_existing_verified_transitions_still_work(tmp_path):
+    """deprecated への遷移など、既存の verified 起点の遷移を壊さない。"""
+    rid = make_req(tmp_path, 1, "verified")
+    ref = make_ref(tmp_path)
+
+    result = run_proxy(tmp_path, [rid], "deprecated", *proxy_args(ref))
+
+    assert result.returncode == 0, result.stderr
+    assert req_status(tmp_path, rid) == "deprecated"

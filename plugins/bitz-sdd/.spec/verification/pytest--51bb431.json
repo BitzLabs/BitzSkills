@@ -1,0 +1,30 @@
+{
+  "command": [
+    ".venv/bin/pytest",
+    "tests/test_spec_update.py",
+    "-q"
+  ],
+  "command_id": "pytest",
+  "commit": "51bb431ca679035ba0a7ab5a39e70a990652fad1",
+  "counts": {
+    "errors": 0,
+    "failed": 0,
+    "passed": 41,
+    "skipped": 0
+  },
+  "cwd": ".",
+  "dirty": false,
+  "exit_code": 0,
+  "observed": {
+    "duration_seconds": 1.98
+  },
+  "recorded_at": "2026-08-11T19:51:38Z",
+  "requirements": [
+    "SDD-FR-166"
+  ],
+  "schema": "bitzsdd/verification-evidence@1",
+  "tool": {
+    "name": "pytest",
+    "version": "9.1.1"
+  }
+}
