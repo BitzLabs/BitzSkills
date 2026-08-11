@@ -123,8 +123,10 @@ def run_trial(
     """1 trial を実行する。失敗時は blocking reason を返す。"""
     spec = TRIAL_SPEC[kind]
 
-    if not cli_available(platform):
+    if not dry_run and not cli_available(platform):
         # 実行できなかったことを合格と読み替えない。
+        # dry-run は「CLI を起動せず配線を検査する」目的なので、CLI 不在でも成立する
+        # （CI には 3 platform の CLI が無い）。
         return None, f"{platform}: CLI が見つからないため {kind} を実行できない"
 
     command = build_command(platform, prompt=spec["prompt"], repo=repo)

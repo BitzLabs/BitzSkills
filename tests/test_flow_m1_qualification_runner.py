@@ -111,12 +111,38 @@ def test_raw_log_is_guarded(repo, tmp_path):
 
 
 def test_missing_cli_is_blocked_not_passed(repo, tmp_path, monkeypatch):
-    """CLI が無い platform を「合格」にしない。"""
+    """実走時に CLI が無い platform を「合格」にしない。"""
     monkeypatch.setattr(RQ, "cli_available", lambda platform: False)
-    manifest = RQ.run_platform("claude", repo=repo, workdir=tmp_path / "w", dry_run=True)
+    manifest = RQ.run_platform("claude", repo=repo, workdir=tmp_path / "w", dry_run=False)
     assert manifest["gate_status"] == Q.GATE_BLOCKED
     assert manifest["trials"] == []
     assert any("CLI が見つからない" in str(r) for r in manifest["gate_reasons"])
+
+
+def test_dry_run_works_without_any_cli(repo, tmp_path, monkeypatch):
+    """dry-run は配線検査なので CLI 不在でも成立する（CI には 3 platform の CLI が無い）。"""
+    monkeypatch.setattr(RQ, "cli_available", lambda platform: False)
+    monkeypatch.setattr(RQ, "cli_version", lambda platform: "unavailable")
+    for platform in Q.PLATFORMS:
+        manifest = RQ.run_platform(platform, repo=repo, workdir=tmp_path / platform, dry_run=True)
+        assert manifest["gate_status"] == Q.GATE_PASS, manifest["gate_reasons"]
+        assert len(manifest["trials"]) == 3
+
+
+def test_dry_run_never_launches_a_trial(repo, tmp_path, monkeypatch):
+    """dry-run で被験 CLI を起動しない（課金と時間を伴わない）。
+
+    `cli_version` は `--version` の取得のために subprocess を使うことがあるため
+    ここではスタブにし、**trial の起動**が起きないことだけを見る。
+    """
+    def _forbidden(*args, **kwargs):
+        raise AssertionError("dry-run で trial の CLI を起動してはならない")
+
+    monkeypatch.setattr(RQ, "cli_version", lambda platform: "stub")
+    monkeypatch.setattr(RQ.subprocess, "run", _forbidden)
+    manifest = RQ.run_platform("claude", repo=repo, workdir=tmp_path / "w", dry_run=True)
+    assert manifest["gate_status"] == Q.GATE_PASS
+    assert len(manifest["trials"]) == 3
 
 
 def test_timeout_is_blocked(repo, tmp_path, monkeypatch):
