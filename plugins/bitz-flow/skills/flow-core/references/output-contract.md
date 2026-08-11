@@ -84,7 +84,7 @@ DONE  PARTIAL  INDETERMINATE  STALE  BLOCKED  INVALID_INPUT  UNSUPPORTED
 | namespace | 置き場 | 値 |
 |---|---|---|
 | `code`（result code） | result envelope | `OK` / `READY` / `DONE` / `INVALID_INPUT` / `BLOCKED` / `APPROVAL_REQUIRED` / `UNAVAILABLE` / `STALE` / `PARTIAL` / `UNSUPPORTED` / `INDETERMINATE` |
-| `write_state` | `data.write_state` | `planned` / `guarded` / `pending-intent` / `mutating` / `reconciling` / `done` / `partial` / `stale` / `quarantined` |
+| `write_state` | `data.write_state` | `PLANNED` / `GUARDED` / `PENDING_INTENT` / `MUTATING` / `RECONCILING` / `DONE` / `PARTIAL` / `STALE` / `QUARANTINED` |
 | `intent_record_state` | intent record | `PENDING` / `RECONCILING` / `PARTIAL` / `STALE` / `QUARANTINED` / `RELEASED` |
 | `gate_status` | qualification manifest と Gate 判定 | `PASS` / `FAIL` / `BLOCKED` |
 | `attempt_status` | evidence ledger entry | `STARTED` / `PASS` / `FAIL` / `ABORTED` / `UNKNOWN` |

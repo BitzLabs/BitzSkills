@@ -175,9 +175,9 @@ def test_ok_code_is_not_restricted():
 @pytest.mark.parametrize(
     "write_state,expected_phase",
     [
-        ("pending-intent", "pre-object-save"),
-        ("mutating", "post-apply"),
-        ("reconciling", "post-apply"),
+        ("PENDING_INTENT", "pre-object-save"),
+        ("MUTATING", "post-apply"),
+        ("RECONCILING", "post-apply"),
     ],
 )
 def test_write_state_projects_to_matrix_phase(write_state, expected_phase):

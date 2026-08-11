@@ -161,11 +161,28 @@
   },
 
   "consumption": {
-    "pr_used": 2,
-    "sessions_used": 3,
+    "pr_used": 3,
+    "sessions_used": 4,
     "review_iterations": 0,
     "exit_shortfalls": [],
     "entries": [
+      {
+        "partition_id": "M1-3",
+        "pr": 1,
+        "sessions": 1,
+        "session_purposes": ["M1-3 のタスク分解と write 基盤の実装"],
+        "tasks": [
+          "FLW-TSK-037",
+          "FLW-TSK-038",
+          "FLW-TSK-039",
+          "FLW-TSK-040",
+          "FLW-TSK-041"
+        ],
+        "exit_met": true,
+        "exit_evidence": "fault fixture 17件（FLT-001〜009, 016, 019, 020, 024〜027, 029）すべてに対応するテストが PASS。変異試験4種（guard 昇順取得・REC-COMMIT receipt 必須・index.lock 排他作成・intent commit point 必須）で検出力を確認。公開 operation は増やしていない",
+        "remaining_sessions_in_partition": 3,
+        "notes": "M1-1 の契約凍結時に write_state enum を設計の説明的表記（小文字 kebab）で凍結していた誤りを、closed enum 宣言（大文字スネーク）へ是正した。設計文書側の表記ゆれは SI-FLW-039 として起票済み（裁定は人間）。plan_commit が commit-tree で commit object を書いていた副作用も、canonical bytes の自前組み立てと hash-object（-w なし）へ是正した"
+      },
       {
         "partition_id": "M1-2",
         "pr": 1,

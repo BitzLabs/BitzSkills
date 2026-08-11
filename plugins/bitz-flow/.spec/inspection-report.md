@@ -1,6 +1,6 @@
-# inspection-report.md (2026-08-11)
+# inspection-report.md (2026-08-12)
 
-成果物数: 63 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 13 / 孤児要件: 0 / 検証証跡: 2
+成果物数: 63 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 11 / 孤児要件: 0 / 検証証跡: 2
 
 ## 問題一覧
 - なし ✅
@@ -20,7 +20,6 @@
 - FLW-CON-004
 - FLW-CON-005
 - FLW-CON-006
-- FLW-FR-005
 - FLW-FR-006
 - FLW-FR-007
 - FLW-FR-008
@@ -28,7 +27,6 @@
 - FLW-FR-010
 - FLW-FR-011
 - FLW-NFR-005
-- FLW-NFR-006
 
 ## 孤児要件（implementing以降なのに implements するタスクがない）
 - なし ✅
@@ -38,7 +36,6 @@
 - FLW-CON-004
 - FLW-CON-005
 - FLW-CON-006
-- FLW-FR-005
 - FLW-FR-006
 - FLW-FR-007
 - FLW-FR-008
@@ -49,7 +46,6 @@
 - FLW-NFR-001
 - FLW-NFR-004
 - FLW-NFR-005
-- FLW-NFR-006
 - FLW-NFR-009
 - FLW-NFR-010
 
@@ -61,11 +57,9 @@
 - FLW-CON-002 ← BitzSkills/tests/test_flow_contract.py
 - FLW-FR-003 ← BitzSkills/tests/test_flow_contract.py
 - FLW-FR-004 ← BitzSkills/tests/test_flow_contract.py
-- FLW-NFR-003 ← BitzSkills/tests/test_flow_m1_recovery.py
-- FLW-NFR-007 ← BitzSkills/tests/test_flow_m1_core.py, BitzSkills/tests/test_flow_m1_durable.py
+- FLW-NFR-007 ← BitzSkills/tests/test_flow_m1_core.py, BitzSkills/tests/test_flow_m1_durable.py, BitzSkills/tests/test_flow_m1_intent.py
 - FLW-NFR-008 ← BitzSkills/tests/test_flow_contract.py
 - FLW-NFR-011 ← BitzSkills/tests/test_flow_m1_coordinator.py, BitzSkills/tests/test_flow_m1_core.py, BitzSkills/tests/test_flow_m1_durable.py, BitzSkills/tests/test_flow_m1_isolation.py, BitzSkills/tests/test_flow_m1_qualification.py, BitzSkills/tests/test_flow_m1_qualification_fixture.py, BitzSkills/tests/test_flow_m1_raw_log_guard.py
-- FLW-NFR-012 ← BitzSkills/tests/test_flow_m1_core.py, BitzSkills/tests/test_flow_m1_isolation.py
 
 ## 検証証跡（.spec/verification/ — 実出力に基づく機械可読証跡）
 ※ 実行時間は observed（非正規）であり一致判定に使わない。判定は exit_code と件数が正
@@ -118,13 +112,13 @@
 | FLW-DSN-011 | active |  |  | 0 | 3 |
 | FLW-DSN-012 | active |  |  | 0 | 3 |
 | FLW-DSN-013 | active |  |  | 0 | 2 |
-| FLW-DSN-014 | active |  |  | 0 | 3 |
-| FLW-DSN-015 | active |  |  | 0 | 7 |
+| FLW-DSN-014 | active |  |  | 0 | 7 |
+| FLW-DSN-015 | active |  |  | 0 | 11 |
 | FLW-FR-001 | 検証済み（verified） | governance | unit-test | 3 | 5 |
 | FLW-FR-002 | 検証済み（verified） | tooling | manual-check | 1 | 1 |
 | FLW-FR-003 | 検証済み（verified） | tooling | unit-test | 6 | 6 |
 | FLW-FR-004 | 検証済み（verified） | tooling | unit-test | 2 | 2 |
-| FLW-FR-005 | 承認済み（approved） | execution | unit-test | 0 | 0 |
+| FLW-FR-005 | 実装中（implementing） | execution | unit-test | 2 | 4 |
 | FLW-FR-006 | 承認済み（approved） | workflow | unit-test | 0 | 0 |
 | FLW-FR-007 | 承認済み（approved） | tooling | unit-test | 0 | 0 |
 | FLW-FR-008 | 承認済み（approved） | sync | unit-test | 0 | 0 |
@@ -132,19 +126,19 @@
 | FLW-FR-010 | 承認済み（approved） | workflow | unit-test | 0 | 0 |
 | FLW-FR-011 | 承認済み（approved） | tooling | unit-test | 0 | 0 |
 | FLW-FR-012 | 検証済み（verified） | governance | unit-test | 1 | 2 |
-| FLW-FR-013 | 実装中（implementing） | workflow | unit-test | 5 | 6 |
+| FLW-FR-013 | 実装中（implementing） | workflow | unit-test | 7 | 8 |
 | FLW-NFR-001 | 検証済み（verified） | verification | benchmark | 8 | 8 |
 | FLW-NFR-002 | 廃止（deprecated） | verification | benchmark | 0 | 0 |
-| FLW-NFR-003 | 実装中（implementing） | execution | unit-test | 1 | 1 |
+| FLW-NFR-003 | 実装中（implementing） | execution | unit-test | 3 | 5 |
 | FLW-NFR-004 | 検証済み（verified） | tooling | unit-test | 1 | 1 |
 | FLW-NFR-005 | 承認済み（approved） | execution | unit-test | 0 | 0 |
-| FLW-NFR-006 | 承認済み（approved） | execution | unit-test | 0 | 0 |
-| FLW-NFR-007 | 実装中（implementing） | tooling | unit-test | 2 | 2 |
+| FLW-NFR-006 | 実装中（implementing） | execution | unit-test | 1 | 2 |
+| FLW-NFR-007 | 実装中（implementing） | tooling | unit-test | 4 | 4 |
 | FLW-NFR-008 | 検証済み（verified） | verification | benchmark | 4 | 4 |
 | FLW-NFR-009 | 検証済み（verified） | verification | unit-test | 3 | 4 |
 | FLW-NFR-010 | 検証済み（verified） | verification | unit-test | 1 | 2 |
 | FLW-NFR-011 | 実装中（implementing） | verification | benchmark | 10 | 10 |
-| FLW-NFR-012 | 実装中（implementing） | safety | unit-test | 3 | 3 |
+| FLW-NFR-012 | 実装中（implementing） | safety | unit-test | 5 | 6 |
 | FLW-REV-002 | active |  |  | 0 | 0 |
 | FLW-REV-003 | active |  |  | 0 | 0 |
 | FLW-REV-004 | active |  |  | 0 | 0 |
