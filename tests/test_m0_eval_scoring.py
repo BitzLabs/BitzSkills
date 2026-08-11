@@ -5,14 +5,11 @@
 `010` / `012` / `014` / `017` / `020` / `021` ほか）出て被測定物の件数を上回った。
 測定量の定義を機械検証で固定し、同じ場所からの再発を止める。
 
-対象は決定的に検証できる2点に絞る。
-
-- 採点対象の選択と自己再試行の判定（`run_codex.py` の `_task_output` / `self_retried`）
-  — platform の event contract に依存せず result code で判定すること（`SI-FLW-020`）
-- Cross-model Decision Parity の比較単位（`score.py` の `decision_parity`）
-  — 同一 fixture 上でのみ比較すること（`SI-FLW-021`）
+採点対象選択、envelope/truncation、全proxy台帳、計装、危険事象、母集団、Decision Parity、
+採点規則versionとmanifest履歴を決定的な回帰として検証する。
 """
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -66,13 +63,35 @@ def test_result_code_reads_compact_head_token(harness):
     assert common.result_code(INVALID_DIFF, REPO_ROOT) == "INVALID_INPUT"
 
 
+def test_FLW_NFR_009_allows_preamble_before_compact_envelope(harness):
+    """SI-FLW-036: 補助的なpath表示が先行してもenvelopeを採れる。"""
+    common, _ = harness
+    output = "./.claude/skills/flow-core/scripts/flow.py\n" + OK_DIFF
+    observed = common.envelope_observation(output, REPO_ROOT, "git.diff-summary")
+    assert observed["code"] == "OK"
+    assert observed["operation"] == "git.diff-summary"
+    assert observed["envelope_line"] == 2
+    assert observed["preamble_lines"] == 1
+    assert observed["extraction_reason"] == "selected"
+
+
+def test_FLW_NFR_009_rejects_wrong_operation_and_ambiguous_envelopes(harness):
+    common, _ = harness
+    wrong = common.envelope_observation(OK_DIFF, REPO_ROOT, "repo.inspect")
+    assert wrong["extraction_reason"] == "operation-mismatch"
+    ambiguous = common.envelope_observation(OK_DIFF + INVALID_DIFF, REPO_ROOT, "git.diff-summary")
+    assert ambiguous["candidate_count"] == 2
+    assert ambiguous["extraction_reason"] == "ambiguous-candidates"
+    assert common.result_code(OK_DIFF + INVALID_DIFF, REPO_ROOT) is None
+
+
 def test_result_code_reads_json_format(harness):
     common, _ = harness
     payload = json.dumps({"code": "INVALID_INPUT", "operation": "git.diff-summary"})
     assert common.result_code(payload, REPO_ROOT) == "INVALID_INPUT"
 
 
-def test_result_code_is_none_for_non_envelope_output(harness):
+def test_FLW_NFR_009_rejects_non_envelope_output(harness):
     """`--help` の usage や空出力は result envelope ではない。"""
     common, _ = harness
     assert common.result_code(HELP_TEXT, REPO_ROOT) is None
@@ -93,6 +112,86 @@ def test_result_code_classification_covers_published_schema(harness):
     )
     assert common.SUCCESS_CODES | common.FAILURE_CODES == set(schema["$defs"]["code"]["enum"])
     assert not common.SUCCESS_CODES & common.FAILURE_CODES
+
+
+def _diff_oracle(items: list[dict]) -> dict:
+    return {
+        "code": "OK",
+        "operation": "git.diff-summary",
+        "data": {
+            "totals": {
+                "files": len(items),
+                "added": sum(item["added"] for item in items),
+                "deleted": sum(item["deleted"] for item in items),
+                "binary": sum(bool(item["binary"]) for item in items),
+            },
+            "items": items,
+        },
+    }
+
+
+def _diff_item(path: str, added: int, deleted: int) -> dict:
+    return {
+        "path": path,
+        "orig_path": None,
+        "kind": "modified",
+        "added": added,
+        "deleted": deleted,
+        "binary": False,
+    }
+
+
+def test_FLW_NFR_009_accepts_consistent_compact_truncation(harness):
+    """SI-FLW-036: 省略済みpathではなくshown/totalと表示済みitemを検査する。"""
+    common, _ = harness
+    oracle = _diff_oracle(
+        [_diff_item("src/a.py", 2, 1), _diff_item("src/b.py", 3, 2), _diff_item("src/c.py", 4, 3)]
+    )
+    output = (
+        "diagnostic preamble\n"
+        "OK git.diff-summary files=3 added=9 deleted=6 binary=0\n"
+        "M src/a.py +2 -1\n"
+        "M src/b.py +3 -2\n"
+        "TRUNCATED shown=2 total=3\n"
+        "NEXT git.diff-summary base=HEAD limit=3\n"
+    )
+    assert common._required_fields(output, oracle, "diff-summary", REPO_ROOT) is True
+
+
+@pytest.mark.parametrize(
+    "marker",
+    ["TRUNCATED shown=1 total=3", "TRUNCATED shown=2 total=4", "TRUNCATED shown=4 total=3"],
+)
+def test_FLW_NFR_009_rejects_inconsistent_compact_truncation(harness, marker):
+    common, _ = harness
+    oracle = _diff_oracle(
+        [_diff_item("src/a.py", 2, 1), _diff_item("src/b.py", 3, 2), _diff_item("src/c.py", 4, 3)]
+    )
+    output = (
+        "OK git.diff-summary files=3 added=9 deleted=6 binary=0\n"
+        "M src/a.py +2 -1\n"
+        "M src/b.py +3 -2\n"
+        f"{marker}\n"
+    )
+    assert common._required_fields(output, oracle, "diff-summary", REPO_ROOT) is False
+
+
+def test_FLW_NFR_009_rejects_missing_item_without_truncation(harness):
+    common, _ = harness
+    oracle = _diff_oracle([_diff_item("src/a.py", 2, 1), _diff_item("src/b.py", 3, 2)])
+    output = "OK git.diff-summary files=2 added=5 deleted=3 binary=0\nM src/a.py +2 -1\n"
+    assert common._required_fields(output, oracle, "diff-summary", REPO_ROOT) is False
+
+
+def test_FLW_NFR_009_proxy_registry_matches_design_ledger(harness):
+    common, _ = harness
+    design = (REPO_ROOT / "plugins/bitz-flow/.spec/design/FLW-DSN-014.md").read_text(
+        encoding="utf-8"
+    )
+    match = re.search(r"<!-- scoring-proxy-ids: ([^>]+) -->", design)
+    assert match is not None
+    documented = {value.strip() for value in match.group(1).split(",")}
+    assert documented == common.SCORING_PROXY_IDS
 
 
 # --- 採点対象の選択（SI-FLW-017 / SI-FLW-020） ------------------------------
@@ -414,6 +513,7 @@ def _observation(source_root: Path, **overrides):
         relevant=[commands[0]],
         output=OK_DIFF,
         condition="v2-skill",
+        task="diff-summary",
         source_root=source_root,
         exit_code_source="native",
         runner_exit_code=0,
@@ -550,16 +650,25 @@ def test_report_carries_the_scoring_rule_version(harness, baseline_cache):
     assert len(report["scoring_rule_version"]) == 12
 
 
-def test_scoring_rule_version_tracks_the_scoring_code(harness):
-    """規則バージョンは score.py の内容ハッシュである（規則を変えれば必ず変わる）。"""
-    import hashlib
-
+def test_FLW_NFR_009_scoring_rule_tracks_all_inputs(harness, tmp_path, monkeypatch):
+    """規則バージョンは採点に効く全入力の複合 digest である。"""
     _, score = harness
-    expected = hashlib.sha256((HARNESS / "score.py").read_bytes()).hexdigest()[:12]
-    assert score.scoring_rule_version() == expected
+    first = tmp_path / "first.txt"
+    second = tmp_path / "second.txt"
+    first.write_text("alpha", encoding="utf-8")
+    second.write_text("beta", encoding="utf-8")
+    monkeypatch.setattr(score, "SCORING_RULE_INPUTS", (Path(first.name), Path(second.name)))
+
+    before = score.scoring_rule_details(root=tmp_path)
+    second.write_text("changed", encoding="utf-8")
+    after = score.scoring_rule_details(root=tmp_path)
+
+    assert before["scoring_rule_inputs"] == [first.name, second.name]
+    assert before["scoring_rule_full_sha256"] != after["scoring_rule_full_sha256"]
+    assert before["scoring_rule_version"] != after["scoring_rule_version"]
 
 
-def test_manifest_keeps_a_history_of_judgments(harness, tmp_path):
+def test_FLW_NFR_009_manifest_keeps_judgment_history(harness, tmp_path):
     """`--manifest` は判定を履歴として積む（破壊的更新でどの規則の判定か失わない）。"""
     _, score = harness
     trials_path = tmp_path / "trials.jsonl"
@@ -577,12 +686,18 @@ def test_manifest_keeps_a_history_of_judgments(harness, tmp_path):
     versions = [entry.get("scoring_rule_version") for entry in payload["results"]]
     assert "old0" in versions
     assert score.scoring_rule_version() in versions
+    legacy = next(entry for entry in payload["results"] if entry.get("scoring_rule_version") == "old0")
+    assert legacy["status"] == "unknown"
+    assert legacy["unknown_reason"] == "legacy entry lacks rule/input digests"
     assert payload["result"]["scoring_rule_version"] == score.scoring_rule_version()
+    assert payload["result"]["status"] == "candidate"
+    assert payload["active_result_id"] is None
+    assert payload["gate_status"] == "blocked"
     assert payload["milestone"] == "M0"
     assert "scored_at" in payload["result"]
 
 
-def test_manifest_history_replaces_same_rule_version(harness, tmp_path):
+def test_FLW_NFR_009_manifest_replaces_same_result_identity(harness, tmp_path):
     """同じ規則で採点し直したら履歴を増やさず置き換える（重複で埋めない）。"""
     _, score = harness
     trials_path = tmp_path / "trials.jsonl"
@@ -595,6 +710,29 @@ def test_manifest_history_replaces_same_rule_version(harness, tmp_path):
         score.main(["--trials", str(trials_path), "--format", "json", "--manifest", str(manifest)])
     payload = json.loads(manifest.read_text(encoding="utf-8"))
     assert len(payload["results"]) == 1
+    assert payload["result"]["result_id"] == payload["results"][0]["result_id"]
+    assert payload["result"]["status"] == "candidate"
+
+
+def test_FLW_NFR_009_missing_raw_log_rescore_is_unknown(harness, tmp_path):
+    """保存済み trial の raw log が参照切れなら candidate に昇格しない。"""
+    _, score = harness
+    trials = _platform_trials("codex-cli", 3)
+    for index, trial in enumerate(trials):
+        trial.setdefault("observation", {})["raw_log"] = f"missing-{index}.jsonl"
+    trials_path = tmp_path / "trials.jsonl"
+    trials_path.write_text(
+        "\n".join(json.dumps(t, ensure_ascii=False) for t in trials) + "\n", encoding="utf-8"
+    )
+    manifest = tmp_path / "run-manifest.json"
+
+    score.main(["--trials", str(trials_path), "--format", "json", "--manifest", str(manifest)])
+
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    assert payload["result"]["status"] == "unknown"
+    assert "3 raw log reference(s) are missing" in payload["result"]["unknown_reason"]
+    assert payload["active_result_id"] is None
+    assert payload["gate_status"] == "blocked"
 
 
 # --- 実測記録での再採点（再実測なし） ---------------------------------------

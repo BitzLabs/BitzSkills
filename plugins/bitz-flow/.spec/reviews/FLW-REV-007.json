@@ -1,0 +1,32 @@
+{
+  "schema_version": 2,
+  "review_id": "FLW-REV-007",
+  "verdict": "PASS",
+  "aggregate_score": 4.88,
+  "perspective_scores": {
+    "consistency": 5.0,
+    "operations": 4.8,
+    "risk": 5.0,
+    "business": 4.65
+  },
+  "findings_summary": {
+    "total": 0,
+    "after_dedup": 0,
+    "by_priority": {"P0": 0, "P1": 0, "P2": 0, "P3": 0},
+    "by_severity": {"critical": 0, "major": 0, "minor": 0, "info": 0}
+  },
+  "findings": [],
+  "gate_preconditions": [],
+  "carried_over": [
+    "FLW-REV-006:SYN-001",
+    "FLW-REV-006:SYN-002",
+    "FLW-REV-006:SYN-003",
+    "FLW-REV-006:SYN-004",
+    "FLW-REV-006:SYN-005",
+    "FLW-REV-006:SYN-006",
+    "FLW-REV-006:SYN-007",
+    "FLW-REV-006:SYN-008",
+    "FLW-REV-006:SYN-009"
+  ],
+  "conditional_items": []
+}

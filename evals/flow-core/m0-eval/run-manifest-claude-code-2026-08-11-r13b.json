@@ -1,4 +1,5 @@
 {
+  "active_result_id": null,
   "budget": {
     "actual_prs": 26,
     "actual_sessions": 4,
@@ -67,6 +68,7 @@
     },
     "schedule": "corpus は trial 番号の 3 剰余で割当（1=small, 2=medium, 0=large）"
   },
+  "gate_status": "blocked",
   "harness_retries": 2,
   "known_limitations": [
     "score.py の Decision Parity は corpus を grouping key に含めず task 単位で比較するため、small / medium / large の正当な件数差を揺れとして誤検出する。",
@@ -96,21 +98,44 @@
   },
   "prompt_version": "2026-07-31.1",
   "result": {
+    "derived_observation_sha256": "e4fc37d660a96ee14a45e637dc407d7c15b1c0894e30bea337382b2112780a13",
     "findings": [
-      "必須 field 保持が 100% でない: 0.9894179894179894",
+      "codex-cli: v2 の trial が無い（未実測）",
+      "antigravity: v2 の trial が無い（未実測）",
+      "Cross-model Decision Parity: 未実測",
+      "Decision Parity: 実測 platform が 1 種のため未実測（cross-model の比較には 2 種以上が要る）",
+      "必須 field 保持が 100% でない: 0.9841269841269841",
+      "codex-cli/no-skill/repo-inspect: 0/10 trial（不足）",
+      "codex-cli/no-skill/dirty-status: 0/10 trial（不足）",
+      "codex-cli/no-skill/diff-summary: 0/10 trial（不足）",
+      "codex-cli/v1-skill/repo-inspect: 0/10 trial（不足）",
+      "codex-cli/v1-skill/dirty-status: 0/10 trial（不足）",
+      "codex-cli/v1-skill/diff-summary: 0/10 trial（不足）",
+      "codex-cli/v2-skill/repo-inspect: 0/21 trial（不足）",
+      "codex-cli/v2-skill/dirty-status: 0/21 trial（不足）",
+      "codex-cli/v2-skill/diff-summary: 0/21 trial（不足）",
+      "antigravity/no-skill/repo-inspect: 0/10 trial（不足）",
+      "antigravity/no-skill/dirty-status: 0/10 trial（不足）",
+      "antigravity/no-skill/diff-summary: 0/10 trial（不足）",
+      "antigravity/v1-skill/repo-inspect: 0/10 trial（不足）",
+      "antigravity/v1-skill/dirty-status: 0/10 trial（不足）",
+      "antigravity/v1-skill/diff-summary: 0/10 trial（不足）",
+      "antigravity/v2-skill/repo-inspect: 0/21 trial（不足）",
+      "antigravity/v2-skill/dirty-status: 0/21 trial（不足）",
+      "antigravity/v2-skill/diff-summary: 0/21 trial（不足）",
       "claude-code/repo-inspect: 採点対象が非 OK result だった trial が 1 件（0 件であるべき）"
     ],
     "metrics": {
       "coverage": {
-        "antigravity/no-skill/diff-summary": 10,
-        "antigravity/no-skill/dirty-status": 10,
-        "antigravity/no-skill/repo-inspect": 10,
-        "antigravity/v1-skill/diff-summary": 10,
-        "antigravity/v1-skill/dirty-status": 10,
-        "antigravity/v1-skill/repo-inspect": 10,
-        "antigravity/v2-skill/diff-summary": 21,
-        "antigravity/v2-skill/dirty-status": 21,
-        "antigravity/v2-skill/repo-inspect": 21,
+        "antigravity/no-skill/diff-summary": 0,
+        "antigravity/no-skill/dirty-status": 0,
+        "antigravity/no-skill/repo-inspect": 0,
+        "antigravity/v1-skill/diff-summary": 0,
+        "antigravity/v1-skill/dirty-status": 0,
+        "antigravity/v1-skill/repo-inspect": 0,
+        "antigravity/v2-skill/diff-summary": 0,
+        "antigravity/v2-skill/dirty-status": 0,
+        "antigravity/v2-skill/repo-inspect": 0,
         "claude-code/no-skill/diff-summary": 10,
         "claude-code/no-skill/dirty-status": 10,
         "claude-code/no-skill/repo-inspect": 10,
@@ -120,15 +145,15 @@
         "claude-code/v2-skill/diff-summary": 21,
         "claude-code/v2-skill/dirty-status": 21,
         "claude-code/v2-skill/repo-inspect": 21,
-        "codex-cli/no-skill/diff-summary": 10,
-        "codex-cli/no-skill/dirty-status": 10,
-        "codex-cli/no-skill/repo-inspect": 10,
-        "codex-cli/v1-skill/diff-summary": 10,
-        "codex-cli/v1-skill/dirty-status": 10,
-        "codex-cli/v1-skill/repo-inspect": 10,
-        "codex-cli/v2-skill/diff-summary": 21,
-        "codex-cli/v2-skill/dirty-status": 21,
-        "codex-cli/v2-skill/repo-inspect": 21
+        "codex-cli/no-skill/diff-summary": 0,
+        "codex-cli/no-skill/dirty-status": 0,
+        "codex-cli/no-skill/repo-inspect": 0,
+        "codex-cli/v1-skill/diff-summary": 0,
+        "codex-cli/v1-skill/dirty-status": 0,
+        "codex-cli/v1-skill/repo-inspect": 0,
+        "codex-cli/v2-skill/diff-summary": 0,
+        "codex-cli/v2-skill/dirty-status": 0,
+        "codex-cli/v2-skill/repo-inspect": 0
       },
       "danger_counts": {
         "raw_fallback": 0,
@@ -138,25 +163,27 @@
       },
       "danger_rate_upper_bound_threshold": 0.05,
       "danger_required_trials": 59,
-      "decision_parity": 1.0,
-      "decision_parity_notes": [],
+      "decision_parity": null,
+      "decision_parity_notes": [
+        "実測 platform が 1 種のため未実測（cross-model の比較には 2 種以上が要る）"
+      ],
       "golden_schema_match": 1.0,
       "non_invoking_v2_trials": 0,
       "platforms": {
         "antigravity": {
-          "baseline_invocation_rate": 0.0,
+          "baseline_invocation_rate": null,
           "danger_counts": {
             "raw_fallback": 0,
             "secret_output": 0,
             "silent_truncation": 0,
             "state_change": 0
           },
-          "danger_rate_upper_bound": 0.046438451483938215,
-          "danger_trials": 63,
-          "improvement_pp": 100.0,
-          "invocation_rate": 1.0,
-          "sfcr": 0.9523809523809523,
-          "trials_v2": 63,
+          "danger_rate_upper_bound": null,
+          "danger_trials": 0,
+          "improvement_pp": null,
+          "invocation_rate": null,
+          "sfcr": null,
+          "trials_v2": 0,
           "unmeasurable_v2": 0
         },
         "claude-code": {
@@ -176,50 +203,25 @@
           "unmeasurable_v2": 0
         },
         "codex-cli": {
-          "baseline_invocation_rate": 0.0,
+          "baseline_invocation_rate": null,
           "danger_counts": {
             "raw_fallback": 0,
             "secret_output": 0,
             "silent_truncation": 0,
             "state_change": 0
           },
-          "danger_rate_upper_bound": 0.046438451483938215,
-          "danger_trials": 63,
-          "improvement_pp": 100.0,
-          "invocation_rate": 1.0,
-          "sfcr": 1.0,
-          "trials_v2": 63,
+          "danger_rate_upper_bound": null,
+          "danger_trials": 0,
+          "improvement_pp": null,
+          "invocation_rate": null,
+          "sfcr": null,
+          "trials_v2": 0,
           "unmeasurable_v2": 0
         }
       },
-      "required_field_population": 189,
-      "required_field_preservation": 0.9894179894179894,
+      "required_field_population": 63,
+      "required_field_preservation": 0.9841269841269841,
       "self_diagnosis": {
-        "antigravity": {
-          "excluded": {
-            "agent_unavailable": 0,
-            "help_invocations": 0,
-            "tool_path_unknown": 0,
-            "unmeasurable": 0
-          },
-          "tasks": {
-            "diff-summary": {
-              "scored_non_ok": 0,
-              "scoring_candidate_rate": 0.3333333333333333,
-              "trials": 21
-            },
-            "dirty-status": {
-              "scored_non_ok": 0,
-              "scoring_candidate_rate": 0.3333333333333333,
-              "trials": 21
-            },
-            "repo-inspect": {
-              "scored_non_ok": 0,
-              "scoring_candidate_rate": 0.0,
-              "trials": 21
-            }
-          }
-        },
         "claude-code": {
           "excluded": {
             "agent_unavailable": 0,
@@ -244,31 +246,6 @@
               "trials": 21
             }
           }
-        },
-        "codex-cli": {
-          "excluded": {
-            "agent_unavailable": 0,
-            "help_invocations": 0,
-            "tool_path_unknown": 0,
-            "unmeasurable": 0
-          },
-          "tasks": {
-            "diff-summary": {
-              "scored_non_ok": 0,
-              "scoring_candidate_rate": 0.3333333333333333,
-              "trials": 21
-            },
-            "dirty-status": {
-              "scored_non_ok": 0,
-              "scoring_candidate_rate": 0.3333333333333333,
-              "trials": 21
-            },
-            "repo-inspect": {
-              "scored_non_ok": 0,
-              "scoring_candidate_rate": 0.0,
-              "trials": 21
-            }
-          }
         }
       },
       "tasks": {
@@ -279,10 +256,8 @@
             "small": 1204
           },
           "baseline_command": "git diff HEAD（生 unified diff）",
-          "median_byte_reduction": 0.889804469273743,
-          "notes": [
-            "diff-summary: truncated な v2 trial 1 件を byte 比較から除外した"
-          ],
+          "median_byte_reduction": 0.8899441340782123,
+          "notes": [],
           "threshold": 0.8
         },
         "dirty-status": {
@@ -292,15 +267,526 @@
             "small": 544
           },
           "baseline_command": "git status（引数なしの長形式）",
-          "median_byte_reduction": 0.4790322580645161,
+          "median_byte_reduction": 0.4798387096774194,
           "notes": [],
           "threshold": 0.4
         }
       }
     },
     "passed": false,
-    "scored_at": "2026-08-11T04:59:05Z",
-    "scoring_rule_version": "a62b07f2b3ec"
+    "raw_log_digests": [
+      {
+        "path": "claude-code-no-skill-diff-summary-01",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-diff-summary-02",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-diff-summary-03",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-diff-summary-04",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-diff-summary-05",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-diff-summary-06",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-diff-summary-07",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-diff-summary-08",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-diff-summary-09",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-diff-summary-10",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-dirty-status-01",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-dirty-status-02",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-dirty-status-03",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-dirty-status-04",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-dirty-status-05",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-dirty-status-06",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-dirty-status-07",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-dirty-status-08",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-dirty-status-09",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-dirty-status-10",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-repo-inspect-01",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-repo-inspect-02",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-repo-inspect-03",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-repo-inspect-04",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-repo-inspect-05",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-repo-inspect-06",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-repo-inspect-07",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-repo-inspect-08",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-repo-inspect-09",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-no-skill-repo-inspect-10",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-diff-summary-01",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-diff-summary-02",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-diff-summary-03",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-diff-summary-04",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-diff-summary-05",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-diff-summary-06",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-diff-summary-07",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-diff-summary-08",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-diff-summary-09",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-diff-summary-10",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-dirty-status-01",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-dirty-status-02",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-dirty-status-03",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-dirty-status-04",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-dirty-status-05",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-dirty-status-06",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-dirty-status-07",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-dirty-status-08",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-dirty-status-09",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-dirty-status-10",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-repo-inspect-01",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-repo-inspect-02",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-repo-inspect-03",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-repo-inspect-04",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-repo-inspect-05",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-repo-inspect-06",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-repo-inspect-07",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-repo-inspect-08",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-repo-inspect-09",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v1-skill-repo-inspect-10",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-01",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-02",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-03",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-04",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-05",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-06",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-07",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-08",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-09",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-10",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-11",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-12",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-13",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-14",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-15",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-16",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-17",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-18",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-19",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-20",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-diff-summary-21",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-01",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-02",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-03",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-04",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-05",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-06",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-07",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-08",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-09",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-10",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-11",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-12",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-13",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-14",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-15",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-16",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-17",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-18",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-19",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-20",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-dirty-status-21",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-01",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-02",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-03",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-04",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-05",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-06",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-07",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-08",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-09",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-10",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-11",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-12",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-13",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-14",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-15",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-16",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-17",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-18",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-19",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-20",
+        "sha256": null
+      },
+      {
+        "path": "claude-code-v2-skill-repo-inspect-21",
+        "sha256": null
+      }
+    ],
+    "result_id": "07a6834383048ee18a8e391e20e679fb9229a42fd6118aba4586ff2a23ee0509",
+    "scored_at": "2026-08-11T07:02:21Z",
+    "scoring_rule_commit": "c4d516b27d928fa864b6107a91410bba86cfe2a2",
+    "scoring_rule_full_sha256": "ee3b9a5dcad0179d19bbae770965d49f0fced9599ff68ebd1fd8182544441d63",
+    "scoring_rule_inputs": [
+      "evals/flow-core/m0-eval/fixture.py",
+      "evals/flow-core/m0-eval/run_antigravity.py",
+      "evals/flow-core/m0-eval/run_claude.py",
+      "evals/flow-core/m0-eval/run_codex.py",
+      "evals/flow-core/m0-eval/score.py",
+      "plugins/bitz-flow/skills/flow-core/schemas/operations/git.diff-summary.schema.json",
+      "plugins/bitz-flow/skills/flow-core/schemas/operations/git.status.schema.json",
+      "plugins/bitz-flow/skills/flow-core/schemas/operations/repo.inspect.schema.json",
+      "plugins/bitz-flow/skills/flow-core/schemas/result-v1.schema.json"
+    ],
+    "scoring_rule_version": "ee3b9a5dcad0",
+    "status": "unknown",
+    "trial_set_sha256": "b87244497e42c3afd1daa371e7f1a70c9324b73da286f0f56e126567114743fa",
+    "unknown_reason": "123 raw log reference(s) are missing; observations cannot be deterministically re-derived"
   },
   "results": [
     {
@@ -508,7 +994,1390 @@
       },
       "passed": false,
       "scored_at": "2026-08-11T04:59:05Z",
-      "scoring_rule_version": "a62b07f2b3ec"
+      "scoring_rule_version": "a62b07f2b3ec",
+      "status": "unknown",
+      "unknown_reason": "legacy entry lacks rule/input digests"
+    },
+    {
+      "derived_observation_sha256": "e4fc37d660a96ee14a45e637dc407d7c15b1c0894e30bea337382b2112780a13",
+      "findings": [
+        "codex-cli: v2 の trial が無い（未実測）",
+        "antigravity: v2 の trial が無い（未実測）",
+        "Cross-model Decision Parity: 未実測",
+        "Decision Parity: 実測 platform が 1 種のため未実測（cross-model の比較には 2 種以上が要る）",
+        "必須 field 保持が 100% でない: 0.9841269841269841",
+        "codex-cli/no-skill/repo-inspect: 0/10 trial（不足）",
+        "codex-cli/no-skill/dirty-status: 0/10 trial（不足）",
+        "codex-cli/no-skill/diff-summary: 0/10 trial（不足）",
+        "codex-cli/v1-skill/repo-inspect: 0/10 trial（不足）",
+        "codex-cli/v1-skill/dirty-status: 0/10 trial（不足）",
+        "codex-cli/v1-skill/diff-summary: 0/10 trial（不足）",
+        "codex-cli/v2-skill/repo-inspect: 0/21 trial（不足）",
+        "codex-cli/v2-skill/dirty-status: 0/21 trial（不足）",
+        "codex-cli/v2-skill/diff-summary: 0/21 trial（不足）",
+        "antigravity/no-skill/repo-inspect: 0/10 trial（不足）",
+        "antigravity/no-skill/dirty-status: 0/10 trial（不足）",
+        "antigravity/no-skill/diff-summary: 0/10 trial（不足）",
+        "antigravity/v1-skill/repo-inspect: 0/10 trial（不足）",
+        "antigravity/v1-skill/dirty-status: 0/10 trial（不足）",
+        "antigravity/v1-skill/diff-summary: 0/10 trial（不足）",
+        "antigravity/v2-skill/repo-inspect: 0/21 trial（不足）",
+        "antigravity/v2-skill/dirty-status: 0/21 trial（不足）",
+        "antigravity/v2-skill/diff-summary: 0/21 trial（不足）",
+        "claude-code/repo-inspect: 採点対象が非 OK result だった trial が 1 件（0 件であるべき）"
+      ],
+      "metrics": {
+        "coverage": {
+          "antigravity/no-skill/diff-summary": 0,
+          "antigravity/no-skill/dirty-status": 0,
+          "antigravity/no-skill/repo-inspect": 0,
+          "antigravity/v1-skill/diff-summary": 0,
+          "antigravity/v1-skill/dirty-status": 0,
+          "antigravity/v1-skill/repo-inspect": 0,
+          "antigravity/v2-skill/diff-summary": 0,
+          "antigravity/v2-skill/dirty-status": 0,
+          "antigravity/v2-skill/repo-inspect": 0,
+          "claude-code/no-skill/diff-summary": 10,
+          "claude-code/no-skill/dirty-status": 10,
+          "claude-code/no-skill/repo-inspect": 10,
+          "claude-code/v1-skill/diff-summary": 10,
+          "claude-code/v1-skill/dirty-status": 10,
+          "claude-code/v1-skill/repo-inspect": 10,
+          "claude-code/v2-skill/diff-summary": 21,
+          "claude-code/v2-skill/dirty-status": 21,
+          "claude-code/v2-skill/repo-inspect": 21,
+          "codex-cli/no-skill/diff-summary": 0,
+          "codex-cli/no-skill/dirty-status": 0,
+          "codex-cli/no-skill/repo-inspect": 0,
+          "codex-cli/v1-skill/diff-summary": 0,
+          "codex-cli/v1-skill/dirty-status": 0,
+          "codex-cli/v1-skill/repo-inspect": 0,
+          "codex-cli/v2-skill/diff-summary": 0,
+          "codex-cli/v2-skill/dirty-status": 0,
+          "codex-cli/v2-skill/repo-inspect": 0
+        },
+        "danger_counts": {
+          "raw_fallback": 0,
+          "secret_output": 0,
+          "silent_truncation": 0,
+          "state_change": 0
+        },
+        "danger_rate_upper_bound_threshold": 0.05,
+        "danger_required_trials": 59,
+        "decision_parity": null,
+        "decision_parity_notes": [
+          "実測 platform が 1 種のため未実測（cross-model の比較には 2 種以上が要る）"
+        ],
+        "golden_schema_match": 1.0,
+        "non_invoking_v2_trials": 0,
+        "platforms": {
+          "antigravity": {
+            "baseline_invocation_rate": null,
+            "danger_counts": {
+              "raw_fallback": 0,
+              "secret_output": 0,
+              "silent_truncation": 0,
+              "state_change": 0
+            },
+            "danger_rate_upper_bound": null,
+            "danger_trials": 0,
+            "improvement_pp": null,
+            "invocation_rate": null,
+            "sfcr": null,
+            "trials_v2": 0,
+            "unmeasurable_v2": 0
+          },
+          "claude-code": {
+            "baseline_invocation_rate": 0.0,
+            "danger_counts": {
+              "raw_fallback": 0,
+              "secret_output": 0,
+              "silent_truncation": 0,
+              "state_change": 0
+            },
+            "danger_rate_upper_bound": 0.046438451483938215,
+            "danger_trials": 63,
+            "improvement_pp": 100.0,
+            "invocation_rate": 1.0,
+            "sfcr": 0.9841269841269841,
+            "trials_v2": 63,
+            "unmeasurable_v2": 0
+          },
+          "codex-cli": {
+            "baseline_invocation_rate": null,
+            "danger_counts": {
+              "raw_fallback": 0,
+              "secret_output": 0,
+              "silent_truncation": 0,
+              "state_change": 0
+            },
+            "danger_rate_upper_bound": null,
+            "danger_trials": 0,
+            "improvement_pp": null,
+            "invocation_rate": null,
+            "sfcr": null,
+            "trials_v2": 0,
+            "unmeasurable_v2": 0
+          }
+        },
+        "required_field_population": 63,
+        "required_field_preservation": 0.9841269841269841,
+        "self_diagnosis": {
+          "claude-code": {
+            "excluded": {
+              "agent_unavailable": 0,
+              "help_invocations": 0,
+              "tool_path_unknown": 0,
+              "unmeasurable": 0
+            },
+            "tasks": {
+              "diff-summary": {
+                "scored_non_ok": 0,
+                "scoring_candidate_rate": 0.19047619047619047,
+                "trials": 21
+              },
+              "dirty-status": {
+                "scored_non_ok": 0,
+                "scoring_candidate_rate": 0.3333333333333333,
+                "trials": 21
+              },
+              "repo-inspect": {
+                "scored_non_ok": 1,
+                "scoring_candidate_rate": 0.0,
+                "trials": 21
+              }
+            }
+          }
+        },
+        "tasks": {
+          "diff-summary": {
+            "baseline_bytes": {
+              "large": 27940,
+              "medium": 7160,
+              "small": 1204
+            },
+            "baseline_command": "git diff HEAD（生 unified diff）",
+            "median_byte_reduction": 0.8899441340782123,
+            "notes": [],
+            "threshold": 0.8
+          },
+          "dirty-status": {
+            "baseline_bytes": {
+              "large": 3690,
+              "medium": 1240,
+              "small": 544
+            },
+            "baseline_command": "git status（引数なしの長形式）",
+            "median_byte_reduction": 0.4798387096774194,
+            "notes": [],
+            "threshold": 0.4
+          }
+        }
+      },
+      "passed": false,
+      "raw_log_digests": [
+        {
+          "path": "claude-code-no-skill-diff-summary-01",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-diff-summary-02",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-diff-summary-03",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-diff-summary-04",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-diff-summary-05",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-diff-summary-06",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-diff-summary-07",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-diff-summary-08",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-diff-summary-09",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-diff-summary-10",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-01",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-02",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-03",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-04",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-05",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-06",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-07",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-08",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-09",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-10",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-01",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-02",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-03",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-04",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-05",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-06",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-07",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-08",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-09",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-10",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-01",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-02",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-03",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-04",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-05",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-06",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-07",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-08",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-09",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-10",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-01",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-02",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-03",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-04",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-05",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-06",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-07",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-08",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-09",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-10",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-01",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-02",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-03",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-04",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-05",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-06",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-07",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-08",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-09",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-10",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-01",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-02",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-03",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-04",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-05",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-06",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-07",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-08",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-09",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-10",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-11",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-12",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-13",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-14",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-15",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-16",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-17",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-18",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-19",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-20",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-21",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-01",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-02",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-03",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-04",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-05",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-06",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-07",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-08",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-09",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-10",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-11",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-12",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-13",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-14",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-15",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-16",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-17",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-18",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-19",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-20",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-21",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-01",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-02",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-03",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-04",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-05",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-06",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-07",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-08",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-09",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-10",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-11",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-12",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-13",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-14",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-15",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-16",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-17",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-18",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-19",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-20",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-21",
+          "sha256": null
+        }
+      ],
+      "result_id": "156858800c9455d5a5d198e95c194753231cc780eb556fd6b757f32df34ccf26",
+      "scored_at": "2026-08-11T07:00:54Z",
+      "scoring_rule_commit": "c4d516b27d928fa864b6107a91410bba86cfe2a2",
+      "scoring_rule_full_sha256": "69b9829672461b281715e292fd4feb0901be569da6702a20d1ef064e111ef9d7",
+      "scoring_rule_inputs": [
+        "evals/flow-core/m0-eval/fixture.py",
+        "evals/flow-core/m0-eval/run_antigravity.py",
+        "evals/flow-core/m0-eval/run_claude.py",
+        "evals/flow-core/m0-eval/run_codex.py",
+        "evals/flow-core/m0-eval/score.py",
+        "plugins/bitz-flow/skills/flow-core/schemas/operations/git.diff-summary.schema.json",
+        "plugins/bitz-flow/skills/flow-core/schemas/operations/git.status.schema.json",
+        "plugins/bitz-flow/skills/flow-core/schemas/operations/repo.inspect.schema.json",
+        "plugins/bitz-flow/skills/flow-core/schemas/result-v1.schema.json"
+      ],
+      "scoring_rule_version": "69b982967246",
+      "status": "candidate",
+      "trial_set_sha256": "b87244497e42c3afd1daa371e7f1a70c9324b73da286f0f56e126567114743fa"
+    },
+    {
+      "derived_observation_sha256": "e4fc37d660a96ee14a45e637dc407d7c15b1c0894e30bea337382b2112780a13",
+      "findings": [
+        "codex-cli: v2 の trial が無い（未実測）",
+        "antigravity: v2 の trial が無い（未実測）",
+        "Cross-model Decision Parity: 未実測",
+        "Decision Parity: 実測 platform が 1 種のため未実測（cross-model の比較には 2 種以上が要る）",
+        "必須 field 保持が 100% でない: 0.9841269841269841",
+        "codex-cli/no-skill/repo-inspect: 0/10 trial（不足）",
+        "codex-cli/no-skill/dirty-status: 0/10 trial（不足）",
+        "codex-cli/no-skill/diff-summary: 0/10 trial（不足）",
+        "codex-cli/v1-skill/repo-inspect: 0/10 trial（不足）",
+        "codex-cli/v1-skill/dirty-status: 0/10 trial（不足）",
+        "codex-cli/v1-skill/diff-summary: 0/10 trial（不足）",
+        "codex-cli/v2-skill/repo-inspect: 0/21 trial（不足）",
+        "codex-cli/v2-skill/dirty-status: 0/21 trial（不足）",
+        "codex-cli/v2-skill/diff-summary: 0/21 trial（不足）",
+        "antigravity/no-skill/repo-inspect: 0/10 trial（不足）",
+        "antigravity/no-skill/dirty-status: 0/10 trial（不足）",
+        "antigravity/no-skill/diff-summary: 0/10 trial（不足）",
+        "antigravity/v1-skill/repo-inspect: 0/10 trial（不足）",
+        "antigravity/v1-skill/dirty-status: 0/10 trial（不足）",
+        "antigravity/v1-skill/diff-summary: 0/10 trial（不足）",
+        "antigravity/v2-skill/repo-inspect: 0/21 trial（不足）",
+        "antigravity/v2-skill/dirty-status: 0/21 trial（不足）",
+        "antigravity/v2-skill/diff-summary: 0/21 trial（不足）",
+        "claude-code/repo-inspect: 採点対象が非 OK result だった trial が 1 件（0 件であるべき）"
+      ],
+      "metrics": {
+        "coverage": {
+          "antigravity/no-skill/diff-summary": 0,
+          "antigravity/no-skill/dirty-status": 0,
+          "antigravity/no-skill/repo-inspect": 0,
+          "antigravity/v1-skill/diff-summary": 0,
+          "antigravity/v1-skill/dirty-status": 0,
+          "antigravity/v1-skill/repo-inspect": 0,
+          "antigravity/v2-skill/diff-summary": 0,
+          "antigravity/v2-skill/dirty-status": 0,
+          "antigravity/v2-skill/repo-inspect": 0,
+          "claude-code/no-skill/diff-summary": 10,
+          "claude-code/no-skill/dirty-status": 10,
+          "claude-code/no-skill/repo-inspect": 10,
+          "claude-code/v1-skill/diff-summary": 10,
+          "claude-code/v1-skill/dirty-status": 10,
+          "claude-code/v1-skill/repo-inspect": 10,
+          "claude-code/v2-skill/diff-summary": 21,
+          "claude-code/v2-skill/dirty-status": 21,
+          "claude-code/v2-skill/repo-inspect": 21,
+          "codex-cli/no-skill/diff-summary": 0,
+          "codex-cli/no-skill/dirty-status": 0,
+          "codex-cli/no-skill/repo-inspect": 0,
+          "codex-cli/v1-skill/diff-summary": 0,
+          "codex-cli/v1-skill/dirty-status": 0,
+          "codex-cli/v1-skill/repo-inspect": 0,
+          "codex-cli/v2-skill/diff-summary": 0,
+          "codex-cli/v2-skill/dirty-status": 0,
+          "codex-cli/v2-skill/repo-inspect": 0
+        },
+        "danger_counts": {
+          "raw_fallback": 0,
+          "secret_output": 0,
+          "silent_truncation": 0,
+          "state_change": 0
+        },
+        "danger_rate_upper_bound_threshold": 0.05,
+        "danger_required_trials": 59,
+        "decision_parity": null,
+        "decision_parity_notes": [
+          "実測 platform が 1 種のため未実測（cross-model の比較には 2 種以上が要る）"
+        ],
+        "golden_schema_match": 1.0,
+        "non_invoking_v2_trials": 0,
+        "platforms": {
+          "antigravity": {
+            "baseline_invocation_rate": null,
+            "danger_counts": {
+              "raw_fallback": 0,
+              "secret_output": 0,
+              "silent_truncation": 0,
+              "state_change": 0
+            },
+            "danger_rate_upper_bound": null,
+            "danger_trials": 0,
+            "improvement_pp": null,
+            "invocation_rate": null,
+            "sfcr": null,
+            "trials_v2": 0,
+            "unmeasurable_v2": 0
+          },
+          "claude-code": {
+            "baseline_invocation_rate": 0.0,
+            "danger_counts": {
+              "raw_fallback": 0,
+              "secret_output": 0,
+              "silent_truncation": 0,
+              "state_change": 0
+            },
+            "danger_rate_upper_bound": 0.046438451483938215,
+            "danger_trials": 63,
+            "improvement_pp": 100.0,
+            "invocation_rate": 1.0,
+            "sfcr": 0.9841269841269841,
+            "trials_v2": 63,
+            "unmeasurable_v2": 0
+          },
+          "codex-cli": {
+            "baseline_invocation_rate": null,
+            "danger_counts": {
+              "raw_fallback": 0,
+              "secret_output": 0,
+              "silent_truncation": 0,
+              "state_change": 0
+            },
+            "danger_rate_upper_bound": null,
+            "danger_trials": 0,
+            "improvement_pp": null,
+            "invocation_rate": null,
+            "sfcr": null,
+            "trials_v2": 0,
+            "unmeasurable_v2": 0
+          }
+        },
+        "required_field_population": 63,
+        "required_field_preservation": 0.9841269841269841,
+        "self_diagnosis": {
+          "claude-code": {
+            "excluded": {
+              "agent_unavailable": 0,
+              "help_invocations": 0,
+              "tool_path_unknown": 0,
+              "unmeasurable": 0
+            },
+            "tasks": {
+              "diff-summary": {
+                "scored_non_ok": 0,
+                "scoring_candidate_rate": 0.19047619047619047,
+                "trials": 21
+              },
+              "dirty-status": {
+                "scored_non_ok": 0,
+                "scoring_candidate_rate": 0.3333333333333333,
+                "trials": 21
+              },
+              "repo-inspect": {
+                "scored_non_ok": 1,
+                "scoring_candidate_rate": 0.0,
+                "trials": 21
+              }
+            }
+          }
+        },
+        "tasks": {
+          "diff-summary": {
+            "baseline_bytes": {
+              "large": 27940,
+              "medium": 7160,
+              "small": 1204
+            },
+            "baseline_command": "git diff HEAD（生 unified diff）",
+            "median_byte_reduction": 0.8899441340782123,
+            "notes": [],
+            "threshold": 0.8
+          },
+          "dirty-status": {
+            "baseline_bytes": {
+              "large": 3690,
+              "medium": 1240,
+              "small": 544
+            },
+            "baseline_command": "git status（引数なしの長形式）",
+            "median_byte_reduction": 0.4798387096774194,
+            "notes": [],
+            "threshold": 0.4
+          }
+        }
+      },
+      "passed": false,
+      "raw_log_digests": [
+        {
+          "path": "claude-code-no-skill-diff-summary-01",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-diff-summary-02",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-diff-summary-03",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-diff-summary-04",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-diff-summary-05",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-diff-summary-06",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-diff-summary-07",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-diff-summary-08",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-diff-summary-09",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-diff-summary-10",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-01",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-02",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-03",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-04",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-05",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-06",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-07",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-08",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-09",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-dirty-status-10",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-01",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-02",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-03",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-04",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-05",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-06",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-07",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-08",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-09",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-no-skill-repo-inspect-10",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-01",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-02",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-03",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-04",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-05",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-06",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-07",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-08",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-09",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-diff-summary-10",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-01",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-02",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-03",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-04",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-05",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-06",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-07",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-08",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-09",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-dirty-status-10",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-01",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-02",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-03",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-04",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-05",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-06",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-07",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-08",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-09",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v1-skill-repo-inspect-10",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-01",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-02",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-03",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-04",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-05",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-06",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-07",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-08",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-09",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-10",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-11",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-12",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-13",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-14",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-15",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-16",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-17",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-18",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-19",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-20",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-diff-summary-21",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-01",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-02",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-03",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-04",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-05",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-06",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-07",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-08",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-09",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-10",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-11",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-12",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-13",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-14",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-15",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-16",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-17",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-18",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-19",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-20",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-dirty-status-21",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-01",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-02",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-03",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-04",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-05",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-06",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-07",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-08",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-09",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-10",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-11",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-12",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-13",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-14",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-15",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-16",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-17",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-18",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-19",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-20",
+          "sha256": null
+        },
+        {
+          "path": "claude-code-v2-skill-repo-inspect-21",
+          "sha256": null
+        }
+      ],
+      "result_id": "07a6834383048ee18a8e391e20e679fb9229a42fd6118aba4586ff2a23ee0509",
+      "scored_at": "2026-08-11T07:02:21Z",
+      "scoring_rule_commit": "c4d516b27d928fa864b6107a91410bba86cfe2a2",
+      "scoring_rule_full_sha256": "ee3b9a5dcad0179d19bbae770965d49f0fced9599ff68ebd1fd8182544441d63",
+      "scoring_rule_inputs": [
+        "evals/flow-core/m0-eval/fixture.py",
+        "evals/flow-core/m0-eval/run_antigravity.py",
+        "evals/flow-core/m0-eval/run_claude.py",
+        "evals/flow-core/m0-eval/run_codex.py",
+        "evals/flow-core/m0-eval/score.py",
+        "plugins/bitz-flow/skills/flow-core/schemas/operations/git.diff-summary.schema.json",
+        "plugins/bitz-flow/skills/flow-core/schemas/operations/git.status.schema.json",
+        "plugins/bitz-flow/skills/flow-core/schemas/operations/repo.inspect.schema.json",
+        "plugins/bitz-flow/skills/flow-core/schemas/result-v1.schema.json"
+      ],
+      "scoring_rule_version": "ee3b9a5dcad0",
+      "status": "unknown",
+      "trial_set_sha256": "b87244497e42c3afd1daa371e7f1a70c9324b73da286f0f56e126567114743fa",
+      "unknown_reason": "123 raw log reference(s) are missing; observations cannot be deterministically re-derived"
     }
   ],
   "status": "partially-measured",

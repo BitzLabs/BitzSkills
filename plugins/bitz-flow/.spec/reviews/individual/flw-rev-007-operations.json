@@ -1,0 +1,11 @@
+{
+  "perspective": "operations",
+  "dimensions": [
+    {"name": "監視・可観測性", "weight": 0.30, "score": 5, "findings": []},
+    {"name": "災害復旧", "weight": 0.30, "score": 5, "findings": []},
+    {"name": "セキュリティ態勢", "weight": 0.20, "score": 4, "findings": []},
+    {"name": "デプロイ安全性", "weight": 0.20, "score": 5, "findings": []}
+  ],
+  "weighted_score": 4.8,
+  "summary": "全採点依存のversion化、旧規則再現、新旧並行比較、原子的manifest更新、状態遷移、復旧責任が定義され、今回範囲にDesign Gateを阻害するfindingはない。"
+}

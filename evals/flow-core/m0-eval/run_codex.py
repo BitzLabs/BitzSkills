@@ -45,6 +45,7 @@ FLOW_OPERATION = {
     "dirty-status": "git.status",
     "diff-summary": "git.diff-summary",
 }
+SCORING_PROXY_IDS = frozenset(f"PXY-{number:03d}" for number in range(1, 15))
 TASK_FLOW_PATTERN = {
     "repo-inspect": re.compile(r"\bflow\.py\b.*\brepo\s+inspect\b", re.DOTALL),
     "dirty-status": re.compile(r"\bflow\.py\b.*\bgit\s+status\b", re.DOTALL),
@@ -351,6 +352,98 @@ def _result_code_vocabulary(source_root: Path) -> frozenset[str]:
     return codes
 
 
+def envelope_observation(
+    output: str, source_root: Path, expected_operation: str | None = None
+) -> dict:
+    """captured outputから一意なresult envelopeをfail-closedで抽出する。
+
+    JSONは出力全体が単一objectのときだけ、compactは行頭のpublished codeとM0 operationが
+    一致する行だけを候補にする。1 command内に候補が複数あれば選ばない。
+    """
+    empty = {
+        "code": None,
+        "operation": None,
+        "format": None,
+        "envelope_line": None,
+        "preamble_lines": 0,
+        "candidate_count": 0,
+        "truncated": False,
+        "shown": None,
+        "total": None,
+        "extraction_reason": "candidate-not-found",
+        "head": "",
+        "block_lines": [],
+    }
+    text = output.strip()
+    if not text:
+        return empty
+    codes = _result_code_vocabulary(source_root)
+    operations = frozenset(FLOW_OPERATION.values())
+    if text.startswith("{"):
+        try:
+            parsed = json.loads(text)
+        except json.JSONDecodeError:
+            return empty | {"format": "json", "extraction_reason": "invalid-json"}
+        if not isinstance(parsed, dict):
+            return empty | {"format": "json", "extraction_reason": "invalid-json-envelope"}
+        code, operation = parsed.get("code"), parsed.get("operation")
+        candidate = code in codes and operation in operations
+        if not candidate:
+            return empty | {"format": "json", "extraction_reason": "candidate-not-found"}
+        if expected_operation is not None and operation != expected_operation:
+            return empty | {
+                "format": "json",
+                "candidate_count": 1,
+                "extraction_reason": "operation-mismatch",
+            }
+        page = (parsed.get("data") or {}).get("page") or {}
+        return empty | {
+            "code": code,
+            "operation": operation,
+            "format": "json",
+            "candidate_count": 1,
+            "truncated": bool(parsed.get("truncated", False)),
+            "shown": page.get("shown"),
+            "total": page.get("total"),
+            "extraction_reason": "selected",
+        }
+
+    lines = text.splitlines()
+    candidates: list[tuple[int, str, str]] = []
+    for index, line in enumerate(lines):
+        tokens = line.split(maxsplit=2)
+        if len(tokens) >= 2 and tokens[0] in codes and tokens[1] in operations:
+            candidates.append((index, tokens[0], tokens[1]))
+    if len(candidates) != 1:
+        reason = "candidate-not-found" if not candidates else "ambiguous-candidates"
+        return empty | {"format": "compact", "candidate_count": len(candidates), "extraction_reason": reason}
+    index, code, operation = candidates[0]
+    if expected_operation is not None and operation != expected_operation:
+        return empty | {
+            "format": "compact",
+            "candidate_count": 1,
+            "preamble_lines": index,
+            "extraction_reason": "operation-mismatch",
+        }
+    block = lines[index + 1 :]
+    markers = [(offset, match) for offset, line in enumerate(block) if (match := TRUNCATED_TOTAL_PATTERN.fullmatch(line))]
+    marker = markers[0][1] if len(markers) == 1 else None
+    return empty | {
+        "code": code,
+        "operation": operation,
+        "format": "compact",
+        "envelope_line": index + 1,
+        "preamble_lines": index,
+        "candidate_count": 1,
+        "truncated": marker is not None,
+        "shown": int(marker.group(1)) if marker else None,
+        "total": int(marker.group(2)) if marker else None,
+        "extraction_reason": "selected" if len(markers) <= 1 else "ambiguous-truncation-marker",
+        "head": lines[index],
+        "block_lines": block,
+    }
+
+
 def result_code(output: str, source_root: Path) -> str | None:
     """flow.py の出力から result code を読む。result envelope でなければ None。
 
@@ -359,23 +452,13 @@ def result_code(output: str, source_root: Path) -> str | None:
     runner ごとに実体の違う `exit_code` の代わりにこれで成否を判定する（`SI-FLW-020`）。
     `--help` の usage テキストなど result envelope でない出力は None を返す。
     """
-    text = output.strip()
-    if not text:
-        return None
-    codes = _result_code_vocabulary(source_root)
-    if text.startswith("{"):
-        try:
-            parsed = json.loads(text)
-        except json.JSONDecodeError:
-            return None
-        code = parsed.get("code") if isinstance(parsed, dict) else None
-        return code if code in codes else None
-    token = text.splitlines()[0].split(maxsplit=1)[0] if text.splitlines() else ""
-    return token if token in codes else None
+    observed = envelope_observation(output, source_root)
+    return observed["code"] if observed["extraction_reason"] == "selected" else None
 
 
-def _succeeded(item: dict, source_root: Path) -> bool:
-    return result_code(item["output"], source_root) in SUCCESS_CODES
+def _succeeded(item: dict, source_root: Path, expected_operation: str | None = None) -> bool:
+    observed = envelope_observation(item["output"], source_root, expected_operation)
+    return observed["extraction_reason"] == "selected" and observed["code"] in SUCCESS_CODES
 
 
 def self_retried(relevant: list[dict], source_root: Path) -> bool:
@@ -411,9 +494,10 @@ def _task_output(
             return "", False
         complete = [item for item in matches if "TRUNCATED " not in item["output"]]
         pool = complete or matches
-        succeeded = [item for item in pool if _succeeded(item, source_root)]
+        operation = FLOW_OPERATION[task]
+        succeeded = [item for item in pool if _succeeded(item, source_root, operation)]
         selected = (succeeded or pool)[-1]
-        return selected["output"], _succeeded(selected, source_root)
+        return selected["output"], _succeeded(selected, source_root, operation)
 
     # skill なし / v1 baseline は生 git であり result envelope を返さない。ここだけは
     # `exit_code` を使うが、`None`（runner が公開しない）は失敗と見なさない。
@@ -475,7 +559,10 @@ def _required_fields(output: str, result: dict, task: str, source_root: Path) ->
             and _schema_match(source_root, observed, task)
             and _decision(observed, task) == _decision(result, task)
         )
-    first = output.splitlines()[0] if output.splitlines() else ""
+    envelope = envelope_observation(output, source_root, FLOW_OPERATION[task])
+    if envelope["extraction_reason"] != "selected" or envelope["code"] != "OK":
+        return False
+    first = envelope["head"]
     if task == "repo-inspect":
         repo = result["data"]["repository"]
         required = (
@@ -498,7 +585,14 @@ def _required_fields(output: str, result: dict, task: str, source_root: Path) ->
             )
         ):
             return False
-        return all(item["path"] in output and item["xy"] in output for item in data["items"])
+        expected = [
+            _escape_compact_line(
+                f"{item['xy']} {item['path']}"
+                + (f" <- {item['orig_path']}" if item["orig_path"] else "")
+            )
+            for item in data["items"]
+        ]
+        return _compact_items_match(envelope, expected)
 
     data = result["data"]
     totals = data["totals"]
@@ -513,10 +607,46 @@ def _required_fields(output: str, result: dict, task: str, source_root: Path) ->
         )
     ):
         return False
-    return all(
-        item["path"] in output and (item["orig_path"] is None or item["orig_path"] in output)
-        for item in data["items"]
-    )
+    expected = []
+    for item in data["items"]:
+        counts = "binary" if item["binary"] else f"+{item['added']} -{item['deleted']}"
+        rename = f" <- {item['orig_path']}" if item["orig_path"] else ""
+        expected.append(_escape_compact_line(f"{item['kind'][:1].upper()} {item['path']} {counts}{rename}"))
+    return _compact_items_match(envelope, expected)
+
+
+def _escape_compact_line(text: str) -> str:
+    escapes = {"\n": "\\n", "\r": "\\r", "\t": "\\t", "\v": "\\v", "\f": "\\f", "\0": "\\0"}
+    for raw, escaped in escapes.items():
+        text = text.replace(raw, escaped)
+    return "".join(char if char.isprintable() or char == " " else repr(char)[1:-1] for char in text)
+
+
+def _compact_items_match(envelope: dict, expected: list[str]) -> bool:
+    block = envelope["block_lines"]
+    markers = [index for index, line in enumerate(block) if TRUNCATED_TOTAL_PATTERN.fullmatch(line)]
+    if len(markers) > 1:
+        return False
+    marker_index = markers[0] if markers else None
+    item_lines = [
+        line
+        for index, line in enumerate(block)
+        if not line.startswith(("NEXT ", "WARN ", "TRUNCATED "))
+        and (marker_index is None or index < marker_index)
+    ]
+    if marker_index is not None:
+        if any(
+            line and not line.startswith(("NEXT ", "WARN "))
+            for line in block[marker_index + 1 :]
+        ):
+            return False
+        return (
+            envelope["shown"] == len(item_lines)
+            and envelope["total"] == len(expected)
+            and 0 <= envelope["shown"] <= envelope["total"]
+            and item_lines == expected[: envelope["shown"]]
+        )
+    return item_lines == expected
 
 
 def _decision(result: dict, task: str) -> dict:
@@ -722,9 +852,12 @@ REQUIRED_OBSERVATION_KEYS = frozenset(
         "command_events",
         "command_kinds",
         "command_result_codes",
+        "command_envelopes",
         "task_flow_matches",
         "task_flow_exit_codes",
         "task_flow_result_codes",
+        "task_flow_envelopes",
+        "selected_envelope",
         "task_flow_output_bytes",
         "empty_output_positions",
         "help_invocations",
@@ -744,6 +877,7 @@ def build_observation(
     relevant: list[dict],
     output: str,
     condition: str,
+    task: str,
     source_root: Path,
     exit_code_source: str,
     runner_exit_code: int | None,
@@ -759,6 +893,20 @@ def build_observation(
 
     `harness_attempts` は `run_trial` が再試行回数を確定した時点で上書きする。
     """
+    expected_operation = FLOW_OPERATION[task]
+    command_envelopes = [
+        _public_envelope_observation(envelope_observation(item["output"], source_root))
+        for item in commands
+    ]
+    task_envelopes = [
+        _public_envelope_observation(
+            envelope_observation(item["output"], source_root, expected_operation)
+        )
+        for item in relevant
+    ]
+    selected_envelope = _public_envelope_observation(
+        envelope_observation(output, source_root, expected_operation)
+    )
     observation = {
         # runner process の exit code。実体は runner ごとに違うため由来を必ず添える
         # （`exit_code_source`。SI-FLW-020）。採点には使わない。
@@ -780,9 +928,12 @@ def build_observation(
         # 一次証拠である（`FLW-REV-006` GP-005）。byte 長による近似では
         # `repo-inspect`（OK 99B / INVALID_INPUT 61B）を分離できなかった。
         "command_result_codes": [result_code(item["output"], source_root) for item in commands],
+        "command_envelopes": command_envelopes,
         "task_flow_matches": len(relevant),
         "task_flow_exit_codes": [item["exit_code"] for item in relevant],
         "task_flow_result_codes": [result_code(item["output"], source_root) for item in relevant],
+        "task_flow_envelopes": task_envelopes,
+        "selected_envelope": selected_envelope,
         "task_flow_output_bytes": [len(item["output"].encode("utf-8")) for item in relevant],
         # 正常な空結果と測定不能を区別するために位置を残す（SI-FLW-012）。
         "empty_output_positions": _empty_output_positions(commands),
@@ -806,6 +957,11 @@ def build_observation(
     return observation
 
 
+def _public_envelope_observation(observed: dict) -> dict:
+    """raw item行をtrialへ複製せず、抽出根拠だけを永続化する。"""
+    return {key: value for key, value in observed.items() if key not in {"head", "block_lines"}}
+
+
 def failed_observation(exit_code_source: str, error: Exception) -> dict:
     """runner が例外で終わったときの observation。共通部の key は必ず埋める。
 
@@ -822,9 +978,25 @@ def failed_observation(exit_code_source: str, error: Exception) -> dict:
         "command_events": 0,
         "command_kinds": [],
         "command_result_codes": [],
+        "command_envelopes": [],
         "task_flow_matches": 0,
         "task_flow_exit_codes": [],
         "task_flow_result_codes": [],
+        "task_flow_envelopes": [],
+        "selected_envelope": _public_envelope_observation(
+            {
+                "code": None,
+                "operation": None,
+                "format": None,
+                "envelope_line": None,
+                "preamble_lines": 0,
+                "candidate_count": 0,
+                "truncated": False,
+                "shown": None,
+                "total": None,
+                "extraction_reason": "runner-error",
+            }
+        ),
         "task_flow_output_bytes": [],
         "empty_output_positions": [],
         "help_invocations": [],
@@ -1003,6 +1175,7 @@ def _one_attempt(job: dict) -> dict:
             relevant=relevant,
             output=output,
             condition=job["condition"],
+            task=job["task"],
             source_root=job["source_root"],
             exit_code_source=EXIT_CODE_SOURCE,
             runner_exit_code=proc.returncode,

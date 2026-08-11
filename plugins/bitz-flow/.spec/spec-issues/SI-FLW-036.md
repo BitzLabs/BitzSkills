@@ -3,7 +3,8 @@ id: SI-FLW-036
 raised_by: 第13ラウンド claude-code 再実測（2026-08-11）
 target: evals/flow-core/m0-eval/run_codex.py の _required_fields / result_code（採点対象の所在と truncation の扱い）
 proposed_change_type: modify
-status: open
+status: accepted
+github_issue: https://github.com/BitzLabs/BitzSkills/issues/187
 ---
 - **目的**: 第13ラウンド（claude-code 再実測後）の残る未達2点は、いずれも
   **`_required_fields` / `result_code` の proxy が measurand から乖離**して生じている。

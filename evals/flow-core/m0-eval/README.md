@@ -140,10 +140,12 @@ SFCR は `discovery/metrics.md` の North Star Metric の定義に従い、
 
 ### どのラウンドをどの規則で採点したか
 
-判定結果は**どの規則で出たかを自分で持つ**。`score.py` は判定へ `scoring_rule_version`
-（`score.py` の内容ハッシュ先頭12桁）を付け、`--manifest` は判定を `results` 配列へ
-**履歴として積む**（`result` は最新判定への後方互換の別名）。規則を変えれば必ず版が変わり、
-同じ版で採点し直したときは履歴を増やさず置き換える。
+判定結果は**どの規則で出たかを自分で持つ**。`score.py` は採点・観測・oracle・baseline・schema
+の全入力を length-prefix 付きで複合 hash 化し、完全 SHA-256 と先頭12桁の
+`scoring_rule_version` を判定へ付ける。`--manifest` は規則・trial集合・再導出observation集合の
+完全digestから `result_id` を作り、判定を `results` 配列へ履歴として積む（`result` は最新判定への
+後方互換の別名）。新しい判定は自動的に Gate へ採用せず、`candidate` として保存する。raw logが
+参照切れなら `unknown` とし、`active_result_id` は設定せず `gate_status: blocked` を保つ。
 
 これが無いと、ラウンド間の数値比較（第8R 100% ↔ 第10R 93.3%）の**前提が保存されない**
 （`FLW-REV-006` GP-004）。採点規則は `SI-FLW-009` / `012` / `014` / `020` / `021` / `026` /
@@ -154,6 +156,7 @@ SFCR は `discovery/metrics.md` の North Star Metric の定義に従い、
 | 第1〜10R | `exit_code` ベースの旧規則。agy では失敗が構造的に不可視。Parity は task 単位（corpus をまたぐ比較のため**達成不能**）。危険事象は母数を書かない「各0件」 |
 | 第11R・第12R | result code ベース、Parity は task × corpus、危険事象は 95% 上側信頼限界つき |
 | 第13R 以降 | 上記に加え、危険事象 proxy の乖離是正（`031` / `032`）、測定不能の3軸分解（`030` / `033`）、**harness 自己診断**（`019` 案3）、platform metadata の実測取得（`034`） |
+| 第13R 保存記録の FLW-NFR-009 再採点 | `ee3b9a5dcad0`。3 platform・369 trial はraw log参照切れのため全件 `unknown`。説明済み2差分も確定できず、既定切替は `blocked`（`rescoring-2026-08-11-flw-nfr-009.json`） |
 
 過去ラウンドの記録を本規則で**再採点すると数値が変わる**。Parity は `score.py` だけで
 再採点でき、r7 / r8 / r10 はいずれも 33% → **100%** になる
