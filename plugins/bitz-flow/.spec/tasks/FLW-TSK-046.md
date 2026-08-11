@@ -2,7 +2,7 @@
 implements: FLW-FR-004, FLW-FR-005, FLW-FR-011, FLW-NFR-003
 depends_on: [FLW-TSK-042, FLW-TSK-043, FLW-TSK-044, FLW-TSK-045]
 boundary: tests/test_flow_m1_contract_rows.py
-status: pending
+status: done
 ---
 
 ### M1 operation contract全行の検証
