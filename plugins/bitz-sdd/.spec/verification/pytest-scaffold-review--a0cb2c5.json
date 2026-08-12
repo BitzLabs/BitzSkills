@@ -1,0 +1,30 @@
+{
+  "command": [
+    ".venv/bin/pytest",
+    "tests/test_spec_scaffold_review.py",
+    "-q"
+  ],
+  "command_id": "pytest-scaffold-review",
+  "commit": "a0cb2c5a918a91833aa0cf2dd5953978b76170d6",
+  "counts": {
+    "errors": 0,
+    "failed": 0,
+    "passed": 16,
+    "skipped": 0
+  },
+  "cwd": ".",
+  "dirty": false,
+  "exit_code": 0,
+  "observed": {
+    "duration_seconds": 1.4
+  },
+  "recorded_at": "2026-08-12T01:22:19Z",
+  "requirements": [
+    "SDD-FR-167"
+  ],
+  "schema": "bitzsdd/verification-evidence@1",
+  "tool": {
+    "name": "pytest",
+    "version": "9.1.1"
+  }
+}

@@ -1,6 +1,6 @@
 # inspection-report.md (2026-08-12)
 
-成果物数: 103 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0 / 検証証跡: 5
+成果物数: 103 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0 / 検証証跡: 6
 
 ## 問題一覧
 - なし ✅
@@ -75,6 +75,7 @@
 - .spec/verification/pytest--5526358.json — commit 5526358 / exit_code 0 / 対象 SDD-FR-162
 - .spec/verification/pytest--d5a446c.json — commit d5a446c / exit_code 0 / 対象 SDD-FR-151, SDD-FR-152, SDD-FR-153, SDD-FR-154
 - .spec/verification/pytest--f0aed06.json — commit f0aed06 / exit_code 0 / 対象 SDD-FR-164
+- .spec/verification/pytest-scaffold-review--a0cb2c5.json — commit a0cb2c5 / exit_code 0 / 対象 SDD-FR-167
 
 ## 検証証跡の WARN（古い commit・証跡なしの verified 要件 — FAIL にしない）
 - [verify] .spec/verification/pytest--0ee41c9.json: 記録時の commit(0ee41c9) 以降にソースが変更されています（再記録が必要な可能性）
@@ -224,7 +225,7 @@
 | SDD-FR-164 | 検証済み（verified） | sync | unit-test | 1 | 2 |
 | SDD-FR-165 | 検証済み（verified） | workflow | manual-check | 1 | 1 |
 | SDD-FR-166 | 検証済み（verified） | workflow | unit-test | 1 | 2 |
-| SDD-FR-167 | 実装中（implementing） | workflow | unit-test | 1 | 2 |
+| SDD-FR-167 | 検証済み（verified） | workflow | unit-test | 1 | 2 |
 | SDD-REV-002 | active |  |  | 0 | 1 |
 | SDD-REV-003 | active |  |  | 0 | 0 |
 | SDD-REV-004 | active |  |  | 0 | 0 |
