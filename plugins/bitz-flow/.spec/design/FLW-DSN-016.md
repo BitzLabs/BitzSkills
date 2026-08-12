@@ -2,7 +2,7 @@
 id: FLW-DSN-016
 title: "M2 worktree safety詳細設計"
 status: draft
-version: 1.2
+version: 1.3
 updated: 2026-08-12
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-006, FLW-NFR-007, FLW-NFR-011, FLW-NFR-012, FLW-CON-005, FLW-CON-006
@@ -47,9 +47,9 @@ catalog 外は `UNSUPPORTED` である。`FLW-REV-011:SYN-006`（finish / resume
 | `worktree.audit` | read | なし | retry-read | M2-3 |
 | `worktree.create` | local-write | `worktree-dir` ＋ `worktree-registry` ＋ `local-ref` ＋ **`index`** | REC-WT-CREATE | M2-3 |
 | `worktree.resume` | local-write | 同上 | REC-WT-RESUME | M2-3 |
-| `worktree.finish` | local-write | 同上 | REC-WT-FINISH | M2-4 |
-| `worktree.discard` | local-write | 同上 | REC-WT-DISCARD | M2-4 |
-| `git.delete-remote-branch` | remote-write | `remote-ref` | REC-RM-DELETE | M2-5 |
+| `worktree.finish` | local-write | 同上 | REC-WT-FINISH | M2-5 |
+| `worktree.discard` | local-write | 同上 | REC-WT-DISCARD | M2-5 |
+| `git.delete-remote-branch` | remote-write | `remote-ref` | REC-RM-DELETE | M2-6 |
 
 `index` が入るのは §3 の包含規約による。`create` と `resume` は
 **公開 operation 名を分ける**（`FLW-REV-011` の P2 で未確定だった点をここで確定する）。
@@ -536,27 +536,30 @@ registry を先に消せば、残った実体は「registry 外の孤立ディ�
 | `M2-FLT-021` | branch-only / remote-only の legacy target | `branch_audit_state` を返す（決定表どおり） | M2-3 |
 | `M2-FLT-022` | audit 証跡が競合し一意化不能 | `result_code: INDETERMINATE`、分類の推測 0 | M2-3 |
 | `M2-FLT-023` | 未知の enum 値を schema へ投入 | 三者照合テストで FAIL、暗黙 default 0 | M2-3 |
-| `M2-FLT-024` | finish 各 step 境界で crash（8点） | `PARTIAL` の completed / remaining が一意に確定 | M2-4 |
-| `M2-FLT-025` | finish 結果 NEXT へ `git.delete-remote-branch` apply を混入 | NEXT グラフ検査 FAIL | M2-4 |
-| `M2-FLT-026` | squash 相当で到達性証跡が不足 | `BLOCKED`、差分の見かけによる削除 0 | M2-4 |
-| `M2-FLT-027` | **discard 承認待ち中に同じ work-id で worktree を再作成**（SYN-004） | create 時 nonce 不一致で `STALE`。新 instance を削除しない | M2-4 |
-| `M2-FLT-028` | plan 後 apply 前に manifest 内容が変化 | manifest digest 不一致で `STALE` | M2-4 |
-| `M2-FLT-029` | discard manifest へ root 外 path・root 外 symlink を混入 | apply せず `BLOCKED` | M2-4 |
-| `M2-FLT-030` | discard を部分完了で中断 | `PARTIAL`、残 target の自動削除 0、再実行での自動前進 0 | M2-4 |
-| `M2-FLT-031` | **dirty worktree の discard**（SYN-019） | 退避要求を提示し、退避なしの apply を `BLOCKED` | M2-4 |
-| `M2-FLT-032` | discard 対象に submodule / ignored file / symlink | manifest へ計上、列挙 target 外の変更 0 | M2-4 |
-| `M2-FLT-033` | stable file identity / dirfd 相対削除が取得不能 | `worktree.discard` を `UNSUPPORTED` | M2-4 |
-| `M2-FLT-034` | worktree guard を quarantine へ落とす | §6 の3区分へ一意に確定。正規の解除経路が存在する | M2-4 |
-| `M2-FLT-035` | lease 満了だけで guard 再発行を要求 | owner / 子 process / OS lock 停止証明までは再発行拒否 | M2-4 |
-| `M2-FLT-036` | 未登録 recovery tuple（未知 cause / code 矛盾） | 空 NEXT ＋ `human-stop` | M2-4 |
-| `M2-FLT-037` | plan 後 apply 前に remote ref が別 SHA へ進行 | CAS 不成立で削除 0 | M2-5 |
-| `M2-FLT-038` | force push で同一 SHA へ復帰（ABA） | capability ありで停止、なしで承認要求。evidence へ capability 有無を記録 | M2-5 |
-| `M2-FLT-039` | 条件なし削除の要求 / CAS 非検証 protocol | 前者を拒否、後者を `UNSUPPORTED` | M2-5 |
-| `M2-FLT-040` | `REMOTE_ADVANCED` の target へ delete plan 要求 | plan 生成自体を `BLOCKED` | M2-5 |
-| `M2-FLT-041` | default branch から到達不能な ref の削除 | `BLOCKED` | M2-5 |
-| `M2-FLT-042` | M1 active manifest を M2 Gate 根拠として提示 | compatibility key 不一致または TTL 失効で `blocked` | M2-5 |
-| `M2-FLT-043` | qualification 未 PASS で confirmation 母数を開始 | confirmation 未起動 | M2-5 |
-| `M2-FLT-044` | remote-write operation の confirmation を M2 で要求 | `UNSUPPORTED`（M3 へ送った残債であることを提示） | M2-5 |
+| `M2-FLT-024` | finish 各 step 境界で crash（8点） | `PARTIAL` の completed / remaining が一意に確定 | M2-5 |
+| `M2-FLT-025` | finish 結果 NEXT へ `git.delete-remote-branch` apply を混入 | NEXT グラフ検査 FAIL | M2-5 |
+| `M2-FLT-026` | squash 相当で到達性証跡が不足 | `BLOCKED`、差分の見かけによる削除 0 | M2-5 |
+| `M2-FLT-027` | **discard 承認待ち中に同じ work-id で worktree を再作成**（SYN-004） | create 時 nonce 不一致で `STALE`。新 instance を削除しない | M2-5 |
+| `M2-FLT-028` | plan 後 apply 前に manifest 内容が変化 | manifest digest 不一致で `STALE` | M2-5 |
+| `M2-FLT-029` | discard manifest へ root 外 path・root 外 symlink を混入 | apply せず `BLOCKED` | M2-5 |
+| `M2-FLT-030` | discard を部分完了で中断 | `PARTIAL`、残 target の自動削除 0、再実行での自動前進 0 | M2-5 |
+| `M2-FLT-031` | **dirty worktree の discard**（SYN-019） | 退避要求を提示し、退避なしの apply を `BLOCKED` | M2-5 |
+| `M2-FLT-032` | discard 対象に submodule / ignored file / symlink | manifest へ計上、列挙 target 外の変更 0 | M2-5 |
+| `M2-FLT-033` | stable file identity / dirfd 相対削除が取得不能 | `worktree.discard` を `UNSUPPORTED` | M2-5 |
+| `M2-FLT-034` | worktree guard を quarantine へ落とす | §6 の3区分へ一意に確定。正規の解除経路が存在する | M2-5 |
+| `M2-FLT-035` | lease 満了だけで guard 再発行を要求 | owner / 子 process / OS lock 停止証明までは再発行拒否 | M2-5 |
+| `M2-FLT-036` | 未登録 recovery tuple（未知 cause / code 矛盾） | 空 NEXT ＋ `human-stop` | M2-5 |
+| `M2-FLT-037` | plan 後 apply 前に remote ref が別 SHA へ進行 | CAS 不成立で削除 0 | M2-6 |
+| `M2-FLT-038` | force push で同一 SHA へ復帰（ABA） | capability ありで停止、なしで承認要求。evidence へ capability 有無を記録 | M2-6 |
+| `M2-FLT-039` | 条件なし削除の要求 / CAS 非検証 protocol | 前者を拒否、後者を `UNSUPPORTED` | M2-6 |
+| `M2-FLT-040` | `REMOTE_ADVANCED` の target へ delete plan 要求 | plan 生成自体を `BLOCKED` | M2-6 |
+| `M2-FLT-041` | default branch から到達不能な ref の削除 | `BLOCKED` | M2-6 |
+| `M2-FLT-042` | M1 active manifest を M2 Gate 根拠として提示 | compatibility key 不一致または TTL 失効で `blocked` | M2-6 |
+| `M2-FLT-043` | qualification 未 PASS で confirmation 母数を開始 | confirmation 未起動 | M2-6 |
+| `M2-FLT-044` | remote-write operation の confirmation を M2 で要求 | `UNSUPPORTED`（M3 へ送った残債であることを提示） | M2-6 |
+| `M2-FLT-045` | worktree 未展開・未 push・PR 不在の local branch が存在 | in-flight 列挙に現れる（**事故で見落とした条件そのもの**） | M2-4 |
+| `M2-FLT-046` | これから触る path と重なる in-flight branch が存在 | 重なり付きで返る。branch 名・work ID が異なっても検出する | M2-4 |
+| `M2-FLT-047` | reconnaissance を省いて書込み WorkUnit を開始 | entry protocol で停止。着手させない | M2-4 |
 
 ## §10 P2 の処理
 
@@ -573,18 +576,34 @@ registry を先に消せば、残った実体は「registry 外の孤立ディ�
 | M2-1 | guard core（閉集合拡張・binding・包含規約・canonical 化・case 感度） | 4 | `M2-FLT-001`〜`009` PASS。worktree operation 実装へ進まない |
 | M2-2 | 承認 capability ＋ 機械強制層 ＋ M2 qualification | 3 | `M2-FLT-010`〜`015` PASS、qualification PASS（**blocking**）。未達時は M2-3 以降を停止 |
 | M2-3 | create / resume / audit ＋ enum 三者照合 | 3 | `M2-FLT-016`〜`023` PASS |
-| M2-4 | finish / discard ＋ quarantine 解除 | 4 | `M2-FLT-024`〜`036` PASS |
-| M2-5 | delete-remote-branch ＋ confirmation | 3 | `M2-FLT-037`〜`044` PASS、M2 出口 |
+| M2-4 | 着手前 reconnaissance ＋ entry protocol | 3 | `M2-FLT-045`〜`047` PASS（`SI-FLW-046`） |
+| M2-5 | finish / discard ＋ quarantine 解除 | 4 | `M2-FLT-024`〜`036` PASS |
+| M2-6 | delete-remote-branch ＋ confirmation | 3 | `M2-FLT-037`〜`044` PASS、M2 出口 |
 
-- 依存は `M2-1 → M2-2 → M2-3 → M2-4 → M2-5` の直列。各区分は直前を main へ land してから分岐する。
+- 依存は `M2-1 → M2-2 → M2-3 → M2-4 → M2-5 → M2-6` の直列。
+  各区分は直前を main へ land してから分岐する。
 - **M2-1 が通らなければ以降へ進まない**（M1 の `M1-1` と同じ blocking core）。
 - **M2-2 の qualification は blocking**（`SI-FLW-037` が M1 で確立した構造の適用）。
-- 合計 **5 PR / 17 session**（4 + 3 + 3 + 4 + 3）。現行 budget 4 PR / 14 session に
-  M1-6 の confirmation 区分（1 PR / 3 session）を移送した値であり、`SI-FLW-045` と一致する。
-  移送は**区分の付け替えであって余裕の増加ではない**。
-- fixture 件数の偏り（M2-4 が 13 件で最多）に合わせて M2-4 へ 4 session を配り、
-  M2-2 / M2-3 を 3 session とした。M2-4 は finish・discard・quarantine 解除を同時に扱うため、
-  ここが最も超過しやすい区分である。
+- **M2-4 を M2-3 の直後に置く**のは、reconnaissance が audit の branch 列挙に依存するためである。
+  `SI-FLW-046` の accept（M2 着手前）を受けた区分であり、
+  ここを通せば **v2 自身の開発が同じ事故を繰り返さなくなる**（早い位置に置く理由）。
+- 合計 **6 PR / 20 session**（4 + 3 + 3 + 3 + 4 + 3）。内訳は次のとおりで
+  `FLW-DSN-014` の「M2出口条件・budget・M3入口条件」節と一致する。
+
+  | 内訳 | PR | session |
+  |---|---:|---:|
+  | M0 実績による再校正 | 4 | 14 |
+  | M1-6 confirmation 区分の移送（`SI-FLW-045`） | +1 | +3 |
+  | `SI-FLW-046` の scope 追加（M2-4） | +1 | +3 |
+  | **合計** | **6** | **20** |
+
+  移送分は**区分の付け替えであって余裕の増加ではない**。
+  scope 追加分は 2026-08-12 に人間へ再提示して確定した。
+- fixture 件数の偏り（M2-5 が 13 件で最多）に合わせて M2-5 へ 4 session を配った。
+  M2-5 は finish・discard・quarantine 解除を同時に扱うため最も超過しやすい区分である。
+- **`SI-FLW-046` の増分見積りの根拠**: 実装自体は read-only で既存 Git read adapter に乗るため安い。
+  リスクは entry protocol の変更にあり、ここは M0 で最も eval 反復を要した領域である。
+  +3 session はその反復を見込んだ値で、実装費ではなく検証費が主である。
 - いずれかの区分が上限を超える見積りになった時点で、総枠内であっても着手前に人間へ再提示する。
 
 ## §12 M2 出口条件
@@ -593,9 +612,10 @@ registry を先に消せば、残った実体は「registry 外の孤立ディ�
 
 - repo identity 衝突 0
 - repo 外 worktree root の承認（**capability 化されたもの**）
-- `M2-FLT-001`〜`044` 全件 PASS
+- `M2-FLT-001`〜`047` 全件 PASS
 - **enum 三者照合テストが green**（設計 ⊆ schema ⊆ 実装の双方向）
 - **機械強制層が有効**（permissions ＋ フックで receipt なし write をブロック）
+- **着手前 reconnaissance が entry protocol で必須化**されている（`FLW-FR-007` 1.1。`SI-FLW-046`）
 - **local-write class の被測定物 confirmation が 3 platform で PASS** し active manifest 発行済み
 
 **縮退規則3の解除条件**（現行は解除条件を持たない）: 上記を満たした時点で
@@ -626,8 +646,8 @@ M1 operation の guard 導出規則・recovery matrix・qualification プロト�
 | 対象 | 変更 | 根拠 |
 |---|---|---|
 | `guard_identity_kind` | 5種 → 7種（schema ＋ `guard.py`） | `SI-FLW-041`（accepted） |
-| `FLW-NFR-007` | repo 境界外 parent の無条件 `BLOCKED` を3条件付き許可へ | `SI-FLW-043`（要裁定） |
-| `FLW-CON-006` | 削除を再照会一致から expected-OID CAS へ厳格化 | `SI-FLW-044`（要裁定） |
+| `FLW-NFR-007` | repo 境界外 parent の無条件 `BLOCKED` を3条件付き許可へ | `SI-FLW-043`（**accepted**。要件 1.3 で反映済み） |
+| `FLW-CON-006` | 削除を再照会一致から expected-OID CAS へ厳格化 | `SI-FLW-044`（**accepted**。要件 1.3 で反映済み） |
 
 M2 が未完了または fixture 未達なら、`worktree.*` と `git.delete-remote-branch` を
 `UNSUPPORTED` のまま維持し、縮退規則3により M1 Git write も公開しない。
@@ -661,7 +681,7 @@ GP-004 に対し「§5」とだけ書いて対応済みとし、**原文が求�
 | GP-010 | settings.json の permissions へ worktree root を加え、承認 receipt を伴わない worktree write を機械的に止める | §4 — permissions ＋ PreToolUse フック。receipt は common-dir 配下の owner-only 領域へ追記 |
 | GP-011 | destructive worktree operation の承認へ M1 の capability envelope を再利用し単回化する | §4 — M1 の Ed25519 envelope を再利用。nonce は target guard 内で linearizable CAS |
 | GP-012 | 設計の閉集合・schema enum・guard.py 定数の三者照合テストを追加する | §2 — **双方向**照合（片方向が沈黙した原因）。対象は namespace 表の全 namespace |
-| GP-013 | M2-FLT-* を採番し、worktree の fault fixture と recovery matrix 行を定義する | §8（recovery matrix）／ §9（`M2-FLT-001`〜`044`。各 fixture をちょうど1区分へ割当） |
+| GP-013 | M2-FLT-* を採番し、worktree の fault fixture と recovery matrix 行を定義する | §8（recovery matrix）／ §9（`M2-FLT-001`〜`047`。各 fixture をちょうど1区分へ割当） |
 | GP-014 | 複数 namespace に現れる語の一覧を schema から機械導出して文書と照合する | §2 — 手で維持する表を置かず schema から導出。本書の表は導出結果の期待値 |
 | GP-015 | closed enum への値追加の互換性条文を output-contract.md へ作るか、互換性を根拠にしない記述へ改める | §2 — **後者を採用**。「key 集合は加算のみ」は object の key の規定であり closed enum に適用できないため、根拠を「未公開だから影響が無い」へ置換 |
 | GP-016 | 表記規則の判定基準（field 名ではなく値の性質）と反例を明記し、namespace 表へ性質列を足す | §2 — 判定基準を「値の性質」と明記し性質列を追加。反例（`trial_kind` の `Q-NORMAL`）を隠さず記載 |
@@ -673,6 +693,11 @@ GP-004 に対し「§5」とだけ書いて対応済みとし、**原文が求�
 
 ## Revision History
 
+- 1.3 (2026-08-12) `SI-FLW-043`〜`046` の裁定（accept）と budget 再校正を反映。
+  実装境界を5区分→**6区分**へ再構成し、`SI-FLW-046` の着手前 reconnaissance を **M2-4**（audit の直後）
+  として独立させた。fixture へ `M2-FLT-045`〜`047` を追加（計47件）。
+  budget を **6 PR / 20 session** へ更新（`FLW-DSN-014` 1.15 と一致）。
+  §14 の要件改訂2件を「要裁定」から accepted・反映済みへ更新。
 - 1.2 (2026-08-12) §15 の GP 対応表を「節番号のみ」から**原文の逐語併記**へ変更。
   v1.0 が GP-004 に「§5」とだけ書いて取り違えを素通りさせた再発を防ぐ。
   `SI-SDD-042`（レビュー指摘の受領検証）が提案する機械照合の手動先行版にあたる。

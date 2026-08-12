@@ -152,14 +152,29 @@ M2 が未完了のままでは worktree-first の安全境界が閉じないた�
 ### フェーズ3 — M2 worktree-first
 
 - worktree の配置・命名・作成・再開・audit・cleanup・保全・discard、独立 remote branch 削除
-- 出口: repo identity 衝突 0、repo 外 worktree の承認、finish / discard の fault 全通過
-- 縮退境界: M0 read-only prerelease へ縮退（M1 Git write も公開しない）
+- 詳細設計は `FLW-DSN-016`（M2 worktree safety 詳細設計）。出口条件・budget の正は
+  `FLW-DSN-014` の「M2出口条件・budget・M3入口条件」節
+- 出口: repo identity 衝突 0、repo 外 worktree root の承認（**単回 capability**）、
+  `M2-FLT-001`〜`044` 全件 PASS、enum 三者照合 green、機械強制層の有効化、
+  **local-write class の被測定物 confirmation が 3 platform で PASS**、
+  着手前 reconnaissance の必須化
+- budget: **6 PR / 20 session**（2026-08-12 再校正）。4 PR / 14 session に
+  M1-6 の confirmation 区分（+1 PR / +3 session。`SI-FLW-045`）と
+  `SI-FLW-046` の scope 追加（+1 PR / +3 session）を加えた値
+- 縮退境界: M0 read-only prerelease へ縮退（M1 Git write も公開しない）。
+  **解除条件**は上記出口条件の充足であり、その時点で M1 の local-write class と
+  M2 worktree を同時に公開できる。remote-write は M3 まで `UNSUPPORTED` を維持する
 
 ### フェーズ4 — M3 Issue / SDD 接続
 
 - Issue CRUD、issue type / sub-issue / dependency（capability 検出つき）、fallback label、
   `.spec` との双方向リンクと reconcile-link
-- 出口: capability matrix、marker 重複 0、link reconcile 全通過、独立 10 Issue/SDD flow canary green
+- **入口条件**（2026-08-12 追加）: M2 から送られた **remote-write class の被測定物 confirmation**
+  （`git.publish-branch` / `git.delete-remote-branch`）を実施する。前提として裁定3 が M3 へ
+  委譲した **coordinator 証明手段**を確定させる（`SI-FLW-045` 案A）。
+  確定するまで remote-write は `UNSUPPORTED` を維持する
+- 出口: capability matrix、marker 重複 0、link reconcile 全通過、独立 10 Issue/SDD flow canary green、
+  上記入口条件の残債 confirmation
 - 縮退境界: M2 までを prerelease 出荷し、全 `issue.*` を `UNSUPPORTED` にする
 
 ### フェーズ5 — M4 PR ライフサイクル
@@ -230,9 +245,14 @@ spec-issue → 要件化を経て `1.1.0` 以降で個別昇格する。順序�
 
 ## 予算と縮退の運用
 
-M0実績で再校正したbudget（M1: 6PR/20session、M2: 4PR/14session、M3: 6PR/20session、
-M4: 6PR/20session、M5: 4PR/14session）と各縮退境界の**正は `FLW-DSN-014` v1.14**であり、
-裁定根拠は`.spec/reports/decision-2026-08-11-m1-entry-four-issues-review.md`とFLW-REV-008/009に置く。
+budget（M1: 6PR/20session、**M2: 6PR/20session**、M3: 6PR/20session、
+M4: 6PR/20session、M5: 4PR/14session）と各縮退境界の**正は `FLW-DSN-014` v1.15**であり、
+裁定根拠は`.spec/reports/decision-2026-08-11-m1-entry-four-issues-review.md`とFLW-REV-008/009、
+および`.spec/reports/decision-2026-08-12-si-flw-043-046.md`に置く。
+
+M2 は M0 実績による再校正（4PR/14session）に、M1-6 の confirmation 区分の移送
+（+1PR/+3session。`SI-FLW-045`）と `SI-FLW-046` の scope 追加（+1PR/+3session）を加えて
+2026-08-12 に **6PR/20session** へ再確定した。移送分は区分の付け替えであり余裕の増加ではない。
 運用上の要点だけを再掲する。
 
 - 各 milestone は PR 予算か session 予算のどちらかを先に使い切った時点で停止し、
