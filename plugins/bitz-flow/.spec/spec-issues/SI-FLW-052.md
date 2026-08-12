@@ -3,7 +3,7 @@ id: SI-FLW-052
 raised_by: FLW-REV-013（独立5観点レビュー・FAIL 2.31）
 target: FLW-DSN-016・FLW-DSN-014・ROADMAP.md・FLW-FR-007
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: **文書間に散在する定数と「対応済み」という自己申告を、機械検証で塞ぐ。**
   そのうえで、**この検証の構築を文書修正より先に完了させる**という順序制約を確立する。
