@@ -3,7 +3,7 @@ id: SI-FLW-044
 raised_by: M2 worktree safety 設計（FLW-REV-011 対応）
 target: FLW-CON-006
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `git.delete-remote-branch`（`FLW-DSN-012` により **M2 所属**）の保護が、
   可逆な `git.publish-branch` より弱い。**非可逆な操作のほうが防御が薄い**という

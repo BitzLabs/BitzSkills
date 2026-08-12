@@ -1,6 +1,6 @@
 ---
 id: FLW-NFR-007
-version: 1.2
+version: 1.3
 status: implementing
 domain: tooling
 priority: high
@@ -17,7 +17,9 @@ confidence: high
 - **説明**: 永続fileを同一directory内の検証済みtempから原子的に置換し、異常終了時も完全な旧版または完全な新版のいずれかへ収束させる。
 - **受入基準 (EARS)**:
   - WHEN 永続file更新をplanする THEN bitz-flowはcanonical repo境界と`lstat`によるdevice、inode、owner、mode、link count、digestを記録すること SHALL
-  - WHEN 対象がsymlink、複数hardlink、repo境界外parent、または所有者不一致である THEN bitz-flowは原本を変更せず`BLOCKED`を返すこと SHALL
+  - WHEN 対象がsymlink、複数hardlink、または所有者不一致である THEN bitz-flowは原本を変更せず`BLOCKED`を返すこと SHALL
+  - WHEN 対象がrepo境界外parentを持つ THEN bitz-flowは承認済みworktree root配下であること、canonicalize後にroot外へescapeしないこと、`FLW-CON-005`の明示的人間承認を単回capabilityとして得ていることの3条件すべてを満たす場合だけ更新を許可し、1つでも欠ける場合は原本を変更せず`BLOCKED`を返すこと SHALL
+  - WHEN repo境界外parentへの更新を許可する THEN bitz-flowは許可の根拠として照合した承認済みroot、canonical path、capability IDをresultへ含めること SHALL
   - WHEN 更新内容を準備する THEN bitz-flowは対象と同一directoryへ排他的かつowner-onlyのtempを作成し、write、flush、file fsync、parse、digest検証を実行すること SHALL
   - WHEN tempを原本へ置換する THEN bitz-flowは直前に原本identityとdigestを再照会し、plan時と一致する場合だけplatformのatomic replaceを実行すること SHALL
   - WHEN atomic replaceが完了する THEN bitz-flowはparent directoryのdurability同期と最終fileのparse、digest検証を実行し、その完了をdurability commit pointとすること SHALL
@@ -29,6 +31,7 @@ confidence: high
   - WHEN filesystemまたはplatformでatomicityとdurabilityを検証できない THEN bitz-flowは該当永続file writeを`UNSUPPORTED`にすること SHALL
 - **検証手段**: Linux、macOS、Windowsのidentity競合、symlink、hardlink、各段階crash、replace、directory同期、mode・改行保持をunit testで検証し、原本破損0件とtemp path公開0件を確認する。
 - **Revision History**:
+  - 1.3 (2026-08-12) repo境界外parentの無条件BLOCKEDを、承認済みroot配下・escape無し・単回capabilityの3条件付き許可へ改訂（SI-FLW-043。裁定参照: .spec/reports/decision-2026-08-12-si-flw-043-046.md）
   - 1.2 (2026-07-29) durability commit pointをdirectory同期・最終検証後へ修正
   - 1.1 (2026-07-29) atomic replaceをcommit pointとし、crash後の旧版/新版/reconcile契約を実現可能化
   - 1.0 (2026-07-29) FLW-NFR-004から永続file更新の原子性と完全性を分離してdraft起票
