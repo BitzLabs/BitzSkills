@@ -1,6 +1,6 @@
 # inspection-report.md (2026-08-12)
 
-成果物数: 102 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0 / 検証証跡: 5
+成果物数: 103 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0 / 検証証跡: 5
 
 ## 問題一覧
 - なし ✅
@@ -78,6 +78,7 @@
 
 ## 検証証跡の WARN（古い commit・証跡なしの verified 要件 — FAIL にしない）
 - [verify] .spec/verification/pytest--0ee41c9.json: 記録時の commit(0ee41c9) 以降にソースが変更されています（再記録が必要な可能性）
+- [verify] .spec/verification/pytest--51bb431.json: 記録時の commit(51bb431) 以降にソースが変更されています（再記録が必要な可能性）
 - [verify] .spec/verification/pytest--5526358.json: 記録時の commit(5526358) 以降にソースが変更されています（再記録が必要な可能性）
 - [verify] .spec/verification/pytest--d5a446c.json: 記録時の commit(d5a446c) 以降にソースが変更されています（再記録が必要な可能性）
 - [verify] .spec/verification/pytest--f0aed06.json: 記録時の commit(f0aed06) 以降にソースが変更されています（再記録が必要な可能性）
@@ -214,15 +215,16 @@
 | SDD-FR-155 | 検証済み（verified） | workflow | unit-test | 1 | 3 |
 | SDD-FR-156 | 検証済み（verified） | workflow | unit-test | 1 | 2 |
 | SDD-FR-157 | 検証済み（verified） | workflow | unit-test | 1 | 2 |
-| SDD-FR-158 | 検証済み（verified） | verification | unit-test | 1 | 2 |
+| SDD-FR-158 | 検証済み（verified） | verification | unit-test | 1 | 4 |
 | SDD-FR-159 | 検証済み（verified） | verification | unit-test | 1 | 2 |
 | SDD-FR-160 | 検証済み（verified） | verification | unit-test | 1 | 3 |
-| SDD-FR-161 | 検証済み（verified） | verification | unit-test | 1 | 2 |
+| SDD-FR-161 | 検証済み（verified） | verification | unit-test | 1 | 4 |
 | SDD-FR-162 | 検証済み（verified） | verification | unit-test | 1 | 3 |
 | SDD-FR-163 | 検証済み（verified） | reporting | unit-test | 1 | 2 |
 | SDD-FR-164 | 検証済み（verified） | sync | unit-test | 1 | 2 |
 | SDD-FR-165 | 検証済み（verified） | workflow | manual-check | 1 | 1 |
 | SDD-FR-166 | 検証済み（verified） | workflow | unit-test | 1 | 2 |
+| SDD-FR-167 | 実装中（implementing） | workflow | unit-test | 1 | 2 |
 | SDD-REV-002 | active |  |  | 0 | 1 |
 | SDD-REV-003 | active |  |  | 0 | 0 |
 | SDD-REV-004 | active |  |  | 0 | 0 |

@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-167
 version: 1.0
-status: implementing
+status: verified
 domain: workflow
 priority: medium
 origin: SI-SDD-041
