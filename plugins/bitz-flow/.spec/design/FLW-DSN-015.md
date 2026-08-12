@@ -33,9 +33,27 @@ PR、releaseへ状態機械を再利用できても、本書だけを根拠に�
 guard identityはtarget種別ごとに分離する。`index|local-ref|remote-tracking-ref|fetch-head`はGit common-dirの
 platform固有stable file identity（indexだけはworktree IDも付加）、`remote-ref`はcanonical host＋providerの
 repository ID＋ref nameだけから導出する。symlink、相対path、case差、別worktree、remote aliasを正規化し、
-別cloneからの同一remote refも同じguardへ収束させる。mutation target typeはこの5種の閉集合としraw pathを
-keyにしない。identityを一意化できなければwriteを`BLOCKED`にする。intentの`repo_identity`は監査用に
-local common-dir identityとremote repository identityを併記するが、remote guard keyへlocal identityを混ぜない。
+別cloneからの同一remote refも同じguardへ収束させる。identityを一意化できなければwriteを`BLOCKED`にする。
+intentの`repo_identity`は監査用にlocal common-dir identityとremote repository identityを併記するが、
+remote guard keyへlocal identityを混ぜない。
+
+M2でworktreeを扱うため、閉集合へ次の2種を加える（`SI-FLW-041`。**加算であり既存keyの意味は変えない**）。
+
+| identity | canonical keyの作り方 |
+|---|---|
+| `worktree-dir` | canonical common-dir identity ＋ worktreeのcanonical pathのdigest |
+| `worktree-registry` | canonical common-dir identity ＋ registry entry名 |
+
+`worktree.create`／`discard`は**directory・worktree registry・branch refの3者を同時に**変える。
+`FLW-DSN-006`の`ORPHAN`（directory/ref/registryの一部だけ存在）は、3者を同時に守るguardが無ければ
+**検出できても防げない**。M1がcommitで「記録なしの重複write」を構造的に排除したのと同じ扱いを与える。
+3者はcanonical keyの昇順でまとめて取得し、途中失敗は逆順解放・副作用0で`BLOCKED`とする。
+
+`worktree-dir`も**raw pathをkeyにしない**。canonical pathはdigest化し、symlink、相対path、case差、
+別cloneを正規化して同一worktreeへ収束させる。repo外を指すため、canonical pathを提示してapply前に
+人間承認を求める`FLW-DSN-006`の規定は変えず、guardはその承認の**後**に取る。
+
+mutation target typeはこの**7種の閉集合**とする。
 
 ## write状態機械
 
@@ -77,6 +95,11 @@ stateDiagram-v2
 
 同名語の混同を避け、schemaは次のenum namespaceを別fieldで持つ。
 
+**表記規則**（`SI-FLW-042`）: **状態・判定結果は大文字スネーク、分類・語彙・種別は小文字kebab**とする。
+`code`（`INVALID_INPUT`）と`cause`（`not-repository`）が同じresult内で表記を変えるのは、
+偶然ではなく種類が違うためである。内部値と表示を分ける（schemaは大文字、文書は小文字）方式は
+**採らない** — 変換表そのものが二重定義になり、`SI-FLW-039`と同型の事故を招く。
+
 | namespace | field | closed enum |
 |---|---|---|
 | write機械 | `write_state` | `PLANNED, GUARDED, PENDING_INTENT, MUTATING, RECONCILING, DONE, PARTIAL, STALE, QUARANTINED` |
@@ -84,6 +107,22 @@ stateDiagram-v2
 | intent記録 | `intent_record_state` | `PENDING, RECONCILING, PARTIAL, STALE, QUARANTINED, RELEASED` |
 | Gate | `gate_status` | `PASS, FAIL, BLOCKED` |
 | attempt | `attempt_status` | `STARTED, PASS, FAIL, ABORTED, UNKNOWN` |
+| WorkUnit（M2で凍結） | `work_unit_state` | `PLANNED, ISOLATED, ACTIVE, VERIFIED, PR_DRAFT, PR_OPEN, MERGED, FAILED` |
+| worktree（M2で凍結） | `worktree_state` | `ABSENT, PLANNED, APPROVED, ACTIVE_CLEAN, ACTIVE_DIRTY, PR_OPEN, MERGED_EXACT, REMOTE_ADVANCED, WORKTREE_MISMATCH, ORPHAN, FAILED_RETAINED` |
+
+**複数namespaceに現れる語**（読み手はどのnamespaceの語かを必ず確認すること）:
+
+| 語 | 現れるnamespace |
+|---|---|
+| `PLANNED` | `write_state` / `work_unit_state` / `worktree_state` |
+| `PARTIAL` | `write_state` / `result_code` / `intent_record_state` |
+| `STALE` | `write_state` / `result_code` / `intent_record_state` |
+| `DONE` | `write_state` / `result_code` |
+| `PR_OPEN` | `work_unit_state` / `worktree_state` |
+| `FAIL` / `FAILED` | `gate_status` / `attempt_status` / `work_unit_state` |
+
+`work_unit_state`と`worktree_state`の値の正は`FLW-DSN-012`の正規状態写像と`FLW-DSN-006`のaudit分類
+であり、M2の契約凍結でschemaへ落とす。
 
 ## target guardプロトコル
 

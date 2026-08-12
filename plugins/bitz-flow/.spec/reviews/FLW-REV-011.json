@@ -1,0 +1,436 @@
+{
+  "schema_version": 2,
+  "review_id": "FLW-REV-011",
+  "verdict": "FAIL",
+  "aggregate_score": 2.47,
+  "perspective_scores": {
+    "consistency": 2.4,
+    "operations": 2.5,
+    "risk": 2.5
+  },
+  "findings_summary": {
+    "before_dedup": 34,
+    "after_dedup": 21,
+    "p0": 5,
+    "p1": 11,
+    "p2": 4,
+    "p3": 1
+  },
+  "findings": [
+    {
+      "id": "FLW-REV-011:SYN-001",
+      "priority": "P0",
+      "title": "closed enum が「値の正」と宣言した設計文書と一致しない",
+      "detail": "FLW-DSN-015 の work_unit_state は8値だが、値の正と宣言した FLW-DSN-012 の正規 WorkUnit state は12値。review-ready / merge-ready / audited / cleaned / failed-retained / discarded が欠落し、PR_OPEN（worktree state の語）と FAILED（実在しない）が混入している。worktree_state も FLW-DSN-006 の registered-active を落としている。audited は worktree.finish の唯一の許可前提、cleaned / discarded は終端であり、いずれも M2 の対象 operation である。",
+      "tracked_by": "FLW-REV-011:GP-001",
+      "severity": "critical",
+      "source": [
+        "RVC-001",
+        "OPS-003",
+        "RSK-010"
+      ],
+      "recommendation": "FLW-DSN-015 の表を唯一の正と宣言して「値の正は他文書」の委譲文を削り、FLW-DSN-012 の12値・FLW-DSN-006 の状態と一致させる。三者照合テストを追加して片方向照合の沈黙を塞ぐ。",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-011:SYN-002",
+      "priority": "P0",
+      "title": "承認と guard key が結合しておらず、承認から apply までの TOCTOU が閉じない",
+      "detail": "承認は人間が読んだ path 文字列に対して与えられ、guard key は canonical path の digest である。承認から guard 取得・apply までの間に親 directory の symlink 差し替え、別 process の先行占有、worktree_root 設定変更が起きても承認は再検査されない。M1 は quarantine 解除後の mutation に単回 capability（target / snapshot_digest / expires_at / nonce を署名）を要求するが、worktree の repo 外承認には適用されていない。",
+      "tracked_by": "FLW-REV-011:GP-002",
+      "severity": "critical",
+      "source": [
+        "OPS-002",
+        "RSK-002"
+      ],
+      "recommendation": "repo 外承認を capability 化する。署名対象へ worktree_dir guard key・親 directory の stable identity・対象の非存在証明 digest・expires_at・単回 nonce を含め、guard 取得直後と各副作用直前に実 key との一致を再照合する。不一致は STALE（replan-human）。",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-011:SYN-003",
+      "priority": "P0",
+      "title": "worktree guard と M1 の index guard が互いに素で、削除中の worktree に stage が走る",
+      "detail": "git.stage の canonical mutation target は index のみ（branch ref を取らない）。discard が worktree-dir / worktree-registry / local-ref を保持していても、別 operation は index key だけを取って stage を実行できる。key 集合が交差しないため双方とも BLOCKED にならない。",
+      "tracked_by": "FLW-REV-011:GP-003",
+      "severity": "critical",
+      "source": [
+        "RSK-001"
+      ],
+      "recommendation": "target guard プロトコルへ包含規約を入れる。worktree W の worktree-dir / worktree-registry を取る operation は、W に属する index target を同じ acquire に含める。index の worktree_id を registry entry 名から導出して機械的に強制する。",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-011:SYN-004",
+      "priority": "P0",
+      "title": "path digest key が時間をまたいで別実体を同一視し、承認済み discard が作り直された worktree を消す",
+      "detail": "key に instance 識別子（生成 nonce・HEAD OID 等）が無く、work-id は決定的なので同じ task の再挑戦は同じ path を使う。discard の承認待ち中に別 session が同じ work-id で create すると、manifest（path 一覧と件数）も guard key も一致するため誰も止めない。",
+      "tracked_by": "FLW-REV-011:GP-004",
+      "severity": "critical",
+      "source": [
+        "RSK-003"
+      ],
+      "recommendation": "instance identity を precondition に入れる。common-dir/worktrees/<name>/gitdir の内容・worktree 側 .git file が指す entry・HEAD OID・create 時に intent へ焼いた nonce を snapshot_digest へ含め、apply 直前に CAS 照合する。不一致は STALE で自動再 apply 禁止。",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-011:SYN-005",
+      "priority": "P0",
+      "title": "worktree guard の解放経路が未定義で、無期限 BLOCKED から復帰できない",
+      "detail": "quarantine 解除の区分表5種はすべて Git object と ref を前提としており、directory・registry の残留に当てはまる結論が1つも無い。worktree-dir guard が quarantine に落ちると正規の解除手順が存在しない。",
+      "tracked_by": "FLW-REV-011:GP-005",
+      "severity": "critical",
+      "source": [
+        "OPS-001"
+      ],
+      "recommendation": "quarantine 解除区分へ worktree 用を追加する。(a) dir/registry/ref すべて不在＝no-effect 相当、(b) directory だけ残存＝residue-retained（残存 path を receipt へ記録し削除しない）、(c) 三者矛盾＝unresolved で継続 quarantine。owner process 停止証明の具体（PID・OS lock の置き場）も同時に決める。",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-011:SYN-006",
+      "priority": "P1",
+      "title": "worktree.finish が3者 guard の対象から抜けている",
+      "detail": "finish 手順は worktree remove と branch 削除を含み、create / discard と同じ3者を消す。finish の途中失敗こそ ORPHAN の主要な発生源である。",
+      "tracked_by": "FLW-REV-011:GP-006",
+      "severity": "major",
+      "source": [
+        "RVC-007"
+      ],
+      "recommendation": "設計・spec-issue・裁定記録の3箇所の「worktree.create / discard」を「create / resume / finish / discard」へ揃える。",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-011:SYN-007",
+      "priority": "P1",
+      "title": "destructive の防御が git.delete-remote-branch と同等以下",
+      "detail": "M1 は local target に「存続中の OS exclusive lock と CAS」を必須とするが、directory に対する CAS 相当が定義されていない。Capability に directory 用の検査が無く UNSUPPORTED へ縮退する経路も無い。remote branch 削除（再 push できる）より弱い防御で、失うものは未 push の作業である。",
+      "tracked_by": "FLW-REV-011:GP-007",
+      "severity": "major",
+      "source": [
+        "RSK-007"
+      ],
+      "recommendation": "worktree-dir の CAS 相当を定義する。plan 時 manifest を「対象 path 一覧＋各 entry の (type, dev+ino, size, mtime_ns)」の digest とし、apply 直前に再計算して一致した場合だけ削除する。Capability へ directory 用（stable file identity 取得可否・dirfd 相対削除可否）を足し、無ければ UNSUPPORTED へ縮退させる。",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-011:SYN-008",
+      "priority": "P1",
+      "title": "worktree-dir と worktree-registry の binding が未規定",
+      "detail": "2 key を独立に定義するだけで、両者が同じ worktree を指すことの検証規定が無い。registry entry 名の導出規則も無い。既存実装の worktree_id は呼び出し側の自由文字列で、唯一の呼出は git_sync.py:234 が literal \"main\" を渡している。",
+      "tracked_by": "FLW-REV-011:GP-008",
+      "severity": "major",
+      "source": [
+        "RSK-006"
+      ],
+      "recommendation": "registry entry を authoritative 側（common-dir/worktrees/*/gitdir の内容）から読み、dir ↔ entry の相互参照一致を precondition にする。worktree_id の canonical 導出関数を guard.py へ置き、literal を渡せない形にする。",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-011:SYN-009",
+      "priority": "P1",
+      "title": "case 正規化ヒューリスティックが不在 path で機能しない",
+      "detail": "_case_sensitive_filesystem は probe が存在しない場合に case-sensitive と判定する。worktree-dir は create 時に必ず不在であり、root ごと未作成でもあり得る。case-insensitive FS で誤判定し、同一 directory への並行 create が2本通る。",
+      "tracked_by": "FLW-REV-011:GP-009",
+      "severity": "major",
+      "source": [
+        "RSK-005"
+      ],
+      "recommendation": "case 感度の probe を「存在する最も近い祖先」まで遡らせる。root まで不在なら判定不能として BLOCKED にするか、承認済み worktree_root の case 感度を1度測って intent へ記録し再利用する。fixture に「不在 path の case 差」を追加する。",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-011:SYN-010",
+      "priority": "P1",
+      "title": "repo 外書き込みの機械強制層が無い",
+      "detail": "AGENTS.md はリポジトリ外への書き込みを事前確認必須とし、機械的ブロックを settings.json の permissions で強制すると定めるが、worktree root に該当する規則が無い。M2 は repo 外書き込みを常用化する最大の変更でありながら機械層は無変更である。",
+      "tracked_by": "FLW-REV-011:GP-010",
+      "severity": "major",
+      "source": [
+        "OPS-007"
+      ],
+      "recommendation": "M2 の出口条件を機械層まで含む定義にする。settings.json の permissions へ worktree root パターンを追加し、承認 receipt を伴わない worktree write をフックでブロックする。receipt は intent と同じ common-dir 配下 owner-only 領域へ追記して監査可能にする。",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-011:SYN-011",
+      "priority": "P1",
+      "title": "承認が単回化されておらず使い回せる",
+      "detail": "guard を承認の後に取る結果、承認 → guard 取得失敗 → 再試行のループで承認が使い回せる。FLW-DSN-012 は「operation ID を承認 token にする」案をエージェントが転記できる理由で却下しているが、現状の束縛は operation ID 文字列だけである。",
+      "tracked_by": "FLW-REV-011:GP-011",
+      "severity": "major",
+      "source": [
+        "RSK-008"
+      ],
+      "recommendation": "destructive worktree operation の承認へ M1 の capability envelope（target・snapshot_digest・expires_at・単回 nonce・Ed25519）をそのまま再利用し、guard 取得後の apply 区間でだけ有効とする。期限切れ・別 target 転用・再利用を拒否する。",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-011:SYN-012",
+      "priority": "P1",
+      "title": "設計は7種・契約は5種で乖離し、照合テストが片方向のため沈黙する",
+      "detail": "FLW-DSN-015 は7種の閉集合と断定するが、schema・guard.py・output-contract.md はすべて5種のまま。既存の照合テストは schema→文書の一方向で、文書側にだけ増えた値を検出しない。乖離の解消を担うタスクも未起票である。",
+      "tracked_by": "FLW-REV-011:GP-012",
+      "severity": "major",
+      "source": [
+        "RSK-004",
+        "OPS-005",
+        "RVC-004"
+      ],
+      "recommendation": "設計の閉集合表・schema enum・guard.py 定数の三者照合テストを追加する。乖離期間を許すなら FLW-DSN-015 へ「7種目は M2-x で凍結、それまで schema は5であり worktree-* を返す実装は存在してはならない」と期限つきで明記する。",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-011:SYN-013",
+      "priority": "P1",
+      "title": "新 kind の fault fixture が catalog にもタスクにも無い",
+      "detail": "fixture catalog は M1-FLT-001〜030 で凍結され worktree 行が無い。M2-FLT は repo 全体で0件。閉集合だけ増えて増分への注入試験が誰の担当でもない。recovery matrix にも worktree 行が無く、未登録 tuple は human-stop へ fail-closed するため運用上すべての worktree 障害が人間で止まる。",
+      "tracked_by": "FLW-REV-011:GP-013",
+      "severity": "major",
+      "source": [
+        "RSK-009",
+        "OPS-009"
+      ],
+      "recommendation": "M2-FLT-* を採番し、承認後 symlink 差替・承認待ち中の path 再作成・discard 中の同一 worktree stage・不在 path の case 差・dir と registry の不一致・削除途中 crash からの PARTIAL 再開を fixture 化する。recovery matrix へ worktree 行と REC-WORKTREE を追加し、M2 予算への計上を確認する。",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-011:SYN-014",
+      "priority": "P1",
+      "title": "複数 namespace に現れる語の一覧が 4/10 漏れている",
+      "detail": "PASS / BLOCKED / RECONCILING / QUARANTINED が未掲載。PASS は output-contract.md が衝突例の筆頭として名指ししている語である。",
+      "tracked_by": "FLW-REV-011:GP-014",
+      "severity": "major",
+      "source": [
+        "RVC-003"
+      ],
+      "recommendation": "衝突語の一覧を手書きせず schema から機械導出し、文書と照合するテストを追加する（tests/test_flow_m1_core.py の namespace 照合と同じ流儀）。",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-011:SYN-015",
+      "priority": "P1",
+      "title": "「key 集合は加算のみ」を enum 値追加の互換性根拠に誤用している",
+      "detail": "互換性節の本文は key 集合の話であり、許容が明記されているのは未知 field であって未知 enum 値ではない。guard target は閉集合と明言して消費側に列挙を約束しているため、条文上の根拠が存在しない。",
+      "tracked_by": "FLW-REV-011:GP-015",
+      "severity": "major",
+      "source": [
+        "RVC-005"
+      ],
+      "recommendation": "output-contract.md の互換性節へ「closed enum への値の追加は producer 側の加算に限り minor 互換とし、消費側は未知値を拒否せず UNSUPPORTED へ縮退する」を明記して条文を先に作る。作らない判断なら「互換性規定に収まる」を「write 未公開のため外部影響が無い」だけの根拠へ書き換える。",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-011:SYN-016",
+      "priority": "P1",
+      "title": "表記規則に反例があり、判定基準が明文化されていない",
+      "detail": "git.status の state は field 名が state でありながら小文字 kebab（per-file の変更分類なので規則上は正しい）。規則が field 名ではなく値の性質で判定することがどこにも書かれていない。同一対象が audit 分類とも状態とも呼ばれており、次に enum を足す人が逆の結論に達しうる。実測母数も12個ではなく16種である。",
+      "tracked_by": "FLW-REV-011:GP-016",
+      "severity": "major",
+      "source": [
+        "RVC-006",
+        "RSK-011"
+      ],
+      "recommendation": "表記規則へ「判定は field 名ではなく値の性質で行う。git.status の state は per-file の変更分類であり小文字が正」と反例を明記する。namespace 表へ性質列（状態／分類）を足して適用結果を表側に固定する。実測母数を16種へ直すか母集合を限定する。",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-011:SYN-017",
+      "priority": "P1",
+      "title": "ORPHAN を「防げる」と書いたが guard 外要因の復旧手順が無い",
+      "detail": "guard が防げるのは bitz-flow 自身が3者を不揃いに壊す場合だけ。外部要因（手動削除、OS の temp cleaner、別ツールの git worktree prune、アンマウント）は依然残り、repo 外配置はその露出を増やす。許可は「停止・人間確認」のみで復旧手順が無い。",
+      "tracked_by": "FLW-REV-011:GP-017",
+      "severity": "major",
+      "source": [
+        "OPS-006"
+      ],
+      "recommendation": "ORPHAN の断定を「bitz-flow 起因の ORPHAN を構造的に防ぐ。外部起因は検出と復旧の対象として残る」へ訂正し、FLW-DSN-006 へ復旧手順を3分岐（registry のみ／directory のみ／ref のみ残存）で追記する。外部削除・外部 prune・unmount を fault injection 項目へ追加する。",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-011:SYN-018",
+      "priority": "P1",
+      "title": "表記統一が FLW-DSN-006 / FLW-DSN-012 へ未反映で、却下したはずの状態が現存する",
+      "detail": "裁定は「schema は大文字・文書は小文字」方式を却下したが、DSN-006 の audit 分類も DSN-012 の写像も小文字 kebab のまま。M2 の主設計は DSN-006 であり、そこだけを読む実装者に規則が届かない。",
+      "tracked_by": "FLW-REV-011:GP-018",
+      "severity": "major",
+      "source": [
+        "OPS-004",
+        "RSK-010"
+      ],
+      "recommendation": "裁定と同一の変更セットで FLW-DSN-006 / FLW-DSN-012 の状態語を表記規則へ揃え、version と updated を上げる。落とせないなら「M2-1 で是正する」と期限つきで明記して M2 の先頭タスクへ紐付ける。",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-011:SYN-019",
+      "priority": "P2",
+      "title": "dirty worktree の discard に退避要求が無い",
+      "detail": "worktree は repo 外にあり未コミット・未追跡ファイルは版管理にもバックアップにも含まれない。M1 の原理「記録なしの重複 write より無駄な BLOCKED を優先」の等価物（復元不能な削除より保持を優先）が discard に無く、最後の砦は人間の1回の確認だけである。",
+      "tracked_by": "",
+      "severity": "minor",
+      "source": [
+        "OPS-008"
+      ],
+      "recommendation": "dirty / untracked が 0 でない場合、削除前に common-dir 配下 owner-only 領域へ git bundle と untracked のアーカイブを退避し、その digest を discard receipt へ含めることを必須にする。退避できない場合は BLOCKED。",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-011:SYN-020",
+      "priority": "P2",
+      "title": "guard 記録の置き場と create 時の OS lock 対象が未定義",
+      "detail": "create 時点で対象 directory が存在しないため何に対して exclusive lock を取るかが書かれていない。worktree directory 内へ guard 状態を置くと discard がそれごと削除して所有証明が消える。",
+      "tracked_by": "",
+      "severity": "minor",
+      "source": [
+        "OPS-010"
+      ],
+      "recommendation": "「worktree-dir / worktree-registry の guard 状態と OS lock は必ず common-dir 配下 owner-only 領域に置き、worktree directory 内には置かない」を明記する。create は親 directory 直下への O_EXCL 予約を所有証明の一部として定義する。",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-011:SYN-021",
+      "priority": "P2",
+      "title": "canonical 化に root 包含判定が無く、namespace 表にも積み残しがある",
+      "detail": "guard の canonical 化は同一性しか見ず「承認済み root 配下か」を保証しない。あわせて PR state / Release state が namespace 表に入らず規則の適用対象が未定義、FAIL と FAILED を1行にまとめる基準の不統一、result_code が実体の field 名（code）と一致しない、既存テストが namespace 数5を直書きしている点が残る。",
+      "tracked_by": "",
+      "severity": "minor",
+      "source": [
+        "RSK-012",
+        "RVC-008",
+        "RVC-009",
+        "RVC-010",
+        "RVC-011"
+      ],
+      "recommendation": "canonical 化規則へ「worktree-dir target の生成は承認済み root を必須引数に取り、resolve 後の path が root の真下でなければ target を作らず BLOCKED」を追加する。あわせて PR state / Release state の扱い、衝突語一覧の基準、result_code の field 名、テストの namespace 固定値を整理する。",
+      "status": "open"
+    }
+  ],
+  "gate_preconditions": [
+    {
+      "id": "GP-001",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "work_unit_state と worktree_state の値を FLW-DSN-012 / FLW-DSN-006 と一致させ、三者照合を機械化してから M2 の契約を凍結する",
+      "evidence": "plugins/bitz-flow/.spec/design/FLW-DSN-012.md の正規状態写像（12値）と FLW-DSN-015.md:110 の宣言（8値）を直接照合した"
+    },
+    {
+      "id": "GP-002",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "repo 外承認を capability 化し、guard key・親 directory identity・非存在証明・期限・単回 nonce を署名対象に含めて apply 直前に再照合する",
+      "evidence": "FLW-DSN-015.md:52-54（guard は承認の後）と :143（副作用直前の再照合対象に承認が無い）を確認した"
+    },
+    {
+      "id": "GP-003",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "worktree の guard を取る operation は、その worktree に属する index target を同じ acquire に含める包含規約を定める",
+      "evidence": "flowlib/guard.py の canonical_index_target と worktree key に包含関係の規定が無いことを確認した"
+    },
+    {
+      "id": "GP-004",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "worktree の instance identity（gitdir 内容・HEAD OID・create 時 nonce）を precondition に入れ、apply 直前に CAS 照合する",
+      "evidence": "FLW-DSN-006.md:22（work-id 決定的で同 path が再利用される）と :100-102（manifest は path 一覧と件数）を確認した"
+    },
+    {
+      "id": "GP-005",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "worktree guard の quarantine 解除区分を定義し、正規の解放経路を用意する",
+      "evidence": "FLW-DSN-015.md:240-246 の quarantine 解除区分5種がすべて Git object と ref を前提としていることを確認した"
+    },
+    {
+      "id": "GP-006",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "worktree.finish と resume を3者 guard の対象へ加える",
+      "evidence": "FLW-REV-011.md の「実装で確認した事実」節、および individual レビュー3観点の指摘"
+    },
+    {
+      "id": "GP-007",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "worktree-dir の CAS 相当（manifest digest の apply 直前再計算）と capability 縮退を定義する",
+      "evidence": "FLW-REV-011.md の「実装で確認した事実」節、および individual レビュー3観点の指摘"
+    },
+    {
+      "id": "GP-008",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "worktree-dir と worktree-registry の binding 検証と worktree_id の canonical 導出を定める",
+      "evidence": "FLW-REV-011.md の「実装で確認した事実」節、および individual レビュー3観点の指摘"
+    },
+    {
+      "id": "GP-009",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "case 感度の判定を存在する最も近い祖先まで遡らせ、判定不能なら BLOCKED にする",
+      "evidence": "FLW-REV-011.md の「実装で確認した事実」節、および individual レビュー3観点の指摘"
+    },
+    {
+      "id": "GP-010",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "settings.json の permissions へ worktree root を加え、承認 receipt を伴わない worktree write を機械的に止める",
+      "evidence": "FLW-REV-011.md の「実装で確認した事実」節、および individual レビュー3観点の指摘"
+    },
+    {
+      "id": "GP-011",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "destructive worktree operation の承認へ M1 の capability envelope を再利用し単回化する",
+      "evidence": "FLW-REV-011.md の「実装で確認した事実」節、および individual レビュー3観点の指摘"
+    },
+    {
+      "id": "GP-012",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "設計の閉集合・schema enum・guard.py 定数の三者照合テストを追加する",
+      "evidence": "FLW-REV-011.md の「実装で確認した事実」節、および individual レビュー3観点の指摘"
+    },
+    {
+      "id": "GP-013",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "M2-FLT-* を採番し、worktree の fault fixture と recovery matrix 行を定義する",
+      "evidence": "FLW-REV-011.md の「実装で確認した事実」節、および individual レビュー3観点の指摘"
+    },
+    {
+      "id": "GP-014",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "複数 namespace に現れる語の一覧を schema から機械導出して文書と照合する",
+      "evidence": "FLW-REV-011.md の「実装で確認した事実」節、および individual レビュー3観点の指摘"
+    },
+    {
+      "id": "GP-015",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "closed enum への値追加の互換性条文を output-contract.md へ作るか、互換性を根拠にしない記述へ改める",
+      "evidence": "FLW-REV-011.md の「実装で確認した事実」節、および individual レビュー3観点の指摘"
+    },
+    {
+      "id": "GP-016",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "表記規則の判定基準（field 名ではなく値の性質）と反例を明記し、namespace 表へ性質列を足す",
+      "evidence": "FLW-REV-011.md の「実装で確認した事実」節、および individual レビュー3観点の指摘"
+    },
+    {
+      "id": "GP-017",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "ORPHAN の断定を bitz-flow 起因に限定し、外部起因の復旧手順と fault 項目を追加する",
+      "evidence": "FLW-REV-011.md の「実装で確認した事実」節、および individual レビュー3観点の指摘"
+    },
+    {
+      "id": "GP-018",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "FLW-DSN-006 / FLW-DSN-012 の状態語を表記規則へ揃え、version と updated を上げる",
+      "evidence": "FLW-REV-011.md の「実装で確認した事実」節、および individual レビュー3観点の指摘"
+    }
+  ],
+  "carried_over": [],
+  "conditional_items": []
+}
