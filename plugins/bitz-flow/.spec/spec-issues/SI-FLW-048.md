@@ -3,7 +3,7 @@ id: SI-FLW-048
 raised_by: FLW-REV-013（独立5観点レビュー・FAIL 2.31）
 target: FLW-DSN-016
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: **guard が守ると宣言した対象と、operation が実際に変更する対象を一致させる。**
   また **guard key と CAS が別々の identity 方式を使っている**状態を解消する。

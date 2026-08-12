@@ -3,7 +3,7 @@ id: SI-FLW-047
 raised_by: FLW-REV-013（独立5観点レビュー・FAIL 2.31）
 target: FLW-DSN-016・FLW-DSN-012
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: **quarantine の解除区分と write operation の step 順が、互いを無効化している
   状態を解消する。** 現在の設計では discard が中断すると**必ず**恒久 quarantine へ落ちる。
