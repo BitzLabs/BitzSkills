@@ -2,7 +2,7 @@
 id: FLW-DSN-016
 title: "M2 worktree safety詳細設計"
 status: draft
-version: 1.1
+version: 1.2
 updated: 2026-08-12
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-006, FLW-NFR-007, FLW-NFR-011, FLW-NFR-012, FLW-CON-005, FLW-CON-006
@@ -638,29 +638,44 @@ M2 が未完了または fixture 未達なら、`worktree.*` と `git.delete-rem
 
 ## §15 FLW-REV-011 の Gate 前提条件との対応
 
-| GP | 対応節 |
-|---|---|
-| GP-001 enum を `FLW-DSN-012` / `FLW-DSN-006` と一致・三者照合の機械化 | §2 |
-| GP-002 repo 外承認の capability 化 | §4 |
-| GP-003 index 包含規約 | §3 |
-| GP-004 instance identity の CAS 照合 | §5 |
-| GP-005 quarantine 解除区分と解放経路 | §6 |
-| GP-006 finish / resume を3者 guard の対象へ | M2 operation catalog |
-| GP-007 `worktree-dir` の CAS 相当と capability 縮退 | §5 |
-| GP-008 binding 検証と `worktree_id` の canonical 導出 | §3 |
-| GP-009 case 感度の祖先遡り・判定不能は `BLOCKED` | §3 |
-| GP-010 permissions ＋ フックによる機械強制層 | §4 |
-| GP-011 承認の単回化（capability envelope 再利用） | §4 |
-| GP-012 設計・schema・実装の三者照合テスト | §2 |
-| GP-013 `M2-FLT-*` の採番と recovery matrix 行 | §8 / §9 |
-| GP-014 多重語一覧の機械導出 | §2 |
-| GP-015 closed enum 値追加の互換性条文 | §2 |
-| GP-016 表記規則の判定基準と反例 | §2 |
-| GP-017 `ORPHAN` の起因限定と外部起因の復旧 | §7 |
-| GP-018 `FLW-DSN-006` / `FLW-DSN-012` の表記統一と version 更新 | §2（両文書は同じ変更セットで更新する） |
+**GP の原文を逐語で併記する。** 節番号だけを指す対応表は、
+「その節が GP を満たしているか」を読み手に確認させない。実際に本書 v1.0 は
+GP-004 に対し「§5」とだけ書いて対応済みとし、**原文が求める `precondition` ではなく
+`guard key` へ instance identity を入れる**という取り違えを機械検査で素通りさせた
+（`FLW-REV-012:SYN-001`。P0）。原文と応答を1行に並べれば、この不一致は目で見える。
+
+原文は `FLW-REV-011.json` の `gate_preconditions[].statement` から**逐語転記**する。
+要約・言い換えをしない（言い換えた時点で取り違えが隠れるため）。
+
+| GP | 原文（`FLW-REV-011` より逐語） | 応答 |
+|---|---|---|
+| GP-001 | work_unit_state と worktree_state の値を FLW-DSN-012 / FLW-DSN-006 と一致させ、三者照合を機械化してから M2 の契約を凍結する | §2 — 本書の表を唯一の正とし、`work_unit_state` を12値へ回復。設計 ⊆ schema ⊆ 実装の双方向照合テストを規定 |
+| GP-002 | repo 外承認を capability 化し、guard key・親 directory identity・非存在証明・期限・単回 nonce を署名対象に含めて apply 直前に再照合する | §4 — 署名対象表に全5要素を列挙。再照合点は guard 取得直後と各副作用直前の2箇所 |
+| GP-003 | worktree の guard を取る operation は、その worktree に属する index target を同じ acquire に含める包含規約を定める | §3 — 包含規約。acquire 入口で index target を自動付加する正規化により記述漏れを構造的に排除 |
+| GP-004 | worktree の instance identity（gitdir 内容・HEAD OID・create 時 nonce）を precondition に入れ、apply 直前に CAS 照合する | §5 — **precondition（`snapshot_digest`）**へ4要素を含め apply 直前に CAS 照合。**guard key へは入れない**（v1.1 で是正） |
+| GP-005 | worktree guard の quarantine 解除区分を定義し、正規の解放経路を用意する | §6 — worktree 用4区分（`no-effect` / `residue-retained` / `registry-stale` / `unresolved`）と owner process 停止証明の置き場 |
+| GP-006 | worktree.finish と resume を3者 guard の対象へ加える | operation catalog — `create` / `resume` / `finish` / `discard` の4つすべてを3者＋index の対象とする |
+| GP-007 | worktree-dir の CAS 相当（manifest digest の apply 直前再計算）と capability 縮退を定義する | §5 — manifest を `(相対 path, type, dev+ino, size, mtime_ns)` の digest とし apply 直前に再計算。capability 縮退表つき |
+| GP-008 | worktree-dir と worktree-registry の binding 検証と worktree_id の canonical 導出を定める | §3 — registry を authoritative とする相互参照一致を precondition 化。`worktree_id` は canonical 導出関数のみで生成し literal を渡せなくする |
+| GP-009 | case 感度の判定を存在する最も近い祖先まで遡らせ、判定不能なら BLOCKED にする | §3 — 祖先遡り＋承認時の root 測定値の再利用。判定不能は `BLOCKED`（case-sensitive への既定倒しをしない） |
+| GP-010 | settings.json の permissions へ worktree root を加え、承認 receipt を伴わない worktree write を機械的に止める | §4 — permissions ＋ PreToolUse フック。receipt は common-dir 配下の owner-only 領域へ追記 |
+| GP-011 | destructive worktree operation の承認へ M1 の capability envelope を再利用し単回化する | §4 — M1 の Ed25519 envelope を再利用。nonce は target guard 内で linearizable CAS |
+| GP-012 | 設計の閉集合・schema enum・guard.py 定数の三者照合テストを追加する | §2 — **双方向**照合（片方向が沈黙した原因）。対象は namespace 表の全 namespace |
+| GP-013 | M2-FLT-* を採番し、worktree の fault fixture と recovery matrix 行を定義する | §8（recovery matrix）／ §9（`M2-FLT-001`〜`044`。各 fixture をちょうど1区分へ割当） |
+| GP-014 | 複数 namespace に現れる語の一覧を schema から機械導出して文書と照合する | §2 — 手で維持する表を置かず schema から導出。本書の表は導出結果の期待値 |
+| GP-015 | closed enum への値追加の互換性条文を output-contract.md へ作るか、互換性を根拠にしない記述へ改める | §2 — **後者を採用**。「key 集合は加算のみ」は object の key の規定であり closed enum に適用できないため、根拠を「未公開だから影響が無い」へ置換 |
+| GP-016 | 表記規則の判定基準（field 名ではなく値の性質）と反例を明記し、namespace 表へ性質列を足す | §2 — 判定基準を「値の性質」と明記し性質列を追加。反例（`trial_kind` の `Q-NORMAL`）を隠さず記載 |
+| GP-017 | ORPHAN の断定を bitz-flow 起因に限定し、外部起因の復旧手順と fault 項目を追加する | §7 — 3者 guard が防げるのは bitz-flow 起因のみと明記。外部起因は検出＋復旧（`M2-FLT-013` / `014`） |
+| GP-018 | FLW-DSN-006 / FLW-DSN-012 の状態語を表記規則へ揃え、version と updated を上げる | §2 ＋ 実ファイル更新（`FLW-DSN-006` 1.1 / `FLW-DSN-012` 1.2 / `FLW-DSN-015` 1.1 を同じ変更セットで） |
+
+この逐語併記は `SI-SDD-042`（レビュー指摘の受領検証）が提案する機械照合の**手動先行版**である。
+同 issue が accept されて照合が機械化されれば、本表が検査対象になる。
 
 ## Revision History
 
+- 1.2 (2026-08-12) §15 の GP 対応表を「節番号のみ」から**原文の逐語併記**へ変更。
+  v1.0 が GP-004 に「§5」とだけ書いて取り違えを素通りさせた再発を防ぐ。
+  `SI-SDD-042`（レビュー指摘の受領検証）が提案する機械照合の手動先行版にあたる。
 - 1.1 (2026-08-12) 起案者による批判的検証（`FLW-REV-012`）の指摘を反映。
   - **P0**: `worktree-dir` の guard key から instance identity を除いた。key に instance を
     含めると「旧 instance の discard」と「新 instance の create」が別 key になり
