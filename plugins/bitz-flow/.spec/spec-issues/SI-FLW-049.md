@@ -3,7 +3,7 @@ id: SI-FLW-049
 raised_by: FLW-REV-013（独立5観点レビュー・FAIL 2.31）
 target: FLW-DSN-012・FLW-DSN-016・FLW-DSN-014
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: **operation class の所有権を1文書に確定する。** 現在2つの設計文書が同じ
   operation に別の class を宣言しており、その差が **M2 出口で公開される operation 集合**を
