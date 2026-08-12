@@ -3,7 +3,7 @@ id: SI-FLW-053
 raised_by: FLW-REV-013（独立5観点レビュー・FAIL 2.31）
 target: FLW-DSN-014・ROADMAP.md
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: **残債の移送に伴う budget 配賦を記録し、上流の再校正が下流へ伝わる経路を作る。**
   現在、上流が下流へ負債を送るとき、**下流にそれを受け取る器が無い**。この構造欠陥は

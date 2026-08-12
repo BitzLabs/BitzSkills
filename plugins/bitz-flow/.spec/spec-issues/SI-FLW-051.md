@@ -3,7 +3,7 @@ id: SI-FLW-051
 raised_by: FLW-REV-013（独立5観点レビュー・FAIL 2.31）
 target: FLW-DSN-016・FLW-DSN-014
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: **M2 の出口条件が原理的に充足不能な状態を解消する。** 出口条件が要求する
   「機械強制層」は Claude Code 固有機構でしか定義されておらず、同じ出口条件が

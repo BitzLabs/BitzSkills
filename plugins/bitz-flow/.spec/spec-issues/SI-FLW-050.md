@@ -3,7 +3,7 @@ id: SI-FLW-050
 raised_by: FLW-REV-013（独立5観点レビュー・FAIL 2.31）
 target: FLW-DSN-016・FLW-DSN-012
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: **`worktree_state` が互いに排他でない3つの軸を単一 enum へ潰している**状態を
   解消する。この曖昧さは finish の許可判定に直結し、**未コミット作業の喪失可否を決める**。
