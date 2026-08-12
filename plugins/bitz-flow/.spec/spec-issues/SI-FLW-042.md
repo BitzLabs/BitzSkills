@@ -3,7 +3,7 @@ id: SI-FLW-042
 raised_by: M2 設計時の実装者（claude）
 target: FLW-DSN-015 の enum namespace 表・FLW-DSN-012 の正規状態写像・FLW-DSN-006 の audit 分類
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `FLW-DSN-015` が定めた「**同名語の混同を避けるため namespace を別 field で持つ**」規律を、
   M2 で扱う WorkUnit state と worktree state にも適用する。現状この2つは namespace 表に無い。

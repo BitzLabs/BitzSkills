@@ -3,7 +3,7 @@ id: SI-FLW-041
 raised_by: M2 設計時の実装者（claude）
 target: FLW-DSN-015 の guard identity 閉集合・schemas/result-v1.schema.json・flowlib/guard.py
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `worktree.create` / `discard` が変える**3者を同一の target guard で守れる**ようにする。
   現状の guard identity は Git の ref と index だけを対象にしており、worktree の
