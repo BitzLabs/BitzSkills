@@ -83,6 +83,7 @@
 - [verify] .spec/verification/pytest--5526358.json: 記録時の commit(5526358) 以降にソースが変更されています（再記録が必要な可能性）
 - [verify] .spec/verification/pytest--d5a446c.json: 記録時の commit(d5a446c) 以降にソースが変更されています（再記録が必要な可能性）
 - [verify] .spec/verification/pytest--f0aed06.json: 記録時の commit(f0aed06) 以降にソースが変更されています（再記録が必要な可能性）
+- [verify] .spec/verification/pytest-scaffold-review--a0cb2c5.json: 記録時の commit(a0cb2c5) 以降にソースが変更されています（再記録が必要な可能性）
 - [verify] SDD-FR-001: verified/promoted だが検証証跡がありません
 - [verify] SDD-FR-010: verified/promoted だが検証証跡がありません
 - [verify] SDD-FR-041: verified/promoted だが検証証跡がありません

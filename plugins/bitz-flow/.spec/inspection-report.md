@@ -1,6 +1,6 @@
 # inspection-report.md (2026-08-12)
 
-成果物数: 64 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 8 / 孤児要件: 0 / 検証証跡: 2
+成果物数: 66 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 8 / 孤児要件: 0 / 検証証跡: 2
 
 ## 問題一覧
 - なし ✅
@@ -106,6 +106,7 @@
 | FLW-DSN-013 | active |  |  | 0 | 2 |
 | FLW-DSN-014 | active |  |  | 0 | 8 |
 | FLW-DSN-015 | active |  |  | 0 | 12 |
+| FLW-DSN-016 | 起草中（draft） |  |  | 0 | 0 |
 | FLW-FR-001 | 検証済み（verified） | governance | unit-test | 3 | 5 |
 | FLW-FR-002 | 検証済み（verified） | tooling | manual-check | 1 | 1 |
 | FLW-FR-003 | 検証済み（verified） | tooling | unit-test | 6 | 6 |
@@ -141,5 +142,6 @@
 | FLW-REV-009 | pending |  |  | 0 | 0 |
 | FLW-REV-010 | pending |  |  | 0 | 0 |
 | FLW-REV-011 | pending |  |  | 0 | 0 |
+| FLW-REV-012 | pending |  |  | 0 | 0 |
 
 **判定: PASS ✅**
