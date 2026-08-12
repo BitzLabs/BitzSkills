@@ -2,8 +2,8 @@
 id: FLW-DSN-015
 title: "M1 write safety・qualification・evidence ledger詳細設計"
 status: active
-version: 1.0
-updated: 2026-08-11
+version: 1.1
+updated: 2026-08-12
 owner: hide
 implements: FLW-FR-013,FLW-NFR-011,FLW-NFR-012
 origin: SI-FLW-006, SI-FLW-029, SI-FLW-037, SI-FLW-038, FLW-REV-008, FLW-REV-009
@@ -55,6 +55,12 @@ M2でworktreeを扱うため、閉集合へ次の2種を加える（`SI-FLW-041`
 
 mutation target typeはこの**7種の閉集合**とする。
 
+上の2種について、**canonical keyの完全な導出規則・binding検証・`index`包含規約・
+instance identity（`FLW-REV-011:SYN-004`のP0対応）・CAS相当の正は`FLW-DSN-016`§3および§5**である。
+本節の表はkeyの構成要素を示すに留まり、`worktree-dir` keyにはinstance identityが加わる。
+対象operationも`create`／`discard`だけでなく**`create` / `resume` / `finish` / `discard`の4つ**である
+（同`SYN-006`）。
+
 ## write状態機械
 
 ```mermaid
@@ -99,6 +105,8 @@ stateDiagram-v2
 `code`（`INVALID_INPUT`）と`cause`（`not-repository`）が同じresult内で表記を変えるのは、
 偶然ではなく種類が違うためである。内部値と表示を分ける（schemaは大文字、文書は小文字）方式は
 **採らない** — 変換表そのものが二重定義になり、`SI-FLW-039`と同型の事故を招く。
+判定基準は**field名ではなく値の性質**であり、既知の反例（`trial_kind`の`Q-NORMAL`等）を含む
+規則の詳細は`FLW-DSN-016`§2が正である（`FLW-REV-011:SYN-016`）。
 
 | namespace | field | closed enum |
 |---|---|---|
@@ -107,22 +115,15 @@ stateDiagram-v2
 | intent記録 | `intent_record_state` | `PENDING, RECONCILING, PARTIAL, STALE, QUARANTINED, RELEASED` |
 | Gate | `gate_status` | `PASS, FAIL, BLOCKED` |
 | attempt | `attempt_status` | `STARTED, PASS, FAIL, ABORTED, UNKNOWN` |
-| WorkUnit（M2で凍結） | `work_unit_state` | `PLANNED, ISOLATED, ACTIVE, VERIFIED, PR_DRAFT, PR_OPEN, MERGED, FAILED` |
-| worktree（M2で凍結） | `worktree_state` | `ABSENT, PLANNED, APPROVED, ACTIVE_CLEAN, ACTIVE_DIRTY, PR_OPEN, MERGED_EXACT, REMOTE_ADVANCED, WORKTREE_MISMATCH, ORPHAN, FAILED_RETAINED` |
 
-**複数namespaceに現れる語**（読み手はどのnamespaceの語かを必ず確認すること）:
+M2で追加する`work_unit_state` / `worktree_state` / `branch_audit_state`、および
+`guard_identity_kind`への2値追加（`worktree-dir` / `worktree-registry`）の**正は`FLW-DSN-016`**である。
+本表はM0/M1で凍結した5 namespaceの正であり、M2分は`FLW-DSN-016`§2を参照する。
 
-| 語 | 現れるnamespace |
-|---|---|
-| `PLANNED` | `write_state` / `work_unit_state` / `worktree_state` |
-| `PARTIAL` | `write_state` / `result_code` / `intent_record_state` |
-| `STALE` | `write_state` / `result_code` / `intent_record_state` |
-| `DONE` | `write_state` / `result_code` |
-| `PR_OPEN` | `work_unit_state` / `worktree_state` |
-| `FAIL` / `FAILED` | `gate_status` / `attempt_status` / `work_unit_state` |
-
-`work_unit_state`と`worktree_state`の値の正は`FLW-DSN-012`の正規状態写像と`FLW-DSN-006`のaudit分類
-であり、M2の契約凍結でschemaへ落とす。
+`FLW-REV-011:SYN-001`は、ここに置いた暫定表が「値の正は他文書」と委譲した結果、
+**どちらを見ても正が確定しない**状態を作ったことをP0とした。委譲文と暫定値を削り、
+M2分の単一の正を`FLW-DSN-016`へ置くことで解消する。多重語一覧もschemaからの機械導出とし、
+手で維持する表を置かない（同`SYN-014`）。
 
 ## target guardプロトコル
 

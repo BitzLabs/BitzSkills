@@ -2,8 +2,8 @@
 id: FLW-DSN-012
 title: "Operation Contract詳細設計"
 status: active
-version: 1.1
-updated: 2026-07-29
+version: 1.2
+updated: 2026-08-12
 owner: hide
 implements: FLW-FR-003, FLW-FR-004, FLW-FR-005, FLW-FR-006, FLW-FR-007, FLW-FR-008, FLW-FR-009, FLW-FR-010, FLW-NFR-003, FLW-NFR-005, FLW-NFR-006, FLW-CON-002, FLW-CON-004, FLW-CON-005, FLW-CON-006
 origin: FLW-REV-002
@@ -76,7 +76,7 @@ command実装を先に作らず、各操作の対象・副作用・成功・再�
 
 | 正規WorkUnit state | worktree state | PR state | 許可action |
 |---|---|---|---|
-| `planned` | absent/planned | none | worktree.create |
+| `planned` | absent | none | worktree.create |
 | `isolated` | active-clean | none | status、作業開始 |
 | `active` | active-dirty | none | diff、stage、commit |
 | `verified` | active-clean | local-verified | pr.prepare |
@@ -93,6 +93,11 @@ command実装を先に作らず、各操作の対象・副作用・成功・再�
 
 状態遷移は外部事実から毎回再構成する。単一の証拠で複数状態に該当する場合は、
 より危険側の状態を採用し`BLOCKED`にする。
+
+上表の「正規WorkUnit state」12値と「worktree state」の**enum 値としての正は`FLW-DSN-016`§2**
+（`work_unit_state` / `worktree_state`）である。本表は両者の対応関係と許可actionを示す。
+`FLW-REV-011:SYN-001`は、値の正が複数文書へ分散して確定しない状態をP0としたため、
+値そのものは`FLW-DSN-016`の1箇所に置き、設計・schema・実装の三者照合で機械検証する。
 
 ### Release state
 

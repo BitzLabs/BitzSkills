@@ -1,0 +1,178 @@
+{
+  "schema_version": 2,
+  "review_id": "FLW-REV-012",
+  "verdict": "CONDITIONAL_PASS",
+  "aggregate_score": 3.62,
+  "perspective_scores": {
+    "consistency": 3.7,
+    "data-integrity": 3.6,
+    "operations": 3.5,
+    "risk": 3.6,
+    "business": 3.8
+  },
+  "findings_summary": {
+    "before_dedup": 9,
+    "after_dedup": 8,
+    "p0": 1,
+    "p1": 1,
+    "p2": 4,
+    "p3": 2
+  },
+  "gate_preconditions": [
+    {
+      "id": "GP-001",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "SI-FLW-043（FLW-NFR-007 の改訂）が accepted かつ要件改訂が承認されるまで、worktree 実体の作成・削除を実装しない",
+      "evidence": ".spec/requirements/FLW-NFR-007.md の受入基準に「対象が…repo 境界外 parent…である THEN 原本を変更せず BLOCKED を返すこと SHALL」が現存することを実測（2026-08-12）"
+    },
+    {
+      "id": "GP-002",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "SI-FLW-044（FLW-CON-006 の CAS 厳格化）が accepted かつ要件改訂が承認されるまで、git.delete-remote-branch を実装しない",
+      "evidence": ".spec/requirements/FLW-CON-006.md の受入基準が「削除直前に remote ref と expected SHA を再照会し、一致しない場合は削除しない」（CAS ではない）であることを実測"
+    },
+    {
+      "id": "GP-003",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "SI-FLW-045（M1 confirmation 負債の受け側）が accepted となり、FLW-DSN-014 の M2 行と縮退規則3が改訂されるまで、M2 出口条件を凍結しない",
+      "evidence": ".spec/design/FLW-DSN-014.md の M2 行が「4 PR / 14 session」「repo identity 衝突0、repo 外承認、finish/discard fault 全通過」のままであることを実測"
+    },
+    {
+      "id": "GP-004",
+      "kind": "blocking",
+      "basis": "verified",
+      "statement": "ABA 検出 provider capability の実在性を M2-5 着手前に確認し、実在しなければ capability 分岐を削除して単一経路へ確定させる",
+      "evidence": "FLW-DSN-016 §「git.delete-remote-branch の安全条件」が capability の有無で経路を分けており、実在性が未検証であることを本レビューで確認"
+    },
+    {
+      "id": "GP-005",
+      "kind": "agenda",
+      "basis": "assumed",
+      "statement": "本レビューは起案者 self-review であり独立性が無い。M2 契約凍結前に独立レビュー（クロスモデル検証）を実施するかを人間が判断する",
+      "evidence": ""
+    }
+  ],
+  "findings": [
+    {
+      "id": "FLW-REV-012:SYN-001",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "data-integrity",
+        "risk"
+      ],
+      "status": "resolved",
+      "tracked_by": "FLW-DSN-016",
+      "title": "instance identity を guard key へ含めると同一 path の operation が排他しなくなる",
+      "detail": "v1.0 の §3 は worktree-dir の canonical key を「common-dir identity ＋ path digest ＋ instance identity」と定義していた。key に instance を含めると、旧 instance の discard と新 instance の create が別 key になり互いに排他しない。FLW-REV-011:SYN-004 を防ぐどころか、同一 path に対する直列化そのものが失われ、両者が同時に進行し得る。FLW-REV-011:GP-004 の文言も「instance identity を precondition に入れ apply 直前に CAS 照合する」であり、key へ入れるとは書いていない。",
+      "recommendation": "guard key は path に対して安定（instance 非依存）とし、すべての operation を同じ key で直列化する。instance の同一性は precondition（snapshot_digest）で照合する。役割分担（直列化＝key / 同一性照合＝precondition）を表で明示する。",
+      "resolution_note": "v1.1 §3 で key から instance identity を除き、混入禁止の理由と役割分担表を追加した。"
+    },
+    {
+      "id": "FLW-REV-012:SYN-002",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "operations"
+      ],
+      "status": "resolved",
+      "tracked_by": "FLW-DSN-016",
+      "title": "registry entry だけ残存する最頻ケースに正規の解放経路が無い",
+      "detail": "v1.0 の §6 は quarantine 解除区分を no-effect / residue-retained（directory だけ残存）/ unresolved の3種としたが、外部要因（人間の手動削除・外部ツール）で実体だけが消える形が最も起きやすい。これは directory 不在・registry entry 残存であり3区分のどれにも当たらず unresolved へ落ちる。回復可能な状態が恒久 quarantine に固定され、FLW-REV-011:GP-005 が求める「正規の解放経路」が最頻ケースで存在しないことになる。",
+      "recommendation": "worktree-registry-stale 区分を追加し、gitdir が指す path の非存在証明を必須として stale entry の除去を正規の残 step として許可する。単に見えないだけ（mount 未接続・権限不足）と区別できない場合は unresolved とする。",
+      "resolution_note": "v1.1 §6 で worktree-registry-stale を追加し、判定条件と除去範囲（registry entry のみ）を規定した。"
+    },
+    {
+      "id": "FLW-REV-012:SYN-003",
+      "priority": "P2",
+      "severity": "minor",
+      "source": [
+        "business"
+      ],
+      "status": "resolved",
+      "tracked_by": "FLW-DSN-016",
+      "title": "session 合計が budget と 1 ずれていた",
+      "detail": "v1.0 の実装境界表は 4+4+4+3+3=18 session だが、SI-FLW-045 が定める移送後 budget は 4 PR / 14 session ＋ 1 PR / 3 session ＝ 5 PR / 17 session である。",
+      "recommendation": "合計を 17 へ是正し、fixture 件数の偏り（M2-4 が 13 件で最多）に合わせて再配分する。",
+      "resolution_note": "v1.1 で M2-2 / M2-3 を 3 session、M2-4 を 4 session とし合計 17 に是正した。"
+    },
+    {
+      "id": "FLW-REV-012:SYN-004",
+      "priority": "P2",
+      "severity": "minor",
+      "source": [
+        "consistency"
+      ],
+      "status": "resolved",
+      "tracked_by": "FLW-DSN-016",
+      "title": "capability 署名 field の適用範囲が operation 別に分かれていない",
+      "detail": "nonexistence_digest（対象が存在しないことの証明）は create にしか意味が無いが、v1.0 は全 worktree operation の署名対象として一律に列挙していた。resume / finish / discard では対象が存在するため、この field を要求すると常に不成立になるか、意味の無い値を入れることになる。",
+      "recommendation": "nonexistence_digest を create 専用とし、既存 target を扱う operation には instance_identity_digest を対応させる。",
+      "resolution_note": "v1.1 §4 の署名対象表で operation 別の適用範囲を明示した。"
+    },
+    {
+      "id": "FLW-REV-012:SYN-005",
+      "priority": "P2",
+      "severity": "minor",
+      "source": [
+        "consistency"
+      ],
+      "status": "resolved",
+      "tracked_by": "FLW-DSN-016",
+      "title": "namespace 表に trial_kind と cause が無く三者照合の対象範囲が曖昧",
+      "detail": "表記規則の反例として trial_kind を本文で言及しながら表に載せていない。cause も「既存」とだけ書いて値を示していない。三者照合テストの対象を「表の全 namespace」とする場合、載っていない namespace は guard_identity_kind と同じ経路（設計と実装の乖離が沈黙する）で腐る。",
+      "recommendation": "両者を表へ加え、照合対象を「本表の全 namespace」と明示する。",
+      "resolution_note": "v1.1 §2 で trial_kind（規則の反例と明記）と cause を表へ追加し、照合対象を明示した。"
+    },
+    {
+      "id": "FLW-REV-012:SYN-006",
+      "priority": "P2",
+      "severity": "minor",
+      "source": [
+        "risk"
+      ],
+      "status": "open",
+      "tracked_by": "FLW-REV-012:GP-004",
+      "title": "ABA 検出 capability の実在性が未検証のまま経路が分岐している",
+      "detail": "GitHub が「plan 時 snapshot 以降の ref 更新イベント」を観測可能な形で提供するかは未検証。実在しなければ全 platform が承認要求経路へ落ち、capability 分岐は死に枝になる。設計は M2-5 で確認するとしているが、確認結果によって設計の形が変わる項目を未確定のまま catalog に載せている。",
+      "recommendation": "M2-5 着手前に実在性を確認し、実在しなければ分岐を削除して単一経路へ確定させる。確認結果を decision record と FLW-DSN-014 の capability matrix へ反映する。",
+      "resolution_note": ""
+    },
+    {
+      "id": "FLW-REV-012:SYN-007",
+      "priority": "P3",
+      "severity": "info",
+      "source": [
+        "consistency"
+      ],
+      "status": "open",
+      "tracked_by": "",
+      "title": "M2-4 が最も重い区分でありながら fixture / session 比が最悪",
+      "detail": "M2-4 は finish・discard・quarantine 解除を同時に扱い fixture 13 件を 4 session で消化する。他区分は M2-1 が 9 件 / 4 session、M2-5 が 8 件 / 3 session である。区分超過が最も起きやすい位置にある。",
+      "recommendation": "設計上は分割せず、M2-4 着手時に実績で再校正する。超過時は総枠内でも人間へ再提示するという既定の運用に従う。",
+      "resolution_note": ""
+    },
+    {
+      "id": "FLW-REV-012:SYN-008",
+      "priority": "P3",
+      "severity": "info",
+      "source": [
+        "operations"
+      ],
+      "status": "open",
+      "tracked_by": "",
+      "title": "本レビューは起案者 self-review であり独立性が無い",
+      "detail": "FLW-REV-011 は独立した多観点レビューとして実装 grep による裏取りまで行い P0 5系統を検出した。本レビューは FLW-DSN-016 の起案者が自分の設計を採点しており、同じ深度の独立性は無い。P0 1件・P1 1件を自己検出できてはいるが、見落としの可能性を判定に織り込む必要がある。",
+      "recommendation": "M2 契約凍結前に独立レビュー（クロスモデル検証）を実施するかを人間が判断する。",
+      "resolution_note": ""
+    }
+  ],
+  "carried_over": [],
+  "conditional_items": [
+    "FLW-REV-012:SYN-006 — ABA 検出 capability の実在性を M2-5 着手前に確認し、実在しなければ単一経路へ確定させる",
+    "FLW-REV-012:GP-001〜003 — 要件改訂3件（FLW-NFR-007 / FLW-CON-006 / FLW-FR-007）と SI-FLW-043〜045 の裁定が M2 実装の前提"
+  ]
+}
