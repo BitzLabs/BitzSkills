@@ -1,0 +1,78 @@
+{
+  "perspective": "business",
+  "score": 2.6,
+  "summary": "FLW-DSN-016 は安全設計としての完成度は高く、GP 逐語併記（§15）と代替案の却下理由（§13）はトレーサビリティの模範だが、ビジネス整合の面では重大な欠落がある。M2 が M3 へ送った残債（remote-write confirmation ＋ coordinator 証明手段）に budget が一切付いておらず、SI-FLW-045 が是正したばかりの「残債の受け側が予算を持たない」断絶が M2→M3 境界で再発している。加えて v2 計画全体が旧 13 PR / 52 session から 28 PR / 94 session（session 1.81 倍）へ膨張しているにもかかわらず、本書にも裁定記録にも上位計画（bitz-sdd V4 フェーズ4）への影響評価が一行も無く、出口条件の fixture 範囲は3文書で 5 件食い違っている。",
+  "findings": [
+    {
+      "id": "BIZ-001",
+      "severity": "critical",
+      "title": "M2 が M3 へ送った残債に budget が付いておらず、SI-FLW-045 が是正した断絶が再発している",
+      "detail": "SI-FLW-045 は「M1-6 が送った残債の受け側が存在しない」ことを問題とし、その是正として M2 へ +1 PR / +3 session を移送させた（FLW-DSN-016 §11 の内訳表、FLW-DSN-014.md:664-669）。ところが同じ裁定（案A）で M2 が M3 へ送った remote-write class の confirmation（git.publish-branch / git.delete-remote-branch）について、FLW-DSN-014.md:635 の M3 行は budget が「3 + 3 = 6 PR / 20 session」のまま一切変更されていない。さらに M3 入口条件（FLW-DSN-014.md:676-681）は、裁定3 が M3 へ委譲した coordinator 証明手段の確定まで前提として積み増している。つまり M3 は「remote-write confirmation ＋ 分散協調の証明手段設計」という2つの新規負荷を受けながら増分ゼロである。受け側の記述（散文）は作られたが、予算という実効的な受け皿は作られておらず、SI-FLW-045 が指摘した断絶の本質（送った側だけが軽くなる）は解消していない。FLW-DSN-016 §12・§14 もこの点に触れていない。",
+      "recommendation": "M2 出口条件を凍結する前に、(a) M3 の budget を remote-write confirmation と coordinator 証明手段の増分見積り付きで再校正し FLW-DSN-014 の M3 行へ反映する、(b) それが M2 着手前に確定できないなら、FLW-DSN-016 §12 の M2 出口条件へ「M3 budget の再校正が人間へ提示済みであること」を明示的な出口項目として加える。いずれも行わない場合、残債の移送は milestone をまたぐ見積り隠しになるため、案A の採用条件を再裁定すべきである。"
+    },
+    {
+      "id": "BIZ-002",
+      "severity": "critical",
+      "title": "v2 計画全体が 1.8 倍に膨張しているのに、上位計画（bitz-sdd V4）への影響評価が本書にも裁定記録にも無い",
+      "detail": "FLW-DSN-014.md:631-637 の milestone 表では、旧 budget 合計 M1〜M5 = 13 PR / 52 session に対し、新 budget 合計は 28 PR / 94 session（PR 2.15 倍・session 1.81 倍）である。M2 単体でも 2 PR / 8 session → 6 PR / 20 session（session 2.5 倍）。一方 plugins/bitz-flow/.spec/ROADMAP.md「上位ロードマップとの接続」は『bitz-flow V2 の遅延は V4 の遅延に直結する』と明記し、bitz-sdd ROADMAP はフェーズ4 に本作業を置いて V4 Charter の入口条件としている。にもかかわらず、FLW-DSN-016 §14「影響範囲・ロールバック」には上位計画への言及が一切なく（本書および .spec/reports/decision-2026-08-12-si-flw-043-046.md を 'bitz-sdd' / 'V4' / '上位' で grep してヒット 0、FLW-DSN-014 のヒット2件はいずれもテーマ13-E への委託であり遅延影響ではない）、budget 再提示の裁定材料にも下流影響が含まれていない。人間が「この +6 session を M2 で払うか、Should へ回して V4 を先へ進めるか」を判断するための情報が Design Gate に提出されていない。",
+      "recommendation": "FLW-DSN-016 §14 へ「上位計画への影響」小節を追加し、(1) M2 の +6 session が bitz-flow V2 完了時期に与える遅延、(2) その遅延が bitz-sdd V4 Charter 開始（フェーズ4→5）へ与える影響、(3) 累積膨張（52→94 session）に対する program レベルの継続 / scope 縮小 / No-Go の再確認要否、を明記する。ROADMAP『予算と縮退の運用』は milestone 単位の再提示しか規定していないため、累積値での再提示規則を FLW-DSN-014 へ加えることも併せて提案する。"
+    },
+    {
+      "id": "BIZ-003",
+      "severity": "major",
+      "title": "M2 出口条件の fixture 範囲が3文書で不一致で、完了判定が文書によって変わる",
+      "detail": "FLW-DSN-016 §12 は出口条件を「`M2-FLT-001`〜`049` 全件 PASS」とし §9 も 49 件を採番している。しかし plugins/bitz-flow/.spec/ROADMAP.md:158 と plugins/bitz-flow/.spec/design/FLW-DSN-014.md:649 はいずれも「`M2-FLT-001`〜`044` 全件 PASS」のままである（grep 実測）。さらに FLW-DSN-016 §11 は budget について『内訳は次のとおりで FLW-DSN-014 の「M2出口条件・budget・M3入口条件」節と一致する』と主張しており、budget（6 PR / 20 session）は確かに一致する一方で、同じ節の出口条件は一致していない。2026-08-12 の同期作業が budget だけを反映し fixture 範囲を落としたことを示している。M2-FLT-045〜047（SI-FLW-046 の reconnaissance）と 048/049（ABA 経路B/C）という、まさに今回追加した5件が完了条件から抜け落ちる形になっており、出口ゲートを機械判定にかけたときにどちらを正とするかで結論が変わる。",
+      "recommendation": "FLW-DSN-014.md:649 と ROADMAP.md:158 を `M2-FLT-001`〜`049` へ同一変更セットで更新する。併せて、fixture 上限番号のような可変値を3文書へ手で複写する構造自体が腐るため、出口条件側は「§9 の catalog 全件」と参照で書き、件数の正を FLW-DSN-016 §9 に一本化することを推奨する（本書が §2 の enum で採った『唯一の正を1箇所に置く』方針と同じ扱い）。"
+    },
+    {
+      "id": "BIZ-004",
+      "severity": "major",
+      "title": "M2-6 が過負荷で、移送した +3 session が実質的に新規実装費へ流用されている",
+      "detail": "FLW-DSN-016 §11 の M2-6 は 3 session で、(1) git.delete-remote-branch の実装（SI-FLW-044 による再照会一致→expected-OID CAS の厳格化を含む）、(2) ABA 検出の3経路分岐、(3) local-write class 被測定物 confirmation の 3 platform 実走と active manifest 発行、(4) fixture 10 件（M2-FLT-037〜044・048・049）、(5) M2 出口ゲートそのもの、を同時に負う。比較対象として、M1 では confirmation 単独に 1 PR / 3 session が配賦されている（FLW-DSN-014.md:685-686）。つまり M1 で confirmation だけに要した量と同じ枠へ、M2 では confirmation に加えて remote-write operation 一式が押し込まれている。本書自身は M2-5 について『fixture 件数の偏り（13 件で最多）に合わせて 4 session を配った』と根拠を書いているが、10 件＋confirmation＋出口ゲートの M2-6 には同じ論理が適用されていない。逆に M2-4 は read-only の fixture 3 件に 3 session が付いている。この配賦のもとでは『移送分は区分の付け替えであって余裕の増加ではない』（§11）という主張は成立せず、移送された 3 session は実質的に delete-remote-branch の実装費へ回っている。",
+      "recommendation": "M2-6 を「delete-remote-branch ＋ ABA」と「local-write confirmation ＋ 出口ゲート」の2区分へ分割し、fixture 件数と M1 実績（confirmation = 3 session）に基づいて再配賦する。総枠 20 session を維持するなら M2-4（read-only 3 fixture）から 1 session を回すなど、根拠を明示した再配分を §11 へ書く。総枠を超えるなら FLW-DSN-014 の規定どおり着手前に人間へ再提示する。"
+    },
+    {
+      "id": "BIZ-005",
+      "severity": "major",
+      "title": "M2 に early quick win が無く、縮退が二値のため 20 session を投じて出荷可能増分ゼロになり得る",
+      "detail": "FLW-DSN-016 §11 の依存は M2-1→M2-6 の完全直列で、先頭の M2-1（4 session）は guard core という純基盤であり外部価値をまったく生まない。一方 M2 の縮退境界は『M0 read-only prerelease へ縮退。worktree-first 未完了のため M1 Git write も公開しない』（FLW-DSN-014.md:634、ROADMAP フェーズ3）であり、縮退規則3 の解除条件（§12）は M2 出口条件の全充足である。したがって最終区分 M2-6 が未達なら、M2-1〜M2-5 で 17 session を費やしても公開できるものは M0 read-only のままで増分ゼロになる。M1 は『qualification を最初の blocking quick win とする』（FLW-DSN-014.md:687）と早期価値を明示的に設計していたが、M2 には対応する記述が無い。さらに §11 は『いずれかの区分が上限を超える見積りになった時点で人間へ再提示する』とするだけで、超過時に何を落とせば価値を残せるかという中間縮退（例: worktree.discard を UNSUPPORTED のまま audit / create / resume だけを公開する、delete-remote-branch を M3 へ送る）の梯子を定義していない。§5 には capability 縮退表があり discard の UNSUPPORTED 化は技術的に可能なので、これを予算超過時の選択肢として提示できていないのは設計上の欠落である。",
+      "recommendation": "§11 または §12 へ「予算超過時の M2 内 scope 縮小ladder」を追加し、公開できる最小の安全境界（例: local-write confirmation ＋ worktree.audit/create/resume まで＝縮退規則3 の部分解除）と、そのとき UNSUPPORTED へ残す operation を列挙する。併せて M2 の early quick win を1つ特定する（read-only の reconnaissance / audit 拡張が最有力。BIZ-006 参照）。"
+    },
+    {
+      "id": "BIZ-006",
+      "severity": "major",
+      "title": "SI-FLW-046 の M2 内取り込みが裁定4（v2 完成条件は Must のみ）に照らして検討されておらず、配置が取り込み理由と矛盾する",
+      "detail": "ROADMAP『Should 機能の扱い』は『v2 完成条件は Must のみとする（裁定4）』『Should は M0〜M5 の予算に含めず Promotion Gate 後に 1.1.0 以降で個別昇格する』と定める。SI-FLW-046 は自ら『v2 の scope 追加である』と認めた新規要望であり、+1 PR / +3 session で M2 へ取り込まれた。ところが FLW-DSN-016 §13「代替案と却下理由」には7件の代替案が並ぶが、『Promotion Gate 後の Should 昇格へ回す』という最も自然な対案が入っていない。裁定4 の原則に対する例外を作る以上、なぜ Must 側（FLW-FR-007 の受入基準追加）として扱えるのかの判定根拠が設計に残るべきである。さらに配置に矛盾がある。取り込みの理由は『v2 自身の開発が同じ事故を繰り返す期間が延びる』（SI-FLW-046、§11 でも再掲）という早期実現が価値の源泉の論理だが、§11 は M2-4（6区分中5番目）に置いており、先行する M2-1〜M2-3 の 10 session を消化するまで価値が出ない。本書自身が『実装自体は read-only で既存 Git read adapter に乗るため安い』（§11）と認めているとおり、これは M2 で唯一の安価な read-only 増分であり、M2-1 の guard core（write 経路の基盤）に依存しない。M2-3 の audit 実装に依存するという依存説明は正しいが、その audit 自体を前倒しできない理由は書かれていない。",
+      "recommendation": "(1) §13 へ『SI-FLW-046 を Should として Promotion Gate 後へ回す』案とその却下理由を追加し、裁定4 の例外として扱う根拠（FLW-FR-007 という既存 Must 要件の受入基準改訂に収まること）を明記する。(2) reconnaissance が read-only であることを活かし、worktree.audit（M2-3）と M2-4 を M2-1 より前、あるいは M2-1 と並行の read-only slice として前倒しできないかを §11 で評価する。前倒しできれば BIZ-005 の quick win 不在も同時に解消する。前倒し不能なら、その理由（例: enum 三者照合が M2-1 の閉集合確定に依存する）を明示する。"
+    },
+    {
+      "id": "BIZ-007",
+      "severity": "major",
+      "title": "新設した reconnaissance 結果の出力量に上限規定が無く、North Star（token / byte 効率）と Must 要件に反する",
+      "detail": "FLW-FR-007 1.1 の新受入基準は『repo 全体の in-flight branch を列挙し、各 branch が default branch との差分で触れている path 集合と、これから触る path との重なりを返すこと』を求める。これは branch 数 × 変更 path 数で膨らむ出力であり、v2 の North Star（.spec/discovery/success-metrics.md の Token / Output Efficiency、FLW-NFR-008）と、MoSCoW Must 2『Git の安定した machine-readable 出力を parse し、上限と絞込み導線を持つ』に直接ぶつかる。しかし FLW-DSN-016 は §9 の M2-FLT-045『in-flight 列挙に現れる』・M2-FLT-046『重なり付きで返る』としか規定せず、byte 上限・件数上限・truncation 規則・省略の可視化（v2 の設計原則である『省略は必ず可視化する』）のいずれにも触れていない。§12 の M2 出口条件にも出力量に関する項目が無い。安全側の機能追加が、v2 が測っている唯一の効率指標を無審査で圧迫する構図になっている。",
+      "recommendation": "§9 へ『大量 in-flight branch（例: 50 branch × 数百 path）での reconnaissance 出力』の fixture を追加し、期待結果を「compact / json とも上限内に収まり、省略が可視化される」と定義する。併せて §12 の M2 出口条件へ token-byte benchmark の再測定（reconnaissance 追加後も NFR-008 の閾値を満たすこと）を加える。"
+    },
+    {
+      "id": "BIZ-008",
+      "severity": "minor",
+      "title": "M2 出口条件の confirmation 項目に閾値・母数が inline されておらず、本書だけでは合否を判定できない",
+      "detail": "FLW-DSN-016 §12 は『local-write class の被測定物 confirmation が 3 platform で PASS し active manifest 発行済み』とするが、PASS の閾値も母数（被測定物 operation の閉集合）も本書に書かれていない。閉集合は FLW-DSN-014.md:657-660 の write class 表に、閾値は FLW-NFR-011 にあり、2文書を辿らないと判定できない。比較として M0 の出口は『platform 別 Invocation 95%、SFCR 90%、skill なし比 20pt 改善、parity 100%、危険操作 0』（.spec/discovery/scope.md）と数値が inline されており、M2 だけ定量が外部化されている。SI-FLW-045 の確認観点も『M2 出口条件が confirmation 対象 operation を閉集合で列挙していること』を求めていたが、本書は列挙していない。",
+      "recommendation": "§12 へ被測定物 operation の閉集合（git.stage / commit / fetch / sync ＋ 全 worktree.*）と、適用する qualification / confirmation の閾値を明示的に転記または参照 ID 付きで記載する。"
+    },
+    {
+      "id": "BIZ-009",
+      "severity": "minor",
+      "title": "人間承認の発生頻度・所要コストが定量化されておらず、Persona B（AIエージェント）の自律性への影響が評価されていない",
+      "detail": "§4 の capability 化により、worktree.create / resume / finish / discard と git.delete-remote-branch はそれぞれ署名付き単回 capability を要し、§8 では ABA 検出の3経路すべてが『どの経路も人間承認を省略しない』とされる。結果として1 WorkUnit のライフサイクル（create → finish または discard → remote branch 削除）で人間の署名承認が最大4回発生し、STALE 時は再承認で増える。v2 のペルソナ B は AI エージェントであり、North Star は往復・token 効率であるが、この承認回数の上限値・許容値はどこにも定義されていない。discovery の Guardrail Metrics は『誤った破壊的状態変更 0 件』など安全側のみで、摩擦側（承認回数・待ち時間）の指標を持たない。§4 は guard 前倒し案を却下する際に運用影響（承認待ち中の全 write 停止）を正しく評価しており判断の質は高いが、その裏返しとして採用案側の承認コストは評価されていない。",
+      "recommendation": "§4 または §12 へ「1 WorkUnit あたりの人間承認回数」の想定値と許容上限を記載し、超える場合の緩和策（例: 1 承認で create と finish を束ねる複合 capability の可否と、それが単回性を壊さないか）を検討結果として残す。M2 の eval で承認回数を実測して run manifest へ記録することも併せて規定する。"
+    },
+    {
+      "id": "BIZ-010",
+      "severity": "info",
+      "title": "良い点 — トレードオフ判断の文書化とトレーサビリティは模範的",
+      "detail": "§13 は代替案7件それぞれに却下理由を書いており、特に §4 の『guard を承認の前へ倒す』却下理由は、承認待ちが分〜時間単位になること、§3 の包含規約により git.stage まで巻き込むこと、承認待ち1件が当該 worktree の全 write を停止させることまで運用影響を追って説明している。§15 は FLW-REV-011 の GP 18 件を原文逐語で併記し、v1.0 が GP-004 で起こした取り違え（guard key と precondition の混同）を再発させない構造にしている。§9 は fixture を『ちょうど1つの実装区分へ割当・未割当と重複割当 0』と完了条件化しており、機械判定可能である。これらは business 観点のトレーサビリティ次元では加点材料であり、本レビューの低評価は設計の質ではなく計画・予算・上位整合の側にある。",
+      "recommendation": "維持する。特に §15 の逐語併記方式は、SI-SDD-042 の機械照合が入るまでの手動先行版として他の設計文書へも展開する価値がある。"
+    }
+  ],
+  "gp_verification": []
+}

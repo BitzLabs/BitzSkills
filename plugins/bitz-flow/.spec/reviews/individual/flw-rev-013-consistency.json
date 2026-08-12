@@ -1,0 +1,257 @@
+{
+  "perspective": "consistency",
+  "score": 2.1,
+  "summary": "FLW-DSN-016 は §15 の GP 逐語併記と §9 の fixture 全件割当（実測で 49 件が6区分へ未割当0・重複0）という模範的な部分を持つ一方、整合性の観点では『対応済みと書いてあるのに本文・実ファイルが対応していない』類が複数残っている。最大のものは GP-018 で、§15 は「FLW-DSN-006 1.1 / FLW-DSN-012 1.2 を同じ変更セットで更新」と対応済みを主張するが、実ファイルは version だけ上がり audit 分類表・写像表の状態語は小文字 kebab のままで、裁定記録 decision-2026-08-12-m2-design-gaps.md 裁定2 が明示的に却下した『文書と schema で表記を変える／変換表を持つ』構図が温存されている。加えて fixture 範囲は 049 と 044 で3文書が食い違い、しかもどの文書が出口条件の正かが ROADMAP・FLW-DSN-014・本書で三者三様に指名されているため、機械判定にかけると結論が確定しない。次元別は 構造整合 2.3 / トレーサビリティ 2.0 / 用語一貫性 2.0（加重 2.1）。",
+  "findings": [
+    {
+      "id": "FLW-REV-013:RVC-001",
+      "severity": "critical",
+      "title": "M2 出口条件の fixture 範囲が 049 と 044 で3文書食い違い、出口ゲートが機械判定できない",
+      "detail": "FLW-DSN-016 §12 は出口条件を「`M2-FLT-001`〜`049` 全件 PASS」とし、§9 の catalog も実測で 001〜049 の 49 件（M2-1:9 / M2-2:6 / M2-3:8 / M2-4:3 / M2-5:13 / M2-6:10 = 49、未割当0・重複0）を採番している。一方 plugins/bitz-flow/.spec/design/FLW-DSN-014.md:649 と plugins/bitz-flow/.spec/ROADMAP.md:158 はいずれも「`M2-FLT-001`〜`044` 全件 PASS」のままである。落ちている5件は今回追加したもの（`M2-FLT-045`〜`047` = SI-FLW-046 の reconnaissance、`M2-FLT-048` / `049` = ABA 経路B / C）であり、同じ 2026-08-12 の変更セットで budget（6 PR / 20 session）は3文書とも一致させたのに、出口条件だけが同期漏れしている。FLW-DSN-016 §11 は「内訳は次のとおりで FLW-DSN-014 の『M2出口条件・budget・M3入口条件』節と一致する」と主張しているが、この主張は budget 行についてのみ真で、同じ節の出口条件については偽である。RVC-002 の SSOT 指名の循環と組み合わさると、どちらの数値が正かを決める手段が文書内に存在しない。",
+      "recommendation": "FLW-DSN-014.md:649 と ROADMAP.md:158 を同一変更セットで `M2-FLT-001`〜`049` へ更新する。恒久策として、可変の上限番号を3文書へ複写する構造をやめ、要約側は「`FLW-DSN-016` §9 の catalog 全件」と参照で書き、件数の正を §9 に一本化する（本書が §2 の enum に対して採った『唯一の正を1箇所に置く』方針と同型の扱いにする）。"
+    },
+    {
+      "id": "FLW-REV-013:RVC-002",
+      "severity": "critical",
+      "title": "§15 の GP-018 応答が「実ファイル更新済み」と主張するが、FLW-DSN-006 / FLW-DSN-012 の状態語は未変換で version だけ上がっている",
+      "detail": "GP-018 の原文は「FLW-DSN-006 / FLW-DSN-012 の状態語を表記規則へ揃え、version と updated を上げる」。§15 の応答は「§2 ＋ 実ファイル更新（`FLW-DSN-006` 1.1 / `FLW-DSN-012` 1.2 / `FLW-DSN-015` 1.1 を同じ変更セットで）」であり、対応済みと読める。実測では version は確かに上がっている（FLW-DSN-006 = 1.1 / FLW-DSN-012 = 1.2 / FLW-DSN-015 = 1.1、いずれも updated 2026-08-12）が、状態語は揃っていない。FLW-DSN-006 の「audit分類」表は `active-clean` / `active-dirty` / `pr-open` / `merged-exact` / `remote-advanced` / `worktree-mismatch` / `orphan` / `failed-retained` の8値を小文字 kebab のまま保持し（`ABSENT` に相当する値が無く、FLW-DSN-016 §2 の `worktree_state` 9値と集合としても一致しない）、この表には FLW-DSN-016 §2 への委譲注記も付いていない（委譲注記が付いたのは create / resume 節だけである）。FLW-DSN-012 の「正規状態への写像」表も `planned` / `pr-draft` / `merged-exact` / `active-clean` / `pr-open` 等を小文字 kebab のまま保持している。しかもこれは単なる書き漏れではなく、裁定記録 .spec/reports/decision-2026-08-12-m2-design-gaps.md の裁定2 が『状態・判定結果は大文字スネーク』と定め、『schema は `ACTIVE_CLEAN`、文書は `active-clean`』とする案を「変換表自体が新しい二重定義になり、同型の事故（SI-FLW-039）を招く」として明示的に却下した規則への違反である。さらに FLW-DSN-016 §2 自身が「`work_unit_state` は FLW-DSN-012 の12値と1対1に対応する（`planned` → `PLANNED` … `discarded` → `DISCARDED`）」と書いており、却下されたはずの変換表を設計文書の中に作ってしまっている。",
+      "recommendation": "(1) FLW-DSN-006 の audit 分類表と FLW-DSN-012 の写像表の状態語を大文字スネークへ変換し、両表へ「enum 値の正は FLW-DSN-016 §2」の委譲注記を付ける（decision-2026-08-12-write-state-notation.md が write_state に対して行ったのと同じ処置）。(2) FLW-DSN-006 の audit 分類表へ `ABSENT` を含めるか、含めない理由（audit は不在 worktree を分類対象にしない等）を明記する。(3) 変換対応表（`planned` → `PLANNED`）を §2 から削除し、対応は「表記を揃えたので同一」と書けるようにする。(4) §15 の GP-018 応答は、実ファイルの変換が完了するまで「対応済み」ではなく「未完（対象: FLW-DSN-006 audit 分類表 / FLW-DSN-012 写像表）」と書く。"
+    },
+    {
+      "id": "FLW-REV-013:RVC-003",
+      "severity": "critical",
+      "title": "FLW-DSN-006 の「再実行で前進再開する」が残存し、§8 の「自動前進 0」と正面から矛盾している",
+      "detail": "FLW-DSN-016 §8 は「『前進再開』の経路」として、「`FLW-DSN-006` は『途中失敗は `PARTIAL` を返し再実行で前進再開する』と書くが、`FLW-DSN-015` は `PARTIAL` を `reconcile-only` とし残 step 自動 apply を禁止している。**後者へ統一**し…」と明記し、§9 の `M2-FLT-030` は「`PARTIAL`、残 target の自動削除 0、**再実行での自動前進 0**」を期待結果としている。ところが FLW-DSN-006（v1.1、updated 2026-08-12。すなわち本変更セットで実際に編集された文書）の failure / discard 節には「途中失敗は`PARTIAL`と残存要素を返し、再実行で前進再開する。」という文が原文のまま残っている。本書の責務節は「4文書と矛盾する場合は本書の M2 固有表を優先し、**一般原則の変更が必要なら元文書も同じ変更セットで更新する**」と自ら規定しており、`PARTIAL` の自動前進禁止は M2 固有表ではなく一般原則の変更であるから、この規定に照らして未実施である。結果として、worktree ライフサイクルの正である FLW-DSN-006 を読んだ実装者は「再実行で自動前進してよい」と読み、`M2-FLT-030` は必ず FAIL する。同節の finish 手順（「5. worktree remove → 6. local branch 削除」）も、§8 step 契約が durability commit point を根拠に確定した `remove-registry-entry` → `remove-worktree-dir` → `delete-local-branch` の順序を含んでおらず、step 数も 7 対 8 で食い違う（§9 の `M2-FLT-024` は「finish 各 step 境界で crash（8点）」を前提にしている）。",
+      "recommendation": "FLW-DSN-006 の failure / discard 節を「途中失敗は `PARTIAL` と残存要素を返し、reconcile で completed / remaining を確定させる。残 step の自動 apply と再実行による自動前進は行わない（正は FLW-DSN-015 / FLW-DSN-016 §8）」へ改める。finish 手順も §8 の8 step 契約へ差し替えるか、「step 契約の正は FLW-DSN-016 §8」と委譲注記を付ける。どちらも FLW-DSN-016 と同じ変更セットに含める。"
+    },
+    {
+      "id": "FLW-REV-013:RVC-004",
+      "severity": "major",
+      "title": "M2 出口条件の「正」が3文書で相互に別の文書を指しており、RVC-001 の食い違いを解決できない",
+      "detail": "ROADMAP.md:155-156 は「詳細設計は `FLW-DSN-016`。**出口条件・budget の正は `FLW-DSN-014`** の『M2出口条件・budget・M3入口条件』節」と書く。ところが FLW-DSN-014.md:642 は同じ節の冒頭で「**正は`FLW-DSN-016`であり、本節はmilestone表から参照される要約である**」と書き、さらに budget については「区分配賦は`FLW-DSN-016`が正」とする。そして FLW-DSN-016 §12 は「`FLW-DSN-014` の M2 行を次へ改訂する」と、自分が FLW-DSN-014 を書き換える側であるかのように書く。三者が互いに相手を正と指す（あるいは自分が改訂側だと主張する）ため、RVC-001 の 049 対 044 のような食い違いが起きたときに、どちらを採るかを文書体系から決定できない。これは本書が §2 の enum に対しては明確に解決した問題（『委譲文を削り、本表を唯一の正とする』）が、出口条件に対しては未解決のまま残っているということである。FLW-REV-011:SYN-001 が P0 とした「どちらを見ても正が確定しない」構図の再発である。",
+      "recommendation": "M2 出口条件と budget について正を1つ選び、他2文書から『正は X』の相互指名を削って一方向の参照だけを残す。推奨は enum と同じ扱い（詳細設計 FLW-DSN-016 を正とし、FLW-DSN-014 と ROADMAP は数値を複写せず参照だけ置く）。複写を残す場合は、複写箇所を release_check 等で機械照合する対象に加える。"
+    },
+    {
+      "id": "FLW-REV-013:RVC-005",
+      "severity": "major",
+      "title": "§6 の quarantine 解除区分が本文「3区分」・表4行・§15「4区分」・fixture「3区分」で不一致",
+      "detail": "§6 の導入文は「`FLW-DSN-015` の解除区分表へ **worktree 用3区分**を追加する」と書くが、直後の表は `worktree-no-effect` / `worktree-residue-retained` / `worktree-registry-stale` / `worktree-unresolved` の **4行**である。§15 の GP-005 応答は「worktree 用**4区分**」と書き、§9 の `M2-FLT-034` は「**§6 の3区分**へ一意に確定」と書く。Revision History 1.1 が `worktree-registry-stale` を追加した際に、表だけを増やして導入文・fixture 期待結果・（あるいは §15）を更新しなかったことが原因である。`M2-FLT-034` は「§6 の3区分へ一意に確定。正規の解除経路が存在する」を合否条件にしているため、この fixture を素直に実装すると4区分目を検査しない、あるいは区分数不一致で判定不能になる。",
+      "recommendation": "§6 の導入文と `M2-FLT-034` の期待結果を「4区分」へ揃える。恒久策として、区分数のような数え上げを散文へ書かず「§6 の表の全区分」と参照で書く。"
+    },
+    {
+      "id": "FLW-REV-013:RVC-006",
+      "severity": "major",
+      "title": "`branch_audit_state` の表記が要件層で割れており、同日改訂の FLW-FR-007 と FLW-CON-006 が同じ値を別表記で書いている",
+      "detail": "FLW-DSN-016 §2 は `branch_audit_state` を「状態」と分類し、閉集合を `ACTIVE, MERGED_EXACT, REMOTE_ADVANCED, WORKTREE_IN_USE, ORPHAN`（大文字スネーク）と宣言する。ところが FLW-FR-007（v1.1、2026-08-12 改訂。Revision History で `FLW-DSN-016` §2 を明示的に参照している）の受入基準は『WHEN branch証跡が一意に成立する THEN bitz-flowは`active`、`merged-exact`、`remote-advanced`、`worktree-in-use`、`orphan`のいずれかを返すこと SHALL』と小文字 kebab のままである。同じ 2026-08-12 に改訂された FLW-CON-006（v1.3）は『WHEN 削除対象branchが`REMOTE_ADVANCED`に分類される THEN…』と大文字スネークを使う。つまり同一 enum の同一値が、同じ変更セットの2つの要件で別表記になっている。FLW-FR-007 の改訂は `indeterminate` → `result_code: INDETERMINATE` の一本化（§2 が要求したもの）は反映できているのに、同じ節の他4値の表記は落としている。要件は verification_method: unit-test であり、テストが受入基準の文字列を根拠に書かれると schema の値と一致しない。",
+      "recommendation": "FLW-FR-007 の受入基準の分類値5件を大文字スネークへ揃え（version 1.2）、Revision History に FLW-DSN-016 §2 の閉集合へ整合させた旨を書く。併せて §2 の三者照合テストの照合対象へ『要件の受入基準に現れる enum 値』を加えるか、少なくとも要件側から `FLW-DSN-016` §2 への委譲注記を入れる。"
+    },
+    {
+      "id": "FLW-REV-013:RVC-007",
+      "severity": "major",
+      "title": "M2 operation catalog に M2-4（reconnaissance / entry protocol）に対応する行が無く、「catalog 外は UNSUPPORTED」と衝突する",
+      "detail": "冒頭の「M2 operation catalog」は6 operation を列挙し「**catalog 外は `UNSUPPORTED` である**」と宣言する。各行の実装区分は M2-3（audit / create / resume）、M2-5（finish / discard）、M2-6（delete-remote-branch）で、**M2-4 を実装区分に持つ operation が1つも無い**。しかし §11 は M2-4 を「着手前 reconnaissance ＋ entry protocol」という独立区分として立て、3 session と fixture `M2-FLT-045`〜`047` を配賦し、§12 はこれを M2 出口条件の1項目に据えている。reconnaissance が `worktree.audit` の拡張なのか新 operation なのかが catalog から読めず、新 operation なら catalog 外＝`UNSUPPORTED` と自己矛盾する。さらに §8 の recovery matrix には entry protocol 関連の行が1つも無く、`M2-FLT-047`（「reconnaissance を省いて書込み WorkUnit を開始 → entry protocol で停止。着手させない」）が返すべき `result_code` と recovery class が未定義である。§8 は「未登録 tuple は `human-stop` へ fail-closed」と定めるため、現状の記述では `M2-FLT-047` の期待結果を機械判定できない。",
+      "recommendation": "(1) catalog へ reconnaissance の行を追加する（`worktree.audit` の受入基準拡張として扱うなら audit 行の canonical mutation target / recovery 欄はそのままに、実装区分を「M2-3（基本）/ M2-4（in-flight 拡張）」と分ける）。(2) §8 の recovery matrix へ「reconnaissance 未実施のまま write を開始」の行（想定は `BLOCKED` / `human-stop`）を追加し、`M2-FLT-047` の期待結果と対応させる。"
+    },
+    {
+      "id": "FLW-REV-013:RVC-008",
+      "severity": "major",
+      "title": "`guard_identity_kind` の5値閉集合が output-contract.md にも存在するが、三者照合の対象外で第4のコピーとして残る",
+      "detail": "§2 は三者（設計の閉集合・schema の enum・実装の定数）を双方向照合すると定め、§14 は変更対象を「5種 → 7種（**schema ＋ `guard.py`**）」と書く。実測では plugins/bitz-flow/skills/flow-core/schemas/result-v1.schema.json の `guard_identity_kind` が5値、plugins/bitz-flow/skills/flow-core/scripts/flowlib/guard.py:36 の `GUARD_IDENTITY_KINDS` が5要素で、ここまでは §2 の記述と一致する。しかし plugins/bitz-flow/skills/flow-core/references/output-contract.md:102 にも『raw path を含めない（`index` / `local-ref` / `remote-tracking-ref` / `fetch-head` / `remote-ref` の閉集合）』という**第4の複写**が存在し、これは §14 の変更対象にも §2 の照合対象にも入っていない。GP-012 が塞ごうとした失敗（設計と実装の乖離が沈黙する）が、まったく同じ形で output-contract.md に残る。しかも §2 は「`output-contract.md` へ closed enum の値追加に関する条文を新設する」と同ファイルを触ることを予定しており、触るときに5値の複写を見落とす構図になっている。",
+      "recommendation": "§14 の変更対象へ output-contract.md:102 を加え、§2 の三者照合テストの照合対象に output-contract.md の閉集合列挙も含める（実質「四者照合」にする）か、output-contract.md 側の列挙を削って schema への参照に置き換える。"
+    },
+    {
+      "id": "FLW-REV-013:RVC-009",
+      "severity": "major",
+      "title": "FLW-CON-006 1.3 が ABA の旧2分岐モデルのままで、v1.4 の3経路（経路A / B）に対応する受入基準が無い",
+      "detail": "§14 は FLW-CON-006 について「削除を再照会一致から expected-OID CAS へ厳格化（`SI-FLW-044`。**accepted**。要件 1.3 で反映済み）」と書き、対応完了として扱っている。しかし要件 1.3 の ABA 関連条項は『WHEN plan時snapshot以降のremote ref更新イベントを**観測できない** THEN bitz-flowはABA不検出をresultへ明示して明示的人間承認を要求し、expected-OID一致のみを根拠に削除しないこと SHALL』の1条だけであり、これは FLW-DSN-016 の**経路C（capability なし）**しか覆っていない。v1.4 で新設された **経路A**（capability あり＋更新あり → `BLOCKED`）と **経路B**（capability あり＋更新なし → 「不在証明ではない」と明示した承認要求）に対応する受入基準が要件側に存在しない。特に経路A の `BLOCKED` は設計だけが持つ規範であり、CON-006 の既存条項『plan後に進行したrefである THEN BLOCKED』は force push で同一 SHA へ復帰した ABA を覆わない（最終的に ref は進行していないため）。要件が verification_method: unit-test である以上、経路A / B は要件から導出できず、`M2-FLT-038` / `048` は要件アンカーの無い fixture になる。§14 の「1.3 で反映済み」は v1.3 時点の記述であり、v1.4 の再構成後は成り立たない。",
+      "recommendation": "FLW-CON-006 へ経路A（更新イベントを観測した場合は削除を BLOCKED にし検出した更新を提示する）と経路B（観測結果が空でも不在証明ではない旨を明示して人間承認を要求する）の2条を追加し 1.4 へ上げる。併せて §14 の表の根拠欄を「要件 1.4 で反映」へ更新し、v1.4 の変更が要件へ降りていることを追跡可能にする。"
+    },
+    {
+      "id": "FLW-REV-013:RVC-010",
+      "severity": "major",
+      "title": "accepted な SI-FLW-046 が対象に挙げた FLW-DSN-006 に、reconnaissance の記述が1文字も無い",
+      "detail": "SI-FLW-046（status: accepted）の frontmatter は `target: FLW-FR-007・FLW-DSN-006・FLW-DSN-016` と、改訂対象文書を3つ明示している。FLW-FR-007 は 1.1 で反映され、FLW-DSN-016 は §11 / §12 / §9 で反映された。しかし FLW-DSN-006 を `reconnaissance` / `in-flight` / `着手前` / `重なり` で grep するとヒット0件である。FLW-DSN-006 は 2026-08-12 に v1.1 へ更新されている（すなわち本変更セットで実際に開いて編集された文書）ため、「まだ着手していない」ではなく「同じ変更セットで落とした」状態である。しかも FLW-DSN-006 は worktree のライフサイクル設計であり、entry protocol による着手前の停止条件はまさにこの文書の管轄である。どこにも『FLW-DSN-006 側は未対応』という明示が無く、レビュー観点で最悪の形（黙って抜けている）になっている。",
+      "recommendation": "FLW-DSN-006 の create / resume 節の前に「着手前 reconnaissance」を追加し（正は FLW-DSN-016 §11 / FLW-FR-007 1.1 への参照でよい）、v1.2 へ上げる。意図的に FLW-DSN-016 側だけへ集約するなら、SI-FLW-046 の target から FLW-DSN-006 を外す改訂を裁定記録付きで行い、抜けが黙認でないことを残す。"
+    },
+    {
+      "id": "FLW-REV-013:RVC-011",
+      "severity": "major",
+      "title": "frontmatter の origin / decision_ref が本書の実際の駆動要因を指しておらず、幽霊参照と欠落の両方がある",
+      "detail": "FLW-DSN-016 の frontmatter は `origin: SI-FLW-041, SI-FLW-042, SI-FLW-043, SI-FLW-044, SI-FLW-045, FLW-REV-011`、`decision_ref: .spec/reports/decision-2026-08-12-m2-design-gaps.md` である。実際には (1) v1.3 は `SI-FLW-046` の accept が駆動したもので、§11 の M2-4 区分・§12 の出口条件・fixture 3件がこれに由来するのに origin に無い。(2) v1.1 と v1.4 は `FLW-REV-012` の指摘（SYN-001 の guard key 是正、GP-004 の capability 実在性確認）が駆動したのに origin に無い（本文では `FLW-REV-012:GP-004` / `FLW-REV-012:SYN-001` を参照している）。(3) decision_ref が指す decision-2026-08-12-m2-design-gaps.md は「補強詳細設計は作らない」と判断した記録であり、本書の責務節自身が「同判断の見直しを求めた…この見直しは人間裁定で承認され、本書の作成に至った」と書く、つまり**覆された裁定**である。本書を実際に規定する .spec/reports/decision-2026-08-12-si-flw-043-046.md は frontmatter から参照されていない（本文にも frontmatter にも出ず、参照は FLW-DSN-014 と各要件の Revision History 側だけ）。spec_inspect のトレーサビリティ検査は frontmatter を見るため、この状態では裁定→設計の経路が機械的に辿れない。",
+      "recommendation": "`origin` へ `SI-FLW-046` と `FLW-REV-012` を追加し、`decision_ref` を `.spec/reports/decision-2026-08-12-si-flw-043-046.md` へ（複数指定が許されるなら m2-design-gaps との併記へ）改める。あわせて status が draft のままである点も、Design Gate 提出物としての扱いと合っているか確認する。"
+    },
+    {
+      "id": "FLW-REV-013:RVC-012",
+      "severity": "major",
+      "title": "budget の「人間へ再提示して確定した」という記述に対応する裁定記録が存在しない",
+      "detail": "§11 は「scope 追加分は 2026-08-12 に人間へ再提示して確定した」と書き、FLW-DSN-014 の内訳表も合計行の根拠欄に「2026-08-12 に人間へ再提示し確定」と書く。ところが裁定記録 .spec/reports/decision-2026-08-12-si-flw-043-046.md は末尾で「## 未確定 — budget 再提示が必要」「（従来は）**5 PR / 17 session** に固定されており、本裁定はこれを動かす」「**budget の再校正は本裁定に含まれない。** 増分見積りを添えて別途人間へ提示する」と、budget 確定が裁定の範囲外であることを明記している。.spec/reports/ の全34ファイルを確認したが、budget 再校正の提示・確定を記録した decision ファイルは存在しない（最も近い decision-2026-08-12-m1-6-scope.md は M1-6 の範囲裁定、decision-2026-08-12-m1-5-roi.md は M1-5 の ROI）。つまり2つの設計文書が「確定した」と書く事実に、参照可能な根拠が無い。SI-FLW-045 が是正した『送った側の裁定と受けた側の設計が接続していない』のと同型の断絶が、今度は budget 側で発生している。",
+      "recommendation": "budget 再校正（4 PR/14 session → 6 PR/20 session）の提示と確定を裁定記録として起こし、§11 と FLW-DSN-014 の該当箇所から decision-ref で参照する。実際にはまだ人間へ提示していないのであれば、両文書の「確定した」を「提示予定（未確定）」へ直し、M2 着手の前提条件として §12 か ROADMAP へ明示する。"
+    },
+    {
+      "id": "FLW-REV-013:RVC-013",
+      "severity": "minor",
+      "title": "§2 が FLW-DSN-012 の既に是正済みの記述を、未是正のものとして引用している",
+      "detail": "§2 は「`FLW-DSN-012` の写像表で WorkUnit `planned` に対応する worktree state は **`absent/planned` と書かれているが**、worktree が存在しない以上 `ABSENT` の一値へ改める」と書く。実測では FLW-DSN-012（v1.2）の写像表の該当行は `| `planned` | absent | none | worktree.create |` であり、`absent/planned` という表記は存在しない。同じ変更セットで FLW-DSN-012 が先に是正され、FLW-DSN-016 側の引用が更新されなかったものと見られる。引用元の現況と食い違う『改める』という記述は、読み手に未対応作業が残っていると誤認させる（そして実際に残っている未対応作業は RVC-002 の表記変換のほうである）。",
+      "recommendation": "§2 の該当文を「`FLW-DSN-012` の写像表は `absent` と書いており本表の `ABSENT` に対応する」等の現況に即した記述へ改める。文書間で他文書の逐語を引く箇所は、引用日または引用元 version を添えて陳腐化を検出可能にする。"
+    },
+    {
+      "id": "FLW-REV-013:RVC-014",
+      "severity": "minor",
+      "title": "§15 の GP-015 応答が「後者を採用」と書くが、§2 本文は前者（output-contract.md への条文新設）も実施する",
+      "detail": "GP-015 の原文は「closed enum への値追加の互換性条文を output-contract.md へ作る**か**、互換性を根拠にしない記述へ改める」の二者択一である。§15 の応答は「§2 — **後者を採用**。…根拠を『未公開だから影響が無い』へ置換」と書く。しかし §2 の GP-015 節の最終箇条は「`output-contract.md` へ closed enum の値追加に関する条文を新設し、『未公開 operation に限り凍結前の追加を許す。公開後の追加は major 扱い』と明記する」であり、前者も実施することになっている。結論として両方やるのは妥当だが、§15 の対応表が本文の内容を正しく写していない。§15 は「原文と応答を1行に並べれば不一致は目で見える」ことを設計の眼目にしている節であり、その節自身に写し間違いがあるのは信頼性を損なう。",
+      "recommendation": "§15 の GP-015 応答を「両方を実施（根拠を『未公開だから影響が無い』へ置換し、あわせて output-contract.md へ closed enum の条文を新設）」へ改める。"
+    },
+    {
+      "id": "FLW-REV-013:RVC-015",
+      "severity": "minor",
+      "title": "§9 の fixture 表の並びが非単調（038 → 048 → 049 → 039 → … → 047）で、範囲表記と機械抽出に弱い",
+      "detail": "§9 の表は `M2-FLT-001`〜`038` の後に `048` / `049` が挿入され、続いて `039`〜`044`、最後に `045`〜`047` が並ぶ。ID の集合としては 001〜049 の全 49 件が過不足なく1回ずつ現れており（実測）内容は正しいが、§12 と §15 が「`M2-FLT-001`〜`049`」という連続範囲表記で参照しているため、表を機械抽出して範囲と突き合わせる実装は並び順に依存しないよう書く必要がある。また ABA の3経路（038 / 048 / 049）を隣接させたい意図は理解できるが、その意図は表からは読めない。",
+      "recommendation": "表を ID 昇順へ並べ替えるか、ABA 3経路のように意図的に隣接させる場合は行に注記を入れる。§12 側は範囲表記ではなく「§9 の catalog 全件」と書く（RVC-001 の恒久策と同じ）。"
+    },
+    {
+      "id": "FLW-REV-013:RVC-016",
+      "severity": "minor",
+      "title": "`worktree_state` の `WORKTREE_MISMATCH` を返す規定・fixture・recovery 行がどこにも無い孤立値になっている",
+      "detail": "§2 の `worktree_state` 閉集合は `WORKTREE_MISMATCH` を含むが、本書の他の箇所でこの値が使われていない。最も近い `M2-FLT-018`（「部分一致（path 一致・branch / HEAD 不一致）」）の期待結果は `BLOCKED` とだけ書かれ、どの `worktree_state` を返すかに触れない。§8 の recovery matrix にも該当行が無い。参照元の FLW-DSN-006 の audit 分類表には `worktree-mismatch`（「path/branch/HEAD不一致 → 停止」）があるので値の由来自体は正しいが、本書が「唯一の正」を宣言した以上、閉集合の各値には少なくとも1つの判定述語か fixture が対応すべきである（`ORPHAN` については §7 と `M2-FLT-005` / `013` / `014` で対応しており、扱いが不揃いである）。",
+      "recommendation": "`M2-FLT-018` の期待結果を「`WORKTREE_MISMATCH` を提示して `BLOCKED`」へ具体化する（`M2-FLT-019` が `WORKTREE_IN_USE` を提示する形と揃う）。あわせて §2 の閉集合の各値が最低1つの fixture または判定述語に現れることを、三者照合テストの網羅チェックへ加える。"
+    },
+    {
+      "id": "FLW-REV-013:RVC-017",
+      "severity": "minor",
+      "title": "多重語一覧の導出規則が「全 namespace」を対象とするが、`cause` の値が本書に無く導出結果を再現・検証できない",
+      "detail": "§2 の GP-014 節は「導出規則: **全 namespace** の closed enum を集め、2つ以上の namespace に現れる値を列挙する」と定め、その導出結果として13行の表を示す。この13行は、本書が値を列挙している9 namespace（`write_state` / `result_code` / `intent_record_state` / `gate_status` / `attempt_status` / `work_unit_state` / `worktree_state` / `branch_audit_state` / `guard_identity_kind` / `trial_kind`）から再計算すると過不足なく一致する（実測で確認）。しかし namespace 表の最終行 `cause` は「値の正は `FLW-DSN-005` の許可語彙（本書で変更しない）」として値を列挙しておらず、一方で「照合対象は本表の**全 namespace**」「`cause` も照合対象から外さない」と明記されている。したがって導出規則の入力集合の一部が本書に存在せず、表が『全 namespace からの導出結果』であることを本書だけでは検証できない。`cause` と `guard_identity_kind` はいずれも小文字 kebab の語彙であり、衝突の可能性は具体的にある（例: path 関連の語）。",
+      "recommendation": "`cause` の許可語彙を本書へ転記する（`FLW-DSN-005` を正としたままの参照コピーでよく、三者照合テストが差分を出せば足りる）か、多重語一覧の導出規則を「値を列挙している namespace に限る」と限定し、`cause` を除外した理由を明記する。前者を推奨する（本書が §2 冒頭で採った『外した namespace は腐る』という論理と整合するため）。"
+    },
+    {
+      "id": "FLW-REV-013:RVC-018",
+      "severity": "minor",
+      "title": "FLW-REV-012 の GP-004 が参照する実装区分（M2-5）が、v1.3 の6区分再構成で陳腐化している",
+      "detail": "FLW-REV-012 の GP-004 は「ABA 検出 provider capability の実在性を **M2-5 着手前**に確認し、実在しなければ capability 分岐を削除して単一経路へ確定させる」である。v1.2 時点では delete-remote-branch は M2-5 に属していたが、v1.3 の5区分→6区分再構成で M2-6 へ移動した。§8 は「`FLW-REV-012:GP-004` が求めた capability の実在性確認を実施した」と応答しており実質的には充足しているが、GP の文面が指す区分 ID は現在の区分割りに存在しない対応関係になっている。GP は Gate 判定の入力であり、区分 ID で条件が書かれている以上、機械的に充足を判定しようとすると解決できない。",
+      "recommendation": "FLW-REV-012 の GP-004 に「（区分再編により現行は M2-6）」の注記を入れるか、GP 側の条件を区分 ID ではなく operation 名（`git.delete-remote-branch` の実装着手前）で書き直す。以後の GP 起票でも、可変な区分 ID ではなく不変な operation 名・要件 ID を条件に使う。"
+    },
+    {
+      "id": "FLW-REV-013:RVC-019",
+      "severity": "minor",
+      "title": "同一の出口条件項目が FLW-DSN-014 では修飾と参照 ID 付き、FLW-DSN-016 では裸で書かれている",
+      "detail": "FLW-DSN-014.md の M2 出口条件は「repo外worktree rootの承認（**単回capability化されたもの**。`FLW-NFR-007` 1.3）」と、単回性という実質的な修飾と根拠要件 ID を持つ。ROADMAP.md:157 も「（**単回 capability**）」と単回性を保持する。ところが正であるはずの FLW-DSN-016 §12 は「repo 外 worktree root の承認（**capability 化されたもの**）」とだけ書き、単回性の限定も `FLW-NFR-007` 1.3 への参照も無い。単回性は §4 の nonce 設計の核であり（SYN-011 の承認使い回し対策）、出口条件から落ちると「capability 化されているが再利用可能」な実装でも出口を通ってしまう。要約側が正側より強い条件を書いている状態であり、RVC-004 の正の指名循環と相まって、どちらの文面で合否を判定するかが定まらない。",
+      "recommendation": "§12 の該当項目を「repo 外 worktree root の承認（**単回 capability 化されたもの**。`FLW-NFR-007` 1.3、§4）」へ揃える。"
+    },
+    {
+      "id": "FLW-REV-013:RVC-020",
+      "severity": "info",
+      "title": "良い点 — GP 逐語併記・fixture 割当の完全性・enum の正の一本化は整合性の観点で加点",
+      "detail": "(1) §15 が FLW-REV-011 の GP 18 件を `gate_preconditions[].statement` から逐語転記し、要約・言い換えを禁じている点は、本レビューが GP-018 の未達（RVC-002）と GP-015 の写し違い（RVC-014）を機械的に検出できた直接の理由である。対応表が節番号だけだったら、どちらも検出できなかった。(2) §9 の fixture 割当は「ちょうど1つの実装区分へ割当・未割当と重複割当 0」を完了条件としており、実測でも 49 件が M2-1:9 / M2-2:6 / M2-3:8 / M2-4:3 / M2-5:13 / M2-6:10 と過不足なく分配され、§11 の各区分の完了条件の範囲表記とも一致した。(3) FLW-REV-011:SYN-001（P0）に対して、FLW-DSN-015:119-120 と FLW-DSN-012:98 から『値の正は他文書』という委譲文を実際に削り、`FLW-DSN-016` を唯一の正と書き換えた点は実ファイルで確認できた。本レビューの低評価は設計思想ではなく、その思想を同じ変更セットの全ファイルへ適用しきれていない実行の側にある。",
+      "recommendation": "維持する。特に (1) の逐語併記方式は SI-SDD-042 の機械照合が入るまでの手動先行版として有効であり、GP だけでなく『他文書の記述を引用して改訂を宣言する箇所』（§2 の FLW-DSN-012 引用＝RVC-013 で陳腐化した箇所）へも同じ規律を広げる価値がある。"
+    }
+  ],
+  "gp_verification": [
+    {
+      "gp": "GP-001",
+      "claimed_section": "§2",
+      "verdict": "partial",
+      "evidence": "work_unit_state 12値の回復と双方向照合テストの規定は §2 に実在する。ただし『FLW-DSN-012 / FLW-DSN-006 と一致させ』は未達で、FLW-DSN-006 audit 分類表は小文字 kebab 8値（ABSENT 相当なし）、FLW-DSN-012 写像表も小文字 kebab のまま（RVC-002）。"
+    },
+    {
+      "gp": "GP-002",
+      "claimed_section": "§4",
+      "verdict": "satisfied",
+      "evidence": "署名対象表に guard key（worktree_dir / worktree_registry）・parent_dir_identity・nonexistence_digest・expires_at・nonce の5要素すべてが実在し、再照合点も guard 取得直後と各副作用直前の2箇所として本文に明記されている。"
+    },
+    {
+      "gp": "GP-003",
+      "claimed_section": "§3",
+      "verdict": "satisfied",
+      "evidence": "§3『index 包含規約』が worktree-dir / worktree-registry を取る operation に index target の同一 acquire 包含を義務づけ、acquire 入口での自動付加まで規定している。"
+    },
+    {
+      "gp": "GP-004",
+      "claimed_section": "§5",
+      "verdict": "satisfied",
+      "evidence": "§5 は 4要素（registry gitdir 内容・worktree 側 .git・HEAD OID・create 時 nonce）を snapshot_digest = precondition に置き apply 直前に CAS 照合すると規定。§3 は guard key へ instance を含めない理由も明記しており、v1.0 の取り違えは是正されている。"
+    },
+    {
+      "gp": "GP-005",
+      "claimed_section": "§6",
+      "verdict": "partial",
+      "evidence": "解除区分表と owner process 停止証明の置き場は実在し内容は GP を満たす。ただし区分数の記述が本文『3区分』・表4行・§15『4区分』・M2-FLT-034『3区分』で不一致（RVC-005）。"
+    },
+    {
+      "gp": "GP-006",
+      "claimed_section": "operation catalog",
+      "verdict": "satisfied",
+      "evidence": "catalog の create / resume / finish / discard の4行すべてに worktree-dir + worktree-registry + local-ref + index が canonical mutation target として並んでいる。"
+    },
+    {
+      "gp": "GP-007",
+      "claimed_section": "§5",
+      "verdict": "satisfied",
+      "evidence": "manifest を (相対 path, type, dev+ino, size, mtime_ns) の digest とし apply 直前に再計算する規定と、capability 縮退表（取得不能時に discard / create を UNSUPPORTED）が実在する。"
+    },
+    {
+      "gp": "GP-008",
+      "claimed_section": "§3",
+      "verdict": "satisfied",
+      "evidence": "registry を authoritative とする相互参照一致の precondition 化と worktree_id の canonical 導出関数化が実在。実装側の裏取りも一致（guard.py:94 canonical_index_target(common_dir, worktree_id)、git_sync.py の literal \"main\" 呼び出しを確認）。"
+    },
+    {
+      "gp": "GP-009",
+      "claimed_section": "§3",
+      "verdict": "satisfied",
+      "evidence": "祖先遡り probe、承認時の root 測定値の記録・再利用、判定不能時の BLOCKED、fixture M2-FLT-009 の4点がすべて本文に実在する。"
+    },
+    {
+      "gp": "GP-010",
+      "claimed_section": "§4",
+      "verdict": "satisfied",
+      "evidence": "permissions への worktree root 追加・receipt なし write の PreToolUse ブロック・receipt の common-dir 配下配置・AGENTS.md との対応維持が §4 に実在し、§12 の出口条件にも機械強制層が入っている（設計としての充足。実ファイル .claude/settings.json の変更は M2-2 の実装事項）。"
+    },
+    {
+      "gp": "GP-011",
+      "claimed_section": "§4",
+      "verdict": "satisfied",
+      "evidence": "M1 の Ed25519 capability envelope の再利用と、nonce の target guard 内 linearizable CAS（UNUSED → USED_PENDING → USED_DONE / QUARANTINED）が明記されている。"
+    },
+    {
+      "gp": "GP-012",
+      "claimed_section": "§2",
+      "verdict": "partial",
+      "evidence": "双方向照合とタプル定数の一本化は規定されているが、照合対象が『設計・schema・実装』の三者に限られ、output-contract.md:102 に存在する第4の5値複写が対象外で、GP-012 が塞ごうとした沈黙経路が残る（RVC-008）。"
+    },
+    {
+      "gp": "GP-013",
+      "claimed_section": "§8 / §9",
+      "verdict": "partial",
+      "evidence": "fixture 49件の採番と recovery matrix 行は実在し割当も完全（未割当0・重複0を実測）。ただし M2-4（entry protocol）の recovery matrix 行が無く M2-FLT-047 の result_code が未定義（RVC-007）。さらに範囲が FLW-DSN-014 / ROADMAP と不一致（RVC-001）。"
+    },
+    {
+      "gp": "GP-014",
+      "claimed_section": "§2",
+      "verdict": "partial",
+      "evidence": "導出規則と導出結果表は実在し、本書が値を列挙する9 namespace から再計算すると13行と完全一致した（実測）。ただし照合対象と宣言した cause の値が本書に無く、『全 namespace からの導出』であることを本書だけでは検証できない（RVC-017）。"
+    },
+    {
+      "gp": "GP-015",
+      "claimed_section": "§2",
+      "verdict": "satisfied",
+      "evidence": "『key 集合は加算のみ』が object の key の規定であることの引用は正確（output-contract.md:153 に実在）で、根拠を『未公開だから影響が無い』へ置換している。ただし §15 の応答文『後者を採用』は本文が前者も実施することを写せていない（RVC-014）。"
+    },
+    {
+      "gp": "GP-016",
+      "claimed_section": "§2",
+      "verdict": "satisfied",
+      "evidence": "判定基準を『field 名ではなく値の性質』と明記し、namespace 表へ性質列を追加し、反例（trial_kind の Q-NORMAL 系）を隠さず記載している。decision-2026-08-12-m2-design-gaps.md 裁定2 の内容とも一致する。"
+    },
+    {
+      "gp": "GP-017",
+      "claimed_section": "§7",
+      "verdict": "satisfied",
+      "evidence": "3者 guard が防げるのは bitz-flow 起因のみと明記し、外部起因は検出＋復旧経路（§6 の解除区分へ接続）と fixture M2-FLT-013 / 014 を用意している。"
+    },
+    {
+      "gp": "GP-018",
+      "claimed_section": "§2 ＋ 実ファイル更新",
+      "verdict": "not_satisfied",
+      "evidence": "version と updated は上がっている（FLW-DSN-006 1.1 / FLW-DSN-012 1.2 / FLW-DSN-015 1.1、いずれも 2026-08-12）が、GP が求めた『状態語を表記規則へ揃え』が未実施。FLW-DSN-006 の audit 分類表は active-clean / pr-open / merged-exact / remote-advanced / worktree-mismatch / orphan / failed-retained / active-dirty の小文字 kebab のまま、FLW-DSN-012 の写像表も planned / pr-draft / merged-exact 等の小文字 kebab のままである（RVC-002）。"
+    }
+  ]
+}
