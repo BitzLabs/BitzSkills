@@ -1,6 +1,5 @@
 {
-  "view_of": "FLW-REV-010",
-  "review_id": "FLW-REV-010",
-  "path": "FLW-REV-010.json",
-  "note": "最新のレビュー統合結果へのビュー。成果物の正は path が指す番号付きファイル。自前の finding や判定を持たない（SDD-FR-160）"
+  "schema_version": 2,
+  "review_id": "FLW-REV-011",
+  "comment": "最新レビューへのビュー。実体は FLW-REV-011.json が正。"
 }
