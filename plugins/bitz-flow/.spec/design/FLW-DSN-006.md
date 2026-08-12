@@ -2,8 +2,8 @@
 id: FLW-DSN-006
 title: "worktree-firstライフサイクル詳細設計"
 status: active
-version: 1.0
-updated: 2026-07-29
+version: 1.1
+updated: 2026-08-12
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-003, FLW-NFR-006, FLW-CON-002, FLW-CON-005, FLW-CON-006
 origin: SI-FLW-001
@@ -45,6 +45,19 @@ absent
   → approved
   → registered-active
 ```
+
+上の遷移ラベルは**plan のライフサイクル**であり、`worktree_state` の enum 値ではない
+（`SI-FLW-039` の区別を継承する）。対応は次のとおりで、**enum 値の正は `FLW-DSN-016`§2** である。
+
+| 上図のラベル | 対応する enum |
+|---|---|
+| `absent` | `worktree_state: ABSENT` |
+| `planned` / `approved` | `write_state: PLANNED` / `GUARDED`（plan 側の状態。worktree の観測状態ではない） |
+| `registered-active` | **`worktree_state: ACTIVE_CLEAN` へ統合**（2026-08-12 裁定） |
+
+`registered-active` を独立値にしないのは、`FLW-DSN-012` が「状態遷移は外部事実から毎回
+再構成する」と定めるためである。「自分が作った」という由来情報は外部から再構成できず、
+create 直後の worktree は観測上 `ACTIVE_CLEAN` と区別できない。
 
 planで次を照合する:
 
