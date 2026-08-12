@@ -2,7 +2,7 @@
 id: FLW-DSN-016
 title: "M2 worktree safety詳細設計"
 status: draft
-version: 1.3
+version: 1.4
 updated: 2026-08-12
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-006, FLW-NFR-007, FLW-NFR-011, FLW-NFR-012, FLW-CON-005, FLW-CON-006
@@ -479,12 +479,46 @@ fault fixture へ「外部からの手動削除」「外部からの registry �
 | `worktree.*` | quarantine 既存 | `BLOCKED` | `human-stop` | §6 の解除区分へ | 新 plan / apply |
 | `git.delete-remote-branch` | CAS 不成立 | `STALE` | `replan-human` | remote ref 再照会、新 plan | delete 再実行 |
 | `git.delete-remote-branch` | 応答喪失 | `INDETERMINATE` | `human-stop` | remote ref 再照会 | 旧 plan での再削除 |
-| `git.delete-remote-branch` | ABA 不検出 | `BLOCKED` | `human-stop` | ABA 不検出を明示した承認要求 | 一致のみを根拠とする削除 |
+| `git.delete-remote-branch` | ref activity に `T0` 以降の更新あり | `BLOCKED` | `human-stop` | 検出した更新の提示 | 削除の続行 |
+| `git.delete-remote-branch` | ref activity に更新なし（capability あり） | `BLOCKED` | `human-stop` | 「観測範囲では更新なし。不在証明ではない」と明示した承認要求 | 一致のみを根拠とする削除 |
+| `git.delete-remote-branch` | ref activity capability なし | `BLOCKED` | `human-stop` | ABA 不検出を明示した承認要求 | 一致のみを根拠とする削除 |
 
 NEXT は許可グラフの到達可能性を検査する。`PARTIAL` / `STALE` / `INDETERMINATE` から
 人間の新しい裁定なしに mutation node へ到達するグラフは不正とする。特に
 **`worktree.finish` の結果 NEXT に `git.delete-remote-branch` の apply node が現れないこと**を
 明示的に検査する（`FLW-CON-006` の自動連結禁止の機械化）。
+
+### ABA 検出の3経路（GP-004 の実証結果）
+
+`FLW-REV-012:GP-004` が求めた capability の実在性確認を実施した
+（記録: `.spec/reports/investigation-2026-08-12-aba-detection-capability.md`）。
+
+**capability は実在する。** GitHub の `GET /repos/{owner}/{repo}/activity` が
+`activity_type`（`push` / `force_push` / `branch_creation` / `branch_deletion` / `pr_merge`）、
+`before` / `after` / `ref` / `timestamp` を返し、`ref` と `activity_type` で絞り込める。
+`force_push` は第一級の種別であり、実測でも検出できた。
+
+**ただし ABA の「不在」を証明する用途には使えない。** ABA 検出が必要とするのは
+「`T0` から `T1` の間に更新が1件も無い」という**否定的な主張**だが、Activity API が
+提供できるのは「これらの更新が記録されている」という**肯定的な主張**だけである。
+Git Refs API と Activity API は別サブシステムであり、両者の整合性は保証されていない。
+攻撃者の force push が Refs へ反映済みで Activity へ未反映なら、
+「更新なし」と誤って結論する。**観測遅延の上限は実験で確定できない**
+（速いことは示せても、遅くならないことは示せない）。
+
+したがって **capability の有無は承認の要否を変えない。変わるのは証跡の質だけ**である。
+
+| 経路 | 条件 | 結果 |
+|---|---|---|
+| A | capability あり ＋ activity に `T0` 以降の更新**あり** | **`BLOCKED`**（積極的検出。最も強い証跡） |
+| B | capability あり ＋ activity に更新**なし** | 承認要求。**「観測範囲では更新なし。これは不在証明ではない」**と明示 |
+| C | capability **なし**（GHES・権限不足・API 不提供） | 承認要求。**「ABA 不検出」**と明示 |
+
+- **どの経路も人間承認を省略しない。** capability があっても自動では削除しない。
+- capability 判定不能を「更新なし」へ倒さない（経路 C として扱う）。
+- 3経路すべてが到達可能であるため **死に枝は生じない**（GP-004 の趣旨を満たす）。
+- capability の検出は `FLW-DSN-014` の capability matrix（`ref activity read`）に従う。
+  GHES での提供状況は未確認であり、実行時検出に委ねる。
 
 ### step 契約
 
@@ -550,7 +584,9 @@ registry を先に消せば、残った実体は「registry 外の孤立ディ�
 | `M2-FLT-035` | lease 満了だけで guard 再発行を要求 | owner / 子 process / OS lock 停止証明までは再発行拒否 | M2-5 |
 | `M2-FLT-036` | 未登録 recovery tuple（未知 cause / code 矛盾） | 空 NEXT ＋ `human-stop` | M2-5 |
 | `M2-FLT-037` | plan 後 apply 前に remote ref が別 SHA へ進行 | CAS 不成立で削除 0 | M2-6 |
-| `M2-FLT-038` | force push で同一 SHA へ復帰（ABA） | capability ありで停止、なしで承認要求。evidence へ capability 有無を記録 | M2-6 |
+| `M2-FLT-038` | force push で同一 SHA へ復帰（ABA）＋ activity に更新あり | **経路A**: `BLOCKED`。検出した更新を提示 | M2-6 |
+| `M2-FLT-048` | 同上だが activity が空（capability あり） | **経路B**: 承認要求。「不在証明ではない」を明示。自動削除0 | M2-6 |
+| `M2-FLT-049` | ref activity capability が取得不能（権限不足・API 不提供） | **経路C**: 承認要求。「ABA 不検出」を明示。**判定不能を「更新なし」へ倒さない** | M2-6 |
 | `M2-FLT-039` | 条件なし削除の要求 / CAS 非検証 protocol | 前者を拒否、後者を `UNSUPPORTED` | M2-6 |
 | `M2-FLT-040` | `REMOTE_ADVANCED` の target へ delete plan 要求 | plan 生成自体を `BLOCKED` | M2-6 |
 | `M2-FLT-041` | default branch から到達不能な ref の削除 | `BLOCKED` | M2-6 |
@@ -578,7 +614,7 @@ registry を先に消せば、残った実体は「registry 外の孤立ディ�
 | M2-3 | create / resume / audit ＋ enum 三者照合 | 3 | `M2-FLT-016`〜`023` PASS |
 | M2-4 | 着手前 reconnaissance ＋ entry protocol | 3 | `M2-FLT-045`〜`047` PASS（`SI-FLW-046`） |
 | M2-5 | finish / discard ＋ quarantine 解除 | 4 | `M2-FLT-024`〜`036` PASS |
-| M2-6 | delete-remote-branch ＋ confirmation | 3 | `M2-FLT-037`〜`044` PASS、M2 出口 |
+| M2-6 | delete-remote-branch ＋ confirmation | 3 | `M2-FLT-037`〜`044`、`048`、`049` PASS、M2 出口 |
 
 - 依存は `M2-1 → M2-2 → M2-3 → M2-4 → M2-5 → M2-6` の直列。
   各区分は直前を main へ land してから分岐する。
@@ -612,7 +648,7 @@ registry を先に消せば、残った実体は「registry 外の孤立ディ�
 
 - repo identity 衝突 0
 - repo 外 worktree root の承認（**capability 化されたもの**）
-- `M2-FLT-001`〜`047` 全件 PASS
+- `M2-FLT-001`〜`049` 全件 PASS
 - **enum 三者照合テストが green**（設計 ⊆ schema ⊆ 実装の双方向）
 - **機械強制層が有効**（permissions ＋ フックで receipt なし write をブロック）
 - **着手前 reconnaissance が entry protocol で必須化**されている（`FLW-FR-007` 1.1。`SI-FLW-046`）
@@ -681,7 +717,7 @@ GP-004 に対し「§5」とだけ書いて対応済みとし、**原文が求�
 | GP-010 | settings.json の permissions へ worktree root を加え、承認 receipt を伴わない worktree write を機械的に止める | §4 — permissions ＋ PreToolUse フック。receipt は common-dir 配下の owner-only 領域へ追記 |
 | GP-011 | destructive worktree operation の承認へ M1 の capability envelope を再利用し単回化する | §4 — M1 の Ed25519 envelope を再利用。nonce は target guard 内で linearizable CAS |
 | GP-012 | 設計の閉集合・schema enum・guard.py 定数の三者照合テストを追加する | §2 — **双方向**照合（片方向が沈黙した原因）。対象は namespace 表の全 namespace |
-| GP-013 | M2-FLT-* を採番し、worktree の fault fixture と recovery matrix 行を定義する | §8（recovery matrix）／ §9（`M2-FLT-001`〜`047`。各 fixture をちょうど1区分へ割当） |
+| GP-013 | M2-FLT-* を採番し、worktree の fault fixture と recovery matrix 行を定義する | §8（recovery matrix）／ §9（`M2-FLT-001`〜`049`。各 fixture をちょうど1区分へ割当） |
 | GP-014 | 複数 namespace に現れる語の一覧を schema から機械導出して文書と照合する | §2 — 手で維持する表を置かず schema から導出。本書の表は導出結果の期待値 |
 | GP-015 | closed enum への値追加の互換性条文を output-contract.md へ作るか、互換性を根拠にしない記述へ改める | §2 — **後者を採用**。「key 集合は加算のみ」は object の key の規定であり closed enum に適用できないため、根拠を「未公開だから影響が無い」へ置換 |
 | GP-016 | 表記規則の判定基準（field 名ではなく値の性質）と反例を明記し、namespace 表へ性質列を足す | §2 — 判定基準を「値の性質」と明記し性質列を追加。反例（`trial_kind` の `Q-NORMAL`）を隠さず記載 |
@@ -693,6 +729,12 @@ GP-004 に対し「§5」とだけ書いて対応済みとし、**原文が求�
 
 ## Revision History
 
+- 1.4 (2026-08-12) `FLW-REV-012:GP-004`（ABA 検出 capability の実在性）を実証し反映。
+  **capability は実在するが ABA の不在証明には使えない**（Activity API と Git Refs API は
+  別サブシステムで整合性が保証されず、観測遅延の上限を実験で確定できない）。
+  2分岐（capability あり→停止 / なし→承認）を**3経路**へ再構成し、
+  **どの経路も人間承認を省略しない**ことを明示した。fixture へ `M2-FLT-048` / `049` を追加（計49件）。
+  記録は `.spec/reports/investigation-2026-08-12-aba-detection-capability.md`。
 - 1.3 (2026-08-12) `SI-FLW-043`〜`046` の裁定（accept）と budget 再校正を反映。
   実装境界を5区分→**6区分**へ再構成し、`SI-FLW-046` の着手前 reconnaissance を **M2-4**（audit の直後）
   として独立させた。fixture へ `M2-FLT-045`〜`047` を追加（計47件）。

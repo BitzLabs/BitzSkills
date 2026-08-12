@@ -41,6 +41,14 @@ planとapplyでhost/owner/repo/認証主体が変われば`STALE`。
 | branch protection | Should | high-level/API read | 読取不能ならmergeをBLOCKED |
 | merge queue | Should | capability read | 初期版はqueue投入UNSUPPORTED |
 | Release CRUD | Must | high-level `gh release` | なし |
+| ref activity read | Must | `GET /repos/{owner}/{repo}/activity`（`ref` / `activity_type` 絞り込み） | 取得不能なら`UNSUPPORTED`とし、ABA不検出を明示して人間承認を要求する |
+
+`ref activity read`はM2の`git.delete-remote-branch`が使う（2026-08-12 追加）。github.comでの実在は
+実測済みで、`push` / `force_push` / `branch_creation` / `branch_deletion` / `pr_merge`と
+`before` / `after` / `ref` / `timestamp`を返す。**ただしActivity APIとGit Refs APIは別サブシステムであり、
+「activityに更新が無い」ことはref更新の不在を証明しない。** capabilityがAVAILABLEでも人間承認を
+省略しない。詳細は`.spec/reports/investigation-2026-08-12-aba-detection-capability.md`と
+`FLW-DSN-016`の「ABA検出の3経路」。GHESでの提供状況は未確認であり実行時検出に委ねる。
 
 固定endpoint adapterは、source codeに列挙したmethod・path template・response fieldだけを
 `gh api`経由で実行する。利用者入力のURL、method、GraphQL document、任意fieldを受け取らない。
