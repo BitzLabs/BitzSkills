@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """spec_scaffold.py — BitzSDD（sdd-core スキル）の採番付き雛形生成ツール（stdlib のみ）
 
-要件 / spec-issue / タスク / 設計ノート(DSN) の新規起票時に、プレフィックスごとの次番号を
-決定的に採番し、spec_inspect.py の検証を PASS する frontmatter 付き雛形を生成する。
+要件 / spec-issue / タスク / 設計ノート(DSN) / GatePassage / 統合レビューの新規起票時に、
+プレフィックスごとの次番号を決定的に採番し、spec_inspect.py の検証を PASS する frontmatter 付き雛形を生成する。
 エージェントが毎回手書きしていた採番・雛形生成を機械化し、書式ブレと採番衝突を構造的に防ぐ
 （CORE-FR-004）。あわせて生成時に統制語彙（verification_method / domain / status）を検証し、
 語彙外の値は生成前に非ゼロで失敗させて承認後の手戻りを防ぐ（CORE-FR-010）。
@@ -16,8 +16,11 @@
   python spec_scaffold.py <workspace> design --prefix DSN [--title T] [--status draft] [--implements ID]
   python spec_scaffold.py <workspace> gate --prefix SDD-GATE --gate promotion --arbiter hide \
       --scope "SDD-FR-001,SDD-FR-002" --decision-ref .spec/reports/decision-YYYY-MM-DD-....md
+  python spec_scaffold.py <workspace> review --prefix FLW-REV --title T --owner hide \
+      [--findings N] [--preconditions N]   # JSON と Markdown を同時に生成する
 """
 import argparse
+import json
 import re
 import sys
 from datetime import date
@@ -47,7 +50,11 @@ KIND_DIR = {
     "task": "tasks",
     "design": "design",
     "gate": "gates",
+    "review": "reviews",
 }
+
+#: review だけは JSON と Markdown の2ファイルを生成する（統合判定の実体は JSON 側）。
+TWO_FILE_KINDS = frozenset({"review"})
 
 
 def next_number(directory: Path, prefix: str, recursive: bool = False) -> int:
@@ -61,21 +68,27 @@ def next_number(directory: Path, prefix: str, recursive: bool = False) -> int:
     説明的サフィックス付きの慣行を落とさないため（`SI-SDD-006` 提案1 の維持）。
     `recursive` は spec_inspect のレジストリ走査と範囲を揃えるために使う（design 配下）。
     """
-    pat = re.compile(rf"^{re.escape(prefix)}-(\d+)(-.*)?\.md$")
+    pat = re.compile(rf"^{re.escape(prefix)}-(\d+)(-.*)?\.(md|json)$")
     id_pat = re.compile(rf"^{re.escape(prefix)}-(\d+)$")
     nums = []
     if directory.exists():
-        for f in directory.glob("**/*.md" if recursive else "*.md"):
-            if f.name.startswith("_"):
-                continue
-            rid = ""
-            try:
-                rid = parse_frontmatter(f.read_text(encoding="utf-8", errors="ignore")).get("id", "")
-            except OSError:
-                pass
-            m = id_pat.match(rid.strip()) or pat.match(f.name)
-            if m:
-                nums.append(int(m.group(1)))
+        # review は JSON が実体なので走査対象へ含める（.md だけ見ると採番が衝突する）。
+        patterns = ("**/*.md", "**/*.json") if recursive else ("*.md", "*.json")
+        for pattern in patterns:
+            for f in directory.glob(pattern):
+                if f.name.startswith("_"):
+                    continue
+                rid = ""
+                if f.suffix == ".md":
+                    try:
+                        rid = parse_frontmatter(
+                            f.read_text(encoding="utf-8", errors="ignore")
+                        ).get("id", "")
+                    except OSError:
+                        pass
+                m = id_pat.match(rid.strip()) or pat.match(f.name)
+                if m:
+                    nums.append(int(m.group(1)))
     return (max(nums) + 1) if nums else 1
 
 
@@ -202,6 +215,115 @@ def render_gate(gid: str, args) -> str:
     )
 
 
+def render_review_json(rid: str, args) -> str:
+    """統合レビューの JSON 雛形（SDD-FR-158 / SDD-FR-161 の必須キーをすべて含む）。
+
+    必須キーを空文字で置くのは書き忘れではなく「埋めるべき欄」として見せるためである。
+    生成直後の雛形が spec_inspect を PASS することを受入条件とする（SDD-FR-167）。
+    """
+    findings = []
+    for index in range(1, (args.findings or 0) + 1):
+        findings.append({
+            "id": f"{rid}:SYN-{index:03d}",
+            "priority": "P2",
+            "severity": "minor",
+            # 空配列は spec_inspect が「必須キーが無い」と判定する（tracked_by 以外は空不可）。
+            # 雛形では TODO を1件置き、観点別 finding ID へ書き換えさせる。
+            "source": ["TODO（観点別 finding ID。例: RVC-001）"],
+            "title": "TODO",
+            "detail": "TODO",
+            "recommendation": "TODO（実行可能な是正内容を書く。detail の写しにしない）",
+            # P0/P1 では tracked_by が必須。P2/P3 は空文字でよいがキーは置く。
+            "tracked_by": "",
+            "status": "open",
+        })
+
+    preconditions = []
+    for index in range(1, (args.preconditions or 0) + 1):
+        preconditions.append({
+            # id は GP-NNN 形式。findings 側の tracked_by は "<REV-ID>:GP-NNN" で参照する。
+            "id": f"GP-{index:03d}",
+            "kind": "blocking",
+            "basis": "verified",
+            "evidence": "TODO（実測の所在。basis: verified では必須）",
+            "statement": "TODO",
+        })
+
+    payload = {
+        "schema_version": 2,
+        "review_id": rid,
+        "verdict": "FAIL",
+        "aggregate_score": 0.0,
+        "perspective_scores": {},
+        "findings_summary": {
+            "before_dedup": 0,
+            "after_dedup": len(findings),
+            "p0": 0,
+            "p1": 0,
+            "p2": len(findings),
+            "p3": 0,
+        },
+        "findings": findings,
+        "gate_preconditions": preconditions,
+        "carried_over": [],
+        "conditional_items": [],
+    }
+    return json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
+
+
+def render_review_md(rid: str, args) -> str:
+    """統合レビューの Markdown 雛形。frontmatter の decision は sdd-report が参照する。"""
+    title = args.title or "TODO"
+    return f"""---
+id: {rid}
+title: "{title}"
+status: draft
+version: 1.0
+updated: {date.today().isoformat()}
+owner: {args.owner or "TODO"}
+decision: FAIL
+---
+
+# 設計レビュー統合レポート — {title}
+
+- **review_id**: {rid}
+- **対象**: TODO
+- **判定**: **FAIL**
+- **集計スコア**: TODO（PASS ≥ 3.5 / CONDITIONAL_PASS ≥ 2.5）
+- **非適用**: TODO（観点を外した場合はその理由）
+
+## 観点別スコア
+
+| 観点 | スコア | 重み（正規化後） | 主要所見 |
+|---|---:|---:|---|
+| TODO | TODO | TODO | TODO |
+
+findings: 統合前 0 件 → 重複排除後 0 件（P0: 0 / P1: 0 / P2: 0 / P3: 0）
+
+## 判定の意味
+
+TODO（何が問題で、なぜその判定になったかを一段落で）
+
+## findings
+
+| ID | 優先度 | 内容 | 由来 |
+|---|---|---|---|
+| TODO | TODO | TODO | TODO |
+
+## 人間への裁定依頼
+
+TODO（判断が要る点。無ければ「無し」と書く）
+
+## Gate 前提条件（blocking）
+
+| ID | 条件 |
+|---|---|
+| TODO | TODO |
+
+実体は `{rid}.json` が正。本書はその人間向け表現であり、両者の値を食い違わせない。
+"""
+
+
 def validate_vocab(args, req_dir: Path) -> "str | None":
     """統制語彙を生成前に検証する。語彙外ならエラーメッセージを返す（正常なら None）。
 
@@ -246,7 +368,7 @@ def main():
     parser.add_argument("--boundary", help="触れてよいパス（task）")
     # design(DSN) 用
     parser.add_argument("--status", help="status（design。既定 draft。STATUSES 語彙で検証）")
-    parser.add_argument("--owner", help="担当者ハンドル（design）")
+    parser.add_argument("--owner", help="担当者ハンドル（design / review）")
     # gate(GatePassage) 用
     parser.add_argument("--gate", choices=sorted(GATE_CHECKLIST_REF),
                         help="Gate 種別（gate。discovery / design / promotion）")
@@ -256,6 +378,10 @@ def main():
                         help="確認した裁定記録の所在（gate。複数回指定可）")
     parser.add_argument("--checklist-ref", dest="checklist_ref",
                         help="チェックリストの所在（gate。既定は gate 種別ごとの gates.md アンカー）")
+    parser.add_argument("--findings", type=int, default=0,
+                        help="review の findings 雛形の件数（既定 0）")
+    parser.add_argument("--preconditions", type=int, default=0,
+                        help="review の gate_preconditions 雛形の件数（既定 0）")
     args = parser.parse_args()
 
     if args.kind == "task" and not args.implements:
@@ -286,7 +412,8 @@ def main():
 
     provisional_num = (args.number if args.number is not None
                        else next_number(directory, args.prefix, recursive))
-    provisional = directory / f"{args.prefix}-{provisional_num:03d}.md"
+    suffix = ".json" if args.kind in TWO_FILE_KINDS else ".md"
+    provisional = directory / f"{args.prefix}-{provisional_num:03d}{suffix}"
     selected = {}
 
     def prepare(_owner):
@@ -294,6 +421,26 @@ def main():
         num = (args.number if args.number is not None
                else next_number(directory, args.prefix, recursive))
         ident = f"{args.prefix}-{num:03d}"
+        if args.kind in TWO_FILE_KINDS:
+            # review は JSON（実体）と Markdown（人間向け表現）を同時に作る。
+            # 片方だけ存在する状態を作らないよう、両方をひとつの transaction で書く。
+            targets = (directory / f"{ident}.json", directory / f"{ident}.md")
+            for existing in targets:
+                if existing.exists():
+                    raise MutationError(
+                        "mutation-conflict",
+                        f"{existing} は既に存在します（上書き・自動再採番しません）",
+                        1,
+                    )
+            selected.update({"ident": ident, "dest": targets[0]})
+            return TransactionPlan(
+                changes=(
+                    FileChange(targets[0], None, render_review_json(ident, args).encode("utf-8")),
+                    FileChange(targets[1], None, render_review_md(ident, args).encode("utf-8")),
+                ),
+                metadata={"kind": args.kind, "artifact_id": ident},
+            )
+
         dest = directory / f"{ident}.md"
         if dest.exists():
             raise MutationError(

@@ -23,7 +23,10 @@ BitzSDDの設計と仕様の検証レビューを担当します。
 1.  **レジストリ読み込み**: `assets/review-registry.json` を読み込む。プロジェクト側に `.spec/reviews/registry.json` があればそちらを優先。
 2.  **並列起動**: 有効な観点ごとに `references/perspective-<name>.md` に従い、対象一覧に対するレビューを実行する。サブエージェントが利用できる場合は並列実行、それ以外は順次実行。
 3.  **個別結果の保存**: 各観点の判定結果を `.spec/reviews/individual/<perspective>.json` に保存。
-4.  **統合判定 (synthesis)**: 重複排除、P0〜P3 分類、重み正規化を行い、`.spec/reviews/<REV-ID>.json`（`schema_version: 2`）および統合報告書 `.spec/reviews/<REV-ID>.md` を**番号付きで**生成する。過去レビューの未消化 P0/P1 を `carried_over[]` へ取り込む。schema の正は `references/synthesis.md`。
+4.  **統合判定 (synthesis)**: **まず `spec_scaffold.py` の `review` 種別で雛形を作る**
+    （`python3 <sdd-core スキル>/scripts/spec_scaffold.py <ws> review --prefix <REV接頭辞> --title T --owner <担当> [--findings N] [--preconditions N]`）。
+    必須キーが最初から入るため、書いた後に `spec_inspect` で弾かれる手戻りを避けられる（SDD-FR-167）。
+    そのうえで重複排除、P0〜P3 分類、重み正規化を行い、`.spec/reviews/<REV-ID>.json`（`schema_version: 2`）および統合報告書 `.spec/reviews/<REV-ID>.md` を**番号付きで**生成する。過去レビューの未消化 P0/P1 を `carried_over[]` へ取り込む。schema の正は `references/synthesis.md`。
 5.  **ビューの差し替え**: `review-synthesis.json` と `_review-synthesis.md` を 4 で作った番号付きファイルへのポインタとして更新する。Markdown 側は `_` 始まりにして成果物の走査から外す。**順序を逆にしない** — 番号付きファイルが無いまま更新すると `spec_inspect` がアーカイブ漏れとして FAIL させる。
 
 ## 3. 判定結果の扱いとライフサイクル
