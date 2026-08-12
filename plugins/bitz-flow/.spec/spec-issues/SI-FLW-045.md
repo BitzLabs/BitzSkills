@@ -3,7 +3,7 @@ id: SI-FLW-045
 raised_by: M2 worktree safety 設計（FLW-REV-011 対応）
 target: FLW-DSN-014
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: M1-6 が M2 以降へ送った**被測定物 confirmation の受け側が存在しない**。
   送った側の裁定と受けた側の設計が接続しておらず、このままでは

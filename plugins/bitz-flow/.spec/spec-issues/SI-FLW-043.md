@@ -3,7 +3,7 @@ id: SI-FLW-043
 raised_by: M2 worktree safety 設計（FLW-REV-011 対応）
 target: FLW-NFR-007
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `FLW-NFR-007`（永続 file 更新の原子性と完全性、**approved**）が
   repo 境界外への書き込みを**無条件に禁止**しており、M2 の worktree 実体作成・削除が

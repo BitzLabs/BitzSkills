@@ -3,7 +3,7 @@ id: SI-FLW-046
 raised_by: M2設計セッションでの実事故（未マージブランチ見落としによるID二重採番）
 target: FLW-FR-007・FLW-DSN-006・FLW-DSN-016
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: **着手前に「同じ主題の in-flight な作業が既にあるか」を発見させる。**
   v2 は列挙・分類の能力を既に持つが、(a) 見ることが義務になっておらず、
