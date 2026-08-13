@@ -47,8 +47,8 @@ command実装を先に作らず、各操作の対象・副作用・成功・再�
 | `git.stage` | local-write | mutation | index tree一致 | reconcile-first | `REC-STAGE` |
 | `git.commit` | local-write | mutation | parent/tree/message digest一致のcommit存在 | reconcile-first | `REC-COMMIT` |
 | `git.sync` | local-write | mutation | branchがexpected upstreamへff一致 | reconcile-first | `REC-SYNC` |
-| `git.publish-branch` | remote-write | external-write | remote ref=expected HEAD | reconcile-first | `REC-PUSH` |
-| `git.delete-remote-branch` | destructive | explicit-human | remote ref不存在 | reconcile-first | `REC-REMOTE-DELETE` |
+| `git.publish-branch` | remote-write | explicit-human | remote ref=expected HEAD | manual-only | `REC-PUSH` |
+| `git.delete-remote-branch` | destructive | explicit-human | remote ref不存在 | manual-only | `REC-PUSH` |
 | `worktree.plan/list/audit` | read | none | 対象分類取得 | safe | — |
 | `worktree.create/resume` | local-write | explicit-human | path/branch/HEAD/common-dir一致 | reconcile-first | `REC-WORKTREE-CREATE` |
 | `worktree.finish` | destructive | explicit-human | 対象worktree/local branch不存在 | reconcile-first | `REC-WORKTREE-FINISH` |
