@@ -2,8 +2,8 @@
 id: FLW-DSN-014
 title: "GitHub capability・M0検証設計"
 status: active
-version: 1.15
-updated: 2026-08-12
+version: 1.16
+updated: 2026-08-14
 owner: hide
 implements: FLW-FR-003, FLW-FR-008, FLW-FR-012, FLW-NFR-001, FLW-NFR-008, FLW-NFR-004, FLW-NFR-009, FLW-NFR-010, FLW-NFR-011
 origin: FLW-REV-002
@@ -649,15 +649,16 @@ invalidateする。legacy単一JSONLはread-only互換入口とし、新旧Gate�
 - `M2-FLT-001`〜`044`全件PASS
 - **enum三者照合テストがgreen**（設計 ⊆ schema ⊆ 実装の双方向）
 - **機械強制層が有効**（permissions＋フックでreceiptなしworktree writeをブロック）
-- **local-write classの被測定物confirmationが3 platformでPASS**しactive manifest発行済み
+- **`write_target: local` の被測定物confirmationが3 platformでPASS**しactive manifest発行済み
 - **着手前reconnaissanceがentry protocolで必須化**されている（`FLW-FR-007` 1.1）
 
-confirmationのwrite class分割（`SI-FLW-045`案A）:
+confirmationは FLW-DSN-012 の `write_target` 軸から機械的に分割する（`SI-FLW-049`）。
+`reversibility` にかかわらず書き先が同じoperationは同じ区分へ入る。
 
-| write class | 対象operation | confirmation |
+| `write_target` | 対象operation | confirmation |
 |---|---|---|
-| local-write | `git.stage` / `commit` / `fetch` / `sync`、全`worktree.*` | **M2で実施** |
-| remote-write | `git.publish-branch` / `git.delete-remote-branch` | **M3へ送る**。M2出口では`UNSUPPORTED`を維持 |
+| `local` | `git.stage` / `commit` / `fetch` / `sync`、全`worktree.*` | **M2で実施** |
+| `remote` | `git.publish-branch` / `git.delete-remote-branch` | **M3へ送る**。M2出口では`UNSUPPORTED`を維持 |
 
 **M2 budget: 6 PR / 20 session**（区分配賦は`FLW-DSN-016`が正）。
 
@@ -675,10 +676,10 @@ M1実績（6 PR / 7 session）はM2の下振れ根拠にしない。M2はM1に�
 
 **M3入口条件**（`SI-FLW-045`案Aが送った残債の受け側。**M1→M2で起きた断絶を繰り返さない**）:
 
-- M2から送られた**remote-write classの被測定物confirmation**（`git.publish-branch` /
+- M2から送られた**`write_target: remote` の被測定物confirmation**（`git.publish-branch` /
   `git.delete-remote-branch`）をM3で実施する。
 - 前提として裁定3が M3 へ委譲した **coordinator証明手段**を確定させる。
-  確定するまでremote-writeは`UNSUPPORTED`を維持する。
+  確定するまで`write_target: remote`は`UNSUPPORTED`を維持する。
 - 残債の由来は`decision-2026-08-12-m1-6-scope.md`（M1-6がM2以降へ送った）と
   `decision-2026-08-12-si-flw-043-046.md`（M2がM3へ送った）である。
 
@@ -703,8 +704,8 @@ PR予算はmilestone内の実装・fixture・文書・version bumpを含む。�
 2. 未完了operationは部分公開せず`UNSUPPORTED`とし、生コマンドfallbackを提示しない。
 3. M2未完了ではworktree-first安全境界が閉じないため、M1 Git writeを公開しない。
    **解除条件**（2026-08-12 追加。従来は解除条件を持たなかった）:
-   上記「M2出口条件」をすべて満たした時点で、**M1 Git writeのlocal-write classとM2 worktreeを
-   同時に公開できる**。remote-write（`git.publish-branch` / `git.delete-remote-branch`）は
+   上記「M2出口条件」をすべて満たした時点で、**M1 Git writeの`write_target: local`とM2 worktreeを
+   同時に公開できる**。`write_target: remote`（`git.publish-branch` / `git.delete-remote-branch`）は
    M3のconfirmationまで`UNSUPPORTED`を維持する。
    path安全検査・承認capability・機械強制層のいずれかを無効化してworktree writeだけを
    公開する縮退は認めない。

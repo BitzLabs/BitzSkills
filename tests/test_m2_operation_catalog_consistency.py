@@ -9,6 +9,8 @@ REPO = Path(__file__).resolve().parents[1]
 FLOW = REPO / "plugins" / "bitz-flow"
 DESIGN = FLOW / ".spec" / "design" / "FLW-DSN-012.md"
 CATALOG = FLOW / "skills" / "flow-core" / "references" / "operation-catalog.md"
+DESIGN_014 = FLOW / ".spec" / "design" / "FLW-DSN-014.md"
+DESIGN_016 = FLOW / ".spec" / "design" / "FLW-DSN-016.md"
 ALLOWLIST = FLOW / ".spec" / "catalog-consistency-exceptions.json"
 FIELDS = ("class", "approval", "retry", "recovery")
 DERIVED_CLASSES = {
@@ -127,3 +129,19 @@ def test_legacy_class_is_derived_from_orthogonal_axes() -> None:
             f"{operation}: class must be derived from axes; "
             f"expected={DERIVED_CLASSES[axes]}, actual={row['class']}"
         )
+
+
+def test_dependent_designs_do_not_redeclare_operation_class() -> None:
+    detail = DESIGN_016.read_text(encoding="utf-8")
+    m2_catalog = detail.split("## M2 operation catalog", 1)[1].split("## §2", 1)[0]
+    assert "| operation | class |" not in m2_catalog
+    assert "FLW-DSN-012 を唯一の正" in m2_catalog
+
+
+def test_confirmation_partition_uses_write_target_axis() -> None:
+    design = DESIGN_014.read_text(encoding="utf-8")
+    section = design.split("confirmationは FLW-DSN-012", 1)[1].split("**M2 budget", 1)[0]
+    assert "| `write_target` |" in section
+    assert "| `local` |" in section
+    assert "| `remote` |" in section
+    assert "| write class |" not in section
