@@ -3,7 +3,7 @@ id: SI-SDD-042
 raised_by: bitz-flow M2 設計での実事故（blocking GP の取り違えが機械検査を素通り）
 target: sdd-review の review schema・sdd-core の spec_inspect.py・ROADMAP のV4テーマ
 proposed_change_type: new
-status: open
+status: accepted
 origin: bitz-flow
 ---
 - **目的**: **レビュー指摘が設計へ正しく受領されたか**を機械検証できるようにする。
