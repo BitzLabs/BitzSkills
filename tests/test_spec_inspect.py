@@ -1607,6 +1607,17 @@ def base_precondition(**overrides):
     return precondition
 
 
+def gp_response(original, status="accepted", **overrides):
+    response = {
+        "status": status,
+        "original": original,
+        "normalized": "実装向け表現",
+        "target": ".spec/design/sample.md#section",
+    }
+    response.update(overrides)
+    return response
+
+
 def make_review_workspace(tmp_path: Path, *, findings=None, preconditions=None,
                           verdict="CONDITIONAL_PASS", carried_over=None,
                           schema_version=2, archived=True, view_id=REV_ID):
@@ -1882,11 +1893,13 @@ def test_SI_SDD_042_behavioral_gp_requires_when_and_shall(tmp_path: Path):
 
 
 def test_SI_SDD_042_behavioral_gp_with_ears_passes(tmp_path: Path):
+    ears = "WHEN 操作を適用する THEN system SHALL 現在値を照合する"
     make_review_workspace(
         tmp_path,
         preconditions=[base_precondition(
             gp_kind="behavioral",
-            ears="WHEN 操作を適用する THEN system SHALL 現在値を照合する",
+            ears=ears,
+            response=gp_response(ears),
         )],
     )
 
@@ -1900,12 +1913,121 @@ def test_SI_SDD_042_non_behavioral_gp_does_not_require_ears(tmp_path: Path):
         workspace = tmp_path / gp_kind
         make_review_workspace(
             workspace,
-            preconditions=[base_precondition(gp_kind=gp_kind)],
+            preconditions=[base_precondition(
+                gp_kind=gp_kind,
+                response=gp_response("サンプル前提条件"),
+            )],
         )
 
         res = run_inspect(workspace)
 
         assert res.returncode == 0, res.stdout
+
+
+def test_SI_SDD_042_classified_blocking_gp_requires_response(tmp_path: Path):
+    make_review_workspace(
+        tmp_path,
+        preconditions=[base_precondition(gp_kind="artifact")],
+    )
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "分類済み blocking GP には response が必要" in report_of(tmp_path)
+
+
+def test_SI_SDD_042_response_original_must_match_gp_verbatim(tmp_path: Path):
+    make_review_workspace(
+        tmp_path,
+        preconditions=[base_precondition(
+            gp_kind="artifact",
+            response=gp_response("意味を変えた文"),
+        )],
+    )
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "GP 原文と逐語一致" in report_of(tmp_path)
+
+
+def test_SI_SDD_042_rejected_requires_reason_and_rereview(tmp_path: Path):
+    response = gp_response("サンプル前提条件", status="rejected")
+    response.pop("normalized")
+    response.pop("target")
+    make_review_workspace(
+        tmp_path,
+        preconditions=[base_precondition(gp_kind="process", response=response)],
+    )
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    report = report_of(tmp_path)
+    assert "rejected response には reason が必要" in report
+    assert "rejected response には rereview が必要" in report
+
+
+def test_SI_SDD_042_rejected_with_evidence_passes(tmp_path: Path):
+    response = gp_response(
+        "サンプル前提条件",
+        status="rejected",
+        reason="前提が実測と矛盾する",
+        rereview="independent-review-record",
+    )
+    response.pop("normalized")
+    response.pop("target")
+    make_review_workspace(
+        tmp_path,
+        preconditions=[base_precondition(gp_kind="process", response=response)],
+    )
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+
+
+def test_SI_SDD_042_deferred_requires_valid_tracking_contract(tmp_path: Path):
+    response = gp_response(
+        "サンプル前提条件",
+        status="deferred",
+        tracking_target="tracking-record",
+        deadline="later",
+        gate="unknown",
+    )
+    response.pop("normalized")
+    response.pop("target")
+    make_review_workspace(
+        tmp_path,
+        preconditions=[base_precondition(gp_kind="artifact", response=response)],
+    )
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    report = report_of(tmp_path)
+    assert "deadline は YYYY-MM-DD 形式" in report
+    assert "gate は discovery / design / promotion のいずれか" in report
+
+
+def test_SI_SDD_042_deferred_with_tracking_contract_passes(tmp_path: Path):
+    response = gp_response(
+        "サンプル前提条件",
+        status="deferred",
+        tracking_target="tracking-record",
+        deadline="2026-09-01",
+        gate="promotion",
+    )
+    response.pop("normalized")
+    response.pop("target")
+    make_review_workspace(
+        tmp_path,
+        preconditions=[base_precondition(gp_kind="artifact", response=response)],
+    )
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
 
 
 # --- 設計成果物の走査範囲と ID 一意性（SDD-FR-162） ---------------------------

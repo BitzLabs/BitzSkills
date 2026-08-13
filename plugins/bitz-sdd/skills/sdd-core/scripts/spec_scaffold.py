@@ -249,6 +249,12 @@ def render_review_json(rid: str, args) -> str:
             "ears": "WHEN TODO THEN system SHALL TODO",
             "evidence": "TODO（実測の所在。basis: verified では必須）",
             "statement": "TODO",
+            "response": {
+                "status": "accepted",
+                "original": "WHEN TODO THEN system SHALL TODO",
+                "normalized": "TODO（意味を保った実装向け表現）",
+                "target": "TODO（応答を実現する成果物・節）",
+            },
         })
 
     payload = {
