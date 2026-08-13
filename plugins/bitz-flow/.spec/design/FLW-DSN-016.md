@@ -2,8 +2,8 @@
 id: FLW-DSN-016
 title: "M2 worktree safety詳細設計"
 status: draft
-version: 1.4
-updated: 2026-08-12
+version: 1.5
+updated: 2026-08-14
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-006, FLW-NFR-007, FLW-NFR-011, FLW-NFR-012, FLW-CON-005, FLW-CON-006
 origin: SI-FLW-041, SI-FLW-042, SI-FLW-043, SI-FLW-044, SI-FLW-045, FLW-REV-011
@@ -41,15 +41,17 @@ decision_ref: .spec/reports/decision-2026-08-12-m2-design-gaps.md
 
 catalog 外は `UNSUPPORTED` である。`FLW-REV-011:SYN-006`（finish / resume が3者 guard の
 対象から抜けている）を受け、**worktree を変える4 operation すべてを3者 guard の対象**とする。
+`write_target` / `reversibility` / 導出 `class` は FLW-DSN-012 を唯一の正とし、本書では
+再宣言しない。本表はM2固有のmutation target・recovery・実装区分だけを持つ。
 
-| operation | class | canonical mutation target | recovery | 実装区分 |
-|---|---|---|---|---|
-| `worktree.audit` | read | なし | retry-read | M2-3 |
-| `worktree.create` | local-write | `worktree-dir` ＋ `worktree-registry` ＋ `local-ref` ＋ **`index`** | REC-WT-CREATE | M2-3 |
-| `worktree.resume` | local-write | 同上 | REC-WT-RESUME | M2-3 |
-| `worktree.finish` | local-write | 同上 | REC-WT-FINISH | M2-5 |
-| `worktree.discard` | local-write | 同上 | REC-WT-DISCARD | M2-5 |
-| `git.delete-remote-branch` | remote-write | `remote-ref` | REC-RM-DELETE | M2-6 |
+| operation | canonical mutation target | recovery | 実装区分 |
+|---|---|---|---|
+| `worktree.audit` | なし | retry-read | M2-3 |
+| `worktree.create` | `worktree-dir` ＋ `worktree-registry` ＋ `local-ref` ＋ **`index`** | REC-WT-CREATE | M2-3 |
+| `worktree.resume` | 同上 | REC-WT-RESUME | M2-3 |
+| `worktree.finish` | 同上 | REC-WT-FINISH | M2-5 |
+| `worktree.discard` | 同上 | REC-WT-DISCARD | M2-5 |
+| `git.delete-remote-branch` | `remote-ref` | REC-RM-DELETE | M2-6 |
 
 `index` が入るのは §3 の包含規約による。`create` と `resume` は
 **公開 operation 名を分ける**（`FLW-REV-011` の P2 で未確定だった点をここで確定する）。
@@ -652,11 +654,11 @@ registry を先に消せば、残った実体は「registry 外の孤立ディ�
 - **enum 三者照合テストが green**（設計 ⊆ schema ⊆ 実装の双方向）
 - **機械強制層が有効**（permissions ＋ フックで receipt なし write をブロック）
 - **着手前 reconnaissance が entry protocol で必須化**されている（`FLW-FR-007` 1.1。`SI-FLW-046`）
-- **local-write class の被測定物 confirmation が 3 platform で PASS** し active manifest 発行済み
+- **`write_target: local` の被測定物 confirmation が 3 platform で PASS** し active manifest 発行済み
 
 **縮退規則3の解除条件**（現行は解除条件を持たない）: 上記を満たした時点で
-M1 Git write（local-write class）と M2 worktree を同時に公開できる。
-remote-write は M3 の confirmation まで `UNSUPPORTED` を維持する。
+M1 Git write（`write_target: local`）と M2 worktree を同時に公開できる。
+`write_target: remote` は M3 の confirmation まで `UNSUPPORTED` を維持する。
 
 ## §13 代替案と却下理由
 
