@@ -84,10 +84,14 @@ finding も持たない（SDD-FR-160）。Markdown 側を `_` 始まりにする
 | `kind` | **`blocking`**（Gate 通過前に消化する条件）/ **`agenda`**（Gate で決める論点） |
 | `basis` | **`verified`**（実測で確認済み）/ **`assumed`**（未検証の想定） |
 | `evidence` | `basis: verified` のとき必須。実測の所在 |
+| `gp_kind` | 新規 GP で必須。**`behavioral`** / **`artifact`** / **`process`**。既存レビューは段階移行のため欠落を許容 |
+| `ears` | `gp_kind: behavioral` のとき必須。`WHEN` 節と `SHALL` を含む振る舞い契約 |
 
 **不変条件: `basis: assumed` を根拠に `kind: blocking` は立てられない**。Gate 通過の阻止に
 使うのは `kind: blocking` かつ未消化のものだけで、`agenda` は阻止に使わない。
 この区別が無いと「前提条件なのに Gate で決めること」という循環が起きる。
+`artifact` / `process` へ形式だけの EARS 文を作ってはならない。EARS は実行時の振る舞いを要求する
+`behavioral` GP に限定し、成果物や作業手順の条件は `statement` で記述する。
 
 ### 持ち越し（carried_over）
 

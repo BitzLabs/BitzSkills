@@ -245,6 +245,8 @@ def render_review_json(rid: str, args) -> str:
             "id": f"GP-{index:03d}",
             "kind": "blocking",
             "basis": "verified",
+            "gp_kind": "behavioral",
+            "ears": "WHEN TODO THEN system SHALL TODO",
             "evidence": "TODO（実測の所在。basis: verified では必須）",
             "statement": "TODO",
         })

@@ -75,6 +75,7 @@ FINDING_STATUSES = {"open", "tracked", "resolved"}
 BLOCKING_PRIORITIES = {"P0", "P1"}
 PRECONDITION_KINDS = {"blocking", "agenda"}
 PRECONDITION_BASES = {"verified", "assumed"}
+PRECONDITION_GP_KINDS = {"behavioral", "artifact", "process"}
 REV_PART = r"(?:[A-Z0-9]{2,4}-)?REV-\d{3}"
 FINDING_ID_RE = re.compile(rf"^{REV_PART}:SYN-\d{{3}}$")
 GP_REF_RE = re.compile(rf"^({REV_PART}):(GP-\d{{3}})$")
@@ -218,7 +219,7 @@ def check_gate_passages(root: Path, gates: dict, global_reqs: dict) -> list:
 
 
 def _check_gate_preconditions(rel, preconditions: list) -> tuple[list, set]:
-    """gate_preconditions の kind / basis を検査する（SDD-FR-161）。(problems, gp_ids) を返す。
+    """gate_preconditions の kind / basis / gp_kind を検査する。(problems, gp_ids) を返す。
 
     不変条件: **`basis: assumed` を根拠に `kind: blocking` は立てられない**。未検証の想定が
     Gate 通過の阻止条件として据えられる事故（実装順序を誤って規定した実例）の再発防止。
@@ -235,6 +236,7 @@ def _check_gate_preconditions(rel, preconditions: list) -> tuple[list, set]:
         label = f"{label} ({gp_id or '?'})"
         kind = precondition.get("kind")
         basis = precondition.get("basis")
+        gp_kind = precondition.get("gp_kind")
         if kind not in PRECONDITION_KINDS:
             problems.append(
                 f"[review] {label}: kind は blocking / agenda のいずれか（現在: {kind or '未記入'}）"
@@ -249,6 +251,21 @@ def _check_gate_preconditions(rel, preconditions: list) -> tuple[list, set]:
             )
         if basis == "verified" and not precondition.get("evidence"):
             problems.append(f"[review] {label}: basis: verified には実測の所在（evidence）が必要")
+        # SI-SDD-042 の段階移行: 既存レビューの gp_kind 欠落は許容するが、分類済みの GP は
+        # 統制語彙と behavioral 固有の EARS 契約を検査する。
+        if gp_kind is not None and gp_kind not in PRECONDITION_GP_KINDS:
+            problems.append(
+                f"[review] {label}: gp_kind は behavioral / artifact / process のいずれか"
+                f"（現在: {gp_kind or '未記入'}）"
+            )
+        if gp_kind == "behavioral":
+            ears = precondition.get("ears")
+            if not isinstance(ears, str) or not ears.strip():
+                problems.append(f"[review] {label}: gp_kind: behavioral には ears が必要")
+            elif not re.search(r"\bWHEN\b", ears) or not re.search(r"\bSHALL\b", ears):
+                problems.append(
+                    f"[review] {label}: behavioral GP の ears は WHEN 節と SHALL を含める"
+                )
     return problems, gp_ids
 
 
