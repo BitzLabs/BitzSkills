@@ -86,12 +86,28 @@ finding も持たない（SDD-FR-160）。Markdown 側を `_` 始まりにする
 | `evidence` | `basis: verified` のとき必須。実測の所在 |
 | `gp_kind` | 新規 GP で必須。**`behavioral`** / **`artifact`** / **`process`**。既存レビューは段階移行のため欠落を許容 |
 | `ears` | `gp_kind: behavioral` のとき必須。`WHEN` 節と `SHALL` を含む振る舞い契約 |
+| `response` | 分類済み `blocking` GP で必須。下記の受領応答 |
 
 **不変条件: `basis: assumed` を根拠に `kind: blocking` は立てられない**。Gate 通過の阻止に
 使うのは `kind: blocking` かつ未消化のものだけで、`agenda` は阻止に使わない。
 この区別が無いと「前提条件なのに Gate で決めること」という循環が起きる。
 `artifact` / `process` へ形式だけの EARS 文を作ってはならない。EARS は実行時の振る舞いを要求する
 `behavioral` GP に限定し、成果物や作業手順の条件は `statement` で記述する。
+
+### blocking GP の response（SI-SDD-042）
+
+すべての応答は `original` にGP原文を逐語転記する。`behavioral` では `ears`、それ以外では
+`statement` と完全一致しなければならない（段階移行中の旧レビューは `condition` も受理する）。
+状態別の必須キーは次のとおり。
+
+| `status` | 必須キー | 意味 |
+|---|---|---|
+| `accepted` | `original`, `normalized`, `target` | 意味を保った表現と実現先を宣言する |
+| `rejected` | `original`, `reason`, `rereview` | 却下理由と独立した再レビュー先を宣言する |
+| `deferred` | `original`, `tracking_target`, `deadline`, `gate` | 追跡先、ISO日付の期限、再判定Gateを宣言する |
+
+`deferred.gate` は `discovery` / `design` / `promotion` のいずれかとする。この構造化検査は
+独立レビューの代替ではなく、レビュー指摘を別の意味へ取り違えないための受領証跡である。
 
 ### 持ち越し（carried_over）
 

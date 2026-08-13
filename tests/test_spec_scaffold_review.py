@@ -158,6 +158,11 @@ def test_precondition_scaffold_classifies_behavior_and_supplies_ears(workspace):
     assert precondition["gp_kind"] == "behavioral"
     assert "WHEN" in precondition["ears"]
     assert "SHALL" in precondition["ears"]
+    response = precondition["response"]
+    assert response["status"] == "accepted"
+    assert response["original"] == precondition["ears"]
+    assert response["normalized"]
+    assert response["target"]
 
 
 def test_markdown_frontmatter_has_decision(workspace):

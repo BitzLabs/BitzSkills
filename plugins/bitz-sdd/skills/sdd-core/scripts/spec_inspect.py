@@ -76,6 +76,8 @@ BLOCKING_PRIORITIES = {"P0", "P1"}
 PRECONDITION_KINDS = {"blocking", "agenda"}
 PRECONDITION_BASES = {"verified", "assumed"}
 PRECONDITION_GP_KINDS = {"behavioral", "artifact", "process"}
+GP_RESPONSE_STATUSES = {"accepted", "rejected", "deferred"}
+GP_DEFERRED_GATES = {"discovery", "design", "promotion"}
 REV_PART = r"(?:[A-Z0-9]{2,4}-)?REV-\d{3}"
 FINDING_ID_RE = re.compile(rf"^{REV_PART}:SYN-\d{{3}}$")
 GP_REF_RE = re.compile(rf"^({REV_PART}):(GP-\d{{3}})$")
@@ -266,6 +268,45 @@ def _check_gate_preconditions(rel, preconditions: list) -> tuple[list, set]:
                 problems.append(
                     f"[review] {label}: behavioral GP の ears は WHEN 節と SHALL を含める"
                 )
+        # 分類済み blocking GP は受領応答を必須化する。gp_kind 未記載の既存レビューには
+        # 遡及しない。original の逐語一致で、別の意味へ正規化した取り違えを検出する。
+        if kind == "blocking" and gp_kind in PRECONDITION_GP_KINDS:
+            response = precondition.get("response")
+            if not isinstance(response, dict):
+                problems.append(f"[review] {label}: 分類済み blocking GP には response が必要")
+                continue
+            status = response.get("status")
+            if status not in GP_RESPONSE_STATUSES:
+                problems.append(
+                    f"[review] {label}: response.status は accepted / rejected / deferred のいずれか"
+                )
+            original = (precondition.get("ears") if gp_kind == "behavioral"
+                        else precondition.get("statement") or precondition.get("condition"))
+            if not original or response.get("original") != original:
+                problems.append(f"[review] {label}: response.original は GP 原文と逐語一致させる")
+            if status == "accepted":
+                for key in ("normalized", "target"):
+                    if not response.get(key):
+                        problems.append(f"[review] {label}: accepted response には {key} が必要")
+            elif status == "rejected":
+                for key in ("reason", "rereview"):
+                    if not response.get(key):
+                        problems.append(f"[review] {label}: rejected response には {key} が必要")
+            elif status == "deferred":
+                for key in ("tracking_target", "deadline", "gate"):
+                    if not response.get(key):
+                        problems.append(f"[review] {label}: deferred response には {key} が必要")
+                deadline = response.get("deadline")
+                if deadline:
+                    try:
+                        date.fromisoformat(str(deadline))
+                    except ValueError:
+                        problems.append(f"[review] {label}: deferred response の deadline は YYYY-MM-DD 形式")
+                gate = response.get("gate")
+                if gate and gate not in GP_DEFERRED_GATES:
+                    problems.append(
+                        f"[review] {label}: deferred response の gate は discovery / design / promotion のいずれか"
+                    )
     return problems, gp_ids
 
 
