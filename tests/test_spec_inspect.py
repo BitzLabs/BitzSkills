@@ -1851,6 +1851,63 @@ def test_SDD_FR_161_verified_basis_requires_evidence(tmp_path: Path):
     assert "実測の所在（evidence）が必要" in report_of(tmp_path)
 
 
+def test_SI_SDD_042_unknown_gp_kind_fails(tmp_path: Path):
+    make_review_workspace(tmp_path, preconditions=[base_precondition(gp_kind="unknown")])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "gp_kind は behavioral / artifact / process のいずれか" in report_of(tmp_path)
+
+
+def test_SI_SDD_042_behavioral_gp_requires_ears(tmp_path: Path):
+    make_review_workspace(tmp_path, preconditions=[base_precondition(gp_kind="behavioral")])
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "gp_kind: behavioral には ears が必要" in report_of(tmp_path)
+
+
+def test_SI_SDD_042_behavioral_gp_requires_when_and_shall(tmp_path: Path):
+    make_review_workspace(
+        tmp_path,
+        preconditions=[base_precondition(gp_kind="behavioral", ears="SHALL だけ")],
+    )
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode != 0
+    assert "WHEN 節と SHALL を含める" in report_of(tmp_path)
+
+
+def test_SI_SDD_042_behavioral_gp_with_ears_passes(tmp_path: Path):
+    make_review_workspace(
+        tmp_path,
+        preconditions=[base_precondition(
+            gp_kind="behavioral",
+            ears="WHEN 操作を適用する THEN system SHALL 現在値を照合する",
+        )],
+    )
+
+    res = run_inspect(tmp_path)
+
+    assert res.returncode == 0, res.stdout
+
+
+def test_SI_SDD_042_non_behavioral_gp_does_not_require_ears(tmp_path: Path):
+    for gp_kind in ("artifact", "process"):
+        workspace = tmp_path / gp_kind
+        make_review_workspace(
+            workspace,
+            preconditions=[base_precondition(gp_kind=gp_kind)],
+        )
+
+        res = run_inspect(workspace)
+
+        assert res.returncode == 0, res.stdout
+
+
 # --- 設計成果物の走査範囲と ID 一意性（SDD-FR-162） ---------------------------
 
 # fixture 用の設計 ID は連結で組み立てる（このリポジトリ自身の走査が

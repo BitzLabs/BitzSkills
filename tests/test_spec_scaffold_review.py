@@ -151,6 +151,15 @@ def test_verified_precondition_has_evidence(workspace):
     assert precondition["evidence"], "verified なら evidence が要る"
 
 
+def test_precondition_scaffold_classifies_behavior_and_supplies_ears(workspace):
+    """新規 GP は分類済みで、behavioral の EARS 欄を最初から持つ。"""
+    scaffold(workspace, "--prefix", REV, "--preconditions", "1")
+    precondition = load(workspace, rev_id(1))["gate_preconditions"][0]
+    assert precondition["gp_kind"] == "behavioral"
+    assert "WHEN" in precondition["ears"]
+    assert "SHALL" in precondition["ears"]
+
+
 def test_markdown_frontmatter_has_decision(workspace):
     """decision は sdd-report の自動集計が参照する。"""
     scaffold(workspace, "--prefix", REV, "--title", "T", "--owner", "o")

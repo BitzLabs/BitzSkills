@@ -2,10 +2,10 @@
 name: sdd-review
 description: BitzSDD の設計ドキュメントや要件定義を多観点（consistency/data-integrity/operations/risk/business）で並列レビューするスキル。結果はすべて .spec/reviews/ 配下に格納し、レポート自動生成およびゲート判定の材料とする。ユーザーが「設計レビュー」「要件レビュー」「多観点レビュー」に言及したとき、または Design Gate 前に使用する。
 metadata:
-  version: "0.3.0"
+  version: "0.4.0"
   author: br7.hide
   created: "2026-07-08"
-  updated: "2026-07-30"
+  updated: "2026-08-13"
 ---
 
 # SDD Review — 多観点並列レビュー
@@ -33,5 +33,5 @@ BitzSDDの設計と仕様の検証レビューを担当します。
 *   判定（`PASS` / `CONDITIONAL_PASS` / `FAIL`）は `sdd-report` による自動集計の対象となり、統合進捗レポート `.spec/reports/status-report.md` に反映されます。
 *   `FAIL` または `CONDITIONAL_PASS` の場合は、指摘事項を修正するか、条件を消化するまで Design Gate / Promotion Gate を通過することはできません。
 *   レビューで見つかった要件や設計の根本的な問題は、`.spec/spec-issues/` に起票します。
-*   **未紐づけの P0/P1 がある状態で `verdict: PASS` を出せません**（SDD-FR-159）。`findings[]` の `tracked_by` は spec-issue ID または `<REV-ID>:GP-NNN` を指し、実在検査の対象です。`gate_preconditions[]` は `kind`（`blocking` / `agenda`）と `basis`（`verified` / `assumed`）を必須とし、**`basis: assumed` を根拠に `kind: blocking` は立てられません**（SDD-FR-161）。
+*   **未紐づけの P0/P1 がある状態で `verdict: PASS` を出せません**（SDD-FR-159）。`findings[]` の `tracked_by` は spec-issue ID または `<REV-ID>:GP-NNN` を指し、実在検査の対象です。`gate_preconditions[]` は `kind`（`blocking` / `agenda`）と `basis`（`verified` / `assumed`）を必須とし、**`basis: assumed` を根拠に `kind: blocking` は立てられません**（SDD-FR-161）。新規 GP は `gp_kind`（`behavioral` / `artifact` / `process`）で分類し、`behavioral` に限って `ears` を必須とします（SI-SDD-042）。
 *   **ID体系**: 統合報告書 (`<REV-ID>.md`) は `REV-NNN` のIDを持ち、YAML frontmatterを含みます。`_review-synthesis.md` は最新へのビューであり自前の ID を持ちません。finding ID は `<REV-ID>:SYN-NNN` としてレビュー横断で一意にします。frontmatter には共通キーに加えて **`decision: PASS | CONDITIONAL_PASS | FAIL` を必須**で含めます（`sdd-report` の自動集計が参照する。書式の正は `sdd-core` の assets/artifact-frontmatter.md「領域固有の追加キー」）。Consistency観点の指摘事項は、制約要件(CON)との衝突を避けるため `RVC-` プレフィックスを使用します。
