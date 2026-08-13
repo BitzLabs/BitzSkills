@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "additions_allowed": false,
+  "issue": "SI-FLW-052",
+  "exceptions": [
+    "budget-reference:bitz-sdd-roadmap:missing-v2-total",
+    "budget:m2-design-rework:missing-3pr-9session",
+    "budget:m3-design:6pr-20session!=8pr-26session",
+    "budget:m3-roadmap:6pr-20session!=8pr-26session"
+  ]
+}
