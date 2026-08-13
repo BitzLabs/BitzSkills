@@ -3,7 +3,7 @@ id: SI-FLW-054
 raised_by: FLW-REV-013（独立5観点レビュー・FAIL 2.31）
 target: FLW-DSN-016・FLW-FR-007
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: **M2 が新設する機構の運用規定を決める。** 安全機構は定義されているが、
   それを日常的に回すための規定（上限・失敗時の扱い・棚卸し・診断経路）が無い。
