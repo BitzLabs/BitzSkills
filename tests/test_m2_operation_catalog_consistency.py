@@ -11,6 +11,13 @@ DESIGN = FLOW / ".spec" / "design" / "FLW-DSN-012.md"
 CATALOG = FLOW / "skills" / "flow-core" / "references" / "operation-catalog.md"
 ALLOWLIST = FLOW / ".spec" / "catalog-consistency-exceptions.json"
 FIELDS = ("class", "approval", "retry", "recovery")
+DERIVED_CLASSES = {
+    ("none", "none"): "read",
+    ("local", "reversible"): "local-write",
+    ("remote", "reversible"): "remote-write",
+    ("local", "destructive"): "destructive",
+    ("remote", "destructive"): "destructive",
+}
 
 
 def _expand_operation(value: str) -> list[str]:
@@ -24,7 +31,8 @@ def _design_rows() -> dict[str, dict[str, str]]:
     section = text.split("## 公開action catalog", 1)[1].split("## 正規状態への写像", 1)[0]
     rows: dict[str, dict[str, str]] = {}
     pattern = re.compile(
-        r"^\| `(?P<operation>[^`]+)` \| (?P<class>[a-z-]+) \| (?P<approval>[a-z-]+) \|"
+        r"^\| `(?P<operation>[^`]+)` \| (?P<write_target>[a-z-]+) \|"
+        r" (?P<reversibility>[a-z-]+) \| (?P<class>[a-z-]+) \| (?P<approval>[a-z-]+) \|"
         r" [^|]+ \| (?P<retry>[a-z-]+) \| (?P<recovery>[^|]+) \|$"
     )
     for line in section.splitlines():
@@ -36,6 +44,8 @@ def _design_rows() -> dict[str, dict[str, str]]:
         for operation in _expand_operation(values["operation"]):
             rows[operation] = {
                 "class": values["class"],
+                "write_target": values["write_target"],
+                "reversibility": values["reversibility"],
                 "approval": values["approval"],
                 "retry": values["retry"],
                 "recovery": recovery,
@@ -106,3 +116,14 @@ def test_catalog_exception_scope_is_fixed() -> None:
     config = json.loads(ALLOWLIST.read_text(encoding="utf-8"))
     assert config["issue"] == "SI-FLW-052"
     assert config["exceptions"] == []
+
+
+def test_legacy_class_is_derived_from_orthogonal_axes() -> None:
+    rows = _design_rows()
+    for operation, row in rows.items():
+        axes = (row["write_target"], row["reversibility"])
+        assert axes in DERIVED_CLASSES, f"{operation}: invalid axes {axes}"
+        assert row["class"] == DERIVED_CLASSES[axes], (
+            f"{operation}: class must be derived from axes; "
+            f"expected={DERIVED_CLASSES[axes]}, actual={row['class']}"
+        )

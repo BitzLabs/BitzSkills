@@ -2,8 +2,8 @@
 id: FLW-DSN-012
 title: "Operation Contract詳細設計"
 status: active
-version: 1.2
-updated: 2026-08-12
+version: 1.3
+updated: 2026-08-14
 owner: hide
 implements: FLW-FR-003, FLW-FR-004, FLW-FR-005, FLW-FR-006, FLW-FR-007, FLW-FR-008, FLW-FR-009, FLW-FR-010, FLW-NFR-003, FLW-NFR-005, FLW-NFR-006, FLW-CON-002, FLW-CON-004, FLW-CON-005, FLW-CON-006
 origin: FLW-REV-002
@@ -23,7 +23,9 @@ command実装を先に作らず、各操作の対象・副作用・成功・再�
 | field | 内容 |
 |---|---|
 | `operation` | `<domain>.<action>`の安定名 |
-| `class` | `read` / `local-write` / `remote-write` / `destructive` |
+| `write_target` | `none`（read）/ `local` / `remote` |
+| `reversibility` | `none`（read）/ `reversible` / `destructive` |
+| `class` | 上記2軸から導出する互換値。直接決定しない |
 | `target` | repo identity、host/owner/repo、ref、path等のcanonical target |
 | `preconditions` | plan時とapply直前に照合する事実 |
 | `effects` | 許可された副作用の上限。列挙外は実行しない |
@@ -37,38 +39,53 @@ command実装を先に作らず、各操作の対象・副作用・成功・再�
 
 `approval`はCLIが人間本人を認証したことを表さない。実行前に必要な外部裁定の強さを表す。
 
+### operation class の正規導出（SI-FLW-049）
+
+operation class の正は本書の `write_target` と `reversibility` の直交2軸である。互換用の4値
+`class` は次の規則だけから導出し、他文書で独自に分類しない。
+
+| `write_target` | `reversibility` | 導出 `class` |
+|---|---|---|
+| `none` | `none` | `read` |
+| `local` | `reversible` | `local-write` |
+| `remote` | `reversible` | `remote-write` |
+| `local` / `remote` | `destructive` | `destructive` |
+
+`write_target: none` と `reversibility: none` は必ず組にし、write operation に `none` を使わない。
+`approval` はこの2軸と独立した第3軸である。
+
 ## 公開action catalog
 
-| operation | class | approval | postcondition | retry | recovery |
-|---|---|---|---|---|---|
-| `repo.inspect/capabilities` | read | none | snapshot/capability取得 | safe | — |
-| `git.status/diff-summary/diff-detail/log/branches/conflicts` | read | none | snapshot付きresult | safe | — |
-| `git.fetch` | local-write | mutation | FETCH_HEAD/refspec照合 | reconcile-first | `REC-FETCH` |
-| `git.stage` | local-write | mutation | index tree一致 | reconcile-first | `REC-STAGE` |
-| `git.commit` | local-write | mutation | parent/tree/message digest一致のcommit存在 | reconcile-first | `REC-COMMIT` |
-| `git.sync` | local-write | mutation | branchがexpected upstreamへff一致 | reconcile-first | `REC-SYNC` |
-| `git.publish-branch` | remote-write | explicit-human | remote ref=expected HEAD | manual-only | `REC-PUSH` |
-| `git.delete-remote-branch` | destructive | explicit-human | remote ref不存在 | manual-only | `REC-PUSH` |
-| `worktree.plan/list/audit` | read | none | 対象分類取得 | safe | — |
-| `worktree.create/resume` | local-write | explicit-human | path/branch/HEAD/common-dir一致 | reconcile-first | `REC-WORKTREE-CREATE` |
-| `worktree.finish` | destructive | explicit-human | 対象worktree/local branch不存在 | reconcile-first | `REC-WORKTREE-FINISH` |
-| `worktree.discard` | destructive | explicit-human | 列挙したtargetだけ不存在 | manual-only | `REC-WORKTREE-DISCARD` |
-| `issue.list/view/search/verify-link/reconcile-link` | read | none | updatedAt付きresult/repair plan | safe | — |
-| `issue.prepare` | read | none | body digestとplan生成 | safe | — |
-| `issue.publish` | remote-write | external-write | marker/URL一致 | reconcile-first | `REC-ISSUE-PUBLISH` |
-| `issue.edit` | remote-write | external-write | digest一致 | reconcile-first | `REC-ISSUE-EDIT` |
-| `issue.comment` | remote-write | external-write | marker一致 | reconcile-first | `REC-ISSUE-COMMENT` |
-| `issue.close` | remote-write | external-write | state一致 | reconcile-first | `REC-ISSUE-CLOSE` |
-| `pr.prepare/checks/merge-plan/post-merge` | read | none | head/base/check/review証跡 | safe | — |
-| `pr.publish` | remote-write | external-write | PR URL/marker/head一致 | reconcile-first | `REC-PR-PUBLISH` |
-| `pr.ready` | remote-write | external-write | draft=false/head一致 | reconcile-first | `REC-PR-READY` |
-| `pr.merge` | destructive | explicit-human | MERGED/head/merge commit確認 | reconcile-first | `REC-PR-MERGE` |
-| `release.plan/changelog/notes` | read | none | change-set/preview digest | safe | — |
-| `release.changelog-apply` | local-write | mutation | file digest一致 | reconcile-first | `REC-CHANGELOG-APPLY` |
-| `release.tag-create` | local-write | mutation | local annotated tag=target | reconcile-first | `REC-TAG-CREATE` |
-| `release.tag-push` | remote-write | external-write | remote tag=target | reconcile-first | `REC-TAG-PUSH` |
-| `release.draft` | remote-write | external-write | draft URL/tag/notes digest一致 | reconcile-first | `REC-RELEASE-DRAFT` |
-| `release.publish` | destructive | explicit-human | published URL/tag/target一致 | manual-only | `REC-RELEASE-PUBLISH` |
+| operation | write_target | reversibility | class | approval | postcondition | retry | recovery |
+|---|---|---|---|---|---|---|---|
+| `repo.inspect/capabilities` | none | none | read | none | snapshot/capability取得 | safe | — |
+| `git.status/diff-summary/diff-detail/log/branches/conflicts` | none | none | read | none | snapshot付きresult | safe | — |
+| `git.fetch` | local | reversible | local-write | mutation | FETCH_HEAD/refspec照合 | reconcile-first | `REC-FETCH` |
+| `git.stage` | local | reversible | local-write | mutation | index tree一致 | reconcile-first | `REC-STAGE` |
+| `git.commit` | local | reversible | local-write | mutation | parent/tree/message digest一致のcommit存在 | reconcile-first | `REC-COMMIT` |
+| `git.sync` | local | reversible | local-write | mutation | branchがexpected upstreamへff一致 | reconcile-first | `REC-SYNC` |
+| `git.publish-branch` | remote | reversible | remote-write | explicit-human | remote ref=expected HEAD | manual-only | `REC-PUSH` |
+| `git.delete-remote-branch` | remote | destructive | destructive | explicit-human | remote ref不存在 | manual-only | `REC-PUSH` |
+| `worktree.plan/list/audit` | none | none | read | none | 対象分類取得 | safe | — |
+| `worktree.create/resume` | local | reversible | local-write | explicit-human | path/branch/HEAD/common-dir一致 | reconcile-first | `REC-WORKTREE-CREATE` |
+| `worktree.finish` | local | destructive | destructive | explicit-human | 対象worktree/local branch不存在 | reconcile-first | `REC-WORKTREE-FINISH` |
+| `worktree.discard` | local | destructive | destructive | explicit-human | 列挙したtargetだけ不存在 | manual-only | `REC-WORKTREE-DISCARD` |
+| `issue.list/view/search/verify-link/reconcile-link` | none | none | read | none | updatedAt付きresult/repair plan | safe | — |
+| `issue.prepare` | none | none | read | none | body digestとplan生成 | safe | — |
+| `issue.publish` | remote | reversible | remote-write | external-write | marker/URL一致 | reconcile-first | `REC-ISSUE-PUBLISH` |
+| `issue.edit` | remote | reversible | remote-write | external-write | digest一致 | reconcile-first | `REC-ISSUE-EDIT` |
+| `issue.comment` | remote | reversible | remote-write | external-write | marker一致 | reconcile-first | `REC-ISSUE-COMMENT` |
+| `issue.close` | remote | reversible | remote-write | external-write | state一致 | reconcile-first | `REC-ISSUE-CLOSE` |
+| `pr.prepare/checks/merge-plan/post-merge` | none | none | read | none | head/base/check/review証跡 | safe | — |
+| `pr.publish` | remote | reversible | remote-write | external-write | PR URL/marker/head一致 | reconcile-first | `REC-PR-PUBLISH` |
+| `pr.ready` | remote | reversible | remote-write | external-write | draft=false/head一致 | reconcile-first | `REC-PR-READY` |
+| `pr.merge` | remote | destructive | destructive | explicit-human | MERGED/head/merge commit確認 | reconcile-first | `REC-PR-MERGE` |
+| `release.plan/changelog/notes` | none | none | read | none | change-set/preview digest | safe | — |
+| `release.changelog-apply` | local | reversible | local-write | mutation | file digest一致 | reconcile-first | `REC-CHANGELOG-APPLY` |
+| `release.tag-create` | local | reversible | local-write | mutation | local annotated tag=target | reconcile-first | `REC-TAG-CREATE` |
+| `release.tag-push` | remote | reversible | remote-write | external-write | remote tag=target | reconcile-first | `REC-TAG-PUSH` |
+| `release.draft` | remote | reversible | remote-write | external-write | draft URL/tag/notes digest一致 | reconcile-first | `REC-RELEASE-DRAFT` |
+| `release.publish` | remote | destructive | destructive | explicit-human | published URL/tag/target一致 | manual-only | `REC-RELEASE-PUBLISH` |
 
 上表にないoperationは`UNSUPPORTED`。`gh api`やGit subcommandを利用者入力から透過実行しない。
 
