@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "additions_allowed": false,
+  "issue": "SI-FLW-052",
+  "exceptions": [
+    "git.delete-remote-branch:recovery:REC-REMOTE-DELETE!=REC-PUSH",
+    "git.delete-remote-branch:retry:reconcile-first!=manual-only",
+    "git.publish-branch:approval:external-write!=explicit-human",
+    "git.publish-branch:retry:reconcile-first!=manual-only"
+  ]
+}
