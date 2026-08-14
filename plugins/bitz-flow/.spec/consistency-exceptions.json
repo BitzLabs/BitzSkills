@@ -5,7 +5,6 @@
   "exceptions": [
     "fixture-range:FLW-DSN-014.md:44!=49",
     "fixture-range:ROADMAP.md:44!=49",
-    "quarantine-count:declared-3!=table-4",
     "recovery-id:undefined:REC-RM-DELETE",
     "recovery-id:undefined:REC-WT-CREATE",
     "recovery-id:undefined:REC-WT-DISCARD",
