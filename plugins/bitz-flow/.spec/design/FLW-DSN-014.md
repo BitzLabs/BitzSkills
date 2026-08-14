@@ -2,7 +2,7 @@
 id: FLW-DSN-014
 title: "GitHub capability・M0検証設計"
 status: active
-version: 1.17
+version: 1.18
 updated: 2026-08-14
 owner: hide
 implements: FLW-FR-003, FLW-FR-008, FLW-FR-012, FLW-NFR-001, FLW-NFR-008, FLW-NFR-004, FLW-NFR-009, FLW-NFR-010, FLW-NFR-011
@@ -647,7 +647,7 @@ invalidateする。legacy単一JSONLはread-only互換入口とし、新旧Gate�
 
 - repo identity衝突0
 - repo外worktree rootの承認（**単回capability化されたもの**。`FLW-NFR-007` 1.3）
-- `M2-FLT-001`〜`055`全件PASS
+- `M2-FLT-001`〜`056`全件PASS
 - **enum三者照合テストがgreen**（設計 ⊆ schema ⊆ 実装の双方向）
 - **承認capabilityが全worktree writeでin-band検証される**
 - **operation外の変更をauditが検出しquarantineへ接続する**

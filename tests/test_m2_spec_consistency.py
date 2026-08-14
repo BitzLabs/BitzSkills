@@ -166,3 +166,15 @@ def test_m2_operational_contract_is_bounded_and_fail_closed() -> None:
     assert "悪意あるexecutorへの防御を" in operations
     for fixture in range(51, 56):
         assert f"`M2-FLT-{fixture:03d}`" in design
+
+
+def test_local_branch_tip_is_retained_before_delete() -> None:
+    design = DESIGN_016.read_text(encoding="utf-8")
+    steps = design.split("### step 契約", 1)[1].split("## §9", 1)[0]
+    assert "`create-retention-ref` (mutate)" in steps
+    assert steps.index("`create-retention-ref` (mutate)") < steps.index("`delete-local-branch` (mutate)")
+    assert "`refs/bitz-flow/deleted/<work-id>/<timestamp>`" in steps
+    assert "expected-absent CAS" in steps
+    assert "`safety.retention-list`" in design
+    assert "`safety.retention-prune`" in design
+    assert "`M2-FLT-056`" in design

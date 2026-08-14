@@ -2,7 +2,7 @@
 id: FLW-DSN-016
 title: "M2 worktree safety詳細設計"
 status: draft
-version: 2.0
+version: 2.1
 updated: 2026-08-14
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-006, FLW-NFR-007, FLW-NFR-011, FLW-NFR-012, FLW-CON-005, FLW-CON-006
@@ -50,6 +50,8 @@ catalog 外は `UNSUPPORTED` である。`FLW-REV-011:SYN-006`（finish / resume
 | `safety.quarantine-list` | なし | retry-read | M2-3 |
 | `safety.intent-show` | なし | retry-read | M2-3 |
 | `safety.receipt-show` | なし | retry-read | M2-3 |
+| `safety.retention-list` | なし | retry-read | M2-5 |
+| `safety.retention-prune` | `local-ref` | `REC-RETENTION-PRUNE` | M2-5 |
 | `worktree.create` | `worktree-dir` ＋ `worktree-registry` ＋ `local-ref` ＋ **`index`** | `REC-WORKTREE-CREATE` | M2-3 |
 | `worktree.resume` | 同上 | `REC-WORKTREE-RESUME` | M2-3 |
 | `worktree.finish` | 同上 | `REC-WORKTREE-FINISH` | M2-5 |
@@ -552,11 +554,13 @@ stepは `verify`（non-mutating）/ `mutate` の型を持つ。**mutating step�
 
 `worktree.finish`:
 `verify-pr-merge` (verify) → `verify-target-oid` (verify) → `verify-reachability` (verify) →
-`remove-registry-entry` (mutate) → `remove-worktree-dir` (mutate) → `delete-local-branch` (mutate)
+`create-retention-ref` (mutate) → `remove-registry-entry` (mutate) →
+`remove-worktree-dir` (mutate) → `delete-local-branch` (mutate)
 
 `worktree.discard`:
 `freeze-manifest` (verify) → `verify-manifest-scope` (verify) →
-`remove-registry-entry` (mutate) → `remove-worktree-dir` (mutate) → `delete-local-branch` (mutate)
+`create-retention-ref` (mutate) → `remove-registry-entry` (mutate) →
+`remove-worktree-dir` (mutate) → `delete-local-branch` (mutate)
 
 `worktree.create`:
 `verify-path-scope` (verify) → `create-local-ref` (mutate) → `create-worktree-dir` (mutate) →
@@ -565,6 +569,14 @@ stepは `verify`（non-mutating）/ `mutate` の型を持つ。**mutating step�
 `worktree.resume`:
 `verify-registry-binding` (verify) → `verify-instance-nonce` (verify) → `verify-head-oid` (verify) →
 `acquire-worktree-guard` (mutate) → `publish-resume-receipt` (mutate)
+
+`create-retention-ref`は削除直前のtip OIDをintent/receiptへ記録し、
+`refs/bitz-flow/deleted/<work-id>/<timestamp>`をexpected-absent CASで同じOIDへ作る。
+同名refが同じOIDならDONE、別OIDなら`BLOCKED`とし、保全ref作成前にlocal branchを削除しない。
+保全refによりcommit objectをGitの到達可能集合へ残し、reflog設定には依存しない。
+`safety.retention-list`はref、tip OID、作成時刻、期限、関連quarantineを列挙する。
+`safety.retention-prune`は期限超過かつ関連quarantine解決済みのrefだけを明示承認とCASで削除し、
+未解決・不明な関連状態は`BLOCKED`にする。
 
 **`remove-registry-entry` を `remove-worktree-dir` より先に置く**。cross-filesystem 時の
 durability commit point が「registry entry の atomic 公開時点」であり registry を正とするため、
@@ -636,6 +648,7 @@ main同期は既存の独立operation `git.sync` が担う。remote candidateは
 | `M2-FLT-053` | finish/discard capability不足rootでcreate要求 | create/resumeを`UNSUPPORTED`、auditのみ許可 | M2-3 |
 | `M2-FLT-054` | Activity API timeout/rate limit/部分page/API非提供 | `UNAVAILABLE`/`INDETERMINATE`/`UNSUPPORTED`を分離し、更新なし判定0 | M2-6 |
 | `M2-FLT-055` | 永続証跡のchain欠損・改ざん・restore不一致 | `INDETERMINATE`＋quarantine、write副作用0 | M2-4 |
+| `M2-FLT-056` | 未push commitを指すlocal branchのfinish/discard、または期限前保全refのprune | tip OIDの保全ref作成前はbranch削除0、期限前/未解決ref削除0 | M2-5 |
 
 ## §10 P2 と M2 運用規定
 
@@ -672,7 +685,9 @@ atomic replace＋directory fsync、stable identity、mtime粒度をprobeしroot 
 前record digestを含むappend-only hash-chainを読み出し時に全検証する。未解決quarantineは削除不可。
 解決済みはM2 Promotion Gateから90日または関連releaseのサポート終了の遅い方まで保持する。
 owner-only export bundleをbackup単位とし、四半期ごとに一時rootへrestoreしてchain/nonce/postconditionを
-検証する。欠損・不一致は`INDETERMINATE`＋quarantineとする。
+検証する。欠損・不一致は`INDETERMINATE`＋quarantineとする。branch tip保全refも同じ
+90日/サポート終了規則に従い、期限前または未解決quarantineに関連するrefは
+`safety.retention-prune`の対象にしない。
 
 **脅威モデル**: capabilityは誤操作、承認再利用、別processの取り違えを防ぐ。秘密鍵は可能なら
 executorと別のowner-only process/keystoreへ隔離する。隔離不能なら悪意あるexecutorへの防御を
@@ -691,7 +706,7 @@ timeout/rate limit/5xxは`UNAVAILABLE`、API非提供/恒久scope不足は`UNSUP
 | M2-3 | create / resume / audit ＋ enum 三者照合 | 3 | `M2-FLT-016`〜`023`、`053` PASS |
 | M2-4 | 着手前 reconnaissance ＋ entry protocol・運用証跡 | 3 | `M2-FLT-045`〜`047`、`051`、`052`、`055` PASS（`SI-FLW-046` / `054`） |
 | M2-Q | M2 qualification | 1 | compatibility key確定後にqualification PASS（**blocking**）。未達時はM2-5以降を停止 |
-| M2-5 | finish / discard ＋ quarantine 解除 | 4 | `M2-FLT-024`〜`036` PASS |
+| M2-5 | finish / discard・retention ＋ quarantine 解除 | 4 | `M2-FLT-024`〜`036`、`050`、`056` PASS |
 | M2-6 | delete-remote-branch ＋ confirmation | 3 | `M2-FLT-037`〜`044`、`048`、`049`、`054` PASS、M2 出口 |
 
 - 依存は `M2-1 → M2-2 → M2-3 → M2-4 → M2-Q → M2-5 → M2-6` の直列。
@@ -733,7 +748,7 @@ create/resumeはfinish/discardが揃うM2-5まで公開せず、「作れるが�
 
 - repo identity 衝突 0
 - repo 外 worktree root の承認（**capability 化されたもの**）
-- `M2-FLT-001`〜`055` 全件 PASS
+- `M2-FLT-001`〜`056` 全件 PASS
 - **enum 三者照合テストが green**（設計 ⊆ schema ⊆ 実装の双方向）
 - **承認capabilityが全worktree writeでin-band検証される**
 - **operation外の変更をauditが検出しquarantineへ接続する**
@@ -805,7 +820,7 @@ GP-004 に対し「§5」とだけ書いて対応済みとし、**原文が求�
 | GP-010 | settings.json の permissions へ worktree root を加え、承認 receipt を伴わない worktree write を機械的に止める | §4 — permissions ＋ PreToolUse フック。receipt は common-dir 配下の owner-only 領域へ追記 |
 | GP-011 | destructive worktree operation の承認へ M1 の capability envelope を再利用し単回化する | §4 — M1 の Ed25519 envelope を再利用。nonce は target guard 内で linearizable CAS |
 | GP-012 | 設計の閉集合・schema enum・guard.py 定数の三者照合テストを追加する | §2 — **双方向**照合（片方向が沈黙した原因）。対象は namespace 表の全 namespace |
-| GP-013 | M2-FLT-* を採番し、worktree の fault fixture と recovery matrix 行を定義する | §8（recovery matrix）／ §9（`M2-FLT-001`〜`055`。各 fixture をちょうど1区分へ割当） |
+| GP-013 | M2-FLT-* を採番し、worktree の fault fixture と recovery matrix 行を定義する | §8（recovery matrix）／ §9（`M2-FLT-001`〜`056`。各 fixture をちょうど1区分へ割当） |
 | GP-014 | 複数 namespace に現れる語の一覧を schema から機械導出して文書と照合する | §2 — 手で維持する表を置かず schema から導出。本書の表は導出結果の期待値 |
 | GP-015 | closed enum への値追加の互換性条文を output-contract.md へ作るか、互換性を根拠にしない記述へ改める | §2 — **後者を採用**。「key 集合は加算のみ」は object の key の規定であり closed enum に適用できないため、根拠を「未公開だから影響が無い」へ置換 |
 | GP-016 | 表記規則の判定基準（field 名ではなく値の性質）と反例を明記し、namespace 表へ性質列を足す | §2 — 判定基準を「値の性質」と明記し性質列を追加。反例（`trial_kind` の `Q-NORMAL`）を隠さず記載 |
@@ -816,6 +831,9 @@ GP-004 に対し「§5」とだけ書いて対応済みとし、**原文が求�
 同 issue が accept されて照合が機械化されれば、本表が検査対象になる。
 
 ## Revision History
+
+- 2.1 (2026-08-14) SI-FLW-049のaccept済みbranch tip保全を反映。finish/discardの削除前に
+  `refs/bitz-flow/deleted/<work-id>/<timestamp>`をCAS作成し、retention list/pruneと`M2-FLT-056`を追加。
 
 - 2.0 (2026-08-14) SI-FLW-054裁定を反映。reconnaissance有限境界、quarantine RACI/read経路、
   承認疲れ指標、capability対称性、filesystem probe、永続証跡retention/hash-chain、
