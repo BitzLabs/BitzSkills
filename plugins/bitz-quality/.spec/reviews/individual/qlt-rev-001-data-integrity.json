@@ -1,0 +1,7 @@
+{
+  "perspective": "data-integrity",
+  "score": 4.7,
+  "verdict": "PASS",
+  "findings": [],
+  "comments": "qa-session.json および rules-ledger.md のスキーマ整合性と既存データ保護が適切に定義されている。"
+}

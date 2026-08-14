@@ -1,0 +1,7 @@
+{
+  "perspective": "risk",
+  "score": 4.9,
+  "verdict": "PASS",
+  "findings": [],
+  "comments": "5軸スコアリングのクリティカル判定（セキュリティ/DB変更で強制レベルA）とシークレット検知が強固に定義されている。"
+}
