@@ -2,12 +2,12 @@
 id: FLW-DSN-016
 title: "M2 worktree safety詳細設計"
 status: draft
-version: 2.2
+version: 2.3
 updated: 2026-08-14
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-006, FLW-NFR-007, FLW-NFR-011, FLW-NFR-012, FLW-CON-005, FLW-CON-006
-origin: SI-FLW-041, SI-FLW-042, SI-FLW-043, SI-FLW-044, SI-FLW-045, FLW-REV-011
-decision_ref: .spec/reports/decision-2026-08-12-m2-design-gaps.md
+origin: SI-FLW-041, SI-FLW-042, SI-FLW-043, SI-FLW-044, SI-FLW-045, SI-FLW-046, SI-FLW-047, SI-FLW-048, SI-FLW-049, SI-FLW-050, SI-FLW-051, SI-FLW-052, SI-FLW-053, SI-FLW-054, FLW-REV-011, FLW-REV-012, FLW-REV-013, FLW-REV-014
+decision_ref: .spec/reports/decision-2026-08-13-si-flw-049-055.md
 ---
 
 # FLW-DSN-016 M2 worktree safety詳細設計
@@ -702,6 +702,15 @@ owner-only export bundleをbackup単位とし、四半期ごとに一時rootへr
 90日/サポート終了規則に従い、期限前または未解決quarantineに関連するrefは
 `safety.retention-prune`の対象にしない。
 
+support calendar のSSOTは本節の次表とし、repository ownerをAccountable ownerとする。
+Promotion Gateで対象release lineとISO 8601形式の`support_end`を確定し、変更は裁定記録を伴わせる。
+`support_end`が`UNSET`、解釈不能、または対象releaseを一意に選べない場合、期限は未到来として扱い
+`safety.retention-prune`を`BLOCKED`にする。
+
+| release line | support_end | Accountable owner | 状態 |
+|---|---|---|---|
+| bitz-flow v2 | `UNSET` | repository owner | pre-release。M2 Promotion Gateで日付を確定するまでprune禁止 |
+
 **脅威モデル**: capabilityは誤操作、承認再利用、別processの取り違えを防ぐ。秘密鍵は可能なら
 executorと別のowner-only process/keystoreへ隔離する。隔離不能なら悪意あるexecutorへの防御を
 主張せず、単回nonce・監査chain・明示承認による事故防止だけを保証する。
@@ -844,6 +853,9 @@ GP-004 に対し「§5」とだけ書いて対応済みとし、**原文が求�
 同 issue が accept されて照合が機械化されれば、本表が検査対象になる。
 
 ## Revision History
+
+- 2.3 (2026-08-14) `FLW-REV-014:SYN-002` / `SYN-003`を反映。support calendarのSSOT・owner・
+  未設定時のprune禁止を定義し、frontmatterを実際のspec-issue、レビュー、裁定台帳へ同期。
 
 - 2.2 (2026-08-14) Unicode NFC/NFD、case別名、Windows device/ADS/short-name/reparseを
   stable identityへ収束またはfail-closedにする規則と`M2-FLT-057`を追加。ABA経路Cを恒久非対応へ限定。

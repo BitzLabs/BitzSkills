@@ -2,7 +2,7 @@
 id: FLW-REV-014
 title: M2詳細設計 FLW-REV-013残指摘 再レビュー
 status: active
-version: 1.0
+version: 1.1
 updated: 2026-08-14
 owner: hide
 ---
@@ -31,11 +31,13 @@ FLW-REV-013 の P0 14件・P1 9件は、後続の裁定、設計改訂、ガバ�
 
 旧 finding の本文は監査証跡として FLW-REV-013 に保存し、解消判定の正は本レビューとする。
 
-## 残 findings
+## findings の解消状況
 
-1. `FLW-REV-014:SYN-001` (P2): FLW-DSN-006 の create/resume 入口から有限 reconnaissance 契約を明示参照する。
-2. `FLW-REV-014:SYN-002` (P3): retention の support calendar SSOT/owner を明記する。
-3. `FLW-REV-014:SYN-003` (P3): 次回改訂時に FLW-DSN-016 frontmatter を機械台帳へ同期する。
+`FLW-TSK-072`で3件とも解消した。レビュー時のpriorityとscoreは監査証跡として変更しない。
+
+1. `FLW-REV-014:SYN-001` (P2, resolved): FLW-DSN-006 1.3のcreate/resume入口から有限reconnaissance契約へ接続した。
+2. `FLW-REV-014:SYN-002` (P3, resolved): FLW-DSN-016 2.3にsupport calendarのSSOT/ownerと未設定時のprune禁止を定義した。
+3. `FLW-REV-014:SYN-003` (P3, resolved): FLW-DSN-016 2.3のfrontmatterを実際のspec-issue、レビュー、裁定台帳へ同期した。
 
 ## M2 Design Gate 再判定
 
@@ -44,6 +46,10 @@ FLW-REV-013 の P0 14件・P1 9件は、後続の裁定、設計改訂、ガバ�
 - aggregate score 4.25（PASS 閾値 3.50 以上）
 - 全観点 4.0 以上
 - P0 / P1 / gate precondition / conditional item はすべて 0
-- 残る P2/P3 は M2 実装と出荷を阻止しない改善項目
+- レビュー時の P2/P3 3件も`FLW-TSK-072`で解消済み
 
 この判定はレビューによる推奨である。GatePassage の起票と設計の active 化は、人間の Design Gate 裁定後に行う。
+
+## Revision History
+
+- 1.1 (2026-08-14) `FLW-TSK-072`による`SYN-001`〜`003`の解消と追跡先を記録。

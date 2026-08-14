@@ -27,8 +27,8 @@
       "title": "worktree lifecycle SSOT に着手前 reconnaissance の参照が未接続",
       "detail": "有限 reconnaissance と entry protocol の規範は FLW-FR-007 / FLW-DSN-016 に存在するが、FLW-DSN-006 の create/resume 入口から明示参照されていない。",
       "recommendation": "FLW-DSN-006 から両規範を参照し、ライフサイクル読者の見落としを防ぐ。",
-      "tracked_by": "",
-      "status": "open"
+      "tracked_by": "FLW-TSK-072",
+      "status": "resolved"
     },
     {
       "id": "FLW-REV-014:SYN-002",
@@ -38,8 +38,8 @@
       "title": "retention 判定に用いる support calendar の情報源が未指定",
       "detail": "保持期限は安全側へ定義済みだが、関連リリースのサポート終了日を取得する台帳または owner が明記されていない。",
       "recommendation": "support calendar の SSOT と owner を運用設計へ追記する。",
-      "tracked_by": "",
-      "status": "open"
+      "tracked_by": "FLW-TSK-072",
+      "status": "resolved"
     },
     {
       "id": "FLW-REV-014:SYN-003",
@@ -49,8 +49,8 @@
       "title": "FLW-DSN-016 frontmatter の由来は機械台帳より情報量が少ない",
       "detail": "governance-claims.json は実際の裁定と設計の接続を機械検証するが、FLW-DSN-016 の frontmatter 単体では後続裁定の全履歴を一覧できない。機械トレースは成立しているため軽微な可読性課題である。",
       "recommendation": "次回の設計改訂時に origin / decision_ref を governance claims の現況へ同期する。",
-      "tracked_by": "",
-      "status": "open"
+      "tracked_by": "FLW-TSK-072",
+      "status": "resolved"
     }
   ],
   "gate_preconditions": [],
