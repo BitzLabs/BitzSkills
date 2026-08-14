@@ -1,7 +1,7 @@
 ---
 id: QLT-FR-027
 version: 1.0
-status: draft
+status: approved
 domain: quality-review
 priority: high
 origin: SI-QLT-002

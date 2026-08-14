@@ -34,7 +34,8 @@ graph TD
 
 1. **レビュー基盤契約** — `QLT-FR-017〜026`をapproved化。Discovery GateとDesign Gateは
    2026-08-14にGo（`QLT-GATE-001`）。`QLT-REV-003`はPASS。追加契約は`SI-QLT-002`と
-   `QLT-FR-027〜030`で補強中、`QLT-REV-004`はPASS。補足Gate後に実装タスクへ進む。
+   `QLT-FR-027〜030`を補足Gateでapproved化（`QLT-GATE-002`、2026-08-14）。`QLT-REV-004`はPASS。
+   実装タスク分解へ進むが、V4 Charter確定時のprofile再qualificationと移管の二重Gateを必須とする。
 2. **`quality-result@1`** — `target_sha`、判定、finding、measurand、規則・tool version、
    evidence digestを持つ閉集合JSON schemaを設計し、未知field・欠落・古いSHAを安全側に扱う。
 3. **SDD adapter** — EARS要件ID・テストID・測定結果をV4の公開portへ渡す。
