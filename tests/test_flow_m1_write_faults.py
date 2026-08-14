@@ -475,14 +475,17 @@ def test_reachable_codes_are_still_m0_only(repo):
     assert seen <= {"OK", "INVALID_INPUT", "BLOCKED", "UNAVAILABLE", "STALE", "UNSUPPORTED"}
 
 
-def test_write_modules_are_not_reachable_from_dispatcher():
-    """dispatcher の handler 表に write が入っていないこと。"""
+def test_only_m0_and_m2_worktree_are_reachable_from_dispatcher():
+    """dispatcher は M0 と M2 worktree runtime だけを公開する。"""
     from flowlib import cli
 
-    for domain, action in cli._HANDLERS:
-        assert (domain, action) in (
-            ("repo", "inspect"), ("git", "status"), ("git", "diff-summary")
-        ), f"M1-3 で公開 operation が増えている: {domain}.{action}"
+    expected = {
+        ("repo", "inspect"), ("git", "status"), ("git", "diff-summary"),
+        ("worktree", "audit"), ("worktree", "create"),
+        ("worktree", "resume"), ("worktree", "finish"),
+        ("worktree", "discard"),
+    }
+    assert set(cli._HANDLERS) == expected
 
 
 # === fixture の網羅 ============================================================

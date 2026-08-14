@@ -3,10 +3,11 @@
 公開 operation の contract。**この表にない operation は `UNSUPPORTED`**（exit 8）を返して停止し、
 生の `git` / `gh` コマンドを代替案として提示しない。
 
-現在**公開**されているのは M0 の read-only 3 operation だけである。M1 以降の operation は
-実装と fault fixture が揃った milestone で公開する（設計上の配分は `FLW-DSN-012` が正）。
+現在**公開**されているのは M0 read-only 3 operationとM2 worktree operationである。
+M2 writeは署名済み単回capabilityと固定trusted key registryを必須とし、plan/applyを分離する。
 
-M1 の operation は**契約だけを凍結済み**で、まだ公開しない（下の「M1 で凍結した契約（未公開）」節）。
+M1 のoperationは**契約だけを凍結済み**で、Completion Gate裁定までは公開しない
+（下の「M1で凍結した契約（未公開）」節）。
 凍結は「後から意味を変えないための固定」であって公開予告ではない。実装と fault fixture が
 揃うまで、これらの operation は `UNSUPPORTED` を返す。
 
@@ -87,6 +88,23 @@ Git 入力は `status --porcelain=v2 --branch -z`。path は NUL 区切りで取
 Git 入力は `diff --name-status -z` と `diff --numstat -z`。
 変更行の内容は返さない（必要なら M1 の `git.diff-detail` を使う）。
 data schema は `schemas/operations/git.diff-summary.schema.json`。
+
+## 公開 operation（M2 worktree）
+
+| operation | class | approval | effects | retry |
+|---|---|---|---|---|
+| `worktree.audit` | read | none | なし | safe |
+| `worktree.create` | local-write | explicit-human | branchとworktree作成 | reconcile-first |
+| `worktree.resume` | local-write | explicit-human | resume receipt追記 | reconcile-first |
+| `worktree.finish` | destructive | explicit-human | merged worktreeとlocal branch除去 | reconcile-first |
+| `worktree.discard` | destructive | explicit-human | retention ref作成後にworktreeとlocal branch除去 | manual-only |
+
+writeは副作用なしのplanで`operation_id`と`capability_context`を返す。applyは同じ入力、
+`--confirm <operation_id>`、`--capability-file`を要求する。trusted Ed25519 public keyは
+Git common-dirの`bitz-flow-v2/trusted-worktree-keys.json`からだけ読み、CLI引数で差し替えない。
+registryはowner-only regular fileでなければならない。各mutation直前に署名・期限・scope・identityを
+再検査し、nonceを永続消費する。receiptはcommon-dir配下へhash-chainでfsyncし、部分失敗は
+completed/remaining stepsを返してquarantineする。remote writeはM3まで`UNSUPPORTED`を維持する。
 
 ## M1 で凍結した契約（未公開）
 

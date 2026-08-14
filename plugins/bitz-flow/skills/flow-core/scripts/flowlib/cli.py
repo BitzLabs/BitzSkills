@@ -1,7 +1,7 @@
 """単一 dispatcher の CLI 層（FLW-DSN-003 公開入口）。
 
 入力を canonical 化し、adapter から事実を取得し、renderer へ渡す。
-状態変更は行わない（M0 は read-only の3 operation のみ）。
+M0 read-onlyとM2 worktreeの署名capability付きplan/applyを扱う。
 
 未対応の domain / action は ``UNSUPPORTED``（exit 8）で停止し、生の ``git`` /
 ``gh`` コマンドを代替案として出力しない（references/operation-catalog.md）。
@@ -10,18 +10,24 @@
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import datetime as _dt
 import os
 import sys
 from typing import Any, Sequence
 
-from . import __version__, git_read, result as R
+from . import __version__, git_read, result as R, worktree_runtime
 
-# M0 で公開する operation。ここに無い組み合わせは UNSUPPORTED。
-M0_OPERATIONS = {
+# 公開 operation。ここに無い組み合わせは UNSUPPORTED。
+PUBLISHED_OPERATIONS = {
     ("repo", "inspect"),
     ("git", "status"),
     ("git", "diff-summary"),
+    ("worktree", "audit"),
+    ("worktree", "create"),
+    ("worktree", "resume"),
+    ("worktree", "finish"),
+    ("worktree", "discard"),
 }
 
 # 公開予定だが当該 milestone まで未対応の operation（UNSUPPORTED の理由付けに使う）。
@@ -99,6 +105,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--apply", action="store_true", help="状態変更の実行（M1 以降）")
     parser.add_argument("--confirm", help="plan が返した operation_id（M1 以降）")
     parser.add_argument("--approval-ref", dest="approval_ref", help="外部裁定への参照（M1 以降）")
+    parser.add_argument("--path", help="worktree path")
+    parser.add_argument("--branch", help="worktree branch")
+    parser.add_argument("--worktree-root", dest="worktree_root", help="承認済みworktree root")
+    parser.add_argument("--start-point", default="HEAD", help="worktree.createの開始ref")
+    parser.add_argument("--default-branch", default="main", help="finish到達性を確認するdefault branch")
+    parser.add_argument("--capability-file", help="署名済み単回capability JSON")
+    parser.add_argument("--backup-receipt", action="store_true", help="dirty内容を退避済みであることを提示")
     return parser
 
 
@@ -319,6 +332,94 @@ def _op_git_diff_summary(root: str, args, started: str) -> tuple[dict, R.Compact
     return result, view
 
 
+def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
+    operation = f"worktree.{args.action}"
+    if args.action == "audit":
+        proc = worktree_runtime._git(__import__("pathlib").Path(root), "worktree", "list", "--porcelain")
+        items = [line for line in proc.stdout.splitlines() if line.startswith("worktree ")]
+        data = R.empty_data()
+        data["items"] = [{"path": line.split(" ", 1)[1]} for line in items]
+        data["page"] = {"shown": len(items), "total": len(items)}
+        data["evidence"] = ["git worktree list --porcelain"]
+        result = R.build_result(
+            operation=operation, code="OK", repo=root, tool_version=__version__,
+            started_at=started, finished_at=_now(), summary=f"{len(items)} worktrees",
+            snapshot=R.snapshot_of(items), data=data,
+        )
+        return result, R.CompactView(tokens={"worktrees": len(items)})
+
+    missing = [name for name, value in (
+        ("--path", args.path), ("--branch", args.branch), ("--worktree-root", args.worktree_root)
+    ) if not value]
+    if missing:
+        return _simple_result(
+            operation=operation, code="INVALID_INPUT", repo=root,
+            summary="worktree input missing: " + ", ".join(missing), stage="validate",
+        ), R.CompactView()
+    try:
+        plan_value = worktree_runtime.plan(
+            root, action=args.action, path=args.path, branch=args.branch,
+            worktree_root=args.worktree_root, start_point=args.start_point,
+            default_branch=args.default_branch,
+        )
+    except worktree_runtime.RuntimeError as exc:
+        return _simple_result(
+            operation=operation, code="BLOCKED", repo=root, summary=str(exc), stage="plan",
+        ), R.CompactView()
+
+    data = R.empty_data()
+    data.update({
+        "target": {"path": plan_value.path, "branch": plan_value.branch},
+        "preconditions": ["plan snapshot一致", "単回Ed25519 capability一致"],
+        "effects": list(plan_value.effects),
+        "postconditions": ["worktree/branch/receiptを再観測して一致"],
+        "concurrency_key": plan_value.context.worktree_dir_guard_key,
+        "evidence": ["operation_id", "snapshot", "receipt digest"],
+        "capability_context": dataclasses.asdict(plan_value.context),
+    })
+    if not args.apply:
+        result = R.build_result(
+            operation=operation, code="READY", repo=root, tool_version=__version__,
+            started_at=started, finished_at=_now(), summary="worktree plan ready",
+            snapshot=plan_value.snapshot, operation_id=plan_value.operation_id,
+            approval_required="explicit-human", approval_reference=args.approval_ref,
+            stage="plan", data=data,
+        )
+        return result, R.CompactView(tokens={"action": args.action, "branch": args.branch})
+    if not (args.confirm and args.capability_file):
+        return _simple_result(
+            operation=operation, code="APPROVAL_REQUIRED", repo=root,
+            summary="--confirm and --capability-file are required", stage="validate",
+        ), R.CompactView()
+    try:
+        import json
+        from pathlib import Path
+        capability = worktree_runtime.capability_from_json(
+            json.loads(Path(args.capability_file).read_text(encoding="utf-8"))
+        )
+        public_keys = worktree_runtime.load_trusted_keys(plan_value.common_dir)
+        decision = worktree_runtime.apply(
+            plan_value, confirm=args.confirm, capability=capability,
+            public_keys=public_keys,
+            backup_receipt=args.backup_receipt,
+        )
+    except (OSError, ValueError, worktree_runtime.RuntimeError) as exc:
+        return _simple_result(
+            operation=operation, code="BLOCKED", repo=root, summary=str(exc), stage="apply",
+        ), R.CompactView()
+    data["completed_steps"] = list(decision.completed_steps)
+    data["remaining_steps"] = list(decision.remaining_steps)
+    data["evidence"] = list(decision.evidence)
+    result = R.build_result(
+        operation=operation, code=decision.code, repo=root, tool_version=__version__,
+        started_at=started, finished_at=_now(), summary=decision.summary,
+        snapshot=plan_value.snapshot, operation_id=plan_value.operation_id,
+        approval_required="explicit-human", approval_source="signed-capability",
+        approval_reference=args.approval_ref, stage="apply", data=data,
+    )
+    return result, R.CompactView(tokens={"action": args.action, "code": decision.code})
+
+
 def _failure_result(operation: str, repo: str, failure, started: str) -> dict:
     """adapter の失敗を公開 result へ写す（cause と stage だけを載せる）。"""
     code = "UNAVAILABLE"
@@ -343,6 +444,11 @@ _HANDLERS = {
     ("repo", "inspect"): _op_repo_inspect,
     ("git", "status"): _op_git_status,
     ("git", "diff-summary"): _op_git_diff_summary,
+    ("worktree", "audit"): _op_worktree,
+    ("worktree", "create"): _op_worktree,
+    ("worktree", "resume"): _op_worktree,
+    ("worktree", "finish"): _op_worktree,
+    ("worktree", "discard"): _op_worktree,
 }
 
 
@@ -355,7 +461,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     cwd = os.getcwd()
     operation = f"{args.domain}.{args.action}"
 
-    if args.apply or args.confirm or args.approval_ref:
+    if (args.apply or args.confirm or args.approval_ref) and args.domain != "worktree":
         return _emit(
             _simple_result(
                 operation=operation,
