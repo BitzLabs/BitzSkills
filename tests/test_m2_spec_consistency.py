@@ -132,3 +132,15 @@ def test_worktree_state_is_physical_and_finish_predicate_is_explicit() -> None:
     assert "| `worktree.finish` | `AUDITED` | `DIRTY` | `MERGED_EXACT` | なし | `BLOCKED` |" in table
     assert "退避receipt" in table
     assert "M2-FLT-050" in design
+
+
+def test_enforcement_is_in_band_and_qualification_follows_skill_change() -> None:
+    design = DESIGN_016.read_text(encoding="utf-8")
+    section = design.split("## §4", 1)[1].split("## §5", 1)[0]
+    assert "platform固有hookを配布せず" in section
+    assert "permissionsも変更しない" in section
+    assert "単回承認capability・guard・CAS" in section
+    boundary = design.split("## §11 実装境界", 1)[1].split("## §12", 1)[0]
+    assert "M2-1 → M2-2 → M2-3 → M2-4 → M2-Q → M2-5 → M2-6" in boundary
+    assert "M2-Qのqualificationはblocking" in boundary
+    assert "機械強制層" not in boundary

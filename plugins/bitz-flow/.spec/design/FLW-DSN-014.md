@@ -648,7 +648,8 @@ invalidateする。legacy単一JSONLはread-only互換入口とし、新旧Gate�
 - repo外worktree rootの承認（**単回capability化されたもの**。`FLW-NFR-007` 1.3）
 - `M2-FLT-001`〜`050`全件PASS
 - **enum三者照合テストがgreen**（設計 ⊆ schema ⊆ 実装の双方向）
-- **機械強制層が有効**（permissions＋フックでreceiptなしworktree writeをブロック）
+- **承認capabilityが全worktree writeでin-band検証される**
+- **operation外の変更をauditが検出しquarantineへ接続する**
 - **`write_target: local` の被測定物confirmationが3 platformでPASS**しactive manifest発行済み
 - **着手前reconnaissanceがentry protocolで必須化**されている（`FLW-FR-007` 1.1）
 
@@ -707,7 +708,7 @@ PR予算はmilestone内の実装・fixture・文書・version bumpを含む。�
    上記「M2出口条件」をすべて満たした時点で、**M1 Git writeの`write_target: local`とM2 worktreeを
    同時に公開できる**。`write_target: remote`（`git.publish-branch` / `git.delete-remote-branch`）は
    M3のconfirmationまで`UNSUPPORTED`を維持する。
-   path安全検査・承認capability・機械強制層のいずれかを無効化してworktree writeだけを
+   path安全検査・承認capabilityのいずれかを無効化してworktree writeだけを
    公開する縮退は認めない。
 4. M5前半のdraft機能はprerelease限定とし、publishをv2完成条件から黙って除外しない。
 5. 縮退版をv2-currentへ昇格する場合は、scope/要件/operation catalogを改訂して

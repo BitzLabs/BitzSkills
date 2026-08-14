@@ -282,7 +282,7 @@ case-sensitive と判定するが、worktree-dir は create 時に必ず不在�
    並行 create を2本通すため採らない。
 4. fault fixture に「**不在 path の case 差**」を追加する（`M2-FLT-009`）。
 
-## §4 承認の capability 化と機械強制層
+## §4 承認 capability と環境ガードレールの責務分離
 
 対応 GP: **GP-002 / GP-010 / GP-011**
 
@@ -336,7 +336,7 @@ nonce は M1 と同じく target guard 内で linearizable CAS し、
 `FLW-CON-005` の「`--approval-ref` は参照の存在だけで apply 可否を変更しない」原則は維持する。
 capability は**署名の検証結果**が可否を決めるのであって、参照の存在ではない。
 
-### 機械強制層（GP-010）
+### 環境ガードレールは bitz-flow の責務外（GP-010 / SI-FLW-051）
 
 `FLW-REV-011:SYN-010` は「`AGENTS.md` はリポジトリ外への書き込みを事前確認必須とし
 機械的ブロックを `settings.json` の permissions で強制すると定めるが、worktree root に
@@ -345,12 +345,14 @@ capability は**署名の検証結果**が可否を決めるのであって、�
 
 **M2 の出口条件を機械層まで含む定義にする。**
 
-1. `.claude/settings.json` の permissions へ worktree root パターンを追加する。
-2. **承認 receipt を伴わない worktree write を PreToolUse フックでブロックする。**
-3. receipt は intent と同じ **common-dir 配下の owner-only 領域**へ追記し、監査可能にする
-   （worktree 実体側に置くと discard で消えるため）。
-4. `AGENTS.md` のガードレール節と permissions の対応関係を維持する
-   （片方だけ緩めない。`env-doctor` の同期チェック対象）。
+bitz-flow はplatform固有hookを配布せず、`.claude/settings.json`のpermissionsも変更しない。
+これはplatform固有hookの候補0件を求める検証済み`FLW-CON-001`と、3 platform共通契約を守るためである。
+
+- bitz-flow経由のwriteは、単回承認capability・guard・CASをin-bandで必須化する。
+- operationを経由しない外部変更は完全防止を主張せず、auditが証跡との矛盾を検出して
+  `ORPHAN` / quarantineへ接続する。
+- AGENTS.md・permissions・環境hookの所有者はbitz-envまたは利用者の環境設定とする。
+- repo外root向け環境ガードレールは推奨設定として案内できるが、M2出口条件には含めない。
 
 ## §5 instance identity と CAS 相当
 
@@ -582,7 +584,7 @@ main同期は既存の独立operation `git.sync` が担う。remote candidateは
 | `M2-FLT-012` | 承認後・apply 前に対象 path を別 process が先行占有 | `nonexistence_digest` 不一致で `STALE` | M2-2 |
 | `M2-FLT-013` | **外部からの手動削除**（guard 外要因） | audit が `ORPHAN` 検出 → 解除区分へ接続。防止は主張しない | M2-2 |
 | `M2-FLT-014` | 外部からの registry 改変 | 同上 | M2-2 |
-| `M2-FLT-015` | 承認 receipt を伴わない worktree write | permissions ＋ フックでブロック | M2-2 |
+| `M2-FLT-015` | capabilityなしでbitz-flowのworktree writeをapply | in-band検査で`BLOCKED`、副作用0。外部変更はauditが検出しquarantineへ接続 | M2-2 |
 | `M2-FLT-016` | registry 公開の各点（temp / fsync / rename / dir fsync）で crash | 双方向一致の照合で `DONE` / `STALE` / `INDETERMINATE` へ一意化 | M2-3 |
 | `M2-FLT-017` | 完全一致の既存 worktree へ create 要求 | 重複作成せず `resume` へ分岐 | M2-3 |
 | `M2-FLT-018` | 部分一致（path 一致・branch / HEAD 不一致） | `BLOCKED` | M2-3 |
@@ -632,16 +634,17 @@ main同期は既存の独立operation `git.sync` が担う。remote candidateは
 | 区分 | 関心事 | session 上限 | 完了条件 |
 |---|---|---|---|
 | M2-1 | guard core（閉集合拡張・binding・包含規約・canonical 化・case 感度） | 4 | `M2-FLT-001`〜`009` PASS。worktree operation 実装へ進まない |
-| M2-2 | 承認 capability ＋ 機械強制層 ＋ M2 qualification | 3 | `M2-FLT-010`〜`015` PASS、qualification PASS（**blocking**）。未達時は M2-3 以降を停止 |
+| M2-2 | 承認 capability | TBD | `M2-FLT-010`〜`015` PASS |
 | M2-3 | create / resume / audit ＋ enum 三者照合 | 3 | `M2-FLT-016`〜`023` PASS |
 | M2-4 | 着手前 reconnaissance ＋ entry protocol | 3 | `M2-FLT-045`〜`047` PASS（`SI-FLW-046`） |
+| M2-Q | M2 qualification | TBD | compatibility key確定後にqualification PASS（**blocking**）。未達時はM2-5以降を停止 |
 | M2-5 | finish / discard ＋ quarantine 解除 | 4 | `M2-FLT-024`〜`036` PASS |
 | M2-6 | delete-remote-branch ＋ confirmation | 3 | `M2-FLT-037`〜`044`、`048`、`049` PASS、M2 出口 |
 
-- 依存は `M2-1 → M2-2 → M2-3 → M2-4 → M2-5 → M2-6` の直列。
+- 依存は `M2-1 → M2-2 → M2-3 → M2-4 → M2-Q → M2-5 → M2-6` の直列。
   各区分は直前を main へ land してから分岐する。
 - **M2-1 が通らなければ以降へ進まない**（M1 の `M1-1` と同じ blocking core）。
-- **M2-2 の qualification は blocking**（`SI-FLW-037` が M1 で確立した構造の適用）。
+- **M2-Qのqualificationはblocking**。compatibility keyの`skill`を変えるM2-4の直後に1回だけ実行する。
 - **M2-4 を M2-3 の直後に置く**のは、reconnaissance が audit の branch 列挙に依存するためである。
   `SI-FLW-046` の accept（M2 着手前）を受けた区分であり、
   ここを通せば **v2 自身の開発が同じ事故を繰り返さなくなる**（早い位置に置く理由）。
@@ -672,7 +675,8 @@ main同期は既存の独立operation `git.sync` が担う。remote candidateは
 - repo 外 worktree root の承認（**capability 化されたもの**）
 - `M2-FLT-001`〜`049` 全件 PASS
 - **enum 三者照合テストが green**（設計 ⊆ schema ⊆ 実装の双方向）
-- **機械強制層が有効**（permissions ＋ フックで receipt なし write をブロック）
+- **承認capabilityが全worktree writeでin-band検証される**
+- **operation外の変更をauditが検出しquarantineへ接続する**
 - **着手前 reconnaissance が entry protocol で必須化**されている（`FLW-FR-007` 1.1。`SI-FLW-046`）
 - **`write_target: local` の被測定物 confirmation が 3 platform で PASS** し active manifest 発行済み
 
@@ -697,7 +701,8 @@ M1 Git write（`write_target: local`）と M2 worktree を同時に公開でき�
 
 ## §14 影響範囲・ロールバック
 
-本書は M2 実装前の設計であり、現行の M0 read-only dispatcher を変更しない。
+本書はM2実装前の設計である。M2-4はM0 Contract Kernel構成物のSKILL.mdを変更するため、
+「M0 dispatcherを変更しない」とは主張しない。qualificationはこの変更後に実施する。
 M1 operation の guard 導出規則・recovery matrix・qualification プロトコルは変更せず追加のみである。
 ただし次の3点は M1 で凍結した契約・要件に触れる。
 
@@ -709,7 +714,7 @@ M1 operation の guard 導出規則・recovery matrix・qualification プロト�
 
 M2 が未完了または fixture 未達なら、`worktree.*` と `git.delete-remote-branch` を
 `UNSUPPORTED` のまま維持し、縮退規則3により M1 Git write も公開しない。
-**path 安全検査・承認 capability・機械強制層を無効化して worktree write だけを公開する縮退は認めない。**
+**path安全検査または承認capabilityを無効化してworktree writeだけを公開する縮退は認めない。**
 
 ロールバック時も intent、ledger、manifest、digest、解除 receipt を監査証跡として保持する。
 `worktree-residue-retained` で保全した directory は**ロールバックでも削除しない**。
