@@ -1,0 +1,15 @@
+{
+  "perspective": "operations",
+  "dimensions": [
+    {"name": "監視・可観測性", "weight": 0.30, "score": 3, "findings": [
+      {"id": "OPS-101", "severity": "major", "location": "evals/flow-core/m2-eval/local_confirmation_subject.py", "title": "confirmationが実operationを観測していない", "description": "外部CLIはpytestを起動するだけで、dispatcher result、worktree副作用、receipt/quarantine eventを観測していない。", "recommendation": "dispatcher経由の実動positive controlとfault injectionをconfirmation subjectへ追加する。"}
+    ]},
+    {"name": "災害復旧", "weight": 0.30, "score": 3, "findings": []},
+    {"name": "セキュリティ態勢", "weight": 0.20, "score": 4, "findings": []},
+    {"name": "デプロイ安全性", "weight": 0.20, "score": 2, "findings": [
+      {"id": "OPS-401", "severity": "major", "location": "active-local-confirmation.json", "title": "未公開operationをPASSとしてactive化", "description": "manifestはworktree.*をPASSとするがdispatcherはUNSUPPORTEDであり、この証跡を根拠に公開するとcanary無しの昇格になる。", "recommendation": "実動統合後にcompatibility keyを更新し、3platform canaryを再発行する。"}
+    ]}
+  ],
+  "weighted_score": 3.00,
+  "summary": "縮退・quarantine契約は整う一方、運用入口と実動canaryが未接続でCompletion Gateには不足する。"
+}

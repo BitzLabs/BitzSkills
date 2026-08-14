@@ -1,0 +1,84 @@
+{
+  "schema_version": 2,
+  "review_id": "FLW-REV-015",
+  "verdict": "CONDITIONAL_PASS",
+  "aggregate_score": 3.09,
+  "perspective_scores": {
+    "business": 3.1,
+    "consistency": 3.3,
+    "data-integrity": 3.65,
+    "operations": 3.0,
+    "risk": 2.45
+  },
+  "findings_summary": {
+    "before_dedup": 8,
+    "after_dedup": 3,
+    "p0": 0,
+    "p1": 1,
+    "p2": 1,
+    "p3": 1
+  },
+  "findings": [
+    {
+      "id": "FLW-REV-015:SYN-001",
+      "priority": "P1",
+      "severity": "major",
+      "source": ["RVC-201", "DIN-201", "OPS-101", "OPS-401", "RSK-201", "RSK-301"],
+      "title": "worktree安全核が実動apply経路とdispatcherへ未接続",
+      "detail": "worktree/create/resume/finish/discardの判断核は実装済みだが、Git worktree・registry・nonce・receiptを更新するadapterと公開dispatcher接続が無い。現在の3platform confirmationは単体テストを外部CLIから再実行するだけで、全worktree writeのin-band capability検証と実副作用の収束を証明しない。",
+      "recommendation": "SI-FLW-056をacceptし、実動adapter・dispatcher E2E・3platform実動confirmationを追加してactive manifestを置換する。",
+      "tracked_by": "SI-FLW-056",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-015:SYN-002",
+      "priority": "P2",
+      "severity": "major",
+      "source": ["BIZ-401"],
+      "title": "M2実装予算6 PRを消化済み",
+      "detail": "#246/#248/#250/#252/#254/#256で6 PR枠を全消化しており、実動統合と再confirmationは既定budget外になる。",
+      "recommendation": "追加2 PR・最大6 sessionをM2是正枠として人間が裁定する。",
+      "tracked_by": "FLW-REV-015:GP-003",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-015:SYN-003",
+      "priority": "P3",
+      "severity": "minor",
+      "source": ["BIZ-201"],
+      "title": "3platform confirmationのtest母数が一致しない",
+      "detail": "同じcompatibility keyに対しClaude/Codexは138件、Antigravityは137件であり、件数だけでは同じ被測定物集合を証明できない。",
+      "recommendation": "再confirmationではrequired test ID集合のdigestをmanifestへ固定しplatform間で一致検査する。",
+      "tracked_by": "SI-FLW-056",
+      "status": "tracked"
+    }
+  ],
+  "gate_preconditions": [
+    {
+      "id": "GP-001",
+      "kind": "blocking",
+      "basis": "verified",
+      "evidence": "flowlib/cli.pyのM0_OPERATIONS/_HANDLERS、およびworktree.py/worktree_cleanup.pyの実装監査",
+      "statement": "公開dispatcherから全worktree writeを起動し、各副作用直前のcapability検証とreceipt prefix収束をE2Eで確認する"
+    },
+    {
+      "id": "GP-002",
+      "kind": "blocking",
+      "basis": "verified",
+      "evidence": "local_confirmation_subject.pyとactive-local-confirmation.jsonの実測監査",
+      "statement": "実動worktree operationを対象に3platform confirmationを再実行し、同一test ID集合・hazard 0・residual 0のactive manifestへ置換する"
+    },
+    {
+      "id": "GP-003",
+      "kind": "agenda",
+      "basis": "verified",
+      "evidence": "FLW-DSN-014 M2 budget 6 PR、およびmerged PR #246/#248/#250/#252/#254/#256",
+      "statement": "SI-FLW-056のaccept/rejectと追加2 PR・最大6 sessionのM2是正予算を人間が裁定する"
+    }
+  ],
+  "carried_over": [],
+  "conditional_items": [
+    "FLW-REV-015:GP-001を消化する",
+    "FLW-REV-015:GP-002を消化する"
+  ]
+}

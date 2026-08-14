@@ -1,0 +1,15 @@
+{
+  "perspective": "risk",
+  "dimensions": [
+    {"name": "分散システムリスク", "weight": 0.30, "score": 3, "findings": []},
+    {"name": "障害モード分析", "weight": 0.30, "score": 2, "findings": [
+      {"id": "RSK-201", "severity": "major", "location": "M2 write実行経路", "title": "安全核を迂回しないことを実証できない", "description": "実apply経路が無いため、各副作用直前のcapability再検証、guard保持、失敗時quarantine接続が合成後も成立するか未検証である。", "recommendation": "実動adapterを単一入口に閉じ、capability欠落・差替え・crashをE2E faultとして注入する。"}
+    ]},
+    {"name": "Saga設計の妥当性", "weight": 0.25, "score": 2, "findings": [
+      {"id": "RSK-301", "severity": "major", "location": "worktree create/finish/discard step列", "title": "reconcile設計が実行Sagaへ未接続", "description": "補償せず前進収束する設計はあるが、実際のGit副作用とreceipt順序を強制するorchestratorが無い。", "recommendation": "step orchestratorを実装し、応答喪失を含む全境界で一意なremaining stepsを確認する。"}
+    ]},
+    {"name": "データ整合性リスク", "weight": 0.15, "score": 3, "findings": []}
+  ],
+  "weighted_score": 2.45,
+  "summary": "個別安全核はfail-closedだが、合成された実行Sagaが無いため最重要の迂回・部分失敗リスクが未検証である。"
+}
