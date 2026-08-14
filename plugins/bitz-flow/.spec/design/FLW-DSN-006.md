@@ -2,8 +2,8 @@
 id: FLW-DSN-006
 title: "worktree-firstライフサイクル詳細設計"
 status: active
-version: 1.1
-updated: 2026-08-12
+version: 1.2
+updated: 2026-08-14
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-003, FLW-NFR-006, FLW-CON-002, FLW-CON-005, FLW-CON-006
 origin: SI-FLW-001
@@ -114,7 +114,8 @@ PRなし:
 - discard planは削除対象path一覧、symlink、submodule、ignored file件数をmanifest化する。
 - applyはoperation ID再入力、外部の明示的人間確認、現在状態の一致を要求する。
 - 禁止操作を使わず、Gitのworktree removeとbranch削除を列挙targetへ限定して実行する。
-- 途中失敗は`PARTIAL`と残存要素を返し、再実行で前進再開する。
+- 途中失敗は`PARTIAL`とreceipt prefixから確定した残存要素を返す。旧operationの再実行で自動前進せず、
+  read-only reconcile → 残stepだけの新plan → 明示的人間承認 → 新operation IDで再開する。
 - manifestを完全取得できない場合は`BLOCKED`とし、applyしない。
 
 ## 検証
