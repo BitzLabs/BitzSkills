@@ -1,0 +1,1 @@
+{"perspective":"operations","dimensions":[{"name":"監視・可観測性","weight":0.30,"score":4,"findings":[]},{"name":"災害復旧","weight":0.30,"score":4,"findings":[]},{"name":"セキュリティ態勢","weight":0.20,"score":4,"findings":[]},{"name":"デプロイ安全性","weight":0.20,"score":5,"findings":[]}],"weighted_score":4.2,"summary":"中断復旧、履歴、raw log保護、有限時間のprocess収束が設計された。"}

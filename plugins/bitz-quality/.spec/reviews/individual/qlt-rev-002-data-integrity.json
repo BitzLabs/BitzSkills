@@ -1,0 +1,10 @@
+{
+  "perspective": "data-integrity",
+  "dimensions": [
+    {"name": "トランザクション安全性", "weight": 0.40, "score": 2, "findings": [{"id": "DIN-101", "severity": "major", "location": "plugins/bitz-quality/.spec/design/architecture.md:Deployment view", "title": "成果物公開の原子境界が未確定", "description": "atomic replaceとworkspace lockが候補に留まり、individual result、synthesis、quality-resultの世代一貫性を保証できない。", "recommendation": "immutable run directoryとcommit manifestを用いた単一世代公開、lock、crash recoveryを要件化する。"}]},
+    {"name": "データ整合性", "weight": 0.35, "score": 2, "findings": [{"id": "DIN-201", "severity": "major", "location": "plugins/bitz-quality/.spec/design/domain-model.md:ReviewRun", "title": "並行attemptの競合規則がない", "description": "遅延した旧attemptとretryが競合した場合のactive result選択が定義されず、古い証跡を合成し得る。", "recommendation": "attempt世代、単一writer、遅延結果のquarantine規則を固定する。"}]},
+    {"name": "スキーマ設計品質", "weight": 0.25, "score": 3, "findings": [{"id": "DIN-301", "severity": "minor", "location": "plugins/bitz-quality/.spec/design/api-design.md:Schema catalog", "title": "digest正規化とschema移行規則が不足", "description": "digest algorithm、canonical serialization、version間変換の可逆性が未定義である。", "recommendation": "schema versionごとのcanonical bytesと互換reader/移行規則を定義する。"}]}
+  ],
+  "weighted_score": 2.25,
+  "summary": "不変成果物と閉集合schemaの方向性は良いが、並行実行と複数ファイル公開の一貫性がまだ規範契約になっていない。"
+}

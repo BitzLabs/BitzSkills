@@ -1,0 +1,11 @@
+{
+  "perspective": "business",
+  "dimensions": [
+    {"name": "要件トレーサビリティ", "weight": 0.35, "score": 4, "findings": []},
+    {"name": "NFR定量化", "weight": 0.30, "score": 3, "findings": [{"id": "BIZ-201", "severity": "major", "location": "plugins/bitz-quality/.spec/requirements/QLT-FR-026.md:受入基準", "title": "測定プロトコルが再現可能な粒度に達していない", "description": "分母と除外規則は要求されるが、fixture母集団、最低試行数、測定期間、baseline比較手順が未確定で、H-Q3やplatform parityの結果を同じ条件で再現できない。", "recommendation": "測定計画にfixture集合、最低試行数、期間、baseline、信頼区間または全数判定を固定し、未達時のNo-Goを対応づける。"}]},
+    {"name": "ステークホルダー整合", "weight": 0.20, "score": 4, "findings": []},
+    {"name": "ROI・実現可能性", "weight": 0.15, "score": 3, "findings": [{"id": "BIZ-401", "severity": "minor", "location": "plugins/bitz-quality/.spec/design/migration.md:Stages", "title": "各移行段階の担当と期間が未定義", "description": "出口条件とrollbackは明確だが、担当workspaceと期間目安がなく実行可能性の評価が難しい。", "recommendation": "実装計画時に各stageのowner、依存、観測期間をタスクへ割り当てる。"}]}
+  ],
+  "weighted_score": 3.55,
+  "summary": "価値、利用者、段階移管とNo-Goは明確である。一方、測定プロトコルの母集団と試行条件が未確定で、仮説検証の再現性をDesign Gate前に補う必要がある。"
+}

@@ -1,0 +1,1 @@
+{"perspective":"consistency","dimensions":[{"name":"構造整合","weight":0.35,"score":4,"findings":[]},{"name":"トレーサビリティ","weight":0.35,"score":4,"findings":[]},{"name":"用語一貫性","weight":0.30,"score":5,"findings":[]}],"weighted_score":4.3,"summary":"補足要件、active設計、SI-QLT-002の対応と公開語彙は整合している。"}

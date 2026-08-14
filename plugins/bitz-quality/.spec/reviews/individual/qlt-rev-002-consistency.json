@@ -1,0 +1,10 @@
+{
+  "perspective": "consistency",
+  "dimensions": [
+    {"name": "構造整合", "weight": 0.35, "score": 4, "findings": [{"id": "RVC-101", "severity": "major", "location": "plugins/bitz-quality/.spec/discovery/worksheet.md:現在地", "title": "Discovery Gate状態が裁定結果と不一致", "description": "worksheetは裁定待ちだがassumptions.mdはGo済みであり現在地が矛盾する。", "recommendation": "worksheetをDiscovery Gate Go、Design Gate準備中へ更新する。"}]},
+    {"name": "トレーサビリティ", "weight": 0.35, "score": 3, "findings": [{"id": "RVC-201", "severity": "major", "location": "plugins/bitz-quality/.spec/requirements/QLT-FR-023.md:frontmatter", "title": "H-Q2からvalidator要件への追跡が明示されていない", "description": "H-Q2から要件・設計への機械的な追跡が途切れる。", "recommendation": "仮説→要件→設計→検証の対応表を追加する。"}, {"id": "RVC-202", "severity": "minor", "location": "plugins/bitz-quality/.spec/design/worksheet.md:API導出表", "title": "QLT-FR-026がAPI導出表から欠落", "description": "測定要件が台帳ビューで孤児に見える。", "recommendation": "run history/measurement成果物との対応行を追加する。"}, {"id": "RVC-203", "severity": "minor", "location": "plugins/bitz-quality/.spec/design/*.md:frontmatter", "title": "Discovery仮説への逆向き参照がない", "description": "設計から仮説・kill閾値へ直接辿れない。", "recommendation": "設計作業台帳へ仮説対応表を追加する。"}]},
+    {"name": "用語一貫性", "weight": 0.30, "score": 4, "findings": [{"id": "RVC-301", "severity": "minor", "location": "plugins/bitz-quality/.spec/design/domain-model.md:Published Language", "title": "短縮名と正式名の対応が未定義", "description": "Profile等とReviewProfile等が混在する。", "recommendation": "公開契約上の正式名へ統一する。"}]}
+  ],
+  "weighted_score": 3.65,
+  "summary": "要件と設計は概ね網羅されるが、Gate現在地、仮説追跡、公開語彙に不整合がある。"
+}
