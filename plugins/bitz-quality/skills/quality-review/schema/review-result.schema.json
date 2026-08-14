@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "profile", "verdict", "profile_digest", "sample_size"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "profile": {"type": "string", "minLength": 1},
+    "verdict": {"type": "string", "enum": ["PASS", "FAIL", "BLOCKED", "CONTRACT_PENDING"]},
+    "profile_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "sample_size": {"type": "integer", "minimum": 0},
+    "thresholds": {"type": "object"},
+    "perspectives": {"type": "array", "items": {"type": "string"}},
+    "scores": {"type": "object", "additionalProperties": {"type": "number"}},
+    "findings": {"type": "array", "items": {"type": "object"}}
+  }
+}
