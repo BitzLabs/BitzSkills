@@ -634,10 +634,10 @@ main同期は既存の独立operation `git.sync` が担う。remote candidateは
 | 区分 | 関心事 | session 上限 | 完了条件 |
 |---|---|---|---|
 | M2-1 | guard core（閉集合拡張・binding・包含規約・canonical 化・case 感度） | 4 | `M2-FLT-001`〜`009` PASS。worktree operation 実装へ進まない |
-| M2-2 | 承認 capability | TBD | `M2-FLT-010`〜`015` PASS |
+| M2-2 | 承認 capability | 2 | `M2-FLT-010`〜`015` PASS |
 | M2-3 | create / resume / audit ＋ enum 三者照合 | 3 | `M2-FLT-016`〜`023` PASS |
 | M2-4 | 着手前 reconnaissance ＋ entry protocol | 3 | `M2-FLT-045`〜`047` PASS（`SI-FLW-046`） |
-| M2-Q | M2 qualification | TBD | compatibility key確定後にqualification PASS（**blocking**）。未達時はM2-5以降を停止 |
+| M2-Q | M2 qualification | 1 | compatibility key確定後にqualification PASS（**blocking**）。未達時はM2-5以降を停止 |
 | M2-5 | finish / discard ＋ quarantine 解除 | 4 | `M2-FLT-024`〜`036` PASS |
 | M2-6 | delete-remote-branch ＋ confirmation | 3 | `M2-FLT-037`〜`044`、`048`、`049` PASS、M2 出口 |
 
@@ -648,7 +648,8 @@ main同期は既存の独立operation `git.sync` が担う。remote candidateは
 - **M2-4 を M2-3 の直後に置く**のは、reconnaissance が audit の branch 列挙に依存するためである。
   `SI-FLW-046` の accept（M2 着手前）を受けた区分であり、
   ここを通せば **v2 自身の開発が同じ事故を繰り返さなくなる**（早い位置に置く理由）。
-- 合計 **6 PR / 20 session**（4 + 3 + 3 + 3 + 4 + 3）。内訳は次のとおりで
+- 合計 **6 PR / 20 session**（4 + 2 + 3 + 3 + 1 + 4 + 3）。M2-2とM2-Qは同一PRの
+  capability/qualification区分として実施し、区分数7とPR数6を混同しない。内訳は次のとおりで
   `FLW-DSN-014` の「M2出口条件・budget・M3入口条件」節と一致する。
 
   | 内訳 | PR | session |
@@ -659,7 +660,13 @@ main同期は既存の独立operation `git.sync` が担う。remote candidateは
   | **合計** | **6** | **20** |
 
   移送分は**区分の付け替えであって余裕の増加ではない**。
-  scope 追加分は 2026-08-12 に人間へ再提示して確定した。
+  実装枠と本配賦は`decision-2026-08-13-si-flw-053.md`で確定した。
+
+設計再整備は実装枠と分離し、**3 PR / 9 session**を別枠とする。SI-FLW-047〜055の裁定反映と
+SI-FLW-052の機械検査構築にのみ使用し、M2実装枠へ流用しない。
+
+**early quick win**: M2-3完了時点でread-onlyの`worktree.audit`だけを出荷可能増分として公開する。
+create/resumeはfinish/discardが揃うM2-5まで公開せず、「作れるが消せない」非対称を作らない。
 - fixture 件数の偏り（M2-5 が 13 件で最多）に合わせて M2-5 へ 4 session を配った。
   M2-5 は finish・discard・quarantine 解除を同時に扱うため最も超過しやすい区分である。
 - **`SI-FLW-046` の増分見積りの根拠**: 実装自体は read-only で既存 Git read adapter に乗るため安い。

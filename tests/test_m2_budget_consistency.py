@@ -42,4 +42,4 @@ def test_budget_exceptions_are_exact_and_shrink_only() -> None:
 def test_budget_exception_scope_is_fixed() -> None:
     config = json.loads(ALLOWLIST.read_text(encoding="utf-8"))
     assert config["issue"] == "SI-FLW-052"
-    assert len(config["exceptions"]) == 4
+    assert len(config["exceptions"]) == 1
