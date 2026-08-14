@@ -18,6 +18,8 @@ owner: br7.hide
 | legacy import/shadow compare | Process | QLT-FR-025 |
 | summary/result | Experience | QLT-FR-021/023 |
 | run history/measurement plan | System | QLT-FR-026 |
+| SDD V4 profile / public contract | System | QLT-FR-027/028 |
+| execution fencing / rollback qualification | System | QLT-FR-029/030 |
 
 ## 仮説トレーサビリティ
 
@@ -30,8 +32,14 @@ owner: br7.hide
 | H-Q5 | QLT-FR-025 | golden corpus、shadow compare |
 | H-Q6 | QLT-FR-021/022/025 | consumer境界、権限外write/stale canary |
 
+## Design decisions
+
+- `bitz-sdd-v4@1` profileはV4 Charter未確定時に`contract pending`として互換PASSを発行しない。
+- project overrideの正は`.spec/quality/review/`、公開線形化点は単一`current` pointerとする。
+- M5 removalはbitz-qualityとbitz-sdd双方のGateを要求し、point-of-no-return後はforward-fixとする。
+
 ## Open Questions
 
-- profile overrideの物理配置と所有者。
+- V4 Charter確定後の閾値変更をどのprofile versionで提供するか。
 - adapterの実プロセス起動契約と秘密値境界。
 - 初回qualificationのtrial数、token・時間budget。

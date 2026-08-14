@@ -5,7 +5,7 @@ status: active
 version: 1.0
 updated: 2026-08-14
 owner: br7.hide
-implements: [QLT-FR-017, QLT-FR-022, QLT-FR-023, QLT-FR-024, QLT-FR-026]
+implements: [QLT-FR-017, QLT-FR-022, QLT-FR-023, QLT-FR-024, QLT-FR-026, QLT-FR-027, QLT-FR-028, QLT-FR-029]
 ---
 
 # アーキテクチャ
@@ -45,10 +45,10 @@ coreはfilesystem/process/platformを直接知らずport越しに扱う。adapte
 
 - 共通core/schema/profileは`skills/quality-review/`内で自己完結させる。
 - Claude/Codex/Antigravityの物理agent定義はplatform別配布境界に置き、共通schemaを参照する。
-- project overrideは`.spec/quality/review/`候補だが、物理配置はDesign Gateで確定する。
-- writeはrun世代ごとのimmutable directoryへ行い、全schema検証後にcommit manifest/current pointerを
-  一時ファイル→file/parent directory flush→atomic replaceする。workspace lock参加を必須とし、
-  commit markerのない孤立世代はquarantineしてconsumerへ提示しない。
+- project overrideの正は`.spec/quality/review/`とし、base profileとのdigest・owner・versionをmanifestへ記録する。
+- writeはrun世代ごとのimmutable directoryへ行い、全schema検証後にgeneration manifestをfsyncする。
+  単一の`current` pointerだけを同一filesystem上でatomic replaceして公開線形化点とし、consumerは
+  pointer経由だけを読む。pointer破損・欠落時はlast-known-goodを選び、孤立世代はquarantineする。
 
 ## 技術適合性
 
@@ -64,8 +64,8 @@ coreはfilesystem/process/platformを直接知らずport越しに扱う。adapte
 - prompt injectionをfinding/evidenceデータとして隔離し、命令として再実行しない。
 - repository外write、secret読取、任意shellはadapter capabilityで既定拒否する。
 - adapterはreviewer別作業領域とquotaを持ち、timeout時はprocess groupへgraceful cancel後、固定期限で
-  強制終了する。時間・token・出力・ディスク・同時実行上限の超過は`BLOCKED`とする。
-- raw logは既定非保存とし、必要時のみsecret redaction後に最小権限のquarantine領域へ期限付き保存する。
-  canonical成果物にはraw log本文を含めずdigestと監査時刻だけを残す。
+  強制終了する。任意ReviewerのattemptはBLOCKEDとして隔離し、run verdictはprofile decision tableへ委ねる。
+- raw logはdefault-denyとし、明示opt-in主体、streaming redaction、最小権限、容量上限、TTL、削除監査を
+  必須とする。redaction失敗時は保存せず、canonical成果物にはdigestと監査時刻だけを残す。
 - 入力はschema versionで固定したcanonical bytesとpath/symlink規則でdigest化したsnapshotを渡し、
-  adapter終了後にも再照合する。不一致は`STALE`として公開しない。
+  adapter終了後にも再照合する。不一致は`STALE`として公開しない。adapterのread rootはsnapshotだけに閉じる。

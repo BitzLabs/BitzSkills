@@ -30,10 +30,11 @@ graph TD
 - **M5**: 論理Reviewer、platform adapter、review profile、個別結果・synthesis schema、validator
 - **M6**: `quality-result@1`、`bitz-sdd` V4 adapter、`bitz-flow` V2 adapter
 
-## 3. 次期統合マイルストーン（提案・未裁定）
+## 3. 次期統合マイルストーン（Design Gate通過・契約補強中）
 
 1. **レビュー基盤契約** — `QLT-FR-017〜026`をapproved化。Discovery GateとDesign Gateは
-   2026-08-14にGo（`QLT-GATE-001`）。`QLT-REV-003`はPASS。次は境界別の実装タスク分解へ進む。
+   2026-08-14にGo（`QLT-GATE-001`）。`QLT-REV-003`はPASS。追加契約は`SI-QLT-002`と
+   `QLT-FR-027〜030`で補強中、`QLT-REV-004`はPASS。補足Gate後に実装タスクへ進む。
 2. **`quality-result@1`** — `target_sha`、判定、finding、measurand、規則・tool version、
    evidence digestを持つ閉集合JSON schemaを設計し、未知field・欠落・古いSHAを安全側に扱う。
 3. **SDD adapter** — EARS要件ID・テストID・測定結果をV4の公開portへ渡す。

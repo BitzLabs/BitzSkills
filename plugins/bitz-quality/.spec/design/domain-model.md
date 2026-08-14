@@ -5,7 +5,7 @@ status: active
 version: 1.0
 updated: 2026-08-14
 owner: br7.hide
-implements: [QLT-FR-017, QLT-FR-018, QLT-FR-019, QLT-FR-020, QLT-FR-021, QLT-FR-022]
+implements: [QLT-FR-017, QLT-FR-018, QLT-FR-019, QLT-FR-020, QLT-FR-021, QLT-FR-022, QLT-FR-029]
 ---
 
 # ドメインモデル
@@ -30,7 +30,8 @@ Aggregate rootは`ReviewRun(review_id)`。`InvocationManifest`でtarget/profile�
 - target/profile digestが異なるresultを同じrunへ混在させない。
 - 必須resultが成功集合に揃うまでPASS synthesisを作らない。
 - retryはattemptを増やし、既存evidenceを上書きしない。
-- attemptは単調増加する世代であり、単一writer lockまたはcompare-and-swapでactive遷移を直列化する。
+- attemptは永続的に単調増加する世代とfencing tokenを持ち、compare-and-swapでactive遷移を直列化する。
+- lock回収後の旧writerもfencing token不一致で拒否し、`attempt == current_attempt`かつrunが結果受入状態のときだけactive化する。
 - 取消済み・終了済みattemptの遅延結果はimmutable evidenceとして隔離し、active集合へ戻さない。
 
 ### ReviewSynthesis
