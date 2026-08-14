@@ -317,5 +317,6 @@ def test_missing_remote_cas_only_affects_remote_targets(tokens, repo):
 
 def test_guard_identity_kinds_are_closed():
     assert GD.GUARD_IDENTITY_KINDS == (
-        "index", "local-ref", "remote-tracking-ref", "fetch-head", "remote-ref"
+        "index", "local-ref", "remote-tracking-ref", "fetch-head", "remote-ref",
+        "worktree-dir", "worktree-registry"
     )

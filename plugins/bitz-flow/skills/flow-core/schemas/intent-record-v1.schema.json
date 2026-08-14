@@ -95,7 +95,7 @@
     },
     "guard_identity_kind": {
       "type": "string",
-      "enum": ["index", "local-ref", "remote-tracking-ref", "fetch-head", "remote-ref"],
+      "enum": ["index", "local-ref", "remote-tracking-ref", "fetch-head", "remote-ref", "worktree-dir", "worktree-registry"],
       "description": "target guard が識別する canonical mutation target の種別（閉集合）。`schemas/result-v1.schema.json` の同名 $defs と同一の値集合でなければならない。"
     }
   }

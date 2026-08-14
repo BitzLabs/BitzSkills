@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import dataclasses
 import os
+import re
+import unicodedata
 from pathlib import Path, PurePosixPath
 from typing import Iterable, Sequence
 
@@ -33,16 +35,65 @@ KIND_LOCAL_REF = "local-ref"
 KIND_REMOTE_TRACKING_REF = "remote-tracking-ref"
 KIND_FETCH_HEAD = "fetch-head"
 KIND_REMOTE_REF = "remote-ref"
+KIND_WORKTREE_DIR = "worktree-dir"
+KIND_WORKTREE_REGISTRY = "worktree-registry"
 GUARD_IDENTITY_KINDS = (
     KIND_INDEX,
     KIND_LOCAL_REF,
     KIND_REMOTE_TRACKING_REF,
     KIND_FETCH_HEAD,
     KIND_REMOTE_REF,
+    KIND_WORKTREE_DIR,
+    KIND_WORKTREE_REGISTRY,
 )
 
 #: local target は OS exclusive lock と CAS、remote target は server-side CAS が排他の実体。
-_LOCAL_KINDS = frozenset({KIND_INDEX, KIND_LOCAL_REF, KIND_REMOTE_TRACKING_REF, KIND_FETCH_HEAD})
+_LOCAL_KINDS = frozenset(
+    {
+        KIND_INDEX,
+        KIND_LOCAL_REF,
+        KIND_REMOTE_TRACKING_REF,
+        KIND_FETCH_HEAD,
+        KIND_WORKTREE_DIR,
+        KIND_WORKTREE_REGISTRY,
+    }
+)
+
+_WINDOWS_RESERVED = frozenset(
+    {"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)), *(f"LPT{i}" for i in range(1, 10))}
+)
+
+
+class CanonicalizationError(ValueError):
+    """M2 targetを安全に一意化できない。呼び出し側は副作用0でBLOCKEDへ写像する。"""
+
+
+@dataclasses.dataclass(frozen=True, init=False)
+class WorktreeId:
+    """registry entry名だけから生成できるopaqueなworktree ID。"""
+
+    value: str
+
+    @classmethod
+    def _from_registry_name(cls, name: str) -> "WorktreeId":
+        item = object.__new__(cls)
+        object.__setattr__(item, "value", name)
+        return item
+
+
+def derive_worktree_id(common_dir: str | Path, registry_entry: str | Path) -> WorktreeId:
+    """FLW-CON-006: common-dir/worktrees直下のentry名からのみIDを導出する。"""
+    common = Path(common_dir).resolve()
+    registry_root = (common / "worktrees").resolve(strict=False)
+    entry = Path(registry_entry).resolve(strict=False)
+    if entry.parent != registry_root or not entry.name or entry.name in {".", ".."}:
+        raise CanonicalizationError("registry entryはcommon-dir/worktrees直下でなければならない")
+    return WorktreeId._from_registry_name(entry.name)
+
+
+def main_worktree_id() -> WorktreeId:
+    """registry entryを持たないmain worktree専用sentinel。"""
+    return WorktreeId._from_registry_name("@main")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -91,10 +142,168 @@ class GuardSet:
 # --- canonical 化 -------------------------------------------------------------
 
 
-def canonical_index_target(common_dir: str | Path, worktree_id: str) -> Target:
-    """index は common-dir + worktree ID で識別する（worktree ごとに別 index）。"""
+def canonical_index_target(common_dir: str | Path, worktree_id: WorktreeId | str) -> Target:
+    """M1互換入口。M2 worktree操作はstrictなcanonical_worktree_index_targetを使う。"""
     resolved = _resolve(common_dir)
-    return Target(KIND_INDEX, f"{KIND_INDEX}:{_digest(resolved)}:{worktree_id}")
+    value = worktree_id.value if isinstance(worktree_id, WorktreeId) else worktree_id
+    return Target(KIND_INDEX, f"{KIND_INDEX}:{_digest(resolved)}:{value}")
+
+
+def canonical_worktree_index_target(common_dir: str | Path, worktree_id: WorktreeId) -> Target:
+    """M2用入口。literal IDを拒否しregistry由来のopaque IDだけを受け取る。"""
+    if not isinstance(worktree_id, WorktreeId):
+        raise TypeError("worktree_idはderive_worktree_id()で導出する")
+    return canonical_index_target(common_dir, worktree_id)
+
+
+def canonical_worktree_dir_target(
+    path: str | Path, *, approved_root: str | Path, case_sensitive: bool
+) -> Target:
+    """worktree directoryを実体identityまたは最寄り祖先identityへ収束させる。"""
+    return _canonical_filesystem_target(
+        KIND_WORKTREE_DIR, path, approved_root=approved_root, case_sensitive=case_sensitive
+    )
+
+
+def canonical_worktree_registry_target(
+    common_dir: str | Path, registry_entry: str | Path, *, case_sensitive: bool
+) -> Target:
+    return _canonical_filesystem_target(
+        KIND_WORKTREE_REGISTRY,
+        registry_entry,
+        approved_root=common_dir,
+        case_sensitive=case_sensitive,
+    )
+
+
+def worktree_guard_targets(
+    *,
+    common_dir: str | Path,
+    worktree_root: str | Path,
+    worktree_path: str | Path,
+    registry_entry: str | Path,
+    local_ref: str,
+    case_sensitive: bool,
+    require_binding: bool = True,
+) -> tuple[Target, ...]:
+    """M2の3者+indexを一括導出し、index包含規約を呼出側から隠蔽する。"""
+    worktree_id = derive_worktree_id(common_dir, registry_entry)
+    if require_binding:
+        verify_worktree_binding(common_dir, registry_entry, worktree_path)
+    return tuple(
+        order(
+            [
+                canonical_worktree_dir_target(
+                    worktree_path, approved_root=worktree_root, case_sensitive=case_sensitive
+                ),
+                canonical_worktree_registry_target(
+                    common_dir, registry_entry, case_sensitive=case_sensitive
+                ),
+                canonical_local_ref_target(common_dir, local_ref),
+                canonical_worktree_index_target(common_dir, worktree_id),
+            ]
+        )
+    )
+
+
+def verify_worktree_binding(
+    common_dir: str | Path, registry_entry: str | Path, worktree_path: str | Path
+) -> None:
+    """registryのgitdirとworktree側.git fileの双方向一致を検証する。"""
+    entry = Path(registry_entry).resolve(strict=False)
+    derive_worktree_id(common_dir, entry)
+    gitdir_record = entry / "gitdir"
+    worktree_dotgit = Path(worktree_path).resolve(strict=False) / ".git"
+    try:
+        recorded_dotgit = Path(gitdir_record.read_text(encoding="utf-8").strip()).resolve()
+        reverse_text = worktree_dotgit.read_text(encoding="utf-8").strip()
+    except (OSError, UnicodeError) as exc:
+        raise CanonicalizationError("worktree bindingの片側が欠落または読取不能") from exc
+    if not reverse_text.startswith("gitdir:"):
+        raise CanonicalizationError("worktree .git fileの形式が不正")
+    reverse_entry = Path(reverse_text.split(":", 1)[1].strip()).resolve()
+    if recorded_dotgit != worktree_dotgit.resolve() or reverse_entry != entry.resolve():
+        raise CanonicalizationError("registry entryとworktree .gitの相互参照が一致しない")
+
+
+def _canonical_filesystem_target(
+    kind: str,
+    raw_path: str | Path,
+    *,
+    approved_root: str | Path,
+    case_sensitive: bool,
+) -> Target:
+    if not isinstance(case_sensitive, bool):
+        raise CanonicalizationError("rootのcase感度が確定していない")
+    raw_text = os.fspath(raw_path)
+    _validate_portable_path(raw_text)
+    root = Path(approved_root).resolve(strict=True)
+    candidate = Path(raw_path)
+    if not candidate.is_absolute():
+        candidate = root / candidate
+    resolved = candidate.resolve(strict=False)
+    try:
+        resolved.relative_to(root)
+    except ValueError as exc:
+        raise CanonicalizationError("targetが承認済みroot外へescapeする") from exc
+
+    if resolved.exists():
+        if not resolved.is_dir():
+            raise CanonicalizationError("worktree filesystem targetはdirectoryでなければならない")
+        try:
+            stat = resolved.stat()
+            root_stat = root.stat()
+        except OSError as exc:
+            raise CanonicalizationError("stable filesystem identityを取得できない") from exc
+        if stat.st_dev != root_stat.st_dev:
+            raise CanonicalizationError("targetが承認済みrootと異なるvolumeへ解決された")
+        return Target(kind, f"{kind}:{stat.st_dev}:{stat.st_ino}")
+
+    ancestor = resolved
+    suffix: list[str] = []
+    while not ancestor.exists():
+        if ancestor == root:
+            break
+        suffix.append(ancestor.name)
+        parent = ancestor.parent
+        if parent == ancestor:
+            raise CanonicalizationError("存在する祖先へ到達できない")
+        ancestor = parent
+    try:
+        ancestor.relative_to(root)
+        stat = ancestor.stat()
+    except (ValueError, OSError) as exc:
+        raise CanonicalizationError("承認済みroot内の祖先identityを取得できない") from exc
+    normalized = "/".join(
+        _normalize_component(part, case_sensitive=case_sensitive) for part in reversed(suffix)
+    )
+    if not normalized:
+        raise CanonicalizationError("不在targetの相対pathを一意化できない")
+    return Target(kind, f"{kind}:{stat.st_dev}:{stat.st_ino}:{_digest(normalized)}")
+
+
+def _normalize_component(component: str, *, case_sensitive: bool) -> str:
+    normalized = unicodedata.normalize("NFC", component)
+    return normalized if case_sensitive else normalized.casefold()
+
+
+def _validate_portable_path(text: str) -> None:
+    normalized = text.replace("\\", "/")
+    if normalized.startswith(("//?/", "//./")) or normalized.startswith("//"):
+        raise CanonicalizationError("device namespaceまたはroot外UNCは許可しない")
+    components = [part for part in normalized.split("/") if part]
+    if ".." in components:
+        raise CanonicalizationError("parent traversalは許可しない")
+    for index, component in enumerate(components):
+        if component.endswith((".", " ")):
+            raise CanonicalizationError("末尾dot/spaceは許可しない")
+        stem = component.split(".", 1)[0].upper()
+        if stem in _WINDOWS_RESERVED:
+            raise CanonicalizationError("Windows予約device名は許可しない")
+        if re.search(r"~[1-9](?:\.|$)", component, re.IGNORECASE):
+            raise CanonicalizationError("8.3 short-name aliasは許可しない")
+        if ":" in component and not (index == 0 and re.fullmatch(r"[A-Za-z]:", component)):
+            raise CanonicalizationError("ADSを作るcolonは許可しない")
 
 
 def canonical_local_ref_target(common_dir: str | Path, ref: str) -> Target:

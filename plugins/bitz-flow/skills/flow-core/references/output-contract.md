@@ -99,7 +99,8 @@ write の result は read と同じ envelope を使い、次を追加で持つ�
 
 - `data.write_state` — 状態機械上の位置。read では省略または null。
 - `data.guard_targets` — target guard を取得した canonical mutation target。canonical key の昇順。
-  raw path を含めない（`index` / `local-ref` / `remote-tracking-ref` / `fetch-head` / `remote-ref` の閉集合）。
+  raw path を含めない（`index` / `local-ref` / `remote-tracking-ref` / `fetch-head` / `remote-ref` /
+  `worktree-dir` / `worktree-registry` の閉集合）。
 - `invocation.stage` — `plan` / `apply` / `post-check` を区別する。
 - `approval` — `required` が `explicit-human` の場合、`source` と `reference` に裁定の所在を載せる。
   CLI が人間本人を認証したことは表さない。

@@ -192,7 +192,7 @@
     },
     "guard_identity_kind": {
       "type": "string",
-      "enum": ["index", "local-ref", "remote-tracking-ref", "fetch-head", "remote-ref"],
+      "enum": ["index", "local-ref", "remote-tracking-ref", "fetch-head", "remote-ref", "worktree-dir", "worktree-registry"],
       "description": "target guard が識別する canonical mutation target の種別（閉集合）。raw path を key にしない。local は platform 固有の stable file identity（index は worktree ID を付加）、remote は canonical host + provider repository ID + ref name のみから導出し local identity を混ぜない。"
     },
     "approval": {
