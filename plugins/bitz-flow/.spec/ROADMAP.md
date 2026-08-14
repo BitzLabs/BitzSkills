@@ -155,7 +155,7 @@ M2 が未完了のままでは worktree-first の安全境界が閉じないた�
 - 詳細設計は `FLW-DSN-016`（M2 worktree safety 詳細設計）。出口条件・budget の正は
   `FLW-DSN-014` の「M2出口条件・budget・M3入口条件」節
 - 出口: repo identity 衝突 0、repo 外 worktree root の承認（**単回 capability**）、
-  `M2-FLT-001`〜`044` 全件 PASS、enum 三者照合 green、機械強制層の有効化、
+  `M2-FLT-001`〜`050` 全件 PASS、enum 三者照合 green、機械強制層の有効化、
   **local-write class の被測定物 confirmation が 3 platform で PASS**、
   着手前 reconnaissance の必須化
 - budget: **6 PR / 20 session**（2026-08-12 再校正）。4 PR / 14 session に

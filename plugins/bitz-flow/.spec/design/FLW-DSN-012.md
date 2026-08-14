@@ -2,7 +2,7 @@
 id: FLW-DSN-012
 title: "Operation Contract詳細設計"
 status: active
-version: 1.3
+version: 1.4
 updated: 2026-08-14
 owner: hide
 implements: FLW-FR-003, FLW-FR-004, FLW-FR-005, FLW-FR-006, FLW-FR-007, FLW-FR-008, FLW-FR-009, FLW-FR-010, FLW-NFR-003, FLW-NFR-005, FLW-NFR-006, FLW-CON-002, FLW-CON-004, FLW-CON-005, FLW-CON-006
@@ -93,20 +93,18 @@ operation class の正は本書の `write_target` と `reversibility` の直交2
 
 | 正規WorkUnit state | worktree state | PR state | 許可action |
 |---|---|---|---|
-| `planned` | absent | none | worktree.create |
-| `isolated` | active-clean | none | status、作業開始 |
-| `active` | active-dirty | none | diff、stage、commit |
-| `verified` | active-clean | local-verified | pr.prepare |
-| `verified` | active-clean | prepared | pr.publish |
-| `pr-draft` | pr-open | draft-published | pr.checks/ready |
-| `pr-draft` | pr-open | checks-pending/checks-failed/checks-passed | pr.checks/ready |
-| `review-ready` | pr-open | review-ready | pr.merge-plan |
-| `merge-ready` | pr-open | merge-ready | pr.merge |
-| `merged` | merged-exact | merged | pr.post-merge |
-| `audited` | merged-exact | post-merge-audited | worktree.finish |
-| `cleaned` | absent | merged | 終端 |
-| `failed-retained` | active-dirty/orphan | 任意 | audit/discard planのみ |
-| `discarded` | absent | 任意 | 終端 |
+| `PLANNED` | `ABSENT` | none | worktree.create |
+| `ISOLATED` | `CLEAN` | none | status、作業開始 |
+| `ACTIVE` | `DIRTY` | none | diff、stage、commit |
+| `VERIFIED` | `CLEAN` | local-verified/prepared | pr.prepare/publish |
+| `PR_DRAFT` | `CLEAN` / `DIRTY` | draft/checks-* | pr.checks/ready |
+| `REVIEW_READY` | `CLEAN` / `DIRTY` | review-ready | pr.merge-plan |
+| `MERGE_READY` | `CLEAN` / `DIRTY` | merge-ready | pr.merge |
+| `MERGED` | `CLEAN` / `DIRTY` | merged | pr.post-merge |
+| `AUDITED` | `CLEAN` / `DIRTY` | post-merge-audited | worktree.finish（DIRTYは退避receipt必須） |
+| `FAILED_RETAINED` | `DIRTY` / `MISMATCH` | 任意 | audit/discard planのみ |
+| `CLEANED` | `ABSENT` | merged | 終端 |
+| `DISCARDED` | `ABSENT` | 任意 | 終端 |
 
 状態遷移は外部事実から毎回再構成する。単一の証拠で複数状態に該当する場合は、
 より危険側の状態を採用し`BLOCKED`にする。

@@ -646,7 +646,7 @@ invalidateする。legacy単一JSONLはread-only互換入口とし、新旧Gate�
 
 - repo identity衝突0
 - repo外worktree rootの承認（**単回capability化されたもの**。`FLW-NFR-007` 1.3）
-- `M2-FLT-001`〜`044`全件PASS
+- `M2-FLT-001`〜`050`全件PASS
 - **enum三者照合テストがgreen**（設計 ⊆ schema ⊆ 実装の双方向）
 - **機械強制層が有効**（permissions＋フックでreceiptなしworktree writeをブロック）
 - **`write_target: local` の被測定物confirmationが3 platformでPASS**しactive manifest発行済み
