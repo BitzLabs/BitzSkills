@@ -1,11 +1,26 @@
+import importlib.util
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "plugins/bitz-quality/skills/quality-review"))
 
-from migration.migration import MigrationEvidence, removal_allowed, rollback_mode
-from qualification.qualification import FAULTS, is_current, qualify
+def load_module(name, path):
+    spec = importlib.util.spec_from_file_location(name, ROOT / path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+migration = load_module("quality_migration", "plugins/bitz-quality/skills/quality-review/migration/migration.py")
+qualification = load_module("quality_qualification", "plugins/bitz-quality/skills/quality-review/qualification/qualification.py")
+MigrationEvidence = migration.MigrationEvidence
+removal_allowed = migration.removal_allowed
+rollback_mode = migration.rollback_mode
+FAULTS = qualification.FAULTS
+is_current = qualification.is_current
+qualify = qualification.qualify
 
 
 def trial(verdict):
