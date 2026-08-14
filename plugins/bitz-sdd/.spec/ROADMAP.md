@@ -576,6 +576,8 @@ SDD-REV-006で特定した逆起票要件を、V4ターゲット設計の前に�
 - `architecture.md` — モジュール配置、レイヤ、依存方向、実行・配布ビュー
 - `api-design.md` — CLI、終了コード、JSON、schema version、互換性
 - V4 review quality profile — 4.5目標、観点別下限、指摘上限、SE Review、Gate接続
+- bitz-quality接続契約 — `quality-result@1`を入力するport、ReviewFindingへの変換、
+  stale/unknown時の安全側判定。quality側へstatus・GatePassage・証跡SSOTを委譲しない
 - モジュール分割表 — 現行関数から新しい所有モジュールへの対応
 - 移行計画 — 3.xから4.0.0、固定版ドッグフーディング、bitz-ddd依存への波及
 - rollback / downgrade条件 — lock・transaction・schemaを含む安全な戻し方
@@ -664,6 +666,8 @@ graph TD
       M2 Design Gate前の設計再整備 **3 PR / 9 session**、合計 **33 PR / 109 session** を参照する。
       上流で再配賦した場合はbitz-flow側の値へ追随し、bitz-sddで独自に再定義しない。
 12. **bitz-flow V2 Promotion Gate** — 単一dispatcher、SDD opaque ID、result契約を確定
+    - `bitz-quality`連携はV2の公開result/check契約を消費するadapter候補として扱い、
+      Promotion Gate前の内部APIへ結合しない。
 
 ### フェーズ5 — bitz-sdd V4準備（provisional）
 
@@ -671,6 +675,10 @@ graph TD
 14. **ブラウンフィールド分析** — モジュール構造、DDD成熟度、MMI、公開契約を測定
 15. **逆起票要件の分類** — 契約と実装詳細を分離し、`SDD-FR-080〜082`の後継先を確定
 16. **V4ターゲット設計** — domain / API / architecture / migration / rebuild / rollback
+    - QA責務境界を設計する。`bitz-quality`は評価・測定・テスト設計、`bitz-flow`は
+      Git/PRでの強制、`bitz-sdd`は要件status・GatePassage・ReviewFinding・
+      `.spec/verification/`のSSOTを所有する。
+    - `quality-result@1`受入portと、findingの重複排除・追跡・古いtarget SHA拒否を定義する。
 17. **V4 Design Gate** — 多観点レビューと人間裁定
 
 ### フェーズ6 — 3.xでの無破壊準備（provisional）
@@ -686,6 +694,8 @@ graph TD
 ### フェーズ7 — V4カットオーバー（provisional）
 
 24. **証跡schemaと検証責務** — SI-SDD-029 / 030の裁定内容を実装
+    - `bitz-quality`の結果は検証入力であり、verified判定そのものではない。
+      `sdd-test`が要件・test-spec・実出力を照合してcanonical evidenceへ昇格する。
 25. **artifact種別ごとのポリシー分割** — 従来の裁定4をターゲット設計どおり実装
 26. **`sdd-git`削除** — skill、ルーティング、旧参照を削除し、SDD固有契約を各所有先へ移す
 27. **必要なCLI / JSON契約の切替** — V4対象として承認された破壊的変更を同時に反映
