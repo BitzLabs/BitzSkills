@@ -1,7 +1,7 @@
 ---
 id: FLW-DSN-016
 title: "M2 worktree safety詳細設計"
-status: draft
+status: active
 version: 2.3
 updated: 2026-08-14
 owner: hide

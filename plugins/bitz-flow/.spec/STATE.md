@@ -1,5 +1,8 @@
 # STATE — status 遷移ログ
 
+- 2026-08-14 M2 Design Gate: PASS（hideのチャット裁定。FLW-REV-014 PASS 4.25、全finding解消。`FLW-GATE-003`、裁定参照: .spec/reports/decision-2026-08-14-m2-design-gate.md）
+- 2026-08-14 FLW-DSN-016: draft → active（codex on behalf of hide; GatePassage: FLW-GATE-003; 裁定参照: .spec/reports/decision-2026-08-14-m2-design-gate.md）
+
 - 2026-07-18 SI-FLW-001: open → accepted (human)
 - 2026-07-18 FLW-FR-001: draft → approved (hide)
 - 2026-07-18 FLW-FR-001: approved → implementing (codex)

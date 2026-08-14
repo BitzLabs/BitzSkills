@@ -88,6 +88,7 @@ Promotion GateのGatePassageで検分される。
 |---|---|---|---|
 | Discovery Gate | 人間 | assumptions / worksheet の裁定記録 | Go（2026-07-29） |
 | Design Gate | 人間 | FLW-REV-002 多観点 PASS、FLW-REV-003 SE PASS | PASS（2026-07-29。記録 `FLW-GATE-001`） |
+| **M2 Design Gate** | 人間 | FLW-REV-014 PASS 4.25、全finding解消 | **PASS（2026-08-14。記録 `FLW-GATE-003`）** |
 | 要件承認ゲート | 人間 | FLW-REV-004 / FLW-REV-005 と draft 要件の diff | 完了（2026-07-31。一括承認） |
 | **M0 出口** | 機械（eval）+ 人間確認 | FLW-DSN-014 の M0 出口条件 | **PASS（2026-08-11、第14ラウンド）** |
 | **M1 出口** | 機械（fixture）+ 人間確認 | FLW-DSN-014 の出口・予算・縮退境界 | **PASS（2026-08-12）** |
@@ -150,6 +151,8 @@ M2 が未完了のままでは worktree-first の安全境界が閉じないた�
 - 縮退境界: M0 read-only prerelease だけを維持し、Git write と doctor v2 は公開しない
 
 ### フェーズ3 — M2 worktree-first
+
+- **入口**: M2 Design Gate PASS（2026-08-14、`FLW-GATE-003`）。`FLW-DSN-016`をactiveな規範設計としてM2-1から順に実装する
 
 - worktree の配置・命名・作成・再開・audit・cleanup・保全・discard、独立 remote branch 削除
 - 詳細設計は `FLW-DSN-016`（M2 worktree safety 詳細設計）。出口条件・budget の正は
