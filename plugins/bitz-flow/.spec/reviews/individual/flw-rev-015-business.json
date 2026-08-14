@@ -1,0 +1,15 @@
+{
+  "perspective": "business",
+  "dimensions": [
+    {"name": "要件トレーサビリティ", "weight": 0.35, "score": 3, "findings": []},
+    {"name": "NFR定量化", "weight": 0.30, "score": 4, "findings": [
+      {"id": "BIZ-201", "severity": "minor", "location": "active-local-confirmation.json", "title": "platform間のtest母数が不一致", "description": "Claude/Codexは138件、Antigravityは137件で、同じcompatibility keyでも母数同一性が保証されていない。", "recommendation": "required test ID集合をmanifestへ固定し、件数ではなく集合一致をGate条件にする。"}
+    ]},
+    {"name": "ステークホルダー整合", "weight": 0.20, "score": 3, "findings": []},
+    {"name": "ROI・実現可能性", "weight": 0.15, "score": 2, "findings": [
+      {"id": "BIZ-401", "severity": "major", "location": "FLW-DSN-014 M2 budget", "title": "実装枠6 PRを消化済み", "description": "実動統合と再confirmationには追加作業が必要だが、M2の6 PR枠は#246〜#256で全消化した。", "recommendation": "追加2 PR・最大6 sessionのscope/budgetを人間が裁定してから着手する。"}
+    ]}
+  ],
+  "weighted_score": 3.10,
+  "summary": "M2の設計価値は維持されるが、実利用可能なworktree writeまで到達しておらず、追加予算の明示裁定が必要である。"
+}

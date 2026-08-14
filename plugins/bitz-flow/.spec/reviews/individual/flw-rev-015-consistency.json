@@ -1,0 +1,12 @@
+{
+  "perspective": "consistency",
+  "dimensions": [
+    {"name": "構造整合", "weight": 0.35, "score": 4, "findings": []},
+    {"name": "トレーサビリティ", "weight": 0.35, "score": 2, "findings": [
+      {"id": "RVC-201", "severity": "major", "location": "flowlib/cli.py・FLW-DSN-016 §12", "title": "M2出口主張から公開実行経路へ辿れない", "description": "設計は全worktree writeのin-band検証を要求するが、dispatcherはM0 read-onlyだけを公開し、worktree核を呼ぶ実行経路がない。", "recommendation": "dispatcherから実動worktree adapterへ接続し、要件→設計→実装→E2E証跡を双方向に固定する。"}
+    ]},
+    {"name": "用語一貫性", "weight": 0.30, "score": 4, "findings": []}
+  ],
+  "weighted_score": 3.30,
+  "summary": "文書・enum・fault IDの整合は良好だが、M2出口のworktree writeから公開実装へ至るトレースが切れている。"
+}

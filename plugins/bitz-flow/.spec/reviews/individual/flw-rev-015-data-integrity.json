@@ -1,0 +1,12 @@
+{
+  "perspective": "data-integrity",
+  "dimensions": [
+    {"name": "トランザクション安全性", "weight": 0.40, "score": 4, "findings": []},
+    {"name": "データ整合性", "weight": 0.35, "score": 3, "findings": [
+      {"id": "DIN-201", "severity": "major", "location": "flowlib/worktree.py・worktree_cleanup.py", "title": "receipt stepと実副作用の結合が未実装", "description": "純粋なstep/reconcile判定はあるが、Git worktree・registry・nonce・receiptを同じapply境界で更新するadapterが無く、実状態でprefix不変条件を証明できない。", "recommendation": "各mutating stepを永続receiptと結合したadapterを実装し、全crash境界を実repositoryで検証する。"}
+    ]},
+    {"name": "スキーマ設計品質", "weight": 0.25, "score": 4, "findings": []}
+  ],
+  "weighted_score": 3.65,
+  "summary": "CAS・nonce・状態enumのモデルは堅牢だが、永続Git状態へ適用するトランザクション境界がまだ存在しない。"
+}
