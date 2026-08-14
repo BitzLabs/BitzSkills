@@ -2,7 +2,7 @@
 id: FLW-DSN-006
 title: "worktree-firstライフサイクル詳細設計"
 status: active
-version: 1.2
+version: 1.3
 updated: 2026-08-14
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-003, FLW-NFR-006, FLW-CON-002, FLW-CON-005, FLW-CON-006
@@ -38,6 +38,12 @@ Work ID:
 branchは`<type>/<work-id>-<slug>`。typeは`feat/fix/docs/refactor/test/chore`。
 
 ## create / resume
+
+create / resume の plan を開始する前に、`FLW-FR-007` と `FLW-DSN-016` §11（M2-4）を正とする
+**有限 reconnaissance と entry protocol**を完了しなければならない。active benchmark manifest の
+期限・件数・byte上限・実行時間上限を満たす一意な証跡が得られない場合は、write WorkUnitを開始せず
+副作用0で`BLOCKED`にする。`INDETERMINATE`、timeout、command/parse失敗、上限超過も同じ扱いとし、
+打切り途中の結果を安全判断へ利用しない。
 
 ```text
 absent
@@ -126,3 +132,8 @@ collision、path escape、symlink、dirty、別worktree占有、merged/unmerged�
 ## 影響
 
 現行`worktree_ops.py`のadd/list/cleanup/discardを新状態機械へ置換する。旧CLI互換は持たない。
+
+## Revision History
+
+- 1.3 (2026-08-14) `FLW-REV-014:SYN-001`を反映。create/resume入口から`FLW-FR-007`と
+  `FLW-DSN-016`§11の有限reconnaissance/entry protocolへ明示接続し、失敗時の副作用0を固定。
