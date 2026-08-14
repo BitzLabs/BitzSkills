@@ -146,3 +146,23 @@ def test_enforcement_is_in_band_and_qualification_follows_skill_change() -> None
     assert "M2-1 → M2-2 → M2-3 → M2-4 → M2-Q → M2-5 → M2-6" in boundary
     assert "M2-Qのqualificationはblocking" in boundary
     assert "機械強制層" not in boundary
+
+
+def test_m2_operational_contract_is_bounded_and_fail_closed() -> None:
+    design = DESIGN_016.read_text(encoding="utf-8")
+    operations = design.split("### SI-FLW-054 運用規定", 1)[1].split("## §11", 1)[0]
+    for field in ("deadline_seconds", "max_items", "absolute_bytes"):
+        assert f"`{field}`" in operations
+    for operation in (
+        "safety.quarantine-list", "safety.intent-show", "safety.receipt-show",
+    ):
+        assert f"`{operation}`" in design
+    for term in (
+        "1営業日", "1日1回", "2営業日", "90日", "四半期", "append-only hash-chain",
+        "UNAVAILABLE", "UNSUPPORTED", "INDETERMINATE",
+    ):
+        assert term in operations
+    assert "finish/discardの必須capabilityが欠ければ" in operations
+    assert "悪意あるexecutorへの防御を" in operations
+    for fixture in range(51, 56):
+        assert f"`M2-FLT-{fixture:03d}`" in design

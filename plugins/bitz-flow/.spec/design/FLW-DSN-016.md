@@ -2,7 +2,7 @@
 id: FLW-DSN-016
 title: "M2 worktree safety詳細設計"
 status: draft
-version: 1.9
+version: 2.0
 updated: 2026-08-14
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-006, FLW-NFR-007, FLW-NFR-011, FLW-NFR-012, FLW-CON-005, FLW-CON-006
@@ -47,6 +47,9 @@ catalog 外は `UNSUPPORTED` である。`FLW-REV-011:SYN-006`（finish / resume
 | operation | canonical mutation target | recovery | 実装区分 |
 |---|---|---|---|
 | `worktree.audit` | なし | retry-read | M2-3 |
+| `safety.quarantine-list` | なし | retry-read | M2-3 |
+| `safety.intent-show` | なし | retry-read | M2-3 |
+| `safety.receipt-show` | なし | retry-read | M2-3 |
 | `worktree.create` | `worktree-dir` ＋ `worktree-registry` ＋ `local-ref` ＋ **`index`** | `REC-WORKTREE-CREATE` | M2-3 |
 | `worktree.resume` | 同上 | `REC-WORKTREE-RESUME` | M2-3 |
 | `worktree.finish` | 同上 | `REC-WORKTREE-FINISH` | M2-5 |
@@ -628,8 +631,13 @@ main同期は既存の独立operation `git.sync` が担う。remote candidateは
 | `M2-FLT-045` | worktree 未展開・未 push・PR 不在の local branch が存在 | in-flight 列挙に現れる（**事故で見落とした条件そのもの**） | M2-4 |
 | `M2-FLT-046` | これから触る path と重なる in-flight branch が存在 | 重なり付きで返る。branch 名・work ID が異なっても検出する | M2-4 |
 | `M2-FLT-047` | reconnaissance を省いて書込み WorkUnit を開始 | entry protocol で停止。着手させない | M2-4 |
+| `M2-FLT-051` | reconnaissanceのmanifest欠落・件数/byte超過・timeout・`INDETERMINATE` | write副作用0で`BLOCKED` | M2-4 |
+| `M2-FLT-052` | quarantineが2営業日超滞留 | repository ownerへのエスカレーション記録 | M2-4 |
+| `M2-FLT-053` | finish/discard capability不足rootでcreate要求 | create/resumeを`UNSUPPORTED`、auditのみ許可 | M2-3 |
+| `M2-FLT-054` | Activity API timeout/rate limit/部分page/API非提供 | `UNAVAILABLE`/`INDETERMINATE`/`UNSUPPORTED`を分離し、更新なし判定0 | M2-6 |
+| `M2-FLT-055` | 永続証跡のchain欠損・改ざん・restore不一致 | `INDETERMINATE`＋quarantine、write副作用0 | M2-4 |
 
-## §10 P2 の処理
+## §10 P2 と M2 運用規定
 
 | finding | 対応 |
 |---|---|
@@ -637,17 +645,54 @@ main同期は既存の独立operation `git.sync` が担う。remote candidateは
 | `SYN-020` guard 記録の置き場と create 時の OS lock 対象が未定義 | §6 後段のとおり **common-dir 配下**の owner-only 領域に統一。create 時は対象がまだ無いため、**親（承認済み root）に対して OS lock** を取る |
 | `SYN-021` canonical 化に root 包含判定が無い | §3 の canonicalize に **承認済み root 配下であることの包含判定**を組み込み、判定を通らない path は guard 導出以前に `BLOCKED`。namespace 表の積み残しは §2 で解消 |
 
+### SI-FLW-054 運用規定
+
+**reconnaissance**: 全write前にactive benchmark manifestの`deadline_seconds`、`max_items`、
+`absolute_bytes`を適用する。値の欠落・0以下・期限切れ、件数/byte超過、timeout、command/parse失敗、
+`INDETERMINATE`はすべてwrite副作用0で`BLOCKED`にする。値は`FLW-NFR-004`と`FLW-NFR-008`の
+qualification実測から生成し、打切り結果を安全判断へ使わない。
+
+**quarantine**: 解除判定目標は検出から1営業日、棚卸しは1日1回。2営業日超または
+`worktree-unresolved`はrepository ownerへ即時エスカレーションする。RACIはexecutor=Responsible、
+repository owner=Accountable、evaluation reviewer=Consulted、利用者=Informedとし、兼務も記録する。
+`safety.quarantine-list`、`safety.intent-show`、`safety.receipt-show`はそれぞれ状態/年齢/解除可否、
+redacted intent、hash-chain/postconditionをread-onlyで返し、秘密値を返さない。
+
+**承認疲れ**: 承認画面はoperation、canonical target、expected identity/OID、effects、不可逆性、
+recovery、証跡時刻、capability縮退を最低限提示する。24時間rolling windowの承認/拒否/timeout、
+承認率、判断時間、連続承認数を記録し、20件以上で承認率90%超、または10秒未満が5件連続なら警告する。
+M2では自動拒否せずconfirmation evidenceへ残す。
+
+**capability対称性とfilesystem probe**: 同一rootでfinish/discardの必須capabilityが欠ければ
+create/resumeも`UNSUPPORTED`にし、診断とauditだけを許可する。repo外rootごとにadvisory lock、
+atomic replace＋directory fsync、stable identity、mtime粒度をprobeしroot identityへ拘束する。
+未対応は`UNSUPPORTED`、一時失敗/判定不能は`UNAVAILABLE`でwriteを許可せず、root変更で失効させる。
+
+**永続証跡**: intent、receipt、quarantine、instance nonceはcommon-dir配下owner-only領域へ置く。
+前record digestを含むappend-only hash-chainを読み出し時に全検証する。未解決quarantineは削除不可。
+解決済みはM2 Promotion Gateから90日または関連releaseのサポート終了の遅い方まで保持する。
+owner-only export bundleをbackup単位とし、四半期ごとに一時rootへrestoreしてchain/nonce/postconditionを
+検証する。欠損・不一致は`INDETERMINATE`＋quarantineとする。
+
+**脅威モデル**: capabilityは誤操作、承認再利用、別processの取り違えを防ぐ。秘密鍵は可能なら
+executorと別のowner-only process/keystoreへ隔離する。隔離不能なら悪意あるexecutorへの防御を
+主張せず、単回nonce・監査chain・明示承認による事故防止だけを保証する。
+
+**Activity API**: 完全pagination・対象ref・観測区間を証明できた結果だけを承認材料にする。
+timeout/rate limit/5xxは`UNAVAILABLE`、API非提供/恒久scope不足は`UNSUPPORTED`、部分page/cursor欠落/
+応答矛盾は`INDETERMINATE`。いずれも「更新なし」へ倒さずremote削除を`BLOCKED`にする。
+
 ## §11 実装境界
 
 | 区分 | 関心事 | session 上限 | 完了条件 |
 |---|---|---|---|
 | M2-1 | guard core（閉集合拡張・binding・包含規約・canonical 化・case 感度） | 4 | `M2-FLT-001`〜`009` PASS。worktree operation 実装へ進まない |
 | M2-2 | 承認 capability | 2 | `M2-FLT-010`〜`015` PASS |
-| M2-3 | create / resume / audit ＋ enum 三者照合 | 3 | `M2-FLT-016`〜`023` PASS |
-| M2-4 | 着手前 reconnaissance ＋ entry protocol | 3 | `M2-FLT-045`〜`047` PASS（`SI-FLW-046`） |
+| M2-3 | create / resume / audit ＋ enum 三者照合 | 3 | `M2-FLT-016`〜`023`、`053` PASS |
+| M2-4 | 着手前 reconnaissance ＋ entry protocol・運用証跡 | 3 | `M2-FLT-045`〜`047`、`051`、`052`、`055` PASS（`SI-FLW-046` / `054`） |
 | M2-Q | M2 qualification | 1 | compatibility key確定後にqualification PASS（**blocking**）。未達時はM2-5以降を停止 |
 | M2-5 | finish / discard ＋ quarantine 解除 | 4 | `M2-FLT-024`〜`036` PASS |
-| M2-6 | delete-remote-branch ＋ confirmation | 3 | `M2-FLT-037`〜`044`、`048`、`049` PASS、M2 出口 |
+| M2-6 | delete-remote-branch ＋ confirmation | 3 | `M2-FLT-037`〜`044`、`048`、`049`、`054` PASS、M2 出口 |
 
 - 依存は `M2-1 → M2-2 → M2-3 → M2-4 → M2-Q → M2-5 → M2-6` の直列。
   各区分は直前を main へ land してから分岐する。
@@ -688,7 +733,7 @@ create/resumeはfinish/discardが揃うM2-5まで公開せず、「作れるが�
 
 - repo identity 衝突 0
 - repo 外 worktree root の承認（**capability 化されたもの**）
-- `M2-FLT-001`〜`049` 全件 PASS
+- `M2-FLT-001`〜`055` 全件 PASS
 - **enum 三者照合テストが green**（設計 ⊆ schema ⊆ 実装の双方向）
 - **承認capabilityが全worktree writeでin-band検証される**
 - **operation外の変更をauditが検出しquarantineへ接続する**
@@ -760,7 +805,7 @@ GP-004 に対し「§5」とだけ書いて対応済みとし、**原文が求�
 | GP-010 | settings.json の permissions へ worktree root を加え、承認 receipt を伴わない worktree write を機械的に止める | §4 — permissions ＋ PreToolUse フック。receipt は common-dir 配下の owner-only 領域へ追記 |
 | GP-011 | destructive worktree operation の承認へ M1 の capability envelope を再利用し単回化する | §4 — M1 の Ed25519 envelope を再利用。nonce は target guard 内で linearizable CAS |
 | GP-012 | 設計の閉集合・schema enum・guard.py 定数の三者照合テストを追加する | §2 — **双方向**照合（片方向が沈黙した原因）。対象は namespace 表の全 namespace |
-| GP-013 | M2-FLT-* を採番し、worktree の fault fixture と recovery matrix 行を定義する | §8（recovery matrix）／ §9（`M2-FLT-001`〜`049`。各 fixture をちょうど1区分へ割当） |
+| GP-013 | M2-FLT-* を採番し、worktree の fault fixture と recovery matrix 行を定義する | §8（recovery matrix）／ §9（`M2-FLT-001`〜`055`。各 fixture をちょうど1区分へ割当） |
 | GP-014 | 複数 namespace に現れる語の一覧を schema から機械導出して文書と照合する | §2 — 手で維持する表を置かず schema から導出。本書の表は導出結果の期待値 |
 | GP-015 | closed enum への値追加の互換性条文を output-contract.md へ作るか、互換性を根拠にしない記述へ改める | §2 — **後者を採用**。「key 集合は加算のみ」は object の key の規定であり closed enum に適用できないため、根拠を「未公開だから影響が無い」へ置換 |
 | GP-016 | 表記規則の判定基準（field 名ではなく値の性質）と反例を明記し、namespace 表へ性質列を足す | §2 — 判定基準を「値の性質」と明記し性質列を追加。反例（`trial_kind` の `Q-NORMAL`）を隠さず記載 |
@@ -771,6 +816,10 @@ GP-004 に対し「§5」とだけ書いて対応済みとし、**原文が求�
 同 issue が accept されて照合が機械化されれば、本表が検査対象になる。
 
 ## Revision History
+
+- 2.0 (2026-08-14) SI-FLW-054裁定を反映。reconnaissance有限境界、quarantine RACI/read経路、
+  承認疲れ指標、capability対称性、filesystem probe、永続証跡retention/hash-chain、
+  capability脅威モデル、Activity API失敗分類と`M2-FLT-051`〜`055`を追加。
 
 - 1.4 (2026-08-12) `FLW-REV-012:GP-004`（ABA 検出 capability の実在性）を実証し反映。
   **capability は実在するが ABA の不在証明には使えない**（Activity API と Git Refs API は
