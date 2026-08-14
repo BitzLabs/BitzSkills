@@ -1,7 +1,7 @@
 ---
 id: QLT-REV-003
 title: "レビュー基盤 仕様・設計再レビュー"
-status: pending
+status: active
 decision: PASS
 version: 1.0
 updated: 2026-08-14

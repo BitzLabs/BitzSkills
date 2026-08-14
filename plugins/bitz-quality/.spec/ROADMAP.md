@@ -32,8 +32,8 @@ graph TD
 
 ## 3. 次期統合マイルストーン（提案・未裁定）
 
-1. **レビュー基盤契約** — `QLT-FR-017〜026`をdraft起票。Discovery Gateは2026-08-14にGo。
-   `QLT-REV-003`はPASS。Design Gateと要件approveは未実施であり、実装着手不可。
+1. **レビュー基盤契約** — `QLT-FR-017〜026`をapproved化。Discovery GateとDesign Gateは
+   2026-08-14にGo（`QLT-GATE-001`）。`QLT-REV-003`はPASS。次は境界別の実装タスク分解へ進む。
 2. **`quality-result@1`** — `target_sha`、判定、finding、measurand、規則・tool version、
    evidence digestを持つ閉集合JSON schemaを設計し、未知field・欠落・古いSHAを安全側に扱う。
 3. **SDD adapter** — EARS要件ID・テストID・測定結果をV4の公開portへ渡す。

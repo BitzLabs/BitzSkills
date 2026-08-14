@@ -1,7 +1,7 @@
 ---
 id: QLT-FR-021
 version: 1.0
-status: draft
+status: approved
 domain: quality-review
 priority: medium
 origin: SI-QLT-001 / SDD-FR-158 / SDD-FR-159 / SDD-FR-161

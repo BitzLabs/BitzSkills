@@ -3,7 +3,7 @@ id: SI-QLT-001
 raised_by: ユーザー要望: SDDでbitz-qualityを充実
 target: レビュー基盤の仕様化とsdd-reviewからの段階的所有権移管
 proposed_change_type: new
-status: open
+status: accepted
 origin: SI-CORE-040
 github_issue: https://github.com/BitzLabs/BitzSkills/issues/269
 ---

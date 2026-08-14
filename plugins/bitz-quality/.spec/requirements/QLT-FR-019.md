@@ -1,7 +1,7 @@
 ---
 id: QLT-FR-019
 version: 1.0
-status: draft
+status: approved
 domain: quality-review
 priority: medium
 origin: SI-QLT-001 / QLT-DSC-003

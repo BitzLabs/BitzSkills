@@ -1,7 +1,7 @@
 ---
 id: QLT-DSN-002
 title: "レビュー基盤 公開API・成果物schema"
-status: draft
+status: active
 version: 1.0
 updated: 2026-08-14
 owner: br7.hide

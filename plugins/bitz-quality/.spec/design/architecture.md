@@ -1,7 +1,7 @@
 ---
 id: QLT-DSN-003
 title: "レビュー基盤 アーキテクチャ"
-status: draft
+status: active
 version: 1.0
 updated: 2026-08-14
 owner: br7.hide

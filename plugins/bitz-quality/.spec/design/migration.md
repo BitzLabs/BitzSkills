@@ -1,7 +1,7 @@
 ---
 id: QLT-DSN-004
 title: "sdd-review 段階移管計画"
-status: draft
+status: active
 version: 1.0
 updated: 2026-08-14
 owner: br7.hide
