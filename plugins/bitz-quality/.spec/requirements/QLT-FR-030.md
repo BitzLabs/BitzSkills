@@ -1,7 +1,7 @@
 ---
 id: QLT-FR-030
 version: 1.0
-status: approved
+status: verified
 domain: quality-review
 priority: high
 origin: SI-QLT-002
