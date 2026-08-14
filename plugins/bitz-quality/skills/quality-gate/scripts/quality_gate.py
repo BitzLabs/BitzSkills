@@ -33,6 +33,12 @@ def check_static_rules(target_dir: Path, staged_only: bool = False) -> tuple[int
     try:
         res = subprocess.run(git_cmd, cwd=target_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         changed_files = [f.strip() for f in res.stdout.splitlines() if f.strip()]
+        if not staged_only:
+            # 未追跡ファイル (Untracked) もスキャン対象に追加
+            res_untracked = subprocess.run(["git", "--no-optional-locks", "status", "--porcelain"], cwd=target_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            for line in res_untracked.stdout.splitlines():
+                if line.startswith("?? "):
+                    changed_files.append(line[3:].strip())
         if not changed_files:
             print("  [INFO] S01: 変更されたファイルはありません")
         else:

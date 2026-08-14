@@ -4,7 +4,7 @@ version: 1.0
 status: verified
 domain: quality-review
 priority: high
-origin: アルダグラム3層ゲート（第2層LLMレビュー）+ 設計 v0.3.0
+origin: 3層ゲート（第2層LLMレビュー）+ 設計 v0.3.0
 verification_method: example-test
 derived_from:
 supersedes:

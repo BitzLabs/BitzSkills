@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parent.parent
 TRACE_SCRIPT = ROOT / "plugins/bitz-quality/skills/quality-trace/scripts/quality_trace.py"
 INIT_SCRIPT = ROOT / "plugins/bitz-quality/skills/quality-init/scripts/quality_init.py"
 
-def test_QLT_FR_011_and_012_traceability_verification():
+def test_QLT_FR_011_traceability_verification():
     with tempfile.TemporaryDirectory() as tmpdir:
         target = Path(tmpdir)
         subprocess.run([sys.executable, str(INIT_SCRIPT), str(target)], check=True)
@@ -35,11 +35,25 @@ def test_QLT_FR_011_and_012_traceability_verification():
         assert res2.returncode == 0, res2.stderr
         assert "100.0%" in res2.stdout
         assert "PASS" in res2.stdout
+
+def test_QLT_FR_012_verification_evidence_report():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        target = Path(tmpdir)
+        subprocess.run([sys.executable, str(INIT_SCRIPT), str(target)], check=True)
         
-        # レポートファイルの確認
+        req_dir = target / ".spec/requirements"
+        req_dir.mkdir(parents=True, exist_ok=True)
+        (req_dir / "REQ-100.md").write_text("---\nid: REQ-100\nstatus: verified\n---\n### REQ-100 証跡テスト\n", encoding="utf-8")
+        
+        tests_dir = target / "tests"
+        tests_dir.mkdir(parents=True, exist_ok=True)
+        (tests_dir / "test_evidence.py").write_text("def test_req_100():\n    assert True\n", encoding="utf-8")
+        
+        res = subprocess.run([sys.executable, str(TRACE_SCRIPT), "verify", str(target), "--save"], capture_output=True, text=True)
+        assert res.returncode == 0
+        
         matrix_file = target / ".spec/quality/reports/traceability-matrix.md"
         assert matrix_file.is_file()
         content = matrix_file.read_text(encoding="utf-8")
-        assert "REQ-001" in content
-        assert "REQ-002" in content
+        assert "REQ-100" in content
         assert "COVERED" in content

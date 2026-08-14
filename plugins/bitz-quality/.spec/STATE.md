@@ -9,3 +9,8 @@
 - 2026-08-14 QLT-FR-009〜010: pytest全4件PASSにより verified 昇格 (br7.hide)
 - 2026-08-14 QLT-TSK-006: quality-trace スキル・トレーサビリティ連携 (status: done) (br7.hide)
 - 2026-08-14 QLT-FR-011〜012: pytest全PASSにより verified 昇格 (br7.hide)
+- 2026-08-14 QLT-TSK-007〜008: quality-measurand スキル・v1.0.0総合検証 (status: done) (br7.hide)
+- 2026-08-14 QLT-FR-013〜014: pytest全PASSにより verified 昇格 (br7.hide)
+- 2026-08-14 QLT-TSK-009〜010: quality_status / quality-report 実装 (status: done) (br7.hide)
+- 2026-08-14 QLT-FR-015〜016: pytest全PASSにより verified 昇格 (br7.hide)
+- 2026-08-14 QLT-RELEASE-v1.0.0: M1〜M5 全機能実装完了・正式リリース (br7.hide)

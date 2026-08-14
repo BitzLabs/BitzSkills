@@ -1,30 +1,72 @@
-# bitz-quality プラグイン
+# bitz-quality プラグイン (v1.0.0)
 
-BitzQuality は、AI駆動の品質管理（QA）、多層品質ゲート、テスト自動設計、および多観点レビューを提供するプラグインです。
-アルダグラム社による実務実践モデル（`qa-orchestrator` / プール制QA & 5軸リスクスコアリング / 静的×LLM×Hooks の3層ゲート）を完全統合し、仕様駆動開発（`bitz-sdd`）および PR フロー（`bitz-flow`）と連携して「最速で最高品質を届ける自律QA体制」を実現します。
+実践的な多層QAプラクティス（専門サブエージェント分業・プール制QA・3層品質ゲート・再発防止自律蓄積ループ）と、BitzSDD 仕様駆動開発（EARSトレーサビリティ・測定系モデル）を統合した、AIエージェント向け包括的品質管理プラグインです。
 
-## スキル一覧（全8スキル）
+---
 
-1. **`quality-core`**: メインスキル。QAプロセス全体を対話型で統括し、専門サブエージェント群をオーケストレーションする。
-2. **`quality-init`**: プロジェクトへ `.spec/quality/` ディレクトリと Git hooks（pre-commit / pre-push）を初期化・配備する。
-3. **`quality-doctor`**: 品質環境、hooks、スキーマ整合性、未レビュー差分を読み取り専用で診断する。
-4. **`quality-score`**: 5軸（規模・セキュリティ・影響・難易度・習熟度）で施策リスクを評価し、関与レベル（A/B/C）を自動判定する。
-5. **`quality-gate`**: 静的チェック（S01〜S10）× 読み取り専用LLMレビュー（L01〜L11）× pre-push による3層品質ゲートを強制する。
-6. **`quality-review`**: 仕様・コード・スキル・テストの多観点レビューを実行し、指摘から再発防止ルール（`general_rule`）を自律蓄積する。
-7. **`quality-design`**: 5つの専門サブエージェント（影響分析・不具合分析・観点・ケース・データ）によるテスト設計を自動化する。
-8. **`quality-measurand`**: EARS 数値要件に対する測定定義（分母・proxy・除外規則）と検証履歴をモデル化する。
+## 1. 含まれるスキル一覧
 
-## 成果物スキーマ（`.spec/` 統合）
+| スキル名 | コマンド / スクリプト | 主な役割 |
+|---|---|---|
+| **[`quality-core`](file:///home/hide/BitzLabs/BitzSkills/plugins/bitz-quality/skills/quality-core/SKILL.md)** | `quality_session.py`<br>`quality_status.py` | QAプロセスの自律オーケストレーション、セッション管理、およびエージェント向け状態照会 |
+| **[`quality-init`](file:///home/hide/BitzLabs/BitzSkills/plugins/bitz-quality/skills/quality-init/SKILL.md)** | `quality_init.py` | `.spec/quality/` ワークスペースおよび再発防止台帳の初期化 |
+| **[`quality-doctor`](file:///home/hide/BitzLabs/BitzSkills/plugins/bitz-quality/skills/quality-doctor/SKILL.md)** | `quality_doctor.py` | 品質環境・ルール台帳・セッション健全性の読み取り専用診断 |
+| **[`quality-score`](file:///home/hide/BitzLabs/BitzSkills/plugins/bitz-quality/skills/quality-score/SKILL.md)** | `quality_score.py` | 5軸リスクスコアリング（規模・セキュリティ・影響・難易度・習熟度）と関与レベル（A/B/C）判定 |
+| **[`quality-gate`](file:///home/hide/BitzLabs/BitzSkills/plugins/bitz-quality/skills/quality-gate/SKILL.md)** | `quality_gate.py` | 第1層 静的チェック（S01〜S10: デバッグ文・シークレット検知・`--staged`） |
+| **[`quality-design`](file:///home/hide/BitzLabs/BitzSkills/plugins/bitz-quality/skills/quality-design/SKILL.md)** | `quality_impact_analysis.py`<br>`quality_bug_analysis.py`<br>`quality_viewpoints.py`<br>`quality_cases.py` | 5つの専門サブエージェント（影響分析・不具合傾向・テスト観点一覧・具象ケース・境界値テストデータ生成） |
+| **[`quality-review`](file:///home/hide/BitzLabs/BitzSkills/plugins/bitz-quality/skills/quality-review/SKILL.md)** | `quality_llm_review.py`<br>`quality_rule_extractor.py` | 第2層 LLM多観点レビュー（L01〜L11）と再発防止ルール（cause/general_rule）自律蓄積ループ |
+| **[`quality-trace`](file:///home/hide/BitzLabs/BitzSkills/plugins/bitz-quality/skills/quality-trace/SKILL.md)** | `quality_trace.py` | EARS 要件 ⇄ 自動テスト ⇄ 証跡の双方向トレーサビリティ照合 |
+| **[`quality-measurand`](file:///home/hide/BitzLabs/BitzSkills/plugins/bitz-quality/skills/quality-measurand/SKILL.md)** | `quality_measurand.py` | 統合品質メトリクス測定 & ミューテーション自己診断（人工欠陥注入テスト） |
+| **[`quality-report`](file:///home/hide/BitzLabs/BitzSkills/plugins/bitz-quality/skills/quality-report/SKILL.md)** | `quality_report.py` | 人間向け総合品質報告書（ダッシュボード・多層ゲート・トレーサビリティ・再発防止統合）の自動生成 |
 
-```text
-.spec/
-├── quality/               # bitz-quality 成果物
-│   ├── sessions/          # qa-session.json（オーケストレーション進捗）
-│   ├── scorings/          # 5軸リスクスコアリング & 関与レベル判定結果
-│   ├── analyses/          # 影響分析 / 不具合傾向分析レポート
-│   ├── viewpoints/        # テスト観点一覧設計書
-│   ├── reports/           # quality-summary.md（リリース判定サマリー）
-│   └── rules/             # 再発防止ルール台帳 (自律進化ルール)
-├── reviews/               # 多観点レビュー結果・ReviewFinding
-└── verification/          # 検証証跡 (verification-evidence)
+---
+
+## 2. アーキテクチャ
+
+```mermaid
+graph TD
+    User["開発者 / AI エージェント"] --> Core["quality-core (オーケストレーター)"]
+    Core --> P0["Phase 0: intake (ヒアリング & 初期化)"]
+    Core --> P1["Phase 1: scoring (5軸リスク評価 & 関与レベル A/B/C)"]
+    Core --> P2["Phase 2: design (専門エージェント分業テスト設計)"]
+    Core --> P3["Phase 3: gate (第1層静的 + 第2層LLMレビュー)"]
+    Core --> P4["Phase 4: trace (要件トレーサビリティ & 証跡照合)"]
+    Core --> P5["Phase 5: metrics & loop (測定系 & 再発防止自律蓄積)"]
+```
+
+---
+
+## 3. クイックスタート
+
+### 1. ワークスペース初期化
+```bash
+python3 plugins/bitz-quality/skills/quality-init/scripts/quality_init.py .
+```
+
+### 2. 環境健全性診断
+```bash
+python3 plugins/bitz-quality/skills/quality-doctor/scripts/quality_doctor.py .
+```
+
+### 3. リスクスコアリング
+```bash
+python3 plugins/bitz-quality/skills/quality-score/scripts/quality_score.py FEAT-001 --scale 2 --security 1 --blast-radius 2 --save
+```
+
+### 4. 影響分析 & テスト観点設計
+```bash
+python3 plugins/bitz-quality/skills/quality-design/scripts/quality_impact_analysis.py FEAT-001 . --save
+python3 plugins/bitz-quality/skills/quality-design/scripts/quality_viewpoints.py FEAT-001 . --title "認証機能" --save
+```
+
+### 5. 静的ゲート & LLMレビュー
+```bash
+python3 plugins/bitz-quality/skills/quality-gate/scripts/quality_gate.py . --staged
+python3 plugins/bitz-quality/skills/quality-review/scripts/quality_llm_review.py FEAT-001 . --save --auto-ledger
+```
+
+### 6. トレーサビリティ検証 & メトリクス集計
+```bash
+python3 plugins/bitz-quality/skills/quality-trace/scripts/quality_trace.py verify . --save
+python3 plugins/bitz-quality/skills/quality-measurand/scripts/quality_measurand.py metrics . --save
 ```
