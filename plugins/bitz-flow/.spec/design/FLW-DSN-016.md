@@ -2,7 +2,7 @@
 id: FLW-DSN-016
 title: "M2 worktree safety詳細設計"
 status: draft
-version: 1.8
+version: 1.9
 updated: 2026-08-14
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-006, FLW-NFR-007, FLW-NFR-011, FLW-NFR-012, FLW-CON-005, FLW-CON-006
@@ -47,11 +47,11 @@ catalog 外は `UNSUPPORTED` である。`FLW-REV-011:SYN-006`（finish / resume
 | operation | canonical mutation target | recovery | 実装区分 |
 |---|---|---|---|
 | `worktree.audit` | なし | retry-read | M2-3 |
-| `worktree.create` | `worktree-dir` ＋ `worktree-registry` ＋ `local-ref` ＋ **`index`** | REC-WT-CREATE | M2-3 |
-| `worktree.resume` | 同上 | REC-WT-RESUME | M2-3 |
-| `worktree.finish` | 同上 | REC-WT-FINISH | M2-5 |
-| `worktree.discard` | 同上 | REC-WT-DISCARD | M2-5 |
-| `git.delete-remote-branch` | `remote-ref` | REC-RM-DELETE | M2-6 |
+| `worktree.create` | `worktree-dir` ＋ `worktree-registry` ＋ `local-ref` ＋ **`index`** | `REC-WORKTREE-CREATE` | M2-3 |
+| `worktree.resume` | 同上 | `REC-WORKTREE-RESUME` | M2-3 |
+| `worktree.finish` | 同上 | `REC-WORKTREE-FINISH` | M2-5 |
+| `worktree.discard` | 同上 | `REC-WORKTREE-DISCARD` | M2-5 |
+| `git.delete-remote-branch` | `remote-ref` | `REC-REMOTE-DELETE` | M2-6 |
 
 `index` が入るのは §3 の包含規約による。`create` と `resume` は
 **公開 operation 名を分ける**（`FLW-REV-011` の P2 で未確定だった点をここで確定する）。
@@ -555,6 +555,14 @@ stepは `verify`（non-mutating）/ `mutate` の型を持つ。**mutating step�
 `freeze-manifest` (verify) → `verify-manifest-scope` (verify) →
 `remove-registry-entry` (mutate) → `remove-worktree-dir` (mutate) → `delete-local-branch` (mutate)
 
+`worktree.create`:
+`verify-path-scope` (verify) → `create-local-ref` (mutate) → `create-worktree-dir` (mutate) →
+`set-head` (mutate) → `publish-instance-nonce` (mutate) → `publish-registry-entry` (mutate)
+
+`worktree.resume`:
+`verify-registry-binding` (verify) → `verify-instance-nonce` (verify) → `verify-head-oid` (verify) →
+`acquire-worktree-guard` (mutate) → `publish-resume-receipt` (mutate)
+
 **`remove-registry-entry` を `remove-worktree-dir` より先に置く**。cross-filesystem 時の
 durability commit point が「registry entry の atomic 公開時点」であり registry を正とするため、
 実体削除を先に行うと「registry が正＝実体を再作成すべき」という誤結論へ収束する。
@@ -710,14 +718,15 @@ M1 Git write（`write_target: local`）と M2 worktree を同時に公開でき�
 
 本書はM2実装前の設計である。M2-4はM0 Contract Kernel構成物のSKILL.mdを変更するため、
 「M0 dispatcherを変更しない」とは主張しない。qualificationはこの変更後に実施する。
-M1 operation の guard 導出規則・recovery matrix・qualification プロトコルは変更せず追加のみである。
-ただし次の3点は M1 で凍結した契約・要件に触れる。
+M1 operation の guard 導出規則・qualification プロトコルは変更せず追加のみである。
+ただし次の4点は M1 で凍結した契約・要件・recovery registryに触れる。
 
 | 対象 | 変更 | 根拠 |
 |---|---|---|
 | `guard_identity_kind` | 5種 → 7種（schema ＋ `guard.py`） | `SI-FLW-041`（accepted） |
 | `FLW-NFR-007` | repo 境界外 parent の無条件 `BLOCKED` を3条件付き許可へ | `SI-FLW-043`（**accepted**。要件 1.3 で反映済み） |
 | `FLW-CON-006` | 削除を再照会一致から expected-OID CAS へ厳格化 | `SI-FLW-044`（**accepted**。要件 1.3 で反映済み） |
+| `FLW-DSN-013` | worktree recovery IDをoperation単位へ統一し、instance nonce・manifest・receipt chain・reconcile-onlyへ厳格化 | `SI-FLW-049`（**accepted**） |
 
 M2 が未完了または fixture 未達なら、`worktree.*` と `git.delete-remote-branch` を
 `UNSUPPORTED` のまま維持し、縮退規則3により M1 Git write も公開しない。

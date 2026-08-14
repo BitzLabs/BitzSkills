@@ -2,8 +2,8 @@
 id: FLW-DSN-013
 title: "Forward Recovery・承認・I/O安全設計"
 status: active
-version: 1.4
-updated: 2026-08-11
+version: 1.5
+updated: 2026-08-14
 owner: hide
 implements: FLW-FR-013, FLW-NFR-008, FLW-NFR-003, FLW-NFR-004, FLW-NFR-005, FLW-NFR-006, FLW-NFR-007, FLW-NFR-012, FLW-CON-002, FLW-CON-004, FLW-CON-005
 origin: FLW-REV-002
@@ -40,9 +40,10 @@ origin: FLW-REV-002
 | `REC-SYNC` | sync応答喪失 | branch/upstream/dirty | expected upstreamへff一致ならDONE |
 | `REC-PUSH` | push応答喪失 | remote branch SHA | expected HEADならDONE |
 | `REC-REMOTE-DELETE` | remote branch削除応答喪失 | remote refを全page再照会 | 不存在ならDONE、expected SHA残存ならBLOCKEDとして新snapshotのplanと再承認を要求、別SHA存在ならSTALE |
-| `REC-WORKTREE-CREATE` | worktree create/resume応答喪失 | worktree list/path/branch/HEAD/common-dir | 全一致ならDONE、一部一致はBLOCKED |
-| `REC-WORKTREE-FINISH` | worktree finish応答喪失またはworktree remove後branch削除失敗 | worktree list/local ref | 消えた段階をcompleted_stepsへ入れ、残存branchだけ再開 |
-| `REC-WORKTREE-DISCARD` | worktree discard応答喪失 | manifest target/worktree list/ref | 列挙targetだけ不存在ならDONE、未知残存はBLOCKED |
+| `REC-WORKTREE-CREATE` | worktree create応答喪失 | worktree list/path/branch/HEAD/common-dir、registry entry、instance nonce、receipt chain | 全一致かつ全mutating stepのreceiptが揃えばDONE。receiptが厳密なprefixならPARTIALとして残stepを確定するが、自動applyせず新planと再承認を要求。不一致はSTALE、証跡不足はINDETERMINATE |
+| `REC-WORKTREE-RESUME` | worktree resume応答喪失 | 既存registry entry、instance nonce、HEAD OID、receipt chain | 同一instanceで全mutating step完了ならDONE。receiptが厳密なprefixならPARTIALとして残stepを確定するが、自動applyせず新planと再承認を要求。identity不一致はSTALE、証跡不足はINDETERMINATE |
+| `REC-WORKTREE-FINISH` | worktree finish応答喪失またはworktree remove後branch削除失敗 | registry/実体/local ref、instance nonce、receipt chain | 全mutating step完了ならDONE。receiptが厳密なprefixならPARTIALとして残stepを確定するが、自動applyせず新planと再承認を要求。不一致はSTALE、証跡不足はINDETERMINATE |
+| `REC-WORKTREE-DISCARD` | worktree discard応答喪失 | frozen manifest digest、registry/実体/local ref、instance nonce、receipt chain | manifest対象の全mutating step完了ならDONE。receiptが厳密なprefixならPARTIALとして残targetを確定するが、自動削除せず新planと再承認を要求。manifest/identity不一致はSTALE、未知targetはBLOCKED、証跡不足はINDETERMINATE |
 | `REC-PR-PUBLISH` | PR作成応答喪失またはpush成功・PR作成失敗 | remote SHA + marker付きopen PRを全page照会 | head/marker一致が1件ならURLを復元してDONE、0件かつremote SHA一致なら作成から再開、複数ならBLOCKED |
 | `REC-ISSUE-PUBLISH` | Issue作成成功・結果喪失 | idempotency markerを全page検索 | 1件ならURLを復元してDONE、0件なら再作成、複数ならBLOCKED |
 | `REC-ISSUE-LINK` | Issue作成成功・spec URL未記録 | marker + sdd側期待URL | reconcile-link planを返し、`.spec`は変更しない |
@@ -58,6 +59,8 @@ origin: FLW-REV-002
 | `REC-RELEASE-PUBLISH` | publish成功・post-check失敗 | tag/release state/URL/target | publishedかつexpected targetならDONE。不一致時は再照会のみで自動削除・上書きしない |
 
 照合対象がpaginationや権限不足で全件確認できない場合は`INDETERMINATE`にする。
+M2 worktree recovery の step閉集合、instance identity、manifest、registry先行削除の詳細は
+`FLW-DSN-016`を正とし、本表は同じRecovery IDからその契約を参照する。
 
 ## idempotency marker
 

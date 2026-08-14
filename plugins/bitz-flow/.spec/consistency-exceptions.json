@@ -2,11 +2,5 @@
   "schema_version": 1,
   "additions_allowed": false,
   "issue": "SI-FLW-052",
-  "exceptions": [
-    "recovery-id:undefined:REC-RM-DELETE",
-    "recovery-id:undefined:REC-WT-CREATE",
-    "recovery-id:undefined:REC-WT-DISCARD",
-    "recovery-id:undefined:REC-WT-FINISH",
-    "recovery-id:undefined:REC-WT-RESUME"
-  ]
+  "exceptions": []
 }
