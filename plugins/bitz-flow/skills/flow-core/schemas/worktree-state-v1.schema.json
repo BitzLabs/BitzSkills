@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bitz-flow/worktree-state/v1",
+  "title": "bitz-flow M2 worktree state enums",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "work_unit_state": { "$ref": "#/$defs/work_unit_state" },
+    "worktree_state": { "$ref": "#/$defs/worktree_state" },
+    "branch_audit_state": { "$ref": "#/$defs/branch_audit_state" }
+  },
+  "$defs": {
+    "work_unit_state": {
+      "type": "string",
+      "enum": ["PLANNED", "ISOLATED", "ACTIVE", "VERIFIED", "PR_DRAFT", "REVIEW_READY", "MERGE_READY", "MERGED", "AUDITED", "CLEANED", "FAILED_RETAINED", "DISCARDED"]
+    },
+    "worktree_state": {
+      "type": "string",
+      "enum": ["ABSENT", "CLEAN", "DIRTY", "MISMATCH"]
+    },
+    "branch_audit_state": {
+      "type": "string",
+      "enum": ["ACTIVE", "MERGED_EXACT", "REMOTE_ADVANCED", "WORKTREE_IN_USE", "ORPHAN"]
+    }
+  }
+}
