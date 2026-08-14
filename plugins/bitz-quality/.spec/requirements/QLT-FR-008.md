@@ -4,7 +4,7 @@ version: 1.0
 status: verified
 domain: quality-review
 priority: high
-origin: アルダグラム再発防止ループ + 設計 v0.1.0
+origin: 再発防止ループ + 設計 v0.1.0
 verification_method: example-test
 derived_from:
 supersedes:

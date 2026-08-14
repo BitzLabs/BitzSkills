@@ -4,7 +4,7 @@ version: 1.0
 status: verified
 domain: quality-score
 priority: high
-origin: アルダグラム5軸リスクスコアリング + 設計 v0.1.0
+origin: 5軸リスクスコアリング + 設計 v0.1.0
 verification_method: example-test
 derived_from:
 supersedes:

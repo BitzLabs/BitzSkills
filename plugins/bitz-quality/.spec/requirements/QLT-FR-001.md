@@ -4,7 +4,7 @@ version: 1.0
 status: verified
 domain: quality-core
 priority: high
-origin: アルダグラムQAプラクティス + 設計 v0.1.0
+origin: 実践QAプラクティス + 設計 v0.1.0
 verification_method: example-test
 derived_from:
 supersedes:

@@ -4,7 +4,7 @@ version: 1.0
 status: verified
 domain: quality-design
 priority: high
-origin: アルダグラムQA専門エージェント分業モデル + 設計 v0.1.0
+origin: QA専門エージェント分業モデル + 設計 v0.1.0
 verification_method: example-test
 derived_from:
 supersedes:

@@ -4,7 +4,7 @@ version: 1.0
 status: verified
 domain: quality-gate
 priority: high
-origin: アルダグラム3層品質ゲート + 設計 v0.1.0
+origin: 3層品質ゲート + 設計 v0.1.0
 verification_method: example-test
 derived_from:
 supersedes:

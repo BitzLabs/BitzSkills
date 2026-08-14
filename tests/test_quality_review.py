@@ -73,7 +73,7 @@ def test_QLT_FR_009_clean_code_passes_llm_review():
         assert report.is_file()
         assert "指摘事項はありません" in report.read_text(encoding="utf-8")
 
-def test_QLT_FR_009_and_010_p0_p1_findings_fail_and_auto_ledger():
+def test_QLT_FR_010_findings_report_and_auto_ledger():
     with tempfile.TemporaryDirectory() as tmpdir:
         target = Path(tmpdir)
         subprocess.run([sys.executable, str(INIT_SCRIPT), str(target)], check=True)

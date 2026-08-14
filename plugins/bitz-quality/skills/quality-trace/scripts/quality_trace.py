@@ -29,11 +29,12 @@ def scan_requirements(target_dir: Path) -> list[dict]:
             title_m = re.search(r"^###\s+[A-Z0-9\-]+\s+(.+)$", content, re.MULTILINE)
             
             if id_m:
+                rel_f = str(f.relative_to(target_dir)) if target_dir in f.parents else str(f)
                 reqs.append({
                     "id": id_m.group(1).strip(),
                     "status": status_m.group(1).strip() if status_m else "draft",
                     "title": title_m.group(1).strip() if title_m else f.stem,
-                    "file": str(f.relative_to(target_dir))
+                    "file": rel_f
                 })
     return reqs
 
@@ -41,11 +42,15 @@ def scan_tests_for_requirements(target_dir: Path, req_ids: list[str]) -> dict[st
     """テストファイル内の要件ID参照をスキャンする"""
     coverage = {rid: [] for rid in req_ids}
     tests_dir = target_dir / "tests"
+    if not tests_dir.exists() and (target_dir.parent / "tests").exists():
+        tests_dir = target_dir.parent / "tests"
+    elif not tests_dir.exists() and (target_dir.parent.parent / "tests").exists():
+        tests_dir = target_dir.parent.parent / "tests"
     
     if tests_dir.exists():
         for tf in sorted(tests_dir.glob("test_*.py")):
             content = tf.read_text(encoding="utf-8")
-            rel_tf = str(tf.relative_to(target_dir))
+            rel_tf = str(tf.relative_to(target_dir)) if target_dir in tf.parents else str(tf)
             
             for rid in req_ids:
                 normalized_id = rid.replace("-", "_")
