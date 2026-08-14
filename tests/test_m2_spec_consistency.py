@@ -178,3 +178,15 @@ def test_local_branch_tip_is_retained_before_delete() -> None:
     assert "`safety.retention-list`" in design
     assert "`safety.retention-prune`" in design
     assert "`M2-FLT-056`" in design
+
+
+def test_unicode_and_windows_path_aliases_fail_closed() -> None:
+    design = DESIGN_016.read_text(encoding="utf-8")
+    section = design.split("### Unicode / Windows path", 1)[1].split("**instance identity", 1)[0]
+    for term in (
+        "Unicode NFC", "NFC/NFD", "device namespace", "ADS", "予約device名",
+        "末尾dot/space", "8.3 short-name", "reparse point", "最終volume",
+    ):
+        assert term in section
+    assert "`M2-FLT-057`" in design
+    assert "API非提供または恒久scope不足" in design

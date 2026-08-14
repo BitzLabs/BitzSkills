@@ -2,7 +2,7 @@
 id: FLW-DSN-016
 title: "M2 worktree safety詳細設計"
 status: draft
-version: 2.1
+version: 2.2
 updated: 2026-08-14
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-006, FLW-NFR-007, FLW-NFR-011, FLW-NFR-012, FLW-CON-005, FLW-CON-006
@@ -224,6 +224,18 @@ guard keyはpath名ではなく対象実体へ収束させる。実在targetのi
 検査し、最初の実在祖先を得る。相対pathはrootのcase感度規則で正規化する。祖先identityまたは
 case感度を取得不能なら推測せず`BLOCKED`とする。create後は実体identityを再計算し、plan時の
 祖先keyと作成先bindingをreceiptへ残す。
+
+### Unicode / Windows path のfail-closed正規化
+
+path文字列の一致だけをidentityに使わない。各componentはOS APIで解決した実体identityへ拘束し、
+比較用表現にはUnicode NFCとrootのcase規則を適用する。元の表現も証跡へ残し、異なる入力が
+同じ比較用表現または同じ実体identityへ収束したら同一guard keyへ束ねる。正規化・case規則・
+最終実体のいずれかを取得不能なら`BLOCKED`にする。
+
+Windowsでは`\\?\\` / device namespace、ADSを作るcolon、予約device名、末尾dot/space、root外UNC、
+8.3 short-name alias、junction/reparse pointを明示検査する。承認済みrootと同じ最終volume/root identityへ
+収束しない表現は拒否する。POSIX/macOSではNFC/NFD別名、case-insensitive volume、symlink/bind mountを
+同じidentity規則へ通し、platform既定の文字列比較へ暗黙委譲しない。
 
 **instance identity（§5）を guard key へ含めてはならない。** key に instance を混ぜると、
 同じ path に対する「旧 instance の discard」と「新 instance の create」が**別 key になり
@@ -633,7 +645,7 @@ main同期は既存の独立operation `git.sync` が担う。remote candidateは
 | `M2-FLT-037` | plan 後 apply 前に remote ref が別 SHA へ進行 | CAS 不成立で削除 0 | M2-6 |
 | `M2-FLT-038` | force push で同一 SHA へ復帰（ABA）＋ activity に更新あり | **経路A**: `BLOCKED`。検出した更新を提示 | M2-6 |
 | `M2-FLT-048` | 同上だが activity が空（capability あり） | **経路B**: 承認要求。「不在証明ではない」を明示。自動削除0 | M2-6 |
-| `M2-FLT-049` | ref activity capability が取得不能（権限不足・API 不提供） | **経路C**: 承認要求。「ABA 不検出」を明示。**判定不能を「更新なし」へ倒さない** | M2-6 |
+| `M2-FLT-049` | ref activity API非提供または恒久scope不足 | **経路C**: `UNSUPPORTED`＋承認要求。「ABA 不検出」を明示。更新なしへ倒さない | M2-6 |
 | `M2-FLT-039` | 条件なし削除の要求 / CAS 非検証 protocol | 前者を拒否、後者を `UNSUPPORTED` | M2-6 |
 | `M2-FLT-040` | `REMOTE_ADVANCED` の target へ delete plan 要求 | plan 生成自体を `BLOCKED` | M2-6 |
 | `M2-FLT-041` | default branch から到達不能な ref の削除 | `BLOCKED` | M2-6 |
@@ -649,6 +661,7 @@ main同期は既存の独立operation `git.sync` が担う。remote candidateは
 | `M2-FLT-054` | Activity API timeout/rate limit/部分page/API非提供 | `UNAVAILABLE`/`INDETERMINATE`/`UNSUPPORTED`を分離し、更新なし判定0 | M2-6 |
 | `M2-FLT-055` | 永続証跡のchain欠損・改ざん・restore不一致 | `INDETERMINATE`＋quarantine、write副作用0 | M2-4 |
 | `M2-FLT-056` | 未push commitを指すlocal branchのfinish/discard、または期限前保全refのprune | tip OIDの保全ref作成前はbranch削除0、期限前/未解決ref削除0 | M2-5 |
+| `M2-FLT-057` | NFC/NFD・case別名・Windows device/ADS/末尾dot-space/short-name/reparse表現で同じrootまたは実体を指す | 同一実体は同一guard key、root外/判定不能は`BLOCKED`、別名経由の副作用0 | M2-1 |
 
 ## §10 P2 と M2 運用規定
 
@@ -701,7 +714,7 @@ timeout/rate limit/5xxは`UNAVAILABLE`、API非提供/恒久scope不足は`UNSUP
 
 | 区分 | 関心事 | session 上限 | 完了条件 |
 |---|---|---|---|
-| M2-1 | guard core（閉集合拡張・binding・包含規約・canonical 化・case 感度） | 4 | `M2-FLT-001`〜`009` PASS。worktree operation 実装へ進まない |
+| M2-1 | guard core（閉集合拡張・binding・包含規約・canonical 化・case/Unicode/Windows path） | 4 | `M2-FLT-001`〜`009`、`057` PASS。worktree operation 実装へ進まない |
 | M2-2 | 承認 capability | 2 | `M2-FLT-010`〜`015` PASS |
 | M2-3 | create / resume / audit ＋ enum 三者照合 | 3 | `M2-FLT-016`〜`023`、`053` PASS |
 | M2-4 | 着手前 reconnaissance ＋ entry protocol・運用証跡 | 3 | `M2-FLT-045`〜`047`、`051`、`052`、`055` PASS（`SI-FLW-046` / `054`） |
@@ -748,7 +761,7 @@ create/resumeはfinish/discardが揃うM2-5まで公開せず、「作れるが�
 
 - repo identity 衝突 0
 - repo 外 worktree root の承認（**capability 化されたもの**）
-- `M2-FLT-001`〜`056` 全件 PASS
+- `M2-FLT-001`〜`057` 全件 PASS
 - **enum 三者照合テストが green**（設計 ⊆ schema ⊆ 実装の双方向）
 - **承認capabilityが全worktree writeでin-band検証される**
 - **operation外の変更をauditが検出しquarantineへ接続する**
@@ -820,7 +833,7 @@ GP-004 に対し「§5」とだけ書いて対応済みとし、**原文が求�
 | GP-010 | settings.json の permissions へ worktree root を加え、承認 receipt を伴わない worktree write を機械的に止める | §4 — permissions ＋ PreToolUse フック。receipt は common-dir 配下の owner-only 領域へ追記 |
 | GP-011 | destructive worktree operation の承認へ M1 の capability envelope を再利用し単回化する | §4 — M1 の Ed25519 envelope を再利用。nonce は target guard 内で linearizable CAS |
 | GP-012 | 設計の閉集合・schema enum・guard.py 定数の三者照合テストを追加する | §2 — **双方向**照合（片方向が沈黙した原因）。対象は namespace 表の全 namespace |
-| GP-013 | M2-FLT-* を採番し、worktree の fault fixture と recovery matrix 行を定義する | §8（recovery matrix）／ §9（`M2-FLT-001`〜`056`。各 fixture をちょうど1区分へ割当） |
+| GP-013 | M2-FLT-* を採番し、worktree の fault fixture と recovery matrix 行を定義する | §8（recovery matrix）／ §9（`M2-FLT-001`〜`057`。各 fixture をちょうど1区分へ割当） |
 | GP-014 | 複数 namespace に現れる語の一覧を schema から機械導出して文書と照合する | §2 — 手で維持する表を置かず schema から導出。本書の表は導出結果の期待値 |
 | GP-015 | closed enum への値追加の互換性条文を output-contract.md へ作るか、互換性を根拠にしない記述へ改める | §2 — **後者を採用**。「key 集合は加算のみ」は object の key の規定であり closed enum に適用できないため、根拠を「未公開だから影響が無い」へ置換 |
 | GP-016 | 表記規則の判定基準（field 名ではなく値の性質）と反例を明記し、namespace 表へ性質列を足す | §2 — 判定基準を「値の性質」と明記し性質列を追加。反例（`trial_kind` の `Q-NORMAL`）を隠さず記載 |
@@ -831,6 +844,9 @@ GP-004 に対し「§5」とだけ書いて対応済みとし、**原文が求�
 同 issue が accept されて照合が機械化されれば、本表が検査対象になる。
 
 ## Revision History
+
+- 2.2 (2026-08-14) Unicode NFC/NFD、case別名、Windows device/ADS/short-name/reparseを
+  stable identityへ収束またはfail-closedにする規則と`M2-FLT-057`を追加。ABA経路Cを恒久非対応へ限定。
 
 - 2.1 (2026-08-14) SI-FLW-049のaccept済みbranch tip保全を反映。finish/discardの削除前に
   `refs/bitz-flow/deleted/<work-id>/<timestamp>`をCAS作成し、retention list/pruneと`M2-FLT-056`を追加。
