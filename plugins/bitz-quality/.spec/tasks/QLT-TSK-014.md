@@ -2,7 +2,7 @@
 implements: QLT-FR-030
 depends_on: [QLT-TSK-011, QLT-TSK-012, QLT-TSK-013]
 boundary: plugins/bitz-quality/skills/quality-review/qualification/, plugins/bitz-quality/skills/quality-review/migration/, tests/test_quality_review_migration.py
-status: implementing
+status: done
 ---
 
 ### qualification移行rollback実装

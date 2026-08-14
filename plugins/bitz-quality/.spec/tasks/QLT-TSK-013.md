@@ -2,7 +2,7 @@
 implements: QLT-FR-029
 depends_on: [QLT-TSK-011, QLT-TSK-012]
 boundary: plugins/bitz-quality/skills/quality-review/runtime/, plugins/bitz-quality/skills/quality-review/storage/, tests/test_quality_review_safety.py
-status: implementing
+status: done
 ---
 
 ### レビュー実行安全性と世代fencing実装

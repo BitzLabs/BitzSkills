@@ -2,7 +2,7 @@
 implements: QLT-FR-027
 depends_on: [QLT-TSK-010]
 boundary: plugins/bitz-quality/skills/quality-review/profile/, tests/test_quality_review_profile.py
-status: implementing
+status: done
 ---
 
 ### SDD V4レビューprofile実装

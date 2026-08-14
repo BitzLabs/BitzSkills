@@ -2,7 +2,7 @@
 implements: QLT-FR-028
 depends_on: [QLT-TSK-010]
 boundary: plugins/bitz-quality/skills/quality-review/schema/, plugins/bitz-quality/skills/quality-review/cli/, tests/test_quality_review_contract.py
-status: implementing
+status: done
 ---
 
 ### レビューAPI schemaとCLI契約実装
