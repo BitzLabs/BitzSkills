@@ -1,0 +1,6 @@
+{
+  "perspective": "data-integrity",
+  "score": 4.4,
+  "summary": "直交状態軸、content CAS、instance nonce、回復 ID、tip ref retention、Unicode/Windows path alias と ABA 分類が閉じた契約になった。FLW-REV-013 のデータ損失・誤削除経路に関する P0/P1 は解消済みで、新規 finding はない。",
+  "findings": []
+}

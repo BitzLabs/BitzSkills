@@ -1,0 +1,6 @@
+{
+  "perspective": "risk",
+  "score": 4.3,
+  "summary": "remote/local mutation の guard、fail-closed recovery、鍵ライフサイクルと脅威モデル、非対称 capability の事前開示が揃った。FLW-REV-013 の critical/high risk 経路はすべて閉じられ、新規 finding はない。",
+  "findings": []
+}

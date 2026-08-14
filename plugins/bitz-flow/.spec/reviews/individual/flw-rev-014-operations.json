@@ -1,0 +1,14 @@
+{
+  "perspective": "operations",
+  "score": 4.2,
+  "summary": "reconnaissance 上限、quarantine SLO/RACI/read operation、承認疲労指標、capability 縮退、filesystem probe、retention と hash chain が定義された。retention 終了日の情報源だけが運用上の軽微な明文化課題である。",
+  "findings": [
+    {
+      "id": "FLW-REV-014:OPS-001",
+      "severity": "minor",
+      "title": "関連リリースのサポート終了日を決める情報源が明記されていない",
+      "detail": "M2 永続成果物は関連リリースのサポート終了まで保持すると定義されたが、サポート終了日を取得する台帳または責任者が明示されていない。保持側へ倒れるため即時の安全性問題ではない。",
+      "recommendation": "リリース台帳または owner が管理する support calendar を retention 判定の情報源として明記する。"
+    }
+  ]
+}

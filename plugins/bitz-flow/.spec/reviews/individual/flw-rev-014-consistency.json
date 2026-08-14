@@ -1,0 +1,14 @@
+{
+  "perspective": "consistency",
+  "score": 4.0,
+  "summary": "FLW-REV-013 の P0/P1 は後続の裁定・設計改訂・機械検査で解消された。M2 の operation catalog、状態軸、回復契約、budget、要件語彙は相互参照可能である。accepted な SI-FLW-046 が対象に含めたライフサイクル SSOT への reconnaissance 接続だけが非ブロッキング残課題である。",
+  "findings": [
+    {
+      "id": "FLW-REV-014:RVC-001",
+      "severity": "major",
+      "title": "worktree lifecycle SSOT に着手前 reconnaissance の参照が未接続",
+      "detail": "FLW-FR-007 と FLW-DSN-016 は有限 reconnaissance と entry protocol を規定するが、worktree lifecycle の正である FLW-DSN-006 の create/resume 手順はこの前置条件を明示参照していない。規範自体は存在し機械検査対象にも含まれるため Gate blocker ではないが、実装者が FLW-DSN-006 だけを読む経路では見落とし得る。",
+      "recommendation": "FLW-DSN-006 の create/resume 入口から FLW-FR-007 および FLW-DSN-016 の有限 reconnaissance 契約を明示参照する。"
+    }
+  ]
+}
