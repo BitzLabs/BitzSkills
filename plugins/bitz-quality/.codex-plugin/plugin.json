@@ -1,6 +1,6 @@
 {
   "name": "bitz-quality",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "BitzQuality — AI駆動の品質管理（QA）・多層品質ゲート・テスト設計・多観点レビュープラグイン。5軸リスクスコアリング（quality-score）、3層品質ゲート（quality-gate）、多観点レビュー（quality-review）、テスト設計専門エージェント群（quality-design）、品質サマリーレポート（quality-report）、測定定義モデル（quality-measurand）を、プロセス統括（quality-core）・初期化（quality-init）・環境診断（quality-doctor）とともに提供する",
   "author": {
     "name": "BitzLabs"

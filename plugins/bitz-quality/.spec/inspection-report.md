@@ -1,6 +1,6 @@
 # inspection-report.md (2026-08-14)
 
-成果物数: 9 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0 / 検証証跡: 0
+成果物数: 13 / 問題: 0 / 幽霊参照: 0 / 実装待ち: 0 / 孤児要件: 0 / 検証証跡: 0
 
 ## 問題一覧
 - なし ✅
@@ -26,6 +26,10 @@
 - QLT-FR-006
 - QLT-FR-007
 - QLT-FR-008
+- QLT-FR-009
+- QLT-FR-010
+- QLT-FR-011
+- QLT-FR-012
 
 ## 参照がない manual-check 要件（テスト参照は原理的に生じない — 検証記録で担保）
 - なし ✅
@@ -48,6 +52,10 @@
 | QLT-FR-006 | 検証済み（verified） | quality-design | example-test | 1 | 1 |
 | QLT-FR-007 | 検証済み（verified） | quality-design | example-test | 1 | 1 |
 | QLT-FR-008 | 検証済み（verified） | quality-review | example-test | 1 | 1 |
+| QLT-FR-009 | 検証済み（verified） | quality-review | example-test | 1 | 1 |
+| QLT-FR-010 | 検証済み（verified） | quality-review | example-test | 1 | 1 |
+| QLT-FR-011 | 検証済み（verified） | quality-trace | example-test | 1 | 1 |
+| QLT-FR-012 | 検証済み（verified） | quality-trace | example-test | 1 | 1 |
 | QLT-REV-001 | active |  |  | 0 | 0 |
 
 **判定: PASS ✅**
