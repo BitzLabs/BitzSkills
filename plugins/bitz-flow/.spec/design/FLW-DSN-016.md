@@ -2,7 +2,7 @@
 id: FLW-DSN-016
 title: "M2 worktree safety詳細設計"
 status: draft
-version: 1.7
+version: 1.8
 updated: 2026-08-14
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-006, FLW-NFR-007, FLW-NFR-011, FLW-NFR-012, FLW-CON-005, FLW-CON-006
@@ -91,7 +91,7 @@ result schema の operation 名一意性を満たすためである。
 | Gate | `gate_status` | 判定結果 | `PASS, FAIL, BLOCKED` |
 | attempt | `attempt_status` | 判定結果 | `STARTED, PASS, FAIL, ABORTED, UNKNOWN` |
 | **WorkUnit** | `work_unit_state` | 状態 | `PLANNED, ISOLATED, ACTIVE, VERIFIED, PR_DRAFT, REVIEW_READY, MERGE_READY, MERGED, AUDITED, CLEANED, FAILED_RETAINED, DISCARDED` |
-| **worktree** | `worktree_state` | 状態 | `ABSENT, ACTIVE_CLEAN, ACTIVE_DIRTY, PR_OPEN, MERGED_EXACT, REMOTE_ADVANCED, WORKTREE_MISMATCH, ORPHAN, FAILED_RETAINED` |
+| **worktree** | `worktree_state` | 物理状態 | `ABSENT, CLEAN, DIRTY, MISMATCH` |
 | **branch 単体** | `branch_audit_state` | 状態 | `ACTIVE, MERGED_EXACT, REMOTE_ADVANCED, WORKTREE_IN_USE, ORPHAN` |
 | guard target 種別 | `guard_identity_kind` | 種別 | `index, local-ref, remote-tracking-ref, fetch-head, remote-ref, worktree-dir, worktree-registry` |
 | qualification trial 種別 | `trial_kind` | 種別（**規則の反例**） | `Q-NORMAL, Q-REJECT, Q-CORRUPT` |
@@ -151,10 +151,23 @@ result schema の operation 名一意性を満たすためである。
 | `ORPHAN` | `worktree_state` / `branch_audit_state` |
 | `FAILED_RETAINED` | `work_unit_state` / `worktree_state` |
 
-`worktree_state` と `branch_audit_state` に共通して現れる3語
-（`MERGED_EXACT` / `REMOTE_ADVANCED` / `ORPHAN`）は、**判定述語を namespace ごとに分離**する。
-worktree の有無で照合する証跡集合が変わるためである
-（`worktree_state` 側は registry entry と実体の双方向一致を含み、`branch_audit_state` 側は含まない）。
+`worktree_state` は物理状態だけを表す。branch状態は `branch_audit_state`、PR・工程状態は
+`work_unit_state` が表し、同じ事実を複数namespaceへ複製しない。
+
+### worktree operation 許可決定表（SI-FLW-050）
+
+| operation | work_unit_state | worktree_state | branch_audit_state | 退避receipt | 判定 |
+|---|---|---|---|---|---|
+| `worktree.finish` | `AUDITED` | `CLEAN` | `MERGED_EXACT` | 不要 | `ALLOW` |
+| `worktree.finish` | `AUDITED` | `DIRTY` | `MERGED_EXACT` | あり | `ALLOW` |
+| `worktree.finish` | `AUDITED` | `DIRTY` | `MERGED_EXACT` | なし | `BLOCKED` |
+| `worktree.finish` | その他 | 任意 | 任意 | 任意 | `BLOCKED` |
+| `worktree.discard` | 任意 | `DIRTY` | 任意 | あり | `ALLOW` |
+| `worktree.discard` | 任意 | `DIRTY` | 任意 | なし | `BLOCKED` |
+| `worktree.discard` | 任意 | `MISMATCH` | 任意 | 任意 | `BLOCKED` |
+
+退避receiptはdirty/untracked内容のpatchまたは同等の復元可能成果物、そのdigest、保存先を持つ。
+finishとdiscardは同じprecondition検査を使い、退避なしに未コミット作業を削除しない。
 
 ### 三者照合の機械化（GP-012）
 
@@ -586,6 +599,7 @@ main同期は既存の独立operation `git.sync` が担う。remote candidateは
 | `M2-FLT-029` | discard manifest へ root 外 path・root 外 symlink を混入 | apply せず `BLOCKED` | M2-5 |
 | `M2-FLT-030` | discard の各mutating step境界で中断 | receipt prefixから`worktree-resumable`とremaining stepsを一意化。自動前進0 | M2-5 |
 | `M2-FLT-031` | **dirty worktree の discard**（SYN-019） | 退避要求を提示し、退避なしの apply を `BLOCKED` | M2-5 |
+| `M2-FLT-050` | **MERGED_EXACTかつDIRTYのworktreeをfinish** | 退避receiptなしは`BLOCKED`、ありなら決定表どおり許可 | M2-5 |
 | `M2-FLT-032` | discard 対象に submodule / ignored file / symlink | manifest へ計上、列挙 target 外の変更 0 | M2-5 |
 | `M2-FLT-033` | stable file identity / dirfd 相対削除が取得不能 | `worktree.discard` を `UNSUPPORTED` | M2-5 |
 | `M2-FLT-034` | worktree guard を quarantine へ落とす | intent/nonce/receiptから§6の4区分へ一意に確定。正規の解除経路が存在する | M2-5 |

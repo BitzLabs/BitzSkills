@@ -72,7 +72,7 @@ def test_m2_known_inconsistencies_are_exact_and_shrink_only() -> None:
 def test_m2_exception_ids_are_scoped_to_the_accepted_issue() -> None:
     config = json.loads(ALLOWLIST.read_text(encoding="utf-8"))
     assert config["issue"] == "SI-FLW-052"
-    assert len(config["exceptions"]) == 7
+    assert len(config["exceptions"]) == 5
 
 
 def test_quarantine_uses_evidence_axis_and_covers_discard_interruptions() -> None:
@@ -120,3 +120,15 @@ def test_worktree_content_cas_delegates_to_git_porcelain_v2() -> None:
     assert "racily-clean" in cas
     assert "untrackedもCAS対象" in cas
     assert "非ゼロ終了は`BLOCKED`" in cas
+
+
+def test_worktree_state_is_physical_and_finish_predicate_is_explicit() -> None:
+    design = DESIGN_016.read_text(encoding="utf-8")
+    enum = design.split("### 閉集合", 1)[1].split("### 表記規則", 1)[0]
+    assert "`ABSENT, CLEAN, DIRTY, MISMATCH`" in enum
+    for moved in ("PR_OPEN", "MERGED_EXACT, REMOTE_ADVANCED", "FAILED_RETAINED`"):
+        assert moved not in enum.split("| **worktree**", 1)[1].splitlines()[0]
+    table = design.split("### worktree operation 許可決定表", 1)[1].split("### 表記規則", 1)[0]
+    assert "| `worktree.finish` | `AUDITED` | `DIRTY` | `MERGED_EXACT` | なし | `BLOCKED` |" in table
+    assert "退避receipt" in table
+    assert "M2-FLT-050" in design
