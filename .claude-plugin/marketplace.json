@@ -37,6 +37,11 @@
       "name": "bitz-flow",
       "source": "./plugins/bitz-flow",
       "description": "BitzFlow — Git / GitHub 開発フローの独立プラグイン。状況に応じたフロー選択とコミット規約（flow-core）、worktree による並列開発運用（flow-worktree）、GitHub Issue 駆動 + Draft PR + squash merge（flow-pr）を提供する。SDD 非採用プロジェクトでも単体で使える（bitz-sdd 併用時は各スキルの併用節が接続点を規定）"
+    },
+    {
+      "name": "bitz-quality",
+      "source": "./plugins/bitz-quality",
+      "description": "BitzQuality — AI駆動の品質管理（QA）・多層品質ゲート・テスト設計・多観点レビュープラグイン。5軸リスクスコアリング（quality-score）、3層品質ゲート（quality-gate）、多観点レビュー（quality-review）、テスト設計専門エージェント群（quality-design）、品質サマリーレポート（quality-report）、測定定義モデル（quality-measurand）を、プロセス統括（quality-core）・初期化（quality-init）・環境診断（quality-doctor）とともに提供する"
     }
   ]
 }
