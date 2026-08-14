@@ -2,7 +2,7 @@
 name: flow-core
 description: BitzFlow のメインスキル。プロジェクト状況に応じた Git / GitHub 開発フローの選択（単独開発=feature ブランチ / 複数エージェント並列=worktree / チーム・公開開発=GitHub Issue 駆動 + PR）、Conventional Commits のコミット規定、失敗時の復元方針を規定する。ユーザーが「Git フロー」「ブランチ運用」「コミット規約」「開発フローを決めたい」「並列で開発したい」に言及したとき、または開発作業の開始時にフローが未確定のときに使用する。worktree の実手順は flow-worktree、Issue 駆動 PR の実手順は flow-pr が担当する。
 metadata:
-  version: "0.2.4"
+  version: "0.2.5"
   author: br7.hide
   created: "2026-07-18"
   updated: "2026-08-14"
@@ -21,6 +21,13 @@ SDD（仕様駆動開発）を採用していないプロジェクトでも単�
 | 単独開発（1人 / 1エージェント） | feature ブランチのみ | 本 SKILL.md で完結 |
 | 複数エージェント並列 | **1エージェント = 1 worktree = 1ブランチ** | `flow-worktree` スキル |
 | チーム開発・公開リポジトリでの開発 | GitHub Issue 駆動 + Draft PR + squash merge | `flow-pr` スキル |
+
+## Mandatory entry protocol（M2 write）
+
+write WorkUnit を開始する前に、active qualification manifest の deadline・件数・byte 上限で
+in-flight branch / worktree / PR を列挙し、変更予定 path との重複を確認する。worktree 未展開、
+未 push、PR 不在の local branch も除外しない。manifest 欠落・timeout・上限超過・不完全な列挙・
+判定不能では write を開始せず `BLOCKED` とする。打切り結果を「競合なし」の根拠にしない。
 
 ## ブランチ規約（単独開発の最小規定）
 
