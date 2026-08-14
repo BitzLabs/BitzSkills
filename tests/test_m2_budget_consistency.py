@@ -20,7 +20,13 @@ def _observed() -> set[str]:
         observed.add("budget:m3-roadmap:6pr-20session!=8pr-26session")
     if "設計再整備 3 PR / 9 session" not in design and "設計再整備 3 PR / 9 session" not in roadmap:
         observed.add("budget:m2-design-rework:missing-3pr-9session")
-    if "bitz-flow V2" in sdd_roadmap and "3 PR / 9 session" not in sdd_roadmap:
+    if (
+        "bitz-flow V2" in sdd_roadmap
+        and (
+            "3 PR / 9 session" not in sdd_roadmap
+            or "33 PR / 109 session" not in sdd_roadmap
+        )
+    ):
         observed.add("budget-reference:bitz-sdd-roadmap:missing-v2-total")
     return observed
 
@@ -42,4 +48,4 @@ def test_budget_exceptions_are_exact_and_shrink_only() -> None:
 def test_budget_exception_scope_is_fixed() -> None:
     config = json.loads(ALLOWLIST.read_text(encoding="utf-8"))
     assert config["issue"] == "SI-FLW-052"
-    assert len(config["exceptions"]) == 1
+    assert len(config["exceptions"]) == 0
