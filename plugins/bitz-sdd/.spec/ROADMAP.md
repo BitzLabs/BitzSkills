@@ -660,6 +660,9 @@ graph TD
 ### フェーズ4 — bitz-flow V2（別workspaceで実施）
 
 11. **bitz-flow V2 M0〜M5** — bitz-flow ROADMAPと承認済み設計に従って段階実装
+    - 予算の正はbitz-flow `FLW-DSN-014`とし、M0〜M5の実装 **30 PR / 100 session** と
+      M2 Design Gate前の設計再整備 **3 PR / 9 session**、合計 **33 PR / 109 session** を参照する。
+      上流で再配賦した場合はbitz-flow側の値へ追随し、bitz-sddで独自に再定義しない。
 12. **bitz-flow V2 Promotion Gate** — 単一dispatcher、SDD opaque ID、result契約を確定
 
 ### フェーズ5 — bitz-sdd V4準備（provisional）

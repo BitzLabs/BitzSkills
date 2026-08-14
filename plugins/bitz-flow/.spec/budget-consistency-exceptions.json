@@ -2,7 +2,5 @@
   "schema_version": 1,
   "additions_allowed": false,
   "issue": "SI-FLW-052",
-  "exceptions": [
-    "budget-reference:bitz-sdd-roadmap:missing-v2-total"
-  ]
+  "exceptions": []
 }
