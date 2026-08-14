@@ -632,7 +632,7 @@ invalidateする。legacy単一JSONLはread-only互換入口とし、新旧Gate�
 |---|---|---:|---:|---|---|
 | M1 Git operations | 3 PR / 12 session | **3 + 3 = 6 PR** | 20 | 残るGit read/writeとdoctor、M1所属operationのcontract全行、fault fixture、重複commit 0 | M0 read-only prereleaseだけを維持。Git writeとdoctor v2は公開しない |
 | M2 worktree | 2 PR / 8 session | **6 PR**（下記で再校正） | 20 | 下記「M2出口条件」を正とする | M0 read-only prereleaseへ縮退。worktree-first未完了のためM1 Git writeも公開しない |
-| M3 Issue/SDD | 3 PR / 12 session | **3 + 3 = 6 PR** | 20 | capability matrix、marker重複0、link reconcile全通過、独立10 Issue/SDD flow canary green、**下記「M3入口条件」の残債confirmation** | M2までをprerelease出荷し、全`issue.*`を`UNSUPPORTED`にする |
+| M3 Issue/SDD | 3 PR / 12 session | **8 PR**（6＋残債2） | 26 | capability matrix、marker重複0、link reconcile全通過、独立10 Issue/SDD flow canary green、**下記「M3入口条件」の残債confirmation** | M2までをprerelease出荷し、全`issue.*`を`UNSUPPORTED`にする |
 | M4 PR | 3 PR / 12 session | **3 + 3 = 6 PR** | 20 | push/PR/merge各partialから収束、CI/head誤判定0、独立10 PR flow canary green | M3までをprerelease出荷し、全`pr.*`を`UNSUPPORTED`にする |
 | M5 Release | 2 PR / 8 session | **2 + 2 = 4 PR** | 14 | changelog atomicity、tag/draft収束後にpublishを段階有効化 | M4までを出荷。release draftだけがgreenならprerelease限定で公開し、publishは`UNSUPPORTED`にする |
 
@@ -668,7 +668,10 @@ confirmationは FLW-DSN-012 の `write_target` 軸から機械的に分割する
 | M0実績による再校正 | 4 | 14 | 初回再校正（2026-08-08） |
 | M1-6 confirmation区分の移送 | +1 | +3 | `SI-FLW-045`。**区分の付け替えであり余裕の増加ではない** |
 | `SI-FLW-046`のscope追加 | +1 | +3 | 着手前reconnaissance。entry protocolの変更はM0で最も反復した領域であり、eval反復の増加を見込む |
-| **合計** | **6** | **20** | 2026-08-12 に人間へ再提示し確定 |
+| **合計** | **6** | **20** | `decision-2026-08-13-si-flw-053.md`で確定 |
+
+M2の設計再整備には、実装枠とは別に**設計再整備 3 PR / 9 session**を割り当てる。
+対象はSI-FLW-047〜055の裁定反映とSI-FLW-052の機械検査であり、M2実装には流用しない。
 
 `SI-FLW-046`はscope追加であるため、本節冒頭の「新しい要件、operation、platform固有分岐を
 追加する場合は予算内であってもscope変更として人間へ提示する」に従い提示・確定した。
@@ -677,10 +680,20 @@ M1実績（6 PR / 7 session）はM2の下振れ根拠にしない。M2はM1に�
 
 **M3入口条件**（`SI-FLW-045`案Aが送った残債の受け側。**M1→M2で起きた断絶を繰り返さない**）:
 
+**M3 budget — 8 PR / 26 session**
+
+| 内訳 | PR | session |
+|---|---:|---:|
+| 一律再校正 | 6 | 20 |
+| remote write confirmation移送 | +1 | +3 |
+| coordinator証明手段の設計 | +1 | +3 |
+| **合計** | **8** | **26** |
+
 - M2から送られた**`write_target: remote` の被測定物confirmation**（`git.publish-branch` /
   `git.delete-remote-branch`）をM3で実施する。
 - 前提として裁定3が M3 へ委譲した **coordinator証明手段**を確定させる。
   確定するまで`write_target: remote`は`UNSUPPORTED`を維持する。
+- coordinator設計が分散状態を必要とする場合は本枠を暗黙延長せず、M3着手前にscopeを再提示する。
 - 残債の由来は`decision-2026-08-12-m1-6-scope.md`（M1-6がM2以降へ送った）と
   `decision-2026-08-12-si-flw-043-046.md`（M2がM3へ送った）である。
 

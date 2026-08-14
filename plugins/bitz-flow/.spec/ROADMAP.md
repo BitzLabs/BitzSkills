@@ -245,14 +245,15 @@ spec-issue → 要件化を経て `1.1.0` 以降で個別昇格する。順序�
 
 ## 予算と縮退の運用
 
-budget（M1: 6PR/20session、**M2: 6PR/20session**、M3: 6PR/20session、
+budget（M1: 6PR/20session、**M2: 6PR/20session＋設計再整備3PR/9session**、M3: 8PR/26session、
 M4: 6PR/20session、M5: 4PR/14session）と各縮退境界の**正は `FLW-DSN-014` v1.15**であり、
 裁定根拠は`.spec/reports/decision-2026-08-11-m1-entry-four-issues-review.md`とFLW-REV-008/009、
 および`.spec/reports/decision-2026-08-12-si-flw-043-046.md`に置く。
 
 M2 は M0 実績による再校正（4PR/14session）に、M1-6 の confirmation 区分の移送
 （+1PR/+3session。`SI-FLW-045`）と `SI-FLW-046` の scope 追加（+1PR/+3session）を加えて
-2026-08-12 に **6PR/20session** へ再確定した。移送分は区分の付け替えであり余裕の増加ではない。
+`decision-2026-08-13-si-flw-053.md`で **6PR/20session** として確定した。移送分は区分の付け替えであり余裕の増加ではない。
+M2-3完了時にはread-onlyの`worktree.audit`だけをearly quick winとして公開できる。
 運用上の要点だけを再掲する。
 
 - 各 milestone は PR 予算か session 予算のどちらかを先に使い切った時点で停止し、
