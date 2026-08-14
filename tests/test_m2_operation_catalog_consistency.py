@@ -145,3 +145,15 @@ def test_confirmation_partition_uses_write_target_axis() -> None:
     assert "| `local` |" in section
     assert "| `remote` |" in section
     assert "| write class |" not in section
+
+
+def test_m2_safety_operations_exist_in_contract_ssot() -> None:
+    rows = _design_rows()
+    for operation in (
+        "safety.quarantine-list", "safety.intent-show", "safety.receipt-show",
+        "safety.retention-list", "safety.retention-prune",
+    ):
+        assert operation in rows
+    assert rows["safety.retention-prune"]["class"] == "destructive"
+    assert rows["safety.retention-prune"]["approval"] == "explicit-human"
+    assert rows["safety.retention-prune"]["recovery"] == "REC-RETENTION-PRUNE"

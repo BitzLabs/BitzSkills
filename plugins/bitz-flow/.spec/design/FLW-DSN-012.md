@@ -2,7 +2,7 @@
 id: FLW-DSN-012
 title: "Operation Contract詳細設計"
 status: active
-version: 1.5
+version: 1.6
 updated: 2026-08-14
 owner: hide
 implements: FLW-FR-003, FLW-FR-004, FLW-FR-005, FLW-FR-006, FLW-FR-007, FLW-FR-008, FLW-FR-009, FLW-FR-010, FLW-NFR-003, FLW-NFR-005, FLW-NFR-006, FLW-CON-002, FLW-CON-004, FLW-CON-005, FLW-CON-006
@@ -71,6 +71,8 @@ operation class の正は本書の `write_target` と `reversibility` の直交2
 | `worktree.resume` | local | reversible | local-write | explicit-human | registry/instance nonce/HEAD/receipt chain一致 | reconcile-first | `REC-WORKTREE-RESUME` |
 | `worktree.finish` | local | destructive | destructive | explicit-human | 対象worktree/local branch不存在 | reconcile-first | `REC-WORKTREE-FINISH` |
 | `worktree.discard` | local | destructive | destructive | explicit-human | 列挙したtargetだけ不存在 | manual-only | `REC-WORKTREE-DISCARD` |
+| `safety.quarantine-list/intent-show/receipt-show/retention-list` | none | none | read | none | redacted snapshot/hash-chain/retention取得 | safe | — |
+| `safety.retention-prune` | local | destructive | destructive | explicit-human | 期限超過かつ解決済みの保全refだけ不存在 | manual-only | `REC-RETENTION-PRUNE` |
 | `issue.list/view/search/verify-link/reconcile-link` | none | none | read | none | updatedAt付きresult/repair plan | safe | — |
 | `issue.prepare` | none | none | read | none | body digestとplan生成 | safe | — |
 | `issue.publish` | remote | reversible | remote-write | external-write | marker/URL一致 | reconcile-first | `REC-ISSUE-PUBLISH` |
