@@ -6,6 +6,7 @@
 """
 import json
 import re
+import shlex
 import sys
 
 DENY_PATTERNS = [
@@ -24,6 +25,32 @@ ASK_PATTERNS = [
 ]
 
 
+def _strings(value):
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for item in value.values():
+            yield from _strings(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from _strings(item)
+
+
+def _is_m2_confirmation_subject(command: str) -> bool:
+    """ユーザー裁定済みのM2確認subject 1コマンドだけを完全形で許可する。"""
+    try:
+        parts = shlex.split(command)
+    except ValueError:
+        return False
+    return (
+        len(parts) == 4
+        and parts[:3] == [
+            "python3", "evals/flow-core/m2-eval/local_confirmation_subject.py", "--repo",
+        ]
+        and bool(parts[3])
+    )
+
+
 def main() -> None:
     try:
         payload = json.load(sys.stdin)
@@ -32,6 +59,14 @@ def main() -> None:
         return
 
     args_text = json.dumps(payload.get("toolCall", {}).get("args", {}), ensure_ascii=False)
+
+    if any(_is_m2_confirmation_subject(value)
+           for value in _strings(payload.get("toolCall", {}).get("args", {}))):
+        print(json.dumps({
+            "decision": "allow",
+            "reason": "M2 GP-002用の限定confirmation subject（2026-08-14裁定）",
+        }, ensure_ascii=False))
+        return
 
     for pattern in DENY_PATTERNS:
         if re.search(pattern, args_text):

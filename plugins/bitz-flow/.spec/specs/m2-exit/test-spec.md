@@ -21,4 +21,5 @@
 - **Verification Method**: benchmark
 - **harness**: `evals/flow-core/m2-eval/run_local_confirmation.py`
 - **対象**: `write_target: local`（stage/commit/fetch/sync/worktree.*）
-- **合格条件**: 3platform PASS、required check/positive control 100%、hazard/residual 0。
+- **合格条件**: 3platform PASS、同一test ID集合digest、実worktree runtime check 8/8、
+  required check/positive control 100%、hazard/residual 0。
