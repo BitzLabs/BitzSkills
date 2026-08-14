@@ -72,4 +72,31 @@ def test_m2_known_inconsistencies_are_exact_and_shrink_only() -> None:
 def test_m2_exception_ids_are_scoped_to_the_accepted_issue() -> None:
     config = json.loads(ALLOWLIST.read_text(encoding="utf-8"))
     assert config["issue"] == "SI-FLW-052"
-    assert len(config["exceptions"]) == 8
+    assert len(config["exceptions"]) == 7
+
+
+def test_quarantine_uses_evidence_axis_and_covers_discard_interruptions() -> None:
+    design = DESIGN_016.read_text(encoding="utf-8")
+    quarantine = design.split("## §6 quarantine 解除と解放経路", 1)[1].split("## §7", 1)[0]
+    for state in (
+        "worktree-not-started", "worktree-resumable",
+        "worktree-confirmed-done", "worktree-unresolved",
+    ):
+        assert f"`{state}`" in quarantine
+    for evidence in ("intent", "instance nonce", "receipt"):
+        assert evidence in quarantine
+    assert "存在パターンだけ" in quarantine
+
+    recovery = design.split("### step 契約", 1)[1].split("## §9", 1)[0]
+    assert "(verify)" in recovery
+    assert "(mutate)" in recovery
+    assert "sync-main" not in recovery
+    assert "result field" in recovery
+    assert "mutating stepから宣言済みmutation target" in recovery
+
+
+def test_instance_nonce_survives_registry_removal() -> None:
+    design = DESIGN_016.read_text(encoding="utf-8")
+    identity = design.split("### instance identity", 1)[1].split("### `worktree-dir`", 1)[0]
+    assert "common-dir 配下の owner-only 証跡領域" in identity
+    assert "registry entry 配下の owner-only file" not in identity

@@ -2,7 +2,7 @@
 id: FLW-DSN-016
 title: "M2 worktree safety詳細設計"
 status: draft
-version: 1.5
+version: 1.6
 updated: 2026-08-14
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-006, FLW-NFR-007, FLW-NFR-011, FLW-NFR-012, FLW-CON-005, FLW-CON-006
@@ -354,7 +354,7 @@ instance identity を precondition に含め、apply 直前に CAS 照合する�
 | registry entry の `gitdir` 内容 | `common-dir/worktrees/<name>/gitdir` |
 | worktree 側 `.git` file が指す entry | worktree 実体 |
 | `HEAD` OID | registry entry の `HEAD` |
-| **create 時 nonce** | create の intent へ焼いた単回値。registry entry 配下の owner-only file へ保存 |
+| **create 時 nonce** | create の intent へ焼いた単回値。**common-dir 配下の owner-only 証跡領域**へ保存 |
 
 この4つを `snapshot_digest` へ含め、apply 直前に再計算して一致した場合だけ mutation する。
 不一致は **`STALE`** とし、自動再 apply を禁止する（人間の新しい plan を要求する）。
@@ -398,24 +398,20 @@ create 時 nonce があるため、**同じ path・同じ work-id で作り直�
 前提としており、directory・registry の残留に当てはまる結論が1つも無い。
 `worktree-dir` guard が quarantine に落ちると**正規の解除手順が存在しない**」とした。
 
-`FLW-DSN-015` の解除区分表へ worktree 用3区分を追加する。
+存在パターンだけでは「未実行」と「完了済み」を区別できないため、解除判断の一次情報を
+common-dir配下のowner-only領域に残る intent / instance nonce / receipt hash-chainへ移す。
+`completed_steps` はreceipt chainから再構成し、次のworktree 用4区分へ必ず1つだけ分類する。
 
 | 観測結論 | 必須証跡 | 解除可否 |
 |---|---|---|
-| `worktree-no-effect` | dir / registry entry / local-ref のいずれも不在。instance nonce も不在 | evaluation-reviewer 承認で可 |
-| `worktree-residue-retained` | **directory だけ残存**。registry entry と ref は不在。残存 path 一覧を receipt へ記録 | repository-owner ＋ evaluation-reviewer で可。**残存 directory は削除しない** |
-| `worktree-registry-stale` | **registry entry だけ残存**。実体 directory は不在で、entry の `gitdir` が指す path が存在しないことを証明できる | evaluation-reviewer 承認で可。**stale entry の除去を正規の残 step として許可**する |
-| `worktree-unresolved` | 三者が矛盾（例: registry entry と実体が別 instance を指す） | **不可。quarantine 継続** |
+| `worktree-not-started` | intentあり、mutation receiptなし、instance nonceがplan時値と一致 | evaluation-reviewer承認で解除可。新operation IDで再planする |
+| `worktree-resumable` | receipt chainが正当で、`completed_steps`がstep列の厳密なprefix。現在instance nonceも一致 | repository-owner＋evaluation-reviewer承認後、`remaining_steps`だけを新tokenで再開可 |
+| `worktree-confirmed-done` | 全mutating stepのreceiptとpostconditionが一致し、同一instanceの完了receiptあり | evaluation-reviewer承認で解除可。mutationは行わない |
+| `worktree-unresolved` | chain欠損・prefix違反・nonce不一致・外部状態とreceiptの矛盾 | **不可。quarantine継続** |
 
-`worktree-registry-stale` を独立区分にするのは、外部要因（人間の手動削除・外部ツール）で
-**実体だけが消える**のが最も起きやすい残留形であり、これを `worktree-unresolved` に落とすと
-**回復可能な状態が恒久 quarantine に固定される**ためである（GP-005 が求める「正規の解放経路」が
-最頻ケースで存在しないことになる）。除去対象は registry entry のみで、
-ref と実体には触れない。判定には「`gitdir` が指す path の非存在証明」を必須とし、
-単に見えないだけ（mount 未接続・権限不足）と区別できない場合は `worktree-unresolved` とする。
-
-- `worktree-residue-retained` で directory を削除しないのは、未コミット作業を含み得るためである
-  （M1 の `orphan-object-no-reachable-effect` で object を削除しないのと同じ判断）。
+directory / registry entry / local-refの存在はpostcondition照合には使うが、区分の定義軸にはしない。
+否定的な存在観測だけを「未実行」または「完了」の証明にしてはならない。`worktree-resumable`で
+directoryが残る場合は未コミット作業を含み得るため、receiptが許可する残step以外を削除しない。
 - 解除 receipt は reviewer、根拠 digest、旧・新 fencing token、結論、時刻を hash-chain へ追記する。
 - 解除後の mutation には §4 の単回 capability と新 operation ID を要求する。
 
@@ -525,15 +521,17 @@ Git Refs API と Activity API は別サブシステムであり、両者の整�
 ### step 契約
 
 step 名を閉集合とし、`FLW-DSN-012` の `completed_steps` / `remaining_steps` へ写像する。
-**全 step がちょうど1つの mutation target に対応する**（残存 target を一意化するため）。
+stepは `verify`（non-mutating）/ `mutate` の型を持つ。**mutating stepから宣言済みmutation target
+集合への写像は全射**とし、各targetを少なくとも1 stepが変更する。verify stepは副作用0であり、
+全射性検査と`completed_steps`による残存target算出の対象外とする。
 
 `worktree.finish`:
-`verify-pr-merge` → `verify-target-oid` → `verify-reachability` → `sync-main` →
-`remove-registry-entry` → `remove-worktree-dir` → `delete-local-branch` → `report-remote-candidate`
+`verify-pr-merge` (verify) → `verify-target-oid` (verify) → `verify-reachability` (verify) →
+`remove-registry-entry` (mutate) → `remove-worktree-dir` (mutate) → `delete-local-branch` (mutate)
 
 `worktree.discard`:
-`freeze-manifest` → `verify-manifest-scope` → `remove-registry-entry` →
-`remove-worktree-dir` → `delete-local-branch`
+`freeze-manifest` (verify) → `verify-manifest-scope` (verify) →
+`remove-registry-entry` (mutate) → `remove-worktree-dir` (mutate) → `delete-local-branch` (mutate)
 
 **`remove-registry-entry` を `remove-worktree-dir` より先に置く**。cross-filesystem 時の
 durability commit point が「registry entry の atomic 公開時点」であり registry を正とするため、
@@ -541,7 +539,8 @@ durability commit point が「registry entry の atomic 公開時点」であり
 registry を先に消せば、残った実体は「registry 外の孤立ディレクトリ」として
 §6 の `worktree-residue-retained` へ一意に確定できる。
 
-`report-remote-candidate` は **read-only の step** であり remote ref 削除を含まない。
+main同期は既存の独立operation `git.sync` が担う。remote candidateはstepではなくresult fieldへ
+記録し、remote ref削除は含めない。
 
 ## §9 fault fixture catalog
 
@@ -578,11 +577,11 @@ registry を先に消せば、残った実体は「registry 外の孤立ディ�
 | `M2-FLT-027` | **discard 承認待ち中に同じ work-id で worktree を再作成**（SYN-004） | create 時 nonce 不一致で `STALE`。新 instance を削除しない | M2-5 |
 | `M2-FLT-028` | plan 後 apply 前に manifest 内容が変化 | manifest digest 不一致で `STALE` | M2-5 |
 | `M2-FLT-029` | discard manifest へ root 外 path・root 外 symlink を混入 | apply せず `BLOCKED` | M2-5 |
-| `M2-FLT-030` | discard を部分完了で中断 | `PARTIAL`、残 target の自動削除 0、再実行での自動前進 0 | M2-5 |
+| `M2-FLT-030` | discard の各mutating step境界で中断 | receipt prefixから`worktree-resumable`とremaining stepsを一意化。自動前進0 | M2-5 |
 | `M2-FLT-031` | **dirty worktree の discard**（SYN-019） | 退避要求を提示し、退避なしの apply を `BLOCKED` | M2-5 |
 | `M2-FLT-032` | discard 対象に submodule / ignored file / symlink | manifest へ計上、列挙 target 外の変更 0 | M2-5 |
 | `M2-FLT-033` | stable file identity / dirfd 相対削除が取得不能 | `worktree.discard` を `UNSUPPORTED` | M2-5 |
-| `M2-FLT-034` | worktree guard を quarantine へ落とす | §6 の3区分へ一意に確定。正規の解除経路が存在する | M2-5 |
+| `M2-FLT-034` | worktree guard を quarantine へ落とす | intent/nonce/receiptから§6の4区分へ一意に確定。正規の解除経路が存在する | M2-5 |
 | `M2-FLT-035` | lease 満了だけで guard 再発行を要求 | owner / 子 process / OS lock 停止証明までは再発行拒否 | M2-5 |
 | `M2-FLT-036` | 未登録 recovery tuple（未知 cause / code 矛盾） | 空 NEXT ＋ `human-stop` | M2-5 |
 | `M2-FLT-037` | plan 後 apply 前に remote ref が別 SHA へ進行 | CAS 不成立で削除 0 | M2-6 |
