@@ -2117,3 +2117,94 @@ def test_SDD_FR_162_requirements_scan_stays_non_recursive(tmp_path: Path):
 
     assert res.returncode == 0, res.stdout
     assert "archive/old.md" not in report_of(tmp_path)
+
+
+# ---- SDD-FR-168: ガバナンス主張の機械検証 ----
+
+
+def make_governance_workspace(root: Path, *, status: str = "verified") -> dict:
+    tasks = make_spec(root)
+    write_active_requirement(root, status)
+    if status in {"verified", "promoted"}:
+        (tasks / f"{TASK_ID}.md").write_text(
+            f"---\nimplements: {REQ_ID}\ndepends_on: []\nstatus: done\n---\n",
+            encoding="utf-8",
+        )
+    design = root / ".spec" / "design" / "sample.md"
+    design.parent.mkdir(parents=True)
+    design.write_text("---\nid: DSN-001\nstatus: active\n---\n", encoding="utf-8")
+    reports = root / ".spec" / "reports"
+    reports.mkdir(parents=True)
+    (reports / "decision-sample.md").write_text("# 裁定記録\n", encoding="utf-8")
+    return {
+        "schema_version": 1,
+        "decision_claims": [{
+            "subject": "sample-decision",
+            "decision_ref": ".spec/reports/decision-sample.md",
+            "claim_sources": [".spec/design/sample.md"],
+        }],
+        "authorities": [{
+            "topic": "sample-contract",
+            "source": ".spec/design/sample.md",
+            "claim_sources": [".spec/design/sample.md"],
+        }],
+        "design_constraints": [{
+            "design": ".spec/design/sample.md",
+            "requirement": REQ_ID,
+            "alignment": "compliant",
+        }],
+    }
+
+
+def write_governance_claims(root: Path, payload: dict) -> None:
+    (root / ".spec" / "governance-claims.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+
+
+def test_SDD_FR_168_valid_governance_claims_pass(tmp_path: Path):
+    payload = make_governance_workspace(tmp_path)
+    write_governance_claims(tmp_path, payload)
+    result = run_inspect(tmp_path)
+    assert result.returncode == 0, report_of(tmp_path)
+
+
+def test_SDD_FR_168_missing_decision_record_fails(tmp_path: Path):
+    payload = make_governance_workspace(tmp_path)
+    payload["decision_claims"][0]["decision_ref"] = ".spec/reports/decision-missing.md"
+    write_governance_claims(tmp_path, payload)
+    result = run_inspect(tmp_path)
+    assert result.returncode != 0
+    assert "decision_ref: 参照先が存在しない" in report_of(tmp_path)
+
+
+def test_SDD_FR_168_duplicate_authority_topic_fails(tmp_path: Path):
+    payload = make_governance_workspace(tmp_path)
+    payload["authorities"].append(dict(payload["authorities"][0]))
+    write_governance_claims(tmp_path, payload)
+    result = run_inspect(tmp_path)
+    assert result.returncode != 0
+    assert "同一topicの正が複数ある" in report_of(tmp_path)
+
+
+def test_SDD_FR_168_non_verified_constraint_fails(tmp_path: Path):
+    payload = make_governance_workspace(tmp_path, status="approved")
+    write_governance_claims(tmp_path, payload)
+    result = run_inspect(tmp_path)
+    assert result.returncode != 0
+    assert "requirement は verified/promoted ではない" in report_of(tmp_path)
+
+
+def test_SDD_FR_168_verified_constraint_conflict_fails(tmp_path: Path):
+    payload = make_governance_workspace(tmp_path)
+    payload["design_constraints"][0]["alignment"] = "conflict"
+    write_governance_claims(tmp_path, payload)
+    result = run_inspect(tmp_path)
+    assert result.returncode != 0
+    assert "verified制約との競合が宣言されている" in report_of(tmp_path)
+
+
+def test_SDD_FR_168_manifest_is_optional_for_existing_workspace(tmp_path: Path):
+    make_spec(tmp_path)
+    result = run_inspect(tmp_path)
+    assert result.returncode == 0, report_of(tmp_path)

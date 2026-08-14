@@ -85,6 +85,8 @@ EVIDENCE_SCHEMA = "bitzsdd/verification-evidence@1"
 EVIDENCE_REQUIRED_KEYS = (
     "command_id", "command", "cwd", "commit", "recorded_at", "exit_code", "requirements",
 )
+GOVERNANCE_CLAIMS_FILE = "governance-claims.json"
+GOVERNANCE_ALIGNMENT_VALUES = {"compliant", "conflict"}
 
 
 def parse_frontmatter(text: str) -> dict:
@@ -217,6 +219,115 @@ def check_gate_passages(root: Path, gates: dict, global_reqs: dict) -> list:
                 problems.append(
                     f"[gate] {gid}: confirmed_decision_refs の参照先が存在しない: {ref}"
                 )
+    return problems
+
+
+def check_governance_claims(root: Path, reqs: dict) -> list:
+    """裁定根拠・topic別SSOT・verified制約宣言を検査する（SDD-FR-168）。"""
+    path = root / ".spec" / GOVERNANCE_CLAIMS_FILE
+    if not path.exists():
+        return []
+    rel = f".spec/{GOVERNANCE_CLAIMS_FILE}"
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return [f"[governance] {rel}: JSONを解釈できない: {exc}"]
+    if not isinstance(payload, dict) or payload.get("schema_version") != 1:
+        return [f"[governance] {rel}: schema_version は 1 にする"]
+
+    problems = []
+
+    def resolve_file(value, label):
+        if not isinstance(value, str) or not value.strip():
+            problems.append(f"[governance] {label}: workspace相対pathが必要")
+            return None
+        candidate = Path(value)
+        if candidate.is_absolute() or ".." in candidate.parts:
+            problems.append(f"[governance] {label}: workspace外を参照できない: {value}")
+            return None
+        resolved = (root / candidate).resolve()
+        if not resolved.is_relative_to(root.resolve()):
+            problems.append(f"[governance] {label}: workspace外を参照できない: {value}")
+            return None
+        if not resolved.is_file():
+            problems.append(f"[governance] {label}: 参照先が存在しない: {value}")
+        return resolved
+
+    decisions = payload.get("decision_claims", [])
+    if not isinstance(decisions, list):
+        problems.append(f"[governance] {rel}: decision_claims は配列にする")
+        decisions = []
+    subjects = set()
+    for index, claim in enumerate(decisions):
+        label = f"{rel} decision_claims[{index}]"
+        if not isinstance(claim, dict):
+            problems.append(f"[governance] {label}: オブジェクトではない")
+            continue
+        subject = claim.get("subject")
+        if not subject:
+            problems.append(f"[governance] {label}: subject が必要")
+        elif subject in subjects:
+            problems.append(f"[governance] {label}: subject が重複している: {subject}")
+        subjects.add(subject)
+        decision = resolve_file(claim.get("decision_ref"), f"{label}.decision_ref")
+        if decision is not None and decision.is_file() and "decision" not in decision.name:
+            problems.append(f"[governance] {label}.decision_ref: decision記録を指していない")
+        sources = claim.get("claim_sources", [])
+        if not isinstance(sources, list):
+            problems.append(f"[governance] {label}.claim_sources: 配列にする")
+        else:
+            for source in sources:
+                resolve_file(source, f"{label}.claim_sources")
+
+    authorities = payload.get("authorities", [])
+    if not isinstance(authorities, list):
+        problems.append(f"[governance] {rel}: authorities は配列にする")
+        authorities = []
+    topics = set()
+    for index, authority in enumerate(authorities):
+        label = f"{rel} authorities[{index}]"
+        if not isinstance(authority, dict):
+            problems.append(f"[governance] {label}: オブジェクトではない")
+            continue
+        topic = authority.get("topic")
+        if not topic:
+            problems.append(f"[governance] {label}: topic が必要")
+        elif topic in topics:
+            problems.append(f"[governance] {label}: 同一topicの正が複数ある: {topic}")
+        topics.add(topic)
+        resolve_file(authority.get("source"), f"{label}.source")
+        sources = authority.get("claim_sources", [])
+        if not isinstance(sources, list):
+            problems.append(f"[governance] {label}.claim_sources: 配列にする")
+        else:
+            for source in sources:
+                resolve_file(source, f"{label}.claim_sources")
+
+    constraints = payload.get("design_constraints", [])
+    if not isinstance(constraints, list):
+        problems.append(f"[governance] {rel}: design_constraints は配列にする")
+        constraints = []
+    pairs = set()
+    for index, constraint in enumerate(constraints):
+        label = f"{rel} design_constraints[{index}]"
+        if not isinstance(constraint, dict):
+            problems.append(f"[governance] {label}: オブジェクトではない")
+            continue
+        resolve_file(constraint.get("design"), f"{label}.design")
+        rid = constraint.get("requirement")
+        pair = (constraint.get("design"), rid)
+        if pair in pairs:
+            problems.append(f"[governance] {label}: design/requirement の組が重複している")
+        pairs.add(pair)
+        if rid not in reqs:
+            problems.append(f"[governance] {label}: requirement が存在しない: {rid}")
+        elif reqs[rid]["fm"].get("status") not in {"verified", "promoted"}:
+            problems.append(f"[governance] {label}: requirement は verified/promoted ではない: {rid}")
+        alignment = constraint.get("alignment")
+        if alignment not in GOVERNANCE_ALIGNMENT_VALUES:
+            problems.append(f"[governance] {label}: alignment は compliant / conflict のいずれか")
+        elif alignment == "conflict":
+            problems.append(f"[governance] {label}: verified制約との競合が宣言されている: {rid}")
     return problems
 
 
@@ -1157,6 +1268,7 @@ def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None,
     reqs, problems = load_requirements(root)
     if global_reqs is None:
         global_reqs = reqs
+    problems += check_governance_claims(root, global_reqs)
     if delegation_ctx is None:
         delegation_ctx = build_delegation_context([root])
     problems += check_delegations(root, *delegation_ctx)
