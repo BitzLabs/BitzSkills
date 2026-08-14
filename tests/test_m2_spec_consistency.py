@@ -6,6 +6,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 FLOW_SPEC = REPO / "plugins" / "bitz-flow" / ".spec"
 DESIGN_016 = FLOW_SPEC / "design" / "FLW-DSN-016.md"
+DESIGN_013 = FLOW_SPEC / "design" / "FLW-DSN-013.md"
 ALLOWLIST = FLOW_SPEC / "consistency-exceptions.json"
 
 
@@ -46,9 +47,10 @@ def _observed_exceptions() -> set[str]:
     if declared_count != table_count:
         observed.add(f"quarantine-count:declared-{declared_count}!=table-{table_count}")
 
-    referenced = set(re.findall(r"\bREC-(?:WT|RM)-[A-Z-]+\b", design))
-    recovery_section = design.split("## §8 M2 recovery matrix", 1)[1].split("## §9", 1)[0]
-    defined = set(re.findall(r"\bREC-(?:WT|RM)-[A-Z-]+\b", recovery_section))
+    catalog = design.split("## M2 operation catalog", 1)[1].split("## §2", 1)[0]
+    referenced = set(re.findall(r"\bREC-[A-Z-]+\b", catalog))
+    registry = DESIGN_013.read_text(encoding="utf-8").split("## Recovery Matrix", 1)[1].split("## idempotency marker", 1)[0]
+    defined = set(re.findall(r"\bREC-[A-Z-]+\b", registry))
     for recovery_id in sorted(referenced - defined):
         observed.add(f"recovery-id:undefined:{recovery_id}")
 
@@ -72,7 +74,7 @@ def test_m2_known_inconsistencies_are_exact_and_shrink_only() -> None:
 def test_m2_exception_ids_are_scoped_to_the_accepted_issue() -> None:
     config = json.loads(ALLOWLIST.read_text(encoding="utf-8"))
     assert config["issue"] == "SI-FLW-052"
-    assert len(config["exceptions"]) == 5
+    assert len(config["exceptions"]) == 0
 
 
 def test_quarantine_uses_evidence_axis_and_covers_discard_interruptions() -> None:
