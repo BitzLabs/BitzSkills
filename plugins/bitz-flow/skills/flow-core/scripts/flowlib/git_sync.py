@@ -231,7 +231,7 @@ def guard_targets_for_sync(common_dir: Path, remote: str, branch: str, plan: Fet
     """canonical mutation target: branch ref・index・remote-tracking ref 集合。"""
     targets = [
         GD.canonical_local_ref_target(common_dir, branch),
-        GD.canonical_index_target(common_dir, "main"),
+        GD.canonical_index_target(common_dir, GD.main_worktree_id()),
         *guard_targets_for_fetch(common_dir, remote, plan),
     ]
     return GD.order(targets)
