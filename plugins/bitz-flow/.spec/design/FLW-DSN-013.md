@@ -2,7 +2,7 @@
 id: FLW-DSN-013
 title: "Forward Recovery・承認・I/O安全設計"
 status: active
-version: 1.5
+version: 1.6
 updated: 2026-08-14
 owner: hide
 implements: FLW-FR-013, FLW-NFR-008, FLW-NFR-003, FLW-NFR-004, FLW-NFR-005, FLW-NFR-006, FLW-NFR-007, FLW-NFR-012, FLW-CON-002, FLW-CON-004, FLW-CON-005
@@ -44,6 +44,7 @@ origin: FLW-REV-002
 | `REC-WORKTREE-RESUME` | worktree resume応答喪失 | 既存registry entry、instance nonce、HEAD OID、receipt chain | 同一instanceで全mutating step完了ならDONE。receiptが厳密なprefixならPARTIALとして残stepを確定するが、自動applyせず新planと再承認を要求。identity不一致はSTALE、証跡不足はINDETERMINATE |
 | `REC-WORKTREE-FINISH` | worktree finish応答喪失またはworktree remove後branch削除失敗 | registry/実体/local ref、instance nonce、receipt chain | 全mutating step完了ならDONE。receiptが厳密なprefixならPARTIALとして残stepを確定するが、自動applyせず新planと再承認を要求。不一致はSTALE、証跡不足はINDETERMINATE |
 | `REC-WORKTREE-DISCARD` | worktree discard応答喪失 | frozen manifest digest、registry/実体/local ref、instance nonce、receipt chain | manifest対象の全mutating step完了ならDONE。receiptが厳密なprefixならPARTIALとして残targetを確定するが、自動削除せず新planと再承認を要求。manifest/identity不一致はSTALE、未知targetはBLOCKED、証跡不足はINDETERMINATE |
+| `REC-RETENTION-PRUNE` | tip保全ref prune応答喪失 | retention ref、expected tip OID、期限、関連quarantine | ref不存在ならDONE、expected OID残存ならBLOCKEDとして新plan/再承認、別OID・期限前・未解決quarantineはSTALEまたはBLOCKED |
 | `REC-PR-PUBLISH` | PR作成応答喪失またはpush成功・PR作成失敗 | remote SHA + marker付きopen PRを全page照会 | head/marker一致が1件ならURLを復元してDONE、0件かつremote SHA一致なら作成から再開、複数ならBLOCKED |
 | `REC-ISSUE-PUBLISH` | Issue作成成功・結果喪失 | idempotency markerを全page検索 | 1件ならURLを復元してDONE、0件なら再作成、複数ならBLOCKED |
 | `REC-ISSUE-LINK` | Issue作成成功・spec URL未記録 | marker + sdd側期待URL | reconcile-link planを返し、`.spec`は変更しない |
