@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "decision_claims": [
+    {
+      "subject": "m2-quarantine-evidence-axis",
+      "decision_ref": ".spec/reports/decision-2026-08-13-si-flw-047-048.md",
+      "claim_sources": [".spec/design/FLW-DSN-016.md"]
+    },
+    {
+      "subject": "m2-operation-class-and-recovery-ids",
+      "decision_ref": ".spec/reports/decision-2026-08-13-si-flw-049-055.md",
+      "claim_sources": [".spec/design/FLW-DSN-012.md", ".spec/design/FLW-DSN-013.md", ".spec/design/FLW-DSN-016.md"]
+    },
+    {
+      "subject": "m2-worktree-state-axes",
+      "decision_ref": ".spec/reports/decision-2026-08-13-si-flw-050.md",
+      "claim_sources": [".spec/design/FLW-DSN-016.md"]
+    },
+    {
+      "subject": "m2-enforcement-responsibility",
+      "decision_ref": ".spec/reports/decision-2026-08-13-si-flw-051.md",
+      "claim_sources": [".spec/design/FLW-DSN-016.md"]
+    },
+    {
+      "subject": "m2-consistency-inspection-placement",
+      "decision_ref": ".spec/reports/decision-2026-08-13-si-flw-052.md",
+      "claim_sources": [".spec/design/FLW-DSN-016.md", ".spec/ROADMAP.md"]
+    },
+    {
+      "subject": "v2-budget-reallocation",
+      "decision_ref": ".spec/reports/decision-2026-08-13-si-flw-053.md",
+      "claim_sources": [".spec/design/FLW-DSN-014.md", ".spec/design/FLW-DSN-016.md", ".spec/ROADMAP.md"]
+    }
+  ],
+  "authorities": [
+    {
+      "topic": "operation-classification",
+      "source": ".spec/design/FLW-DSN-012.md",
+      "claim_sources": [".spec/design/FLW-DSN-016.md"]
+    },
+    {
+      "topic": "worktree-recovery-registry",
+      "source": ".spec/design/FLW-DSN-013.md",
+      "claim_sources": [".spec/design/FLW-DSN-012.md", ".spec/design/FLW-DSN-016.md"]
+    },
+    {
+      "topic": "m2-exit-conditions",
+      "source": ".spec/design/FLW-DSN-016.md",
+      "claim_sources": [".spec/design/FLW-DSN-014.md", ".spec/ROADMAP.md"]
+    },
+    {
+      "topic": "v2-milestone-budget",
+      "source": ".spec/design/FLW-DSN-014.md",
+      "claim_sources": [".spec/design/FLW-DSN-016.md", ".spec/ROADMAP.md"]
+    }
+  ],
+  "design_constraints": [
+    {
+      "design": ".spec/design/FLW-DSN-012.md",
+      "requirement": "FLW-CON-001",
+      "alignment": "compliant"
+    },
+    {
+      "design": ".spec/design/FLW-DSN-012.md",
+      "requirement": "FLW-CON-002",
+      "alignment": "compliant"
+    },
+    {
+      "design": ".spec/design/FLW-DSN-016.md",
+      "requirement": "FLW-CON-001",
+      "alignment": "compliant"
+    },
+    {
+      "design": ".spec/design/FLW-DSN-016.md",
+      "requirement": "FLW-CON-002",
+      "alignment": "compliant"
+    }
+  ]
+}
