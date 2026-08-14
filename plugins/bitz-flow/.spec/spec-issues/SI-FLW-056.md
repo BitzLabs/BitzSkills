@@ -3,7 +3,8 @@ id: SI-FLW-056
 raised_by: FLW-REV-015 M2 Exit再レビュー
 target: M2 worktree write実行アダプタ・dispatcher統合・実動confirmation
 proposed_change_type: modify
-status: open
+status: accepted
+github_issue: https://github.com/BitzLabs/BitzSkills/issues/259
 ---
 
 - **目的**: M2 の安全判断核を実際の `worktree.create` / `resume` / `finish` / `discard`
@@ -55,10 +56,7 @@ status: open
   | 既存要件との矛盾 | なし。FLW-FR-006 / FLW-CON-005 / 006 / FLW-NFR-011の未実装部分を埋める |
   | ガードレール抵触 | あり得るため、実動テストは独立tmp repoに限定しrepo外rootへ書かない |
   | 影響範囲 | FLW-FR-006 impact: test-spec 2件・task 2件・root test 1件。加えてdispatcher/confirmation |
-  | 軽量レーン適否 | 不可。公開CLIとdestructive worktree operationへ接続するため通常フローが必要 |
-- **目的**: TODO
-- **提案する修正**: TODO
-- **対象ファイル**: TODO
-- **確認観点**: TODO
-- **影響推定・ロールバック**: TODO
-- **依存**: TODO
+| 軽量レーン適否 | 不可。公開CLIとdestructive worktree operationへ接続するため通常フローが必要 |
+
+- **裁定**: 2026-08-14 accept。追加2 PR・最大6 sessionを承認。
+  裁定記録: `.spec/reports/decision-2026-08-14-si-flw-056.md`。

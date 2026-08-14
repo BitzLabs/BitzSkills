@@ -386,7 +386,6 @@ def test_unsupported_operations(rich_repo: Path, args, expected_code, expected_e
     [
         ("pr", "merge"),
         ("git", "fetch"),
-        ("worktree", "create"),
         ("release", "publish"),
         ("bogus", "thing"),
         ("git", "status", "--apply"),

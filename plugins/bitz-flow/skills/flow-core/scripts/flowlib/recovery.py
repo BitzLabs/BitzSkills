@@ -47,6 +47,7 @@ READ_OPERATIONS = (
     "git.branches",
     "git.conflicts",
     "worktree.list",
+    "worktree.audit",
 )
 WRITE_OPERATIONS = (
     "git.fetch",
@@ -55,6 +56,10 @@ WRITE_OPERATIONS = (
     "git.sync",
     "git.publish-branch",
     "git.delete-remote-branch",
+    "worktree.create",
+    "worktree.resume",
+    "worktree.finish",
+    "worktree.discard",
 )
 
 #: 構造上あり得ない (operation, code)。暗黙 default に頼らず明示する。

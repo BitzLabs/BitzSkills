@@ -7,9 +7,9 @@ python3 <flow-core>/scripts/flow.py
   <domain> <action> [operation options]
 ```
 
-M0 で公開するのは read-only の3 operation（``repo inspect`` / ``git status`` /
-``git diff-summary``）だけである。それ以外は ``UNSUPPORTED``（exit 8）で停止し、
-生の ``git`` / ``gh`` コマンドを代替案として提示しない。
+M0 read-only 3 operationに加え、M2 worktree auditと署名capability付きplan/applyを公開する。
+catalog外は``UNSUPPORTED``（exit 8）で停止し、生の``git`` / ``gh`` commandを代替案として
+提示しない。
 
 ``flowlib`` を直接呼ぶことは公開契約外（FLW-DSN-004）。
 """

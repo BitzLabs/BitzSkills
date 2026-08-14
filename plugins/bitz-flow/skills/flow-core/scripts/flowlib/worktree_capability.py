@@ -94,6 +94,35 @@ def authorize_worktree_write(
     verify_signature: SignatureVerifier,
 ) -> CapabilityFailure | None:
     """worktree write を in-band で許可できるか fail-closed に判定する。"""
+    return _authorize_worktree_write(
+        capability, context=context, now=now, trusted_key_ids=trusted_key_ids,
+        nonce_state=nonce_state, allowed_nonce_states=(NONCE_UNUSED,),
+        verify_signature=verify_signature,
+    )
+
+
+def reauthorize_pending_worktree_write(
+    capability: WorktreeApprovalCapability | None,
+    *,
+    context: WorktreeApprovalContext,
+    now: datetime,
+    trusted_key_ids: Sequence[str],
+    verify_signature: SignatureVerifier,
+) -> CapabilityFailure | None:
+    """nonce消費後、各mutating step直前に同じscopeと署名を再検証する。"""
+    return _authorize_worktree_write(
+        capability, context=context, now=now, trusted_key_ids=trusted_key_ids,
+        nonce_state=NONCE_USED_PENDING, allowed_nonce_states=(NONCE_USED_PENDING,),
+        verify_signature=verify_signature,
+    )
+
+
+def _authorize_worktree_write(
+    capability: WorktreeApprovalCapability | None,
+    *, context: WorktreeApprovalContext, now: datetime,
+    trusted_key_ids: Sequence[str], nonce_state: str,
+    allowed_nonce_states: Sequence[str], verify_signature: SignatureVerifier,
+) -> CapabilityFailure | None:
     if capability is None:
         return CapabilityFailure(CODE_BLOCKED, "単回承認 capability が無いため write を開始しない")
     if capability.algorithm != "Ed25519":
@@ -106,7 +135,7 @@ def authorize_worktree_write(
         return CapabilityFailure(CODE_BLOCKED, "capability の署名を検証できない")
     if now >= capability.expires_at:
         return CapabilityFailure(CODE_BLOCKED, "capability の有効期限が切れている")
-    if nonce_state != NONCE_UNUSED:
+    if nonce_state not in allowed_nonce_states:
         return CapabilityFailure(CODE_BLOCKED, f"capability nonce は再利用できない: {nonce_state}")
 
     scope_pairs = (

@@ -31,6 +31,10 @@ from flowlib import guard as GD  # noqa: E402
 from flowlib import recovery as RC  # noqa: E402
 
 M0_OPERATIONS = {"repo.inspect", "git.status", "git.diff-summary"}
+M2_WORKTREE_OPERATIONS = {
+    "worktree.audit", "worktree.create", "worktree.resume",
+    "worktree.finish", "worktree.discard",
+}
 M0_REACHABLE_CODES = {"OK", "INVALID_INPUT", "BLOCKED", "UNAVAILABLE", "STALE", "UNSUPPORTED"}
 
 #: catalog の「class / approval / retry / concurrency_key」表（M1 節）から読む行。
@@ -233,9 +237,9 @@ def _flow_json(*args, repo):
     return json.loads(proc.stdout), proc.returncode
 
 
-def test_dispatcher_still_exposes_only_m0(rows):
+def test_dispatcher_exposes_m0_and_m2_worktree_only(rows):
     exposed = {f"{domain}.{action}" for domain, action in cli._HANDLERS}
-    assert exposed == M0_OPERATIONS
+    assert exposed == M0_OPERATIONS | M2_WORKTREE_OPERATIONS
     assert not (exposed & set(rows)), "M1 operation を公開してはならない"
 
 
