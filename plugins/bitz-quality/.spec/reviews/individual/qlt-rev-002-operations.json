@@ -1,0 +1,11 @@
+{
+  "perspective": "operations",
+  "dimensions": [
+    {"name": "監視・可観測性", "weight": 0.30, "score": 4, "findings": [{"id": "OPS-101", "severity": "minor", "location": "plugins/bitz-quality/.spec/requirements/QLT-FR-026.md:受入基準", "title": "実行履歴の保存契約が未完", "description": "保存先、保持期間、追記規則が未定義である。", "recommendation": "履歴schema、保存場所、保持方針、run ID追記規則を追加する。"}]},
+    {"name": "災害復旧", "weight": 0.30, "score": 3, "findings": [{"id": "OPS-201", "severity": "major", "location": "plugins/bitz-quality/.spec/design/architecture.md:Deployment view", "title": "中断時の成果物保全が候補事項に留まる", "description": "atomic publishとlockが候補であり復旧基点を失い得る。", "recommendation": "atomic publish、lock競合、孤立一時ファイル復旧、非上書き再実行をEARS化する。"}]},
+    {"name": "セキュリティ態勢", "weight": 0.20, "score": 3, "findings": [{"id": "OPS-301", "severity": "major", "location": "plugins/bitz-quality/.spec/design/architecture.md:Security / operations", "title": "raw log隔離の保護条件が不足", "description": "redaction、権限、保持・削除規則が未定義で漏えい源になり得る。", "recommendation": "既定非保存またはredaction、最小権限、保持・削除規則を契約化する。"}, {"id": "OPS-302", "severity": "minor", "location": "plugins/bitz-quality/.spec/requirements/QLT-FR-019.md:受入基準", "title": "実行主体と時刻の監査情報が未定義", "description": "誰がいつ実行・再試行したか追跡できない。", "recommendation": "created_at、started_at、completed_at、executor identityを追加する。"}]},
+    {"name": "デプロイ安全性", "weight": 0.20, "score": 5, "findings": []}
+  ],
+  "weighted_score": 3.70,
+  "summary": "段階移管は良好だが、中断復旧、raw log保護、監査履歴を確定する必要がある。"
+}

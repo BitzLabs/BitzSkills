@@ -5,6 +5,7 @@ target: bitz-quality / bitz-sdd V4 / bitz-flow V2 のQA責務境界と公開接�
 proposed_change_type: modify
 status: open
 github_issue: https://github.com/BitzLabs/BitzSkills/issues/267
+delegated_to: bitz-quality:SI-QLT-001
 ---
 - **目的**: bitz-quality v1.0.0が持つ品質判定・トレース・ゲート機能を、bitz-sdd V4と
   bitz-flow V2の公開契約へ二重管理なく接続する。評価、強制、仕様status・証跡SSOTの所有者を

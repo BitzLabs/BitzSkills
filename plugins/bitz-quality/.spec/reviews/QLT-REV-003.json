@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "review_id": "QLT-REV-003",
+  "verdict": "PASS",
+  "aggregate_score": 4.31,
+  "perspective_scores": {"consistency": 5.0, "data-integrity": 4.0, "operations": 4.2, "risk": 4.0, "business": 4.55},
+  "findings_summary": {"before_dedup": 1, "after_dedup": 1, "p0": 0, "p1": 0, "p2": 0, "p3": 1},
+  "findings": [{"id":"QLT-REV-003:SYN-001","priority":"P3","severity":"minor","source":["BIZ-401"],"title":"移行stageのownerと観測期間は実装計画で確定が必要","detail":"出口条件は十分だが担当と期間はタスク未分解のため未確定である。","recommendation":"タスク分解時に各stageのowner、依存、観測期間を宣言する。","tracked_by":"","status":"open"}],
+  "gate_preconditions": [],
+  "carried_over": [],
+  "conditional_items": []
+}
