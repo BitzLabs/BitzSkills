@@ -2,7 +2,7 @@
 id: FLW-DSN-016
 title: "M2 worktree safety詳細設計"
 status: draft
-version: 1.6
+version: 1.7
 updated: 2026-08-14
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-006, FLW-NFR-007, FLW-NFR-011, FLW-NFR-012, FLW-CON-005, FLW-CON-006
@@ -193,15 +193,19 @@ worktree の有無で照合する証跡集合が変わるためである
 
 ### 導出規則
 
-`FLW-DSN-015` の閉集合へ2種を追加する。既存5種の導出規則は変更しない。
+guard keyはpath名ではなく対象実体へ収束させる。実在targetのidentityはfilesystemの
+**`st_dev + st_ino`だけ**を用い、canonical pathをkeyへ混ぜない。bind mountなど別名から同じ
+実体へ到達しても同じkeyになる。instance nonceは世代検査用preconditionでありkeyへ含めない。
 
 | target type | canonical key |
 |---|---|
-| `worktree-registry` | canonical common-dir identity ＋ **registry entry 名** |
-| `worktree-dir` | canonical common-dir identity ＋ worktree の canonical path の digest |
+| 実在する`worktree-registry` / `worktree-dir` | target自身の`st_dev:st_ino` |
+| 不在の`worktree-dir` | 最も近い実在祖先の`st_dev:st_ino` ＋ 祖先からの正規化相対path |
 
-`worktree-dir` も **raw path を key にしない**。canonical path は digest 化し、
-symlink・相対 path・case 差・別 clone を正規化して同一 worktree へ収束させる。
+不在pathは対象が現れるまでinodeを持たないため、祖先をroot方向へ遡る。各成分をsymlink非追随で
+検査し、最初の実在祖先を得る。相対pathはrootのcase感度規則で正規化する。祖先identityまたは
+case感度を取得不能なら推測せず`BLOCKED`とする。create後は実体identityを再計算し、plan時の
+祖先keyと作成先bindingをreceiptへ残す。
 
 **instance identity（§5）を guard key へ含めてはならない。** key に instance を混ぜると、
 同じ path に対する「旧 instance の discard」と「新 instance の create」が**別 key になり
@@ -370,12 +374,15 @@ create 時 nonce があるため、**同じ path・同じ work-id で作り直�
 
 **代替の CAS 述語**を次で定義する。
 
-1. plan 時に **削除対象 manifest** を作る。各 entry は
-   `(相対 path, type, dev+ino, size, mtime_ns)` とし、全体の digest を取る。
-2. apply 直前に**再計算**し、plan 時 digest と一致した場合だけ削除する。
+1. plan 時に `git status --porcelain=v2 --untracked-files=all -z` を対象worktreeで実行し、
+   stdout bytesのdigestを取る。Git管理外metadataは削除対象manifestへ別途列挙する。
+2. apply 直前に同じGit commandを再実行し、出力digestとmanifest digestの双方が一致した場合だけ削除する。
    不一致は `STALE`（`replan-human`）。
 3. 削除は **dirfd 相対**で行い、apply 中の path 再解決による escape を防ぐ。
-4. §5 の instance identity と併せて照合する（manifest 一致だけでは SYN-004 を防げないため）。
+4. §5 の instance identity と併せて照合する（content digest一致だけでは SYN-004 を防げないため）。
+
+Gitのporcelain v2へ委譲することでracily-clean判定を自前実装せず、untrackedもCAS対象に含める。
+command失敗・不正UTF-8の有無にかかわらずstdoutはbytesとしてdigestし、非ゼロ終了は`BLOCKED`とする。
 
 **capability 縮退**（`FLW-DSN-015` の「提供できない platform は `UNSUPPORTED`」と同じ規律）:
 

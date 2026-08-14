@@ -100,3 +100,23 @@ def test_instance_nonce_survives_registry_removal() -> None:
     identity = design.split("### instance identity", 1)[1].split("### `worktree-dir`", 1)[0]
     assert "common-dir 配下の owner-only 証跡領域" in identity
     assert "registry entry 配下の owner-only file" not in identity
+
+
+def test_guard_identity_uses_object_identity_and_ancestor_fallback() -> None:
+    design = DESIGN_016.read_text(encoding="utf-8")
+    guard = design.split("## §3 guard identity の拡張", 1)[1].split("## §4", 1)[0]
+    assert "`st_dev + st_ino`だけ" in guard
+    assert "canonical pathをkeyへ混ぜない" in guard
+    assert "最も近い実在祖先" in guard
+    assert "正規化相対path" in guard
+    assert "instance nonceは世代検査用precondition" in guard
+
+
+def test_worktree_content_cas_delegates_to_git_porcelain_v2() -> None:
+    design = DESIGN_016.read_text(encoding="utf-8")
+    cas = design.split("### `worktree-dir` の CAS 相当", 1)[1].split("## §6", 1)[0]
+    assert "git status --porcelain=v2 --untracked-files=all -z" in cas
+    assert "stdout bytesのdigest" in cas
+    assert "racily-clean" in cas
+    assert "untrackedもCAS対象" in cas
+    assert "非ゼロ終了は`BLOCKED`" in cas
