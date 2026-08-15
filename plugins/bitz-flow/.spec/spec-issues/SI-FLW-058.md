@@ -3,7 +3,7 @@ id: SI-FLW-058
 raised_by: FLW-REV-016 M2 Exit再レビュー
 target: M2 confirmation harnessの証跡（raw log・実測値・TTL・指紋範囲）
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 
 - **目的**: M2 の confirmation 証跡を `FLW-NFR-011` の契約へ適合させ、
