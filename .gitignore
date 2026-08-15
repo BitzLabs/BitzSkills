@@ -9,3 +9,6 @@
 __pycache__/
 .pytest_cache/
 .claude/worktrees/
+
+# docs_inspect.py がリポジトリルートへ吐く生成物（追跡対象ではない。判定は終了コードが正）
+/docs-inspection-report.md

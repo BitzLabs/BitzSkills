@@ -44,11 +44,11 @@
 - FLW-FR-002
 
 ## 他ワークスペースのテスト/実装から参照されている要件
-- FLW-CON-002 ← bitzskills-m2-runtime-confirmation/tests/test_flow_contract.py
-- FLW-FR-003 ← bitzskills-m2-runtime-confirmation/tests/test_flow_contract.py
-- FLW-FR-007 ← bitzskills-m2-runtime-confirmation/tests/test_flow_m2_worktree.py
-- FLW-NFR-008 ← bitzskills-m2-runtime-confirmation/tests/test_flow_contract.py
-- FLW-NFR-011 ← bitzskills-m2-runtime-confirmation/tests/test_flow_m1_compatibility.py, bitzskills-m2-runtime-confirmation/tests/test_flow_m1_coordinator.py, bitzskills-m2-runtime-confirmation/tests/test_flow_m1_core.py, bitzskills-m2-runtime-confirmation/tests/test_flow_m1_durable.py, bitzskills-m2-runtime-confirmation/tests/test_flow_m1_isolation.py, bitzskills-m2-runtime-confirmation/tests/test_flow_m1_ledger.py, bitzskills-m2-runtime-confirmation/tests/test_flow_m1_qualification.py, bitzskills-m2-runtime-confirmation/tests/test_flow_m1_qualification_fixture.py, bitzskills-m2-runtime-confirmation/tests/test_flow_m1_qualification_runner.py, bitzskills-m2-runtime-confirmation/tests/test_flow_m1_raw_log_guard.py, bitzskills-m2-runtime-confirmation/tests/test_flow_m1_recovery_ops.py
+- FLW-CON-002 ← BitzSkills/tests/test_flow_contract.py
+- FLW-FR-003 ← BitzSkills/tests/test_flow_contract.py
+- FLW-FR-007 ← BitzSkills/tests/test_flow_m2_worktree.py
+- FLW-NFR-008 ← BitzSkills/tests/test_flow_contract.py
+- FLW-NFR-011 ← BitzSkills/tests/test_flow_m1_compatibility.py, BitzSkills/tests/test_flow_m1_coordinator.py, BitzSkills/tests/test_flow_m1_core.py, BitzSkills/tests/test_flow_m1_durable.py, BitzSkills/tests/test_flow_m1_isolation.py, BitzSkills/tests/test_flow_m1_ledger.py, BitzSkills/tests/test_flow_m1_qualification.py, BitzSkills/tests/test_flow_m1_qualification_fixture.py, BitzSkills/tests/test_flow_m1_qualification_runner.py, BitzSkills/tests/test_flow_m1_raw_log_guard.py, BitzSkills/tests/test_flow_m1_recovery_ops.py
 
 ## 検証証跡（.spec/verification/ — 実出力に基づく機械可読証跡）
 ※ 実行時間は observed（非正規）であり一致判定に使わない。判定は exit_code と件数が正
