@@ -74,6 +74,10 @@ def _parse_time(value) -> datetime | None:
     return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
 
 
+#: raw log へ仕込む観測可能性 canary。redaction が効いているかを検査するために要る。
+CANARY_PREFIX = "bitz-flow-m2-confirmation-canary"
+
+
 def _store_raw_log(out: Path, platform: str, raw: str, now: datetime) -> dict:
     """raw log を owner-only 境界と保持期限つきで保存する（`FLW-REV-016:SYN-004`）。
 
@@ -84,15 +88,21 @@ def _store_raw_log(out: Path, platform: str, raw: str, now: datetime) -> dict:
     import raw_log_guard as G  # noqa: E402
 
     guard = G.RawLogGuard(out / "raw", owner="owner-1")
-    log, failure = guard.store(f"{platform}.log", raw, canaries=[], now=now)
+    canary = f"{CANARY_PREFIX}-{platform}"
+    log, failure = guard.store(f"{platform}.log", f"{canary}\n{raw}",
+                               canaries=[canary], now=now)
     if failure is not None:
         return {"stored": False, "reason": failure.reason}
     return {
         "stored": True,
         "path": str(log.path.relative_to(out)),
         "digest": log.digest,
-        "expires_at": log.expires_at.isoformat().replace("+00:00", "Z"),
+        "stored_at": log.stored_at.isoformat().replace("+00:00", "Z"),
+        "delete_by": log.delete_by.isoformat().replace("+00:00", "Z"),
         "delete_owner": log.delete_owner,
+        "canary_detected": log.canary_detected,
+        "redaction_version": log.redaction_version,
+        "redactions": list(log.redactions),
         "allowed_roles": list(G.ALLOWED_ROLES),
     }
 

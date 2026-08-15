@@ -171,3 +171,20 @@ def test_SI_FLW_058_compatibility_key_covers_the_authorization_core():
     covered = set(module.COMPATIBILITY_INPUTS)
     for core in ("worktree_capability.py", "guard.py", "worktree_cleanup.py", "recovery.py"):
         assert any(path.endswith(core) for path in covered), core
+
+
+def test_SI_FLW_058_raw_log_is_actually_stored_with_a_retention_boundary():
+    """active manifest の raw log が**実際に保存されている**こと。
+
+    保存を呼ぶだけで成否を検査しないと、`stored: False` のまま気づけない
+    （実際に canary 不在で全 platform が保存に失敗していた）。
+    """
+    manifest = json.loads(ACTIVE.read_text())
+    for record in manifest["platforms"]:
+        raw = record.get("raw_log")
+        assert raw is not None, record["platform"]
+        assert raw["stored"] is True, f"{record['platform']}: {raw.get('reason')}"
+        assert raw["delete_by"], record["platform"]
+        assert raw["delete_owner"], record["platform"]
+        assert raw["canary_detected"] is True, record["platform"]
+        assert "evaluation-reviewer" in raw["allowed_roles"], record["platform"]
