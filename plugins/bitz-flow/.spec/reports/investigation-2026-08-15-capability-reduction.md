@@ -3,8 +3,11 @@
 - **日付**: 2026-08-15
 - **作成**: claude（`decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md` が
   「A / C 完了後に別途扱う」とした選択肢 B の検討）
-- **裁定者**: hide（本書は裁定ではない。争点と選択肢の提示にとどまる）
+- **裁定者**: hide
 - **対象**: `FLW-DSN-016` §4 の承認 capability 機構
+- **裁定結果（2026-08-15）**: **B2 を採用**。
+  裁定記録は `.spec/reports/decision-2026-08-15-capability-b2.md`、
+  実装は `SI-FLW-061` で起票済み。本書は裁定前の検討材料としてそのまま残す
 
 ## 先に訂正
 
@@ -103,6 +106,46 @@ M2 には承認者を名指す field が無いため、実行者が範囲の広�
 署名が守るのは「envelope が発行後に改竄されていないこと」であり、
 改竄者が鍵を持たない場合にだけ意味を持つ。
 
+### `operation_id` が承認 scope 全体を既に束縛している
+
+さらに追跡した結果、**検査 7 と 8 は capability を使わなくても既に閉じている**ことが分かった。
+
+`worktree_runtime.plan()`（L154-161）は次の facts の digest を `operation_id` とする。
+
+```python
+facts = {"action": …, "repo": …, "path": …, "branch": …, "start_point": …,
+         "default_branch": …, "expected_head": head,
+         "context": dataclasses.asdict(context)}       # ← 承認 context 全体
+operation_id = R.sha256_of(R.canonical_bytes(["bitz-flow/worktree-plan/v1", facts]))
+```
+
+`context` は `WorktreeApprovalContext` そのもの（guard keys / `parent_dir_identity` /
+`nonexistence_digest` / `instance_identity_digest` / `worktree_root_canonical` /
+`case_sensitivity` / `operation_id`）であり、**capability の scope field と freshness field は
+すべてこの digest の内側にある**。
+
+そして apply 側は capability とは独立に次を行う。
+
+| 箇所 | 検査 |
+|---|---|
+| `worktree_runtime.py:306` | `confirm != plan_value.operation_id` → `STALE` |
+| `worktree_runtime.py:336-340` | **各副作用の直前に plan を再導出**し、`refreshed.operation_id != plan_value.operation_id` なら停止 |
+
+つまり **`--confirm <operation_id>` ＋ 副作用直前の plan 再導出だけで、TOCTOU（`SYN-002`）は
+閉じている**。capability の 7 / 8 は同じ束縛を署名付き envelope で二重に持っているにすぎない。
+
+capability が固有に足しているものを整理すると次の3つに縮む。
+
+| 検査 | 固有性 |
+|---|---|
+| 5 `expires_at` | `RuntimePlan` に有効期限 field が無いため**固有**（承認の陳腐化を時間で切る唯一の手段） |
+| 6 nonce 単回性 | ledger による再利用拒否。**固有**（`SYN-011` の閉じ手） |
+| 2/3/4 署名 | 承認者 ≠ 実行者のときだけ意味を持つ |
+
+**この発見により B1 / B2 の性格が変わる。** 署名を外すことは「束縛を弱める」のではなく、
+**二重になっている束縛の片方（署名側）を外す**変更である。
+残す必要があるのは `expires_at` と nonce の2つだけで、いずれも暗号を必要としない。
+
 ### trusted key registry の境界（`FLW-REV-016:RSK-204` の再確認）
 
 レビューは「`apply()` は trusted key を呼び出し側から受け取るだけで、owner-only registry を
@@ -160,13 +203,15 @@ M0 が測定した失敗モード（生コマンドへの迂回・improvise）�
 
 | 案 | 内容 | 得るもの | 失うもの |
 |---|---|---|---|
-| **B1 完全撤去** | 2/3/4 と registry・鍵管理を削除し、6/7/8/9 だけで承認を構成 | 維持コストの削減。`SI-FLW-057` の例外分類が扱う面が縮む。fault fixture が減る | 隔離配備への将来の拡張路。plan 転記＋field 改変への速度制限 |
-| **B2 条件付き縮退** | 鍵隔離を**前提条件として明文化**し、隔離できない配備では capability の署名を要求しない（nonce＋freshness のみ）。隔離配備では現行どおり | 実態に合う。二重の儀式をやめられる | 2 モードの分岐が増え、どちらで動いているかを result に出す必要がある |
+| **B1 完全撤去** | 2/3/4 と registry・鍵管理を削除。承認は `--confirm <operation_id>` ＋ `--nonce` ＋ `expires_at` で構成し、`--capability-file` を廃止 | 維持コストの削減。`SI-FLW-057` の例外分類が扱う面が縮む。fault fixture が減る | 隔離配備への将来の拡張路。plan 転記＋field 改変への速度制限 |
+| **B2 条件付き縮退** | 既定は B1 と同じ。**trusted key registry が存在する配備でのみ**署名検査 2/3/4 を有効化し、判定モードを result へ明示する。鍵隔離を署名モードの前提条件として明文化 | 実態に合う。二重の儀式をやめつつ隔離配備の道を残す | 2 モードの分岐。どちらで判定したかを可視化する責務が増える |
 | **B3 維持＋前提の復活** | 署名を維持し、M1 の `reviewer` に相当する承認者 field を復活させる。あわせて `apply()` 自体が registry を読むよう変更（`RSK-204` の是正）し、鍵隔離の手順を運用文書化する | 移植時に落ちた前提が戻り、署名が設計どおり機能する | 維持コストはそのまま。通常操作を1件ずつ承認する運用負荷が発生する |
 | **B4 現状維持** | 何もしない | 変更コスト 0 | `FLW-REV-016` の再発3類型のうち「実体のない層」が残り続ける |
 
 **B1 / B2 は設計の後退ではない。** 由来の節が示すとおり、これらは
-「M1 からの流用時に落ちた前提（`reviewer` の不在）を、実装と宣言にも反映する」変更である。
+「M1 からの流用時に落ちた前提（`reviewer` の不在）を、実装と宣言にも反映する」変更であり、
+さらに `operation_id` の節が示すとおり
+**二重になっている束縛の片方（署名側）を外す**変更である。
 逆に B3 は「落ちた前提を復活させる」変更であり、どちらも一貫した選択肢である。
 
 ## 推奨

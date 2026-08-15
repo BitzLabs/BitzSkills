@@ -2,12 +2,12 @@
 id: FLW-DSN-016
 title: "M2 worktree safety詳細設計"
 status: active
-version: 2.4
+version: 2.5
 updated: 2026-08-15
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-006, FLW-NFR-007, FLW-NFR-011, FLW-NFR-012, FLW-CON-005, FLW-CON-006
 origin: SI-FLW-041, SI-FLW-042, SI-FLW-043, SI-FLW-044, SI-FLW-045, SI-FLW-046, SI-FLW-047, SI-FLW-048, SI-FLW-049, SI-FLW-050, SI-FLW-051, SI-FLW-052, SI-FLW-053, SI-FLW-054, FLW-REV-011, FLW-REV-012, FLW-REV-013, FLW-REV-014
-decision_ref: .spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md
+decision_ref: .spec/reports/decision-2026-08-15-capability-b2.md
 ---
 
 # FLW-DSN-016 M2 worktree safety詳細設計
@@ -331,6 +331,24 @@ case-sensitive と判定するが、worktree-dir は create 時に必ず不在�
   異常時であり、正常な承認フローで恒常的に発生させる設計は運用に耐えない。
 - **代替手段**: TOCTOU と承認使い回しは、guard の保持ではなく**署名付き単回 capability**で閉じる。
   これは M1 が quarantine 解除後の mutation に対して既に採っている方式であり、新規機構ではない。
+
+> **改訂予定（2026-08-15 の裁定 B2。`SI-FLW-061` で反映する）**
+>
+> 本節以下の「署名付き単回 capability」は、**署名を条件付きへ縮退**する。
+> 承認の既定は `--confirm <operation_id>` ＋ 単回 nonce ＋ `expires_at` とし、
+> 署名検査は **trusted key registry が存在する配備でのみ**有効化する（鍵隔離が前提条件）。
+>
+> 根拠は次の2点（詳細は `.spec/reports/investigation-2026-08-15-capability-reduction.md`）。
+>
+> 1. 本節が「M1 からそのまま再利用」と述べる envelope は、M1 では署名対象に `reviewer` を
+>    持ち registry を repository owner が管理していた。M2 への移植で `reviewer` が落ち、
+>    承認者 ≠ executor という前提だけが失われた
+> 2. `worktree_runtime.plan()` の `operation_id` は下表の署名対象 field を含む facts の
+>    digest であり、apply は `--confirm` 一致に加えて**各副作用の直前に plan を再導出**して
+>    同一性を再検査する。下表の scope / freshness field は同じ束縛の二重持ちである
+>
+> 裁定記録は `.spec/reports/decision-2026-08-15-capability-b2.md`。
+> 本節の規範文言そのものの改訂は `SI-FLW-061` の実装と同じ変更セットで行う。
 
 ### repo 外承認 capability（GP-002 / GP-011）
 
