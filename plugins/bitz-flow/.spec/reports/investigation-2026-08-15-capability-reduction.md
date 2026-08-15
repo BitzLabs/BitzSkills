@@ -21,6 +21,56 @@
 したがって B の争点は「設計が嘘をついているか」ではなく、
 **「隔離できない配備において、この機構は割に合うか」**である。
 
+## 由来 — なぜ鍵を必要としたのか
+
+**worktree 固有の脅威分析から出た機構ではない。M1 の器を流用したものである。**
+
+`FLW-DSN-016` §4（L328-331）は採用理由をこう書いている。
+
+> M1 の capability envelope（`algorithm=Ed25519` の閉集合、trusted key ID、key generation、
+> signed payload、signature）を**そのまま再利用**し、署名対象を worktree 用に定める。
+> （中略）これは M1 が quarantine 解除後の mutation に対して既に採っている方式であり、
+> **新規機構ではない**。
+
+### M1 では鍵に必然性があった
+
+`FLW-DSN-015`（L248-254）の原型は **quarantine 解除**の文脈である。
+
+> 解除後の mutation には `target, snapshot_digest, prior_operation_id, **reviewer**,
+> expires_at, nonce` を署名した単回 authorization capability と新 operation ID を要求する。
+> （中略）trusted key registry は **repository owner** が rotation/revocation し…
+
+異常状態を人間（`evaluation-reviewer` / `repository owner`）が検分して解除を承認する
+**例外イベント**であり、署名者は executor とは別の役割として設計に明記されている。
+この構図では署名は機能する。
+
+### M2 への移植で前提が落ちた
+
+署名対象 field を比べると、移植時に何が失われたかが分かる。
+
+| | M1（`flowlib/intent.py` の `Capability`） | M2（`flowlib/worktree_capability.py` の `WorktreeApprovalCapability`） |
+|---|---|---|
+| 署名対象 | `target`, `snapshot_digest`, `prior_operation_id`, **`reviewer`**, `expires_at`, `nonce` | guard keys, `parent_dir_identity`, `nonexistence_digest`, `instance_identity_digest`, `worktree_root_canonical`, `case_sensitivity`, `expires_at`, `nonce`, `operation_id` |
+| 承認者を名指す field | **あり**（`reviewer`） | **なし** |
+| 文脈 | quarantine 解除（例外・人間検分） | 通常の worktree write |
+| 鍵の保持者 | repository owner（rotation/revocation する主体） | executor と同じ信頼領域 |
+
+**`reviewer` は移植時に落ちている。** 別の承認者が存在するという前提を表していた
+唯一の field が消え、器だけが残った。
+
+### `FLW-REV-011` の指摘を実際に閉じているもの
+
+capability 化を要求した2件について、何が閉じているかを分解する。
+
+| 指摘 | 実際に閉じている機構 | 暗号依存 |
+|---|---|---|
+| `SYN-002` TOCTOU（承認後の symlink 差し替え・先行占有・root 設定変更） | **2点での再観測**（guard 取得直後・各副作用直前）による `parent_dir_identity` / `nonexistence_digest` / `instance_identity_digest` / guard key の比較。**git・filesystem の観測値比較そのもの** | いいえ |
+| `SYN-011` 承認の使い回し | **単回 nonce**（`UNUSED → USED_PENDING` の linearizable CAS） | いいえ |
+
+署名はどちらも直接には閉じていない。署名が固有に足すのは
+**「承認者と実行者が別のとき、実行者が承認後に scope を広げられない」**ことだけである。
+M2 には承認者を名指す field が無いため、実行者が範囲の広い envelope を再発行すれば足りてしまう。
+
 ## 現況の正確な把握
 
 ### 承認判定の内訳
@@ -77,12 +127,20 @@ common-dir へも書ける。現状の配備では鍵は executor と同じ信�
 
 ## 争点
 
-**隔離された鍵保持者を持つ配備が、現実に存在する（または計画されている）か。**
+由来を踏まえると、争点は次のように具体化する。
 
-- **ある**なら、署名は設計どおりの価値を持つ。B は採らず、代わりに
-  `apply()` 側で registry を強制する（多層防御の是正）方が筋が通る。
-- **ない**なら、2/3/4 は隔離不能な配備における儀式であり、
+**M2 の worktree write に、`reviewer` に相当する「executor とは別の承認者」を立てる運用を採るか。**
+
+- **採る**なら、M1 が持っていた前提を M2 でも復活させることになり、署名は設計どおりに機能する。
+  この場合は B を採らず、`reviewer` 相当 field の復活と、`apply()` 側での registry 強制
+  （`RSK-204` の是正）を行う。
+- **採らない**なら、署名は「M1 からの流用時に前提が落ちたまま残った器」であり、
   維持コスト（鍵生成・registry 管理・fault fixture・例外分類）だけが残る。
+
+この問いは実装からは判定できない。M2 の worktree 作成・再開を、
+**人間または別プロセスが1件ずつ承認する運用**を想定しているかどうかによる。
+（M1 の quarantine 解除は例外イベントなので1件ずつの承認が現実的だったが、
+M2 の worktree write は通常操作であり、頻度が違う）
 
 ### 隔離不能でも署名が持つ弱い性質（steelman）
 
@@ -104,32 +162,46 @@ M0 が測定した失敗モード（生コマンドへの迂回・improvise）�
 |---|---|---|---|
 | **B1 完全撤去** | 2/3/4 と registry・鍵管理を削除し、6/7/8/9 だけで承認を構成 | 維持コストの削減。`SI-FLW-057` の例外分類が扱う面が縮む。fault fixture が減る | 隔離配備への将来の拡張路。plan 転記＋field 改変への速度制限 |
 | **B2 条件付き縮退** | 鍵隔離を**前提条件として明文化**し、隔離できない配備では capability の署名を要求しない（nonce＋freshness のみ）。隔離配備では現行どおり | 実態に合う。二重の儀式をやめられる | 2 モードの分岐が増え、どちらで動いているかを result に出す必要がある |
-| **B3 維持＋境界の是正** | 署名は維持し、`apply()` 自体が registry を読むよう変更（`RSK-204` の是正）。鍵隔離の手順を運用文書化 | 多層防御が閉じる。隔離配備が実際に機能する | 維持コストはそのまま。B の目的（縮退）を達しない |
+| **B3 維持＋前提の復活** | 署名を維持し、M1 の `reviewer` に相当する承認者 field を復活させる。あわせて `apply()` 自体が registry を読むよう変更（`RSK-204` の是正）し、鍵隔離の手順を運用文書化する | 移植時に落ちた前提が戻り、署名が設計どおり機能する | 維持コストはそのまま。通常操作を1件ずつ承認する運用負荷が発生する |
 | **B4 現状維持** | 何もしない | 変更コスト 0 | `FLW-REV-016` の再発3類型のうち「実体のない層」が残り続ける |
+
+**B1 / B2 は設計の後退ではない。** 由来の節が示すとおり、これらは
+「M1 からの流用時に落ちた前提（`reviewer` の不在）を、実装と宣言にも反映する」変更である。
+逆に B3 は「落ちた前提を復活させる」変更であり、どちらも一貫した選択肢である。
 
 ## 推奨
 
-**B2 を軸に検討し、その前提として B3 の境界是正を先に入れる。**
+**B2 を軸に検討する。**
 
 理由:
 
-1. 設計は既に「隔離できないなら claim を縮退する」と書いており、B2 はその方針を
-   **実装と result にも反映するだけ**で、設計思想の転換ではない
-2. B1 は将来の隔離配備を閉ざす。M3 以降で remote write を扱うとき、
-   署名付き承認の器が必要になる可能性がある
-3. B3 の是正（`apply()` が registry を読む）は B1/B2 いずれを選んでも無駄にならない
+1. `FLW-REV-011` が要求した2件（`SYN-002` TOCTOU / `SYN-011` 使い回し）は、
+   由来の節が示すとおり**再観測と nonce で閉じており、署名は関与していない**。
+   B2 は要求を満たしたまま器だけを外す
+2. 設計は既に「隔離できないなら claim を縮退する」と書いており、B2 はその方針を
+   実装と result にも反映するだけで、設計思想の転換ではない
+3. B1 は将来の隔離配備（および M3 の remote write）を閉ざす。B2 なら隔離配備の道を残せる
+4. `apply()` 側での registry 強制（`RSK-204` の是正）は B2 / B3 いずれでも無駄にならないため、
+   **どちらを選ぶ場合でも先に入れてよい**
+
+M2 の worktree write を1件ずつ人間が承認する運用を採るなら、推奨は **B3** に変わる。
 
 ## 裁定に必要な情報（本書では未確定）
 
-- **隔離された鍵保持者を持つ配備の予定があるか**（これが最大の分岐点）
+- **M2 の worktree write に `reviewer` 相当の承認者を立てる運用を採るか**（最大の分岐点）
 - B2 を採る場合、2 モードの判別を result のどの field で表すか
-- B1/B2 の実装規模（未見積もり。`SI-FLW-057` と同じ `apply()` を触るため相互作用がある）
+- B1/B2/B3 の実装規模（未見積もり。`SI-FLW-057` と同じ `apply()` を触るため相互作用がある）
 - `FLW-REV-013:GP-002` / `GP-011`（capability 化を求めた前提条件）の再裁定要否
 
 ## 参照
 
 - `plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_capability.py`
-  （`_authorize_worktree_write` L120-176、`NonceLedger` L180-205）
+  （`WorktreeApprovalCapability` L34-67、`_authorize_worktree_write` L120-176、
+  `NonceLedger` L180-205）
+- `plugins/bitz-flow/skills/flow-core/scripts/flowlib/intent.py` L112-125
+  （M1 の `Capability`。`reviewer` field を持つ）
+- `plugins/bitz-flow/.spec/design/FLW-DSN-015.md` L248-254（M1 の原型と repository owner による鍵管理）
+- `plugins/bitz-flow/.spec/design/FLW-DSN-016.md` §4 L317-360（流用の宣言と署名対象表）
 - `plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_runtime.py`
   （`apply` L301、`load_trusted_keys` L217）
 - `plugins/bitz-flow/skills/flow-core/scripts/flowlib/cli.py` L405（registry の強制点）
