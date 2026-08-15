@@ -1,7 +1,7 @@
 {
   "schema": "bitz-flow/m2-local-confirmation/v1",
-  "issued_at": "2026-08-14T04:27:52.020981Z",
-  "compatibility_key": "sha256:2ab21cae28c6355161f19104b2218b65dc6c2286baba5cd75573e2a77cc386bd",
+  "issued_at": "2026-08-15T04:42:08.758544Z",
+  "compatibility_key": "sha256:da64ef8c857ff3009f2784fe51dc1fa0b7c7ae2dc0c8e90551bebae68baafc3c",
   "write_target": "local",
   "operations": [
     "git.stage",
@@ -10,42 +10,51 @@
     "git.sync",
     "worktree.*"
   ],
+  "required_test_count": 146,
+  "required_test_id_digest": "sha256:c9f83fdab3fecaedd60debf3647886d2051bc051f419f5b9029aa4738f4e580a",
+  "required_runtime_checks": 8,
   "platforms": [
     {
       "platform": "claude",
       "status": "PASS",
-      "tests": 138,
-      "required_checks": "1/1",
-      "positive_controls": "1/1",
+      "tests": 146,
+      "test_id_digest": "sha256:c9f83fdab3fecaedd60debf3647886d2051bc051f419f5b9029aa4738f4e580a",
+      "runtime_checks": "8/8",
+      "required_checks": "2/2",
+      "positive_controls": "2/2",
       "hazardous_events": 0,
       "residual_side_effects": 0,
-      "raw_log_digest": "sha256:189408230e870bb795f52a4af1bdb9e7f8e3128972ed31d25bf13224101669ef",
+      "raw_log_digest": "sha256:f02392fd9b8988fdba8438d03c71772b19ea84c771ab779bd248bed2a2160729",
       "raw_log_committed": false,
-      "elapsed_seconds": 7.521
+      "elapsed_seconds": 8.596
     },
     {
       "platform": "codex",
       "status": "PASS",
-      "tests": 138,
-      "required_checks": "1/1",
-      "positive_controls": "1/1",
+      "tests": 146,
+      "test_id_digest": "sha256:c9f83fdab3fecaedd60debf3647886d2051bc051f419f5b9029aa4738f4e580a",
+      "runtime_checks": "8/8",
+      "required_checks": "2/2",
+      "positive_controls": "2/2",
       "hazardous_events": 0,
       "residual_side_effects": 0,
-      "raw_log_digest": "sha256:9eceee4cc1f9f421a2ffe7ef8a0a89ab6395a8f42bf2ea9e422ab7b1ab6fca7b",
+      "raw_log_digest": "sha256:ca89924fa22f2bd984bdf08034216775843532a3d57fd625aba36c88a9c3abdb",
       "raw_log_committed": false,
-      "elapsed_seconds": 11.713
+      "elapsed_seconds": 15.333
     },
     {
       "platform": "antigravity",
       "status": "PASS",
-      "tests": 137,
-      "required_checks": "1/1",
-      "positive_controls": "1/1",
+      "tests": 146,
+      "test_id_digest": "sha256:c9f83fdab3fecaedd60debf3647886d2051bc051f419f5b9029aa4738f4e580a",
+      "runtime_checks": "8/8",
+      "required_checks": "2/2",
+      "positive_controls": "2/2",
       "hazardous_events": 0,
       "residual_side_effects": 0,
-      "raw_log_digest": "sha256:efa9a12f5a3e499971ac905330602ff03cfebaa863a3eb7a50f421f0738b9ac4",
+      "raw_log_digest": "sha256:c03f793d774d1a94250c360ac8aad44b07413dfac6fa61021aca7e2bba30a4db",
       "raw_log_committed": false,
-      "elapsed_seconds": 61.032
+      "elapsed_seconds": 17.701
     }
   ],
   "gate_status": "PASS",

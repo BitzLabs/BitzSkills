@@ -1,8 +1,8 @@
 ---
 implements: FLW-FR-006, FLW-CON-005, FLW-CON-006, FLW-NFR-011
 depends_on: FLW-TSK-080
-boundary: scripts/agy_guard.py, evals/flow-core/m2-eval/local_confirmation_subject.py, evals/flow-core/m2-eval/run_local_confirmation.py, evals/flow-core/m2-eval/qualification-2026-08-14-m2-runtime.json, evals/flow-core/m2-eval/active-local-confirmation.json, tests/test_agy_guard.py, tests/test_flow_m2_confirmation.py, plugins/bitz-flow/.spec/specs/m2-exit/test-spec.md, plugins/bitz-flow/.spec/tasks/FLW-TSK-081.md, plugins/bitz-flow/.spec/reviews/FLW-REV-016.md, plugins/bitz-flow/.spec/reviews/FLW-REV-016.json, plugins/bitz-flow/.spec/ROADMAP.md, plugins/bitz-flow/.spec/STATE.md
-status: implementing
+boundary: scripts/agy_guard.py, evals/flow-core/m2-eval/local_confirmation_subject.py, evals/flow-core/m2-eval/run_local_confirmation.py, evals/flow-core/m2-eval/qualification-2026-08-15-m2-runtime.json, evals/flow-core/m2-eval/active-local-confirmation.json, tests/test_agy_guard.py, tests/test_flow_m2_confirmation.py, plugins/bitz-flow/.spec/specs/m2-exit/test-spec.md, plugins/bitz-flow/.spec/tasks/FLW-TSK-081.md, plugins/bitz-flow/.spec/reviews/FLW-REV-016.md, plugins/bitz-flow/.spec/reviews/FLW-REV-016.json, plugins/bitz-flow/.spec/reviews/individual/flw-rev-016-business.json, plugins/bitz-flow/.spec/reviews/individual/flw-rev-016-consistency.json, plugins/bitz-flow/.spec/reviews/individual/flw-rev-016-data-integrity.json, plugins/bitz-flow/.spec/reviews/individual/flw-rev-016-operations.json, plugins/bitz-flow/.spec/reviews/individual/flw-rev-016-risk.json, plugins/bitz-flow/.spec/spec-issues/SI-FLW-057.md, plugins/bitz-flow/.spec/spec-issues/SI-FLW-058.md, plugins/bitz-flow/.spec/spec-issues/SI-FLW-059.md, plugins/bitz-flow/.spec/ROADMAP.md, plugins/bitz-flow/.spec/STATE.md
+status: done
 ---
 
 ### M2実動confirmationとExit再レビューを完了する

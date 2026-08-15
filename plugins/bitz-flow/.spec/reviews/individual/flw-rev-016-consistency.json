@@ -1,0 +1,140 @@
+{
+  "perspective": "consistency",
+  "dimensions": [
+    {
+      "name": "構造整合",
+      "weight": 0.35,
+      "score": 3,
+      "findings": [
+        {
+          "id": "RVC-101",
+          "severity": "major",
+          "location": "flowlib/cli.py:335-349（_op_worktree の audit 分岐）",
+          "title": "公開 worktree.audit だけが契約層を通らない",
+          "description": "cli.py 自身の docstring は「adapter から事実を取得し renderer へ渡す」と規定し、他の read は git_read アダプタ経由で失敗を _failure_result へ写す。しかし audit だけは worktree_runtime._git（private 関数）を `__import__(\"pathlib\")` 越しに直接呼び、porcelain 出力を CLI 層でパースしている。try/except が無いため git 失敗は worktree_runtime.RuntimeError として main を貫通し、公開契約の result ではなく traceback になる。さらに operation-catalog の read 共通規律（件数上限時の shown/total/cursor、pager 無効化、timeout）に対し --limit / --timeout-seconds を無視し、page は常に shown==total を返す。公開 operation でありながら dispatcher 経由の behavioral test も存在しない（tests は _HANDLERS の集合一致しか見ていない）。",
+          "recommendation": "audit を git_read 側の read adapter（凍結中の worktree.list と同じ観測）へ移し、失敗を _failure_result 経由の result へ写す。--limit / --timeout-seconds と pagination 規律を他の read と揃え、dispatcher 経由の contract test を1件追加する。"
+        },
+        {
+          "id": "RVC-102",
+          "severity": "major",
+          "location": "flowlib/cli.py:22-31 と :443-452、tests/test_flow_m1_write_faults.py:478",
+          "title": "公開 operation 集合が二重定義され、機械検査は片方だけ",
+          "description": "PUBLISHED_OPERATIONS と _HANDLERS が同じ8組を独立に宣言している。PUBLISHED_OPERATIONS はリポジトリ全体で他に参照が無く（grep 一致は定義行のみ）、main は _HANDLERS だけを引く。test_only_m0_and_m2_worktree_are_reachable_from_dispatcher も _HANDLERS しか照合しないため、片方だけ更新した状態が検査を素通りする。本リポジトリが繰り返し是正してきた「宣言と実装の二重定義」パターンそのものが、今回の公開集合拡張で新たに持ち込まれている。",
+          "recommendation": "PUBLISHED_OPERATIONS を削除して _HANDLERS を単一の正にするか、逆に _HANDLERS を PUBLISHED_OPERATIONS から導出する。どちらにせよ両者の一致をテストで拘束する。"
+        },
+        {
+          "id": "RVC-103",
+          "severity": "major",
+          "location": "flow-core/references/operation-catalog.md「公開 operation（M2 worktree）」節",
+          "title": "新規公開した destructive operation が catalog の 11 field 契約を満たさない",
+          "description": "catalog は冒頭で「各 operation は次の 11 field を持つ」と規定し、M0 の3 read はそれぞれ 11 行の表を持つ。一方、今回公開した worktree.audit / create / resume / finish / discard は operation / class / approval / effects / retry の5列表だけで、target・preconditions・postconditions・concurrency_key・partial・evidence が公開契約として明文化されていない。これらは cli.py の data 構築側（preconditions / postconditions / concurrency_key / evidence）に実体があるのに catalog へ写されていないため、公開契約の正が実装コードにしか無い状態になっている。destructive operation を公開する出口判定としては、M0 と同じ記述水準に達していない。",
+          "recommendation": "M2 worktree 5 operation を M0 と同じ 11 field 表へ展開し、cli.py が data へ載せている preconditions / postconditions / concurrency_key / evidence を catalog 側の正として固定する。"
+        },
+        {
+          "id": "RVC-104",
+          "severity": "minor",
+          "location": ".spec/ROADMAP.md:65、.spec/STATE.md、.spec/tasks/FLW-TSK-081.md の boundary",
+          "title": "ROADMAP が「公開集合は M0 の3 operation のまま」と述べ続けている",
+          "description": "ROADMAP「現在地」は『**M1 operation は引き続き `UNSUPPORTED`** であり、dispatcher の公開集合は M0 の3 operation のままである』と明記しており、operation-catalog.md・flow.py・cli.py が公開する5つの worktree operation と正面から矛盾する。ROADMAP.md と STATE.md は FLW-TSK-081 の boundary に宣言されているが本ブランチでは未変更で（差分は eval / tests / test-spec / agy_guard / task のみ）、Completion Gate 裁定者が最初に読む規範文書が古い事実を提示する状態のまま出口判定に入る。",
+          "recommendation": "ROADMAP「現在地」と縮退規則3の記述を、M2 worktree を公開済み・M1 local-write は未公開という現状へ更新し、STATE.md へ公開集合変更の遷移を記録してから裁定に上げる。"
+        },
+        {
+          "id": "RVC-105",
+          "severity": "minor",
+          "location": "scripts/agy_guard.py",
+          "title": "guard の docstring と判定スコープが allow 追加に追随していない",
+          "description": "module docstring は「危険コマンドを deny、リポジトリ外書き込みを force_ask する」のままで、今回追加した3つ目の決定 allow を記述していない。実装上も allow は deny/ask より先に評価され、かつ allow は args 配下の任意の文字列を個別に走査（_strings）するのに対し deny/ask は args の JSON 全文に対する正規表現という非対称な照合スコープを持つ。AGENTS.md のガードレール節・.claude/settings.json permissions との3層同期にも、この例外許可が反映されていない。",
+          "recommendation": "docstring と AGENTS.md 側のガードレール記述へ期限付き例外として allow を明記し、allow の照合対象を deny/ask と同じスコープ（実際に実行される command 値）に揃える。"
+        }
+      ]
+    },
+    {
+      "name": "トレーサビリティ",
+      "weight": 0.35,
+      "score": 3,
+      "findings": [
+        {
+          "id": "RVC-201",
+          "severity": "major",
+          "location": "tests/test_flow_m2_runtime.py（8件中 dispatcher 経由は1件）、GP-001 原文",
+          "title": "GP-001 の「全 worktree write を公開 dispatcher から」に対し create しか辿れない",
+          "description": "前回指摘（出口主張から公開実装への trace 断絶）は、cli.py が worktree.create/resume/finish/discard を公開し worktree_runtime が実 Git 副作用を持つようになったことで大枠は解消した。ただし GP-001 の原文は「公開 dispatcher から**全** worktree write を起動し、各副作用直前の capability 検証と receipt prefix 収束を E2E で確認する」である。実際に flow.py を起動する E2E は test_FLW_FR_006_dispatcher_create_plan_exposes_signed_capability_context の1件のみで、対象は create の plan+apply。resume / finish / discard、副作用直前の再検証（step_hook 注入）、receipt prefix の PENDING→MUTATING→QUARANTINED 収束はすべて W.plan / W.apply のライブラリ直呼びで検証されている。step_hook は cli.py から渡せない引数であり、公開入口からは到達できない検証経路である。公開入口からのトレースは 4 write 中 1、fault 経路は 0。",
+          "recommendation": "resume / finish / discard の apply と、少なくとも1つの fault 注入ケースを flow.py 経由の E2E として追加する。step_hook 相当の副作用直前検証を公開経路でも観測できるよう、receipt chain の中間状態を証跡として突き合わせる。"
+        },
+        {
+          "id": "RVC-202",
+          "severity": "major",
+          "location": "evals/flow-core/m2-eval/run_local_confirmation.py:36-56、.spec/requirements/FLW-NFR-011.md",
+          "title": "compatibility_key の実装が FLW-NFR-011 の列挙を満たさない",
+          "description": "FLW-NFR-011 は compatibility_key を「scoring rule、runner、adapter、oracle、fixture、prompt、skill、result/event schema、推移的実行依存、model identity/date、CLI・host event-contract version」から作ると規定する。実装の COMPATIBILITY_INPUTS は plugin.json / SKILL.md / flow.py / cli.py / worktree_runtime.py / subject / runner の7ファイルのみで、(a) fixture かつ oracle である 10 本の test ファイル、(b) 安全核である worktree_capability.py・guard.py・recovery.py、(c) qualification が別途記録している CLI version（claude 2.1.233 / codex 0.147.0 / agy 1.1.13）と model identity、(d) result/event schema、が指紋に入らない。すなわち capability 検証の実装や fixture を書き換えても active manifest は失効しない。加えて NFR-011 が compatibility_key と分離せよと定める evidence_id、および attempt ID / run ID / owner / lease は qualification・manifest のどちらの schema にも存在しない。M2 出口の「active manifest 発行済み」という条件が、要件が定義した意味の manifest では満たされていない。",
+          "recommendation": "COMPATIBILITY_INPUTS へ fixture 10ファイルと worktree_capability / guard / recovery を加え、CLI version と model identity を key 入力へ含める。evidence_id を manifest schema へ追加し、compatibility_key と分離して記録する。"
+        },
+        {
+          "id": "RVC-203",
+          "severity": "major",
+          "location": "local_confirmation_subject.py:77、run_local_confirmation.py:29-35,132-135、tests/test_flow_m2_confirmation.py:89-92",
+          "title": "required_checks / positive_controls / hazard / residual が観測へ辿れない",
+          "description": "subject は `required_checks=2/2 positive_controls=2/2 hazards=0 residuals=0` を固定文字列で出力し、runner の MARKER 正規表現は `required_checks=2/2 positive_controls=2/2 hazards=0 residuals=0` をリテラルで要求し、manifest には valid 判定から `\"2/2\"` を書き戻し、テストは manifest が `\"2/2\"` であることを assert する。全段が同じ定数を運んでいるだけで、「どの2件が required check なのか」「どの2件が陽性対照なのか」を定義する台帳が .spec / evals のどこにも無い（qualification 側は 21/21・9/9 と別の母数を使っており対応関係も不明）。hazardous_events / residual_side_effects に至っては `0 if valid else 1` で、marker が一致したことの言い換えにすぎず、危険事象・残存副作用を独立に観測していない。runtime_checks だけが収集結果から導出され、それを検証するテスト（test_confirmation_runtime_check_count_is_derived_not_hardcoded）もあるという対比が、この3指標の非導出性を際立たせる。M2 出口条件の「hazard 0 / residual 0」は現状 trace 不能な主張である。",
+          "recommendation": "required check / 陽性対照の ID 台帳を test-spec 側に定義し、subject が収集結果から件数を導出する（runtime_checks と同じ方式）。hazard / residual は worktree root と receipt/nonce 領域の実測差分から判定し、valid から導出しない。"
+        },
+        {
+          "id": "RVC-204",
+          "severity": "minor",
+          "location": "tests/test_flow_m2_confirmation.py:11、evals/flow-core/m2-eval/",
+          "title": "GP-002 の実証跡 qualification がどのテストからも検査されていない",
+          "description": "テストが参照する QUALIFICATION は旧 `qualification-2026-08-14.json` で、しかも compatibility_key を上書きしてテンプレートとして使うだけである。GP-002 の実証跡である `qualification-2026-08-15-m2-runtime.json`（gate_status PASS、compatibility_key sha256:da64ef8c…、expires_at 2026-08-16T04:21:46Z）は、active manifest との key 一致も TTL 有効性も、どのテストからも検査されていない。m2-eval 配下には qualification が3ファイル並んでおり、どれが有効かを示す記述・命名規約・索引が無い。",
+          "recommendation": "active な qualification を指す単一の参照（symlink か manifest 内の qualification パス field）を導入し、active manifest の compatibility_key・issued_at が当該 qualification の key と TTL 範囲に収まることをテストで拘束する。"
+        },
+        {
+          "id": "RVC-205",
+          "severity": "minor",
+          "location": ".spec/requirements/FLW-FR-006.md、.spec/verification/",
+          "title": "出口要件のライフサイクルと検証証跡が実装状況に追随していない",
+          "description": "FLW-FR-006 は `status: approved` のままだが、これを implements する FLW-TSK-076 / 078 / 080 はすべて done である（同じタスクが implements する FLW-CON-005 / CON-006 / NFR-011 は implementing）。同一タスク内で要件の status が割れている。また .spec/verification/ には pytest-flw-nfr-009 / 010 の2件しか無く、M2 出口の4要件（FR-006 / CON-005 / CON-006 / NFR-011）には記録済み検証証跡が存在しない（spec inspect の検証証跡カウントにも現れない）。全 pytest 1945 passed という実走事実は残っているが、要件 ID へ紐づいた green 判定の正として保存されていない。",
+          "recommendation": "FLW-FR-006 を implementing へ揃え、M2 出口の4要件について spec_verify record で検証証跡を記録してから Completion Gate へ上げる。"
+        }
+      ]
+    },
+    {
+      "name": "用語一貫性",
+      "weight": 0.30,
+      "score": 3,
+      "findings": [
+        {
+          "id": "RVC-301",
+          "severity": "major",
+          "location": "flowlib/cli.py:77, 104-107, 470",
+          "title": "公開 CLI の help とメッセージが「M0 read-only」のまま",
+          "description": "利用者が最初に見る `--help` の description が『bitz-flow の唯一の公開実行入口（M0: read-only の3 operation）。』のままで、同一スキルの flow.py:10（「M0 read-only 3 operationに加え、M2 worktree auditと署名capability付きplan/applyを公開する」）および operation-catalog.md と矛盾する。さらに --apply / --confirm / --approval-ref の help はいずれも「（M1 以降）」と書かれているが、この3つは今や M2 worktree write の必須引数である。非 worktree domain での UNSUPPORTED summary も「M0 は read-only であり状態変更を受け付けない」のままで、実際には同じ dispatcher が destructive worktree operation を実行する。公開契約の表面（help / summary）が、公開した機能と逆のことを述べている。",
+          "recommendation": "description を「M0 read-only 3 operation と M2 worktree operation」へ、--apply / --confirm / --approval-ref の help を「M2 worktree write で必須」へ改め、UNSUPPORTED summary を「当該 domain は現在の milestone では状態変更を受け付けない」へ書き換える。"
+        },
+        {
+          "id": "RVC-302",
+          "severity": "minor",
+          "location": "local_confirmation_subject.py:77、run_local_confirmation.py:126-138、qualification-2026-08-15-m2-runtime.json",
+          "title": "同一 Gate の証跡が2系統の語彙を持つ",
+          "description": "同じ指標が artifact ごとに別名・別形になっている。marker は `hazards` / `residuals`、manifest は `hazardous_events` / `residual_side_effects`。qualification は `raw_logs_committed`（複数形）、manifest の platform record は `raw_log_committed`（単数形）。`required_checks` / `positive_controls` は qualification が `{detected, denominator}` object、manifest が `\"2/2\"` 文字列。schema 名も `m2-qualification-summary/v1` と `m2-local-confirmation/v1` で、共通 field の型が揃っていない。裁定者は同じ Gate の2証跡を2つの語彙で読むことになる。",
+          "recommendation": "hazard / residual / required check / positive control / raw log commit 状態の field 名と型を両 schema で統一し、marker の略記も manifest の field 名に合わせる。"
+        },
+        {
+          "id": "RVC-303",
+          "severity": "minor",
+          "location": "operation-catalog.md（公開 M2 表 と「M1 で凍結した契約」表）",
+          "title": "worktree.audit と worktree.list が同一観測の別名として併存",
+          "description": "公開済みの `worktree.audit`（class read、実装は `git worktree list --porcelain`）と、M1-4 公開予定として凍結中の `worktree.list`（Git 入力欄も `worktree list --porcelain`）が同じ catalog に並び、入力も evidence もほぼ同一である。両者の責務差（audit は「operation 外の変更を検出し quarantine へ接続する」M2 出口条件の担い手、list は単なる列挙）が catalog 上のどこにも書かれていないため、読み手はどちらを呼ぶべきか判断できない。",
+          "recommendation": "audit と list の責務差を catalog に明記するか、audit を list の上位（quarantine 接続を含む診断）として定義し直し、重複する片方を統合する。"
+        },
+        {
+          "id": "RVC-304",
+          "severity": "minor",
+          "location": "flowlib/worktree_runtime.py:60、flowlib/cli.py:406、tests/test_flow_m1_write_faults.py:470",
+          "title": "組込み名の覆いと陳腐化したテスト名",
+          "description": "worktree_runtime.RuntimeError が組込み RuntimeError を同名で覆っているため、同モジュール内の `except (RuntimeError, OSError)` は組込み RuntimeError（例: fcntl 不在時に自分で送出しているものは自作クラスだが、下位ライブラリ由来のもの）を捕らえない。cli.py の `except (OSError, ValueError, worktree_runtime.RuntimeError)` は RuntimeError が ValueError 派生であるため冗長で、読み手に別系統の例外だと誤読させる。またテスト名 `test_reachable_codes_are_still_m0_only` は M2 worktree 公開後の実態と合っていない（隣の test_only_m0_and_m2_worktree_are_reachable_from_dispatcher とも語彙が割れている）。",
+          "recommendation": "自作例外を WorktreeRuntimeError 等へ改名して組込み名の覆いを解き、cli.py の except を実際の型集合へ整理する。テスト名を M0+M2 の現状に合わせて改める。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 3.00,
+  "summary": "前回 RVC-201（M2 出口主張から公開 worktree 実装への trace 断絶）は実質解消した。cli.py が worktree.audit/create/resume/finish/discard を公開し、worktree_runtime が単回 Ed25519 capability・nonce ledger・append-only receipt chain の内側で実 Git 副作用を持ち、SI-FLW-056 → FLW-TSK-080/081 → 実装 → test-spec → ID 付きテストの鎖が繋がった。plan/apply、MUTATING_STEPS と effects と completed/remaining、result code 語彙の対応は良好で、構造の核は整っている。ただし GP-001 の原文が求める「公開 dispatcher から**全** worktree write」には届いておらず、dispatcher 経由 E2E は create 1件・fault 経路 0 で残存（RVC-201 は解消ではなく縮小）。加えて今回の是正で新たな consistency 欠陥が広く持ち込まれた: 公開 CLI の help が「M0 read-only の3 operation」のままで destructive write を公開している事実と逆を述べ（RVC-301）、ROADMAP も「公開集合は M0 の3 operation のまま」と述べ続け（RVC-104）、公開集合が PUBLISHED_OPERATIONS と _HANDLERS へ二重定義され機械検査は片方だけ（RVC-102）、新規公開した5 operation は catalog の 11 field 契約を満たさず（RVC-103）、audit だけが契約層を通らない（RVC-101）。GP-002 側では compatibility_key が FLW-NFR-011 の列挙（fixture・oracle・CLI version・安全核モジュール）を覆わず（RVC-202）、required_checks 2/2・positive_controls 2/2・hazard 0・residual 0 が全段で定数として流れ観測へ辿れない（RVC-203）。「3 platform で同一 test ID 集合 146件・digest 一致」という事実は確かだが、それが証明しているのは pytest のホスト非依存性であって、hazard/residual 0 は marker 一致の言い換えである。構造整合は核が整った一方で周辺に複数の実欠陥が入ったため 4→3、トレーサビリティは主要断絶が閉じたため 2→3、用語一貫性は公開 CLI 表面の矛盾により 4→3。総合 3.30→3.00。GP-001 は partially-discharged（公開経路は開通したが全 write を覆っていない）、GP-002 も partially-discharged（3platform 実走 manifest は置換されたが、compatibility_key の被覆と hazard/residual の非導出により FLW-NFR-011 が定義する証跡になっていない）。"
+}
