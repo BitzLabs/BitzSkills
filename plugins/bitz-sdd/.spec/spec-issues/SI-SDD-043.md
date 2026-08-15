@@ -3,7 +3,7 @@ id: SI-SDD-043
 raised_by: BitzSkills リポジトリ運用（inspection-report のパス汚染）
 target: spec_inspect.py のクロスワークスペース参照識別子
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 
 - **目的**: `inspection-report.md` の「他ワークスペースのテスト/実装から参照されている要件」節が、
