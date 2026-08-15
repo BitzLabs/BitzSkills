@@ -237,10 +237,20 @@ def _flow_json(*args, repo):
     return json.loads(proc.stdout), proc.returncode
 
 
-def test_dispatcher_exposes_m0_and_m2_worktree_only(rows):
+def test_dispatcher_exposes_m0_only(rows):
+    """出荷面は M0 read-only だけ（縮退規則3。裁定 2026-08-15）。"""
     exposed = {f"{domain}.{action}" for domain, action in cli._HANDLERS}
-    assert exposed == M0_OPERATIONS | M2_WORKTREE_OPERATIONS
+    assert exposed == M0_OPERATIONS
     assert not (exposed & set(rows)), "M1 operation を公開してはならない"
+    assert not (exposed & M2_WORKTREE_OPERATIONS), "M2 出口が閉じるまで worktree を公開してはならない"
+
+
+def test_gated_worktree_handlers_are_kept_for_reinstatement():
+    """公開を止めた worktree handler は削除せず、ゲート通過時に戻せる形で保持する。"""
+    gated = {f"{domain}.{action}" for domain, action in cli._GATED_HANDLERS}
+    assert gated == M2_WORKTREE_OPERATIONS
+    exposed = {f"{domain}.{action}" for domain, action in cli.PUBLISHED_OPERATIONS}
+    assert not (gated & exposed), "gated と公開集合は互いに素であること"
 
 
 @pytest.mark.parametrize(

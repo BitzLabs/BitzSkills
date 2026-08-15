@@ -62,10 +62,15 @@ v2 はこれを、3プラットフォーム（Claude Code / Codex CLI / Antigrav
 M1-6 の範囲は裁定により **qualification のみ**とし、被測定物の confirmation は M2 以降へ送った
 （`.spec/reports/decision-2026-08-12-m1-6-scope.md`）。縮退規則3で M2 未完了の間は Git write を
 公開せず、cross-host 予約・lease を証明できないため remote-write confirmation が成立しないことによる。
-**M1 operation は引き続き `UNSUPPORTED`** である。dispatcher の公開集合は M2-2 以降
-`worktree.{audit,create,resume,finish,discard}` を含む（`FLW-TSK-080`）が、
-`git.stage` / `git.commit` / `git.fetch` / `git.sync` は未公開のままである
-（公開集合の正は `flowlib/cli.py` の `_HANDLERS`。`--help` 文言の追随は `FLW-REV-016:SYN-016`）。
+**M1 operation は引き続き `UNSUPPORTED`** である。dispatcher の公開集合は
+**M0 read-only の 3 operation（`repo.inspect` / `git.status` / `git.diff-summary`）だけ**であり、
+その正は `flowlib/cli.py` の `PUBLISHED_OPERATIONS`（`_HANDLERS` との一致を import 時に強制する）。
+
+M2-2〜M2-6 で実装した `worktree.{audit,create,resume,finish,discard}` は一時的に公開されていたが、
+M2 出口が未達（`FLW-REV-016` FAIL）であり縮退規則3 に反する状態だったため、
+**2026-08-15 の裁定で公開集合から外した**
+（`.spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md`）。
+安全核と runtime adapter は削除せず `cli._GATED_HANDLERS` に保持し、ゲート通過時に戻す。
 
 途中で bitz-sdd のライフサイクルに `verified → implementing`（人間裁定必須）を追加した（#199）。
 M0 で read の一部だけを検証して verified になった要件の残りを実装できない行き止まりを解いたもので、
@@ -158,23 +163,33 @@ M2 が未完了のままでは worktree-first の安全境界が閉じないた�
 
 - **入口**: M2 Design Gate PASS（2026-08-14、`FLW-GATE-003`）。`FLW-DSN-016`をactiveな規範設計としてM2-1から順に実装する
 
-- worktree の配置・命名・作成・再開・audit・cleanup・保全・discard、独立 remote branch 削除
+- **scope（2026-08-15 縮小）**: worktree の配置・命名・**作成・再開・audit**までを M2 とする。
+  破壊系の **`worktree.finish` / `worktree.discard` と独立 remote branch 削除は M3 へ移送**した
+  （`.spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md`）。
+  retention ref・quarantine・receipt chain の複雑さの大半が破壊操作に由来し、
+  M2 が閉じない主因になっていたため
 - 詳細設計は `FLW-DSN-016`（M2 worktree safety 詳細設計）。出口条件・budget の正は
   `FLW-DSN-014` の「M2出口条件・budget・M3入口条件」節
-- 出口: repo identity 衝突 0、repo 外 worktree root の承認（**単回 capability**）、
-  `M2-FLT-001`〜`057` 全件 PASS、enum 三者照合 green、全worktree writeの承認capability検証、
-  operation外変更のaudit検出・quarantine接続、**`write_target: local` の被測定物 confirmationが3 platformでPASS**、
+- 出口（新 scope）: repo identity 衝突 0、repo 外 worktree root の承認（**単回 capability**）、
+  `create` / `resume` / `audit` に対応する fault fixture 全件 PASS、enum 三者照合 green、
+  **`create` / `resume` の承認 capability 検証を公開 dispatcher 経由で確認**、
+  operation 外変更の audit 検出・quarantine 接続、
+  **`write_target: local` の被測定物 confirmation が 3 platform で PASS**、
   着手前 reconnaissance の必須化
-- **出口再判定（2026-08-15）**: `FLW-REV-016` **FAIL 2.85**。8項目中「全worktree writeの
-  in-band capability検証」「operation外変更のaudit→quarantine」「3platform被測定物confirmation」の
-  3項目が BLOCKED。`SI-FLW-056` の追加 2 PR / 最大6 session は消化済みであり、
-  P0（`SYN-002`〜`SYN-005`）の是正には人間の予算再裁定が要る（`FLW-REV-016:GP-005`）
+- **出口再判定（2026-08-15）**: `FLW-REV-016` **FAIL 2.85**（旧 scope の8項目中3項目 BLOCKED）。
+  本裁定で scope を縮小したため、出口条件と `GP-001` は新 scope で再定義する。
+  `SI-FLW-056` の追加 2 PR / 最大6 session は消化済みであり、残る P0 の是正には
+  人間の予算再裁定が要る（`FLW-REV-016:GP-005`）
 - budget: **6 PR / 20 session**（2026-08-12 再校正）。4 PR / 14 session に
   M1-6 の confirmation 区分（+1 PR / +3 session。`SI-FLW-045`）と
   `SI-FLW-046` の scope 追加（+1 PR / +3 session）を加えた値
 - 縮退境界: M0 read-only prerelease へ縮退（M1 Git write も公開しない）。
   **解除条件**は上記出口条件の充足であり、その時点で M1 の local-write class と
-  M2 worktree を同時に公開できる。remote-write は M3 まで `UNSUPPORTED` を維持する
+  M2 worktree（`create` / `resume` / `audit`）を同時に公開できる。
+  remote-write と破壊系 worktree は M3 まで `UNSUPPORTED` を維持する。
+  **2026-08-15 時点で本縮退境界は出荷物へ適用済み**であり、公開集合は M0 read-only 3 operation
+  のみである（機械検査: `tests/test_flow_m1_write_faults.py::test_only_m0_is_reachable_from_dispatcher`、
+  `tests/test_flow_m2_runtime.py::test_FLW_CON_006_worktree_is_not_reachable_from_the_dispatcher`）
 
 ### フェーズ4 — M3 Issue / SDD 接続
 
@@ -184,8 +199,12 @@ M2 が未完了のままでは worktree-first の安全境界が閉じないた�
   （`git.publish-branch` / `git.delete-remote-branch`）を実施する。前提として裁定3 が M3 へ
   委譲した **coordinator 証明手段**を確定させる（`SI-FLW-045` 案A）。
   確定するまで remote-write は `UNSUPPORTED` を維持する
+- **M2 から移送された scope**（2026-08-15 裁定）: `worktree.finish` / `worktree.discard`
+  （retention ref・quarantine・receipt chain を含む破壊系）。remote branch 削除と同じ
+  「破壊操作」区分として M3 でまとめて扱う。budget への反映は `FLW-REV-016:GP-005` の
+  予算再裁定で確定する（本移送分は未計上）
 - 出口: capability matrix、marker 重複 0、link reconcile 全通過、独立 10 Issue/SDD flow canary green、
-  上記入口条件の残債 confirmation
+  上記入口条件の残債 confirmation、**移送された破壊系 worktree operation の出口条件**
 - 縮退境界: M2 までを prerelease 出荷し、全 `issue.*` を `UNSUPPORTED` にする
 
 ### フェーズ5 — M4 PR ライフサイクル

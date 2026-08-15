@@ -198,39 +198,36 @@ def test_FLW_CON_006_partial_discard_retains_tip_and_quarantines_receipt(reposit
     assert [record["state"] for record in matching] == ["PENDING", "MUTATING", "QUARANTINED"]
 
 
-def test_FLW_FR_006_dispatcher_create_plan_exposes_signed_capability_context(repository):
-    repo, root = repository
-    command = [
-        sys.executable, str(SKILL / "scripts" / "flow.py"), "worktree", "create",
-        "--repo", str(repo), "--path", str(root / "cli"), "--branch", "feat/cli",
-        "--worktree-root", str(root), "--format", "json",
-    ]
-    proc = subprocess.run(command, text=True, capture_output=True, check=False)
-    payload = json.loads(proc.stdout)
-    assert proc.returncode == 0
-    assert payload["code"] == "READY" and payload["operation"] == "worktree.create"
-    assert payload["operation_id"].startswith("sha256:")
-    assert payload["data"]["capability_context"]["operation_id"] == "worktree.create"
+@pytest.mark.parametrize("action", ["audit", "create", "resume", "finish", "discard"])
+def test_FLW_CON_006_worktree_is_not_reachable_from_the_dispatcher(repository, action):
+    """出荷面は M0 read-only だけで、worktree は公開入口から到達できないこと。
 
-    runtime_plan = W.plan(
-        repo, action="create", path=root / "cli", branch="feat/cli", worktree_root=root
+    ROADMAP の縮退規則3（M2 出口が閉じるまで worktree を公開しない）の機械検査。
+    安全核と runtime adapter は実装済みだが公開集合から外してある
+    （裁定 2026-08-15 — `.spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md`）。
+    """
+    repo, _ = repository
+    proc = subprocess.run(
+        [sys.executable, str(SKILL / "scripts" / "flow.py"), "worktree", action,
+         "--repo", str(repo), "--format", "json"],
+        text=True, capture_output=True, check=False,
     )
-    cap, keys = signed(runtime_plan, "nonce-cli")
-    cap_file = root / "capability.json"
-    cap_data = dataclasses.asdict(cap)
-    cap_data["expires_at"] = cap.expires_at.isoformat()
-    cap_file.write_text(json.dumps(cap_data), encoding="utf-8")
-    common = Path(git(repo, "rev-parse", "--path-format=absolute", "--git-common-dir"))
-    registry = common / "bitz-flow-v2" / "trusted-worktree-keys.json"
-    registry.parent.mkdir(parents=True, exist_ok=True)
-    registry.write_text(json.dumps(keys), encoding="utf-8")
-    registry.chmod(0o600)
-    apply_command = command + [
-        "--apply", "--confirm", payload["operation_id"],
-        "--capability-file", str(cap_file),
-        "--approval-ref", "decision:test",
-    ]
-    applied = subprocess.run(apply_command, text=True, capture_output=True, check=False)
-    applied_payload = json.loads(applied.stdout)
-    assert applied.returncode == 0 and applied_payload["code"] == "DONE"
-    assert (root / "cli").is_dir()
+    payload = json.loads(proc.stdout)
+    assert payload["code"] == "UNSUPPORTED"
+    assert payload["operation"] == f"worktree.{action}"
+
+
+def test_FLW_CON_006_dispatcher_apply_creates_no_worktree(repository):
+    """公開入口へ apply 一式を渡しても副作用が起きないこと。"""
+    repo, root = repository
+    target = root / "cli"
+    proc = subprocess.run(
+        [sys.executable, str(SKILL / "scripts" / "flow.py"), "worktree", "create",
+         "--repo", str(repo), "--path", str(target), "--branch", "feat/cli",
+         "--worktree-root", str(root), "--apply", "--confirm", "sha256:" + "0" * 64,
+         "--approval-ref", "decision:test", "--format", "json"],
+        text=True, capture_output=True, check=False,
+    )
+    assert json.loads(proc.stdout)["code"] == "UNSUPPORTED"
+    assert not target.exists()
+    assert "feat/cli" not in git(repo, "branch", "--format=%(refname:short)")

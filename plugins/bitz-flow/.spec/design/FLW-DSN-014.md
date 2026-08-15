@@ -2,8 +2,8 @@
 id: FLW-DSN-014
 title: "GitHub capability・M0検証設計"
 status: active
-version: 1.19
-updated: 2026-08-14
+version: 1.20
+updated: 2026-08-15
 owner: hide
 implements: FLW-FR-003, FLW-FR-008, FLW-FR-012, FLW-NFR-001, FLW-NFR-008, FLW-NFR-004, FLW-NFR-009, FLW-NFR-010, FLW-NFR-011
 origin: FLW-REV-002
@@ -643,16 +643,29 @@ invalidateする。legacy単一JSONLはread-only互換入口とし、新旧Gate�
 正は`FLW-DSN-016`であり、本節はmilestone表から参照される要約である。
 裁定記録は`.spec/reports/decision-2026-08-12-si-flw-043-046.md`。
 
-**M2出口条件**（従来の「repo identity衝突0、repo外承認、finish/discard fault全通過」を置換）:
+**M2出口条件**（従来の「repo identity衝突0、repo外承認、finish/discard fault全通過」を置換。
+**2026-08-15 の裁定で scope を縮小**し破壊系を M3 へ移送した。裁定記録は
+`.spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md`）:
 
 - repo identity衝突0
 - repo外worktree rootの承認（**単回capability化されたもの**。`FLW-NFR-007` 1.3）
-- `M2-FLT-001`〜`057`全件PASS
+- **`worktree.create` / `resume` / `audit` に対応する** `M2-FLT-*` 全件PASS
+  （`finish` / `discard` 由来の fixture は M3 へ移送する）
 - **enum三者照合テストがgreen**（設計 ⊆ schema ⊆ 実装の双方向）
-- **承認capabilityが全worktree writeでin-band検証される**
+- **承認capabilityが `create` / `resume` の write で公開dispatcher経由でin-band検証される**
 - **operation外の変更をauditが検出しquarantineへ接続する**
 - **`write_target: local` の被測定物confirmationが3 platformでPASS**しactive manifest発行済み
 - **着手前reconnaissanceがentry protocolで必須化**されている（`FLW-FR-007` 1.1）
+
+**M2 scope から外した項目**（M3 へ移送）:
+
+- `worktree.finish` / `worktree.discard` の plan / apply と、それに付随する
+  retention ref・quarantine・receipt chain の破壊系規定
+- 独立 remote branch 削除（従来どおり M3）
+
+移送理由は、破壊操作が retention・quarantine・receipt chain の複雑さの大半を生み、
+M2 が閉じない主因になっていたことである（`FLW-REV-016` FAIL 2.85 の P0 のうち
+`SYN-002`（receipt step 語彙）・`SYN-003`（例外分類）は破壊系経路を含む）。
 
 confirmationは FLW-DSN-012 の `write_target` 軸から機械的に分割する（`SI-FLW-049`）。
 `reversibility` にかかわらず書き先が同じoperationは同じ区分へ入る。
@@ -681,7 +694,9 @@ M1実績（6 PR / 7 session）はM2の下振れ根拠にしない。M2はM1に�
 
 **M3入口条件**（`SI-FLW-045`案Aが送った残債の受け側。**M1→M2で起きた断絶を繰り返さない**）:
 
-**M3 budget — 8 PR / 26 session**
+**M3 budget — 8 PR / 26 session**（**2026-08-15 に M2 から移送された破壊系 worktree は未計上**。
+移送分の計上は `FLW-REV-016:GP-005` の予算再裁定で確定する。
+移送は区分の付け替えであり、暗黙の余裕増加として扱わない）
 
 | 内訳 | PR | session |
 |---|---:|---:|
@@ -695,8 +710,12 @@ M1実績（6 PR / 7 session）はM2の下振れ根拠にしない。M2はM1に�
 - 前提として裁定3が M3 へ委譲した **coordinator証明手段**を確定させる。
   確定するまで`write_target: remote`は`UNSUPPORTED`を維持する。
 - coordinator設計が分散状態を必要とする場合は本枠を暗黙延長せず、M3着手前にscopeを再提示する。
-- 残債の由来は`decision-2026-08-12-m1-6-scope.md`（M1-6がM2以降へ送った）と
-  `decision-2026-08-12-si-flw-043-046.md`（M2がM3へ送った）である。
+- **M2から移送された破壊系 worktree**（`worktree.finish` / `worktree.discard` と、
+  retention ref・quarantine・receipt chain の破壊系規定）をM3で実施する。
+  remote branch削除と同じ「破壊操作」区分としてまとめて扱う。
+- 残債の由来は`decision-2026-08-12-m1-6-scope.md`（M1-6がM2以降へ送った）、
+  `decision-2026-08-12-si-flw-043-046.md`（M2がM3へ送った）、
+  `decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md`（M2の破壊系をM3へ送った）である。
 
 M1の6 PR / 20 sessionは、公開契約1 PR / 3 session、qualification 1 / 4、Git実装2 / 7、
 evidence合成1 / 3、confirmation 1 / 3へ割り当てる。区分間の未使用分だけを移送でき、超過時は

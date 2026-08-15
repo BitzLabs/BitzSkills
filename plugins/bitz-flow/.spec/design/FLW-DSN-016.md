@@ -2,15 +2,30 @@
 id: FLW-DSN-016
 title: "M2 worktree safety詳細設計"
 status: active
-version: 2.3
-updated: 2026-08-14
+version: 2.4
+updated: 2026-08-15
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-006, FLW-NFR-007, FLW-NFR-011, FLW-NFR-012, FLW-CON-005, FLW-CON-006
 origin: SI-FLW-041, SI-FLW-042, SI-FLW-043, SI-FLW-044, SI-FLW-045, SI-FLW-046, SI-FLW-047, SI-FLW-048, SI-FLW-049, SI-FLW-050, SI-FLW-051, SI-FLW-052, SI-FLW-053, SI-FLW-054, FLW-REV-011, FLW-REV-012, FLW-REV-013, FLW-REV-014
-decision_ref: .spec/reports/decision-2026-08-13-si-flw-049-055.md
+decision_ref: .spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md
 ---
 
 # FLW-DSN-016 M2 worktree safety詳細設計
+
+## scope（2026-08-15 縮小）
+
+本書の規定のうち、**M2 の範囲は `worktree.create` / `resume` / `audit` までである**。
+破壊系の **`worktree.finish` / `worktree.discard`**（および retention ref・quarantine・
+receipt chain の破壊系規定）は **M3 へ移送**した。
+裁定記録: `.spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md`。
+
+移送した節の記述は**削除せず本書に残す**。M3 で受けるときに再利用するためであり、
+M2 の出口判定では対象外として扱う。出口条件の正は `FLW-DSN-014` の
+「M2出口条件・budget・M3入口条件」節である。
+
+なお **dispatcher の公開集合は M0 read-only 3 operation のみ**であり、
+本書が規定する worktree operation は M2 出口通過まで `UNSUPPORTED` を返す
+（実装は `flowlib/cli.py` の `_GATED_HANDLERS` に保持）。
 
 ## 責務と規範性
 

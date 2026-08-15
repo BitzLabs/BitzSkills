@@ -304,8 +304,9 @@
       "basis": "verified",
       "carried_from": "FLW-REV-015:GP-001",
       "evidence": "cli.py:_HANDLERS、tests/test_flow_m2_runtime.py（8件中dispatcher経由は create --plan の1件）、worktree_runtime.MUTATING_STEPS と worktree_cleanup.FINISH_STEPS の語彙差",
-      "statement": "公開dispatcherから全worktree writeを起動し、各副作用直前のcapability検証とreceipt prefix収束をE2Eで確認する",
-      "status": "not-discharged"
+      "statement": "公開dispatcherから M2 scope の worktree write（create / resume）を起動し、各副作用直前のcapability検証とreceipt prefix収束をE2Eで確認する（finish / discard は 2026-08-15 の裁定で M3 へ移送）",
+      "status": "not-discharged",
+      "rescoped_by": ".spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md"
     },
     {
       "id": "GP-002",
@@ -338,7 +339,8 @@
       "basis": "verified",
       "evidence": "FLW-REV-016:SYN-015、decision-2026-08-14-si-flw-056.md（追加2 PR・最大6 sessionを消化）",
       "statement": "M2是正の追加予算を人間が再裁定し、budget SSOTとrun manifestへ反映する",
-      "status": "open"
+      "status": "resolved",
+      "resolution": "2026-08-15 に hide が裁定（A: 出荷面を M0 read-only へ限定、C: M2 scope 縮小）。移送分の予算計上は後続の再裁定に送る"
     }
   ],
   "carried_over": [
