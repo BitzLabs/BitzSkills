@@ -372,15 +372,29 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
             operation=operation, code="BLOCKED", repo=root, summary=str(exc), stage="plan",
         ), R.CompactView()
 
+    # 承認モードは配備が決める（`SI-FLW-061`）。registry があれば署名を要求し、無ければ
+    # plan digest（`--confirm`）と operation_id 由来の単回 nonce だけで承認する。
+    # plan の時点で提示しないと、人間はどちらの承認を求められているか判らない。
+    signed_mode = worktree_runtime.signature_mode_available(plan_value.common_dir)
+    approval_mode = (
+        worktree_runtime.C.MODE_SIGNED_CAPABILITY if signed_mode
+        else worktree_runtime.C.MODE_PLAN_DIGEST
+    )
+    preconditions = ["plan snapshot一致"]
+    preconditions.append(
+        "単回Ed25519 capability一致" if signed_mode
+        else "operation_id一致とoperation_id由来の単回nonce"
+    )
     data = R.empty_data()
     data.update({
         "target": {"path": plan_value.path, "branch": plan_value.branch},
-        "preconditions": ["plan snapshot一致", "単回Ed25519 capability一致"],
+        "preconditions": preconditions,
         "effects": list(plan_value.effects),
         "postconditions": ["worktree/branch/receiptを再観測して一致"],
         "concurrency_key": plan_value.context.worktree_dir_guard_key,
         "evidence": ["operation_id", "snapshot", "receipt digest"],
         "capability_context": dataclasses.asdict(plan_value.context),
+        "approval_mode": approval_mode,
     })
     if not args.apply:
         result = R.build_result(
@@ -391,21 +405,22 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
             stage="plan", data=data,
         )
         return result, R.CompactView(tokens={"action": args.action, "branch": args.branch})
-    if not (args.confirm and args.capability_file):
+    if not args.confirm or (signed_mode and not args.capability_file):
+        required = "--confirm and --capability-file" if signed_mode else "--confirm"
         return _simple_result(
             operation=operation, code="APPROVAL_REQUIRED", repo=root,
-            summary="--confirm and --capability-file are required", stage="validate",
+            summary=f"{required} are required", stage="validate",
         ), R.CompactView()
     try:
         import json
         from pathlib import Path
-        capability = worktree_runtime.capability_from_json(
-            json.loads(Path(args.capability_file).read_text(encoding="utf-8"))
-        )
-        public_keys = worktree_runtime.load_trusted_keys(plan_value.common_dir)
+        capability = None
+        if signed_mode:
+            capability = worktree_runtime.capability_from_json(
+                json.loads(Path(args.capability_file).read_text(encoding="utf-8"))
+            )
         decision = worktree_runtime.apply(
             plan_value, confirm=args.confirm, capability=capability,
-            public_keys=public_keys,
             backup_receipt=args.backup_receipt,
         )
     except (OSError, ValueError, worktree_runtime.RuntimeError) as exc:

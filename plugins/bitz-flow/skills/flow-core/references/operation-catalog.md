@@ -108,8 +108,10 @@ data schema は `schemas/operations/git.diff-summary.schema.json`。
 | `worktree.finish` | destructive | explicit-human | merged worktreeとlocal branch除去 | reconcile-first |
 | `worktree.discard` | destructive | explicit-human | retention ref作成後にworktreeとlocal branch除去 | manual-only |
 
-writeは副作用なしのplanで`operation_id`と`capability_context`を返す。applyは同じ入力、
-`--confirm <operation_id>`、`--capability-file`を要求する。trusted Ed25519 public keyは
+writeは副作用なしのplanで`operation_id`と`capability_context`、`approval_mode`を返す。
+applyの要求は承認モードで決まる（`SI-FLW-061`）。既定の`plan-digest`では同じ入力と
+`--confirm <operation_id>`だけを要求し、nonceは`operation_id`から導出する。
+trusted key registryがある配備では`signed-capability`となり`--capability-file`も要求する。trusted Ed25519 public keyは
 Git common-dirの`bitz-flow-v2/trusted-worktree-keys.json`からだけ読み、CLI引数で差し替えない。
 registryはowner-only regular fileでなければならない。各mutation直前に署名・期限・scope・identityを
 再検査し、nonceを永続消費する。receiptはcommon-dir配下へhash-chainでfsyncし、部分失敗は

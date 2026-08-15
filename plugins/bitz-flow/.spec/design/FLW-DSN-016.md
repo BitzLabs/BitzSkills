@@ -2,7 +2,7 @@
 id: FLW-DSN-016
 title: "M2 worktree safety詳細設計"
 status: active
-version: 2.5
+version: 2.6
 updated: 2026-08-15
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-006, FLW-NFR-007, FLW-NFR-011, FLW-NFR-012, FLW-CON-005, FLW-CON-006
@@ -332,23 +332,40 @@ case-sensitive と判定するが、worktree-dir は create 時に必ず不在�
 - **代替手段**: TOCTOU と承認使い回しは、guard の保持ではなく**署名付き単回 capability**で閉じる。
   これは M1 が quarantine 解除後の mutation に対して既に採っている方式であり、新規機構ではない。
 
-> **改訂予定（2026-08-15 の裁定 B2。`SI-FLW-061` で反映する）**
->
-> 本節以下の「署名付き単回 capability」は、**署名を条件付きへ縮退**する。
-> 承認の既定は `--confirm <operation_id>` ＋ 単回 nonce ＋ `expires_at` とし、
-> 署名検査は **trusted key registry が存在する配備でのみ**有効化する（鍵隔離が前提条件）。
->
-> 根拠は次の2点（詳細は `.spec/reports/investigation-2026-08-15-capability-reduction.md`）。
->
-> 1. 本節が「M1 からそのまま再利用」と述べる envelope は、M1 では署名対象に `reviewer` を
->    持ち registry を repository owner が管理していた。M2 への移植で `reviewer` が落ち、
->    承認者 ≠ executor という前提だけが失われた
-> 2. `worktree_runtime.plan()` の `operation_id` は下表の署名対象 field を含む facts の
->    digest であり、apply は `--confirm` 一致に加えて**各副作用の直前に plan を再導出**して
->    同一性を再検査する。下表の scope / freshness field は同じ束縛の二重持ちである
->
-> 裁定記録は `.spec/reports/decision-2026-08-15-capability-b2.md`。
-> 本節の規範文言そのものの改訂は `SI-FLW-061` の実装と同じ変更セットで行う。
+### 承認モード（2026-08-15 裁定 B2。`SI-FLW-061` で実装）
+
+上の「署名付き単回 capability」は、**配備によって署名を要求するかどうかが決まる**。
+
+| モード | 条件 | 承認入力 |
+|---|---|---|
+| `plan-digest`（既定） | trusted key registry が無い | `--confirm <operation_id>` のみ |
+| `signed-capability` | trusted key registry がある（鍵隔離が前提） | `--confirm` ＋ `--capability-file` |
+
+モードは result の `data.approval_mode` へ出す。plan の時点で提示しなければ、
+人間はどちらの承認を求められているか判らないため、READY にも含める。
+
+**なぜ既定で署名を要らないか**（`.spec/reports/investigation-2026-08-15-capability-reduction.md`）:
+
+1. 本節が「M1 からそのまま再利用」と述べる envelope は、M1 では署名対象に `reviewer` を持ち
+   registry を repository owner が管理していた。M2 への移植で `reviewer` が落ち、
+   承認者 ≠ executor という前提だけが失われた
+2. `operation_id` は下の署名対象表の scope / freshness field を含む facts の digest であり、
+   apply は `--confirm` 一致に加えて**各副作用の直前に plan を再導出**して同一性を再検査する。
+   下表の scope / freshness は同じ束縛の二重持ちである
+
+したがって既定モードで残すのは、この経路でしか得られない2点だけとする。
+
+- **nonce の単回性**。nonce は `operation_id` から決定的に導出する
+  （呼び出し側が選べると再試行のたびに新しい値を選べてしまい、`SYN-011` を閉じられない）。
+  署名モードでも同じ導出値でなければ拒否する
+- **identity 観測の整合**（`create` は nonexistence、instance operation は instance identity）
+
+`expires_at` による時間ベースの期限は**署名モードでのみ**有効とする。
+既定モードでは呼び出し側が任意の値を書けるため承認の束縛にならず、
+鮮度は plan 再導出による構造的検査に委ねる。
+
+trusted key registry は `apply()` 自身が読む（`FLW-REV-016:RSK-204`）。
+呼び出し側から鍵を受け取らない。
 
 ### repo 外承認 capability（GP-002 / GP-011）
 

@@ -84,6 +84,12 @@ class WorktreeApprovalContext:
 SignatureVerifier = Callable[[dict[str, Any], str, str], bool]
 
 
+#: 承認モード。`plan-digest` が既定で、trusted key registry のある配備だけ `signed-capability`。
+MODE_PLAN_DIGEST = "plan-digest"
+MODE_SIGNED_CAPABILITY = "signed-capability"
+MODES = frozenset({MODE_PLAN_DIGEST, MODE_SIGNED_CAPABILITY})
+
+
 def authorize_worktree_write(
     capability: WorktreeApprovalCapability | None,
     *,
@@ -92,8 +98,11 @@ def authorize_worktree_write(
     trusted_key_ids: Sequence[str],
     nonce_state: str,
     verify_signature: SignatureVerifier,
+    mode: str = MODE_SIGNED_CAPABILITY,
 ) -> CapabilityFailure | None:
     """worktree write を in-band で許可できるか fail-closed に判定する。"""
+    if mode == MODE_PLAN_DIGEST:
+        return _authorize_plan_digest(context, nonce_state, (NONCE_UNUSED,))
     return _authorize_worktree_write(
         capability, context=context, now=now, trusted_key_ids=trusted_key_ids,
         nonce_state=nonce_state, allowed_nonce_states=(NONCE_UNUSED,),
@@ -108,13 +117,44 @@ def reauthorize_pending_worktree_write(
     now: datetime,
     trusted_key_ids: Sequence[str],
     verify_signature: SignatureVerifier,
+    mode: str = MODE_SIGNED_CAPABILITY,
 ) -> CapabilityFailure | None:
     """nonce消費後、各mutating step直前に同じscopeと署名を再検証する。"""
+    if mode == MODE_PLAN_DIGEST:
+        return _authorize_plan_digest(context, NONCE_USED_PENDING, (NONCE_USED_PENDING,))
     return _authorize_worktree_write(
         capability, context=context, now=now, trusted_key_ids=trusted_key_ids,
         nonce_state=NONCE_USED_PENDING, allowed_nonce_states=(NONCE_USED_PENDING,),
         verify_signature=verify_signature,
     )
+
+
+def _authorize_plan_digest(
+    context: WorktreeApprovalContext, nonce_state: str, allowed_nonce_states: Sequence[str],
+) -> CapabilityFailure | None:
+    """署名なしモードの判定（`SI-FLW-061`）。
+
+    scope と freshness は `operation_id`（承認 context 全体の digest）と apply 側の
+    plan 再導出が既に束縛しているため、ここでは**再確認しない**。
+    自明に真になる比較を承認の根拠として並べると反証できない検査になるためである
+    （`FLW-REV-016:SYN-007` と同じ失敗を持ち込まない）。
+
+    本経路が担うのは次の2点だけである。
+
+    1. nonce の単回性。nonce は `operation_id` から導出されるため承認へ束縛されている
+    2. plan が生成した identity 観測が operation に対して整合していること
+    """
+    if nonce_state not in allowed_nonce_states:
+        return CapabilityFailure(CODE_BLOCKED, f"承認 nonce は再利用できない: {nonce_state}")
+    if context.operation_id == "worktree.create":
+        if context.nonexistence_digest is None or context.instance_identity_digest is not None:
+            return CapabilityFailure(CODE_BLOCKED, "create の identity 観測が不正")
+    elif context.operation_id in _INSTANCE_OPERATIONS:
+        if context.instance_identity_digest is None or context.nonexistence_digest is not None:
+            return CapabilityFailure(CODE_BLOCKED, "instance operation の identity 観測が不正")
+    else:
+        return CapabilityFailure(CODE_BLOCKED, "承認対象外の operation")
+    return None
 
 
 def _authorize_worktree_write(

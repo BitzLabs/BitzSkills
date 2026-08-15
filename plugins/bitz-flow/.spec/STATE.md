@@ -1,5 +1,9 @@
 # STATE — status 遷移ログ
 
+- 2026-08-15 FLW-TSK-082: pending → implementing（`SI-FLW-061` の B2 実装。承認モードを配備で決め、既定は plan-digest。nonce は operation_id から導出。`apply()` が自ら registry を読む）
+- 2026-08-15 FLW-DSN-016: 2.5 → 2.6（§4 の改訂予定を承認モードの規範本文へ差し替え）
+- 2026-08-15 M2是正枠 run manifest: 記録機構を先行履行（`evals/flow-core/m2-eval/record_run.py`。予算裁定の着手条件・`SYN-015` の是正）
+- 2026-08-15 M2 confirmation: codex が1回 TimeoutExpired で BLOCKED。`FLW-NFR-011` が認める harness 再試行1回で再実走し 3platform PASS（156件・runtime check 18/18）
 - 2026-08-15 M2是正予算: **段階承認 4 PR / 13 session**（hide のチャット裁定。P3案。`SI-FLW-061` → `SI-FLW-057` の順で着手し、残りは実績つきで再提示。付帯条件: run manifest 記録の着手条件化・着手順固定・予算到達時の自動停止。裁定参照: .spec/reports/decision-2026-08-15-m2-remediation-budget.md）
 - 2026-08-15 budget の PR 定義: **実装 PR のみを数える**（裁定・調査・記録は budget 外。裁定参照: 同上）
 - 2026-08-15 FLW-DSN-014: 1.20 → 1.21（M2是正枠とPR定義を budget SSOT へ反映。claude on behalf of hide; 代行実行・実行者未検証; 裁定参照: 同上）

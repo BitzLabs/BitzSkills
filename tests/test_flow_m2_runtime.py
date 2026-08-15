@@ -39,7 +39,10 @@ def repository(tmp_path):
     return repo, root
 
 
-def signed(plan, nonce):
+def signed(plan, nonce=None):
+    # nonce は operation_id から導出される（SI-FLW-061）。
+    # 明示指定は「導出値と違う nonce を拒否する」negative fixture のためだけに使う。
+    nonce = W.derive_nonce(plan.operation_id) if nonce is None else nonce
     values = {
         **dataclasses.asdict(plan.context),
         "expires_at": datetime.now(timezone.utc) + timedelta(minutes=10),
@@ -78,19 +81,19 @@ def test_FLW_FR_006_create_resume_finish_actual_git_worktree(repository):
     repo, root = repository
     path = root / "feature"
     create = W.plan(repo, action="create", path=path, branch="feat/runtime", worktree_root=root)
-    cap, keys = signed(create, "nonce-create")
-    result = W.apply(create, confirm=create.operation_id, capability=cap, public_keys=keys)
+    cap, keys = signed(create)
+    result = W.apply(create, confirm=create.operation_id, capability=cap, trusted_keys_for_test=keys)
     assert result.code == "DONE"
     assert path.is_dir() and git(path, "branch", "--show-current") == "feat/runtime"
 
     resume = W.plan(repo, action="resume", path=path, branch="feat/runtime", worktree_root=root)
-    cap, keys = signed(resume, "nonce-resume")
-    assert W.apply(resume, confirm=resume.operation_id, capability=cap, public_keys=keys).code == "DONE"
+    cap, keys = signed(resume)
+    assert W.apply(resume, confirm=resume.operation_id, capability=cap, trusted_keys_for_test=keys).code == "DONE"
 
     git(repo, "merge", "--ff-only", "feat/runtime")
     finish = W.plan(repo, action="finish", path=path, branch="feat/runtime", worktree_root=root)
-    cap, keys = signed(finish, "nonce-finish")
-    result = W.apply(finish, confirm=finish.operation_id, capability=cap, public_keys=keys)
+    cap, keys = signed(finish)
+    result = W.apply(finish, confirm=finish.operation_id, capability=cap, trusted_keys_for_test=keys)
     assert result.code == "DONE"
     assert not path.exists()
     assert subprocess.run(["git", "show-ref", "--verify", "refs/heads/feat/runtime"], cwd=repo).returncode != 0
@@ -100,15 +103,15 @@ def test_FLW_CON_006_discard_retains_tip_and_removes_actual_worktree(repository)
     repo, root = repository
     path = root / "discard"
     create = W.plan(repo, action="create", path=path, branch="feat/discard", worktree_root=root)
-    cap, keys = signed(create, "nonce-create-discard")
-    assert W.apply(create, confirm=create.operation_id, capability=cap, public_keys=keys).code == "DONE"
+    cap, keys = signed(create)
+    assert W.apply(create, confirm=create.operation_id, capability=cap, trusted_keys_for_test=keys).code == "DONE"
     (path / "change.txt").write_text("committed\n", encoding="utf-8")
     git(path, "add", "change.txt"); git(path, "commit", "-m", "discard me")
     tip = git(path, "rev-parse", "HEAD")
 
     discard = W.plan(repo, action="discard", path=path, branch="feat/discard", worktree_root=root)
-    cap, keys = signed(discard, "nonce-discard")
-    result = W.apply(discard, confirm=discard.operation_id, capability=cap, public_keys=keys)
+    cap, keys = signed(discard)
+    result = W.apply(discard, confirm=discard.operation_id, capability=cap, trusted_keys_for_test=keys)
     assert result.code == "DONE" and not path.exists()
     retained = git(repo, "for-each-ref", "--format=%(objectname)", "refs/bitz-flow/retained/")
     assert tip in retained
@@ -118,14 +121,14 @@ def test_FLW_CON_005_missing_bad_or_reused_capability_has_no_git_side_effect(rep
     repo, root = repository
     path = root / "blocked"
     plan = W.plan(repo, action="create", path=path, branch="feat/blocked", worktree_root=root)
-    cap, keys = signed(plan, "nonce-blocked")
+    cap, keys = signed(plan)
     wrong = dataclasses.replace(cap, signature=base64.b64encode(b"x" * 64).decode())
-    result = W.apply(plan, confirm=plan.operation_id, capability=wrong, public_keys=keys)
+    result = W.apply(plan, confirm=plan.operation_id, capability=wrong, trusted_keys_for_test=keys)
     assert result.code == "BLOCKED" and not path.exists()
-    result = W.apply(plan, confirm="sha256:wrong", capability=cap, public_keys=keys)
+    result = W.apply(plan, confirm="sha256:wrong", capability=cap, trusted_keys_for_test=keys)
     assert result.code == "STALE" and not path.exists()
-    assert W.apply(plan, confirm=plan.operation_id, capability=cap, public_keys=keys).code == "DONE"
-    second = W.apply(plan, confirm=plan.operation_id, capability=cap, public_keys=keys)
+    assert W.apply(plan, confirm=plan.operation_id, capability=cap, trusted_keys_for_test=keys).code == "DONE"
+    second = W.apply(plan, confirm=plan.operation_id, capability=cap, trusted_keys_for_test=keys)
     assert second.code == "BLOCKED"
 
 
@@ -133,23 +136,23 @@ def test_FLW_CON_006_crash_before_first_mutation_quarantines_nonce_without_side_
     repo, root = repository
     path = root / "crash"
     plan = W.plan(repo, action="create", path=path, branch="feat/crash", worktree_root=root)
-    cap, keys = signed(plan, "nonce-crash")
+    cap, keys = signed(plan)
     result = W.apply(
-        plan, confirm=plan.operation_id, capability=cap, public_keys=keys,
+        plan, confirm=plan.operation_id, capability=cap, trusted_keys_for_test=keys,
         step_hook=lambda step: (_ for _ in ()).throw(W.RuntimeError(f"crash:{step}")),
     )
     assert result.code == "BLOCKED" and not path.exists()
-    assert W.apply(plan, confirm=plan.operation_id, capability=cap, public_keys=keys).code == "BLOCKED"
+    assert W.apply(plan, confirm=plan.operation_id, capability=cap, trusted_keys_for_test=keys).code == "BLOCKED"
 
 
 def test_FLW_CON_005_state_change_after_plan_is_stale_and_has_no_git_side_effect(repository):
     repo, root = repository
     path = root / "occupied"
     plan = W.plan(repo, action="create", path=path, branch="feat/occupied", worktree_root=root)
-    cap, keys = signed(plan, "nonce-occupied")
+    cap, keys = signed(plan)
     path.mkdir()
 
-    result = W.apply(plan, confirm=plan.operation_id, capability=cap, public_keys=keys)
+    result = W.apply(plan, confirm=plan.operation_id, capability=cap, trusted_keys_for_test=keys)
 
     assert result.code == "BLOCKED"
     assert git(repo, "branch", "--list", "feat/occupied") == ""
@@ -172,17 +175,17 @@ def test_FLW_CON_006_partial_discard_retains_tip_and_quarantines_receipt(reposit
     repo, root = repository
     path = root / "partial"
     create = W.plan(repo, action="create", path=path, branch="feat/partial", worktree_root=root)
-    cap, keys = signed(create, "nonce-create-partial")
-    assert W.apply(create, confirm=create.operation_id, capability=cap, public_keys=keys).code == "DONE"
+    cap, keys = signed(create)
+    assert W.apply(create, confirm=create.operation_id, capability=cap, trusted_keys_for_test=keys).code == "DONE"
     discard = W.plan(repo, action="discard", path=path, branch="feat/partial", worktree_root=root)
-    cap, keys = signed(discard, "nonce-discard-partial")
+    cap, keys = signed(discard)
 
     def fail_after_retention(step):
         if step == "git-worktree-remove":
             raise W.RuntimeError("injected after retention")
 
     result = W.apply(
-        discard, confirm=discard.operation_id, capability=cap, public_keys=keys,
+        discard, confirm=discard.operation_id, capability=cap, trusted_keys_for_test=keys,
         step_hook=fail_after_retention,
     )
 
@@ -231,3 +234,54 @@ def test_FLW_CON_006_dispatcher_apply_creates_no_worktree(repository):
     assert json.loads(proc.stdout)["code"] == "UNSUPPORTED"
     assert not target.exists()
     assert "feat/cli" not in git(repo, "branch", "--format=%(refname:short)")
+
+
+# === plan-digest モード（既定。SI-FLW-061） ===================================
+
+
+def test_SI_FLW_061_plan_digest_mode_applies_without_a_signature(repository):
+    """registry が無い配備では署名なしで承認が成立し、実 worktree が作られること。"""
+    repo, root = repository
+    create = W.plan(repo, action="create", path=root / "pd", branch="feat/pd", worktree_root=root)
+    assert not W.signature_mode_available(create.common_dir)
+    result = W.apply(create, confirm=create.operation_id)
+    assert result.code == "DONE", result.summary
+    assert (root / "pd").is_dir()
+
+
+def test_SI_FLW_061_plan_digest_rejects_confirm_mismatch_without_side_effect(repository):
+    repo, root = repository
+    create = W.plan(repo, action="create", path=root / "pd2", branch="feat/pd2", worktree_root=root)
+    result = W.apply(create, confirm="sha256:" + "0" * 64)
+    assert result.code == "STALE"
+    assert not (root / "pd2").exists()
+
+
+def test_SI_FLW_061_nonce_is_derived_from_operation_id_and_blocks_reuse(repository):
+    """nonce は承認へ束縛される。同じ承認の再適用は消費済みとして拒否されること。"""
+    repo, root = repository
+    create = W.plan(repo, action="create", path=root / "pd3", branch="feat/pd3", worktree_root=root)
+    assert W.derive_nonce(create.operation_id) == W.derive_nonce(create.operation_id)
+    assert W.derive_nonce(create.operation_id) != W.derive_nonce(create.operation_id + "x")
+    assert W.apply(create, confirm=create.operation_id).code == "DONE"
+    again = W.apply(create, confirm=create.operation_id)
+    assert again.code in {"BLOCKED", "STALE"}
+
+
+def test_SI_FLW_061_signed_mode_rejects_a_capability_whose_nonce_is_not_derived(repository):
+    """署名モードでも nonce は operation_id 由来でなければ拒否されること。"""
+    repo, root = repository
+    create = W.plan(repo, action="create", path=root / "pd4", branch="feat/pd4", worktree_root=root)
+    cap, keys = signed(create, "attacker-chosen-nonce")
+    result = W.apply(create, confirm=create.operation_id, capability=cap, trusted_keys_for_test=keys)
+    assert result.code == "BLOCKED"
+    assert not (root / "pd4").exists()
+
+
+def test_SI_FLW_061_signed_mode_requires_a_capability(repository):
+    repo, root = repository
+    create = W.plan(repo, action="create", path=root / "pd5", branch="feat/pd5", worktree_root=root)
+    _, keys = signed(create)
+    result = W.apply(create, confirm=create.operation_id, trusted_keys_for_test=keys)
+    assert result.code == "BLOCKED"
+    assert not (root / "pd5").exists()
