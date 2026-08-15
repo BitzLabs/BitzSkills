@@ -367,7 +367,7 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
             worktree_root=args.worktree_root, start_point=args.start_point,
             default_branch=args.default_branch,
         )
-    except worktree_runtime.RuntimeError as exc:
+    except worktree_runtime.WorktreeRuntimeError as exc:
         return _simple_result(
             operation=operation, code="BLOCKED", repo=root, summary=str(exc), stage="plan",
         ), R.CompactView()
@@ -423,7 +423,7 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
             plan_value, confirm=args.confirm, capability=capability,
             backup_receipt=args.backup_receipt,
         )
-    except (OSError, ValueError, worktree_runtime.RuntimeError) as exc:
+    except (OSError, ValueError, KeyError, worktree_runtime.WorktreeRuntimeError) as exc:
         return _simple_result(
             operation=operation, code="BLOCKED", repo=root, summary=str(exc), stage="apply",
         ), R.CompactView()

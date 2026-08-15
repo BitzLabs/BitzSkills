@@ -20,3 +20,12 @@
 - **Verification Method**: unit-test
 - **テスト**: discardはtip retention後だけ除去し、fault injectionはreceipt prefixとnonceを
   quarantineへ確定して自動再実行しない。
+
+### FLW-NFR-012 mutation境界の例外分類（SI-FLW-057）
+
+- **導出元種別**: Unwanted Behavior
+- **Verification Method**: unit-test
+- **テスト**: 副作用適用後に素の `ValueError` / `KeyError` が起きたとき、`BLOCKED`（副作用前に停止）
+  ではなく `PARTIAL` を返し、completed steps を伴うこと。旧実装で落ちる陽性対照を同梱する。
+- **テスト**: `create` / `resume` の receipt が cleanup 核の step 列の真の前置として
+  reconcile できること。未知 operation は既定へ倒さず `INDETERMINATE` にすること。
