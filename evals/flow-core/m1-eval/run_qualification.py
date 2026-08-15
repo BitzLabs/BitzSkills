@@ -45,8 +45,10 @@ CLI_COMMANDS: dict[str, list[str]] = {
                "--setting-sources", "project", "--strict-mcp-config"],
     "codex": ["codex", "exec", "--ignore-user-config", "--ignore-rules", "--ephemeral",
               "--sandbox", "read-only", "--json", "--cd", "{repo}", "{prompt}"],
-    "antigravity": ["agy", "--new-project", "--print", "{prompt}", "--output-format", "stream-json",
-                    "--mode", "accept-edits", "--sandbox=false", "--dangerously-skip-permissions"],
+    # 観測 trial に書き込みは要らない。`--sandbox=false` と `--dangerously-skip-permissions` は
+    # 被験エージェントに被験リポジトリを書き換えさせ、実際に無許可コミット事故を起こした
+    # （`SI-FLW-062`）。付けない。
+    "antigravity": ["agy", "--new-project", "--print", "{prompt}", "--output-format", "stream-json"],
 }
 CLI_BINARY = {"claude": "claude", "codex": "codex", "antigravity": "agy"}
 
@@ -116,6 +118,47 @@ def _digest(*parts: str) -> str:
     return R.sha256_of(R.canonical_bytes(list(parts)))
 
 
+def _git_out(repo: Path, *args: str) -> str:
+    """観測は失敗しても例外を投げない。観測不能は before/after で同じ値になるため
+    hazard を作らないが、git が動かない環境では harness 自体が成立しないので許容する。"""
+    try:
+        proc = subprocess.run(["git", *args], cwd=repo, capture_output=True, text=True,
+                              check=False)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return f"<unavailable:{type(exc).__name__}>"
+    return proc.stdout if proc.returncode == 0 else f"<error:{proc.returncode}>"
+
+
+def repo_state_digest(repo: Path) -> str:
+    """被験リポジトリの観測可能な状態を1つの digest に畳む（`SI-FLW-062`）。
+
+    HEAD・ref 一覧・作業ツリーの汚れ・worktree 一覧を含める。trial の前後で比較し、
+    変化していれば被験エージェントが被験リポジトリを触ったことになる。
+    """
+    return R.sha256_of(R.canonical_bytes([
+        _git_out(repo, "rev-parse", "HEAD"),
+        _git_out(repo, "for-each-ref", "--format=%(refname) %(objectname)"),
+        _git_out(repo, "status", "--porcelain"),
+        _git_out(repo, "worktree", "list", "--porcelain"),
+    ]))
+
+
+def scratch_repo(workdir: Path, name: str) -> Path:
+    """trial の cwd に使う使い捨てリポジトリを作る（被験リポジトリを cwd にしない）。"""
+    target = workdir / "scratch" / name
+    target.mkdir(parents=True, exist_ok=True)
+    (target / "README.md").write_text("scratch fixture\n", encoding="utf-8")
+    for args in (["init", "-q", "."], ["add", "README.md"],
+                 ["-c", "user.name=eval", "-c", "user.email=eval@example.invalid",
+                  "commit", "-q", "-m", "scratch"]):
+        try:
+            subprocess.run(["git", *args], cwd=target, check=False,
+                           capture_output=True, text=True)
+        except (OSError, subprocess.SubprocessError):
+            break
+    return target
+
+
 def run_trial(
     platform: str, kind: str, *, repo: Path, workdir: Path, dry_run: bool,
     timeout: int = DEFAULT_TIMEOUT_SECONDS,
@@ -129,8 +172,13 @@ def run_trial(
         # （CI には 3 platform の CLI が無い）。
         return None, f"{platform}: CLI が見つからないため {kind} を実行できない"
 
-    command = build_command(platform, prompt=spec["prompt"], repo=repo)
+    # 被験リポジトリを cwd にしない（`SI-FLW-062`）。trial は「計測器が repo を観測できるか」を
+    # 測るものなので、使い捨ての fixture で足りる。被験リポジトリは前後比較の対象に回す。
     canary = f"{CANARY_PREFIX}-{platform}-{kind}"
+    subject_before = _digest("dry-run") if dry_run else repo_state_digest(repo)
+    cwd = repo if dry_run else scratch_repo(workdir, f"{platform}-{kind}")
+    command = build_command(platform, prompt=spec["prompt"], repo=cwd)
+    timed_out = False
 
     if dry_run:
         stdout, exit_code, duration_ms = f"dry-run {canary}", 0, 0.0
@@ -139,15 +187,29 @@ def run_trial(
         try:
             proc = subprocess.run(
                 command, capture_output=True, text=True, stdin=subprocess.DEVNULL,
-                timeout=timeout, check=False, cwd=str(repo),
+                timeout=timeout, check=False, cwd=str(cwd),
             )
             stdout, exit_code = proc.stdout, proc.returncode
-        except subprocess.TimeoutExpired:
-            return None, f"{platform}: {kind} が {timeout} 秒で timeout した"
+        except subprocess.TimeoutExpired as exc:
+            # timeout でも副作用の有無を確かめてから BLOCKED を確定する。
+            # 事故時は timeout の裏でエージェントが commit していた。
+            stdout, exit_code, timed_out = (exc.stdout or b"").decode("utf-8", "replace"), None, True
         except OSError as exc:
             return None, f"{platform}: {kind} を起動できない（{type(exc).__name__}）"
         duration_ms = (time.monotonic() - started) * 1000.0
         stdout = f"{canary}\n{stdout}"
+
+    subject_after = _digest("dry-run") if dry_run else repo_state_digest(repo)
+    hazards: tuple[str, ...] = ()
+    residuals: tuple[str, ...] = ()
+    if subject_after != subject_before:
+        hazards = (f"subject-repo-mutated:{platform}:{kind}",)
+        residuals = (f"subject-repo-state-changed:{subject_before[:19]}->{subject_after[:19]}",)
+    if timed_out:
+        reason = f"{platform}: {kind} が {timeout} 秒で timeout した"
+        if hazards:
+            reason += "（timeout 中に被験リポジトリが変更された）"
+        return None, reason
 
     guard = G.RawLogGuard(workdir / "raw" / platform, owner="owner-1")
     log, failure = guard.store(f"{kind}.log", stdout, canaries=[canary], now=datetime.now(timezone.utc))
@@ -156,15 +218,14 @@ def run_trial(
 
     observed = 1 if (dry_run or exit_code is not None) else 0
     checks = tuple(Q.CheckResult(check_id, 1, observed) for check_id in spec["checks"])
-    fixture_digest = _digest(platform, kind, "fixture")
 
     return (
         Q.TrialOutcome(
             kind=kind,
             credential_class="local-only",
             capability=("cli-available", "raw-log-guard", "isolation"),
-            fixture_initial_digest=fixture_digest,
-            fixture_final_digest=fixture_digest,
+            fixture_initial_digest=subject_before,
+            fixture_final_digest=subject_after,
             sandbox_boundary=str(workdir.name),
             cli_identity=cli_version(platform),
             model_identity=f"{platform}-default",
@@ -175,8 +236,8 @@ def run_trial(
             positive_control_ids=spec["controls"],
             positive_controls_detected=spec["controls"] if observed else (),
             oracle_digest=_digest(kind, "oracle"),
-            residual_side_effects=(),
-            hazardous_events=(),
+            residual_side_effects=residuals,
+            hazardous_events=hazards,
         ),
         None,
     )
