@@ -214,6 +214,29 @@ def ed25519_verifier(public_keys: Mapping[str, str]) -> C.SignatureVerifier:
     return verify
 
 
+def derive_nonce(operation_id: str) -> str:
+    """承認 nonce を `operation_id` から決定的に導出する（`SI-FLW-061`）。
+
+    呼び出し側が nonce を自由に選べると、再試行のたびに新しい値を選ぶだけで
+    単回性が承認の束縛にならない（`FLW-REV-011:SYN-011` を閉じられない）。
+    `operation_id` は承認 context 全体の digest なので、これに束縛すると
+
+    - 同じ承認の再利用 → 同じ nonce → ledger が `USED` → 拒否
+    - 世界が変わった → 新しい `operation_id` → 新しい nonce → 新規承認が必要
+
+    となり、承認と単回性が一致する。
+    """
+    return R.sha256_of(("bitz-flow/worktree-nonce/v1:" + operation_id).encode())
+
+
+def signature_mode_available(common_dir: str | Path) -> bool:
+    """trusted key registry が使える配備かを、例外を投げずに判定する（モード判定用）。"""
+    try:
+        return bool(load_trusted_keys(common_dir))
+    except RuntimeError:
+        return False
+
+
 def load_trusted_keys(common_dir: str | Path) -> dict[str, str]:
     """固定owner-only registryからtrusted public keyだけを読む。CLI引数で差し替えない。"""
     path = Path(common_dir) / "bitz-flow-v2" / "trusted-worktree-keys.json"
@@ -299,32 +322,62 @@ class _ReceiptLog:
 
 
 def apply(
-    plan_value: RuntimePlan, *, confirm: str, capability: C.WorktreeApprovalCapability,
-    public_keys: Mapping[str, str], backup_receipt: bool = False,
+    plan_value: RuntimePlan, *, confirm: str,
+    capability: C.WorktreeApprovalCapability | None = None,
+    backup_receipt: bool = False,
     step_hook: Callable[[str], None] | None = None,
+    trusted_keys_for_test: Mapping[str, str] | None = None,
 ) -> RuntimeDecision:
+    """承認済み plan を適用する。
+
+    承認モードは配備が決める（`SI-FLW-061`）。trusted key registry があれば
+    `signed-capability`、無ければ `plan-digest`。registry は**本関数が自ら読む**
+    （`FLW-REV-016:RSK-204`。呼び出し側から鍵を受け取らない）。
+    `trusted_keys_for_test` は fixture 専用の注入口であり、公開経路では使わない。
+    """
     if confirm != plan_value.operation_id:
         return RuntimeDecision("STALE", "operation_id mismatch", remaining_steps=plan_value.effects)
-    try:
-        verifier = ed25519_verifier(public_keys)
-    except RuntimeError as exc:
-        return RuntimeDecision("UNSUPPORTED", str(exc), remaining_steps=plan_value.effects)
     common = Path(plan_value.common_dir)
-    ledger = _NonceLedger(common, capability.nonce)
+    public_keys: Mapping[str, str] = trusted_keys_for_test or {}
+    if trusted_keys_for_test is None and signature_mode_available(common):
+        public_keys = load_trusted_keys(common)
+    mode = C.MODE_SIGNED_CAPABILITY if public_keys else C.MODE_PLAN_DIGEST
+
+    verifier: C.SignatureVerifier = lambda payload, signature, key_id: False
+    if mode == C.MODE_SIGNED_CAPABILITY:
+        if capability is None:
+            return RuntimeDecision(
+                "BLOCKED", "署名モードでは単回承認 capability が必要",
+                remaining_steps=plan_value.effects,
+            )
+        try:
+            verifier = ed25519_verifier(public_keys)
+        except RuntimeError as exc:
+            return RuntimeDecision("UNSUPPORTED", str(exc), remaining_steps=plan_value.effects)
+
+    # nonce はどちらのモードでも operation_id から導出し、承認へ束縛する。
+    nonce = derive_nonce(plan_value.operation_id)
+    if mode == C.MODE_SIGNED_CAPABILITY and capability is not None and capability.nonce != nonce:
+        return RuntimeDecision(
+            "BLOCKED", "capability の nonce が operation_id から導出された値と一致しない",
+            remaining_steps=plan_value.effects,
+        )
+    ledger = _NonceLedger(common, nonce)
     failure = C.authorize_worktree_write(
         capability, context=plan_value.context, now=datetime.now(timezone.utc),
-        trusted_key_ids=tuple(public_keys), nonce_state=ledger.state(), verify_signature=verifier,
+        trusted_key_ids=tuple(public_keys), nonce_state=ledger.state(),
+        verify_signature=verifier, mode=mode,
     )
     if failure is not None:
         return RuntimeDecision(failure.code, failure.reason, remaining_steps=plan_value.effects)
-    if not ledger.begin(capability.nonce, plan_value.operation_id):
-        return RuntimeDecision("BLOCKED", "capability nonce already consumed", remaining_steps=plan_value.effects)
+    if not ledger.begin(nonce, plan_value.operation_id):
+        return RuntimeDecision("BLOCKED", "承認 nonce は消費済み", remaining_steps=plan_value.effects)
     receipts = _ReceiptLog(common)
     completed: list[str] = []
     try:
         receipts.append({"operation_id": plan_value.operation_id, "state": "PENDING", "completed_steps": []})
     except (RuntimeError, OSError, ValueError) as exc:
-        ledger.finish(capability.nonce, plan_value.operation_id, C.NONCE_QUARANTINED)
+        ledger.finish(nonce, plan_value.operation_id, C.NONCE_QUARANTINED)
         return RuntimeDecision("BLOCKED", str(exc), remaining_steps=plan_value.effects)
     repo, path = Path(plan_value.repo), Path(plan_value.path)
 
@@ -341,7 +394,7 @@ def apply(
             current_context = refreshed.context
         pending_failure = C.reauthorize_pending_worktree_write(
             capability, context=current_context, now=datetime.now(timezone.utc),
-            trusted_key_ids=tuple(public_keys), verify_signature=verifier,
+            trusted_key_ids=tuple(public_keys), verify_signature=verifier, mode=mode,
         )
         if pending_failure is not None:
             raise RuntimeError(pending_failure.reason)
@@ -384,13 +437,13 @@ def apply(
             _git(repo, "branch", "-D" if plan_value.action == "discard" else "-d", plan_value.branch)
             completed.append("delete-local-branch")
         receipt = receipts.append({"operation_id": plan_value.operation_id, "state": "DONE", "completed_steps": completed})
-        ledger.finish(capability.nonce, plan_value.operation_id, C.NONCE_USED_DONE)
+        ledger.finish(nonce, plan_value.operation_id, C.NONCE_USED_DONE)
         return RuntimeDecision("DONE", f"worktree.{plan_value.action} completed", tuple(completed), (), (receipt,))
     except (RuntimeError, OSError) as exc:
         try:
             receipts.append({"operation_id": plan_value.operation_id, "state": "QUARANTINED", "completed_steps": completed})
         finally:
-            ledger.finish(capability.nonce, plan_value.operation_id, C.NONCE_QUARANTINED)
+            ledger.finish(nonce, plan_value.operation_id, C.NONCE_QUARANTINED)
         remaining = plan_value.effects[len(completed):]
         code = "PARTIAL" if completed else "BLOCKED"
         return RuntimeDecision(code, str(exc), tuple(completed), tuple(remaining))

@@ -34,8 +34,11 @@ status: accepted
 - **提案する修正**:
   1. 署名検査（`algorithm` / `key_id` / signature）を条件付きにする。
      trusted key registry が存在しない配備では要求しない。
-  2. 既定モードの承認入力を `--confirm <operation_id>` ＋ `--nonce` ＋ `expires_at` とする。
-     `--capability-file` は署名モードでのみ必須とする。
+  2. 既定モードの承認入力を **`--confirm <operation_id>` のみ**とし、nonce は
+     `operation_id` から決定的に導出する（実装時の修正。当初案の `--nonce` は
+     呼び出し側が自由に選べるため単回性が承認を束縛せず `SYN-011` を閉じられない）。
+     `expires_at` による時間ベースの期限は署名モードでのみ有効とし、既定モードの鮮度は
+     plan 再導出による構造的検査に委ねる。`--capability-file` は署名モードでのみ必須。
   3. 承認モードを result へ明示する（候補: `data.approval_mode` =
      `"plan-digest"` / `"signed-capability"`）。schema 追加の要否を含めて決める。
   4. `apply()` が自ら `load_trusted_keys(common_dir)` を呼ぶ。`public_keys` 引数は削除するか、
