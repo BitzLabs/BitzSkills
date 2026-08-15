@@ -1,5 +1,8 @@
 # STATE — status 遷移ログ
 
+- 2026-08-15 FLW-REV-016: M2実動confirmationとExit再レビュー **FAIL 2.85**（5観点を独立エージェントへ並列委譲。`FLW-REV-015:GP-001` は not-discharged、`GP-002` は partially-discharged。出口8項目中3項目 BLOCKED）
+- 2026-08-15 M2 出口: **未達**。Completion Gate は保留を継続し、P0 4件（`FLW-REV-016:SYN-002`〜`SYN-005`）の是正予算を人間が再裁定する（`FLW-REV-016:GP-005`）
+- 2026-08-15 FLW-TSK-081: implementing → done（3platform実動confirmation実走、active manifest置換、Exit再レビュー完了。confirmation用ガード緩和の全面バイパス `SYN-001` は同PR内で解消）
 - 2026-08-14 M2 Design Gate: PASS（hideのチャット裁定。FLW-REV-014 PASS 4.25、全finding解消。`FLW-GATE-003`、裁定参照: .spec/reports/decision-2026-08-14-m2-design-gate.md）
 - 2026-08-14 FLW-DSN-016: draft → active（codex on behalf of hide; GatePassage: FLW-GATE-003; 裁定参照: .spec/reports/decision-2026-08-14-m2-design-gate.md）
 

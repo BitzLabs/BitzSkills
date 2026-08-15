@@ -1,0 +1,348 @@
+{
+  "schema_version": 2,
+  "review_id": "FLW-REV-016",
+  "verdict": "FAIL",
+  "aggregate_score": 2.85,
+  "perspective_scores": {
+    "business": 3.2,
+    "consistency": 3.0,
+    "data-integrity": 2.65,
+    "operations": 2.9,
+    "risk": 2.7
+  },
+  "findings_summary": {
+    "before_dedup": 57,
+    "after_dedup": 20,
+    "p0": 5,
+    "p1": 6,
+    "p2": 5,
+    "p3": 4
+  },
+  "findings": [
+    {
+      "id": "FLW-REV-016:SYN-001",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "OPS-301",
+        "RSK-201"
+      ],
+      "title": "confirmation用に足したallow経路がガードレール全体をバイパスする",
+      "detail": "scripts/agy_guard.pyのallow判定がDENY_PATTERNS走査より前にreturnし、args配下の任意フィールドの文字列が許可形に一致すれば全体がallowになった。実測で `;rm$IFS-rf$IFS/…`、`$(id)`、バッククォート、`&&sudo$IFS-i`、および兄弟フィールド（dict/list/入れ子）へ `sudo rm -rf /` を積む形の6経路が deny→allow に反転した。",
+      "recommendation": "deny走査をallowより前に置き、許可形はshell metacharacter禁止と絶対パス正規表現で拘束し、同居フィールドも無害性を検査する。",
+      "tracked_by": "FLW-TSK-081",
+      "status": "resolved"
+    },
+    {
+      "id": "FLW-REV-016:SYN-002",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "DIN-201"
+      ],
+      "title": "receiptのstep語彙が安全核と不一致でprefix収束が成立しない",
+      "detail": "worktree_runtime.MUTATING_STEPS は finish で `git-worktree-remove`/`delete-local-branch` を記録するが、worktree_cleanup.FINISH_STEPS は `verify-pr-merge`…`remove-worktree-dir`/`delete-local-branch` であり語彙が別物である。実receiptの非空前置列をreconcile_stepsへ入力するとfinish/discardとも例外なくINDETERMINATEになる。GP-001が証明対象としたreceipt prefix収束はruntime私有の閉じた集合内でのみ自明に成立している。",
+      "recommendation": "step語彙をSSOT化し、runtimeが書くreceiptとcleanup核が読むstep列を同一集合に統一したうえで、全crash境界のprefix収束をfixtureで再証明する。",
+      "tracked_by": "SI-FLW-057",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-016:SYN-003",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "DIN-101",
+        "RSK-202"
+      ],
+      "title": "例外遮蔽により破壊的な部分適用がBLOCKEDとして誤報される",
+      "detail": "worktree_runtime.py が module 内で `class RuntimeError(ValueError)` を定義して組み込み例外を遮蔽しており、副作用適用ループの `except (RuntimeError, OSError)` は素のValueError/KeyErrorを捕捉しない（plan側の except は ValueError を含むのに mutation 側だけ欠けている）。receipt append の失敗時に worktree と branch は作成済み、QUARANTINED receipt なし、nonce は USED_PENDING 固着のまま、CLI は「副作用前に停止」を意味する BLOCKED を返す。",
+      "recommendation": "遮蔽している例外クラスを固有名へ改名し、mutation境界のexceptをplan側と同じ閉集合に揃え、receipt永続化失敗をquarantine確定経路へ接続する。",
+      "tracked_by": "SI-FLW-057",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-016:SYN-004",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "OPS-101"
+      ],
+      "title": "raw logをdigest化直後に破棄しており証跡が第三者検証不能",
+      "detail": "run_local_confirmation.py は raw log の digest だけを manifest へ書き、本体を保持しない（raw_log_committed: false）。FLW-NFR-011 が SHALL で要求する owner-only 境界・redaction・最大30日保持・削除担当と削除証跡のmanifest記録がM2 harnessに無く、M1が持つ raw_log_guard.py も未使用である。hazard 0 / residual 0 / test ID 一致を後から検証する手段が存在しない。",
+      "recommendation": "M1のraw_log_guardをM2 harnessへ接続し、保持境界・redaction・削除証跡をmanifestへ記録する。",
+      "tracked_by": "SI-FLW-058",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-016:SYN-005",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "OPS-401",
+        "DIN-302"
+      ],
+      "title": "公開されていないM1 local-write 4 operationをPASSとしてactive化している",
+      "detail": "active manifest の operations は `git.stage`/`git.commit`/`git.fetch`/`git.sync`/`worktree.*` を確認済みとして列挙するが、cli.py の _HANDLERS が公開するのは repo.inspect / git.status / git.diff-summary / worktree.{audit,create,resume,finish,discard} だけで、前4者は dispatcher に存在しない。縮退規則3の解除はまさにこの4 operationの公開を意味するため、証跡と主張が逆向きである。`worktree.*` のワイルドカードも未実測・将来operationまで認証範囲に含めてしまう。",
+      "recommendation": "manifestのoperationsを実際に公開かつ実測した閉集合へ限定し、ワイルドカードを廃する。",
+      "tracked_by": "SI-FLW-058",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-016:SYN-006",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RVC-201",
+        "RSK-302",
+        "OPS-404",
+        "OPS-201"
+      ],
+      "title": "公開dispatcher経由のwrite網羅がcreateのplanのみ",
+      "detail": "tests/test_flow_m2_runtime.py の8件のうち7件は worktree_runtime を直呼びし、dispatcherを通るのは create --plan（read-only）1件だけである。resume/finish/discard/audit と全fault経路は公開入口を通らない。GP-001原文の「公開dispatcherから全worktree writeを起動し」を満たしていない。",
+      "recommendation": "4 write operationと主要fault経路をcli.main経由のE2Eで再構成する。",
+      "tracked_by": "SI-FLW-059",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-016:SYN-007",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "OPS-102",
+        "BIZ-201",
+        "RVC-203",
+        "RSK-402"
+      ],
+      "title": "hazard/residual/required_check/positive_controlが実測ではなく定数",
+      "detail": "local_confirmation_subject.py は `required_checks=2/2 positive_controls=2/2 hazards=0 residuals=0` を固定文字列として出力し、run_local_confirmation.py は marker 一致から `0 if valid else 1` を写像するだけである。run前後のリポジトリ状態digest比較も残留副作用の測定機構も存在しないため、これらの値は反証不能な恒真値である。実測されているのは tests 件数・test ID digest・runtime check の3つのみ。",
+      "recommendation": "run前後のworktree一覧とgit statusのdigestを取得して残留副作用を実測し、required check / positive control を台帳から導出する。",
+      "tracked_by": "SI-FLW-058",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-016:SYN-008",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "DIN-301",
+        "RVC-202"
+      ],
+      "title": "compatibility_keyが認可核とfixtureを覆わない",
+      "detail": "COMPATIBILITY_INPUTS の7ファイルに worktree_capability.py / guard.py / worktree_cleanup.py / recovery.py と対象fixture10本が含まれず、CLI version・model identity も指紋外である。認可核を変えてもactive manifestが失効しない。FLW-NFR-011が要求する `evidence_id` との分離も未実装である。",
+      "recommendation": "指紋入力をFLW-NFR-011の列挙へ揃え、raw log digestとrun固有metadataからなるevidence_idを分離して記録する。",
+      "tracked_by": "SI-FLW-058",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-016:SYN-009",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "OPS-402"
+      ],
+      "title": "qualification 24時間・confirmation 7日のTTLが未強制",
+      "detail": "qualification summary は expires_at を持つが、これを読むコードは evals/flow-core/m2-eval/ 配下・scripts/ 配下・該当テストのいずれにも存在しない。runner が照合するのは gate_status と compatibility_key だけであり、期限超過を `blocked` にするFLW-NFR-011のSHALLが実装されていない。",
+      "recommendation": "runnerにfingerprint TTL照合を実装し、期限超過をBLOCKEDとして非ゼロ終了させる。",
+      "tracked_by": "SI-FLW-058",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-016:SYN-010",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "DIN-204",
+        "RSK-401"
+      ],
+      "title": "backup-receiptが未実装でdiscardが未コミット変更を破壊しうる",
+      "detail": "`--backup-receipt` は退避の実行も検証も記録も行わない。retention ref はcommit済みtipだけを守るため、dirty worktreeのdiscardで未コミット変更が失われる。さらに discard の `git branch -D` は retention 済み oid との再照合なしに走り、remove→delete 間で進んだ tip が回復不能になりうる。",
+      "recommendation": "退避の実行と検証をreceiptへ記録し、branch削除前にretention済みoidとの一致を再確認する。",
+      "tracked_by": "SI-FLW-057",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-016:SYN-011",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RVC-101",
+        "RSK-205"
+      ],
+      "title": "公開worktree.auditが契約層を通らずquarantineへ未接続",
+      "detail": "_op_worktree の audit 分岐は private `_git` を直呼びする `git worktree list --porcelain` の薄いラッパであり、失敗がresultにならずtracebackになる。`--limit`/`--timeout` も無視される。M2出口条件の「operation外変更のaudit検出・quarantine接続」が公開経路で未達である。",
+      "recommendation": "auditを契約層（result/エラー分類）へ載せ、外部変更検出からquarantineまでを公開経路で接続する。",
+      "tracked_by": "SI-FLW-059",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-016:SYN-012",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "RSK-101",
+        "OPS-103"
+      ],
+      "title": "coordinator・lease・append-only台帳がM2 harnessで未使用",
+      "detail": "concurrency_key を宣言するだけでtarget単位の相互排他が無く、並行applyのfixtureは0件である。manifestからqualificationへの証跡チェーンも欠落し、attempt台帳・lease記録が存在しない。M1が実装済みの coordinator / ledger / isolation をM2 confirmationが利用していない。",
+      "recommendation": "M1の台帳機構をM2 confirmationへ接続し、target単位排他のfaultを追加する。",
+      "tracked_by": null,
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-016:SYN-013",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "DIN-202",
+        "DIN-203"
+      ],
+      "title": "receipt payloadに監査・復旧情報がなくchainの切詰めが検出不能",
+      "detail": "receipt payload は path / branch / tip / retention ref / timestamp を持たず、事後の監査も復旧もできない。chain末尾の切詰めはsequence埋め直しで再連結でき検出されない一方、中間削除では全worktree writeが恒久停止する。",
+      "recommendation": "receipt payloadへ復旧に必要な最小の観測値を含め、chain長と終端をmanifestへ拘束する。",
+      "tracked_by": null,
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-016:SYN-014",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "BIZ-101"
+      ],
+      "title": "M2出口4要件がapprovedのままで出口条件と証拠の対応表が無い",
+      "detail": "FLW-FR-006 / FLW-FR-007 は2026-07-31以来 approved のままで、M2 が implements する要件に verified は0件である。8つの出口条件それぞれを証拠へ突き合わせた表がどこにも存在せず、m2-exit test-spec が扱うのは3要件にとどまる。`.spec/verification/` の証跡も0件。",
+      "recommendation": "出口条件8項目×証拠の対応表を作り、要件statusと検証証跡をSDDの規律どおりに前進させる。",
+      "tracked_by": null,
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-016:SYN-015",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "BIZ-401"
+      ],
+      "title": "承認済み是正予算がbudget SSOTへ未反映でM2 run manifestが0件",
+      "detail": "FLW-DSN-014 / FLW-DSN-016 / ROADMAP はいずれも SI-FLW-056 を参照せず「6 PR / 20 session」のままだが、人間裁定を含む実際の承認総額は 8 PR / 26 session である。M0は40件超、M1は1件のrun manifestがあるのに m2-eval には0件で、ROADMAP自身が定める「実績PR数・session数をrun manifestへ記録する」運用規則が未履行である。",
+      "recommendation": "budget SSOTへ是正枠を反映し、M2のrun manifestを起こして実績を記録する。",
+      "tracked_by": null,
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-016:SYN-016",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "RVC-102",
+        "RVC-301"
+      ],
+      "title": "公開集合の二重定義と--help文言が実態と逆を述べる",
+      "detail": "公開operation集合が PUBLISHED_OPERATIONS と _HANDLERS に二重定義され、機械検査は後者のみを見るため前者は死んだ宣言である。公開CLIの --help は「M0: read-only の3 operation」、`--apply`/`--confirm`/`--approval-ref` は「（M1 以降）」のままで、destructive writeを公開した事実と逆を述べる。ROADMAP.md:65 も「dispatcherの公開集合はM0の3 operationのまま」と述べ続けている。",
+      "recommendation": "公開集合をSSOT化して機械検査を一本化し、--helpとROADMAPの現在地記述を実態へ揃える。",
+      "tracked_by": null,
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-016:SYN-017",
+      "priority": "P3",
+      "severity": "minor",
+      "source": [
+        "RSK-301"
+      ],
+      "title": "recovery.py / worktree_cleanup.pyがどこからもimportされていない",
+      "detail": "PARTIALから前進するための公開operation（quarantine-list / receipt-show / retention-list / prune）が無く、復旧核が実行経路から孤立している。",
+      "recommendation": "前進収束を人間が実行できる読み取り・復旧operationを公開する。",
+      "tracked_by": null,
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-016:SYN-018",
+      "priority": "P3",
+      "severity": "minor",
+      "source": [
+        "RSK-203",
+        "RSK-303"
+      ],
+      "title": "crash実証がhandled exceptionのみで境界も2/7",
+      "detail": "「crash」テストは捕捉された例外であり異常終了ではない。実killが残すterminal record無しの状態は未検証で復帰手段も無い。crash境界の実証はfinishの2境界とdiscard最終境界を欠く2/7にとどまる。",
+      "recommendation": "実プロセスkillによる境界注入を追加し、terminal record欠損からの復旧を検証する。",
+      "tracked_by": null,
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-016:SYN-019",
+      "priority": "P3",
+      "severity": "minor",
+      "source": [
+        "DIN-103",
+        "DIN-102"
+      ],
+      "title": "nonce ledgerのdirectory fsyncとUSED_PENDING回収が無く、終端stepのfreshness検証が恒真",
+      "detail": "nonce ledgerはreceipt logと非対称でdirectory fsyncを行わず、USED_PENDINGの回収機構も持たない。終端の delete-local-branch は現在値を再観測しないためfreshness検証が恒真である。",
+      "recommendation": "nonce ledgerの永続化をreceipt logと対称にし、終端stepでも現在値を再観測する。",
+      "tracked_by": null,
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-016:SYN-020",
+      "priority": "P3",
+      "severity": "minor",
+      "source": [
+        "RVC-103"
+      ],
+      "title": "新規公開したM2 worktree 5 operationがoperation-catalogの11 field契約を満たさない",
+      "detail": "operation-catalog の既存operationは11 fieldの契約行を持つが、M2で公開した5 operationは5列表の記載にとどまる。",
+      "recommendation": "catalogの契約形式へ揃え、機械検査の対象に含める。",
+      "tracked_by": null,
+      "status": "open"
+    }
+  ],
+  "gate_preconditions": [
+    {
+      "id": "GP-001",
+      "kind": "blocking",
+      "basis": "verified",
+      "carried_from": "FLW-REV-015:GP-001",
+      "evidence": "cli.py:_HANDLERS、tests/test_flow_m2_runtime.py（8件中dispatcher経由は create --plan の1件）、worktree_runtime.MUTATING_STEPS と worktree_cleanup.FINISH_STEPS の語彙差",
+      "statement": "公開dispatcherから全worktree writeを起動し、各副作用直前のcapability検証とreceipt prefix収束をE2Eで確認する",
+      "status": "not-discharged"
+    },
+    {
+      "id": "GP-002",
+      "kind": "blocking",
+      "basis": "verified",
+      "carried_from": "FLW-REV-015:GP-002",
+      "evidence": "active-local-confirmation.json（3platform PASS・146件・同一test ID digest・runtime check 8/8）と、hazard/residualが固定文字列由来である local_confirmation_subject.py の実装",
+      "statement": "実動worktree operationを対象に3platform confirmationを再実行し、同一test ID集合・hazard 0・residual 0のactive manifestへ置換する",
+      "status": "partially-discharged"
+    },
+    {
+      "id": "GP-003",
+      "kind": "blocking",
+      "basis": "verified",
+      "evidence": "FLW-REV-016:SYN-002 / SYN-003",
+      "statement": "receiptのstep語彙を安全核と統一し、mutation境界の例外分類を是正して、部分適用がBLOCKEDと誤報されないことをfaultで実証する",
+      "status": "open"
+    },
+    {
+      "id": "GP-004",
+      "kind": "blocking",
+      "basis": "verified",
+      "evidence": "FLW-REV-016:SYN-004 / SYN-007 / SYN-009",
+      "statement": "confirmation証跡をFLW-NFR-011の契約（raw log保持境界・実測hazard/residual・TTL照合）へ適合させる",
+      "status": "open"
+    },
+    {
+      "id": "GP-005",
+      "kind": "agenda",
+      "basis": "verified",
+      "evidence": "FLW-REV-016:SYN-015、decision-2026-08-14-si-flw-056.md（追加2 PR・最大6 sessionを消化）",
+      "statement": "M2是正の追加予算を人間が再裁定し、budget SSOTとrun manifestへ反映する",
+      "status": "open"
+    }
+  ],
+  "carried_over": [
+    "FLW-REV-015:SYN-001"
+  ],
+  "conditional_items": []
+}

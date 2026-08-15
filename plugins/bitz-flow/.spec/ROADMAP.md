@@ -62,7 +62,10 @@ v2 はこれを、3プラットフォーム（Claude Code / Codex CLI / Antigrav
 M1-6 の範囲は裁定により **qualification のみ**とし、被測定物の confirmation は M2 以降へ送った
 （`.spec/reports/decision-2026-08-12-m1-6-scope.md`）。縮退規則3で M2 未完了の間は Git write を
 公開せず、cross-host 予約・lease を証明できないため remote-write confirmation が成立しないことによる。
-**M1 operation は引き続き `UNSUPPORTED`** であり、dispatcher の公開集合は M0 の3 operation のままである。
+**M1 operation は引き続き `UNSUPPORTED`** である。dispatcher の公開集合は M2-2 以降
+`worktree.{audit,create,resume,finish,discard}` を含む（`FLW-TSK-080`）が、
+`git.stage` / `git.commit` / `git.fetch` / `git.sync` は未公開のままである
+（公開集合の正は `flowlib/cli.py` の `_HANDLERS`。`--help` 文言の追随は `FLW-REV-016:SYN-016`）。
 
 途中で bitz-sdd のライフサイクルに `verified → implementing`（人間裁定必須）を追加した（#199）。
 M0 で read の一部だけを検証して verified になった要件の残りを実装できない行き止まりを解いたもので、
@@ -92,7 +95,8 @@ Promotion GateのGatePassageで検分される。
 | 要件承認ゲート | 人間 | FLW-REV-004 / FLW-REV-005 と draft 要件の diff | 完了（2026-07-31。一括承認） |
 | **M0 出口** | 機械（eval）+ 人間確認 | FLW-DSN-014 の M0 出口条件 | **PASS（2026-08-11、第14ラウンド）** |
 | **M1 出口** | 機械（fixture）+ 人間確認 | FLW-DSN-014 の出口・予算・縮退境界 | **PASS（2026-08-12）** |
-| M2〜M5 出口 | 機械（fixture / canary）+ 人間確認 | FLW-DSN-014 の出口・予算・縮退境界 | 未実施 |
+| **M2 出口** | 機械（fixture）+ 人間確認 | FLW-DSN-014 の出口・予算・縮退境界 | **未達（2026-08-15。FLW-REV-016 FAIL 2.85、出口8項目中3項目 BLOCKED）** |
+| M3〜M5 出口 | 機械（fixture / canary）+ 人間確認 | FLW-DSN-014 の出口・予算・縮退境界 | 未実施 |
 | Promotion Gate | 人間 | 全 milestone green、canary、代行遷移の検分 | 未実施 |
 
 レビュー PASS は人間による要件承認を代替しない（FLW-REV-004 のゲート勧告）。
@@ -161,6 +165,10 @@ M2 が未完了のままでは worktree-first の安全境界が閉じないた�
   `M2-FLT-001`〜`057` 全件 PASS、enum 三者照合 green、全worktree writeの承認capability検証、
   operation外変更のaudit検出・quarantine接続、**`write_target: local` の被測定物 confirmationが3 platformでPASS**、
   着手前 reconnaissance の必須化
+- **出口再判定（2026-08-15）**: `FLW-REV-016` **FAIL 2.85**。8項目中「全worktree writeの
+  in-band capability検証」「operation外変更のaudit→quarantine」「3platform被測定物confirmation」の
+  3項目が BLOCKED。`SI-FLW-056` の追加 2 PR / 最大6 session は消化済みであり、
+  P0（`SYN-002`〜`SYN-005`）の是正には人間の予算再裁定が要る（`FLW-REV-016:GP-005`）
 - budget: **6 PR / 20 session**（2026-08-12 再校正）。4 PR / 14 session に
   M1-6 の confirmation 区分（+1 PR / +3 session。`SI-FLW-045`）と
   `SI-FLW-046` の scope 追加（+1 PR / +3 session）を加えた値

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""M2 local-write confirmation subject。独立tmp repoを使うfixtureだけを実行する。"""
+"""M2 local-write confirmation subject。実Git worktree E2Eを同一test ID集合で実行する。"""
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import re
 import subprocess
 import sys
@@ -20,12 +21,32 @@ FILES = (
     "tests/test_flow_m2_reconnaissance.py",
     "tests/test_flow_m2_cleanup.py",
     "tests/test_flow_m2_remote_delete.py",
+    "tests/test_flow_m2_runtime.py",
 )
+
+#: 実Git worktree副作用を観測する実動E2Eファイル（runtime check の母数はここから導出する）。
+RUNTIME_FILE = "tests/test_flow_m2_runtime.py"
+
+
+def _suite(root: Path, python: str) -> tuple[list[str], str, int]:
+    proc = subprocess.run(
+        [python, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider", *FILES],
+        cwd=root, capture_output=True, text=True, check=False,
+    )
+    test_ids = sorted(line.strip() for line in proc.stdout.splitlines() if "::" in line)
+    if proc.returncode != 0 or not test_ids:
+        raise RuntimeError("confirmation test ID collection failed")
+    runtime_checks = sum(1 for test_id in test_ids if test_id.startswith(RUNTIME_FILE + "::"))
+    if runtime_checks == 0:
+        raise RuntimeError("runtime check collection failed")
+    digest = "sha256:" + hashlib.sha256("\n".join(test_ids).encode()).hexdigest()
+    return test_ids, digest, runtime_checks
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", required=True)
+    parser.add_argument("--describe", action="store_true")
     args = parser.parse_args()
     root = Path(args.repo).resolve()
     common = subprocess.run(
@@ -34,6 +55,14 @@ def main() -> int:
     ).stdout.strip()
     workspace_python = Path(common).parent / ".venv" / "bin" / "python"
     python = str(workspace_python) if workspace_python.is_file() else sys.executable
+    test_ids, test_id_digest, runtime_checks = _suite(root, python)
+    if args.describe:
+        print(
+            "M2_CONFIRMATION_SUITE "
+            f"tests={len(test_ids)} test_id_digest={test_id_digest} "
+            f"runtime_checks={runtime_checks}"
+        )
+        return 0
     command = [python, "-m", "pytest", "-q", "-p", "no:cacheprovider", *FILES]
     proc = subprocess.run(command, cwd=root, capture_output=True, text=True, check=False)
     output = proc.stdout + proc.stderr
@@ -43,8 +72,9 @@ def main() -> int:
         return 1
     print(
         "M2_CONFIRMATION_PASS "
-        f"tests={match.group(1)} required_checks=1/1 positive_controls=1/1 "
-        "hazards=0 residuals=0"
+        f"tests={match.group(1)} test_id_digest={test_id_digest} "
+        f"runtime_checks={runtime_checks}/{runtime_checks} "
+        "required_checks=2/2 positive_controls=2/2 hazards=0 residuals=0"
     )
     return 0
 
