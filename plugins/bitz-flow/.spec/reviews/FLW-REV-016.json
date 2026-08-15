@@ -340,7 +340,7 @@
       "evidence": "FLW-REV-016:SYN-015、decision-2026-08-14-si-flw-056.md（追加2 PR・最大6 sessionを消化）",
       "statement": "M2是正の追加予算を人間が再裁定し、budget SSOTとrun manifestへ反映する",
       "status": "resolved",
-      "resolution": "2026-08-15 に hide が裁定（A: 出荷面を M0 read-only へ限定、C: M2 scope 縮小）。移送分の予算計上は後続の再裁定に送る"
+      "resolution": "2026-08-15 に hide が裁定。scope（A+C）に続き予算も決着し、M2 是正枠 4 PR / 13 session を段階承認して budget SSOT へ反映した（decision-2026-08-15-m2-remediation-budget.md）。残りは先行2件の実績つきで再提示する"
     }
   ],
   "carried_over": [

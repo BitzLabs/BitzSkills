@@ -2,7 +2,7 @@
 id: FLW-DSN-014
 title: "GitHub capability・M0検証設計"
 status: active
-version: 1.20
+version: 1.21
 updated: 2026-08-15
 owner: hide
 implements: FLW-FR-003, FLW-FR-008, FLW-FR-012, FLW-NFR-001, FLW-NFR-008, FLW-NFR-004, FLW-NFR-009, FLW-NFR-010, FLW-NFR-011
@@ -619,6 +619,14 @@ invalidateする。legacy単一JSONLはread-only互換入口とし、新旧Gate�
 生成する連続作業単位」とする。各milestoneはPR予算またはsession予算のどちらかを先に
 使い切った時点で停止し、継続、scope縮小、またはNo-Goを人間へ再提示する。
 
+**budgetが数えるPRの定義**（2026-08-15 裁定。
+`.spec/reports/decision-2026-08-15-m2-remediation-budget.md`）:
+milestone budgetが数えるのは**実装PRだけ**である。裁定材料の作成、裁定記録、調査、
+spec-issueの起票・裁定反映は**budgetの外**に置く。裁定プロセスは実装とは独立に発生するため、
+実装枠へ含めると裁定が進むほど枠が枯れてmilestoneが止まる
+（2026-08-15の6 PR = #274〜#279 が実例）。出荷面の是正（#275）のようにコードを変える
+PRは実装PRであり budget 内に属する。本定義より前の消化分は遡って計上しない。
+
 下表は**M0実績で再校正したbudget**である（2026-08-08。初回の再校正）。各milestone開始時に、
 直前までの実績PR数、実績session数、レビュー修正回数、出口未達理由をrun manifestへ記録し、
 人間が次budgetの維持または変更を確認する。進行中milestoneの上限を暗黙に延長せず、
@@ -691,6 +699,35 @@ M2の設計再整備には、実装枠とは別に**設計再整備 3 PR / 9 ses
 追加する場合は予算内であってもscope変更として人間へ提示する」に従い提示・確定した。
 M1実績（6 PR / 7 session）はM2の下振れ根拠にしない。M2はM1に無いpath安全・repo外境界・
 承認capabilityを含み、新規実装と再利用の比率が異なるためである。
+
+### M2是正枠（2026-08-15 段階承認）
+
+`FLW-REV-016` の残 P0 / P1 を消化するための追加枠。裁定記録は
+`.spec/reports/decision-2026-08-15-m2-remediation-budget.md`。
+
+**先行承認: 4 PR / 13 session**（総額は決めない）
+
+| 区分 | PR | session | 対象 |
+|---|---:|---:|---|
+| 承認経路の縮退 | 2 | 7 | `SI-FLW-061`（B2） |
+| mutation境界の例外分類とreconcile経路 | 2 | 6 | `SI-FLW-057` |
+| **先行合計** | **4** | **13** | 上記2件を通した時点で残りを再提示 |
+
+- session上限は**根拠が無い**（`FLW-REV-016:SYN-015` によりM2のsession実績は未記録）。
+  暫定としてM2実装枠の比率（6 PR / 20 session ≒ 3.3 session/PR）を適用した。
+  実績記録後に再校正する
+- 残り（`SI-FLW-058` / `SI-FLW-059` / Exit再レビュー）は**先行2件の実績つきで再提示**する。
+  総額を先に固めない（M0・M2と同じ経過をたどらないため）
+
+**付帯条件**（3件とも裁定で明示的に付された）:
+
+1. **run manifestの記録を着手条件とする。** 最初のPR（`SI-FLW-061`）に
+   `SI-FLW-058` の一部として記録機構を含め、以後のPRで実績PR数・session数・
+   レビュー修正回数・出口未達理由を記録する（`SYN-015` の是正）
+2. **着手順を `SI-FLW-061` → `SI-FLW-057` に固定する。** 両者は同じ
+   `worktree_runtime.apply()` を触るため、承認経路を縮退させてから例外分類を当てる
+3. **予算到達時は自動停止し人間へ再提示する。** 4 PRまたは13 sessionのどちらかを
+   先に使い切った時点で停止し、継続 / scope縮小 / No-Goを再裁定する
 
 **M3入口条件**（`SI-FLW-045`案Aが送った残債の受け側。**M1→M2で起きた断絶を繰り返さない**）:
 

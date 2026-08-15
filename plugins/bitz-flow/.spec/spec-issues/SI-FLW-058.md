@@ -53,3 +53,5 @@ status: accepted
   変更後は qualification と confirmation の再実走が必要になる。
 
 - **依存**: `FLW-REV-016:GP-004`。予算は `FLW-REV-016:GP-005` の再裁定に従う。
+
+- **着手条件としての先行履行**（2026-08-15 予算裁定）: 本 issue のうち **run manifest の記録機構**は、`SI-FLW-061` の PR に含めて先行履行する。以後の PR で実績 PR 数・session 数・レビュー修正回数・出口未達理由を記録し、残予算の再提示はこの実績に基づいて行う（`FLW-REV-016:SYN-015` の是正）。
