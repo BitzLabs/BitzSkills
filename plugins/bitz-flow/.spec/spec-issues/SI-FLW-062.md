@@ -3,7 +3,7 @@ id: SI-FLW-062
 raised_by: SI-FLW-057 実装中に発生した無許可コミット事故（2026-08-15）
 target: eval harness が被験エージェントへ与える権限と、被験リポジトリの隔離
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 
 - **目的**: eval harness が起動する被験エージェントから、**被験リポジトリを変更する能力を
