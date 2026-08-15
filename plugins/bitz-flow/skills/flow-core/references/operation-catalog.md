@@ -3,8 +3,14 @@
 公開 operation の contract。**この表にない operation は `UNSUPPORTED`**（exit 8）を返して停止し、
 生の `git` / `gh` コマンドを代替案として提示しない。
 
-現在**公開**されているのは M0 read-only 3 operationとM2 worktree operationである。
-M2 writeは署名済み単回capabilityと固定trusted key registryを必須とし、plan/applyを分離する。
+現在**公開**されているのは **M0 read-only 3 operation だけ**である
+（`repo.inspect` / `git.status` / `git.diff-summary`）。公開集合の正は
+`scripts/flowlib/cli.py` の `PUBLISHED_OPERATIONS`（`_HANDLERS` との一致を import 時に強制）。
+
+M2 worktree operation は実装済みだが、M2 出口が未達（`FLW-REV-016` FAIL）のため
+**2026-08-15 の裁定で公開集合から外した**（縮退規則3 の適用。裁定記録は
+`.spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md`）。
+現在は `UNSUPPORTED` を返す。契約は凍結済みで下節に残す。
 
 M1 のoperationは**契約だけを凍結済み**で、Completion Gate裁定までは公開しない
 （下の「M1で凍結した契約（未公開）」節）。
@@ -89,7 +95,10 @@ Git 入力は `diff --name-status -z` と `diff --numstat -z`。
 変更行の内容は返さない（必要なら M1 の `git.diff-detail` を使う）。
 data schema は `schemas/operations/git.diff-summary.schema.json`。
 
-## 公開 operation（M2 worktree）
+## M2 worktree の契約（未公開・`UNSUPPORTED`）
+
+実装済みだが M2 出口通過まで公開しない（2026-08-15 裁定）。
+`worktree.finish` / `worktree.discard` は同裁定で **M3 へ移送**した。
 
 | operation | class | approval | effects | retry |
 |---|---|---|---|---|

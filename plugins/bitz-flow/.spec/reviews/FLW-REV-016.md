@@ -115,11 +115,11 @@ test ID集合digestの固定により**解消**した。
 
 | ID | 区分 | 状態 | 内容 |
 |---|---|---|---|
-| `GP-001` | blocking | **not-discharged** | 公開dispatcherから全worktree writeを起動し、capability検証とreceipt prefix収束をE2Eで確認する |
+| `GP-001` | blocking | **not-discharged** | 公開dispatcherから **M2 scope の** worktree write（`create` / `resume`）を起動し、capability検証とreceipt prefix収束をE2Eで確認する（`finish` / `discard` は 2026-08-15 の裁定で M3 へ移送） |
 | `GP-002` | blocking | **partially-discharged** | 実動confirmationを再実行しactive manifestを置換する（実走・digest一致は達成、hazard/residualの実測が未達） |
 | `GP-003` | blocking | open | receiptのstep語彙を統一し、mutation境界の例外分類を是正する |
 | `GP-004` | blocking | open | confirmation証跡をFLW-NFR-011の契約へ適合させる |
-| `GP-005` | agenda | open | M2是正の追加予算を人間が再裁定し、budget SSOTとrun manifestへ反映する |
+| `GP-005` | agenda | **resolved** | 2026-08-15 に hide が裁定（A: 出荷面を M0 read-only へ限定 / C: M2 scope 縮小）。移送分の予算計上は後続の再裁定に送る |
 
 ## 人間への裁定依頼
 

@@ -1,7 +1,7 @@
 {
   "schema": "bitz-flow/m2-local-confirmation/v1",
-  "issued_at": "2026-08-15T04:42:08.758544Z",
-  "compatibility_key": "sha256:da64ef8c857ff3009f2784fe51dc1fa0b7c7ae2dc0c8e90551bebae68baafc3c",
+  "issued_at": "2026-08-15T12:08:05.525338Z",
+  "compatibility_key": "sha256:07eef2f0a3d288ddcd0dc2e4bf0893487f034e20d4b86398ff49eab469a4499d",
   "write_target": "local",
   "operations": [
     "git.stage",
@@ -10,51 +10,51 @@
     "git.sync",
     "worktree.*"
   ],
-  "required_test_count": 146,
-  "required_test_id_digest": "sha256:c9f83fdab3fecaedd60debf3647886d2051bc051f419f5b9029aa4738f4e580a",
-  "required_runtime_checks": 8,
+  "required_test_count": 151,
+  "required_test_id_digest": "sha256:aa54d555f5ca0be29f5734c8618ae117010a63f035ae456cbcff40fde50b76b4",
+  "required_runtime_checks": 13,
   "platforms": [
     {
       "platform": "claude",
       "status": "PASS",
-      "tests": 146,
-      "test_id_digest": "sha256:c9f83fdab3fecaedd60debf3647886d2051bc051f419f5b9029aa4738f4e580a",
-      "runtime_checks": "8/8",
+      "tests": 151,
+      "test_id_digest": "sha256:aa54d555f5ca0be29f5734c8618ae117010a63f035ae456cbcff40fde50b76b4",
+      "runtime_checks": "13/13",
       "required_checks": "2/2",
       "positive_controls": "2/2",
       "hazardous_events": 0,
       "residual_side_effects": 0,
-      "raw_log_digest": "sha256:f02392fd9b8988fdba8438d03c71772b19ea84c771ab779bd248bed2a2160729",
+      "raw_log_digest": "sha256:e828c23ec52f7648f20120e976680ffb06e86588d4e2222c2243125f93e5ff98",
       "raw_log_committed": false,
-      "elapsed_seconds": 8.596
+      "elapsed_seconds": 11.304
     },
     {
       "platform": "codex",
       "status": "PASS",
-      "tests": 146,
-      "test_id_digest": "sha256:c9f83fdab3fecaedd60debf3647886d2051bc051f419f5b9029aa4738f4e580a",
-      "runtime_checks": "8/8",
+      "tests": 151,
+      "test_id_digest": "sha256:aa54d555f5ca0be29f5734c8618ae117010a63f035ae456cbcff40fde50b76b4",
+      "runtime_checks": "13/13",
       "required_checks": "2/2",
       "positive_controls": "2/2",
       "hazardous_events": 0,
       "residual_side_effects": 0,
-      "raw_log_digest": "sha256:ca89924fa22f2bd984bdf08034216775843532a3d57fd625aba36c88a9c3abdb",
+      "raw_log_digest": "sha256:7df21a2394e7fa0b37a91cc4de6c00e37cc5e72738117a3cf5ac426749af1054",
       "raw_log_committed": false,
-      "elapsed_seconds": 15.333
+      "elapsed_seconds": 16.634
     },
     {
       "platform": "antigravity",
       "status": "PASS",
-      "tests": 146,
-      "test_id_digest": "sha256:c9f83fdab3fecaedd60debf3647886d2051bc051f419f5b9029aa4738f4e580a",
-      "runtime_checks": "8/8",
+      "tests": 151,
+      "test_id_digest": "sha256:aa54d555f5ca0be29f5734c8618ae117010a63f035ae456cbcff40fde50b76b4",
+      "runtime_checks": "13/13",
       "required_checks": "2/2",
       "positive_controls": "2/2",
       "hazardous_events": 0,
       "residual_side_effects": 0,
-      "raw_log_digest": "sha256:c03f793d774d1a94250c360ac8aad44b07413dfac6fa61021aca7e2bba30a4db",
+      "raw_log_digest": "sha256:753ec93363f1a493f1ae8eec66f6405a34141513e481e97d65f5377ecceef715",
       "raw_log_committed": false,
-      "elapsed_seconds": 17.701
+      "elapsed_seconds": 64.262
     }
   ],
   "gate_status": "PASS",

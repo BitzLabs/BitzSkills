@@ -18,16 +18,16 @@ from typing import Any, Sequence
 
 from . import __version__, git_read, result as R, worktree_runtime
 
-# 公開 operation。ここに無い組み合わせは UNSUPPORTED。
+# 公開 operation の SSOT。ここに無い組み合わせは UNSUPPORTED。
+#
+# 現在の出荷面は **M0 read-only の 3 operation だけ**である（裁定 2026-08-15、
+# `.spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md`）。
+# M2 worktree の安全核と runtime adapter は実装済みだが、M2 出口が未達（`FLW-REV-016` FAIL）の
+# 間は ROADMAP の縮退規則3 に従って公開しない。ゲート通過時にここへ戻す。
 PUBLISHED_OPERATIONS = {
     ("repo", "inspect"),
     ("git", "status"),
     ("git", "diff-summary"),
-    ("worktree", "audit"),
-    ("worktree", "create"),
-    ("worktree", "resume"),
-    ("worktree", "finish"),
-    ("worktree", "discard"),
 }
 
 # 公開予定だが当該 milestone まで未対応の operation（UNSUPPORTED の理由付けに使う）。
@@ -105,13 +105,18 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--apply", action="store_true", help="状態変更の実行（M1 以降）")
     parser.add_argument("--confirm", help="plan が返した operation_id（M1 以降）")
     parser.add_argument("--approval-ref", dest="approval_ref", help="外部裁定への参照（M1 以降）")
-    parser.add_argument("--path", help="worktree path")
-    parser.add_argument("--branch", help="worktree branch")
-    parser.add_argument("--worktree-root", dest="worktree_root", help="承認済みworktree root")
-    parser.add_argument("--start-point", default="HEAD", help="worktree.createの開始ref")
-    parser.add_argument("--default-branch", default="main", help="finish到達性を確認するdefault branch")
-    parser.add_argument("--capability-file", help="署名済み単回capability JSON")
-    parser.add_argument("--backup-receipt", action="store_true", help="dirty内容を退避済みであることを提示")
+    # worktree 系の引数は受理するが、operation 自体が M2 出口通過まで UNSUPPORTED である
+    # （裁定 2026-08-15）。黙殺せず受理して UNSUPPORTED を返すのは M0 の read-only 系と同じ扱い。
+    gated = "（worktree は M2 出口通過まで UNSUPPORTED）"
+    parser.add_argument("--path", help=f"worktree path{gated}")
+    parser.add_argument("--branch", help=f"worktree branch{gated}")
+    parser.add_argument("--worktree-root", dest="worktree_root", help=f"承認済みworktree root{gated}")
+    parser.add_argument("--start-point", default="HEAD", help=f"worktree.createの開始ref{gated}")
+    parser.add_argument("--default-branch", default="main",
+                        help=f"finish到達性を確認するdefault branch{gated}")
+    parser.add_argument("--capability-file", help=f"署名済み単回capability JSON{gated}")
+    parser.add_argument("--backup-receipt", action="store_true",
+                        help=f"dirty内容を退避済みであることを提示{gated}")
     return parser
 
 
@@ -444,12 +449,24 @@ _HANDLERS = {
     ("repo", "inspect"): _op_repo_inspect,
     ("git", "status"): _op_git_status,
     ("git", "diff-summary"): _op_git_diff_summary,
+}
+
+#: M2 出口が閉じたときに `_HANDLERS` へ戻す handler（実装は残すが今は公開しない）。
+_GATED_HANDLERS = {
     ("worktree", "audit"): _op_worktree,
     ("worktree", "create"): _op_worktree,
     ("worktree", "resume"): _op_worktree,
     ("worktree", "finish"): _op_worktree,
     ("worktree", "discard"): _op_worktree,
 }
+
+if set(_HANDLERS) != PUBLISHED_OPERATIONS:
+    # 宣言（PUBLISHED_OPERATIONS）と実体（_HANDLERS）の二重定義で乖離させない
+    # （`FLW-REV-016:SYN-016`）。import 時に落として出荷面のズレを検出する。
+    raise RuntimeError(
+        "公開集合の宣言と dispatcher の実体が一致しない: "
+        f"{sorted(PUBLISHED_OPERATIONS ^ set(_HANDLERS))}"
+    )
 
 
 # --- dispatcher --------------------------------------------------------------
@@ -461,7 +478,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     cwd = os.getcwd()
     operation = f"{args.domain}.{args.action}"
 
-    if (args.apply or args.confirm or args.approval_ref) and args.domain != "worktree":
+    # 出荷面は M0 read-only だけなので、状態変更系のフラグは domain を問わず受け付けない
+    # （裁定 2026-08-15。worktree の例外は M2 出口通過まで閉じる）。
+    if args.apply or args.confirm or args.approval_ref:
         return _emit(
             _simple_result(
                 operation=operation,

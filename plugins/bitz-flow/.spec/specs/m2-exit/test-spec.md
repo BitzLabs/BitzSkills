@@ -21,5 +21,10 @@
 - **Verification Method**: benchmark
 - **harness**: `evals/flow-core/m2-eval/run_local_confirmation.py`
 - **対象**: `write_target: local`（stage/commit/fetch/sync/worktree.*）
-- **合格条件**: 3platform PASS、同一test ID集合digest、実worktree runtime check 8/8、
+- **合格条件**: 3platform PASS、同一test ID集合digest、実worktree runtime check が
+  **収集件数と同数**（母数は `tests/test_flow_m2_runtime.py` から導出し、定数で固定しない）、
   required check/positive control 100%、hazard/residual 0。
+- **note**: 2026-08-15 の裁定で dispatcher の公開集合は M0 read-only 3 operation へ限定された
+  （`.spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md`）。
+  runtime check には「worktree が公開入口から到達できないこと」の検査を含む。
+  `manifest.operations` が未公開 operation を列挙している点は `FLW-REV-016:SYN-005` として未解消。

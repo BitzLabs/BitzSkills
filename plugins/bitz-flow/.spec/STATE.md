@@ -1,5 +1,10 @@
 # STATE — status 遷移ログ
 
+- 2026-08-15 出荷面: **M0 read-only 3 operation へ限定**（hide のチャット裁定。`worktree.*` を dispatcher の公開集合から外し `UNSUPPORTED` へ戻した。これで縮退規則3 が出荷物へ適用済みになった。裁定参照: .spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md）
+- 2026-08-15 M2 scope: **縮小**（`create` / `resume` / `audit` を M2 とし、破壊系 `finish` / `discard` を M3 へ移送。裁定参照: 同上）
+- 2026-08-15 FLW-DSN-014: 1.19 → 1.20（M2出口条件・M3入口条件へ移送を反映。claude on behalf of hide; 代行実行・実行者未検証; 裁定参照: 同上）
+- 2026-08-15 FLW-DSN-016: 2.3 → 2.4（scope 節を追加。claude on behalf of hide; 代行実行・実行者未検証; 裁定参照: 同上）
+- 2026-08-15 FLW-REV-016:GP-005: open → **resolved**（追加予算の再裁定が A + C として決着。`GP-001` は新 scope で再定義。移送分の予算計上は後続裁定へ）
 - 2026-08-15 FLW-REV-016: M2実動confirmationとExit再レビュー **FAIL 2.85**（5観点を独立エージェントへ並列委譲。`FLW-REV-015:GP-001` は not-discharged、`GP-002` は partially-discharged。出口8項目中3項目 BLOCKED）
 - 2026-08-15 M2 出口: **未達**。Completion Gate は保留を継続し、P0 4件（`FLW-REV-016:SYN-002`〜`SYN-005`）の是正予算を人間が再裁定する（`FLW-REV-016:GP-005`）
 - 2026-08-15 FLW-TSK-081: implementing → done（3platform実動confirmation実走、active manifest置換、Exit再レビュー完了。confirmation用ガード緩和の全面バイパス `SYN-001` は同PR内で解消）
