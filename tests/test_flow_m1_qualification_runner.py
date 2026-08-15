@@ -222,3 +222,89 @@ def test_cli_can_target_a_single_platform(tmp_path, repo):
     summary = json.loads((out / "summary.json").read_text(encoding="utf-8"))
     assert summary["platforms"] == ["codex"]
     assert any("antigravity" in r for r in summary["gate_reasons"])
+
+
+# === SI-FLW-062: 被験リポジトリの隔離と hazard の実測 =========================
+
+
+def _subject_repo(tmp_path):
+    repo = tmp_path / "subject"
+    repo.mkdir()
+    for args in (["init", "-q", "."], ["add", "-A"],
+                 ["-c", "user.name=t", "-c", "user.email=t@example.invalid",
+                  "commit", "-q", "--allow-empty", "-m", "base"]):
+        subprocess.run(["git", *args], cwd=repo, check=False, capture_output=True, text=True)
+    return repo
+
+
+def test_SI_FLW_062_write_flags_are_not_passed_to_any_platform():
+    """観測 trial に無制限の書き込み権限を与えない。"""
+    flat = " ".join(part for command in RQ.CLI_COMMANDS.values() for part in command)
+    assert "--dangerously-skip-permissions" not in flat
+    assert "--sandbox=false" not in flat
+
+
+def test_SI_FLW_062_repo_state_digest_detects_a_commit(tmp_path):
+    """陽性対照 — 状態が変われば digest が変わること。"""
+    repo = _subject_repo(tmp_path)
+    before = RQ.repo_state_digest(repo)
+    subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@example.invalid",
+                    "commit", "-q", "--allow-empty", "-m", "intruder"],
+                   cwd=repo, check=False, capture_output=True, text=True)
+    assert RQ.repo_state_digest(repo) != before
+
+
+def test_SI_FLW_062_repo_state_digest_detects_a_new_branch(tmp_path):
+    repo = _subject_repo(tmp_path)
+    before = RQ.repo_state_digest(repo)
+    subprocess.run(["git", "checkout", "-q", "-b", "intruder"], cwd=repo,
+                   check=False, capture_output=True, text=True)
+    assert RQ.repo_state_digest(repo) != before
+
+
+def test_SI_FLW_062_trial_records_a_hazard_when_the_subject_repo_is_mutated(tmp_path, monkeypatch):
+    """被験エージェントが被験リポジトリを触ったら hazard として記録されること。"""
+    repo = _subject_repo(tmp_path)
+    workdir = tmp_path / "work"
+
+    real_run = subprocess.run
+
+    def rogue(command, *args, **kwargs):
+        if command and command[0] != "git":
+            # 被験 CLI を装って被験リポジトリへコミットする（事故の再現）
+            real_run(["git", "-c", "user.name=a", "-c", "user.email=a@example.invalid",
+                      "commit", "-q", "--allow-empty", "-m", "rogue"],
+                     cwd=repo, check=False, capture_output=True, text=True)
+            class P:
+                stdout, returncode = "ok", 0
+            return P()
+        return real_run(command, *args, **kwargs)
+
+    monkeypatch.setattr(RQ, "cli_available", lambda platform: True)
+    monkeypatch.setattr(RQ.subprocess, "run", rogue)
+    outcome, reason = RQ.run_trial("claude", "Q-NORMAL", repo=repo, workdir=workdir, dry_run=False)
+    assert reason is None, reason
+    assert outcome.hazardous_events, "無許可の変更が hazard として記録されること"
+    assert outcome.residual_side_effects
+    assert outcome.fixture_initial_digest != outcome.fixture_final_digest
+
+
+def test_SI_FLW_062_clean_trial_records_no_hazard(tmp_path, monkeypatch):
+    """陰性対照 — 被験リポジトリに触らなければ hazard は立たないこと。"""
+    repo = _subject_repo(tmp_path)
+    workdir = tmp_path / "work"
+    real_run = subprocess.run
+
+    def polite(command, *args, **kwargs):
+        if command and command[0] != "git":
+            class P:
+                stdout, returncode = "ok", 0
+            return P()
+        return real_run(command, *args, **kwargs)
+
+    monkeypatch.setattr(RQ, "cli_available", lambda platform: True)
+    monkeypatch.setattr(RQ.subprocess, "run", polite)
+    outcome, reason = RQ.run_trial("claude", "Q-NORMAL", repo=repo, workdir=workdir, dry_run=False)
+    assert reason is None, reason
+    assert outcome.hazardous_events == ()
+    assert outcome.residual_side_effects == ()

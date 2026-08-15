@@ -1,7 +1,7 @@
 {
   "schema": "bitz-flow/m2-local-confirmation/v1",
-  "issued_at": "2026-08-15T14:23:14.789144Z",
-  "compatibility_key": "sha256:38d2f6ca135fbfa4d1c969a4912b607e986a2d2ace8811c86496dfa9bb5cdee1",
+  "issued_at": "2026-08-15T15:18:55.751622Z",
+  "compatibility_key": "sha256:eaa61d9034d4418c821fd3ee5789f17a8afdc4bb249e023ee1ca83e589409bdb",
   "write_target": "local",
   "operations": [
     "git.stage",
@@ -24,9 +24,11 @@
       "positive_controls": "2/2",
       "hazardous_events": 0,
       "residual_side_effects": 0,
-      "raw_log_digest": "sha256:dbb263cbde120fd99378806b8bb15d4a4fef792ade9819e0a9a5d176c59cdb04",
+      "subject_state_before": "sha256:b21215c046af49376bb840e98620745b43d3a8d38dd1431fae79ae7488ed64aa",
+      "subject_state_after": "sha256:b21215c046af49376bb840e98620745b43d3a8d38dd1431fae79ae7488ed64aa",
+      "raw_log_digest": "sha256:e7c3f25497892edc3b0bae1bbdbec5bf6708674a1027cc475c3813fa44de0b54",
       "raw_log_committed": false,
-      "elapsed_seconds": 8.286
+      "elapsed_seconds": 29.839
     },
     {
       "platform": "codex",
@@ -38,9 +40,11 @@
       "positive_controls": "2/2",
       "hazardous_events": 0,
       "residual_side_effects": 0,
-      "raw_log_digest": "sha256:6fbd3f0d4b123f4ee041b624fde0e27f092cdf0be5bc09e9b3d14f0ba6a70845",
+      "subject_state_before": "sha256:b21215c046af49376bb840e98620745b43d3a8d38dd1431fae79ae7488ed64aa",
+      "subject_state_after": "sha256:b21215c046af49376bb840e98620745b43d3a8d38dd1431fae79ae7488ed64aa",
+      "raw_log_digest": "sha256:a739be5e40e0aa460408ce6e43a99cb535026e9a2dce382c86719f62bbb5b6fd",
       "raw_log_committed": false,
-      "elapsed_seconds": 12.668
+      "elapsed_seconds": 11.993
     },
     {
       "platform": "antigravity",
@@ -52,9 +56,11 @@
       "positive_controls": "2/2",
       "hazardous_events": 0,
       "residual_side_effects": 0,
-      "raw_log_digest": "sha256:be089bf76bd35208619bee25dace1d2ee226eec0f7d4e4ad403ec90a60769290",
+      "subject_state_before": "sha256:b21215c046af49376bb840e98620745b43d3a8d38dd1431fae79ae7488ed64aa",
+      "subject_state_after": "sha256:b21215c046af49376bb840e98620745b43d3a8d38dd1431fae79ae7488ed64aa",
+      "raw_log_digest": "sha256:bd44fda9222dcb0aaaa30eb23f04db553480781219d7af369109d1151632839b",
       "raw_log_committed": false,
-      "elapsed_seconds": 23.615
+      "elapsed_seconds": 23.915
     }
   ],
   "gate_status": "PASS",
