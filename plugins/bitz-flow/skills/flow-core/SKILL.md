@@ -2,7 +2,7 @@
 name: flow-core
 description: BitzFlow のメインスキル。プロジェクト状況に応じた Git / GitHub 開発フローの選択（単独開発=feature ブランチ / 複数エージェント並列=worktree / チーム・公開開発=GitHub Issue 駆動 + PR）、Conventional Commits のコミット規定、失敗時の復元方針を規定する。ユーザーが「Git フロー」「ブランチ運用」「コミット規約」「開発フローを決めたい」「並列で開発したい」に言及したとき、または開発作業の開始時にフローが未確定のときに使用する。worktree の実手順は flow-worktree、Issue 駆動 PR の実手順は flow-pr が担当する。
 metadata:
-  version: "0.4.1"
+  version: "0.4.2"
   author: br7.hide
   created: "2026-07-18"
   updated: 2026-08-15

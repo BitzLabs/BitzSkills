@@ -13,6 +13,14 @@
       "review_fixes": 0,
       "unmet_exit_reason": "M2出口条件は未達（SI-FLW-057/058/059 が残る）",
       "recorded_at": "2026-08-15"
+    },
+    {
+      "pr": 282,
+      "issue": "SI-FLW-057",
+      "sessions": 2,
+      "review_fixes": 0,
+      "unmet_exit_reason": "M2出口条件は未達（SI-FLW-058/059 が残る）",
+      "recorded_at": "2026-08-16"
     }
   ]
 }
