@@ -178,11 +178,17 @@ M2 が未完了のままでは worktree-first の安全境界が閉じないた�
   着手前 reconnaissance の必須化
 - **出口再判定（2026-08-15）**: `FLW-REV-016` **FAIL 2.85**（旧 scope の8項目中3項目 BLOCKED）。
   本裁定で scope を縮小したため、出口条件と `GP-001` は新 scope で再定義する。
-  `SI-FLW-056` の追加 2 PR / 最大6 session は消化済みであり、残る P0 の是正には
-  人間の予算再裁定が要る（`FLW-REV-016:GP-005`）
+  `SI-FLW-056` の追加 2 PR / 最大6 session は消化済み
 - budget: **6 PR / 20 session**（2026-08-12 再校正）。4 PR / 14 session に
   M1-6 の confirmation 区分（+1 PR / +3 session。`SI-FLW-045`）と
   `SI-FLW-046` の scope 追加（+1 PR / +3 session）を加えた値
+- **M2 是正枠（2026-08-15 段階承認）**: 先行 **4 PR / 13 session**（`SI-FLW-061` → `SI-FLW-057`）。
+  残り（`058` / `059` / Exit 再レビュー）は先行2件の実績つきで再提示する。総額は決めない。
+  付帯条件は run manifest の記録を着手条件とすること、着手順の固定、予算到達時の自動停止。
+  正は `FLW-DSN-014` の「M2是正枠」節、裁定記録は
+  `.spec/reports/decision-2026-08-15-m2-remediation-budget.md`
+- **budget が数える PR の定義（2026-08-15）**: milestone budget は**実装 PR だけ**を数える。
+  裁定材料・裁定記録・調査・spec-issue の起票と裁定反映は budget の外に置く
 - 縮退境界: M0 read-only prerelease へ縮退（M1 Git write も公開しない）。
   **解除条件**は上記出口条件の充足であり、その時点で M1 の local-write class と
   M2 worktree（`create` / `resume` / `audit`）を同時に公開できる。

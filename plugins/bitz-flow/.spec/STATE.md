@@ -1,5 +1,9 @@
 # STATE — status 遷移ログ
 
+- 2026-08-15 M2是正予算: **段階承認 4 PR / 13 session**（hide のチャット裁定。P3案。`SI-FLW-061` → `SI-FLW-057` の順で着手し、残りは実績つきで再提示。付帯条件: run manifest 記録の着手条件化・着手順固定・予算到達時の自動停止。裁定参照: .spec/reports/decision-2026-08-15-m2-remediation-budget.md）
+- 2026-08-15 budget の PR 定義: **実装 PR のみを数える**（裁定・調査・記録は budget 外。裁定参照: 同上）
+- 2026-08-15 FLW-DSN-014: 1.20 → 1.21（M2是正枠とPR定義を budget SSOT へ反映。claude on behalf of hide; 代行実行・実行者未検証; 裁定参照: 同上）
+- 2026-08-15 FLW-REV-016:GP-005: 予算裁定まで完了（scope に続き予算も決着）
 - 2026-08-15 出荷面: **M0 read-only 3 operation へ限定**（hide のチャット裁定。`worktree.*` を dispatcher の公開集合から外し `UNSUPPORTED` へ戻した。これで縮退規則3 が出荷物へ適用済みになった。裁定参照: .spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md）
 - 2026-08-15 M2 scope: **縮小**（`create` / `resume` / `audit` を M2 とし、破壊系 `finish` / `discard` を M3 へ移送。裁定参照: 同上）
 - 2026-08-15 FLW-DSN-014: 1.19 → 1.20（M2出口条件・M3入口条件へ移送を反映。claude on behalf of hide; 代行実行・実行者未検証; 裁定参照: 同上）

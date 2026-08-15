@@ -63,3 +63,5 @@ status: accepted
 
 - **依存**: `SI-FLW-057`（同じ `apply()` の例外分類を触る）。着手順の調整が要る。
   予算は後続の予算裁定に従う。
+
+- **着手順と予算**（2026-08-15 予算裁定。`.spec/reports/decision-2026-08-15-m2-remediation-budget.md`）: 本 issue を **M2 是正枠の最初の PR** とし、`SI-FLW-057` より先に着手する（同じ `apply()` を触るため）。先行承認は 2 件あわせて 4 PR / 13 session。本 PR には `SI-FLW-058` の run manifest 記録機構を含める。
