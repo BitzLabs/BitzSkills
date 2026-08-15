@@ -14,7 +14,7 @@ import dataclasses
 import datetime as _dt
 import os
 import sys
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 from . import __version__, git_read, result as R, worktree_runtime
 
@@ -340,18 +340,40 @@ def _op_git_diff_summary(root: str, args, started: str) -> tuple[dict, R.Compact
 def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
     operation = f"worktree.{args.action}"
     if args.action == "audit":
-        proc = worktree_runtime._git(__import__("pathlib").Path(root), "worktree", "list", "--porcelain")
-        items = [line for line in proc.stdout.splitlines() if line.startswith("worktree ")]
+        # 以前は private `_git` を直呼びし、失敗が result にならず traceback になっていた。
+        # `--limit` / `--timeout` も無視していた（`FLW-REV-016:SYN-011`）。
+        from pathlib import Path as _Path
+
+        try:
+            proc = worktree_runtime._git(_Path(root), "worktree", "list", "--porcelain")
+        except (worktree_runtime.WorktreeRuntimeError, OSError, ValueError) as exc:
+            return _simple_result(
+                operation=operation, code="UNAVAILABLE", repo=root,
+                summary=f"worktree 一覧を取得できない（{type(exc).__name__}）", stage="inspect",
+            ), R.CompactView()
+        lines = [line for line in proc.stdout.splitlines() if line.startswith("worktree ")]
+        limit = args.limit if args.limit and args.limit > 0 else DEFAULT_ITEM_LIMIT
+        shown = lines[:limit]
+        items = [{"path": line.split(" ", 1)[1]} for line in shown]
+
+        # operation 外の変更検出（`FLW-REV-016:SYN-011` の後半）は**未実装**である。
+        # git の registry は `git worktree add` で必ず登録されるため、registry 照合では
+        # bitz-flow が作ったものと外部で作られたものを区別できない。区別には
+        # bitz-flow 自身の receipt と突き合わせる必要があるが、receipt payload に
+        # path が無い（`FLW-REV-016:SYN-013`）。動かない検出器を出荷しないため、
+        # ここでは検出を主張せず依存を明示する。
         data = R.empty_data()
-        data["items"] = [{"path": line.split(" ", 1)[1]} for line in items]
-        data["page"] = {"shown": len(items), "total": len(items)}
+        data["items"] = items
+        data["page"] = {"shown": len(shown), "total": len(lines),
+                        "truncated": len(lines) > len(shown)}
         data["evidence"] = ["git worktree list --porcelain"]
+        data["external_change_detection"] = "unavailable:receipt-payload-lacks-path"
         result = R.build_result(
             operation=operation, code="OK", repo=root, tool_version=__version__,
-            started_at=started, finished_at=_now(), summary=f"{len(items)} worktrees",
-            snapshot=R.snapshot_of(items), data=data,
+            started_at=started, finished_at=_now(), summary=f"{len(lines)} worktrees",
+            snapshot=R.snapshot_of(lines), data=data, stage="inspect",
         )
-        return result, R.CompactView(tokens={"worktrees": len(items)})
+        return result, R.CompactView(tokens={"worktrees": len(lines)})
 
     missing = [name for name, value in (
         ("--path", args.path), ("--branch", args.branch), ("--worktree-root", args.worktree_root)
@@ -487,15 +509,29 @@ if set(_HANDLERS) != PUBLISHED_OPERATIONS:
 # --- dispatcher --------------------------------------------------------------
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main(argv: Sequence[str] | None = None, *, handlers: Mapping | None = None) -> int:
+    """公開実行入口。
+
+    `handlers` は fixture 専用の注入口である（`SI-FLW-059`、裁定 2026-08-16）。
+    出荷面は 2026-08-15 の裁定で M0 read-only に限定されており、worktree は
+    `_GATED_HANDLERS` に退避している。出口条件が求めるのは「dispatcher の
+    コード経路を通ること」であって事前公開ではないため、fixture が
+    `{**_HANDLERS, **_GATED_HANDLERS}` を渡して公開経路を丸ごと検証できるようにする。
+    **production では既定（`_HANDLERS`）以外を渡さない。** 実行時に破壊的 operation を
+    公開する切替スイッチや環境変数は設けない。
+    """
+    table = _HANDLERS if handlers is None else handlers
     args = build_parser().parse_args(argv)
     started = _now()
     cwd = os.getcwd()
     operation = f"{args.domain}.{args.action}"
 
-    # 出荷面は M0 read-only だけなので、状態変更系のフラグは domain を問わず受け付けない
-    # （裁定 2026-08-15。worktree の例外は M2 出口通過まで閉じる）。
-    if args.apply or args.confirm or args.approval_ref:
+    # 出荷面は M0 read-only だけなので、状態変更系のフラグは受け付けない
+    # （裁定 2026-08-15）。判定は「いま dispatcher が扱える operation か」で行う。
+    # production の既定表に worktree は無いため挙動は変わらない。fixture が
+    # `_GATED_HANDLERS` を注入したときだけ、その operation の apply が通る。
+    write_capable = (args.domain, args.action) in table and args.domain == "worktree"
+    if (args.apply or args.confirm or args.approval_ref) and not write_capable:
         return _emit(
             _simple_result(
                 operation=operation,
@@ -507,7 +543,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.format,
         )
 
-    handler = _HANDLERS.get((args.domain, args.action))
+    handler = table.get((args.domain, args.action))
     if handler is None:
         summary = (
             "この operation は現在の milestone では未対応"

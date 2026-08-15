@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
 import base64
 import dataclasses
 import json
@@ -371,3 +373,115 @@ def test_SI_FLW_057_partial_create_receipt_reconciles_against_the_same_vocabular
     assert done, "DONE receipt が存在する"
     decision = CL.reconcile_steps("worktree.create", tuple(done[-1]["completed_steps"]))
     assert decision.code == "DONE", decision.reason
+
+
+# === SI-FLW-059: 公開 dispatcher 経由の E2E ==================================
+#
+# 出荷面は M0 read-only に限定されている（2026-08-15 裁定）ため、fixture は
+# `{**_HANDLERS, **_GATED_HANDLERS}` を注入して公開経路を丸ごと通す
+# （裁定 2026-08-16。`.spec/reports/decision-2026-08-16-si-flw-059-dispatcher-e2e.md`）。
+# production では既定以外を渡さない。
+
+
+def _dispatch(*argv):
+    """公開 dispatcher を fixture 用ハンドラ表で起動し、結果 JSON を返す。"""
+    from flowlib import cli
+
+    table = {**cli._HANDLERS, **cli._GATED_HANDLERS}
+    buffer = io.StringIO()
+    with contextlib.redirect_stdout(buffer):
+        code = cli.main([*argv, "--format", "json"], handlers=table)
+    return json.loads(buffer.getvalue()), code
+
+
+def test_SI_FLW_059_dispatcher_create_then_resume_via_public_path(repository):
+    """create → resume を公開経路の plan/apply で通し、実 worktree が作られること。"""
+    repo, root = repository
+    target = root / "pub"
+    base = ["worktree", "create", "--repo", str(repo), "--path", str(target),
+            "--branch", "feat/pub", "--worktree-root", str(root)]
+
+    plan_result, _ = _dispatch(*base)
+    assert plan_result["code"] == "READY", plan_result["summary"]
+    assert plan_result["data"]["approval_mode"] == "plan-digest"
+    operation_id = plan_result["operation_id"]
+
+    applied, _ = _dispatch(*base, "--apply", "--confirm", operation_id)
+    assert applied["code"] == "DONE", applied["summary"]
+    assert target.is_dir()
+
+    resume_base = ["worktree", "resume", "--repo", str(repo), "--path", str(target),
+                   "--branch", "feat/pub", "--worktree-root", str(root)]
+    resume_plan, _ = _dispatch(*resume_base)
+    assert resume_plan["code"] == "READY"
+    resumed, _ = _dispatch(*resume_base, "--apply", "--confirm", resume_plan["operation_id"])
+    assert resumed["code"] == "DONE", resumed["summary"]
+
+
+def test_SI_FLW_059_dispatcher_rejects_a_stale_confirm_without_side_effect(repository):
+    """公開経路で confirm 不一致なら副作用0で停止すること。"""
+    repo, root = repository
+    target = root / "stale"
+    result, _ = _dispatch(
+        "worktree", "create", "--repo", str(repo), "--path", str(target),
+        "--branch", "feat/stale", "--worktree-root", str(root),
+        "--apply", "--confirm", "sha256:" + "0" * 64,
+    )
+    assert result["code"] == "STALE"
+    assert not target.exists()
+
+
+def test_SI_FLW_059_dispatcher_blocks_approval_reuse(repository):
+    """承認の使い回しが公開経路で拒否されること（nonce 単回性）。"""
+    repo, root = repository
+    target = root / "reuse"
+    base = ["worktree", "create", "--repo", str(repo), "--path", str(target),
+            "--branch", "feat/reuse", "--worktree-root", str(root)]
+    plan_result, _ = _dispatch(*base)
+    operation_id = plan_result["operation_id"]
+    assert _dispatch(*base, "--apply", "--confirm", operation_id)[0]["code"] == "DONE"
+    again, _ = _dispatch(*base, "--apply", "--confirm", operation_id)
+    assert again["code"] in {"BLOCKED", "STALE"}
+
+
+def test_SI_FLW_059_dispatcher_requires_confirm_for_apply(repository):
+    repo, root = repository
+    result, _ = _dispatch(
+        "worktree", "create", "--repo", str(repo), "--path", str(root / "noconfirm"),
+        "--branch", "feat/noconfirm", "--worktree-root", str(root), "--apply",
+    )
+    assert result["code"] == "APPROVAL_REQUIRED"
+    assert not (root / "noconfirm").exists()
+
+
+def test_SI_FLW_059_audit_goes_through_the_contract_layer(repository):
+    """audit が result を返し、--limit を尊重すること。"""
+    repo, root = repository
+    result, _ = _dispatch("worktree", "audit", "--repo", str(repo), "--limit", "1")
+    assert result["code"] in {"OK", "BLOCKED"}
+    assert result["data"]["page"]["shown"] <= 1
+    assert "external_change_detection" in result["data"]
+
+
+def test_SI_FLW_059_audit_declares_that_external_change_detection_is_unavailable(repository):
+    """外部変更検出は未実装であることを result で明示すること。
+
+    git の registry は `git worktree add` で必ず登録されるため、registry 照合では
+    operation 外で作られたものを区別できない。区別には bitz-flow 自身の receipt が
+    要るが、payload に path が無い（`FLW-REV-016:SYN-013`）。
+    **検出できないことを黙らず宣言する**（できない検査を「OK」で覆わない）。
+    """
+    repo, _ = repository
+    result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
+    assert result["data"]["external_change_detection"] == "unavailable:receipt-payload-lacks-path"
+
+
+def test_SI_FLW_059_default_table_still_hides_worktree(repository):
+    """注入しなければ公開経路からは到達できないこと（出荷面は変わっていない）。"""
+    from flowlib import cli
+
+    repo, _ = repository
+    buffer = io.StringIO()
+    with contextlib.redirect_stdout(buffer):
+        cli.main(["worktree", "audit", "--repo", str(repo), "--format", "json"])
+    assert json.loads(buffer.getvalue())["code"] == "UNSUPPORTED"
