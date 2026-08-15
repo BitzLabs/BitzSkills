@@ -1,5 +1,8 @@
 # STATE — status 遷移ログ
 
+- 2026-08-16 FLW-TSK-086: pending → implementing（`SI-FLW-059`。公開 dispatcher 経由 E2E と audit の契約層接続）
+- 2026-08-16 SI-FLW-059 の実装で判明: **operation 外の変更検出は実装できない**。git の registry は `git worktree add` で必ず登録されるため registry 照合では区別できず、bitz-flow 自身の receipt と 突き合わせる必要があるが payload に path が無い（`FLW-REV-016:SYN-013`）。動かない検出器を出荷せず `data.external_change_detection` で不可を宣言した。**M2 出口条件「operation 外変更の audit 検出・quarantine 接続」は SYN-013 に依存して未達のまま**
+- 2026-08-16 SI-FLW-059 の証跡: qualification 3platform PASS。confirmation は codex が1回 TimeoutExpired、再試行1回で 3platform PASS（167件・runtime check 29/29・hazard/residual すべて実測 0）
 - 2026-08-16 FLW-TSK-085: pending → implementing（`SI-FLW-058`。証跡契約の適合）
 - 2026-08-16 SI-FLW-058 実装中の発見: raw log 保存を呼ぶだけで成否を検査していなかったため、canary 不在で全 platform が保存失敗していたのに `stored: false` のまま気づけなかった。canary を仕込むよう修正し、**保存成功と canary 検出を検査するテストを追加**した
 - 2026-08-16 SI-FLW-058 の証跡: qualification 3platform PASS（被験リポジトリ不変）。confirmation は codex が1回 TimeoutExpired、再試行1回で 3platform PASS（160件・runtime check 22/22・hazard/residual すべて実測 0・raw log 保存と canary 検出すべて成功）

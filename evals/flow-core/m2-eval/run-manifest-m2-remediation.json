@@ -29,6 +29,14 @@
       "review_fixes": 1,
       "unmet_exit_reason": "M2出口条件は未達（SI-FLW-059 が残る）",
       "recorded_at": "2026-08-16"
+    },
+    {
+      "pr": 287,
+      "issue": "SI-FLW-059",
+      "sessions": 3,
+      "review_fixes": 2,
+      "unmet_exit_reason": "audit→quarantine は SYN-013（receipt payload に path が無い）に依存して未達",
+      "recorded_at": "2026-08-16"
     }
   ]
 }
