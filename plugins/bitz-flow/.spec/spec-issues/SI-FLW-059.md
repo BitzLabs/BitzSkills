@@ -27,9 +27,19 @@ status: accepted
     `--limit` / `--timeout` も無視される。外部変更検出から quarantine までが
     未接続である（`FLW-REV-016:SYN-011`）。
 
+- **着手方法**（2026-08-16 裁定。`.spec/reports/decision-2026-08-16-si-flw-059-dispatcher-e2e.md`）:
+  2026-08-15 の出荷面限定により worktree は `_HANDLERS` から外れており、`cli.main` は
+  `UNSUPPORTED` を返す。一方で公開を戻すには本 issue が満たす出口条件が要る、という循環がある。
+  出口条件が求めるのは **dispatcher のコード経路を通ること**であって事前公開ではないため、
+  **`cli.main()` がハンドラ表を引数で受け取れる形にし（既定は `_HANDLERS`）、テストが
+  `{**_HANDLERS, **_GATED_HANDLERS}` を渡して公開経路を丸ごと通す**方法を採る。
+  production に切替スイッチや環境変数は作らない（依存性注入であり、実行時に破壊的 operation を
+  公開する経路を新設しない）。「出荷表に載っているか」は `PUBLISHED_OPERATIONS` ⇔ `_HANDLERS` の
+  import 時不変条件検査が別途担保し、2つ合わせて `GP-001` を満たす。
+
 - **提案する修正**:
-  1. `create` / `resume` と主要 fault 経路を `cli.main` 経由の E2E で再構成する。
-     公開を戻すタイミングは M2 出口条件の充足時とする。
+  1. `cli.main()` にハンドラ表の注入口を設け、`create` / `resume` と主要 fault 経路を
+     公開経路の E2E で再構成する。公開集合そのものを戻すのは Completion Gate の裁定後とする。
   2. `worktree.audit` を契約層（result / エラー分類 / `--limit` / `--timeout`）へ載せ、
      外部変更検出から quarantine までを公開経路で接続する。
 

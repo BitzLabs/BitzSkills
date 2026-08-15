@@ -1,5 +1,6 @@
 # STATE — status 遷移ログ
 
+- 2026-08-16 SI-FLW-059 の着手方法: **案A（dispatcher へハンドラ表を注入）**を裁定。出荷面限定と出口条件の循環を、production に切替スイッチを作らず依存性注入で解く。案B（同一PRで公開）は Completion Gate より先に公開が起きるため、案C（出口条件の緩和）は FLW-REV-015/016 の指摘を巻き戻すため不採用。裁定参照: .spec/reports/decision-2026-08-16-si-flw-059-dispatcher-e2e.md
 - 2026-08-16 FLW-TSK-083: pending → implementing（`SI-FLW-057`。mutation 境界の例外分類是正と create/resume の reconcile 経路）
 - 2026-08-16 SI-FLW-057 の証跡: harness 是正（`SI-FLW-062`）後に再実走。qualification 3platform PASS で被験リポジトリ不変を確認。confirmation は codex が1回 TimeoutExpired（hazard 実測 0）、再試行1回で 3platform PASS（160件・runtime check 22/22・hazard/residual すべて実測 0）
 - 2026-08-16 SI-FLW-062: open → accepted（hide のチャット裁定。裁定参照: .spec/reports/decision-2026-08-16-si-flw-062.md）
