@@ -126,7 +126,11 @@ test ID集合digestの固定により**解消**した。
 1. **Completion Gateは保留を継続**する。M2出口条件8項目のうち3項目がBLOCKEDであり、
    M1 local-write と M2 worktree の同時公開（縮退規則3の解除）は現時点で根拠を欠く。
 2. `SI-FLW-056`で承認された **2 PR / 最大6 session を消化済み**である。
-   `SYN-002`〜`SYN-005`の是正には新たな予算裁定が要る。
+   `SYN-002`〜`SYN-005`の是正には新たな予算裁定が要る（`GP-005`）。
+   **裁定材料**: `.spec/reports/analysis-2026-08-15-v2-scope-reassessment.md`
+   — North Star（SFCR）は M0 で実測 1.0 に達しているが縮退規則3により未出荷であること、
+   承認総額 35 PR に対し実績 113 コミットであること、安全機構が宣言された脅威モデルに対して
+   過剰である可能性を、選択肢（M0 先行出荷 / capability 縮退 / M2 scope 縮小 / 継続）とともに整理した。
 3. P0のうち`SYN-001`のみ本PRで解消した。残りは本タスクのboundary外のため
    spec-issueとして起票済みであり、accept / rejectの裁定を仰ぐ。
 
