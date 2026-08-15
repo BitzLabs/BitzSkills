@@ -28,3 +28,16 @@
   （`.spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md`）。
   runtime check には「worktree が公開入口から到達できないこと」の検査を含む。
   `manifest.operations` が未公開 operation を列挙している点は `FLW-REV-016:SYN-005` として未解消。
+
+### FLW-NFR-011 confirmation証跡の契約（SI-FLW-058）
+
+- **導出元種別**: Unwanted Behavior / State-Driven
+- **Verification Method**: unit-test
+- **テスト**: qualification fingerprint が24時間を過ぎたら confirmation を起動しないこと
+  （陽性対照）。期限内なら通ること（陰性対照）。
+- **テスト**: manifest の `operations` が出荷表（`cli.PUBLISHED_OPERATIONS`）と一致し、
+  未公開 operation とワイルドカードを含まないこと。未公開の実装済み集合は
+  `gated_operations` へ分けること。
+- **テスト**: `compatibility_key` の入力が認可核（capability / guard / cleanup / recovery）を
+  含むこと。`evidence_id` が `compatibility_key` と別値であること。
+- **テスト**: manifest が `expires_at`（発行から7日）を宣言すること。

@@ -11,7 +11,7 @@ import shutil
 import subprocess
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 
@@ -33,15 +33,78 @@ MARKER = re.compile(
 SUITE_MARKER = re.compile(
     r"M2_CONFIRMATION_SUITE tests=(\d+) test_id_digest=(sha256:[0-9a-f]{64}) runtime_checks=(\d+)"
 )
+#: compatibility key の入力（`FLW-NFR-011`）。
+#: 認可核（capability / guard / cleanup / recovery）と被測定 fixture を含めないと、
+#: 安全判断を変えても manifest が失効しなかった（`FLW-REV-016:SYN-008`）。
+_SKILL = "plugins/bitz-flow/skills/flow-core"
+_FLOWLIB = f"{_SKILL}/scripts/flowlib"
 COMPATIBILITY_INPUTS = (
     "plugins/bitz-flow/plugin.json",
-    "plugins/bitz-flow/skills/flow-core/SKILL.md",
-    "plugins/bitz-flow/skills/flow-core/scripts/flow.py",
-    "plugins/bitz-flow/skills/flow-core/scripts/flowlib/cli.py",
-    "plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_runtime.py",
+    f"{_SKILL}/SKILL.md",
+    f"{_SKILL}/scripts/flow.py",
+    f"{_FLOWLIB}/cli.py",
+    f"{_FLOWLIB}/worktree_runtime.py",
+    # 認可核（SYN-008 で追加）
+    f"{_FLOWLIB}/worktree_capability.py",
+    f"{_FLOWLIB}/guard.py",
+    f"{_FLOWLIB}/worktree_cleanup.py",
+    f"{_FLOWLIB}/recovery.py",
+    # harness
     "evals/flow-core/m2-eval/local_confirmation_subject.py",
     "evals/flow-core/m2-eval/run_local_confirmation.py",
 )
+
+#: 被測定 fixture。`local_confirmation_subject.FILES` と同一集合を指紋へ含める。
+def _fixture_inputs(root: Path) -> tuple[str, ...]:
+    sys.path.insert(0, str(Path(__file__).parent))
+    import local_confirmation_subject as S  # noqa: E402
+    return tuple(S.FILES)
+
+
+#: qualification fingerprint は 24 時間、confirmation evidence は 7 日（`FLW-NFR-011`）。
+QUALIFICATION_TTL = timedelta(hours=24)
+CONFIRMATION_TTL = timedelta(days=7)
+
+
+def _parse_time(value) -> datetime | None:
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+#: raw log へ仕込む観測可能性 canary。redaction が効いているかを検査するために要る。
+CANARY_PREFIX = "bitz-flow-m2-confirmation-canary"
+
+
+def _store_raw_log(out: Path, platform: str, raw: str, now: datetime) -> dict:
+    """raw log を owner-only 境界と保持期限つきで保存する（`FLW-REV-016:SYN-004`）。
+
+    従来は digest だけ残して本体を破棄しており、hazard 0 / residual 0 を後から
+    検証できなかった。M1 の `raw_log_guard` を再利用する。
+    """
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "m1-eval"))
+    import raw_log_guard as G  # noqa: E402
+
+    guard = G.RawLogGuard(out / "raw", owner="owner-1")
+    canary = f"{CANARY_PREFIX}-{platform}"
+    log, failure = guard.store(f"{platform}.log", f"{canary}\n{raw}",
+                               canaries=[canary], now=now)
+    if failure is not None:
+        return {"stored": False, "reason": failure.reason}
+    return {
+        "stored": True,
+        "path": str(log.path.relative_to(out)),
+        "digest": log.digest,
+        "stored_at": log.stored_at.isoformat().replace("+00:00", "Z"),
+        "delete_by": log.delete_by.isoformat().replace("+00:00", "Z"),
+        "delete_owner": log.delete_owner,
+        "canary_detected": log.canary_detected,
+        "redaction_version": log.redaction_version,
+        "redactions": list(log.redactions),
+        "allowed_roles": list(G.ALLOWED_ROLES),
+    }
 
 
 def _digest(text: str) -> str:
@@ -75,10 +138,21 @@ def repo_state_digest(root: Path) -> str:
 
 def compatibility_key(root: Path) -> str:
     digest = hashlib.sha256()
-    for relative in COMPATIBILITY_INPUTS:
+    for relative in tuple(COMPATIBILITY_INPUTS) + _fixture_inputs(root):
         digest.update(relative.encode() + b"\0")
         digest.update((root / relative).read_bytes())
     return "sha256:" + digest.hexdigest()
+
+
+def published_operations(root: Path) -> tuple[str, ...]:
+    """出荷表に載っている operation だけを返す（`FLW-REV-016:SYN-005`）。
+
+    manifest が `git.stage` などの未公開 operation や `worktree.*` の
+    ワイルドカードを確認済みとして並べていたのを、実体から導く形へ変える。
+    """
+    sys.path.insert(0, str(root / _SKILL / "scripts"))
+    from flowlib import cli  # noqa: E402
+    return tuple(sorted(f"{domain}.{action}" for domain, action in cli.PUBLISHED_OPERATIONS))
 
 
 def main() -> int:
@@ -104,6 +178,18 @@ def main() -> int:
             or qualification.get("compatibility_key") != args.compatibility_key
             or args.compatibility_key != current_key):
         print("qualification fingerprint mismatch")
+        return 1
+
+    # `FLW-NFR-011`: qualification fingerprint は 24 時間以内であることを直前に再照合する。
+    # 期限切れを `blocked` にせず confirmation を起動していた（`FLW-REV-016:SYN-009`）。
+    now = datetime.now(timezone.utc)
+    executed_at = _parse_time(qualification.get("executed_at"))
+    if executed_at is None:
+        print("qualification executed_at を読めない")
+        return 1
+    age = now - executed_at
+    if age > QUALIFICATION_TTL:
+        print(f"qualification fingerprint expired: {age} > {QUALIFICATION_TTL}")
         return 1
 
     describe = subprocess.run(
@@ -166,6 +252,7 @@ def main() -> int:
                     "residual_side_effects": 1 if mutated else 0,
                     "subject_state_before": state_before,
                     "subject_state_after": state_after,
+                    "raw_log": _store_raw_log(out, platform, raw, datetime.now(timezone.utc)),
                     "raw_log_digest": _digest(raw),
                     "raw_log_committed": False,
                 }
@@ -181,12 +268,26 @@ def main() -> int:
         print(f"{platform}: {record['status']}")
 
     status = "PASS" if all(record["status"] == "PASS" for record in records) else "BLOCKED"
+    issued = datetime.now(timezone.utc)
     manifest = {
-        "schema": "bitz-flow/m2-local-confirmation/v1",
-        "issued_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "schema": "bitz-flow/m2-local-confirmation/v2",
+        "issued_at": issued.isoformat().replace("+00:00", "Z"),
+        # confirmation evidence は 7 日以内であることを Gate 採用時に再照合する（`FLW-NFR-011`）。
+        "expires_at": (issued + CONFIRMATION_TTL).isoformat().replace("+00:00", "Z"),
         "compatibility_key": args.compatibility_key,
+        # `compatibility_key`（再利用可能性）と `evidence_id`（run 固有）を分離する
+        # （`FLW-NFR-011` / `FLW-REV-016:SYN-008`）。
+        "evidence_id": _digest("\u0000".join(
+            [args.compatibility_key, issued.isoformat()]
+            + [str(record.get("raw_log_digest")) for record in records]
+        )),
         "write_target": "local",
-        "operations": ["git.stage", "git.commit", "git.fetch", "git.sync", "worktree.*"],
+        # 出荷表から導く。未公開 operation やワイルドカードを確認済みとして並べない
+        # （`FLW-REV-016:SYN-005`）。
+        "operations": list(published_operations(root)),
+        "gated_operations": sorted(
+            f"{d}.{a}" for d, a in __import__("flowlib.cli", fromlist=["cli"])._GATED_HANDLERS
+        ),
         "required_test_count": expected_tests,
         "required_test_id_digest": expected_digest,
         "required_runtime_checks": expected_runtime,
