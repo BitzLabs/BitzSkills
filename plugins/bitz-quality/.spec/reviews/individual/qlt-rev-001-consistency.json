@@ -1,0 +1,7 @@
+{
+  "perspective": "consistency",
+  "score": 4.8,
+  "verdict": "PASS",
+  "findings": [],
+  "comments": "QLT-FR-001〜008のEARS記法およびCLIコントラクトとの整合性が確保されている。"
+}

@@ -1,0 +1,1 @@
+{"perspective":"data-integrity","dimensions":[{"name":"トランザクション安全性","weight":0.40,"score":4,"findings":[]},{"name":"データ整合性","weight":0.35,"score":4,"findings":[]},{"name":"スキーマ設計品質","weight":0.25,"score":4,"findings":[]}],"weighted_score":4.0,"summary":"single current pointer、generation fencing、read-only snapshotを補足契約へ昇格した。"}

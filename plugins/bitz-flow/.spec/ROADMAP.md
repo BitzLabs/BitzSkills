@@ -183,6 +183,11 @@ M2 が未完了のままでは worktree-first の安全境界が閉じないた�
 ### フェーズ5 — M4 PR ライフサイクル
 
 - prepare / push / Draft publish / checks / ready / merge plan・apply / post-merge audit
+- 外部QA providerの判定を受けるcheck adapterは、provider固有ファイルを直接解釈せず、
+  version付き`quality-result`契約を入力する。評価内容は`bitz-quality`、PR ready/mergeの
+  強制判断と副作用はbitz-flowが所有する。
+- `PASS`だけでなく`FAIL` / `STALE` / `UNKNOWN`、target SHA不一致、schema未知、
+  evidence欠落をcanaryに含め、安全側の`BLOCKED`へ写像する。
 - 出口: push・PR・merge の各 partial から収束、CI / head 誤判定 0、独立 10 PR flow canary green
 - 縮退境界: M3 までを prerelease 出荷し、全 `pr.*` を `UNSUPPORTED` にする
 
@@ -206,6 +211,8 @@ M2 が未完了のままでは worktree-first の安全境界が閉じないた�
 3. v1 の design / skills / scripts を撤去し、doctor で旧参照ゼロを確認する
 4. 同じ変更セットで `1.0.0` へ上げ、bitz-sdd の依存宣言を `bitz-flow>=0.2` から
    `bitz-flow>=1.0` へ更新する。README と migration note も同じ release 系列で更新する
+5. `bitz-quality` adapterは任意providerとしてcontract testを行い、provider不在時と
+   不適格結果時の縮退を確認する。V2 coreはbitz-qualityへ必須依存しない
 
 候補の一部が Promotion Gate を満たさない場合は、v1 要件を deprecated へ進めず候補表を更新して再審査する。
 

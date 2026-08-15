@@ -1,0 +1,1 @@
+{"perspective":"consistency","dimensions":[{"name":"構造整合","weight":0.35,"score":5,"findings":[]},{"name":"トレーサビリティ","weight":0.35,"score":5,"findings":[]},{"name":"用語一貫性","weight":0.30,"score":5,"findings":[]}],"weighted_score":5.0,"summary":"Gate現在地、仮説対応表、QLT-FR-026、Published Languageの不整合は解消された。"}

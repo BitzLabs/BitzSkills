@@ -1,0 +1,11 @@
+{
+  "perspective": "risk",
+  "dimensions": [
+    {"name": "分散システムリスク", "weight": 0.30, "score": "N/A", "findings": []},
+    {"name": "障害モード分析", "weight": 0.30, "score": 2, "findings": [{"id": "RSK-201", "severity": "major", "location": "plugins/bitz-quality/.spec/design/architecture.md:Security / operations", "title": "timeout後の実行収束と資源隔離が未契約", "description": "停止期限、強制終了、出力・token・同時実行上限、reviewer隔離が要件化されていない。", "recommendation": "QLT-FR-022へprocess group収束、quota、枯渇時BLOCKED、fault injectionを追加する。"}, {"id": "RSK-202", "severity": "major", "location": "plugins/bitz-quality/.spec/design/domain-model.md:ReviewRun", "title": "並行attemptの競合解決が未定義", "description": "旧attemptの遅延結果が新attemptを上書きし得る。", "recommendation": "attempt世代と単一writerでactive遷移を直列化する。"}]},
+    {"name": "Saga設計の妥当性", "weight": 0.25, "score": "N/A", "findings": []},
+    {"name": "データ整合性リスク", "weight": 0.15, "score": 2, "findings": [{"id": "RSK-401", "severity": "major", "location": "plugins/bitz-quality/.spec/design/architecture.md:Deployment view", "title": "複数成果物の原子的公開境界がない", "description": "途中crashや並行consumerが新旧世代混在を読み得る。", "recommendation": "immutable run directoryを検証後にcommit manifestで原子的に公開する。"}, {"id": "RSK-402", "severity": "major", "location": "plugins/bitz-quality/.spec/requirements/QLT-FR-019.md:受入基準", "title": "digest正規化とTOCTOU防止が不足", "description": "algorithm、canonical serialization、対象集合、snapshot固定が未定義である。", "recommendation": "canonical bytesとcontent-addressed snapshotを固定し実行後再照合する。"}]}
+  ],
+  "weighted_score": 2.00,
+  "summary": "非分散CLIだが、timeout収束、並行attempt、原子的公開、digest固定が不足する。"
+}

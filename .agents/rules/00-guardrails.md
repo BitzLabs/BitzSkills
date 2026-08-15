@@ -1,3 +1,8 @@
+---
+description: BitzSkills 共通のガードレール規約（禁止操作と承認必須操作）
+always_on: true
+---
+
 # BitzSkills ガードレール（Antigravity 用）
 
 - リポジトリ直下の `AGENTS.md`（特に「ガードレール」節）に必ず従うこと。

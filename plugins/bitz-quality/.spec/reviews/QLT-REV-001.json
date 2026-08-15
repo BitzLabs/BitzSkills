@@ -1,0 +1,25 @@
+{
+  "schema_version": 2,
+  "review_id": "QLT-REV-001",
+  "verdict": "PASS",
+  "aggregate_score": 4.82,
+  "perspective_scores": {
+    "consistency": 4.8,
+    "data-integrity": 4.7,
+    "operations": 4.8,
+    "risk": 4.9,
+    "business": 4.9
+  },
+  "findings_summary": {
+    "before_dedup": 0,
+    "after_dedup": 0,
+    "p0": 0,
+    "p1": 0,
+    "p2": 0,
+    "p3": 0
+  },
+  "findings": [],
+  "gate_preconditions": [],
+  "carried_over": [],
+  "conditional_items": []
+}

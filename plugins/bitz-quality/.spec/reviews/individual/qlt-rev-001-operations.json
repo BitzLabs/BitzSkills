@@ -1,0 +1,7 @@
+{
+  "perspective": "operations",
+  "score": 4.8,
+  "verdict": "PASS",
+  "findings": [],
+  "comments": "quality-doctor による診断と quality-gate の静的チェック高速性が実運用に即している。"
+}

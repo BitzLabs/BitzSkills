@@ -36,7 +36,62 @@ Claude Code は、起動時に以下の順序で設定をマージします。�
 > [!NOTE]
 > 一部の資料で紹介される `telemetry` / `maxThinkingTokens` といったトップレベルキーは、一次情報（公式ドキュメント）では確認できていません。**テレメトリの無効化は `env.DISABLE_TELEMETRY="1"` が公式手段**です。推論トークンの制御が必要な場合も、トップレベルキーではなく環境変数経由の設定を確認してください。
 
-## 5.3 設定の変更方法
+## 5.3 permissions のルール構文
+
+`permissions` の `allow` / `deny` / `ask` に書くルールは `Tool` または `Tool(specifier)` の形式を取ります。
+評価順序は `deny > ask > allow`（詳細は第6章・第7章）。
+
+### ファイルパスのルールは `Edit` と `Read` だけが評価される
+
+**Claude Code がファイル操作の許可判定に用いるのは `Edit(path)` と `Read(path)` の2つだけ**です。
+`Edit` ルールは「ファイルを書き換えるビルトインツール全体」に適用され、**`Write` ツールもここに含まれます**。
+
+一方、`Write(path)` / `NotebookEdit(path)` / `Glob(path)` / 旧 `MultiEdit(path)` のようにパス付きで書いたルールは、
+**受理はされるが一度も参照されず、起動時に警告が出ます**（Claude Code v2.1.210 以降）。
+
+```
+Permission deny rule (.claude/settings.json): Write(docs/**) is not matched by file permission checks
+— only Edit(path) rules are. Use Edit(docs/**) instead
+```
+
+| 書きたいこと | 正しい書き方 | 誤り（無視され警告される） |
+| --- | --- | --- |
+| 特定パスへの書き込み・新規作成を制御 | `Edit(docs/**)` | `Write(docs/**)` / `NotebookEdit(docs/**)` / `MultiEdit(docs/**)` |
+| 特定パスの読み取りを制御 | `Read(docs/**)` | `Glob(docs/**)` |
+
+補足:
+
+- `Read` の deny ルールは、同一パスに対する Edit / Write（新規ファイルの作成を含む）も併せてブロックします
+  （edit は v2.1.208 以降、write は v2.1.228 以降）。ただし NotebookEdit は対象外のため、
+  「どのツールでも変更させたくないパス」には `Edit` の deny を明示的に併記します
+- パス指定のない裸のツール名ルール（例: deny の `Write`）は警告されず、ツール単位で全体に効きます
+
+### パスの解決基準はルールを書いたファイルで変わる
+
+`/path` のような先頭スラッシュのパスは、ルールを定義した設定ファイルごとに異なる基準で解決されます。
+
+| ルールの定義場所 | `/path` の解決先 |
+| --- | --- |
+| プロジェクト設定 `.claude/settings.json` | `<プロジェクトルート>/path` |
+| ローカル設定 `.claude/settings.local.json` | `<起動時の cwd>/path` |
+| ユーザー設定 `~/.claude/settings.json` | `~/.claude/path` |
+
+プロジェクトの位置に依存せず効かせたい場合は、`//` 始まりの絶対パス（例: `Edit(//tmp/scratch.txt)`）または
+`~/` 始まりの home 相対パス（例: `Read(~/.zshrc)`）を使います。Windows ではパスが POSIX 形式へ正規化され、
+`C:\Users\alice` は `/c/Users/alice` になります。
+
+### Bash ルールのワイルドカード
+
+Bash ルールは `*` のグロブをサポートします。`Bash(ls:*)` は `Bash(ls *)` と等価で、
+`:*` は**末尾でのみ**ワイルドカードとして解釈されます（`Bash(git:* push)` のコロンはリテラル文字扱いになり、
+git コマンドにマッチしません）。承認ダイアログで「Yes, don't ask again」を選ぶとスペース区切りの形式が書き込まれます。
+
+> [!NOTE]
+> 本リポジトリの `.claude/settings.json` が `~/.claude/skills/**` 等の保護に `Edit(...)` のみを置いているのは
+> この仕様によります（`Write(...)` を併記すると無視されたうえ起動時警告が出るため）。
+> 出典: 公式ドキュメント [Configure permissions](https://docs.claude.com/en/docs/claude-code/permissions)
+
+## 5.4 設定の変更方法
 設定を変更するには以下のいずれかのアプローチを取ります。
 
 ### 1. インタラクティブ変更
@@ -49,7 +104,7 @@ project-root > /config verbose=true
 ### 2. 手動編集
 プロジェクトの `.claude/settings.json` またはグローバルの `~/.claude/settings.json` を任意のテキストエディタで直接編集します。
 
-## 5.4 独自のプラグイン設定パターン (local.md駆動)
+## 5.5 独自のプラグイン設定パターン (local.md駆動)
 フックやコマンド、サブエージェントなどから参照できる、プロジェクト固有の動的設定ファイルパターンです。
 
 ### 設定ファイル: `.claude/[plugin-name].local.md`

@@ -1,0 +1,27 @@
+{
+  "schema_version": 2,
+  "review_id": "QLT-REV-002",
+  "verdict": "CONDITIONAL_PASS",
+  "aggregate_score": 2.88,
+  "perspective_scores": {"consistency": 3.65, "data-integrity": 2.25, "operations": 3.70, "risk": 2.00, "business": 3.55},
+  "findings_summary": {"before_dedup": 16, "after_dedup": 9, "p0": 0, "p1": 4, "p2": 3, "p3": 2},
+  "findings": [
+    {"id": "QLT-REV-002:SYN-001", "priority": "P1", "severity": "major", "source": ["DIN-101", "RSK-401", "OPS-201"], "title": "複数成果物の原子的公開境界が未確定", "detail": "individual result、synthesis、quality-resultを世代一貫して公開・復旧する規範契約がない。", "recommendation": "immutable run directory、workspace lock、commit manifest、crash recoveryを要件化する。", "tracked_by": "QLT-REV-002:GP-001", "status": "resolved"},
+    {"id": "QLT-REV-002:SYN-002", "priority": "P1", "severity": "major", "source": ["DIN-201", "RSK-202"], "title": "並行attemptの競合解決が未定義", "detail": "timeout直後の旧attemptとretryが競合し、古い結果をactive化し得る。", "recommendation": "attempt世代と単一writerでactive遷移を直列化し遅延結果を隔離する。", "tracked_by": "QLT-REV-002:GP-002", "status": "resolved"},
+    {"id": "QLT-REV-002:SYN-003", "priority": "P1", "severity": "major", "source": ["RSK-201"], "title": "timeout後の実行収束と資源隔離が未契約", "detail": "process tree停止、quota、同時実行上限がなく資源枯渇が他reviewerへ波及し得る。", "recommendation": "process group収束期限、強制終了、quota、枯渇時BLOCKED、fault injectionを要件化する。", "tracked_by": "QLT-REV-002:GP-003", "status": "resolved"},
+    {"id": "QLT-REV-002:SYN-004", "priority": "P1", "severity": "major", "source": ["RSK-402", "DIN-301"], "title": "digest正規化とTOCTOU防止が不足", "detail": "canonical bytesと入力snapshotが未定義でplatform parityとSTALE判定を信頼できない。", "recommendation": "hash algorithm、canonical serialization、対象集合、snapshot、実行後再照合を固定する。", "tracked_by": "QLT-REV-002:GP-004", "status": "resolved"},
+    {"id": "QLT-REV-002:SYN-005", "priority": "P2", "severity": "major", "source": ["RVC-101", "RVC-201"], "title": "Gate現在地と仮説トレーサビリティが不整合", "detail": "Discovery GateのGoがworksheetへ反映されず、H-Q2からvalidator設計への追跡も途切れる。", "recommendation": "現在地を更新し、仮説→要件→設計→検証の対応表を追加する。", "tracked_by": "", "status": "open"},
+    {"id": "QLT-REV-002:SYN-006", "priority": "P2", "severity": "major", "source": ["OPS-301"], "title": "raw log隔離の保護条件が不足", "detail": "秘密値除去、権限、保持・削除規則がなく監査領域が漏えい源になり得る。", "recommendation": "既定非保存またはredaction、最小権限、保持・削除規則を契約化する。", "tracked_by": "", "status": "open"},
+    {"id": "QLT-REV-002:SYN-007", "priority": "P2", "severity": "major", "source": ["BIZ-201"], "title": "測定プロトコルが再現可能な粒度に達していない", "detail": "fixture母集団、最低試行数、期間、baseline比較がなく仮説検証を再現できない。", "recommendation": "測定計画に母集団、試行数、期間、baseline、判定方法を固定する。", "tracked_by": "", "status": "open"},
+    {"id": "QLT-REV-002:SYN-008", "priority": "P3", "severity": "minor", "source": ["OPS-101", "OPS-302", "BIZ-401"], "title": "履歴・監査・移行担当の運用契約が不足", "detail": "履歴の保存規則、実行主体・時刻、移行stageのownerが未定義である。", "recommendation": "run history schemaと実装タスクに保存・監査・owner情報を追加する。", "tracked_by": "", "status": "open"},
+    {"id": "QLT-REV-002:SYN-009", "priority": "P3", "severity": "minor", "source": ["RVC-202", "RVC-203", "RVC-301"], "title": "設計台帳と公開語彙に軽微な欠落", "detail": "QLT-FR-026とDiscovery仮説の対応、型の正式名が揃っていない。", "recommendation": "設計台帳の対応表を補いPublished Languageを正式名へ統一する。", "tracked_by": "", "status": "open"}
+  ],
+  "gate_preconditions": [
+    {"id": "GP-001", "kind": "blocking", "basis": "verified", "gp_kind": "behavioral", "ears": "WHEN review成果物群を公開する THEN system SHALL 単一世代として原子的に公開し中断時の部分世代をconsumerへ提示しない", "evidence": "QLT-REV-002:SYN-001", "response": {"status": "accepted", "original": "WHEN review成果物群を公開する THEN system SHALL 単一世代として原子的に公開し中断時の部分世代をconsumerへ提示しない", "normalized": "immutable run directoryを検証後にcommit manifestで原子的に公開する", "target": "QLT-FR-020 / QLT-FR-021 / QLT-FR-026"}},
+    {"id": "GP-002", "kind": "blocking", "basis": "verified", "gp_kind": "behavioral", "ears": "WHEN 同一reviewerのattemptが競合する THEN system SHALL 最新の有効世代だけをactive resultとして合成する", "evidence": "QLT-REV-002:SYN-002", "response": {"status": "accepted", "original": "WHEN 同一reviewerのattemptが競合する THEN system SHALL 最新の有効世代だけをactive resultとして合成する", "normalized": "attempt世代と単一writerでactive遷移を直列化する", "target": "QLT-FR-019 / QLT-FR-020 / QLT-FR-022"}},
+    {"id": "GP-003", "kind": "blocking", "basis": "verified", "gp_kind": "behavioral", "ears": "WHEN reviewerがtimeoutまたは資源上限へ達する THEN system SHALL process treeを有限時間で収束させ当該runをBLOCKEDとして隔離する", "evidence": "QLT-REV-002:SYN-003", "response": {"status": "accepted", "original": "WHEN reviewerがtimeoutまたは資源上限へ達する THEN system SHALL process treeを有限時間で収束させ当該runをBLOCKEDとして隔離する", "normalized": "process group停止とquota超過をfail-safeに処理する", "target": "QLT-FR-022"}},
+    {"id": "GP-004", "kind": "blocking", "basis": "verified", "gp_kind": "behavioral", "ears": "WHEN review入力をadapterへ渡す THEN system SHALL canonical digestで固定したsnapshotだけを実行し終了時にも同一性を再検証する", "evidence": "QLT-REV-002:SYN-004", "response": {"status": "accepted", "original": "WHEN review入力をadapterへ渡す THEN system SHALL canonical digestで固定したsnapshotだけを実行し終了時にも同一性を再検証する", "normalized": "canonical serializationとcontent-addressed snapshotでTOCTOUを防止する", "target": "QLT-FR-019 / QLT-FR-020"}}
+  ],
+  "carried_over": [],
+  "conditional_items": ["QLT-REV-002:GP-001", "QLT-REV-002:GP-002", "QLT-REV-002:GP-003", "QLT-REV-002:GP-004"]
+}

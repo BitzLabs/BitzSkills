@@ -1,0 +1,1 @@
+{"perspective":"operations","dimensions":[{"name":"監視・可観測性","weight":0.30,"score":4,"findings":[]},{"name":"災害復旧","weight":0.30,"score":4,"findings":[]},{"name":"セキュリティ態勢","weight":0.20,"score":4,"findings":[]},{"name":"デプロイ安全性","weight":0.20,"score":4,"findings":[]}],"weighted_score":4.0,"summary":"raw log default-deny、TTL、削除監査、rollback rehearsalを契約化した。"}
