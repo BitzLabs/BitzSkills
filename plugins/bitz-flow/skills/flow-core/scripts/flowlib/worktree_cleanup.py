@@ -15,8 +15,22 @@ DISCARD_STEPS = (
     "freeze-manifest", "verify-manifest-scope", "create-retention-ref",
     "remove-registry-entry", "remove-worktree-dir", "delete-local-branch",
 )
+#: `create` / `resume` の step 列。`worktree_runtime.MUTATING_STEPS` と同じ語彙を使う
+#: （`SI-FLW-057`。M2 scope の2 operation に前進経路が無かったための追加）。
+#: `finish` / `discard` の語彙不一致（`FLW-REV-016:SYN-002`）は M3 の `SI-FLW-060` が扱う。
+CREATE_STEPS = ("git-worktree-add",)
+RESUME_STEPS = ("publish-resume-receipt",)
+
+STEPS_BY_OPERATION = {
+    "worktree.create": CREATE_STEPS,
+    "worktree.resume": RESUME_STEPS,
+    "worktree.finish": FINISH_STEPS,
+    "worktree.discard": DISCARD_STEPS,
+}
+
 MUTATING_STEPS = frozenset(
-    {"create-retention-ref", "remove-registry-entry", "remove-worktree-dir", "delete-local-branch"}
+    {"create-retention-ref", "remove-registry-entry", "remove-worktree-dir", "delete-local-branch",
+     "git-worktree-add", "publish-resume-receipt"}
 )
 
 
@@ -30,7 +44,15 @@ class CleanupDecision:
 
 
 def reconcile_steps(operation: str, completed: tuple[str, ...]) -> CleanupDecision:
-    steps = FINISH_STEPS if operation == "worktree.finish" else DISCARD_STEPS
+    """receipt の completed 列から前進可否を判定する。
+
+    以前は `finish` 以外をすべて `DISCARD_STEPS` と比較しており、`create` / `resume` は
+    **黙って別 operation の step 列に照合されていた**（`SI-FLW-057`）。
+    未知の operation は既定へ倒さず `INDETERMINATE` にする。
+    """
+    steps = STEPS_BY_OPERATION.get(operation)
+    if steps is None:
+        return CleanupDecision("INDETERMINATE", reason=f"reconcile 対象外の operation: {operation}")
     if completed != steps[: len(completed)]:
         return CleanupDecision("INDETERMINATE", reason="receipt chainがstep列のprefixでない")
     if completed == steps:

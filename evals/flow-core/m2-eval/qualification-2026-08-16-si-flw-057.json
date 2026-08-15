@@ -1,0 +1,39 @@
+{
+  "schema": "bitz-flow/m2-qualification-summary/v1",
+  "executed_at": "2026-08-15T15:27:32Z",
+  "expires_at": "2026-08-16T15:24:39Z",
+  "compatibility_key": "sha256:aae4eb734996c02784eb5ef6f97df1f9959fdb8a779fbc310e58e62dd98c6024",
+  "skill": "flow-core@0.4.2;bitz-flow@0.7.2",
+  "gate_status": "PASS",
+  "platforms": {
+    "claude": {
+      "status": "PASS",
+      "trials": 3,
+      "elapsed_seconds": 32.465,
+      "cli": "2.1.233 (Claude Code)"
+    },
+    "codex": {
+      "status": "PASS",
+      "trials": 3,
+      "elapsed_seconds": 53.44,
+      "cli": "codex-cli 0.147.0"
+    },
+    "antigravity": {
+      "status": "PASS",
+      "trials": 3,
+      "elapsed_seconds": 87.342,
+      "cli": "1.1.13"
+    }
+  },
+  "required_checks": {
+    "detected": 21,
+    "denominator": 21
+  },
+  "positive_controls": {
+    "detected": 9,
+    "denominator": 9
+  },
+  "hazardous_events": 0,
+  "residual_side_effects": 0,
+  "raw_logs_committed": false
+}

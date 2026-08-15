@@ -57,8 +57,13 @@ class RuntimeDecision:
     evidence: tuple[str, ...] = ()
 
 
-class RuntimeError(ValueError):
-    pass
+class WorktreeRuntimeError(ValueError):
+    """worktree runtime が意図して投げる失敗。
+
+    以前は `RuntimeError` という名前で組み込み例外を module 内で遮蔽しており、
+    mutation 境界の except が素の `ValueError` / `KeyError` を捕捉できなかった
+    （`FLW-REV-016:SYN-003`）。固有名にして遮蔽をやめる。
+    """
 
 
 def _git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -67,7 +72,7 @@ def _git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProc
         cwd=repo, capture_output=True, text=True, check=False,
     )
     if check and proc.returncode != 0:
-        raise RuntimeError(f"git {args[0]} failed")
+        raise WorktreeRuntimeError(f"git {args[0]} failed")
     return proc
 
 
@@ -109,7 +114,7 @@ def plan(
     worktree_root: str | Path, start_point: str = "HEAD", default_branch: str = "main",
 ) -> RuntimePlan:
     if action not in WRITE_ACTIONS:
-        raise RuntimeError(f"unsupported worktree action: {action}")
+        raise WorktreeRuntimeError(f"unsupported worktree action: {action}")
     root = Path(repo).resolve(strict=True)
     common = _common_dir(root)
     approved_root = Path(worktree_root).resolve(strict=True)
@@ -120,7 +125,7 @@ def plan(
     try:
         target.relative_to(approved_root)
     except ValueError as exc:
-        raise RuntimeError("worktree path escapes approved root") from exc
+        raise WorktreeRuntimeError("worktree path escapes approved root") from exc
     registry = _registry_for(common, target)
     dir_target = guard.canonical_worktree_dir_target(
         target, approved_root=approved_root, case_sensitive=True
@@ -133,13 +138,13 @@ def plan(
     nonexistent = _nonexistence_digest(target)
     if action == "create":
         if target.exists() or registry.exists() or _head(root, f"refs/heads/{branch}") is not None:
-            raise RuntimeError("create target, registry, or branch already exists")
+            raise WorktreeRuntimeError("create target, registry, or branch already exists")
         instance = None
         if nonexistent is None:
-            raise RuntimeError("create target nonexistence cannot be proven")
+            raise WorktreeRuntimeError("create target nonexistence cannot be proven")
     else:
         if instance is None:
-            raise RuntimeError("existing worktree binding cannot be proven")
+            raise WorktreeRuntimeError("existing worktree binding cannot be proven")
         nonexistent = None
         guard.verify_worktree_binding(common, registry, target)
     context = C.WorktreeApprovalContext(
@@ -183,12 +188,12 @@ def capability_from_json(value: Mapping[str, object]) -> C.WorktreeApprovalCapab
             signature=str(value["signature"]),
         )
     except (KeyError, TypeError, ValueError) as exc:
-        raise RuntimeError("capability envelope is invalid") from exc
+        raise WorktreeRuntimeError("capability envelope is invalid") from exc
 
 
 def ed25519_verifier(public_keys: Mapping[str, str]) -> C.SignatureVerifier:
     if shutil.which("openssl") is None:
-        raise RuntimeError("OpenSSL Ed25519 verifier unavailable")
+        raise WorktreeRuntimeError("OpenSSL Ed25519 verifier unavailable")
     def verify(payload: dict, signature: str, key_id: str) -> bool:
         encoded = public_keys.get(key_id)
         if encoded is None:
@@ -233,7 +238,7 @@ def signature_mode_available(common_dir: str | Path) -> bool:
     """trusted key registry が使える配備かを、例外を投げずに判定する（モード判定用）。"""
     try:
         return bool(load_trusted_keys(common_dir))
-    except RuntimeError:
+    except WorktreeRuntimeError:
         return False
 
 
@@ -243,14 +248,14 @@ def load_trusted_keys(common_dir: str | Path) -> dict[str, str]:
     try:
         stat = path.lstat()
         if path.is_symlink() or not path.is_file() or stat.st_uid != os.getuid() or stat.st_mode & 0o077:
-            raise RuntimeError("trusted key registry must be owner-only regular file")
+            raise WorktreeRuntimeError("trusted key registry must be owner-only regular file")
         value = json.loads(path.read_text(encoding="utf-8"))
-    except RuntimeError:
+    except WorktreeRuntimeError:
         raise
     except (OSError, ValueError) as exc:
-        raise RuntimeError("trusted key registry unavailable") from exc
+        raise WorktreeRuntimeError("trusted key registry unavailable") from exc
     if not isinstance(value, dict) or not value:
-        raise RuntimeError("trusted key registry is empty or invalid")
+        raise WorktreeRuntimeError("trusted key registry is empty or invalid")
     return {str(k): str(v) for k, v in value.items()}
 
 
@@ -296,7 +301,7 @@ class _ReceiptLog:
         try:
             import fcntl
         except ImportError as exc:
-            raise RuntimeError("receipt locking unavailable") from exc
+            raise WorktreeRuntimeError("receipt locking unavailable") from exc
         lock_path = self.root / ".append.lock"
         with lock_path.open("a+b") as lock_stream:
             fcntl.flock(lock_stream.fileno(), fcntl.LOCK_EX)
@@ -352,7 +357,7 @@ def apply(
             )
         try:
             verifier = ed25519_verifier(public_keys)
-        except RuntimeError as exc:
+        except WorktreeRuntimeError as exc:
             return RuntimeDecision("UNSUPPORTED", str(exc), remaining_steps=plan_value.effects)
 
     # nonce はどちらのモードでも operation_id から導出し、承認へ束縛する。
@@ -376,7 +381,7 @@ def apply(
     completed: list[str] = []
     try:
         receipts.append({"operation_id": plan_value.operation_id, "state": "PENDING", "completed_steps": []})
-    except (RuntimeError, OSError, ValueError) as exc:
+    except (WorktreeRuntimeError, OSError, ValueError, KeyError) as exc:
         ledger.finish(nonce, plan_value.operation_id, C.NONCE_QUARANTINED)
         return RuntimeDecision("BLOCKED", str(exc), remaining_steps=plan_value.effects)
     repo, path = Path(plan_value.repo), Path(plan_value.path)
@@ -390,14 +395,14 @@ def apply(
                 default_branch=plan_value.default_branch,
             )
             if refreshed.operation_id != plan_value.operation_id:
-                raise RuntimeError("worktree state changed after approval")
+                raise WorktreeRuntimeError("worktree state changed after approval")
             current_context = refreshed.context
         pending_failure = C.reauthorize_pending_worktree_write(
             capability, context=current_context, now=datetime.now(timezone.utc),
             trusted_key_ids=tuple(public_keys), verify_signature=verifier, mode=mode,
         )
         if pending_failure is not None:
-            raise RuntimeError(pending_failure.reason)
+            raise WorktreeRuntimeError(pending_failure.reason)
         if step_hook is not None:
             step_hook(step)
 
@@ -415,13 +420,13 @@ def apply(
         else:
             tip = _head(repo, f"refs/heads/{plan_value.branch}")
             if tip != plan_value.expected_head:
-                raise RuntimeError("branch tip changed after plan")
+                raise WorktreeRuntimeError("branch tip changed after plan")
             dirty = bool(_git(path, "status", "--porcelain").stdout)
             if dirty and not backup_receipt:
-                raise RuntimeError("dirty worktree requires backup receipt")
+                raise WorktreeRuntimeError("dirty worktree requires backup receipt")
             if plan_value.action == "finish":
                 if _git(repo, "merge-base", "--is-ancestor", tip or "", plan_value.default_branch, check=False).returncode != 0:
-                    raise RuntimeError("finish requires merged/reachable branch tip")
+                    raise WorktreeRuntimeError("finish requires merged/reachable branch tip")
             else:
                 before("create-retention-ref")
                 retained = f"refs/bitz-flow/retained/{plan_value.branch.replace('/', '-')}-{(tip or '')[:12]}"
@@ -439,7 +444,7 @@ def apply(
         receipt = receipts.append({"operation_id": plan_value.operation_id, "state": "DONE", "completed_steps": completed})
         ledger.finish(nonce, plan_value.operation_id, C.NONCE_USED_DONE)
         return RuntimeDecision("DONE", f"worktree.{plan_value.action} completed", tuple(completed), (), (receipt,))
-    except (RuntimeError, OSError) as exc:
+    except (WorktreeRuntimeError, OSError, ValueError, KeyError) as exc:
         try:
             receipts.append({"operation_id": plan_value.operation_id, "state": "QUARANTINED", "completed_steps": completed})
         finally:
