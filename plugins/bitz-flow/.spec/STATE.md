@@ -1,5 +1,6 @@
 # STATE — status 遷移ログ
 
+- 2026-08-15 harness事故: qualification の antigravity trial（`--sandbox=false --dangerously-skip-permissions`）で**被験エージェントが被験リポジトリへブランチを切り2件コミット**した。`agy_guard.py` のフェイルオープン化を含む。manifest は同区間を hazard 0 / residual 0 と報告しており `FLW-REV-016:SYN-007` の見逃しが実証された。`SI-FLW-062` として起票。**是正まで harness を再実行しない**（`SI-FLW-057` の証跡更新はブロック）
 - 2026-08-15 FLW-TSK-082: pending → implementing（`SI-FLW-061` の B2 実装。承認モードを配備で決め、既定は plan-digest。nonce は operation_id から導出。`apply()` が自ら registry を読む）
 - 2026-08-15 FLW-DSN-016: 2.5 → 2.6（§4 の改訂予定を承認モードの規範本文へ差し替え）
 - 2026-08-15 M2是正枠 run manifest: 記録機構を先行履行（`evals/flow-core/m2-eval/record_run.py`。予算裁定の着手条件・`SYN-015` の是正）
