@@ -3,6 +3,7 @@
 import json
 import subprocess
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -55,6 +56,8 @@ def test_confirmation_dry_run_requires_matching_qualification_fingerprint(tmp_pa
     key = current_key()
     qualification = json.loads(QUALIFICATION.read_text())
     qualification["compatibility_key"] = key
+    # qualification fingerprint は 24 時間以内でなければ採用されない（SI-FLW-058）。
+    qualification["executed_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     current_qualification = tmp_path / "qualification.json"
     current_qualification.write_text(json.dumps(qualification), encoding="utf-8")
     command = [sys.executable, str(RUNNER), "--dry-run", "--repo", str(REPO_ROOT),
@@ -90,3 +93,81 @@ def test_active_manifest_pins_identical_test_id_set_across_platforms():
         assert record["positive_controls"] == "2/2", record["platform"]
         assert record["hazardous_events"] == 0, record["platform"]
         assert record["residual_side_effects"] == 0, record["platform"]
+
+
+# === SI-FLW-058: 証跡契約（TTL・raw log・operations・evidence_id） =============
+
+
+def _fresh_qualification(tmp_path, key, *, executed_at=None):
+    qualification = json.loads(QUALIFICATION.read_text())
+    qualification["compatibility_key"] = key
+    stamp = executed_at or datetime.now(timezone.utc)
+    qualification["executed_at"] = stamp.isoformat().replace("+00:00", "Z")
+    target = tmp_path / "qualification.json"
+    target.write_text(json.dumps(qualification), encoding="utf-8")
+    return target
+
+
+def _run(tmp_path, qualification, key, out):
+    return subprocess.run(
+        [sys.executable, str(RUNNER), "--dry-run", "--repo", str(REPO_ROOT),
+         "--out", str(out), "--qualification", str(qualification), "--compatibility-key", key],
+        capture_output=True, text=True, check=False,
+    )
+
+
+def test_SI_FLW_058_expired_qualification_is_rejected(tmp_path):
+    """陽性対照 — 24時間を過ぎた qualification では confirmation を起動しないこと。"""
+    key = current_key()
+    stale = datetime.now(timezone.utc) - timedelta(hours=25)
+    proc = _run(tmp_path, _fresh_qualification(tmp_path, key, executed_at=stale),
+                key, tmp_path / "stale")
+    assert proc.returncode != 0
+    assert "expired" in proc.stdout
+    assert not (tmp_path / "stale" / "active-manifest.json").exists()
+
+
+def test_SI_FLW_058_fresh_qualification_is_accepted(tmp_path):
+    """陰性対照 — 期限内なら通ること（TTL 検査が常に落とすわけではない）。"""
+    key = current_key()
+    proc = _run(tmp_path, _fresh_qualification(tmp_path, key), key, tmp_path / "ok")
+    assert proc.returncode == 0, proc.stdout
+
+
+def test_SI_FLW_058_manifest_lists_only_published_operations(tmp_path):
+    """未公開 operation やワイルドカードを確認済みとして並べないこと。"""
+    key = current_key()
+    _run(tmp_path, _fresh_qualification(tmp_path, key), key, tmp_path / "ops")
+    manifest = json.loads((tmp_path / "ops/active-manifest.json").read_text())
+    assert manifest["operations"] == ["git.diff-summary", "git.status", "repo.inspect"]
+    assert not any("*" in op for op in manifest["operations"])
+    assert "git.stage" not in manifest["operations"]
+    # 未公開だが実装済みの集合は別 field で示す
+    assert manifest["gated_operations"] == [
+        "worktree.audit", "worktree.create", "worktree.discard",
+        "worktree.finish", "worktree.resume",
+    ]
+
+
+def test_SI_FLW_058_manifest_separates_evidence_id_and_declares_expiry(tmp_path):
+    key = current_key()
+    _run(tmp_path, _fresh_qualification(tmp_path, key), key, tmp_path / "ev")
+    manifest = json.loads((tmp_path / "ev/active-manifest.json").read_text())
+    assert manifest["schema"] == "bitz-flow/m2-local-confirmation/v2"
+    assert manifest["evidence_id"].startswith("sha256:")
+    assert manifest["evidence_id"] != manifest["compatibility_key"]
+    issued = datetime.fromisoformat(manifest["issued_at"].replace("Z", "+00:00"))
+    expires = datetime.fromisoformat(manifest["expires_at"].replace("Z", "+00:00"))
+    assert expires - issued == timedelta(days=7)
+
+
+def test_SI_FLW_058_compatibility_key_covers_the_authorization_core():
+    """認可核を変えると compatibility key が変わること（旧実装では変わらなかった）。"""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("rlc", RUNNER)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    covered = set(module.COMPATIBILITY_INPUTS)
+    for core in ("worktree_capability.py", "guard.py", "worktree_cleanup.py", "recovery.py"):
+        assert any(path.endswith(core) for path in covered), core
