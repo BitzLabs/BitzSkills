@@ -109,10 +109,24 @@ scripts/             # エージェント共用の運用スクリプト（bump /
   （SI-CORE-022 / SI-CORE-034 / CORE-FR-011）。
   例: `python3 scripts/spec status .` / `python3 scripts/spec scaffold . requirement --prefix CORE-FR ...`
 - **仕様（.spec）検証の正規コマンド**:
-  `python3 scripts/spec inspect --workspace . plugins/*`
+  `python3 scripts/spec inspect --workspace . plugins/* --check-only`
   — このモノリポでは常に `--workspace . plugins/*` を使う（ルートと全プラグインを一括検証し
   クロスリファレンスを解決する）。ルート単体（末尾 `.`）は `tests/` が参照する他ワークスペースの
-  `ENV-*` 等を解決できず幽霊参照で FAIL するため使わない（SI-CORE-023）
+  `ENV-*` 等を解決できず幽霊参照で FAIL するため使わない（SI-CORE-023）。
+  **`--check-only` を既定とする**: このリポジトリは常に複数セッション・worktree が並行するため
+  （上の「並行開発」節）、レポートを書く形で回すと 8 ワークスペース分の
+  `inspection-report.md` が一斉に dirty になり、他セッションの未コミット変更と混ざる。
+  判定は終了コードが正であり、CI も `release_check.py` もコミット済みレポートを読まない。
+  レポート更新は**締め工程だけ**で行う（下記）
+- **inspection-report.md の締め工程**: `.spec/*/inspection-report.md` は
+  `spec_inspect.py` の生成物であり、**機械はどれもコミット済みのファイルを読まない**
+  （CI・`release_check.py`・テストのいずれも参照しない。読むのは人間だけ）。
+  更新するときは次の条件をすべて満たすこと。
+  1. 対象 PR がすべて main へ統合された後に、専用ブランチで1回だけ実行する
+  2. **メイン作業ツリー（`BitzSkills/`）から実行する**。worktree から回すと
+     クロスワークスペース参照の識別子にチェックアウト先のディレクトリ名が混入する
+     （`SI-SDD-043`。修正されるまでの回避規約）
+  3. 他セッションが同じレポートを未コミットで抱えていないことを `git status` で確かめる
 
 ### スクリプトの呼び出し規約（CORE-CON-012 / CORE-CON-013）
 
