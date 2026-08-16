@@ -1,5 +1,6 @@
 # STATE — status 遷移ログ
 
+- 2026-08-16 M2是正の第2次予算: PR #291 の記録で **3 PR / 9 session** に到達し、**本体枠を使い切って予備枠（2 PR / 6 session）に入った**。予備の使用に裁定は不要だが、裁定条件どおり `FLW-REV-017` の予算節で報告する
 - 2026-08-16 SI-FLW-065 の証跡: qualification 3platform PASS。confirmation を**フォアグラウンドで実走し、再試行 0 回のまま 3platform PASS**（173件・同一 test ID digest・runtime check 35/35・hazard/residual すべて実測 0・raw log 保存と canary 検出すべて成功。runner 全体 90秒）。**codex の初回 timeout は一度も起きなかった**（バックグラウンド実行が原因という切り分けを実走で裏付けた）。active manifest を置換し `--verify-for-gate` が exit 0。attempt 台帳は `attempts-2026-08-16-si-flw-065.jsonl`
 - 2026-08-16 FLW-REV-017: M2 Exit 再々レビュー **CONDITIONAL_PASS 3.13**（前回 FAIL 2.85、+0.28）。**M2 出口条件 8項目中 7項目が PASS**（前回は3項目 BLOCKED）。残る1項目は audit の quarantine 接続語彙。critical 4件はすべて是正済み。business 観点は分類器のブロックで欠測（重み 0.85 で測定、感度 0.01）。**最終状態を独立に評価した観点は無い**（`GP-005`）
 - 2026-08-16 Completion Gate: 保留を継続。通過条件6件と `GP-005`（是正後の独立検分）が残る

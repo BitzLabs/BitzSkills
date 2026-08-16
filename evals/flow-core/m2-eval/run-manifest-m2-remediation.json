@@ -31,6 +31,14 @@
       "review_fixes": 0,
       "unmet_exit_reason": "M2出口条件の再判定が未了（audit検出は実装済み）",
       "recorded_at": "2026-08-16"
+    },
+    {
+      "pr": 291,
+      "issue": "SI-FLW-065",
+      "sessions": 2,
+      "review_fixes": 0,
+      "unmet_exit_reason": "FLW-REV-017 は CONDITIONAL_PASS。通過条件6件（SYN-008/009/011/012・GP-005・business 欠測）が残る",
+      "recorded_at": "2026-08-16"
     }
   ],
   "previous_budgets": [
