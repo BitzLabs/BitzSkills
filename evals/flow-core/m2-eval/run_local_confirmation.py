@@ -28,7 +28,7 @@ COMMANDS = {
 }
 MARKER = re.compile(
     r"M2_CONFIRMATION_PASS tests=(\d+) test_id_digest=(sha256:[0-9a-f]{64}) "
-    r"runtime_checks=(\d+)/(\d+) required_checks=2/2 positive_controls=2/2 hazards=0 residuals=0"
+    r"runtime_checks=(\d+)/(\d+) hazards=0 residuals=0"
 )
 SUITE_MARKER = re.compile(
     r"M2_CONFIRMATION_SUITE tests=(\d+) test_id_digest=(sha256:[0-9a-f]{64}) runtime_checks=(\d+)"
@@ -293,8 +293,6 @@ def main() -> int:
                     "tests": int(match.group(1)) if match else 0,
                     "test_id_digest": match.group(2) if match else None,
                     "runtime_checks": f"{match.group(3)}/{match.group(4)}" if match else "0/8",
-                    "required_checks": "2/2" if valid else "0/2",
-                    "positive_controls": "2/2" if valid else "0/2",
                     "hazardous_events": 1 if mutated else 0,
                     "residual_side_effects": 1 if mutated else 0,
                     "subject_state_before": state_before,

@@ -2,8 +2,8 @@
 id: FLW-DSN-016
 title: "M2 worktree safety詳細設計"
 status: active
-version: 2.7
-updated: 2026-08-16
+version: 2.8
+updated: 2026-08-17
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-006, FLW-NFR-007, FLW-NFR-011, FLW-NFR-012, FLW-CON-005, FLW-CON-006
 origin: SI-FLW-041, SI-FLW-042, SI-FLW-043, SI-FLW-044, SI-FLW-045, SI-FLW-046, SI-FLW-047, SI-FLW-048, SI-FLW-049, SI-FLW-050, SI-FLW-051, SI-FLW-052, SI-FLW-053, SI-FLW-054, FLW-REV-011, FLW-REV-012, FLW-REV-013, FLW-REV-014
@@ -537,34 +537,67 @@ worktree の場合の**置き場**が未定義だった。
 fault fixture へ「外部からの手動削除」「外部からの registry 改変」を加える
 （`M2-FLT-013` / `M2-FLT-014`）。
 
-### 外部起因 `ORPHAN` の2形と、audit の code の棲み分け
+### 外部起因の3形と、audit の code の棲み分け
 
-`FLW-REV-017:SYN-011` は「検出は成立したが quarantine への接続語彙が無い」とした。
-外部起因には次の2形があり、どちらも `ORPHAN` として §6 の解除区分へ接続する。
+`FLW-REV-017:SYN-011` は「検出は成立したが quarantine への接続語彙が無い」とし、
+`FLW-REV-018:SYN-002` は「検出自体が片方向で、2形のうち1形しか見ていない」とした。
+registry と receipt を**双方向**に突き合わせ、次の3形をすべて拾う。
 
-| 形 | 判定関数 | 例 |
+| 形 | `divergence` | 例 |
 |---|---|---|
-| 登録済み worktree の binding が壊れた | `worktree_capability.audit_external_binding_change` | 手動 `rm -rf`、registry 改変 |
-| bitz-flow が作っていない worktree が registry にいる | `worktree_capability.audit_unmanaged_worktree` | 手動 `git worktree add`、外部ツール、別クローン |
+| bitz-flow が作っていない worktree が registry にいる | `unmanaged` | 手動 `git worktree add`、外部ツール、別クローン |
+| receipt が managed と記録しているのに registry から消えた | `registry-missing` | 外部ツールによる登録解除 |
+| registry にはあるが実体ディレクトリが無い | `directory-missing` | 手動 `rm -rf` |
+
+登録済み worktree の binding 破壊は `worktree_capability.audit_external_binding_change`
+が判定し、`worktree_state` は**閉集合（§2）から**選ぶ（実体が無ければ `ABSENT`、
+相互参照不一致なら `MISMATCH`）。**`ORPHAN` は `branch_audit_state` の値であり
+`worktree_state` には無い。**本節が使う「ORPHAN」は `FLW-DSN-006` 由来の
+**起因の呼称**（散文）であって field 値ではない（`FLW-REV-018:SYN-005`）。
 
 §8 の recovery matrix には `worktree.audit` の行が「照合中 = `INDETERMINATE`」しか無く、
 検出が**成立した**場合の code が読み取れなかった。棲み分けは次のとおりとする。
 
 | audit の状況 | code | recovery class | NEXT |
 |---|---|---|---|
-| 突合が成立し、外部起因の `ORPHAN` を検出した | `BLOCKED` | `human-stop` | **空**（解除は §6 の reviewer 裁定であり operation ではない） |
-| 突合自体が成立しない（receipt を読めない等） | `INDETERMINATE` | `human-stop` | 空 ＋ `required_human_input` |
+| 突合が成立し、外部起因の乖離を検出した | `BLOCKED` | `human-stop` | **空**（解除は §6 の reviewer 裁定であり operation ではない） |
+| 突合自体が成立しない（chain 破損・欠番・store 異常） | `INDETERMINATE` | `human-stop` | 空 ＋ `required_human_input` |
 | 外部起因なし | `OK` | — | — |
 
 `BLOCKED` は §8 の「`worktree.*` / quarantine 既存」行と同じ扱いである。
-`ORPHAN` を検出した result は `cause: "quarantined"`、`recovery_class`、`quarantine`
-（`worktree_state` / `required` / `release_class` / `reason` / `targets`）、
-`required_human_input` を data に持ち、解除区分は §6 の4区分から選ぶ。
-receipt chain の無い worktree は `worktree-unresolved`（解除不可・quarantine 継続）になる。
+検出した result は `cause: "quarantined"`、`recovery_class`、`quarantine`
+（`required` / `release_class` / `reason` / `targets`）、`required_human_input` を data に持つ。
+解除区分は §6 の4区分を `classify_quarantine` へ**実観測を渡して計算**する
+（固定リテラルの evidence を渡してはならない。`FLW-REV-018:SYN-004`）。
+
+### receipt chain は読み出し時に検証する
+
+audit の判定は receipt store という単一の ground truth に依存する。
+`FLW-DSN-015` が evidence ledger へ定める「欠番、chain 破損で `blocked`」と**同じ規則**を
+receipt へ適用し、読み出し時に次を検証する（`FLW-REV-018:SYN-001`）。
+
+- ファイル名の連番が途切れていないこと（欠落・追加の検出）
+- 各 record の `record_digest` が本文と一致すること（改竄の検出）
+- `previous_record_digest` が前の record の digest と一致すること（差し替えの検出）
+
+いずれかが破れたら `INDETERMINATE` とし、**どの分類も主張しない**。
+検証しなければ、手書き receipt を1件置くだけで検出を無効化できる。
 
 「receipt が1件も無い」と「receipt を読めない」を同一視してはならない。
 後者を前者として扱うと**すべての worktree が外部起因に見え**、`BLOCKED` を偽って立てる。
+store がディレクトリでない場合・権限で読めない場合も後者である（`FLW-REV-018:SYN-003`）。
 これは同表が禁じる「分類の推測」に当たる。
+
+### 判定しないと決めたこと（裁定 2026-08-16）
+
+出口条件6の「operation 外の変更」は、**worktree の生成・消失・binding 不整合**を指す。
+managed worktree 内での HEAD 前進は M2 が実現しようとしている正常な作業であり、
+`head_changed` として**事実を報告するが違反にしない**。
+
+commit 単位の由来判定は行わない。`commit_causality` の原則は「由来は
+**CAS を実行した writer の receipt** でしか判定しない」であり、`git.commit` が M1 で
+未公開である間、bitz-flow は commit を1つも作らないため由来を裏付ける receipt が
+存在し得ない。commit 由来判定は M1 公開に依存するため M3 入口条件へ計上する。
 
 ## §8 M2 recovery matrix
 

@@ -122,22 +122,32 @@ completed/remaining stepsを返してquarantineする。remote writeはM3まで`
 `worktree.audit` は単純列挙ではない。**bitz-flow の receipt と registry を突き合わせる診断**である
 （単純列挙は M1-4 公開予定の `worktree.list` が担う。両者を統合しないのはこの責務差のため）。
 
-| 入力 | `git worktree list --porcelain` と、common-dir 配下 `bitz-flow-v2/receipts` |
+| 入力 | `git worktree list --porcelain`（path と HEAD）と、common-dir 配下 `bitz-flow-v2/receipts` |
 |---|---|
-| data | `items` / `page` / `managed_worktrees` / `external_changes` / `evidence` |
-| 判定 | receipt に裏付けの無い worktree があれば `BLOCKED`、突合できなければ `INDETERMINATE`、他は `OK` |
+| data | `items` / `page` / `evidence`、判定時に `cause` / `recovery_class` / `quarantine` / `required_human_input` |
+| 判定 | 外部起因の乖離があれば `BLOCKED`、receipt chain を検証できなければ `INDETERMINATE`、他は `OK` |
 
-`BLOCKED` は「registry にいるが bitz-flow の operation が作っていない worktree がある」ことを表す。
-`FLW-DSN-016 §7` の**外部起因 `ORPHAN`** であり、同 §6 の解除区分へ接続する。
-このとき data は次を持つ（語彙の正は `worktree_capability` / `worktree_cleanup` 側）。
+`items` の各行は `path` / `registered` / `managed` / `present` / `head_changed` / `divergence` を持つ。
+`divergence` は空文字（正常）か、次の3種のいずれかである。
 
-- `cause: "quarantined"` / `recovery_class: "human-stop"`
-- `quarantine`: `worktree_state`（`ORPHAN`）/ `required` / `release_class`（§6 の4区分）/ `reason` / `targets`
-- `required_human_input`: 解除に必要な人間の判断
+| `divergence` | 意味 |
+|---|---|
+| `unmanaged` | registry にいるが bitz-flow の receipt に裏付けが無い |
+| `registry-missing` | receipt は managed と記録しているのに registry から消えた |
+| `directory-missing` | registry にはあるが実体ディレクトリが無い |
 
-`human-stop` であるため **NEXT は空**である。解除は operation ではなく reviewer の裁定であり、
-示せる次の operation が存在しない。receipt を読めず突合自体が成立しない場合は
-`INDETERMINATE` を返し、**分類を推測しない**（すべてを外部起因と読むのは誤りであるため）。
+いずれかがあれば `BLOCKED` とし、`FLW-DSN-016` §6 の解除区分へ接続する。data は
+`cause: "quarantined"` / `recovery_class: "human-stop"` /
+`quarantine`（`required` / `release_class` / `reason` / `targets`）/ `required_human_input` を持つ。
+**NEXT は空**である — 解除は operation ではなく reviewer の裁定であり、示せる次の operation が無い。
+
+receipt chain は**読み出し時に検証する**（連番・`record_digest`・前方連結）。
+検証できなければ `INDETERMINATE` を返し、**分類を推測しない**。
+「receipt が1件も無い」と「receipt を読めない」を同一視しない。
+
+**判定しないこと**: managed worktree 内の HEAD 前進は正常な作業であり、
+`head_changed` として事実を報告するが違反にしない。任意のコミットの正当性も判定しない
+（由来判定は receipt に依存し、`git.commit` の公開が前提となるため M3）。
 
 自動修復は行わない。`worktree.audit` は read だが、その判定は write の開始可否を止める。
 

@@ -2,10 +2,10 @@
 name: flow-core
 description: BitzFlow のメインスキル。プロジェクト状況に応じた Git / GitHub 開発フローの選択（単独開発=feature ブランチ / 複数エージェント並列=worktree / チーム・公開開発=GitHub Issue 駆動 + PR）、Conventional Commits のコミット規定、失敗時の復元方針を規定する。ユーザーが「Git フロー」「ブランチ運用」「コミット規約」「開発フローを決めたい」「並列で開発したい」に言及したとき、または開発作業の開始時にフローが未確定のときに使用する。worktree の実手順は flow-worktree、Issue 駆動 PR の実手順は flow-pr が担当する。
 metadata:
-  version: "0.7.0"
+  version: "0.8.0"
   author: br7.hide
   created: "2026-07-18"
-  updated: 2026-08-16
+  updated: 2026-08-17
 ---
 
 # flow-core — Git / GitHub 開発フローの選択とコミット規約
@@ -29,7 +29,7 @@ in-flight branch / worktree / PR を列挙し、変更予定 path との重複�
 未 push、PR 不在の local branch も除外しない。manifest 欠落・timeout・上限超過・不完全な列挙・
 判定不能では write を開始せず `BLOCKED` とする。打切り結果を「競合なし」の根拠にしない。
 
-`worktree.create` / `resume` / `finish` / `discard` は **2026-08-15 の裁定で公開集合から外れており、
+`worktree.create` / `resume` / `finish` / `discard` / `audit` は **2026-08-15 の裁定で公開集合から外れており、
 現在 `<このスキル>/scripts/flow.py` は `UNSUPPORTED` を返す**（M2 出口が未達のため。縮退規則3 の適用。
 裁定記録は `.spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md`）。
 公開されるまでの worktree 操作は `flow-worktree` スキルの手順に従う。

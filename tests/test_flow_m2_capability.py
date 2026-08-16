@@ -86,14 +86,24 @@ def test_M2_FLT_012_prior_path_occupation_is_stale():
 
 
 def test_M2_FLT_013_external_directory_removal_is_orphaned_and_quarantined():
+    """外部削除を検出し quarantine へ接続すること。
+
+    `worktree_state` は `FLW-DSN-016` §2 の閉集合から選ぶ。実体が消えたのだから
+    `ABSENT` である。従来は `ORPHAN` を返していたが、`ORPHAN` は
+    `branch_audit_state` の値であり `worktree_state` の閉集合には無い
+    （`FLW-REV-018:SYN-005`）。§7 が使う「ORPHAN」は起因の呼称であって field 値ではない。
+    """
+    from flowlib import worktree as W
+
     finding = C.audit_external_binding_change(
         C.WorktreeBindingObservation(False, True, False)
     )
     assert (finding.worktree_state, finding.result_code, finding.quarantine_required) == (
-        "ORPHAN",
+        "ABSENT",
         C.CODE_BLOCKED,
         True,
     )
+    assert finding.worktree_state in W.WORKTREE_STATES, "閉集合の外の値を作らないこと"
 
 
 def test_M2_FLT_014_external_registry_tampering_is_orphaned_and_quarantined():

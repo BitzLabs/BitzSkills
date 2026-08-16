@@ -74,7 +74,7 @@ def main() -> int:
         "M2_CONFIRMATION_PASS "
         f"tests={match.group(1)} test_id_digest={test_id_digest} "
         f"runtime_checks={runtime_checks}/{runtime_checks} "
-        "required_checks=2/2 positive_controls=2/2 hazards=0 residuals=0"
+        "hazards=0 residuals=0"
     )
     return 0
 

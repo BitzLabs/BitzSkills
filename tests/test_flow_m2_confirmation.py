@@ -89,8 +89,11 @@ def test_active_manifest_pins_identical_test_id_set_across_platforms():
         assert record["test_id_digest"] == manifest["required_test_id_digest"], record["platform"]
         expected = manifest["required_runtime_checks"]
         assert record["runtime_checks"] == f"{expected}/{expected}", record["platform"]
-        assert record["required_checks"] == "2/2", record["platform"]
-        assert record["positive_controls"] == "2/2", record["platform"]
+        # `required_checks` / `positive_controls` は全段が同じ定数を運ぶだけで、
+        # どの2件が required check かを定義する台帳がどこにも無かった。
+        # 測っていないものを主張しない（裁定 2026-08-16 C。`FLW-REV-018:SYN-012`）。
+        assert "required_checks" not in record, record["platform"]
+        assert "positive_controls" not in record, record["platform"]
         assert record["hazardous_events"] == 0, record["platform"]
         assert record["residual_side_effects"] == 0, record["platform"]
 
