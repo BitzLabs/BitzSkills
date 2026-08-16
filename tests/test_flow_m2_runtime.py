@@ -384,9 +384,16 @@ def test_SI_FLW_057_partial_create_receipt_reconciles_against_the_same_vocabular
 
 
 def _dispatch(*argv):
-    """公開 dispatcher を fixture 用ハンドラ表で起動し、結果 JSON を返す。"""
+    """公開 dispatcher を fixture 用ハンドラ表で起動し、結果 JSON を返す。
+
+    `--format json` だけを通していたため、result 契約に従わない `next_actions` を入れても
+    検出できず、既定形式で `KeyError` を投げる状態を出荷しかけた（`SI-FLW-065`）。
+    既定 renderer は下の専用テストで担保する。
+    """
     from flowlib import cli
 
+    # 二重実行は write を2回走らせてしまうため、既定 renderer の検査は
+    # 副作用の無い operation を対象にした専用テストで担保する（下の SI_FLW_065）。
     table = {**cli._HANDLERS, **cli._GATED_HANDLERS}
     buffer = io.StringIO()
     with contextlib.redirect_stdout(buffer):
@@ -573,3 +580,46 @@ def test_SI_FLW_063_recovery_path_survives_a_failing_quarantine_append(repositor
     assert (root / "recov").is_dir(), "副作用は起きている"
     assert result.code == "PARTIAL", f"例外を脱出させず判定を返すこと: {result.summary}"
     assert "quarantine receipt も記録できない" in result.summary
+
+
+def test_SI_FLW_065_every_published_operation_renders_in_the_default_format(repository):
+    """公開経路の全 operation が既定 renderer で描画できること。
+
+    `--format json` だけを検査していると、result 契約に従わない `next_actions` を
+    入れても通ってしまう。既定形式は利用者が実際に見る出力である。
+    """
+    from flowlib import cli
+
+    repo, root = repository
+    table = {**cli._HANDLERS, **cli._GATED_HANDLERS}
+    outside = root / "renderable"
+    git(repo, "worktree", "add", "-b", "feat/renderable", str(outside))
+    plan_argv = ["worktree", "create", "--repo", str(repo), "--path", str(root / "planned"),
+                 "--branch", "feat/planned", "--worktree-root", str(root)]
+    try:
+        cases = (["repo", "inspect", "--repo", str(repo)],
+                 ["git", "status", "--repo", str(repo)],
+                 ["git", "diff-summary", "--repo", str(repo)],
+                 ["worktree", "audit", "--repo", str(repo)],   # external 検出つき（NEXT 行が出る）
+                 plan_argv)                                    # write の plan は副作用なし
+        for argv in cases:
+            buffer = io.StringIO()
+            with contextlib.redirect_stdout(buffer):
+                cli.main(argv, handlers=table)      # 例外を投げないこと自体が検査
+            assert buffer.getvalue().strip(), argv
+    finally:
+        git(repo, "worktree", "remove", "--force", str(outside))
+
+
+def test_SI_FLW_065_audit_next_action_follows_the_result_contract(repository):
+    """外部変更を検出したときの next_action が契約の形であること。"""
+    repo, root = repository
+    outside = root / "contract"
+    git(repo, "worktree", "add", "-b", "feat/contract", str(outside))
+    try:
+        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
+        assert result["code"] == "BLOCKED"
+        for action in result["next_actions"]:
+            assert set(action) == {"domain", "action", "args"}, action
+    finally:
+        git(repo, "worktree", "remove", "--force", str(outside))
