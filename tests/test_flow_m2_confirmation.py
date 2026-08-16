@@ -205,10 +205,46 @@ def test_SI_FLW_063_gate_verification_rejects_expired_evidence(tmp_path):
     assert "失効" in proc.stdout
 
 
-def test_SI_FLW_063_gate_verification_accepts_current_evidence():
-    """陰性対照 — 現行の active manifest は Gate 採用可であること。"""
+def test_SI_FLW_070_gate_verification_rejects_a_stale_qualification_reference(tmp_path):
+    """陽性対照 — 参照する qualification が 24 時間を超えていたら弾くこと。
+
+    従来は confirmation evidence の `expires_at` だけを陽性対照にしており、
+    qualification 側の TTL 判定に対照実験が無かった。
+    """
+    manifest = json.loads(ACTIVE.read_text())
+    manifest["expires_at"] = (datetime.now(timezone.utc) + timedelta(days=1)) \
+        .isoformat().replace("+00:00", "Z")
+    manifest["qualification_ref"]["executed_at"] = (
+        datetime.now(timezone.utc) - timedelta(hours=25)).isoformat().replace("+00:00", "Z")
+    stale = tmp_path / "stale-qualification.json"
+    stale.write_text(json.dumps(manifest), encoding="utf-8")
     proc = subprocess.run(
-        [sys.executable, str(RUNNER), "--repo", str(REPO_ROOT), "--verify-for-gate", str(ACTIVE)],
+        [sys.executable, str(RUNNER), "--repo", str(REPO_ROOT), "--verify-for-gate", str(stale)],
+        capture_output=True, text=True, check=False,
+    )
+    assert proc.returncode != 0
+    assert "24 時間" in proc.stdout
+
+
+def test_SI_FLW_070_gate_verification_accepts_evidence_within_ttl(tmp_path):
+    """陰性対照 — TTL 内の証跡は Gate 採用可であること。
+
+    **コミット済み artifact が「いま」有効かは検査しない。** qualification の TTL は
+    24 時間であり、それを CI へ固定すると**コード変更が無くても時刻が過ぎるだけで
+    全ブランチが赤になる**（`FLW-REV-018:SYN-010`）。証跡の鮮度は Gate 裁定の時点で
+    人間が確認するものであって、CI が主張することではない。
+    ここで検査するのは**判定ロジックが TTL 内の証跡を通すこと**である
+    （指紋の一致は時刻に依存しないため、そのまま検査対象に残る）。
+    """
+    manifest = json.loads(ACTIVE.read_text())
+    now = datetime.now(timezone.utc)
+    manifest["expires_at"] = (now + timedelta(days=1)).isoformat().replace("+00:00", "Z")
+    manifest["qualification_ref"]["executed_at"] = (
+        now - timedelta(hours=1)).isoformat().replace("+00:00", "Z")
+    fresh = tmp_path / "fresh.json"
+    fresh.write_text(json.dumps(manifest), encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, str(RUNNER), "--repo", str(REPO_ROOT), "--verify-for-gate", str(fresh)],
         capture_output=True, text=True, check=False,
     )
     assert proc.returncode == 0, proc.stdout

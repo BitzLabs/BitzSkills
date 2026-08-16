@@ -234,12 +234,37 @@ def derive_nonce(operation_id: str) -> str:
     return R.sha256_of(("bitz-flow/worktree-nonce/v1:" + operation_id).encode())
 
 
+def trusted_key_registry_path(common_dir: str | Path) -> Path:
+    return Path(common_dir) / "bitz-flow-v2" / "trusted-worktree-keys.json"
+
+
+def signature_mode_status(common_dir: str | Path) -> tuple[bool, str]:
+    """承認モードの判定と、**降格した理由**を返す。
+
+    従来は使える／使えないの2値で、`chmod 644`・削除・空化のいずれでも黙って
+    `False` を返していた。そのため高保証配備（registry を置いている配備）の承認強度が、
+    common-dir へ書ける主体によって**無言で** `plan-digest` へ外せた
+    （`FLW-REV-018:SYN-008`）。
+
+    registry が**存在しない**配備は素の `plan-digest` であり降格ではない。
+    registry が**存在するのに使えない**場合だけを降格として報告する。
+    """
+    path = trusted_key_registry_path(common_dir)
+    try:
+        exists = path.exists() or path.is_symlink()
+    except OSError as exc:
+        return False, f"trusted key registry を確認できない（{type(exc).__name__}）"
+    if not exists:
+        return False, ""
+    try:
+        return bool(load_trusted_keys(common_dir)), ""
+    except WorktreeRuntimeError as exc:
+        return False, f"trusted key registry が存在するが使えない: {exc}"
+
+
 def signature_mode_available(common_dir: str | Path) -> bool:
     """trusted key registry が使える配備かを、例外を投げずに判定する（モード判定用）。"""
-    try:
-        return bool(load_trusted_keys(common_dir))
-    except WorktreeRuntimeError:
-        return False
+    return signature_mode_status(common_dir)[0]
 
 
 def load_trusted_keys(common_dir: str | Path) -> dict[str, str]:
@@ -257,6 +282,15 @@ def load_trusted_keys(common_dir: str | Path) -> dict[str, str]:
     if not isinstance(value, dict) or not value:
         raise WorktreeRuntimeError("trusted key registry is empty or invalid")
     return {str(k): str(v) for k, v in value.items()}
+
+
+def _fsync_dir(path: Path) -> None:
+    """directory entry を永続化する。file の fsync だけでは名前が残らない。"""
+    dir_fd = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(dir_fd)
+    finally:
+        os.close(dir_fd)
 
 
 class _NonceLedger:
@@ -281,15 +315,26 @@ class _NonceLedger:
             return False
         with os.fdopen(fd, "wb") as stream:
             stream.write(payload); stream.flush(); os.fsync(stream.fileno())
+        # directory entry を fsync しないと、crash 後に nonce file ごと消え得る。
+        # 単回性の担保が receipt log と非対称だった（`FLW-REV-018:SYN-007`）。
+        _fsync_dir(self.path.parent)
         return True
 
     def finish(self, nonce: str, operation_id: str, state: str) -> None:
-        temp = self.path.with_suffix(f".tmp.{os.getpid()}")
         payload = R.canonical_bytes({"nonce": nonce, "operation_id": operation_id, "state": state})
-        fd = os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        with os.fdopen(fd, "wb") as stream:
-            stream.write(payload); stream.flush(); os.fsync(stream.fileno())
-        os.replace(temp, self.path)
+        # temp 名に pid を使うと、pid 名前空間が別のプロセス間で衝突し得る。
+        # 同一 directory 内の一意名を OS に作らせる（`FLW-REV-018:SYN-007`）。
+        fd, temp_name = tempfile.mkstemp(dir=self.path.parent, prefix=".nonce.", suffix=".tmp")
+        temp = Path(temp_name)
+        try:
+            with os.fdopen(fd, "wb") as stream:
+                stream.write(payload); stream.flush(); os.fsync(stream.fileno())
+            os.chmod(temp, 0o600)
+            os.replace(temp, self.path)
+        except BaseException:
+            temp.unlink(missing_ok=True)
+            raise
+        _fsync_dir(self.path.parent)
 
 
 def receipt_target(plan_value: "RuntimePlan") -> dict:
@@ -512,9 +557,7 @@ class _ReceiptLog:
         fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         with os.fdopen(fd, "wb") as stream:
             stream.write(body); stream.flush(); os.fsync(stream.fileno())
-        dir_fd = os.open(self.root, os.O_RDONLY)
-        try: os.fsync(dir_fd)
-        finally: os.close(dir_fd)
+        _fsync_dir(self.root)
         return digest
 
 
@@ -536,8 +579,18 @@ def apply(
         return RuntimeDecision("STALE", "operation_id mismatch", remaining_steps=plan_value.effects)
     common = Path(plan_value.common_dir)
     public_keys: Mapping[str, str] = trusted_keys_for_test or {}
-    if trusted_keys_for_test is None and signature_mode_available(common):
-        public_keys = load_trusted_keys(common)
+    if trusted_keys_for_test is None:
+        available, degraded = signature_mode_status(common)
+        if degraded:
+            # registry を置いている配備の意図は `signed-capability` である。
+            # 読めないからといって `plan-digest` へ落とすと、common-dir へ書ける主体が
+            # 承認強度を無言で外せる（`FLW-REV-018:SYN-008`）。降格せず停止する。
+            return RuntimeDecision(
+                "BLOCKED", degraded, remaining_steps=plan_value.effects,
+                evidence=("trusted key registry", "承認モードの降格を拒否した"),
+            )
+        if available:
+            public_keys = load_trusted_keys(common)
     mode = C.MODE_SIGNED_CAPABILITY if public_keys else C.MODE_PLAN_DIGEST
 
     verifier: C.SignatureVerifier = lambda payload, signature, key_id: False

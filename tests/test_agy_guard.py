@@ -122,3 +122,42 @@ def test_allow_refuses_a_cwd_with_shell_metacharacters():
 
 def test_allow_refuses_a_different_command_line():
     assert judge({**REAL, "CommandLine": "git push origin main"}).get("decision") != "allow"
+
+
+# --- SYN-009: 評価順の固定と、禁止操作の独立 deny -----------------------------
+
+
+def test_SYN_009_allow_does_not_bypass_force_ask():
+    """allow 分岐が ASK より先に評価されると force_ask を迂回できた（実測済み）。
+
+    許可形の `--repo` へ実環境のスキル配置先を渡すだけで allow を取れる状態だった。
+    評価順は DENY → ASK → ALLOW に固定する。
+    """
+    outside = ("python3 evals/flow-core/m2-eval/local_confirmation_subject.py "
+               "--repo /home/hide/.claude/skills")
+    assert judge({**REAL, "CommandLine": outside})["decision"] == "force_ask"
+
+
+def test_SYN_009_denies_guard_neutralization_regardless_of_allow():
+    """ガードレール実体を無力化する操作は allow の有無と独立に deny すること。
+
+    これらを通すと以後のすべての判定が無意味になる。
+    2026-08-15 の事故で実際に使われた操作種別である。
+    """
+    for command in (
+        "chmod 000 scripts/agy_guard.py",
+        "mv scripts/agy_guard.py /tmp/z",
+        "cp /tmp/evil .agents/hooks.json",
+        "tee .claude/settings.json",
+        "cat /home/hide/.claude/.credentials.json",
+    ):
+        assert judge({**REAL, "CommandLine": command})["decision"] == "deny", command
+
+
+def test_SYN_009_denies_forced_branch_deletion():
+    assert judge({**REAL, "CommandLine": "git branch -D main"})["decision"] == "deny"
+
+
+def test_SYN_009_keeps_unrelated_commands_without_opinion():
+    """陰性対照 — 無関係なコマンドまで deny しないこと（過剰拒否の防止）。"""
+    assert judge({**REAL, "CommandLine": "ls -la"}) == {}

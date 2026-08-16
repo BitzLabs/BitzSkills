@@ -9,12 +9,23 @@ import re
 import shlex
 import sys
 
+#: ガードレールの実体。これらを書き換え・退避・破壊する操作は、
+#: 以後のすべての判定を無意味にするため allow 分岐と独立に deny する
+#: （2026-08-15 の事故で実際に使われた操作種別。`FLW-REV-018:SYN-009`）。
+GUARD_ASSETS = r"(agy_guard\.py|hooks\.json|settings\.json|\.credentials\.json)"
+
 DENY_PATTERNS = [
     r"\brm\s+(-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r)\b",
     r"\bgit\s+push\s+.*(--force\b|-f\b)",
     r"\bgit\s+reset\s+--hard\b",
     r"\bgit\s+clean\s+-[a-zA-Z]*f",
     r"\bsudo\b",
+    # ガードレール実体への破壊的操作
+    rf"\b(chmod|chown|mv|cp|rm|truncate|tee)\b[^\n]*{GUARD_ASSETS}",
+    # 認証情報の読み取り（AGENTS.md の禁止事項）
+    r"\.claude/\.credentials\.json",
+    # 強制削除
+    r"\bgit\s+branch\s+.*(-D\b|--delete\s+--force\b)",
 ]
 
 ASK_PATTERNS = [
@@ -122,13 +133,9 @@ def main() -> None:
             }, ensure_ascii=False))
             return
 
-    if _is_m2_confirmation_payload(payload.get("toolCall", {}).get("args", {})):
-        print(json.dumps({
-            "decision": "allow",
-            "reason": "M2 GP-002用の限定confirmation subject（2026-08-14裁定）",
-        }, ensure_ascii=False))
-        return
-
+    # 評価順は DENY → ASK → ALLOW に固定する。allow を ASK より先に置くと、
+    # 許可形の `--repo` に実環境のスキル配置先を渡すだけで force_ask を迂回できた
+    # （`FLW-REV-018:SYN-009`。実測済み）。
     for pattern in ASK_PATTERNS:
         if re.search(pattern, args_text):
             print(json.dumps({
@@ -136,6 +143,13 @@ def main() -> None:
                 "reason": "リポジトリ外（実環境のスキル配置先）への操作にはユーザーの明示承認が必要です",
             }, ensure_ascii=False))
             return
+
+    if _is_m2_confirmation_payload(payload.get("toolCall", {}).get("args", {})):
+        print(json.dumps({
+            "decision": "allow",
+            "reason": "M2 GP-002用の限定confirmation subject（2026-08-14裁定）",
+        }, ensure_ascii=False))
+        return
 
     print("{}")
 
