@@ -3,7 +3,7 @@ id: SI-FLW-068
 raised_by: FLW-REV-018（RSK-301 / DIN-104 / DIN-103 / RSK-305）
 target: quarantine の解除経路と nonce ledger の耐久性
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: quarantine が**一方通行**である状態を解消する。入る経路はできたが、
   そこから出る経路が仕様にしか存在しない。

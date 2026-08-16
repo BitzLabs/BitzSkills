@@ -1,0 +1,29 @@
+{
+  "command": [
+    "python3",
+    "evals/flow-core/m2-eval/run_local_confirmation.py",
+    "--repo",
+    ".",
+    "--verify-for-gate",
+    "evals/flow-core/m2-eval/active-local-confirmation.json"
+  ],
+  "command_id": "m2-local-confirmation-gate",
+  "commit": "13c9ed300270430b60147317c89c765f4054ef1a",
+  "counts": null,
+  "cwd": ".",
+  "dirty": false,
+  "exit_code": 0,
+  "observed": {
+    "duration_seconds": 0.02
+  },
+  "recorded_at": "2026-08-16T16:48:15Z",
+  "requirements": [
+    "FLW-CON-005",
+    "FLW-NFR-011"
+  ],
+  "schema": "bitzsdd/verification-evidence@1",
+  "tool": {
+    "name": "python3",
+    "version": "3.12.3"
+  }
+}

@@ -3,7 +3,7 @@ id: SI-FLW-071
 raised_by: FLW-REV-018（OPS-404 / OPS-203 / RVC-201 / RVC-206 / OPS-201 / BIZ-301 / BIZ-401 / BIZ-402）
 target: 出荷物の記述・タスク境界の実効性・予算 SSOT の追随
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: 「記録・反映が実装に追いつかない」型の負債をまとめて解消する。
   `FLW-REV-017` の `SYN-008` / `SYN-009` と同型であり、**是正 PR 自身が新しい実例を作った**。

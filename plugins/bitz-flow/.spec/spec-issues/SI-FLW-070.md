@@ -3,7 +3,7 @@ id: SI-FLW-070
 raised_by: FLW-REV-018（OPS-403 / OPS-105 / BIZ-101 / BIZ-102 / OPS-103 / OPS-101 / BIZ-201 / RSK-402）
 target: 検証証跡の到達可能性・TTL 時限故障・比率 field の非測定
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: 証跡が「記録されている」ことと「裁定者が辿れる」ことの乖離を解消する。
   あわせて **CI の時限故障**を取り除く。

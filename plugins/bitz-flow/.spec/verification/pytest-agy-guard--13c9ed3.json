@@ -1,0 +1,32 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/test_agy_guard.py",
+    "-q"
+  ],
+  "command_id": "pytest-agy-guard",
+  "commit": "13c9ed300270430b60147317c89c765f4054ef1a",
+  "counts": {
+    "errors": 0,
+    "failed": 0,
+    "passed": 30,
+    "skipped": 0
+  },
+  "cwd": ".",
+  "dirty": false,
+  "exit_code": 0,
+  "observed": {
+    "duration_seconds": 0.41
+  },
+  "recorded_at": "2026-08-16T16:48:16Z",
+  "requirements": [
+    "FLW-CON-005"
+  ],
+  "schema": "bitzsdd/verification-evidence@1",
+  "tool": {
+    "name": "python",
+    "version": "3.12.3"
+  }
+}

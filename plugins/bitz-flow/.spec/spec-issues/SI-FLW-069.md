@@ -3,7 +3,7 @@ id: SI-FLW-069
 raised_by: FLW-REV-018（RSK-201 / RSK-207 / RSK-204 / OPS-302）
 target: 実行環境ガードの覆域と、承認強度の無言降格
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: 2026-08-15 の harness 事故と同じ操作種別が**今も止まらない**状態を解消する。
   `SI-FLW-063`（PR #289）が閉じたのは「allow が禁止操作を覆う」ことであって
