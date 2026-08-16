@@ -2,8 +2,8 @@
 id: FLW-DSN-014
 title: "GitHub capability・M0検証設計"
 status: active
-version: 1.21
-updated: 2026-08-15
+version: 1.22
+updated: 2026-08-16
 owner: hide
 implements: FLW-FR-003, FLW-FR-008, FLW-FR-012, FLW-NFR-001, FLW-NFR-008, FLW-NFR-004, FLW-NFR-009, FLW-NFR-010, FLW-NFR-011
 origin: FLW-REV-002
@@ -664,6 +664,32 @@ PRは実装PRであり budget 内に属する。本定義より前の消化分�
 - **operation外の変更をauditが検出しquarantineへ接続する**
 - **`write_target: local` の被測定物confirmationが3 platformでPASS**しactive manifest発行済み
 - **着手前reconnaissanceがentry protocolで必須化**されている（`FLW-FR-007` 1.1）
+
+#### M2出口条件 × 証拠の対応表（2026-08-16）
+
+`FLW-REV-017:SYN-012` は「出口4要件が `approved` のままで検証証跡が0件、
+出口条件と現存証拠の対応表が無い」とした。裁定者が条件ごとに証拠へ辿れるよう対応を固定する。
+**この表が Completion Gate の裁定材料の目次である。**
+
+| # | 出口条件 | 証拠 | 対応要件 |
+|---|---|---|---|
+| 1 | repo identity衝突0 | `tests/test_flow_m2_runtime.py` の guard fixture | `FLW-CON-005` |
+| 2 | repo外worktree rootの単回capability承認 | `M2-FLT-007`〜`015` | `FLW-FR-006` |
+| 3 | `create` / `resume` / `audit` の `M2-FLT-*` 全件 | `.spec/specs/m2-runtime/test-spec.md`（欠番0） | `FLW-FR-006` |
+| 4 | enum三者照合 | `M2-FLT-023` | `FLW-CON-006` |
+| 5 | 承認capabilityの公開dispatcher経由 in-band 検証 | 公開経路 E2E（`SI-FLW-059`。裁定 案A） | `FLW-FR-006` |
+| 6 | operation外変更のaudit検出・quarantine接続 | 検出は `SI-FLW-064`、接続語彙は `SI-FLW-066` | `FLW-FR-007`, `FLW-CON-005` |
+| 7 | `write_target: local` の3 platform confirmation | `evals/flow-core/m2-eval/active-local-confirmation.json` | `FLW-NFR-011` |
+| 8 | 着手前reconnaissanceのentry protocol必須化 | `M2-FLT-045`〜`047` / `051` | `FLW-FR-007` |
+
+各条件の達成状況は、判定した時点のレビュー（最新は `FLW-REV-017`）を正とする。
+本表は**どの証拠を見ればよいか**を固定するものであり、判定そのものは持たない
+（判定を二重に持つと、レビューと表が食い違ったときにどちらが正か決められなくなる）。
+
+**要件の status について**: 出口条件を満たしても、要件を `verified` にするのは
+Completion Gate の裁定を経てからである。Gate 通過前は `implementing` を上限とし、
+`.spec/verification/` の証跡（`spec_verify record` の出力）を根拠として添える。
+実走が green であることと、要件が検証済みであることは別の主張である。
 
 **M2 scope から外した項目**（M3 へ移送）:
 

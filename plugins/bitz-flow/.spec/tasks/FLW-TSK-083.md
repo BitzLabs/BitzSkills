@@ -2,7 +2,7 @@
 implements: FLW-FR-006, FLW-CON-006, FLW-NFR-012
 depends_on: FLW-TSK-082
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_runtime.py, plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_cleanup.py, plugins/bitz-flow/skills/flow-core/scripts/flowlib/cli.py, plugins/bitz-flow/.spec/specs/m2-runtime/test-spec.md, plugins/bitz-flow/.spec/tasks/FLW-TSK-083.md, plugins/bitz-flow/.spec/STATE.md, evals/flow-core/m2-eval/qualification-2026-08-15-si-flw-057.json, evals/flow-core/m2-eval/active-local-confirmation.json, evals/flow-core/m2-eval/run-manifest-m2-remediation.json, tests/test_flow_m2_runtime.py, plugins/bitz-flow/.claude-plugin/plugin.json, plugins/bitz-flow/plugin.json, plugins/bitz-flow/.codex-plugin/plugin.json
-status: implementing
+status: done
 ---
 
 ### mutation境界の例外分類を是正しcreate/resumeのreconcile経路を定義する

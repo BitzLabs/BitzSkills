@@ -2,10 +2,10 @@
 name: flow-core
 description: BitzFlow のメインスキル。プロジェクト状況に応じた Git / GitHub 開発フローの選択（単独開発=feature ブランチ / 複数エージェント並列=worktree / チーム・公開開発=GitHub Issue 駆動 + PR）、Conventional Commits のコミット規定、失敗時の復元方針を規定する。ユーザーが「Git フロー」「ブランチ運用」「コミット規約」「開発フローを決めたい」「並列で開発したい」に言及したとき、または開発作業の開始時にフローが未確定のときに使用する。worktree の実手順は flow-worktree、Issue 駆動 PR の実手順は flow-pr が担当する。
 metadata:
-  version: "0.6.1"
+  version: "0.7.0"
   author: br7.hide
   created: "2026-07-18"
-  updated: 2026-08-15
+  updated: 2026-08-16
 ---
 
 # flow-core — Git / GitHub 開発フローの選択とコミット規約
@@ -35,9 +35,11 @@ in-flight branch / worktree / PR を列挙し、変更予定 path との重複�
 公開されるまでの worktree 操作は `flow-worktree` スキルの手順に従う。
 
 公開後の契約は凍結済みで、内容は `<このスキル>/references/operation-catalog.md` が正である。
-plan/applyからだけ実行し、applyはplanの`operation_id`、署名済み単回capability、Git common-dir
-配下のowner-only trusted key registryを必須とする。capability欠落・期限切れ・nonce再利用・
-identity差替えは最初の副作用前に停止し、生のGit commandへfallbackしない。
+write は plan/apply からだけ実行し、**apply が何を要求するかは承認モードで決まる**
+（既定は署名を要求しない `plan-digest`。trusted key registry のある配備だけ `signed-capability`）。
+条件を二重に書かないため、要求物の詳細は catalog を正として参照すること。
+承認の欠落・期限切れ・単回性の消費済み・identity 差替えは最初の副作用前に停止し、
+生の Git command へ fallback しない。
 
 ## ブランチ規約（単独開発の最小規定）
 

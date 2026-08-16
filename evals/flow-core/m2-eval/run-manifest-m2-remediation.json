@@ -39,6 +39,14 @@
       "review_fixes": 0,
       "unmet_exit_reason": "FLW-REV-017 は CONDITIONAL_PASS。通過条件6件（SYN-008/009/011/012・GP-005・business 欠測）が残る",
       "recorded_at": "2026-08-16"
+    },
+    {
+      "pr": 292,
+      "issue": "SI-FLW-066",
+      "sessions": 1,
+      "review_fixes": 0,
+      "unmet_exit_reason": "GP-005（是正後の最終状態の独立レビュー）と business 観点の欠測が残る",
+      "recorded_at": "2026-08-16"
     }
   ],
   "previous_budgets": [

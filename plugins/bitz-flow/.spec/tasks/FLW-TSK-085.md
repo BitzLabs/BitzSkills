@@ -2,7 +2,7 @@
 implements: FLW-NFR-011
 depends_on: FLW-TSK-084
 boundary: evals/flow-core/m2-eval/run_local_confirmation.py, evals/flow-core/m2-eval/qualification-2026-08-16-si-flw-058.json, evals/flow-core/m2-eval/active-local-confirmation.json, evals/flow-core/m2-eval/run-manifest-m2-remediation.json, tests/test_flow_m2_confirmation.py, plugins/bitz-flow/.spec/specs/m2-exit/test-spec.md, plugins/bitz-flow/.spec/tasks/FLW-TSK-085.md, plugins/bitz-flow/.spec/STATE.md, plugins/bitz-flow/skills/flow-core/SKILL.md, plugins/bitz-flow/.claude-plugin/plugin.json, plugins/bitz-flow/plugin.json, plugins/bitz-flow/.codex-plugin/plugin.json
-status: implementing
+status: done
 ---
 
 ### confirmation証跡をFLW-NFR-011の契約へ適合させる
