@@ -445,10 +445,23 @@ def apply(
         ledger.finish(nonce, plan_value.operation_id, C.NONCE_USED_DONE)
         return RuntimeDecision("DONE", f"worktree.{plan_value.action} completed", tuple(completed), (), (receipt,))
     except (WorktreeRuntimeError, OSError, ValueError, KeyError) as exc:
+        # 復旧経路自身も失敗しうる。receipt log が読めない状況では QUARANTINED の追記も
+        # 同じ例外で落ち、`try/finally` だけでは例外が apply() から脱出していた
+        # （`FLW-REV-017:DIN-101` / `RSK-202`。PR #282 の是正が届いていなかった経路）。
+        # 副作用は既に起きているので、記録に失敗しても判定は返しきる。
+        quarantine_failure = None
         try:
             receipts.append({"operation_id": plan_value.operation_id, "state": "QUARANTINED", "completed_steps": completed})
+        except (WorktreeRuntimeError, OSError, ValueError, KeyError) as receipt_exc:
+            quarantine_failure = receipt_exc
         finally:
-            ledger.finish(nonce, plan_value.operation_id, C.NONCE_QUARANTINED)
+            try:
+                ledger.finish(nonce, plan_value.operation_id, C.NONCE_QUARANTINED)
+            except (WorktreeRuntimeError, OSError, ValueError, KeyError):
+                pass
         remaining = plan_value.effects[len(completed):]
         code = "PARTIAL" if completed else "BLOCKED"
-        return RuntimeDecision(code, str(exc), tuple(completed), tuple(remaining))
+        summary = str(exc)
+        if quarantine_failure is not None:
+            summary = f"{summary}（quarantine receipt も記録できない: {quarantine_failure}）"
+        return RuntimeDecision(code, summary, tuple(completed), tuple(remaining))

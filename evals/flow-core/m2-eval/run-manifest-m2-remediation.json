@@ -7,7 +7,16 @@
     "core_session": 9,
     "decision_ref": ".spec/reports/decision-2026-08-16-m2-remediation-budget-2.md"
   },
-  "entries": [],
+  "entries": [
+    {
+      "pr": 289,
+      "issue": "SI-FLW-063",
+      "sessions": 3,
+      "review_fixes": 1,
+      "unmet_exit_reason": "receipt payload（DIN-202/SYN-013）と codex timeout の恒常欠陥が残る",
+      "recorded_at": "2026-08-16"
+    }
+  ],
   "previous_budgets": [
     {
       "pr": 4,

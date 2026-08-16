@@ -485,3 +485,48 @@ def test_SI_FLW_059_default_table_still_hides_worktree(repository):
     with contextlib.redirect_stdout(buffer):
         cli.main(["worktree", "audit", "--repo", str(repo), "--format", "json"])
     assert json.loads(buffer.getvalue())["code"] == "UNSUPPORTED"
+
+
+def test_SI_FLW_063_approval_source_matches_the_actual_mode(repository):
+    """receipt が実際に使った承認モードを名乗ること（`SI-FLW-063`（RSK-204 / OPS-303））。
+
+    以前は無条件に `signed-capability` を名乗り、同じ result の
+    `data.approval_mode: plan-digest` と矛盾していた。承認強度を強く見せる危険側の誤り。
+    """
+    repo, root = repository
+    base = ["worktree", "create", "--repo", str(repo), "--path", str(root / "src"),
+            "--branch", "feat/src", "--worktree-root", str(root)]
+    plan_result, _ = _dispatch(*base)
+    applied, _ = _dispatch(*base, "--apply", "--confirm", plan_result["operation_id"])
+    assert applied["code"] == "DONE", applied["summary"]
+    assert applied["data"]["approval_mode"] == "plan-digest"
+    assert applied["approval"]["source"] == applied["data"]["approval_mode"]
+
+
+def test_SI_FLW_063_recovery_path_survives_a_failing_quarantine_append(repository):
+    """復旧経路が失敗しても apply() から例外を出さないこと（`SI-FLW-063`（DIN-101 / RSK-202））。
+
+    receipt log が読めない状況では QUARANTINED の追記も同じ例外で落ちる。
+    以前は `try/finally` だけだったため例外が apply() を脱出し、副作用適用済みなのに
+    PARTIAL を返せなかった。
+    """
+    repo, root = repository
+    create = W.plan(repo, action="create", path=root / "recov", branch="feat/recov",
+                    worktree_root=root)
+    original = W._ReceiptLog.append
+
+    def always_broken(self, record):
+        state = record.get("state")
+        if state == "PENDING":
+            return original(self, record)
+        raise ValueError(f"receipt log unreadable at {state}")
+
+    W._ReceiptLog.append = always_broken
+    try:
+        result = W.apply(create, confirm=create.operation_id)
+    finally:
+        W._ReceiptLog.append = original
+
+    assert (root / "recov").is_dir(), "副作用は起きている"
+    assert result.code == "PARTIAL", f"例外を脱出させず判定を返すこと: {result.summary}"
+    assert "quarantine receipt も記録できない" in result.summary

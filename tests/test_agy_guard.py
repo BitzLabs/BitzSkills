@@ -28,7 +28,9 @@ def decide(command):
 
 
 def test_m2_confirmation_subject_exact_shape_is_allowed():
-    assert decide(SUBJECT)["decision"] == "allow"
+    """`CommandLine` を持つ実測形だけが allow される（`{"command": ...}` は Antigravity の形ではない）。"""
+    assert judge({"CommandLine": SUBJECT, "Cwd": "/tmp/repo"})["decision"] == "allow"
+    assert judge({"command": SUBJECT}).get("decision") != "allow"
 
 
 @pytest.mark.parametrize("command", [
@@ -67,3 +69,56 @@ def test_m2_confirmation_allow_does_not_shield_sibling_fields(args):
 ])
 def test_guardrail_denies_are_unaffected_by_the_allow_path(command):
     assert decide(command)["decision"] == "deny"
+
+
+# === SI-FLW-063: allow 述語の相乗り（RSK-201 / OPS-301） ======================
+#
+# 以前の allow 述語は「args のどこかに正規形があり、他の値にシェルメタ文字が無ければ allow」
+# だった。下記はいずれもメタ文字を含まないため allow を通っていた。
+# **2026-08-15 の事故で実際に使われた操作種別（コミットとガード無力化）を含む。**
+
+
+@pytest.mark.parametrize("payload", [
+    pytest.param("git commit -am pwned", id="commit"),
+    pytest.param("git push origin main", id="push"),
+    pytest.param("git branch -D main", id="branch-delete"),
+    pytest.param("mv scripts/agy_guard.py /tmp/z", id="guard-move"),
+    pytest.param("chmod 000 scripts/agy_guard.py", id="guard-chmod"),
+    pytest.param("git checkout -b sneaky", id="branch-create"),
+])
+def test_allow_never_covers_a_piggybacked_command(payload):
+    """正規形と同居する別コマンドを allow で覆わないこと。
+
+    これらはシェルメタ文字を含まないため、旧述語（メタ文字が無ければ allow）を通っていた。
+    2026-08-15 の事故で実際に使われた操作種別を含む（`SI-FLW-063`（RSK-201））。
+    """
+    assert judge({"command": SUBJECT, "note": payload}).get("decision") != "allow"
+
+
+#: Antigravity の run_command が実際に送る形（2026-08-16 に guard へ入力して実測）。
+REAL = {"CommandLine": SUBJECT, "Cwd": "/tmp/repo", "BypassSandbox": False,
+        "RunPersistent": False, "WaitMsBeforeAsync": 5000}
+
+
+def test_allow_covers_the_measured_payload_shape():
+    """陰性対照 — 実測した正規形は通ること（厳格化で正規経路を落とさない）。"""
+    assert judge(REAL)["decision"] == "allow"
+
+
+def test_allow_refuses_a_sandbox_bypass():
+    """sandbox 解除を allow で覆わないこと。実測で BypassSandbox=True の経路が存在する。"""
+    assert judge({**REAL, "BypassSandbox": True}).get("decision") != "allow"
+
+
+def test_allow_refuses_unknown_fields():
+    """未知の field を持つ payload は allow しない（形が変わったら既定へ倒す）。"""
+    assert judge({**REAL, "note": "git commit -am pwned"}).get("decision") != "allow"
+    assert judge({"command": SUBJECT}).get("decision") != "allow"
+
+
+def test_allow_refuses_a_cwd_with_shell_metacharacters():
+    assert judge({**REAL, "Cwd": "/tmp/x; rm -r /tmp/y"}).get("decision") != "allow"
+
+
+def test_allow_refuses_a_different_command_line():
+    assert judge({**REAL, "CommandLine": "git push origin main"}).get("decision") != "allow"

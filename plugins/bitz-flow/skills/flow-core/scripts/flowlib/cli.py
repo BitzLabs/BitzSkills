@@ -456,7 +456,11 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
         operation=operation, code=decision.code, repo=root, tool_version=__version__,
         started_at=started, finished_at=_now(), summary=decision.summary,
         snapshot=plan_value.snapshot, operation_id=plan_value.operation_id,
-        approval_required="explicit-human", approval_source="signed-capability",
+        approval_required="explicit-human",
+        # 承認の由来は実際に使ったモードを名乗る。無条件に "signed-capability" と
+        # 名乗ると、plan-digest で適用した receipt が承認強度を強く見せる
+        # （`FLW-REV-017:RSK-204` / `OPS-303`）。
+        approval_source=approval_mode,
         approval_reference=args.approval_ref, stage="apply", data=data,
     )
     return result, R.CompactView(tokens={"action": args.action, "code": decision.code})

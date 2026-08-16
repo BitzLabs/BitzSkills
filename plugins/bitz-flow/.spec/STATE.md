@@ -1,5 +1,8 @@
 # STATE — status 遷移ログ
 
+- 2026-08-16 SI-FLW-063 実装中の発見: agy_guard の allow を「値が1つ」に絞ったら **antigravity の正規経路まで落ちた**。推測で緩めず agy の payload を実測したところ `run_command` の args は `CommandLine` / `Cwd` / `BypassSandbox` / `RunPersistent` / `WaitMsBeforeAsync` で、実行されるのは `CommandLine` だけ、**`BypassSandbox` が True になる経路が実在**した。実測に基づく allowlist（CommandLine 一致・BypassSandbox 非真・Cwd にメタ文字なし・未知 field なし）へ変更し、正規経路 PASS と相乗り拒否を両立させた
+- 2026-08-16 codex の confirmation 初回 timeout は **6/6**。attempt 台帳（`attempts.jsonl`）を導入し、失敗が証跡から消えないようにした。恒常欠陥に再試行条項を当て続けるのは筋が悪く、別途の論点として残る
+- 2026-08-16 SI-FLW-063: accepted で起票（`FLW-REV-017` の残存欠陥6件。第2次予算裁定が列挙・順序付けした実行単位）
 - 2026-08-16 M2是正の第2次予算: **5 PR / 15 session**（本体 3 PR / 9 session ＋ 予備 2 PR / 6 session）を承認。**初めて実績に基づく見積もり**（第1次は 4 PR / 8 session で消化、平均 2.0・最悪 3 session/PR、上昇トレンド）。予備の使用に裁定は不要だが記録して報告する。着手順はセキュリティ2件（agy_guard の allow 厳格化・approval_source の是正）を最優先。裁定参照: .spec/reports/decision-2026-08-16-m2-remediation-budget-2.md
 - 2026-08-16 FLW-REV-017: 5観点のうち3観点完了（operations 3.60 +0.70 / data-integrity 3.25 +0.60 / risk 2.70 ±0）。残り consistency / business はプラットフォームのセッション上限で中断。重み合計 0.70 のため暫定判定は出さない
 - 2026-08-16 FLW-TSK-086: pending → implementing（`SI-FLW-059`。公開 dispatcher 経由 E2E と audit の契約層接続）
