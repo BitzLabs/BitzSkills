@@ -49,6 +49,8 @@ COMPATIBILITY_INPUTS = (
     f"{_FLOWLIB}/guard.py",
     f"{_FLOWLIB}/worktree_cleanup.py",
     f"{_FLOWLIB}/recovery.py",
+    # digest の定義元。ここが変われば operation_id も snapshot も変わる
+    f"{_FLOWLIB}/result.py",
     # harness
     "evals/flow-core/m2-eval/local_confirmation_subject.py",
     "evals/flow-core/m2-eval/run_local_confirmation.py",
@@ -107,6 +109,46 @@ def _store_raw_log(out: Path, platform: str, raw: str, now: datetime) -> dict:
     }
 
 
+def _verify_for_gate(manifest_path: Path, current_key: str, now: datetime) -> int:
+    """Gate へ採用する直前に、証跡がまだ有効かを再照合する（`FLW-NFR-011`）。
+
+    起動時の TTL 照合だけでは、採用時点で失効した証跡を止められなかった
+    （`FLW-REV-017:OPS-402`）。confirmation evidence は 7 日、参照する
+    qualification fingerprint は 24 時間を超えていないことを確かめる。
+    """
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    problems = []
+    if manifest.get("gate_status") != "PASS":
+        problems.append(f"gate_status={manifest.get('gate_status')}")
+    if manifest.get("compatibility_key") != current_key:
+        problems.append("compatibility_key が現在の被測定物と一致しない")
+    expires = _parse_time(manifest.get("expires_at"))
+    if expires is None or now > expires:
+        problems.append(f"confirmation evidence が失効している（expires_at={manifest.get('expires_at')}）")
+    reference = manifest.get("qualification_ref") or {}
+    executed = _parse_time(reference.get("executed_at"))
+    if executed is None:
+        problems.append("qualification_ref.executed_at が無い")
+    elif now - executed > QUALIFICATION_TTL:
+        problems.append(f"qualification fingerprint が 24 時間を超えている（{now - executed}）")
+    for problem in problems:
+        print(f"Gate 採用不可: {problem}")
+    if problems:
+        return 1
+    print("Gate 採用可: TTL と指紋を再照合した")
+    return 0
+
+
+def _append_attempt(out: Path, record: dict) -> None:
+    """attempt を append-only の台帳へ残す。成功で上書きしない。"""
+    ledger = out / "attempts.jsonl"
+    ledger.parent.mkdir(parents=True, exist_ok=True)
+    entry = dict(record)
+    entry["recorded_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    with ledger.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+
 def _digest(text: str) -> str:
     return "sha256:" + hashlib.sha256(text.encode()).hexdigest()
 
@@ -162,6 +204,8 @@ def main() -> int:
     parser.add_argument("--qualification")
     parser.add_argument("--compatibility-key")
     parser.add_argument("--print-compatibility-key", action="store_true")
+    parser.add_argument("--verify-for-gate", metavar="MANIFEST",
+                        help="Gate 採用時の再照合（TTL・指紋）。非ゼロ終了で不採用を示す")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
     root = Path(args.repo).resolve()
@@ -169,6 +213,9 @@ def main() -> int:
     if args.print_compatibility_key:
         print(current_key)
         return 0
+    if args.verify_for_gate:
+        return _verify_for_gate(Path(args.verify_for_gate), current_key,
+                                datetime.now(timezone.utc))
     if not (args.out and args.qualification and args.compatibility_key):
         parser.error("--out, --qualification, and --compatibility-key are required")
     out = Path(args.out)
@@ -256,6 +303,7 @@ def main() -> int:
                     "raw_log_digest": _digest(raw),
                     "raw_log_committed": False,
                 }
+                _append_attempt(out, record)
             except (subprocess.TimeoutExpired, OSError) as exc:
                 # timeout でも副作用を確かめてから BLOCKED を確定する（`SI-FLW-062`）。
                 state_after = repo_state_digest(root)
@@ -263,6 +311,10 @@ def main() -> int:
                           "hazardous_events": 1 if state_after != state_before else 0,
                           "subject_state_before": state_before,
                           "subject_state_after": state_after}
+                # 失敗 attempt を捨てずに併記する（`FLW-NFR-011`。`FLW-REV-017:OPS-104` /
+                # `RSK-403`。codex は 5/5 で初回 timeout する恒常欠陥であり、
+                # 成功分だけ残すとその規則性が証跡から消える）。
+                _append_attempt(out, record)
         record["elapsed_seconds"] = round(time.monotonic() - started, 3)
         records.append(record)
         print(f"{platform}: {record['status']}")
@@ -285,6 +337,13 @@ def main() -> int:
         # 出荷表から導く。未公開 operation やワイルドカードを確認済みとして並べない
         # （`FLW-REV-016:SYN-005`）。
         "operations": list(published_operations(root)),
+        # Gate 採用時に再照合するための材料（`FLW-NFR-011`。`FLW-REV-017:OPS-402`。
+        # 従来は起動時にしか TTL を見ておらず、採用時点での失効を検出できなかった）。
+        "qualification_ref": {
+            "executed_at": qualification.get("executed_at"),
+            "expires_at": qualification.get("expires_at"),
+            "compatibility_key": qualification.get("compatibility_key"),
+        },
         "gated_operations": sorted(
             f"{d}.{a}" for d, a in __import__("flowlib.cli", fromlist=["cli"])._GATED_HANDLERS
         ),

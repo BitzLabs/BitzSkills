@@ -188,3 +188,35 @@ def test_SI_FLW_058_raw_log_is_actually_stored_with_a_retention_boundary():
         assert raw["delete_owner"], record["platform"]
         assert raw["canary_detected"] is True, record["platform"]
         assert "evaluation-reviewer" in raw["allowed_roles"], record["platform"]
+
+
+def test_SI_FLW_063_gate_verification_rejects_expired_evidence(tmp_path):
+    """Gate 採用時に失効した証跡を弾くこと（陽性対照。`SI-FLW-063`（OPS-402））。"""
+    manifest = json.loads(ACTIVE.read_text())
+    manifest["expires_at"] = (datetime.now(timezone.utc) - timedelta(hours=1)) \
+        .isoformat().replace("+00:00", "Z")
+    stale = tmp_path / "stale.json"
+    stale.write_text(json.dumps(manifest), encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, str(RUNNER), "--repo", str(REPO_ROOT), "--verify-for-gate", str(stale)],
+        capture_output=True, text=True, check=False,
+    )
+    assert proc.returncode != 0
+    assert "失効" in proc.stdout
+
+
+def test_SI_FLW_063_gate_verification_accepts_current_evidence():
+    """陰性対照 — 現行の active manifest は Gate 採用可であること。"""
+    proc = subprocess.run(
+        [sys.executable, str(RUNNER), "--repo", str(REPO_ROOT), "--verify-for-gate", str(ACTIVE)],
+        capture_output=True, text=True, check=False,
+    )
+    assert proc.returncode == 0, proc.stdout
+
+
+def test_SI_FLW_063_manifest_carries_a_qualification_reference():
+    """Gate 採用時に再照合できるよう qualification を参照していること。"""
+    manifest = json.loads(ACTIVE.read_text())
+    reference = manifest["qualification_ref"]
+    assert reference["executed_at"] and reference["expires_at"]
+    assert reference["compatibility_key"] == manifest["compatibility_key"]

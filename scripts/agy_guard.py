@@ -66,15 +66,42 @@ def _is_m2_confirmation_subject(command: str) -> bool:
     )
 
 
+#: Antigravity の `run_command` が実際に送る field（2026-08-16 に実測）。
+#: 実行されるのは `CommandLine` だけで、他は構造化された付随情報である。
+#: **未知の field がある payload は allow しない**（形が変わったら黙って通さない）。
+_RUN_COMMAND_FIELDS = frozenset({
+    "CommandLine", "Cwd", "BypassSandbox", "RunPersistent", "WaitMsBeforeAsync",
+})
+
+
 def _is_m2_confirmation_payload(args) -> bool:
-    """args 全体が確認subject 1件だけを表しており、他フィールドが無害であること。"""
-    values = list(_strings(args))
-    if not any(_is_m2_confirmation_subject(value) for value in values):
+    """args が確認subject の実行**そのもの**であること。
+
+    以前は「どこかに正規形があり、他の値にシェルメタ文字が無ければ allow」だった。
+    しかし `git commit -am pwned` / `git push origin main` / `git branch -D main` /
+    `mv scripts/agy_guard.py /tmp/z` / `chmod 000 scripts/agy_guard.py` は
+    いずれもメタ文字を含まないため、別フィールドへ相乗りさせると allow を通っていた
+    （`FLW-REV-017:RSK-201` / `OPS-301`。2026-08-15 の事故で実際に使われた操作種別）。
+
+    推測で緩めず、実測した payload の形に対する allowlist にする。
+
+    1. 実行される `CommandLine` が正規形と完全一致すること
+    2. **`BypassSandbox` が真でないこと**（sandbox 解除を allow で覆わない）
+    3. `Cwd` は shell metacharacter を含まない path であること
+    4. 未知の field を持たないこと（形が変わったら allow せず既定へ倒す）
+    """
+    if not isinstance(args, dict):
         return False
-    return all(
-        _is_m2_confirmation_subject(value) or not _has_shell_metacharacter(value)
-        for value in values
-    )
+    if set(args) - _RUN_COMMAND_FIELDS:
+        return False
+    if not _is_m2_confirmation_subject(str(args.get("CommandLine", ""))):
+        return False
+    if args.get("BypassSandbox"):
+        return False
+    cwd = args.get("Cwd")
+    if cwd is not None and (not isinstance(cwd, str) or _has_shell_metacharacter(cwd)):
+        return False
+    return True
 
 
 def main() -> None:
