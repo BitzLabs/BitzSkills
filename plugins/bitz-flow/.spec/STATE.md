@@ -1,5 +1,10 @@
 # STATE — status 遷移ログ
 
+- 2026-08-16 SI-FLW-065 の証跡: qualification 3platform PASS。confirmation を**フォアグラウンドで実走し、再試行 0 回のまま 3platform PASS**（173件・同一 test ID digest・runtime check 35/35・hazard/residual すべて実測 0・raw log 保存と canary 検出すべて成功。runner 全体 90秒）。**codex の初回 timeout は一度も起きなかった**（バックグラウンド実行が原因という切り分けを実走で裏付けた）。active manifest を置換し `--verify-for-gate` が exit 0。attempt 台帳は `attempts-2026-08-16-si-flw-065.jsonl`
+- 2026-08-16 FLW-REV-017: M2 Exit 再々レビュー **CONDITIONAL_PASS 3.13**（前回 FAIL 2.85、+0.28）。**M2 出口条件 8項目中 7項目が PASS**（前回は3項目 BLOCKED）。残る1項目は audit の quarantine 接続語彙。critical 4件はすべて是正済み。business 観点は分類器のブロックで欠測（重み 0.85 で測定、感度 0.01）。**最終状態を独立に評価した観点は無い**（`GP-005`）
+- 2026-08-16 Completion Gate: 保留を継続。通過条件6件と `GP-005`（是正後の独立検分）が残る
+- 2026-08-16 FLW-REV-017 consistency: **3.00**（前回と同点）。是正は実在するが同じ型の欠陥が同量入って相殺、との判定。critical `RVC-101` として **`SI-FLW-064` が入れた next_actions が既定 compact 形式で KeyError を投げる**ことを実測で指摘。原因は公開経路 E2E が `--format json` 固定で既定 renderer を一度も通していなかったこと。`SI-FLW-065` として是正
+- 2026-08-16 SI-FLW-065: accepted で起票し実装（next_action を契約形へ／既定 renderer の専用テストを追加）
 - 2026-08-16 codex confirmation timeout の切り分け（**先行の説明を訂正**）: 8/8 を「恒常欠陥」と説明していたが、切り分けの結果 **失敗はすべてバックグラウンド実行時**であり、フォアグラウンド実行では一度も再現しない（runner 全体 51秒で 3platform PASS、codex 単体 13.7秒、runner と同一コマンドを Python から 12.2秒）。被測定物の性質ではなく**計測環境の性質**であり、`FLW-NFR-011` の「instrument/environment failure は再試行1回」に照らせば条項どおりの運用だった。`OPS-104` の「証跡に残らない」指摘は正しく `attempts.jsonl` で対応済みだが、「恒常欠陥の隠蔽」という評価は司令塔の誤った説明に基づく
 - 2026-08-16 SI-FLW-064: accepted で起票し実装（receipt payload へ変更対象を載せ、`worktree.audit` の外部変更検出を成立させた）。**M2 出口条件「operation 外変更の audit 検出・quarantine 接続」が実装可能になった**（`SI-FLW-059` では不可を宣言していた）
 - 2026-08-16 SI-FLW-063 実装中の発見: agy_guard の allow を「値が1つ」に絞ったら **antigravity の正規経路まで落ちた**。推測で緩めず agy の payload を実測したところ `run_command` の args は `CommandLine` / `Cwd` / `BypassSandbox` / `RunPersistent` / `WaitMsBeforeAsync` で、実行されるのは `CommandLine` だけ、**`BypassSandbox` が True になる経路が実在**した。実測に基づく allowlist（CommandLine 一致・BypassSandbox 非真・Cwd にメタ文字なし・未知 field なし）へ変更し、正規経路 PASS と相乗り拒否を両立させた

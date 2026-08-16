@@ -375,10 +375,11 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
         code = "OK" if not external else "BLOCKED"
         summary = (f"{len(lines)} worktrees" if not external
                    else f"operation 外の worktree を {len(external)} 件検出した")
+        # next_action は result 契約の形（domain / action / args）に従う。
+        # 自作の dict を渡すと既定の compact renderer が KeyError で落ちる
+        # （`SI-FLW-065`。E2E が `--format json` 固定だったため検出できていなかった）。
         next_actions = () if not external else (
-            {"operation": "worktree.audit",
-             "reason": "operation 外で作られた worktree は自動で扱わない。人間が検分して"
-                       "取り込むか除去するまで worktree write を開始しない"},
+            R.next_action("worktree", "audit", external=len(external)),
         )
         result = R.build_result(
             operation=operation, code=code, repo=root, tool_version=__version__,

@@ -1,0 +1,252 @@
+{
+  "schema_version": 2,
+  "review_id": "FLW-REV-017",
+  "verdict": "CONDITIONAL_PASS",
+  "aggregate_score": 3.13,
+  "perspective_scores": {
+    "consistency": 3.0,
+    "data-integrity": 3.25,
+    "operations": 3.6,
+    "risk": 2.7
+  },
+  "coverage": {
+    "weight_measured": 0.85,
+    "missing": [
+      "business"
+    ],
+    "missing_reason": "Claude Code の自動モード分類器が独立エージェントの起動をブロックしたため未実施（2回試行）",
+    "sensitivity": "前回 business 3.20 を据え置いた場合 3.14。欠測の影響は 0.01 で判定を左右しない"
+  },
+  "findings_summary": {
+    "before_dedup": 54,
+    "after_dedup": 12,
+    "p0": 4,
+    "p1": 5,
+    "p2": 3,
+    "p3": 0
+  },
+  "findings": [
+    {
+      "id": "FLW-REV-017:SYN-001",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "RSK-201",
+        "OPS-301"
+      ],
+      "title": "ガード迂回が閉じておらず、事故で使われた操作種別が allow を通っていた",
+      "detail": "`agy_guard` の allow 述語は「args のどこかに正規形があり、他の値にシェルメタ文字が無ければ allow」だった。`git commit -am pwned` / `git push origin main` / `git branch -D main` / `mv scripts/agy_guard.py /tmp/z` / `chmod 000 scripts/agy_guard.py` はいずれもメタ文字を含まないため相乗りで allow を通る。2026-08-15 の事故で実際に使われた操作種別（コミットとガード無力化）が PR #272 の是正後も通っていた。",
+      "recommendation": "推測で緩めず、被験 CLI が実際に送る payload を計測して allowlist を作る。",
+      "tracked_by": "SI-FLW-063",
+      "status": "resolved"
+    },
+    {
+      "id": "FLW-REV-017:SYN-002",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "DIN-202"
+      ],
+      "title": "receipt payload が変更対象を指さず、M2 出口条件が実装不能だった",
+      "detail": "receipt は `operation_id` / `state` / `completed_steps` だけで何を変えたかを持たない。git の registry は `git worktree add` で必ず登録されるため区別に使えず、`worktree.audit` の operation 外変更検出が成立しなかった。`SI-FLW-059` は「実装不能」と宣言して出荷せざるを得なかった。",
+      "recommendation": "receipt へ変更対象（action / path / branch / worktree_root / expected_head）を載せ、receipt 照合で検出する。",
+      "tracked_by": "SI-FLW-064",
+      "status": "resolved"
+    },
+    {
+      "id": "FLW-REV-017:SYN-003",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "RVC-101"
+      ],
+      "title": "既定の出力形式が KeyError で落ちる状態を出荷しかけた",
+      "detail": "`SI-FLW-064` が追加した `worktree.audit` の `next_actions` が result 契約の形（domain / action / args）に従わず、既定の compact 形式で `render_compact` が `KeyError: 'domain'` を投げる。JSON 形式では正常に返る。見逃した理由は構造的で、公開経路 E2E の `_dispatch` が `--format json` を固定しており dispatcher テストが既定 renderer を一度も通っていなかった（`grep render_compact tests/` は 0 件）。既定形式は利用者が実際に見る出力である。",
+      "recommendation": "`R.next_action()` を使い、公開 operation を既定 renderer で描画する専用テストを置く。",
+      "tracked_by": "SI-FLW-065",
+      "status": "resolved"
+    },
+    {
+      "id": "FLW-REV-017:SYN-004",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "DIN-101",
+        "RSK-202"
+      ],
+      "title": "例外分類の是正が復旧経路に届いていなかった",
+      "detail": "mutation 境界の except ハンドラ内で `receipts.append(QUARANTINED)` が `try/finally` のみに包まれ `except` を持たず、receipt log が読めない状況で例外が `apply()` から脱出する。副作用は適用済みなのに `PARTIAL` を返せない。PR #282 の是正がハンドラ自身には届いていなかった。",
+      "recommendation": "復旧経路自身の失敗も捕捉し、副作用が起きていれば判定を返しきる。",
+      "tracked_by": "SI-FLW-063",
+      "status": "resolved"
+    },
+    {
+      "id": "FLW-REV-017:SYN-005",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RSK-204",
+        "OPS-303"
+      ],
+      "title": "承認由来が無条件で signed-capability を名乗っていた",
+      "detail": "`cli.py` が無条件に `approval_source=\"signed-capability\"` を返し、同じ result の `data.approval_mode: plan-digest` と矛盾していた。承認強度を強く見せる危険側の誤りで、検査テストは 0 件だった。",
+      "recommendation": "実際に使ったモードを名乗り、両者の一致を検査する。",
+      "tracked_by": "SI-FLW-063",
+      "status": "resolved"
+    },
+    {
+      "id": "FLW-REV-017:SYN-006",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "OPS-402"
+      ],
+      "title": "TTL が起動時のみで Gate 採用時に再照合されない",
+      "detail": "`FLW-NFR-011` は「evidence を Gate へ採用するとき fingerprint を再照合する」と定めるが、confirmation runner は起動時にしか TTL を見ていなかった。採用時点で失効した証跡を止められない。",
+      "recommendation": "`--verify-for-gate` で採用直前に TTL と指紋を再照合する。manifest に qualification 参照を持たせる。",
+      "tracked_by": "SI-FLW-063",
+      "status": "resolved"
+    },
+    {
+      "id": "FLW-REV-017:SYN-007",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "OPS-104",
+        "RSK-403"
+      ],
+      "title": "失敗 attempt が証跡に併記されない",
+      "detail": "confirmation は成功分だけを manifest へ残すため、どの条件でどれだけ失敗したかが証跡から消える。`FLW-NFR-011` は再試行の併記を求めている。",
+      "recommendation": "attempt を append-only の台帳へ残す。",
+      "tracked_by": "SI-FLW-063",
+      "status": "resolved",
+      "note": "レビュー時は codex の初回 timeout を『恒常欠陥』として評価したが、司令塔の切り分けで失敗はすべてバックグラウンド実行時に集中しており、フォアグラウンドでは再現しないことが判明した（runner 全体 51秒で 3platform PASS）。被測定物ではなく計測環境の性質であり、『恒常欠陥の隠蔽』という評価は司令塔の誤った説明に基づく。証跡へ残す是正自体は正しい"
+    },
+    {
+      "id": "FLW-REV-017:SYN-008",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RVC-201"
+      ],
+      "title": "是正 PR に対応するタスクが無く boundary が実体とずれている",
+      "detail": "`SI-FLW-063` / `SI-FLW-064` に対応する task が存在せず（tasks は 086 止まり）、PR #289+#290 の変更 21 ファイル中 4 件がどの boundary にも属さない。`FLW-TSK-086` の boundary は `SI-FLW-059` の成果物を指したままである。`spec_inspect` はこの規律を検査しないため PASS してしまう。",
+      "recommendation": "是正 PR にもタスクを起こし boundary を実体へ合わせる。機械検査の追加も検討する。",
+      "tracked_by": "SI-FLW-066",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-017:SYN-009",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RVC-103",
+        "RVC-102"
+      ],
+      "title": "覆った宣言と新しい振る舞いが文書へ反映されていない",
+      "detail": "`SI-FLW-064` で覆った「外部変更検出は実装しない」という規範が `FLW-TSK-086`（status: implementing）に残置されている。STATE.md 側は訂正済みでタスクだけ漏れた。また audit の新しい振る舞い（BLOCKED・external_changes・receipt 突合）が operation-catalog へ未反映で、契約の正が再びコードだけになっている。",
+      "recommendation": "覆った宣言を削除し、catalog を新しい振る舞いへ追随させる。",
+      "tracked_by": "SI-FLW-066",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-017:SYN-010",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "RVC-202"
+      ],
+      "title": "出荷スクリプトが未確定のレビュー finding を規範として引用している",
+      "detail": "`agy_guard.py` と `run_local_confirmation.py` が、判定の出ていない `FLW-REV-017` の finding ID を根拠として引用していた。司令塔は作業中に2度これを持ち込み `spec_inspect` に幽霊参照として検出されたが、実装コード側は同検査の対象外であり残っていた。",
+      "recommendation": "未完成成果物を根拠に引用しない。accepted 済みの spec-issue へ寄せる。",
+      "tracked_by": "SI-FLW-063",
+      "status": "resolved"
+    },
+    {
+      "id": "FLW-REV-017:SYN-011",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "RVC-301",
+        "RVC-302"
+      ],
+      "title": "SKILL.md と設計語彙が実装と食い違う",
+      "detail": "SKILL.md が「apply は署名済み単回 capability と trusted key registry を必須」と述べ、自ら正と指名した operation-catalog（既定 plan-digest）と矛盾する。また公開 audit が設計語彙（ORPHAN / quarantine_required / INDETERMINATE）を使わず独自語彙を新設したため、出口条件の「quarantine へ接続」に対応する語が出力のどこにも無い。検出は成立したが接続は未成立である。",
+      "recommendation": "SKILL.md を B2 の規範へ追随させ、audit の出力語彙を設計と揃える。",
+      "tracked_by": null,
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-017:SYN-012",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "RVC-205",
+        "BIZ-101（前回）"
+      ],
+      "title": "M2 出口4要件が approved のままで検証証跡が 0 件",
+      "detail": "`FLW-FR-006` / `FLW-FR-007` は 2026-07-31 以来 approved のままで、M2 が implements する要件に verified は無い。`.spec/verification/` の証跡も増えていない。前回 `BIZ-101` が指摘した「出口条件×証拠の対応表が無い」も未解消である。",
+      "recommendation": "出口条件8項目と現存証拠の対応表を作り、要件 status と検証証跡を前進させる。",
+      "tracked_by": null,
+      "status": "open"
+    }
+  ],
+  "gate_preconditions": [
+    {
+      "id": "GP-001",
+      "kind": "blocking",
+      "basis": "verified",
+      "carried_from": "FLW-REV-016:GP-001",
+      "statement": "公開dispatcherから M2 scope の worktree write（create / resume）を起動し、capability検証とreceipt prefix収束をE2Eで確認する",
+      "status": "partially-discharged",
+      "evidence": "operations 観点は discharged と判定（外部削除後の再適用で USED_DONE 拒否まで独立に再現）。consistency 観点は fixture の --format json 固定により証拠が既定出力形式に盲であった点を留保（SI-FLW-065 で是正）"
+    },
+    {
+      "id": "GP-002",
+      "kind": "blocking",
+      "basis": "verified",
+      "carried_from": "FLW-REV-016:GP-002",
+      "statement": "実動confirmationを再実行しactive manifestを置換する（hazard/residual の実測を含む）",
+      "status": "partially-discharged",
+      "evidence": "hazard/residual は repo state digest の前後比較で実測化され、raw log は canary 検出つきで保存された。required_checks / positive_controls は依然リテラルで台帳が無く、compatibility_key に CLI version と model identity が入らない"
+    },
+    {
+      "id": "GP-003",
+      "kind": "blocking",
+      "basis": "verified",
+      "carried_from": "FLW-REV-016:GP-003",
+      "statement": "receiptのstep語彙を統一し、mutation境界の例外分類を是正する",
+      "status": "discharged",
+      "evidence": "data-integrity が実 receipt で prefix 収束を確認、operations と consistency も M2 scope 内で異議なしと判定。復旧経路の残存欠陥は SI-FLW-063 で是正済み。finish / discard は裁定により M3 へ移送"
+    },
+    {
+      "id": "GP-004",
+      "kind": "blocking",
+      "basis": "verified",
+      "carried_from": "FLW-REV-016:GP-004",
+      "statement": "confirmation証跡をFLW-NFR-011の契約へ適合させる",
+      "status": "partially-discharged",
+      "evidence": "raw log 保持・TTL（起動時＋Gate 採用時）・evidence_id 分離・operations の出荷表由来化・attempt 台帳は成立。attempt 台帳と coordinator / lease の接続、指紋の列挙不足、証跡2系統の語彙分裂が残る"
+    },
+    {
+      "id": "GP-005",
+      "kind": "agenda",
+      "basis": "verified",
+      "statement": "レビュー後に入れた是正（PR #289 / #290 / SI-FLW-065）を独立レビューで検分する",
+      "status": "open",
+      "evidence": "本レビューの4観点は是正前後の異なる commit を見ており、最終状態を独立に評価した観点は無い"
+    }
+  ],
+  "carried_over": [
+    "FLW-REV-016:SYN-002",
+    "FLW-REV-016:SYN-013"
+  ],
+  "conditional_items": [
+    "FLW-REV-017:SYN-008（是正PRのタスク欠落）を解消する",
+    "FLW-REV-017:SYN-009（覆った宣言の残置とcatalog未追随）を解消する",
+    "FLW-REV-017:SYN-011（SKILL.mdと設計語彙の食い違い、quarantine接続の語彙）を解消する",
+    "FLW-REV-017:SYN-012（出口条件×証拠の対応表と要件status）を解消する",
+    "GP-005（是正後の最終状態を独立レビューで検分）を実施する",
+    "business 観点の欠測を埋める"
+  ]
+}
