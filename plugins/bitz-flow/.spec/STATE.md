@@ -1,5 +1,7 @@
 # STATE — status 遷移ログ
 
+- 2026-08-16 codex confirmation timeout の切り分け（**先行の説明を訂正**）: 8/8 を「恒常欠陥」と説明していたが、切り分けの結果 **失敗はすべてバックグラウンド実行時**であり、フォアグラウンド実行では一度も再現しない（runner 全体 51秒で 3platform PASS、codex 単体 13.7秒、runner と同一コマンドを Python から 12.2秒）。被測定物の性質ではなく**計測環境の性質**であり、`FLW-NFR-011` の「instrument/environment failure は再試行1回」に照らせば条項どおりの運用だった。`OPS-104` の「証跡に残らない」指摘は正しく `attempts.jsonl` で対応済みだが、「恒常欠陥の隠蔽」という評価は司令塔の誤った説明に基づく
+- 2026-08-16 SI-FLW-064: accepted で起票し実装（receipt payload へ変更対象を載せ、`worktree.audit` の外部変更検出を成立させた）。**M2 出口条件「operation 外変更の audit 検出・quarantine 接続」が実装可能になった**（`SI-FLW-059` では不可を宣言していた）
 - 2026-08-16 SI-FLW-063 実装中の発見: agy_guard の allow を「値が1つ」に絞ったら **antigravity の正規経路まで落ちた**。推測で緩めず agy の payload を実測したところ `run_command` の args は `CommandLine` / `Cwd` / `BypassSandbox` / `RunPersistent` / `WaitMsBeforeAsync` で、実行されるのは `CommandLine` だけ、**`BypassSandbox` が True になる経路が実在**した。実測に基づく allowlist（CommandLine 一致・BypassSandbox 非真・Cwd にメタ文字なし・未知 field なし）へ変更し、正規経路 PASS と相乗り拒否を両立させた
 - 2026-08-16 codex の confirmation 初回 timeout は **6/6**。attempt 台帳（`attempts.jsonl`）を導入し、失敗が証跡から消えないようにした。恒常欠陥に再試行条項を当て続けるのは筋が悪く、別途の論点として残る
 - 2026-08-16 SI-FLW-063: accepted で起票（`FLW-REV-017` の残存欠陥6件。第2次予算裁定が列挙・順序付けした実行単位）

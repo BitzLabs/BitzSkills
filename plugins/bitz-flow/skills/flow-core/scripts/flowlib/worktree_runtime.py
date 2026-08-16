@@ -292,6 +292,56 @@ class _NonceLedger:
         os.replace(temp, self.path)
 
 
+def receipt_target(plan_value: "RuntimePlan") -> dict:
+    """receipt に載せる「何を変えたか」（`SI-FLW-064`）。
+
+    従来の payload は `operation_id` / `state` / `completed_steps` だけで、
+    **変更対象を一切指していなかった**。そのため
+    `worktree.audit` が operation 外の worktree を区別できず、M2 出口条件
+    「operation 外変更の audit 検出・quarantine 接続」が実装不能だった。
+    事後の監査と復旧に要る最小の観測値だけを載せる。
+    """
+    return {
+        "action": plan_value.action,
+        "path": plan_value.path,
+        "branch": plan_value.branch,
+        "worktree_root": plan_value.worktree_root,
+        "expected_head": plan_value.expected_head,
+    }
+
+
+def managed_worktrees(repo: str | Path) -> frozenset[str]:
+    """receipt が「この operation 群で作った」と記録している worktree path。
+
+    `worktree.audit` はこれと `git worktree list` を突き合わせて、
+    operation 外で作られた worktree を検出する。
+    `create` が DONE のものを加え、`finish` / `discard` が DONE のものを除く。
+    """
+    root = Path(repo)
+    try:
+        common = _common_dir(root)
+    except (WorktreeRuntimeError, OSError, ValueError):
+        return frozenset()
+    receipts = common / "bitz-flow-v2" / "receipts"
+    if not receipts.is_dir():
+        return frozenset()
+    managed: set[str] = set()
+    for entry in sorted(receipts.glob("*.json")):
+        try:
+            record = json.loads(entry.read_text(encoding="utf-8"))["record"]
+        except (OSError, ValueError, KeyError):
+            continue
+        target = record.get("target") or {}
+        path, action = target.get("path"), target.get("action")
+        if not path or record.get("state") != "DONE":
+            continue
+        if action in ("create", "resume"):
+            managed.add(str(path))
+        elif action in ("finish", "discard"):
+            managed.discard(str(path))
+    return frozenset(managed)
+
+
 class _ReceiptLog:
     def __init__(self, common: Path) -> None:
         self.root = common / "bitz-flow-v2" / "receipts"
@@ -380,7 +430,8 @@ def apply(
     receipts = _ReceiptLog(common)
     completed: list[str] = []
     try:
-        receipts.append({"operation_id": plan_value.operation_id, "state": "PENDING", "completed_steps": []})
+        receipts.append({"operation_id": plan_value.operation_id, "state": "PENDING",
+                          "completed_steps": [], "target": receipt_target(plan_value)})
     except (WorktreeRuntimeError, OSError, ValueError, KeyError) as exc:
         ledger.finish(nonce, plan_value.operation_id, C.NONCE_QUARANTINED)
         return RuntimeDecision("BLOCKED", str(exc), remaining_steps=plan_value.effects)
@@ -411,12 +462,14 @@ def apply(
             before("git-worktree-add")
             _git(repo, "worktree", "add", "-b", plan_value.branch, str(path), plan_value.start_point)
             completed.append("git-worktree-add")
-            receipts.append({"operation_id": plan_value.operation_id, "state": "MUTATING", "completed_steps": completed})
+            receipts.append({"operation_id": plan_value.operation_id, "state": "MUTATING",
+                          "completed_steps": completed, "target": receipt_target(plan_value)})
         elif plan_value.action == "resume":
             before("publish-resume-receipt")
             guard.verify_worktree_binding(common, Path(plan_value.registry_entry), path)
             completed.append("publish-resume-receipt")
-            receipts.append({"operation_id": plan_value.operation_id, "state": "MUTATING", "completed_steps": completed})
+            receipts.append({"operation_id": plan_value.operation_id, "state": "MUTATING",
+                          "completed_steps": completed, "target": receipt_target(plan_value)})
         else:
             tip = _head(repo, f"refs/heads/{plan_value.branch}")
             if tip != plan_value.expected_head:
@@ -432,26 +485,30 @@ def apply(
                 retained = f"refs/bitz-flow/retained/{plan_value.branch.replace('/', '-')}-{(tip or '')[:12]}"
                 _git(repo, "update-ref", retained, tip or "")
                 completed.append("create-retention-ref")
-                receipts.append({"operation_id": plan_value.operation_id, "state": "MUTATING", "completed_steps": completed})
+                receipts.append({"operation_id": plan_value.operation_id, "state": "MUTATING",
+                          "completed_steps": completed, "target": receipt_target(plan_value)})
             before("git-worktree-remove")
             remove_args = ["worktree", "remove"] + (["--force"] if plan_value.action == "discard" else []) + [str(path)]
             _git(repo, *remove_args)
             completed.append("git-worktree-remove")
-            receipts.append({"operation_id": plan_value.operation_id, "state": "MUTATING", "completed_steps": completed})
+            receipts.append({"operation_id": plan_value.operation_id, "state": "MUTATING",
+                          "completed_steps": completed, "target": receipt_target(plan_value)})
             before("delete-local-branch")
             _git(repo, "branch", "-D" if plan_value.action == "discard" else "-d", plan_value.branch)
             completed.append("delete-local-branch")
-        receipt = receipts.append({"operation_id": plan_value.operation_id, "state": "DONE", "completed_steps": completed})
+        receipt = receipts.append({"operation_id": plan_value.operation_id, "state": "DONE",
+                          "completed_steps": completed, "target": receipt_target(plan_value)})
         ledger.finish(nonce, plan_value.operation_id, C.NONCE_USED_DONE)
         return RuntimeDecision("DONE", f"worktree.{plan_value.action} completed", tuple(completed), (), (receipt,))
     except (WorktreeRuntimeError, OSError, ValueError, KeyError) as exc:
         # 復旧経路自身も失敗しうる。receipt log が読めない状況では QUARANTINED の追記も
         # 同じ例外で落ち、`try/finally` だけでは例外が apply() から脱出していた
-        # （`FLW-REV-017:DIN-101` / `RSK-202`。PR #282 の是正が届いていなかった経路）。
+        # （`SI-FLW-063`。PR #282 の是正が届いていなかった経路）。
         # 副作用は既に起きているので、記録に失敗しても判定は返しきる。
         quarantine_failure = None
         try:
-            receipts.append({"operation_id": plan_value.operation_id, "state": "QUARANTINED", "completed_steps": completed})
+            receipts.append({"operation_id": plan_value.operation_id, "state": "QUARANTINED",
+                          "completed_steps": completed, "target": receipt_target(plan_value)})
         except (WorktreeRuntimeError, OSError, ValueError, KeyError) as receipt_exc:
             quarantine_failure = receipt_exc
         finally:

@@ -39,5 +39,6 @@
 - **テスト**: confirm 不一致・承認の使い回し・confirm 欠如が公開経路で副作用0のまま停止すること。
 - **テスト**: 注入しなければ公開経路から worktree へ到達できないこと（出荷面は不変）。
 - **テスト**: `worktree.audit` が失敗を result（`UNAVAILABLE`）にし、`--limit` を尊重すること。
-  operation 外の変更検出は `FLW-REV-016:SYN-013`（receipt payload に path が無い）に依存するため
-  未実装であり、`data.external_change_detection` で不可を宣言すること。
+  operation 外の変更検出は receipt の `target` と `git worktree list` を突き合わせて行う
+  （`SI-FLW-064`）。陽性対照（外部作成の worktree を検出して `BLOCKED`）と
+  陰性対照（operation が作った worktree は外部変更にしない）を両方持つこと。
