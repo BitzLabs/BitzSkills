@@ -1,0 +1,132 @@
+{
+  "perspective": "consistency",
+  "dimensions": [
+    {
+      "name": "構造整合",
+      "weight": 0.35,
+      "score": 4,
+      "findings": [
+        {
+          "id": "RVC-102",
+          "severity": "minor",
+          "location": "flow-core/references/operation-catalog.md:20-22（共通 contract の 11 field 宣言）、:98-108（M2 表）、:120-152（audit 専用節）",
+          "title": "audit 節は実体と完全に一致するまで前進したが、M2 の 5 operation は依然 11 field 契約に従っていない",
+          "description": "audit の記述は今回さらに前進し、**実装と一字単位で一致する水準**に達した。実 Git repo に外部 worktree を作って公開 dispatcher 経由で `worktree.audit` を実走させ、catalog が宣言する `items` の 6 field（`path` / `registered` / `managed` / `present` / `head_changed` / `divergence`）、`divergence` の 3 語彙（`unmanaged` / `registry-missing` / `directory-missing`）、`cause: \"quarantined\"` / `recovery_class: \"human-stop\"` / `quarantine`（`required` / `release_class` / `reason` / `targets`）/ `required_human_input` / 空 NEXT がすべて実出力に現れることを確認した。前回 catalog に残っていた `quarantine.worktree_state（ORPHAN）` の記述も削除されており、記述と実体の齟齬は見つからなかった。この部分は正当に評価する。残るのは REV-016 から3周続く形式面で、catalog:22 が「各 operation は次の 11 field を持つ」と宣言しているのに 11 field 表を持つのは M0 の 3 read だけであり、M2 の 5 operation は `operation / class / approval / effects / retry` の 5 列表のままである。`target` / `preconditions` / `postconditions` / `concurrency_key` / `partial` / `evidence` は audit だけが散文で補われた状態で、create / resume には対応する記述が無い。",
+          "recommendation": "M2 の 5 operation を M0 と同じ 11 field 表へ展開する。一括が重いなら、公開へ戻す対象である create / resume の 2 件だけでも先に揃える。"
+        },
+        {
+          "id": "RVC-108",
+          "severity": "minor",
+          "location": "flow-core/schemas/operations/（`git.diff-summary` / `git.status` / `repo.inspect` の 3 件のみ）、schemas/result-v1.schema.json の `$defs.data`",
+          "title": "出口条件6を担う `worktree.audit` だけ operation 別 schema が無く、data 契約が散文にしか存在しない",
+          "description": "`result-v1.schema.json` の `$defs.data` は `additionalProperties: true` とし、「operation 別 JSON Schema（`schemas/operations/`）が必須 field・型・enum・cardinality を定める」と明記して、data の細部の正を operation schema へ委譲している。ところが `schemas/operations/` に存在するのは M0 公開 3 operation の schema だけで、`worktree.*` の schema は 1 つも無い。したがって今回 audit が新たに公開する `quarantine`（object）・`recovery_class`・`required_human_input`・`items[].divergence` / `head_changed` / `managed` / `present` / `registered` は、**どの schema にも型も語彙も定義されていない**。envelope 側が未知 field を許すため機械検証は素通りし、`divergence` の 3 語彙も catalog の散文だけが正になっている。出口条件4（enum 三者照合）は「設計・schema・実装が同じ閉集合を持つ」ことを担保する仕組みだが、audit の data 語彙は schema という辺を最初から欠いており、三者照合の対象になり得ない。M0 の 3 operation には schema があるのに、Gate の争点になっている operation にだけ無い、という非対称である。",
+          "recommendation": "`schemas/operations/worktree.audit.schema.json` を追加し、`divergence` の 3 語彙・`quarantine` の必須 key・`release_class` の 4 区分・`items` の field 集合を closed enum として定義する。作らないと決めるなら、data 契約の正が catalog の散文であることを `$defs.data` の description へ明記して委譲先の空白を隠さない。"
+        },
+        {
+          "id": "RVC-104",
+          "severity": "minor",
+          "location": "flowlib/cli.py:1-8（module docstring）、:90（`--timeout-seconds` の help）、:107-109（`--apply` / `--confirm` / `--approval-ref` の help）",
+          "title": "cli.py の自己記述が 2 周連続で一字も変わっていない",
+          "description": "REV-017・REV-018 の 2 周にわたって指摘し、どちらの是正 PR でも触れられていない。docstring は「M0 read-onlyと**M2 worktreeの署名capability付き**plan/applyを扱う。」のままで、(a) 直下の `PUBLISHED_OPERATIONS`（M0 の 3 operation のみ）と逆を述べ、(b) `SI-FLW-061` で既定承認が `plan-digest`（署名不要）へ縮退した事実とも合わない。同じ縮退を SKILL.md と catalog は正しく反映済みであり、出荷物のうち cli.py の自己記述だけが取り残されている。`--apply` / `--confirm` / `--approval-ref` の help も「（M1 以降）」のままで、直後の worktree 系が使う「（worktree は M2 出口通過まで UNSUPPORTED）」と milestone ラベルが割れている。今回の PR は cli.py を 91 行変更しており、触れられなかったのではなく**選ばれなかった**。",
+          "recommendation": "docstring を出荷面（M0 read-only 3 operation）と gated 実装の区別が判る形へ書き換え、承認モード 2 種の記述は catalog を正として参照するに留める。3 引数の help を worktree 系と同じ milestone ラベルへ統一する。"
+        },
+        {
+          "id": "RVC-105",
+          "severity": "minor",
+          "location": "flowlib/cli.py:344-352（audit の `worktree_runtime._git` 直呼びと関数内 import、および冒頭コメント）、flowlib/worktree_runtime.py:69（`_git` の signature）",
+          "title": "`--timeout-seconds` は依然として audit に効かないのに、コメントが解消済みと読める過去形で書かれた",
+          "description": "audit は今回も `git_read` アダプタを通らず、モジュール private の `worktree_runtime._git` を関数内 import した `pathlib.Path` 越しに直接呼ぶ。冒頭に追加されたコメントは「以前は private `_git` を直呼びし、失敗が result にならず traceback になっていた。**`--limit` / `--timeout` も無視していた**（`FLW-REV-016:SYN-011`）」と過去形で書かれ、読み手はどちらも解消したと受け取る。しかし `--limit` は確かに尊重されるようになった一方、`worktree_runtime._git` の signature は `def _git(repo, *args, check=True)` であり **timeout 引数がそもそも存在しない**。`args.timeout_seconds` を参照するのは M0 の 3 read（cli.py:169 / 218 / 286）だけで、audit には効かない。catalog が「read operation の共通規律」として timeout を求めているのに従っていない点は無変更で、そのうえ変更されたのは「解消したように読めるコメント」だけである。これは今回の方針「機能を足すより主張を正す」と逆向きの、主張だけを進める記述である。",
+          "recommendation": "`_git` に timeout 引数を通して `args.timeout_seconds` を尊重するか、それが M3 送りであるならコメントを「`--limit` は尊重するが `--timeout-seconds` は未対応（M3）」と現在形の事実へ直す。truncation 時の cursor 付き next_action も他の read と揃える。"
+        },
+        {
+          "id": "RVC-107",
+          "severity": "minor",
+          "location": "flow-core/references/operation-catalog.md:10、flowlib/cli.py:28",
+          "title": "出荷物が 3 世代前の `FLW-REV-016` FAIL を縮退の根拠として挙げ続けている（無変更）",
+          "description": "前回と一字も変わっていない。catalog:10 は「M2 worktree operation は実装済みだが、M2 出口が未達（`FLW-REV-016` FAIL）のため」、cli.py:28 も同文で縮退の理由を述べる。しかし判定は `FLW-REV-017`（CONDITIONAL_PASS 3.13）→ `FLW-REV-018`（CONDITIONAL_PASS 3.60）と 2 回進んでおり、`FLW-REV-016` FAIL 2.85 は 3 世代前である。裁定そのもの（2026-08-15 に公開集合から外した）は正しく引かれているので判断は誤っていないが、利用者と裁定者が最初に読む 2 つの出荷物が失効したレビューを現況として提示している。前回「レビュー番号が進むたびに再発する」と書いたとおりに再発した。",
+          "recommendation": "縮退の根拠は裁定記録のパス（`decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md`）だけを引き、レビュー番号は書かない。番号を書き続けるなら、締め工程の確認項目に「出荷物が引くレビュー番号が最新か」を加える。"
+        }
+      ]
+    },
+    {
+      "name": "トレーサビリティ",
+      "weight": 0.35,
+      "score": 3,
+      "findings": [
+        {
+          "id": "RVC-201",
+          "severity": "major",
+          "location": "PR #294 / commit e4e2564（39 ファイル）、.spec/tasks/FLW-TSK-090.md（唯一の open task、status: implementing）",
+          "title": "前回宣言した「task 無しで実装 PR を出さない」が、その次の PR 自身によって破られた",
+          "description": "前回、遡り起票された `FLW-TSK-087`〜`090` が「以後は task 無しで実装 PR を出さない」を予算消費の記録条件として宣言した点は誠実だと評価した。その宣言の直後に出た本 PR（#294 / e4e2564、39 ファイル）に**対応するタスクが 1 件も無い**。tasks は `FLW-TSK-090` 止まりで、090 は PR #292 のタスクであり status は今も `implementing` のまま（PR #292 はマージ済み）である。090 の boundary と PR #294 の変更集合を機械的に突き合わせると、**39 ファイル中 23 ファイルが boundary 外**であった（`scripts/agy_guard.py`、`tests/test_agy_guard.py`、`tests/test_flow_m2_capability.py`、`tests/test_flow_m2_confirmation.py`、`evals/flow-core/m2-eval/` の 4 件、`.spec/reviews/` の 8 件、`.spec/reports/` の 1 件、`.spec/spec-issues/` の 6 件、`plugins/bitz-sdd/.spec/spec-issues/SI-SDD-044.md`）。同時に boundary の 13 エントリは今回使われていない。前回の指摘は「遡って書いた boundary は変更集合の転写であり制約として機能しない」だったが、今回はそれ以前の段階へ後退しており、**PR ↔ task ↔ issue の対応関係そのものが最新の PR について切れている**。裁定者が `.spec/tasks/` を読んでも、REV-018 の 16 finding を全件対処したと主張する変更がどの作業単位に属するのかを辿れない。`spec inspect` はこの規律を検査しないため exit 0 のまま素通りする。",
+          "recommendation": "PR #294 に対応する `FLW-TSK-091` を起票し（遡り起票である旨を明記）、`FLW-TSK-090` を `done` へ遷移させる。恒久策として、commit 範囲と task の boundary を突き合わせる検査（20 行程度で足りる）を release_check か CI の WARN として機械化する。機械化しない限り同じ欠陥が毎周回再生産されることは、3 周連続の実測で示されている。"
+        },
+        {
+          "id": "RVC-207",
+          "severity": "major",
+          "location": ".spec/design/FLW-DSN-014.md:654-694（M2 出口条件の列挙と「M2出口条件 × 証拠の対応表」）— PR #294 で一切変更されていない",
+          "title": "Gate の裁定材料の目次と自称する対応表が、是正周回で更新されず 3 箇所で実体と食い違う",
+          "description": "`FLW-DSN-014` は当該表を「**この表が Completion Gate の裁定材料の目次である**」と自称し、出口条件ごとに見るべき証拠を固定している。しかし本 PR は `FLW-DSN-014.md` を 1 行も変更していない（`git diff --stat bcc1525..HEAD` に不在）。結果として次の 3 点が食い違う。(1) **出口条件6の文言が案1の限定を持たない**。条件は「operation外の変更をauditが検出しquarantineへ接続する」と無限定のままで、今回確定した「対象は worktree の生成・消失・binding 不整合に限る／HEAD 前進は違反にしない／commit 由来判定は M3」という限定は `FLW-DSN-016` §7・catalog・STATE.md にしか無い。出口条件の正を持つ文書に限定が無いまま、限定つきの読み方で PASS を主張する形になる。(2) **row 6 の証拠が古い**。「検出は `SI-FLW-064`、接続語彙は `SI-FLW-066`」とあるが、検出は本 PR の `SI-FLW-067` で片方向から双方向・3 形へ全面的に書き直されており、示された証拠は置き換えられた実装を指す。(3) **row 3 の証拠が存在しない**。「`.spec/specs/m2-runtime/test-spec.md`（欠番0）」とあるが、当該ファイル（44 行）には `M2-FLT-*` の ID が **1 件も書かれていない**。ID 台帳の実体は `FLW-DSN-016` の fixture 表（57 件）であり、そちらと tests の 57 件は集合として完全一致している（`design-only: []` / `tests-only: []` を機械確認）。条件3 自体は実質的に満たされているのに、目次が読者を空のファイルへ送る。さらに表末の「各条件の達成状況は、判定した時点のレビュー（最新は `FLW-REV-017`）を正とする」も `FLW-REV-018` が確定した今は失効している。GP-006（commit 由来判定の M3 入口条件への計上）も STATE.md に書かれるだけで、M3 入口条件を所有する本文書には反映されていない。",
+          "recommendation": "出口条件6の文言へ案1の適用範囲を書き込み、row 6 の証拠を `SI-FLW-067` と `decision-2026-08-16-flw-rev-018-remediation.md` へ更新し、row 3 の証拠を `FLW-DSN-016` の fixture 表へ差し替える（または test-spec.md へ ID 台帳を移す）。GP-006 の計上を M3 入口条件節へ明記する。「最新は」の参照は番号を書かず「最新の M2 Exit レビュー」とする。"
+        },
+        {
+          "id": "RVC-203",
+          "severity": "minor",
+          "location": ".spec/verification/（7 件）、特に `m2-local-confirmation-gate--13c9ed3.json` / `pytest-agy-guard--13c9ed3.json` / `pytest-flw-m2-runtime--13c9ed3.json`",
+          "title": "証跡は 4 → 7 件へ増えたが、7 件すべての commit が HEAD の祖先でない（規模だけが拡大）",
+          "description": "証跡が増えたこと自体は前進であり、`SI-FLW-067` の周回で `agy_guard` の pytest 証跡が加わった点は SYN-009 の是正を裁定者が辿れるようにする。しかし `git merge-base --is-ancestor` で 7 件すべてを機械確認したところ、記録された commit（`13c9ed3` ×3 / `77d7edb` / `8cfd7da` / `01b8e64` / `fbe1c1b`）は**いずれも HEAD の祖先ではない**。squash merge により枝 commit が履歴に残らないためで、前回 4 件で指摘した構造的問題がそのまま 7 件へ拡大した。「`.spec/verification/*.json` が green 判定の正」という運用に対し、第三者はどの証跡についても出荷履歴から commit を解決できない。加えて古い世代の証跡（`77d7edb` / `8cfd7da`）が新しい世代（`13c9ed3`）と同居しており、どちらが現況かは ファイル名の commit 断片からは判別できない。",
+          "recommendation": "`spec_verify record` に squash 後の main 側 commit を追記する field を設けるか、枝 commit が解決不能である旨を運用規約として明記する。世代が重なる証跡は `superseded_by` を持たせて現況を一意にする。"
+        },
+        {
+          "id": "RVC-205",
+          "severity": "minor",
+          "location": "evals/flow-core/m2-eval/run_local_confirmation.py:41-57（COMPATIBILITY_INPUTS）、.spec/requirements/FLW-NFR-011.md",
+          "title": "compatibility_key に CLI version と model identity が入らず、指紋対象マニフェストが 1/3 のまま（3 周連続で無変更）",
+          "description": "REV-017・REV-018 に続いて 3 周目の無変更である。`COMPATIBILITY_INPUTS` は認可核（`worktree_capability` / `guard` / `worktree_cleanup` / `recovery`）と digest 定義元（`result.py`）と harness を含み被覆は広いが、`FLW-NFR-011` が列挙する「CLI・host event-contract version」と「model identity / date」は入っていない。qualification 側は実際に CLI version を記録しているのに、その値は confirmation の指紋に効かないため、CLI を入れ替えても active manifest は失効しない。指紋対象のマニフェストも `plugins/bitz-flow/plugin.json` の 1 つだけで、3 マニフェスト運用（`.claude-plugin` / `.codex-plugin`）と非対称である。",
+          "recommendation": "qualification が既に測っている CLI version と model identity を compatibility_key の入力へ加える。3 マニフェストを指紋対象に揃えるか、1 つで足る理由をコメントに残す。"
+        }
+      ]
+    },
+    {
+      "name": "用語一貫性",
+      "weight": 0.30,
+      "score": 3,
+      "findings": [
+        {
+          "id": "RVC-306",
+          "severity": "major",
+          "location": "flowlib/result.py:40-63（`ALLOWED_CAUSES` に `\"quarantined\"`）、schemas/result-v1.schema.json の `$defs.cause.enum`（14 値、`quarantined` を含まない）、flowlib/cli.py:452（`data[\"cause\"] = \"quarantined\"`）、tests/test_flow_contract.py:122",
+          "title": "公開 result が schema の閉集合外の `cause` を返す — `RVC-305` と同型の逸脱が別 namespace で生存しており、「唯一の逸脱だった」という中心的主張は成立しない",
+          "description": "司令塔の中心的主張のうち `worktree_state` に関する部分は**確かに正しい**。閉集合表（`FLW-DSN-016` §2 の `ABSENT, CLEAN, DIRTY, MISMATCH`）・schema（`worktree-state-v1.schema.json`）・実装（`worktree.py:12` の `WORKTREE_STATES`）の三者を自分で突き合わせて一致を確認し、`worktree_capability.py:278` が `ABSENT` / `MISMATCH` へ改まって公開 result から `worktree_state` が消えたことも実走で確認した（`RVC-305` は解消）。しかし「PR #292 が公開 result へ載せたのが唯一の逸脱だった」は誤りである。実 Git repo に外部 worktree を作って公開経路で `worktree.audit` を実走させたところ、result は `code: BLOCKED` / `data.cause: \"quarantined\"` を返し、機械照合の結果 **`quarantined` は `result-v1.schema.json` の `$defs.cause.enum` に存在しない**（impl-only の差分はこの 1 語だけ、schema-only は 0）。すなわち公開 result envelope が、自身の schema が定める closed enum の外の値を載せている。同じ schema は冒頭で「key 集合は加算のみで、既存 key の意味を変える場合は schema major を上げる」と宣言しており、cause は `$defs` の closed enum である。逸脱が検出されない機械的な理由も特定した。(1) `build_result` の docstring は「schema 違反になり得る組み合わせ（未知 code、不正 stage、**cause 語彙外**）はここで弾く」と述べるが、照合先は schema ではなく実装側定数 `ALLOWED_CAUSES` であり、これは schema の 14 値に `quarantined` を足した**上位集合**である。ガードが守るべき正より広い基準で検査している。(2) 出口条件4 の enum 三者照合（`M2_FLT_023`）は `work_unit_state` / `worktree_state` / `branch_audit_state` の 3 namespace しか回らず、`cause` を見ない。(3) `test_flow_contract.py:122` は `cause in defs[\"cause\"][\"enum\"]` を実際に検査しているが、対象が M0 公開 3 operation の result に限られるため audit の BLOCKED result には届かない。この語は PR #292 で追加され、SYN-005 の是正で `worktree_state` を削っても残り、PR #294 でも触れられなかった。STATE.md:3 の「新しい enum も新しい operation も1つも追加していない」という記述は、HEAD の実体に対しては成り立っていない。",
+          "recommendation": "`result-v1.schema.json` の `$defs.cause.enum` へ `quarantined` を追加して三者を揃える（`recovery_for` が既に `(\"BLOCKED\", \"quarantined\")` を定めている以上、語彙の追加が正しい向きである）。同時に `build_result` の cause 検査を schema から読んだ enum に対して行うか、`ALLOWED_CAUSES` と schema の一致を検査するテストを追加する。enum 三者照合の走査対象を `worktree-state-v1` の 3 namespace から、`result-v1` の `code` / `cause` / `stage` / `write_state` / `guard_identity_kind` を含む全 closed enum へ広げる。"
+        },
+        {
+          "id": "RVC-307",
+          "severity": "major",
+          "location": ".spec/design/FLW-DSN-016.md:152-172（GP-014「多重語一覧は schema から機械導出する」の導出結果表）と :553-556（PR #294 が追記した §7 の断定）",
+          "title": "設計文書が自分自身と矛盾している — §2 の多重語表は `ORPHAN` を `worktree_state` の値として列挙し、§7 の新規追記がそれを正面から否定する",
+          "description": "「設計・schema・実装の三者は元々一致していた」という主張は、閉集合表（§2 の namespace 表）に限れば正しいが、**`FLW-DSN-016` 全体としては成立しない**。同じ §2 の中に GP-014 の「多重語一覧」表があり、そこには `| \\`ORPHAN\\` | \\`worktree_state\\` / \\`branch_audit_state\\` |` と書かれている。すなわち設計文書自身が、8 行上の閉集合表と矛盾して `ORPHAN` を `worktree_state` の値として列挙している。schema の全 enum から多重語を機械導出して突き合わせたところ、この表は 13 行中 **4 行が誤り**であった（`ORPHAN` / `MERGED_EXACT` / `REMOTE_ADVANCED` は `branch_audit_state` の 1 namespace にしか現れず、`FAILED_RETAINED` は `work_unit_state` にしか現れない）。皮肉なのは、この節が「`FLW-REV-011:SYN-014` は多重語の一覧が 4/10 漏れているとした。**手で維持する一覧は必ず腐る**ため、schema の enum から機械導出する」と述べ、「実装時は生成物と本表を照合する」と自ら定めている点である。導出も照合も実装されておらず、宣言どおりに腐った。PR #292 の作者が `worktree_state=\"ORPHAN\"` と書いた根拠として最も自然に読めるのがこの表であり、REV-018 で `RVC-305` を指摘された後の是正周回でも表は**一行も直されていない**。そのうえ PR #294 は §7 へ「**`ORPHAN` は `branch_audit_state` の値であり `worktree_state` には無い。**」という断定を追記したため、同一文書内に正面から対立する 2 つの規範が並ぶ状態を新たに作った。是正が新しい不整合を持ち込んでいないか、という論点に対する答えはここでは「持ち込んだ」である。",
+          "recommendation": "多重語表を GP-014 が定めたとおり schema から機械導出する（本レビューで用いた 20 行程度のスクリプトで足りる）か、少なくとも 4 行を手で修正して §7 の断定と揃える。導出テストを `M2_FLT_023` に併設し、表が腐ったら赤くなるようにする。修正するまでは §2 の表に「§7 が正。本表は未検証」と注記して、二重の正が並ぶ状態を隠さない。"
+        },
+        {
+          "id": "RVC-302",
+          "severity": "major",
+          "location": "flowlib/cli.py:436-450（`QuarantineEvidence` の組み立て）、flowlib/worktree_cleanup.py:135-145（`classify_quarantine`）、flowlib/intent.py:88-102（0 行変更）、.spec/design/FLW-DSN-016.md:571-573",
+          "title": "`release_class` は依然として定数であり、設計・コメント・実装が互いに逆のことを述べている",
+          "description": "SYN-004 の是正は「`classify_quarantine` へ実観測を渡して計算する」と主張し、cli.py には「以前は全フィールド固定リテラルの evidence を渡していたため、分類ではなく表示だった」というコメントが、設計 §7 には「解除区分は §6 の4区分を `classify_quarantine` へ**実観測を渡して計算**する（**固定リテラルの evidence を渡してはならない**）」という規範が追加された。実際に 5 field のうち 3 つ（`chain_valid` / `completed_steps` / `mutation_receipts`）は実観測から渡るようになった。しかし残る 2 つ（`instance_nonce_matches` / `all_postconditions_match`）は依然 `False` のハードコードであり、`classify_quarantine` の第 1 分岐が `if not evidence.chain_valid or not evidence.instance_nonce_matches: return \"worktree-unresolved\"` であるため、**`instance_nonce_matches=False` だけで必ず短絡する**。audit 経路が渡し得る全組合せ（readable × completed_steps × mutation_receipts）を網羅列挙して実行したところ、到達可能な戻り値は `['worktree-unresolved']` の 1 値のみであった。実走でも `release_class: \"worktree-unresolved\"` が返る。§6 の 4 区分のうち公開経路で到達可能なのは 1 つだけという状態は前回から変わっておらず、変わったのは「変わったと述べる記述が 3 箇所に増えた」ことである。設計が禁じた「固定リテラルの evidence」を実装が渡し続けているため、規範違反が明文化された分だけ状態は悪い。さらに `intent.py` は本 PR で **0 行**の変更であり、唯一実装された解除 API `intent.quarantine_release` の `CONCLUSION_APPROVERS = {confirmed-done, no-effect, orphan-object-no-reachable-effect, abandoned-with-compensation, unresolved}` は今も `worktree-*` を受け付けない。audit が出す `worktree-unresolved` を渡せば `INVALID_INPUT` になる。2 系統の解除語彙の併存も前回のまま、その理由も §6 に書かれていない。`required_human_input` が「§6 の解除区分に従い evaluation-reviewer の判断を要する」と述べる一方、§6 は `worktree-unresolved` を「**不可。quarantine 継続**」と定義しており、reviewer に定義された行動が無い点も無変更である。",
+          "recommendation": "(a) `instance_nonce_matches` と `all_postconditions_match` を receipt の実観測から組むか、組めないなら `classify_quarantine` を呼ばず「receipt chain から instance identity を再構成できないため区分不能」を明示する（設計が禁じた固定リテラルを渡し続けない）。(b) 到達可能な区分が 1 値であることを検査する陰性対照テストを置き、将来 4 区分が到達可能になったときに赤くならないようにする。(c) `intent.CONCLUSION_APPROVERS` / `CONCLUSION_EVIDENCE` を §6 の worktree 4 区分へ揃えるか、2 系統が併存する理由と対応関係を §6 に明記する。(d) `required_human_input` の文面を「解除不可・quarantine 継続。reviewer が行うのは worktree の外部処理であって解除ではない」と実態へ合わせる。"
+        },
+        {
+          "id": "RVC-303",
+          "severity": "minor",
+          "location": "evals/flow-core/m2-eval/qualification-2026-08-17-si-flw-067.json、active-local-confirmation.json、local_confirmation_subject.py:77、run_local_confirmation.py:31 / :293-297",
+          "title": "同一 Gate の 2 証跡の語彙分裂は解消せず、片側からの field 削除で非対称が別の形になった",
+          "description": "SYN-012 の是正として、manifest 側から `required_checks` / `positive_controls` が削除された（subject の MARKER・runner の正規表現・manifest 書き戻しの 3 箇所すべてから消えている）。定数を実測値のふりをさせて運んでいたのだから、この削除は「主張を正す」側であり**証跡を薄くしたとは判定しない**（`RVC-204` はこれで解消したと見る）。しかし同じ Gate のもう一方の証跡である qualification は今も `required_checks: {detected: 21, denominator: 21}` / `positive_controls: {detected: 9, denominator: 9}` を object 型で報告し続けている。結果として、裁定者は「陽性対照 9/9 を主張する文書」と「陽性対照に一切言及しない文書」を同じ Gate の証跡として並べて読むことになり、前回の「同じ指標が別語彙・別型」という分裂は「片方にしか存在しない指標」という別の非対称へ形を変えただけである。`raw_logs_committed`（qualification・複数形・false）と `raw_log_committed`（manifest の platform record・単数形）の分裂、subject marker の `hazards` / `residuals` と manifest の `hazardous_events` / `residual_side_effects` の略記差も無変更である。",
+          "recommendation": "qualification 側の `required_checks` / `positive_controls` も台帳を持たないなら同様に削除するか、ID 台帳を test-spec に定義して両証跡が同じ母数を同じ型で報告する。`raw_logs_committed` / `raw_log_committed` はどちらかへ寄せ、marker の略記も manifest の field 名へ合わせる。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 3.35,
+  "summary": "総合 3.35（前回 FLW-REV-018 consistency 3.70 から **-0.35**）。前回の major 4 件のうち完全解消は 1 件（RVC-206）、実質解消が 1 件（RVC-305）、残存が 1 件（RVC-302）、悪化が 1 件（RVC-201）。新規 major 3 件（RVC-306 / RVC-307 / RVC-207）を検出した。是正には本物の前進が複数ある一方、**司令塔の中心的な主張は独立検分で反証された**というのが今回の判定である。\n\n【中心的な主張の検分結果】「`ORPHAN` は `worktree_state` の値ではなく `branch_audit_state` の値である。設計・schema・実装の三者は元々一致しており、PR #292 が公開 result へ載せたのが唯一の逸脱だった」。**前半は正しく、後半は誤りである。** 三者の実体を自分で突き合わせ、`FLW-DSN-016` §2 の閉集合表（`ABSENT, CLEAN, DIRTY, MISMATCH`）・`worktree-state-v1.schema.json` の enum・`worktree.py:12` の `WORKTREE_STATES` が完全一致すること、`worktree.py:69` が `worktree_state=\"MISMATCH\", branch_audit_state=\"ORPHAN\"` と正しく使い分けること、`worktree_capability.py:278` が `ABSENT` / `MISMATCH` へ改まったこと、実走した公開 result に `worktree_state` がもはや現れないことを確認した（RVC-305 解消）。しかし「唯一の逸脱」は 2 点で成り立たない。(1) **RVC-307**: 同じ `FLW-DSN-016` §2 の GP-014「多重語一覧」表が `ORPHAN` を `worktree_state` の値として列挙しており（schema から機械導出すると 13 行中 4 行が誤り）、この表は是正周回でも一行も直っていない。PR #292 の誤りの最も自然な出所がこの表であり、PR #294 が §7 へ追記した「`ORPHAN` は `worktree_state` には無い」という断定によって、同一文書内に対立する 2 つの規範が並ぶ状態が新たに生まれた。しかも同節は自ら「手で維持する一覧は必ず腐る」と書いている。(2) **RVC-306**: 実 Git repo で公開経路の `worktree.audit` を実走させると `data.cause: \"quarantined\"` を返すが、この語は `result-v1.schema.json` の `$defs.cause.enum`（14 値）に**存在しない**。閉集合外の値を公開 result へ載せるという `RVC-305` と同型の逸脱が、別 namespace で HEAD に生存している。`build_result` は docstring で「cause 語彙外はここで弾く」と述べながら、照合先が schema ではなく上位集合の実装定数 `ALLOWED_CAUSES` であるため素通りする。enum 三者照合（`M2_FLT_023`）は `cause` を走査せず、`test_flow_contract.py:122` の cause 検査は M0 3 operation にしか届かない。STATE.md の「新しい enum も1つも追加していない」は HEAD の実体に対して成り立っていない。\n\n【前回 major 4 件の 1 件ずつの判定】**RVC-201（遡り boundary が制約として機能しない）= 悪化して残存。** PR #294 に対応するタスクは**存在しない**。tasks は `FLW-TSK-090` 止まりで、090 は PR #292 のタスクかつ status は今も `implementing`（PR #292 はマージ済み）。090 の boundary と PR #294 の変更集合を機械突合すると **39 ファイル中 23 ファイルが boundary 外**（agy_guard・tests 3 件・evals 4 件・reviews 8 件・reports 1 件・spec-issues 6 件・bitz-sdd の SI-SDD-044）。前回は「転写された boundary は違反できない」という段階だったが、今回は PR ↔ task ↔ issue の対応そのものが最新 PR について切れている。しかもその PR は、前周回で「task 無しで実装 PR を出さない」と宣言した当人である。**RVC-206（実装済み `SI-FLW-066` が open のまま）= 完全解消。** `SI-FLW-066` は `accepted` へ遷移し、本文の「裁定待ち」は「**裁定済み（2026-08-16）**：予備枠の PR-A として実施が裁定され PR #292 で実装した」へ書き換わった。今回 accepted にした `SI-FLW-067`〜`071` も全 5 件が `accepted` で、STATE.md に代行遷移（実行者未検証・裁定参照つき）が 1 件ずつ記録されている。同型の問題は無い。**RVC-305（`worktree_state: \"ORPHAN\"` が閉集合外）= 解消。** ただし上記のとおり同型の欠陥が `cause` namespace へ移っている。**RVC-302（解除区分が定数で解除 API の語彙と噛み合わない）= 残存、記述面では悪化。** `QuarantineEvidence` の 5 field のうち 3 つは実観測になったが、`instance_nonce_matches=False` のハードコードが `classify_quarantine` の第 1 分岐を必ず短絡させる。audit 経路が渡し得る全組合せを網羅実行した結果、**到達可能な戻り値は `worktree-unresolved` の 1 値のみ**であった。設計 §7 は「固定リテラルの evidence を渡してはならない」と新たに明文化したので、規範違反が言語化された分だけ状態は悪い。`intent.py` は 0 行変更で、`CONCLUSION_APPROVERS` は今も `worktree-*` を受け付けない。\n\n【無変更で残存した前回 minor】RVC-104（cli.py の docstring と 3 引数の help。2 周連続で一字も変わらず、しかも同 PR は cli.py を 91 行変更している）、RVC-107（catalog:10 と cli.py:28 が 3 世代前の `FLW-REV-016` FAIL を縮退根拠に挙げ続ける）、RVC-205（compatibility_key に CLI version / model identity なし、指紋対象 manifest 1/3。3 周連続）。RVC-105 は `--limit` が尊重されるようになった一方、`worktree_runtime._git` には timeout 引数がそもそも無く `--timeout-seconds` は依然 audit に効かないのに、追加されたコメントが「以前は `--limit` / `--timeout` も無視していた」と過去形で書かれ解消済みと読める点で、記述だけが先行した。RVC-204 は解消と判定する（定数だった `required_checks` / `positive_controls` を全段から削除したのは主張を正す側であり、証跡を薄くしたとは見ない）。RVC-102 は audit 節が実装と一字単位で一致する水準に達し、実走で全 field の一致を確認した（11 field 契約の未適用だけが残る minor）。\n\n【正当に評価する前進】catalog の audit 節は `items` の 6 field・`divergence` の 3 語彙・`quarantine` の 4 key・空 NEXT・「判定しないこと」まで書き切っており、実走出力と齟齬が無い。設計 §7 の 3 形（`unmanaged` / `registry-missing` / `directory-missing`）と code の棲み分け表、`INDETERMINATE` の分離（`survey.readable` が偽なら分類を推測しない）は文書・実装・実測の三者で揃った。`agy_guard.py` は DENY → ASK → ALLOW の評価順を規範（コメント）と実装（:127-149）の双方で明示しており、順序に関する不整合は見つからない。出口条件3 の実体は健全で、`FLW-DSN-016` の fixture 表 57 件と tests の `M2_FLT_*` 57 件は集合として完全一致（欠番 0・片側のみ 0）である。\n\n【GP-001〜GP-006 の判定（consistency 観点）】**GP-001 = partially-discharged**: 既定 renderer 専用テストが audit の compact 出力（`cause=quarantined` / `quarantine=worktree-unresolved`）まで検査するようになったが、`_dispatch` は今も `[*argv, '--format', 'json']` を固定しており apply 経路の result は既定形式で一度も描画されない。**GP-002 = partially-discharged**: 定数だった `required_checks` / `positive_controls` を manifest から削除して自己申告は減ったが、compatibility_key は依然 CLI version / model identity を含まず指紋対象 manifest も 1/3 で、qualification 側は同名の定数比率を持ち続ける。**GP-003 = discharged**: `WorktreeRuntimeError` への統一と mutation 境界の except 是正について本観点の再検分で反証は見つからず、finish / discard の語彙は裁定により M3 へ移送済みで M2 scope 外。**GP-004 = partially-discharged**: 証跡は 4 → 7 件へ増えたが 7 件すべての commit が HEAD の祖先でなく（機械確認）、2 証跡の語彙分裂も片側からの field 削除で別の非対称へ変わっただけである。**GP-005 = discharged（実施として）**: 最終状態 `e4e2564` を独立に検分し、実 Git repo での実走・schema と実装の機械突合・boundary と commit の機械突合・多重語表の schema 導出という 4 種の再現で主要主張を自分で確かめた。ただしその結果として中心的主張の一部が反証されたことを併記する。**GP-006 = partially-discharged**: 「commit 由来判定は `commit_causality` の原則により `git.commit`（M1）の公開に依存するため M3 へ計上する」という論証自体は成立しており（bitz-flow が commit を作らない以上、由来を裏付ける receipt が存在し得ないのは正しい）、設計 §7・catalog・STATE.md へ反映された。しかし計上先である M3 入口条件を所有する `FLW-DSN-014` は本 PR で 1 行も変更されておらず、「M3 へ計上した」という主張の裏付けが Gate の目次に存在しない。\n\n【M2 出口条件 8 項目・consistency 観点の判定】**PASS と言えるもの**: (1) repo identity 衝突 0 — 文書と実装の対応に矛盾は見つからなかった。(2) repo 外 worktree root の単回 capability 承認 — 承認モード 2 種（既定 `plan-digest` / registry 有りで `signed-capability`）の記述が catalog・SKILL.md・実装で一致する（cli.py の docstring だけが古いが、これは規範ではなく自己記述）。(3) `create` / `resume` / `audit` の `M2-FLT-*` 全件・欠番 0 — 今回検分し、`FLW-DSN-016` の fixture 表 57 件と tests 57 件の集合一致・欠番 0 を機械確認した。ただし `FLW-DSN-014` が示す証拠ファイルに ID が 1 件も無い（RVC-207）ため、目次を直さない限り裁定者は自力で辿り着けない。(5) 承認 capability の公開 dispatcher 経由 in-band 検証 — `{**_HANDLERS, **_GATED_HANDLERS}` 注入による E2E が confirm 不一致・使い回し・欠如・非注入時の不可達まで覆い、既定形式の盲点も audit については閉じた。(8) entry protocol 必須化 — `M2-FLT-045` / `046` / `047` / `051` が `tests/test_flow_m2_reconnaissance.py` に実在し、test-spec の記述と対応する。**PASS と言えないもの**: (4) enum 三者照合 — 照合機構は動いているが、公開 result が返す `cause: \"quarantined\"` が `result-v1.schema.json` の閉集合外にあり、照合の走査対象にも入っていない（RVC-306）。さらに設計文書自身が §2 と §7 で `ORPHAN` の所属を食い違わせている（RVC-307）。この条件が担保するはずの「未知の enum 値が公開契約へ入らない」は、前回に続いて今回も破られている。(6) operation 外変更の audit 検出・quarantine 接続 — 検出（3 形の双方向突合）は実測で成立を確認したが、接続は解除不可の**定数**区分を表示するところまでで（到達可能値は 1 種のみと網羅確認）、示された区分は唯一実装された解除 API の語彙に存在せず、reviewer に定義された行動も無い（RVC-302）。加えて案1 の適用範囲は出口条件を所有する `FLW-DSN-014` に書かれていないため、「限定つきで満たした」と読む根拠が Gate の正となる文書に無い（RVC-207）。**条件付き**: (7) `write_target: local` の 3 platform confirmation — 実走の成立は他観点の判断に属するが、consistency 観点では 2 証跡の非対称（RVC-303）と、要件へ紐づけた証跡の commit が 7/7 とも履歴から解決できない点（RVC-203）により、裁定者が単一の語彙で読み、かつ出荷履歴へ辿れる状態にはない。"
+}
