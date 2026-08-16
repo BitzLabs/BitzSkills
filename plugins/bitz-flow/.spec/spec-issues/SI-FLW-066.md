@@ -3,11 +3,12 @@ id: SI-FLW-066
 raised_by: FLW-REV-017 consistency（RVC-201 / RVC-103 / RVC-102）
 target: 是正PRのタスク追跡と、覆った宣言・operation-catalog の追随
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 
 - **目的**: `FLW-REV-017` が指摘したトレーサビリティの断絶を解消する。
-  本 issue は**裁定待ち**であり、実施は後続の予算裁定に従う。
+  **裁定済み（2026-08-16）**: 予備枠の PR-A として実施することが裁定され、PR #292 で実装した。
+  裁定参照: .spec/reports/decision-2026-08-16-flw-rev-017-completion-gate.md
 
 - **発見した事実**:
   1. **是正 PR に対応するタスクが無い**（`FLW-REV-017:SYN-008` / `RVC-201`）。

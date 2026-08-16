@@ -1,0 +1,132 @@
+{
+  "perspective": "consistency",
+  "dimensions": [
+    {
+      "name": "構造整合",
+      "weight": 0.35,
+      "score": 4,
+      "findings": [
+        {
+          "id": "RVC-102",
+          "severity": "minor",
+          "location": "flow-core/references/operation-catalog.md:22（共通 contract の 11 field）、:98-119（M2 表）、:120-142（audit 節）",
+          "title": "audit の記述は解消したが、M2 の 5 operation は依然 11 field 契約に従っていない",
+          "description": "前回 major とした2点のうち主要な半分は解消した。catalog に `worktree.audit` 専用節（入力・data field・BLOCKED / INDETERMINATE / OK の判定・quarantine data の内訳・空 NEXT の理由・自動修復しない旨）が入り、M2 表の `effects` も「なし（判定は write の開始可否を止める）」へ改まった。実装（cli.py:345-445）と読み合わせて齟齬は見つからなかった。残るのは REV-016 から続く形式面で、catalog:22 が「各 operation は次の 11 field を持つ」と宣言しているのに 11 field 表を持つのは M0 の 3 read だけであり、M2 の 5 operation は `operation / class / approval / effects / retry` の 5 列表、M1 凍結分も 6 列表のままである。`target` / `preconditions` / `postconditions` / `concurrency_key` / `partial` / `evidence` は audit だけが散文で補われた状態で、create / resume / finish / discard には対応する記述が無い。出荷面が M0 に戻っているため実害は無いが、Completion Gate は「公開へ戻してよいか」を判定する場であり、公開契約の記述水準が M0 と揃っていない点は変わっていない。",
+          "recommendation": "M2 の 5 operation を M0 と同じ 11 field 表へ展開する（audit は既存の散文節をそのまま表へ写せる）。一括が重いなら、公開へ戻す対象である create / resume の 2 件だけでも先に揃える。"
+        },
+        {
+          "id": "RVC-104",
+          "severity": "minor",
+          "location": "flowlib/cli.py:1-8（module docstring）、:107-109（--apply / --confirm / --approval-ref の help）",
+          "title": "module docstring と引数 help が無変更で残る（前回指摘の完全な残存）",
+          "description": "前回と一字も変わっていない。docstring は「M0 read-onlyと**M2 worktreeの署名capability付き**plan/applyを扱う。」のままで、(a) 直下の `PUBLISHED_OPERATIONS`（M0 の 3 operation のみ）と逆を述べ、(b) `SI-FLW-061` で既定承認が `plan-digest`（署名不要）へ縮退した事実とも合わない。同じ縮退を SKILL.md と catalog は正しく反映済み（RVC-301 は解消）であるから、出荷物のうち cli.py の自己記述だけが取り残された形である。`--apply` / `--confirm` / `--approval-ref` の help も「（M1 以降）」のままで、直後の worktree 系が使う「（worktree は M2 出口通過まで UNSUPPORTED）」と milestone ラベルが割れている。`--confirm` は現在 plan-digest 承認そのものを渡す引数であり「M1 以降」は機能を表していない。",
+          "recommendation": "docstring を出荷面（M0 read-only 3 operation）と gated 実装の区別が判る形へ書き換え、承認モード 2 種の記述は catalog を正として参照するに留める。3 引数の help を worktree 系と同じ milestone ラベルへ統一する。"
+        },
+        {
+          "id": "RVC-105",
+          "severity": "minor",
+          "location": "flowlib/cli.py:345-360（audit の `worktree_runtime._git` 直呼びと関数内 import）、:368-370（page）",
+          "title": "audit だけ read adapter を経ず、`--timeout-seconds` と truncation 時の NEXT が他の read と揃わない（無変更）",
+          "description": "前回から無変更である。audit は `git_read` アダプタを通らず、モジュール private の `worktree_runtime._git` を関数内 import した `pathlib.Path` 越しに直接呼ぶ。`--timeout-seconds` は他の read と違って無視されたままで、catalog の「read operation の共通規律」が求める timeout の扱いに揃っていない。件数上限に達した場合も cursor 付き `next_actions` を返さず、compact 出力は `TRUNCATED shown=… total=…` だけで次に打つ手を示さない（実測: `--limit 1` で truncated=true でも NEXT 行は出ない）。なお `human-stop` の BLOCKED / INDETERMINATE で NEXT を空にするのは設計どおりであり、ここで言うのは truncation という別事象の扱いである。",
+          "recommendation": "audit を git_read 側の read adapter へ移すか、少なくとも `--timeout-seconds` の尊重と truncation 時の cursor 付き next_action を他の read と同じ規律へ揃える。"
+        },
+        {
+          "id": "RVC-106",
+          "severity": "minor",
+          "location": "flowlib/result.py:167-244（build_result の検査項目）、tests/test_flow_m2_runtime.py:386-402（_dispatch）、:645-700（既定 renderer テスト2本）",
+          "title": "既定 renderer の担保は read / plan に限られ、next_actions の形は依然コード側で検証されない",
+          "description": "前回 critical とした欠陥（既定 compact で `KeyError: 'domain'`）は**実測で解消を確認した**。実 Git repo を作って `cli.main(['worktree','audit','--repo',…], handlers={**_HANDLERS, **_GATED_HANDLERS})` を既定形式で走らせ、外部 worktree なしで `OK worktree.audit snapshot=… worktrees=1 external=0`、外部 worktree ありで `BLOCKED worktree.audit cause=quarantined stage=inspect … external=1 quarantine=worktree-unresolved` が返ることを確認した（traceback なし）。原因側も是正されており、audit は BLOCKED / INDETERMINATE のいずれでも `next_actions=()` を渡す。専用テスト2本（全公開 operation ＋ audit ＋ write の plan を既定形式で描画、および NEXT の形の検査）も追加されている。残る構造的な穴は 2 点。(1) 勧告した「`build_result` に next_actions の形を検証させる」は実施されておらず、`build_result` が弾くのは未知 code / 不正 stage / 語彙外 cause だけである。現状 flowlib 内の `next_actions=` 呼出はすべて `R.next_action()` か空タプルなので実害は無いが、防止はテストの網羅性頼みに戻っている。(2) `_dispatch` は今も `[*argv, '--format', 'json']` を固定しており、既定 renderer を通るのは副作用の無い経路だけである。apply 側の DONE / PARTIAL / BLOCKED の result は既定形式で一度も描画されない（二重実行を避けるためという理由はテスト内に明記されている）。",
+          "recommendation": "`build_result` で next_actions の必須 key（domain / action / args）を検証し、壊れた形を renderer より前で落とす。apply 経路については、result dict を保存して `render_compact` へ直接通す検査を足せば二重実行なしで既定形式を担保できる。"
+        },
+        {
+          "id": "RVC-107",
+          "severity": "minor",
+          "location": "flow-core/references/operation-catalog.md:10、flowlib/cli.py:28",
+          "title": "出荷物が縮退の根拠として 2 世代前の `FLW-REV-016` FAIL を挙げ続けている",
+          "description": "catalog:10 は「M2 worktree operation は実装済みだが、M2 出口が未達（`FLW-REV-016` FAIL）のため」、cli.py:28 も同文で縮退の理由を述べる。しかし最新の判定は `FLW-REV-017`（CONDITIONAL_PASS 3.13、出口条件 8 項目中 7 項目 PASS）であり、`FLW-REV-016` FAIL 2.85 は既に置き換わっている。裁定そのもの（2026-08-15 に公開集合から外した）は正しく引かれているので判断は誤っていないが、利用者と裁定者が最初に読む出荷物が失効したレビューを現況として提示している。この PR 群が `FLW-TSK-086` の死んだ宣言を撤回した（RVC-103 解消）のと同じ型の残置であり、レビュー番号が進むたびに再発する。",
+          "recommendation": "縮退の根拠は裁定記録のパス（`decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md`）だけを引き、レビュー番号は書かない。番号を書くなら締め工程の確認項目に「出荷物が引くレビュー番号が最新か」を加える。"
+        }
+      ]
+    },
+    {
+      "name": "トレーサビリティ",
+      "weight": 0.35,
+      "score": 4,
+      "findings": [
+        {
+          "id": "RVC-201",
+          "severity": "major",
+          "location": ".spec/tasks/FLW-TSK-087.md 〜 090.md の boundary 宣言、commit 63df43f / 56418fc / 677e06b / bcc1525",
+          "title": "task の鎖は回復したが、遡って書かれた boundary は変更集合の転写であり、制約として機能していない",
+          "description": "前回の指摘（`SI-FLW-063` / `064` に task が無く、21 ファイル中 4 件がどの boundary にも属さない）に対し、PR #292 が `FLW-TSK-087`〜`090` を起票した。鎖は実際に繋がった: 087→#289/SI-FLW-063、088→#290/SI-FLW-064、089→#291/SI-FLW-065、090→#292/SI-FLW-066 で、各タスクが「**遡って起票した理由**」を明記し、以後は「task 無しで実装 PR を出さない」を予算消費の記録条件とすると宣言している。事実を隠していない点は正当に評価する。しかし boundary の実体を機械的に突き合わせると、遡って書かれた 3 件は宣言と変更集合が**完全一致**していた（087: 変更 17 / boundary 17、逸脱 0・未使用 0。088: 15 / 15、逸脱 0・未使用 0。089: 17 / 17、逸脱 0・未使用 0）。boundary は本来「実装前に宣言し、実装をその範囲へ束縛する制約」であり、事前に書けば未使用エントリや逸脱が必ず生じる。3 件連続で誤差ゼロという分布は、`git diff --name-only` の書き写しであることを示している。書き写した boundary は定義上ひとつも違反できないため、逸脱検査の材料にならない。実際、前方に宣言された唯一のタスクである `FLW-TSK-090`（status: implementing）は、この時点で既に 2 ファイル（`evals/flow-core/m2-eval/attempts-2026-08-16-si-flw-066.jsonl` と `qualification-2026-08-16-si-flw-066.json`）が boundary の外にある。前回指摘した欠陥そのものが、件数を減らして現在も存在している。したがって回復したのは「PR ↔ task ↔ issue の対応関係」であって「boundary の規律」ではない。`spec inspect` はこの逸脱を検査しないため PASS のまま素通りする。",
+          "recommendation": "遡って起票した 3 件については boundary が事後記録である旨を各タスクに明示し、Gate の判断材料としては使わない。`FLW-TSK-090` の boundary へ si-flw-066 の attempts / qualification を加える。恒久策として、commit 範囲と task の boundary を突き合わせる検査（本レビューで用いた 20 行程度のスクリプトで足りる）を release_check か CI の WARN として機械化する。"
+        },
+        {
+          "id": "RVC-206",
+          "severity": "major",
+          "location": ".spec/spec-issues/SI-FLW-066.md:6（status: open）と :9（本文「本 issue は**裁定待ち**であり、実施は後続の予算裁定に従う」）、commit bcc1525",
+          "title": "実装・マージ済みの `SI-FLW-066` が `status: open`・「裁定待ち」のまま残り、RVC-103 と同型の死んだ宣言をこの PR 自身が作った",
+          "description": "`SI-FLW-066` は本 PR 群の最終 PR（#292 / bcc1525）で全面的に実装され、`FLW-TSK-090` がそれを実装単位として起票され、STATE.md には「SI-FLW-066（PR-A）: SYN-011 / SYN-012 / SYN-008 / SYN-009 を解消」と証跡まで記録されている。にもかかわらず issue 本体は `status: open` のままで、本文も「本 issue は**裁定待ち**であり、実施は後続の予算裁定に従う」と書いている。同じ周回の `SI-FLW-063` / `064` / `065` はいずれも `accepted` へ遷移済みであり、内部的にも不統一である。実質的な裁定は `decision-2026-08-16-flw-rev-017-completion-gate.md:42` の PR-A 割当で下りているので判断の欠落ではなく、status の追随漏れである。しかしこれは前回 RVC-103 で指摘した「覆った宣言が規範として残置される」型そのものであり、その是正を掲げた PR が自分の起票文書で同じことをした。Completion Gate の裁定者が `.spec/spec-issues/` を読むと、出口条件 8/8 化の根拠となった作業が「まだ裁定待ちで未実施」に見える。",
+          "recommendation": "`SI-FLW-066` を `accepted` へ遷移させ、本文の「裁定待ち」節を裁定済み（参照: 上記 decision 記録）へ書き換える。締め工程の確認項目に「実装 PR がマージされた issue の status が open のまま残っていないか」を加える（`spec inspect` は status と実装状況の突合を行わない）。"
+        },
+        {
+          "id": "RVC-203",
+          "severity": "minor",
+          "location": ".spec/verification/m2-local-confirmation-gate--77d7edb.json、pytest-flw-m2-runtime--8cfd7da.json、.spec/requirements/FLW-FR-006.md / FLW-FR-007.md",
+          "title": "要件 status と証跡の欠落は解消したが、記録された証跡の粒度と commit の到達性に弱さが残る",
+          "description": "前回 major とした指摘の中心は解消した。`FLW-FR-006` / `FLW-FR-007` は `implementing` へ遷移し（`FLW-CON-005` / `FLW-CON-006` / `FLW-NFR-011` / `FLW-NFR-012` と揃った）、`.spec/verification/` は 2 → 4 件になり、M2 出口 4 要件すべてに ID 紐づけの証跡が付いた。`FLW-DSN-014` に「Gate 通過前の上限は `implementing`、`verified` は裁定を経てから」という規則が明文化された点も、実走 green と要件検証済みを混同しない規律として正しい。残る弱さは 2 点。(1) `FLW-CON-005` / `FLW-NFR-011` の証跡として記録されたのは `--verify-for-gate` の 1 実行（`counts: null`、`duration_seconds: 0.02`）であり、これは保存済み manifest の再照合であって 3 platform confirmation の実走そのものではない。要件が主張する内容と証跡が測っている対象がずれている。(2) 4 件の証跡の `commit`（`77d7edb` / `8cfd7da` / `01b8e64` / `fbe1c1b`）は**いずれも HEAD の祖先ではない**（`git merge-base --is-ancestor` で確認）。squash merge により枝 commit が履歴に残らないためで M0 期の証跡も同様の構造的問題だが、「`.spec/verification/*.json` が green 判定の正」という運用に対し、第三者がその commit を出荷履歴から解決できない。なお `8cfd7da..HEAD` の flowlib / tests に差分は無く、記録内容自体は最終状態と同じであることは確認した。",
+          "recommendation": "3 platform confirmation は runner の実走そのものを `spec_verify record` で記録し、`--verify-for-gate` はゲート時の再照合として別 command_id で残す。証跡の commit については、squash 後の main 側 commit を追記する field を設けるか、解決不能である旨を運用規約として明記する。"
+        },
+        {
+          "id": "RVC-204",
+          "severity": "minor",
+          "location": "evals/flow-core/m2-eval/local_confirmation_subject.py:77、run_local_confirmation.py:31 / :296-297",
+          "title": "required_checks / positive_controls が定数のまま流れ、台帳が無い（無変更）",
+          "description": "前回から一字も変わっていない。subject は `required_checks=2/2 positive_controls=2/2` を固定文字列で出力し、runner の MARKER 正規表現は `required_checks=2/2 positive_controls=2/2` をリテラルで要求し、manifest は `\"2/2\" if valid else \"0/2\"` を書き戻す。全段が同じ定数を運んでいるだけで、「どの 2 件が required check か」「どの 2 件が陽性対照か」を定義する台帳は .spec / evals のどこにも無い。qualification 側が同名 field で 21/21・9/9 を報告していることとの対応関係も未記載である。hazard / residual が `subject_state_before` / `after` の digest 比較として実測化されたのと対照的で、同じ manifest の中で実測 field と定数 field が混在している。",
+          "recommendation": "required check / 陽性対照の ID 台帳を test-spec に定義し、subject が収集結果から件数を導出する（runtime_checks と同じ方式）。qualification 側の母数（21 / 9）との対応も台帳に書く。"
+        },
+        {
+          "id": "RVC-205",
+          "severity": "minor",
+          "location": "evals/flow-core/m2-eval/run_local_confirmation.py:41-57（COMPATIBILITY_INPUTS）、.spec/requirements/FLW-NFR-011.md",
+          "title": "compatibility_key に CLI version と model identity が入らず、指紋対象マニフェストが 1/3 のまま（無変更）",
+          "description": "前回の残件がそのまま残っている。`COMPATIBILITY_INPUTS` は認可核（worktree_capability / guard / worktree_cleanup / recovery）と digest 定義元（result.py）と harness を含み被覆は広いが、`FLW-NFR-011` が列挙する「CLI・host event-contract version」と「model identity / date」は入っていない。qualification 側は claude 2.1.233 / codex-cli 0.147.0 / agy 1.1.13 を実際に記録しているのに、その値は confirmation の指紋に効かない。すなわち CLI を入れ替えても active manifest は失効しない。指紋対象のマニフェストも `plugins/bitz-flow/plugin.json` の 1 つだけで、3 マニフェスト運用（.claude-plugin / .codex-plugin）と非対称である。",
+          "recommendation": "qualification が既に測っている CLI version と model identity を compatibility_key の入力へ加える。3 マニフェストを指紋対象に揃えるか、1 つで足る理由をコメントに残す。"
+        }
+      ]
+    },
+    {
+      "name": "用語一貫性",
+      "weight": 0.30,
+      "score": 3,
+      "findings": [
+        {
+          "id": "RVC-305",
+          "severity": "major",
+          "location": "flowlib/worktree_capability.py:255 / :272 / :293（WorktreeAuditFinding.worktree_state=\"ORPHAN\"）、flowlib/cli.py:425、flowlib/worktree.py:12（WORKTREE_STATES）、.spec/design/FLW-DSN-016.md:107-118（閉集合表）、tests/test_flow_m2_worktree.py:87",
+          "title": "quarantine 接続で公開 result に載せた `worktree_state: \"ORPHAN\"` が、設計の閉集合の外にある",
+          "description": "`FLW-DSN-016` §2 の閉集合表は「**本表を唯一の正**とする」と宣言したうえで、`worktree_state` の closed enum を `ABSENT, CLEAN, DIRTY, MISMATCH` と定め、`ORPHAN` は別 namespace の `branch_audit_state` の値として列挙している。実装側でも `worktree.py:12` が `WORKTREE_STATES = (\"ABSENT\",\"CLEAN\",\"DIRTY\",\"MISMATCH\")` を持ち、`worktree.py:69` は正しく `worktree_state=\"MISMATCH\", branch_audit_state=\"ORPHAN\"` と使い分けている。ところが PR #292 が接続に使った `worktree_capability.WorktreeAuditFinding` は `worktree_state=\"ORPHAN\"` を返し、`cli.py:425` がそれを公開 result の `data.quarantine.worktree_state` に載せる（実測で確認: 外部 worktree を作ると `\"worktree_state\": \"ORPHAN\"` が出力される）。同じ設計文書が「`FLW-FR-007` の audit 分類 `indeterminate` は `branch_audit_state` に置かない。`result_code: INDETERMINATE` へ一本化する（**同名別概念を作らないため**）」と自ら規定しているのと正面から矛盾する。しかも出口条件 4 の証拠とされる enum 三者照合は `tests/test_flow_m2_worktree.py:87` が `W.WORKTREE_STATES`（worktree.py）を基準に回すため、`worktree_capability` 側の同名 field を一切見ず、この違反を検出しないまま PASS する。「設計語彙へ写した」という主張が、field 名だけ借りて閉集合を確認しなかった形になっている。",
+          "recommendation": "audit の finding が持つのは `branch_audit_state=\"ORPHAN\"` であるか、あるいは worktree の物理状態を表す別 field 名（例: `origin_state`）を新設して閉集合表へ追加するかを決め、`FLW-DSN-016` §2 と §7 を揃える。三者照合テストの走査対象を、閉集合の field 名を使うすべての module（worktree_capability を含む）へ広げる。"
+        },
+        {
+          "id": "RVC-302",
+          "severity": "major",
+          "location": "flowlib/cli.py:405-437（release_class の算出と required_human_input）、flowlib/worktree_cleanup.py:135-145、flowlib/intent.py:88-102 / :251-302、.spec/design/FLW-DSN-016.md:493-506（§6）",
+          "title": "quarantine 語彙は出力に現れたが、示される解除区分は定数であり、唯一実装された解除 API の語彙とも噛み合わない",
+          "description": "前回の指摘（公開 audit が設計語彙を使わず独自語彙を新設した）の中心は解消した。実 Git repo での実測により、外部 worktree を検出した公開 result が `cause: \"quarantined\"` / `recovery_class: \"human-stop\"` / `quarantine.{worktree_state, required, release_class, reason, targets}` / `required_human_input` / 空 NEXT を持ち、compact 既定出力にも `cause=quarantined quarantine=worktree-unresolved` が出ることを確認した。設計側も `FLW-DSN-016` §7 に「外部起因 `ORPHAN` の 2 形と、audit の code の棲み分け」表が追記され、catalog にも同じ内容が入り、`INDETERMINATE`（突合不成立）との分離が文書・実装・テストの三者で揃った。ここまでは実質的な前進であり、語を並べただけではない。残る問題は接続先である。(1) `release_class` は `classify_quarantine` を呼んではいるが、渡す `QuarantineEvidence` が `chain_valid=False, completed_steps=(), instance_nonce_matches=False, mutation_receipts=0, all_postconditions_match=False` の**ハードコード**であり、同関数の第 1 分岐が即座に成立するため、この経路からは `worktree-unresolved` 以外の値が原理的に出ない（実測確認）。§6 の 4 区分のうち公開経路で到達可能なのは 1 つだけで、関数呼び出しは定数を分類に見せかける装飾になっている。(2) 実装済みの解除 API は `intent.quarantine_release` だけで、その `conclusion` は `CONCLUSION_APPROVERS = {confirmed-done, no-effect, orphan-object-no-reachable-effect, abandoned-with-compensation, unresolved}` で検証される。audit が出す `worktree-unresolved` はこの集合に無く、渡せば「未知の観測結論」として `INVALID_INPUT` になる。つまり §6 が worktree 用 4 区分で置換したはずの語彙が intent.py 側へ伝播しておらず、2 系統の解除語彙が併存している。(3) `required_human_input` は「§6 の解除区分に従い evaluation-reviewer の判断を要する」と述べるが、§6 は `worktree-unresolved` を「**不可。quarantine 継続**」と定義しており、reviewer に定義された行動が存在しない。出口条件 6 の文言「quarantine へ**接続する**」に対し、成立しているのは「quarantine 相当として停止し、解除不能の区分名を表示する」までである。",
+          "recommendation": "(a) audit が渡す `QuarantineEvidence` を receipt chain の実観測から組むか、組めないなら `classify_quarantine` を呼ばず「receipt chain 不在のため区分不能」を明示する（定数を分類に見せない）。(b) `intent.CONCLUSION_APPROVERS` / `CONCLUSION_EVIDENCE` を §6 の worktree 4 区分へ揃えるか、2 系統が併存する理由と対応関係を `FLW-DSN-016` §6 に明記する。(c) `required_human_input` の文面を「解除不可・quarantine 継続。reviewer が行うのは worktree の外部処理であって解除ではない」と実態へ合わせる。解除経路の実装が M3 送りであるなら、その旨を出口条件 6 の適用範囲として裁定文へ書く。"
+        },
+        {
+          "id": "RVC-303",
+          "severity": "minor",
+          "location": "evals/flow-core/m2-eval/qualification-2026-08-16-si-flw-066.json、active-local-confirmation.json、local_confirmation_subject.py:77",
+          "title": "同一 Gate の 2 証跡が別語彙・別型を持ち続ける（無変更）",
+          "description": "前回から変化が無い。`required_checks` / `positive_controls` は qualification が `{detected: 21, denominator: 21}` の object、manifest が `\"2/2\"` の文字列。raw log は qualification が `raw_logs_committed: false`（複数形・偽）、manifest の platform record が `raw_log: {stored: true, path, digest, stored_at, delete_by}`。subject の marker は `hazards` / `residuals` の略記で manifest の `hazardous_events` / `residual_side_effects` と一致しない。裁定者は同じ Gate の 2 証跡を 2 つの語彙で読み、`raw_logs_committed: false` と `raw_log.stored: true` が並ぶ状態を自力で解釈する必要がある。",
+          "recommendation": "両 schema で共通指標の field 名と型を統一し、marker の略記も manifest の field 名へ合わせる。`raw_logs_committed` が qualification 側で何を意味するのか（コミット済みか否か）を明示するか、意味が違うなら別名にする。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 3.70,
+  "summary": "総合 3.70（前回 FLW-REV-017 consistency 3.00 から +0.70）。前回 critical 1 件は**自分で再現条件を作って解消を確認**し、major 6 件のうち 3 件が完全解消・1 件が minor へ後退・2 件が形を変えて残存、新規 major 2 件を検出した。是正は本物であるが、検分を一段深い層へ入れると同じ型の欠陥が再生産されている、というのが今回の判定である。\n\n【解消を実測で確認したもの】RVC-101（critical。audit の next_action が契約外で既定 renderer が KeyError）は解消した。実 Git repo を作り `cli.main(...)` を**既定形式（compact）で**実行して、外部 worktree 無しで `OK worktree.audit … external=0`、有りで `BLOCKED worktree.audit cause=quarantined … quarantine=worktree-unresolved` が traceback 無しに描画されることを確認した。原因側も audit が BLOCKED / INDETERMINATE の双方で `next_actions=()` を渡す形へ直り、既定 renderer を必ず通す専用テスト 2 本が追加されている（`test_SI_FLW_065_every_published_operation_renders_in_the_default_format` は全公開 operation ＋ audit ＋ write の plan を対象にする）。RVC-202（未確定の `FLW-REV-017` を規範として引用）は解消した。`FLW-REV-017.md` / `.json` が実在し、コードが引く `RSK-201` / `OPS-301` / `OPS-402` / `OPS-104` の 4 ID すべてが individual JSON 内に実在することを確認した。RVC-103（`FLW-TSK-086` の「実装不能」宣言の残置）は解消した。同タスクに「**撤回済みの宣言（2026-08-16）**」節が入り「『検出は行わない』を有効な設計判断として引き継がないこと」と明示され、`external_change_detection` はコードから消え、残る言及は撤回文と日付付き STATE ログだけである。RVC-301（SKILL.md が catalog と矛盾）は解消した。SKILL.md は「apply が何を要求するかは承認モードで決まる（既定は署名を要求しない `plan-digest`）。条件を二重に書かないため、要求物の詳細は catalog を正として参照すること」へ書き換わり、二重定義そのものを消している。RVC-304（audit と list の責務差が無記述）は解消した。catalog に「`worktree.audit` は単純列挙ではない。単純列挙は M1-4 公開予定の `worktree.list` が担う。両者を統合しないのはこの責務差のため」と明記された。RVC-102 は catalog に audit 専用節が入って主要部分が解消し minor へ、RVC-203 は要件 status の是正と証跡 2→4 件で主要部分が解消し minor へ後退した。\n\n【残存（無変更）】RVC-104（cli.py の docstring と `--apply` / `--confirm` / `--approval-ref` の help が古い）、RVC-105（audit の private `_git` 直呼び・`--timeout-seconds` 無視・truncation 時の cursor NEXT 無し）、RVC-204（required_checks / positive_controls の定数化と台帳不在）、RVC-205（compatibility_key に CLI version / model identity が無く指紋対象マニフェストが 1/3）、RVC-303（qualification と manifest の語彙・型の分裂）はいずれも一字も変わっていない。\n\n【形を変えて残存・新規】major 4 件。RVC-201: task の鎖は `FLW-TSK-087`〜`090` の遡り起票で繋がり、各タスクが遡り起票である旨を明記した誠実さは評価する。しかし boundary を commit と機械的に突合すると、遡って書かれた 3 件は変更集合と**完全一致**（17/17・15/15・17/17、逸脱 0・未使用 0）であり、`git diff --name-only` の転写である。転写された boundary は定義上違反できないため制約として機能しない。実際、前方に宣言された唯一のタスク `FLW-TSK-090` は既に 2 ファイルが boundary 外にある。回復したのは対応関係であって規律ではない。RVC-206（新規）: `SI-FLW-066` が実装・マージ済みにもかかわらず `status: open`・本文「裁定待ち」のまま残り、同周回の 063 / 064 / 065 が accepted であるのと不統一である。RVC-103 で指摘した「死んだ宣言の残置」と同型を、その是正 PR 自身が作った。RVC-305（新規）: 接続に使った `worktree_state: \"ORPHAN\"` が `FLW-DSN-016` §2 の閉集合（`ABSENT, CLEAN, DIRTY, MISMATCH`）の外にあり、`ORPHAN` は本来 `branch_audit_state` の値である。同設計が「同名別概念を作らない」と自ら規定しているのに反し、しかも enum 三者照合テストは `worktree.py` の `WORKTREE_STATES` だけを基準にするためこの違反を検出しない。RVC-302（残存・内容変更）: 語彙の接続自体は成立した（設計 §7 の 2 形と code の棲み分けが追記され、実測でも `cause` / `recovery_class` / `quarantine.*` / 空 NEXT が公開 result に出る）が、`release_class` は全 false のハードコード evidence を `classify_quarantine` へ渡すため `worktree-unresolved` 以外を返し得ず、区分は定数の装飾である。さらに実装済みの解除 API `intent.quarantine_release` の語彙は `{confirmed-done, no-effect, orphan-object-no-reachable-effect, abandoned-with-compensation, unresolved}` であり `worktree-*` を受け付けない。§6 は `worktree-unresolved` を解除不可と定義しているのに `required_human_input` は「evaluation-reviewer の判断を要する」と述べており、reviewer に定義された行動が存在しない。\n\n【スコア根拠】構造整合 3→4: critical 1 件と major 2 件が消え、残るのは minor 5 件（うち 2 件は無変更、2 件は新規の記述・担保の穴）。11 field 契約の未適用と cli.py の自己記述の陳腐化が残るため 5 は付けない。トレーサビリティ 3→4: 出口条件×証拠の対応表・要件 status の是正・証跡 2→4 件・レビュー確定と引用の解決という、裁定材料として決定的な 4 点が揃った。残る major 2 件はいずれも「記録が実体に追いつかない」型で、鎖そのものは辿れる。ただし証跡の粒度（NFR-011 の証跡が 0.02 秒の manifest 再照合）と boundary の非制約性のため、4 の下限に位置する。用語一貫性 3→3: SKILL.md の矛盾と audit / list の責務差という major 2 件が解消した一方、閉集合違反（RVC-305）と解除語彙の非接続（RVC-302）という major 2 件が同じ層に残った。改善はあるが、この次元の中心的な問いである「出荷物・設計・実装が同じ語を同じ意味で使っているか」に対しては、公開 result の 1 field が設計の唯一の正に反しているという事実が重い。\n\n【GP 判定（consistency 観点）】GP-001 = **partially-discharged**: 前回指摘した「fixture が `--format json` を固定しているため公開経路の証拠が既定出力形式に対して盲」という穴は、既定 renderer 専用テスト 2 本の追加で read / plan 経路について閉じた（実測で再現確認）。ただし `_dispatch` は今も format を固定し、apply 経路の result は既定形式で一度も描画されないため、盲点は縮小したが消えていない。GP-002 = **partially-discharged**: manifest v2 は 3 platform PASS・175 件・runtime check 37/37・hazard / residual の実測化・raw log 実保存・`qualification_ref` を備えるが、`required_checks` / `positive_controls` が定数のまま台帳を持たず（RVC-204）、compatibility_key に CLI version と model identity が入らない（RVC-205）ため、同一 manifest 内で実測 field と自己申告 field が混在している。GP-003 = **discharged**: `WorktreeRuntimeError` への改名と mutation 境界の except 是正は本レビューの範囲で反証が見つからず、finish / discard の語彙不一致は裁定により M3 へ移送済みで M2 scope 外。GP-004 = **partially-discharged**: raw log の実保存・TTL 再照合・`evidence_id` 分離・operations の出荷表由来化で契約適合は進んだが、証跡 2 系統の語彙分裂（RVC-303）と、`FLW-NFR-011` へ紐づけて記録された証跡が実走ではなく 0.02 秒のゲート再照合である点（RVC-203）により、第三者が一意に読める証跡には至っていない。GP-005 = **discharged（consistency 観点分）**: 最終状態 `bcc1525` を独立に検分し、前回の critical 1 件を含む主要指摘を自分で再現・確認した（既定形式の実描画、閉集合の突合、boundary と commit の機械突合、引用 ID の実在確認）。ただし GP-005 全体の消化は 5 観点の合成を経て確定する。\n\n【M2 出口条件 8 項目・consistency 観点の判定】PASS と言えるもの: (1) repo identity 衝突 0 — 文書と実装の対応に矛盾は見つからなかった。(2) repo 外 worktree root の単回 capability 承認 — 承認モード 2 種（既定 plan-digest / registry 有りで signed-capability）の記述が catalog・SKILL.md・実装（`signature_mode_available` 分岐）で一致した。前回の SKILL.md 矛盾は解消。(5) 承認 capability の公開 dispatcher 経由 in-band 検証 — 既定出力形式の盲点が閉じたことで、前回 PASS と言えなかった理由が解消した（apply 経路の既定描画が未担保という留保は付く）。**PASS と言えないもの**: (4) enum 三者照合 — 照合機構自体は動いているが、PR #292 が公開 result へ足した `worktree_state: \"ORPHAN\"` は閉集合の外にあり、照合の走査対象にも入っていない（RVC-305）。この条件が担保する「未知の enum 値が schema へ入らない」は、まさにその周回で破られている。(6) operation 外変更の audit 検出・quarantine 接続 — 検出は実測で成立を確認したが、接続は解除不可の定数区分を表示するところまでで、示された区分は唯一実装された解除 API の語彙に存在せず、reviewer に定義された行動も無い（RVC-302）。「検出と語彙表示をもって満たす」と適用範囲を裁定文で限定するなら PASS、「quarantine 運用が成立した」と読むなら未達である。**条件付き**: (7) `write_target: local` の 3 platform confirmation — 実走の成立は他観点の判断に属するが、consistency 観点では 2 証跡の語彙分裂（RVC-303）と要件へ紐づけた証跡の粒度（RVC-203）により、裁定者が単一の語彙で読める状態にない。**未検分**: (3) `M2-FLT-*` 全件・欠番 0 と (8) entry protocol 必須化は本観点では確認していない。"
+}

@@ -1,0 +1,325 @@
+{
+  "schema_version": 2,
+  "review_id": "FLW-REV-018",
+  "verdict": "CONDITIONAL_PASS",
+  "aggregate_score": 3.6,
+  "perspective_scores": {
+    "operations": 4.0,
+    "business": 3.85,
+    "consistency": 3.7,
+    "data-integrity": 3.65,
+    "risk": 3.0
+  },
+  "coverage": {
+    "weight_measured": 1.0,
+    "missing": [],
+    "missing_reason": "",
+    "sensitivity": "5観点すべてを測定した。FLW-REV-016 以来はじめて欠測が無い"
+  },
+  "findings_summary": {
+    "before_dedup": 76,
+    "after_dedup": 16,
+    "p0": 1,
+    "p1": 11,
+    "p2": 3,
+    "p3": 1
+  },
+  "findings": [
+    {
+      "id": "FLW-REV-018:SYN-001",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "DIN-203",
+        "RSK-404"
+      ],
+      "title": "audit の ground truth である receipt chain が無検証で、検出を1ファイルで偽装できる",
+      "detail": "receipt chain の `record_digest` を誰も検証しない。手書き receipt を1件置くだけで外部 worktree を `managed` に洗浄でき、逆に receipt 1件の欠落で正規の worktree が誤って quarantine される（独立レビュア2名が別経路で実測）。M2 出口条件6の判定根拠そのものが偽装可能である。",
+      "recommendation": "読み出し時に chain の digest を検証し、不整合は `INDETERMINATE`（`human-stop`）とする。欠落と改竄を区別する。",
+      "tracked_by": "SI-FLW-067",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-018:SYN-002",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RSK-205",
+        "OPS-202"
+      ],
+      "title": "audit が見る外部起因 ORPHAN は2形のうち1形だけで、事故の実体を検出しない",
+      "detail": "`audit_external_binding_change` は `cli.py` から呼ばれず、managed worktree のディレクトリを外部削除しても audit は `OK` を返す。さらに receipt へ `expected_head` を載せながら比較しないため、managed worktree 内の無許可コミット（2026-08-15 事故の実体）を検出しない。",
+      "recommendation": "公開 audit から `audit_external_binding_change` を呼び、directory 消失・registry 改変・`expected_head` 乖離を検出対象に加える。",
+      "tracked_by": "SI-FLW-067",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-018:SYN-003",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RSK-208",
+        "DIN-207"
+      ],
+      "title": "INDETERMINATE の分離が store 単位の読めなさを取りこぼし、禁じられた分類の推測へ落ちる",
+      "detail": "`receipts` が通常ファイルに置換された場合と `chmod 000` の場合はどちらも `is_dir()` が False を返して「receipt が1件も無い」枝へ落ち、全 worktree が外部起因に見える。ファイル欠落・自 operation の中断も誤分類する。`FLW-DSN-016` §7 が名指しで禁じた「分類の推測」に当たる。",
+      "recommendation": "照合不能条件を store 単位（`is_dir()` False・permission・欠落）まで広げる。",
+      "tracked_by": "SI-FLW-067",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-018:SYN-004",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RSK-306",
+        "DIN-304",
+        "RVC-302"
+      ],
+      "title": "release_class が定数で、解除区分は常に worktree-unresolved に固定される",
+      "detail": "`classify_quarantine` へ渡す `QuarantineEvidence` は全フィールドが固定リテラルで、§6 の4区分のうち `worktree-unresolved` 以外は公開経路から生成され得ない。分類は計算ではなく表示である。",
+      "recommendation": "`QuarantineEvidence` を receipt chain の実状態から構成し、4区分が実際に分岐するようにする。",
+      "tracked_by": "SI-FLW-067",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-018:SYN-005",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RVC-305",
+        "DIN-304"
+      ],
+      "title": "quarantine 語彙が result schema の閉集合の外にあり、出口条件4を新たに崩した",
+      "detail": "PR #292 が公開 result へ載せた `worktree_state: \"ORPHAN\"` / `quarantine` / `recovery_class` は result schema に定義が無く、enum 三者照合の対象にも入っていない。**是正が新しい不整合を作った**形である。",
+      "recommendation": "新設 field を result schema の閉集合へ登録し、enum 三者照合の対象に入れる。",
+      "tracked_by": "SI-FLW-067",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-018:SYN-006",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RSK-301",
+        "DIN-104"
+      ],
+      "title": "quarantine は一方通行で、そこから出る経路が仕様にしか無い",
+      "detail": "`FLW-DSN-016` §6 は解除 receipt を hash-chain へ追記すると定めるが、`reconcile_steps` / `classify_quarantine` には製品コードからの呼び出し元が1つも無い。quarantine へ落ちた worktree は手作業以外で回復できない。",
+      "recommendation": "解除 receipt を書く経路を実装し、4区分を実際に駆動する。",
+      "tracked_by": "SI-FLW-068",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-018:SYN-007",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "DIN-103",
+        "RSK-305"
+      ],
+      "title": "nonce ledger の耐久性が3レビュー連続で未解消で、PARTIAL が恒久 BLOCKED の袋小路になる",
+      "detail": "directory fsync が無く、temp 名が pid ベースで、`USED_PENDING` の回収機構が無い。receipt log 側と耐久性が非対称であり、単回性の担保が crash に耐えない。加えて nonce を `operation_id` から導出したため、あらゆる `PARTIAL` が再試行で消費済み nonce に当たる。出口条件2（**単回** capability 承認）の根拠に直結する。",
+      "recommendation": "dir fsync・衝突しない temp 名・`USED_PENDING` 回収を入れ、`PARTIAL` からの前進導線を result へ示す。",
+      "tracked_by": "SI-FLW-068",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-018:SYN-008",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RSK-204"
+      ],
+      "title": "署名モードが registry を消すだけで無言のまま plan-digest へ降格する",
+      "detail": "`signature_mode_available` が registry の `chmod 644` / 削除 / 空化のいずれでも例外を握り潰して `False` を返し、`apply()` が警告も evidence も無く `plan-digest` へ降格する。高保証配備の承認強度が、common-dir へ書ける主体によって無言で外せる。",
+      "recommendation": "registry の存在を期待する配備で降格するときは `warnings` と `evidence` に必ず残す。",
+      "tracked_by": "SI-FLW-069",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-018:SYN-009",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RSK-201",
+        "RSK-207",
+        "OPS-302"
+      ],
+      "title": "ガードの覆域が事故の操作種別を含まず、force_ask も迂回できる",
+      "detail": "allow 分岐が `ASK_PATTERNS` より先に評価されるため `--repo /home/hide/.claude/skills` が `force_ask` を迂回して allow になる（実測）。単独の `git commit` / `git push` / `git branch -D` / `chmod 000 scripts/agy_guard.py` は `{}`（deny でない）を返し、matcher は `run_command` のみでファイル編集系ツールは1つもフックされていない。PR #289 が閉じたのは「allow が禁止操作を覆う」ことであって「禁止操作を止める」ことではない。",
+      "recommendation": "評価順を DENY → ASK → ALLOW に固定し、禁止操作を allow の有無と独立に deny する。",
+      "tracked_by": "SI-FLW-069",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-018:SYN-010",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "OPS-403"
+      ],
+      "title": "コミット済み証跡の TTL がテストへ固定されており、時刻だけで CI が赤になる",
+      "detail": "qualification が 2026-08-17T07:45:25Z に失効する。`--verify-for-gate` の exit 0 を主張するテストが CI にあるため、コード変更が無くても時刻が過ぎるだけで全ブランチが赤になる。**期限がある**ため独立に先行させる価値がある。",
+      "recommendation": "TTL 検査を「失効していたら再実走を促す」形にし、CI が時刻で赤にならないようにする。",
+      "tracked_by": "SI-FLW-070",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-018:SYN-011",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "OPS-105",
+        "BIZ-101",
+        "BIZ-102"
+      ],
+      "title": "検証証跡が指す commit が確定履歴に存在せず、粒度も要件に届かない",
+      "detail": "`.spec/verification/` の4件がすべて HEAD の祖先でない commit を指す。squash merge で SHA が変わるためで、M0 期の証跡も同様の**構造的欠陥**である。加えて出口条件7の証跡として記録されたのは 0.02 秒の `--verify-for-gate` であり実走そのものではない。",
+      "recommendation": "commit ではなく tree digest / tag で紐づける方式を検討し、confirmation の実走そのものを証跡化する。",
+      "tracked_by": "SI-FLW-070",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-018:SYN-012",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "BIZ-201",
+        "RSK-402",
+        "OPS-101",
+        "OPS-103"
+      ],
+      "title": "比率 field と raw log 判定が全段で定数のまま、attempt 台帳も証跡へ接続されていない",
+      "detail": "`required_checks` / `positive_controls` は subject・runner・manifest のすべてで同じ定数を運ぶだけで台帳が無い。raw log の保存成否・canary は Gate 判定に未接続。attempt 台帳は coordinator・lease・hash-chain・attempt ID を欠き、manifest から参照されず、台帳名も手でリネームしている。",
+      "recommendation": "required check / 陽性対照の ID 台帳を test-spec に定義し、件数を収集結果から導出する。",
+      "tracked_by": "SI-FLW-070",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-018:SYN-013",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "RVC-201",
+        "RVC-206"
+      ],
+      "title": "遡り boundary は変更集合の転写であり、是正 PR 自身が死んだ宣言を新たに作った",
+      "detail": "`FLW-TSK-087` / `088` / `089` の boundary は commit の変更集合と完全一致（17/17・15/15・17/17）で `git diff --name-only` の転写である。前方宣言した唯一の `FLW-TSK-090` は既に2ファイルが boundary 外。さらに実装・マージ済みの `SI-FLW-066` が `status: open`・本文「裁定待ち」のまま残っており、`FLW-REV-017:RVC-103` とまったく同型である。",
+      "recommendation": "boundary を着手前に宣言して逸脱を機械検査し、`SI-FLW-066` を裁定記録に基づき遷移させる。",
+      "tracked_by": "SI-FLW-071",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-018:SYN-014",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "OPS-404",
+        "OPS-203",
+        "OPS-201"
+      ],
+      "title": "出荷物 SKILL.md の UNSUPPORTED 列挙が audit を落とし、失敗系 result も空のまま",
+      "detail": "SKILL.md の `UNSUPPORTED` 列挙が `worktree.audit` を落としており、事故対応で最初に手が伸びる診断の可用性を誤って伝える。audit 自体も出荷面では `UNSUPPORTED` で運用者に届かない。worktree write の失敗系は cause も `recovery_class` も `next_actions` も空で、承認再利用が「対象が既に存在する」に化ける。",
+      "recommendation": "SKILL.md の列挙を実体へ合わせ、失敗系 result に cause / recovery_class / next_actions を載せる。",
+      "tracked_by": "SI-FLW-071",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-018:SYN-015",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "BIZ-301",
+        "BIZ-401",
+        "BIZ-402"
+      ],
+      "title": "予算とゲート判定の SSOT が追随せず、M3 予算は未確定のまま",
+      "detail": "ROADMAP のゲート一覧が失効した判定（`FLW-REV-016` FAIL 2.85）を現在値として掲げ、第2次予算 5 PR / 15 session が `FLW-DSN-014` / `FLW-DSN-016` / ROADMAP へ未反映。M3 予算は M2 から移送された破壊系 worktree を未計上のままである。**最後の項目は是正では閉じず人間の裁定を要する。**",
+      "recommendation": "予算の SSOT を1か所に定め、ROADMAP を最新レビューへ追随させる。M3 予算は Completion Gate と同じ場で確定させる。",
+      "tracked_by": "SI-FLW-071",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-018:SYN-016",
+      "priority": "P3",
+      "severity": "major",
+      "source": [
+        "RSK-101",
+        "RSK-401",
+        "RSK-203"
+      ],
+      "title": "M3 へ送る残債（concurrency_key 不執行・retention 後の tip 進行・実 kill 未検証）",
+      "detail": "`concurrency_key` は宣言のままで cross-operation の並行破壊に無防備。retention 後に tip が進むと `git branch -D` が未保全のコミットを消し得る。「crash」は依然として自前の handled exception であり、実 kill 後の状態は未検証かつ復帰不能。いずれも出荷面が M0 read-only に留まる限り Exit 判定と分離できる。",
+      "recommendation": "M3 入口条件へ明示的に計上する。",
+      "tracked_by": "FLW-REV-018:GP-006",
+      "status": "open"
+    }
+  ],
+  "gate_preconditions": [
+    {
+      "id": "GP-001",
+      "kind": "blocking",
+      "basis": "verified",
+      "carried_from": "FLW-REV-017:GP-001",
+      "statement": "公開dispatcherから M2 scope の worktree write（create / resume）を起動し、capability検証とreceipt prefix収束をE2Eで確認する",
+      "status": "partially-discharged",
+      "evidence": "5観点すべてが公開経路の create / resume / audit を実機で再現し、既定出力形式の盲点（FLW-REV-017:SYN-003）も閉じたと確認した。ただし成立するのは `_GATED_HANDLERS` 注入時のみで出荷既定表は未検証、実 Git mutation は `git worktree add` 1 種、署名モードの dispatcher 層は公開経路を一度も通っていない"
+    },
+    {
+      "id": "GP-002",
+      "kind": "blocking",
+      "basis": "verified",
+      "carried_from": "FLW-REV-017:GP-002",
+      "statement": "実動confirmationを再実行しactive manifestを置換する（hazard/residual の実測を含む）",
+      "status": "discharged",
+      "evidence": "data-integrity が HEAD で `compatibility_key` を再計算して active manifest と一致することを実証し、PR #292 の `result.py` 変更が失効へ伝播することを確認した。hazard/residual は `repo_state_digest` の前後比較による実測。operations が `--verify-for-gate` を再実行し exit 0"
+    },
+    {
+      "id": "GP-003",
+      "kind": "blocking",
+      "basis": "verified",
+      "carried_from": "FLW-REV-017:GP-003",
+      "statement": "receiptのstep語彙を統一し、mutation境界の例外分類を是正する",
+      "status": "discharged",
+      "evidence": "data-integrity が monkeypatch ではなく実際の receipt 破損条件で追試し、`apply()` が例外を脱出させず `PARTIAL` を返し nonce が `QUARANTINED` へ収束することを実測した。risk・operations・consistency も反証材料を見つけていない"
+    },
+    {
+      "id": "GP-004",
+      "kind": "blocking",
+      "basis": "verified",
+      "carried_from": "FLW-REV-017:GP-004",
+      "statement": "confirmation証跡をFLW-NFR-011の契約へ適合させる",
+      "status": "partially-discharged",
+      "evidence": "5観点すべてが partially と判定した。TTL 両側照合・raw log 保持・evidence_id 分離・attempt 台帳・指紋の認可核被覆は成立したが、台帳が manifest から参照されず coordinator / lease / hash-chain を欠き、`revoked_at` が無く、比率 field が非測定で、指紋に CLI version と model identity が入らない"
+    },
+    {
+      "id": "GP-005",
+      "kind": "blocking",
+      "basis": "verified",
+      "carried_from": "FLW-REV-017:GP-005",
+      "statement": "レビュー後に入れた是正（PR #289 / #290 / SI-FLW-065 / #292）を独立レビューで検分する",
+      "status": "discharged",
+      "evidence": "5観点すべてが最終状態 `bcc1525` を単一 commit で検分し、司令塔の主張に依存せず自分で再現・追試した。結果として『出口条件 8/8 を満たした』という司令塔の報告は否定され、条件4と条件6が未達と判定された。GP-005 の目的は達成された"
+    },
+    {
+      "id": "GP-006",
+      "kind": "agenda",
+      "basis": "verified",
+      "statement": "M3 入口条件へ、移送された破壊系 worktree の予算と M2 残債（concurrency_key・retention・実 kill 検証）を計上する",
+      "status": "open",
+      "evidence": "business が「M3 予算は未確定」と指摘し、risk が M2 残債3件を Exit 判定と分離可能と整理した。是正では閉じず人間の裁定を要する"
+    }
+  ],
+  "carried_over": [
+    "FLW-REV-016:SYN-002",
+    "FLW-REV-017:SYN-011"
+  ],
+  "conditional_items": [
+    "FLW-REV-018:SYN-001（receipt chain の無検証。critical）を解消する",
+    "M2 出口条件6（audit 検出・quarantine 接続）を成立させる（SI-FLW-067）",
+    "M2 出口条件4（enum 三者照合）の回帰を解消する（SI-FLW-067）",
+    "FLW-REV-018:SYN-010（TTL 時限故障）を期限内に処置する（SI-FLW-070）",
+    "GP-006（M3 予算と M2 残債の計上）を人間が裁定する"
+  ]
+}
