@@ -310,27 +310,39 @@ def receipt_target(plan_value: "RuntimePlan") -> dict:
     }
 
 
-def managed_worktrees(repo: str | Path) -> frozenset[str]:
-    """receipt が「この operation 群で作った」と記録している worktree path。
+RECEIPTS_READABLE = "readable"
+RECEIPTS_UNREADABLE = "unreadable"
 
-    `worktree.audit` はこれと `git worktree list` を突き合わせて、
-    operation 外で作られた worktree を検出する。
-    `create` が DONE のものを加え、`finish` / `discard` が DONE のものを除く。
+
+def managed_worktrees_status(repo: str | Path) -> tuple[frozenset[str], str]:
+    """receipt が記録している worktree path と、突合が成立したかを返す。
+
+    「receipt が1件も無い」と「receipt を読めない」を区別する。前者は突合が成立した
+    うえでの空集合だが、後者では**すべての worktree が外部起因に見えてしまう**。
+    `FLW-DSN-016 §8` は audit の照合不能を `INDETERMINATE` ＋ `human-stop` と定めており、
+    分類を推測してはならない（`FLW-REV-017:SYN-011`）。
     """
     root = Path(repo)
     try:
         common = _common_dir(root)
     except (WorktreeRuntimeError, OSError, ValueError):
-        return frozenset()
+        return frozenset(), RECEIPTS_UNREADABLE
     receipts = common / "bitz-flow-v2" / "receipts"
     if not receipts.is_dir():
-        return frozenset()
+        # 一度も write operation を通していない repo。突合自体は成立している。
+        return frozenset(), RECEIPTS_READABLE
     managed: set[str] = set()
-    for entry in sorted(receipts.glob("*.json")):
+    try:
+        entries = sorted(receipts.glob("*.json"))
+    except OSError:
+        return frozenset(), RECEIPTS_UNREADABLE
+    for entry in entries:
         try:
             record = json.loads(entry.read_text(encoding="utf-8"))["record"]
         except (OSError, ValueError, KeyError):
-            continue
+            # 1件でも読めなければ突合は不完全である。欠けた receipt が指していた
+            # worktree を「外部起因」と誤判定しないよう、照合不能として返す。
+            return frozenset(), RECEIPTS_UNREADABLE
         target = record.get("target") or {}
         path, action = target.get("path"), target.get("action")
         if not path or record.get("state") != "DONE":
@@ -339,7 +351,17 @@ def managed_worktrees(repo: str | Path) -> frozenset[str]:
             managed.add(str(path))
         elif action in ("finish", "discard"):
             managed.discard(str(path))
-    return frozenset(managed)
+    return frozenset(managed), RECEIPTS_READABLE
+
+
+def managed_worktrees(repo: str | Path) -> frozenset[str]:
+    """receipt が「この operation 群で作った」と記録している worktree path。
+
+    `worktree.audit` はこれと `git worktree list` を突き合わせて、
+    operation 外で作られた worktree を検出する。
+    `create` が DONE のものを加え、`finish` / `discard` が DONE のものを除く。
+    """
+    return managed_worktrees_status(repo)[0]
 
 
 class _ReceiptLog:

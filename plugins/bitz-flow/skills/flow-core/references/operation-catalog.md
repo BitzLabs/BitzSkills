@@ -102,7 +102,7 @@ data schema は `schemas/operations/git.diff-summary.schema.json`。
 
 | operation | class | approval | effects | retry |
 |---|---|---|---|---|
-| `worktree.audit` | read | none | なし | safe |
+| `worktree.audit` | read | none | なし（判定は write の開始可否を止める） | safe |
 | `worktree.create` | local-write | explicit-human | branchとworktree作成 | reconcile-first |
 | `worktree.resume` | local-write | explicit-human | resume receipt追記 | reconcile-first |
 | `worktree.finish` | destructive | explicit-human | merged worktreeとlocal branch除去 | reconcile-first |
@@ -116,6 +116,30 @@ Git common-dirの`bitz-flow-v2/trusted-worktree-keys.json`からだけ読み、C
 registryはowner-only regular fileでなければならない。各mutation直前に署名・期限・scope・identityを
 再検査し、nonceを永続消費する。receiptはcommon-dir配下へhash-chainでfsyncし、部分失敗は
 completed/remaining stepsを返してquarantineする。remote writeはM3まで`UNSUPPORTED`を維持する。
+
+### `worktree.audit` — receipt 突合と quarantine 接続
+
+`worktree.audit` は単純列挙ではない。**bitz-flow の receipt と registry を突き合わせる診断**である
+（単純列挙は M1-4 公開予定の `worktree.list` が担う。両者を統合しないのはこの責務差のため）。
+
+| 入力 | `git worktree list --porcelain` と、common-dir 配下 `bitz-flow-v2/receipts` |
+|---|---|
+| data | `items` / `page` / `managed_worktrees` / `external_changes` / `evidence` |
+| 判定 | receipt に裏付けの無い worktree があれば `BLOCKED`、突合できなければ `INDETERMINATE`、他は `OK` |
+
+`BLOCKED` は「registry にいるが bitz-flow の operation が作っていない worktree がある」ことを表す。
+`FLW-DSN-016 §7` の**外部起因 `ORPHAN`** であり、同 §6 の解除区分へ接続する。
+このとき data は次を持つ（語彙の正は `worktree_capability` / `worktree_cleanup` 側）。
+
+- `cause: "quarantined"` / `recovery_class: "human-stop"`
+- `quarantine`: `worktree_state`（`ORPHAN`）/ `required` / `release_class`（§6 の4区分）/ `reason` / `targets`
+- `required_human_input`: 解除に必要な人間の判断
+
+`human-stop` であるため **NEXT は空**である。解除は operation ではなく reviewer の裁定であり、
+示せる次の operation が存在しない。receipt を読めず突合自体が成立しない場合は
+`INDETERMINATE` を返し、**分類を推測しない**（すべてを外部起因と読むのは誤りであるため）。
+
+自動修復は行わない。`worktree.audit` は read だが、その判定は write の開始可否を止める。
 
 ## M1 で凍結した契約（未公開）
 

@@ -274,3 +274,24 @@ def audit_external_binding_change(
         quarantine_required=True,
         reason="worktree directory と registry の外部変更または相互参照不一致を検出した",
     )
+
+
+def audit_unmanaged_worktree(paths: Sequence[str]) -> WorktreeAuditFinding | None:
+    """receipt に裏付けの無い worktree を `ORPHAN` として quarantine へ接続する。
+
+    `audit_external_binding_change` は「登録済み worktree の binding が壊れた」場合を見る。
+    こちらは「bitz-flow の operation が作っていない worktree が registry にいる」場合で、
+    `FLW-DSN-016 §7` の guard 外要因（手動 `git worktree add`・外部ツール・別クローンからの
+    操作）に当たる。どちらも外部起因の `ORPHAN` であり、§6 の解除区分へ接続する点は同じ。
+
+    公開 `worktree.audit` は検出（前半）だけを実装しており、quarantine への接続（後半）に
+    対応する語彙が出力に無かった（`FLW-REV-017:SYN-011` / `RVC-302`）。
+    """
+    if not paths:
+        return None
+    return WorktreeAuditFinding(
+        worktree_state="ORPHAN",
+        result_code=CODE_BLOCKED,
+        quarantine_required=True,
+        reason=f"receipt に対応の無い worktree を {len(paths)} 件検出した",
+    )

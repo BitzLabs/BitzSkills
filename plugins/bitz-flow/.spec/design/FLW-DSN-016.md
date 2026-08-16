@@ -2,8 +2,8 @@
 id: FLW-DSN-016
 title: "M2 worktree safety詳細設計"
 status: active
-version: 2.6
-updated: 2026-08-15
+version: 2.7
+updated: 2026-08-16
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-006, FLW-NFR-007, FLW-NFR-011, FLW-NFR-012, FLW-CON-005, FLW-CON-006
 origin: SI-FLW-041, SI-FLW-042, SI-FLW-043, SI-FLW-044, SI-FLW-045, SI-FLW-046, SI-FLW-047, SI-FLW-048, SI-FLW-049, SI-FLW-050, SI-FLW-051, SI-FLW-052, SI-FLW-053, SI-FLW-054, FLW-REV-011, FLW-REV-012, FLW-REV-013, FLW-REV-014
@@ -536,6 +536,35 @@ worktree の場合の**置き場**が未定義だった。
 外部起因の復旧手順を `worktree.audit` の結果から辿れるようにし、
 fault fixture へ「外部からの手動削除」「外部からの registry 改変」を加える
 （`M2-FLT-013` / `M2-FLT-014`）。
+
+### 外部起因 `ORPHAN` の2形と、audit の code の棲み分け
+
+`FLW-REV-017:SYN-011` は「検出は成立したが quarantine への接続語彙が無い」とした。
+外部起因には次の2形があり、どちらも `ORPHAN` として §6 の解除区分へ接続する。
+
+| 形 | 判定関数 | 例 |
+|---|---|---|
+| 登録済み worktree の binding が壊れた | `worktree_capability.audit_external_binding_change` | 手動 `rm -rf`、registry 改変 |
+| bitz-flow が作っていない worktree が registry にいる | `worktree_capability.audit_unmanaged_worktree` | 手動 `git worktree add`、外部ツール、別クローン |
+
+§8 の recovery matrix には `worktree.audit` の行が「照合中 = `INDETERMINATE`」しか無く、
+検出が**成立した**場合の code が読み取れなかった。棲み分けは次のとおりとする。
+
+| audit の状況 | code | recovery class | NEXT |
+|---|---|---|---|
+| 突合が成立し、外部起因の `ORPHAN` を検出した | `BLOCKED` | `human-stop` | **空**（解除は §6 の reviewer 裁定であり operation ではない） |
+| 突合自体が成立しない（receipt を読めない等） | `INDETERMINATE` | `human-stop` | 空 ＋ `required_human_input` |
+| 外部起因なし | `OK` | — | — |
+
+`BLOCKED` は §8 の「`worktree.*` / quarantine 既存」行と同じ扱いである。
+`ORPHAN` を検出した result は `cause: "quarantined"`、`recovery_class`、`quarantine`
+（`worktree_state` / `required` / `release_class` / `reason` / `targets`）、
+`required_human_input` を data に持ち、解除区分は §6 の4区分から選ぶ。
+receipt chain の無い worktree は `worktree-unresolved`（解除不可・quarantine 継続）になる。
+
+「receipt が1件も無い」と「receipt を読めない」を同一視してはならない。
+後者を前者として扱うと**すべての worktree が外部起因に見え**、`BLOCKED` を偽って立てる。
+これは同表が禁じる「分類の推測」に当たる。
 
 ## §8 M2 recovery matrix
 

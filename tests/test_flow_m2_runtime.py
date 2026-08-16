@@ -483,9 +483,66 @@ def test_SI_FLW_064_audit_detects_an_operation_external_worktree(repository):
         result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
         assert result["code"] == "BLOCKED", result["summary"]
         assert any(str(outside) in path for path in result["data"]["external_changes"])
-        assert result["next_actions"], "検分を促す next action を返すこと"
+        # `human-stop` は空 NEXT である（`FLW-DSN-016` §8）。解除は operation ではなく
+        # reviewer の裁定なので、示せる次の operation は存在しない。
+        # 「次に何をするか」は required_human_input と解除区分が担う。
+        assert result["next_actions"] == []
+        assert result["data"]["required_human_input"]
     finally:
         git(repo, "worktree", "remove", "--force", str(outside))
+
+
+def test_SYN_011_audit_connects_the_detection_to_quarantine(repository):
+    """検出結果が設計の quarantine 語彙へ接続されること（`FLW-REV-017:SYN-011`）。
+
+    M2 出口条件は「operation 外変更の audit 検出**・quarantine 接続**」である。
+    検出だけでは後半を満たさない。以前は `external_changes` という独自語彙しか無く、
+    裁定者が「quarantine へ接続した」と読める証跡が result に存在しなかった。
+    """
+    repo, root = repository
+    outside = root / "outside-quarantine"
+    git(repo, "worktree", "add", "-b", "feat/outside-q", str(outside))
+    try:
+        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
+        assert result["code"] == "BLOCKED", result["summary"]
+        quarantine = result["data"]["quarantine"]
+        # 語彙は設計（FLW-DSN-016 §6 / §7）と実装（worktree_capability /
+        # worktree_cleanup）の側にある。audit が独自語を作らないこと。
+        assert quarantine["worktree_state"] == "ORPHAN"
+        assert quarantine["required"] is True
+        assert quarantine["release_class"] == "worktree-unresolved"
+        assert any(str(outside) in path for path in quarantine["targets"])
+        assert result["data"]["cause"] == "quarantined"
+        assert result["data"]["recovery_class"] == "human-stop"
+    finally:
+        git(repo, "worktree", "remove", "--force", str(outside))
+
+
+def test_SYN_011_audit_is_indeterminate_when_receipts_are_unreadable(repository):
+    """receipt を読めないときに分類を推測しないこと（`FLW-DSN-016` §8 の audit 行）。
+
+    「receipt が1件も無い」と「receipt を読めない」を同一視すると、後者で
+    **すべての worktree が外部起因に見える**。BLOCKED を偽って立てるのは
+    「分類の推測」であり設計が禁じている。
+    """
+    repo, root = repository
+    target = root / "for-indeterminate"
+    base = ["worktree", "create", "--repo", str(repo), "--path", str(target),
+            "--branch", "feat/indeterminate", "--worktree-root", str(root)]
+    plan_result, _ = _dispatch(*base)
+    applied, _ = _dispatch(*base, "--apply", "--confirm", plan_result["operation_id"])
+    assert applied["code"] == "DONE", applied["summary"]
+
+    receipts = sorted((repo / ".git" / "bitz-flow-v2" / "receipts").glob("*.json"))
+    assert receipts, "receipt が書かれていること"
+    receipts[0].write_text("{ broken", encoding="utf-8")
+
+    result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
+    assert result["code"] == "INDETERMINATE", result["summary"]
+    assert result["data"]["recovery_class"] == "human-stop"
+    assert result["next_actions"] == [], "INDETERMINATE から NEXT を示さないこと"
+    assert result["data"]["required_human_input"]
+    assert "external_changes" not in result["data"], "推測した分類を載せないこと"
 
 
 def test_SI_FLW_064_audit_accepts_an_operation_created_worktree(repository):
@@ -600,7 +657,7 @@ def test_SI_FLW_065_every_published_operation_renders_in_the_default_format(repo
         cases = (["repo", "inspect", "--repo", str(repo)],
                  ["git", "status", "--repo", str(repo)],
                  ["git", "diff-summary", "--repo", str(repo)],
-                 ["worktree", "audit", "--repo", str(repo)],   # external 検出つき（NEXT 行が出る）
+                 ["worktree", "audit", "--repo", str(repo)],   # external 検出つき（BLOCKED）
                  plan_argv)                                    # write の plan は副作用なし
         for argv in cases:
             buffer = io.StringIO()
@@ -612,7 +669,15 @@ def test_SI_FLW_065_every_published_operation_renders_in_the_default_format(repo
 
 
 def test_SI_FLW_065_audit_next_action_follows_the_result_contract(repository):
-    """外部変更を検出したときの next_action が契約の形であること。"""
+    """外部変更を検出したときの result が契約の形で描画できること。
+
+    `SI-FLW-065` の欠陥は「next_actions に契約外の dict を入れて既定 renderer が
+    落ちる」であった。現在この経路は `human-stop` で空 NEXT を返すため、
+    NEXT の形の検査だけでは空振りする。**既定 renderer を実際に通す**ことと、
+    NEXT が出る場合に契約の形であることの両方を押さえる。
+    """
+    from flowlib import cli
+
     repo, root = repository
     outside = root / "contract"
     git(repo, "worktree", "add", "-b", "feat/contract", str(outside))
@@ -621,5 +686,16 @@ def test_SI_FLW_065_audit_next_action_follows_the_result_contract(repository):
         assert result["code"] == "BLOCKED"
         for action in result["next_actions"]:
             assert set(action) == {"domain", "action", "args"}, action
+
+        # 既定形式（compact）でも同じ経路を通す。audit は read-only なので
+        # 二重実行しても副作用が無い。
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            cli.main(["worktree", "audit", "--repo", str(repo)],
+                     handlers={**cli._HANDLERS, **cli._GATED_HANDLERS})
+        rendered = buffer.getvalue()
+        assert "BLOCKED" in rendered
+        assert "cause=quarantined" in rendered, "quarantine 接続が既定出力から読めること"
+        assert "quarantine=worktree-unresolved" in rendered, "解除区分が既定出力から読めること"
     finally:
         git(repo, "worktree", "remove", "--force", str(outside))

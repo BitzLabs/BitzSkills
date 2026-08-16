@@ -2,7 +2,7 @@
 implements: FLW-FR-006, FLW-CON-005, FLW-NFR-011
 depends_on: FLW-TSK-081
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_capability.py, plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_runtime.py, plugins/bitz-flow/skills/flow-core/scripts/flowlib/cli.py, plugins/bitz-flow/skills/flow-core/references/operation-catalog.md, plugins/bitz-flow/skills/flow-core/SKILL.md, plugins/bitz-flow/.spec/design/FLW-DSN-016.md, plugins/bitz-flow/.spec/spec-issues/SI-FLW-061.md, plugins/bitz-flow/.spec/tasks/FLW-TSK-082.md, plugins/bitz-flow/.spec/STATE.md, evals/flow-core/m2-eval/record_run.py, evals/flow-core/m2-eval/run-manifest-m2-remediation.json, evals/flow-core/m2-eval/qualification-2026-08-15-si-flw-061.json, evals/flow-core/m2-eval/active-local-confirmation.json, tests/test_flow_m2_runtime.py, tests/test_flow_m2_run_manifest.py, plugins/bitz-flow/.claude-plugin/plugin.json, plugins/bitz-flow/plugin.json, plugins/bitz-flow/.codex-plugin/plugin.json
-status: implementing
+status: done
 ---
 
 ### 承認capabilityをplan-digest既定へ縮退しregistry境界を是正する

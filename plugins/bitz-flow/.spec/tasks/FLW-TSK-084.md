@@ -2,7 +2,7 @@
 implements: FLW-NFR-011, FLW-NFR-012
 depends_on: FLW-TSK-082
 boundary: evals/flow-core/m1-eval/run_qualification.py, evals/flow-core/m2-eval/run_local_confirmation.py, evals/flow-core/m2-eval/qualification-2026-08-16-si-flw-062.json, evals/flow-core/m2-eval/active-local-confirmation.json, tests/test_flow_m1_qualification_runner.py, plugins/bitz-flow/.spec/spec-issues/SI-FLW-062.md, plugins/bitz-flow/.spec/reports/decision-2026-08-16-si-flw-062.md, plugins/bitz-flow/.spec/tasks/FLW-TSK-084.md, plugins/bitz-flow/.spec/STATE.md, plugins/bitz-flow/skills/flow-core/SKILL.md, plugins/bitz-flow/.claude-plugin/plugin.json, plugins/bitz-flow/plugin.json, plugins/bitz-flow/.codex-plugin/plugin.json
-status: implementing
+status: done
 ---
 
 ### eval harnessから被験リポジトリの書き込み権限を取り上げhazardを実測する
