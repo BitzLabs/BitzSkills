@@ -7,6 +7,7 @@ import io
 import base64
 import dataclasses
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -467,7 +468,9 @@ def test_SI_FLW_059_audit_goes_through_the_contract_layer(repository):
     result, _ = _dispatch("worktree", "audit", "--repo", str(repo), "--limit", "1")
     assert result["code"] in {"OK", "BLOCKED"}
     assert result["data"]["page"]["shown"] <= 1
-    assert "external_changes" in result["data"]
+    for row in result["data"]["items"]:
+        assert set(row) == {"path", "registered", "managed", "present",
+                            "head_changed", "divergence"}, row
 
 
 def test_SI_FLW_064_audit_detects_an_operation_external_worktree(repository):
@@ -482,7 +485,7 @@ def test_SI_FLW_064_audit_detects_an_operation_external_worktree(repository):
     try:
         result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
         assert result["code"] == "BLOCKED", result["summary"]
-        assert any(str(outside) in path for path in result["data"]["external_changes"])
+        assert any(str(outside) in path for path in result["data"]["quarantine"]["targets"])
         # `human-stop` は空 NEXT である（`FLW-DSN-016` §8）。解除は operation ではなく
         # reviewer の裁定なので、示せる次の operation は存在しない。
         # 「次に何をするか」は required_human_input と解除区分が担う。
@@ -506,9 +509,11 @@ def test_SYN_011_audit_connects_the_detection_to_quarantine(repository):
         result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
         assert result["code"] == "BLOCKED", result["summary"]
         quarantine = result["data"]["quarantine"]
-        # 語彙は設計（FLW-DSN-016 §6 / §7）と実装（worktree_capability /
-        # worktree_cleanup）の側にある。audit が独自語を作らないこと。
-        assert quarantine["worktree_state"] == "ORPHAN"
+        # 語彙は設計（FLW-DSN-016 §6）と実装（worktree_cleanup）の側にある。
+        # `worktree_state` は公開 result に載せない — `ORPHAN` は
+        # `branch_audit_state` の値であり `worktree_state` の閉集合には無い
+        # （`FLW-REV-018:SYN-005`）。
+        assert "worktree_state" not in quarantine
         assert quarantine["required"] is True
         assert quarantine["release_class"] == "worktree-unresolved"
         assert any(str(outside) in path for path in quarantine["targets"])
@@ -542,7 +547,7 @@ def test_SYN_011_audit_is_indeterminate_when_receipts_are_unreadable(repository)
     assert result["data"]["recovery_class"] == "human-stop"
     assert result["next_actions"] == [], "INDETERMINATE から NEXT を示さないこと"
     assert result["data"]["required_human_input"]
-    assert "external_changes" not in result["data"], "推測した分類を載せないこと"
+    assert not result["data"]["items"], "推測した分類を載せないこと"
 
 
 def test_SI_FLW_064_audit_accepts_an_operation_created_worktree(repository):
@@ -559,8 +564,9 @@ def test_SI_FLW_064_audit_accepts_an_operation_created_worktree(repository):
     assert applied["code"] == "DONE", applied["summary"]
 
     result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
-    assert str(target) in result["data"]["managed_worktrees"]
-    assert not any(str(target) in path for path in result["data"]["external_changes"])
+    rows = {row["path"]: row for row in result["data"]["items"]}
+    assert rows[str(target)]["managed"] is True
+    assert rows[str(target)]["divergence"] == ""
     assert result["code"] == "OK", result["summary"]
 
 
@@ -697,5 +703,174 @@ def test_SI_FLW_065_audit_next_action_follows_the_result_contract(repository):
         assert "BLOCKED" in rendered
         assert "cause=quarantined" in rendered, "quarantine 接続が既定出力から読めること"
         assert "quarantine=worktree-unresolved" in rendered, "解除区分が既定出力から読めること"
+    finally:
+        git(repo, "worktree", "remove", "--force", str(outside))
+
+
+# --- FLW-REV-018: audit の ground truth と分類の健全性 ------------------------
+
+
+def _receipt_dir(repo):
+    return repo / ".git" / "bitz-flow-v2" / "receipts"
+
+
+def _create_managed_worktree(repo, root, name):
+    """公開経路で worktree を1つ作り、その path を返す。"""
+    target = root / name
+    base = ["worktree", "create", "--repo", str(repo), "--path", str(target),
+            "--branch", f"feat/{name}", "--worktree-root", str(root)]
+    plan_result, _ = _dispatch(*base)
+    applied, _ = _dispatch(*base, "--apply", "--confirm", plan_result["operation_id"])
+    assert applied["code"] == "DONE", applied["summary"]
+    return target
+
+
+def test_SYN_001_forged_receipt_cannot_launder_an_external_worktree(repository):
+    """陽性対照 — 手書き receipt 1件で外部 worktree を managed に洗浄できないこと。
+
+    従来は `record_digest` を誰も検証しておらず、receipt を1件置くだけで
+    audit の検出を無効化できた（独立レビュア2名が別経路で実測）。
+    """
+    repo, root = repository
+    outside = root / "forged"
+    git(repo, "worktree", "add", "-b", "feat/forged", str(outside))
+    try:
+        receipts = _receipt_dir(repo)
+        receipts.mkdir(parents=True, exist_ok=True)
+        # digest も chain も持たない、それらしい receipt を置く
+        forged = {"record": {"sequence": 1, "previous_record_digest": None,
+                             "state": "DONE", "operation_id": "forged",
+                             "target": {"action": "create", "path": str(outside)}},
+                  "record_digest": "sha256:" + "0" * 64}
+        (receipts / "000000000001.json").write_text(json.dumps(forged), encoding="utf-8")
+
+        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
+        assert result["code"] == "INDETERMINATE", result["summary"]
+        assert result["data"]["recovery_class"] == "human-stop"
+        assert not any(row.get("managed") for row in result["data"]["items"])
+    finally:
+        git(repo, "worktree", "remove", "--force", str(outside))
+
+
+def test_SYN_001_a_missing_receipt_is_detected_instead_of_silently_dropped(repository):
+    """陽性対照 — receipt が1件欠けたら照合不能として扱うこと。
+
+    従来は欠落に気づかず、正規の worktree が「外部起因」へ誤分類された。
+    """
+    repo, root = repository
+    _create_managed_worktree(repo, root, "dropped")
+    entries = sorted(_receipt_dir(repo).glob("*.json"))
+    assert len(entries) >= 2, "create は複数 receipt を書く"
+    entries[0].unlink()
+
+    result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
+    assert result["code"] == "INDETERMINATE", result["summary"]
+    assert "連番" in result["data"]["required_human_input"]
+
+
+def test_SYN_001_an_intact_chain_is_accepted(repository):
+    """陰性対照 — 無傷の chain は照合成立とすること（常時 INDETERMINATE にしない）。"""
+    repo, root = repository
+    target = _create_managed_worktree(repo, root, "intact")
+    result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
+    assert result["code"] == "OK", result["summary"]
+    rows = {row["path"]: row for row in result["data"]["items"]}
+    assert rows[str(target)]["managed"] is True
+
+
+def test_SYN_002_external_deletion_of_a_managed_worktree_is_detected(repository):
+    """陽性対照 — managed worktree の実体が外部から消えたら検出すること。
+
+    従来は registry → receipt の片方向しか見ておらず、`OK` を返していた。
+    """
+    repo, root = repository
+    target = _create_managed_worktree(repo, root, "vanished")
+    shutil.rmtree(target)
+
+    result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
+    assert result["code"] == "BLOCKED", result["summary"]
+    rows = {row["path"]: row for row in result["data"]["items"]}
+    assert rows[str(target)]["divergence"] == "directory-missing"
+    assert str(target) in result["data"]["quarantine"]["targets"]
+
+
+def test_SYN_002_head_movement_is_reported_but_not_a_violation(repository):
+    """陰性対照 — managed worktree での通常の作業（HEAD 前進）を違反にしないこと。
+
+    出口条件6は「worktree の生成・消失・binding 不整合」に限る（裁定 2026-08-16 案1）。
+    任意のコミットの正当性は判定しない。
+    """
+    repo, root = repository
+    target = _create_managed_worktree(repo, root, "working")
+    (target / "note.txt").write_text("work", encoding="utf-8")
+    git(target, "add", "note.txt")
+    git(target, "-c", "user.email=t@e", "-c", "user.name=t", "commit", "-m", "feat: work")
+
+    result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
+    assert result["code"] == "OK", result["summary"]
+    rows = {row["path"]: row for row in result["data"]["items"]}
+    assert rows[str(target)]["head_changed"] is True, "事実としては報告すること"
+    assert rows[str(target)]["divergence"] == "", "違反にはしないこと"
+
+
+def test_SYN_003_a_receipt_store_that_is_not_a_directory_is_indeterminate(repository):
+    """陽性対照 — store がディレクトリでない場合を「1件も無い」と同一視しないこと。
+
+    同一視すると全 worktree が外部起因に見え、`BLOCKED` を偽って立てる。
+    """
+    repo, root = repository
+    outside = root / "store-broken"
+    git(repo, "worktree", "add", "-b", "feat/store-broken", str(outside))
+    try:
+        receipts = _receipt_dir(repo)
+        receipts.parent.mkdir(parents=True, exist_ok=True)
+        receipts.write_text("not a directory", encoding="utf-8")
+
+        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
+        assert result["code"] == "INDETERMINATE", result["summary"]
+        assert "ディレクトリではない" in result["data"]["required_human_input"]
+    finally:
+        git(repo, "worktree", "remove", "--force", str(outside))
+
+
+def test_SYN_004_release_class_is_computed_from_the_survey(repository):
+    """解除区分が固定リテラルではなく観測から計算されていること。
+
+    従来は全フィールド固定の evidence を渡しており、分類ではなく表示だった。
+    """
+    from flowlib import worktree_cleanup as CL
+
+    repo, root = repository
+    outside = root / "computed"
+    git(repo, "worktree", "add", "-b", "feat/computed", str(outside))
+    try:
+        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
+        assert result["code"] == "BLOCKED"
+        assert result["data"]["quarantine"]["release_class"] in {
+            "worktree-not-started", "worktree-resumable",
+            "worktree-confirmed-done", "worktree-unresolved",
+        }
+        # 分類器が入力に反応することを、同じ関数へ別の証跡を与えて示す
+        assert CL.classify_quarantine(
+            CL.QuarantineEvidence(True, ("git-worktree-add",), True, 1, True),
+            total_mutating_steps=1) == "worktree-confirmed-done"
+    finally:
+        git(repo, "worktree", "remove", "--force", str(outside))
+
+
+def test_SYN_005_public_result_uses_only_closed_enum_vocabulary(repository):
+    """公開 result が閉集合の外の状態値を載せないこと。
+
+    `ORPHAN` は `branch_audit_state` の値で、`worktree_state` の閉集合
+    （`ABSENT` / `CLEAN` / `DIRTY` / `MISMATCH`）には無い。
+    """
+    repo, root = repository
+    outside = root / "enum"
+    git(repo, "worktree", "add", "-b", "feat/enum", str(outside))
+    try:
+        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
+        payload = json.dumps(result, ensure_ascii=False)
+        assert "ORPHAN" not in payload
+        assert "worktree_state" not in payload
     finally:
         git(repo, "worktree", "remove", "--force", str(outside))
