@@ -47,6 +47,14 @@
       "review_fixes": 0,
       "unmet_exit_reason": "GP-005（是正後の最終状態の独立レビュー）と business 観点の欠測が残る",
       "recorded_at": "2026-08-16"
+    },
+    {
+      "pr": 293,
+      "issue": "FLW-REV-018",
+      "sessions": 1,
+      "review_fixes": 0,
+      "unmet_exit_reason": "M2出口条件4と6が未達。critical SYN-001（receipt chain 無検証）と TTL 時限故障 SYN-010 が残る",
+      "recorded_at": "2026-08-16"
     }
   ],
   "previous_budgets": [
