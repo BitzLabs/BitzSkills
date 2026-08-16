@@ -1,0 +1,35 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "tests/test_flow_m2_runtime.py",
+    "-q"
+  ],
+  "command_id": "pytest-flw-m2-runtime",
+  "commit": "13c9ed300270430b60147317c89c765f4054ef1a",
+  "counts": {
+    "errors": 0,
+    "failed": 0,
+    "passed": 45,
+    "skipped": 0
+  },
+  "cwd": ".",
+  "dirty": false,
+  "exit_code": 0,
+  "observed": {
+    "duration_seconds": 2.69
+  },
+  "recorded_at": "2026-08-16T16:48:08Z",
+  "requirements": [
+    "FLW-CON-006",
+    "FLW-FR-006",
+    "FLW-FR-007",
+    "FLW-NFR-012"
+  ],
+  "schema": "bitzsdd/verification-evidence@1",
+  "tool": {
+    "name": "python",
+    "version": "3.12.3"
+  }
+}

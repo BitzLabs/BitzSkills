@@ -3,7 +3,7 @@ id: SI-FLW-067
 raised_by: FLW-REV-018（DIN-203 / RSK-404 / RSK-205 / RSK-208 / RSK-306 / DIN-207 / DIN-304 / OPS-202 / RVC-302 / RVC-305）
 target: worktree.audit の ground truth 検証・外部起因 ORPHAN の被覆・分類の導出・result schema
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: M2 出口条件6「operation 外の変更を audit が検出し quarantine へ接続する」が
   **未達である**という判定（5観点中4観点）を解消する。`FLW-REV-017` は同条件を
