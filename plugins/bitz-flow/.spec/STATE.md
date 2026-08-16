@@ -1,5 +1,7 @@
 # STATE — status 遷移ログ
 
+- 2026-08-16 M2是正の第2次予算: **5 PR / 15 session**（本体 3 PR / 9 session ＋ 予備 2 PR / 6 session）を承認。**初めて実績に基づく見積もり**（第1次は 4 PR / 8 session で消化、平均 2.0・最悪 3 session/PR、上昇トレンド）。予備の使用に裁定は不要だが記録して報告する。着手順はセキュリティ2件（agy_guard の allow 厳格化・approval_source の是正）を最優先。裁定参照: .spec/reports/decision-2026-08-16-m2-remediation-budget-2.md
+- 2026-08-16 FLW-REV-017: 5観点のうち3観点完了（operations 3.60 +0.70 / data-integrity 3.25 +0.60 / risk 2.70 ±0）。残り consistency / business はプラットフォームのセッション上限で中断。重み合計 0.70 のため暫定判定は出さない
 - 2026-08-16 FLW-TSK-086: pending → implementing（`SI-FLW-059`。公開 dispatcher 経由 E2E と audit の契約層接続）
 - 2026-08-16 SI-FLW-059 の実装で判明: **operation 外の変更検出は実装できない**。git の registry は `git worktree add` で必ず登録されるため registry 照合では区別できず、bitz-flow 自身の receipt と 突き合わせる必要があるが payload に path が無い（`FLW-REV-016:SYN-013`）。動かない検出器を出荷せず `data.external_change_detection` で不可を宣言した。**M2 出口条件「operation 外変更の audit 検出・quarantine 接続」は SYN-013 に依存して未達のまま**
 - 2026-08-16 SI-FLW-059 の証跡: qualification 3platform PASS。confirmation は codex が1回 TimeoutExpired、再試行1回で 3platform PASS（167件・runtime check 29/29・hazard/residual すべて実測 0）

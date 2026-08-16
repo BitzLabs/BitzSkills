@@ -30,8 +30,8 @@ def test_summary_reports_the_approved_budget_before_any_entry(tmp_path):
     proc = call(recorder_in(tmp_path), "--summary")
     assert proc.returncode == 0
     summary = json.loads(proc.stdout)
-    assert summary == {"used_pr": 0, "used_session": 0, "budget_pr": 4,
-                       "budget_session": 13, "exhausted": False}
+    assert summary == {"used_pr": 0, "used_session": 0, "budget_pr": 5,
+                       "budget_session": 15, "in_reserve": False, "exhausted": False}
 
 
 def test_entries_accumulate_and_are_append_only(tmp_path):
@@ -45,13 +45,25 @@ def test_entries_accumulate_and_are_append_only(tmp_path):
 
 
 def test_budget_exhaustion_exits_non_zero(tmp_path):
-    """予算到達で自動停止する（2026-08-15 裁定の付帯条件3）。"""
+    """予算到達で自動停止する（付帯条件3）。"""
     target = recorder_in(tmp_path)
-    for pr in (281, 282, 283):
-        assert call(target, "--pr", str(pr), "--issue", "SI-FLW-061").returncode == 0
-    proc = call(target, "--pr", "284", "--issue", "SI-FLW-057")
+    for pr in (301, 302, 303, 304):
+        assert call(target, "--pr", str(pr), "--issue", "SI-FLW-063").returncode == 0
+    proc = call(target, "--pr", "305", "--issue", "SI-FLW-063")
     assert proc.returncode == 1
     assert "予算到達" in proc.stdout
+
+
+def test_entering_the_reserve_is_reported_without_stopping(tmp_path):
+    """予備枠に入ったら報告するが停止はしない（2026-08-16 の第2次予算）。"""
+    target = recorder_in(tmp_path)
+    for pr in (301, 302):
+        proc = call(target, "--pr", str(pr), "--issue", "SI-FLW-063")
+        assert proc.returncode == 0
+        assert json.loads(proc.stdout.split("予備枠")[0])["in_reserve"] is False
+    proc = call(target, "--pr", "303", "--issue", "SI-FLW-063")
+    assert proc.returncode == 0, "予備枠は停止させない"
+    assert "予備枠に入った" in proc.stdout
 
 
 def test_recording_requires_pr_and_issue(tmp_path):
