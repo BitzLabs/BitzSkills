@@ -29,8 +29,13 @@ status: accepted
      `try/finally` のみに包まれ `except` を持たず、receipt log が読めない状況で
      例外が `apply()` から脱出する。PR #282 の是正が届いていなかった。
   4. **TTL が起動時のみ**（`OPS-402`）。`FLW-NFR-011` は Gate 採用時の再照合を求めるが未実装。
-  5. **再試行が証跡に残らない**（`OPS-104` / `RSK-403`）。codex は **5/5 で初回 timeout** する
-     恒常欠陥だが、成功分だけを manifest へ残すため規則性が証跡から消える。
+  5. **再試行が証跡に残らない**（`OPS-104` / `RSK-403`）。成功分だけを manifest へ残すため、
+     失敗 attempt が証跡から消える。
+     **訂正（2026-08-16）**: 起票時は codex の初回 timeout を「恒常欠陥」と記したが、
+     切り分けの結果 **失敗はすべてバックグラウンド実行時**であり、フォアグラウンドでは
+     再現しない（runner 全体 51秒で 3platform PASS）。被測定物ではなく計測環境の性質であり、
+     `FLW-NFR-011` の「instrument/environment failure は再試行1回」に照らせば
+     条項どおりの運用だった。証跡へ残す是正（`attempts.jsonl`）自体は正しく、そのまま維持する。
   6. **指紋の穴**（data-integrity）。`canonical_bytes` / `sha256_of` を定義する `result.py` が
      `COMPATIBILITY_INPUTS` に無い。
   7. **receipt payload が変更対象を指さない**（`DIN-202` / `SYN-013`）。

@@ -356,24 +356,38 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
         shown = lines[:limit]
         items = [{"path": line.split(" ", 1)[1]} for line in shown]
 
-        # operation 外の変更検出（`FLW-REV-016:SYN-011` の後半）は**未実装**である。
-        # git の registry は `git worktree add` で必ず登録されるため、registry 照合では
-        # bitz-flow が作ったものと外部で作られたものを区別できない。区別には
-        # bitz-flow 自身の receipt と突き合わせる必要があるが、receipt payload に
-        # path が無い（`FLW-REV-016:SYN-013`）。動かない検出器を出荷しないため、
-        # ここでは検出を主張せず依存を明示する。
+        # operation 外の変更を検出する（`FLW-REV-016:SYN-011` / `SI-FLW-064`）。
+        # git の registry は `git worktree add` で必ず登録されるため区別に使えない。
+        # bitz-flow 自身の receipt が記録した対象と突き合わせる。
+        managed = worktree_runtime.managed_worktrees(_Path(root))
+        main_worktree = str(_Path(root).resolve())
+        external = [item["path"] for item in items
+                    if item["path"] not in managed and item["path"] != main_worktree]
+
         data = R.empty_data()
         data["items"] = items
         data["page"] = {"shown": len(shown), "total": len(lines),
                         "truncated": len(lines) > len(shown)}
-        data["evidence"] = ["git worktree list --porcelain"]
-        data["external_change_detection"] = "unavailable:receipt-payload-lacks-path"
-        result = R.build_result(
-            operation=operation, code="OK", repo=root, tool_version=__version__,
-            started_at=started, finished_at=_now(), summary=f"{len(lines)} worktrees",
-            snapshot=R.snapshot_of(lines), data=data, stage="inspect",
+        data["evidence"] = ["git worktree list --porcelain", "bitz-flow-v2/receipts"]
+        data["managed_worktrees"] = sorted(managed)
+        data["external_changes"] = external
+        # 検出したら quarantine 相当として停止し、次の行動を示す（自動修復はしない）。
+        code = "OK" if not external else "BLOCKED"
+        summary = (f"{len(lines)} worktrees" if not external
+                   else f"operation 外の worktree を {len(external)} 件検出した")
+        next_actions = () if not external else (
+            {"operation": "worktree.audit",
+             "reason": "operation 外で作られた worktree は自動で扱わない。人間が検分して"
+                       "取り込むか除去するまで worktree write を開始しない"},
         )
-        return result, R.CompactView(tokens={"worktrees": len(lines)})
+        result = R.build_result(
+            operation=operation, code=code, repo=root, tool_version=__version__,
+            started_at=started, finished_at=_now(), summary=summary,
+            snapshot=R.snapshot_of(lines), data=data, stage="inspect",
+            next_actions=next_actions,
+        )
+        return result, R.CompactView(
+            tokens={"worktrees": len(lines), "external": len(external)})
 
     missing = [name for name, value in (
         ("--path", args.path), ("--branch", args.branch), ("--worktree-root", args.worktree_root)
@@ -459,7 +473,7 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
         approval_required="explicit-human",
         # 承認の由来は実際に使ったモードを名乗る。無条件に "signed-capability" と
         # 名乗ると、plan-digest で適用した receipt が承認強度を強く見せる
-        # （`FLW-REV-017:RSK-204` / `OPS-303`）。
+        # （`SI-FLW-063` / `OPS-303`）。
         approval_source=approval_mode,
         approval_reference=args.approval_ref, stage="apply", data=data,
     )

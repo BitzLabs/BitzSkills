@@ -460,20 +460,63 @@ def test_SI_FLW_059_audit_goes_through_the_contract_layer(repository):
     result, _ = _dispatch("worktree", "audit", "--repo", str(repo), "--limit", "1")
     assert result["code"] in {"OK", "BLOCKED"}
     assert result["data"]["page"]["shown"] <= 1
-    assert "external_change_detection" in result["data"]
+    assert "external_changes" in result["data"]
 
 
-def test_SI_FLW_059_audit_declares_that_external_change_detection_is_unavailable(repository):
-    """外部変更検出は未実装であることを result で明示すること。
+def test_SI_FLW_064_audit_detects_an_operation_external_worktree(repository):
+    """陽性対照 — operation 外で作られた worktree を検出し BLOCKED にすること。
 
-    git の registry は `git worktree add` で必ず登録されるため、registry 照合では
-    operation 外で作られたものを区別できない。区別には bitz-flow 自身の receipt が
-    要るが、payload に path が無い（`FLW-REV-016:SYN-013`）。
-    **検出できないことを黙らず宣言する**（できない検査を「OK」で覆わない）。
+    git の registry は `git worktree add` で必ず登録されるため区別に使えない。
+    bitz-flow 自身の receipt が記録した対象と突き合わせる（`SI-FLW-064`）。
     """
-    repo, _ = repository
+    repo, root = repository
+    outside = root / "outside"
+    git(repo, "worktree", "add", "-b", "feat/outside", str(outside))
+    try:
+        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
+        assert result["code"] == "BLOCKED", result["summary"]
+        assert any(str(outside) in path for path in result["data"]["external_changes"])
+        assert result["next_actions"], "検分を促す next action を返すこと"
+    finally:
+        git(repo, "worktree", "remove", "--force", str(outside))
+
+
+def test_SI_FLW_064_audit_accepts_an_operation_created_worktree(repository):
+    """陰性対照 — operation が作った worktree は外部変更にしないこと。
+
+    検出器が「常に BLOCKED」なら反証できない検査になる。
+    """
+    repo, root = repository
+    target = root / "managed"
+    base = ["worktree", "create", "--repo", str(repo), "--path", str(target),
+            "--branch", "feat/managed", "--worktree-root", str(root)]
+    plan_result, _ = _dispatch(*base)
+    applied, _ = _dispatch(*base, "--apply", "--confirm", plan_result["operation_id"])
+    assert applied["code"] == "DONE", applied["summary"]
+
     result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
-    assert result["data"]["external_change_detection"] == "unavailable:receipt-payload-lacks-path"
+    assert str(target) in result["data"]["managed_worktrees"]
+    assert not any(str(target) in path for path in result["data"]["external_changes"])
+    assert result["code"] == "OK", result["summary"]
+
+
+def test_SI_FLW_064_receipt_records_the_change_target(repository):
+    """receipt が「何を変えたか」を持つこと（従来は operation_id だけだった）。"""
+    repo, root = repository
+    target = root / "recorded"
+    create = W.plan(repo, action="create", path=target, branch="feat/recorded",
+                    worktree_root=root)
+    assert W.apply(create, confirm=create.operation_id).code == "DONE"
+    common = Path(git(repo, "rev-parse", "--path-format=absolute", "--git-common-dir"))
+    records = [json.loads(p.read_text(encoding="utf-8"))["record"]
+               for p in sorted((common / "bitz-flow-v2" / "receipts").glob("*.json"))]
+    done = [r for r in records
+            if r["operation_id"] == create.operation_id and r["state"] == "DONE"]
+    assert done, "DONE receipt が存在する"
+    change = done[-1]["target"]
+    assert change["path"] == str(target)
+    assert change["branch"] == "feat/recorded"
+    assert change["action"] == "create"
 
 
 def test_SI_FLW_059_default_table_still_hides_worktree(repository):

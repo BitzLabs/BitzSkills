@@ -15,6 +15,22 @@
       "review_fixes": 1,
       "unmet_exit_reason": "receipt payload（DIN-202/SYN-013）と codex timeout の恒常欠陥が残る",
       "recorded_at": "2026-08-16"
+    },
+    {
+      "pr": 290,
+      "issue": "SI-FLW-064",
+      "sessions": 2,
+      "review_fixes": 0,
+      "unmet_exit_reason": "codex timeout の恒常欠陥（8/8）が残る",
+      "recorded_at": "2026-08-16"
+    },
+    {
+      "pr": 290,
+      "issue": "SI-FLW-064",
+      "sessions": 2,
+      "review_fixes": 0,
+      "unmet_exit_reason": "M2出口条件の再判定が未了（audit検出は実装済み）",
+      "recorded_at": "2026-08-16"
     }
   ],
   "previous_budgets": [
