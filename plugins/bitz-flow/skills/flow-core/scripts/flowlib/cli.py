@@ -354,95 +354,96 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
                 operation=operation, code="UNAVAILABLE", repo=root,
                 summary=f"worktree 一覧を取得できない（{type(exc).__name__}）", stage="inspect",
             ), R.CompactView()
-        lines = [line for line in proc.stdout.splitlines() if line.startswith("worktree ")]
-        limit = args.limit if args.limit and args.limit > 0 else DEFAULT_ITEM_LIMIT
-        shown = lines[:limit]
-        items = [{"path": line.split(" ", 1)[1]} for line in shown]
-
-        # operation 外の変更を検出する（`FLW-REV-016:SYN-011` / `SI-FLW-064`）。
-        # git の registry は `git worktree add` で必ず登録されるため区別に使えない。
-        # bitz-flow 自身の receipt が記録した対象と突き合わせる。
-        managed, receipts_state = worktree_runtime.managed_worktrees_status(_Path(root))
+        registry = worktree_runtime.parse_worktree_registry(proc.stdout)
+        survey = worktree_runtime.survey_receipts(_Path(root))
 
         data = R.empty_data()
-        data["items"] = items
-        data["page"] = {"shown": len(shown), "total": len(lines),
-                        "truncated": len(lines) > len(shown)}
         data["evidence"] = ["git worktree list --porcelain", "bitz-flow-v2/receipts"]
 
-        # 突合が成立しない場合は分類を推測しない（`FLW-DSN-016 §8` の audit 行）。
+        # 突合が成立しない場合は分類を推測しない（`FLW-DSN-016` §8 の audit 行）。
         # receipt を読めないまま比べると、すべての worktree が外部起因に見える。
-        if receipts_state == worktree_runtime.RECEIPTS_UNREADABLE:
+        if not survey.readable:
             data["cause"] = "result-indeterminate"
             data["recovery_class"] = "human-stop"
             data["required_human_input"] = (
-                "receipt store を読めないため worktree の由来を判定できない。"
+                f"{survey.reason}。worktree の由来を判定できない。"
                 "common-dir 配下の bitz-flow-v2/receipts を確認すること"
             )
             result = R.build_result(
                 operation=operation, code="INDETERMINATE", repo=root,
                 tool_version=__version__, started_at=started, finished_at=_now(),
                 summary="receipt との突合が成立せず worktree の由来を判定できない",
-                snapshot=R.snapshot_of(lines), data=data, stage="inspect",
+                snapshot=R.snapshot_of([survey.status]), data=data, stage="inspect",
                 next_actions=(),
             )
             return result, R.CompactView(
-                tokens={"worktrees": len(lines), "receipts": "unreadable"})
+                tokens={"worktrees": len(registry), "receipts": "unreadable"})
 
+        # 外部起因は2形ある（`FLW-DSN-016` §7）。registry と receipt を双方向に突き合わせ、
+        # どちらから見た欠落も拾う（`FLW-REV-018:SYN-002`）。
+        # HEAD の変化は managed worktree での通常の作業でも起きるため、
+        # **事実として報告するが違反にはしない**（裁定 2026-08-16）。
         main_worktree = str(_Path(root).resolve())
-        external = [item["path"] for item in items
-                    if item["path"] not in managed and item["path"] != main_worktree]
-        data["managed_worktrees"] = sorted(managed)
-        data["external_changes"] = external
+        rows = worktree_runtime.reconcile_registry(registry, survey, main_worktree)
 
-        # 検出したら quarantine 相当として停止する（自動修復はしない）。
-        # 検出だけでは M2 出口条件の「quarantine 接続」を満たさないため、
-        # 設計（`FLW-DSN-016` §6 / §7）の語彙で解除区分まで示す
-        # （`FLW-REV-017:SYN-011` / `RVC-302`）。
-        finding = worktree_capability.audit_unmanaged_worktree(external)
-        if finding is None:
+        limit = args.limit if args.limit and args.limit > 0 else DEFAULT_ITEM_LIMIT
+        shown = rows[:limit]
+        data["items"] = list(shown)
+        data["page"] = {"shown": len(shown), "total": len(rows),
+                        "truncated": len(rows) > len(shown)}
+
+        divergent = [row["path"] for row in rows if row["divergence"]]
+        if not divergent:
             result = R.build_result(
                 operation=operation, code="OK", repo=root, tool_version=__version__,
-                started_at=started, finished_at=_now(), summary=f"{len(lines)} worktrees",
-                snapshot=R.snapshot_of(lines), data=data, stage="inspect",
+                started_at=started, finished_at=_now(),
+                summary=f"{len(registry)} worktrees",
+                snapshot=R.snapshot_of(rows), data=data, stage="inspect",
             )
             return result, R.CompactView(
-                tokens={"worktrees": len(lines), "external": 0})
+                tokens={"worktrees": len(registry), "divergent": 0})
 
-        # 解除区分は §6 の4区分から選ぶ。receipt が無い worktree は chain 自体が
-        # 欠けているため `worktree-unresolved`（解除不可・quarantine 継続）になる。
+        # 検出したら quarantine 相当として停止する（自動修復はしない）。
+        # 解除区分は §6 の4区分を `classify_quarantine` で**実データから計算**する。
+        # 以前は全フィールド固定リテラルの evidence を渡していたため、
+        # 分類ではなく表示だった（`FLW-REV-018:SYN-004`）。
         release_class = worktree_cleanup.classify_quarantine(
             worktree_cleanup.QuarantineEvidence(
-                chain_valid=False, completed_steps=(), instance_nonce_matches=False,
-                mutation_receipts=0, all_postconditions_match=False,
+                chain_valid=survey.readable,
+                completed_steps=survey.completed_steps,
+                # registry と receipt が食い違っている以上、いま観測できる実体が
+                # receipt の記録した instance と同じである保証は無い。
+                instance_nonce_matches=False,
+                mutation_receipts=survey.mutation_receipts,
+                all_postconditions_match=False,
             ),
-            total_mutating_steps=0,
+            total_mutating_steps=survey.mutation_receipts,
         )
+        reason = f"registry と receipt が食い違う worktree を {len(divergent)} 件検出した"
         data["cause"] = "quarantined"
         data["recovery_class"] = worktree_cleanup.recovery_for(
-            finding.result_code, "quarantined").recovery_class
+            "BLOCKED", "quarantined").recovery_class
         data["quarantine"] = {
-            "worktree_state": finding.worktree_state,
-            "required": finding.quarantine_required,
+            "required": True,
             "release_class": release_class,
-            "reason": finding.reason,
-            "targets": external,
+            "reason": reason,
+            "targets": divergent,
         }
         data["required_human_input"] = (
-            f"{release_class}: receipt chain が無いため解除できない。"
-            "FLW-DSN-016 §6 の解除区分に従い evaluation-reviewer の判断を要する"
+            f"{release_class}: FLW-DSN-016 §6 の解除区分に従い "
+            "evaluation-reviewer の判断を要する。bitz-flow は解除を代行しない"
         )
         result = R.build_result(
-            operation=operation, code=finding.result_code, repo=root,
+            operation=operation, code="BLOCKED", repo=root,
             tool_version=__version__, started_at=started, finished_at=_now(),
-            summary=finding.reason, snapshot=R.snapshot_of(lines), data=data,
+            summary=reason, snapshot=R.snapshot_of(rows), data=data,
             stage="inspect",
             # `human-stop` は空 NEXT である（§8）。解除は operation ではなく
             # reviewer の裁定であり、示せる次の operation は存在しない。
             next_actions=(),
         )
         return result, R.CompactView(
-            tokens={"worktrees": len(lines), "external": len(external),
+            tokens={"worktrees": len(registry), "divergent": len(divergent),
                     "quarantine": release_class})
 
     missing = [name for name, value in (

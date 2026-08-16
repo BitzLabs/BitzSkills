@@ -314,44 +314,111 @@ RECEIPTS_READABLE = "readable"
 RECEIPTS_UNREADABLE = "unreadable"
 
 
-def managed_worktrees_status(repo: str | Path) -> tuple[frozenset[str], str]:
-    """receipt が記録している worktree path と、突合が成立したかを返す。
+@dataclasses.dataclass(frozen=True)
+class ReceiptSurvey:
+    """receipt store を検証しながら読んだ結果。
+
+    `worktree.audit` の判定はこの1つの観測に依存する。
+    `status` が `unreadable` のときは**どの分類も主張しない**。
+    """
+
+    status: str
+    reason: str = ""
+    managed: frozenset[str] = dataclasses.field(default_factory=frozenset)
+    expected_heads: Mapping[str, str] = dataclasses.field(default_factory=dict)
+    mutation_receipts: int = 0
+    completed_steps: tuple[str, ...] = ()
+
+    @property
+    def readable(self) -> bool:
+        return self.status == RECEIPTS_READABLE
+
+
+def read_receipt_chain(receipts: Path) -> tuple[tuple[dict, ...], str]:
+    """receipt chain を**検証しながら**読む。
+
+    書き込み側（`_ReceiptLog._append_locked`）は連番・`record_digest`・
+    `previous_record_digest` を正しく作っているのに、読み出し側がそれを一切
+    検証していなかった。そのため手書き receipt を1件置くだけで audit の判定を
+    偽装でき、逆に1件の欠落が検出されなかった（`FLW-REV-018:SYN-001`）。
+
+    `FLW-DSN-015` は evidence ledger について「未取込 lease、重複 ID、**欠番、
+    chain 破損**で Gate を `blocked` にする」と既に定めている。同じ規則を receipt へ
+    適用するだけであり、新しい概念は導入しない。
+    """
+    try:
+        entries = sorted(receipts.glob("*.json"))
+    except OSError as exc:
+        return (), f"receipt store を列挙できない（{type(exc).__name__}）"
+
+    records: list[dict] = []
+    previous: str | None = None
+    for index, entry in enumerate(entries, start=1):
+        if entry.name != f"{index:012d}.json":
+            return (), f"receipt の連番が途切れている（{entry.name} は {index} 番目）"
+        try:
+            body = json.loads(entry.read_text(encoding="utf-8"))
+            record, digest = body["record"], body["record_digest"]
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            return (), f"receipt を読めない（{entry.name}: {type(exc).__name__}）"
+        if R.sha256_of(R.canonical_bytes(record)) != digest:
+            return (), f"receipt の digest が本文と一致しない（{entry.name}）"
+        if record.get("sequence") != index:
+            return (), f"receipt の sequence が位置と一致しない（{entry.name}）"
+        if record.get("previous_record_digest") != previous:
+            return (), f"receipt chain の連結が切れている（{entry.name}）"
+        previous = digest
+        records.append(record)
+    return tuple(records), ""
+
+
+def survey_receipts(repo: str | Path) -> ReceiptSurvey:
+    """receipt store を検証して読み、audit が要る観測値をまとめて返す。
 
     「receipt が1件も無い」と「receipt を読めない」を区別する。前者は突合が成立した
     うえでの空集合だが、後者では**すべての worktree が外部起因に見えてしまう**。
-    `FLW-DSN-016 §8` は audit の照合不能を `INDETERMINATE` ＋ `human-stop` と定めており、
-    分類を推測してはならない（`FLW-REV-017:SYN-011`）。
+    `FLW-DSN-016` §8 は audit の照合不能を `INDETERMINATE` ＋ `human-stop` と定めており、
+    分類を推測してはならない。
     """
     root = Path(repo)
     try:
         common = _common_dir(root)
-    except (WorktreeRuntimeError, OSError, ValueError):
-        return frozenset(), RECEIPTS_UNREADABLE
+    except (WorktreeRuntimeError, OSError, ValueError) as exc:
+        return ReceiptSurvey(RECEIPTS_UNREADABLE,
+                             f"common-dir を解決できない（{type(exc).__name__}）")
     receipts = common / "bitz-flow-v2" / "receipts"
-    if not receipts.is_dir():
+    if not receipts.exists():
         # 一度も write operation を通していない repo。突合自体は成立している。
-        return frozenset(), RECEIPTS_READABLE
+        return ReceiptSurvey(RECEIPTS_READABLE)
+    if not receipts.is_dir():
+        # 「存在しない」と同一視すると全 worktree が外部起因に見える
+        # （`FLW-REV-018:SYN-003`）。store 単位の異常は照合不能である。
+        return ReceiptSurvey(RECEIPTS_UNREADABLE, "receipt store がディレクトリではない")
+
+    records, failure = read_receipt_chain(receipts)
+    if failure:
+        return ReceiptSurvey(RECEIPTS_UNREADABLE, failure)
+
     managed: set[str] = set()
-    try:
-        entries = sorted(receipts.glob("*.json"))
-    except OSError:
-        return frozenset(), RECEIPTS_UNREADABLE
-    for entry in entries:
-        try:
-            record = json.loads(entry.read_text(encoding="utf-8"))["record"]
-        except (OSError, ValueError, KeyError):
-            # 1件でも読めなければ突合は不完全である。欠けた receipt が指していた
-            # worktree を「外部起因」と誤判定しないよう、照合不能として返す。
-            return frozenset(), RECEIPTS_UNREADABLE
+    heads: dict[str, str] = {}
+    mutations = 0
+    steps: tuple[str, ...] = ()
+    for record in records:
+        if record.get("state") in ("MUTATING", "DONE"):
+            mutations += 1
+        steps = tuple(record.get("completed_steps") or steps)
         target = record.get("target") or {}
         path, action = target.get("path"), target.get("action")
         if not path or record.get("state") != "DONE":
             continue
         if action in ("create", "resume"):
             managed.add(str(path))
+            if target.get("expected_head"):
+                heads[str(path)] = str(target["expected_head"])
         elif action in ("finish", "discard"):
             managed.discard(str(path))
-    return frozenset(managed), RECEIPTS_READABLE
+            heads.pop(str(path), None)
+    return ReceiptSurvey(RECEIPTS_READABLE, "", frozenset(managed), heads, mutations, steps)
 
 
 def managed_worktrees(repo: str | Path) -> frozenset[str]:
@@ -361,7 +428,60 @@ def managed_worktrees(repo: str | Path) -> frozenset[str]:
     operation 外で作られた worktree を検出する。
     `create` が DONE のものを加え、`finish` / `discard` が DONE のものを除く。
     """
-    return managed_worktrees_status(repo)[0]
+    return survey_receipts(repo).managed
+
+
+def parse_worktree_registry(porcelain: str) -> dict[str, str | None]:
+    """`git worktree list --porcelain` を path → HEAD の対応へ読む。
+
+    HEAD も同じ出力に含まれるため、追加の git 呼び出しをせずに読める。
+    """
+    registry: dict[str, str | None] = {}
+    current: str | None = None
+    for line in porcelain.splitlines():
+        if line.startswith("worktree "):
+            current = line.split(" ", 1)[1]
+            registry[current] = None
+        elif line.startswith("HEAD ") and current is not None:
+            registry[current] = line.split(" ", 1)[1]
+    return registry
+
+
+def reconcile_registry(
+    registry: Mapping[str, str | None], survey: ReceiptSurvey, main_worktree: str,
+) -> tuple[dict, ...]:
+    """registry と receipt を**双方向に**突き合わせる。
+
+    外部起因は2形ある（`FLW-DSN-016` §7）。片方向の照合では、
+    「registry にいるが receipt に無い」しか拾えず、
+    「receipt が managed と記録しているのに registry から消えた」「実体が消えた」を
+    見落としていた（`FLW-REV-018:SYN-002`）。
+
+    HEAD の変化は managed worktree での通常の作業でも起きるため
+    `head_changed` として**事実を報告するだけ**とし、`divergence` には数えない。
+    """
+    rows: list[dict] = []
+    for path in sorted(set(registry) | set(survey.managed)):
+        if path == main_worktree:
+            continue
+        registered = path in registry
+        managed = path in survey.managed
+        present = Path(path).is_dir()
+        expected = survey.expected_heads.get(path)
+        observed = registry.get(path)
+        head_changed = bool(managed and expected and observed and expected != observed)
+        if not managed:
+            divergence = "unmanaged"          # bitz-flow が作っていない worktree
+        elif not registered:
+            divergence = "registry-missing"   # receipt はあるが registry から消えた
+        elif not present:
+            divergence = "directory-missing"  # registry にはあるが実体が無い
+        else:
+            divergence = ""
+        rows.append({"path": path, "registered": registered, "managed": managed,
+                     "present": present, "head_changed": head_changed,
+                     "divergence": divergence})
+    return tuple(rows)
 
 
 class _ReceiptLog:
