@@ -1,5 +1,6 @@
 # STATE — status 遷移ログ
 
+- 2026-08-16 SI-FLW-066 の証跡: qualification 3platform PASS（21/21 required check・9/9 陽性対照・hazard/residual 実測 0）。confirmation は**フォアグラウンド実走で再試行 0 回の 3platform PASS**（175件・同一 test ID digest・runtime check 37/37・raw log 保存と canary 検出すべて成功。runner 全体 57秒）。`--verify-for-gate` exit 0。**M2 出口4要件の検証証跡を初めて記録**（`.spec/verification/` が 2 → 4 件。`FLW-FR-006` / `FLW-FR-007` / `FLW-CON-006` / `FLW-NFR-012` は pytest、`FLW-CON-005` / `FLW-NFR-011` は Gate 再照合）
 - 2026-08-16 SI-FLW-066（PR-A）: `SYN-011` / `SYN-012` / `SYN-008` / `SYN-009` を解消。**`worktree.audit` の検出を quarantine 語彙へ接続**した（`cause: "quarantined"` / `recovery_class: "human-stop"` / `quarantine.worktree_state=ORPHAN` / §6 の解除区分 `worktree-unresolved`）。`human-stop` のため NEXT は空とし、次の行動は `required_human_input` が持つ。**receipt を読めない場合は `INDETERMINATE`** とし分類を推測しない（従来は空集合と同一視され、全 worktree が外部起因に見えた）。これで M2 出口条件は 8項目すべてが実装側で満たされる（**判定は独立レビュー `GP-005` を経てから**）
 - 2026-08-16 FLW-TSK-082〜086: implementing → done（対応 PR はすべて main へ統合済み）。FLW-TSK-087 / 088 / 089 を PR #289 / #290 / #291 に対応させて**遡って起票**し、FLW-TSK-090 を本 PR として起票（`FLW-REV-017:SYN-008`。以後は task 無しで実装 PR を出さない）
 - 2026-08-16 FLW-TSK-086 の「未実装として宣言する範囲」を**撤回**（`RVC-103`）。`SI-FLW-064` が検出を成立させ `data.external_change_detection` は消滅済み。死んだ宣言を規範として残さない
