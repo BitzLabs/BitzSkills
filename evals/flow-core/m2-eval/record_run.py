@@ -19,9 +19,17 @@ from pathlib import Path
 
 MANIFEST = Path(__file__).with_name("run-manifest-m2-remediation.json")
 
-#: 2026-08-15 裁定の先行承認枠。到達したら自動停止し人間へ再提示する。
-BUDGET_PR = 4
-BUDGET_SESSION = 13
+#: 2026-08-16 の第2次予算（実績に基づく再校正。
+#: `.spec/reports/decision-2026-08-16-m2-remediation-budget-2.md`）。
+#: 本体 3 PR / 9 session に、上昇トレンドへの明示的な余裕として予備 2 PR / 6 session を足す。
+#: 予備の使用に新たな裁定は要らないが、使ったら記録して次の再提示で報告する。
+#: 到達したら自動停止し人間へ再提示する。
+BUDGET_CORE_PR = 3
+BUDGET_CORE_SESSION = 9
+BUDGET_RESERVE_PR = 2
+BUDGET_RESERVE_SESSION = 6
+BUDGET_PR = BUDGET_CORE_PR + BUDGET_RESERVE_PR
+BUDGET_SESSION = BUDGET_CORE_SESSION + BUDGET_RESERVE_SESSION
 
 
 def _load() -> dict:
@@ -29,7 +37,8 @@ def _load() -> dict:
         return {
             "schema": "bitz-flow/m2-remediation-run-manifest/v1",
             "budget": {"pr": BUDGET_PR, "session": BUDGET_SESSION,
-                       "decision_ref": ".spec/reports/decision-2026-08-15-m2-remediation-budget.md"},
+                       "core_pr": BUDGET_CORE_PR, "core_session": BUDGET_CORE_SESSION,
+                       "decision_ref": ".spec/reports/decision-2026-08-16-m2-remediation-budget-2.md"},
             "entries": [],
         }
     return json.loads(MANIFEST.read_text(encoding="utf-8"))
@@ -39,13 +48,17 @@ def _summary(manifest: dict) -> dict:
     entries = manifest["entries"]
     used_pr = len({entry["pr"] for entry in entries})
     used_session = sum(entry["sessions"] for entry in entries)
+    budget = manifest["budget"]
+    core_pr = budget.get("core_pr", budget["pr"])
+    core_session = budget.get("core_session", budget["session"])
     return {
         "used_pr": used_pr,
         "used_session": used_session,
-        "budget_pr": manifest["budget"]["pr"],
-        "budget_session": manifest["budget"]["session"],
-        "exhausted": used_pr >= manifest["budget"]["pr"]
-        or used_session >= manifest["budget"]["session"],
+        "budget_pr": budget["pr"],
+        "budget_session": budget["session"],
+        # 予備へ入ったことを見えるようにする（使用に裁定は要らないが報告はする）。
+        "in_reserve": used_pr >= core_pr or used_session >= core_session,
+        "exhausted": used_pr >= budget["pr"] or used_session >= budget["session"],
     }
 
 
@@ -79,8 +92,10 @@ def main() -> int:
     summary = _summary(manifest)
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     if summary["exhausted"]:
-        print("予算到達: 停止して人間へ再提示すること（2026-08-15 裁定の付帯条件3）")
+        print("予算到達: 停止して人間へ再提示すること（付帯条件3）")
         return 1
+    if summary["in_reserve"]:
+        print("予備枠に入った: 使用は認められているが、次の再提示で必ず報告すること")
     return 0
 
 
