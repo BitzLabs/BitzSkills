@@ -64,6 +64,18 @@ ALLOWED_CAUSES = frozenset(
 
 ALLOWED_STAGES = frozenset({"inspect", "parse", "validate", "plan", "apply", "post-check"})
 
+# gate_status（正は schemas/evidence-ledger-entry-v1.schema.json $defs/gate_status。
+# FLW-DSN-016 §2 所在表）。
+GATE_STATUSES = frozenset({"PASS", "FAIL", "BLOCKED"})
+
+# attempt_status（正は schemas/evidence-ledger-entry-v1.schema.json $defs/attempt_status。
+# FLW-DSN-016 §2 所在表）。
+ATTEMPT_STATUSES = frozenset({"STARTED", "PASS", "FAIL", "ABORTED", "UNKNOWN"})
+
+# trial_kind（正は schemas/qualification-manifest-v1.schema.json $defs/trial_kind。
+# 表記規則の既知の反例 — 種別だが大文字（FLW-DSN-016 §2）。FLW-DSN-016 §2 所在表）。
+TRIAL_KINDS = frozenset({"Q-NORMAL", "Q-REJECT", "Q-CORRUPT"})
+
 DIGEST_KEY = "result_digest"
 
 

@@ -87,6 +87,22 @@ binding 不整合を検知する責務に限る。receipt store と保護境界�
 場合だけ新規の security 設計として扱う。裁定の正は
 `.spec/reports/decision-2026-08-17-v2-operational-integrity-scope.md`。
 
+`FLW-REV-019` 由来の `SI-FLW-072` / `SI-FLW-073` / `SI-FLW-075` を accepted とし、設計を
+`FLW-DSN-016` 2.9 / `FLW-DSN-014` 1.23 へ改訂した（裁定の正は
+`.spec/reports/decision-2026-08-17-si-flw-072-073-075.md`）。要点は3つである。
+
+1. 未達だった出口条件4・6は「証拠が無い」のではなく**証拠が空回りしていた**。
+   enum 三者照合は宣言された全 namespace ではなく3 namespace しか回っておらず、
+   quarantine 解除区分は入力が固定リテラルで像が1点へ潰れる恒真であった。
+2. **出口条件4に対応する要件が存在しなかった**。従来の対応先 `FLW-CON-006` は破壊操作の
+   安全境界のみを扱い、enum 照合の受入基準を持たない。`FLW-CON-007`（契約語彙の単一の正と
+   機械照合）を新設し、対応表を差し替えた。
+3. 承認モードは registry の**存在**からモードを推定していたため、registry を削除すると
+   無言で `plan-digest` へ降格した。配備意図の宣言を git 追跡下へ分離し3値判定へ改めた。
+
+是正タスクは `FLW-TSK-096`〜`FLW-TSK-102` の7件（契約固定 → 分類 → 承認 → 失敗系 result →
+測定系の順。`FLW-TSK-101` / `102` は他と boundary が互いに素で並列投入可能）。
+
 ## 規範セットの時間軸
 
 | set | 適用期間 | 正となる成果物 |

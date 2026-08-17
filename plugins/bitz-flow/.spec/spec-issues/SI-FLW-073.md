@@ -3,7 +3,7 @@ id: SI-FLW-073
 raised_by: FLW-REV-019（OPS-304 / RSK-204 / RSK-201 / RSK-207）
 target: 実行環境ガードの覆域と、承認強度 fail-closed の不全
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `SI-FLW-069` の対処（PR #294）が**述べた脅威を閉じていない**状態を解消する。
 

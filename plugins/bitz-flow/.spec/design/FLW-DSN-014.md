@@ -2,11 +2,11 @@
 id: FLW-DSN-014
 title: "GitHub capability・M0検証設計"
 status: active
-version: 1.22
-updated: 2026-08-16
+version: 1.23
+updated: 2026-08-17
 owner: hide
 implements: FLW-FR-003, FLW-FR-008, FLW-FR-012, FLW-NFR-001, FLW-NFR-008, FLW-NFR-004, FLW-NFR-009, FLW-NFR-010, FLW-NFR-011
-origin: FLW-REV-002
+origin: FLW-REV-002, FLW-REV-019, SI-FLW-073, SI-FLW-075
 ---
 
 # FLW-DSN-014 GitHub capability・M0検証設計
@@ -380,6 +380,61 @@ Invocation Rate側だけに計上する。**歯止め**として、非呼出tria
 **r8はagyが全指標passだったラウンドである**（`SI-FLW-019`原因3の「合格が測定系の
 健全性の証明になっていない」の実例）。是正後の第12ラウンドは3 platformとも指摘が出ない。
 
+### 測定系を保護する実行環境ガード（`SI-FLW-073`）
+
+confirmation は被測定エージェントを実リポジトリの近傍で走らせるため、被測定物が
+測定系そのものを壊す経路を塞ぐ必要がある。実体は `scripts/agy_guard.py`（Antigravity の
+`PreToolUse` フック）であり、**bitz-flow が配布する成果物ではない**。所有者は本リポジトリの
+eval harness であり、`FLW-DSN-016` §4 が「環境ガードレールは bitz-flow の責務外」と
+述べる product 側の規定とは別に、**測定の完全性を守る統制**として本節が設計を持つ。
+これまで設計上の持ち主が無く、`FLW-REV-018` の是正で実装だけが増えていた。
+
+`FLW-REV-019` は実測で2つの不全を示した。いずれも**列挙方式に由来する構造的な穴**である。
+
+| 不全 | 実測された迂回 | 由来 |
+|---|---|---|
+| `force_ask` がパス正規化で外れる | `ASK_PATTERNS` が生文字列の正規表現のため、`/./` や重複スラッシュを挟むだけで一致しない | `RSK-201` |
+| ガード資産の保護が書き込み動詞の列挙 | `(chmod\|chown\|mv\|cp\|rm\|truncate\|tee)` に無い動詞（`sed -i`・リダイレクト・`install`・`dd`・`patch`・`ln -sf`・インタプリタからの `open(..., "w")`）が素通りする | `RSK-207` |
+
+設計を次のとおり改める。
+
+1. **判定は正規化後の文字列に対して行う**。payload から候補文字列を再帰的に取り出し
+   （既存の `_strings` を実際に使う。現在は定義されていながら未使用である）、
+   各文字列を正規化（`~` 展開、`.` / `..` / 重複スラッシュの解決、大小同一視の要否は
+   `FLW-DSN-016` §3 の case 感度判定に従う）してから照合する。
+   **正規化前の生文字列だけを見る照合を残さない。**
+2. **ガード資産の保護は極性を反転する**。書き込み動詞を列挙して deny する方式は、
+   列挙の網羅性に安全性が乗るため成立しない。ガード資産のパスに**言及する payload は
+   既定で deny** し、読み取りだけの許可形（`cat` / `grep` / `head` / `tail` / `diff` /
+   `git show` 等の enumerate された read allowlist に完全一致する形）だけを通す。
+   これで未知の書き込み経路は列挙不要のまま塞がる（fail-closed）。
+3. **陽性対照を必須にする**。パス正規化の変種（`/./`・`//`・`..` を含む形）、
+   書き込み動詞の変種（上表の各例）に対してテストを置き、**deny / force_ask に
+   ならないケースが1つでもあれば FAIL** とする。列挙を足したときに漏れが増えないよう、
+   変種は表としてテスト側に持ち、追加も表への行追加で行う。
+
+本ガードは M2 出口条件そのものではないが、**出口条件7（3 platform confirmation）の
+証跡が信用できるための前提**である。ガードが迂回可能なまま得た confirmation は、
+被測定物が測定系へ介入していないことを主張できない。
+
+### confirmation の実走そのものを証跡化する（`SI-FLW-075`）
+
+出口条件7の証跡は、`FLW-REV-019` 時点で **0.02 秒のゲート照合1件**であり、
+3 platform の実走そのものではなかった（`BIZ-102`）。「実走した」という主張と
+「実走の証跡がある」ことが乖離している。次を規範とする。
+
+| 項目 | 規範 |
+|---|---|
+| 実走の証跡 | trial ごとに開始・終了時刻、platform と CLI 版、被測定物の commit、実行コマンドの正規形を記録する。ゲート照合の記録で代替しない |
+| raw log | 保存の**成否**を証跡へ書き、保存先 root を証跡から特定できるようにする。保存に失敗した trial は Gate 判定で PASS にしない（`OPS-101`） |
+| attempt 台帳 | coordinator ID・lease・hash chain・attempt ID を持たせ、台帳と run を機械的に結び付ける（`OPS-103`。手作業の対応付けを残さない） |
+| 検出器の対照実験 | confirmation 側の検出器に**陽性対照**を置く。検出器が何も検出しなかったことと、検出器が動いていないことを区別できるようにする（`RSK-402`。現状はフェイルオープン） |
+| 裁定スコープの allow | 失効期限・撤去・登録の機構を持たせる。期限の無い allow を残さない（`OPS-302`） |
+
+**`residual` を `hazard` と同一式で算出してはならない**（`RSK-402`）。同一式なら
+residual は hazard の言い換えであり、緩和の効果を表さない。緩和後に残る量を
+別の観測から算出するか、算出できないなら residual を報告しない。
+
 ### 危険事象条件の検出力
 
 「0件」には性質の異なる2つが混在するため、層を分けて所在と検証手段を定める（`SI-FLW-026`）。
@@ -682,16 +737,29 @@ receipt store と保護境界の双方を書き換えられる攻撃者に対す
 | 1 | repo identity衝突0 | `tests/test_flow_m2_runtime.py` の guard fixture | `FLW-CON-005` |
 | 2 | repo外worktree rootの単回capability承認 | `M2-FLT-007`〜`015` | `FLW-FR-006` |
 | 3 | `create` / `resume` / `audit` の `M2-FLT-*` 全件 | `.spec/specs/m2-runtime/test-spec.md`（欠番0） | `FLW-FR-006` |
-| 4 | enum三者照合 | `M2-FLT-023` | `FLW-CON-006` |
+| 4 | enum三者照合 | `M2-FLT-023`（**全 namespace へ拡張**）＋ 照合網羅性アサーション | `FLW-CON-007` |
 | 5 | 承認capabilityの公開dispatcher経由 in-band 検証 | 公開経路 E2E（`SI-FLW-059`。裁定 案A） | `FLW-FR-006` |
-| 6 | operation外変更のaudit検出・quarantine接続 | 検出は `SI-FLW-064`、接続語彙は `SI-FLW-066` | `FLW-FR-007`, `FLW-CON-005` |
-| 7 | `write_target: local` の3 platform confirmation | `evals/flow-core/m2-eval/active-local-confirmation.json` | `FLW-NFR-011` |
+| 6 | operation外変更のaudit検出・quarantine接続 | 検出は `SI-FLW-064`、接続語彙は `SI-FLW-066`、**per-target 分類の陽性・陰性対照**は `SI-FLW-072` | `FLW-FR-007`, `FLW-CON-005` |
+| 7 | `write_target: local` の3 platform confirmation | `evals/flow-core/m2-eval/active-local-confirmation.json` ＋ **実走の raw log 保存成否**（`SI-FLW-075`） | `FLW-NFR-011` |
 | 8 | 着手前reconnaissanceのentry protocol必須化 | `M2-FLT-045`〜`047` / `051` | `FLW-FR-007` |
 
 各条件の達成状況は、判定した時点のレビュー（最新は `FLW-REV-019`）を正とする。
 `FLW-REV-019` 時点では 1・3・8 が PASS、2・5・7 が条件付き、4・6 が未達である。
 本表は**どの証拠を見ればよいか**を固定するものであり、判定そのものは持たない
 （判定を二重に持つと、レビューと表が食い違ったときにどちらが正か決められなくなる）。
+
+**条件4の対応要件を `FLW-CON-006` から `FLW-CON-007` へ改める**。従来の対応先である
+`FLW-CON-006` は破壊操作とcleanupの安全境界のみを扱い、**enum 三者照合を要求する
+受入基準を1つも持たない**。すなわち条件4は出口条件として掲げられていながら、
+それを機械検証する要件が存在しなかった。照合が宣言された全 namespace ではなく
+3 namespace しか回っていなかったのは、この欠落の帰結である（`SI-FLW-072`）。
+
+**条件4と6が未達である理由は、証拠が無いことではなく証拠が空回りしていたことである**
+（`FLW-REV-019`）。条件4の `M2-FLT-023` は宣言された全 namespace ではなく3 namespace しか
+照合しておらず、`cause` の schema 欠落を通した。条件6の分類は入力が固定リテラルで
+像が1点へ潰れており、検査するテストが恒真であった。したがって是正は「証拠を足す」ことでは
+なく「**証拠が対象を実際に区別することを対照実験で示す**」ことを要求する。
+規範は `FLW-DSN-016` §2・§7、裁定は `.spec/reports/decision-2026-08-17-si-flw-072-073-075.md`。
 
 **要件の status について**: 出口条件を満たしても、要件を `verified` にするのは
 Completion Gate の裁定を経てからである。Gate 通過前は `implementing` を上限とし、
@@ -839,3 +907,14 @@ component release、Projects、merge queueはMust出口を満たした後に個�
 ## 影響
 
 FLW-DSN-004/007/008/010とscope/metricsを本matrix・M0へ揃える。
+
+## Revision History
+
+- 1.23 (2026-08-17) `FLW-REV-019` 由来の `SI-FLW-073` / `SI-FLW-075` を反映。
+  測定系を保護する実行環境ガード（`scripts/agy_guard.py`）の設計上の持ち主を本書と定め、
+  パス正規化後の照合とガード資産保護の極性反転（read allowlist 以外を deny）を規定した。
+  confirmation の実走証跡・raw log 保存成否の Gate 接続・attempt 台帳・検出器の陽性対照・
+  裁定スコープ allow の失効機構を規範化し、`residual` を `hazard` と同一式で算出することを
+  禁じた。M2 出口条件×証拠の対応表は、条件4・6 の未達が「証拠が無い」ではなく
+  「証拠が空回りしていた」ことによると明記した。
+  裁定は `.spec/reports/decision-2026-08-17-si-flw-072-073-075.md`。

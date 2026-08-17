@@ -33,6 +33,14 @@ MUTATING_STEPS = frozenset(
      "git-worktree-add", "publish-resume-receipt"}
 )
 
+# release_class（quarantine 解除区分。正は schemas/result-v1.schema.json $defs/release_class。
+# FLW-DSN-016 §2 所在表・§6）。`classify_quarantine` はこの4定数以外を返さない。
+RELEASE_NOT_STARTED = "worktree-not-started"
+RELEASE_RESUMABLE = "worktree-resumable"
+RELEASE_CONFIRMED_DONE = "worktree-confirmed-done"
+RELEASE_UNRESOLVED = "worktree-unresolved"
+RELEASE_CLASSES = (RELEASE_NOT_STARTED, RELEASE_RESUMABLE, RELEASE_CONFIRMED_DONE, RELEASE_UNRESOLVED)
+
 
 @dataclasses.dataclass(frozen=True)
 class CleanupDecision:
@@ -134,14 +142,14 @@ class QuarantineEvidence:
 
 def classify_quarantine(evidence: QuarantineEvidence, *, total_mutating_steps: int) -> str:
     if not evidence.chain_valid or not evidence.instance_nonce_matches:
-        return "worktree-unresolved"
+        return RELEASE_UNRESOLVED
     if evidence.mutation_receipts == 0:
-        return "worktree-not-started"
+        return RELEASE_NOT_STARTED
     if evidence.mutation_receipts == total_mutating_steps and evidence.all_postconditions_match:
-        return "worktree-confirmed-done"
+        return RELEASE_CONFIRMED_DONE
     if evidence.completed_steps and evidence.all_postconditions_match:
-        return "worktree-resumable"
-    return "worktree-unresolved"
+        return RELEASE_RESUMABLE
+    return RELEASE_UNRESOLVED
 
 
 def may_reissue_guard(*, lease_expired: bool, owner_stopped: bool, children_stopped: bool,

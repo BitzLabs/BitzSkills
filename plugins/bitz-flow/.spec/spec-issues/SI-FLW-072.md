@@ -3,7 +3,7 @@ id: SI-FLW-072
 raised_by: FLW-REV-019（DIN-203 / RSK-404 / RSK-306 / DIN-304 / RVC-302 / DIN-305 / RVC-306 / RVC-307 / RSK-208 / DIN-207 / OPS-202 / RSK-205）
 target: audit の通常運用における解除区分の実効性・cause 語彙の schema 反映・設計文書の自己矛盾
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `SI-FLW-067` の対処（PR #294）で**閉じなかった通常運用上の問題**を閉じる。
   M2 出口条件6と4は今回も未達である。receipt store と保護境界を同時に操作できる主体への
