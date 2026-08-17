@@ -5,14 +5,16 @@
 (stdin: camelCase JSON / stdout: {"decision": ...})。
 """
 import json
+import os
 import re
 import shlex
 import sys
 
-#: ガードレールの実体。これらを書き換え・退避・破壊する操作は、
-#: 以後のすべての判定を無意味にするため allow 分岐と独立に deny する
-#: （2026-08-15 の事故で実際に使われた操作種別。`FLW-REV-018:SYN-009`）。
+#: ガードレールの実体。これらに言及する payload は既定 deny とし、read-only
+#: allowlist（`_is_read_only_command`）だけを通す（`FLW-TSK-101`）。
+#: 2026-08-15 の事故で実際に使われた操作種別（`FLW-REV-018:SYN-009`）。
 GUARD_ASSETS = r"(agy_guard\.py|hooks\.json|settings\.json|\.credentials\.json)"
+GUARD_ASSETS_RE = re.compile(GUARD_ASSETS)
 
 DENY_PATTERNS = [
     r"\brm\s+(-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r)\b",
@@ -20,9 +22,8 @@ DENY_PATTERNS = [
     r"\bgit\s+reset\s+--hard\b",
     r"\bgit\s+clean\s+-[a-zA-Z]*f",
     r"\bsudo\b",
-    # ガードレール実体への破壊的操作
-    rf"\b(chmod|chown|mv|cp|rm|truncate|tee)\b[^\n]*{GUARD_ASSETS}",
-    # 認証情報の読み取り（AGENTS.md の禁止事項）
+    # 認証情報の読み取り（AGENTS.md の禁止事項。read/write を問わず全面禁止であり、
+    # ガード資産の read-only allowlist（`_is_read_only_command`）の対象外）。
     r"\.claude/\.credentials\.json",
     # 強制削除
     r"\bgit\s+branch\s+.*(-D\b|--delete\s+--force\b)",
@@ -34,6 +35,16 @@ ASK_PATTERNS = [
     r"/home/[^/\s]+/\.claude/skills",
     r"/home/[^/\s]+/\.gemini/config/skills",
 ]
+
+#: ガード資産に言及する payload で唯一許可する読み取り専用コマンド（enumerate allowlist）。
+#: 書き込み動詞の列挙（旧方式）は `sed -i` / リダイレクト / `install` / `dd` / `patch` /
+#: `ln -sf` / インタプリタからの `open(..., "w")` を素通りさせるため成立しない
+#: （`FLW-TSK-101`）。極性を反転し、read-only と確認できたものだけを通す。
+READ_ONLY_PROGRAMS = frozenset({
+    "cat", "grep", "egrep", "fgrep", "head", "tail", "diff", "wc", "stat", "file",
+    "less", "more", "sha256sum", "md5sum",
+})
+READ_ONLY_GIT_SUBCOMMANDS = frozenset({"show", "log", "diff", "status", "blame", "cat-file"})
 
 
 def _strings(value):
@@ -58,6 +69,77 @@ M2_SUBJECT_SCRIPT = "/evals/flow-core/m2-eval/local_confirmation_subject.py"
 
 def _has_shell_metacharacter(value: str) -> bool:
     return any(char in value for char in SHELL_METACHARACTERS)
+
+
+#: `~` が home 参照として使われている位置（`/` が続くか文字列末尾）だけを展開する。
+#: bare `~word`（他ユーザー参照）は展開せずそのまま残す（fail-closed。誤って
+#: 無関係な文字列を書き換えない）。
+_TILDE_HOME_RE = re.compile(r"~(?=/|$)")
+
+
+def _normalize_candidate(text: str) -> str:
+    """`~` 展開・`.` / `..` / 重複スラッシュの解決を経た正規化後の文字列を返す。
+
+    `ASK_PATTERNS` は生文字列の正規表現であり、`/./` や重複スラッシュを挟むだけで
+    照合から外れていた。`os.path.normpath` はスラッシュ区切りの区間だけを畳み込むため、
+    コマンド全体（複数語を含む1つの文字列）に適用しても他の語は変化しない
+    （`FLW-TSK-101`）。
+    """
+    if not text:
+        return text
+    expanded = _TILDE_HOME_RE.sub(os.path.expanduser("~"), text)
+    return os.path.normpath(expanded) if "/" in expanded else expanded
+
+
+def _candidate_strings(args) -> list[str]:
+    """payload から正規化済みの候補文字列を再帰的に取り出す（`_strings` を実際に使う）。"""
+    return [_normalize_candidate(text) for text in _strings(args) if isinstance(text, str) and text]
+
+
+def _is_read_only_command(command) -> bool:
+    """command 全体が読み取り専用の許可形と完全一致すること（enumerated read allowlist）。
+
+    許可された program（`READ_ONLY_PROGRAMS`）または `git show` 等の読み取り専用
+    subcommand に**完全一致**する場合だけ true。shell metacharacter を含む場合は
+    偽装（chaining・redirection）の余地があるため無条件に false とする。
+    """
+    if not isinstance(command, str) or not command or _has_shell_metacharacter(command):
+        return False
+    try:
+        parts = shlex.split(command)
+    except ValueError:
+        return False
+    if not parts:
+        return False
+    program = parts[0]
+    if program == "git":
+        return len(parts) >= 2 and parts[1] in READ_ONLY_GIT_SUBCOMMANDS
+    return program in READ_ONLY_PROGRAMS
+
+
+def _guard_asset_verdict(args, candidates: list[str]) -> dict | None:
+    """ガード資産に言及する payload を既定 deny とし、read-only allowlist だけ通す。
+
+    以前の保護は書き込み動詞（`chmod` / `chown` / `mv` / `cp` / `rm` / `truncate` /
+    `tee`）の列挙であり、`sed -i` / リダイレクト（`>` は shell metacharacter として
+    別途 deny されるが `install` / `dd` / `patch` / `ln -sf` / インタプリタからの
+    `open(..., "w")` は動詞に無いため素通りした。動詞の列挙に安全性を載せる方式は
+    成立しない（`FLW-TSK-101`）。極性を反転し、ガード資産に言及する payload は
+    既定 deny、read-only と確認できたものだけを allow 側へ進める。
+    """
+    if not any(GUARD_ASSETS_RE.search(candidate) for candidate in candidates):
+        return None
+    command_line = args.get("CommandLine") if isinstance(args, dict) else None
+    bypass = isinstance(args, dict) and bool(args.get("BypassSandbox"))
+    if not bypass and _is_read_only_command(command_line):
+        return None
+    return {
+        "decision": "deny",
+        "reason": (
+            "ガード資産（agy_guard.py / hooks.json / settings.json / .credentials.json）に"
+            "言及する操作は読み取り専用の許可形以外すべて拒否します"
+        ),
+    }
 
 
 def _is_m2_confirmation_subject(command: str) -> bool:
@@ -121,30 +203,38 @@ def main() -> None:
         print("{}")
         return
 
-    args_text = json.dumps(payload.get("toolCall", {}).get("args", {}), ensure_ascii=False)
+    args = payload.get("toolCall", {}).get("args", {})
+    # payload から候補文字列を再帰的に取り出し（`_strings`）、正規化後の文字列へ
+    # 照合する。正規化前の生文字列だけを見る照合は残さない（`FLW-TSK-101`）。
+    candidates = _candidate_strings(args)
 
     # deny は常に allow より先に判定する（許可形が禁止操作を持ち込む経路を作らない）。
     for pattern in DENY_PATTERNS:
-        if re.search(pattern, args_text):
+        if any(re.search(pattern, candidate) for candidate in candidates):
             print(json.dumps({
                 "decision": "deny",
                 "reason": f"AGENTS.md のガードレールで禁止されている操作です (pattern: {pattern})",
             }, ensure_ascii=False))
             return
 
+    guard_asset_verdict = _guard_asset_verdict(args, candidates)
+    if guard_asset_verdict is not None:
+        print(json.dumps(guard_asset_verdict, ensure_ascii=False))
+        return
+
     # 評価順は DENY → ASK → ALLOW に固定する。allow を ASK より先に置くと、
     # 許可形の `--repo` に実環境のスキル配置先を渡すだけで force_ask を迂回できた
     # （`FLW-REV-018:SYN-009`。実測済み）。
     for pattern in ASK_PATTERNS:
-        if re.search(pattern, args_text):
+        if any(re.search(pattern, candidate) for candidate in candidates):
             print(json.dumps({
                 "decision": "force_ask",
                 "reason": "リポジトリ外（実環境のスキル配置先）への操作にはユーザーの明示承認が必要です",
             }, ensure_ascii=False))
             return
 
-    if _is_m2_confirmation_payload(payload.get("toolCall", {}).get("args", {})):
-        command = payload["toolCall"]["args"]["CommandLine"]
+    if _is_m2_confirmation_payload(args):
+        command = args["CommandLine"]
         print(json.dumps({
             "decision": "allow",
             "reason": "M2 GP-002用の限定confirmation subject（2026-08-14裁定）",
