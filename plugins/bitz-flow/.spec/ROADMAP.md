@@ -79,6 +79,13 @@ M0 で read の一部だけを検証して verified になった要件の残り�
 次は **M2 worktree-first**。承認によって生じた代行遷移は、`verified → promoted`を経て
 Promotion GateのGatePassageで検分される。
 
+**M2 の現況（2026-08-17）**: 最新の独立レビューは `FLW-REV-019` の
+**CONDITIONAL_PASS 3.41** である。出口条件は PASS 3 / 条件付き 3 / 未達 2 のままで、
+Completion Gate は保留する。M2 は通常運用での receipt 破損、worktree の生成・消失、
+binding 不整合を検知する責務に限る。receipt store と保護境界の双方を書き換えられる攻撃者への
+真正性保証は M2 単独では主張せず、M3 以降または別の security 設計で扱う。
+裁定の正は `.spec/reports/decision-2026-08-17-m2-integrity-boundary-and-control-plane.md`。
+
 ## 規範セットの時間軸
 
 | set | 適用期間 | 正となる成果物 |
@@ -100,7 +107,7 @@ Promotion GateのGatePassageで検分される。
 | 要件承認ゲート | 人間 | FLW-REV-004 / FLW-REV-005 と draft 要件の diff | 完了（2026-07-31。一括承認） |
 | **M0 出口** | 機械（eval）+ 人間確認 | FLW-DSN-014 の M0 出口条件 | **PASS（2026-08-11、第14ラウンド）** |
 | **M1 出口** | 機械（fixture）+ 人間確認 | FLW-DSN-014 の出口・予算・縮退境界 | **PASS（2026-08-12）** |
-| **M2 出口** | 機械（fixture）+ 人間確認 | FLW-DSN-014 の出口・予算・縮退境界 | **未達（2026-08-15。FLW-REV-016 FAIL 2.85、出口8項目中3項目 BLOCKED）** |
+| **M2 出口** | 機械（fixture）+ 人間確認 | FLW-DSN-014 の出口・予算・縮退境界 | **未達（2026-08-17。FLW-REV-019 CONDITIONAL_PASS 3.41、PASS 3 / 条件付き 3 / 未達 2）** |
 | M3〜M5 出口 | 機械（fixture / canary）+ 人間確認 | FLW-DSN-014 の出口・予算・縮退境界 | 未実施 |
 | Promotion Gate | 人間 | 全 milestone green、canary、代行遷移の検分 | 未実施 |
 
@@ -176,17 +183,17 @@ M2 が未完了のままでは worktree-first の安全境界が閉じないた�
   operation 外変更の audit 検出・quarantine 接続、
   **`write_target: local` の被測定物 confirmation が 3 platform で PASS**、
   着手前 reconnaissance の必須化
-- **出口再判定（2026-08-15）**: `FLW-REV-016` **FAIL 2.85**（旧 scope の8項目中3項目 BLOCKED）。
-  本裁定で scope を縮小したため、出口条件と `GP-001` は新 scope で再定義する。
-  `SI-FLW-056` の追加 2 PR / 最大6 session は消化済み
+- **出口再判定（2026-08-17）**: `FLW-REV-019` **CONDITIONAL_PASS 3.41**。新 scope の
+  出口8項目は PASS 3 / 条件付き 3 / 未達 2 であり、enum 三者照合と通常運用における
+  audit・quarantine 接続が未達である。Completion Gate は保留を継続する。
 - budget: **6 PR / 20 session**（2026-08-12 再校正）。4 PR / 14 session に
   M1-6 の confirmation 区分（+1 PR / +3 session。`SI-FLW-045`）と
   `SI-FLW-046` の scope 追加（+1 PR / +3 session）を加えた値
-- **M2 是正枠（2026-08-15 段階承認）**: 先行 **4 PR / 13 session**（`SI-FLW-061` → `SI-FLW-057`）。
-  残り（`058` / `059` / Exit 再レビュー）は先行2件の実績つきで再提示する。総額は決めない。
-  付帯条件は run manifest の記録を着手条件とすること、着手順の固定、予算到達時の自動停止。
-  正は `FLW-DSN-014` の「M2是正枠」節、裁定記録は
-  `.spec/reports/decision-2026-08-15-m2-remediation-budget.md`
+- **M2 是正枠**: 2026-08-15 の段階承認（先行 **4 PR / 13 session**）は、2026-08-16 の
+  `FLW-REV-018` 全件対処裁定で上限解除された。M3〜M5 を含む次期予算の再校正は
+  `FLW-REV-019:GP-006` として未裁定である。実績の正は
+  `evals/flow-core/m2-eval/run-manifest-m2-remediation.json` とし、統制層の回復タスクで
+  補正・機械検査する。
 - **budget が数える PR の定義（2026-08-15）**: milestone budget は**実装 PR だけ**を数える。
   裁定材料・裁定記録・調査・spec-issue の起票と裁定反映は budget の外に置く
 - 縮退境界: M0 read-only prerelease へ縮退（M1 Git write も公開しない）。

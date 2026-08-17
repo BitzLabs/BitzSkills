@@ -1,7 +1,7 @@
 ---
 id: FLW-FR-012
-version: 1.4
-status: verified
+version: 1.5
+status: implementing
 domain: governance
 priority: high
 origin: .spec/reports/decision-2026-07-29-bitz-flow-v2-design-gate.md
@@ -30,6 +30,7 @@ confidence: high
   - WHEN 人間が旧要件をdeprecatedへ遷移させる THEN bitz-flowは同じ変更セットで完全性を確認した候補側`supersedes`と旧要件側`superseded_by`を記録すること SHALL
 - **検証手段**: version/schema誤起動、旧参照検出、milestone停止、v1 pin、往復canary、外部成果物保全をunit testとmigration fixtureで検証する。
 - **Revision History**:
+  - 1.5 (2026-08-17) `SI-FLW-074` により、M2 の実績・予算・出口根拠が受入基準に追随していないことを確認した。裁定記録 `.spec/reports/decision-2026-08-17-m2-integrity-boundary-and-control-plane.md` を根拠に `verified` から `implementing` へ再入した。
   - 1.4 (2026-07-29) M3/M4の独立canaryと縮退出荷ごとのgreen条件を追加
   - 1.3 (2026-07-29) milestone budgetを初期値とし、実績と人間確認referenceによる再校正を追加
   - 1.2 (2026-07-29) M1〜M5のPR/session予算、上限到達時の再裁定、縮退出荷境界を追加
