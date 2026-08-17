@@ -1,12 +1,9 @@
 """M2-3 create/resume/audit fixtures（FLW-FR-006 / FLW-FR-007）。"""
 
-import json
-import re
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-SKILL = REPO_ROOT / "plugins" / "bitz-flow" / "skills" / "flow-core"
+SKILL = Path(__file__).resolve().parents[1] / "plugins" / "bitz-flow" / "skills" / "flow-core"
 sys.path.insert(0, str(SKILL / "scripts"))
 
 from flowlib import worktree as W  # noqa: E402
@@ -70,26 +67,11 @@ def test_M2_FLT_022_incomplete_evidence_is_indeterminate_without_guessing():
     assert decision.worktree_state is decision.branch_audit_state is None
 
 
-def _design_enums():
-    text = (REPO_ROOT / "plugins/bitz-flow/.spec/design/FLW-DSN-016.md").read_text(encoding="utf-8")
-    rows = {}
-    for field in ("work_unit_state", "worktree_state", "branch_audit_state"):
-        match = re.search(rf"\|[^\n]*`{field}`[^\n]*\|\s*`([^\n]+)`\s*\|", text)
-        assert match
-        rows[field] = tuple(part.strip(" `") for part in match.group(1).split(","))
-    return rows
-
-
-def test_M2_FLT_023_design_schema_and_implementation_enums_match_both_ways():
-    schema = json.loads((SKILL / "schemas/worktree-state-v1.schema.json").read_text(encoding="utf-8"))
-    implementation = {
-        "work_unit_state": W.WORK_UNIT_STATES,
-        "worktree_state": W.WORKTREE_STATES,
-        "branch_audit_state": W.BRANCH_AUDIT_STATES,
-    }
-    for field, design_values in _design_enums().items():
-        schema_values = tuple(schema["$defs"][field]["enum"])
-        assert set(design_values) == set(schema_values) == set(implementation[field])
+# `M2-FLT-023`（design/schema/実装の三者照合）は `test_flow_contract_vocabulary.py` へ
+# 移設・拡張した（`FLW-TSK-097`）。旧実装は `work_unit_state` / `worktree_state` /
+# `branch_audit_state` の3 namespace だけをハードコードしており、`FLW-DSN-016` §2 の
+# 閉集合表が宣言する他の namespace（`cause` を含む）を走査していなかった
+# （`SI-FLW-072`）。新実装は閉集合表をパースして得た**全 namespace**を回す。
 
 
 def test_M2_FLT_053_capability_symmetry_blocks_create_but_allows_audit():
