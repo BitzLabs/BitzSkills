@@ -736,17 +736,50 @@ def build_trace_context(workspaces) -> dict:
     return {w: collect_trace_refs(w) for w in workspaces}
 
 
-def external_refs_for(root: Path, trace_ctx: dict) -> dict:
-    """root 以外のワークスペースが持つ参照を {ID: ["<ワークスペース名>/<相対パス>"]} へ畳む
+def git_toplevel(root: Path):
+    """Git top-level を返す。git 不在・リポジトリ外では None へ縮退する。"""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if result.returncode != 0 or not result.stdout.strip():
+        return None
+    return Path(result.stdout.strip()).resolve()
 
-    単一ワークスペース検査では呼ばれず（trace_ctx が None）、既存の判定を変えない。
+
+def workspace_trace_label(workspace: Path, repo_root: Path = None) -> str:
+    """参照元 workspace の checkout 名に依存しない表示ラベルを返す。"""
+    if repo_root is not None:
+        try:
+            return workspace.resolve().relative_to(repo_root).as_posix()
+        except ValueError:
+            pass
+    return workspace.name
+
+
+def external_refs_for(root: Path, trace_ctx: dict) -> dict:
+    """root 以外の参照を {ID: ["<repo相対workspace>/<相対パス>"]} へ畳む。
+
+    Git 配下では top-level からの相対パス（ルートは ``.``）を使い、checkout 名を
+    レポートへ混入させない。git 不在・リポジトリ外では従来の basename 表記へ縮退する。
+    単一ワークスペース検査では trace_ctx が None のため、git も呼ばず既存判定を変えない。
     """
+    if not trace_ctx:
+        return {}
+    repo_root = git_toplevel(root)
     merged = {}
-    for w, refs in (trace_ctx or {}).items():
+    for w, refs in trace_ctx.items():
         if w == root:
             continue
+        label = workspace_trace_label(w, repo_root)
         for rid, srcs in refs.items():
-            merged.setdefault(rid, []).extend(f"{w.name}/{s}" for s in srcs)
+            merged.setdefault(rid, []).extend(f"{label}/{s}" for s in srcs)
     return merged
 
 
