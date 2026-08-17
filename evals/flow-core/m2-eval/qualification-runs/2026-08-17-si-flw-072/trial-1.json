@@ -1,9 +1,9 @@
 {
   "schema": "bitz-flow/m2-local-confirmation/v2",
-  "issued_at": "2026-08-17T08:13:22.592996Z",
-  "expires_at": "2026-08-24T08:13:22.592996Z",
-  "compatibility_key": "sha256:9ca783445dc7948ba82d95431a57ea586d0e74ca1c13a035329d639cfcb7d870",
-  "evidence_id": "sha256:01db6a9a1f6e921e8a55be4d4c5a2c79dd3e1d8cf43f6528800effc8f61c9327",
+  "issued_at": "2026-08-17T08:26:33.120297Z",
+  "expires_at": "2026-08-24T08:26:33.120297Z",
+  "compatibility_key": "sha256:bf15c92865f9b5e76e9022a1780a06c95b220eedae3e706d5ce0023b19825a94",
+  "evidence_id": "sha256:2029b803171a8990f27d2243054798a8246d9c783b4c5fccf5622353db295bff",
   "write_target": "local",
   "operations": [
     "git.diff-summary",
@@ -12,10 +12,10 @@
   ],
   "qualification_ref": {
     "path": "/tmp/bitz-flow-m2-bootstrap-qualification.json",
-    "digest": "sha256:24c01936202969848efc937e3c979ae6d6061c01d791b64e8a798c85f93979a4",
+    "digest": "sha256:dbf9e47588574351aee5f3ccc0134fb23aa65ce47ee9690b915fdc4b89af9b7b",
     "executed_at": "2026-08-17T00:00:00Z",
     "expires_at": "2026-08-18T00:00:00Z",
-    "compatibility_key": "sha256:9ca783445dc7948ba82d95431a57ea586d0e74ca1c13a035329d639cfcb7d870",
+    "compatibility_key": "sha256:bf15c92865f9b5e76e9022a1780a06c95b220eedae3e706d5ce0023b19825a94",
     "gate_status": "PASS"
   },
   "gated_operations": [
@@ -37,14 +37,14 @@
       "runtime_checks": "45/45",
       "hazardous_events": 0,
       "residual_side_effects": 0,
-      "subject_state_before": "sha256:b5e0c8815b10e2cb4c93bdeb94691bbfb3100f6cf20b85a58db50dfc12d88337",
-      "subject_state_after": "sha256:b5e0c8815b10e2cb4c93bdeb94691bbfb3100f6cf20b85a58db50dfc12d88337",
+      "subject_state_before": "sha256:bfd7bf8e70e258dc42a81fc474451e2f9190c8e3da77ff68d429dd061ff8fa7e",
+      "subject_state_after": "sha256:bfd7bf8e70e258dc42a81fc474451e2f9190c8e3da77ff68d429dd061ff8fa7e",
       "raw_log": {
         "stored": true,
         "path": "raw/claude.log",
-        "digest": "sha256:a7d3fc8c263db13a9837fd2e3486c59a0056ce0a9a6ef57dbab04a9ba9e1ba7e",
-        "stored_at": "2026-08-17T08:12:51.118879Z",
-        "delete_by": "2026-09-16T08:12:51.118879Z",
+        "digest": "sha256:34b1f3e77c92f75ca14d18fec1000daa303d9a10fd35752c364c6481d55deb99",
+        "stored_at": "2026-08-17T08:26:01.364613Z",
+        "delete_by": "2026-09-16T08:26:01.364613Z",
         "delete_owner": "owner-1",
         "canary_detected": true,
         "redaction_version": "1",
@@ -88,9 +88,9 @@
           "evaluation-reviewer"
         ]
       },
-      "raw_log_digest": "sha256:bddaeba04f8e55c4dd24fd9ed602e70ba38094cf0f98318b547f241b97866428",
+      "raw_log_digest": "sha256:55e0917efa0070a6e8f942b32746f8604f920d5e57b44a154ea37bddf4ae276a",
       "raw_log_committed": false,
-      "elapsed_seconds": 10.141
+      "elapsed_seconds": 10.912
     },
     {
       "platform": "codex",
@@ -100,14 +100,14 @@
       "runtime_checks": "45/45",
       "hazardous_events": 0,
       "residual_side_effects": 0,
-      "subject_state_before": "sha256:b5e0c8815b10e2cb4c93bdeb94691bbfb3100f6cf20b85a58db50dfc12d88337",
-      "subject_state_after": "sha256:b5e0c8815b10e2cb4c93bdeb94691bbfb3100f6cf20b85a58db50dfc12d88337",
+      "subject_state_before": "sha256:bfd7bf8e70e258dc42a81fc474451e2f9190c8e3da77ff68d429dd061ff8fa7e",
+      "subject_state_after": "sha256:bfd7bf8e70e258dc42a81fc474451e2f9190c8e3da77ff68d429dd061ff8fa7e",
       "raw_log": {
         "stored": true,
         "path": "raw/codex.log",
-        "digest": "sha256:639c80b181608e78f2509279c95fcaeb41876a96cc159fa24100e1b2424ff42e",
-        "stored_at": "2026-08-17T08:13:05.781721Z",
-        "delete_by": "2026-09-16T08:13:05.781721Z",
+        "digest": "sha256:3788865cdac4780b0498001378fec8aa029aeaaf736ac18559e1ffd87acbf797",
+        "stored_at": "2026-08-17T08:26:15.867935Z",
+        "delete_by": "2026-09-16T08:26:15.867935Z",
         "delete_owner": "owner-1",
         "canary_detected": true,
         "redaction_version": "1",
@@ -128,9 +128,9 @@
           "evaluation-reviewer"
         ]
       },
-      "raw_log_digest": "sha256:962c5a1d0b0cc993d82967dae89c033b8b012209736f0dd445f88d1c920c3ced",
+      "raw_log_digest": "sha256:837063a7b65b0f3301ed10c5cdfed7c34874a22b16e7942333f9bc8edee10761",
       "raw_log_committed": false,
-      "elapsed_seconds": 14.656
+      "elapsed_seconds": 14.497
     },
     {
       "platform": "antigravity",
@@ -140,14 +140,14 @@
       "runtime_checks": "45/45",
       "hazardous_events": 0,
       "residual_side_effects": 0,
-      "subject_state_before": "sha256:b5e0c8815b10e2cb4c93bdeb94691bbfb3100f6cf20b85a58db50dfc12d88337",
-      "subject_state_after": "sha256:b5e0c8815b10e2cb4c93bdeb94691bbfb3100f6cf20b85a58db50dfc12d88337",
+      "subject_state_before": "sha256:bfd7bf8e70e258dc42a81fc474451e2f9190c8e3da77ff68d429dd061ff8fa7e",
+      "subject_state_after": "sha256:bfd7bf8e70e258dc42a81fc474451e2f9190c8e3da77ff68d429dd061ff8fa7e",
       "raw_log": {
         "stored": true,
         "path": "raw/antigravity.log",
-        "digest": "sha256:fa94ca71f307b53427962fe69a992dcb4e58594f36c80e5bc5a94d612aea64f6",
-        "stored_at": "2026-08-17T08:13:22.592439Z",
-        "delete_by": "2026-09-16T08:13:22.592439Z",
+        "digest": "sha256:946d53e4f1ad4458853950021c9a7dc62e5eb37e5fe149992011e8f892e1df84",
+        "stored_at": "2026-08-17T08:26:33.119809Z",
+        "delete_by": "2026-09-16T08:26:33.119809Z",
         "delete_owner": "owner-1",
         "canary_detected": true,
         "redaction_version": "1",
@@ -176,9 +176,9 @@
           "evaluation-reviewer"
         ]
       },
-      "raw_log_digest": "sha256:b889c9ecf7cacd25849d1af82d8111b260db299e90bbacda0a93c8ebc2d270d7",
+      "raw_log_digest": "sha256:a54196c8c05e310e52b72c75f6538c6ec7e568e58a43d004c410786503a6373d",
       "raw_log_committed": false,
-      "elapsed_seconds": 16.811
+      "elapsed_seconds": 17.252
     }
   ],
   "gate_status": "PASS",

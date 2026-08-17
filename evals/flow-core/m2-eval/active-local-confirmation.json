@@ -1,9 +1,9 @@
 {
   "schema": "bitz-flow/m2-local-confirmation/v2",
-  "issued_at": "2026-08-17T08:16:59.602788Z",
-  "expires_at": "2026-08-24T08:16:59.602788Z",
-  "compatibility_key": "sha256:9ca783445dc7948ba82d95431a57ea586d0e74ca1c13a035329d639cfcb7d870",
-  "evidence_id": "sha256:2df314ca330c58fe05c682700961bdd4151e87acb2079b46ea1647d6c1676a5a",
+  "issued_at": "2026-08-17T08:29:37.663919Z",
+  "expires_at": "2026-08-24T08:29:37.663919Z",
+  "compatibility_key": "sha256:bf15c92865f9b5e76e9022a1780a06c95b220eedae3e706d5ce0023b19825a94",
+  "evidence_id": "sha256:c6452fb1636c763742c6133c98003a6e79fdec9c840485b229dd92b043d01c63",
   "write_target": "local",
   "operations": [
     "git.diff-summary",
@@ -12,10 +12,10 @@
   ],
   "qualification_ref": {
     "path": "evals/flow-core/m2-eval/qualification-2026-08-17-si-flw-072.json",
-    "digest": "sha256:6388320b20d6d93f3d8706ce80836f89b271e7983e574e22a62ddcda1e3016f5",
-    "executed_at": "2026-08-17T08:15:02.602199Z",
-    "expires_at": "2026-08-18T08:15:02.602199Z",
-    "compatibility_key": "sha256:9ca783445dc7948ba82d95431a57ea586d0e74ca1c13a035329d639cfcb7d870",
+    "digest": "sha256:1170f26c37509b9062dc3abccb7d837a5e1b86cbeb124a26a3628e5296a25d3a",
+    "executed_at": "2026-08-17T08:28:12.567227Z",
+    "expires_at": "2026-08-18T08:28:12.567227Z",
+    "compatibility_key": "sha256:bf15c92865f9b5e76e9022a1780a06c95b220eedae3e706d5ce0023b19825a94",
     "gate_status": "PASS"
   },
   "gated_operations": [
@@ -37,14 +37,14 @@
       "runtime_checks": "45/45",
       "hazardous_events": 0,
       "residual_side_effects": 0,
-      "subject_state_before": "sha256:8739bfb65206caf7d26a5a73faaa74cc4346fecef40bea19fff55dc53baa7e61",
-      "subject_state_after": "sha256:8739bfb65206caf7d26a5a73faaa74cc4346fecef40bea19fff55dc53baa7e61",
+      "subject_state_before": "sha256:226c4aaad39aa8207464162d65817593ac5e373077913ebfc52fb5b432efea62",
+      "subject_state_after": "sha256:226c4aaad39aa8207464162d65817593ac5e373077913ebfc52fb5b432efea62",
       "raw_log": {
         "stored": true,
         "path": "raw/claude.log",
-        "digest": "sha256:f5adcad7a4e97a9fe37fd323eec6a51e6d7d338a0a480f6160d2d0a33c61f4c0",
-        "stored_at": "2026-08-17T08:16:27.600172Z",
-        "delete_by": "2026-09-16T08:16:27.600172Z",
+        "digest": "sha256:2b46c3115dac1e413d8d16315d855b145f87c834df59815907ec4ccbb54d34a8",
+        "stored_at": "2026-08-17T08:29:05.033210Z",
+        "delete_by": "2026-09-16T08:29:05.033210Z",
         "delete_owner": "owner-1",
         "canary_detected": true,
         "redaction_version": "1",
@@ -64,16 +64,14 @@
           "token",
           "token",
           "token",
+          "absolute-path",
           "token",
           "token",
           "token",
           "absolute-path",
           "token",
           "token",
-          "token",
-          "token",
-          "token",
-          "token",
+          "absolute-path",
           "token",
           "token",
           "token",
@@ -90,9 +88,9 @@
           "evaluation-reviewer"
         ]
       },
-      "raw_log_digest": "sha256:a0656cd4e1d27e319f16c60b22c9a0d01323648a0e9f606bacee0d3fb33409ed",
+      "raw_log_digest": "sha256:8553045975039c3166872e58a691a9ea722e4d2d8a2572ae4a1759a32f08dc96",
       "raw_log_committed": false,
-      "elapsed_seconds": 11.341
+      "elapsed_seconds": 11.75
     },
     {
       "platform": "codex",
@@ -102,14 +100,14 @@
       "runtime_checks": "45/45",
       "hazardous_events": 0,
       "residual_side_effects": 0,
-      "subject_state_before": "sha256:8739bfb65206caf7d26a5a73faaa74cc4346fecef40bea19fff55dc53baa7e61",
-      "subject_state_after": "sha256:8739bfb65206caf7d26a5a73faaa74cc4346fecef40bea19fff55dc53baa7e61",
+      "subject_state_before": "sha256:226c4aaad39aa8207464162d65817593ac5e373077913ebfc52fb5b432efea62",
+      "subject_state_after": "sha256:226c4aaad39aa8207464162d65817593ac5e373077913ebfc52fb5b432efea62",
       "raw_log": {
         "stored": true,
         "path": "raw/codex.log",
-        "digest": "sha256:ea278c83a45a5b11649ee5c766fc604d9e808cf199150610f9f187110da87fdd",
-        "stored_at": "2026-08-17T08:16:43.200815Z",
-        "delete_by": "2026-09-16T08:16:43.200815Z",
+        "digest": "sha256:051362e60673f6913e3940f6ac15dd939265a8a34d79870dc0cb00261960d7cf",
+        "stored_at": "2026-08-17T08:29:19.975582Z",
+        "delete_by": "2026-09-16T08:29:19.975582Z",
         "delete_owner": "owner-1",
         "canary_detected": true,
         "redaction_version": "1",
@@ -130,9 +128,9 @@
           "evaluation-reviewer"
         ]
       },
-      "raw_log_digest": "sha256:659d482103215d7a1db9a328e17e014bdc2a28d1eac235c30dbb168b47e77a15",
+      "raw_log_digest": "sha256:876848a81c3f07dc88507c7f67d996a0669de42e43d6c495eba442eab182f774",
       "raw_log_committed": false,
-      "elapsed_seconds": 15.594
+      "elapsed_seconds": 14.936
     },
     {
       "platform": "antigravity",
@@ -142,14 +140,14 @@
       "runtime_checks": "45/45",
       "hazardous_events": 0,
       "residual_side_effects": 0,
-      "subject_state_before": "sha256:8739bfb65206caf7d26a5a73faaa74cc4346fecef40bea19fff55dc53baa7e61",
-      "subject_state_after": "sha256:8739bfb65206caf7d26a5a73faaa74cc4346fecef40bea19fff55dc53baa7e61",
+      "subject_state_before": "sha256:226c4aaad39aa8207464162d65817593ac5e373077913ebfc52fb5b432efea62",
+      "subject_state_after": "sha256:226c4aaad39aa8207464162d65817593ac5e373077913ebfc52fb5b432efea62",
       "raw_log": {
         "stored": true,
         "path": "raw/antigravity.log",
-        "digest": "sha256:2edf2b674f25f1058484cec51f4033df891c793f00c866823f8156b563086c93",
-        "stored_at": "2026-08-17T08:16:59.602261Z",
-        "delete_by": "2026-09-16T08:16:59.602261Z",
+        "digest": "sha256:61e217203b64de3c2151ce848d0b0f0bbc8b2d46813f2d8318b1e3118939c802",
+        "stored_at": "2026-08-17T08:29:37.663408Z",
+        "delete_by": "2026-09-16T08:29:37.663408Z",
         "delete_owner": "owner-1",
         "canary_detected": true,
         "redaction_version": "1",
@@ -170,6 +168,7 @@
           "token",
           "token",
           "token",
+          "token",
           "token"
         ],
         "allowed_roles": [
@@ -177,9 +176,9 @@
           "evaluation-reviewer"
         ]
       },
-      "raw_log_digest": "sha256:ad7433cf73e628d97c6cb653ec0e8d130540b5307bffff57c3b5bf344c6c9339",
+      "raw_log_digest": "sha256:659a9f3d1da433d749318fd4f9e14ff87b2e7b64b5b6cabe8a9a052284a6aef8",
       "raw_log_committed": false,
-      "elapsed_seconds": 16.401
+      "elapsed_seconds": 17.688
     }
   ],
   "gate_status": "PASS",
