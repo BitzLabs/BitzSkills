@@ -1,0 +1,8 @@
+{
+  "schema": "bitz-flow/m2-qualification-summary/bootstrap",
+  "executed_at": "2026-08-17T12:48:32.239458Z",
+  "expires_at": "2026-08-18T08:48:32.239458Z",
+  "compatibility_key": "sha256:089ddc9d698ba877ebfdcc60df95b68bb2002d809eecac444e09d8fa8f09ee2e",
+  "gate_status": "PASS",
+  "note": "FLW-TSK-096だ102の修正後の再確認用 bootstrap qualification。M2の確認フローは実 confirmation の結果を次回のqualification 参照へ連鎖させる既存パターン（qualification-2026-08-17-si-flw-072.json 以降）に従う。"
+}
