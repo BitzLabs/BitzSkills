@@ -168,7 +168,7 @@ def test_SI_FLW_058_manifest_separates_evidence_id_and_declares_expiry(tmp_path)
     key = current_key()
     _run(tmp_path, _fresh_qualification(tmp_path, key), key, tmp_path / "ev")
     manifest = json.loads((tmp_path / "ev/active-manifest.json").read_text())
-    assert manifest["schema"] == "bitz-flow/m2-local-confirmation/v2"
+    assert manifest["schema"] == "bitz-flow/m2-local-confirmation/v3"
     assert manifest["evidence_id"].startswith("sha256:")
     assert manifest["evidence_id"] != manifest["compatibility_key"]
     issued = datetime.fromisoformat(manifest["issued_at"].replace("Z", "+00:00"))
@@ -314,3 +314,177 @@ def test_SI_FLW_063_manifest_carries_a_qualification_reference():
     reference = manifest["qualification_ref"]
     assert reference["executed_at"] and reference["expires_at"]
     assert reference["compatibility_key"] == manifest["compatibility_key"]
+
+
+# === FLW-TSK-102 (SI-FLW-075): confirmation の実走そのものを証跡化する ==========
+
+
+def _load_runner_module():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("rlc", RUNNER)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_raw_log_storage_failure_is_not_counted_as_pass():
+    """陽性対照 — raw log の保存に失敗した trial を PASS として採用しないこと（`OPS-101`）。"""
+    module = _load_runner_module()
+    assert module._apply_raw_log_gate(True, {"stored": True}) is True
+    assert module._apply_raw_log_gate(True, {"stored": False, "reason": "disk full"}) is False
+    assert module._apply_raw_log_gate(False, {"stored": True}) is False
+
+
+def test_detector_positive_control_actually_detects_an_induced_change():
+    """陽性対照 — hazard 検出器（`repo_state_digest`）が実際に変化を検出できること。
+
+    検出0件と検出器不作動を区別できないと測定がフェイルオープンになる（`RSK-402`）。
+    """
+    module = _load_runner_module()
+    result = module._detector_self_check(datetime.now(timezone.utc))
+    assert result["detected"] is True, result
+
+
+def test_detector_self_check_reports_failure_without_crashing(monkeypatch):
+    """陰性対照 — 検出器の自己診断自体が失敗しても例外を投げず reason を残すこと。"""
+    module = _load_runner_module()
+
+    def _boom(root):
+        raise OSError("git unavailable")
+
+    monkeypatch.setattr(module, "repo_state_digest", _boom)
+    result = module._detector_self_check(datetime.now(timezone.utc))
+    assert result["detected"] is False
+    assert result["reason"]
+
+
+def test_expired_scope_allow_is_rejected():
+    """陽性対照 — 失効期限を過ぎた裁定スコープの allow を拒否すること（`OPS-302`）。"""
+    module = _load_runner_module()
+    now = datetime.now(timezone.utc)
+    expired = ({
+        "id": "test-expired", "scope": "test", "decision_ref": "test",
+        "registered_by": "test", "registered_at": "2020-01-01T00:00:00Z",
+        "expires_at": "2020-06-01T00:00:00Z", "revocation": "test",
+    },)
+    assert module._expired_scope_allows(now, expired) == list(expired)
+
+
+def test_scope_allow_without_expiry_is_treated_as_expired():
+    """期限の無い allow を残さない — `expires_at` 欠落は失効扱いにすること（`OPS-302`）。"""
+    module = _load_runner_module()
+    now = datetime.now(timezone.utc)
+    no_expiry = ({
+        "id": "test-no-expiry", "scope": "test", "decision_ref": "test",
+        "registered_by": "test", "registered_at": "2020-01-01T00:00:00Z",
+        "revocation": "test",
+    },)
+    assert module._expired_scope_allows(now, no_expiry) == list(no_expiry)
+
+
+def test_registered_scope_allow_has_expiry_revocation_and_registrant():
+    """現行の SCOPE_ALLOWS entry 自体が失効期限・撤去手段・登録者を持つこと。"""
+    module = _load_runner_module()
+    assert module.SCOPE_ALLOWS
+    for allow in module.SCOPE_ALLOWS:
+        assert allow["expires_at"]
+        assert allow["revocation"]
+        assert allow["registered_by"]
+    # 現行登録は失効していないこと（登録直後に失効した allow を残さない）。
+    assert module._expired_scope_allows(datetime.now(timezone.utc)) == []
+
+
+def test_residual_is_not_computed_by_the_same_formula_as_hazard():
+    """residual を hazard と同一式で算出しないこと（`RSK-402`）。
+
+    緩和ステップを持たないため、hazard 発生時の residual は算出できず `None` になる。
+    """
+    module = _load_runner_module()
+    hazardous, residual, note = module._classify_hazard_and_residual(mutated=False)
+    assert (hazardous, residual, note) == (0, 0, None)
+    hazardous, residual, note = module._classify_hazard_and_residual(mutated=True)
+    assert hazardous == 1
+    assert residual is None, "hazardと同一式（1）を residual として報告してはならない"
+    assert note
+
+
+def test_attempt_ledger_hash_chain_links_entries_to_the_run(tmp_path):
+    """台帳と run が機械的に結び付けられること（coordinator attempt_id・hash chain）。
+
+    単一 coordinator を共有すると attempt ID が platform をまたいで単調増加すること
+    （`Store` を呼出しごとに作り直すと常に 1 に戻ってしまう）。
+    """
+    module = _load_runner_module()
+    out = tmp_path / "ledger-out"
+    out.mkdir()
+    coordinator = module.new_coordinator("test-chain")
+
+    attempt1, failure1 = coordinator.issue_attempt()
+    assert failure1 is None
+    entry1 = module._append_attempt(out, {"platform": "claude", "status": "PASS"}, attempt=attempt1)
+    assert entry1["previous_entry_digest"] is None
+    assert entry1["attempt_id"] == attempt1.attempt_id == 1
+
+    attempt2, failure2 = coordinator.issue_attempt()
+    assert failure2 is None
+    entry2 = module._append_attempt(out, {"platform": "codex", "status": "FAIL"}, attempt=attempt2)
+    assert entry2["previous_entry_digest"] is not None
+    assert entry2["attempt_id"] == attempt1.attempt_id + 1 == 2
+
+    problems = module.verify_attempt_chain(out / "attempts.jsonl")
+    assert problems == [], problems
+
+
+def test_attempt_ledger_chain_detects_tampering(tmp_path):
+    """陰性対照 — 既に書かれた台帳 entry を手で書き換えると chain 検証が検出すること。"""
+    module = _load_runner_module()
+    out = tmp_path / "ledger-tamper"
+    out.mkdir()
+    coordinator = module.new_coordinator("test-tamper")
+    attempt1, _ = coordinator.issue_attempt()
+    module._append_attempt(out, {"platform": "claude", "status": "PASS"}, attempt=attempt1)
+    attempt2, _ = coordinator.issue_attempt()
+    module._append_attempt(out, {"platform": "codex", "status": "PASS"}, attempt=attempt2)
+
+    ledger = out / "attempts.jsonl"
+    lines = ledger.read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 2
+    first = json.loads(lines[0])
+    first["attempt_id"] = 999  # 1件目だけを改変する。2件目は改変前の chain を保持したまま
+    lines[0] = json.dumps(first)
+    ledger.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    problems = module.verify_attempt_chain(ledger)
+    assert problems, "改変された台帳で chain 検証が何も検出しないのは誤り"
+
+
+def test_trial_evidence_records_start_end_time_cli_version_commit_and_command(tmp_path):
+    """陽性対照 — dry-run でも trial ごとの実走証跡 field が記録されること。
+
+    `--dry-run` は CLI を起動しないため `cli_version` は `unavailable` になり得るが、
+    `started_at` / `finished_at` / `subject_commit` は常に記録される。
+    """
+    key = current_key()
+    qualification = json.loads(QUALIFICATION.read_text())
+    qualification["compatibility_key"] = key
+    qualification["executed_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    current_qualification = tmp_path / "qualification.json"
+    current_qualification.write_text(json.dumps(qualification), encoding="utf-8")
+    out = tmp_path / "evidence"
+    proc = subprocess.run(
+        [sys.executable, str(RUNNER), "--dry-run", "--repo", str(REPO_ROOT),
+         "--out", str(out), "--qualification", str(current_qualification),
+         "--compatibility-key", key],
+        capture_output=True, text=True, check=False,
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    manifest = json.loads((out / "active-manifest.json").read_text())
+    assert manifest["detector_self_check"]["detected"] is True
+    assert manifest["scope_allows"]
+    assert "attempt_ledger" in manifest
+    for record in manifest["platforms"]:
+        assert record["started_at"], record["platform"]
+        assert record["finished_at"], record["platform"]
+        assert record["subject_commit"], record["platform"]
+        assert "cli_version" in record, record["platform"]
