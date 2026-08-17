@@ -645,7 +645,7 @@ PRは実装PRであり budget 内に属する。本定義より前の消化分�
 | M4 PR | 3 PR / 12 session | **3 + 3 = 6 PR** | 20 | push/PR/merge各partialから収束、CI/head誤判定0、独立10 PR flow canary green | M3までをprerelease出荷し、全`pr.*`を`UNSUPPORTED`にする |
 | M5 Release | 2 PR / 8 session | **2 + 2 = 4 PR** | 14 | changelog atomicity、tag/draft収束後にpublishを段階有効化 | M4までを出荷。release draftだけがgreenならprerelease限定で公開し、publishは`UNSUPPORTED`にする |
 
-### M2出口条件・budget・M3入口条件（2026-08-12 再校正）
+### M2出口条件・budget・M3入口条件（2026-08-12 再校正、2026-08-17 現況更新）
 
 `SI-FLW-045`（accept・案A）と`SI-FLW-046`（accept・M2着手前）の裁定を反映する。
 正は`FLW-DSN-016`であり、本節はmilestone表から参照される要約である。
@@ -665,7 +665,13 @@ PRは実装PRであり budget 内に属する。本定義より前の消化分�
 - **`write_target: local` の被測定物confirmationが3 platformでPASS**しactive manifest発行済み
 - **着手前reconnaissanceがentry protocolで必須化**されている（`FLW-FR-007` 1.1）
 
-#### M2出口条件 × 証拠の対応表（2026-08-16）
+M2 の audit は通常運用での receipt 破損、worktree の生成・消失、binding 不整合を対象とする。
+receipt store と保護境界の双方を書き換えられる攻撃者に対する真正性は M2 単独で主張しない。
+この真正性保証は BitzFlow V2 のスコープ外であり、M2出口・Completion Gate の前提に含めない。
+将来必要になった場合だけ新規の security 設計として扱う。裁定の正は
+`.spec/reports/decision-2026-08-17-v2-operational-integrity-scope.md`。
+
+#### M2出口条件 × 証拠の対応表（2026-08-17）
 
 `FLW-REV-017:SYN-012` は「出口4要件が `approved` のままで検証証跡が0件、
 出口条件と現存証拠の対応表が無い」とした。裁定者が条件ごとに証拠へ辿れるよう対応を固定する。
@@ -682,7 +688,8 @@ PRは実装PRであり budget 内に属する。本定義より前の消化分�
 | 7 | `write_target: local` の3 platform confirmation | `evals/flow-core/m2-eval/active-local-confirmation.json` | `FLW-NFR-011` |
 | 8 | 着手前reconnaissanceのentry protocol必須化 | `M2-FLT-045`〜`047` / `051` | `FLW-FR-007` |
 
-各条件の達成状況は、判定した時点のレビュー（最新は `FLW-REV-017`）を正とする。
+各条件の達成状況は、判定した時点のレビュー（最新は `FLW-REV-019`）を正とする。
+`FLW-REV-019` 時点では 1・3・8 が PASS、2・5・7 が条件付き、4・6 が未達である。
 本表は**どの証拠を見ればよいか**を固定するものであり、判定そのものは持たない
 （判定を二重に持つと、レビューと表が食い違ったときにどちらが正か決められなくなる）。
 
@@ -732,6 +739,16 @@ M1実績（6 PR / 7 session）はM2の下振れ根拠にしない。M2はM1に�
 `.spec/reports/decision-2026-08-15-m2-remediation-budget.md`。
 
 **先行承認: 4 PR / 13 session**（総額は決めない）
+
+この段階承認は `.spec/reports/decision-2026-08-16-flw-rev-018-remediation.md` により、
+`FLW-REV-018` の16 findingに限って上限解除へ移行した。M3〜M5 と M2 残債を含む次期予算の
+再校正は `FLW-REV-019:GP-006` として未裁定であり、既存の M3 budget を現在の確定値として
+扱わない。
+
+上限なしは `M2 remediation / FLW-REV-018` のmanifest scopeと
+`.spec/reports/decision-2026-08-17-si-flw-076-m2-budget-exception.md` を持つ記録だけに限る。
+M3〜M5は、人間が最大予算と再校正referenceを裁定するまで開始・記録しない。例外以外で上限へ
+達した場合は、従来どおり後続作業を `BLOCKED` にして裁定を要求する。
 
 | 区分 | PR | session | 対象 |
 |---|---:|---:|---|

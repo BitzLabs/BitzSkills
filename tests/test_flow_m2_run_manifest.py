@@ -26,47 +26,54 @@ def call(target, *args):
                           capture_output=True, text=True, check=False)
 
 
-def test_summary_reports_the_approved_budget_before_any_entry(tmp_path):
+def test_FLW_FR_012_summary_reports_unbounded_budget_before_any_entry(tmp_path):
     proc = call(recorder_in(tmp_path), "--summary")
     assert proc.returncode == 0
     summary = json.loads(proc.stdout)
-    assert summary == {"used_pr": 0, "used_session": 0, "budget_pr": 5,
-                       "budget_session": 15, "in_reserve": False, "exhausted": False}
+    assert summary == {"used_pr": 0, "known_session": 0, "unknown_session_prs": [],
+                       "budget_mode": "unbounded", "exception_scope": "M2 remediation / FLW-REV-018",
+                       "recalibration_pending": "FLW-REV-019:GP-006"}
 
 
-def test_entries_accumulate_and_are_append_only(tmp_path):
+def test_FLW_FR_012_entries_accumulate_once_and_keep_sessions(tmp_path):
     target = recorder_in(tmp_path)
     assert call(target, "--pr", "281", "--issue", "SI-FLW-061", "--sessions", "2").returncode == 0
     assert call(target, "--pr", "282", "--issue", "SI-FLW-057", "--sessions", "3").returncode == 0
     manifest = json.loads((tmp_path / "run-manifest-m2-remediation.json").read_text())
     assert [e["issue"] for e in manifest["entries"]] == ["SI-FLW-061", "SI-FLW-057"]
     summary = json.loads(call(target, "--summary").stdout)
-    assert summary["used_pr"] == 2 and summary["used_session"] == 5
+    assert summary["used_pr"] == 2 and summary["known_session"] == 5
 
 
-def test_budget_exhaustion_exits_non_zero(tmp_path):
-    """予算到達で自動停止する（付帯条件3）。"""
+def test_FLW_FR_012_unbounded_budget_does_not_stop_after_old_limit(tmp_path):
     target = recorder_in(tmp_path)
-    for pr in (301, 302, 303, 304):
-        assert call(target, "--pr", str(pr), "--issue", "SI-FLW-063").returncode == 0
-    proc = call(target, "--pr", "305", "--issue", "SI-FLW-063")
-    assert proc.returncode == 1
-    assert "予算到達" in proc.stdout
+    for pr in (301, 302, 303, 304, 305, 306):
+        assert call(target, "--pr", str(pr), "--issue", "SI-FLW-063", "--sessions", "1").returncode == 0
 
 
-def test_entering_the_reserve_is_reported_without_stopping(tmp_path):
-    """予備枠に入ったら報告するが停止はしない（2026-08-16 の第2次予算）。"""
+def test_FLW_FR_012_duplicate_pr_is_rejected_without_overwriting_manifest(tmp_path):
     target = recorder_in(tmp_path)
-    for pr in (301, 302):
-        proc = call(target, "--pr", str(pr), "--issue", "SI-FLW-063")
-        assert proc.returncode == 0
-        assert json.loads(proc.stdout.split("予備枠")[0])["in_reserve"] is False
-    proc = call(target, "--pr", "303", "--issue", "SI-FLW-063")
-    assert proc.returncode == 0, "予備枠は停止させない"
-    assert "予備枠に入った" in proc.stdout
+    assert call(target, "--pr", "301", "--issue", "SI-FLW-063", "--sessions", "1").returncode == 0
+    before = (tmp_path / "run-manifest-m2-remediation.json").read_text()
+    proc = call(target, "--pr", "301", "--issue", "SI-FLW-063", "--sessions", "1")
+    assert proc.returncode != 0
+    assert "すでに記録済み" in proc.stderr
+    assert (tmp_path / "run-manifest-m2-remediation.json").read_text() == before
 
 
-def test_recording_requires_pr_and_issue(tmp_path):
+def test_FLW_FR_012_unbounded_budget_rejects_a_scope_outside_m2_remediation(tmp_path):
+    target = recorder_in(tmp_path)
+    assert call(target, "--pr", "301", "--issue", "SI-FLW-063", "--sessions", "1").returncode == 0
+    manifest_path = tmp_path / "run-manifest-m2-remediation.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["budget"]["scope"] = "M3 remediation / FLW-REV-018"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    proc = call(target, "--summary")
+    assert proc.returncode != 0
+    assert "M2 remediation" in proc.stderr
+
+
+def test_FLW_FR_012_recording_requires_pr_issue_and_sessions(tmp_path):
     proc = call(recorder_in(tmp_path), "--sessions", "1")
     assert proc.returncode != 0
 

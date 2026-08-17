@@ -1,11 +1,13 @@
 {
-  "schema": "bitz-flow/m2-remediation-run-manifest/v1",
+  "schema": "bitz-flow/m2-remediation-run-manifest/v2",
+  "reconciled_at": "2026-08-17",
+  "reconciliation_ref": ".spec/reports/decision-2026-08-17-m2-integrity-boundary-and-control-plane.md",
   "budget": {
-    "pr": 5,
-    "session": 15,
-    "core_pr": 3,
-    "core_session": 9,
-    "decision_ref": ".spec/reports/decision-2026-08-16-m2-remediation-budget-2.md"
+    "mode": "unbounded",
+    "scope": "M2 remediation / FLW-REV-018",
+    "decision_ref": ".spec/reports/decision-2026-08-16-flw-rev-018-remediation.md",
+    "exception_ref": ".spec/reports/decision-2026-08-17-si-flw-076-m2-budget-exception.md",
+    "recalibration_pending": "FLW-REV-019:GP-006"
   },
   "entries": [
     {
@@ -13,7 +15,7 @@
       "issue": "SI-FLW-063",
       "sessions": 3,
       "review_fixes": 1,
-      "unmet_exit_reason": "receipt payload（DIN-202/SYN-013）と codex timeout の恒常欠陥が残る",
+      "unmet_exit_reason": "receipt payload と confirmation の未達が残る",
       "recorded_at": "2026-08-16"
     },
     {
@@ -21,23 +23,15 @@
       "issue": "SI-FLW-064",
       "sessions": 2,
       "review_fixes": 0,
-      "unmet_exit_reason": "codex timeout の恒常欠陥（8/8）が残る",
-      "recorded_at": "2026-08-16"
-    },
-    {
-      "pr": 290,
-      "issue": "SI-FLW-064",
-      "sessions": 2,
-      "review_fixes": 0,
-      "unmet_exit_reason": "M2出口条件の再判定が未了（audit検出は実装済み）",
+      "unmet_exit_reason": "audit の外部変更検出を実装したが、M2出口の独立再判定が未了",
       "recorded_at": "2026-08-16"
     },
     {
       "pr": 291,
-      "issue": "SI-FLW-065",
+      "issue": "FLW-REV-017",
       "sessions": 2,
       "review_fixes": 0,
-      "unmet_exit_reason": "FLW-REV-017 は CONDITIONAL_PASS。通過条件6件（SYN-008/009/011/012・GP-005・business 欠測）が残る",
+      "unmet_exit_reason": "Completion Gate 保留の裁定と通過条件が残る",
       "recorded_at": "2026-08-16"
     },
     {
@@ -45,7 +39,7 @@
       "issue": "SI-FLW-066",
       "sessions": 1,
       "review_fixes": 0,
-      "unmet_exit_reason": "GP-005（是正後の最終状態の独立レビュー）と business 観点の欠測が残る",
+      "unmet_exit_reason": "最終状態の独立レビューが未了",
       "recorded_at": "2026-08-16"
     },
     {
@@ -53,16 +47,16 @@
       "issue": "FLW-REV-018",
       "sessions": 1,
       "review_fixes": 0,
-      "unmet_exit_reason": "M2出口条件4と6が未達。critical SYN-001（receipt chain 無検証）と TTL 時限故障 SYN-010 が残る",
+      "unmet_exit_reason": "出口条件4と6が未達",
       "recorded_at": "2026-08-16"
-    }
-  ],
-  "previous_budgets": [
+    },
     {
-      "pr": 4,
-      "session": 13,
-      "decision_ref": ".spec/reports/decision-2026-08-15-m2-remediation-budget.md",
-      "outcome": "4 PR / 8 session で消化し自動停止"
+      "pr": 294,
+      "issue": "FLW-REV-018",
+      "sessions": null,
+      "review_fixes": 16,
+      "unmet_exit_reason": "FLW-REV-019で出口条件4と6が未達。session数は当時未記録のため不明",
+      "recorded_at": "2026-08-17"
     }
   ]
 }

@@ -3,7 +3,7 @@ id: SI-FLW-074
 raised_by: FLW-REV-019（BIZ-301 / BIZ-401 / BIZ-403 / OPS-406 / OPS-105 / BIZ-101 / RVC-207 / RVC-201）
 target: 記録層（ROADMAP・予算 SSOT・出口条件対応表・予算台帳・タスク規律）の一括追随
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: 3周回（`FLW-REV-017` → `018` → `019`）を通じて**型が変わっていない**負債を
   1 PR で一括して閉じる。business 観点は「4件がいずれも1コミットで閉じる作業なのに
