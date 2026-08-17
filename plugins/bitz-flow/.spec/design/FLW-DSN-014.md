@@ -667,8 +667,9 @@ PRは実装PRであり budget 内に属する。本定義より前の消化分�
 
 M2 の audit は通常運用での receipt 破損、worktree の生成・消失、binding 不整合を対象とする。
 receipt store と保護境界の双方を書き換えられる攻撃者に対する真正性は M2 単独で主張しない。
-この境界は `.spec/reports/decision-2026-08-17-m2-integrity-boundary-and-control-plane.md` が正であり、
-より強い保証は M3 以降または別の security 設計で扱う。
+この真正性保証は BitzFlow V2 のスコープ外であり、M2出口・Completion Gate の前提に含めない。
+将来必要になった場合だけ新規の security 設計として扱う。裁定の正は
+`.spec/reports/decision-2026-08-17-v2-operational-integrity-scope.md`。
 
 #### M2出口条件 × 証拠の対応表（2026-08-17）
 

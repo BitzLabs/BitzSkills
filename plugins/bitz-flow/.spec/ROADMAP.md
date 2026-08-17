@@ -83,8 +83,9 @@ Promotion GateのGatePassageで検分される。
 **CONDITIONAL_PASS 3.41** である。出口条件は PASS 3 / 条件付き 3 / 未達 2 のままで、
 Completion Gate は保留する。M2 は通常運用での receipt 破損、worktree の生成・消失、
 binding 不整合を検知する責務に限る。receipt store と保護境界の双方を書き換えられる攻撃者への
-真正性保証は M2 単独では主張せず、M3 以降または別の security 設計で扱う。
-裁定の正は `.spec/reports/decision-2026-08-17-m2-integrity-boundary-and-control-plane.md`。
+真正性保証は BitzFlow V2 のスコープ外とし、Completion Gate の前提に含めない。将来必要になった
+場合だけ新規の security 設計として扱う。裁定の正は
+`.spec/reports/decision-2026-08-17-v2-operational-integrity-scope.md`。
 
 ## 規範セットの時間軸
 
