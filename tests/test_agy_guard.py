@@ -163,3 +163,97 @@ def test_SYN_009_denies_forced_branch_deletion():
 def test_SYN_009_keeps_unrelated_commands_without_opinion():
     """陰性対照 — 無関係なコマンドまで deny しないこと（過剰拒否の防止）。"""
     assert judge({**REAL, "CommandLine": "ls -la"}) == {}
+
+
+# === FLW-TSK-101: パス正規化と極性反転（read-only allowlist） ==================
+#
+# `ASK_PATTERNS` は生文字列の正規表現であり `/./` や重複スラッシュを挟むだけで
+# 照合から外れていた。ガード資産の保護は書き込み動詞の列挙であり、列挙に無い
+# 動詞（sed -i / リダイレクト / install / dd / patch / ln -sf / インタプリタからの
+# open(..., "w")）が素通りした。動詞列挙に安全性を載せる方式は成立しない。
+
+
+@pytest.mark.parametrize("path", [
+    pytest.param("/home/agent/./.claude/skills", id="dot-segment"),
+    pytest.param("/home/agent//.claude/skills", id="double-slash"),
+    pytest.param("/home/agent/x/../.claude/skills", id="dot-dot-traversal"),
+    pytest.param("/home/agent/.claude/./skills", id="dot-segment-mid-path"),
+    pytest.param("/home/agent/a/b/../../.claude/skills", id="multi-dot-dot"),
+])
+def test_path_normalization_variants_still_reach_force_ask(path):
+    """陽性対照 — `/./`・`//`・`..` を挟んでも正規化後に ASK 照合へ到達すること。
+
+    正規化前の生文字列だけを見る照合では、これらはいずれも
+    `/home/[^/\\s]+/\\.claude/skills` の literal 照合から外れていた。
+    """
+    assert judge({**REAL, "CommandLine": f"cat {path}"})["decision"] == "force_ask", path
+
+
+def test_tilde_normalization_expands_before_matching():
+    """`~` 展開が実際の home directory へ展開されたうえで正規化されること（単体）。"""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("agy_guard", GUARD)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    home = module.os.path.expanduser("~")
+    assert module._normalize_candidate("~/./.claude/skills") == f"{home}/.claude/skills"
+    assert module._normalize_candidate("~//.claude/skills") == f"{home}/.claude/skills"
+
+
+@pytest.mark.parametrize("command", [
+    pytest.param("sed -i s/x/y/ scripts/agy_guard.py", id="sed-in-place"),
+    pytest.param("install -m 000 /tmp/evil scripts/agy_guard.py", id="install"),
+    pytest.param("dd if=/dev/zero of=scripts/agy_guard.py", id="dd"),
+    pytest.param("patch scripts/agy_guard.py x.diff", id="patch"),
+    pytest.param("ln -sf /tmp/evil scripts/agy_guard.py", id="symlink-replace"),
+    pytest.param(
+        'python3 -c "open(\'scripts/agy_guard.py\', \'w\').write(\'x\')"',
+        id="interpreter-write",
+    ),
+    pytest.param("echo pwned>scripts/agy_guard.py", id="redirection-no-space"),
+])
+def test_write_verb_variants_outside_the_old_enumeration_are_now_denied(command):
+    """陽性対照 — 旧・書き込み動詞列挙に無い変種がすべて deny になること（極性反転）。
+
+    以前は `(chmod|chown|mv|cp|rm|truncate|tee)` の列挙だけを見ており、これらは
+    いずれも列挙に無い動詞・リダイレクト・インタプリタ経由の書き込みのため
+    素通りしていた。
+    """
+    assert judge({**REAL, "CommandLine": command})["decision"] == "deny", command
+
+
+@pytest.mark.parametrize("command", [
+    pytest.param("cat scripts/agy_guard.py", id="cat"),
+    pytest.param("grep pattern scripts/agy_guard.py", id="grep"),
+    pytest.param("head -n 5 .claude/settings.json", id="head"),
+    pytest.param("tail -n 5 .agents/hooks.json", id="tail"),
+    pytest.param("diff a.json .claude/settings.json", id="diff"),
+    pytest.param("git show HEAD:scripts/agy_guard.py", id="git-show"),
+    pytest.param("git log -- scripts/agy_guard.py", id="git-log"),
+])
+def test_read_only_allowlist_still_reaches_the_guard_assets(command):
+    """陰性対照 — enumerate された read-only 形は deny にならないこと（過剰拒否の防止）。"""
+    assert judge({**REAL, "CommandLine": command}).get("decision") != "deny", command
+
+
+def test_read_only_form_with_bypass_sandbox_is_still_denied():
+    """`BypassSandbox` はガード資産の read-only allowlist を無効化する。"""
+    assert judge(
+        {**REAL, "CommandLine": "cat scripts/agy_guard.py", "BypassSandbox": True}
+    )["decision"] == "deny"
+
+
+def test_read_only_form_with_shell_metacharacter_is_still_denied():
+    """read-only program でも shell metacharacter があれば chaining の余地があるため deny。"""
+    assert judge(
+        {**REAL, "CommandLine": "cat scripts/agy_guard.py; rm -rf /tmp/x"}
+    )["decision"] == "deny"
+
+
+def test_measured_m2_confirmation_shape_still_allows_after_the_rewrite():
+    """回帰 — 既存の M2 confirmation subject の許可形が引き続き通ること。"""
+    response = judge(REAL)
+    assert response["decision"] == "allow"
+    assert response["permissionOverrides"] == [f"command({SUBJECT})"]

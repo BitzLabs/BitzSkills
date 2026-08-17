@@ -2,7 +2,7 @@
 implements: FLW-NFR-011
 depends_on: []
 boundary: scripts/agy_guard.py, tests/test_agy_guard.py
-status: pending
+status: done
 ---
 
 ### 測定系ガードを正規化後のパス判定と読み取り allowlist へ改める
