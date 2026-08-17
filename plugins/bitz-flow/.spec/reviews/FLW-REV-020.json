@@ -1,0 +1,43 @@
+{
+  "schema_version": 2,
+  "review_id": "FLW-REV-020",
+  "verdict": "CONDITIONAL_PASS",
+  "aggregate_score": 3.23,
+  "perspective_scores": {
+    "consistency": 2.5,
+    "data-integrity": 3.5,
+    "operations": 3.5,
+    "risk": 3.0,
+    "business": 3.0
+  },
+  "findings_summary": {
+    "before_dedup": 1,
+    "after_dedup": 1,
+    "p0": 0,
+    "p1": 1,
+    "p2": 0,
+    "p3": 0
+  },
+  "findings": [
+    {
+      "id": "FLW-REV-020:SYN-001",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RVC-201",
+        "BIZ-101",
+        "OPS-201"
+      ],
+      "title": "上限到達時に停止する要件契約と、上限なしの記録器が矛盾している",
+      "detail": "FLW-FR-012はPR数またはsession数が上限に達したとき、後続作業をBLOCKEDにして人間裁定を要求する。一方、PR #296はM2 manifestをunboundedへ変更し、旧上限到達後も停止しないことをテストしている。上限なしがFLW-REV-018のM2是正だけに限られるのか、M1〜M5すべての契約を置換するのかを要件が定義していない。",
+      "recommendation": "人間が上限ありを維持するか、M2限定の上限なし例外を受入基準へ明記するかを裁定し、その裁定に合わせて要件・設計・記録器・テストを同一変更で整合させる。",
+      "tracked_by": "SI-FLW-076",
+      "status": "open"
+    }
+  ],
+  "gate_preconditions": [],
+  "carried_over": [],
+  "conditional_items": [
+    "SI-FLW-076の人間裁定を反映し、FLW-FR-012とM2 manifestの停止条件を一致させること"
+  ]
+}
