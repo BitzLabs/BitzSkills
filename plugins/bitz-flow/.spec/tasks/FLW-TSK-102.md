@@ -2,7 +2,7 @@
 implements: FLW-NFR-011
 depends_on: []
 boundary: evals/flow-core/m2-eval/run_local_confirmation.py, evals/flow-core/m2-eval/record_run.py, evals/flow-core/m2-eval/active-local-confirmation.json, tests/test_flow_m2_confirmation.py
-status: pending
+status: done
 ---
 
 ### confirmation の実走そのものを証跡化し raw log 保存成否を Gate へ接続する

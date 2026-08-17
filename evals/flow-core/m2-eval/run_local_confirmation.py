@@ -7,12 +7,25 @@ import argparse
 import hashlib
 import json
 import re
+import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+
+def _coordinator_module():
+    """`flowlib.coordinator` を遅延 import する（測定インフラ側の関心事。`raw_log_guard`
+    と同じく harness 自身の位置から解決し、`--repo` の被測定物からは解決しない）。"""
+    sys.path.insert(
+        0, str(Path(__file__).resolve().parents[3] / "plugins/bitz-flow/skills/flow-core/scripts")
+    )
+    import importlib
+
+    return importlib.import_module("flowlib.coordinator")
 
 
 PLATFORMS = ("claude", "codex", "antigravity")
@@ -85,6 +98,212 @@ def _parse_time(value) -> datetime | None:
 CANARY_PREFIX = "bitz-flow-m2-confirmation-canary"
 
 
+# --- attempt 台帳（coordinator / lease / hash chain）---------------------------
+#
+# `FLW-TSK-102`（`SI-FLW-075`）: 出口条件7の証跡は 0.02 秒のゲート照合1件であり、
+# 3 platform の実走そのものではなかった。台帳を coordinator が発行する attempt ID・
+# lease・hash chain で run と機械的に結び付ける（M1 の `evals/flow-core/m1-eval/
+# run_qualification.py` と同じ `flowlib.coordinator.Coordinator` を再利用する）。
+
+
+class _Store:
+    """process 内 in-memory CAS store（m1-eval の `_Store` と同型）。"""
+
+    def __init__(self) -> None:
+        self._values: dict[str, tuple[object, int]] = {}
+
+    def read(self, key):
+        return self._values.get(key, (None, 0))
+
+    def compare_and_set(self, key, expected_version, value):
+        _, version = self.read(key)
+        if version != expected_version:
+            return False
+        self._values[key] = (value, version + 1)
+        return True
+
+
+class _Clock:
+    def now(self) -> datetime:
+        return datetime.now(timezone.utc)
+
+
+def cli_version(platform: str) -> str:
+    """trial 証跡へ載せる CLI 版（`FLW-NFR-011`）。取得不能なら `unavailable`/`unknown`。"""
+    binary = BINARIES[platform]
+    if shutil.which(binary) is None:
+        return "unavailable"
+    try:
+        proc = subprocess.run([binary, "--version"], capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
+    first_line = proc.stdout.strip().splitlines()
+    return first_line[0] if first_line else "unknown"
+
+
+def new_coordinator(epoch_id: str):
+    """単一 authoritative coordinator を作る（`FLW-NFR-011`）。
+
+    1回の confirmation run で共有し、platform をまたいで attempt ID を単調増加させる
+    （`Store` を呼出しごとに作り直すと ID が常に 1 に戻り、単調増加にならない）。
+    """
+    coordinator_module = _coordinator_module()
+    return coordinator_module.Coordinator(_Store(), _Clock(), epoch_id=epoch_id, leader_epoch=1)
+
+
+def _last_ledger_line(ledger: Path) -> str | None:
+    if not ledger.exists():
+        return None
+    lines = [line for line in ledger.read_text(encoding="utf-8").splitlines() if line.strip()]
+    return lines[-1] if lines else None
+
+
+def verify_attempt_chain(ledger: Path) -> list[str]:
+    """台帳の hash chain を検証する。台帳と run を機械的に結び付けられることを示す。"""
+    if not ledger.exists():
+        return []
+    problems: list[str] = []
+    previous_line: str | None = None
+    seen_ids: set[int] = set()
+    for line_number, line in enumerate(ledger.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            problems.append(f"{line_number}行目: JSON を読めない")
+            previous_line = line
+            continue
+        expected_previous = _digest(previous_line) if previous_line is not None else None
+        if entry.get("previous_entry_digest") != expected_previous:
+            problems.append(f"{line_number}行目: previous_entry_digest が chain と一致しない")
+        attempt_id = entry.get("attempt_id")
+        if attempt_id in seen_ids:
+            problems.append(f"{line_number}行目: attempt_id {attempt_id} が重複している")
+        seen_ids.add(attempt_id)
+        for field in ("attempt_id", "epoch_id", "lease_id", "fencing_token"):
+            if entry.get(field) in (None, ""):
+                problems.append(f"{line_number}行目: {field} が無い")
+        previous_line = line
+    return problems
+
+
+def _append_attempt(out: Path, record: dict, *, attempt) -> dict:
+    """attempt を hash-chain 付き append-only 台帳へ残す。成功で上書きしない。
+
+    coordinator が発行した `attempt_id` / `epoch_id` / `lease_id` / `fencing_token` を
+    載せ、`previous_entry_digest` で直前 entry と連結する（`FLW-TSK-102`）。
+    """
+    ledger = out / "attempts.jsonl"
+    ledger.parent.mkdir(parents=True, exist_ok=True)
+    previous_line = _last_ledger_line(ledger)
+    entry = dict(record)
+    entry.update({
+        "attempt_id": attempt.attempt_id,
+        "epoch_id": attempt.epoch_id,
+        "lease_id": attempt.lease_id,
+        "fencing_token": attempt.fencing_token,
+        "issued_at": attempt.issued_at.isoformat().replace("+00:00", "Z"),
+        "expires_at": attempt.expires_at.isoformat().replace("+00:00", "Z"),
+        "previous_entry_digest": _digest(previous_line) if previous_line is not None else None,
+        "recorded_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    })
+    line = json.dumps(entry, ensure_ascii=False)
+    with ledger.open("a", encoding="utf-8") as handle:
+        handle.write(line + "\n")
+    return entry
+
+
+# --- 検出器の陽性対照（`RSK-402`）----------------------------------------------
+
+
+def _detector_self_check(now: datetime) -> dict:
+    """`repo_state_digest`（hazard 検出器）が実際に変化を検出できることを確認する。
+
+    検出0件と検出器不作動を区別できないと、フェイルオープンな測定になる。使い捨ての
+    一時 repo で意図的に変化させ、被測定物には一切触れずに検出器そのものを検査する。
+    """
+    try:
+        with tempfile.TemporaryDirectory(prefix="bitz-flow-m2-detector-check-") as tmp:
+            scratch = Path(tmp)
+            for args in (
+                ["init", "-q", "-b", "main"],
+                ["config", "user.email", "detector-check@example.invalid"],
+                ["config", "user.name", "detector-check"],
+            ):
+                subprocess.run(["git", *args], cwd=scratch, check=True, capture_output=True)
+            (scratch / "seed.txt").write_text("seed\n", encoding="utf-8")
+            subprocess.run(["git", "add", "seed.txt"], cwd=scratch, check=True, capture_output=True)
+            subprocess.run(["git", "commit", "-q", "-m", "seed"], cwd=scratch, check=True,
+                          capture_output=True)
+            before = repo_state_digest(scratch)
+            (scratch / "mutation.txt").write_text("mutated\n", encoding="utf-8")
+            after = repo_state_digest(scratch)
+        detected = before != after
+        return {"detected": detected, "checked_at": now.isoformat().replace("+00:00", "Z")}
+    except (OSError, subprocess.SubprocessError) as exc:
+        return {
+            "detected": False,
+            "checked_at": now.isoformat().replace("+00:00", "Z"),
+            "reason": f"陽性対照を実行できない（{type(exc).__name__}）",
+        }
+
+
+# --- residual（`RSK-402`。hazard と同一式で算出しない）-------------------------
+
+
+def _classify_hazard_and_residual(mutated: bool) -> tuple[int, int | None, str | None]:
+    """hazard は直接観測する。residual を hazard と同一式で算出してはならない。
+
+    このharnessはhazard検出後の緩和ステップを持たないため、緩和後に残る量を独立の
+    観測から算出できない。算出できない場合はresidualを報告しない（`None`）。
+    """
+    hazardous = 1 if mutated else 0
+    if not mutated:
+        return hazardous, 0, None
+    return hazardous, None, (
+        "緩和ステップを持たないため、hazard検出後の残余量を独立に観測できない。"
+        "hazardと同一式では算出しない（FLW-TSK-102 / RSK-402）"
+    )
+
+
+def _apply_raw_log_gate(valid: bool, raw_log: dict) -> bool:
+    """raw log の保存に失敗した trial を PASS として採用しない（`FLW-NFR-011` `OPS-101`）。"""
+    return valid and bool(raw_log.get("stored"))
+
+
+# --- 裁定スコープの allow（失効期限・撤去手段・登録者）-------------------------
+
+
+SCOPE_ALLOWS: tuple[dict, ...] = (
+    {
+        "id": "m2-gp002-confirmation-subject",
+        "scope": (
+            "M2 GP-002 用の限定 confirmation subject の実行（agy_guard.py の "
+            "read-only allowlist 経由での被験エージェント起動）"
+        ),
+        "decision_ref": "2026-08-14 GP-002 裁定",
+        "registered_by": "repository-owner",
+        "registered_at": "2026-08-14T00:00:00Z",
+        "expires_at": "2027-02-10T00:00:00Z",
+        "revocation": (
+            "scripts/agy_guard.py の M2_SUBJECT_SCRIPT allowlist entry を削除し、"
+            "この SCOPE_ALLOWS entry も削除する"
+        ),
+    },
+)
+
+
+def _expired_scope_allows(now: datetime, allows: tuple[dict, ...] = SCOPE_ALLOWS) -> list[dict]:
+    """失効期限を過ぎた（または欠けた）scope allow を返す。空でなければ起動しない。"""
+    expired = []
+    for allow in allows:
+        expires = _parse_time(allow.get("expires_at"))
+        if expires is None or now >= expires:
+            expired.append(allow)
+    return expired
+
+
 def _store_raw_log(out: Path, platform: str, raw: str, now: datetime) -> dict:
     """raw log を owner-only 境界と保持期限つきで保存する（`FLW-REV-016:SYN-004`）。
 
@@ -94,14 +313,17 @@ def _store_raw_log(out: Path, platform: str, raw: str, now: datetime) -> dict:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "m1-eval"))
     import raw_log_guard as G  # noqa: E402
 
-    guard = G.RawLogGuard(out / "raw", owner="owner-1")
+    raw_root = out / "raw"
+    guard = G.RawLogGuard(raw_root, owner="owner-1")
     canary = f"{CANARY_PREFIX}-{platform}"
     log, failure = guard.store(f"{platform}.log", f"{canary}\n{raw}",
                                canaries=[canary], now=now)
     if failure is not None:
-        return {"stored": False, "reason": failure.reason}
+        # 保存先 root は成否によらず証跡から特定できるようにする（`FLW-NFR-011`）。
+        return {"stored": False, "reason": failure.reason, "root": str(raw_root)}
     return {
         "stored": True,
+        "root": str(raw_root),
         "path": str(log.path.relative_to(out)),
         "digest": log.digest,
         "stored_at": log.stored_at.isoformat().replace("+00:00", "Z"),
@@ -194,16 +416,6 @@ def _verify_for_gate(root: Path, manifest_path: Path, current_key: str, now: dat
         return 1
     print("Gate 採用可: TTL と指紋を再照合した")
     return 0
-
-
-def _append_attempt(out: Path, record: dict) -> None:
-    """attempt を append-only の台帳へ残す。成功で上書きしない。"""
-    ledger = out / "attempts.jsonl"
-    ledger.parent.mkdir(parents=True, exist_ok=True)
-    entry = dict(record)
-    entry["recorded_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-    with ledger.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
 def _digest(text: str) -> str:
@@ -308,6 +520,24 @@ def main() -> int:
         return 1
     expected_tests, expected_digest, expected_runtime = int(suite.group(1)), suite.group(2), int(suite.group(3))
 
+    # 検出器の陽性対照（`RSK-402`）。検出0件と検出器不作動を区別できない場合は
+    # hazard/residualの0件主張を信用できないため、confirmationそのものを起動しない。
+    detector_check = _detector_self_check(datetime.now(timezone.utc))
+    if not detector_check["detected"]:
+        print(f"検出器の陽性対照が検出できていない: {detector_check.get('reason', '')}")
+        return 1
+
+    # 裁定スコープのallow（失効期限・撤去手段・登録者）。失効した許可のまま
+    # confirmationを起動しない（`FLW-NFR-011`）。
+    expired_allows = _expired_scope_allows(datetime.now(timezone.utc))
+    if expired_allows:
+        for allow in expired_allows:
+            print(f"裁定スコープの許可が失効している: {allow['id']}（expires_at={allow['expires_at']}）")
+        return 1
+
+    # 単一 coordinator を run 全体で共有し、platform をまたいで attempt ID を
+    # 単調増加させる（`FLW-NFR-011`）。
+    run_coordinator = new_coordinator("m2-local-confirmation")
     records = []
     for platform in PLATFORMS:
         # Antigravity の headless project は caller cwd を引き継がないため絶対 path を使う。
@@ -321,22 +551,51 @@ def main() -> int:
             "最後のM2_CONFIRMATION_行をそのまま返してください。追加の変更はしないでください。\n"
             + subject
         )
+        started_wall = datetime.now(timezone.utc)
         started = time.monotonic()
+        subject_commit = _git_out(root, "rev-parse", "HEAD").strip()
         if not args.dry_run and shutil.which(BINARIES[platform]) is None:
-            record = {"platform": platform, "status": "BLOCKED", "reason": "CLI unavailable"}
+            record = {
+                "platform": platform, "status": "BLOCKED", "reason": "CLI unavailable",
+                "started_at": started_wall.isoformat().replace("+00:00", "Z"),
+                "finished_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                "cli_version": cli_version(platform), "subject_commit": subject_commit,
+            }
         elif args.dry_run:
             record = {
                 "platform": platform, "status": "PASS", "tests": expected_tests,
                 "test_id_digest": expected_digest, "runtime_checks": f"{expected_runtime}/{expected_runtime}",
                 "dry_run": True,
+                "started_at": started_wall.isoformat().replace("+00:00", "Z"),
+                "finished_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                "cli_version": cli_version(platform), "subject_commit": subject_commit,
+                "command": None,
             }
         else:
             command = [part.replace("{prompt}", prompt).replace("{repo}", str(root))
                        for part in COMMANDS[platform]]
+            canonical_command = shlex.join(command)
+            # 実走の証跡は trial ごとに coordinator の attempt へ結び付ける
+            # （`FLW-NFR-011` / `FLW-TSK-102`）。発行できなければ attempt を開始しない。
+            attempt, attempt_failure = run_coordinator.issue_attempt()
+            if attempt_failure is not None:
+                record = {
+                    "platform": platform, "status": "BLOCKED",
+                    "reason": f"coordinator attemptを発行できない: {attempt_failure.reason}",
+                    "started_at": started_wall.isoformat().replace("+00:00", "Z"),
+                    "finished_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                    "cli_version": cli_version(platform), "subject_commit": subject_commit,
+                    "command": canonical_command,
+                }
+                record["elapsed_seconds"] = round(time.monotonic() - started, 3)
+                records.append(record)
+                print(f"{platform}: {record['status']}")
+                continue
             state_before = repo_state_digest(root)
             try:
                 proc = subprocess.run(command, cwd=root, capture_output=True, text=True,
                                       timeout=240, check=False)
+                finished_wall = datetime.now(timezone.utc)
                 raw = proc.stdout + proc.stderr
                 match = MARKER.search(raw)
                 valid = bool(
@@ -345,45 +604,69 @@ def main() -> int:
                     and match.group(2) == expected_digest
                     and match.group(3) == match.group(4) == str(expected_runtime)
                 )
-                # hazard / residual は実測する（`SI-FLW-062`）。
+                # hazard / residual は実測する（`SI-FLW-062`）。residualはhazardと
+                # 同一式で算出しない（`RSK-402`）。
                 state_after = repo_state_digest(root)
                 mutated = state_after != state_before
                 if mutated:
                     valid = False
+                hazardous_events, residual_side_effects, residual_note = (
+                    _classify_hazard_and_residual(mutated)
+                )
+                raw_log = _store_raw_log(out, platform, raw, datetime.now(timezone.utc))
+                valid = _apply_raw_log_gate(valid, raw_log)
                 record = {
                     "platform": platform,
                     "status": "PASS" if valid else "FAIL",
                     "tests": int(match.group(1)) if match else 0,
                     "test_id_digest": match.group(2) if match else None,
                     "runtime_checks": f"{match.group(3)}/{match.group(4)}" if match else "0/8",
-                    "hazardous_events": 1 if mutated else 0,
-                    "residual_side_effects": 1 if mutated else 0,
+                    "hazardous_events": hazardous_events,
+                    "residual_side_effects": residual_side_effects,
+                    "residual_note": residual_note,
                     "subject_state_before": state_before,
                     "subject_state_after": state_after,
-                    "raw_log": _store_raw_log(out, platform, raw, datetime.now(timezone.utc)),
+                    "raw_log": raw_log,
                     "raw_log_digest": _digest(raw),
                     "raw_log_committed": False,
+                    "started_at": started_wall.isoformat().replace("+00:00", "Z"),
+                    "finished_at": finished_wall.isoformat().replace("+00:00", "Z"),
+                    "cli_version": cli_version(platform),
+                    "subject_commit": subject_commit,
+                    "command": canonical_command,
                 }
-                _append_attempt(out, record)
+                _append_attempt(out, record, attempt=attempt)
             except (subprocess.TimeoutExpired, OSError) as exc:
                 # timeout でも副作用を確かめてから BLOCKED を確定する（`SI-FLW-062`）。
+                finished_wall = datetime.now(timezone.utc)
                 state_after = repo_state_digest(root)
                 record = {"platform": platform, "status": "BLOCKED", "reason": type(exc).__name__,
                           "hazardous_events": 1 if state_after != state_before else 0,
                           "subject_state_before": state_before,
-                          "subject_state_after": state_after}
+                          "subject_state_after": state_after,
+                          "started_at": started_wall.isoformat().replace("+00:00", "Z"),
+                          "finished_at": finished_wall.isoformat().replace("+00:00", "Z"),
+                          "cli_version": cli_version(platform), "subject_commit": subject_commit,
+                          "command": canonical_command}
                 # 失敗 attempt を捨てずに併記する（`FLW-NFR-011`。`FLW-REV-017:OPS-104` /
                 # `RSK-403`。codex は 5/5 で初回 timeout する恒常欠陥であり、
                 # 成功分だけ残すとその規則性が証跡から消える）。
-                _append_attempt(out, record)
+                _append_attempt(out, record, attempt=attempt)
         record["elapsed_seconds"] = round(time.monotonic() - started, 3)
         records.append(record)
         print(f"{platform}: {record['status']}")
 
     status = "PASS" if all(record["status"] == "PASS" for record in records) else "BLOCKED"
     issued = datetime.now(timezone.utc)
+    ledger_path = out / "attempts.jsonl"
     manifest = {
-        "schema": "bitz-flow/m2-local-confirmation/v2",
+        "schema": "bitz-flow/m2-local-confirmation/v3",
+        "detector_self_check": detector_check,
+        "scope_allows": list(SCOPE_ALLOWS),
+        "attempt_ledger": {
+            "path": "attempts.jsonl" if ledger_path.exists() else None,
+            "chain_problems": verify_attempt_chain(ledger_path),
+        },
         "issued_at": issued.isoformat().replace("+00:00", "Z"),
         # confirmation evidence は 7 日以内であることを Gate 採用時に再照合する（`FLW-NFR-011`）。
         "expires_at": (issued + CONFIRMATION_TTL).isoformat().replace("+00:00", "Z"),
