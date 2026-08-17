@@ -2,7 +2,7 @@
 implements: FLW-CON-007
 depends_on: FLW-TSK-096
 boundary: tests/test_flow_contract_vocabulary.py, tests/test_flow_m2_worktree.py, plugins/bitz-flow/.spec/design/FLW-DSN-016.md
-status: pending
+status: done
 ---
 
 ### 三者照合を全 namespace へ拡張し照合の網羅性そのものを検査する
