@@ -166,9 +166,20 @@
         "permission-denied",
         "snapshot-mismatch",
         "remote-unavailable",
-        "result-indeterminate"
+        "result-indeterminate",
+        "quarantined"
       ],
-      "description": "下位 Git / gh の終了コードやメッセージをそのまま公開せず、この許可語彙へ正規化する（FLW-DSN-005 診断 cause）。"
+      "description": "下位 Git / gh の終了コードやメッセージをそのまま公開せず、この許可語彙へ正規化する（FLW-DSN-016 §2 診断 cause の閉集合が正。値の由来は FLW-DSN-005）。"
+    },
+    "release_class": {
+      "type": "string",
+      "enum": [
+        "worktree-not-started",
+        "worktree-resumable",
+        "worktree-confirmed-done",
+        "worktree-unresolved"
+      ],
+      "description": "quarantine 解除区分（FLW-DSN-016 §6）。worktree.audit の data.quarantine.release_class が取り得る値の閉集合。"
     },
     "stage": {
       "type": "string",

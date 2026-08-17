@@ -2,7 +2,7 @@
 implements: FLW-CON-007
 depends_on: []
 boundary: plugins/bitz-flow/skills/flow-core/schemas/result-v1.schema.json, plugins/bitz-flow/skills/flow-core/scripts/flowlib/result.py, plugins/bitz-flow/skills/flow-core/scripts/flowlib/intent.py, plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_cleanup.py, plugins/bitz-flow/.spec/design/FLW-DSN-016.md
-status: pending
+status: done
 ---
 
 ### enum 契約の単一の正を schema と実装定数へ固定する
