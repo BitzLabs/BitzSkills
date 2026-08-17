@@ -21,3 +21,5 @@ status: accepted
   要する。裁定前は PR #296 のmanifest変更をマージしない。Aを採る場合はmanifest v1相当の停止挙動へ
   戻せる。Bを採る場合もM2限定の例外として隔離できる。
 - **依存**: `FLW-REV-020:SYN-001`。強い改ざん耐性をV2対象外とする裁定とは独立。
+- **実施**: 2026-08-17 `FLW-TSK-095` / `dacb48b`。裁定Bを `FLW-FR-012` v1.6、
+  `FLW-DSN-014`、M2 manifest・記録器・pytestへ同期し、全pytest 2036件とrelease_checkを確認。
