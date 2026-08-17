@@ -64,6 +64,14 @@ ALLOWED_CAUSES = frozenset(
 
 ALLOWED_STAGES = frozenset({"inspect", "parse", "validate", "plan", "apply", "post-check"})
 
+# recovery class（閉集合。正は references/recovery-matrix.md）。
+RECOVERY_CLASSES = frozenset({"retry-read", "reconcile-only", "replan-human", "human-stop"})
+
+#: 非ok の result でも cause 必須を免除する code。`APPROVAL_REQUIRED` は診断された
+#: 失敗ではなく、write フローが人間の承認を待つ通常の中断点である。
+#: `references/recovery-matrix.md` の決定表もこの code の行を持たない。
+CAUSE_EXEMPT_CODES = frozenset({"APPROVAL_REQUIRED"})
+
 # gate_status（正は schemas/evidence-ledger-entry-v1.schema.json $defs/gate_status。
 # FLW-DSN-016 §2 所在表）。
 GATE_STATUSES = frozenset({"PASS", "FAIL", "BLOCKED"})
@@ -176,6 +184,49 @@ def paginate(items: Sequence[Any], limit: int | None, snapshot: str | None) -> t
     return list(items[:shown]), {"shown": shown, "total": total}, True
 
 
+def _require_non_ok_contract(
+    operation: str,
+    code: str,
+    cause: str | None,
+    payload: Mapping[str, Any],
+    next_actions: Sequence[Mapping[str, Any]],
+) -> None:
+    """非ok result の `cause` / `recovery_class` / `next_actions` を組み立て時に強制する。
+
+    以前は `worktree.*` の write 失敗系（apply 中の例外、承認モード不整合等）が
+    `summary` と `stage` だけを持ち、`cause` も `recovery_class` も `next_actions` も
+    空だった。recovery matrix は文書にあっても公開 result へ載っていなかった
+    （`FLW-REV-019`）。operation 個別のテストで担保する方式は、新しい失敗経路を
+    足すたびに同じ穴が再発するため、`build_result` 自身が全 operation・全 code に対して
+    一律に検査する（`FLW-DSN-016` §8）。
+    """
+    if cause is None and code not in CAUSE_EXEMPT_CODES:
+        raise ValueError(f"{operation}: 非ok result（code={code}）は cause を欠かせない")
+
+    recovery_class = payload.get("recovery_class")
+    if recovery_class not in RECOVERY_CLASSES:
+        raise ValueError(
+            f"{operation}: 非ok result（code={code}）は recovery_class を欠かせない "
+            f"（{sorted(RECOVERY_CLASSES)} のいずれか。実際: {recovery_class!r}）"
+        )
+
+    if recovery_class == "human-stop":
+        if next_actions:
+            raise ValueError(
+                f"{operation}: recovery_class=human-stop は next_actions を空にする"
+                "（解除は operation ではなく人間の裁定であるため）"
+            )
+        if not payload.get("required_human_input"):
+            raise ValueError(
+                f"{operation}: recovery_class=human-stop は data.required_human_input を要求する"
+            )
+    elif not next_actions:
+        raise ValueError(
+            f"{operation}: recovery_class={recovery_class!r} は next_actions を要求する"
+            "（空であることは human-stop のときだけ matrix から導かれる結論である）"
+        )
+
+
 def build_result(
     *,
     operation: str,
@@ -218,6 +269,8 @@ def build_result(
         raise ValueError(f"許可語彙外の cause: {cause}")
 
     exit_code = CODE_EXIT_CODES[code]
+    if exit_code != 0:
+        _require_non_ok_contract(operation, code, cause, payload, next_actions)
     result: dict[str, Any] = {
         "schema": SCHEMA,
         DIGEST_KEY: "",

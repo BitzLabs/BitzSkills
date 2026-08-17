@@ -117,11 +117,32 @@ mutation の判断に全件確認が必要なのに項目が上限超過した�
 not-repository     invalid-ref        invalid-path       dirty
 detached-head      no-upstream        non-fast-forward   conflict
 timeout            command-unavailable permission-denied snapshot-mismatch
-remote-unavailable result-indeterminate
+remote-unavailable result-indeterminate quarantined
 ```
+
+値の正は `schemas/result-v1.schema.json` の `$defs/cause`（`FLW-DSN-016` §2 が閉集合の唯一の正）。
 
 失敗時は cause に加えて失敗 stage（`inspect` / `parse` / `validate` / `plan` / `apply` /
 `post-check`）を返し、どの工程で落ちたかを区別できるようにする。
+
+## 非ok result の必須 field（`FLW-TSK-100`）
+
+`ok: false`（`exit_code != 0`）の result は、`data.cause` / `data.recovery_class` /
+`next_actions` の3つを欠かせない。`build_result` がこれを組み立て時に検査し、
+欠けた result は例外で拒否する（operation 個別のテストで担保する方式は、新しい
+失敗経路を足すたびに同じ穴が再発するため採らない）。
+
+- **`data.cause`** — 上の許可語彙から選ぶ。**`APPROVAL_REQUIRED` だけ免除**する
+  （診断された失敗ではなく、write フローが人間の承認を待つ通常の中断点であり、
+  `references/recovery-matrix.md` の決定表もこの code の行を持たないため）。
+- **`data.recovery_class`** — `retry-read` / `reconcile-only` / `replan-human` /
+  `human-stop` の閉集合（`references/recovery-matrix.md` が正）。
+  `worktree_cleanup.recovery_for(code, cause)` から決定し、値を手で書かない。
+  未登録の `(code, cause)` は fail-closed に `human-stop` へ倒れる。
+- **`next_actions`** — `recovery_class` が `human-stop` の場合に**限り**空にできる。
+  その場合 `data.required_human_input` を必須とする。空であること自体が
+  recovery matrix から導かれた結論でなければならない。`human-stop` 以外の
+  `recovery_class` では `next_actions` を空にできない。
 
 ## snapshot
 
