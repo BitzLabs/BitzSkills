@@ -340,6 +340,61 @@ def _op_git_diff_summary(root: str, args, started: str) -> tuple[dict, R.Compact
     return result, view
 
 
+def _classify_divergent_target(
+    root: str,
+    row: Mapping[str, Any],
+    *,
+    receipt_records: tuple[dict, ...],
+    registry: Mapping[str, str | None],
+) -> dict[str, Any]:
+    """1 target 分の §6/§7 分類を実観測から算出し `data.quarantine.targets` の1件を返す。
+
+    `chain_valid=True` を固定するのは、呼出元（`worktree.audit`）が既に
+    `survey.readable` を確認したうえでこの関数へ到達しているため（store 全体が
+    読めない場合は audit がここへ来る前に `INDETERMINATE` を返す）。
+    """
+    from pathlib import Path as _Path
+
+    path = row["path"]
+    target_records = tuple(
+        record for record in receipt_records
+        if (record.get("target") or {}).get("path") == path
+    )
+    branch = (target_records[-1].get("target") or {}).get("branch") if target_records else None
+    ref_exists = False
+    if branch:
+        proc = worktree_runtime._git(
+            _Path(root), "rev-parse", "--verify", f"refs/heads/{branch}", check=False
+        )
+        ref_exists = proc.returncode == 0
+    # instance identity の再照合（§5）はここでは HEAD OID 一致だけに限る。§5 が求める
+    # 4要素（registry gitdir / .git file entry / HEAD OID / create 時 nonce）のうち
+    # 後者3つは receipt log に永続化されておらず、本 boundary（worktree_runtime.py
+    # 不可変更）では再導出できない（既知の残余限界。要 spec-issue）。
+    expected_head = (
+        (target_records[-1].get("target") or {}).get("expected_head") if target_records else None
+    )
+    observed_head = registry.get(path)
+    instance_nonce_matches = bool(
+        target_records and expected_head is not None and observed_head is not None
+        and expected_head == observed_head
+    )
+    release_class, undetermined_reason = worktree_cleanup.classify_quarantine_target(
+        chain_valid=True,
+        records=target_records,
+        directory_exists=row["present"],
+        registry_exists=row["registered"],
+        ref_exists=ref_exists,
+        instance_nonce_matches=instance_nonce_matches,
+    )
+    return {
+        "path": path,
+        "divergence": row["divergence"],
+        "release_class": release_class,
+        "undetermined_reason": undetermined_reason,
+    }
+
+
 def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
     operation = f"worktree.{args.action}"
     if args.action == "audit":
@@ -421,34 +476,32 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
         ]
 
         # 検出したら quarantine 相当として停止する（自動修復はしない）。
-        # 解除区分は §6 の4区分を `classify_quarantine` で**実データから計算**する。
-        # 以前は全フィールド固定リテラルの evidence を渡していたため、
-        # 分類ではなく表示だった（`FLW-REV-018:SYN-004`）。
-        release_class = worktree_cleanup.classify_quarantine(
-            worktree_cleanup.QuarantineEvidence(
-                chain_valid=survey.readable,
-                completed_steps=survey.completed_steps,
-                # 外部起因の乖離には、plan時の intent / instance nonce の一致を
-                # 証明できない。存在観測だけで worktree-not-started と推測しない。
-                instance_nonce_matches=False,
-                mutation_receipts=survey.mutation_receipts,
-                all_postconditions_match=False,
-            ),
-            total_mutating_steps=survey.mutation_receipts,
+        # 解除区分は divergent target ごとに §6 の4区分を `classify_quarantine_target` で
+        # **実データから計算**する。以前は集合全体へ固定リテラルの evidence を1回だけ
+        # 渡していたため、到達可能な像が `worktree-unresolved` の1点へ潰れていた
+        # （`FLW-REV-019`。分類ではなく表示だった）。
+        receipts_dir = worktree_runtime._common_dir(_Path(root)) / "bitz-flow-v2" / "receipts"
+        receipt_records = (
+            worktree_runtime.read_receipt_chain(receipts_dir)[0] if receipts_dir.exists() else ()
         )
+        quarantine_targets = [
+            _classify_divergent_target(root, row, receipt_records=receipt_records, registry=registry)
+            for row in rows if row["divergence"]
+        ]
+        release_classes = [target["release_class"] for target in quarantine_targets]
+        worst = worktree_cleanup.most_severe_release_class(release_classes)
         reason = f"registry と receipt が食い違う worktree を {len(divergent)} 件検出した"
         data["cause"] = "quarantined"
         data["recovery_class"] = worktree_cleanup.recovery_for(
             "BLOCKED", "quarantined").recovery_class
         data["quarantine"] = {
             "required": True,
-            "release_class": release_class,
+            "targets": quarantine_targets,
             "reason": reason,
-            "targets": divergent,
             "binding_findings": [finding.reason for finding in binding_findings],
         }
         data["required_human_input"] = (
-            f"{release_class}: FLW-DSN-016 §6 の解除区分に従い "
+            f"{worst}: FLW-DSN-016 §6 の解除区分に従い "
             "evaluation-reviewer の判断を要する。bitz-flow は解除を代行しない"
         )
         result = R.build_result(
@@ -462,7 +515,7 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
         )
         return result, R.CompactView(
             tokens={"worktrees": len(registry), "divergent": len(divergent),
-                    "quarantine": release_class})
+                    "quarantine": worst if worst is not None else "indeterminate"})
 
     missing = [name for name, value in (
         ("--path", args.path), ("--branch", args.branch), ("--worktree-root", args.worktree_root)

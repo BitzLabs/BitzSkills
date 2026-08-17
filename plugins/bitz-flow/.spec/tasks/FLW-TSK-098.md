@@ -2,7 +2,7 @@
 implements: FLW-FR-007, FLW-CON-005
 depends_on: FLW-TSK-096
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/cli.py, plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_cleanup.py, plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_capability.py, plugins/bitz-flow/skills/flow-core/schemas/operations, tests/test_flow_m2_runtime.py
-status: pending
+status: done
 ---
 
 ### quarantine 解除区分を divergent target ごとに実観測から算出する

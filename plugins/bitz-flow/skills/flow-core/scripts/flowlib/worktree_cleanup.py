@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import dataclasses
 from datetime import datetime
-from typing import Iterable
+from typing import Any, Iterable, Mapping, Sequence
 
 
 FINISH_STEPS = (
@@ -138,10 +138,17 @@ class QuarantineEvidence:
     instance_nonce_matches: bool
     mutation_receipts: int
     all_postconditions_match: bool
+    #: この target に対する bitz-flow の intent（PENDING を含む receipt 記録）が
+    #: 1件でも存在するか。既定 True は「呼出側が明示しない限り従来どおり存在する
+    #: 前提を保つ」ための後方互換値（既存呼出側は intent の有無を区別していなかった）。
+    #: `worktree.audit` は §7 の「bitz-flow が作っていない worktree」（`unmanaged`）を
+    #: `False` で明示する — receipt が1件も無い target は `not-started` ではなく
+    #: `unresolved` へ倒す（`not-started` は「intent はある」ことが前提のため）。
+    has_intent: bool = True
 
 
 def classify_quarantine(evidence: QuarantineEvidence, *, total_mutating_steps: int) -> str:
-    if not evidence.chain_valid or not evidence.instance_nonce_matches:
+    if not evidence.chain_valid or not evidence.has_intent or not evidence.instance_nonce_matches:
         return RELEASE_UNRESOLVED
     if evidence.mutation_receipts == 0:
         return RELEASE_NOT_STARTED
@@ -150,6 +157,97 @@ def classify_quarantine(evidence: QuarantineEvidence, *, total_mutating_steps: i
     if evidence.completed_steps and evidence.all_postconditions_match:
         return RELEASE_RESUMABLE
     return RELEASE_UNRESOLVED
+
+
+#: §7 INDETERMINATE の理由（本モジュールが実際に区別できる部分集合）。receipt store
+#: 全体が読めない場合は呼出側（`worktree.audit`）が既に別経路で INDETERMINATE を
+#: 返しており（`survey.readable` が False）、ここへは届かない。store が「一度も
+#: 存在しない」のか「作られてから消えた」のかは、いまの receipt log が痕跡を残さない
+#: ため区別できない（残余限界。検出には `worktree_runtime.py` 側の receipt schema
+#: 拡張が要り、本モジュールの boundary 外）。
+INDETERMINATE_REASONS = ("receipt-store-unreadable", "self-operation-in-progress")
+
+#: 自 operation の未完了痕跡（receipt log の実際の語彙）。`FLW-DSN-016` §7 が挙げる
+#: write_state の `PENDING_INTENT` / `MUTATING` / `RECONCILING` / `PARTIAL` は、
+#: `worktree_runtime._ReceiptLog` が使う独自語彙（`PENDING` / `MUTATING` / `DONE` /
+#: `QUARANTINED`）と同名ではない（M2 worktree write は `flowlib.intent.IntentStore` を
+#: 経由しておらず、この receipt log が実質的な intent 記録である）。`DONE` /
+#: `QUARANTINED`（終端）以外はすべて自 operation の途中である。
+SELF_OPERATION_IN_PROGRESS_STATES = frozenset({"PENDING", "MUTATING"})
+
+#: worktree が「存在するはず」の action（create / resume の完了後）。finish / discard の
+#: 完了後は worktree が存在しないことが正しい postcondition である。
+_PRESENCE_EXPECTED_ACTIONS = frozenset({"create", "resume"})
+
+
+def classify_quarantine_target(
+    *,
+    chain_valid: bool,
+    records: Sequence[Mapping[str, Any]],
+    directory_exists: bool,
+    registry_exists: bool,
+    ref_exists: bool,
+    instance_nonce_matches: bool,
+) -> tuple[str | None, str | None]:
+    """target 単位で §6 の4区分または §7 の INDETERMINATE を実観測から算出する。
+
+    `records` はこの target の path を持つ receipt 記録を sequence 順（古い→新しい）で
+    渡す。以前は集合全体の evidence を固定入力で1回だけ計算しており、到達可能な像が
+    `worktree-unresolved` の1点へ潰れていた（`FLW-REV-019`）。
+
+    戻り値は ``(release_class, undetermined_reason)``。分類できないときは
+    ``release_class`` が ``None`` になり、``undetermined_reason`` に理由を残す
+    （`release_class: null` と4区分の混在を区別可能にする）。
+    """
+    if not chain_valid:
+        return None, "receipt-store-unreadable"
+    if records and records[-1].get("state") in SELF_OPERATION_IN_PROGRESS_STATES:
+        # 自 operation の中断を外部起因の quarantine と誤分類しない（§7）。
+        return None, "self-operation-in-progress"
+
+    has_intent = bool(records)
+    completed_steps = tuple(records[-1].get("completed_steps") or ()) if records else ()
+    mutation_receipts = len(completed_steps)
+    action = (records[-1].get("target") or {}).get("action") if records else None
+    steps = STEPS_BY_OPERATION.get(f"worktree.{action}") if action else None
+    total_mutating_steps = len(steps) if steps else 0
+
+    if action is None:
+        all_postconditions_match = False
+    else:
+        expected_presence = action in _PRESENCE_EXPECTED_ACTIONS
+        all_postconditions_match = (
+            directory_exists == expected_presence
+            and registry_exists == expected_presence
+            and ref_exists == expected_presence
+            and instance_nonce_matches
+        )
+
+    evidence = QuarantineEvidence(
+        chain_valid=chain_valid,
+        completed_steps=completed_steps,
+        instance_nonce_matches=instance_nonce_matches,
+        mutation_receipts=mutation_receipts,
+        all_postconditions_match=all_postconditions_match,
+        has_intent=has_intent,
+    )
+    return classify_quarantine(evidence, total_mutating_steps=total_mutating_steps), None
+
+
+#: compact 表示用の重大度順（重い→軽い）。`None`（INDETERMINATE）が最も重い —
+#: 事実を確定できないことは、確定した4区分のどれよりも保守的に扱う。
+RELEASE_CLASS_SEVERITY: tuple[str | None, ...] = (
+    None, RELEASE_UNRESOLVED, RELEASE_RESUMABLE, RELEASE_CONFIRMED_DONE, RELEASE_NOT_STARTED,
+)
+
+
+def most_severe_release_class(classes: Sequence[str | None]) -> str | None:
+    """target 群の release_class から compact 表示へ出す代表値を選ぶ。"""
+    present = set(classes)
+    for candidate in RELEASE_CLASS_SEVERITY:
+        if candidate in present:
+            return candidate
+    raise ValueError("classes が空である")
 
 
 def may_reissue_guard(*, lease_expired: bool, owner_stopped: bool, children_stopped: bool,

@@ -485,7 +485,7 @@ def test_SI_FLW_064_audit_detects_an_operation_external_worktree(repository):
     try:
         result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
         assert result["code"] == "BLOCKED", result["summary"]
-        assert any(str(outside) in path for path in result["data"]["quarantine"]["targets"])
+        assert any(t["path"] == str(outside) for t in result["data"]["quarantine"]["targets"])
         # `human-stop` は空 NEXT である（`FLW-DSN-016` §8）。解除は operation ではなく
         # reviewer の裁定なので、示せる次の operation は存在しない。
         # 「次に何をするか」は required_human_input と解除区分が担う。
@@ -515,8 +515,11 @@ def test_SYN_011_audit_connects_the_detection_to_quarantine(repository):
         # （`FLW-REV-018:SYN-005`）。
         assert "worktree_state" not in quarantine
         assert quarantine["required"] is True
-        assert quarantine["release_class"] == "worktree-unresolved"
-        assert any(str(outside) in path for path in quarantine["targets"])
+        targets = {t["path"]: t for t in quarantine["targets"]}
+        assert str(outside) in targets
+        # bitz-flow 経由ではなく生の `git worktree add` で作った worktree なので
+        # intent（receipt）が1件も無く、`worktree-unresolved` になる。
+        assert targets[str(outside)]["release_class"] == "worktree-unresolved"
         assert result["data"]["cause"] == "quarantined"
         assert result["data"]["recovery_class"] == "human-stop"
     finally:
@@ -791,8 +794,11 @@ def test_SYN_002_external_deletion_of_a_managed_worktree_is_detected(repository)
     assert result["code"] == "BLOCKED", result["summary"]
     rows = {row["path"]: row for row in result["data"]["items"]}
     assert rows[str(target)]["divergence"] == "directory-missing"
-    assert str(target) in result["data"]["quarantine"]["targets"]
-    assert result["data"]["quarantine"]["release_class"] == "worktree-unresolved"
+    targets = {t["path"]: t for t in result["data"]["quarantine"]["targets"]}
+    assert str(target) in targets
+    # managed worktree なので intent（receipt）はあるが、ディレクトリが外部から
+    # 消えているため postcondition が不一致で unresolved になる。
+    assert targets[str(target)]["release_class"] == "worktree-unresolved"
     assert result["data"]["quarantine"]["binding_findings"]
 
 
@@ -848,13 +854,139 @@ def test_SYN_004_release_class_is_computed_from_the_survey(repository):
     try:
         result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
         assert result["code"] == "BLOCKED"
-        assert result["data"]["quarantine"]["release_class"] == "worktree-unresolved"
+        targets = result["data"]["quarantine"]["targets"]
+        assert any(t["release_class"] == "worktree-unresolved" for t in targets)
         # 分類器が入力に反応することを、同じ関数へ別の証跡を与えて示す
         assert CL.classify_quarantine(
             CL.QuarantineEvidence(True, ("git-worktree-add",), True, 1, True),
             total_mutating_steps=1) == "worktree-confirmed-done"
     finally:
         git(repo, "worktree", "remove", "--force", str(outside))
+
+
+def test_FLW_TSK_098_classify_quarantine_target_reaches_all_four_classes():
+    """陽性対照 — target ごとの実観測入力で§6の4区分すべてへ実際に到達すること。
+
+    以前の `_op_worktree` は `instance_nonce_matches=False` と
+    `all_postconditions_match=False` を固定で渡しており、到達可能な像が
+    `worktree-unresolved` の1点へ潰れていた（`FLW-REV-019`）。receipt log の実際の
+    語彙（`PENDING` / `MUTATING` / `DONE` / `QUARANTINED`）に基づく現実的な記録形で
+    4区分すべてに届くことを示す。
+    """
+    from flowlib import worktree_cleanup as CL
+
+    # not-started: intent はある（QUARANTINED で確定終了）が mutation は0件
+    # （最初の mutating step の前に例外で終端した receipt）。
+    not_started = (
+        {"state": "QUARANTINED", "completed_steps": [], "target": {"action": "create", "path": "/x"}},
+    )
+    assert CL.classify_quarantine_target(
+        chain_valid=True, records=not_started, directory_exists=False,
+        registry_exists=False, ref_exists=False, instance_nonce_matches=True,
+    ) == ("worktree-not-started", None)
+
+    # resumable: QUARANTINED で確定終了しているが completed_steps が step列の
+    # 厳密な prefix（discard の3 step のうち1つだけ完了）。
+    resumable = (
+        {"state": "QUARANTINED", "completed_steps": ["create-retention-ref"],
+         "target": {"action": "discard", "path": "/y"}},
+    )
+    assert CL.classify_quarantine_target(
+        chain_valid=True, records=resumable, directory_exists=False,
+        registry_exists=False, ref_exists=False, instance_nonce_matches=True,
+    ) == ("worktree-resumable", None)
+
+    # confirmed-done: create の唯一の step が完了し（DONE）、postcondition（存在側）も一致。
+    confirmed = (
+        {"state": "DONE", "completed_steps": ["git-worktree-add"],
+         "target": {"action": "create", "path": "/z"}},
+    )
+    assert CL.classify_quarantine_target(
+        chain_valid=True, records=confirmed, directory_exists=True,
+        registry_exists=True, ref_exists=True, instance_nonce_matches=True,
+    ) == ("worktree-confirmed-done", None)
+
+    # unresolved: intent すら無い（bitz-flow が一度も触れていない target）。
+    assert CL.classify_quarantine_target(
+        chain_valid=True, records=(), directory_exists=True,
+        registry_exists=True, ref_exists=True, instance_nonce_matches=True,
+    ) == ("worktree-unresolved", None)
+
+
+def test_FLW_TSK_098_fixed_evidence_collapses_to_a_single_class():
+    """陰性対照 — 固定 evidence を渡すと4区分が1点へ潰れることを検出できること。
+
+    このテストは「潰れを検出できる」ことを示す（是正前の実装が実際にこうだった）。
+    """
+    from flowlib import worktree_cleanup as CL
+
+    fixed_records = (
+        {"state": "DONE", "completed_steps": ["git-worktree-add"],
+         "target": {"action": "create", "path": "/p"}},
+    )
+    outcomes = {
+        CL.classify_quarantine_target(
+            chain_valid=True, records=fixed_records, directory_exists=directory_exists,
+            registry_exists=registry_exists, ref_exists=False,
+            instance_nonce_matches=False,  # 固定 False（是正前の実装のバグそのもの）
+        )[0]
+        for directory_exists in (True, False)
+        for registry_exists in (True, False)
+    }
+    assert outcomes == {"worktree-unresolved"}, (
+        "instance_nonce_matches を固定すると常に worktree-unresolved へ潰れる — "
+        "これが是正対象のバグであり、`_classify_divergent_target` は実観測から渡す"
+    )
+
+
+def test_FLW_TSK_098_indeterminate_reasons_are_not_misclassified_as_external(repository):
+    """§7 INDETERMINATE の閉列挙 — 自 operation の中断・store 不読を外部起因と混同しないこと。"""
+    from flowlib import worktree_cleanup as CL
+
+    for state in CL.SELF_OPERATION_IN_PROGRESS_STATES:
+        records = (
+            {"state": state, "completed_steps": [], "target": {"action": "create", "path": "/w"}},
+        )
+        assert CL.classify_quarantine_target(
+            chain_valid=True, records=records, directory_exists=False,
+            registry_exists=False, ref_exists=False, instance_nonce_matches=True,
+        ) == (None, "self-operation-in-progress")
+
+    assert CL.classify_quarantine_target(
+        chain_valid=False, records=(), directory_exists=False,
+        registry_exists=False, ref_exists=False, instance_nonce_matches=False,
+    ) == (None, "receipt-store-unreadable")
+
+    # E2E — 実際に worktree.create の apply を PENDING で止め、audit がその target を
+    # 外部起因の quarantine 区分（unresolved 等）へ誤分類せず INDETERMINATE にすること。
+    repo, root = repository
+    target = root / "interrupted"
+    base = ["worktree", "create", "--repo", str(repo), "--path", str(target),
+            "--branch", "feat/interrupted", "--worktree-root", str(root)]
+    plan_result, _ = _dispatch(*base)
+    receipts_dir = repo / ".git" / "bitz-flow-v2" / "receipts"
+    receipts_dir.mkdir(parents=True, exist_ok=True)
+    pending_record = {
+        "sequence": 1, "previous_record_digest": None, "state": "PENDING",
+        "completed_steps": [], "operation_id": plan_result["operation_id"],
+        "target": {"action": "create", "path": str(target), "branch": "feat/interrupted",
+                   "worktree_root": str(root), "expected_head": None},
+    }
+    digest = R.sha256_of(R.canonical_bytes(pending_record))
+    (receipts_dir / "000000000001.json").write_text(
+        json.dumps({"record": pending_record, "record_digest": digest}), encoding="utf-8"
+    )
+    # git worktree add を直接叩き、registry と receipt が食い違う divergent target を作る
+    # （create は PENDING のまま止まっており、bitz-flow の apply は通していない）。
+    git(repo, "worktree", "add", "-b", "feat/interrupted-outside", str(target))
+    try:
+        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
+        assert result["code"] == "BLOCKED", result["summary"]
+        targets = {t["path"]: t for t in result["data"]["quarantine"]["targets"]}
+        assert targets[str(target)]["release_class"] is None
+        assert targets[str(target)]["undetermined_reason"] == "self-operation-in-progress"
+    finally:
+        git(repo, "worktree", "remove", "--force", str(target))
 
 
 def test_SYN_005_public_result_uses_only_closed_enum_vocabulary(repository):
