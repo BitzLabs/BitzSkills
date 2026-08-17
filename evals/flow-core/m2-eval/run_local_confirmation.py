@@ -24,7 +24,7 @@ COMMANDS = {
     "codex": ["codex", "exec", "--ignore-user-config", "--ignore-rules", "--ephemeral",
               "--sandbox", "workspace-write", "--json", "--cd", "{repo}", "{prompt}"],
     "antigravity": ["agy", "--new-project", "--print", "{prompt}", "--output-format", "stream-json",
-                    "--mode", "accept-edits"],
+                    "--mode", "accept-edits", "--dangerously-skip-permissions"],
 }
 MARKER = re.compile(
     r"M2_CONFIRMATION_PASS tests=(\d+) test_id_digest=(sha256:[0-9a-f]{64}) "

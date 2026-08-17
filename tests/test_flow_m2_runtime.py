@@ -792,6 +792,8 @@ def test_SYN_002_external_deletion_of_a_managed_worktree_is_detected(repository)
     rows = {row["path"]: row for row in result["data"]["items"]}
     assert rows[str(target)]["divergence"] == "directory-missing"
     assert str(target) in result["data"]["quarantine"]["targets"]
+    assert result["data"]["quarantine"]["release_class"] == "worktree-unresolved"
+    assert result["data"]["quarantine"]["binding_findings"]
 
 
 def test_SYN_002_head_movement_is_reported_but_not_a_violation(repository):
@@ -846,10 +848,7 @@ def test_SYN_004_release_class_is_computed_from_the_survey(repository):
     try:
         result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
         assert result["code"] == "BLOCKED"
-        assert result["data"]["quarantine"]["release_class"] in {
-            "worktree-not-started", "worktree-resumable",
-            "worktree-confirmed-done", "worktree-unresolved",
-        }
+        assert result["data"]["quarantine"]["release_class"] == "worktree-unresolved"
         # 分類器が入力に反応することを、同じ関数へ別の証跡を与えて示す
         assert CL.classify_quarantine(
             CL.QuarantineEvidence(True, ("git-worktree-add",), True, 1, True),
