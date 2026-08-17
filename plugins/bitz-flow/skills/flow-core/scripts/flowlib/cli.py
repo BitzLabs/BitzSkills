@@ -536,14 +536,25 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
             operation=operation, code="BLOCKED", repo=root, summary=str(exc), stage="plan",
         ), R.CompactView()
 
-    # 承認モードは配備が決める（`SI-FLW-061`）。registry があれば署名を要求し、無ければ
-    # plan digest（`--confirm`）と operation_id 由来の単回 nonce だけで承認する。
-    # plan の時点で提示しないと、人間はどちらの承認を求められているか判らない。
-    signed_mode = worktree_runtime.signature_mode_available(plan_value.common_dir)
-    approval_mode = (
-        worktree_runtime.C.MODE_SIGNED_CAPABILITY if signed_mode
-        else worktree_runtime.C.MODE_PLAN_DIGEST
+    # 承認モードは配備の宣言（git 追跡下）が決める（`SI-FLW-061` / `SI-FLW-073`）。
+    # 宣言が signed-capability なのに trusted key registry が使えない場合は
+    # 降格せず BLOCKED にする（`FLW-DSN-016` §4）。plan の時点で提示しないと、
+    # 人間はどちらの承認を求められているか判らない。
+    approval_decision = worktree_runtime.resolve_approval_mode(
+        plan_value.repo, plan_value.common_dir
     )
+    if approval_decision.mode is None:
+        data = R.empty_data()
+        data["evidence"] = list(approval_decision.evidence)
+        data["required_human_input"] = approval_decision.blocked_reason
+        result = R.build_result(
+            operation=operation, code="BLOCKED", repo=root, tool_version=__version__,
+            started_at=started, finished_at=_now(), summary=approval_decision.blocked_reason,
+            data=data, stage="plan", warnings=list(approval_decision.warnings),
+        )
+        return result, R.CompactView()
+    approval_mode = approval_decision.mode
+    signed_mode = approval_mode == worktree_runtime.C.MODE_SIGNED_CAPABILITY
     preconditions = ["plan snapshot一致"]
     preconditions.append(
         "単回Ed25519 capability一致" if signed_mode

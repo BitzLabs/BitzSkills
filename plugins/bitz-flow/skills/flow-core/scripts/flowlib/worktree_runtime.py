@@ -267,6 +267,82 @@ def signature_mode_available(common_dir: str | Path) -> bool:
     return signature_mode_status(common_dir)[0]
 
 
+def approval_mode_declaration_path(repo: str | Path) -> Path:
+    """配備が要求する承認モードの宣言（git 追跡下）。鍵の実体（common-dir、owner-only）
+    とは所在を分離する（`FLW-DSN-016` §4 `SI-FLW-073`）。"""
+    return Path(repo) / ".bitz-flow" / "approval-mode.json"
+
+
+def read_approval_mode_declaration(repo: str | Path) -> tuple[str | None, str | None]:
+    """宣言ファイルを読む。戻り値は ``(mode, error)``。
+
+    宣言ファイルが無ければ ``(None, None)``（宣言なし＝`plan-digest`）。読めない・
+    値が不正な場合は ``(None, エラー文言)`` — 「宣言なし」と区別して呼出側が
+    fail-closed に倒せるようにする。
+    """
+    path = approval_mode_declaration_path(repo)
+    if not path.exists():
+        return None, None
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        return None, f"承認モード宣言を読めない（{type(exc).__name__}）"
+    mode = value.get("mode") if isinstance(value, dict) else None
+    if mode not in C.MODES:
+        return None, f"承認モード宣言の値が不正: {mode!r}"
+    return mode, None
+
+
+@dataclasses.dataclass(frozen=True)
+class ApprovalModeDecision:
+    """承認モードの判定結果。``mode`` が ``None`` なら BLOCKED（降格せず停止）。"""
+
+    mode: str | None
+    blocked_reason: str | None = None
+    evidence: tuple[str, ...] = ()
+    warnings: tuple[str, ...] = ()
+
+
+def resolve_approval_mode(repo: str | Path, common_dir: str | Path) -> ApprovalModeDecision:
+    """配備が要求する承認モードを宣言から読み、鍵の実体の健全性と突き合わせる。
+
+    従来の `signature_mode_status` は trusted key registry の**存在**からモードを
+    推定していた。この推定は registry を削除できる主体に対して承認強度を無言で
+    落とす — `chmod 644` は `BLOCKED` になるが、**registry を削除すると `apply` が
+    `DONE` を返して実 worktree を作っていた**（`FLW-REV-019:OPS-304` / `RSK-204`）。
+    配備意図の宣言（git 追跡下）を鍵の実体（common-dir、owner-only）から分離し、
+    判定を2値から3値へ改める（`FLW-DSN-016` §4）。
+
+    | 宣言 | registry | 判定 |
+    |---|---|---|
+    | `signed-capability` | 健全 | `signed-capability` |
+    | `signed-capability` | 不在・破損・権限不正・空 | `None`（BLOCKED、降格しない） |
+    | 宣言なし | 任意 | `plan-digest`（降格ではなく素の配備） |
+
+    宣言ファイル自体が読めない・値が不正な場合も、意図を確認できない以上
+    黙って `plan-digest` へは倒さず `BLOCKED` にする。
+    """
+    declared_mode, declaration_error = read_approval_mode_declaration(repo)
+    if declaration_error is not None:
+        message = f"承認モード宣言が読めない: {declaration_error}"
+        return ApprovalModeDecision(None, blocked_reason=message, evidence=(message,), warnings=(message,))
+    if declared_mode is None:
+        return ApprovalModeDecision(C.MODE_PLAN_DIGEST)
+    if declared_mode == C.MODE_PLAN_DIGEST:
+        return ApprovalModeDecision(C.MODE_PLAN_DIGEST)
+
+    # declared_mode == C.MODE_SIGNED_CAPABILITY
+    registry_available, registry_degraded = signature_mode_status(common_dir)
+    if registry_available:
+        return ApprovalModeDecision(C.MODE_SIGNED_CAPABILITY)
+    reason = registry_degraded or "trusted key registry が存在しない"
+    message = (
+        "承認モード宣言は signed-capability だが trusted key registry が使えない"
+        f"（{reason}）。降格せず停止する"
+    )
+    return ApprovalModeDecision(None, blocked_reason=message, evidence=(message,), warnings=(message,))
+
+
 def load_trusted_keys(common_dir: str | Path) -> dict[str, str]:
     """固定owner-only registryからtrusted public keyだけを読む。CLI引数で差し替えない。"""
     path = Path(common_dir) / "bitz-flow-v2" / "trusted-worktree-keys.json"
@@ -580,16 +656,18 @@ def apply(
     common = Path(plan_value.common_dir)
     public_keys: Mapping[str, str] = trusted_keys_for_test or {}
     if trusted_keys_for_test is None:
-        available, degraded = signature_mode_status(common)
-        if degraded:
-            # registry を置いている配備の意図は `signed-capability` である。
-            # 読めないからといって `plan-digest` へ落とすと、common-dir へ書ける主体が
-            # 承認強度を無言で外せる（`FLW-REV-018:SYN-008`）。降格せず停止する。
+        # 配備意図の宣言（git 追跡下）を鍵の実体（common-dir）から分離した3値判定
+        # （`FLW-DSN-016` §4 `SI-FLW-073`）。宣言が signed-capability なのに registry が
+        # 使えない場合は降格せず停止する。読めないからといって `plan-digest` へ落とすと、
+        # 宣言または common-dir へ書ける主体が承認強度を無言で外せる
+        # （`FLW-REV-018:SYN-008` / `FLW-REV-019:OPS-304`）。
+        decision = resolve_approval_mode(plan_value.repo, common)
+        if decision.mode is None:
             return RuntimeDecision(
-                "BLOCKED", degraded, remaining_steps=plan_value.effects,
-                evidence=("trusted key registry", "承認モードの降格を拒否した"),
+                "BLOCKED", decision.blocked_reason, remaining_steps=plan_value.effects,
+                evidence=decision.evidence,
             )
-        if available:
+        if decision.mode == C.MODE_SIGNED_CAPABILITY:
             public_keys = load_trusted_keys(common)
     mode = C.MODE_SIGNED_CAPABILITY if public_keys else C.MODE_PLAN_DIGEST
 

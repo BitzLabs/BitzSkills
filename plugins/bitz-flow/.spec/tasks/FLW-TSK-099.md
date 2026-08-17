@@ -2,7 +2,7 @@
 implements: FLW-FR-006
 depends_on: FLW-TSK-098
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_runtime.py, plugins/bitz-flow/skills/flow-core/scripts/flowlib/cli.py, plugins/bitz-flow/skills/flow-core/references/operation-catalog.md, tests/test_flow_m2_runtime.py
-status: pending
+status: done
 ---
 
 ### 承認モードの配備意図を宣言から読み registry 削除を BLOCKED へ倒す
