@@ -403,6 +403,23 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
             return result, R.CompactView(
                 tokens={"worktrees": len(registry), "divergent": 0})
 
+        # managed worktree の binding 不整合は、公開 audit から §6 の観測へ接続する。
+        # receipt が存在しない外部 worktree はこの観測の対象外であり、存在観測だけから
+        # §6 の解除区分を推測しない。
+        binding_findings = [
+            finding
+            for row in rows
+            if row["managed"]
+            for finding in [worktree_capability.audit_external_binding_change(
+                worktree_capability.WorktreeBindingObservation(
+                    directory_exists=row["present"],
+                    registry_exists=row["registered"],
+                    bidirectional_binding_valid=not bool(row["divergence"]),
+                )
+            )]
+            if finding is not None
+        ]
+
         # 検出したら quarantine 相当として停止する（自動修復はしない）。
         # 解除区分は §6 の4区分を `classify_quarantine` で**実データから計算**する。
         # 以前は全フィールド固定リテラルの evidence を渡していたため、
@@ -411,8 +428,8 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
             worktree_cleanup.QuarantineEvidence(
                 chain_valid=survey.readable,
                 completed_steps=survey.completed_steps,
-                # registry と receipt が食い違っている以上、いま観測できる実体が
-                # receipt の記録した instance と同じである保証は無い。
+                # 外部起因の乖離には、plan時の intent / instance nonce の一致を
+                # 証明できない。存在観測だけで worktree-not-started と推測しない。
                 instance_nonce_matches=False,
                 mutation_receipts=survey.mutation_receipts,
                 all_postconditions_match=False,
@@ -428,6 +445,7 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
             "release_class": release_class,
             "reason": reason,
             "targets": divergent,
+            "binding_findings": [finding.reason for finding in binding_findings],
         }
         data["required_human_input"] = (
             f"{release_class}: FLW-DSN-016 §6 の解除区分に従い "

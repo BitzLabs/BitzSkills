@@ -98,6 +98,18 @@ def test_active_manifest_pins_identical_test_id_set_across_platforms():
         assert record["residual_side_effects"] == 0, record["platform"]
 
 
+def test_active_manifest_binds_a_persisted_qualification_artifact():
+    """confirmation は一時入力でなく、内容 digest を持つ qualification を参照する。"""
+    manifest = json.loads(ACTIVE.read_text())
+    reference = manifest["qualification_ref"]
+    source = REPO_ROOT / reference["path"]
+    assert source.is_file()
+    assert reference["digest"].startswith("sha256:")
+    qualification = json.loads(source.read_text())
+    for field in ("executed_at", "expires_at", "compatibility_key", "gate_status"):
+        assert reference[field] == qualification[field]
+
+
 # === SI-FLW-058: 証跡契約（TTL・raw log・operations・evidence_id） =============
 
 
@@ -172,7 +184,10 @@ def test_SI_FLW_058_compatibility_key_covers_the_authorization_core():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     covered = set(module.COMPATIBILITY_INPUTS)
-    for core in ("worktree_capability.py", "guard.py", "worktree_cleanup.py", "recovery.py"):
+    for core in (
+        "worktree_capability.py", "guard.py", "worktree_cleanup.py", "recovery.py",
+        "agy_guard.py",
+    ):
         assert any(path.endswith(core) for path in covered), core
 
 
@@ -229,6 +244,44 @@ def test_SI_FLW_070_gate_verification_rejects_a_stale_qualification_reference(tm
     assert "24 時間" in proc.stdout
 
 
+def test_gate_verification_rejects_a_missing_qualification_source(tmp_path):
+    manifest = json.loads(ACTIVE.read_text())
+    manifest["expires_at"] = (datetime.now(timezone.utc) + timedelta(days=1)) \
+        .isoformat().replace("+00:00", "Z")
+    manifest["qualification_ref"]["executed_at"] = datetime.now(timezone.utc) \
+        .isoformat().replace("+00:00", "Z")
+    manifest["qualification_ref"]["path"] = "evals/flow-core/m2-eval/missing.json"
+    missing = tmp_path / "missing-qualification.json"
+    missing.write_text(json.dumps(manifest), encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, str(RUNNER), "--repo", str(REPO_ROOT), "--verify-for-gate", str(missing)],
+        capture_output=True, text=True, check=False,
+    )
+    assert proc.returncode != 0
+    assert "成果物が存在しない" in proc.stdout
+
+
+def test_m2_antigravity_command_never_bypasses_permissions():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("rlc", RUNNER)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    command = module.COMMANDS["antigravity"]
+    assert "--dangerously-skip-permissions" not in command
+    assert "--sandbox" not in command
+    assert command[command.index("--mode") + 1] == "plan"
+
+
+def test_m2_subject_uses_the_workspace_python_with_pytest_available():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("rlc", RUNNER)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert module.SUBJECT_COMMAND.startswith("python3 {repo}/")
+
+
 def test_SI_FLW_070_gate_verification_accepts_evidence_within_ttl(tmp_path):
     """陰性対照 — TTL 内の証跡は Gate 採用可であること。
 
@@ -240,17 +293,19 @@ def test_SI_FLW_070_gate_verification_accepts_evidence_within_ttl(tmp_path):
     （指紋の一致は時刻に依存しないため、そのまま検査対象に残る）。
     """
     manifest = json.loads(ACTIVE.read_text())
-    now = datetime.now(timezone.utc)
+    qualification = json.loads(
+        (REPO_ROOT / manifest["qualification_ref"]["path"]).read_text()
+    )
+    now = datetime.fromisoformat(qualification["executed_at"].replace("Z", "+00:00")) + timedelta(hours=1)
     manifest["expires_at"] = (now + timedelta(days=1)).isoformat().replace("+00:00", "Z")
-    manifest["qualification_ref"]["executed_at"] = (
-        now - timedelta(hours=1)).isoformat().replace("+00:00", "Z")
     fresh = tmp_path / "fresh.json"
     fresh.write_text(json.dumps(manifest), encoding="utf-8")
-    proc = subprocess.run(
-        [sys.executable, str(RUNNER), "--repo", str(REPO_ROOT), "--verify-for-gate", str(fresh)],
-        capture_output=True, text=True, check=False,
-    )
-    assert proc.returncode == 0, proc.stdout
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("rlc", RUNNER)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert module._verify_for_gate(REPO_ROOT, fresh, current_key(), now) == 0
 
 
 def test_SI_FLW_063_manifest_carries_a_qualification_reference():

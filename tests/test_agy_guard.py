@@ -10,7 +10,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 GUARD = ROOT / "scripts" / "agy_guard.py"
 
-SUBJECT = "python3 evals/flow-core/m2-eval/local_confirmation_subject.py --repo /tmp/repo"
+SUBJECT = "python3 /tmp/repo/evals/flow-core/m2-eval/local_confirmation_subject.py --repo /tmp/repo"
 DESTRUCTIVE = "rm" + " -rf"
 
 
@@ -102,7 +102,9 @@ REAL = {"CommandLine": SUBJECT, "Cwd": "/tmp/repo", "BypassSandbox": False,
 
 def test_allow_covers_the_measured_payload_shape():
     """陰性対照 — 実測した正規形は通ること（厳格化で正規経路を落とさない）。"""
-    assert judge(REAL)["decision"] == "allow"
+    response = judge(REAL)
+    assert response["decision"] == "allow"
+    assert response["permissionOverrides"] == [f"command({SUBJECT})"]
 
 
 def test_allow_refuses_a_sandbox_bypass():

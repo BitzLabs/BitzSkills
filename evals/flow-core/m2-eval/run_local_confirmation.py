@@ -17,6 +17,7 @@ from pathlib import Path
 
 PLATFORMS = ("claude", "codex", "antigravity")
 BINARIES = {"claude": "claude", "codex": "codex", "antigravity": "agy"}
+SUBJECT_COMMAND = "python3 {repo}/evals/flow-core/m2-eval/local_confirmation_subject.py --repo {repo}"
 COMMANDS = {
     "claude": ["claude", "-p", "{prompt}", "--output-format", "stream-json", "--verbose",
                "--setting-sources", "project", "--strict-mcp-config", "--allowedTools",
@@ -24,7 +25,7 @@ COMMANDS = {
     "codex": ["codex", "exec", "--ignore-user-config", "--ignore-rules", "--ephemeral",
               "--sandbox", "workspace-write", "--json", "--cd", "{repo}", "{prompt}"],
     "antigravity": ["agy", "--new-project", "--print", "{prompt}", "--output-format", "stream-json",
-                    "--mode", "accept-edits"],
+                    "--mode", "plan", "--disable-slash-commands"],
 }
 MARKER = re.compile(
     r"M2_CONFIRMATION_PASS tests=(\d+) test_id_digest=(sha256:[0-9a-f]{64}) "
@@ -51,6 +52,10 @@ COMPATIBILITY_INPUTS = (
     f"{_FLOWLIB}/recovery.py",
     # digest の定義元。ここが変われば operation_id も snapshot も変わる
     f"{_FLOWLIB}/result.py",
+    # headless Antigravity の限定 command allow。ここが変われば M2 confirmation の
+    # 実行権限も変わるため、証跡の再利用対象に含める。
+    ".agents/hooks.json",
+    "scripts/agy_guard.py",
     # harness
     "evals/flow-core/m2-eval/local_confirmation_subject.py",
     "evals/flow-core/m2-eval/run_local_confirmation.py",
@@ -109,7 +114,57 @@ def _store_raw_log(out: Path, platform: str, raw: str, now: datetime) -> dict:
     }
 
 
-def _verify_for_gate(manifest_path: Path, current_key: str, now: datetime) -> int:
+def _file_digest(path: Path) -> str:
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _qualification_reference(root: Path, path: Path, qualification: dict) -> dict:
+    """Gate へ提出する qualification の出所を、内容 digest とともに固定する。"""
+    try:
+        relative = path.resolve().relative_to(root)
+        source_path = relative.as_posix()
+    except ValueError:
+        # dry-run の配線検査では pytest の一時成果物を入力にできる。Gate 採用時には
+        # `_verify_qualification_reference()` がリポジトリ外 path を必ず拒否する。
+        source_path = str(path.resolve())
+    return {
+        "path": source_path,
+        "digest": _file_digest(path),
+        "executed_at": qualification.get("executed_at"),
+        "expires_at": qualification.get("expires_at"),
+        "compatibility_key": qualification.get("compatibility_key"),
+        "gate_status": qualification.get("gate_status"),
+    }
+
+
+def _verify_qualification_reference(root: Path, reference: dict) -> list[str]:
+    """manifest が指す qualification の存在・内容・採用可否を再照合する。"""
+    relative = reference.get("path")
+    if not isinstance(relative, str) or not relative:
+        return ["qualification_ref.path が無い"]
+    candidate = (root / relative).resolve()
+    try:
+        candidate.relative_to(root)
+    except ValueError:
+        return ["qualification_ref.path がリポジトリ外を指す"]
+    if not candidate.is_file():
+        return ["qualification_ref.path の成果物が存在しない"]
+    if reference.get("digest") != _file_digest(candidate):
+        return ["qualification_ref.digest が成果物と一致しない"]
+    try:
+        qualification = json.loads(candidate.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ["qualification_ref.path の成果物を読めない"]
+    problems = []
+    for field in ("executed_at", "expires_at", "compatibility_key", "gate_status"):
+        if reference.get(field) != qualification.get(field):
+            problems.append(f"qualification_ref.{field} が成果物と一致しない")
+    if qualification.get("gate_status") != "PASS":
+        problems.append(f"qualification の gate_status={qualification.get('gate_status')}")
+    return problems
+
+
+def _verify_for_gate(root: Path, manifest_path: Path, current_key: str, now: datetime) -> int:
     """Gate へ採用する直前に、証跡がまだ有効かを再照合する（`FLW-NFR-011`）。
 
     起動時の TTL 照合だけでは、採用時点で失効した証跡を止められなかった
@@ -126,6 +181,8 @@ def _verify_for_gate(manifest_path: Path, current_key: str, now: datetime) -> in
     if expires is None or now > expires:
         problems.append(f"confirmation evidence が失効している（expires_at={manifest.get('expires_at')}）")
     reference = manifest.get("qualification_ref") or {}
+    for problem in _verify_qualification_reference(root, reference):
+        problems.append(problem)
     executed = _parse_time(reference.get("executed_at"))
     if executed is None:
         problems.append("qualification_ref.executed_at が無い")
@@ -214,13 +271,14 @@ def main() -> int:
         print(current_key)
         return 0
     if args.verify_for_gate:
-        return _verify_for_gate(Path(args.verify_for_gate), current_key,
+        return _verify_for_gate(root, Path(args.verify_for_gate), current_key,
                                 datetime.now(timezone.utc))
     if not (args.out and args.qualification and args.compatibility_key):
         parser.error("--out, --qualification, and --compatibility-key are required")
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    qualification = json.loads(Path(args.qualification).read_text(encoding="utf-8"))
+    qualification_path = Path(args.qualification).resolve()
+    qualification = json.loads(qualification_path.read_text(encoding="utf-8"))
     if (qualification.get("gate_status") != "PASS"
             or qualification.get("compatibility_key") != args.compatibility_key
             or args.compatibility_key != current_key):
@@ -250,14 +308,19 @@ def main() -> int:
         return 1
     expected_tests, expected_digest, expected_runtime = int(suite.group(1)), suite.group(2), int(suite.group(3))
 
-    prompt = (
-        "M2 local-write confirmationです。委譲やファイル編集をせず、run_commandで"
-        "次の限定コマンドをそのまま1回だけ実行し、完了まで待ってから"
-        "最後のM2_CONFIRMATION_行をそのまま返してください。追加の変更はしないでください。\n"
-        f"python3 evals/flow-core/m2-eval/local_confirmation_subject.py --repo {root}"
-    )
     records = []
     for platform in PLATFORMS:
+        # Antigravity の headless project は caller cwd を引き継がないため絶対 path を使う。
+        # Claude / Codex は対象 repo を cwd にするので、Claude の closed allowedTools と同じ
+        # 相対形を使う。いずれも `local_confirmation_subject` だけを実行する。
+        subject = (SUBJECT_COMMAND.format(repo=root) if platform == "antigravity" else
+                   f"python3 evals/flow-core/m2-eval/local_confirmation_subject.py --repo {root}")
+        prompt = (
+            "M2 local-write confirmationです。委譲やファイル編集をせず、run_commandで"
+            "次の限定コマンドをそのまま1回だけ実行し、完了まで待ってから"
+            "最後のM2_CONFIRMATION_行をそのまま返してください。追加の変更はしないでください。\n"
+            + subject
+        )
         started = time.monotonic()
         if not args.dry_run and shutil.which(BINARIES[platform]) is None:
             record = {"platform": platform, "status": "BLOCKED", "reason": "CLI unavailable"}
@@ -337,11 +400,7 @@ def main() -> int:
         "operations": list(published_operations(root)),
         # Gate 採用時に再照合するための材料（`FLW-NFR-011`。`FLW-REV-017:OPS-402`。
         # 従来は起動時にしか TTL を見ておらず、採用時点での失効を検出できなかった）。
-        "qualification_ref": {
-            "executed_at": qualification.get("executed_at"),
-            "expires_at": qualification.get("expires_at"),
-            "compatibility_key": qualification.get("compatibility_key"),
-        },
+        "qualification_ref": _qualification_reference(root, qualification_path, qualification),
         "gated_operations": sorted(
             f"{d}.{a}" for d, a in __import__("flowlib.cli", fromlist=["cli"])._GATED_HANDLERS
         ),

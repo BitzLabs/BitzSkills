@@ -53,9 +53,7 @@ SHELL_METACHARACTERS = ";|&$`<>(){}[]\\\n\r\t\v\f*?!#'\""
 #: `--repo` に許すのは絶対パスだけ（展開・置換の余地を残さない）。
 SAFE_REPO_ARG = re.compile(r"/[A-Za-z0-9_./-]+")
 
-M2_SUBJECT_PREFIX = [
-    "python3", "evals/flow-core/m2-eval/local_confirmation_subject.py", "--repo",
-]
+M2_SUBJECT_SCRIPT = "/evals/flow-core/m2-eval/local_confirmation_subject.py"
 
 
 def _has_shell_metacharacter(value: str) -> bool:
@@ -70,11 +68,12 @@ def _is_m2_confirmation_subject(command: str) -> bool:
         parts = shlex.split(command)
     except ValueError:
         return False
-    return (
-        len(parts) == 4
-        and parts[:3] == M2_SUBJECT_PREFIX
-        and SAFE_REPO_ARG.fullmatch(parts[3]) is not None
-    )
+    if len(parts) != 4 or parts[2] != "--repo":
+        return False
+    interpreter, script, repo = parts[0], parts[1], parts[3]
+    if not (interpreter == "python3" and SAFE_REPO_ARG.fullmatch(repo)):
+        return False
+    return script == repo + M2_SUBJECT_SCRIPT
 
 
 #: Antigravity の `run_command` が実際に送る field（2026-08-16 に実測）。
@@ -145,9 +144,13 @@ def main() -> None:
             return
 
     if _is_m2_confirmation_payload(payload.get("toolCall", {}).get("args", {})):
+        command = payload["toolCall"]["args"]["CommandLine"]
         print(json.dumps({
             "decision": "allow",
             "reason": "M2 GP-002用の限定confirmation subject（2026-08-14裁定）",
+            # headless 実行でも通常の permission layer がこの正規形だけを許可できるよう、
+            # hook 判定と同じ command を override として明示する。全承認フラグは使わない。
+            "permissionOverrides": [f"command({command})"],
         }, ensure_ascii=False))
         return
 
