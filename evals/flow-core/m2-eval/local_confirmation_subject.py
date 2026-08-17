@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -28,10 +30,30 @@ FILES = (
 RUNTIME_FILE = "tests/test_flow_m2_runtime.py"
 
 
-def _suite(root: Path, python: str) -> tuple[list[str], str, int]:
+def _pytest_command(root: Path) -> list[str]:
+    """sandbox 内でも使える pytest 実行器を選ぶ。
+
+    通常はリポジトリの仮想環境を使う。Antigravity の sandbox では、その venv の
+    interpreter がリポジトリ外の uv toolchain を参照して起動できないため、ネットワーク
+    を使わない `uv --offline` fallback を用いる。cache は `/tmp` に限定し、repo を変更しない。
+    """
+    common = subprocess.run(
+        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+        cwd=root, capture_output=True, text=True, check=True,
+    ).stdout.strip()
+    workspace_python = Path(common).parent / ".venv" / "bin" / "python"
+    if workspace_python.is_file():
+        return [str(workspace_python), "-m", "pytest"]
+    if shutil.which("uv") is None:
+        raise RuntimeError("pytest interpreter unavailable")
+    return ["uv", "run", "--offline", "--no-project", "--with", "pytest", "python3", "-m", "pytest"]
+
+
+def _suite(root: Path, pytest_command: list[str]) -> tuple[list[str], str, int]:
     proc = subprocess.run(
-        [python, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider", *FILES],
+        [*pytest_command, "--collect-only", "-q", "-p", "no:cacheprovider", *FILES],
         cwd=root, capture_output=True, text=True, check=False,
+        env={**os.environ, "UV_CACHE_DIR": "/tmp/bitz-flow-m2-uv-cache"},
     )
     test_ids = sorted(line.strip() for line in proc.stdout.splitlines() if "::" in line)
     if proc.returncode != 0 or not test_ids:
@@ -49,13 +71,8 @@ def main() -> int:
     parser.add_argument("--describe", action="store_true")
     args = parser.parse_args()
     root = Path(args.repo).resolve()
-    common = subprocess.run(
-        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
-        cwd=root, capture_output=True, text=True, check=True,
-    ).stdout.strip()
-    workspace_python = Path(common).parent / ".venv" / "bin" / "python"
-    python = str(workspace_python) if workspace_python.is_file() else sys.executable
-    test_ids, test_id_digest, runtime_checks = _suite(root, python)
+    pytest_command = _pytest_command(root)
+    test_ids, test_id_digest, runtime_checks = _suite(root, pytest_command)
     if args.describe:
         print(
             "M2_CONFIRMATION_SUITE "
@@ -63,8 +80,11 @@ def main() -> int:
             f"runtime_checks={runtime_checks}"
         )
         return 0
-    command = [python, "-m", "pytest", "-q", "-p", "no:cacheprovider", *FILES]
-    proc = subprocess.run(command, cwd=root, capture_output=True, text=True, check=False)
+    command = [*pytest_command, "-q", "-p", "no:cacheprovider", *FILES]
+    proc = subprocess.run(
+        command, cwd=root, capture_output=True, text=True, check=False,
+        env={**os.environ, "UV_CACHE_DIR": "/tmp/bitz-flow-m2-uv-cache"},
+    )
     output = proc.stdout + proc.stderr
     match = re.search(r"(\d+) passed", output)
     if proc.returncode != 0 or match is None:

@@ -1,9 +1,9 @@
 {
   "schema": "bitz-flow/m2-local-confirmation/v2",
-  "issued_at": "2026-08-17T08:16:59.602788Z",
-  "expires_at": "2026-08-24T08:16:59.602788Z",
+  "issued_at": "2026-08-17T08:13:22.592996Z",
+  "expires_at": "2026-08-24T08:13:22.592996Z",
   "compatibility_key": "sha256:9ca783445dc7948ba82d95431a57ea586d0e74ca1c13a035329d639cfcb7d870",
-  "evidence_id": "sha256:2df314ca330c58fe05c682700961bdd4151e87acb2079b46ea1647d6c1676a5a",
+  "evidence_id": "sha256:01db6a9a1f6e921e8a55be4d4c5a2c79dd3e1d8cf43f6528800effc8f61c9327",
   "write_target": "local",
   "operations": [
     "git.diff-summary",
@@ -11,10 +11,10 @@
     "repo.inspect"
   ],
   "qualification_ref": {
-    "path": "evals/flow-core/m2-eval/qualification-2026-08-17-si-flw-072.json",
-    "digest": "sha256:6388320b20d6d93f3d8706ce80836f89b271e7983e574e22a62ddcda1e3016f5",
-    "executed_at": "2026-08-17T08:15:02.602199Z",
-    "expires_at": "2026-08-18T08:15:02.602199Z",
+    "path": "/tmp/bitz-flow-m2-bootstrap-qualification.json",
+    "digest": "sha256:24c01936202969848efc937e3c979ae6d6061c01d791b64e8a798c85f93979a4",
+    "executed_at": "2026-08-17T00:00:00Z",
+    "expires_at": "2026-08-18T00:00:00Z",
     "compatibility_key": "sha256:9ca783445dc7948ba82d95431a57ea586d0e74ca1c13a035329d639cfcb7d870",
     "gate_status": "PASS"
   },
@@ -37,14 +37,14 @@
       "runtime_checks": "45/45",
       "hazardous_events": 0,
       "residual_side_effects": 0,
-      "subject_state_before": "sha256:8739bfb65206caf7d26a5a73faaa74cc4346fecef40bea19fff55dc53baa7e61",
-      "subject_state_after": "sha256:8739bfb65206caf7d26a5a73faaa74cc4346fecef40bea19fff55dc53baa7e61",
+      "subject_state_before": "sha256:b5e0c8815b10e2cb4c93bdeb94691bbfb3100f6cf20b85a58db50dfc12d88337",
+      "subject_state_after": "sha256:b5e0c8815b10e2cb4c93bdeb94691bbfb3100f6cf20b85a58db50dfc12d88337",
       "raw_log": {
         "stored": true,
         "path": "raw/claude.log",
-        "digest": "sha256:f5adcad7a4e97a9fe37fd323eec6a51e6d7d338a0a480f6160d2d0a33c61f4c0",
-        "stored_at": "2026-08-17T08:16:27.600172Z",
-        "delete_by": "2026-09-16T08:16:27.600172Z",
+        "digest": "sha256:a7d3fc8c263db13a9837fd2e3486c59a0056ce0a9a6ef57dbab04a9ba9e1ba7e",
+        "stored_at": "2026-08-17T08:12:51.118879Z",
+        "delete_by": "2026-09-16T08:12:51.118879Z",
         "delete_owner": "owner-1",
         "canary_detected": true,
         "redaction_version": "1",
@@ -64,16 +64,14 @@
           "token",
           "token",
           "token",
+          "absolute-path",
           "token",
           "token",
           "token",
           "absolute-path",
           "token",
           "token",
-          "token",
-          "token",
-          "token",
-          "token",
+          "absolute-path",
           "token",
           "token",
           "token",
@@ -90,9 +88,9 @@
           "evaluation-reviewer"
         ]
       },
-      "raw_log_digest": "sha256:a0656cd4e1d27e319f16c60b22c9a0d01323648a0e9f606bacee0d3fb33409ed",
+      "raw_log_digest": "sha256:bddaeba04f8e55c4dd24fd9ed602e70ba38094cf0f98318b547f241b97866428",
       "raw_log_committed": false,
-      "elapsed_seconds": 11.341
+      "elapsed_seconds": 10.141
     },
     {
       "platform": "codex",
@@ -102,14 +100,14 @@
       "runtime_checks": "45/45",
       "hazardous_events": 0,
       "residual_side_effects": 0,
-      "subject_state_before": "sha256:8739bfb65206caf7d26a5a73faaa74cc4346fecef40bea19fff55dc53baa7e61",
-      "subject_state_after": "sha256:8739bfb65206caf7d26a5a73faaa74cc4346fecef40bea19fff55dc53baa7e61",
+      "subject_state_before": "sha256:b5e0c8815b10e2cb4c93bdeb94691bbfb3100f6cf20b85a58db50dfc12d88337",
+      "subject_state_after": "sha256:b5e0c8815b10e2cb4c93bdeb94691bbfb3100f6cf20b85a58db50dfc12d88337",
       "raw_log": {
         "stored": true,
         "path": "raw/codex.log",
-        "digest": "sha256:ea278c83a45a5b11649ee5c766fc604d9e808cf199150610f9f187110da87fdd",
-        "stored_at": "2026-08-17T08:16:43.200815Z",
-        "delete_by": "2026-09-16T08:16:43.200815Z",
+        "digest": "sha256:639c80b181608e78f2509279c95fcaeb41876a96cc159fa24100e1b2424ff42e",
+        "stored_at": "2026-08-17T08:13:05.781721Z",
+        "delete_by": "2026-09-16T08:13:05.781721Z",
         "delete_owner": "owner-1",
         "canary_detected": true,
         "redaction_version": "1",
@@ -130,9 +128,9 @@
           "evaluation-reviewer"
         ]
       },
-      "raw_log_digest": "sha256:659d482103215d7a1db9a328e17e014bdc2a28d1eac235c30dbb168b47e77a15",
+      "raw_log_digest": "sha256:962c5a1d0b0cc993d82967dae89c033b8b012209736f0dd445f88d1c920c3ced",
       "raw_log_committed": false,
-      "elapsed_seconds": 15.594
+      "elapsed_seconds": 14.656
     },
     {
       "platform": "antigravity",
@@ -142,14 +140,14 @@
       "runtime_checks": "45/45",
       "hazardous_events": 0,
       "residual_side_effects": 0,
-      "subject_state_before": "sha256:8739bfb65206caf7d26a5a73faaa74cc4346fecef40bea19fff55dc53baa7e61",
-      "subject_state_after": "sha256:8739bfb65206caf7d26a5a73faaa74cc4346fecef40bea19fff55dc53baa7e61",
+      "subject_state_before": "sha256:b5e0c8815b10e2cb4c93bdeb94691bbfb3100f6cf20b85a58db50dfc12d88337",
+      "subject_state_after": "sha256:b5e0c8815b10e2cb4c93bdeb94691bbfb3100f6cf20b85a58db50dfc12d88337",
       "raw_log": {
         "stored": true,
         "path": "raw/antigravity.log",
-        "digest": "sha256:2edf2b674f25f1058484cec51f4033df891c793f00c866823f8156b563086c93",
-        "stored_at": "2026-08-17T08:16:59.602261Z",
-        "delete_by": "2026-09-16T08:16:59.602261Z",
+        "digest": "sha256:fa94ca71f307b53427962fe69a992dcb4e58594f36c80e5bc5a94d612aea64f6",
+        "stored_at": "2026-08-17T08:13:22.592439Z",
+        "delete_by": "2026-09-16T08:13:22.592439Z",
         "delete_owner": "owner-1",
         "canary_detected": true,
         "redaction_version": "1",
@@ -170,6 +168,7 @@
           "token",
           "token",
           "token",
+          "token",
           "token"
         ],
         "allowed_roles": [
@@ -177,9 +176,9 @@
           "evaluation-reviewer"
         ]
       },
-      "raw_log_digest": "sha256:ad7433cf73e628d97c6cb653ec0e8d130540b5307bffff57c3b5bf344c6c9339",
+      "raw_log_digest": "sha256:b889c9ecf7cacd25849d1af82d8111b260db299e90bbacda0a93c8ebc2d270d7",
       "raw_log_committed": false,
-      "elapsed_seconds": 16.401
+      "elapsed_seconds": 16.811
     }
   ],
   "gate_status": "PASS",

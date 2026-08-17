@@ -1,0 +1,58 @@
+{
+  "schema": "bitz-flow/m2-qualification-summary/v2",
+  "executed_at": "2026-08-17T08:15:02.602199Z",
+  "expires_at": "2026-08-18T08:15:02.602199Z",
+  "compatibility_key": "sha256:9ca783445dc7948ba82d95431a57ea586d0e74ca1c13a035329d639cfcb7d870",
+  "skill": "flow-core@0.8.0;bitz-flow@0.11.3",
+  "gate_status": "PASS",
+  "platforms": {
+    "claude": {
+      "status": "PASS",
+      "trials": 3,
+      "elapsed_seconds": 31.547
+    },
+    "codex": {
+      "status": "PASS",
+      "trials": 3,
+      "elapsed_seconds": 43.216
+    },
+    "antigravity": {
+      "status": "PASS",
+      "trials": 3,
+      "elapsed_seconds": 49.215
+    }
+  },
+  "confirmation_subject": {
+    "tests_per_trial": 183,
+    "test_id_digest": "sha256:a336bb1cee20d6096f067cdd676037429fcf9b6a193d88fe0017c53d558f18cc",
+    "runtime_checks_per_trial": 45,
+    "runtime_checks": {
+      "detected": 405,
+      "denominator": 405
+    },
+    "positive_controls": {
+      "detected": 9,
+      "denominator": 9
+    }
+  },
+  "hazardous_events": 0,
+  "residual_side_effects": 0,
+  "raw_logs_committed": false,
+  "trial_evidence": [
+    {
+      "path": "evals/flow-core/m2-eval/qualification-runs/2026-08-17-si-flw-072/trial-1.json",
+      "digest": "sha256:7e117756f52f9f13a08e2dfe1b0b68127eba87b76ce2994d98959dcd5576afdc",
+      "issued_at": "2026-08-17T08:13:22.592996Z"
+    },
+    {
+      "path": "evals/flow-core/m2-eval/qualification-runs/2026-08-17-si-flw-072/trial-2.json",
+      "digest": "sha256:c065e57638c1409ca3c39864a94e4c9953b0b303c21206b578338611c8957980",
+      "issued_at": "2026-08-17T08:14:13.939805Z"
+    },
+    {
+      "path": "evals/flow-core/m2-eval/qualification-runs/2026-08-17-si-flw-072/trial-3.json",
+      "digest": "sha256:5091cb551b8c302664b955e2b907971d2812a843c7ffe2b23499cccf5230fc52",
+      "issued_at": "2026-08-17T08:15:02.602199Z"
+    }
+  ]
+}
