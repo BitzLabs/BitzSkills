@@ -290,6 +290,176 @@ def test_SI_FLW_061_signed_mode_requires_a_capability(repository):
     assert not (root / "pd5").exists()
 
 
+# === FLW-TSK-099 (SI-FLW-073): 承認モードの配備意図宣言 =======================
+
+
+def _common_dir(repo: Path) -> Path:
+    return Path(git(repo, "rev-parse", "--path-format=absolute", "--git-common-dir"))
+
+
+def _write_declaration(repo: Path, mode: str | None = "signed-capability", *, raw: str | None = None) -> None:
+    directory = repo / ".bitz-flow"
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / "approval-mode.json"
+    path.write_text(raw if raw is not None else json.dumps({"mode": mode}), encoding="utf-8")
+
+
+def _registry_path(common: Path) -> Path:
+    return common / "bitz-flow-v2" / "trusted-worktree-keys.json"
+
+
+def _registry_healthy(common: Path) -> None:
+    path = _registry_path(common)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text('{"owner-key": "dGVzdA=="}', encoding="utf-8")
+    path.chmod(0o600)
+
+
+def _registry_chmod644(common: Path) -> None:
+    _registry_healthy(common)
+    _registry_path(common).chmod(0o644)
+
+
+def _registry_empty(common: Path) -> None:
+    path = _registry_path(common)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("{}", encoding="utf-8")
+    path.chmod(0o600)
+
+
+def _registry_directory(common: Path) -> None:
+    _registry_path(common).mkdir(parents=True, exist_ok=True)
+
+
+def _registry_symlink(common: Path, elsewhere: Path) -> None:
+    path = _registry_path(common)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    elsewhere.write_text('{"owner-key": "dGVzdA=="}', encoding="utf-8")
+    path.symlink_to(elsewhere)
+
+
+#: registry 不在・symlink は個別テストへ分離する（不在は「宣言なし」と組み合わせる
+#: 別テストがあり、symlink は追加の tmp_path 引数が要るため）。
+_BROKEN_REGISTRY_SETUPS = {
+    "chmod644": _registry_chmod644,
+    "empty": _registry_empty,
+    "directory": _registry_directory,
+}
+
+
+def test_FLW_TSK_099_declared_signed_capability_with_healthy_registry_resolves_signed(repository):
+    """陽性対照 — 宣言 signed-capability × registry 健全 → signed-capability。"""
+    repo, root = repository
+    _write_declaration(repo, "signed-capability")
+    common = _common_dir(repo)
+    _registry_healthy(common)
+    decision = W.resolve_approval_mode(repo, common)
+    assert decision.mode == "signed-capability"
+    assert decision.blocked_reason is None
+
+
+def test_FLW_TSK_099_declared_signed_capability_with_missing_registry_is_blocked(repository):
+    """陽性対照 — 宣言 signed-capability × registry 不在 → BLOCKED（降格しない）。
+
+    `FLW-REV-019` が指摘した経路そのもの — registry を**削除**すると
+    無言で `plan-digest` へ降格していた。
+    """
+    repo, root = repository
+    _write_declaration(repo, "signed-capability")
+    decision = W.resolve_approval_mode(repo, _common_dir(repo))
+    assert decision.mode is None
+    assert decision.blocked_reason
+    assert decision.warnings
+
+
+@pytest.mark.parametrize("name", sorted(_BROKEN_REGISTRY_SETUPS))
+def test_FLW_TSK_099_declared_signed_capability_with_broken_registry_is_blocked(repository, name):
+    """陽性対照 — 宣言 signed-capability × registry {chmod644 / 空 / ディレクトリ} → BLOCKED。"""
+    repo, root = repository
+    _write_declaration(repo, "signed-capability")
+    common = _common_dir(repo)
+    _BROKEN_REGISTRY_SETUPS[name](common)
+    decision = W.resolve_approval_mode(repo, common)
+    assert decision.mode is None, name
+    assert decision.blocked_reason, name
+
+
+def test_FLW_TSK_099_declared_signed_capability_with_symlinked_registry_is_blocked(repository, tmp_path):
+    """陽性対照 — 宣言 signed-capability × registry が symlink → BLOCKED。"""
+    repo, root = repository
+    _write_declaration(repo, "signed-capability")
+    common = _common_dir(repo)
+    _registry_symlink(common, tmp_path / "elsewhere.json")
+    decision = W.resolve_approval_mode(repo, common)
+    assert decision.mode is None
+    assert decision.blocked_reason
+
+
+def test_FLW_TSK_099_no_declaration_is_plan_digest_regardless_of_registry(repository):
+    """陽性対照 — 宣言なし → registry の状態に関わらず plan-digest（降格ではなく素の配備）。"""
+    repo, root = repository
+    common = _common_dir(repo)
+    assert not (repo / ".bitz-flow").exists()
+    assert W.resolve_approval_mode(repo, common).mode == "plan-digest"
+    _registry_healthy(common)
+    assert W.resolve_approval_mode(repo, common).mode == "plan-digest"
+
+
+def test_FLW_TSK_099_declaration_file_broken_json_is_blocked(repository):
+    """宣言ファイルが壊れている場合 → 意図を確認できないため BLOCKED（黙って plan-digest へ倒さない）。"""
+    repo, root = repository
+    _write_declaration(repo, raw="{ not json")
+    decision = W.resolve_approval_mode(repo, _common_dir(repo))
+    assert decision.mode is None
+    assert "宣言" in decision.blocked_reason
+
+
+def test_FLW_TSK_099_declaration_file_invalid_mode_value_is_blocked(repository):
+    """宣言ファイルの mode 値が閉集合外 → BLOCKED。"""
+    repo, root = repository
+    _write_declaration(repo, mode="bogus-mode")
+    decision = W.resolve_approval_mode(repo, _common_dir(repo))
+    assert decision.mode is None
+
+
+def test_FLW_TSK_099_registry_deletion_after_declaration_does_not_silently_downgrade_apply(repository):
+    """**registry 削除経路の回帰テスト**（`FLW-REV-019` の指摘そのもの）。
+
+    以前は配備意図の宣言という概念が無く、registry の削除だけで `apply` が無言で
+    `plan-digest` へ降格し `DONE` を返して実 worktree を作っていた。宣言
+    signed-capability の配備で registry を削除すると `apply` が `BLOCKED` を返し、
+    worktree が作られないことを確認する（この経路の回帰テストが1件も無かったことが
+    `FLW-REV-019:OPS-304` / `RSK-204` の指摘の中身）。
+    """
+    repo, root = repository
+    _write_declaration(repo, "signed-capability")
+    common = _common_dir(repo)
+    _registry_healthy(common)
+
+    path = root / "deleted-registry"
+    plan = W.plan(repo, action="create", path=path, branch="feat/deleted-registry", worktree_root=root)
+    _registry_path(common).unlink()  # 敵対的主体による registry 削除を模す
+
+    result = W.apply(plan, confirm=plan.operation_id)
+    assert result.code == "BLOCKED", result.summary
+    assert not path.exists()
+    assert git(repo, "branch", "--list", "feat/deleted-registry") == ""
+
+
+def test_FLW_TSK_099_cli_plan_returns_blocked_when_declared_mode_cannot_be_honored(repository):
+    """公開 dispatcher 経由でも plan 段階から BLOCKED を返すこと（`--capability-file` の
+    要否が誤って `plan-digest` を名乗らない）。"""
+    repo, root = repository
+    _write_declaration(repo, "signed-capability")  # registry は置かない（不在）
+    result, _ = _dispatch(
+        "worktree", "create", "--repo", str(repo), "--path", str(root / "cli-blocked"),
+        "--branch", "feat/cli-blocked", "--worktree-root", str(root),
+    )
+    assert result["code"] == "BLOCKED", result["summary"]
+    assert result["data"]["required_human_input"]
+    assert result["warnings"]
+
+
 # === SI-FLW-057: mutation境界の例外分類と create/resume の reconcile 経路 =======
 
 
