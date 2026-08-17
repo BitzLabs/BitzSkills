@@ -1,6 +1,6 @@
 ---
 id: FLW-FR-007
-version: 1.2
+version: 1.3
 status: implementing
 domain: tooling
 priority: high
@@ -26,8 +26,13 @@ confidence: high
   - WHEN merged-exact branchを報告する THEN bitz-flowはPR番号、expected SHA、検査snapshotをevidenceとして返すこと SHALL
   - WHEN write前reconnaissanceを実行する THEN bitz-flowはactive benchmark manifestのdeadline、件数上限、absolute byte上限を適用すること SHALL
   - WHEN reconnaissanceが失敗、上限超過、timeout、または`INDETERMINATE`になる THEN bitz-flowはwrite副作用0で`BLOCKED`を返すこと SHALL
+  - WHEN auditが外部起因の乖離を検出する THEN bitz-flowはquarantine解除区分をdivergent targetごとに算出し、集合を代表する単一の解除区分を返さないこと SHALL
+  - WHEN 解除区分を算出する THEN bitz-flowはchain検証結果、完了step、mutation receipt件数、instance nonce照合、postcondition再照合をいずれも実観測から導出し、固定値を入力に用いないこと SHALL
+  - WHEN あるtargetの解除区分の入力を導出できない THEN bitz-flowは当該targetの解除区分を`null`として理由を併記し、他targetの算出を継続すること SHALL
+  - WHEN receipt storeが読めない、storeがディレクトリでない、storeが存在しない、chain検証が破れた、または自operationの未完了痕跡が残る THEN bitz-flowは外部起因と分類せず`result_code: INDETERMINATE`を返すこと SHALL
 - **検証手段**: 同名複数PR、openとmerged混在、remote-only、local-only、head進行、worktree占有、timeout、worktree未展開かつ未pushかつPR不在のbranchの列挙、path重なりの提示をunit testで検証する。
 - **Revision History**:
+  - 1.3 (2026-08-17) 解除区分をdivergent targetごとに実観測から算出する要件と、`INDETERMINATE`へ倒す事象の閉じた列挙を追加（`SI-FLW-072`。裁定参照: .spec/reports/decision-2026-08-17-si-flw-072-073-075.md）
   - 1.2 (2026-08-14) branch_audit_stateを設計の大文字閉集合へ整合し、SI-FLW-054のreconnaissance有限境界とfail-closed要件を追加
   - 1.1 (2026-08-12) audit分類の`indeterminate`を`result_code: INDETERMINATE`へ一本化し（FLW-DSN-016 §2）、着手前のin-flight branch列挙とpath重なり提示を追加（SI-FLW-046。裁定参照: .spec/reports/decision-2026-08-12-si-flw-043-046.md）
   - 1.0 (2026-07-29) accepted SI-FLW-003とFLW-DSN-006/012からdraft起票

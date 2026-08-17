@@ -2,7 +2,7 @@
 implements: FLW-FR-006, FLW-FR-007, FLW-CON-005, FLW-NFR-011
 depends_on: FLW-TSK-089
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/result.py, plugins/bitz-flow/skills/flow-core/scripts/flowlib/cli.py, plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_capability.py, plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_runtime.py, plugins/bitz-flow/skills/flow-core/references/operation-catalog.md, plugins/bitz-flow/skills/flow-core/SKILL.md, plugins/bitz-flow/.spec/design/FLW-DSN-016.md, plugins/bitz-flow/.spec/design/FLW-DSN-014.md, plugins/bitz-flow/.spec/requirements/FLW-FR-006.md, plugins/bitz-flow/.spec/requirements/FLW-FR-007.md, plugins/bitz-flow/.spec/tasks/FLW-TSK-082.md, plugins/bitz-flow/.spec/tasks/FLW-TSK-083.md, plugins/bitz-flow/.spec/tasks/FLW-TSK-084.md, plugins/bitz-flow/.spec/tasks/FLW-TSK-085.md, plugins/bitz-flow/.spec/tasks/FLW-TSK-086.md, plugins/bitz-flow/.spec/tasks/FLW-TSK-087.md, plugins/bitz-flow/.spec/tasks/FLW-TSK-088.md, plugins/bitz-flow/.spec/tasks/FLW-TSK-089.md, plugins/bitz-flow/.spec/tasks/FLW-TSK-090.md, plugins/bitz-flow/.spec/verification, plugins/bitz-flow/.spec/STATE.md, tests/test_flow_m2_runtime.py, evals/flow-core/m2-eval/active-local-confirmation.json, evals/flow-core/m2-eval/run-manifest-m2-remediation.json, plugins/bitz-flow/.claude-plugin/plugin.json, plugins/bitz-flow/plugin.json, plugins/bitz-flow/.codex-plugin/plugin.json
-status: implementing
+status: done
 ---
 
 ### auditの検出をquarantine語彙へ接続し出口条件と証跡の対応を確定する

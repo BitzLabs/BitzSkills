@@ -1,6 +1,6 @@
 ---
 id: FLW-FR-006
-version: 1.0
+version: 1.1
 status: implementing
 domain: workflow
 priority: high
@@ -24,6 +24,11 @@ confidence: high
   - WHEN merged WorkUnitをfinishする THEN bitz-flowはmerge証跡監査後にworktree除去とlocal branch処理を段階別に実行すること SHALL
   - WHEN WorkUnitが失敗状態になる THEN bitz-flowはworktreeと未コミット変更を保持して`failed-retained`を返すこと SHALL
   - WHEN failed-retained WorkUnitをdiscardする THEN bitz-flowは固定manifestの全targetと明示的人間承認が一致した場合だけ列挙targetを除去すること SHALL
+  - WHEN worktree writeの承認モードを決定する THEN bitz-flowは配備が意図する承認モードの宣言をrepositoryの追跡下成果物から読み、trusted key registryの存在からモードを推定しないこと SHALL
+  - WHEN 承認モードの宣言が`signed-capability`でありtrusted key registryが不在、破損、権限不正、または空である THEN bitz-flowは`plan-digest`へ降格せず`BLOCKED`を返し実worktreeを作らないこと SHALL
+  - WHEN 承認モードの宣言が存在しない THEN bitz-flowは`plan-digest`を素の配備として扱い降格として報告しないこと SHALL
+  - WHEN 判定した承認モードが宣言より弱い、または宣言を読めない THEN bitz-flowは降格の理由を`warnings`と`data.evidence`の両方へ記録すること SHALL
 - **検証手段**: path衝突、repo identity、resume不一致、branch-only、finish部分失敗、dirty保全、manifest外target不変をunit testで検証する。
 - **Revision History**:
+  - 1.1 (2026-08-17) 承認モードの配備意図を追跡下の宣言から読み、registry削除時の無言降格を`BLOCKED`へ倒す3値判定を追加（`SI-FLW-073`。裁定参照: .spec/reports/decision-2026-08-17-si-flw-072-073-075.md）
   - 1.0 (2026-07-29) accepted SI-FLW-004とFLW-DSN-006/012からdraft起票

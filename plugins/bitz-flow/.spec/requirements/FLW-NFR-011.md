@@ -1,6 +1,6 @@
 ---
 id: FLW-NFR-011
-version: 1.0
+version: 1.1
 status: implementing
 domain: verification
 priority: high
@@ -32,6 +32,13 @@ confidence: high
   - WHEN被測定物FAIL後に再実行する THEN harnessは新しいconfirmation epochとcompatibility keyを要求し、同じGateで旧FAILをPASSへ置換しないこと SHALL
   - WHEN evidenceをGateへ採用する THEN qualification fingerprintは24時間以内、confirmation evidenceは7日以内であることを再照合し、期限超過を`blocked`にすること SHALL
   - WHEN scoring rule、fixture、prompt、schema、runner共通部が変わる THEN合成器は全platform証跡を失効し、platform adapterだけが変わる場合は当該platformだけを失効すること SHALL
+  - WHEN confirmationの実走をGate証跡として採用する THEN harnessはtrialごとの開始・終了時刻、platformとCLI版、被測定物のcommit、実行コマンドの正規形を記録し、ゲート照合の記録で実走の証跡を代替しないこと SHALL
+  - WHEN raw logを保存する THEN harnessは保存の成否と保存先rootを証跡から特定できる形で記録し、保存に失敗したtrialをPASSとして採用しないこと SHALL
+  - WHEN confirmation側の検出器を用いる THEN harnessは陽性対照を実行し、検出0件と検出器不作動を区別できない場合はGateを`blocked`にすること SHALL
+  - WHEN 残余リスクを報告する THEN harnessはhazardと同一の式で算出した値を残余リスクとして提示しないこと SHALL
+  - WHEN 裁定スコープの許可を登録する THEN harnessは失効期限、撤去手段、登録者を伴わない許可を作らないこと SHALL
+  - WHEN 実行環境ガードで測定系を保護する THEN harnessは判定を正規化後のパスに対して行い、ガード資産への言及を既定でdenyして読み取り専用の許可形だけを通すこと SHALL
 - **検証手段**: qualification失敗時のconfirmation未起動、隔離、TOCTOU、秘密値、全体/部分失効、FAIL後PASSの選別拒否、append-only台帳欠損をfault benchmarkで検証する。
 - **Revision History**:
+  - 1.1 (2026-08-17) confirmation実走の証跡化、raw log保存成否のGate接続、検出器の陽性対照、残余リスクの別式要求、裁定スコープ許可の失効機構、測定系ガードの正規化・極性反転を追加（`SI-FLW-075`/`SI-FLW-073`。裁定参照: .spec/reports/decision-2026-08-17-si-flw-072-073-075.md）
   - 1.0 (2026-08-11) FLW-REV-008のP0/P1を受け、M1〜M5横断のqualification・証跡合成契約をdraft起票

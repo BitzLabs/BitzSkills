@@ -2,12 +2,12 @@
 id: FLW-DSN-016
 title: "M2 worktree safety詳細設計"
 status: active
-version: 2.8
+version: 2.9
 updated: 2026-08-17
 owner: hide
 implements: FLW-FR-006, FLW-FR-007, FLW-NFR-006, FLW-NFR-007, FLW-NFR-011, FLW-NFR-012, FLW-CON-005, FLW-CON-006
-origin: SI-FLW-041, SI-FLW-042, SI-FLW-043, SI-FLW-044, SI-FLW-045, SI-FLW-046, SI-FLW-047, SI-FLW-048, SI-FLW-049, SI-FLW-050, SI-FLW-051, SI-FLW-052, SI-FLW-053, SI-FLW-054, FLW-REV-011, FLW-REV-012, FLW-REV-013, FLW-REV-014
-decision_ref: .spec/reports/decision-2026-08-15-capability-b2.md
+origin: SI-FLW-072, SI-FLW-073, SI-FLW-075, FLW-REV-019, SI-FLW-041, SI-FLW-042, SI-FLW-043, SI-FLW-044, SI-FLW-045, SI-FLW-046, SI-FLW-047, SI-FLW-048, SI-FLW-049, SI-FLW-050, SI-FLW-051, SI-FLW-052, SI-FLW-053, SI-FLW-054, FLW-REV-011, FLW-REV-012, FLW-REV-013, FLW-REV-014
+decision_ref: .spec/reports/decision-2026-08-17-si-flw-072-073-075.md
 ---
 
 # FLW-DSN-016 M2 worktree safety詳細設計
@@ -106,7 +106,7 @@ result schema の operation 名一意性を満たすためである。
 | namespace | field | 値の性質 | closed enum |
 |---|---|---|---|
 | write 機械 | `write_state` | 状態 | `PLANNED, GUARDED, PENDING_INTENT, MUTATING, RECONCILING, DONE, PARTIAL, STALE, QUARANTINED` |
-| operation 結果 | `result_code` | 判定結果 | `DONE, PARTIAL, INDETERMINATE, STALE, BLOCKED, INVALID_INPUT, UNSUPPORTED` |
+| operation 結果 | `result_code` | 判定結果 | `OK, READY, DONE, INVALID_INPUT, BLOCKED, APPROVAL_REQUIRED, UNAVAILABLE, STALE, PARTIAL, UNSUPPORTED, INDETERMINATE` |
 | intent 記録 | `intent_record_state` | 状態 | `PENDING, RECONCILING, PARTIAL, STALE, QUARANTINED, RELEASED` |
 | Gate | `gate_status` | 判定結果 | `PASS, FAIL, BLOCKED` |
 | attempt | `attempt_status` | 判定結果 | `STARTED, PASS, FAIL, ABORTED, UNKNOWN` |
@@ -115,11 +115,57 @@ result schema の operation 名一意性を満たすためである。
 | **branch 単体** | `branch_audit_state` | 状態 | `ACTIVE, MERGED_EXACT, REMOTE_ADVANCED, WORKTREE_IN_USE, ORPHAN` |
 | guard target 種別 | `guard_identity_kind` | 種別 | `index, local-ref, remote-tracking-ref, fetch-head, remote-ref, worktree-dir, worktree-registry` |
 | qualification trial 種別 | `trial_kind` | 種別（**規則の反例**） | `Q-NORMAL, Q-REJECT, Q-CORRUPT` |
-| 診断 cause | `cause` | 分類 | `FLW-DSN-005` の許可語彙（本書で変更しない） |
+| quarantine 解除区分 | `release_class` | 分類 | `worktree-not-started, worktree-resumable, worktree-confirmed-done, worktree-unresolved` |
+| 診断 cause | `cause` | 分類 | `not-repository, invalid-ref, invalid-path, dirty, detached-head, no-upstream, non-fast-forward, conflict, timeout, command-unavailable, permission-denied, snapshot-mismatch, remote-unavailable, result-indeterminate, quarantined` |
 
-三者照合テスト（下記）の対象は**本表の全 namespace** とする。`cause` は値の正を
-`FLW-DSN-005` に置いたままだが、照合対象から外さない — 外した namespace は
-`guard_identity_kind` と同じ経路（設計と実装の乖離が沈黙する）で腐るためである。
+三者照合テスト（下記）の対象は**本表の全 namespace** とする。
+
+**`cause` の委譲を廃止する（`SI-FLW-072`）**。従来この行は値を書かず
+「`FLW-DSN-005` の許可語彙（本書で変更しない）」と委譲していた。これは本節冒頭の
+「委譲文を削り、本表を唯一の正とする」に**自分自身が違反している**状態であり、
+照合対象を宣言しながら照合できる値集合を持たないため、テストが `cause` を走査せず
+沈黙した。実際に `quarantined` は実装定数 `result.ALLOWED_CAUSES` にだけ追加され、
+`schemas/result-v1.schema.json` へ入らないまま公開経路へ出た。以後 `cause` の値の正は
+本表とし、`FLW-DSN-005` は本表を参照する記述に改める（`GP-018` と同じ扱い）。
+
+**`release_class` を namespace として新設する（`SI-FLW-072`）**。§6 の4区分は
+`classify_quarantine` の戻り値として実装され、`worktree.audit` の公開 result
+（`data.quarantine.release_class`）へ出ているにもかかわらず、**schema にも実装定数にも
+語彙が存在しなかった**。`ORPHAN`・`quarantined` と同型の逸脱の3例目であり、
+公開 result に現れる値は例外なく本表と schema を持つ。
+
+**`result_code` の欠落4値を回復する（`SI-FLW-072`）**。本表は7値だったが、
+`schemas/result-v1.schema.json` の `$defs/code` と実装 `result.CODE_EXIT_CODES` は
+いずれも11値であり、`OK` / `READY` / `APPROVAL_REQUIRED` / `UNAVAILABLE` が設計側から
+欠落していた。設計上の namespace 名 `result_code` と schema 上の field 名 `code` は
+同一概念であり、照合表（下記）が対応を機械可読に持つ。
+
+### 実装定数の所在（GP-012 の照合対象を機械的に解決する）
+
+三者照合は「設計の閉集合・schema の enum・実装の定数」を突き合わせるが、実装側の定数が
+どこにあるかを宣言していなかったため、テストが**見つけられた3 namespace だけ**を
+照合していた。所在を本表で宣言し、テストは本表を読んで全 namespace を解決する。
+
+| namespace | schema の所在 | 実装定数の所在 |
+|---|---|---|
+| `write_state` | `result-v1.schema.json` `$defs/write_state` | `flowlib/intent.py` `WRITE_STATES` |
+| `result_code` | `result-v1.schema.json` `$defs/code` | `flowlib/result.py` `CODE_EXIT_CODES`（key 集合） |
+| `intent_record_state` | `intent-record-v1.schema.json` `$defs/intent_record_state` | `flowlib/intent.py` `INTENT_RECORD_STATES`（**新設**） |
+| `gate_status` | `evidence-ledger-entry-v1.schema.json` `$defs/gate_status` | `flowlib/result.py` `GATE_STATUSES`（**新設**） |
+| `attempt_status` | `evidence-ledger-entry-v1.schema.json` `$defs/attempt_status` | `flowlib/result.py` `ATTEMPT_STATUSES`（**新設**） |
+| `work_unit_state` | `worktree-state-v1.schema.json` `$defs/work_unit_state` | `flowlib/worktree.py` `WORK_UNIT_STATES` |
+| `worktree_state` | `worktree-state-v1.schema.json` `$defs/worktree_state` | `flowlib/worktree.py` `WORKTREE_STATES` |
+| `branch_audit_state` | `worktree-state-v1.schema.json` `$defs/branch_audit_state` | `flowlib/worktree.py` `BRANCH_AUDIT_STATES` |
+| `guard_identity_kind` | `result-v1.schema.json` / `intent-record-v1.schema.json` `$defs/guard_identity_kind` | `flowlib/guard.py` `GUARD_IDENTITY_KINDS` |
+| `trial_kind` | `qualification-manifest-v1.schema.json` `$defs/trial_kind` | `flowlib/result.py` `TRIAL_KINDS`（**新設**） |
+| `release_class` | `result-v1.schema.json` `$defs/release_class`（**新設**） | `flowlib/worktree_cleanup.py` `RELEASE_CLASSES`（**新設**） |
+| `cause` | `result-v1.schema.json` `$defs/cause` | `flowlib/result.py` `ALLOWED_CAUSES` |
+
+同じ namespace が複数 schema に現れる場合（`gate_status` / `guard_identity_kind`）は
+**全出現を照合対象**とし、schema 間の不一致も FAIL とする。1 namespace につき実装定数は
+1つに限る — 値を個別の文字列定数として散らしたまま集合定数を持たない状態
+（現状の `intent_record_state` / `gate_status` / `attempt_status` / `trial_kind`）は
+照合不能であり、本表の宣言と同時に集合定数を新設する。
 
 `work_unit_state` は `FLW-DSN-012` の正規 WorkUnit state **12値**と1対1に対応する
 （`planned` → `PLANNED` … `discarded` → `DISCARDED`）。`FLW-REV-011:SYN-001` が指摘した
@@ -152,27 +198,40 @@ result schema の operation 名一意性を満たすためである。
 `FLW-REV-011:SYN-014` は「複数 namespace に現れる語の一覧が 4/10 漏れている」とした。
 **手で維持する一覧は必ず腐る**ため、schema の enum から機械導出する。
 
-導出規則: 全 namespace の closed enum を集め、2つ以上の namespace に現れる値を列挙する。
-本設計時点の導出結果は次のとおり（実装時は生成物と本表を照合する）。
+導出規則: 上の閉集合表の全 namespace から値を集め、**2つ以上の namespace に現れる値**を
+昇順に列挙する。比較は case-sensitive とする（`dirty` と `DIRTY` は別の値であり、
+`cause` の分類語と `worktree_state` の物理状態を同一視しない）。
+
+**「実装時は生成物と本表を照合する」という運用は成立しなかった**（`SI-FLW-072`）。
+本表は手で維持されたまま腐り、13行のうち4行（`MERGED_EXACT` / `REMOTE_ADVANCED` /
+`ORPHAN` / `FAILED_RETAINED` を `worktree_state` の値として列挙していた行）が誤りとなった。
+`worktree_state` は `ABSENT, CLEAN, DIRTY, MISMATCH` の4値であり、これらの語を含まない。
+`ORPHAN` を `worktree_state` に載せた行は §7 の記述と正面から対立していた。
+
+したがって本表を**生成ブロックとして機械が書き込む**。下のマーカー区間はテストが
+閉集合表から再生成して一致を検査し、不一致で FAIL する（人間が手で編集しない）。
+本節が自ら述べた「手で維持する一覧は必ず腐る」を、一覧そのものへ適用する。
+
+<!-- BEGIN GENERATED: multi-namespace-values -->
 
 | 語 | 現れる namespace |
 |---|---|
-| `PLANNED` | `write_state` / `work_unit_state` |
-| `DONE` | `write_state` / `result_code` |
-| `PARTIAL` | `write_state` / `result_code` / `intent_record_state` |
-| `STALE` | `write_state` / `result_code` / `intent_record_state` |
-| `RECONCILING` | `write_state` / `intent_record_state` |
-| `QUARANTINED` | `write_state` / `intent_record_state` |
-| `BLOCKED` | `result_code` / `gate_status` |
-| `PASS` / `FAIL` | `gate_status` / `attempt_status` |
-| `ACTIVE` | `work_unit_state` / `branch_audit_state` |
-| `MERGED_EXACT` | `worktree_state` / `branch_audit_state` |
-| `REMOTE_ADVANCED` | `worktree_state` / `branch_audit_state` |
-| `ORPHAN` | `worktree_state` / `branch_audit_state` |
-| `FAILED_RETAINED` | `work_unit_state` / `worktree_state` |
+| `ACTIVE` | `branch_audit_state` / `work_unit_state` |
+| `BLOCKED` | `gate_status` / `result_code` |
+| `DONE` | `result_code` / `write_state` |
+| `FAIL` | `attempt_status` / `gate_status` |
+| `PARTIAL` | `intent_record_state` / `result_code` / `write_state` |
+| `PASS` | `attempt_status` / `gate_status` |
+| `PLANNED` | `work_unit_state` / `write_state` |
+| `QUARANTINED` | `intent_record_state` / `write_state` |
+| `RECONCILING` | `intent_record_state` / `write_state` |
+| `STALE` | `intent_record_state` / `result_code` / `write_state` |
+
+<!-- END GENERATED: multi-namespace-values -->
 
 `worktree_state` は物理状態だけを表す。branch状態は `branch_audit_state`、PR・工程状態は
-`work_unit_state` が表し、同じ事実を複数namespaceへ複製しない。
+`work_unit_state` が表し、同じ事実を複数namespaceへ複製しない。上表に `worktree_state` の
+値が1つも現れないのは、この分離が守られていることの帰結である。
 
 ### worktree operation 許可決定表（SI-FLW-050）
 
@@ -203,6 +262,19 @@ finishとdiscardは同じprecondition検査を使い、退避なしに未コミ�
 - 実装定数は既存の `GUARD_IDENTITY_KINDS` のように**タプル定数として1箇所に置く**。
   設計文書から機械抽出できる形式（本書の表）を正とし、テストが差分を出す。
 - 多重語一覧（上節）も同テストで生成・照合する。
+
+**照合の網羅性そのものを検査する（`SI-FLW-072`）**。`M2-FLT-023` は上の規定にも
+かかわらず `work_unit_state` / `worktree_state` / `branch_audit_state` の3 namespace
+だけを照合しており、`cause` を走査していなかった。テストが「宣言された namespace のうち
+自分が知っているものだけ」を回る形だと、**照合対象の欠落そのものが沈黙する**。
+
+- テストは閉集合表を**パースして得た namespace 集合**を回す。実装側に定数の解決先が
+  無い namespace は skip せず **FAIL** させる（所在表が未整備であること自体を落とす）。
+- 閉集合表・所在表・実際に照合した namespace の**3集合が完全一致**することを別アサーションで
+  検査する。片方の表に行を足して他方を忘れた場合もここで落ちる。
+- schema 側に `$defs` が無い namespace（新設前の `release_class`）は、所在表に
+  「**新設**」と書かれていても猶予しない。設計が公開 result に出ると決めた値は
+  schema を持つまで green にならない。
 
 ### closed enum への値追加の互換性（GP-015）
 
@@ -343,6 +415,46 @@ case-sensitive と判定するが、worktree-dir は create 時に必ず不在�
 
 モードは result の `data.approval_mode` へ出す。plan の時点で提示しなければ、
 人間はどちらの承認を求められているか判らないため、READY にも含める。
+
+#### 配備意図の宣言を鍵の実体から分離する（`SI-FLW-073`）
+
+上表は**モードを registry の存在から推定している**。この推定は、registry を削除できる
+主体に対して承認強度を無言で落とす。`chmod 644` による破損は `BLOCKED` になるが、
+**registry を削除すると `apply` が `DONE` を返して実 worktree を作る**
+（`FLW-REV-019:OPS-304` / `RSK-204`。実測）。`signature_mode_status` が
+「registry が存在しない配備は素の `plan-digest` であり降格ではない」と規定しているため、
+削除された高保証配備と最初から素の配備が**区別できない**ことが原因である。
+閉じられていたのは非敵対的な破損だけで、想定した脅威主体は削除もできる。
+
+裁定（`decision-2026-08-17-si-flw-072-073-075.md`）により、**配備が意図するモードの宣言**を
+**鍵の実体**から分離する。
+
+| 成果物 | 所在 | 役割 | 削除されたときの可視性 |
+|---|---|---|---|
+| 意図の宣言 | `<repo>/.bitz-flow/approval-mode.json`（**git 追跡下**） | 配備が要求する承認モード | `git status` に現れる |
+| 鍵の実体 | `$GIT_COMMON_DIR/bitz-flow-v2/trusted-worktree-keys.json`（owner-only） | trusted public key | 宣言との突合で検出する |
+
+判定は2値ではなく**3値**とする。
+
+| 宣言 | registry | 判定 |
+|---|---|---|
+| `signed-capability` | 健全 | `signed-capability` で続行 |
+| `signed-capability` | 不在・破損・権限不正・空 | **`BLOCKED`**（降格せず停止する） |
+| 宣言なし | 任意 | `plan-digest`（降格ではなく素の配備） |
+
+宣言を git 追跡下に置く理由は、**削除が作業ツリーの差分として現れる**ことである。
+common-dir 側へ別マーカーを置く案は、マーカー自体が registry と同じ主体に削除可能で
+問題が一段ずれるだけなので採らない。到達最高モードを durable ledger へ記録する案は
+錨としては強いが、台帳の初期化・移設の運用が増えるため V2 では採らない。
+
+**降格を沈黙させない**。判定が宣言より弱いモードへ動いた場合、および宣言が読めない場合は、
+理由を `warnings` と `data.evidence` の**両方**へ必ず残す。`approval_source` は
+実際に使ったモードを名乗る（既存規定の維持）。
+
+**この経路のテストを置く**。`FLW-REV-019` は「registry 削除経路に回帰テストが1件も無い」ことを
+指摘した。宣言あり × registry の {健全 / 不在 / `chmod 644` / 空 / ディレクトリ / symlink} と
+宣言なしの各組合せに**陽性対照**を置き、`BLOCKED` になるべき組合せで `DONE` が返らないことを
+検査する。宣言ファイルが無い・壊れている場合も同様に列挙する。
 
 **なぜ既定で署名を要らないか**（`.spec/reports/investigation-2026-08-15-capability-reduction.md`）:
 
@@ -588,6 +700,61 @@ receipt へ適用し、読み出し時に次を検証する（`FLW-REV-018:SYN-0
 store がディレクトリでない場合・権限で読めない場合も後者である（`FLW-REV-018:SYN-003`）。
 これは同表が禁じる「分類の推測」に当たる。
 
+### `INDETERMINATE` へ倒す事象の閉じた列挙（`SI-FLW-073` / `SI-FLW-072`）
+
+前段の規定にもかかわらず、実装は store が読めない3形を外部起因（`BLOCKED`）と
+誤分類していた（`FLW-REV-019:RSK-208` / `DIN-207`）。「読めない」の判定を
+**store へのアクセス結果と自 operation の状態から**行い、下表を閉じた列挙とする。
+表に無い事象は `INDETERMINATE` 側へ倒す（fail-closed）。
+
+| 観測 | 分類 | 根拠 |
+|---|---|---|
+| store ディレクトリが存在し読める。receipt 0 件 | 外部起因の判定材料として有効 | 「作っていない」ことを肯定的に観測できる |
+| store が `chmod 000` 等で読めない（`PermissionError`） | **`INDETERMINATE`** | 0 件なのか読めないのか区別できない |
+| store ディレクトリ自体が消えている | **`INDETERMINATE`** | 同上。消えた原因を audit は知らない |
+| store がディレクトリでない（file / symlink） | **`INDETERMINATE`** | store 契約違反。中身を主張できない |
+| chain 検証が破れた（欠番・digest 不一致） | **`INDETERMINATE`** | 前段の規定どおり |
+| **自 operation が `PARTIAL` で中断した痕跡がある** | **`INDETERMINATE`** | 内部起因であり外部起因ではない |
+
+最後の行が実装で最も抜けやすい。自分の operation が中断して三者がずれた状態は
+§7 冒頭の表で「bitz-flow 起因」に分類され、対応は reconcile である。これを
+外部起因の `BLOCKED` として扱うと、**自分の未完了を人間の手動操作のせいにする**。
+intent record が `PENDING_INTENT` / `MUTATING` / `RECONCILING` / `PARTIAL` の
+いずれかで残っている target は、外部起因の判定へ入れずに `INDETERMINATE` とする。
+
+### `release_class` は divergent target ごとに実観測から算出する（`SI-FLW-072`）
+
+実装は `classify_quarantine` へ `instance_nonce_matches=False` と
+`all_postconditions_match=False` を**固定で渡していた**。
+`classify_quarantine` の第1条件が `not chain_valid or not instance_nonce_matches` で
+あるため、**到達可能な像は `worktree-unresolved` の1点に潰れる**。survey から何を
+渡しても結果は変わらず、「実観測を渡して計算する」という前段の規定は満たされていない。
+この分類を検査するテストは恒真であった（`FLW-REV-019:RSK-306` / `DIN-304` / `RVC-302`）。
+
+裁定（`decision-2026-08-17-si-flw-072-073-075.md`）により、次を規範とする。
+
+1. **分類の単位は divergent target 個別**とする。survey 全体を1つの evidence へ畳まない。
+   公開 result は `data.quarantine.targets[]` の各要素に `release_class` を持つ。
+2. 各入力は下表の実観測から導出する。**固定リテラルを渡してはならない**。
+
+   | 入力 | 導出元 |
+   |---|---|
+   | `chain_valid` | 当該 target の receipt chain 検証結果 |
+   | `completed_steps` | 当該 target の receipt が記録した完了 step |
+   | `mutation_receipts` | 当該 target の mutation receipt 件数 |
+   | `instance_nonce_matches` | receipt の instance nonce と §5 の instance identity 再導出の照合 |
+   | `all_postconditions_match` | dir / registry / ref / instance nonce の再照合（`divergence` が空であること） |
+
+3. **導出できない入力がある target は分類しない**。その target だけ
+   `release_class: null` と `undetermined_reason` を置き、他の target の分類は続行する。
+   `null` と4区分の混在を result 上で区別できる形にする（推測の禁止は維持する）。
+4. `data.quarantine.release_class`（集合単位の1値）は**廃止する**。集合を代表する
+   1つの分類は存在せず、置けば必ずどれかの target について偽になる。
+   compact 表示は最も重い区分と target 件数を示す。
+5. **恒真テストを禁じる**。分類のテストは、4区分それぞれへ到達する入力を与えて
+   区分が**実際に変わること**を検査する（陽性対照）。加えて、固定入力を渡した場合に
+   像が1点へ潰れることを検出する陰性対照を置く。到達不能な区分が生じたら FAIL とする。
+
 ### 判定しないと決めたこと（裁定 2026-08-16）
 
 出口条件6の「operation 外の変更」は、**worktree の生成・消失・binding 不整合**を指す。
@@ -605,6 +772,57 @@ commit 単位の由来判定は行わない。`commit_causality` の原則は「
 
 未登録 tuple、未知 field、code/cause 矛盾は `human-stop` へ fail-closed にする
 （`FLW-DSN-015` の規定を継承）。
+
+### 失敗系 result の必須 field（`SI-FLW-075`）
+
+recovery matrix は「どの code・状態にどの recovery class を割り当てるか」を定めているが、
+**その割り当てが公開 result に載る**ことを規定していなかった。結果として
+`worktree.*` の write 失敗系は `summary` と `stage` だけを持ち、`cause` も
+`recovery_class` も `next_actions` も空のまま返っていた（`FLW-REV-019:OPS-201`）。
+`FLW-REV-018` の是正で新設した fail-closed の `BLOCKED` も同じ穴を継いでいる。
+運用者は失敗した result から次の行動を決められず、recovery matrix は文書の中にしか無い。
+
+**非 ok の result は例外なく次を持つ。**
+
+| field | 規範 |
+|---|---|
+| `data.cause` | §2 の `cause` 閉集合から選ぶ。下位ツールのメッセージをそのまま置かない |
+| `data.recovery_class` | 本節の matrix から `recovery_for(code, cause)` で決定する |
+| `next_actions` | matrix の「許可 NEXT」を写す。**`human-stop` に限り空**とし、その場合は `data.required_human_input` を必須にする |
+
+`human-stop` の空 NEXT は既存規定であり（解除は reviewer の裁定であって operation ではない）、
+**空であること自体が matrix から導かれた結論**でなければならない。matrix を引かずに
+省略した結果としての空欄と、`human-stop` の空 NEXT を区別するため、
+`recovery_class` が無い非 ok result は**組み立て時に拒否**する。
+
+適用対象は `worktree.*` の失敗系すべてであり、次を含む。
+
+- 入力欠落（`INVALID_INPUT`）、plan 失敗（`BLOCKED`）、承認不足（`APPROVAL_REQUIRED`）
+- apply 中の例外（`BLOCKED`）
+- §4 の承認モード宣言と registry の不整合による `BLOCKED`（新設経路）
+- §7 の `INDETERMINATE`
+
+**検査は個別 operation ではなく組み立て層に置く**。`build_result` が非 ok の result に対して
+上表の充足を検査し、欠けていれば例外にする。呼び出し側ごとにテストを書く方式では、
+新しい失敗経路を足したときに必ず同じ穴が再発する（`ORPHAN` / `quarantined` /
+`release_class` と同型の再発を、失敗系 field でも繰り返さない）。
+
+### audit の出荷面到達性は判定を分離して記録する（`SI-FLW-075`）
+
+`worktree.audit` は公開集合から外れており `UNSUPPORTED` である。したがって
+**運用者は事故の後にこの診断へ到達できない**（`FLW-REV-019:OPS-203`）。
+これは縮退規則3の帰結であって欠陥ではないが、「library として成立している」ことと
+「運用者が到達できる」ことは別の主張であり、両者を混ぜて出口条件6を PASS と書けない。
+
+出口条件6の判定は次の2つを**分離して記録**する。
+
+| 主張 | 意味 | M2 での状態 |
+|---|---|---|
+| library として成立 | 公開 dispatcher を経由したテストで検出と分類が動く | M2 出口の対象 |
+| 運用者が到達できる | 公開集合に `worktree.audit` が入り、事故後に運用者が実行できる | **M2 では成立しない**（縮退規則3） |
+
+後者は M2 出口条件に含めず、Completion Gate の裁定材料として「未到達である」ことを
+明記する。書かなければ、出口条件6の PASS が運用上の到達性を含むと読まれる。
 
 **「前進再開」の経路**: `FLW-DSN-006` は「途中失敗は `PARTIAL` を返し**再実行で前進再開する**」と
 書くが、`FLW-DSN-015` は `PARTIAL` を `reconcile-only` とし残 step 自動 apply を禁止している。
@@ -965,6 +1183,21 @@ GP-004 に対し「§5」とだけ書いて対応済みとし、**原文が求�
 同 issue が accept されて照合が機械化されれば、本表が検査対象になる。
 
 ## Revision History
+
+- 2.9 (2026-08-17) `FLW-REV-019` 由来の `SI-FLW-072` / `SI-FLW-073` / `SI-FLW-075` を反映。
+  §2 は `cause` の委譲を廃して閉集合へ実値を列挙し、`release_class` namespace を新設、
+  `result_code` の欠落4値を回復、実装定数の所在表を追加、多重語一覧を生成ブロック化、
+  照合の網羅性そのものを検査する規定を追加。§4 は承認モードの配備意図を git 追跡下の
+  宣言ファイルへ分離し registry 削除を `BLOCKED` へ倒す3値判定にした。§7 は
+  `INDETERMINATE` へ倒す事象を閉じて列挙し、`release_class` を divergent target ごとに
+  実観測から算出する規範へ改めた（従来は像が1点へ潰れる恒真）。§8 は非 ok result の
+  必須 field（`cause` / `recovery_class` / `next_actions`）を組み立て層で強制する規定と、
+  audit の出荷面到達性を判定から分離する規定を追加。
+  裁定は `.spec/reports/decision-2026-08-17-si-flw-072-073-075.md`。
+
+  なお本 history は 2.3 の次が 2.9 になっている。version 2.4〜2.8 の変更は記録されて
+  おらず、本改訂では遡って再構成しない（`SI-FLW-072` が指摘した「手で維持する一覧は
+  必ず腐る」の同型事例であり、別途起票して扱う）。
 
 - 2.3 (2026-08-14) `FLW-REV-014:SYN-002` / `SYN-003`を反映。support calendarのSSOT・owner・
   未設定時のprune禁止を定義し、frontmatterを実際のspec-issue、レビュー、裁定台帳へ同期。

@@ -3,7 +3,7 @@ id: SI-FLW-075
 raised_by: FLW-REV-019（BIZ-102 / OPS-101 / OPS-103 / RSK-402 / OPS-201 / OPS-203 / OPS-302）
 target: 証跡の粒度と、失敗系 result の空欄
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: 証跡が「記録されている」ことと「主張を裏づけている」ことの乖離を解消する。
 
