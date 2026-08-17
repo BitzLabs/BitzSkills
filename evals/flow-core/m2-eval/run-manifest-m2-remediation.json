@@ -4,7 +4,9 @@
   "reconciliation_ref": ".spec/reports/decision-2026-08-17-m2-integrity-boundary-and-control-plane.md",
   "budget": {
     "mode": "unbounded",
+    "scope": "M2 remediation / FLW-REV-018",
     "decision_ref": ".spec/reports/decision-2026-08-16-flw-rev-018-remediation.md",
+    "exception_ref": ".spec/reports/decision-2026-08-17-si-flw-076-m2-budget-exception.md",
     "recalibration_pending": "FLW-REV-019:GP-006"
   },
   "entries": [

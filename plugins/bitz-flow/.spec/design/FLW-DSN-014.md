@@ -745,6 +745,11 @@ M1実績（6 PR / 7 session）はM2の下振れ根拠にしない。M2はM1に�
 再校正は `FLW-REV-019:GP-006` として未裁定であり、既存の M3 budget を現在の確定値として
 扱わない。
 
+上限なしは `M2 remediation / FLW-REV-018` のmanifest scopeと
+`.spec/reports/decision-2026-08-17-si-flw-076-m2-budget-exception.md` を持つ記録だけに限る。
+M3〜M5は、人間が最大予算と再校正referenceを裁定するまで開始・記録しない。例外以外で上限へ
+達した場合は、従来どおり後続作業を `BLOCKED` にして裁定を要求する。
+
 | 区分 | PR | session | 対象 |
 |---|---:|---:|---|
 | 承認経路の縮退 | 2 | 7 | `SI-FLW-061`（B2） |

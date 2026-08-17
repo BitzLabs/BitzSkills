@@ -31,7 +31,8 @@ def test_FLW_FR_012_summary_reports_unbounded_budget_before_any_entry(tmp_path):
     assert proc.returncode == 0
     summary = json.loads(proc.stdout)
     assert summary == {"used_pr": 0, "known_session": 0, "unknown_session_prs": [],
-                       "budget_mode": "unbounded", "recalibration_pending": "FLW-REV-019:GP-006"}
+                       "budget_mode": "unbounded", "exception_scope": "M2 remediation / FLW-REV-018",
+                       "recalibration_pending": "FLW-REV-019:GP-006"}
 
 
 def test_FLW_FR_012_entries_accumulate_once_and_keep_sessions(tmp_path):
@@ -58,6 +59,18 @@ def test_FLW_FR_012_duplicate_pr_is_rejected_without_overwriting_manifest(tmp_pa
     assert proc.returncode != 0
     assert "すでに記録済み" in proc.stderr
     assert (tmp_path / "run-manifest-m2-remediation.json").read_text() == before
+
+
+def test_FLW_FR_012_unbounded_budget_rejects_a_scope_outside_m2_remediation(tmp_path):
+    target = recorder_in(tmp_path)
+    assert call(target, "--pr", "301", "--issue", "SI-FLW-063", "--sessions", "1").returncode == 0
+    manifest_path = tmp_path / "run-manifest-m2-remediation.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["budget"]["scope"] = "M3 remediation / FLW-REV-018"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    proc = call(target, "--summary")
+    assert proc.returncode != 0
+    assert "M2 remediation" in proc.stderr
 
 
 def test_FLW_FR_012_recording_requires_pr_issue_and_sessions(tmp_path):

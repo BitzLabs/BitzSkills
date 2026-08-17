@@ -62,7 +62,9 @@ def test_FLW_FR_012_m2_manifest_matches_the_current_control_decision() -> None:
     assert manifest["schema"] == "bitz-flow/m2-remediation-run-manifest/v2"
     assert budget == {
         "mode": "unbounded",
+        "scope": "M2 remediation / FLW-REV-018",
         "decision_ref": ".spec/reports/decision-2026-08-16-flw-rev-018-remediation.md",
+        "exception_ref": ".spec/reports/decision-2026-08-17-si-flw-076-m2-budget-exception.md",
         "recalibration_pending": "FLW-REV-019:GP-006",
     }
     assert [entry["pr"] for entry in entries] == [289, 290, 291, 292, 293, 294]

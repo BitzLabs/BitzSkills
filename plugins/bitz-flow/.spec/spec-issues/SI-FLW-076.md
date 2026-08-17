@@ -3,7 +3,7 @@ id: SI-FLW-076
 raised_by: PR #296 self-review / FLW-REV-020
 target: FLW-FR-012 の上限到達時BLOCKED契約と、M2 manifestのunbounded裁定の整合
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `FLW-FR-012` が定める「上限到達時の `BLOCKED` と人間裁定」の契約と、PR #296 が
   導入する M2 remediation manifest の `unbounded`・自動停止なしを整合させる。現在は同一要件の

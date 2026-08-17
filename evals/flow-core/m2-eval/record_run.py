@@ -18,6 +18,8 @@ from pathlib import Path
 MANIFEST = Path(__file__).with_name("run-manifest-m2-remediation.json")
 UNBOUNDED_DECISION = ".spec/reports/decision-2026-08-16-flw-rev-018-remediation.md"
 RECALIBRATION_REF = "FLW-REV-019:GP-006"
+M2_EXCEPTION_SCOPE = "M2 remediation / FLW-REV-018"
+M2_EXCEPTION_DECISION = ".spec/reports/decision-2026-08-17-si-flw-076-m2-budget-exception.md"
 
 
 def _default_manifest() -> dict:
@@ -25,7 +27,9 @@ def _default_manifest() -> dict:
         "schema": "bitz-flow/m2-remediation-run-manifest/v2",
         "budget": {
             "mode": "unbounded",
+            "scope": M2_EXCEPTION_SCOPE,
             "decision_ref": UNBOUNDED_DECISION,
+            "exception_ref": M2_EXCEPTION_DECISION,
             "recalibration_pending": RECALIBRATION_REF,
         },
         "entries": [],
@@ -36,8 +40,12 @@ def _validate(manifest: dict) -> None:
     budget = manifest.get("budget", {})
     if budget.get("mode") != "unbounded":
         raise ValueError("現行のM2是正裁定は unbounded budget でなければならない")
+    if budget.get("scope") != M2_EXCEPTION_SCOPE:
+        raise ValueError("上限なしは M2 remediation / FLW-REV-018 にだけ適用できる")
     if budget.get("decision_ref") != UNBOUNDED_DECISION:
         raise ValueError("上限解除の裁定参照が一致しない")
+    if budget.get("exception_ref") != M2_EXCEPTION_DECISION:
+        raise ValueError("M2限定例外の裁定参照が一致しない")
     if budget.get("recalibration_pending") != RECALIBRATION_REF:
         raise ValueError("次期予算の再校正参照が一致しない")
 
@@ -61,6 +69,7 @@ def _summary(manifest: dict) -> dict:
         "known_session": known_sessions,
         "unknown_session_prs": unknown_session_prs,
         "budget_mode": manifest["budget"]["mode"],
+        "exception_scope": manifest["budget"]["scope"],
         "recalibration_pending": manifest["budget"]["recalibration_pending"],
     }
 
