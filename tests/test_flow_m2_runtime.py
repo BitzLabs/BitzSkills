@@ -22,6 +22,7 @@ sys.path.insert(0, str(SKILL / "scripts"))
 
 from flowlib import result as R  # noqa: E402
 from flowlib import worktree_capability as C  # noqa: E402
+from flowlib import worktree_cleanup  # noqa: E402
 from flowlib import worktree_runtime as W  # noqa: E402
 
 
@@ -1175,3 +1176,151 @@ def test_SYN_005_public_result_uses_only_closed_enum_vocabulary(repository):
         assert "worktree_state" not in payload
     finally:
         git(repo, "worktree", "remove", "--force", str(outside))
+
+
+# === FLW-TSK-100: 非ok result の cause/recovery_class/next_actions 必須化 ======
+
+
+def _assert_non_ok_contract(result: dict) -> None:
+    """`build_result` の非ok契約（cause/recovery_class/next_actions）を検査する。"""
+    assert result["ok"] is False, result
+    data = result["data"]
+    if result["code"] != "APPROVAL_REQUIRED":
+        assert data.get("cause"), result
+    recovery_class = data.get("recovery_class")
+    assert recovery_class in {"retry-read", "reconcile-only", "replan-human", "human-stop"}, result
+    if recovery_class == "human-stop":
+        # 空 NEXT は matrix から導かれた結論であり、required_human_input が伴う。
+        assert result["next_actions"] == [], result
+        assert data.get("required_human_input"), result
+    else:
+        assert result["next_actions"], result
+
+
+def test_FLW_TSK_100_invalid_input_has_the_non_ok_contract(repository):
+    """入力欠落（INVALID_INPUT）。"""
+    repo, root = repository
+    result, _ = _dispatch("worktree", "create", "--repo", str(repo))
+    assert result["code"] == "INVALID_INPUT"
+    _assert_non_ok_contract(result)
+
+
+def test_FLW_TSK_100_plan_conflict_has_the_non_ok_contract(repository):
+    """plan失敗（BLOCKED）— 既存 branch と衝突する create。"""
+    repo, root = repository
+    git(repo, "branch", "feat/taken100")
+    result, _ = _dispatch(
+        "worktree", "create", "--repo", str(repo), "--path", str(root / "taken100"),
+        "--branch", "feat/taken100", "--worktree-root", str(root),
+    )
+    assert result["code"] == "BLOCKED", result["summary"]
+    _assert_non_ok_contract(result)
+
+
+def test_FLW_TSK_100_approval_required_has_the_non_ok_contract(repository):
+    """承認不足（APPROVAL_REQUIRED）— cause 免除でも recovery_class/next_actions は必須。"""
+    repo, root = repository
+    result, _ = _dispatch(
+        "worktree", "create", "--repo", str(repo), "--path", str(root / "approval100"),
+        "--branch", "feat/approval100", "--worktree-root", str(root), "--apply",
+    )
+    assert result["code"] == "APPROVAL_REQUIRED", result["summary"]
+    _assert_non_ok_contract(result)
+
+
+def test_FLW_TSK_100_apply_stale_has_the_non_ok_contract(repository):
+    """apply中の例外系（STALE — confirm 不一致）。"""
+    repo, root = repository
+    _dispatch(
+        "worktree", "create", "--repo", str(repo), "--path", str(root / "stale100"),
+        "--branch", "feat/stale100", "--worktree-root", str(root),
+    )
+    result, _ = _dispatch(
+        "worktree", "create", "--repo", str(repo), "--path", str(root / "stale100"),
+        "--branch", "feat/stale100", "--worktree-root", str(root), "--apply",
+        "--confirm", "sha256:" + "0" * 64,
+    )
+    assert result["code"] == "STALE", result["summary"]
+    _assert_non_ok_contract(result)
+
+
+def test_FLW_TSK_100_apply_exception_has_the_non_ok_contract(repository):
+    """apply中の例外（BLOCKED）— capability-file が読めない。"""
+    repo, root = repository
+    _write_declaration(repo, "signed-capability")
+    _registry_healthy(_common_dir(repo))
+    plan_result, _ = _dispatch(
+        "worktree", "create", "--repo", str(repo), "--path", str(root / "capfail100"),
+        "--branch", "feat/capfail100", "--worktree-root", str(root),
+    )
+    missing_cap = root / "missing-capability.json"
+    result, _ = _dispatch(
+        "worktree", "create", "--repo", str(repo), "--path", str(root / "capfail100"),
+        "--branch", "feat/capfail100", "--worktree-root", str(root), "--apply",
+        "--confirm", plan_result["operation_id"], "--capability-file", str(missing_cap),
+    )
+    assert result["code"] == "BLOCKED", result["summary"]
+    _assert_non_ok_contract(result)
+
+
+def test_FLW_TSK_100_declared_mode_conflict_has_the_non_ok_contract(repository):
+    """承認モード宣言と registry の不整合による BLOCKED。"""
+    repo, root = repository
+    _write_declaration(repo, "signed-capability")  # registry は置かない
+    result, _ = _dispatch(
+        "worktree", "create", "--repo", str(repo), "--path", str(root / "decl100"),
+        "--branch", "feat/decl100", "--worktree-root", str(root),
+    )
+    assert result["code"] == "BLOCKED", result["summary"]
+    _assert_non_ok_contract(result)
+
+
+def test_FLW_TSK_100_audit_indeterminate_has_the_non_ok_contract(repository):
+    """§7 の INDETERMINATE — receipt store がディレクトリでない。"""
+    repo, root = repository
+    outside = root / "store-broken100"
+    git(repo, "worktree", "add", "-b", "feat/store-broken100", str(outside))
+    try:
+        receipts = _receipt_dir(repo)
+        receipts.parent.mkdir(parents=True, exist_ok=True)
+        receipts.write_text("not a directory", encoding="utf-8")
+        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
+        assert result["code"] == "INDETERMINATE", result["summary"]
+        _assert_non_ok_contract(result)
+    finally:
+        git(repo, "worktree", "remove", "--force", str(outside))
+
+
+def test_FLW_TSK_100_audit_quarantine_has_the_non_ok_contract(repository):
+    """quarantine 検出（BLOCKED）。"""
+    repo, root = repository
+    outside = root / "quarantine100"
+    git(repo, "worktree", "add", "-b", "feat/quarantine100", str(outside))
+    try:
+        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
+        assert result["code"] == "BLOCKED", result["summary"]
+        _assert_non_ok_contract(result)
+    finally:
+        git(repo, "worktree", "remove", "--force", str(outside))
+
+
+def test_FLW_TSK_100_partial_and_unsupported_cause_mapping_reaches_the_recovery_matrix():
+    """table駆動 — PARTIAL/STALE/BLOCKED/UNSUPPORTED の粗い cause が `recovery_for` へ届くこと。
+
+    `RuntimeDecision`（`worktree_runtime.apply` の戻り値）は構造化 cause を持たず
+    summary の自由文しか無いため、CLI 層が `decision.code` から cause を決める
+    （`cli._APPLY_FAILURE_CAUSE`）。PARTIAL/STALE は `recovery_for` の既登録 tuple と
+    一致し reconcile-only/replan-human を引き、未登録の BLOCKED/UNSUPPORTED は
+    fail-closed に human-stop へ倒れる。
+    """
+    from flowlib import cli
+
+    expected = {
+        "PARTIAL": "reconcile-only",
+        "STALE": "replan-human",
+        "BLOCKED": "human-stop",
+        "UNSUPPORTED": "human-stop",
+    }
+    for code, recovery_class in expected.items():
+        cause = cli._APPLY_FAILURE_CAUSE[code]
+        assert worktree_cleanup.recovery_for(code, cause).recovery_class == recovery_class, code

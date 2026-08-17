@@ -57,6 +57,7 @@ class _Parser(argparse.ArgumentParser):
                 code="INVALID_INPUT",
                 repo=os.getcwd(),
                 summary="引数を解釈できない",
+                cause="invalid-path",
                 stage="validate",
             ),
             fmt,
@@ -123,6 +124,17 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+# apply() の RuntimeDecision は構造化 cause を持たないため、decision.code から
+# 一意に決まる粗い分類を使う（`FLW-TSK-100`）。PARTIAL/STALE は recovery_for の
+# 既登録 tuple と一致させ、reconcile-only / replan-human を引けるようにする。
+_APPLY_FAILURE_CAUSE = {
+    "PARTIAL": "step-interrupted",
+    "STALE": "snapshot-mismatch",
+    "BLOCKED": "conflict",
+    "UNSUPPORTED": "command-unavailable",
+}
+
+
 # --- result の組み立て -------------------------------------------------------
 
 
@@ -135,9 +147,23 @@ def _simple_result(
     cause: str | None = None,
     stage: str = "inspect",
     next_actions: Sequence[dict] = (),
+    required_human_input: str | None = None,
 ) -> dict[str, Any]:
+    """`build_result` の非ok契約（cause/recovery_class/next_actions）を自動で満たす。
+
+    `recovery_class` は `worktree_cleanup.recovery_for(code, cause)` から決定する
+    （matrix を引かずに手で置かない。`FLW-DSN-016` §8）。未登録の組合せは
+    fail-closed に `human-stop` へ倒れるため、呼出側が明示的に `next_actions` を
+    渡さない限り既定で安全側になる。
+    """
     data = R.empty_data()
     data["cause"] = cause
+    if R.CODE_EXIT_CODES[code] != 0:
+        recovery_class = worktree_cleanup.recovery_for(code, cause).recovery_class
+        data["recovery_class"] = recovery_class
+        if recovery_class == "human-stop":
+            next_actions = ()
+            data["required_human_input"] = required_human_input or summary
     now = _now()
     return R.build_result(
         operation=operation,
@@ -407,7 +433,8 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
         except (worktree_runtime.WorktreeRuntimeError, OSError, ValueError) as exc:
             return _simple_result(
                 operation=operation, code="UNAVAILABLE", repo=root,
-                summary=f"worktree 一覧を取得できない（{type(exc).__name__}）", stage="inspect",
+                summary=f"worktree 一覧を取得できない（{type(exc).__name__}）",
+                cause="command-unavailable", stage="inspect",
             ), R.CompactView()
         registry = worktree_runtime.parse_worktree_registry(proc.stdout)
         survey = worktree_runtime.survey_receipts(_Path(root))
@@ -419,7 +446,9 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
         # receipt を読めないまま比べると、すべての worktree が外部起因に見える。
         if not survey.readable:
             data["cause"] = "result-indeterminate"
-            data["recovery_class"] = "human-stop"
+            data["recovery_class"] = worktree_cleanup.recovery_for(
+                "INDETERMINATE", "result-indeterminate"
+            ).recovery_class
             data["required_human_input"] = (
                 f"{survey.reason}。worktree の由来を判定できない。"
                 "common-dir 配下の bitz-flow-v2/receipts を確認すること"
@@ -523,7 +552,8 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
     if missing:
         return _simple_result(
             operation=operation, code="INVALID_INPUT", repo=root,
-            summary="worktree input missing: " + ", ".join(missing), stage="validate",
+            summary="worktree input missing: " + ", ".join(missing),
+            cause="invalid-path", stage="validate",
         ), R.CompactView()
     try:
         plan_value = worktree_runtime.plan(
@@ -533,7 +563,8 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
         )
     except worktree_runtime.WorktreeRuntimeError as exc:
         return _simple_result(
-            operation=operation, code="BLOCKED", repo=root, summary=str(exc), stage="plan",
+            operation=operation, code="BLOCKED", repo=root, summary=str(exc),
+            cause="conflict", stage="plan",
         ), R.CompactView()
 
     # 承認モードは配備の宣言（git 追跡下）が決める（`SI-FLW-061` / `SI-FLW-073`）。
@@ -545,6 +576,10 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
     )
     if approval_decision.mode is None:
         data = R.empty_data()
+        data["cause"] = "permission-denied"
+        data["recovery_class"] = worktree_cleanup.recovery_for(
+            "BLOCKED", "permission-denied"
+        ).recovery_class
         data["evidence"] = list(approval_decision.evidence)
         data["required_human_input"] = approval_decision.blocked_reason
         result = R.build_result(
@@ -600,11 +635,30 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
         )
     except (OSError, ValueError, KeyError, worktree_runtime.WorktreeRuntimeError) as exc:
         return _simple_result(
-            operation=operation, code="BLOCKED", repo=root, summary=str(exc), stage="apply",
+            operation=operation, code="BLOCKED", repo=root, summary=str(exc),
+            cause="conflict", stage="apply",
         ), R.CompactView()
     data["completed_steps"] = list(decision.completed_steps)
     data["remaining_steps"] = list(decision.remaining_steps)
     data["evidence"] = list(decision.evidence)
+    apply_next_actions: Sequence[dict] = ()
+    if decision.code != "DONE":
+        # 非ok の cause は decision.code から一意に決まる粗い分類である
+        # （`RuntimeDecision` は構造化 cause を持たず summary の自由文しか無いため。
+        # 細分類には worktree_runtime.py 側の変更が要り本タスクの boundary 外）。
+        cause = _APPLY_FAILURE_CAUSE[decision.code]
+        data["cause"] = cause
+        recovery = worktree_cleanup.recovery_for(decision.code, cause)
+        data["recovery_class"] = recovery.recovery_class
+        if recovery.recovery_class == "human-stop":
+            data["required_human_input"] = decision.summary
+        elif decision.code == "PARTIAL":
+            # reconcile-only — 残 step の自動 apply はしない。read-only reconcile
+            # として worktree.audit を提示する（recovery-matrix.md の許可 NEXT）。
+            apply_next_actions = [R.next_action("worktree", "audit")]
+        elif decision.code == "STALE":
+            # replan-human — 旧 operation ID を再利用せず、同じ action を新規 plan する。
+            apply_next_actions = [R.next_action("worktree", args.action)]
     result = R.build_result(
         operation=operation, code=decision.code, repo=root, tool_version=__version__,
         started_at=started, finished_at=_now(), summary=decision.summary,
@@ -615,6 +669,7 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
         # （`SI-FLW-063` / `OPS-303`）。
         approval_source=approval_mode,
         approval_reference=args.approval_ref, stage="apply", data=data,
+        next_actions=apply_next_actions,
     )
     return result, R.CompactView(tokens={"action": args.action, "code": decision.code})
 
@@ -624,8 +679,13 @@ def _failure_result(operation: str, repo: str, failure, started: str) -> dict:
     code = "UNAVAILABLE"
     if failure.cause in ("not-repository", "invalid-path", "invalid-ref"):
         code = "INVALID_INPUT"
+    summary = "操作を完了できない"
     data = R.empty_data()
     data["cause"] = failure.cause
+    recovery_class = worktree_cleanup.recovery_for(code, failure.cause).recovery_class
+    data["recovery_class"] = recovery_class
+    if recovery_class == "human-stop":
+        data["required_human_input"] = summary
     return R.build_result(
         operation=operation,
         code=code,
@@ -633,7 +693,7 @@ def _failure_result(operation: str, repo: str, failure, started: str) -> dict:
         tool_version=__version__,
         started_at=started,
         finished_at=_now(),
-        summary="操作を完了できない",
+        summary=summary,
         data=data,
         stage=failure.stage,
     )
@@ -695,6 +755,7 @@ def main(argv: Sequence[str] | None = None, *, handlers: Mapping | None = None) 
                 code="UNSUPPORTED",
                 repo=cwd,
                 summary="M0 は read-only であり状態変更を受け付けない",
+                cause="command-unavailable",
                 stage="validate",
             ),
             args.format,
@@ -713,6 +774,7 @@ def main(argv: Sequence[str] | None = None, *, handlers: Mapping | None = None) 
                 code="UNSUPPORTED",
                 repo=cwd,
                 summary=summary,
+                cause="command-unavailable",
                 stage="validate",
             ),
             args.format,

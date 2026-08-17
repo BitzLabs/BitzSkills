@@ -2,7 +2,7 @@
 implements: FLW-FR-013
 depends_on: FLW-TSK-096, FLW-TSK-098, FLW-TSK-099
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/result.py, plugins/bitz-flow/skills/flow-core/scripts/flowlib/cli.py, plugins/bitz-flow/skills/flow-core/references/output-contract.md, tests/test_flow_m2_runtime.py, tests/test_flow_result_contract.py
-status: pending
+status: done
 ---
 
 ### 非 ok の result に cause / recovery_class / next_actions を必須化する
