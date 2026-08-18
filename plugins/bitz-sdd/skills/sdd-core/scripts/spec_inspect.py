@@ -1261,7 +1261,7 @@ def integration_preflight(root: Path, target_ref: str) -> tuple[bool, str]:
 
 
 def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None,
-            trace_ctx: dict = None) -> str:
+            trace_ctx: dict = None, global_task_ids: set = None) -> str:
     req_dir = root / ".spec" / "requirements"
     if not req_dir.exists():
         return f"ERROR: {req_dir} が存在しません（BitzSDD レイアウト未初期化）"
@@ -1343,7 +1343,8 @@ def inspect(root: Path, global_reqs: dict = None, delegation_ctx: tuple = None,
     # タスク ID（.spec/tasks/ のファイル名 stem）は既知 ID として幽霊判定から除外する
     # （depends_on / specs からのタスク参照を許すため。成果物レジストリには登録しない — SI-CORE-003）
     tasks_dir = root / ".spec" / "tasks"
-    task_ids = {f.stem for f in tasks_dir.rglob("*.md")} if tasks_dir.exists() else set()
+    local_task_ids = {f.stem for f in tasks_dir.rglob("*.md")} if tasks_dir.exists() else set()
+    task_ids = global_task_ids if global_task_ids is not None else local_task_ids
     ghosts = {rid: srcs for rid, srcs in all_refs.items()
               if rid not in global_reqs and rid not in task_ids}
     waiting = [rid for rid, r in reqs.items()
@@ -1534,6 +1535,16 @@ def main():
     # 複数ワークスペース検査のときだけ、テスト/実装参照をグローバルに集約する（SDD-FR-146）。
     # 単一検査では None のままとし、既存の判定と結果を変えない。
     trace_ctx = build_trace_context(workspaces) if len(workspaces) > 1 else None
+    # 要件 ID と同様に、正規の複数 workspace 検査では全対象のタスク ID を既知化する
+    # （SDD-FR-001）。単一 workspace 検査は従来どおりローカルだけを対象にする。
+    global_task_ids = None
+    if len(workspaces) > 1:
+        global_task_ids = {
+            task.stem
+            for workspace in workspaces
+            for task in (workspace / ".spec" / "tasks").rglob("*.md")
+            if (workspace / ".spec" / "tasks").exists()
+        }
 
     has_error = False
     if args.target_ref:
@@ -1551,7 +1562,7 @@ def main():
         elif args.impact:
             print(impact(w, args.impact, global_reqs))
         else:
-            report = inspect(w, global_reqs, delegation_ctx, trace_ctx)
+            report = inspect(w, global_reqs, delegation_ctx, trace_ctx, global_task_ids)
             out = w / ".spec" / "inspection-report.md"
             if not report.startswith("ERROR"):
                 if not args.check_only:

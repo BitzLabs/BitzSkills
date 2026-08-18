@@ -107,6 +107,36 @@ def test_missing_task_reference_still_detected(tmp_path: Path):
     assert "FAIL" in report
 
 
+def test_multi_workspace_task_reference_resolves_sibling_task(tmp_path: Path):
+    """複数 workspace 検査では、他 workspace の実在タスク ID も既知として扱う。"""
+    root = tmp_path / "root"
+    make_spec(root)
+    plugin = tmp_path / "plugin"
+    plugin_tasks = make_spec(plugin)
+    (plugin_tasks / f"{TASK_ID2}.md").write_text(
+        f"---\nimplements: {REQ_ID}\ndepends_on: []\n---\n\n### sibling task\n",
+        encoding="utf-8",
+    )
+    write_root_test(root, f'"""実装タスクは {TASK_ID2}。"""\n')
+
+    res = run_inspect_multi(root, plugin)
+
+    assert res.returncode == 0, res.stdout
+    assert TASK_ID2 not in section_body(report_of(root), GHOST_SECTION)
+
+
+def test_single_workspace_does_not_resolve_external_task(tmp_path: Path):
+    """単一 workspace 検査では、検査対象外のタスク ID を既知化しない。"""
+    root = tmp_path / "root"
+    make_spec(root)
+    write_root_test(root, f'"""検査対象外の実装タスクは {TASK_ID2}。"""\n')
+
+    res = run_inspect(root)
+
+    assert res.returncode == 1
+    assert TASK_ID2 in section_body(report_of(root), GHOST_SECTION)
+
+
 def test_true_ghost_reference_still_detected(tmp_path: Path):
     """存在しない要件 ID への参照は引き続き幽霊参照として FAIL になる"""
     tasks_dir = make_spec(tmp_path)
