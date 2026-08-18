@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-001
 version: 1.1
-status: implementing
+status: verified
 domain: verification
 priority: medium
 origin: SI-CORE-003（ルート .spec/spec-issues/、実装 v1.4.x からの reverse-derived）
