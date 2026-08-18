@@ -41,3 +41,6 @@ status: accepted
 
 - **依存**: なし。BitzSkills 側は AGENTS.md の締め工程規約
   （「メイン作業ツリーから実行する」）で暫定回避している。
+
+- **実施**: `SDD-FR-146` / `SDD-TSK-060` で実装・検証済み。
+  Git リポジトリ内では repo 相対 workspace ID を使い、リポジトリ外では basename へ縮退する。

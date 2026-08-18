@@ -1,7 +1,7 @@
 ---
 id: SDD-FR-146
 version: 1.0
-status: implementing
+status: verified
 domain: verification
 priority: medium
 origin: SI-SDD-014
