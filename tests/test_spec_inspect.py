@@ -1039,6 +1039,58 @@ def test_SDD_FR_146_root_test_reference_resolves_plugin_requirement(tmp_path: Pa
     assert "root/tests/test_plugin_feature.py" in external
 
 
+def test_SDD_FR_146_reports_use_checkout_independent_workspace_ids(tmp_path: Path):
+    """Git 配下の参照元は repo 相対で表し、checkout 名が違ってもレポートを同一にする。"""
+    source = tmp_path / "source"
+    make_spec(source)
+    root_req = source / ".spec" / "requirements" / f"{REQ_ID}.md"
+    root_req.write_text(
+        f"---\nid: {REQ_ID}\nversion: 1.0\nstatus: approved\n"
+        "domain: verification\nverification_method: unit-test\n---\n\n"
+        f"### {REQ_ID} ルート要件\n",
+        encoding="utf-8",
+    )
+
+    plugin = source / "plugins" / "demo"
+    plugin_req = plugin / ".spec" / "requirements"
+    plugin_req.mkdir(parents=True)
+    (plugin_req / f"{TRACE_REQ_ID}.md").write_text(
+        f"---\nid: {TRACE_REQ_ID}\nversion: 1.0\nstatus: approved\n"
+        "domain: verification\nverification_method: unit-test\n---\n\n"
+        f"### {TRACE_REQ_ID} プラグイン要件\n",
+        encoding="utf-8",
+    )
+    (plugin / ".spec" / "tasks").mkdir(parents=True)
+    write_root_test(source, f'"""{TRACE_REQ_ID}: プラグイン要件の検証。"""\n')
+    plugin_tests = plugin / "tests"
+    plugin_tests.mkdir()
+    (plugin_tests / "test_root_feature.py").write_text(
+        f'"""{REQ_ID}: ルート要件の検証。"""\n', encoding="utf-8"
+    )
+    init_git(source)
+
+    reports = []
+    for checkout_name in ("checkout-alpha", "checkout-beta"):
+        checkout = tmp_path / checkout_name
+        subprocess.run(
+            ["git", "clone", "-q", str(source), str(checkout)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        result = run_inspect_multi(checkout, checkout / "plugins" / "demo")
+        assert result.returncode == 0, result.stdout
+        reports.append((report_of(checkout), report_of(checkout / "plugins" / "demo")))
+
+    assert reports[0] == reports[1]
+    root_external = section_body(reports[0][0], EXTERNAL_SECTION)
+    plugin_external = section_body(reports[0][1], EXTERNAL_SECTION)
+    assert "plugins/demo/tests/test_root_feature.py" in root_external
+    assert "./tests/test_plugin_feature.py" in plugin_external
+    assert "checkout-alpha" not in reports[0][0] + reports[0][1]
+    assert "checkout-beta" not in reports[1][0] + reports[1][1]
+
+
 def test_SDD_FR_146_single_workspace_inspection_is_unchanged(tmp_path: Path):
     """同じ配置でも単一ワークスペース検査では集約せず、未参照のまま報告する。"""
     root, plugin = make_plugin_workspace(tmp_path)

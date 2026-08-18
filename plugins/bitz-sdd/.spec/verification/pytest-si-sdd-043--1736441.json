@@ -1,0 +1,32 @@
+{
+  "command": [
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "tests/test_spec_inspect.py"
+  ],
+  "command_id": "pytest-si-sdd-043",
+  "commit": "173644197eb11a0d020634ec0627975eb8bef7ea",
+  "counts": {
+    "errors": 0,
+    "failed": 0,
+    "passed": 121,
+    "skipped": 0
+  },
+  "cwd": ".",
+  "dirty": false,
+  "exit_code": 0,
+  "observed": {
+    "duration_seconds": 6.5
+  },
+  "recorded_at": "2026-08-18T00:46:06Z",
+  "requirements": [
+    "SDD-FR-146"
+  ],
+  "schema": "bitzsdd/verification-evidence@1",
+  "tool": {
+    "name": "pytest",
+    "version": "9.1.1"
+  }
+}
