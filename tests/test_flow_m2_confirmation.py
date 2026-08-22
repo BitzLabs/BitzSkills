@@ -324,6 +324,42 @@ def test_m2_materialized_runtime_has_pytest_and_is_short_lived(tmp_path):
     assert not runtime_root.exists()
 
 
+def test_m2_materialized_runtime_accepts_setup_python_layout(tmp_path):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("rlc", RUNNER)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    source = module._subject_python(REPO_ROOT)
+    source_site = (
+        source.parent.parent / "lib" /
+        f"python{sys.version_info.major}.{sys.version_info.minor}" / "site-packages"
+    )
+    hosted = tmp_path / "hostedtoolcache" / "Python" / "3.12.14" / "x64"
+    hosted_python = hosted / "bin" / "python"
+    hosted_python.parent.mkdir(parents=True)
+    hosted_python.symlink_to(source)
+    hosted_site = (
+        hosted / "lib" /
+        f"python{sys.version_info.major}.{sys.version_info.minor}" / "site-packages"
+    )
+    hosted_site.parent.mkdir(parents=True)
+    hosted_site.symlink_to(source_site, target_is_directory=True)
+    runtime_parent = tmp_path / "runtime"
+    runtime_parent.mkdir()
+
+    holder, python = module._materialize_subject_runtime(runtime_parent, hosted_python)
+    try:
+        proc = subprocess.run(
+            [str(python), "-m", "pytest", "--version"],
+            capture_output=True, text=True, check=False,
+        )
+        assert proc.returncode == 0
+        assert "pytest" in proc.stdout
+    finally:
+        holder.cleanup()
+
+
 @pytest.mark.parametrize("bound", ["relative/python", "/definitely/missing/python"])
 def test_m2_subject_rejects_an_invalid_bound_python(monkeypatch, bound):
     import importlib.util

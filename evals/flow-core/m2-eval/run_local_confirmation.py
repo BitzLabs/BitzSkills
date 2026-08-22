@@ -554,7 +554,10 @@ def _materialize_subject_runtime(runtime_parent: Path,
         source_venv / "lib" /
         f"python{sys.version_info.major}.{sys.version_info.minor}" / "site-packages"
     )
-    if source_venv.name != ".venv" or not source_site.is_dir():
+    # GitHub Actions の setup-python は pytest を仮想環境ではなく
+    # `/opt/hostedtoolcache/.../x64` 配下へ導入する。呼出元が固定した Python と
+    # 対応する site-packages が存在すれば、ディレクトリ名を `.venv` に限定しない。
+    if not source_python.is_absolute() or not source_python.is_file() or not source_site.is_dir():
         raise RuntimeError("shared pytest runtime is unavailable")
     holder = tempfile.TemporaryDirectory(prefix=".bitz-confirmation-runtime-", dir=runtime_parent)
     runtime = Path(holder.name)
