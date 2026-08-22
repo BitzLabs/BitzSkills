@@ -6,6 +6,8 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RUNNER = REPO_ROOT / "evals/flow-core/m2-eval/run_local_confirmation.py"
 SUBJECT = REPO_ROOT / "evals/flow-core/m2-eval/local_confirmation_subject.py"
@@ -269,7 +271,7 @@ def test_m2_antigravity_command_never_bypasses_permissions():
     spec.loader.exec_module(module)
     command = module.COMMANDS["antigravity"]
     assert "--dangerously-skip-permissions" not in command
-    assert "--sandbox" not in command
+    assert "--sandbox=false" in command
     assert command[command.index("--mode") + 1] == "plan"
 
 
@@ -280,6 +282,96 @@ def test_m2_subject_uses_the_workspace_python_with_pytest_available():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     assert module.SUBJECT_COMMAND.startswith("python3 {repo}/")
+
+    subject_spec = importlib.util.spec_from_file_location("confirmation_subject", SUBJECT)
+    subject_module = importlib.util.module_from_spec(subject_spec)
+    subject_spec.loader.exec_module(subject_module)
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        monkeypatch.setenv("BITZ_CONFIRMATION_PYTHON", sys.executable)
+        assert subject_module._python_for_suite(REPO_ROOT) == sys.executable
+
+
+def test_m2_antigravity_exposes_only_the_shared_virtualenv(tmp_path):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("rlc", RUNNER)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    python = tmp_path / ".venv" / "bin" / "python"
+    command = module._platform_command("antigravity", "prompt", tmp_path, python)
+    assert command[-2:] == ["--add-dir", str(tmp_path)]
+    assert all(".git" not in part for part in command)
+
+
+def test_m2_materialized_runtime_has_pytest_and_is_short_lived(tmp_path):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("rlc", RUNNER)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    source = module._subject_python(REPO_ROOT)
+    holder, python = module._materialize_subject_runtime(tmp_path, source)
+    runtime_root = Path(holder.name)
+    try:
+        proc = subprocess.run(
+            [str(python), "-m", "pytest", "--version"],
+            capture_output=True, text=True, check=False,
+        )
+        assert proc.returncode == 0
+        assert "pytest" in proc.stdout
+    finally:
+        holder.cleanup()
+    assert not runtime_root.exists()
+
+
+def test_m2_materialized_runtime_accepts_setup_python_layout(tmp_path):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("rlc", RUNNER)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    source = module._subject_python(REPO_ROOT)
+    source_site = (
+        source.parent.parent / "lib" /
+        f"python{sys.version_info.major}.{sys.version_info.minor}" / "site-packages"
+    )
+    hosted = tmp_path / "hostedtoolcache" / "Python" / "3.12.14" / "x64"
+    hosted_python = hosted / "bin" / "python"
+    hosted_python.parent.mkdir(parents=True)
+    hosted_python.symlink_to(source)
+    hosted_site = (
+        hosted / "lib" /
+        f"python{sys.version_info.major}.{sys.version_info.minor}" / "site-packages"
+    )
+    hosted_site.parent.mkdir(parents=True)
+    hosted_site.symlink_to(source_site, target_is_directory=True)
+    runtime_parent = tmp_path / "runtime"
+    runtime_parent.mkdir()
+
+    holder, python = module._materialize_subject_runtime(runtime_parent, hosted_python)
+    try:
+        proc = subprocess.run(
+            [str(python), "-m", "pytest", "--version"],
+            capture_output=True, text=True, check=False,
+        )
+        assert proc.returncode == 0
+        assert "pytest" in proc.stdout
+    finally:
+        holder.cleanup()
+
+
+@pytest.mark.parametrize("bound", ["relative/python", "/definitely/missing/python"])
+def test_m2_subject_rejects_an_invalid_bound_python(monkeypatch, bound):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("confirmation_subject", SUBJECT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setenv("BITZ_CONFIRMATION_PYTHON", bound)
+    with pytest.raises(RuntimeError, match="executable absolute path"):
+        module._python_for_suite(REPO_ROOT)
+
+
 
 
 def test_SI_FLW_070_gate_verification_accepts_evidence_within_ttl(tmp_path):
@@ -292,20 +384,8 @@ def test_SI_FLW_070_gate_verification_accepts_evidence_within_ttl(tmp_path):
     ここで検査するのは**判定ロジックが TTL 内の証跡を通すこと**である
     （指紋の一致は時刻に依存しないため、そのまま検査対象に残る）。
     """
-    manifest = json.loads(ACTIVE.read_text())
-    qualification = json.loads(
-        (REPO_ROOT / manifest["qualification_ref"]["path"]).read_text()
-    )
-    now = datetime.fromisoformat(qualification["executed_at"].replace("Z", "+00:00")) + timedelta(hours=1)
-    manifest["expires_at"] = (now + timedelta(days=1)).isoformat().replace("+00:00", "Z")
-    fresh = tmp_path / "fresh.json"
-    fresh.write_text(json.dumps(manifest), encoding="utf-8")
-    import importlib.util
-
-    spec = importlib.util.spec_from_file_location("rlc", RUNNER)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    assert module._verify_for_gate(REPO_ROOT, fresh, current_key(), now) == 0
+    module, manifest_path, key, now = _fresh_gate_evidence(tmp_path)
+    assert module._verify_for_gate(tmp_path, manifest_path, key, now) == 0
 
 
 def test_SI_FLW_063_manifest_carries_a_qualification_reference():
@@ -326,6 +406,77 @@ def _load_runner_module():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def _fresh_gate_evidence(tmp_path):
+    """Gate 採用可能な一時 evidence を生成する（既存 artifact の鮮度には依存しない）。"""
+    module = _load_runner_module()
+    key = current_key()
+    qualification = _fresh_qualification(tmp_path, key)
+    out = tmp_path / "evidence"
+    result = _run(tmp_path, qualification, key, out)
+    assert result.returncode == 0, result.stdout + result.stderr
+    manifest_path = out / "active-manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    coordinator = module.new_coordinator("test-gate-evidence")
+    for record in manifest["platforms"]:
+        platform = record["platform"]
+        attempt, failure = coordinator.issue_attempt()
+        assert failure is None
+        raw = module._store_raw_log(out, platform, f"{platform} output", datetime.now(timezone.utc))
+        assert raw["stored"] is True
+        record["raw_log"] = raw
+        record["raw_log_digest"] = module._digest(f"{platform} output")
+        module._append_attempt(out, {"platform": platform, "status": record["status"]}, attempt=attempt)
+    ledger = out / "attempts.jsonl"
+    manifest["attempt_ledger"] = {
+        "path": "attempts.jsonl",
+        "digest": module._file_digest(ledger),
+        "chain_problems": module.verify_attempt_chain(ledger),
+    }
+    qualification_body = json.loads(qualification.read_text(encoding="utf-8"))
+    manifest["qualification_ref"] = {
+        "path": qualification.name,
+        "digest": module._file_digest(qualification),
+        "executed_at": qualification_body["executed_at"],
+        "expires_at": qualification_body.get("expires_at"),
+        "compatibility_key": qualification_body["compatibility_key"],
+        "gate_status": qualification_body["gate_status"],
+    }
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    now = datetime.fromisoformat(qualification_body["executed_at"].replace("Z", "+00:00")) + timedelta(hours=1)
+    return module, manifest_path, key, now
+
+
+def test_FLW_TSK_105_gate_verification_rejects_missing_raw_log(tmp_path):
+    module, manifest_path, key, now = _fresh_gate_evidence(tmp_path)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    raw = manifest["platforms"][0]["raw_log"]
+    (Path(raw["root"]) / Path(raw["path"]).name).unlink()
+
+    assert module._verify_for_gate(tmp_path, manifest_path, key, now) == 1
+
+
+def test_FLW_TSK_105_gate_verification_rejects_missing_attempt_ledger(tmp_path):
+    module, manifest_path, key, now = _fresh_gate_evidence(tmp_path)
+    (manifest_path.parent / "attempts.jsonl").unlink()
+
+    assert module._verify_for_gate(tmp_path, manifest_path, key, now) == 1
+
+
+def test_FLW_TSK_105_gate_verification_rejects_a_plaintext_canary(tmp_path):
+    module, manifest_path, key, now = _fresh_gate_evidence(tmp_path)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    raw = manifest["platforms"][0]["raw_log"]
+    path = Path(raw["root"]) / Path(raw["path"]).name
+    path.write_text(
+        path.read_text(encoding="utf-8") + f"{module.CANARY_PREFIX}-claude\n",
+        encoding="utf-8",
+    )
+    raw["digest"] = module._file_digest(path)
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    assert module._verify_for_gate(tmp_path, manifest_path, key, now) == 1
 
 
 def test_raw_log_storage_failure_is_not_counted_as_pass():

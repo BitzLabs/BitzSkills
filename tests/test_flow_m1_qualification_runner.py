@@ -211,6 +211,35 @@ def test_cli_dry_run_writes_artifacts(tmp_path, repo):
         assert (out / f"qualification-{platform}.json").exists()
 
 
+def test_cli_binds_aggregate_times_and_compatibility_key(tmp_path, repo):
+    out = tmp_path / "out"
+    key = "sha256:" + "a" * 64
+    proc = subprocess.run(
+        [sys.executable, str(RUNNER), "--dry-run", "--repo", str(repo), "--out", str(out),
+         "--compatibility-key", key],
+        capture_output=True, text=True,
+    )
+    assert proc.returncode == 0, proc.stderr
+    summary = json.loads((out / "summary.json").read_text(encoding="utf-8"))
+    manifests = [
+        json.loads((out / f"qualification-{platform}.json").read_text(encoding="utf-8"))
+        for platform in Q.PLATFORMS
+    ]
+    assert summary["compatibility_key"] == key
+    assert summary["executed_at"] == max(row["completed_at"] for row in manifests)
+    assert summary["expires_at"] == min(row["expires_at"] for row in manifests)
+
+
+def test_cli_rejects_invalid_compatibility_key(tmp_path, repo):
+    proc = subprocess.run(
+        [sys.executable, str(RUNNER), "--dry-run", "--repo", str(repo),
+         "--out", str(tmp_path / "out"), "--compatibility-key", "sha256:BAD"],
+        capture_output=True, text=True,
+    )
+    assert proc.returncode != 0
+    assert "--compatibility-key" in proc.stderr
+
+
 def test_cli_can_target_a_single_platform(tmp_path, repo):
     out = tmp_path / "out"
     proc = subprocess.run(

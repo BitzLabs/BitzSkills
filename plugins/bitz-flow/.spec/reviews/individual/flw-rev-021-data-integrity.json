@@ -1,0 +1,43 @@
+{
+  "perspective": "data-integrity",
+  "dimensions": [
+    {
+      "name": "トランザクション安全性",
+      "weight": 0.4,
+      "score": 2,
+      "findings": [
+        {
+          "id": "DIN-101",
+          "severity": "major",
+          "location": "FLW-DSN-017:§1・§3",
+          "title": "再照合からmutationまでの原子境界がない",
+          "description": "差替えを検出できない窓が残る。",
+          "recommendation": "dirfd/FD identityとmutationを同じ信頼境界へ結ぶ。"
+        }
+      ]
+    },
+    {
+      "name": "データ整合性",
+      "weight": 0.35,
+      "score": 2,
+      "findings": [
+        {
+          "id": "DIN-201",
+          "severity": "major",
+          "location": "FLW-DSN-017:§1・§2",
+          "title": "index追跡は配備意図の不変性を証明しない",
+          "description": "staged-only宣言もboundになり得る。",
+          "recommendation": "HEADまたはreviewed treeへ束縛する。"
+        }
+      ]
+    },
+    {
+      "name": "スキーマ設計品質",
+      "weight": 0.25,
+      "score": 3,
+      "findings": []
+    }
+  ],
+  "weighted_score": 2.25,
+  "summary": "閉集合とdigest方針は妥当だが、信頼根と原子性が不足。"
+}

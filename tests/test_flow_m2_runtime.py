@@ -149,6 +149,25 @@ def test_FLW_CON_006_crash_before_first_mutation_quarantines_nonce_without_side_
     assert W.apply(plan, confirm=plan.operation_id, capability=cap, trusted_keys_for_test=keys).code == "BLOCKED"
 
 
+def test_FLW_TSK_104_target_guard_blocks_a_competing_apply_until_mutation_finishes(repository):
+    """同じ worktree target の別 operation は、PENDING 後も副作用前に止まる。"""
+    repo, root = repository
+    target = root / "guarded"
+    first = W.plan(repo, action="create", path=target, branch="feat/guarded-a", worktree_root=root)
+    competing = W.plan(repo, action="create", path=target, branch="feat/guarded-b", worktree_root=root)
+    competing_results = []
+
+    def attempt_competing_apply(_step):
+        competing_results.append(W.apply(competing, confirm=competing.operation_id))
+
+    result = W.apply(first, confirm=first.operation_id, step_hook=attempt_competing_apply)
+
+    assert result.code == "DONE", result.summary
+    assert [item.code for item in competing_results] == ["BLOCKED"]
+    assert target.is_dir()
+    assert W._TARGET_GUARDS.held_targets() == []
+
+
 def test_FLW_CON_005_state_change_after_plan_is_stale_and_has_no_git_side_effect(repository):
     repo, root = repository
     path = root / "occupied"

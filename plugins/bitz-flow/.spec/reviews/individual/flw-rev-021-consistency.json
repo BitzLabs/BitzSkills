@@ -1,0 +1,43 @@
+{
+  "perspective": "consistency",
+  "dimensions": [
+    {
+      "name": "構造整合",
+      "weight": 0.35,
+      "score": 5,
+      "findings": []
+    },
+    {
+      "name": "トレーサビリティ",
+      "weight": 0.35,
+      "score": 2,
+      "findings": [
+        {
+          "id": "RVC-201",
+          "severity": "major",
+          "location": "FLW-NFR-013:frontmatter",
+          "title": "派生元が承認モード契約の正と一致しない",
+          "description": "FLW-NFR-011だけでは直接の既存契約を辿れない。",
+          "recommendation": "FLW-FR-006とFLW-NFR-007を一次参照にする。"
+        }
+      ]
+    },
+    {
+      "name": "用語一貫性",
+      "weight": 0.3,
+      "score": 4,
+      "findings": [
+        {
+          "id": "RVC-301",
+          "severity": "minor",
+          "location": "FLW-NFR-013:EARS 1",
+          "title": "実行者所有の主体が未定義",
+          "description": "複数プラットフォームで同じ所有者判定を実装できない。",
+          "recommendation": "OS有効UID等の判定主体を定義する。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 3.35,
+  "summary": "構造は良好だが、系譜と所有者用語の是正が必要。"
+}

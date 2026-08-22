@@ -1,0 +1,11 @@
+{
+  "perspective": "operations",
+  "dimensions": [
+    {"name": "監視・可観測性", "weight": 0.30, "score": 4, "findings": []},
+    {"name": "災害復旧", "weight": 0.30, "score": 4, "findings": []},
+    {"name": "セキュリティ態勢", "weight": 0.20, "score": 4, "findings": []},
+    {"name": "デプロイ安全性", "weight": 0.20, "score": 4, "findings": []}
+  ],
+  "weighted_score": 4.0,
+  "summary": "SLI、runbook境界、crash隔離、sentinel-aware baselineとpromotion barrierにより、運用可能性と保証境界が明確になった。新規findingはない。"
+}

@@ -1,0 +1,302 @@
+{
+  "schema_version": 2,
+  "review_id": "FLW-REV-021",
+  "verdict": "FAIL",
+  "aggregate_score": 2.49,
+  "perspective_scores": {
+    "consistency": 3.35,
+    "data-integrity": 2.25,
+    "operations": 2.5,
+    "risk": 2,
+    "business": 2.8
+  },
+  "findings_summary": {
+    "before_dedup": 14,
+    "after_dedup": 9,
+    "p0": 0,
+    "p1": 5,
+    "p2": 3,
+    "p3": 1
+  },
+  "findings": [
+    {
+      "id": "FLW-REV-021:SYN-001",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "DIN-101",
+        "RSK-201",
+        "BIZ-201"
+      ],
+      "title": "宣言再照合とGit mutationの原子境界が未定義",
+      "recommendation": "dirfd/O_NOFOLLOWとidentity検査をmutation発行時まで結び、決定的な競合注入で副作用0件を検証する。",
+      "tracked_by": "SI-FLW-078",
+      "status": "resolved"
+    },
+    {
+      "id": "FLW-REV-021:SYN-002",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "DIN-201"
+      ],
+      "title": "index追跡だけでは配備意図の不変性を証明できない",
+      "recommendation": "HEADまたはreviewed treeのblobと宣言を束縛する。",
+      "tracked_by": "",
+      "status": "resolved"
+    },
+    {
+      "id": "FLW-REV-021:SYN-003",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "OPS-301"
+      ],
+      "title": "親ディレクトリ経由の外部参照を拒否する手順がない",
+      "recommendation": "repo rootからcomponentごとにdirfd相対・O_NOFOLLOWで走査する。",
+      "tracked_by": "",
+      "status": "resolved"
+    },
+    {
+      "id": "FLW-REV-021:SYN-004",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RSK-202"
+      ],
+      "title": "target guardがプロセス内限定で別CLI競合を防げない",
+      "recommendation": "common-dirのOS lockと永続fencing/coordinatorを設計する。",
+      "tracked_by": "SI-FLW-078",
+      "status": "resolved"
+    },
+    {
+      "id": "FLW-REV-021:SYN-005",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RSK-401"
+      ],
+      "title": "absentの固定digestは一時的な作成・削除を識別できない",
+      "recommendation": "absence generationを永続化するか、識別不能な環境ではBLOCKEDにする。",
+      "tracked_by": "SI-FLW-078",
+      "status": "resolved"
+    },
+    {
+      "id": "FLW-REV-021:SYN-006",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RSK-402",
+        "OPS-401"
+      ],
+      "title": "capability契約変更の旧形式拒否と移行規則がない",
+      "recommendation": "digestを必須fieldとするversioned envelopeを定義し、旧形式・欠落・不一致をBLOCKEDにする。",
+      "tracked_by": "SI-FLW-078",
+      "status": "resolved"
+    },
+    {
+      "id": "FLW-REV-021:SYN-007",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "OPS-101"
+      ],
+      "title": "承認束縛の検証・拒否が監査証跡へ残らない",
+      "recommendation": "receipt/eventにstate、digest、再照合段階、原因分類を記録する。",
+      "tracked_by": "",
+      "status": "resolved"
+    },
+    {
+      "id": "FLW-REV-021:SYN-008",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RVC-201",
+        "BIZ-101"
+      ],
+      "title": "要件の派生系譜が承認モード契約の正と一致しない",
+      "recommendation": "FLW-FR-006とFLW-NFR-007を一次参照へ加える。",
+      "tracked_by": "SI-FLW-079",
+      "status": "resolved"
+    },
+    {
+      "id": "FLW-REV-021:SYN-009",
+      "priority": "P3",
+      "severity": "minor",
+      "source": [
+        "RVC-301",
+        "BIZ-301"
+      ],
+      "title": "実行者所有のOS主体が未定義",
+      "recommendation": "ownerをOS有効UIDとして定義し、取得不能プラットフォームの停止を明記する。",
+      "tracked_by": "",
+      "status": "resolved"
+    }
+  ],
+  "gate_preconditions": [
+    {
+      "id": "FLW-REV-021:GP-001",
+      "kind": "blocking",
+      "basis": "verified",
+      "evidence": "FLW-NFR-013、FLW-DSN-017、および現行runtime/capability実装の静的照合",
+      "gp_kind": "behavioral",
+      "ears": "WHEN approval declaration is re-evaluated immediately before a mutation THEN bitz-flow SHALL detect a replacement and execute zero Git side effects after that re-evaluation point.",
+      "response": {
+        "status": "accepted",
+        "original": "WHEN approval declaration is re-evaluated immediately before a mutation THEN bitz-flow SHALL detect a replacement and execute zero Git side effects after that re-evaluation point.",
+        "normalized": "mutation開始と同じ信頼境界で宣言identityを検証し、競合を検出したら副作用を起こさない。",
+        "target": "FLW-DSN-017 改訂"
+      }
+    },
+    {
+      "id": "FLW-REV-021:GP-002",
+      "kind": "blocking",
+      "basis": "verified",
+      "evidence": "FLW-NFR-013、FLW-DSN-017、および現行runtime/capability実装の静的照合",
+      "gp_kind": "process",
+      "statement": "宣言束縛とtarget mutationを別CLIプロセスおよびcrash後にも直列化する永続coordinator・fencing設計を定義する。",
+      "response": {
+        "status": "accepted",
+        "original": "宣言束縛とtarget mutationを別CLIプロセスおよびcrash後にも直列化する永続coordinator・fencing設計を定義する。",
+        "normalized": "プロセス内guardの限界を永続排他・復旧規則で補う。",
+        "target": "FLW-DSN-017 改訂"
+      }
+    },
+    {
+      "id": "FLW-REV-021:GP-003",
+      "kind": "blocking",
+      "basis": "verified",
+      "evidence": "FLW-NFR-013、FLW-DSN-017、および現行runtime/capability実装の静的照合",
+      "gp_kind": "behavioral",
+      "ears": "WHEN a plan is created with an absent declaration THEN bitz-flow SHALL distinguish any intervening declaration creation and deletion before mutation, or SHALL block when that distinction is unavailable.",
+      "response": {
+        "status": "accepted",
+        "original": "WHEN a plan is created with an absent declaration THEN bitz-flow SHALL distinguish any intervening declaration creation and deletion before mutation, or SHALL block when that distinction is unavailable.",
+        "normalized": "不在状態の中間変化を観測できなければ安全に停止する。",
+        "target": "FLW-DSN-017 改訂"
+      }
+    },
+    {
+      "id": "FLW-REV-021:GP-004",
+      "kind": "blocking",
+      "basis": "verified",
+      "evidence": "FLW-NFR-013、FLW-DSN-017、および現行runtime/capability実装の静的照合",
+      "gp_kind": "process",
+      "statement": "approval_declaration_digestを必須とするcapability/plan contract version、旧形式拒否、pending operationのreplan・rollback規則を定義する。",
+      "response": {
+        "status": "accepted",
+        "original": "approval_declaration_digestを必須とするcapability/plan contract version、旧形式拒否、pending operationのreplan・rollback規則を定義する。",
+        "normalized": "digest欠落を既定値で受理しない移行契約を定義する。",
+        "target": "FLW-DSN-017 改訂"
+      }
+    },
+    {
+      "id": "FLW-REV-021:GP-005",
+      "kind": "blocking",
+      "basis": "verified",
+      "evidence": "FLW-NFR-013、FLW-DSN-017、および現行runtime/capability実装の静的照合",
+      "gp_kind": "artifact",
+      "statement": "FLW-NFR-013の派生・参照をFLW-FR-006およびFLW-NFR-007へ接続し、FLW-NFR-011は起票経緯として区別する。",
+      "response": {
+        "status": "accepted",
+        "original": "FLW-NFR-013の派生・参照をFLW-FR-006およびFLW-NFR-007へ接続し、FLW-NFR-011は起票経緯として区別する。",
+        "normalized": "承認モード契約の系譜を正しい既存要件へ訂正する。",
+        "target": "SI-FLW-079（要件メタデータ改訂の人間裁定）"
+      }
+    }
+  ],
+  "carried_over": [
+    "FLW-REV-006:SYN-001",
+    "FLW-REV-006:SYN-002",
+    "FLW-REV-006:SYN-003",
+    "FLW-REV-006:SYN-004",
+    "FLW-REV-006:SYN-005",
+    "FLW-REV-006:SYN-006",
+    "FLW-REV-006:SYN-007",
+    "FLW-REV-006:SYN-008",
+    "FLW-REV-006:SYN-009",
+    "FLW-REV-011:SYN-001",
+    "FLW-REV-011:SYN-002",
+    "FLW-REV-011:SYN-003",
+    "FLW-REV-011:SYN-004",
+    "FLW-REV-011:SYN-005",
+    "FLW-REV-011:SYN-006",
+    "FLW-REV-011:SYN-007",
+    "FLW-REV-011:SYN-008",
+    "FLW-REV-011:SYN-009",
+    "FLW-REV-011:SYN-010",
+    "FLW-REV-011:SYN-011",
+    "FLW-REV-011:SYN-012",
+    "FLW-REV-011:SYN-013",
+    "FLW-REV-011:SYN-014",
+    "FLW-REV-011:SYN-015",
+    "FLW-REV-011:SYN-016",
+    "FLW-REV-011:SYN-017",
+    "FLW-REV-011:SYN-018",
+    "FLW-REV-013:SYN-001",
+    "FLW-REV-013:SYN-002",
+    "FLW-REV-013:SYN-003",
+    "FLW-REV-013:SYN-004",
+    "FLW-REV-013:SYN-005",
+    "FLW-REV-013:SYN-006",
+    "FLW-REV-013:SYN-007",
+    "FLW-REV-013:SYN-008",
+    "FLW-REV-013:SYN-009",
+    "FLW-REV-013:SYN-010",
+    "FLW-REV-013:SYN-011",
+    "FLW-REV-013:SYN-012",
+    "FLW-REV-013:SYN-013",
+    "FLW-REV-013:SYN-014",
+    "FLW-REV-013:SYN-015",
+    "FLW-REV-013:SYN-016",
+    "FLW-REV-013:SYN-017",
+    "FLW-REV-013:SYN-018",
+    "FLW-REV-013:SYN-019",
+    "FLW-REV-013:SYN-020",
+    "FLW-REV-013:SYN-021",
+    "FLW-REV-013:SYN-022",
+    "FLW-REV-013:SYN-023",
+    "FLW-REV-015:SYN-001",
+    "FLW-REV-016:SYN-002",
+    "FLW-REV-016:SYN-003",
+    "FLW-REV-016:SYN-004",
+    "FLW-REV-016:SYN-005",
+    "FLW-REV-016:SYN-006",
+    "FLW-REV-016:SYN-007",
+    "FLW-REV-016:SYN-008",
+    "FLW-REV-016:SYN-009",
+    "FLW-REV-016:SYN-010",
+    "FLW-REV-016:SYN-011",
+    "FLW-REV-017:SYN-008",
+    "FLW-REV-017:SYN-009",
+    "FLW-REV-018:SYN-001",
+    "FLW-REV-018:SYN-002",
+    "FLW-REV-018:SYN-003",
+    "FLW-REV-018:SYN-004",
+    "FLW-REV-018:SYN-005",
+    "FLW-REV-018:SYN-006",
+    "FLW-REV-018:SYN-007",
+    "FLW-REV-018:SYN-008",
+    "FLW-REV-018:SYN-009",
+    "FLW-REV-018:SYN-010",
+    "FLW-REV-018:SYN-011",
+    "FLW-REV-018:SYN-012",
+    "FLW-REV-019:SYN-001",
+    "FLW-REV-019:SYN-002",
+    "FLW-REV-019:SYN-003",
+    "FLW-REV-019:SYN-004",
+    "FLW-REV-019:SYN-005",
+    "FLW-REV-019:SYN-006",
+    "FLW-REV-019:SYN-007",
+    "FLW-REV-019:SYN-008",
+    "FLW-REV-019:SYN-009",
+    "FLW-REV-019:SYN-010",
+    "FLW-REV-019:SYN-011",
+    "FLW-REV-019:SYN-012",
+    "FLW-REV-020:SYN-001"
+  ],
+  "conditional_items": [
+    "FLW-REV-021:GP-001〜GP-005を消化し、FLW-DSN-017を再レビューすること",
+    "持ち越した未解消P0/P1をDesign Gateで裁定すること"
+  ]
+}

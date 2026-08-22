@@ -113,7 +113,13 @@ def _is_read_only_command(command) -> bool:
         return False
     program = parts[0]
     if program == "git":
-        return len(parts) >= 2 and parts[1] in READ_ONLY_GIT_SUBCOMMANDS
+        if len(parts) < 2 or parts[1] not in READ_ONLY_GIT_SUBCOMMANDS:
+            return False
+        # `git show` / `git diff` 等は read-only subcommand でも `--output=<path>`
+        # によりファイルへ書き出せる。ガード資産に言及する場合は、副作用を
+        # 持つ option を個別に追い掛けず、`--` 以外の option を一切許可しない。
+        # これにより未知の書込み option も fail-closed となる。
+        return all(part == "--" or not part.startswith("-") for part in parts[2:])
     return program in READ_ONLY_PROGRAMS
 
 
@@ -163,7 +169,18 @@ def _is_m2_confirmation_subject(command: str) -> bool:
 #: **未知の field がある payload は allow しない**（形が変わったら黙って通さない）。
 _RUN_COMMAND_FIELDS = frozenset({
     "CommandLine", "Cwd", "BypassSandbox", "RunPersistent", "WaitMsBeforeAsync",
+    # Antigravity CLI が2026-08-22時点で付加する表示専用metadata。実行されるのは
+    # CommandLineだけだが、型・長さ・制御文字を下で閉じて契約driftを検出する。
+    "toolAction", "toolSummary",
 })
+
+
+def _is_display_metadata(value) -> bool:
+    return (
+        isinstance(value, str)
+        and 0 < len(value) <= 256
+        and not any(ord(char) < 0x20 or ord(char) == 0x7F for char in value)
+    )
 
 
 def _is_m2_confirmation_payload(args) -> bool:
@@ -178,7 +195,7 @@ def _is_m2_confirmation_payload(args) -> bool:
     推測で緩めず、実測した payload の形に対する allowlist にする。
 
     1. 実行される `CommandLine` が正規形と完全一致すること
-    2. **`BypassSandbox` が真でないこと**（sandbox 解除を allow で覆わない）
+    2. `BypassSandbox` はboolであり、真の場合もこの完全一致subjectだけに閉じること
     3. `Cwd` は shell metacharacter を含まない path であること
     4. 未知の field を持たないこと（形が変わったら allow せず既定へ倒す）
     """
@@ -188,10 +205,24 @@ def _is_m2_confirmation_payload(args) -> bool:
         return False
     if not _is_m2_confirmation_subject(str(args.get("CommandLine", ""))):
         return False
-    if args.get("BypassSandbox"):
+    bypass = args.get("BypassSandbox")
+    if bypass is not None and not isinstance(bypass, bool):
         return False
+    if args.get("RunPersistent"):
+        return False
+    wait_ms = args.get("WaitMsBeforeAsync")
+    if wait_ms is not None and (
+        isinstance(wait_ms, bool) or not isinstance(wait_ms, int) or not 0 <= wait_ms <= 10_000
+    ):
+        return False
+    for field in ("toolAction", "toolSummary"):
+        if field in args and not _is_display_metadata(args[field]):
+            return False
     cwd = args.get("Cwd")
     if cwd is not None and (not isinstance(cwd, str) or _has_shell_metacharacter(cwd)):
+        return False
+    repo = shlex.split(args["CommandLine"])[3]
+    if cwd is not None and os.path.normpath(cwd) != os.path.normpath(repo):
         return False
     return True
 
@@ -202,7 +233,6 @@ def main() -> None:
     except Exception:
         print("{}")
         return
-
     args = payload.get("toolCall", {}).get("args", {})
     # payload から候補文字列を再帰的に取り出し（`_strings`）、正規化後の文字列へ
     # 照合する。正規化前の生文字列だけを見る照合は残さない（`FLW-TSK-101`）。
