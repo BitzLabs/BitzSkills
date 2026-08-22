@@ -1,0 +1,193 @@
+{
+  "schema_version": 2,
+  "review_id": "FLW-REV-023",
+  "verdict": "CONDITIONAL_PASS",
+  "aggregate_score": 2.91,
+  "perspective_scores": {
+    "consistency": 2.95,
+    "data-integrity": 3.0,
+    "operations": 3.3,
+    "risk": 2.67,
+    "business": 2.6
+  },
+  "findings_summary": {
+    "before_dedup": 18,
+    "after_dedup": 11,
+    "p0": 0,
+    "p1": 4,
+    "p2": 4,
+    "p3": 3
+  },
+  "findings": [
+    {
+      "id": "FLW-REV-023:SYN-001",
+      "priority": "P2",
+      "severity": "major",
+      "source": ["RVC-101"],
+      "title": "regular fileとdirectoryのidentity契約が混同されている",
+      "detail": "link_count=1を全identityへ課すとPOSIXのlocks directoryを正常に表現できず、3platform通常系UNSUPPORTED 0件と両立しない。",
+      "recommendation": "regular_file_identityとdirectory_identityを別の閉じたplatform schemaへ分離する。",
+      "tracked_by": "",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-023:SYN-002",
+      "priority": "P1",
+      "severity": "major",
+      "source": ["RVC-102", "BIZ-401"],
+      "title": "reserved schemaをactive化するtask所有権がない",
+      "detail": "後続taskのboundaryがschema inventoryを含まず、producer禁止を守ると実装不能、実装するとboundary違反になる。",
+      "recommendation": "TSK-107〜109のboundary・完了条件へ担当schema、inventory、codec、round-trip testのactive遷移を追加する。",
+      "tracked_by": "FLW-REV-023:GP-001",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-023:SYN-003",
+      "priority": "P1",
+      "severity": "major",
+      "source": ["RVC-103", "BIZ-101", "DIN-101"],
+      "title": "quarantine解除経路の要件・権限・線形化点が未定義",
+      "detail": "既存catalogはreviewer裁定を要求するが、設計は解除CLIを要求する。管理経路かwrite operationかが未裁定で、lease・token・chain headを束縛した原子遷移もない。",
+      "recommendation": "解除経路を裁定し、管理経路なら裁定証拠記録、write operationならEARS要件・capability・lease下のdurable遷移を定義する。",
+      "tracked_by": "FLW-REV-023:GP-002",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-023:SYN-004",
+      "priority": "P2",
+      "severity": "major",
+      "source": ["OPS-202"],
+      "title": "TSK-110が運用実装sourceを所有していない",
+      "detail": "完了条件はaudit/reconcile、SLI、通知adapterを要求するが、boundaryはcatalog、runbook、testだけである。",
+      "recommendation": "運用CLI、receipt/SLI集計、通知adapterをboundaryへ加えるか独立taskへ分割する。",
+      "tracked_by": "",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-023:SYN-005",
+      "priority": "P1",
+      "severity": "major",
+      "source": ["RVC-201", "BIZ-301", "RSK-201"],
+      "title": "promotion証明の独立信頼根と線形化点がない",
+      "detail": "child probeの自己申告と比較するtrusted artifact baselineがなく、probe後からv2 state durability commitまでのregistry/cache差替えも閉じていない。",
+      "recommendation": "versioned baseline manifest、親processによるhandle相対digest、registry leaseまたはcommit直前再照合を定義し、promotion receiptへ固定する。",
+      "tracked_by": "FLW-REV-023:GP-003",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-023:SYN-006",
+      "priority": "P1",
+      "severity": "major",
+      "source": ["RSK-204"],
+      "title": "OS由来pathのNFC変換が別実体の承認scopeを衝突させる",
+      "detail": "LinuxではNFC名とNFD名が別entryとして共存できる。双方をNFCへ変換すると、特にcreateの不在targetでguard key、digest、operation identity、capability scopeが衝突する。",
+      "recommendation": "native pathを可逆byte表現とplatform/path-encoding discriminatorで束縛し、不在targetをparent identityと正確なcomponentへ結び付ける。",
+      "tracked_by": "FLW-REV-023:GP-004",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-023:SYN-007",
+      "priority": "P2",
+      "severity": "major",
+      "source": ["DIN-201"],
+      "title": "uint64 fencing tokenのJSON表現がcross-languageで精度を失う",
+      "detail": "2^53超のJSON整数はIEEE-754 consumerで丸められ、canonical byte、単調性、receipt chain照合を壊す。",
+      "recommendation": "unsigned decimal stringへ固定するか、arbitrary-precision codecとcross-language vectorを必須化する。",
+      "tracked_by": "",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-023:SYN-008",
+      "priority": "P2",
+      "severity": "major",
+      "source": ["OPS-201", "OPS-301"],
+      "title": "未信頼entrypoint probeの実行・停止・隔離境界がない",
+      "detail": "timeout、process tree停止、出力上限に加え、権限・環境・network・filesystem・handle継承制限がなく、hangや副作用を安全に収束できない。",
+      "recommendation": "platform別sandbox、monotonic deadline、process group/Job Object、強制終了とINDETERMINATE evidenceを定義する。",
+      "tracked_by": "",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-023:SYN-009",
+      "priority": "P3",
+      "severity": "minor",
+      "source": ["BIZ-201"],
+      "title": "M2通常系UNSUPPORTED 0件が成功指標へ未反映",
+      "detail": "設計・NFRの出口条件とdiscovery metricsの記述が一致しない。",
+      "recommendation": "platform別通常系0件をmetricsへ追加し、異常fixtureを分母から区別する。",
+      "tracked_by": "",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-023:SYN-010",
+      "priority": "P3",
+      "severity": "minor",
+      "source": ["DIN-301"],
+      "title": "digestのcanonical字句表現が未固定",
+      "detail": "SHA-256のprefix有無が共通規則になく、record間の同一byte照合が不安定になる。",
+      "recommendation": "algorithm discriminatorを含む共通$defsとcross-record vectorで一種類へ固定する。",
+      "tracked_by": "",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-023:SYN-011",
+      "priority": "P3",
+      "severity": "minor",
+      "source": ["OPS-401"],
+      "title": "runtime versionの受理・順序規則が未定義",
+      "detail": "component数、leading zero、prerelease、build metadataの扱いがなく、platform間でbaseline判定が変わり得る。",
+      "recommendation": "既存plugin semver規約を参照し、grammar・比較algorithm・境界vectorを固定する。",
+      "tracked_by": "",
+      "status": "open"
+    }
+  ],
+  "gate_preconditions": [
+    {
+      "id": "GP-001",
+      "kind": "agenda",
+      "basis": "verified",
+      "gp_kind": "artifact",
+      "statement": "各reserved recordのactive化をowner taskのboundary・完了条件・rollback単位へ割り当てる。",
+      "evidence": "FLW-DSN-017 §6.3 と FLW-TSK-107〜109 のboundary比較"
+    },
+    {
+      "id": "GP-002",
+      "kind": "agenda",
+      "basis": "verified",
+      "gp_kind": "artifact",
+      "statement": "quarantine解除を裁定証拠記録用の管理経路または新規write operationのどちらとして設計するか裁定する。",
+      "evidence": "FLW-DSN-017 §7、FLW-TSK-110、operation-catalog worktree.audit の比較"
+    },
+    {
+      "id": "GP-003",
+      "kind": "agenda",
+      "basis": "verified",
+      "gp_kind": "behavioral",
+      "ears": "WHEN contract v2 promotionを確定する THEN bitz-flow SHALL trusted baselineに対する親processのartifact測定とcommit直前のentrypoint集合再照合を成功させ、その線形化点をdurable receiptへ記録する",
+      "evidence": "FLW-DSN-017 §6.4にbaseline比較先とdurability commit直前再照合がない"
+    },
+    {
+      "id": "GP-004",
+      "kind": "agenda",
+      "basis": "verified",
+      "gp_kind": "behavioral",
+      "ears": "WHEN native filesystem pathを承認scopeへ正規化する THEN bitz-flow SHALL platform固有の別directory entryを同一scopeへ畳み込まず、不在targetをparent identityと可逆component表現へ束縛する",
+      "evidence": "FLW-DSN-017 §6.1のOS/Git path NFC変換とLinux byte-name filesystemの反例"
+    }
+  ],
+  "carried_over": [
+    "FLW-REV-006:SYN-001", "FLW-REV-006:SYN-002", "FLW-REV-006:SYN-003", "FLW-REV-006:SYN-004", "FLW-REV-006:SYN-005", "FLW-REV-006:SYN-006", "FLW-REV-006:SYN-007", "FLW-REV-006:SYN-008", "FLW-REV-006:SYN-009",
+    "FLW-REV-011:SYN-001", "FLW-REV-011:SYN-002", "FLW-REV-011:SYN-003", "FLW-REV-011:SYN-004", "FLW-REV-011:SYN-005", "FLW-REV-011:SYN-006", "FLW-REV-011:SYN-007", "FLW-REV-011:SYN-008", "FLW-REV-011:SYN-009", "FLW-REV-011:SYN-010", "FLW-REV-011:SYN-011", "FLW-REV-011:SYN-012", "FLW-REV-011:SYN-013", "FLW-REV-011:SYN-014", "FLW-REV-011:SYN-015", "FLW-REV-011:SYN-016", "FLW-REV-011:SYN-017", "FLW-REV-011:SYN-018",
+    "FLW-REV-013:SYN-001", "FLW-REV-013:SYN-002", "FLW-REV-013:SYN-003", "FLW-REV-013:SYN-004", "FLW-REV-013:SYN-005", "FLW-REV-013:SYN-006", "FLW-REV-013:SYN-007", "FLW-REV-013:SYN-008", "FLW-REV-013:SYN-009", "FLW-REV-013:SYN-010", "FLW-REV-013:SYN-011", "FLW-REV-013:SYN-012", "FLW-REV-013:SYN-013", "FLW-REV-013:SYN-014", "FLW-REV-013:SYN-015", "FLW-REV-013:SYN-016", "FLW-REV-013:SYN-017", "FLW-REV-013:SYN-018", "FLW-REV-013:SYN-019", "FLW-REV-013:SYN-020", "FLW-REV-013:SYN-021", "FLW-REV-013:SYN-022", "FLW-REV-013:SYN-023",
+    "FLW-REV-015:SYN-001",
+    "FLW-REV-016:SYN-002", "FLW-REV-016:SYN-003", "FLW-REV-016:SYN-004", "FLW-REV-016:SYN-005", "FLW-REV-016:SYN-006", "FLW-REV-016:SYN-007", "FLW-REV-016:SYN-008", "FLW-REV-016:SYN-009", "FLW-REV-016:SYN-010", "FLW-REV-016:SYN-011",
+    "FLW-REV-017:SYN-008", "FLW-REV-017:SYN-009",
+    "FLW-REV-018:SYN-001", "FLW-REV-018:SYN-002", "FLW-REV-018:SYN-003", "FLW-REV-018:SYN-004", "FLW-REV-018:SYN-005", "FLW-REV-018:SYN-006", "FLW-REV-018:SYN-007", "FLW-REV-018:SYN-008", "FLW-REV-018:SYN-009", "FLW-REV-018:SYN-010", "FLW-REV-018:SYN-011", "FLW-REV-018:SYN-012",
+    "FLW-REV-019:SYN-001", "FLW-REV-019:SYN-002", "FLW-REV-019:SYN-003", "FLW-REV-019:SYN-004", "FLW-REV-019:SYN-005", "FLW-REV-019:SYN-006", "FLW-REV-019:SYN-007", "FLW-REV-019:SYN-008", "FLW-REV-019:SYN-009", "FLW-REV-019:SYN-010", "FLW-REV-019:SYN-011", "FLW-REV-019:SYN-012",
+    "FLW-REV-020:SYN-001"
+  ],
+  "conditional_items": [
+    "FLW-REV-023:SYN-001〜008を設計・タスク境界へ反映する",
+    "FLW-REV-023:GP-001〜004を人間が裁定し、修正後に再レビューする"
+  ]
+}

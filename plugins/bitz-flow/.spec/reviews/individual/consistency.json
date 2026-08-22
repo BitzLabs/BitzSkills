@@ -1,25 +1,16 @@
 {
   "perspective": "consistency",
   "dimensions": [
-    {
-      "name": "構造整合",
-      "weight": 0.35,
-      "score": 5,
-      "findings": []
-    },
-    {
-      "name": "トレーサビリティ",
-      "weight": 0.35,
-      "score": 5,
-      "findings": []
-    },
-    {
-      "name": "用語一貫性",
-      "weight": 0.3,
-      "score": 5,
-      "findings": []
-    }
+    {"name":"構造整合","weight":0.35,"score":2,"findings":[
+      {"id":"RVC-101","severity":"major","location":"FLW-DSN-017.md:§4.1, §6.2","title":"regular file用identityではlocks directoryを表現できない","description":"全platform variantがlink_count=1を要求する一方、lock namespaceはdirectory identityを永続化する。POSIX directoryは通常link countが2以上で、通常系UNSUPPORTED 0件と両立しない。","recommendation":"regular_file_identityとdirectory_identityを別の閉じたschemaへ分離し、manifest・reserved schema・後続codecを同じ型へ接続する。"},
+      {"id":"RVC-102","severity":"major","location":"FLW-DSN-017.md:§6.3, FLW-TSK-107.md〜109.md","title":"reserved schemaをactive化する後続タスク境界がない","description":"owner taskがcodec追加と同時にactive化する設計だが、後続taskのboundaryにschema inventoryがなく、境界を守るとproducerを実装できない。","recommendation":"各owner taskのboundaryと完了条件へschema・inventory・round-trip vectorのactive遷移を追加する。"},
+      {"id":"RVC-103","severity":"major","location":"FLW-DSN-017.md:§7, FLW-TSK-110.md, operation-catalog.md:worktree.audit","title":"quarantine解除CLIが既存の人間専用解除契約と未接続","description":"既存catalogは解除を通常operationではなくreviewer裁定としNEXTを空にするが、設計は解除CLIを要求する。管理経路かwrite operationか、capability・receipt遷移・task boundaryが未定義である。","recommendation":"管理経路なら裁定済み証拠の記録専用契約を定義し、write operationなら要件と実装boundaryを追加する。"}
+    ]},
+    {"name":"トレーサビリティ","weight":0.35,"score":3,"findings":[
+      {"id":"RVC-201","severity":"major","location":"FLW-DSN-017.md:§6.4, FLW-TSK-106.md","title":"entrypoint probeの独立したartifact信頼根が未定義","description":"closed policyが固定するのはentrypoint IDだけで、artifact digestとbaselineの対応がない。childの自己申告値だけでは独立証明にならない。","recommendation":"親が保持handleからartifact/import treeを測定し、versioned baseline manifestの許可digest・contract・kindと照合する。"}
+    ]},
+    {"name":"用語一貫性","weight":0.30,"score":4,"findings":[]}
   ],
-  "weighted_score": 5.0,
-  "summary": "v1-currentとv2-proposedの時間的適用、Design Gate前の空implements、レビューを起点とした移行設計が一貫している。公開action、WorkUnit・PR・Release状態、M0〜M5配属、評価閾値、raw fallback方針、初回入口も文書間で整合している。"
+  "weighted_score": 2.95,
+  "summary": "NFD拒否、platform identity、active/reserved codec、実process probeは具体化された。残る設計問題はdirectory identity、schema activation所有権、quarantine解除経路、entrypoint証明の独立信頼根である。"
 }

@@ -1,40 +1,19 @@
 {
   "perspective": "business",
   "dimensions": [
-    {
-      "name": "要件トレーサビリティ",
-      "weight": 0.35,
-      "score": 5,
-      "findings": []
-    },
-    {
-      "name": "NFR定量化",
-      "weight": 0.3,
-      "score": 5,
-      "findings": []
-    },
-    {
-      "name": "ステークホルダー整合",
-      "weight": 0.2,
-      "score": 5,
-      "findings": []
-    },
-    {
-      "name": "ROI・実現可能性",
-      "weight": 0.15,
-      "score": 4,
-      "findings": [
-        {
-          "id": "BIZ-401",
-          "severity": "minor",
-          "location": "design/FLW-DSN-014.md:M1〜M5出口、discovery/scope.md:リリース分割",
-          "title": "M1〜M5には継続判断のtimeboxがない",
-          "description": "M0は1PRまたは5作業sessionでpivotを再提示する一方、M1〜M5は技術出口のみで、個人・小規模チームが過大なMustスコープを継続するか縮小する判断時点がない。",
-          "recommendation": "Design Gate後の要件・タスク分解時に、各milestoneの最大PR数または作業session数、依存、縮退可能な出荷境界を定める。"
-        }
-      ]
-    }
+    {"name":"要件トレーサビリティ","weight":0.35,"score":2,"findings":[
+      {"id":"BIZ-101","severity":"major","location":"FLW-DSN-017.md:§7, FLW-TSK-110.md, FLW-NFR-014.md","title":"quarantine解除経路に承認済みの操作契約がない","description":"解除CLIの主体、承認証拠、scope、失敗時効果が受入基準になく、管理経路かwrite operationかを検証できない。","recommendation":"位置づけを人間裁定し、管理経路なら裁定証拠の記録契約、write operationならEARS要件を追加する。"}
+    ]},
+    {"name":"NFR定量化","weight":0.30,"score":3,"findings":[
+      {"id":"BIZ-201","severity":"minor","location":"FLW-DSN-017.md:§4.4, FLW-NFR-014.md, discovery/metrics.md","title":"M2のUNSUPPORTED 0件出口条件が成功指標の正へ反映されていない","description":"NFRと設計は3platform通常系0件を要求するが、metricsはM0だけ0%としている。","recommendation":"M2通常系のplatform別0件をmetricsへ追加し、異常fixtureを分母から区別する。"}
+    ]},
+    {"name":"ステークホルダー整合","weight":0.20,"score":2,"findings":[
+      {"id":"BIZ-301","severity":"major","location":"FLW-DSN-017.md:§6.4, discovery/vision.md","title":"promotion証明がentrypoint自己申告から独立していない","description":"配布側が信頼するartifact baselineがなく、誤ったcacheをgreenと判定し得る。","recommendation":"baseline manifestを信頼根にし、親がartifact/import treeを独立測定する。"}
+    ]},
+    {"name":"ROI・実現可能性","weight":0.15,"score":2,"findings":[
+      {"id":"BIZ-401","severity":"major","location":"FLW-DSN-017.md:§6.3, FLW-TSK-107.md〜109.md","title":"後続codecをactive化できないタスク分解になっている","description":"後続owner taskはinventoryを変更できないboundaryで、終盤の境界変更や追加taskを招く。","recommendation":"schema、inventory、codec、round-trip testを各owner taskの同じrollback境界へ含める。"}
+    ]}
   ],
-  "weighted_score": 4.85,
-  "summary": "v1/v2規範移行、rejectされたspec-issueの除去・独立根拠への付替え、Design Gate後にEARS要件を派生するトレース順序が明確になった。「200UE」は「ISSUE」の誤記と人間裁定され、M3の用語リスクも解消した。M0のInvocation 95%・baseline比20ポイント改善・SFCR 90%、status 70%・diff-summary 80%も成功指標と一致している。"
+  "weighted_score": 2.60,
+  "summary": "解除経路の要件化、M2成功指標、entrypoint信頼根、schema activationのtask境界を修正する必要がある。"
 }

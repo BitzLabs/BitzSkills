@@ -1,40 +1,14 @@
 {
   "perspective": "risk",
   "dimensions": [
-    {
-      "name": "分散システムリスク",
-      "weight": 0.3,
-      "score": 4,
-      "findings": [
-        {
-          "id": "RSK-101",
-          "severity": "minor",
-          "location": "design/FLW-DSN-012.md:concurrency",
-          "title": "cross-host競合の防止はsingle coordinator前提である",
-          "description": "GitHub createの別host競合を内部lockだけでは防げない。設計は安全を証明できない場合にUNSUPPORTEDへ縮退し、重複marker検出時も自動補償しないため安全側だが、並列性の一部を運用制約へ移している。",
-          "recommendation": "M3/M4 canaryでcoordinator重複割当とmarker重複を測定し、違反が1件でもあればpromotionを停止する。"
-        }
-      ]
-    },
-    {
-      "name": "障害モード分析",
-      "weight": 0.3,
-      "score": 5,
-      "findings": []
-    },
-    {
-      "name": "Saga設計の妥当性",
-      "weight": 0.25,
-      "score": 5,
-      "findings": []
-    },
-    {
-      "name": "データ整合性リスク",
-      "weight": 0.15,
-      "score": 5,
-      "findings": []
-    }
+    {"name":"分散システムリスク","weight":0.30,"score":"N/A","findings":[]},
+    {"name":"障害モード分析","weight":0.30,"score":2,"findings":[
+      {"id":"RSK-201","severity":"major","location":"FLW-DSN-017.md:§6.4, 影響範囲・ロールバック","title":"probeからv2 state durability commitまでのpromotion線形化点が未定義","description":"列挙・hash・probe後からv2 state生成までregistry、cache、launcherを固定または再照合する規則がなく、pre-baseline実体へ差し替えられる。","recommendation":"trusted baseline、親計算digest、registry leaseまたはcommit直前再照合を定義し、成功点をpromotion receiptへ固定する。"},
+      {"id":"RSK-204","severity":"major","location":"FLW-DSN-017.md:§6, §6.1, FLW-NFR-014.md","title":"OS由来pathのNFC変換がLinux上の別実体を同一承認scopeへ衝突させる","description":"LinuxではNFC名とNFD名が別entryとして共存できる。双方をNFC化するとguard key、nonexistence digest、operation identity、capability scopeが衝突し、createの不在targetではfile identityでも区別できない。","recommendation":"native pathを可逆byte表現とplatform/path-encoding discriminatorで束縛し、不在targetはparent identityと正確なcomponent表現へ結び付ける。"}
+    ]},
+    {"name":"Saga設計の妥当性","weight":0.25,"score":"N/A","findings":[]},
+    {"name":"データ整合性リスク","weight":0.15,"score":4,"findings":[]}
   ],
-  "weighted_score": 4.7,
-  "summary": "固定allowlist adapter、capability fail-closed、全writeのreconcile-first、安定Recovery ID、pagination不完備時のINDETERMINATE、段階canaryにより主要リスクは管理可能になった。唯一の残余リスクはcross-host直列化をsingle coordinator運用へ委ねる点で、初期版では分散lockを増やさずpromotion gateで統制する判断が妥当である。"
+  "weighted_score": 2.67,
+  "summary": "サービス間分散とSagaはN/A。promotion線形化点とLinux native byte pathの可逆scopeが設計上未解決である。"
 }

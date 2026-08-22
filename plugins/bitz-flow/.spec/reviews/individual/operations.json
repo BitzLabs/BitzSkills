@@ -1,31 +1,18 @@
 {
   "perspective": "operations",
   "dimensions": [
-    {
-      "name": "監視・可観測性",
-      "weight": 0.3,
-      "score": 5,
-      "findings": []
-    },
-    {
-      "name": "災害復旧",
-      "weight": 0.3,
-      "score": 5,
-      "findings": []
-    },
-    {
-      "name": "セキュリティ態勢",
-      "weight": 0.2,
-      "score": 5,
-      "findings": []
-    },
-    {
-      "name": "デプロイ安全性",
-      "weight": 0.2,
-      "score": 5,
-      "findings": []
-    }
+    {"name":"監視・可観測性","weight":0.30,"score":4,"findings":[]},
+    {"name":"災害復旧","weight":0.30,"score":3,"findings":[
+      {"id":"OPS-201","severity":"major","location":"FLW-DSN-017.md:§6.4, FLW-TSK-106.md","title":"entrypoint probeのtimeout・終了手順が設計不足","description":"timeout値、monotonic deadline、process tree終了、強制終了、kill不能分類、出力上限、evidence保存が未定義で、旧entrypointがhangするとpreflightも無期限化し得る。","recommendation":"platform別timeout、process group/Job Object、終了不能時の分類、closed evidenceをTSK-106へ追加する。"},
+      {"id":"OPS-202","severity":"major","location":"FLW-DSN-017.md:§7, FLW-TSK-110.md:boundary","title":"運用CLI・SLI・通知adapterの実装境界がtaskに含まれない","description":"TSK-110は運用CLI、SLI、通知adapterを要求するがboundaryはcatalog、runbook、testだけで、必要なsourceを所有しない。","recommendation":"運用CLI、receipt/SLI集計、通知adapterのmoduleをboundaryへ追加するか独立taskへ分割する。"}
+    ]},
+    {"name":"セキュリティ態勢","weight":0.20,"score":3,"findings":[
+      {"id":"OPS-301","severity":"major","location":"FLW-DSN-017.md:§6.4","title":"旧entrypointを実行するprobeの隔離境界がない","description":"旧・破損entrypointがruntime-contractを無視した場合の権限、cwd、environment、network、write、handle継承制限がなく、probe自身が副作用を起こし得る。","recommendation":"固定argv、閉じたenvironment、read-only FS、networkなし、秘密なし、不要handle非継承をadapter契約にする。"}
+    ]},
+    {"name":"デプロイ安全性","weight":0.20,"score":3,"findings":[
+      {"id":"OPS-401","severity":"minor","location":"FLW-NFR-014.md:promotion baseline, FLW-DSN-017.md:§6.4","title":"runtime versionの順序規則が未定義","description":"SemVerか、component数、leading zero、prerelease、build metadataをどう比較するかがなく、adapter間で判定が変わり得る。","recommendation":"既存plugin semver規約を参照し、受理grammar・比較algorithm・境界vectorを固定する。"}
+    ]}
   ],
-  "weighted_score": 5.0,
-  "summary": "digestの保証範囲を破損・不一致検出へ限定し、耐改ざん監査を呼出側の署名または追記専用storageへ分離した。監査相関、全writeのForward Recovery、timeout収束、外部承認境界、atomic I/O、段階canary・rollbackはいずれもCLI／スクリプト製品として実装・検証可能な運用契約になっている。"
+  "weighted_score": 3.30,
+  "summary": "運用方向は妥当だが、probeのtimeout・隔離、TSK-110の実装boundary、version順序規則を具体化する必要がある。"
 }
