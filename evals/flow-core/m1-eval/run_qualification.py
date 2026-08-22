@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -73,6 +74,7 @@ TRIAL_SPEC = {
 
 DEFAULT_TIMEOUT_SECONDS = 180
 CANARY_PREFIX = "CANARY-m1-6"
+COMPATIBILITY_KEY_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 
 class _Store:
@@ -315,12 +317,20 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="3 platform の qualification を実走する")
     parser.add_argument("--repo", default=".", help="被験リポジトリ（既定: カレント）")
     parser.add_argument("--out", default=str(_HERE / "qualification-runs"), help="成果物の保存先")
+    parser.add_argument(
+        "--compatibility-key",
+        help="confirmation起動前に計算し、qualification実走へ拘束するsha256 key",
+    )
     parser.add_argument("--dry-run", action="store_true", help="CLI を起動せず配線だけ検査する")
     parser.add_argument(
         "--platform", action="append", choices=list(Q.PLATFORMS),
         help="対象 platform（既定: すべて）",
     )
     args = parser.parse_args(argv)
+    if args.compatibility_key is not None and not COMPATIBILITY_KEY_RE.fullmatch(args.compatibility_key):
+        parser.error("--compatibility-key は sha256:<64 lowercase hex> 形式で指定する")
+    if not args.dry_run and args.compatibility_key is None:
+        parser.error("実走では --compatibility-key が必須")
 
     platforms = args.platform or list(Q.PLATFORMS)
     out = Path(args.out)
@@ -344,6 +354,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         "gate_reasons": list(combined.reasons),
         "platforms": platforms,
         "dry_run": args.dry_run,
+        "compatibility_key": args.compatibility_key,
+        # 全platformが完了した時刻と、最も早く失効するplatform期限を採用する。
+        # 文字列はすべてUTC RFC3339固定なので辞書順が時刻順と一致する。
+        "executed_at": max(manifest["completed_at"] for manifest in manifests),
+        "expires_at": min(manifest["expires_at"] for manifest in manifests),
     }
     (out / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"

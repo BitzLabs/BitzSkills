@@ -1,0 +1,11 @@
+{
+  "perspective": "business",
+  "dimensions": [
+    {"name": "要件トレーサビリティ", "weight": 0.35, "score": 5, "findings": []},
+    {"name": "NFR定量化", "weight": 0.30, "score": 5, "findings": []},
+    {"name": "ステークホルダー整合", "weight": 0.20, "score": 5, "findings": []},
+    {"name": "ROI・実現可能性", "weight": 0.15, "score": 4, "findings": []}
+  ],
+  "weighted_score": 4.85,
+  "summary": "3プラットフォームの出口条件、promotion preflight、旧entrypoint無効化証明、quarantine運用、独立実装境界が定義された。新規findingはない。"
+}

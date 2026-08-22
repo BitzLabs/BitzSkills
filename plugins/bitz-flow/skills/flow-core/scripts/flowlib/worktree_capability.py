@@ -3,14 +3,21 @@
 from __future__ import annotations
 
 import dataclasses
+import re
 import threading
 from collections.abc import Callable, Sequence
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 
 CODE_BLOCKED = "BLOCKED"
 CODE_STALE = "STALE"
+
+CAPABILITY_CONTRACT_VERSION = 2
+CASE_SENSITIVE = "sensitive"
+CASE_INSENSITIVE = "insensitive"
+CASE_SENSITIVITY_VALUES = frozenset({CASE_SENSITIVE, CASE_INSENSITIVE})
+_SHA256_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 NONCE_UNUSED = "UNUSED"
 NONCE_USED_PENDING = "USED_PENDING"
@@ -79,6 +86,122 @@ class WorktreeApprovalContext:
     worktree_root_canonical: str
     case_sensitivity: bool
     operation_id: str
+
+
+@dataclasses.dataclass(frozen=True)
+class WorktreeApprovalCapabilityV2:
+    """approval declaration bindingを必須化したcontract v2 envelope。
+
+    既存のv1相当dataclassは移行期間の内部APIとして残すが、公開JSON parserは本型だけを
+    受理する。missing fieldをdefaultで補完しないことが安全境界である。
+    """
+
+    contract_version: int
+    approval_declaration_digest: str
+    repository_identity_digest: str
+    worktree_dir_guard_key: str
+    worktree_registry_guard_key: str
+    parent_dir_identity: str
+    nonexistence_digest: str | None
+    instance_identity_digest: str | None
+    worktree_root_canonical: str
+    case_sensitivity: str
+    expires_at: datetime
+    nonce: str
+    operation_id: str
+    algorithm: str
+    key_id: str
+    signature: str
+
+    def signed_payload(self) -> dict[str, Any]:
+        return {
+            "contract_version": self.contract_version,
+            "approval_declaration_digest": self.approval_declaration_digest,
+            "repository_identity_digest": self.repository_identity_digest,
+            "worktree_dir_guard_key": self.worktree_dir_guard_key,
+            "worktree_registry_guard_key": self.worktree_registry_guard_key,
+            "parent_dir_identity": self.parent_dir_identity,
+            "nonexistence_digest": self.nonexistence_digest,
+            "instance_identity_digest": self.instance_identity_digest,
+            "worktree_root_canonical": self.worktree_root_canonical,
+            "case_sensitivity": self.case_sensitivity,
+            "expires_at": self.expires_at.astimezone(timezone.utc).isoformat(),
+            "nonce": self.nonce,
+            "operation_id": self.operation_id,
+            "algorithm": self.algorithm,
+            "key_id": self.key_id,
+        }
+
+
+_CAPABILITY_V2_FIELDS = frozenset(
+    {
+        "contract_version",
+        "approval_declaration_digest",
+        "repository_identity_digest",
+        "worktree_dir_guard_key",
+        "worktree_registry_guard_key",
+        "parent_dir_identity",
+        "nonexistence_digest",
+        "instance_identity_digest",
+        "worktree_root_canonical",
+        "case_sensitivity",
+        "expires_at",
+        "nonce",
+        "operation_id",
+        "algorithm",
+        "key_id",
+        "signature",
+    }
+)
+
+
+def capability_v2_from_mapping(value: Any) -> WorktreeApprovalCapabilityV2:
+    """strictな公開JSON境界。v1・欠落・未知fieldをfail-closedに拒否する。"""
+    if not isinstance(value, dict):
+        raise ValueError("capability v2 envelope must be an object")
+    fields = frozenset(value)
+    missing = sorted(_CAPABILITY_V2_FIELDS - fields)
+    unknown = sorted(fields - _CAPABILITY_V2_FIELDS)
+    if missing or unknown:
+        raise ValueError(f"capability v2 fields mismatch: missing={missing}, unknown={unknown}")
+    if value["contract_version"] != CAPABILITY_CONTRACT_VERSION:
+        raise ValueError("unsupported capability contract version")
+    for name in (
+        "approval_declaration_digest",
+        "repository_identity_digest",
+        "parent_dir_identity",
+    ):
+        if not isinstance(value[name], str) or not _SHA256_RE.fullmatch(value[name]):
+            raise ValueError(f"{name} must be a lowercase sha256 digest")
+    if value["case_sensitivity"] not in CASE_SENSITIVITY_VALUES:
+        raise ValueError("case_sensitivity must use the v2 discriminator")
+    if value["algorithm"] != "Ed25519":
+        raise ValueError("unsupported capability signature algorithm")
+    for name in (
+        "worktree_dir_guard_key",
+        "worktree_registry_guard_key",
+        "worktree_root_canonical",
+        "nonce",
+        "operation_id",
+        "key_id",
+        "signature",
+    ):
+        if not isinstance(value[name], str) or not value[name]:
+            raise ValueError(f"{name} must be a non-empty string")
+    for name in ("nonexistence_digest", "instance_identity_digest"):
+        item = value[name]
+        if item is not None and (not isinstance(item, str) or not _SHA256_RE.fullmatch(item)):
+            raise ValueError(f"{name} must be null or a lowercase sha256 digest")
+    try:
+        expires_at = datetime.fromisoformat(str(value["expires_at"]))
+    except (TypeError, ValueError) as exc:
+        raise ValueError("expires_at must be an ISO-8601 timestamp") from exc
+    if expires_at.tzinfo is None:
+        raise ValueError("expires_at must include a timezone")
+    return WorktreeApprovalCapabilityV2(
+        **{name: value[name] for name in _CAPABILITY_V2_FIELDS if name != "expires_at"},
+        expires_at=expires_at,
+    )
 
 
 SignatureVerifier = Callable[[dict[str, Any], str, str], bool]

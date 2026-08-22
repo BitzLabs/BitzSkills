@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import base64
 import dataclasses
+import itertools
 import json
 import os
 import shutil
@@ -28,6 +29,34 @@ MUTATING_STEPS = {
     "finish": ("git-worktree-remove", "delete-local-branch"),
     "discard": ("create-retention-ref", "git-worktree-remove", "delete-local-branch"),
 }
+
+# `TargetGuardManager` は runtime 内で共有し、同一 process の複数 apply を同じ
+# canonical target 集合で直列化する。process 間 coordinator と crash 後の
+# quarantine 復旧は別の実装単位で永続化する。
+_TARGET_GUARDS = guard.TargetGuardManager()
+_FENCING_TOKENS = itertools.count(1)
+
+
+def _next_fencing_token(_canonical_key: str) -> int:
+    return next(_FENCING_TOKENS)
+
+
+def _targets_for_apply(plan_value: "RuntimePlan") -> tuple[guard.Target, ...]:
+    """apply の全 mutation target を canonical 昇順で導出する。
+
+    create の registry/worktree はまだ存在しないため binding の実在照合だけを
+    省く。opaque worktree ID は registry entry 名から導出できるため、index を
+    含む4 targetの集合自体は plan 時点で固定できる。
+    """
+    return guard.worktree_guard_targets(
+        common_dir=plan_value.common_dir,
+        worktree_root=plan_value.worktree_root,
+        worktree_path=plan_value.path,
+        registry_entry=plan_value.registry_entry,
+        local_ref=plan_value.branch,
+        case_sensitive=plan_value.context.case_sensitivity,
+        require_binding=plan_value.action != "create",
+    )
 
 
 @dataclasses.dataclass(frozen=True)
@@ -698,8 +727,27 @@ def apply(
     )
     if failure is not None:
         return RuntimeDecision(failure.code, failure.reason, remaining_steps=plan_value.effects)
+    try:
+        targets = _targets_for_apply(plan_value)
+    except (guard.CanonicalizationError, OSError, ValueError) as exc:
+        return RuntimeDecision(
+            "BLOCKED", f"target guard を導出できない: {exc}", remaining_steps=plan_value.effects
+        )
+    guard_set, guard_failure = _TARGET_GUARDS.acquire(
+        targets, operation_id=plan_value.operation_id, next_token=_next_fencing_token
+    )
+    if guard_failure is not None or guard_set is None:
+        reason = guard_failure.reason if guard_failure is not None else "target guard を取得できない"
+        return RuntimeDecision("BLOCKED", reason, remaining_steps=plan_value.effects)
+
+    def released(decision: RuntimeDecision) -> RuntimeDecision:
+        _TARGET_GUARDS.release(guard_set)
+        return decision
+
     if not ledger.begin(nonce, plan_value.operation_id):
-        return RuntimeDecision("BLOCKED", "承認 nonce は消費済み", remaining_steps=plan_value.effects)
+        return released(RuntimeDecision(
+            "BLOCKED", "承認 nonce は消費済み", remaining_steps=plan_value.effects
+        ))
     receipts = _ReceiptLog(common)
     completed: list[str] = []
     try:
@@ -707,7 +755,7 @@ def apply(
                           "completed_steps": [], "target": receipt_target(plan_value)})
     except (WorktreeRuntimeError, OSError, ValueError, KeyError) as exc:
         ledger.finish(nonce, plan_value.operation_id, C.NONCE_QUARANTINED)
-        return RuntimeDecision("BLOCKED", str(exc), remaining_steps=plan_value.effects)
+        return released(RuntimeDecision("BLOCKED", str(exc), remaining_steps=plan_value.effects))
     repo, path = Path(plan_value.repo), Path(plan_value.path)
 
     def before(step: str) -> None:
@@ -727,6 +775,10 @@ def apply(
         )
         if pending_failure is not None:
             raise WorktreeRuntimeError(pending_failure.reason)
+        for target in targets:
+            target_failure = _TARGET_GUARDS.verify_before_mutation(guard_set, target)
+            if target_failure is not None:
+                raise WorktreeRuntimeError(target_failure.reason)
         if step_hook is not None:
             step_hook(step)
 
@@ -772,7 +824,9 @@ def apply(
         receipt = receipts.append({"operation_id": plan_value.operation_id, "state": "DONE",
                           "completed_steps": completed, "target": receipt_target(plan_value)})
         ledger.finish(nonce, plan_value.operation_id, C.NONCE_USED_DONE)
-        return RuntimeDecision("DONE", f"worktree.{plan_value.action} completed", tuple(completed), (), (receipt,))
+        return released(RuntimeDecision(
+            "DONE", f"worktree.{plan_value.action} completed", tuple(completed), (), (receipt,)
+        ))
     except (WorktreeRuntimeError, OSError, ValueError, KeyError) as exc:
         # 復旧経路自身も失敗しうる。receipt log が読めない状況では QUARANTINED の追記も
         # 同じ例外で落ち、`try/finally` だけでは例外が apply() から脱出していた
@@ -794,4 +848,4 @@ def apply(
         summary = str(exc)
         if quarantine_failure is not None:
             summary = f"{summary}（quarantine receipt も記録できない: {quarantine_failure}）"
-        return RuntimeDecision(code, summary, tuple(completed), tuple(remaining))
+        return released(RuntimeDecision(code, summary, tuple(completed), tuple(remaining)))

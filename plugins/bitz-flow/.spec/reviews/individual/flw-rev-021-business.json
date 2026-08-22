@@ -1,0 +1,58 @@
+{
+  "perspective": "business",
+  "dimensions": [
+    {
+      "name": "要件トレーサビリティ",
+      "weight": 0.35,
+      "score": 2,
+      "findings": [
+        {
+          "id": "BIZ-101",
+          "severity": "major",
+          "location": "FLW-NFR-013:frontmatter",
+          "title": "既存の安全契約への接続が不足",
+          "description": "影響範囲と回帰対象を過小評価し得る。",
+          "recommendation": "FLW-FR-006とFLW-NFR-007を明示する。"
+        }
+      ]
+    },
+    {
+      "name": "NFR定量化",
+      "weight": 0.3,
+      "score": 3,
+      "findings": [
+        {
+          "id": "BIZ-201",
+          "severity": "major",
+          "location": "FLW-NFR-013:EARS 1・4",
+          "title": "読取競合を決定的に検証できない",
+          "description": "タイミング依存テストだけでは差替え防止を証明できない。",
+          "recommendation": "lstat/open/read境界への決定的hookを設ける。"
+        }
+      ]
+    },
+    {
+      "name": "ステークホルダー整合",
+      "weight": 0.2,
+      "score": 3,
+      "findings": [
+        {
+          "id": "BIZ-301",
+          "severity": "minor",
+          "location": "FLW-DSN-017:§1",
+          "title": "所有者判定の利用者方針が未確定",
+          "description": "対応プラットフォームと停止時の案内がない。",
+          "recommendation": "principalとremediationを明記する。"
+        }
+      ]
+    },
+    {
+      "name": "ROI・実現可能性",
+      "weight": 0.15,
+      "score": 4,
+      "findings": []
+    }
+  ],
+  "weighted_score": 2.8,
+  "summary": "安全価値は妥当だが、検証と系譜の明確化が必要。"
+}

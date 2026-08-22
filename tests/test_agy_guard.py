@@ -97,7 +97,9 @@ def test_allow_never_covers_a_piggybacked_command(payload):
 
 #: Antigravity の run_command が実際に送る形（2026-08-16 に guard へ入力して実測）。
 REAL = {"CommandLine": SUBJECT, "Cwd": "/tmp/repo", "BypassSandbox": False,
-        "RunPersistent": False, "WaitMsBeforeAsync": 5000}
+        "RunPersistent": False, "WaitMsBeforeAsync": 5000,
+        "toolAction": "Running confirmation subject",
+        "toolSummary": "Run confirmation subject"}
 
 
 def test_allow_covers_the_measured_payload_shape():
@@ -107,9 +109,12 @@ def test_allow_covers_the_measured_payload_shape():
     assert response["permissionOverrides"] == [f"command({SUBJECT})"]
 
 
-def test_allow_refuses_a_sandbox_bypass():
-    """sandbox 解除を allow で覆わないこと。実測で BypassSandbox=True の経路が存在する。"""
-    assert judge({**REAL, "BypassSandbox": True}).get("decision") != "allow"
+def test_allow_covers_a_sandbox_bypass_only_for_the_exact_subject():
+    """M2 write試験の限定subjectだけはsandbox解除を許可し、別commandへ一般化しない。"""
+    assert judge({**REAL, "BypassSandbox": True})["decision"] == "allow"
+    assert judge({**REAL, "BypassSandbox": True,
+                  "CommandLine": "git status"}).get("decision") != "allow"
+    assert judge({**REAL, "BypassSandbox": "true"}).get("decision") != "allow"
 
 
 def test_allow_refuses_unknown_fields():
@@ -120,6 +125,33 @@ def test_allow_refuses_unknown_fields():
 
 def test_allow_refuses_a_cwd_with_shell_metacharacters():
     assert judge({**REAL, "Cwd": "/tmp/x; rm -r /tmp/y"}).get("decision") != "allow"
+
+
+def test_allow_refuses_a_cwd_other_than_the_bound_repo():
+    assert judge({**REAL, "Cwd": "/tmp/other"}).get("decision") != "allow"
+
+
+@pytest.mark.parametrize("change", [
+    pytest.param({"RunPersistent": True}, id="persistent"),
+    pytest.param({"WaitMsBeforeAsync": True}, id="wait-bool"),
+    pytest.param({"WaitMsBeforeAsync": 10001}, id="wait-too-large"),
+    pytest.param({"toolAction": ""}, id="empty-action"),
+    pytest.param({"toolSummary": "x\nmalformed"}, id="summary-control"),
+    pytest.param({"toolSummary": "x" * 257}, id="summary-too-long"),
+])
+def test_allow_refuses_unsafe_current_antigravity_metadata(change):
+    assert judge({**REAL, **change}).get("decision") != "allow"
+
+
+def test_allow_accepts_current_payload_without_optional_sandbox_fields():
+    payload = {
+        "CommandLine": SUBJECT,
+        "Cwd": "/tmp/repo",
+        "WaitMsBeforeAsync": 5000,
+        "toolAction": "Running confirmation subject",
+        "toolSummary": "Run confirmation subject",
+    }
+    assert judge(payload)["decision"] == "allow"
 
 
 def test_allow_refuses_a_different_command_line():
@@ -236,6 +268,16 @@ def test_write_verb_variants_outside_the_old_enumeration_are_now_denied(command)
 def test_read_only_allowlist_still_reaches_the_guard_assets(command):
     """陰性対照 — enumerate された read-only 形は deny にならないこと（過剰拒否の防止）。"""
     assert judge({**REAL, "CommandLine": command}).get("decision") != "deny", command
+
+
+@pytest.mark.parametrize("command", [
+    pytest.param("git show --output=scripts/agy_guard.py HEAD", id="show-output"),
+    pytest.param("git diff --output=.agents/hooks.json HEAD~1", id="diff-output"),
+    pytest.param("git log --output=.claude/settings.json HEAD", id="log-output"),
+])
+def test_git_read_only_subcommands_with_output_options_are_denied(command):
+    """read-only subcommand 名だけでは書込み option を許可しない。"""
+    assert judge({**REAL, "CommandLine": command})["decision"] == "deny", command
 
 
 def test_read_only_form_with_bypass_sandbox_is_still_denied():

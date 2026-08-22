@@ -1,0 +1,58 @@
+{
+  "perspective": "operations",
+  "dimensions": [
+    {
+      "name": "監視・可観測性",
+      "weight": 0.3,
+      "score": 2,
+      "findings": [
+        {
+          "id": "OPS-101",
+          "severity": "major",
+          "location": "FLW-DSN-017:§3・§4",
+          "title": "再照合結果を運用証跡へ残さない",
+          "description": "承認低下試行を監査・集計できない。",
+          "recommendation": "receipt/eventにstate/digest/phase/causeを記録する。"
+        }
+      ]
+    },
+    {
+      "name": "災害復旧",
+      "weight": 0.3,
+      "score": 3,
+      "findings": []
+    },
+    {
+      "name": "セキュリティ態勢",
+      "weight": 0.2,
+      "score": 3,
+      "findings": [
+        {
+          "id": "OPS-301",
+          "severity": "major",
+          "location": "FLW-DSN-017:§1",
+          "title": "親ディレクトリ経由の外部参照を拒否しない",
+          "description": "末尾だけのO_NOFOLLOWではcontainmentが保証できない。",
+          "recommendation": "componentごとのdirfd相対走査を定義する。"
+        }
+      ]
+    },
+    {
+      "name": "デプロイ安全性",
+      "weight": 0.2,
+      "score": 2,
+      "findings": [
+        {
+          "id": "OPS-401",
+          "severity": "major",
+          "location": "FLW-DSN-017:影響範囲",
+          "title": "不互換capability契約の導入・rollback方針がない",
+          "description": "旧payloadを既定値で受けるとfail-openになる。",
+          "recommendation": "version、旧形式拒否、pendingのreplan/rollbackを定義する。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 2.5,
+  "summary": "監査証跡と移行規則を設計する必要がある。"
+}

@@ -1,0 +1,65 @@
+{
+  "perspective": "risk",
+  "dimensions": [
+    {
+      "name": "分散システムリスク",
+      "weight": 0.3,
+      "score": "N/A",
+      "findings": []
+    },
+    {
+      "name": "障害モード分析",
+      "weight": 0.3,
+      "score": 2,
+      "findings": [
+        {
+          "id": "RSK-201",
+          "severity": "major",
+          "location": "FLW-DSN-017:§1・§3・§4",
+          "title": "再照合とGit mutationの間の書換えを防げない",
+          "description": "target guardは宣言を保護しない。",
+          "recommendation": "原子的な信頼根または安全な縮退を設計する。"
+        },
+        {
+          "id": "RSK-202",
+          "severity": "major",
+          "location": "worktree_runtime.py",
+          "title": "target guardがプロセス内限定",
+          "description": "別CLIとcrash後の直列化がない。",
+          "recommendation": "永続coordinator/fencingとfault testを追加する。"
+        }
+      ]
+    },
+    {
+      "name": "Saga設計の妥当性",
+      "weight": 0.25,
+      "score": "N/A",
+      "findings": []
+    },
+    {
+      "name": "データ整合性リスク",
+      "weight": 0.15,
+      "score": 2,
+      "findings": [
+        {
+          "id": "RSK-401",
+          "severity": "major",
+          "location": "FLW-DSN-017:§2・§3",
+          "title": "absentの中間変化を識別できない",
+          "description": "作成後削除で同じabsent digestへ戻る。",
+          "recommendation": "generationを永続化するかBLOCKEDにする。"
+        },
+        {
+          "id": "RSK-402",
+          "severity": "major",
+          "location": "worktree_capability.py",
+          "title": "旧capability拒否規則がない",
+          "description": "optional fieldはdowngrade経路になる。",
+          "recommendation": "必須versioned envelopeと欠落拒否を定義する。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 2,
+  "summary": "単一プロセスのため分散/SagaはN/A。原子性・プロセス間排他・旧形式拒否が必要。"
+}

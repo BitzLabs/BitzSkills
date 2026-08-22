@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import shlex
 import shutil
@@ -38,7 +39,7 @@ COMMANDS = {
     "codex": ["codex", "exec", "--ignore-user-config", "--ignore-rules", "--ephemeral",
               "--sandbox", "workspace-write", "--json", "--cd", "{repo}", "{prompt}"],
     "antigravity": ["agy", "--new-project", "--print", "{prompt}", "--output-format", "stream-json",
-                    "--mode", "plan", "--disable-slash-commands"],
+                    "--mode", "plan", "--disable-slash-commands", "--sandbox=false"],
 }
 MARKER = re.compile(
     r"M2_CONFIRMATION_PASS tests=(\d+) test_id_digest=(sha256:[0-9a-f]{64}) "
@@ -73,6 +74,10 @@ COMPATIBILITY_INPUTS = (
     "evals/flow-core/m2-eval/local_confirmation_subject.py",
     "evals/flow-core/m2-eval/run_local_confirmation.py",
 )
+PYTEST_RUNTIME_PACKAGES = (
+    "_pytest", "pytest", "pluggy", "packaging", "iniconfig", "pygments", "py.py",
+)
+PYTEST_RUNTIME_DISTRIBUTIONS = ("pytest", "pluggy", "packaging", "iniconfig", "pygments")
 
 #: 被測定 fixture。`local_confirmation_subject.FILES` と同一集合を指紋へ含める。
 def _fixture_inputs(root: Path) -> tuple[str, ...]:
@@ -386,6 +391,83 @@ def _verify_qualification_reference(root: Path, reference: dict) -> list[str]:
     return problems
 
 
+def _evidence_path(manifest_dir: Path, relative: object, *, label: str) -> tuple[Path | None, str | None]:
+    """manifest 相対の証跡 path を root escape なしに解決する。"""
+    if not isinstance(relative, str) or not relative:
+        return None, f"{label}.path が無い"
+    candidate = (manifest_dir / relative).resolve()
+    try:
+        candidate.relative_to(manifest_dir.resolve())
+    except ValueError:
+        return None, f"{label}.path が manifest root 外を指す"
+    return candidate, None
+
+
+def _verify_confirmation_evidence(manifest_dir: Path, manifest: dict) -> list[str]:
+    """raw log と attempt ledger が self-report でなく実体として成立するか検証する。"""
+    problems: list[str] = []
+    platforms = manifest.get("platforms")
+    if not isinstance(platforms, list) or {row.get("platform") for row in platforms if isinstance(row, dict)} != set(PLATFORMS):
+        return ["platforms が3 platformの閉集合ではない"]
+
+    ledger_meta = manifest.get("attempt_ledger")
+    if not isinstance(ledger_meta, dict):
+        problems.append("attempt_ledger が無い")
+    else:
+        ledger, failure = _evidence_path(manifest_dir, ledger_meta.get("path"), label="attempt_ledger")
+        if failure is not None:
+            problems.append(failure)
+        elif ledger is None or not ledger.is_file():
+            problems.append("attempt_ledger の実体が存在しない")
+        else:
+            if ledger_meta.get("digest") != _file_digest(ledger):
+                problems.append("attempt_ledger.digest が実体と一致しない")
+            chain_problems = verify_attempt_chain(ledger)
+            if chain_problems:
+                problems.append("attempt_ledger の hash chain が不正: " + "; ".join(chain_problems))
+            try:
+                ledger_platforms = {
+                    json.loads(line).get("platform")
+                    for line in ledger.read_text(encoding="utf-8").splitlines() if line.strip()
+                }
+            except (OSError, json.JSONDecodeError):
+                problems.append("attempt_ledger を読めない")
+            else:
+                if ledger_platforms != set(PLATFORMS):
+                    problems.append("attempt_ledger が全 platform の trial を持たない")
+
+    for record in platforms:
+        platform = record["platform"]
+        raw = record.get("raw_log")
+        if not isinstance(raw, dict) or not raw.get("stored"):
+            problems.append(f"{platform}: raw_log が保存済みではない")
+            continue
+        if raw.get("canary_detected") is not True:
+            problems.append(f"{platform}: raw_log の canary 検出が確認できない")
+        raw_path, failure = _evidence_path(manifest_dir, raw.get("path"), label=f"{platform}.raw_log")
+        if failure is not None:
+            problems.append(failure)
+            continue
+        raw_root = raw.get("root")
+        if not isinstance(raw_root, str) or not raw_root:
+            problems.append(f"{platform}: raw_log.root が無い")
+            continue
+        if raw_path is None or raw_path.parent != Path(raw_root).resolve():
+            problems.append(f"{platform}: raw_log.root と path が一致しない")
+            continue
+        if not raw_path.is_file():
+            problems.append(f"{platform}: raw_log の実体が存在しない")
+            continue
+        if raw.get("digest") != _file_digest(raw_path):
+            problems.append(f"{platform}: raw_log.digest が実体と一致しない")
+            continue
+        # canary は raw_log_guard が秘密値として検出・redaction する対象である。
+        # metadata の検出済み主張だけでなく、保存実体に平文が残っていないことも確認する。
+        if f"{CANARY_PREFIX}-{platform}" in raw_path.read_text(encoding="utf-8"):
+            problems.append(f"{platform}: raw_log に canary が平文で残っている")
+    return problems
+
+
 def _verify_for_gate(root: Path, manifest_path: Path, current_key: str, now: datetime) -> int:
     """Gate へ採用する直前に、証跡がまだ有効かを再照合する（`FLW-NFR-011`）。
 
@@ -410,6 +492,8 @@ def _verify_for_gate(root: Path, manifest_path: Path, current_key: str, now: dat
         problems.append("qualification_ref.executed_at が無い")
     elif now - executed > QUALIFICATION_TTL:
         problems.append(f"qualification fingerprint が 24 時間を超えている（{now - executed}）")
+    for problem in _verify_confirmation_evidence(manifest_path.parent, manifest):
+        problems.append(problem)
     for problem in problems:
         print(f"Gate 採用不可: {problem}")
     if problems:
@@ -453,6 +537,69 @@ def compatibility_key(root: Path) -> str:
         digest.update(relative.encode() + b"\0")
         digest.update((root / relative).read_bytes())
     return "sha256:" + digest.hexdigest()
+
+
+def _subject_python(root: Path) -> Path:
+    """親 runner 側で共有 worktree の検証用 Python を固定する。"""
+    common = Path(_git_out(root, "rev-parse", "--path-format=absolute", "--git-common-dir").strip())
+    candidate = common.parent / ".venv" / "bin" / "python"
+    return candidate.absolute() if candidate.is_file() else Path(sys.executable).resolve()
+
+
+def _materialize_subject_runtime(runtime_parent: Path,
+                                 source_python: Path) -> tuple[tempfile.TemporaryDirectory, Path]:
+    """成果物root内へ、pytest専用の短命runtimeを作る。"""
+    source_venv = source_python.parent.parent
+    source_site = (
+        source_venv / "lib" /
+        f"python{sys.version_info.major}.{sys.version_info.minor}" / "site-packages"
+    )
+    if source_venv.name != ".venv" or not source_site.is_dir():
+        raise RuntimeError("shared pytest runtime is unavailable")
+    holder = tempfile.TemporaryDirectory(prefix=".bitz-confirmation-runtime-", dir=runtime_parent)
+    runtime = Path(holder.name)
+    runtime_bin = runtime / "bin"
+    runtime_site = (
+        runtime / "lib" /
+        f"python{sys.version_info.major}.{sys.version_info.minor}" / "site-packages"
+    )
+    runtime_bin.mkdir(parents=True)
+    runtime_site.mkdir(parents=True)
+    runtime_python = runtime_bin / "python"
+    shutil.copy2(source_python.resolve(), runtime_python)
+    (runtime / "pyvenv.cfg").write_text(
+        f"home = {source_python.resolve().parent}\n"
+        "include-system-site-packages = false\n"
+        f"version = {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}\n",
+        encoding="utf-8",
+    )
+    for name in PYTEST_RUNTIME_PACKAGES:
+        source = source_site / name
+        if not source.exists():
+            holder.cleanup()
+            raise RuntimeError(f"pytest runtime component is unavailable: {name}")
+        target = runtime_site / name
+        if source.is_dir():
+            shutil.copytree(source, target)
+        else:
+            shutil.copy2(source, target)
+    for distribution in PYTEST_RUNTIME_DISTRIBUTIONS:
+        matches = list(source_site.glob(f"{distribution}-*.dist-info"))
+        if len(matches) != 1:
+            holder.cleanup()
+            raise RuntimeError(f"pytest runtime metadata is ambiguous: {distribution}")
+        shutil.copytree(matches[0], runtime_site / matches[0].name)
+    return holder, runtime_python
+
+
+def _platform_command(platform: str, prompt: str, root: Path,
+                      subject_python: Path) -> list[str]:
+    command = [part.replace("{prompt}", prompt).replace("{repo}", str(root))
+               for part in COMMANDS[platform]]
+    if platform == "antigravity":
+        # 短命pytest runtimeもroot内へ置き、run_command mountは既存worktree 1個に固定する。
+        command.extend(["--add-dir", str(root)])
+    return command
 
 
 def published_operations(root: Path) -> tuple[str, ...]:
@@ -535,6 +682,14 @@ def main() -> int:
             print(f"裁定スコープの許可が失効している: {allow['id']}（expires_at={allow['expires_at']}）")
         return 1
 
+    source_python = _subject_python(root)
+    runtime_holder = None
+    subject_python = source_python
+    if not args.dry_run:
+        runtime_holder, subject_python = _materialize_subject_runtime(root, source_python)
+    subject_env = os.environ.copy()
+    subject_env["BITZ_CONFIRMATION_PYTHON"] = str(subject_python)
+
     # 単一 coordinator を run 全体で共有し、platform をまたいで attempt ID を
     # 単調増加させる（`FLW-NFR-011`）。
     run_coordinator = new_coordinator("m2-local-confirmation")
@@ -572,8 +727,7 @@ def main() -> int:
                 "command": None,
             }
         else:
-            command = [part.replace("{prompt}", prompt).replace("{repo}", str(root))
-                       for part in COMMANDS[platform]]
+            command = _platform_command(platform, prompt, root, subject_python)
             canonical_command = shlex.join(command)
             # 実走の証跡は trial ごとに coordinator の attempt へ結び付ける
             # （`FLW-NFR-011` / `FLW-TSK-102`）。発行できなければ attempt を開始しない。
@@ -594,7 +748,7 @@ def main() -> int:
             state_before = repo_state_digest(root)
             try:
                 proc = subprocess.run(command, cwd=root, capture_output=True, text=True,
-                                      timeout=240, check=False)
+                                      timeout=240, check=False, env=subject_env)
                 finished_wall = datetime.now(timezone.utc)
                 raw = proc.stdout + proc.stderr
                 match = MARKER.search(raw)
@@ -656,6 +810,9 @@ def main() -> int:
         records.append(record)
         print(f"{platform}: {record['status']}")
 
+    if runtime_holder is not None:
+        runtime_holder.cleanup()
+
     status = "PASS" if all(record["status"] == "PASS" for record in records) else "BLOCKED"
     issued = datetime.now(timezone.utc)
     ledger_path = out / "attempts.jsonl"
@@ -665,6 +822,7 @@ def main() -> int:
         "scope_allows": list(SCOPE_ALLOWS),
         "attempt_ledger": {
             "path": "attempts.jsonl" if ledger_path.exists() else None,
+            "digest": _file_digest(ledger_path) if ledger_path.exists() else None,
             "chain_problems": verify_attempt_chain(ledger_path),
         },
         "issued_at": issued.isoformat().replace("+00:00", "Z"),
@@ -694,6 +852,14 @@ def main() -> int:
         "gate_status": status,
         "dry_run": args.dry_run,
     }
+    # dry-run は platform CLI を実行せず raw log / attempt を意図的に作らない配線検査である。
+    # Gate に採用する実走 evidence と混同して不採用にしない。実走では生成直後にも完全性を
+    # 検証し、書込み失敗を PASS manifest として残さない。
+    if not args.dry_run:
+        evidence_problems = _verify_confirmation_evidence(out, manifest)
+        if evidence_problems:
+            manifest["gate_status"] = "BLOCKED"
+            manifest["evidence_problems"] = evidence_problems
     (out / "active-manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
