@@ -1,0 +1,68 @@
+{
+  "perspective": "consistency",
+  "dimensions": [
+    {
+      "name": "構造整合",
+      "weight": 0.35,
+      "score": 3,
+      "findings": [
+        {
+          "id": "RVC-101",
+          "severity": "major",
+          "location": "FLW-DSN-017.md:§6.1 Unicode受理境界、FLW-NFR-014.md:native path受入基準",
+          "title": "case-insensitive filesystemで同一targetのguard keyが分裂する",
+          "description": "native path payloadは正確なcomponent列とcase_sensitivityをdigestへ含めるが、insensitive時にcase-equivalentな末尾componentを同じ比較keyへ写像する規則がない。Windowsや既定のmacOS volumeで不在targetの`Foo`と`foo`は同じ実効targetになり得る一方、component byte列が異なるため別guard key・operation identity・capability scopeとなり、同一canonical targetを最大1processへ直列化する要件と矛盾する。",
+          "recommendation": "表示・証跡用の可逆native pathとは別に、parent handleから得たvolume/directoryのcase semanticsに従うcollision keyを定義する。安全な比較keyを導出できない不在targetはUNSUPPORTEDとし、case-sensitive directoryでは正確なcomponentを維持するcross-platform vectorを追加する。"
+        },
+        {
+          "id": "RVC-102",
+          "severity": "major",
+          "location": "FLW-DSN-017.md:§6.3 schemaとruntime codecの双方向整合、FLW-TSK-106.md・FLW-TSK-108.md・FLW-TSK-110.md・FLW-TSK-111.md・FLW-TSK-113.md:boundary",
+          "title": "schema単位activation規約とgrouped manifestのtask境界が一致しない",
+          "description": "設計は`activation/<schema-id>.json`の各manifestが単一`schema_id`を持つと規定する。一方、複数schemaを所有するtaskのboundaryは`lease-records-v2.json`、`promotion-v2.json`、`quarantine-release-v2.json`など1個のgrouped manifestしか含まない。file identity/native path、support profile、entrypoint policy/evidence、promotion state/receiptなどもschemaごとのmanifestが列挙されず、中央loaderの一意対応規則を満たせない。",
+          "recommendation": "schemaごとに同名activation manifestを設けて全boundaryへ列挙するか、manifest schemaを`schema_ids`配列のgroup ownershipへ正式変更し、重複・部分active・owner不一致の規則とtestを設計へ反映する。"
+        }
+      ]
+    },
+    {
+      "name": "トレーサビリティ",
+      "weight": 0.35,
+      "score": 2,
+      "findings": [
+        {
+          "id": "RVC-201",
+          "severity": "major",
+          "location": "FLW-DSN-017.md:§6.4 supported entrypoint inventory、§7.3 support profile、FLW-TSK-111.md・FLW-TSK-113.md",
+          "title": "署名baselineとsupport profileの検証trust anchorが未割当",
+          "description": "設計はentrypoint baselineとsupport profileを署名対象の信頼根とするが、署名envelope、許可algorithm、trusted distribution keyの所在・role・generation・失効、検証責務を定義していない。TSK-111とTSK-113にも署名schemaやtrust registryのboundaryがなく、親processによるartifact測定が正しくても、比較元manifest自体の真正性をどのcomponentが確立するか追跡できない。",
+          "recommendation": "配布baseline/support profile用の署名envelopeと独立roleをContractKernel schemaへ追加し、trusted public key registry、generation/digest、失効規則、検証controller、owner taskを明示する。plugin packageの外部署名を信頼するなら、その検証済みpackage identityをpromotion receiptへ束縛する契約を定義する。"
+        },
+        {
+          "id": "RVC-202",
+          "severity": "major",
+          "location": "FLW-DSN-017.md:§7.2 reviewer keyのライフサイクル、FLW-NFR-014.md:quarantine reviewer key受入基準、FLW-TSK-110.md・FLW-TSK-114.md",
+          "title": "reviewer key registryのschema・codec・task ownerがない",
+          "description": "NFRと設計はreviewer registryのgeneration、digest、role、有効・失効状態を署名判断へ必須化するが、§6のschema inventoryにregistry recordがなく、TSK-110/114のboundaryにもregistry schema・codec・検証moduleがない。既存の単純なtrusted-key mappingを拡張するのか、別registryを設けるのかも未定義である。",
+          "recommendation": "approval signerとquarantine reviewerを含むkey registryの分離または統合方針を決め、closed schema、canonical digest、codec、非追随読取、generation遷移、owner taskを追加する。既存capability検証とのmigrationとrole非互換testもtask依存へ含める。"
+        }
+      ]
+    },
+    {
+      "name": "用語一貫性",
+      "weight": 0.3,
+      "score": 3,
+      "findings": [
+        {
+          "id": "RVC-301",
+          "severity": "minor",
+          "location": "FLW-DSN-017.md:§7.1 運用CLIの公開境界、discovery/vision.md:Product、discovery/scope.md:単一dispatcher",
+          "title": "二階層action契約と新しい多階層commandが未対応",
+          "description": "discoveryは`flow.py <domain> <action>`を公開形とするが、v1.5は`worktree promotion check`や`worktree quarantine release-record`など3〜4階層のcommandを定義する。また`worktree doctor`と独立`flow-doctor`の診断責務の呼び分けも用語上明示されていない。",
+          "recommendation": "dispatcher grammarを階層subcommand対応へ正式改訂してoperation IDとの写像を固定するか、既存二階層契約に合うaction名へ平坦化する。`worktree doctor`はv2永続state診断、`flow-doctor`は環境診断など責務差をdiscoveryとoperation catalogへ明記する。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 2.65,
+  "summary": "v1.5は旧レビューのidentity種別、native Unicode、promotion測定、quarantine管理経路、task責務分割を大幅に改善している。未実装であること自体はfindingとしていない。残る設計上の阻害点はcase-insensitive targetの同一性、activation manifestのcardinality、配布manifestとreviewer registryの信頼・所有境界である。"
+}

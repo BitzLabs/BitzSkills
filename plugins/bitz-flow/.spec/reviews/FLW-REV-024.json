@@ -1,0 +1,217 @@
+{
+  "schema_version": 2,
+  "review_id": "FLW-REV-024",
+  "verdict": "FAIL",
+  "aggregate_score": 2.35,
+  "perspective_scores": {
+    "consistency": 2.65,
+    "data-integrity": 2.0,
+    "operations": 2.2,
+    "risk": 2.0,
+    "business": 3.4
+  },
+  "findings_summary": {
+    "before_dedup": 26,
+    "after_dedup": 12,
+    "p0": 0,
+    "p1": 8,
+    "p2": 3,
+    "p3": 1
+  },
+  "findings": [
+    {
+      "id": "FLW-REV-024:SYN-001",
+      "priority": "P1",
+      "severity": "major",
+      "source": ["RSK-201"],
+      "title": "lease・fencing・journalを更新する単一authorityがない",
+      "detail": "MutationCoordinatorとRecoveryControllerの双方が同じlock、counter、event chainを更新するが、両者が共有する唯一のauthorityが依存図とtask boundaryにない。実装が分岐するとtoken単調性と最大1 writerを破る。",
+      "recommendation": "Git起動権限を持たないTargetLeaseJournalServiceを独立させ、lock取得、token発行、event公開、chain再照合の唯一のAPIとしてmutationとrecoveryから利用する。",
+      "tracked_by": "FLW-REV-024:GP-001",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-024:SYN-002",
+      "priority": "P1",
+      "severity": "major",
+      "source": ["RSK-202"],
+      "title": "測定artifactとprobe実行artifactの同一性が閉じていない",
+      "detail": "handleからhashした後もchildが元pathとimport treeを参照するため、exec/import前の差替えで未知codeをprobeとして実行し得る。commit前再照合は副作用を取り消せない。",
+      "recommendation": "保持handleからowner-only immutable staging snapshotを作成・fsync・再検証し、probeの実行とimport resolutionをsnapshot内だけへ固定する。",
+      "tracked_by": "FLW-REV-024:GP-002",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-024:SYN-003",
+      "priority": "P1",
+      "severity": "major",
+      "source": ["RSK-203"],
+      "title": "promotion最終再照合とACTIVE公開がCASされていない",
+      "detail": "registry generationとartifactを再照合した後、active stateのatomic replaceまでregistry/cacheを固定しないため、pre-baseline entrypointの再有効化と競合してstale evidenceをACTIVEにできる。",
+      "recommendation": "registry generation lock/CASをACTIVE公開まで保持するか、PENDING公開後の再列挙を通した二段階commitとし、sentinel-aware launcherにACTIVE以外を拒否させる。",
+      "tracked_by": "FLW-REV-024:GP-002",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-024:SYN-004",
+      "priority": "P1",
+      "severity": "major",
+      "source": ["RSK-204"],
+      "title": "quarantine releaseのcrash・retry収束が未定義",
+      "detail": "token発行前後、release event公開前後、応答喪失後のretryに対するphaseと単回nonceの冪等規則がなく、永久quarantineや重複token消費を運用者と機械が同じ結論へ収束できない。",
+      "recommendation": "release専用の不変phase列と各crash点の再開表を定義し、同一decision digest/nonceは既存結果を返し、異decisionと未確定tokenは自動解除しない。",
+      "tracked_by": "FLW-REV-024:GP-001",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-024:SYN-005",
+      "priority": "P1",
+      "severity": "major",
+      "source": ["RSK-401", "RVC-201", "RVC-202", "BIZ-101", "DIN-201", "OPS-301"],
+      "title": "署名policyとreviewer registryのroot of trust・履歴がない",
+      "detail": "baseline、support profile、reviewer key registryの許可signer、trust anchor、generation rollback防止、失効、過去receipt検証、schema/codec/task ownerが閉じておらず、正当な古い署名へのdowngradeやregistry同時差替えを拒否できない。",
+      "recommendation": "署名role別の責任表、OSまたは配布root public key、closed envelope/registry schema、単調generationと前digest、失効、旧snapshot保持、唯一のPolicyVerifierとowner taskを定義する。",
+      "tracked_by": "FLW-REV-024:GP-003",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-024:SYN-006",
+      "priority": "P1",
+      "severity": "major",
+      "source": ["RSK-402", "DIN-102", "DIN-202", "DIN-302", "OPS-201", "OPS-401", "OPS-402"],
+      "title": "archiveが不変journalと矛盾し、所有・復旧契約もない",
+      "detail": "event削除禁止とgap検出を規定しながらarchive receipt後のDONE原本削除を許している。archive chain、保存先identity、作成・検証・prune順序、crash収束、restore、task/schema owner、段階展開が未定義である。",
+      "recommendation": "M2では原本pruneを禁止してarchiveをscope外に戻すことを推奨する。採用する場合は独立taskでcheckpoint chain、archive/restore状態機械、schema、owner、canaryとrollbackを設計する。",
+      "tracked_by": "FLW-REV-024:GP-004",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-024:SYN-007",
+      "priority": "P1",
+      "severity": "major",
+      "source": ["DIN-101", "OPS-101"],
+      "title": "mutation完了証跡の容量予約がない",
+      "detail": "容量迫近を通知するだけで、Git副作用後に必要となるpostcondition、DONEまたはquarantine receipt分を事前予約しないため、ENOSPCで証跡を確定できずINDETERMINATEへ陥る。",
+      "recommendation": "最初のGit mutation前に同一filesystem上で最悪journal量と緊急receipt量を予約し、予約不能なら副作用0件で停止するdurability gateとcrash後回収規則を追加する。",
+      "tracked_by": "FLW-REV-024:GP-005",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-024:SYN-008",
+      "priority": "P1",
+      "severity": "major",
+      "source": ["DIN-301", "RVC-102"],
+      "title": "schema単位activationとgroup manifestの粒度が矛盾する",
+      "detail": "設計はactivation/<schema-id>.jsonを要求するが、複数schemaを所有するtaskはlease-records-v2.json等のgroup manifestを1件だけ境界に持ち、部分activeとrollbackの原子性を一意に実装できない。",
+      "recommendation": "schemaごとのmanifestへtask boundaryを展開するか、member一覧とall-or-nothing規則を持つgroup manifest契約へ設計・loader・testを統一する。",
+      "tracked_by": "FLW-REV-024:GP-006",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-024:SYN-009",
+      "priority": "P2",
+      "severity": "major",
+      "source": ["RVC-101"],
+      "title": "case-insensitive filesystemで同一targetのguard keyが分裂する",
+      "detail": "可逆native componentだけをdigest化すると、不在targetのFooとfooが同じ実体になるvolumeでも別guard keyとなり、最大1 writerの要件と衝突する。",
+      "recommendation": "可逆表示pathとは別にparent handleのcase semanticsに従うcollision keyを定義し、安全に導出できない不在targetはUNSUPPORTEDにする。",
+      "tracked_by": "",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-024:SYN-010",
+      "priority": "P2",
+      "severity": "major",
+      "source": ["OPS-302"],
+      "title": "状態変更する運用CLIのauthorization matrixがない",
+      "detail": "promotion apply、reconcile、release-recordの実行principal、OS owner/ACL、role、対話承認、remote session可否が未定義で、署名済みdecisionの投入権限を制御できない。",
+      "recommendation": "read-only、promotion-operator、recovery-operator、quarantine-reviewerを分離し、principalとroleをreceiptへ記録して不一致をBLOCKEDにする。",
+      "tracked_by": "",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-024:SYN-011",
+      "priority": "P2",
+      "severity": "major",
+      "source": ["RVC-301", "BIZ-301"],
+      "title": "多階層commandとdoctorの利用者導線が既存契約に未接続",
+      "detail": "discoveryのflow.py <domain> <action>に対して3〜4階層commandを追加し、環境診断のflow-doctorとv2 state診断のworktree doctorの選択規則や指標計上方法がない。",
+      "recommendation": "dispatcher grammarを階層subcommand対応へ改訂するかactionを平坦化し、flow-doctorとworktree doctorのrouting rule、相互案内、Invocation Rate計測を固定する。",
+      "tracked_by": "",
+      "status": "open"
+    },
+    {
+      "id": "FLW-REV-024:SYN-012",
+      "priority": "P3",
+      "severity": "minor",
+      "source": ["OPS-202"],
+      "title": "復旧操作のRTO目標がない",
+      "detail": "doctor検出、reconcile、reviewer裁定、archive restoreの目標時間がなく、journal量増加時の運用可能性を測定できない。",
+      "recommendation": "support profile別の検出時間、reconcile p95、quarantine初動RTOをproto指標として追加し、archiveを採用する場合だけrestore RTOも定義する。",
+      "tracked_by": "",
+      "status": "open"
+    }
+  ],
+  "gate_preconditions": [
+    {
+      "id": "GP-001",
+      "kind": "agenda",
+      "basis": "verified",
+      "gp_kind": "behavioral",
+      "ears": "WHEN mutationまたはquarantine releaseがtargetのlease、fencing tokenまたはjournalを更新する THEN bitz-flow SHALL Git起動権限を持たない単一authorityを通じて更新し、release retryを同一decisionへ冪等に収束させる",
+      "evidence": "FLW-DSN-017 §5・§7とFLW-TSK-108〜110の所有境界比較"
+    },
+    {
+      "id": "GP-002",
+      "kind": "agenda",
+      "basis": "verified",
+      "gp_kind": "behavioral",
+      "ears": "WHEN contract v2 promotionを実行する THEN bitz-flow SHALL 測定済みimmutable snapshotだけをprobeし、registry generationをACTIVE公開までCASまたは二段階commitで固定する",
+      "evidence": "FLW-DSN-017 §6.4の測定・probe・最終再照合・active state公開順序"
+    },
+    {
+      "id": "GP-003",
+      "kind": "agenda",
+      "basis": "verified",
+      "gp_kind": "artifact",
+      "statement": "baseline、support profile、reviewer registryの署名role、root of trust、anti-rollback、旧generation保持、schema/codec、PolicyVerifier、owner taskを単一の責任表へ割り当てる。",
+      "evidence": "FLW-DSN-017 §6.4・§7.2・§7.3とFLW-TSK-106/110/111/113/114の比較"
+    },
+    {
+      "id": "GP-004",
+      "kind": "agenda",
+      "basis": "verified",
+      "gp_kind": "artifact",
+      "statement": "M2ではjournal原本pruneを禁止してarchiveをscope外へ戻すか、独立したarchive/restore設計・schema・task・Gateを追加する。",
+      "evidence": "FLW-DSN-017 §4.2のevent削除禁止と§7.3のarchive receipt後原本削除の矛盾"
+    },
+    {
+      "id": "GP-005",
+      "kind": "agenda",
+      "basis": "verified",
+      "gp_kind": "behavioral",
+      "ears": "WHEN 最初のGit mutationを開始する THEN bitz-flow SHALL 同一filesystem上に最悪時journal量と緊急quarantine receipt量を予約済みとし、予約不能ならGit副作用0件で停止する",
+      "evidence": "FLW-DSN-017 §7.3とFLW-NFR-014の容量迫近時受入基準"
+    },
+    {
+      "id": "GP-006",
+      "kind": "agenda",
+      "basis": "verified",
+      "gp_kind": "artifact",
+      "statement": "activation manifestの粒度をschema単位またはall-or-nothing group単位のどちらかへ統一し、task boundary、loader、round-trip testを同じ粒度にする。",
+      "evidence": "FLW-DSN-017 §6.3とFLW-TSK-106/108/110/111/113のboundary比較"
+    }
+  ],
+  "carried_over": [
+    "FLW-REV-006:SYN-001", "FLW-REV-006:SYN-002", "FLW-REV-006:SYN-003", "FLW-REV-006:SYN-004", "FLW-REV-006:SYN-005", "FLW-REV-006:SYN-006", "FLW-REV-006:SYN-007", "FLW-REV-006:SYN-008", "FLW-REV-006:SYN-009",
+    "FLW-REV-011:SYN-001", "FLW-REV-011:SYN-002", "FLW-REV-011:SYN-003", "FLW-REV-011:SYN-004", "FLW-REV-011:SYN-005", "FLW-REV-011:SYN-006", "FLW-REV-011:SYN-007", "FLW-REV-011:SYN-008", "FLW-REV-011:SYN-009", "FLW-REV-011:SYN-010", "FLW-REV-011:SYN-011", "FLW-REV-011:SYN-012", "FLW-REV-011:SYN-013", "FLW-REV-011:SYN-014", "FLW-REV-011:SYN-015", "FLW-REV-011:SYN-016", "FLW-REV-011:SYN-017", "FLW-REV-011:SYN-018",
+    "FLW-REV-013:SYN-001", "FLW-REV-013:SYN-002", "FLW-REV-013:SYN-003", "FLW-REV-013:SYN-004", "FLW-REV-013:SYN-005", "FLW-REV-013:SYN-006", "FLW-REV-013:SYN-007", "FLW-REV-013:SYN-008", "FLW-REV-013:SYN-009", "FLW-REV-013:SYN-010", "FLW-REV-013:SYN-011", "FLW-REV-013:SYN-012", "FLW-REV-013:SYN-013", "FLW-REV-013:SYN-014", "FLW-REV-013:SYN-015", "FLW-REV-013:SYN-016", "FLW-REV-013:SYN-017", "FLW-REV-013:SYN-018", "FLW-REV-013:SYN-019", "FLW-REV-013:SYN-020", "FLW-REV-013:SYN-021", "FLW-REV-013:SYN-022", "FLW-REV-013:SYN-023",
+    "FLW-REV-015:SYN-001",
+    "FLW-REV-016:SYN-002", "FLW-REV-016:SYN-003", "FLW-REV-016:SYN-004", "FLW-REV-016:SYN-005", "FLW-REV-016:SYN-006", "FLW-REV-016:SYN-007", "FLW-REV-016:SYN-008", "FLW-REV-016:SYN-009", "FLW-REV-016:SYN-010", "FLW-REV-016:SYN-011",
+    "FLW-REV-017:SYN-008", "FLW-REV-017:SYN-009",
+    "FLW-REV-018:SYN-001", "FLW-REV-018:SYN-002", "FLW-REV-018:SYN-003", "FLW-REV-018:SYN-004", "FLW-REV-018:SYN-005", "FLW-REV-018:SYN-006", "FLW-REV-018:SYN-007", "FLW-REV-018:SYN-008", "FLW-REV-018:SYN-009", "FLW-REV-018:SYN-010", "FLW-REV-018:SYN-011", "FLW-REV-018:SYN-012",
+    "FLW-REV-019:SYN-001", "FLW-REV-019:SYN-002", "FLW-REV-019:SYN-003", "FLW-REV-019:SYN-004", "FLW-REV-019:SYN-005", "FLW-REV-019:SYN-006", "FLW-REV-019:SYN-007", "FLW-REV-019:SYN-008", "FLW-REV-019:SYN-009", "FLW-REV-019:SYN-010", "FLW-REV-019:SYN-011", "FLW-REV-019:SYN-012",
+    "FLW-REV-020:SYN-001"
+  ],
+  "conditional_items": []
+}

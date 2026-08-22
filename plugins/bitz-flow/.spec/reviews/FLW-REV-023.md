@@ -107,6 +107,10 @@ v1.5ではSafety KernelとOperations Control Plane、不変operation journal、�
 support/retention profile、4段階rolloutを追加し、実装を9責務へ再分割した。この追加設計も
 本レビューの旧判定だけでは通過扱いにせず、v1.5を対象とする独立再レビューを必要とする。
 
+FLW-REV-024でv1.5を独立再レビューし、本レビューのSYN-001〜011が対象とした元の根本原因は
+解消済みと確認したため、各findingをresolvedへ更新した。v1.5で新たに見つかった問題は
+FLW-REV-024へ分離し、本レビューの過去判定自体は変更しない。
+
 ## 持ち越し
 
 本件外の過去レビュー由来で未解消のP0/P1は88件あり、`FLW-REV-023.json`の`carried_over`へ保持した。

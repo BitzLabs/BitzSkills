@@ -1,0 +1,49 @@
+{
+  "perspective": "business",
+  "dimensions": [
+    {
+      "name": "要件トレーサビリティ",
+      "weight": 0.35,
+      "score": 2,
+      "findings": [
+        {
+          "id": "BIZ-101",
+          "severity": "major",
+          "location": "FLW-DSN-017.md:§6.4・§7.2・§7.3、FLW-TSK-110.md・FLW-TSK-111.md・FLW-TSK-113.md",
+          "title": "3種類の署名主体と運用責任がエンドツーエンドで割り当てられていない",
+          "description": "approval capability signer、quarantine reviewer、entrypoint baseline/support profileの配布signerが登場するが、後二者のtrust registry、署名検証責任、rotation・失効時の利用者導線がtask境界まで接続されていない。特に配布manifestの真正性とreviewer registry codecにownerがなく、小規模チームが安全に運用開始できる完成条件を判定できない。",
+          "recommendation": "署名roleごとに発行主体、trusted public key配置、登録・rotation・失効、障害時停止、担当controller/task、runbookを責任表へ追加する。roleを統合する場合は権限分離への影響と誤用防止条件を明示する。"
+        }
+      ]
+    },
+    {
+      "name": "NFR定量化",
+      "weight": 0.3,
+      "score": 5,
+      "findings": []
+    },
+    {
+      "name": "ステークホルダー整合",
+      "weight": 0.2,
+      "score": 3,
+      "findings": [
+        {
+          "id": "BIZ-301",
+          "severity": "major",
+          "location": "FLW-DSN-017.md:§7.1、discovery/vision.md:Product、discovery/personas.md:Persona B",
+          "title": "運用commandの入口と既存doctorの選択規則が利用者契約へ反映されていない",
+          "description": "Persona Bは全操作を`flow.py`から始める一方、Productは`flow-doctor`を独立診断入口としている。v1.5はさらに`flow.py worktree doctor`を追加するが、利用者が環境診断とv2 state診断のどちらを選ぶか、multi-level commandが単一dispatcher指標へどう計上されるかを定義していない。誤った入口選択は復旧時間とDispatcher Invocation Rateを悪化させる。",
+          "recommendation": "環境前提の診断はflow-doctor、repositoryのcontract-v2 state・receipt・promotion診断はflow.py worktree doctorとするrouting ruleをdiscovery、SKILL、operation catalogへ追加し、同じ障害に対する相互リンクとInvocation Rate計測方法を固定する。"
+        }
+      ]
+    },
+    {
+      "name": "ROI・実現可能性",
+      "weight": 0.15,
+      "score": 4,
+      "findings": []
+    }
+  ],
+  "weighted_score": 3.4,
+  "summary": "platform別UNSUPPORTED 0件、operator action completeness、read-only integrity、段階rollout、9責務のtask分割により測定可能性と実現可能性は高い。未実装状態は評価へ含めていない。ビジネス面で残る主要課題は、署名roleの運用責任をtaskまで閉じることと、flow-doctorと新しいworktree control-plane commandの利用者導線を統一することである。"
+}

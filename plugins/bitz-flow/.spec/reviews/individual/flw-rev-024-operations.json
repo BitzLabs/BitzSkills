@@ -1,0 +1,91 @@
+{
+  "perspective": "operations",
+  "dimensions": [
+    {
+      "name": "監視・可観測性",
+      "weight": 0.30,
+      "score": 2,
+      "findings": [
+        {
+          "id": "OPS-101",
+          "severity": "major",
+          "location": "FLW-DSN-017 §7・§7.3、discovery/metrics.md Input Metrics・Guardrail Metrics",
+          "title": "容量SLIに停止閾値とdurability headroomがない",
+          "description": "容量迫近をSLIとdoctorで通知する方針はあるが、警告・停止閾値、operation別最悪必要量、緊急receipt予約量、archive失敗時の書込み停止条件が定義されていない。Operator Action Completenessが100%でも、通知だけではmutation後の証跡欠落を防げない。",
+          "recommendation": "support profileへwarning threshold、hard-stop threshold、reserved emergency bytes、最大operation journal量を必須化し、metricsへDurability Reservation Success Rate 100%とmutation後ENOSPC 0件を追加する。"
+        }
+      ]
+    },
+    {
+      "name": "災害復旧",
+      "weight": 0.30,
+      "score": 2,
+      "findings": [
+        {
+          "id": "OPS-201",
+          "severity": "major",
+          "location": "FLW-DSN-017 §7.3、検証設計、FLW-TSK-110・114",
+          "title": "archiveのrestore・検証不能時の復旧手順がない",
+          "description": "DONE証跡のarchiveを許す一方、archive保存先の消失・改変・一時到達不能、archive receiptだけ残った状態、原本削除中crashからのrestore判定が定義されていない。doctor、receipt verify、reconcileのどれがarchiveを取得し、失敗をUNAVAILABLE、INDETERMINATE、データ喪失のどれへ分類するか不明である。",
+          "recommendation": "archive/restore state machine、保存先capability、再検証頻度、restore drill、二重保存または失敗時の原本保持、archive不達時のresult/cause codeを定義する。runbookとfault fixtureへarchive消失・改変・部分restoreを追加する。"
+        },
+        {
+          "id": "OPS-202",
+          "severity": "minor",
+          "location": "FLW-DSN-017 §7、discovery/metrics.md",
+          "title": "reconcile・quarantine解除・archive restoreのRTO目標がない",
+          "description": "quarantine 24時間超過のreview条件はあるが、doctor検出、reconcile判定、reviewer裁定、archive restoreの目標時間がなく、journal量増加時の運用可能性を評価できない。",
+          "recommendation": "support profile別に検出時間、reconcile p95、quarantine初動、archive restoreのRTOをproto指標として追加し、fixture規模と測定条件を固定する。"
+        }
+      ]
+    },
+    {
+      "name": "セキュリティ態勢",
+      "weight": 0.20,
+      "score": 2,
+      "findings": [
+        {
+          "id": "OPS-301",
+          "severity": "major",
+          "location": "FLW-DSN-017 §7.2 reviewer keyのライフサイクル",
+          "title": "trusted registryのroot of trustと履歴保持が未定義",
+          "description": "runtimeをread-only verifierとする責務分離は妥当だが、registry自体の署名者、保護path、owner/ACL、atomic generation更新、rollback防止、旧generation snapshotの保持先が定義されていない。registry digestだけでは攻撃者がregistryとdigestを同時差替えした場合の信頼根にならない。",
+          "recommendation": "配布/導入管理者側のroot public keyまたはOS保護されたtrust anchor、registry署名schema、非追随・atomic更新、単調generation、rollback検出、旧snapshot保持をsupport profileへ接続する。key compromise、全reviewer key喪失、管理者key rotationのrunbookを定義する。"
+        },
+        {
+          "id": "OPS-302",
+          "severity": "major",
+          "location": "FLW-DSN-017 §7.1、FLW-TSK-114",
+          "title": "状態変更する運用CLIの実行権限が未定義",
+          "description": "promotion apply、quarantine reconcile、release-recordは永続stateを変更するが、実行principal、OS owner/ACL、role、対話承認、remote session可否が定義されていない。release decision署名だけでは、誰がそのdecisionを投入しpromotionやreconcileを起動できるかを制御しない。",
+          "recommendation": "commandごとのauthorization matrixを設け、read-only、promotion-operator、recovery-operator、quarantine-reviewerを分離する。管理commandはowner principalとroleをreceiptへ記録し、権限不明・role不一致をBLOCKEDにする。"
+        }
+      ]
+    },
+    {
+      "name": "デプロイ安全性",
+      "weight": 0.20,
+      "score": 3,
+      "findings": [
+        {
+          "id": "OPS-401",
+          "severity": "major",
+          "location": "FLW-DSN-017 §7.3・影響範囲/ロールバック、FLW-TSK-114",
+          "title": "retention/archive機能に段階展開とrollback境界がない",
+          "description": "contract v2本体にはaudit-onlyからdefault-onまでの4 phaseがあるが、DONE原本を削除可能にするarchive機能についてはaudit、canary、default-on、rollback条件がない。archive receiptやrestoreに欠陥がある状態で原本削除を有効化すると回復不能になる。",
+          "recommendation": "archiveは初期状態をcopy-and-verifyのみとし、複数回のrestore drillとchain parityを出口条件にしてから原本削除をcanary有効化する。rollback時は削除を即時停止し、既存archiveのverify能力を維持する独立feature gateを定義する。"
+        },
+        {
+          "id": "OPS-402",
+          "severity": "minor",
+          "location": "FLW-DSN-017 §7.3、FLW-TSK-114",
+          "title": "保持期間・容量上限の変更互換性が未定義",
+          "description": "値をsupport profileで宣言するが、profile更新で保持期間を短縮した場合の既存DONE証跡、上限縮小時の即時超過、profile rollback時の扱いがない。",
+          "recommendation": "retention policy versionをreceiptへ束縛し、短縮・上限縮小は明示的migrationとdry-run inventoryを必須にする。既存証跡へ遡及削除せず、新policy適用時点と対象集合を記録する。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 2.20,
+  "summary": "Safety KernelとOperations Control Planeの責務分離、運用CLI一覧、support profile、reviewer role、4段階rolloutはよく整理されている。一方、容量枯渇前のhard-stop、archive/restore運用、registryのroot of trust、状態変更CLIのauthorization、archive機能自体の段階展開が不足しており、長期運用と障害復旧のDesign Gate条件として残る。"
+}

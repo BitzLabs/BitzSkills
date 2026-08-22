@@ -1,0 +1,76 @@
+{
+  "perspective": "data-integrity",
+  "dimensions": [
+    {
+      "name": "トランザクション安全性",
+      "weight": 0.40,
+      "score": 2,
+      "findings": [
+        {
+          "id": "DIN-101",
+          "severity": "major",
+          "location": "FLW-DSN-017 §4.2・§7.3、FLW-NFR-014 保持上限EARS",
+          "title": "mutation後のjournal容量を保証する予約境界がない",
+          "description": "設計は容量迫近をmutation前に通知するが、operationがDONEまたはQUARANTINEDへ収束するまでに必要なevent、postcondition、receipt、directory metadata分の容量を事前予約する規則がない。通知後もmutationへ進めるため、Git副作用の完了後にENOSPCとなり、POSTCONDITION_DURABLEやquarantine receiptを記録できずINDETERMINATEへ陥る。",
+          "recommendation": "target lease取得後かつ最初のGit mutation前に、operationの最悪時journal量と緊急quarantine receipt量を同一filesystem上で予約するdurability gateを設ける。予約不能・容量閾値未満は副作用0件でBLOCKEDとし、予約解放点とcrash後回収規則を状態機械へ追加する。"
+        },
+        {
+          "id": "DIN-102",
+          "severity": "major",
+          "location": "FLW-DSN-017 §4.2 不変event列、§7.3 support profile・保持・容量",
+          "title": "不変eventの削除禁止とDONE原本削除が矛盾する",
+          "description": "operation journalでは確定済みeventの削除を禁止し、gapをINDETERMINATEとする一方、保持設計ではarchive receiptがあればDONE原本を削除できる。削除後のchain head、後続receipt、counter下限、receipt verifyがarchiveへどう連続するか定義されず、正規のretention処理がjournal gapとして検出され得る。",
+          "recommendation": "削除ではなく検証済みcheckpoint/segment compactionとして契約化し、archive segmentのMerkle rootまたはhead/tail digest、sequence範囲、保存先identity、検証時刻、署名をdurable checkpoint eventへ固定する。checkpoint確定前の原本削除を禁止し、recoveryとreceipt verifyがarchiveを含む単一chainとして検証する規則を追加する。"
+        }
+      ]
+    },
+    {
+      "name": "データ整合性",
+      "weight": 0.35,
+      "score": 2,
+      "findings": [
+        {
+          "id": "DIN-201",
+          "severity": "major",
+          "location": "FLW-DSN-017 §7.2 reviewer keyのライフサイクル",
+          "title": "key rotation後の過去receipt検証規則がない",
+          "description": "release decisionとreceiptはregistry generation/digestへ束縛されるが、旧generationのpublic key、role、失効時刻、registry snapshotをどれだけ保持し、receipt verifyが署名時点と現在時点のどちらの有効性を評価するかが未定義である。rotationや失効後に過去receiptが検証不能になるか、逆に失効keyの新規decisionを過去generationとして受理する恐れがある。",
+          "recommendation": "registry generationごとの署名済み不変snapshotをjournal/retention対象にし、key ID再利用を禁止する。decision実行時はcurrent registryで有効性を検査し、過去receipt検証はreceipt時点のsnapshotと失効有効期間を用いる二つの判定を分離する。旧public keyと失効証跡の保持期間をreceipt保持期間以上に固定する。"
+        },
+        {
+          "id": "DIN-202",
+          "severity": "major",
+          "location": "FLW-DSN-017 §4.2、§7.3、FLW-TSK-110・114",
+          "title": "archive作成・検証・原本削除の所有者と原子順序がない",
+          "description": "archive receiptを前提にDONE原本を削除できるが、RecoveryControllerとOperationsControlPlaneのどちらがarchiveを作成し、誰が同一target lockを保持してchainを凍結し、archive検証後に原本を削除するかがtaskへ割り当てられていない。並行receipt verifyやreconcileとの競合も未定義である。",
+          "recommendation": "archive controllerまたは明示的管理APIをtask境界へ追加し、target lock取得、segment head固定、archive durability、再読検証、checkpoint receipt確定、原本削除、directory fsyncの順を定義する。各段階のcrash recoveryと並行verifyのsnapshot規則をfixture化する。"
+        }
+      ]
+    },
+    {
+      "name": "スキーマ設計品質",
+      "weight": 0.25,
+      "score": 2,
+      "findings": [
+        {
+          "id": "DIN-301",
+          "severity": "major",
+          "location": "FLW-DSN-017 §6.3、FLW-TSK-108・110・111・113 boundary",
+          "title": "schema単位activation規約とgroup manifest境界が一致しない",
+          "description": "設計はactivation/<schema-id>.jsonをschemaごとのowner manifestと定義するが、task境界はlease-records-v2.json、quarantine-release-v2.json、platform-evidence-v2.json、promotion-v2.jsonというgroup名のmanifestを各1件だけ所有する。複数schemaを1つのmanifestでactive化するのか、各schema manifestを作るのかが矛盾し、部分失敗時のactivation原子性とrollback単位を一意に実装できない。",
+          "recommendation": "各schemaに1manifestを置く規約へtask boundaryを展開するか、group manifest schemaを正式定義してmember schema一覧、全codec digest、all-or-nothing activation条件を持たせる。部分activeを禁止し、loaderとtask完了条件を同じ粒度へ揃える。"
+        },
+        {
+          "id": "DIN-302",
+          "severity": "minor",
+          "location": "FLW-DSN-017 §7.3",
+          "title": "archive receiptの物理schemaがschema inventoryにない",
+          "description": "retentionの安全境界を担うarchive receiptが永続contract一覧、owner task表、activation manifest表に含まれない。形式、canonical digest、保存先identity、sequence範囲、署名fieldを実装者が独自決定する余地がある。",
+          "recommendation": "archive checkpoint/receipt schema、codec、owner task、activation manifest、round-trip vectorを§6.3へ追加する。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 2.00,
+  "summary": "不変journal、fencing、quarantine releaseの基本状態機械は明確だが、容量枯渇時のdurability予約、archive後のchain連続性、過去key generationによるreceipt検証が未確定である。特にDONE原本削除は現在のgap検出規則と直接衝突するため、checkpoint型archiveと原子的な所有境界を設計してから実装へ進める必要がある。"
+}

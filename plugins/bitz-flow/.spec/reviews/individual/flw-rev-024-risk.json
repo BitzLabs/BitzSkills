@@ -1,0 +1,81 @@
+{
+  "perspective": "risk",
+  "dimensions": [
+    {
+      "name": "分散システムリスク",
+      "weight": 0.3,
+      "score": "N/A",
+      "findings": []
+    },
+    {
+      "name": "障害モード分析",
+      "weight": 0.3,
+      "score": 2,
+      "findings": [
+        {
+          "id": "RSK-201",
+          "severity": "major",
+          "location": "FLW-DSN-017.md:§5 責務分離と監査証跡、§7 quarantine-release-record、FLW-TSK-108/109/110",
+          "title": "RecoveryControllerとMutationCoordinatorのlease・fencing所有境界が閉じていない",
+          "description": "設計表ではtarget lease、fencing、journalをMutationCoordinatorが所有し、RecoveryControllerはその兄弟componentとしてGit mutationを持たない。一方quarantine releaseはRecoveryController側で同一targetのOS lock取得、新fencing token発行、不変event公開を要求する。両者が同じcounterとlock namespaceを更新する共通authorityが依存図とtask boundaryに存在せず、実装時にRecoveryControllerがlease処理を複製するか、禁止された兄弟逆依存を持つことになる。並行releaseと通常applyが異なるtoken発行経路を通ると、単調性と最大1 writerを破る。",
+          "recommendation": "ContractKernel/PlatformEvidenceAdapterの上に、Git起動権限を持たない単一のTargetLeaseJournalServiceを置き、lock取得、token発行、event append、chain再照合を唯一の公開APIとしてMutationCoordinatorとRecoveryControllerの双方へ提供する。通常mutation用とrelease-record用の許可遷移を閉じたcommand型で分離し、両controllerの並行fixtureで同じlock/counter authority以外から更新できないことをarchitecture testへ追加する。"
+        },
+        {
+          "id": "RSK-202",
+          "severity": "major",
+          "location": "FLW-DSN-017.md:§6.4 supported entrypoint inventoryの実体証明、FLW-TSK-113",
+          "title": "測定済みartifactとprobeが実行するartifactの同一性が保証されない",
+          "description": "親processは保持handleからlauncherとflowlib treeを測定するが、probe childを実際に起動する方法は固定argvと実行handle identityまでしか定義されていない。script本体またはimport treeがhash後・child import前にpath上で差し替えられると、baseline未一致のcodeを「検証済みartifact」として起動し得る。commit直前の再照合は事後に差替えを検出してstate生成を止められても、未知codeをprobe時に実行した副作用までは取り消せない。",
+          "recommendation": "測定した全artifactをowner-only・非追随・同一filesystemのimmutable staging treeへfile handleから複製し、fsyncとmanifest digest再検証後、そのsnapshotだけをprobeする。利用可能なplatformでは保持handleからの実行を用い、import resolutionもsnapshot内へ固定する。snapshot構築からchild終了まで元cache pathを参照しないこと、hash直後・exec直前・import途中の差替えで未知canary codeが一度も実行されないことをfixtureで証明する。"
+        },
+        {
+          "id": "RSK-203",
+          "severity": "major",
+          "location": "FLW-DSN-017.md:§6.4 supported entrypoint inventoryの実体証明、影響範囲・ロールバック:promotion phase、FLW-TSK-113",
+          "title": "promotion最終再照合とactive state commitの間がCASされていない",
+          "description": "registry generation、entrypoint identity、artifact digestをdurability commit直前に再照合する順序は定義されたが、再照合後からactive stateのatomic replaceまでregistry/cacheを固定するleaseまたはgeneration CASがない。その窓でpre-baseline entrypointが再有効化されると、staleなevidenceを持つactive stateが公開され、sentinelを理解しないentrypointがpromotion直後に起動できる。receiptへ時刻順序を記録しても競合自体は防げない。",
+          "recommendation": "enabled registryが共有lockまたはgeneration compare-and-swapを提供する場合は、最終再照合からactive stateとpromotion receiptのdurability commitまで同じgenerationを保持する。提供できない場合はPENDING stateを先に公開し、commit後の再列挙で同一generation・identity・digestを確認してから別の原子的active pointerを公開する二段階commitとし、全sentinel-aware launcherがACTIVE以外を拒否することを契約化する。"
+        },
+        {
+          "id": "RSK-204",
+          "severity": "major",
+          "location": "FLW-DSN-017.md:§7 quarantine-release-record、FLW-TSK-110",
+          "title": "quarantine release記録のcrash・retry状態遷移が未定義",
+          "description": "releaseはOS lock取得、token発行、chain/postcondition再照合、release event公開という複数のdurable stepを持つが、各step間のcrash収束と同じdecision/nonceの再試行規則が定義されていない。token発行後・release event前のcrash、event公開後・応答前のcrash、並行retryで、永久quarantine、tokenの不要な連続消費、既記録decisionの誤ったnonce再利用判定が起こり得る。安全側停止は可能でも、運用者と機械が同じ復旧可能性を導出する保証がない。",
+          "recommendation": "release-record専用の不変event列をREQUEST_VERIFIED→TOKEN_DURABLE→CHAIN_RECHECKED→RELEASE_DURABLEとして定義し、各crash点の再開、同一decision digest/nonceのidempotent結果、異decisionのSTALE/BLOCKEDを表にする。応答喪失後のretryは既存release receiptをDONEとして返し、token発行済みreceipt未確定は自動解除せずreconcile対象にする。"
+        }
+      ]
+    },
+    {
+      "name": "Saga設計の妥当性",
+      "weight": 0.25,
+      "score": "N/A",
+      "findings": []
+    },
+    {
+      "name": "データ整合性リスク",
+      "weight": 0.15,
+      "score": 2,
+      "findings": [
+        {
+          "id": "RSK-401",
+          "severity": "major",
+          "location": "FLW-DSN-017.md:§7.3 support profile、保持、容量、§6.4 baseline manifest、FLW-TSK-111/113",
+          "title": "support profileとentrypoint baselineの署名信頼根・rollback防止が未定義",
+          "description": "両artifactは「署名対象」またはplugin releaseと同じ境界とされるが、許可signer role、trusted key registry、署名検証責務、version/generation単調性、失効、古い正当署名artifactへのrollback拒否が定義されていない。古いprofileへ戻すと、現在は非対応と裁定したfilesystemや古いentrypointを再びsupportedとしてpromotionでき、self-testと実観測が正常でも安全policyがdowngradeされる。",
+          "recommendation": "release-policy signer roleをtrusted registryに追加し、support profileとbaselineへprofile ID、generation、plugin version、適用contract version、有効期間、前generation digestを署名する。PromotionControllerまたは専用PolicyVerifierを唯一の検証authorityとし、sentinel/promotion stateへ受理済みprofile・baseline digestと最小generationを固定してrollback、失効key、role不一致をBLOCKEDにする。"
+        },
+        {
+          "id": "RSK-402",
+          "severity": "major",
+          "location": "FLW-DSN-017.md:§4.2 不変event列、§7.3 support profile、保持、容量、FLW-NFR-014.md:archive受入基準、FLW-TSK-114",
+          "title": "archive後のjournal chain継続性とcrash-safe原本削除手順が不足",
+          "description": "DONE原本はarchive receipt後に削除可能だが、archive destination identity、archive manifest、event chainの前後接続、取得時検証、copy・receipt・原本削除間のcrash収束が定義されていない。原本削除後にRecoveryControllerやreceipt verifyがarchiveを発見できなければsequence gapとして停止し、逆にarchive receiptだけを信じると欠損・改変済みarchiveを完全な履歴として扱う恐れがある。counterや後続eventが削除済みprefixを参照する場合の検証起点も曖昧である。",
+          "recommendation": "archiveをoperation journalの正式な状態遷移として設計し、archive manifestへrepository/operation/target identity、sequence範囲、先頭・末尾digest、全event digest、destination identity、保持policy generationを含める。COPY_DURABLE→ARCHIVE_VERIFIED→ARCHIVE_RECEIPT_DURABLE→LOCAL_PRUNEの不変eventと各crash収束を定義し、prune後もowner-only local anchorがarchive chain headを保持する。RecoveryControllerとreceipt verifyはlocal anchorからarchiveを再検証できない場合INDETERMINATEとし、active/quarantined/indeterminate chainおよび後続参照中prefixをpruneしない。"
+        }
+      ]
+    }
+  ],
+  "weighted_score": 2.0,
+  "summary": "単一ホスト上の複数CLI processを対象とし、サービス間分散やSagaを持たないため次元1・3はN/Aとした。v1.5はSafety Kernel、platform evidence、promotion、mutation、recovery、operationsを明確に分離し、不変journalとsupport profileを導入したが、lease/fencingの共通authority、probe実行snapshot、promotion commit競合、release crash収束がまだ閉じていない。さらに署名対象policyのanti-rollbackとarchive chainのcrash-safe移送が不足しており、未実装ではなく設計上のmajor riskとしてDesign Gate前の修正が必要である。"
+}
