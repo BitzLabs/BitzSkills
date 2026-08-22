@@ -2,11 +2,11 @@
 id: FLW-DSN-017
 title: "M2 Local Safety Profileの競合排除・耐久証跡・原子的promotion"
 status: draft
-version: 2.1
+version: 2.2
 updated: 2026-08-22
 owner: codex
 implements: FLW-NFR-014
-origin: SI-FLW-077, SI-FLW-078, SI-FLW-079
+origin: SI-FLW-077, SI-FLW-078, SI-FLW-079, SI-FLW-080, SI-FLW-081, SI-FLW-082
 ---
 
 # FLW-DSN-017 M2 Local Safety Profileの競合排除・耐久証跡・原子的promotion
@@ -92,7 +92,9 @@ planは副作用なしで`operation_id`、`expires_at`、単回`nonce`、確認�
 
 HEAD、index、worktreeのいずれかに`approval-mode.json`が存在する、またはCLIに
 `--capability-file`やtrusted key registry依存の入力がある場合は、内容を承認へ使わず
-`UNSUPPORTED_APPROVAL_MODE`で停止する。`plan-digest`へ無言降格しない。存在確認はrepository rootから
+内部reason `UNSUPPORTED_APPROVAL_MODE`で停止する。公開resultでは既存の大分類
+`code: UNSUPPORTED`とclosed cause `unsupported-approval-mode`へ一意に写像し、内部reasonを
+result codeへ直接追加しない。`plan-digest`へ無言降格しない。存在確認はrepository rootから
 component単位の非追随walkで行い、staged-only、worktree-only、削除途中も「存在する可能性あり」として停止する。
 これにより過去B2配備の意図を誤って弱めず、M2実装から暗号鍵管理を除去する。
 
@@ -333,8 +335,11 @@ PromotionController
 | 5 | MutationCoordinatorへの結線 |
 | 6 | audit、reconcile、doctor、runbook |
 
-各taskは担当module、schema、codec、testを同じrollback単位に含める。schema別activation file、署名policy、
-reviewer registry、archive schema、通知adapterはtask boundaryに含めない。
+各taskは担当module、schema、codec、testを同じrollback単位に含める。各実装PRの先頭taskをrelease
+integration ownerとし、`flow-core/SKILL.md`、bitz-flowの3マニフェスト、root marketplaceをそのtaskの
+boundaryへ含め、PRごとにpluginとskillをpatch bumpする。ownerはPR 1=`106`、PR 2=`111`、PR 3=`108`、
+PR 4=`112`、PR 5=`109`、PR 6=`110`とする。schema別activation file、署名policy、reviewer registry、
+archive schema、通知adapterはtask boundaryに含めない。
 
 ### 9.1 残作業の再見積もり
 
@@ -351,8 +356,8 @@ pure contractまたは運用結線だけを同じPRへまとめる。sessionは�
 | 6 | 110, 114 | audit、verify、reconcile、doctor、runbook、E2E | 4 | 運用受入マトリクスに未実行行またはoperator action欠落が残る |
 
 合計は**6 PR / 20 session**。PRまたはsessionのどちらかを使い切った時点で実装を停止し、未達行、
-実績、scope変更候補を人間へ再提示する。PR間の並列化は依存がないPR 1/2だけに限定し、PR 3以降は
-上表とtaskの`depends_on`に従う。設計・裁定・spec reviewは実装budgetへ数えない。
+実績、scope変更候補を人間へ再提示する。PR 1/2は機能依存がないがrelease metadataを共有するため直列化し、
+PR 3以降も上表とtaskの`depends_on`に従う。設計・裁定・spec reviewは実装budgetへ数えない。
 
 ## 10. 検証設計
 
@@ -395,6 +400,8 @@ pre-v2 runtimeへ戻す場合はv2 stateを無視せず、doctorが明示するm
 
 ## Revision History
 
+- 2.2 (2026-08-22) 実装前検査の裁定を反映。legacy schemaとactive bundleを分離し、非対応承認方式の
+  公開result写像、PRごとのrelease integration ownerと直列化を確定
 - 2.1 (2026-08-22) 用語表、運用受入マトリクス、RepositoryObserverを含むE2E接続表、
   9taskに基づく残作業6 PR/20 sessionの再見積もりを追加
 - 2.0 (2026-08-22) M2 Local Safety Profileへ縮退。plan-digest限定、単一TargetTransaction、

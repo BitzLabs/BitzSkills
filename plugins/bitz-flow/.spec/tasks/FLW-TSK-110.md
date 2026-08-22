@@ -1,7 +1,7 @@
 ---
 implements: FLW-NFR-014
 depends_on: [FLW-TSK-108,FLW-TSK-109]
-boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_recovery.py,tests/test_flow_m2_recovery.py
+boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_recovery.py,tests/test_flow_m2_recovery.py,plugins/bitz-flow/skills/flow-core/SKILL.md,plugins/bitz-flow/.claude-plugin/plugin.json,plugins/bitz-flow/plugin.json,plugins/bitz-flow/.codex-plugin/plugin.json,.claude-plugin/marketplace.json
 status: pending
 ---
 
@@ -17,3 +17,4 @@ status: pending
   安全側へ収束し、本moduleからGit subprocessを直接起動できない。
 - **見積り**: FLW-TSK-114と実装PR 6へまとめ、2 sessionを上限とする。
 - **実行判定**: mutation runtime完了後に開始する。archiveや鍵管理要求は別scopeへ戻す。
+  実装PR 6のrelease integration ownerとしてplugin/skillをpatch bumpする。

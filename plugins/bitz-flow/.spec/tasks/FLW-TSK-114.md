@@ -11,6 +11,7 @@ status: pending
   - read-only commandは実行前後のpersistent state digest不変を検査する。
   - reconcileだけが明示確認後に下位API経由でclosure eventを追記できる。
   - closed resultへcause、side-effect state、自動復旧可否、operator action、receipt参照、journal使用量を含める。
+  - 非対応承認方式を公開`UNSUPPORTED` + `unsupported-approval-mode`として表示し、内部reasonを漏らさない。
   - RBAC、通知adapter、RTO/SLO、key lifecycle、archive/prune/restoreを実装しない。
 - **完了条件**: 全commandが実在し、read-only副作用0件、停止時operator action欠落0件、
   reconcileのGit副作用0件、journal/receipt自動削除0件、FLW-DSN-017 §7.1の全適用行と§8.1の全edgeを

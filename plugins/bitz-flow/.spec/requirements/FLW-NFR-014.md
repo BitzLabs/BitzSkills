@@ -1,10 +1,10 @@
 ---
 id: FLW-NFR-014
-version: 2.1
+version: 2.2
 status: implementing
 domain: safety
 priority: high
-origin: SI-FLW-078, SI-FLW-079
+origin: SI-FLW-078, SI-FLW-079, SI-FLW-081
 verification_method: unit-test
 derived_from: FLW-FR-006, FLW-NFR-007, FLW-NFR-012, FLW-NFR-013
 supersedes: FLW-NFR-013
@@ -23,7 +23,8 @@ confidence: high
   - WHEN M2のapplyを要求する THEN bitz-flowは`--confirm <operation_id>`、未使用nonce、有効期限を検査し、
     不一致、期限切れ、再利用をGit副作用0件で`BLOCKED`または`STALE`にすること SHALL
   - WHEN M2で`signed-capability`の宣言、capability fileまたはtrusted key registry依存の入力を検出する THEN
-    bitz-flowは無言で`plan-digest`へ降格せず`UNSUPPORTED_APPROVAL_MODE`を返すこと SHALL
+    bitz-flowは無言で`plan-digest`へ降格せず、内部reasonを`UNSUPPORTED_APPROVAL_MODE`、公開resultを
+    `code: UNSUPPORTED`かつ`cause: unsupported-approval-mode`として返すこと SHALL
   - WHEN repository、GitまたはOS由来pathをguard key、operation identityまたはtarget scopeへ固定する THEN
     bitz-flowはnative componentを可逆なplatform別表現で保持し、case-insensitive volumeでは別のcollision keyを
     導出し、安全に導出できない不在targetを`UNSUPPORTED`にすること SHALL
@@ -73,6 +74,8 @@ confidence: high
   bundle promotion競合、network filesystem拒否、read-only commandの非変更、reconcile冪等性を検証する。
   Linux・macOS・Windowsの登録済みlocal filesystem fixtureで通常系`UNSUPPORTED` 0件を出口条件とする。
 - **Revision History**:
+  - 2.2 (2026-08-22) `UNSUPPORTED_APPROVAL_MODE`を内部reasonとし、公開resultを
+    `UNSUPPORTED` / `unsupported-approval-mode`へ一意に写像
   - 2.1 (2026-08-22) read-only Git観測境界と、運用受入マトリクスに対応する定量的な公開条件を追加
   - 2.0 (2026-08-22) M2 Local Safety Profileへ縮退し、署名policy、archive、RBAC、通知/RTOを除外。
     単一authority、緊急receipt、bundle単位promotion、手動reconcileへ契約を再構成

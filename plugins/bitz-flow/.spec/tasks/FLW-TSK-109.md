@@ -1,7 +1,7 @@
 ---
 implements: FLW-NFR-014
 depends_on: [FLW-TSK-107,FLW-TSK-108,FLW-TSK-113]
-boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_runtime.py,tests/test_flow_m2_runtime.py
+boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_runtime.py,plugins/bitz-flow/skills/flow-core/scripts/flowlib/result.py,plugins/bitz-flow/skills/flow-core/schemas/result-v1.schema.json,plugins/bitz-flow/skills/flow-core/references/output-contract.md,tests/test_flow_m2_runtime.py,tests/test_flow_result_contract.py,tests/test_flow_contract_vocabulary.py,plugins/bitz-flow/skills/flow-core/SKILL.md,plugins/bitz-flow/.claude-plugin/plugin.json,plugins/bitz-flow/plugin.json,plugins/bitz-flow/.codex-plugin/plugin.json,.claude-plugin/marketplace.json
 status: pending
 ---
 
@@ -17,8 +17,11 @@ status: pending
     write option、未知command、非machine-readable出力要求を拒否する。
   - runtimeからcounter、journal、receipt fileを直接編集しない。
   - `STALE`、`BLOCKED`、`UNSUPPORTED`、`INDETERMINATE`をclosed resultへ写像する。
+  - 内部reason `UNSUPPORTED_APPROVAL_MODE`を公開`UNSUPPORTED` +
+    `unsupported-approval-mode`へ一意に写像する。
 - **完了条件**: 正常系、各再照合点の差替え、別process競合、parent/child crashでresult、receipt、
   実Git副作用が一致し、緊急receiptを伴わないGit mutationが0件となる。promotion中のapply開始と
   active operation中のpromotionが相互に停止し、lock timeoutが副作用なしで収束する。
 - **見積り**: 単独の実装PR 5とし、3 sessionを上限とする。
 - **実行判定**: 先行task完了後に直列で実施する統合境界。
+  実装PR 5のrelease integration ownerとしてplugin/skillをpatch bumpする。

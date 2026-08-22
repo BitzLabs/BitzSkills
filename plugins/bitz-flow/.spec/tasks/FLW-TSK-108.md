@@ -1,7 +1,7 @@
 ---
 implements: FLW-NFR-014
 depends_on: [FLW-TSK-106,FLW-TSK-111]
-boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_transaction.py,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/target-transaction-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/operation-event-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/mutation-receipt-v2.schema.json,tests/test_flow_m2_target_transaction.py
+boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_transaction.py,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/target-transaction-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/operation-event-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/mutation-receipt-v2.schema.json,tests/test_flow_m2_target_transaction.py,plugins/bitz-flow/skills/flow-core/SKILL.md,plugins/bitz-flow/.claude-plugin/plugin.json,plugins/bitz-flow/plugin.json,plugins/bitz-flow/.codex-plugin/plugin.json,.claude-plugin/marketplace.json
 status: pending
 ---
 
@@ -17,3 +17,4 @@ status: pending
   nonce再利用、receipt複数後継、gap、branch、改変、token巻戻り・overflowを`INDETERMINATE`へ停止する。
 - **見積り**: 単独の実装PR 3とし、4 sessionを上限とする。
 - **実行判定**: 並行性とcrash safetyの中核。platform primitiveが不足する環境は`UNSUPPORTED`を維持する。
+  実装PR 3のrelease integration ownerとしてplugin/skillをpatch bumpする。
