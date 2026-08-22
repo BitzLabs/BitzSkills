@@ -452,7 +452,7 @@ def test_FLW_TSK_105_gate_verification_rejects_missing_raw_log(tmp_path):
     module, manifest_path, key, now = _fresh_gate_evidence(tmp_path)
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     raw = manifest["platforms"][0]["raw_log"]
-    (Path(raw["root"]) / Path(raw["path"]).name).unlink()
+    (manifest_path.parent / raw["root"] / Path(raw["path"]).name).unlink()
 
     assert module._verify_for_gate(tmp_path, manifest_path, key, now) == 1
 
@@ -468,7 +468,7 @@ def test_FLW_TSK_105_gate_verification_rejects_a_plaintext_canary(tmp_path):
     module, manifest_path, key, now = _fresh_gate_evidence(tmp_path)
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     raw = manifest["platforms"][0]["raw_log"]
-    path = Path(raw["root"]) / Path(raw["path"]).name
+    path = manifest_path.parent / raw["root"] / Path(raw["path"]).name
     path.write_text(
         path.read_text(encoding="utf-8") + f"{module.CANARY_PREFIX}-claude\n",
         encoding="utf-8",

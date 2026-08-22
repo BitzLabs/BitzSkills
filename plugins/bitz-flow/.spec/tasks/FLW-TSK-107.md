@@ -2,7 +2,7 @@
 implements: FLW-NFR-014
 depends_on: [FLW-TSK-106]
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_approval.py,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/approval-context-v2.schema.json,tests/test_flow_m2_approval.py,tests/test_flow_m2_contract_v2.py
-status: pending
+status: done
 ---
 
 ### plan-digest承認contextを固定する

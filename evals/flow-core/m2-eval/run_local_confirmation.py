@@ -59,6 +59,15 @@ COMPATIBILITY_INPUTS = (
     f"{_SKILL}/scripts/flow.py",
     f"{_FLOWLIB}/cli.py",
     f"{_FLOWLIB}/worktree_runtime.py",
+    # Local Safety Profileのpure contract/approval核。ここが変わればbundle、operation_id、
+    # signed入力拒否の安全判断が変わるため、旧confirmationを再利用しない（SI-FLW-083）。
+    f"{_FLOWLIB}/worktree_contract.py",
+    f"{_FLOWLIB}/worktree_approval.py",
+    f"{_SKILL}/schemas/worktree-v2/contract-bundle-v2.schema.json",
+    f"{_SKILL}/schemas/worktree-v2/approval-context-v2.schema.json",
+    "tests/test_flow_m2_contract_kernel.py",
+    "tests/test_flow_m2_approval.py",
+    "tests/test_flow_m2_contract_v2.py",
     # 認可核（SYN-008 で追加）
     f"{_FLOWLIB}/worktree_capability.py",
     f"{_FLOWLIB}/guard.py",
@@ -325,10 +334,11 @@ def _store_raw_log(out: Path, platform: str, raw: str, now: datetime) -> dict:
                                canaries=[canary], now=now)
     if failure is not None:
         # 保存先 root は成否によらず証跡から特定できるようにする（`FLW-NFR-011`）。
-        return {"stored": False, "reason": failure.reason, "root": str(raw_root)}
+        return {"stored": False, "reason": failure.reason, "root": raw_root.relative_to(out).as_posix()}
     return {
         "stored": True,
-        "root": str(raw_root),
+        # evidenceの採用先が変わっても検証できるよう、manifest root相対で固定する。
+        "root": raw_root.relative_to(out).as_posix(),
         "path": str(log.path.relative_to(out)),
         "digest": log.digest,
         "stored_at": log.stored_at.isoformat().replace("+00:00", "Z"),
@@ -448,11 +458,17 @@ def _verify_confirmation_evidence(manifest_dir: Path, manifest: dict) -> list[st
         if failure is not None:
             problems.append(failure)
             continue
-        raw_root = raw.get("root")
-        if not isinstance(raw_root, str) or not raw_root:
+        raw_root_value = raw.get("root")
+        if not isinstance(raw_root_value, str) or not raw_root_value:
             problems.append(f"{platform}: raw_log.root が無い")
             continue
-        if raw_path is None or raw_path.parent != Path(raw_root).resolve():
+        raw_root, root_failure = _evidence_path(
+            manifest_dir, raw_root_value, label=f"{platform}.raw_log.root"
+        )
+        if root_failure is not None:
+            problems.append(root_failure)
+            continue
+        if raw_path is None or raw_root is None or raw_path.parent != raw_root:
             problems.append(f"{platform}: raw_log.root と path が一致しない")
             continue
         if not raw_path.is_file():

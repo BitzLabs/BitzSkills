@@ -79,11 +79,17 @@ M0 で read の一部だけを検証して verified になった要件の残り�
 次は **M2 worktree-first**。承認によって生じた代行遷移は、`verified → promoted`を経て
 Promotion GateのGatePassageで検分される。
 
-**M2 の現況（2026-08-22）**: `FLW-DSN-017` v1.5の独立レビュー`FLW-REV-024`は
-**FAIL 2.35**であり、改訂設計のDesign Gateは未通過である。人間裁定によりM2をLocal Safety Profileへ
-縮退し、plan-digest、local process間lease、追記証跡、単一bundle promotionへ限定するv2.0を再設計中。
-署名policy、鍵registry、archive、RBAC、通知/RTOはV2初期版のGate条件から外した。裁定の正は
-`.spec/reports/decision-2026-08-22-m2-local-safety-profile.md`。公開面はM0 read-onlyのまま維持する。
+**M2 の現況（2026-08-22）**: Local Safety Profileへ縮退した`FLW-DSN-017` v2.1を
+`FLW-REV-026`が**PASS 4.96**と評価し、`FLW-GATE-005`で再Design Gateを通過した。
+実装前検査の裁定を反映した正はv2.2であり、plan-digest、local process間lease、追記証跡、
+単一bundle promotionに限定して実装中である。署名policy、鍵registry、archive、RBAC、通知/RTOは
+V2初期版のGate条件から外した。裁定の正は
+`.spec/reports/decision-2026-08-22-m2-local-safety-profile.md`と
+`.spec/reports/decision-2026-08-22-m2-implementation-preflight.md`。公開面はM0 read-onlyのまま維持する。
+
+M2の強い改ざん耐性をV2初期版から外した先行裁定は
+`.spec/reports/decision-2026-08-17-v2-operational-integrity-scope.md`であり、Local Safety Profileは
+この境界を同一OS ownerのローカル運用として具体化する。
 
 `FLW-REV-019` 由来の `SI-FLW-072` / `SI-FLW-073` / `SI-FLW-075` を accepted とし、設計を
 `FLW-DSN-016` 2.9 / `FLW-DSN-014` 1.23 へ改訂した（裁定の正は
@@ -183,15 +189,16 @@ M2 が未完了のままでは worktree-first の安全境界が閉じないた�
 
 ### フェーズ3 — M2 worktree-first
 
-- **入口**: M2 Design Gate PASS（2026-08-14、`FLW-GATE-003`）。`FLW-DSN-016`をactiveな規範設計としてM2-1から順に実装する
+- **入口**: M2再Design Gate PASS（2026-08-22、`FLW-GATE-005`）。`FLW-DSN-017` v2.2を
+  activeな規範設計として`FLW-TSK-106`から依存順に実装する
 
 - **scope（2026-08-15 縮小）**: worktree の配置・命名・**作成・再開・audit**までを M2 とする。
   破壊系の **`worktree.finish` / `worktree.discard` と独立 remote branch 削除は M3 へ移送**した
   （`.spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md`）。
   retention ref・quarantine・receipt chain の複雑さの大半が破壊操作に由来し、
   M2 が閉じない主因になっていたため
-- 現行実装の基準は`FLW-DSN-016`。再設計案は`FLW-DSN-017` v2.1であり、再Design Gateまで
-  実装を再開しない。Local Safety Profileの出口条件・接続・残作業budgetの正は`FLW-DSN-017`とする
+- 現行実装の基準は`FLW-DSN-017` v2.2。Local Safety Profileの出口条件・接続・残作業budgetの正も
+  同設計とする
 - 出口（Local Safety Profile）: repo identity 衝突 0、repo 外 worktree rootの
   **plan-digest＋期限＋単回nonce＋明示確認**、
   `create` / `resume` / `audit` に対応する fault fixture 全件 PASS、enum 三者照合 green、
@@ -203,7 +210,7 @@ M2 が未完了のままでは worktree-first の安全境界が閉じないた�
   出口8項目は PASS 3 / 条件付き 3 / 未達 2 であり、enum 三者照合と通常運用における
   audit・quarantine 接続が未達である。Completion Gate は保留を継続する。
 - **残作業budget（2026-08-22再校正）**: 再Design Gate後は`FLW-TSK-106`〜`114`を6つの実装PRへ
-  束ねた **6 PR / 20 session** とする。内訳と停止条件は`FLW-DSN-017` v2.1 §9.1を正とし、
+  束ねた **6 PR / 20 session** とする。内訳と停止条件は`FLW-DSN-017` v2.2 §9.1を正とし、
   設計是正以前の実績はsunk cost、設計・裁定・spec reviewは実装budget外として混在させない
 - **M2 是正枠**: 2026-08-15 の段階承認（先行 **4 PR / 13 session**）は、2026-08-16 の
   `FLW-REV-018` 全件対処裁定で上限解除された。M3〜M5 を含む次期予算の再校正は

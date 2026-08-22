@@ -20,7 +20,7 @@ from flowlib import worktree_promotion as P  # noqa: E402
 
 
 DIGEST = "sha256:" + "a" * 64
-EXPECTED_SCHEMAS = {
+LEGACY_SCHEMAS = {
     "approval-capability-v2.schema.json",
     "approval-binding-v2.schema.json",
     "target-lease-v2.schema.json",
@@ -31,6 +31,11 @@ EXPECTED_SCHEMAS = {
     "lock-namespace-v2.schema.json",
     "minimum-runtime-v1.schema.json",
 }
+LOCAL_SAFETY_SCHEMAS = {
+    "contract-bundle-v2.schema.json",
+    "approval-context-v2.schema.json",
+}
+EXPECTED_SCHEMAS = LEGACY_SCHEMAS | LOCAL_SAFETY_SCHEMAS
 
 
 def capability_value() -> dict[str, object]:
@@ -62,6 +67,11 @@ def test_FLW_NFR_014_all_v2_records_are_closed_versioned_schemas():
         assert schema["type"] == "object"
         assert schema["additionalProperties"] is False
         assert set(schema["required"]) == set(schema["properties"])
+
+
+def test_FLW_NFR_014_legacy_signed_schema_exists_but_is_not_a_local_safety_schema():
+    assert "approval-capability-v2.schema.json" in LEGACY_SCHEMAS
+    assert "approval-capability-v2.schema.json" not in LOCAL_SAFETY_SCHEMAS
 
 
 def test_FLW_NFR_014_capability_v2_parser_accepts_the_closed_contract():
