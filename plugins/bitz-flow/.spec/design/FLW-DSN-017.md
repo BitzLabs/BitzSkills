@@ -1,15 +1,15 @@
 ---
 id: FLW-DSN-017
-title: "approval-mode 宣言の観測可能な再照合と安全な束縛"
+title: "approval-mode contract v2のSafety Kernelと運用制御面"
 status: draft
-version: 1.4
+version: 1.5
 updated: 2026-08-22
 owner: codex
 implements: FLW-NFR-014
 origin: SI-FLW-077, SI-FLW-078, SI-FLW-079
 ---
 
-# FLW-DSN-017 approval-mode 宣言の観測可能な再照合と安全な束縛
+# FLW-DSN-017 approval-mode contract v2のSafety Kernelと運用制御面
 
 ## 背景 / 課題
 
@@ -143,6 +143,17 @@ LOCKED
 | `MUTATING`、postcondition未確定 | `INDETERMINATE` / quarantine | 不可 |
 | `POSTCONDITION_DURABLE`、DONE未記録 | postconditionとreceipt prefix一致ならDONE補完 | 補完後可 |
 
+状態の正は上書き可能な単一fileではなく、`operations/<operation-id>/events/`配下の
+不変phase event列とする。event名は単調なsequence、phase、event digestを含み、各eventは
+直前event digest、operation ID、fencing token、target identityを必ず持つ。作成中temp fileの
+file fsync、未使用名への一度だけの公開、directory fsyncが成功したeventだけをdurableとし、
+確定済みeventの上書き・削除・sequence再利用を禁止する。counterとpromotionのcurrent pointerだけは
+保護lock下のatomic replaceを許し、その新値もevent/receiptから照合できなければならない。
+
+復旧はevent列の最長な有効hash chainだけを信頼し、一時file、sequence gap、branchしたchain、
+schema不明eventを`INDETERMINATE`とする。これにより、機械と運用者が同じphase列を根拠に
+crash位置と次の許容操作を判定する。
+
 各mutation直前にOS lock handle、lease owner、operation ID、最新tokenを同じcoordinator境界で照合する。
 Git自体はtokenを解釈しないため、tokenはOS lockの代替ではなくstale writer検出と復旧順序の証拠である。
 
@@ -172,27 +183,41 @@ adapterは起動時self-testでsemantic fixtureを通した能力だけをsuppor
 
 | コンポーネント | 責務 |
 |---|---|
-| `worktree_runtime` | 非追随path walk、HEAD/index/worktree照合、plan固定、再照合、process間lease、result/receipt原因写像 |
-| `worktree_capability` | contract v2 payloadにdigestを必須化し、旧形式・未知fieldを拒否 |
-| Git | HEAD tree/blobとindex/worktree contentの照合。Git追跡だけを承認とみなさない |
-| target lease | canonical targetをprocess間直列化し、fencing tokenとcrash後reconcileを提供 |
-| `MutationGuardian` | leaseを保持してGit childを監督し、終了statusをdurable receiptへ確定 |
+| `ContractKernel` | canonical JSON、digest、native path、resource identity、schema/codecを決定論的に処理。OS/Git/process副作用は持たない |
+| `PlatformEvidenceAdapter` | 非追随walk、identity、owner/ACL、lock、durability、child監督のOS観測とprimitive。ポリシー判定は行わない |
+| `MinimumRuntimeController` | sentinelの読み書きと起動時schema gate。promotionやGit mutationは行わない |
+| `PromotionController` | 署名baseline、entrypoint inventory/probe、commit直前再照合、v2 active stateとpromotion receiptを所有 |
+| `ApprovalBindingReader` | HEAD/index/worktree三者照合とbinding snapshot導出。leaseやmutationは行わない |
+| `MutationCoordinator` | plan固定、再照合、target lease、fencing、journal、`MutationGuardian`を統括し、Git mutationを起動できる唯一のcomponent |
+| `RecoveryController` | receipt chain検証、crash reconcile、quarantineの照会と署名済み解除裁定記録。Git mutationと自動再開は行わない |
+| `OperationsControlPlane` | read-only doctor、promotion/quarantine/receiptの管理CLI、SLI、runbook、通知adapter。上位コンポーネントの公開APIだけを使う |
+
+依存方向は`CLI / Runtime → Promotion / Mutation / Recovery → ContractKernel / PlatformEvidenceAdapter`の
+一方向とし、kernel/adapterからorchestratorやCLIへの逆依存を禁止する。
+`PromotionController`、`RecoveryController`、`OperationsControlPlane`はGit childを起動できない。
+OS adapterの観測失敗をpolicy resultへ写像するのは各controllerであり、adapterが
+`BLOCKED`と正常状態を選択しない。
 
 result/receiptには本文を含めず、`approval_contract_version`、`approval_declaration_state`、
 `approval_declaration_digest`、`approval_recheck_phase`、構造化cause、`fencing_token`を記録する。
+CLIが返す停止resultはこれらに加え、`side_effect_state`（`none` / `confirmed-complete` /
+`confirmed-incomplete` / `indeterminate`）、`automatic_recovery_allowed`、`operator_action`、
+`operation_id`、`receipt_path`を必須とする。`operator_action`は自由文だけでなく閉じた
+action codeと表示文を持ち、危険な再実行を推奨しない。
 `BLOCKED`/`STALE`が連続する場合の利用者導線は「宣言をHEADへcommitして再plan」「競合process終了後に
 audit/reconcile」「platform非対応ならplan-digest配備へ明示的に戻す」の3分類とする。
 
 ### 6. 物理schemaとcanonicalization
 
-capability、binding、lease、counter、receiptはそれぞれ`schema_version`を必須とし、
+capability、binding、platform evidence、support profile、sentinel、promotion、lease、counter、
+operation event、receipt、quarantine decisionはそれぞれ`schema_version`を必須とし、
 `additionalProperties: false`、required field、null許容をJSON Schemaで固定する。canonical JSONはUTF-8、
 object key辞書順、余分な空白なし、通常のbounded integerはJSON整数とする。SHA-256は全recordで
 `sha256:` + 64桁lowercase hex、Git OIDはobject-format名と小文字hexの組に固定する。file identityは
 resource kindとplatformのdiscriminator付きobjectとし、異platform間でfieldを流用しない。fencing tokenは
 `0..18446744073709551615`の先頭zeroなしdecimal stringとし、parserで値域を検査する。
 
-schema境界タスクではlease、counter、intention、postcondition、receipt、namespace manifestごとに実体JSON
+schema境界タスクではlease、counter、operation phase event、receipt、namespace manifestごとに実体JSON
 Schemaを作成し、状態別required/nullable制約を固定する。path比較には
 `case_sensitivity: sensitive | insensitive` discriminatorを必須化する。各schemaには同じlogical valueが
 同一byte列となるcanonical test vectorと、未知field・NFD・case discriminator欠落の拒否vectorを付ける。
@@ -253,9 +278,12 @@ schema inventoryは単一共有fileではなく`schemas/worktree-v2/activation/<
 
 | record | owner task | owner task完了時 |
 |---|---|---|
-| approval capability v2、minimum-runtime v1、entrypoint policy/evidence、共通identity/path/digest定義 | FLW-TSK-106 | `active` |
+| approval capability v2、共通identity/path/digest定義 | FLW-TSK-106 | `active` |
+| platform evidence、support profile | FLW-TSK-111 | `active` |
+| minimum-runtime v1 | FLW-TSK-112 | `active` |
+| entrypoint policy/evidence、promotion state/receipt | FLW-TSK-113 | `active` |
 | approval binding v2 | FLW-TSK-107 | `active` |
-| target lease、fencing counter、intention、postcondition、lock namespace v2 | FLW-TSK-108 | `active` |
+| target lease、fencing counter、operation phase event、lock namespace v2 | FLW-TSK-108 | `active` |
 | mutation receipt v2 | FLW-TSK-109 | `active` |
 | quarantine release decision/receipt extension | FLW-TSK-110 | `active` |
 
@@ -318,7 +346,7 @@ baseline未満、`sentinel_aware != true`はpromotionを`UNSUPPORTED`、`BLOCKED
 alias、実行中差替え、registry generation変化、欠落cache、hang、出力超過、副作用canaryの陽性対照を持つ。
 文字列のversion mappingだけを直接渡すtestは補助testに留める。
 
-### 7. 運用監視とrunbook
+### 7. 運用control planeとrunbook
 
 cause別`BLOCKED`/`STALE`/`UNSUPPORTED`件数、lock待機時間、quarantine滞留時間、token不連続、
 receipt chain検証失敗をSLIとする。1 operation内のtoken不連続、chain failure、quarantine 24時間超過は
@@ -333,13 +361,53 @@ postcondition digest、reviewer role付きkey ID、decision digest、単回nonce
 reviewer keyはtrusted registryの`quarantine-reviewer` roleだけを許可し、実行process自身の未登録keyを受理しない。
 
 管理経路も同じcanonical targetのOS lockを取得し、新fencing token発行、chain head・旧token・postcondition再照合、
-release receiptのfile fsync・atomic append/replace・directory fsyncを行う。chain変化は`STALE`、postconditionやchild終了を
+release receiptを不変eventとしてfile fsync・一度だけの公開・directory fsyncで確定する。chain変化は`STALE`、postconditionやchild終了を
 確定できない場合は`INDETERMINATE`として解除しない。成功後も次のwriteは新しいplanと通常承認を必須とする。
 これによりreviewer裁定を機械的に記録できるが、quarantineからGit変更へ直接遷移するwrite operationは追加しない。
 
 receipt/SLI統合タスクは`plugins/bitz-flow/docs/runbooks/m2-worktree-quarantine.md`を成果物とし、audit、
 reconcile、`quarantine-release-record`管理CLI、一次対応role、reviewer承認経路、通知adapter、24時間超過時の
 escalationを固定する。通知adapter未設定でもreceiptと終了codeを失わず、CLIに手動通知先を表示する。
+
+#### 7.1 運用CLIの公開境界
+
+運用者が内部fileを直接編集しなくても判定できるよう、次の管理APIを公開契約とする。
+
+```text
+flow.py worktree doctor --json
+flow.py worktree promotion check --json
+flow.py worktree promotion apply
+flow.py worktree quarantine list
+flow.py worktree quarantine show <operation-id>
+flow.py worktree quarantine reconcile <operation-id>
+flow.py worktree quarantine release-record <decision-file>
+flow.py worktree receipt verify <operation-id>
+```
+
+`doctor`、`promotion check`、`quarantine list/show`、`receipt verify`はread-onlyで、lock、counter、
+sentinel、journal、receiptを変更しない。`reconcile`は最長有効event chainと実postconditionから
+証明可能な補完だけを行い、`indeterminate`を操作者の推測で確定状態へ変更しない。
+全commandは人間表示と同じclosed resultのJSON出力を持ち、終了codeと`cause_code`の対応を固定する。
+
+#### 7.2 reviewer keyのライフサイクル
+
+trusted registryはpublic key、role、key ID、generation、有効/失効状態を持ち、registry digestを
+release decisionとreceiptへ束縛する。bitz-flow runtimeはregistryをread-only検証し、private keyの
+生成・保管・出力、reviewerの自己登録、失効keyの復活を行わない。登録・rotation・失効は
+配布/導入管理者の保護された経路で行い、紛失時の署名省略や緊急bypassを設けない。
+registry generationがdecision作成後に変わった場合は`STALE`とし、新registry下でdecisionを作り直す。
+
+#### 7.3 support profile、保持、容量
+
+各配布profileはOS、filesystem/volume semantics、lock/durability adapter、probe能力を列挙した
+署名対象`support-profile.json`を持つ。起動時self-testの成功だけで未登録filesystemを
+自動的にsupportedへ格上げず、profileと実観測の両方が一致した場合だけ通常系に入れる。
+network filesystem、未登録volume、durability semantics不明は理由付き`UNSUPPORTED_FILESYSTEM`とする。
+M2のLinux/macOS/Windows通常系0件は、qualificationで確定したsupport profileごとに判定する。
+
+`QUARANTINED`、`INDETERMINATE`、active operationのjournal/receiptは自動削除しない。`DONE`は
+監査保持期間と上限を配布profileで宣言し、archive先の完全性を検証したarchive receiptなしに
+原本を削除しない。上限迫近はwrite失敗後ではなくSLIと`doctor`で事前に通知する。
 
 ## 代替案と却下理由
 
@@ -372,32 +440,45 @@ escalationを固定する。通知adapter未設定でもreceiptと終了codeを�
 - 別processの同一target競合は最大1processだけがmutationへ進み、process kill後は新fencing tokenと
   receipt reconcileなしに再開しない。
 - result/receiptからrecheck phaseと原因を追跡でき、秘密本文やpath外情報を含めない。
+- operation journalの各crash pointで最長有効chainから同じphaseと復旧可否を導出し、
+  event改変、sequence gap、chain branch、一時file残存をfail-closedにする。
+- `doctor`と各read-only管理commandの実行前後でstate digestが変わらず、停止resultに
+  cause、side-effect state、自動復旧可否、次action、receipt参照が欠落しない。
+- reviewer keyの未登録・失効・role不一致・registry generation変化を解除せず、private keyや
+  署名対象の秘密値を診断出力へ含めない。
+- audit-onlyからdefault-onまでの各展開phaseで許容されたwriteだけが発生し、
+  support profile外filesystemと保持容量不足をmutation前に操作可能な原因として返す。
 
 ## 影響範囲・ロールバック
 
-対象は`worktree_runtime.py`、`worktree_capability.py`、`worktree_promotion.py`、schema activation manifest、
-target guard/coordinator、quarantine管理経路、receipt schema、M2 runtime
-testsとcapability fixture。配備時点のv1 plan/capabilityは`BLOCKED`として再planする。rollback時にv2の
+対象はcontract kernel、platform evidence adapter、minimum-runtime controller、promotion controller、
+approval binding reader、mutation coordinator、recovery controller、operations control plane、schema activation manifest、
+M2 runtime testsとfault fixture。配備時点のv1 plan/capabilityは`BLOCKED`として再planする。rollback時にv2の
 pending receipt/nonceがある場合は自動でv1へ戻さずquarantineし、人間確認後にreplanする。
 M2は未公開のため公開利用者の移行は不要だが、「検証不能なら`BLOCKED`」はrollbackでも維持する。
 
-version切替は二段階にする。第1段階でcommon-dirの保護済みnamespaceへ
-`minimum_runtime_version` sentinelと起動時schema gateだけを導入する。sentinelはowner-only regular file、
-hardlink count 1、非追随walk、`FLW-NFR-007`のatomic replace/fsyncを適用したversioned JSONとする。
+version切替は機械状態と運用展開を分け、次の4 phaseで行う。
 
-第2段階の前にpromotion barrierを置く。stable launcher、CLI、plugin cacheを含むサポート対象の全起動経路を
-inventory化し、各entrypointがsentinel-aware baseline以降であること、pre-baseline entrypointが無効化・撤去
-されていることを§6.4の実process probeで確認する。この証明ができない配備は`UNSUPPORTED`としてcontract v2 stateを
-生成しない。pre-baseline binaryを利用者が保護境界外から直接持ち込んで実行することは機械的に阻止できず、
+1. `audit-only`: doctor、support profile照合、entrypoint inventory、path/identity検証だけを行い、sentinel、v2 state、journalを書かない。
+2. `sentinel-ready`: common-dirの保護済みnamespaceへ`minimum_runtime_version` sentinelと起動時schema gateだけを導入し、v2 mutationは無効のままにする。
+3. `canary`: 明示したrepository/targetだけをpromotionし、receipt、quarantine、reconcile、通知の運用証跡を確認する。
+4. `default-on`: canaryの出口条件を満たしたsupport profileでだけv2を既定化する。
+
+sentinelはowner-only regular file、hardlink count 1、非追随walk、`FLW-NFR-007`のatomic replace/fsyncを
+適用したversioned JSONとする。promotion barrierはstable launcher、CLI、plugin cacheを含む
+サポート対象の全起動経路をinventory化し、各entrypointがsentinel-aware baseline以降であること、
+pre-baseline entrypointが無効化・撤去されていることを§6.4の実process probeで確認する。
+この証明ができない配備は`UNSUPPORTED`としてcontract v2 stateを生成しない。
+pre-baseline binaryを利用者が保護境界外から直接持ち込んで実行することは機械的に阻止できず、
 サポート対象外の残余リスクである。
 
 promotion後にcontract v2 stateを生成する。一度生成した環境では、sentinel-aware runtimeはv2 reconcileが
 pending/quarantine/leaseなしを証明しdowngrade receiptを記録するまで旧version起動を拒否する。旧binaryへ
 単純に戻す操作はsupportせず、pre-baseline entrypointを再導入した配備は直ちにsupport外とする。
 
-実装は次の独立境界に分ける: (1) HEAD/index/worktree三者照合reader、(2) capability/schema v2と
-minimum-version gateとpromotion preflight、(3) OS lock・namespace manifest・fencing状態機械・
-`MutationGuardian`、(4) receipt/SLI/runbook統合。
+実装は次の独立境界に分ける: (1) 純粋なcontract kernel、(2) policyを持たないplatform evidence adapter、
+(3) minimum-runtime sentinel、(4) promotion controller、(5) HEAD/index/worktree三者照合reader、
+(6) lease/journal/guardian、(7) mutation runtime結線、(8) recovery controller、(9) operations control plane/SLI/runbook。
 各段階はfail-closedなfeature flagの背後で検証し、前段がgreenになるまで次段を有効化しない。
 
 ## 後続の仕様化
@@ -405,6 +486,9 @@ minimum-version gateとpromotion preflight、(3) OS lock・namespace manifest・
 本改訂は`FLW-NFR-013`の既存greenをredにし得るため、同一IDを変更せず後継`FLW-NFR-014`を起票した。
 2026-08-22にuserが`SI-FLW-078`の案B、`SI-FLW-079`、`FLW-NFR-014`を承認し、`FLW-NFR-013`を
 deprecatedとして後継へ接続した。同日の`FLW-GATE-004`でDesign Gateを通過し、実装タスク再分解へ移る。
+2026-08-22のその後、userは正式再レビュー前の自己検討としてSafety KernelとOperations Control Planeの
+統合案およびtask分割を承認した。v1.5は旧Gateの対象後に追加した設計変更であるため、`FLW-GATE-004`の通過を
+v1.5の承認に流用せず、独立再レビューと新しいDesign Gate裁定が完了するまで実装を再開しない。
 
 ## FLW-REV-021 指摘への対応
 
@@ -418,6 +502,7 @@ deprecatedとして後継へ接続した。同日の`FLW-GATE-004`でDesign Gate
 
 ## Revision History
 
+- 1.5 (2026-08-22) Safety KernelとOperations Control Planeを分離し、不変operation journal、運用CLI、reviewer key lifecycle、support/retention profile、4段階rollout、責務別task境界を追加
 - 1.4 (2026-08-22) FLW-REV-023のP1〜P3を反映し、native path、identity kind、schema activation所有権、trusted promotion、quarantine管理経路、token/digest/SemVer契約を確定
 - 1.3 (2026-08-22) NFD拒否境界、platform別file identity、active/reserved codec整合、実entrypoint probeを具体化し再レビューへ戻した
 - 1.2 (2026-08-22) promotion barrierとminimum-runtime rollback境界を追加

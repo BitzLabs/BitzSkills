@@ -2,7 +2,7 @@
 id: FLW-DSC-002
 title: "bitz-flow v2 成功指標"
 status: draft
-version: 2.2
+version: 2.3
 updated: 2026-08-22
 owner: hide
 ---
@@ -32,10 +32,12 @@ UTF-8 byte 数と項目数を正とし、モデル別 token 数は補助指標�
 |---|---|---:|
 | Dispatcher Invocation Rate | Git / GitHub 操作タスクで最初に `flow.py` を実行した割合 | 95%以上 |
 | Raw Fallback Rate | 理由を問わず生 `git` / `gh`へ迂回した割合 | 0% |
-| Unsupported Operation Rate | 評価taskで`UNSUPPORTED`停止した割合 | M0 0%。M2 worktree通常系はLinux・macOS・Windows各0件。異常fixtureのfail-closed停止は別分母 |
+| Unsupported Operation Rate | 評価taskで`UNSUPPORTED`停止した割合 | M0 0%。M2 worktree通常系はqualification済みsupport profile×Linux・macOS・Windows各0件。profile外と異常fixtureのfail-closed停止は別分母 |
 | Resume Success Rate | 中断 fixture を再実行し、重複副作用なく次段階へ進めた割合 | 100% |
 | Cross-model Decision Parity | 同じ fixture の判定コード・状態変更が3プラットフォームで一致する割合 | 100% |
 | SDD Link Integrity | 公開した GitHub Issue と `.spec` の双方向リンクが一意に照合できる割合 | 100% |
+| Operator Action Completeness | 停止resultにcause、side-effect state、自動復旧可否、次action、receipt参照が揃う割合 | 100% |
+| Read-only Control Plane Integrity | doctor/check/list/show/verify前後で永続state digestが不変の割合 | 100% |
 
 ## Token / Output Efficiency
 
@@ -84,6 +86,8 @@ UTF-8 byte 数と項目数を正とし、モデル別 token 数は補助指標�
 | stale head / stale snapshot を使った commit・merge・cleanup | 0件 |
 | process環境値・認証出力・raw stderr の構造化出力混入 | 0件 |
 | dry-run での外部状態変更 | 0件 |
+| read-only管理CLIでの永続state変更 | 0件 |
+| active / quarantined / indeterminate証跡の自動削除 | 0件 |
 | CI failure / pending を green と誤判定 | 0件 |
 | `.spec` の人間専用 status を GitHub 側から自動変更 | 0件 |
 

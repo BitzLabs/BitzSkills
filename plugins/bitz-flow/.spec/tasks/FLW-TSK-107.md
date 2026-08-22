@@ -1,6 +1,6 @@
 ---
 implements: FLW-NFR-014
-depends_on: [FLW-TSK-106]
+depends_on: [FLW-TSK-106,FLW-TSK-111]
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_approval_binding.py,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/approval-binding-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/activation/approval-binding-v2.json,tests/test_flow_m2_approval_binding.py
 status: pending
 ---
@@ -17,6 +17,8 @@ status: pending
   - repository identityとplatform file identityを含むcanonical binding digestを返す。
   - approval binding schema、codec、round-trip testを同じ変更で揃え、owner activation manifestを
     `reserved`から`active`へ遷移してからproducerを有効化する。
+  - OS観測はplatform evidence adapterの保持handle付き結果だけを使い、本readerは
+    `absent` / `bound` / `invalid`のpolicy判定とbinding digest導出に限定する。
 - **完了条件**: Linux・macOS・Windows adapter fixtureで正常なbound/absentを受理し、各invalid形を
   誤ってabsentへ降格させず、決定的な差替えhookで読取競合を検出する。NFC/NFD native pathを別scopeとして
   束縛し、approval bindingのactive schemaとcodecが双方向一致する。

@@ -102,6 +102,11 @@ userはP1〜P3をすべて推奨案で再設計する方針を承認した。GP-
 GP-004は可逆native path表現として受領した。P2/P3も同じv1.4改訂へ含め、独立再レビューまでは
 本レビューのCONDITIONAL_PASSを維持する。
 
+その後の正式再レビュー前自己検討で、userはシステム設計案と実運用設計案の統合を承認した。
+v1.5ではSafety KernelとOperations Control Plane、不変operation journal、運用CLI、reviewer key lifecycle、
+support/retention profile、4段階rolloutを追加し、実装を9責務へ再分割した。この追加設計も
+本レビューの旧判定だけでは通過扱いにせず、v1.5を対象とする独立再レビューを必要とする。
+
 ## 持ち越し
 
 本件外の過去レビュー由来で未解消のP0/P1は88件あり、`FLW-REV-023.json`の`carried_over`へ保持した。

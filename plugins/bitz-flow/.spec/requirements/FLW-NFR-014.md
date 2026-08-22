@@ -1,6 +1,6 @@
 ---
 id: FLW-NFR-014
-version: 1.2
+version: 1.3
 status: implementing
 domain: safety
 priority: high
@@ -47,9 +47,16 @@ confidence: high
     contract version、状態、digest、再照合phase、result code、原因分類、fencing tokenを記録すること SHALL
   - WHEN platformでowner principal、非追随path walk、OS lockまたはfile identityを安全に検証できない THEN
     bitz-flowは`bound`を成立させず`UNSUPPORTED`または`BLOCKED`を返すこと SHALL
+  - WHEN contractのcanonicalization、schema検証、native pathまたはresource identityを処理する THEN
+    bitz-flowは当該処理をOS・Git・process副作用を持たない決定論的contract kernelへ限定し、
+    OS adapterを観測とprimitiveに限定し、Git mutationをmutation coordinator以外から
+    起動しないこと SHALL
   - WHEN fencing stateを更新する THEN bitz-flowは`LOCKED`、`TOKEN_DURABLE`、`INTENTION_DURABLE`、
     `MUTATING`、`POSTCONDITION_DURABLE`の順序とfile/directory durabilityを守り、欠損、巻戻り、overflow、
     未知状態またはpostcondition不確定を`INDETERMINATE`として後続mutationを停止すること SHALL
+  - WHEN operationのphaseを永続化する THEN bitz-flowはoperation単位の単調sequenceと直前digestを
+    持つ不変eventをdurableに一度だけ公開し、確定済みeventの上書き・削除・sequence再利用を
+    行わず、gap・branch・改変・未知eventで後続mutationを`INDETERMINATE`に停止すること SHALL
   - WHEN contract v2 stateの有効化を要求する THEN bitz-flowのpromotion preflightは、サポート対象の
     launcher・CLI・plugin cacheを含む全起動経路がminimum-runtime sentinelを検査するbaseline以降であり、
     pre-baselineの起動経路が無効化されていることをinventoryと実行fixtureで証明し、証明できない環境では
@@ -61,16 +68,31 @@ confidence: high
   - WHEN sentinel-aware baselineのpromotionが完了した環境でruntimeまたはschema versionを切り替える THEN
     bitz-flowはminimum runtime versionをcontract v2 stateより先に永続化し、sentinelに未対応のversionの
     起動とv2 pending stateを無視したrollbackを`BLOCKED`にすること SHALL
+  - WHEN contract v2を配備する THEN bitz-flowは`audit-only`、`sentinel-ready`、`canary`、
+    `default-on`の順に展開し、署名対象support profileと実観測が一致しないfilesystem/volumeを
+    通常系へ格上げず、各phaseで許可した永続副作用だけを行うこと SHALL
   - WHEN reviewerがquarantine解除を裁定済みとして記録する THEN bitz-flowは通常operationとGit mutationを
     開始せず、role付きreviewer署名と単回nonceを検証し、同一targetのOS lock下で最新chain head、fencing token、
     postconditionを再照合してdurable release receiptだけを追記し、成功後も新しいplanと通常承認を要求すること SHALL
+  - WHEN quarantine release decisionの署名を検証する THEN bitz-flowはtrusted public-key registryの
+    generation、digest、key ID、`quarantine-reviewer` role、有効/失効状態をdecisionへ束縛し、
+    未登録・失効・role不一致・registry差替えを拒否し、private keyの生成・保管・出力を
+    runtimeの責務にしないこと SHALL
+  - WHEN 運用者がdoctor、promotion check、quarantine照会またはreceipt verifyを実行する THEN
+    bitz-flowは永続stateを変更せず、result code、cause code、side-effect state、自動復旧可否、
+    次のoperator action、operation ID、receipt参照をclosed JSONで返すこと SHALL
+  - WHEN operation journalまたはreceiptの保持上限が迫る THEN bitz-flowはactive、`QUARANTINED`、
+    `INDETERMINATE`の証跡を自動削除せず、完全性を検証したarchive receiptなしに`DONE`原本を
+    削除せず、mutation前に容量状態と対応actionを通知すること SHALL
 - **検証手段**: unit testと複数process fault fixtureで、HEAD固定の正常系、absentのplan-digest、
   path component symlink/reparse point、staged-only・未追跡・権限不正、各再照合点の差替え、旧capability、
   NFC/NFD native path衝突、lock競合・parent/child process crash・counter破損、2^53超token、
-  sentinel-aware旧runtime起動、baseline不一致、probe timeout、registry差替え、並行quarantine解除を検証し、
+  journal gap/branch/改変、sentinel-aware旧runtime起動、baseline不一致、probe timeout、registry差替え、
+  reviewer key失効、support profile外filesystem、read-only管理commandの非変更、並行quarantine解除を検証し、
   pre-baseline起動経路が残るpromotionと不確定な解除を拒否して、停止判定後のGit副作用0件と
   receiptの原因追跡を確認する。Linux・macOS・Windowsの必須fixtureで通常系`UNSUPPORTED` 0件を出口条件とする。
 - **Revision History**:
+  - 1.3 (2026-08-22) Safety Kernel/Control Plane分離、不変journal、運用API、key lifecycle、support/retention、段階展開を追加
   - 1.2 (2026-08-22) native path非衝突、trusted promotion線形化、quarantine裁定記録を追加
   - 1.1 (2026-08-22) 旧runtimeの保証境界をsentinel-aware baselineへ限定しpromotion barrierを追加
   - 1.0 (2026-08-22) `FLW-REV-021`と`SI-FLW-078/079`を受けた後継契約案をdraft起票

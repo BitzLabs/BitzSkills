@@ -1,6 +1,6 @@
 ---
 implements: FLW-NFR-014
-depends_on: [FLW-TSK-107,FLW-TSK-108]
+depends_on: [FLW-TSK-107,FLW-TSK-108,FLW-TSK-113]
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_runtime.py,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/mutation-receipt-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/activation/mutation-receipt-v2.json,tests/test_flow_m2_runtime.py
 status: pending
 ---
@@ -14,6 +14,8 @@ status: pending
   - digest差異を`STALE`、検証不能を`BLOCKED`/`UNSUPPORTED`、postcondition不確定を
     `INDETERMINATE`へ写像し、停止点以後のGit副作用を0件にする。
   - 現在のprocess内`TargetGuardManager`は先行検査として残し、永続leaseの代替にはしない。
+  - Git childを起動できる公開経路を本runtimeのmutation coordinatorに限定し、
+    promotion、recovery、operations control planeからの直接起動を依存性testで拒否する。
   - mutation receipt schema、codec、round-trip testを同じ変更で揃え、owner activation manifestをactive化する。
 - **完了条件**: boundとabsentの正常系、各再照合点での作成・削除・内容変更・inode置換、別process
   競合、parent/child crashを通し、result/receiptと実Git副作用が要件の分類に一致する。
