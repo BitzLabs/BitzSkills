@@ -14,10 +14,14 @@ status: implementing
     context不一致を既定値補完せず`BLOCKED`にする。
   - canonical JSON、NFC、case-sensitivity discriminator、platform別file identityを固定し、
     accept/reject canonical vectorを作る。
+  - `FLW-DSN-017` §6.3のschema inventoryで本タスク所有recordだけを`active`としてruntime codecとの
+    双方向round-tripを証明し、後続タスク所有recordはproducer禁止の`reserved`にする。
   - owner-only・非追随・atomic replace/fsyncのminimum-runtime sentinelとpromotion preflightを実装し、
-    supported entrypoint inventoryを証明できない環境ではcontract v2 stateを生成しない。
-- **完了条件**: schemaと実装の必須fieldが一致し、旧runtime・旧capability・未知field・NFD・entrypoint
-  残存の各陽性対照がfail-closed、正常な3platform fixtureがpromotion可能になる。
+    配布policy、実filesystem/registry列挙、実process probeでsupported entrypoint inventoryを証明できない
+    環境ではcontract v2 stateを生成しない。
+- **完了条件**: active schemaとruntime codecのfield・round-tripが双方向一致し、reserved schemaから
+  producerが生成されず、旧runtime・旧capability・未知field・NFD・platform別identity異常・entrypoint
+  残存/差替えの各陽性対照がfail-closed、正常な3platform実entrypoint fixtureがpromotion可能になる。
 - **実行判定**: 契約固定タスク。設計裁定済みのため実装は機械的だが公開契約を扱う。利用可能な
   下位tier委譲先が確認できない場合は司令塔が自己実行し、契約差分を発見したら中断してspec-issueへ戻す。
 - **実装・検証記録（2026-08-22）**:
@@ -42,4 +46,9 @@ status: implementing
     双方向照合、supported entrypoint inventoryの実体証明を行う陽性・陰性対照が不足している。
     現行テストはschema内部の`required == properties`と論理inventoryを検査するに留まるため、
     statusは`implementing`を維持する。
+- **設計具体化（2026-08-22）**:
+  - `FLW-DSN-017` v1.3で、非NFCを暗黙変換せずdecode境界で拒否する規則、3platformの閉じた
+    file identity、active/reserved codec inventory、配布policyと実process probeによるentrypoint証明を固定した。
+  - 後続タスク所有schemaを`reserved`としてproducer禁止にすることで、本タスクと後続lease実装の
+    循環依存を解消した。設計再レビューとGate裁定までは実装再開せずstatusは`implementing`を維持する。
 - **備考**: 本文にタスク自身の ID を書くと spec_inspect が幽霊参照として検出するため記載しない（SI-CORE-002 参照）。

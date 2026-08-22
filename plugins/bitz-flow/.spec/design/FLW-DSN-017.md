@@ -1,8 +1,8 @@
 ---
 id: FLW-DSN-017
 title: "approval-mode 宣言の観測可能な再照合と安全な束縛"
-status: active
-version: 1.2
+status: draft
+version: 1.3
 updated: 2026-08-22
 owner: codex
 implements: FLW-NFR-014
@@ -180,14 +180,86 @@ audit/reconcile」「platform非対応ならplan-digest配備へ明示的に戻�
 
 capability、binding、lease、counter、receiptはそれぞれ`schema_version`を必須とし、
 `additionalProperties: false`、required field、null許容をJSON Schemaで固定する。canonical JSONはUTF-8、
-object key辞書順、余分な空白なし、integerはJSON整数、pathはUnicode正規化後のplatform canonical表現、
+object key辞書順、余分な空白なし、integerはJSON整数、pathはplatform adapterが生成したNFCのcanonical表現、
 Git OIDはobject-format名と小文字hexの組にする。file identityはplatform discriminator付きobjectとし、
 異platform間で同じfieldへ文字列を詰めない。fencing tokenは`0..2^64-1`とし、型違い・overflowを拒否する。
 
 schema境界タスクではlease、counter、intention、postcondition、receipt、namespace manifestごとに実体JSON
-Schemaを作成し、状態別required/nullable制約を固定する。UnicodeはNFCへ正規化し、path比較には
+Schemaを作成し、状態別required/nullable制約を固定する。path比較には
 `case_sensitivity: sensitive | insensitive` discriminatorを必須化する。各schemaには同じlogical valueが
 同一byte列となるcanonical test vectorと、未知field・NFD・case discriminator欠落の拒否vectorを付ける。
+
+#### 6.1 Unicode受理境界
+
+contract v2の公開JSON、永続record、署名payload、digest payloadに含まれる**全string値とobject key**は、
+decode直後かつschema検証・署名検証・digest計算より前に`value == NFC(value)`を満たすことを検査する。
+一致しないNFDその他の非NFC入力は正規化して受理せず`BLOCKED`にする。これにより異なる入力byte列が
+同じ署名対象へ暗黙変換されることを防ぐ。OS/Gitから取得したpathだけはplatform adapterがNFCへ変換して
+canonical pathを生成してよいが、そのadapter出力も同じ検査を通す。表示専用messageはcontract payload外とする。
+
+受理vectorはASCII、合成済み日本語、合成済みaccentを含め、拒否vectorは同じ見た目のNFD key/value、
+surrogate、NULを含める。拒否後にparser、署名検証器、sentinel writer、promotion判定を呼んではならない。
+
+#### 6.2 platform別file identityの閉じた表現
+
+`file_identity`は次の`oneOf`で固定し、共通の自由形式objectやplatform間field流用を許さない。
+大きな識別子をJSON実装の数値精度に依存させないため、OS整数はcanonicalな文字列で保持する。
+
+| platform | 必須field | canonical表現 |
+|---|---|---|
+| `linux` | `platform`, `device`, `inode`, `link_count` | `device`/`inode`は先頭zeroなしunsigned decimal、`link_count`は整数`1` |
+| `macos` | `platform`, `device`, `inode`, `link_count` | Linuxと同形だがdiscriminatorを共有しない |
+| `windows` | `platform`, `volume_serial`, `file_id`, `link_count` | serialは先頭zeroなしlowercase hex、file IDは32桁lowercase hex、`link_count`は整数`1` |
+
+各variantは`additionalProperties: false`とし、異platformのfield混在、負数、先頭zero、大文字hex、桁不足、
+`link_count != 1`を拒否する。adapterはpath文字列からidentityを推測せず、保持したhandle/FDへのOS照会値から
+構築する。取得不能、値域外、open前後のidentity不一致は`UNSUPPORTED`または`BLOCKED`であり、
+文字列pathやcontent digestへのfallbackを行わない。
+
+#### 6.3 schemaとruntime codecの双方向整合
+
+schema inventoryは各recordについて`schema_id`、`owner_task`、`activation`、runtimeの`decoder`/`encoder`を
+一意に対応付ける。`activation`は`active`または`reserved`の閉集合とする。
+
+| record | owner | 106完了時 |
+|---|---|---|
+| approval capability v2、minimum-runtime v1、entrypoint inventory/evidence | schema境界 | `active` |
+| approval binding v2 | HEAD/index/worktree binding | `reserved` |
+| target lease、fencing counter、intention、postcondition、lock namespace v2 | process間lease | `reserved` |
+| mutation receipt v2 | runtime統合 | `reserved` |
+
+`active` recordはschemaの`properties`、`required`、parser許可field、serializer出力field、実装型fieldが
+完全一致し、valid fixtureを`decode → encode → schema validate → canonical encode`して同一byte列へ戻す。
+schemaだけの自己比較は完了証拠にしない。`reserved` recordはschema自体を検証するがcodec不在を欠陥とせず、
+producer/consumer登録とstate生成を禁止する。owner taskがcodecと同じ双方向testを追加したcommitでだけ
+`active`へ遷移できる。この分離により、schema境界の完了が後続lease実装を待つ循環依存を作らない。
+
+#### 6.4 supported entrypoint inventoryの実体証明
+
+promotion preflightの期待集合と観測値を呼出元が同時に渡すAPIは、論理整合のtest doubleに限定し、
+本番のpromotion根拠にしない。本番では配布profileに同梱したclosed policyから期待entrypoint ID集合を読み、
+platform adapterがstable launcher、公開CLI、enabled plugin cacheを列挙する。現在の公開CLIは
+`<flow-core>/scripts/flow.py`だけであり、`flowlib`直呼出しはinventory対象外とする。Claude Code、Codex、
+Antigravityの各plugin cacheは、有効化registryが指す実pathを列挙し、同じ実体を指すaliasはfile identityで
+重複排除する。
+
+各実entrypointを副作用なしの`runtime-contract` probeとしてchild process起動し、次のclosed evidenceを得る。
+
+```text
+entrypoint_id
+entrypoint_kind       # stable-launcher / public-cli / plugin-cache
+resolved_file_identity
+artifact_sha256       # launcherとimport対象flowlib treeのmanifest digest
+runtime_version
+contract_versions     # minimum-runtime=1, worktree-state=2
+sentinel_aware        # trueのみ受理
+probe_exit_code       # 0のみ受理
+```
+
+policy期待集合と列挙集合の差、probe未実装・timeout・非zero終了、identity差替え、artifact digest不一致、
+baseline未満、`sentinel_aware != true`はpromotionを`UNSUPPORTED`または`BLOCKED`にし、contract v2 stateを
+生成しない。testは一時directoryに実entrypoint artifactを配置してprocessを起動し、旧runtime残存、alias、
+実行中差替え、欠落cacheの陽性対照を持つ。文字列のversion mappingだけを直接渡すtestは補助testに留める。
 
 ### 7. 運用監視とrunbook
 
@@ -218,6 +290,12 @@ reconcile、quarantine解除の各CLI、一次対応role、reviewer承認経路�
 - hookをplan後、approval後、各mutation前へ決定的に置き、内容変更、削除、新規作成、inode置換を
   `STALE`/`BLOCKED`とし、その再照合点以後のGit副作用0件を確認する。
 - contract v1、digest欠落・改変、未知field、plan-digest/signed-capability相互転用を拒否する。
+- public/永続contractのNFD key/valueをdecode境界で拒否し、暗黙NFC変換後の署名・digest計算へ進まない。
+- Linux・macOS・Windowsのfile identity正常vectorを受理し、variant間field混在、非canonical整数、
+  link count異常、open前後差替えをfail-closedにする。
+- active schemaはruntime codecとの双方向round-tripを通し、reserved schemaにはproducerが存在しない。
+- 配布policyから得た期待集合と実filesystem/registryから列挙・process probeしたentrypoint集合を照合し、
+  caller作成の論理version mappingだけではpromotionできない。
 - 別processの同一target競合は最大1processだけがmutationへ進み、process kill後は新fencing tokenと
   receipt reconcileなしに再開しない。
 - result/receiptからrecheck phaseと原因を追跡でき、秘密本文やpath外情報を含めない。
@@ -235,7 +313,7 @@ hardlink count 1、非追随walk、`FLW-NFR-007`のatomic replace/fsyncを適用
 
 第2段階の前にpromotion barrierを置く。stable launcher、CLI、plugin cacheを含むサポート対象の全起動経路を
 inventory化し、各entrypointがsentinel-aware baseline以降であること、pre-baseline entrypointが無効化・撤去
-されていることを実行fixtureで確認する。この証明ができない配備は`UNSUPPORTED`としてcontract v2 stateを
+されていることを§6.4の実process probeで確認する。この証明ができない配備は`UNSUPPORTED`としてcontract v2 stateを
 生成しない。pre-baseline binaryを利用者が保護境界外から直接持ち込んで実行することは機械的に阻止できず、
 サポート対象外の残余リスクである。
 
@@ -263,3 +341,8 @@ deprecatedとして後継へ接続した。同日の`FLW-GATE-004`でDesign Gate
 | SYN-005 | 非観測履歴を保証対象から外す案Bと、観測点の状態/digest照合 |
 | SYN-006 | capability contract v2、必須digest、v1/未知field拒否、replan/rollback規則 |
 | SYN-008 | `FLW-FR-006`、`FLW-NFR-007`、`FLW-NFR-012`への派生接続 |
+
+## Revision History
+
+- 1.3 (2026-08-22) NFD拒否境界、platform別file identity、active/reserved codec整合、実entrypoint probeを具体化し再レビューへ戻した
+- 1.2 (2026-08-22) promotion barrierとminimum-runtime rollback境界を追加
