@@ -34,4 +34,12 @@ status: implementing
     active manifestを更新せず、本タスクは `implementing` を維持する。
   - `spec_inspect --workspace . plugins/* --check-only`: 全8 workspace PASS。
     `python3 scripts/release_check.py`: PASS。
+- **完了再判定（2026-08-22）**:
+  - 現行mainで対象3スイートを再実行し、`143 passed`（終了コード0）を確認した。
+  - 3者qualification / confirmationは後続修正により全platform PASSへ更新済みであり、
+    以前のAntigravity BLOCKEDは解消している。
+  - ただし完了条件に対し、NFD拒否、platform別file identity、schemaと実装fieldの厳密な
+    双方向照合、supported entrypoint inventoryの実体証明を行う陽性・陰性対照が不足している。
+    現行テストはschema内部の`required == properties`と論理inventoryを検査するに留まるため、
+    statusは`implementing`を維持する。
 - **備考**: 本文にタスク自身の ID を書くと spec_inspect が幽霊参照として検出するため記載しない（SI-CORE-002 参照）。
