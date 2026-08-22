@@ -1,0 +1,25 @@
+{
+  "schema_version": 2,
+  "review_id": "FLW-REV-026",
+  "verdict": "PASS",
+  "aggregate_score": 4.96,
+  "perspective_scores": {
+    "consistency": 5.0,
+    "data-integrity": 5.0,
+    "operations": 4.8,
+    "risk": 5.0,
+    "business": 5.0
+  },
+  "findings_summary": {
+    "before_dedup": 0,
+    "after_dedup": 0,
+    "p0": 0,
+    "p1": 0,
+    "p2": 0,
+    "p3": 0
+  },
+  "findings": [],
+  "gate_preconditions": [],
+  "carried_over": [],
+  "conditional_items": []
+}

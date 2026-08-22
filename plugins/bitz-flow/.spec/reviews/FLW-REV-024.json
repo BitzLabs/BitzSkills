@@ -28,7 +28,7 @@
       "detail": "MutationCoordinatorとRecoveryControllerの双方が同じlock、counter、event chainを更新するが、両者が共有する唯一のauthorityが依存図とtask boundaryにない。実装が分岐するとtoken単調性と最大1 writerを破る。",
       "recommendation": "Git起動権限を持たないTargetLeaseJournalServiceを独立させ、lock取得、token発行、event公開、chain再照合の唯一のAPIとしてmutationとrecoveryから利用する。",
       "tracked_by": "FLW-REV-024:GP-001",
-      "status": "open"
+      "status": "resolved"
     },
     {
       "id": "FLW-REV-024:SYN-002",
@@ -39,7 +39,7 @@
       "detail": "handleからhashした後もchildが元pathとimport treeを参照するため、exec/import前の差替えで未知codeをprobeとして実行し得る。commit前再照合は副作用を取り消せない。",
       "recommendation": "保持handleからowner-only immutable staging snapshotを作成・fsync・再検証し、probeの実行とimport resolutionをsnapshot内だけへ固定する。",
       "tracked_by": "FLW-REV-024:GP-002",
-      "status": "open"
+      "status": "resolved"
     },
     {
       "id": "FLW-REV-024:SYN-003",
@@ -50,7 +50,7 @@
       "detail": "registry generationとartifactを再照合した後、active stateのatomic replaceまでregistry/cacheを固定しないため、pre-baseline entrypointの再有効化と競合してstale evidenceをACTIVEにできる。",
       "recommendation": "registry generation lock/CASをACTIVE公開まで保持するか、PENDING公開後の再列挙を通した二段階commitとし、sentinel-aware launcherにACTIVE以外を拒否させる。",
       "tracked_by": "FLW-REV-024:GP-002",
-      "status": "open"
+      "status": "resolved"
     },
     {
       "id": "FLW-REV-024:SYN-004",
@@ -61,7 +61,7 @@
       "detail": "token発行前後、release event公開前後、応答喪失後のretryに対するphaseと単回nonceの冪等規則がなく、永久quarantineや重複token消費を運用者と機械が同じ結論へ収束できない。",
       "recommendation": "release専用の不変phase列と各crash点の再開表を定義し、同一decision digest/nonceは既存結果を返し、異decisionと未確定tokenは自動解除しない。",
       "tracked_by": "FLW-REV-024:GP-001",
-      "status": "open"
+      "status": "resolved"
     },
     {
       "id": "FLW-REV-024:SYN-005",
@@ -72,7 +72,7 @@
       "detail": "baseline、support profile、reviewer key registryの許可signer、trust anchor、generation rollback防止、失効、過去receipt検証、schema/codec/task ownerが閉じておらず、正当な古い署名へのdowngradeやregistry同時差替えを拒否できない。",
       "recommendation": "署名role別の責任表、OSまたは配布root public key、closed envelope/registry schema、単調generationと前digest、失効、旧snapshot保持、唯一のPolicyVerifierとowner taskを定義する。",
       "tracked_by": "FLW-REV-024:GP-003",
-      "status": "open"
+      "status": "resolved"
     },
     {
       "id": "FLW-REV-024:SYN-006",
@@ -83,7 +83,7 @@
       "detail": "event削除禁止とgap検出を規定しながらarchive receipt後のDONE原本削除を許している。archive chain、保存先identity、作成・検証・prune順序、crash収束、restore、task/schema owner、段階展開が未定義である。",
       "recommendation": "M2では原本pruneを禁止してarchiveをscope外に戻すことを推奨する。採用する場合は独立taskでcheckpoint chain、archive/restore状態機械、schema、owner、canaryとrollbackを設計する。",
       "tracked_by": "FLW-REV-024:GP-004",
-      "status": "open"
+      "status": "resolved"
     },
     {
       "id": "FLW-REV-024:SYN-007",
@@ -94,7 +94,7 @@
       "detail": "容量迫近を通知するだけで、Git副作用後に必要となるpostcondition、DONEまたはquarantine receipt分を事前予約しないため、ENOSPCで証跡を確定できずINDETERMINATEへ陥る。",
       "recommendation": "最初のGit mutation前に同一filesystem上で最悪journal量と緊急receipt量を予約し、予約不能なら副作用0件で停止するdurability gateとcrash後回収規則を追加する。",
       "tracked_by": "FLW-REV-024:GP-005",
-      "status": "open"
+      "status": "resolved"
     },
     {
       "id": "FLW-REV-024:SYN-008",
@@ -105,7 +105,7 @@
       "detail": "設計はactivation/<schema-id>.jsonを要求するが、複数schemaを所有するtaskはlease-records-v2.json等のgroup manifestを1件だけ境界に持ち、部分activeとrollbackの原子性を一意に実装できない。",
       "recommendation": "schemaごとのmanifestへtask boundaryを展開するか、member一覧とall-or-nothing規則を持つgroup manifest契約へ設計・loader・testを統一する。",
       "tracked_by": "FLW-REV-024:GP-006",
-      "status": "open"
+      "status": "resolved"
     },
     {
       "id": "FLW-REV-024:SYN-009",

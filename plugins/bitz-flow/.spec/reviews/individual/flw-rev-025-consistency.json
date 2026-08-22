@@ -1,0 +1,10 @@
+{
+  "perspective": "consistency",
+  "dimensions": [
+    {"name": "構造整合", "weight": 0.35, "score": 5, "findings": []},
+    {"name": "トレーサビリティ", "weight": 0.35, "score": 5, "findings": []},
+    {"name": "用語一貫性", "weight": 0.30, "score": 4, "findings": []}
+  ],
+  "weighted_score": 4.70,
+  "summary": "裁定、discovery、FR/NFR、設計、9タスクがLocal Safety Profileの同じ境界へ収束した。spec inspectでも問題・幽霊参照・孤児要件は0件であり、FLW-REV-024の12 findingへの対応を設計内で追跡できる。"
+}

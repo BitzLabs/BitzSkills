@@ -1,28 +1,19 @@
 ---
 implements: FLW-NFR-014
 depends_on: [FLW-TSK-106,FLW-TSK-111]
-boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_lease.py,plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_journal.py,plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_guardian.py,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/target-lease-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/fencing-counter-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/operation-event-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/lock-namespace-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/activation/lease-records-v2.json,tests/test_flow_m2_process_lease.py,tests/test_flow_m2_operation_journal.py
+boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_transaction.py,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/target-transaction-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/operation-event-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/mutation-receipt-v2.schema.json,tests/test_flow_m2_target_transaction.py
 status: pending
 ---
 
-### process間lease・fencing状態機械・MutationGuardianを実装する
+### TargetTransactionでlease・fencing・journalを一元化する
 
-- **作業内容**: common-dirの保護済みnamespaceにprocess間OS lock、`lock-namespace.json`、単調増加
-  uint64 fencing token、durable state machineを実装する。
-  - `LOCKED → TOKEN_DURABLE → INTENTION_DURABLE → MUTATING → POSTCONDITION_DURABLE → DONE /
-    QUARANTINED`の順序とfile/directory durabilityを守る。
-  - lock namespace identity不一致、counter欠損・巻戻り・overflow、receipt下限未満を
-    `INDETERMINATE`としてquarantineする。
-  - `MutationGuardian`がLinux/macOSではlease FDとprocess group、Windowsではlease handleと
-    Job Objectを保持し、Git child終了statusをdurableに確定する。
-  - operationごとのphaseを単調sequence・直前digest付き不変eventとして一度だけ公開し、
-    gap、branch、改変、未知eventを`INDETERMINATE`にする。
-  - regular fileとdirectory identityを別schemaで扱い、fencing tokenをuint64 decimal stringとして
-    全recordへ統一する。担当schema/codec/round-tripを揃えてowner activation manifestをactive化する。
-- **完了条件**: 複数process競合でmutationへ進むprocessが最大1つとなり、各crash pointからの再開が
-  設計表どおり収束する。event chainの最長有効prefixを機械と人間で同一判定でき、
-  child終了を証明できない場合は後続mutationを停止し、2^53境界・2^64-1・overflowの
-  cross-language vectorとlease recordのschema/codec双方向一致を確認する。
-- **実行判定**: 並行性・crash safetyを扱う難実装。外部相談先が利用不能なため自己実行するが、
-  OS capabilityが設計matrixを満たさない場合は`UNSUPPORTED`を維持してscope裁定へ戻す。
-- **備考**: 本文にタスク自身の ID を書くと spec_inspect が幽霊参照として検出するため記載しない（SI-CORE-002 参照）。
+- **作業内容**: Git起動権限を持たない単一moduleへOS lock、単調fencing token、operation journal、
+  terminal receipt、reconcile closureの更新authorityを集約する。
+  - `LOCKED → INTENT_DURABLE → MUTATING → RESULT_DURABLE → DONE / QUARANTINED`を実装する。
+  - 最初のGit mutation前にintentと有効な`INDETERMINATE`緊急receiptをdurable公開する。
+  - terminal receiptは緊急receiptのdigestを参照し、最長有効chainの単一後継だけを正とする。
+  - eventの上書き・削除・sequence再利用、archive、pruneを実装しない。
+- **完了条件**: 複数process競合で最大1 writer、全crash pointで緊急またはterminal receiptが残り、
+  nonce再利用、receipt複数後継、gap、branch、改変、token巻戻り・overflowを`INDETERMINATE`へ停止する。
+- **見積り**: 単独の実装PR 3とし、4 sessionを上限とする。
+- **実行判定**: 並行性とcrash safetyの中核。platform primitiveが不足する環境は`UNSUPPORTED`を維持する。

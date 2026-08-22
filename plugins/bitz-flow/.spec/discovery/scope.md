@@ -2,8 +2,8 @@
 id: FLW-DSC-003
 title: "bitz-flow v2 スコープ"
 status: draft
-version: 2.3
-updated: 2026-07-29
+version: 2.4
+updated: 2026-08-22
 owner: hide
 ---
 
@@ -21,6 +21,9 @@ owner: hide
 - 禁止操作（`git reset --hard`、force push、`git clean -f`、`rm -rf`、`sudo`）を
   実装・提案しない。
 - リポジトリ外に worktree を作る場合は、実行前にパスを提示してユーザー承認を得る。
+- M2のwrite safetyは、同一OSユーザーが管理するローカルrepository、Git common-dir、ローカル
+  filesystemを信頼境界とする。同一OSユーザーによる悪意ある改ざん、network filesystem、remote writeは
+  M2の保証対象にしない。
 
 ## MoSCoW
 
@@ -80,6 +83,9 @@ owner: hide
 - 自動 version bump、任意 build command の実行、署名鍵操作。
 - GitHub Project を `.spec` status の SSOT にする。
 - 失敗 worktree を自動削除する。
+- M2での署名capability、reviewer key registry、root of trust、key rotation/revocation。
+- M2 operation journalのarchive、prune、restore、自動削除。
+- M2運用CLIのRBAC、通知adapter、運用RTO/SLO。
 
 ## リリース分割
 

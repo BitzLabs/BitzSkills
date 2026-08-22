@@ -1,0 +1,13 @@
+{
+  "perspective": "business",
+  "dimensions": [
+    {"name": "要件トレーサビリティ", "weight": 0.35, "score": 5, "findings": []},
+    {"name": "NFR定量化", "weight": 0.30, "score": 4, "findings": []},
+    {"name": "ステークホルダー整合", "weight": 0.20, "score": 5, "findings": []},
+    {"name": "ROI・実現可能性", "weight": 0.15, "score": 4, "findings": [
+      {"id": "BIZ-401", "severity": "info", "location": "plugins/bitz-flow/.spec/ROADMAP.md:フェーズ3", "title": "縮退後の実装予算は再校正待ち", "description": "設計面積は縮小したが、ROADMAPの既存PR/session budgetは旧M2実績を基準にしており、新しい9タスクの見積りではない。", "recommendation": "Design Gate通過後、実装再開前にtask別PR/session見積りを再校正する。"}
+    ]}
+  ],
+  "weighted_score": 4.50,
+  "summary": "小規模チームとAIエージェントの通常運用へ焦点を戻し、過剰設計の除外理由も人間裁定へ接続した。価値と検証可能性は高いが、実装再開前に縮退後taskの予算再校正が望ましい。"
+}

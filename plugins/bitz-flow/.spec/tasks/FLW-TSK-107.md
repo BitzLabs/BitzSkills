@@ -1,27 +1,19 @@
 ---
 implements: FLW-NFR-014
-depends_on: [FLW-TSK-106,FLW-TSK-111]
-boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_approval_binding.py,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/approval-binding-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/activation/approval-binding-v2.json,tests/test_flow_m2_approval_binding.py
+depends_on: [FLW-TSK-106]
+boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_approval.py,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/approval-context-v2.schema.json,tests/test_flow_m2_approval.py
 status: pending
 ---
 
-### approval-mode宣言をHEAD・index・worktreeへ束縛する
+### plan-digest承認contextを固定する
 
-- **作業内容**: repository rootから`.bitz-flow/approval-mode.json`をcomponent単位の非追随walkで読み、
-  HEAD・index・worktreeの三者状態を`absent` / `bound` / `invalid`へ分類する。
-  - 三者すべて不在の場合だけ`absent`とする。
-  - regular file、実効OS principal所有、group/world非書込み、HEAD追跡済み、三者blob一致を満たす
-    場合だけ`bound`とする。
-  - symlink/reparse point、staged-only、未追跡、staged deletion、worktree deletion、読取中置換を
-    `invalid`として`BLOCKED`にする。
-  - repository identityとplatform file identityを含むcanonical binding digestを返す。
-  - approval binding schema、codec、round-trip testを同じ変更で揃え、owner activation manifestを
-    `reserved`から`active`へ遷移してからproducerを有効化する。
-  - OS観測はplatform evidence adapterの保持handle付き結果だけを使い、本readerは
-    `absent` / `bound` / `invalid`のpolicy判定とbinding digest導出に限定する。
-- **完了条件**: Linux・macOS・Windows adapter fixtureで正常なbound/absentを受理し、各invalid形を
-  誤ってabsentへ降格させず、決定的な差替えhookで読取競合を検出する。NFC/NFD native pathを別scopeとして
-  束縛し、approval bindingのactive schemaとcodecが双方向一致する。
-- **実行判定**: filesystem/Git境界の難実装。上位相談先が利用不能なため設計書を正として自己実行し、
-  platform差異が設計matrixを越える場合は実装を止める。
-- **備考**: 本文にタスク自身の ID を書くと spec_inspect が幽霊参照として検出するため記載しない（SI-CORE-002 参照）。
+- **作業内容**: repository identity、target、HEAD/index/worktree snapshot、effects、期限、nonceから
+  `operation_id`を導出し、`--confirm`、期限、nonce未使用、context再導出を検査する。
+  - M2の承認方式を`plan-digest`へ固定する。
+  - `signed-capability`宣言、capability file、鍵registry依存入力は
+    `UNSUPPORTED_APPROVAL_MODE`で停止し、無言降格しない。
+  - 署名schema、reviewer role、key lifecycleを本境界へ入れない。
+- **完了条件**: 正常承認、期限切れ、nonce再利用、context差替え、signed入力拒否でresultと
+  Git副作用0件が契約どおりになる。
+- **見積り**: FLW-TSK-106と実装PR 1へまとめ、1 sessionを上限とする。
+- **実行判定**: pure contract完了後に開始し、暗号鍵管理の再導入要求が出た場合はscope裁定へ戻す。

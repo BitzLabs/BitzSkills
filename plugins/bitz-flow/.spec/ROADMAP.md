@@ -79,13 +79,11 @@ M0 で read の一部だけを検証して verified になった要件の残り�
 次は **M2 worktree-first**。承認によって生じた代行遷移は、`verified → promoted`を経て
 Promotion GateのGatePassageで検分される。
 
-**M2 の現況（2026-08-17）**: 最新の独立レビューは `FLW-REV-019` の
-**CONDITIONAL_PASS 3.41** である。出口条件は PASS 3 / 条件付き 3 / 未達 2 のままで、
-Completion Gate は保留する。M2 は通常運用での receipt 破損、worktree の生成・消失、
-binding 不整合を検知する責務に限る。receipt store と保護境界の双方を書き換えられる攻撃者への
-真正性保証は BitzFlow V2 のスコープ外とし、Completion Gate の前提に含めない。将来必要になった
-場合だけ新規の security 設計として扱う。裁定の正は
-`.spec/reports/decision-2026-08-17-v2-operational-integrity-scope.md`。
+**M2 の現況（2026-08-22）**: `FLW-DSN-017` v1.5の独立レビュー`FLW-REV-024`は
+**FAIL 2.35**であり、改訂設計のDesign Gateは未通過である。人間裁定によりM2をLocal Safety Profileへ
+縮退し、plan-digest、local process間lease、追記証跡、単一bundle promotionへ限定するv2.0を再設計中。
+署名policy、鍵registry、archive、RBAC、通知/RTOはV2初期版のGate条件から外した。裁定の正は
+`.spec/reports/decision-2026-08-22-m2-local-safety-profile.md`。公開面はM0 read-onlyのまま維持する。
 
 `FLW-REV-019` 由来の `SI-FLW-072` / `SI-FLW-073` / `SI-FLW-075` を accepted とし、設計を
 `FLW-DSN-016` 2.9 / `FLW-DSN-014` 1.23 へ改訂した（裁定の正は
@@ -97,8 +95,8 @@ binding 不整合を検知する責務に限る。receipt store と保護境界�
 2. **出口条件4に対応する要件が存在しなかった**。従来の対応先 `FLW-CON-006` は破壊操作の
    安全境界のみを扱い、enum 照合の受入基準を持たない。`FLW-CON-007`（契約語彙の単一の正と
    機械照合）を新設し、対応表を差し替えた。
-3. 承認モードは registry の**存在**からモードを推定していたため、registry を削除すると
-   無言で `plan-digest` へ降格した。配備意図の宣言を git 追跡下へ分離し3値判定へ改めた。
+3. 承認モードの無言降格問題は一度3値判定で是正した。2026-08-22の後続裁定では、M2の実運用に
+   対して署名機構が過剰と判断し、`plan-digest`だけをsupported、署名入力を明示的`UNSUPPORTED`とした。
 
 是正タスクは `FLW-TSK-096`〜`FLW-TSK-102` の7件（契約固定 → 分類 → 承認 → 失敗系 result →
 測定系の順。`FLW-TSK-101` / `102` は他と boundary が互いに素で並列投入可能）。
@@ -192,20 +190,21 @@ M2 が未完了のままでは worktree-first の安全境界が閉じないた�
   （`.spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md`）。
   retention ref・quarantine・receipt chain の複雑さの大半が破壊操作に由来し、
   M2 が閉じない主因になっていたため
-- 詳細設計は `FLW-DSN-016`（M2 worktree safety 詳細設計）。出口条件・budget の正は
-  `FLW-DSN-014` の「M2出口条件・budget・M3入口条件」節
-- 出口（新 scope）: repo identity 衝突 0、repo 外 worktree root の承認（**単回 capability**）、
+- 現行実装の基準は`FLW-DSN-016`。再設計案は`FLW-DSN-017` v2.1であり、再Design Gateまで
+  実装を再開しない。Local Safety Profileの出口条件・接続・残作業budgetの正は`FLW-DSN-017`とする
+- 出口（Local Safety Profile）: repo identity 衝突 0、repo 外 worktree rootの
+  **plan-digest＋期限＋単回nonce＋明示確認**、
   `create` / `resume` / `audit` に対応する fault fixture 全件 PASS、enum 三者照合 green、
-  **`create` / `resume` の承認 capability 検証を公開 dispatcher 経由で確認**、
+  **`create` / `resume` のplan-digest承認を公開dispatcher経由で確認**、
   operation 外変更の audit 検出・quarantine 接続、
   **`write_target: local` の被測定物 confirmation が 3 platform で PASS**、
   着手前 reconnaissance の必須化
 - **出口再判定（2026-08-17）**: `FLW-REV-019` **CONDITIONAL_PASS 3.41**。新 scope の
   出口8項目は PASS 3 / 条件付き 3 / 未達 2 であり、enum 三者照合と通常運用における
   audit・quarantine 接続が未達である。Completion Gate は保留を継続する。
-- budget: **6 PR / 20 session**（2026-08-12 再校正）。4 PR / 14 session に
-  M1-6 の confirmation 区分（+1 PR / +3 session。`SI-FLW-045`）と
-  `SI-FLW-046` の scope 追加（+1 PR / +3 session）を加えた値
+- **残作業budget（2026-08-22再校正）**: 再Design Gate後は`FLW-TSK-106`〜`114`を6つの実装PRへ
+  束ねた **6 PR / 20 session** とする。内訳と停止条件は`FLW-DSN-017` v2.1 §9.1を正とし、
+  設計是正以前の実績はsunk cost、設計・裁定・spec reviewは実装budget外として混在させない
 - **M2 是正枠**: 2026-08-15 の段階承認（先行 **4 PR / 13 session**）は、2026-08-16 の
   `FLW-REV-018` 全件対処裁定で上限解除された。M3〜M5 を含む次期予算の再校正は
   `FLW-REV-019:GP-006` として未裁定である。実績の正は

@@ -1,0 +1,11 @@
+{
+  "perspective": "operations",
+  "dimensions": [
+    {"name": "監視・可観測性", "weight": 0.30, "score": 4, "findings": []},
+    {"name": "災害復旧", "weight": 0.30, "score": 4, "findings": []},
+    {"name": "セキュリティ態勢", "weight": 0.20, "score": 4, "findings": []},
+    {"name": "デプロイ安全性", "weight": 0.20, "score": 5, "findings": []}
+  ],
+  "weighted_score": 4.20,
+  "summary": "ローカルCLIに適用しないservice運用要素を明示的にscope外とし、doctor・audit・verify-receipt・reconcileとclosed operator actionへ運用面を限定した。段階展開、atomic promotion、M0への縮退境界が定義されている。"
+}

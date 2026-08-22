@@ -5,21 +5,15 @@ boundary: plugins/bitz-flow/skills/flow-core/references/operation-catalog.md,plu
 status: pending
 ---
 
-### operations control plane・SLI・runbookを統合する
+### doctor・audit・verify-receipt・reconcileを統合する
 
-- **作業内容**: doctor、promotion check/apply、quarantine list/show/reconcile/release-record、
-  receipt verifyを公開CLIとoperation catalogへ接続する。
-  - read-only commandは実行前後のstate digest不変を検証し、管理commandも下位controllerの
-    公開API以外から永続fileを編集しない。
-  - closed resultにresult/cause code、side-effect state、自動復旧可否、operator action、
-    operation ID、receipt pathを必須化する。
-  - cause別停止、lock待機、quarantine滞留、token不連続、chain failure、容量迫近を
-    SLIへ接続し、通知未設定でも手動対応先と終了codeを失わない。
-  - runbookにreviewer keyの登録/rotation/失効、support profile、保持/archive、
-    audit-onlyからdefault-onの展開とrollbackを記載する。
-- **完了条件**: runbookの全commandが実在し、read-onlyの副作用0件、全停止原因の
-  operator action欠落0件、通知未設定時の証跡喪失0件、active/quarantine証跡の自動削除0件を
-  E2E fault fixtureで確認する。共有runtime変更のため全pytest、spec inspect、release checkを実行する。
-- **実行判定**: 運用統合の最終タスク。recoveryとpromotionの完了後に開始し、
-  下位の安全判定をCLI独自ロジックで上書きしない。
-- **備考**: 本文にタスク自身の ID を書くと spec_inspect が幽霊参照として検出するため記載しない（SI-CORE-002 参照）。
+- **作業内容**: 既存の`worktree <action>` grammarへdoctor、audit、verify-receipt、reconcileを接続する。
+  - read-only commandは実行前後のpersistent state digest不変を検査する。
+  - reconcileだけが明示確認後に下位API経由でclosure eventを追記できる。
+  - closed resultへcause、side-effect state、自動復旧可否、operator action、receipt参照、journal使用量を含める。
+  - RBAC、通知adapter、RTO/SLO、key lifecycle、archive/prune/restoreを実装しない。
+- **完了条件**: 全commandが実在し、read-only副作用0件、停止時operator action欠落0件、
+  reconcileのGit副作用0件、journal/receipt自動削除0件、FLW-DSN-017 §7.1の全適用行と§8.1の全edgeを
+  E2E coverage manifestで確認する。
+- **見積り**: FLW-TSK-110と実装PR 6へまとめ、2 sessionを上限とする。
+- **実行判定**: 運用統合の最終task。下位の安全判定をCLI独自logicで上書きしない。

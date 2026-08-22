@@ -1,0 +1,11 @@
+{
+  "perspective": "risk",
+  "dimensions": [
+    {"name": "分散システムリスク", "weight": 0.30, "score": "N/A", "findings": []},
+    {"name": "障害モード分析", "weight": 0.30, "score": 4, "findings": []},
+    {"name": "Saga設計の妥当性", "weight": 0.25, "score": "N/A", "findings": []},
+    {"name": "データ整合性リスク", "weight": 0.15, "score": 5, "findings": []}
+  ],
+  "weighted_score": 4.33,
+  "summary": "単一host・非分散設計のため分散システムとSagaはN/Aとし、残る重みを再正規化した。promotion/apply競合、lock順序、crash、nonce再利用、receipt分岐をfail-closedに閉じ、remote/NFSを明示的に除外している。"
+}

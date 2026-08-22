@@ -1,0 +1,10 @@
+{
+  "perspective": "data-integrity",
+  "dimensions": [
+    {"name": "トランザクション安全性", "weight": 0.40, "score": 4, "findings": []},
+    {"name": "データ整合性", "weight": 0.35, "score": 5, "findings": []},
+    {"name": "スキーマ設計品質", "weight": 0.25, "score": 5, "findings": []}
+  ],
+  "weighted_score": 4.60,
+  "summary": "単一TargetTransaction、lock非重複規則、mutation前緊急receipt、receipt supersession、単一bundleのatomic publishにより主要な完全性境界が閉じた。archiveを外して原本不変としたため、削除とchain保証の矛盾もない。"
+}

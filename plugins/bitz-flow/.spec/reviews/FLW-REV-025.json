@@ -1,0 +1,37 @@
+{
+  "schema_version": 2,
+  "review_id": "FLW-REV-025",
+  "verdict": "PASS",
+  "aggregate_score": 4.45,
+  "perspective_scores": {
+    "consistency": 4.70,
+    "data-integrity": 4.60,
+    "operations": 4.20,
+    "risk": 4.33,
+    "business": 4.50
+  },
+  "findings_summary": {
+    "before_dedup": 1,
+    "after_dedup": 1,
+    "p0": 0,
+    "p1": 0,
+    "p2": 0,
+    "p3": 1
+  },
+  "findings": [
+    {
+      "id": "FLW-REV-025:SYN-001",
+      "priority": "P3",
+      "severity": "info",
+      "source": ["BIZ-401"],
+      "title": "縮退後の実装予算は再校正待ち",
+      "detail": "設計面積は縮小したが、ROADMAPの既存PR/session budgetは旧M2実績を基準にしており、新しい9タスクの見積りではない。",
+      "recommendation": "Design Gate通過後、実装再開前にtask別PR/session見積りを再校正する。",
+      "tracked_by": "",
+      "status": "resolved"
+    }
+  ],
+  "gate_preconditions": [],
+  "carried_over": [],
+  "conditional_items": []
+}
