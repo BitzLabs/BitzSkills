@@ -1,7 +1,7 @@
 ---
 implements: FLW-NFR-014
 depends_on: [FLW-TSK-106]
-boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_approval_binding.py,tests/test_flow_m2_approval_binding.py
+boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_approval_binding.py,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/approval-binding-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/activation/approval-binding-v2.json,tests/test_flow_m2_approval_binding.py
 status: pending
 ---
 
@@ -15,8 +15,11 @@ status: pending
   - symlink/reparse point、staged-only、未追跡、staged deletion、worktree deletion、読取中置換を
     `invalid`として`BLOCKED`にする。
   - repository identityとplatform file identityを含むcanonical binding digestを返す。
+  - approval binding schema、codec、round-trip testを同じ変更で揃え、owner activation manifestを
+    `reserved`から`active`へ遷移してからproducerを有効化する。
 - **完了条件**: Linux・macOS・Windows adapter fixtureで正常なbound/absentを受理し、各invalid形を
-  誤ってabsentへ降格させず、決定的な差替えhookで読取競合を検出する。
+  誤ってabsentへ降格させず、決定的な差替えhookで読取競合を検出する。NFC/NFD native pathを別scopeとして
+  束縛し、approval bindingのactive schemaとcodecが双方向一致する。
 - **実行判定**: filesystem/Git境界の難実装。上位相談先が利用不能なため設計書を正として自己実行し、
   platform差異が設計matrixを越える場合は実装を止める。
 - **備考**: 本文にタスク自身の ID を書くと spec_inspect が幽霊参照として検出するため記載しない（SI-CORE-002 参照）。

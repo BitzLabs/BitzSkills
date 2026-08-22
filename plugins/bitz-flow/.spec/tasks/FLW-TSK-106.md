@@ -1,7 +1,7 @@
 ---
 implements: FLW-NFR-014
 depends_on: []
-boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_capability.py,plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_promotion.py,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2,tests/test_flow_m2_contract_v2.py
+boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_capability.py,plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_promotion.py,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/approval-capability-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/minimum-runtime-v1.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/file-identity-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/native-path-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/entrypoint-policy-v1.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/entrypoint-evidence-v1.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/activation,plugins/bitz-flow/skills/flow-core/references/worktree-v2-entrypoint-baseline.json,tests/test_flow_m2_contract_v2.py
 status: implementing
 ---
 
@@ -14,16 +14,23 @@ status: implementing
     context不一致を既定値補完せず`BLOCKED`にする。
   - canonical JSON、NFC、case-sensitivity discriminator、platform別file identityを固定し、
     accept/reject canonical vectorを作る。
+  - native pathはNFC化せず可逆component表現へ固定し、regular file/directory identity、
+    `sha256:<hex>` digest、uint64 decimal string、SemVer 2.0.0を共通schemaへ固定する。
   - `FLW-DSN-017` §6.3のschema inventoryで本タスク所有recordだけを`active`としてruntime codecとの
     双方向round-tripを証明し、後続タスク所有recordはproducer禁止の`reserved`にする。
   - owner-only・非追随・atomic replace/fsyncのminimum-runtime sentinelとpromotion preflightを実装し、
     配布policy、実filesystem/registry列挙、実process probeでsupported entrypoint inventoryを証明できない
     環境ではcontract v2 stateを生成しない。
+  - versioned baseline manifestと親processのhandle相対artifact測定を信頼根にし、未知artifactは起動しない。
+    trusted probeには30秒timeout、process tree監督、closed environment/output上限を適用し、v2 state commit直前に
+    registry generation、identity、digestを再照合してpromotion receiptへ線形化点を記録する。
 - **完了条件**: active schemaとruntime codecのfield・round-tripが双方向一致し、reserved schemaから
   producerが生成されず、旧runtime・旧capability・未知field・NFD・platform別identity異常・entrypoint
-  残存/差替えの各陽性対照がfail-closed、正常な3platform実entrypoint fixtureがpromotion可能になる。
-- **実行判定**: 契約固定タスク。設計裁定済みのため実装は機械的だが公開契約を扱う。利用可能な
-  下位tier委譲先が確認できない場合は司令塔が自己実行し、契約差分を発見したら中断してspec-issueへ戻す。
+  残存/差替え・native path衝突・probe timeout/出力超過・registry変化の各陽性対照がfail-closed、正常な
+  3platform実entrypoint fixtureがpromotion可能になる。
+- **実行判定**: 契約固定タスク。FLW-DSN-017 v1.4の再レビューとDesign Gateまでは実装を再開しない。
+  Gate通過後も公開契約を扱うため、利用可能な下位tier委譲先が確認できない場合は司令塔が自己実行し、
+  契約差分を発見したら中断してspec-issueへ戻す。
 - **実装・検証記録（2026-08-22）**:
   - capability v2 の strict parser、9個の閉じた JSON Schema、owner-only・非 symlink・
     atomic replace/fsync の minimum-runtime sentinel、3 entrypoint の promotion preflight を実装。
@@ -51,4 +58,8 @@ status: implementing
     file identity、active/reserved codec inventory、配布policyと実process probeによるentrypoint証明を固定した。
   - 後続タスク所有schemaを`reserved`としてproducer禁止にすることで、本タスクと後続lease実装の
     循環依存を解消した。設計再レビューとGate裁定までは実装再開せずstatusは`implementing`を維持する。
+- **レビュー是正設計（2026-08-22）**:
+  - userがFLW-REV-023のP1〜P3を推奨案で採用し、FLW-DSN-017 v1.4へ可逆native path、resource kind別
+    identity、owner別activation、trusted promotion線形化、quarantine管理経路、token/digest/SemVer契約を反映した。
+  - 本記録は設計反映であり完了証拠ではない。独立再レビューとDesign Gateまでは実装を再開しない。
 - **備考**: 本文にタスク自身の ID を書くと spec_inspect が幽霊参照として検出するため記載しない（SI-CORE-002 参照）。

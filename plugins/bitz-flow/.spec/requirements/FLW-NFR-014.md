@@ -1,6 +1,6 @@
 ---
 id: FLW-NFR-014
-version: 1.1
+version: 1.2
 status: implementing
 domain: safety
 priority: high
@@ -26,6 +26,10 @@ confidence: high
   - WHEN `bound`または`absent`の宣言からOperationPlanを作成する THEN bitz-flowはcontract version、
     repository identity、宣言状態、mode、HEAD tree/blob、content digest、file identityを正規化した
     `approval_declaration_digest`をsnapshotとoperation identityへ固定すること SHALL
+  - WHEN repository、GitまたはOS由来pathをguard key、nonexistence digest、operation identityまたは
+    capability scopeへ固定する THEN bitz-flowはnative componentを可逆なplatform別表現で保持し、Unicode
+    normalizationで別directory entryを同一scopeへ畳み込まず、不在targetをparent directory identityと
+    末尾native componentへ束縛すること SHALL
   - WHEN signed-capabilityを検証する THEN bitz-flowはcontract version 2と
     `approval_declaration_digest`を署名対象の必須fieldとし、旧version、field欠落、未知fieldまたは
     plan contextとの不一致を`BLOCKED`にすること SHALL
@@ -50,14 +54,23 @@ confidence: high
     launcher・CLI・plugin cacheを含む全起動経路がminimum-runtime sentinelを検査するbaseline以降であり、
     pre-baselineの起動経路が無効化されていることをinventoryと実行fixtureで証明し、証明できない環境では
     v2 state生成を`UNSUPPORTED`または`BLOCKED`にすること SHALL
+  - WHEN promotion preflightがentrypointを検証する THEN bitz-flowは配布側のversioned baseline manifestを
+    信頼根とし、親processが保持handleからartifactを測定して一致した実体だけを制限付きprobeで実行し、
+    contract v2 stateのdurability commit直前にregistry generation、file identity、artifact digestを再照合して、
+    差異・timeout・終了不能・出力超過・副作用を安全側へ停止すること SHALL
   - WHEN sentinel-aware baselineのpromotionが完了した環境でruntimeまたはschema versionを切り替える THEN
     bitz-flowはminimum runtime versionをcontract v2 stateより先に永続化し、sentinelに未対応のversionの
     起動とv2 pending stateを無視したrollbackを`BLOCKED`にすること SHALL
+  - WHEN reviewerがquarantine解除を裁定済みとして記録する THEN bitz-flowは通常operationとGit mutationを
+    開始せず、role付きreviewer署名と単回nonceを検証し、同一targetのOS lock下で最新chain head、fencing token、
+    postconditionを再照合してdurable release receiptだけを追記し、成功後も新しいplanと通常承認を要求すること SHALL
 - **検証手段**: unit testと複数process fault fixtureで、HEAD固定の正常系、absentのplan-digest、
   path component symlink/reparse point、staged-only・未追跡・権限不正、各再照合点の差替え、旧capability、
-  lock競合・parent/child process crash・counter破損・sentinel-aware旧runtime起動・pre-baseline起動経路が
-  残るpromotion拒否を検証し、停止判定後のGit副作用0件と
+  NFC/NFD native path衝突、lock競合・parent/child process crash・counter破損、2^53超token、
+  sentinel-aware旧runtime起動、baseline不一致、probe timeout、registry差替え、並行quarantine解除を検証し、
+  pre-baseline起動経路が残るpromotionと不確定な解除を拒否して、停止判定後のGit副作用0件と
   receiptの原因追跡を確認する。Linux・macOS・Windowsの必須fixtureで通常系`UNSUPPORTED` 0件を出口条件とする。
 - **Revision History**:
+  - 1.2 (2026-08-22) native path非衝突、trusted promotion線形化、quarantine裁定記録を追加
   - 1.1 (2026-08-22) 旧runtimeの保証境界をsentinel-aware baselineへ限定しpromotion barrierを追加
   - 1.0 (2026-08-22) `FLW-REV-021`と`SI-FLW-078/079`を受けた後継契約案をdraft起票

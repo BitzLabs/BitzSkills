@@ -2,7 +2,7 @@
 id: FLW-DSN-017
 title: "approval-mode 宣言の観測可能な再照合と安全な束縛"
 status: draft
-version: 1.3
+version: 1.4
 updated: 2026-08-22
 owner: codex
 implements: FLW-NFR-014
@@ -48,6 +48,8 @@ Gitの信頼根はindexだけでなくreview対象のHEAD treeとする。HEAD�
 ```text
 repo_root_canonical
 git_dir_canonical
+repo_root_native_path_digest # 表示pathではなく可逆native component列のdigest
+git_dir_native_path_digest   # 同上
 repository_identity_digest # canonical git-dir + object-format + initial identity evidence
 contract_version      # 2
 state                 # absent / bound
@@ -67,6 +69,9 @@ file_identity         # platform固有の安定identity（absent 時は null）
 要件上の`OperationPlan`は抽象契約名、実装型`RuntimePlan`はそのM2 worktree adapterである。
 `repository_identity_digest`は既存repository identity導出器の出力をそのまま用い、root/git-dirの
 文字列連結を独自identityとして再実装しない。
+`repo_root_canonical`と`git_dir_canonical`は表示・診断用であり、guard key、nonexistence digest、
+`operation_id`、capability scopeの安全判定には使わない。安全判定は§6.1の可逆native path表現と
+parent directory identityから得たdigestを用いる。
 
 ### 3. 再照合点と失敗分類
 
@@ -106,9 +111,11 @@ reconcileして前tokenのpostconditionが確定するまでmutationへ進まな
 #### 4.1 lock/counter格納域の完全性
 
 `bitz-flow-v2/locks`とcounter/lease recordはcommon-dirからcomponent単位で非追随walkし、owner-only、
-hardlink count 1、expected identityを要求する。network filesystem、lock semantics不明、owner/ACL検査不能は
+expected identityを要求する。hardlink count 1はregular file recordだけへ課し、locks directoryには
+§6.2のdirectory identityを使う。network filesystem、lock semantics不明、owner/ACL検査不能は
 `UNSUPPORTED`とする。counter更新には`FLW-NFR-007`の同一directory temp、file fsync、atomic replace、
-directory fsync、再parse・digest検証を適用する。tokenはunsigned 64-bitで、最大値到達、欠損、巻戻り、
+directory fsync、再parse・digest検証を適用する。tokenはunsigned 64-bitのcanonical decimal stringで、
+最大値到達、欠損、巻戻り、
 receipt chainから再構成した下限未満を`INDETERMINATE`にする。
 
 locks directoryの期待identityは同じ保護境界の`lock-namespace.json`に、schema version、repository
@@ -180,9 +187,10 @@ audit/reconcile」「platform非対応ならplan-digest配備へ明示的に戻�
 
 capability、binding、lease、counter、receiptはそれぞれ`schema_version`を必須とし、
 `additionalProperties: false`、required field、null許容をJSON Schemaで固定する。canonical JSONはUTF-8、
-object key辞書順、余分な空白なし、integerはJSON整数、pathはplatform adapterが生成したNFCのcanonical表現、
-Git OIDはobject-format名と小文字hexの組にする。file identityはplatform discriminator付きobjectとし、
-異platform間で同じfieldへ文字列を詰めない。fencing tokenは`0..2^64-1`とし、型違い・overflowを拒否する。
+object key辞書順、余分な空白なし、通常のbounded integerはJSON整数とする。SHA-256は全recordで
+`sha256:` + 64桁lowercase hex、Git OIDはobject-format名と小文字hexの組に固定する。file identityは
+resource kindとplatformのdiscriminator付きobjectとし、異platform間でfieldを流用しない。fencing tokenは
+`0..18446744073709551615`の先頭zeroなしdecimal stringとし、parserで値域を検査する。
 
 schema境界タスクではlease、counter、intention、postcondition、receipt、namespace manifestごとに実体JSON
 Schemaを作成し、状態別required/nullable制約を固定する。path比較には
@@ -194,54 +202,86 @@ Schemaを作成し、状態別required/nullable制約を固定する。path比�
 contract v2の公開JSON、永続record、署名payload、digest payloadに含まれる**全string値とobject key**は、
 decode直後かつschema検証・署名検証・digest計算より前に`value == NFC(value)`を満たすことを検査する。
 一致しないNFDその他の非NFC入力は正規化して受理せず`BLOCKED`にする。これにより異なる入力byte列が
-同じ署名対象へ暗黙変換されることを防ぐ。OS/Gitから取得したpathだけはplatform adapterがNFCへ変換して
-canonical pathを生成してよいが、そのadapter出力も同じ検査を通す。表示専用messageはcontract payload外とする。
+同じ署名対象へ暗黙変換されることを防ぐ。表示専用messageはcontract payload外とする。
+
+OS/Git由来pathはこの規則の例外として文字列へ正規化せず、各componentのnative nameを可逆なASCII objectへ
+符号化する。POSIXはdirfd基準で得たbyte列をunpadded base64url、Windowsはroot-relative handleで得たUTF-16LE
+code unit列を同形式で保持する。path payloadは次を必須とする。
+
+```text
+platform               # linux / macos / windows
+native_encoding        # posix-bytes / windows-utf16le
+components_base64url   # rootからの長さ付きcomponent列。`.` / `..` / 空componentは禁止
+case_sensitivity       # sensitive / insensitive
+normalization_semantics # byte-exact / volume-reported
+parent_directory_identity
+```
+
+guard key、nonexistence digest、operation identity、capability scopeはこのobjectのcanonical digestを使う。
+NFC/NFD、case variant、別mount aliasを文字列正規化で同一視しない。macOS/Windowsでvolume semanticsを安全に
+取得できない場合と、利用者入力をnative componentへ一意に対応付けられない場合は`UNSUPPORTED`または
+`BLOCKED`とする。不在targetはparent directory identityと末尾native componentを必ず含める。
 
 受理vectorはASCII、合成済み日本語、合成済みaccentを含め、拒否vectorは同じ見た目のNFD key/value、
-surrogate、NULを含める。拒否後にparser、署名検証器、sentinel writer、promotion判定を呼んではならない。
+surrogate、NULを含める。native path vectorはNFC/NFDが同居するdirectory、両方不在、片方だけ存在するcreateを
+含め、scope digestが衝突しないことを確認する。拒否後にparser、署名検証器、sentinel writer、promotion判定を
+呼んではならない。
 
 #### 6.2 platform別file identityの閉じた表現
 
-`file_identity`は次の`oneOf`で固定し、共通の自由形式objectやplatform間field流用を許さない。
-大きな識別子をJSON実装の数値精度に依存させないため、OS整数はcanonicalな文字列で保持する。
+identityは`regular_file_identity`と`directory_identity`を別の`oneOf`へ分離し、共通の自由形式objectや
+platform間field流用を許さない。大きなOS整数はJSONの数値精度に依存させずcanonical stringで保持する。
 
-| platform | 必須field | canonical表現 |
-|---|---|---|
-| `linux` | `platform`, `device`, `inode`, `link_count` | `device`/`inode`は先頭zeroなしunsigned decimal、`link_count`は整数`1` |
-| `macos` | `platform`, `device`, `inode`, `link_count` | Linuxと同形だがdiscriminatorを共有しない |
-| `windows` | `platform`, `volume_serial`, `file_id`, `link_count` | serialは先頭zeroなしlowercase hex、file IDは32桁lowercase hex、`link_count`は整数`1` |
+| resource kind | platform | 必須field | canonical表現 |
+|---|---|---|---|
+| `regular-file` | `linux` / `macos` | `kind`, `platform`, `device`, `inode`, `link_count` | device/inodeは`0`または先頭zeroなしuint64 decimal、link_countはdecimal string `1` |
+| `directory` | `linux` / `macos` | `kind`, `platform`, `device`, `inode` | device/inodeは同上。directory link countは子directory作成で変動するためidentityへ含めない |
+| `regular-file` | `windows` | `kind`, `platform`, `volume_serial`, `file_id`, `link_count` | serialは`0`または1〜16桁lowercase hex、file IDは32桁lowercase hex、link_countはdecimal string `1` |
+| `directory` | `windows` | `kind`, `platform`, `volume_serial`, `file_id` | serial/file IDは同上。link countはidentityへ含めない |
 
-各variantは`additionalProperties: false`とし、異platformのfield混在、負数、先頭zero、大文字hex、桁不足、
-`link_count != 1`を拒否する。adapterはpath文字列からidentityを推測せず、保持したhandle/FDへのOS照会値から
-構築する。取得不能、値域外、open前後のidentity不一致は`UNSUPPORTED`または`BLOCKED`であり、
-文字列pathやcontent digestへのfallbackを行わない。
+各variantは`additionalProperties: false`とし、異resource/platform field混在、uint64値域外、負数、先頭zero、
+大文字hex、桁不足、regular fileの`link_count != "1"`を拒否する。adapterはpath文字列からidentityを推測せず、
+保持したhandle/FDへのOS照会値から構築する。resource kindは同じhandleへの`fstat`相当で確認する。
+取得不能、open前後のidentity/kind不一致は`UNSUPPORTED`または`BLOCKED`であり、pathやcontent digestへfallbackしない。
 
 #### 6.3 schemaとruntime codecの双方向整合
 
-schema inventoryは各recordについて`schema_id`、`owner_task`、`activation`、runtimeの`decoder`/`encoder`を
-一意に対応付ける。`activation`は`active`または`reserved`の閉集合とする。
+schema inventoryは単一共有fileではなく`schemas/worktree-v2/activation/<schema-id>.json`のowner別manifest群とする。
+各manifestは`schema_id`、`owner_task`、`activation`、runtimeの`decoder`/`encoder`を一意に対応付ける。
+中央loaderはschema ID重複、owner不一致、未知activationを拒否する。`activation`は`active`または`reserved`の
+閉集合とし、各taskは自分が所有するmanifestだけを変更するため、並行する後続taskが共有inventoryで競合しない。
 
-| record | owner | 106完了時 |
+| record | owner task | owner task完了時 |
 |---|---|---|
-| approval capability v2、minimum-runtime v1、entrypoint inventory/evidence | schema境界 | `active` |
-| approval binding v2 | HEAD/index/worktree binding | `reserved` |
-| target lease、fencing counter、intention、postcondition、lock namespace v2 | process間lease | `reserved` |
-| mutation receipt v2 | runtime統合 | `reserved` |
+| approval capability v2、minimum-runtime v1、entrypoint policy/evidence、共通identity/path/digest定義 | FLW-TSK-106 | `active` |
+| approval binding v2 | FLW-TSK-107 | `active` |
+| target lease、fencing counter、intention、postcondition、lock namespace v2 | FLW-TSK-108 | `active` |
+| mutation receipt v2 | FLW-TSK-109 | `active` |
+| quarantine release decision/receipt extension | FLW-TSK-110 | `active` |
 
 `active` recordはschemaの`properties`、`required`、parser許可field、serializer出力field、実装型fieldが
 完全一致し、valid fixtureを`decode → encode → schema validate → canonical encode`して同一byte列へ戻す。
 schemaだけの自己比較は完了証拠にしない。`reserved` recordはschema自体を検証するがcodec不在を欠陥とせず、
 producer/consumer登録とstate生成を禁止する。owner taskがcodecと同じ双方向testを追加したcommitでだけ
-`active`へ遷移できる。この分離により、schema境界の完了が後続lease実装を待つ循環依存を作らない。
+自分のactivation manifestを`active`へ遷移できる。owner taskのboundaryは担当schema、activation manifest、
+codec、round-trip testを同じrollback単位に含める。この分離により、schema境界の完了が後続lease実装を待つ
+循環依存を作らず、後続taskもboundary違反なしにproducerを有効化できる。
 
 #### 6.4 supported entrypoint inventoryの実体証明
 
 promotion preflightの期待集合と観測値を呼出元が同時に渡すAPIは、論理整合のtest doubleに限定し、
-本番のpromotion根拠にしない。本番では配布profileに同梱したclosed policyから期待entrypoint ID集合を読み、
-platform adapterがstable launcher、公開CLI、enabled plugin cacheを列挙する。現在の公開CLIは
+本番のpromotion根拠にしない。本番では配布profileに同梱した署名対象のclosed baseline manifestから
+entrypoint ID、kind、runtime SemVer、許可artifact digest、contract versionを読み、platform adapterが
+stable launcher、公開CLI、enabled plugin cacheを列挙する。manifestはschema versionと配布versionを持ち、
+plugin releaseと同じreview・署名境界でのみ更新する。現在の公開CLIは
 `<flow-core>/scripts/flow.py`だけであり、`flowlib`直呼出しはinventory対象外とする。Claude Code、Codex、
 Antigravityの各plugin cacheは、有効化registryが指す実pathを列挙し、同じ実体を指すaliasはfile identityで
-重複排除する。
+重複排除する。ただし期待logical IDとの対応は保持し、aliasによって期待entrypointの欠落を隠さない。
+
+親processはentrypointとimport対象`flowlib` treeを保持handleから列挙し、canonical manifest digestを独立計算する。
+baseline不一致・identity不一致・未知artifactはchildとして**起動せず**`BLOCKED`にする。artifact一致後だけ、
+機能証拠を得るために実entrypointを`runtime-contract` probeとして起動する。childの自己申告値は親計算digest、
+実行handle identity、baseline値、親が生成した単回challenge nonceと一致した場合だけ証拠にする。
 
 各実entrypointを副作用なしの`runtime-contract` probeとしてchild process起動し、次のclosed evidenceを得る。
 
@@ -249,17 +289,34 @@ Antigravityの各plugin cacheは、有効化registryが指す実pathを列挙し
 entrypoint_id
 entrypoint_kind       # stable-launcher / public-cli / plugin-cache
 resolved_file_identity
-artifact_sha256       # launcherとimport対象flowlib treeのmanifest digest
+artifact_sha256       # 親processが計算したlauncherとimport対象flowlib treeのmanifest digest
 runtime_version
 contract_versions     # minimum-runtime=1, worktree-state=2
 sentinel_aware        # trueのみ受理
 probe_exit_code       # 0のみ受理
+challenge_digest      # 親の単回nonceへ束縛した応答
+registry_generation
 ```
 
+probeは親が検証済みartifactだけを、固定argv、空のrepository外cwd、allowlist environment、credentialなし、
+network endpoint引数なし、repository/common-dir read-only、不要FD/handle非継承で起動する。POSIXは専用process group、
+WindowsはJob Objectを使い、monotonic 30秒timeout、2秒のgraceful終了猶予後にprocess treeを強制終了する。
+stdoutは64KiBのclosed JSON、stderrは8KiBのsanitized診断を上限とし、超過・timeout・tree終了未確認は
+`INDETERMINATE`としてevidenceを残す。検証済みartifactをこの境界で起動できないplatformは`UNSUPPORTED`とする。
+
+runtime versionはSemVer 2.0.0の`major.minor.patch`だけをpromotion比較へ受理する。leading zero、component欠落、
+prerelease、build metadataは配布baselineでは拒否し、開発fixtureだけ別profileへ分離する。
+
+列挙開始時にenabled registry generationを取得し、probe完了後、contract v2 stateのdurability commit直前に
+同じregistry generation、全entrypoint identity、親計算artifact digestを再照合する。差異は`STALE`としてstateを
+生成しない。成功した最終再照合とv2 stateのfile fsync・atomic replace・directory fsyncをpromotionの線形化順序とし、
+receiptへbaseline digest、registry generation、entrypoint evidence digest、commit時刻順序を記録する。
+
 policy期待集合と列挙集合の差、probe未実装・timeout・非zero終了、identity差替え、artifact digest不一致、
-baseline未満、`sentinel_aware != true`はpromotionを`UNSUPPORTED`または`BLOCKED`にし、contract v2 stateを
-生成しない。testは一時directoryに実entrypoint artifactを配置してprocessを起動し、旧runtime残存、alias、
-実行中差替え、欠落cacheの陽性対照を持つ。文字列のversion mappingだけを直接渡すtestは補助testに留める。
+baseline未満、`sentinel_aware != true`はpromotionを`UNSUPPORTED`、`BLOCKED`、`STALE`、`INDETERMINATE`の
+該当分類で停止し、contract v2 stateを生成しない。testは一時directoryに実artifactを配置し、旧runtime残存、
+alias、実行中差替え、registry generation変化、欠落cache、hang、出力超過、副作用canaryの陽性対照を持つ。
+文字列のversion mappingだけを直接渡すtestは補助testに留める。
 
 ### 7. 運用監視とrunbook
 
@@ -269,9 +326,20 @@ receipt chain検証失敗をSLIとする。1 operation内のtoken不連続、cha
 改ざん検査とcorrelation keyでplan/result/receiptを接続する。解除はreviewer、根拠digest、旧新token、
 postconditionを新receiptへ追記した場合だけ許可する。
 
+quarantine解除は通常operationでも`NEXT`でもなく、reviewer裁定済み証拠をcontrol-plane receiptへ記録する
+管理経路`quarantine-release-record`とする。この経路はGit childを起動せず、通常mutationを自動再開しない。
+入力はschema version、repository/target identity、quarantined chain head、expected fencing token、検証済み
+postcondition digest、reviewer role付きkey ID、decision digest、単回nonce、署名を持つclosed recordとする。
+reviewer keyはtrusted registryの`quarantine-reviewer` roleだけを許可し、実行process自身の未登録keyを受理しない。
+
+管理経路も同じcanonical targetのOS lockを取得し、新fencing token発行、chain head・旧token・postcondition再照合、
+release receiptのfile fsync・atomic append/replace・directory fsyncを行う。chain変化は`STALE`、postconditionやchild終了を
+確定できない場合は`INDETERMINATE`として解除しない。成功後も次のwriteは新しいplanと通常承認を必須とする。
+これによりreviewer裁定を機械的に記録できるが、quarantineからGit変更へ直接遷移するwrite operationは追加しない。
+
 receipt/SLI統合タスクは`plugins/bitz-flow/docs/runbooks/m2-worktree-quarantine.md`を成果物とし、audit、
-reconcile、quarantine解除の各CLI、一次対応role、reviewer承認経路、通知adapter、24時間超過時のescalationを
-固定する。通知adapter未設定でもreceiptと終了codeを失わず、CLIに手動通知先を表示する。
+reconcile、`quarantine-release-record`管理CLI、一次対応role、reviewer承認経路、通知adapter、24時間超過時の
+escalationを固定する。通知adapter未設定でもreceiptと終了codeを失わず、CLIに手動通知先を表示する。
 
 ## 代替案と却下理由
 
@@ -291,18 +359,24 @@ reconcile、quarantine解除の各CLI、一次対応role、reviewer承認経路�
   `STALE`/`BLOCKED`とし、その再照合点以後のGit副作用0件を確認する。
 - contract v1、digest欠落・改変、未知field、plan-digest/signed-capability相互転用を拒否する。
 - public/永続contractのNFD key/valueをdecode境界で拒否し、暗黙NFC変換後の署名・digest計算へ進まない。
+- NFC/NFD native nameが同居するLinux directoryで別scopeを導出し、不在targetもparent identityと末尾componentで
+  一意に束縛する。
 - Linux・macOS・Windowsのfile identity正常vectorを受理し、variant間field混在、非canonical整数、
-  link count異常、open前後差替えをfail-closedにする。
+  regular fileのlink count異常、file/directory kind混同、open前後差替えをfail-closedにする。
 - active schemaはruntime codecとの双方向round-tripを通し、reserved schemaにはproducerが存在しない。
 - 配布policyから得た期待集合と実filesystem/registryから列挙・process probeしたentrypoint集合を照合し、
-  caller作成の論理version mappingだけではpromotionできない。
+  caller作成の論理version mappingだけではpromotionできない。未知artifactは起動せず、trusted artifactのhang、
+  出力超過、registry generation変化、副作用canaryを停止する。
+- 2^53境界と2^64-1のfencing tokenをcross-language fixtureで同一canonical byteへし、overflowを拒否する。
+- 並行するrelease記録、chain head変化、token差異、postcondition不確定を解除せず、成功後も新planを要求する。
 - 別processの同一target競合は最大1processだけがmutationへ進み、process kill後は新fencing tokenと
   receipt reconcileなしに再開しない。
 - result/receiptからrecheck phaseと原因を追跡でき、秘密本文やpath外情報を含めない。
 
 ## 影響範囲・ロールバック
 
-対象は`worktree_runtime.py`、`worktree_capability.py`、target guard/coordinator、receipt schema、M2 runtime
+対象は`worktree_runtime.py`、`worktree_capability.py`、`worktree_promotion.py`、schema activation manifest、
+target guard/coordinator、quarantine管理経路、receipt schema、M2 runtime
 testsとcapability fixture。配備時点のv1 plan/capabilityは`BLOCKED`として再planする。rollback時にv2の
 pending receipt/nonceがある場合は自動でv1へ戻さずquarantineし、人間確認後にreplanする。
 M2は未公開のため公開利用者の移行は不要だが、「検証不能なら`BLOCKED`」はrollbackでも維持する。
@@ -344,5 +418,6 @@ deprecatedとして後継へ接続した。同日の`FLW-GATE-004`でDesign Gate
 
 ## Revision History
 
+- 1.4 (2026-08-22) FLW-REV-023のP1〜P3を反映し、native path、identity kind、schema activation所有権、trusted promotion、quarantine管理経路、token/digest/SemVer契約を確定
 - 1.3 (2026-08-22) NFD拒否境界、platform別file identity、active/reserved codec整合、実entrypoint probeを具体化し再レビューへ戻した
 - 1.2 (2026-08-22) promotion barrierとminimum-runtime rollback境界を追加

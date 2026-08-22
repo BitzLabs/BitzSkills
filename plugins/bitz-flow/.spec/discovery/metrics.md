@@ -2,8 +2,8 @@
 id: FLW-DSC-002
 title: "bitz-flow v2 成功指標"
 status: draft
-version: 2.1
-updated: 2026-07-31
+version: 2.2
+updated: 2026-08-22
 owner: hide
 ---
 
@@ -32,7 +32,7 @@ UTF-8 byte 数と項目数を正とし、モデル別 token 数は補助指標�
 |---|---|---:|
 | Dispatcher Invocation Rate | Git / GitHub 操作タスクで最初に `flow.py` を実行した割合 | 95%以上 |
 | Raw Fallback Rate | 理由を問わず生 `git` / `gh`へ迂回した割合 | 0% |
-| Unsupported Operation Rate | 評価taskで`UNSUPPORTED`停止した割合 | M0 0%、以後はoperation別に記録 |
+| Unsupported Operation Rate | 評価taskで`UNSUPPORTED`停止した割合 | M0 0%。M2 worktree通常系はLinux・macOS・Windows各0件。異常fixtureのfail-closed停止は別分母 |
 | Resume Success Rate | 中断 fixture を再実行し、重複副作用なく次段階へ進めた割合 | 100% |
 | Cross-model Decision Parity | 同じ fixture の判定コード・状態変更が3プラットフォームで一致する割合 | 100% |
 | SDD Link Integrity | 公開した GitHub Issue と `.spec` の双方向リンクが一意に照合できる割合 | 100% |

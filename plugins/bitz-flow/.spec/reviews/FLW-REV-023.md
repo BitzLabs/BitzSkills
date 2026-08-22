@@ -95,6 +95,13 @@ TSK-106は`implementing`であり、v1.3をまだ実装していないこと自�
 - [ ] GP-001〜004を人間が裁定する
 - [ ] 修正後に5観点の再レビューを行い、PASSを得る
 
+## 人間裁定（2026-08-22）
+
+userはP1〜P3をすべて推奨案で再設計する方針を承認した。GP-001はowner別activation manifest、GP-002は
+通常operationではない裁定証拠記録用の管理経路、GP-003は配布baseline・親測定・commit直前再照合、
+GP-004は可逆native path表現として受領した。P2/P3も同じv1.4改訂へ含め、独立再レビューまでは
+本レビューのCONDITIONAL_PASSを維持する。
+
 ## 持ち越し
 
 本件外の過去レビュー由来で未解消のP0/P1は88件あり、`FLW-REV-023.json`の`carried_over`へ保持した。

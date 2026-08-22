@@ -39,7 +39,7 @@
       "detail": "後続taskのboundaryがschema inventoryを含まず、producer禁止を守ると実装不能、実装するとboundary違反になる。",
       "recommendation": "TSK-107〜109のboundary・完了条件へ担当schema、inventory、codec、round-trip testのactive遷移を追加する。",
       "tracked_by": "FLW-REV-023:GP-001",
-      "status": "open"
+      "status": "tracked"
     },
     {
       "id": "FLW-REV-023:SYN-003",
@@ -50,7 +50,7 @@
       "detail": "既存catalogはreviewer裁定を要求するが、設計は解除CLIを要求する。管理経路かwrite operationかが未裁定で、lease・token・chain headを束縛した原子遷移もない。",
       "recommendation": "解除経路を裁定し、管理経路なら裁定証拠記録、write operationならEARS要件・capability・lease下のdurable遷移を定義する。",
       "tracked_by": "FLW-REV-023:GP-002",
-      "status": "open"
+      "status": "tracked"
     },
     {
       "id": "FLW-REV-023:SYN-004",
@@ -72,7 +72,7 @@
       "detail": "child probeの自己申告と比較するtrusted artifact baselineがなく、probe後からv2 state durability commitまでのregistry/cache差替えも閉じていない。",
       "recommendation": "versioned baseline manifest、親processによるhandle相対digest、registry leaseまたはcommit直前再照合を定義し、promotion receiptへ固定する。",
       "tracked_by": "FLW-REV-023:GP-003",
-      "status": "open"
+      "status": "tracked"
     },
     {
       "id": "FLW-REV-023:SYN-006",
@@ -83,7 +83,7 @@
       "detail": "LinuxではNFC名とNFD名が別entryとして共存できる。双方をNFCへ変換すると、特にcreateの不在targetでguard key、digest、operation identity、capability scopeが衝突する。",
       "recommendation": "native pathを可逆byte表現とplatform/path-encoding discriminatorで束縛し、不在targetをparent identityと正確なcomponentへ結び付ける。",
       "tracked_by": "FLW-REV-023:GP-004",
-      "status": "open"
+      "status": "tracked"
     },
     {
       "id": "FLW-REV-023:SYN-007",
@@ -148,7 +148,13 @@
       "basis": "verified",
       "gp_kind": "artifact",
       "statement": "各reserved recordのactive化をowner taskのboundary・完了条件・rollback単位へ割り当てる。",
-      "evidence": "FLW-DSN-017 §6.3 と FLW-TSK-107〜109 のboundary比較"
+      "evidence": "FLW-DSN-017 §6.3 と FLW-TSK-107〜109 のboundary比較",
+      "response": {
+        "status": "accepted",
+        "original": "各reserved recordのactive化をowner taskのboundary・完了条件・rollback単位へ割り当てる。",
+        "normalized": "owner別activation manifestを採用し、各taskがschema・codec・testと同時にactive化する。",
+        "target": "FLW-DSN-017 v1.4 §6.3、FLW-TSK-107〜110"
+      }
     },
     {
       "id": "GP-002",
@@ -156,7 +162,13 @@
       "basis": "verified",
       "gp_kind": "artifact",
       "statement": "quarantine解除を裁定証拠記録用の管理経路または新規write operationのどちらとして設計するか裁定する。",
-      "evidence": "FLW-DSN-017 §7、FLW-TSK-110、operation-catalog worktree.audit の比較"
+      "evidence": "FLW-DSN-017 §7、FLW-TSK-110、operation-catalog worktree.audit の比較",
+      "response": {
+        "status": "accepted",
+        "original": "quarantine解除を裁定証拠記録用の管理経路または新規write operationのどちらとして設計するか裁定する。",
+        "normalized": "通常operation/NEXTではなく、reviewer裁定済み証拠とrelease receiptだけを記録する管理経路を採用する。",
+        "target": "FLW-DSN-017 v1.4 §7、FLW-NFR-014 v1.2、FLW-TSK-110"
+      }
     },
     {
       "id": "GP-003",
@@ -164,7 +176,13 @@
       "basis": "verified",
       "gp_kind": "behavioral",
       "ears": "WHEN contract v2 promotionを確定する THEN bitz-flow SHALL trusted baselineに対する親processのartifact測定とcommit直前のentrypoint集合再照合を成功させ、その線形化点をdurable receiptへ記録する",
-      "evidence": "FLW-DSN-017 §6.4にbaseline比較先とdurability commit直前再照合がない"
+      "evidence": "FLW-DSN-017 §6.4にbaseline比較先とdurability commit直前再照合がない",
+      "response": {
+        "status": "accepted",
+        "original": "WHEN contract v2 promotionを確定する THEN bitz-flow SHALL trusted baselineに対する親processのartifact測定とcommit直前のentrypoint集合再照合を成功させ、その線形化点をdurable receiptへ記録する",
+        "normalized": "配布baseline、親測定、commit直前再照合をpromotionの必須線形化順序にする。",
+        "target": "FLW-DSN-017 v1.4 §6.4、FLW-NFR-014 v1.2、FLW-TSK-106"
+      }
     },
     {
       "id": "GP-004",
@@ -172,7 +190,13 @@
       "basis": "verified",
       "gp_kind": "behavioral",
       "ears": "WHEN native filesystem pathを承認scopeへ正規化する THEN bitz-flow SHALL platform固有の別directory entryを同一scopeへ畳み込まず、不在targetをparent identityと可逆component表現へ束縛する",
-      "evidence": "FLW-DSN-017 §6.1のOS/Git path NFC変換とLinux byte-name filesystemの反例"
+      "evidence": "FLW-DSN-017 §6.1のOS/Git path NFC変換とLinux byte-name filesystemの反例",
+      "response": {
+        "status": "accepted",
+        "original": "WHEN native filesystem pathを承認scopeへ正規化する THEN bitz-flow SHALL platform固有の別directory entryを同一scopeへ畳み込まず、不在targetをparent identityと可逆component表現へ束縛する",
+        "normalized": "native pathをNFC化せず可逆byte/code-unit表現としてparent identityへ束縛する。",
+        "target": "FLW-DSN-017 v1.4 §2・§6.1、FLW-NFR-014 v1.2、FLW-TSK-106/107"
+      }
     }
   ],
   "carried_over": [
