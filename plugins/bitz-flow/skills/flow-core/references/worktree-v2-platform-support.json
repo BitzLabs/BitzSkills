@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "profiles": [
+    {
+      "platform": "linux",
+      "filesystem_types": ["btrfs", "ext4", "tmpfs", "xfs"],
+      "owner_model": "uid",
+      "lock_primitive": "flock",
+      "file_durability": "fsync",
+      "directory_durability": "fsync",
+      "child_supervision": "waitpid"
+    },
+    {
+      "platform": "macos",
+      "filesystem_types": ["apfs", "hfs"],
+      "owner_model": "uid",
+      "lock_primitive": "flock",
+      "file_durability": "fsync",
+      "directory_durability": "fsync",
+      "child_supervision": "waitpid"
+    },
+    {
+      "platform": "windows",
+      "filesystem_types": ["ntfs", "refs"],
+      "owner_model": "sid",
+      "lock_primitive": "LockFileEx",
+      "file_durability": "FlushFileBuffers",
+      "directory_durability": "ReplaceFileW",
+      "child_supervision": "job-object"
+    }
+  ]
+}

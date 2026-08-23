@@ -1,0 +1,13 @@
+{
+  "gate_status": "PASS",
+  "gate_reasons": [],
+  "platforms": [
+    "claude",
+    "codex",
+    "antigravity"
+  ],
+  "dry_run": false,
+  "compatibility_key": "sha256:4ed3eb420154573bcc0242ef917ff6df154de6acd4b8fe5c78d71d7c7c8eb0b6",
+  "executed_at": "2026-08-23T01:42:34.681681Z",
+  "expires_at": "2026-08-24T01:33:52.173865Z"
+}
