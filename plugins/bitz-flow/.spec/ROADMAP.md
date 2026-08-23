@@ -225,7 +225,7 @@ M2 が未完了のままでは worktree-first の安全境界が閉じないた�
   remote-write と破壊系 worktree は M3 まで `UNSUPPORTED` を維持する。
   **2026-08-15 時点で本縮退境界は出荷物へ適用済み**であり、公開集合は M0 read-only 3 operation
   のみである（機械検査: `tests/test_flow_m1_write_faults.py::test_only_m0_is_reachable_from_dispatcher`、
-  `tests/test_flow_m2_runtime.py::test_FLW_CON_006_worktree_is_not_reachable_from_the_dispatcher`）
+  `tests/test_flow_m2_runtime.py::test_worktree_remains_unreachable_from_public_dispatcher`）
 
 ### フェーズ4 — M3 Issue / SDD 接続
 
