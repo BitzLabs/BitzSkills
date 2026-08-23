@@ -167,6 +167,9 @@
         "snapshot-mismatch",
         "remote-unavailable",
         "result-indeterminate",
+        "approval-expired",
+        "unsupported-approval-mode",
+        "unsupported-filesystem",
         "quarantined"
       ],
       "description": "下位 Git / gh の終了コードやメッセージをそのまま公開せず、この許可語彙へ正規化する（FLW-DSN-016 §2 診断 cause の閉集合が正。値の由来は FLW-DSN-005）。"

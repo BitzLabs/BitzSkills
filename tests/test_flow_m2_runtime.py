@@ -1,16 +1,11 @@
-"""FLW-FR-006 / FLW-CON-005 / FLW-CON-006 worktree実動E2E。"""
+"""FLW-NFR-014 / FLW-TSK-109 plan-digest runtime integration tests."""
 
 from __future__ import annotations
 
-import contextlib
-import io
 import base64
-import dataclasses
 import json
-import shutil
 import subprocess
 import sys
-import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -20,14 +15,50 @@ ROOT = Path(__file__).resolve().parents[1]
 SKILL = ROOT / "plugins" / "bitz-flow" / "skills" / "flow-core"
 sys.path.insert(0, str(SKILL / "scripts"))
 
-from flowlib import result as R  # noqa: E402
-from flowlib import worktree_capability as C  # noqa: E402
-from flowlib import worktree_cleanup  # noqa: E402
+from flowlib import worktree_platform as PF  # noqa: E402
+from flowlib import worktree_promotion as P  # noqa: E402
 from flowlib import worktree_runtime as W  # noqa: E402
+from flowlib import worktree_transaction as T  # noqa: E402
+from flowlib.worktree_contract import native_component_from_posix, sha256_digest  # noqa: E402
+
+BUNDLE = "sha256:" + "b" * 64
 
 
-def git(repo: Path, *args: str) -> str:
-    return subprocess.run(["git", *args], cwd=repo, text=True, capture_output=True, check=True).stdout.strip()
+def git(repo: Path, *args: str, check: bool = True) -> str:
+    proc = subprocess.run(["git", *args], cwd=repo, text=True, capture_output=True, check=False)
+    if check and proc.returncode != 0:
+        raise AssertionError(proc.stderr)
+    return proc.stdout.strip()
+
+
+def supported_evidence(root: Path) -> PF.PlatformEvidence:
+    stat = root.stat()
+    observation = PF.PlatformObservation(
+        platform="linux", filesystem_type="ext4", filesystem_class="local",
+        owner_principal="test-owner", owner_matches=True, acl_owner_only=True,
+        non_follow_walk=True, resource_kind="directory",
+        resource_identity=sha256_digest(f"{stat.st_dev}:{stat.st_ino}".encode()),
+        native_component=native_component_from_posix(root.name.encode()).as_mapping(),
+        case_semantics="sensitive", os_lock=True, file_durability=True,
+        directory_durability=True, child_supervision=True, semantic_self_test=True,
+    )
+    profiles = PF.load_support_profiles(
+        SKILL / "references" / "worktree-v2-platform-support.json"
+    )
+    return PF.evaluate_platform(observation, profiles=profiles)
+
+
+def install_current_bundle(repo: Path) -> None:
+    common = Path(git(repo, "rev-parse", "--path-format=absolute", "--git-common-dir"))
+    namespace = common / P.PROMOTION_RELATIVE_PATH
+    namespace.mkdir(parents=True, mode=0o700)
+    namespace.chmod(0o700)
+    current = namespace / "current.json"
+    current.write_text(json.dumps({
+        "contract_version": 2, "generation": "1", "bundle_digest": BUNDLE,
+        "runtime_identity_digest": "sha256:" + "a" * 64, "state": "ACTIVE",
+    }), encoding="utf-8")
+    current.chmod(0o600)
 
 
 @pytest.fixture
@@ -40,198 +71,206 @@ def repository(tmp_path):
     git(repo, "config", "user.email", "runtime@example.invalid")
     (repo / "README.md").write_text("base\n", encoding="utf-8")
     git(repo, "add", "README.md"); git(repo, "commit", "-m", "initial")
+    install_current_bundle(repo)
     return repo, root
 
 
-def signed(plan, nonce=None):
-    # nonce は operation_id から導出される（SI-FLW-061）。
-    # 明示指定は「導出値と違う nonce を拒否する」negative fixture のためだけに使う。
-    nonce = W.derive_nonce(plan.operation_id) if nonce is None else nonce
-    values = {
-        **dataclasses.asdict(plan.context),
-        "expires_at": datetime.now(timezone.utc) + timedelta(minutes=10),
-        "nonce": nonce,
-        "algorithm": "Ed25519",
-        "key_id": "owner-key",
-        "signature": "",
-    }
-    cap = C.WorktreeApprovalCapability(**values)
-    with tempfile.TemporaryDirectory(prefix="bitz-flow-sign-") as directory:
-        private_path = Path(directory) / "private.pem"
-        public_path = Path(directory) / "public.der"
-        signature_path = Path(directory) / "signature.bin"
-        message_path = Path(directory) / "message.bin"
-        subprocess.run(
-            ["openssl", "genpkey", "-algorithm", "ED25519", "-out", str(private_path)],
-            capture_output=True, check=True,
-        )
-        subprocess.run(
-            ["openssl", "pkey", "-in", str(private_path), "-pubout", "-outform", "DER",
-             "-out", str(public_path)], capture_output=True, check=True,
-        )
-        message_path.write_bytes(R.canonical_bytes(cap.signed_payload()))
-        subprocess.run(
-            ["openssl", "pkeyutl", "-sign", "-inkey", str(private_path), "-rawin",
-             "-in", str(message_path), "-out", str(signature_path)], capture_output=True, check=True,
-        )
-        public = public_path.read_bytes()
-        signature = signature_path.read_bytes()
-    cap = dataclasses.replace(cap, signature=base64.b64encode(signature).decode())
-    keys = {"owner-key": base64.b64encode(public).decode()}
-    return cap, keys
-
-
-def test_FLW_FR_006_create_resume_finish_actual_git_worktree(repository):
-    repo, root = repository
-    path = root / "feature"
-    create = W.plan(repo, action="create", path=path, branch="feat/runtime", worktree_root=root)
-    cap, keys = signed(create)
-    result = W.apply(create, confirm=create.operation_id, capability=cap, trusted_keys_for_test=keys)
-    assert result.code == "DONE"
-    assert path.is_dir() and git(path, "branch", "--show-current") == "feat/runtime"
-
-    resume = W.plan(repo, action="resume", path=path, branch="feat/runtime", worktree_root=root)
-    cap, keys = signed(resume)
-    assert W.apply(resume, confirm=resume.operation_id, capability=cap, trusted_keys_for_test=keys).code == "DONE"
-
-    git(repo, "merge", "--ff-only", "feat/runtime")
-    finish = W.plan(repo, action="finish", path=path, branch="feat/runtime", worktree_root=root)
-    cap, keys = signed(finish)
-    result = W.apply(finish, confirm=finish.operation_id, capability=cap, trusted_keys_for_test=keys)
-    assert result.code == "DONE"
-    assert not path.exists()
-    assert subprocess.run(["git", "show-ref", "--verify", "refs/heads/feat/runtime"], cwd=repo).returncode != 0
-
-
-def test_FLW_CON_006_discard_retains_tip_and_removes_actual_worktree(repository):
-    repo, root = repository
-    path = root / "discard"
-    create = W.plan(repo, action="create", path=path, branch="feat/discard", worktree_root=root)
-    cap, keys = signed(create)
-    assert W.apply(create, confirm=create.operation_id, capability=cap, trusted_keys_for_test=keys).code == "DONE"
-    (path / "change.txt").write_text("committed\n", encoding="utf-8")
-    git(path, "add", "change.txt"); git(path, "commit", "-m", "discard me")
-    tip = git(path, "rev-parse", "HEAD")
-
-    discard = W.plan(repo, action="discard", path=path, branch="feat/discard", worktree_root=root)
-    cap, keys = signed(discard)
-    result = W.apply(discard, confirm=discard.operation_id, capability=cap, trusted_keys_for_test=keys)
-    assert result.code == "DONE" and not path.exists()
-    retained = git(repo, "for-each-ref", "--format=%(objectname)", "refs/bitz-flow/retained/")
-    assert tip in retained
-
-
-def test_FLW_CON_005_missing_bad_or_reused_capability_has_no_git_side_effect(repository):
-    repo, root = repository
-    path = root / "blocked"
-    plan = W.plan(repo, action="create", path=path, branch="feat/blocked", worktree_root=root)
-    cap, keys = signed(plan)
-    wrong = dataclasses.replace(cap, signature=base64.b64encode(b"x" * 64).decode())
-    result = W.apply(plan, confirm=plan.operation_id, capability=wrong, trusted_keys_for_test=keys)
-    assert result.code == "BLOCKED" and not path.exists()
-    result = W.apply(plan, confirm="sha256:wrong", capability=cap, trusted_keys_for_test=keys)
-    assert result.code == "STALE" and not path.exists()
-    assert W.apply(plan, confirm=plan.operation_id, capability=cap, trusted_keys_for_test=keys).code == "DONE"
-    second = W.apply(plan, confirm=plan.operation_id, capability=cap, trusted_keys_for_test=keys)
-    assert second.code == "BLOCKED"
-
-
-def test_FLW_CON_006_crash_before_first_mutation_quarantines_nonce_without_side_effect(repository):
-    repo, root = repository
-    path = root / "crash"
-    plan = W.plan(repo, action="create", path=path, branch="feat/crash", worktree_root=root)
-    cap, keys = signed(plan)
-    result = W.apply(
-        plan, confirm=plan.operation_id, capability=cap, trusted_keys_for_test=keys,
-        step_hook=lambda step: (_ for _ in ()).throw(W.WorktreeRuntimeError(f"crash:{step}")),
+def runtime_plan(repo: Path, *, action: str, path: Path, branch: str, root: Path,
+                 **kwargs) -> W.RuntimePlan:
+    return W.plan(
+        repo, action=action, path=path, branch=branch, worktree_root=root,
+        platform_evidence=supported_evidence(root), **kwargs,
     )
-    assert result.code == "BLOCKED" and not path.exists()
-    assert W.apply(plan, confirm=plan.operation_id, capability=cap, trusted_keys_for_test=keys).code == "BLOCKED"
 
 
-def test_FLW_TSK_104_target_guard_blocks_a_competing_apply_until_mutation_finishes(repository):
-    """同じ worktree target の別 operation は、PENDING 後も副作用前に止まる。"""
-    repo, root = repository
-    target = root / "guarded"
-    first = W.plan(repo, action="create", path=target, branch="feat/guarded-a", worktree_root=root)
-    competing = W.plan(repo, action="create", path=target, branch="feat/guarded-b", worktree_root=root)
-    competing_results = []
-
-    def attempt_competing_apply(_step):
-        competing_results.append(W.apply(competing, confirm=competing.operation_id))
-
-    result = W.apply(first, confirm=first.operation_id, step_hook=attempt_competing_apply)
-
-    assert result.code == "DONE", result.summary
-    assert [item.code for item in competing_results] == ["BLOCKED"]
-    assert target.is_dir()
-    assert W._TARGET_GUARDS.held_targets() == []
-
-
-def test_FLW_CON_005_state_change_after_plan_is_stale_and_has_no_git_side_effect(repository):
-    repo, root = repository
-    path = root / "occupied"
-    plan = W.plan(repo, action="create", path=path, branch="feat/occupied", worktree_root=root)
-    cap, keys = signed(plan)
-    path.mkdir()
-
-    result = W.apply(plan, confirm=plan.operation_id, capability=cap, trusted_keys_for_test=keys)
-
-    assert result.code == "BLOCKED"
-    assert git(repo, "branch", "--list", "feat/occupied") == ""
-    assert list(path.iterdir()) == []
-
-
-def test_FLW_CON_005_trusted_registry_rejects_group_readable_file(repository):
+def test_repository_observer_is_closed_machine_readable_and_deterministic(repository):
     repo, _ = repository
-    common = Path(git(repo, "rev-parse", "--path-format=absolute", "--git-common-dir"))
-    registry = common / "bitz-flow-v2" / "trusted-worktree-keys.json"
-    registry.parent.mkdir(parents=True, exist_ok=True)
-    registry.write_text('{"owner-key":"unused"}', encoding="utf-8")
-    registry.chmod(0o640)
-
-    with pytest.raises(W.WorktreeRuntimeError, match="owner-only"):
-        W.load_trusted_keys(common)
+    observer = W.RepositoryObserver(repo)
+    assert observer.snapshot() == observer.snapshot()
+    assert observer.snapshot().digest.startswith("sha256:")
+    with pytest.raises(W.WorktreeRuntimeError, match="unknown or write-capable"):
+        observer.run("update-ref")
 
 
-def test_FLW_CON_006_partial_discard_retains_tip_and_quarantines_receipt(repository):
+def test_plan_digest_create_and_resume_use_target_transaction(repository):
     repo, root = repository
-    path = root / "partial"
-    create = W.plan(repo, action="create", path=path, branch="feat/partial", worktree_root=root)
-    cap, keys = signed(create)
-    assert W.apply(create, confirm=create.operation_id, capability=cap, trusted_keys_for_test=keys).code == "DONE"
-    discard = W.plan(repo, action="discard", path=path, branch="feat/partial", worktree_root=root)
-    cap, keys = signed(discard)
-
-    def fail_after_retention(step):
-        if step == "git-worktree-remove":
-            raise W.WorktreeRuntimeError("injected after retention")
-
-    result = W.apply(
-        discard, confirm=discard.operation_id, capability=cap, trusted_keys_for_test=keys,
-        step_hook=fail_after_retention,
+    target = root / "feature"
+    create = runtime_plan(repo, action="create", path=target, branch="feat/runtime", root=root)
+    result = W.apply(create, confirm=create.operation_id)
+    assert result.code == "DONE", result.summary
+    assert target.is_dir() and git(target, "branch", "--show-current") == "feat/runtime"
+    tx = T.TargetTransaction(
+        W._transaction_root(create), target_collision_key=create.context.target_collision_key,
     )
+    assert tx.inspect(create.operation_id).state == "DONE"
 
-    assert result.code == "PARTIAL"
-    assert result.completed_steps == ("create-retention-ref",)
-    assert path.is_dir()
-    retained = git(repo, "for-each-ref", "--format=%(refname)", "refs/bitz-flow/retained/")
-    assert "refs/bitz-flow/retained/feat-partial-" in retained
-    common = Path(discard.common_dir)
-    records = [json.loads(p.read_text(encoding="utf-8"))["record"]
-               for p in sorted((common / "bitz-flow-v2" / "receipts").glob("*.json"))]
-    matching = [record for record in records if record["operation_id"] == discard.operation_id]
-    assert [record["state"] for record in matching] == ["PENDING", "MUTATING", "QUARANTINED"]
+    resume = runtime_plan(repo, action="resume", path=target, branch="feat/runtime", root=root)
+    assert W.apply(resume, confirm=resume.operation_id).code == "DONE"
+
+
+def test_finish_and_discard_remain_outside_m2(repository):
+    repo, root = repository
+    for action in ("finish", "discard"):
+        with pytest.raises(W.WorktreeRuntimeError, match="unsupported"):
+            runtime_plan(repo, action=action, path=root / action, branch=f"feat/{action}", root=root)
+
+
+def test_signed_capability_inputs_are_immediately_unsupported(repository):
+    repo, root = repository
+    target = root / "legacy"
+    planned = runtime_plan(repo, action="create", path=target, branch="feat/legacy", root=root)
+    result = W.apply(
+        planned, confirm=planned.operation_id, capability=object(),
+        trusted_keys_for_test={"legacy": "ignored"},
+    )
+    assert (result.code, result.cause) == ("UNSUPPORTED", "unsupported-approval-mode")
+    assert not target.exists()
+    assert git(repo, "branch", "--list", "feat/legacy") == ""
+    assert not W._transaction_root(planned).exists()
+
+
+@pytest.mark.parametrize("legacy_signal", ["worktree", "head", "index", "registry"])
+def test_legacy_deployment_signals_never_downgrade_to_plan_digest(repository, legacy_signal):
+    repo, root = repository
+    target = root / legacy_signal
+    planned = runtime_plan(repo, action="create", path=target, branch=f"feat/{legacy_signal}", root=root)
+    declaration = repo / ".bitz-flow" / "approval-mode.json"
+    if legacy_signal in {"worktree", "head", "index"}:
+        declaration.parent.mkdir()
+        declaration.write_text('{"mode":"signed-capability"}', encoding="utf-8")
+        if legacy_signal == "head":
+            git(repo, "add", str(declaration.relative_to(repo))); git(repo, "commit", "-m", "legacy")
+        elif legacy_signal == "index":
+            git(repo, "add", str(declaration.relative_to(repo)))
+    else:
+        common = Path(planned.common_dir)
+        registry = common / "bitz-flow-v2" / "trusted-worktree-keys.json"
+        registry.parent.mkdir(parents=True, exist_ok=True)
+        registry.write_text("{}", encoding="utf-8")
+    result = W.apply(planned, confirm=planned.operation_id)
+    assert (result.code, result.cause) == ("UNSUPPORTED", "unsupported-approval-mode")
+    assert not target.exists()
+
+
+def test_confirmation_mismatch_is_stale_without_transaction(repository):
+    repo, root = repository
+    target = root / "mismatch"
+    planned = runtime_plan(repo, action="create", path=target, branch="feat/mismatch", root=root)
+    result = W.apply(planned, confirm="sha256:" + "0" * 64)
+    assert (result.code, result.cause) == ("STALE", "snapshot-mismatch")
+    assert not target.exists() and not W._transaction_root(planned).exists()
+
+
+def test_expired_plan_is_stale(repository):
+    repo, root = repository
+    planned = runtime_plan(
+        repo, action="create", path=root / "expired", branch="feat/expired", root=root,
+        expires_at=datetime.now(timezone.utc) - timedelta(seconds=1),
+    )
+    result = W.apply(planned, confirm=planned.operation_id)
+    assert (result.code, result.cause) == ("STALE", "approval-expired")
+    assert not (root / "expired").exists()
+
+
+def test_repository_change_after_plan_is_stale(repository):
+    repo, root = repository
+    target = root / "changed"
+    planned = runtime_plan(repo, action="create", path=target, branch="feat/changed", root=root)
+    (repo / "new.txt").write_text("change\n", encoding="utf-8")
+    result = W.apply(planned, confirm=planned.operation_id)
+    assert (result.code, result.cause) == ("STALE", "snapshot-mismatch")
+    assert not target.exists()
+
+
+def test_bundle_change_after_plan_is_stale(repository):
+    repo, root = repository
+    target = root / "bundle"
+    planned = runtime_plan(repo, action="create", path=target, branch="feat/bundle", root=root)
+    current = Path(planned.common_dir) / P.PROMOTION_RELATIVE_PATH / "current.json"
+    value = json.loads(current.read_text(encoding="utf-8"))
+    value["bundle_digest"] = "sha256:" + "c" * 64
+    current.write_text(json.dumps(value), encoding="utf-8")
+    result = W.apply(planned, confirm=planned.operation_id)
+    assert result.code == "STALE"
+    assert not target.exists()
+
+
+def test_crash_before_git_has_emergency_and_terminal_quarantine_receipts(repository):
+    repo, root = repository
+    target = root / "crash"
+    planned = runtime_plan(repo, action="create", path=target, branch="feat/crash", root=root)
+
+    def crash(_step: str) -> None:
+        raise W.WorktreeRuntimeError("injected crash")
+
+    result = W.apply(planned, confirm=planned.operation_id, step_hook=crash)
+    assert result.code == "INDETERMINATE"
+    assert not target.exists()
+    tx = T.TargetTransaction(
+        W._transaction_root(planned), target_collision_key=planned.context.target_collision_key,
+    )
+    report = tx.inspect(planned.operation_id)
+    assert report.state == "QUARANTINED"
+    by_state = {item["receipt_state"]: item for item in report.receipts}
+    assert set(by_state) == {"INDETERMINATE", "TERMINAL"}
+    assert by_state["TERMINAL"]["supersedes_receipt_digest"] is not None
+
+
+def test_target_lock_timeout_cleans_pre_intent_marker_without_git(repository):
+    repo, root = repository
+    target = root / "busy"
+    planned = runtime_plan(repo, action="create", path=target, branch="feat/busy", root=root)
+    authority = T.TargetTransaction(
+        W._transaction_root(planned), target_collision_key=planned.context.target_collision_key,
+    )
+    lease = authority.acquire(operation_id="sha256:" + "d" * 64, nonce="competing")
+    try:
+        result = W.apply(planned, confirm=planned.operation_id)
+    finally:
+        authority.release(lease)
+    assert result.code == "BLOCKED"
+    assert not target.exists()
+    active = Path(planned.common_dir) / P.PROMOTION_RELATIVE_PATH / "active"
+    assert not active.exists() or not list(active.iterdir())
+
+
+def test_promotion_lock_contention_stops_before_target_authority(repository):
+    repo, root = repository
+    target = root / "promotion-busy"
+    planned = runtime_plan(repo, action="create", path=target, branch="feat/promotion-busy", root=root)
+    namespace = Path(planned.common_dir) / P.PROMOTION_RELATIVE_PATH
+    lock = P._promotion_lock(namespace)
+    try:
+        result = W.apply(planned, confirm=planned.operation_id)
+    finally:
+        P._promotion_unlock(lock)
+    assert result.code == "BLOCKED"
+    assert not target.exists() and not W._transaction_root(planned).exists()
+
+
+def test_terminal_promotion_cleanup_never_overlaps_target_lock(repository, monkeypatch):
+    repo, root = repository
+    target = root / "lock-order"
+    planned = runtime_plan(repo, action="create", path=target, branch="feat/lock-order", root=root)
+    observed = {"target_released": False}
+    original = P.release_active_operation
+
+    def checked_release(*args, **kwargs):
+        import fcntl
+        lock_path = W._transaction_root(planned) / "target.lock"
+        with lock_path.open("r+b") as stream:
+            fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            observed["target_released"] = True
+            fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(P, "release_active_operation", checked_release)
+    assert W.apply(planned, confirm=planned.operation_id).code == "DONE"
+    assert observed["target_released"]
 
 
 @pytest.mark.parametrize("action", ["audit", "create", "resume", "finish", "discard"])
-def test_FLW_CON_006_worktree_is_not_reachable_from_the_dispatcher(repository, action):
-    """出荷面は M0 read-only だけで、worktree は公開入口から到達できないこと。
-
-    ROADMAP の縮退規則3（M2 出口が閉じるまで worktree を公開しない）の機械検査。
-    安全核と runtime adapter は実装済みだが公開集合から外してある
-    （裁定 2026-08-15 — `.spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md`）。
-    """
+def test_worktree_remains_unreachable_from_public_dispatcher(repository, action):
     repo, _ = repository
     proc = subprocess.run(
         [sys.executable, str(SKILL / "scripts" / "flow.py"), "worktree", action,
@@ -241,1105 +280,3 @@ def test_FLW_CON_006_worktree_is_not_reachable_from_the_dispatcher(repository, a
     payload = json.loads(proc.stdout)
     assert payload["code"] == "UNSUPPORTED"
     assert payload["operation"] == f"worktree.{action}"
-
-
-def test_FLW_CON_006_dispatcher_apply_creates_no_worktree(repository):
-    """公開入口へ apply 一式を渡しても副作用が起きないこと。"""
-    repo, root = repository
-    target = root / "cli"
-    proc = subprocess.run(
-        [sys.executable, str(SKILL / "scripts" / "flow.py"), "worktree", "create",
-         "--repo", str(repo), "--path", str(target), "--branch", "feat/cli",
-         "--worktree-root", str(root), "--apply", "--confirm", "sha256:" + "0" * 64,
-         "--approval-ref", "decision:test", "--format", "json"],
-        text=True, capture_output=True, check=False,
-    )
-    assert json.loads(proc.stdout)["code"] == "UNSUPPORTED"
-    assert not target.exists()
-    assert "feat/cli" not in git(repo, "branch", "--format=%(refname:short)")
-
-
-# === plan-digest モード（既定。SI-FLW-061） ===================================
-
-
-def test_SI_FLW_061_plan_digest_mode_applies_without_a_signature(repository):
-    """registry が無い配備では署名なしで承認が成立し、実 worktree が作られること。"""
-    repo, root = repository
-    create = W.plan(repo, action="create", path=root / "pd", branch="feat/pd", worktree_root=root)
-    assert not W.signature_mode_available(create.common_dir)
-    result = W.apply(create, confirm=create.operation_id)
-    assert result.code == "DONE", result.summary
-    assert (root / "pd").is_dir()
-
-
-def test_SI_FLW_061_plan_digest_rejects_confirm_mismatch_without_side_effect(repository):
-    repo, root = repository
-    create = W.plan(repo, action="create", path=root / "pd2", branch="feat/pd2", worktree_root=root)
-    result = W.apply(create, confirm="sha256:" + "0" * 64)
-    assert result.code == "STALE"
-    assert not (root / "pd2").exists()
-
-
-def test_SI_FLW_061_nonce_is_derived_from_operation_id_and_blocks_reuse(repository):
-    """nonce は承認へ束縛される。同じ承認の再適用は消費済みとして拒否されること。"""
-    repo, root = repository
-    create = W.plan(repo, action="create", path=root / "pd3", branch="feat/pd3", worktree_root=root)
-    assert W.derive_nonce(create.operation_id) == W.derive_nonce(create.operation_id)
-    assert W.derive_nonce(create.operation_id) != W.derive_nonce(create.operation_id + "x")
-    assert W.apply(create, confirm=create.operation_id).code == "DONE"
-    again = W.apply(create, confirm=create.operation_id)
-    assert again.code in {"BLOCKED", "STALE"}
-
-
-def test_SI_FLW_061_signed_mode_rejects_a_capability_whose_nonce_is_not_derived(repository):
-    """署名モードでも nonce は operation_id 由来でなければ拒否されること。"""
-    repo, root = repository
-    create = W.plan(repo, action="create", path=root / "pd4", branch="feat/pd4", worktree_root=root)
-    cap, keys = signed(create, "attacker-chosen-nonce")
-    result = W.apply(create, confirm=create.operation_id, capability=cap, trusted_keys_for_test=keys)
-    assert result.code == "BLOCKED"
-    assert not (root / "pd4").exists()
-
-
-def test_SI_FLW_061_signed_mode_requires_a_capability(repository):
-    repo, root = repository
-    create = W.plan(repo, action="create", path=root / "pd5", branch="feat/pd5", worktree_root=root)
-    _, keys = signed(create)
-    result = W.apply(create, confirm=create.operation_id, trusted_keys_for_test=keys)
-    assert result.code == "BLOCKED"
-    assert not (root / "pd5").exists()
-
-
-# === FLW-TSK-099 (SI-FLW-073): 承認モードの配備意図宣言 =======================
-
-
-def _common_dir(repo: Path) -> Path:
-    return Path(git(repo, "rev-parse", "--path-format=absolute", "--git-common-dir"))
-
-
-def _write_declaration(repo: Path, mode: str | None = "signed-capability", *, raw: str | None = None) -> None:
-    directory = repo / ".bitz-flow"
-    directory.mkdir(parents=True, exist_ok=True)
-    path = directory / "approval-mode.json"
-    path.write_text(raw if raw is not None else json.dumps({"mode": mode}), encoding="utf-8")
-
-
-def _registry_path(common: Path) -> Path:
-    return common / "bitz-flow-v2" / "trusted-worktree-keys.json"
-
-
-def _registry_healthy(common: Path) -> None:
-    path = _registry_path(common)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text('{"owner-key": "dGVzdA=="}', encoding="utf-8")
-    path.chmod(0o600)
-
-
-def _registry_chmod644(common: Path) -> None:
-    _registry_healthy(common)
-    _registry_path(common).chmod(0o644)
-
-
-def _registry_empty(common: Path) -> None:
-    path = _registry_path(common)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("{}", encoding="utf-8")
-    path.chmod(0o600)
-
-
-def _registry_directory(common: Path) -> None:
-    _registry_path(common).mkdir(parents=True, exist_ok=True)
-
-
-def _registry_symlink(common: Path, elsewhere: Path) -> None:
-    path = _registry_path(common)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    elsewhere.write_text('{"owner-key": "dGVzdA=="}', encoding="utf-8")
-    path.symlink_to(elsewhere)
-
-
-#: registry 不在・symlink は個別テストへ分離する（不在は「宣言なし」と組み合わせる
-#: 別テストがあり、symlink は追加の tmp_path 引数が要るため）。
-_BROKEN_REGISTRY_SETUPS = {
-    "chmod644": _registry_chmod644,
-    "empty": _registry_empty,
-    "directory": _registry_directory,
-}
-
-
-def test_FLW_TSK_099_declared_signed_capability_with_healthy_registry_resolves_signed(repository):
-    """陽性対照 — 宣言 signed-capability × registry 健全 → signed-capability。"""
-    repo, root = repository
-    _write_declaration(repo, "signed-capability")
-    common = _common_dir(repo)
-    _registry_healthy(common)
-    decision = W.resolve_approval_mode(repo, common)
-    assert decision.mode == "signed-capability"
-    assert decision.blocked_reason is None
-
-
-def test_FLW_TSK_099_declared_signed_capability_with_missing_registry_is_blocked(repository):
-    """陽性対照 — 宣言 signed-capability × registry 不在 → BLOCKED（降格しない）。
-
-    `FLW-REV-019` が指摘した経路そのもの — registry を**削除**すると
-    無言で `plan-digest` へ降格していた。
-    """
-    repo, root = repository
-    _write_declaration(repo, "signed-capability")
-    decision = W.resolve_approval_mode(repo, _common_dir(repo))
-    assert decision.mode is None
-    assert decision.blocked_reason
-    assert decision.warnings
-
-
-@pytest.mark.parametrize("name", sorted(_BROKEN_REGISTRY_SETUPS))
-def test_FLW_TSK_099_declared_signed_capability_with_broken_registry_is_blocked(repository, name):
-    """陽性対照 — 宣言 signed-capability × registry {chmod644 / 空 / ディレクトリ} → BLOCKED。"""
-    repo, root = repository
-    _write_declaration(repo, "signed-capability")
-    common = _common_dir(repo)
-    _BROKEN_REGISTRY_SETUPS[name](common)
-    decision = W.resolve_approval_mode(repo, common)
-    assert decision.mode is None, name
-    assert decision.blocked_reason, name
-
-
-def test_FLW_TSK_099_declared_signed_capability_with_symlinked_registry_is_blocked(repository, tmp_path):
-    """陽性対照 — 宣言 signed-capability × registry が symlink → BLOCKED。"""
-    repo, root = repository
-    _write_declaration(repo, "signed-capability")
-    common = _common_dir(repo)
-    _registry_symlink(common, tmp_path / "elsewhere.json")
-    decision = W.resolve_approval_mode(repo, common)
-    assert decision.mode is None
-    assert decision.blocked_reason
-
-
-def test_FLW_TSK_099_no_declaration_is_plan_digest_regardless_of_registry(repository):
-    """陽性対照 — 宣言なし → registry の状態に関わらず plan-digest（降格ではなく素の配備）。"""
-    repo, root = repository
-    common = _common_dir(repo)
-    assert not (repo / ".bitz-flow").exists()
-    assert W.resolve_approval_mode(repo, common).mode == "plan-digest"
-    _registry_healthy(common)
-    assert W.resolve_approval_mode(repo, common).mode == "plan-digest"
-
-
-def test_FLW_TSK_099_declaration_file_broken_json_is_blocked(repository):
-    """宣言ファイルが壊れている場合 → 意図を確認できないため BLOCKED（黙って plan-digest へ倒さない）。"""
-    repo, root = repository
-    _write_declaration(repo, raw="{ not json")
-    decision = W.resolve_approval_mode(repo, _common_dir(repo))
-    assert decision.mode is None
-    assert "宣言" in decision.blocked_reason
-
-
-def test_FLW_TSK_099_declaration_file_invalid_mode_value_is_blocked(repository):
-    """宣言ファイルの mode 値が閉集合外 → BLOCKED。"""
-    repo, root = repository
-    _write_declaration(repo, mode="bogus-mode")
-    decision = W.resolve_approval_mode(repo, _common_dir(repo))
-    assert decision.mode is None
-
-
-def test_FLW_TSK_099_registry_deletion_after_declaration_does_not_silently_downgrade_apply(repository):
-    """**registry 削除経路の回帰テスト**（`FLW-REV-019` の指摘そのもの）。
-
-    以前は配備意図の宣言という概念が無く、registry の削除だけで `apply` が無言で
-    `plan-digest` へ降格し `DONE` を返して実 worktree を作っていた。宣言
-    signed-capability の配備で registry を削除すると `apply` が `BLOCKED` を返し、
-    worktree が作られないことを確認する（この経路の回帰テストが1件も無かったことが
-    `FLW-REV-019:OPS-304` / `RSK-204` の指摘の中身）。
-    """
-    repo, root = repository
-    _write_declaration(repo, "signed-capability")
-    common = _common_dir(repo)
-    _registry_healthy(common)
-
-    path = root / "deleted-registry"
-    plan = W.plan(repo, action="create", path=path, branch="feat/deleted-registry", worktree_root=root)
-    _registry_path(common).unlink()  # 敵対的主体による registry 削除を模す
-
-    result = W.apply(plan, confirm=plan.operation_id)
-    assert result.code == "BLOCKED", result.summary
-    assert not path.exists()
-    assert git(repo, "branch", "--list", "feat/deleted-registry") == ""
-
-
-def test_FLW_TSK_099_cli_plan_returns_blocked_when_declared_mode_cannot_be_honored(repository):
-    """公開 dispatcher 経由でも plan 段階から BLOCKED を返すこと（`--capability-file` の
-    要否が誤って `plan-digest` を名乗らない）。"""
-    repo, root = repository
-    _write_declaration(repo, "signed-capability")  # registry は置かない（不在）
-    result, _ = _dispatch(
-        "worktree", "create", "--repo", str(repo), "--path", str(root / "cli-blocked"),
-        "--branch", "feat/cli-blocked", "--worktree-root", str(root),
-    )
-    assert result["code"] == "BLOCKED", result["summary"]
-    assert result["data"]["required_human_input"]
-    assert result["warnings"]
-
-
-# === SI-FLW-057: mutation境界の例外分類と create/resume の reconcile 経路 =======
-
-
-def test_SI_FLW_057_plain_valueerror_in_mutation_is_reported_as_partial(repository):
-    """副作用適用後の素の ValueError が transaction 境界を貫通しないこと。
-
-    以前は module 内の `RuntimeError(ValueError)` が組み込みを遮蔽し、mutation 境界の
-    `except (RuntimeError, OSError)` が素の ValueError を捕捉しなかった。その結果
-    worktree は作成済みなのに「副作用前に停止」を意味する BLOCKED が返っていた
-    （`FLW-REV-016:SYN-003`）。
-    """
-    repo, root = repository
-    create = W.plan(repo, action="create", path=root / "vex", branch="feat/vex", worktree_root=root)
-    seen: list[str] = []
-
-    def hook(step: str) -> None:
-        seen.append(step)
-
-    original = W._ReceiptLog.append
-    calls = {"n": 0}
-
-    def flaky(self, record):
-        calls["n"] += 1
-        if record.get("state") == "MUTATING":
-            raise ValueError("plain ValueError after the first mutation")
-        return original(self, record)
-
-    W._ReceiptLog.append = flaky
-    try:
-        result = W.apply(create, confirm=create.operation_id, step_hook=hook)
-    finally:
-        W._ReceiptLog.append = original
-
-    assert (root / "vex").is_dir(), "副作用は実際に起きている"
-    assert result.code == "PARTIAL", f"副作用後の失敗を BLOCKED と誤報しない: {result.summary}"
-    assert result.completed_steps == ("git-worktree-add",)
-
-
-def test_SI_FLW_057_keyerror_in_mutation_is_also_caught(repository):
-    repo, root = repository
-    create = W.plan(repo, action="create", path=root / "kex", branch="feat/kex", worktree_root=root)
-    original = W._ReceiptLog.append
-
-    def flaky(self, record):
-        if record.get("state") == "MUTATING":
-            raise KeyError("missing field")
-        return original(self, record)
-
-    W._ReceiptLog.append = flaky
-    try:
-        result = W.apply(create, confirm=create.operation_id)
-    finally:
-        W._ReceiptLog.append = original
-    assert result.code == "PARTIAL"
-
-
-def test_SI_FLW_057_create_and_resume_have_a_reconcile_path():
-    """create / resume が別 operation の step 列へ黙って照合されないこと。"""
-    from flowlib import worktree_cleanup as CL
-
-    assert CL.reconcile_steps("worktree.create", ()).code == "PARTIAL"
-    assert CL.reconcile_steps("worktree.create", ("git-worktree-add",)).code == "DONE"
-    assert CL.reconcile_steps("worktree.resume", ("publish-resume-receipt",)).code == "DONE"
-    # 別 operation の step は前置にならない
-    assert CL.reconcile_steps("worktree.create", ("verify-pr-merge",)).code == "INDETERMINATE"
-    # 未知 operation を既定へ倒さない
-    assert CL.reconcile_steps("worktree.unknown", ()).code == "INDETERMINATE"
-
-
-def test_SI_FLW_057_partial_create_receipt_reconciles_against_the_same_vocabulary(repository):
-    """実 receipt の completed 列が、cleanup 核の step 列の真の前置になること。"""
-    from flowlib import worktree_cleanup as CL
-
-    repo, root = repository
-    create = W.plan(repo, action="create", path=root / "rec", branch="feat/rec", worktree_root=root)
-    assert W.apply(create, confirm=create.operation_id).code == "DONE"
-    common = Path(git(repo, "rev-parse", "--path-format=absolute", "--git-common-dir"))
-    records = [json.loads(p.read_text(encoding="utf-8"))["record"]
-               for p in sorted((common / "bitz-flow-v2" / "receipts").glob("*.json"))]
-    done = [r for r in records
-            if r["operation_id"] == create.operation_id and r["state"] == "DONE"]
-    assert done, "DONE receipt が存在する"
-    decision = CL.reconcile_steps("worktree.create", tuple(done[-1]["completed_steps"]))
-    assert decision.code == "DONE", decision.reason
-
-
-# === SI-FLW-059: 公開 dispatcher 経由の E2E ==================================
-#
-# 出荷面は M0 read-only に限定されている（2026-08-15 裁定）ため、fixture は
-# `{**_HANDLERS, **_GATED_HANDLERS}` を注入して公開経路を丸ごと通す
-# （裁定 2026-08-16。`.spec/reports/decision-2026-08-16-si-flw-059-dispatcher-e2e.md`）。
-# production では既定以外を渡さない。
-
-
-def _dispatch(*argv):
-    """公開 dispatcher を fixture 用ハンドラ表で起動し、結果 JSON を返す。
-
-    `--format json` だけを通していたため、result 契約に従わない `next_actions` を入れても
-    検出できず、既定形式で `KeyError` を投げる状態を出荷しかけた（`SI-FLW-065`）。
-    既定 renderer は下の専用テストで担保する。
-    """
-    from flowlib import cli
-
-    # 二重実行は write を2回走らせてしまうため、既定 renderer の検査は
-    # 副作用の無い operation を対象にした専用テストで担保する（下の SI_FLW_065）。
-    table = {**cli._HANDLERS, **cli._GATED_HANDLERS}
-    buffer = io.StringIO()
-    with contextlib.redirect_stdout(buffer):
-        code = cli.main([*argv, "--format", "json"], handlers=table)
-    return json.loads(buffer.getvalue()), code
-
-
-def test_SI_FLW_059_dispatcher_create_then_resume_via_public_path(repository):
-    """create → resume を公開経路の plan/apply で通し、実 worktree が作られること。"""
-    repo, root = repository
-    target = root / "pub"
-    base = ["worktree", "create", "--repo", str(repo), "--path", str(target),
-            "--branch", "feat/pub", "--worktree-root", str(root)]
-
-    plan_result, _ = _dispatch(*base)
-    assert plan_result["code"] == "READY", plan_result["summary"]
-    assert plan_result["data"]["approval_mode"] == "plan-digest"
-    operation_id = plan_result["operation_id"]
-
-    applied, _ = _dispatch(*base, "--apply", "--confirm", operation_id)
-    assert applied["code"] == "DONE", applied["summary"]
-    assert target.is_dir()
-
-    resume_base = ["worktree", "resume", "--repo", str(repo), "--path", str(target),
-                   "--branch", "feat/pub", "--worktree-root", str(root)]
-    resume_plan, _ = _dispatch(*resume_base)
-    assert resume_plan["code"] == "READY"
-    resumed, _ = _dispatch(*resume_base, "--apply", "--confirm", resume_plan["operation_id"])
-    assert resumed["code"] == "DONE", resumed["summary"]
-
-
-def test_SI_FLW_059_dispatcher_rejects_a_stale_confirm_without_side_effect(repository):
-    """公開経路で confirm 不一致なら副作用0で停止すること。"""
-    repo, root = repository
-    target = root / "stale"
-    result, _ = _dispatch(
-        "worktree", "create", "--repo", str(repo), "--path", str(target),
-        "--branch", "feat/stale", "--worktree-root", str(root),
-        "--apply", "--confirm", "sha256:" + "0" * 64,
-    )
-    assert result["code"] == "STALE"
-    assert not target.exists()
-
-
-def test_SI_FLW_059_dispatcher_blocks_approval_reuse(repository):
-    """承認の使い回しが公開経路で拒否されること（nonce 単回性）。"""
-    repo, root = repository
-    target = root / "reuse"
-    base = ["worktree", "create", "--repo", str(repo), "--path", str(target),
-            "--branch", "feat/reuse", "--worktree-root", str(root)]
-    plan_result, _ = _dispatch(*base)
-    operation_id = plan_result["operation_id"]
-    assert _dispatch(*base, "--apply", "--confirm", operation_id)[0]["code"] == "DONE"
-    again, _ = _dispatch(*base, "--apply", "--confirm", operation_id)
-    assert again["code"] in {"BLOCKED", "STALE"}
-
-
-def test_SI_FLW_059_dispatcher_requires_confirm_for_apply(repository):
-    repo, root = repository
-    result, _ = _dispatch(
-        "worktree", "create", "--repo", str(repo), "--path", str(root / "noconfirm"),
-        "--branch", "feat/noconfirm", "--worktree-root", str(root), "--apply",
-    )
-    assert result["code"] == "APPROVAL_REQUIRED"
-    assert not (root / "noconfirm").exists()
-
-
-def test_SI_FLW_059_audit_goes_through_the_contract_layer(repository):
-    """audit が result を返し、--limit を尊重すること。"""
-    repo, root = repository
-    result, _ = _dispatch("worktree", "audit", "--repo", str(repo), "--limit", "1")
-    assert result["code"] in {"OK", "BLOCKED"}
-    assert result["data"]["page"]["shown"] <= 1
-    for row in result["data"]["items"]:
-        assert set(row) == {"path", "registered", "managed", "present",
-                            "head_changed", "divergence"}, row
-
-
-def test_SI_FLW_064_audit_detects_an_operation_external_worktree(repository):
-    """陽性対照 — operation 外で作られた worktree を検出し BLOCKED にすること。
-
-    git の registry は `git worktree add` で必ず登録されるため区別に使えない。
-    bitz-flow 自身の receipt が記録した対象と突き合わせる（`SI-FLW-064`）。
-    """
-    repo, root = repository
-    outside = root / "outside"
-    git(repo, "worktree", "add", "-b", "feat/outside", str(outside))
-    try:
-        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
-        assert result["code"] == "BLOCKED", result["summary"]
-        assert any(t["path"] == str(outside) for t in result["data"]["quarantine"]["targets"])
-        # `human-stop` は空 NEXT である（`FLW-DSN-016` §8）。解除は operation ではなく
-        # reviewer の裁定なので、示せる次の operation は存在しない。
-        # 「次に何をするか」は required_human_input と解除区分が担う。
-        assert result["next_actions"] == []
-        assert result["data"]["required_human_input"]
-    finally:
-        git(repo, "worktree", "remove", "--force", str(outside))
-
-
-def test_SYN_011_audit_connects_the_detection_to_quarantine(repository):
-    """検出結果が設計の quarantine 語彙へ接続されること（`FLW-REV-017:SYN-011`）。
-
-    M2 出口条件は「operation 外変更の audit 検出**・quarantine 接続**」である。
-    検出だけでは後半を満たさない。以前は `external_changes` という独自語彙しか無く、
-    裁定者が「quarantine へ接続した」と読める証跡が result に存在しなかった。
-    """
-    repo, root = repository
-    outside = root / "outside-quarantine"
-    git(repo, "worktree", "add", "-b", "feat/outside-q", str(outside))
-    try:
-        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
-        assert result["code"] == "BLOCKED", result["summary"]
-        quarantine = result["data"]["quarantine"]
-        # 語彙は設計（FLW-DSN-016 §6）と実装（worktree_cleanup）の側にある。
-        # `worktree_state` は公開 result に載せない — `ORPHAN` は
-        # `branch_audit_state` の値であり `worktree_state` の閉集合には無い
-        # （`FLW-REV-018:SYN-005`）。
-        assert "worktree_state" not in quarantine
-        assert quarantine["required"] is True
-        targets = {t["path"]: t for t in quarantine["targets"]}
-        assert str(outside) in targets
-        # bitz-flow 経由ではなく生の `git worktree add` で作った worktree なので
-        # intent（receipt）が1件も無く、`worktree-unresolved` になる。
-        assert targets[str(outside)]["release_class"] == "worktree-unresolved"
-        assert result["data"]["cause"] == "quarantined"
-        assert result["data"]["recovery_class"] == "human-stop"
-    finally:
-        git(repo, "worktree", "remove", "--force", str(outside))
-
-
-def test_SYN_011_audit_is_indeterminate_when_receipts_are_unreadable(repository):
-    """receipt を読めないときに分類を推測しないこと（`FLW-DSN-016` §8 の audit 行）。
-
-    「receipt が1件も無い」と「receipt を読めない」を同一視すると、後者で
-    **すべての worktree が外部起因に見える**。BLOCKED を偽って立てるのは
-    「分類の推測」であり設計が禁じている。
-    """
-    repo, root = repository
-    target = root / "for-indeterminate"
-    base = ["worktree", "create", "--repo", str(repo), "--path", str(target),
-            "--branch", "feat/indeterminate", "--worktree-root", str(root)]
-    plan_result, _ = _dispatch(*base)
-    applied, _ = _dispatch(*base, "--apply", "--confirm", plan_result["operation_id"])
-    assert applied["code"] == "DONE", applied["summary"]
-
-    receipts = sorted((repo / ".git" / "bitz-flow-v2" / "receipts").glob("*.json"))
-    assert receipts, "receipt が書かれていること"
-    receipts[0].write_text("{ broken", encoding="utf-8")
-
-    result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
-    assert result["code"] == "INDETERMINATE", result["summary"]
-    assert result["data"]["recovery_class"] == "human-stop"
-    assert result["next_actions"] == [], "INDETERMINATE から NEXT を示さないこと"
-    assert result["data"]["required_human_input"]
-    assert not result["data"]["items"], "推測した分類を載せないこと"
-
-
-def test_SI_FLW_064_audit_accepts_an_operation_created_worktree(repository):
-    """陰性対照 — operation が作った worktree は外部変更にしないこと。
-
-    検出器が「常に BLOCKED」なら反証できない検査になる。
-    """
-    repo, root = repository
-    target = root / "managed"
-    base = ["worktree", "create", "--repo", str(repo), "--path", str(target),
-            "--branch", "feat/managed", "--worktree-root", str(root)]
-    plan_result, _ = _dispatch(*base)
-    applied, _ = _dispatch(*base, "--apply", "--confirm", plan_result["operation_id"])
-    assert applied["code"] == "DONE", applied["summary"]
-
-    result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
-    rows = {row["path"]: row for row in result["data"]["items"]}
-    assert rows[str(target)]["managed"] is True
-    assert rows[str(target)]["divergence"] == ""
-    assert result["code"] == "OK", result["summary"]
-
-
-def test_SI_FLW_064_receipt_records_the_change_target(repository):
-    """receipt が「何を変えたか」を持つこと（従来は operation_id だけだった）。"""
-    repo, root = repository
-    target = root / "recorded"
-    create = W.plan(repo, action="create", path=target, branch="feat/recorded",
-                    worktree_root=root)
-    assert W.apply(create, confirm=create.operation_id).code == "DONE"
-    common = Path(git(repo, "rev-parse", "--path-format=absolute", "--git-common-dir"))
-    records = [json.loads(p.read_text(encoding="utf-8"))["record"]
-               for p in sorted((common / "bitz-flow-v2" / "receipts").glob("*.json"))]
-    done = [r for r in records
-            if r["operation_id"] == create.operation_id and r["state"] == "DONE"]
-    assert done, "DONE receipt が存在する"
-    change = done[-1]["target"]
-    assert change["path"] == str(target)
-    assert change["branch"] == "feat/recorded"
-    assert change["action"] == "create"
-
-
-def test_SI_FLW_059_default_table_still_hides_worktree(repository):
-    """注入しなければ公開経路からは到達できないこと（出荷面は変わっていない）。"""
-    from flowlib import cli
-
-    repo, _ = repository
-    buffer = io.StringIO()
-    with contextlib.redirect_stdout(buffer):
-        cli.main(["worktree", "audit", "--repo", str(repo), "--format", "json"])
-    assert json.loads(buffer.getvalue())["code"] == "UNSUPPORTED"
-
-
-def test_SI_FLW_063_approval_source_matches_the_actual_mode(repository):
-    """receipt が実際に使った承認モードを名乗ること（`SI-FLW-063`（RSK-204 / OPS-303））。
-
-    以前は無条件に `signed-capability` を名乗り、同じ result の
-    `data.approval_mode: plan-digest` と矛盾していた。承認強度を強く見せる危険側の誤り。
-    """
-    repo, root = repository
-    base = ["worktree", "create", "--repo", str(repo), "--path", str(root / "src"),
-            "--branch", "feat/src", "--worktree-root", str(root)]
-    plan_result, _ = _dispatch(*base)
-    applied, _ = _dispatch(*base, "--apply", "--confirm", plan_result["operation_id"])
-    assert applied["code"] == "DONE", applied["summary"]
-    assert applied["data"]["approval_mode"] == "plan-digest"
-    assert applied["approval"]["source"] == applied["data"]["approval_mode"]
-
-
-def test_SI_FLW_063_recovery_path_survives_a_failing_quarantine_append(repository):
-    """復旧経路が失敗しても apply() から例外を出さないこと（`SI-FLW-063`（DIN-101 / RSK-202））。
-
-    receipt log が読めない状況では QUARANTINED の追記も同じ例外で落ちる。
-    以前は `try/finally` だけだったため例外が apply() を脱出し、副作用適用済みなのに
-    PARTIAL を返せなかった。
-    """
-    repo, root = repository
-    create = W.plan(repo, action="create", path=root / "recov", branch="feat/recov",
-                    worktree_root=root)
-    original = W._ReceiptLog.append
-
-    def always_broken(self, record):
-        state = record.get("state")
-        if state == "PENDING":
-            return original(self, record)
-        raise ValueError(f"receipt log unreadable at {state}")
-
-    W._ReceiptLog.append = always_broken
-    try:
-        result = W.apply(create, confirm=create.operation_id)
-    finally:
-        W._ReceiptLog.append = original
-
-    assert (root / "recov").is_dir(), "副作用は起きている"
-    assert result.code == "PARTIAL", f"例外を脱出させず判定を返すこと: {result.summary}"
-    assert "quarantine receipt も記録できない" in result.summary
-
-
-def test_SI_FLW_065_every_published_operation_renders_in_the_default_format(repository):
-    """公開経路の全 operation が既定 renderer で描画できること。
-
-    `--format json` だけを検査していると、result 契約に従わない `next_actions` を
-    入れても通ってしまう。既定形式は利用者が実際に見る出力である。
-    """
-    from flowlib import cli
-
-    repo, root = repository
-    table = {**cli._HANDLERS, **cli._GATED_HANDLERS}
-    outside = root / "renderable"
-    git(repo, "worktree", "add", "-b", "feat/renderable", str(outside))
-    plan_argv = ["worktree", "create", "--repo", str(repo), "--path", str(root / "planned"),
-                 "--branch", "feat/planned", "--worktree-root", str(root)]
-    try:
-        cases = (["repo", "inspect", "--repo", str(repo)],
-                 ["git", "status", "--repo", str(repo)],
-                 ["git", "diff-summary", "--repo", str(repo)],
-                 ["worktree", "audit", "--repo", str(repo)],   # external 検出つき（BLOCKED）
-                 plan_argv)                                    # write の plan は副作用なし
-        for argv in cases:
-            buffer = io.StringIO()
-            with contextlib.redirect_stdout(buffer):
-                cli.main(argv, handlers=table)      # 例外を投げないこと自体が検査
-            assert buffer.getvalue().strip(), argv
-    finally:
-        git(repo, "worktree", "remove", "--force", str(outside))
-
-
-def test_SI_FLW_065_audit_next_action_follows_the_result_contract(repository):
-    """外部変更を検出したときの result が契約の形で描画できること。
-
-    `SI-FLW-065` の欠陥は「next_actions に契約外の dict を入れて既定 renderer が
-    落ちる」であった。現在この経路は `human-stop` で空 NEXT を返すため、
-    NEXT の形の検査だけでは空振りする。**既定 renderer を実際に通す**ことと、
-    NEXT が出る場合に契約の形であることの両方を押さえる。
-    """
-    from flowlib import cli
-
-    repo, root = repository
-    outside = root / "contract"
-    git(repo, "worktree", "add", "-b", "feat/contract", str(outside))
-    try:
-        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
-        assert result["code"] == "BLOCKED"
-        for action in result["next_actions"]:
-            assert set(action) == {"domain", "action", "args"}, action
-
-        # 既定形式（compact）でも同じ経路を通す。audit は read-only なので
-        # 二重実行しても副作用が無い。
-        buffer = io.StringIO()
-        with contextlib.redirect_stdout(buffer):
-            cli.main(["worktree", "audit", "--repo", str(repo)],
-                     handlers={**cli._HANDLERS, **cli._GATED_HANDLERS})
-        rendered = buffer.getvalue()
-        assert "BLOCKED" in rendered
-        assert "cause=quarantined" in rendered, "quarantine 接続が既定出力から読めること"
-        assert "quarantine=worktree-unresolved" in rendered, "解除区分が既定出力から読めること"
-    finally:
-        git(repo, "worktree", "remove", "--force", str(outside))
-
-
-# --- FLW-REV-018: audit の ground truth と分類の健全性 ------------------------
-
-
-def _receipt_dir(repo):
-    return repo / ".git" / "bitz-flow-v2" / "receipts"
-
-
-def _create_managed_worktree(repo, root, name):
-    """公開経路で worktree を1つ作り、その path を返す。"""
-    target = root / name
-    base = ["worktree", "create", "--repo", str(repo), "--path", str(target),
-            "--branch", f"feat/{name}", "--worktree-root", str(root)]
-    plan_result, _ = _dispatch(*base)
-    applied, _ = _dispatch(*base, "--apply", "--confirm", plan_result["operation_id"])
-    assert applied["code"] == "DONE", applied["summary"]
-    return target
-
-
-def test_SYN_001_forged_receipt_cannot_launder_an_external_worktree(repository):
-    """陽性対照 — 手書き receipt 1件で外部 worktree を managed に洗浄できないこと。
-
-    従来は `record_digest` を誰も検証しておらず、receipt を1件置くだけで
-    audit の検出を無効化できた（独立レビュア2名が別経路で実測）。
-    """
-    repo, root = repository
-    outside = root / "forged"
-    git(repo, "worktree", "add", "-b", "feat/forged", str(outside))
-    try:
-        receipts = _receipt_dir(repo)
-        receipts.mkdir(parents=True, exist_ok=True)
-        # digest も chain も持たない、それらしい receipt を置く
-        forged = {"record": {"sequence": 1, "previous_record_digest": None,
-                             "state": "DONE", "operation_id": "forged",
-                             "target": {"action": "create", "path": str(outside)}},
-                  "record_digest": "sha256:" + "0" * 64}
-        (receipts / "000000000001.json").write_text(json.dumps(forged), encoding="utf-8")
-
-        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
-        assert result["code"] == "INDETERMINATE", result["summary"]
-        assert result["data"]["recovery_class"] == "human-stop"
-        assert not any(row.get("managed") for row in result["data"]["items"])
-    finally:
-        git(repo, "worktree", "remove", "--force", str(outside))
-
-
-def test_SYN_001_a_missing_receipt_is_detected_instead_of_silently_dropped(repository):
-    """陽性対照 — receipt が1件欠けたら照合不能として扱うこと。
-
-    従来は欠落に気づかず、正規の worktree が「外部起因」へ誤分類された。
-    """
-    repo, root = repository
-    _create_managed_worktree(repo, root, "dropped")
-    entries = sorted(_receipt_dir(repo).glob("*.json"))
-    assert len(entries) >= 2, "create は複数 receipt を書く"
-    entries[0].unlink()
-
-    result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
-    assert result["code"] == "INDETERMINATE", result["summary"]
-    assert "連番" in result["data"]["required_human_input"]
-
-
-def test_SYN_001_an_intact_chain_is_accepted(repository):
-    """陰性対照 — 無傷の chain は照合成立とすること（常時 INDETERMINATE にしない）。"""
-    repo, root = repository
-    target = _create_managed_worktree(repo, root, "intact")
-    result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
-    assert result["code"] == "OK", result["summary"]
-    rows = {row["path"]: row for row in result["data"]["items"]}
-    assert rows[str(target)]["managed"] is True
-
-
-def test_SYN_002_external_deletion_of_a_managed_worktree_is_detected(repository):
-    """陽性対照 — managed worktree の実体が外部から消えたら検出すること。
-
-    従来は registry → receipt の片方向しか見ておらず、`OK` を返していた。
-    """
-    repo, root = repository
-    target = _create_managed_worktree(repo, root, "vanished")
-    shutil.rmtree(target)
-
-    result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
-    assert result["code"] == "BLOCKED", result["summary"]
-    rows = {row["path"]: row for row in result["data"]["items"]}
-    assert rows[str(target)]["divergence"] == "directory-missing"
-    targets = {t["path"]: t for t in result["data"]["quarantine"]["targets"]}
-    assert str(target) in targets
-    # managed worktree なので intent（receipt）はあるが、ディレクトリが外部から
-    # 消えているため postcondition が不一致で unresolved になる。
-    assert targets[str(target)]["release_class"] == "worktree-unresolved"
-    assert result["data"]["quarantine"]["binding_findings"]
-
-
-def test_SYN_002_head_movement_is_reported_but_not_a_violation(repository):
-    """陰性対照 — managed worktree での通常の作業（HEAD 前進）を違反にしないこと。
-
-    出口条件6は「worktree の生成・消失・binding 不整合」に限る（裁定 2026-08-16 案1）。
-    任意のコミットの正当性は判定しない。
-    """
-    repo, root = repository
-    target = _create_managed_worktree(repo, root, "working")
-    (target / "note.txt").write_text("work", encoding="utf-8")
-    git(target, "add", "note.txt")
-    git(target, "-c", "user.email=t@e", "-c", "user.name=t", "commit", "-m", "feat: work")
-
-    result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
-    assert result["code"] == "OK", result["summary"]
-    rows = {row["path"]: row for row in result["data"]["items"]}
-    assert rows[str(target)]["head_changed"] is True, "事実としては報告すること"
-    assert rows[str(target)]["divergence"] == "", "違反にはしないこと"
-
-
-def test_SYN_003_a_receipt_store_that_is_not_a_directory_is_indeterminate(repository):
-    """陽性対照 — store がディレクトリでない場合を「1件も無い」と同一視しないこと。
-
-    同一視すると全 worktree が外部起因に見え、`BLOCKED` を偽って立てる。
-    """
-    repo, root = repository
-    outside = root / "store-broken"
-    git(repo, "worktree", "add", "-b", "feat/store-broken", str(outside))
-    try:
-        receipts = _receipt_dir(repo)
-        receipts.parent.mkdir(parents=True, exist_ok=True)
-        receipts.write_text("not a directory", encoding="utf-8")
-
-        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
-        assert result["code"] == "INDETERMINATE", result["summary"]
-        assert "ディレクトリではない" in result["data"]["required_human_input"]
-    finally:
-        git(repo, "worktree", "remove", "--force", str(outside))
-
-
-def test_SYN_004_release_class_is_computed_from_the_survey(repository):
-    """解除区分が固定リテラルではなく観測から計算されていること。
-
-    従来は全フィールド固定の evidence を渡しており、分類ではなく表示だった。
-    """
-    from flowlib import worktree_cleanup as CL
-
-    repo, root = repository
-    outside = root / "computed"
-    git(repo, "worktree", "add", "-b", "feat/computed", str(outside))
-    try:
-        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
-        assert result["code"] == "BLOCKED"
-        targets = result["data"]["quarantine"]["targets"]
-        assert any(t["release_class"] == "worktree-unresolved" for t in targets)
-        # 分類器が入力に反応することを、同じ関数へ別の証跡を与えて示す
-        assert CL.classify_quarantine(
-            CL.QuarantineEvidence(True, ("git-worktree-add",), True, 1, True),
-            total_mutating_steps=1) == "worktree-confirmed-done"
-    finally:
-        git(repo, "worktree", "remove", "--force", str(outside))
-
-
-def test_FLW_TSK_098_classify_quarantine_target_reaches_all_four_classes():
-    """陽性対照 — target ごとの実観測入力で§6の4区分すべてへ実際に到達すること。
-
-    以前の `_op_worktree` は `instance_nonce_matches=False` と
-    `all_postconditions_match=False` を固定で渡しており、到達可能な像が
-    `worktree-unresolved` の1点へ潰れていた（`FLW-REV-019`）。receipt log の実際の
-    語彙（`PENDING` / `MUTATING` / `DONE` / `QUARANTINED`）に基づく現実的な記録形で
-    4区分すべてに届くことを示す。
-    """
-    from flowlib import worktree_cleanup as CL
-
-    # not-started: intent はある（QUARANTINED で確定終了）が mutation は0件
-    # （最初の mutating step の前に例外で終端した receipt）。
-    not_started = (
-        {"state": "QUARANTINED", "completed_steps": [], "target": {"action": "create", "path": "/x"}},
-    )
-    assert CL.classify_quarantine_target(
-        chain_valid=True, records=not_started, directory_exists=False,
-        registry_exists=False, ref_exists=False, instance_nonce_matches=True,
-    ) == ("worktree-not-started", None)
-
-    # resumable: QUARANTINED で確定終了しているが completed_steps が step列の
-    # 厳密な prefix（discard の3 step のうち1つだけ完了）。
-    resumable = (
-        {"state": "QUARANTINED", "completed_steps": ["create-retention-ref"],
-         "target": {"action": "discard", "path": "/y"}},
-    )
-    assert CL.classify_quarantine_target(
-        chain_valid=True, records=resumable, directory_exists=False,
-        registry_exists=False, ref_exists=False, instance_nonce_matches=True,
-    ) == ("worktree-resumable", None)
-
-    # confirmed-done: create の唯一の step が完了し（DONE）、postcondition（存在側）も一致。
-    confirmed = (
-        {"state": "DONE", "completed_steps": ["git-worktree-add"],
-         "target": {"action": "create", "path": "/z"}},
-    )
-    assert CL.classify_quarantine_target(
-        chain_valid=True, records=confirmed, directory_exists=True,
-        registry_exists=True, ref_exists=True, instance_nonce_matches=True,
-    ) == ("worktree-confirmed-done", None)
-
-    # unresolved: intent すら無い（bitz-flow が一度も触れていない target）。
-    assert CL.classify_quarantine_target(
-        chain_valid=True, records=(), directory_exists=True,
-        registry_exists=True, ref_exists=True, instance_nonce_matches=True,
-    ) == ("worktree-unresolved", None)
-
-
-def test_FLW_TSK_098_fixed_evidence_collapses_to_a_single_class():
-    """陰性対照 — 固定 evidence を渡すと4区分が1点へ潰れることを検出できること。
-
-    このテストは「潰れを検出できる」ことを示す（是正前の実装が実際にこうだった）。
-    """
-    from flowlib import worktree_cleanup as CL
-
-    fixed_records = (
-        {"state": "DONE", "completed_steps": ["git-worktree-add"],
-         "target": {"action": "create", "path": "/p"}},
-    )
-    outcomes = {
-        CL.classify_quarantine_target(
-            chain_valid=True, records=fixed_records, directory_exists=directory_exists,
-            registry_exists=registry_exists, ref_exists=False,
-            instance_nonce_matches=False,  # 固定 False（是正前の実装のバグそのもの）
-        )[0]
-        for directory_exists in (True, False)
-        for registry_exists in (True, False)
-    }
-    assert outcomes == {"worktree-unresolved"}, (
-        "instance_nonce_matches を固定すると常に worktree-unresolved へ潰れる — "
-        "これが是正対象のバグであり、`_classify_divergent_target` は実観測から渡す"
-    )
-
-
-def test_FLW_TSK_098_indeterminate_reasons_are_not_misclassified_as_external(repository):
-    """§7 INDETERMINATE の閉列挙 — 自 operation の中断・store 不読を外部起因と混同しないこと。"""
-    from flowlib import worktree_cleanup as CL
-
-    for state in CL.SELF_OPERATION_IN_PROGRESS_STATES:
-        records = (
-            {"state": state, "completed_steps": [], "target": {"action": "create", "path": "/w"}},
-        )
-        assert CL.classify_quarantine_target(
-            chain_valid=True, records=records, directory_exists=False,
-            registry_exists=False, ref_exists=False, instance_nonce_matches=True,
-        ) == (None, "self-operation-in-progress")
-
-    assert CL.classify_quarantine_target(
-        chain_valid=False, records=(), directory_exists=False,
-        registry_exists=False, ref_exists=False, instance_nonce_matches=False,
-    ) == (None, "receipt-store-unreadable")
-
-    # E2E — 実際に worktree.create の apply を PENDING で止め、audit がその target を
-    # 外部起因の quarantine 区分（unresolved 等）へ誤分類せず INDETERMINATE にすること。
-    repo, root = repository
-    target = root / "interrupted"
-    base = ["worktree", "create", "--repo", str(repo), "--path", str(target),
-            "--branch", "feat/interrupted", "--worktree-root", str(root)]
-    plan_result, _ = _dispatch(*base)
-    receipts_dir = repo / ".git" / "bitz-flow-v2" / "receipts"
-    receipts_dir.mkdir(parents=True, exist_ok=True)
-    pending_record = {
-        "sequence": 1, "previous_record_digest": None, "state": "PENDING",
-        "completed_steps": [], "operation_id": plan_result["operation_id"],
-        "target": {"action": "create", "path": str(target), "branch": "feat/interrupted",
-                   "worktree_root": str(root), "expected_head": None},
-    }
-    digest = R.sha256_of(R.canonical_bytes(pending_record))
-    (receipts_dir / "000000000001.json").write_text(
-        json.dumps({"record": pending_record, "record_digest": digest}), encoding="utf-8"
-    )
-    # git worktree add を直接叩き、registry と receipt が食い違う divergent target を作る
-    # （create は PENDING のまま止まっており、bitz-flow の apply は通していない）。
-    git(repo, "worktree", "add", "-b", "feat/interrupted-outside", str(target))
-    try:
-        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
-        assert result["code"] == "BLOCKED", result["summary"]
-        targets = {t["path"]: t for t in result["data"]["quarantine"]["targets"]}
-        assert targets[str(target)]["release_class"] is None
-        assert targets[str(target)]["undetermined_reason"] == "self-operation-in-progress"
-    finally:
-        git(repo, "worktree", "remove", "--force", str(target))
-
-
-def test_SYN_005_public_result_uses_only_closed_enum_vocabulary(repository):
-    """公開 result が閉集合の外の状態値を載せないこと。
-
-    `ORPHAN` は `branch_audit_state` の値で、`worktree_state` の閉集合
-    （`ABSENT` / `CLEAN` / `DIRTY` / `MISMATCH`）には無い。
-    """
-    repo, root = repository
-    outside = root / "enum"
-    git(repo, "worktree", "add", "-b", "feat/enum", str(outside))
-    try:
-        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
-        payload = json.dumps(result, ensure_ascii=False)
-        assert "ORPHAN" not in payload
-        assert "worktree_state" not in payload
-    finally:
-        git(repo, "worktree", "remove", "--force", str(outside))
-
-
-# === FLW-TSK-100: 非ok result の cause/recovery_class/next_actions 必須化 ======
-
-
-def _assert_non_ok_contract(result: dict) -> None:
-    """`build_result` の非ok契約（cause/recovery_class/next_actions）を検査する。"""
-    assert result["ok"] is False, result
-    data = result["data"]
-    if result["code"] != "APPROVAL_REQUIRED":
-        assert data.get("cause"), result
-    recovery_class = data.get("recovery_class")
-    assert recovery_class in {"retry-read", "reconcile-only", "replan-human", "human-stop"}, result
-    if recovery_class == "human-stop":
-        # 空 NEXT は matrix から導かれた結論であり、required_human_input が伴う。
-        assert result["next_actions"] == [], result
-        assert data.get("required_human_input"), result
-    else:
-        assert result["next_actions"], result
-
-
-def test_FLW_TSK_100_invalid_input_has_the_non_ok_contract(repository):
-    """入力欠落（INVALID_INPUT）。"""
-    repo, root = repository
-    result, _ = _dispatch("worktree", "create", "--repo", str(repo))
-    assert result["code"] == "INVALID_INPUT"
-    _assert_non_ok_contract(result)
-
-
-def test_FLW_TSK_100_plan_conflict_has_the_non_ok_contract(repository):
-    """plan失敗（BLOCKED）— 既存 branch と衝突する create。"""
-    repo, root = repository
-    git(repo, "branch", "feat/taken100")
-    result, _ = _dispatch(
-        "worktree", "create", "--repo", str(repo), "--path", str(root / "taken100"),
-        "--branch", "feat/taken100", "--worktree-root", str(root),
-    )
-    assert result["code"] == "BLOCKED", result["summary"]
-    _assert_non_ok_contract(result)
-
-
-def test_FLW_TSK_100_approval_required_has_the_non_ok_contract(repository):
-    """承認不足（APPROVAL_REQUIRED）— cause 免除でも recovery_class/next_actions は必須。"""
-    repo, root = repository
-    result, _ = _dispatch(
-        "worktree", "create", "--repo", str(repo), "--path", str(root / "approval100"),
-        "--branch", "feat/approval100", "--worktree-root", str(root), "--apply",
-    )
-    assert result["code"] == "APPROVAL_REQUIRED", result["summary"]
-    _assert_non_ok_contract(result)
-
-
-def test_FLW_TSK_100_apply_stale_has_the_non_ok_contract(repository):
-    """apply中の例外系（STALE — confirm 不一致）。"""
-    repo, root = repository
-    _dispatch(
-        "worktree", "create", "--repo", str(repo), "--path", str(root / "stale100"),
-        "--branch", "feat/stale100", "--worktree-root", str(root),
-    )
-    result, _ = _dispatch(
-        "worktree", "create", "--repo", str(repo), "--path", str(root / "stale100"),
-        "--branch", "feat/stale100", "--worktree-root", str(root), "--apply",
-        "--confirm", "sha256:" + "0" * 64,
-    )
-    assert result["code"] == "STALE", result["summary"]
-    _assert_non_ok_contract(result)
-
-
-def test_FLW_TSK_100_apply_exception_has_the_non_ok_contract(repository):
-    """apply中の例外（BLOCKED）— capability-file が読めない。"""
-    repo, root = repository
-    _write_declaration(repo, "signed-capability")
-    _registry_healthy(_common_dir(repo))
-    plan_result, _ = _dispatch(
-        "worktree", "create", "--repo", str(repo), "--path", str(root / "capfail100"),
-        "--branch", "feat/capfail100", "--worktree-root", str(root),
-    )
-    missing_cap = root / "missing-capability.json"
-    result, _ = _dispatch(
-        "worktree", "create", "--repo", str(repo), "--path", str(root / "capfail100"),
-        "--branch", "feat/capfail100", "--worktree-root", str(root), "--apply",
-        "--confirm", plan_result["operation_id"], "--capability-file", str(missing_cap),
-    )
-    assert result["code"] == "BLOCKED", result["summary"]
-    _assert_non_ok_contract(result)
-
-
-def test_FLW_TSK_100_declared_mode_conflict_has_the_non_ok_contract(repository):
-    """承認モード宣言と registry の不整合による BLOCKED。"""
-    repo, root = repository
-    _write_declaration(repo, "signed-capability")  # registry は置かない
-    result, _ = _dispatch(
-        "worktree", "create", "--repo", str(repo), "--path", str(root / "decl100"),
-        "--branch", "feat/decl100", "--worktree-root", str(root),
-    )
-    assert result["code"] == "BLOCKED", result["summary"]
-    _assert_non_ok_contract(result)
-
-
-def test_FLW_TSK_100_audit_indeterminate_has_the_non_ok_contract(repository):
-    """§7 の INDETERMINATE — receipt store がディレクトリでない。"""
-    repo, root = repository
-    outside = root / "store-broken100"
-    git(repo, "worktree", "add", "-b", "feat/store-broken100", str(outside))
-    try:
-        receipts = _receipt_dir(repo)
-        receipts.parent.mkdir(parents=True, exist_ok=True)
-        receipts.write_text("not a directory", encoding="utf-8")
-        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
-        assert result["code"] == "INDETERMINATE", result["summary"]
-        _assert_non_ok_contract(result)
-    finally:
-        git(repo, "worktree", "remove", "--force", str(outside))
-
-
-def test_FLW_TSK_100_audit_quarantine_has_the_non_ok_contract(repository):
-    """quarantine 検出（BLOCKED）。"""
-    repo, root = repository
-    outside = root / "quarantine100"
-    git(repo, "worktree", "add", "-b", "feat/quarantine100", str(outside))
-    try:
-        result, _ = _dispatch("worktree", "audit", "--repo", str(repo))
-        assert result["code"] == "BLOCKED", result["summary"]
-        _assert_non_ok_contract(result)
-    finally:
-        git(repo, "worktree", "remove", "--force", str(outside))
-
-
-def test_FLW_TSK_100_partial_and_unsupported_cause_mapping_reaches_the_recovery_matrix():
-    """table駆動 — PARTIAL/STALE/BLOCKED/UNSUPPORTED の粗い cause が `recovery_for` へ届くこと。
-
-    `RuntimeDecision`（`worktree_runtime.apply` の戻り値）は構造化 cause を持たず
-    summary の自由文しか無いため、CLI 層が `decision.code` から cause を決める
-    （`cli._APPLY_FAILURE_CAUSE`）。PARTIAL/STALE は `recovery_for` の既登録 tuple と
-    一致し reconcile-only/replan-human を引き、未登録の BLOCKED/UNSUPPORTED は
-    fail-closed に human-stop へ倒れる。
-    """
-    from flowlib import cli
-
-    expected = {
-        "PARTIAL": "reconcile-only",
-        "STALE": "replan-human",
-        "BLOCKED": "human-stop",
-        "UNSUPPORTED": "human-stop",
-    }
-    for code, recovery_class in expected.items():
-        cause = cli._APPLY_FAILURE_CAUSE[code]
-        assert worktree_cleanup.recovery_for(code, cause).recovery_class == recovery_class, code

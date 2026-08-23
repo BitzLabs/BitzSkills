@@ -63,11 +63,17 @@ COMPATIBILITY_INPUTS = (
     # signed入力拒否の安全判断が変わるため、旧confirmationを再利用しない（SI-FLW-083）。
     f"{_FLOWLIB}/worktree_contract.py",
     f"{_FLOWLIB}/worktree_approval.py",
+    f"{_FLOWLIB}/worktree_platform.py",
+    f"{_FLOWLIB}/worktree_transaction.py",
+    f"{_FLOWLIB}/worktree_promotion.py",
     f"{_SKILL}/schemas/worktree-v2/contract-bundle-v2.schema.json",
     f"{_SKILL}/schemas/worktree-v2/approval-context-v2.schema.json",
     "tests/test_flow_m2_contract_kernel.py",
     "tests/test_flow_m2_approval.py",
     "tests/test_flow_m2_contract_v2.py",
+    "tests/test_flow_m2_platform_adapter.py",
+    "tests/test_flow_m2_target_transaction.py",
+    "tests/test_flow_m2_promotion.py",
     # 認可核（SYN-008 で追加）
     f"{_FLOWLIB}/worktree_capability.py",
     f"{_FLOWLIB}/guard.py",
@@ -178,7 +184,7 @@ def verify_attempt_chain(ledger: Path) -> list[str]:
         return []
     problems: list[str] = []
     previous_line: str | None = None
-    seen_ids: set[int] = set()
+    seen_ids: set[tuple[str, int]] = set()
     for line_number, line in enumerate(ledger.read_text(encoding="utf-8").splitlines(), start=1):
         if not line.strip():
             continue
@@ -192,9 +198,18 @@ def verify_attempt_chain(ledger: Path) -> list[str]:
         if entry.get("previous_entry_digest") != expected_previous:
             problems.append(f"{line_number}行目: previous_entry_digest が chain と一致しない")
         attempt_id = entry.get("attempt_id")
-        if attempt_id in seen_ids:
-            problems.append(f"{line_number}行目: attempt_id {attempt_id} が重複している")
-        seen_ids.add(attempt_id)
+        epoch_id = entry.get("epoch_id")
+        identity = (str(epoch_id), attempt_id) if isinstance(attempt_id, int) else None
+        # v3.1以前は全runが固定epochを再利用していたため、過去台帳にはrunをまたぐ
+        # 1/2/3の再出現がある。固定legacy epochだけはchain/digestを検査しつつ重複判定から
+        # 除外し、unique epoch導入後のentryにはpair uniquenessを強制する。
+        legacy_epoch = epoch_id == "m2-local-confirmation"
+        if identity is not None and not legacy_epoch and identity in seen_ids:
+            problems.append(
+                f"{line_number}行目: epoch_id/attempt_id {epoch_id}/{attempt_id} が重複している"
+            )
+        if identity is not None and not legacy_epoch:
+            seen_ids.add(identity)
         for field in ("attempt_id", "epoch_id", "lease_id", "fencing_token"):
             if entry.get(field) in (None, ""):
                 problems.append(f"{line_number}行目: {field} が無い")
@@ -711,7 +726,8 @@ def main() -> int:
 
     # 単一 coordinator を run 全体で共有し、platform をまたいで attempt ID を
     # 単調増加させる（`FLW-NFR-011`）。
-    run_coordinator = new_coordinator("m2-local-confirmation")
+    run_epoch = "m2-local-confirmation:" + now.strftime("%Y%m%dT%H%M%S.%fZ")
+    run_coordinator = new_coordinator(run_epoch)
     records = []
     for platform in PLATFORMS:
         # Antigravity の headless project は caller cwd を引き継がないため絶対 path を使う。

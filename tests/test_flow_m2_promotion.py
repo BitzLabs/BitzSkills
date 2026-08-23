@@ -48,6 +48,26 @@ def test_normal_promotion_publishes_one_complete_current_pointer(tmp_path):
     assert current == pointer
 
 
+def test_active_marker_registration_rechecks_current_bundle_under_promotion_lock(tmp_path):
+    pointer = promote(tmp_path)
+    with pytest.raises(P.PromotionError) as caught:
+        P.register_active_operation(
+            tmp_path, operation_id=OPERATION, bundle_digest=DIGEST, verify_current=True,
+        )
+    assert caught.value.code == "STALE"
+    active = tmp_path / P.PROMOTION_RELATIVE_PATH / "active"
+    assert not active.exists() or not list(active.iterdir())
+
+    P.register_active_operation(
+        tmp_path, operation_id=OPERATION,
+        bundle_digest=pointer["bundle_digest"], verify_current=True,
+    )
+    P.abort_active_operation(
+        tmp_path, operation_id=OPERATION, bundle_digest=pointer["bundle_digest"],
+    )
+    assert not list(active.iterdir())
+
+
 def test_active_operation_blocks_promotion_under_same_lock(tmp_path):
     P.register_active_operation(tmp_path, operation_id=OPERATION, bundle_digest=DIGEST)
     with pytest.raises(P.PromotionError) as caught:

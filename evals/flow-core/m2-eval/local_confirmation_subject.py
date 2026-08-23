@@ -23,6 +23,11 @@ FILES = (
     "tests/test_flow_m2_cleanup.py",
     "tests/test_flow_m2_remote_delete.py",
     "tests/test_flow_m2_runtime.py",
+    "tests/test_flow_m2_contract_kernel.py",
+    "tests/test_flow_m2_approval.py",
+    "tests/test_flow_m2_platform_adapter.py",
+    "tests/test_flow_m2_target_transaction.py",
+    "tests/test_flow_m2_promotion.py",
 )
 
 #: 実Git worktree副作用を観測する実動E2Eファイル（runtime check の母数はここから導出する）。

@@ -116,7 +116,7 @@ result schema の operation 名一意性を満たすためである。
 | guard target 種別 | `guard_identity_kind` | 種別 | `index, local-ref, remote-tracking-ref, fetch-head, remote-ref, worktree-dir, worktree-registry` |
 | qualification trial 種別 | `trial_kind` | 種別（**規則の反例**） | `Q-NORMAL, Q-REJECT, Q-CORRUPT` |
 | quarantine 解除区分 | `release_class` | 分類 | `worktree-not-started, worktree-resumable, worktree-confirmed-done, worktree-unresolved` |
-| 診断 cause | `cause` | 分類 | `not-repository, invalid-ref, invalid-path, dirty, detached-head, no-upstream, non-fast-forward, conflict, timeout, command-unavailable, permission-denied, snapshot-mismatch, remote-unavailable, result-indeterminate, quarantined` |
+| 診断 cause | `cause` | 分類 | `not-repository, invalid-ref, invalid-path, dirty, detached-head, no-upstream, non-fast-forward, conflict, timeout, command-unavailable, permission-denied, snapshot-mismatch, remote-unavailable, result-indeterminate, approval-expired, unsupported-approval-mode, unsupported-filesystem, quarantined` |
 
 三者照合テスト（下記）の対象は**本表の全 namespace** とする。
 

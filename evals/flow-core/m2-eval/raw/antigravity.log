@@ -1,15 +1,13 @@
 [REDACTED:token:len=44:sha256:69e79a8]
-[REDACTED:token:len=1259:sha256:e157977]
-[REDACTED:token:len=151:sha256:d1a95de]
-[REDACTED:token:len=182:sha256:556ca63]
-[REDACTED:token:len=305:sha256:8cde7f3]
-[REDACTED:token:len=242:sha256:7e161bf] [REDACTED:absolute-path:len=88:sha256:7b80d66] --repo [REDACTED:absolute-path:len=39:sha256:b3a192c]
-[REDACTED:token:len=270:sha256:0ca6a0b] [REDACTED:absolute-path:len=88:sha256:7b80d66] --repo [REDACTED:absolute-path:len=67:sha256:2261708] tests=206 [REDACTED:token:len=86:sha256:78c5ea3] runtime_checks=69/69 hazards=0 residuals=0\r\n"}}}
-[REDACTED:token:len=302:sha256:1edbd5a]
-[REDACTED:token:len=186:sha256:2cb665f]
-[REDACTED:token:len=190:sha256:5b34e1e] tests=206 test_id_digest=sha256:ffe7b38d"}}
-[REDACTED:token:len=200:sha256:ecea6ad]
-[REDACTED:token:len=199:sha256:1ebac9f] runtime_checks=69/69 hazards=0 residuals=0"}}
-[REDACTED:token:len=329:sha256:e4d6ed6]
-[REDACTED:token:len=136:sha256:bf58a53] tests=206 [REDACTED:token:len=86:sha256:78c5ea3] runtime_checks=69/69 hazards=0 residuals=0\n","duration_seconds":25.126395891,"num_turns":1,"usage":{"input_tokens":19351,"output_tokens":812,"thinking_tokens":590,"cache_read_tokens":48803,"total_tokens":20163}}}
+[REDACTED:token:len=1259:sha256:184e718]
+[REDACTED:token:len=151:sha256:7297777]
+[REDACTED:token:len=182:sha256:13ec2e8]
+[REDACTED:token:len=302:sha256:94446d4]
+[REDACTED:token:len=242:sha256:e1bd1e8] [REDACTED:absolute-path:len=88:sha256:7b80d66] --repo [REDACTED:absolute-path:len=39:sha256:b3a192c]
+[REDACTED:token:len=271:sha256:a00b16f] [REDACTED:absolute-path:len=88:sha256:7b80d66] --repo [REDACTED:absolute-path:len=67:sha256:2261708] tests=277 [REDACTED:token:len=86:sha256:70d36d8] runtime_checks=21/21 hazards=0 residuals=0\r\n"}}}
+[REDACTED:token:len=190:sha256:9319dd5] tests=2"}}
+[REDACTED:token:len=172:sha256:a68246a] test_id_digest=sha256:03e468b5c14"}}
+[REDACTED:token:len=223:sha256:e73616a] runtime_checks=21/21 hazards=0 residuals=0"}}
+[REDACTED:token:len=322:sha256:a83cd9b]
+[REDACTED:token:len=136:sha256:cbe2121] tests=277 [REDACTED:token:len=86:sha256:70d36d8] runtime_checks=21/21 hazards=0 residuals=0\n","duration_seconds":18.832838051,"num_turns":1,"usage":{"input_tokens":24576,"output_tokens":666,"thinking_tokens":446,"cache_read_tokens":20318,"total_tokens":25242}}}
 warning: --mode plan has no effect while slash command expansion is disabled.

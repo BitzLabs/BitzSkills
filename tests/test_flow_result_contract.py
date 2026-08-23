@@ -110,6 +110,22 @@ def test_valid_non_ok_result_with_populated_next_actions_succeeds():
     assert result["next_actions"] == [{"domain": "worktree", "action": "create", "args": {}}]
 
 
+@pytest.mark.parametrize(
+    "code,cause", [
+        ("STALE", "approval-expired"),
+        ("UNSUPPORTED", "unsupported-approval-mode"),
+        ("UNSUPPORTED", "unsupported-filesystem"),
+    ],
+)
+def test_m2_plan_digest_failure_causes_are_closed_contract_values(code, cause):
+    result = R.build_result(**_kwargs(
+        code=code,
+        data={"cause": cause, "recovery_class": "replan-human"},
+        next_actions=[R.next_action("worktree", "create")],
+    ))
+    assert result["data"]["cause"] == cause
+
+
 def test_approval_required_is_exempt_from_the_cause_requirement():
     """`APPROVAL_REQUIRED` は診断された失敗ではなく通常の write フロー中断点。
 

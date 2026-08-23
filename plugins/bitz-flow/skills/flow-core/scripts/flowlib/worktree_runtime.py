@@ -1,63 +1,91 @@
-"""M2 worktree operationの実動plan/apply adapter。
+"""M2 Local Safety Profile の plan/apply integration boundary。
 
-公開dispatcherからのみ利用し、全mutationを単回Ed25519 capability、永続nonce、
-append-only receipt chainの内側で実行する。remote writeは扱わない。
+承認は plan-digest のみに限定し、旧 signed-capability 入力は即時拒否する。
+write-capable Git child は :class:`MutationCoordinator` だけが起動し、永続状態は
+``TargetTransaction`` と promotion barrier の authority 経由で更新する。
 """
 
 from __future__ import annotations
 
 import base64
 import dataclasses
-import itertools
 import json
 import os
 import shutil
 import subprocess
 import tempfile
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable, Mapping
 
 from . import guard, result as R
 from . import worktree_capability as C
+from . import worktree_approval as A
+from . import worktree_platform as PF
+from . import worktree_promotion as P
+from . import worktree_transaction as T
+from .worktree_contract import (
+    CONTRACT_VERSION, ContractError, canonical_json_bytes, native_component_from_posix,
+    sha256_digest,
+)
 
 
-WRITE_ACTIONS = frozenset({"create", "resume", "finish", "discard"})
+@dataclasses.dataclass(frozen=True)
+class RepositorySnapshot:
+    head_oid: str
+    index_digest: str
+    worktree_digest: str
+    worktree_list_digest: str
+
+    @property
+    def digest(self) -> str:
+        return sha256_digest(canonical_json_bytes(dataclasses.asdict(self)))
+
+
+class RepositoryObserver:
+    """Fixed, machine-readable, read-only Git observation boundary."""
+
+    _COMMANDS = {
+        "head": ("rev-parse", "--verify", "HEAD"),
+        "index": ("diff", "--cached", "--binary", "--no-ext-diff"),
+        "worktree": ("status", "--porcelain=v2", "-z", "--untracked-files=all"),
+        "worktree-list": ("worktree", "list", "--porcelain", "-z"),
+        "approval-head": ("ls-tree", "-r", "--name-only", "HEAD", "--", ".bitz-flow/approval-mode.json"),
+        "approval-index": ("diff", "--cached", "--name-only", "--", ".bitz-flow/approval-mode.json"),
+    }
+
+    def __init__(self, repo: str | Path) -> None:
+        self.repo = Path(repo).resolve(strict=True)
+
+    def run(self, observation: str) -> bytes:
+        args = self._COMMANDS.get(observation)
+        if args is None:
+            raise WorktreeRuntimeError("unknown or write-capable repository observation")
+        environment = os.environ.copy()
+        environment["GIT_OPTIONAL_LOCKS"] = "0"
+        proc = subprocess.run(
+            ["git", "-c", "color.ui=false", "-c", "core.pager=cat", *args],
+            cwd=self.repo, env=environment, capture_output=True, check=False,
+        )
+        if proc.returncode != 0:
+            raise WorktreeRuntimeError(f"repository observation failed: {observation}")
+        return proc.stdout
+
+    def snapshot(self) -> RepositorySnapshot:
+        head = self.run("head").decode("ascii").strip()
+        return RepositorySnapshot(
+            head,
+            sha256_digest(self.run("index")),
+            sha256_digest(self.run("worktree")),
+            sha256_digest(self.run("worktree-list")),
+        )
+
+
+WRITE_ACTIONS = frozenset({"create", "resume"})
 MUTATING_STEPS = {
     "create": ("git-worktree-add",),
     "resume": ("publish-resume-receipt",),
-    "finish": ("git-worktree-remove", "delete-local-branch"),
-    "discard": ("create-retention-ref", "git-worktree-remove", "delete-local-branch"),
 }
-
-# `TargetGuardManager` は runtime 内で共有し、同一 process の複数 apply を同じ
-# canonical target 集合で直列化する。process 間 coordinator と crash 後の
-# quarantine 復旧は別の実装単位で永続化する。
-_TARGET_GUARDS = guard.TargetGuardManager()
-_FENCING_TOKENS = itertools.count(1)
-
-
-def _next_fencing_token(_canonical_key: str) -> int:
-    return next(_FENCING_TOKENS)
-
-
-def _targets_for_apply(plan_value: "RuntimePlan") -> tuple[guard.Target, ...]:
-    """apply の全 mutation target を canonical 昇順で導出する。
-
-    create の registry/worktree はまだ存在しないため binding の実在照合だけを
-    省く。opaque worktree ID は registry entry 名から導出できるため、index を
-    含む4 targetの集合自体は plan 時点で固定できる。
-    """
-    return guard.worktree_guard_targets(
-        common_dir=plan_value.common_dir,
-        worktree_root=plan_value.worktree_root,
-        worktree_path=plan_value.path,
-        registry_entry=plan_value.registry_entry,
-        local_ref=plan_value.branch,
-        case_sensitive=plan_value.context.case_sensitivity,
-        require_binding=plan_value.action != "create",
-    )
-
 
 @dataclasses.dataclass(frozen=True)
 class RuntimePlan:
@@ -71,7 +99,10 @@ class RuntimePlan:
     default_branch: str
     expected_head: str | None
     registry_entry: str
-    context: C.WorktreeApprovalContext
+    context: A.ApprovalContext
+    repository_snapshot: RepositorySnapshot
+    platform_evidence: PF.PlatformEvidence
+    bundle_digest: str
     snapshot: str
     operation_id: str
     effects: tuple[str, ...]
@@ -84,6 +115,7 @@ class RuntimeDecision:
     completed_steps: tuple[str, ...] = ()
     remaining_steps: tuple[str, ...] = ()
     evidence: tuple[str, ...] = ()
+    cause: str | None = None
 
 
 class WorktreeRuntimeError(ValueError):
@@ -96,6 +128,15 @@ class WorktreeRuntimeError(ValueError):
 
 
 def _git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+    read_only = (
+        bool(args)
+        and (
+            args[0] in {"rev-parse", "status", "merge-base"}
+            or (args[0] == "worktree" and len(args) > 1 and args[1] == "list")
+        )
+    )
+    if not read_only:
+        raise WorktreeRuntimeError("unknown or write-capable Git command")
     proc = subprocess.run(
         ["git", "-c", "color.ui=false", "-c", "core.pager=cat", *args],
         cwd=repo, capture_output=True, text=True, check=False,
@@ -138,13 +179,48 @@ def _registry_for(common: Path, path: Path) -> Path:
     return common / "worktrees" / path.name
 
 
+def _repository_identity(common: Path) -> str:
+    stat = common.stat()
+    return sha256_digest(canonical_json_bytes({
+        "common_dir": str(common), "device": stat.st_dev, "inode": stat.st_ino,
+    }))
+
+
+def _current_bundle_digest(common: Path) -> str:
+    current = common / P.PROMOTION_RELATIVE_PATH / "current.json"
+    try:
+        value = json.loads(current.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise WorktreeRuntimeError("active contract bundle is unavailable") from exc
+    if value.get("state") != "ACTIVE":
+        raise WorktreeRuntimeError("active contract bundle is unavailable")
+    digest = value.get("bundle_digest")
+    try:
+        from .worktree_contract import validate_digest
+        return validate_digest(digest)
+    except ContractError as exc:
+        raise WorktreeRuntimeError("active contract bundle digest is invalid") from exc
+
+
+def _approval_expiry(value: datetime | None) -> str:
+    expiry = value or (datetime.now(timezone.utc) + timedelta(minutes=10))
+    if expiry.tzinfo is None or expiry.utcoffset() is None:
+        raise WorktreeRuntimeError("approval expiry must include a timezone")
+    return expiry.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
 def plan(
     repo: str | Path, *, action: str, path: str | Path, branch: str,
     worktree_root: str | Path, start_point: str = "HEAD", default_branch: str = "main",
+    platform_evidence: PF.PlatformEvidence | None = None,
+    expires_at: datetime | None = None, nonce: str | None = None,
+    bundle_digest: str | None = None,
 ) -> RuntimePlan:
     if action not in WRITE_ACTIONS:
         raise WorktreeRuntimeError(f"unsupported worktree action: {action}")
     root = Path(repo).resolve(strict=True)
+    observer = RepositoryObserver(root)
+    observed = observer.snapshot()
     common = _common_dir(root)
     approved_root = Path(worktree_root).resolve(strict=True)
     target = Path(path)
@@ -176,26 +252,35 @@ def plan(
             raise WorktreeRuntimeError("existing worktree binding cannot be proven")
         nonexistent = None
         guard.verify_worktree_binding(common, registry, target)
-    context = C.WorktreeApprovalContext(
-        worktree_dir_guard_key=dir_target.canonical_key,
-        worktree_registry_guard_key=registry_target.canonical_key,
-        parent_dir_identity=_parent_identity(target),
-        nonexistence_digest=nonexistent,
-        instance_identity_digest=instance,
-        worktree_root_canonical=str(approved_root),
-        case_sensitivity=True,
-        operation_id=f"worktree.{action}",
+    if platform_evidence is None:
+        raise WorktreeRuntimeError("platform evidence is required")
+    if not platform_evidence.supported:
+        raise WorktreeRuntimeError("platform evidence is unsupported")
+    collision = PF.collision_key(
+        parent_identity=sha256_digest(_parent_identity(target).encode("utf-8")),
+        native_component=native_component_from_posix(os.fsencode(target.name)).as_mapping(),
+        case_semantics=platform_evidence.observation.case_semantics,
     )
+    expiry = _approval_expiry(expires_at)
     facts = {
         "action": action, "repo": str(root), "path": str(target), "branch": branch,
         "start_point": start_point, "default_branch": default_branch,
-        "expected_head": head, "context": dataclasses.asdict(context),
+        "expected_head": head, "repository_snapshot": dataclasses.asdict(observed),
+        "target_collision_key": collision, "expires_at": expiry,
     }
-    snapshot = R.sha256_of(R.canonical_bytes(facts))
-    operation_id = R.sha256_of(R.canonical_bytes(["bitz-flow/worktree-plan/v1", facts]))
+    nonce_value = nonce or sha256_digest(canonical_json_bytes(["bitz-flow/worktree-nonce/v2", facts]))
+    context = A.ApprovalContext(
+        CONTRACT_VERSION, f"worktree.{action}", _repository_identity(common), collision,
+        observed.head_oid, observed.index_digest, observed.worktree_digest,
+        MUTATING_STEPS[action], expiry, nonce_value,
+    )
+    snapshot = observed.digest
+    operation_id = context.operation_id
+    active_bundle = bundle_digest or _current_bundle_digest(common)
     return RuntimePlan(
         action, str(root), str(common), str(approved_root), str(target), branch,
-        start_point, default_branch, head, str(registry), context, snapshot,
+        start_point, default_branch, head, str(registry), context, observed,
+        platform_evidence, active_bundle, snapshot,
         operation_id, MUTATING_STEPS[action],
     )
 
@@ -389,77 +474,6 @@ def load_trusted_keys(common_dir: str | Path) -> dict[str, str]:
     return {str(k): str(v) for k, v in value.items()}
 
 
-def _fsync_dir(path: Path) -> None:
-    """directory entry を永続化する。file の fsync だけでは名前が残らない。"""
-    dir_fd = os.open(path, os.O_RDONLY)
-    try:
-        os.fsync(dir_fd)
-    finally:
-        os.close(dir_fd)
-
-
-class _NonceLedger:
-    def __init__(self, common: Path, nonce: str) -> None:
-        digest = R.sha256_of(nonce.encode())[7:]
-        self.path = common / "bitz-flow-v2" / "nonces" / f"{digest}.json"
-
-    def state(self) -> str:
-        if not self.path.exists():
-            return C.NONCE_UNUSED
-        try:
-            return str(json.loads(self.path.read_text(encoding="utf-8"))["state"])
-        except (OSError, ValueError, KeyError):
-            return C.NONCE_QUARANTINED
-
-    def begin(self, nonce: str, operation_id: str) -> bool:
-        self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-        payload = R.canonical_bytes({"nonce": nonce, "operation_id": operation_id, "state": C.NONCE_USED_PENDING})
-        try:
-            fd = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        except FileExistsError:
-            return False
-        with os.fdopen(fd, "wb") as stream:
-            stream.write(payload); stream.flush(); os.fsync(stream.fileno())
-        # directory entry を fsync しないと、crash 後に nonce file ごと消え得る。
-        # 単回性の担保が receipt log と非対称だった（`FLW-REV-018:SYN-007`）。
-        _fsync_dir(self.path.parent)
-        return True
-
-    def finish(self, nonce: str, operation_id: str, state: str) -> None:
-        payload = R.canonical_bytes({"nonce": nonce, "operation_id": operation_id, "state": state})
-        # temp 名に pid を使うと、pid 名前空間が別のプロセス間で衝突し得る。
-        # 同一 directory 内の一意名を OS に作らせる（`FLW-REV-018:SYN-007`）。
-        fd, temp_name = tempfile.mkstemp(dir=self.path.parent, prefix=".nonce.", suffix=".tmp")
-        temp = Path(temp_name)
-        try:
-            with os.fdopen(fd, "wb") as stream:
-                stream.write(payload); stream.flush(); os.fsync(stream.fileno())
-            os.chmod(temp, 0o600)
-            os.replace(temp, self.path)
-        except BaseException:
-            temp.unlink(missing_ok=True)
-            raise
-        _fsync_dir(self.path.parent)
-
-
-def receipt_target(plan_value: "RuntimePlan") -> dict:
-    """receipt に載せる「何を変えたか」（`SI-FLW-064`）。
-
-    従来の payload は `operation_id` / `state` / `completed_steps` だけで、
-    **変更対象を一切指していなかった**。そのため
-    `worktree.audit` が operation 外の worktree を区別できず、M2 出口条件
-    「operation 外変更の audit 検出・quarantine 接続」が実装不能だった。
-    事後の監査と復旧に要る最小の観測値だけを載せる。
-    """
-    return {
-        "action": plan_value.action,
-        "path": plan_value.path,
-        "branch": plan_value.branch,
-        "worktree_root": plan_value.worktree_root,
-        "expected_head": plan_value.expected_head,
-    }
-
-
 RECEIPTS_READABLE = "readable"
 RECEIPTS_UNREADABLE = "unreadable"
 
@@ -487,9 +501,8 @@ class ReceiptSurvey:
 def read_receipt_chain(receipts: Path) -> tuple[tuple[dict, ...], str]:
     """receipt chain を**検証しながら**読む。
 
-    書き込み側（`_ReceiptLog._append_locked`）は連番・`record_digest`・
-    `previous_record_digest` を正しく作っているのに、読み出し側がそれを一切
-    検証していなかった。そのため手書き receipt を1件置くだけで audit の判定を
+    旧形式も連番・`record_digest`・`previous_record_digest` を持つため、読み出し時に
+    chain 全体を検証する。手書き receipt を1件置くだけで audit の判定を
     偽装でき、逆に1件の欠落が検出されなかった（`FLW-REV-018:SYN-001`）。
 
     `FLW-DSN-015` は evidence ledger について「未取込 lease、重複 ID、**欠番、
@@ -634,36 +647,107 @@ def reconcile_registry(
     return tuple(rows)
 
 
-class _ReceiptLog:
-    def __init__(self, common: Path) -> None:
-        self.root = common / "bitz-flow-v2" / "receipts"
+def _legacy_approval_input_present(
+    plan_value: RuntimePlan, *, capability: object | None,
+    trusted_keys_for_test: Mapping[str, str] | None,
+) -> bool:
+    """Observe every retired signed-capability signal without consuming its content."""
+    if capability is not None or trusted_keys_for_test is not None:
+        return True
+    repo = Path(plan_value.repo)
+    common = Path(plan_value.common_dir)
+    observer = RepositoryObserver(repo)
+    try:
+        head = observer.run("approval-head")
+        index = observer.run("approval-index")
+        worktree_path = repo / ".bitz-flow" / "approval-mode.json"
+        declaration_present = bool(head.strip() or index.strip() or os.path.lexists(worktree_path))
+        registry_present = os.path.lexists(common / "bitz-flow-v2" / "trusted-worktree-keys.json")
+    except (OSError, WorktreeRuntimeError):
+        return True
+    return A.has_unsupported_approval_input(
+        declaration_present=declaration_present,
+        capability_file_present=capability is not None,
+        trusted_registry_configured=registry_present,
+    )
 
-    def append(self, payload: dict) -> str:
-        self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
-        try:
-            import fcntl
-        except ImportError as exc:
-            raise WorktreeRuntimeError("receipt locking unavailable") from exc
-        lock_path = self.root / ".append.lock"
-        with lock_path.open("a+b") as lock_stream:
-            fcntl.flock(lock_stream.fileno(), fcntl.LOCK_EX)
-            return self._append_locked(payload)
 
-    def _append_locked(self, payload: dict) -> str:
-        entries = sorted(self.root.glob("*.json"))
-        previous = None
-        sequence = len(entries) + 1
-        if entries:
-            previous = json.loads(entries[-1].read_text(encoding="utf-8"))["record_digest"]
-        record = dict(payload, sequence=sequence, previous_record_digest=previous)
-        digest = R.sha256_of(R.canonical_bytes(record))
-        body = R.canonical_bytes({"record": record, "record_digest": digest})
-        path = self.root / f"{sequence:012d}.json"
-        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        with os.fdopen(fd, "wb") as stream:
-            stream.write(body); stream.flush(); os.fsync(stream.fileno())
-        _fsync_dir(self.root)
-        return digest
+def _rederive(plan_value: RuntimePlan) -> RuntimePlan:
+    expires = datetime.fromisoformat(plan_value.context.expires_at.replace("Z", "+00:00"))
+    return plan(
+        plan_value.repo, action=plan_value.action, path=plan_value.path,
+        branch=plan_value.branch, worktree_root=plan_value.worktree_root,
+        start_point=plan_value.start_point, default_branch=plan_value.default_branch,
+        platform_evidence=plan_value.platform_evidence, expires_at=expires,
+        nonce=plan_value.context.nonce,
+    )
+
+
+def _transaction_root(plan_value: RuntimePlan) -> Path:
+    return (
+        Path(plan_value.common_dir) / "bitz-flow-v2" / "transactions"
+        / plan_value.context.target_collision_key[7:]
+    )
+
+
+def _closed_failure(code: str, summary: str, plan_value: RuntimePlan, *,
+                    cause: str | None = None, completed: tuple[str, ...] = (),
+                    evidence: tuple[str, ...] = ()) -> RuntimeDecision:
+    remaining = plan_value.effects[len(completed):]
+    return RuntimeDecision(code, summary, completed, remaining, evidence, cause)
+
+
+class MutationCoordinator:
+    """The only runtime component allowed to launch write-capable Git children."""
+
+    def __init__(self, plan_value: RuntimePlan, transaction: T.TargetTransaction,
+                 lease: T.LeaseContext, *, step_hook: Callable[[str], None] | None = None) -> None:
+        self.plan = plan_value
+        self.transaction = transaction
+        self.lease = lease
+        self.step_hook = step_hook
+        self._mutating = False
+
+    def _recheck(self) -> None:
+        current = _rederive(self.plan)
+        if (
+            current.operation_id != self.plan.operation_id
+            or current.repository_snapshot != self.plan.repository_snapshot
+            or current.bundle_digest != self.plan.bundle_digest
+            or current.context.target_collision_key != self.plan.context.target_collision_key
+        ):
+            raise WorktreeRuntimeError("repository, target, or contract bundle changed after plan")
+
+    def _begin_mutation(self, step: str) -> None:
+        self._recheck()
+        if self.step_hook is not None:
+            self.step_hook(step)
+        self._recheck()
+        if not self._mutating:
+            self.transaction.mark_mutating(self.lease)
+            self._mutating = True
+
+    def run_git(self, step: str, *args: str, cwd: str | Path | None = None) -> None:
+        self._begin_mutation(step)
+        proc = subprocess.run(
+            ["git", "-c", "color.ui=false", "-c", "core.pager=cat", *args],
+            cwd=Path(cwd or self.plan.repo), capture_output=True, text=True, check=False,
+        )
+        if proc.returncode != 0:
+            raise WorktreeRuntimeError(f"git {args[0]} failed")
+
+    def record_only(self, step: str) -> None:
+        self._begin_mutation(step)
+
+
+def _map_transaction_error(exc: T.TransactionError, plan_value: RuntimePlan) -> RuntimeDecision:
+    if exc.code == "STALE":
+        return _closed_failure("STALE", exc.cause, plan_value, cause="snapshot-mismatch")
+    if exc.code == "UNSUPPORTED_FILESYSTEM":
+        return _closed_failure("UNSUPPORTED", exc.cause, plan_value, cause="unsupported-filesystem")
+    if exc.code == "INDETERMINATE":
+        return _closed_failure("INDETERMINATE", exc.cause, plan_value, cause="result-indeterminate")
+    return _closed_failure("BLOCKED", exc.cause, plan_value, cause="timeout")
 
 
 def apply(
@@ -673,179 +757,174 @@ def apply(
     step_hook: Callable[[str], None] | None = None,
     trusted_keys_for_test: Mapping[str, str] | None = None,
 ) -> RuntimeDecision:
-    """承認済み plan を適用する。
+    """Apply one plan-digest operation through promotion and target authorities.
 
-    承認モードは配備が決める（`SI-FLW-061`）。trusted key registry があれば
-    `signed-capability`、無ければ `plan-digest`。registry は**本関数が自ら読む**
-    （`FLW-REV-016:RSK-204`。呼び出し側から鍵を受け取らない）。
-    `trusted_keys_for_test` は fixture 専用の注入口であり、公開経路では使わない。
+    ``capability`` and ``trusted_keys_for_test`` remain signature-compatible only so
+    older callers receive a closed rejection instead of a Python argument error.
+    Their values are never parsed, verified, or downgraded to plan-digest.
     """
-    if confirm != plan_value.operation_id:
-        return RuntimeDecision("STALE", "operation_id mismatch", remaining_steps=plan_value.effects)
+    del backup_receipt  # M2 create/resume has no backup-receipt mode.
+    unsupported = _legacy_approval_input_present(
+        plan_value, capability=capability, trusted_keys_for_test=trusted_keys_for_test,
+    )
+    try:
+        rederived = _rederive(plan_value)
+    except (WorktreeRuntimeError, ContractError, OSError, ValueError):
+        rederived = plan_value
+    transaction = T.TargetTransaction(
+        _transaction_root(plan_value),
+        target_collision_key=plan_value.context.target_collision_key,
+    )
+    existing = transaction.inspect(plan_value.operation_id)
+    nonce_unused = not existing.events and not existing.problems
+    authorization = A.authorize_plan_digest(
+        plan_value.context, confirm=confirm, now=datetime.now(timezone.utc),
+        nonce_unused=nonce_unused, rederived_context=rederived.context,
+        unsupported_approval_input=unsupported,
+    )
+    if authorization.reason_code == A.UNSUPPORTED_APPROVAL_MODE:
+        return _closed_failure(
+            "UNSUPPORTED", "signed-capability approval inputs are not supported in M2",
+            plan_value, cause="unsupported-approval-mode",
+        )
+    if not authorization.allowed:
+        cause = "snapshot-mismatch" if authorization.reason_code in {
+            "CONFIRMATION_MISMATCH", "CONTEXT_STALE", "NONCE_REUSED",
+        } else "approval-expired"
+        return _closed_failure("STALE", authorization.reason_code or "approval rejected",
+                               plan_value, cause=cause)
+    if existing.problems:
+        return _closed_failure(
+            "INDETERMINATE", "; ".join(existing.problems), plan_value,
+            cause="result-indeterminate",
+        )
+    if not plan_value.platform_evidence.supported:
+        return _closed_failure(
+            "UNSUPPORTED", "platform evidence is not supported", plan_value,
+            cause="unsupported-filesystem", evidence=plan_value.platform_evidence.reasons,
+        )
+    if rederived.operation_id != plan_value.operation_id or rederived.bundle_digest != plan_value.bundle_digest:
+        return _closed_failure("STALE", "context changed after plan", plan_value,
+                               cause="snapshot-mismatch")
+
     common = Path(plan_value.common_dir)
-    public_keys: Mapping[str, str] = trusted_keys_for_test or {}
-    if trusted_keys_for_test is None:
-        # 配備意図の宣言（git 追跡下）を鍵の実体（common-dir）から分離した3値判定
-        # （`FLW-DSN-016` §4 `SI-FLW-073`）。宣言が signed-capability なのに registry が
-        # 使えない場合は降格せず停止する。読めないからといって `plan-digest` へ落とすと、
-        # 宣言または common-dir へ書ける主体が承認強度を無言で外せる
-        # （`FLW-REV-018:SYN-008` / `FLW-REV-019:OPS-304`）。
-        decision = resolve_approval_mode(plan_value.repo, common)
-        if decision.mode is None:
-            return RuntimeDecision(
-                "BLOCKED", decision.blocked_reason, remaining_steps=plan_value.effects,
-                evidence=decision.evidence,
-            )
-        if decision.mode == C.MODE_SIGNED_CAPABILITY:
-            public_keys = load_trusted_keys(common)
-    mode = C.MODE_SIGNED_CAPABILITY if public_keys else C.MODE_PLAN_DIGEST
-
-    verifier: C.SignatureVerifier = lambda payload, signature, key_id: False
-    if mode == C.MODE_SIGNED_CAPABILITY:
-        if capability is None:
-            return RuntimeDecision(
-                "BLOCKED", "署名モードでは単回承認 capability が必要",
-                remaining_steps=plan_value.effects,
-            )
-        try:
-            verifier = ed25519_verifier(public_keys)
-        except WorktreeRuntimeError as exc:
-            return RuntimeDecision("UNSUPPORTED", str(exc), remaining_steps=plan_value.effects)
-
-    # nonce はどちらのモードでも operation_id から導出し、承認へ束縛する。
-    nonce = derive_nonce(plan_value.operation_id)
-    if mode == C.MODE_SIGNED_CAPABILITY and capability is not None and capability.nonce != nonce:
-        return RuntimeDecision(
-            "BLOCKED", "capability の nonce が operation_id から導出された値と一致しない",
-            remaining_steps=plan_value.effects,
-        )
-    ledger = _NonceLedger(common, nonce)
-    failure = C.authorize_worktree_write(
-        capability, context=plan_value.context, now=datetime.now(timezone.utc),
-        trusted_key_ids=tuple(public_keys), nonce_state=ledger.state(),
-        verify_signature=verifier, mode=mode,
-    )
-    if failure is not None:
-        return RuntimeDecision(failure.code, failure.reason, remaining_steps=plan_value.effects)
-    try:
-        targets = _targets_for_apply(plan_value)
-    except (guard.CanonicalizationError, OSError, ValueError) as exc:
-        return RuntimeDecision(
-            "BLOCKED", f"target guard を導出できない: {exc}", remaining_steps=plan_value.effects
-        )
-    guard_set, guard_failure = _TARGET_GUARDS.acquire(
-        targets, operation_id=plan_value.operation_id, next_token=_next_fencing_token
-    )
-    if guard_failure is not None or guard_set is None:
-        reason = guard_failure.reason if guard_failure is not None else "target guard を取得できない"
-        return RuntimeDecision("BLOCKED", reason, remaining_steps=plan_value.effects)
-
-    def released(decision: RuntimeDecision) -> RuntimeDecision:
-        _TARGET_GUARDS.release(guard_set)
-        return decision
-
-    if not ledger.begin(nonce, plan_value.operation_id):
-        return released(RuntimeDecision(
-            "BLOCKED", "承認 nonce は消費済み", remaining_steps=plan_value.effects
-        ))
-    receipts = _ReceiptLog(common)
+    marker_registered = False
+    lease: T.LeaseContext | None = None
+    intent_durable = False
     completed: list[str] = []
-    try:
-        receipts.append({"operation_id": plan_value.operation_id, "state": "PENDING",
-                          "completed_steps": [], "target": receipt_target(plan_value)})
-    except (WorktreeRuntimeError, OSError, ValueError, KeyError) as exc:
-        ledger.finish(nonce, plan_value.operation_id, C.NONCE_QUARANTINED)
-        return released(RuntimeDecision("BLOCKED", str(exc), remaining_steps=plan_value.effects))
-    repo, path = Path(plan_value.repo), Path(plan_value.path)
+    terminal_receipt: str | None = None
 
-    def before(step: str) -> None:
-        current_context = plan_value.context
-        if not completed or path.exists():
-            refreshed = plan(
-                repo, action=plan_value.action, path=path, branch=plan_value.branch,
-                worktree_root=plan_value.worktree_root, start_point=plan_value.start_point,
-                default_branch=plan_value.default_branch,
-            )
-            if refreshed.operation_id != plan_value.operation_id:
-                raise WorktreeRuntimeError("worktree state changed after approval")
-            current_context = refreshed.context
-        pending_failure = C.reauthorize_pending_worktree_write(
-            capability, context=current_context, now=datetime.now(timezone.utc),
-            trusted_key_ids=tuple(public_keys), verify_signature=verifier, mode=mode,
-        )
-        if pending_failure is not None:
-            raise WorktreeRuntimeError(pending_failure.reason)
-        for target in targets:
-            target_failure = _TARGET_GUARDS.verify_before_mutation(guard_set, target)
-            if target_failure is not None:
-                raise WorktreeRuntimeError(target_failure.reason)
-        if step_hook is not None:
-            step_hook(step)
-
-    try:
-        if plan_value.action == "create":
-            before("git-worktree-add")
-            _git(repo, "worktree", "add", "-b", plan_value.branch, str(path), plan_value.start_point)
-            completed.append("git-worktree-add")
-            receipts.append({"operation_id": plan_value.operation_id, "state": "MUTATING",
-                          "completed_steps": completed, "target": receipt_target(plan_value)})
-        elif plan_value.action == "resume":
-            before("publish-resume-receipt")
-            guard.verify_worktree_binding(common, Path(plan_value.registry_entry), path)
-            completed.append("publish-resume-receipt")
-            receipts.append({"operation_id": plan_value.operation_id, "state": "MUTATING",
-                          "completed_steps": completed, "target": receipt_target(plan_value)})
-        else:
-            tip = _head(repo, f"refs/heads/{plan_value.branch}")
-            if tip != plan_value.expected_head:
-                raise WorktreeRuntimeError("branch tip changed after plan")
-            dirty = bool(_git(path, "status", "--porcelain").stdout)
-            if dirty and not backup_receipt:
-                raise WorktreeRuntimeError("dirty worktree requires backup receipt")
-            if plan_value.action == "finish":
-                if _git(repo, "merge-base", "--is-ancestor", tip or "", plan_value.default_branch, check=False).returncode != 0:
-                    raise WorktreeRuntimeError("finish requires merged/reachable branch tip")
-            else:
-                before("create-retention-ref")
-                retained = f"refs/bitz-flow/retained/{plan_value.branch.replace('/', '-')}-{(tip or '')[:12]}"
-                _git(repo, "update-ref", retained, tip or "")
-                completed.append("create-retention-ref")
-                receipts.append({"operation_id": plan_value.operation_id, "state": "MUTATING",
-                          "completed_steps": completed, "target": receipt_target(plan_value)})
-            before("git-worktree-remove")
-            remove_args = ["worktree", "remove"] + (["--force"] if plan_value.action == "discard" else []) + [str(path)]
-            _git(repo, *remove_args)
-            completed.append("git-worktree-remove")
-            receipts.append({"operation_id": plan_value.operation_id, "state": "MUTATING",
-                          "completed_steps": completed, "target": receipt_target(plan_value)})
-            before("delete-local-branch")
-            _git(repo, "branch", "-D" if plan_value.action == "discard" else "-d", plan_value.branch)
-            completed.append("delete-local-branch")
-        receipt = receipts.append({"operation_id": plan_value.operation_id, "state": "DONE",
-                          "completed_steps": completed, "target": receipt_target(plan_value)})
-        ledger.finish(nonce, plan_value.operation_id, C.NONCE_USED_DONE)
-        return released(RuntimeDecision(
-            "DONE", f"worktree.{plan_value.action} completed", tuple(completed), (), (receipt,)
-        ))
-    except (WorktreeRuntimeError, OSError, ValueError, KeyError) as exc:
-        # 復旧経路自身も失敗しうる。receipt log が読めない状況では QUARANTINED の追記も
-        # 同じ例外で落ち、`try/finally` だけでは例外が apply() から脱出していた
-        # （`SI-FLW-063`。PR #282 の是正が届いていなかった経路）。
-        # 副作用は既に起きているので、記録に失敗しても判定は返しきる。
-        quarantine_failure = None
+    def quarantined_failure(exc: BaseException) -> RuntimeDecision:
+        nonlocal lease, marker_registered, terminal_receipt
+        if not intent_durable:
+            return _closed_failure("BLOCKED", str(exc), plan_value, cause="snapshot-mismatch")
         try:
-            receipts.append({"operation_id": plan_value.operation_id, "state": "QUARANTINED",
-                          "completed_steps": completed, "target": receipt_target(plan_value)})
-        except (WorktreeRuntimeError, OSError, ValueError, KeyError) as receipt_exc:
-            quarantine_failure = receipt_exc
-        finally:
+            if terminal_receipt is None:
+                if lease is None:
+                    raise WorktreeRuntimeError("target lease ended without a terminal receipt")
+                report = transaction.inspect(plan_value.operation_id)
+                if report.state == "INTENT_DURABLE":
+                    transaction.mark_mutating(lease)
+                elif report.state != "MUTATING":
+                    raise WorktreeRuntimeError(f"cannot quarantine transaction state {report.state}")
+                terminal_receipt = transaction.publish_result(
+                    lease, terminal_state="QUARANTINED",
+                    postcondition_digest=RepositoryObserver(plan_value.repo).snapshot().digest,
+                )
+            if lease is not None:
+                transaction.release(lease)
+                lease = None
+            P.release_active_operation(
+                common, operation_id=plan_value.operation_id,
+                terminal_receipt_digest=terminal_receipt,
+            )
+            marker_registered = False
+        except (T.TransactionError, P.PromotionError, WorktreeRuntimeError, OSError, ValueError):
+            return _closed_failure(
+                "INDETERMINATE", str(exc), plan_value, cause="result-indeterminate",
+                completed=tuple(completed),
+            )
+        return _closed_failure(
+            "INDETERMINATE", str(exc), plan_value, cause="result-indeterminate",
+            completed=tuple(completed), evidence=(terminal_receipt,),
+        )
+
+    try:
+        P.register_active_operation(
+            common, operation_id=plan_value.operation_id,
+            bundle_digest=plan_value.bundle_digest, verify_current=True,
+        )
+        marker_registered = True
+        lease = transaction.acquire(
+            operation_id=plan_value.operation_id, nonce=plan_value.context.nonce,
+            timeout_seconds=0.0,
+        )
+        after_lease = _rederive(plan_value)
+        if (
+            after_lease.operation_id != plan_value.operation_id
+            or after_lease.repository_snapshot != plan_value.repository_snapshot
+            or after_lease.bundle_digest != plan_value.bundle_digest
+        ):
+            raise WorktreeRuntimeError("context changed after target lease")
+        transaction.prepare_intent(
+            lease,
+            planned_effects_digest=sha256_digest(canonical_json_bytes(list(plan_value.effects))),
+            precondition_digest=plan_value.repository_snapshot.digest,
+        )
+        intent_durable = True
+        coordinator = MutationCoordinator(plan_value, transaction, lease, step_hook=step_hook)
+        if plan_value.action == "create":
+            coordinator.run_git(
+                "git-worktree-add", "worktree", "add", "-b", plan_value.branch,
+                plan_value.path, plan_value.start_point,
+            )
+            completed.append("git-worktree-add")
+        elif plan_value.action == "resume":
+            coordinator.record_only("publish-resume-receipt")
+            guard.verify_worktree_binding(common, Path(plan_value.registry_entry), Path(plan_value.path))
+            completed.append("publish-resume-receipt")
+        else:  # defensive: plan() already rejects this closed set violation.
+            raise WorktreeRuntimeError("unsupported M2 mutation action")
+        post = RepositoryObserver(plan_value.repo).snapshot().digest
+        terminal_receipt = transaction.publish_result(
+            lease, terminal_state="DONE", postcondition_digest=post,
+        )
+        transaction.release(lease)
+        lease = None
+        P.release_active_operation(
+            common, operation_id=plan_value.operation_id,
+            terminal_receipt_digest=terminal_receipt,
+        )
+        marker_registered = False
+        return RuntimeDecision(
+            "DONE", f"worktree.{plan_value.action} completed", tuple(completed), (),
+            (terminal_receipt,), None,
+        )
+    except P.PromotionError as exc:
+        if intent_durable:
+            return quarantined_failure(exc)
+        code = "STALE" if exc.code == "STALE" else (
+            "INDETERMINATE" if exc.code == "INDETERMINATE" else "BLOCKED"
+        )
+        return _closed_failure(code, exc.cause, plan_value,
+                               cause="result-indeterminate" if code == "INDETERMINATE" else "snapshot-mismatch")
+    except T.TransactionError as exc:
+        if intent_durable:
+            return quarantined_failure(exc)
+        return _map_transaction_error(exc, plan_value)
+    except (WorktreeRuntimeError, ContractError, OSError, ValueError, KeyError) as exc:
+        return quarantined_failure(exc)
+    finally:
+        if lease is not None:
             try:
-                ledger.finish(nonce, plan_value.operation_id, C.NONCE_QUARANTINED)
-            except (WorktreeRuntimeError, OSError, ValueError, KeyError):
+                transaction.release(lease)
+            except (T.TransactionError, OSError):
                 pass
-        remaining = plan_value.effects[len(completed):]
-        code = "PARTIAL" if completed else "BLOCKED"
-        summary = str(exc)
-        if quarantine_failure is not None:
-            summary = f"{summary}（quarantine receipt も記録できない: {quarantine_failure}）"
-        return released(RuntimeDecision(code, summary, tuple(completed), tuple(remaining)))
+        if marker_registered and not intent_durable:
+            try:
+                P.abort_active_operation(
+                    common, operation_id=plan_value.operation_id,
+                    bundle_digest=plan_value.bundle_digest,
+                )
+            except (P.PromotionError, OSError):
+                pass

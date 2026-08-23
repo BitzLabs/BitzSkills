@@ -117,7 +117,8 @@ mutation の判断に全件確認が必要なのに項目が上限超過した�
 not-repository     invalid-ref        invalid-path       dirty
 detached-head      no-upstream        non-fast-forward   conflict
 timeout            command-unavailable permission-denied snapshot-mismatch
-remote-unavailable result-indeterminate quarantined
+remote-unavailable result-indeterminate approval-expired
+unsupported-approval-mode unsupported-filesystem quarantined
 ```
 
 値の正は `schemas/result-v1.schema.json` の `$defs/cause`（`FLW-DSN-016` §2 が閉集合の唯一の正）。

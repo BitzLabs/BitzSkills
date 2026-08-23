@@ -53,6 +53,9 @@ ALLOWED_CAUSES = frozenset(
         "snapshot-mismatch",
         "remote-unavailable",
         "result-indeterminate",
+        "approval-expired",
+        "unsupported-approval-mode",
+        "unsupported-filesystem",
         # quarantine 接続の語彙。`worktree_cleanup.recovery_for` は
         # ("BLOCKED", "quarantined") → `human-stop` を既に定めていたが、
         # result envelope の cause 語彙に対応する語が無く、公開 audit が

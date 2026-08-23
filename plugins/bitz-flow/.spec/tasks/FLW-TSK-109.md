@@ -1,8 +1,8 @@
 ---
 implements: FLW-NFR-014
 depends_on: [FLW-TSK-107,FLW-TSK-108,FLW-TSK-113]
-boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_runtime.py,plugins/bitz-flow/skills/flow-core/scripts/flowlib/result.py,plugins/bitz-flow/skills/flow-core/schemas/result-v1.schema.json,plugins/bitz-flow/skills/flow-core/references/output-contract.md,tests/test_flow_m2_runtime.py,tests/test_flow_result_contract.py,tests/test_flow_contract_vocabulary.py,plugins/bitz-flow/skills/flow-core/SKILL.md,plugins/bitz-flow/.claude-plugin/plugin.json,plugins/bitz-flow/plugin.json,plugins/bitz-flow/.codex-plugin/plugin.json,.claude-plugin/marketplace.json
-status: pending
+boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_runtime.py,plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_promotion.py,plugins/bitz-flow/skills/flow-core/scripts/flowlib/result.py,plugins/bitz-flow/skills/flow-core/schemas/result-v1.schema.json,plugins/bitz-flow/skills/flow-core/references/output-contract.md,plugins/bitz-flow/skills/flow-core/references/operation-catalog.md,plugins/bitz-flow/.spec/design/FLW-DSN-016.md,tests/test_flow_m2_runtime.py,tests/test_flow_m2_promotion.py,tests/test_flow_result_contract.py,tests/test_flow_contract_vocabulary.py,tests/test_flow_m2_confirmation.py,evals/flow-core/m2-eval/local_confirmation_subject.py,evals/flow-core/m2-eval/run_local_confirmation.py,evals/flow-core/m2-eval/qualification-2026-08-23-flw-tsk-109.json,evals/flow-core/m2-eval/active-local-confirmation.json,evals/flow-core/m2-eval/attempts.jsonl,evals/flow-core/m2-eval/raw/claude.log,evals/flow-core/m2-eval/raw/codex.log,evals/flow-core/m2-eval/raw/antigravity.log,plugins/bitz-flow/skills/flow-core/SKILL.md,plugins/bitz-flow/.claude-plugin/plugin.json,plugins/bitz-flow/plugin.json,plugins/bitz-flow/.codex-plugin/plugin.json,.claude-plugin/marketplace.json
+status: done
 ---
 
 ### plan-digest・TargetTransaction・Git mutationを結線する

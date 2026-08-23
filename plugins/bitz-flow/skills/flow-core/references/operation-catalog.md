@@ -108,26 +108,17 @@ data schema は `schemas/operations/git.diff-summary.schema.json`。
 | `worktree.finish` | destructive | explicit-human | merged worktreeとlocal branch除去 | reconcile-first |
 | `worktree.discard` | destructive | explicit-human | retention ref作成後にworktreeとlocal branch除去 | manual-only |
 
-writeは副作用なしのplanで`operation_id`と`capability_context`、`approval_mode`を返す。
-applyの要求は承認モードで決まる（`SI-FLW-061` / `SI-FLW-073`）。承認モードは
-**配備意図の宣言**（`<repo>/.bitz-flow/approval-mode.json`、git追跡下）と
-**鍵の実体**（Git common-dirの`bitz-flow-v2/trusted-worktree-keys.json`、owner-only）を
-突き合わせた3値で決まり、鍵の実体の存在だけからは推定しない（`FLW-DSN-016` §4）。
+writeは副作用なしのplanでclosed `ApprovalContext`と`operation_id`を返し、applyは
+`--confirm <operation_id>`だけを承認入力として受け付ける。nonce、期限、repository snapshot、
+target collision key、planned effectsをoperation IDへ束縛し、lease取得直後と各Git child起動直前に
+同じcontextを再導出する。
 
-| 宣言 | trusted key registry | 判定 |
-|---|---|---|
-| `signed-capability` | 健全 | `signed-capability`（`--capability-file`も要求） |
-| `signed-capability` | 不在・破損・権限不正・空 | `BLOCKED`（降格しない） |
-| 宣言なし | 任意 | `plan-digest`（既定と同じ入力と`--confirm <operation_id>`のみ） |
-
-nonceはどちらのモードでも`operation_id`から導出する。宣言が`signed-capability`を
-要求する配備でregistryが削除・破損しても、無言で`plan-digest`へは降格せず`apply`が
-`BLOCKED`を返す — registryの**存在**だけでモードを推定すると、registryを削除できる
-主体に対して承認強度を無言で落とせてしまうため（`FLW-REV-019`）。trusted Ed25519
-public keyはregistryからだけ読み、CLI引数で差し替えない。registryはowner-only
-regular fileでなければならない。各mutation直前に署名・期限・scope・identityを
-再検査し、nonceを永続消費する。receiptはcommon-dir配下へhash-chainでfsyncし、部分失敗は
-completed/remaining stepsを返してquarantineする。remote writeはM3まで`UNSUPPORTED`を維持する。
+M2では`signed-capability`を扱わない。HEAD/index/worktreeの承認モード宣言、capability file入力、
+trusted key registryのいずれかを検出した場合、内容を使用せず
+`UNSUPPORTED / unsupported-approval-mode`で即時停止する。旧入力を無視して`plan-digest`へ
+降格してはならない。mutation前に`TargetTransaction`がintentと緊急receiptをdurable公開し、
+write-capable Git childは`MutationCoordinator`だけが起動する。remote writeはM3まで
+`UNSUPPORTED`を維持する。
 
 ### `worktree.audit` — receipt 突合と quarantine 接続
 

@@ -208,10 +208,18 @@ def _promotion_namespace(common_dir: str | Path) -> Path:
 
 
 def register_active_operation(common_dir: str | Path, *, operation_id: str,
-                              bundle_digest: str) -> Path:
+                              bundle_digest: str, verify_current: bool = False) -> Path:
     validate_digest(operation_id); validate_digest(bundle_digest)
     namespace = _promotion_namespace(common_dir); lock = _promotion_lock(namespace)
     try:
+        if verify_current:
+            current_path = namespace / "current.json"
+            try:
+                current = json.loads(current_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                raise PromotionError("INDETERMINATE", "current bundle cannot be verified") from exc
+            if current.get("state") != "ACTIVE" or current.get("bundle_digest") != bundle_digest:
+                raise PromotionError("STALE", "current bundle changed")
         marker = namespace / "active" / f"{operation_id[7:]}.json"
         if marker.exists():
             raise PromotionError("STALE", "active operation marker already exists")
@@ -234,6 +242,25 @@ def release_active_operation(common_dir: str | Path, *, operation_id: str,
         _atomic_json(closed, {"contract_version": CONTRACT_VERSION,
                               "operation_id": operation_id,
                               "terminal_receipt_digest": terminal_receipt_digest})
+        marker.unlink()
+        _fsync_dir(marker.parent)
+    finally:
+        _promotion_unlock(lock)
+
+
+def abort_active_operation(common_dir: str | Path, *, operation_id: str,
+                           bundle_digest: str) -> None:
+    """Remove a marker only when target intent was never made durable."""
+    validate_digest(operation_id); validate_digest(bundle_digest)
+    namespace = _promotion_namespace(common_dir); lock = _promotion_lock(namespace)
+    try:
+        marker = namespace / "active" / f"{operation_id[7:]}.json"
+        try:
+            value = json.loads(marker.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise PromotionError("INDETERMINATE", "active operation marker cannot be aborted") from exc
+        if value.get("operation_id") != operation_id or value.get("bundle_digest") != bundle_digest:
+            raise PromotionError("INDETERMINATE", "active operation marker changed")
         marker.unlink()
         _fsync_dir(marker.parent)
     finally:
