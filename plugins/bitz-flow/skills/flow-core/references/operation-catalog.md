@@ -102,7 +102,10 @@ data schema は `schemas/operations/git.diff-summary.schema.json`。
 
 | operation | class | approval | effects | retry |
 |---|---|---|---|---|
+| `worktree.doctor` | read | none | なし | safe |
 | `worktree.audit` | read | none | なし（判定は write の開始可否を止める） | safe |
+| `worktree.verify-receipt` | read | none | なし | safe |
+| `worktree.reconcile` | local-write | explicit-human | closure event追記とactive marker closureだけ | reconcile-first |
 | `worktree.create` | local-write | explicit-human | branchとworktree作成 | reconcile-first |
 | `worktree.resume` | local-write | explicit-human | resume receipt追記 | reconcile-first |
 | `worktree.finish` | destructive | explicit-human | merged worktreeとlocal branch除去 | reconcile-first |
@@ -153,6 +156,35 @@ receipt chain は**読み出し時に検証する**（連番・`record_digest`�
 （由来判定は receipt に依存し、`git.commit` の公開が前提となるため M3）。
 
 自動修復は行わない。`worktree.audit` は read だが、その判定は write の開始可否を止める。
+
+### M2 operability（未公開）
+
+`worktree doctor` / `audit` / `verify-receipt` / `reconcile` は既存の `worktree <action>` grammarへ
+接続済みだが、M2出口裁定までは gated table に置き、production の公開集合へ入れない。fixture は公開時と
+同じdispatcher経路へ gated tableを注入してE2E検証する。runtime switchや環境変数による先行公開は行わない。
+
+read-only 3操作は実行前後の`bitz-flow-v2` persistent state digestを比較し、不一致を
+`INDETERMINATE / result-indeterminate`へ閉じる。reconcileだけが新しいplan-digestを作り、元operation ID、
+audit digest、人間decision、bundle digest、期限、nonceを新しいoperation IDへ束縛する。applyは同じ入力と
+`--confirm <新operation_id>`を要求し、`RecoveryInspector`と`TargetTransaction`の判定を上書きしない。
+
+4操作のresultは必ず次を持つ。
+
+| field | 値 / 意味 |
+|---|---|
+| `data.result_code` / `data.cause_code` | envelope codeと許可語彙cause。内部exception文をreasonとして出さない |
+| `data.side_effect_state` | `none` / `indeterminate` / `closure-only` |
+| `data.automatic_recovery_allowed` | 常に`false` |
+| `data.operator_action` | `none` / `fix-platform-or-bundle` / `create-reconcile-plan` / `audit-operation` / `manual-inspection` / `confirm-reconcile-plan` |
+| `operation_id` | audit対象または新しいreconcile plan ID |
+| `data.receipt_path` | common-dir相対のterminal receipt参照。存在しなければ`null` |
+| `data.journal_usage` | event / receipt / closure件数と合計byte数 |
+
+`worktree verify-receipt`はchainの連番、digest、token、terminal successorだけを検証し、Git状態から完了を
+推測しない。`worktree doctor`はplatform runtime evidenceの要否、current bundle、minimum-runtime、active
+marker、transaction使用量を診断するが、archive/prune/restoreは行わない。詳細手順は
+`docs/runbooks/m2-worktree-quarantine.md`、受入行とE2E edgeの対応は
+`references/m2-operability-coverage.json`を正とする。
 
 ## M1 で凍結した契約（未公開）
 

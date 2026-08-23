@@ -1,8 +1,8 @@
 ---
 implements: FLW-NFR-014
 depends_on: [FLW-TSK-110,FLW-TSK-113]
-boundary: plugins/bitz-flow/skills/flow-core/references/operation-catalog.md,plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_operability.py,plugins/bitz-flow/skills/flow-core/scripts/flowlib/cli.py,plugins/bitz-flow/docs/runbooks/m2-worktree-quarantine.md,tests/test_flow_m2_operability.py
-status: pending
+boundary: plugins/bitz-flow/skills/flow-core/references/operation-catalog.md,plugins/bitz-flow/skills/flow-core/references/m2-operability-coverage.json,plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_operability.py,plugins/bitz-flow/skills/flow-core/scripts/flowlib/cli.py,plugins/bitz-flow/skills/flow-core/scripts/flowlib/recovery.py,plugins/bitz-flow/docs/runbooks/m2-worktree-quarantine.md,tests/test_flow_m2_operability.py,tests/test_flow_m1_contract_rows.py,tests/test_flow_m2_confirmation.py,evals/flow-core/m2-eval/local_confirmation_subject.py,evals/flow-core/m2-eval/run_local_confirmation.py,evals/flow-core/m2-eval/qualification-2026-08-23-flw-tsk-114.json,evals/flow-core/m2-eval/active-local-confirmation.json,evals/flow-core/m2-eval/attempts.jsonl,evals/flow-core/m2-eval/raw/claude.log,evals/flow-core/m2-eval/raw/codex.log,evals/flow-core/m2-eval/raw/antigravity.log,plugins/bitz-flow/skills/flow-core/SKILL.md,plugins/bitz-flow/.claude-plugin/plugin.json,plugins/bitz-flow/plugin.json,plugins/bitz-flow/.codex-plugin/plugin.json,.claude-plugin/marketplace.json
+status: done
 ---
 
 ### doctor・audit・verify-receipt・reconcileを統合する

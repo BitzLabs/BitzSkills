@@ -1,0 +1,28 @@
+{
+  "contract_version": 1,
+  "acceptance_rows": {
+    "plan-state-change": ["tests/test_flow_m2_runtime.py"],
+    "lock-contention": ["tests/test_flow_m2_target_transaction.py"],
+    "pre-intent-storage": ["tests/test_flow_m2_target_transaction.py"],
+    "post-intent-pre-child-crash": ["tests/test_flow_m2_recovery.py"],
+    "child-unknown": ["tests/test_flow_m2_recovery.py"],
+    "postcondition-pre-terminal": ["tests/test_flow_m2_recovery.py"],
+    "terminal-pre-marker-release": ["tests/test_flow_m2_recovery.py"],
+    "journal-corruption": ["tests/test_flow_m2_recovery.py"],
+    "promotion-failure": ["tests/test_flow_m2_promotion.py"],
+    "readonly-invariance": ["tests/test_flow_m2_operability.py"],
+    "reconcile-retry": ["tests/test_flow_m2_recovery.py"],
+    "unsupported-environment-or-approval": ["tests/test_flow_m2_operability.py"]
+  },
+  "flow_edges": {
+    "plan": ["tests/test_flow_m2_runtime.py"],
+    "apply-start": ["tests/test_flow_m2_runtime.py"],
+    "git-mutation": ["tests/test_flow_m2_runtime.py"],
+    "apply-end": ["tests/test_flow_m2_runtime.py"],
+    "audit": ["tests/test_flow_m2_operability.py"],
+    "verify-receipt": ["tests/test_flow_m2_operability.py"],
+    "reconcile": ["tests/test_flow_m2_operability.py"],
+    "promotion": ["tests/test_flow_m2_promotion.py"],
+    "startup-gate": ["tests/test_flow_m2_promotion.py"]
+  }
+}

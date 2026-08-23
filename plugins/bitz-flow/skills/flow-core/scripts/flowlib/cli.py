@@ -1,7 +1,7 @@
 """単一 dispatcher の CLI 層（FLW-DSN-003 公開入口）。
 
 入力を canonical 化し、adapter から事実を取得し、renderer へ渡す。
-M0 read-onlyとM2 worktreeの署名capability付きplan/applyを扱う。
+M0 read-onlyとM2 worktreeのplan-digest付きplan/applyを扱う。
 
 未対応の domain / action は ``UNSUPPORTED``（exit 8）で停止し、生の ``git`` /
 ``gh`` コマンドを代替案として出力しない（references/operation-catalog.md）。
@@ -18,7 +18,7 @@ from typing import Any, Mapping, Sequence
 
 from . import (
     __version__, git_read, result as R, worktree_capability, worktree_cleanup,
-    worktree_runtime,
+    worktree_operability, worktree_recovery, worktree_runtime,
 )
 
 # 公開 operation の SSOT。ここに無い組み合わせは UNSUPPORTED。
@@ -121,6 +121,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--capability-file", help=f"署名済み単回capability JSON{gated}")
     parser.add_argument("--backup-receipt", action="store_true",
                         help=f"dirty内容を退避済みであることを提示{gated}")
+    parser.add_argument("--operation-id", help=f"audit/reconcile対象のoperation ID{gated}")
+    parser.add_argument("--decision", choices=(
+        "confirmed-complete", "confirmed-incomplete", "quarantine",
+    ), help=f"reconcileで明示する人間判断{gated}")
+    parser.add_argument("--expires-at", help=f"reconcile planのRFC3339 UTC期限{gated}")
+    parser.add_argument("--nonce", help=f"reconcile planの単回nonce{gated}")
+    parser.add_argument("--bundle-digest", help=f"reconcile対象contract bundle digest{gated}")
     return parser
 
 
@@ -421,8 +428,168 @@ def _classify_divergent_target(
     }
 
 
+def _operability_result(root: str, started: str, decision,
+                        *, operation: str) -> tuple[dict, R.CompactView]:
+    data = R.empty_data()
+    data.update({
+        "result_code": decision.code,
+        "cause_code": decision.cause,
+        "side_effect_state": decision.side_effect_state,
+        "automatic_recovery_allowed": False,
+        "operator_action": decision.operator_action,
+        "receipt_path": decision.receipt_path,
+        "journal_usage": decision.journal_usage.as_mapping(),
+        "operability": decision.details,
+    })
+    next_actions: Sequence[dict] = ()
+    if R.CODE_EXIT_CODES[decision.code] != 0:
+        data["cause"] = decision.cause
+        recovery = worktree_cleanup.recovery_for(decision.code, decision.cause)
+        data["recovery_class"] = recovery.recovery_class
+        data["required_human_input"] = decision.operator_action
+    result = R.build_result(
+        operation=operation,
+        code=decision.code,
+        repo=root,
+        tool_version=__version__,
+        started_at=started,
+        finished_at=_now(),
+        summary=decision.summary,
+        snapshot=decision.details.get("persistent_state_digest"),
+        operation_id=decision.operation_id,
+        approval_required="explicit-human" if decision.code in {"READY", "DONE"} else None,
+        approval_source="plan-digest" if decision.code == "DONE" else None,
+        stage="apply" if decision.code == "DONE" else "inspect",
+        data=data,
+        next_actions=next_actions,
+    )
+    return result, R.CompactView(tokens={
+        "code": decision.code,
+        "action": decision.operator_action,
+        "events": decision.journal_usage.event_count,
+        "receipts": decision.journal_usage.receipt_count,
+        "bytes": decision.journal_usage.bytes,
+    })
+
+
+def _operability_failure(root: str, started: str, operation: str,
+                         *, code: str, cause: str, summary: str):
+    public_code = {
+        "BLOCKED_LOCK_BUSY": "BLOCKED",
+        "BLOCKED_STORAGE": "BLOCKED",
+        "UNSUPPORTED_FILESYSTEM": "UNSUPPORTED",
+    }.get(code, code)
+    public_cause = {
+        "BLOCKED_LOCK_BUSY": "conflict",
+        "BLOCKED_STORAGE": "permission-denied",
+        "UNSUPPORTED_FILESYSTEM": "unsupported-filesystem",
+        "STALE": "snapshot-mismatch",
+        "INDETERMINATE": "result-indeterminate",
+    }.get(code, cause)
+    recovery = worktree_cleanup.recovery_for(public_code, public_cause)
+    data = R.empty_data()
+    data.update({
+        "cause": public_cause,
+        "recovery_class": recovery.recovery_class,
+        "result_code": public_code,
+        "cause_code": public_cause,
+        "side_effect_state": "indeterminate",
+        "automatic_recovery_allowed": False,
+        "operator_action": "manual-inspection",
+        "receipt_path": None,
+        "journal_usage": {
+            "event_count": 0, "receipt_count": 0, "closure_count": 0, "bytes": 0,
+        },
+    })
+    next_actions: Sequence[dict] = ()
+    if recovery.recovery_class == "human-stop":
+        data["required_human_input"] = "manual-inspection"
+    else:
+        action = operation.split(".", 1)[1]
+        next_actions = [R.next_action("worktree", action)]
+    result = R.build_result(
+        operation=operation, code=public_code, repo=root, tool_version=__version__,
+        started_at=started, finished_at=_now(), summary=summary, data=data,
+        stage="apply" if operation == "worktree.reconcile" else "inspect",
+        next_actions=next_actions,
+    )
+    return result, R.CompactView(tokens={"code": public_code, "action": "manual-inspection"})
+
+
+def _op_worktree_operability(root: str, args, started: str):
+    operation = f"worktree.{args.action}"
+    if args.capability_file or worktree_operability.has_unsupported_approval_input(root):
+        return _operability_failure(
+            root, started, operation, code="UNSUPPORTED", cause="unsupported-approval-mode",
+            summary="この承認方式はサポートされていない",
+        )
+    try:
+        if args.action == "doctor":
+            decision = worktree_operability.doctor(root)
+        else:
+            if not args.operation_id:
+                return _operability_failure(
+                    root, started, operation, code="INVALID_INPUT", cause="invalid-path",
+                    summary="--operation-id is required",
+                )
+            if args.action == "audit":
+                decision = worktree_operability.audit_operation(
+                    root, operation_id=args.operation_id
+                )
+            elif args.action == "verify-receipt":
+                decision = worktree_operability.verify_receipt(
+                    root, operation_id=args.operation_id
+                )
+            else:
+                if not (args.decision and args.expires_at and args.nonce):
+                    return _operability_failure(
+                        root, started, operation, code="INVALID_INPUT", cause="invalid-path",
+                        summary="--decision, --expires-at and --nonce are required",
+                    )
+                planned = worktree_operability.reconcile_plan(
+                    root,
+                    operation_id=args.operation_id,
+                    decision=args.decision,
+                    expires_at=args.expires_at,
+                    nonce=args.nonce,
+                    bundle_digest=args.bundle_digest,
+                )
+                if not args.apply:
+                    decision = planned
+                elif not args.confirm:
+                    return _operability_failure(
+                        root, started, operation, code="APPROVAL_REQUIRED", cause=None,
+                        summary="--confirm <reconcile operation_id> is required",
+                    )
+                else:
+                    decision = worktree_operability.reconcile_apply(
+                        root,
+                        plan=planned.plan,
+                        confirm=args.confirm,
+                        now=_dt.datetime.now(_dt.timezone.utc),
+                        timeout_seconds=args.timeout_seconds or 0.0,
+                    )
+        return _operability_result(root, started, decision, operation=operation)
+    except worktree_operability.OperabilityError as exc:
+        return _operability_failure(
+            root, started, operation, code=exc.code, cause=exc.cause, summary=exc.summary,
+        )
+    except worktree_recovery.RecoveryError as exc:
+        return _operability_failure(
+            root, started, operation, code=exc.code,
+            cause="result-indeterminate", summary=exc.cause,
+        )
+    except (OSError, ValueError, KeyError) as exc:
+        return _operability_failure(
+            root, started, operation, code="INDETERMINATE",
+            cause="result-indeterminate", summary=f"operability contract error: {type(exc).__name__}",
+        )
+
+
 def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
     operation = f"worktree.{args.action}"
+    if args.action in {"doctor", "audit", "verify-receipt", "reconcile"}:
+        return _op_worktree_operability(root, args, started)
     if args.action == "audit":
         # 以前は private `_git` を直呼びし、失敗が result にならず traceback になっていた。
         # `--limit` / `--timeout` も無視していた（`FLW-REV-016:SYN-011`）。
@@ -707,7 +874,10 @@ _HANDLERS = {
 
 #: M2 出口が閉じたときに `_HANDLERS` へ戻す handler（実装は残すが今は公開しない）。
 _GATED_HANDLERS = {
+    ("worktree", "doctor"): _op_worktree,
     ("worktree", "audit"): _op_worktree,
+    ("worktree", "verify-receipt"): _op_worktree,
+    ("worktree", "reconcile"): _op_worktree,
     ("worktree", "create"): _op_worktree,
     ("worktree", "resume"): _op_worktree,
     ("worktree", "finish"): _op_worktree,
@@ -742,6 +912,21 @@ def main(argv: Sequence[str] | None = None, *, handlers: Mapping | None = None) 
     started = _now()
     cwd = os.getcwd()
     operation = f"{args.domain}.{args.action}"
+
+    # 旧 signed capability は、worktree operationの公開可否より先に閉じた契約で拒否する。
+    # command-unavailableへ丸めると承認強度の誤設定を運用者が識別できない。
+    if args.domain == "worktree" and args.capability_file:
+        return _emit(
+            _simple_result(
+                operation=operation,
+                code="UNSUPPORTED",
+                repo=cwd,
+                summary="この承認方式はサポートされていない",
+                cause="unsupported-approval-mode",
+                stage="validate",
+            ),
+            args.format,
+        )
 
     # 出荷面は M0 read-only だけなので、状態変更系のフラグは受け付けない
     # （裁定 2026-08-15）。判定は「いま dispatcher が扱える operation か」で行う。

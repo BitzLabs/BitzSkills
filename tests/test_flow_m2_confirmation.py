@@ -162,7 +162,8 @@ def test_SI_FLW_058_manifest_lists_only_published_operations(tmp_path):
     # 未公開だが実装済みの集合は別 field で示す
     assert manifest["gated_operations"] == [
         "worktree.audit", "worktree.create", "worktree.discard",
-        "worktree.finish", "worktree.resume",
+        "worktree.doctor", "worktree.finish", "worktree.reconcile",
+        "worktree.resume", "worktree.verify-receipt",
     ]
 
 
