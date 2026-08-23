@@ -1,8 +1,8 @@
 ---
 implements: FLW-NFR-014
 depends_on: [FLW-TSK-106,FLW-TSK-111]
-boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_minimum_runtime.py,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/minimum-runtime-v1.schema.json,tests/test_flow_m2_minimum_runtime.py,plugins/bitz-flow/skills/flow-core/SKILL.md,plugins/bitz-flow/.claude-plugin/plugin.json,plugins/bitz-flow/plugin.json,plugins/bitz-flow/.codex-plugin/plugin.json,.claude-plugin/marketplace.json
-status: pending
+boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_minimum_runtime.py,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/minimum-runtime-v1.schema.json,tests/test_flow_m2_minimum_runtime.py,evals/flow-core/m2-eval/qualification-2026-08-23-flw-tsk-112-113.json,evals/flow-core/m2-eval/active-local-confirmation.json,evals/flow-core/m2-eval/raw/claude.log,evals/flow-core/m2-eval/raw/codex.log,evals/flow-core/m2-eval/raw/antigravity.log,plugins/bitz-flow/skills/flow-core/SKILL.md,plugins/bitz-flow/.claude-plugin/plugin.json,plugins/bitz-flow/plugin.json,plugins/bitz-flow/.codex-plugin/plugin.json,.claude-plugin/marketplace.json
+status: done
 ---
 
 ### minimum-runtime gateを実装する

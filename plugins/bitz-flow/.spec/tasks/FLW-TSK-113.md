@@ -1,8 +1,8 @@
 ---
 implements: FLW-NFR-014
 depends_on: [FLW-TSK-106,FLW-TSK-111,FLW-TSK-112]
-boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_promotion.py,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/promotion-state-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/promotion-receipt-v2.schema.json,tests/test_flow_m2_promotion.py
-status: pending
+boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_promotion.py,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/promotion-state-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/promotion-receipt-v2.schema.json,tests/test_flow_m2_promotion.py,tests/test_flow_m2_contract_v2.py
+status: done
 ---
 
 ### owner-only stagingとatomic bundle promotionを実装する

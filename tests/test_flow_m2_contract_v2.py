@@ -37,6 +37,8 @@ LOCAL_SAFETY_SCHEMAS = {
     "platform-evidence-v2.schema.json",
     "operation-event-v2.schema.json",
     "target-transaction-v2.schema.json",
+    "promotion-state-v2.schema.json",
+    "promotion-receipt-v2.schema.json",
 }
 EXPECTED_SCHEMAS = LEGACY_SCHEMAS | LOCAL_SAFETY_SCHEMAS
 
