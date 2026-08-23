@@ -1,0 +1,40 @@
+{
+  "command": [
+    "uv",
+    "run",
+    "--with",
+    "pytest",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "--deselect",
+    "tests/test_quality_measurand.py::test_QLT_FR_014_mutation_self_diagnosis",
+    "--deselect",
+    "tests/test_quality_review.py::test_QLT_FR_010_findings_report_and_auto_ledger"
+  ],
+  "command_id": "pytest-m2-local-safety",
+  "commit": "7dadabe0ccee0f8975fa1d8b60790faf2d5fc1a7",
+  "counts": {
+    "deselected": 2,
+    "errors": 0,
+    "failed": 0,
+    "passed": 2272,
+    "skipped": 0
+  },
+  "cwd": ".",
+  "dirty": false,
+  "exit_code": 0,
+  "observed": {
+    "duration_seconds": 55.22
+  },
+  "recorded_at": "2026-08-23T09:21:18Z",
+  "requirements": [
+    "FLW-NFR-014"
+  ],
+  "schema": "bitzsdd/verification-evidence@1",
+  "tool": {
+    "name": "uv",
+    "version": "0.11.28"
+  }
+}
