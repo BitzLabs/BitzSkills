@@ -1,13 +1,12 @@
 [REDACTED:token:len=44:sha256:69e79a8]
-[REDACTED:token:len=1259:sha256:184e718]
-[REDACTED:token:len=151:sha256:7297777]
-[REDACTED:token:len=182:sha256:13ec2e8]
-[REDACTED:token:len=302:sha256:94446d4]
-[REDACTED:token:len=242:sha256:e1bd1e8] [REDACTED:absolute-path:len=88:sha256:7b80d66] --repo [REDACTED:absolute-path:len=39:sha256:b3a192c]
-[REDACTED:token:len=271:sha256:a00b16f] [REDACTED:absolute-path:len=88:sha256:7b80d66] --repo [REDACTED:absolute-path:len=67:sha256:2261708] tests=277 [REDACTED:token:len=86:sha256:70d36d8] runtime_checks=21/21 hazards=0 residuals=0\r\n"}}}
-[REDACTED:token:len=190:sha256:9319dd5] tests=2"}}
-[REDACTED:token:len=172:sha256:a68246a] test_id_digest=sha256:03e468b5c14"}}
-[REDACTED:token:len=223:sha256:e73616a] runtime_checks=21/21 hazards=0 residuals=0"}}
-[REDACTED:token:len=322:sha256:a83cd9b]
-[REDACTED:token:len=136:sha256:cbe2121] tests=277 [REDACTED:token:len=86:sha256:70d36d8] runtime_checks=21/21 hazards=0 residuals=0\n","duration_seconds":18.832838051,"num_turns":1,"usage":{"input_tokens":24576,"output_tokens":666,"thinking_tokens":446,"cache_read_tokens":20318,"total_tokens":25242}}}
+[REDACTED:token:len=1259:sha256:9e60b39]
+[REDACTED:token:len=151:sha256:a4f1e93]
+[REDACTED:token:len=182:sha256:490a078]
+[REDACTED:token:len=302:sha256:fceb22a]
+[REDACTED:token:len=242:sha256:970fbe8] [REDACTED:absolute-path:len=88:sha256:7b80d66] --repo [REDACTED:absolute-path:len=39:sha256:b3a192c]
+[REDACTED:token:len=271:sha256:fb51256] [REDACTED:absolute-path:len=88:sha256:7b80d66] --repo [REDACTED:absolute-path:len=67:sha256:2261708] tests=295 [REDACTED:token:len=86:sha256:a81d990] runtime_checks=21/21 hazards=0 residuals=0\r\n"}}}
+[REDACTED:token:len=190:sha256:6983552] tests=295 [REDACTED:token:len=50:sha256:b8512f2]
+[REDACTED:token:len=209:sha256:b231575] runtime_checks=21/21 hazards=0 residuals"}}
+[REDACTED:token:len=324:sha256:4fe6a3d]
+[REDACTED:token:len=136:sha256:1ba882f] tests=295 [REDACTED:token:len=86:sha256:a81d990] runtime_checks=21/21 hazards=0 residuals=0\n","duration_seconds":19.321599594,"num_turns":1,"usage":{"input_tokens":24834,"output_tokens":926,"thinking_tokens":695,"cache_read_tokens":20320,"total_tokens":25760}}}
 warning: --mode plan has no effect while slash command expansion is disabled.

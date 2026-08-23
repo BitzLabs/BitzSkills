@@ -2,7 +2,7 @@
 name: flow-core
 description: BitzFlow のメインスキル。プロジェクト状況に応じた Git / GitHub 開発フローの選択（単独開発=feature ブランチ / 複数エージェント並列=worktree / チーム・公開開発=GitHub Issue 駆動 + PR）、Conventional Commits のコミット規定、失敗時の復元方針を規定する。ユーザーが「Git フロー」「ブランチ運用」「コミット規約」「開発フローを決めたい」「並列で開発したい」に言及したとき、または開発作業の開始時にフローが未確定のときに使用する。worktree の実手順は flow-worktree、Issue 駆動 PR の実手順は flow-pr が担当する。
 metadata:
-  version: "0.9.5"
+  version: "0.9.6"
   author: br7.hide
   created: "2026-07-18"
   updated: 2026-08-23
@@ -41,6 +41,13 @@ M2 の write は plan/apply からだけ実行し、承認方式を `plan-digest
 条件を二重に書かないため、要求物の詳細は catalog を正として参照すること。
 承認の欠落・期限切れ・単回性の消費済み・identity 差替えは最初の副作用前に停止し、
 生の Git command へ fallback しない。
+
+障害復旧は `audit` と `reconcile` を分離する。audit は Git snapshot、最長有効 journal prefix、
+terminal receipt を読み取り専用で照合し、`confirmed-complete` / `confirmed-incomplete` /
+`indeterminate` のいずれかだけを返す。reconcile は新しい plan-digest とその operation ID の
+明示確認を必須とし、同じ target lock 下で再照合した後、冪等な closure event だけを追記する。
+Git の自動再実行・worktree の自動解除や削除・異なる decision への置換は禁止する。active operation
+marker の closure は target lock を解放してから行い、両 lock を同時に保持しない。
 
 ## ブランチ規約（単独開発の最小規定）
 

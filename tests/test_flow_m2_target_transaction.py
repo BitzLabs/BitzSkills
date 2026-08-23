@@ -171,12 +171,21 @@ def test_crash_during_intent_never_grants_mutation_without_emergency_receipt(tmp
 def test_reconcile_is_idempotent_and_conflicting_decision_is_rejected(tmp_path):
     tx = transaction(tmp_path)
     lease, _ = begin(tx)
-    first = tx.reconcile(lease, decision_digest=DIGEST)
-    assert tx.reconcile(lease, decision_digest=DIGEST) == first
-    with pytest.raises(T.TransactionError) as caught:
-        tx.reconcile(lease, decision_digest=DIGEST_B)
-    assert caught.value.code == "INDETERMINATE"
+    report = tx.inspect(DIGEST)
+    token = lease.fencing_token
     tx.release(lease)
+    recovery = transaction(tmp_path)
+    lease = recovery.acquire_reconcile(
+        operation_id=DIGEST,
+        expected_fencing_token=token,
+        expected_head_digest=report.head_digest,
+    )
+    first = recovery.reconcile(lease, decision_digest=DIGEST)
+    assert recovery.reconcile(lease, decision_digest=DIGEST) == first
+    with pytest.raises(T.TransactionError) as caught:
+        recovery.reconcile(lease, decision_digest=DIGEST_B)
+    assert caught.value.code == "INDETERMINATE"
+    recovery.release(lease)
 
 
 def test_operation_id_cannot_escape_authority_root_and_module_has_no_git_launcher(tmp_path):

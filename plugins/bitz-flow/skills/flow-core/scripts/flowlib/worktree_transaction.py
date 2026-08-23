@@ -38,6 +38,7 @@ class LeaseContext:
     fencing_token: str
     nonce_digest: str
     _lock_stream: object
+    purpose: str = "mutation"
 
 
 @dataclass(frozen=True)
@@ -146,6 +147,40 @@ class TargetTransaction:
             self._lease = None
             raise
 
+    def acquire_reconcile(self, *, operation_id: str, expected_fencing_token: str,
+                          expected_head_digest: str,
+                          timeout_seconds: float = 0.0) -> LeaseContext:
+        """Reacquire the target lock after a crash without extending the mutation journal."""
+        if self._lease is not None:
+            raise TransactionError("BLOCKED_LOCK_BUSY", "authority already holds target lock")
+        validate_digest(operation_id)
+        validate_digest(expected_head_digest)
+        validate_uint64_string(expected_fencing_token)
+        self._prepare_root()
+        stream = self._acquire_lock_stream(timeout_seconds)
+        try:
+            report = self.inspect(operation_id)
+            if not report.events or report.problems:
+                raise TransactionError(
+                    "INDETERMINATE", "; ".join(report.problems) or "empty journal"
+                )
+            actual_token = str(report.events[0]["event"]["fencing_token"])
+            if actual_token != expected_fencing_token or report.head_digest != expected_head_digest:
+                raise TransactionError("STALE", "reconcile journal head or fencing token changed")
+            if self._current_fencing_token() != expected_fencing_token:
+                raise TransactionError("STALE", "a newer target fencing token exists")
+            lease = LeaseContext(
+                operation_id, self.target_collision_key, expected_fencing_token,
+                sha256_digest(b"reconcile"), stream, "reconcile",
+            )
+            self._lease = lease
+            return lease
+        except Exception:
+            _unlock(stream)
+            stream.close()
+            self._lease = None
+            raise
+
     def release(self, lease: LeaseContext) -> None:
         self._require_lease(lease)
         _unlock(lease._lock_stream)
@@ -203,6 +238,8 @@ class TargetTransaction:
     def reconcile(self, lease: LeaseContext, *, decision_digest: str) -> str:
         """Append one idempotent human-confirmed closure; never invokes Git."""
         self._require_lease(lease)
+        if lease.purpose != "reconcile":
+            raise TransactionError("STALE", "a reconcile lease is required")
         validate_digest(decision_digest)
         report = self.inspect(lease.operation_id)
         if not report.events or report.problems:
@@ -313,7 +350,13 @@ class TargetTransaction:
                 validate_digest(value["decision_digest"])
                 validate_digest(value["event_digest"])
                 validate_uint64_string(value["fencing_token"])
-                if value["operation_id"] != operation_id or value["event_digest"] != head:
+                if (
+                    value["operation_id"] != operation_id
+                    or value["target_collision_key"] != self.target_collision_key
+                    or value["event_digest"] != head
+                    or not events
+                    or value["fencing_token"] != events[0]["event"]["fencing_token"]
+                ):
                     raise ContractError("closure binding mismatch")
                 if path.stem != sha256_digest(canonical_json_bytes(value))[7:]:
                     raise ContractError("closure digest mismatch")
@@ -330,6 +373,24 @@ class TargetTransaction:
             raise TransactionError("UNSUPPORTED_FILESYSTEM", "transaction root is not owner-only")
         for name in ("events", "receipts", "closures"):
             (self.root / name).mkdir(mode=0o700, exist_ok=True)
+
+    def _acquire_lock_stream(self, timeout_seconds: float) -> object:
+        lock_path = self.root / "target.lock"
+        descriptor = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o600)
+        stream = os.fdopen(descriptor, "r+b", buffering=0)
+        if os.name != "nt" and lock_path.stat().st_mode & 0o077:
+            stream.close()
+            raise TransactionError("UNSUPPORTED_FILESYSTEM", "target lock is not owner-only")
+        if lock_path.stat().st_size == 0:
+            stream.write(b"0")
+            os.fsync(stream.fileno())
+        deadline = time.monotonic() + max(0.0, timeout_seconds)
+        while not _lock(stream):
+            if time.monotonic() >= deadline:
+                stream.close()
+                raise TransactionError("BLOCKED_LOCK_BUSY", "target lock timeout")
+            time.sleep(min(0.01, max(0.0, deadline - time.monotonic())))
+        return stream
 
     def _issue_fencing_token(self) -> str:
         counter_path = self.root / "fencing-counter.json"
@@ -350,6 +411,19 @@ class TargetTransaction:
         token = str(current + 1)
         self._atomic_publish(counter_path, {"value": token}, replace=True)
         return token
+
+    def _current_fencing_token(self) -> str:
+        counter_path = self.root / "fencing-counter.json"
+        try:
+            value = json.loads(counter_path.read_text(encoding="utf-8"))
+            if set(value) != {"value"}:
+                raise ValueError
+            current = validate_uint64_string(value["value"])
+        except (OSError, json.JSONDecodeError, ValueError, ContractError) as exc:
+            raise TransactionError("INDETERMINATE", "fencing counter is invalid") from exc
+        if int(current) != self._maximum_observed_token():
+            raise TransactionError("INDETERMINATE", "fencing counter does not match journal")
+        return current
 
     def _maximum_observed_token(self) -> int:
         maximum = 0

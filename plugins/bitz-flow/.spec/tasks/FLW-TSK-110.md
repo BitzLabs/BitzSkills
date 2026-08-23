@@ -1,8 +1,8 @@
 ---
 implements: FLW-NFR-014
 depends_on: [FLW-TSK-108,FLW-TSK-109]
-boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_recovery.py,tests/test_flow_m2_recovery.py,plugins/bitz-flow/skills/flow-core/SKILL.md,plugins/bitz-flow/.claude-plugin/plugin.json,plugins/bitz-flow/plugin.json,plugins/bitz-flow/.codex-plugin/plugin.json,.claude-plugin/marketplace.json
-status: pending
+boundary: plugins/bitz-flow/.spec/design/FLW-DSN-017.md,plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_recovery.py,plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_transaction.py,plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_promotion.py,tests/test_flow_m2_recovery.py,tests/test_flow_m2_target_transaction.py,tests/test_flow_m2_confirmation.py,evals/flow-core/m2-eval/local_confirmation_subject.py,evals/flow-core/m2-eval/run_local_confirmation.py,evals/flow-core/m2-eval/qualification-2026-08-23-flw-tsk-110.json,evals/flow-core/m2-eval/active-local-confirmation.json,evals/flow-core/m2-eval/attempts.jsonl,evals/flow-core/m2-eval/raw/claude.log,evals/flow-core/m2-eval/raw/codex.log,evals/flow-core/m2-eval/raw/antigravity.log,plugins/bitz-flow/skills/flow-core/SKILL.md,plugins/bitz-flow/.claude-plugin/plugin.json,plugins/bitz-flow/plugin.json,plugins/bitz-flow/.codex-plugin/plugin.json,.claude-plugin/marketplace.json
+status: done
 ---
 
 ### read-only auditと明示確認付きreconcileを実装する

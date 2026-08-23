@@ -248,6 +248,61 @@ def release_active_operation(common_dir: str | Path, *, operation_id: str,
         _promotion_unlock(lock)
 
 
+def release_reconciled_operation(common_dir: str | Path, *, operation_id: str,
+                                 bundle_digest: str, closure_digest: str) -> None:
+    """Idempotently close a crash-held marker after target-lock reconciliation."""
+    validate_digest(operation_id)
+    validate_digest(bundle_digest)
+    validate_digest(closure_digest)
+    namespace = _promotion_namespace(common_dir)
+    lock = _promotion_lock(namespace)
+    expected = {
+        "contract_version": CONTRACT_VERSION,
+        "operation_id": operation_id,
+        "bundle_digest": bundle_digest,
+        "closure_digest": closure_digest,
+    }
+    try:
+        marker = namespace / "active" / f"{operation_id[7:]}.json"
+        closed = namespace / "closed" / f"{operation_id[7:]}.json"
+        if closed.exists():
+            try:
+                existing = json.loads(closed.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                raise PromotionError("INDETERMINATE", "reconcile closure marker is invalid") from exc
+            if existing != expected:
+                raise PromotionError("INDETERMINATE", "reconcile closure marker conflicts")
+            if marker.exists():
+                try:
+                    active = json.loads(marker.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError) as exc:
+                    raise PromotionError("INDETERMINATE", "active operation marker is invalid") from exc
+                if active != {
+                    "contract_version": CONTRACT_VERSION,
+                    "operation_id": operation_id,
+                    "bundle_digest": bundle_digest,
+                }:
+                    raise PromotionError("INDETERMINATE", "active operation marker conflicts")
+                marker.unlink()
+                _fsync_dir(marker.parent)
+            return
+        try:
+            active = json.loads(marker.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise PromotionError("INDETERMINATE", "active operation marker missing or invalid") from exc
+        if active != {
+            "contract_version": CONTRACT_VERSION,
+            "operation_id": operation_id,
+            "bundle_digest": bundle_digest,
+        }:
+            raise PromotionError("STALE", "active operation marker changed")
+        _atomic_json(closed, expected)
+        marker.unlink()
+        _fsync_dir(marker.parent)
+    finally:
+        _promotion_unlock(lock)
+
+
 def abort_active_operation(common_dir: str | Path, *, operation_id: str,
                            bundle_digest: str) -> None:
     """Remove a marker only when target intent was never made durable."""

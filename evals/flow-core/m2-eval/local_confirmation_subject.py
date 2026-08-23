@@ -28,6 +28,7 @@ FILES = (
     "tests/test_flow_m2_platform_adapter.py",
     "tests/test_flow_m2_target_transaction.py",
     "tests/test_flow_m2_promotion.py",
+    "tests/test_flow_m2_recovery.py",
 )
 
 #: 実Git worktree副作用を観測する実動E2Eファイル（runtime check の母数はここから導出する）。

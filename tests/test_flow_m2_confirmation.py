@@ -188,7 +188,7 @@ def test_SI_FLW_058_compatibility_key_covers_the_authorization_core():
     covered = set(module.COMPATIBILITY_INPUTS)
     for core in (
         "worktree_capability.py", "guard.py", "worktree_cleanup.py", "recovery.py",
-        "agy_guard.py",
+        "worktree_recovery.py", "agy_guard.py",
     ):
         assert any(path.endswith(core) for path in covered), core
 

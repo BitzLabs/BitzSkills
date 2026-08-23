@@ -66,6 +66,7 @@ COMPATIBILITY_INPUTS = (
     f"{_FLOWLIB}/worktree_platform.py",
     f"{_FLOWLIB}/worktree_transaction.py",
     f"{_FLOWLIB}/worktree_promotion.py",
+    f"{_FLOWLIB}/worktree_recovery.py",
     f"{_SKILL}/schemas/worktree-v2/contract-bundle-v2.schema.json",
     f"{_SKILL}/schemas/worktree-v2/approval-context-v2.schema.json",
     "tests/test_flow_m2_contract_kernel.py",
@@ -74,6 +75,7 @@ COMPATIBILITY_INPUTS = (
     "tests/test_flow_m2_platform_adapter.py",
     "tests/test_flow_m2_target_transaction.py",
     "tests/test_flow_m2_promotion.py",
+    "tests/test_flow_m2_recovery.py",
     # 認可核（SYN-008 で追加）
     f"{_FLOWLIB}/worktree_capability.py",
     f"{_FLOWLIB}/guard.py",

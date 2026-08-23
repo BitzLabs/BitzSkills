@@ -223,6 +223,11 @@ promotionはtarget lockを取得しない。この非重複規則をarchitecture
 一致する冪等なclosure eventだけを`TargetTransaction`経由で追記する。Git childは起動しない。
 異なる判断、token不一致、状態変化は`STALE`とし、新しいauditからやり直す。
 
+crash後のreconcile leaseは元operationのjournalを延長する`LOCKED` eventや新しいfencing tokenを
+発行しない。OS target lockを再取得したうえで、auditが束縛したjournal headと元tokenが一致し、かつ
+そのtokenがtarget authorityの現在最大値である場合に限ってclosure追記を許可する。これにより、後続
+operationが開始済みの古いjournalへ復旧判断を後付けしない。
+
 ## 7. 最小運用面
 
 公開する運用機能は次に限定する。
