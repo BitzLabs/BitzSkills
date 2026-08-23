@@ -3,7 +3,7 @@ id: SI-FLW-088
 raised_by: FLW-REV-027
 target: flow-core recovery audit
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `QUARANTINED`を正常完了と誤分類せず、運用者判断を誤った事実へ固定しない。
 - **提案する修正**: `confirmed-complete`を`DONE`かつ予定postcondition成立時に限定し、`QUARANTINED`は常にindeterminate/quarantineへ分類する。receiptへrequested/actual outcomeとplanned-effects digestを束縛する。

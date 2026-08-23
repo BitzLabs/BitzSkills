@@ -3,7 +3,7 @@ id: SI-FLW-087
 raised_by: FLW-REV-027
 target: flow-core TargetTransaction
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: intent durable化と有効な緊急receiptの間にcrash可能な不健全chainを残さない。
 - **提案する修正**: intentと緊急receiptを単一durable transaction recordとして公開するか、receipt確定前を`INTENT_DURABLE`と扱わない中間状態へ変更する。

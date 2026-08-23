@@ -3,7 +3,7 @@ id: SI-FLW-086
 raised_by: FLW-REV-027
 target: flow-core process supervision / operability
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: Git childのhang時にも30秒以内のclosed terminal resultへ収束させる。
 - **提案する修正**: read/write共通の有限TimeoutBudgetとprocess supervisionを実装し、terminate/kill/wait、出力上限、reconciliation reserveを適用する。終了を証明できないwriteは緊急receiptを保持して`INDETERMINATE`へ閉じる。

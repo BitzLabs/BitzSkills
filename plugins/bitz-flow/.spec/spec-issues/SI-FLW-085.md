@@ -3,7 +3,7 @@ id: SI-FLW-085
 raised_by: FLW-REV-027
 target: flow-core CLI legacy approval path
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: create/resumeのCLIをM2のplan-digest専用契約へ一致させ、廃止済みsigned-capability経路と旧context参照を除去する。
 - **提案する修正**: `resolve_approval_mode`、capability解析、鍵registry選択、`worktree_dir_guard_key`参照をCLIから除去する。旧宣言・file・registryの検出は共通preflightでmutation前に`UNSUPPORTED / unsupported-approval-mode`へ閉じる。

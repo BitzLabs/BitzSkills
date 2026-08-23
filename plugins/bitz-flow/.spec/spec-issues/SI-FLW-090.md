@@ -3,7 +3,7 @@ id: SI-FLW-090
 raised_by: FLW-REV-027
 target: bitz-flow M2 verification / task trace
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: fixture内部の検証とproduction接続完了を区別し、`verified`・task `done`・coverageの過大主張を解消する。
 - **提案する修正**: 実環境probe、production dispatcher、timeout、crash境界、recovery分類を検証仕様へ追加し、既存taskの境界と未接続点を再記録する。`FLW-FR-006`へcreate/resume是正taskを直接トレースし、M3のfinish/discardを明示する。

@@ -3,7 +3,7 @@ id: SI-FLW-089
 raised_by: FLW-REV-027
 target: flow-core recovery / promotion marker
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: reconcile closureを追記する前にcrash-held active markerの適格性を確定する。
 - **提案する修正**: plan時にmarker存在・operation ID・bundle digestをauditへ束縛し、apply時はclosure前にpromotion lock下で再検証する。正常DONEや既にclosedのoperationへreconcileを案内しない。

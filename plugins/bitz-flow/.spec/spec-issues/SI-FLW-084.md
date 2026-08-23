@@ -3,7 +3,7 @@ id: SI-FLW-084
 raised_by: FLW-REV-027
 target: flow-core platform adapter / CLI / production E2E
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: `worktree.create` / `resume` が実環境のplatform能力を安全に観測し、production CLIからplanへclosed `PlatformEvidence`を渡せるようにする。
 - **提案する修正**: OS別read-only probeを追加し、owner、filesystem、非追随walk、native/folded component、case semantics、lock、durability、child supervisionを観測する。観測不能は`UNSUPPORTED_FILESYSTEM`へ閉じ、doctorとplanで同じevidence生成器を使う。Windowsとcase-insensitive volumeを含むproduction dispatcher E2Eを追加する。

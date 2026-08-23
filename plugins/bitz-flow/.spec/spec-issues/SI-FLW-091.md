@@ -3,7 +3,7 @@ id: SI-FLW-091
 raised_by: FLW-REV-027
 target: bitz-flow review ledger
 proposed_change_type: modify
-status: open
+status: accepted
 ---
 - **目的**: 過去レビューの未解決P0/P1 statusと後続PASS判定の台帳不整合を解消する。
 - **提案する修正**: 88件のopen/tracked findingを後続是正証跡へ照合し、resolvedまたは現行issueへの追跡状態へ更新する。最新synthesisの`carried_over`生成を自動検査する。
