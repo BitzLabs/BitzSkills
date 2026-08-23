@@ -1,0 +1,17 @@
+{
+  "perspective": "consistency",
+  "dimensions": [
+    {"name": "構造整合", "weight": 0.35, "score": 3, "findings": [
+      {"id": "RVC-101", "severity": "major", "location": "FLW-DSN-017 §8.1 / flowlib/cli.py:_op_worktree", "title": "E2E出口条件とproduction経路が不整合", "description": "production dispatcherはworktreeをgatedに保ち、create/resume CLIは必須platform_evidenceをplanへ渡さないため、公開しても停止する。", "recommendation": "実環境probeをCLIへ接続し、既定dispatcherのplan/apply E2Eを追加する。"}
+    ]},
+    {"name": "トレーサビリティ", "weight": 0.35, "score": 2, "findings": [
+      {"id": "RVC-201", "severity": "major", "location": "FLW-TSK-109/111/114", "title": "done判定がproduction接続完了を表していない", "description": "adapterはObservation評価器であり実環境観測器ではなく、CLIへのevidence供給も無い。", "recommendation": "probe・evidence生成・CLI注入・production E2Eを是正taskへ分解する。"},
+      {"id": "RVC-202", "severity": "minor", "location": "FLW-TSK-106〜114:implements", "title": "FLW-FR-006への実装トレースが欠落", "description": "機能実装taskがFLW-NFR-014だけをimplementsしている。", "recommendation": "create/resume是正taskをFLW-FR-006へ直接紐づける。"}
+    ]},
+    {"name": "用語一貫性", "weight": 0.30, "score": 3, "findings": [
+      {"id": "RVC-301", "severity": "major", "location": "flowlib/cli.py:_op_worktree / FLW-DSN-017 §2", "title": "廃止済みsigned-capability経路がCLI内部に残存", "description": "設計はplan-digest限定だがCLIに承認mode選択とcapability解析が残る。", "recommendation": "旧入力の即時拒否だけを残し、CLIをplan-digest専用へ置換する。"}
+    ]}
+  ],
+  "weighted_score": 2.65,
+  "summary": "安全核の内部構造は整理されているが、設計からproduction入口への接続と承認語彙が一致していない。"
+}

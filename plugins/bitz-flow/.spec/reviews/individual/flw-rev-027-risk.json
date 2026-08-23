@@ -1,0 +1,17 @@
+{
+  "perspective": "risk",
+  "dimensions": [
+    {"name": "分散システムリスク", "weight": 0.30, "score": "N/A", "findings": []},
+    {"name": "障害モード分析", "weight": 0.30, "score": 1, "findings": [
+      {"id": "RSK-201", "severity": "critical", "location": "flowlib/cli.py / worktree_runtime.py:plan", "title": "production create/resumeはplatform evidence欠落で必ず停止する", "description": "正常操作のフローがproductionで切れている。", "recommendation": "probeからplanまでの単一路をproduction E2Eで検証する。"},
+      {"id": "RSK-202", "severity": "critical", "location": "flowlib/cli.py / ApprovalContext", "title": "evidence接続後も旧CLI契約が例外または旧承認へ逸脱する", "description": "存在しないfield参照と旧承認解析が残る。", "recommendation": "現行ApprovalContextとplan-digest契約へCLIを置換する。"},
+      {"id": "RSK-203", "severity": "major", "location": "worktree_runtime.py:Git child", "title": "Git child hangがlease・markerを占有し得る", "description": "有限timeoutがなく後続操作を無期限停止させ得る。", "recommendation": "deadlineと終了監督を実装する。"}
+    ]},
+    {"name": "Saga設計の妥当性", "weight": 0.25, "score": "N/A", "findings": []},
+    {"name": "データ整合性リスク", "weight": 0.15, "score": 2, "findings": [
+      {"id": "RSK-401", "severity": "major", "location": "worktree_runtime.py:plan / worktree_platform.py:collision_key", "title": "Windowsのcollision identity生成が契約と不整合", "description": "runtimeはPOSIX component固定でfolded componentを渡さない。", "recommendation": "probe由来のplatform別native/folded componentを使い実filesystemで検証する。"}
+    ]}
+  ],
+  "weighted_score": 1.33,
+  "summary": "単一ホストのため分散通信とSagaはN/A。production接続、timeout、Windows identityに重大な断線がある。"
+}

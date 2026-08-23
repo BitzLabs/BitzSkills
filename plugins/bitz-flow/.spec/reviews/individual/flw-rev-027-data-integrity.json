@@ -1,0 +1,18 @@
+{
+  "perspective": "data-integrity",
+  "dimensions": [
+    {"name": "トランザクション安全性", "weight": 0.40, "score": 2, "findings": [
+      {"id": "DIN-101", "severity": "major", "location": "worktree_transaction.py:prepare_intent", "title": "intentと緊急receiptのdurable公開に原子性の空隙がある", "description": "INTENT_DURABLE eventのfsync後、別publishの緊急receipt前に停止すると不健全chainが残る。", "recommendation": "単一durable recordまたは中間状態へ変更し、全crash境界を検証する。"},
+      {"id": "DIN-102", "severity": "major", "location": "worktree_recovery.py:reconcile", "title": "reconcile closureがmarker適格性の確認前に不可逆追記される", "description": "closure後のactive marker検証失敗でclosureだけが残る。", "recommendation": "markerをplanへ束縛しclosure前に再検証する。"}
+    ]},
+    {"name": "データ整合性", "weight": 0.35, "score": 2, "findings": [
+      {"id": "DIN-201", "severity": "major", "location": "worktree_recovery.py:audit", "title": "QUARANTINED operationをconfirmed-completeと誤分類できる", "description": "失敗時snapshotがterminal receiptと一致するとQUARANTINEDもcompleteになる。", "recommendation": "completeをDONEかつ予定postcondition成立時に限定する。"},
+      {"id": "DIN-202", "severity": "major", "location": "flowlib/cli.py:_op_worktree", "title": "production CLIからplatform evidenceと契約核への接続が成立しない", "description": "evidence供給が無く、到達後も旧承認と旧context参照が残る。", "recommendation": "公開を止め、probe接続・旧経路除去・production E2Eを行う。"}
+    ]},
+    {"name": "スキーマ設計品質", "weight": 0.25, "score": 2, "findings": [
+      {"id": "DIN-301", "severity": "minor", "location": "fencing-counter-v2.schema.json / worktree_transaction.py", "title": "legacy fencing schemaと現行内部形式の区別が不明瞭", "description": "legacy schemaとTargetTransactionの内部counter形式が異なるが、同じv2名称で残り誤適用しやすい。", "recommendation": "legacy非適用を明示し、現行内部形式のclosed contract testを追加する。"}
+    ]}
+  ],
+  "weighted_score": 2.0,
+  "summary": "基本的なlock・journal構造はあるが、durable確定境界とrecovery authority間に重大な不整合が残る。"
+}

@@ -1,0 +1,20 @@
+{
+  "perspective": "operations",
+  "dimensions": [
+    {"name": "監視・可観測性", "weight": 0.30, "score": 2, "findings": [
+      {"id": "OPS-101", "severity": "major", "location": "worktree_operability.py:doctor / worktree_platform.py", "title": "doctorが実環境platform能力を観測していない", "description": "doctorはrequires-runtime-evidenceを返すだけで開始可否を確定できない。", "recommendation": "OS別read-only probeをdoctorとplanへ共通接続する。"},
+      {"id": "OPS-102", "severity": "major", "location": "worktree_runtime.py:Git child", "title": "30秒terminal-result条件を強制できない", "description": "Git subprocessに有限timeoutがなく上限規模試験も無い。", "recommendation": "共通TimeoutBudgetとhang/load試験を追加する。"}
+    ]},
+    {"name": "災害復旧", "weight": 0.30, "score": 3, "findings": [
+      {"id": "OPS-201", "severity": "minor", "location": "m2-worktree-quarantine.md", "title": "責任者とエスカレーション出口がない", "description": "責任分界、引継ぎ条件、判断期限が未定義である。", "recommendation": "役割・証跡・再判定Gateをrunbookへ追加する。"}
+    ]},
+    {"name": "セキュリティ態勢", "weight": 0.20, "score": 2, "findings": [
+      {"id": "OPS-301", "severity": "major", "location": "flowlib/cli.py:_op_worktree", "title": "廃止済みsigned-capability経路が残存", "description": "platform修正後に旧承認経路が再活性化し得る。", "recommendation": "旧選択・解析を除去し共通preflightだけを残す。"}
+    ]},
+    {"name": "デプロイ安全性", "weight": 0.20, "score": 2, "findings": [
+      {"id": "OPS-401", "severity": "critical", "location": "flowlib/cli.py / M2 tests", "title": "公開候補create/resumeのproduction接続試験が成立していない", "description": "合成evidenceとgated handler注入だけでproduction plan/applyを覆わない。", "recommendation": "実環境probeと既定handler E2E後まで公開しない。"}
+    ]}
+  ],
+  "weighted_score": 2.3,
+  "summary": "運用核は堅いが実環境evidence、有限timeout、production E2Eが未接続である。"
+}

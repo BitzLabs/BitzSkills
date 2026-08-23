@@ -1,0 +1,20 @@
+{
+  "perspective": "business",
+  "dimensions": [
+    {"name": "要件トレーサビリティ", "weight": 0.35, "score": 2, "findings": [
+      {"id": "BIZ-101", "severity": "major", "location": "FLW-FR-006 / flowlib/cli.py", "title": "create/resumeの利用価値がproductionで実現不能", "description": "主要ユースケースはruntime内部では成立するが公開入口から実行できない。", "recommendation": "Promotion Gateを止め、probeとCLI結線を最優先で是正する。"},
+      {"id": "BIZ-102", "severity": "minor", "location": "FLW-FR-006 / FLW-TSK-106〜114", "title": "機能要件の残作業がtask台帳に直接現れない", "description": "FRはimplementingだが対象taskは全doneかつNFRだけへ紐づく。", "recommendation": "create/resume是正とfinish/discard M3 taskをFRへ直接接続する。"}
+    ]},
+    {"name": "NFR定量化", "weight": 0.30, "score": 3, "findings": [
+      {"id": "BIZ-201", "severity": "major", "location": "FLW-NFR-014 / m2-local-safety-profile/test-spec.md", "title": "定量指標がfixtureの論理整合に偏っている", "description": "3platform証跡は手組みObservationを評価し、実環境primitiveを観測していない。", "recommendation": "各OS runnerで実観測・unsupported・副作用0・terminal resultを測定する。"}
+    ]},
+    {"name": "ステークホルダー整合", "weight": 0.20, "score": 4, "findings": [
+      {"id": "BIZ-301", "severity": "minor", "location": "worktree_operability.py:doctor", "title": "運用者向け診断がplatform実観測を完結しない", "description": "doctorは必要evidenceを生成しない。", "recommendation": "doctorへread-only probeと理由別operator actionを統合する。"}
+    ]},
+    {"name": "ROI・実現可能性", "weight": 0.15, "score": 3, "findings": [
+      {"id": "BIZ-401", "severity": "minor", "location": "FLW-DSN-017 §9.1", "title": "再見積もりにproduction probe是正が含まれない", "description": "OS別probe・CLI注入・実runner検証の工数が予算外である。", "recommendation": "是正とレビュー修正を再見積もりする。"}
+    ]}
+  ],
+  "weighted_score": 2.85,
+  "summary": "主要価値がproduction入口から提供できず、fixture中心の証跡と予算を実環境へ拡張する必要がある。"
+}
