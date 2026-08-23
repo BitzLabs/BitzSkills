@@ -1,15 +1,12 @@
 [REDACTED:token:len=44:sha256:69e79a8]
-[REDACTED:token:len=1259:sha256:03a3fdd]
-[REDACTED:token:len=151:sha256:b5a0b03]
-[REDACTED:token:len=182:sha256:6b0661c]
-[REDACTED:token:len=302:sha256:5ff674c]
-[REDACTED:token:len=242:sha256:35ee2b5] [REDACTED:absolute-path:len=88:sha256:7b80d66] --repo [REDACTED:absolute-path:len=39:sha256:b3a192c]
-[REDACTED:token:len=278:sha256:41fced6] [REDACTED:absolute-path:len=88:sha256:7b80d66] --repo [REDACTED:absolute-path:len=67:sha256:2261708] tests=206 [REDACTED:token:len=86:sha256:78c5ea3] runtime_checks=69/69 hazards=0 residuals=0\r\n"}}}
-[REDACTED:token:len=171:sha256:b980cec] am running"}}
-[REDACTED:token:len=168:sha256:3ad749d] the requested command. I will wait for it to finish and provide the confirmation line.\n","duration_seconds":2.866263235,"usage":{"input_tokens":2517,"output_tokens":57,"thinking_tokens":37,"cache_read_tokens":20318,"total_tokens":2574}}}
-[REDACTED:token:len=186:sha256:b663035]
-[REDACTED:token:len=190:sha256:a73ee23] tests=206 [REDACTED:token:len=49:sha256:127c90b]
-[REDACTED:token:len=210:sha256:8db3248] runtime_checks=69/69 hazards=0 resid"}}
-[REDACTED:token:len=327:sha256:d0001ef]
-[REDACTED:token:len=117:sha256:8c07e6d] am running the requested command. I will wait for it to finish and provide the confirmation [REDACTED:token:len=27:sha256:5d5a335] tests=206 [REDACTED:token:len=86:sha256:78c5ea3] runtime_checks=69/69 hazards=0 residuals=0\n","duration_seconds":21.732929049,"num_turns":1,"usage":{"input_tokens":27511,"output_tokens":808,"thinking_tokens":564,"cache_read_tokens":40629,"total_tokens":28319}}}
+[REDACTED:token:len=1259:sha256:43f5008]
+[REDACTED:token:len=151:sha256:7c2ffd0]
+[REDACTED:token:len=182:sha256:6beb2b7]
+[REDACTED:token:len=312:sha256:4dccc6c]
+[REDACTED:token:len=242:sha256:a3a3f2c] [REDACTED:absolute-path:len=88:sha256:7b80d66] --repo [REDACTED:absolute-path:len=39:sha256:b3a192c]
+[REDACTED:token:len=271:sha256:8b7fe20] [REDACTED:absolute-path:len=88:sha256:7b80d66] --repo [REDACTED:absolute-path:len=67:sha256:2261708] tests=206 [REDACTED:token:len=86:sha256:78c5ea3] runtime_checks=69/69 hazards=0 residuals=0\r\n"}}}
+[REDACTED:token:len=190:sha256:271b0eb] tests=206 test_id_digest=sha256:ffe7b38d98"}}
+[REDACTED:token:len=224:sha256:84f2176]
+[REDACTED:token:len=171:sha256:e7d4aad] runtime_checks=69/69 hazards=0 residuals=0\n","duration_seconds":3.434767267,"usage":{"input_tokens":2605,"output_tokens":222,"thinking_tokens":125,"cache_read_tokens":20319,"total_tokens":2827}}}
+[REDACTED:token:len=136:sha256:38d1438] tests=206 [REDACTED:token:len=86:sha256:78c5ea3] runtime_checks=69/69 hazards=0 residuals=0\n","duration_seconds":19.107215998,"num_turns":1,"usage":{"input_tokens":16616,"output_tokens":823,"thinking_tokens":601,"cache_read_tokens":28448,"total_tokens":17439}}}
 warning: --mode plan has no effect while slash command expansion is disabled.

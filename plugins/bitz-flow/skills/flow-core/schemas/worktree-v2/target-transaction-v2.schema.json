@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bitz-flow/worktree-v2/target-transaction/v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event", "intent", "result", "receipt_digest"],
+  "properties": {
+    "event": {"$ref": "operation-event-v2.schema.json"},
+    "intent": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["planned_effects_digest", "precondition_digest", "nonce_digest"],
+      "properties": {
+        "planned_effects_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "precondition_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "nonce_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+      }
+    },
+    "result": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["postcondition_digest"],
+      "properties": {"postcondition_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}}
+    },
+    "receipt_digest": {"type": ["string", "null"], "pattern": "^sha256:[0-9a-f]{64}$"}
+  }
+}

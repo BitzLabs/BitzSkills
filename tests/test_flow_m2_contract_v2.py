@@ -35,6 +35,8 @@ LOCAL_SAFETY_SCHEMAS = {
     "contract-bundle-v2.schema.json",
     "approval-context-v2.schema.json",
     "platform-evidence-v2.schema.json",
+    "operation-event-v2.schema.json",
+    "target-transaction-v2.schema.json",
 }
 EXPECTED_SCHEMAS = LEGACY_SCHEMAS | LOCAL_SAFETY_SCHEMAS
 

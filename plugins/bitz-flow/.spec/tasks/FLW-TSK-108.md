@@ -1,8 +1,8 @@
 ---
 implements: FLW-NFR-014
 depends_on: [FLW-TSK-106,FLW-TSK-111]
-boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_transaction.py,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/target-transaction-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/operation-event-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/mutation-receipt-v2.schema.json,tests/test_flow_m2_target_transaction.py,plugins/bitz-flow/skills/flow-core/SKILL.md,plugins/bitz-flow/.claude-plugin/plugin.json,plugins/bitz-flow/plugin.json,plugins/bitz-flow/.codex-plugin/plugin.json,.claude-plugin/marketplace.json
-status: pending
+boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_transaction.py,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/target-transaction-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/operation-event-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/target-lease-v2.schema.json,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/mutation-receipt-v2.schema.json,tests/test_flow_m2_target_transaction.py,tests/test_flow_m2_contract_v2.py,evals/flow-core/m2-eval/qualification-2026-08-23-flw-tsk-108.json,evals/flow-core/m2-eval/active-local-confirmation.json,evals/flow-core/m2-eval/raw/claude.log,evals/flow-core/m2-eval/raw/codex.log,evals/flow-core/m2-eval/raw/antigravity.log,plugins/bitz-flow/skills/flow-core/SKILL.md,plugins/bitz-flow/.claude-plugin/plugin.json,plugins/bitz-flow/plugin.json,plugins/bitz-flow/.codex-plugin/plugin.json,.claude-plugin/marketplace.json
+status: done
 ---
 
 ### TargetTransactionでlease・fencing・journalを一元化する

@@ -1,1 +1,15 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"bitz-flow/worktree-v2/target-lease/v2","title":"Worktree Target Lease v2","type":"object","additionalProperties":false,"properties":{"schema_version":{"const":2},"repository_identity_digest":{"type":"string","pattern":"^[0-9a-f]{64}$"},"target_key":{"type":"string","minLength":1},"owner_principal":{"type":"string","minLength":1},"operation_id":{"type":"string","minLength":1},"fencing_token":{"type":"integer","minimum":0,"maximum":18446744073709551615},"state":{"enum":["ACTIVE","RELEASED","EXPIRED"]}},"required":["schema_version","repository_identity_digest","target_key","owner_principal","operation_id","fencing_token","state"]}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bitz-flow/worktree-v2/target-lease/v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "operation_id", "target_collision_key", "fencing_token", "nonce_digest", "state"],
+  "properties": {
+    "contract_version": {"type": "integer", "const": 2},
+    "operation_id": {"type": "string", "minLength": 1},
+    "target_collision_key": {"type": "string", "minLength": 1},
+    "fencing_token": {"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"},
+    "nonce_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "state": {"type": "string", "enum": ["ACTIVE", "RELEASED"]}
+  }
+}
