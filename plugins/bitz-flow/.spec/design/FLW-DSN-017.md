@@ -2,11 +2,12 @@
 id: FLW-DSN-017
 title: "M2 Local Safety Profileの競合排除・耐久証跡・原子的promotion"
 status: draft
-version: 2.2
-updated: 2026-08-22
+version: 2.3
+updated: 2026-08-24
 owner: codex
-implements: FLW-NFR-014
-origin: SI-FLW-077, SI-FLW-078, SI-FLW-079, SI-FLW-080, SI-FLW-081, SI-FLW-082
+implements: FLW-NFR-014, FLW-CON-008
+origin: SI-FLW-077, SI-FLW-078, SI-FLW-079, SI-FLW-080, SI-FLW-081, SI-FLW-082,
+  SI-FLW-084, SI-FLW-085, SI-FLW-086, SI-FLW-087, SI-FLW-088, SI-FLW-089, SI-FLW-090
 ---
 
 # FLW-DSN-017 M2 Local Safety Profileの競合排除・耐久証跡・原子的promotion
@@ -149,19 +150,37 @@ LOCKED
 - gap、branch、digest不一致、未知event、token巻戻り・overflowは`INDETERMINATE`にする。
 - Git child終了までleaseを保持または監督し、終了状態を証明できなければ完了扱いしない。
 
-### 4.2 緊急receiptを先行確定する
+### 4.2 intentと緊急receiptを単一durable recordで確定する（2.3で変更）
 
-最初のGit mutation前に、同一filesystemへ次の2件をdurable公開する。
+**v2.2の欠陥**: `prepare_intent`は`INTENT_DURABLE` eventのatomic publishと緊急receiptの
+atomic publishを**2回に分けて**行っていた（`worktree_transaction.py` L197-L209）。この2回の間で
+停止すると、chain検査`len(events) >= 2 and len(emergency) != 1`（同 L323-L324）が
+`durable intent does not have exactly one emergency receipt`を記録し、chainは`INDETERMINATE`になる。
+このときGit副作用は**証明可能に0件**（`mark_mutating`が`require_emergency=True`を要求するため
+`MUTATING`へ進めない）であるにもかかわらず、nonceは`INTENT_DURABLE`公開時点で消費済みである。
+結果として、**副作用0件のtargetが同一planで再実行できないまま隔離される**。
+これはFLW-NFR-014のdurable receipt受入基準に反する。
 
-1. planned effectsとpreconditionを持つ`INTENT_DURABLE` event。
-2. 「副作用が発生した可能性があり自動再実行不可」を示す有効な`INDETERMINATE`緊急receipt。
+**2.3の設計**: intentと緊急receiptを**単一のdurable transaction record**として1回のatomic publish
+（temp write → file fsync → rename → directory fsync）で公開する。最初のGit mutation前に確定するのは
+次を含む1件だけとする。
 
-この2件を公開できなければGit副作用0件で`BLOCKED_STORAGE`を返す。正常終了時は新しいterminal receiptを
-追記して緊急receiptをsupersedeするが、原本は削除しない。緊急receiptはjournal chain上のsequenceと
-自分のdigestを持ち、後続terminal receiptは`supersedes_receipt_digest`でそれを指す。判定時は同一operationの
-最長有効chainにある最後のterminal receiptだけを正とし、branchまたは複数の後継は`INDETERMINATE`にする。
-nonceは`INTENT_DURABLE`の公開時点で消費済みとなる。したがってGit副作用後にENOSPCとなっても、
-少なくとも安全側のoperator actionは既にdurableである。動的な最悪容量計算、予約file、archive容量管理は不要となる。
+1. planned effectsとprecondition。
+2. 「副作用が発生した可能性があり自動再実行不可」を示す`INDETERMINATE`緊急receipt。
+3. nonce digestとfencing token。
+
+この1件を公開できなければGit副作用0件で`BLOCKED_STORAGE`を返す。record公開の前後どちらで停止しても
+中間状態は存在せず、`INTENT_DURABLE`は「intentと緊急receiptが同時に確定した」ことだけを意味する。
+nonceの消費はこのrecordの公開と同時に成立し、部分公開による消費は起こらない。
+
+正常終了時は新しいterminal receiptを追記して緊急receiptをsupersedeするが、原本は削除しない。
+terminal receiptは`supersedes_receipt_digest`でrecord内の緊急receipt digestを指す。判定時は
+同一operationの最長有効chainにある最後のterminal receiptだけを正とし、branchまたは複数の後継は
+`INDETERMINATE`にする。したがってGit副作用後にENOSPCとなっても、安全側のoperator actionは既にdurableである。
+動的な最悪容量計算、予約file、archive容量管理は不要である。
+
+**移行**: 旧形式（分離publish）のchainは推測移行せずfail-closedとし、doctorがmanual rollback手順を
+提示する。schema・runtime・testを同一rollback単位に置く（`SI-FLW-087`）。
 
 ## 5. contract bundleと原子的promotion
 
@@ -403,8 +422,161 @@ PR 3以降も上表とtaskの`depends_on`に従う。設計・裁定・spec revi
 contract v2 bundleを一度activeにしたrepositoryは、current pointerを既知のcompatible bundleへだけ戻せる。
 pre-v2 runtimeへ戻す場合はv2 stateを無視せず、doctorが明示するmanual rollback手順を要求する。
 
+## 13. 実証設計（FLW-CON-008）
+
+本節は`FLW-CON-008`が要求する6表である。**本節の各行は現時点の実測に基づき、未接続を
+未接続として記載する。** `FLW-REV-027`のFAILは、v2.2 §8.1が接続順を書いていたにもかかわらず
+production経路の到達可能性を検査しなかったことに起因する。したがって本節は「設計上の意図」ではなく
+**「production既定dispatcherから到達するか」の実測結果**を記す。
+
+### 13.1 垂直接続図
+
+production入口は`skills/flow-core/scripts/flow.py`が呼ぶ`flowlib/cli.py`の`main()`既定表
+`_HANDLERS`とする。black-box testは`flow.py`を別processとして起動し、handler注入を行わない。`main(handlers=...)`は
+fixture専用注入口であり、**本表のproduction test ID欄にfixture注入testを記載してはならない**。
+
+| # | フロー | production入口 | 経由component | 最終永続証跡 | 利用者出力 | 所有task | production test ID |
+|---:|---|---|---|---|---|---|---|
+| 1 | `repo.inspect` | `_HANDLERS` 到達 | RepositoryObserver | なし（read-only） | `OK` + snapshot | M0既存 | `tests/test_flow_m1_contract_rows.py` |
+| 2 | `git.status` | `_HANDLERS` 到達 | RepositoryObserver | なし（read-only） | `OK` + status | M0既存 | `tests/test_flow_m1_contract_rows.py` |
+| 3 | `git.diff-summary` | `_HANDLERS` 到達 | RepositoryObserver | なし（read-only） | `OK` + diff | M0既存 | `tests/test_flow_m1_contract_rows.py` |
+| 4 | `worktree.*` 全8件の非公開 | `_HANDLERS` 非到達 | dispatcher の`UNSUPPORTED`写像 | なし | `UNSUPPORTED` / `command-unavailable` | 113 | `tests/test_flow_m2_runtime.py::test_worktree_remains_unreachable_from_public_dispatcher` |
+| 5 | 旧signed-capability拒否 | `--capability-file`検出 | cli.py L916-L930 | なし | `UNSUPPORTED` / `unsupported-approval-mode` | 085 | **未実装**（現行testはfixture注入経路） |
+| 6 | `worktree.create` plan | **未接続** | PlatformProbe → ApprovalContext → RuntimePlan | plan digest | `OK` + `operation_id` | 084, 085 | **未実装** |
+| 7 | `worktree.create` apply | **未接続** | TargetTransaction → MutationCoordinator → Git child | 単一intent record → terminal receipt | `DONE` / `QUARANTINED` | 084, 086, 087 | **未実装** |
+| 8 | `worktree.resume` | **未接続** | 同上（binding検証つき） | 同上 | `DONE` / `QUARANTINED` | 084, 085, 087 | **未実装** |
+| 9 | `worktree.audit` | **未接続** | RepositoryObserver → RecoveryInspector | chain read（追記なし） | complete / incomplete / quarantine | 088 | **未実装** |
+| 10 | `worktree.reconcile` | **未接続** | ApprovalContext → RecoveryInspector → closure追記 | closure event | 状態収束 | 089 | **未実装** |
+| 11 | `worktree.doctor` | **未接続** | PlatformProbe → ContractBundleLoader | なし | 診断結果 | 084 | **未実装** |
+
+**実測根拠**: 行6〜11が未接続である理由は2つある。(a) 8つの`worktree.*` handlerはすべて
+`_GATED_HANDLERS`にあり`_HANDLERS`に無い（`cli.py` L876-L885）。(b) より根本的に、
+`worktree_runtime.plan()`は`platform_evidence is None`のとき
+`WorktreeRuntimeError("platform evidence is required")`を送出する（同 L255-L256）が、
+`PF.evaluate_platform()`を呼ぶ**production呼出元は存在しない**（呼出元は
+`tests/test_flow_m2_platform_adapter.py`と`tests/test_flow_m2_runtime.py`のみ）。
+さらに`worktree_platform.py`には実測probe（`uname`／`platform`／`statvfs`／`os.stat`）が1つも無く、
+`PlatformObservation`を構築するproductionコードが存在しない。
+**したがって行6〜11は、公開集合へ戻しただけでは必ず例外で停止する。**
+`SI-FLW-084`はprobeの新規実装と結線の双方を含む。
+
+**接続契約**: 上流は下流のclosed resultを独自解釈せずそのまま伝播し、`operation_id`、
+`collision_key`、fencing token、bundle generationを途中で再生成しない。
+行が`実証済み`となる条件は、production既定dispatcherを起点とするblack-box testの実在である。
+
+### 13.2 状態遷移意味表
+
+| 状態 | 前提 | 永続証跡 | 許される後続処理 | 禁止される完了判定 |
+|---|---|---|---|---|
+| `DONE` | terminal receiptが最長有効chainの最後にあり、予定postconditionが観測で成立 | terminal receipt（`supersedes_receipt_digest`が緊急receiptを一意に指す） | lock解放、marker解除、promotion可 | 予定postconditionを検証せず`DONE`にすること |
+| `QUARANTINED` | mutation後の再観測が予定postconditionと不一致 | terminal receipt（`QUARANTINED`） | audit報告、人間判断、reconcileによるclosure | **`confirmed-complete`へ分類すること**（`SI-FLW-088`） |
+| `INDETERMINATE` | chainにgap／branch／digest不一致／未知event／token巻戻り、または終了状態を証明できないGit child | 最長有効prefixまでのevent（追記は行わない） | 新planと明示確認によるreconcile | 現在snapshotが期待と一致することを根拠に`DONE`扱いすること |
+| `BLOCKED` | precondition不成立、lock競合、storage不能。**Git副作用0件** | `BLOCKED_STORAGE`時はrecord未公開 | 原因解消後の同一planでの再実行 | 副作用の有無を確認せず失敗を成功へ畳むこと |
+
+**不変条件**: `QUARANTINED`と`INDETERMINATE`はいかなる経路でも`DONE`または`confirmed-complete`へ
+畳み込まない。`confirmed-complete`は`DONE`**かつ**予定postcondition成立時に限る（`SI-FLW-088`）。
+現行`worktree_recovery.py`はこの限定を満たさないため**未実装境界**である。
+
+### 13.3 crash-point表
+
+durable writeは4段階（temp write → file fsync → rename → directory fsync）のatomic publishで行う。
+本表は各publishの直前・直後で停止した場合を列挙する。
+
+| # | durable write | 直前で停止 | 直後で停止 | authority | 再開処理 | 重複実行時の結果 |
+|---:|---|---|---|---|---|---|
+| 1 | `LOCKED` event | lock未取得。証跡なし | lock保持、intent無し | TargetTransaction | lock期限切れ後に再取得し同一planで再実行 | 冪等（同一sequenceの再利用は拒否） |
+| 2 | **単一intent record**（2.3統合） | nonce未消費、Git副作用0 | nonce消費、緊急receipt有効、Git副作用0 | TargetTransaction | 緊急receiptを根拠にreconcileで安全closure | 冪等（nonce再消費を拒否） |
+| 3 | `MUTATING` event | intent record確定済、Git未起動 | Git起動可、副作用未確定 | MutationCoordinator | 再観測して`DONE`／`QUARANTINED`を判定 | Git child再起動は禁止。再観測のみ |
+| 4 | Git child実行中 | 副作用0 | 副作用の有無が不明 | MutationCoordinator | 再観測。証明不能なら`INDETERMINATE` | 自動再実行不可（緊急receiptが明示） |
+| 5 | terminal receipt | 副作用確定済、緊急receiptのみ有効 | terminal確定、緊急をsupersede | TargetTransaction | chain最長有効prefixから終局判定 | 冪等（複数後継は`INDETERMINATE`） |
+| 6 | reconcile closure | marker適格性未確認 | closure確定、marker未解除 | RecoveryInspector | **marker適格性をpromotion lock下で再検証してから追記**（`SI-FLW-089`） | 同一decisionの再試行は単一closureへ収束 |
+| 7 | promotion marker解除 | marker保持、promotion不可 | marker解除、promotion可 | PromotionBarrier | marker再検証 | 冪等 |
+
+**v2.2からの解消**: 旧設計は#2を2回のpublishに分割しており、その間の停止が
+「Git副作用0件かつnonce消費済みかつ`INDETERMINATE`」という回収不能状態を作っていた（§4.2）。
+2.3の統合によりこの空隙は構造的に消える。
+
+**未実装境界**: #6のmarker適格性再検証（`SI-FLW-089`）と#4の有限収束（§13.4）は未実装である。
+`target lock`と`promotion lock`を同時保持しないlock order不変条件を保護する。
+
+### 13.4 liveness budget表
+
+| 対象 | deadline | kill手順 | 出力回収 | terminal result最大応答 |
+|---|---:|---|---|---:|
+| read-only Git child | 30秒（既定。範囲1〜300秒） | SIGTERM → 2.0秒grace → SIGKILL（Windowsはjob object close） | 8 MiB上限。超過で終了させ`UNAVAILABLE` | 32秒 |
+| write-capable Git child | 60秒（既定。範囲10〜300秒） | 同上 | 同上 | 62秒 |
+| operation全体 | 300秒 | 全child kill後にreconciliation reserveを確保 | — | **30秒**（`FLW-NFR-014`受入基準） |
+| reconciliation reserve | 10秒 | — | — | operation deadline内 |
+
+**実測との乖離（未実装境界）**: `process.py`は`TimeoutBudget`、SIGTERM/SIGKILL、2.0秒grace、
+8 MiB出力上限、Windows job objectをすべて実装済みである（L36-L48, L236-L250）。しかし
+**worktree経路はこれを一切使っていない**。`worktree_runtime.py`の全subprocess呼び出し
+（L66 RepositoryObserver、L140 `_git`、L325 openssl署名検証、L732 `run_git`＝write経路）は
+いずれも`timeout=`引数を持たない素の`subprocess.run`である。したがって現状、hangしたGit childは
+**無期限にブロックする**。`SI-FLW-086`は`--timeout-seconds`を全childへ伝播させ、
+10,000 event／100 MiB条件で30秒以内に閉じることを要求する。
+
+### 13.5 platform reality表
+
+registryの正は`skills/flow-core/references/worktree-v2-platform-support.json`とする。
+
+| OS | 実装component | identity | probe方法 | 未対応時の即時拒否 | 実観測 |
+|---|---|---|---|---|---|
+| linux | flock / fsync / fsync / waitpid | uid | filesystem type（btrfs, ext4, tmpfs, xfs）、owner、case semantics、lock、durability、child supervision | `UNSUPPORTED_FILESYSTEM` | **未実施** |
+| macos | flock / fsync / fsync / waitpid | uid | 同上（apfs, hfs）。case-insensitive volumeを含む | `UNSUPPORTED_FILESYSTEM` | **未実施** |
+| windows | LockFileEx / FlushFileBuffers / ReplaceFileW / job-object | sid | 同上（ntfs, refs）。native/folded componentとcase foldingを含む | `UNSUPPORTED_FILESYSTEM` | **未実施** |
+
+**代替禁止**: 他OSのcomponentによる代替を同一証明として扱わない。現行
+`worktree_runtime.plan()`は`native_component_from_posix(os.fsencode(target.name))`を
+**OS非依存に呼んでいる**（L261）ため、Windows実行をPOSIX前提componentで代替している。
+これは`FLW-REV-027`の「Windows identity」P0に相当し、`SI-FLW-084`で是正する。
+
+**観測不能の扱い**: probeが観測不能な項目を1つでも返した場合、`supported`へ格上げせず
+`UNSUPPORTED_FILESYSTEM`へ閉じる。network filesystem、未知filesystem、観測失敗を
+supportedの既定へ倒さない。
+
+### 13.6 legacy exclusion表
+
+| 廃止対象 | 所在 | production入口からの到達可否 | 即時拒否の写像 | negative test ID |
+|---|---|---|---|---|
+| `--capability-file`（signed capability） | `cli.py` L916-L930 | 到達する（拒否handlerとして） | `UNSUPPORTED` / `unsupported-approval-mode` | **未実装** |
+| `resolve_approval_mode` | `cli.py` | 未接続経路に残存 | 同上（共通preflightへ移す） | **未実装** |
+| trusted key registry選択 | `cli.py` / `worktree_capability.py` | 未接続経路に残存 | 同上 | **未実装** |
+| openssl署名検証child | `worktree_runtime.py` L325 | 未接続経路に残存。**timeout無し** | 経路ごと除去する | **未実装** |
+| `worktree_dir_guard_key` 旧context | `worktree_runtime.py` / `guard.py` | 未接続経路に残存 | `ApprovalContext.target_collision_key`へ一本化 | **未実装** |
+| legacy signed-capability schema | `schemas/worktree-v2/` | bundle memberではない（実在のみ） | active bundleへ混入させない | `tests/test_flow_m2_contract_v2.py` |
+
+**契約**: 廃止入力は**内容を解析せず**mutation前に閉じる。解析してからの降格、
+`plan-digest`への暗黙のfallbackを禁止する。`SI-FLW-085`は上記5件をproduction handlerから
+除去し、共通preflightで即時拒否へ写像する。除去後、本表のnegative test IDは
+production既定dispatcherを起点とするtestで埋める。
+
+### 13.7 7観点の現状
+
+`FLW-CON-008`が要求するDesign Gateへの回答である。
+
+| # | 観点 | 現状 | 根拠 |
+|---:|---|---|---|
+| 1 | 接続完全性 | **未実装境界** | 13.1 行6〜11が`_HANDLERS`非到達かつplatform evidence生成器不在 |
+| 2 | 失敗原子性 | **検証計画** | 13.3 #2は2.3設計で解消。#6は`SI-FLW-089`で是正予定 |
+| 3 | 有限収束性 | **未実装境界** | 13.4 worktree経路の全subprocessに`timeout=`が無い |
+| 4 | platform実在性 | **未実装境界** | 13.5 3 OSとも実観測未実施。POSIX component をOS非依存に使用 |
+| 5 | 証跡妥当性 | **未実装境界** | 現`verified`証跡はfixture注入経路。`SI-FLW-090`で是正 |
+| 6 | legacy排除 | **未実装境界** | 13.6 の5件がproductionコードに残存 |
+| 7 | 状態意味保存 | **検証計画** | 13.2の不変条件を`SI-FLW-088`／`089`で実装 |
+
+**Gate判定への拘束**: 7観点に`実証済み`が1件も無い。したがって本設計は
+`FLW-CON-008`により、**接続の成立を根拠としたDesign Gate PASSを主張しない**。
+本節が求める裁定は「是正の設計方針としての妥当性」であり、`FLW-REV-027`のGate blocking条件
+（production既定dispatcher実走、3platform実観測、全crash境界、finite timeout）は
+実装後の再レビューでのみ解除できる。
+
 ## Revision History
 
+- 2.3 (2026-08-24) FLW-REV-027のFAILを受け、`FLW-CON-008`が要求する6表（§13）を追加。
+  §4.2のintent／緊急receiptを単一durable recordへ統合し、production未接続・timeout欠落・
+  Windows代替component・legacy残存を未実装境界として明示（SI-FLW-084〜090。
+  裁定参照: .spec/reports/decision-2026-08-24-flw-rev-027-remediation.md）
 - 2.2 (2026-08-22) 実装前検査の裁定を反映。legacy schemaとactive bundleを分離し、非対応承認方式の
   公開result写像、PRごとのrelease integration ownerと直列化を確定
 - 2.1 (2026-08-22) 用語表、運用受入マトリクス、RepositoryObserverを含むE2E接続表、

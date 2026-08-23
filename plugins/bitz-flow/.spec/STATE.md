@@ -1,5 +1,16 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-REV-027是正の設計着手: 振り返り§5-§6の「7観点」「6設計成果物」が裁定記録の散文に
+  留まり機械検証されていなかったため、`FLW-CON-008`（設計完了判定の実証義務）をdraft起票して規範化した。
+  あわせて`FLW-DSN-017`を2.3へ改訂し、§13へ6表（垂直接続図・状態遷移意味表・crash-point表・
+  liveness budget表・platform reality表・legacy exclusion表）を追加、§4.2のintent／緊急receiptを
+  単一durable recordへ統合した（`SI-FLW-087`）。6表は実測に基づき、7観点すべてが
+  `未実装境界`または`検証計画`であることを明示する（`実証済み`は0件）。実測で確定した事実:
+  worktree全8 handlerは`_GATED_HANDLERS`にあり公開dispatcher非到達、`PF.evaluate_platform()`の
+  production呼出元が存在せず`plan()`は必ず例外停止、`worktree_runtime.py`の全subprocessに
+  `timeout=`が無い、`native_component_from_posix`をOS非依存に使用。あわせてROADMAP L228が
+  名指ししていた実在しないtest名を実体（`test_worktree_remains_unreachable_from_public_dispatcher`）へ修正した。
+
 - 2026-08-24 FLW-REV-027是正issueの一括受理: userが「8件すべてacceptで進める」と裁定し、
   `SI-FLW-084`〜`SI-FLW-091`をopen→acceptedへ遷移した（代行記録・実行者未検証。
   裁定参照: `.spec/reports/decision-2026-08-24-flw-rev-027-remediation.md`）。実装は依存順に
