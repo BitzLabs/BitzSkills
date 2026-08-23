@@ -1,5 +1,12 @@
 # STATE — status 遷移ログ
 
+- 2026-08-23 M2実装後の恒久教訓候補: モジュールの存在、内部helperの成功、単体testのPASSを
+  機能完成の証拠としない。production入口から永続化・復旧・監査・利用者出力までの垂直接続、
+  全durable write境界のcrash recovery、有限時間での収束、対象OS固有component、廃止契約の
+  到達不能性、隔離・判定不能を成功へ畳み込まない状態意味をDesign Gate以前に設計し、
+  task done / verified以前にproduction black-box evidenceで実証する。詳細と次回の必須7観点は
+  `.spec/reports/decision-2026-08-23-m2-post-implementation-retrospective.md`。Promotion Gate通過後に
+  人間確認を経て`docs/05_リリース・運用/教訓.md`へ昇格する。
 - 2026-08-22 FLW-TSK-106 confirmation実走: prerequisite qualificationは
   Claude / Codex / Antigravityの3者すべてPASS。qualification runnerのsummaryが
   confirmation必須のcompatibility key・集約時刻を出さない既存接続ギャップがあり、3者の
