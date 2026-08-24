@@ -1,5 +1,29 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 M2 confirmation実走: userが`evals/`上書きを承認し、qualification・confirmationとも
+  **3 platform PASS**を得た（裁定参照: `.spec/reports/decision-2026-08-24-confirmation-rerun.md`）。
+  3者ともtests=311・`test_id_digest`一致・runtime 21/21・hazard 0・residual 0・canary検出済み、
+  被験repo stateは実走前後で不変。Gate再照合は`Gate 採用可`（exit 0）。
+  `test_active_manifest_records_real_three_platform_run`の失敗が解消し、
+  全体**2465 passed / 43 skipped / 失敗0**。2026-08-22から続いていたcompatibility fingerprint
+  失効は解消した。compatibility key: `sha256:e878418c5cd4bd6e2123295c6e3d03880052f31904c261e3cce52c5d892d4b34`。
+  **途中の非PASS 2件はいずれも是正の回帰ではなかった**。(1) qualificationのclaude FAILは
+  `--out`を被験リポジトリ内へ指定したことが原因。`repo_state_digest()`が`git status --porcelain`を
+  含み、runnerが作った出力ディレクトリが`??`として現れてdigestを変えた。gitは未追跡ディレクトリを
+  1行に畳むため最初のplatform（claude）だけがその瞬間をまたぎ、以降は不変となる。
+  `--out`をリポジトリ外にしてclaude単独で再実走しPASSすることを確認して確定した。
+  hazard検出器は正しく動作しており、変化させたのは実走手順の側だった。
+  (2) confirmationのclaude FAILはCLIのセッション上限。manifest上の測定値はPASSした2 platformと
+  完全に同一で、判定式の消去法から`returncode != 0`のみが要因と特定。raw log末尾に
+  `tests=311 ... hazards=0 residuals=0`（被験スクリプト完走）に続く
+  `hit your session limit · resets 1:30pm`があり確証を得た。上限リセット後に許容上限1回の
+  再試行でPASS。
+  **証跡採用の手順も1点修正した**: attempt ledgerはハッシュチェーンであり、別ディレクトリの
+  ledgerを既存ファイルへ単純追記すると連鎖が壊れる。確定版manifestが30行の累積ledger全体を
+  digestで束縛していることを`git show HEAD:`で確認し、`--out`をrepoの`evals/flow-core/m2-eval/`へ
+  向けて実走し直した。runnerはraw logとledgerを`state_after`取得後に書くため被験repoの
+  前後比較には影響しない（実測でhazard 0）。ledgerは30→33行へ連鎖。
+
 - 2026-08-24 FLW-TSK-122（SI-FLW-091）実装: レビュー台帳の整合を機械検査する
   `tests/test_flow_review_ledger.py`（8種・75 test）を追加した。runtime挙動は変えていない。
   **実測して分かったこと**: `FLW-REV-027`の`carried_over` 88件は先行レビューの未解決
