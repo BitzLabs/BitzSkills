@@ -118,6 +118,19 @@ class RuntimeDecision:
     cause: str | None = None
 
 
+class WorktreeUnsupportedPlatformError(ValueError):
+    """platform evidence が supported でないことを表す（`SI-FLW-084`）。
+
+    `WorktreeRuntimeError` と分けるのは、呼び出し側が `BLOCKED / conflict` へ
+    丸めてしまうと運用者が「環境が対象外」なのか「競合で止まった」のかを
+    識別できないためである。理由は closed evidence の `reasons` をそのまま運ぶ。
+    """
+
+    def __init__(self, reasons: tuple[str, ...]) -> None:
+        super().__init__("platform evidence is not supported")
+        self.reasons = tuple(reasons)
+
+
 class WorktreeRuntimeError(ValueError):
     """worktree runtime が意図して投げる失敗。
 
@@ -253,9 +266,12 @@ def plan(
         nonexistent = None
         guard.verify_worktree_binding(common, registry, target)
     if platform_evidence is None:
-        raise WorktreeRuntimeError("platform evidence is required")
+        # production から evidence を渡す経路が無く、ここが必ず例外で止まっていた
+        # （`FLW-REV-027:SYN-001`）。既定を実環境 probe にして production 経路を閉じる。
+        # probe は例外を投げず、観測不能を closed evidence の reasons へ載せる。
+        platform_evidence = PF.platform_evidence_for(approved_root)
     if not platform_evidence.supported:
-        raise WorktreeRuntimeError("platform evidence is unsupported")
+        raise WorktreeUnsupportedPlatformError(platform_evidence.reasons)
     collision = PF.collision_key(
         parent_identity=sha256_digest(_parent_identity(target).encode("utf-8")),
         native_component=native_component_from_posix(os.fsencode(target.name)).as_mapping(),

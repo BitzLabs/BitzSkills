@@ -619,6 +619,19 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
             worktree_root=args.worktree_root, start_point=args.start_point,
             default_branch=args.default_branch,
         )
+    except worktree_runtime.WorktreeUnsupportedPlatformError as exc:
+        # 環境が対象外であることを `BLOCKED / conflict` へ丸めない。運用者は
+        # 「競合で止まった」のか「この filesystem では動かない」のかを区別できる
+        # 必要がある（`SI-FLW-084`）。理由は closed evidence をそのまま載せる。
+        data = R.empty_data()
+        data["cause"] = "unsupported-filesystem"
+        data["evidence"] = list(exc.reasons)
+        result = R.build_result(
+            operation=operation, code="UNSUPPORTED", repo=root, tool_version=__version__,
+            started_at=started, finished_at=_now(), summary=str(exc),
+            data=data, stage="plan",
+        )
+        return result, R.CompactView(tokens={"platform": "unsupported"})
     except worktree_runtime.WorktreeRuntimeError as exc:
         return _simple_result(
             operation=operation, code="BLOCKED", repo=root, summary=str(exc),

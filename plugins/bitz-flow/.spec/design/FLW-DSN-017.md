@@ -442,23 +442,23 @@ fixture専用注入口であり、**本表のproduction test ID欄にfixture注�
 | 3 | `git.diff-summary` | `_HANDLERS` 到達 | RepositoryObserver | なし（read-only） | `OK` + diff | M0既存 | `tests/test_flow_m1_contract_rows.py::test_reachable_codes_are_still_m0_only` |
 | 4 | `worktree.*` 全8件の非公開 | `_HANDLERS` 非到達 | dispatcher の`UNSUPPORTED`写像 | なし | `UNSUPPORTED` / `command-unavailable` | 113 | `tests/test_flow_m2_runtime.py::test_worktree_remains_unreachable_from_public_dispatcher` |
 | 5 | 旧signed-capability拒否 | `--capability-file`検出 | cli.py L916-L930 | なし | `UNSUPPORTED` / `unsupported-approval-mode` | 085 | **未実装**（現行testはfixture注入経路） |
-| 6 | `worktree.create` plan | **未接続** | PlatformProbe → ApprovalContext → RuntimePlan | plan digest | `OK` + `operation_id` | 084, 085 | **未実装** |
+| 6 | `worktree.create` plan | **未接続**（gated） | PlatformProbe → ApprovalContext → RuntimePlan | plan digest | `OK` + `operation_id` | 116 | **未実装**（公開集合復帰後。probe結線は`tests/test_flow_m2_platform_probe.py::test_plan_no_longer_requires_injected_platform_evidence`） |
 | 7 | `worktree.create` apply | **未接続** | TargetTransaction → MutationCoordinator → Git child | 単一intent record → terminal receipt | `DONE` / `QUARANTINED` | 084, 086, 087 | **未実装** |
 | 8 | `worktree.resume` | **未接続** | 同上（binding検証つき） | 同上 | `DONE` / `QUARANTINED` | 084, 085, 087 | **未実装** |
 | 9 | `worktree.audit` | **未接続** | RepositoryObserver → RecoveryInspector | chain read（追記なし） | complete / incomplete / quarantine | 088 | **未実装** |
 | 10 | `worktree.reconcile` | **未接続** | ApprovalContext → RecoveryInspector → closure追記 | closure event | 状態収束 | 089 | **未実装** |
-| 11 | `worktree.doctor` | **未接続** | PlatformProbe → ContractBundleLoader | なし | 診断結果 | 084 | **未実装** |
+| 11 | `worktree.doctor` | **未接続**（gated） | PlatformProbe → ContractBundleLoader | なし | 診断結果 | 116 | **未実装**（公開集合復帰後。共通生成器は`tests/test_flow_m2_platform_probe.py::test_plan_and_doctor_share_one_evidence_generator`） |
 
-**実測根拠**: 行6〜11が未接続である理由は2つある。(a) 8つの`worktree.*` handlerはすべて
-`_GATED_HANDLERS`にあり`_HANDLERS`に無い（`cli.py` L876-L885）。(b) より根本的に、
-`worktree_runtime.plan()`は`platform_evidence is None`のとき
-`WorktreeRuntimeError("platform evidence is required")`を送出する（同 L255-L256）が、
-`PF.evaluate_platform()`を呼ぶ**production呼出元は存在しない**（呼出元は
-`tests/test_flow_m2_platform_adapter.py`と`tests/test_flow_m2_runtime.py`のみ）。
-さらに`worktree_platform.py`には実測probe（`uname`／`platform`／`statvfs`／`os.stat`）が1つも無く、
-`PlatformObservation`を構築するproductionコードが存在しない。
-**したがって行6〜11は、公開集合へ戻しただけでは必ず例外で停止する。**
-`SI-FLW-084`はprobeの新規実装と結線の双方を含む。
+**実測根拠**: 行6〜11が未接続である理由は、8つの`worktree.*` handlerがすべて
+`_GATED_HANDLERS`にあり`_HANDLERS`に無いこと（`cli.py`）である。これは縮退規則3による
+意図的なgatingであり、解除は`FLW-REV-027`のGate blocking条件を満たしたときに限る。
+
+`FLW-TSK-116`以前は、より根本的な断線があった。`worktree_runtime.plan()`が
+`platform_evidence is None`のとき`platform evidence is required`を送出する一方で、
+`PF.evaluate_platform()`を呼ぶproduction呼出元が存在せず、`PlatformObservation`を
+構築するコードも無かった。**公開集合へ戻しただけでは必ず例外で停止する状態**だった。
+`FLW-TSK-116`で実環境probeを実装し、`plan()`とdoctorを共通生成器
+`platform_evidence_for()`へ結線してこれを解消した。残るのはgatingのみである。
 
 **接続契約**: 上流は下流のclosed resultを独自解釈せずそのまま伝播し、`operation_id`、
 `collision_key`、fencing token、bundle generationを途中で再生成しない。
@@ -519,21 +519,28 @@ durable writeは4段階（temp write → file fsync → rename → directory fsy
 ### 13.5 platform reality表
 
 registryの正は`skills/flow-core/references/worktree-v2-platform-support.json`とする。
+probeの正は`worktree_platform.probe_platform()`で、planとdoctorは共通入口
+`platform_evidence_for()`を通る（`FLW-TSK-116`）。probeは**read-only**であり、
+対象filesystemへ書き込まない。
 
 | OS | 実装component | identity | probe方法 | 未対応時の即時拒否 | 実観測 |
 |---|---|---|---|---|---|
-| linux | flock / fsync / fsync / waitpid | uid | filesystem type（btrfs, ext4, tmpfs, xfs）、owner、case semantics、lock、durability、child supervision | `UNSUPPORTED_FILESYSTEM` | **未実施** |
-| macos | flock / fsync / fsync / waitpid | uid | 同上（apfs, hfs）。case-insensitive volumeを含む | `UNSUPPORTED_FILESYSTEM` | **未実施** |
-| windows | LockFileEx / FlushFileBuffers / ReplaceFileW / job-object | sid | 同上（ntfs, refs）。native/folded componentとcase foldingを含む | `UNSUPPORTED_FILESYSTEM` | **未実施** |
+| linux | flock / fsync / fsync / waitpid | uid（`st_uid` vs `geteuid`） | `/proc/self/mountinfo`を`st_dev`（major:minor）で引きfstypeを得る。case semanticsはswapcase pathの存在で判定 | `UNSUPPORTED_FILESYSTEM` | **実施**（`tests/test_flow_m2_platform_probe.py::test_probe_observes_the_real_filesystem`。Linux 6.18 WSL2 / ext4・tmpfsで`SUPPORTED`、9pで`filesystem-class-network`を確認） |
+| macos | flock / fsync / fsync / waitpid | uid | `statfs(2)`の`f_fstypename`をctypesで取得。case-insensitive volumeを含む | `UNSUPPORTED_FILESYSTEM` | **未実施**（実装のみ。macOS上での実走が必要） |
+| windows | LockFileEx / FlushFileBuffers / ReplaceFileW / job-object | sid | `GetVolumeInformationW`でfilesystem名と`FILE_CASE_SENSITIVE_SEARCH`を取得 | `UNSUPPORTED_FILESYSTEM` | **未実施**（実装のみ。SID取得手段が未確定のため現状は`owner-unobservable`で必ず不支持になる） |
 
-**代替禁止**: 他OSのcomponentによる代替を同一証明として扱わない。現行
-`worktree_runtime.plan()`は`native_component_from_posix(os.fsencode(target.name))`を
-**OS非依存に呼んでいる**（L261）ため、Windows実行をPOSIX前提componentで代替している。
-これは`FLW-REV-027`の「Windows identity」P0に相当し、`SI-FLW-084`で是正する。
+**代替禁止**: 他OSのcomponentによる代替を同一証明として扱わない。registryが宣言する
+`child_supervision`と実runtimeで使える primitive が食い違う場合は`supported`にしない
+（`test_child_supervision_must_match_the_declared_primitive`）。
 
-**観測不能の扱い**: probeが観測不能な項目を1つでも返した場合、`supported`へ格上げせず
-`UNSUPPORTED_FILESYSTEM`へ閉じる。network filesystem、未知filesystem、観測失敗を
-supportedの既定へ倒さない。
+**fail-closed**: probeは**例外を送出しない**。観測不能・未知filesystem・network filesystemは
+`supported`へ格上げせず、理由をclosed evidenceの`reasons`へ載せる。`fuse.*`は既知の
+network transportとして扱い、未知の`fuse.*`変種もlocalへ格上げしない。support registryが
+読めない場合も`support-registry-unreadable`として閉じる。
+
+**Windowsの残課題**: `_owner()`はWindowsでSIDを取得できないため`owner_principal=None`を返し、
+`owner-unobservable`で必ず不支持になる。これは安全側の既定であり誤りではないが、Windowsを
+supportedにするにはSID取得の実装が要る。`SI-FLW-084`の残作業として本表に明示する。
 
 ### 13.6 legacy exclusion表
 
@@ -565,15 +572,15 @@ operationがgatedである間production入口から到達できず`command-unava
 
 | # | 観点 | 現状 | 根拠 |
 |---:|---|---|---|
-| 1 | 接続完全性 | **未実装境界** | 13.1 行6〜11が`_HANDLERS`非到達かつplatform evidence生成器不在 |
+| 1 | 接続完全性 | **未実装境界** | 13.1 行6〜11が`_HANDLERS`非到達。evidence生成器不在は`FLW-TSK-116`で解消し、残るのはgatingのみ |
 | 2 | 失敗原子性 | **検証計画** | 13.3 #2は2.3設計で解消。#6は`SI-FLW-089`で是正予定 |
 | 3 | 有限収束性 | **未実装境界** | 13.4 worktree経路の全subprocessに`timeout=`が無い |
-| 4 | platform実在性 | **未実装境界** | 13.5 3 OSとも実観測未実施。POSIX component をOS非依存に使用 |
+| 4 | platform実在性 | **検証計画** | 13.5 probe実装済み。linuxは実観測済み（ext4/tmpfsでSUPPORTED、9pでnetwork拒否）。macos／windowsは実装のみで実走未実施 |
 | 5 | 証跡妥当性 | **未実装境界** | 現`verified`証跡はfixture注入経路。`SI-FLW-090`で是正 |
-| 6 | legacy排除 | **未実装境界** | 13.6 の5件がproductionコードに残存 |
+| 6 | legacy排除 | **検証計画** | 13.6 の旧承認経路は`FLW-TSK-115`で除去済み（参照0件）。宣言／registry検出のblack-box化は公開集合復帰後 |
 | 7 | 状態意味保存 | **検証計画** | 13.2の不変条件を`SI-FLW-088`／`089`で実装 |
 
-**Gate判定への拘束**: 7観点に`実証済み`が1件も無い。したがって本設計は
+**Gate判定への拘束**: 7観点に`実証済み`は依然1件も無い（`FLW-TSK-115`／`116`後も、production既定dispatcherからの到達がgatingで閉じているため）。したがって本設計は
 `FLW-CON-008`により、**接続の成立を根拠としたDesign Gate PASSを主張しない**。
 本節が求める裁定は「是正の設計方針としての妥当性」であり、`FLW-REV-027`のGate blocking条件
 （production既定dispatcher実走、3platform実観測、全crash境界、finite timeout）は

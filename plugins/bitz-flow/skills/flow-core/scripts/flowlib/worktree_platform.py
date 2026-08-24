@@ -7,6 +7,8 @@ self-testの両方が成立した場合だけsupportedにする。外部profile�
 from __future__ import annotations
 
 import json
+import os
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping
@@ -15,6 +17,8 @@ from .worktree_contract import (
     CONTRACT_VERSION,
     ContractError,
     canonical_json_bytes,
+    native_component_from_posix,
+    native_component_from_windows,
     native_component_to_posix,
     native_component_to_windows,
     sha256_digest,
@@ -242,3 +246,345 @@ def collision_key(
         "case_semantics": case_semantics,
         "component": dict(selected),
     }))
+
+
+# --- 実環境probe（FLW-TSK-116 / SI-FLW-084） ---------------------------------
+#
+# `evaluate_platform` は観測を評価するだけで、観測そのものは行わない。probe が無い間、
+# production から `PlatformObservation` を構築する経路が存在せず、`plan()` は必ず
+# `platform evidence is required` で停止していた（`FLW-REV-027:SYN-001`）。
+#
+# probe は **read-only** である。対象 filesystem へ書き込まない。durability と lock は
+# 「この runtime で primitive が利用可能か」を検査し、書き込みによる実証は行わない。
+
+#: 明らかに network / 非ローカルな filesystem。allowlist とは別に class を決める。
+NETWORK_FILESYSTEMS = frozenset({
+    "9p", "afs", "ceph", "cifs", "davfs", "ftpfs", "fuse.sshfs", "glusterfs",
+    "ncpfs", "nfs", "nfs4", "smb2", "smb3", "smbfs", "sshfs", "vboxsf", "virtiofs",
+})
+
+
+def current_platform() -> str | None:
+    """OS 判別子。未知の OS は推測せず None を返す。"""
+    if os.name == "nt":
+        return "windows"
+    if sys.platform == "darwin":
+        return "macos"
+    if sys.platform.startswith("linux"):
+        return "linux"
+    return None
+
+
+def classify_filesystem(filesystem_type: str | None) -> tuple[str, str]:
+    """(filesystem_type, filesystem_class) を返す。判別できなければ unknown へ閉じる。"""
+    if not filesystem_type:
+        return "unknown", "unknown"
+    name = filesystem_type.strip().lower()
+    if not name:
+        return "unknown", "unknown"
+    if name in NETWORK_FILESYSTEMS or name.startswith("fuse."):
+        return name, "network"
+    if name == "unknown":
+        return "unknown", "unknown"
+    return name, "local"
+
+
+def _linux_filesystem_type(target: Path) -> str | None:
+    """`/proc/self/mountinfo` を st_dev で引く。読めなければ None。"""
+    try:
+        device = os.stat(target).st_dev
+        major, minor = os.major(device), os.minor(device)
+        wanted = f"{major}:{minor}"
+        for line in Path("/proc/self/mountinfo").read_text(encoding="utf-8").splitlines():
+            fields = line.split()
+            if len(fields) < 5 or fields[2] != wanted:
+                continue
+            if "-" not in fields:
+                continue
+            return fields[fields.index("-") + 1]
+    except (OSError, ValueError, IndexError):
+        return None
+    return None
+
+
+def _macos_filesystem_type(target: Path) -> str | None:
+    """`statfs(2)` の `f_fstypename` を ctypes で読む。"""
+    try:
+        import ctypes
+
+        class _Statfs(ctypes.Structure):
+            _fields_ = [
+                ("f_bsize", ctypes.c_uint32), ("f_iosize", ctypes.c_int32),
+                ("f_blocks", ctypes.c_uint64), ("f_bfree", ctypes.c_uint64),
+                ("f_bavail", ctypes.c_uint64), ("f_files", ctypes.c_uint64),
+                ("f_ffree", ctypes.c_uint64), ("f_fsid", ctypes.c_int32 * 2),
+                ("f_owner", ctypes.c_uint32), ("f_type", ctypes.c_uint32),
+                ("f_flags", ctypes.c_uint32), ("f_fssubtype", ctypes.c_uint32),
+                ("f_fstypename", ctypes.c_char * 16),
+                ("f_mntonname", ctypes.c_char * 1024),
+                ("f_mntfromname", ctypes.c_char * 1024),
+                ("f_reserved", ctypes.c_uint32 * 8),
+            ]
+
+        libc = ctypes.CDLL("libc.dylib", use_errno=True)
+        buffer = _Statfs()
+        if libc.statfs(os.fsencode(str(target)), ctypes.byref(buffer)) != 0:
+            return None
+        return buffer.f_fstypename.decode("ascii", "replace") or None
+    except (OSError, AttributeError, ValueError):
+        return None
+
+
+def _windows_volume(target: Path) -> tuple[str | None, bool]:
+    """`GetVolumeInformationW` から (filesystem 名, case-sensitive か) を得る。"""
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        root = ctypes.c_wchar_p(str(Path(target).anchor))
+        name = ctypes.create_unicode_buffer(261)
+        flags = wintypes.DWORD()
+        ok = kernel32.GetVolumeInformationW(
+            root, None, 0, None, None, ctypes.byref(flags), name, ctypes.sizeof(name)
+        )
+        if not ok:
+            return None, False
+        # FILE_CASE_SENSITIVE_SEARCH = 0x00000001
+        return (name.value or None), bool(flags.value & 0x1)
+    except (OSError, AttributeError, ValueError):
+        return None, False
+
+
+def _case_semantics(target: Path) -> str | None:
+    """case を反転した path が見えるかで判定する。判定材料が無ければ None。
+
+    マウント単位で異なるため OS 名では決められない（`guard.py` と同じ根拠）。
+    書き込みを伴わないので read-only を保てる。
+    """
+    probe = target if target.exists() else target.parent
+    text = str(probe)
+    swapped = text.swapcase()
+    if swapped == text:
+        return None      # 英字が無く判定できない。推測しない。
+    try:
+        return "insensitive" if os.path.exists(swapped) else "sensitive"
+    except OSError:
+        return None
+
+
+def _owner(target: Path) -> tuple[str | None, bool, bool]:
+    """(owner_principal, owner_matches, acl_owner_only) を返す。"""
+    try:
+        info = os.stat(target)
+    except OSError:
+        return None, False, False
+    if os.name == "nt":
+        # SID を取得できる保証が無い。取得できないものを owner として名乗らない。
+        return None, False, False
+    try:
+        principal = str(info.st_uid)
+        matches = info.st_uid == os.geteuid()
+    except (AttributeError, OSError):
+        return None, False, False
+    acl_owner_only = not (info.st_mode & 0o077)
+    return principal, matches, acl_owner_only
+
+
+def _primitives(platform: str, profile: SupportProfile | None) -> dict[str, bool]:
+    """registry が宣言する primitive が、この runtime で実際に使えるかを検査する。"""
+    if os.name == "nt":
+        lock = _has_windows_locking()
+        directory_durability = hasattr(os, "replace")
+        supervision = _has_windows_job_object()
+    else:
+        try:
+            import fcntl
+            lock = hasattr(fcntl, "flock")
+        except ImportError:
+            lock = False
+        directory_durability = hasattr(os, "fsync") and hasattr(os, "O_DIRECTORY")
+        supervision = hasattr(os, "killpg") and hasattr(os, "getpgid")
+    values = {
+        "os_lock": bool(lock),
+        "file_durability": hasattr(os, "fsync"),
+        "directory_durability": bool(directory_durability),
+        "child_supervision": bool(supervision),
+        "non_follow_walk": _has_non_follow_walk(),
+    }
+    if profile is not None:
+        # registry の宣言と実際に使える primitive が食い違う場合は supported にしない。
+        expected_supervision = {"waitpid": not _is_nt(), "job-object": _is_nt()}
+        values["child_supervision"] = bool(
+            values["child_supervision"]
+            and expected_supervision.get(profile.child_supervision, False)
+        )
+    return values
+
+
+def _is_nt() -> bool:
+    return os.name == "nt"
+
+
+def _has_non_follow_walk() -> bool:
+    """symlink を追わない走査ができるか。"""
+    if not hasattr(os, "scandir") or not hasattr(os, "lstat"):
+        return False
+    if _is_nt():
+        return True
+    return hasattr(os, "O_NOFOLLOW")
+
+
+def _has_windows_locking() -> bool:
+    try:
+        import ctypes
+
+        return hasattr(ctypes.WinDLL("kernel32", use_last_error=True), "LockFileEx")
+    except (OSError, AttributeError, ValueError):
+        return False
+
+
+def _has_windows_job_object() -> bool:
+    try:
+        import ctypes
+
+        return hasattr(ctypes.WinDLL("kernel32", use_last_error=True), "CreateJobObjectW")
+    except (OSError, AttributeError, ValueError):
+        return False
+
+
+def _native_component(platform: str, target: Path) -> Mapping[str, str] | None:
+    try:
+        if platform == "windows":
+            return native_component_from_windows(target.name).as_mapping()
+        return native_component_from_posix(os.fsencode(target.name)).as_mapping()
+    except (ContractError, ValueError, TypeError):
+        return None
+
+
+def _resource_identity(target: Path) -> tuple[str, str] | None:
+    try:
+        info = os.stat(target)
+    except OSError:
+        return None
+    kind = "directory" if os.path.isdir(target) else "file"
+    return kind, sha256_digest(f"{info.st_dev}:{info.st_ino}".encode("ascii"))
+
+
+#: 同梱 support registry。plan と doctor はこの1本を共有する（`SI-FLW-084`）。
+SUPPORT_REGISTRY_PATH = (
+    Path(__file__).resolve().parents[2] / "references" / "worktree-v2-platform-support.json"
+)
+
+
+def platform_evidence_for(path: str | Path) -> PlatformEvidence:
+    """production 共通の evidence 生成器。
+
+    plan と doctor が別々に観測すると、doctor が緑でも plan が別判定になりうる。
+    生成器を1本にして、両者が同じ registry と同じ probe を通ることを保証する。
+    registry が読めない場合も例外にせず closed evidence へ閉じる。
+    """
+    try:
+        profiles = load_support_profiles(SUPPORT_REGISTRY_PATH)
+    except (OSError, ValueError, ContractError, json.JSONDecodeError):
+        return _unobservable("support-registry-unreadable")
+    return probe_platform(path, profiles=profiles)
+
+
+def probe_platform(
+    path: str | Path, *, profiles: Mapping[str, SupportProfile]
+) -> PlatformEvidence:
+    """実環境を read-only で観測し closed evidence を返す。
+
+    **例外を送出しない。** 観測できない項目は supported へ格上げせず、
+    `UNSUPPORTED_FILESYSTEM` と理由へ閉じる。呼び出し側は `evidence.supported` と
+    `evidence.reasons` だけを見ればよい。
+    """
+    platform = current_platform()
+    if platform is None:
+        return _unobservable("unknown-platform")
+    try:
+        # 相対 path のままだと case 判定材料（英字）が無いことがある。存在しない
+        # create target も扱うため strict=False で解決する。
+        target = Path(path).resolve(strict=False)
+    except (OSError, RuntimeError, ValueError):
+        return _unobservable("target-path-unobservable", platform=platform)
+    anchor = target if target.exists() else target.parent
+    if not anchor.exists():
+        return _unobservable("target-path-unobservable", platform=platform)
+
+    if platform == "linux":
+        raw_type, case_flag = _linux_filesystem_type(anchor), None
+    elif platform == "macos":
+        raw_type, case_flag = _macos_filesystem_type(anchor), None
+    else:
+        raw_type, case_flag = _windows_volume(anchor)
+    filesystem_type, filesystem_class = classify_filesystem(raw_type)
+
+    case_semantics = _case_semantics(anchor)
+    if case_semantics is None and case_flag is not None:
+        case_semantics = "sensitive" if case_flag else "insensitive"
+    if case_semantics is None:
+        return _unobservable("case-semantics-unobservable", platform=platform)
+
+    identity = _resource_identity(anchor)
+    if identity is None:
+        return _unobservable("resource-identity-unobservable", platform=platform)
+    resource_kind, resource_identity = identity
+
+    component = _native_component(platform, target)
+    if component is None:
+        return _unobservable("native-component-unobservable", platform=platform)
+
+    principal, owner_matches, acl_owner_only = _owner(anchor)
+    profile = profiles.get(platform)
+    primitives = _primitives(platform, profile)
+
+    observation = PlatformObservation(
+        platform=platform,
+        filesystem_type=filesystem_type,
+        filesystem_class=filesystem_class,
+        owner_principal=principal,
+        owner_matches=owner_matches,
+        acl_owner_only=acl_owner_only,
+        non_follow_walk=primitives["non_follow_walk"],
+        resource_kind=resource_kind,
+        resource_identity=resource_identity,
+        native_component=component,
+        case_semantics=case_semantics,
+        os_lock=primitives["os_lock"],
+        file_durability=primitives["file_durability"],
+        directory_durability=primitives["directory_durability"],
+        child_supervision=primitives["child_supervision"],
+        semantic_self_test=_semantic_self_test(platform, component),
+    )
+    try:
+        return evaluate_platform(observation, profiles=profiles)
+    except ContractError as exc:
+        return _unobservable(f"observation-rejected-{type(exc).__name__}", platform=platform)
+
+
+def _semantic_self_test(platform: str, component: Mapping[str, str]) -> bool:
+    """native component がこの platform の codec で round-trip するか（書き込み無し）。"""
+    try:
+        if platform == "windows":
+            native_component_to_windows(component)
+        else:
+            native_component_to_posix(component)
+    except (ContractError, ValueError, TypeError):
+        return False
+    return True
+
+
+def _unobservable(reason: str, *, platform: str | None = None) -> PlatformEvidence:
+    """観測不能を closed evidence として表す（例外にしない）。"""
+    observation = PlatformObservation(
+        platform=platform or "linux", filesystem_type="unknown", filesystem_class="unknown",
+        owner_principal=None, owner_matches=False, acl_owner_only=False,
+        non_follow_walk=False, resource_kind="directory",
+        resource_identity=sha256_digest(b"unobservable"),
+        native_component=native_component_from_posix(b"unobservable").as_mapping(),
+        case_semantics="sensitive", os_lock=False, file_durability=False,
+        directory_durability=False, child_supervision=False, semantic_self_test=False,
+    )
+    return PlatformEvidence(observation, UNSUPPORTED_FILESYSTEM, (reason,))

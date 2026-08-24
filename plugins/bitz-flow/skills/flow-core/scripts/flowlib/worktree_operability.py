@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+from . import worktree_platform as PF
 from . import worktree_promotion as P
 from . import worktree_recovery as RC
 from . import worktree_runtime as WR
@@ -178,6 +179,7 @@ def doctor(repo: str | Path) -> OperabilityDecision:
     common = _common(repo)
 
     def inspect() -> OperabilityDecision:
+        evidence = PF.platform_evidence_for(common)
         namespace = common / "bitz-flow-v2"
         promotion = namespace / "promotion"
         transactions = namespace / "transactions"
@@ -233,8 +235,15 @@ def doctor(repo: str | Path) -> OperabilityDecision:
             None,
             usage,
             {
-                "platform": "windows" if os.name == "nt" else ("macos" if sys.platform == "darwin" else "linux"),
-                "platform_support": "requires-runtime-evidence",
+                # 以前は OS 名を自己申告し `platform_support` を
+                # "requires-runtime-evidence" と書いていた（＝証跡が無いと自ら宣言）。
+                # plan と同じ生成器で実測し、doctor が緑でも plan が別判定になる
+                # 食い違いを無くす（`SI-FLW-084`）。
+                "platform": evidence.observation.platform,
+                "platform_support": evidence.support_code,
+                "platform_reasons": list(evidence.reasons),
+                "filesystem_type": evidence.observation.filesystem_type,
+                "filesystem_class": evidence.observation.filesystem_class,
                 "bundle_digest": bundle_digest,
                 "active_marker_count": len(active),
                 "transaction_root_count": len(transaction_roots),

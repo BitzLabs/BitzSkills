@@ -1,5 +1,28 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-TSK-116（SI-FLW-084 / FLW-REV-027:SYN-001 P0）実装: 実環境platform probeを
+  実装しproduction経路へ結線した。`worktree_platform.probe_platform()`を追加（read-only。
+  linuxは`/proc/self/mountinfo`をst_devで引く、macOSは`statfs(2)`の`f_fstypename`をctypes、
+  Windowsは`GetVolumeInformationW`）。共通入口`platform_evidence_for()`を設け、`plan()`と
+  doctorの双方をこれへ結線した。`plan()`の`platform evidence is required`例外を削除し、
+  既定をprobe生成に変更。doctorの`"platform_support": "requires-runtime-evidence"`という
+  自己申告を実測結果へ置換した。`WorktreeUnsupportedPlatformError`を新設し、環境が対象外で
+  あることを`BLOCKED / conflict`へ丸めずCLIで`UNSUPPORTED / unsupported-filesystem`へ写す。
+  **実観測の結果**（Linux 6.18 WSL2）: owner-onlyなtmpfs/ext4ディレクトリで`SUPPORTED`、
+  world-readableなら`acl-not-owner-only`、`/mnt/c`（9p）は`filesystem-class-network`で拒否。
+  **productionコードがplatform evidenceを生成したのは本変更が初めてである。**
+  `tests/test_flow_m2_platform_probe.py`（27 test）を追加し、4変異（network→local格上げ・
+  未知fs→local・probeが例外送出・planをinjected evidence必須へ復帰）で全件検出を確認した。
+  `FLW-DSN-017` §13.1/§13.5/§13.7を実態へ更新。7観点のうちplatform実在性とlegacy排除を
+  `未実装境界`→`検証計画`へ改めた（`実証済み`は依然0件。gatingで production 到達が閉じているため）。
+  bitz-flow 0.12.8→0.12.9。
+  **spec inspectがFAILへ転じた（要人間裁定）**: `[trace] FLW-NFR-014: verified/promotedだが
+  未完了local taskがある: FLW-TSK-116 (implementing)`。FLW-NFR-014は2026-08-23にfixture経路の
+  証跡で`verified`になったが、production接続は未完了だった。残作業を正直にタスク化したことで
+  既存の過大主張が機械検出された。これは`SI-FLW-090`の中身そのものである。解消には
+  `FLW-NFR-014`を`verified`→`implementing`へ戻す必要があるが、当該遷移は人間裁定必須
+  （機械がverifiedを勝手に取り消せないため）。裁定まで保留する。
+
 - 2026-08-24 FLW-TSK-115（SI-FLW-085 / FLW-REV-027:SYN-002 P0）実装: create/resume CLIを
   plan-digest専用契約へ一致させた。`resolve_approval_mode`・`signed_mode`分岐・
   `capability_from_json`・`--capability-file`必須判定を除去し、共通preflight
@@ -748,3 +771,5 @@
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiYzQ4MDlhOWY5NmZjZDBjYmE3ZmVmZTE0NzcwNDM4ZjA3MDQxZGQxYTE1NzU3MDM4ZDAyNTNkNDVlZmM0M2VmMyIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiNzkxMmNmMWE5OThlN2Q0YjdkY2QyZmU0Njg4ZGZlYTVlOTNjZWNiMmZiMzg5ZTM3YWZlNzJlYWExZTVhNzM1OSIsImFydGlmYWN0X2lkIjoiRkxXLUNPTi0wMDgiLCJldmVudF9pZCI6IjRlNzMzOGI1LTAwMDYtNGE5OC1hNWRlLTFiMmJiOWFhMjk5OSIsIm5ldyI6ImFwcHJvdmVkIiwib2xkIjoiZHJhZnQiLCJwYXRoIjoiLnNwZWMvcmVxdWlyZW1lbnRzL0ZMVy1DT04tMDA4Lm1kIiwicHJvdmVuYW5jZSI6eyJhY3RvciI6ImNsYXVkZSIsImRlY2lzaW9uX3JlZiI6Ii5zcGVjL3JlcG9ydHMvZGVjaXNpb24tMjAyNi0wOC0yNC1mbHctY29uLTAwOC1hcHByb3ZhbC5tZCIsImtpbmQiOiJhZ2VudC1wcm94eS11bnZlcmlmaWVkIiwib25fYmVoYWxmX29mIjoiaGlkZSJ9LCJzY2hlbWFfdmVyc2lvbiI6MiwidGltZXN0YW1wIjoiMjAyNi0wOC0yNFQwMDoxMzo1NC44NzE1ODZaIn0= -->
 - 2026-08-24 FLW-TSK-115: pending → implementing (claude)
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiYTZhZTE4OTNkNTMxN2E3MDQxNmQ0OTFiNTE1YzE5YzM0ZWEwMzA3NGJlMTMxNDc3MzI4YTIxNTlkZjhmZTFiNiIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiMTBjM2QzZjUxN2IxZThkNDk1NWFhNmZjODg3MjI5NjhhMjQ2OTQ4YWUyODI0ZjA4ODk1NGQ5NTBjMDkzYjM2YyIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMTUiLCJldmVudF9pZCI6IjlkZWQ0MzE3LTAxOGUtNGFhMy05NDg2LWRmNjAxMTFlOTc5MSIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMTUubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAwOjI0OjE3LjcxNzI5NFoifQ== -->
+- 2026-08-24 FLW-TSK-116: pending → implementing (claude)
+<!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiZDY3ZjVjYzdjNDEzYjgzNGQ2NTU0NGFhNDlmN2NiNDVhZTVhYjZiZjYzNTA2NDcxMmRhODRkOWIzMzllYmY5ZiIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiODhkZmVkNDhjY2E5ZDU2NGVkMjgxOTI3ZDI4YzhlYzM3MTU1YzBmYjc5ZDFjNjYxMGEyMTkwMjg3NWNjYTM1MyIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMTYiLCJldmVudF9pZCI6ImI2Y2MxYmNkLTNiZmYtNDljNC04OWFjLTkyNWEyMTNhZTVmOCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMTYubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAwOjQ1OjUzLjgzOTgyNloifQ== -->
