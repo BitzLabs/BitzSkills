@@ -1,5 +1,29 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-TSK-124（FLW-REV-028:GP-001）実装: 不支持理由へoperator actionを与え、
+  あわせて**自分が書いたコードの欠陥を1件是正**した。
+  **発見した欠陥**: `FLW-TSK-116`／`117`で追加した`WorktreeUnsupportedPlatformError`と
+  `WorktreeChildTimeoutError`のhandlerが`R.build_result`を直呼びし`recovery_class`を
+  設定していなかった。`build_result`は非ok resultにこれを強制するため、**到達すると
+  ValueErrorになる**。`FLW-TSK-123`のdispatcher網がそれを`UNAVAILABLE` /
+  `result-indeterminate`へ丸めるためtracebackにはならないが、**意図した具体的な
+  closed resultが静かに失われる**。網が欠陥を隠していた。
+  両handlerを`_simple_result`経由へ変え、`recovery_class`を`worktree_cleanup.recovery_for`
+  から自動決定する既存の仕組みに乗せた。`_simple_result`へ`evidence`引数を追加。
+  **operator action**: `worktree_platform.OPERATOR_ACTIONS`（17理由）と`operator_action()`を
+  追加し、`human-stop`の`required_human_input`へ行動可能な是正を載せる。
+  `acl-not-owner-only`は対象pathと必要mode（0700）を明示する。
+  未知理由はdoctorへ誘導する。`evaluate_platform`が出す全理由が表に載っていることを
+  機械検査し、実際にテストが`platform-not-allowlisted`の漏れを検出したので追加した。
+  runbookへworktree root作成手順と「chmodでは解消しない理由」の表を追加。
+  `FLW-DSN-017`をv2.5へ改訂し§13.2へ`UNSUPPORTED`行とoperator action義務を登録した。
+  `tests/test_flow_m2_operator_action.py`（28 test）を追加。3変異（build_result直呼びへ
+  復帰・operator_actionが理由をそのまま返す・理由を1件表から落とす）で全件検出を確認。
+  **作業中の事故**: 変異検査の復元に`git checkout --`を使い、未コミットの`OPERATOR_ACTIONS`
+  追加を消した。以後バックアップからの復元へ統一した。
+  confirmation証跡を再実走して更新（key `sha256:436dd659...`、3者PASS、Gate採用可）。
+  全体**2518 passed / 44 skipped / 失敗0**、release_check PASS、spec inspect全8 workspace PASS。
+
 - 2026-08-24 FLW-TSK-123（FLW-REV-028:GP-005 / GP-003）実装: userが「当面Linux専用で進める」と
   裁定し（`.spec/reports/decision-2026-08-24-linux-only-scope.md`）、GP-005から着手した。
   **(1) 公開経路の網**: dispatcherでhandlerの取りこぼしをclosed result（`UNAVAILABLE` /
@@ -1056,3 +1080,5 @@
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiNGZhNGZhZmQ3ZThlMTk4NzBmNjQ5ZDY3YWU1MjY5M2Q3ZGE0NWVkOGMyNjViYTA1MjkwM2MyZjZjMjU4NzFmZiIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiNWRiYTc0OTQ5MTBjOTk4NTlkMmIzYmFiNTVhYzkzMzcwNzQwNTJhNjEzZWM1ZjljYTg4NTNmNTk2ZDdmNzVlYSIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjIiLCJldmVudF9pZCI6IjI1MGZmODdmLTMzNGMtNDRmZi05OTVkLWRhM2JlNjVlMWE4MSIsIm5ldyI6ImRvbmUiLCJvbGQiOiJpbXBsZW1lbnRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjIubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDA0OjQ5OjU5LjI2MDExNloifQ== -->
 - 2026-08-24 FLW-TSK-123: pending → implementing (claude)
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiYmM5YzE3MjlhNmM5OWUwMTcyYWVmY2QxZWY5Nzk0NjBhM2U3MTE5Y2E4MGE4MTNmNmVkMTMwZThkZGQwNmQ1NSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiMDRkYWYyYWY5NGZlOWU0MDI1NjQzMTUwNTgyOGY0OGYwNDg0ZTFmZmVlMTI1YTc5YWNjOWYzNWNkOWMwY2QxYSIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjMiLCJldmVudF9pZCI6ImJkNmE4NzQyLWRkNTUtNGQ1My1iNmIwLTY2YjVkNzMzNTk1ZCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjMubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDA1OjQzOjUxLjc2MTA1NloifQ== -->
+- 2026-08-24 FLW-TSK-124: pending → implementing (claude)
+<!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiNTQxZjdlMDY1MWUyMjg5OTZmNTcxYjA5MDJkMjg5ZDRmOWZkMjMwYmRmNzlhNDg3OTY0OGE4ZTU1YjBjMzI2YiIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiMjAzNGYxMzk4ZWFhZjY1YmE1Mzc2MzJiYjFmNTZiMmE4N2JhODIzYzk0MzEwZTI4MmMzY2E5ZDk3ZDYyZDJmOCIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjQiLCJldmVudF9pZCI6ImYyNzgxM2UyLTkyOWMtNDVkZS04ZmM3LTVmZWI0ZmRiODg5MCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjQubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDA3OjA4OjE4LjM5MDQ3NloifQ== -->

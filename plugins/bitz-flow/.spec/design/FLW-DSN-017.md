@@ -2,7 +2,7 @@
 id: FLW-DSN-017
 title: "M2 Local Safety Profileの競合排除・耐久証跡・原子的promotion"
 status: active
-version: 2.4
+version: 2.5
 updated: 2026-08-24
 owner: codex
 implements: FLW-NFR-014, FLW-CON-008
@@ -494,7 +494,15 @@ fixture専用注入口であり、**本表のproduction test ID欄にfixture注�
 | `DONE` | terminal receiptが最長有効chainの最後にあり、予定postconditionが観測で成立 | terminal receipt（`supersedes_receipt_digest`が緊急receiptを一意に指す） | lock解放、marker解除、promotion可 | 予定postconditionを検証せず`DONE`にすること |
 | `QUARANTINED` | mutation後の再観測が予定postconditionと不一致 | terminal receipt（`QUARANTINED`）＋`RESULT_DURABLE`へ束縛したrequested outcomeと予定effects | audit報告、人間判断、reconcileによるclosure | **`confirmed-complete`へ分類すること**（`FLW-TSK-119`で是正済み。現在snapshotの一致を根拠にしない） |
 | `INDETERMINATE` | chainにgap／branch／digest不一致／未知event／token巻戻り、または終了状態を証明できないGit child | 最長有効prefixまでのevent（追記は行わない） | 新planと明示確認によるreconcile | 現在snapshotが期待と一致することを根拠に`DONE`扱いすること |
+| `UNSUPPORTED` | 環境が保証対象外（platform／filesystem／case semantics／owner-only 不成立）。**Git副作用0件** | 永続証跡なし（plan前に停止） | 環境是正後の再実行 | `BLOCKED`（競合）と同一視すること。理由だけ示して operator action を省くこと |
 | `BLOCKED` | precondition不成立、lock競合、storage不能。**Git副作用0件** | `BLOCKED_STORAGE`時はrecord未公開 | 原因解消後の同一planでの再実行 | 副作用の有無を確認せず失敗を成功へ畳むこと |
+
+**operator action の義務**（`FLW-REV-028:GP-001`）: `recovery_class: human-stop` の
+closed resultは`data.required_human_input`へ**行動可能な**是正を載せる。理由の写しでは
+足りない。とくに`acl-not-owner-only`は**既定umask（0755）のworktree rootが必ず拒否される**
+条件であり、対象pathと必要mode（0700）を明示する。理由と是正の対応表は
+`worktree_platform.OPERATOR_ACTIONS`を正とし、`evaluate_platform`が出す全理由を
+網羅することを機械検査する。手順は`docs/runbooks/m2-worktree-quarantine.md`。
 
 **不変条件**: `QUARANTINED`と`INDETERMINATE`はいかなる経路でも`DONE`または`confirmed-complete`へ
 畳み込まない。`confirmed-complete`は`DONE`**かつ**予定postcondition成立時に限る（`SI-FLW-088`）。
@@ -640,6 +648,7 @@ macOS／Windowsの実観測は依然として未実施である（§13.5）。
 
 ## Revision History
 
+- 2.5 (2026-08-24) §13.2へ`UNSUPPORTED`行とoperator action義務を追加（`FLW-REV-028:GP-001`）
 - 2.4 (2026-08-24) 保証scopeをLinuxへ限定し、case-insensitive環境と対象外platformを
   理由付きで`UNSUPPORTED_FILESYSTEM`へ閉じる。§3.2のsemantic self-test要求と実装の
   乖離を明記（裁定参照: .spec/reports/decision-2026-08-24-linux-only-scope.md。

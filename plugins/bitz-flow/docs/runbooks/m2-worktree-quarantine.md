@@ -51,3 +51,37 @@ gatedであり、production dispatcherは`UNSUPPORTED`を返す。
 - `unsupported-approval-mode`
 
 検証対象と受入行の対応は`references/m2-operability-coverage.json`で確認する。
+
+## worktree root の作成手順（`acl-not-owner-only` の解消）
+
+M2 は worktree root を **owner-only** な local filesystem namespace として信頼する
+（`FLW-DSN-017` §1.2）。probe は `st_mode & 0o077` が 0 でなければ
+`acl-not-owner-only` で `UNSUPPORTED_FILESYSTEM` へ閉じる。
+
+**既定 umask で `mkdir` した directory は 0755 であり必ず拒否される。**
+これは設計どおりの安全側動作であり不具合ではないが、利用者は手順を知らないと復帰できない。
+
+```text
+mkdir -p <worktree-root>
+chmod 0700 <worktree-root>
+```
+
+確認は doctor で行う。`platform_support` が `SUPPORTED` になれば解消している。
+
+```text
+python3 <このスキル>/scripts/flow.py worktree doctor --repo <repo> --format json
+```
+
+### 対象外の環境（`chmod` では解消しない理由）
+
+次の理由は permission ではなく環境そのものに起因するため、`chmod` では解消しない。
+
+| 理由 | 意味 | 対応 |
+|---|---|---|
+| `platform-out-of-scope` | 保証対象は当面 Linux のみ（裁定 2026-08-24） | Linux 上で実行する |
+| `case-insensitive-unsupported` | case-insensitive volume は `collision_key` の folded component を導出できない | case-sensitive な filesystem 上へ置く |
+| `filesystem-type-not-allowlisted` | 同梱 allowlist（btrfs / ext4 / tmpfs / xfs）外 | 登録済み filesystem 上へ置く |
+| `filesystem-class-network` | network filesystem は lock semantics を保証できない | local filesystem 上へ置く |
+
+公開 result の `data.required_human_input` に、対象 path と必要な是正が載る。
+`data.evidence` には判定理由がそのまま入る。

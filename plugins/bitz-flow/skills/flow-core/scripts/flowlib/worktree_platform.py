@@ -493,6 +493,42 @@ SUPPORT_REGISTRY_PATH = (
 )
 
 
+#: 不支持理由ごとの operator action。`human-stop` の `required_human_input` へ載せる
+#: （`FLW-REV-028:GP-001`）。理由を出すだけでは利用者が自力で復帰できない。
+OPERATOR_ACTIONS = {
+    "acl-not-owner-only": "worktree root を owner-only にする（mode 0700。group/other の権限を落とす）",
+    "owner-mismatch": "worktree root の所有者を実行ユーザーへ変更する",
+    "owner-unobservable": "所有者を観測できる filesystem 上へ worktree root を置く",
+    "platform-out-of-scope": "保証対象は Linux のみである。Linux 上で実行する",
+    "platform-not-allowlisted": "同梱 registry に登録された platform 上で実行する",
+    "case-insensitive-unsupported": "case-sensitive な filesystem 上へ worktree root を置く",
+    "filesystem-type-not-allowlisted": "登録済み filesystem（btrfs / ext4 / tmpfs / xfs）上へ worktree root を置く",
+    "non-follow-walk-unavailable": "symlink を含まない path へ worktree root を置く",
+    "os-lock-unavailable": "OS lock が使える filesystem 上へ worktree root を置く",
+    "file-durability-unavailable": "fsync が使える filesystem 上へ worktree root を置く",
+    "directory-durability-unavailable": "directory fsync が使える filesystem 上へ worktree root を置く",
+    "child-supervision-unavailable": "child process を監督できる環境で実行する",
+    "semantic-self-test-failed": "doctor で環境診断を実行し、報告された不整合を解消する",
+    "support-registry-unreadable": "bitz-flow の配布物が破損している。再インストールする",
+    "target-path-unobservable": "worktree root の親 directory が存在し読み取り可能であることを確認する",
+    "resource-identity-unobservable": "worktree root を stat できる filesystem 上へ置く",
+    "native-component-unobservable": "worktree root の名前に使えない byte 列が含まれていないか確認する",
+}
+
+
+def operator_action(reasons, *, target: str | Path | None = None) -> str:
+    """不支持理由から行動可能な operator action を組み立てる。
+
+    理由をそのまま返すだけでは「なぜ動かないか」は判っても「どうすれば動くか」が
+    判らない。既知の理由には具体的な是正を、未知の理由には doctor への誘導を返す。
+    """
+    known = [OPERATOR_ACTIONS[r] for r in reasons if r in OPERATOR_ACTIONS]
+    if not known:
+        known = ["doctor で環境診断を実行し、報告された理由を解消する"]
+    prefix = f"対象: {target}。" if target is not None else ""
+    return prefix + " / ".join(dict.fromkeys(known))
+
+
 def platform_evidence_for(path: str | Path) -> PlatformEvidence:
     """production 共通の evidence 生成器。
 

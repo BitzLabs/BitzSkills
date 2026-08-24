@@ -17,7 +17,7 @@ import sys
 from typing import Any, Mapping, Sequence
 
 from . import (
-    __version__, git_read, result as R, worktree_cleanup,
+    __version__, git_read, result as R, worktree_cleanup, worktree_platform,
     worktree_operability, worktree_recovery, worktree_runtime,
 )
 
@@ -155,6 +155,7 @@ def _simple_result(
     stage: str = "inspect",
     next_actions: Sequence[dict] = (),
     required_human_input: str | None = None,
+    evidence: Sequence[str] = (),
 ) -> dict[str, Any]:
     """`build_result` の非ok契約（cause/recovery_class/next_actions）を自動で満たす。
 
@@ -165,6 +166,8 @@ def _simple_result(
     """
     data = R.empty_data()
     data["cause"] = cause
+    if evidence:
+        data["evidence"] = list(evidence)
     if R.CODE_EXIT_CODES[code] != 0:
         recovery_class = worktree_cleanup.recovery_for(code, cause).recovery_class
         data["recovery_class"] = recovery_class
@@ -624,28 +627,34 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
     except worktree_runtime.WorktreeChildTimeoutError as exc:
         # 終了を証明できない child は「失敗」ではない。副作用の有無が不明なので
         # `INDETERMINATE` へ閉じる（`FLW-DSN-017` §13.2）。
-        data = R.empty_data()
-        data["cause"] = "result-indeterminate"
-        data["evidence"] = [exc.command, exc.cause]
-        result = R.build_result(
-            operation=operation, code="INDETERMINATE", repo=root, tool_version=__version__,
-            started_at=started, finished_at=_now(), summary=str(exc),
-            data=data, stage="plan",
-        )
-        return result, R.CompactView(tokens={"child": "timeout"})
+        return _simple_result(
+            operation=operation, code="INDETERMINATE", repo=root,
+            summary="child の終了を有限時間内に証明できなかった",
+            cause="result-indeterminate", stage="plan",
+            evidence=[exc.command, exc.cause],
+            required_human_input=(
+                "audit で副作用の有無を確認し、必要なら reconcile で状態を収束させる"
+            ),
+        ), R.CompactView(tokens={"child": "timeout"})
     except worktree_runtime.WorktreeUnsupportedPlatformError as exc:
         # 環境が対象外であることを `BLOCKED / conflict` へ丸めない。運用者は
         # 「競合で止まった」のか「この filesystem では動かない」のかを区別できる
-        # 必要がある（`SI-FLW-084`）。理由は closed evidence をそのまま載せる。
-        data = R.empty_data()
-        data["cause"] = "unsupported-filesystem"
-        data["evidence"] = list(exc.reasons)
-        result = R.build_result(
-            operation=operation, code="UNSUPPORTED", repo=root, tool_version=__version__,
-            started_at=started, finished_at=_now(), summary=str(exc),
-            data=data, stage="plan",
-        )
-        return result, R.CompactView(tokens={"platform": "unsupported"})
+        # 必要がある（`SI-FLW-084`）。
+        #
+        # `_simple_result` を通すのは非ok契約（cause / recovery_class /
+        # required_human_input）を確実に満たすためである。以前は `build_result` を
+        # 直呼びして `recovery_class` を欠いており、到達すると ValueError になっていた
+        # （`FLW-REV-028:GP-001`）。dispatcher の網はその ValueError を
+        # `UNAVAILABLE` へ丸めるため traceback にはならないが、意図した result が失われた。
+        return _simple_result(
+            operation=operation, code="UNSUPPORTED", repo=root,
+            summary="この環境では worktree operation を実行できない",
+            cause="unsupported-filesystem", stage="plan",
+            evidence=list(exc.reasons),
+            required_human_input=worktree_platform.operator_action(
+                exc.reasons, target=args.worktree_root or args.path,
+            ),
+        ), R.CompactView(tokens={"platform": "unsupported"})
     except worktree_runtime.WorktreeRuntimeError as exc:
         return _simple_result(
             operation=operation, code="BLOCKED", repo=root, summary=str(exc),
@@ -882,6 +891,9 @@ def main(argv: Sequence[str] | None = None, *, handlers: Mapping | None = None) 
                 summary="operation を完了できなかった",
                 cause="result-indeterminate",
                 stage="inspect",
+                required_human_input=(
+                    "doctor で環境診断を実行し、解消しなければ本件を報告する"
+                ),
             ),
             args.format,
         )
