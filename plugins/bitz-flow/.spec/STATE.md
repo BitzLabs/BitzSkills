@@ -1,5 +1,26 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-NFR-014 verified→implementing（人間裁定）とFLW-TSK-118（SI-FLW-087）実装:
+  userが「FLW-NFR-014のimplementing 許可します」と裁定し、fixture注入経路の証跡でverifiedに
+  していた過大主張を戻した（裁定参照: `.spec/reports/decision-2026-08-24-flw-nfr-014-reopen.md`）。
+  完了済みtask FLW-TSK-106〜114のdoneは取り消さない（task境界の再記録は`SI-FLW-090`の管轄）。
+  spec inspectは全8 workspace PASSへ回復。
+  FLW-TSK-118: intentと緊急receiptを`INTENT_DURABLE` event fileへ`emergency_receipt`として
+  同梱し、**1回のatomic publish**で確定するよう変更した（永続形式変更。`FLW-GATE-006`承認済み）。
+  循環参照は、同梱前のcore recordのdigestを`event_digest`とすることで回避。**coreの形と
+  digest定義は旧形式と同一**に保ったため、既存のdigest・filename検査がそのまま効く。
+  旧形式（別file・2回publish）は推測移行せずfail-closed。別fileからの緊急receipt持ち込みも塞いだ。
+  **全4 publish stepでkillして検証**: rename前は`LOCKED`（receipt 0件）、rename後は
+  `INTENT_DURABLE`（receipt 1件）。「intent確定かつ緊急receipt無し」は生じない。
+  旧設計を固定していた`test_crash_during_intent_never_grants_mutation_without_emergency_receipt`を
+  新しい不変条件へ書き換えた。`tests/test_flow_m2_intent_atomicity.py`（16 test）を追加。
+  **変異検査で自分のテストの穴を発見した**: 同梱検査ブロックを丸ごと消す強変異が初回は
+  素通りした（下流の「緊急receiptちょうど1件」検査が代替するため）。改竄された同梱receiptを
+  拒否するnegative testを追加したところ、**実装側の実際の穴**が判明した — 同梱receiptの
+  `operation_id`が検査されておらず、別operationを指すreceiptを受理できた（別file経路では
+  検査済み）。`operation_id`／`target_collision_key`／`fencing_token`の束縛を追加して修正し、
+  強変異が5件FAILすることを再確認した。bitz-flow 0.12.10→0.12.11。
+
 - 2026-08-24 FLW-TSK-117（SI-FLW-086 / FLW-REV-027:SYN-003 P1）実装: worktree経路の全Git childを
   `process.run()`の監督下へ結線した。`_supervised_git()`を追加し、`RepositoryObserver.run`・
   `_git`・`MutationCoordinator.run_git`の3箇所から素の`subprocess.run`を排除（残り0件）。
@@ -798,3 +819,7 @@
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiZDY3ZjVjYzdjNDEzYjgzNGQ2NTU0NGFhNDlmN2NiNDVhZTVhYjZiZjYzNTA2NDcxMmRhODRkOWIzMzllYmY5ZiIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiODhkZmVkNDhjY2E5ZDU2NGVkMjgxOTI3ZDI4YzhlYzM3MTU1YzBmYjc5ZDFjNjYxMGEyMTkwMjg3NWNjYTM1MyIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMTYiLCJldmVudF9pZCI6ImI2Y2MxYmNkLTNiZmYtNDljNC04OWFjLTkyNWEyMTNhZTVmOCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMTYubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAwOjQ1OjUzLjgzOTgyNloifQ== -->
 - 2026-08-24 FLW-TSK-117: pending → implementing (claude)
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiOWNmMWM3ZWM2NzAwYzI2MWM4MmJlM2ZlNmRkYjA3ZThmYzkyOWY4OTZkZWEyNjQ1YTA1YzhkNDgzZWYxNzEyOCIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiODZjZjI5NzNmMDkwMWE4NTY0OTc1NWUxNzU3YTFhZWJiYjliZjhlNWQ1Y2JmMzk0NmM1MGM4NGYzODE3MWUzMyIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMTciLCJldmVudF9pZCI6ImI5YWFmZjNmLWIzMzYtNDEwYS1hZTA3LTQ3NmE2M2Q1NGVjMCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMTcubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAwOjU4OjE5Ljg0ODk5NFoifQ== -->
+- 2026-08-24 FLW-NFR-014: verified → implementing (claude on behalf of hide; 代行実行・実行者未検証・裁定参照: .spec/reports/decision-2026-08-24-flw-nfr-014-reopen.md)
+<!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiODdjMDQ5YzI1MDBjODQ0YjEwMDJmYjFkZjJiNmFhNTI4Mzk5ZDFhOTA3OTM3YTIwZGJlMjVhZmIwOTkxZTcxYSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiNmZjZWNlNzM5YmNkYjE1OTFmYWZmMWM2MTg3ZDQ3ZGQyNmM3M2U5YzE5ZmJjYmM2ODU4MmZhMzQ3MGI1MDQ0NSIsImFydGlmYWN0X2lkIjoiRkxXLU5GUi0wMTQiLCJldmVudF9pZCI6IjE5MTMzOTU3LTU2N2MtNGQ4Ni1iNzUxLTE0YTU1MzIzYjcyMCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InZlcmlmaWVkIiwicGF0aCI6Ii5zcGVjL3JlcXVpcmVtZW50cy9GTFctTkZSLTAxNC5tZCIsInByb3ZlbmFuY2UiOnsiYWN0b3IiOiJjbGF1ZGUiLCJkZWNpc2lvbl9yZWYiOiIuc3BlYy9yZXBvcnRzL2RlY2lzaW9uLTIwMjYtMDgtMjQtZmx3LW5mci0wMTQtcmVvcGVuLm1kIiwia2luZCI6ImFnZW50LXByb3h5LXVudmVyaWZpZWQiLCJvbl9iZWhhbGZfb2YiOiJoaWRlIn0sInNjaGVtYV92ZXJzaW9uIjoyLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAxOjEyOjEzLjE0OTg0OVoifQ== -->
+- 2026-08-24 FLW-TSK-118: pending → implementing (claude)
+<!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiMDkyNTEzZDg4OWNjMTMyZDk5Njg1NDQ4NzZiMzg5N2I0YzVmNmMwODViNmJjMGY1YzkyODA0NDg4MzQzYjJkNyIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiNjM2MmM5MDEyNzU0OGI3YjcxZGViMmM5NzY5NDQ3NzcxN2ZjODlhOTgwYjFiYzk2YTVkOGRiYmEzMjA2OTA0NCIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMTgiLCJldmVudF9pZCI6IjA0MzYxMThkLTdlOTMtNDU5ZC04YjA3LTQ5Nzc4Nzk2YjE4NyIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMTgubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAxOjE0OjUyLjQ0MDMxNloifQ== -->

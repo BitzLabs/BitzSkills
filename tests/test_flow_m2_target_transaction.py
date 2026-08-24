@@ -162,9 +162,19 @@ def test_crash_during_intent_never_grants_mutation_without_emergency_receipt(tmp
             lease, planned_effects_digest=DIGEST, precondition_digest=DIGEST_B
         )
     tx._hook = None
-    assert tx.inspect(DIGEST).state in {"LOCKED", "INDETERMINATE"}
-    with pytest.raises(T.TransactionError):
-        tx.mark_mutating(lease)
+    # `SI-FLW-087` 以降、intent と緊急 receipt は 1 回の atomic publish で確定する。
+    # したがって不変条件は「INTENT_DURABLE へ到達しない」ではなく、
+    # **「intent が確定したなら必ず有効な緊急 receipt が付いている」** である。
+    report = tx.inspect(DIGEST)
+    assert not report.problems, report.problems
+    if report.state == "INTENT_DURABLE":
+        emergency = [r for r in report.receipts if r["receipt_state"] == "INDETERMINATE"]
+        assert len(emergency) == 1, "intent 確定なのに緊急 receipt が無い（回収不能状態）"
+        tx.mark_mutating(lease)          # 緊急 receipt があるので前進できる
+    else:
+        assert report.state == "LOCKED"
+        with pytest.raises(T.TransactionError):
+            tx.mark_mutating(lease)
     tx.release(lease)
 
 

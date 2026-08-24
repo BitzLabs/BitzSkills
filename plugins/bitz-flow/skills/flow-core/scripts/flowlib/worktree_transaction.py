@@ -23,6 +23,11 @@ PHASES = ("LOCKED", "INTENT_DURABLE", "MUTATING", "RESULT_DURABLE", "DONE")
 QUARANTINE_PHASES = ("LOCKED", "INTENT_DURABLE", "MUTATING", "RESULT_DURABLE", "QUARANTINED")
 PUBLISH_STEPS = ("temp-written", "file-fsynced", "renamed", "dir-fsynced")
 
+#: INTENT_DURABLE event へ同梱する緊急 receipt の field 名（`SI-FLW-087`）。
+#: 旧形式は intent と緊急 receipt を 2 回に分けて publish しており、その間で停止すると
+#: 「Git 副作用 0 件・nonce 消費済み・INDETERMINATE」という回収不能状態が生じた。
+EMERGENCY_RECEIPT_FIELD = "emergency_receipt"
+
 
 class TransactionError(RuntimeError):
     def __init__(self, code: str, cause: str):
@@ -194,20 +199,29 @@ class TargetTransaction:
         validate_digest(precondition_digest)
         if self._nonce_was_consumed(lease.nonce_digest):
             raise TransactionError("STALE", "nonce was already consumed")
-        event_digest = self._append_event(lease, "INTENT_DURABLE", intent={
-            "planned_effects_digest": planned_effects_digest,
-            "precondition_digest": precondition_digest,
-            "nonce_digest": lease.nonce_digest,
-        })
-        return self._publish_receipt({
-            "contract_version": CONTRACT_VERSION,
-            "operation_id": lease.operation_id,
-            "target_collision_key": lease.target_collision_key,
-            "receipt_state": "INDETERMINATE",
-            "event_digest": event_digest,
-            "supersedes_receipt_digest": None,
-            "fencing_token": lease.fencing_token,
-        })
+        def emergency(event_digest: str) -> dict[str, object]:
+            return {
+                "contract_version": CONTRACT_VERSION,
+                "operation_id": lease.operation_id,
+                "target_collision_key": lease.target_collision_key,
+                "receipt_state": "INDETERMINATE",
+                "event_digest": event_digest,
+                "supersedes_receipt_digest": None,
+                "fencing_token": lease.fencing_token,
+            }
+
+        # intent と緊急 receipt は 1 回の atomic publish で同時に確定する。
+        # 中間状態が存在しないため、nonce の消費と緊急 receipt の有効化は不可分になる。
+        event_digest = self._append_event(
+            lease, "INTENT_DURABLE",
+            intent={
+                "planned_effects_digest": planned_effects_digest,
+                "precondition_digest": precondition_digest,
+                "nonce_digest": lease.nonce_digest,
+            },
+            emergency_receipt_factory=emergency,
+        )
+        return sha256_digest(canonical_json_bytes(emergency(event_digest)))
 
     def mark_mutating(self, lease: LeaseContext) -> str:
         self._require_state(lease, "INTENT_DURABLE", require_emergency=True)
@@ -261,17 +275,42 @@ class TargetTransaction:
     def inspect(self, operation_id: str) -> ChainReport:
         problems: list[str] = []
         events: list[dict[str, object]] = []
+        embedded_receipts: list[dict[str, object]] = []
         event_digests: set[str] = set()
         head: str | None = None
         event_dir = self._event_dir(operation_id)
         for path in sorted(event_dir.glob("*.json")) if event_dir.exists() else ():
             try:
                 record = json.loads(path.read_text(encoding="utf-8"))
+                # 同梱された緊急 receipt を外してから core を評価する。core の形と
+                # digest 定義は旧形式と同一に保つため、既存の digest 検査はそのまま効く。
+                embedded = record.pop(EMERGENCY_RECEIPT_FIELD, None)
                 if set(record) != {"event", "intent", "result", "receipt_digest"}:
                     raise ContractError("transaction record fields mismatch")
                 event = validate_operation_event(record["event"])
                 digest = sha256_digest(canonical_json_bytes(record))
                 self._validate_record_payload(record, str(event["state"]))
+                if str(event["state"]) == "INTENT_DURABLE":
+                    if embedded is None:
+                        # 旧形式（intent と緊急 receipt を別 file へ 2 回 publish）は
+                        # 推測移行せず fail-closed にする（`SI-FLW-087`）。
+                        raise ContractError("intent record has no embedded emergency receipt")
+                    embedded = validate_mutation_receipt(embedded)
+                    # 別 file 経路と同じ束縛を同梱にも課す。個数（ちょうど 1 件）の
+                    # 検査だけでは、個数は合っているが別 operation を指す receipt を
+                    # 見逃す。
+                    if (
+                        embedded["receipt_state"] != "INDETERMINATE"
+                        or embedded["event_digest"] != digest
+                        or embedded["operation_id"] != event["operation_id"]
+                        or embedded["target_collision_key"] != event["target_collision_key"]
+                        or embedded["fencing_token"] != event["fencing_token"]
+                    ):
+                        raise ContractError("embedded emergency receipt does not bind this intent")
+                elif embedded is not None:
+                    raise ContractError("only the intent record may embed an emergency receipt")
+                if embedded is not None:
+                    embedded_receipts.append(embedded)
             except (OSError, json.JSONDecodeError, KeyError, ContractError) as exc:
                 problems.append(f"{path.name}: invalid event ({type(exc).__name__})")
                 continue
@@ -296,7 +335,7 @@ class TargetTransaction:
         if states and states not in {PHASES[:len(states)], QUARANTINE_PHASES[:len(states)]}:
             problems.append("unknown or out-of-order operation phase")
 
-        receipts: list[dict[str, object]] = []
+        receipts: list[dict[str, object]] = list(embedded_receipts)
         receipt_dir = self._receipt_dir(operation_id)
         for path in sorted(receipt_dir.glob("*.json")) if receipt_dir.exists() else ():
             try:
@@ -304,6 +343,11 @@ class TargetTransaction:
                 digest = sha256_digest(canonical_json_bytes(value))
             except (OSError, json.JSONDecodeError, ContractError) as exc:
                 problems.append(f"{path.name}: invalid receipt ({type(exc).__name__})")
+                continue
+            if value["receipt_state"] == "INDETERMINATE":
+                # 緊急 receipt は intent record への同梱だけを正とする。別 file から
+                # 持ち込めると 2 回 publish の空隙が復活する（`SI-FLW-087`）。
+                problems.append(f"{path.name}: emergency receipt must be embedded in the intent record")
                 continue
             if path.stem != digest[7:] or value["event_digest"] not in event_digests:
                 problems.append(f"{path.name}: receipt digest or event reference mismatch")
@@ -461,7 +505,8 @@ class TargetTransaction:
     def _append_event(self, lease: LeaseContext, state: str, *,
                       intent: Mapping[str, str] | None = None,
                       result: Mapping[str, str] | None = None,
-                      receipt_digest: str | None = None) -> str:
+                      receipt_digest: str | None = None,
+                      emergency_receipt_factory: Callable[[str], Mapping[str, object]] | None = None) -> str:
         if state not in EVENT_STATES:
             raise ContractError("unknown event state")
         report = self.inspect(lease.operation_id)
@@ -478,7 +523,14 @@ class TargetTransaction:
                   "result": dict(result) if result else None, "receipt_digest": receipt_digest}
         digest = sha256_digest(canonical_json_bytes(record))
         target = self._event_dir(lease.operation_id) / f"{len(report.events):020d}-{digest[7:]}.json"
-        self._atomic_publish(target, record)
+        if emergency_receipt_factory is None:
+            self._atomic_publish(target, record)
+            return digest
+        # 緊急 receipt を同じ file へ同梱し、**1 回の atomic publish** で確定する
+        # （`SI-FLW-087`）。receipt の `event_digest` は同梱前の core record の digest を
+        # 指すため循環しない。core の形と digest 定義は従来と同一に保つ。
+        receipt = validate_mutation_receipt(emergency_receipt_factory(digest))
+        self._atomic_publish(target, {**record, EMERGENCY_RECEIPT_FIELD: receipt})
         return digest
 
     def _publish_receipt(self, value: Mapping[str, object]) -> str:

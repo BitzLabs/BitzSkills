@@ -485,7 +485,7 @@ durable writeは4段階（temp write → file fsync → rename → directory fsy
 | # | durable write | 直前で停止 | 直後で停止 | authority | 再開処理 | 重複実行時の結果 |
 |---:|---|---|---|---|---|---|
 | 1 | `LOCKED` event | lock未取得。証跡なし | lock保持、intent無し | TargetTransaction | lock期限切れ後に再取得し同一planで再実行 | 冪等（同一sequenceの再利用は拒否） |
-| 2 | **単一intent record**（2.3統合） | nonce未消費、Git副作用0 | nonce消費、緊急receipt有効、Git副作用0 | TargetTransaction | 緊急receiptを根拠にreconcileで安全closure | 冪等（nonce再消費を拒否） |
+| 2 | **単一intent record**（2.3統合。`FLW-TSK-118`で実装） | nonce未消費、Git副作用0、状態は`LOCKED` | nonce消費、緊急receipt有効、Git副作用0、状態は`INTENT_DURABLE` | TargetTransaction | 緊急receiptを根拠にreconcileで安全closure | 冪等（nonce再消費を拒否） |
 | 3 | `MUTATING` event | intent record確定済、Git未起動 | Git起動可、副作用未確定 | MutationCoordinator | 再観測して`DONE`／`QUARANTINED`を判定 | Git child再起動は禁止。再観測のみ |
 | 4 | Git child実行中 | 副作用0 | 副作用の有無が不明 | MutationCoordinator | 再観測。証明不能なら`INDETERMINATE` | 自動再実行不可（緊急receiptが明示） |
 | 5 | terminal receipt | 副作用確定済、緊急receiptのみ有効 | terminal確定、緊急をsupersede | TargetTransaction | chain最長有効prefixから終局判定 | 冪等（複数後継は`INDETERMINATE`） |
@@ -496,7 +496,7 @@ durable writeは4段階（temp write → file fsync → rename → directory fsy
 「Git副作用0件かつnonce消費済みかつ`INDETERMINATE`」という回収不能状態を作っていた（§4.2）。
 2.3の統合によりこの空隙は構造的に消える。
 
-**未実装境界**: #6のmarker適格性再検証（`SI-FLW-089`）と#4の有限収束（§13.4）は未実装である。
+**実装状況**: #2は`FLW-TSK-118`で解消済み。4つのpublish step全点でkillして検証しており、rename前は`LOCKED`（receipt 0件）、rename後は`INTENT_DURABLE`（receipt 1件）となり、**「intent確定かつ緊急receipt無し」は生じない**（`tests/test_flow_m2_intent_atomicity.py::test_no_crash_point_leaves_a_durable_intent_without_an_emergency_receipt`）。#4の有限収束は`FLW-TSK-117`で結線済み。**未実装境界**は#6のmarker適格性再検証（`SI-FLW-089`）である。
 `target lock`と`promotion lock`を同時保持しないlock order不変条件を保護する。
 
 ### 13.4 liveness budget表
@@ -590,7 +590,7 @@ operationがgatedである間production入口から到達できず`command-unava
 | # | 観点 | 現状 | 根拠 |
 |---:|---|---|---|
 | 1 | 接続完全性 | **未実装境界** | 13.1 行6〜11が`_HANDLERS`非到達。evidence生成器不在は`FLW-TSK-116`で解消し、残るのはgatingのみ |
-| 2 | 失敗原子性 | **検証計画** | 13.3 #2は2.3設計で解消。#6は`SI-FLW-089`で是正予定 |
+| 2 | 失敗原子性 | **検証計画** | 13.3 #2は`FLW-TSK-118`で実装・全crash点で検証済み。#6のmarker適格性再検証は`SI-FLW-089`で是正予定 |
 | 3 | 有限収束性 | **検証計画** | 13.4 全childを`process.run()`監督下へ結線済み（素の`subprocess.run`は0件）。10,000 event／100 MiB規模の負荷実測は未実施 |
 | 4 | platform実在性 | **検証計画** | 13.5 probe実装済み。linuxは実観測済み（ext4/tmpfsでSUPPORTED、9pでnetwork拒否）。macos／windowsは実装のみで実走未実施 |
 | 5 | 証跡妥当性 | **未実装境界** | 現`verified`証跡はfixture注入経路。`SI-FLW-090`で是正 |
