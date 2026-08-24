@@ -1,7 +1,7 @@
 ---
 id: FLW-DSN-017
 title: "M2 Local Safety Profileの競合排除・耐久証跡・原子的promotion"
-status: draft
+status: active
 version: 2.3
 updated: 2026-08-24
 owner: codex

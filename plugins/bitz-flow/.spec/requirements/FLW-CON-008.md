@@ -1,7 +1,7 @@
 ---
 id: FLW-CON-008
 version: 1.2
-status: draft
+status: approved
 domain: governance
 priority: high
 origin: FLW-REV-027 / decision-2026-08-23-m2-post-implementation-retrospective.md §5-§6
