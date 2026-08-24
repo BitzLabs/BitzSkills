@@ -2,7 +2,7 @@
 implements: FLW-NFR-014
 depends_on: [FLW-TSK-118]
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_recovery.py,plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_transaction.py,tests/test_flow_m2_recovery.py,tests/test_flow_m2_outcome_binding.py,plugins/bitz-flow/.spec/design/FLW-DSN-017.md,plugins/bitz-flow/.claude-plugin/plugin.json,plugins/bitz-flow/plugin.json,plugins/bitz-flow/.codex-plugin/plugin.json
-status: implementing
+status: done
 ---
 
 ### QUARANTINEDの完了誤分類を是正しoutcomeをreceiptへ束縛する

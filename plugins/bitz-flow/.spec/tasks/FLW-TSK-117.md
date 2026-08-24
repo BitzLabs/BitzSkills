@@ -2,7 +2,7 @@
 implements: FLW-NFR-014
 depends_on: [FLW-TSK-116]
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_runtime.py,plugins/bitz-flow/skills/flow-core/scripts/flowlib/cli.py,tests/test_flow_m2_liveness.py,plugins/bitz-flow/.spec/design/FLW-DSN-017.md,plugins/bitz-flow/.claude-plugin/plugin.json,plugins/bitz-flow/plugin.json,plugins/bitz-flow/.codex-plugin/plugin.json
-status: implementing
+status: done
 ---
 
 ### Git childへ有限timeoutとprocess supervisionを結線する

@@ -2,7 +2,7 @@
 implements: FLW-NFR-014
 depends_on: [FLW-TSK-119]
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_recovery.py,plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_promotion.py,tests/test_flow_m2_marker_eligibility.py,tests/test_flow_m2_recovery.py,plugins/bitz-flow/.spec/design/FLW-DSN-017.md,plugins/bitz-flow/.claude-plugin/plugin.json,plugins/bitz-flow/plugin.json,plugins/bitz-flow/.codex-plugin/plugin.json
-status: implementing
+status: done
 ---
 
 ### reconcile closure前にactive markerの適格性を確定する

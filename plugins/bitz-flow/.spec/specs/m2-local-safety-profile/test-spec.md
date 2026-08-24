@@ -13,6 +13,12 @@
 ## 導出テスト
 
 **接続**列は fixture 内部の検証か production 経路の実証かを表す（`SI-FLW-090`）。
+
+**軸の区別**（`SI-FLW-092`）: `target OS`（Linux／macOS／Windows）と
+`agent platform`（claude／codex／antigravity）は別の軸である。confirmationは
+`agent platform` 3者を**同一Linuxホスト上**で走らせるものであり、これが揃っても
+`target OS`の実観測にはならない。`verified`昇格条件が要求する「実観測」は
+`target OS`軸である（`FLW-NFR-014`）。
 worktree operation は縮退規則3 で gated であるため、production から実証できるのは
 「到達しないこと」と「旧承認方式の即時拒否」に限られる。**fixture 上の成立を
 production 接続の完了として扱わない。** 対応の機械可読な正は
@@ -27,10 +33,10 @@ production 接続の完了として扱わない。** 対応の機械可読な正
 | runtime mutation境界 | plan後のrepository変化、lock競合、storage/crashを注入したとき、write childを単一coordinatorへ限定しclosed failureへ倒す | `tests/test_flow_m2_runtime.py` | fixture |
 | audit・reconcile | journalとGit snapshotの一致・不一致、同一／異decisionを与えたとき、3値auditと単一closureへ収束する | `tests/test_flow_m2_recovery.py` | fixture |
 | doctor・audit・verify-receipt・CLI | read操作と停止入力を与えたとき、persistent write 0でclosed operator resultを返し、reconcileだけclosureを許可する | `tests/test_flow_m2_operability.py` | fixture |
-| 公開受入 | 3 platform fixtureを同一test ID集合で実行したとき、receipt chain、writer数、副作用、partial active、重複closureのhazardが0である | `evals/flow-core/m2-eval/local_confirmation_subject.py`, `tests/test_flow_m2_confirmation.py` | fixture |
+| 公開受入（`agent platform`軸） | claude／codex／antigravityの3 CLIで同一test ID集合を実行したとき、receipt chain、writer数、副作用、partial active、重複closureのhazardが0である | `evals/flow-core/m2-eval/local_confirmation_subject.py`, `tests/test_flow_m2_confirmation.py` | fixture |
 | 旧承認経路のproduction拒否 | production既定dispatcherへ旧capability file・宣言・registryを与えたとき、内容を解析せず`UNSUPPORTED` / `unsupported-approval-mode`で閉じる | `tests/test_flow_m2_legacy_approval.py` | **production** |
 | worktree operationのgating | production既定dispatcherへ全8 worktree actionを与えたとき、`UNSUPPORTED` / `command-unavailable`を返す | `tests/test_flow_m2_runtime.py::test_worktree_remains_unreachable_from_public_dispatcher`, `tests/test_flow_m2_operability.py::test_all_operability_commands_exist_but_remain_gated_in_production` | **production** |
-| 実環境platform probe | 実行中OSのowner-only／world-readable／network filesystemを観測したとき、`SUPPORTED`または理由つき`UNSUPPORTED_FILESYSTEM`を返し例外を送出しない | `tests/test_flow_m2_platform_probe.py` | fixture（linuxのみ実観測。macOS／Windowsは未実走） |
+| 実環境platform probe（`target OS`軸） | 実行中OSのowner-only／world-readable／network filesystemを観測したとき、`SUPPORTED`または理由つき`UNSUPPORTED_FILESYSTEM`を返し例外を送出しない | `tests/test_flow_m2_platform_probe.py` | fixture（**Linuxのみ実観測**。macOS／Windowsは未実走） |
 | child timeoutと有限収束 | hangするchild・SIGTERM無視child・出力洪水を与えたとき、budget内にclosed terminal resultへ収束する | `tests/test_flow_m2_liveness.py` | fixture |
 | intentのcrash原子性 | 4つのpublish step全点でkillしたとき、intent確定なら必ず有効な緊急receiptが付く | `tests/test_flow_m2_intent_atomicity.py` | fixture |
 | recovery分類の陽性陰性 | `DONE`／`QUARANTINED`×snapshot一致／不一致を与えたとき、`QUARANTINED`を`confirmed-complete`へ畳まない | `tests/test_flow_m2_outcome_binding.py` | fixture |

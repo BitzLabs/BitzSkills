@@ -2,7 +2,7 @@
 implements: FLW-FR-006
 depends_on: []
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/cli.py,tests/test_flow_m2_legacy_approval.py,tests/test_flow_m1_contract_rows.py,plugins/bitz-flow/.spec/design/FLW-DSN-017.md,plugins/bitz-flow/skills/flow-core/references/operation-catalog.md,plugins/bitz-flow/skills/flow-core/SKILL.md,plugins/bitz-flow/.claude-plugin/plugin.json,plugins/bitz-flow/plugin.json,plugins/bitz-flow/.codex-plugin/plugin.json
-status: implementing
+status: done
 ---
 
 ### create/resume CLIをplan-digest専用契約へ一致させる

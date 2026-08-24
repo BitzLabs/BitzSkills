@@ -2,7 +2,7 @@
 implements: FLW-NFR-014
 depends_on: [FLW-TSK-117]
 boundary: plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_transaction.py,plugins/bitz-flow/skills/flow-core/schemas/worktree-v2/operation-event-v2.schema.json,tests/test_flow_m2_target_transaction.py,tests/test_flow_m2_intent_atomicity.py,plugins/bitz-flow/.spec/design/FLW-DSN-017.md,plugins/bitz-flow/.claude-plugin/plugin.json,plugins/bitz-flow/plugin.json,plugins/bitz-flow/.codex-plugin/plugin.json
-status: implementing
+status: done
 ---
 
 ### intentと緊急receiptを単一durable recordへ統合する

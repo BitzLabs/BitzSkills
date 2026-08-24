@@ -2,7 +2,7 @@
 implements: FLW-NFR-014
 depends_on: [FLW-TSK-121]
 boundary: tests/test_flow_review_ledger.py,plugins/bitz-flow/.spec/reviews/FLW-REV-018.json,plugins/bitz-flow/.spec/reviews/FLW-REV-019.json,plugins/bitz-flow/.spec/reviews/FLW-REV-027.json,plugins/bitz-flow/.spec/reports/review-ledger-reconciliation.md,plugins/bitz-flow/.claude-plugin/plugin.json,plugins/bitz-flow/plugin.json,plugins/bitz-flow/.codex-plugin/plugin.json
-status: implementing
+status: done
 ---
 
 ### レビュー台帳の整合を機械検査し未解決P0/P1を照合する

@@ -65,9 +65,24 @@ processが同じrepositoryを操作する通常運用で、stale plan、競合wr
 | `closure event` | 人間判断済みreconcileを記録する、Git mutationを伴わない冪等event | `TargetTransaction` | 同一decision digestでは1件。異なる判断は新audit/planが必要 |
 | `active operation marker` | promotionと通常applyの同時進行を防ぐdurable marker | `PromotionBarrier` | terminal receipt確定後に解除。crash時はreconcileでclosure証明後に解除 |
 | `current pointer` | activeなcontract bundle generationとdigestを指すowner-only regular JSON | `PromotionController` | 次の成功promotionによるatomic replaceまで |
+| `target OS` | probeと`PlatformAdapter`が対象とする実行OS（Linux／macOS／Windows） | `PlatformAdapter` | 対象OSの追加・削除まで |
+| `agent platform` | confirmationの被験エージェントCLI（claude／codex／antigravity） | confirmation runner | 対象CLIの追加・削除まで |
 
 本文、schema、result、runbookはこの用語を正とし、`approval token`、`lease receipt`、`active manifest`などの
 別名を導入しない。OS固有名は`PlatformAdapter`内部に閉じ、公開resultでは上表のlogical nameへ正規化する。
+
+**「platform」を単独で使わない**（`SI-FLW-092`）。本設計では2つの異なる軸に同じ語が
+使われており、混同すると**片方の達成をもう片方の達成として読める**。
+
+- `target OS` は **OS** の軸である。Linux／macOS／Windowsの実行環境を指し、
+  §13.5 platform reality表と`FLW-NFR-014`の`verified`昇格条件が要求する「実観測」は
+  **この軸**である。
+- `agent platform` は **エージェントCLI** の軸である。confirmationが同一test ID集合を
+  claude／codex／antigravityで実行することを指す。**3者とも同一ホスト上で走る**ため、
+  これが揃っても`target OS`の実観測にはならない。
+
+2026-08-24のconfirmationは`agent platform` 3者PASSであり、`target OS`の実観測は
+Linuxのみである。
 
 ## 2. 承認契約をplan-digestへ統一する
 
@@ -607,8 +622,13 @@ operationがgatedである間production入口から到達できず`command-unava
 **Gate判定への拘束**: 7観点に`実証済み`は依然1件も無い（`FLW-TSK-115`／`116`後も、production既定dispatcherからの到達がgatingで閉じているため）。したがって本設計は
 `FLW-CON-008`により、**接続の成立を根拠としたDesign Gate PASSを主張しない**。
 本節が求める裁定は「是正の設計方針としての妥当性」であり、`FLW-REV-027`のGate blocking条件
-（production既定dispatcher実走、3platform実観測、全crash境界、finite timeout）は
+（production既定dispatcher実走、**`target OS` 3種の実観測**、全crash境界、finite timeout）は
 実装後の再レビューでのみ解除できる。
+
+**混同への注意**: 2026-08-24に`agent platform` 3者（claude／codex／antigravity）の
+confirmationがPASSしたが、**これはGate blocking条件の「実観測」を満たさない**。
+confirmationは3者とも同一Linuxホスト上でfixture suiteを実行するものであり、
+macOS／Windowsの実観測は依然として未実施である（§13.5）。
 
 ## Revision History
 

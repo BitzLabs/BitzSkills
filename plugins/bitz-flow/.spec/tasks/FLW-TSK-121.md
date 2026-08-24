@@ -2,7 +2,7 @@
 implements: FLW-FR-006
 depends_on: [FLW-TSK-120]
 boundary: plugins/bitz-flow/.spec/requirements/FLW-FR-006.md,plugins/bitz-flow/.spec/requirements/FLW-NFR-014.md,plugins/bitz-flow/.spec/specs/m2-local-safety-profile/test-spec.md,plugins/bitz-flow/skills/flow-core/references/m2-operability-coverage.json,tests/test_flow_m2_operability.py,plugins/bitz-flow/.spec/reports/m2-unconnected-points.md,plugins/bitz-flow/.claude-plugin/plugin.json,plugins/bitz-flow/plugin.json,plugins/bitz-flow/.codex-plugin/plugin.json
-status: implementing
+status: done
 ---
 
 ### fixture検証とproduction接続を区別し証跡の過大主張を解消する
