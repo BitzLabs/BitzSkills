@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import stat
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -305,22 +306,60 @@ def classify_filesystem(filesystem_type: str | None) -> tuple[str, str]:
     return name, "local"
 
 
+def _unescape_mountinfo(value: str) -> str:
+    """mountinfo の 8 進 escape（`\\040` 等）を解く。"""
+    out, index = [], 0
+    while index < len(value):
+        if value[index] == "\\" and value[index + 1:index + 4].isdigit():
+            out.append(chr(int(value[index + 1:index + 4], 8)))
+            index += 4
+        else:
+            out.append(value[index])
+            index += 1
+    return "".join(out)
+
+
+def select_mount_type(lines, target: Path) -> str | None:
+    """mountinfo の行集合から target が属する mount の fstype を選ぶ。
+
+    **mount point の最長一致**で選ぶ。st_dev（major:minor）は bind mount 間で共有される
+    ため識別子として不十分であり、先頭一致では親マウントの種別を返してしまう
+    （`FLW-REV-028:SYN-010`）。行順に依存しないよう深さで比較する。
+
+    file 読み取りから分離してあるのは、bind mount を作るには root が要り、
+    振る舞いを実環境で対照できないためである（合成データで検証する）。
+    """
+    absolute = Path(os.path.abspath(str(target)))
+    best_type, best_depth = None, -1
+    for line in lines:
+        fields = line.split()
+        if len(fields) < 5 or "-" not in fields:
+            continue
+        mount_point = Path(_unescape_mountinfo(fields[4]))
+        try:
+            absolute.relative_to(mount_point)
+        except ValueError:
+            continue
+        depth = len(mount_point.parts)
+        if depth <= best_depth:
+            continue
+        separator = fields.index("-")
+        if len(fields) <= separator + 1:
+            continue
+        best_type, best_depth = fields[separator + 1], depth
+    return best_type
+
+
 def _linux_filesystem_type(target: Path) -> str | None:
-    """`/proc/self/mountinfo` を st_dev で引く。読めなければ None。"""
+    """`/proc/self/mountinfo` から target が属する mount の fstype を求める。"""
     try:
-        device = os.stat(target).st_dev
-        major, minor = os.major(device), os.minor(device)
-        wanted = f"{major}:{minor}"
-        for line in Path("/proc/self/mountinfo").read_text(encoding="utf-8").splitlines():
-            fields = line.split()
-            if len(fields) < 5 or fields[2] != wanted:
-                continue
-            if "-" not in fields:
-                continue
-            return fields[fields.index("-") + 1]
+        lines = Path("/proc/self/mountinfo").read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return None
+    try:
+        return select_mount_type(lines, target)
     except (OSError, ValueError, IndexError):
         return None
-    return None
 
 
 def _macos_filesystem_type(target: Path) -> str | None:
@@ -373,18 +412,30 @@ def _windows_volume(target: Path) -> tuple[str | None, bool]:
 
 
 def _case_semantics(target: Path) -> str | None:
-    """case を反転した path が見えるかで判定する。判定材料が無ければ None。
+    """対象 entry が属する directory の lookup semantics を判定する。
 
-    マウント単位で異なるため OS 名では決められない（`guard.py` と同じ根拠）。
-    書き込みを伴わないので read-only を保てる。
+    以前は **絶対 path 全体** を swapcase して存在確認していたため、祖先の case 差に
+    引きずられて mount 単位の semantics を測れなかった（`FLW-REV-028:SYN-010`）。
+    誤って `sensitive` と判定すると `collision_key` が case alias を畳めず、
+    同一資源への競合が直列化されない。
+
+    判定は対象 entry 名だけを反転して**同一 parent 内**で引き、見つかった場合は
+    `(st_dev, st_ino)` の一致で同一 entry かを確かめる（同名の別 entry を
+    insensitive と誤認しないため）。書き込みは行わない。
+    判定材料が無ければ None を返す（推測しない）。
     """
     probe = target if target.exists() else target.parent
-    text = str(probe)
-    swapped = text.swapcase()
-    if swapped == text:
-        return None      # 英字が無く判定できない。推測しない。
+    name = probe.name
+    if not name or name.swapcase() == name:
+        return None      # 英字が無く判定材料がない
+    sibling = probe.parent / name.swapcase()
     try:
-        return "insensitive" if os.path.exists(swapped) else "sensitive"
+        if not sibling.exists():
+            return "sensitive"
+        here, there = os.stat(probe), os.stat(sibling)
+        if (here.st_dev, here.st_ino) == (there.st_dev, there.st_ino):
+            return "insensitive"
+        return "sensitive"   # 同名の別 entry が存在するだけ
     except OSError:
         return None
 
@@ -443,12 +494,39 @@ def _is_nt() -> bool:
 
 
 def _has_non_follow_walk() -> bool:
-    """symlink を追わない走査ができるか。"""
+    """symlink を追わない走査に必要な primitive が使えるか（能力の検査）。"""
     if not hasattr(os, "scandir") or not hasattr(os, "lstat"):
         return False
     if _is_nt():
         return True
     return hasattr(os, "O_NOFOLLOW")
+
+
+def path_is_symlink_free(target: Path) -> bool | None:
+    """root から target まで component 単位に lstat し、symlink が無いことを**実証**する。
+
+    以前は primitive の存在確認だけで `non_follow_walk=True` を主張していたため、
+    symlink 経由の root が `SUPPORTED` になった（`FLW-REV-028:SYN-008`）。§1.2 は
+    「非 symlink/reparse-point の namespace」を信頼すると規定しており、追跡した path で
+    その性質を名乗ってはならない。
+
+    True=symlink 無し / False=symlink あり / None=観測不能（推測しない）。
+    """
+    try:
+        absolute = Path(os.path.abspath(str(target)))
+        current = Path(absolute.anchor or os.sep)
+        for part in absolute.relative_to(current).parts:
+            current = current / part
+            try:
+                info = os.lstat(current)
+            except FileNotFoundError:
+                # 未作成の create target 以降は観測対象にしない。
+                return True
+            if stat.S_ISLNK(info.st_mode):
+                return False
+        return True
+    except (OSError, ValueError, RuntimeError):
+        return None
 
 
 def _has_windows_locking() -> bool:
@@ -555,6 +633,10 @@ def probe_platform(
     platform = current_platform()
     if platform is None:
         return _unobservable("unknown-platform")
+    # symlink 実証は **解決前の path** に対して行う。resolve() は symlink を解いて
+    # しまうため、解決後を検査しても常に「symlink 無し」になる。
+    requested = Path(path)
+    symlink_free = path_is_symlink_free(requested)
     try:
         # 相対 path のままだと case 判定材料（英字）が無いことがある。存在しない
         # create target も扱うため strict=False で解決する。
@@ -591,6 +673,8 @@ def probe_platform(
     principal, owner_matches, acl_owner_only = _owner(anchor)
     profile = profiles.get(platform)
     primitives = _primitives(platform, profile)
+    # 能力の有無だけでなく、要求された path が実際に symlink を含まないことを実証する。
+    primitives["non_follow_walk"] = bool(primitives["non_follow_walk"] and symlink_free)
 
     observation = PlatformObservation(
         platform=platform,

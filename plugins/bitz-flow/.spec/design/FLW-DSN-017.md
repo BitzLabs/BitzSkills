@@ -2,7 +2,7 @@
 id: FLW-DSN-017
 title: "M2 Local Safety Profileの競合排除・耐久証跡・原子的promotion"
 status: active
-version: 2.5
+version: 2.6
 updated: 2026-08-24
 owner: codex
 implements: FLW-NFR-014, FLW-CON-008
@@ -584,6 +584,18 @@ probeの正は`worktree_platform.probe_platform()`で、planとdoctorは共通�
 | macos（**保証対象外**） | flock / fsync / fsync / waitpid | uid | `statfs(2)`の`f_fstypename`をctypesで取得。case-insensitive volumeを含む | `UNSUPPORTED_FILESYSTEM` | **対象外**（実装は残す。既定APFSがcase-insensitiveでfolded_component導出不可） |
 | windows（**保証対象外**） | LockFileEx / FlushFileBuffers / ReplaceFileW / job-object | sid | `GetVolumeInformationW`でfilesystem名と`FILE_CASE_SENSITIVE_SEARCH`を取得 | `UNSUPPORTED_FILESYSTEM` | **対象外**（実装は残す。SID取得手段が未確定で`owner-unobservable`固定） |
 
+**実証の義務**（`FLW-REV-028:GP-006`／`GP-008`）: probeは検証していない性質を主張しない。
+
+- `non_follow_walk`は primitive の可用性**だけでは主張しない**。要求されたpath（`resolve()`
+  **前**）をcomponent単位に`lstat`し、経路上にsymlinkが無いことを実証する。
+  `resolve()`後を検査しても常に「symlink無し」になるため意味がない。
+- case semanticsは**mount局所**で判定する。絶対path全体のswapcaseは祖先のcase差に
+  引きずられる。対象entry名だけを反転して同一parent内で引き、見つかった場合は
+  `(st_dev, st_ino)`一致で同一entryかを確かめる（同名の別entryをinsensitiveと誤認しない）。
+- filesystem種別は**mount pointの最長一致**で選ぶ。`st_dev`（major:minor）はbind mount間で
+  共有されるため識別子として不十分で、先頭一致では親マウントの種別を返す。
+- いずれも判定材料が無ければ`None`を返し不支持へ閉じる。**推測しない。**
+
 **代替禁止**: 他OSのcomponentによる代替を同一証明として扱わない。registryが宣言する
 `child_supervision`と実runtimeで使える primitive が食い違う場合は`supported`にしない
 （`test_child_supervision_must_match_the_declared_primitive`）。
@@ -648,6 +660,8 @@ macOS／Windowsの実観測は依然として未実施である（§13.5）。
 
 ## Revision History
 
+- 2.6 (2026-08-24) §13.5へprobeの実証義務を追加。symlinkの実証検出、mount局所のcase判定、
+  mount point最長一致によるfilesystem種別解決（`FLW-REV-028:GP-006`／`GP-008`）
 - 2.5 (2026-08-24) §13.2へ`UNSUPPORTED`行とoperator action義務を追加（`FLW-REV-028:GP-001`）
 - 2.4 (2026-08-24) 保証scopeをLinuxへ限定し、case-insensitive環境と対象外platformを
   理由付きで`UNSUPPORTED_FILESYSTEM`へ閉じる。§3.2のsemantic self-test要求と実装の

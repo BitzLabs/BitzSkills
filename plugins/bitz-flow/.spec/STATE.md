@@ -1,5 +1,26 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-TSK-125（FLW-REV-028:GP-006／GP-008）実装: probeが検証していない性質を
+  主張しないよう3点を実証へ変えた。いずれもセカンドオピニオンの指摘を実測確認したもの。
+  **(1) symlinkの実証検出**: `non_follow_walk`をprimitive可用性だけで主張せず、
+  要求されたpath（`resolve()`**前**）をcomponent単位に`lstat`して経路上にsymlinkが無いことを
+  実証する。実装中に**`resolve()`後を検査していて実証が効かない**状態を一度作り、
+  symlink経由が依然SUPPORTEDだったことで気づいて修正した（解決後は常にsymlink無しになる）。
+  **(2) case semanticsのmount局所化**: 絶対path全体のswapcaseをやめ、対象entry名だけを
+  反転して同一parent内で引く。見つかった場合は`(st_dev, st_ino)`一致で同一entryか確認し、
+  **同名の別entryをinsensitiveと誤認しない**（誤認するとcollision_keyが別資源を同一へ畳む）。
+  **(3) filesystem種別のmount最長一致**: `st_dev`はbind mount間で共有され識別子として
+  不十分なため、mount pointの最長一致で選ぶ。mountinfoの8進escapeを解く。
+  `tests/test_flow_m2_probe_evidence.py`（17 test）を追加。
+  **変異検査で自分のテストの穴を1つ発見**: 最長一致を先頭一致へ戻す変異が初回素通りした。
+  bind mountの作成にはrootが要り実環境で対照できないため、選択ロジックを
+  `select_mount_type()`として分離し合成mountinfoで行順非依存を検証する形へ改めた。
+  再変異で2件FAILすることを確認。他3変異（symlink実証の除去・解決後pathでの実証・
+  st_dev/ino照合の除去）は初回から検出できていた。
+  `FLW-DSN-017`をv2.6へ改訂し§13.5へprobeの実証義務を明記。
+  confirmation証跡を再実走して更新（3者PASS、Gate採用可）。
+  全体**2535 passed / 44 skipped / 失敗0**、release_check PASS、spec inspect全8 workspace PASS。
+
 - 2026-08-24 FLW-TSK-124（FLW-REV-028:GP-001）実装: 不支持理由へoperator actionを与え、
   あわせて**自分が書いたコードの欠陥を1件是正**した。
   **発見した欠陥**: `FLW-TSK-116`／`117`で追加した`WorktreeUnsupportedPlatformError`と
@@ -1082,3 +1103,5 @@
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiYmM5YzE3MjlhNmM5OWUwMTcyYWVmY2QxZWY5Nzk0NjBhM2U3MTE5Y2E4MGE4MTNmNmVkMTMwZThkZGQwNmQ1NSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiMDRkYWYyYWY5NGZlOWU0MDI1NjQzMTUwNTgyOGY0OGYwNDg0ZTFmZmVlMTI1YTc5YWNjOWYzNWNkOWMwY2QxYSIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjMiLCJldmVudF9pZCI6ImJkNmE4NzQyLWRkNTUtNGQ1My1iNmIwLTY2YjVkNzMzNTk1ZCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjMubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDA1OjQzOjUxLjc2MTA1NloifQ== -->
 - 2026-08-24 FLW-TSK-124: pending → implementing (claude)
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiNTQxZjdlMDY1MWUyMjg5OTZmNTcxYjA5MDJkMjg5ZDRmOWZkMjMwYmRmNzlhNDg3OTY0OGE4ZTU1YjBjMzI2YiIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiMjAzNGYxMzk4ZWFhZjY1YmE1Mzc2MzJiYjFmNTZiMmE4N2JhODIzYzk0MzEwZTI4MmMzY2E5ZDk3ZDYyZDJmOCIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjQiLCJldmVudF9pZCI6ImYyNzgxM2UyLTkyOWMtNDVkZS04ZmM3LTVmZWI0ZmRiODg5MCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjQubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDA3OjA4OjE4LjM5MDQ3NloifQ== -->
+- 2026-08-25 FLW-TSK-125: pending → implementing (claude)
+<!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiZjNhZDAyNmRkN2EyNzMwYjRiYzI4YjgwMzE1YjcxZGIxMmUzNWQyN2U1OWM3YzNhOTljNWQwNDRlYWE5ZmZmYyIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiMTUyNTI1ZjBjMzU0MTM1ZDM0N2Q2MzE1NjU5YTYxNDljNzNjZWRlYzAyMzBkMmE0ZDJhYjAyM2FjOTc3NzQ1YyIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjUiLCJldmVudF9pZCI6IjQ2Y2E1OWEwLWE3MWMtNDgwMS1iMTg3LWI0N2M3YTVlMDY3ZCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjUubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDIzOjIwOjI1LjQ4Mzc4MloifQ== -->
