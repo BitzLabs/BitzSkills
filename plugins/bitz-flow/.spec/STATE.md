@@ -1,5 +1,24 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-TSK-119（SI-FLW-088 / FLW-REV-027:SYN-005 P1）実装:
+  `worktree_recovery.audit()`の分類条件から`QUARANTINED`を外し、`confirmed-complete`を
+  `DONE`かつ予定postcondition成立時に限定した。**欠陥の機序**: `RESULT_DURABLE` eventの
+  `postcondition_digest`は*予定*ではなく*実観測*の値（`quarantined_failure`が観測値を記録）で
+  あるため、quarantine直後はrepositoryが変化しておらず現在snapshotと必ず一致し、
+  `confirmed-complete`へ分類されていた。運用者が隔離操作を正常完了と誤認する。
+  `RESULT_DURABLE` eventへrequested outcome（`terminal_state`）と`planned_effects_digest`を
+  束縛し、実観測値だけで完了を主張できないようにした。終局event未着（`RESULT_DURABLE`止まり）
+  でも要求された結末が`QUARANTINED`なら完了へ倒さない。
+  `tests/test_flow_m2_outcome_binding.py`（9 test）で陽性・陰性対照を置いた
+  （QUARANTINED×snapshot一致／不一致、DONE×一致／乖離、LOCKED、INTENT_DURABLE、
+  requested outcomeの束縛、RESULT_DURABLE止まり）。
+  **欠陥の実在を旧条件へ戻して確認**: 3件FAIL（snapshot一致時のQUARANTINEDが
+  `confirmed-complete`になること、snapshot不一致時が`indeterminate`止まりで
+  `quarantine`にならないこと、RESULT_DURABLE止まりの誤分類）。
+  既存の全M2 testは無改変でgreenのままであり、分類は安全側へ狭めただけで
+  正常完了を過剰にquarantineへ倒していないことを陽性対照で確認した。
+  bitz-flow 0.12.11→0.12.12。全体2376 passed（confirmation失効の1件を除く）。
+
 - 2026-08-24 FLW-NFR-014 verified→implementing（人間裁定）とFLW-TSK-118（SI-FLW-087）実装:
   userが「FLW-NFR-014のimplementing 許可します」と裁定し、fixture注入経路の証跡でverifiedに
   していた過大主張を戻した（裁定参照: `.spec/reports/decision-2026-08-24-flw-nfr-014-reopen.md`）。
@@ -823,3 +842,5 @@
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiODdjMDQ5YzI1MDBjODQ0YjEwMDJmYjFkZjJiNmFhNTI4Mzk5ZDFhOTA3OTM3YTIwZGJlMjVhZmIwOTkxZTcxYSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiNmZjZWNlNzM5YmNkYjE1OTFmYWZmMWM2MTg3ZDQ3ZGQyNmM3M2U5YzE5ZmJjYmM2ODU4MmZhMzQ3MGI1MDQ0NSIsImFydGlmYWN0X2lkIjoiRkxXLU5GUi0wMTQiLCJldmVudF9pZCI6IjE5MTMzOTU3LTU2N2MtNGQ4Ni1iNzUxLTE0YTU1MzIzYjcyMCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InZlcmlmaWVkIiwicGF0aCI6Ii5zcGVjL3JlcXVpcmVtZW50cy9GTFctTkZSLTAxNC5tZCIsInByb3ZlbmFuY2UiOnsiYWN0b3IiOiJjbGF1ZGUiLCJkZWNpc2lvbl9yZWYiOiIuc3BlYy9yZXBvcnRzL2RlY2lzaW9uLTIwMjYtMDgtMjQtZmx3LW5mci0wMTQtcmVvcGVuLm1kIiwia2luZCI6ImFnZW50LXByb3h5LXVudmVyaWZpZWQiLCJvbl9iZWhhbGZfb2YiOiJoaWRlIn0sInNjaGVtYV92ZXJzaW9uIjoyLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAxOjEyOjEzLjE0OTg0OVoifQ== -->
 - 2026-08-24 FLW-TSK-118: pending → implementing (claude)
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiMDkyNTEzZDg4OWNjMTMyZDk5Njg1NDQ4NzZiMzg5N2I0YzVmNmMwODViNmJjMGY1YzkyODA0NDg4MzQzYjJkNyIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiNjM2MmM5MDEyNzU0OGI3YjcxZGViMmM5NzY5NDQ3NzcxN2ZjODlhOTgwYjFiYzk2YTVkOGRiYmEzMjA2OTA0NCIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMTgiLCJldmVudF9pZCI6IjA0MzYxMThkLTdlOTMtNDU5ZC04YjA3LTQ5Nzc4Nzk2YjE4NyIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMTgubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAxOjE0OjUyLjQ0MDMxNloifQ== -->
+- 2026-08-24 FLW-TSK-119: pending → implementing (claude)
+<!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiNDU0NTZiZDk3NTAyZDM0MGY0Y2RhMWQ5MTFiMWExNDQyYTE1YjA0YjdjMmY2Y2IxMzdmMjNhYjU1YjFmNjYzZiIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiOWM1ODlmOTYzN2NmZTlhODgwMTJlMzVlOWQzYTNlMjg2ZGExNGU1YTA4MTZjZTJkY2Y5OTA2MjE4NGJmY2I4YyIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMTkiLCJldmVudF9pZCI6ImNkMzE2MWQxLTVjYTgtNGU5Yy04Y2I4LTM0MjIzN2M2NzlkMyIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMTkubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAxOjI0OjAzLjE1MDU1OVoifQ== -->

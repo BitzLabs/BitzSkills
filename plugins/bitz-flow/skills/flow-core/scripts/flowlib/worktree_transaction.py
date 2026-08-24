@@ -234,8 +234,20 @@ class TargetTransaction:
         validate_digest(postcondition_digest)
         report = self._require_state(lease, "MUTATING", require_emergency=True)
         emergency_digest = self._emergency_digest(report)
+        # 実観測値（postcondition_digest）だけでは完了を主張できない。quarantine 時の
+        # 記録は「予定どおりの状態」ではなく「実際に観測された状態」なので、後から
+        # 現在 snapshot と一致しただけで完了扱いされうる（`SI-FLW-088`）。requested
+        # outcome と予定 effects を同じ event へ束縛して区別できるようにする。
+        intent_event = next(
+            item for item in reversed(report.events)
+            if item["event"]["state"] == "INTENT_DURABLE"
+        )
         result_event = self._append_event(
-            lease, "RESULT_DURABLE", result={"postcondition_digest": postcondition_digest}
+            lease, "RESULT_DURABLE", result={
+                "postcondition_digest": postcondition_digest,
+                "terminal_state": terminal_state,
+                "planned_effects_digest": intent_event["intent"]["planned_effects_digest"],
+            },
         )
         terminal_digest = self._publish_receipt({
             "contract_version": CONTRACT_VERSION,
@@ -584,9 +596,14 @@ class TargetTransaction:
             for value in intent.values():
                 validate_digest(value)
         elif state == "RESULT_DURABLE":
-            if not isinstance(result, Mapping) or set(result) != {"postcondition_digest"} or intent is not None or receipt is not None:
+            if not isinstance(result, Mapping) or set(result) != {
+                "postcondition_digest", "terminal_state", "planned_effects_digest"
+            } or intent is not None or receipt is not None:
                 raise ContractError("invalid RESULT_DURABLE payload")
             validate_digest(result["postcondition_digest"])
+            validate_digest(result["planned_effects_digest"])
+            if result["terminal_state"] not in {"DONE", "QUARANTINED"}:
+                raise ContractError("unknown requested terminal state")
         elif state in {"DONE", "QUARANTINED"}:
             if intent is not None or result is not None or receipt is None:
                 raise ContractError("invalid terminal event payload")

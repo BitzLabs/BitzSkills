@@ -469,13 +469,20 @@ fixture専用注入口であり、**本表のproduction test ID欄にfixture注�
 | 状態 | 前提 | 永続証跡 | 許される後続処理 | 禁止される完了判定 |
 |---|---|---|---|---|
 | `DONE` | terminal receiptが最長有効chainの最後にあり、予定postconditionが観測で成立 | terminal receipt（`supersedes_receipt_digest`が緊急receiptを一意に指す） | lock解放、marker解除、promotion可 | 予定postconditionを検証せず`DONE`にすること |
-| `QUARANTINED` | mutation後の再観測が予定postconditionと不一致 | terminal receipt（`QUARANTINED`） | audit報告、人間判断、reconcileによるclosure | **`confirmed-complete`へ分類すること**（`SI-FLW-088`） |
+| `QUARANTINED` | mutation後の再観測が予定postconditionと不一致 | terminal receipt（`QUARANTINED`）＋`RESULT_DURABLE`へ束縛したrequested outcomeと予定effects | audit報告、人間判断、reconcileによるclosure | **`confirmed-complete`へ分類すること**（`FLW-TSK-119`で是正済み。現在snapshotの一致を根拠にしない） |
 | `INDETERMINATE` | chainにgap／branch／digest不一致／未知event／token巻戻り、または終了状態を証明できないGit child | 最長有効prefixまでのevent（追記は行わない） | 新planと明示確認によるreconcile | 現在snapshotが期待と一致することを根拠に`DONE`扱いすること |
 | `BLOCKED` | precondition不成立、lock競合、storage不能。**Git副作用0件** | `BLOCKED_STORAGE`時はrecord未公開 | 原因解消後の同一planでの再実行 | 副作用の有無を確認せず失敗を成功へ畳むこと |
 
 **不変条件**: `QUARANTINED`と`INDETERMINATE`はいかなる経路でも`DONE`または`confirmed-complete`へ
 畳み込まない。`confirmed-complete`は`DONE`**かつ**予定postcondition成立時に限る（`SI-FLW-088`）。
-現行`worktree_recovery.py`はこの限定を満たさないため**未実装境界**である。
+
+**実装状況**（`FLW-TSK-119`）: `worktree_recovery.audit()`はこの限定を満たす。旧実装は
+`QUARANTINED`を完了判定の集合に含めており、記録される`postcondition_digest`が*予定*ではなく
+*実観測*の値であるため、quarantine後にrepositoryが変化していなければ現在snapshotと一致して
+`confirmed-complete`へ分類されていた。`RESULT_DURABLE` eventへrequested outcome
+（`terminal_state`）と`planned_effects_digest`を束縛し、実観測値だけで完了を主張できないようにした。
+終局event未着（`RESULT_DURABLE`止まり）でも、要求された結末が`QUARANTINED`なら完了へ倒さない。
+陽性・陰性対照は`tests/test_flow_m2_outcome_binding.py`（9 test）。
 
 ### 13.3 crash-point表
 
@@ -595,7 +602,7 @@ operationがgatedである間production入口から到達できず`command-unava
 | 4 | platform実在性 | **検証計画** | 13.5 probe実装済み。linuxは実観測済み（ext4/tmpfsでSUPPORTED、9pでnetwork拒否）。macos／windowsは実装のみで実走未実施 |
 | 5 | 証跡妥当性 | **未実装境界** | 現`verified`証跡はfixture注入経路。`SI-FLW-090`で是正 |
 | 6 | legacy排除 | **検証計画** | 13.6 の旧承認経路は`FLW-TSK-115`で除去済み（参照0件）。宣言／registry検出のblack-box化は公開集合復帰後 |
-| 7 | 状態意味保存 | **検証計画** | 13.2の不変条件を`SI-FLW-088`／`089`で実装 |
+| 7 | 状態意味保存 | **検証計画** | 13.2の`QUARANTINED`不変条件は`FLW-TSK-119`で実装・陽性陰性対照で検証済み。marker適格性（`SI-FLW-089`）が残る |
 
 **Gate判定への拘束**: 7観点に`実証済み`は依然1件も無い（`FLW-TSK-115`／`116`後も、production既定dispatcherからの到達がgatingで閉じているため）。したがって本設計は
 `FLW-CON-008`により、**接続の成立を根拠としたDesign Gate PASSを主張しない**。

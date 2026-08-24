@@ -115,17 +115,31 @@ def audit(transaction: T.TargetTransaction, *, operation_id: str,
             precondition = report.events[-1]["intent"]["precondition_digest"]
             if precondition == observed_snapshot.digest:
                 classification = CONFIRMED_INCOMPLETE
-        elif report.state in {"RESULT_DURABLE", "DONE", "QUARANTINED"} and terminal_digest:
+        elif report.state == "QUARANTINED":
+            # `QUARANTINED` は「mutation は起きたが再観測が予定 postcondition と
+            # 不一致」である。記録される postcondition_digest は *予定* ではなく
+            # *実観測* の値なので、その後 repository が変化していなければ現在
+            # snapshot と一致してしまう。一致を根拠に完了扱いすると、隔離された
+            # 操作を正常完了と誤認させる（`SI-FLW-088`）。常に quarantine へ倒す。
+            classification = QUARANTINE
+        elif report.state in {"RESULT_DURABLE", "DONE"} and terminal_digest:
             result_events = [
                 item for item in report.events
                 if item["event"]["state"] == "RESULT_DURABLE"
             ]
-            if (
-                len(result_events) == 1
-                and result_events[0]["result"]["postcondition_digest"]
-                == observed_snapshot.digest
-            ):
-                classification = CONFIRMED_COMPLETE
+            if len(result_events) == 1:
+                result = result_events[0]["result"]
+                requested = result.get("terminal_state")
+                if requested == "QUARANTINED":
+                    # 終局 event が未着でも、要求された結末が quarantine なら
+                    # 完了へ倒さない。
+                    classification = QUARANTINE
+                elif (
+                    report.state == "DONE"
+                    and result["postcondition_digest"] == observed_snapshot.digest
+                ):
+                    # `confirmed-complete` は `DONE` かつ予定 postcondition 成立時に限る。
+                    classification = CONFIRMED_COMPLETE
     return RecoveryAudit(
         operation_id,
         transaction.target_collision_key,
