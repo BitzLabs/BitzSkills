@@ -501,20 +501,37 @@ durable writeは4段階（temp write → file fsync → rename → directory fsy
 
 ### 13.4 liveness budget表
 
+全Git childは`worktree_runtime._supervised_git()`経由で`process.run()`の監督下に入る
+（`FLW-TSK-117`）。budgetは`process.normalize_timeout()`が範囲へ丸めるため、
+**要求値が何であれ有限かつ正になる**（`None`／`0`／負値／`inf`のいずれも丸められる）。
+
 | 対象 | deadline | kill手順 | 出力回収 | terminal result最大応答 |
 |---|---:|---|---|---:|
 | read-only Git child | 30秒（既定。範囲1〜300秒） | SIGTERM → 2.0秒grace → SIGKILL（Windowsはjob object close） | 8 MiB上限。超過で終了させ`UNAVAILABLE` | 32秒 |
-| write-capable Git child | 60秒（既定。範囲10〜300秒） | 同上 | 同上 | 62秒 |
-| operation全体 | 300秒 | 全child kill後にreconciliation reserveを確保 | — | **30秒**（`FLW-NFR-014`受入基準） |
-| reconciliation reserve | 10秒 | — | — | operation deadline内 |
+| write-capable Git child | 30秒（既定。範囲10〜300秒）。うちexecutionは60% = 18秒 | SIGTERM → grace（総量の10%、1〜5秒。既定3秒） → SIGKILL | 同上 | 32秒 |
+| operation全体 | 300秒（`READ_TIMEOUT_MAX_SECONDS`） | 全child kill後にreconciliation reserveを確保 | — | **30秒**（`FLW-NFR-014`受入基準） |
+| reconciliation reserve | 総量の30%以上かつ最低3秒（既定30秒なら9秒） | — | — | 30秒以内 |
 
-**実測との乖離（未実装境界）**: `process.py`は`TimeoutBudget`、SIGTERM/SIGKILL、2.0秒grace、
-8 MiB出力上限、Windows job objectをすべて実装済みである（L36-L48, L236-L250）。しかし
-**worktree経路はこれを一切使っていない**。`worktree_runtime.py`の全subprocess呼び出し
-（L66 RepositoryObserver、L140 `_git`、L325 openssl署名検証、L732 `run_git`＝write経路）は
-いずれも`timeout=`引数を持たない素の`subprocess.run`である。したがって現状、hangしたGit childは
-**無期限にブロックする**。`SI-FLW-086`は`--timeout-seconds`を全childへ伝播させ、
-10,000 event／100 MiB条件で30秒以内に閉じることを要求する。
+**timeoutの写像**: timeoutは「失敗」ではなく「副作用の有無が不明」である。
+`WorktreeChildTimeoutError`を専用に設け、write childのtimeoutを`QUARANTINED`
+（再観測が予定postconditionと不一致＝観測はできた）へ畳まず`INDETERMINATE`へ閉じる。
+§13.2の「終了状態を証明できないGit child」と一致する。CLIは同errorを
+`INDETERMINATE` / `result-indeterminate`のclosed resultへ写す。
+
+**`--timeout-seconds`の伝播**: CLIの`--timeout-seconds`は`plan()`へ渡り、
+`RuntimePlan.timeout_seconds`としてapply経路の全childへ伝播する。以前はM0 read
+operationにだけ渡り、worktree経路へは渡っていなかった。
+
+**解消済みの乖離**: v2.3時点では`process.py`が`TimeoutBudget`・SIGTERM/SIGKILL・
+2.0秒grace・8 MiB出力上限・Windows job objectを実装済みである一方、
+`worktree_runtime.py`の全subprocess呼び出しが素の`subprocess.run`で`timeout=`を
+持たず、hangしたGit childが無期限にブロックしていた。`FLW-TSK-117`で3つのGit
+呼び出しを`process.run()`へ置換し、素の`subprocess.run`を0件にした
+（`tests/test_flow_m2_liveness.py::test_worktree_runtime_never_spawns_an_unsupervised_child`）。
+あわせて呼出元0件のまま無制限openssl childを起動していた死コード`ed25519_verifier`を除去した。
+
+**未達**: 10,000 event／100 MiB規模の負荷条件下での30秒収束は未計測である。
+`SI-FLW-090`の証跡整備とあわせて実施する。
 
 ### 13.5 platform reality表
 
@@ -574,7 +591,7 @@ operationがgatedである間production入口から到達できず`command-unava
 |---:|---|---|---|
 | 1 | 接続完全性 | **未実装境界** | 13.1 行6〜11が`_HANDLERS`非到達。evidence生成器不在は`FLW-TSK-116`で解消し、残るのはgatingのみ |
 | 2 | 失敗原子性 | **検証計画** | 13.3 #2は2.3設計で解消。#6は`SI-FLW-089`で是正予定 |
-| 3 | 有限収束性 | **未実装境界** | 13.4 worktree経路の全subprocessに`timeout=`が無い |
+| 3 | 有限収束性 | **検証計画** | 13.4 全childを`process.run()`監督下へ結線済み（素の`subprocess.run`は0件）。10,000 event／100 MiB規模の負荷実測は未実施 |
 | 4 | platform実在性 | **検証計画** | 13.5 probe実装済み。linuxは実観測済み（ext4/tmpfsでSUPPORTED、9pでnetwork拒否）。macos／windowsは実装のみで実走未実施 |
 | 5 | 証跡妥当性 | **未実装境界** | 現`verified`証跡はfixture注入経路。`SI-FLW-090`で是正 |
 | 6 | legacy排除 | **検証計画** | 13.6 の旧承認経路は`FLW-TSK-115`で除去済み（参照0件）。宣言／registry検出のblack-box化は公開集合復帰後 |

@@ -1,5 +1,28 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-TSK-117（SI-FLW-086 / FLW-REV-027:SYN-003 P1）実装: worktree経路の全Git childを
+  `process.run()`の監督下へ結線した。`_supervised_git()`を追加し、`RepositoryObserver.run`・
+  `_git`・`MutationCoordinator.run_git`の3箇所から素の`subprocess.run`を排除（残り0件）。
+  `--timeout-seconds`を`plan()`→`RuntimePlan.timeout_seconds`→apply経路の全childへ伝播させた。
+  `WorktreeChildTimeoutError`を新設し、write childのtimeoutを`QUARANTINED`（再観測が予定
+  postconditionと不一致＝観測はできた）へ畳まず`INDETERMINATE`へ閉じる（§13.2の
+  「終了状態を証明できないGit child」と一致）。呼出元0件のまま無制限openssl childを起動していた
+  死コード`ed25519_verifier`（28行）を除去。`tests/test_flow_m2_liveness.py`（17 test）を追加し、
+  実際にhangするchild・SIGTERMを無視するchild・出力洪水が有限時間で閉じることを実測した。
+  **編集事故を1件起こし自己検出した**: `ed25519_verifier`除去でスライス順序を誤り
+  `capability_from_json`が二重定義になった。`syntax ok`は通ったが定義数の検査で発覚し修復した。
+  以後アンカーは正規表現で次のtop-level定義を求める方式へ変更した。
+  4変異中3件を検出。未検出の1件（`DEFAULT_WORKTREE_TIMEOUT_SECONDS`を0.0へ）は
+  `normalize_timeout`が下限へ丸めるため**欠陥にならない**ことを確認し、代わりに丸めの不変条件
+  （`None`／`0`／負値／`inf`のいずれでも有限かつ正）を直接検査するtestを追加した。
+  この追加testは丸め自体を外す変異で5件FAILすることを確認済み。
+  **FLW-CON-008が自分の設計編集を捕捉した**: §13.4のreconciliation reserve行のdeadlineを
+  「`TimeoutBudget`が段階配分」と非数値で書いてしまい`test_liveness_budget_declares_numeric_deadlines`が
+  FAIL。実配分値（総量の30%以上かつ最低3秒。既定30秒なら9秒）へ修正した。
+  §13.4/§13.7を更新し、有限収束性を`未実装境界`→`検証計画`へ改めた
+  （10,000 event／100 MiB規模の負荷実測は未実施）。bitz-flow 0.12.9→0.12.10。
+  spec inspectのFAILは`FLW-NFR-014`のverified過大主張（FLW-TSK-116/117）で、人間裁定待ち。
+
 - 2026-08-24 FLW-TSK-116（SI-FLW-084 / FLW-REV-027:SYN-001 P0）実装: 実環境platform probeを
   実装しproduction経路へ結線した。`worktree_platform.probe_platform()`を追加（read-only。
   linuxは`/proc/self/mountinfo`をst_devで引く、macOSは`statfs(2)`の`f_fstypename`をctypes、
@@ -773,3 +796,5 @@
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiYTZhZTE4OTNkNTMxN2E3MDQxNmQ0OTFiNTE1YzE5YzM0ZWEwMzA3NGJlMTMxNDc3MzI4YTIxNTlkZjhmZTFiNiIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiMTBjM2QzZjUxN2IxZThkNDk1NWFhNmZjODg3MjI5NjhhMjQ2OTQ4YWUyODI0ZjA4ODk1NGQ5NTBjMDkzYjM2YyIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMTUiLCJldmVudF9pZCI6IjlkZWQ0MzE3LTAxOGUtNGFhMy05NDg2LWRmNjAxMTFlOTc5MSIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMTUubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAwOjI0OjE3LjcxNzI5NFoifQ== -->
 - 2026-08-24 FLW-TSK-116: pending → implementing (claude)
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiZDY3ZjVjYzdjNDEzYjgzNGQ2NTU0NGFhNDlmN2NiNDVhZTVhYjZiZjYzNTA2NDcxMmRhODRkOWIzMzllYmY5ZiIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiODhkZmVkNDhjY2E5ZDU2NGVkMjgxOTI3ZDI4YzhlYzM3MTU1YzBmYjc5ZDFjNjYxMGEyMTkwMjg3NWNjYTM1MyIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMTYiLCJldmVudF9pZCI6ImI2Y2MxYmNkLTNiZmYtNDljNC04OWFjLTkyNWEyMTNhZTVmOCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMTYubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAwOjQ1OjUzLjgzOTgyNloifQ== -->
+- 2026-08-24 FLW-TSK-117: pending → implementing (claude)
+<!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiOWNmMWM3ZWM2NzAwYzI2MWM4MmJlM2ZlNmRkYjA3ZThmYzkyOWY4OTZkZWEyNjQ1YTA1YzhkNDgzZWYxNzEyOCIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiODZjZjI5NzNmMDkwMWE4NTY0OTc1NWUxNzU3YTFhZWJiYjliZjhlNWQ1Y2JmMzk0NmM1MGM4NGYzODE3MWUzMyIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMTciLCJldmVudF9pZCI6ImI5YWFmZjNmLWIzMzYtNDEwYS1hZTA3LTQ3NmE2M2Q1NGVjMCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMTcubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAwOjU4OjE5Ljg0ODk5NFoifQ== -->

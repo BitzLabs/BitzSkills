@@ -618,7 +618,21 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
             root, action=args.action, path=args.path, branch=args.branch,
             worktree_root=args.worktree_root, start_point=args.start_point,
             default_branch=args.default_branch,
+            # budget を渡さないと worktree 経路の child だけ無期限になる（`SI-FLW-086`）。
+            timeout_seconds=args.timeout_seconds,
         )
+    except worktree_runtime.WorktreeChildTimeoutError as exc:
+        # 終了を証明できない child は「失敗」ではない。副作用の有無が不明なので
+        # `INDETERMINATE` へ閉じる（`FLW-DSN-017` §13.2）。
+        data = R.empty_data()
+        data["cause"] = "result-indeterminate"
+        data["evidence"] = [exc.command, exc.cause]
+        result = R.build_result(
+            operation=operation, code="INDETERMINATE", repo=root, tool_version=__version__,
+            started_at=started, finished_at=_now(), summary=str(exc),
+            data=data, stage="plan",
+        )
+        return result, R.CompactView(tokens={"child": "timeout"})
     except worktree_runtime.WorktreeUnsupportedPlatformError as exc:
         # 環境が対象外であることを `BLOCKED / conflict` へ丸めない。運用者は
         # 「競合で止まった」のか「この filesystem では動かない」のかを区別できる

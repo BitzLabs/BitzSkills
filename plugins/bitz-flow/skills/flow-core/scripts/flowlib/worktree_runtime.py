@@ -7,18 +7,15 @@ write-capable Git child は :class:`MutationCoordinator` だけが起動し、�
 
 from __future__ import annotations
 
-import base64
 import dataclasses
 import json
 import os
-import shutil
 import subprocess
-import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable, Mapping
 
-from . import guard, result as R
+from . import guard, process as PROC, result as R
 from . import worktree_capability as C
 from . import worktree_approval as A
 from . import worktree_platform as PF
@@ -42,6 +39,28 @@ class RepositorySnapshot:
         return sha256_digest(canonical_json_bytes(dataclasses.asdict(self)))
 
 
+#: worktree 経路の既定 timeout。`process.py` が範囲へ丸める（read 1〜300 / write 10〜300）。
+DEFAULT_WORKTREE_TIMEOUT_SECONDS = 30.0
+
+
+def _supervised_git(
+    args, *, cwd, timeout_seconds: float | None = None, mutating: bool = False,
+    env_overrides=None,
+) -> PROC.ProcessOutcome:
+    """Git child を必ず監督下で起動する（`SI-FLW-086`）。
+
+    以前は素の `subprocess.run` を `timeout=` なしで呼んでおり、hang した child が
+    無期限にブロックしていた。`process.py` は TimeoutBudget・SIGTERM→grace→SIGKILL・
+    出力上限・Windows job object を実装済みなので、worktree 経路もそれを通す。
+    """
+    budget = DEFAULT_WORKTREE_TIMEOUT_SECONDS if timeout_seconds is None else timeout_seconds
+    return PROC.run(
+        ["git", "-c", "color.ui=false", "-c", "core.pager=cat", *args],
+        cwd=str(cwd), timeout_seconds=budget, mutating=mutating,
+        env_overrides=env_overrides,
+    )
+
+
 class RepositoryObserver:
     """Fixed, machine-readable, read-only Git observation boundary."""
 
@@ -54,22 +73,23 @@ class RepositoryObserver:
         "approval-index": ("diff", "--cached", "--name-only", "--", ".bitz-flow/approval-mode.json"),
     }
 
-    def __init__(self, repo: str | Path) -> None:
+    def __init__(self, repo: str | Path, *, timeout_seconds: float | None = None) -> None:
         self.repo = Path(repo).resolve(strict=True)
+        self.timeout_seconds = timeout_seconds
 
     def run(self, observation: str) -> bytes:
         args = self._COMMANDS.get(observation)
         if args is None:
             raise WorktreeRuntimeError("unknown or write-capable repository observation")
-        environment = os.environ.copy()
-        environment["GIT_OPTIONAL_LOCKS"] = "0"
-        proc = subprocess.run(
-            ["git", "-c", "color.ui=false", "-c", "core.pager=cat", *args],
-            cwd=self.repo, env=environment, capture_output=True, check=False,
+        outcome = _supervised_git(
+            args, cwd=self.repo, timeout_seconds=self.timeout_seconds,
+            env_overrides={"GIT_OPTIONAL_LOCKS": "0"},
         )
-        if proc.returncode != 0:
+        if not outcome.ok:
+            if outcome.cause == PROC.CAUSE_TIMEOUT:
+                raise WorktreeChildTimeoutError(f"git {args[0]}", outcome.cause)
             raise WorktreeRuntimeError(f"repository observation failed: {observation}")
-        return proc.stdout
+        return outcome.stdout
 
     def snapshot(self) -> RepositorySnapshot:
         head = self.run("head").decode("ascii").strip()
@@ -106,6 +126,8 @@ class RuntimePlan:
     snapshot: str
     operation_id: str
     effects: tuple[str, ...]
+    #: この operation の全 child へ伝播する budget（`SI-FLW-086`）。
+    timeout_seconds: float = DEFAULT_WORKTREE_TIMEOUT_SECONDS
 
 
 @dataclasses.dataclass(frozen=True)
@@ -116,6 +138,20 @@ class RuntimeDecision:
     remaining_steps: tuple[str, ...] = ()
     evidence: tuple[str, ...] = ()
     cause: str | None = None
+
+
+class WorktreeChildTimeoutError(ValueError):
+    """Git child の終了を有限時間内に証明できなかったことを表す（`SI-FLW-086`）。
+
+    `QUARANTINED`（再観測が予定 postcondition と不一致）と区別する。timeout は
+    「副作用が起きたか自体が不明」であり、`FLW-DSN-017` §13.2 の
+    「終了状態を証明できない Git child」に該当して `INDETERMINATE` へ閉じる。
+    """
+
+    def __init__(self, command: str, cause: str) -> None:
+        super().__init__(f"child did not terminate within budget: {command}")
+        self.command = command
+        self.cause = cause
 
 
 class WorktreeUnsupportedPlatformError(ValueError):
@@ -140,7 +176,8 @@ class WorktreeRuntimeError(ValueError):
     """
 
 
-def _git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+def _git(repo: Path, *args: str, check: bool = True,
+         timeout_seconds: float | None = None) -> subprocess.CompletedProcess[str]:
     read_only = (
         bool(args)
         and (
@@ -150,13 +187,16 @@ def _git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProc
     )
     if not read_only:
         raise WorktreeRuntimeError("unknown or write-capable Git command")
-    proc = subprocess.run(
-        ["git", "-c", "color.ui=false", "-c", "core.pager=cat", *args],
-        cwd=repo, capture_output=True, text=True, check=False,
-    )
-    if check and proc.returncode != 0:
+    outcome = _supervised_git(args, cwd=repo, timeout_seconds=timeout_seconds)
+    if outcome.cause == PROC.CAUSE_TIMEOUT:
+        raise WorktreeChildTimeoutError(f"git {args[0]}", outcome.cause)
+    if check and not outcome.ok:
         raise WorktreeRuntimeError(f"git {args[0]} failed")
-    return proc
+    return subprocess.CompletedProcess(
+        args=list(args), returncode=outcome.exit_status if outcome.exit_status is not None else -1,
+        stdout=outcome.stdout.decode("utf-8", "replace"),
+        stderr=outcome.stderr.decode("utf-8", "replace"),
+    )
 
 
 def _common_dir(repo: Path) -> Path:
@@ -227,12 +267,13 @@ def plan(
     worktree_root: str | Path, start_point: str = "HEAD", default_branch: str = "main",
     platform_evidence: PF.PlatformEvidence | None = None,
     expires_at: datetime | None = None, nonce: str | None = None,
-    bundle_digest: str | None = None,
+    bundle_digest: str | None = None, timeout_seconds: float | None = None,
 ) -> RuntimePlan:
     if action not in WRITE_ACTIONS:
         raise WorktreeRuntimeError(f"unsupported worktree action: {action}")
     root = Path(repo).resolve(strict=True)
-    observer = RepositoryObserver(root)
+    budget = PROC.normalize_timeout(timeout_seconds)
+    observer = RepositoryObserver(root, timeout_seconds=budget)
     observed = observer.snapshot()
     common = _common_dir(root)
     approved_root = Path(worktree_root).resolve(strict=True)
@@ -297,7 +338,7 @@ def plan(
         action, str(root), str(common), str(approved_root), str(target), branch,
         start_point, default_branch, head, str(registry), context, observed,
         platform_evidence, active_bundle, snapshot,
-        operation_id, MUTATING_STEPS[action],
+        operation_id, MUTATING_STEPS[action], budget,
     )
 
 
@@ -319,34 +360,6 @@ def capability_from_json(value: Mapping[str, object]) -> C.WorktreeApprovalCapab
         )
     except (KeyError, TypeError, ValueError) as exc:
         raise WorktreeRuntimeError("capability envelope is invalid") from exc
-
-
-def ed25519_verifier(public_keys: Mapping[str, str]) -> C.SignatureVerifier:
-    if shutil.which("openssl") is None:
-        raise WorktreeRuntimeError("OpenSSL Ed25519 verifier unavailable")
-    def verify(payload: dict, signature: str, key_id: str) -> bool:
-        encoded = public_keys.get(key_id)
-        if encoded is None:
-            return False
-        try:
-            key_der = base64.b64decode(encoded, validate=True)
-            signature_bytes = base64.b64decode(signature, validate=True)
-            with tempfile.TemporaryDirectory(prefix="bitz-flow-ed25519-") as directory:
-                key_path = Path(directory) / "public.der"
-                signature_path = Path(directory) / "signature.bin"
-                message_path = Path(directory) / "message.bin"
-                key_path.write_bytes(key_der)
-                signature_path.write_bytes(signature_bytes)
-                message_path.write_bytes(R.canonical_bytes(payload))
-                proc = subprocess.run(
-                    ["openssl", "pkeyutl", "-verify", "-pubin", "-inkey", str(key_path),
-                     "-keyform", "DER", "-rawin", "-in", str(message_path),
-                     "-sigfile", str(signature_path)], capture_output=True, check=False,
-                )
-                return proc.returncode == 0
-        except (ValueError, TypeError, OSError):
-            return False
-    return verify
 
 
 def derive_nonce(operation_id: str) -> str:
@@ -745,11 +758,15 @@ class MutationCoordinator:
 
     def run_git(self, step: str, *args: str, cwd: str | Path | None = None) -> None:
         self._begin_mutation(step)
-        proc = subprocess.run(
-            ["git", "-c", "color.ui=false", "-c", "core.pager=cat", *args],
-            cwd=Path(cwd or self.plan.repo), capture_output=True, text=True, check=False,
+        outcome = _supervised_git(
+            args, cwd=Path(cwd or self.plan.repo),
+            timeout_seconds=self.plan.timeout_seconds, mutating=True,
         )
-        if proc.returncode != 0:
+        if outcome.cause == PROC.CAUSE_TIMEOUT:
+            # write child の終了を証明できない。副作用の有無が不明なので
+            # 失敗（QUARANTINED）へ畳まず INDETERMINATE へ閉じる。
+            raise WorktreeChildTimeoutError(f"git {args[0]}", outcome.cause)
+        if not outcome.ok:
             raise WorktreeRuntimeError(f"git {args[0]} failed")
 
     def record_only(self, step: str) -> None:
@@ -928,6 +945,14 @@ def apply(
         if intent_durable:
             return quarantined_failure(exc)
         return _map_transaction_error(exc, plan_value)
+    except WorktreeChildTimeoutError as exc:
+        # child の終了を証明できない。`QUARANTINED`（再観測が予定 postcondition と
+        # 不一致）へ畳むと「観測できた」ことになってしまうため、緊急 receipt を
+        # 保持したまま `INDETERMINATE` へ閉じる（`FLW-DSN-017` §13.2 / `SI-FLW-086`）。
+        return _closed_failure(
+            "INDETERMINATE", str(exc), plan_value, cause="result-indeterminate",
+            completed=tuple(completed), evidence=(exc.command, exc.cause),
+        )
     except (WorktreeRuntimeError, ContractError, OSError, ValueError, KeyError) as exc:
         return quarantined_failure(exc)
     finally:
