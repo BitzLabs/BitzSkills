@@ -537,19 +537,27 @@ supportedの既定へ倒さない。
 
 ### 13.6 legacy exclusion表
 
+到達不能性の確認手段は2種類ある。`--capability-file`は公開可否より先に閉じるため
+**production black-box**で観測できる。宣言fileとtrusted key registryの検出は、worktree
+operationがgatedである間production入口から到達できず`command-unavailable`に隠れるため、
+到達不能性を**production codeの参照0件**で確認する。参照0件は`SI-FLW-084`で公開集合へ
+戻したあとも維持され、その時点でblack-boxのnegative testへ置き換える。
+
 | 廃止対象 | 所在 | production入口からの到達可否 | 即時拒否の写像 | negative test ID |
 |---|---|---|---|---|
-| `--capability-file`（signed capability） | `cli.py` L916-L930 | 到達する（拒否handlerとして） | `UNSUPPORTED` / `unsupported-approval-mode` | **未実装** |
-| `resolve_approval_mode` | `cli.py` | 未接続経路に残存 | 同上（共通preflightへ移す） | **未実装** |
-| trusted key registry選択 | `cli.py` / `worktree_capability.py` | 未接続経路に残存 | 同上 | **未実装** |
-| openssl署名検証child | `worktree_runtime.py` L325 | 未接続経路に残存。**timeout無し** | 経路ごと除去する | **未実装** |
-| `worktree_dir_guard_key` 旧context | `worktree_runtime.py` / `guard.py` | 未接続経路に残存 | `ApprovalContext.target_collision_key`へ一本化 | **未実装** |
+| `--capability-file`（signed capability） | `cli.py` `main()` | 到達する（gatingより前の拒否handler） | `UNSUPPORTED` / `unsupported-approval-mode` | `tests/test_flow_m2_legacy_approval.py::test_capability_file_is_rejected_as_unsupported_approval_mode` |
+| capability fileの内容解析 | 除去済み | 到達しない（内容を読まない） | 同上 | `tests/test_flow_m2_legacy_approval.py::test_capability_file_content_is_never_parsed` |
+| `resolve_approval_mode` | 除去済み | 参照0件 | 共通preflightへ一本化 | `tests/test_flow_m2_legacy_approval.py::test_production_cli_does_not_reference_retired_approval_symbols` |
+| trusted key registry選択 | 除去済み | 参照0件 | 同上 | 同上 |
+| openssl署名検証child | 除去済み（到達不能`audit`分岐ごと） | 参照0件 | 経路ごと除去 | 同上 |
+| `worktree_dir_guard_key` 旧context | 除去済み | 参照0件 | `ApprovalContext.target_collision_key`へ一本化 | 同上 |
+| 旧宣言 / trusted key registryの存在検出 | `worktree_operability.has_unsupported_approval_input` | gated（`command-unavailable`に隠れる） | `UNSUPPORTED` / `unsupported-approval-mode` | **未実装**（公開集合復帰後にblack-box化） |
 | legacy signed-capability schema | `schemas/worktree-v2/` | bundle memberではない（実在のみ） | active bundleへ混入させない | `tests/test_flow_m2_contract_v2.py` |
 
 **契約**: 廃止入力は**内容を解析せず**mutation前に閉じる。解析してからの降格、
-`plan-digest`への暗黙のfallbackを禁止する。`SI-FLW-085`は上記5件をproduction handlerから
-除去し、共通preflightで即時拒否へ写像する。除去後、本表のnegative test IDは
-production既定dispatcherを起点とするtestで埋める。
+`plan-digest`への暗黙のfallbackを禁止する。存在しないpath・壊れたJSON・必須field欠落の
+いずれでも同一の`unsupported-approval-mode`を返すことで、内容非依存であることを示す
+（`FLW-TSK-115`で実装）。
 
 ### 13.7 7観点の現状
 

@@ -1,5 +1,30 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-TSK-115（SI-FLW-085 / FLW-REV-027:SYN-002 P0）実装: create/resume CLIを
+  plan-digest専用契約へ一致させた。`resolve_approval_mode`・`signed_mode`分岐・
+  `capability_from_json`・`--capability-file`必須判定を除去し、共通preflight
+  `_legacy_approval_detected`へ一本化。旧context`worktree_dir_guard_key`参照を
+  `ApprovalContext.target_collision_key`へ置換した。到達不能な`audit`分岐（123行。L602の
+  operability委譲で先に処理されるため到達しない）を除去し、legacy `worktree_capability`の
+  production handlerからの参照を0件にした。cli.py は 38 insertions / 170 deletions。
+  **実測で確定した潜在バグ**: `cli.py`旧L771の`plan_value.context.worktree_dir_guard_key`は
+  `ApprovalContext`に存在しないfieldであり、`SI-FLW-084`でplatform evidenceを結線した時点で
+  AttributeErrorとして顕在化するはずだった。依存順（085を084より先行）が正しかったことの裏付け。
+  `tests/test_flow_m2_legacy_approval.py`（19 test）を追加。production black-boxで
+  `--capability-file`が`unsupported-approval-mode`を返すこと、存在しないpath・壊れたJSON・
+  必須field欠落のいずれでも同一結果になる（＝内容を解析していない）ことを検証する。
+  宣言file・registryの検出はgatedのためproduction到達不能であり、到達不能性は参照0件で確認する。
+  3変異（旧symbol復活・main()拒否除去・preflight呼び出し削除）で全件検出を確認。
+  `FLW-DSN-017` §13.6のnegative test ID欄を実在testで埋め、`FLW-CON-008`の検査を通した。
+  この過程で`test_flow_design_completion_contract.py`の欠陥を発見: §13.6の解決検査が
+  file存在しか見ておらず架空の関数名を見逃していた。両表を共通の`_resolution_problem`へ寄せ、
+  AST で関数実在まで検査するよう修正した（変異で再確認済み）。
+  bitz-flow 0.12.7→0.12.8。**FLW-TSK-115は`implementing`を維持する**: 完了条件の「全suite green」が
+  未達であり、唯一の失敗は`test_active_manifest_records_real_three_platform_run`の
+  compatibility fingerprint不一致。`cli.py`はconfirmationのCOMPATIBILITY_INPUTSに含まれるため、
+  変更により3platform実走証跡が失効した（設計どおりの検出）。証跡更新には`evals/`既存成果物の
+  上書き承認（AGENTS.md）と3platform実走が要る。2026-08-22と同じ扱いでmanifestは更新しない。
+
 - 2026-08-24 FLW-CON-008承認とFLW-DSN-017 v2.3のDesign Gate: userが「承認します。設計を進めましょう」と
   裁定し、`FLW-CON-008`をdraft→approved、`FLW-DSN-017` v2.3をdraft→activeとした（`FLW-GATE-006`。
   裁定参照: `.spec/reports/decision-2026-08-24-flw-con-008-approval.md`）。
@@ -721,3 +746,5 @@
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiZDRhNDg3ZGRjMDlmMWRjZjUxZjEyOWM4OTg0MjdlNjJhNWE3MjNkODllNjgzNzhiNThkOTVlNWUyNGFhNjNjMSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiOWY4ODFiODZjNDJhMjg5NDkxMTBiZmEyYjljNmNjNjg4NWE5MjdhNjRmMGM1ZDU2YmZjOTY3MDdiYmI0MzVkZCIsImFydGlmYWN0X2lkIjoiU0ktRkxXLTA5MSIsImV2ZW50X2lkIjoiMmI5M2E3ODMtMDM1Zi00ZTgzLWIwMjItZDc4YTNiOGVjY2QxIiwibmV3IjoiYWNjZXB0ZWQiLCJvbGQiOiJvcGVuIiwicGF0aCI6Ii5zcGVjL3NwZWMtaXNzdWVzL1NJLUZMVy0wOTEubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwiZGVjaXNpb25fcmVmIjoiLnNwZWMvcmVwb3J0cy9kZWNpc2lvbi0yMDI2LTA4LTI0LWZsdy1yZXYtMDI3LXJlbWVkaWF0aW9uLm1kIiwia2luZCI6ImFnZW50LXByb3h5LXVudmVyaWZpZWQiLCJvbl9iZWhhbGZfb2YiOiJoaWRlIn0sInNjaGVtYV92ZXJzaW9uIjoyLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTIzVDIzOjQwOjE0LjE1MzA0N1oifQ== -->
 - 2026-08-24 FLW-CON-008: draft → approved (claude on behalf of hide; 代行実行・実行者未検証・裁定参照: .spec/reports/decision-2026-08-24-flw-con-008-approval.md)
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiYzQ4MDlhOWY5NmZjZDBjYmE3ZmVmZTE0NzcwNDM4ZjA3MDQxZGQxYTE1NzU3MDM4ZDAyNTNkNDVlZmM0M2VmMyIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiNzkxMmNmMWE5OThlN2Q0YjdkY2QyZmU0Njg4ZGZlYTVlOTNjZWNiMmZiMzg5ZTM3YWZlNzJlYWExZTVhNzM1OSIsImFydGlmYWN0X2lkIjoiRkxXLUNPTi0wMDgiLCJldmVudF9pZCI6IjRlNzMzOGI1LTAwMDYtNGE5OC1hNWRlLTFiMmJiOWFhMjk5OSIsIm5ldyI6ImFwcHJvdmVkIiwib2xkIjoiZHJhZnQiLCJwYXRoIjoiLnNwZWMvcmVxdWlyZW1lbnRzL0ZMVy1DT04tMDA4Lm1kIiwicHJvdmVuYW5jZSI6eyJhY3RvciI6ImNsYXVkZSIsImRlY2lzaW9uX3JlZiI6Ii5zcGVjL3JlcG9ydHMvZGVjaXNpb24tMjAyNi0wOC0yNC1mbHctY29uLTAwOC1hcHByb3ZhbC5tZCIsImtpbmQiOiJhZ2VudC1wcm94eS11bnZlcmlmaWVkIiwib25fYmVoYWxmX29mIjoiaGlkZSJ9LCJzY2hlbWFfdmVyc2lvbiI6MiwidGltZXN0YW1wIjoiMjAyNi0wOC0yNFQwMDoxMzo1NC44NzE1ODZaIn0= -->
+- 2026-08-24 FLW-TSK-115: pending → implementing (claude)
+<!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiYTZhZTE4OTNkNTMxN2E3MDQxNmQ0OTFiNTE1YzE5YzM0ZWEwMzA3NGJlMTMxNDc3MzI4YTIxNTlkZjhmZTFiNiIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiMTBjM2QzZjUxN2IxZThkNDk1NWFhNmZjODg3MjI5NjhhMjQ2OTQ4YWUyODI0ZjA4ODk1NGQ5NTBjMDkzYjM2YyIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMTUiLCJldmVudF9pZCI6IjlkZWQ0MzE3LTAxOGUtNGFhMy05NDg2LWRmNjAxMTFlOTc5MSIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMTUubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAwOjI0OjE3LjcxNzI5NFoifQ== -->

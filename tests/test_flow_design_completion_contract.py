@@ -200,24 +200,33 @@ def _resolve(test_id: str) -> tuple[Path, str | None]:
     return REPO_ROOT / file_part, (func or None)
 
 
+def _resolution_problem(test_id: str) -> str | None:
+    """test ID が実体へ解決できない理由を返す（解決できれば None）。
+
+    file の実在だけでは足りない。`file.py::関数名` 形式で関数が存在しない場合を
+    見逃すと、実在する file 名に架空の関数名を添えた ID が通ってしまう。
+    """
+    path, func = _resolve(test_id)
+    if not path.exists():
+        return f"file 不在 {test_id}"
+    if func is None:
+        return None
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    names = {
+        n.name for n in ast.walk(tree)
+        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    return None if func in names else f"関数不在 {test_id}"
+
+
 @pytest.mark.parametrize("design", BOUND_DESIGNS, ids=lambda p: p.stem)
 def test_vertical_table_cites_only_existing_tests(design):
     """名指しした production test が実在すること（架空 ID を許さない）。"""
     problems = []
     for label, test_id in _cited_test_ids(design):
-        path, func = _resolve(test_id)
-        if not path.exists():
-            problems.append(f"{label}: file 不在 {test_id}")
-            continue
-        if func is None:
-            continue
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-        names = {
-            n.name for n in ast.walk(tree)
-            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
-        }
-        if func not in names:
-            problems.append(f"{label}: 関数不在 {test_id}")
+        reason = _resolution_problem(test_id)
+        if reason:
+            problems.append(f"{label}: {reason}")
     assert not problems, f"{design.name} §13.1 の test 参照が実体と一致しない: {problems}"
 
 
@@ -311,9 +320,9 @@ def test_legacy_exclusion_negative_tests_exist_when_cited(design):
         if any(marker in cell for marker in UNPROVEN_MARKERS):
             continue
         for span in re.findall(r"`([^`]+)`", cell):
-            path, func = _resolve(span)
-            if not path.exists():
-                problems.append(f"{row[0]}: {span}")
+            reason = _resolution_problem(span)
+            if reason:
+                problems.append(f"{row[0]}: {reason}")
     assert not problems, f"{design.name} §13.6: negative test が実在しない {problems}"
 
 

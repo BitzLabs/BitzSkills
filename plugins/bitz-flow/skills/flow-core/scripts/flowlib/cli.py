@@ -17,7 +17,7 @@ import sys
 from typing import Any, Mapping, Sequence
 
 from . import (
-    __version__, git_read, result as R, worktree_capability, worktree_cleanup,
+    __version__, git_read, result as R, worktree_cleanup,
     worktree_operability, worktree_recovery, worktree_runtime,
 )
 
@@ -516,9 +516,20 @@ def _operability_failure(root: str, started: str, operation: str,
     return result, R.CompactView(tokens={"code": public_code, "action": "manual-inspection"})
 
 
+def _legacy_approval_detected(root: str, args) -> bool:
+    """廃止済み承認方式の入力を、**内容を解析せず**検出する（`SI-FLW-085`）。
+
+    M2 の承認契約は plan-digest に一本化されている（`FLW-DSN-017` §2）。
+    旧 signed-capability の宣言・capability file・trusted key registry は、
+    いずれも mutation 前にここで閉じる。検出は存在の有無だけで行い、内容を読んで
+    妥当性を判定したり plan-digest へ暗黙に降格したりしない。
+    """
+    return bool(args.capability_file or worktree_operability.has_unsupported_approval_input(root))
+
+
 def _op_worktree_operability(root: str, args, started: str):
     operation = f"worktree.{args.action}"
-    if args.capability_file or worktree_operability.has_unsupported_approval_input(root):
+    if _legacy_approval_detected(root, args):
         return _operability_failure(
             root, started, operation, code="UNSUPPORTED", cause="unsupported-approval-mode",
             summary="この承認方式はサポートされていない",
@@ -590,129 +601,9 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
     operation = f"worktree.{args.action}"
     if args.action in {"doctor", "audit", "verify-receipt", "reconcile"}:
         return _op_worktree_operability(root, args, started)
-    if args.action == "audit":
-        # 以前は private `_git` を直呼びし、失敗が result にならず traceback になっていた。
-        # `--limit` / `--timeout` も無視していた（`FLW-REV-016:SYN-011`）。
-        from pathlib import Path as _Path
-
-        try:
-            proc = worktree_runtime._git(_Path(root), "worktree", "list", "--porcelain")
-        except (worktree_runtime.WorktreeRuntimeError, OSError, ValueError) as exc:
-            return _simple_result(
-                operation=operation, code="UNAVAILABLE", repo=root,
-                summary=f"worktree 一覧を取得できない（{type(exc).__name__}）",
-                cause="command-unavailable", stage="inspect",
-            ), R.CompactView()
-        registry = worktree_runtime.parse_worktree_registry(proc.stdout)
-        survey = worktree_runtime.survey_receipts(_Path(root))
-
-        data = R.empty_data()
-        data["evidence"] = ["git worktree list --porcelain", "bitz-flow-v2/receipts"]
-
-        # 突合が成立しない場合は分類を推測しない（`FLW-DSN-016` §8 の audit 行）。
-        # receipt を読めないまま比べると、すべての worktree が外部起因に見える。
-        if not survey.readable:
-            data["cause"] = "result-indeterminate"
-            data["recovery_class"] = worktree_cleanup.recovery_for(
-                "INDETERMINATE", "result-indeterminate"
-            ).recovery_class
-            data["required_human_input"] = (
-                f"{survey.reason}。worktree の由来を判定できない。"
-                "common-dir 配下の bitz-flow-v2/receipts を確認すること"
-            )
-            result = R.build_result(
-                operation=operation, code="INDETERMINATE", repo=root,
-                tool_version=__version__, started_at=started, finished_at=_now(),
-                summary="receipt との突合が成立せず worktree の由来を判定できない",
-                snapshot=R.snapshot_of([survey.status]), data=data, stage="inspect",
-                next_actions=(),
-            )
-            return result, R.CompactView(
-                tokens={"worktrees": len(registry), "receipts": "unreadable"})
-
-        # 外部起因は2形ある（`FLW-DSN-016` §7）。registry と receipt を双方向に突き合わせ、
-        # どちらから見た欠落も拾う（`FLW-REV-018:SYN-002`）。
-        # HEAD の変化は managed worktree での通常の作業でも起きるため、
-        # **事実として報告するが違反にはしない**（裁定 2026-08-16）。
-        main_worktree = str(_Path(root).resolve())
-        rows = worktree_runtime.reconcile_registry(registry, survey, main_worktree)
-
-        limit = args.limit if args.limit and args.limit > 0 else DEFAULT_ITEM_LIMIT
-        shown = rows[:limit]
-        data["items"] = list(shown)
-        data["page"] = {"shown": len(shown), "total": len(rows),
-                        "truncated": len(rows) > len(shown)}
-
-        divergent = [row["path"] for row in rows if row["divergence"]]
-        if not divergent:
-            result = R.build_result(
-                operation=operation, code="OK", repo=root, tool_version=__version__,
-                started_at=started, finished_at=_now(),
-                summary=f"{len(registry)} worktrees",
-                snapshot=R.snapshot_of(rows), data=data, stage="inspect",
-            )
-            return result, R.CompactView(
-                tokens={"worktrees": len(registry), "divergent": 0})
-
-        # managed worktree の binding 不整合は、公開 audit から §6 の観測へ接続する。
-        # receipt が存在しない外部 worktree はこの観測の対象外であり、存在観測だけから
-        # §6 の解除区分を推測しない。
-        binding_findings = [
-            finding
-            for row in rows
-            if row["managed"]
-            for finding in [worktree_capability.audit_external_binding_change(
-                worktree_capability.WorktreeBindingObservation(
-                    directory_exists=row["present"],
-                    registry_exists=row["registered"],
-                    bidirectional_binding_valid=not bool(row["divergence"]),
-                )
-            )]
-            if finding is not None
-        ]
-
-        # 検出したら quarantine 相当として停止する（自動修復はしない）。
-        # 解除区分は divergent target ごとに §6 の4区分を `classify_quarantine_target` で
-        # **実データから計算**する。以前は集合全体へ固定リテラルの evidence を1回だけ
-        # 渡していたため、到達可能な像が `worktree-unresolved` の1点へ潰れていた
-        # （`FLW-REV-019`。分類ではなく表示だった）。
-        receipts_dir = worktree_runtime._common_dir(_Path(root)) / "bitz-flow-v2" / "receipts"
-        receipt_records = (
-            worktree_runtime.read_receipt_chain(receipts_dir)[0] if receipts_dir.exists() else ()
-        )
-        quarantine_targets = [
-            _classify_divergent_target(root, row, receipt_records=receipt_records, registry=registry)
-            for row in rows if row["divergence"]
-        ]
-        release_classes = [target["release_class"] for target in quarantine_targets]
-        worst = worktree_cleanup.most_severe_release_class(release_classes)
-        reason = f"registry と receipt が食い違う worktree を {len(divergent)} 件検出した"
-        data["cause"] = "quarantined"
-        data["recovery_class"] = worktree_cleanup.recovery_for(
-            "BLOCKED", "quarantined").recovery_class
-        data["quarantine"] = {
-            "required": True,
-            "targets": quarantine_targets,
-            "reason": reason,
-            "binding_findings": [finding.reason for finding in binding_findings],
-        }
-        data["required_human_input"] = (
-            f"{worst}: FLW-DSN-016 §6 の解除区分に従い "
-            "evaluation-reviewer の判断を要する。bitz-flow は解除を代行しない"
-        )
-        result = R.build_result(
-            operation=operation, code="BLOCKED", repo=root,
-            tool_version=__version__, started_at=started, finished_at=_now(),
-            summary=reason, snapshot=R.snapshot_of(rows), data=data,
-            stage="inspect",
-            # `human-stop` は空 NEXT である（§8）。解除は operation ではなく
-            # reviewer の裁定であり、示せる次の operation は存在しない。
-            next_actions=(),
-        )
-        return result, R.CompactView(
-            tokens={"worktrees": len(registry), "divergent": len(divergent),
-                    "quarantine": worst if worst is not None else "indeterminate"})
-
+    # `audit` は上の operability 委譲で処理済みである。以前ここにあった registry 走査は
+    # 到達不能なまま legacy `worktree_capability` を production handler から参照していた
+    # ため除去した（`SI-FLW-085`）。
     missing = [name for name, value in (
         ("--path", args.path), ("--branch", args.branch), ("--worktree-root", args.worktree_root)
     ) if not value]
@@ -734,44 +625,30 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
             cause="conflict", stage="plan",
         ), R.CompactView()
 
-    # 承認モードは配備の宣言（git 追跡下）が決める（`SI-FLW-061` / `SI-FLW-073`）。
-    # 宣言が signed-capability なのに trusted key registry が使えない場合は
-    # 降格せず BLOCKED にする（`FLW-DSN-016` §4）。plan の時点で提示しないと、
-    # 人間はどちらの承認を求められているか判らない。
-    approval_decision = worktree_runtime.resolve_approval_mode(
-        plan_value.repo, plan_value.common_dir
-    )
-    if approval_decision.mode is None:
-        data = R.empty_data()
-        data["cause"] = "permission-denied"
-        data["recovery_class"] = worktree_cleanup.recovery_for(
-            "BLOCKED", "permission-denied"
-        ).recovery_class
-        data["evidence"] = list(approval_decision.evidence)
-        data["required_human_input"] = approval_decision.blocked_reason
-        result = R.build_result(
-            operation=operation, code="BLOCKED", repo=root, tool_version=__version__,
-            started_at=started, finished_at=_now(), summary=approval_decision.blocked_reason,
-            data=data, stage="plan", warnings=list(approval_decision.warnings),
-        )
-        return result, R.CompactView()
-    approval_mode = approval_decision.mode
-    signed_mode = approval_mode == worktree_runtime.C.MODE_SIGNED_CAPABILITY
-    preconditions = ["plan snapshot一致"]
-    preconditions.append(
-        "単回Ed25519 capability一致" if signed_mode
-        else "operation_id一致とoperation_id由来の単回nonce"
-    )
+    # M2 の承認は plan-digest に一本化した（`FLW-DSN-017` §2、`SI-FLW-085`）。
+    # 旧 signed-capability の宣言・capability file・trusted key registry は、内容を解析せず
+    # mutation 前に閉じる。ここで降格させると、人間はどちらの承認を求められているか判らない。
+    if _legacy_approval_detected(root, args):
+        return _simple_result(
+            operation=operation, code="UNSUPPORTED", repo=root,
+            summary="この承認方式はサポートされていない",
+            cause="unsupported-approval-mode", stage="validate",
+        ), R.CompactView()
+
+    preconditions = [
+        "plan snapshot一致",
+        "operation_id一致とoperation_id由来の単回nonce",
+    ]
     data = R.empty_data()
     data.update({
         "target": {"path": plan_value.path, "branch": plan_value.branch},
         "preconditions": preconditions,
         "effects": list(plan_value.effects),
         "postconditions": ["worktree/branch/receiptを再観測して一致"],
-        "concurrency_key": plan_value.context.worktree_dir_guard_key,
+        "concurrency_key": plan_value.context.target_collision_key,
         "evidence": ["operation_id", "snapshot", "receipt digest"],
         "capability_context": dataclasses.asdict(plan_value.context),
-        "approval_mode": approval_mode,
+        "approval_mode": worktree_runtime.C.MODE_PLAN_DIGEST,
     })
     if not args.apply:
         result = R.build_result(
@@ -782,22 +659,14 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
             stage="plan", data=data,
         )
         return result, R.CompactView(tokens={"action": args.action, "branch": args.branch})
-    if not args.confirm or (signed_mode and not args.capability_file):
-        required = "--confirm and --capability-file" if signed_mode else "--confirm"
+    if not args.confirm:
         return _simple_result(
             operation=operation, code="APPROVAL_REQUIRED", repo=root,
-            summary=f"{required} are required", stage="validate",
+            summary="--confirm are required", stage="validate",
         ), R.CompactView()
     try:
-        import json
-        from pathlib import Path
-        capability = None
-        if signed_mode:
-            capability = worktree_runtime.capability_from_json(
-                json.loads(Path(args.capability_file).read_text(encoding="utf-8"))
-            )
         decision = worktree_runtime.apply(
-            plan_value, confirm=args.confirm, capability=capability,
+            plan_value, confirm=args.confirm, capability=None,
             backup_receipt=args.backup_receipt,
         )
     except (OSError, ValueError, KeyError, worktree_runtime.WorktreeRuntimeError) as exc:
@@ -831,10 +700,9 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
         started_at=started, finished_at=_now(), summary=decision.summary,
         snapshot=plan_value.snapshot, operation_id=plan_value.operation_id,
         approval_required="explicit-human",
-        # 承認の由来は実際に使ったモードを名乗る。無条件に "signed-capability" と
-        # 名乗ると、plan-digest で適用した receipt が承認強度を強く見せる
-        # （`SI-FLW-063` / `OPS-303`）。
-        approval_source=approval_mode,
+        # 承認の由来は実際に使ったモードを名乗る（`SI-FLW-063` / `OPS-303`）。
+        # M2 は plan-digest 一本であり、signed-capability を名乗ることはない。
+        approval_source=worktree_runtime.C.MODE_PLAN_DIGEST,
         approval_reference=args.approval_ref, stage="apply", data=data,
         next_actions=apply_next_actions,
     )
