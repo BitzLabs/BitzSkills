@@ -1,5 +1,34 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-REV-028をv2.0へ改訂しFAILへ訂正: クロスモデルのセカンドオピニオンを
+  同一レビュー活動の一部として実施し、実測で確認できた追加欠陥により判定を
+  **CONDITIONAL_PASS 3.75 → FAIL 2.52**へ訂正した（`risk` 2.00 が floor 2.5 未達）。
+  レビュー本体への追記としたのはユーザーの指摘による。版改訂はこのプロジェクトの慣例で
+  あり（`FLW-REV-002`はv4.1、`FLW-REV-014`はRevision Historyで後続の解消を追記）、
+  `FLW-REV-028`はまだどのGateにも消費されていないため、別レビューへ切るより
+  同一レビューの改訂が記録として忠実である。私の当初案（別レビュー化）は誤りだった。
+  **セカンドオピニオンの手段**: `/antigravity:review`は**使えなかった**（antigravityプラグイン
+  未導入。CLAUDE.mdの委譲マトリクスが実態と乖離しており env-doctor の検出対象）。
+  代わりに`codex exec --sandbox read-only`と`agy --print`を直接起動した。agyはheadlessで
+  tool権限が自動拒否されるため、`--dangerously-skip-permissions`を使わず対象コードを
+  prompt へ埋め込んだ自己完結形で実行した。
+  **判定**: codex（OpenAI）は**FAIL**、agy（Gemini）は追加欠陥6件。**指摘は自己申告として
+  受け取らず1件ずつ再現検証した**。
+  **実測で確認した追加欠陥**: (1)【P0】case-insensitive volumeで`plan()`が`ContractError`を
+  送出し、CLIが捕捉する3型のいずれでもないため**closed resultではなくtraceback**になる。
+  macOSの既定APFSはcase-insensitiveであり、実際に動くのはcase-sensitiveなLinuxのみ。
+  agyの指摘より重い欠陥だった。(2)【P1】symlink経由の0700ディレクトリが`SUPPORTED`かつ
+  `non_follow_walk=True`を返す（§1.2の非symlink namespace前提を破る）。(3)【P1】
+  `_semantic_self_test`が`_native_component`成功後に同一codecを往復させるだけで**恒真**、
+  §3.2の起動時semantic self-testが形骸化。(4)【P1】`_case_semantics`がpath全体の
+  swapcase存在確認でmount単位のsemanticsを測れず、`_linux_filesystem_type`はbind mountで
+  親マウントの種別を返す。(5)【P1】operation全体のdeadlineが無くchild単位のtimeoutのみ
+  （codexの指摘。§13.4は300秒を掲げるが未実装）。
+  GP-005〜008を追加し計8件、着手順はGP-005最優先とした。
+  **自己レビューの限界が実証された**: v1.0は是正の実装者本人が書き、probeの中核欠陥3件を
+  1件も検出できなかった。v1.0の判定根拠「新規P1はすべてfail-closed」は誤りで、
+  未捕捉例外とsymlink逸脱はfail-closedの反対である。v1.0の判定は削除せず本文に残した。
+
 - 2026-08-24 FLW-REV-028（M2是正後再レビュー）実施: 判定**CONDITIONAL_PASS**、集計**3.75**
   （前回FLW-REV-027はFAIL 2.12）。観点別: consistency 3.70 / data-integrity 4.65 /
   operations 2.90 / risk 4.00 / business 3.00。riskは1.33→4.00でfloorをクリアし、

@@ -1,0 +1,45 @@
+{
+ "perspective": "second-opinion",
+ "reviewer": "codex",
+ "cli_version": "codex-cli 0.149.0",
+ "model_family": "OpenAI",
+ "invocation": "codex exec --ignore-user-config --sandbox read-only --cd . （プロンプトは stdin）",
+ "executed_at": "2026-08-24",
+ "verdict": "FAIL",
+ "disputes_resolution_of": [
+  {
+   "finding": "FLW-REV-027:SYN-001",
+   "claim": "worktree handler は全て _GATED_HANDLERS にあり production 既定 dispatcher から plan()/probe へ到達できない。元 finding の「production CLI への経路が無い」は現在も成立するため『解消』とは呼べない。",
+   "verified_by_claude": "妥当。gating は意図的だが、finding の文面に対しては未解消である。"
+  },
+  {
+   "finding": "FLW-REV-027:SYN-003",
+   "claim": "各 Git child には有限 timeout が付いたが operation 全体の共通 deadline が無く、複数 child がそれぞれ最大時間を消費できる。10,000 event／100 MiB も未実測であり『30秒 terminal result』は未達。",
+   "verified_by_claude": "妥当。§13.4 は operation 全体 300 秒と書くが実装は child 単位のみである。"
+  }
+ ],
+ "additional_findings": [
+  {
+   "id": "ADD-001",
+   "severity": "critical",
+   "location": "worktree_platform.py probe_platform/_primitives",
+   "claim": "Path.resolve()/os.stat()/os.path.isdir() で symlink を追跡し、non_follow_walk も O_NOFOLLOW の存在確認だけで実際の component walk をしない。symlink 経由の root を SUPPORTED にできる。",
+   "verified_by_claude": "**実測で確認**。symlink 経由の 0700 ディレクトリが SUPPORTED / non_follow_walk=True を返す。§1.2 の非 symlink namespace 前提を破る。"
+  },
+  {
+   "id": "ADD-002",
+   "severity": "major",
+   "location": "worktree_platform.py _primitives/_semantic_self_test",
+   "claim": "flock/fsync/job object の属性存在だけで成功扱いし、_semantic_self_test も codec round-trip しか見ない。§3.2 の起動時 semantic self-test を満たさない。",
+   "verified_by_claude": "妥当。_native_component 成功後に同じ codec を往復させるため**恒真**である。"
+  },
+  {
+   "id": "ADD-003",
+   "severity": "major",
+   "location": "worktree_platform.py _case_semantics",
+   "claim": "対象 directory entry ではなく絶対 path 全体を swapcase して存在確認する。親ごとに case semantics が異なる環境で誤判定し collision_key が case alias を直列化できない。",
+   "verified_by_claude": "**実測で確認**。判定は path 全体の反転存在確認であり mount 単位の semantics を測っていない。"
+  }
+ ],
+ "summary": "前回 P0 の SYN-001 が production 到達性という元の意味で残存し、SYN-003 も operation 全体 30 秒収束を満たしていない。加えて非追随 probe の欠落は信頼境界と競合排除を損なう安全上の欠陥であり、既知 P1 を条件化しただけの状態としては扱えない。"
+}

@@ -1,0 +1,54 @@
+{
+ "perspective": "second-opinion",
+ "reviewer": "antigravity",
+ "cli_version": "1.1.19",
+ "model_family": "Gemini",
+ "invocation": "agy --print '<コード埋め込みプロンプト>' --sandbox=false",
+ "invocation_note": "headless では tool 権限が自動拒否されるため、--dangerously-skip-permissions を使わず worktree_platform.py を prompt へ埋め込んだ自己完結形で実行した。",
+ "executed_at": "2026-08-24",
+ "additional_findings": [
+  {
+   "id": "AGY-001",
+   "severity": "critical",
+   "location": "worktree_platform.py collision_key / worktree_runtime.py plan",
+   "claim": "case_semantics=insensitive のとき collision_key は folded_component を必須とするが、probe に導出経路が無く plan() も渡さない。呼び出し側ごとに異なる畳み込みが適用され鍵の不一致や誤畳み込みを誘発する。",
+   "verified_by_claude": "**実測で確認し、指摘より重い**。plan() の呼び出しを再現すると ContractError('case-insensitive target requires a platform-derived folded component') が送出される。ContractError は ValueError 派生で CLI が捕捉する3型（WorktreeChildTimeoutError / WorktreeUnsupportedPlatformError / WorktreeRuntimeError）のいずれでもないため **closed result ではなく traceback** になる。macOS の既定 APFS は case-insensitive であり、実際に動作するのは case-sensitive な Linux のみである。"
+  },
+  {
+   "id": "AGY-002",
+   "severity": "major",
+   "location": "worktree_platform.py _unobservable",
+   "claim": "platform='windows' を渡しても native_component を常に native_component_from_posix で作るため observation.platform と native_component.platform が不整合になる。",
+   "verified_by_claude": "妥当。closed evidence 内の契約不整合である。"
+  },
+  {
+   "id": "AGY-003",
+   "severity": "minor",
+   "location": "worktree_platform.py classify_filesystem",
+   "claim": "name.startswith('fuse.') を一律 network へ分類するため fuse.ntfs-3g / fuse.bindfs 等の local FUSE を誤って network 理由で拒否する。",
+   "verified_by_claude": "妥当。allowlist でも拒否されるため結果は同じだが **operator へ示す理由が誤る**。"
+  },
+  {
+   "id": "AGY-004",
+   "severity": "major",
+   "location": "worktree_platform.py _linux_filesystem_type",
+   "claim": "/proc/self/mountinfo で st_dev が一致する最初のエントリを返すため、bind mount や重ねマウントで親マウントの種別を返してしまう。",
+   "verified_by_claude": "妥当。bind mount は major:minor を共有するため実際に起こりうる。"
+  },
+  {
+   "id": "AGY-005",
+   "severity": "minor",
+   "location": "worktree_platform.py probe_platform",
+   "claim": "不在 target で anchor を parent へ繰り上げるため resource_kind が常に directory になり resource_identity も親の dev:ino になる。観測データとしての target 識別性が壊れる。",
+   "verified_by_claude": "妥当。create target の evidence が親を記述している。"
+  },
+  {
+   "id": "AGY-006",
+   "severity": "minor",
+   "location": "worktree_platform.py _primitives",
+   "claim": "child_supervision の期待値を waitpid / job-object に固定するため、registry が他の識別子を宣言すると強制的に不支持になる。",
+   "verified_by_claude": "妥当だが registry は同梱でありコード側で統制されるため影響は小さい。"
+  }
+ ],
+ "summary": "probe の中核（symlink 追随・semantic self-test の恒真性・case semantics 判定・filesystem 種別解決）に複数の欠陥がある。とくに case-insensitive volume での folded_component 欠落は plan() の未捕捉例外を招く。"
+}

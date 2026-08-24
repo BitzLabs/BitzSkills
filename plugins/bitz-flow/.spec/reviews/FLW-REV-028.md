@@ -2,10 +2,10 @@
 id: FLW-REV-028
 title: "M2 Local Safety Profile 是正後再レビュー"
 status: active
-version: 1.0
+version: 2.0
 updated: 2026-08-24
 owner: claude
-decision: CONDITIONAL_PASS
+decision: FAIL
 ---
 
 # M2 Local Safety Profile 是正後再レビュー
@@ -13,22 +13,26 @@ decision: CONDITIONAL_PASS
 - **対象**: `FLW-DSN-017` v2.3、`FLW-FR-006` v2.1、`FLW-NFR-014` v2.3、`FLW-CON-008`、
   `FLW-TSK-106`〜`122`、flow-core の CLI・platform・runtime・transaction・recovery・
   operability、関連 schema・test・runbook、confirmation 証跡
-- **判定**: **CONDITIONAL_PASS**
-- **集計スコア**: **3.75**（`FLW-REV-027` は 2.12）
+- **判定**: **FAIL**（v1.0 の CONDITIONAL_PASS から訂正。理由は §訂正の経緯）
+- **集計スコア**: **2.52**（`FLW-REV-027` は 2.12）。`risk` 2.00 が floor 2.5 に未達
 - **公開判断**: worktree operation は現在の gated 状態を維持する。
-  下記 GP-001〜004 の消化まで Promotion Gate を通さない。
+  下記 GP-001〜008 の消化まで Promotion Gate を通さない。
+- **セカンドオピニオン**: codex（OpenAI）判定 **FAIL**、antigravity（Gemini）追加欠陥6件。
+  記録は `individual/flw-rev-028-secondopinion-{codex,agy}.json`。
 
 ## 観点別スコア
 
-| 観点 | スコア | 前回 | 重み | 主要所見 |
-|---|---:|---:|---:|---|
-| consistency | 3.70 | 2.65 | 0.15 | 設計・schema・実装の乖離は解消。成文化と機械検査が不足 |
-| data-integrity | 4.65 | 2.00 | 0.25 | crash 空隙が構造的に消滅。旧形式 chain の復旧手段のみ未実装 |
-| operations | 2.90 | 2.30 | 0.20 | 既定 umask 拒否と Windows 固定不支持で運用可能性に壁 |
-| risk | **4.00** | 1.33 | 0.25 | floor をクリア。ただし是正が新規停止条件を持ち込んだ |
-| business | 3.00 | 2.85 | 0.15 | 安全核は閉じたが利用可能な価値は依然 0 |
+| 観点 | v2.0 | v1.0 | 前回 | 重み | 主要所見 |
+|---|---:|---:|---:|---:|---|
+| consistency | 3.00 | 3.70 | 2.65 | 0.15 | §3.2 の self-test 要求と実装が乖離し、v1.0 はそれを申告しなかった |
+| data-integrity | 3.50 | 4.65 | 2.00 | 0.25 | crash 空隙は解消。ただし case alias を畳めず競合直列化に穴 |
+| operations | 2.00 | 2.90 | 2.30 | 0.20 | macOS で traceback、Windows は固定不支持。動くのは case-sensitive Linux のみ |
+| risk | **2.00** | 4.00 | 1.33 | 0.25 | **floor 2.5 未達**。未捕捉例外・symlink 逸脱・恒真 self-test |
+| business | 2.00 | 3.00 | 2.85 | 0.15 | 実質 Linux 専用であり 3 OS の価値仮説が成立しない |
 
-findings: 統合前 9 件 → 重複排除後 6 件（**P0: 0** / P1: 4 / P2: 2 / P3: 0）。
+findings: 統合前 18 件 → 重複排除後 12 件（**P0: 1** / P1: 8 / P2: 3 / P3: 0）。
+
+集計 2.52 は閾値 2.5 をわずかに上回るが、**`risk` が floor 2.5 に未達**のため FAIL とする。
 
 `risk` は M2 が単一プロセス・非分散のため分散システムリスクと Saga 設計の2次元を N/A とし、
 残る重みを再正規化した。
@@ -59,6 +63,46 @@ findings: 統合前 9 件 → 重複排除後 6 件（**P0: 0** / P1: 4 / P2: 2 
 - **SYN-005** 未解決 P0/P1 86 件が未照合のまま残り、件数を判断材料にできない — `SI-FLW-091`
 - **SYN-006** production 判定基準と `platform` 語彙の禁止が規範文書に成文化・機械検査されていない — `SI-FLW-092`
 
+## 訂正の経緯（v1.0 → v2.0）
+
+v1.0 は **CONDITIONAL_PASS 3.75** と判定した。その後、同一レビュー活動の一部として
+クロスモデルのセカンドオピニオンを実施し、**実測で確認できた追加欠陥により判定を FAIL へ訂正**した。
+
+v1.0 の判定を本書から削除していない。**自己レビューの限界の実例として残す。**
+v1.0 は是正を実装した本人が書いており、`worktree_platform.py` の中核欠陥
+（symlink 追随、恒真 self-test、case-insensitive クラッシュ）を**1件も検出できなかった**。
+いずれも自分が書いたコードである。
+
+セカンドオピニオンの内訳は次のとおり。
+
+| レビュアー | モデル | 判定 | 追加指摘 |
+|---|---|---|---|
+| codex | OpenAI | **FAIL** | 3件（symlink 追随、恒真 self-test、case semantics）＋ SYN-001／003 の解消判定に異議 |
+| antigravity | Gemini | 判定は求めず | 6件（folded_component 欠落、evidence 不整合、fuse 分類、bind mount、不在 target、supervision 固定値） |
+
+**指摘は自己申告として受け取らず、1件ずつ再現して検証した。**
+
+- `AGY-001`（folded_component 欠落）は**指摘より重い**と判明した。再現すると
+  `ContractError` が送出され、CLI が捕捉する3型のいずれでもないため traceback になる。
+- `ADD-001`（symlink）は symlink 経由の 0700 ディレクトリが `SUPPORTED` /
+  `non_follow_walk=True` を返すことを実測した。
+- `ADD-003`（case semantics）は判定が path 全体の反転存在確認であることを実測した。
+
+v1.0 で挙げた新規 P1 4件（GP-001〜004）は取り下げない。すべて有効な指摘として残る。
+
+## v1.0 が甘かった理由
+
+判定の分かれ目は「新規 P1 はすべて fail-closed であり、データ破壊や誤った完了主張に
+至る経路は無い」という v1.0 の根拠だった。これは**誤りだった**。
+
+`SYN-007` の未捕捉例外は fail-closed ではない。closed result 契約の違反であり、
+`FLW-CON-008` の「状態意味保存」にも反する。また `SYN-008`（symlink 逸脱）は
+信頼境界の外へ出る経路であり、fail-closed の反対である。
+
+自分が書いたコードの**主張と実証の差**（`non_follow_walk=True` と実際の追随、
+`semantic_self_test=True` と恒真性）を、書いた本人は「そう書いたから正しい」と
+読んでしまう。この差は他者が読むまで見えなかった。
+
 ## 最も重要な所見
 
 **是正は成功したが、是正自体が新しい停止条件を3件持ち込んだ。**
@@ -73,32 +117,40 @@ findings: 統合前 9 件 → 重複排除後 6 件（**P0: 0** / P1: 4 / P2: 2 
 既定 umask では必ず `acl-not-owner-only` で止まる。closed result は理由を載せるが
 operator action を持たず、runbook にも記述が無い。gating を外しても機能しない。
 
-## CONDITIONAL_PASS とした根拠
+## FAIL とした根拠
 
-`PASS` にしない理由は次の3点である。
+1. **P0 が 1 件ある**（`SYN-007`）。case-insensitive volume で `plan()` が未捕捉例外に
+   なり closed result 契約を破る。macOS の既定 APFS は case-insensitive であり、
+   実際に動作するのは case-sensitive な Linux のみである。
+2. **`risk` 2.00 が floor 2.5 に未達**である。`FLW-REV-027` が FAIL となった構造と同じで
+   ある（当時 1.33）。未捕捉例外・symlink 逸脱・恒真 self-test はいずれも安全境界に
+   関わる欠陥である。
+3. 前回 P0/P1 のうち **`SYN-001` と `SYN-003` は解消と言い切れない**。前者は
+   production 到達性という元の文面に対して未解消、後者は operation 全体の deadline が
+   未実装で 30 秒収束が保証されない（`SYN-011`）。
+4. `FLW-CON-008` の 7 観点に `実証済み` が 1 件も無い。
 
-1. 新規 P1 が 4 件あり、うち3件は公開後に利用者が直面する停止条件である。
-2. `FLW-REV-027` の Gate blocking 条件のうち、**production 既定 dispatcher の E2E** と
-   **`target OS` 3 種の実観測**が未達である。前者は gating により構造的に不可、
-   後者は Linux のみ実施で Windows は実装不足により不可である。
-3. `FLW-CON-008` の 7 観点に `実証済み` が 1 件も無い。
+前回から改善した点は否定しない。crash 空隙の解消、`QUARANTINED` の誤分類是正、
+closure 順序の是正、証跡の過大主張の解消はいずれも実効性がある。しかし
+**probe という新規コードが新しい安全境界の穴を作った**ため、通算では FAIL である。
 
-`FAIL` にしない理由は次の3点である。
+## Gate blocking 条件（GP-001〜008）
 
-1. 前回の P0/P1 7 件がすべて解消し、**P0 が 0 件**になった。
-2. `risk` が 1.33 → 4.00 へ改善し floor をクリアした。前回の FAIL 要因が消えている。
-3. 新規 P1 はいずれも fail-closed であり、データ破壊や誤った完了主張につながる経路は無い。
+8 件すべて `basis: verified`（ソースまたは実測で確認済み）、`response: accepted`。
 
-## Gate blocking 条件（GP-001〜004）
+| GP | 内容 | 由来 |
+|---|---|---|
+| GP-001 | `acl-not-owner-only` の operator action を closed result と runbook へ与える | v1.0 |
+| GP-002 | snapshot 出力上限を設計値として分離定義し、operation 全体 deadline と 10,000 event／100 MiB 収束を実測する | v1.0＋codex |
+| GP-003 | §1.1 の 3 OS 保証を実装能力へ揃える | v1.0 |
+| GP-004 | 旧形式 chain の復旧手順を doctor から出力するか前提条件として明示する | v1.0 |
+| **GP-005** | **folded_component を導出して plan を成立させ、未捕捉例外 0 件を機械検査する** | agy |
+| GP-006 | component 単位の非追随 walk で symlink を実証検出する | codex |
+| GP-007 | §3.2 の semantic self-test 要求と実装の乖離を解消する | codex |
+| GP-008 | case semantics と filesystem 種別を mount 単位で解決する | codex＋agy |
 
-4 件すべて `basis: verified`（ソースまたは実測で確認済み）、`response: accepted`。
-
-1. `GP-001` — `acl-not-owner-only` の operator action を closed result と runbook へ与える。
-2. `GP-002` — snapshot 観測の出力上限を設計値として分離定義し、10,000 event／100 MiB
-   条件の収束を実測する。
-3. `GP-003` — §1.1 の 3 OS 保証を実装能力へ揃える（Windows の追跡先・期限・再判定 Gate
-   を置くか、保証を Linux／macOS へ限定する）。
-4. `GP-004` — 旧形式 chain の復旧手順を doctor から出力するか、前提条件として明示する。
+**着手順は GP-005 を最優先とする**（未捕捉例外は他の是正の検証を妨げる）。
+次に GP-001（既定 umask）、GP-006（symlink）である。
 
 ## carried over 台帳
 
@@ -108,7 +160,16 @@ operator action を持たず、runbook にも記述が無い。gating を外し�
 
 ## 裁定
 
-worktree operation は gated を維持する。`GP-001`〜`GP-004` を消化し、
+worktree operation は gated を維持する。`GP-001`〜`GP-008` を消化し、
 公開集合の復帰後に production E2E と `target OS` 実観測を得たうえで、
 同じ5観点で三度目のレビューを行うこと。spec-issue の accept/reject は人間専権であり
 本レビューは行わない。
+
+## Revision History
+
+- 2.0 (2026-08-24) クロスモデルのセカンドオピニオン（codex / antigravity）の指摘を
+  実測で検証し、判定を CONDITIONAL_PASS 3.75 から **FAIL 2.52** へ訂正。P0 1 件
+  （case-insensitive volume での未捕捉例外）と P1 4 件を追加し、GP-005〜008 を起票。
+  v1.0 の判定と、それが甘かった理由を本文に残した。
+- 1.0 (2026-08-24) 是正後の初回判定（CONDITIONAL_PASS 3.75）。是正を実装した本人による
+  自己レビューであり、probe の中核欠陥3件を検出できなかった。

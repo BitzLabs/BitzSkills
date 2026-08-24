@@ -1,21 +1,21 @@
 {
   "schema_version": 2,
   "review_id": "FLW-REV-028",
-  "verdict": "CONDITIONAL_PASS",
-  "aggregate_score": 3.75,
+  "verdict": "FAIL",
+  "aggregate_score": 2.52,
   "perspective_scores": {
-    "consistency": 3.7,
-    "data-integrity": 4.65,
-    "operations": 2.9,
-    "risk": 4.0,
-    "business": 3.0
+    "consistency": 3.0,
+    "data-integrity": 3.5,
+    "operations": 2.0,
+    "risk": 2.0,
+    "business": 2.0
   },
   "findings_summary": {
-    "before_dedup": 9,
-    "after_dedup": 6,
-    "p0": 0,
-    "p1": 4,
-    "p2": 2,
+    "before_dedup": 18,
+    "after_dedup": 12,
+    "p0": 1,
+    "p1": 8,
+    "p2": 3,
     "p3": 0
   },
   "findings": [
@@ -101,6 +101,89 @@
       "recommendation": "FLW-CON-008 の受入基準へ production の定義を移し、SI-FLW-092 の範囲へ規範文書の散文における platform 単独使用の検出を含める。",
       "tracked_by": "SI-FLW-092",
       "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-028:SYN-007",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "AGY-001"
+      ],
+      "title": "case-insensitive volume で plan() が未捕捉例外になり closed result 契約を破る",
+      "detail": "collision_key は case_semantics='insensitive' のとき folded_component を必須とするが、probe に導出経路が無く worktree_runtime.plan() も渡さない。再現すると ContractError('case-insensitive target requires a platform-derived folded component') が送出される。ContractError は ValueError 派生であり CLI が捕捉する3型（WorktreeChildTimeoutError / WorktreeUnsupportedPlatformError / WorktreeRuntimeError）のいずれでもないため、closed result ではなく **traceback** になる。macOS の既定 APFS は case-insensitive であり、実際に動作するのは case-sensitive な Linux のみである。fail-closed ですらない。",
+      "recommendation": "probe が platform 規律に従う folded_component を導出して evidence へ載せ、plan() がそれを collision_key へ渡す。あわせて ContractError を closed result へ写す except を CLI へ追加し、未捕捉例外が公開経路へ出ないことを機械検査する。",
+      "tracked_by": "FLW-REV-028:GP-005",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-028:SYN-008",
+      "priority": "P1",
+      "severity": "critical",
+      "source": [
+        "ADD-001"
+      ],
+      "title": "probe が symlink を追跡しながら non_follow_walk=True を主張する",
+      "detail": "probe は Path.resolve()・os.stat()・os.path.isdir() で symlink を追跡する一方、non_follow_walk は O_NOFOLLOW 等の属性存在だけで True にする。実測すると symlink 経由の 0700 ディレクトリが SUPPORTED / non_follow_walk=True を返す。§1.2 は「非 symlink/reparse-point の local filesystem namespace」を信頼するとしており、probe は検証していない性質を主張している。",
+      "recommendation": "component 単位の非追随 walk（O_NOFOLLOW / lstat）で target までの経路に symlink が無いことを実証し、検出時は理由付きで UNSUPPORTED_FILESYSTEM へ閉じる。",
+      "tracked_by": "FLW-REV-028:GP-006",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-028:SYN-009",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "ADD-002",
+        "AGY-001"
+      ],
+      "title": "semantic self-test が恒真で §3.2 の起動時 self-test が形骸化している",
+      "detail": "_semantic_self_test は _native_component が変換に成功した値を同じ codec で往復させるだけであり **常に True** を返す。_primitives も flock/fsync/job object の属性存在のみで成功扱いする。§3.2 は静的 allowlist と起動時 semantic self-test の**両方**で支持を決めると規定するが、実装は allowlist のみで決まっている。read-only probe を優先した設計判断だが §3.2 は更新されておらず、FLW-REV-028 v1.0 もこの乖離を申告しなかった。",
+      "recommendation": "§3.2 を read-only probe の能力へ合わせて改訂するか、semantic self-test を実証可能な形（隔離領域での lock/fsync 実行）へ実装する。いずれにせよ設計と実装の一致を機械検査へ載せる。",
+      "tracked_by": "FLW-REV-028:GP-007",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-028:SYN-010",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "ADD-003",
+        "AGY-004"
+      ],
+      "title": "case semantics と filesystem 種別の解決が mount 単位で正しくない",
+      "detail": "_case_semantics は絶対 path 全体を swapcase して存在確認するため、mount 単位の case semantics を測れない。誤って sensitive と判定すると collision_key が case alias を畳めず、同一資源への競合が直列化されない。_linux_filesystem_type は /proc/self/mountinfo で st_dev が一致する最初のエントリを返すため、bind mount や重ねマウントで親マウントの種別を返す。",
+      "recommendation": "case 判定は対象 parent directory 内の一時 entry ではなく、mount point を特定して既知の case semantics へ対応づける（または判定不能を UNSUPPORTED へ閉じる）。mountinfo 走査は mount point の最長一致で最下層を選ぶ。",
+      "tracked_by": "FLW-REV-028:GP-008",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-028:SYN-011",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "codex:SYN-003 dispute"
+      ],
+      "title": "operation 全体の deadline が無く child 単位の timeout しか実装されていない",
+      "detail": "§13.4 は operation 全体 300 秒と reconciliation reserve を設計値として掲げるが、実装は _supervised_git による child 単位の budget のみである。複数 child がそれぞれ最大時間を消費できるため、FLW-NFR-014 が要求する 30 秒 terminal result は保証されない。FLW-REV-028 v1.0 は SYN-003 を『解消』としたが、operation 全体の収束は未実装である。",
+      "recommendation": "operation 単位の TimeoutBudget を plan へ束縛し、各 child budget をそこから配分する。10,000 event／100 MiB 条件での収束実測とあわせて検証する。",
+      "tracked_by": "FLW-REV-028:GP-002",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-028:SYN-012",
+      "priority": "P2",
+      "severity": "minor",
+      "source": [
+        "AGY-002",
+        "AGY-003",
+        "AGY-005",
+        "AGY-006"
+      ],
+      "title": "probe の closed evidence に4件の局所的不整合がある",
+      "detail": "_unobservable は platform='windows' でも native_component を posix で作るため observation.platform と不整合になる。classify_filesystem は fuse.* を一律 network とするため local FUSE を誤った理由で拒否する。不在 target では anchor を parent へ繰り上げるため resource_kind が常に directory・resource_identity が親の dev:ino になる。_primitives は child_supervision の期待値を waitpid / job-object に固定する。",
+      "recommendation": "platform 別の native_component 生成、fuse サブタイプの allowlist 判定、不在 target 用の resource_kind 表現、registry 由来の supervision 識別子照合をそれぞれ是正する。",
+      "tracked_by": "",
+      "status": "open"
     }
   ],
   "gate_preconditions": [
@@ -161,6 +244,65 @@
         "original": "WHEN 旧形式の transaction chain を検出する THEN bitz-flow は doctor から具体的な復旧手順を出力すること SHALL",
         "normalized": "doctor が旧形式 chain を検出して復旧手順を closed result へ出力する経路を実装する。実装しない場合は §1.2 へ前提条件として明示する。",
         "target": "worktree_operability.py doctor、FLW-DSN-017 §1.2/§4.2"
+      }
+    },
+    {
+      "id": "GP-005",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "behavioral",
+      "ears": "WHEN 公開経路で例外が発生する THEN bitz-flow は closed result へ写して traceback を出さないこと SHALL",
+      "evidence": "plan() と同じ呼び出しを再現し ContractError が送出されることを実測した。ContractError は ValueError 派生で CLI が捕捉する3型のいずれでもない。",
+      "statement": "case-insensitive volume で folded_component を導出して plan を成立させ、あわせて未捕捉例外が公開経路へ出ないことを機械検査すること。",
+      "response": {
+        "status": "accepted",
+        "original": "WHEN 公開経路で例外が発生する THEN bitz-flow は closed result へ写して traceback を出さないこと SHALL",
+        "normalized": "probe が folded_component を導出して evidence へ載せ plan() が collision_key へ渡す。CLI は ContractError を含む想定外例外を closed result へ写し、公開経路の未捕捉例外 0 件を機械検査する。",
+        "target": "worktree_platform.py, worktree_runtime.py plan, cli.py, 新規 test"
+      }
+    },
+    {
+      "id": "GP-006",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "behavioral",
+      "ears": "WHEN target までの経路に symlink または reparse point がある THEN bitz-flow は理由付きで UNSUPPORTED_FILESYSTEM を返すこと SHALL",
+      "evidence": "symlink 経由の 0700 ディレクトリが SUPPORTED / non_follow_walk=True を返すことを実測した。",
+      "statement": "検証していない非追随性を主張せず、component 単位の非追随 walk で実証すること。",
+      "response": {
+        "status": "accepted",
+        "original": "WHEN target までの経路に symlink または reparse point がある THEN bitz-flow は理由付きで UNSUPPORTED_FILESYSTEM を返すこと SHALL",
+        "normalized": "lstat / O_NOFOLLOW による component 単位 walk で経路上の symlink を検出し、検出時は UNSUPPORTED_FILESYSTEM へ閉じる。non_follow_walk は実証結果のみを載せる。",
+        "target": "worktree_platform.py, FLW-DSN-017 §1.2/§13.5, 新規 test"
+      }
+    },
+    {
+      "id": "GP-007",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "artifact",
+      "evidence": "_semantic_self_test が _native_component 成功後に同一 codec を往復させるだけで恒真であることをソースで確認した。",
+      "statement": "§3.2 が要求する起動時 semantic self-test と実装の乖離を解消すること。read-only probe の能力へ設計を合わせるか、self-test を実証可能な形へ実装するかを裁定し、一致を機械検査へ載せること。",
+      "response": {
+        "status": "accepted",
+        "original": "§3.2 が要求する起動時 semantic self-test と実装の乖離を解消すること。read-only probe の能力へ設計を合わせるか、self-test を実証可能な形へ実装するかを裁定し、一致を機械検査へ載せること。",
+        "normalized": "§3.2 の self-test 要求を実装能力へ揃え、支持判定の根拠（allowlist のみか self-test 併用か）を設計と実装で一致させる。",
+        "target": "FLW-DSN-017 §3.2, worktree_platform.py"
+      }
+    },
+    {
+      "id": "GP-008",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "behavioral",
+      "ears": "WHEN case semantics または filesystem 種別を解決する THEN bitz-flow は target が属する mount を特定して判定すること SHALL",
+      "evidence": "_case_semantics が絶対 path 全体の swapcase 存在確認であることを実測し、_linux_filesystem_type が st_dev 先頭一致を返すことをソースで確認した。",
+      "statement": "mount 単位で case semantics と filesystem 種別を解決し、判定不能は UNSUPPORTED へ閉じること。",
+      "response": {
+        "status": "accepted",
+        "original": "WHEN case semantics または filesystem 種別を解決する THEN bitz-flow は target が属する mount を特定して判定すること SHALL",
+        "normalized": "mountinfo の mount point 最長一致で最下層 filesystem を選び、case semantics は対象 mount に対して判定する。判定不能は UNSUPPORTED_FILESYSTEM へ閉じる。",
+        "target": "worktree_platform.py _case_semantics/_linux_filesystem_type, 新規 test"
       }
     }
   ],
@@ -263,7 +405,25 @@
     "GP-001",
     "GP-002",
     "GP-003",
-    "GP-004"
+    "GP-004",
+    "GP-005",
+    "GP-006",
+    "GP-007",
+    "GP-008"
   ],
-  "ledger_contract": "SI-FLW-091"
+  "ledger_contract": "SI-FLW-091",
+  "second_opinions": [
+    {
+      "reviewer": "codex",
+      "model_family": "OpenAI",
+      "verdict": "FAIL",
+      "record": ".spec/reviews/individual/flw-rev-028-secondopinion-codex.json"
+    },
+    {
+      "reviewer": "antigravity",
+      "model_family": "Gemini",
+      "verdict": "追加欠陥6件（判定は求めず）",
+      "record": ".spec/reviews/individual/flw-rev-028-secondopinion-agy.json"
+    }
+  ]
 }

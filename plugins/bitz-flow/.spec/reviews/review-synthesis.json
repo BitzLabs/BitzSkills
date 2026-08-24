@@ -2,7 +2,7 @@
  "review_id": "FLW-REV-028",
  "view_of": "FLW-REV-028",
  "path": ".spec/reviews/FLW-REV-028.json",
- "verdict": "CONDITIONAL_PASS",
- "aggregate_score": 3.75,
+ "verdict": "FAIL",
+ "aggregate_score": 2.52,
  "updated": "2026-08-24"
 }
