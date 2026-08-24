@@ -1,6 +1,6 @@
 ---
 id: FLW-NFR-014
-version: 2.2
+version: 2.3
 status: implementing
 domain: safety
 priority: high
@@ -69,11 +69,29 @@ confidence: high
   - WHEN registered local profileのreference fixtureでdoctor、auditまたはverify-receiptを実行する THEN
     bitz-flowはjournal 10,000 event以下かつreceipt合計100 MiB以下の条件で、child timeoutを含め30秒以内に
     closed terminal resultを返し、時間超過も例外やhangではなくclosed timeout resultにすること SHALL
-- **検証手段**: unit testと複数process fault fixtureで、plan-digest正常系、signed-capability拒否、
-  native path/case collision、lock競合、全crash point、counter破損、journal gap/branch/改変、緊急receipt、
-  bundle promotion競合、network filesystem拒否、read-only commandの非変更、reconcile冪等性を検証する。
-  Linux・macOS・Windowsの登録済みlocal filesystem fixtureで通常系`UNSUPPORTED` 0件を出口条件とする。
+- **検証手段**: 検証は**2層に分け、混同しない**（`SI-FLW-090`）。
+  - **fixture層**: unit testと複数process fault fixtureで、plan-digest正常系、旧承認拒否、
+    native path/case collision、lock競合、全crash point、counter破損、journal gap/branch/改変、
+    緊急receipt、bundle promotion競合、network filesystem拒否、read-only commandの非変更、
+    reconcile冪等性を検証する。**この層の成立をproduction接続の完了として扱わない。**
+  - **production層**: production既定dispatcher（`flow.py`の別process起動、または既定
+    handler表での`cli.main`）を起点とするblack-box testで、実環境platform probe、
+    child timeout、crash境界、recovery分類が公開経路から到達することを実証する。
+    fixture注入（`cli.main(handlers=...)`）を根拠にしない。
+  - 2層の対応は`skills/flow-core/references/m2-operability-coverage.json`
+    （`contract_version: 2`。entryごとに`production`／`fixture`を関数単位で持つ）を
+    機械可読な正とする。
+- **`verified`昇格条件**: 次をすべて満たすこと。fixture上の成立では昇格しない。
+  1. 対象3 OS（Linux／macOS／Windows）で**実環境probe**を実走し、
+     `SUPPORTED`／`UNSUPPORTED_FILESYSTEM`の判定をmachine evidenceへ残す。
+  2. worktree operationの公開集合復帰後、`plan`／`apply`／`audit`／`reconcile`を
+     production既定dispatcher起点のE2Eで実証する。
+  3. 全durable write境界のcrash injectionと、10,000 event／100 MiB条件での
+     30秒収束をmachine evidenceへ結び付ける。
+  4. `FLW-REV-027`と同じ5観点の再レビューで**PASS**を得る。
+     **再レビューPASS前にPromotion Gateを通さない。**
 - **Revision History**:
+  - 2.3 (2026-08-24) 検証手段をfixture層とproduction層へ分離し、fixture出口条件を撤回。`verified`昇格条件を実環境probe・production E2E・crash境界・再レビューPASSへ据え直す（`SI-FLW-090`）
   - 2.2 (2026-08-22) `UNSUPPORTED_APPROVAL_MODE`を内部reasonとし、公開resultを
     `UNSUPPORTED` / `unsupported-approval-mode`へ一意に写像
   - 2.1 (2026-08-22) read-only Git観測境界と、運用受入マトリクスに対応する定量的な公開条件を追加

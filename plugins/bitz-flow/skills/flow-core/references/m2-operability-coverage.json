@@ -1,28 +1,167 @@
 {
-  "contract_version": 1,
+  "contract_version": 2,
+  "connection_kinds": [
+    "production",
+    "fixture"
+  ],
   "acceptance_rows": {
-    "plan-state-change": ["tests/test_flow_m2_runtime.py"],
-    "lock-contention": ["tests/test_flow_m2_target_transaction.py"],
-    "pre-intent-storage": ["tests/test_flow_m2_target_transaction.py"],
-    "post-intent-pre-child-crash": ["tests/test_flow_m2_recovery.py"],
-    "child-unknown": ["tests/test_flow_m2_recovery.py"],
-    "postcondition-pre-terminal": ["tests/test_flow_m2_recovery.py"],
-    "terminal-pre-marker-release": ["tests/test_flow_m2_recovery.py"],
-    "journal-corruption": ["tests/test_flow_m2_recovery.py"],
-    "promotion-failure": ["tests/test_flow_m2_promotion.py"],
-    "readonly-invariance": ["tests/test_flow_m2_operability.py"],
-    "reconcile-retry": ["tests/test_flow_m2_recovery.py"],
-    "unsupported-environment-or-approval": ["tests/test_flow_m2_operability.py"]
+    "plan-state-change": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_runtime.py"
+      ],
+      "connection": "fixture"
+    },
+    "lock-contention": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_target_transaction.py"
+      ],
+      "connection": "fixture"
+    },
+    "pre-intent-storage": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_target_transaction.py"
+      ],
+      "connection": "fixture"
+    },
+    "post-intent-pre-child-crash": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_recovery.py"
+      ],
+      "connection": "fixture"
+    },
+    "child-unknown": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_recovery.py"
+      ],
+      "connection": "fixture"
+    },
+    "postcondition-pre-terminal": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_recovery.py"
+      ],
+      "connection": "fixture"
+    },
+    "terminal-pre-marker-release": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_recovery.py"
+      ],
+      "connection": "fixture"
+    },
+    "journal-corruption": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_recovery.py"
+      ],
+      "connection": "fixture"
+    },
+    "promotion-failure": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_promotion.py"
+      ],
+      "connection": "fixture"
+    },
+    "readonly-invariance": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_operability.py"
+      ],
+      "connection": "fixture"
+    },
+    "reconcile-retry": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_recovery.py"
+      ],
+      "connection": "fixture"
+    },
+    "unsupported-environment-or-approval": {
+      "production": [
+        "tests/test_flow_m2_legacy_approval.py::test_capability_file_is_rejected_as_unsupported_approval_mode",
+        "tests/test_flow_m2_legacy_approval.py::test_capability_file_content_is_never_parsed",
+        "tests/test_flow_m2_legacy_approval.py::test_worktree_stays_gated_after_legacy_removal",
+        "tests/test_flow_m2_operability.py::test_signed_capability_is_immediately_rejected_on_public_dispatcher",
+        "tests/test_flow_m2_operability.py::test_all_operability_commands_exist_but_remain_gated_in_production",
+        "tests/test_flow_m2_runtime.py::test_worktree_remains_unreachable_from_public_dispatcher"
+      ],
+      "fixture": [
+        "tests/test_flow_m2_legacy_approval.py",
+        "tests/test_flow_m2_operability.py"
+      ],
+      "connection": "production"
+    }
   },
   "flow_edges": {
-    "plan": ["tests/test_flow_m2_runtime.py"],
-    "apply-start": ["tests/test_flow_m2_runtime.py"],
-    "git-mutation": ["tests/test_flow_m2_runtime.py"],
-    "apply-end": ["tests/test_flow_m2_runtime.py"],
-    "audit": ["tests/test_flow_m2_operability.py"],
-    "verify-receipt": ["tests/test_flow_m2_operability.py"],
-    "reconcile": ["tests/test_flow_m2_operability.py"],
-    "promotion": ["tests/test_flow_m2_promotion.py"],
-    "startup-gate": ["tests/test_flow_m2_promotion.py"]
+    "plan": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_runtime.py"
+      ],
+      "connection": "fixture"
+    },
+    "apply-start": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_runtime.py"
+      ],
+      "connection": "fixture"
+    },
+    "git-mutation": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_runtime.py"
+      ],
+      "connection": "fixture"
+    },
+    "apply-end": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_runtime.py"
+      ],
+      "connection": "fixture"
+    },
+    "audit": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_operability.py"
+      ],
+      "connection": "fixture"
+    },
+    "verify-receipt": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_operability.py"
+      ],
+      "connection": "fixture"
+    },
+    "reconcile": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_operability.py"
+      ],
+      "connection": "fixture"
+    },
+    "promotion": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_promotion.py"
+      ],
+      "connection": "fixture"
+    },
+    "startup-gate": {
+      "production": [],
+      "fixture": [
+        "tests/test_flow_m2_promotion.py",
+        "tests/test_flow_m2_runtime.py"
+      ],
+      "connection": "fixture"
+    }
   }
 }

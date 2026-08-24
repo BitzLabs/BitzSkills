@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import json
+import textwrap
 import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
@@ -202,10 +203,77 @@ def test_all_operability_commands_exist_but_remain_gated_in_production(capsys):
         assert code == 8 and payload["code"] == "UNSUPPORTED"
 
 
-def test_coverage_manifest_covers_every_acceptance_row_and_flow_edge():
-    manifest = json.loads(
+def _coverage_manifest():
+    return json.loads(
         (SKILL / "references/m2-operability-coverage.json").read_text(encoding="utf-8")
     )
+
+
+def _coverage_entries():
+    manifest = _coverage_manifest()
+    return {**manifest["acceptance_rows"], **manifest["flow_edges"]}
+
+
+def _calls_with_handler_injection(tree: ast.AST) -> bool:
+    """この AST 内に `main(..., handlers=...)` 呼び出しがあるか。"""
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        name = node.func.attr if isinstance(node.func, ast.Attribute) else getattr(node.func, "id", "")
+        if name == "main" and any(k.arg == "handlers" for k in node.keywords):
+            return True
+    return False
+
+
+def _injects_handlers(module_source: str, func_name: str) -> bool:
+    """test が（直接またはローカル helper 経由で）handler 注入を使うかを判定する。
+
+    文字列一致だと `_GATED_HANDLERS` を集合比較に使うだけの test まで注入扱いに
+    なる。一方、関数の body だけを見ると `_run()` のような helper 内の注入を
+    見逃す（実際に見逃した）。そこで **module 内 helper を 1 階層だけ辿る**。
+    """
+    tree = ast.parse(module_source)
+    functions = {
+        n.name: n for n in ast.walk(tree)
+        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    target = functions.get(func_name)
+    if target is None:
+        return False
+    if _calls_with_handler_injection(target):
+        return True
+    for node in ast.walk(target):
+        if not isinstance(node, ast.Call):
+            continue
+        callee = getattr(node.func, "id", None)
+        helper = functions.get(callee) if callee else None
+        if helper is not None and _calls_with_handler_injection(helper):
+            return True
+    return False
+
+
+def _resolve_test_id(test_id: str):
+    """`file.py` / `file.py::func` を実体へ解決する。無ければ理由を返す。"""
+    file_part, _, func = test_id.partition("::")
+    path = ROOT / file_part
+    if not path.exists():
+        return None, f"file 不在 {test_id}"
+    source = path.read_text(encoding="utf-8")
+    if not func:
+        return source, None
+    tree = ast.parse(source)
+    node = next(
+        (n for n in ast.walk(tree)
+         if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == func),
+        None,
+    )
+    if node is None:
+        return None, f"関数不在 {test_id}"
+    return ast.get_source_segment(source, node) or "", None
+
+
+def test_coverage_manifest_covers_every_acceptance_row_and_flow_edge():
+    manifest = _coverage_manifest()
     assert set(manifest["acceptance_rows"]) == {
         "plan-state-change", "lock-contention", "pre-intent-storage",
         "post-intent-pre-child-crash", "child-unknown", "postcondition-pre-terminal",
@@ -216,5 +284,67 @@ def test_coverage_manifest_covers_every_acceptance_row_and_flow_edge():
         "plan", "apply-start", "git-mutation", "apply-end", "audit",
         "verify-receipt", "reconcile", "promotion", "startup-gate",
     }
-    assert all(manifest["acceptance_rows"].values())
-    assert all(manifest["flow_edges"].values())
+    for name, entry in _coverage_entries().items():
+        assert entry["production"] or entry["fixture"], f"{name}: test が 1 件も無い"
+
+
+def test_coverage_manifest_only_cites_tests_that_exist():
+    """名指しした test の実在を検査する（`SI-FLW-090`）。
+
+    以前はキーの網羅と値の非空しか見ておらず、**実在しない test 名でも coverage を
+    主張できた**。証跡が実体を伴わないまま緑に見える典型である。
+    """
+    problems = []
+    for name, entry in _coverage_entries().items():
+        for test_id in entry["production"] + entry["fixture"]:
+            _, reason = _resolve_test_id(test_id)
+            if reason:
+                problems.append(f"{name}: {reason}")
+    assert not problems, f"coverage manifest が実体の無い test を名指ししている: {problems}"
+
+
+def test_coverage_manifest_declares_a_known_connection_kind():
+    """各 entry が fixture 内部の検証か production 経路の実証かを宣言すること。"""
+    manifest = _coverage_manifest()
+    kinds = set(manifest["connection_kinds"])
+    assert kinds == {"production", "fixture"}
+    for name, entry in _coverage_entries().items():
+        assert entry["connection"] in kinds, f"{name}: connection 宣言が未知"
+        expected = "production" if entry["production"] else "fixture"
+        assert entry["connection"] == expected, (
+            f"{name}: connection 宣言が production list と食い違う"
+        )
+
+
+def test_production_coverage_names_functions_not_whole_files():
+    """production 主張は **関数単位** で名指しすること。
+
+    file 単位だと、その file に production test が 1 件あるだけで行全体が
+    production 扱いになり、過大主張が再現する。
+    """
+    coarse = [
+        f"{name}: {test_id}"
+        for name, entry in _coverage_entries().items()
+        for test_id in entry["production"]
+        if "::" not in test_id
+    ]
+    assert not coarse, f"production 主張が file 単位になっている: {coarse}"
+
+
+def test_production_coverage_never_relies_on_fixture_injection():
+    """`production` 宣言の test が handler 注入を使わず、production 入口を通ること。
+
+    `cli.main(handlers=...)` は fixture 専用の注入口であり（`SI-FLW-059`）、
+    production 既定 dispatcher からの到達を証明しない。
+    """
+    problems = []
+    for name, entry in _coverage_entries().items():
+        for test_id in entry["production"]:
+            _, reason = _resolve_test_id(test_id)
+            if reason:
+                continue                      # 実在検査は別 test の責務
+            file_part, _, func = test_id.partition("::")
+            module_source = (ROOT / file_part).read_text(encoding="utf-8")
+            if func and _injects_handlers(module_source, func):
+                problems.append(f"{name}: {test_id} が fixture 注入を使用")
+    assert not problems, f"production 宣言が fixture 注入に依存している: {problems}"

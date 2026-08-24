@@ -600,7 +600,7 @@ operationがgatedである間production入口から到達できず`command-unava
 | 2 | 失敗原子性 | **検証計画** | 13.3 全行が実装・検証済み（#2は`FLW-TSK-118`、#6は`FLW-TSK-120`）。production経路での実証がgatingで未了 |
 | 3 | 有限収束性 | **検証計画** | 13.4 全childを`process.run()`監督下へ結線済み（素の`subprocess.run`は0件）。10,000 event／100 MiB規模の負荷実測は未実施 |
 | 4 | platform実在性 | **検証計画** | 13.5 probe実装済み。linuxは実観測済み（ext4/tmpfsでSUPPORTED、9pでnetwork拒否）。macos／windowsは実装のみで実走未実施 |
-| 5 | 証跡妥当性 | **未実装境界** | 現`verified`証跡はfixture注入経路。`SI-FLW-090`で是正 |
+| 5 | 証跡妥当性 | **検証計画** | `FLW-TSK-121`でcoverage manifestを`contract_version: 2`へ上げfixture／productionを関数単位で分離。`FLW-NFR-014`のfixture出口条件を撤回しproduction証跡へ据え直した。実証は公開集合復帰後 |
 | 6 | legacy排除 | **検証計画** | 13.6 の旧承認経路は`FLW-TSK-115`で除去済み（参照0件）。宣言／registry検出のblack-box化は公開集合復帰後 |
 | 7 | 状態意味保存 | **検証計画** | 13.2の`QUARANTINED`不変条件は`FLW-TSK-119`、marker適格性は`FLW-TSK-120`で実装・検証済み。production経路での実証がgatingで未了 |
 

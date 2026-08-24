@@ -1,6 +1,6 @@
 ---
 id: FLW-FR-006
-version: 2.0
+version: 2.1
 status: implementing
 domain: workflow
 priority: high
@@ -30,8 +30,22 @@ confidence: high
     `UNSUPPORTED_APPROVAL_MODE`を返し、Git副作用を0件にすること SHALL
   - WHEN M2の承認方式をresultまたはreceiptへ記録する THEN bitz-flowは`plan-digest`を明示し、
     trusted key registry、署名鍵、reviewer roleをM2の判定入力にしないこと SHALL
-- **検証手段**: path衝突、repo identity、resume不一致、branch-only、finish部分失敗、dirty保全、manifest外target不変をunit testで検証する。
+  - WHEN `worktree.finish`または`worktree.discard`を要求する THEN bitz-flowはM3まで
+    `UNSUPPORTED`を返し、M2の受入対象に含めないこと SHALL
+  - WHEN create/resumeの承認経路を検査する THEN bitz-flowは廃止済みsigned-capability経路と
+    旧contextをproduction handlerから参照せず、旧入力は内容を解析せずmutation前に
+    `UNSUPPORTED` / `unsupported-approval-mode`へ閉じること SHALL
+  - WHEN create/resumeのplatform能力を判定する THEN bitz-flowはproductionコードが生成した
+    closed `PlatformEvidence`を用い、観測不能・未知・network filesystemを`supported`へ
+    格上げしないこと SHALL
+- **検証手段**: path衝突、repo identity、resume不一致、branch-only、finish部分失敗、dirty保全、
+  manifest外target不変をunit testで検証する。create/resumeの是正は
+  `FLW-TSK-115`（旧承認経路の除去。`tests/test_flow_m2_legacy_approval.py`）と
+  `FLW-TSK-116`（実環境platform probeの結線。`tests/test_flow_m2_platform_probe.py`）が担う。
+  `finish`／`discard`はM2の検証対象外であり、M3の入口条件として扱う
+  （移送裁定: `.spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md`）。
 - **Revision History**:
+  - 2.1 (2026-08-24) create/resume是正（`FLW-TSK-115`／`116`）を検証手段へ直接トレースし、`finish`／`discard`がM3であることとplatform evidenceの格上げ禁止を受入基準へ明示（`SI-FLW-090`）
   - 2.0 (2026-08-22) M2 Local Safety Profileへ縮退し、条件付き署名をV2初期版から外してplan-digestへ限定
   - 1.1 (2026-08-17) 承認モードの配備意図を追跡下の宣言から読み、registry削除時の無言降格を`BLOCKED`へ倒す3値判定を追加（`SI-FLW-073`。裁定参照: .spec/reports/decision-2026-08-17-si-flw-072-073-075.md）
   - 1.0 (2026-07-29) accepted SI-FLW-004とFLW-DSN-006/012からdraft起票

@@ -1,5 +1,29 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-TSK-121（SI-FLW-090 / FLW-REV-027:SYN-007 P1）実装: fixture検証と
+  production接続を区別し、証跡の過大主張を解消した。runtime挙動は変えていない。
+  **是正した過大主張3件**: (1)`FLW-NFR-014`の検証手段が「登録済みlocal filesystem
+  **fixture**で通常系UNSUPPORTED 0件を出口条件とする」と書いており、fixture上の成立を
+  出口条件に据えていた。検証をfixture層／production層へ分離し、`verified`昇格条件を
+  実環境probe・production E2E・全crash境界・再レビューPASSへ据え直した。
+  (2)`m2-operability-coverage.json`が名指しするtestの**実在すら検査していなかった**
+  （キーの網羅と値の非空のみ）。`contract_version: 2`へ上げ、entryごとに
+  `production`／`fixture`を**関数単位**で持たせ、実在・connection整合・fixture注入の
+  不使用を機械検査するようにした。(3)`FLW-FR-006`がcreate/resume是正taskへ
+  トレースしておらず、finish/discardのM3境界も受入基準から読めなかった。
+  **測定の結果は正直に記録した**: 21 entryのうちproduction実証は**1件のみ**
+  （`unsupported-environment-or-approval`）。worktree operationはgatedのため、
+  productionから実証できるのは「到達しないこと」と「旧承認方式の即時拒否」に限られる。
+  分類は3回作り直した — handler注入の有無で測ると17/21がproductionになり誤り、
+  file単位でも11/21で過大、関数単位で測って1/21が実態だった。
+  `.spec/reports/m2-unconnected-points.md`へTSK-106〜114の未接続点8件と是正の対応、
+  および**是正では埋まらない残件**（公開集合復帰前のproduction E2E、macOS／Windows実観測、
+  10,000 event/100 MiB規模の30秒収束）を集約記録した。taskのdoneは取り消していない。
+  5変異（実在しないtest・架空関数名・fixture行のproduction詐称・file単位への粗化・
+  helper経由でfixture注入するtestのproduction登録）で全件検出を確認。うち最後の1件は
+  初回素通りし、ローカルhelperを1階層辿る検査へ強化して捕捉するようにした。
+  bitz-flow 0.12.13→0.12.14。全体2389 passed。
+
 - 2026-08-24 FLW-TSK-120（SI-FLW-089 / FLW-REV-027:SYN-006 P1）実装:
   reconcile closureの追記前にactive markerの適格性を確定するよう順序を変更した。
   **欠陥**: 旧実装は target lock → 再audit → closure追記（不可逆） → lock解放 →
@@ -867,3 +891,5 @@
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiNDU0NTZiZDk3NTAyZDM0MGY0Y2RhMWQ5MTFiMWExNDQyYTE1YjA0YjdjMmY2Y2IxMzdmMjNhYjU1YjFmNjYzZiIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiOWM1ODlmOTYzN2NmZTlhODgwMTJlMzVlOWQzYTNlMjg2ZGExNGU1YTA4MTZjZTJkY2Y5OTA2MjE4NGJmY2I4YyIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMTkiLCJldmVudF9pZCI6ImNkMzE2MWQxLTVjYTgtNGU5Yy04Y2I4LTM0MjIzN2M2NzlkMyIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMTkubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAxOjI0OjAzLjE1MDU1OVoifQ== -->
 - 2026-08-24 FLW-TSK-120: pending → implementing (claude)
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiMDJhNDNiZjRjMjU0Zjc3ZjllMjc1NmFkYzYzM2U0OGRjNWEwMjUwZjBkYmE5NmU1NWJmMWVlNTQ3OTNmOGEyYSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiMWIyYTQ4NTIxMDc1ZjFjZGJlZGMyY2MyMjhhOWE5Y2Y0NTQ5ZGIxMGExNWQxZDcwODUxOWQ2MzBmNDkyZTFkZSIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjAiLCJldmVudF9pZCI6ImFhNWE3YmRmLTcyZjctNDY5Ni1iNjhkLTliN2JkNDAwMjU1MiIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjAubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAyOjAwOjUzLjM3OTY5MloifQ== -->
+- 2026-08-24 FLW-TSK-121: pending → implementing (claude)
+<!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiMGEwYjg5NGZjMTFiNjM1MGM1NjMzMDgzY2Q5NThjZGZmNTM3NTc3ZTllNGUwYjNiYzRkYmNhNTAzZDI3N2ZmZSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiODQ3MWYwNTE1YWRiMzQwM2U0NzgzMDkzMjU3YjcyNmIyOTgxNzEyNWQzNjQxZThhMTY0ODQ3NGEyNDYyMmRlYSIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjEiLCJldmVudF9pZCI6IjhkMTczNjIxLWIyNDgtNGViYy04MmEzLWI2MjUzNjZiNjI0NSIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjEubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAyOjA5OjM0LjI3NDQ1NloifQ== -->
