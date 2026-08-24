@@ -867,7 +867,24 @@ def main(argv: Sequence[str] | None = None, *, handlers: Mapping | None = None) 
             args.format,
         )
 
-    result, view = handler(root, args, started)
+    try:
+        result, view = handler(root, args, started)
+    except Exception as exc:  # noqa: BLE001 — 公開経路へ traceback を出さないための網
+        # 例外型を列挙する方式は穴が開く。`ContractError` は `ValueError` 派生であり
+        # handler 側の except 3 型のいずれでもなかったため traceback になっていた
+        # （`FLW-REV-028:SYN-007`）。型ごとの写像は各 handler が行い、**取りこぼしを
+        # ここで受け止める**。内部型名・traceback・path 断片は公開 result へ載せない。
+        return _emit(
+            _simple_result(
+                operation=operation,
+                code="UNAVAILABLE",
+                repo=root,
+                summary="operation を完了できなかった",
+                cause="result-indeterminate",
+                stage="inspect",
+            ),
+            args.format,
+        )
 
     # 呼出時の --snapshot と再計算値が違えば STALE（FLW-DSN-005）。
     if args.snapshot and result["ok"] and not R.digest_matches(result.get("snapshot"), args.snapshot):

@@ -60,15 +60,40 @@ def test_registry_and_schema_are_closed_and_cover_three_platforms():
     assert set(schema["required"]) == set(schema["properties"])
 
 
-@pytest.mark.parametrize("platform", ["linux", "macos", "windows"])
-def test_registered_local_platforms_return_the_same_logical_supported_evidence(platform):
-    evidence = P.evaluate_platform(_observation(platform), profiles=P.load_support_profiles(REGISTRY))
-    assert evidence.supported
-    assert evidence.support_code == P.SUPPORTED
-    assert evidence.reasons == ()
-    mapping = evidence.as_mapping()
-    assert mapping["contract_version"] == 2
-    assert set(mapping) == set(json.loads(SCHEMA.read_text())["required"])
+def test_platform_in_scope_returns_supported_evidence():
+    """保証 scope 内の platform が supported になること。
+
+    以前は linux / macos / windows の 3 者すべてに parity を要求していたが、
+    2026-08-24 の裁定で保証を Linux へ限定した（`FLW-REV-028:GP-003`）。
+    macOS は既定 APFS が case-insensitive で folded_component を導出できず、
+    Windows は SID 取得手段が無いため、いずれも実際には supported にならなかった。
+    """
+    for platform in sorted(P.SUPPORTED_SCOPE):
+        evidence = P.evaluate_platform(
+            _observation(platform), profiles=P.load_support_profiles(REGISTRY))
+        assert evidence.supported, (platform, evidence.reasons)
+        assert evidence.support_code == P.SUPPORTED
+        assert evidence.reasons == ()
+        mapping = evidence.as_mapping()
+        assert mapping["contract_version"] == 2
+        assert set(mapping) == set(json.loads(SCHEMA.read_text())["required"])
+
+
+@pytest.mark.parametrize("platform", ["macos", "windows"])
+def test_platform_out_of_scope_is_closed_with_a_reason(platform):
+    """保証対象外の platform を理由付きで閉じること（実装は残す）。"""
+    evidence = P.evaluate_platform(
+        _observation(platform), profiles=P.load_support_profiles(REGISTRY))
+    assert not evidence.supported
+    assert evidence.support_code == P.UNSUPPORTED_FILESYSTEM
+    assert "platform-out-of-scope" in evidence.reasons
+
+
+def test_scope_narrowing_did_not_drop_the_registry_or_probes():
+    """scope を狭めても registry と probe 実装を落としていないこと。"""
+    profiles = P.load_support_profiles(REGISTRY)
+    assert set(profiles) == set(P.PLATFORMS) == {"linux", "macos", "windows"}
+    assert P.SUPPORTED_SCOPE == frozenset({"linux"})
 
 
 @pytest.mark.parametrize("changes,reason", [

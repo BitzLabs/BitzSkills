@@ -29,6 +29,13 @@ PROFILE_VERSION = 1
 SUPPORTED = "SUPPORTED"
 UNSUPPORTED_FILESYSTEM = "UNSUPPORTED_FILESYSTEM"
 PLATFORMS = frozenset({"linux", "macos", "windows"})
+
+#: 保証対象の platform（裁定 2026-08-24。`FLW-REV-028:GP-003`）。
+#: macOS / Windows の probe 実装は残すが保証しない。macOS は既定 APFS が
+#: case-insensitive で `collision_key` の folded_component を導出できず、Windows は
+#: SID 取得手段が無い。対象外は理由付きで `UNSUPPORTED_FILESYSTEM` へ閉じる。
+#: 再開条件は `.spec/reports/decision-2026-08-24-linux-only-scope.md` を参照。
+SUPPORTED_SCOPE = frozenset({"linux"})
 FILESYSTEM_CLASSES = frozenset({"local", "network", "unknown"})
 CASE_SEMANTICS = frozenset({"sensitive", "insensitive"})
 
@@ -186,6 +193,15 @@ def evaluate_platform(
     _validate_native_component(observation.platform, observation.native_component)
     profile = profiles.get(observation.platform)
     reasons: list[str] = []
+    if observation.platform not in SUPPORTED_SCOPE:
+        # 実装があることと保証することは別である（`FLW-REV-028:GP-003`）。
+        reasons.append("platform-out-of-scope")
+    if observation.case_semantics == "insensitive":
+        # `collision_key` は case-insensitive のとき folded_component を要求するが、
+        # 実物の case-insensitive volume を観測できない環境で folding 規則を作ると
+        # 「検証していない性質の主張」になり、§3.1 の畳み込み禁止にも触れる。
+        # 案 B（裁定済み）に従い閉じる。`collision_key` へ到達させない。
+        reasons.append("case-insensitive-unsupported")
     if profile is None:
         reasons.append("platform-not-allowlisted")
     if observation.filesystem_class != "local":

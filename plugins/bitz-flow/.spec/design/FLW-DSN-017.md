@@ -2,7 +2,7 @@
 id: FLW-DSN-017
 title: "M2 Local Safety Profileの競合排除・耐久証跡・原子的promotion"
 status: active
-version: 2.3
+version: 2.4
 updated: 2026-08-24
 owner: codex
 implements: FLW-NFR-014, FLW-CON-008
@@ -32,7 +32,10 @@ processが同じrepositoryを操作する通常運用で、stale plan、競合wr
 - Git副作用の前に、crash後も残るintentと安全側の緊急receiptを確定する。
 - 完了を証明できない操作を`INDETERMINATE`または`QUARANTINED`として保持する。
 - contract v2を部分activeにせず、単一bundleとして原子的に有効化する。
-- Linux、macOS、Windowsの登録済みlocal filesystem adapterで同じlogical resultへ収束する。
+- **Linux**の登録済みlocal filesystem adapterでlogical resultへ収束する。
+  macOS／Windowsは**当面保証対象外**とし、probeは`platform-out-of-scope`で閉じる
+  （裁定 2026-08-24。`FLW-REV-028:GP-003`。実装は残す。再開条件は
+  `.spec/reports/decision-2026-08-24-linux-only-scope.md`）。
 
 ### 1.2 信頼するもの
 
@@ -121,7 +124,10 @@ component単位の非追随walkで行い、staged-only、worktree-only、削除�
 - `display_path`: native componentを可逆に表現し、人間への表示とreceiptへ使う。
 - `collision_key`: parent directoryのcase semanticsとresource identityから導出し、lock keyへ使う。
 - 不在targetはparent directory identityと末尾native componentへ束縛する。
-- case-insensitiveかどうかを安全に判定できない不在targetは`UNSUPPORTED_FILESYSTEM`とする。
+- case-insensitiveと判定した環境は`case-insensitive-unsupported`で`UNSUPPORTED_FILESYSTEM`
+  とする。`collision_key`が要求するfolded_componentのfolding規則を、実物の
+  case-insensitive volumeを観測できない環境で新設しない（`FLW-REV-028:GP-005` 案B）。
+- case-insensitiveかどうかを安全に判定できない不在targetも`UNSUPPORTED_FILESYSTEM`とする。
 - Unicode normalizationで別directory entryを同一scopeへ畳み込まない。
 
 ### 3.2 platform adapter
@@ -129,8 +135,10 @@ component単位の非追随walkで行い、staged-only、worktree-only、削除�
 platform adapterはpolicyを決めず、owner、ACL/mode、非追随walk、regular file/directory identity、
 case semantics、OS lock、file/directory durability、child process監督のclosed evidenceだけを返す。
 
-サポート対象はコード同梱の静的allowlistと起動時semantic self-testの両方で決める。self-testだけで
-未知filesystemをsupportedへ格上げしない。network filesystem、owner取得不能、lock semantics不明、
+サポート対象は**保証scope**（当面Linuxのみ）とコード同梱の静的allowlistで決める。
+self-testだけで未知filesystemをsupportedへ格上げしない。
+**現行の`semantic_self_test`はnative component codecの往復のみで、lock／durabilityの
+semanticsを実証していない**（`FLW-REV-028:SYN-009`。`GP-007`で是正する）。network filesystem、owner取得不能、lock semantics不明、
 directory fsync相当を確認できない環境は理由付き`UNSUPPORTED_FILESYSTEM`とする。
 support profileへの署名や外部更新機構は持たない。
 
@@ -564,9 +572,9 @@ probeの正は`worktree_platform.probe_platform()`で、planとdoctorは共通�
 
 | OS | 実装component | identity | probe方法 | 未対応時の即時拒否 | 実観測 |
 |---|---|---|---|---|---|
-| linux | flock / fsync / fsync / waitpid | uid（`st_uid` vs `geteuid`） | `/proc/self/mountinfo`を`st_dev`（major:minor）で引きfstypeを得る。case semanticsはswapcase pathの存在で判定 | `UNSUPPORTED_FILESYSTEM` | **実施**（`tests/test_flow_m2_platform_probe.py::test_probe_observes_the_real_filesystem`。Linux 6.18 WSL2 / ext4・tmpfsで`SUPPORTED`、9pで`filesystem-class-network`を確認） |
-| macos | flock / fsync / fsync / waitpid | uid | `statfs(2)`の`f_fstypename`をctypesで取得。case-insensitive volumeを含む | `UNSUPPORTED_FILESYSTEM` | **未実施**（実装のみ。macOS上での実走が必要） |
-| windows | LockFileEx / FlushFileBuffers / ReplaceFileW / job-object | sid | `GetVolumeInformationW`でfilesystem名と`FILE_CASE_SENSITIVE_SEARCH`を取得 | `UNSUPPORTED_FILESYSTEM` | **未実施**（実装のみ。SID取得手段が未確定のため現状は`owner-unobservable`で必ず不支持になる） |
+| linux（**保証対象**） | flock / fsync / fsync / waitpid | uid（`st_uid` vs `geteuid`） | `/proc/self/mountinfo`を`st_dev`（major:minor）で引きfstypeを得る。case semanticsはswapcase pathの存在で判定 | `UNSUPPORTED_FILESYSTEM` | **実施**（`tests/test_flow_m2_platform_probe.py::test_probe_observes_the_real_filesystem`。Linux 6.18 WSL2 / ext4・tmpfsで`SUPPORTED`、9pで`filesystem-class-network`を確認） |
+| macos（**保証対象外**） | flock / fsync / fsync / waitpid | uid | `statfs(2)`の`f_fstypename`をctypesで取得。case-insensitive volumeを含む | `UNSUPPORTED_FILESYSTEM` | **対象外**（実装は残す。既定APFSがcase-insensitiveでfolded_component導出不可） |
+| windows（**保証対象外**） | LockFileEx / FlushFileBuffers / ReplaceFileW / job-object | sid | `GetVolumeInformationW`でfilesystem名と`FILE_CASE_SENSITIVE_SEARCH`を取得 | `UNSUPPORTED_FILESYSTEM` | **対象外**（実装は残す。SID取得手段が未確定で`owner-unobservable`固定） |
 
 **代替禁止**: 他OSのcomponentによる代替を同一証明として扱わない。registryが宣言する
 `child_supervision`と実runtimeで使える primitive が食い違う場合は`supported`にしない
@@ -632,6 +640,10 @@ macOS／Windowsの実観測は依然として未実施である（§13.5）。
 
 ## Revision History
 
+- 2.4 (2026-08-24) 保証scopeをLinuxへ限定し、case-insensitive環境と対象外platformを
+  理由付きで`UNSUPPORTED_FILESYSTEM`へ閉じる。§3.2のsemantic self-test要求と実装の
+  乖離を明記（裁定参照: .spec/reports/decision-2026-08-24-linux-only-scope.md。
+  `FLW-REV-028:GP-003`／`GP-005`）
 - 2.3 (2026-08-24) FLW-REV-027のFAILを受け、`FLW-CON-008`が要求する6表（§13）を追加。
   §4.2のintent／緊急receiptを単一durable recordへ統合し、production未接続・timeout欠落・
   Windows代替component・legacy残存を未実装境界として明示（SI-FLW-084〜090。

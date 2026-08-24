@@ -1,5 +1,32 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-TSK-123（FLW-REV-028:GP-005 / GP-003）実装: userが「当面Linux専用で進める」と
+  裁定し（`.spec/reports/decision-2026-08-24-linux-only-scope.md`）、GP-005から着手した。
+  **(1) 公開経路の網**: dispatcherでhandlerの取りこぼしをclosed result（`UNAVAILABLE` /
+  `result-indeterminate`）へ写した。例外型の列挙は穴が開く（`ContractError`が`ValueError`派生で
+  実際に漏れた）ため、型ごとの写像は各handlerが行い**取りこぼしはhandlerの外側で受け止める**。
+  内部型名・traceback・path断片を公開resultへ載せない。
+  **(2) 保証scope**: `SUPPORTED_SCOPE = {"linux"}`を追加し対象外は`platform-out-of-scope`で閉じる。
+  macOS／Windowsのprobe実装は**削除しない**（再開のため）。
+  **(3) case-insensitive**: 案B（裁定済み）に従い`case-insensitive-unsupported`で閉じ、
+  folding規則を新設しない。実物のcase-insensitive volumeを観測できない環境で規則を作れば
+  また「検証していない性質の主張」になるため。`collision_key`へ到達させない。
+  `FLW-DSN-017`をv2.4へ改訂（§1.1をLinux限定、§3.1にcase-insensitiveの閉じ、
+  §3.2にsemantic self-testの乖離を明記、§13.5のmacos／windowsを「対象外」へ）。
+  `tests/test_flow_m2_closed_result_contract.py`（20 test）を追加。production black-boxで
+  6種のoperationと8種の悪性入力に対しtracebackが出ないことを検証した。
+  **NULバイトの入力はexecveの制約で実起動経路から到達不能**と判明したため、到達可能な
+  入力（負値／inf timeout、flag様ref、5000字ref、不正snapshot、path escape、改行入りpath）へ
+  差し替えた。3変異（網の除去＋例外注入・case-insensitiveを閉じない・scopeを3 OSへ戻す）で
+  全件検出を確認。
+  **既存testを1件書き換えた**: `test_registered_local_platforms_return_the_same_logical_supported_evidence`
+  は3 OS parityを固定していたが、裁定で保証が変わったため新保証（Linux supported ／
+  macos・windowsはplatform-out-of-scope）を検証する形へ改めた。scope縮小でregistryとprobe実装を
+  落としていないことも別testで保証する。
+  confirmation証跡を再実走して更新（compatibility key `sha256:4acf9e6a...`、3者PASS、
+  Gate採用可、ledger 33→36行）。全体**2490 passed / 44 skipped / 失敗0**、release_check PASS、
+  spec inspect全8 workspace PASS。
+
 - 2026-08-24 FLW-REV-028をv2.0へ改訂しFAILへ訂正: クロスモデルのセカンドオピニオンを
   同一レビュー活動の一部として実施し、実測で確認できた追加欠陥により判定を
   **CONDITIONAL_PASS 3.75 → FAIL 2.52**へ訂正した（`risk` 2.00 が floor 2.5 未達）。
@@ -1027,3 +1054,5 @@
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiN2JhZTZlZTcyYmZmMTM0ZDIzZmI0MDk3Yjg3MTkwNjAyZWRjZTc0ZDZlZDVkZjhmMmIzMmZhMGYxMzMyMGVlNSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiMGEwYjg5NGZjMTFiNjM1MGM1NjMzMDgzY2Q5NThjZGZmNTM3NTc3ZTllNGUwYjNiYzRkYmNhNTAzZDI3N2ZmZSIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjEiLCJldmVudF9pZCI6ImZmYmEwNTJhLWQyNjQtNGE4Mi1iZWQxLTk4ZmEwNzUyNjY1NyIsIm5ldyI6ImRvbmUiLCJvbGQiOiJpbXBsZW1lbnRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjEubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDA0OjQ5OjU5LjE1NjIxNloifQ== -->
 - 2026-08-24 FLW-TSK-122: implementing → done (claude)
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiNGZhNGZhZmQ3ZThlMTk4NzBmNjQ5ZDY3YWU1MjY5M2Q3ZGE0NWVkOGMyNjViYTA1MjkwM2MyZjZjMjU4NzFmZiIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiNWRiYTc0OTQ5MTBjOTk4NTlkMmIzYmFiNTVhYzkzMzcwNzQwNTJhNjEzZWM1ZjljYTg4NTNmNTk2ZDdmNzVlYSIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjIiLCJldmVudF9pZCI6IjI1MGZmODdmLTMzNGMtNDRmZi05OTVkLWRhM2JlNjVlMWE4MSIsIm5ldyI6ImRvbmUiLCJvbGQiOiJpbXBsZW1lbnRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjIubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDA0OjQ5OjU5LjI2MDExNloifQ== -->
+- 2026-08-24 FLW-TSK-123: pending → implementing (claude)
+<!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiYmM5YzE3MjlhNmM5OWUwMTcyYWVmY2QxZWY5Nzk0NjBhM2U3MTE5Y2E4MGE4MTNmNmVkMTMwZThkZGQwNmQ1NSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiMDRkYWYyYWY5NGZlOWU0MDI1NjQzMTUwNTgyOGY0OGYwNDg0ZTFmZmVlMTI1YTc5YWNjOWYzNWNkOWMwY2QxYSIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjMiLCJldmVudF9pZCI6ImJkNmE4NzQyLWRkNTUtNGQ1My1iNmIwLTY2YjVkNzMzNTk1ZCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjMubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDA1OjQzOjUxLjc2MTA1NloifQ== -->
