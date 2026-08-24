@@ -1,0 +1,269 @@
+{
+  "schema_version": 2,
+  "review_id": "FLW-REV-028",
+  "verdict": "CONDITIONAL_PASS",
+  "aggregate_score": 3.75,
+  "perspective_scores": {
+    "consistency": 3.7,
+    "data-integrity": 4.65,
+    "operations": 2.9,
+    "risk": 4.0,
+    "business": 3.0
+  },
+  "findings_summary": {
+    "before_dedup": 9,
+    "after_dedup": 6,
+    "p0": 0,
+    "p1": 4,
+    "p2": 2,
+    "p3": 0
+  },
+  "findings": [
+    {
+      "id": "FLW-REV-028:SYN-001",
+      "priority": "P1",
+      "severity": "critical",
+      "source": [
+        "OPS-101",
+        "RSK-201",
+        "BIZ-101"
+      ],
+      "title": "既定 umask で作った worktree root が常に拒否され、回避手順が示されない",
+      "detail": "probe は st_mode & 0o077 が 0 でなければ acl-not-owner-only で不支持にする。§1.2 の信頼境界に忠実だが、利用者が普通に mkdir した root は 0755 であり必ず失敗する。closed result は reason を載せるが next_action を持たず、runbook にも chmod 700 の指示が無い。公開集合が戻った時点で create/resume は事実上使えない。是正が新しい停止条件を持ち込んだ類型である。",
+      "recommendation": "acl-not-owner-only に対する operator action（対象 path と 0700 への是正）を closed result の next_action へ載せ、m2-worktree-quarantine runbook へ worktree root の作成手順を追加する。§13.2 状態遷移意味表へ本停止条件を登録する。",
+      "tracked_by": "FLW-REV-028:GP-001",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-028:SYN-002",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "OPS-301",
+        "RSK-201",
+        "RSK-401"
+      ],
+      "title": "必須 snapshot 経路へ 8 MiB 出力上限が新たに適用され、大規模 repository で plan が失敗する",
+      "detail": "_supervised_git は output_limit_bytes を渡さず既定 8 MiB を使う。RepositoryObserver.run('worktree') は git status --porcelain=v2 -z --untracked-files=all を起動するため、未追跡ファイルが多い repository では上限超過で observation が失敗する。FLW-TSK-117 以前は無制限で成功していた経路であり可用性の後退である。fail-closed だが受入基準にも §13.2／§13.4 にも現れない。10,000 event／100 MiB 条件の実測も未了で、上限の妥当性を判断する材料が無い。",
+      "recommendation": "snapshot 観測の出力上限を設計値として分離定義し、超過時の closed result と operator action を §13.2／§13.4 へ追加する。負荷 fixture で 10,000 event／100 MiB 条件の収束を実測し machine evidence へ残す。",
+      "tracked_by": "FLW-REV-028:GP-002",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-028:SYN-003",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "OPS-102"
+      ],
+      "title": "Windows は SID 取得手段が無く構造的に常に不支持で、§1.1 の 3 OS 保証と一致しない",
+      "detail": "_owner() は Windows で無条件に (None, False, False) を返すため owner-unobservable で必ず不支持になる。§1.1 は Linux・macOS・Windows の登録済み local filesystem adapter で同じ logical result へ収束すると保証するが、Windows では収束先が常に UNSUPPORTED である。安全側の既定であって実装欠陥ではないが、保証の文面が実装能力を超えている。§13.5 は「未実施」と書くが、これは未実走ではなく構造的な不可である。",
+      "recommendation": "§1.1 の保証を現在の実装能力（Linux／macOS）へ限定するか、Windows の SID 取得を独立した追跡先へ起票して期限と再判定 Gate を置く。§13.5 の Windows 行を「未実走」から「実装不足により不支持固定」へ改める。",
+      "tracked_by": "FLW-REV-028:GP-003",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-028:SYN-004",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "DIN-201"
+      ],
+      "title": "旧形式 chain の復旧手段が fail-closed 以外に無い",
+      "detail": "旧形式（intent と緊急 receipt を 2 file へ分離）の chain は INDETERMINATE へ閉じる。安全側だが、既存 repository に旧形式 chain が残ると reconcile も audit も通らず、運用者は手作業以外の復旧経路を持たない。§4.2 は doctor が manual rollback 手順を提示すると書くが、その実装は無い。",
+      "recommendation": "doctor が旧形式 chain を検出して具体的な手順を出力する経路を実装するか、公開前に旧形式 chain が存在しないことを前提条件として §1.2 へ明示する。",
+      "tracked_by": "FLW-REV-028:GP-004",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-028:SYN-005",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "RVC-301"
+      ],
+      "title": "未解決 P0/P1 86 件が未照合のまま残り、件数を判断材料にできない",
+      "detail": "SI-FLW-091 は carried_over からの欠落を機械保証したが、86 件の個別照合は未了である。うち 16 件は本 M2 の話題と重なるため、実際には解消済みのものが未解決として計上されている可能性がある。逆に未解決のものが埋もれている可能性も否定できない。",
+      "recommendation": "話題が重なる 16 件を優先して証跡照合し、残る 70 件は対応 scope の作業時に照合する運用を .spec/reports/review-ledger-reconciliation.md へ追記して明文化する。",
+      "tracked_by": "SI-FLW-091",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-028:SYN-006",
+      "priority": "P2",
+      "severity": "minor",
+      "source": [
+        "RVC-101",
+        "RVC-201"
+      ],
+      "title": "production 判定基準と platform 語彙の禁止が規範文書に成文化・機械検査されていない",
+      "detail": "coverage manifest の production 定義は test 側の判定関数と manifest の comment にしか無く、関数を書き換えれば宣言の意味が静かに変わる。target OS と agent platform の分離も用語表に記載しただけで、platform 単独使用の再発を検出する仕組みが無い。",
+      "recommendation": "FLW-CON-008 の受入基準へ production の定義を移し、SI-FLW-092 の範囲へ規範文書の散文における platform 単独使用の検出を含める。",
+      "tracked_by": "SI-FLW-092",
+      "status": "tracked"
+    }
+  ],
+  "gate_preconditions": [
+    {
+      "id": "GP-001",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "behavioral",
+      "ears": "WHEN worktree root が owner-only でない THEN bitz-flow は対象 path と 0700 への是正を operator action として closed result へ載せること SHALL",
+      "evidence": "worktree_platform.py の acl-not-owner-only 判定と、リポジトリ（0755）で UNSUPPORTED_FILESYSTEM を実測した結果。cli.py の WorktreeUnsupportedPlatformError 写像は next_actions を持たない。",
+      "statement": "既定 umask の worktree root が拒否される事実に対し、利用者が自力で復帰できる operator action を公開 result と runbook の双方へ与えること。",
+      "response": {
+        "status": "accepted",
+        "original": "WHEN worktree root が owner-only でない THEN bitz-flow は対象 path と 0700 への是正を operator action として closed result へ載せること SHALL",
+        "normalized": "unsupported-filesystem の reason に acl-not-owner-only を含むとき、next_actions へ対象 path と必要 mode を含む是正案内を載せ、runbook へ worktree root の作成手順を追加する。",
+        "target": "cli.py の unsupported 写像、docs/runbooks/m2-worktree-quarantine.md、FLW-DSN-017 §13.2"
+      }
+    },
+    {
+      "id": "GP-002",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "behavioral",
+      "ears": "WHEN snapshot 観測の出力が上限を超える THEN bitz-flow は上限を設計値として宣言した closed result と operator action を返すこと SHALL",
+      "evidence": "_supervised_git が output_limit_bytes を渡さず process.DEFAULT_OUTPUT_LIMIT_BYTES(8 MiB) を使うこと、および RepositoryObserver が git status --porcelain=v2 -z --untracked-files=all を起動することをソースで確認した。",
+      "statement": "是正が持ち込んだ新しい停止条件（8 MiB 上限・30 秒 read timeout）を受入基準と状態遷移意味表へ登録し、10,000 event／100 MiB 条件で収束を実測すること。",
+      "response": {
+        "status": "accepted",
+        "original": "WHEN snapshot 観測の出力が上限を超える THEN bitz-flow は上限を設計値として宣言した closed result と operator action を返すこと SHALL",
+        "normalized": "snapshot 観測の出力上限を専用の設計値として分離定義し、超過時の closed result・cause・operator action を §13.2／§13.4 と FLW-NFR-014 受入基準へ登録し、負荷 fixture で実測する。",
+        "target": "worktree_runtime.py _supervised_git、FLW-DSN-017 §13.2/§13.4、FLW-NFR-014"
+      }
+    },
+    {
+      "id": "GP-003",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "artifact",
+      "evidence": "worktree_platform.py _owner が os.name == 'nt' で無条件に (None, False, False) を返すこと、および §1.1 が 3 OS の logical parity を保証していることを確認した。",
+      "statement": "§1.1 の 3 OS 保証を実装能力へ一致させること。Windows を保証対象に残すなら SID 取得を追跡先つきで起票し期限と再判定 Gate を置き、残さないなら保証を Linux／macOS へ限定して §13.5 の表記を「実装不足により不支持固定」へ改めること。",
+      "response": {
+        "status": "accepted",
+        "original": "§1.1 の 3 OS 保証を実装能力へ一致させること。Windows を保証対象に残すなら SID 取得を追跡先つきで起票し期限と再判定 Gate を置き、残さないなら保証を Linux／macOS へ限定して §13.5 の表記を「実装不足により不支持固定」へ改めること。",
+        "normalized": "§1.1 の保証範囲と §13.5 の Windows 行を実装能力へ揃え、Windows を保証対象に残す場合は SID 取得の追跡先・期限・再判定 Gate を明記する。",
+        "target": "FLW-DSN-017 §1.1／§13.5、新規 spec-issue"
+      }
+    },
+    {
+      "id": "GP-004",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "behavioral",
+      "ears": "WHEN 旧形式の transaction chain を検出する THEN bitz-flow は doctor から具体的な復旧手順を出力すること SHALL",
+      "evidence": "worktree_transaction.py inspect が同梱 receipt を持たない INTENT_DURABLE を ContractError で fail-closed にすること、および §4.2 が doctor の manual rollback 手順提示を約束しているが実装が無いことを確認した。",
+      "statement": "旧形式 chain を抱えた repository が手作業以外で復帰できるようにするか、公開前に旧形式が存在しないことを前提条件として明示すること。",
+      "response": {
+        "status": "accepted",
+        "original": "WHEN 旧形式の transaction chain を検出する THEN bitz-flow は doctor から具体的な復旧手順を出力すること SHALL",
+        "normalized": "doctor が旧形式 chain を検出して復旧手順を closed result へ出力する経路を実装する。実装しない場合は §1.2 へ前提条件として明示する。",
+        "target": "worktree_operability.py doctor、FLW-DSN-017 §1.2/§4.2"
+      }
+    }
+  ],
+  "carried_over": [
+    "FLW-REV-006:SYN-001",
+    "FLW-REV-006:SYN-002",
+    "FLW-REV-006:SYN-003",
+    "FLW-REV-006:SYN-004",
+    "FLW-REV-006:SYN-005",
+    "FLW-REV-006:SYN-006",
+    "FLW-REV-006:SYN-007",
+    "FLW-REV-006:SYN-008",
+    "FLW-REV-006:SYN-009",
+    "FLW-REV-011:SYN-001",
+    "FLW-REV-011:SYN-002",
+    "FLW-REV-011:SYN-003",
+    "FLW-REV-011:SYN-004",
+    "FLW-REV-011:SYN-005",
+    "FLW-REV-011:SYN-006",
+    "FLW-REV-011:SYN-007",
+    "FLW-REV-011:SYN-008",
+    "FLW-REV-011:SYN-009",
+    "FLW-REV-011:SYN-010",
+    "FLW-REV-011:SYN-011",
+    "FLW-REV-011:SYN-012",
+    "FLW-REV-011:SYN-013",
+    "FLW-REV-011:SYN-014",
+    "FLW-REV-011:SYN-015",
+    "FLW-REV-011:SYN-016",
+    "FLW-REV-011:SYN-017",
+    "FLW-REV-011:SYN-018",
+    "FLW-REV-013:SYN-001",
+    "FLW-REV-013:SYN-002",
+    "FLW-REV-013:SYN-003",
+    "FLW-REV-013:SYN-004",
+    "FLW-REV-013:SYN-005",
+    "FLW-REV-013:SYN-006",
+    "FLW-REV-013:SYN-007",
+    "FLW-REV-013:SYN-008",
+    "FLW-REV-013:SYN-009",
+    "FLW-REV-013:SYN-010",
+    "FLW-REV-013:SYN-011",
+    "FLW-REV-013:SYN-012",
+    "FLW-REV-013:SYN-013",
+    "FLW-REV-013:SYN-014",
+    "FLW-REV-013:SYN-015",
+    "FLW-REV-013:SYN-016",
+    "FLW-REV-013:SYN-017",
+    "FLW-REV-013:SYN-018",
+    "FLW-REV-013:SYN-019",
+    "FLW-REV-013:SYN-020",
+    "FLW-REV-013:SYN-021",
+    "FLW-REV-013:SYN-022",
+    "FLW-REV-013:SYN-023",
+    "FLW-REV-015:SYN-001",
+    "FLW-REV-016:SYN-002",
+    "FLW-REV-016:SYN-003",
+    "FLW-REV-016:SYN-004",
+    "FLW-REV-016:SYN-005",
+    "FLW-REV-016:SYN-006",
+    "FLW-REV-016:SYN-007",
+    "FLW-REV-016:SYN-008",
+    "FLW-REV-016:SYN-009",
+    "FLW-REV-016:SYN-010",
+    "FLW-REV-016:SYN-011",
+    "FLW-REV-017:SYN-008",
+    "FLW-REV-017:SYN-009",
+    "FLW-REV-018:SYN-001",
+    "FLW-REV-018:SYN-002",
+    "FLW-REV-018:SYN-003",
+    "FLW-REV-018:SYN-004",
+    "FLW-REV-018:SYN-006",
+    "FLW-REV-018:SYN-007",
+    "FLW-REV-018:SYN-008",
+    "FLW-REV-018:SYN-009",
+    "FLW-REV-018:SYN-010",
+    "FLW-REV-018:SYN-011",
+    "FLW-REV-018:SYN-012",
+    "FLW-REV-019:SYN-001",
+    "FLW-REV-019:SYN-002",
+    "FLW-REV-019:SYN-004",
+    "FLW-REV-019:SYN-005",
+    "FLW-REV-019:SYN-006",
+    "FLW-REV-019:SYN-007",
+    "FLW-REV-019:SYN-008",
+    "FLW-REV-019:SYN-009",
+    "FLW-REV-019:SYN-010",
+    "FLW-REV-019:SYN-011",
+    "FLW-REV-019:SYN-012",
+    "FLW-REV-020:SYN-001",
+    "FLW-REV-027:SYN-001",
+    "FLW-REV-027:SYN-002",
+    "FLW-REV-027:SYN-003",
+    "FLW-REV-027:SYN-004",
+    "FLW-REV-027:SYN-005",
+    "FLW-REV-027:SYN-006",
+    "FLW-REV-027:SYN-007"
+  ],
+  "conditional_items": [
+    "GP-001",
+    "GP-002",
+    "GP-003",
+    "GP-004"
+  ],
+  "ledger_contract": "SI-FLW-091"
+}

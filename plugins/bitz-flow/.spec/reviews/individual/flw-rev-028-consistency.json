@@ -1,0 +1,52 @@
+{
+ "perspective": "consistency",
+ "dimensions": [
+  {
+   "name": "設計・schema・実装の整合",
+   "weight": 0.4,
+   "score": 4,
+   "findings": [
+    {
+     "id": "RVC-101",
+     "severity": "minor",
+     "location": "FLW-DSN-017 §13.6 / m2-operability-coverage.json",
+     "title": "coverage manifest の production 判定基準が規範文書に成文化されていない",
+     "description": "`production` の定義（flow.py の別 process 起動、または既定 handler 表での cli.main）は test 側の判定関数と manifest の comment にしか無い。判定関数を書き換えれば宣言の意味が静かに変わる。",
+     "recommendation": "FLW-CON-008 の受入基準へ `production` の定義を移し、test をその実装として位置づける。"
+    }
+   ]
+  },
+  {
+   "name": "用語と語彙の一貫性",
+   "weight": 0.3,
+   "score": 4,
+   "findings": [
+    {
+     "id": "RVC-201",
+     "severity": "minor",
+     "location": "FLW-DSN-017 §1.4",
+     "title": "`platform` 単独使用の禁止が機械検査されていない",
+     "description": "`target OS` と `agent platform` の分離は用語表へ明記したが、再発を検出する仕組みが無い。FLW-CON-007 の三者照合は enum 値を見るもので散文の語彙は対象外である。",
+     "recommendation": "SI-FLW-092 の範囲へ、規範文書の散文における `platform` 単独使用の検出を含める。"
+    }
+   ]
+  },
+  {
+   "name": "台帳と履歴の整合",
+   "weight": 0.3,
+   "score": 3,
+   "findings": [
+    {
+     "id": "RVC-301",
+     "severity": "major",
+     "location": ".spec/reviews/FLW-REV-027.json carried_over",
+     "title": "未解決 P0/P1 86 件が未照合のまま残る",
+     "description": "SI-FLW-091 は欠落しないことを機械保証したが 86 件の個別照合は未了である。うち 16 件は本 M2 の話題と重なるため、実際には解消済みのものが未解決として計上されている可能性がある。件数を判断材料に使うと過大評価になる。",
+     "recommendation": "16 件を優先して証跡照合し、残る 70 件は対応 scope の作業時に照合する運用を明文化する。"
+    }
+   ]
+  }
+ ],
+ "weighted_score": 3.7,
+ "summary": "FLW-REV-027 が指摘した設計・schema・実装の乖離は解消した。三者照合・coverage manifest v2・用語の二軸分離により、片方の達成をもう片方として読む余地が塞がれている。残る弱点は成文化と機械検査の不足であり、実装欠陥ではない。"
+}

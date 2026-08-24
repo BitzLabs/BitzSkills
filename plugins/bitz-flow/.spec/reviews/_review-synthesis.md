@@ -1,9 +1,9 @@
-# 最新レビューへのビュー
+# 最新レビュー統合報告（ビュー）
 
-最新の統合レビューは **FLW-REV-027**（実装後判定: FAIL / 集計スコア 2.12）。
-実体は `FLW-REV-027.md` と `FLW-REV-027.json` を参照すること。本ファイルは番号付きファイルへの
-ポインタであり、自前のIDを持たない。
+最新は **FLW-REV-028**（CONDITIONAL_PASS / 集計 3.75）。本文は
+FLW-REV-028.md を正とする。本ファイルは最新へのポインタであり自前の ID を持たない。
 
-production platform evidence、plan-digest専用CLI、finite timeout、durable receipt境界、
-recovery分類・marker適格性、検証台帳にblocking指摘があり、worktree操作の公開と
-Promotion Gateは停止している。
+- 判定: CONDITIONAL_PASS（前回 FLW-REV-027 は FAIL 2.12）
+- findings: P0 0 / P1 4 / P2 2 / P3 0
+- Gate blocking: GP-001〜GP-004（すべて basis: verified / response: accepted）
+- 公開判断: worktree operation は gated を維持

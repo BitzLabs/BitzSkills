@@ -1,0 +1,34 @@
+{
+ "perspective": "data-integrity",
+ "dimensions": [
+  {
+   "name": "永続境界の原子性",
+   "weight": 0.35,
+   "score": 5,
+   "findings": []
+  },
+  {
+   "name": "復旧と冪等性",
+   "weight": 0.35,
+   "score": 4,
+   "findings": [
+    {
+     "id": "DIN-201",
+     "severity": "major",
+     "location": "worktree_transaction.py inspect / FLW-DSN-017 §4.2",
+     "title": "旧形式 chain の復旧手段が fail-closed 以外に無い",
+     "description": "旧形式（intent と緊急 receipt を 2 file へ分離）の chain は INDETERMINATE へ閉じる。安全側だが、既存 repository に旧形式 chain が残ると reconcile も audit も通らず、運用者は手作業以外の復旧経路を持たない。§4.2 は doctor が manual rollback 手順を提示すると書くが実装が無い。",
+     "recommendation": "doctor が旧形式 chain を検出して具体的手順を出力する経路を実装するか、公開前に旧形式が存在しないことを前提条件として明示する。"
+    }
+   ]
+  },
+  {
+   "name": "状態意味の保存",
+   "weight": 0.3,
+   "score": 5,
+   "findings": []
+  }
+ ],
+ "weighted_score": 4.65,
+ "summary": "2 回 publish の crash 空隙は単一 durable record への統合で構造的に消え、4 publish 点すべてで健全性を実測した。同梱 receipt は operation/target/token へ束縛され、QUARANTINED を完了へ畳む経路と closure の順序逆転も塞がれた。残る指摘は旧形式 chain の復旧手段が未実装であることに限る。"
+}

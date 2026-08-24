@@ -1,5 +1,29 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-REV-028（M2是正後再レビュー）実施: 判定**CONDITIONAL_PASS**、集計**3.75**
+  （前回FLW-REV-027はFAIL 2.12）。観点別: consistency 3.70 / data-integrity 4.65 /
+  operations 2.90 / risk 4.00 / business 3.00。riskは1.33→4.00でfloorをクリアし、
+  前回のFAIL要因が消えた。findings統合前9件→重複排除後6件（**P0: 0** / P1: 4 / P2: 2）。
+  **FLW-REV-027のP0/P1 7件はすべて解消**（SYN-001〜007 → FLW-TSK-115〜121）。
+  **本レビューのP1 4件はすべて新規**であり、うち3件は「是正自体が新しい停止条件を
+  持ち込んだ」類型である（FLW-REV-018:SYN-005／FLW-REV-019:SYN-003と同型）。
+  最重要はSYN-001: probeの`acl-not-owner-only`判定により**既定umaskで作ったworktree rootが
+  必ず拒否される**。closed resultはreasonを載せるがoperator actionを持たず、runbookにも
+  記述が無いため、gatingを外しても create/resume は機能しない。
+  SYN-002: `_supervised_git`が`output_limit_bytes`を渡さず既定8 MiBを使うため、
+  必須snapshot経路（`git status --porcelain=v2 -z --untracked-files=all`）が
+  大規模repositoryで失敗する。FLW-TSK-117以前は無制限で成功していた経路であり可用性の後退。
+  SYN-003: `_owner()`がWindowsで無条件に`(None,False,False)`を返すため構造的に常に不支持で、
+  §1.1の3 OS保証と一致しない。§13.5の「未実施」は未実走ではなく実装不足による不可である。
+  SYN-004: 旧形式chainの復旧手段がfail-closed以外に無い（§4.2が約束するdoctor手順が未実装）。
+  Gate blocking条件GP-001〜004を起票（全件`basis: verified`／`response: accepted`）。
+  **PASSにしなかった根拠**: 新規P1 4件、production既定dispatcherのE2Eと`target OS` 3種の
+  実観測が未達（前者はgatingで構造的に不可、後者はLinuxのみ）、FLW-CON-008の7観点に
+  `実証済み`が0件。**FAILにしなかった根拠**: P0が0件、riskがfloorクリア、
+  新規P1はすべてfail-closedでデータ破壊や誤完了主張に至る経路が無い。
+  carried_overは93件（FLW-REV-027時点86件＋本レビューでtrackedとした7件）。
+  worktree operationはgatedを維持し、Promotion Gateは通さない。
+
 - 2026-08-24 FLW-REV-028前の反映3件: 再レビューへ出す前に、実態と証跡の食い違いを潰した。
   (1) **FLW-TSK-115〜122をimplementing→doneへ遷移**した。8件すべて完了条件を1件ずつ照合済み。
   最後の障害だった`FLW-TSK-115`の「全suite green」はconfirmation実走で解けた（122/122 done）。

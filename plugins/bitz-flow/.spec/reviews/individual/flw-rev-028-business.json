@@ -1,0 +1,28 @@
+{
+ "perspective": "business",
+ "dimensions": [
+  {
+   "name": "価値の提供",
+   "weight": 0.5,
+   "score": 2,
+   "findings": [
+    {
+     "id": "BIZ-101",
+     "severity": "major",
+     "location": "cli.py _GATED_HANDLERS / ROADMAP フェーズ3",
+     "title": "是正は完了したが利用可能な価値は依然 0 で、公開判断の材料が揃っていない",
+     "description": "SI-FLW-084〜091 の是正で安全核は閉じたが worktree operation は全 8 件が gated のままで利用者が使える機能は増えていない。North Star（M0 read-only）は達成済み未出荷が継続している。加えて OPS-101 が未解決のため gating を外しても即座には使えない。",
+     "recommendation": "OPS-101 を解消したうえで create/resume/audit の限定公開を独立した裁定として提示する。gating 解除の判断材料に「実際に使える状態か」を含める。"
+    }
+   ]
+  },
+  {
+   "name": "スコープ規律",
+   "weight": 0.5,
+   "score": 4,
+   "findings": []
+  }
+ ],
+ "weighted_score": 3.0,
+ "summary": "是正の scope 規律は良好で、単純化方針を維持しつつ機能量を増やさずに安全核を閉じた。一方で利用者が得た価値は依然 0 であり gating を外しても既定 umask の壁で使えない。公開判断には安全性の証明に加えて「実際に使えるか」の確認が必要である。"
+}
