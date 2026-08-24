@@ -1,5 +1,13 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-CON-008の機械検証を実装: `tests/test_flow_design_completion_contract.py`を追加し、
+  規範を散文から機械検査へ移した（14 test。全体2288 passed / 1 skipped）。対象は`implements`に
+  FLW-CON-008を宣言した設計と、発効日2026-08-24以降のdesign GatePassageに限る（FLW-GATE-001〜005へは
+  非遡及）。対象設計0件はFAILさせ、規範の骨抜きを検出する。6変異（架空test ID・fixture注入testの引用・
+  必須列削除・終局状態欠落・deadlineの定性表現・platform欠落）で全件が検出されることを確認した。
+  副次的にテストが`FLW-DSN-017` §13.1行1〜3のfile単位引用を検出したため、production black-boxである
+  `test_reachable_codes_are_still_m0_only`へ精密化した。FLW-CON-008は`draft`のままで、承認は人間裁定。
+
 - 2026-08-24 FLW-REV-027是正の設計着手: 振り返り§5-§6の「7観点」「6設計成果物」が裁定記録の散文に
   留まり機械検証されていなかったため、`FLW-CON-008`（設計完了判定の実証義務）をdraft起票して規範化した。
   あわせて`FLW-DSN-017`を2.3へ改訂し、§13へ6表（垂直接続図・状態遷移意味表・crash-point表・

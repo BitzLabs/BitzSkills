@@ -1,6 +1,6 @@
 ---
 id: FLW-CON-008
-version: 1.1
+version: 1.2
 status: draft
 domain: governance
 priority: high
@@ -32,10 +32,18 @@ confidence: high
   - WHEN design GateのGatePassageを起票する THEN bitz-flowは接続完全性、失敗原子性、有限収束性、platform実在性、証跡妥当性、legacy排除、状態意味保存の7観点それぞれへ`実証済み`または`未実装境界`もしくは`検証計画`のいずれかを記録すること SHALL
   - WHEN 7観点のいずれかが`実証済み`でない THEN bitz-flowは当該観点をDesign GateのPASS根拠にせず、未実装境界または検証計画として明示すること SHALL
   - WHEN 設計成果物が接続を成立済みと表記する THEN bitz-flowはtest fixture上の接続または予定上の接続をその根拠にしないこと SHALL
-- **検証手段**: `tests/test_flow_design_completion_contract.py`が`.spec/design/*.md`のうち
-  `status: active`のものと`.spec/gates/*.md`のうち`gate: design`のものを動的収集し、6表の実在、
-  各表の必須列、垂直接続図が参照するproduction test IDの実在、GatePassageの7観点記録を検査する。
-  test IDの実在検査は`tests/`配下の収集結果と照合する。
+- **検証手段**: `tests/test_flow_design_completion_contract.py`が次を機械検証する。
+  対象設計は`implements`に本要件を宣言したもの（動的収集）、対象Gateは`gate: design`かつ
+  `date`が本要件の発効日（Revision History 1.0 の日付を要件自身から読む）以降で、
+  対象設計を`scope`に含むものとする。発効前のGatePassageへは遡及適用しない。
+  検査項目は、6表の実在と必須列、垂直接続図が名指しするproduction test IDの実在、
+  当該testが`handlers=`／`_GATED_HANDLERS`のfixture注入を使っていないこと、
+  4終局状態の網羅、liveness budgetのdeadlineが数値であること、
+  support registryの全platformがplatform reality表に現れること、
+  legacy exclusion表のnegative test IDの実在、GatePassageの7観点記録、
+  7観点の現状表が各観点へ判定可能な表記を持つことである。
+  **対象設計が0件になった場合はFAILさせる**（規範が適用対象を失ったことを検出するため）。
 - **Revision History**:
+  - 1.2 (2026-08-24) 検証手段を実装（tests/test_flow_design_completion_contract.py）の実態へ一致させ、対象収集条件・発効日の非遡及・対象0件時のFAILを明記
   - 1.1 (2026-08-24) 是正期間中の未実装行を`未実装`表記で許容し、架空test IDとfixture注入testの記載を禁止する形へ精密化
   - 1.0 (2026-08-24) FLW-REV-027の振り返り§5-§6を規範化してdraft起票（裁定参照: .spec/reports/decision-2026-08-24-flw-rev-027-remediation.md）

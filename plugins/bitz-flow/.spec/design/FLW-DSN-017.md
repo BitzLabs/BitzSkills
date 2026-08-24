@@ -437,9 +437,9 @@ fixture専用注入口であり、**本表のproduction test ID欄にfixture注�
 
 | # | フロー | production入口 | 経由component | 最終永続証跡 | 利用者出力 | 所有task | production test ID |
 |---:|---|---|---|---|---|---|---|
-| 1 | `repo.inspect` | `_HANDLERS` 到達 | RepositoryObserver | なし（read-only） | `OK` + snapshot | M0既存 | `tests/test_flow_m1_contract_rows.py` |
-| 2 | `git.status` | `_HANDLERS` 到達 | RepositoryObserver | なし（read-only） | `OK` + status | M0既存 | `tests/test_flow_m1_contract_rows.py` |
-| 3 | `git.diff-summary` | `_HANDLERS` 到達 | RepositoryObserver | なし（read-only） | `OK` + diff | M0既存 | `tests/test_flow_m1_contract_rows.py` |
+| 1 | `repo.inspect` | `_HANDLERS` 到達 | RepositoryObserver | なし（read-only） | `OK` + snapshot | M0既存 | `tests/test_flow_m1_contract_rows.py::test_reachable_codes_are_still_m0_only` |
+| 2 | `git.status` | `_HANDLERS` 到達 | RepositoryObserver | なし（read-only） | `OK` + status | M0既存 | `tests/test_flow_m1_contract_rows.py::test_reachable_codes_are_still_m0_only` |
+| 3 | `git.diff-summary` | `_HANDLERS` 到達 | RepositoryObserver | なし（read-only） | `OK` + diff | M0既存 | `tests/test_flow_m1_contract_rows.py::test_reachable_codes_are_still_m0_only` |
 | 4 | `worktree.*` 全8件の非公開 | `_HANDLERS` 非到達 | dispatcher の`UNSUPPORTED`写像 | なし | `UNSUPPORTED` / `command-unavailable` | 113 | `tests/test_flow_m2_runtime.py::test_worktree_remains_unreachable_from_public_dispatcher` |
 | 5 | 旧signed-capability拒否 | `--capability-file`検出 | cli.py L916-L930 | なし | `UNSUPPORTED` / `unsupported-approval-mode` | 085 | **未実装**（現行testはfixture注入経路） |
 | 6 | `worktree.create` plan | **未接続** | PlatformProbe → ApprovalContext → RuntimePlan | plan digest | `OK` + `operation_id` | 084, 085 | **未実装** |
