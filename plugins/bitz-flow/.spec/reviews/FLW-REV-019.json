@@ -66,7 +66,12 @@
       "detail": "`result.py` の `ALLOWED_CAUSES` にだけ足し、`result-v1.schema.json` へ足していない。`build_result` の cause 検査が schema ではなく実装定数を見ているため素通りし、`M2-FLT-023` は cause を走査しない。**PR #292 の `ORPHAN` とまったく同じ型**であり、出口条件4を再び破っている。",
       "recommendation": "cause の語彙を schema と実装で単一の正から導出し、三者照合の対象に加える。",
       "tracked_by": "SI-FLW-072",
-      "status": "open"
+      "status": "resolved",
+      "resolved_by": [
+        "plugins/bitz-flow/skills/flow-core/schemas/result-v1.schema.json",
+        "tests/test_flow_contract_vocabulary.py"
+      ],
+      "resolution_note": "SI-FLW-091 の照合で解消を確認した。cause の閉集合へ `quarantined` が登録され、`worktree_state` / `release_class` を含む 12 namespace が FLW-CON-007 の三者照合（設計表・schema・実装定数）の対象に入っている。指摘対象の `ORPHAN` は値ごと廃止済み。"
     },
     {
       "id": "FLW-REV-019:SYN-004",
@@ -325,5 +330,6 @@
     "FLW-REV-019:SYN-007（fail-closed が脅威を閉じていない）を解消する（SI-FLW-073）",
     "記録層を1 PR で一括追随させる（SI-FLW-074）",
     "GP-006（M2 実績の確定と M3〜M5 予算の再校正）を人間が裁定する"
-  ]
+  ],
+  "ledger_contract": "SI-FLW-091"
 }

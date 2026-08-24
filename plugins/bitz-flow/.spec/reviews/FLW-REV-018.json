@@ -94,7 +94,12 @@
       "detail": "PR #292 が公開 result へ載せた `worktree_state: \"ORPHAN\"` / `quarantine` / `recovery_class` は result schema に定義が無く、enum 三者照合の対象にも入っていない。**是正が新しい不整合を作った**形である。",
       "recommendation": "新設 field を result schema の閉集合へ登録し、enum 三者照合の対象に入れる。",
       "tracked_by": "SI-FLW-067",
-      "status": "open"
+      "status": "resolved",
+      "resolved_by": [
+        "plugins/bitz-flow/skills/flow-core/schemas/result-v1.schema.json",
+        "tests/test_flow_contract_vocabulary.py"
+      ],
+      "resolution_note": "SI-FLW-091 の照合で解消を確認した。cause の閉集合へ `quarantined` が登録され、`worktree_state` / `release_class` を含む 12 namespace が FLW-CON-007 の三者照合（設計表・schema・実装定数）の対象に入っている。指摘対象の `ORPHAN` は値ごと廃止済み。"
     },
     {
       "id": "FLW-REV-018:SYN-006",
@@ -321,5 +326,6 @@
     "M2 出口条件4（enum 三者照合）の回帰を解消する（SI-FLW-067）",
     "FLW-REV-018:SYN-010（TTL 時限故障）を期限内に処置する（SI-FLW-070）",
     "GP-006（M3 予算と M2 残債の計上）を人間が裁定する"
-  ]
+  ],
+  "ledger_contract": "SI-FLW-091"
 }

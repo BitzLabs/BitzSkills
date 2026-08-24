@@ -3,150 +3,361 @@
   "review_id": "FLW-REV-027",
   "verdict": "FAIL",
   "aggregate_score": 2.12,
-  "perspective_scores": {"consistency": 2.65, "data-integrity": 2.0, "operations": 2.3, "risk": 1.33, "business": 2.85},
-  "findings_summary": {"before_dedup": 23, "after_dedup": 10, "p0": 2, "p1": 5, "p2": 3, "p3": 0},
+  "perspective_scores": {
+    "consistency": 2.65,
+    "data-integrity": 2.0,
+    "operations": 2.3,
+    "risk": 1.33,
+    "business": 2.85
+  },
+  "findings_summary": {
+    "before_dedup": 23,
+    "after_dedup": 10,
+    "p0": 2,
+    "p1": 5,
+    "p2": 3,
+    "p3": 0
+  },
   "findings": [
     {
-      "id": "FLW-REV-027:SYN-001", "priority": "P0", "severity": "critical",
-      "source": ["RVC-101", "BIZ-101", "BIZ-201", "OPS-101", "OPS-401", "RSK-201", "DIN-202", "RSK-401"],
+      "id": "FLW-REV-027:SYN-001",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "RVC-101",
+        "BIZ-101",
+        "BIZ-201",
+        "OPS-101",
+        "OPS-401",
+        "RSK-201",
+        "DIN-202",
+        "RSK-401"
+      ],
       "title": "実環境platform evidenceからproduction CLIへの経路が無い",
       "detail": "create/resumeのCLIは必須platform_evidenceをplanへ渡さず常に停止する。adapterは合成Observationの評価器に留まり、Windows/case-insensitive targetのnative/folded componentもruntimeへ伝播しない。fixture注入テストはproduction接続を証明しない。",
       "recommendation": "OS別read-only probeをdoctorとplanへ共通接続し、観測不能をUNSUPPORTEDへ閉じる。既定dispatcherと実CLI processで3platformのplan/apply/拒否E2Eを実施する。",
-      "tracked_by": "SI-FLW-084", "status": "tracked"
+      "tracked_by": "SI-FLW-084",
+      "status": "tracked"
     },
     {
-      "id": "FLW-REV-027:SYN-002", "priority": "P0", "severity": "critical",
-      "source": ["RVC-301", "OPS-301", "RSK-202"],
+      "id": "FLW-REV-027:SYN-002",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "RVC-301",
+        "OPS-301",
+        "RSK-202"
+      ],
       "title": "create/resume CLIが廃止済み承認契約と旧contextを参照する",
       "detail": "evidence接続後もCLIはresolve_approval_mode、capability解析、現ApprovalContextに無いworktree_dir_guard_keyを使用するため、未捕捉例外またはM2で禁止した旧承認経路へ逸脱する。",
       "recommendation": "CLIをtarget_collision_keyとplan-digestだけを使う実装へ置換し、旧入力は内容を解析せず共通preflightで即時拒否する。旧参照不在をarchitecture testで固定する。",
-      "tracked_by": "SI-FLW-085", "status": "tracked"
+      "tracked_by": "SI-FLW-085",
+      "status": "tracked"
     },
     {
-      "id": "FLW-REV-027:SYN-003", "priority": "P1", "severity": "major",
-      "source": ["OPS-102", "RSK-203"],
+      "id": "FLW-REV-027:SYN-003",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "OPS-102",
+        "RSK-203"
+      ],
       "title": "Git childの有限timeoutと30秒terminal resultが未実装",
       "detail": "RepositoryObserverとmutation Git childのsubprocessにtimeoutがなく、hang時にlease・markerを保持したままclosed resultへ収束できない。上限規模の実負荷証跡も無い。",
       "recommendation": "全Git childを共通TimeoutBudget付きsupervisorへ移し、terminate/kill/wait、出力上限、reconciliation reserveをhang faultと上限規模fixtureで検証する。",
-      "tracked_by": "SI-FLW-086", "status": "tracked"
+      "tracked_by": "SI-FLW-086",
+      "status": "tracked"
     },
     {
-      "id": "FLW-REV-027:SYN-004", "priority": "P1", "severity": "major",
-      "source": ["DIN-101"],
+      "id": "FLW-REV-027:SYN-004",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "DIN-101"
+      ],
       "title": "intentと緊急receiptのdurable確定間にcrash空隙がある",
       "detail": "INTENT_DURABLE eventを先にfsyncし、緊急receiptを別publishするため、その間のcrashで有効な緊急receiptを持たない不健全chainが永続化する。全crash injectionでhealthy chain 100%という受入条件を満たさない。",
       "recommendation": "intentと緊急receiptを単一durable recordにするか中間状態を導入し、event publish直後を含む全境界のkill testを追加する。",
-      "tracked_by": "SI-FLW-087", "status": "tracked"
+      "tracked_by": "SI-FLW-087",
+      "status": "tracked"
     },
     {
-      "id": "FLW-REV-027:SYN-005", "priority": "P1", "severity": "major",
-      "source": ["DIN-201"],
+      "id": "FLW-REV-027:SYN-005",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "DIN-201"
+      ],
       "title": "QUARANTINED operationをconfirmed-completeへ誤分類できる",
       "detail": "auditはQUARANTINEDをDONEと同じ条件で扱い、失敗時の現在snapshotがterminal receiptと一致すると完了を証明できない操作をconfirmed-completeにする。",
       "recommendation": "completeをDONEかつ予定postcondition成立時だけに限定し、QUARANTINEDは常にindeterminate/quarantineへ閉じる。requested/actual outcomeをreceiptへ束縛する。",
-      "tracked_by": "SI-FLW-088", "status": "tracked"
+      "tracked_by": "SI-FLW-088",
+      "status": "tracked"
     },
     {
-      "id": "FLW-REV-027:SYN-006", "priority": "P1", "severity": "major",
-      "source": ["DIN-102"],
+      "id": "FLW-REV-027:SYN-006",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "DIN-102"
+      ],
       "title": "reconcile closureがactive marker適格性の確認より先に追記される",
       "detail": "正常DONEやmarker欠落operationにもplanを作成でき、target closure追記後にpromotion marker検査が失敗する。不可逆closureだけが残り、二authorityの整合が分断される。",
       "recommendation": "planとapplyでcrash-held markerをclosure前に束縛・再検証し、正常DONEやclosed operationへreconcileを提示しない。lock同時保持禁止を保ったcrash収束テストを追加する。",
-      "tracked_by": "SI-FLW-089", "status": "tracked"
+      "tracked_by": "SI-FLW-089",
+      "status": "tracked"
     },
     {
-      "id": "FLW-REV-027:SYN-007", "priority": "P1", "severity": "major",
-      "source": ["RVC-201", "BIZ-201", "BIZ-401"],
+      "id": "FLW-REV-027:SYN-007",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "RVC-201",
+        "BIZ-201",
+        "BIZ-401"
+      ],
       "title": "verified・task done・予算がproduction接続完了を過大主張する",
       "detail": "TSK-109/111/114とFLW-NFR-014は完了・verifiedだが、実環境probe、production dispatcher、timeout、追加crash境界を検証していない。再見積もりにも是正工数が含まれない。",
       "recommendation": "検証仕様とtask境界を再構成し、実環境・production evidenceを追加してから状態と予算を再判定する。Promotion Gateは最終レビューPASSまで停止する。",
-      "tracked_by": "SI-FLW-090", "status": "tracked"
+      "tracked_by": "SI-FLW-090",
+      "status": "tracked"
     },
     {
-      "id": "FLW-REV-027:SYN-008", "priority": "P2", "severity": "minor",
-      "source": ["RVC-202", "BIZ-102"],
+      "id": "FLW-REV-027:SYN-008",
+      "priority": "P2",
+      "severity": "minor",
+      "source": [
+        "RVC-202",
+        "BIZ-102"
+      ],
       "title": "FLW-FR-006の残作業がtask台帳へ直接追跡されない",
       "detail": "create/resume実装taskがFLW-NFR-014だけをimplementsし、FLW-FR-006はimplementingのままM3移送したfinish/discardを含むため、提供済み範囲と残量が集計しにくい。",
       "recommendation": "create/resume是正taskをFLW-FR-006へ直接紐づけ、finish/discardのM3境界と未提供範囲を明示する。",
-      "tracked_by": "SI-FLW-090", "status": "tracked"
+      "tracked_by": "SI-FLW-090",
+      "status": "tracked"
     },
     {
-      "id": "FLW-REV-027:SYN-009", "priority": "P2", "severity": "minor",
-      "source": ["OPS-201", "BIZ-301"],
+      "id": "FLW-REV-027:SYN-009",
+      "priority": "P2",
+      "severity": "minor",
+      "source": [
+        "OPS-201",
+        "BIZ-301"
+      ],
       "title": "runbookにplatform診断完結性と責任者・引継ぎ条件が無い",
       "detail": "安全な停止手順はあるが、doctorはplatform適合を確定できず、長期quarantineの責任分界、判断期限、証跡引継ぎ先も未定義である。",
       "recommendation": "doctorへprobe理由を統合し、runbookへ役割、引継ぎ条件、証跡参照、再判定Gateを追加する。",
-      "tracked_by": "SI-FLW-084", "status": "tracked"
+      "tracked_by": "SI-FLW-084",
+      "status": "tracked"
     },
     {
-      "id": "FLW-REV-027:SYN-010", "priority": "P2", "severity": "minor",
-      "source": ["review-ledger-audit"],
+      "id": "FLW-REV-027:SYN-010",
+      "priority": "P2",
+      "severity": "minor",
+      "source": [
+        "review-ledger-audit"
+      ],
       "title": "過去レビューの未解決P0/P1が後続PASSから欠落している",
       "detail": "過去9レビューにstatus未解決のP0/P1が88件残る一方、FLW-REV-026のcarried_overは空である。後続修正済みでも原記録のstatusが更新されておらず、機械台帳上は矛盾する。",
       "recommendation": "88件を実在する是正証跡へ照合してresolvedまたは現行issueへ追跡し、carried_over生成の機械検査を追加する。",
-      "tracked_by": "SI-FLW-091", "status": "tracked"
+      "tracked_by": "SI-FLW-091",
+      "status": "tracked"
     }
   ],
   "gate_preconditions": [
     {
-      "id": "GP-001", "kind": "blocking", "basis": "verified", "gp_kind": "behavioral",
+      "id": "GP-001",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "behavioral",
       "ears": "WHEN production CLIでworktree.createまたはresumeを要求する THEN bitz-flow SHALL 実環境からclosed PlatformEvidenceを取得し、supported時だけplanからapplyへ到達する",
       "evidence": "cli.py:_op_worktree と worktree_runtime.py:plan の直接照合、SI-FLW-084",
       "statement": "実環境probeとproduction E2Eを完了する。",
-      "response": {"status": "accepted", "original": "WHEN production CLIでworktree.createまたはresumeを要求する THEN bitz-flow SHALL 実環境からclosed PlatformEvidenceを取得し、supported時だけplanからapplyへ到達する", "normalized": "platform evidenceの単一production経路を実装する", "target": "SI-FLW-084"}
+      "response": {
+        "status": "accepted",
+        "original": "WHEN production CLIでworktree.createまたはresumeを要求する THEN bitz-flow SHALL 実環境からclosed PlatformEvidenceを取得し、supported時だけplanからapplyへ到達する",
+        "normalized": "platform evidenceの単一production経路を実装する",
+        "target": "SI-FLW-084"
+      }
     },
     {
-      "id": "GP-002", "kind": "blocking", "basis": "verified", "gp_kind": "behavioral",
+      "id": "GP-002",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "behavioral",
       "ears": "WHEN M2 worktree CLIが承認入力を処理する THEN bitz-flow SHALL plan-digestだけを選択し、旧signed-capability入力を解析せず即時拒否する",
       "evidence": "cli.pyのresolve_approval_mode・worktree_dir_guard_key参照、SI-FLW-085",
       "statement": "旧承認選択経路と旧context参照を除去する。",
-      "response": {"status": "accepted", "original": "WHEN M2 worktree CLIが承認入力を処理する THEN bitz-flow SHALL plan-digestだけを選択し、旧signed-capability入力を解析せず即時拒否する", "normalized": "CLIをplan-digest専用契約へ置換する", "target": "SI-FLW-085"}
+      "response": {
+        "status": "accepted",
+        "original": "WHEN M2 worktree CLIが承認入力を処理する THEN bitz-flow SHALL plan-digestだけを選択し、旧signed-capability入力を解析せず即時拒否する",
+        "normalized": "CLIをplan-digest専用契約へ置換する",
+        "target": "SI-FLW-085"
+      }
     },
     {
-      "id": "GP-003", "kind": "blocking", "basis": "verified", "gp_kind": "behavioral",
+      "id": "GP-003",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "behavioral",
       "ears": "WHEN Git childがhangまたは出力上限超過になる THEN bitz-flow SHALL 有限時間内にchildを監督してclosed terminal resultへ収束する",
       "evidence": "worktree_runtime.pyのtimeout無しsubprocess.runとFLW-NFR-014、SI-FLW-086",
       "statement": "有限TimeoutBudgetとfault/load検証を実装する。",
-      "response": {"status": "accepted", "original": "WHEN Git childがhangまたは出力上限超過になる THEN bitz-flow SHALL 有限時間内にchildを監督してclosed terminal resultへ収束する", "normalized": "全Git childへ有限deadlineを強制する", "target": "SI-FLW-086"}
+      "response": {
+        "status": "accepted",
+        "original": "WHEN Git childがhangまたは出力上限超過になる THEN bitz-flow SHALL 有限時間内にchildを監督してclosed terminal resultへ収束する",
+        "normalized": "全Git childへ有限deadlineを強制する",
+        "target": "SI-FLW-086"
+      }
     },
     {
-      "id": "GP-004", "kind": "blocking", "basis": "verified", "gp_kind": "behavioral",
+      "id": "GP-004",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "behavioral",
       "ears": "WHEN intentをdurable公開する THEN bitz-flow SHALL 同じ確定境界で有効な緊急receiptを必ず利用可能にする",
       "evidence": "worktree_transaction.py:prepare_intentのpublish順序、SI-FLW-087",
       "statement": "intentと緊急receiptのcrash空隙を除去する。",
-      "response": {"status": "accepted", "original": "WHEN intentをdurable公開する THEN bitz-flow SHALL 同じ確定境界で有効な緊急receiptを必ず利用可能にする", "normalized": "全crash境界でhealthy chainを維持する", "target": "SI-FLW-087"}
+      "response": {
+        "status": "accepted",
+        "original": "WHEN intentをdurable公開する THEN bitz-flow SHALL 同じ確定境界で有効な緊急receiptを必ず利用可能にする",
+        "normalized": "全crash境界でhealthy chainを維持する",
+        "target": "SI-FLW-087"
+      }
     },
     {
-      "id": "GP-005", "kind": "blocking", "basis": "verified", "gp_kind": "behavioral",
+      "id": "GP-005",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "behavioral",
       "ears": "WHEN auditがQUARANTINED operationを分類する THEN bitz-flow SHALL confirmed-completeを返さずquarantineとして停止する",
       "evidence": "worktree_recovery.py:auditのstate集合、SI-FLW-088",
       "statement": "QUARANTINED誤陽性を除去する。",
-      "response": {"status": "accepted", "original": "WHEN auditがQUARANTINED operationを分類する THEN bitz-flow SHALL confirmed-completeを返さずquarantineとして停止する", "normalized": "complete判定をDONEへ限定する", "target": "SI-FLW-088"}
+      "response": {
+        "status": "accepted",
+        "original": "WHEN auditがQUARANTINED operationを分類する THEN bitz-flow SHALL confirmed-completeを返さずquarantineとして停止する",
+        "normalized": "complete判定をDONEへ限定する",
+        "target": "SI-FLW-088"
+      }
     },
     {
-      "id": "GP-006", "kind": "blocking", "basis": "verified", "gp_kind": "behavioral",
+      "id": "GP-006",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "behavioral",
       "ears": "WHEN reconcile closureを追記する THEN bitz-flow SHALL crash-held active markerのoperationとbundle適格性をclosure前に再検証する",
       "evidence": "worktree_recovery.py:reconcileとworktree_promotion.py:release_reconciled_operationの順序、SI-FLW-089",
       "statement": "marker不適格時のclosureを0件にする。",
-      "response": {"status": "accepted", "original": "WHEN reconcile closureを追記する THEN bitz-flow SHALL crash-held active markerのoperationとbundle適格性をclosure前に再検証する", "normalized": "二authorityの適格性をclosure前に確認する", "target": "SI-FLW-089"}
+      "response": {
+        "status": "accepted",
+        "original": "WHEN reconcile closureを追記する THEN bitz-flow SHALL crash-held active markerのoperationとbundle適格性をclosure前に再検証する",
+        "normalized": "二authorityの適格性をclosure前に確認する",
+        "target": "SI-FLW-089"
+      }
     },
     {
-      "id": "GP-007", "kind": "blocking", "basis": "verified", "gp_kind": "artifact",
+      "id": "GP-007",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "artifact",
       "evidence": "FLW-NFR-014 status verified、TSK-109/111/114 status done、production経路未接続の直接照合",
       "statement": "SI-FLW-084〜089の是正証跡を検証仕様・task・予算へ反映し、実装後レビューでPASSを得る。",
-      "response": {"status": "accepted", "original": "SI-FLW-084〜089の是正証跡を検証仕様・task・予算へ反映し、実装後レビューでPASSを得る。", "normalized": "verificationとtask台帳をproduction実態へ揃える", "target": "SI-FLW-090"}
+      "response": {
+        "status": "accepted",
+        "original": "SI-FLW-084〜089の是正証跡を検証仕様・task・予算へ反映し、実装後レビューでPASSを得る。",
+        "normalized": "verificationとtask台帳をproduction実態へ揃える",
+        "target": "SI-FLW-090"
+      }
     }
   ],
   "carried_over": [
-    "FLW-REV-006:SYN-001", "FLW-REV-006:SYN-002", "FLW-REV-006:SYN-003", "FLW-REV-006:SYN-004", "FLW-REV-006:SYN-005", "FLW-REV-006:SYN-006", "FLW-REV-006:SYN-007", "FLW-REV-006:SYN-008", "FLW-REV-006:SYN-009",
-    "FLW-REV-011:SYN-001", "FLW-REV-011:SYN-002", "FLW-REV-011:SYN-003", "FLW-REV-011:SYN-004", "FLW-REV-011:SYN-005", "FLW-REV-011:SYN-006", "FLW-REV-011:SYN-007", "FLW-REV-011:SYN-008", "FLW-REV-011:SYN-009", "FLW-REV-011:SYN-010", "FLW-REV-011:SYN-011", "FLW-REV-011:SYN-012", "FLW-REV-011:SYN-013", "FLW-REV-011:SYN-014", "FLW-REV-011:SYN-015", "FLW-REV-011:SYN-016", "FLW-REV-011:SYN-017", "FLW-REV-011:SYN-018",
-    "FLW-REV-013:SYN-001", "FLW-REV-013:SYN-002", "FLW-REV-013:SYN-003", "FLW-REV-013:SYN-004", "FLW-REV-013:SYN-005", "FLW-REV-013:SYN-006", "FLW-REV-013:SYN-007", "FLW-REV-013:SYN-008", "FLW-REV-013:SYN-009", "FLW-REV-013:SYN-010", "FLW-REV-013:SYN-011", "FLW-REV-013:SYN-012", "FLW-REV-013:SYN-013", "FLW-REV-013:SYN-014", "FLW-REV-013:SYN-015", "FLW-REV-013:SYN-016", "FLW-REV-013:SYN-017", "FLW-REV-013:SYN-018", "FLW-REV-013:SYN-019", "FLW-REV-013:SYN-020", "FLW-REV-013:SYN-021", "FLW-REV-013:SYN-022", "FLW-REV-013:SYN-023",
+    "FLW-REV-006:SYN-001",
+    "FLW-REV-006:SYN-002",
+    "FLW-REV-006:SYN-003",
+    "FLW-REV-006:SYN-004",
+    "FLW-REV-006:SYN-005",
+    "FLW-REV-006:SYN-006",
+    "FLW-REV-006:SYN-007",
+    "FLW-REV-006:SYN-008",
+    "FLW-REV-006:SYN-009",
+    "FLW-REV-011:SYN-001",
+    "FLW-REV-011:SYN-002",
+    "FLW-REV-011:SYN-003",
+    "FLW-REV-011:SYN-004",
+    "FLW-REV-011:SYN-005",
+    "FLW-REV-011:SYN-006",
+    "FLW-REV-011:SYN-007",
+    "FLW-REV-011:SYN-008",
+    "FLW-REV-011:SYN-009",
+    "FLW-REV-011:SYN-010",
+    "FLW-REV-011:SYN-011",
+    "FLW-REV-011:SYN-012",
+    "FLW-REV-011:SYN-013",
+    "FLW-REV-011:SYN-014",
+    "FLW-REV-011:SYN-015",
+    "FLW-REV-011:SYN-016",
+    "FLW-REV-011:SYN-017",
+    "FLW-REV-011:SYN-018",
+    "FLW-REV-013:SYN-001",
+    "FLW-REV-013:SYN-002",
+    "FLW-REV-013:SYN-003",
+    "FLW-REV-013:SYN-004",
+    "FLW-REV-013:SYN-005",
+    "FLW-REV-013:SYN-006",
+    "FLW-REV-013:SYN-007",
+    "FLW-REV-013:SYN-008",
+    "FLW-REV-013:SYN-009",
+    "FLW-REV-013:SYN-010",
+    "FLW-REV-013:SYN-011",
+    "FLW-REV-013:SYN-012",
+    "FLW-REV-013:SYN-013",
+    "FLW-REV-013:SYN-014",
+    "FLW-REV-013:SYN-015",
+    "FLW-REV-013:SYN-016",
+    "FLW-REV-013:SYN-017",
+    "FLW-REV-013:SYN-018",
+    "FLW-REV-013:SYN-019",
+    "FLW-REV-013:SYN-020",
+    "FLW-REV-013:SYN-021",
+    "FLW-REV-013:SYN-022",
+    "FLW-REV-013:SYN-023",
     "FLW-REV-015:SYN-001",
-    "FLW-REV-016:SYN-002", "FLW-REV-016:SYN-003", "FLW-REV-016:SYN-004", "FLW-REV-016:SYN-005", "FLW-REV-016:SYN-006", "FLW-REV-016:SYN-007", "FLW-REV-016:SYN-008", "FLW-REV-016:SYN-009", "FLW-REV-016:SYN-010", "FLW-REV-016:SYN-011",
-    "FLW-REV-017:SYN-008", "FLW-REV-017:SYN-009",
-    "FLW-REV-018:SYN-001", "FLW-REV-018:SYN-002", "FLW-REV-018:SYN-003", "FLW-REV-018:SYN-004", "FLW-REV-018:SYN-005", "FLW-REV-018:SYN-006", "FLW-REV-018:SYN-007", "FLW-REV-018:SYN-008", "FLW-REV-018:SYN-009", "FLW-REV-018:SYN-010", "FLW-REV-018:SYN-011", "FLW-REV-018:SYN-012",
-    "FLW-REV-019:SYN-001", "FLW-REV-019:SYN-002", "FLW-REV-019:SYN-003", "FLW-REV-019:SYN-004", "FLW-REV-019:SYN-005", "FLW-REV-019:SYN-006", "FLW-REV-019:SYN-007", "FLW-REV-019:SYN-008", "FLW-REV-019:SYN-009", "FLW-REV-019:SYN-010", "FLW-REV-019:SYN-011", "FLW-REV-019:SYN-012",
+    "FLW-REV-016:SYN-002",
+    "FLW-REV-016:SYN-003",
+    "FLW-REV-016:SYN-004",
+    "FLW-REV-016:SYN-005",
+    "FLW-REV-016:SYN-006",
+    "FLW-REV-016:SYN-007",
+    "FLW-REV-016:SYN-008",
+    "FLW-REV-016:SYN-009",
+    "FLW-REV-016:SYN-010",
+    "FLW-REV-016:SYN-011",
+    "FLW-REV-017:SYN-008",
+    "FLW-REV-017:SYN-009",
+    "FLW-REV-018:SYN-001",
+    "FLW-REV-018:SYN-002",
+    "FLW-REV-018:SYN-003",
+    "FLW-REV-018:SYN-004",
+    "FLW-REV-018:SYN-006",
+    "FLW-REV-018:SYN-007",
+    "FLW-REV-018:SYN-008",
+    "FLW-REV-018:SYN-009",
+    "FLW-REV-018:SYN-010",
+    "FLW-REV-018:SYN-011",
+    "FLW-REV-018:SYN-012",
+    "FLW-REV-019:SYN-001",
+    "FLW-REV-019:SYN-002",
+    "FLW-REV-019:SYN-004",
+    "FLW-REV-019:SYN-005",
+    "FLW-REV-019:SYN-006",
+    "FLW-REV-019:SYN-007",
+    "FLW-REV-019:SYN-008",
+    "FLW-REV-019:SYN-009",
+    "FLW-REV-019:SYN-010",
+    "FLW-REV-019:SYN-011",
+    "FLW-REV-019:SYN-012",
     "FLW-REV-020:SYN-001"
   ],
-  "conditional_items": []
+  "conditional_items": [],
+  "ledger_contract": "SI-FLW-091"
 }

@@ -1,5 +1,26 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-TSK-122（SI-FLW-091）実装: レビュー台帳の整合を機械検査する
+  `tests/test_flow_review_ledger.py`（8種・75 test）を追加した。runtime挙動は変えていない。
+  **実測して分かったこと**: `FLW-REV-027`の`carried_over` 88件は先行レビューの未解決
+  （open／tracked）P0/P1と**完全に一致**しており、欠落も余剰も0件だった。つまり本issueの
+  実体は「台帳が壊れている」ではなく**「台帳が正しいことを検査する仕組みが無い」**である。
+  照合は**機械的に証明できる2件のみ**実施した: `FLW-REV-018:SYN-005`と`FLW-REV-019:SYN-003`
+  （どちらもquarantine語彙のschema未登録）。`cause` enumへの`quarantined`登録と、
+  `worktree_state`／`release_class`を含む12 namespaceの`FLW-CON-007`三者照合対象化で
+  解消済みであることを確認し、`resolved_by`へschemaとtestを名指しした。指摘対象の`ORPHAN`は
+  値ごと廃止済み。`carried_over`は88→86。
+  **残る86件は据え置いた**。70件は今回の是正と話題が重ならず（予算・measurement system・
+  Issue駆動フロー等、M2の外側）、16件は話題が重なるが個別の証跡照合が要る。憶測での
+  一括resolved化は`FLW-REV-027`が指摘した過大主張そのものになるため行わない。
+  経緯は`.spec/reports/review-ledger-reconciliation.md`へ記録した。
+  `status` field導入前の記録（`FLW-REV-002`。`schema_version`なし）は免除するが、
+  **免除がP0/P1を隠していないこと**を別testで保証する（当該レビューはP2のみ）。
+  4変異（carried_overから未解決を1件落とす・証跡なしのresolved化・実在しないspec-issueを
+  tracked_byにする・実在しない証跡でのresolved化）で全件検出を確認。
+  bitz-flow 0.12.14→0.12.15。全体2464 passed / 43 skipped。
+  **これでSI-FLW-084〜091の8件すべてが実装完了した。**
+
 - 2026-08-24 FLW-TSK-121（SI-FLW-090 / FLW-REV-027:SYN-007 P1）実装: fixture検証と
   production接続を区別し、証跡の過大主張を解消した。runtime挙動は変えていない。
   **是正した過大主張3件**: (1)`FLW-NFR-014`の検証手段が「登録済みlocal filesystem
@@ -893,3 +914,5 @@
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiMDJhNDNiZjRjMjU0Zjc3ZjllMjc1NmFkYzYzM2U0OGRjNWEwMjUwZjBkYmE5NmU1NWJmMWVlNTQ3OTNmOGEyYSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiMWIyYTQ4NTIxMDc1ZjFjZGJlZGMyY2MyMjhhOWE5Y2Y0NTQ5ZGIxMGExNWQxZDcwODUxOWQ2MzBmNDkyZTFkZSIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjAiLCJldmVudF9pZCI6ImFhNWE3YmRmLTcyZjctNDY5Ni1iNjhkLTliN2JkNDAwMjU1MiIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjAubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAyOjAwOjUzLjM3OTY5MloifQ== -->
 - 2026-08-24 FLW-TSK-121: pending → implementing (claude)
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiMGEwYjg5NGZjMTFiNjM1MGM1NjMzMDgzY2Q5NThjZGZmNTM3NTc3ZTllNGUwYjNiYzRkYmNhNTAzZDI3N2ZmZSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiODQ3MWYwNTE1YWRiMzQwM2U0NzgzMDkzMjU3YjcyNmIyOTgxNzEyNWQzNjQxZThhMTY0ODQ3NGEyNDYyMmRlYSIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjEiLCJldmVudF9pZCI6IjhkMTczNjIxLWIyNDgtNGViYy04MmEzLWI2MjUzNjZiNjI0NSIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjEubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAyOjA5OjM0LjI3NDQ1NloifQ== -->
+- 2026-08-24 FLW-TSK-122: pending → implementing (claude)
+<!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiNWRiYTc0OTQ5MTBjOTk4NTlkMmIzYmFiNTVhYzkzMzcwNzQwNTJhNjEzZWM1ZjljYTg4NTNmNTk2ZDdmNzVlYSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiOWZmZDgzMTBkZjkxNDEyY2YzY2Y2OTliNmQ5M2JjY2RkYzIxMmIzZmNhNjU3NzYyOTgxOTRlM2QxMjMyZGUxNiIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjIiLCJldmVudF9pZCI6ImNiY2NhYmU5LTZiOTItNDQwNC05ZTE3LTA4ZDU5YThkNzZjMyIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjIubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAyOjMwOjAyLjgzNzY3MFoifQ== -->
