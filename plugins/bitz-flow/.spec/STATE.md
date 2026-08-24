@@ -1,5 +1,26 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-TSK-120（SI-FLW-089 / FLW-REV-027:SYN-006 P1）実装:
+  reconcile closureの追記前にactive markerの適格性を確定するよう順序を変更した。
+  **欠陥**: 旧実装は target lock → 再audit → closure追記（不可逆） → lock解放 →
+  promotion lockでmarker解放 の順で、marker適格性を検査するのは最後の
+  `release_reconciled_operation`だった。marker欠落・不正・不一致は**closure追記後**に
+  判明する。`worktree_promotion.inspect_active_marker()`（read-only・promotion lock下）を
+  追加し、`RecoveryAudit`へmarker束縛（`active_marker`）を持たせ、closure前に照合する。
+  **lock order不変条件は維持**: 適格性検査はpromotion lockを取りtarget lock取得前に解放する。
+  `tests/test_flow_m2_marker_eligibility.py`（9 test）でASTによる機械検査も置いた。
+  冪等性の扱いを1点調整した: closure済み・marker解放済み（closedのみ存在）の再試行は
+  拒否せず通す。下流の`transaction.reconcile`と`release_reconciled_operation`が
+  どちらも冪等であり、拒否すると「closure後marker closure前crashの再試行が収束する」という
+  受入基準を満たせなくなるため。marker/closedが**どちらも無い**場合だけ拒否する。
+  実装中に2件の付随修正: (1)`RecoveryAudit.digest`のcanonical JSONがtupleを扱えないため
+  marker束縛をlistへ落とした（`problems`と同じ扱い）。(2)再auditは marker を束縛しないため
+  digest比較から`active_marker`を中和した（`closure_digest`と同じ扱い。適格性は別途確定するため）。
+  4変異（適格性検査の除去＝旧挙動・bundle照合の除去・audit束縛照合の除去・
+  検査をtarget lock内へ移すlock order違反）で全件検出を確認。
+  §13.3 crash-point表の**全行が実装・検証済み**になった。bitz-flow 0.12.12→0.12.13。
+  全体2385 passed（confirmation失効の1件を除く）。
+
 - 2026-08-24 FLW-TSK-119（SI-FLW-088 / FLW-REV-027:SYN-005 P1）実装:
   `worktree_recovery.audit()`の分類条件から`QUARANTINED`を外し、`confirmed-complete`を
   `DONE`かつ予定postcondition成立時に限定した。**欠陥の機序**: `RESULT_DURABLE` eventの
@@ -844,3 +865,5 @@
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiMDkyNTEzZDg4OWNjMTMyZDk5Njg1NDQ4NzZiMzg5N2I0YzVmNmMwODViNmJjMGY1YzkyODA0NDg4MzQzYjJkNyIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiNjM2MmM5MDEyNzU0OGI3YjcxZGViMmM5NzY5NDQ3NzcxN2ZjODlhOTgwYjFiYzk2YTVkOGRiYmEzMjA2OTA0NCIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMTgiLCJldmVudF9pZCI6IjA0MzYxMThkLTdlOTMtNDU5ZC04YjA3LTQ5Nzc4Nzk2YjE4NyIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMTgubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAxOjE0OjUyLjQ0MDMxNloifQ== -->
 - 2026-08-24 FLW-TSK-119: pending → implementing (claude)
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiNDU0NTZiZDk3NTAyZDM0MGY0Y2RhMWQ5MTFiMWExNDQyYTE1YjA0YjdjMmY2Y2IxMzdmMjNhYjU1YjFmNjYzZiIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiOWM1ODlmOTYzN2NmZTlhODgwMTJlMzVlOWQzYTNlMjg2ZGExNGU1YTA4MTZjZTJkY2Y5OTA2MjE4NGJmY2I4YyIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMTkiLCJldmVudF9pZCI6ImNkMzE2MWQxLTVjYTgtNGU5Yy04Y2I4LTM0MjIzN2M2NzlkMyIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMTkubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAxOjI0OjAzLjE1MDU1OVoifQ== -->
+- 2026-08-24 FLW-TSK-120: pending → implementing (claude)
+<!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiMDJhNDNiZjRjMjU0Zjc3ZjllMjc1NmFkYzYzM2U0OGRjNWEwMjUwZjBkYmE5NmU1NWJmMWVlNTQ3OTNmOGEyYSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiMWIyYTQ4NTIxMDc1ZjFjZGJlZGMyY2MyMjhhOWE5Y2Y0NTQ5ZGIxMGExNWQxZDcwODUxOWQ2MzBmNDkyZTFkZSIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjAiLCJldmVudF9pZCI6ImFhNWE3YmRmLTcyZjctNDY5Ni1iNjhkLTliN2JkNDAwMjU1MiIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjAubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDAyOjAwOjUzLjM3OTY5MloifQ== -->

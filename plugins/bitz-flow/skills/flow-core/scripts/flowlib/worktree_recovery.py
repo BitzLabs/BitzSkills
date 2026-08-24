@@ -10,7 +10,7 @@ from __future__ import annotations
 import dataclasses
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Callable
+from typing import Callable, Mapping
 
 from . import worktree_approval as A
 from . import worktree_promotion as P
@@ -43,11 +43,20 @@ class RecoveryAudit:
     terminal_receipt_digest: str | None
     closure_digest: str | None
     problems: tuple[str, ...]
+    #: plan 時に束縛した active marker（`SI-FLW-089`）。closure 前の再検証で照合する。
+    #: 既存の read-only audit 呼び出しは None のままでよい。
+    active_marker: tuple[tuple[str, str], ...] | None = None
 
     @property
     def digest(self) -> str:
         value = dataclasses.asdict(self)
         value["problems"] = list(self.problems)
+        # canonical JSON は tuple を扱わない。marker 束縛も list へ落とす
+        # （`problems` と同じ扱い。`SI-FLW-089`）。
+        value["active_marker"] = (
+            None if self.active_marker is None
+            else [list(pair) for pair in self.active_marker]
+        )
         return sha256_digest(canonical_json_bytes(value))
 
 
@@ -91,7 +100,8 @@ class RecoveryError(RuntimeError):
 
 
 def audit(transaction: T.TargetTransaction, *, operation_id: str,
-          observed_snapshot: RepositorySnapshot) -> RecoveryAudit:
+          observed_snapshot: RepositorySnapshot,
+          active_marker: Mapping[str, object] | None = None) -> RecoveryAudit:
     """Classify one operation without acquiring locks or writing durable state."""
     validate_digest(operation_id)
     report = transaction.inspect(operation_id)
@@ -152,7 +162,19 @@ def audit(transaction: T.TargetTransaction, *, operation_id: str,
         terminal_digest,
         closure_digest,
         report.problems,
+        _marker_binding(active_marker),
     )
+
+
+def _marker_binding(value: Mapping[str, object] | None) -> tuple[tuple[str, str], ...] | None:
+    """marker を audit digest へ載せられる決定的な形へ正規化する。
+
+    dict のままでは `RecoveryAudit.digest` の canonical 化に依存が増えるため、
+    key 昇順の tuple にして順序を固定する。
+    """
+    if value is None:
+        return None
+    return tuple(sorted((str(key), str(item)) for key, item in value.items()))
 
 
 def build_reconcile_plan(*, audit_report: RecoveryAudit, decision: str,
@@ -195,6 +217,36 @@ def build_reconcile_plan(*, audit_report: RecoveryAudit, decision: str,
     )
 
 
+def _require_marker_eligibility(plan: ReconcilePlan,
+                                observed: Mapping[str, object] | None) -> None:
+    """closure 追記前に active marker の適格性を確定する（`SI-FLW-089`）。
+
+    reconcile は crash で保持されたままの marker を閉じる操作である。marker が
+    そもそも無い operation（正常 `DONE` で解放済み、または対象違い）へ reconcile を
+    案内してはならない。一方、closure と marker closure の間で停止した再試行は
+    **同一 decision なら単一 closure へ収束**させる必要があるため、既に closed の
+    場合は通す（下流の `transaction.reconcile` と `release_reconciled_operation` が
+    どちらも冪等である）。
+    """
+    if observed is None:
+        # active も closed も無い。閉じるべき crash-held marker が存在しない。
+        raise RecoveryError("STALE", "no crash-held active marker for this operation")
+
+    if observed.get("operation_id") is None:
+        # active は解放済みで closed だけがある = 完了済みの再試行。冪等に通す。
+        if observed.get("closed_digest") is None:
+            raise RecoveryError("STALE", "no crash-held active marker for this operation")
+        return
+
+    if observed.get("operation_id") != plan.original_operation_id:
+        raise RecoveryError("STALE", "active operation marker belongs to another operation")
+    if observed.get("bundle_digest") != plan.bundle_digest:
+        raise RecoveryError("STALE", "active operation marker bundle changed")
+    expected_marker = plan.audit.active_marker
+    if expected_marker is not None and _marker_binding(observed) != expected_marker:
+        raise RecoveryError("STALE", "active operation marker changed since the audit")
+
+
 def reconcile(*, transaction: T.TargetTransaction, plan: ReconcilePlan,
               confirm: str, now: datetime, nonce_unused: bool,
               observe: Callable[[], RepositorySnapshot], common_dir: str,
@@ -213,6 +265,21 @@ def reconcile(*, transaction: T.TargetTransaction, plan: ReconcilePlan,
     expected = plan.audit
     if expected.journal_head_digest is None or expected.fencing_token is None:
         raise RecoveryError("INDETERMINATE", "audit has no recoverable journal head")
+
+    # closure は不可逆である。marker の適格性は **追記の前** に確定させる
+    # （`SI-FLW-089`）。`release_reconciled_operation` の検証は closure の後に走るため、
+    # そこだけに頼ると「不適格と判明したときには既に追記済み」になる。
+    #
+    # promotion lock はここで取り、**target lock を取る前に解放する**。両方を同時に
+    # 保持しない（lock order 不変条件）。
+    try:
+        observed_marker = P.inspect_active_marker(
+            common_dir, operation_id=plan.original_operation_id
+        )
+    except P.PromotionError as exc:
+        raise RecoveryError(exc.code, exc.cause) from exc
+    _require_marker_eligibility(plan, observed_marker)
+
     try:
         lease = transaction.acquire_reconcile(
             operation_id=plan.original_operation_id,
@@ -237,8 +304,13 @@ def reconcile(*, transaction: T.TargetTransaction, plan: ReconcilePlan,
             operation_id=plan.original_operation_id,
             observed_snapshot=observe(),
         )
+        # marker の適格性は closure 前の `_require_marker_eligibility` が別途確定させる。
+        # ここの digest 比較は repository / journal / receipt / token の同一性を見る
+        # ものなので、marker 束縛は `closure_digest` と同様に比較から中和する。
         comparable = dataclasses.replace(
-            current, closure_digest=expected.closure_digest
+            current,
+            closure_digest=expected.closure_digest,
+            active_marker=expected.active_marker,
         )
         if comparable.digest != expected.digest:
             raise RecoveryError("STALE", "repository, journal, receipt, or token changed")

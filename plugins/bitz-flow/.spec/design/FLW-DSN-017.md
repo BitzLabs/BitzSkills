@@ -496,15 +496,15 @@ durable writeは4段階（temp write → file fsync → rename → directory fsy
 | 3 | `MUTATING` event | intent record確定済、Git未起動 | Git起動可、副作用未確定 | MutationCoordinator | 再観測して`DONE`／`QUARANTINED`を判定 | Git child再起動は禁止。再観測のみ |
 | 4 | Git child実行中 | 副作用0 | 副作用の有無が不明 | MutationCoordinator | 再観測。証明不能なら`INDETERMINATE` | 自動再実行不可（緊急receiptが明示） |
 | 5 | terminal receipt | 副作用確定済、緊急receiptのみ有効 | terminal確定、緊急をsupersede | TargetTransaction | chain最長有効prefixから終局判定 | 冪等（複数後継は`INDETERMINATE`） |
-| 6 | reconcile closure | marker適格性未確認 | closure確定、marker未解除 | RecoveryInspector | **marker適格性をpromotion lock下で再検証してから追記**（`SI-FLW-089`） | 同一decisionの再試行は単一closureへ収束 |
+| 6 | reconcile closure | marker適格性は確認済み（closure未追記） | closure確定、marker未解除 | RecoveryInspector | marker適格性はclosure**前**にpromotion lock下で確定済み（`FLW-TSK-120`）。marker解除のみ再試行 | 同一decisionの再試行は単一closureへ収束 |
 | 7 | promotion marker解除 | marker保持、promotion不可 | marker解除、promotion可 | PromotionBarrier | marker再検証 | 冪等 |
 
 **v2.2からの解消**: 旧設計は#2を2回のpublishに分割しており、その間の停止が
 「Git副作用0件かつnonce消費済みかつ`INDETERMINATE`」という回収不能状態を作っていた（§4.2）。
 2.3の統合によりこの空隙は構造的に消える。
 
-**実装状況**: #2は`FLW-TSK-118`で解消済み。4つのpublish step全点でkillして検証しており、rename前は`LOCKED`（receipt 0件）、rename後は`INTENT_DURABLE`（receipt 1件）となり、**「intent確定かつ緊急receipt無し」は生じない**（`tests/test_flow_m2_intent_atomicity.py::test_no_crash_point_leaves_a_durable_intent_without_an_emergency_receipt`）。#4の有限収束は`FLW-TSK-117`で結線済み。**未実装境界**は#6のmarker適格性再検証（`SI-FLW-089`）である。
-`target lock`と`promotion lock`を同時保持しないlock order不変条件を保護する。
+**実装状況**: #6は`FLW-TSK-120`で解消済み（適格性検査をclosure前へ移動）。#2は`FLW-TSK-118`で解消済み。4つのpublish step全点でkillして検証しており、rename前は`LOCKED`（receipt 0件）、rename後は`INTENT_DURABLE`（receipt 1件）となり、**「intent確定かつ緊急receipt無し」は生じない**（`tests/test_flow_m2_intent_atomicity.py::test_no_crash_point_leaves_a_durable_intent_without_an_emergency_receipt`）。#4の有限収束は`FLW-TSK-117`で結線済み。**crash-point表の全行が実装・検証済みになった。**
+`target lock`と`promotion lock`を同時保持しないlock order不変条件は維持している。適格性検査はpromotion lockを取り、**target lockを取る前に解放する**（`tests/test_flow_m2_marker_eligibility.py::test_promotion_lock_is_never_held_while_holding_the_target_lock`がASTで機械検査）。
 
 ### 13.4 liveness budget表
 
@@ -597,12 +597,12 @@ operationがgatedである間production入口から到達できず`command-unava
 | # | 観点 | 現状 | 根拠 |
 |---:|---|---|---|
 | 1 | 接続完全性 | **未実装境界** | 13.1 行6〜11が`_HANDLERS`非到達。evidence生成器不在は`FLW-TSK-116`で解消し、残るのはgatingのみ |
-| 2 | 失敗原子性 | **検証計画** | 13.3 #2は`FLW-TSK-118`で実装・全crash点で検証済み。#6のmarker適格性再検証は`SI-FLW-089`で是正予定 |
+| 2 | 失敗原子性 | **検証計画** | 13.3 全行が実装・検証済み（#2は`FLW-TSK-118`、#6は`FLW-TSK-120`）。production経路での実証がgatingで未了 |
 | 3 | 有限収束性 | **検証計画** | 13.4 全childを`process.run()`監督下へ結線済み（素の`subprocess.run`は0件）。10,000 event／100 MiB規模の負荷実測は未実施 |
 | 4 | platform実在性 | **検証計画** | 13.5 probe実装済み。linuxは実観測済み（ext4/tmpfsでSUPPORTED、9pでnetwork拒否）。macos／windowsは実装のみで実走未実施 |
 | 5 | 証跡妥当性 | **未実装境界** | 現`verified`証跡はfixture注入経路。`SI-FLW-090`で是正 |
 | 6 | legacy排除 | **検証計画** | 13.6 の旧承認経路は`FLW-TSK-115`で除去済み（参照0件）。宣言／registry検出のblack-box化は公開集合復帰後 |
-| 7 | 状態意味保存 | **検証計画** | 13.2の`QUARANTINED`不変条件は`FLW-TSK-119`で実装・陽性陰性対照で検証済み。marker適格性（`SI-FLW-089`）が残る |
+| 7 | 状態意味保存 | **検証計画** | 13.2の`QUARANTINED`不変条件は`FLW-TSK-119`、marker適格性は`FLW-TSK-120`で実装・検証済み。production経路での実証がgatingで未了 |
 
 **Gate判定への拘束**: 7観点に`実証済み`は依然1件も無い（`FLW-TSK-115`／`116`後も、production既定dispatcherからの到達がgatingで閉じているため）。したがって本設計は
 `FLW-CON-008`により、**接続の成立を根拠としたDesign Gate PASSを主張しない**。

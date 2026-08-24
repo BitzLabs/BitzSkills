@@ -248,6 +248,40 @@ def release_active_operation(common_dir: str | Path, *, operation_id: str,
         _promotion_unlock(lock)
 
 
+def inspect_active_marker(common_dir: str | Path, *, operation_id: str) -> dict[str, object] | None:
+    """active marker を read-only で観測する（`SI-FLW-089`）。
+
+    `release_reconciled_operation` は marker を検証するが、それは closure を追記した
+    **後**である。不可逆な追記を適格性確認より先行させないため、closure の前に
+    呼べる観測手段を用意する。promotion lock 下で読み、marker が無ければ None を返す。
+    closed marker の有無は `closed_digest` で示す。
+
+    **target lock と同時に保持しない。** 呼び出し側は本関数から戻った後に target lock を
+    取ること（lock order 不変条件）。
+    """
+    validate_digest(operation_id)
+    namespace = _promotion_namespace(common_dir)
+    lock = _promotion_lock(namespace)
+    try:
+        marker = namespace / "active" / f"{operation_id[7:]}.json"
+        closed = namespace / "closed" / f"{operation_id[7:]}.json"
+        closed_digest = None
+        if closed.exists():
+            try:
+                closed_digest = json.loads(closed.read_text(encoding="utf-8")).get("closure_digest")
+            except (OSError, json.JSONDecodeError) as exc:
+                raise PromotionError("INDETERMINATE", "reconcile closure marker is invalid") from exc
+        if not marker.exists():
+            return None if closed_digest is None else {"closed_digest": closed_digest}
+        try:
+            active = json.loads(marker.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise PromotionError("INDETERMINATE", "active operation marker is invalid") from exc
+        return {**active, "closed_digest": closed_digest}
+    finally:
+        _promotion_unlock(lock)
+
+
 def release_reconciled_operation(common_dir: str | Path, *, operation_id: str,
                                  bundle_digest: str, closure_digest: str) -> None:
     """Idempotently close a crash-held marker after target-lock reconciliation."""
