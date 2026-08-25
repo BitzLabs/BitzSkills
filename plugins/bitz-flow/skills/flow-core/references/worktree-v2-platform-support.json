@@ -3,7 +3,11 @@
   "profiles": [
     {
       "platform": "linux",
-      "filesystem_types": ["btrfs", "ext4", "tmpfs", "xfs"],
+      "filesystem_types": [
+        "btrfs",
+        "ext4",
+        "xfs"
+      ],
       "owner_model": "uid",
       "lock_primitive": "flock",
       "file_durability": "fsync",
@@ -12,7 +16,10 @@
     },
     {
       "platform": "macos",
-      "filesystem_types": ["apfs", "hfs"],
+      "filesystem_types": [
+        "apfs",
+        "hfs"
+      ],
       "owner_model": "uid",
       "lock_primitive": "flock",
       "file_durability": "fsync",
@@ -21,7 +28,10 @@
     },
     {
       "platform": "windows",
-      "filesystem_types": ["ntfs", "refs"],
+      "filesystem_types": [
+        "ntfs",
+        "refs"
+      ],
       "owner_model": "sid",
       "lock_primitive": "LockFileEx",
       "file_durability": "FlushFileBuffers",

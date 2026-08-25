@@ -45,7 +45,6 @@ def _observation(platform: str, **changes) -> P.PlatformObservation:
         "file_durability": True,
         "directory_durability": True,
         "child_supervision": True,
-        "semantic_self_test": True,
     }
     value.update(changes)
     return P.PlatformObservation(**value)
@@ -107,7 +106,6 @@ def test_scope_narrowing_did_not_drop_the_registry_or_probes():
     ({"file_durability": False}, "file-durability-unavailable"),
     ({"directory_durability": False}, "directory-durability-unavailable"),
     ({"child_supervision": False}, "child-supervision-unavailable"),
-    ({"semantic_self_test": False}, "semantic-self-test-failed"),
 ])
 def test_unknown_or_unproven_platform_capabilities_stop_safely(changes, reason):
     evidence = P.evaluate_platform(_observation("linux", **changes), profiles=P.load_support_profiles(REGISTRY))
@@ -116,9 +114,29 @@ def test_unknown_or_unproven_platform_capabilities_stop_safely(changes, reason):
     assert reason in evidence.reasons
 
 
-def test_self_test_cannot_promote_a_filesystem_missing_from_static_allowlist():
+def test_capability_probes_cannot_promote_a_filesystem_missing_from_static_allowlist():
+    """能力が揃っていても allowlist 外の filesystem を supported へ格上げしないこと。
+
+    以前は `semantic_self_test=True` を渡してこれを検査していたが、当該 field は恒真で
+    あり検査になっていなかったため撤去した（`FLW-REV-028:GP-007`）。能力側の flag を
+    すべて True にしても allowlist が効くことを確かめる形へ改める。
+    """
     evidence = P.evaluate_platform(
-        _observation("linux", filesystem_type="new-local-fs", semantic_self_test=True),
+        _observation("linux", filesystem_type="new-local-fs"),
+        profiles=P.load_support_profiles(REGISTRY),
+    )
+    assert not evidence.supported
+    assert "filesystem-type-not-allowlisted" in evidence.reasons
+
+
+def test_tmpfs_is_not_allowlisted():
+    """tmpfs は再起動で消えるため durability 保証が成立しない（`FLW-REV-028:GP-007`）。
+
+    worktree root の既定は `<repo-parent>/.worktrees/...`（`FLW-DSN-006`）であり
+    repo の兄弟＝永続 filesystem である。tmpfs へ置く運用は想定にない。
+    """
+    evidence = P.evaluate_platform(
+        _observation("linux", filesystem_type="tmpfs"),
         profiles=P.load_support_profiles(REGISTRY),
     )
     assert not evidence.supported

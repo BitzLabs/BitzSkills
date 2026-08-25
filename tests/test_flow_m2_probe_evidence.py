@@ -28,8 +28,9 @@ from flowlib import worktree_platform as PF  # noqa: E402
 
 
 @pytest.fixture
-def owner_only(tmp_path: Path) -> Path:
-    target = tmp_path / "real"
+def owner_only(allowlisted_root: Path) -> Path:
+    """allowlist 済み filesystem 上の owner-only ディレクトリ（`FLW-REV-028:GP-007`）。"""
+    target = allowlisted_root / "real"
     target.mkdir(mode=0o700)
     os.chmod(target, 0o700)
     return target
@@ -44,18 +45,18 @@ def test_direct_owner_only_directory_is_supported(owner_only):
     assert evidence.supported, evidence.reasons
 
 
-def test_symlinked_root_is_refused(tmp_path, owner_only):
+def test_symlinked_root_is_refused(allowlisted_root, owner_only):
     """**本 issue の中心**。symlink 経由の root を支持しないこと。"""
-    link = tmp_path / "link"
+    link = allowlisted_root / "link"
     link.symlink_to(owner_only)
     evidence = PF.platform_evidence_for(link)
     assert not evidence.supported
     assert "non-follow-walk-unavailable" in evidence.reasons
 
 
-def test_symlink_in_an_ancestor_is_refused(tmp_path, owner_only):
+def test_symlink_in_an_ancestor_is_refused(allowlisted_root, owner_only):
     """祖先が symlink でも拒否すること（末端だけを見ない）。"""
-    link = tmp_path / "link"
+    link = allowlisted_root / "link"
     link.symlink_to(owner_only)
     evidence = PF.platform_evidence_for(link / "not-created-yet")
     assert not evidence.supported

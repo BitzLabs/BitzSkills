@@ -133,7 +133,7 @@ def test_case_insensitive_is_closed_instead_of_raising():
         native_component=PF.native_component_from_posix(b"w1").as_mapping(),
         case_semantics="insensitive",       # ← ここだけが supported 環境と違う
         os_lock=True, file_durability=True, directory_durability=True,
-        child_supervision=True, semantic_self_test=True,
+        child_supervision=True,
     )
     evidence = PF.evaluate_platform(observation, profiles=profiles)
     assert not evidence.supported
@@ -160,7 +160,7 @@ def test_out_of_scope_platforms_are_closed_with_a_reason(platform):
         ),
         case_semantics="sensitive",
         os_lock=True, file_durability=True, directory_durability=True,
-        child_supervision=True, semantic_self_test=True,
+        child_supervision=True,
     )
     evidence = PF.evaluate_platform(observation, profiles=profiles)
     assert not evidence.supported

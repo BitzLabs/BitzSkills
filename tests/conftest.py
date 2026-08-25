@@ -61,3 +61,39 @@ def copy_script():
         shutil.copy2(original_script_path, dest)
         return dest
     return _copy_script
+
+
+@pytest.fixture
+def allowlisted_root(tmp_path_factory, request):
+    """allowlist 済み filesystem 上の owner-only ディレクトリを返す。
+
+    pytest の `tmp_path` は `/tmp`（多くの環境で tmpfs）に作られるが、tmpfs は
+    再起動で消えるため durability 保証が成立せず allowlist から外した
+    （`FLW-REV-028:GP-007`）。probe が `SUPPORTED` を返す前提の test は、
+    実運用と同じ**永続 filesystem** 上で走らせる必要がある。
+
+    worktree root の既定は `<repo-parent>/.worktrees/...`（`FLW-DSN-006`）なので、
+    repository の兄弟位置を借りる。allowlist 済み fs が見つからなければ skip する。
+    """
+    import os
+    import shutil
+    import sys
+    import tempfile
+    from pathlib import Path
+
+    repo_root = Path(__file__).resolve().parents[1]
+    skill = repo_root / "plugins" / "bitz-flow" / "skills" / "flow-core"
+    sys.path.insert(0, str(skill / "scripts"))
+    from flowlib import worktree_platform as platform_probe
+
+    profiles = platform_probe.load_support_profiles(platform_probe.SUPPORT_REGISTRY_PATH)
+    allowed = profiles[platform_probe.current_platform()].filesystem_types
+
+    for parent in (repo_root.parent, Path.home()):
+        kind = platform_probe._linux_filesystem_type(parent)
+        if kind in allowed:
+            created = Path(tempfile.mkdtemp(prefix=".bitz-flow-test-", dir=str(parent)))
+            os.chmod(created, 0o700)
+            request.addfinalizer(lambda: shutil.rmtree(created, ignore_errors=True))
+            return created
+    pytest.skip(f"allowlist 済み filesystem({sorted(allowed)})上の作業場所が無い")

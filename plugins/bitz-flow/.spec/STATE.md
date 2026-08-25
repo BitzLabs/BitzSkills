@@ -1,5 +1,30 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-TSK-126（FLW-REV-028:GP-007）実装: 恒真の`semantic_self_test`を撤去し、
+  `tmpfs`をallowlistから外した。**新機能は作らず実態に合わせて書き直しただけ**である。
+  裁定は「実運用の範囲から逆算し、発火しない検査は実装しない」（ユーザー指示）。
+  **判断の根拠**: 案B（隔離領域でlock/fsyncを実証）が捕まえるはずだった4類型
+  （no-op flock、嘘をつくfsync、overlay、network）は、allowlistと`filesystem-class-network`
+  拒否で**すべて先に排除される**。保証scopeがLinux・allowlistが主流ローカルfs 3種に絞られた
+  現在、実環境で発火しない。加えて案Bはprobeのread-onlyを壊し`readonly-invariance`の
+  受入行と衝突する。
+  **代わりに範囲を絞って見えた実際の穴**: `tmpfs`がallowlistに入っており、tmpfs上の
+  0700ディレクトリは`SUPPORTED`になっていた。しかし§1.1 は「crash後も残るintent」を保証し、
+  **tmpfsはマシン再起動で消える**。worktree rootの既定は`<repo-parent>/.worktrees/...`
+  （`FLW-DSN-006`。repoの兄弟＝ext4）でありtmpfsへ置く運用は想定にないため、
+  allowlistから外して保証の文面と実装を一致させた。
+  `_semantic_self_test`を関数ごと削除し、`PlatformObservation`とschemaから
+  `semantic_self_test` fieldを撤去（参照0件）。§3.2 をprobeの実能力へ書き直し、
+  **lock/durabilityのsemanticsは検査しておらずallowlistを信頼している**ことと、
+  allowlistを広げるときの再検討条件を明記した。`FLW-DSN-017` v2.7。
+  **波及**: pytestの`tmp_path`は`/tmp`（tmpfs）なのでSUPPORTEDを期待するtestが19件落ちた。
+  実運用と同じ永続filesystem（repoの兄弟）上に作業場所を取る`allowlisted_root` fixtureを
+  conftestへ追加して差し替えた。allowlist済みfsが無い環境ではskipする。
+  変異（tmpfsをallowlistへ戻す）で検出を確認。
+  confirmation証跡を再実走して更新（3者PASS、Gate採用可）。
+  全体**2534 passed / 44 skipped / 失敗0**、release_check PASS、spec inspect全8 workspace PASS。
+  **これでFLW-REV-028のGP-001〜008のうち残るはGP-002とGP-004の2件。**
+
 - 2026-08-24 FLW-TSK-125（FLW-REV-028:GP-006／GP-008）実装: probeが検証していない性質を
   主張しないよう3点を実証へ変えた。いずれもセカンドオピニオンの指摘を実測確認したもの。
   **(1) symlinkの実証検出**: `non_follow_walk`をprimitive可用性だけで主張せず、
@@ -1105,3 +1130,5 @@
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiNTQxZjdlMDY1MWUyMjg5OTZmNTcxYjA5MDJkMjg5ZDRmOWZkMjMwYmRmNzlhNDg3OTY0OGE4ZTU1YjBjMzI2YiIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiMjAzNGYxMzk4ZWFhZjY1YmE1Mzc2MzJiYjFmNTZiMmE4N2JhODIzYzk0MzEwZTI4MmMzY2E5ZDk3ZDYyZDJmOCIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjQiLCJldmVudF9pZCI6ImYyNzgxM2UyLTkyOWMtNDVkZS04ZmM3LTVmZWI0ZmRiODg5MCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjQubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDA3OjA4OjE4LjM5MDQ3NloifQ== -->
 - 2026-08-25 FLW-TSK-125: pending → implementing (claude)
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiZjNhZDAyNmRkN2EyNzMwYjRiYzI4YjgwMzE1YjcxZGIxMmUzNWQyN2U1OWM3YzNhOTljNWQwNDRlYWE5ZmZmYyIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiMTUyNTI1ZjBjMzU0MTM1ZDM0N2Q2MzE1NjU5YTYxNDljNzNjZWRlYzAyMzBkMmE0ZDJhYjAyM2FjOTc3NzQ1YyIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjUiLCJldmVudF9pZCI6IjQ2Y2E1OWEwLWE3MWMtNDgwMS1iMTg3LWI0N2M3YTVlMDY3ZCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjUubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDIzOjIwOjI1LjQ4Mzc4MloifQ== -->
+- 2026-08-25 FLW-TSK-126: pending → implementing (claude)
+<!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiMjQ1ZmU1ZDhiMjQ4NmY1NDAzMmFkYzkzY2NjM2UwNmQ2YmIxODM0ZjJkNzg3ZWNkYjA2OGFlNWM0Yzk1YTk0MSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiMmY3ODJmNDc3N2ViZGYyYzI3MjRkM2VhN2UwMmE5OGFjN2ZiMTcxYjZlNGI5YTZkOTkyNDA5M2E5ZTU0MjMxOCIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjYiLCJldmVudF9pZCI6IjVlNTM1ZGM2LTY5YTYtNDY4ZC04YTJjLWUwNzU1MmI5YjJlNCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjYubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDIzOjU4OjI2Ljk2ODEyOVoifQ== -->

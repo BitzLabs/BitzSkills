@@ -69,7 +69,6 @@ class PlatformObservation:
     file_durability: bool
     directory_durability: bool
     child_supervision: bool
-    semantic_self_test: bool
 
 
 @dataclass(frozen=True)
@@ -172,7 +171,6 @@ def evaluate_platform(
     boolean_fields = (
         "owner_matches", "acl_owner_only", "non_follow_walk", "os_lock",
         "file_durability", "directory_durability", "child_supervision",
-        "semantic_self_test",
     )
     if any(type(getattr(observation, name)) is not bool for name in boolean_fields):
         raise ContractError("platform observation flags must be booleans")
@@ -221,7 +219,6 @@ def evaluate_platform(
         "file-durability-unavailable": observation.file_durability,
         "directory-durability-unavailable": observation.directory_durability,
         "child-supervision-unavailable": observation.child_supervision,
-        "semantic-self-test-failed": observation.semantic_self_test,
     }
     reasons.extend(reason for reason, passed in checks.items() if not passed)
     return PlatformEvidence(
@@ -580,13 +577,12 @@ OPERATOR_ACTIONS = {
     "platform-out-of-scope": "保証対象は Linux のみである。Linux 上で実行する",
     "platform-not-allowlisted": "同梱 registry に登録された platform 上で実行する",
     "case-insensitive-unsupported": "case-sensitive な filesystem 上へ worktree root を置く",
-    "filesystem-type-not-allowlisted": "登録済み filesystem（btrfs / ext4 / tmpfs / xfs）上へ worktree root を置く",
+    "filesystem-type-not-allowlisted": "永続 filesystem（btrfs / ext4 / xfs）上へ worktree root を置く。tmpfs は再起動で消えるため対象外",
     "non-follow-walk-unavailable": "symlink を含まない path へ worktree root を置く",
     "os-lock-unavailable": "OS lock が使える filesystem 上へ worktree root を置く",
     "file-durability-unavailable": "fsync が使える filesystem 上へ worktree root を置く",
     "directory-durability-unavailable": "directory fsync が使える filesystem 上へ worktree root を置く",
     "child-supervision-unavailable": "child process を監督できる環境で実行する",
-    "semantic-self-test-failed": "doctor で環境診断を実行し、報告された不整合を解消する",
     "support-registry-unreadable": "bitz-flow の配布物が破損している。再インストールする",
     "target-path-unobservable": "worktree root の親 directory が存在し読み取り可能であることを確認する",
     "resource-identity-unobservable": "worktree root を stat できる filesystem 上へ置く",
@@ -692,24 +688,11 @@ def probe_platform(
         file_durability=primitives["file_durability"],
         directory_durability=primitives["directory_durability"],
         child_supervision=primitives["child_supervision"],
-        semantic_self_test=_semantic_self_test(platform, component),
     )
     try:
         return evaluate_platform(observation, profiles=profiles)
     except ContractError as exc:
         return _unobservable(f"observation-rejected-{type(exc).__name__}", platform=platform)
-
-
-def _semantic_self_test(platform: str, component: Mapping[str, str]) -> bool:
-    """native component がこの platform の codec で round-trip するか（書き込み無し）。"""
-    try:
-        if platform == "windows":
-            native_component_to_windows(component)
-        else:
-            native_component_to_posix(component)
-    except (ContractError, ValueError, TypeError):
-        return False
-    return True
 
 
 def _unobservable(reason: str, *, platform: str | None = None) -> PlatformEvidence:
@@ -721,6 +704,6 @@ def _unobservable(reason: str, *, platform: str | None = None) -> PlatformEviden
         resource_identity=sha256_digest(b"unobservable"),
         native_component=native_component_from_posix(b"unobservable").as_mapping(),
         case_semantics="sensitive", os_lock=False, file_durability=False,
-        directory_durability=False, child_supervision=False, semantic_self_test=False,
+        directory_durability=False, child_supervision=False,
     )
     return PlatformEvidence(observation, UNSUPPORTED_FILESYSTEM, (reason,))

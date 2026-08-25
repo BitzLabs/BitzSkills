@@ -2,7 +2,7 @@
 id: FLW-DSN-017
 title: "M2 Local Safety Profileの競合排除・耐久証跡・原子的promotion"
 status: active
-version: 2.6
+version: 2.7
 updated: 2026-08-24
 owner: codex
 implements: FLW-NFR-014, FLW-CON-008
@@ -30,6 +30,9 @@ processが同じrepositoryを操作する通常運用で、stale plan、競合wr
 - 同じcanonical targetに対する複数local processの同時writeを直列化する。
 - plan後のHEAD、index、worktree、target identityの変化をmutation直前に検出する。
 - Git副作用の前に、crash後も残るintentと安全側の緊急receiptを確定する。
+  ここでいう「残る」は**永続filesystem上**での話である。`tmpfs`はマシン再起動で消えるため
+  この保証が成立せず、allowlistから外している（`FLW-REV-028:GP-007`）。worktree rootの既定は
+  `<repo-parent>/.worktrees/...`（`FLW-DSN-006`）であり永続filesystem上にある。
 - 完了を証明できない操作を`INDETERMINATE`または`QUARANTINED`として保持する。
 - contract v2を部分activeにせず、単一bundleとして原子的に有効化する。
 - **Linux**の登録済みlocal filesystem adapterでlogical resultへ収束する。
@@ -136,11 +139,32 @@ platform adapterはpolicyを決めず、owner、ACL/mode、非追随walk、regul
 case semantics、OS lock、file/directory durability、child process監督のclosed evidenceだけを返す。
 
 サポート対象は**保証scope**（当面Linuxのみ）とコード同梱の静的allowlistで決める。
-self-testだけで未知filesystemをsupportedへ格上げしない。
-**現行の`semantic_self_test`はnative component codecの往復のみで、lock／durabilityの
-semanticsを実証していない**（`FLW-REV-028:SYN-009`。`GP-007`で是正する）。network filesystem、owner取得不能、lock semantics不明、
-directory fsync相当を確認できない環境は理由付き`UNSUPPORTED_FILESYSTEM`とする。
-support profileへの署名や外部更新機構は持たない。
+allowlistは永続local filesystemに限る（`btrfs` / `ext4` / `xfs`）。
+
+**probeが検査するもの・しないもの**（`FLW-REV-028:GP-007`）。probeは**read-only**であり
+対象filesystemへ書き込まない。したがって検査できる範囲には限界があり、それを明示する。
+
+| 項目 | probeの検査 | 根拠 |
+|---|---|---|
+| platform / filesystem種別 | mount pointの最長一致で**実測** | `/proc/self/mountinfo` |
+| owner / ACL | `st_uid` と mode を**実測** | `os.stat` |
+| symlink非追随 | component単位の`lstat`で**実証** | 経路上のsymlink検出 |
+| case semantics | 対象entryのlookupで**実測** | 同一parent内の反転引き＋inode一致 |
+| OS lock / durability / child監督 | **primitiveの可用性のみ**（semanticsは未実証） | allowlistを信頼する |
+
+**lock・durabilityの実semanticsは検査していない。** `flock`がno-opな環境や`fsync`が嘘をつく
+環境は、allowlistと`filesystem-class-network`拒否で先に排除される前提に依存している。
+実証するには対象filesystemへ書き込む必要があり、read-only commandの
+`persistent write 0件`保証（§7.1 `readonly-invariance`）と衝突するため採らない。
+
+以前の版は「起動時semantic self-test」を要求していたが、実装は
+`_semantic_self_test`が直前に変換成功した値を同じcodecで往復させるだけの**恒真**関数で
+あり検査になっていなかった。関数とevidence fieldを撤去し、本表のとおり書き直した。
+
+**再検討の条件**: allowlistへ新しいfilesystemを追加するとき、またはnetwork/FUSEの拒否を
+緩めるときは、lock・durabilityのsemanticsを実証する手段を先に用意すること。
+self-testだけで未知filesystemをsupportedへ格上げしない。support profileへの署名や
+外部更新機構は持たない。
 
 ## 4. 単一のTargetTransaction authority
 
@@ -660,6 +684,8 @@ macOS／Windowsの実観測は依然として未実施である（§13.5）。
 
 ## Revision History
 
+- 2.7 (2026-08-24) 恒真の`semantic_self_test`を撤去し§3.2をprobeの実能力へ書き直す。
+  `tmpfs`をallowlistから外し§1.1のdurability前提を明記（`FLW-REV-028:GP-007`）
 - 2.6 (2026-08-24) §13.5へprobeの実証義務を追加。symlinkの実証検出、mount局所のcase判定、
   mount point最長一致によるfilesystem種別解決（`FLW-REV-028:GP-006`／`GP-008`）
 - 2.5 (2026-08-24) §13.2へ`UNSUPPORTED`行とoperator action義務を追加（`FLW-REV-028:GP-001`）

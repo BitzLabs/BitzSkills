@@ -21,39 +21,126 @@
     "file_durability",
     "directory_durability",
     "child_supervision",
-    "semantic_self_test",
     "support_code",
     "reasons"
   ],
   "properties": {
-    "contract_version": {"type": "integer", "const": 2},
-    "profile_version": {"type": "integer", "const": 1},
-    "platform": {"type": "string", "enum": ["linux", "macos", "windows"]},
-    "filesystem_type": {"type": "string", "minLength": 1},
-    "filesystem_class": {"type": "string", "enum": ["local", "network", "unknown"]},
-    "owner_principal": {"type": ["string", "null"]},
-    "owner_matches": {"type": "boolean"},
-    "acl_owner_only": {"type": "boolean"},
-    "non_follow_walk": {"type": "boolean"},
-    "resource_kind": {"type": "string", "enum": ["file", "directory"]},
-    "resource_identity": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "contract_version": {
+      "type": "integer",
+      "const": 2
+    },
+    "profile_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "linux",
+        "macos",
+        "windows"
+      ]
+    },
+    "filesystem_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "filesystem_class": {
+      "type": "string",
+      "enum": [
+        "local",
+        "network",
+        "unknown"
+      ]
+    },
+    "owner_principal": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "owner_matches": {
+      "type": "boolean"
+    },
+    "acl_owner_only": {
+      "type": "boolean"
+    },
+    "non_follow_walk": {
+      "type": "boolean"
+    },
+    "resource_kind": {
+      "type": "string",
+      "enum": [
+        "file",
+        "directory"
+      ]
+    },
+    "resource_identity": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
     "native_component": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["platform", "encoding", "value"],
+      "required": [
+        "platform",
+        "encoding",
+        "value"
+      ],
       "properties": {
-        "platform": {"type": "string", "enum": ["posix", "windows"]},
-        "encoding": {"type": "string", "enum": ["bytes-base64url", "utf16le-base64url"]},
-        "value": {"type": "string", "pattern": "^[A-Za-z0-9_-]*$"}
+        "platform": {
+          "type": "string",
+          "enum": [
+            "posix",
+            "windows"
+          ]
+        },
+        "encoding": {
+          "type": "string",
+          "enum": [
+            "bytes-base64url",
+            "utf16le-base64url"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]*$"
+        }
       }
     },
-    "case_semantics": {"type": "string", "enum": ["sensitive", "insensitive"]},
-    "os_lock": {"type": "boolean"},
-    "file_durability": {"type": "boolean"},
-    "directory_durability": {"type": "boolean"},
-    "child_supervision": {"type": "boolean"},
-    "semantic_self_test": {"type": "boolean"},
-    "support_code": {"type": "string", "enum": ["SUPPORTED", "UNSUPPORTED_FILESYSTEM"]},
-    "reasons": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+    "case_semantics": {
+      "type": "string",
+      "enum": [
+        "sensitive",
+        "insensitive"
+      ]
+    },
+    "os_lock": {
+      "type": "boolean"
+    },
+    "file_durability": {
+      "type": "boolean"
+    },
+    "directory_durability": {
+      "type": "boolean"
+    },
+    "child_supervision": {
+      "type": "boolean"
+    },
+    "support_code": {
+      "type": "string",
+      "enum": [
+        "SUPPORTED",
+        "UNSUPPORTED_FILESYSTEM"
+      ]
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
   }
 }

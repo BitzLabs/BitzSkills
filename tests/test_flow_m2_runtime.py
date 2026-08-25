@@ -40,7 +40,7 @@ def supported_evidence(root: Path) -> PF.PlatformEvidence:
         resource_identity=sha256_digest(f"{stat.st_dev}:{stat.st_ino}".encode()),
         native_component=native_component_from_posix(root.name.encode()).as_mapping(),
         case_semantics="sensitive", os_lock=True, file_durability=True,
-        directory_durability=True, child_supervision=True, semantic_self_test=True,
+        directory_durability=True, child_supervision=True,
     )
     profiles = PF.load_support_profiles(
         SKILL / "references" / "worktree-v2-platform-support.json"

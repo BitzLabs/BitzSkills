@@ -156,18 +156,23 @@ def test_output_flood_is_bounded():
 # --- budget の伝播 -----------------------------------------------------------
 
 
-def test_plan_carries_a_finite_budget_for_every_child(repo, tmp_path):
-    """plan が budget を持ち、apply の child へ伝播すること。"""
-    root = tmp_path / "wt"
+def test_plan_carries_a_finite_budget_for_every_child(repo, allowlisted_root):
+    """plan が budget を持ち、apply の child へ伝播すること。
+
+    worktree root は allowlist 済み filesystem 上に要る。`tmp_path` は tmpfs のことが
+    あり、tmpfs は durability 保証が成立しないため allowlist 外である
+    （`FLW-REV-028:GP-007`）。
+    """
+    root = allowlisted_root / "wt"
     root.mkdir(mode=0o700)
     plan = WR.plan(repo, action="create", path=root / "w1", branch="feature/x",
                    worktree_root=root, timeout_seconds=12)
     assert plan.timeout_seconds == 12
 
 
-def test_plan_defaults_to_a_finite_budget(repo, tmp_path):
+def test_plan_defaults_to_a_finite_budget(repo, allowlisted_root):
     """budget 未指定でも無期限にしないこと。"""
-    root = tmp_path / "wt"
+    root = allowlisted_root / "wt"
     root.mkdir(mode=0o700)
     plan = WR.plan(repo, action="create", path=root / "w1", branch="feature/x",
                    worktree_root=root)

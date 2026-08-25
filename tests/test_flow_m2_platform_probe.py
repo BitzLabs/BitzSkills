@@ -34,8 +34,13 @@ from flowlib import worktree_runtime as WR  # noqa: E402
 
 
 @pytest.fixture
-def owner_only_dir(tmp_path: Path) -> Path:
-    target = tmp_path / "root"
+def owner_only_dir(allowlisted_root: Path) -> Path:
+    """allowlist 済み filesystem 上の owner-only ディレクトリ。
+
+    `tmp_path` は tmpfs のことがあり、tmpfs は allowlist 外なので
+    `SUPPORTED` を期待する test には使えない（`FLW-REV-028:GP-007`）。
+    """
+    target = allowlisted_root / "root"
     target.mkdir(mode=0o700)
     os.chmod(target, 0o700)
     return target

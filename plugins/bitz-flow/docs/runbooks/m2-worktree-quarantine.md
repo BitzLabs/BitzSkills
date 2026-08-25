@@ -61,9 +61,18 @@ M2 は worktree root を **owner-only** な local filesystem namespace として
 **既定 umask で `mkdir` した directory は 0755 であり必ず拒否される。**
 これは設計どおりの安全側動作であり不具合ではないが、利用者は手順を知らないと復帰できない。
 
+worktree root は **repository の兄弟位置**へ置く（`FLW-DSN-006`）。
+
 ```text
-mkdir -p <worktree-root>
-chmod 0700 <worktree-root>
+<repo-parent>/.worktrees/<repo-slug>-<repo-id8>/<work-id>/
+```
+
+repository 内に置くと `git status` や検索結果へ混入し、並行作業の前提が壊れる。
+`/tmp` 等の `tmpfs` はマシン再起動で intent record ごと消えるため allowlist 外である。
+
+```text
+mkdir -p <repo-parent>/.worktrees
+chmod 0700 <repo-parent>/.worktrees
 ```
 
 確認は doctor で行う。`platform_support` が `SUPPORTED` になれば解消している。
@@ -80,7 +89,7 @@ python3 <このスキル>/scripts/flow.py worktree doctor --repo <repo> --format
 |---|---|---|
 | `platform-out-of-scope` | 保証対象は当面 Linux のみ（裁定 2026-08-24） | Linux 上で実行する |
 | `case-insensitive-unsupported` | case-insensitive volume は `collision_key` の folded component を導出できない | case-sensitive な filesystem 上へ置く |
-| `filesystem-type-not-allowlisted` | 同梱 allowlist（btrfs / ext4 / tmpfs / xfs）外 | 登録済み filesystem 上へ置く |
+| `filesystem-type-not-allowlisted` | 同梱 allowlist（btrfs / ext4 / xfs）外。`tmpfs` は再起動で消えるため含まない | 永続 filesystem 上へ置く |
 | `filesystem-class-network` | network filesystem は lock semantics を保証できない | local filesystem 上へ置く |
 
 公開 result の `data.required_human_input` に、対象 path と必要な是正が載る。
