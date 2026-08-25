@@ -23,14 +23,25 @@ from . import (
 
 # 公開 operation の SSOT。ここに無い組み合わせは UNSUPPORTED。
 #
-# 現在の出荷面は **M0 read-only の 3 operation だけ**である（裁定 2026-08-15、
-# `.spec/reports/decision-2026-08-15-m0-shipping-surface-and-m2-rescope.md`）。
-# M2 worktree の安全核と runtime adapter は実装済みだが、M2 出口が未達（`FLW-REV-016` FAIL）の
-# 間は ROADMAP の縮退規則3 に従って公開しない。ゲート通過時にここへ戻す。
+# 出荷面は **read-only に限る**。M0 の 3 operation（裁定 2026-08-15）に加え、
+# M2 の read-only 3 operation を限定公開する（裁定 2026-08-24、
+# `.spec/reports/decision-2026-08-24-m2-readonly-canary.md`）。
+#
+# M2 read-only を公開するのは、`FLW-CON-008` が要求する production 既定 dispatcher 起点の
+# black-box 証跡が、公開集合に無い operation では**原理的に取得できない**ためである。
+# 3 operation はいずれも `worktree_operability._read_only_guard` 配下で
+# persistent state 不変を機械強制する。
+#
+# **write class は引き続き非公開**である（M1 local-write、M2 `create`/`resume`、
+# closure を追記する `reconcile`、M3 へ移送した `finish`/`discard`）。
+# ROADMAP の縮退規則3 が禁じているのは write を出すことであり、その趣旨は維持される。
 PUBLISHED_OPERATIONS = {
     ("repo", "inspect"),
     ("git", "status"),
     ("git", "diff-summary"),
+    ("worktree", "doctor"),
+    ("worktree", "audit"),
+    ("worktree", "verify-receipt"),
 }
 
 # 公開予定だが当該 milestone まで未対応の operation（UNSUPPORTED の理由付けに使う）。
@@ -774,13 +785,16 @@ _HANDLERS = {
     ("repo", "inspect"): _op_repo_inspect,
     ("git", "status"): _op_git_status,
     ("git", "diff-summary"): _op_git_diff_summary,
-}
-
-#: M2 出口が閉じたときに `_HANDLERS` へ戻す handler（実装は残すが今は公開しない）。
-_GATED_HANDLERS = {
+    # M2 read-only 限定公開（裁定 2026-08-24）。persistent state 不変は
+    # `worktree_operability._read_only_guard` が機械強制する。
     ("worktree", "doctor"): _op_worktree,
     ("worktree", "audit"): _op_worktree,
     ("worktree", "verify-receipt"): _op_worktree,
+}
+
+#: M2 出口が閉じたときに `_HANDLERS` へ戻す handler（実装は残すが今は公開しない）。
+#: いずれも **write を伴う**。`reconcile` は closure event を durable 追記する。
+_GATED_HANDLERS = {
     ("worktree", "reconcile"): _op_worktree,
     ("worktree", "create"): _op_worktree,
     ("worktree", "resume"): _op_worktree,

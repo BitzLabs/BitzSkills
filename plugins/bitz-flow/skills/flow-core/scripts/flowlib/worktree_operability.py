@@ -175,6 +175,32 @@ def has_unsupported_approval_input(repo: str | Path) -> bool:
         return True
 
 
+#: doctor が検出する bundle 側 problem に対応する operator action。
+#: platform 側は `worktree_platform.OPERATOR_ACTIONS` を使う。
+_BUNDLE_ACTIONS = {
+    "current-bundle-missing": "contract bundle を導入する（bitz-flow の初期化を実行する）",
+    "minimum-runtime-missing": "minimum runtime sentinel を導入する（bitz-flow の初期化を実行する）",
+    "current-bundle-invalid": "contract bundle が壊れている。bitz-flow を再インストールする",
+    "current-bundle-not-active": "contract bundle が active でない。promotion を完了させる",
+}
+
+
+def _doctor_operator_action(evidence, problems, common: Path) -> str:
+    """診断結果から**行動可能な**是正を組み立てる（`FLW-REV-028:GP-001` の要求を doctor へ）。
+
+    符丁（`fix-platform-or-bundle`）を返しても利用者は何をすればよいか判らない。
+    platform 側の理由は `OPERATOR_ACTIONS` から、bundle 側は導入手順から引く。
+    """
+    actions: list[str] = []
+    if not evidence.supported:
+        actions.append(PF.operator_action(evidence.reasons, target=common.parent))
+    actions.extend(_BUNDLE_ACTIONS[p] for p in problems if p in _BUNDLE_ACTIONS)
+    unknown = [p for p in problems if p not in _BUNDLE_ACTIONS]
+    if unknown:
+        actions.append(f"未分類の問題を報告する: {', '.join(sorted(unknown))}")
+    return " / ".join(dict.fromkeys(actions)) or "報告する"
+
+
 def doctor(repo: str | Path) -> OperabilityDecision:
     common = _common(repo)
 
@@ -230,7 +256,11 @@ def doctor(repo: str | Path) -> OperabilityDecision:
             None if code == "OK" else "result-indeterminate",
             "M2 local safety namespaceを診断した",
             "none",
-            "none" if code == "OK" else "fix-platform-or-bundle",
+            # doctor は利用者が最初に走らせる診断である。`fix-platform-or-bundle` の
+            # ような符丁を返しても何をすればよいか判らない（`FLW-REV-028:GP-001` と
+            # 同じ要求を doctor 自身へ適用する）。platform 側の理由は
+            # `OPERATOR_ACTIONS` から、bundle 側は導入手順を返す。
+            "none" if code == "OK" else _doctor_operator_action(evidence, problems, common),
             None,
             None,
             usage,

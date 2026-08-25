@@ -156,14 +156,17 @@ def test_SI_FLW_058_manifest_lists_only_published_operations(tmp_path):
     key = current_key()
     _run(tmp_path, _fresh_qualification(tmp_path, key), key, tmp_path / "ops")
     manifest = json.loads((tmp_path / "ops/active-manifest.json").read_text())
-    assert manifest["operations"] == ["git.diff-summary", "git.status", "repo.inspect"]
+    assert manifest["operations"] == [
+        "git.diff-summary", "git.status", "repo.inspect",
+        "worktree.audit", "worktree.doctor", "worktree.verify-receipt",
+    ]
     assert not any("*" in op for op in manifest["operations"])
     assert "git.stage" not in manifest["operations"]
     # 未公開だが実装済みの集合は別 field で示す
+    # read-only 3 件は 2026-08-24 の裁定で公開集合へ移した。gated に残るのは write のみ。
     assert manifest["gated_operations"] == [
-        "worktree.audit", "worktree.create", "worktree.discard",
-        "worktree.doctor", "worktree.finish", "worktree.reconcile",
-        "worktree.resume", "worktree.verify-receipt",
+        "worktree.create", "worktree.discard", "worktree.finish",
+        "worktree.reconcile", "worktree.resume",
     ]
 
 

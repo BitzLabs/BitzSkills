@@ -269,8 +269,13 @@ def test_terminal_promotion_cleanup_never_overlaps_target_lock(repository, monke
     assert observed["target_released"]
 
 
-@pytest.mark.parametrize("action", ["audit", "create", "resume", "finish", "discard"])
-def test_worktree_remains_unreachable_from_public_dispatcher(repository, action):
+@pytest.mark.parametrize("action", ["create", "resume", "reconcile", "finish", "discard"])
+def test_write_worktree_remains_unreachable_from_public_dispatcher(repository, action):
+    """write を伴う worktree operation が公開 dispatcher から到達しないこと。
+
+    read-only 3 件（doctor / audit / verify-receipt）は 2026-08-24 の裁定で限定公開した。
+    緩めてはならないのは write 側である。
+    """
     repo, _ = repository
     proc = subprocess.run(
         [sys.executable, str(SKILL / "scripts" / "flow.py"), "worktree", action,

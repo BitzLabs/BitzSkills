@@ -69,11 +69,13 @@
       "connection": "fixture"
     },
     "readonly-invariance": {
-      "production": [],
+      "production": [
+        "tests/test_flow_m2_readonly_canary.py::test_production_run_does_not_change_persistent_state"
+      ],
       "fixture": [
         "tests/test_flow_m2_operability.py"
       ],
-      "connection": "fixture"
+      "connection": "production"
     },
     "reconcile-retry": {
       "production": [],
@@ -86,10 +88,10 @@
       "production": [
         "tests/test_flow_m2_legacy_approval.py::test_capability_file_is_rejected_as_unsupported_approval_mode",
         "tests/test_flow_m2_legacy_approval.py::test_capability_file_content_is_never_parsed",
-        "tests/test_flow_m2_legacy_approval.py::test_worktree_stays_gated_after_legacy_removal",
+        "tests/test_flow_m2_legacy_approval.py::test_write_worktree_operations_stay_gated",
         "tests/test_flow_m2_operability.py::test_signed_capability_is_immediately_rejected_on_public_dispatcher",
-        "tests/test_flow_m2_operability.py::test_all_operability_commands_exist_but_remain_gated_in_production",
-        "tests/test_flow_m2_runtime.py::test_worktree_remains_unreachable_from_public_dispatcher"
+        "tests/test_flow_m2_operability.py::test_write_operability_commands_remain_gated_in_production",
+        "tests/test_flow_m2_runtime.py::test_write_worktree_remains_unreachable_from_public_dispatcher"
       ],
       "fixture": [
         "tests/test_flow_m2_legacy_approval.py",
@@ -128,18 +130,23 @@
       "connection": "fixture"
     },
     "audit": {
-      "production": [],
+      "production": [
+        "tests/test_flow_m2_readonly_canary.py::test_production_run_does_not_change_persistent_state",
+        "tests/test_flow_m2_readonly_canary.py::test_read_only_operation_is_reachable_from_the_production_dispatcher"
+      ],
       "fixture": [
         "tests/test_flow_m2_operability.py"
       ],
-      "connection": "fixture"
+      "connection": "production"
     },
     "verify-receipt": {
-      "production": [],
+      "production": [
+        "tests/test_flow_m2_readonly_canary.py::test_read_only_operation_is_reachable_from_the_production_dispatcher"
+      ],
       "fixture": [
         "tests/test_flow_m2_operability.py"
       ],
-      "connection": "fixture"
+      "connection": "production"
     },
     "reconcile": {
       "production": [],

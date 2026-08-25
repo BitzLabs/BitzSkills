@@ -475,13 +475,42 @@ def test_reachable_codes_are_still_m0_only(repo):
     assert seen <= {"OK", "INVALID_INPUT", "BLOCKED", "UNAVAILABLE", "STALE", "UNSUPPORTED"}
 
 
-def test_only_m0_is_reachable_from_dispatcher():
-    """dispatcher は M0 read-only だけを公開する（縮退規則3。裁定 2026-08-15）。"""
+def test_only_read_only_operations_are_reachable_from_dispatcher():
+    """dispatcher は **read-only だけ**を公開する。
+
+    縮退規則3 が禁じているのは write を出すことである。裁定 2026-08-15 の M0 3 件に加え、
+    裁定 2026-08-24 で M2 の read-only 3 件を限定公開した
+    （`.spec/reports/decision-2026-08-24-m2-readonly-canary.md`）。
+    write class（M1 local-write、M2 create/resume/reconcile、M3 finish/discard）は
+    引き続き非公開であり、その不変条件は
+    `test_no_write_operation_is_ever_published` が検査する。
+    """
     from flowlib import cli
 
-    expected = {("repo", "inspect"), ("git", "status"), ("git", "diff-summary")}
+    expected = {
+        ("repo", "inspect"), ("git", "status"), ("git", "diff-summary"),
+        ("worktree", "doctor"), ("worktree", "audit"), ("worktree", "verify-receipt"),
+    }
     assert set(cli._HANDLERS) == expected
     assert cli.PUBLISHED_OPERATIONS == expected, "宣言と実体を乖離させない（SYN-016）"
+
+
+def test_no_write_operation_is_ever_published():
+    """**write を伴う operation は 1 件も公開しない**（縮退規則3 の本体）。
+
+    read-only の限定公開で緩めてはならない不変条件はこちらである。
+    """
+    from flowlib import cli
+
+    forbidden = {
+        ("worktree", "create"), ("worktree", "resume"),
+        ("worktree", "reconcile"),          # closure event を durable 追記する
+        ("worktree", "finish"), ("worktree", "discard"),
+    }
+    published = set(cli.PUBLISHED_OPERATIONS)
+    assert not (published & forbidden), f"write operation が公開されている: {published & forbidden}"
+    assert not any(domain == "git" and action not in {"status", "diff-summary"}
+                   for domain, action in published), "M1 write class が公開されている"
 
 
 # === fixture の網羅 ============================================================

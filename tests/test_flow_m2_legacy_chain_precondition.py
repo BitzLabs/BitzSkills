@@ -103,15 +103,19 @@ def test_design_records_the_condition_to_revisit():
     assert "再検討の条件" in section
 
 
-def test_precondition_holds_today_because_m2_is_gated():
-    """前提が今日成立している根拠（M2 未公開）を機械で確かめる。
+def test_precondition_holds_today_because_no_write_operation_is_published():
+    """前提が今日成立している根拠を機械で確かめる。
 
-    公開されていれば旧形式 chain を持つ repository が生まれうるため、前提条件は
-    「M2 が gated である」ことに依存している。
+    chain を作るのは **write operation** だけである。read-only 3 件は 2026-08-24 に
+    限定公開したが、`create` / `resume` が非公開である限り新しい chain は生まれず、
+    旧形式 chain も生まれない。前提条件が依存しているのは「worktree が全て gated」では
+    なく「**write が未公開**」である。
     """
     published = {f"{domain}.{action}" for domain, action in cli.PUBLISHED_OPERATIONS}
-    assert not any(name.startswith("worktree.") for name in published), (
-        "worktree が公開されている。旧形式 chain の前提条件を再検討すること"
+    writers = {"worktree.create", "worktree.resume", "worktree.reconcile"}
+    assert not (published & writers), (
+        f"chain を作る operation が公開されている {published & writers}。"
+        "旧形式 chain の前提条件を再検討すること"
     )
 
 

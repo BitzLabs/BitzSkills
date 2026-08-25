@@ -2,7 +2,7 @@
 id: FLW-DSN-017
 title: "M2 Local Safety Profileの競合排除・耐久証跡・原子的promotion"
 status: active
-version: 2.9
+version: 3.0
 updated: 2026-08-24
 owner: codex
 implements: FLW-NFR-014, FLW-CON-008
@@ -503,18 +503,24 @@ fixture専用注入口であり、**本表のproduction test ID欄にfixture注�
 | 1 | `repo.inspect` | `_HANDLERS` 到達 | RepositoryObserver | なし（read-only） | `OK` + snapshot | M0既存 | `tests/test_flow_m1_contract_rows.py::test_reachable_codes_are_still_m0_only` |
 | 2 | `git.status` | `_HANDLERS` 到達 | RepositoryObserver | なし（read-only） | `OK` + status | M0既存 | `tests/test_flow_m1_contract_rows.py::test_reachable_codes_are_still_m0_only` |
 | 3 | `git.diff-summary` | `_HANDLERS` 到達 | RepositoryObserver | なし（read-only） | `OK` + diff | M0既存 | `tests/test_flow_m1_contract_rows.py::test_reachable_codes_are_still_m0_only` |
-| 4 | `worktree.*` 全8件の非公開 | `_HANDLERS` 非到達 | dispatcher の`UNSUPPORTED`写像 | なし | `UNSUPPORTED` / `command-unavailable` | 113 | `tests/test_flow_m2_runtime.py::test_worktree_remains_unreachable_from_public_dispatcher` |
+| 4 | `worktree` write 5件の非公開 | `_HANDLERS` 非到達 | dispatcher の`UNSUPPORTED`写像 | なし | `UNSUPPORTED` / `command-unavailable` | 113 | `tests/test_flow_m2_readonly_canary.py::test_write_operation_stays_unreachable` |
 | 5 | 旧signed-capability拒否 | `--capability-file`検出 | cli.py L916-L930 | なし | `UNSUPPORTED` / `unsupported-approval-mode` | 085 | **未実装**（現行testはfixture注入経路） |
 | 6 | `worktree.create` plan | **未接続**（gated） | PlatformProbe → ApprovalContext → RuntimePlan | plan digest | `OK` + `operation_id` | 116 | **未実装**（公開集合復帰後。probe結線は`tests/test_flow_m2_platform_probe.py::test_plan_no_longer_requires_injected_platform_evidence`） |
 | 7 | `worktree.create` apply | **未接続** | TargetTransaction → MutationCoordinator → Git child | 単一intent record → terminal receipt | `DONE` / `QUARANTINED` | 084, 086, 087 | **未実装** |
 | 8 | `worktree.resume` | **未接続** | 同上（binding検証つき） | 同上 | `DONE` / `QUARANTINED` | 084, 085, 087 | **未実装** |
-| 9 | `worktree.audit` | **未接続** | RepositoryObserver → RecoveryInspector | chain read（追記なし） | complete / incomplete / quarantine | 088 | **未実装** |
+| 9 | `worktree.audit` | **`_HANDLERS` 到達**（限定公開） | RepositoryObserver → RecoveryInspector | chain read（追記なし） | complete / incomplete / quarantine | 088, 129 | `tests/test_flow_m2_readonly_canary.py::test_read_only_operation_is_reachable_from_the_production_dispatcher` |
+| 9b | `worktree.verify-receipt` | **`_HANDLERS` 到達**（限定公開） | RecoveryInspector → TargetTransaction chain read | chain read（追記なし） | chain/result検証 | 129 | `tests/test_flow_m2_readonly_canary.py::test_read_only_operation_is_reachable_from_the_production_dispatcher` |
 | 10 | `worktree.reconcile` | **未接続** | ApprovalContext → RecoveryInspector → closure追記 | closure event | 状態収束 | 089 | **未実装** |
-| 11 | `worktree.doctor` | **未接続**（gated） | PlatformProbe → ContractBundleLoader | なし | 診断結果 | 116 | **未実装**（公開集合復帰後。共通生成器は`tests/test_flow_m2_platform_probe.py::test_plan_and_doctor_share_one_evidence_generator`） |
+| 11 | `worktree.doctor` | **`_HANDLERS` 到達**（限定公開） | PlatformProbe → ContractBundleLoader | なし | 診断結果＋operator action | 116, 129 | `tests/test_flow_m2_readonly_canary.py::test_doctor_reports_observed_platform_evidence_from_production` |
 
-**実測根拠**: 行6〜11が未接続である理由は、8つの`worktree.*` handlerがすべて
-`_GATED_HANDLERS`にあり`_HANDLERS`に無いこと（`cli.py`）である。これは縮退規則3による
-意図的なgatingであり、解除は`FLW-REV-027`のGate blocking条件を満たしたときに限る。
+**実測根拠**: 2026-08-24の裁定でread-only 3件（`doctor`／`audit`／`verify-receipt`）を
+限定公開し、行9・9b・11が**production既定dispatcherから到達するようになった**
+（`.spec/reports/decision-2026-08-24-m2-readonly-canary.md`）。
+これらは`worktree_operability._read_only_guard`配下でpersistent state不変を機械強制する。
+
+行6〜8・10（`create`／`resume`／`reconcile`）は依然`_GATED_HANDLERS`にある。
+`reconcile`はclosure eventをdurable追記するためread-onlyではない。
+縮退規則3が禁じているのはwriteを出すことであり、その趣旨は維持されている。
 
 `FLW-TSK-116`以前は、より根本的な断線があった。`worktree_runtime.plan()`が
 `platform_evidence is None`のとき`platform evidence is required`を送出する一方で、
@@ -699,7 +705,7 @@ operationがgatedである間production入口から到達できず`command-unava
 
 | # | 観点 | 現状 | 根拠 |
 |---:|---|---|---|
-| 1 | 接続完全性 | **未実装境界** | 13.1 行6〜11が`_HANDLERS`非到達。evidence生成器不在は`FLW-TSK-116`で解消し、残るのはgatingのみ |
+| 1 | 接続完全性 | **一部実証済み** | 13.1 行9・9b・11（read-only 3件）がproduction既定dispatcherから到達し black-box 証跡を持つ（`FLW-TSK-129`）。行6〜8・10（write）はgatedのため未実証 |
 | 2 | 失敗原子性 | **検証計画** | 13.3 全行が実装・検証済み（#2は`FLW-TSK-118`、#6は`FLW-TSK-120`）。production経路での実証がgatingで未了 |
 | 3 | 有限収束性 | **検証計画** | 13.4 全childを`process.run()`監督下へ結線済み（素の`subprocess.run`は0件）。10,000 event／100 MiB規模の負荷実測は未実施 |
 | 4 | platform実在性 | **検証計画** | 13.5 probe実装済み。linuxは実観測済み（ext4/tmpfsでSUPPORTED、9pでnetwork拒否）。macos／windowsは実装のみで実走未実施 |
@@ -720,6 +726,8 @@ macOS／Windowsの実観測は依然として未実施である（§13.5）。
 
 ## Revision History
 
+- 3.0 (2026-08-24) read-only 3件の限定公開を反映。§13.1 行9・9b・11がproduction到達となり
+  「接続完全性」に初めて実証が入る（裁定参照: .spec/reports/decision-2026-08-24-m2-readonly-canary.md）
 - 2.9 (2026-08-24) 旧形式chainの移行を§1.2の公開前提条件として明示し、§4.2の
   「doctorがmanual rollback手順を提示する」という未実装の約束を取り下げ（`FLW-REV-028:GP-004`）
 - 2.8 (2026-08-24) operation全体deadlineとsnapshot専用出力上限を設計値化し、

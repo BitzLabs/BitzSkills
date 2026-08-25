@@ -1,5 +1,32 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-TSK-129（read-only限定公開／canary）: userが「推奨通り b->a で進めましょう」と
+  裁定し、`worktree.doctor`／`audit`／`verify-receipt`を公開集合へ戻した
+  （裁定参照: `.spec/reports/decision-2026-08-24-m2-readonly-canary.md`）。
+  **write class（`create`／`resume`／`reconcile`／`finish`／`discard`）は非公開のまま。**
+  `reconcile`はclosure eventをdurable追記するためread-onlyではない。
+  **なぜ公開したか**: `FLW-CON-008`が要求するproduction black-box証跡は、公開集合に無い
+  operationでは**原理的に取得できない**。`FLW-REV-028`の7観点で`実証済み`が0件だった
+  主因はここにあり、安全性の証明だけを積んでも増えない。
+  **実装中に見つけた欠陥**: doctorの`required_human_input`が`fix-platform-or-bundle`という
+  **符丁**で、`GP-001`で定めた「行動可能な是正」になっていなかった。利用者が最初に走らせる
+  診断がこれでは公開する意味がないため、`OPERATOR_ACTIONS`とbundle導入手順から組み立てる
+  `_doctor_operator_action()`を追加した。
+  `tests/test_flow_m2_readonly_canary.py`（18 test）を追加。production既定dispatcherを
+  別process起動し、read-only 3件の到達・write 5件の非到達・persistent state不変・
+  traceback不在・doctorの出力が行動可能であることを検証する。
+  **出荷面を固定していた既存test 12件を更新した**。弱めず、新しい不変条件
+  「**write を伴う operation は1件も公開しない**」を検査する形へ改めた。旧形式chainの
+  前提条件testも「M2がgated」→「**chainを作るwriteが未公開**」へ精密化した（read-onlyは
+  chainを作らないため前提は維持される）。coverage manifestの実在検査が、私がrenameした
+  test IDを正しく捕捉した。
+  **成果**: `FLW-DSN-017` §13.1の行9・9b・11がproduction到達となり、§13.7の
+  **「接続完全性」に初めて実証が入った**（`未実装境界`→`一部実証済み`）。
+  coverage manifestのproduction実証は**1/21 → 4/21**。設計 v3.0。
+  confirmation証跡を再実走して更新（3者PASS、Gate採用可）。
+  全体**2570 passed / 44 skipped / 失敗0**、release_check PASS、spec inspect全8 workspace PASS。
+  次はA（`FLW-REV-029`）。
+
 - 2026-08-24 FLW-TSK-128（FLW-REV-028:GP-004）実装: 旧形式chainの移行を**実装せず**
   §1.2 の公開前提条件として明示した。**runtimeは変えていない。**
   判断軸は`FLW-TSK-126`（tmpfs／semantic self-test）と同じで、**発生しない状態のための

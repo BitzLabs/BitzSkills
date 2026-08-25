@@ -36,6 +36,11 @@ M2_WORKTREE_OPERATIONS = {
     "worktree.reconcile", "worktree.create", "worktree.resume",
     "worktree.finish", "worktree.discard",
 }
+#: read-only として限定公開した worktree operation（裁定 2026-08-24。
+#: `.spec/reports/decision-2026-08-24-m2-readonly-canary.md`）。
+M2_READONLY_OPERATIONS = {"worktree.doctor", "worktree.audit", "worktree.verify-receipt"}
+#: write を伴うため引き続き非公開の worktree operation。
+M2_WRITE_OPERATIONS = M2_WORKTREE_OPERATIONS - M2_READONLY_OPERATIONS
 M0_REACHABLE_CODES = {"OK", "INVALID_INPUT", "BLOCKED", "UNAVAILABLE", "STALE", "UNSUPPORTED"}
 
 #: catalog の「class / approval / retry / concurrency_key」表（M1 節）から読む行。
@@ -238,18 +243,22 @@ def _flow_json(*args, repo):
     return json.loads(proc.stdout), proc.returncode
 
 
-def test_dispatcher_exposes_m0_only(rows):
-    """出荷面は M0 read-only だけ（縮退規則3。裁定 2026-08-15）。"""
+def test_dispatcher_exposes_read_only_operations_only(rows):
+    """出荷面は read-only だけ（縮退規則3。裁定 2026-08-15 ＋ 2026-08-24）。"""
     exposed = {f"{domain}.{action}" for domain, action in cli._HANDLERS}
-    assert exposed == M0_OPERATIONS
+    assert exposed == M0_OPERATIONS | M2_READONLY_OPERATIONS
     assert not (exposed & set(rows)), "M1 operation を公開してはならない"
-    assert not (exposed & M2_WORKTREE_OPERATIONS), "M2 出口が閉じるまで worktree を公開してはならない"
+    assert not (exposed & M2_WRITE_OPERATIONS), "write を伴う worktree を公開してはならない"
 
 
 def test_gated_worktree_handlers_are_kept_for_reinstatement():
-    """公開を止めた worktree handler は削除せず、ゲート通過時に戻せる形で保持する。"""
+    """公開を止めた worktree handler は削除せず、ゲート通過時に戻せる形で保持する。
+
+    read-only 3 件は 2026-08-24 の裁定で公開集合へ移した。gated に残るのは
+    **write を伴うもの**だけである。
+    """
     gated = {f"{domain}.{action}" for domain, action in cli._GATED_HANDLERS}
-    assert gated == M2_WORKTREE_OPERATIONS
+    assert gated == M2_WRITE_OPERATIONS
     exposed = {f"{domain}.{action}" for domain, action in cli.PUBLISHED_OPERATIONS}
     assert not (gated & exposed), "gated と公開集合は互いに素であること"
 

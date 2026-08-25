@@ -112,13 +112,27 @@ def test_capability_rejection_does_not_fall_back_to_plan_digest(repo):
     assert result.get("approval_source") != "plan-digest"
 
 
-@pytest.mark.parametrize("action", ["doctor", "audit", "verify-receipt", "reconcile",
-                                    "create", "resume", "finish", "discard"])
-def test_worktree_stays_gated_after_legacy_removal(repo, action):
-    """到達不能な audit 分岐の除去で、gating が緩んでいないこと。"""
+@pytest.mark.parametrize("action", ["reconcile", "create", "resume", "finish", "discard"])
+def test_write_worktree_operations_stay_gated(repo, action):
+    """write を伴う worktree operation の gating が緩んでいないこと。
+
+    read-only 3 件（doctor / audit / verify-receipt）は 2026-08-24 の裁定で限定公開した。
+    緩めてはならないのは write 側である。
+    """
     result = _flow("worktree", action, repo=repo)
     assert result["code"] == "UNSUPPORTED"
     assert _cause(result) == "command-unavailable"
+
+
+@pytest.mark.parametrize("action", ["doctor", "audit", "verify-receipt"])
+def test_read_only_worktree_operations_are_reachable(repo, action):
+    """限定公開した read-only 3 件が production 既定 dispatcher から到達すること。
+
+    `command-unavailable` で閉じられていないことが要点である（到達したうえで
+    入力不足や環境不備を返すのは正しい）。
+    """
+    result = _flow("worktree", action, repo=repo)
+    assert _cause(result) != "command-unavailable", "公開したのに到達していない"
 
 
 # --- 静的検査（gated の間 production から到達できない経路の到達不能性） -------

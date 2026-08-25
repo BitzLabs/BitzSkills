@@ -189,8 +189,26 @@ def test_retired_approval_configuration_is_rejected_without_downgrade(
     assert "not-consumed" not in json.dumps(payload)
 
 
-def test_all_operability_commands_exist_but_remain_gated_in_production(capsys):
-    expected = {"doctor", "audit", "verify-receipt", "reconcile"}
+def test_read_only_operability_commands_are_published(capsys):
+    """read-only 3 件が公開集合にあり production 既定 dispatcher から到達すること。
+
+    裁定 2026-08-24（`.spec/reports/decision-2026-08-24-m2-readonly-canary.md`）。
+    到達したうえで入力不足や環境不備を返すのは正しい。`command-unavailable` で
+    閉じられていないことが要点である。
+    """
+    for action in ("doctor", "audit", "verify-receipt"):
+        assert ("worktree", action) in cli.PUBLISHED_OPERATIONS
+        cli.main(["worktree", action, "--format", "json"])
+        payload = json.loads(capsys.readouterr().out)
+        assert payload["data"].get("cause") != "command-unavailable", action
+
+
+def test_write_operability_commands_remain_gated_in_production(capsys):
+    """write を伴う operation は引き続き公開しないこと。
+
+    `reconcile` は closure event を durable 追記するため read-only ではない。
+    """
+    expected = {"reconcile", "create", "resume", "finish", "discard"}
     assert expected <= {
         action for domain, action in cli._GATED_HANDLERS if domain == "worktree"
     }
@@ -201,6 +219,7 @@ def test_all_operability_commands_exist_but_remain_gated_in_production(capsys):
         code = cli.main(["worktree", action, "--format", "json"])
         payload = json.loads(capsys.readouterr().out)
         assert code == 8 and payload["code"] == "UNSUPPORTED"
+        assert payload["data"]["cause"] == "command-unavailable", action
 
 
 def _coverage_manifest():
