@@ -32,13 +32,9 @@
       "detail": "`FLW-TSK-129` で公開した `doctor`／`audit`／`verify-receipt` は `OperationDeadline` を生成も参照もしない（`worktree_operability.py` に参照 0 件）。`RepositoryObserver` と journal の同期走査を無期限で行うため、`FLW-NFR-014` が要求する 30 秒 closed terminal result が公開面で構造的に成立しない。`FLW-TSK-127` で deadline を実装した直後に、それを通らない経路を公開している。裁定記録の後退条件に該当する。",
       "recommendation": "3 operation へ `OperationDeadline` を結線し公開経路の E2E で収束を実測する。結線までは `PUBLISHED_OPERATIONS` から戻す。",
       "tracked_by": "FLW-REV-029:GP-001",
-      "status": "resolved",
-      "resolved_by": [
-        "tests/test_flow_m2_deadline_propagation.py",
-        "plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_operability.py",
-        "FLW-TSK-130"
-      ],
-      "resolution_note": "`FLW-TSK-130` で公開 3 operation へ OperationDeadline を結線し、read-only guard を逐次読みへ変えた。確認は source 照合ではなく振る舞い（期限を尽きさせ child 起動が止まること、配分回数が実測 8 と一致すること）で行い、4 変異で検出を確認した。"
+      "status": "open",
+      "reopened_by": "FLW-REV-030",
+      "reopen_note": "`FLW-REV-030` で再測定した結果、公開経路の deadline には前段の抜け道が残っていた。`worktree doctor` は 4 child のうち 3 が deadline 無しで走る（legacy approval preflight が deadline 生成より前）。さらに `--timeout-seconds 300` が operation deadline をそのまま 300 秒にする。`FLW-TSK-130` の resolved 判定は誤りであった。"
     },
     {
       "id": "FLW-REV-029:SYN-002",
@@ -52,13 +48,9 @@
       "detail": "`_common_dir()`／`_head()` は deadline を受け取らず（`worktree_runtime.py` L342/L359/L363/L641）、`_rederive()` は新しい deadline を開始する（L807/L874）。operation 合計が 30 秒を超えうる一方、正常操作が途中で切られる経路も同時に存在する。`GP-002` の消化確認が source 文字列の照合に留まり、伝播を振る舞いで検査していなかった。",
       "recommendation": "deadline を operation 単位で 1 つにし全 child 経路へ配る。伝播を振る舞いで検査する。",
       "tracked_by": "FLW-REV-029:GP-002",
-      "status": "resolved",
-      "resolved_by": [
-        "tests/test_flow_m2_deadline_propagation.py",
-        "plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_operability.py",
-        "FLW-TSK-130"
-      ],
-      "resolution_note": "`FLW-TSK-130` で公開 3 operation へ OperationDeadline を結線し、read-only guard を逐次読みへ変えた。確認は source 照合ではなく振る舞い（期限を尽きさせ child 起動が止まること、配分回数が実測 8 と一致すること）で行い、4 変異で検出を確認した。"
+      "status": "open",
+      "reopened_by": "FLW-REV-030",
+      "reopen_note": "同上。`_common_dir`／`_head`／`_rederive` は塞いだが、legacy approval preflight の 3 child は deadline の外に残っている。"
     },
     {
       "id": "FLW-REV-029:SYN-003",
@@ -72,14 +64,9 @@
       "detail": "`FLW-NFR-014`:85 は依然「対象3 OS（Linux／macOS／Windows）で実環境 probe を実走」を `verified` 昇格条件とし、`FLW-DSN-017` §7（L353）は 3 OS の fixture 実行を、§13.7（L719）は Gate blocking として「`target OS` 3種の実観測」を要求している。裁定は §1.1／§13.5 にしか適用されておらず、規範が互いに矛盾している。",
       "recommendation": "適用漏れ3箇所を Linux 限定へ揃え、規範間の整合を機械検査へ載せる。",
       "tracked_by": "FLW-REV-029:GP-003",
-      "status": "resolved",
-      "resolved_by": [
-        "tests/test_flow_norm_consistency.py",
-        "plugins/bitz-flow/.spec/design/FLW-DSN-017.md",
-        "plugins/bitz-flow/.spec/requirements/FLW-NFR-014.md",
-        "FLW-TSK-131"
-      ],
-      "resolution_note": "`FLW-TSK-131` で Linux 限定の裁定を規範3箇所へ反映し、§13.5 の陳腐化した証跡を実装へ揃えた。再発は `test_flow_norm_consistency.py` が機械検査する（保証範囲の広い記述0件、ラベルと `SUPPORTED_SCOPE` の厳密一致、allowlist 外の SUPPORTED 記述の禁止、置き換え前 probe 方法の禁止）。4 変異で検出を確認した。"
+      "status": "open",
+      "reopened_by": "FLW-REV-030",
+      "reopen_note": "`FLW-REV-030` で §9.1（`FLW-DSN-017`:441）と §10（同:460）に「登録済み3platform local fixture」が残っていることを確認した。名指しした3箇所だけを直しており、同じ欠陥の他の実例を探していない。"
     },
     {
       "id": "FLW-REV-029:SYN-004",
@@ -182,13 +169,9 @@
       "detail": "`test_observer_and_coordinator_receive_the_deadline` は source の 2 文字列しか見ず `_common_dir`／`_head`／`_rederive` の抜けを見逃した（`SYN-002` の直接原因）。`test_production_run_does_not_change_persistent_state` は path 名一覧しか比較せず内容・mode 変更を検出できない。`test_public_dispatcher_never_emits_a_traceback` の `worktree create` は非公開 dispatcher で即時拒否されるため `GP-005` の元欠陥だった write `plan()` 経路を通っていない。",
       "recommendation": "source 照合は補助に留め、GP 消化の確認は振る舞いの検査に限定する。既存の source 照合 test を振る舞い検査へ置き換える。",
       "tracked_by": "FLW-REV-029:GP-006",
-      "status": "resolved",
-      "resolved_by": [
-        "tests/test_flow_m2_deadline_propagation.py",
-        "plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_operability.py",
-        "FLW-TSK-130"
-      ],
-      "resolution_note": "`FLW-TSK-130` で公開 3 operation へ OperationDeadline を結線し、read-only guard を逐次読みへ変えた。確認は source 照合ではなく振る舞い（期限を尽きさせ child 起動が止まること、配分回数が実測 8 と一致すること）で行い、4 変異で検出を確認した。"
+      "status": "open",
+      "reopened_by": "FLW-REV-030",
+      "reopen_note": "`FLW-REV-030` の変異試験で、`verify_receipt` を常に有効と主張する形へ改変しても全 2574 test が通ることを確認した。`GP-006` を適用したと称した `tests/test_flow_m2_judgement_quality.py` 自身が公開 API を呼ばず判定式を再実装している。"
     }
   ],
   "gate_preconditions": [

@@ -1,5 +1,39 @@
 # STATE — status 遷移ログ
 
+- 2026-08-25 FLW-REV-030（GP-001〜006消化主張の検証）実施: 判定**FAIL**、集計**2.28**
+  （閾値2.5未達。**risk 2.00もfloor 2.5に未達**）。観点別: consistency 1.80 /
+  data-integrity 2.50 / operations 1.80 / risk 2.00 / business 3.50。
+  findings統合前19件→重複排除後10件（**P0: 2** / P1: 5 / P2: 3）。
+  セカンドオピニオンは**統合判定より前**に実施（codex=FAIL、agy=FAIL。**両者とも独立にFAIL**）。
+  **結論**: `GP-001`〜`006`の「全件消化」は成立しない。
+  **最も重要な所見**: **是正taskが、自分が是正するはずだった欠陥を犯した。**
+  `GP-006`（確認を振る舞いに限定する）を適用したと明記した
+  `tests/test_flow_m2_judgement_quality.py`自身が**公開APIを一度も呼んでいない**。
+  `verify_receipt`の判定を`valid = True`（常に有効と主張）へ改変しても**全2574 testが通る**。
+  「receiptを壊せば判定が反転すること」を証明するために書いたtestが、判定を真へ固定しても
+  落ちない。同型がもう1件: `UNSUPPORTED`を`BLOCKED`へ畳む改変（§13.2が禁止し`SI-FLW-084`の
+  中心である区別）を**全2611 testが検出しない**。
+  **P0 2件はいずれも外部レビュアーが先に指摘した**。自己レビューはchildの*監督*は数えたが
+  各childが*deadlineを受け取っているか*を見ていなかった。**2回連続で最も重い所見は
+  自己レビュー単独では出ていない。**
+  **P0-1**: 公開operationのdeadlineに前段の抜け道。`worktree doctor`は4 child中**3がdeadline
+  無し**（`_legacy_approval_detected()`がdeadline生成より前にchildを起動）。さらに
+  `--timeout-seconds 300`がoperation deadlineをそのまま**300秒**にし、`FLW-NFR-014`の30秒
+  closed terminal resultを利用者が上書きできる。
+  **P1**: `audit_operation`が`quarantine`を`INDETERMINATE`へ写し公開契約
+  （`operation-catalog.md`: `BLOCKED`／`quarantined`／NEXT空）を破る。`FLW-REV-017:SYN-011`の
+  **回帰**。`FLW-TSK-132`が矛盾を1つ直す過程で別の矛盾を作った。
+  **P1**: §13.7の表（行4=実証済み）と直後の散文（「実証済みは依然1件も無い」）が矛盾。
+  **`FLW-TSK-131`は`FLW-REV-029:SYN-003`（直した後に他の箇所を確認していない）の是正taskで
+  ありながら同じ誤りを犯した。**
+  **P1**: `FLW-CON-008`の7観点の閉集合がsubstring検査で開いており「一部実証済み」
+  「ほぼ実証済み（未確認）」が実証済みとして通る（変異で確認）。
+  **差し戻し**: `FLW-REV-029`の`SYN-001`（P0）／`SYN-002`／`SYN-003`／`SYN-009`を
+  `resolved`→`open`へ戻した。**是正が不十分または誤っていた。**
+  carried over 107件。Gate blocking `GP-001`〜`004`を新設（`GP-002`=確認方法が最優先）。
+  **`origin/main`へのマージ禁止を継続**（担保は`GP-001`完了で解ける約束だったが、
+  その完了判定自体が誤りであった）。
+
 - 2026-08-25 FLW-TSK-132（FLW-REV-029:GP-005）実装: 判定APIの矛盾を解消し、網が隠す
   内部障害を観測可能にした。**`FLW-REV-029`のGP-001〜006がこれで全件消化。**
   **是正した欠陥（`SYN-006`のaudit側）**: `audit_operation`は`INDETERMINATE`以外を

@@ -1,0 +1,64 @@
+{
+  "review_id": "FLW-REV-030",
+  "reviewer": "antigravity",
+  "model_family": "Gemini",
+  "invocation": "agy --print --dangerously-skip-permissions --add-dir <throwaway clone>",
+  "order": "統合判定より前に実施",
+  "verdict": "FAIL",
+  "gp_assessment": {
+    "GP-001": "未解決",
+    "GP-002": "一部解決",
+    "GP-003": "未解決",
+    "GP-004": "解決",
+    "GP-005": "未解決",
+    "GP-006": "未解決"
+  },
+  "findings": [
+    {
+      "ref": "AGY-001",
+      "priority": "P0",
+      "title": "公開 API 契約と実装の乖離",
+      "note": "audit_operation が QUARANTINE を含む復旧要状態へ一律 INDETERMINATE / result-indeterminate を返す。operator_action: create-reconcile-plan も catalog の NEXT は空 と矛盾。",
+      "adopted": true,
+      "mapped_to": "FLW-REV-030:SYN-003",
+      "verification": "codex と独立に同一箇所を指摘。catalog の NEXT 空 との矛盾は agy のみが指摘"
+    },
+    {
+      "ref": "AGY-002",
+      "priority": "P0",
+      "title": "振る舞い検証 test の偽陽性（公開 API 未呼び出し）",
+      "note": "GP-006 に従うと主張しながら OP.verify_receipt / OP.audit_operation / CLI を一切呼んでいない。",
+      "adopted": true,
+      "mapped_to": "FLW-REV-030:SYN-002",
+      "verification": "codex と独立に同一箇所を指摘。変異試験で確証"
+    },
+    {
+      "ref": "AGY-003",
+      "priority": "P1",
+      "title": "§13.7 の自己矛盾",
+      "note": "表 1 行目 一部実証済み と直後の散文 実証済みは依然1件も無い が矛盾。",
+      "adopted": true,
+      "mapped_to": "FLW-REV-030:SYN-005",
+      "verification": "該当行を確認"
+    },
+    {
+      "ref": "AGY-004",
+      "priority": "P1",
+      "title": "deadline_propagation に source 照合が残存",
+      "note": "GP-006 を掲げるファイル自身が worktree_operability.py を read_text して正規表現で problems を抽出している。",
+      "adopted": true,
+      "mapped_to": "FLW-REV-030:SYN-002",
+      "verification": "該当箇所を確認"
+    },
+    {
+      "ref": "AGY-005",
+      "priority": "P1",
+      "title": "100 MiB 規模 journal の収束実測が未実施",
+      "note": "設計自身が §13.4 で未実施と明記。",
+      "adopted": "partial",
+      "mapped_to": "FLW-REV-030:SYN-008",
+      "verification": "未実施は事実だが、設計が自己申告しているため新規欠陥ではなく既知の残作業として扱う。ただし §13.7 行3 の記述は §13.4 と矛盾しており、そちらを finding とした"
+    }
+  ],
+  "limitations": "初回は headless の権限制約で応答不能、2 回目は timeout。3 回目に使い捨て clone に対して実行して取得した。実装者の作業ツリーには触れていない。"
+}

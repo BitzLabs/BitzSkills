@@ -1,0 +1,76 @@
+{
+  "review_id": "FLW-REV-030",
+  "reviewer": "codex",
+  "model_family": "OpenAI",
+  "invocation": "codex exec --sandbox read-only --cd <repo> <brief>",
+  "order": "統合判定より前に実施",
+  "verdict": "FAIL",
+  "gp_assessment": {
+    "GP-001": "未消化",
+    "GP-002": "部分",
+    "GP-003": "部分",
+    "GP-004": "部分",
+    "GP-005": "部分",
+    "GP-006": "未消化"
+  },
+  "findings": [
+    {
+      "ref": "CDX-001",
+      "priority": "P0",
+      "title": "公開3 operation の30秒保証に抜け道が残る",
+      "note": "deadline は _legacy_approval_detected() の後に生成される。preflight の 3 child が deadline 無し。--timeout-seconds 300 がそのまま operation deadline になる。",
+      "adopted": true,
+      "mapped_to": "FLW-REV-030:SYN-001",
+      "verification": "実装者が独立に再測定して確認（doctor child=4 / deadline無し=3、300 秒指定で deadline 残=300.0）"
+    },
+    {
+      "ref": "CDX-002",
+      "priority": "P1",
+      "title": "judgement_quality test が定数を検査しているだけ",
+      "note": "code/cause を実行せず _AUDIT_ACTIONS 定数の整合だけを検査するため欠陥を通す。receipt 反転 test も公開 verify_receipt ではなく判定式を再実装した helper を見ている。",
+      "adopted": true,
+      "mapped_to": "FLW-REV-030:SYN-002",
+      "verification": "変異試験で確認（verify_receipt を常に有効へ改変しても全 2574 test が通過）。実装者は P0 へ引き上げた"
+    },
+    {
+      "ref": "CDX-003",
+      "priority": "P1",
+      "title": "audit_operation の code/cause が確定分類と矛盾",
+      "note": "confirmed-incomplete / quarantine を INDETERMINATE / result-indeterminate へ変換。quarantine は既存契約の BLOCKED / quarantined と不一致。",
+      "adopted": true,
+      "mapped_to": "FLW-REV-030:SYN-003",
+      "verification": "operation-catalog.md の判定表と result.py の quarantined cause 追加経緯（FLW-REV-017:SYN-011）で確認"
+    },
+    {
+      "ref": "CDX-004",
+      "priority": "P1",
+      "title": "§13.7 が自己矛盾し FLW-CON-008 の語彙にも違反",
+      "note": "表は実証済み、直後の散文は 1 件も無い。一部実証済みは閉集合外だが substring 検査で通る。",
+      "adopted": true,
+      "mapped_to": [
+        "FLW-REV-030:SYN-005",
+        "FLW-REV-030:SYN-006"
+      ],
+      "verification": "実装者が独立に発見し、変異試験で substring 検査の穴を確認"
+    },
+    {
+      "ref": "CDX-005",
+      "priority": "P1",
+      "title": "Linux 限定の反映が規範全体では未完了",
+      "note": "§9.1:441 と §10:460 に登録済み3platform local fixture が残る。norm test は固定 4 フレーズしか探索しない。",
+      "adopted": true,
+      "mapped_to": "FLW-REV-030:SYN-007",
+      "verification": "該当行を確認"
+    },
+    {
+      "ref": "CDX-006",
+      "priority": "P2",
+      "title": "§13.5 の tmpfs/9p は実観測ではない",
+      "note": "引用 test が実走するのは ext4 だけ。tmpfs/9p は合成 classification test。",
+      "adopted": true,
+      "mapped_to": "FLW-REV-030:SYN-009",
+      "verification": "該当 test の分類表を確認"
+    }
+  ],
+  "limitations": "read-only sandbox のため pytest の一時領域が作れず、codex 自身による receipt 破損の再現は未実施。当該点は実装者が変異試験で補完した。"
+}
