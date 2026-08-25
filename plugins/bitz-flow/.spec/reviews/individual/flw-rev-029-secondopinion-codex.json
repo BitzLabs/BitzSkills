@@ -1,0 +1,69 @@
+{
+ "perspective": "second-opinion",
+ "reviewer": "codex",
+ "cli_version": "codex-cli 0.149.0",
+ "model_family": "OpenAI",
+ "executed_at": "2026-08-24",
+ "verdict": "FAIL",
+ "invocation": "codex exec --ignore-user-config --sandbox read-only --cd .（プロンプトは stdin）",
+ "gp_consumption_disputes": [
+  {
+   "gp": "GP-002",
+   "claim": "OperationDeadline は child の timeout を制限するだけで operation 全体を締めていない。plan() の _common_dir()/_head()、apply() の _legacy_approval_input_present() と _rederive() は deadline を受け取らず、_rederive() は新しい deadline を開始する。",
+   "verified_by_claude": "**実測で確認**。worktree_runtime.py L342/L359/L363/L641 の _common_dir/_head と L807/L874 の _rederive が deadline を受け取らない。"
+  },
+  {
+   "gp": "GP-003",
+   "claim": "§1.1 と実装は Linux 限定になったが、FLW-DSN-017 §7 は依然 3 OS の fixture を要求し、§13.7 は target OS 3種の実観測を Gate blocking に残す。FLW-NFR-014 の verified 昇格条件も対象3 OSを要求しており規範全体が整合していない。",
+   "verified_by_claude": "**実測で確認**。FLW-NFR-014:85、FLW-DSN-017:353／719 に 3 OS 条件が残存。"
+  },
+  {
+   "gp": "GP-004",
+   "claim": "設計変更自体は Gate が許しているが、「旧形式chainを持つrepositoryは存在しない」は立証されていない。test が示すのは「現在の公開操作から新規作成できない」ことだけで、既存 repository に残っていないことではない。",
+   "verified_by_claude": "妥当。前提の立証範囲を過大に書いていた。"
+  },
+  {
+   "gp": "GP-007",
+   "claim": "消化を認める。恒真 self-test を保証根拠から撤去し未実証の semantics を明記したため元の乖離は解消している。",
+   "verified_by_claude": "同意。"
+  }
+ ],
+ "additional_findings": [
+  {
+   "id": "CDX-001",
+   "severity": "critical",
+   "location": "worktree_operability.py doctor/audit_operation/verify_receipt",
+   "claim": "公開された 3 operation は OperationDeadline を生成せず、RepositoryObserver と journal の同期走査を無期限で行う。公開した read-only 3 操作こそ FLW-NFR-014 の 30 秒 closed terminal result を構造的に保証していない。",
+   "verified_by_claude": "**実測で確認**。worktree_operability.py に deadline の生成も参照も 0 件。**本日公開したばかりの経路に 30 秒保証が無い。**"
+  },
+  {
+   "id": "CDX-002",
+   "severity": "major",
+   "location": "cli.py dispatcher の except Exception",
+   "claim": "traceback は防ぐが、予期しないプログラム欠陥を一律 UNAVAILABLE へ変換しログ・例外分類・相関情報を残さない。内部障害まで不可観測にしており回帰を隠す網になっている。",
+   "verified_by_claude": "妥当。利用者への秘匿は正しいが、開発側の観測手段が無い。"
+  },
+  {
+   "id": "CDX-003",
+   "severity": "major",
+   "location": "FLW-DSN-017 §13.5",
+   "claim": "tmpfs を allowlist から外した一方、実観測欄には依然「ext4・tmpfsで SUPPORTED」と残っている。証跡記述が現在の判定と矛盾している。",
+   "verified_by_claude": "**実測で確認**。L649 に加え case semantics の probe 方法欄も TSK-125 以前の「swapcase path の存在で判定」のまま。**撤回した事実を証跡が主張し続けている。**"
+  },
+  {
+   "id": "CDX-004",
+   "severity": "minor",
+   "location": "worktree_operability.py _read_only_guard",
+   "claim": "同時実行中の別 process による正当な更新も当該操作自身の write として誤判定する競合上の曖昧さが残る。",
+   "verified_by_claude": "妥当。read-only 公開により発生確率が上がる。"
+  }
+ ],
+ "test_weaknesses": [
+  "test_observer_and_coordinator_receive_the_deadline は source の 2 文字列しか見ず、_common_dir/_head/legacy preflight/_rederive の抜けを見逃している",
+  "test_chain_inspection_converges_under_load は 10,000 event を直接 inspect するだけで、100 MiB 条件・operation 全体・timeout 時の closed result を検査していない",
+  "test_untracked_flood_stays_within_the_snapshot_limit は 2000 ファイルで成功することしか確認せず 64 MiB 上限への到達も超過時の収束も検査していない",
+  "test_production_run_does_not_change_persistent_state は path 名一覧しか比較せず、内容・mode 変更を検出できない（実装側 guard は bytes と mode を比較する）",
+  "test_public_dispatcher_never_emits_a_traceback の worktree create は非公開 dispatcher で即時拒否されるため GP-005 の元欠陥だった write plan() 経路を通っていない"
+ ],
+ "summary": "GP-002 の中心要求である operation 全体 deadline は実装されておらず、限定公開した read-only 3 操作にも 30 秒収束の構造的保証がない。GP-003 は設計・要件内に 3 OS 条件が残り、GP-004 も既存 legacy chain 不在を保証していない。production E2E は read-only 部分に限られ CONDITIONAL_PASS に上げる条件にも達していない。"
+}

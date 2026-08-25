@@ -1,0 +1,37 @@
+{
+ "perspective": "consistency",
+ "dimensions": [
+  {
+   "name": "規範内の整合",
+   "weight": 0.5,
+   "score": 2,
+   "findings": [
+    {
+     "id": "RVC-101",
+     "severity": "critical",
+     "location": "FLW-NFR-014:85 / FLW-DSN-017:353,719",
+     "title": "Linux限定の裁定が規範の3箇所へ反映されておらず内部矛盾している",
+     "description": "2026-08-24の裁定で保証をLinuxへ限定したが、`FLW-NFR-014`の`verified`昇格条件は依然「対象3 OS（Linux／macOS／Windows）で実環境probeを実走」を要求し、`FLW-DSN-017` §7 は3 OSのfixture実行を、§13.7 Gate blockingは「`target OS` 3種の実観測」を要求している。**規範が互いに矛盾しており、どれを満たせば良いか決まらない。**",
+     "recommendation": "裁定の適用漏れ3箇所をLinux限定へ揃える。規範間の整合を機械検査へ載せる。"
+    }
+   ]
+  },
+  {
+   "name": "証跡と実態の一致",
+   "weight": 0.5,
+   "score": 2,
+   "findings": [
+    {
+     "id": "RVC-201",
+     "severity": "critical",
+     "location": "FLW-DSN-017 §13.5",
+     "title": "撤回した事実を証跡が主張し続けている",
+     "description": "`FLW-TSK-126`でtmpfsをallowlistから外したにもかかわらず§13.5の実観測欄は「ext4・tmpfsで`SUPPORTED`」のまま。`FLW-TSK-125`でcase判定をmount局所へ変えたのにprobe方法欄は「swapcase pathの存在で判定」のまま。**証跡が現在の実装と食い違っている。**これは`FLW-REV-027`が指摘した過大主張の再発である。",
+     "recommendation": "§13.5を現在の実装と実測へ更新し、設計表の記述が実装と一致することを機械検査へ載せる。"
+    }
+   ]
+  }
+ ],
+ "weighted_score": 2.0,
+ "summary": "Linux限定の裁定が規範3箇所へ未反映で内部矛盾しており、§13.5の証跡は撤回済みの事実を主張し続けている。是正の適用範囲を確認せずに「消化済み」と宣言したことが原因である。"
+}

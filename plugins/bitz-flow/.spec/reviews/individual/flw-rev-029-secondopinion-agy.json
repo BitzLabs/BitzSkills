@@ -1,0 +1,54 @@
+{
+ "perspective": "second-opinion",
+ "reviewer": "antigravity",
+ "cli_version": "1.1.19",
+ "model_family": "Gemini",
+ "executed_at": "2026-08-24",
+ "invocation": "agy --print '<worktree_operability.py 埋め込み>' --sandbox=false",
+ "scope": "本日限定公開した read-only 3 operation の実装",
+ "additional_findings": [
+  {
+   "id": "AGY-101",
+   "severity": "major",
+   "location": "worktree_operability.verify_receipt",
+   "claim": "report.healthy and bool(report.events) のみで判定し receipts の存在・内容を一切検証していない。receipt が未生成・破損・消失でも code=OK（journal/receipt chainは有効）を返す。",
+   "verified_by_claude": "妥当。名前が receipt 検証を主張しているのに receipt を見ていない。"
+  },
+  {
+   "id": "AGY-102",
+   "severity": "major",
+   "location": "worktree_operability.doctor / _BUNDLE_ACTIONS",
+   "claim": "doctor が出す current-bundle-digest-mismatch が _BUNDLE_ACTIONS に無く、是正手順ではなく「未分類の問題を報告する」が利用者へ露出する。",
+   "verified_by_claude": "**実測で確認**。doctor は 5 種の problem を出すが表は 4 種のみ。GP-001 の網羅漏れであり、私の coverage test が platform 理由だけを見て bundle problem を見ていなかった。"
+  },
+  {
+   "id": "AGY-103",
+   "severity": "major",
+   "location": "worktree_operability.audit_operation",
+   "claim": "classification が INDETERMINATE でない限り、復旧が必要な状態でも code=OK を返す。是正アクションを提示しながら OK と返すため正常と誤解させる。",
+   "verified_by_claude": "妥当。operator action と code が矛盾しうる。"
+  },
+  {
+   "id": "AGY-104",
+   "severity": "minor",
+   "location": "worktree_operability._transaction",
+   "claim": "存在しない operation_id で NOT_FOUND / INVALID_INPUT ではなく INDETERMINATE を投げるため、単なる ID 誤りを判定不能障害と誤認させる。",
+   "verified_by_claude": "妥当。公開により利用者が踏みやすくなった。"
+  },
+  {
+   "id": "AGY-105",
+   "severity": "minor",
+   "location": "worktree_operability._receipt_path",
+   "claim": "存在確認せず path 文字列を返すため、実在しない receipt path が公開 result へ載る。",
+   "verified_by_claude": "妥当。"
+  },
+  {
+   "id": "AGY-106",
+   "severity": "major",
+   "location": "worktree_operability.persistent_state_digest",
+   "claim": "bitz-flow-v2 配下の全ファイルを read_bytes で一括ロードして hash する。大容量時に OOM や I/O 遅延を招き、read-only guard 自体が実行障害の原因になる。",
+   "verified_by_claude": "**実測で確認**。全 bytes を読む実装であり、guard は各 operation の前後で **2 回**走る。FLW-NFR-014 が想定する 100 MiB 級 journal では 200 MiB の読み取りが公開経路に入る。"
+  }
+ ],
+ "summary": "公開した read-only 3 operation に、判定の甘さ（receipt 未検証・要復旧でも OK）、operator action の網羅漏れ、read-only guard 自体のスケール問題がある。公開により利用者へ直接露出する。"
+}

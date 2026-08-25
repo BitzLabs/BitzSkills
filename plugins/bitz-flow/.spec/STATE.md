@@ -1,5 +1,35 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-REV-029（read-only限定公開後の再レビュー）実施: 判定**FAIL**、集計**2.72**
+  （閾値2.5は超えるが**risk 2.33がfloor 2.5に未達**）。観点別: consistency 2.00 /
+  data-integrity 3.80 / operations 1.80 / risk 2.33 / business 3.50。
+  findings統合前21件→重複排除後9件（**P0: 1** / P1: 6 / P2: 2）。
+  **手順を変えた**: 前回は自己判定の後にセカンドオピニオンをかけて判定が覆ったため、
+  今回は**統合判定より前**にクロスモデル検証を実施した（codex=FAIL、agy=追加欠陥6件）。
+  結果、P0とP1のうち**5件は外部レビュアーが先に指摘したもの**であり、自己レビュー単独では
+  見つけられなかった蓋然性が高い。指摘はすべて実測で再現してから採用した。
+  **P0（SYN-001）**: `FLW-TSK-129`で公開した`doctor`／`audit`／`verify-receipt`が
+  `OperationDeadline`を生成も参照もしない（`worktree_operability.py`に参照0件）。
+  `FLW-NFR-014`の30秒収束が**公開面で構造的に成立しない**。`FLW-TSK-127`でdeadlineを
+  実装した直後に、それを通らない経路を公開していた。
+  **P1 6件**: deadline伝播の抜け道（`_common_dir`／`_head`／`_rederive`。GP-002未消化）、
+  Linux限定の裁定が規範3箇所（`FLW-NFR-014`:85、§7、§13.7）へ未反映で内部矛盾、
+  §13.5が撤回済みの事実（tmpfs SUPPORTED、swapcase判定）を主張し続けている、
+  `persistent_state_digest`が全bytes読みで公開経路が100 MiB級journalに耐えない、
+  `verify_receipt`がreceiptsを検証せず`audit_operation`が要復旧でもOKを返す、
+  dispatcher網が内部障害を不可観測にしている。
+  **共通の根**: **GP消化の確認をsource文字列の照合で済ませた**こと。`GP-002`の確認testは
+  sourceに`deadline=self.deadline`が含まれるかを見るだけで、実際の伝播を検査していなかった。
+  そのため抜け道を見逃し、さらにdeadlineを通らない経路を公開した。`GP-003`も§1.1と§13.5を
+  直したことで「揃えた」と判断し、他3箇所を確認していなかった。
+  「直した」と「直ったことを確かめた」の差がそのままfindingになっている。
+  GP-001〜006を起票（`GP-006`は確認方法そのものへの手当てで最優先）。
+  **前進した点**: crash境界の原子性は回帰なし。production E2Eが1/21→4/21へ増え
+  7観点の「接続完全性」に初めて実証が入った。businessは2.00→3.50。
+  **裁定記録の後退条件に該当**（`FLW-REV-029`が本公開に対してP0を出した）。
+  後退（公開を戻す）か前進（`GP-001`結線後に再判定）かは人間裁定。
+  carried_overは102件。全体2574 passed / 45 skipped / 失敗0。
+
 - 2026-08-24 FLW-TSK-129（read-only限定公開／canary）: userが「推奨通り b->a で進めましょう」と
   裁定し、`worktree.doctor`／`audit`／`verify-receipt`を公開集合へ戻した
   （裁定参照: `.spec/reports/decision-2026-08-24-m2-readonly-canary.md`）。

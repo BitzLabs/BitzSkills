@@ -1,0 +1,368 @@
+{
+  "schema_version": 2,
+  "review_id": "FLW-REV-029",
+  "verdict": "FAIL",
+  "aggregate_score": 2.72,
+  "perspective_scores": {
+    "consistency": 2.0,
+    "data-integrity": 3.8,
+    "operations": 1.8,
+    "risk": 2.33,
+    "business": 3.5
+  },
+  "findings_summary": {
+    "before_dedup": 21,
+    "after_dedup": 9,
+    "p0": 1,
+    "p1": 6,
+    "p2": 2,
+    "p3": 0
+  },
+  "findings": [
+    {
+      "id": "FLW-REV-029:SYN-001",
+      "priority": "P0",
+      "severity": "critical",
+      "source": [
+        "OPS-101",
+        "CDX-001",
+        "RSK-101"
+      ],
+      "title": "公開した read-only 3 operation に 30 秒収束の保証が無い",
+      "detail": "`FLW-TSK-129` で公開した `doctor`／`audit`／`verify-receipt` は `OperationDeadline` を生成も参照もしない（`worktree_operability.py` に参照 0 件）。`RepositoryObserver` と journal の同期走査を無期限で行うため、`FLW-NFR-014` が要求する 30 秒 closed terminal result が公開面で構造的に成立しない。`FLW-TSK-127` で deadline を実装した直後に、それを通らない経路を公開している。裁定記録の後退条件に該当する。",
+      "recommendation": "3 operation へ `OperationDeadline` を結線し公開経路の E2E で収束を実測する。結線までは `PUBLISHED_OPERATIONS` から戻す。",
+      "tracked_by": "FLW-REV-029:GP-001",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-029:SYN-002",
+      "priority": "P1",
+      "severity": "critical",
+      "source": [
+        "CDX-001",
+        "RSK-401"
+      ],
+      "title": "operation deadline に抜け道が残り GP-002 が未消化である",
+      "detail": "`_common_dir()`／`_head()` は deadline を受け取らず（`worktree_runtime.py` L342/L359/L363/L641）、`_rederive()` は新しい deadline を開始する（L807/L874）。operation 合計が 30 秒を超えうる一方、正常操作が途中で切られる経路も同時に存在する。`GP-002` の消化確認が source 文字列の照合に留まり、伝播を振る舞いで検査していなかった。",
+      "recommendation": "deadline を operation 単位で 1 つにし全 child 経路へ配る。伝播を振る舞いで検査する。",
+      "tracked_by": "FLW-REV-029:GP-002",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-029:SYN-003",
+      "priority": "P1",
+      "severity": "critical",
+      "source": [
+        "RVC-101",
+        "CDX-001"
+      ],
+      "title": "Linux 限定の裁定が規範3箇所へ未反映で内部矛盾している",
+      "detail": "`FLW-NFR-014`:85 は依然「対象3 OS（Linux／macOS／Windows）で実環境 probe を実走」を `verified` 昇格条件とし、`FLW-DSN-017` §7（L353）は 3 OS の fixture 実行を、§13.7（L719）は Gate blocking として「`target OS` 3種の実観測」を要求している。裁定は §1.1／§13.5 にしか適用されておらず、規範が互いに矛盾している。",
+      "recommendation": "適用漏れ3箇所を Linux 限定へ揃え、規範間の整合を機械検査へ載せる。",
+      "tracked_by": "FLW-REV-029:GP-003",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-029:SYN-004",
+      "priority": "P1",
+      "severity": "critical",
+      "source": [
+        "RVC-201",
+        "CDX-003"
+      ],
+      "title": "§13.5 の証跡が撤回済みの事実を主張し続けている",
+      "detail": "`FLW-TSK-126` で tmpfs を allowlist から外したのに §13.5 実観測欄は「ext4・tmpfs で `SUPPORTED`」のまま。`FLW-TSK-125` で case 判定を mount 局所へ変えたのに probe 方法欄は「swapcase path の存在で判定」のまま。`FLW-REV-027` が指摘した過大主張の再発である。",
+      "recommendation": "§13.5 を現在の実装と実測へ更新し、設計表の記述が実装と一致することを機械検査へ載せる。",
+      "tracked_by": "FLW-REV-029:GP-004",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-029:SYN-005",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "OPS-102",
+        "AGY-106"
+      ],
+      "title": "read-only guard 自体が大規模 journal でスケールしない",
+      "detail": "`persistent_state_digest` は `bitz-flow-v2` 配下の全ファイルを `read_bytes` で一括ロードして hash する。guard は各 operation の前後 2 回走るため、`FLW-NFR-014` が想定する 100 MiB 級 journal では 200 MiB の読み取りが公開経路へ入る。read-only を保証する仕組み自体が実行障害の原因になりうる。",
+      "recommendation": "逐次読みへ変え、journal 容量に対する収束を実測する。",
+      "tracked_by": "FLW-REV-029:GP-001",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-029:SYN-006",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "DIN-101",
+        "AGY-101",
+        "AGY-103"
+      ],
+      "title": "公開した判定 API が名前どおりの検証をしていない",
+      "detail": "`verify_receipt` は `report.healthy and bool(report.events)` だけで判定し receipts の存在・内容を検証しない。receipt が未生成・破損でも `OK`（journal/receipt chain は有効）を返す。`audit_operation` は復旧が必要な状態でも `classification` が `INDETERMINATE` でなければ `OK` を返し、operator action を提示しながら正常と表示する。",
+      "recommendation": "`verify_receipt` は receipt chain の実体を検証する。`audit_operation` の code と operator action の整合を強制する。",
+      "tracked_by": "FLW-REV-029:GP-005",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-029:SYN-007",
+      "priority": "P1",
+      "severity": "major",
+      "source": [
+        "OPS-301",
+        "CDX-002"
+      ],
+      "title": "取りこぼしの網が内部障害まで不可観測にしている",
+      "detail": "`FLW-TSK-123` の dispatcher 網は traceback を防ぐが、予期しないプログラム欠陥を一律 `UNAVAILABLE` へ変換しログ・例外分類・相関情報を残さない。実際にこの網が `FLW-TSK-116`／`117` の handler 欠陥（`recovery_class` 欠落による ValueError）を隠していた。",
+      "recommendation": "公開 result は現状のまま、内部向けに例外種別と発生箇所を記録する経路を設ける。",
+      "tracked_by": "FLW-REV-029:GP-005",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-029:SYN-008",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "OPS-201",
+        "AGY-102"
+      ],
+      "title": "doctor が出す問題の1件に operator action が無い",
+      "detail": "doctor は 5 種の problem を出すが `_BUNDLE_ACTIONS` は 4 種しかなく、`current-bundle-digest-mismatch` は「未分類の問題を報告する」へ落ちる。`GP-001` の網羅漏れであり、coverage test が platform 理由だけを見て bundle problem を見ていなかった。",
+      "recommendation": "表へ追加し、doctor が出す全 problem の網羅を機械検査する。",
+      "tracked_by": "FLW-REV-029:GP-005",
+      "status": "tracked"
+    },
+    {
+      "id": "FLW-REV-029:SYN-009",
+      "priority": "P2",
+      "severity": "major",
+      "source": [
+        "CDX-001（Q3）"
+      ],
+      "title": "source 文字列を照合するだけの test が保証になっていない",
+      "detail": "`test_observer_and_coordinator_receive_the_deadline` は source の 2 文字列しか見ず `_common_dir`／`_head`／`_rederive` の抜けを見逃した（`SYN-002` の直接原因）。`test_production_run_does_not_change_persistent_state` は path 名一覧しか比較せず内容・mode 変更を検出できない。`test_public_dispatcher_never_emits_a_traceback` の `worktree create` は非公開 dispatcher で即時拒否されるため `GP-005` の元欠陥だった write `plan()` 経路を通っていない。",
+      "recommendation": "source 照合は補助に留め、GP 消化の確認は振る舞いの検査に限定する。既存の source 照合 test を振る舞い検査へ置き換える。",
+      "tracked_by": "FLW-REV-029:GP-006",
+      "status": "tracked"
+    }
+  ],
+  "gate_preconditions": [
+    {
+      "id": "GP-001",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "behavioral",
+      "evidence": "worktree_operability.py に OperationDeadline の参照が 0 件であることをソースで確認した。persistent_state_digest が全 bytes を読むことも確認した。",
+      "statement": "公開した read-only 3 operation へ deadline を結線し、大規模 journal でも収束することを公開経路の E2E で実測すること。結線までは公開を戻すこと。",
+      "response": {
+        "status": "accepted",
+        "original": "WHEN 公開集合の operation を実行する THEN bitz-flow は operation 全体の deadline 内に closed terminal result を返すこと SHALL",
+        "normalized": "公開集合の全 operation を OperationDeadline 配下に置き、persistent_state_digest を逐次読みへ変え、journal 容量に対する収束を実測する。",
+        "target": "worktree_operability.py, cli.py, 公開経路 E2E test"
+      },
+      "ears": "WHEN 公開集合の operation を実行する THEN bitz-flow は operation 全体の deadline 内に closed terminal result を返すこと SHALL"
+    },
+    {
+      "id": "GP-002",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "behavioral",
+      "evidence": "_common_dir()/_head() が deadline を受け取らず、_rederive() が新しい deadline を開始することをソースで確認した。",
+      "statement": "deadline を operation 単位で 1 つにし、全 child 経路へ配ること。伝播は source 照合ではなく振る舞いで検査すること。",
+      "response": {
+        "status": "accepted",
+        "original": "WHEN operation が複数の child を起動する THEN bitz-flow は単一の operation deadline を全 child へ配ること SHALL",
+        "normalized": "deadline を plan/apply の入口で 1 つ生成し、_common_dir/_head/_rederive/legacy preflight を含む全経路へ渡す。",
+        "target": "worktree_runtime.py, tests/test_flow_m2_operation_budget.py"
+      },
+      "ears": "WHEN operation が複数の child を起動する THEN bitz-flow は単一の operation deadline を全 child へ配ること SHALL"
+    },
+    {
+      "id": "GP-003",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "artifact",
+      "evidence": "FLW-NFR-014:85、FLW-DSN-017:353／719 に 3 OS 条件が残存することを実測で確認した。",
+      "statement": "Linux 限定の裁定を規範全体へ適用し、規範間の矛盾を解消すること。",
+      "response": {
+        "status": "accepted",
+        "original": "Linux 限定の裁定を規範全体へ適用し、規範間の矛盾を解消すること。",
+        "normalized": "FLW-NFR-014 の verified 昇格条件、FLW-DSN-017 §7 の fixture 要求、§13.7 の Gate blocking を Linux 限定へ揃える。",
+        "target": "FLW-NFR-014, FLW-DSN-017 §7/§13.7"
+      }
+    },
+    {
+      "id": "GP-004",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "artifact",
+      "evidence": "§13.5 の実観測欄に tmpfs SUPPORTED が、probe 方法欄に swapcase 判定が残ることを実測で確認した。",
+      "statement": "設計表の記述が実装と一致することを保証すること。撤回した事実を証跡が主張し続けてはならない。",
+      "response": {
+        "status": "accepted",
+        "original": "設計表の記述が実装と一致することを保証すること。撤回した事実を証跡が主張し続けてはならない。",
+        "normalized": "§13.5 を現在の実装と実測へ更新し、記述と実装の一致を機械検査へ載せる。",
+        "target": "FLW-DSN-017 §13.5, tests/test_flow_design_completion_contract.py"
+      }
+    },
+    {
+      "id": "GP-005",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "behavioral",
+      "evidence": "verify_receipt が receipts を参照しないこと、audit_operation が要復旧状態でも OK を返すこと、_BUNDLE_ACTIONS が doctor の problem を網羅しないことをソースで確認した。",
+      "statement": "公開した判定 API の code・operator action・実際の検証対象を一致させること。",
+      "response": {
+        "status": "accepted",
+        "original": "WHEN 判定 API が OK を返す THEN bitz-flow はその名が主張する対象を実際に検証していること SHALL",
+        "normalized": "verify_receipt へ receipt chain 検証を実装し、audit_operation の code と operator action の整合を強制し、_BUNDLE_ACTIONS の網羅を機械検査する。あわせて内部向けの例外記録経路を設ける。",
+        "target": "worktree_operability.py, cli.py"
+      },
+      "ears": "WHEN 判定 API が OK を返す THEN bitz-flow はその名が主張する対象を実際に検証していること SHALL"
+    },
+    {
+      "id": "GP-006",
+      "kind": "blocking",
+      "basis": "verified",
+      "gp_kind": "process",
+      "evidence": "GP-002 の消化確認が source 文字列の照合に留まり、_common_dir/_head/_rederive の抜けを見逃したことを本レビューで確認した。",
+      "statement": "GP 消化の確認を振る舞いの検査に限定すること。source 照合は補助に留める。",
+      "response": {
+        "status": "accepted",
+        "original": "GP 消化の確認を振る舞いの検査に限定すること。source 照合は補助に留める。",
+        "normalized": "既存の source 照合 test を振る舞い検査へ置き換え、以後の GP 消化判定に source 照合を単独の根拠として用いない。",
+        "target": "tests/, FLW-CON-008"
+      }
+    }
+  ],
+  "carried_over": [
+    "FLW-REV-006:SYN-001",
+    "FLW-REV-006:SYN-002",
+    "FLW-REV-006:SYN-003",
+    "FLW-REV-006:SYN-004",
+    "FLW-REV-006:SYN-005",
+    "FLW-REV-006:SYN-006",
+    "FLW-REV-006:SYN-007",
+    "FLW-REV-006:SYN-008",
+    "FLW-REV-006:SYN-009",
+    "FLW-REV-011:SYN-001",
+    "FLW-REV-011:SYN-002",
+    "FLW-REV-011:SYN-003",
+    "FLW-REV-011:SYN-004",
+    "FLW-REV-011:SYN-005",
+    "FLW-REV-011:SYN-006",
+    "FLW-REV-011:SYN-007",
+    "FLW-REV-011:SYN-008",
+    "FLW-REV-011:SYN-009",
+    "FLW-REV-011:SYN-010",
+    "FLW-REV-011:SYN-011",
+    "FLW-REV-011:SYN-012",
+    "FLW-REV-011:SYN-013",
+    "FLW-REV-011:SYN-014",
+    "FLW-REV-011:SYN-015",
+    "FLW-REV-011:SYN-016",
+    "FLW-REV-011:SYN-017",
+    "FLW-REV-011:SYN-018",
+    "FLW-REV-013:SYN-001",
+    "FLW-REV-013:SYN-002",
+    "FLW-REV-013:SYN-003",
+    "FLW-REV-013:SYN-004",
+    "FLW-REV-013:SYN-005",
+    "FLW-REV-013:SYN-006",
+    "FLW-REV-013:SYN-007",
+    "FLW-REV-013:SYN-008",
+    "FLW-REV-013:SYN-009",
+    "FLW-REV-013:SYN-010",
+    "FLW-REV-013:SYN-011",
+    "FLW-REV-013:SYN-012",
+    "FLW-REV-013:SYN-013",
+    "FLW-REV-013:SYN-014",
+    "FLW-REV-013:SYN-015",
+    "FLW-REV-013:SYN-016",
+    "FLW-REV-013:SYN-017",
+    "FLW-REV-013:SYN-018",
+    "FLW-REV-013:SYN-019",
+    "FLW-REV-013:SYN-020",
+    "FLW-REV-013:SYN-021",
+    "FLW-REV-013:SYN-022",
+    "FLW-REV-013:SYN-023",
+    "FLW-REV-015:SYN-001",
+    "FLW-REV-016:SYN-002",
+    "FLW-REV-016:SYN-003",
+    "FLW-REV-016:SYN-004",
+    "FLW-REV-016:SYN-005",
+    "FLW-REV-016:SYN-006",
+    "FLW-REV-016:SYN-007",
+    "FLW-REV-016:SYN-008",
+    "FLW-REV-016:SYN-009",
+    "FLW-REV-016:SYN-010",
+    "FLW-REV-016:SYN-011",
+    "FLW-REV-017:SYN-008",
+    "FLW-REV-017:SYN-009",
+    "FLW-REV-018:SYN-001",
+    "FLW-REV-018:SYN-002",
+    "FLW-REV-018:SYN-003",
+    "FLW-REV-018:SYN-004",
+    "FLW-REV-018:SYN-006",
+    "FLW-REV-018:SYN-007",
+    "FLW-REV-018:SYN-008",
+    "FLW-REV-018:SYN-009",
+    "FLW-REV-018:SYN-010",
+    "FLW-REV-018:SYN-011",
+    "FLW-REV-018:SYN-012",
+    "FLW-REV-019:SYN-001",
+    "FLW-REV-019:SYN-002",
+    "FLW-REV-019:SYN-004",
+    "FLW-REV-019:SYN-005",
+    "FLW-REV-019:SYN-006",
+    "FLW-REV-019:SYN-007",
+    "FLW-REV-019:SYN-008",
+    "FLW-REV-019:SYN-009",
+    "FLW-REV-019:SYN-010",
+    "FLW-REV-019:SYN-011",
+    "FLW-REV-019:SYN-012",
+    "FLW-REV-020:SYN-001",
+    "FLW-REV-027:SYN-001",
+    "FLW-REV-027:SYN-002",
+    "FLW-REV-027:SYN-003",
+    "FLW-REV-027:SYN-004",
+    "FLW-REV-027:SYN-005",
+    "FLW-REV-027:SYN-006",
+    "FLW-REV-027:SYN-007",
+    "FLW-REV-028:SYN-001",
+    "FLW-REV-028:SYN-002",
+    "FLW-REV-028:SYN-003",
+    "FLW-REV-028:SYN-004",
+    "FLW-REV-028:SYN-007",
+    "FLW-REV-028:SYN-008",
+    "FLW-REV-028:SYN-009",
+    "FLW-REV-028:SYN-010",
+    "FLW-REV-028:SYN-011"
+  ],
+  "conditional_items": [
+    "GP-001",
+    "GP-002",
+    "GP-003",
+    "GP-004",
+    "GP-005",
+    "GP-006"
+  ],
+  "ledger_contract": "SI-FLW-091",
+  "second_opinions": [
+    {
+      "reviewer": "codex",
+      "model_family": "OpenAI",
+      "verdict": "FAIL",
+      "order": "統合判定より前に実施",
+      "record": ".spec/reviews/individual/flw-rev-029-secondopinion-codex.json"
+    },
+    {
+      "reviewer": "antigravity",
+      "model_family": "Gemini",
+      "verdict": "追加欠陥6件",
+      "order": "統合判定より前に実施",
+      "record": ".spec/reviews/individual/flw-rev-029-secondopinion-agy.json"
+    }
+  ]
+}

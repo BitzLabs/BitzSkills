@@ -1,0 +1,43 @@
+{
+ "perspective": "data-integrity",
+ "dimensions": [
+  {
+   "name": "永続境界の原子性",
+   "weight": 0.4,
+   "score": 5,
+   "findings": []
+  },
+  {
+   "name": "復旧と判定の正しさ",
+   "weight": 0.4,
+   "score": 3,
+   "findings": [
+    {
+     "id": "DIN-101",
+     "severity": "major",
+     "location": "worktree_operability.verify_receipt / audit_operation",
+     "title": "公開した判定APIが名前どおりの検証をしていない",
+     "description": "`verify_receipt`は`report.healthy and bool(report.events)`だけで判定し**receiptsの存在・内容を検証しない**。receiptが未生成・破損でも`OK`（journal/receipt chainは有効）を返す。`audit_operation`は復旧が必要な状態でも`classification`が`INDETERMINATE`でなければ`OK`を返し、operator actionを提示しながら正常と表示する。",
+     "recommendation": "`verify_receipt`はreceipt chainの実体を検証する。`audit_operation`のcodeとoperator actionの整合を強制する。"
+    }
+   ]
+  },
+  {
+   "name": "前提条件の立証",
+   "weight": 0.2,
+   "score": 3,
+   "findings": [
+    {
+     "id": "DIN-201",
+     "severity": "minor",
+     "location": "FLW-DSN-017 §1.2 / test_flow_m2_legacy_chain_precondition.py",
+     "title": "旧形式chain不在の前提が立証範囲を超えて書かれている",
+     "description": "testが示すのは「現在の公開操作から新規作成できない」ことだけで、既存repositoryに残っていないことではない。§1.2は「存在しない」と断定している。",
+     "recommendation": "前提を「新規には生じない」へ弱め、既存分の扱いをdoctorの検査または報告手順へ委ねる。"
+    }
+   ]
+  }
+ ],
+ "weighted_score": 3.8,
+ "summary": "crash境界の原子性は前回の是正で確立しており回帰していない。一方、公開した判定APIが名前どおりの検証をしておらず、旧形式chain不在の前提も立証範囲を超えて断定している。"
+}

@@ -1,0 +1,60 @@
+{
+ "perspective": "operations",
+ "dimensions": [
+  {
+   "name": "公開面の保証",
+   "weight": 0.5,
+   "score": 1,
+   "findings": [
+    {
+     "id": "OPS-101",
+     "severity": "critical",
+     "location": "worktree_operability.py（doctor/audit_operation/verify_receipt）",
+     "title": "公開した3 operationに30秒収束の保証が無い",
+     "description": "`FLW-TSK-129`で公開した`doctor`／`audit`／`verify-receipt`は`OperationDeadline`を**生成も参照もしない**（当該fileに参照0件）。`RepositoryObserver`とjournalの同期走査を無期限で行うため、`FLW-NFR-014`が要求する30秒closed terminal resultが**公開面で構造的に成立しない**。`FLW-TSK-127`でdeadlineを実装した直後に、それを通らない経路を公開した。",
+     "recommendation": "3 operationへ`OperationDeadline`を結線し、公開経路のE2Eで収束を実測する。結線までは公開を戻す。"
+    },
+    {
+     "id": "OPS-102",
+     "severity": "major",
+     "location": "worktree_operability.persistent_state_digest",
+     "title": "read-only guard自体が大規模journalでスケールしない",
+     "description": "`bitz-flow-v2`配下の全ファイルを`read_bytes`で一括ロードしてhashする。guardは各operationの**前後2回**走るため、`FLW-NFR-014`が想定する100 MiB級journalでは200 MiBの読み取りが公開経路へ入る。read-onlyを保証する仕組み自体が実行障害の原因になりうる。",
+     "recommendation": "逐次読みへ変え、journal容量に対する収束を実測する。"
+    }
+   ]
+  },
+  {
+   "name": "operator action",
+   "weight": 0.3,
+   "score": 3,
+   "findings": [
+    {
+     "id": "OPS-201",
+     "severity": "major",
+     "location": "worktree_operability._BUNDLE_ACTIONS",
+     "title": "doctorが出す問題の1件にoperator actionが無い",
+     "description": "doctorは5種のproblemを出すが表は4種しかなく、`current-bundle-digest-mismatch`は「未分類の問題を報告する」へ落ちる。`GP-001`の網羅漏れであり、私が書いたcoverage testは**platform理由だけ**を見てbundle problemを見ていなかった。",
+     "recommendation": "表へ追加し、doctorが出す全problemの網羅を機械検査する。"
+    }
+   ]
+  },
+  {
+   "name": "可観測性",
+   "weight": 0.2,
+   "score": 2,
+   "findings": [
+    {
+     "id": "OPS-301",
+     "severity": "major",
+     "location": "cli.py dispatcher の except Exception",
+     "title": "取りこぼしの網が内部障害まで不可観測にしている",
+     "description": "`FLW-TSK-123`で入れた網はtracebackを防ぐが、予期しないプログラム欠陥を一律`UNAVAILABLE`へ変換し、ログ・例外分類・相関情報を残さない。利用者への秘匿は正しいが、**開発側が回帰を観測できない**。実際に本レビューで、この網が`FLW-TSK-116`／`117`のhandler欠陥を隠していた事例が既にある。",
+     "recommendation": "公開resultは現状のまま、内部向けに例外種別と発生箇所を記録する経路を設ける。"
+    }
+   ]
+  }
+ ],
+ "weighted_score": 1.8,
+ "summary": "公開した3 operationに30秒収束の保証が無く、read-only guard自体も大規模journalでスケールしない。公開判断の根拠だった「read-onlyであること」は満たすが、**要件が求める収束保証は公開面で成立していない**。取りこぼしの網は内部障害を不可観測にしている。"
+}

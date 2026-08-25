@@ -1,0 +1,49 @@
+{
+ "perspective": "risk",
+ "dimensions": [
+  {
+   "name": "分散システムリスク",
+   "weight": 0.3,
+   "score": "N/A",
+   "findings": []
+  },
+  {
+   "name": "障害モード分析",
+   "weight": 0.3,
+   "score": 2,
+   "findings": [
+    {
+     "id": "RSK-101",
+     "severity": "critical",
+     "location": "worktree_operability.py / cli.py",
+     "title": "保証が成立しない経路を公開面へ露出させた",
+     "description": "`FLW-REV-028`の教訓は「是正自体が新しい停止条件を持ち込んだ」だった。今回はさらに悪く、**保証が成立しない経路を利用者へ露出させた**。deadlineを実装した同じ作業列で、それを通らない経路を公開している。`GP-002`消化の確認が実装ではなくsource文字列の照合に留まったことが原因である。",
+     "recommendation": "公開を戻すか、結線を完了させてから公開する。GP消化の確認を振る舞いの検査に限定する。"
+    }
+   ]
+  },
+  {
+   "name": "Saga設計の妥当性",
+   "weight": 0.25,
+   "score": "N/A",
+   "findings": []
+  },
+  {
+   "name": "データ整合性リスク",
+   "weight": 0.15,
+   "score": 3,
+   "findings": [
+    {
+     "id": "RSK-401",
+     "severity": "major",
+     "location": "worktree_runtime.py（_common_dir/_head/_rederive）",
+     "title": "operation deadlineに抜け道が残る",
+     "description": "`_common_dir()`／`_head()`は deadline を受け取らず、`_rederive()`は**新しいdeadlineを開始する**。operation合計は30秒を超えうる一方、正常操作が途中で切られる経路も同時に存在する。",
+     "recommendation": "deadlineをoperation単位で1つにし、全child経路へ配る。伝播を振る舞いで検査する。"
+    }
+   ]
+  }
+ ],
+ "weighted_score": 2.33,
+ "summary": "M2は単一プロセス・非分散のため2次元をN/Aとし重みを再正規化した。前回floorをクリアしたriskが再び低下している。原因は、保証が成立しない経路を公開面へ露出させたことと、deadline伝播に抜け道が残ることである。GP消化の確認がsource文字列の照合に留まったのが共通の根である。"
+}

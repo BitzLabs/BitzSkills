@@ -1,0 +1,28 @@
+{
+ "perspective": "business",
+ "dimensions": [
+  {
+   "name": "価値の提供",
+   "weight": 0.5,
+   "score": 3,
+   "findings": [
+    {
+     "id": "BIZ-101",
+     "severity": "major",
+     "location": "cli.PUBLISHED_OPERATIONS",
+     "title": "初めて利用可能になったが、要件の収束保証を満たさないまま出した",
+     "description": "read-only 3 operationの限定公開でM0以来初めてM2の機能が利用可能になり、production E2Eも4/21へ増えた。これは実質的な前進である。しかし公開面が`FLW-NFR-014`の30秒収束を満たしておらず、**保証未達のまま出荷した**形になっている。裁定記録の後退条件（本レビューがP0を出した場合は直ちに公開を戻す）に該当する。",
+     "recommendation": "後退条件に従い公開を戻すか、結線を完了させたうえで再判定する。判断は人間裁定とする。"
+    }
+   ]
+  },
+  {
+   "name": "スコープ規律",
+   "weight": 0.5,
+   "score": 4,
+   "findings": []
+  }
+ ],
+ "weighted_score": 3.5,
+ "summary": "限定公開でM2の機能が初めて利用可能になりproduction証跡も増えた点は前進である。一方で要件の収束保証を満たさないまま出しており、裁定記録の後退条件に該当する。scope規律（writeを出さない）は維持されている。"
+}
