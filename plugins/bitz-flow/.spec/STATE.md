@@ -1,5 +1,32 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-TSK-130（FLW-REV-029:GP-001／GP-002／GP-006）実装: userが「案Bで進めましょう」と
+  裁定し、canaryを後退させず結線して前進した（裁定参照:
+  `.spec/reports/decision-2026-08-24-canary-forward-fix.md`）。
+  **後退条件を発動しない根拠**: 本公開は未リリース（作業ツリー0.12.15／導入済みキャッシュ0.12.0／
+  `origin/main`未マージ）で、条件が守ろうとしている対象が存在しない。担保として
+  **結線完了まで`origin/main`へマージしない**ことを課した。条件の解釈を後出しで明文化した点も記録した。
+  **是正内容**: 公開3 operation（`doctor`／`audit`／`verify-receipt`）へ`OperationDeadline`を
+  結線。`_common_dir`／`_head`／`_rederive`の抜け道を塞ぎ、`_rederive`は新規開始せず受け取る形に。
+  `persistent_state_digest`を逐次読み（1 MiBチャンク）へ。`current-bundle-digest-mismatch`の
+  operator actionを追加。
+  **GP-006（確認方法）を実際に適用した**: `tests/test_flow_m2_deadline_propagation.py`（13 test）は
+  **sourceを一切見ない**。期限を尽きさせてchild起動が止まることと、配分回数が実測値と
+  一致することで伝播を検査する。
+  **この方式が実際に効いた**: 振る舞い検査が「`doctor`が引数を受け取るだけで使っていない」
+  欠陥を捕まえた。source照合なら通っていた。
+  **自分のテストの弱点も2回直した**: (1)`tmp_path`がtmpfsでplanが早期失敗し深いchildまで
+  到達していなかった → `allowlisted_root`とactive bundleを揃え、skipではなくfailさせる形へ。
+  (2)配分回数の下限を`>= 7`と曖昧にしたため`_common_dir`の欠落が閾値に埋もれた → 実測値
+  **8との厳密一致**へ。増減どちらも検出する。
+  旧source照合test（`test_observer_and_coordinator_receive_the_deadline`）を撤去し
+  振る舞い検査へ委譲した。5変異（doctor未使用・_rederive新規開始・_head欠落・_common_dir欠落・
+  digest一括ロード）で全件検出を確認。
+  `FLW-REV-029`の`SYN-001`（P0）／`SYN-002`／`SYN-005`／`SYN-008`／`SYN-009`を証跡付きで
+  `resolved`へ照合した。**残るはSYN-003／004（規範の整合と§13.5の陳腐化）／006／007。**
+  `FLW-DSN-017` v3.1。confirmation再実走（3者PASS、Gate採用可）。
+  全体**2586 passed / 45 skipped / 失敗0**、release_check PASS、spec inspect全8 workspace PASS。
+
 - 2026-08-24 FLW-REV-029（read-only限定公開後の再レビュー）実施: 判定**FAIL**、集計**2.72**
   （閾値2.5は超えるが**risk 2.33がfloor 2.5に未達**）。観点別: consistency 2.00 /
   data-integrity 3.80 / operations 1.80 / risk 2.33 / business 3.50。
@@ -1238,3 +1265,5 @@
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiMjQ1ZmU1ZDhiMjQ4NmY1NDAzMmFkYzkzY2NjM2UwNmQ2YmIxODM0ZjJkNzg3ZWNkYjA2OGFlNWM0Yzk1YTk0MSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiMmY3ODJmNDc3N2ViZGYyYzI3MjRkM2VhN2UwMmE5OGFjN2ZiMTcxYjZlNGI5YTZkOTkyNDA5M2E5ZTU0MjMxOCIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjYiLCJldmVudF9pZCI6IjVlNTM1ZGM2LTY5YTYtNDY4ZC04YTJjLWUwNzU1MmI5YjJlNCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjYubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDIzOjU4OjI2Ljk2ODEyOVoifQ== -->
 - 2026-08-25 FLW-TSK-127: pending → implementing (claude)
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiMjZiYTAxNGZhZWQzMWEwYTIzOTQyMmY1ZmZkMjRkN2JkNTQ0NWFmZDI0M2NmNmFmODY0M2IxMmQzNTMzMzJlNSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiOWNhOGViZWQ0NTJmNzJlOTgzZTAzMmY3M2VjNDYyYmE0MDEyNTgxNDI4MjkzZGZiMzkyNzI1ZmI2ZGU1ZjdlNiIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjciLCJldmVudF9pZCI6ImM4NTFkODVjLWE1NmUtNGZlNC1iMjEzLWY2OWE3ZGQ4ZDRlNCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjcubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI1VDAwOjMwOjAzLjIxNjcxMloifQ== -->
+- 2026-08-25 FLW-TSK-130: pending → implementing (claude)
+<!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiMzQ4NzA1M2Q2MGFmODgzYzIwNjBlODRkZjE0ZGJlZDc1Zjg3MzI3NzE3MmRiZDFiZTA3NjE3Y2M4MTVmMDA3YiIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiOGIyNTdiNmIxNDdhNWVlNTVkM2I1ODc2OWM2ZTNhOTY4ZDA2YzM1MjliOGNiYzNkZGMyMzVkODI4YTkxODU4ZCIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMzAiLCJldmVudF9pZCI6IjBjMjc2NzE4LTEwYmUtNGRhZi1hNzE0LWE4ODdlYTQwMGMzNSIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMzAubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI1VDAzOjA4OjE1LjE1NjAzOFoifQ== -->

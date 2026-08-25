@@ -1,9 +1,9 @@
 [REDACTED:token:len=38:sha256:441dfe7]
-[REDACTED:token:len=76:sha256:2567394]
+[REDACTED:token:len=76:sha256:358e4b4]
 {"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"指定されたコマンドを1回だけ実行し、完了後に最後の `M2_CONFIRMATION_` 行だけを返します。"}}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"指定された限定コマンドを1回だけ実行し、完了後に最後の確認行だけ返します。"}}
 {"type":"item.started","item":{"id":"item_1","type":"command_execution","command":"/bin/bash -lc 'python3 [REDACTED:token:len=53:sha256:c8e14c0] --repo [REDACTED:absolute-path:len=101:sha256:4917cf8]
 {"type":"item.completed","item":{"id":"item_1","type":"command_execution","command":"/bin/bash -lc 'python3 [REDACTED:token:len=53:sha256:c8e14c0] --repo [REDACTED:absolute-path:len=78:sha256:0396458] tests=313 [REDACTED:token:len=86:sha256:a0ec30f] runtime_checks=21/21 hazards=0 residuals=0\n","exit_code":0,"status":"completed"}}
 [REDACTED:token:len=98:sha256:1cabe24] tests=313 [REDACTED:token:len=86:sha256:a0ec30f] runtime_checks=21/21 hazards=0 residuals=0"}}
-[REDACTED:token:len=161:sha256:8ebd8ed]
+[REDACTED:token:len=161:sha256:edfb1b1]
 Reading additional input from stdin...

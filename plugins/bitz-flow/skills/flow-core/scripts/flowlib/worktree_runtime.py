@@ -261,13 +261,14 @@ def _git(repo: Path, *args: str, check: bool = True,
     )
 
 
-def _common_dir(repo: Path) -> Path:
-    value = _git(repo, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip()
+def _common_dir(repo: Path, *, deadline: OperationDeadline | None = None) -> Path:
+    value = _git(repo, "rev-parse", "--path-format=absolute", "--git-common-dir",
+                 deadline=deadline).stdout.strip()
     return Path(value).resolve()
 
 
-def _head(repo: Path, ref: str) -> str | None:
-    proc = _git(repo, "rev-parse", "--verify", ref, check=False)
+def _head(repo: Path, ref: str, *, deadline: OperationDeadline | None = None) -> str | None:
+    proc = _git(repo, "rev-parse", "--verify", ref, check=False, deadline=deadline)
     return proc.stdout.strip() if proc.returncode == 0 else None
 
 
@@ -330,16 +331,20 @@ def plan(
     platform_evidence: PF.PlatformEvidence | None = None,
     expires_at: datetime | None = None, nonce: str | None = None,
     bundle_digest: str | None = None, timeout_seconds: float | None = None,
+    deadline: OperationDeadline | None = None,
 ) -> RuntimePlan:
     if action not in WRITE_ACTIONS:
         raise WorktreeRuntimeError(f"unsupported worktree action: {action}")
     root = Path(repo).resolve(strict=True)
     budget = PROC.normalize_timeout(timeout_seconds)
     # operation 全体の deadline。child 単位の budget と二重の網にする。
-    deadline = OperationDeadline(timeout_seconds)
+    # 呼び出し側が持っていれば**それを使う**。`_rederive` が新しい deadline を開始すると
+    # operation 合計が 30 秒を超えうる（`FLW-REV-029:SYN-002`）。
+    if deadline is None:
+        deadline = OperationDeadline(timeout_seconds)
     observer = RepositoryObserver(root, timeout_seconds=budget, deadline=deadline)
     observed = observer.snapshot()
-    common = _common_dir(root)
+    common = _common_dir(root, deadline=deadline)
     approved_root = Path(worktree_root).resolve(strict=True)
     target = Path(path)
     if not target.is_absolute():
@@ -356,11 +361,12 @@ def plan(
     registry_target = guard.canonical_worktree_registry_target(
         common, registry, case_sensitive=True
     )
-    head = _head(root, branch) or _head(root, start_point)
+    head = _head(root, branch, deadline=deadline) or _head(root, start_point, deadline=deadline)
     instance = _instance_digest(target, registry, head)
     nonexistent = _nonexistence_digest(target)
     if action == "create":
-        if target.exists() or registry.exists() or _head(root, f"refs/heads/{branch}") is not None:
+        if target.exists() or registry.exists() or _head(
+                root, f"refs/heads/{branch}", deadline=deadline) is not None:
             raise WorktreeRuntimeError("create target, registry, or branch already exists")
         instance = None
         if nonexistent is None:
@@ -765,14 +771,14 @@ def _legacy_approval_input_present(
     )
 
 
-def _rederive(plan_value: RuntimePlan) -> RuntimePlan:
+def _rederive(plan_value: RuntimePlan, *, deadline: OperationDeadline | None = None) -> RuntimePlan:
     expires = datetime.fromisoformat(plan_value.context.expires_at.replace("Z", "+00:00"))
     return plan(
         plan_value.repo, action=plan_value.action, path=plan_value.path,
         branch=plan_value.branch, worktree_root=plan_value.worktree_root,
         start_point=plan_value.start_point, default_branch=plan_value.default_branch,
         platform_evidence=plan_value.platform_evidence, expires_at=expires,
-        nonce=plan_value.context.nonce,
+        nonce=plan_value.context.nonce, deadline=deadline,
     )
 
 
@@ -804,7 +810,7 @@ class MutationCoordinator:
         self.deadline = deadline
 
     def _recheck(self) -> None:
-        current = _rederive(self.plan)
+        current = _rederive(self.plan, deadline=self.deadline)
         if (
             current.operation_id != self.plan.operation_id
             or current.repository_snapshot != self.plan.repository_snapshot
@@ -871,7 +877,7 @@ def apply(
         plan_value, capability=capability, trusted_keys_for_test=trusted_keys_for_test,
     )
     try:
-        rederived = _rederive(plan_value)
+        rederived = _rederive(plan_value, deadline=deadline)
     except (WorktreeRuntimeError, ContractError, OSError, ValueError):
         rederived = plan_value
     transaction = T.TargetTransaction(
@@ -963,7 +969,7 @@ def apply(
             operation_id=plan_value.operation_id, nonce=plan_value.context.nonce,
             timeout_seconds=0.0,
         )
-        after_lease = _rederive(plan_value)
+        after_lease = _rederive(plan_value, deadline=deadline)
         if (
             after_lease.operation_id != plan_value.operation_id
             or after_lease.repository_snapshot != plan_value.repository_snapshot

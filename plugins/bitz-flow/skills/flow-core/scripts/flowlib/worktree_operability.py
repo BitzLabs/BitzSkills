@@ -58,6 +58,10 @@ class OperabilityDecision:
     plan: RC.ReconcilePlan | None = None
 
 
+#: `persistent_state_digest` の逐次読みチャンク（`FLW-REV-029:SYN-005`）。
+_DIGEST_CHUNK_BYTES = 1024 * 1024
+
+
 def persistent_state_digest(common_dir: str | Path) -> str:
     """Hash names, modes and bytes below bitz-flow-v2 without changing them."""
     root = Path(common_dir) / "bitz-flow-v2"
@@ -72,7 +76,13 @@ def persistent_state_digest(common_dir: str | Path) -> str:
         if path.is_symlink():
             digest.update(b"symlink\0" + os.readlink(path).encode("utf-8"))
         elif path.is_file():
-            digest.update(b"file\0" + path.read_bytes())
+            # 一括ロードすると 100 MiB 級 journal で guard 自体が実行障害の原因になる
+            # （`FLW-REV-029:SYN-005`）。guard は各 operation の前後 2 回走るため、
+            # 読み取り量は journal 容量の 2 倍になる。逐次読みでメモリを一定に保つ。
+            digest.update(b"file\0")
+            with path.open("rb") as stream:
+                for chunk in iter(lambda: stream.read(_DIGEST_CHUNK_BYTES), b""):
+                    digest.update(chunk)
         elif path.is_dir():
             digest.update(b"directory\0")
         else:
@@ -80,9 +90,9 @@ def persistent_state_digest(common_dir: str | Path) -> str:
     return "sha256:" + digest.hexdigest()
 
 
-def _common(repo: str | Path) -> Path:
+def _common(repo: str | Path, *, deadline: WR.OperationDeadline | None = None) -> Path:
     try:
-        return WR._common_dir(Path(repo).resolve(strict=True))
+        return WR._common_dir(Path(repo).resolve(strict=True), deadline=deadline)
     except (OSError, WR.WorktreeRuntimeError) as exc:
         raise OperabilityError("INVALID_INPUT", "not-repository", "Git repositoryを観測できない") from exc
 
@@ -182,6 +192,7 @@ _BUNDLE_ACTIONS = {
     "minimum-runtime-missing": "minimum runtime sentinel を導入する（bitz-flow の初期化を実行する）",
     "current-bundle-invalid": "contract bundle が壊れている。bitz-flow を再インストールする",
     "current-bundle-not-active": "contract bundle が active でない。promotion を完了させる",
+    "current-bundle-digest-mismatch": "contract bundle の digest が current pointer と一致しない。promotion をやり直す",
 }
 
 
@@ -201,8 +212,8 @@ def _doctor_operator_action(evidence, problems, common: Path) -> str:
     return " / ".join(dict.fromkeys(actions)) or "報告する"
 
 
-def doctor(repo: str | Path) -> OperabilityDecision:
-    common = _common(repo)
+def doctor(repo: str | Path, *, deadline: WR.OperationDeadline | None = None) -> OperabilityDecision:
+    common = _common(repo, deadline=deadline)
 
     def inspect() -> OperabilityDecision:
         evidence = PF.platform_evidence_for(common)
@@ -284,12 +295,13 @@ def doctor(repo: str | Path) -> OperabilityDecision:
     return _read_only_guard(common, inspect)
 
 
-def audit_operation(repo: str | Path, *, operation_id: str) -> OperabilityDecision:
-    common = _common(repo)
+def audit_operation(repo: str | Path, *, operation_id: str,
+                    deadline: WR.OperationDeadline | None = None) -> OperabilityDecision:
+    common = _common(repo, deadline=deadline)
 
     def inspect() -> OperabilityDecision:
         transaction = _transaction(common, operation_id)
-        observed = WR.RepositoryObserver(repo).snapshot()
+        observed = WR.RepositoryObserver(repo, deadline=deadline).snapshot()
         report = RC.audit(transaction, operation_id=operation_id, observed_snapshot=observed)
         indeterminate = report.classification == RC.INDETERMINATE
         return OperabilityDecision(
@@ -314,8 +326,9 @@ def audit_operation(repo: str | Path, *, operation_id: str) -> OperabilityDecisi
     return _read_only_guard(common, inspect)
 
 
-def verify_receipt(repo: str | Path, *, operation_id: str) -> OperabilityDecision:
-    common = _common(repo)
+def verify_receipt(repo: str | Path, *, operation_id: str,
+                   deadline: WR.OperationDeadline | None = None) -> OperabilityDecision:
+    common = _common(repo, deadline=deadline)
 
     def inspect() -> OperabilityDecision:
         transaction = _transaction(common, operation_id)
@@ -343,12 +356,13 @@ def verify_receipt(repo: str | Path, *, operation_id: str) -> OperabilityDecisio
 
 def reconcile_plan(repo: str | Path, *, operation_id: str, decision: str,
                    expires_at: str, nonce: str,
-                   bundle_digest: str | None = None) -> OperabilityDecision:
-    common = _common(repo)
+                   bundle_digest: str | None = None,
+                   deadline: WR.OperationDeadline | None = None) -> OperabilityDecision:
+    common = _common(repo, deadline=deadline)
 
     def build() -> OperabilityDecision:
         transaction = _transaction(common, operation_id)
-        observed = WR.RepositoryObserver(repo).snapshot()
+        observed = WR.RepositoryObserver(repo, deadline=deadline).snapshot()
         report = RC.audit(transaction, operation_id=operation_id, observed_snapshot=observed)
         bundle = bundle_digest or WR._current_bundle_digest(common)
         plan = RC.build_reconcile_plan(

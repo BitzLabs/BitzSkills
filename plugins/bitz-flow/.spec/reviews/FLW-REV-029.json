@@ -32,7 +32,13 @@
       "detail": "`FLW-TSK-129` で公開した `doctor`／`audit`／`verify-receipt` は `OperationDeadline` を生成も参照もしない（`worktree_operability.py` に参照 0 件）。`RepositoryObserver` と journal の同期走査を無期限で行うため、`FLW-NFR-014` が要求する 30 秒 closed terminal result が公開面で構造的に成立しない。`FLW-TSK-127` で deadline を実装した直後に、それを通らない経路を公開している。裁定記録の後退条件に該当する。",
       "recommendation": "3 operation へ `OperationDeadline` を結線し公開経路の E2E で収束を実測する。結線までは `PUBLISHED_OPERATIONS` から戻す。",
       "tracked_by": "FLW-REV-029:GP-001",
-      "status": "tracked"
+      "status": "resolved",
+      "resolved_by": [
+        "tests/test_flow_m2_deadline_propagation.py",
+        "plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_operability.py",
+        "FLW-TSK-130"
+      ],
+      "resolution_note": "`FLW-TSK-130` で公開 3 operation へ OperationDeadline を結線し、read-only guard を逐次読みへ変えた。確認は source 照合ではなく振る舞い（期限を尽きさせ child 起動が止まること、配分回数が実測 8 と一致すること）で行い、4 変異で検出を確認した。"
     },
     {
       "id": "FLW-REV-029:SYN-002",
@@ -46,7 +52,13 @@
       "detail": "`_common_dir()`／`_head()` は deadline を受け取らず（`worktree_runtime.py` L342/L359/L363/L641）、`_rederive()` は新しい deadline を開始する（L807/L874）。operation 合計が 30 秒を超えうる一方、正常操作が途中で切られる経路も同時に存在する。`GP-002` の消化確認が source 文字列の照合に留まり、伝播を振る舞いで検査していなかった。",
       "recommendation": "deadline を operation 単位で 1 つにし全 child 経路へ配る。伝播を振る舞いで検査する。",
       "tracked_by": "FLW-REV-029:GP-002",
-      "status": "tracked"
+      "status": "resolved",
+      "resolved_by": [
+        "tests/test_flow_m2_deadline_propagation.py",
+        "plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_operability.py",
+        "FLW-TSK-130"
+      ],
+      "resolution_note": "`FLW-TSK-130` で公開 3 operation へ OperationDeadline を結線し、read-only guard を逐次読みへ変えた。確認は source 照合ではなく振る舞い（期限を尽きさせ child 起動が止まること、配分回数が実測 8 と一致すること）で行い、4 変異で検出を確認した。"
     },
     {
       "id": "FLW-REV-029:SYN-003",
@@ -88,7 +100,13 @@
       "detail": "`persistent_state_digest` は `bitz-flow-v2` 配下の全ファイルを `read_bytes` で一括ロードして hash する。guard は各 operation の前後 2 回走るため、`FLW-NFR-014` が想定する 100 MiB 級 journal では 200 MiB の読み取りが公開経路へ入る。read-only を保証する仕組み自体が実行障害の原因になりうる。",
       "recommendation": "逐次読みへ変え、journal 容量に対する収束を実測する。",
       "tracked_by": "FLW-REV-029:GP-001",
-      "status": "tracked"
+      "status": "resolved",
+      "resolved_by": [
+        "tests/test_flow_m2_deadline_propagation.py",
+        "plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_operability.py",
+        "FLW-TSK-130"
+      ],
+      "resolution_note": "`FLW-TSK-130` で公開 3 operation へ OperationDeadline を結線し、read-only guard を逐次読みへ変えた。確認は source 照合ではなく振る舞い（期限を尽きさせ child 起動が止まること、配分回数が実測 8 と一致すること）で行い、4 変異で検出を確認した。"
     },
     {
       "id": "FLW-REV-029:SYN-006",
@@ -131,7 +149,13 @@
       "detail": "doctor は 5 種の problem を出すが `_BUNDLE_ACTIONS` は 4 種しかなく、`current-bundle-digest-mismatch` は「未分類の問題を報告する」へ落ちる。`GP-001` の網羅漏れであり、coverage test が platform 理由だけを見て bundle problem を見ていなかった。",
       "recommendation": "表へ追加し、doctor が出す全 problem の網羅を機械検査する。",
       "tracked_by": "FLW-REV-029:GP-005",
-      "status": "tracked"
+      "status": "resolved",
+      "resolved_by": [
+        "tests/test_flow_m2_deadline_propagation.py",
+        "plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_operability.py",
+        "FLW-TSK-130"
+      ],
+      "resolution_note": "`FLW-TSK-130` で公開 3 operation へ OperationDeadline を結線し、read-only guard を逐次読みへ変えた。確認は source 照合ではなく振る舞い（期限を尽きさせ child 起動が止まること、配分回数が実測 8 と一致すること）で行い、4 変異で検出を確認した。"
     },
     {
       "id": "FLW-REV-029:SYN-009",
@@ -144,7 +168,13 @@
       "detail": "`test_observer_and_coordinator_receive_the_deadline` は source の 2 文字列しか見ず `_common_dir`／`_head`／`_rederive` の抜けを見逃した（`SYN-002` の直接原因）。`test_production_run_does_not_change_persistent_state` は path 名一覧しか比較せず内容・mode 変更を検出できない。`test_public_dispatcher_never_emits_a_traceback` の `worktree create` は非公開 dispatcher で即時拒否されるため `GP-005` の元欠陥だった write `plan()` 経路を通っていない。",
       "recommendation": "source 照合は補助に留め、GP 消化の確認は振る舞いの検査に限定する。既存の source 照合 test を振る舞い検査へ置き換える。",
       "tracked_by": "FLW-REV-029:GP-006",
-      "status": "tracked"
+      "status": "resolved",
+      "resolved_by": [
+        "tests/test_flow_m2_deadline_propagation.py",
+        "plugins/bitz-flow/skills/flow-core/scripts/flowlib/worktree_operability.py",
+        "FLW-TSK-130"
+      ],
+      "resolution_note": "`FLW-TSK-130` で公開 3 operation へ OperationDeadline を結線し、read-only guard を逐次読みへ変えた。確認は source 照合ではなく振る舞い（期限を尽きさせ child 起動が止まること、配分回数が実測 8 と一致すること）で行い、4 変異で検出を確認した。"
     }
   ],
   "gate_preconditions": [

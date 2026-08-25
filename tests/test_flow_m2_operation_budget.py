@@ -77,13 +77,11 @@ def test_operation_deadline_default_matches_the_terminal_result_requirement():
     assert WR.OperationDeadline().total_seconds == 30.0
 
 
-def test_observer_and_coordinator_receive_the_deadline():
-    """snapshot と write child の双方が deadline の配下に入ること。"""
-    source = (SKILL / "scripts" / "flowlib" / "worktree_runtime.py").read_text(encoding="utf-8")
-    observer = source[source.index("class RepositoryObserver:"):]
-    assert "deadline=self.deadline" in observer[:observer.index("def snapshot")]
-    coordinator = source[source.index("def run_git("):]
-    assert "deadline=self.deadline" in coordinator[:600]
+# `test_observer_and_coordinator_receive_the_deadline` は source の 2 文字列しか見ておらず、
+# `_common_dir` / `_head` / `_rederive` の欠落と、公開 operation が deadline を生成すら
+# しないことを見逃した（`FLW-REV-029:SYN-001`／`SYN-002`／`SYN-009`）。
+# 伝播の検査は `tests/test_flow_m2_deadline_propagation.py` の**振る舞い検査**が担う。
+# `GP-006` により、GP 消化の確認に source 照合を単独の根拠として用いない。
 
 
 # --- snapshot 出力上限 --------------------------------------------------------

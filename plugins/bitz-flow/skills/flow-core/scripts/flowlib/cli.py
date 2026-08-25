@@ -548,9 +548,13 @@ def _op_worktree_operability(root: str, args, started: str):
             root, started, operation, code="UNSUPPORTED", cause="unsupported-approval-mode",
             summary="この承認方式はサポートされていない",
         )
+    # 公開集合の operation は operation 全体の deadline 配下で走らせる
+    # （`FLW-REV-029:SYN-001`）。read-only であることと有限時間で閉じることは別の保証で
+    # あり、公開した以上どちらも成立させる必要がある。
+    deadline = worktree_runtime.OperationDeadline(args.timeout_seconds)
     try:
         if args.action == "doctor":
-            decision = worktree_operability.doctor(root)
+            decision = worktree_operability.doctor(root, deadline=deadline)
         else:
             if not args.operation_id:
                 return _operability_failure(
@@ -559,11 +563,11 @@ def _op_worktree_operability(root: str, args, started: str):
                 )
             if args.action == "audit":
                 decision = worktree_operability.audit_operation(
-                    root, operation_id=args.operation_id
+                    root, operation_id=args.operation_id, deadline=deadline
                 )
             elif args.action == "verify-receipt":
                 decision = worktree_operability.verify_receipt(
-                    root, operation_id=args.operation_id
+                    root, operation_id=args.operation_id, deadline=deadline
                 )
             else:
                 if not (args.decision and args.expires_at and args.nonce):

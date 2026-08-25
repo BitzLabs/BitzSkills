@@ -2,7 +2,7 @@
 id: FLW-DSN-017
 title: "M2 Local Safety Profileの競合排除・耐久証跡・原子的promotion"
 status: active
-version: 3.0
+version: 3.1
 updated: 2026-08-24
 owner: codex
 implements: FLW-NFR-014, FLW-CON-008
@@ -596,12 +596,24 @@ durable writeは4段階（temp write → file fsync → rename → directory fsy
 | snapshot観測child | 残り時間と30秒の小さい方 | 同上 | **64 MiB**（`SNAPSHOT_OUTPUT_LIMIT_BYTES`。専用設計値） | operation deadline内 |
 | write-capable Git child | 残り時間と30秒の小さい方。executionは60% | SIGTERM → grace（総量の10%、1〜5秒） → SIGKILL | 8 MiB上限 | operation deadline内 |
 
-**operation全体のdeadline**（`FLW-REV-028:GP-002`）: child単位のbudgetだけでは保証が成立しない。
+**operation全体のdeadline**（`FLW-REV-028:GP-002` ／ `FLW-REV-029:GP-001`／`GP-002`）:
+child単位のbudgetだけでは保証が成立しない。
 1 operationは`snapshot()`（4 child）をplan／apply／postで複数回回すため**15〜20 child**を
 起動し、child毎30秒なら最悪450秒超になる。`OperationDeadline`が各childへ**残り時間**を配り、
 尽きたらchildを起動せず`operation-deadline`として閉じる。plan と apply は別の起動なので
 deadlineもそれぞれ開始する（planの残りをapplyへ持ち越さない）。
 child単位のbudgetは二重の網として残す。
+
+**配下に入る経路**（`FLW-REV-029`で3つの抜け道を是正した）: `RepositoryObserver`の全観測、
+`_common_dir`、`_head`、`MutationCoordinator.run_git`、および**公開集合の read-only 3
+operation**（`doctor`／`audit`／`verify-receipt`）。`_rederive`は新しいdeadlineを開始せず
+呼び出し元のものを受け取る。plan は実測で **8 child** を起動し、そのすべてが同一deadlineから
+配分を受ける。
+
+**確認は振る舞いで行う**（`FLW-REV-029:GP-006`）: sourceに`deadline=`が含まれるかを見る検査は
+**引数を受け取るだけで使っていない実装を通してしまう**（実際に`doctor`がそうだった）。
+期限を実際に尽きさせてchild起動が止まることと、配分回数が期待値と一致することで検査する。
+検査は`tests/test_flow_m2_deadline_propagation.py`。
 
 **snapshot観測の出力上限**: `git status --porcelain=v2 -z --untracked-files=all`は未追跡
 ファイルが多いrepositoryで既定のchild上限（8 MiB。porcelain=v2の未追跡行は概ね
@@ -726,6 +738,9 @@ macOS／Windowsの実観測は依然として未実施である（§13.5）。
 
 ## Revision History
 
+- 3.1 (2026-08-24) operation deadlineの抜け道3件（`_common_dir`／`_head`／`_rederive`）と
+  公開集合の未結線を是正し、確認を振る舞い検査へ改める。read-only guardを逐次読みへ
+  （`FLW-REV-029:GP-001`／`GP-002`／`GP-006`）
 - 3.0 (2026-08-24) read-only 3件の限定公開を反映。§13.1 行9・9b・11がproduction到達となり
   「接続完全性」に初めて実証が入る（裁定参照: .spec/reports/decision-2026-08-24-m2-readonly-canary.md）
 - 2.9 (2026-08-24) 旧形式chainの移行を§1.2の公開前提条件として明示し、§4.2の
