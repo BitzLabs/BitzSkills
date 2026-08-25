@@ -11,6 +11,7 @@ import dataclasses
 import json
 import os
 import subprocess
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable, Mapping
@@ -42,22 +43,76 @@ class RepositorySnapshot:
 #: worktree 経路の既定 timeout。`process.py` が範囲へ丸める（read 1〜300 / write 10〜300）。
 DEFAULT_WORKTREE_TIMEOUT_SECONDS = 30.0
 
+#: **operation 全体**の既定 deadline（`FLW-REV-028:GP-002`）。
+#: `FLW-NFR-014` は 30 秒 terminal result を要求するが、1 operation は `snapshot()`
+#: （4 child）を plan / apply / post で複数回回すため 15〜20 child を起動する。
+#: child 単位の budget だけでは合計が保証を超えるので、operation 単位でも締める。
+DEFAULT_OPERATION_DEADLINE_SECONDS = 30.0
+
+#: snapshot 観測の出力上限（`FLW-REV-028:GP-002`）。
+#: `git status --porcelain=v2 -z --untracked-files=all` は未追跡ファイルが多い repository で
+#: 既定の child 上限（8 MiB）を超えうる。porcelain=v2 の未追跡行は概ね `? <path>\0` なので
+#: 8 MiB は約 13 万件に相当する。既定値の流用ではなく**設計値**として分離し、
+#: 超過は closed result と operator action で閉じる。
+SNAPSHOT_OUTPUT_LIMIT_BYTES = 64 * 1024 * 1024
+
+
+class OperationDeadline:
+    """operation 全体の残り時間を配る（`FLW-REV-028:GP-002`）。
+
+    child ごとに独立した budget を与えると、child 数だけ最大時間を消費できてしまう。
+    各 child には **残り時間** を配り、尽きたら child を起動しない。
+    """
+
+    def __init__(self, total_seconds: float | None = None) -> None:
+        self.total_seconds = float(
+            DEFAULT_OPERATION_DEADLINE_SECONDS if total_seconds is None else total_seconds
+        )
+        self._expires_at = time.monotonic() + self.total_seconds
+
+    def remaining(self) -> float:
+        return self._expires_at - time.monotonic()
+
+    def expired(self) -> bool:
+        return self.remaining() <= 0.0
+
+    def budget_for_child(self, child_seconds: float | None) -> float:
+        """child へ配る budget。残り時間を超えない。"""
+        requested = DEFAULT_WORKTREE_TIMEOUT_SECONDS if child_seconds is None else child_seconds
+        return max(0.0, min(float(requested), self.remaining()))
+
 
 def _supervised_git(
     args, *, cwd, timeout_seconds: float | None = None, mutating: bool = False,
-    env_overrides=None,
+    env_overrides=None, deadline: "OperationDeadline | None" = None,
+    output_limit_bytes: int | None = None,
 ) -> PROC.ProcessOutcome:
     """Git child を必ず監督下で起動する（`SI-FLW-086`）。
 
     以前は素の `subprocess.run` を `timeout=` なしで呼んでおり、hang した child が
     無期限にブロックしていた。`process.py` は TimeoutBudget・SIGTERM→grace→SIGKILL・
     出力上限・Windows job object を実装済みなので、worktree 経路もそれを通す。
+
+    `deadline` を渡すと **operation 全体の残り時間**を超えない budget を配る。
+    残りが尽きていれば child を起動せず timeout として返す（`FLW-REV-028:GP-002`）。
     """
-    budget = DEFAULT_WORKTREE_TIMEOUT_SECONDS if timeout_seconds is None else timeout_seconds
+    if deadline is not None and deadline.expired():
+        return PROC.ProcessOutcome(
+            ok=False, command_name="git", exit_status=None, stdout=b"", stderr=b"",
+            output_truncated=False, duration_ms=0, cause=PROC.CAUSE_TIMEOUT,
+            stage=PROC.STAGE_INSPECT, exit_category="operation-deadline",
+        )
+    if deadline is not None:
+        budget = deadline.budget_for_child(timeout_seconds)
+    else:
+        budget = DEFAULT_WORKTREE_TIMEOUT_SECONDS if timeout_seconds is None else timeout_seconds
     return PROC.run(
         ["git", "-c", "color.ui=false", "-c", "core.pager=cat", *args],
         cwd=str(cwd), timeout_seconds=budget, mutating=mutating,
         env_overrides=env_overrides,
+        output_limit_bytes=(
+            PROC.DEFAULT_OUTPUT_LIMIT_BYTES if output_limit_bytes is None else output_limit_bytes
+        ),
     )
 
 
@@ -73,9 +128,11 @@ class RepositoryObserver:
         "approval-index": ("diff", "--cached", "--name-only", "--", ".bitz-flow/approval-mode.json"),
     }
 
-    def __init__(self, repo: str | Path, *, timeout_seconds: float | None = None) -> None:
+    def __init__(self, repo: str | Path, *, timeout_seconds: float | None = None,
+                 deadline: OperationDeadline | None = None) -> None:
         self.repo = Path(repo).resolve(strict=True)
         self.timeout_seconds = timeout_seconds
+        self.deadline = deadline
 
     def run(self, observation: str) -> bytes:
         args = self._COMMANDS.get(observation)
@@ -83,7 +140,10 @@ class RepositoryObserver:
             raise WorktreeRuntimeError("unknown or write-capable repository observation")
         outcome = _supervised_git(
             args, cwd=self.repo, timeout_seconds=self.timeout_seconds,
-            env_overrides={"GIT_OPTIONAL_LOCKS": "0"},
+            env_overrides={"GIT_OPTIONAL_LOCKS": "0"}, deadline=self.deadline,
+            # snapshot は operation の必須経路であり、既定の child 上限を流用すると
+            # 未追跡ファイルの多い repository で plan 自体が失敗する（`FLW-REV-028:GP-002`）。
+            output_limit_bytes=SNAPSHOT_OUTPUT_LIMIT_BYTES,
         )
         if not outcome.ok:
             if outcome.cause == PROC.CAUSE_TIMEOUT:
@@ -177,7 +237,8 @@ class WorktreeRuntimeError(ValueError):
 
 
 def _git(repo: Path, *args: str, check: bool = True,
-         timeout_seconds: float | None = None) -> subprocess.CompletedProcess[str]:
+         timeout_seconds: float | None = None,
+         deadline: OperationDeadline | None = None) -> subprocess.CompletedProcess[str]:
     read_only = (
         bool(args)
         and (
@@ -187,7 +248,8 @@ def _git(repo: Path, *args: str, check: bool = True,
     )
     if not read_only:
         raise WorktreeRuntimeError("unknown or write-capable Git command")
-    outcome = _supervised_git(args, cwd=repo, timeout_seconds=timeout_seconds)
+    outcome = _supervised_git(args, cwd=repo, timeout_seconds=timeout_seconds,
+                              deadline=deadline)
     if outcome.cause == PROC.CAUSE_TIMEOUT:
         raise WorktreeChildTimeoutError(f"git {args[0]}", outcome.cause)
     if check and not outcome.ok:
@@ -273,7 +335,9 @@ def plan(
         raise WorktreeRuntimeError(f"unsupported worktree action: {action}")
     root = Path(repo).resolve(strict=True)
     budget = PROC.normalize_timeout(timeout_seconds)
-    observer = RepositoryObserver(root, timeout_seconds=budget)
+    # operation 全体の deadline。child 単位の budget と二重の網にする。
+    deadline = OperationDeadline(timeout_seconds)
+    observer = RepositoryObserver(root, timeout_seconds=budget, deadline=deadline)
     observed = observer.snapshot()
     common = _common_dir(root)
     approved_root = Path(worktree_root).resolve(strict=True)
@@ -730,12 +794,14 @@ class MutationCoordinator:
     """The only runtime component allowed to launch write-capable Git children."""
 
     def __init__(self, plan_value: RuntimePlan, transaction: T.TargetTransaction,
-                 lease: T.LeaseContext, *, step_hook: Callable[[str], None] | None = None) -> None:
+                 lease: T.LeaseContext, *, step_hook: Callable[[str], None] | None = None,
+                 deadline: OperationDeadline | None = None) -> None:
         self.plan = plan_value
         self.transaction = transaction
         self.lease = lease
         self.step_hook = step_hook
         self._mutating = False
+        self.deadline = deadline
 
     def _recheck(self) -> None:
         current = _rederive(self.plan)
@@ -761,6 +827,7 @@ class MutationCoordinator:
         outcome = _supervised_git(
             args, cwd=Path(cwd or self.plan.repo),
             timeout_seconds=self.plan.timeout_seconds, mutating=True,
+            deadline=self.deadline,
         )
         if outcome.cause == PROC.CAUSE_TIMEOUT:
             # write child の終了を証明できない。副作用の有無が不明なので
@@ -797,6 +864,9 @@ def apply(
     Their values are never parsed, verified, or downgraded to plan-digest.
     """
     del backup_receipt  # M2 create/resume has no backup-receipt mode.
+    # apply は plan とは別の起動なので deadline もここで新たに開始する
+    # （plan の残り時間を持ち越さない。`FLW-REV-028:GP-002`）。
+    deadline = OperationDeadline(plan_value.timeout_seconds)
     unsupported = _legacy_approval_input_present(
         plan_value, capability=capability, trusted_keys_for_test=trusted_keys_for_test,
     )
@@ -862,7 +932,8 @@ def apply(
                     raise WorktreeRuntimeError(f"cannot quarantine transaction state {report.state}")
                 terminal_receipt = transaction.publish_result(
                     lease, terminal_state="QUARANTINED",
-                    postcondition_digest=RepositoryObserver(plan_value.repo).snapshot().digest,
+                    postcondition_digest=RepositoryObserver(
+                        plan_value.repo, deadline=deadline).snapshot().digest,
                 )
             if lease is not None:
                 transaction.release(lease)
@@ -905,7 +976,8 @@ def apply(
             precondition_digest=plan_value.repository_snapshot.digest,
         )
         intent_durable = True
-        coordinator = MutationCoordinator(plan_value, transaction, lease, step_hook=step_hook)
+        coordinator = MutationCoordinator(plan_value, transaction, lease,
+                                          step_hook=step_hook, deadline=deadline)
         if plan_value.action == "create":
             coordinator.run_git(
                 "git-worktree-add", "worktree", "add", "-b", plan_value.branch,
@@ -918,7 +990,7 @@ def apply(
             completed.append("publish-resume-receipt")
         else:  # defensive: plan() already rejects this closed set violation.
             raise WorktreeRuntimeError("unsupported M2 mutation action")
-        post = RepositoryObserver(plan_value.repo).snapshot().digest
+        post = RepositoryObserver(plan_value.repo, deadline=deadline).snapshot().digest
         terminal_receipt = transaction.publish_result(
             lease, terminal_state="DONE", postcondition_digest=post,
         )

@@ -2,7 +2,7 @@
 id: FLW-DSN-017
 title: "M2 Local Safety Profileの競合排除・耐久証跡・原子的promotion"
 status: active
-version: 2.7
+version: 2.8
 updated: 2026-08-24
 owner: codex
 implements: FLW-NFR-014, FLW-CON-008
@@ -569,10 +569,31 @@ durable writeは4段階（temp write → file fsync → rename → directory fsy
 
 | 対象 | deadline | kill手順 | 出力回収 | terminal result最大応答 |
 |---|---:|---|---|---:|
-| read-only Git child | 30秒（既定。範囲1〜300秒） | SIGTERM → 2.0秒grace → SIGKILL（Windowsはjob object close） | 8 MiB上限。超過で終了させ`UNAVAILABLE` | 32秒 |
-| write-capable Git child | 30秒（既定。範囲10〜300秒）。うちexecutionは60% = 18秒 | SIGTERM → grace（総量の10%、1〜5秒。既定3秒） → SIGKILL | 同上 | 32秒 |
-| operation全体 | 300秒（`READ_TIMEOUT_MAX_SECONDS`） | 全child kill後にreconciliation reserveを確保 | — | **30秒**（`FLW-NFR-014`受入基準） |
-| reconciliation reserve | 総量の30%以上かつ最低3秒（既定30秒なら9秒） | — | — | 30秒以内 |
+| **operation全体** | **30秒**（`DEFAULT_OPERATION_DEADLINE_SECONDS`） | 残り時間が尽きたらchildを起動しない | — | **30秒**（`FLW-NFR-014`受入基準） |
+| read-only Git child | 残り時間と30秒の小さい方 | SIGTERM → 2.0秒grace → SIGKILL（Windowsはjob object close） | 8 MiB上限。超過で終了させ`UNAVAILABLE` | operation deadline内 |
+| snapshot観測child | 残り時間と30秒の小さい方 | 同上 | **64 MiB**（`SNAPSHOT_OUTPUT_LIMIT_BYTES`。専用設計値） | operation deadline内 |
+| write-capable Git child | 残り時間と30秒の小さい方。executionは60% | SIGTERM → grace（総量の10%、1〜5秒） → SIGKILL | 8 MiB上限 | operation deadline内 |
+
+**operation全体のdeadline**（`FLW-REV-028:GP-002`）: child単位のbudgetだけでは保証が成立しない。
+1 operationは`snapshot()`（4 child）をplan／apply／postで複数回回すため**15〜20 child**を
+起動し、child毎30秒なら最悪450秒超になる。`OperationDeadline`が各childへ**残り時間**を配り、
+尽きたらchildを起動せず`operation-deadline`として閉じる。plan と apply は別の起動なので
+deadlineもそれぞれ開始する（planの残りをapplyへ持ち越さない）。
+child単位のbudgetは二重の網として残す。
+
+**snapshot観測の出力上限**: `git status --porcelain=v2 -z --untracked-files=all`は未追跡
+ファイルが多いrepositoryで既定のchild上限（8 MiB。porcelain=v2の未追跡行は概ね
+`? <path>\0`なので約13万件相当）を超えうる。snapshotはoperationの必須経路であり、
+既定値の流用では大規模repositoryでplan自体が失敗する。専用の設計値として分離する。
+
+**負荷条件での収束（実測）**: 10,000 eventのjournalに対する`inspect()`の収束を実測した。
+
+| 条件 | 実測 | 要求 |
+|---|---:|---:|
+| 10,000 event の chain 検査 | **0.40秒** | 30秒 |
+
+測定は`tests/test_flow_m2_operation_budget.py::test_chain_inspection_converges_under_load`。
+chain検査は全eventを読むため線形に伸びるが、要求に対して2桁の余裕がある。
 
 **timeoutの写像**: timeoutは「失敗」ではなく「副作用の有無が不明」である。
 `WorktreeChildTimeoutError`を専用に設け、write childのtimeoutを`QUARANTINED`
@@ -584,7 +605,7 @@ durable writeは4段階（temp write → file fsync → rename → directory fsy
 `RuntimePlan.timeout_seconds`としてapply経路の全childへ伝播する。以前はM0 read
 operationにだけ渡り、worktree経路へは渡っていなかった。
 
-**解消済みの乖離**: v2.3時点では`process.py`が`TimeoutBudget`・SIGTERM/SIGKILL・
+**解消済みの乖離（v2.3時点の記録）**: v2.3時点では`process.py`が`TimeoutBudget`・SIGTERM/SIGKILL・
 2.0秒grace・8 MiB出力上限・Windows job objectを実装済みである一方、
 `worktree_runtime.py`の全subprocess呼び出しが素の`subprocess.run`で`timeout=`を
 持たず、hangしたGit childが無期限にブロックしていた。`FLW-TSK-117`で3つのGit
@@ -592,8 +613,7 @@ operationにだけ渡り、worktree経路へは渡っていなかった。
 （`tests/test_flow_m2_liveness.py::test_worktree_runtime_never_spawns_an_unsupervised_child`）。
 あわせて呼出元0件のまま無制限openssl childを起動していた死コード`ed25519_verifier`を除去した。
 
-**未達**: 10,000 event／100 MiB規模の負荷条件下での30秒収束は未計測である。
-`SI-FLW-090`の証跡整備とあわせて実施する。
+**未達**: 100 MiB規模のjournal容量そのものに対する測定は未実施である（event数での測定は実施済み）。
 
 ### 13.5 platform reality表
 
@@ -684,6 +704,8 @@ macOS／Windowsの実観測は依然として未実施である（§13.5）。
 
 ## Revision History
 
+- 2.8 (2026-08-24) operation全体deadlineとsnapshot専用出力上限を設計値化し、
+  10,000 event条件の収束実測を記録（`FLW-REV-028:GP-002`）
 - 2.7 (2026-08-24) 恒真の`semantic_self_test`を撤去し§3.2をprobeの実能力へ書き直す。
   `tmpfs`をallowlistから外し§1.1のdurability前提を明記（`FLW-REV-028:GP-007`）
 - 2.6 (2026-08-24) §13.5へprobeの実証義務を追加。symlinkの実証検出、mount局所のcase判定、

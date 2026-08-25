@@ -1,5 +1,33 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-TSK-127（FLW-REV-028:GP-002）実装: operation全体deadlineとsnapshot専用
+  出力上限を設計値化し、負荷条件の収束を実測した。
+  **(1) operation全体deadline**: child単位のbudgetだけでは30秒保証が成立しない。実測すると
+  1 operationは`snapshot()`（4 child）をplan／apply／postで複数回回すため**15〜20 child**を
+  起動し、child毎30秒なら最悪450秒超になる。`OperationDeadline`が各childへ**残り時間**を配り、
+  尽きたらchildを起動せず`operation-deadline`として閉じる。planとapplyは別起動なので
+  deadlineもそれぞれ開始する（planの残りをapplyへ持ち越さない）。child単位budgetは二重の網
+  として残す。
+  **(2) snapshot専用出力上限**: `_supervised_git`が`output_limit_bytes`を渡さず既定8 MiBを
+  流用していた。porcelain=v2の未追跡行は概ね`? <path>\0`なので8 MiBは約13万件相当であり、
+  未追跡ファイルの多いrepositoryでplan自体が失敗する。`SNAPSHOT_OUTPUT_LIMIT_BYTES`（64 MiB）
+  として分離した。
+  **(3) 負荷実測**: 10,000 eventのjournalに対する`inspect()`は**0.403秒**で収束
+  （要求30秒に対し2桁の余裕）。API経由の生成は1 eventごとに4段階atomic publishが走り
+  測りたいもの（chain検査）を測れないため、journalを直接生成して測定した。
+  `tests/test_flow_m2_operation_budget.py`（9 test）を追加。4変異（deadline無視・
+  尽きてもchild起動・snapshot上限を既定へ・observerへdeadline未伝播）で全件検出。
+  **自分のテストの誤りを2件修正**: (a)「合計がdeadlineを超えない」という主張は誤りだった。
+  `budget_for_child`は呼ぶだけでは時間を消費しないため、tight loopでは毎回残り全部を返す。
+  childは逐次実行なので、実際に保証しているのは「各childは残り時間しかもらえない」であり、
+  時間経過とともに配分が縮み最後は0になることを検査する形へ改めた。(b) journalのパスを
+  実装（`root/events/<id>/`）と取り違えていた。
+  **FLW-CON-008がまた設計編集を捕捉**: §13.4の`snapshot観測child`行のdeadlineを「同上」と
+  書いて数値でなくなった。あわせて**私が書いたパーサの欠陥**も判明 — セクション内の全パイプ行を
+  拾うため、後続の測定表まで同じ表として読んでいた。最初の連続ブロックだけを表とみなす形へ修正。
+  `FLW-DSN-017` v2.8。confirmation証跡を再実走して更新（3者PASS、Gate採用可）。
+  全体**2543 passed / 44 skipped / 失敗0**。**残るGPはGP-004の1件。**
+
 - 2026-08-24 FLW-TSK-126（FLW-REV-028:GP-007）実装: 恒真の`semantic_self_test`を撤去し、
   `tmpfs`をallowlistから外した。**新機能は作らず実態に合わせて書き直しただけ**である。
   裁定は「実運用の範囲から逆算し、発火しない検査は実装しない」（ユーザー指示）。
@@ -1132,3 +1160,5 @@
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiZjNhZDAyNmRkN2EyNzMwYjRiYzI4YjgwMzE1YjcxZGIxMmUzNWQyN2U1OWM3YzNhOTljNWQwNDRlYWE5ZmZmYyIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiMTUyNTI1ZjBjMzU0MTM1ZDM0N2Q2MzE1NjU5YTYxNDljNzNjZWRlYzAyMzBkMmE0ZDJhYjAyM2FjOTc3NzQ1YyIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjUiLCJldmVudF9pZCI6IjQ2Y2E1OWEwLWE3MWMtNDgwMS1iMTg3LWI0N2M3YTVlMDY3ZCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjUubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDIzOjIwOjI1LjQ4Mzc4MloifQ== -->
 - 2026-08-25 FLW-TSK-126: pending → implementing (claude)
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiMjQ1ZmU1ZDhiMjQ4NmY1NDAzMmFkYzkzY2NjM2UwNmQ2YmIxODM0ZjJkNzg3ZWNkYjA2OGFlNWM0Yzk1YTk0MSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiMmY3ODJmNDc3N2ViZGYyYzI3MjRkM2VhN2UwMmE5OGFjN2ZiMTcxYjZlNGI5YTZkOTkyNDA5M2E5ZTU0MjMxOCIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjYiLCJldmVudF9pZCI6IjVlNTM1ZGM2LTY5YTYtNDY4ZC04YTJjLWUwNzU1MmI5YjJlNCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjYubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI0VDIzOjU4OjI2Ljk2ODEyOVoifQ== -->
+- 2026-08-25 FLW-TSK-127: pending → implementing (claude)
+<!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiMjZiYTAxNGZhZWQzMWEwYTIzOTQyMmY1ZmZkMjRkN2JkNTQ0NWFmZDI0M2NmNmFmODY0M2IxMmQzNTMzMzJlNSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiOWNhOGViZWQ0NTJmNzJlOTgzZTAzMmY3M2VjNDYyYmE0MDEyNTgxNDI4MjkzZGZiMzkyNzI1ZmI2ZGU1ZjdlNiIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjciLCJldmVudF9pZCI6ImM4NTFkODVjLWE1NmUtNGZlNC1iMjEzLWY2OWE3ZGQ4ZDRlNCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjcubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI1VDAwOjMwOjAzLjIxNjcxMloifQ== -->

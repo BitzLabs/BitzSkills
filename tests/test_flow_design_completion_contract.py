@@ -99,7 +99,15 @@ def _table_rows(text: str, heading: str) -> tuple[list[str], list[list[str]]]:
     nxt = re.search(r"^#{2,3}\s", section, re.M)
     if nxt:
         section = section[: nxt.start()]
-    lines = [ln.strip() for ln in section.splitlines() if ln.strip().startswith("|")]
+    # セクション内の全パイプ行を拾うと、後続の別表まで同じ表として読んでしまう。
+    # 最初の連続ブロックだけを表とみなす。
+    lines: list[str] = []
+    for raw in section.splitlines():
+        stripped = raw.strip()
+        if stripped.startswith("|"):
+            lines.append(stripped)
+        elif lines:
+            break
     if not lines:
         raise AssertionError(f"表が無い: {heading}")
     def cells(line: str) -> list[str]:
