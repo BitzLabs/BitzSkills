@@ -1,5 +1,39 @@
 # STATE — status 遷移ログ
 
+- 2026-08-25 FLW-TSK-132（FLW-REV-029:GP-005）実装: 判定APIの矛盾を解消し、網が隠す
+  内部障害を観測可能にした。**`FLW-REV-029`のGP-001〜006がこれで全件消化。**
+  **是正した欠陥（`SYN-006`のaudit側）**: `audit_operation`は`INDETERMINATE`以外を
+  すべて`OK`（exit 0）にし、その**全部**に`create-reconcile-plan`を促していた。
+  `confirmed-complete`（何もしなくてよい）へreconcileを促し、`quarantine`と
+  `confirmed-incomplete`（復旧を要する）を`OK`と表示していた。分類→operator actionの
+  写像を`_AUDIT_ACTIONS`へ寄せ、`_CLASSIFICATIONS_NEEDING_RECOVERY`を`OK`にしない形へ。
+  **是正した欠陥（`SYN-007`）**: dispatcherの網が例外を一律`UNAVAILABLE`へ変換し、
+  種別も発生箇所も残さなかった（実際にこの網が`FLW-TSK-116`／`117`のhandler欠陥を
+  隠していた）。**利用者への秘匿と開発側の不可観測は別**として、公開resultは変えずに
+  内部向け記録だけを残す（`LAST_UNEXPECTED_FAILURE`と、`BITZ_FLOW_INTERNAL_LOG`が
+  指す場合のみ1行JSON追記）。
+  **再現しなかった指摘（`SYN-006`のverify_receipt側）**: 「`verify_receipt`がreceiptsを
+  見ていない」は**振る舞いとしては成立していなかった**。`transaction.inspect()`が
+  receipt chain（同梱緊急receiptのbinding・supersede関係・terminal eventとの結合）を
+  検証して`problems`へ畳み込んでおり、`healthy`はその結果である。receiptを削除・破損
+  させると判定は実際に反転する（実測）。**一度は指摘どおり`_receipt_chain_problems()`を
+  実装したが、実経路で一度も発火せず、発火するときは`state`が`INDETERMINATE`へ潰れて
+  いるため誤った理由を出すだけだったので撤去した。** 陽性対照を置いて再現しないことを
+  証跡として固定した。指摘はsourceの見た目に基づくものであった。
+  **旧契約を固定していたtestを直した**: `tests/test_flow_m2_operability.py`が
+  「`confirmed-incomplete`でexit 0」を正としていた。**testが欠陥を固定していた**ため
+  是正後の契約（exit非0・`INDETERMINATE`・`create-reconcile-plan`）へ改めた。
+  **GP-006に従いsource照合をしない**: `tests/test_flow_m2_judgement_quality.py`（18 test）は
+  実際にreceipt fileを削除・破損させ、緊急receiptをintent recordから外し、handlerへ
+  例外を注入して振る舞いを見る。3変異（旧audit写像の復元・記録呼び出しの除去・
+  内部情報の公開result混入）でそれぞれ6件／3件／1件の検出を確認した。
+  `evals/flow-core/m2-eval/run_local_confirmation.py`の`COMPATIBILITY_INPUTS`へ
+  新testを追加した（運用者へ返す安全判断を決めるため）。
+  `FLW-REV-029`の`SYN-006`／`SYN-007`を証跡付きで`resolved`へ照合した。**残0件。**
+  bitz-flow 0.12.16。qualification（3 platform PASS）とconfirmation（3 platform PASS、
+  Gate採用可を`--verify-for-gate`で確認）を再実走した。
+  全体**2611 passed / 45 skipped / 失敗0**、release_check PASS、spec inspect全8 workspace PASS。
+
 - 2026-08-24 FLW-TSK-131（FLW-REV-029:GP-003／GP-004）実装: Linux限定の裁定を規範へ反映し、
   §13.5の陳腐化した証跡を実装へ揃えた。**runtimeは変えていない。**
   **是正**: `FLW-NFR-014`:85の`verified`昇格条件、`FLW-DSN-017`§7のfixture要求、

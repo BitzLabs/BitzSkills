@@ -295,6 +295,22 @@ def doctor(repo: str | Path, *, deadline: WR.OperationDeadline | None = None) ->
     return _read_only_guard(common, inspect)
 
 
+#: 復旧を要する recovery 分類（`FLW-REV-029:SYN-006`）。
+#: `confirmed-complete` だけが「何もしなくてよい」状態である。`confirmed-incomplete` と
+#: `quarantine` は人間の判断と reconcile を要するため `OK` にしない。
+_CLASSIFICATIONS_NEEDING_RECOVERY = frozenset({
+    RC.CONFIRMED_INCOMPLETE, RC.QUARANTINE, RC.INDETERMINATE,
+})
+
+#: 分類ごとの operator action。code と矛盾しないよう 1 か所で決める。
+_AUDIT_ACTIONS = {
+    RC.CONFIRMED_COMPLETE: "none",
+    RC.CONFIRMED_INCOMPLETE: "create-reconcile-plan",
+    RC.QUARANTINE: "create-reconcile-plan",
+    RC.INDETERMINATE: "manual-inspection",
+}
+
+
 def audit_operation(repo: str | Path, *, operation_id: str,
                     deadline: WR.OperationDeadline | None = None) -> OperabilityDecision:
     common = _common(repo, deadline=deadline)
@@ -303,13 +319,18 @@ def audit_operation(repo: str | Path, *, operation_id: str,
         transaction = _transaction(common, operation_id)
         observed = WR.RepositoryObserver(repo, deadline=deadline).snapshot()
         report = RC.audit(transaction, operation_id=operation_id, observed_snapshot=observed)
-        indeterminate = report.classification == RC.INDETERMINATE
+        # 以前は `INDETERMINATE` 以外をすべて `OK` にしていたため、復旧が必要な状態でも
+        # 「OK」と表示しながら `create-reconcile-plan` を促していた。code と operator
+        # action が矛盾し、運用者へ正常と誤解させる（`FLW-REV-029:SYN-006`）。
+        # **復旧を要する分類は OK にしない。**
+        needs_recovery = report.classification in _CLASSIFICATIONS_NEEDING_RECOVERY
+        code = "INDETERMINATE" if needs_recovery else "OK"
         return OperabilityDecision(
-            "INDETERMINATE" if indeterminate else "OK",
-            "result-indeterminate" if indeterminate else None,
+            code,
+            "result-indeterminate" if needs_recovery else None,
             f"recovery classification: {report.classification}",
             "indeterminate" if report.transaction_state == "MUTATING" else "none",
-            "manual-inspection" if indeterminate else "create-reconcile-plan",
+            _AUDIT_ACTIONS[report.classification],
             operation_id,
             _receipt_path(common, transaction, operation_id),
             _usage(transaction, operation_id),
@@ -333,6 +354,13 @@ def verify_receipt(repo: str | Path, *, operation_id: str,
     def inspect() -> OperabilityDecision:
         transaction = _transaction(common, operation_id)
         report = transaction.inspect(operation_id)
+        # `FLW-REV-029:SYN-006` は「receipts を見ていない」と指摘したが、`inspect()` が
+        # receipt chain（同梱緊急 receipt の binding・supersede 関係・terminal event との
+        # 結合）を検証して `problems` へ畳み込んでおり、`healthy` はその結果である。
+        # receipt を削除・破損させると実際に `healthy=False` になる（`FLW-TSK-132` の
+        # 実測）。判定を二重に持つと state が `INDETERMINATE` へ潰れた後で誤った理由を
+        # 出すため、判定は `inspect()` に一本化する。**観測できるのは receipt を何件
+        # 読めたかであり、それを details へ出す。**
         valid = report.healthy and bool(report.events)
         return OperabilityDecision(
             "OK" if valid else "INDETERMINATE",
@@ -348,6 +376,7 @@ def verify_receipt(repo: str | Path, *, operation_id: str,
                 "transaction_state": report.state,
                 "journal_head_digest": report.head_digest,
                 "problems": list(report.problems),
+                "receipt_count": len(report.receipts),
             },
         )
 

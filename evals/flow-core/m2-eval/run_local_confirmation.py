@@ -78,6 +78,10 @@ COMPATIBILITY_INPUTS = (
     "tests/test_flow_m2_promotion.py",
     "tests/test_flow_m2_recovery.py",
     "tests/test_flow_m2_operability.py",
+    # 判定 API が名前どおりの判定をすることの検査（`FLW-REV-029:SYN-006`／`SYN-007`）。
+    # audit の code と operator action の対応、および網が受け止めた内部障害の観測性を
+    # 決めているため、ここが変われば運用者へ返す安全判断が変わる。
+    "tests/test_flow_m2_judgement_quality.py",
     f"{_SKILL}/references/m2-operability-coverage.json",
     # 認可核（SYN-008 で追加）
     f"{_FLOWLIB}/worktree_capability.py",

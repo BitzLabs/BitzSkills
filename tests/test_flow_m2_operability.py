@@ -89,8 +89,13 @@ def test_audit_and_verify_receipt_use_recovery_and_transaction_chain(repository,
     code, audit = invoke(
         repo, ["worktree", "audit", "--operation-id", ORIGINAL], capsys
     )
-    assert code == 0
+    # `confirmed-incomplete` は復旧を要する。以前はこれを exit 0 / `OK` で返しながら
+    # `create-reconcile-plan` を促しており、code と operator action が矛盾していた
+    # （`FLW-REV-029:SYN-006`）。**復旧を要する分類は成功終了にしない。**
+    assert code != 0
+    assert audit["code"] == "INDETERMINATE"
     assert audit["data"]["operability"]["classification"] == "confirmed-incomplete"
+    assert audit["data"]["operator_action"] == "create-reconcile-plan"
     code, verified = invoke(
         repo, ["worktree", "verify-receipt", "--operation-id", ORIGINAL], capsys
     )

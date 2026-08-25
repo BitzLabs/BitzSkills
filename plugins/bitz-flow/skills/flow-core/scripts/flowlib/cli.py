@@ -760,6 +760,53 @@ def _op_worktree(root: str, args, started: str) -> tuple[dict, R.CompactView]:
     return result, R.CompactView(tokens={"action": args.action, "code": decision.code})
 
 
+#: 想定外例外の内部記録を有効にする環境変数（`FLW-REV-029:SYN-007`）。
+#: 既定は無効。利用者の実行を汚さないため、明示的に有効化したときだけ書く。
+UNEXPECTED_LOG_ENV = "BITZ_FLOW_INTERNAL_LOG"
+
+#: 直近の想定外例外（同一 process 内の観測用）。公開 result へは載せない。
+LAST_UNEXPECTED_FAILURE: dict[str, Any] | None = None
+
+
+def _record_unexpected_failure(operation: str, exc: BaseException) -> None:
+    """想定外例外を**内部向けに**記録する（公開 result は変えない）。
+
+    利用者への秘匿と開発側の不可観測は別の話である。網が例外を一律 `UNAVAILABLE` へ
+    変換して何も残さないと、回帰が静かに隠れる（実際に隠れた）。ここでは
+
+    - process 内の直近 1 件を `LAST_UNEXPECTED_FAILURE` へ保持する
+    - `BITZ_FLOW_INTERNAL_LOG` が指す path があれば 1 行 JSON を追記する
+
+    の 2 つだけを行う。既定では file を作らず、stdout も汚さない。
+    """
+    global LAST_UNEXPECTED_FAILURE
+    import traceback as _traceback
+
+    frames = _traceback.extract_tb(exc.__traceback__)
+    origin = frames[-1] if frames else None
+    record = {
+        "operation": operation,
+        "exception_type": type(exc).__name__,
+        "exception_module": type(exc).__module__,
+        # path 全体は載せない。file 名と行だけで発生箇所は特定できる。
+        "origin_file": os.path.basename(origin.filename) if origin else None,
+        "origin_line": origin.lineno if origin else None,
+        "recorded_at": _now(),
+    }
+    LAST_UNEXPECTED_FAILURE = record
+
+    target = os.environ.get(UNEXPECTED_LOG_ENV)
+    if not target:
+        return
+    try:
+        import json as _json
+        with open(target, "a", encoding="utf-8") as handle:
+            handle.write(_json.dumps(record, ensure_ascii=False) + "\n")
+    except OSError:
+        # 記録の失敗で operation を壊さない。closed result はすでに決まっている。
+        pass
+
+
 def _failure_result(operation: str, repo: str, failure, started: str) -> dict:
     """adapter の失敗を公開 result へ写す（cause と stage だけを載せる）。"""
     code = "UNAVAILABLE"
@@ -901,6 +948,12 @@ def main(argv: Sequence[str] | None = None, *, handlers: Mapping | None = None) 
         # handler 側の except 3 型のいずれでもなかったため traceback になっていた
         # （`FLW-REV-028:SYN-007`）。型ごとの写像は各 handler が行い、**取りこぼしを
         # ここで受け止める**。内部型名・traceback・path 断片は公開 result へ載せない。
+        #
+        # ただし**利用者への秘匿と開発側の不可観測は別**である。以前はここで一律
+        # `UNAVAILABLE` へ変換し、例外種別も発生箇所も残さなかったため、この網が
+        # `FLW-TSK-116`／`117` の handler 欠陥を隠していた（`FLW-REV-029:SYN-007`）。
+        # 公開 result は変えず、**内部向けの記録だけ**を残す。
+        _record_unexpected_failure(operation, exc)
         return _emit(
             _simple_result(
                 operation=operation,
