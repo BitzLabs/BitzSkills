@@ -2,7 +2,7 @@
 id: FLW-DSN-017
 title: "M2 Local Safety Profileの競合排除・耐久証跡・原子的promotion"
 status: active
-version: 3.1
+version: 3.2
 updated: 2026-08-24
 owner: codex
 implements: FLW-NFR-014, FLW-CON-008
@@ -350,7 +350,9 @@ reference fixtureは1 repository、2 local process、journal 10,000 event以下�
 | 同じdecisionのreconcile再試行 | decision digest照合 | closure eventは高々1件 | 冪等再試行 | 同一result/receipt参照 | 重複closure 0件 |
 | network/unknown filesystemまたはsigned approval入力 | adapter/approval preflight | mutation stateを作らない | 対応local環境または別scopeへ移行 | `UNSUPPORTED_*`を保持 | Git副作用0件 |
 
-reference fixtureの各行はLinux、macOS、Windowsの適用可能なregistered local profileで実行する。
+reference fixtureの各行は**保証対象platform**（現在はLinuxのみ。正は
+`worktree_platform.SUPPORTED_SCOPE`）の適用可能なregistered local profileで実行する。
+保証対象外のplatformは`platform-out-of-scope`で閉じることの確認に留める。
 platform固有で適用不能な注入は`N/A`理由を固定し、成功扱いに丸めない。doctor、audit、verify-receiptは
 各commandがchild timeoutを含め30秒以内にterminal resultを返すfixtureを設け、timeout時もclosed resultを返す。
 
@@ -658,7 +660,7 @@ probeの正は`worktree_platform.probe_platform()`で、planとdoctorは共通�
 
 | OS | 実装component | identity | probe方法 | 未対応時の即時拒否 | 実観測 |
 |---|---|---|---|---|---|
-| linux（**保証対象**） | flock / fsync / fsync / waitpid | uid（`st_uid` vs `geteuid`） | `/proc/self/mountinfo`を`st_dev`（major:minor）で引きfstypeを得る。case semanticsはswapcase pathの存在で判定 | `UNSUPPORTED_FILESYSTEM` | **実施**（`tests/test_flow_m2_platform_probe.py::test_probe_observes_the_real_filesystem`。Linux 6.18 WSL2 / ext4・tmpfsで`SUPPORTED`、9pで`filesystem-class-network`を確認） |
+| linux（**保証対象**） | flock / fsync / fsync / waitpid | uid（`st_uid` vs `geteuid`） | `/proc/self/mountinfo`を**mount pointの最長一致**で引きfstypeを得る。case semanticsは**対象entry名の反転を同一parent内で引きinode一致で確認**する（`FLW-TSK-125`） | `UNSUPPORTED_FILESYSTEM` | **実施**（`tests/test_flow_m2_platform_probe.py::test_probe_observes_the_real_filesystem`。Linux 6.18 WSL2 / ext4で`SUPPORTED`、tmpfsは`filesystem-type-not-allowlisted`、9pは`filesystem-class-network`で拒否） |
 | macos（**保証対象外**） | flock / fsync / fsync / waitpid | uid | `statfs(2)`の`f_fstypename`をctypesで取得。case-insensitive volumeを含む | `UNSUPPORTED_FILESYSTEM` | **対象外**（実装は残す。既定APFSがcase-insensitiveでfolded_component導出不可） |
 | windows（**保証対象外**） | LockFileEx / FlushFileBuffers / ReplaceFileW / job-object | sid | `GetVolumeInformationW`でfilesystem名と`FILE_CASE_SENSITIVE_SEARCH`を取得 | `UNSUPPORTED_FILESYSTEM` | **対象外**（実装は残す。SID取得手段が未確定で`owner-unobservable`固定） |
 
@@ -720,7 +722,7 @@ operationがgatedである間production入口から到達できず`command-unava
 | 1 | 接続完全性 | **一部実証済み** | 13.1 行9・9b・11（read-only 3件）がproduction既定dispatcherから到達し black-box 証跡を持つ（`FLW-TSK-129`）。行6〜8・10（write）はgatedのため未実証 |
 | 2 | 失敗原子性 | **検証計画** | 13.3 全行が実装・検証済み（#2は`FLW-TSK-118`、#6は`FLW-TSK-120`）。production経路での実証がgatingで未了 |
 | 3 | 有限収束性 | **検証計画** | 13.4 全childを`process.run()`監督下へ結線済み（素の`subprocess.run`は0件）。10,000 event／100 MiB規模の負荷実測は未実施 |
-| 4 | platform実在性 | **検証計画** | 13.5 probe実装済み。linuxは実観測済み（ext4/tmpfsでSUPPORTED、9pでnetwork拒否）。macos／windowsは実装のみで実走未実施 |
+| 4 | platform実在性 | **実証済み** | 13.5 保証対象（Linuxのみ）で実観測済み。ext4で`SUPPORTED`、tmpfs／9pは理由付きで拒否。macos／windowsは保証対象外であり`platform-out-of-scope`で閉じることを確認済み |
 | 5 | 証跡妥当性 | **検証計画** | `FLW-TSK-121`でcoverage manifestを`contract_version: 2`へ上げfixture／productionを関数単位で分離。`FLW-NFR-014`のfixture出口条件を撤回しproduction証跡へ据え直した。実証は公開集合復帰後 |
 | 6 | legacy排除 | **検証計画** | 13.6 の旧承認経路は`FLW-TSK-115`で除去済み（参照0件）。宣言／registry検出のblack-box化は公開集合復帰後 |
 | 7 | 状態意味保存 | **検証計画** | 13.2の`QUARANTINED`不変条件は`FLW-TSK-119`、marker適格性は`FLW-TSK-120`で実装・検証済み。production経路での実証がgatingで未了 |
@@ -728,8 +730,11 @@ operationがgatedである間production入口から到達できず`command-unava
 **Gate判定への拘束**: 7観点に`実証済み`は依然1件も無い（`FLW-TSK-115`／`116`後も、production既定dispatcherからの到達がgatingで閉じているため）。したがって本設計は
 `FLW-CON-008`により、**接続の成立を根拠としたDesign Gate PASSを主張しない**。
 本節が求める裁定は「是正の設計方針としての妥当性」であり、`FLW-REV-027`のGate blocking条件
-（production既定dispatcher実走、**`target OS` 3種の実観測**、全crash境界、finite timeout）は
+（production既定dispatcher実走、**保証対象`target OS`の実観測**、全crash境界、finite timeout）は
 実装後の再レビューでのみ解除できる。
+
+保証対象は2026-08-24の裁定でLinuxのみである。macOS／Windowsは`platform-out-of-scope`で
+閉じることを確認すれば足り、当該OS上での実走をGate通過の条件にしない。
 
 **混同への注意**: 2026-08-24に`agent platform` 3者（claude／codex／antigravity）の
 confirmationがPASSしたが、**これはGate blocking条件の「実観測」を満たさない**。
@@ -738,6 +743,8 @@ macOS／Windowsの実観測は依然として未実施である（§13.5）。
 
 ## Revision History
 
+- 3.2 (2026-08-24) Linux限定の裁定を§7と§13.7へ反映し、§13.5の陳腐化した証跡
+  （tmpfs SUPPORTED、swapcase判定）を実装へ揃える（`FLW-REV-029:SYN-003`／`SYN-004`）
 - 3.1 (2026-08-24) operation deadlineの抜け道3件（`_common_dir`／`_head`／`_rederive`）と
   公開集合の未結線を是正し、確認を振る舞い検査へ改める。read-only guardを逐次読みへ
   （`FLW-REV-029:GP-001`／`GP-002`／`GP-006`）

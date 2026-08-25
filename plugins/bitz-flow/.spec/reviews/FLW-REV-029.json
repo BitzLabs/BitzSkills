@@ -72,7 +72,14 @@
       "detail": "`FLW-NFR-014`:85 は依然「対象3 OS（Linux／macOS／Windows）で実環境 probe を実走」を `verified` 昇格条件とし、`FLW-DSN-017` §7（L353）は 3 OS の fixture 実行を、§13.7（L719）は Gate blocking として「`target OS` 3種の実観測」を要求している。裁定は §1.1／§13.5 にしか適用されておらず、規範が互いに矛盾している。",
       "recommendation": "適用漏れ3箇所を Linux 限定へ揃え、規範間の整合を機械検査へ載せる。",
       "tracked_by": "FLW-REV-029:GP-003",
-      "status": "tracked"
+      "status": "resolved",
+      "resolved_by": [
+        "tests/test_flow_norm_consistency.py",
+        "plugins/bitz-flow/.spec/design/FLW-DSN-017.md",
+        "plugins/bitz-flow/.spec/requirements/FLW-NFR-014.md",
+        "FLW-TSK-131"
+      ],
+      "resolution_note": "`FLW-TSK-131` で Linux 限定の裁定を規範3箇所へ反映し、§13.5 の陳腐化した証跡を実装へ揃えた。再発は `test_flow_norm_consistency.py` が機械検査する（保証範囲の広い記述0件、ラベルと `SUPPORTED_SCOPE` の厳密一致、allowlist 外の SUPPORTED 記述の禁止、置き換え前 probe 方法の禁止）。4 変異で検出を確認した。"
     },
     {
       "id": "FLW-REV-029:SYN-004",
@@ -86,7 +93,14 @@
       "detail": "`FLW-TSK-126` で tmpfs を allowlist から外したのに §13.5 実観測欄は「ext4・tmpfs で `SUPPORTED`」のまま。`FLW-TSK-125` で case 判定を mount 局所へ変えたのに probe 方法欄は「swapcase path の存在で判定」のまま。`FLW-REV-027` が指摘した過大主張の再発である。",
       "recommendation": "§13.5 を現在の実装と実測へ更新し、設計表の記述が実装と一致することを機械検査へ載せる。",
       "tracked_by": "FLW-REV-029:GP-004",
-      "status": "tracked"
+      "status": "resolved",
+      "resolved_by": [
+        "tests/test_flow_norm_consistency.py",
+        "plugins/bitz-flow/.spec/design/FLW-DSN-017.md",
+        "plugins/bitz-flow/.spec/requirements/FLW-NFR-014.md",
+        "FLW-TSK-131"
+      ],
+      "resolution_note": "`FLW-TSK-131` で Linux 限定の裁定を規範3箇所へ反映し、§13.5 の陳腐化した証跡を実装へ揃えた。再発は `test_flow_norm_consistency.py` が機械検査する（保証範囲の広い記述0件、ラベルと `SUPPORTED_SCOPE` の厳密一致、allowlist 外の SUPPORTED 記述の禁止、置き換え前 probe 方法の禁止）。4 変異で検出を確認した。"
     },
     {
       "id": "FLW-REV-029:SYN-005",

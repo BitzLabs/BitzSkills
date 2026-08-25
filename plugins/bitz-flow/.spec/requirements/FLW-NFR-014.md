@@ -1,6 +1,6 @@
 ---
 id: FLW-NFR-014
-version: 2.3
+version: 2.4
 status: implementing
 domain: safety
 priority: high
@@ -82,8 +82,11 @@ confidence: high
     （`contract_version: 2`。entryごとに`production`／`fixture`を関数単位で持つ）を
     機械可読な正とする。
 - **`verified`昇格条件**: 次をすべて満たすこと。fixture上の成立では昇格しない。
-  1. 対象3 OS（Linux／macOS／Windows）で**実環境probe**を実走し、
+  1. **保証対象platform**（現在はLinuxのみ。裁定 2026-08-24。正は
+     `worktree_platform.SUPPORTED_SCOPE`）で**実環境probe**を実走し、
      `SUPPORTED`／`UNSUPPORTED_FILESYSTEM`の判定をmachine evidenceへ残す。
+     保証対象外のplatformは`platform-out-of-scope`で閉じることを確認すれば足り、
+     当該OS上での実走を`verified`の条件にしない。
   2. worktree operationの公開集合復帰後、`plan`／`apply`／`audit`／`reconcile`を
      production既定dispatcher起点のE2Eで実証する。
   3. 全durable write境界のcrash injectionと、10,000 event／100 MiB条件での
@@ -91,6 +94,8 @@ confidence: high
   4. `FLW-REV-027`と同じ5観点の再レビューで**PASS**を得る。
      **再レビューPASS前にPromotion Gateを通さない。**
 - **Revision History**:
+  - 2.4 (2026-08-24) `verified`昇格条件の「対象3 OS」を保証対象platform（`SUPPORTED_SCOPE`）へ
+    改め、Linux限定の裁定と整合させる（`FLW-REV-029:SYN-003`）
   - 2.3 (2026-08-24) 検証手段をfixture層とproduction層へ分離し、fixture出口条件を撤回。`verified`昇格条件を実環境probe・production E2E・crash境界・再レビューPASSへ据え直す（`SI-FLW-090`）
   - 2.2 (2026-08-22) `UNSUPPORTED_APPROVAL_MODE`を内部reasonとし、公開resultを
     `UNSUPPORTED` / `unsupported-approval-mode`へ一意に写像

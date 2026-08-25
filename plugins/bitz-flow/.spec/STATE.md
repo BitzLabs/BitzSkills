@@ -1,5 +1,29 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-TSK-131（FLW-REV-029:GP-003／GP-004）実装: Linux限定の裁定を規範へ反映し、
+  §13.5の陳腐化した証跡を実装へ揃えた。**runtimeは変えていない。**
+  **是正**: `FLW-NFR-014`:85の`verified`昇格条件、`FLW-DSN-017`§7のfixture要求、
+  §13.7のGate blockingに残っていた「3 OS」を保証対象platform（`SUPPORTED_SCOPE`）基準へ改めた。
+  §13.5の証跡欄「ext4・tmpfsで`SUPPORTED`」「swapcase pathの存在で判定」を実装
+  （ext4のみSUPPORTED／tmpfsは`filesystem-type-not-allowlisted`／case判定はmount局所）へ揃えた。
+  7観点の「platform実在性」を`検証計画`→**`実証済み`**へ（保証対象はLinuxのみで実観測済み、
+  対象外は`platform-out-of-scope`で閉じることを確認済みのため）。
+  **再発を機械検査する**（`GP-004`の要求）: `tests/test_flow_norm_consistency.py`（7 test）を
+  追加。実装を正として規範文書の主張を照合する。保証範囲を広く読ませる記述0件、
+  §13.5のラベルと`SUPPORTED_SCOPE`の**厳密一致**、allowlist外のfilesystemを`SUPPORTED`と
+  記述しないこと、置き換え前のprobe方法を記述しないことを検査する。
+  **自分の検査の穴を2つ直した**: (1)`allowlist外×SUPPORTED`の判定を「`X で SUPPORTED`」の
+  完全一致で書いたため「ext4・tmpfsで`SUPPORTED`」の**2件目以降を取りこぼした**
+  → `SUPPORTED`主張の直前に並ぶ全filesystem名を取り出す形へ。(2)「対象外が明示されているか」の
+  片方向だけを見ていたため`SUPPORTED_SCOPE`を広げると**空振り**した → 両方向の厳密一致へ。
+  4変異（3 OS記述の復活・tmpfs SUPPORTEDの復活・旧probe方法の復活・SUPPORTED_SCOPE拡大）で
+  全件検出を確認。Revision Historyは旧文言の引用を許す（変更の経緯を残せなくなるため本文のみ検査）。
+  `FLW-DSN-017` v3.2、`FLW-NFR-014` v2.4。
+  `FLW-REV-029`の`SYN-003`／`SYN-004`を証跡付きで`resolved`へ照合した。
+  **残るは`SYN-006`（判定APIが名前どおりの検証をしていない）と`SYN-007`（網が内部障害を
+  不可観測にしている）の2件。**
+  全体**2593 passed / 45 skipped / 失敗0**、release_check PASS、spec inspect全8 workspace PASS。
+
 - 2026-08-24 FLW-TSK-130（FLW-REV-029:GP-001／GP-002／GP-006）実装: userが「案Bで進めましょう」と
   裁定し、canaryを後退させず結線して前進した（裁定参照:
   `.spec/reports/decision-2026-08-24-canary-forward-fix.md`）。
@@ -1267,3 +1291,5 @@
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiMjZiYTAxNGZhZWQzMWEwYTIzOTQyMmY1ZmZkMjRkN2JkNTQ0NWFmZDI0M2NmNmFmODY0M2IxMmQzNTMzMzJlNSIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiOWNhOGViZWQ0NTJmNzJlOTgzZTAzMmY3M2VjNDYyYmE0MDEyNTgxNDI4MjkzZGZiMzkyNzI1ZmI2ZGU1ZjdlNiIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMjciLCJldmVudF9pZCI6ImM4NTFkODVjLWE1NmUtNGZlNC1iMjEzLWY2OWE3ZGQ4ZDRlNCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMjcubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI1VDAwOjMwOjAzLjIxNjcxMloifQ== -->
 - 2026-08-25 FLW-TSK-130: pending → implementing (claude)
 <!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiMzQ4NzA1M2Q2MGFmODgzYzIwNjBlODRkZjE0ZGJlZDc1Zjg3MzI3NzE3MmRiZDFiZTA3NjE3Y2M4MTVmMDA3YiIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiOGIyNTdiNmIxNDdhNWVlNTVkM2I1ODc2OWM2ZTNhOTY4ZDA2YzM1MjliOGNiYzNkZGMyMzVkODI4YTkxODU4ZCIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMzAiLCJldmVudF9pZCI6IjBjMjc2NzE4LTEwYmUtNGRhZi1hNzE0LWE4ODdlYTQwMGMzNSIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMzAubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI1VDAzOjA4OjE1LjE1NjAzOFoifQ== -->
+- 2026-08-25 FLW-TSK-131: pending → implementing (claude)
+<!-- sdd-event:eyJhcnRpZmFjdF9hZnRlcl9oYXNoIjoiNjJlYzUwZjI3NzYyMmJmMWNjYWM0ZDc5ZDIyOGU0MmVkMzgxMDkyZTQzMzMwNjlkZTkyNzU4MWRiZTMxNTE3YyIsImFydGlmYWN0X2JlZm9yZV9oYXNoIjoiY2U2YThhNzExODRmMDBhNzU0N2VkZmVhYzA3ZDFiODE0NDc1YWNkOGI5ODcyMTNkOGM0NDc1YTI5YTQzNDk2MSIsImFydGlmYWN0X2lkIjoiRkxXLVRTSy0xMzEiLCJldmVudF9pZCI6IjkzMDFlNWZlLWFkM2MtNDY5Yy1iNDc2LTIzOTZjOWY2YzM1MCIsIm5ldyI6ImltcGxlbWVudGluZyIsIm9sZCI6InBlbmRpbmciLCJwYXRoIjoiLnNwZWMvdGFza3MvRkxXLVRTSy0xMzEubWQiLCJwcm92ZW5hbmNlIjp7ImFjdG9yIjoiY2xhdWRlIiwia2luZCI6ImFnZW50In0sInNjaGVtYV92ZXJzaW9uIjoxLCJ0aW1lc3RhbXAiOiIyMDI2LTA4LTI1VDAzOjMzOjIxLjE3MDk2OFoifQ== -->
