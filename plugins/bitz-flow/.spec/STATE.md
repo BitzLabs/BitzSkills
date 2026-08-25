@@ -1,5 +1,24 @@
 # STATE — status 遷移ログ
 
+- 2026-08-24 FLW-TSK-128（FLW-REV-028:GP-004）実装: 旧形式chainの移行を**実装せず**
+  §1.2 の公開前提条件として明示した。**runtimeは変えていない。**
+  判断軸は`FLW-TSK-126`（tmpfs／semantic self-test）と同じで、**発生しない状態のための
+  復旧経路を作らない**。M2は未公開（worktree全8 operationが`_GATED_HANDLERS`にあり
+  公開dispatcher非到達）であり、旧形式chainを持つrepositoryは存在しない。
+  §4.2 が書いていた「doctorがmanual rollback手順を提示する」は**実装が無く、設計が存在しない
+  機能を約束している**状態だったため取り下げた。実装しない理由と再検討条件
+  （公開後に永続形式を再変更する／公開済みruntimeが作ったchainを読む必要が生じる）を明記。
+  fail-closedの挙動そのものは`FLW-TSK-118`のまま変えていない。
+  runbookへ旧形式chainを踏んだ場合の判別（`intent record has no embedded emergency receipt`）と
+  報告事項、Git作業ツリー自体は壊れていない旨を追記した。
+  `tests/test_flow_m2_legacy_chain_precondition.py`（7 test）を追加。fail-closedの回帰検出、
+  推測移行しないこと、前提条件と再検討条件の明記、**前提が今日成立している根拠
+  （worktreeが公開集合に無いこと）を機械で確認**する検査を含む。
+  3変異（fail-closedの除去・前提条件の削除・再検討条件の削除）で全件検出。
+  `FLW-DSN-017` v2.9。全体**2550 passed / 44 skipped / 失敗0**、release_check PASS、
+  spec inspect全8 workspace PASS。
+  **これでFLW-REV-028のGate blocking条件GP-001〜008がすべて消化済みとなった。**
+
 - 2026-08-24 FLW-TSK-127（FLW-REV-028:GP-002）実装: operation全体deadlineとsnapshot専用
   出力上限を設計値化し、負荷条件の収束を実測した。
   **(1) operation全体deadline**: child単位のbudgetだけでは30秒保証が成立しない。実測すると

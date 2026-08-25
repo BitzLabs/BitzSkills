@@ -94,3 +94,26 @@ python3 <このスキル>/scripts/flow.py worktree doctor --repo <repo> --format
 
 公開 result の `data.required_human_input` に、対象 path と必要な是正が載る。
 `data.evidence` には判定理由がそのまま入る。
+
+## 旧形式 transaction chain を踏んだ場合
+
+M2 は未公開であり、旧形式（intent と緊急 receipt を 2 file へ分離した形）の chain を持つ
+repository は**存在しない前提**である（`FLW-DSN-017` §1.2）。移行手段は実装していない。
+
+万一これを踏んだ場合、`audit` と `reconcile` が次のように閉じる。
+
+```text
+code: INDETERMINATE
+data.cause: result-indeterminate
+```
+
+`inspect` の problems に `intent record has no embedded emergency receipt` が現れる。
+
+**この状態は自動復旧できない。** chain を書き換える手段は用意していない（推測での移行は
+安全側の判断を壊すため）。前提が崩れているので、次を添えて開発元へ報告すること。
+
+- 該当 operation ID と `<git-common-dir>/bitz-flow-v2/transactions/` 配下の journal
+- 当該 repository で M2 worktree operation を実行した bitz-flow の version
+
+Git の作業ツリー自体は壊れていない。当該 worktree を手動で確認し、必要なら
+`git worktree` の標準コマンドで整理する。

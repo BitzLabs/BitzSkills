@@ -2,7 +2,7 @@
 id: FLW-DSN-017
 title: "M2 Local Safety Profileの競合排除・耐久証跡・原子的promotion"
 status: active
-version: 2.8
+version: 2.9
 updated: 2026-08-24
 owner: codex
 implements: FLW-NFR-014, FLW-CON-008
@@ -46,6 +46,13 @@ processが同じrepositoryを操作する通常運用で、stale plan、競合wr
 - owner-only、非symlink/reparse-pointのlocal filesystem namespace。
 - bitz-flow配布物に同梱されたcontract bundle member一覧とplatform allowlist。
 - Gitのmachine-readable出力と、各副作用直後に再取得したrepository state。
+
+**公開前の前提条件**（`FLW-REV-028:GP-004`）: 対象repositoryに**旧形式のtransaction chainが
+存在しない**こと。旧形式（intentと緊急receiptを2 fileへ分離publishする形。`FLW-TSK-118`以前）は
+`inspect()`がfail-closedで`INDETERMINATE`へ閉じるため、reconcileもauditも通らない。
+
+M2は未公開であり、旧形式chainを持つrepositoryは**存在しない**。したがって移行手段は実装せず、
+前提条件として明示する。公開後にこの前提が崩れる条件と対応は下の再検討条件に従う。
 
 ### 1.3 M2で保証しないこと
 
@@ -226,8 +233,17 @@ terminal receiptは`supersedes_receipt_digest`でrecord内の緊急receipt diges
 `INDETERMINATE`にする。したがってGit副作用後にENOSPCとなっても、安全側のoperator actionは既にdurableである。
 動的な最悪容量計算、予約file、archive容量管理は不要である。
 
-**移行**: 旧形式（分離publish）のchainは推測移行せずfail-closedとし、doctorがmanual rollback手順を
-提示する。schema・runtime・testを同一rollback単位に置く（`SI-FLW-087`）。
+**移行**: 旧形式（分離publish）のchainは推測移行せず**fail-closed**とする。
+schema・runtime・testを同一rollback単位に置く（`SI-FLW-087`）。
+
+**移行手段を実装しない理由**（`FLW-REV-028:GP-004`）: M2は未公開であり、旧形式chainを持つ
+repositoryは存在しない。§1.2 の公開前提条件として明示し、発生しない状態のための復旧経路を
+作らない。以前の版は「doctorがmanual rollback手順を提示する」と書いていたが実装が無く、
+**設計が存在しない機能を約束している**状態だった。約束を取り下げて実態へ合わせる。
+
+**再検討の条件**: 公開後に旧形式chainが実在しうるようになったとき。具体的には
+(a) M2公開後にintent recordの永続形式を再度変更する、(b) 公開済みruntimeが作ったchainを
+新しいruntimeが読む必要が生じる、のいずれか。そのときはdoctorへ検出と手順出力を実装する。
 
 ## 5. contract bundleと原子的promotion
 
@@ -704,6 +720,8 @@ macOS／Windowsの実観測は依然として未実施である（§13.5）。
 
 ## Revision History
 
+- 2.9 (2026-08-24) 旧形式chainの移行を§1.2の公開前提条件として明示し、§4.2の
+  「doctorがmanual rollback手順を提示する」という未実装の約束を取り下げ（`FLW-REV-028:GP-004`）
 - 2.8 (2026-08-24) operation全体deadlineとsnapshot専用出力上限を設計値化し、
   10,000 event条件の収束実測を記録（`FLW-REV-028:GP-002`）
 - 2.7 (2026-08-24) 恒真の`semantic_self_test`を撤去し§3.2をprobeの実能力へ書き直す。
