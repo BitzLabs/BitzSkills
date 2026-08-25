@@ -129,6 +129,7 @@ REQ、TECH、ADR、TASKは、種別ごとにH1とH2の構成を固定する。�
 - 成功時は既定でファイルを生成しない。
 - 失敗時は再現に必要な対象、Diagnostic、コマンド、終了コードを保存してよい。
 - `--report`指定時は`.spec/reports/<timestamp>-<operation>.json`へ保存する。
+- `.spec/reports/`は既定で`.gitignore`対象とし、長期証跡はCI artifactまたはPR添付へ保存する。
 - ULID、追記型台帳、永続ロックはCore 1.0で必須にしない。
 - 同時書込みはGit worktreeまたはOSの単純な一時ファイル置換で衝突を避ける。
 

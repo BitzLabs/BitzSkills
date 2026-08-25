@@ -19,7 +19,7 @@
 |---|---|---|---|
 | [ADR-001](ADR-001_EARS-AI旧検討版の位置づけ.md) | EARS-AI旧検討版（v2/v3/v5）の位置づけ | Accepted | EARS-AI規格/07 |
 | [ADR-002](ADR-002_Gate語彙の所有権と診断のcheckpoint一般化.md) | Gate語彙の所有権と診断のcheckpoint一般化 | Superseded | ADR-009 |
-| [ADR-003](ADR-003_Diagnostic正本スキーマと診断コード命名規約.md) | Diagnostic正本スキーマと診断コード命名規約 | Superseded | ADR-009 |
+| [ADR-003](ADR-003_Diagnostic正本スキーマと診断コード命名規約.md) | Diagnostic正本スキーマと診断コード命名規約 | Superseded | ADR-009, ADR-011 |
 | [ADR-004](ADR-004_設定の上書き禁止分類.md) | 設定の上書き禁止分類 | Superseded | ADR-009 |
 | [ADR-005](ADR-005_規範文IDの階層と記法.md) | 規範文IDの階層と記法 | Accepted | 02, EARS-AI規格/01 |
 | [ADR-006](ADR-006_runIdの形式と並行実行制御.md) | runIdの形式と並行実行制御 | Superseded | ADR-009 |
@@ -27,3 +27,6 @@
 | [ADR-008](ADR-008_プラグイン配布とコア実行体の入手経路.md) | プラグイン配布とコア実行体の入手経路 | Superseded | ADR-009 |
 | [ADR-009](ADR-009_小規模チーム向け軽量コアとEARS-AI中核化.md) | 小規模チーム向け軽量コアとEARS-AI中核化 | Accepted | 01〜08, EARS-AI規格 |
 | [ADR-010](ADR-010_型付き依存とContext-Resolutionの中核化.md) | 型付き依存とContext Resolutionの中核化 | Accepted | 01〜05, SPECファイル規定/10 |
+| [ADR-011](ADR-011_Diagnostic所有者とコード命名規約.md) | Diagnostic所有者とコード命名規約 | Accepted | 01, EARS-AI規格/02・06, SPECファイル規定/06 |
+| [ADR-012](ADR-012_置換済みREQ・TECHの適用禁止.md) | 置換済みREQ・TECHの適用禁止 | Accepted | SPECファイル規定/03・04・10 |
+| [ADR-013](ADR-013_文書IDとローカルIDの字句規則訂正.md) | 文書IDとローカルIDの字句規則訂正 | Accepted | ADR-005, EARS-AI規格/01・08 |

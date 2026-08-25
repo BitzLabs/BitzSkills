@@ -32,6 +32,6 @@ EARS-AI Coreへ開発フロー固有の語彙を持ち込まず、必要なプ�
 ## 5. 例
 
 ```markdown
-- [RULE-010:STEP-01] [sdd:FLOW=Small] [sdd:RETRY_LIMIT=2] [ACTOR:ImplAgent] [IF_ERROR] 対象テストが失敗した場合 [MUST] [THEN] 変更境界内で修正を再試行する。
-- [RULE-010:STEP-02] [sdd:HITL=required] [ACTOR:ImplAgent] [IF_ERROR] 修復試行が上限へ達した場合 [MUST] [THEN] 実装を停止して人間へ判断を要求する。
+- [TECH-010:STEP-01] [sdd:FLOW=Small] [sdd:RETRY_LIMIT=2] [ACTOR:ImplAgent] [IF_ERROR] 対象テストが失敗した場合 [MUST] [THEN] 変更境界内で修正を再試行する。
+- [TECH-010:STEP-02] [sdd:HITL=required] [ACTOR:ImplAgent] [IF_ERROR] 修復試行が上限へ達した場合 [MUST] [THEN] 実装を停止して人間へ判断を要求する。
 ```

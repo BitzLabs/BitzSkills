@@ -143,14 +143,14 @@ H2は次の順序とする。
 
 ## 7. 検査レベル
 
-| 条件 | severity |
-|---|---|
-| H1がない、複数ある、Frontmatterと不一致 | error |
-| 必須H2がない | error |
-| H2が未定義または順序違反 | error |
-| EARS-AI規範文が許可セクション外にある | error |
-| 太字ラベルが標準セクションを代替 | warning |
-| 空の任意セクション | warning |
-| 推奨スタイルの違反 | 原則として診断しない |
+| 条件 | severity | Diagnostic |
+|---|---|---|
+| H1がない、複数ある、Frontmatterと不一致 | error | `SPEC-STYLE-H1-001` |
+| 必須H2がない | error | `SPEC-STYLE-SECTION-001` |
+| H2が未定義または順序違反 | error | `SPEC-STYLE-SECTION-002` |
+| EARS-AI規範文が許可セクション外にある | error | `SPEC-STYLE-PLACEMENT-001` |
+| 太字ラベルが標準セクションを代替 | warning | `SPEC-STYLE-PSEUDO-001` |
+| 空の任意セクション | warning | `SPEC-STYLE-EMPTY-001` |
+| 推奨スタイルの違反 | 原則として診断しない | — |
 
 書式検査は構造だけを扱い、文章の巧拙、意味的正しさ、十分性を自動判定しない。

@@ -3,6 +3,7 @@
 - 状態: Accepted
 - 決定日: 2026-08-25
 - Amends: ADR-009
+- Amended by: ADR-012（置換済みREQ・TECHの適用禁止）
 
 ## Context
 

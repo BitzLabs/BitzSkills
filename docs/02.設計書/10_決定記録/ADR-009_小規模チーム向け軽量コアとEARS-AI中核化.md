@@ -3,7 +3,7 @@
 - 状態: Accepted
 - 決定日: 2026-08-25
 - Supersedes: ADR-002, ADR-003, ADR-004, ADR-006, ADR-007, ADR-008
-- Amended by: ADR-010（公開操作と参照モデル）
+- Amended by: ADR-010（公開操作と参照モデル）、ADR-011（Diagnostic所有者と命名）
 
 ## 背景
 

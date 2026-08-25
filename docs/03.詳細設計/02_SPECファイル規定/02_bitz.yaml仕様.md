@@ -38,7 +38,7 @@ safety:
 | `context.maxDocuments` | integer | No | `20` | 1以上100以下 |
 | `context.maxBytes` | integer | No | `131072` | 4096以上1048576以下 |
 | `verify.timeoutSeconds` | integer | No | `300` | 1以上3600以下 |
-| `verify.commands` | map | No | `{}` | コマンド名からargvへの対応 |
+| `verify.commands` | map | No | `{}` | コマンド名からargvと任意cwdへの対応 |
 | `safety.protectApprovedRequirements` | boolean | No | `true` | 承認済み要求の意味変更を検出 |
 
 未知の標準キーは、同じmajor内の前方互換性のため警告して保持する。型不正、必須キー欠如、
@@ -52,22 +52,26 @@ Contextの上限は完全な依存閉包を部分的に切り捨てるためで�
 
 ## 4. 検証コマンド
 
-`verify.commands`のキーは`[a-z][a-z0-9-]{0,31}`とし、値は空でない文字列配列とする。
-先頭要素は実行ファイル、残りは引数である。Coreはシェルを介さずargvとして起動する。
+`verify.commands`のキーは`[a-z][a-z0-9-]{0,31}`とする。値は空でない文字列配列、または`argv`と任意の
+`cwd`を持つmapとする。配列形式は`argv`だけを持つ短縮記法である。Coreはシェルを介さずargvとして起動する。
 
 ```yaml
 verify:
   commands:
     default: [pytest, -q, "{tests}"]
-    frontend: [npm, test, "--", "{tests}"]
+    frontend:
+      argv: [npm, test, "--", "{tests}"]
+      cwd: frontend
 ```
 
 `{tests}`は配列要素全体として1回だけ使用でき、対象要求の`tests`を1パスずつのargvへ展開する。
 文字列の一部への埋込み、環境変数展開、コマンド置換、パイプ、リダイレクトは行わない。
 `{tests}`がなければ設定されたargvをそのまま1回実行する。
 
-実行ファイルはPATHから解決する。SPEC文書のFrontmatterや本文は、コマンド、引数、環境変数、
-作業ディレクトリを定義できない。
+`cwd`はワークスペースルート相対の既存ディレクトリとし、絶対パス、`..`、シンボリックリンクによる
+ルート外参照を禁止する。`cwd`指定時は全テストパスがその配下にあることを要求し、`{tests}`へは`cwd`相対へ
+正規化したパスを展開する。実行ファイルはPATHから解決する。SPEC文書のFrontmatterや本文は、コマンド、
+引数、環境変数、作業ディレクトリを定義できない。
 
 ## 5. 実効設定
 

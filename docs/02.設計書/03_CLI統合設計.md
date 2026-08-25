@@ -27,6 +27,9 @@ bitz verify [spec-or-statement-id|paths...] [--report]
 bitz doctor [--format text|json]
 ```
 
+`doctor`の検査順序、初回導入支援、Git不在時の縮退、Diagnosticは
+[doctor仕様](../03.詳細設計/02_SPECファイル規定/11_doctor仕様.md)を正とする。
+
 初期化はテンプレートのコピーまたはスキルで行い、専用CLIサブシステムを必須にしない。
 SDD、DDD、同期はCore 1.0の公開コマンドへ含めない。
 

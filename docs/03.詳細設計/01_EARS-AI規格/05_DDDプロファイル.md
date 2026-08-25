@@ -31,5 +31,5 @@ Value Objectなどを規範文へ関連付ける拡張点を予約する。
 ## 5. 例
 
 ```markdown
-- [DOMAIN-001:INV-01] [ddd:BOUNDED_CONTEXT=Ordering] [ddd:AGGREGATE_ROOT=Order] [ACTOR:Order] [ALWAYS] [MUST] [CONSTRAINT] 確定済み注文の合計金額を負数にしない。
+- [REQ-001:INV-01] [ddd:BOUNDED_CONTEXT=Ordering] [ddd:AGGREGATE_ROOT=Order] [ACTOR:Order] [ALWAYS] [MUST] [CONSTRAINT] 確定済み注文の合計金額を負数にしない。
 ```

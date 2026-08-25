@@ -43,6 +43,7 @@ SPECは人間とAIが共有する小さな契約面である。要求の正本�
 | [08_Markdown本文構成・スタイル.md](08_Markdown本文構成・スタイル.md) | 文書種別ごとの固定セクションと表記規則 |
 | [09_旧SPEC知見の評価.md](09_旧SPEC知見の評価.md) | 旧実装から採用・簡素化・不採用とした機能 |
 | [10_Context Resolution仕様.md](10_Context%20Resolution仕様.md) | 型付き依存、完全閉包、Context Bundle、句単位網羅 |
+| [11_doctor仕様.md](11_doctor仕様.md) | 導入状態、互換性、Git縮退、検証環境の診断 |
 
 ## 5. Core 1.0の非目標
 

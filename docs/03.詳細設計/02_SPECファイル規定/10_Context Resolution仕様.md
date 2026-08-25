@@ -72,7 +72,7 @@ bitz context <spec-or-statement-id>...
 2. 各文書の`requires`を終端までたどる。
 3. `refines`のtargetを含める。
 4. 対象文書を`refines`する`approved`文書を逆参照で含め、その`requires`もたどる。
-5. 起点が旧文書の場合、有効な`supersedes`元を識別してadvisoryへ含める。
+5. 起点が置換済み文書の場合、旧文書をadvisory、有効な後継文書をreplacementとして識別する。
 6. `related`、TASK、コード、テストは自動追加しない。
 
 ### `implement`
@@ -96,6 +96,7 @@ bitz context <spec-or-statement-id>...
 | `approved` REQ/TECH | Yes | No | なし |
 | `draft` REQ/TECH | No | Yes | `implement`または`verify`の起点 |
 | `outdated` REQ/TECH | No | Yes | 強い依存先または`implement`/`verify`の起点 |
+| 有効な`supersedes`逆参照を持つREQ/TECH | No | Yes | 強い依存先または`implement`/`verify`の起点 |
 | `accepted` ADR | Yes | No | なし |
 | `proposed` ADR | No | Yes | 強い依存先 |
 | `rejected`/`superseded` ADR | No | Yes | 強い依存先 |
@@ -105,13 +106,21 @@ bitz context <spec-or-statement-id>...
 advisory文書は本文を別区分で渡し、規範として適用してはならない。強い依存に適用不能な文書が必要な場合、
 Context Bundle全体を`blocked`とする。
 
+置換済みREQ/TECHを`implement`または`verify`へ指定した場合は、後継IDを`suggestedAction`へ含めて
+`blocked`とする。Coreは後継へ暗黙に起点を差し替えない。同じ旧文書に複数の有効な後継がある場合は
+置換が曖昧なため`failed`とする。
+
+有効な後継とは、同種の旧文書を`supersedes`する`approved`のREQ/TECHを指す。`draft`または`outdated`の
+後継候補だけでは旧文書を置換済みと判定しない。`interpret`で置換済み文書を起点にした場合は、旧文書と
+後継を区別して`passed_with_warnings`で返す。
+
 ## 7. 決定論的探索
 
 1. 全文書とEARS-AI規範文のID索引を作る。
 2. 型、状態、強い関係、循環を検査する。
 3. 起点をID辞書順へ正規化する。
 4. purpose規則に従い、強い関係の完全な閉包を計算する。
-5. 文書を`roots`、`requirements`、`constraints`、`refinements`、`work`、`advisory`へ分類する。
+5. 文書を`roots`、`requirements`、`constraints`、`refinements`、`replacements`、`work`、`advisory`へ分類する。
 6. 各区分を最短距離、種別順REQ・TECH・ADR・TASK、ID辞書順で並べる。
 7. 規範文を文書順、source line、規範文IDの順で並べる。
 8. 内容hashと関係をCanonical JSON化し、Context Digestを計算する。
@@ -144,11 +153,16 @@ Context Bundleは生成ファイルを正本にせず、コマンド結果とし
     }
   ],
   "coverage": {
-    "must": ["REQ-001:AC-01", "REQ-001:AC-02"],
-    "addressed": ["REQ-001:AC-01"],
-    "tested": ["REQ-001:AC-01"],
-    "unaddressed": ["REQ-001:AC-02"],
-    "untested": ["REQ-001:AC-02"]
+    "must": {
+      "total": ["REQ-001:AC-01", "REQ-001:AC-02"],
+      "addressed": ["REQ-001:AC-01"],
+      "tested": ["REQ-001:AC-01"],
+      "unaddressed": ["REQ-001:AC-02"],
+      "untested": ["REQ-001:AC-02"]
+    },
+    "should": {"total": [], "addressed": [], "tested": [], "unaddressed": [], "untested": []},
+    "may": {"total": [], "addressed": [], "tested": [], "unaddressed": [], "untested": []},
+    "adjacent": []
   },
   "limits": {"documents": 1, "bytes": 4096},
   "diagnostics": []
@@ -166,6 +180,7 @@ Diagnostics and Coverage Gaps
 Root Intent
 Required Context
 Applicable Refinements
+Replacement Candidates
 Work Boundary
 Verification Bindings
 Advisory Documents
@@ -183,6 +198,15 @@ Advisory Documents
 - TASK起点では、`addresses`にない句を作業対象へ含めないが、同一文書の未対象句をadjacentとして表示する。
 - REQ起点の`implement`では全`MUST`を対象とし、未addressedをwarning、未testedをwarningとする。
 - `verify`では未testedの`MUST`が1件でもあればテスト実行前に`blocked`とする。
+
+`coverage`は`must`、`should`、`may`を同じ構造で持ち、各区分に`total`、`addressed`、`tested`、
+`unaddressed`、`untested`を格納する。TASK起点で同一文書内の対象外規範文がある場合だけ`adjacent`へ格納する。
+
+| purpose | coverageの扱い |
+|---|---|
+| `interpret` | `coverage`を省略する |
+| `implement` | 全区分と`adjacent`を返す |
+| `verify` | 全区分を返す。`addressed`と`unaddressed`は情報として保持し、合否は`tested`と`untested`で決める |
 
 テスト対応は「そのテストファイルが句を対象として宣言した」ことだけを保証する。assertionの十分性は
 テストレビュー、mutation testing、実行結果などで別に評価する。
@@ -230,6 +254,8 @@ Context Resolutionは基準環境で1秒以内を目標とする。ネットワ�
 | `CTX-RELATION-MISSING-001` | 強い関係のtargetがない |
 | `CTX-CYCLE-001` | 禁止された循環がある |
 | `CTX-STATE-001` | 強い依存先が適用不能。結果は`blocked` |
+| `CTX-STATE-SUPERSEDED-001` | 起点または強い依存先が置換済み。後継IDを返し、結果は`blocked` |
+| `CTX-STATE-SUPERSEDED-002` | 同じ旧文書に複数の有効な後継がある。結果は`failed` |
 | `CTX-LIMIT-001` | 完全な閉包が上限を超える。結果は`blocked` |
 | `CTX-COVERAGE-TASK-001` | 対象`MUST`をaddressするTASKがない |
 | `CTX-COVERAGE-TEST-001` | 対象`MUST`にテスト対応がない |

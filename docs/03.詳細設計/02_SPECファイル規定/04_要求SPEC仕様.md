@@ -72,6 +72,9 @@ Coreは[EARS-AI Core構文仕様](../01_EARS-AI規格/01_Core構文仕様.md)が
 `requires`と`refines`はContext Resolutionで完全に探索される。説明文中のIDやMarkdownリンクを、
 強い依存の代わりにしてはならない。
 
+後継文書が旧文書を`supersedes`した時点で、旧文書を新しい実装・検証の起点にしない。Coreは後継へ
+暗黙に差し替えず、`CTX-STATE-SUPERSEDED-001`と後継IDを返す。
+
 ## 6. 状態別の検査
 
 ### `draft`

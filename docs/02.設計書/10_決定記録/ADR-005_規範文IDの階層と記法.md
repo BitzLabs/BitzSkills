@@ -2,6 +2,7 @@
 
 - 状態: Accepted
 - 決定日: 2026-08-25
+- Amended by: ADR-013
 - 関連: [02_specディレクトリ仕様.md](../02_specディレクトリ仕様.md), [EARS-AI規格/01_Core構文仕様.md](../../03.詳細設計/01_EARS-AI規格/01_Core構文仕様.md)
 
 ## 背景
@@ -17,6 +18,9 @@ document-id = prefix, "-", 3*DIGIT           ; 例 REQ-001
 local-id    = 1*( ALPHA / DIGIT / "-" )      ; 例 AC-01, SPEC-04, CONST-01
 statement-id = document-id, ":", local-id
 ```
+
+現在の`local-id`字句規則とCore文書prefixは[ADR-013](ADR-013_文書IDとローカルIDの字句規則訂正.md)で
+訂正されている。実装はEARS-AI Core構文仕様を正とする。
 
 - 1つの規範文は1行で完結し、ID、ACTOR、発動条件、規範強度、処理種別を必ず備える。
 - 条件と結果を親子の箇条書きへ分割する記法を禁止する。
