@@ -25,10 +25,11 @@
 | [ADR-006](ADR-006_runIdの形式と並行実行制御.md) | runIdの形式と並行実行制御 | Superseded | ADR-009 |
 | [ADR-007](ADR-007_コア実行体の配布形態.md) | コア実行体の実装言語と配布形態 | Superseded | ADR-009 |
 | [ADR-008](ADR-008_プラグイン配布とコア実行体の入手経路.md) | プラグイン配布とコア実行体の入手経路 | Superseded | ADR-009 |
-| [ADR-009](ADR-009_小規模チーム向け軽量コアとEARS-AI中核化.md) | 小規模チーム向け軽量コアとEARS-AI中核化 | Accepted | 01〜08, EARS-AI規格 |
+| [ADR-009](ADR-009_小規模チーム向け軽量コアとEARS-AI中核化.md) | 小規模チーム向け軽量コアとEARS-AI中核化 | Accepted | 01〜08, EARS-AI規格, ADR-010・011・016 |
 | [ADR-010](ADR-010_型付き依存とContext-Resolutionの中核化.md) | 型付き依存とContext Resolutionの中核化 | Accepted | 01〜05, SPECファイル規定/10 |
 | [ADR-011](ADR-011_Diagnostic所有者とコード命名規約.md) | Diagnostic所有者とコード命名規約 | Accepted | 01, EARS-AI規格/02・06, SPECファイル規定/06 |
 | [ADR-012](ADR-012_置換済みREQ・TECHの適用禁止.md) | 置換済みREQ・TECHの適用禁止 | Accepted | SPECファイル規定/03・04・10 |
 | [ADR-013](ADR-013_文書IDとローカルIDの字句規則訂正.md) | 文書IDとローカルIDの字句規則訂正 | Accepted | ADR-005, EARS-AI規格/01・08 |
 | [ADR-014](ADR-014_Semantic-IRと段階的Context-Projection.md) | Semantic IRと段階的Context Projection | Accepted | ADR-010, EARS-AI規格/06, SPECファイル規定/10 |
 | [ADR-015](ADR-015_SPEC改訂履歴の必須化.md) | SPEC改訂履歴の必須化 | Accepted | SPECファイル規定/04・05・08・09 |
+| [ADR-016](ADR-016_Agent-Plugins準拠の複数プラグイン配布.md) | Agent Plugins準拠の複数プラグイン配布 | Accepted | 01, 03, 06〜08, SPECファイル規定/11 |

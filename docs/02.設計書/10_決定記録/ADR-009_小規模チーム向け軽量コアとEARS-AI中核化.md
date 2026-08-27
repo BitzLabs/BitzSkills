@@ -3,7 +3,7 @@
 - 状態: Accepted
 - 決定日: 2026-08-25
 - Supersedes: ADR-002, ADR-003, ADR-004, ADR-006, ADR-007, ADR-008
-- Amended by: ADR-010（公開操作と参照モデル）、ADR-011（Diagnostic所有者と命名）
+- Amended by: ADR-010（公開操作と参照モデル）、ADR-011（Diagnostic所有者と命名）、ADR-016（配布形態）
 
 ## 背景
 
@@ -26,6 +26,10 @@
 8. 成功時の詳細レポート、永続run、複雑なwaiver、外部署名policyを必須にしない。
 9. PyPI + `uv`だけを初期配布とし、単一バイナリは需要確認後に検討する。
 10. EARS-AI Profile、DDD、多言語AST、独立AuditAgent、自動逆同期は1.0後の任意拡張とする。
+
+決定9の初期配布形態は、[ADR-016](ADR-016_Agent-Plugins準拠の複数プラグイン配布.md)により、
+GitHubマーケットプレイス上のAgent Plugins 1.0.0パッケージをAI利用者向けの主要経路とし、
+PyPI + `uv`をスタンドアロン実行体の代替経路として維持する形へ改訂された。
 
 ## 性能判断
 
