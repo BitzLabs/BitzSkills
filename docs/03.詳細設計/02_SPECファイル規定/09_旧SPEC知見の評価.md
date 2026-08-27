@@ -2,7 +2,8 @@
 
 ## 1. 調査対象
 
-旧実装の`design/flw-tsk-106-safety-boundary`、commit `2cd4ff1`を、作業ツリーへ切り替えず確定refから調査した。
+旧実装の`design/flw-tsk-106-safety-boundary`、commit
+`2cd4ff19c8b510684051edbd86c159b6e9307890`を、作業ツリーへ切り替えず確定refから調査した。
 特にM2 Local Safety Profileの要求、設計、TASK、spec-issue、テスト仕様、検証証跡、実装後振り返りと、
 bitz-sddの共通Frontmatter・ライフサイクル・検証契約を対象にした。
 

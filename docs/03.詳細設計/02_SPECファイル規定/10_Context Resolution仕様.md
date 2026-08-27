@@ -385,7 +385,7 @@ Canonical JSON化して計算する。これは表示の再現性とキャッシ
 hard limitを超える場合は`CTX-PROJECTION-LIMIT-001`で`failed`とし、Context Resolution自体のstatusとは区別する。
 
 索引は1回の走査で作り、`fileHash`が同じ文書は再解析しない。モノレポでは連合全体の軽量索引を作るが、
-無関係workspaceの本文を完全解析しない。10,000 SPECの索引作成を除き、通常の20文書以下の
+無関係workspaceの本文を完全解析しない。10,000 SPECの索引作成を除き、通常の20文書・128 KiB以下の
 Context Resolutionは基準環境で1秒以内を目標とする。ネットワークとLLMを使用しない。
 
 ## 12. Diagnostic

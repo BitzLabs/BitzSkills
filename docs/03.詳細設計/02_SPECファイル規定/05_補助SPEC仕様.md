@@ -101,6 +101,7 @@ changes:
 REQ  --requires----> REQ / TECH / accepted ADR
 TECH --refines-----> REQ / TECH
 TECH --requires----> REQ / TECH / accepted ADR
+ADR  --requires----> REQ / TECH / accepted ADR
 TASK --addresses---> REQ:statement / TECH:statement
 TASK --requires----> REQ / TECH / TASK / accepted ADR
 NEW  --supersedes--> OLD of same kind

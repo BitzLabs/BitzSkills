@@ -1,7 +1,23 @@
 # 02. Antigravity 詳細設計レビューと改訂提案
 
-**状態**: 提案（未裁定）
+**状態**: **Closed（全項目裁定済み）**
 **作成日**: 2026-08-25
+**裁定日**: 2026-08-27
+
+## 0. 裁定結果
+
+本書は独立レビューの原文として保存し、次の裁定をもって閉じる。現行契約の正本は
+`docs/02.設計書`と`docs/03.詳細設計`であり、本書に記載したレビュー時点の行番号と実装案は
+そのまま実装根拠にしない。
+
+| 項目 | 裁定 | 反映先または理由 |
+|---|---|---|
+| P1 Context Projection | 修正採用・反映済み | ADR-014とContext Resolutionへ反映。深度だけでは切らず、完全閉包、Constraint Ledger、purpose・role・規範強度による段階的Projectionを採用 |
+| P2 `implements.addresses` | Core 1.0未採用 | TASKの`relations.addresses`とテストの`covers`を正本とし、実装ファイルへの同義情報の二重管理を避ける |
+| P2 TASK境界の緩和 | Core 1.0未採用 | warning化と対話承認はfail-openになるため、明示TASKの境界外変更は`blocked`を維持。作業分離にはbranch/worktreeを使う |
+| P3 小規模時のcache bypass | 1.1以降の候補 | キャッシュは任意かつ結果不変とする現契約で足りる。ファイル数の固定閾値は設けず、実装後のbenchmarkでI/Oが支配的と判明した場合だけ再評価 |
+
+「1.1以降の候補」はCore 1.0では不採用として閉じた項目であり、実装予定を意味しない。
 
 ## 総評
 
@@ -75,9 +91,9 @@ Context Bundle の生成において、依存距離（Depth）に応じた情報
 3.  **P2**: Git境界検査の `blocked` 緩和 — *開発体験（DX）向上のため*
 4.  **P3**: 小規模向けのインメモリパース（IOバイパス） — *余力があれば実装*
 
-## 実装前チェックリスト
+## 実装前チェックリスト（裁定済み）
 
-- [ ] `10_Context Resolution仕様.md` への Context Projection（Depth制御）の追記
-- [ ] `docs/03.詳細設計/02_SPECファイル規定/03_Frontmatter共通仕様.md` の `implements` スキーマ拡張
-- [ ] `06_参照・トレース・検証仕様.md` における `SPEC-TASK-BOUNDARY-001` の severity 調整の追記
-- [ ] `docs/02.設計書/01_共通アーキテクチャ.md` の性能制約へのインメモリルールの追記
+- [x] Context Projectionは深度制御案を修正し、ADR-014とContext Resolutionへ反映
+- [x] `implements.addresses`はCore 1.0未採用と裁定
+- [x] `SPEC-TASK-BOUNDARY-001`のseverity緩和は未採用とし、`blocked`を維持
+- [x] cache bypassの固定閾値は1.1以降の実測候補としてCore 1.0から除外
