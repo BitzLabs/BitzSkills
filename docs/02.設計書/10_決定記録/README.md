@@ -33,3 +33,4 @@
 | [ADR-014](ADR-014_Semantic-IRと段階的Context-Projection.md) | Semantic IRと段階的Context Projection | Accepted | ADR-010, EARS-AI規格/06, SPECファイル規定/10 |
 | [ADR-015](ADR-015_SPEC改訂履歴の必須化.md) | SPEC改訂履歴の必須化 | Accepted | SPECファイル規定/04・05・08・09 |
 | [ADR-016](ADR-016_Agent-Plugins準拠の複数プラグイン配布.md) | Agent Plugins準拠の複数プラグイン配布 | Accepted | 01, 03, 06〜08, SPECファイル規定/11 |
+| [ADR-017](ADR-017_モノレポSPEC連合をCore-1.0へ含める.md) | モノレポSPEC連合をCore 1.0へ含める | Accepted | 02, 03, 06, 08, SPECファイル規定/01・02・06・10〜12 |

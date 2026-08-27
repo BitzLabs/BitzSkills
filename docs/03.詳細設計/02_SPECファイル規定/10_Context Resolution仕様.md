@@ -29,10 +29,16 @@ bitz context <spec-or-statement-id>...
   [--detail compact|standard|full]
   [--expand <document-id>[#revision-history]]...
   [--expect-digest sha256:<hex>]
+  [--workspace <workspace-id>]
 ```
 
 `purpose`の既定値は`interpret`とする。起点IDは文書IDと規範文IDを受け付け、重複を除いてID辞書順に
 正規化する。パスを起点にせず、移動後も安定するIDを使用する。
+
+モノレポ連合では、active workspace内の起点はローカルIDを許可し、別workspaceの起点と`expand`は
+`<workspace-id>::<document-id>`で指定する。非修飾IDを他workspaceから探索しない。`context`は
+`--all-workspaces`を受け付けない。全起点は同じworkspaceが所有し、そのworkspaceをrequest workspaceとする。
+独立した複数workspaceを起点にする場合はrequestを分ける。
 
 `detail`の既定値は`standard`とする。`expand`は完全解決済み集合に含まれる文書IDだけを受け付け、
 指定文書のProjectionを`full`へ昇格する。`#revision-history`を付けた場合は、その文書の改訂履歴だけを
@@ -76,6 +82,7 @@ bitz context <spec-or-statement-id>...
 
 `requires`と`refines`を合わせた意味依存グラフ、および`supersedes`の連鎖は循環を禁止する。
 `related`の循環は許容し、探索しない。TASK間の`requires`循環は実行順序を決められないためエラーとする。
+これらの型・循環規則はworkspace境界を越える修飾関係にも同じく適用する。
 
 ## 5. purpose別の閉包
 
@@ -101,6 +108,8 @@ bitz context <spec-or-statement-id>...
 
 `interpret`閉包に加え、対象規範文のテスト対応、検証コマンド、実装パスを含める。TASKは起点として
 指定された場合だけ含める。
+モノレポでは、適用される別workspaceの直接refinementが対象規範文へ宣言した横断テスト対応も含め、
+テスト所有workspaceのID、command、path、`cwd`を保持する。
 
 ## 6. 状態と適用可能性
 
@@ -129,7 +138,7 @@ Context Bundle全体を`blocked`とする。
 
 ## 7. 決定論的探索
 
-1. 全文書とEARS-AI規範文のID索引を作る。
+1. active workspaceまたは明示されたモノレポ連合の全文書とEARS-AI規範文の修飾ID索引を作る。
 2. 型、状態、強い関係、循環を検査する。
 3. 起点をID辞書順へ正規化する。
 4. purpose規則に従い、強い関係の完全な閉包を計算する。
@@ -140,6 +149,7 @@ Context Bundle全体を`blocked`とする。
 
 同じ文書が複数経路から到達した場合は1回だけ収録し、`reachedBy`へ全経路の直前edgeを記録する。
 実装はvisited setを用いるが、循環を単に無視せずDiagnosticとして報告する。
+連合ではworkspace IDを探索キーへ含め、同じローカルIDを持つ別workspaceの文書を同一視しない。
 
 ## 8. Context Bundleと段階的Projection
 
@@ -151,7 +161,8 @@ Context Bundleは生成ファイルを正本にせず、コマンド結果とし
   "operation": "context",
   "status": "passed_with_warnings",
   "purpose": "implement",
-  "roots": ["REQ-001"],
+  "workspace": {"id": "web", "path": "apps/web"},
+  "roots": ["web::REQ-001"],
   "contextDigest": "sha256:0123456789abcdef",
   "projectionDigest": "sha256:fedcba9876543210",
   "revision": {"commit": "0123456789abcdef", "dirty": false},
@@ -166,7 +177,9 @@ Context Bundleは生成ファイルを正本にせず、コマンド結果とし
   },
   "documents": [
     {
-      "id": "REQ-001",
+      "id": "web::REQ-001",
+      "localId": "REQ-001",
+      "workspaceId": "web",
       "kind": "requirement",
       "status": "approved",
       "role": "root",
@@ -174,7 +187,7 @@ Context Bundleは生成ファイルを正本にせず、コマンド結果とし
       "semanticHash": "sha256:abcdef0123456789",
       "fileHash": "sha256:1111111111111111",
       "projection": "full",
-      "statementRefs": ["REQ-001:AC-01", "REQ-001:AC-02"],
+      "statementRefs": ["web::REQ-001:AC-01", "web::REQ-001:AC-02"],
       "revisionHistory": {
         "entryCount": 2,
         "latest": {"date": "2026-08-27", "summary": "失敗時の契約を追加", "reference": "ADR-015"},
@@ -184,7 +197,9 @@ Context Bundleは生成ファイルを正本にせず、コマンド結果とし
       "untrustedText": true
     },
     {
-      "id": "TECH-014",
+      "id": "api::TECH-014",
+      "localId": "TECH-014",
+      "workspaceId": "api",
       "kind": "technical",
       "status": "approved",
       "role": "constraint",
@@ -206,8 +221,8 @@ Context Bundleは生成ファイルを正本にせず、コマンド結果とし
   "constraintLedger": {
     "statements": [
       {
-        "id": "REQ-001:AC-01",
-        "documentId": "REQ-001",
+        "id": "web::REQ-001:AC-01",
+        "documentId": "web::REQ-001",
         "role": "root",
         "modality": "MUST",
         "actor": "AuthService",
@@ -215,8 +230,8 @@ Context Bundleは生成ファイルを正本にせず、コマンド結果とし
         "operation": {"kind": "THEN", "text": "アクセストークンを1件発行する"}
       },
       {
-        "id": "REQ-001:AC-02",
-        "documentId": "REQ-001",
+        "id": "web::REQ-001:AC-02",
+        "documentId": "web::REQ-001",
         "role": "root",
         "modality": "MUST",
         "actor": "AuthService",
@@ -227,11 +242,11 @@ Context Bundleは生成ファイルを正本にせず、コマンド結果とし
   },
   "coverage": {
     "must": {
-      "total": ["REQ-001:AC-01", "REQ-001:AC-02"],
-      "addressed": ["REQ-001:AC-01"],
-      "tested": ["REQ-001:AC-01"],
-      "unaddressed": ["REQ-001:AC-02"],
-      "untested": ["REQ-001:AC-02"]
+      "total": ["web::REQ-001:AC-01", "web::REQ-001:AC-02"],
+      "addressed": ["web::REQ-001:AC-01"],
+      "tested": ["web::REQ-001:AC-01"],
+      "unaddressed": ["web::REQ-001:AC-02"],
+      "untested": ["web::REQ-001:AC-02"]
     },
     "should": {"total": [], "addressed": [], "tested": [], "unaddressed": [], "untested": []},
     "may": {"total": [], "addressed": [], "tested": [], "unaddressed": [], "untested": []},
@@ -324,6 +339,7 @@ Expanded Revision History
 
 テスト対応は「そのテストファイルが句を対象として宣言した」ことだけを保証する。assertionの十分性は
 テストレビュー、mutation testing、実行結果などで別に評価する。
+モノレポの横断テスト対応は、対象句を直接`refines`する文書からの宣言だけを集計する。
 
 ## 10. Context Digestとstale検出
 
@@ -335,8 +351,10 @@ Context Digestは、次をCanonical JSON化したSHA-256とする。
 - 閉包内の強い関係
 - EARS-AI Semantic IRのCanonical表現
 - 実装パス、テスト対応、検証コマンド名、TASK変更境界
+- 到達workspaceのIDとGitルート相対path、修飾起点、workspace境界を越えるedge、解釈へ影響する実効設定
 
 生成時刻、絶対パス、キャッシュ位置、出力形式は含めない。
+到達しなかったモノレポmemberの設定と内容も含めない。
 `Revision History`、`fileHash`、`detail`、`expand`、各文書のProjection、Projection Digestも含めない。
 提示方法や非規範の履歴だけを変えても、完全解決した
 仕様解釈が同じならContext Digestは同一でなければならない。
@@ -366,7 +384,8 @@ Canonical JSON化して計算する。これは表示の再現性とキャッシ
 完全解決した文書集合とSemantic IRに対して判定する。`--detail full`または`--expand`による提示量だけが
 hard limitを超える場合は`CTX-PROJECTION-LIMIT-001`で`failed`とし、Context Resolution自体のstatusとは区別する。
 
-索引は1回の走査で作り、`fileHash`が同じ文書は再解析しない。10,000 SPECの索引作成を除き、通常の20文書以下の
+索引は1回の走査で作り、`fileHash`が同じ文書は再解析しない。モノレポでは連合全体の軽量索引を作るが、
+無関係workspaceの本文を完全解析しない。10,000 SPECの索引作成を除き、通常の20文書以下の
 Context Resolutionは基準環境で1秒以内を目標とする。ネットワークとLLMを使用しない。
 
 ## 12. Diagnostic
@@ -374,6 +393,7 @@ Context Resolutionは基準環境で1秒以内を目標とする。ネットワ�
 | コード | 条件 |
 |---|---|
 | `CTX-ROOT-MISSING-001` | 起点IDが解決できない。結果は`failed` |
+| `CTX-ROOT-WORKSPACE-001` | 1回のrequestに異なるworkspace所有の起点が混在する。結果は`failed` |
 | `CTX-RELATION-TYPE-001` | 関係のsource/target型が不正 |
 | `CTX-RELATION-MISSING-001` | 強い関係のtargetがない |
 | `CTX-CYCLE-001` | 禁止された循環がある |

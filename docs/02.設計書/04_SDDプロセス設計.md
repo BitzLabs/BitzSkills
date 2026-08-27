@@ -29,6 +29,7 @@ Intent -> Context -> Check -> Implement -> Verify -> Done
 - 公開API、永続データ、互換性を変更する
 - セキュリティ、費用、法令、本番SLOへ影響する
 - 複数モジュールまたは複数人の作業境界を越える
+- モノレポの複数workspaceへ変更または検証が波及する
 - 承認済みREQの意味を変更する
 
 ```text

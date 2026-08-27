@@ -32,9 +32,11 @@ Skillsは`skills/`、MCP設定は`mcp.json`へ置く。クライアント固有�
 bitz context <spec-or-statement-id>... [--purpose interpret|implement|verify]
   [--format markdown|json] [--detail compact|standard|full]
   [--expand <document-id>[#revision-history]]... [--expect-digest sha256:<hex>]
-bitz check [ids-or-paths...] [--full] [--format text|json] [--report]
-bitz verify [spec-or-statement-id|paths...] [--report]
-bitz doctor [--format text|json]
+  [--workspace <workspace-id>]
+bitz check [ids-or-paths...] [--full] [--workspace <workspace-id>|--all-workspaces]
+  [--format text|json] [--report]
+bitz verify [spec-or-statement-id|paths...] [--workspace <workspace-id>|--all-workspaces] [--report]
+bitz doctor [--workspace <workspace-id>|--all-workspaces] [--format text|json]
   [--plugin <id> --plugin-version <semver>]
   [--require-core-api <range>] [--require-capability <name>]...
 ```
@@ -45,9 +47,15 @@ bitz doctor [--format text|json]
 初期化はテンプレートのコピーまたはスキルで行い、専用CLIサブシステムを必須にしない。
 SDD、DDD、同期はCore 1.0の公開コマンドへ含めない。
 
+モノレポでは最寄りの`.spec/bitz.yaml`をactive workspaceとする。別workspaceの起点は
+`<workspace-id>::<document-id>`で指定でき、`--workspace`はローカルIDと設定の解決基準を明示する。
+`--all-workspaces`は連合ルートでの`check`、`verify`、`doctor`だけに使用し、`context`へは指定しない。
+`--workspace`とは排他的であり、全体`check`は`--full`、全体`verify`は各workspaceの引数なしverifyを含意する。
+詳細は[モノレポSPEC連合仕様](../03.詳細設計/02_SPECファイル規定/12_モノレポSPEC連合仕様.md)を正とする。
+
 ## 4. プラグイン責務
 
-- プロジェクトルートと`.spec/`の検出
+- Gitルート、active workspace、連合カタログと`.spec/`の検出
 - 実装前のContext Bundle取得と、編集直前のContext Digest再照合
 - Constraint Ledgerの全`MUST`確認と、必要な`reference`文書だけの明示展開
 - コアコマンドの呼出し
@@ -101,3 +109,5 @@ Core 1.0はフックなしで完結する。フックは性能、互換性、攻
 - 全`plugin.json`と`mcp.json`がAgent Plugins 1.0.0 schemaへ適合する
 - `bitz-core`以外への必須依存とプラグイン外ファイル参照がない
 - 拡張ごとの`doctor`プリフライトが不在、非互換、Capability不足を`blocked`にする
+- 同名のローカルIDを持つ複数workspace、横断依存、未登録member、所有境界違反のfixtureが正しく判定される
+- `--all-workspaces`の結果順と集約statusが同一入力で再現される

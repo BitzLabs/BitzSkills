@@ -4,6 +4,7 @@
 
 `.spec/bitz.yaml`はワークスペースごとに1つだけ置く設定の正本である。Git管理を前提とし、
 SPEC本文、環境変数、ユーザーのホームディレクトリにある設定から安全性や検証コマンドを上書きしない。
+モノレポではGitルートの設定だけが連合カタログを持ち、member設定は継承せず自己完結する。
 
 ## 2. 最小例
 
@@ -27,6 +28,20 @@ safety:
   protectApprovedRequirements: true
 ```
 
+モノレポ連合ルートでは次を追加する。
+
+```yaml
+workspace:
+  id: platform
+monorepo:
+  maxMembers: 20
+  members:
+    - id: web
+      path: apps/web
+    - id: api
+      path: services/api
+```
+
 ## 3. Schema
 
 | キー | 型 | 必須 | 既定値 | 制約 |
@@ -34,6 +49,9 @@ safety:
 | `schemaVersion` | string | Yes | なし | Core 1.0では`"1.0"` |
 | `language` | string | No | `ja` | BCP 47の言語タグ |
 | `earsAi` | string | Yes | なし | 対象EARS-AIのmajor.minor |
+| `workspace.id` | string | No | `root` | workspace識別子。連合ルートとmemberでは必須 |
+| `monorepo.members` | object[] | No | なし | Gitルートだけで使用する`id`と`path`の明示カタログ |
+| `monorepo.maxMembers` | integer | No | `20` | 1以上100以下。member数が超えれば`blocked` |
 | `check.changedOnly` | boolean | No | `true` | 通常検査の範囲 |
 | `context.maxDocuments` | integer | No | `20` | 1以上100以下 |
 | `context.maxBytes` | integer | No | `131072` | 4096以上1048576以下 |
@@ -49,6 +67,12 @@ safety:
 
 Contextの上限は完全な依存閉包を部分的に切り捨てるためではない。上限を超えた場合は`blocked`とし、
 利用者が依存の分割またはhard limit内での明示的な上限変更を判断する。
+
+`workspace.id`は`[a-z][a-z0-9-]{0,31}`とする。`monorepo.members`は`maxMembers`以下かつhard limit
+100件以下とし、各要素の`id`はmember側`workspace.id`と一致させる。`path`はGitルート相対とし、絶対パス、
+`..`、glob、symlink、Git submodule、member同士の重複・入れ子を禁止する。member設定で`monorepo`を
+宣言してはならない。`monorepo.maxMembers`だけを`members`なしで指定することも禁止する。詳細は
+[モノレポSPEC連合仕様](12_モノレポSPEC連合仕様.md)を正とする。
 
 ## 4. 検証コマンド
 
@@ -69,7 +93,8 @@ verify:
 `{tests}`がなければ設定されたargvをそのまま1回実行する。
 
 `cwd`はワークスペースルート相対の既存ディレクトリとし、絶対パス、`..`、シンボリックリンクによる
-ルート外参照を禁止する。`cwd`指定時は全テストパスがその配下にあることを要求し、`{tests}`へは`cwd`相対へ
+ルート外参照を禁止する。モノレポmemberではmember root外、連合ルートでは登録member配下を指定できない。
+`cwd`指定時は全テストパスがその配下にあることを要求し、`{tests}`へは`cwd`相対へ
 正規化したパスを展開する。実行ファイルはPATHから解決する。SPEC文書のFrontmatterや本文は、コマンド、
 引数、環境変数、作業ディレクトリを定義できない。
 

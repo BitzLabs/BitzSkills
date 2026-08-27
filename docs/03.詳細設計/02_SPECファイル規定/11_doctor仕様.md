@@ -8,7 +8,7 @@
 ## 2. 公開操作
 
 ```text
-bitz doctor [--format text|json]
+bitz doctor [--workspace <workspace-id>|--all-workspaces] [--format text|json]
   [--plugin <id> --plugin-version <semver>]
   [--require-core-api <semver-range>]
   [--require-capability <capability-name>]...
@@ -28,11 +28,12 @@ MCPの`bitz_doctor`は同じ情報を構造化引数で受け取る。`plugin`�
 | 2 | 呼出し元プラグインとCore API | major不一致・範囲外は`blocked` |
 | 3 | 要求Capability | 1つでも不足すれば`blocked` |
 | 4 | `.spec/`と`bitz.yaml` | 不在・Schema不正は`blocked` |
-| 5 | EARS-AI/Profile版互換性 | 未知majorは`blocked` |
-| 6 | Git利用可否 | 不在はwarningとし、失われる保証を列挙 |
-| 7 | `verify.commands`の実行ファイルと`cwd` | 未解決は`blocked` |
-| 8 | キャッシュ | 破損時は無視して再構築可能ならwarning |
-| 9 | 未解消の影響候補件数 | 0件以上を情報として表示 |
+| 5 | モノレポ連合、member、workspace ID、所有境界 | 不整合は`blocked`または`failed` |
+| 6 | EARS-AI/Profile版互換性 | 未知majorは`blocked` |
+| 7 | Git利用可否 | 不在はwarningとし、失われる保証を列挙 |
+| 8 | `verify.commands`の実行ファイルと`cwd` | 未解決は`blocked` |
+| 9 | キャッシュ | 破損時は無視して再構築可能ならwarning |
+| 10 | 未解消の影響候補件数 | 0件以上を情報として表示 |
 
 独立して検査できる項目は、先行項目が失敗しても可能な限り続行する。
 
@@ -42,13 +43,19 @@ MCPの`bitz_doctor`は同じ情報を構造化引数で受け取る。`plugin`�
 渡す。`doctor`はCoreが公開する実値と比較し、Skillの自然言語判断へ委ねない。初回利用、セッション再開、
 プラグインまたはCoreの版変更後に必須とし、同一セッションの全ツール呼出し前には繰り返さない。
 
-Capability名は`context.v1`、`check.v1`、`verify.v1`、`doctor.v1`のように、操作名とAPI majorを
+Capability名は`context.v1`、`check.v1`、`verify.v1`、`doctor.v1`、`monorepo.v1`のように、操作名とAPI majorを
 ピリオドで連結する。未知Capabilityは不足として扱う。Core API minor差は、要求範囲と全Capabilityを
 満たす場合だけ許可する。
 
 Agent Plugins 1.0には導入済みプラグインを横断列挙する標準APIがないため、`doctor`はクライアント固有の
 インストール先を探索しない。`.spec/bitz.yaml`も導入済みプラグイン台帳として扱わない。呼出し元から
 プラグイン情報が渡されない通常の`bitz doctor`は、Coreとワークスペースだけを診断する。
+
+### 3.2 モノレポ連合
+
+通常の`doctor`はactive workspaceと、そこから解決に必要な連合カタログを診断する。
+`doctor --all-workspaces`は連合ルートでだけ使用し、全memberの設定、workspace ID、path、Schema/EARS-AI major、
+所有境界、検証コマンドを読取り専用で検査する。未登録の`.spec/`を自動的にmemberへ追加しない。
 
 ## 4. 初回導入
 
@@ -69,6 +76,7 @@ earsAi: "1.0"
 Git不在はCore全体の起動失敗にしない。構文、Schema、参照、Context、テスト実行は利用できるが、承認済み
 要求の差分保護とTASK変更境界を保証できないことを明示する。縮退の正は
 [更新・互換性・安全性](07_更新・互換性・安全性.md) §8とする。
+ただしモノレポ連合ではGitルート、member境界、所有範囲を確定できないため、連合操作を`blocked`とする。
 
 ## 6. JSON結果
 
@@ -77,10 +85,11 @@ Git不在はCore全体の起動失敗にしない。構文、Schema、参照、C
   "schemaVersion": "1.0",
   "operation": "doctor",
   "status": "passed_with_warnings",
+  "workspace": {"id": "web", "path": "apps/web"},
   "core": {
     "version": "1.3.0",
     "apiVersion": "1.0",
-    "capabilities": ["context.v1", "check.v1", "verify.v1", "doctor.v1"]
+    "capabilities": ["context.v1", "check.v1", "verify.v1", "doctor.v1", "monorepo.v1"]
   },
   "plugin": {
     "id": "bitz-sdd",
@@ -111,6 +120,9 @@ Git不在はCore全体の起動失敗にしない。構文、Schema、参照、C
 | `SPEC-DOCTOR-GIT-001` | Gitを利用できず一部保証が失われる |
 | `SPEC-DOCTOR-COMMAND-001` | 検証コマンドまたは`cwd`を解決できない |
 | `SPEC-DOCTOR-CACHE-001` | キャッシュが破損または不整合 |
+
+モノレポ構造のDiagnosticは[モノレポSPEC連合仕様](12_モノレポSPEC連合仕様.md) §10を使用し、`doctor`専用の
+同義コードを重複定義しない。
 
 Core自体が未導入またはMCP serverが起動せず`doctor`を呼べない場合、この診断形式は生成できない。
 拡張プラグインはその場合だけ静的な`bitz-core`導入手順を示して`blocked`とし、Coreの解析・判定を代替しない。

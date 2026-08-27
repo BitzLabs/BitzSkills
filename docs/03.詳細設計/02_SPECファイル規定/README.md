@@ -44,6 +44,7 @@ SPECは人間とAIが共有する小さな契約面である。要求の正本�
 | [09_旧SPEC知見の評価.md](09_旧SPEC知見の評価.md) | 旧実装から採用・簡素化・不採用とした機能 |
 | [10_Context Resolution仕様.md](10_Context%20Resolution仕様.md) | 型付き依存、完全閉包、Context Bundle、句単位網羅 |
 | [11_doctor仕様.md](11_doctor仕様.md) | 導入状態、互換性、Git縮退、検証環境の診断 |
+| [12_モノレポSPEC連合仕様.md](12_モノレポSPEC連合仕様.md) | 複数`.spec/`、workspace修飾ID、所有境界、全体検査 |
 
 ## 5. Core 1.0の非目標
 
@@ -53,3 +54,4 @@ SPECは人間とAIが共有する小さな契約面である。要求の正本�
 - シンボル単位の実装トレース
 - AIによる意味的承認や自動的な要求本文の書換え
 - DOCX、PDF、データベースを正本とする運用
+- 複数Gitリポジトリ、Git submodule、ネットワーク越しのSPEC連合

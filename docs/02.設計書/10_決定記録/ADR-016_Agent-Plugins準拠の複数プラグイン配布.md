@@ -75,7 +75,7 @@ Capabilityを実行前に`bitz doctor`または`bitz_doctor`へ渡す。`doctor`
 
 - Core実行体とMCP serverの利用可否
 - Core API、EARS-AI、Profileの版互換性
-- `context.v1`、`check.v1`、`verify.v1`など要求Capabilityの有無
+- `context.v1`、`check.v1`、`verify.v1`、`monorepo.v1`など要求Capabilityの有無
 - `.spec/`、設定、検証コマンド、キャッシュの利用可否
 
 不在または非互換時は`blocked`と具体的な導入・更新手順を返し、SkillがCore処理を代替しない。

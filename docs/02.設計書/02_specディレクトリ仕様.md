@@ -20,6 +20,24 @@
 `domain/`、`research/`、`quality/profiles/`、永続run状態、生成物ディレクトリはCore 1.0の必須構造にしない。
 利用者が通常の`docs/`やIssueを使っている場合、それらを重複して`.spec/`へコピーしない。
 
+### 2.1 モノレポ
+
+Core 1.0は、1つのGitリポジトリに複数の`.spec/`を置くモノレポ連合を扱う。
+
+```text
+repository/
+├── .spec/                  # 連合カタログと共通要求
+├── apps/web/.spec/         # web固有SPEC
+├── services/api/.spec/     # api固有SPEC
+└── libs/native/.spec/      # native固有SPEC
+```
+
+Gitルートの`.spec/bitz.yaml`へmemberのIDとpathを明示し、各memberも自己完結した設定を持つ。
+文書IDはworkspace内で一意とし、横断参照では`web::REQ-001`のような修飾IDを使用する。通常操作は
+最寄りworkspaceだけを対象とし、横断Contextは型付き依存で到達するSPECだけを含める。
+配置、所有境界、全体操作は[モノレポSPEC連合仕様](../03.詳細設計/02_SPECファイル規定/12_モノレポSPEC連合仕様.md)、
+採用理由は[ADR-017](10_決定記録/ADR-017_モノレポSPEC連合をCore-1.0へ含める.md)を正とする。
+
 ## 3. 設定
 
 設定は`.spec/bitz.yaml`だけを正本とする。
@@ -40,6 +58,8 @@ verify:
 safety:
   protectApprovedRequirements: true
 ```
+
+モノレポ連合ルートは`workspace.id`と`monorepo.members`を追加し、member設定を継承しない。
 
 個人・小規模チームではリポジトリ管理者を信頼し、設定変更はGit diffとレビューで管理する。
 `policy`と`local`の二層スコープ、外部署名、専用override権限は導入しない。
@@ -97,6 +117,7 @@ Core 1.0は次の最小トレースだけを扱う。
 - テストの実行結果は`bitz verify`で確認する。
 - リンクが存在するだけで、要求を満たしたとは判定しない。
 - 任意ワークフローDAG、コードシンボル単位の対応、意味的依存推定は対象外とする。
+- モノレポでは修飾IDの横断関係を同じ閉包規則で解決し、関係しないworkspaceはContextへ含めない。
 
 ## 7. 状態
 
@@ -143,5 +164,6 @@ REQ、TECH、ADR、TASKは、種別ごとにH1とH2の構成を固定する。�
 
 ## 11. 言語
 
-Core 1.0では1プロジェクト1言語を推奨するが、異なる言語の文書を即時エラーにはしない。
+Core 1.0では1workspaceのSPEC記述言語を揃えることを推奨するが、連合内でworkspaceごとに異なる言語を
+使用でき、異なる言語の文書を即時エラーにはしない。
 同一規範文の自動翻訳同期は対象外とする。

@@ -79,7 +79,12 @@ tests:
 ```
 
 REQまたはEARS-AIを含むTECHでは、`covers`に同じ文書が所有する規範文IDを列挙する。規範文を持たないTECHだけ、
-文書IDを`covers`に指定できる。存在しない規範文、別文書の規範文、同じ対応の重複はエラーとする。
+文書IDを`covers`に指定できる。存在しない規範文、許可されない別文書の規範文、同じ対応の重複はエラーとする。
+
+モノレポでは例外として、REQまたはTECHが別workspaceの規範文を直接`refines`する場合、または別workspaceの
+文書を直接`refines`する場合、その対象規範文または対象文書が所有する規範文の修飾IDを自身の
+`tests[].covers`へ指定できる。テストpathとcommandは宣言文書のworkspaceが所有し、推移的な依存、
+`requires`、`related`だけを根拠に別workspaceの句をcoverすることは禁止する。
 
 テスト対応は検証対象の宣言であり、assertionの十分性を証明しない。Coreは`path`の存在、対象ID、コマンド解決、
 実行結果を検査する。
