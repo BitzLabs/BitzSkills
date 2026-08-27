@@ -40,13 +40,20 @@ verify: default
 ## Verification
 
 公開ログインAPIを入口にした結合テストで、成功応答と不正入力拒否を確認する。
+
+## Revision History
+
+| Date | Summary | Reference |
+|---|---|---|
+| 2026-08-27 | 初版を作成 | — |
 ```
 
 ## 3. 本文構造
 
 H1、H2、セクション順、太字の扱いは
 [Markdown本文構成・スタイル](08_Markdown本文構成・スタイル.md)に従う。REQでは`Intent`と
-`Acceptance Criteria`を必須とし、EARS-AI規範文は`Acceptance Criteria`だけに置く。
+`Acceptance Criteria`と最終H2の`Revision History`を必須とし、EARS-AI規範文は`Acceptance Criteria`だけに置く。
+`Revision History`は非規範メタデータであり、規範文ID、coverage、Context Digestの意味集合へ含めない。
 
 Coreは[EARS-AI Core構文仕様](../01_EARS-AI規格/01_Core構文仕様.md)が定める規範行だけを解析する。
 通常の説明文、コード例、引用内のEARS-AI風テキストを要求として扱わない。
@@ -105,6 +112,9 @@ Coreは[EARS-AI Core構文仕様](../01_EARS-AI規格/01_Core構文仕様.md)が
 
 `implements`、`tests`、`verify`、`related`、`x-`拡張、説明文だけの変更は意味変更として扱わない。
 ただし、説明文と規範文が矛盾していないかは人間が確認する。
+
+承認済み要求の`title`、規範文、強い関係を変更する場合は、必要なstatus変更に加え、同じ変更で
+`Revision History`へ改訂理由と裁定の参照を追記する。履歴行だけを追加して承認保護を回避してはならない。
 
 Gitの基準版がない新規ファイルは比較対象外とする。Gitが利用できない場合、`bitz doctor`は保護を
 実施できないことを警告し、Coreは文書を自動変更しない。

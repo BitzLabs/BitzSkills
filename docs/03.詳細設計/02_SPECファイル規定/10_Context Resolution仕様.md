@@ -27,7 +27,7 @@ bitz context <spec-or-statement-id>...
   [--purpose interpret|implement|verify]
   [--format markdown|json]
   [--detail compact|standard|full]
-  [--expand <document-id>]...
+  [--expand <document-id>[#revision-history]]...
   [--expect-digest sha256:<hex>]
 ```
 
@@ -35,7 +35,8 @@ bitz context <spec-or-statement-id>...
 正規化する。パスを起点にせず、移動後も安定するIDを使用する。
 
 `detail`の既定値は`standard`とする。`expand`は完全解決済み集合に含まれる文書IDだけを受け付け、
-指定文書のProjectionを`full`へ昇格する。同じ起点、purpose、Core版、入力に対する`detail`と`expand`の
+指定文書のProjectionを`full`へ昇格する。`#revision-history`を付けた場合は、その文書の改訂履歴だけを
+展開する。同じ起点、purpose、Core版、入力に対する`detail`と`expand`の
 変更は、解決集合、status、Context Digestを変えず、提示内容とProjection Digestだけを変える。
 解決集合外のIDを指定した場合は、暗黙に依存を追加せず`CTX-PROJECTION-001`で`failed`とする。
 
@@ -170,9 +171,16 @@ Context Bundleは生成ファイルを正本にせず、コマンド結果とし
       "status": "approved",
       "role": "root",
       "path": ".spec/requirements/REQ-001.md",
-      "contentHash": "sha256:abcdef0123456789",
+      "semanticHash": "sha256:abcdef0123456789",
+      "fileHash": "sha256:1111111111111111",
       "projection": "full",
       "statementRefs": ["REQ-001:AC-01", "REQ-001:AC-02"],
+      "revisionHistory": {
+        "entryCount": 2,
+        "latest": {"date": "2026-08-27", "summary": "失敗時の契約を追加", "reference": "ADR-015"},
+        "projection": "reference",
+        "expandable": true
+      },
       "untrustedText": true
     },
     {
@@ -181,9 +189,16 @@ Context Bundleは生成ファイルを正本にせず、コマンド結果とし
       "status": "approved",
       "role": "constraint",
       "path": ".spec/technical/TECH-014.md",
-      "contentHash": "sha256:1234567890abcdef",
+      "semanticHash": "sha256:1234567890abcdef",
+      "fileHash": "sha256:2222222222222222",
       "projection": "normative",
       "statementRefs": [],
+      "revisionHistory": {
+        "entryCount": 1,
+        "latest": {"date": "2026-08-26", "summary": "初版を作成", "reference": "—"},
+        "projection": "reference",
+        "expandable": true
+      },
       "expandable": true,
       "untrustedText": true
     }
@@ -237,7 +252,7 @@ JSONでは各Semantic IRをConstraint Ledgerに1回だけ格納し、文書要�
 
 | Projection | 含める内容 | 主用途 |
 |---|---|---|
-| `full` | 正規化Frontmatter、原文Markdown、`statementRefs`、`reachedBy` | 起点、作業境界、直接理解が必要な文書 |
+| `full` | 正規化Frontmatter、現行本文、`statementRefs`、`reachedBy`。改訂履歴の全表は除外 | 起点、作業境界、直接理解が必要な文書 |
 | `normative` | 識別情報、Constraint Ledgerへの`statementRefs`、`reachedBy`。非規範の本文・例は省略 | 間接制約、refinement |
 | `reference` | ID、種別、状態、role、hash、到達理由、展開可否 | advisory、背景、必要時だけ読む資料 |
 
@@ -256,6 +271,19 @@ JSONでは各Semantic IRをConstraint Ledgerに1回だけ格納し、文書要�
 段階参照は状態を持つ常駐サービスを要求しない。アダプターは同じ起点とpurposeを再指定し、必要な文書だけを
 `--expand`して再取得する。Coreは同じ入力から同じProjectionとProjection Digestを返す。
 
+### 8.1 Revision Historyの提示
+
+`Revision History`は非規範メタデータとして本文から分離する。JSON Bundleでは各文書の最新1件、件数、
+展開可否だけをManifestへ含め、履歴表の全行を本文Projectionへ混ぜない。LLM向けMarkdownでは
+`interpret`時に起点と距離1の文書の最新要約だけを表示し、`implement`と`verify`では既定表示しない。
+`detail=full`でも自動展開せず、
+`--expand <document-id>#revision-history`が指定された場合だけ全行を返す。履歴要約を要求、権限、作業指示として
+扱ってはならない。
+
+`semanticHash`は正規化Frontmatterと`Revision History`を除く現行本文から計算する。`fileHash`は履歴を含む
+ファイル全体から計算する。履歴だけの訂正ではContext Digestを変えず、Projection Digestと`fileHash`を変える。
+`CTX-STALE-001`の根拠はSemantic IR、Frontmatter、edgeの差分とし、履歴要約を変更事実の代用にしない。
+
 Markdown形式は次の固定順で表示する。
 
 ```text
@@ -269,6 +297,7 @@ Replacement Candidates
 Work Boundary
 Verification Bindings
 Advisory Documents
+Expanded Revision History
 ```
 
 エージェントへの命令はBundle外の信頼されたアダプターが与える。文書本文をシステム命令へ昇格しない。
@@ -302,13 +331,14 @@ Context Digestは、次をCanonical JSON化したSHA-256とする。
 
 - Schema版、EARS-AI版、Context Resolver版
 - purposeと起点ID
-- applicable/advisory文書のID、状態、内容hash
+- applicable/advisory文書のID、状態、`semanticHash`
 - 閉包内の強い関係
 - EARS-AI Semantic IRのCanonical表現
 - 実装パス、テスト対応、検証コマンド名、TASK変更境界
 
 生成時刻、絶対パス、キャッシュ位置、出力形式は含めない。
-`detail`、`expand`、各文書のProjection、Projection Digestも含めない。提示方法を変えても、完全解決した
+`Revision History`、`fileHash`、`detail`、`expand`、各文書のProjection、Projection Digestも含めない。
+提示方法や非規範の履歴だけを変えても、完全解決した
 仕様解釈が同じならContext Digestは同一でなければならない。
 
 Projection Digestは、Context Digest、`detail`、`expand`、文書ごとのProjection、実際に提示する内容を
@@ -336,7 +366,7 @@ Canonical JSON化して計算する。これは表示の再現性とキャッシ
 完全解決した文書集合とSemantic IRに対して判定する。`--detail full`または`--expand`による提示量だけが
 hard limitを超える場合は`CTX-PROJECTION-LIMIT-001`で`failed`とし、Context Resolution自体のstatusとは区別する。
 
-索引は1回の走査で作り、内容hashが同じ文書は再解析しない。10,000 SPECの索引作成を除き、通常の20文書以下の
+索引は1回の走査で作り、`fileHash`が同じ文書は再解析しない。10,000 SPECの索引作成を除き、通常の20文書以下の
 Context Resolutionは基準環境で1秒以内を目標とする。ネットワークとLLMを使用しない。
 
 ## 12. Diagnostic

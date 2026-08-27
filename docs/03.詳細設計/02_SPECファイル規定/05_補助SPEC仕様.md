@@ -30,7 +30,7 @@ verify: default
 ---
 ```
 
-本文は`Context`、`Contract`、任意の`Constraints`、`Verification`、`Notes`で構成する。機械検査が必要な
+本文は`Context`、`Contract`、任意の`Constraints`、`Verification`、`Notes`、最終H2の`Revision History`で構成する。機械検査が必要な
 契約はEARS-AI規範文で記述できるが、Core 1.0はTECHへEARS-AIを必須としない。状態は`draft`、
 `approved`、`outdated`を使う。
 
@@ -53,7 +53,7 @@ relations:
 ```
 
 状態は`proposed`、`accepted`、`rejected`、`superseded`とする。本文は`Context`、`Decision`、
-`Consequences`、任意の`Alternatives`、`Notes`で構成する。
+`Consequences`、任意の`Alternatives`、`Notes`、最終H2の`Revision History`で構成する。
 
 ADRを必須制約として適用する側は、自身の`requires`からADRを参照する。ADRの`related`だけでは
 Contextへ自動的に含まれない。後継ADRは`supersedes`で旧ADRを指定し、旧ADRを`superseded`へ変更する。
@@ -83,7 +83,7 @@ changes:
 
 状態は`open`と`done`だけとする。担当者、期限、blocked理由などはIssue管理がある場合はそちらへ置く。
 完了したTASKは削除してもよいが、そのIDを別の作業へ再利用しない。本文は`Objective`、任意の`Work`、
-`Completion Criteria`、任意の`Notes`で構成する。
+`Completion Criteria`、任意の`Notes`、最終H2の`Revision History`で構成する。
 
 `addresses`には実装対象のEARS-AI規範文IDを列挙する。規範文を持つREQ/TECHの文書IDだけを指定して
 全句を暗黙対象にすることは禁止する。対象外の兄弟句はContext Bundleへadjacentとして表示し、
@@ -109,3 +109,10 @@ ANY  --related-----> ANY
 
 関係の正確な包含規則は[Context Resolution仕様](10_Context%20Resolution仕様.md)を正とする。本文中のID、
 Markdownリンク、`related`を強い依存の代用にしない。
+
+## 6. 改訂履歴
+
+TECH、ADR、TASKはいずれも[Markdown本文構成・スタイル](08_Markdown本文構成・スタイル.md) §2.5に従い、
+最終H2に`Revision History`を置く。TECHは契約・制約の変更、TASKは`changes`・対象句・完了条件の変更を
+要約する。ADRは作成、非意味的訂正、後継ADRによる置換だけを記録し、Decisionの変更履歴として使わない。
+履歴は非規範メタデータであり、型付き依存、Constraint Ledger、coverageの入力にしない。

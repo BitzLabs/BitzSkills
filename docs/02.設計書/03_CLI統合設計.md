@@ -22,7 +22,7 @@ Core 1.0は主要CLIを1つだけ参照実装し、2つ目はコア契約の移�
 ```text
 bitz context <spec-or-statement-id>... [--purpose interpret|implement|verify]
   [--format markdown|json] [--detail compact|standard|full]
-  [--expand <document-id>]... [--expect-digest sha256:<hex>]
+  [--expand <document-id>[#revision-history]]... [--expect-digest sha256:<hex>]
 bitz check [ids-or-paths...] [--full] [--format text|json] [--report]
 bitz verify [spec-or-statement-id|paths...] [--report]
 bitz doctor [--format text|json]

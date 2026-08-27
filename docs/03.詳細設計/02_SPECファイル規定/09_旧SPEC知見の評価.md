@@ -39,7 +39,8 @@ bitz-sddの共通Frontmatter・ライフサイクル・検証契約を対象に�
 | `.spec/STATE.md`、ROADMAP、永続run台帳 | Git、Issue、CLI結果と責務が重複する |
 | レビューごとの複数JSON・統合レポート | ファイル数と待ち時間が急増する |
 | 専用`spec-issues/`ライフサイクル | 通常のIssueまたはTASK/ADRで足りる |
-| 成果物ごとのversion、updated、Revision History | Git履歴と重複し、同期ずれを生む |
+| 成果物ごとのversion、updated | Git履歴と重複し、同期ずれを生むため不採用 |
+| 最終H2の`Revision History` | 主要な改訂意図だけを3列で要約。正確な差分・変更者・時刻はGitを正とする |
 | 全変更の自動DAG伝播 | 候補抽出以上の意味判定は人間なしでは不正確 |
 | platform・署名・lease等の安全機構をSPEC共通機能化 | 個別runtimeの責務でありSPEC形式を肥大化させる |
 

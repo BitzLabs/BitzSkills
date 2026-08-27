@@ -57,7 +57,8 @@ Projectionは目的別にLLMへ渡す提示表現とする。Semantic IRやProje
 - Lexer token、区切り文字、Markdown装飾の構文ノードは公開Schemaへ含めない。必要ならParser内部だけで保持する。
 - `raw`と`source`は診断、差分最小化、原文参照に使う付帯情報であり、LLM向けProjectionへの常時収録を要求しない。
 - Context Digestが使うSemantic IRのCanonical表現からは、`raw`、絶対パス、行・列を除外し、
-  正規化済み意味フィールドと拡張を含める。文書全体の変更検出は別途`contentHash`が担う。
+  正規化済み意味フィールドと拡張を含める。現行契約の変更検出は`semanticHash`、履歴を含む
+  ファイル全体の変更検出は`fileHash`が担う。
 - JSONはCoreとアダプター間の機械契約とする。LLM向けMarkdownはSemantic IRから生成できる表示であり、
   JSONと独立した意味解釈を追加してはならない。
 

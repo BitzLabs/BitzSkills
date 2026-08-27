@@ -3,6 +3,7 @@
 - 状態: Accepted
 - 決定日: 2026-08-27
 - Amends: ADR-010
+- Amended by: ADR-015（Revision Historyの非規範・明示展開）
 
 ## Context
 
@@ -26,7 +27,8 @@ EARS-AIをLLMへ渡す方法には、原文Markdownをそのまま渡す案、AS
    LLMへ明示し、深い依存にあることを理由に参照だけへ落とさない。
 5. 文書の提示を`full`、`normative`、`reference`の3段階とする。既定Projectionは規範強度、purpose、role、
    TASK対象性を優先し、依存距離はその後の判断材料にする。
-6. 追加参照は、同じ起点とpurposeに対する`bitz context --expand <document-id>`で行う。常駐サービスや
+6. 追加参照は、同じ起点とpurposeに対する`bitz context --expand <document-id>`で行う。改訂履歴は
+   `--expand <document-id>#revision-history`で明示展開する。常駐サービスや
    セッション状態を新設せず、同じ入力から同じ結果を返す。
 7. Context Digestは完全解決した意味集合から計算し、Projectionの違いを含めない。実際の提示内容には
    別のProjection Digestを付ける。

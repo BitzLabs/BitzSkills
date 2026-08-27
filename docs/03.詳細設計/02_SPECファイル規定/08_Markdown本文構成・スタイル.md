@@ -49,6 +49,33 @@ Frontmatter直後の最初の非空行を、次の形式のH1とする。
 - 絵文字、HTML、折り畳み要素を意味伝達の必須手段にしない。
 - 見出し、段落、リスト、コードブロックの前後に空行を1行置く。
 
+### 2.5 Revision History
+
+全SPECは最終H2に`Revision History`を必須とする。このセクションは**非規範メタデータ**であり、
+Git履歴を置き換える完全な変更台帳ではなく、
+人間とAIが文書の主要な改訂意図を短時間で把握するための要約である。正確な差分、変更者、commit時刻の
+正本はGit履歴とする（[ADR-015](../../02.設計書/10_決定記録/ADR-015_SPEC改訂履歴の必須化.md)）。
+
+```markdown
+## Revision History
+
+| Date | Summary | Reference |
+|---|---|---|
+| 2026-08-27 | 初版を作成 | `ADR-015` |
+```
+
+- 列は`Date`、`Summary`、`Reference`の3列固定とする。
+- `Date`は`YYYY-MM-DD`形式とし、古い行から新しい行の順に追記する。
+- 初版作成時から1行以上を必須とする。
+- `Summary`には状態値の反復ではなく、契約、境界、判断がどう変わったかを1行で記述する。
+- `Reference`には関連するADR、Issue、PR、commitなどの安定した参照を記述する。参照がなければ`—`とする。
+- 誤字修正や整形だけの変更は、判断の理解に必要な場合を除いて追記しなくてよい。
+- 承認済みREQの意味変更、TECHの契約変更、TASKの作業境界変更には、同じ変更で履歴行を追記する。
+- 履歴行の追記は、必要なstatus遷移、後継ADR、Gitレビューを代替しない。
+- EARS-AI風の行を置いても規範文として解析しない。履歴内へ規範文を複製してはならない。
+- Context ResolutionのJSONは最新1件の要約だけをManifestへ載せる。LLM向け表示は`interpret`時の
+  起点・直接文書に限定し、全履歴は明示要求時だけ提示する。
+
 ## 3. REQ
 
 H2は次の順序とする。
@@ -60,6 +87,7 @@ H2は次の順序とする。
 | `Acceptance Criteria` | Yes | EARS-AI規範文 |
 | `Verification` | Yes | production入口、試験戦略、未証明事項 |
 | `Notes` | No | 非規範の補足 |
+| `Revision History` | Yes | 主要な改訂意図の要約。常に最終H2 |
 
 ```markdown
 # REQ-001 有効な認証情報によるログイン
@@ -75,6 +103,12 @@ H2は次の順序とする。
 ## Verification
 
 公開APIを入口にした結合テストで、成功応答と不正入力拒否を確認する。
+
+## Revision History
+
+| Date | Summary | Reference |
+|---|---|---|
+| 2026-08-27 | 初版を作成 | — |
 ```
 
 REQ内のEARS-AI規範文は`Acceptance Criteria`だけに置く。他セクションにある規範文形式の行はエラーとする。
@@ -91,6 +125,7 @@ H2は次の順序とする。
 | `Constraints` | No | 性能、安全性、禁止事項 |
 | `Verification` | Yes | 統合入口、異常境界、試験方法 |
 | `Notes` | No | 非規範の補足 |
+| `Revision History` | Yes | 主要な改訂意図の要約。常に最終H2 |
 
 TECHでEARS-AIを使う場合は`Contract`または`Constraints`に置く。複雑な状態遷移、失敗原子性、
 platform差分が重要な場合は、表または図をH3以下へ追加する。
@@ -106,9 +141,11 @@ H2は次の順序とする。
 | `Consequences` | Yes | 利点、費用、残る制約 |
 | `Alternatives` | No | 不採用案と理由 |
 | `Notes` | No | 関連情報 |
+| `Revision History` | Yes | 作成・訂正・後継化の要約。常に最終H2 |
 
-ADRの状態や後継関係はFrontmatterで表し、`Revision History`を本文へ重ねない。判断を変える場合は
-既存ADRを書き換え続けず、後継ADRを作成する。
+ADRの状態や後継関係はFrontmatterを正とする。`Revision History`は判断の完全な変遷を複製せず、
+作成、非意味的訂正、後継ADRによる置換を要約する。判断を変える場合は既存ADRを書き換え続けず、
+後継ADRを作成する。
 
 ## 6. TASK
 
@@ -120,6 +157,7 @@ H2は次の順序とする。
 | `Work` | No | 実装方針または作業項目 |
 | `Completion Criteria` | Yes | 観測可能な完了条件 |
 | `Notes` | No | 見積り、制約、引継ぎ |
+| `Revision History` | Yes | 主要な作業境界・完了条件の改訂要約。常に最終H2 |
 
 ```markdown
 # TASK-001 ログインエンドポイントを実装する
@@ -137,6 +175,12 @@ H2は次の順序とする。
 
 - `bitz verify REQ-001`が成功する。
 - `bitz check .spec/tasks/TASK-001.md`が変更境界違反を報告しない。
+
+## Revision History
+
+| Date | Summary | Reference |
+|---|---|---|
+| 2026-08-27 | 初版を作成 | — |
 ```
 
 作業境界のパスは本文へ列挙せず、Frontmatterの`changes`を正とする。
@@ -151,6 +195,7 @@ H2は次の順序とする。
 | EARS-AI規範文が許可セクション外にある | error | `SPEC-STYLE-PLACEMENT-001` |
 | 太字ラベルが標準セクションを代替 | warning | `SPEC-STYLE-PSEUDO-001` |
 | 空の任意セクション | warning | `SPEC-STYLE-EMPTY-001` |
+| `Revision History`が最終H2でない、表の列が不正、履歴行がない | error | `SPEC-STYLE-HISTORY-001` |
 | 推奨スタイルの違反 | 原則として診断しない | — |
 
 書式検査は構造だけを扱い、文章の巧拙、意味的正しさ、十分性を自動判定しない。
