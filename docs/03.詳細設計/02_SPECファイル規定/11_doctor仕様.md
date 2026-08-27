@@ -27,13 +27,15 @@ MCPの`bitz_doctor`は同じ情報を構造化引数で受け取る。`plugin`�
 | 1 | Core実行体、MCP server、Pythonの対応版 | 起動不能・実行環境不適合は`error` |
 | 2 | 呼出し元プラグインとCore API | major不一致・範囲外は`blocked` |
 | 3 | 要求Capability | 1つでも不足すれば`blocked` |
-| 4 | `.spec/`と`bitz.yaml` | 不在・Schema不正は`blocked` |
-| 5 | モノレポ連合、member、workspace ID、所有境界 | 不整合は`blocked`または`failed` |
-| 6 | EARS-AI/Profile版互換性 | 未知majorは`blocked` |
-| 7 | Git利用可否 | 不在はwarningとし、失われる保証を列挙 |
-| 8 | `verify.commands`の実行ファイルと`cwd` | 未解決は`blocked` |
-| 9 | キャッシュ | 破損時は無視して再構築可能ならwarning |
-| 10 | 未解消の影響候補件数 | 0件以上を情報として表示 |
+| 4 | `.spec/`と`bitz.yaml`の存在 | 不在は`blocked` |
+| 5 | `bitz.yaml`の構文、型、必須項目 | 不正は`error` |
+| 6 | `schemaVersion`互換性 | 未知majorは`blocked` |
+| 7 | モノレポ連合、member、workspace ID、所有境界 | 不整合は`blocked`または`failed` |
+| 8 | EARS-AI/Profile版互換性 | 未知majorは`blocked` |
+| 9 | Git利用可否 | 不在はwarningとし、失われる保証を列挙 |
+| 10 | `verify.commands`の実行ファイルと`cwd` | 未解決は`blocked` |
+| 11 | キャッシュ | 破損時は無視して再構築可能ならwarning |
+| 12 | 未解消の影響候補件数 | 0件以上を情報として表示 |
 
 独立して検査できる項目は、先行項目が失敗しても可能な限り続行する。
 

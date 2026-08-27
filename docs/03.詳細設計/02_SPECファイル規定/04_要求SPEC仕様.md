@@ -52,7 +52,8 @@ verify: default
 
 H1、H2、セクション順、太字の扱いは
 [Markdown本文構成・スタイル](08_Markdown本文構成・スタイル.md)に従う。REQでは`Intent`と
-`Acceptance Criteria`と最終H2の`Revision History`を必須とし、EARS-AI規範文は`Acceptance Criteria`だけに置く。
+`Acceptance Criteria`、`Verification`、最終H2の`Revision History`を必須とし、EARS-AI規範文は
+`Acceptance Criteria`だけに置く。
 `Revision History`は非規範メタデータであり、規範文ID、coverage、Context Digestの意味集合へ含めない。
 
 Coreは[EARS-AI Core構文仕様](../01_EARS-AI規格/01_Core構文仕様.md)が定める規範行だけを解析する。

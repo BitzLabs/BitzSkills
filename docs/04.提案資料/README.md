@@ -110,5 +110,13 @@
 | Git不在時のDiagnostic severityと操作statusが異なる | 未採用 | severityとstatusは別軸であり、`error`診断を伴う`blocked`結果は矛盾しない |
 | Context性能目標の128 KiB条件が一部で省略 | 採用・反映済み | 実装ロードマップとContext Resolution仕様を共通アーキテクチャに統一 |
 
-Claude CLIにも同じレビューを依頼したが、全量、分割、safe modeのいずれもAPI request timeoutとなり、
-裁定可能なレビュー結果は得られなかった。Claudeによる再レビューはサービス応答が回復した場合だけ実施する。
+Claude Codeは通常サンドボックス内でAnthropic APIのDNS timeoutとなったが、外部通信を許可した
+読取り専用実行で設計書全体のレビューを完了した。5件の指摘を正本と照合し、すべて採用・反映した。
+
+| 指摘 | 裁定 | 対応 |
+|---|---|---|
+| doctorで`bitz.yaml`不在とSchema不正が同じ`blocked` | 修正採用・反映済み | 不在と未対応majorは`blocked`、構文・型・必須項目不正は`error`へ分離 |
+| REQ必須H2の列挙に`Verification`がない | 採用・反映済み | 要求SPEC仕様の必須節へ追加 |
+| Context Bundle例の文書直下に未定義`expandable`がある | 採用・反映済み | 重複フィールドを削除し、`revisionHistory.expandable`へ一本化 |
+| 運用設計のContext性能目標に128 KiB条件がない | 採用・反映済み | 共通アーキテクチャ、ロードマップ、詳細仕様と統一 |
+| Constraint Ledgerの`role`がSemantic IRで未定義 | 採用・反映済み | `documentRole`へ改称し、所有文書から導出するContextメタデータとして定義 |

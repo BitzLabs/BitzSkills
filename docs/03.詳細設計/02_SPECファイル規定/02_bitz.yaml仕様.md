@@ -59,8 +59,8 @@ monorepo:
 | `verify.commands` | map | No | `{}` | コマンド名からargvと任意cwdへの対応 |
 | `safety.protectApprovedRequirements` | boolean | No | `true` | 承認済み要求の意味変更を検出 |
 
-未知の標準キーは、同じmajor内の前方互換性のため警告して保持する。型不正、必須キー欠如、
-未知の`schemaVersion` majorはエラーとする。
+未知の標準キーは、同じmajor内の前方互換性のため警告して保持する。型不正と必須キー欠如は`error`、
+未知の`schemaVersion` majorは未対応の前提として`blocked`とする。
 
 `verify.commands`は仕様作成だけの段階では省略できる。`bitz verify`を実行するときに対象のコマンドが
 定義されていなければ`blocked`とする。

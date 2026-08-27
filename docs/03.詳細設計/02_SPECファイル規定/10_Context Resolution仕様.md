@@ -214,7 +214,6 @@ Context Bundleは生成ファイルを正本にせず、コマンド結果とし
         "projection": "reference",
         "expandable": true
       },
-      "expandable": true,
       "untrustedText": true
     }
   ],
@@ -223,7 +222,7 @@ Context Bundleは生成ファイルを正本にせず、コマンド結果とし
       {
         "id": "web::REQ-001:AC-01",
         "documentId": "web::REQ-001",
-        "role": "root",
+        "documentRole": "root",
         "modality": "MUST",
         "actor": "AuthService",
         "activation": {"kind": "WHEN", "text": "有効な認証情報を受信した場合"},
@@ -232,7 +231,7 @@ Context Bundleは生成ファイルを正本にせず、コマンド結果とし
       {
         "id": "web::REQ-001:AC-02",
         "documentId": "web::REQ-001",
-        "role": "root",
+        "documentRole": "root",
         "modality": "MUST",
         "actor": "AuthService",
         "activation": {"kind": "WHEN", "text": "認証情報が無効な場合"},
@@ -259,7 +258,9 @@ Context Bundleは生成ファイルを正本にせず、コマンド結果とし
 
 `resolution.complete: true`は、強い依存の完全閉包、型、状態、循環、上限の検査が完了したことを表す。
 部分解決した集合にこの値を設定してはならない。`constraintLedger.statements`は完全解決したapplicable文書の
-全EARS-AI規範文をSemantic IRで保持する。少なくとも全`MUST`と、purposeに関係する`SHOULD`をLLM向け表示の
+全EARS-AI規範文をSemantic IRのCanonical意味フィールドで保持する。`documentRole`は所有文書の
+`documents[].role`から導出するContext固有メタデータであり、Semantic IR公開Schemaの一部ではなく、
+所有文書のroleと異なる値を設定してはならない。少なくとも全`MUST`と、purposeに関係する`SHOULD`をLLM向け表示の
 先頭で省略せず提示する。依存が深いことを理由に規範文を参照だけへ落としてはならない。
 JSONでは各Semantic IRをConstraint Ledgerに1回だけ格納し、文書要素は`statementRefs`で参照する。
 
