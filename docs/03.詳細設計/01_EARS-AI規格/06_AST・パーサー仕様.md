@@ -1,8 +1,12 @@
-# EARS-AI 共通AST・パーサー仕様 1.0
+# EARS-AI 共通Semantic IR（AST）・パーサー仕様 1.0
 
 ## 1. 所有者
 
-Parser、AST Schema、Canonical Serializerは `bitz-core` が所有する。各プラグインによるMarkdownの独自再解析は禁止する。
+Parser、Semantic IR Schema、Canonical Serializerは `bitz-core` が所有する。各プラグインによるMarkdownの独自再解析は禁止する。
+
+既存の公開名称との互換性のため本規格では `AST` という語を残すが、その実体は字句や括弧を全ノードとして
+保持する具象構文木ではなく、EARS-AI規範文の意味軸だけを正規化した **Semantic IR** である。
+LLMへ構文解析を委ねず、Core、Profile、Context Resolutionが同じ意味表現を共有するために生成する。
 
 これらはEARS-AI垂直スライス（Phase 1）の成果物であり、`bitz check`の前提となる（[08_実装ロードマップ.md](../../02.設計書/08_実装ロードマップ.md) §3）。
 
@@ -14,11 +18,14 @@ Markdown
  -> Normative Line Scanner      (01_Core構文仕様 §3.4)
  -> Core Lexer / Parser / Validator
  -> Profile Resolver / Validators
- -> Canonical AST
- -> Report / Projection / Serializer
+ -> Canonical Semantic IR (AST互換名)
+ -> Validator / Context Projection / Serializer
 ```
 
-## 3. AST
+Markdownは人間が編集する正本、Semantic IRは決定論的な検査・依存解決・投影のための派生表現、
+Projectionは目的別にLLMへ渡す提示表現とする。Semantic IRやProjectionを正本として保存しない。
+
+## 3. Semantic IR
 
 ```json
 {
@@ -44,6 +51,20 @@ Markdown
 - コードスパンは `text` 内でバッククォートを含んだまま保持する。
 - `untrustedText` は自由記述本文がツール権限や実行命令ではないことを下流へ伝える。Profileはこの値を解除できない。
 
+### 3.1 表現境界
+
+- Semantic IRは、ID、出典、主体、発動条件、規範強度、処理、拡張、参照を保持する。
+- Lexer token、区切り文字、Markdown装飾の構文ノードは公開Schemaへ含めない。必要ならParser内部だけで保持する。
+- `raw`と`source`は診断、差分最小化、原文参照に使う付帯情報であり、LLM向けProjectionへの常時収録を要求しない。
+- Context Digestが使うSemantic IRのCanonical表現からは、`raw`、絶対パス、行・列を除外し、
+  正規化済み意味フィールドと拡張を含める。文書全体の変更検出は別途`contentHash`が担う。
+- JSONはCoreとアダプター間の機械契約とする。LLM向けMarkdownはSemantic IRから生成できる表示であり、
+  JSONと独立した意味解釈を追加してはならない。
+
+この境界により、決定論的な検査と句単位トレースには構造化表現を使いながら、LLMへ原文とJSONを
+無条件に二重投入することを避ける。Context Bundleでの具体的な提示規則は
+[Context Resolution仕様](../02_SPECファイル規定/10_Context%20Resolution仕様.md)に従う。
+
 ## 4. Parser要件
 
 - UTF-8を必須とする。
@@ -53,7 +74,7 @@ Markdown
 - ソース位置を行・列単位で保持する。
 - 未知拡張を失わず `unknownExtensions` に保持する。
 - Core解析結果をProfileの有無で変化させない。
-- ネットワークとAI推論を必要としない決定論的処理とする。同一入力・同一バージョンで必ず同一のASTを返す。
+- ネットワークとAI推論を必要としない決定論的処理とする。同一入力・同一バージョンで必ず同一のSemantic IRを返す。
 
 ## 5. 正規出力順
 

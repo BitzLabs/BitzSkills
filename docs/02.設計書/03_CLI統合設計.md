@@ -21,7 +21,8 @@ Core 1.0は主要CLIを1つだけ参照実装し、2つ目はコア契約の移�
 
 ```text
 bitz context <spec-or-statement-id>... [--purpose interpret|implement|verify]
-  [--format markdown|json] [--expect-digest sha256:<hex>]
+  [--format markdown|json] [--detail compact|standard|full]
+  [--expand <document-id>]... [--expect-digest sha256:<hex>]
 bitz check [ids-or-paths...] [--full] [--format text|json] [--report]
 bitz verify [spec-or-statement-id|paths...] [--report]
 bitz doctor [--format text|json]
@@ -37,6 +38,7 @@ SDD、DDD、同期はCore 1.0の公開コマンドへ含めない。
 
 - プロジェクトルートと`.spec/`の検出
 - 実装前のContext Bundle取得と、編集直前のContext Digest再照合
+- Constraint Ledgerの全`MUST`確認と、必要な`reference`文書だけの明示展開
 - コアコマンドの呼出し
 - 読取り、書込み、コマンド実行の承認仲介
 - stdout、stderr、終了コードの提示
@@ -73,8 +75,9 @@ Core 1.0はフックなしで完結する。フックは性能、互換性、攻
 ## 8. 互換性試験
 
 - クリーン環境での`uv tool install`
-- 同一EARS-AI fixtureから同一ASTとDiagnosticを得る
+- 同一EARS-AI fixtureから同一Semantic IRとDiagnosticを得る
 - 同一依存グラフから同じContext BundleとDigestを得る
+- detailを変更しても解決集合とContext Digestは不変で、Projection Digestだけが変わる
 - 参照漏れ、循環、上限超過で部分bundleを成功扱いしない
 - コア不在時の`blocked`
 - `check`がネットワーク、LLM、フックなしで動く

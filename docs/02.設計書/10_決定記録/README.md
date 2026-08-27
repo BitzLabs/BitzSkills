@@ -30,3 +30,4 @@
 | [ADR-011](ADR-011_Diagnostic所有者とコード命名規約.md) | Diagnostic所有者とコード命名規約 | Accepted | 01, EARS-AI規格/02・06, SPECファイル規定/06 |
 | [ADR-012](ADR-012_置換済みREQ・TECHの適用禁止.md) | 置換済みREQ・TECHの適用禁止 | Accepted | SPECファイル規定/03・04・10 |
 | [ADR-013](ADR-013_文書IDとローカルIDの字句規則訂正.md) | 文書IDとローカルIDの字句規則訂正 | Accepted | ADR-005, EARS-AI規格/01・08 |
+| [ADR-014](ADR-014_Semantic-IRと段階的Context-Projection.md) | Semantic IRと段階的Context Projection | Accepted | ADR-010, EARS-AI規格/06, SPECファイル規定/10 |

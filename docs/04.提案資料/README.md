@@ -18,11 +18,11 @@
 | 文書 | 対象 | 状態 |
 |---|---|---|
 | [01_詳細設計レビューと改訂提案.md](01_詳細設計レビューと改訂提案.md) | 03.詳細設計 全19文書 | 検討済み（一部反映・残件あり） |
-| [02_Antigravity_詳細設計レビューと改訂提案.md](02_Antigravity_詳細設計レビューと改訂提案.md) | 02.設計書、03.詳細設計 | 検討済み（修正採用・残件あり） |
+| [02_Antigravity_詳細設計レビューと改訂提案.md](02_Antigravity_詳細設計レビューと改訂提案.md) | 02.設計書、03.詳細設計 | 検討済み（Context Projection反映・残件あり） |
 
 ## 3. 検討結果の要約
 
-2026-08-25時点で、実装開始後の手戻りや互換性破壊につながる契約上の矛盾を優先して
+2026-08-27時点で、実装開始後の手戻りや互換性破壊につながる契約上の矛盾を優先して
 修正した。レビュー01の32件の提案は、完了19件、一部反映5件、未着手6件、
 将来検討1件、見送り1件である。肯定的評価だけの項目（7.1）は件数に含めない。
 
@@ -34,12 +34,16 @@
 | 検証契約 | 引数なしverify、全体Frontmatter索引、対象限定AST、`cwd`、coverage強度を明記 | 完了 |
 | doctor・Git | doctorの出力契約、Git情報取得のフォールバック、reportsのGit除外を明記 | 完了 |
 | 導入計画 | Phase 0の試験対象を5件へ縮小し、小規模開発向けの軽量性を優先 | 完了 |
+| EARS-AI表現 | 詳細な構文木ではなく、要求の意味軸を保持する軽量Semantic IRとしてASTを定義 | 完了 |
+| Context提示 | 完全解決と提示量を分離し、Constraint Ledgerと3段階Projectionを採用 | 完了 |
 
 主な反映先は次のとおり。
 
 - [ADR-011](../02.設計書/10_決定記録/ADR-011_Diagnostic所有者とコード命名規約.md)
 - [ADR-012](../02.設計書/10_決定記録/ADR-012_置換済みREQ・TECHの適用禁止.md)
 - [ADR-013](../02.設計書/10_決定記録/ADR-013_文書IDとローカルIDの字句規則訂正.md)
+- [ADR-014](../02.設計書/10_決定記録/ADR-014_Semantic-IRと段階的Context-Projection.md)
+- [Semantic IR（AST）仕様](../03.詳細設計/01_EARS-AI規格/06_AST・パーサー仕様.md)
 - [EARS-AI Core構文仕様](../03.詳細設計/01_EARS-AI規格/01_Core構文仕様.md)
 - [参照・トレース・検証仕様](../03.詳細設計/02_SPECファイル規定/06_参照・トレース・検証仕様.md)
 - [Context Resolution仕様](../03.詳細設計/02_SPECファイル規定/10_Context%20Resolution仕様.md)
@@ -59,11 +63,15 @@
 | 7.4 digest再検証 | 未着手 | 時間閾値ではなく変更イベントを基準にする |
 | 7.5 `bitz fmt` | 将来検討 | 1.1の実測で表記揺れが問題になった場合だけ採用する |
 | 9.1〜9.4、9.7 | 未着手 | P3機能として、利用実績と性能計測後に再裁定する |
-| Antigravity P1 Context Projection | 修正採用 | 新しい常駐機構を増やさず、既存Context Resolutionの出力形として設計する |
 | Antigravity P2 TASK境界スナップショット | 修正採用 | `blocked` を維持し、TASK着手時の解決結果固定として設計する |
 | Antigravity `implementation.implements.addresses` | 見送り | TASKの`addresses`との二重管理を避ける |
 | 9.6 自動プロファイル継承 | 見送り | 暗黙適用を増やさず、明示的なprofile宣言を維持する |
 | キャッシュ閾値の固定 | 保留 | ベンチマークで必要性と閾値を決める |
+
+Antigravity P1のContext Projectionは、[ADR-014](../02.設計書/10_決定記録/ADR-014_Semantic-IRと段階的Context-Projection.md)
+として裁定・反映した。深度だけで原文を切り替える案は修正し、規範強度、purpose、role、TASK対象性を
+優先する。強い依存は常に完全解決し、全`MUST`をConstraint Ledgerで先に渡す。起点・直接資料は`full`、
+間接制約は`normative`、背景・advisoryは`reference`とし、必要な文書だけを`--expand`する。
 
 ## 5. 一旦終了時点の進捗
 
