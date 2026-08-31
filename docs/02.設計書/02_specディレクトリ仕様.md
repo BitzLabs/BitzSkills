@@ -128,7 +128,7 @@ Core 1.0は次の最小トレースだけを扱う。
 |---|---|
 | `draft` | 編集中 |
 | `approved` | 人間が意味を確認済み |
-| `outdated` | 上位要求または実装変更の影響候補 |
+| `outdated` | 上位要求または依存仕様の変更による影響候補 |
 
 許可遷移は`draft -> approved`、`approved -> draft|outdated`、
 `outdated -> draft|approved`と同一状態の維持とする。作成時は`draft`または`approved`を選択できる。

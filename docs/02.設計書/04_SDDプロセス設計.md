@@ -27,6 +27,15 @@ Intent -> Context -> Pre-check -> Implement -> Post-check -> Verify -> Human Rev
 経ずに`Done`へ到達する経路は作らない。フロー配置と必須呼出しの根拠は
 [ADR-028](10_決定記録/ADR-028_開発フローの実装後検査とTASK境界の接続.md)を正とする。
 
+Intentの機械起点はREQ、TECH、規範文、`open` TASKのいずれかに限る。`bitz context`は生の意図文字列を
+起点にせず、SPEC IDまたは規範文IDを要求する。TASK起点では`addresses`と`requires`から適用要求を解決する
+（[Context Resolution仕様](../03.詳細設計/02_SPECファイル規定/10_Context%20Resolution仕様.md) §5）。
+生の意図しかない場合は、実装前にREQ、TECH、TASKのいずれかへ記録する。
+
+SPECを作らずに行う変更は、Small Flowの外側にあるCore保証外の作業とする。`bitz check`の構文・関係検査は
+受けられるが、句単位coverage、TASK変更境界、Context Digestの再照合は保証されない。この区別のために
+専用のフローや公開操作を追加しない。
+
 通常のバグ修正、局所的な機能追加、リファクタリングはSmall Flowを使う。専用Gate承認や永続runを要求しない。
 
 ## 3. Full Flow（条件付き）
@@ -40,14 +49,28 @@ Intent -> Context -> Pre-check -> Implement -> Post-check -> Verify -> Human Rev
 - 承認済みREQの意味を変更する
 
 ```text
-Intent -> Context -> Requirement Review -> Design Review
-  -> Pre-check -> Implement -> Post-check -> Verify -> Human Review -> Done
+Intent -> Context -> Requirement Review -> Design Review -> Pre-check
+   ^          ^              |                  |
+   |          +--------------+                  |
+   +--------------------------------------------+
+
+Pre-check -> Implement -> Post-check -> Verify -> Human Review -> Done
+                ^             |           |             |
+                +-------------+-----------+-------------+
 ```
 
+- Requirement Review否決はIntentまたはREQ改訂へ戻す。
+- Design Review否決はContext再取得または設計改訂へ戻す。
+- 要求または設定を変更した場合はContext Digestを再照合する。
+- `Post-check`とVerifyの失敗は§6の分類済みリトライ規則へ従う。
+- Human Review否決は理由に応じてIntent、Context、Implementのいずれかへ戻す。
+
 品質検査コマンドはSmall Flowと同じものを使い、`Pre-check`と`Post-check`の配置もSmall Flowと同一とする。
-Full Flow専用の別エンジンを作らない。各レビューの否決時の戻り先は
-[ユースケース・フロー遷移レビュー](../04.提案資料/07_ユースケース・フロー遷移レビューと修正提案.md) UC-FLOW-006
-として未裁定であり、Core 1.0の機械契約にしない。
+Full Flow専用の別エンジンを作らない。
+
+レビューの承認と否決は人間とAI CLIの進行契約であり、Coreの機械契約ではない。Coreはレビュー状態も否決も
+保持せず、Gate状態機械を持たない（[ADR-009](10_決定記録/ADR-009_小規模チーム向け軽量コアとEARS-AI中核化.md)）。
+戻り先の合流点でCoreが行うのは、再取得したContextの完全解決とDigest照合だけである。
 
 ## 4. Spike
 

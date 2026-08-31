@@ -108,7 +108,7 @@ Serializerは意味を書き換えず、フォーマット修正と内容変更�
 | `EAI-CORE-SYNTAX-006` | error（`draft`ではwarning） | `failed`（降格時は`passed_with_warnings`） | 行末句点の欠落 |
 | `EAI-CORE-ID-001` | error | `failed` | ID形式不正（2階層固定に不適合） |
 | `EAI-CORE-ID-002` | error | `failed` | ID重複 |
-| `EAI-CORE-ID-003` | error | `failed` | 削除済みIDの再利用 |
+| `EAI-CORE-ID-003` | error | `failed` | Git基準版に存在し現在は削除されているIDの再利用。基準版がない場合は実施不能 |
 | `EAI-CORE-SEM-001` | error（`draft`ではwarning） | `failed`（降格時は`passed_with_warnings`） | オペランド不足 |
 | `EAI-CORE-LANG-001` | warning | `passed_with_warnings` | 正本言語との不一致 |
 | `EAI-EXT-UNKNOWN-001` | warning | `passed_with_warnings` | 未登録拡張 |

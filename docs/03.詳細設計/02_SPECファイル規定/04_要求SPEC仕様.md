@@ -64,7 +64,7 @@ Coreは[EARS-AI Core構文仕様](../01_EARS-AI規格/01_Core構文仕様.md)が
 - 各規範文IDは`<document-id>:<local-id>`とする。
 - 要求SPECの`document-id`はFrontmatterの`id`と一致させる。
 - `local-id`は同一文書内で一意とし、`AC-[0-9]{2,}`を推奨する。
-- 承認後に別の意味へIDを再利用しない。
+- 承認後に別の意味へIDを再利用しない。Git基準版を越える再利用はレビューで担保する。
 - 文の並べ替えではIDを変更しない。
 
 規範文IDはTASKの`addresses`、テストの`covers`、Context Bundleの網羅判定に使用する。IDを変更する場合は、

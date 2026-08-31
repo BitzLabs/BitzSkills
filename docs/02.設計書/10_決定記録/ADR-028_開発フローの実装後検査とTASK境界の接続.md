@@ -43,6 +43,8 @@ Full Flowは「品質検査コマンドはSmall Flowと同じものを使う」�
    増やさない冪等な再実行だけを許可する。
 6. Full FlowもPre-check、Implement、Post-check、Verifyの同じ骨格を共有する。Full Flow固有のレビュー
    否決edgeと`Done`への接続はUC-FLOW-006として別に裁定する。
+   （2026-08-31追記: UC-FLOW-006は同日に裁定し、否決edgeを`04_SDDプロセス設計` §3へ反映した。
+   レビューの承認・否決はCoreの機械契約に含めない。）
 7. Coreの公開操作は追加しない。本決定はフロー配置と必須呼出しの契約であり、`bitz check`の対象選択規則、
    Diagnostic、終了コードはADR-025と既存仕様のままとする。
 
@@ -78,3 +80,4 @@ Full Flowは「品質検査コマンドはSmall Flowと同じものを使う」�
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-08-31 | Small/Full Flowの実装後検査とTASK明示境界検査を確定 | — |
+| 2026-08-31 | UC-FLOW-006の裁定結果をDecision 6へ注記 | `UC-FLOW-006` |
