@@ -49,9 +49,12 @@ Context Digestは検証コマンド名だけを含み、同じ名前の`argv`や
 ## Notes
 
 - 本ADRは2026-08-31のP2残存契約レビュー「verify実行契約」に対する裁定である。
+- Decision 2が定めるContext Digestの構成要素は有効である。実行bindingの正規識別子と重複排除単位は
+  [ADR-030](ADR-030_verify実行bindingの正規識別子と重複排除単位の統一.md)を正とする。
 
 ## Revision History
 
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-08-31 | verify timeout、binding digest、command結果Schemaを確定 | — |
+| 2026-08-31 | 実行binding識別子の正本が`ADR-030`であることを注記 | `ADR-030` |

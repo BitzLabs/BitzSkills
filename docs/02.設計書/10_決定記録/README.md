@@ -52,3 +52,6 @@
 | [ADR-025](ADR-025_Git基準版とcheck明示対象の確定.md) | Git基準版とcheck明示対象の確定 | accepted | 01・03, SPECファイル規定/04・06・07 |
 | [ADR-026](ADR-026_verify実行binding・timeout・結果Schemaの確定.md) | verify実行binding・timeout・結果Schemaの確定 | accepted | 01・03, SPECファイル規定/02・06・10・12 |
 | [ADR-027](ADR-027_Diagnostic結果効果・集約・workspace-sourceの確定.md) | Diagnostic結果効果・集約・workspace sourceの確定 | accepted | 01, SPECファイル規定/06・10〜12 |
+| [ADR-028](ADR-028_開発フローの実装後検査とTASK境界の接続.md) | 開発フローの実装後検査とTASK境界の接続 | accepted | 04・06・08・09, SPECファイル規定/05・06 |
+| [ADR-029](ADR-029_TASK先行依存の状態ガード.md) | TASK先行依存の状態ガード | accepted | 09, SPECファイル規定/05・06・10 |
+| [ADR-030](ADR-030_verify実行bindingの正規識別子と重複排除単位の統一.md) | verify実行bindingの正規識別子と重複排除単位の統一 | accepted | ADR-018・026, SPECファイル規定/02・06・10・12 |

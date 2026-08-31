@@ -8,17 +8,24 @@
 ## 2. Small Flow（既定）
 
 ```text
-Intent -> Context -> Check -> Implement -> Verify -> Done
-              ^          |          |          |
-              +----------+----------+----------+
+Intent -> Context -> Pre-check -> Implement -> Post-check -> Verify -> Human Review -> Done
+                                      ^            |            |
+                                      +------------+------------+
 ```
 
-1. **Intent**: 変更対象のREQまたは1件以上のEARS-AI規範文を特定する。
+1. **Intent**: 変更対象のREQ、TECH、1件以上のEARS-AI規範文、または`open` TASKを特定する。
 2. **Context**: `bitz context --purpose implement`で強い依存、全`MUST`、変更境界を取得する。
-3. **Check**: `bitz check`で構文、関係、変更境界を確認する。
+3. **Pre-check**: 実装前に`bitz check`で構文、関係、状態遷移、既存作業ツリーの不適合を確認する。
 4. **Implement**: Digestを再照合してからコードとテストを変更する。
-5. **Verify**: `purpose=verify`を再解決し、句単位の網羅を確認して対象テストを実行する。
-6. **Done**: 対応した規範文IDとdiffを人間が確認し、Gitへ記録する。
+5. **Post-check**: 実装後に`bitz check`で変更集合を検査する。TASK起点では`bitz check <TASK-ID>`を実行し、
+   `changes`境界を強制する。
+6. **Verify**: `purpose=verify`を再解決し、句単位の網羅を確認して対象テストを実行する。
+7. **Human Review**: 対応した規範文IDと最終diffを人間が確認する。
+8. **Done**: 完了結果をGitへ記録する。
+
+`Pre-check`と`Post-check`は同じ`bitz check`であり、実行位置と対象選択だけが異なる。実装後に静的検査を
+経ずに`Done`へ到達する経路は作らない。フロー配置と必須呼出しの根拠は
+[ADR-028](10_決定記録/ADR-028_開発フローの実装後検査とTASK境界の接続.md)を正とする。
 
 通常のバグ修正、局所的な機能追加、リファクタリングはSmall Flowを使う。専用Gate承認や永続runを要求しない。
 
@@ -33,10 +40,14 @@ Intent -> Context -> Check -> Implement -> Verify -> Done
 - 承認済みREQの意味を変更する
 
 ```text
-Intent -> Context -> Requirement Review -> Design Review -> Check -> Implement -> Verify -> Human Review
+Intent -> Context -> Requirement Review -> Design Review
+  -> Pre-check -> Implement -> Post-check -> Verify -> Human Review -> Done
 ```
 
-品質検査コマンドはSmall Flowと同じものを使う。Full Flow専用の別エンジンを作らない。
+品質検査コマンドはSmall Flowと同じものを使い、`Pre-check`と`Post-check`の配置もSmall Flowと同一とする。
+Full Flow専用の別エンジンを作らない。各レビューの否決時の戻り先は
+[ユースケース・フロー遷移レビュー](../04.提案資料/07_ユースケース・フロー遷移レビューと修正提案.md) UC-FLOW-006
+として未裁定であり、Core 1.0の機械契約にしない。
 
 ## 4. Spike
 
@@ -50,12 +61,13 @@ Intent -> Context -> Requirement Review -> Design Review -> Check -> Implement -
 
 実装前に必要なのは次だけとする。
 
-- 対象REQまたは意図が特定されている
+- 対象REQ、TECH、規範文、または`open` TASKが特定されている
 - Context Bundleが完全に解決され、`blocked`がない
 - 対象となる全`MUST`規範文が列挙されている
 - 変更予定パスが明示されている
 - テストコマンドが解決できる
 - 既存の未コミット変更と衝突しない
+- TASK起点では、`requires`が指す先行TASKがすべて`done`である
 - 高リスク変更ならFull Flowが選ばれている
 
 前提不足は`blocked`とし、コード編集へ進まない。
@@ -69,6 +81,10 @@ Intent -> Context -> Requirement Review -> Design Review -> Check -> Implement -
 | 仕様矛盾、権限不足 | 0 | 人間へ確認 |
 
 各試行で同じ変更を反復しない。上限到達時は停止し、最後の失敗とdiffを提示する。
+
+戻り先は失敗種別で決める。コンパイル、Lint、単体テスト、TASK境界外変更は`Implement`へ戻す。仕様矛盾、
+要求の意味変更、権限不足は自動修復せず人間確認へ戻す。一時的なツール障害は、同じ副作用を増やさない
+冪等な再実行だけを許可する。
 
 ## 7. 自動修復境界
 
@@ -89,7 +105,8 @@ Intent -> Context -> Requirement Review -> Design Review -> Check -> Implement -
 
 - 対象EARS-AI規範文が特定されている。
 - 実装直前にContext Digestが一致している。
-- `bitz check`が成功している。
+- 実装前の`bitz check`が成功している。
+- 実装後の`bitz check`が成功している。TASK起点では`bitz check <TASK-ID>`で`changes`境界を検査している。
 - 対象`MUST`の未testedが0件である。
 - 必須テストが実際に実行され成功している。
 - 省略した検証があれば表示されている。

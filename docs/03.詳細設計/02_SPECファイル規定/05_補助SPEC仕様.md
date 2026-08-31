@@ -94,10 +94,19 @@ changes:
 エージェントが要求全体の存在を見落とさないようにする。
 
 `requires`はTASK実行前に必要なSPECまたは先行TASKを示す。TASK間の循環はエラーとする。
+TASKを起点とする`purpose=implement`または`purpose=verify`では、`requires`が指すTASKがすべて`done`である
+ことを要求する。`open`の先行TASKが残る場合は`CTX-TASK-DEPENDENCY-001`／error／`blocked`とし、未完了の
+先行TASK IDを返す。`purpose=interpret`は停止せず、未完了の先行TASKをWork区分として表示する。
+実行順序を持たない単なる関連作業には`related`を使い、`requires`を使わない
+（[ADR-029](../../02.設計書/10_決定記録/ADR-029_TASK先行依存の状態ガード.md)）。
 
 `changes`は任意の変更境界である。TASK IDまたはTASKファイルpathを明示して`bitz check`すると、Gitの変更パスが
 `changes`のファイルまたはディレクトリ接頭辞に含まれるかを検査する。境界の修正が必要ならTASK自身の
 `changes`を人間がdiffで確認して更新する。
+
+TASKを起点とする開発フローでは、実装後の`Post-check`で`bitz check <TASK-ID>`を実行して境界を強制する
+（[ADR-028](../../02.設計書/10_決定記録/ADR-028_開発フローの実装後検査とTASK境界の接続.md)）。実装前の
+汎用`bitz check`は実装で生じる変更pathを含まないため、境界保証の根拠にしない。
 
 ## 5. 関係方向
 
