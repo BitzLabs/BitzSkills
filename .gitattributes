@@ -1,0 +1,16 @@
+# 既定: テキストは索引・作業ツリーの両方でLFへ統一する。
+# SPEC Serializerの正規出力をLFとする規定（03.詳細設計/02_SPECファイル規定/07_更新・互換性・安全性 §1）に揃える。
+* text=auto eol=lf
+
+# Windows専用スクリプトを追加する場合だけCRLFを保つ。
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# バイナリは変換しない。
+*.png binary
+*.jpg binary
+*.gif binary
+*.pdf binary
+*.ico binary
+*.woff2 binary
