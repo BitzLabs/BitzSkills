@@ -1,9 +1,16 @@
-# ADR-018: 正本Schemaの欠落補完と診断severityの明示
+---
+id: ADR-018
+title: 正本Schemaの欠落補完と診断severityの明示
+status: accepted
+relations:
+  related:
+    - ADR-009
+    - ADR-011
+    - ADR-014
+    - ADR-016
+---
 
-- 状態: Accepted
-- 決定日: 2026-08-31
-- Clarifies: ADR-009, ADR-011, ADR-014, ADR-016
-- 関連: [EARS-AI規格/01](../../03.詳細設計/01_EARS-AI規格/01_Core構文仕様.md), [EARS-AI規格/02](../../03.詳細設計/01_EARS-AI規格/02_拡張プロファイル仕様.md), [EARS-AI規格/06](../../03.詳細設計/01_EARS-AI規格/06_AST・パーサー仕様.md), [SPECファイル規定/02](../../03.詳細設計/02_SPECファイル規定/02_bitz.yaml仕様.md), [SPECファイル規定/03](../../03.詳細設計/02_SPECファイル規定/03_Frontmatter共通仕様.md), [SPECファイル規定/06](../../03.詳細設計/02_SPECファイル規定/06_参照・トレース・検証仕様.md), [SPECファイル規定/11](../../03.詳細設計/02_SPECファイル規定/11_doctor仕様.md), [SPECファイル規定/12](../../03.詳細設計/02_SPECファイル規定/12_モノレポSPEC連合仕様.md)
+# ADR-018 正本Schemaの欠落補完と診断severityの明示
 
 ## Context
 
@@ -65,3 +72,12 @@ ADR-009以降、Profile、モノレポ連合、Revision History、Agent Plugins�
 本ADRは[04.提案資料/03_設計書・詳細設計レビューと改訂提案](../../04.提案資料/03_設計書・詳細設計レビューと改訂提案.md)
 §2のP1 5件に対する裁定であり、同書 附録Aの差分を適用して確定した。
 同書のP2・P3は未裁定であり、本ADRの対象外とする。
+
+関連文書: [EARS-AI規格/01](../../03.詳細設計/01_EARS-AI規格/01_Core構文仕様.md), [EARS-AI規格/02](../../03.詳細設計/01_EARS-AI規格/02_拡張プロファイル仕様.md), [EARS-AI規格/06](../../03.詳細設計/01_EARS-AI規格/06_AST・パーサー仕様.md), [SPECファイル規定/02](../../03.詳細設計/02_SPECファイル規定/02_bitz.yaml仕様.md), [SPECファイル規定/03](../../03.詳細設計/02_SPECファイル規定/03_Frontmatter共通仕様.md), [SPECファイル規定/06](../../03.詳細設計/02_SPECファイル規定/06_参照・トレース・検証仕様.md), [SPECファイル規定/11](../../03.詳細設計/02_SPECファイル規定/11_doctor仕様.md), [SPECファイル規定/12](../../03.詳細設計/02_SPECファイル規定/12_モノレポSPEC連合仕様.md)
+
+## Revision History
+
+| Date | Summary | Reference |
+|---|---|---|
+| 2026-08-31 | 初版を作成 | — |
+| 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |

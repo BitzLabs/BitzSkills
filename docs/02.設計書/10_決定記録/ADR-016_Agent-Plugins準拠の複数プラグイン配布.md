@@ -1,11 +1,15 @@
-# ADR-016: Agent Plugins準拠の複数プラグイン配布
+---
+id: ADR-016
+title: Agent Plugins準拠の複数プラグイン配布
+status: accepted
+relations:
+  related:
+    - ADR-009
+---
 
-- 状態: Accepted
-- 決定日: 2026-08-27
-- Amends: ADR-009 決定9（初期配布形態）
-- 関連: [01_共通アーキテクチャ.md](../01_共通アーキテクチャ.md), [03_CLI統合設計.md](../03_CLI統合設計.md), [06_運用設計.md](../06_運用設計.md), [07_セキュリティとガバナンス.md](../07_セキュリティとガバナンス.md), [08_実装ロードマップ.md](../08_実装ロードマップ.md), [ADR-009](ADR-009_小規模チーム向け軽量コアとEARS-AI中核化.md)
+# ADR-016 Agent Plugins準拠の複数プラグイン配布
 
-## 背景
+## Context
 
 Bitzを単一プラグインへ集約すると、EARS-AIの決定論的コア、SDD、品質、DDD、同期など、用途の異なる
 機能が一括導入される。個人から数人のチームが必要な機能だけを選べるようにしつつ、CLIごとの独自形式へ
@@ -15,7 +19,7 @@ Agent Plugins 1.0.0は、ルート`plugin.json`、`skills/`、`mcp.json`を用�
 移植可能な構成要素として定義する。一方、標準の`plugin.json`にはプラグイン間依存の解決機構がなく、
 配布、導入、権限、クライアント固有機能は各クライアントの管理範囲である。
 
-## 決定
+## Decision
 
 ### 1. 配布単位
 
@@ -91,7 +95,7 @@ manifest、Core API要求、拡張間依存禁止、プラグイン外参照禁�
 各プラグインは独立にSemantic Versioningする。Core API majorの不一致は停止し、minor差は要求Capabilityが
 満たされる限り許可する。外部リポジトリをsourceにする場合はtagだけでなくcommit SHAを固定する。
 
-## 結果
+## Consequences
 
 - 利用者は必要な機能だけを導入できる。
 - EARS-AI解釈と品質判定の所有権を`bitz-core`へ集中できる。
@@ -99,7 +103,7 @@ manifest、Core API要求、拡張間依存禁止、プラグイン外参照禁�
 - 標準にない依存自動解決を前提にしないため、クライアント差を`doctor`とCIで吸収する必要がある。
 - 自己完結実行体の対象OS、アーキテクチャ、サイズは実証してから出荷範囲を確定する必要がある。
 
-## 却下した案
+## Alternatives
 
 ### 単一の巨大プラグイン
 
@@ -117,7 +121,16 @@ Agent Plugins 1.0の標準manifestで解決できず、クライアント固有�
 
 自然言語層にParser、Context選択、合否判定が複製され、同一入力に対する再現性を失う。
 
-## 参照
+## Notes
 
 - [Agent Plugins Specification 1.0.0](https://agent-plugins.org/specification)
 - [GitHub Copilot CLI plugin reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference)
+
+関連文書: [01_共通アーキテクチャ.md](../01_共通アーキテクチャ.md), [03_CLI統合設計.md](../03_CLI統合設計.md), [06_運用設計.md](../06_運用設計.md), [07_セキュリティとガバナンス.md](../07_セキュリティとガバナンス.md), [08_実装ロードマップ.md](../08_実装ロードマップ.md), [ADR-009](ADR-009_小規模チーム向け軽量コアとEARS-AI中核化.md)
+
+## Revision History
+
+| Date | Summary | Reference |
+|---|---|---|
+| 2026-08-27 | 初版を作成 | — |
+| 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |

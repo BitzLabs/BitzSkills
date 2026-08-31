@@ -1,9 +1,16 @@
-# ADR-010: 型付き依存とContext Resolutionの中核化
+---
+id: ADR-010
+title: 型付き依存とContext Resolutionの中核化
+status: accepted
+relations:
+  related:
+    - ADR-009
+    - ADR-012
+    - ADR-014
+    - ADR-015
+---
 
-- 状態: Accepted
-- 決定日: 2026-08-25
-- Amends: ADR-009
-- Amended by: ADR-012（置換済みREQ・TECHの適用禁止）、ADR-014（Semantic IRと段階的Context Projection）、ADR-015（SPEC改訂履歴の必須化）
+# ADR-010 型付き依存とContext Resolutionの中核化
 
 ## Context
 
@@ -37,3 +44,11 @@ ADR-009はCore 1.0の公開操作を3つに限定したが、EARS-AIを構造化
 2. **全文書を常に渡す**: 小規模リポジトリでもノイズとトークン消費が増え、重要制約が埋もれる。
 3. **LLMに関連文書を選ばせる**: 同じ入力でも選択が変わり、依存漏れを機械的に失敗扱いできない。
 4. **深度上限だけで打ち切る**: 末端の制約を欠いた部分コンテキストを正常に見せてしまう。
+
+## Revision History
+
+| Date | Summary | Reference |
+|---|---|---|
+| 2026-08-25 | 初版を作成 | — |
+| 2026-08-27 | 置換済み文書の扱い、Projection、改訂履歴を後続ADRで改訂 | `ADR-012` `ADR-014` `ADR-015` |
+| 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |

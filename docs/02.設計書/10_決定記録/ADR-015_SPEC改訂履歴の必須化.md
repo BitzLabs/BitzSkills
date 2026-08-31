@@ -1,7 +1,13 @@
-# ADR-015: SPEC改訂履歴の必須化
+---
+id: ADR-015
+title: SPEC改訂履歴の必須化
+status: accepted
+relations:
+  related:
+    - ADR-014
+---
 
-- 状態: Accepted
-- 決定日: 2026-08-27
+# ADR-015 SPEC改訂履歴の必須化
 
 ## Context
 
@@ -42,3 +48,10 @@ AIへ段階的なContextを渡す場合も、全文やGit履歴を展開せず�
 2. **Frontmatterへversionとupdatedを追加する**: 機械更新項目が増え、内容との同期ずれを生む。
 3. **任意セクションにする**: 重要な文書ほど履歴の有無がばらつき、共通の参照位置にならない。
 4. **完全な変更台帳を本文へ複製する**: Gitと責務が重なり、記述・同期コストが過大になる。
+
+## Revision History
+
+| Date | Summary | Reference |
+|---|---|---|
+| 2026-08-27 | 初版を作成 | — |
+| 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |

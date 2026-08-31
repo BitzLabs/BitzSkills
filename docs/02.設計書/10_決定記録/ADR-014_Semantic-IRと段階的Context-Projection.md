@@ -1,9 +1,14 @@
-# ADR-014: Semantic IRと段階的Context Projection
+---
+id: ADR-014
+title: Semantic IRと段階的Context Projection
+status: accepted
+relations:
+  related:
+    - ADR-010
+    - ADR-015
+---
 
-- 状態: Accepted
-- 決定日: 2026-08-27
-- Amends: ADR-010
-- Amended by: ADR-015（Revision Historyの非規範・明示展開）
+# ADR-014 Semantic IRと段階的Context Projection
 
 ## Context
 
@@ -51,3 +56,11 @@ EARS-AIをLLMへ渡す方法には、原文Markdownをそのまま渡す案、AS
 3. **全ASTと全原文を常時渡す**: 情報が重複し、トークン消費とコンテキスト希釈が増える。
 4. **依存深度で探索を打ち切る**: 深い位置の必須制約を欠いた部分コンテキストを正常に見せる。
 5. **LLMに参照先を自由探索させる**: 選択が非決定論的になり、参照漏れをCoreが検出できない。
+
+## Revision History
+
+| Date | Summary | Reference |
+|---|---|---|
+| 2026-08-27 | 初版を作成 | — |
+| 2026-08-27 | Revision Historyの非規範化と明示展開をADR-015で追加 | `ADR-015` |
+| 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |
