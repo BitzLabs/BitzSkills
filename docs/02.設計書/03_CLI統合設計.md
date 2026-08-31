@@ -31,7 +31,7 @@ Skillsは`skills/`、MCP設定は`mcp.json`へ置く。クライアント固有�
 ```text
 bitz context <spec-or-statement-id>... [--purpose interpret|implement|verify]
   [--format markdown|json] [--detail compact|standard|full]
-  [--expand <document-id>[#revision-history]]... [--expect-digest sha256:<hex>]
+  [--expand <document-id>[#revision-history]]... [--expect-digest sha256:<64-lower-hex>]
   [--workspace <workspace-id>]
 bitz check [requirement-id|technical-id|decision-id|task-id|statement-id|spec-file-path]...
   [--base <git-revision>] [--workspace <workspace-id>]

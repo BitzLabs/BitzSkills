@@ -104,7 +104,15 @@ Git不在はCore全体の起動失敗にしない。構文、Schema、参照、C
     {"name": "core-version", "status": "ok"},
     {"name": "git", "status": "warning", "lostGuarantees": ["approved-diff-protection", "task-boundary"]}
   ],
-  "diagnostics": []
+  "diagnostics": [
+    {
+      "code": "SPEC-DOCTOR-GIT-001",
+      "severity": "warning",
+      "resultStatus": "passed_with_warnings",
+      "summary": "Gitを利用できないため一部の保証が失われます",
+      "source": {"kind": "environment", "component": "git"}
+    }
+  ]
 }
 ```
 
@@ -112,7 +120,7 @@ Git不在はCore全体の起動失敗にしない。構文、Schema、参照、C
 
 ## 7. Diagnostic
 
-| コード | severity | result status | 条件 |
+| コード | severity | `resultStatus` | 条件 |
 |---|---|---|---|
 | `SPEC-DOCTOR-CORE-001` | error | `blocked` | CoreまたはPythonの版が不適合 |
 | `SPEC-DOCTOR-CORE-002` | error | `error` | Core実行体またはMCP serverを起動できない |

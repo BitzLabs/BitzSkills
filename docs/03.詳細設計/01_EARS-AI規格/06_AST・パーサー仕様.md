@@ -98,7 +98,7 @@ Serializerは意味を書き換えず、フォーマット修正と内容変更�
 
 診断は`bitz-core`が所有するDiagnosticスキーマに従う（[01_共通アーキテクチャ.md](../../02.設計書/01_共通アーキテクチャ.md) §6）。Core診断のOWNERセグメントは`EAI`とし、Profile診断は所有拡張のOWNERを用いる（[ADR-011](../../02.設計書/10_決定記録/ADR-011_Diagnostic所有者とコード命名規約.md)）。
 
-| コード | severity | result status | 意味 |
+| コード | severity | `resultStatus` | 意味 |
 |---|---|---|---|
 | `EAI-CORE-SYNTAX-001` | error（`draft`ではwarning） | `failed`（降格時は`passed_with_warnings`） | タグ順序不正 |
 | `EAI-CORE-SYNTAX-002` | error（`draft`ではwarning） | `failed`（降格時は`passed_with_warnings`） | 必須タグ不足 |

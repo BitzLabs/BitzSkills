@@ -196,11 +196,11 @@ Context Digestには、到達したworkspace IDとpath、修飾起点、修飾ed
   "schemaVersion": "1.0",
   "operation": "check",
   "scope": "all-workspaces",
-  "status": "passed_with_warnings",
+  "status": "passed",
   "federation": {"id": "platform", "path": "."},
   "workspaces": [
     {"id": "platform", "path": ".", "status": "passed"},
-    {"id": "api", "path": "services/api", "status": "passed_with_warnings"},
+    {"id": "api", "path": "services/api", "status": "passed"},
     {"id": "web", "path": "apps/web", "status": "passed"}
   ],
   "diagnostics": []
@@ -225,7 +225,7 @@ member単独操作のレポートはmember自身の`.spec/reports/`へ保存す�
 
 ## 10. Diagnostic
 
-| コード | severity | result status | 条件 |
+| コード | severity | `resultStatus` | 条件 |
 |---|---|---|---|
 | `SPEC-MONOREPO-CONFIG-001` | error | `failed` | `monorepo`設定の型、件数、配置が不正 |
 | `SPEC-MONOREPO-MEMBER-001` | error | `failed` | memberの設定不在、またはcatalogとのID不一致 |

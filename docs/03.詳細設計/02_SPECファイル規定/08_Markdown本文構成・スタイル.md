@@ -187,7 +187,7 @@ H2は次の順序とする。
 
 ## 7. 検査レベル
 
-| 条件 | severity | result status | Diagnostic |
+| 条件 | severity | `resultStatus` | Diagnostic |
 |---|---|---|---|
 | H1がない、複数ある、Frontmatterと不一致 | error | `failed` | `SPEC-STYLE-H1-001` |
 | 必須H2がない | error | `failed` | `SPEC-STYLE-SECTION-001` |

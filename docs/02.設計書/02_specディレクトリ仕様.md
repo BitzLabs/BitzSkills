@@ -149,7 +149,7 @@ REQ、TECH、ADR、TASKは、種別ごとにH1とH2の構成を固定する。�
 
 - 成功時は既定でファイルを生成しない。
 - `failed`、`blocked`、`error`では再現に必要な対象、Diagnostic、コマンド、終了コードを自動保存する。
-- `--report`指定時は`.spec/reports/<timestamp>-<operation>.json`へ保存する。
+- `--report`指定時は`.spec/reports/<YYYYMMDDTHHMMSSZ>-<operation>[-<sequence>].json`へ保存する。
 - 引数不正の終了コード4ではworkspace結果を生成していないため保存しない。
 - `.spec/reports/`は既定で`.gitignore`対象とし、長期証跡はCI artifactまたはPR添付へ保存する。
 - ULID、追記型台帳、永続ロックはCore 1.0で必須にしない。

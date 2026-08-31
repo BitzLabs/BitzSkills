@@ -28,7 +28,7 @@ bitz context <spec-or-statement-id>...
   [--format markdown|json]
   [--detail compact|standard|full]
   [--expand <document-id>[#revision-history]]...
-  [--expect-digest sha256:<hex>]
+  [--expect-digest sha256:<64-lower-hex>]
   [--workspace <workspace-id>]
 ```
 
@@ -57,7 +57,7 @@ Context Resolution自身はpath起点を受け付けない。
 |---|---|---|
 | `requires` | sourceを解釈・実行する前提 | targetを再帰的に含める |
 | `refines` | sourceがtargetを具体化・制約する | targetと、targetに対する有効なrefinerを含める |
-| `addresses` | TASKが対象規範文を実装する | `implement`でTASKと対象句を対応付ける |
+| `addresses` | TASKが対象規範文または規範文なしTECHを実装する | `implement`でTASKと対象句または文書単位TECHを対応付ける |
 | `supersedes` | sourceが旧文書を置き換える | 旧文書をadvisoryとして識別する |
 | `related` | 閲覧用の弱い関連 | 自動的には含めない |
 
@@ -102,7 +102,7 @@ Context Resolution自身はpath起点を受け付けない。
 
 `interpret`閉包に加え、次を含める。
 
-- 起点と適用されるrefinementの規範文を`addresses`する`open` TASK
+- 起点と適用されるrefinementの規範文、または起点と適用される規範文なしTECHを`addresses`する`open` TASK
 - 起点がTASKの場合、その`addresses`対象と`requires`閉包
 - 適用文書の`implements`、テスト対応、TASKの`changes`
 - 対象となる全EARS-AI規範文と実装・テスト網羅状況
@@ -166,8 +166,8 @@ Context Bundleは生成ファイルを正本にせず、コマンド結果とし
   "purpose": "implement",
   "workspace": {"id": "web", "path": "apps/web"},
   "roots": ["web::REQ-001"],
-  "contextDigest": "sha256:0123456789abcdef",
-  "projectionDigest": "sha256:fedcba9876543210",
+  "contextDigest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "projectionDigest": "sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
   "revision": {"commit": "0123456789abcdef", "dirty": false},
   "resolution": {
     "complete": true,
@@ -187,8 +187,8 @@ Context Bundleは生成ファイルを正本にせず、コマンド結果とし
       "status": "approved",
       "role": "root",
       "path": ".spec/requirements/REQ-001.md",
-      "semanticHash": "sha256:abcdef0123456789",
-      "fileHash": "sha256:1111111111111111",
+      "semanticHash": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+      "fileHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
       "projection": "full",
       "statementRefs": ["web::REQ-001:AC-01", "web::REQ-001:AC-02"],
       "revisionHistory": {
@@ -207,8 +207,8 @@ Context Bundleは生成ファイルを正本にせず、コマンド結果とし
       "status": "approved",
       "role": "constraint",
       "path": ".spec/technical/TECH-014.md",
-      "semanticHash": "sha256:1234567890abcdef",
-      "fileHash": "sha256:2222222222222222",
+      "semanticHash": "sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "fileHash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
       "projection": "normative",
       "statementRefs": [],
       "revisionHistory": {
@@ -255,7 +255,24 @@ Context Bundleは生成ファイルを正本にせず、コマンド結果とし
     "adjacent": []
   },
   "limits": {"documents": 2, "bytes": 4096},
-  "diagnostics": []
+  "diagnostics": [
+    {
+      "code": "CTX-COVERAGE-TASK-001",
+      "severity": "warning",
+      "resultStatus": "passed_with_warnings",
+      "summary": "対象MUSTをaddressするTASKがありません",
+      "source": {"kind": "file", "workspaceId": "web", "path": ".spec/requirements/REQ-001.md"},
+      "specRefs": ["web::REQ-001:AC-02"]
+    },
+    {
+      "code": "CTX-COVERAGE-TEST-001",
+      "severity": "warning",
+      "resultStatus": "passed_with_warnings",
+      "summary": "対象MUSTにテスト対応がありません",
+      "source": {"kind": "file", "workspaceId": "web", "path": ".spec/requirements/REQ-001.md"},
+      "specRefs": ["web::REQ-001:AC-02"]
+    }
+  ]
 }
 ```
 
@@ -365,6 +382,9 @@ Verification Bindingsに保持する。
 
 Context Digestは、次をCanonical JSON化したSHA-256とする。
 
+Context Digest、Projection Digest、`semanticHash`、`fileHash`の正規表現は
+`sha256:[0-9a-f]{64}`とし、小文字16進数で出力する。`--expect-digest`も同じ形式だけを受け付ける。
+
 - Schema版、EARS-AI版、Context Resolver版
 - purposeと起点ID
 - applicable/advisory文書のID、状態、`semanticHash`
@@ -411,7 +431,7 @@ Context Resolutionは基準環境で1秒以内を目標とする。ネットワ�
 
 ## 12. Diagnostic
 
-| コード | severity | result status | 条件 |
+| コード | severity | `resultStatus` | 条件 |
 |---|---|---|---|
 | `CTX-ROOT-MISSING-001` | error | `failed` | 起点IDが解決できない |
 | `CTX-ROOT-WORKSPACE-001` | error | `failed` | 1回のrequestに異なるworkspace所有の起点が混在する |
