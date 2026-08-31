@@ -45,3 +45,6 @@
 | [ADR-018](ADR-018_正本Schemaの欠落補完と診断severityの明示.md) | 正本Schemaの欠落補完と診断severityの明示 | accepted | EARS-AI規格/01・02・06, SPECファイル規定/02〜04・06・11・12 |
 | [ADR-019](ADR-019_検証対象と縮退判定の明確化.md) | 検証対象と縮退判定の明確化 | accepted | 03, EARS-AI規格/02, SPECファイル規定/02・06・11・12 |
 | [ADR-020](ADR-020_決定記録をSPEC本文構造規定へ適合させる.md) | 決定記録をSPEC本文構造規定へ適合させる | accepted | ADR-015, SPECファイル規定/05・08 |
+| [ADR-021](ADR-021_Diagnostic-severity・操作status・source-Schemaの分離.md) | Diagnostic severity・操作status・source Schemaの分離 | accepted | 01, EARS-AI規格/06, SPECファイル規定/06・10〜12 |
+| [ADR-022](ADR-022_規範行候補抽出とID構文検証の分離.md) | 規範行候補抽出とID構文検証の分離 | accepted | EARS-AI規格/01・06, SPECファイル規定/04・06 |
+| [ADR-023](ADR-023_verify明示対象とpath入力の確定.md) | verify明示対象とpath入力の確定 | accepted | 03, SPECファイル規定/06・10・12 |

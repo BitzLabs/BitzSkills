@@ -35,6 +35,9 @@ bitz context <spec-or-statement-id>...
 `purpose`の既定値は`interpret`とする。起点IDは文書IDと規範文IDを受け付け、重複を除いてID辞書順に
 正規化する。パスを起点にせず、移動後も安定するIDを使用する。
 
+`bitz verify`が受け付けたSPECファイルpathは、verify側でFrontmatter IDへ正規化してから本操作を呼び出す。
+Context Resolution自身はpath起点を受け付けない。
+
 モノレポ連合では、active workspace内の起点はローカルIDを許可し、別workspaceの起点と`expand`は
 `<workspace-id>::<document-id>`で指定する。非修飾IDを他workspaceから探索しない。`context`は
 `--all-workspaces`を受け付けない。全起点は同じworkspaceが所有し、そのworkspaceをrequest workspaceとする。
@@ -322,10 +325,21 @@ Expanded Revision History
 
 対象REQ/TECHと適用されるrefinementのEARS-AI規範文を規範強度ごとに集計する。
 
+target statement集合は起点種別により次のとおり決める。
+
+- REQまたは規範文を持つTECHの文書ID起点: 所有文書の全規範文と、適用される強い依存・refinement。
+- 規範文ID起点: 指定句と、その句へ適用される強い依存・直接refinement。同じ所有文書の兄弟句は
+  `adjacent`として表示し、target statementへ暗黙追加しない。
+- TASK起点: `addresses`に列挙された句と`requires`閉包。
+- 規範文を持たないTECH起点: target statementは空とし、文書単位の`tests`をverifyが実行する。
+
+複数起点はtarget statement集合の和集合を使用し、同じ句を1回だけ集計する。
+
 - `MUST`: `verify`では1件以上のテスト対応を必須とする。
 - `SHOULD`: 未対応をwarningとする。
 - `MAY`: 対応の有無を情報として表示する。
 - TASK起点では、`addresses`にない句を作業対象へ含めないが、同一文書の未対象句をadjacentとして表示する。
+- 規範文ID起点でも、同一文書の未対象句をadjacentとして表示する。
 - REQ起点の`implement`では全`MUST`を対象とし、未addressedをwarning、未testedをwarningとする。
 - `verify`では未testedの`MUST`が1件でもあればテスト実行前に`blocked`とする。
 
@@ -391,25 +405,27 @@ Context Resolutionは基準環境で1秒以内を目標とする。ネットワ�
 
 ## 12. Diagnostic
 
-| コード | 条件 |
-|---|---|
-| `CTX-ROOT-MISSING-001` | 起点IDが解決できない。結果は`failed` |
-| `CTX-ROOT-WORKSPACE-001` | 1回のrequestに異なるworkspace所有の起点が混在する。結果は`failed` |
-| `CTX-RELATION-TYPE-001` | 関係のsource/target型が不正 |
-| `CTX-RELATION-MISSING-001` | 強い関係のtargetがない |
-| `CTX-CYCLE-001` | 禁止された循環がある |
-| `CTX-STATE-001` | 強い依存先が適用不能。結果は`blocked` |
-| `CTX-STATE-SUPERSEDED-001` | 起点または強い依存先が置換済み。後継IDを返し、結果は`blocked` |
-| `CTX-STATE-SUPERSEDED-002` | 同じ旧文書に複数の有効な後継がある。結果は`failed` |
-| `CTX-LIMIT-001` | 完全な閉包が上限を超える。結果は`blocked` |
-| `CTX-COVERAGE-TASK-001` | 対象`MUST`をaddressするTASKがない。`implement`でwarning |
-| `CTX-COVERAGE-TEST-001` | 対象`MUST`にテスト対応がない。`implement`でwarning、`verify`で`blocked` |
-| `CTX-STALE-001` | 期待Context Digestと現在値が異なる。結果は`blocked` |
-| `CTX-PROJECTION-001` | `expand`対象が完全解決済み集合にない。結果は`failed` |
-| `CTX-PROJECTION-LIMIT-001` | 要求されたProjectionが提示量hard limitを超える。結果は`failed` |
+| コード | severity | result status | 条件 |
+|---|---|---|---|
+| `CTX-ROOT-MISSING-001` | error | `failed` | 起点IDが解決できない |
+| `CTX-ROOT-WORKSPACE-001` | error | `failed` | 1回のrequestに異なるworkspace所有の起点が混在する |
+| `CTX-RELATION-TYPE-001` | error | `failed` | 関係のsource/target型が不正 |
+| `CTX-RELATION-MISSING-001` | error | `failed` | 強い関係のtargetがない |
+| `CTX-CYCLE-001` | error | `failed` | 禁止された循環がある |
+| `CTX-STATE-001` | error | `blocked` | 強い依存先が適用不能 |
+| `CTX-STATE-SUPERSEDED-001` | error | `blocked` | 起点または強い依存先が置換済み。後継IDを返す |
+| `CTX-STATE-SUPERSEDED-002` | error | `failed` | 同じ旧文書に複数の有効な後継がある |
+| `CTX-LIMIT-001` | error | `blocked` | 完全な閉包が上限を超える |
+| `CTX-COVERAGE-TASK-001` | warning | `passed_with_warnings` | 対象`MUST`をaddressするTASKがない（`implement`） |
+| `CTX-COVERAGE-TEST-001` | warning / error | `passed_with_warnings` / `blocked` | 対象`MUST`にテスト対応がない。`implement`ではwarning、`verify`ではerror |
+| `CTX-STALE-001` | error | `blocked` | 期待Context Digestと現在値が異なる |
+| `CTX-PROJECTION-001` | error | `failed` | `expand`対象が完全解決済み集合にない |
+| `CTX-PROJECTION-LIMIT-001` | error | `failed` | 要求されたProjectionが提示量hard limitを超える |
 
 関係の型不正、参照切れ、循環は成果物不適合として`failed`にする。状態不適合、上限超過、Digest不一致は
 成果物を直ちに不正とは断定せず、現在の操作を安全に継続できないため`blocked`にする。
+severityとresult statusは[ADR-021](../../02.設計書/10_決定記録/ADR-021_Diagnostic-severity・操作status・source-Schemaの分離.md)に従い、
+同じerror severityでも原因に応じて`failed`または`blocked`へ対応付ける。
 
 ## 13. エージェントアダプター契約
 

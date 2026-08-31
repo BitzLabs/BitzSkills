@@ -97,6 +97,8 @@ Coreは[EARS-AI Core構文仕様](../01_EARS-AI規格/01_Core構文仕様.md)が
 ### `approved`
 
 - 1件以上の妥当なEARS-AI規範文を必須とする。
+- 妥当な規範文が0件の場合は`SPEC-REQ-STATEMENT-001`／error／`failed`とする。不正IDや必須タグ不足の
+  候補行を通常本文として数えず、同時に該当する`EAI-*` Diagnosticを返す。
 - 強い関係、規範文ID、指定済みパスはすべて解決できなければならない。
 - `implements`と`tests`は実装前には省略できる。
 - `bitz verify`の対象にする時点では、全`MUST`にテスト対応と有効なコマンドを必須とする。

@@ -15,7 +15,8 @@ LLMへ構文解析を委ねず、Core、Profile、Context Resolutionが同じ意
 ```text
 Markdown
  -> Frontmatter Reader
- -> Normative Line Scanner      (01_Core構文仕様 §3.4)
+ -> Excluded Region Reader      (コードブロック・引用)
+ -> Normative Candidate Scanner (01_Core構文仕様 §3.4)
  -> Core Lexer / Parser / Validator
  -> Profile Resolver / Validators
  -> Canonical Semantic IR (AST互換名)
@@ -69,13 +70,18 @@ Projectionは目的別にLLMへ渡す提示表現とする。Semantic IRやProje
 ## 4. Parser要件
 
 - UTF-8を必須とする。
-- 規範箇条書きだけを解析し、フェンス付きコードブロックと引用ブロックの内部を除外する（[01_Core構文仕様.md](01_Core構文仕様.md) §3.4）。これにより仕様書中の記述例が規範文として解釈されない。
+- フェンス付きコードブロックと引用ブロックを先に除外し、[01_Core構文仕様.md](01_Core構文仕様.md) §3.4の
+  広い候補規則で規範行候補を抽出する。候補抽出時に正しい`statement-id`への一致を要求しない。
+- 通常のGFM checkboxを候補から除外する。
 - 字句解析はコードスパンを保護し、`\[` `\]` のエスケープを解釈する（同 §3.3）。
 - ID形式（2階層固定）、ID重複、タグ順序、必須オペランド、空文字、行末句点を検証する。
 - ソース位置を行・列単位で保持する。
 - 未知拡張を失わず `unknownExtensions` に保持する。
 - Core解析結果をProfileの有無で変化させない。
 - ネットワークとAI推論を必要としない決定論的処理とする。同一入力・同一バージョンで必ず同一のSemantic IRを返す。
+
+適合性fixtureには、3桁未満ID、未知prefix、3階層ID、ID欠落、通常checkbox、コードブロック、引用ブロックを
+それぞれ1件以上含める。不正IDの候補行が通常本文として無視されないことを検証する。
 
 ## 5. 正規出力順
 
@@ -92,28 +98,30 @@ Serializerは意味を書き換えず、フォーマット修正と内容変更�
 
 診断は`bitz-core`が所有するDiagnosticスキーマに従う（[01_共通アーキテクチャ.md](../../02.設計書/01_共通アーキテクチャ.md) §6）。Core診断のOWNERセグメントは`EAI`とし、Profile診断は所有拡張のOWNERを用いる（[ADR-011](../../02.設計書/10_決定記録/ADR-011_Diagnostic所有者とコード命名規約.md)）。
 
-| コード | severity | 意味 |
-|---|---|---|
-| `EAI-CORE-SYNTAX-001` | error（`draft`ではwarning） | タグ順序不正 |
-| `EAI-CORE-SYNTAX-002` | error（`draft`ではwarning） | 必須タグ不足 |
-| `EAI-CORE-SYNTAX-003` | error（`draft`ではwarning） | 発動条件の複数指定 |
-| `EAI-CORE-SYNTAX-004` | error（`draft`ではwarning） | 未閉鎖または不正なタグ／未エスケープの `[` |
-| `EAI-CORE-SYNTAX-005` | error（`draft`ではwarning） | 未閉鎖のコードスパン |
-| `EAI-CORE-SYNTAX-006` | error（`draft`ではwarning） | 行末句点の欠落 |
-| `EAI-CORE-ID-001` | error | ID形式不正（2階層固定に不適合） |
-| `EAI-CORE-ID-002` | error | ID重複 |
-| `EAI-CORE-ID-003` | error | 削除済みIDの再利用 |
-| `EAI-CORE-SEM-001` | error（`draft`ではwarning） | オペランド不足 |
-| `EAI-CORE-LANG-001` | warning | 正本言語との不一致 |
-| `EAI-EXT-UNKNOWN-001` | warning | 未登録拡張 |
-| `EAI-EXT-CONFLICT-001` | error | 拡張競合 |
+| コード | severity | result status | 意味 |
+|---|---|---|---|
+| `EAI-CORE-SYNTAX-001` | error（`draft`ではwarning） | `failed`（降格時は`passed_with_warnings`） | タグ順序不正 |
+| `EAI-CORE-SYNTAX-002` | error（`draft`ではwarning） | `failed`（降格時は`passed_with_warnings`） | 必須タグ不足 |
+| `EAI-CORE-SYNTAX-003` | error（`draft`ではwarning） | `failed`（降格時は`passed_with_warnings`） | 発動条件の複数指定 |
+| `EAI-CORE-SYNTAX-004` | error（`draft`ではwarning） | `failed`（降格時は`passed_with_warnings`） | 未閉鎖または不正なタグ／未エスケープの `[` |
+| `EAI-CORE-SYNTAX-005` | error（`draft`ではwarning） | `failed`（降格時は`passed_with_warnings`） | 未閉鎖のコードスパン |
+| `EAI-CORE-SYNTAX-006` | error（`draft`ではwarning） | `failed`（降格時は`passed_with_warnings`） | 行末句点の欠落 |
+| `EAI-CORE-ID-001` | error | `failed` | ID形式不正（2階層固定に不適合） |
+| `EAI-CORE-ID-002` | error | `failed` | ID重複 |
+| `EAI-CORE-ID-003` | error | `failed` | 削除済みIDの再利用 |
+| `EAI-CORE-SEM-001` | error（`draft`ではwarning） | `failed`（降格時は`passed_with_warnings`） | オペランド不足 |
+| `EAI-CORE-LANG-001` | warning | `passed_with_warnings` | 正本言語との不一致 |
+| `EAI-EXT-UNKNOWN-001` | warning | `passed_with_warnings` | 未登録拡張 |
+| `EAI-EXT-CONFLICT-001` | error | `failed` | 拡張競合 |
 
 `draft`での降格は、所有文書の`status`が`draft`である場合だけ適用する。ID系3コードは、
 `status`にかかわらず`error`とする。IDは文書を越えた索引と参照解決の基礎であり、
 `draft`の不正IDが他文書の参照検査を壊すためである。
 
-severityから結果statusへの写像は[共通アーキテクチャ](../../02.設計書/01_共通アーキテクチャ.md) §5に従う。
-`error`が1件でもあれば`failed`、`warning`だけなら`passed_with_warnings`とする。
+severityと結果statusは[共通アーキテクチャ](../../02.設計書/01_共通アーキテクチャ.md) §5〜6および
+[ADR-021](../../02.設計書/10_決定記録/ADR-021_Diagnostic-severity・操作status・source-Schemaの分離.md)に従う。
+EARS-AI Validatorでは本表のerrorを成果物不適合の`failed`へ対応付け、warningだけなら
+`passed_with_warnings`とする。この対応をdoctorやContextの前提不足へ一般化しない。
 Profile診断のseverityは各Profile文書が同じ形式で定義する。
 
 診断コードは永続識別子とし、再利用と意味変更を禁止する。廃止したコードは予約済みとして本表に残す。

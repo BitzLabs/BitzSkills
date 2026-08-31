@@ -94,6 +94,8 @@ workspace:
 rootを先頭、その後をworkspace ID辞書順で処理する。
 `--workspace`と`--all-workspaces`は排他的とする。`check --all-workspaces`は`--full`を含意し、対象ID・pathを
 受け付けない。`verify --all-workspaces`も引数なしverifyを各workspaceへ適用し、対象ID・pathを受け付けない。
+明示`verify`のSPECファイルpathは選択workspace内のREQ、TECH、TASKだけを受け付け、Frontmatter IDへ
+正規化する。コードpath、テストpath、ディレクトリ、ADRを受け付けない。
 
 ## 5. 修飾ID
 
@@ -217,18 +219,21 @@ workspace IDを含める。member単独操作のレポートはmember自身の`.
 
 ## 10. Diagnostic
 
-| コード | 結果 | 条件 |
-|---|---|---|
-| `SPEC-MONOREPO-CONFIG-001` | `failed` | `monorepo`設定の型、件数、配置が不正 |
-| `SPEC-MONOREPO-MEMBER-001` | `failed` | memberの設定不在、またはcatalogとのID不一致 |
-| `SPEC-MONOREPO-VERSION-001` | `blocked` | memberの`schemaVersion`または`earsAi`が未対応major |
-| `SPEC-MONOREPO-PATH-001` | `failed` | member pathが不正、重複、入れ子、symlink、submodule |
-| `SPEC-MONOREPO-ID-001` | `failed` | workspace IDが不正または重複 |
-| `SPEC-MONOREPO-UNREGISTERED-001` | `blocked` | federation内で選択した`.spec/`がcatalogへ未登録 |
-| `SPEC-MONOREPO-REF-001` | `failed` | 横断参照が非修飾、またはworkspaceを解決できない |
-| `SPEC-MONOREPO-OWNERSHIP-001` | `failed` | SPEC、コード、テスト、TASK、cwdが所有境界を越える |
-| `SPEC-MONOREPO-LIMIT-001` | `blocked` | member数または連合全体のリソース上限を超えた |
-| `SPEC-MONOREPO-GIT-001` | `blocked` | Gitを利用できず連合境界と所有範囲を確定できない |
+| コード | severity | result status | 条件 |
+|---|---|---|---|
+| `SPEC-MONOREPO-CONFIG-001` | error | `failed` | `monorepo`設定の型、件数、配置が不正 |
+| `SPEC-MONOREPO-MEMBER-001` | error | `failed` | memberの設定不在、またはcatalogとのID不一致 |
+| `SPEC-MONOREPO-VERSION-001` | error | `blocked` | memberの`schemaVersion`または`earsAi`が未対応major |
+| `SPEC-MONOREPO-PATH-001` | error | `failed` | member pathが不正、重複、入れ子、symlink、submodule |
+| `SPEC-MONOREPO-ID-001` | error | `failed` | workspace IDが不正または重複 |
+| `SPEC-MONOREPO-UNREGISTERED-001` | error | `blocked` | federation内で選択した`.spec/`がcatalogへ未登録 |
+| `SPEC-MONOREPO-REF-001` | error | `failed` | 横断参照が非修飾、またはworkspaceを解決できない |
+| `SPEC-MONOREPO-OWNERSHIP-001` | error | `failed` | SPEC、コード、テスト、TASK、cwdが所有境界を越える |
+| `SPEC-MONOREPO-LIMIT-001` | error | `blocked` | member数または連合全体のリソース上限を超えた |
+| `SPEC-MONOREPO-GIT-001` | error | `blocked` | Gitを利用できず連合境界と所有範囲を確定できない |
+
+severityとresult statusは
+[ADR-021](../../02.設計書/10_決定記録/ADR-021_Diagnostic-severity・操作status・source-Schemaの分離.md)に従う。
 
 ## 11. 非目標
 

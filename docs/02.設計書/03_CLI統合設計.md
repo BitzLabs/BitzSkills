@@ -36,7 +36,8 @@ bitz context <spec-or-statement-id>... [--purpose interpret|implement|verify]
 bitz check [ids-or-paths...] [--full] [--workspace <workspace-id>]
   [--format text|json] [--report]
 bitz check --all-workspaces [--format text|json] [--report]
-bitz verify [spec-or-statement-id|paths...] [--workspace <workspace-id>]
+bitz verify [requirement-id|technical-id|statement-id|task-id|spec-file-path]...
+  [--workspace <workspace-id>]
   [--format text|json] [--report]
 bitz verify --all-workspaces [--format text|json] [--report]
 bitz doctor [--workspace <workspace-id>|--all-workspaces] [--format text|json]
@@ -55,6 +56,11 @@ SDD、DDD、同期はCore 1.0の公開コマンドへ含めない。
 `--all-workspaces`は連合ルートでの`check`、`verify`、`doctor`だけに使用し、`context`へは指定しない。
 `--workspace`とは排他的であり、全体`check`は`--full`、全体`verify`は各workspaceの引数なしverifyを含意する。
 詳細は[モノレポSPEC連合仕様](../03.詳細設計/02_SPECファイル規定/12_モノレポSPEC連合仕様.md)を正とする。
+
+`verify`の`spec-file-path`はREQ、TECH、TASKのSPEC Markdownだけを受け付け、Frontmatter IDへ正規化する。
+コードpath、テストpath、ディレクトリ、ADRは受け付けない。明示対象ごとのstatement選択は
+[ADR-023](10_決定記録/ADR-023_verify明示対象とpath入力の確定.md)と
+[参照・トレース・検証仕様](../03.詳細設計/02_SPECファイル規定/06_参照・トレース・検証仕様.md) §5を正とする。
 
 ## 4. プラグイン責務
 

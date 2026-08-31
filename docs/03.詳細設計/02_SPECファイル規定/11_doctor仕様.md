@@ -112,19 +112,23 @@ Git不在はCore全体の起動失敗にしない。構文、Schema、参照、C
 
 ## 7. Diagnostic
 
-| コード | 条件 |
-|---|---|
-| `SPEC-DOCTOR-CORE-001` | CoreまたはPythonの版が不適合。結果は`blocked` |
-| `SPEC-DOCTOR-CORE-002` | Core実行体またはMCP serverを起動できない。結果は`error` |
-| `SPEC-DOCTOR-PLUGIN-001` | プラグインID、版、互換性要求が不正または不足 |
-| `SPEC-DOCTOR-API-001` | 要求Core API範囲と実行中Coreが非互換 |
-| `SPEC-DOCTOR-CAPABILITY-001` | 要求CapabilityをCoreが提供しない |
-| `SPEC-DOCTOR-WORKSPACE-001` | `.spec/`または`bitz.yaml`がない |
-| `SPEC-DOCTOR-CONFIG-001` | `bitz.yaml`のSchemaが不正 |
-| `SPEC-DOCTOR-EARS-001` | `earsAi`のmajorに互換性がない。Core 1.0では`profiles`をこの判定へ含めない |
-| `SPEC-DOCTOR-GIT-001` | Gitを利用できず一部保証が失われる |
-| `SPEC-DOCTOR-COMMAND-001` | 検証コマンドまたは`cwd`を解決できない |
-| `SPEC-DOCTOR-CACHE-001` | キャッシュが破損または不整合 |
+| コード | severity | result status | 条件 |
+|---|---|---|---|
+| `SPEC-DOCTOR-CORE-001` | error | `blocked` | CoreまたはPythonの版が不適合 |
+| `SPEC-DOCTOR-CORE-002` | error | `error` | Core実行体またはMCP serverを起動できない |
+| `SPEC-DOCTOR-PLUGIN-001` | error | `failed` | 渡されたプラグインID、版、互換性要求の形式または組が不正・不足 |
+| `SPEC-DOCTOR-API-001` | error | `blocked` | 要求Core API範囲と実行中Coreが非互換 |
+| `SPEC-DOCTOR-CAPABILITY-001` | error | `blocked` | 要求CapabilityをCoreが提供しない |
+| `SPEC-DOCTOR-WORKSPACE-001` | error | `blocked` | `.spec/`または`bitz.yaml`がない |
+| `SPEC-DOCTOR-CONFIG-001` | error | `error` | `bitz.yaml`の構文、型、必須項目が不正 |
+| `SPEC-DOCTOR-EARS-001` | error | `blocked` | `earsAi`のmajorに互換性がない。Core 1.0では`profiles`をこの判定へ含めない |
+| `SPEC-DOCTOR-GIT-001` | warning | `passed_with_warnings` | Gitを利用できず一部保証が失われる |
+| `SPEC-DOCTOR-COMMAND-001` | error | `blocked` | 検証コマンドまたは`cwd`を解決できない |
+| `SPEC-DOCTOR-CACHE-001` | warning | `passed_with_warnings` | キャッシュが破損または不整合だが再構築できる |
+
+ファイルを持たない診断は`source.kind: environment`を使用し、Core、Python、Git、プラグイン、コマンド、
+キャッシュを`component`で識別する。severityとresult statusは
+[ADR-021](../../02.設計書/10_決定記録/ADR-021_Diagnostic-severity・操作status・source-Schemaの分離.md)に従う。
 
 モノレポ構造のDiagnosticは[モノレポSPEC連合仕様](12_モノレポSPEC連合仕様.md) §10を使用し、`doctor`専用の
 同義コードを重複定義しない。
