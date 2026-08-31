@@ -52,7 +52,9 @@ relations:
 ---
 ```
 
-状態は`proposed`、`accepted`、`rejected`、`superseded`とする。本文は`Context`、`Decision`、
+状態は`proposed`、`accepted`、`rejected`、`superseded`とする。作成時は`proposed`、`accepted`、
+`rejected`を許可し、既存文書は`proposed -> accepted|rejected`、`accepted -> superseded`だけを遷移できる。
+`rejected`と`superseded`は終端状態とする。本文は`Context`、`Decision`、
 `Consequences`、任意の`Alternatives`、`Notes`、最終H2の`Revision History`で構成する。
 
 ADRを必須制約として適用する側は、自身の`requires`からADRを参照する。ADRの`related`だけでは
@@ -81,17 +83,19 @@ changes:
 ---
 ```
 
-状態は`open`と`done`だけとする。担当者、期限、blocked理由などはIssue管理がある場合はそちらへ置く。
+状態は`open`と`done`だけとし、作成時は`open`、許可遷移は`open -> done`とする。`done`は終端状態であり、
+追加作業には新しいTASK IDを使用する。担当者、期限、blocked理由などはIssue管理がある場合はそちらへ置く。
 完了したTASKは削除してもよいが、そのIDを別の作業へ再利用しない。本文は`Objective`、任意の`Work`、
 `Completion Criteria`、任意の`Notes`、最終H2の`Revision History`で構成する。
 
-`addresses`には実装対象のEARS-AI規範文IDを列挙する。規範文を持つREQ/TECHの文書IDだけを指定して
-全句を暗黙対象にすることは禁止する。対象外の兄弟句はContext Bundleへadjacentとして表示し、
+`addresses`には実装対象のEARS-AI規範文IDを列挙する。規範文を持たないTECHだけは文書IDを指定できる。
+規範文を持つREQ/TECHの文書IDだけを指定して全句を暗黙対象にすることは禁止する。
+対象外の兄弟句はContext Bundleへadjacentとして表示し、
 エージェントが要求全体の存在を見落とさないようにする。
 
 `requires`はTASK実行前に必要なSPECまたは先行TASKを示す。TASK間の循環はエラーとする。
 
-`changes`は任意の変更境界である。TASKファイルを明示して`bitz check`すると、Gitの変更パスが
+`changes`は任意の変更境界である。TASK IDまたはTASKファイルpathを明示して`bitz check`すると、Gitの変更パスが
 `changes`のファイルまたはディレクトリ接頭辞に含まれるかを検査する。境界の修正が必要ならTASK自身の
 `changes`を人間がdiffで確認して更新する。
 
@@ -99,10 +103,11 @@ changes:
 
 ```text
 REQ  --requires----> REQ / TECH / accepted ADR
-TECH --refines-----> REQ / TECH
+REQ  --refines-----> REQ / REQ:statement
+TECH --refines-----> REQ / TECH / REQ:statement / TECH:statement
 TECH --requires----> REQ / TECH / accepted ADR
 ADR  --requires----> REQ / TECH / accepted ADR
-TASK --addresses---> REQ:statement / TECH:statement
+TASK --addresses---> REQ:statement / TECH:statement / non-normative TECH
 TASK --requires----> REQ / TECH / TASK / accepted ADR
 NEW  --supersedes--> OLD of same kind
 ANY  --related-----> ANY

@@ -33,13 +33,16 @@ bitz context <spec-or-statement-id>... [--purpose interpret|implement|verify]
   [--format markdown|json] [--detail compact|standard|full]
   [--expand <document-id>[#revision-history]]... [--expect-digest sha256:<hex>]
   [--workspace <workspace-id>]
-bitz check [ids-or-paths...] [--full] [--workspace <workspace-id>]
+bitz check [requirement-id|technical-id|decision-id|task-id|statement-id|spec-file-path]...
+  [--base <git-revision>] [--workspace <workspace-id>]
   [--format text|json] [--report]
-bitz check --all-workspaces [--format text|json] [--report]
+bitz check --full [--base <git-revision>] [--workspace <workspace-id>]
+  [--format text|json] [--report]
+bitz check --all-workspaces [--base <git-revision>] [--format text|json] [--report]
 bitz verify [requirement-id|technical-id|statement-id|task-id|spec-file-path]...
   [--workspace <workspace-id>]
-  [--format text|json] [--report]
-bitz verify --all-workspaces [--format text|json] [--report]
+  [--timeout <seconds>] [--format text|json] [--report]
+bitz verify --all-workspaces [--timeout <seconds>] [--format text|json] [--report]
 bitz doctor [--workspace <workspace-id>|--all-workspaces] [--format text|json]
   [--plugin <id> --plugin-version <semver>]
   [--require-core-api <range>] [--require-capability <name>]...
@@ -57,10 +60,18 @@ SDD、DDD、同期はCore 1.0の公開コマンドへ含めない。
 `--workspace`とは排他的であり、全体`check`は`--full`、全体`verify`は各workspaceの引数なしverifyを含意する。
 詳細は[モノレポSPEC連合仕様](../03.詳細設計/02_SPECファイル規定/12_モノレポSPEC連合仕様.md)を正とする。
 
+`check`の規範文IDとSPECファイルpathは所有文書IDへ正規化する。コードpath、テストpath、ディレクトリ、
+構文上不正なID／pathは受け付けない。形式が正しい不在ID／SPEC pathはDiagnosticとして返す。
+明示対象と`--full`は排他的であり、Git比較の基準版は`--base`で指定する。
+対象範囲、変更集合、CIでの利用は
+[ADR-025](10_決定記録/ADR-025_Git基準版とcheck明示対象の確定.md)を正とする。
+
 `verify`の`spec-file-path`はREQ、TECH、TASKのSPEC Markdownだけを受け付け、Frontmatter IDへ正規化する。
 コードpath、テストpath、ディレクトリ、ADRは受け付けない。明示対象ごとのstatement選択は
 [ADR-023](10_決定記録/ADR-023_verify明示対象とpath入力の確定.md)と
 [参照・トレース・検証仕様](../03.詳細設計/02_SPECファイル規定/06_参照・トレース・検証仕様.md) §5を正とする。
+`--timeout`は1以上3600以下の秒数capであり、各workspaceの設定値を延長しない。実効値とcommand結果は
+[ADR-026](10_決定記録/ADR-026_verify実行binding・timeout・結果Schemaの確定.md)に従う。
 
 ## 4. プラグイン責務
 
@@ -120,3 +131,7 @@ Core 1.0はフックなしで完結する。フックは性能、互換性、攻
 - 拡張ごとの`doctor`プリフライトが不在、非互換、Capability不足を`blocked`にする
 - 同名のローカルIDを持つ複数workspace、横断依存、未登録member、所有境界違反のfixtureが正しく判定される
 - `--all-workspaces`の結果順と集約statusが同一入力で再現される
+- `check --base`がHEAD既定と明示merge-baseで同じ変更集合契約を使い、未追跡pathを漏らさない
+- `check`の明示対象、`--full`、`--all-workspaces`の排他と終了コードが再現される
+- `verify --timeout`がworkspace設定を延長せず、通常終了・非0終了・起動失敗・signal・timeoutを区別する
+- Diagnosticの`resultStatus`と`source.workspaceId`から、単一・連合結果を同じ順位で集約できる

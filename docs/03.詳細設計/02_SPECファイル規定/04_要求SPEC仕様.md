@@ -109,9 +109,12 @@ Coreは[EARS-AI Core構文仕様](../01_EARS-AI規格/01_Core構文仕様.md)が
 - 強い依存先、`implement`、`verify`の起点に指定された場合は`blocked`とする。
 - 意味を見直した後、`draft`または`approved`へ明示的に変更する。
 
+REQの許可遷移、作成時状態、禁止遷移のDiagnosticは
+[Frontmatter共通仕様](03_Frontmatter共通仕様.md) §5を正とする。
+
 ## 7. 承認済み要求の保護
 
-`safety.protectApprovedRequirements`が有効な場合、`bitz check`はGitの基準版と比較し、承認済み要求の
+`safety.protectApprovedRequirements`が有効な場合、`bitz check`は解決済みGit基準版と比較し、承認済み要求の
 `title`、EARS-AI規範文、強い関係が変更されたことを検出する。同じ変更で状態を`draft`または`outdated`へ
 戻していなければエラーとする。
 
@@ -121,7 +124,9 @@ Coreは[EARS-AI Core構文仕様](../01_EARS-AI規格/01_Core構文仕様.md)が
 承認済み要求の`title`、規範文、強い関係を変更する場合は、必要なstatus変更に加え、同じ変更で
 `Revision History`へ改訂理由と裁定の参照を追記する。履歴行だけを追加して承認保護を回避してはならない。
 
-Gitの基準版がない新規ファイルは比較対象外とする。Gitが利用できない場合、`bitz doctor`は保護を
+Git基準版に存在しない新規ファイルは変更前状態との比較対象外とする。基準版、変更集合、`--base`は
+[ADR-025](../../02.設計書/10_決定記録/ADR-025_Git基準版とcheck明示対象の確定.md)に従う。
+Gitが利用できない場合、`bitz doctor`は保護を
 実施できないことを警告し、Coreは文書を自動変更しない。
 
 ## 8. AI利用時の境界

@@ -107,8 +107,16 @@ verify:
 
 ## 5. 実効設定
 
-コマンドライン引数は対象範囲、出力形式、レポート生成、タイムアウト短縮だけを変更できる。
+コマンドライン引数は対象範囲、Git比較基準、出力形式、レポート生成、タイムアウト短縮だけを変更できる。
 タイムアウト延長、保護解除、検証コマンド差替えは行わない。
+
+`bitz check --base <git-revision>`は設定の保護を解除する値ではなく、変更範囲、状態遷移、
+承認済みREQ保護、TASK境界が共通利用する比較元を明示する。未指定時は`HEAD`を使用し、解決済みcommit IDを
+結果の`revision.base`へ記録する。
+
+`bitz verify --timeout <seconds>`は1以上3600以下の整数capとする。各workspaceの実効値は
+`min(CLI指定値, verify.timeoutSeconds)`であり、CLIから設定timeoutを延長できない。未指定時は設定値を使い、
+実効値をcommand結果へ記録する。
 
 `bitz check`、`bitz verify`、`bitz doctor`の`--format json`は、秘密情報を含まない実効設定を結果へ含めてよい。
 Core 1.0は`.env`を読み込まず、設定値の文字列補間を行わない。

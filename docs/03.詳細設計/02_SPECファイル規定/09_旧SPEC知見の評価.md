@@ -77,8 +77,11 @@ H3、表、または短い箇条書きで具体化する。
 - 各Diagnosticに対する最小の正例・反例fixture
 - H1/H2構成、EARS-AI配置、太字疑似セクションを検査する適合性テスト
 - TASK変更境界、Git revision、dirty状態、影響候補の統合テスト
+- HEAD／明示base、index、worktree、未追跡、削除、renameを含む変更集合テスト
+- REQ／TECH、ADR、TASKの状態遷移matrixテスト
 - 型付き依存の閉包、循環、状態、上限、Context Digestの適合性テスト
 - 各`MUST`句のTASK・テスト対応を1件ずつ欠落させるmutation fixture
+- command起動失敗、signal、timeout、非0終了とレポート生成条件の統合テスト
 - production入口を通る小さなEARS-AI垂直スライス
 
 安全性が高い永続処理、複数process競合、platform固有機能については、SPEC Coreを拡張するのではなく、

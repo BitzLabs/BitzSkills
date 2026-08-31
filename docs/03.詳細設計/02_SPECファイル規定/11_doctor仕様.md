@@ -108,7 +108,7 @@ Git不在はCore全体の起動失敗にしない。構文、Schema、参照、C
 }
 ```
 
-集約statusは`error`、`failed`、`blocked`、`passed_with_warnings`、`passed`の順で最も悪い状態を採用する。
+集約statusは[共通結果形式](../../02.設計書/01_共通アーキテクチャ.md)の最悪値規則を使う。
 
 ## 7. Diagnostic
 
@@ -129,6 +129,8 @@ Git不在はCore全体の起動失敗にしない。構文、Schema、参照、C
 ファイルを持たない診断は`source.kind: environment`を使用し、Core、Python、Git、プラグイン、コマンド、
 キャッシュを`component`で識別する。severityとresult statusは
 [ADR-021](../../02.設計書/10_決定記録/ADR-021_Diagnostic-severity・操作status・source-Schemaの分離.md)に従う。
+各Diagnosticインスタンスの`resultStatus`と操作集約は
+[ADR-027](../../02.設計書/10_決定記録/ADR-027_Diagnostic結果効果・集約・workspace-sourceの確定.md)に従う。
 
 モノレポ構造のDiagnosticは[モノレポSPEC連合仕様](12_モノレポSPEC連合仕様.md) §10を使用し、`doctor`専用の
 同義コードを重複定義しない。

@@ -266,6 +266,8 @@ Context Bundleは生成ファイルを正本にせず、コマンド結果とし
 所有文書のroleと異なる値を設定してはならない。少なくとも全`MUST`と、purposeに関係する`SHOULD`をLLM向け表示の
 先頭で省略せず提示する。依存が深いことを理由に規範文を参照だけへ落としてはならない。
 JSONでは各Semantic IRをConstraint Ledgerに1回だけ格納し、文書要素は`statementRefs`で参照する。
+`revision.commit`は実行時HEAD、`revision.dirty`はindex、worktree、未追跡かつ非ignore pathのいずれかに
+変更があることを表す。Git不在時は`commit: null`とし、失われる保証をDiagnosticへ残す。
 
 各文書のProjectionは次の3値とする。
 
@@ -330,7 +332,8 @@ target statement集合は起点種別により次のとおり決める。
 - REQまたは規範文を持つTECHの文書ID起点: 所有文書の全規範文と、適用される強い依存・refinement。
 - 規範文ID起点: 指定句と、その句へ適用される強い依存・直接refinement。同じ所有文書の兄弟句は
   `adjacent`として表示し、target statementへ暗黙追加しない。
-- TASK起点: `addresses`に列挙された句と`requires`閉包。
+- TASK起点: `addresses`に列挙された句と`requires`閉包。規範文を持たないTECH IDは
+  target statementへ加えず、文書単位verification bindingとして保持する。
 - 規範文を持たないTECH起点: target statementは空とし、文書単位の`tests`をverifyが実行する。
 
 複数起点はtarget statement集合の和集合を使用し、同じ句を1回だけ集計する。
@@ -344,7 +347,9 @@ target statement集合は起点種別により次のとおり決める。
 - `verify`では未testedの`MUST`が1件でもあればテスト実行前に`blocked`とする。
 
 `coverage`は`must`、`should`、`may`を同じ構造で持ち、各区分に`total`、`addressed`、`tested`、
-`unaddressed`、`untested`を格納する。TASK起点で同一文書内の対象外規範文がある場合だけ`adjacent`へ格納する。
+`unaddressed`、`untested`を格納する。TASK起点または規範文ID起点で、同一文書内に対象外規範文がある場合は
+`adjacent`へ格納する。規範文なしTECHの文書単位bindingはcoverageへ空の句を追加せず、
+Verification Bindingsに保持する。
 
 | purpose | coverageの扱い |
 |---|---|
@@ -365,7 +370,7 @@ Context Digestは、次をCanonical JSON化したSHA-256とする。
 - applicable/advisory文書のID、状態、`semanticHash`
 - 閉包内の強い関係
 - EARS-AI Semantic IRのCanonical表現
-- 実装パス、テスト対応、検証コマンド名、TASK変更境界
+- 実装パス、テスト対応、検証コマンド名、正規化した`argv` template、`cwd`、設定timeout、TASK変更境界
 - 到達workspaceのIDとGitルート相対path、修飾起点、workspace境界を越えるedge、解釈へ影響する実効設定
 
 生成時刻、絶対パス、キャッシュ位置、出力形式は含めない。
@@ -379,6 +384,7 @@ Canonical JSON化して計算する。これは表示の再現性とキャッシ
 
 実装・テストファイルの内容hashも含めない。エージェント自身の正当な編集でDigestが変わり続けるのを避けるためである。
 コード競合はGitのHEAD、index、worktree差分とTASK変更境界で検出し、Context Digestは仕様解釈のstale検出に限定する。
+verify呼出しのCLI timeoutは実行ごとのcapとして結果へ記録し、Context Digestへ含めない。
 
 エージェントは編集直前に同じrequestを`--expect-digest`付きで再実行する。現在digestが一致しなければ
 `CTX-STALE-001`で`blocked`とし、変更済み文書とedgeを返す。自動的に新しい意味を受諾して実装を続行しない。
@@ -426,6 +432,8 @@ Context Resolutionは基準環境で1秒以内を目標とする。ネットワ�
 成果物を直ちに不正とは断定せず、現在の操作を安全に継続できないため`blocked`にする。
 severityとresult statusは[ADR-021](../../02.設計書/10_決定記録/ADR-021_Diagnostic-severity・操作status・source-Schemaの分離.md)に従い、
 同じerror severityでも原因に応じて`failed`または`blocked`へ対応付ける。
+実行時Diagnosticの`resultStatus`、file sourceの`workspaceId`、操作集約は
+[ADR-027](../../02.設計書/10_決定記録/ADR-027_Diagnostic結果効果・集約・workspace-sourceの確定.md)に従う。
 
 ## 13. エージェントアダプター契約
 

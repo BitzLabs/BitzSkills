@@ -94,6 +94,9 @@ workspace:
 rootを先頭、その後をworkspace ID辞書順で処理する。
 `--workspace`と`--all-workspaces`は排他的とする。`check --all-workspaces`は`--full`を含意し、対象ID・pathを
 受け付けない。`verify --all-workspaces`も引数なしverifyを各workspaceへ適用し、対象ID・pathを受け付けない。
+`check --all-workspaces --base <git-revision>`の基準版はrepository全体で1つとし、解決済みcommitを
+全memberの変更範囲、状態遷移、承認保護、TASK境界へ共通利用する。
+明示`check`はselected workspace内のREQ、TECH、ADR、TASK、規範文、SPECファイルpathだけを受け付ける。
 明示`verify`のSPECファイルpathは選択workspace内のREQ、TECH、TASKだけを受け付け、Frontmatter IDへ
 正規化する。コードpath、テストpath、ディレクトリ、ADRを受け付けない。
 
@@ -181,8 +184,10 @@ Context Digestには、到達したworkspace IDとpath、修飾起点、修飾ed
 `(workspace-id, command, test-path)`で識別する。`cwd`はコマンド定義に従属するため識別子へ含めない。
 コマンド名が同じでもworkspaceが異なれば統合しない。実行済み集合は連合全体で1つとし、
 横断refinementが参照する同一テストを二重に実行しない。
-結果はworkspace別に保持し、集約statusは通常の最悪値規則を使う。
+結果はworkspace別に保持し、集約statusは[共通結果形式](../../02.設計書/01_共通アーキテクチャ.md)の
+最悪値規則を使う。
 失敗したworkspaceがあっても、独立した後続workspaceは可能な範囲で継続する。
+`--timeout`は全workspaceへ共通のcapとして渡し、各commandの実効値は当該workspace設定との小さい方とする。
 
 全体操作のJSONは次の共通外形を持つ。
 
@@ -204,8 +209,9 @@ Context Digestには、到達したworkspace IDとpath、修飾起点、修飾ed
 
 `workspaces`は実行順と同じ順序を保ち、各要素に対象別Diagnostic、検証時はcommandsとdurationを追加できる。
 
-`--report`を指定した全体操作の集約レポートはfederation rootの`.spec/reports/`へ保存し、member別結果に
-workspace IDを含める。member単独操作のレポートはmember自身の`.spec/reports/`へ保存する。
+`--report`を指定した全体操作、または全体statusが`failed`、`blocked`、`error`の集約レポートは
+federation rootの`.spec/reports/`へ保存し、member別結果にworkspace IDを含める。
+member単独操作のレポートはmember自身の`.spec/reports/`へ保存する。引数不正では保存しない。
 
 ## 9. 上限と性能
 
@@ -234,6 +240,8 @@ workspace IDを含める。member単独操作のレポートはmember自身の`.
 
 severityとresult statusは
 [ADR-021](../../02.設計書/10_決定記録/ADR-021_Diagnostic-severity・操作status・source-Schemaの分離.md)に従う。
+file sourceは`workspaceId`とworkspace相対pathの組で一意にし、Diagnosticの実行時効果と集約は
+[ADR-027](../../02.設計書/10_決定記録/ADR-027_Diagnostic結果効果・集約・workspace-sourceの確定.md)に従う。
 
 ## 11. 非目標
 

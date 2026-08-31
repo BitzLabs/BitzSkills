@@ -64,7 +64,8 @@ safety:
 個人・小規模チームではリポジトリ管理者を信頼し、設定変更はGit diffとレビューで管理する。
 `policy`と`local`の二層スコープ、外部署名、専用override権限は導入しない。
 
-環境変数やコマンド引数は、出力形式、タイムアウト、一時領域、`--full`など実行上の便宜だけを変更できる。
+環境変数やコマンド引数は、出力形式、タイムアウト、一時領域、`--full`、Git比較基準など
+実行上の便宜だけを変更できる。
 設定値を変更した実行は、実効値を`--format json`の結果へ含める。
 
 ## 4. 共通Frontmatter
@@ -121,20 +122,19 @@ Core 1.0は次の最小トレースだけを扱う。
 
 ## 7. 状態
 
-要求文書の状態は次の3つに限定する。
-
-```text
-draft -> approved
-           |
-           v
-        outdated -> draft
-```
+要求文書と技術仕様の状態は次の3つに限定する。
 
 | 状態 | 意味 |
 |---|---|
 | `draft` | 編集中 |
 | `approved` | 人間が意味を確認済み |
 | `outdated` | 上位要求または実装変更の影響候補 |
+
+許可遷移は`draft -> approved`、`approved -> draft|outdated`、
+`outdated -> draft|approved`と同一状態の維持とする。作成時は`draft`または`approved`を選択できる。
+ADRとTASKを含む状態遷移の正は
+[Frontmatter共通仕様](../03.詳細設計/02_SPECファイル規定/03_Frontmatter共通仕様.md) §5と
+[ADR-024](10_決定記録/ADR-024_SPEC文書の状態遷移契約.md)とする。
 
 `verified`は文書状態ではなく、特定時点の`bitz verify`実行結果として扱う。`review`、`implementing`、
 run状態機械はCore 1.0の共通契約に含めない。進行中状態はGit、Issue、または利用中のAI CLIが管理する。
@@ -148,8 +148,9 @@ REQ、TECH、ADR、TASKは、種別ごとにH1とH2の構成を固定する。�
 ## 9. レポート
 
 - 成功時は既定でファイルを生成しない。
-- 失敗時は再現に必要な対象、Diagnostic、コマンド、終了コードを保存してよい。
+- `failed`、`blocked`、`error`では再現に必要な対象、Diagnostic、コマンド、終了コードを自動保存する。
 - `--report`指定時は`.spec/reports/<timestamp>-<operation>.json`へ保存する。
+- 引数不正の終了コード4ではworkspace結果を生成していないため保存しない。
 - `.spec/reports/`は既定で`.gitignore`対象とし、長期証跡はCI artifactまたはPR添付へ保存する。
 - ULID、追記型台帳、永続ロックはCore 1.0で必須にしない。
 - 同時書込みはGit worktreeまたはOSの単純な一時ファイル置換で衝突を避ける。

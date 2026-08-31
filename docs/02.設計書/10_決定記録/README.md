@@ -48,3 +48,7 @@
 | [ADR-021](ADR-021_Diagnostic-severity・操作status・source-Schemaの分離.md) | Diagnostic severity・操作status・source Schemaの分離 | accepted | 01, EARS-AI規格/06, SPECファイル規定/06・10〜12 |
 | [ADR-022](ADR-022_規範行候補抽出とID構文検証の分離.md) | 規範行候補抽出とID構文検証の分離 | accepted | EARS-AI規格/01・06, SPECファイル規定/04・06 |
 | [ADR-023](ADR-023_verify明示対象とpath入力の確定.md) | verify明示対象とpath入力の確定 | accepted | 03, SPECファイル規定/06・10・12 |
+| [ADR-024](ADR-024_SPEC文書の状態遷移契約.md) | SPEC文書の状態遷移契約 | accepted | 02, SPECファイル規定/03〜05 |
+| [ADR-025](ADR-025_Git基準版とcheck明示対象の確定.md) | Git基準版とcheck明示対象の確定 | accepted | 01・03, SPECファイル規定/04・06・07 |
+| [ADR-026](ADR-026_verify実行binding・timeout・結果Schemaの確定.md) | verify実行binding・timeout・結果Schemaの確定 | accepted | 01・03, SPECファイル規定/02・06・10・12 |
+| [ADR-027](ADR-027_Diagnostic結果効果・集約・workspace-sourceの確定.md) | Diagnostic結果効果・集約・workspace sourceの確定 | accepted | 01, SPECファイル規定/06・10〜12 |
