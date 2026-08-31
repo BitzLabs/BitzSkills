@@ -110,7 +110,7 @@ verify:
 コマンドライン引数は対象範囲、出力形式、レポート生成、タイムアウト短縮だけを変更できる。
 タイムアウト延長、保護解除、検証コマンド差替えは行わない。
 
-`bitz check --format json`と`bitz doctor --format json`は、秘密情報を含まない実効設定を結果へ含めてよい。
+`bitz check`、`bitz verify`、`bitz doctor`の`--format json`は、秘密情報を含まない実効設定を結果へ含めてよい。
 Core 1.0は`.env`を読み込まず、設定値の文字列補間を行わない。
 
 ## 6. 解析制約

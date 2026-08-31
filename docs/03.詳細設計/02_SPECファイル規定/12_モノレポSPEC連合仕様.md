@@ -177,7 +177,8 @@ Context Digestには、到達したworkspace IDとpath、修飾起点、修飾ed
 `bitz verify --all-workspaces`はworkspaceごとにContextを解決し、テストを所有するworkspaceの設定で実行する。
 横断refinementが共通規範文をcoverする場合も、テスト所有workspaceのコマンドと`cwd`を使用する。実行単位は
 `(workspace-id, command, test-path)`で識別する。`cwd`はコマンド定義に従属するため識別子へ含めない。
-コマンド名が同じでもworkspaceが異なれば統合しない。
+コマンド名が同じでもworkspaceが異なれば統合しない。実行済み集合は連合全体で1つとし、
+横断refinementが参照する同一テストを二重に実行しない。
 結果はworkspace別に保持し、集約statusは通常の最悪値規則を使う。
 失敗したworkspaceがあっても、独立した後続workspaceは可能な範囲で継続する。
 

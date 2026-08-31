@@ -24,7 +24,8 @@ MCPの`bitz_doctor`は同じ情報を構造化引数で受け取る。`plugin`�
 
 | # | 検査 | 判定 |
 |---:|---|---|
-| 1 | Core実行体、MCP server、Pythonの対応版 | 起動不能・実行環境不適合は`error` |
+| 1a | Core実行体・MCP serverの版、Pythonの対応版 | 要求範囲外・非対応版は`blocked`。導入・更新手順を返す |
+| 1b | Core実行体・MCP serverの起動 | 破損、権限不足、I/O失敗による起動不能は`error` |
 | 2 | 呼出し元プラグインとCore API | major不一致・範囲外は`blocked` |
 | 3 | 要求Capability | 1つでも不足すれば`blocked` |
 | 4 | `.spec/`と`bitz.yaml`の存在 | 不在は`blocked` |
@@ -113,7 +114,8 @@ Git不在はCore全体の起動失敗にしない。構文、Schema、参照、C
 
 | コード | 条件 |
 |---|---|
-| `SPEC-DOCTOR-CORE-001` | CoreまたはPythonの版が不適合 |
+| `SPEC-DOCTOR-CORE-001` | CoreまたはPythonの版が不適合。結果は`blocked` |
+| `SPEC-DOCTOR-CORE-002` | Core実行体またはMCP serverを起動できない。結果は`error` |
 | `SPEC-DOCTOR-PLUGIN-001` | プラグインID、版、互換性要求が不正または不足 |
 | `SPEC-DOCTOR-API-001` | 要求Core API範囲と実行中Coreが非互換 |
 | `SPEC-DOCTOR-CAPABILITY-001` | 要求CapabilityをCoreが提供しない |
