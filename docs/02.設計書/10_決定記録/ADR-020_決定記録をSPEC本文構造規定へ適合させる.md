@@ -60,8 +60,15 @@ ADR-015は「既存SPECはCore 1.0適合前に`Revision History`を追加する�
 本ADRは[04.提案資料/03_設計書・詳細設計レビューと改訂提案.md](../../04.提案資料/03_設計書・詳細設計レビューと改訂提案.md)
 §3.7に対する裁定であり、同書 附録B.7の手順で適用した。
 
+Decision 4のうち、`Amends`相当を`related`だけで表すとした部分は
+[ADR-033](ADR-033_部分改訂ADRの記録規約.md)が置き換えた。部分改訂は`related`に加えて、後継ADRの
+Decision本文、旧ADRの`Notes`、旧ADRの`Revision History`の3点で記録する。同Decision後段の
+「改訂関係の機械追跡が実測で必要になった場合に新しい関係型を裁定する」は維持されている。
+本ADRの他のDecisionは変更されていない。
+
 ## Revision History
 
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-08-31 | 初版を作成 | `ADR-015` |
+| 2026-08-31 | Decision 4の`Amends`表現を`ADR-033`が部分改訂 | `ADR-033` |

@@ -45,6 +45,16 @@ ADR-009はCore 1.0の公開操作を3つに限定したが、EARS-AIを構造化
 3. **LLMに関連文書を選ばせる**: 同じ入力でも選択が変わり、依存漏れを機械的に失敗扱いできない。
 4. **深度上限だけで打ち切る**: 末端の制約を欠いた部分コンテキストを正常に見せてしまう。
 
+## Notes
+
+次のDecision項目が後続ADRによって部分改訂されている。本ADRの他のDecisionは有効である。
+
+| 対象 | 後継ADR | 内容 |
+|---|---|---|
+| Decision 1（`supersedes`） | [ADR-012](ADR-012_置換済みREQ・TECHの適用禁止.md) | 置換済みREQ/TECHを逆参照で判定し、`implement`／`verify`で`blocked`とする規則を追加 |
+| Decision 2、5 | [ADR-014](ADR-014_Semantic-IRと段階的Context-Projection.md) | 段階的Projectionを追加し、Context DigestからProjectionの違いを除外 |
+| Decision 5 | [ADR-015](ADR-015_SPEC改訂履歴の必須化.md) | 改訂履歴を非規範メタデータとし、`semanticHash`と`fileHash`を分離 |
+
 ## Revision History
 
 | Date | Summary | Reference |
@@ -52,3 +62,4 @@ ADR-009はCore 1.0の公開操作を3つに限定したが、EARS-AIを構造化
 | 2026-08-25 | 初版を作成 | — |
 | 2026-08-27 | 置換済み文書の扱い、Projection、改訂履歴を後続ADRで改訂 | `ADR-012` `ADR-014` `ADR-015` |
 | 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |
+| 2026-08-31 | 部分改訂の対象Decision項目を`Notes`へ明示 | `ADR-012` `ADR-014` `ADR-015` |

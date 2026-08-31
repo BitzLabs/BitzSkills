@@ -14,8 +14,20 @@
 - H1は `# <id> <title>`、H2は `Context`、`Decision`、`Consequences`、任意の `Alternatives`、
   `Notes`、最終H2の `Revision History` とする
   （[Markdown本文構成・スタイル](../../03.詳細設計/02_SPECファイル規定/08_Markdown本文構成・スタイル.md) §5）。
-- 決定を変更する場合は既存ADRのDecisionを書き換えず、後継ADRを作成して
-  後継側の `relations.supersedes` に旧IDを書き、旧ADRの `status` を `superseded` にする。
+- 決定を変更する場合は既存ADRのDecisionを書き換えず、後継ADRを作成する。
+- **全Decision項目が置き換わる場合**は、後継側の `relations.supersedes` に旧IDを書き、
+  旧ADRの `status` を `superseded` にする。
+- **一部のDecision項目だけが置き換わる場合**は部分改訂とし、旧ADRは `accepted` のままとする。
+  `supersedes` / `superseded` は使わず、次の3点をすべて記録する
+  （[ADR-033](ADR-033_部分改訂ADRの記録規約.md)）。
+  1. 後継ADRのDecision本文へ、置き換える旧ADR IDとDecision項目、および他のDecisionを
+     変更しないことを明記し、`relations.related` へ旧ADRを含める。
+  2. 旧ADRの `Notes` へ、どのDecision項目がどの後継ADRへ移ったかを記載する。
+  3. 旧ADRの `Revision History` へ1行追加し、Summaryへ対象Decision項目、
+     Reference列へ後継ADR IDを書く。
+- Decisionが番号付き箇条書きでないADRでは、Decision項目の代わりに該当箇所を一意に特定できる
+  語句を用いる。番号を後付けするためにDecision本文を書き換えない。
+- `x-amends` などのFrontmatter拡張キーと、`amends` 相当の新しい関係型は追加しない。
 - 非意味的な訂正と後継化は、旧ADRの `Revision History` へ1行で要約する。
 - 設計書本文の該当箇所からADRへリンクする。
 - 本ディレクトリは `docs/` 配下の設計資料であり、`.spec/` の配置・命名・探索規則は適用しない。
@@ -57,3 +69,4 @@
 | [ADR-030](ADR-030_verify実行bindingの正規識別子と重複排除単位の統一.md) | verify実行bindingの正規識別子と重複排除単位の統一 | accepted | ADR-018・026, SPECファイル規定/02・06・10・12 |
 | [ADR-031](ADR-031_変更コード・テストからの検査対象選択.md) | 変更コード・テストからの検査対象選択 | accepted | 01・02・05, SPECファイル規定/06 |
 | [ADR-032](ADR-032_ID再利用検出のCore保証範囲.md) | ID再利用検出のCore保証範囲 | accepted | EARS-AI規格/01・06, SPECファイル規定/01・04・07 |
+| [ADR-033](ADR-033_部分改訂ADRの記録規約.md) | 部分改訂ADRの記録規約 | accepted | ADR-020, 決定記録README |

@@ -50,6 +50,9 @@ statement-id = document-id, ":", local-id
 
 ## Notes
 
+Decisionのうち`local-id`の字句規則とCore文書prefixは[ADR-013](ADR-013_文書IDとローカルIDの字句規則訂正.md)が
+置き換えた。2階層固定という決定と、規範文の分割規則は変更されていない。
+
 関連文書: [02_specディレクトリ仕様.md](../02_specディレクトリ仕様.md), [EARS-AI規格/01_Core構文仕様.md](../../03.詳細設計/01_EARS-AI規格/01_Core構文仕様.md)
 
 ## Revision History
@@ -59,3 +62,4 @@ statement-id = document-id, ":", local-id
 | 2026-08-25 | 初版を作成 | — |
 | 2026-08-25 | 文書IDとローカルIDの字句規則をADR-013で訂正 | `ADR-013` |
 | 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |
+| 2026-08-31 | 部分改訂の対象箇所（`local-id`字句規則とprefix）を明示 | `ADR-013` |

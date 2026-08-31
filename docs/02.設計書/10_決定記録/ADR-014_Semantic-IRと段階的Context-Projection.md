@@ -57,6 +57,14 @@ EARS-AIをLLMへ渡す方法には、原文Markdownをそのまま渡す案、AS
 4. **依存深度で探索を打ち切る**: 深い位置の必須制約を欠いた部分コンテキストを正常に見せる。
 5. **LLMに参照先を自由探索させる**: 選択が非決定論的になり、参照漏れをCoreが検出できない。
 
+## Notes
+
+次のDecision項目が後続ADRによって部分改訂されている。本ADRの他のDecisionは有効である。
+
+| 対象 | 後継ADR | 内容 |
+|---|---|---|
+| Decision 6、7 | [ADR-015](ADR-015_SPEC改訂履歴の必須化.md) | 改訂履歴を非規範メタデータとして意味集合から除外し、明示展開時の返却規則と`semanticHash`／`fileHash`の分離を定義 |
+
 ## Revision History
 
 | Date | Summary | Reference |
@@ -64,3 +72,4 @@ EARS-AIをLLMへ渡す方法には、原文Markdownをそのまま渡す案、AS
 | 2026-08-27 | 初版を作成 | — |
 | 2026-08-27 | Revision Historyの非規範化と明示展開をADR-015で追加 | `ADR-015` |
 | 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |
+| 2026-08-31 | 部分改訂の対象Decision項目を`Notes`へ明示 | `ADR-015` |

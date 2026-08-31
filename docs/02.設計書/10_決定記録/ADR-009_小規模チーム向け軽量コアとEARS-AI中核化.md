@@ -70,6 +70,16 @@ PyPI + `uv`をスタンドアロン実行体の代替経路として維持する
 3. **EARS-AIを形式仕様言語として扱う**: 自由記述本文に形式意味論がなく、保証を過大表示する。
 4. **全ProfileをCore 1.0へ含める**: 未検証の語彙と実装負荷が通常利用へ流入する。
 
+## Notes
+
+次のDecision項目が後続ADRによって部分改訂されている。本ADRの他のDecisionは有効である。
+
+| 対象 | 後継ADR | 内容 |
+|---|---|---|
+| Decision 4 | [ADR-010](ADR-010_型付き依存とContext-Resolutionの中核化.md) | 公開操作へ`context`を追加し、3つから4つへ改訂 |
+| Decision 9 | [ADR-016](ADR-016_Agent-Plugins準拠の複数プラグイン配布.md) | 初期配布をAgent Plugins 1.0.0パッケージ主体へ改訂 |
+| ADR-003から引き継いだDiagnostic所有者の扱い | [ADR-011](ADR-011_Diagnostic所有者とコード命名規約.md) | Diagnostic所有者とコード命名規約を改訂。番号付きDecisionには対応項目がない |
+
 ## Revision History
 
 | Date | Summary | Reference |
@@ -77,3 +87,4 @@ PyPI + `uv`をスタンドアロン実行体の代替経路として維持する
 | 2026-08-25 | 初版を作成 | — |
 | 2026-08-27 | 公開操作、Diagnostic所有者、配布形態を後続ADRで改訂 | `ADR-010` `ADR-011` `ADR-016` |
 | 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |
+| 2026-08-31 | 部分改訂の対象Decision項目を`Notes`へ明示 | `ADR-010` `ADR-011` `ADR-016` |
