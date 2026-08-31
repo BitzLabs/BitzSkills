@@ -31,6 +31,7 @@ bitz-sddの共通Frontmatter・ライフサイクル・検証契約を対象に�
 | `derived_from`、`implements`、`depends_on`等の無規律なグラフ | 5つの型付き関係と句単位テスト対応へ限定する |
 | featureごとの`test-spec.md` | REQ/TECHの`Verification`節へ統合する |
 | stale伝播と状態更新 | 逆参照から影響候補を警告し、人間が`outdated`を選ぶ |
+| 成果物ごとの完全な変更台帳 | 最終H2の`Revision History`で主要な改訂意図だけを3列に要約し、正確な差分・変更者・時刻はGitを正とする（[ADR-015](../../02.設計書/10_決定記録/ADR-015_SPEC改訂履歴の必須化.md)） |
 
 ## 4. 採用しない機能
 
@@ -41,7 +42,6 @@ bitz-sddの共通Frontmatter・ライフサイクル・検証契約を対象に�
 | レビューごとの複数JSON・統合レポート | ファイル数と待ち時間が急増する |
 | 専用`spec-issues/`ライフサイクル | 通常のIssueまたはTASK/ADRで足りる |
 | 成果物ごとのversion、updated | Git履歴と重複し、同期ずれを生むため不採用 |
-| 最終H2の`Revision History` | 主要な改訂意図だけを3列で要約。正確な差分・変更者・時刻はGitを正とする |
 | 全変更の自動DAG伝播 | 候補抽出以上の意味判定は人間なしでは不正確 |
 | platform・署名・lease等の安全機構をSPEC共通機能化 | 個別runtimeの責務でありSPEC形式を肥大化させる |
 

@@ -402,8 +402,8 @@ Context Resolutionは基準環境で1秒以内を目標とする。ネットワ�
 | `CTX-STATE-SUPERSEDED-001` | 起点または強い依存先が置換済み。後継IDを返し、結果は`blocked` |
 | `CTX-STATE-SUPERSEDED-002` | 同じ旧文書に複数の有効な後継がある。結果は`failed` |
 | `CTX-LIMIT-001` | 完全な閉包が上限を超える。結果は`blocked` |
-| `CTX-COVERAGE-TASK-001` | 対象`MUST`をaddressするTASKがない |
-| `CTX-COVERAGE-TEST-001` | 対象`MUST`にテスト対応がない |
+| `CTX-COVERAGE-TASK-001` | 対象`MUST`をaddressするTASKがない。`implement`でwarning |
+| `CTX-COVERAGE-TEST-001` | 対象`MUST`にテスト対応がない。`implement`でwarning、`verify`で`blocked` |
 | `CTX-STALE-001` | 期待Context Digestと現在値が異なる。結果は`blocked` |
 | `CTX-PROJECTION-001` | `expand`対象が完全解決済み集合にない。結果は`failed` |
 | `CTX-PROJECTION-LIMIT-001` | 要求されたProjectionが提示量hard limitを超える。結果は`failed` |
