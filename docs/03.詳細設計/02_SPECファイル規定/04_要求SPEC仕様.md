@@ -88,7 +88,9 @@ Coreは[EARS-AI Core構文仕様](../01_EARS-AI規格/01_Core構文仕様.md)が
 ### `draft`
 
 - Frontmatterの必須項目とID一意性を検査する。
-- 不完全なEARS-AI行はエラーではなく警告にできる。
+- 不完全なEARS-AI行は、`EAI-CORE-SYNTAX-*`と`EAI-CORE-SEM-001`に限りwarningとする。
+  ID形式・重複・再利用は`draft`でもerrorとする
+  （[AST・パーサー仕様](../01_EARS-AI規格/06_AST・パーサー仕様.md) §6）。
 - `implements`、`tests`、`verify`はなくてよい。
 - `purpose=interpret`ではadvisoryとして取得できる。
 

@@ -49,6 +49,7 @@ monorepo:
 | `schemaVersion` | string | Yes | なし | Core 1.0では`"1.0"` |
 | `language` | string | No | `ja` | BCP 47の言語タグ |
 | `earsAi` | string | Yes | なし | 対象EARS-AIのmajor.minor |
+| `profiles` | map | No | `{}` | Profile名前空間から`major.minor`への対応。Core 1.0では保持のみ |
 | `workspace.id` | string | No | `root` | workspace識別子。連合ルートとmemberでは必須 |
 | `monorepo.members` | object[] | No | なし | Gitルートだけで使用する`id`と`path`の明示カタログ |
 | `monorepo.maxMembers` | integer | No | `20` | 1以上100以下。member数が超えれば`blocked` |
@@ -61,6 +62,12 @@ monorepo:
 
 未知の標準キーは、同じmajor内の前方互換性のため警告して保持する。型不正と必須キー欠如は`error`、
 未知の`schemaVersion` majorは未対応の前提として`blocked`とする。
+
+`profiles`はProfileの正式実装まで予約キーとする。Core 1.0は値の型（`map<string, string>`、
+キーは`[a-z][a-z0-9]{0,15}`、値は`major.minor`）だけを検査し、未知キー警告を出さず、
+合否判定、Context Digest、Projectionへ使用しない。Coreへ登録されていない名前空間の宣言は
+`bitz doctor`が情報として表示する。Profile版の互換性判定は、当該Profileが正式実装された
+時点で有効化する（[拡張プロファイル仕様](../01_EARS-AI規格/02_拡張プロファイル仕様.md) §3）。
 
 `verify.commands`は仕様作成だけの段階では省略できる。`bitz verify`を実行するときに対象のコマンドが
 定義されていなければ`blocked`とする。

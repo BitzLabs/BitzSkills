@@ -92,20 +92,28 @@ Serializerは意味を書き換えず、フォーマット修正と内容変更�
 
 診断は`bitz-core`が所有するDiagnosticスキーマに従う（[01_共通アーキテクチャ.md](../../02.設計書/01_共通アーキテクチャ.md) §6）。Core診断のOWNERセグメントは`EAI`とし、Profile診断は所有拡張のOWNERを用いる（[ADR-011](../../02.設計書/10_決定記録/ADR-011_Diagnostic所有者とコード命名規約.md)）。
 
-| コード | 意味 |
-|---|---|
-| `EAI-CORE-SYNTAX-001` | タグ順序不正 |
-| `EAI-CORE-SYNTAX-002` | 必須タグ不足 |
-| `EAI-CORE-SYNTAX-003` | 発動条件の複数指定 |
-| `EAI-CORE-SYNTAX-004` | 未閉鎖または不正なタグ／未エスケープの `[` |
-| `EAI-CORE-SYNTAX-005` | 未閉鎖のコードスパン |
-| `EAI-CORE-SYNTAX-006` | 行末句点の欠落 |
-| `EAI-CORE-ID-001` | ID形式不正（2階層固定に不適合） |
-| `EAI-CORE-ID-002` | ID重複 |
-| `EAI-CORE-ID-003` | 削除済みIDの再利用 |
-| `EAI-CORE-SEM-001` | オペランド不足 |
-| `EAI-CORE-LANG-001` | 正本言語との不一致 |
-| `EAI-EXT-UNKNOWN-001` | 未登録拡張 |
-| `EAI-EXT-CONFLICT-001` | 拡張競合 |
+| コード | severity | 意味 |
+|---|---|---|
+| `EAI-CORE-SYNTAX-001` | error（`draft`ではwarning） | タグ順序不正 |
+| `EAI-CORE-SYNTAX-002` | error（`draft`ではwarning） | 必須タグ不足 |
+| `EAI-CORE-SYNTAX-003` | error（`draft`ではwarning） | 発動条件の複数指定 |
+| `EAI-CORE-SYNTAX-004` | error（`draft`ではwarning） | 未閉鎖または不正なタグ／未エスケープの `[` |
+| `EAI-CORE-SYNTAX-005` | error（`draft`ではwarning） | 未閉鎖のコードスパン |
+| `EAI-CORE-SYNTAX-006` | error（`draft`ではwarning） | 行末句点の欠落 |
+| `EAI-CORE-ID-001` | error | ID形式不正（2階層固定に不適合） |
+| `EAI-CORE-ID-002` | error | ID重複 |
+| `EAI-CORE-ID-003` | error | 削除済みIDの再利用 |
+| `EAI-CORE-SEM-001` | error（`draft`ではwarning） | オペランド不足 |
+| `EAI-CORE-LANG-001` | warning | 正本言語との不一致 |
+| `EAI-EXT-UNKNOWN-001` | warning | 未登録拡張 |
+| `EAI-EXT-CONFLICT-001` | error | 拡張競合 |
+
+`draft`での降格は、所有文書の`status`が`draft`である場合だけ適用する。ID系3コードは、
+`status`にかかわらず`error`とする。IDは文書を越えた索引と参照解決の基礎であり、
+`draft`の不正IDが他文書の参照検査を壊すためである。
+
+severityから結果statusへの写像は[共通アーキテクチャ](../../02.設計書/01_共通アーキテクチャ.md) §5に従う。
+`error`が1件でもあれば`failed`、`warning`だけなら`passed_with_warnings`とする。
+Profile診断のseverityは各Profile文書が同じ形式で定義する。
 
 診断コードは永続識別子とし、再利用と意味変更を禁止する。廃止したコードは予約済みとして本表に残す。

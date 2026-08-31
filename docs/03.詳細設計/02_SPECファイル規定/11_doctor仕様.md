@@ -31,7 +31,8 @@ MCPの`bitz_doctor`は同じ情報を構造化引数で受け取る。`plugin`�
 | 5 | `bitz.yaml`の構文、型、必須項目 | 不正は`error` |
 | 6 | `schemaVersion`互換性 | 未知majorは`blocked` |
 | 7 | モノレポ連合、member、workspace ID、所有境界 | 不整合は`blocked`または`failed` |
-| 8 | EARS-AI/Profile版互換性 | 未知majorは`blocked` |
+| 8 | EARS-AI版互換性 | 未知majorは`blocked` |
+| 8a | `profiles`宣言 | Core 1.0では判定せず、宣言内容と未登録名前空間を情報として表示 |
 | 9 | Git利用可否 | 不在はwarningとし、失われる保証を列挙 |
 | 10 | `verify.commands`の実行ファイルと`cwd` | 未解決は`blocked` |
 | 11 | キャッシュ | 破損時は無視して再構築可能ならwarning |
@@ -118,7 +119,7 @@ Git不在はCore全体の起動失敗にしない。構文、Schema、参照、C
 | `SPEC-DOCTOR-CAPABILITY-001` | 要求CapabilityをCoreが提供しない |
 | `SPEC-DOCTOR-WORKSPACE-001` | `.spec/`または`bitz.yaml`がない |
 | `SPEC-DOCTOR-CONFIG-001` | `bitz.yaml`のSchemaが不正 |
-| `SPEC-DOCTOR-EARS-001` | EARS-AI版に互換性がない |
+| `SPEC-DOCTOR-EARS-001` | `earsAi`のmajorに互換性がない。Core 1.0では`profiles`をこの判定へ含めない |
 | `SPEC-DOCTOR-GIT-001` | Gitを利用できず一部保証が失われる |
 | `SPEC-DOCTOR-COMMAND-001` | 検証コマンドまたは`cwd`を解決できない |
 | `SPEC-DOCTOR-CACHE-001` | キャッシュが破損または不整合 |

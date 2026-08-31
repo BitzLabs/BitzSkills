@@ -169,14 +169,15 @@ Context Digestには、到達したworkspace IDとpath、修飾起点、修飾ed
 
 1. catalogとmember設定
 2. workspace IDとpathの一意性、非重複性
-3. Schema、EARS-AI、Profile majorの互換性
+3. SchemaとEARS-AIのmajor互換性。Profileの互換性はCore 1.0では判定しない
 4. 連合全体の修飾ID索引と横断関係
 5. workspaceごとのSPEC、所有パス、検証コマンド
 6. 横断逆参照による影響候補
 
 `bitz verify --all-workspaces`はworkspaceごとにContextを解決し、テストを所有するworkspaceの設定で実行する。
 横断refinementが共通規範文をcoverする場合も、テスト所有workspaceのコマンドと`cwd`を使用する。実行単位は
-`(workspace-id, command, test-path)`で識別し、コマンド名が同じでもworkspaceが異なれば統合しない。
+`(workspace-id, command, test-path)`で識別する。`cwd`はコマンド定義に従属するため識別子へ含めない。
+コマンド名が同じでもworkspaceが異なれば統合しない。
 結果はworkspace別に保持し、集約statusは通常の最悪値規則を使う。
 失敗したworkspaceがあっても、独立した後続workspaceは可能な範囲で継続する。
 
@@ -219,7 +220,7 @@ workspace IDを含める。member単独操作のレポートはmember自身の`.
 |---|---|---|
 | `SPEC-MONOREPO-CONFIG-001` | `failed` | `monorepo`設定の型、件数、配置が不正 |
 | `SPEC-MONOREPO-MEMBER-001` | `failed` | memberの設定不在、またはcatalogとのID不一致 |
-| `SPEC-MONOREPO-VERSION-001` | `blocked` | memberのSchema、EARS-AI、Profileが未対応major |
+| `SPEC-MONOREPO-VERSION-001` | `blocked` | memberの`schemaVersion`または`earsAi`が未対応major |
 | `SPEC-MONOREPO-PATH-001` | `failed` | member pathが不正、重複、入れ子、symlink、submodule |
 | `SPEC-MONOREPO-ID-001` | `failed` | workspace IDが不正または重複 |
 | `SPEC-MONOREPO-UNREGISTERED-001` | `blocked` | federation内で選択した`.spec/`がcatalogへ未登録 |
