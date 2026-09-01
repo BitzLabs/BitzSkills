@@ -96,6 +96,8 @@ rootを先頭、その後をworkspace ID辞書順で処理する。
 受け付けない。`verify --all-workspaces`も引数なしverifyを各workspaceへ適用し、対象ID・pathを受け付けない。
 `check --all-workspaces --base <git-revision>`の基準版はrepository全体で1つとし、解決済みcommitを
 全memberの変更範囲、状態遷移、承認保護、TASK境界へ共通利用する。
+基準版catalogと現在版catalogの両方から文書索引を作り、memberの削除またはpath変更で基準版側のSPECを
+検査対象外にしない。同じworkspace IDと文書IDが現在版にあれば移動、なければSPEC削除として扱う。
 明示`check`はselected workspace内のREQ、TECH、ADR、TASK、規範文、SPECファイルpathだけを受け付ける。
 明示`verify`のSPECファイルpathは選択workspace内のREQ、TECH、TASKだけを受け付け、Frontmatter IDへ
 正規化する。コードpath、テストpath、ディレクトリ、ADRを受け付けない。

@@ -73,8 +73,9 @@
 | [ADR-029](ADR-029_TASK先行依存の状態ガード.md) | TASK先行依存の状態ガード | accepted | 09, SPECファイル規定/05・06・10 |
 | [ADR-030](ADR-030_verify実行bindingの正規識別子と重複排除単位の統一.md) | verify実行bindingの正規識別子と重複排除単位の統一 | accepted | ADR-018・026, SPECファイル規定/02・06・10・12 |
 | [ADR-031](ADR-031_変更コード・テストからの検査対象選択.md) | 変更コード・テストからの検査対象選択 | accepted | 01・02・05, SPECファイル規定/06 |
-| [ADR-032](ADR-032_ID再利用検出のCore保証範囲.md) | ID再利用検出のCore保証範囲 | accepted | EARS-AI規格/01・06, SPECファイル規定/01・04・07 |
+| [ADR-032](ADR-032_ID再利用検出のCore保証範囲.md) | ID再利用検出のCore保証範囲 | superseded | ADR-037 |
 | [ADR-033](ADR-033_部分改訂ADRの記録規約.md) | 部分改訂ADRの記録規約 | accepted | ADR-020, 決定記録README |
 | [ADR-034](ADR-034_TASK完了終端とdone起点操作の確定.md) | TASK完了終端とdone起点操作の確定 | accepted | ADR-024・028・029, 04・06・08・09, SPECファイル規定/05・06・10 |
 | [ADR-035](ADR-035_check空対象とフロー通過statusの確定.md) | check空対象とフロー通過statusの確定 | accepted | ADR-019・027・028・031・034, 01・04・05・08・09, SPECファイル規定/06 |
 | [ADR-036](ADR-036_フロー取り止めと不採用履歴の保持.md) | フロー取り止めと不採用履歴の保持 | accepted | ADR-024・029・034, 04〜06・08・09, SPECファイル規定/03〜06・08・10 |
+| [ADR-037](ADR-037_Git基準版間のSPEC同一性と削除規則.md) | Git基準版間のSPEC同一性と削除規則 | accepted | ADR-025・032・036, EARS-AI規格/01・06, SPECファイル規定/01・06・07・12 |

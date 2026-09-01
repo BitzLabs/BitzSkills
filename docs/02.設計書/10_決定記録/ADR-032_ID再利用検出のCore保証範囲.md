@@ -1,7 +1,7 @@
 ---
 id: ADR-032
 title: ID再利用検出のCore保証範囲
-status: accepted
+status: superseded
 relations:
   requires:
     - ADR-025
@@ -55,6 +55,9 @@ Diagnosticを再現できる」ことはPhase 1の完了条件であり、Core 1
 ## Notes
 
 - 本ADRは2026-08-31のユースケース・フロー遷移レビューUC-FLOW-007に対する裁定であり、同提案の案2を採る。
+- 本ADRのDecisionは[ADR-037](ADR-037_Git基準版間のSPEC同一性と削除規則.md)により文書全体として置き換えられた。
+  2時点比較では同一文書の改訂と「別の意味での再出現」を区別できないため、Core 1.0は削除禁止と
+  現在集合の重複検出へ保証を限定する。
 - 関連文書: [EARS-AI規格/01](../../03.詳細設計/01_EARS-AI規格/01_Core構文仕様.md),
   [EARS-AI規格/06](../../03.詳細設計/01_EARS-AI規格/06_AST・パーサー仕様.md),
   [SPECファイル規定/01](../../03.詳細設計/02_SPECファイル規定/01_配置・命名・探索規則.md),
@@ -66,3 +69,4 @@ Diagnosticを再現できる」ことはPhase 1の完了条件であり、Core 1
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-08-31 | `EAI-CORE-ID-003`の保証範囲をGit基準版までに確定 | — |
+| 2026-09-01 | ADR-037により文書全体を置換 | `ADR-037` |
