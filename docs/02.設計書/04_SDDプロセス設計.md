@@ -5,6 +5,12 @@
 個人から数人の開発では、段階管理そのものを目的にしない。EARS-AIで変更意図を短く固定し、
 実装後に実行可能な証拠を対応付けることを最小サイクルとする。
 
+フローは専用branchまたはworktreeで開始し、開始時のHEADを復帰基点とする。変更を伴うIntent、Requirement Review、
+Design Review、Implement、DoneまたはStoppedは、必要なcheckと人間確認を通過した時点で、他フェーズの変更を
+混ぜずにGit commitへ記録する。Context、Pre-check、Post-check、Verify、Human Reviewのように正本の変更を
+伴わない段階は、その時点のHEADをcheckpointとし、空commitを作らない。commitはsquashせず、取り消す場合は
+共有済み履歴を書き換えず新しい順に`git revert`する。Coreはbranch、commit、revert、pushを実行しない。
+
 ## 2. Small Flow（既定）
 
 ```text
@@ -75,6 +81,12 @@ Small FlowとFull Flowは、`Done`へ到達する前のどの段階でも、人�
 起点が`open` TASKなら`cancelled`へ変更し、`Cancellation Rationale`へ取り止め理由、得た知見、再計画条件を
 記録する。該当する文書のRevision Historyを更新し、変更後の`bitz check <ID>`が`passed`または
 `passed_with_warnings`であることを確認してから、取り止め結果をGitへ記録する。
+
+取り止める文書IDは人間が明示し、CoreとSkillは関連文書から対象を推測しない。Implement開始後に取り止める場合、
+Skillは残っているコード・テスト差分を提示し、人間が破棄、作業ツリーへ保持、別TASKへの引継ぎ、またはSpikeへの
+隔離を選ぶ。CoreとSkillは途中成果物を自動削除しない。Stoppedのcommitは原則として状態、理由、Revision History
+だけを含め、保持する途中成果物は新しいTASKまたはSpikeの別commitへ分離する。選択理由と引継ぎ先は既存の
+`Rejection Rationale`または`Cancellation Rationale`へ記録し、新しいFrontmatter項目やCore statusを追加しない。
 
 `Stopped`ではDoneの完了条件、検証成功、TASKの`done`化を要求しない。`cancelled` TASKを必要とする後続TASKは
 依存未充足のままであり、依存の除去または代替TASKへの更新を人間が判断する。REQ／TECH／TASKがまだ存在しない
