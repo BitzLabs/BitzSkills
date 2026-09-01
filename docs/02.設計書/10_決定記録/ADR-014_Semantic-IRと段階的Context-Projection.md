@@ -64,6 +64,7 @@ EARS-AIをLLMへ渡す方法には、原文Markdownをそのまま渡す案、AS
 | 対象 | 後継ADR | 内容 |
 |---|---|---|
 | Decision 6、7 | [ADR-015](ADR-015_SPEC改訂履歴の必須化.md) | 改訂履歴を非規範メタデータとして意味集合から除外し、明示展開時の返却規則と`semanticHash`／`fileHash`の分離を定義 |
+| Decision 7 | [ADR-039](ADR-039_Core-1.0仕様構造の再編とscope縮小.md) | `projectionDigest`の公開を取りやめ、公開hashを`contextDigest`だけに限定 |
 
 ## Revision History
 
@@ -73,3 +74,4 @@ EARS-AIをLLMへ渡す方法には、原文Markdownをそのまま渡す案、AS
 | 2026-08-27 | Revision Historyの非規範化と明示展開をADR-015で追加 | `ADR-015` |
 | 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |
 | 2026-08-31 | 部分改訂の対象Decision項目を`Notes`へ明示 | `ADR-015` |
+| 2026-09-01 | Decision 7の公開digestが`ADR-039`で変更されたことを注記 | `ADR-039` |

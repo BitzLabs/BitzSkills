@@ -1,7 +1,7 @@
 ---
 id: ADR-015
 title: SPEC改訂履歴の必須化
-status: accepted
+status: superseded
 relations:
   related:
     - ADR-014
@@ -55,3 +55,4 @@ AIへ段階的なContextを渡す場合も、全文やGit履歴を展開せず�
 |---|---|---|
 | 2026-08-27 | 初版を作成 | — |
 | 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |
+| 2026-09-01 | SPEC改訂履歴の必須化を廃止しGitを正本へ戻す | `ADR-039` |

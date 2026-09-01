@@ -77,6 +77,10 @@ ADR-009以降、Profile、モノレポ連合、Revision History、Agent Plugins�
 Decision 2のテストパス重複排除単位`(argv, cwd)`は、[ADR-030](ADR-030_verify実行bindingの正規識別子と重複排除単位の統一.md)が
 `(workspaceId, 正規化argv template, 正規化cwd)`へ置き換えた。本ADRの他のDecisionは有効である。
 
+Decision 1の`profiles`予約キーとProfile互換性の判断、およびDecision 2のbinding同一性は、
+[ADR-039](ADR-039_Core-1.0仕様構造の再編とscope縮小.md)がCore 1.0の対象外またはcommand名単位へ変更した。
+Decision 3〜5と、Decision 2の`cwd`実行規則は有効である。
+
 関連文書: [EARS-AI規格/01](../../03.詳細設計/01_EARS-AI規格/01_Core構文仕様.md), [EARS-AI規格/02](../../03.詳細設計/01_EARS-AI規格/02_拡張プロファイル仕様.md), [EARS-AI規格/06](../../03.詳細設計/01_EARS-AI規格/06_AST・パーサー仕様.md), [SPECファイル規定/02](../../03.詳細設計/02_SPECファイル規定/02_bitz.yaml仕様.md), [SPECファイル規定/03](../../03.詳細設計/02_SPECファイル規定/03_Frontmatter共通仕様.md), [SPECファイル規定/06](../../03.詳細設計/02_SPECファイル規定/06_参照・トレース・検証仕様.md), [SPECファイル規定/11](../../03.詳細設計/02_SPECファイル規定/11_doctor仕様.md), [SPECファイル規定/12](../../03.詳細設計/02_SPECファイル規定/12_モノレポSPEC連合仕様.md)
 
 ## Revision History
@@ -86,3 +90,4 @@ Decision 2のテストパス重複排除単位`(argv, cwd)`は、[ADR-030](ADR-0
 | 2026-08-31 | 初版を作成 | — |
 | 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |
 | 2026-08-31 | Decision 2の重複排除単位が`ADR-030`へ置換されたことを注記 | `ADR-030` |
+| 2026-09-01 | Decision 1とDecision 2の一部が`ADR-039`で変更されたことを注記 | `ADR-039` |

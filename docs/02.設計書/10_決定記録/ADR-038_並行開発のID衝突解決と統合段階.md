@@ -1,7 +1,7 @@
 ---
 id: ADR-038
 title: 並行開発のID衝突解決と統合段階
-status: accepted
+status: superseded
 relations:
   requires:
     - ADR-025
@@ -160,3 +160,4 @@ path変更だけであり、ID変更を表現できない。基準版に旧IDが
 | 2026-09-01 | 先勝ち規則、正規手順、採番規則、検出と適用の分離、`Integrate`段階、UC-13の新設を確定 | 提案10 附録C |
 | 2026-09-01 | 初出状態、終端状態の改番、TASK境界の基準版、CI標準invocation、連合スコープを確定 | 提案10 附録F |
 | 2026-09-01 | レポートへの`idCollisions`保存とcherry-pick由来の人間確認契約を確定 | 提案10 附録H |
+| 2026-09-01 | 自動改番支援と専用Integrate段階をCore 1.0から延期 | `ADR-039` |

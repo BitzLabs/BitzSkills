@@ -51,6 +51,9 @@ Context Digestは検証コマンド名だけを含み、同じ名前の`argv`や
 - 本ADRは2026-08-31のP2残存契約レビュー「verify実行契約」に対する裁定である。
 - Decision 2が定めるContext Digestの構成要素は有効である。実行bindingの正規識別子と重複排除単位は
   [ADR-030](ADR-030_verify実行bindingの正規識別子と重複排除単位の統一.md)を正とする。
+- Decision 2の公開Digest構成と実行bindingの同一性は、
+  [ADR-039](ADR-039_Core-1.0仕様構造の再編とscope縮小.md)が`contextDigest`だけの公開とcommand名単位へ変更した。
+  timeout、終了理由、結果Schema、TECH文書単位bindingに関する他のDecisionは有効である。
 - 2026-09-01の実装前異常ケースレビュー`EDGE-003`で、timeout時にCoreが停止と回収を保証する対象を
   直接起動したprocessまでと明確化した。子孫processのOS横断管理はCore 1.0へ追加せず、command側の責務とする。
   stdoutとstderrは各64 KiBまで保持し、出力全文を結果Schemaへ追加しない。
@@ -62,3 +65,4 @@ Context Digestは検証コマンド名だけを含み、同じ名前の`argv`や
 | 2026-08-31 | verify timeout、binding digest、command結果Schemaを確定 | — |
 | 2026-08-31 | 実行binding識別子の正本が`ADR-030`であることを注記 | `ADR-030` |
 | 2026-09-01 | timeout保証範囲と出力保持上限を明確化 | `EDGE-003` |
+| 2026-09-01 | Decision 2の一部が`ADR-039`で変更されたことを注記 | `ADR-039` |

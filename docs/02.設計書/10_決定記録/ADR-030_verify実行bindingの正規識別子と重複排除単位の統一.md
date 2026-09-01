@@ -1,7 +1,7 @@
 ---
 id: ADR-030
 title: verify実行bindingの正規識別子と重複排除単位の統一
-status: accepted
+status: superseded
 relations:
   requires:
     - ADR-026
@@ -79,3 +79,4 @@ relations:
 |---|---|---|
 | 2026-08-31 | 検証binding識別子、重複排除単位、実行回数を確定 | — |
 | 2026-09-01 | binding実行順、失敗後の継続、代表名を明確化 | `EDGE-003` |
+| 2026-09-01 | binding識別子をcommand名へ簡素化 | `ADR-039` |

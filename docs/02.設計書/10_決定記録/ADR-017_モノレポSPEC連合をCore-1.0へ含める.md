@@ -1,7 +1,7 @@
 ---
 id: ADR-017
 title: モノレポSPEC連合をCore 1.0へ含める
-status: accepted
+status: superseded
 ---
 
 # ADR-017 モノレポSPEC連合をCore 1.0へ含める
@@ -108,3 +108,4 @@ vendor、fixture、submodule内の意図しない設定を取り込み、入力�
 |---|---|---|
 | 2026-08-27 | 初版を作成 | — |
 | 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |
+| 2026-09-01 | モノレポ連合をCore 1.0から延期 | `ADR-039` |
