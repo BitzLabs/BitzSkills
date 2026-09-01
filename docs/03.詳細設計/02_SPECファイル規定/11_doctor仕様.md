@@ -142,6 +142,8 @@ Git不在はCore全体の起動失敗にしない。構文、Schema、参照、C
 
 モノレポ構造のDiagnosticは[モノレポSPEC連合仕様](12_モノレポSPEC連合仕様.md) §10を使用し、`doctor`専用の
 同義コードを重複定義しない。
+`bitz.yaml`または診断対象SPECの不正UTF-8、権限不足、I/O障害には、doctor専用コードを追加せず
+[参照・トレース・検証仕様](06_参照・トレース・検証仕様.md) §8の`SPEC-INPUT-READ-001`を使用する。
 
 Core自体が未導入またはMCP serverが起動せず`doctor`を呼べない場合、この診断形式は生成できない。
 拡張プラグインはその場合だけ静的な`bitz-core`導入手順を示して`blocked`とし、Coreの解析・判定を代替しない。
