@@ -91,13 +91,14 @@ REQまたはEARS-AIを含むTECHでは、`covers`に同じ文書が所有する�
 
 ## 5. 状態
 
-要求と技術仕様は次の3状態だけを持つ。
+要求と技術仕様は次の4状態だけを持つ。
 
 | 状態 | 意味 |
 |---|---|
 | `draft` | 内容を編集中。未完成を許容する |
 | `approved` | 人間が意味を確認した契約 |
 | `outdated` | 再確認が必要で、実装・検証の強い依存には使えない |
+| `rejected` | 採用しないと決定した終端履歴。現行の実装・検証には使えない |
 
 `verified`はFrontmatter状態にしない。検証は特定時点のコード、テスト、環境に対する実行結果であり、
 要求文書の承認状態とは寿命が異なるためである。
@@ -111,14 +112,15 @@ ADRとTASKの状態は[補助SPEC仕様](05_補助SPEC仕様.md)で定義する�
 
 | 種別 | 作成時 | 許可遷移 | 終端状態 |
 |---|---|---|---|
-| REQ／TECH | `draft`、`approved` | `draft -> approved`、`approved -> draft`、`approved -> outdated`、`outdated -> draft`、`outdated -> approved` | なし |
+| REQ／TECH | `draft`、`approved`、`rejected` | `draft -> approved`、`draft -> rejected`、`approved -> draft`、`approved -> outdated`、`outdated -> draft`、`outdated -> approved` | `rejected` |
 | ADR | `proposed`、`accepted`、`rejected` | `proposed -> accepted`、`proposed -> rejected`、`accepted -> superseded` | `rejected`、`superseded` |
-| TASK | `open` | `open -> done` | `done` |
+| TASK | `open` | `open -> done`、`open -> cancelled` | `done`、`cancelled` |
 
 禁止遷移は`SPEC-STATE-TRANSITION-001`／error／`failed`とする。遷移検査には
 [Git基準版](../../02.設計書/10_決定記録/ADR-025_Git基準版とcheck明示対象の確定.md)を使用する。
 基準版を利用できない場合も現在値の語彙は検査するが、過去状態を推測して遷移合格を宣言しない。
-状態変更と人間確認の境界は[ADR-024](../../02.設計書/10_決定記録/ADR-024_SPEC文書の状態遷移契約.md)に従う。
+状態変更と人間確認の境界は[ADR-024](../../02.設計書/10_決定記録/ADR-024_SPEC文書の状態遷移契約.md)および
+[ADR-036](../../02.設計書/10_決定記録/ADR-036_フロー取り止めと不採用履歴の保持.md)に従う。
 
 ## 6. 種別固有項目
 

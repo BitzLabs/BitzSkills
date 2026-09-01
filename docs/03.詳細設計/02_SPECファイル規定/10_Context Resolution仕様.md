@@ -103,16 +103,22 @@ Context Resolution自身はpath起点を受け付けない。
 `interpret`閉包に加え、次を含める。
 
 - 起点と適用されるrefinementの規範文、または起点と適用される規範文なしTECHを`addresses`する`open` TASK
-- 起点がTASKの場合、その`addresses`対象と`requires`閉包。`requires`が指すTASKに`open`が1件でもあれば
+- 起点がTASKの場合、その`addresses`対象と`requires`閉包。`requires`が指すTASKに`done`でないものが1件でもあれば
   `CTX-TASK-DEPENDENCY-001`／`blocked`とする
 - 適用文書の`implements`、テスト対応、TASKの`changes`
 - 対象となる全EARS-AI規範文と実装・テスト網羅状況
 
+`done` TASKを起点にした場合は`CTX-STATE-001`／error／`blocked`とし、追加作業に新しいTASKを作るよう
+`suggestedAction`へ示す。完了済みTASKを暗黙に再オープンしたり、別の`open` TASKへ差し替えたりしない。
+`cancelled` TASKも同じDiagnosticで停止し、依存の見直しまたは新しいTASKの作成を示す。
+
 ### `verify`
 
 `interpret`閉包に加え、対象規範文のテスト対応、検証コマンド、実装パスを含める。TASKは起点として
-指定された場合だけ含め、その`requires`が指すTASKに`open`が1件でもあれば`CTX-TASK-DEPENDENCY-001`／
+指定された場合だけ含め、その`requires`が指すTASKに`done`でないものが1件でもあれば`CTX-TASK-DEPENDENCY-001`／
 `blocked`とする。
+起点TASKが`done`の場合は完了済み作業の再検証として許可し、TASKをHistory区分へ置いたまま`addresses`から
+対象規範文または規範文なしTECHを導出する。`addresses`先と`requires`閉包には通常の適用可能性検査を行う。
 モノレポでは、適用される別workspaceの直接refinementが対象規範文へ宣言した横断テスト対応も含め、
 テスト所有workspaceのID、command、path、`cwd`を保持する。
 
@@ -123,15 +129,28 @@ Context Resolution自身はpath起点を受け付けない。
 | `approved` REQ/TECH | Yes | No | なし |
 | `draft` REQ/TECH | No | Yes | `implement`または`verify`の起点 |
 | `outdated` REQ/TECH | No | Yes | 強い依存先または`implement`/`verify`の起点 |
+| `rejected` REQ/TECH | No | History | 強い依存先または`implement`/`verify`の起点 |
 | 有効な`supersedes`逆参照を持つREQ/TECH | No | Yes | 強い依存先または`implement`/`verify`の起点 |
 | `accepted` ADR | Yes | No | なし |
 | `proposed` ADR | No | Yes | 強い依存先 |
 | `rejected`/`superseded` ADR | No | Yes | 強い依存先 |
 | `open` TASK | Work | No | `implement`／`verify`起点TASKの`requires`先 |
-| `done` TASK | No | History | なし |
+| `done` TASK | No | History | `implement`の起点 |
+| `cancelled` TASK | No | History | `implement`／`verify`の起点、または起点TASKの`requires`先 |
 
 advisory文書は本文を別区分で渡し、規範として適用してはならない。強い依存に適用不能な文書が必要な場合、
 Context Bundle全体を`blocked`とする。
+
+`done` TASKは`interpret`の起点として履歴参照でき、`verify`の起点として再検証できる。`implement`の起点では
+`CTX-STATE-001`／error／`blocked`とし、新しいTASKの作成を`suggestedAction`へ含める。`bitz check`で
+`done` TASKを明示することは状態と遷移の検査であり、このpurpose別blocking条件の対象ではない
+（[ADR-034](../../02.設計書/10_決定記録/ADR-034_TASK完了終端とdone起点操作の確定.md)）。
+
+`rejected` REQ／TECHと`cancelled` TASKは`interpret`で不採用・中止理由を含むHistoryとして返す。
+`rejected`文書の`implements`、`tests`、`verify`は履歴表示には残すが、現行の所有逆索引、検証対象、coverage、
+パス存在検査、検証コマンド解決へ使わない。`cancelled` TASKは完了済みではないため、`requires`先にある場合は
+`CTX-TASK-DEPENDENCY-001`／error／`blocked`とし、依存の除去または代替TASKへの更新を`suggestedAction`へ
+含める（[ADR-036](../../02.設計書/10_決定記録/ADR-036_フロー取り止めと不採用履歴の保持.md)）。
 
 置換済みREQ/TECHを`implement`または`verify`へ指定した場合は、後継IDを`suggestedAction`へ含めて
 `blocked`とする。Coreは後継へ暗黙に起点を差し替えない。同じ旧文書に複数の有効な後継がある場合は
@@ -441,7 +460,7 @@ Context Resolutionは基準環境で1秒以内を目標とする。ネットワ�
 | `CTX-RELATION-MISSING-001` | error | `failed` | 強い関係のtargetがない |
 | `CTX-CYCLE-001` | error | `failed` | 禁止された循環がある |
 | `CTX-TASK-DEPENDENCY-001` | error | `blocked` | 起点TASKの`requires`先TASKに`done`でないものがある（`implement`／`verify`） |
-| `CTX-STATE-001` | error | `blocked` | 強い依存先が適用不能 |
+| `CTX-STATE-001` | error | `blocked` | 起点または強い依存先が指定purposeに対して適用不能 |
 | `CTX-STATE-SUPERSEDED-001` | error | `blocked` | 起点または強い依存先が置換済み。後継IDを返す |
 | `CTX-STATE-SUPERSEDED-002` | error | `failed` | 同じ旧文書に複数の有効な後継がある |
 | `CTX-LIMIT-001` | error | `blocked` | 完全な閉包が上限を超える |

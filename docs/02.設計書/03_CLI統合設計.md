@@ -133,5 +133,7 @@ Core 1.0はフックなしで完結する。フックは性能、互換性、攻
 - `--all-workspaces`の結果順と集約statusが同一入力で再現される
 - `check --base`がHEAD既定と明示merge-baseで同じ変更集合契約を使い、未追跡pathを漏らさない
 - `check`の明示対象、`--full`、`--all-workspaces`の排他と終了コードが再現される
+- 引数なし`check`の対象0件が`passed`となり、選択件数がtext／JSONで一致する
+- `passed_with_warnings`のcheckが終了コード0となり、`--strict`が公開文法に存在しない
 - `verify --timeout`がworkspace設定を延長せず、通常終了・非0終了・起動失敗・signal・timeoutを区別する
 - Diagnosticの`resultStatus`と`source.workspaceId`から、単一・連合結果を同じ順位で集約できる

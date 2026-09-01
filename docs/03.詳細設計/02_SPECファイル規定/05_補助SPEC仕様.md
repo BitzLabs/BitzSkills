@@ -30,9 +30,13 @@ verify: default
 ---
 ```
 
-本文は`Context`、`Contract`、任意の`Constraints`、`Verification`、`Notes`、最終H2の`Revision History`で構成する。機械検査が必要な
+本文は`Context`、`Contract`、任意の`Constraints`、`Verification`、条件付きの`Rejection Rationale`、`Notes`、最終H2の`Revision History`で構成する。機械検査が必要な
 契約はEARS-AI規範文で記述できるが、Core 1.0はTECHへEARS-AIを必須としない。状態は`draft`、
-`approved`、`outdated`を使う。
+`approved`、`outdated`、`rejected`を使う。`rejected`では空でない`Rejection Rationale`を必須とし、
+採用しなかった理由、根拠またはトレードオフ、再検討条件を記録する。元の`Contract`と`Verification`、
+`implements`、`tests`、`verify`は履歴として保持する。ただし、パスと検証情報は所有逆索引、検証対象、coverage、
+パス存在検査、検証コマンド解決へ含めない。`rejected`を強い依存先または`implement`／`verify`の起点にした場合は
+`CTX-STATE-001`／error／`blocked`とする。再検討時は新しいTECH IDを作る。
 
 REQを技術的に具体化するTECHは`refines`を使用する。単に同じテーマを扱うだけなら`related`とし、
 Contextへ自動混入させない。
@@ -83,10 +87,19 @@ changes:
 ---
 ```
 
-状態は`open`と`done`だけとし、作成時は`open`、許可遷移は`open -> done`とする。`done`は終端状態であり、
-追加作業には新しいTASK IDを使用する。担当者、期限、blocked理由などはIssue管理がある場合はそちらへ置く。
-完了したTASKは削除してもよいが、そのIDを別の作業へ再利用しない。本文は`Objective`、任意の`Work`、
-`Completion Criteria`、任意の`Notes`、最終H2の`Revision History`で構成する。
+状態は`open`、`done`、`cancelled`とし、作成時は`open`、許可遷移は`open -> done|cancelled`とする。
+`done`と`cancelled`は終端状態であり、追加作業または再計画には新しいTASK IDを使用する。担当者、期限、
+blocked理由などはIssue管理がある場合はそちらへ置く。終端TASKのIDを別の作業へ再利用しない。本文は
+`Objective`、任意の`Work`、`Completion Criteria`、条件付きの`Cancellation Rationale`、任意の`Notes`、
+最終H2の`Revision History`で構成する。`cancelled`では空でない`Cancellation Rationale`を必須とし、
+取り止め理由、既に得た知見、再開または再計画の条件を記録する。
+
+TASK起点の開発フローでは、VerifyとHuman Reviewの後に起点TASKを`done`へ変更してRevision Historyを更新し、
+変更後の入力へ`bitz check <TASK-ID>`を実行する。このcheckが`passed`または`passed_with_warnings`の場合だけ、
+完了結果をGitへ記録する。TASK自身のファイルは`changes`境界の比較対象から除くが、状態遷移と文書検査の対象からは
+除外しない。Coreはstatusを自動変更せず、後続TASKは先行TASKの完了結果をGitへ記録した後に開始する
+（[ADR-034](../../02.設計書/10_決定記録/ADR-034_TASK完了終端とdone起点操作の確定.md)）。
+checkの通過statusは[ADR-035](../../02.設計書/10_決定記録/ADR-035_check空対象とフロー通過statusの確定.md)を正とする。
 
 `addresses`には実装対象のEARS-AI規範文IDを列挙する。規範文を持たないTECHだけは文書IDを指定できる。
 規範文を持つREQ/TECHの文書IDだけを指定して全句を暗黙対象にすることは禁止する。
@@ -99,6 +112,18 @@ TASKを起点とする`purpose=implement`または`purpose=verify`では、`requ
 先行TASK IDを返す。`purpose=interpret`は停止せず、未完了の先行TASKをWork区分として表示する。
 実行順序を持たない単なる関連作業には`related`を使い、`requires`を使わない
 （[ADR-029](../../02.設計書/10_決定記録/ADR-029_TASK先行依存の状態ガード.md)）。
+
+`done` TASKを`purpose=implement`の起点にすることは禁止し、`CTX-STATE-001`／error／`blocked`として
+新しいTASKの作成を示す。`purpose=verify`は完了済み作業の再検証として許可し、`addresses`から検証対象を
+導出する。`purpose=interpret`も許可し、TASKをHistory区分で返す。`verify`時の先行TASK状態ガードは
+`done`の起点にも同じく適用する。
+
+`cancelled` TASKは`purpose=interpret`でHistory区分として返し、明示`check`を許可する。
+`purpose=implement`または`purpose=verify`の起点では`CTX-STATE-001`／error／`blocked`とする。
+別TASKの`requires`先にある場合は完了済みとみなさず、`CTX-TASK-DEPENDENCY-001`／error／`blocked`で
+依存の除去または代替TASKへの更新を示す。取り止め時は`open -> cancelled`、理由、Revision Historyを同じ変更へ
+記録し、変更後の入力へ`bitz check <TASK-ID>`を実行してからGitへ記録する
+（[ADR-036](../../02.設計書/10_決定記録/ADR-036_フロー取り止めと不採用履歴の保持.md)）。
 
 `changes`は任意の変更境界である。TASK IDまたはTASKファイルpathを明示して`bitz check`すると、Gitの変更パスが
 `changes`のファイルまたはディレクトリ接頭辞に含まれるかを検査する。境界の修正が必要ならTASK自身の

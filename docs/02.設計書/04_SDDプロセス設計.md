@@ -21,11 +21,23 @@ Intent -> Context -> Pre-check -> Implement -> Post-check -> Verify -> Human Rev
    `changes`境界を強制する。
 6. **Verify**: `purpose=verify`を再解決し、句単位の網羅を確認して対象テストを実行する。
 7. **Human Review**: 対応した規範文IDと最終diffを人間が確認する。
-8. **Done**: 完了結果をGitへ記録する。
+8. **Done**: TASK起点では、Human Review後に起点TASKを`done`へ変更してRevision Historyを更新し、
+   変更後の入力へ`bitz check <TASK-ID>`を実行してから、完了結果をGitへ記録する。
 
 `Pre-check`と`Post-check`は同じ`bitz check`であり、実行位置と対象選択だけが異なる。実装後に静的検査を
 経ずに`Done`へ到達する経路は作らない。フロー配置と必須呼出しの根拠は
 [ADR-028](10_決定記録/ADR-028_開発フローの実装後検査とTASK境界の接続.md)を正とする。
+
+Pre-check、Post-check、TASK起点のDone内で行う最終checkは、statusが`passed`または
+`passed_with_warnings`の場合に通過する。`failed`、`blocked`、`error`、引数不正では次段階へ進まない。
+warningは表示したまま継続し、Core 1.0は`--strict`で昇格しない
+（[ADR-035](10_決定記録/ADR-035_check空対象とフロー通過statusの確定.md)）。
+
+TASK起点の`Done`内で行うcheckは、`open -> done`、Revision History、文書構造、関係、`changes`境界を
+変更後の入力で検査する。TASK自身のファイルは境界比較から除くが、状態遷移と文書検査からは除外しない。
+checkがフローの通過条件を満たすまでGitへ記録せず、後続TASKのフローは完了結果を記録した後に開始する。
+CoreはTASKのstatusを自動変更せず、Git commitも実行しない
+（[ADR-034](10_決定記録/ADR-034_TASK完了終端とdone起点操作の確定.md)）。
 
 Intentの機械起点はREQ、TECH、規範文、`open` TASKのいずれかに限る。`bitz context`は生の意図文字列を
 起点にせず、SPEC IDまたは規範文IDを要求する。TASK起点では`addresses`と`requires`から適用要求を解決する
@@ -37,6 +49,25 @@ SPECを作らずに行う変更は、Small Flowの外側にあるCore保証外�
 専用のフローや公開操作を追加しない。
 
 通常のバグ修正、局所的な機能追加、リファクタリングはSmall Flowを使う。専用Gate承認や永続runを要求しない。
+
+### 3.1 取り止め終端
+
+Small FlowとFull Flowは、`Done`へ到達する前のどの段階でも、人間の明示判断により`Stopped`へ終了できる。
+`Stopped`は再作業のための一時停止やCoreの操作statusではなく、そのフローを完了させない終端である。
+レビュー否決は再作業へ戻すことも、理由を記録して`Stopped`へ進むこともできる。Coreは停滞や否決から
+取り止めを推測せず、文書の状態、ファイル、Gitを自動変更しない。
+
+取り止める提案または設計が`draft`のREQ／TECHであれば`rejected`へ変更し、本文の
+`Rejection Rationale`へ不採用理由、根拠またはトレードオフ、再検討条件を記録する。既に`approved`として
+適用したREQ／TECHは`rejected`へ変更せず、必要に応じて`outdated`として別の廃止判断へ接続する。
+起点が`open` TASKなら`cancelled`へ変更し、`Cancellation Rationale`へ取り止め理由、得た知見、再計画条件を
+記録する。該当する文書のRevision Historyを更新し、変更後の`bitz check <ID>`が`passed`または
+`passed_with_warnings`であることを確認してから、取り止め結果をGitへ記録する。
+
+`Stopped`ではDoneの完了条件、検証成功、TASKの`done`化を要求しない。`cancelled` TASKを必要とする後続TASKは
+依存未充足のままであり、依存の除去または代替TASKへの更新を人間が判断する。REQ／TECH／TASKがまだ存在しない
+段階での取り止めはCore保証外の作業記録とする
+（[ADR-036](10_決定記録/ADR-036_フロー取り止めと不採用履歴の保持.md)）。
 
 ## 3. Full Flow（条件付き）
 
@@ -66,7 +97,7 @@ Pre-check -> Implement -> Post-check -> Verify -> Human Review -> Done
 - Human Review否決は理由に応じてIntent、Context、Implementのいずれかへ戻す。
 
 品質検査コマンドはSmall Flowと同じものを使い、`Pre-check`と`Post-check`の配置もSmall Flowと同一とする。
-Full Flow専用の別エンジンを作らない。
+TASK起点の`Done`もSmall Flowと同じ終端手順を使い、Full Flow専用の別エンジンを作らない。
 
 レビューの承認と否決は人間とAI CLIの進行契約であり、Coreの機械契約ではない。Coreはレビュー状態も否決も
 保持せず、Gate状態機械を持たない（[ADR-009](10_決定記録/ADR-009_小規模チーム向け軽量コアとEARS-AI中核化.md)）。
@@ -103,7 +134,8 @@ Full Flow専用の別エンジンを作らない。
 | 一時的なツール障害 | 1 | 冪等な再実行のみ |
 | 仕様矛盾、権限不足 | 0 | 人間へ確認 |
 
-各試行で同じ変更を反復しない。上限到達時は停止し、最後の失敗とdiffを提示する。
+各試行で同じ変更を反復しない。上限到達時は進行を停止し、最後の失敗とdiffを提示する。この停止は
+自動的な`Stopped`確定ではなく、人間が再作業または取り止めを選ぶ判断点である。
 
 戻り先は失敗種別で決める。コンパイル、Lint、単体テスト、TASK境界外変更は`Implement`へ戻す。仕様矛盾、
 要求の意味変更、権限不足は自動修復せず人間確認へ戻す。一時的なツール障害は、同じ副作用を増やさない
@@ -128,9 +160,13 @@ Full Flow専用の別エンジンを作らない。
 
 - 対象EARS-AI規範文が特定されている。
 - 実装直前にContext Digestが一致している。
-- 実装前の`bitz check`が成功している。
-- 実装後の`bitz check`が成功している。TASK起点では`bitz check <TASK-ID>`で`changes`境界を検査している。
+- 実装前の`bitz check`が`passed`または`passed_with_warnings`である。
+- 実装後の`bitz check`が`passed`または`passed_with_warnings`である。TASK起点では
+  `bitz check <TASK-ID>`で`changes`境界を検査している。
 - 対象`MUST`の未testedが0件である。
 - 必須テストが実際に実行され成功している。
 - 省略した検証があれば表示されている。
 - 人間が最終diffを確認できる。
+- TASK起点では、起点TASKが`done`へ遷移し、変更後の入力に対する`bitz check <TASK-ID>`が`passed`または
+  `passed_with_warnings`である。
+- 完了結果がGitへ記録されている。

@@ -68,6 +68,10 @@ Full Flowは「品質検査コマンドはSmall Flowと同じものを使う」�
 ## Notes
 
 - 本ADRは2026-08-31のユースケース・フロー遷移レビューUC-FLOW-001に対する裁定である。
+- TASK起点のHuman Review後に`open -> done`と最終checkを行う終端手順は
+  [ADR-034](ADR-034_TASK完了終端とdone起点操作の確定.md)で補完する。Decision 1および4は変更しない。
+- Decision 4の「非成功」は`failed`、`blocked`、`error`を指し、`passed_with_warnings`は通過することを
+  [ADR-035](ADR-035_check空対象とフロー通過statusの確定.md)で明確化した。
 - 関連文書: [04_SDDプロセス設計](../04_SDDプロセス設計.md),
   [06_運用設計](../06_運用設計.md),
   [08_実装ロードマップ](../08_実装ロードマップ.md),
@@ -81,3 +85,5 @@ Full Flowは「品質検査コマンドはSmall Flowと同じものを使う」�
 |---|---|---|
 | 2026-08-31 | Small/Full Flowの実装後検査とTASK明示境界検査を確定 | — |
 | 2026-08-31 | UC-FLOW-006の裁定結果をDecision 6へ注記 | `UC-FLOW-006` |
+| 2026-09-01 | TASK起点フローの完了終端をADR-034へ接続 | `ADR-034` |
+| 2026-09-01 | Decision 4の非成功statusを明確化 | `ADR-035` |

@@ -54,6 +54,8 @@ H1、H2、セクション順、太字の扱いは
 [Markdown本文構成・スタイル](08_Markdown本文構成・スタイル.md)に従う。REQでは`Intent`と
 `Acceptance Criteria`、`Verification`、最終H2の`Revision History`を必須とし、EARS-AI規範文は
 `Acceptance Criteria`だけに置く。
+`status: rejected`の場合は、`Verification`の後に空でない`Rejection Rationale`を必須とし、採用しなかった理由、
+根拠またはトレードオフ、再検討条件を記録する。元の`Acceptance Criteria`と`Verification`は削除しない。
 `Revision History`は非規範メタデータであり、規範文ID、coverage、Context Digestの意味集合へ含めない。
 
 Coreは[EARS-AI Core構文仕様](../01_EARS-AI規格/01_Core構文仕様.md)が定める規範行だけを解析する。
@@ -109,8 +111,18 @@ Coreは[EARS-AI Core構文仕様](../01_EARS-AI規格/01_Core構文仕様.md)が
 - 強い依存先、`implement`、`verify`の起点に指定された場合は`blocked`とする。
 - 意味を見直した後、`draft`または`approved`へ明示的に変更する。
 
+### `rejected`
+
+- 構文、ID、本文構造、関係先の存在と型を検査する。
+- `Rejection Rationale`を必須とし、`interpret`ではHistoryとして取得できる。
+- `implements`、`tests`、`verify`は履歴として保持できるが、所有逆索引、検証対象、coverage、パス存在検査、
+  検証コマンド解決には使わない。
+- 強い依存先、`implement`、`verify`の起点に指定された場合は`CTX-STATE-001`／error／`blocked`とする。
+- 終端状態である。再検討する場合は新しいREQ IDを作り、`related`で履歴へ接続する。
+
 REQの許可遷移、作成時状態、禁止遷移のDiagnosticは
-[Frontmatter共通仕様](03_Frontmatter共通仕様.md) §5を正とする。
+[Frontmatter共通仕様](03_Frontmatter共通仕様.md) §5および
+[ADR-036](../../02.設計書/10_決定記録/ADR-036_フロー取り止めと不採用履歴の保持.md)を正とする。
 
 ## 7. 承認済み要求の保護
 

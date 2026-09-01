@@ -53,6 +53,10 @@ Historyへ分類するだけで、`open`の先行TASKをblocking条件にして�
 ## Notes
 
 - 本ADRは2026-08-31のユースケース・フロー遷移レビューUC-FLOW-002に対する裁定である。
+- 先行TASKを`done`へ遷移させるフロー終端と、`done` TASK自身を起点にしたpurpose別挙動は
+  [ADR-034](ADR-034_TASK完了終端とdone起点操作の確定.md)で補完する。Decision 1の先行依存条件は変更しない。
+- [ADR-036](ADR-036_フロー取り止めと不採用履歴の保持.md)が追加した`cancelled` TASKも`done`ではないため、
+  Decision 1の条件を満たさない。依存の除去または代替TASKへの更新が必要である。
 - 関連文書: [SPECファイル規定/05](../../03.詳細設計/02_SPECファイル規定/05_補助SPEC仕様.md),
   [SPECファイル規定/06](../../03.詳細設計/02_SPECファイル規定/06_参照・トレース・検証仕様.md),
   [SPECファイル規定/10](../../03.詳細設計/02_SPECファイル規定/10_Context%20Resolution仕様.md)
@@ -62,3 +66,5 @@ Historyへ分類するだけで、`open`の先行TASKをblocking条件にして�
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-08-31 | TASK `requires`先の状態ガードと`CTX-TASK-DEPENDENCY-001`を確定 | — |
+| 2026-09-01 | TASK完了終端と`done`起点操作の補完先を追記 | `ADR-034` |
+| 2026-09-01 | `cancelled`先行TASKの未充足扱いを補足 | `ADR-036` |

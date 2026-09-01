@@ -86,6 +86,7 @@ H2は次の順序とする。
 | `Context` | No | 前提、用語、対象外 |
 | `Acceptance Criteria` | Yes | EARS-AI規範文 |
 | `Verification` | Yes | production入口、試験戦略、未証明事項 |
+| `Rejection Rationale` | `rejected`のみYes | 不採用理由、根拠・トレードオフ、再検討条件 |
 | `Notes` | No | 非規範の補足 |
 | `Revision History` | Yes | 主要な改訂意図の要約。常に最終H2 |
 
@@ -124,6 +125,7 @@ H2は次の順序とする。
 | `Contract` | Yes | 外部から観測できる技術契約 |
 | `Constraints` | No | 性能、安全性、禁止事項 |
 | `Verification` | Yes | 統合入口、異常境界、試験方法 |
+| `Rejection Rationale` | `rejected`のみYes | 不採用理由、根拠・トレードオフ、再検討条件 |
 | `Notes` | No | 非規範の補足 |
 | `Revision History` | Yes | 主要な改訂意図の要約。常に最終H2 |
 
@@ -156,6 +158,7 @@ H2は次の順序とする。
 | `Objective` | Yes | 完了時に成立する結果 |
 | `Work` | No | 実装方針または作業項目 |
 | `Completion Criteria` | Yes | 観測可能な完了条件 |
+| `Cancellation Rationale` | `cancelled`のみYes | 取り止め理由、得た知見、再開・再計画条件 |
 | `Notes` | No | 見積り、制約、引継ぎ |
 | `Revision History` | Yes | 主要な作業境界・完了条件の改訂要約。常に最終H2 |
 
@@ -190,7 +193,7 @@ H2は次の順序とする。
 | 条件 | severity | `resultStatus` | Diagnostic |
 |---|---|---|---|
 | H1がない、複数ある、Frontmatterと不一致 | error | `failed` | `SPEC-STYLE-H1-001` |
-| 必須H2がない | error | `failed` | `SPEC-STYLE-SECTION-001` |
+| 必須H2がない、または状態に応じた条件付き必須H2がない／空である | error | `failed` | `SPEC-STYLE-SECTION-001` |
 | H2が未定義または順序違反 | error | `failed` | `SPEC-STYLE-SECTION-002` |
 | EARS-AI規範文が許可セクション外にある | error | `failed` | `SPEC-STYLE-PLACEMENT-001` |
 | 太字ラベルが標準セクションを代替 | warning | `passed_with_warnings` | `SPEC-STYLE-PSEUDO-001` |
@@ -198,4 +201,5 @@ H2は次の順序とする。
 | `Revision History`が最終H2でない、表の列が不正、履歴行がない | error | `failed` | `SPEC-STYLE-HISTORY-001` |
 | 推奨スタイルの違反 | 原則として診断しない | — | — |
 
-書式検査は構造だけを扱い、文章の巧拙、意味的正しさ、十分性を自動判定しない。
+書式検査は構造だけを扱い、`Rejection Rationale`または`Cancellation Rationale`に理由が十分記述されたかを含む、
+文章の巧拙、意味的正しさ、十分性を自動判定しない。
