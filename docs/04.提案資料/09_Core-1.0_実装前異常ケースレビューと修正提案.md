@@ -91,7 +91,7 @@ command結果の分類は定義済みだったが、bindingの実行順、1件�
 - bindingを正規識別子のCanonical JSON辞書順で逐次実行する。
 - 1件が`failed`または`error`でも、解決済みの独立bindingを継続する。
 - 複数command名の代表名は辞書順最小とする。
-- stdoutとstderrはそれぞれ末尾64 KiBまで保持し、超過した古いbyte列を破棄する。
+- stdoutとstderrは終了までdrainし、それぞれ末尾64 KiBまで保持して、超過した古いbyte列を破棄する。
 - timeout時の停止と回収はCoreが直接起動したprocessまでを保証する。
 - Coreがtimeoutのため送ったsignalは`termination: timeout`として記録する。
 
