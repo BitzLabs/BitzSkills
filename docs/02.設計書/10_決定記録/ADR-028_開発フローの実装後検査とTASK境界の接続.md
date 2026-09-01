@@ -79,6 +79,8 @@ Full Flowは「品質検査コマンドはSmall Flowと同じものを使う」�
   [SPECファイル規定/05](../../03.詳細設計/02_SPECファイル規定/05_補助SPEC仕様.md),
   [SPECファイル規定/06](../../03.詳細設計/02_SPECファイル規定/06_参照・トレース・検証仕様.md)
 
+- 開発フロー骨格へ`Integrate`段階を追加する部分改訂をADR-038で行った。本ADRのDecisionは変更していない。
+
 ## Revision History
 
 | Date | Summary | Reference |
@@ -87,3 +89,4 @@ Full Flowは「品質検査コマンドはSmall Flowと同じものを使う」�
 | 2026-08-31 | UC-FLOW-006の裁定結果をDecision 6へ注記 | `UC-FLOW-006` |
 | 2026-09-01 | TASK起点フローの完了終端をADR-034へ接続 | `ADR-034` |
 | 2026-09-01 | Decision 4の非成功statusを明確化 | `ADR-035` |
+| 2026-09-01 | 骨格へ`Integrate`を追加する部分改訂をADR-038で行った | `ADR-038` |

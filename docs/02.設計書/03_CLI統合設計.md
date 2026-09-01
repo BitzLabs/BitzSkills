@@ -131,7 +131,7 @@ Core 1.0はフックなしで完結する。フックは性能、互換性、攻
 - 拡張ごとの`doctor`プリフライトが不在、非互換、Capability不足を`blocked`にする
 - 同名のローカルIDを持つ複数workspace、横断依存、未登録member、所有境界違反のfixtureが正しく判定される
 - `--all-workspaces`の結果順と集約statusが同一入力で再現される
-- `check --base`がHEAD既定と明示merge-baseで同じ変更集合契約を使い、未追跡pathを漏らさない
+- `check --base`がHEAD既定と明示した統合先先端で同じ変更集合契約を使い、未追跡pathを漏らさない
 - `check`の明示対象、`--full`、`--all-workspaces`の排他と終了コードが再現される
 - 引数なし`check`の対象0件が`passed`となり、選択件数がtext／JSONで一致する
 - `passed_with_warnings`のcheckが終了コード0となり、`--strict`が公開文法に存在しない
