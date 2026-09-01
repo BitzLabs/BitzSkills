@@ -52,9 +52,12 @@ PRのmerge-baseのどれを指すか、未追跡ファイルを含むかが未�
 ## Notes
 
 - 本ADRは2026-08-31のP2残存契約レビュー「Git基準版」と「check明示対象」に対する裁定である。
+- Decision 8の明示対象限定は、引数なし、`--full`、`--all-workspaces`でTASKが検査対象になった場合にも維持する。
+  これらはTASK文書を検査するが`changes`境界を適用しない。完了・取り止め時はTASK IDを明示して境界を検査する。
 
 ## Revision History
 
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-08-31 | Git比較基準とcheckの入力・検査範囲を確定 | — |
+| 2026-09-01 | 暗黙選択TASKへ境界検査を適用しないことを明確化 | `UC-FLOW-015` |

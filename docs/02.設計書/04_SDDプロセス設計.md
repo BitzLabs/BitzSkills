@@ -9,8 +9,8 @@
 
 ```text
 Intent -> Context -> Pre-check -> Implement -> Post-check -> Verify -> Human Review -> Done
-                                      ^            |            |
-                                      +------------+------------+
+                                      ^            |            |              |
+                                      +------------+------------+--------------+
 ```
 
 1. **Intent**: 変更対象のREQ、TECH、1件以上のEARS-AI規範文、または`open` TASKを特定する。
@@ -23,6 +23,18 @@ Intent -> Context -> Pre-check -> Implement -> Post-check -> Verify -> Human Rev
 7. **Human Review**: 対応した規範文IDと最終diffを人間が確認する。
 8. **Done**: TASK起点では、Human Review後に起点TASKを`done`へ変更してRevision Historyを更新し、
    変更後の入力へ`bitz check <TASK-ID>`を実行してから、完了結果をGitへ記録する。
+
+Human Reviewで否決された場合は、理由に応じて次の段階へ戻す。
+
+| 否決理由 | 戻り先 | 再実行する段階 |
+|---|---|---|
+| 要求、目的、受入条件 | Intent | ContextからHuman Reviewまで |
+| 依存、設計、Context不足・陳腐化 | Context | Pre-checkからHuman Reviewまで |
+| コード、テスト、最終diff | Implement | Post-checkからHuman Reviewまで |
+
+戻った地点より後のcheck、Verify、Human Reviewを省略してDoneへ進まない。REQ、TECH、TASK、設定を変更した場合は
+Contextを再取得し、書込み前にDigestを再照合する。Human Review否決は人間が指示する再作業であり、§6の
+自動リトライ回数へ含めない。再作業しない場合は§2.1の`Stopped`を選ぶ。
 
 `Pre-check`と`Post-check`は同じ`bitz check`であり、実行位置と対象選択だけが異なる。実装後に静的検査を
 経ずに`Done`へ到達する経路は作らない。フロー配置と必須呼出しの根拠は
@@ -50,7 +62,7 @@ SPECを作らずに行う変更は、Small Flowの外側にあるCore保証外�
 
 通常のバグ修正、局所的な機能追加、リファクタリングはSmall Flowを使う。専用Gate承認や永続runを要求しない。
 
-### 3.1 取り止め終端
+### 2.1 取り止め終端
 
 Small FlowとFull Flowは、`Done`へ到達する前のどの段階でも、人間の明示判断により`Stopped`へ終了できる。
 `Stopped`は再作業のための一時停止やCoreの操作statusではなく、そのフローを完了させない終端である。
@@ -94,7 +106,7 @@ Pre-check -> Implement -> Post-check -> Verify -> Human Review -> Done
 - Design Review否決はContext再取得または設計改訂へ戻す。
 - 要求または設定を変更した場合はContext Digestを再照合する。
 - `Post-check`とVerifyの失敗は§6の分類済みリトライ規則へ従う。
-- Human Review否決は理由に応じてIntent、Context、Implementのいずれかへ戻す。
+- Human Review否決はSmall Flowと同じ理由分類、戻り先、再実行範囲を使う。
 
 品質検査コマンドはSmall Flowと同じものを使い、`Pre-check`と`Post-check`の配置もSmall Flowと同一とする。
 TASK起点の`Done`もSmall Flowと同じ終端手順を使い、Full Flow専用の別エンジンを作らない。
@@ -136,6 +148,9 @@ TASK起点の`Done`もSmall Flowと同じ終端手順を使い、Full Flow専用
 
 各試行で同じ変更を反復しない。上限到達時は進行を停止し、最後の失敗とdiffを提示する。この停止は
 自動的な`Stopped`確定ではなく、人間が再作業または取り止めを選ぶ判断点である。
+
+Human Review否決による再作業は自動修正ではないため、この表の回数へ含めない。Coreは否決回数を数えず、
+同じ理由が繰り返された場合も、人間が再作業または`Stopped`を選ぶ。
 
 戻り先は失敗種別で決める。コンパイル、Lint、単体テスト、TASK境界外変更は`Implement`へ戻す。仕様矛盾、
 要求の意味変更、権限不足は自動修復せず人間確認へ戻す。一時的なツール障害は、同じ副作用を増やさない

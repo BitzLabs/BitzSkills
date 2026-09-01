@@ -62,7 +62,14 @@ relations:
 `Consequences`、任意の`Alternatives`、`Notes`、最終H2の`Revision History`で構成する。
 
 ADRを必須制約として適用する側は、自身の`requires`からADRを参照する。ADRの`related`だけでは
-Contextへ自動的に含まれない。後継ADRは`supersedes`で旧ADRを指定し、旧ADRを`superseded`へ変更する。
+Contextへ自動的に含まれない。Coreが認識する後継化は文書全体の置換だけとし、後継ADRは`supersedes`で
+旧ADRを指定し、旧ADRを`superseded`へ変更する。
+
+Decision項目の一部だけを後続ADRで変更する「部分改訂」はCore共通契約に含めない。`amends`相当の関係型がなく、
+`related`もContextへ自動包含されないため、Coreが部分改訂を適用順序として解釈すると欠落が生じるためである。
+Core保証内で既存Decisionを変更する場合は、現行Decisionを統合した後継ADRで文書全体を置換する。
+プロジェクト独自の文書ガバナンスとして部分改訂を採用することは妨げないが、Coreは改訂関係、対象Decision、
+3点記録の完全性を検査せず、Contextへ暗黙適用しない。
 
 ADRは実装パスや検証コマンドを直接所有しない。
 
