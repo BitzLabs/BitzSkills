@@ -109,7 +109,7 @@ Coreは取り止めを推測せず、code/test差分を削除しない。既に`
 1. 共通要求の`purpose=interpret` Contextをreviewする。
 2. memberごとに`purpose=implement` Context、Pre-check、実装、Post-check、verifyを行う。
 3. 横断Contextの到達先と、各memberの所有境界をHuman Reviewで確認する。
-4. 統合前にfederation rootで`check --all-workspaces --base <統合先先端>`と
+4. 統合前に同じGit／federation rootを発見できるdirectoryで`check --all-workspaces --base <統合先先端>`と
    `verify --all-workspaces`を実行する。
 
 独立した複数workspaceを1つのContext requestの複数起点にせず、memberごとにrequestを分ける。

@@ -64,4 +64,6 @@ LLM出力の決定論性、実装の完全性は保証せず、人間reviewとte
 モノレポSPEC連合は[ADR-040](10_決定記録/ADR-040_モノレポSPEC連合をCore-1.0へ再導入する.md)により
 Core 1.0へ含める。verifyのtarget別証跡と明示report保存は
 [ADR-041](10_決定記録/ADR-041_verify対象別証跡とreport明示保存の分離.md)に従う。その他の対象外機能は
-[ADR-039](10_決定記録/ADR-039_Core-1.0仕様構造の再編とscope縮小.md)の簡素化判断を維持する。
+[ADR-039](10_決定記録/ADR-039_Core-1.0仕様構造の再編とscope縮小.md)の簡素化判断を維持する。連合のworkspace
+identity、所有境界、公開Schema、CLI、resourceと性能条件は
+[ADR-042](10_決定記録/ADR-042_モノレポ連合のidentity・所有境界・公開契約を確定する.md)で確定した。

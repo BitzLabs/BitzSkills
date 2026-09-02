@@ -4,7 +4,8 @@
 - 作成日: 2026-09-01
 - 前提: [ADR-039](../02.設計書/10_決定記録/ADR-039_Core-1.0仕様構造の再編とscope縮小.md)、
   [ADR-040](../02.設計書/10_決定記録/ADR-040_モノレポSPEC連合をCore-1.0へ再導入する.md)、
-  [ADR-041](../02.設計書/10_決定記録/ADR-041_verify対象別証跡とreport明示保存の分離.md)
+  [ADR-041](../02.設計書/10_決定記録/ADR-041_verify対象別証跡とreport明示保存の分離.md)、
+  [ADR-042](../02.設計書/10_決定記録/ADR-042_モノレポ連合のidentity・所有境界・公開契約を確定する.md)
 
 ## 1. 目的
 
@@ -16,7 +17,8 @@ Phase番号と完了条件は計画であり、Core APIの規範ではない。
 
 - 通常Markdownまたは従来EARSを使う比較taskを5件固定する。
 - 完了時間、仕様記述時間、review時間、欠陥検出数を定義する。
-- 単一workspaceと20 member連合の基準fixtureを固定する。
+- 単一workspaceと、20 workspace、SPEC 1,000件、relation 20,000件の基準連合fixtureを固定する。
+- 平均file byte、statement数、edge密度、横断Contextの到達workspace数と基準環境manifestを固定する。
 - Core 1.0対象外機能を確認する。
 
 完了条件は、比較方法と成功基準が実装前に固定されていることである。
@@ -60,10 +62,17 @@ Phase番号と完了条件は計画であり、Core APIの規範ではない。
 - `--workspace`と`--all-workspaces`
 - workspace別`targetResults[]`、共有command結果、集約status、明示連合report
 - 未登録member、path重複、Git不在、横断参照、対象0件fixture
+- Git既知の未登録設定、symlink所有迂回、case差、初回root ID写像、member移動・削除fixture
+- 連合Contextとcheck／verify／doctor全体結果の期待JSON
+- byte、statement、edge、trace、command、bindingの上限直前・直後fixture
 
 完了条件は、同名ローカルIDを持つmember、横断refinement、所有境界違反を決定論的に区別し、
 `check --all-workspaces`と`verify --all-workspaces`が基準性能を満たすことである。別member所有bindingを1回だけ実行し、
 request targetとowner memberのstatusへ反映してもcommand実体とdurationを複製しないことをfixtureで確認する。
+
+性能はCore cacheを使わず、暖機1回後の5回中央値で測定する。基準環境で`check --all-workspaces`を30秒以内、
+3 workspaceへ到達する20文書・128 KiB以下のContextを1秒以内、Core peak RSS増分を200 MiB以内とする。
+10,000 SPEC fixtureは性能SLOではなくhard limitの安全停止を検証する。
 
 ## 7. Phase 5: SDD垂直スライス
 

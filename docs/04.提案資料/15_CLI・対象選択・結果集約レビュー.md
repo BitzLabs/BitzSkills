@@ -1,6 +1,6 @@
 # CLI・対象選択・結果集約レビュー
 
-- 状態: Review Complete
+- 状態: P1 Closed / P2 Pending
 - 実施日: 2026-09-02
 - 基準: branch `bitz_next`、HEAD `0097f2839e15a697cea5a8e4cb413a77562201ab`＋未コミット設計
 - 規範文書digest: `b292eed96f8d607c49e380bdb500c10a0c896c2e2c41bea415c4fd14aa38aaba`
@@ -81,3 +81,10 @@ member結果へ複製すると不一致の余地が生じる。全体結果例�
 ## 9. 判定
 
 CLIの基本構文は成立している。FED-CLI-001〜003をAPI freeze前に確定する必要がある。
+
+## 10. P1裁定（2026-09-03）
+
+`FED-CLI-001`〜`003`は[ADR-042](../02.設計書/10_決定記録/ADR-042_モノレポ連合のidentity・所有境界・公開契約を確定する.md)
+で採用した。`--all-workspaces`をGit／federation discovery基準、未知`--workspace`を終了コード4・結果なしとし、
+3操作のmember固有fieldと完全JSON例を固定した。全体checkの`revision`もtop-level 1件に固定したため
+`FED-CLI-005`は随伴してClosedとする。P1はClosedとし、継続判定`FED-CLI-004`のP2だけを残す。

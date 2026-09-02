@@ -1,6 +1,6 @@
 # ID・横断関係・Contextレビュー
 
-- 状態: Review Complete
+- 状態: P1 Closed / P2 Pending
 - 実施日: 2026-09-02
 - 基準: branch `bitz_next`、HEAD `0097f2839e15a697cea5a8e4cb413a77562201ab`＋未コミット設計
 - 規範文書digest: `b292eed96f8d607c49e380bdb500c10a0c896c2e2c41bea415c4fd14aa38aaba`
@@ -70,3 +70,9 @@ workspaceの`bitz.yaml`全体を含めるのか、閉包が参照するcommand�
 ## 7. 判定
 
 IDとgraph規則にP0はない。FED-CTX-001と002を実装前にSchema化する必要がある。
+
+## 8. P1裁定（2026-09-03）
+
+`FED-CTX-001`と`FED-CTX-002`は[ADR-042](../02.設計書/10_決定記録/ADR-042_モノレポ連合のidentity・所有境界・公開契約を確定する.md)
+で採用した。連合Contextの必須field、空配列、順序と、Digestへ収録する実効設定allowlistをcontext仕様へ反映した。
+P1はClosedとし、Diagnostic優先順位`FED-CTX-003`のP2だけを残す。

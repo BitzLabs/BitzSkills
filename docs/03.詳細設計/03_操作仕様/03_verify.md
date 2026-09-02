@@ -24,7 +24,8 @@ bitz verify --all-workspaces
 1回の単独操作の対象workspaceを1つに限定する。code/test path、directory、ADR、異なるworkspaceを所有する
 対象の混在は引数不正で終了コード4とする。
 
-`--all-workspaces`はfederation rootでだけ許可し、明示対象と`--workspace`に排他的である。各workspaceへ引数なし
+`--all-workspaces`は同じGit rootとfederation rootを探索起点から一意に発見できる場合だけ許可し、current directoryの
+root一致は要求しない。明示対象と`--workspace`に排他的である。各workspaceへ引数なし
 verifyを適用し、結果を集約する。
 
 ## 3. 対象
@@ -188,3 +189,9 @@ command実体、member Diagnosticの最悪値とする。これにより横断te
 workspace単位の引数なし対象が0件の場合、`SPEC-VERIFY-BLOCKED-002`をwarningとしてmember結果を
 `passed_with_warnings`にする。連合全体の対象が0件の場合だけerror／`blocked`とする。結果は
 [モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)の集約外形を使う。
+
+全target解決前に、現在treeのGit既知`.spec/bitz.yaml`、catalog、ID、path、Git境界、未対応major、resource上限を
+共通preflightで検査する。非成功ならtarget解決とcommand実行を開始しない。全体結果はtop-levelに
+`scope: all-workspaces`とrepository共通`revision`を1件持つ。各workspace結果は0件でも省略しない
+`targetResults[]`と`commands[]`を持ち、revisionを複製しない。完全JSON例は
+[共通結果契約](../00_共通契約/01_結果・Diagnostic・終了コード.md#22-verify全体結果)を正とする。

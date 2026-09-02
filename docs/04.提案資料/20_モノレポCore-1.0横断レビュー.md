@@ -1,6 +1,6 @@
 # モノレポCore 1.0横断レビュー
 
-- 状態: Review Complete / P0 Closed / P1 Adjudication Pending
+- 状態: Review Complete / P0・P1 Closed / P2 Pending
 - 実施日: 2026-09-02
 - 基準: branch `bitz_next`、HEAD `0097f2839e15a697cea5a8e4cb413a77562201ab`＋未コミット設計
 - 規範文書digest: `b292eed96f8d607c49e380bdb500c10a0c896c2e2c41bea415c4fd14aa38aaba`
@@ -13,11 +13,12 @@
 Core 1.0として実装可能な大きさに収まっている。
 
 レビュー時点では、複数targetのverifyに対し結果が単一`contextDigest`しか持たず、verified述語が成立しない
-P0を1件検出した。P0は2026-09-02にADR-041で裁定・反映済みである。互換条件、所有pathのcanonical判定、
-公開Schema、CLI境界、移行、性能受入条件のP1は引き続き残る。
+P0を1件検出した。P0は2026-09-02にADR-041で裁定・反映済みである。レビュー時点で残っていた互換条件、
+所有pathのcanonical判定、公開Schema、CLI境界、移行、性能受入条件のP1は、2026-09-03にADR-042で裁定した。
 
-独立レビュー29件は原因単位で7つの横断課題へ統合できる。FED-CROSS-001はClosed、残るP1を正本へ反映し、
-P2をfixtureまたは非目標として裁定した時点で、設計レビューゲートを再開できる。
+独立レビュー29件は原因単位で7つの横断課題へ統合できる。FED-CROSS-001はADR-041、
+FED-CROSS-002〜007のP1はADR-042で裁定・反映した。P0とP1の実装着手gateは満たしたが、P2をfixtureまたは
+非目標として裁定するまで設計レビュー全体は完了としない。
 
 ## 2. 独立レビュー結果
 
@@ -43,12 +44,12 @@ P2をfixtureまたは非目標として裁定した時点で、設計レビュ�
 | ID | 優先度 | 統合した独立指摘 | 裁定案 | 主な反映先 |
 |---|---|---|---|---|
 | FED-CROSS-001 | P0 | VER-001〜005 | `targetResults[]`をverified証跡の正本にする | verify仕様、共通結果 |
-| FED-CROSS-002 | P1 | MIG-001〜002 | 初回公開前提を確認し、違う場合は旧Coreが拒否するversion gateを採る | ADR-040、設定Schema、互換性 |
-| FED-CROSS-003 | P1 | INV-001、SEC-001〜004 | Git管理SPECのcatalog差分とcanonical所有領域を検査する | 連合仕様、安全なI/O、doctor/check |
-| FED-CROSS-004 | P1 | CTX-001〜003、CLI-003、IMP-003 | Context・連合結果・bindingの完全Schemaを所有文書へ置く | Context、共通結果、verify |
-| FED-CROSS-005 | P1 | CLI-001〜002、CLI-004〜005 | `--all-workspaces`の起点、未知workspace、継続、revisionを固定する | CLI共通、各操作仕様 |
-| FED-CROSS-006 | P1 | INV-002、MIG-003〜005 | workspace IDを永続identityとし、原子的移行手順を定める | 連合仕様、運用手順、実装計画 |
-| FED-CROSS-007 | P1 | IMP-001〜002、IMP-004〜005 | resource数値、測定条件、期待JSON fixtureを固定する | 実装計画、resource契約 |
+| FED-CROSS-002 | P1 / Closed | MIG-001〜002 | 初回公開前提を確認し、違う場合は旧Coreが拒否するversion gateを採る | ADR-040、設定Schema、互換性 |
+| FED-CROSS-003 | P1 Closed / P2 Pending | INV-001、SEC-001〜004 | Git管理SPECのcatalog差分とcanonical所有領域を検査する | 連合仕様、安全なI/O、doctor/check |
+| FED-CROSS-004 | P1 Closed / P2 Pending | CTX-001〜003、CLI-003、IMP-003 | Context・連合結果・bindingの完全Schemaを所有文書へ置く | Context、共通結果、verify |
+| FED-CROSS-005 | P1 Closed / P2 Pending | CLI-001〜002、CLI-004〜005 | `--all-workspaces`の起点、未知workspace、継続、revisionを固定する | CLI共通、各操作仕様 |
+| FED-CROSS-006 | P1 Closed / P2 Pending | INV-002、MIG-003〜005 | workspace IDを永続identityとし、原子的移行手順を定める | 連合仕様、運用手順、実装計画 |
+| FED-CROSS-007 | P1 Closed / P2 Pending | IMP-001〜002、IMP-004〜005 | resource数値、測定条件、期待JSON fixtureを固定する | 実装計画、resource契約 |
 
 FED-CROSS-001は[ADR-041](../02.設計書/10_決定記録/ADR-041_verify対象別証跡とreport明示保存の分離.md)で
 裁定・反映済みである。結果保存も同時に明示`--report`だけへ変更し、CIとworktreeの暗黙file生成を禁止した。
@@ -169,22 +170,40 @@ report生成有無を機械比較する。
 | 順序 | 課題 | Gate |
 |---:|---|---|
 | 1 | FED-CROSS-001 verify証跡 | **Closed**。ADR-041と正本へ反映済み |
-| 2 | FED-CROSS-002 互換性 | 公開済み版の事実確認後にversion方針を決定 |
-| 3 | FED-CROSS-003 所有境界 | path resolver／doctor実装前に固定 |
-| 4 | FED-CROSS-004 公開Schema | adapterとfixture作成前に固定 |
-| 5 | FED-CROSS-005 CLI集約 | CLI parserとreport実装前に固定 |
-| 6 | FED-CROSS-006 identity・移行 | 実repository移行前に固定 |
-| 7 | FED-CROSS-007 性能・fixture | 1.0受入試験開始前に固定 |
+| 2 | FED-CROSS-002 互換性 | **P1 Closed**。未リリース前提をADR-042と正本へ反映済み |
+| 3 | FED-CROSS-003 所有境界 | **P1 Closed**。Git既知設定とcanonicalizerを反映済み |
+| 4 | FED-CROSS-004 公開Schema | **P1 Closed**。Contextと3操作の全体Schemaを反映済み |
+| 5 | FED-CROSS-005 CLI集約 | **P1 Closed**。discoveryと未知workspace境界を反映済み |
+| 6 | FED-CROSS-006 identity・移行 | **P1 Closed**。永続IDと原子的移行を反映済み |
+| 7 | FED-CROSS-007 性能・fixture | **P1 Closed**。resource数値と測定条件を反映済み |
 
-1、3、4、5は既存方針を変えず詳細契約を閉じるため、原則として詳細設計の改訂で足りる。2は公開履歴によって
-Schema互換性の決定が変わり、6はworkspace identityを新たに固定するため、ADR-040の追補または新規ADRで裁定する。
+1、3、4、5は詳細設計を改訂し、2の公開履歴と6のworkspace identityを含む判断理由はADR-042へ記録した。
 
 ## 12. 最終判定
 
 - 方針: **採用維持**
-- 設計レビューゲート: **未完了**
-- 実装着手: **残るP1裁定まで保留**
-- 再レビュー: 正本反映後、上記受入fixtureに対する契約追跡だけを行う
+- 設計レビューゲート: **P2裁定待ち**
+- 実装着手: **P0・P1 gate通過**
+- 再レビュー: 残るP2をfixture、追加契約または非目標として裁定する
 
-モノレポをCore 1.0から再び除外する必要はない。verify結果とI/OのP0接続は完了した。現時点の課題はscope過大ではなく、
-残る互換、所有、公開Schema、CLI、移行、resource契約を最後まで接続できていないことである。
+モノレポをCore 1.0から再び除外する必要はない。verify結果とI/OのP0、および互換、所有、公開Schema、CLI、移行、
+resource／性能のP1接続は完了した。残件はP2の運用・適合性詳細である。
+
+## 13. P1裁定結果（2026-09-03）
+
+[提案22](22_モノレポ残存P1裁定案.md)の6点を一括採用し、
+[ADR-042](../02.設計書/10_決定記録/ADR-042_モノレポ連合のidentity・所有境界・公開契約を確定する.md)と正本へ反映した。
+P0反映後のP1 15件のうち`FED-MIG-001`はCore 1.0未リリースの事実で解消し、残る14件を次で閉じた。
+
+| 裁定単位 | 結果 |
+|---|---|
+| 初回公開・identity・移行 | 初回1.0へ連合を含め、永続ID、初回root写像、原子的切替を採用 |
+| catalog・所有境界 | Git既知設定の差分検査とsymlink解決後のcanonical所有判定を採用 |
+| 公開Schema | 連合Context、Digest allowlist、3操作のmember固有fieldと完全JSON例を固定 |
+| CLI | `--all-workspaces`をdiscovery基準、未知`--workspace`を終了コード4に固定 |
+| resource | byte、statement、edge、trace、command、bindingの連合上限を数値化 |
+| 性能 | 1,000 SPECの通常fixtureと10,000 SPECのhard-limit fixtureを分離し、5回中央値を採用 |
+
+これによりFED-CROSS-002〜007のP1をClosedとする。また、P1と不可分だった`FED-INV-002`、`FED-CLI-005`、
+`FED-MIG-004`、およびADR-041で解消済みの`FED-VER-005`もClosedである。残るP2は`FED-CTX-003`、
+`FED-CLI-004`、`FED-SEC-004`、`FED-MIG-005`、`FED-IMP-004`、`FED-IMP-005`の6件とする。

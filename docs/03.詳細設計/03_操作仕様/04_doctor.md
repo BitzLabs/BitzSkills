@@ -34,10 +34,15 @@ plugin情報を指定する場合はID、version、required API、capabilityを1
 | 11 | cache | 再構築可能ならwarning |
 | 12 | 影響候補件数 | info |
 
-独立検査は先行失敗後も可能な範囲で続行する。`--workspace`は選択member、`--all-workspaces`はcatalogと
-全memberをworkspace ID順に診断する。Core 1.0はProfile互換性を検査しない。
+独立検査は先行失敗後も可能な範囲で続行する。`--workspace`は選択member、`--all-workspaces`は同じGit rootと
+federation rootを探索起点から一意に発見できる場合にcatalogと全memberをworkspace ID順に診断する。current directoryの
+root一致は要求しない。Core 1.0はProfile互換性を検査しない。
 `--all-workspaces`ではCore、plugin、Capability、Git、catalogをtop-levelで1回検査し、workspace固有の設定、版、
 command、cwd、cache、影響候補を各member結果へ置く。同じ環境Diagnosticをmemberごとに複製しない。
+
+全体診断はHEADと現在snapshotのGit既知`.spec/bitz.yaml`を、連合を宣言している各snapshot自身のcatalogと比較する。
+unborn repositoryと連合化前の単一workspace HEADでは現在snapshotだけを連合完全性の対象にする。catalog、ID、path、
+Git境界、未対応major、resource上限のglobal preflightが非成功ならmember診断を開始しない。
 
 ## 4. Capability
 
@@ -84,6 +89,22 @@ earsAi: "1.0"
   "diagnostics": []
 }
 ```
+
+`--all-workspaces`結果はtop-levelに`core`とglobal `checks[]`を持ち、各workspace結果は0件でも省略しない
+workspace固有`checks[]`を持つ。同じCore／plugin／Capability／Git／catalog診断をmemberへ複製しない。
+
+| `checks[]` field | 型 | 必須 | 意味 |
+|---|---|:--:|---|
+| `name` | string | Yes | 安定した検査名 |
+| `status` | enum | Yes | `passed`、`info`、`warning`、`failed`、`blocked`、`error` |
+| `lostGuarantees` | string[] | No | 縮退で失われる保証。重複なし辞書順 |
+
+check statusの`info`は操作statusを変えず、`warning`は`passed_with_warnings`として集約する。`failed`、`blocked`、
+`error`は同名の操作statusとして共通の最悪値規則へ加える。
+
+単一workspaceではtop-level `checks[]`にglobalとworkspace固有検査を処理順で置く。全体結果ではglobal検査をtop-level、
+workspace固有検査を該当workspace要素へ置く。完全JSON例は
+[共通結果契約](../00_共通契約/01_結果・Diagnostic・終了コード.md#23-doctor全体結果)を正とする。
 
 ## 8. Diagnostic
 

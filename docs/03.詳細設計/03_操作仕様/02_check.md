@@ -26,7 +26,8 @@ bitz check --all-workspaces
 異なるworkspaceを所有する対象の混在は引数不正で終了コード4とする。
 
 `--full`と明示対象は排他的である。引数なしはGit変更集合を起点にする。
-`--all-workspaces`はfederation rootでだけ許可し、明示対象、`--full`、`--workspace`と排他的である。
+`--all-workspaces`は同じGit rootとfederation rootを探索起点から一意に発見できる場合だけ許可し、current directoryの
+root一致は要求しない。明示対象、`--full`、`--workspace`と排他的である。
 全体操作は`--full`を含意し、catalog、全workspace、横断関係、所有境界を検査する。
 
 ## 3. 共通索引と完全検査
@@ -40,6 +41,9 @@ bitz check --all-workspaces
 - `--all-workspaces`: catalog内の全SPEC
 
 軽量索引の構築と対象文書の完全解析を混同しない。
+`--all-workspaces`は共通preflightでbase/currentのGit既知`.spec/bitz.yaml`を、連合を宣言している各snapshot自身の
+catalogと比較する。初回連合化前の単一workspace baseへ全体列挙を適用しない。catalog、ID、path、Git境界、
+未対応major、resource上限が非成功ならworkspace別検査を開始しない。
 
 ## 4. 検査順序
 
@@ -74,6 +78,10 @@ bitz check --all-workspaces
 `--all-workspaces`ではrepository全体で1つの基準commitを使い、基準版と現在版の両catalogからworkspace修飾IDで
 文書を対応付ける。member削除または移動時の扱いは
 [モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)に従う。
+
+初回連合化では、baseのrepository root設定が`monorepo`と明示`workspace.id`を持たない場合だけ、実効ID `root`を
+currentのfederation root IDへ比較上で写像する。連合化後のID renameは推定せず、member pathだけの移動は同じIDで
+対応付ける。catalogから消えたmemberの管理済みSPECは削除検査の対象から外さない。
 
 ## 6. 引数なし対象選択
 
@@ -126,7 +134,9 @@ Coreは意味的影響を断定せず、statusを自動変更しない。`relate
 
 `scope: changed`では`selection`を必須とする。text出力も同じ3件数を使う。
 `--all-workspaces`では`scope: all-workspaces`と共通の`federation`、`workspaces`外形を使用し、各memberの
-操作固有件数とDiagnosticをmember結果へ保持する。
+`checkedDocumentCount`、`checkedStatementCount`とDiagnosticをmember結果へ保持する。両件数は非負integerで必須とし、
+全SPECを完全検査した文書数と規範文数を表す。repository共通の`revision`はtop-levelに1件だけ置き、member結果へ
+複製しない。完全JSON例は[共通結果契約](../00_共通契約/01_結果・Diagnostic・終了コード.md#21-check全体結果)を正とする。
 
 ## 10. Git不在
 

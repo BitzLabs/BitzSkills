@@ -83,6 +83,10 @@ ADR-039はCore 1.0の最小垂直スライスを先に実証するため、連�
 - ADR-039のS2〜S7に対応する簡素化と、1規則1正本の文書構造は維持する。
 - verify結果のContext Digest配置とtarget別証跡は、後続の
   [ADR-041](ADR-041_verify対象別証跡とreport明示保存の分離.md)で明確化した。
+- Decision 1、3、5、7の未確定境界は、後続の
+  [ADR-042](ADR-042_モノレポ連合のidentity・所有境界・公開契約を確定する.md)で補完した。Decision 4の
+  federation root条件はGit／federation discovery条件へ、Decision 8のresource契約は連合全体の数値表へ同ADRで
+  置き換えた。
 
 ## Revision History
 
@@ -90,3 +94,4 @@ ADR-039はCore 1.0の最小垂直スライスを先に実証するため、連�
 |---|---|---|
 | 2026-09-02 | 現行の簡素化を維持してモノレポSPEC連合をCore 1.0へ再導入 | ADR-017, ADR-039 |
 | 2026-09-02 | verify結果のtarget別証跡を後続決定へ接続 | ADR-041 |
+| 2026-09-03 | Decision 1、3、5、7を補完し、Decision 4と8を部分改訂 | ADR-042 |

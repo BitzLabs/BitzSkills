@@ -107,6 +107,21 @@ path、code、testを受け付けない。単一workspaceでは非修飾IDだけ
 `resolution.workspaces`と`resolution.crossWorkspaceEdges`のfield、内容、順序は
 [モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)に従い、連合結果では必須とする。
 
+連合結果の追加Schemaを次に示す。単一workspaceではこれらの追加fieldを省略する。
+
+| field | 型 | 必須 | 内容 |
+|---|---|:--:|---|
+| `documents[].workspaceId` | string | Yes | 所有workspace ID。文書`id`は修飾形式 |
+| `resolution.workspaces` | object[] | Yes | 1件以上の到達workspace。request workspaceを先頭、以降ID辞書順 |
+| `resolution.workspaces[].id` | string | Yes | 重複しないworkspace ID |
+| `resolution.workspaces[].path` | string | Yes | repository root相対path。rootは`.` |
+| `resolution.crossWorkspaceEdges` | object[] | Yes | 横断edge。0件でも空配列 |
+| `crossWorkspaceEdges[].relation` | enum | Yes | `requires`、`refines`、`addresses`、`supersedes`、`related` |
+| `crossWorkspaceEdges[].source` | string | Yes | 修飾document ID |
+| `crossWorkspaceEdges[].target` | string | Yes | 修飾document IDまたはstatement ID |
+
+edgeは重複排除し、`source`、`relation`、`target`の辞書順とする。workspace境界を越えないedgeは収録しない。
+
 ## 5. Projection
 
 | projection | 内容 |
@@ -135,6 +150,13 @@ Context Digestは次をCanonical JSON化したSHA-256である。形式は`sha25
 - Contextに影響する実効設定
 - 到達workspaceのID、repository root相対path、修飾edge
 
+「Contextに影響する実効設定」は、到達workspaceの設定全体ではなく次のallowlistとする。
+
+- 到達workspaceごとの`schemaVersion`、`earsAi`、`language`
+- request workspaceだけの既定値適用後`context.maxDocuments`と`context.maxBytes`
+- bindingを1件以上収録したworkspaceの既定値適用後`verify.timeoutSeconds`
+- Bundleが参照するcommandだけの名前、argv template、既定値適用後cwd。command名辞書順
+
 次は含めない。
 
 - 生成時刻、絶対path、cache位置、出力形式
@@ -143,6 +165,9 @@ Context Digestは次をCanonical JSON化したSHA-256である。形式は`sha25
 - code/test fileの内容
 - CLI timeout cap
 - 未到達workspaceの設定、本文、catalog列挙順
+- `monorepo.maxMembers`、未使用command、`safety`
+
+設定の構文、型、必須fieldまたは参照commandが不適合ならDigest計算前に停止し、不完全な設定からDigestを作らない。
 
 公開するhashはContext Digestだけとする。文書単位hashと提示内容digestは内部実装に限定する。
 

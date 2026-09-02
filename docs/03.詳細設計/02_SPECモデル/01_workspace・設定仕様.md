@@ -96,6 +96,10 @@ safety:
 未知の標準keyは同一majorの前方互換性のためwarningし、値を変更しない。型不正と必須key欠如は`error`、
 未知Schema majorは`blocked`とする。
 
+`workspace`と`monorepo`は未リリースの初回Core 1.0 Schemaに含まれる。モノレポ非対応の公開済みCore 1.0との
+移行分岐、追加feature marker、Schema major引上げは設けない。連合内のworkspace IDは永続identityであり、
+初回連合化とbase/current対応は[モノレポSPEC連合仕様](05_モノレポSPEC連合仕様.md#41-workspace-identity)に従う。
+
 ## 6. command定義
 
 command名は`[a-z][a-z0-9-]{0,31}`とする。値は空でないargv配列、または`argv`と任意`cwd`のmapとする。
