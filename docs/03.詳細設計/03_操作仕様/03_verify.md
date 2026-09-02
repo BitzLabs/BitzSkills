@@ -39,17 +39,20 @@ verifyを適用し、結果を集約する。
 | done TASK | 完了作業の再検証として同上 |
 | cancelled TASK | `CTX-STATE-001`／blocked |
 
-複数対象はIDへ正規化し、target statement集合を和集合にして重複排除する。
+複数対象はIDへ正規化し、target IDを重複排除して辞書順に並べる。各targetは別々の`purpose=verify` Contextを持つ。
+statement集合はtargetごとに重複排除し、command bindingの実行計画だけを全targetで統合する。
 
 ## 4. 処理
 
-1. `purpose=verify` Contextを完全解決する。
-2. 起点と強い依存の適用可能性、先行TASKのdoneを確認する。
+1. 正規化したtargetごとに`purpose=verify` Contextを完全解決する。
+2. 各targetの起点と強い依存の適用可能性、先行TASKのdoneを確認する。
 3. target statementを確定し、全`MUST`へ1件以上のtest対応を要求する。
-4. test pathとcommand名を解決する。
-5. 同じ`(workspaceId, commandName)`に属するtest pathを所有workspace相対pathで重複排除し、辞書順に並べる。
+4. Contextとcoverageが通過statusのtargetについてtest pathとcommand名を解決し、`bindingRefs[]`を作る。
+5. 全通過targetの`bindingRefs`を和集合にし、同じ`(workspaceId, commandName)`に属するtest pathを
+   所有workspace相対pathで重複排除して辞書順に並べる。
 6. workspace処理順、command名辞書順でbindingを逐次実行する。
-7. Context Digest、対象句、実効timeout、終了理由、終了コード、所要時間を記録する。
+7. command結果を参照targetへ反映し、target、workspace、操作全体のstatusを集約する。
+8. targetごとのContext Digest、対象句、binding参照と、実行ごとのtimeout、終了理由、終了コード、所要時間を記録する。
 
 異なるcommand名はargv/cwdが同じでも別bindingとして実行する。同じworkspaceの同じcommand名は1回だけ実行する。
 workspaceが異なればcommand名と内容が同じでも別bindingとする。
@@ -88,8 +91,9 @@ coverage、command、環境不足はtestを開始せずblockedとする。
 - approved TECHのうち、statementを持つもの
 - approved TECHのうち、statementを持たず`tests`を宣言するもの
 
-対象ごとにContextを解決し、未tested MUSTを持つ対象だけblockedとして独立対象を継続する。同じcommand名の
-test pathは全対象でまとめ、1回実行する。対象0件は`SPEC-VERIFY-BLOCKED-002`／blockedとし、空CIを成功にしない。
+対象ごとにContextを解決し、未tested MUSTを持つ対象は`contextDigest`を保持したままblocked、`bindingRefs: []`として
+独立対象を継続する。同じcommand名のtest pathは通過target全体でまとめ、1回実行する。対象0件は
+`SPEC-VERIFY-BLOCKED-002`／blockedとし、空CIを成功にしない。
 
 ## 8. 結果
 
@@ -100,12 +104,21 @@ test pathは全対象でまとめ、1回実行する。対象0件は`SPEC-VERIFY
   "status": "passed",
   "scope": "selected",
   "workspace": {"id": "root", "path": "."},
-  "targets": ["REQ-001"],
-  "contextDigest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-  "statements": ["REQ-001:AC-01"],
+  "targetResults": [
+    {
+      "target": "REQ-001",
+      "status": "passed",
+      "contextDigest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "statements": ["REQ-001:AC-01"],
+      "bindingRefs": ["root::default"],
+      "diagnostics": []
+    }
+  ],
   "revision": {"commit": "0123456789abcdef", "dirty": false},
   "commands": [
     {
+      "bindingId": "root::default",
+      "workspaceId": "root",
       "name": "default",
       "status": "passed",
       "termination": "exit",
@@ -123,13 +136,30 @@ test pathは全対象でまとめ、1回実行する。対象0件は`SPEC-VERIFY
 }
 ```
 
-`commands[]`はcommand名単位の実行実体である。`argv`は展開後、`tests`はworkspace相対宣言path、`cwd`は
-workspace root相対で未指定時`.`とする。通常終了以外は`exitCode: null`とする。
-連合内のworkspace単独結果では、command実体をその操作結果へ置き、`workspaceId`と
-`bindingId: <workspace-id>::<command-name>`を追加する。対象と句のIDは修飾形式で返す。
+`targetResults[]`はtarget、Context、statement、binding、結果を結ぶ検証証跡の正本であり、target ID辞書順とする。
+top-levelに`targets`、`contextDigest`、`statements`を重複して持たない。
 
-`verified`は特定Context Digest、code、test、環境に対する実行時述語で、Frontmatter状態ではない。
-Context Digestが変われば以前の成功を現在の根拠にしない。
+| `targetResults[]` field | 型 | 必須 | 意味 |
+|---|---|:--:|---|
+| `target` | string | Yes | 正規target ID。連合では修飾形式 |
+| `status` | enum | Yes | Context、coverage、全`bindingRefs`の最悪status |
+| `contextDigest` | string/null | Yes | 完全ContextのDigest。Contextを構成できない場合だけnull |
+| `statements` | string[] | Yes | targetが検証する規範文。重複なし辞書順 |
+| `bindingRefs` | string[] | Yes | 必要なbinding ID。重複なし辞書順 |
+| `diagnostics` | array | Yes | target固有Diagnostic |
+
+規範文なしTECHは`statements: []`でも文書単位testの`bindingRefs`を持てる。Context解決またはcoverageが
+非成功のtargetだけが要求するbindingは実行せず、実行計画作成前に非成功となったtargetは`bindingRefs: []`とする。
+別の通過targetも同じbindingを要求する場合は1回実行し、その結果を通過targetへだけ反映する。
+
+`commands[]`はcommand名単位の実行実体である。単一workspaceを含め、`workspaceId`と
+`bindingId: <workspace-id>::<command-name>`を必須とする。`argv`は展開後、`tests`はworkspace相対宣言path、`cwd`は
+workspace root相対で未指定時`.`とする。通常終了以外は`exitCode: null`とする。連合内では対象、句、`covers`のIDを
+修飾形式で返す。
+
+1つのtargetが`verified`であるのは、target statusが通過status、`contextDigest`が非null、対象となる全`MUST`に
+test対応があり、全`bindingRefs`がちょうど1件のpassed commandを参照する場合である。`verified`は特定Context Digest、
+code、test、環境に対する実行時述語で、Frontmatter状態ではない。Context Digestが変われば以前の成功を現在の根拠にしない。
 
 ## 9. Diagnostic
 
@@ -147,14 +177,13 @@ report生成、秘密情報、result集約は共通契約に従う。
 
 `verify --all-workspaces`はfederation rootを先頭、その後をworkspace ID辞書順に処理する。実行済みbinding集合は
 連合全体で1つ保持し、横断refinementが参照する同じ`(workspaceId, commandName)`を二重実行しない。失敗した
-workspaceがあっても、依存しない後続workspaceの解決済みbindingは継続する。
+workspaceがあっても、依存しない後続workspaceのtarget解決と解決済みbindingは継続する。
 
-全workspaceの対象とContextを先に解決してbindingの和集合を作り、workspace処理順、command名辞書順で実行する。
-command実体は所有workspaceのmember結果の`commands[]`へ1回だけ置く。各member結果は自身の対象が必要とする
-`bindingRefs[]`へ`<workspace-id>::<command-name>`を列挙し、別memberが所有する実行結果を参照する。
-member statusは自身のContext／coverage結果と全`bindingRefs`の実行statusの最悪値とする。commandを所有する
-memberのstatusにも、そのcommandの実行statusを反映する。これにより横断testの失敗を依頼側と実行所有側の
-どちらからも隠さず、command結果自体は複製しない。
+全workspaceのtarget Contextを先に解決し、通過targetのbinding和集合をworkspace処理順、command名辞書順で実行する。
+command実体は所有workspaceのmember結果の`commands[]`へ1回だけ置く。各member結果は`targetResults[]`を持ち、
+各targetの`bindingRefs[]`から別memberが所有する実行結果も参照できる。member statusは全target status、所有する
+command実体、member Diagnosticの最悪値とする。これにより横断testの失敗を依頼側targetと実行所有側memberの
+どちらからも隠さず、command結果自体と所要時間は複製しない。
 
 workspace単位の引数なし対象が0件の場合、`SPEC-VERIFY-BLOCKED-002`をwarningとしてmember結果を
 `passed_with_warnings`にする。連合全体の対象が0件の場合だけerror／`blocked`とする。結果は

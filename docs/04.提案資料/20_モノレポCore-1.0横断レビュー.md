@@ -1,6 +1,6 @@
 # モノレポCore 1.0横断レビュー
 
-- 状態: Review Complete / Adjudication Pending
+- 状態: Review Complete / P0 Closed / P1 Adjudication Pending
 - 実施日: 2026-09-02
 - 基準: branch `bitz_next`、HEAD `0097f2839e15a697cea5a8e4cb413a77562201ab`＋未コミット設計
 - 規範文書digest: `b292eed96f8d607c49e380bdb500c10a0c896c2e2c41bea415c4fd14aa38aaba`
@@ -12,12 +12,12 @@
 到達workspace限定Context、`(workspaceId, commandName)` binding、Git境界のfail-closedは相互に整合し、
 Core 1.0として実装可能な大きさに収まっている。
 
-ただし、現状は**実装着手不可**である。複数targetのverifyに対し結果が単一`contextDigest`しか持たず、
-「この結果がどのContextを検証したか」というverified述語が成立しないP0が1件ある。また、互換条件、所有pathの
-canonical判定、公開Schema、CLI境界、移行、性能受入条件にP1が残る。
+レビュー時点では、複数targetのverifyに対し結果が単一`contextDigest`しか持たず、verified述語が成立しない
+P0を1件検出した。P0は2026-09-02にADR-041で裁定・反映済みである。互換条件、所有pathのcanonical判定、
+公開Schema、CLI境界、移行、性能受入条件のP1は引き続き残る。
 
-独立レビュー29件は原因単位で7つの横断課題へ統合できる。P0とP1を正本へ反映し、P2をfixtureまたは非目標として
-裁定した時点で、設計レビューゲートを再開できる。
+独立レビュー29件は原因単位で7つの横断課題へ統合できる。FED-CROSS-001はClosed、残るP1を正本へ反映し、
+P2をfixtureまたは非目標として裁定した時点で、設計レビューゲートを再開できる。
 
 ## 2. 独立レビュー結果
 
@@ -49,6 +49,9 @@ canonical判定、公開Schema、CLI境界、移行、性能受入条件にP1が
 | FED-CROSS-005 | P1 | CLI-001〜002、CLI-004〜005 | `--all-workspaces`の起点、未知workspace、継続、revisionを固定する | CLI共通、各操作仕様 |
 | FED-CROSS-006 | P1 | INV-002、MIG-003〜005 | workspace IDを永続identityとし、原子的移行手順を定める | 連合仕様、運用手順、実装計画 |
 | FED-CROSS-007 | P1 | IMP-001〜002、IMP-004〜005 | resource数値、測定条件、期待JSON fixtureを固定する | 実装計画、resource契約 |
+
+FED-CROSS-001は[ADR-041](../02.設計書/10_決定記録/ADR-041_verify対象別証跡とreport明示保存の分離.md)で
+裁定・反映済みである。結果保存も同時に明示`--report`だけへ変更し、CIとworktreeの暗黙file生成を禁止した。
 
 ## 4. FED-CROSS-001 verify証跡モデル
 
@@ -165,7 +168,7 @@ report生成有無を機械比較する。
 
 | 順序 | 課題 | Gate |
 |---:|---|---|
-| 1 | FED-CROSS-001 verify証跡 | P0。これが閉じるまでverify実装不可 |
+| 1 | FED-CROSS-001 verify証跡 | **Closed**。ADR-041と正本へ反映済み |
 | 2 | FED-CROSS-002 互換性 | 公開済み版の事実確認後にversion方針を決定 |
 | 3 | FED-CROSS-003 所有境界 | path resolver／doctor実装前に固定 |
 | 4 | FED-CROSS-004 公開Schema | adapterとfixture作成前に固定 |
@@ -180,8 +183,8 @@ Schema互換性の決定が変わり、6はworkspace identityを新たに固定�
 
 - 方針: **採用維持**
 - 設計レビューゲート: **未完了**
-- 実装着手: **P0解消とP1裁定まで保留**
+- 実装着手: **残るP1裁定まで保留**
 - 再レビュー: 正本反映後、上記受入fixtureに対する契約追跡だけを行う
 
-モノレポをCore 1.0から再び除外する必要はない。現時点の課題はscope過大ではなく、追加した連合境界を既存の
-結果・互換・I/O契約へ最後まで接続できていないことである。
+モノレポをCore 1.0から再び除外する必要はない。verify結果とI/OのP0接続は完了した。現時点の課題はscope過大ではなく、
+残る互換、所有、公開Schema、CLI、移行、resource契約を最後まで接続できていないことである。

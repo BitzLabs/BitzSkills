@@ -82,3 +82,4 @@
 | [ADR-038](ADR-038_並行開発のID衝突解決と統合段階.md) | 並行開発のID衝突解決と統合段階 | superseded | ADR-039 |
 | [ADR-039](ADR-039_Core-1.0仕様構造の再編とscope縮小.md) | Core 1.0仕様構造の再編とscope縮小 | accepted | 01〜09, 詳細設計全体, 提案11 |
 | [ADR-040](ADR-040_モノレポSPEC連合をCore-1.0へ再導入する.md) | モノレポSPEC連合をCore 1.0へ再導入する | accepted | ADR-017・039, SPECモデル/05 |
+| [ADR-041](ADR-041_verify対象別証跡とreport明示保存の分離.md) | verify対象別証跡とreport明示保存の分離 | accepted | ADR-019・026・039・040, 共通結果, verify仕様 |

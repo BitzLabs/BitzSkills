@@ -81,9 +81,12 @@ ADR-039はCore 1.0の最小垂直スライスを先に実証するため、連�
 - 現行契約は[モノレポSPEC連合仕様](../../03.詳細設計/02_SPECモデル/05_モノレポSPEC連合仕様.md)を含む
   `docs/03.詳細設計`に記載する。
 - ADR-039のS2〜S7に対応する簡素化と、1規則1正本の文書構造は維持する。
+- verify結果のContext Digest配置とtarget別証跡は、後続の
+  [ADR-041](ADR-041_verify対象別証跡とreport明示保存の分離.md)で明確化した。
 
 ## Revision History
 
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-09-02 | 現行の簡素化を維持してモノレポSPEC連合をCore 1.0へ再導入 | ADR-017, ADR-039 |
+| 2026-09-02 | verify結果のtarget別証跡を後続決定へ接続 | ADR-041 |

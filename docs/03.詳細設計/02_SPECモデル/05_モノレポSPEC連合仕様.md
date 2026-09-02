@@ -187,7 +187,8 @@ Context Digestには、通常の材料に加えてrequest workspace ID、到達w
 
 全体操作は共通結果の`workspace`の代わりに`federation`と`workspaces`を持つ。workspace処理順、Diagnostic配置、
 集約status、件数、report出力先は[結果・Diagnostic・終了コード](../00_共通契約/01_結果・Diagnostic・終了コード.md)
-が定義する。
+が定義する。verifyの各member結果は操作仕様の`targetResults[]`を持ち、共有command実体は所有memberへ1回だけ置く。
+`--report`なしの全体操作はstatusにかかわらずfileを作らない。
 
 ## 10. 上限とGit前提
 

@@ -169,13 +169,9 @@ codeの再利用と意味変更を禁止する。廃止codeは予約済みとし
 
 ## 8. report
 
-`check`と`verify`は次の場合だけ`.spec/reports/`へ結果JSONを保存する。
-
-- `--report`が指定された
-- statusが`failed`、`blocked`、`error`である
-
-`passed`と`passed_with_warnings`は`--report`指定時だけ保存する。引数不正は保存しない。
-`context`と`doctor`はCore 1.0ではreportを保存しない。
+`check`と`verify`はstatusにかかわらず、`--report`が指定された場合だけ`.spec/reports/`へ結果JSONを保存する。
+`--report`がなければ標準出力と終了コードだけを返し、既存reportを変更せず、新しいfileも作らない。
+`--format json`は標準出力の形式だけを変え、保存を含意しない。引数不正、`context`、`doctor`はreportを保存しない。
 
 workspace単独reportは対象workspace、全体reportはfederation rootの`.spec/reports/`へ保存する。
 ファイル名は`.spec/reports/<YYYYMMDDTHHMMSSZ>-<operation>[-<sequence>].json`とする。同一秒の衝突は

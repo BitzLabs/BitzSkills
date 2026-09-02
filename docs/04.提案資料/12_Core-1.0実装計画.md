@@ -3,7 +3,8 @@
 - 状態: Active
 - 作成日: 2026-09-01
 - 前提: [ADR-039](../02.設計書/10_決定記録/ADR-039_Core-1.0仕様構造の再編とscope縮小.md)、
-  [ADR-040](../02.設計書/10_決定記録/ADR-040_モノレポSPEC連合をCore-1.0へ再導入する.md)
+  [ADR-040](../02.設計書/10_決定記録/ADR-040_モノレポSPEC連合をCore-1.0へ再導入する.md)、
+  [ADR-041](../02.設計書/10_決定記録/ADR-041_verify対象別証跡とreport明示保存の分離.md)
 
 ## 1. 目的
 
@@ -43,10 +44,13 @@ Phase番号と完了条件は計画であり、Core APIの規範ではない。
 
 - command名単位のbinding解決
 - `{tests}`展開、cwd、timeout、出力上限
-- verify結果と最小report
+- target単位Context、`targetResults[]`、共有bindingの1回実行
+- verify結果と明示`--report`時だけの最小report
 - 導入、互換性、Git縮退、command診断
 
-完了条件は、test成功、非0、起動失敗、signal、timeout、対象0件をfixtureで区別できることである。
+完了条件は、test成功、非0、起動失敗、signal、timeout、対象0件をfixtureで区別でき、異なる2 Contextを持つtarget、
+共有binding、Context非成功targetの混在を正しい`targetResults[]`へ対応付けられることである。`--report`なしでは
+成功・非成功とも既存reportを変更せず、新しいfileを作らないことを検証する。
 
 ## 6. Phase 4: モノレポ連合
 
@@ -54,11 +58,12 @@ Phase番号と完了条件は計画であり、Core APIの規範ではない。
 - 横断Frontmatter索引、完全Context、Context Digest
 - code／test／TASK／cwdの所有境界
 - `--workspace`と`--all-workspaces`
-- workspace別結果、集約status、連合report
+- workspace別`targetResults[]`、共有command結果、集約status、明示連合report
 - 未登録member、path重複、Git不在、横断参照、対象0件fixture
 
 完了条件は、同名ローカルIDを持つmember、横断refinement、所有境界違反を決定論的に区別し、
-`check --all-workspaces`と`verify --all-workspaces`が基準性能を満たすことである。
+`check --all-workspaces`と`verify --all-workspaces`が基準性能を満たすことである。別member所有bindingを1回だけ実行し、
+request targetとowner memberのstatusへ反映してもcommand実体とdurationを複製しないことをfixtureで確認する。
 
 ## 7. Phase 5: SDD垂直スライス
 

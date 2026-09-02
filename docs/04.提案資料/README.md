@@ -32,11 +32,12 @@
 | [13_モノレポ連合モデル・不変条件レビュー.md](13_モノレポ連合モデル・不変条件レビュー.md) | 連合モデル・不変条件 | **Review Complete**（P1 1件、P2 1件） |
 | [14_ID・横断関係・Contextレビュー.md](14_ID・横断関係・Contextレビュー.md) | ID・横断関係・Context | **Review Complete**（P1 2件、P2 1件） |
 | [15_CLI・対象選択・結果集約レビュー.md](15_CLI・対象選択・結果集約レビュー.md) | CLI・対象選択・結果集約 | **Review Complete**（P1 3件、P2 2件） |
-| [16_verify実行モデルレビュー.md](16_verify実行モデルレビュー.md) | verify実行モデル | **Review Complete**（P0 1件、P1 3件、P2 1件） |
+| [16_verify実行モデルレビュー.md](16_verify実行モデルレビュー.md) | verify実行モデル | **Closed**（ADR-041で5件裁定・反映済み） |
 | [17_セキュリティ・信頼境界レビュー.md](17_セキュリティ・信頼境界レビュー.md) | セキュリティ・信頼境界 | **Review Complete**（P1 3件、P2 1件） |
 | [18_互換性・移行・運用レビュー.md](18_互換性・移行・運用レビュー.md) | 互換性・移行・運用 | **Review Complete**（P1 3件、P2 2件） |
 | [19_実装可能性・性能・文書構造レビュー.md](19_実装可能性・性能・文書構造レビュー.md) | 実装可能性・性能・文書構造 | **Review Complete**（P1 3件、P2 2件） |
-| [20_モノレポCore-1.0横断レビュー.md](20_モノレポCore-1.0横断レビュー.md) | レビュー13〜19の横断整理 | **Adjudication Pending**（29件を7課題へ統合） |
+| [20_モノレポCore-1.0横断レビュー.md](20_モノレポCore-1.0横断レビュー.md) | レビュー13〜19の横断整理 | **P0 Closed / P1 Pending**（29件を7課題へ統合） |
+| [21_P0_verify証跡Schema検討.md](21_P0_verify証跡Schema検討.md) | FED-CROSS-001のSchema案 | **Accepted**（ADR-041と正本へ反映済み） |
 
 ## 3. 検討結果の要約
 
@@ -75,6 +76,7 @@ Core 1.0へ再導入した。
 - [ADR-014](../02.設計書/10_決定記録/ADR-014_Semantic-IRと段階的Context-Projection.md)
 - [ADR-039](../02.設計書/10_決定記録/ADR-039_Core-1.0仕様構造の再編とscope縮小.md)
 - [ADR-040](../02.設計書/10_決定記録/ADR-040_モノレポSPEC連合をCore-1.0へ再導入する.md)
+- [ADR-041](../02.設計書/10_決定記録/ADR-041_verify対象別証跡とreport明示保存の分離.md)
 - [EARS-AI言語・Semantic IR仕様](../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md)
 - [関係・トレースモデル](../03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md)
 - [context仕様](../03.詳細設計/03_操作仕様/01_context.md)
@@ -232,7 +234,7 @@ P1反映後の正本について、状態遷移、Git差分、`check`入力、ve
 | verify timeout・command結果・Digest | 採用・反映済み | [ADR-026](../02.設計書/10_決定記録/ADR-026_verify実行binding・timeout・結果Schemaの確定.md) |
 | TASKと規範文なしTECH、`adjacent` | 修正採用・反映済み | 既存型制約をTASK・Context・verifyへ同期 |
 | Diagnostic効果・集約・workspace source | 採用・反映済み | [ADR-027](../02.設計書/10_決定記録/ADR-027_Diagnostic結果効果・集約・workspace-sourceの確定.md) |
-| レポート生成条件 | 修正採用・反映済み | 非成功時の自動保存、成功時の明示保存、引数不正とcontextの非保存へ統一 |
+| レポート生成条件 | 後続改訂 | 当時は非成功時の自動保存へ統一。ADR-041でstatusを問わず明示`--report`時だけへ変更 |
 
 P2 7件の正本反映を完了したため、Core 1.0の設計レビューゲートを再び**完了**とする。
 
@@ -421,11 +423,12 @@ Projection Digestなどは、提案11の再評価条件を満たすまでCore 1.
 ADR-039 Decision 5だけを部分改訂した。旧仕様をそのまま戻さず、明示catalog、修飾ID、横断Context、
 `--all-workspaces`を再編後の責務境界へ追加した。
 
-command名単位のverify、単一Context Digest、Profile実行基盤・ID自動改番・必須Revision Historyの延期は維持する。
+command名単位のverify、Context Digestだけを公開hashとする方針、Profile実行基盤・ID自動改番・必須Revision Historyの
+延期は維持する。Context Digestの結果内配置は後続ADR-041でtarget単位へ改訂した。
 規範は再編後の`docs/02.設計書`と`docs/03.詳細設計`、実装順序は更新後の
 [12_Core-1.0実装計画](12_Core-1.0実装計画.md)へ反映済みである。
 
-## 18. モノレポCore 1.0再レビュー（2026-09-02、裁定待ち）
+## 18. モノレポCore 1.0再レビュー（2026-09-02、P0裁定済み・P1裁定待ち）
 
 ADR-040反映後の作業ツリーを固定し、7観点を互いに独立してレビューした。結果はP0 1件、P1 18件、P2 10件の
 計29件である。同じ原因を別観点から検出した指摘を、
@@ -433,7 +436,7 @@ ADR-040反映後の作業ツリーを固定し、7観点を互いに独立して
 
 | 横断課題 | 優先度 | 要旨 |
 |---|---|---|
-| FED-CROSS-001 | P0 | 複数target verifyを単一`contextDigest`で証明できない |
+| FED-CROSS-001 | P0 / Closed | 複数target verifyを単一`contextDigest`で証明できない |
 | FED-CROSS-002 | P1 | 旧Coreが同一Schema majorの`monorepo`を無視できる可能性がある |
 | FED-CROSS-003 | P1 | 未登録SPECとsymlinkを含む所有境界の完全性が不足する |
 | FED-CROSS-004 | P1 | Context、連合結果、bindingの公開Schemaが閉じていない |
@@ -441,6 +444,21 @@ ADR-040反映後の作業ツリーを固定し、7観点を互いに独立して
 | FED-CROSS-006 | P1 | workspace identityと移行・rollback契約が不足する |
 | FED-CROSS-007 | P1 | resource数値、性能測定、期待JSON fixtureが不足する |
 
-設計方針は条件付き採用を維持するが、設計レビューゲートは再度**未完了**とする。§17の「単一Context Digestを維持」は、
-単一targetには成立するものの複数targetでは成立しないことが判明したため、FED-CROSS-001の裁定で改訂する。
-P0解消とP1裁定までは実装着手を保留し、正本を変更せずレビュー記録だけを追加した。
+設計方針は条件付き採用を維持するが、設計レビューゲートは再度**未完了**とする。§17のContext Digest配置は、
+単一targetには成立するものの複数targetでは成立しないことが判明した。FED-CROSS-001は後続ADR-041で裁定・反映した。
+残るP1裁定までは実装着手を保留する。
+
+## 19. verify対象別証跡と明示report保存（2026-09-02、裁定・反映済み）
+
+FED-CROSS-001を[提案21](21_P0_verify証跡Schema検討.md)で具体化し、
+[ADR-041](../02.設計書/10_決定記録/ADR-041_verify対象別証跡とreport明示保存の分離.md)として裁定した。
+
+- targetごとにContextを解決し、`targetResults[]`を検証証跡の正本とする
+- top-levelの単一`contextDigest`、`targets[]`、`statements[]`を廃止する
+- binding IDを単一workspaceでも`<workspace-id>::<command-name>`へ統一する
+- Context／coverageが非成功のtargetだけが要求するbindingは実行しない
+- target、workspace、top-levelのstatusを段階別に集約する
+- `check`と`verify`はstatusにかかわらず`--report`指定時だけ結果fileを保存する
+
+report保存条件は、独立履歴branchで確認した並行PR／worktree検査の残留file事例を踏まえた。Git除外は維持するが、
+自動保存の根拠には使わない。これによりFED-VER-001〜005とFED-CROSS-001をClosedとする。

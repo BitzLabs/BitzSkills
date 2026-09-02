@@ -21,4 +21,4 @@
 - 連合の修飾ID、所有境界、全体操作は[モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)を使う。
 - networkとLLMを合否処理に使わない。
 - 同じ入力とversionから同じ対象、順序、Diagnosticを返す。
-- CoreはSPEC、code、test、Gitを変更しない。
+- CoreはSPEC、code、test、Gitを変更しない。`check`と`verify`のfile書込みは明示`--report`だけとする。

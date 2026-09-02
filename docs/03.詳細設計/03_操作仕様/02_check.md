@@ -2,7 +2,8 @@
 
 ## 1. 目的
 
-EARS-AI、SPEC Schema、ID、関係、状態、path、trace、Git差分を読取り専用で検査する。
+EARS-AI、SPEC Schema、ID、関係、状態、path、trace、Git差分を検査する。`--report`なしではfile system上も
+読取り専用とし、明示時だけ結果reportを書き出す。
 
 ## 2. 公開操作
 

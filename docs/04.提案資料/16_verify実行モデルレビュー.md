@@ -1,6 +1,6 @@
 # verify実行モデルレビュー
 
-- 状態: Review Complete
+- 状態: Closed（ADR-041でP0・関連P1/P2を裁定・反映済み）
 - 実施日: 2026-09-02
 - 基準: branch `bitz_next`、HEAD `0097f2839e15a697cea5a8e4cb413a77562201ab`＋未コミット設計
 - 規範文書digest: `b292eed96f8d607c49e380bdb500c10a0c896c2e2c41bea415c4fd14aa38aaba`
@@ -83,4 +83,7 @@ Contextを構成できない場合だけDigestをnullとし、その条件を列
 
 ## 9. 判定
 
-FED-VER-001を解消するまでverify結果Schemaを実装開始不可とする。binding実行規則自体は維持できる。
+レビュー時点ではFED-VER-001を解消するまでverify結果Schemaを実装開始不可と判定した。
+2026-09-02に[ADR-041](../02.設計書/10_決定記録/ADR-041_verify対象別証跡とreport明示保存の分離.md)で、
+target単位Context、`targetResults[]`、全workspace共通binding ID、非成功targetのbinding除外、target／全体statusの分離を
+採用し、正本へ反映した。これによりFED-VER-001〜005をClosedとする。
