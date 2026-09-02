@@ -80,11 +80,13 @@ Core語彙は`requires`、`refines`、`addresses`、`supersedes`、`related`だ�
 | key | 型 | 必須 | 意味 |
 |---|---|:--:|---|
 | `path` | string | Yes | workspace相対test file |
-| `covers` | string[] | Yes | 同じ文書の規範文ID |
+| `covers` | string[] | Yes | 対応する規範文ID |
 | `command` | string | No | `bitz.yaml` command名 |
 
 REQまたはEARS-AIを含むTECHでは`covers`へ同じ文書の規範文IDを指定する。規範文を持たないTECHだけ文書IDを
-指定できる。別文書の句、存在しない句、同じ対応の重複はerrorとする。
+指定できる。存在しない句と同じ対応の重複はerrorとする。モノレポで文書が別workspaceの文書または規範文を
+直接`refines`する場合だけ、そのtargetを修飾IDで`covers`に指定できる。横断coverageの詳細は
+[モノレポSPEC連合仕様](05_モノレポSPEC連合仕様.md)に従う。
 
 command名は`tests[].command`、文書の`verify`の順で解決する。どちらもない場合、または解決したcommand名が
 `bitz.yaml`に存在しない場合、`verify`は`SPEC-VERIFY-BLOCKED-001`／blockedとする。

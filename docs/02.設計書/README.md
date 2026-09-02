@@ -5,7 +5,7 @@
 個人から数人のチームがAI CLIを利用するとき、仕様の取り違え、参照切れ、検証漏れ、危険な自動変更を
 少ない待ち時間で防ぐ。
 
-EARS-AIと単一workspaceの`.spec/`を、人間、AI、testが共有する小さな契約面とする。
+EARS-AIと、単一または明示的に連合したworkspaceの`.spec/`を、人間、AI、testが共有する小さな契約面とする。
 
 ## 2. 中心価値
 
@@ -17,7 +17,7 @@ LLM出力の決定論性、実装の完全性は保証せず、人間reviewとte
 
 ## 3. 原則
 
-1. Core 1.0は単一workspaceの垂直スライスに集中する。
+1. Core 1.0はworkspace単位の垂直スライスと、同一Git repository内の明示的な連合を提供する。
 2. 既定処理はlocal、offline、決定論的にする。
 3. 強い依存を完全解決し、部分Contextを成功扱いしない。
 4. 全`MUST`句とtest対応を追跡する。
@@ -52,7 +52,6 @@ LLM出力の決定論性、実装の完全性は保証せず、人間reviewとte
 
 ## 6. Core 1.0対象外
 
-- 複数`.spec/`のモノレポ連合、修飾ID、`--all-workspaces`
 - ID衝突の勝敗判定と自動改番候補
 - Profile Manifest、外部Validator、Profile固有Serializer／migration
 - 必須Revision History
@@ -60,7 +59,8 @@ LLM出力の決定論性、実装の完全性は保証せず、人間reviewとte
 - 厳格なMarkdown H2順序・空節style検査
 - LLM意味監査、DDD、自動逆同期
 - 永続run、承認service、workflow engine
-- 複数Git repository、network越しSPEC
+- 複数Git repository、Git submodule、network越しSPECの連合
 
-対象外機能は[ADR-039](10_決定記録/ADR-039_Core-1.0仕様構造の再編とscope縮小.md)の再評価条件に従い、
-実測と新しいADRなしにCoreへ戻さない。
+モノレポSPEC連合は[ADR-040](10_決定記録/ADR-040_モノレポSPEC連合をCore-1.0へ再導入する.md)により
+Core 1.0へ含める。その他の対象外機能は[ADR-039](10_決定記録/ADR-039_Core-1.0仕様構造の再編とscope縮小.md)
+の簡素化判断を維持する。

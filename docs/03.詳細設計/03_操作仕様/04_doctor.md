@@ -9,6 +9,7 @@ Coreと`.spec/`を利用できる前提を読取り専用で診断し、停止�
 
 ```text
 bitz doctor [--format text|json]
+  [--workspace <workspace-id>|--all-workspaces]
   [--plugin <id> --plugin-version <semver>]
   [--require-core-api <semver-range>]
   [--require-capability <capability-name>]...
@@ -25,19 +26,22 @@ plugin情報を指定する場合はID、version、required API、capabilityを1
 | 3 | required Capability | blocked |
 | 4 | `.spec/bitz.yaml`存在 | blocked |
 | 5 | 設定構文、型、必須field | error |
-| 6 | Schema major | blocked |
-| 7 | EARS-AI major | blocked |
-| 8 | Git利用可否 | warning |
-| 9 | command実行fileとcwd | blocked |
-| 10 | cache | 再構築可能ならwarning |
-| 11 | 影響候補件数 | info |
+| 6 | 連合catalog、member、path所有 | failed／blocked |
+| 7 | Schema major | blocked |
+| 8 | EARS-AI major | blocked |
+| 9 | Git利用可否 | 単一はwarning、連合はblocked |
+| 10 | command実行fileとcwd | blocked |
+| 11 | cache | 再構築可能ならwarning |
+| 12 | 影響候補件数 | info |
 
-独立検査は先行失敗後も可能な範囲で続行する。Core 1.0はProfile互換性、モノレポmember、
-`monorepo.v1` Capabilityを検査しない。
+独立検査は先行失敗後も可能な範囲で続行する。`--workspace`は選択member、`--all-workspaces`はcatalogと
+全memberをworkspace ID順に診断する。Core 1.0はProfile互換性を検査しない。
+`--all-workspaces`ではCore、plugin、Capability、Git、catalogをtop-levelで1回検査し、workspace固有の設定、版、
+command、cwd、cache、影響候補を各member結果へ置く。同じ環境Diagnosticをmemberごとに複製しない。
 
 ## 4. Capability
 
-Core 1.0は`context.v1`、`check.v1`、`verify.v1`、`doctor.v1`を公開する。未知Capabilityは不足とする。
+Core 1.0は`context.v1`、`check.v1`、`verify.v1`、`doctor.v1`、`monorepo.v1`を公開する。未知Capabilityは不足とする。
 Core API minor差は要求rangeと全Capabilityを満たす場合だけ許可する。
 
 doctorはclient固有plugin install先を探索せず、`bitz.yaml`をplugin台帳にしない。plugin情報が渡されない通常実行は
@@ -57,8 +61,8 @@ earsAi: "1.0"
 
 ## 6. Git不在
 
-Core全体の起動失敗にはしない。構文、関係、Context、明示check、test実行は利用できるが、承認済みREQ保護、
-状態遷移、削除検出、TASK境界の失われる保証を列挙する。
+単一workspaceではCore全体の起動失敗にはせず、承認済みREQ保護、状態遷移、削除検出、TASK境界の失われる
+保証を列挙する。連合ではrepository境界と所有範囲を確定できないため`SPEC-MONOREPO-GIT-001`／blockedとする。
 
 ## 7. 結果
 
@@ -71,11 +75,12 @@ Core全体の起動失敗にはしない。構文、関係、Context、明示che
   "core": {
     "version": "1.0.0",
     "apiVersion": "1.0",
-    "capabilities": ["context.v1", "check.v1", "verify.v1", "doctor.v1"]
+    "capabilities": ["context.v1", "check.v1", "verify.v1", "doctor.v1", "monorepo.v1"]
   },
   "checks": [
     {"name": "git", "status": "warning", "lostGuarantees": ["approved-diff-protection", "task-boundary"]}
   ],
+  "durationMs": 31,
   "diagnostics": []
 }
 ```
@@ -97,3 +102,5 @@ Core全体の起動失敗にはしない。構文、関係、Context、明示che
 | `SPEC-DOCTOR-CACHE-001` | passed_with_warnings | cache不整合だが再構築可能 |
 
 Core自体が未導入でdoctorを呼べない場合、adapterは静的な導入手順だけを示し、Core判定を代替しない。
+連合固有Diagnosticと全体結果外形は
+[モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)に従う。

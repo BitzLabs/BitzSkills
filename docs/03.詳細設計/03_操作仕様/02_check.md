@@ -10,28 +10,39 @@ EARS-AI、SPEC Schema、ID、関係、状態、path、trace、Git差分を読取
 bitz check [<spec-or-statement-id-or-spec-path>...]
   [--full]
   [--base <git-revision>]
+  [--workspace <workspace-id>]
+  [--format text|json]
+  [--report]
+bitz check --all-workspaces
+  [--base <git-revision>]
   [--format text|json]
   [--report]
 ```
 
 明示対象はREQ、TECH、ADR、TASKの文書ID、statement ID、SPEC Markdown pathとする。statement IDとpathは
-所有文書IDへ正規化する。code path、test path、directory、不正ID/pathは引数不正で終了コード4とする。
+所有文書IDへ正規化する。連合ではactive／`--workspace`で選択したworkspaceの非修飾IDとpath、または修飾IDを
+受け付け、1回の単独操作の対象workspaceを1つに限定する。code path、test path、directory、不正ID/path、
+異なるworkspaceを所有する対象の混在は引数不正で終了コード4とする。
 
 `--full`と明示対象は排他的である。引数なしはGit変更集合を起点にする。
+`--all-workspaces`はfederation rootでだけ許可し、明示対象、`--full`、`--workspace`と排他的である。
+全体操作は`--full`を含意し、catalog、全workspace、横断関係、所有境界を検査する。
 
 ## 3. 共通索引と完全検査
 
-どのscopeでも全SPECの軽量Frontmatter索引を構築する。EARS-AI ASTと本文の完全検査対象は次とする。
+どのscopeでも単一workspaceまたは連合catalog全体の軽量Frontmatter索引を構築する。EARS-AI ASTと本文の
+完全検査対象は次とする。
 
 - 明示対象: 対象文書、強い依存閉包、直接逆参照
 - 引数なし: Git変更から選んだ所有文書、強い依存閉包、直接逆参照
 - `--full`: 全SPEC
+- `--all-workspaces`: catalog内の全SPEC
 
 軽量索引の構築と対象文書の完全解析を混同しない。
 
 ## 4. 検査順序
 
-1. `bitz.yaml` Schemaと互換性
+1. `bitz.yaml` Schema、連合catalog、互換性
 2. file名、Frontmatter、ID一意性
 3. EARS-AI構文と文書ID整合
 4. relationのID、型、状態、循環
@@ -59,6 +70,10 @@ bitz check [<spec-or-statement-id-or-spec-path>...]
 基準版と現在版はdocument IDで対応付け、pathだけの変更はrenameとする。基準版IDが現在版にない場合は
 管理済みSPEC削除としてfailedとする。
 
+`--all-workspaces`ではrepository全体で1つの基準commitを使い、基準版と現在版の両catalogからworkspace修飾IDで
+文書を対応付ける。member削除または移動時の扱いは
+[モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)に従う。
+
 ## 6. 引数なし対象選択
 
 | changed path | 所有文書への正規化 |
@@ -69,6 +84,9 @@ bitz check [<spec-or-statement-id-or-spec-path>...]
 
 どの逆索引にも該当しないcode/test pathは対象外とし、Diagnosticを出さず件数だけを結果へ残す。
 rejected REQ/TECHは所有逆索引へ含めない。
+
+連合のworkspace単独操作では、選択workspaceが所有するchanged pathだけを起点にする。横断する強い依存閉包と
+直接逆参照は通常どおり辿るが、別workspaceの無関係な変更を対象へ混ぜない。
 
 対象文書が0件で、設定、索引、Git縮退を含む他Diagnosticがなければpassedとする。設定検査と索引構築は省略しない。
 
@@ -106,10 +124,12 @@ Coreは意味的影響を断定せず、statusを自動変更しない。`relate
 ```
 
 `scope: changed`では`selection`を必須とする。text出力も同じ3件数を使う。
+`--all-workspaces`では`scope: all-workspaces`と共通の`federation`、`workspaces`外形を使用し、各memberの
+操作固有件数とDiagnosticをmember結果へ保持する。
 
 ## 10. Git不在
 
-引数なしcheckは全体checkへ縮退する。REQ保護、遷移、削除検出の失われる保証をwarningで示す。
+単一workspaceの引数なしcheckは全体checkへ縮退する。REQ保護、遷移、削除検出の失われる保証をwarningで示す。
 明示TASK境界だけはblockedとする。詳細は[安全な入出力](../00_共通契約/02_安全な入出力・互換性.md)に従う。
 
 ## 11. Diagnostic
@@ -135,5 +155,5 @@ Coreは意味的影響を断定せず、statusを自動変更しない。`relate
 | `SPEC-STYLE-SECTION-001` | failed | REQ必須section不在・空 |
 | `SPEC-STYLE-PLACEMENT-001` | failed | 規範文が文書種別ごとの許可位置外 |
 
-Core 1.0は`idCollisions`、`SPEC-BASE-AMBIGUOUS-001`、モノレポDiagnostic、H2順序・空節・疑似節Diagnosticを
-返さない。
+Core 1.0は`idCollisions`、`SPEC-BASE-AMBIGUOUS-001`、H2順序・空節・疑似節Diagnosticを返さない。
+連合固有Diagnosticは[モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)が所有する。

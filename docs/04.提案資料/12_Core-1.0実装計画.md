@@ -2,18 +2,20 @@
 
 - 状態: Active
 - 作成日: 2026-09-01
-- 前提: [ADR-039](../02.設計書/10_決定記録/ADR-039_Core-1.0仕様構造の再編とscope縮小.md)
+- 前提: [ADR-039](../02.設計書/10_決定記録/ADR-039_Core-1.0仕様構造の再編とscope縮小.md)、
+  [ADR-040](../02.設計書/10_決定記録/ADR-040_モノレポSPEC連合をCore-1.0へ再導入する.md)
 
 ## 1. 目的
 
-規範設計と実装順序を分離し、単一workspaceにおけるEARS-AI記述からtest実行までの垂直スライスを最短で実証する。
+規範設計と実装順序を分離し、workspace単独のEARS-AI記述からtest実行までの垂直スライスを先に実証した後、
+同じ契約をモノレポ連合へ拡張する。
 Phase番号と完了条件は計画であり、Core APIの規範ではない。
 
 ## 2. Phase 0: 実証条件
 
 - 通常Markdownまたは従来EARSを使う比較taskを5件固定する。
 - 完了時間、仕様記述時間、review時間、欠陥検出数を定義する。
-- 単一workspaceの基準fixtureを固定する。
+- 単一workspaceと20 member連合の基準fixtureを固定する。
 - Core 1.0対象外機能を確認する。
 
 完了条件は、比較方法と成功基準が実装前に固定されていることである。
@@ -46,7 +48,19 @@ Phase番号と完了条件は計画であり、Core APIの規範ではない。
 
 完了条件は、test成功、非0、起動失敗、signal、timeout、対象0件をfixtureで区別できることである。
 
-## 6. Phase 4: SDD垂直スライス
+## 6. Phase 4: モノレポ連合
+
+- 明示catalog、active workspace、修飾ID
+- 横断Frontmatter索引、完全Context、Context Digest
+- code／test／TASK／cwdの所有境界
+- `--workspace`と`--all-workspaces`
+- workspace別結果、集約status、連合report
+- 未登録member、path重複、Git不在、横断参照、対象0件fixture
+
+完了条件は、同名ローカルIDを持つmember、横断refinement、所有境界違反を決定論的に区別し、
+`check --all-workspaces`と`verify --all-workspaces`が基準性能を満たすことである。
+
+## 7. Phase 5: SDD垂直スライス
 
 REQ 1件について次を通す。
 
@@ -56,9 +70,8 @@ SPEC作成 -> context -> pre-check -> code/test変更 -> post-check -> verify ->
 
 通常Markdown条件と比較し、完了時間、欠陥率、review負荷のいずれも改善しない機能を既定経路へ追加しない。
 
-## 7. 1.0以降の再評価候補
+## 8. 1.0以降の再評価候補
 
-- モノレポ連合
 - ID改番支援
 - 実Profile
 - Projection Digest

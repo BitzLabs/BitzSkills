@@ -2,7 +2,7 @@
 
 ## 1. workspace決定
 
-Core 1.0は1つのGit repository内に1つのworkspaceを扱う。
+Core 1.0は単一workspaceと、1つのGit repository内の明示的なworkspace連合を扱う。
 
 1. 指定pathまたはcurrent directoryから親方向へ`.spec/bitz.yaml`を探索する。
 2. Git利用時はrepository境界を越えない。
@@ -10,8 +10,9 @@ Core 1.0は1つのGit repository内に1つのworkspaceを扱う。
 4. 見つからなければ`blocked`とする。
 5. symlinkを辿ってworkspace外のSPECを読み込まない。
 
-結果上のworkspaceは常に`{"id":"root","path":"."}`とする。`workspace.id`、`monorepo`、member探索、
-修飾ID、`--all-workspaces`はCore 1.0で受け付けない。
+単一workspaceの実効IDは`workspace.id`、省略時は`root`とし、pathは`.`とする。Git rootの設定が
+`monorepo.members`を宣言する場合は、
+[モノレポSPEC連合仕様](05_モノレポSPEC連合仕様.md)のcatalog検証、active workspace決定、所有境界を適用する。
 
 ## 2. 標準配置
 
@@ -77,9 +78,20 @@ safety:
 | `verify.timeoutSeconds` | integer | No | `300` | 1〜3,600 |
 | `verify.commands` | map | No | `{}` | command名からbinding定義 |
 | `safety.protectApprovedRequirements` | boolean | No | `true` | Git差分保護 |
+| `workspace.id` | string | No | `root` | `[a-z][a-z0-9-]{0,31}`。連合root/memberは必須 |
+| `monorepo.members` | object[] | No | — | federation rootだけ。`id`とrepository root相対`path` |
+| `monorepo.maxMembers` | integer | No | `20` | 1〜100。`members`指定時だけ使用可 |
 
-`profiles`、`workspace`、`monorepo`はCore 1.0の標準keyではない。検出した場合は将来scopeの設定としてwarningし、
-判定、Context Digest、操作へ使用しない。
+`monorepo.members`要素は次のfieldだけを持つ。
+
+| key | 型 | 必須 | 制約 |
+|---|---|:--:|---|
+| `id` | string | Yes | `workspace.id`と同じ字句規則。連合内で一意 |
+| `path` | string | Yes | repository root相対directory。所有境界は連合仕様に従う |
+
+`profiles`はCore 1.0の標準keyではない。検出した場合は将来scopeの設定としてwarningし、判定、Context Digest、
+操作へ使用しない。`workspace`と`monorepo`の組合せ、member field、path制約は
+[モノレポSPEC連合仕様](05_モノレポSPEC連合仕様.md)が定義する。
 
 未知の標準keyは同一majorの前方互換性のためwarningし、値を変更しない。型不正と必須key欠如は`error`、
 未知Schema majorは`blocked`とする。
@@ -119,7 +131,7 @@ CLIは対象範囲、Git比較基準、出力形式、report、timeout短縮だ�
 ## 8. YAML制約
 
 - UTF-8のYAML 1.2 subset
-- scalar、scalar配列、通常mapだけ
+- scalar、配列、通常mapだけ。object配列は`monorepo.members`だけで使用する
 - custom tag、anchor、alias、merge keyを禁止
 - 重複keyをerror
 - file size 64 KiB以下
@@ -129,3 +141,5 @@ CLIは対象範囲、Git比較基準、出力形式、report、timeout短縮だ�
 
 SPECへ記録するpathはworkspace root相対、separatorは`/`とする。絶対path、`..`、NUL、glob、root外symlinkを
 禁止する。Git管理外の生成物と依存cacheを`implements`または`tests`へ指定しない。
+連合では、workspace root内であっても別memberの所有領域を参照できない。federation rootによるmember配下の
+所有も禁止し、詳細は[モノレポSPEC連合仕様](05_モノレポSPEC連合仕様.md)に従う。

@@ -101,19 +101,34 @@ Done前は人間判断で取り止められる。`draft` REQ/TECHは`rejected`�
 Coreは取り止めを推測せず、code/test差分を削除しない。既に`approved`のREQ/TECHは`rejected`へ戻さず、
 必要なら`outdated`と後継判断で扱う。
 
-## 9. 並行開発
+## 9. モノレポ横断作業
+
+共通要求が複数workspaceへ影響する場合、federation rootに共通REQまたはADRを置き、各memberのREQ／TECHが
+修飾IDで具体化する。実装とtestは所有memberへ置き、作業TASKもmemberごとに分ける。
+
+1. 共通要求の`purpose=interpret` Contextをreviewする。
+2. memberごとに`purpose=implement` Context、Pre-check、実装、Post-check、verifyを行う。
+3. 横断Contextの到達先と、各memberの所有境界をHuman Reviewで確認する。
+4. 統合前にfederation rootで`check --all-workspaces --base <統合先先端>`と
+   `verify --all-workspaces`を実行する。
+
+独立した複数workspaceを1つのContext requestの複数起点にせず、memberごとにrequestを分ける。
+全体操作はworkspace単独フローのHuman Reviewを代替しない。
+
+## 10. 並行開発
 
 Core 1.0は専用`Integrate`段階と自動改番支援を持たない。作業branchを統合先へmergeまたはrebaseした後、
 次を実施する。
 
 1. `bitz check --full --base <統合先先端>`を実行する。
-2. 重複IDがあれば、人間が片方を未使用のIDへ改番し、Frontmatter、ファイル名、関係、`covers`、`addresses`を更新する。
+2. 同じworkspace内に重複IDがあれば、人間が片方を当該workspaceの未使用IDへ改番し、Frontmatter、ファイル名、
+   関係、`covers`、`addresses`を更新する。別workspaceの同名ローカルIDは改番しない。
 3. 同じcheckを再実行する。
 4. 通過後に通常のreviewとmergeを行う。
 
 Coreは勝者、敗者、新IDを決めない。
 
-## 10. 完了条件
+## 11. 完了条件
 
 - 対象規範文が特定されている。
 - 書込み直前のContext Digestが一致している。
@@ -124,3 +139,4 @@ Coreは勝者、敗者、新IDを決めない。
 - 人間が最終diffを確認している。
 - TASK起点では`done`への変更後に最終checkが通過している。
 - 完了結果がGitへ記録されている。
+- 連合横断作業では、全workspaceのcheckとverifyの集約結果が通過statusである。

@@ -14,18 +14,22 @@ bitz context <spec-or-statement-id>...
   [--detail compact|standard|full]
   [--expand <document-id>]...
   [--expect-digest sha256:<64-lower-hex>]
+  [--workspace <workspace-id>]
 ```
 
 purpose既定値は`interpret`、detail既定値は`standard`とする。起点は文書IDとstatement IDだけを受け付け、
-path、code、test、修飾IDを受け付けない。複数起点は重複排除してID辞書順に正規化する。
+path、code、testを受け付けない。単一workspaceでは非修飾IDだけを受け付ける。連合ではactive workspaceの
+非修飾IDまたは修飾IDを受け付け、全起点の所有workspaceを1つに限定する。`--workspace`は非修飾IDの解決基準を
+明示し、起点所有者と一致しなければならない。`--all-workspaces`は提供しない。複数起点は重複排除して
+連合正規ID辞書順に正規化する。
 
 `expand`は完全解決集合にある文書だけを`full`提示へ昇格する。集合外IDは`CTX-PROJECTION-001`／failedとし、
-暗黙に依存へ追加しない。
+暗黙に依存へ追加しない。連合では非修飾`expand`をrequest workspaceから、修飾`expand`を連合索引から解決する。
 
 ## 3. 処理
 
-1. workspaceと設定を解決する。
-2. 全SPECの軽量索引を構築する。
+1. request workspace、連合catalog、workspace設定を解決する。
+2. 単一workspaceまたは連合catalog内の全SPECから軽量索引を構築する。
 3. ID、型、状態、強い関係、循環を検査する。
 4. [purpose別閉包](../02_SPECモデル/04_関係・トレースモデル.md#6-purpose別の閉包)を完全解決する。
 5. Context上限を検査する。
@@ -91,12 +95,17 @@ path、code、test、修飾IDを受け付けない。複数起点は重複排除
     "may": {"total": [], "addressed": [], "tested": [], "unaddressed": [], "untested": []},
     "adjacent": []
   },
+  "durationMs": 24,
   "diagnostics": []
 }
 ```
 
 `resolution.complete: true`は型、状態、循環、上限を含む完全解決が成立したことを示す。
 `constraintLedger`はapplicable文書の対象statementをSemantic IRの意味fieldで1回だけ保持する。
+連合ではtop-level `workspace`をrequest workspaceとし、`roots`、文書`id`、statement参照を修飾形式で返す。
+各`documents[]`は`workspaceId`を持ち、`path`はそのworkspace root相対とする。
+`resolution.workspaces`と`resolution.crossWorkspaceEdges`のfield、内容、順序は
+[モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)に従い、連合結果では必須とする。
 
 ## 5. Projection
 
@@ -118,12 +127,13 @@ referenceとする。`compact`は原文を省略してManifest、Diagnostic、Le
 Context Digestは次をCanonical JSON化したSHA-256である。形式は`sha256:[0-9a-f]{64}`とする。
 
 - SPEC Schema、EARS-AI、Context Resolverのversion
-- purposeと起点ID
+- purpose、request workspace IDと起点の連合正規ID
 - 閉包内文書のID、種別、状態、適用区分、正規化Frontmatter、現行本文の意味内容
 - 強い関係
 - EARS-AI Semantic IRのCanonical意味field
 - `implements`、test対応、command名、argv template、cwd、設定timeout、TASK `changes`
 - Contextに影響する実効設定
+- 到達workspaceのID、repository root相対path、修飾edge
 
 次は含めない。
 
@@ -132,6 +142,7 @@ Context Digestは次をCanonical JSON化したSHA-256である。形式は`sha25
 - Git/PR/ADRにある変更履歴
 - code/test fileの内容
 - CLI timeout cap
+- 未到達workspaceの設定、本文、catalog列挙順
 
 公開するhashはContext Digestだけとする。文書単位hashと提示内容digestは内部実装に限定する。
 

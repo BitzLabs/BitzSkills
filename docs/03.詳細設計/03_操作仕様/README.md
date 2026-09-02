@@ -17,8 +17,8 @@
 
 ## 3. 共通原則
 
-- Core 1.0は単一workspaceだけを扱う。
-- `--all-workspaces`と修飾IDを受け付けない。
+- Core 1.0は単一workspaceと、同一Git repository内の明示的なモノレポ連合を扱う。
+- 連合の修飾ID、所有境界、全体操作は[モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)を使う。
 - networkとLLMを合否処理に使わない。
 - 同じ入力とversionから同じ対象、順序、Diagnosticを返す。
 - CoreはSPEC、code、test、Gitを変更しない。

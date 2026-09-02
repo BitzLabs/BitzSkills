@@ -30,12 +30,48 @@
 | `operation` | enum | Yes | `context`、`check`、`verify`、`doctor` |
 | `status` | enum | Yes | 操作全体のstatus |
 | `scope` | string | 操作依存 | 対象範囲 |
-| `workspace` | object | Yes | Core 1.0では`{"id":"root","path":"."}` |
+| `workspace` | object | workspace単独操作 | 対象またはrequest workspaceの`id`と`path`。単一は`.`、連合内はrepository root相対 |
+| `federation` | object | 全体操作 | federation rootの`id`と`path: "."` |
+| `workspaces` | array | 全体操作 | 処理順のworkspace別結果。操作固有fieldを保持 |
 | `revision` | object/null | 操作依存 | Git基準版と実行時状態 |
 | `durationMs` | integer | Yes | 非負の経過ms |
 | `diagnostics` | array | Yes | 0件以上のDiagnostic |
 
 未知の同一major内fieldは保持または無視できる。未知majorは`blocked`として処理を続けない。
+
+単一workspaceでは設定した`workspace.id`、省略時は`root`を使い、pathを`.`とする。連合内のworkspace単独操作では
+実際のworkspace IDとrepository root相対pathを返す。`--all-workspaces`結果は`workspace`を持たず、
+`federation`と`workspaces`を持つ。top-level statusはtop-level Diagnosticと全workspace結果へ同じ最悪値規則を
+適用して集約する。
+
+```json
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "scope": "all-workspaces",
+  "status": "passed",
+  "federation": {"id": "platform", "path": "."},
+  "workspaces": [
+    {"id": "platform", "path": ".", "status": "passed", "durationMs": 40, "diagnostics": []},
+    {"id": "api", "path": "services/api", "status": "passed", "durationMs": 50, "diagnostics": []},
+    {"id": "web", "path": "apps/web", "status": "passed", "durationMs": 52, "diagnostics": []}
+  ],
+  "durationMs": 142,
+  "diagnostics": []
+}
+```
+
+`workspaces`は実行順を維持し、各要素に操作固有fieldを追加する。top-level `diagnostics`はcatalog、横断関係、
+集約自体のDiagnosticだけを持ち、member Diagnosticを複製しない。件数と所要時間は単純和とし、同じ実行実体を
+重複加算しない。
+
+| `workspaces[]` field | 型 | 必須 | 意味 |
+|---|---|:--:|---|
+| `id` | string | Yes | workspace ID |
+| `path` | string | Yes | repository root相対path。federation rootは`.` |
+| `status` | enum | Yes | workspace単位status |
+| `durationMs` | integer | Yes | workspace単位の非負経過ms |
+| `diagnostics` | array | Yes | 当該workspaceが所有するDiagnostic |
 
 ## 3. statusと終了コード
 
@@ -107,8 +143,8 @@ tool障害の`error`のいずれにも対応できる。warningの`resultStatus`
 | `environment` | `component` | `identifier` | Core、Python、Git、command、cache、plugin |
 | `invocation` | なし | `argument` | CLI/MCP呼出し |
 
-Core 1.0の`file.workspaceId`は常に`root`、`path`はworkspace相対、`line`と`column`は1始まりとする。
-絶対pathを返さない。
+単一workspaceの`file.workspaceId`は設定した実効IDを使う。連合では所有workspaceのIDを使い、`path`はそのworkspace相対、
+`line`と`column`は1始まりとする。`workspaceId`と`path`の組でsourceを一意にし、絶対pathを返さない。
 
 ## 6. Diagnostic code
 
@@ -127,7 +163,7 @@ codeの再利用と意味変更を禁止する。廃止codeは予約済みとし
 
 - text出力は成功時にstatus、対象件数、scope、所要時間を1行で示す。
 - `--format json`は同じ結果を標準出力へ返し、追加ファイルを生成しない。
-- Diagnosticの順序はsource path、line、column、code、specRefsの辞書順とする。
+- Diagnosticの順序はsource workspace ID、path、line、column、code、specRefsの辞書順とする。
 - 端末制御文字を無害化する。
 - textとJSONでstatus、件数、終了コードを変えない。
 
@@ -141,6 +177,7 @@ codeの再利用と意味変更を禁止する。廃止codeは予約済みとし
 `passed`と`passed_with_warnings`は`--report`指定時だけ保存する。引数不正は保存しない。
 `context`と`doctor`はCore 1.0ではreportを保存しない。
 
+workspace単独reportは対象workspace、全体reportはfederation rootの`.spec/reports/`へ保存する。
 ファイル名は`.spec/reports/<YYYYMMDDTHHMMSSZ>-<operation>[-<sequence>].json`とする。同一秒の衝突は
 安全な排他的作成と1以上の連番で回避する。保存失敗は`SPEC-REPORT-WRITE-001`／error／`error`とするが、
 元の結果とDiagnosticは端末へ保持する。

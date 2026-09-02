@@ -92,10 +92,14 @@ Core 1.0の設計は、EARS-AI、単一workspaceのSPEC、型付き依存、Cont
 - ADR-014のSemantic IRと段階的Projectionは維持するが、Projection Digestの公開だけをDecision 9で変更する。
 - ADR-018のProfile予約Schemaは現行Core 1.0から外す。名前空間付き拡張を失わず保持する判断は維持する。
 - ADR-026のtimeoutとcommand結果Schemaは維持するが、binding同一性と公開Digest構成はDecision 9、10で変更する。
-- 再評価条件は提案11のS1〜S7を参照する。再導入は実測と新しいADRを必要とする。
+- 再評価条件は提案11のS1〜S7を参照する。
+- Decision 5のモノレポ延期、対応するConsequences、および本項の再導入条件は
+  [ADR-040](ADR-040_モノレポSPEC連合をCore-1.0へ再導入する.md)で置き換えられた。Decision 1〜4、6〜13と、
+  モノレポ以外のscope縮小は変更しない。
 
 ## Revision History
 
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-09-01 | 仕様責務を再編し、Core 1.0を単一workspaceの垂直スライスへ縮小 | 提案11 |
+| 2026-09-02 | Decision 5のモノレポ延期を部分改訂 | ADR-040 |
