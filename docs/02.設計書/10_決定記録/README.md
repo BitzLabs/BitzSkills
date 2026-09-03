@@ -84,3 +84,4 @@
 | [ADR-040](ADR-040_モノレポSPEC連合をCore-1.0へ再導入する.md) | モノレポSPEC連合をCore 1.0へ再導入する | accepted | ADR-017・039, SPECモデル/05 |
 | [ADR-041](ADR-041_verify対象別証跡とreport明示保存の分離.md) | verify対象別証跡とreport明示保存の分離 | accepted | ADR-019・026・039・040, 共通結果, verify仕様 |
 | [ADR-042](ADR-042_モノレポ連合のidentity・所有境界・公開契約を確定する.md) | モノレポ連合のidentity・所有境界・公開契約を確定する | accepted | ADR-037・040・041, SPECモデル/05, 共通結果 |
+| [ADR-043](ADR-043_モノレポ連合の継続・TASK境界・適合契約を確定する.md) | モノレポ連合の継続・TASK境界・適合契約を確定する | accepted | ADR-028・041・042, SPECモデル/04・05, 操作仕様 |

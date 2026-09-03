@@ -179,6 +179,17 @@ member rootとworkspaceの`.spec/bitz.yaml`へ至るdirectoryはsymlinkを禁止
 `SPEC-MONOREPO-OWNERSHIP-001`とする。member実path同士の同一、親子、case-insensitive filesystemでの同一と、
 nested repository／worktree、submoduleは`SPEC-MONOREPO-PATH-001`とする。
 
+### 5.2 TASK directory境界
+
+TASK `changes`のfileと末尾`/`のdirectory prefixは、正規化した字句Git pathの許可集合である。fileは完全一致、
+directoryはpath segment単位の子孫一致とし、`src/`で`src2/file`を許可しない。symlink解決先の別の字句pathへ
+許可を拡張せず、symlink entry自身はその字句Git pathにあるfileとして扱う。
+
+許可判定とは別に、宣言pathと変更pathを§5.1で所有判定する。追加はcurrent、削除はbase、変更とsymlink entry変更は
+base/current双方を検査し、renameはsource削除とdestination追加の2 pathとする。base treeのsymlinkはGit treeの
+modeとlink target、currentは`lstat`から解決する。所有境界不適合を先に返し、同じpathへTASK境界外Diagnosticを
+重複させない。
+
 ## 6. 横断索引とContext
 
 Coreはcatalogに登録された全workspaceの軽量Frontmatter索引を作り、修飾された関係を通常の型規則で解決する。
@@ -247,12 +258,21 @@ snapshot、doctorはHEAD snapshotも対象にする。verifyは現在snapshotだ
 repository全体の不存在保証を遡及適用しない。ignored path、submodule内部、別repositoryは列挙しない。集合差があれば
 `SPEC-MONOREPO-UNREGISTERED-001`／`blocked`とし、暗黙memberにはしない。
 
-catalog、workspace ID/path、Git境界、未対応Schema/EARS-AI major、連合resource上限をglobal preflightとする。
-非成功ならmember処理とverify commandを開始せず、`workspaces: []`で結果を返す。
+catalog、workspace ID/path、member設定対応、Git境界、未対応Schema/EARS-AI major、連合resource上限を
+global preflightとする。非成功ならmember処理、Context解決、verify commandを開始せず、`workspaces: []`で結果を返す。
 
 処理順はfederation rootを先頭、その後をworkspace IDのUnicode code point辞書順とする。Core 1.0は逐次実行し、
-並列実行を公開契約にしない。あるworkspaceが非成功でも、依存しない後続workspaceは可能な範囲で継続する。
-操作固有の対象選択、Git基準版、binding、0件判定は各[操作仕様](../03_操作仕様/README.md)が定義する。
+並列実行を公開契約にしない。preflight通過後はworkspace全体ではなく、checkの文書とsource edge、context／verifyの
+target strong relation閉包、verifyのbindingを継続判定の単位にする。`requires`、`refines`、`addresses`、
+`supersedes`とbinding ownerを依存とし、`related`は後続処理を遮断しない。
+
+根本原因を持つunitとは別のtargetまたはdoctor checkが依存出力を得られない場合だけ、
+`SPEC-MONOREPO-DEPENDENCY-001`／`blocked`を返す。`evidence`は`stage`、重複なし辞書順の
+`dependencyWorkspaces[]`、`dependencySpecRefs[]`を持つ。既に同じunitへmissing、type、state、coverageなど
+具体的Diagnosticがあれば同義の派生遮断を追加しない。targetに置く場合の`source`はtarget所有SPEC、doctor checkでは
+判定不能になったworkspaceの`.spec/bitz.yaml`とし、root原因fileをsourceへ複製せず`evidence`から参照する。
+依存SPECがないworkspace前提だけの遮断では`dependencySpecRefs`を空配列にする。操作固有の対象選択、Git基準版、
+binding、0件判定は各[操作仕様](../03_操作仕様/README.md)が定義する。
 
 ## 9. 連合結果とreport
 
@@ -288,6 +308,25 @@ global preflightでroot設定の構文、型またはIDが不正で有効なiden
 - Gitが利用できない、repository rootを確定できない、またはmember pathが別worktree／repositoryへ解決される場合、
   連合操作は`SPEC-MONOREPO-GIT-001`／`blocked`とする。単一workspaceの縮退契約は変更しない。
 
+### 10.1 計算量とmemory
+
+`B`を入力raw byte、`F`をSPEC file、`S`をstatement、`E`をrelation edge、`T`をtrace entry、`C`をcommand定義、
+`V`をverify binding、`R`を公開結果のtarget／statement／binding参照数とする。完全検査中の1 workspaceで同時保持する
+本文byteを`Bw`とする。target `q`のContext閉包について、本文byteを`Bq`、文書・edge・trace数を`Dq`、`Eq`、`Tq`とする。
+
+- 上限計数とglobal索引の時間は`O(B + F + S + E + T + C)`、索引memoryは`O(F + S + E + T + C)`とし、
+  全file本文を索引として同時保持しない。
+- 1 targetのContext解決はvisited集合を使い、`O(Bq + Dq + Eq + Tq)`時間・memoryとする。
+- 全体verifyの解決時間は`O(Σq(Bq + Dq + Eq + Tq))`を許容するが、完全BundleはtargetごとにDigest、statement、
+  binding参照へ縮約して解放する。
+- 全体verifyの一時memoryは
+  `O(F + S + E + T + C + max(Bw, maxq(Bq + Dq + Eq + Tq)) + V + R)`とし、workspaceまたは文書の
+  全組合せmatrixを作らない。決定論的sortの`O(K log K)`は許容する。
+
+resource dimensionごとに他dimensionを通常規模へ保った`limit - 1`、`limit`、`limit + 1`を検査する。
+最大dimension fixtureは基準環境でCore peak RSS増分1 GiB以下とし、2 GiB memory limit下で正常終了させる。
+これは通常fixtureの200 MiB目標を変更せず、すべての環境へ保証する公開SLOではない。
+
 ## 11. Diagnostic
 
 | code | severity | `resultStatus` | 条件 |
@@ -298,8 +337,9 @@ global preflightでroot設定の構文、型またはIDが不正で有効なiden
 | `SPEC-MONOREPO-PATH-001` | error | `failed` | member pathが不正、重複、入れ子、symlink、submodule、別repository |
 | `SPEC-MONOREPO-ID-001` | error | `failed` | workspace IDが不正または重複 |
 | `SPEC-MONOREPO-UNREGISTERED-001` | error | `blocked` | 選択した設定、または全体preflightのGit既知設定がcatalogに未登録 |
-| `SPEC-MONOREPO-REF-001` | error | `failed` | 横断参照が非修飾、またはworkspace／targetを解決不能 |
+| `SPEC-MONOREPO-REF-001` | error | `failed` | 修飾ID不正、別workspaceだけにあるtargetの非修飾参照、未知workspace |
 | `SPEC-MONOREPO-OWNERSHIP-001` | error | `failed` | SPEC、code、test、TASK、cwdが所有境界を越える |
+| `SPEC-MONOREPO-DEPENDENCY-001` | error | `blocked` | 別unitの非成功によりtargetまたはdoctor checkを安全に継続不能 |
 | `SPEC-MONOREPO-LIMIT-001` | error | `blocked` | member数または連合全体resource上限を超過 |
 | `SPEC-MONOREPO-GIT-001` | error | `blocked` | Git repository境界またはmember所有範囲を確定不能 |
 

@@ -5,7 +5,8 @@
 - 前提: [ADR-039](../02.設計書/10_決定記録/ADR-039_Core-1.0仕様構造の再編とscope縮小.md)、
   [ADR-040](../02.設計書/10_決定記録/ADR-040_モノレポSPEC連合をCore-1.0へ再導入する.md)、
   [ADR-041](../02.設計書/10_決定記録/ADR-041_verify対象別証跡とreport明示保存の分離.md)、
-  [ADR-042](../02.設計書/10_決定記録/ADR-042_モノレポ連合のidentity・所有境界・公開契約を確定する.md)
+  [ADR-042](../02.設計書/10_決定記録/ADR-042_モノレポ連合のidentity・所有境界・公開契約を確定する.md)、
+  [ADR-043](../02.設計書/10_決定記録/ADR-043_モノレポ連合の継続・TASK境界・適合契約を確定する.md)
 
 ## 1. 目的
 
@@ -39,6 +40,8 @@ Phase番号と完了条件は計画であり、Core APIの規範ではない。
 - `--expect-digest` stale検出
 - changed-only check、`--full`、明示対象
 - REQ保護、状態遷移、TASK境界
+- relation Diagnosticの1 edge 1 primary規則
+- TASK directory prefixの字句許可とbase/current canonical所有判定
 
 完了条件は、参照切れ、循環、上限、Digest不一致を部分成功にせず、基準性能を満たすことである。
 
@@ -65,6 +68,8 @@ Phase番号と完了条件は計画であり、Core APIの規範ではない。
 - Git既知の未登録設定、symlink所有迂回、case差、初回root ID写像、member移動・削除fixture
 - 連合Contextとcheck／verify／doctor全体結果の期待JSON
 - byte、statement、edge、trace、command、bindingの上限直前・直後fixture
+- 文書・target・binding単位の継続と`SPEC-MONOREPO-DEPENDENCY-001`
+- 単一／連合dual-read consumer、原子的rollback、部分rollback拒否fixture
 
 完了条件は、同名ローカルIDを持つmember、横断refinement、所有境界違反を決定論的に区別し、
 `check --all-workspaces`と`verify --all-workspaces`が基準性能を満たすことである。別member所有bindingを1回だけ実行し、
@@ -72,7 +77,16 @@ request targetとowner memberのstatusへ反映してもcommand実体とduration
 
 性能はCore cacheを使わず、暖機1回後の5回中央値で測定する。基準環境で`check --all-workspaces`を30秒以内、
 3 workspaceへ到達する20文書・128 KiB以下のContextを1秒以内、Core peak RSS増分を200 MiB以内とする。
-10,000 SPEC fixtureは性能SLOではなくhard limitの安全停止を検証する。
+10,000 SPEC fixtureは性能SLOではなくhard limitの安全停止を検証する。索引memoryは入力graph size、target一時memoryは
+最大Context閉包へ線形とし、全targetの完全Bundleを同時保持しない。resource dimensionごとに`limit - 1`、`limit`、
+`limit + 1`を分離し、最大dimension fixtureをCore peak RSS増分1 GiB以下、2 GiB memory limit下で正常終了させる。
+
+適合fixtureは`fixtures/conformance/monorepo/<fixture-id>/`へ入力repository、manifest、期待JSONを置く。manifestは
+実行directory、argv、Git base/current、期待終了コード、report条件を持つ。共通normalizerは`durationMs`、生成時刻、
+環境依存process出力だけを除外し、fixture固有の除外fieldを許さない。最低限、同名local ID、横断refinement、
+Diagnostic優先順位、未登録設定、symlink、TASK prefix、独立継続、multi-context verify、共有binding、0件、identity、
+Git不在、resource境界、report副作用、consumer、rollbackを期待status／code／配列順まで構造比較する。fixture ID、
+status、終了コード、必須確認の最小matrixは[提案23 §8](23_モノレポ残存P2裁定案.md#8-f-適合fixtureと期待matrix)を使う。
 
 ## 7. Phase 5: SDD垂直スライス
 

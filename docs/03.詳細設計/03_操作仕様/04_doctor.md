@@ -44,6 +44,11 @@ command、cwd、cache、影響候補を各member結果へ置く。同じ環境Di
 unborn repositoryと連合化前の単一workspace HEADでは現在snapshotだけを連合完全性の対象にする。catalog、ID、path、
 Git境界、未対応major、resource上限のglobal preflightが非成功ならmember診断を開始しない。
 
+preflight通過後はcheck項目を継続単位とする。先行checkの出力を必要としないCore、plugin、Capability、Git、cacheは
+可能な範囲で継続し、設定を解釈できないときのcommand／cwdなど依存checkは実行しない。根本Diagnosticとは別の
+checkが依存出力不足だけで実行不能なら`SPEC-MONOREPO-DEPENDENCY-001`／blockedとし、同じcheckへ具体的原因を
+重複させない。
+
 ## 4. Capability
 
 Core 1.0は`context.v1`、`check.v1`、`verify.v1`、`doctor.v1`、`monorepo.v1`を公開する。未知Capabilityは不足とする。
@@ -121,6 +126,7 @@ workspace固有検査を該当workspace要素へ置く。完全JSON例は
 | `SPEC-DOCTOR-GIT-001` | passed_with_warnings | Git不在 |
 | `SPEC-DOCTOR-COMMAND-001` | blocked | command/cwd解決不能 |
 | `SPEC-DOCTOR-CACHE-001` | passed_with_warnings | cache不整合だが再構築可能 |
+| `SPEC-MONOREPO-DEPENDENCY-001` | blocked | 先行する別unitの出力不足でworkspace固有checkを実行不能 |
 
 Core自体が未導入でdoctorを呼べない場合、adapterは静的な導入手順だけを示し、Core判定を代替しない。
 連合固有Diagnosticと全体結果外形は

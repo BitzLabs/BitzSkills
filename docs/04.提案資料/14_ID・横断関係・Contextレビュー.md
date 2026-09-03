@@ -1,6 +1,6 @@
 # ID・横断関係・Contextレビュー
 
-- 状態: P1 Closed / P2 Pending
+- 状態: Closed（P1・P2裁定済み）
 - 実施日: 2026-09-02
 - 基準: branch `bitz_next`、HEAD `0097f2839e15a697cea5a8e4cb413a77562201ab`＋未コミット設計
 - 規範文書digest: `b292eed96f8d607c49e380bdb500c10a0c896c2e2c41bea415c4fd14aa38aaba`
@@ -76,3 +76,10 @@ IDとgraph規則にP0はない。FED-CTX-001と002を実装前にSchema化する
 `FED-CTX-001`と`FED-CTX-002`は[ADR-042](../02.設計書/10_決定記録/ADR-042_モノレポ連合のidentity・所有境界・公開契約を確定する.md)
 で採用した。連合Contextの必須field、空配列、順序と、Digestへ収録する実効設定allowlistをcontext仕様へ反映した。
 P1はClosedとし、Diagnostic優先順位`FED-CTX-003`のP2だけを残す。
+
+## 9. P2裁定（2026-09-03）
+
+`FED-CTX-003`は[ADR-043](../02.設計書/10_決定記録/ADR-043_モノレポ連合の継続・TASK境界・適合契約を確定する.md)で
+採用した。relation edgeを構文、修飾ID、workspace、target、型の順に1 primary Diagnosticだけへ対応付け、
+存在workspace内のstrong target不在を`SPEC-RELATION-MISSING-001`へ統一した。
+`CTX-RELATION-MISSING-001`は公開結果で使わず予約する。これにより本レビューをClosedとする。

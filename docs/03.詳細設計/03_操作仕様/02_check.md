@@ -58,7 +58,10 @@ catalogと比較する。初回連合化前の単一workspace baseへ全体列�
 9. 明示TASKの`changes`境界
 10. changed strong dependencyの直接逆参照による影響候補
 
-後段へ進めないerrorがあっても、独立fileのDiagnosticは可能な範囲で返す。
+global preflight非成功ならworkspace別検査を開始しない。preflight通過後に後段へ進めないerrorがあっても、
+独立fileのDiagnosticは可能な範囲で返す。継続単位は文書と、その文書をsourceとするedgeであり、別workspaceの
+非成功だけを理由に無関係な文書検査を省略しない。strong targetを解釈できないsourceは具体的なrelation Diagnosticを
+持つ非成功とし、その依存閉包だけを完全Contextとして扱わない。
 
 ## 5. Git基準版と変更集合
 
@@ -103,6 +106,11 @@ rejected REQ/TECHは所有逆索引へ含めない。
 
 TASK IDまたはTASK pathを明示した場合だけ、同じGit基準版からの変更pathを`changes`と比較する。境界外変更は
 `SPEC-TASK-BOUNDARY-001`／failedとする。TASK自身のfileと明示生成reportは比較対象から除く。
+
+`changes`のfileは正規化した字句Git pathの完全一致、末尾`/`のdirectory prefixはpath segment単位の子孫一致で
+変更を許可する。symlink解決先の別の字句pathへ許可を拡張しない。宣言pathと変更pathには所有境界検査を先に適用し、
+追加はcurrent、削除はbase、変更とsymlink変更はbase/current双方、renameはsourceとdestinationの2 pathを検査する。
+所有境界不適合と`SPEC-TASK-BOUNDARY-001`を同じpathへ重複して返さない。
 
 引数なし、`--full`でTASKが選ばれても文書検査だけを行い、境界未実施をwarningにしない。Git不在では
 `SPEC-TASK-BOUNDARY-002`／blockedとする。
@@ -155,6 +163,7 @@ Coreは意味的影響を断定せず、statusを自動変更しない。`relate
 | `SPEC-ID-DUPLICATE-001` | failed | ID重複 |
 | `SPEC-RELATION-LEGACY-001` | failed | 旧`refs`使用 |
 | `SPEC-RELATION-MISSING-001` | failed | strong target不在 |
+| `CTX-RELATION-TYPE-001` | failed | 存在するsource／targetの型不適合 |
 | `SPEC-PATH-INVALID-001` | failed／warning | path不正。draft予定だけwarning |
 | `SPEC-TEST-COVERAGE-001` | failed | `covers`不正 |
 | `SPEC-SAFETY-APPROVED-001` | failed | approvedを戻さず意味変更 |

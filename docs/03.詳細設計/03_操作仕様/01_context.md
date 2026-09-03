@@ -204,8 +204,8 @@ adapter命令はBundle外から与え、本文をsystem instructionへ昇格し�
 | code | result | 条件 |
 |---|---|---|
 | `CTX-ROOT-MISSING-001` | failed | 起点ID不在 |
+| `SPEC-RELATION-MISSING-001` | failed | 存在するworkspace内のstrong target不在 |
 | `CTX-RELATION-TYPE-001` | failed | relation型不正 |
-| `CTX-RELATION-MISSING-001` | failed | strong target不在 |
 | `CTX-CYCLE-001` | failed | 禁止循環 |
 | `CTX-TASK-DEPENDENCY-001` | blocked | 先行TASK未完了 |
 | `CTX-STATE-001` | blocked | purposeに適用不能 |
@@ -217,6 +217,10 @@ adapter命令はBundle外から与え、本文をsystem instructionへ昇格し�
 | `CTX-STALE-001` | blocked | expected Digest不一致 |
 | `CTX-PROJECTION-001` | failed | expand対象が解決集合外 |
 | `CTX-PROJECTION-LIMIT-001` | failed | 提示量hard limit超過 |
+
+strong target不在は`SPEC-RELATION-MISSING-001`へ統一し、`CTX-RELATION-MISSING-001`は公開結果で使用しない。
+修飾ID、workspace、target、型のprimary Diagnostic優先順位は
+[関係・トレースモデル](../02_SPECモデル/04_関係・トレースモデル.md#51-relation-diagnosticの優先順位)に従う。
 
 ## 11. adapter契約
 

@@ -89,9 +89,12 @@ symlinkも防げない。
 - 詳細なSchema、canonicalization、resource計数は`docs/03.詳細設計`を正本とする。
 - 検討経緯とP1対応表は[提案22](../../04.提案資料/22_モノレポ残存P1裁定案.md)に記録する。
 - ADR-041のtarget別verify証跡と明示`--report`だけの保存条件は変更しない。
+- 本ADRでP2として残した継続、Diagnostic、TASK境界、rollback、計算量、適合matrixは
+  [ADR-043](ADR-043_モノレポ連合の継続・TASK境界・適合契約を確定する.md)で確定した。
 
 ## Revision History
 
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-09-03 | モノレポ残存P1のidentity、所有境界、Schema、CLI、resource、性能条件を確定 | FED-CROSS-002〜007 |
+| 2026-09-03 | 本ADRで残したP2の後続裁定を記録 | ADR-043 |

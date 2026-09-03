@@ -210,6 +210,16 @@ global preflightがroot設定の構文、型、ID不正で停止し、有効なf
 `federation`を`{"id": null, "path": "."}`、`workspaces`を空配列にする。その他の全体結果の`federation.id`は
 有効なstringとする。不正なraw IDを結果identityへ転記しない。
 
+JSON consumerは`schemaVersion` majorを確認した後、次の排他的外形で結果種別を識別する。
+
+- `workspace`を持ち、`federation`と`workspaces`を持たない: workspace単独結果
+- `workspace`を持たず、`federation`と`workspaces`を持つ: 全体結果
+- 両方を持つ、または必要fieldをどちらも持たない: Schema不適合
+
+修飾IDの`::`、report file名、current directoryから結果種別を推測しない。連合producerを有効にするadapter／CIは、
+事前にCore APIまたはdoctorで`monorepo.v1`を確認する。Coreは過去reportを合否入力にせず、単一と連合のreportを
+同じ実行結果として集約しない。
+
 ## 3. statusと終了コード
 
 | status | 意味 | 終了コード |
@@ -300,6 +310,10 @@ codeは`<OWNER>-<AREA>-<NNN>`を基本とする。
 
 codeの再利用と意味変更を禁止する。廃止codeは予約済みとして一覧へ残すか、移行表で後継を示す。
 同じ原因に対し、file単位と規範文単位の同義Diagnosticを重複して出さない。
+
+relation edgeは構文・Schema、修飾ID、workspace、target、型の順に検査し、最初のprimary Diagnosticだけを返す。
+strong target不在は`SPEC-RELATION-MISSING-001`へ統一し、`CTX-RELATION-MISSING-001`はCore 1.0で使用せず予約する。
+詳細は[関係・トレースモデル](../02_SPECモデル/04_関係・トレースモデル.md#51-relation-diagnosticの優先順位)に従う。
 
 ## 7. textとJSON
 

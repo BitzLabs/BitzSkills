@@ -1,6 +1,6 @@
 # CLI・対象選択・結果集約レビュー
 
-- 状態: P1 Closed / P2 Pending
+- 状態: Closed（P1・P2裁定済み）
 - 実施日: 2026-09-02
 - 基準: branch `bitz_next`、HEAD `0097f2839e15a697cea5a8e4cb413a77562201ab`＋未コミット設計
 - 規範文書digest: `b292eed96f8d607c49e380bdb500c10a0c896c2e2c41bea415c4fd14aa38aaba`
@@ -88,3 +88,10 @@ CLIの基本構文は成立している。FED-CLI-001〜003をAPI freeze前に�
 で採用した。`--all-workspaces`をGit／federation discovery基準、未知`--workspace`を終了コード4・結果なしとし、
 3操作のmember固有fieldと完全JSON例を固定した。全体checkの`revision`もtop-level 1件に固定したため
 `FED-CLI-005`は随伴してClosedとする。P1はClosedとし、継続判定`FED-CLI-004`のP2だけを残す。
+
+## 11. P2裁定（2026-09-03）
+
+`FED-CLI-004`は[ADR-043](../02.設計書/10_決定記録/ADR-043_モノレポ連合の継続・TASK境界・適合契約を確定する.md)で
+採用した。global preflightだけを全停止境界とし、その後はcheckの文書・source edge、context／verifyのtarget閉包、
+verify binding、doctor checkを継続単位にする。依存出力不足だけで実行不能な別unitは
+`SPEC-MONOREPO-DEPENDENCY-001`／blockedとする。これにより本レビューをClosedとする。

@@ -66,4 +66,6 @@ Core 1.0へ含める。verifyのtarget別証跡と明示report保存は
 [ADR-041](10_決定記録/ADR-041_verify対象別証跡とreport明示保存の分離.md)に従う。その他の対象外機能は
 [ADR-039](10_決定記録/ADR-039_Core-1.0仕様構造の再編とscope縮小.md)の簡素化判断を維持する。連合のworkspace
 identity、所有境界、公開Schema、CLI、resourceと性能条件は
-[ADR-042](10_決定記録/ADR-042_モノレポ連合のidentity・所有境界・公開契約を確定する.md)で確定した。
+[ADR-042](10_決定記録/ADR-042_モノレポ連合のidentity・所有境界・公開契約を確定する.md)で確定した。継続、
+TASK境界、rollback、計算量、適合条件は
+[ADR-043](10_決定記録/ADR-043_モノレポ連合の継続・TASK境界・適合契約を確定する.md)で確定した。

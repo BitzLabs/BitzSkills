@@ -171,20 +171,27 @@ code、test、環境に対する実行時述語で、Frontmatter状態ではな�
 | `SPEC-VERIFY-COMMAND-001` | error | 起動不能またはsignal |
 | `SPEC-VERIFY-TIMEOUT-001` | error | timeout |
 | `CTX-COVERAGE-TEST-001` | blocked | 対象MUSTが未tested |
+| `SPEC-MONOREPO-DEPENDENCY-001` | blocked | 別unitの非成功によりtarget Contextまたはbindingを構成不能 |
 
 report生成、秘密情報、result集約は共通契約に従う。
 
 ## 10. 全体実行
 
 `verify --all-workspaces`はfederation rootを先頭、その後をworkspace ID辞書順に処理する。実行済みbinding集合は
-連合全体で1つ保持し、横断refinementが参照する同じ`(workspaceId, commandName)`を二重実行しない。失敗した
-workspaceがあっても、依存しない後続workspaceのtarget解決と解決済みbindingは継続する。
+連合全体で1つ保持し、横断refinementが参照する同じ`(workspaceId, commandName)`を二重実行しない。preflight通過後は
+workspace全体ではなくtargetのstrong relation閉包とbindingを継続単位とし、失敗したworkspaceがあっても、
+依存しない後続targetの解決とbindingを継続する。
 
 全workspaceのtarget Contextを先に解決し、通過targetのbinding和集合をworkspace処理順、command名辞書順で実行する。
 command実体は所有workspaceのmember結果の`commands[]`へ1回だけ置く。各member結果は`targetResults[]`を持ち、
 各targetの`bindingRefs[]`から別memberが所有する実行結果も参照できる。member statusは全target status、所有する
 command実体、member Diagnosticの最悪値とする。これにより横断testの失敗を依頼側targetと実行所有側memberの
 どちらからも隠さず、command結果自体と所要時間は複製しない。
+
+非成功文書をstrong閉包に必要とするtargetは完全Contextを作らず、別unitの根本原因だけで実行不能なら
+`SPEC-MONOREPO-DEPENDENCY-001`／blocked、`contextDigest: null`、`bindingRefs: []`とする。既にmissing、type、state、
+coverageなど具体的Diagnosticがあるtargetへ同codeを重ねない。1つのcommandがfailed／errorでも、計画済みの後続bindingを
+owner workspace順、command名順に実行し、参照しないtargetへ結果を波及させない。
 
 workspace単位の引数なし対象が0件の場合、`SPEC-VERIFY-BLOCKED-002`をwarningとしてmember結果を
 `passed_with_warnings`にする。連合全体の対象が0件の場合だけerror／`blocked`とする。結果は
