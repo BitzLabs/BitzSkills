@@ -138,8 +138,14 @@ CLIは対象範囲、Git比較基準、出力形式、report、timeout短縮だ�
 - scalar、配列、通常mapだけ。object配列は`monorepo.members`だけで使用する
 - custom tag、anchor、alias、merge keyを禁止
 - 重複keyをerror
+- 日時、8進数、`yes`／`no`などの暗黙型変換を行わない
 - file size 64 KiB以下
 - network accessなし
+
+上記の禁止はCoreが自身で判定する。使用するYAML実装の既定挙動を制約の代わりにしない。
+禁止構文の受理は`SPEC-CONFIG-SCHEMA-001`となるべき入力を通過させるため、値の解釈前に拒否する。
+実装が使用するYAML libraryと安全読取りの条件は
+[ADR-045](../../02.設計書/10_決定記録/ADR-045_実行環境と配布物の確定.md)が所有する。
 
 ## 9. path
 

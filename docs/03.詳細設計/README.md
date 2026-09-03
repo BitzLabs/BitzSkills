@@ -7,12 +7,14 @@
 
 矛盾時は次の所有境界に従う。
 
-1. 共通status、Diagnostic、report、安全な入出力: `00_共通契約`
+1. 共通status、Diagnostic、report、安全な入出力、Context Digest正規化、適合fixture: `00_共通契約`
 2. EARS-AI字句、構文、Semantic IR: `01_EARS-AI`
 3. workspace、設定、文書、状態、関係、trace: `02_SPECモデル`
-4. CLI/MCP入力、対象選択、操作結果: `03_操作仕様`
+4. CLI入力、対象選択、操作結果: `03_操作仕様`
 
 ADRを読まなければ実装できない契約を本仕様へ残してはならない。
+適合条件の正本は[適合fixture仕様](00_共通契約/04_適合fixture仕様.md)であり、提案資料の期待matrixを
+受入基準の正にしない。
 
 ## 2. Core 1.0 scope
 
@@ -33,6 +35,8 @@ Core 1.0は単一workspaceと、同一Git repository内の明示的なモノレ�
 |---|---|---|
 | 共通 | [結果・Diagnostic・終了コード](00_共通契約/01_結果・Diagnostic・終了コード.md) | status、共通結果、Diagnostic、report |
 | 共通 | [安全な入出力・互換性](00_共通契約/02_安全な入出力・互換性.md) | I/O、上限、Git縮退、cache |
+| 共通 | [Context Digest正規化仕様](00_共通契約/03_Context-Digest正規化仕様.md) | digest input、正規化、serialization、hash |
+| 共通 | [適合fixture仕様](00_共通契約/04_適合fixture仕様.md) | fixture配置、manifest、normalizer、期待matrix |
 | 言語 | [言語・Semantic IR仕様](01_EARS-AI/01_言語・Semantic-IR仕様.md) | EARS-AI構文、Parser、IR |
 | 言語 | [適合性・移行仕様](01_EARS-AI/02_適合性・移行仕様.md) | version、適合、旧版移行 |
 | 言語 | [例・アンチパターン](01_EARS-AI/03_例・アンチパターン.md) | 記述例 |

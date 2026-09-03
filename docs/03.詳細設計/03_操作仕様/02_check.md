@@ -177,3 +177,8 @@ Coreは意味的影響を断定せず、statusを自動変更しない。`relate
 
 Core 1.0は`idCollisions`、`SPEC-BASE-AMBIGUOUS-001`、H2順序・空節・疑似節Diagnosticを返さない。
 連合固有Diagnosticは[モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)が所有する。
+
+本表は当該操作が固有に所有するcodeと、`check`が最初に検出する共通codeの集合である。
+`SPEC-CONFIG-SCHEMA-001`と`SPEC-INPUT-READ-001`は全操作共通、`SPEC-REPORT-WRITE-001`は
+`check`と`verify`の共通codeであり、所有者は
+[共通契約 §6.1](../00_共通契約/01_結果・Diagnostic・終了コード.md#61-diagnostic表の閉包)である。

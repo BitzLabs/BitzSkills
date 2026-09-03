@@ -21,7 +21,7 @@ plugin情報を指定する場合はID、version、required API、capabilityを1
 
 | # | 検査 | 不適合 |
 |---:|---|---|
-| 1 | Core実行体、Python version、起動 | version不適合はblocked、起動障害はerror |
+| 1 | Core実行体、実行環境version、起動 | 下限未満はblocked、起動障害はerror |
 | 2 | 呼出しpluginとCore API | blocked |
 | 3 | required Capability | blocked |
 | 4 | `.spec/bitz.yaml`存在 | blocked |
@@ -29,7 +29,7 @@ plugin情報を指定する場合はID、version、required API、capabilityを1
 | 6 | 連合catalog、member、path所有 | failed／blocked |
 | 7 | Schema major | blocked |
 | 8 | EARS-AI major | blocked |
-| 9 | Git利用可否 | 単一はwarning、連合はblocked |
+| 9 | Git利用可否と下限version | 単一はwarning、連合はblocked |
 | 10 | command実行fileとcwd | blocked |
 | 11 | cache | 再構築可能ならwarning |
 | 12 | 影響候補件数 | info |
@@ -48,6 +48,19 @@ preflight通過後はcheck項目を継続単位とする。先行checkの出力�
 可能な範囲で継続し、設定を解釈できないときのcommand／cwdなど依存checkは実行しない。根本Diagnosticとは別の
 checkが依存出力不足だけで実行不能なら`SPEC-MONOREPO-DEPENDENCY-001`／blockedとし、同じcheckへ具体的原因を
 重複させない。
+
+### 3.1 実行環境の下限
+
+検査1は次の下限と比較する。値は
+[ADR-045](../../02.設計書/10_決定記録/ADR-045_実行環境と配布物の確定.md)が所有する。
+
+| 対象 | 下限 | 不適合時 |
+|---|---|---|
+| CPython | 3.11 | `SPEC-DOCTOR-CORE-001`／blocked |
+| Git | 2.30 | Git不在として扱い、単一workspaceはwarning、連合は`SPEC-MONOREPO-GIT-001`／blocked |
+
+下限は環境ごとに変更できる設定値にしない。Core実行体を起動できない場合は
+`SPEC-DOCTOR-CORE-002`／errorとし、version比較へ進まない。
 
 ## 4. Capability
 
@@ -115,8 +128,8 @@ workspace固有検査を該当workspace要素へ置く。完全JSON例は
 
 | code | result | 条件 |
 |---|---|---|
-| `SPEC-DOCTOR-CORE-001` | blocked | Core/Python version不適合 |
-| `SPEC-DOCTOR-CORE-002` | error | Core/MCP起動不能 |
+| `SPEC-DOCTOR-CORE-001` | blocked | 実行環境versionが下限未満 |
+| `SPEC-DOCTOR-CORE-002` | error | Core実行体を起動できない |
 | `SPEC-DOCTOR-PLUGIN-001` | failed | plugin要求形式不正 |
 | `SPEC-DOCTOR-API-001` | blocked | API非互換 |
 | `SPEC-DOCTOR-CAPABILITY-001` | blocked | Capability不足 |
@@ -131,3 +144,9 @@ workspace固有検査を該当workspace要素へ置く。完全JSON例は
 Core自体が未導入でdoctorを呼べない場合、adapterは静的な導入手順だけを示し、Core判定を代替しない。
 連合固有Diagnosticと全体結果外形は
 [モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)に従う。
+
+本表は`doctor`が固有に所有するcodeの閉じた集合である。`SPEC-DOCTOR-CONFIG-001`は`doctor`が
+設定不適合を検査項目として報告するcodeであり、他操作の`SPEC-CONFIG-SCHEMA-001`を置き換えない。
+`SPEC-INPUT-READ-001`を含む全操作共通のcodeは
+[共通契約 §6.1](../00_共通契約/01_結果・Diagnostic・終了コード.md#61-diagnostic表の閉包)が所有する。
+`doctor`はreportを保存しないため`SPEC-REPORT-WRITE-001`を返さない。

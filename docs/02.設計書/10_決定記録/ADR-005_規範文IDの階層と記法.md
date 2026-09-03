@@ -39,7 +39,7 @@ statement-id = document-id, ":", local-id
 
 ## Consequences
 
-- [02_specディレクトリ仕様.md](../02_specディレクトリ仕様.md) の例を Core 1.0 準拠へ修正する。
+- [02_specディレクトリ仕様.md](../../03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md) の例を Core 1.0 準拠へ修正する。
 - 移行表に「親子分割記法 → 発動条件を繰り返した複数の規範文」を追加する。
 - 移行ツールは3階層IDを検出した場合、決定論的に変換できないため人間確認へ回す。
 
@@ -53,7 +53,7 @@ statement-id = document-id, ":", local-id
 Decisionのうち`local-id`の字句規則とCore文書prefixは[ADR-013](ADR-013_文書IDとローカルIDの字句規則訂正.md)が
 置き換えた。2階層固定という決定と、規範文の分割規則は変更されていない。
 
-関連文書: [02_specディレクトリ仕様.md](../02_specディレクトリ仕様.md), [EARS-AI規格/01_Core構文仕様.md](../../03.詳細設計/01_EARS-AI規格/01_Core構文仕様.md)
+関連文書: [02_specディレクトリ仕様.md](../../03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md), [EARS-AI規格/01_Core構文仕様.md](../../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md)
 
 ## Revision History
 
@@ -63,3 +63,4 @@ Decisionのうち`local-id`の字句規則とCore文書prefixは[ADR-013](ADR-01
 | 2026-08-25 | 文書IDとローカルIDの字句規則をADR-013で訂正 | `ADR-013` |
 | 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |
 | 2026-08-31 | 部分改訂の対象箇所（`local-id`字句規則とprefix）を明示 | `ADR-013` |
+| 2026-09-03 | ADR-039の再編に合わせて関連文書linkを現構造へ更新（非意味的訂正） | 提案24 G8 |

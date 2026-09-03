@@ -22,7 +22,7 @@ ADR-015は「既存SPECはCore 1.0適合前に`Revision History`を追加する�
 ## Decision
 
 1. 決定記録の全ADRへFrontmatter（`id`、`title`、`status`、`relations`）を追加する。
-   状態は[補助SPEC仕様](../../03.詳細設計/02_SPECファイル規定/05_補助SPEC仕様.md) §3の
+   状態は[補助SPEC仕様](../../03.詳細設計/02_SPECモデル/03_文書種別・本文テンプレート.md) §3の
    小文字語彙を使い、状態と後継関係はFrontmatterを正とする。
 2. H1を`# <id> <title>`、H2を`Context`、`Decision`、`Consequences`、任意の`Alternatives`、
    `Notes`、最終H2の`Revision History`へ統一する。
@@ -35,7 +35,7 @@ ADR-015は「既存SPECはCore 1.0適合前に`Revision History`を追加する�
 5. `.spec/`の配置・命名・探索規則は適用しない。本ディレクトリは`docs/`配下の設計資料であり、
    ファイル名の改名は27文書67リンクの書換えを伴う一方、得られる検証価値がない。
 6. 適合後のADRを、`SPEC-STYLE-*`と`SPEC-RELATION-*`の正例fixtureとして
-   [実装ロードマップ](../08_実装ロードマップ.md) Phase 1へ加える。
+   [実装ロードマップ](../../04.提案資料/12_Core-1.0実装計画.md) Phase 1へ加える。
 
 ## Consequences
 
@@ -53,7 +53,7 @@ ADR-015は「既存SPECはCore 1.0適合前に`Revision History`を追加する�
 2. **ファイル名も`<ID>-<slug>.md`へ改名する**: 27文書67リンクの書換えが必要な一方、
    区切り文字の統一から得られる検証価値は小さい。
 3. **`amends`関係型をCoreへ追加する**: 実測のない語彙追加であり、
-   Coreを小さく保つ原則（[EARS-AI規格](../../03.詳細設計/01_EARS-AI規格/README.md) §5-1）に反する。
+   Coreを小さく保つ原則（[EARS-AI規格](../../03.詳細設計/README.md) §5-1）に反する。
 
 ## Notes
 
@@ -72,3 +72,4 @@ Decision本文、旧ADRの`Notes`、旧ADRの`Revision History`の3点で記録�
 |---|---|---|
 | 2026-08-31 | 初版を作成 | `ADR-015` |
 | 2026-08-31 | Decision 4の`Amends`表現を`ADR-033`が部分改訂 | `ADR-033` |
+| 2026-09-03 | ADR-039の再編に合わせて関連文書linkを現構造へ更新（非意味的訂正） | 提案24 G8 |

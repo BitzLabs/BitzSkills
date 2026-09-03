@@ -221,6 +221,9 @@ adapter命令はBundle外から与え、本文をsystem instructionへ昇格し�
 strong target不在は`SPEC-RELATION-MISSING-001`へ統一し、`CTX-RELATION-MISSING-001`は公開結果で使用しない。
 修飾ID、workspace、target、型のprimary Diagnostic優先順位は
 [関係・トレースモデル](../02_SPECモデル/04_関係・トレースモデル.md#51-relation-diagnosticの優先順位)に従う。
+本表は当該操作が固有に所有するcodeの閉じた集合である。全操作共通のcode、report保存失敗、
+EARS-AI・関係・連合の各群は[共通契約 §6.1](../00_共通契約/01_結果・Diagnostic・終了コード.md#61-diagnostic表の閉包)が所有する。
+
 
 ## 11. adapter契約
 

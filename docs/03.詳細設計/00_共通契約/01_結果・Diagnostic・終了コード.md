@@ -230,8 +230,19 @@ JSON consumerは`schemaVersion` majorを確認した後、次の排他的外形�
 | `blocked` | 前提不足または安全に継続不能 | 2 |
 | `error` | tool、I/O、processの障害 | 3 |
 
-CLI引数の構文不正、排他違反、解決不能な明示Git revision、構文上妥当でもcatalogにない`--workspace`は
-終了コード4とし、Core操作結果とreportを生成しない。
+CLI引数の構文不正、排他違反、未知option、解決不能な明示Git revision、構文上妥当でもcatalogにない
+`--workspace`は終了コード4とし、Core操作結果とreportを生成しない。
+
+終了コード4は操作statusでもDiagnosticでもなく、Core操作を開始しなかったことを表す。出力は
+`--format`の指定にかかわらず次に固定する。
+
+- 標準出力へ何も書かない。JSON本体、部分結果、空objectのいずれも返さない。
+- 標準エラーへ理由を1行だけ書く。形式は`bitz: <operation-or-argv-context>: <reason>`とし、
+  端末制御文字を無害化する。
+- reportを作らず、既存reportを変更しない。
+
+adapterとCIは終了コード4を、statusによる分岐の前に終了コードだけで判別する。標準エラーの文言は
+人間向けであり、機械判定へ使用しない。
 
 `info` Diagnosticはstatusを変更しない。warningだけなら`passed_with_warnings`とする。
 複数結果は次の最悪値順で集約する。
@@ -242,6 +253,10 @@ error > failed > blocked > passed_with_warnings > passed
 
 最終statusだけで個別原因を隠さず、対象別結果とDiagnosticを保持する。Core 1.0はwarningをfailedへ昇格する
 `--strict`を提供しない。
+
+本表は操作statusとworkspace statusの語彙であり、Core全体で唯一とする。ただし`doctor`の`checks[]`は、
+個別検査の結果に`info`と`warning`を加えた検査単位の語彙を使う。この語彙と操作statusへの集約規則は
+[doctor仕様 §7](../03_操作仕様/04_doctor.md#7-結果)へ委譲する。他の操作は検査単位の語彙を持たない。
 
 ## 4. Diagnostic Schema
 
@@ -288,8 +303,8 @@ tool障害の`error`のいずれにも対応できる。warningの`resultStatus`
 | `kind` | 必須field | 任意field | 用途 |
 |---|---|---|---|
 | `file` | `workspaceId`、`path` | `line`、`column`、`key` | 設定、SPEC、code、test |
-| `environment` | `component` | `identifier` | Core、Python、Git、command、cache、plugin |
-| `invocation` | なし | `argument` | CLI/MCP呼出し |
+| `environment` | `component` | `identifier` | Core、実行環境、Git、command、cache、plugin |
+| `invocation` | なし | `argument` | CLI引数またはadapterからの呼出し引数 |
 
 単一workspaceの`file.workspaceId`は設定した実効IDを使う。連合では所有workspaceのIDを使い、`path`はそのworkspace相対、
 `line`と`column`は1始まりとする。`workspaceId`と`path`の組でsourceを一意にし、絶対pathを返さない。
@@ -315,6 +330,36 @@ relation edgeは構文・Schema、修飾ID、workspace、target、型の順に�
 strong target不在は`SPEC-RELATION-MISSING-001`へ統一し、`CTX-RELATION-MISSING-001`はCore 1.0で使用せず予約する。
 詳細は[関係・トレースモデル](../02_SPECモデル/04_関係・トレースモデル.md#51-relation-diagnosticの優先順位)に従う。
 
+### 6.1 Diagnostic表の閉包
+
+各操作仕様のDiagnostic表は、当該操作が固有に所有するcodeについて閉じた集合とする。表にないcodeを
+操作固有Diagnosticとして返してはならない。ただし次の3群は所有者が別にあり、各操作表へ再掲しない。
+
+第1群は4操作すべてが返し得る共通codeである。
+
+| code | severity | `resultStatus` | 条件 |
+|---|---|---|---|
+| `SPEC-CONFIG-SCHEMA-001` | error | `error`／`blocked` | 設定の構文・型・必須field不正／未知Schema major |
+| `SPEC-INPUT-READ-001` | error | `failed`／`error` | UTF-8として復号不能／権限・I/O障害・読取り中の消失 |
+
+第2群は`check`と`verify`だけが返し得る。`context`と`doctor`はreportを保存しないため返さない。
+
+| code | severity | `resultStatus` | 条件 |
+|---|---|---|---|
+| `SPEC-REPORT-WRITE-001` | error | `error` | 明示`--report`の保存失敗 |
+
+第3群は所有仕様が定義し、当該条件が成立する全操作が返し得る。
+
+| 群 | 所有仕様 | 返し得る操作 |
+|---|---|---|
+| EARS-AI字句・構文・ID | [言語・Semantic IR仕様 §9](../01_EARS-AI/01_言語・Semantic-IR仕様.md#9-diagnostic) | 本文を完全解析する全操作 |
+| 関係・状態・閉包・coverage | [関係・トレースモデル §11](../02_SPECモデル/04_関係・トレースモデル.md#11-diagnostic) | Contextを解決する`context`と`verify`、静的検査を行う`check` |
+| 連合catalog・所有境界・上限 | [モノレポSPEC連合仕様 §11](../02_SPECモデル/05_モノレポSPEC連合仕様.md#11-diagnostic) | 連合内で実行した全操作 |
+
+`verify`はtargetごとに`purpose=verify` Contextを完全解決するため、`CTX-ROOT-MISSING-001`、`CTX-CYCLE-001`、
+`CTX-STATE-001`、`CTX-STATE-SUPERSEDED-001`、`CTX-STATE-SUPERSEDED-002`、`CTX-LIMIT-001`、
+`CTX-TASK-DEPENDENCY-001`を第3群として返し得る。これらはtargetの`diagnostics`へ置き、`bindingRefs`を空にする。
+
 ## 7. textとJSON
 
 - text出力は成功時にstatus、対象件数、scope、所要時間を1行で示す。
@@ -323,6 +368,23 @@ strong target不在は`SPEC-RELATION-MISSING-001`へ統一し、`CTX-RELATION-MI
   `workspaceId: null`はstring IDより前に置く。
 - 端末制御文字を無害化する。
 - textとJSONでstatus、件数、終了コードを変えない。
+
+text出力は次の3部からなる。Diagnosticが0件なら要約行だけを出す。
+
+```text
+<operation> <status> scope=<scope> targets=<n> diagnostics=<n> (<duration>ms)
+<workspace-id>:<path>:<line>:<column>: <severity>: <code>: <summary>
+  -> <suggestedAction>
+```
+
+- 要約行は常に1行目とし、statusと件数をJSON結果と一致させる。`scope`を持たない操作は`scope=`を出さない。
+- Diagnostic行はJSONの`diagnostics`と同じ順序で1件1行とし、`source.kind`が`file`以外の場合は
+  `<component>`または`invocation`を先頭fieldへ置く。`line`と`column`を持たない場合は当該fieldを省略せず空にする。
+- `suggestedAction`を持つDiagnosticだけ、直後へ2 space字下げの継続行を1行出す。
+- 全体操作ではworkspace要素のDiagnosticをworkspace処理順に続けて出し、top-level Diagnosticを先に置く。
+- 色、装飾、進捗表示はCore 1.0の契約に含めない。
+
+textはDiagnosticの`evidence`と`extensions`を出力しない。完全な機械可読情報は`--format json`を使う。
 
 ## 8. report
 
