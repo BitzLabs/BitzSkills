@@ -48,7 +48,7 @@ statement-id = document-id, ":", local-id ;
 | tag | 意味 | 未充足 |
 |---|---|---|
 | `MUST` | 必須 | error |
-| `SHOULD` | 推奨 | 理由なしはwarning |
+| `SHOULD` | 推奨 | 理由なしは`EAI-CORE-SHOULD-001`／warning |
 | `MAY` | 任意 | 不適合にしない |
 
 規範強度の省略を禁止する。Coreは強度を保持するが、実装充足はtestまたは人間確認で判断する。
@@ -182,6 +182,9 @@ opaque extensionを削除しない。Core 1.0は公開`bitz fmt`を提供しな�
 
 ## 9. Diagnostic
 
+本表は検索用索引である。draft差分を含む条件ごとの規範値とprimary優先順位は
+[Diagnostic registry](../00_共通契約/05_Diagnostic-registry.md)が所有する。
+
 | code | severity | `resultStatus` | 条件 |
 |---|---|---|---|
 | `EAI-CORE-SYNTAX-001` | error／draftはwarning | `failed`／`passed_with_warnings` | tag順序不正 |
@@ -193,6 +196,7 @@ opaque extensionを削除しない。Core 1.0は公開`bitz fmt`を提供しな�
 | `EAI-CORE-ID-001` | error | `failed` | ID形式不正 |
 | `EAI-CORE-ID-002` | error | `failed` | 規範文ID重複 |
 | `EAI-CORE-SEM-001` | error／draftはwarning | `failed`／`passed_with_warnings` | operand不足 |
+| `EAI-CORE-SHOULD-001` | warning | `passed_with_warnings` | `SHOULD`の理由field不足 |
 | `EAI-CORE-LANG-001` | warning | `passed_with_warnings` | 正本言語との不一致 |
 | `EAI-EXT-UNKNOWN-001` | warning | `passed_with_warnings` | opaque extension |
 

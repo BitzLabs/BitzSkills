@@ -62,7 +62,8 @@ Step 1と並行して固定する。
 - `bitz.yaml`のYAML subset読込みと禁止構文の拒否
 - 単一workspaceの探索と`doctor`（Core、実行環境version、設定、Git、command、cache）
 
-完了条件は、`SINGLE-001`〜`006`と`SINGLE-070`〜`077`が通過し、終了コード0〜4を区別できることである。
+完了条件は、`SINGLE-001`〜`006`、`SINGLE-070`〜`078`、`SINGLE-081`、`083`、`091`〜`095`が通過し、
+終了コード0〜4を区別できることである。
 
 ## 5. Step 2: EARS-AIと文書モデル
 
@@ -71,7 +72,8 @@ Step 1と並行して固定する。
 - 関係索引、逆索引、path逆索引
 - 正例・反例fixture
 
-完了条件は、同一入力から同一IRとDiagnosticを再現でき、`SINGLE-007`〜`026`が通過することである。
+完了条件は、同一入力から同一IRとDiagnosticを再現でき、`SINGLE-007`〜`026`、`SINGLE-079`〜`080`、
+`SINGLE-082`、`084`〜`090`が通過することである。
 
 ## 6. Step 3: Contextとcheck
 
@@ -93,7 +95,7 @@ Step 1と並行して固定する。
 
 完了条件は、test成功、非0、起動失敗、signal、timeout、対象0件をfixtureで区別でき、異なる2 Contextを持つtarget、
 共有binding、Context非成功targetの混在を正しい`targetResults[]`へ対応付けられることである。`--report`なしでは
-成功・非成功とも既存reportを変更せず、新しいfileを作らない。`SINGLE-055`〜`069`と`SINGLE-078`〜`080`が通過する。
+成功・非成功とも既存reportを変更せず、新しいfileを作らない。`SINGLE-055`〜`069`が通過する。
 
 ## 8. Step 5: モノレポ連合
 

@@ -73,6 +73,19 @@ Parser、Context Resolver、Diagnostic生成、Digest、check、verifyの公開�
 
 ### 4.1 `FIN-FIX-001`: 適合fixtureが再現可能な契約になっていない
 
+- 状態: 修正採用・契約反映済み、実fixture反映待ち
+- 反映先: [適合fixture仕様](../03.詳細設計/00_共通契約/04_適合fixture仕様.md)、
+  `fixtures/conformance/manifest.schema.json`
+
+`setup`は`operations[]`方式を採用した。create、update、delete、rename、stageの適用順とpath境界を固定し、
+Gitのclean、staged、worktree、rename、delete、unbornをmanifestだけから再現できる契約へ改訂した。
+1 ID 1 invocation、1原因種別、1 statusまたはoutcome、1 exit codeとし、競合していたmatrix行をsuffix付きIDへ分割した。
+text normalizerはduration tokenだけを置換し、Digest fixtureはCanonical JSON byte列と`sha256:`値を別々に比較する。
+
+実際の`repo/`、`manifest.json`、`expected/*`は、FIN-DIAG-001、FIN-EAI-001、FIN-OUT-001、FIN-TARGET-001、
+FIN-FM-001およびFIN-DIGEST-001で期待値を一意にした後、同じStep 0B内で追加する。選択的期待値やplaceholderは
+置かない。このため、本項目は実fixtureと2回実行のbyte一致を確認するまでClosedにしない。
+
 #### 問題
 
 [適合fixture仕様 §2](../03.詳細設計/00_共通契約/04_適合fixture仕様.md#2-配置)は
@@ -112,6 +125,19 @@ Step 1以降の完了条件を客観的に判定できない。
 - 同一fixtureを2回実行し、normalizer後の結果がbyte一致する
 
 ### 4.2 `FIN-DIAG-001`: Diagnostic表の閉包が成立していない
+
+- 状態: 修正採用・契約／matrix反映済み、実fixture反映待ち
+- 反映先: [Diagnostic registry](../03.詳細設計/00_共通契約/05_Diagnostic-registry.md)、
+  [共通結果契約](../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md)、各所有仕様、適合fixture仕様
+
+Diagnostic条件の唯一の所有者をregistryへ集約し、各条件へ`conditionId`、operation、code、severity、
+`resultStatus`、source kind、継続単位、primary priorityを固定した。未定義だったBOM、未知設定key、
+Frontmatter/YAML、単一workspace上限、`SHOULD`理由、Git縮退等へcodeを割り当てた。
+doctorの設定不正は`SPEC-CONFIG-SCHEMA-001`だけを返し、config check itemから参照する方式へ統一した。
+`SPEC-DOCTOR-CONFIG-001`は予約済みとし、公開結果へ返さない。
+
+1原因1primaryを確認するmatrixは追加したが、実際の期待JSONはFIN-OUT-001等の確定後に追加する。
+このため、本項目は実fixtureで重複Diagnosticがないことを確認するまでClosedにしない。
 
 #### 問題
 

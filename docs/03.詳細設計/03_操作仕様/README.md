@@ -2,7 +2,8 @@
 
 ## 1. 所有境界
 
-各操作仕様は自身のCLI入力、対象選択、処理順、操作固有結果、Diagnosticを所有する。
+各操作仕様は自身のCLI入力、対象選択、処理順、操作固有結果、Diagnosticの検出処理を所有する。
+Diagnostic条件と公開値は[Diagnostic registry](../00_共通契約/05_Diagnostic-registry.md)が所有する。
 共通status、Diagnostic field、report条件は[共通契約](../00_共通契約/01_結果・Diagnostic・終了コード.md)、
 関係とcoverageは[関係・トレースモデル](../02_SPECモデル/04_関係・トレースモデル.md)を使用する。
 

@@ -1,0 +1,245 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "manifest.schema.json",
+  "title": "Bitz Core 1.0 conformance fixture manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["fixtureId", "description", "setup", "invocation", "expect"],
+  "properties": {
+    "fixtureId": {
+      "type": "string",
+      "pattern": "^(SINGLE|MONO)-[0-9]{3}(?:-[0-9]{2})?$"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "setup": { "$ref": "#/$defs/setup" },
+    "invocation": { "$ref": "#/$defs/invocation" },
+    "expect": { "$ref": "#/$defs/expect" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "invocation": {
+            "properties": { "runner": { "const": "bitz" } },
+            "required": ["runner"]
+          }
+        },
+        "required": ["invocation"]
+      },
+      "then": {
+        "properties": {
+          "expect": { "not": { "required": ["outcome"] } }
+        }
+      },
+      "else": {
+        "properties": {
+          "expect": {
+            "required": ["outcome"],
+            "not": { "required": ["status"] }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "strictPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\u0000).+$"
+    },
+    "repoPath": {
+      "anyOf": [
+        { "const": "." },
+        { "$ref": "#/$defs/strictPath" }
+      ]
+    },
+    "sourcePath": {
+      "type": "string",
+      "pattern": "^changes/(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\u0000).+$"
+    },
+    "pathList": {
+      "oneOf": [
+        {
+          "type": "array",
+          "const": ["."]
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/strictPath" }
+        }
+      ]
+    },
+    "baseCommit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["message", "paths"],
+      "properties": {
+        "message": { "type": "string", "minLength": 1 },
+        "paths": { "$ref": "#/$defs/pathList" }
+      }
+    },
+    "createOrUpdate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "path", "source"],
+      "properties": {
+        "op": { "enum": ["create", "update"] },
+        "path": { "$ref": "#/$defs/strictPath" },
+        "source": { "$ref": "#/$defs/sourcePath" }
+      }
+    },
+    "delete": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "path"],
+      "properties": {
+        "op": { "const": "delete" },
+        "path": { "$ref": "#/$defs/strictPath" }
+      }
+    },
+    "rename": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "from", "to"],
+      "properties": {
+        "op": { "const": "rename" },
+        "from": { "$ref": "#/$defs/strictPath" },
+        "to": { "$ref": "#/$defs/strictPath" }
+      }
+    },
+    "stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "paths"],
+      "properties": {
+        "op": { "const": "stage" },
+        "paths": { "$ref": "#/$defs/pathList" }
+      }
+    },
+    "operation": {
+      "oneOf": [
+        { "$ref": "#/$defs/createOrUpdate" },
+        { "$ref": "#/$defs/delete" },
+        { "$ref": "#/$defs/rename" },
+        { "$ref": "#/$defs/stage" }
+      ]
+    },
+    "setup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["git", "operations"],
+      "properties": {
+        "git": { "type": "boolean" },
+        "baseCommit": { "$ref": "#/$defs/baseCommit" },
+        "operations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/operation" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "git": { "const": false } }, "required": ["git"] },
+          "then": {
+            "not": {
+              "anyOf": [
+                { "required": ["baseCommit"] },
+                {
+                  "properties": {
+                    "operations": {
+                      "contains": {
+                        "type": "object",
+                        "properties": { "op": { "const": "stage" } },
+                        "required": ["op"]
+                      }
+                    }
+                  },
+                  "required": ["operations"]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "invocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runner", "cwd", "argv", "env"],
+      "properties": {
+        "runner": { "enum": ["bitz", "consumer", "migration"] },
+        "cwd": { "$ref": "#/$defs/repoPath" },
+        "argv": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "env": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "expect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exitCode", "stdout", "reportFileCount"],
+      "properties": {
+        "status": {
+          "enum": ["passed", "passed_with_warnings", "failed", "blocked", "error"]
+        },
+        "outcome": { "enum": ["accepted", "rejected", "passed"] },
+        "exitCode": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "stdout": { "enum": ["json", "text", "none"] },
+        "resultFile": { "$ref": "#/$defs/strictPath" },
+        "textFile": { "$ref": "#/$defs/strictPath" },
+        "canonicalFile": { "$ref": "#/$defs/strictPath" },
+        "reportFileCount": { "type": "integer", "minimum": 0 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "exitCode": { "const": 4 } }, "required": ["exitCode"] },
+          "then": {
+            "properties": { "stdout": { "const": "none" } },
+            "not": {
+              "anyOf": [
+                { "required": ["status"] },
+                { "required": ["outcome"] },
+                { "required": ["resultFile"] },
+                { "required": ["textFile"] }
+              ]
+            }
+          },
+          "else": {
+            "oneOf": [
+              {
+                "required": ["status"],
+                "not": { "required": ["outcome"] }
+              },
+              {
+                "required": ["outcome"],
+                "not": { "required": ["status"] }
+              }
+            ]
+          }
+        },
+        {
+          "if": { "properties": { "stdout": { "const": "json" } }, "required": ["stdout"] },
+          "then": { "required": ["resultFile"] }
+        },
+        {
+          "if": { "properties": { "stdout": { "const": "text" } }, "required": ["stdout"] },
+          "then": { "required": ["textFile"] }
+        }
+      ]
+    }
+  }
+}

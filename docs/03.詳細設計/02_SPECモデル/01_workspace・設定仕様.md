@@ -7,7 +7,8 @@ Core 1.0は単一workspaceと、1つのGit repository内の明示的なworkspace
 1. 指定pathまたはcurrent directoryから親方向へ`.spec/bitz.yaml`を探索する。
 2. Git利用時はrepository境界を越えない。
 3. 最初に見つかった設定の親directoryをworkspace rootとする。
-4. 見つからなければ`blocked`とする。
+4. 見つからなければ、`doctor`は`SPEC-DOCTOR-WORKSPACE-001`、他の操作は
+   `SPEC-WORKSPACE-MISSING-001`を返して`blocked`とする。
 5. symlinkを辿ってworkspace外のSPECを読み込まない。
 
 単一workspaceの実効IDは`workspace.id`、省略時は`root`とし、pathは`.`とする。Git rootの設定が
@@ -44,7 +45,7 @@ Core 1.0は単一workspaceと、1つのGit repository内の明示的なworkspace
 | `.spec/tasks/**/*.md` | TASK | 存在時 |
 | `.spec/reports/*.json` | 結果 | 入力にしない |
 
-`.spec/`内の未知file/directoryはwarningとする。hidden、一時file、Markdown以外の成果物を暗黙にSPECとして
+`.spec/`内の未知file/directoryは`SPEC-WORKSPACE-UNKNOWN-001`／warningとする。hidden、一時file、Markdown以外の成果物を暗黙にSPECとして
 読み込まない。
 
 ## 4. `bitz.yaml`
@@ -89,12 +90,13 @@ safety:
 | `id` | string | Yes | `workspace.id`と同じ字句規則。連合内で一意 |
 | `path` | string | Yes | repository root相対directory。所有境界は連合仕様に従う |
 
-`profiles`はCore 1.0の標準keyではない。検出した場合は将来scopeの設定としてwarningし、判定、Context Digest、
+`profiles`はCore 1.0の標準keyではない。検出した場合は`SPEC-CONFIG-UNKNOWN-001`／warningとし、判定、Context Digest、
 操作へ使用しない。`workspace`と`monorepo`の組合せ、member field、path制約は
 [モノレポSPEC連合仕様](05_モノレポSPEC連合仕様.md)が定義する。
 
-未知の標準keyは同一majorの前方互換性のためwarningし、値を変更しない。型不正と必須key欠如は`error`、
-未知Schema majorは`blocked`とする。
+未知の標準keyは同一majorの前方互換性のため`SPEC-CONFIG-UNKNOWN-001`／warningとし、値を変更しない。
+型不正と必須key欠如は`SPEC-CONFIG-SCHEMA-001`／error／`error`、未知Schema majorは
+同code／error／`blocked`とする。
 
 `workspace`と`monorepo`は未リリースの初回Core 1.0 Schemaに含まれる。モノレポ非対応の公開済みCore 1.0との
 移行分岐、追加feature marker、Schema major引上げは設けない。連合内のworkspace IDは永続identityであり、

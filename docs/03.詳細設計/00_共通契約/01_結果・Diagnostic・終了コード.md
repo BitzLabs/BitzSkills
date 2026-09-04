@@ -2,8 +2,8 @@
 
 ## 1. 所有範囲
 
-本書は全Core操作が共有する結果外形、status、Diagnostic、終了コード、report生成条件を定義する。
-操作固有fieldとDiagnostic条件は各操作仕様が定義するが、共通fieldの意味と集約を再定義しない。
+本書は全Core操作が共有する結果外形、status、Diagnostic Schema、終了コード、report生成条件を定義する。
+Diagnostic条件と公開値は[Diagnostic registry](05_Diagnostic-registry.md)、操作固有fieldと検出処理は各操作仕様が定義する。
 
 ## 2. 共通結果
 
@@ -332,33 +332,16 @@ strong target不在は`SPEC-RELATION-MISSING-001`へ統一し、`CTX-RELATION-MI
 
 ### 6.1 Diagnostic表の閉包
 
-各操作仕様のDiagnostic表は、当該操作が固有に所有するcodeについて閉じた集合とする。表にないcodeを
-操作固有Diagnosticとして返してはならない。ただし次の3群は所有者が別にあり、各操作表へ再掲しない。
+公開Diagnostic条件の閉じた集合は[Diagnostic registry](05_Diagnostic-registry.md)だけが所有する。
+各registry行は`conditionId`、返し得る操作、code、severity、`resultStatus`、source kind、継続単位、
+primary優先順位を1つずつ持つ。各操作仕様とSPECモデル仕様のDiagnostic表は検索用索引であり、registryにないcodeや
+条件を追加したり、registryの値を上書きしたりできない。
 
-第1群は4操作すべてが返し得る共通codeである。
+同じraw原因に複数条件が成立する場合はregistryのpriorityが最小の1行だけをprimary Diagnosticとして返す。
+独立原因は別々に返し、共通のDiagnostic sort規則で並べる。予約済みcodeはregistryの予約表に残すが公開結果へ返さない。
 
-| code | severity | `resultStatus` | 条件 |
-|---|---|---|---|
-| `SPEC-CONFIG-SCHEMA-001` | error | `error`／`blocked` | 設定の構文・型・必須field不正／未知Schema major |
-| `SPEC-INPUT-READ-001` | error | `failed`／`error` | UTF-8として復号不能／権限・I/O障害・読取り中の消失 |
-
-第2群は`check`と`verify`だけが返し得る。`context`と`doctor`はreportを保存しないため返さない。
-
-| code | severity | `resultStatus` | 条件 |
-|---|---|---|---|
-| `SPEC-REPORT-WRITE-001` | error | `error` | 明示`--report`の保存失敗 |
-
-第3群は所有仕様が定義し、当該条件が成立する全操作が返し得る。
-
-| 群 | 所有仕様 | 返し得る操作 |
-|---|---|---|
-| EARS-AI字句・構文・ID | [言語・Semantic IR仕様 §9](../01_EARS-AI/01_言語・Semantic-IR仕様.md#9-diagnostic) | 本文を完全解析する全操作 |
-| 関係・状態・閉包・coverage | [関係・トレースモデル §11](../02_SPECモデル/04_関係・トレースモデル.md#11-diagnostic) | Contextを解決する`context`と`verify`、静的検査を行う`check` |
-| 連合catalog・所有境界・上限 | [モノレポSPEC連合仕様 §11](../02_SPECモデル/05_モノレポSPEC連合仕様.md#11-diagnostic) | 連合内で実行した全操作 |
-
-`verify`はtargetごとに`purpose=verify` Contextを完全解決するため、`CTX-ROOT-MISSING-001`、`CTX-CYCLE-001`、
-`CTX-STATE-001`、`CTX-STATE-SUPERSEDED-001`、`CTX-STATE-SUPERSEDED-002`、`CTX-LIMIT-001`、
-`CTX-TASK-DEPENDENCY-001`を第3群として返し得る。これらはtargetの`diagnostics`へ置き、`bindingRefs`を空にする。
+`verify`のContext非成功はtargetの`diagnostics`へ置き、`bindingRefs`を空にする。global preflight、workspace、文書、
+target、binding、doctor checkの停止・継続境界もregistryの`continuation`へ従う。
 
 ## 7. textとJSON
 

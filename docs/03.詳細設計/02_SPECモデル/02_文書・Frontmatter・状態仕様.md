@@ -57,7 +57,7 @@ verify: default
 - ADR: `relations`
 - TASK: `relations`、`changes`
 
-利用できないCore fieldはwarningとする。
+文書種別では利用できないCore fieldは`SPEC-FM-UNAVAILABLE-001`／warningとする。
 
 ## 4. relation field
 
@@ -161,7 +161,7 @@ x-owners: [auth-team]
 x-risk: medium
 ```
 
-`x-`で始まらない未知fieldはwarningとする。
+`x-`で始まらない未知fieldは`SPEC-FM-UNKNOWN-001`／warningとする。
 
 ## 11. YAML制約
 
@@ -170,3 +170,7 @@ x-risk: medium
 - custom tag、anchor、alias、merge key、重複keyを禁止
 - scalar、scalar配列、通常mapだけを許可
 - 日時の暗黙型変換を行わない
+
+Frontmatter YAMLの構文不正、禁止構文、重複key、fieldの型・値域不正は
+`SPEC-FM-SCHEMA-001`／error／`failed`とする。必須field欠如だけは
+`SPEC-FM-REQUIRED-001`／error／`failed`とする。同じraw原因へ両codeを返さない。

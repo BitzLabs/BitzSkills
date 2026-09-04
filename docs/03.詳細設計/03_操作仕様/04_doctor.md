@@ -25,7 +25,7 @@ plugin情報を指定する場合はID、version、required API、capabilityを1
 | 2 | 呼出しpluginとCore API | blocked |
 | 3 | required Capability | blocked |
 | 4 | `.spec/bitz.yaml`存在 | blocked |
-| 5 | 設定構文、型、必須field | error |
+| 5 | 設定構文、型、必須field | `SPEC-CONFIG-SCHEMA-001`／error |
 | 6 | 連合catalog、member、path所有 | failed／blocked |
 | 7 | Schema major | blocked |
 | 8 | EARS-AI major | blocked |
@@ -134,7 +134,6 @@ workspace固有検査を該当workspace要素へ置く。完全JSON例は
 | `SPEC-DOCTOR-API-001` | blocked | API非互換 |
 | `SPEC-DOCTOR-CAPABILITY-001` | blocked | Capability不足 |
 | `SPEC-DOCTOR-WORKSPACE-001` | blocked | `.spec/bitz.yaml`不在 |
-| `SPEC-DOCTOR-CONFIG-001` | error | 設定構文・型・必須field不正 |
 | `SPEC-DOCTOR-EARS-001` | blocked | EARS-AI major非互換 |
 | `SPEC-DOCTOR-GIT-001` | passed_with_warnings | Git不在 |
 | `SPEC-DOCTOR-COMMAND-001` | blocked | command/cwd解決不能 |
@@ -145,8 +144,7 @@ Core自体が未導入でdoctorを呼べない場合、adapterは静的な導入
 連合固有Diagnosticと全体結果外形は
 [モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)に従う。
 
-本表は`doctor`が固有に所有するcodeの閉じた集合である。`SPEC-DOCTOR-CONFIG-001`は`doctor`が
-設定不適合を検査項目として報告するcodeであり、他操作の`SPEC-CONFIG-SCHEMA-001`を置き換えない。
-`SPEC-INPUT-READ-001`を含む全操作共通のcodeは
-[共通契約 §6.1](../00_共通契約/01_結果・Diagnostic・終了コード.md#61-diagnostic表の閉包)が所有する。
+設定不適合は`SPEC-CONFIG-SCHEMA-001`だけをDiagnosticへ置き、doctorのconfig check itemがそのDiagnosticを参照する。
+`SPEC-DOCTOR-CONFIG-001`は予約済みとし、公開結果へ返さない。全条件のcode、severity、status、source、継続単位は
+[Diagnostic registry](../00_共通契約/05_Diagnostic-registry.md)が所有する。
 `doctor`はreportを保存しないため`SPEC-REPORT-WRITE-001`を返さない。

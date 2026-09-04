@@ -175,12 +175,12 @@ code、test、環境に対する実行時述語で、Frontmatter状態ではな�
 
 report生成、秘密情報、result集約は共通契約に従う。
 
-本表は`verify`が固有に所有するcodeの閉じた集合である。`verify`はtargetごとに`purpose=verify` Contextを
+本表は検索用索引である。`verify`はtargetごとに`purpose=verify` Contextを
 完全解決するため、これに加えて`CTX-ROOT-MISSING-001`、`CTX-CYCLE-001`、`CTX-RELATION-TYPE-001`、
 `SPEC-RELATION-MISSING-001`、`CTX-STATE-SUPERSEDED-001`、`CTX-STATE-SUPERSEDED-002`、`CTX-LIMIT-001`、
 `CTX-TASK-DEPENDENCY-001`をtargetの`diagnostics`へ返し得る。これらのtargetは`bindingRefs: []`とし、
-Contextを構成できない場合は`contextDigest: null`とする。全操作共通のcodeとreport保存失敗は
-[共通契約 §6.1](../00_共通契約/01_結果・Diagnostic・終了コード.md#61-diagnostic表の閉包)が所有する。
+Contextを構成できない場合は`contextDigest: null`とする。全条件のcode、severity、status、source、継続単位、
+primary優先順位は[Diagnostic registry](../00_共通契約/05_Diagnostic-registry.md)が所有する。
 
 ## 10. 全体実行
 

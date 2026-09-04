@@ -329,6 +329,9 @@ resource dimensionごとに他dimensionを通常規模へ保った`limit - 1`、
 
 ## 11. Diagnostic
 
+本表は検索用索引である。条件ごとの規範値とprimary優先順位は
+[Diagnostic registry](../00_共通契約/05_Diagnostic-registry.md)が所有する。
+
 | code | severity | `resultStatus` | 条件 |
 |---|---|---|---|
 | `SPEC-MONOREPO-CONFIG-001` | error | `failed` | `monorepo`の型、件数、配置、root条件が不正 |

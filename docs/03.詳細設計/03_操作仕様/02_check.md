@@ -148,7 +148,8 @@ Coreは意味的影響を断定せず、statusを自動変更しない。`relate
 
 ## 10. Git不在
 
-単一workspaceの引数なしcheckは全体checkへ縮退する。REQ保護、遷移、削除検出の失われる保証をwarningで示す。
+単一workspaceの引数なしcheckは全体checkへ縮退する。REQ保護、遷移、削除検出の失われる保証を
+`SPEC-GIT-DEGRADED-001`／warningで示す。
 明示TASK境界だけはblockedとする。詳細は[安全な入出力](../00_共通契約/02_安全な入出力・互換性.md)に従う。
 
 ## 11. Diagnostic
@@ -171,6 +172,7 @@ Coreは意味的影響を断定せず、statusを自動変更しない。`relate
 | `SPEC-TASK-BOUNDARY-001` | failed | 明示TASK境界外変更 |
 | `SPEC-TASK-BOUNDARY-002` | blocked | Git不在でTASK境界不能 |
 | `SPEC-IMPACT-OUTDATED-001` | passed_with_warnings | strong dependency変更 |
+| `SPEC-GIT-DEGRADED-001` | passed_with_warnings | Git不在で差分依存保証を省略 |
 | `SPEC-STYLE-H1-001` | failed | H1不正 |
 | `SPEC-STYLE-SECTION-001` | failed | REQ必須section不在・空 |
 | `SPEC-STYLE-PLACEMENT-001` | failed | 規範文が文書種別ごとの許可位置外 |
@@ -178,7 +180,5 @@ Coreは意味的影響を断定せず、statusを自動変更しない。`relate
 Core 1.0は`idCollisions`、`SPEC-BASE-AMBIGUOUS-001`、H2順序・空節・疑似節Diagnosticを返さない。
 連合固有Diagnosticは[モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)が所有する。
 
-本表は当該操作が固有に所有するcodeと、`check`が最初に検出する共通codeの集合である。
-`SPEC-CONFIG-SCHEMA-001`と`SPEC-INPUT-READ-001`は全操作共通、`SPEC-REPORT-WRITE-001`は
-`check`と`verify`の共通codeであり、所有者は
-[共通契約 §6.1](../00_共通契約/01_結果・Diagnostic・終了コード.md#61-diagnostic表の閉包)である。
+本表は検索用索引である。全条件のcode、severity、status、source、継続単位、primary優先順位は
+[Diagnostic registry](../00_共通契約/05_Diagnostic-registry.md)が所有する。
