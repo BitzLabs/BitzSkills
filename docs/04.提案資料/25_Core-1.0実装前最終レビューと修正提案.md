@@ -175,6 +175,15 @@ doctorの設定不正は`SPEC-CONFIG-SCHEMA-001`だけを返し、config check i
 
 ### 4.3 `FIN-EAI-001`: EARS-AI grammarと候補Scannerが未完結
 
+**状態: 修正採用・契約／matrix反映済み、実fixture反映待ち。**
+
+[言語・Semantic IR仕様](../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md)をISO/IEC 14977相当の
+EBNFへ統一し、全nonterminal、Unicode code point、escape、quoted value、同長runで閉じるcode spanを定義した。
+候補Scannerをfence、blockquote、indent、IDらしいtokenを含む状態機械として固定し、Lexerの最長一致、位置計算、
+primary syntax順も明記した。`SHOULD`理由は`[REASON]` fieldとしてSemantic IRとContext Digestへ保持する。
+自然言語の決定論的識別はCore 1.0のscope外とし、`EAI-CORE-LANG-001`を予約済みcodeへ移した。
+`SINGLE-096`〜`103`を適合matrixへ追加したが、対応するmanifest、入力repository、期待出力は未作成である。
+
 #### 問題
 
 [言語・Semantic IR仕様 §3](../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md#3-正規構文)は

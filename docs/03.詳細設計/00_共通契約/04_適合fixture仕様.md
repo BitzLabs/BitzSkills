@@ -363,6 +363,31 @@ Context Digest fixtureは、Digest入力のCanonical JSONをUTF-8・BOMなし・
 | `SINGLE-094` | `.spec/bitz.yaml`不在 | check | blocked／2 | `SPEC-WORKSPACE-MISSING-001`だけ |
 | `SINGLE-095` | 未知EARS-AI major | check | blocked／2 | `SPEC-EARS-VERSION-001`だけ |
 
+### 6.10 EARS-AI grammar、Scanner、位置
+
+| fixture | 主な入力 | operation | status／exit | 必須確認 |
+|---|---|---|---|---|
+| `SINGLE-096-01` | 1行に異なる長さを含む複数code span | context | passed／0 | 同じrun長だけで閉じ、IRのtextとsourceを完全比較 |
+| `SINGLE-096-02` | 開始と同じrun長の終了delimiterなし | check | failed／1 | `EAI-CORE-SYNTAX-005`だけ、開始backtickのline／column |
+| `SINGLE-097-01` | textの`\[`、`\]`、`\\`、``\` ``、`\"` | context | passed／0 | IRでは各escapeを1 code pointへ解除 |
+| `SINGLE-097-02` | 未知escape | check | failed／1 | `EAI-CORE-SYNTAX-004`だけ、backslashのline／column |
+| `SINGLE-098-01` | quoted extension value内のescaped DQUOTE | context | passed／0 | opaque valueとIRを完全比較 |
+| `SINGLE-098-02` | quoted extension value未閉鎖 | check | failed／1 | `EAI-CORE-SYNTAX-004`だけ、開始DQUOTEのline／column |
+| `SINGLE-099-01` | backtick fenced code内の規範文様文字列 | check | passed／0 | 候補を0件として扱う |
+| `SINGLE-099-02` | tilde fenced code内の規範文様文字列 | check | passed／0 | 候補を0件として扱う |
+| `SINGLE-099-03` | blockquote内の規範文様文字列 | check | passed／0 | 候補を0件として扱う |
+| `SINGLE-099-04` | 4 SP indentの規範文様文字列 | check | passed／0 | 候補を0件として扱う |
+| `SINGLE-100-01` | 短い既知prefix ID | check | failed／1 | 候補化し、`EAI-CORE-ID-001`だけ |
+| `SINGLE-100-02` | 未知uppercase prefix ID | check | failed／1 | 候補化し、`EAI-CORE-ID-001`だけ |
+| `SINGLE-100-03` | 3階層ID | check | failed／1 | 候補化し、`EAI-CORE-ID-001`だけ |
+| `SINGLE-100-04` | `[ACTOR:...]`から始まるID欠落行 | check | failed／1 | 候補化し、`EAI-CORE-ID-001`だけ |
+| `SINGLE-101-01` | `[SHOULD] [REASON] <text>` | context | passed／0 | IRの`reason`とDigestを完全比較 |
+| `SINGLE-101-02` | `[MUST] [REASON] <text>` | check | failed／1 | `EAI-CORE-SYNTAX-001`だけ |
+| `SINGLE-101-03` | `[MAY] [REASON] <text>` | check | failed／1 | `EAI-CORE-SYNTAX-001`だけ |
+| `SINGLE-102` | multi-byte文字とTABの後に不正tag | check | failed／1 | Unicode code point単位の1始まりline／columnを完全比較 |
+| `SINGLE-103-01` | 未閉鎖code spanと未閉鎖tagが同じraw原因 | check | failed／1 | primaryは`EAI-CORE-SYNTAX-005`だけ |
+| `SINGLE-103-02` | 未閉鎖tagとID形式不正が同じraw原因 | check | failed／1 | primaryは`EAI-CORE-SYNTAX-004`だけ |
+
 ## 7. 最小matrix: モノレポ連合
 
 | fixture | 主な入力 | operation | status／exit | 必須確認 |

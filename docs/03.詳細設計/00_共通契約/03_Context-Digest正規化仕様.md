@@ -149,6 +149,7 @@ Semantic IRから次のkeyだけを保持する。
   "actor": "AuthService",
   "activation": {"kind": "WHEN", "text": "有効な認証情報を受信した場合"},
   "modality": "MUST",
+  "reason": null,
   "operation": {"kind": "THEN", "text": "access tokenを1件発行する"},
   "extensions": [
     {"namespace": "quality", "term": "THRESHOLD", "value": "<=200ms"}
@@ -157,8 +158,9 @@ Semantic IRから次のkeyだけを保持する。
 ```
 
 `documentId`、`localId`、`source`、`raw`、`untrustedText`、`unknownExtensions`は含めない。文書IDは`id`から、
-source位置は`bodyText`から導けるためである。`extensions`は`namespace`、`term`の順でcode point辞書順に並べ、
-`value`未指定はnullとする。opaque extensionの保持有無はCore解析結果を変えないが、Digestの材料には含める。
+source位置は`bodyText`から導けるためである。`reason`はSemantic IRと同じく、理由付き`SHOULD`では正規化後の
+text、理由なし`SHOULD`と`MUST`／`MAY`ではnullとする。`extensions`は`namespace`、`term`の順でcode point辞書順に
+並べ、`value`未指定はnullとする。opaque extensionの保持有無はCore解析結果を変えないが、Digestの材料には含める。
 
 `documents[].statements`はContextが収録する対象statementではなく、当該文書が所有する全規範文とする。
 対象statementの選択はcoverageとConstraint Ledgerが保持し、Digestの材料にしない。

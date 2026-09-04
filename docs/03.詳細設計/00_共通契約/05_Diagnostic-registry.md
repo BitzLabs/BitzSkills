@@ -79,25 +79,24 @@ priorityが最小の行だけをprimaryとして返す。同じpriorityの候補
 
 | conditionId | operations | code | severity | status | source | continuation | priority | 条件 |
 |---|---|---|---|---|---|---|---:|---|
-| `EAI-ID-FORMAT` | parse | `EAI-CORE-ID-001` | error | failed | file | `skip-document` | 200 | 規範文ID形式不正 |
-| `EAI-ID-DUPLICATE` | parse | `EAI-CORE-ID-002` | error | failed | file | `skip-document` | 201 | 規範文ID重複 |
-| `EAI-SYNTAX-TAG-ORDER` | parse | `EAI-CORE-SYNTAX-001` | error | failed | file | `skip-document` | 210 | draft以外のtag順序不正 |
-| `EAI-SYNTAX-TAG-ORDER-DRAFT` | parse | `EAI-CORE-SYNTAX-001` | warning | passed_with_warnings | file | `continue` | 210 | draftのtag順序不正 |
-| `EAI-SYNTAX-TAG-REQUIRED` | parse | `EAI-CORE-SYNTAX-002` | error | failed | file | `skip-document` | 211 | draft以外の必須tag不足 |
-| `EAI-SYNTAX-TAG-REQUIRED-DRAFT` | parse | `EAI-CORE-SYNTAX-002` | warning | passed_with_warnings | file | `continue` | 211 | draftの必須tag不足 |
-| `EAI-SYNTAX-TRIGGER-MULTIPLE` | parse | `EAI-CORE-SYNTAX-003` | error | failed | file | `skip-document` | 212 | draft以外の発動条件複数 |
-| `EAI-SYNTAX-TRIGGER-MULTIPLE-DRAFT` | parse | `EAI-CORE-SYNTAX-003` | warning | passed_with_warnings | file | `continue` | 212 | draftの発動条件複数 |
-| `EAI-SYNTAX-TAG-UNCLOSED` | parse | `EAI-CORE-SYNTAX-004` | error | failed | file | `skip-document` | 213 | draft以外の不正または未閉鎖tag |
-| `EAI-SYNTAX-TAG-UNCLOSED-DRAFT` | parse | `EAI-CORE-SYNTAX-004` | warning | passed_with_warnings | file | `continue` | 213 | draftの不正または未閉鎖tag |
-| `EAI-SYNTAX-CODE-UNCLOSED` | parse | `EAI-CORE-SYNTAX-005` | error | failed | file | `skip-document` | 214 | draft以外の未閉鎖code span |
-| `EAI-SYNTAX-CODE-UNCLOSED-DRAFT` | parse | `EAI-CORE-SYNTAX-005` | warning | passed_with_warnings | file | `continue` | 214 | draftの未閉鎖code span |
-| `EAI-SYNTAX-PERIOD-MISSING` | parse | `EAI-CORE-SYNTAX-006` | error | failed | file | `skip-document` | 215 | draft以外の句点欠落 |
-| `EAI-SYNTAX-PERIOD-MISSING-DRAFT` | parse | `EAI-CORE-SYNTAX-006` | warning | passed_with_warnings | file | `continue` | 215 | draftの句点欠落 |
-| `EAI-SEM-OPERAND-MISSING` | parse | `EAI-CORE-SEM-001` | error | failed | file | `skip-document` | 216 | draft以外のoperand不足 |
-| `EAI-SEM-OPERAND-MISSING-DRAFT` | parse | `EAI-CORE-SEM-001` | warning | passed_with_warnings | file | `continue` | 216 | draftのoperand不足 |
-| `EAI-SHOULD-REASON-MISSING` | parse | `EAI-CORE-SHOULD-001` | warning | passed_with_warnings | file | `continue` | 217 | `SHOULD`に理由fieldがない |
-| `EAI-LANGUAGE-MISMATCH` | parse | `EAI-CORE-LANG-001` | warning | passed_with_warnings | file | `continue` | 218 | 決定規則による正本言語との不一致 |
-| `EAI-EXTENSION-UNKNOWN` | parse | `EAI-EXT-UNKNOWN-001` | warning | passed_with_warnings | file | `continue` | 219 | 未知namespaceのopaque extension |
+| `EAI-SYNTAX-CODE-UNCLOSED` | parse | `EAI-CORE-SYNTAX-005` | error | failed | file | `skip-document` | 200 | draft以外の未閉鎖code span |
+| `EAI-SYNTAX-CODE-UNCLOSED-DRAFT` | parse | `EAI-CORE-SYNTAX-005` | warning | passed_with_warnings | file | `continue` | 200 | draftの未閉鎖code span |
+| `EAI-SYNTAX-TAG-UNCLOSED` | parse | `EAI-CORE-SYNTAX-004` | error | failed | file | `skip-document` | 201 | draft以外の不正escape、未閉鎖quoted value、不正または未閉鎖tag |
+| `EAI-SYNTAX-TAG-UNCLOSED-DRAFT` | parse | `EAI-CORE-SYNTAX-004` | warning | passed_with_warnings | file | `continue` | 201 | draftの不正escape、未閉鎖quoted value、不正または未閉鎖tag |
+| `EAI-ID-FORMAT` | parse | `EAI-CORE-ID-001` | error | failed | file | `skip-document` | 202 | 規範文ID形式不正 |
+| `EAI-ID-DUPLICATE` | parse | `EAI-CORE-ID-002` | error | failed | file | `skip-document` | 203 | 規範文ID重複 |
+| `EAI-SYNTAX-TAG-ORDER` | parse | `EAI-CORE-SYNTAX-001` | error | failed | file | `skip-document` | 204 | draft以外のtag順序不正 |
+| `EAI-SYNTAX-TAG-ORDER-DRAFT` | parse | `EAI-CORE-SYNTAX-001` | warning | passed_with_warnings | file | `continue` | 204 | draftのtag順序不正 |
+| `EAI-SYNTAX-TAG-REQUIRED` | parse | `EAI-CORE-SYNTAX-002` | error | failed | file | `skip-document` | 205 | draft以外の必須tag不足 |
+| `EAI-SYNTAX-TAG-REQUIRED-DRAFT` | parse | `EAI-CORE-SYNTAX-002` | warning | passed_with_warnings | file | `continue` | 205 | draftの必須tag不足 |
+| `EAI-SYNTAX-TRIGGER-MULTIPLE` | parse | `EAI-CORE-SYNTAX-003` | error | failed | file | `skip-document` | 206 | draft以外の発動条件複数 |
+| `EAI-SYNTAX-TRIGGER-MULTIPLE-DRAFT` | parse | `EAI-CORE-SYNTAX-003` | warning | passed_with_warnings | file | `continue` | 206 | draftの発動条件複数 |
+| `EAI-SYNTAX-PERIOD-MISSING` | parse | `EAI-CORE-SYNTAX-006` | error | failed | file | `skip-document` | 207 | draft以外の句点欠落 |
+| `EAI-SYNTAX-PERIOD-MISSING-DRAFT` | parse | `EAI-CORE-SYNTAX-006` | warning | passed_with_warnings | file | `continue` | 207 | draftの句点欠落 |
+| `EAI-SEM-OPERAND-MISSING` | parse | `EAI-CORE-SEM-001` | error | failed | file | `skip-document` | 208 | draft以外のoperand不足 |
+| `EAI-SEM-OPERAND-MISSING-DRAFT` | parse | `EAI-CORE-SEM-001` | warning | passed_with_warnings | file | `continue` | 208 | draftのoperand不足 |
+| `EAI-SHOULD-REASON-MISSING` | parse | `EAI-CORE-SHOULD-001` | warning | passed_with_warnings | file | `continue` | 209 | `SHOULD`に`[REASON]` fieldがない |
+| `EAI-EXTENSION-UNKNOWN` | parse | `EAI-EXT-UNKNOWN-001` | warning | passed_with_warnings | file | `continue` | 210 | 未知namespaceのopaque extension |
 | `DOC-FILE-NAME-ID` | check | `SPEC-FILE-NAME-001` | error | failed | file | `skip-document` | 230 | file名IDとFrontmatter IDの不一致 |
 | `DOC-ID-DUPLICATE` | parse | `SPEC-ID-DUPLICATE-001` | error | failed | file | `skip-document` | 231 | 文書ID重複 |
 | `DOC-REQ-STATEMENT-EMPTY` | check | `SPEC-REQ-STATEMENT-001` | error | failed | file | `skip-document` | 232 | approved REQに妥当な規範文がない |
@@ -197,6 +196,7 @@ priority 900〜970を説明するものである。
 | code | 理由 |
 |---|---|
 | `EAI-CORE-ID-003` | Git全履歴を使うID再利用検出をCore 1.0から除外 |
+| `EAI-CORE-LANG-001` | 自然言語を決定論的に識別しないためCore 1.0から除外 |
 | `CTX-RELATION-MISSING-001` | `SPEC-RELATION-MISSING-001`へ統一 |
 | `SPEC-BASE-AMBIGUOUS-001` | Coreがdefault branchやmerge-baseを推測しないため廃止 |
 | `SPEC-DOCTOR-CONFIG-001` | `SPEC-CONFIG-SCHEMA-001`へ統一 |

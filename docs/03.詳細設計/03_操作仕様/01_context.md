@@ -77,6 +77,7 @@ path、code、testを受け付けない。単一workspaceでは非修飾IDだけ
         "documentId": "REQ-001",
         "documentRole": "root",
         "modality": "MUST",
+        "reason": null,
         "actor": "AuthService",
         "activation": {"kind": "WHEN", "text": "有効な認証情報を受信した場合"},
         "operation": {"kind": "THEN", "text": "access tokenを1件発行する"}
@@ -102,6 +103,7 @@ path、code、testを受け付けない。単一workspaceでは非修飾IDだけ
 
 `resolution.complete: true`は型、状態、循環、上限を含む完全解決が成立したことを示す。
 `constraintLedger`はapplicable文書の対象statementをSemantic IRの意味fieldで1回だけ保持する。
+`reason`は全statementで必須とし、理由付き`SHOULD`では正規化後のtext、それ以外ではnullとする。
 連合ではtop-level `workspace`をrequest workspaceとし、`roots`、文書`id`、statement参照を修飾形式で返す。
 各`documents[]`は`workspaceId`を持ち、`path`はそのworkspace root相対とする。
 `resolution.workspaces`と`resolution.crossWorkspaceEdges`のfield、内容、順序は

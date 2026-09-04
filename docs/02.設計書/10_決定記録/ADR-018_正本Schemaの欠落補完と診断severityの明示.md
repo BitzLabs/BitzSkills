@@ -81,6 +81,10 @@ Decision 1の`profiles`予約キーとProfile互換性の判断、およびDecis
 [ADR-039](ADR-039_Core-1.0仕様構造の再編とscope縮小.md)がCore 1.0の対象外またはcommand名単位へ変更した。
 Decision 3〜5と、Decision 2の`cwd`実行規則は有効である。
 
+Decision 4の`EAI-CORE-LANG-001`に対するseverityは、Diagnosticを返すversionでの分類を記録したものである。
+Core 1.0は自然言語を決定論的に識別しないため、現行のEARS-AI契約とDiagnostic registryは同codeを予約済みとし、
+公開結果へ返さない。これは他の`EAI-*` severity判断を変更しない。
+
 関連文書: [EARS-AI規格/01](../../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md), [EARS-AI規格/02](../../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md), [EARS-AI規格/06](../../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md), [SPECファイル規定/02](../../03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md), [SPECファイル規定/03](../../03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md), [SPECファイル規定/06](../../03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md), [SPECファイル規定/11](../../03.詳細設計/03_操作仕様/04_doctor.md), [SPECファイル規定/12](../../03.詳細設計/02_SPECモデル/05_モノレポSPEC連合仕様.md)
 
 ## Revision History
@@ -92,3 +96,4 @@ Decision 3〜5と、Decision 2の`cwd`実行規則は有効である。
 | 2026-08-31 | Decision 2の重複排除単位が`ADR-030`へ置換されたことを注記 | `ADR-030` |
 | 2026-09-01 | Decision 1とDecision 2の一部が`ADR-039`で変更されたことを注記 | `ADR-039` |
 | 2026-09-03 | ADR-039の再編に合わせて関連文書linkを現構造へ更新（非意味的訂正） | 提案24 G8 |
+| 2026-09-04 | Core 1.0では言語識別Diagnosticを予約済みとする現行契約を注記 | 提案25 `FIN-EAI-001` |
