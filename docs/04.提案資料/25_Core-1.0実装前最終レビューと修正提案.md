@@ -212,6 +212,13 @@ primary syntax順も明記した。`SHOULD`理由は`[REASON]` fieldとしてSem
 
 ### 4.4 `FIN-OUT-001`: 公開結果Schemaとtext出力が完全ではない
 
+**状態: 修正採用・契約／Schema／matrix反映済み、実fixture反映待ち。**
+
+Draft 2020-12の`fixtures/conformance/result.schema.json`を追加し、context、check、verify、doctorの単一／連合結果を
+排他的variantとして固定した。required、null、未知field、40桁commit、projection別field、既定format、text件数の
+導出式を本文と同期した。verify process出力はredaction済み末尾抜粋と切捨てflagを公開結果へ保持する。
+`SINGLE-104`〜`106`を適合matrixへ追加したが、対応する実成果物は未作成である。
+
 #### 問題
 
 [共通結果](../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#2-共通結果)では
@@ -244,6 +251,13 @@ machine-readable Schemaになっていない。
 - text要約の全tokenをJSON結果から一意に導出できる
 
 ### 4.5 `FIN-TARGET-001`: target展開規則が操作間で一致していない
+
+**状態: 修正採用・契約／matrix反映済み、実fixture反映待ち。**
+
+関係・トレースモデルに`TargetExpansion(root, purpose)`を単一の正本として追加し、4集合、root種別、
+applicable refinement、TASK、重複排除時点を固定した。`requires`先はContext材料に限定し、test義務へ自動昇格しない。
+構文上妥当だが存在しない明示targetは`CTX-ROOT-MISSING-001`／failed、ADRはinterpret Contextとcheckだけで起点可能とした。
+`SINGLE-107`〜`113`を適合matrixへ追加したが、対応する実成果物は未作成である。
 
 #### 問題
 

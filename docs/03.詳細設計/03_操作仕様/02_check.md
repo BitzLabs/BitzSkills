@@ -25,22 +25,28 @@ bitz check --all-workspaces
 受け付け、1回の単独操作の対象workspaceを1つに限定する。code path、test path、directory、不正ID/path、
 異なるworkspaceを所有する対象の混在は引数不正で終了コード4とする。
 
+構文上妥当な明示IDまたはSPEC pathがcatalogに存在しない場合は操作を開始し、`CTX-ROOT-MISSING-001`／failedを返す。
+構文自体が不正なID/pathの終了コード4と区別する。ADRは文書検査対象にできるが、test義務へ展開しない。
+
 `--full`と明示対象は排他的である。引数なしはGit変更集合を起点にする。
 `--all-workspaces`は同じGit rootとfederation rootを探索起点から一意に発見できる場合だけ許可し、current directoryの
 root一致は要求しない。明示対象、`--full`、`--workspace`と排他的である。
 全体操作は`--full`を含意し、catalog、全workspace、横断関係、所有境界を検査する。
+
+`--format`の既定値は`text`である。
 
 ## 3. 共通索引と完全検査
 
 どのscopeでも単一workspaceまたは連合catalog全体の軽量Frontmatter索引を構築する。EARS-AI ASTと本文の
 完全検査対象は次とする。
 
-- 明示対象: 対象文書、強い依存閉包、直接逆参照
+- 明示対象: `TargetExpansion(root, interpret)`の`contextDocuments`と直接逆参照
 - 引数なし: Git変更から選んだ所有文書、強い依存閉包、直接逆参照
 - `--full`: 全SPEC
 - `--all-workspaces`: catalog内の全SPEC
 
 軽量索引の構築と対象文書の完全解析を混同しない。
+展開規則は[関係・トレースモデル §6.4](../02_SPECモデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)を正とする。
 `--all-workspaces`は共通preflightでbase/currentのGit既知`.spec/bitz.yaml`を、連合を宣言している各snapshot自身の
 catalogと比較する。初回連合化前の単一workspace baseへ全体列挙を適用しない。catalog、ID、path、Git境界、
 未対応major、resource上限が非成功ならworkspace別検査を開始しない。
@@ -141,6 +147,8 @@ Coreは意味的影響を断定せず、statusを自動変更しない。`relate
 ```
 
 `scope: changed`では`selection`を必須とする。text出力も同じ3件数を使う。
+明示対象は`scope: selected`、`--full`とGit不在／unborn時の全体縮退は`scope: full`とし、両scopeでは
+`checkedDocumentCount`と`checkedStatementCount`を必須にする。`selection`は`changed`だけで出力する。
 `--all-workspaces`では`scope: all-workspaces`と共通の`federation`、`workspaces`外形を使用し、各memberの
 `checkedDocumentCount`、`checkedStatementCount`とDiagnosticをmember結果へ保持する。両件数は非負integerで必須とし、
 全SPECを完全検査した文書数と規範文数を表す。repository共通の`revision`はtop-levelに1件だけ置き、member結果へ
@@ -162,6 +170,7 @@ Coreは意味的影響を断定せず、statusを自動変更しない。`relate
 | `SPEC-FM-REQUIRED-001` | failed | Frontmatter必須field不足 |
 | `SPEC-REQ-STATEMENT-001` | failed | approved REQに妥当statementなし |
 | `SPEC-ID-DUPLICATE-001` | failed | ID重複 |
+| `CTX-ROOT-MISSING-001` | failed | 構文上妥当な明示IDまたはSPEC pathがcatalogに不在 |
 | `SPEC-RELATION-LEGACY-001` | failed | 旧`refs`使用 |
 | `SPEC-RELATION-MISSING-001` | failed | strong target不在 |
 | `CTX-RELATION-TYPE-001` | failed | 存在するsource／targetの型不適合 |

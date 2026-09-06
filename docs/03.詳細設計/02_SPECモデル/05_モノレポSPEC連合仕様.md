@@ -88,6 +88,9 @@ Coreは先にGit repository rootを確定し、次の順でworkspaceを決める
 5. `--workspace <id>`はcatalog内のrootまたはmember IDと完全一致でactive workspaceを置き換える。字句不正、
    構文上妥当だがcatalogにないIDはともにinvocation errorとして終了コード4とし、操作結果とreportを生成しない。
 
+この終了コード4はworkspace selectorだけに適用する。構文上妥当な明示SPEC／statement targetが選択workspaceまたは
+連合索引に存在しない場合は、共通target展開規則に従い`CTX-ROOT-MISSING-001`／failedを返す。
+
 `--workspace`を使わないpath入力はactive workspace内に限る。修飾IDを起点にする場合は、その所有workspaceを
 選択する。複数起点が異なるworkspaceを所有する場合、または`--workspace`と起点所有者が一致しない場合は
 引数不正とする。

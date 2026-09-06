@@ -116,7 +116,7 @@ priorityが最小の行だけをprimaryとして返す。同じpriorityの候補
 
 | conditionId | operations | code | severity | status | source | continuation | priority | 条件 |
 |---|---|---|---|---|---|---|---:|---|
-| `CTX-ROOT-MISSING-EXPLICIT` | context, verify | `CTX-ROOT-MISSING-001` | error | failed | invocation | `skip-target` | 400 | 明示した起点ID不在 |
+| `CTX-ROOT-MISSING-EXPLICIT` | context, check, verify | `CTX-ROOT-MISSING-001` | error | failed | invocation | `skip-target` | 400 | 構文上妥当な明示起点IDまたはSPEC pathがcatalogに不在 |
 | `CTX-ROOT-MISSING-DERIVED` | context, verify | `CTX-ROOT-MISSING-001` | error | failed | file | `skip-target` | 400 | TASK等から導出した起点ID不在 |
 | `CTX-TASK-DEPENDENCY` | context, verify | `CTX-TASK-DEPENDENCY-001` | error | blocked | file | `skip-target` | 410 | 起点TASKの先行TASKが未done |
 | `CTX-STATE-INAPPLICABLE` | context, verify | `CTX-STATE-001` | error | blocked | file | `skip-target` | 411 | 起点または強い依存先がpurposeに適用不能 |

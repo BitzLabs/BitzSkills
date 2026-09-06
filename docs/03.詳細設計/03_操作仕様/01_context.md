@@ -23,6 +23,8 @@ path、code、testを受け付けない。単一workspaceでは非修飾IDだけ
 明示し、起点所有者と一致しなければならない。`--all-workspaces`は提供しない。複数起点は重複排除して
 連合正規ID辞書順に正規化する。
 
+`--format`の既定値は`markdown`である。
+
 `expand`は完全解決集合にある文書だけを`full`提示へ昇格する。集合外IDは`CTX-PROJECTION-001`／failedとし、
 暗黙に依存へ追加しない。連合では非修飾`expand`をrequest workspaceから、修飾`expand`を連合索引から解決する。
 
@@ -31,7 +33,8 @@ path、code、testを受け付けない。単一workspaceでは非修飾IDだけ
 1. request workspace、連合catalog、workspace設定を解決する。
 2. 単一workspaceまたは連合catalog内の全SPECから軽量索引を構築する。
 3. ID、型、状態、強い関係、循環を検査する。
-4. [purpose別閉包](../02_SPECモデル/04_関係・トレースモデル.md#6-purpose別の閉包)を完全解決する。
+4. [TargetExpansion](../02_SPECモデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)で起点、
+   purpose別閉包、対象statement、adjacent statementを完全解決する。
 5. Context上限を検査する。
 6. 文書をroleへ分類し、Constraint Ledgerとcoverageを生成する。
 7. Context Digestを計算する。
@@ -39,6 +42,8 @@ path、code、testを受け付けない。単一workspaceでは非修飾IDだけ
 9. `--expect-digest`があれば現在Digestと比較する。
 
 強い関係の一部を解決できない場合、部分Bundleを成功結果として返さない。
+ADRは`purpose=interpret`だけで起点にできる。ADRへ`implement`または`verify`を指定した場合は、
+対応する対象義務がないため引数不正として終了コード4とし、結果を生成しない。
 
 ## 4. Context Bundle
 
@@ -51,7 +56,7 @@ path、code、testを受け付けない。単一workspaceでは非修飾IDだけ
   "workspace": {"id": "root", "path": "."},
   "roots": ["REQ-001"],
   "contextDigest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-  "revision": {"commit": "0123456789abcdef", "dirty": false},
+  "revision": {"commit": "0123456789abcdef0123456789abcdef01234567", "dirty": false},
   "resolution": {
     "complete": true,
     "documentCount": 2,
@@ -66,7 +71,10 @@ path、code、testを受け付けない。単一workspaceでは非修飾IDだけ
       "role": "root",
       "path": ".spec/requirements/REQ-001.md",
       "projection": "full",
+      "reachedBy": ["root"],
       "statementRefs": ["REQ-001:AC-01"],
+      "frontmatter": {"id": "REQ-001", "title": "ユーザーログイン", "status": "approved"},
+      "bodyText": "# REQ-001 ユーザーログイン\n\n## Intent\n\n認証された利用者へアクセスを提供する。\n",
       "untrustedText": true
     }
   ],
@@ -126,11 +134,17 @@ edgeは重複排除し、`source`、`relation`、`target`の辞書順とする�
 
 ## 5. Projection
 
-| projection | 内容 |
-|---|---|
-| `full` | 正規化Frontmatter、現行本文、statement参照、到達理由 |
-| `normative` | 識別情報、statement参照、到達理由。非規範本文は省略 |
-| `reference` | ID、種別、状態、role、path、到達理由、展開可否 |
+全projectionは`id`、`kind`、`status`、`role`、`path`、`projection`、`reachedBy[]`、`untrustedText: true`を必須とする。
+`reachedBy[]`は起点なら`root`、到達edgeなら`<relation>:<source-id>`を保持し、重複排除後のcode point辞書順とする。
+
+| projection | 追加必須field | 禁止field |
+|---|---|---|
+| `full` | `statementRefs[]`、`frontmatter`、`bodyText` | `expandable` |
+| `normative` | `statementRefs[]` | `frontmatter`、`bodyText`、`expandable` |
+| `reference` | `expandable` | `statementRefs`、`frontmatter`、`bodyText` |
+
+`statementRefs[]`はsource line、ID順、`frontmatter`は許可fieldを正規化したobject、`bodyText`は原文の現行本文、
+`expandable`は完全解決集合内で`--expand`可能ならtrueとする。nullで省略を代用せず、禁止fieldは出力しない。
 
 `standard`は起点、TASK、replacement、距離1文書をfull、間接constraint/refinementをnormative、advisoryを
 referenceとする。`compact`は原文を省略してManifest、Diagnostic、Ledger、coverage、境界、参照を返す。

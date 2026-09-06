@@ -28,20 +28,22 @@ bitz verify --all-workspaces
 root一致は要求しない。明示対象と`--workspace`に排他的である。各workspaceへ引数なし
 verifyを適用し、結果を集約する。
 
+`--format`の既定値は`text`である。明示対象は`scope: selected`、引数なしは`scope: all`、
+`--all-workspaces`は`scope: all-workspaces`とする。
+
 ## 3. 対象
 
-| 起点 | target |
-|---|---|
-| REQ ID | 所有全statementとapplicable dependency/refinement |
-| 規範文ありTECH ID | 所有全statementとapplicable dependency/refinement |
-| statement ID | 指定句と直接applicable refinement。兄弟句はadjacent |
-| 規範文なしTECH | 文書単位`tests` |
-| open TASK | `addresses`句／TECHと`requires`閉包 |
-| done TASK | 完了作業の再検証として同上 |
-| cancelled TASK | `CTX-STATE-001`／blocked |
+対象集合は[関係・トレースモデル §6.4](../02_SPECモデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)の
+`TargetExpansion(root, verify)`だけから得る。REQ／規範文ありTECHは所有statementとapplicable refinement、
+statement起点は指定句とapplicable refinement、TASKは自身の`addresses`先とapplicable refinementを対象にする。
+`requires`先はContext材料であり、そのstatementまたはTASKの`addresses`先をtest義務へ追加しない。
+規範文なしTECHはstatement集合を空にして文書単位`tests`を使う。done TASKは再検証でき、cancelled TASKは
+`CTX-STATE-001`／blockedとする。
 
 複数対象はIDへ正規化し、target IDを重複排除して辞書順に並べる。各targetは別々の`purpose=verify` Contextを持つ。
 statement集合はtargetごとに重複排除し、command bindingの実行計画だけを全targetで統合する。
+構文上妥当な明示targetがcatalogに存在しない場合は`CTX-ROOT-MISSING-001`／failedを当該targetへ返す。
+構文不正または許可されないADR、code/test path、directoryは引数不正として終了コード4にする。
 
 ## 4. 処理
 
@@ -70,7 +72,7 @@ workspaceが異なればcommand名と内容が同じでも別bindingとする。
 実効timeoutは`min(CLI cap, 設定timeout)`で、CLI未指定時は設定値を使う。Coreが停止を保証するのは直接起動した
 processまでで、子孫processはcommand側の責務とする。
 
-stdout/stderrは終了までdrainし、各末尾64 KiBだけを一時保持する。Coreは出力自然言語を合否へ使わない。
+stdout/stderrは終了までdrainし、各末尾64 KiBをredactionした公開抜粋として保持する。Coreは出力自然言語を合否へ使わない。
 
 ## 6. command結果
 
@@ -115,7 +117,7 @@ coverage、command、環境不足はtestを開始せずblockedとする。
       "diagnostics": []
     }
   ],
-  "revision": {"commit": "0123456789abcdef", "dirty": false},
+  "revision": {"commit": "0123456789abcdef0123456789abcdef01234567", "dirty": false},
   "commands": [
     {
       "bindingId": "root::default",
@@ -129,6 +131,10 @@ coverage、command、環境不足はtestを開始せずblockedとする。
       "covers": ["REQ-001:AC-01"],
       "exitCode": 0,
       "timeoutSeconds": 300,
+      "stdoutExcerpt": "1 passed",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
       "durationMs": 817
     }
   ],
@@ -157,6 +163,10 @@ top-levelに`targets`、`contextDigest`、`statements`を重複して持たな�
 `bindingId: <workspace-id>::<command-name>`を必須とする。`argv`は展開後、`tests`はworkspace相対宣言path、`cwd`は
 workspace root相対で未指定時`.`とする。通常終了以外は`exitCode: null`とする。連合内では対象、句、`covers`のIDを
 修飾形式で返す。
+
+全commandは`stdoutExcerpt`、`stderrExcerpt`、`stdoutTruncated`、`stderrTruncated`を必須とする。excerptは
+[安全な入出力 §9](../00_共通契約/02_安全な入出力・互換性.md#9-process出力)でredactionした末尾64 KiB以下のstringで、
+出力なしは空stringとする。対応する元streamが64 KiBを超えた場合だけ`*Truncated: true`とする。
 
 1つのtargetが`verified`であるのは、target statusが通過status、`contextDigest`が非null、対象となる全`MUST`に
 test対応があり、全`bindingRefs`がちょうど1件のpassed commandを参照する場合である。`verified`は特定Context Digest、

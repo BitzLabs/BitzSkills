@@ -16,6 +16,7 @@ bitz doctor [--format text|json]
 ```
 
 plugin情報を指定する場合はID、version、required API、capabilityを1つの要求として扱い、一部を暗黙補完しない。
+`--format`の既定値は`text`である。
 
 ## 3. 検査順序
 
@@ -110,6 +111,9 @@ earsAi: "1.0"
 
 `--all-workspaces`結果はtop-levelに`core`とglobal `checks[]`を持ち、各workspace結果は0件でも省略しない
 workspace固有`checks[]`を持つ。同じCore／plugin／Capability／Git／catalog診断をmemberへ複製しない。
+
+`core`は全doctor結果で必須とする。Core実行体を観測できない`SPEC-DOCTOR-CORE-002`の場合だけ`version`と
+`apiVersion`をnull、`capabilities`を空配列にする。それ以外は観測したstring値とCapability配列を返す。
 
 | `checks[]` field | 型 | 必須 | 意味 |
 |---|---|:--:|---|

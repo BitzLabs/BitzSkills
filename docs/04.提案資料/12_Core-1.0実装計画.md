@@ -62,7 +62,8 @@ Step 1と並行して固定する。
 - `bitz.yaml`のYAML subset読込みと禁止構文の拒否
 - 単一workspaceの探索と`doctor`（Core、実行環境version、設定、Git、command、cache）
 
-完了条件は、`SINGLE-001`〜`006`、`SINGLE-070`〜`078`、`SINGLE-081`、`083`、`091`〜`095`が通過し、
+完了条件は、`SINGLE-001`〜`006`、`SINGLE-070`〜`078`、`SINGLE-081`、`083`、`091`〜`095`、
+`SINGLE-104`〜`106`が通過し、
 終了コード0〜4を区別できることである。
 
 ## 5. Step 2: EARS-AIと文書モデル
@@ -85,7 +86,7 @@ Step 1と並行して固定する。
 - relation Diagnosticの1 edge 1 primary規則
 
 完了条件は、参照切れ、循環、上限、Digest不一致を部分成功にせず、`SINGLE-027`〜`054`が通過し、
-固定fixtureのDigestが規定値と完全一致することである。
+`SINGLE-107`〜`112`が通過し、固定fixtureのDigestが規定値と完全一致することである。
 
 ## 7. Step 4: verify
 
@@ -95,7 +96,8 @@ Step 1と並行して固定する。
 
 完了条件は、test成功、非0、起動失敗、signal、timeout、対象0件をfixtureで区別でき、異なる2 Contextを持つtarget、
 共有binding、Context非成功targetの混在を正しい`targetResults[]`へ対応付けられることである。`--report`なしでは
-成功・非成功とも既存reportを変更せず、新しいfileを作らない。`SINGLE-055`〜`069`が通過する。
+成功・非成功とも既存reportを変更せず、新しいfileを作らない。`SINGLE-055`〜`069`、`SINGLE-107`〜`108`、
+`110`、`112`〜`113`が通過する。
 
 ## 8. Step 5: モノレポ連合
 
@@ -110,7 +112,7 @@ Step 1と並行して固定する。
 - 単一／連合dual-read consumer、原子的rollback、部分rollback拒否
 
 完了条件は、同名ローカルIDを持つmember、横断refinement、所有境界違反を決定論的に区別し、
-`check --all-workspaces`と`verify --all-workspaces`が基準性能を満たし、`MONO-001`〜`024`が通過することである。
+`check --all-workspaces`と`verify --all-workspaces`が基準性能を満たし、`MONO-001`〜`025`が通過することである。
 別member所有bindingを1回だけ実行し、request targetとowner memberのstatusへ反映してもcommand実体とdurationを
 複製しない。
 

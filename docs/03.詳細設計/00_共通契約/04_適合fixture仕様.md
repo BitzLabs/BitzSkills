@@ -26,6 +26,7 @@ fixtures/conformance/monorepo/<fixture-id>/changes/...
 fixtures/conformance/monorepo/<fixture-id>/manifest.json
 fixtures/conformance/monorepo/<fixture-id>/expected/<operation>.json
 fixtures/conformance/manifest.schema.json
+fixtures/conformance/result.schema.json
 ```
 
 `repo/`はbase commitを作る前の入力treeとする。`changes/`は`setup.operations[]`の`source`からだけ参照できる
@@ -33,6 +34,8 @@ fixtures/conformance/manifest.schema.json
 version管理する。Git履歴とbase commit後の状態はmanifestだけから構築する。
 `expected/<operation>.txt`はtext出力を比較するfixtureだけが持つ。
 `manifest.schema.json`は全manifestが従うmachine-readable Schemaであり、harnessは実行前にmanifestを検証する。
+`result.schema.json`はCore 1.0の全公開JSON結果が従うDraft 2020-12 Schemaである。harnessは期待JSONを実行前、
+実結果とreportをnormalizer適用前に検証し、いずれかが不適合ならfixture比較自体をerrorにする。
 
 1つのfixtureは1回のinvocation、1種類の独立原因、1つの期待status、1つの期待exit codeだけを持つ。
 並び順や集約を検査するfixtureは、同じ原因を複数位置で発生させてよいが、別の原因を混ぜてはならない。
@@ -90,9 +93,9 @@ fixture IDは`SINGLE-NNN`または`MONO-NNN`をcase familyとし、分割が必�
 | `expect.status` | No | 共通結果を返すinvocationでは必須。引数不正で共通結果を返さない場合だけ省略 |
 | `expect.outcome` | No | `consumer`と`migration`だけで必須。`accepted`、`rejected`、`passed`のいずれか |
 | `expect.exitCode` | Yes | 期待終了コード |
-| `expect.stdout` | Yes | `json`、`text`、`none`のいずれか |
+| `expect.stdout` | Yes | `json`、`text`、`markdown`、`none`のいずれか |
 | `expect.resultFile` | No | 期待JSON。`stdout: none`では持たない |
-| `expect.textFile` | No | 期待text |
+| `expect.textFile` | No | 期待textまたはMarkdown。`stdout: text|markdown`で必須 |
 | `expect.reportFileCount` | Yes | 実行後に`.spec/reports/`へ増える件数 |
 
 `runner: bitz`はshellを介さず、repositoryで検査対象の`bitz` entry pointを実行する。
@@ -302,8 +305,8 @@ Context Digest fixtureは、Digest入力のCanonical JSONをUTF-8・BOMなし・
 | `SINGLE-066` | 規範文なしTECHの文書単位test | verify | passed／0 | `statements: []`でも`bindingRefs`を持つ |
 | `SINGLE-067` | cancelled TASK起点 | verify | blocked／2 | `CTX-STATE-001` |
 | `SINGLE-068` | done TASK起点 | verify | passed／0 | 再検証を許可 |
-| `SINGLE-069-01` | 成功commandのstdout／stderrが64 KiBを超える | verify | passed／0 | pipeを止めず、抜粋を切詰め表示 |
-| `SINGLE-069-02` | 非0終了commandのstdout／stderrが64 KiBを超える | verify | failed／1 | pipeを止めず、抜粋を切詰め表示 |
+| `SINGLE-069-01` | 成功commandのstdout／stderrが64 KiBを超える | verify | passed／0 | pipeを止めず、redacted末尾抜粋とtruncated flagを保持 |
+| `SINGLE-069-02` | 非0終了commandのstdout／stderrが64 KiBを超える | verify | failed／1 | pipeを止めず、redacted末尾抜粋とtruncated flagを保持 |
 
 ### 6.7 出力とreport
 
@@ -388,6 +391,42 @@ Context Digest fixtureは、Digest入力のCanonical JSONをUTF-8・BOMなし・
 | `SINGLE-103-01` | 未閉鎖code spanと未閉鎖tagが同じraw原因 | check | failed／1 | primaryは`EAI-CORE-SYNTAX-005`だけ |
 | `SINGLE-103-02` | 未閉鎖tagとID形式不正が同じraw原因 | check | failed／1 | primaryは`EAI-CORE-SYNTAX-004`だけ |
 
+### 6.11 公開結果Schemaと既定表示
+
+| fixture | 主な入力 | operation | status／exit | 必須確認 |
+|---|---|---|---|---|
+| `SINGLE-104-01` | format省略のcontext | context | passed／0 | stdoutは期待Markdownとbyte一致 |
+| `SINGLE-104-02` | format省略のcheck | check | passed／0 | stdoutはtext |
+| `SINGLE-104-03` | format省略のverify | verify | passed／0 | stdoutはtext |
+| `SINGLE-104-04` | format省略のdoctor | doctor | passed／0 | stdoutはtext、`scope=`なし |
+| `SINGLE-105-01` | Gitありcontextのrevision | context | passed／0 | commitは40桁小文字16進 |
+| `SINGLE-105-02` | Gitなしverifyのrevision | verify | passed／0 | `revision: null` |
+| `SINGLE-106-01` | Context full projection | context | passed／0 | fullだけの必須fieldと禁止fieldをSchema検証 |
+| `SINGLE-106-02` | Context normative projection | context | passed／0 | normativeだけの必須fieldと禁止fieldをSchema検証 |
+| `SINGLE-106-03` | Context reference projection | context | passed／0 | referenceだけの必須fieldと禁止fieldをSchema検証 |
+| `SINGLE-106-04` | stdout、stderrとも空のverify command | verify | passed／0 | 空excerpt、両truncated false |
+| `SINGLE-106-05` | 2 targetに同じDiagnostic条件 | verify | failed／1 | textの`diagnostics`は両target上のDiagnostic総数 |
+
+### 6.12 共通target展開
+
+| fixture | 主な入力 | operation | status／exit | 必須確認 |
+|---|---|---|---|---|
+| `SINGLE-107-01` | REQにrefinementとrequires先がある | context --purpose verify | passed／0 | refinementはtarget、requires先はContextだけ |
+| `SINGLE-107-02` | `SINGLE-107-01`と同じ起点 | verify | passed／0 | contextと同じtarget statement集合 |
+| `SINGLE-108-01` | 規範文ありTECHにrefinementとrequires先がある | context --purpose verify | passed／0 | 4集合を完全比較 |
+| `SINGLE-108-02` | `SINGLE-108-01`と同じ起点 | verify | passed／0 | contextと同じtarget statement集合 |
+| `SINGLE-109` | statement起点と兄弟句 | context --purpose implement | passed／0 | 指定句とrefinementはtarget、兄弟句はadjacent |
+| `SINGLE-110` | TASKのaddresses先とrequires先TASK | context --purpose verify | passed／0 | 自身のaddresses先だけtarget、requires先はContextだけ |
+| `SINGLE-111-01` | catalogにない明示文書ID | check | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
+| `SINGLE-111-02` | 所有文書はあるがstatement IDが不在 | check | failed／1 | `CTX-ROOT-MISSING-001`、所有文書checkへ置換しない |
+| `SINGLE-111-03` | catalogにない構文上妥当なSPEC path | check | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
+| `SINGLE-111-04` | catalogにない明示文書ID | verify | failed／1 | target Diagnosticに`CTX-ROOT-MISSING-001` |
+| `SINGLE-112-01` | ADR起点 | context --purpose interpret | passed／0 | target statementは空 |
+| `SINGLE-112-02` | ADR起点 | context --purpose implement | 結果なし／4 | stdout結果なし、reportなし |
+| `SINGLE-112-03` | ADR起点 | check | passed／0 | 文書検査だけを行う |
+| `SINGLE-112-04` | ADR起点 | verify | 結果なし／4 | stdout結果なし、reportなし |
+| `SINGLE-113` | 文書IDと同文書のstatement IDを複数指定 | verify | passed／0 | 起点、statement、bindingを各規定時点で重複排除 |
+
 ## 7. 最小matrix: モノレポ連合
 
 | fixture | 主な入力 | operation | status／exit | 必須確認 |
@@ -450,6 +489,8 @@ Context Digest fixtureは、Digest入力のCanonical JSONをUTF-8・BOMなし・
 | `MONO-024-01` | 連合形式へのmigration | migration test | passed／0 | 原子的に切り替える |
 | `MONO-024-02` | 完全rollback | migration test | passed／0 | 旧形式へ完全に戻る |
 | `MONO-024-03` | 部分rollback | migration test | rejected／1 | 部分rollbackを拒否 |
+| `MONO-025-01` | 存在workspaceの不在修飾target | check | failed／1 | `CTX-ROOT-MISSING-001`、未知`--workspace`と区別 |
+| `MONO-025-02` | 存在workspaceの不在修飾target | verify | failed／1 | target Diagnosticに`CTX-ROOT-MISSING-001` |
 
 `MONO-012`ではinvalid文書のowner memberを`failed`、それを必要とするtargetを
 `SPEC-MONOREPO-DEPENDENCY-001`／`blocked`、独立targetを通過とし、top-levelは最悪値の`failed`に固定する。

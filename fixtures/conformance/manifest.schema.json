@@ -198,7 +198,7 @@
           "minimum": 0,
           "maximum": 4
         },
-        "stdout": { "enum": ["json", "text", "none"] },
+        "stdout": { "enum": ["json", "text", "markdown", "none"] },
         "resultFile": { "$ref": "#/$defs/strictPath" },
         "textFile": { "$ref": "#/$defs/strictPath" },
         "canonicalFile": { "$ref": "#/$defs/strictPath" },
@@ -237,6 +237,10 @@
         },
         {
           "if": { "properties": { "stdout": { "const": "text" } }, "required": ["stdout"] },
+          "then": { "required": ["textFile"] }
+        },
+        {
+          "if": { "properties": { "stdout": { "const": "markdown" } }, "required": ["stdout"] },
           "then": { "required": ["textFile"] }
         }
       ]

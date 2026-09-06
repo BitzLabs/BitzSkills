@@ -1,0 +1,492 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "result.schema.json",
+  "title": "Bitz Core 1.0 result",
+  "oneOf": [
+    {"$ref": "#/$defs/contextResult"},
+    {"$ref": "#/$defs/checkChangedResult"},
+    {"$ref": "#/$defs/checkCountedResult"},
+    {"$ref": "#/$defs/checkFederationResult"},
+    {"$ref": "#/$defs/verifyResult"},
+    {"$ref": "#/$defs/verifyFederationResult"},
+    {"$ref": "#/$defs/doctorResult"},
+    {"$ref": "#/$defs/doctorFederationResult"}
+  ],
+  "$defs": {
+    "status": {
+      "enum": ["passed", "passed_with_warnings", "failed", "blocked", "error"]
+    },
+    "stringArray": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "stringList": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string"}
+    },
+    "workspace": {
+      "type": "object",
+      "required": ["id", "path"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "workspaceResultIdentity": {
+      "type": "object",
+      "required": ["id", "path"],
+      "properties": {
+        "id": {"type": ["string", "null"], "minLength": 1},
+        "path": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "federation": {
+      "type": "object",
+      "required": ["id", "path"],
+      "properties": {
+        "id": {"type": ["string", "null"], "minLength": 1},
+        "path": {"const": "."}
+      },
+      "additionalProperties": false
+    },
+    "revisionCurrent": {
+      "type": "object",
+      "required": ["commit", "dirty"],
+      "properties": {
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "dirty": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "revisionCheck": {
+      "type": "object",
+      "required": ["base", "commit", "dirty"],
+      "properties": {
+        "base": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "dirty": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "source": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["kind", "workspaceId", "path"],
+          "properties": {
+            "kind": {"const": "file"},
+            "workspaceId": {"type": ["string", "null"]},
+            "path": {"type": "string"},
+            "line": {"type": "integer", "minimum": 1},
+            "column": {"type": "integer", "minimum": 1},
+            "key": {"type": "string"}
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["kind", "component"],
+          "properties": {
+            "kind": {"const": "environment"},
+            "component": {"type": "string", "minLength": 1},
+            "identifier": {"type": "string"}
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["kind"],
+          "properties": {
+            "kind": {"const": "invocation"},
+            "argument": {"type": "string"}
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "diagnostic": {
+      "type": "object",
+      "required": ["code", "severity", "resultStatus", "summary", "source"],
+      "properties": {
+        "code": {"type": "string", "pattern": "^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+){2,}$"},
+        "severity": {"enum": ["info", "warning", "error"]},
+        "resultStatus": {"$ref": "#/$defs/status"},
+        "summary": {"type": "string"},
+        "source": {"$ref": "#/$defs/source"},
+        "specRefs": {"$ref": "#/$defs/stringArray"},
+        "evidence": true,
+        "suggestedAction": {"type": "string"},
+        "extensions": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/diagnostic"}
+    },
+    "baseResult": {
+      "type": "object",
+      "required": ["schemaVersion", "operation", "status", "durationMs", "diagnostics"],
+      "properties": {
+        "schemaVersion": {"const": "1.0"},
+        "operation": {"enum": ["context", "check", "verify", "doctor"]},
+        "status": {"$ref": "#/$defs/status"},
+        "durationMs": {"type": "integer", "minimum": 0},
+        "diagnostics": {"$ref": "#/$defs/diagnostics"}
+      }
+    },
+    "edge": {
+      "type": "object",
+      "required": ["relation", "source", "target"],
+      "properties": {
+        "relation": {"enum": ["requires", "refines", "addresses", "supersedes", "related"]},
+        "source": {"type": "string"},
+        "target": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "resolution": {
+      "type": "object",
+      "required": ["complete", "documentCount", "unresolvedStrongRelations"],
+      "properties": {
+        "complete": {"type": "boolean"},
+        "documentCount": {"type": "integer", "minimum": 0},
+        "unresolvedStrongRelations": {"type": "integer", "minimum": 0},
+        "workspaces": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/workspace"}
+        },
+        "crossWorkspaceEdges": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/edge"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "projection": {
+      "type": "object",
+      "required": ["detail", "expanded"],
+      "properties": {
+        "detail": {"enum": ["compact", "standard", "full"]},
+        "expanded": {"$ref": "#/$defs/stringArray"}
+      },
+      "additionalProperties": false
+    },
+    "fullDocument": {
+      "type": "object",
+      "required": ["id", "kind", "status", "role", "path", "projection", "reachedBy", "statementRefs", "frontmatter", "bodyText", "untrustedText"],
+      "properties": {
+        "id": {"type": "string"},
+        "kind": {"enum": ["requirement", "technical", "decision", "task"]},
+        "status": {"type": "string"},
+        "role": {"enum": ["root", "requirement", "constraint", "refinement", "replacement", "work", "advisory"]},
+        "path": {"type": "string"},
+        "projection": {"const": "full"},
+        "reachedBy": {"$ref": "#/$defs/stringArray"},
+        "statementRefs": {"$ref": "#/$defs/stringArray"},
+        "frontmatter": {"type": "object"},
+        "bodyText": {"type": "string"},
+        "untrustedText": {"const": true},
+        "workspaceId": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "normativeDocument": {
+      "type": "object",
+      "required": ["id", "kind", "status", "role", "path", "projection", "reachedBy", "statementRefs", "untrustedText"],
+      "properties": {
+        "id": {"type": "string"},
+        "kind": {"enum": ["requirement", "technical", "decision", "task"]},
+        "status": {"type": "string"},
+        "role": {"enum": ["root", "requirement", "constraint", "refinement", "replacement", "work", "advisory"]},
+        "path": {"type": "string"},
+        "projection": {"const": "normative"},
+        "reachedBy": {"$ref": "#/$defs/stringArray"},
+        "statementRefs": {"$ref": "#/$defs/stringArray"},
+        "untrustedText": {"const": true},
+        "workspaceId": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "referenceDocument": {
+      "type": "object",
+      "required": ["id", "kind", "status", "role", "path", "projection", "reachedBy", "expandable", "untrustedText"],
+      "properties": {
+        "id": {"type": "string"},
+        "kind": {"enum": ["requirement", "technical", "decision", "task"]},
+        "status": {"type": "string"},
+        "role": {"enum": ["root", "requirement", "constraint", "refinement", "replacement", "work", "advisory"]},
+        "path": {"type": "string"},
+        "projection": {"const": "reference"},
+        "reachedBy": {"$ref": "#/$defs/stringArray"},
+        "expandable": {"type": "boolean"},
+        "untrustedText": {"const": true},
+        "workspaceId": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "activation": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {"enum": ["ALWAYS", "WHEN", "WHILE", "WHERE", "IF_ERROR"]},
+        "text": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "operationValue": {
+      "type": "object",
+      "required": ["kind", "text"],
+      "properties": {
+        "kind": {"enum": ["THEN", "GENERATE", "CONSTRAINT"]},
+        "text": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "ledgerStatement": {
+      "type": "object",
+      "required": ["id", "documentId", "documentRole", "modality", "reason", "actor", "activation", "operation"],
+      "properties": {
+        "id": {"type": "string"},
+        "documentId": {"type": "string"},
+        "documentRole": {"type": "string"},
+        "modality": {"enum": ["MUST", "SHOULD", "MAY"]},
+        "reason": {"type": ["string", "null"]},
+        "actor": {"type": "string"},
+        "activation": {"$ref": "#/$defs/activation"},
+        "operation": {"$ref": "#/$defs/operationValue"}
+      },
+      "additionalProperties": false
+    },
+    "coverageBucket": {
+      "type": "object",
+      "required": ["total", "addressed", "tested", "unaddressed", "untested"],
+      "properties": {
+        "total": {"$ref": "#/$defs/stringArray"},
+        "addressed": {"$ref": "#/$defs/stringArray"},
+        "tested": {"$ref": "#/$defs/stringArray"},
+        "unaddressed": {"$ref": "#/$defs/stringArray"},
+        "untested": {"$ref": "#/$defs/stringArray"}
+      },
+      "additionalProperties": false
+    },
+    "coverage": {
+      "type": "object",
+      "required": ["must", "should", "may", "adjacent"],
+      "properties": {
+        "must": {"$ref": "#/$defs/coverageBucket"},
+        "should": {"$ref": "#/$defs/coverageBucket"},
+        "may": {"$ref": "#/$defs/coverageBucket"},
+        "adjacent": {"$ref": "#/$defs/stringArray"}
+      },
+      "additionalProperties": false
+    },
+    "contextResult": {
+      "allOf": [
+        {"$ref": "#/$defs/baseResult"},
+        {
+          "type": "object",
+          "required": ["workspace", "purpose", "roots", "contextDigest", "revision", "resolution", "projection", "documents", "constraintLedger", "coverage"],
+          "properties": {
+            "operation": {"const": "context"},
+            "workspace": {"$ref": "#/$defs/workspaceResultIdentity"},
+            "purpose": {"enum": ["interpret", "implement", "verify"]},
+            "roots": {"$ref": "#/$defs/stringArray"},
+            "contextDigest": {"type": ["string", "null"], "pattern": "^sha256:[0-9a-f]{64}$"},
+            "revision": {"oneOf": [{"$ref": "#/$defs/revisionCurrent"}, {"type": "null"}]},
+            "resolution": {"$ref": "#/$defs/resolution"},
+            "projection": {"$ref": "#/$defs/projection"},
+            "documents": {"type": "array", "items": {"oneOf": [{"$ref": "#/$defs/fullDocument"}, {"$ref": "#/$defs/normativeDocument"}, {"$ref": "#/$defs/referenceDocument"}]}},
+            "constraintLedger": {
+              "type": "object",
+              "required": ["statements"],
+              "properties": {"statements": {"type": "array", "items": {"$ref": "#/$defs/ledgerStatement"}}},
+              "additionalProperties": false
+            },
+            "coverage": {"$ref": "#/$defs/coverage"}
+          },
+          "oneOf": [
+            {
+              "properties": {
+                "resolution": {"required": ["workspaces", "crossWorkspaceEdges"]},
+                "documents": {"items": {"required": ["workspaceId"]}}
+              }
+            },
+            {
+              "properties": {
+                "resolution": {
+                  "not": {"anyOf": [{"required": ["workspaces"]}, {"required": ["crossWorkspaceEdges"]}]}
+                },
+                "documents": {"items": {"not": {"required": ["workspaceId"]}}}
+              }
+            }
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "selection": {
+      "type": "object",
+      "required": ["changedPathCount", "targetDocumentCount", "excludedCodeTestPathCount"],
+      "properties": {
+        "changedPathCount": {"type": "integer", "minimum": 0},
+        "targetDocumentCount": {"type": "integer", "minimum": 0},
+        "excludedCodeTestPathCount": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "checkChangedResult": {
+      "allOf": [
+        {"$ref": "#/$defs/baseResult"},
+        {"type": "object", "required": ["scope", "workspace", "revision", "selection"], "properties": {
+          "operation": {"const": "check"}, "scope": {"const": "changed"}, "workspace": {"$ref": "#/$defs/workspaceResultIdentity"},
+          "revision": {"$ref": "#/$defs/revisionCheck"}, "selection": {"$ref": "#/$defs/selection"}
+        }}
+      ],
+      "unevaluatedProperties": false
+    },
+    "checkCountedResult": {
+      "allOf": [
+        {"$ref": "#/$defs/baseResult"},
+        {"type": "object", "required": ["scope", "workspace", "revision", "checkedDocumentCount", "checkedStatementCount"], "properties": {
+          "operation": {"const": "check"}, "scope": {"enum": ["selected", "full"]}, "workspace": {"$ref": "#/$defs/workspaceResultIdentity"},
+          "revision": {"oneOf": [{"$ref": "#/$defs/revisionCheck"}, {"type": "null"}]},
+          "checkedDocumentCount": {"type": "integer", "minimum": 0}, "checkedStatementCount": {"type": "integer", "minimum": 0}
+        }}
+      ],
+      "unevaluatedProperties": false
+    },
+    "checkWorkspace": {
+      "type": "object",
+      "required": ["id", "path", "status", "checkedDocumentCount", "checkedStatementCount", "durationMs", "diagnostics"],
+      "properties": {
+        "id": {"type": "string"}, "path": {"type": "string"}, "status": {"$ref": "#/$defs/status"},
+        "checkedDocumentCount": {"type": "integer", "minimum": 0}, "checkedStatementCount": {"type": "integer", "minimum": 0},
+        "durationMs": {"type": "integer", "minimum": 0}, "diagnostics": {"$ref": "#/$defs/diagnostics"}
+      },
+      "additionalProperties": false
+    },
+    "checkFederationResult": {
+      "allOf": [
+        {"$ref": "#/$defs/baseResult"},
+        {"type": "object", "required": ["scope", "federation", "workspaces", "revision"], "properties": {
+          "operation": {"const": "check"}, "scope": {"const": "all-workspaces"}, "federation": {"$ref": "#/$defs/federation"},
+          "workspaces": {"type": "array", "items": {"$ref": "#/$defs/checkWorkspace"}}, "revision": {"$ref": "#/$defs/revisionCheck"}
+        }}
+      ],
+      "unevaluatedProperties": false
+    },
+    "targetResult": {
+      "type": "object",
+      "required": ["target", "status", "contextDigest", "statements", "bindingRefs", "diagnostics"],
+      "properties": {
+        "target": {"type": "string"}, "status": {"$ref": "#/$defs/status"},
+        "contextDigest": {"type": ["string", "null"], "pattern": "^sha256:[0-9a-f]{64}$"},
+        "statements": {"$ref": "#/$defs/stringArray"}, "bindingRefs": {"$ref": "#/$defs/stringArray"},
+        "diagnostics": {"$ref": "#/$defs/diagnostics"}
+      },
+      "additionalProperties": false
+    },
+    "command": {
+      "type": "object",
+      "required": ["bindingId", "workspaceId", "name", "status", "termination", "cwd", "argv", "tests", "covers", "exitCode", "timeoutSeconds", "stdoutExcerpt", "stderrExcerpt", "stdoutTruncated", "stderrTruncated", "durationMs"],
+      "properties": {
+        "bindingId": {"type": "string"}, "workspaceId": {"type": "string"}, "name": {"type": "string"},
+        "status": {"$ref": "#/$defs/status"}, "termination": {"enum": ["exit", "spawn_error", "signal", "timeout"]},
+        "cwd": {"type": "string"}, "argv": {"$ref": "#/$defs/stringList"}, "tests": {"$ref": "#/$defs/stringArray"},
+        "covers": {"$ref": "#/$defs/stringArray"}, "exitCode": {"type": ["integer", "null"]},
+        "timeoutSeconds": {"type": "integer", "minimum": 1}, "stdoutExcerpt": {"type": "string"},
+        "stderrExcerpt": {"type": "string"}, "stdoutTruncated": {"type": "boolean"}, "stderrTruncated": {"type": "boolean"},
+        "durationMs": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "verifyResult": {
+      "allOf": [
+        {"$ref": "#/$defs/baseResult"},
+        {"type": "object", "required": ["scope", "workspace", "targetResults", "revision", "commands"], "properties": {
+          "operation": {"const": "verify"}, "scope": {"enum": ["selected", "all"]}, "workspace": {"$ref": "#/$defs/workspaceResultIdentity"},
+          "targetResults": {"type": "array", "items": {"$ref": "#/$defs/targetResult"}},
+          "revision": {"oneOf": [{"$ref": "#/$defs/revisionCurrent"}, {"type": "null"}]},
+          "commands": {"type": "array", "items": {"$ref": "#/$defs/command"}}
+        }}
+      ],
+      "unevaluatedProperties": false
+    },
+    "verifyWorkspace": {
+      "type": "object",
+      "required": ["id", "path", "status", "targetResults", "commands", "durationMs", "diagnostics"],
+      "properties": {
+        "id": {"type": "string"}, "path": {"type": "string"}, "status": {"$ref": "#/$defs/status"},
+        "targetResults": {"type": "array", "items": {"$ref": "#/$defs/targetResult"}},
+        "commands": {"type": "array", "items": {"$ref": "#/$defs/command"}},
+        "durationMs": {"type": "integer", "minimum": 0}, "diagnostics": {"$ref": "#/$defs/diagnostics"}
+      },
+      "additionalProperties": false
+    },
+    "verifyFederationResult": {
+      "allOf": [
+        {"$ref": "#/$defs/baseResult"},
+        {"type": "object", "required": ["scope", "federation", "workspaces", "revision"], "properties": {
+          "operation": {"const": "verify"}, "scope": {"const": "all-workspaces"}, "federation": {"$ref": "#/$defs/federation"},
+          "workspaces": {"type": "array", "items": {"$ref": "#/$defs/verifyWorkspace"}}, "revision": {"$ref": "#/$defs/revisionCurrent"}
+        }}
+      ],
+      "unevaluatedProperties": false
+    },
+    "core": {
+      "type": "object",
+      "required": ["version", "apiVersion", "capabilities"],
+      "properties": {
+        "version": {"type": ["string", "null"]}, "apiVersion": {"type": ["string", "null"]}, "capabilities": {"$ref": "#/$defs/stringArray"}
+      },
+      "additionalProperties": false
+    },
+    "doctorCheck": {
+      "type": "object",
+      "required": ["name", "status"],
+      "properties": {
+        "name": {"type": "string"},
+        "status": {"enum": ["passed", "info", "warning", "failed", "blocked", "error"]},
+        "lostGuarantees": {"$ref": "#/$defs/stringArray"}
+      },
+      "additionalProperties": false
+    },
+    "doctorResult": {
+      "allOf": [
+        {"$ref": "#/$defs/baseResult"},
+        {"type": "object", "required": ["workspace", "core", "checks"], "properties": {
+          "operation": {"const": "doctor"}, "workspace": {"$ref": "#/$defs/workspaceResultIdentity"}, "core": {"$ref": "#/$defs/core"},
+          "checks": {"type": "array", "items": {"$ref": "#/$defs/doctorCheck"}}
+        }}
+      ],
+      "unevaluatedProperties": false
+    },
+    "doctorWorkspace": {
+      "type": "object",
+      "required": ["id", "path", "status", "checks", "durationMs", "diagnostics"],
+      "properties": {
+        "id": {"type": "string"}, "path": {"type": "string"}, "status": {"$ref": "#/$defs/status"},
+        "checks": {"type": "array", "items": {"$ref": "#/$defs/doctorCheck"}},
+        "durationMs": {"type": "integer", "minimum": 0}, "diagnostics": {"$ref": "#/$defs/diagnostics"}
+      },
+      "additionalProperties": false
+    },
+    "doctorFederationResult": {
+      "allOf": [
+        {"$ref": "#/$defs/baseResult"},
+        {"type": "object", "required": ["federation", "workspaces", "core", "checks"], "properties": {
+          "operation": {"const": "doctor"}, "federation": {"$ref": "#/$defs/federation"},
+          "workspaces": {"type": "array", "items": {"$ref": "#/$defs/doctorWorkspace"}},
+          "core": {"$ref": "#/$defs/core"}, "checks": {"type": "array", "items": {"$ref": "#/$defs/doctorCheck"}}
+        }}
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

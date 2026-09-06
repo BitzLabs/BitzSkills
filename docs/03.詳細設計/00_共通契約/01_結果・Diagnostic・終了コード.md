@@ -4,6 +4,8 @@
 
 本書は全Core操作が共有する結果外形、status、Diagnostic Schema、終了コード、report生成条件を定義する。
 Diagnostic条件と公開値は[Diagnostic registry](05_Diagnostic-registry.md)、操作固有fieldと検出処理は各操作仕様が定義する。
+機械可読な正本は[`fixtures/conformance/result.schema.json`](../../../fixtures/conformance/result.schema.json)とし、
+本文の表・例とSchemaが異なる場合は不適合として同じ変更で修正する。
 
 ## 2. 共通結果
 
@@ -19,6 +21,7 @@ Diagnostic条件と公開値は[Diagnostic registry](05_Diagnostic-registry.md)�
     "commit": "0123456789abcdef0123456789abcdef01234567",
     "dirty": true
   },
+  "selection": {"changedPathCount": 3, "targetDocumentCount": 1, "excludedCodeTestPathCount": 2},
   "durationMs": 184,
   "diagnostics": []
 }
@@ -29,15 +32,49 @@ Diagnostic条件と公開値は[Diagnostic registry](05_Diagnostic-registry.md)�
 | `schemaVersion` | string | Yes | 結果Schema major.minor |
 | `operation` | enum | Yes | `context`、`check`、`verify`、`doctor` |
 | `status` | enum | Yes | 操作全体のstatus |
-| `scope` | string | 操作依存 | 対象範囲 |
-| `workspace` | object | workspace単独操作 | 対象またはrequest workspaceの`id`と`path`。単一は`.`、連合内はrepository root相対 |
-| `federation` | object | 全体操作 | federation rootの`id`と`path: "."`。root identity不成立時だけ`id: null` |
-| `workspaces` | array | 全体操作 | 処理順のworkspace別結果。操作固有fieldを保持 |
-| `revision` | object/null | 操作依存 | Git基準版と実行時状態 |
+| `scope` | string | check／verifyだけYes | checkは`changed`、`selected`、`full`、`all-workspaces`、verifyは`selected`、`all`、`all-workspaces` |
+| `workspace` | object | workspace単独操作でYes | 対象またはrequest workspaceの`id`と`path`。identity確定前だけ`id: null` |
+| `federation` | object | 全体操作でYes | federation rootの`id`と`path: "."`。root identity不成立時だけ`id: null` |
+| `workspaces` | array | 全体操作でYes | 処理順のworkspace別結果。操作固有fieldを保持 |
+| `revision` | object/null | context／check／verifyでYes | Git基準版と実行時状態。doctorでは禁止 |
 | `durationMs` | integer | Yes | 非負の経過ms |
 | `diagnostics` | array | Yes | 0件以上のDiagnostic |
 
-未知の同一major内fieldは保持または無視できる。未知majorは`blocked`として処理を続けない。
+Core 1.0 producerはSchemaにないfieldを出力しない。consumerは同じmajorの新しいminorにある未知fieldを
+保持または無視できる。未知majorは`blocked`として処理を続けない。
+各公開objectは未知fieldを禁止する。ただし、正規化Frontmatter、Diagnostic `extensions`、`evidence`のように
+別契約またはopaque値が内容を所有するfieldだけは、その所有契約のkeyを許可する。配列順は各fieldの所有仕様に従い、
+適合fixtureではkeyの有無、null、空配列、要素順を含めて比較する。
+
+操作と結果variantの必須fieldを次に固定する。表にないvariantは存在しない。
+
+| operation | variant | 必須の識別・操作field |
+|---|---|---|
+| context | workspace-local | `workspace`、`purpose`、`roots`、`contextDigest`、`revision`、`resolution`、`projection`、`documents`、`constraintLedger`、`coverage`。連合固有field禁止 |
+| context | workspace-federated | localと同じfieldに加え`documents[].workspaceId`、`resolution.workspaces`、`resolution.crossWorkspaceEdges` |
+| check | workspace | `workspace`、`scope`、`revision`。`changed`は`selection`、`selected`／`full`は2つのchecked count |
+| check | federation | `federation`、`workspaces`、`scope: all-workspaces`、`revision` |
+| verify | workspace | `workspace`、`scope`、`targetResults`、`commands`、`revision` |
+| verify | federation | `federation`、`workspaces`、`scope: all-workspaces`、`revision` |
+| doctor | workspace | `workspace`、`core`、`checks` |
+| doctor | federation | `federation`、`workspaces`、`core`、`checks` |
+
+`contextDigest`は完全Contextを構成できない場合だけnullとする。`revision`の規則は次のとおりである。
+
+- context／verifyの非null objectは40桁小文字16進`commit`とboolean `dirty`だけを持つ。
+- checkの非null objectは同形式の`base`、`commit`とboolean `dirty`を持つ。
+- 単一workspaceでGit不在またはunborn repositoryなら`revision: null`とする。解決不能な明示`--base`は
+  結果を作らない終了コード4であり、nullへ縮退しない。
+- checkの`scope: changed`は解決済みGit基準版を必要とするためrevisionをnullにしない。Git不在／unbornの縮退結果は
+  `scope: full`とする。
+- 連合check／verifyはGit境界確定がpreflight条件であるため`revision`をnullにしない。
+- doctorはGit状態をcheck itemで報告し、`revision` fieldを出力しない。
+
+非成功でも選択したvariantの必須fieldを省略しない。設定の構文・型・ID不正など、workspace identityを構成する前に
+停止した単独結果だけ`workspace.id`をnullとし、`path`は発見したworkspace候補のrepository root相対pathとする。
+処理開始前に停止した派生配列は空、派生件数は0とする。contextは`contextDigest: null`、
+`resolution.complete: false`、空の`documents`とLedger／coverageを返す。これは部分結果の成功を意味せず、
+実際に完了した処理量だけを表す。identity確定後はtop-levelと入れ子の全workspace IDをstringにする。
 
 単一workspaceでは設定した`workspace.id`、省略時は`root`を使い、pathを`.`とする。連合内のworkspace単独操作では
 実際のworkspace IDとrepository root相対pathを返す。`--all-workspaces`結果は`workspace`を持たず、
@@ -153,6 +190,10 @@ owner workspaceの`commands[]`へ1件だけ置く。top-levelへ操作固有件�
           "covers": ["web::REQ-001:AC-01"],
           "exitCode": 0,
           "timeoutSeconds": 300,
+          "stdoutExcerpt": "1 passed",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
           "durationMs": 817
         }
       ],
@@ -345,7 +386,10 @@ target、binding、doctor checkの停止・継続境界もregistryの`continuati
 
 ## 7. textとJSON
 
-- text出力は成功時にstatus、対象件数、scope、所要時間を1行で示す。
+`--format`省略時の既定値はcontextが`markdown`、check、verify、doctorが`text`である。formatは表示だけを変え、
+結果内容、status、終了コード、report内容を変えない。contextは`text`を提供せず、markdownまたはjsonだけを提供する。
+
+- text出力はstatus、対象件数、scope、所要時間を1行で示す。
 - `--format json`は同じ結果を標準出力へ返し、追加ファイルを生成しない。
 - Diagnosticの順序はsource workspace ID、path、line、column、code、specRefsの辞書順とし、identity確定前の
   `workspaceId: null`はstring IDより前に置く。
@@ -360,14 +404,30 @@ text出力は次の3部からなる。Diagnosticが0件なら要約行だけを�
   -> <suggestedAction>
 ```
 
-- 要約行は常に1行目とし、statusと件数をJSON結果と一致させる。`scope`を持たない操作は`scope=`を出さない。
+- 要約行は常に1行目とし、statusと件数をJSON結果と一致させる。doctorは`scope=`を出さない。
 - Diagnostic行はJSONの`diagnostics`と同じ順序で1件1行とし、`source.kind`が`file`以外の場合は
   `<component>`または`invocation`を先頭fieldへ置く。`line`と`column`を持たない場合は当該fieldを省略せず空にする。
 - `suggestedAction`を持つDiagnosticだけ、直後へ2 space字下げの継続行を1行出す。
 - 全体操作ではworkspace要素のDiagnosticをworkspace処理順に続けて出し、top-level Diagnosticを先に置く。
+  verifyのtarget固有Diagnosticは、所有するtop-levelまたはworkspaceのDiagnosticに続け、target ID順で出す。
 - 色、装飾、進捗表示はCore 1.0の契約に含めない。
 
 textはDiagnosticの`evidence`と`extensions`を出力しない。完全な機械可読情報は`--format json`を使う。
+
+`targets=<n>`と`diagnostics=<n>`は次のJSON導出式へ固定し、表示側で別に数えない。
+
+| operation／scope | `targets` |
+|---|---:|
+| check／`changed` | `selection.targetDocumentCount` |
+| check／`selected`、`full` | `checkedDocumentCount` |
+| check／`all-workspaces` | 全`workspaces[].checkedDocumentCount`の和 |
+| verify／`selected`、`all` | `targetResults.length` |
+| verify／`all-workspaces` | 全`workspaces[].targetResults.length`の和 |
+| doctor workspace | `checks.length` |
+| doctor federation | top-level `checks.length`と全`workspaces[].checks.length`の和 |
+
+`diagnostics`は結果treeに実在するDiagnosticの総数である。top-level `diagnostics`、全`workspaces[].diagnostics`、
+全`targetResults[].diagnostics`の長さを合計する。Diagnosticを複製して件数を合わせてはならない。
 
 ## 8. report
 
