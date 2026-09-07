@@ -35,7 +35,7 @@ Core 1.0は単一workspaceと、同一Git repository内の明示的なモノレ�
 |---|---|---|
 | 共通 | [結果・Diagnostic・終了コード](00_共通契約/01_結果・Diagnostic・終了コード.md) | status、共通結果、Diagnostic、report |
 | 共通 | [Diagnostic registry](00_共通契約/05_Diagnostic-registry.md) | 条件、code、severity、status、source、継続単位、primary優先順位 |
-| 共通 | [安全な入出力・互換性](00_共通契約/02_安全な入出力・互換性.md) | I/O、上限、Git縮退、cache |
+| 共通 | [安全な入出力・互換性](00_共通契約/02_安全な入出力・互換性.md) | I/O、上限、Git縮退、永続cache禁止 |
 | 共通 | [Context Digest正規化仕様](00_共通契約/03_Context-Digest正規化仕様.md) | digest input、正規化、serialization、hash |
 | 共通 | [適合fixture仕様](00_共通契約/04_適合fixture仕様.md) | fixture配置、manifest、normalizer、期待matrix |
 | 言語 | [言語・Semantic IR仕様](01_EARS-AI/01_言語・Semantic-IR仕様.md) | EARS-AI構文、Parser、IR |

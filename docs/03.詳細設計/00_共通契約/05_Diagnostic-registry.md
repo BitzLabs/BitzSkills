@@ -162,7 +162,6 @@ test commandが正常起動して非0で終了した場合はDiagnosticを生成
 | `DOCTOR-GIT-DEGRADED` | doctor | `SPEC-DOCTOR-GIT-001` | warning | passed_with_warnings | environment | `continue` | 830 | 単一workspaceでGit不在または下限未満 |
 | `DOCTOR-COMMAND-FILE` | doctor | `SPEC-DOCTOR-COMMAND-001` | error | blocked | file | `skip-check` | 840 | command実行fileを解決不能 |
 | `DOCTOR-COMMAND-CWD` | doctor | `SPEC-DOCTOR-COMMAND-001` | error | blocked | file | `skip-check` | 841 | command cwdを解決不能 |
-| `DOCTOR-CACHE` | doctor | `SPEC-DOCTOR-CACHE-001` | warning | passed_with_warnings | environment | `continue` | 850 | cache不整合だが再構築可能 |
 
 doctorの設定checkは§3の`CONFIG-*`条件を使用する。`SPEC-DOCTOR-CONFIG-001`は返さず、doctorの
 `checks[]`にあるconfig項目が同じ`SPEC-CONFIG-SCHEMA-001` Diagnosticを参照する。
@@ -200,3 +199,4 @@ priority 900〜970を説明するものである。
 | `CTX-RELATION-MISSING-001` | `SPEC-RELATION-MISSING-001`へ統一 |
 | `SPEC-BASE-AMBIGUOUS-001` | Coreがdefault branchやmerge-baseを推測しないため廃止 |
 | `SPEC-DOCTOR-CONFIG-001` | `SPEC-CONFIG-SCHEMA-001`へ統一 |
+| `SPEC-DOCTOR-CACHE-001` | Core 1.0が永続cacheを持たずcache検査を行わないため予約 |

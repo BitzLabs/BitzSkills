@@ -340,6 +340,12 @@ tuple順序、path型5 fieldだけのseparator変換を正本へ反映した。�
 
 ### 5.2 `FIN-IO-001`: read-onlyとcache writeの境界
 
+**状態: 修正採用・契約／matrix反映済み、実fixture反映待ち。**
+
+Core 1.0の永続cacheをscope外とし、同一invocation内で破棄するmemory cacheだけを許可した。Core自身の永続書込みを
+明示reportだけに限定し、report一時fileの配置、rename、失敗時除去を固定した。doctorからcache検査を外し、
+`SPEC-DOCTOR-CACHE-001`を予約した。`SINGLE-125-01`〜`06`を追加したが、実fixtureは未作成である。
+
 `context`と`doctor`はfileを書かない、`check`は既定でread-onlyとする一方、共通契約とfixtureは
 cacheを例外扱いできる。次のいずれかへ統一する。
 

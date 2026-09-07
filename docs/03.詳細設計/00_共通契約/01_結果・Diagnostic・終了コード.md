@@ -434,6 +434,8 @@ textはDiagnosticの`evidence`と`extensions`を出力しない。完全な機�
 `check`と`verify`はstatusにかかわらず、`--report`が指定された場合だけ`.spec/reports/`へ結果JSONを保存する。
 `--report`がなければ標準出力と終了コードだけを返し、既存reportを変更せず、新しいfileも作らない。
 `--format json`は標準出力の形式だけを変え、保存を含意しない。引数不正、`context`、`doctor`はreportを保存しない。
+reportは排他的に作成し、既存fileを上書きしない。原子的作成の一時fileは同じreport directoryだけに置き、成功時に
+renameし、失敗時に除去する。操作終了後に一時fileを残さない。
 
 workspace単独reportは対象workspace、全体reportはfederation rootの`.spec/reports/`へ保存する。
 ファイル名は`.spec/reports/<YYYYMMDDTHHMMSSZ>-<operation>[-<sequence>].json`とする。同一秒の衝突は

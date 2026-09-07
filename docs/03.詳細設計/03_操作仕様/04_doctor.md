@@ -32,20 +32,19 @@ plugin情報を指定する場合はID、version、required API、capabilityを1
 | 8 | EARS-AI major | blocked |
 | 9 | Git利用可否と下限version | 単一はwarning、連合はblocked |
 | 10 | command実行fileとcwd | blocked |
-| 11 | cache | 再構築可能ならwarning |
-| 12 | 影響候補件数 | info |
+| 11 | 影響候補件数 | info |
 
 独立検査は先行失敗後も可能な範囲で続行する。`--workspace`は選択member、`--all-workspaces`は同じGit rootと
 federation rootを探索起点から一意に発見できる場合にcatalogと全memberをworkspace ID順に診断する。current directoryの
 root一致は要求しない。Core 1.0はProfile互換性を検査しない。
 `--all-workspaces`ではCore、plugin、Capability、Git、catalogをtop-levelで1回検査し、workspace固有の設定、版、
-command、cwd、cache、影響候補を各member結果へ置く。同じ環境Diagnosticをmemberごとに複製しない。
+command、cwd、影響候補を各member結果へ置く。同じ環境Diagnosticをmemberごとに複製しない。
 
 全体診断はHEADと現在snapshotのGit既知`.spec/bitz.yaml`を、連合を宣言している各snapshot自身のcatalogと比較する。
 unborn repositoryと連合化前の単一workspace HEADでは現在snapshotだけを連合完全性の対象にする。catalog、ID、path、
 Git境界、未対応major、resource上限のglobal preflightが非成功ならmember診断を開始しない。
 
-preflight通過後はcheck項目を継続単位とする。先行checkの出力を必要としないCore、plugin、Capability、Git、cacheは
+preflight通過後はcheck項目を継続単位とする。先行checkの出力を必要としないCore、plugin、Capability、Gitは
 可能な範囲で継続し、設定を解釈できないときのcommand／cwdなど依存checkは実行しない。根本Diagnosticとは別の
 checkが依存出力不足だけで実行不能なら`SPEC-MONOREPO-DEPENDENCY-001`／blockedとし、同じcheckへ具体的原因を
 重複させない。
@@ -141,7 +140,6 @@ workspace固有検査を該当workspace要素へ置く。完全JSON例は
 | `SPEC-DOCTOR-EARS-001` | blocked | EARS-AI major非互換 |
 | `SPEC-DOCTOR-GIT-001` | passed_with_warnings | Git不在 |
 | `SPEC-DOCTOR-COMMAND-001` | blocked | command/cwd解決不能 |
-| `SPEC-DOCTOR-CACHE-001` | passed_with_warnings | cache不整合だが再構築可能 |
 | `SPEC-MONOREPO-DEPENDENCY-001` | blocked | 先行する別unitの出力不足でworkspace固有checkを実行不能 |
 
 Core自体が未導入でdoctorを呼べない場合、adapterは静的な導入手順だけを示し、Core判定を代替しない。
@@ -149,6 +147,7 @@ Core自体が未導入でdoctorを呼べない場合、adapterは静的な導入
 [モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)に従う。
 
 設定不適合は`SPEC-CONFIG-SCHEMA-001`だけをDiagnosticへ置き、doctorのconfig check itemがそのDiagnosticを参照する。
-`SPEC-DOCTOR-CONFIG-001`は予約済みとし、公開結果へ返さない。全条件のcode、severity、status、source、継続単位は
+`SPEC-DOCTOR-CONFIG-001`と`SPEC-DOCTOR-CACHE-001`は予約済みとし、公開結果へ返さない。Core 1.0は永続cacheを
+持たないためcache検査を行わない。全条件のcode、severity、status、source、継続単位は
 [Diagnostic registry](../00_共通契約/05_Diagnostic-registry.md)が所有する。
 `doctor`はreportを保存しないため`SPEC-REPORT-WRITE-001`を返さない。

@@ -184,10 +184,15 @@ Context Digest fixtureは、Digest入力のCanonical JSONをUTF-8・BOMなし・
 
 全fixtureは実行前後でGit statusとfilesystem manifestを比較する。
 
-- `--report`なしでは、成功・非成功にかかわらずfile生成、既存report更新、cache以外のworkspace書込みを0件とする。
+- `--report`なしでは、成功・非成功にかかわらずfile生成、既存report更新、workspace内外へのCore書込みを0件とする。
 - `--report`指定時は`check`と`verify`だけが指定先へ1件を排他的作成する。
 - 引数不正、`context`、`doctor`は`--report`の指定有無にかかわらずreportを作らない。
 - Coreは`.spec/`、code、testを変更しない。
+
+harnessはfixtureごとにrepositoryと別の空directoryを`HOME`、`XDG_CACHE_HOME`、`TMPDIR`として割り当て、その3 treeも
+実行前後で比較する。Coreが暗黙に永続cache、index、lock file、作業用directoryを作ればfixture失敗とする。
+明示reportの原子的作成に使う一時fileは指定report directory内だけに許し、操作終了時には残存0件とする。
+verifyのCore副作用fixtureはfileを書かない固定test commandを使い、test process自身の副作用と分離する。
 
 ## 6. 最小matrix: 単一workspace
 
@@ -460,6 +465,12 @@ Context Digest fixtureは、Digest入力のCanonical JSONをUTF-8・BOMなし・
 | `SINGLE-122` | 同一pathでcommand／coversが異なるtest対応 | context | passed／0 | `(path, commandSortKey, covers)`の完全順序 |
 | `SINGLE-123` | 同一namespace／termでvalueが異なるextension | context | passed_with_warnings／0 | `(namespace, term, valueSortKey)`の完全順序 |
 | `SINGLE-124` | 非path文字列とargvにreverse solidusを含む | context --purpose verify | passed／0 | path型field以外のreverse solidusを保持 |
+| `SINGLE-125-01` | contextのCore副作用 | context | passed／0 | repository、HOME、cache、tempへの書込み0件 |
+| `SINGLE-125-02` | doctorのCore副作用 | doctor | passed／0 | repository、HOME、cache、tempへの書込み0件 |
+| `SINGLE-125-03` | reportなしcheckのCore副作用 | check | passed／0 | repository、HOME、cache、tempへの書込み0件 |
+| `SINGLE-125-04` | 書込みなしcommandによるverify | verify | passed／0 | test processを除くCore書込み0件 |
+| `SINGLE-125-05` | 明示report付きcheckのCore副作用 | check --report | passed／0 | 最終report 1件だけ、一時file残存0件 |
+| `SINGLE-125-06` | reportの排他的作成失敗 | check --report | error／3 | 既存file不変、一時file残存0件 |
 
 ## 7. 最小matrix: モノレポ連合
 
@@ -533,7 +544,7 @@ Context Digest fixtureは、Digest入力のCanonical JSONをUTF-8・BOMなし・
 
 性能は適合fixtureとは別に、[品質属性と安全境界 §4](../../02.設計書/02_品質属性と安全境界.md#4-性能予算)の
 基準fixtureと環境manifestで測定する。測定条件はclean working tree、local SSD、networkなし、
-`--report`なし、JSON出力、Core cache無効化、暖機1回後の5回中央値とする。
+`--report`なし、JSON出力、Coreの永続cacheなし、OS file cache暖機1回後の5回中央値とする。
 性能fixtureは合否matrixへ含めず、回帰検査として独立に運用する。
 
 `limit + 1`のhard-limit fixtureは性能SLOの対象ではなく、安全な停止だけを検査する。

@@ -252,7 +252,7 @@ hashはSHA-256とし、上記UTF-8 byte列だけを入力とする。結果は�
 
 適合実装は次を満たす。
 
-- 同じ入力treeと同じ実効設定に対し、実行順、cacheの有無、file system上のpath、locale、
+- 同じ入力treeと同じ実効設定に対し、実行順、memory cacheの使用有無、file system上のpath、locale、
   process環境に依存せず同じDigestを返す。
 - `--detail`、`--expand`、`--format`、`--report`、CLI timeout capの変更でDigestを変えない。
 - 設定の構文、型、必須field、参照commandが不適合な場合はDigestを計算せず、

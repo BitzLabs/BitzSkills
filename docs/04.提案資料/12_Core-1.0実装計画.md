@@ -60,10 +60,10 @@ Step 1と並行して固定する。
 - 共通結果外形、Diagnostic Schema、source、順序規則、status集約
 - text出力の要約行とDiagnostic行
 - `bitz.yaml`のYAML subset読込みと禁止構文の拒否
-- 単一workspaceの探索と`doctor`（Core、実行環境version、設定、Git、command、cache）
+- 単一workspaceの探索と`doctor`（Core、実行環境version、設定、Git、command）
 
 完了条件は、`SINGLE-001`〜`006`、`SINGLE-070`〜`078`、`SINGLE-081`、`083`、`091`〜`095`、
-`SINGLE-104`〜`106`が通過し、
+`SINGLE-104`〜`106`、`125-02`が通過し、
 終了コード0〜4を区別できることである。
 
 ## 5. Step 2: EARS-AIと文書モデル
@@ -86,7 +86,8 @@ Step 1と並行して固定する。
 - relation Diagnosticの1 edge 1 primary規則
 
 完了条件は、参照切れ、循環、上限、Digest不一致を部分成功にせず、`SINGLE-027`〜`054`が通過し、
-`SINGLE-107`〜`112`、`121`〜`124`が通過し、`SINGLE-042`のCanonical JSONとDigestが規定値にbyte一致することである。
+`SINGLE-107`〜`112`、`121`〜`124`、`125-01`、`125-03`、`125-05`〜`06`が通過し、`SINGLE-042`の
+Canonical JSONとDigestが規定値にbyte一致することである。
 
 ## 7. Step 4: verify
 
@@ -97,7 +98,7 @@ Step 1と並行して固定する。
 完了条件は、test成功、非0、起動失敗、signal、timeout、対象0件をfixtureで区別でき、異なる2 Contextを持つtarget、
 共有binding、Context非成功targetの混在を正しい`targetResults[]`へ対応付けられることである。`--report`なしでは
 成功・非成功とも既存reportを変更せず、新しいfileを作らない。`SINGLE-055`〜`069`、`SINGLE-107`〜`108`、
-`110`、`112`〜`113`が通過する。
+`110`、`112`〜`113`、`125-04`が通過する。
 
 ## 8. Step 5: モノレポ連合
 
@@ -132,7 +133,7 @@ SPEC作成 -> context -> pre-check -> code/test変更 -> post-check -> verify ->
 
 ## 10. 性能受入
 
-性能はCore cacheを使わず、暖機1回後の5回中央値で測定する。基準環境で`check --all-workspaces`を30秒以内、
+性能はCoreの永続cacheなしで、OS file cacheの暖機1回後の5回中央値を測定する。基準環境で`check --all-workspaces`を30秒以内、
 3 workspaceへ到達する20文書・128 KiB以下のContextを1秒以内、Core peak RSS増分を200 MiB以内とする。
 10,000 SPEC fixtureは性能SLOではなくhard limitの安全停止を検証する。索引memoryは入力graph size、target一時memoryは
 最大Context閉包へ線形とし、全targetの完全Bundleを同時保持しない。resource dimensionごとに`limit - 1`、`limit`、
