@@ -1,0 +1,9 @@
+[
+  {"id":"unborn","setup":{"git":true,"operations":[]},"status":"?? tracked.txt\n","hasHead":false},
+  {"id":"clean","setup":{"git":true,"baseCommit":{"message":"base","paths":["."]},"operations":[]},"status":"","hasHead":true},
+  {"id":"worktree","setup":{"git":true,"baseCommit":{"message":"base","paths":["."]},"operations":[{"op":"update","path":"tracked.txt","source":"changes/updated.txt"}]},"status":" M tracked.txt\n","hasHead":true},
+  {"id":"staged","setup":{"git":true,"baseCommit":{"message":"base","paths":["."]},"operations":[{"op":"update","path":"tracked.txt","source":"changes/updated.txt"},{"op":"stage","paths":["tracked.txt"]}]},"status":"M  tracked.txt\n","hasHead":true},
+  {"id":"rename","setup":{"git":true,"baseCommit":{"message":"base","paths":["."]},"operations":[{"op":"rename","from":"tracked.txt","to":"renamed.txt"},{"op":"stage","paths":["."]}]},"status":"R  tracked.txt -> renamed.txt\n","hasHead":true},
+  {"id":"delete","setup":{"git":true,"baseCommit":{"message":"base","paths":["."]},"operations":[{"op":"delete","path":"tracked.txt"}]},"status":" D tracked.txt\n","hasHead":true},
+  {"id":"create","setup":{"git":true,"baseCommit":{"message":"base","paths":["."]},"operations":[{"op":"create","path":"new.txt","source":"changes/updated.txt"}]},"status":"?? new.txt\n","hasHead":true}
+]

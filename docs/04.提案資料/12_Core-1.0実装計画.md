@@ -87,6 +87,10 @@ Core実行結果と人間による比較結果は、それぞれの対象機能�
 状態は`In progress`、Gate Aは`Blocked`である。Step 0で確定した契約を機械検証可能な入力、期待値、
 generator、helper、harnessへ落とし込み、fresh checkoutから再現できることを示す。
 
+部分検証の入口は`uv run fixtures/validate_step0b.py`。公開JSON、grammar参照、link、Git setup、process helper、
+副作用比較の自己試験、Step 0-Pを統合済みである。311件の適合fixture、Diagnostic意味網羅、target期待集合、
+golden Context Digest、各fixtureの副作用期待値は残件であり、全Gate A検証の完了は宣言しない。
+
 このStepで実装してよいのはSchema検証、fixture generator、reference計算、grammar検査、matrix検査、
 process用test helper、副作用比較harness、独立cross-checkである。`doctor`、`context`、`check`、`verify`、
 本番Parser、target展開、Digest生成、process runnerの公開挙動を実装してはならない。

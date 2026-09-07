@@ -505,18 +505,24 @@ Step 6まで遅らせず、grammar、Schema、checkが安定した時点で自�
 次を全件満たしたcommitに対して実装着手を再判定する。
 
 - [x] P0 6件に裁定があり、`docs/03.詳細設計`へ反映済み
-- [ ] 公開JSON例がmachine-readable Schemaを全件通過
+- [x] 公開JSON例がmachine-readable Schemaを全件通過
 - [ ] 規範上の全非成功条件がDiagnostic registryへ対応
-- [ ] grammarに未定義token/nonterminalがない
+- [x] grammarに未定義token/nonterminalがない
 - [ ] target種別×purposeの期待集合fixtureが存在
 - [ ] fixture matrixに選択的期待、複数原因、`元status`がない
-- [ ] Git base/current/staged/worktree/unbornをmanifestから再現可能
+- [x] Git base/current/staged/worktree/unbornをmanifestから再現可能
 - [ ] 単一と連合のCanonical JSONおよびgolden Context Digestが独立した2系統のreference計算で一致
 - [ ] read-only、report、cacheの変更前後snapshotと許可書込みが固定され、比較harnessを自己検査可能
-- [ ] timeout、signal、子process、pipe保持を再現するhelperと有限時間で失敗できるharnessが存在
-- [ ] 性能基準fixture、generator、期待tree digest、環境manifestがversion管理済み
-- [ ] 現行正本とaccepted ADRの相対link検査が0件
+- [x] timeout、signal、子process、pipe保持を再現するhelperと有限時間で失敗できるharnessが存在
+- [x] 性能基準fixture、generator、期待tree digest、環境manifestがversion管理済み
+- [x] 現行正本とaccepted ADRの相対link検査が0件
 - [ ] 全検査をCore実行体に依存しない単一commandでfresh checkoutから実行でき、2回の結果が一致
+
+実行入口は`uv run fixtures/validate_step0b.py`。公開結果等10例、EBNF 33定義、相対link 218件、
+Git 7状態の2回再現とprocess helper自己試験を検証した。Semantic IRとDigest材料の5例はJSON構文確認だけであり、
+公開結果Schemaの対象ではない。registry 115条件の構造確認は、全非成功条件の意味的な網羅確認を代替しない。
+matrix 311件の実fixtureは未作成である。詳細は[Step 0B検証記録](../../fixtures/conformance/step0b-validation.md)を参照する。
+未完了の意味検証と実fixtureがあるため、コマンドは終了コード1、Gate A `Blocked`を返す。
 
 従来の「実装計画のStep 0BがClosed」は判定結果を判定条件に含める自己参照であるため削除する。
 上記の自動検査結果と実行環境を同一commitへ記録した時点で、Step 0Bを`Complete`、Gate Aを`Allowed`とする。
