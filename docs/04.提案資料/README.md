@@ -41,7 +41,7 @@
 | [22_モノレポ残存P1裁定案.md](22_モノレポ残存P1裁定案.md) | FED-CROSS-002〜007の裁定案 | **Accepted**（ADR-042と正本へ反映済み） |
 | [23_モノレポ残存P2裁定案.md](23_モノレポ残存P2裁定案.md) | モノレポ残存P2 6件の裁定案 | **Accepted**（ADR-043と正本へ反映済み） |
 | [24_Core-1.0実装着手方針.md](24_Core-1.0実装着手方針.md) | 実装着手可能性と欠落 | **Accepted**（G1〜G8裁定・反映済み、G9は実装計画へ） |
-| [25_Core-1.0実装前最終レビューと修正提案.md](25_Core-1.0実装前最終レビューと修正提案.md) | 02.設計書、03.詳細設計の実装前最終点検 | **Accepted / Reflected**（Step 0B実施中、実装着手gate Closed） |
+| [25_Core-1.0実装前最終レビューと修正提案.md](25_Core-1.0実装前最終レビューと修正提案.md) | 02.設計書、03.詳細設計の実装前最終点検 | **Accepted / Reflected**（Step 0B実施中、Gate A `Blocked`） |
 
 ## 3. 検討結果の要約
 
@@ -535,14 +535,21 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 
 ## 24. 実装前最終レビューの反映状況（2026-09-07）
 
-提案25の採否と実装着手gateを分離して管理する。提案25はAccepted / Reflectedであり、現在のgateはClosedである。
+提案25の採否と実装着手可否を分離して管理する。提案25はAccepted / Reflectedであり、現在のGate Aは
+`Blocked`である。Gate条件の正本は[実装計画 §1.1](12_Core-1.0実装計画.md#11-進行状態とgate)とする。
 
 | 区分 | 現在の状態 | 残件 |
 |---|---|---|
 | P0 6件 | 契約、Schema、matrixへ反映済み | 実入力、期待結果、golden Digestの実fixture化 |
-| P1 5件 | 契約または性能受入成果物へ反映済み | process等の実fixture、Core実装後の性能baseline |
+| P1 5件 | 契約または性能受入成果物へ反映済み | process helper等の検証基盤、Core実装後の受入結果と性能baseline |
 | P2文書衛生 | accepted ADR linkとREADME状態を修正済み | — |
-| 自己適用 | 実装計画へ配置済み | grammar、Schema、check安定後に`.spec/`を作成 |
-| Step 0B | 実施中 | 全Schema検証、Diagnostic閉包、2系統cross-check、gate再判定 |
+| 自己適用 | 実装計画へ配置済み | Step 2完了後に`.spec/`を作成し、Gate Cで最終判定 |
+| Step 0B | `In progress` | Core非依存の全Schema検証、Diagnostic閉包、実fixture、2系統cross-check |
+| Step 0-P | `Complete` | 基準入力・比較条件を固定し一括検証済み。実測はCore実装後 |
+| Gate A | `Blocked` | fresh checkoutから単一commandで2回一致する自動検査結果を記録 |
+| Gate B | `Pending` | 各StepのCore実装を固定済みfixtureへ通して判定 |
+| Gate C | `Pending` | 全適合、性能、決定性、副作用、process、自己適用をまとめて判定 |
 
-実装着手gateをOpenへ戻すのは、提案25 §9の再開条件を満たす自動検査結果を同一commitで確認した後とする。
+Gate Aを`Allowed`へ変更するのは、[提案25 §9.1](25_Core-1.0実装前最終レビューと修正提案.md#91-gate-a-実装着手可能性)の
+Core非依存条件を満たす自動検査結果と実行環境を同一commitで確認した後とする。Core本体の挙動はGate Aで要求せず、
+対応するGate Bと最終のGate Cで判定する。

@@ -21,9 +21,32 @@ Step番号と完了条件は計画であり、Core APIの規範ではない。
 Digestの計算手順は[Context Digest正規化仕様](../03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md)である。
 本書はそれらを再定義せず、実装順序と各Stepの完了条件だけを持つ。
 
+### 1.1 進行状態とGate
+
+Stepの進捗、次工程への許可、受入結果を混同しないため、次の語彙を使う。
+
+| 対象 | 状態語彙 | 意味 |
+|---|---|---|
+| Step | `Not started` / `In progress` / `Complete` | 作業そのものの進捗 |
+| Gate A | `Blocked` / `Allowed` | Step 1へ進むことの可否 |
+| Gate B / Gate C | `Pending` / `Passed` / `Failed` | 固定した検査に対する受入結果 |
+
+Core 1.0のGateは次の3層とする。
+
+| Gate | 判定時点 | 判定対象 | 現在状態 |
+|---|---|---|---|
+| Gate A: 実装着手可能性 | Step 1開始前 | 規範、fixture、期待値、検証基盤がCore実行体なしで再現可能 | `Blocked` |
+| Gate B: Step別実装受入 | 各Step完了時 | 当該StepのCore実装が固定済みfixtureへ適合 | `Pending` |
+| Gate C: Core 1.0リリース受入 | 全Step完了後 | 全適合、性能、自己適用を含む出荷可能性 | `Pending` |
+
+Gate条件の正本は本書、fixture構造と比較方法の正本は
+[適合fixture仕様](../03.詳細設計/00_共通契約/04_適合fixture仕様.md)とする。提案資料は判断理由と移行履歴、
+提案資料READMEは現在状態の要約だけを持つ。
+
 ## 2. Step 0: 仕様確定（コードを書かない）
 
-実装着手gateである。成果物は次とし、いずれも[提案24](24_Core-1.0実装着手方針.md)の裁定に対応する。
+状態は`Complete`である。成果物は次とし、いずれも[提案24](24_Core-1.0実装着手方針.md)の裁定に対応する。
+Step 0完了はGate Aの必要条件だが、それだけでStep 1の開始を許可しない。
 
 | 成果物 | 対象 | 状態 |
 |---|---|---|
@@ -40,6 +63,10 @@ Digestの計算手順は[Context Digest正規化仕様](../03.詳細設計/00_�
 
 ## 3. Step 0-P: 実証条件
 
+状態は`Complete`である。入力形状、対象外機能、比較方法、成功基準を固定し、
+`uv run fixtures/validate_step0p.py`でSchema検証と2回生成一致を確認した。
+検証記録は[Step 0-P検証結果](../../fixtures/step0p-validation.md)を参照する。
+
 入力、generator、期待digest、reference environment、測定protocol、比較task、成功基準はStep 1開始前に固定する。
 Core実行結果と人間による比較結果は、それぞれの対象機能が実装された後に取得する。
 
@@ -54,6 +81,34 @@ Core実行結果と人間による比較結果は、それぞれの対象機能�
 成果物の正本は[`fixtures/performance`](../../fixtures/performance/README.md)と
 [`fixtures/comparison`](../../fixtures/comparison/README.md)である。基準treeはversion管理したmanifestとgeneratorから再生成し、
 件数と期待tree digestが一致しなければ測定を開始しない。
+
+### 3.1 Step 0B: Gate A実証基盤
+
+状態は`In progress`、Gate Aは`Blocked`である。Step 0で確定した契約を機械検証可能な入力、期待値、
+generator、helper、harnessへ落とし込み、fresh checkoutから再現できることを示す。
+
+このStepで実装してよいのはSchema検証、fixture generator、reference計算、grammar検査、matrix検査、
+process用test helper、副作用比較harness、独立cross-checkである。`doctor`、`context`、`check`、`verify`、
+本番Parser、target展開、Digest生成、process runnerの公開挙動を実装してはならない。
+
+Gate Aを`Allowed`にする条件は次の全件である。
+
+- P0 6件が規範文書へ反映されている
+- 公開JSON例がmachine-readable Schemaを全件通過する
+- 規範上の全非成功条件がDiagnostic registryへ対応する
+- grammarに未定義tokenまたはnonterminalがない
+- target種別とpurposeの全組合せに対する期待集合fixtureが存在する
+- fixture matrixに選択的期待、複数原因、`元status`がない
+- Gitのbase、current、staged、worktree、unbornをmanifestから再現できる
+- 単一と連合のCanonical JSONおよびgolden Context Digestが独立した2系統のreference計算で一致する
+- read-only、report、cacheの変更前後snapshotと許可書込みが固定され、副作用比較harness自体を自己検査できる
+- timeout、signal、子process、pipe保持を再現するhelperと有限時間で失敗できるharnessが存在する
+- 性能基準fixture、決定論的generator、期待tree digest、reference environmentがversion管理されている
+- 現行正本とaccepted ADRの相対link検査が0件である
+- 上記をCore実行体へ依存しない単一commandでfresh checkoutから再実行でき、2回の結果が一致する
+
+全条件を通過した自動検査結果と実行環境を同一commitへ記録した時点でStep 0Bを`Complete`、Gate Aを
+`Allowed`とし、Step 1の開始を許可する。Core本体と期待値の一致はGate Aに含めず、該当するGate Bで判定する。
 
 ## 4. Step 1: 骨格と`doctor`
 
@@ -137,6 +192,18 @@ SPEC作成 -> context -> pre-check -> code/test変更 -> post-check -> verify ->
 ```
 
 通常Markdown条件と比較し、完了時間、欠陥率、review負荷のいずれも改善しない機能を既定経路へ追加しない。
+
+### 9.1 Gate C: Core 1.0リリース受入
+
+全StepのGate Bが`Passed`した後、次を全件満たした場合だけGate Cを`Passed`とする。
+
+- 全conformance fixtureが通過する
+- 性能baselineを基準環境で取得し、§10のSLOを満たす
+- 単一と連合のCanonical JSONおよびContext Digestが2回実行でbyte一致する
+- read-only、report、cache、timeout、signal、子processの受入試験が通過する
+- bitz-core自身の`.spec/`でSmall Flowを完走する
+- 通常Markdown条件との完了時間、欠陥率、review負荷の比較結果を記録する
+- 未解決のP0またはP1がない
 
 ## 10. 性能受入
 

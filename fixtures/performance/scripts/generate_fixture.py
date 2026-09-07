@@ -213,6 +213,9 @@ def canonical_target(owner: str, target: str) -> tuple[str, int]:
 def validate_model(manifest: dict, stats: dict, relations: dict[tuple[str, int], list[str]], root: Path) -> None:
     if stats != manifest["counts"]:
         raise ValueError(f"count mismatch: expected {manifest['counts']}, got {stats}")
+    observed_shape = measure_shape(root, stats)
+    if observed_shape != manifest["shape"]:
+        raise ValueError(f"shape mismatch: expected {manifest['shape']}, got {observed_shape}")
 
     nodes = set(relations)
     for owner, targets in relations.items():
@@ -261,6 +264,17 @@ def validate_model(manifest: dict, stats: dict, relations: dict[tuple[str, int],
         raise ValueError(f"context input exceeds presentation budget: {context_input_bytes}")
 
 
+def measure_shape(root: Path, stats: dict) -> dict:
+    spec_bytes = sum(path.stat().st_size for path in root.rglob(".spec/requirements/REQ-*.md"))
+    count = stats["specs"]
+    return {
+        "specBytes": spec_bytes,
+        "meanSpecBytes": {"numerator": spec_bytes, "denominator": count},
+        "statementsPerSpec": {"numerator": stats["statements"], "denominator": count},
+        "edgeDensity": {"numerator": stats["relations"], "denominator": count * (count - 1)},
+    }
+
+
 def tree_digest(root: Path) -> str:
     digest = hashlib.sha256()
     files = sorted((path for path in root.rglob("*") if path.is_file()), key=lambda path: path.relative_to(root).as_posix())
@@ -295,7 +309,7 @@ def main() -> int:
     digest = tree_digest(args.output)
     if not args.print_digest and digest != manifest["expectedTreeDigest"]:
         raise ValueError(f"tree digest mismatch: expected {manifest['expectedTreeDigest']}, got {digest}")
-    result = {"datasetId": manifest["datasetId"], "treeDigest": digest, "counts": stats}
+    result = {"datasetId": manifest["datasetId"], "treeDigest": digest, "counts": stats, "shape": measure_shape(args.output, stats)}
     json.dump(result, sys.stdout, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     sys.stdout.write("\n")
     return 0

@@ -1,6 +1,6 @@
 # Core 1.0実装前最終レビューと修正提案
 
-- 状態: Accepted / Reflected（Step 0B実施中、実装着手gate Closed）
+- 状態: Accepted / Reflected（Step 0B実施中、Gate A `Blocked`）
 - 実施日: 2026-09-04
 - 基準branch: `bitz_next`
 - 基準commit: `f47d14704dd4352cc08af538bd3633f4a030573d`
@@ -24,7 +24,9 @@ Diagnostic、Digest、fixture判定を再現できる状態には達していな
 - 仕様から振る舞いを確定しない内部interfaceの雛形
 - 本提案のP0を閉じるための試験入力と期待値の作成
 
-Parser、Context Resolver、Diagnostic生成、Digest、check、verifyの公開挙動を固定する実装は、P0の裁定・反映後に開始する。
+Schema検証、fixture generator、reference計算、grammar・matrix検査、process用test helper、
+副作用比較harness、独立cross-checkはStep 0Bの検証基盤として先行してよい。
+Parser、Context Resolver、Diagnostic生成、Digest、check、verifyの製品実装は、Gate Aが`Allowed`となった後に開始する。
 
 ## 2. レビュー方法と判定基準
 
@@ -54,7 +56,7 @@ Parser、Context Resolver、Diagnostic生成、Digest、check、verifyの公開�
 - 公開JSONとtextのfield、型、必須性、null、順序、既定値を完全比較できる
 - fixtureの入力状態をmanifestから再現し、1つの正確な期待結果と比較できる
 - 同一入力からContext Digestを独立実装間で一致させられる
-- timeout、resource上限、path境界、read-only性を有限時間内に検証できる
+- timeout、resource上限、path境界、read-only性を有限時間内に検証するfixtureとharnessが固定されている
 
 ## 3. Gate summary
 
@@ -467,7 +469,7 @@ Step 6まで遅らせず、grammar、Schema、checkが安定した時点で自�
 | 1 | grammar、Frontmatter、公開結果、Diagnostic registryを閉じる | P0-2〜4、6 | Schema validation、parser vectors |
 | 2 | target展開とDigestを確定する | P0-5、P1-1 | target集合fixture、golden digest |
 | 3 | fixture manifestとmatrixを分割する | P0-1 | 全IDに実入力と単一期待値 |
-| 4 | cache、process、CLI、実行環境を確定する | P1-2〜4 | 副作用・timeout・CLI fixture |
+| 4 | cache、process、CLI、実行環境を確定する | P1-2〜4 | 副作用snapshot、process helper、timeout harness、CLI fixture |
 | 5 | 性能入力と基準環境を固定する | P1-5 | benchmark fixture、manifest |
 | 6 | linkと状態表示を修正する | P2-1〜2 | link checker 0件 |
 | 7 | 独立実装相当のcross-checkを行う | 全体 | 2系統のserializer/parser結果一致 |
@@ -485,11 +487,22 @@ Step 6まで遅らせず、grammar、Schema、checkが安定した時点で自�
 | `02_SPECモデル/02_文書・Frontmatter・状態仕様.md` | 完全Frontmatter Schema、object配列、null・重複 |
 | `02_SPECモデル/04_関係・トレースモデル.md` | `TargetExpansion`の単一所有 |
 | `03_操作仕様/*.md` | 既定format、target不存在、process、結果variant参照 |
-| `12_Core-1.0実装計画.md` | Step 0Bとgate再開条件 |
+| `12_Core-1.0実装計画.md` | Gate A〜C、Step 0B、Step別受入条件 |
 
-## 9. Gate再開条件
+## 9. Gate条件の再設計
 
-次を全件満たしたcommitに対して再レビューする。
+実装前にCore本体の挙動確認を要求する循環を避けるため、Gate条件の正本を
+[実装計画 §1.1](12_Core-1.0実装計画.md#11-進行状態とgate)へ集約し、次の3層へ分離する。
+
+| Gate | 目的 | Core実行体への依存 |
+|---|---|---|
+| Gate A: 実装着手可能性 | 規範、fixture、期待値、検証基盤の再現性を確認 | 依存しない |
+| Gate B: Step別実装受入 | 各StepのCore実装を固定済みfixtureで確認 | 依存する |
+| Gate C: Core 1.0リリース受入 | 全適合、性能、自己適用を含む出荷判定 | 依存する |
+
+### 9.1 Gate A: 実装着手可能性
+
+次を全件満たしたcommitに対して実装着手を再判定する。
 
 - [x] P0 6件に裁定があり、`docs/03.詳細設計`へ反映済み
 - [ ] 公開JSON例がmachine-readable Schemaを全件通過
@@ -498,25 +511,39 @@ Step 6まで遅らせず、grammar、Schema、checkが安定した時点で自�
 - [ ] target種別×purposeの期待集合fixtureが存在
 - [ ] fixture matrixに選択的期待、複数原因、`元status`がない
 - [ ] Git base/current/staged/worktree/unbornをmanifestから再現可能
-- [ ] 単一と連合のgolden Context Digestが固定済み
-- [ ] read-only、report、cacheの許可書込みが副作用fixtureと一致
-- [ ] timeoutと子process/pipe保持時も規定時間内に終了
-- [ ] 性能基準fixtureと環境manifestがversion管理済み
+- [ ] 単一と連合のCanonical JSONおよびgolden Context Digestが独立した2系統のreference計算で一致
+- [ ] read-only、report、cacheの変更前後snapshotと許可書込みが固定され、比較harnessを自己検査可能
+- [ ] timeout、signal、子process、pipe保持を再現するhelperと有限時間で失敗できるharnessが存在
+- [ ] 性能基準fixture、generator、期待tree digest、環境manifestがversion管理済み
 - [ ] 現行正本とaccepted ADRの相対link検査が0件
-- [ ] 実装計画のStep 0BがClosed
+- [ ] 全検査をCore実行体に依存しない単一commandでfresh checkoutから実行でき、2回の結果が一致
+
+従来の「実装計画のStep 0BがClosed」は判定結果を判定条件に含める自己参照であるため削除する。
+上記の自動検査結果と実行環境を同一commitへ記録した時点で、Step 0Bを`Complete`、Gate Aを`Allowed`とする。
+
+### 9.2 Gate B: Step別実装受入
+
+Gate Aで固定したfixture、期待値、helper、harnessへ各StepのCore実装を通す。Git状態の解釈、Coreが生成するDigest、
+read-only・report・cacheの実副作用、timeout・signal・子processの実終了動作は、対応componentを実装したStepの
+完了条件として判定する。Gate AではこれらのCore実行結果を要求しない。
+
+### 9.3 Gate C: Core 1.0リリース受入
+
+全StepのGate B通過後、全conformance fixture、性能baselineとSLO、決定性、副作用・process受入、
+`FIN-SELF-001`の自己適用、通常Markdown条件との比較、未解決P0/P1がないことをまとめて判定する。
 
 ## 10. 提案する裁定
 
 | ID | 提案 |
 |---|---|
-| D1 | 現在の実装着手gate Openを撤回し、Step 0B完了までClosedとする |
+| D1 | 現在の実装着手gateをGate Aとして`Blocked`へ戻し、Core非依存のStep 0B完了証拠により`Allowed`を判定する |
 | D2 | §4の6件をP0として全件採用する |
 | D3 | §5の5件を該当component実装前のP1として採用する |
 | D4 | fixtureは文書上のmatrixだけでなく、実入力・manifest・期待結果までversion管理する |
 | D5 | 公開結果とFrontmatterへmachine-readable Schemaを追加する |
 | D6 | Diagnostic registryと`TargetExpansion`を単一所有者へ集約する |
 | D7 | ADR-045の現行規範値を詳細設計へ移し、ADRは理由の記録へ戻す |
-| D8 | P0反映後、§9を満たす自動検査結果を添えてgateを再判定する |
+| D8 | P0反映後、§9.1を満たす自動検査結果を添えてGate Aを再判定し、Core実行結果はGate B/Cで判定する |
 
 本提案の採否と正本反映が完了するまでは、実装計画のStep 1完了条件を満たせない。
 したがって、契約修正と検証基盤以外の機能実装を開始しない。

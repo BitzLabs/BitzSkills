@@ -4,8 +4,25 @@
   "title": "Bitz Core 1.0 performance dataset",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "datasetId", "kind", "generatorVersion", "seed", "counts", "benchmark", "expectedTreeDigest"],
+  "required": ["schemaVersion", "datasetId", "kind", "generatorVersion", "seed", "counts", "shape", "benchmark", "expectedTreeDigest"],
+  "$defs": {
+    "ratio": {
+      "type": "object", "additionalProperties": false,
+      "required": ["numerator", "denominator"],
+      "properties": {"numerator": {"type": "integer", "minimum": 0}, "denominator": {"type": "integer", "minimum": 1}}
+    }
+  },
   "properties": {
+    "shape": {
+      "type": "object", "additionalProperties": false,
+      "required": ["specBytes", "meanSpecBytes", "statementsPerSpec", "edgeDensity"],
+      "properties": {
+        "specBytes": {"type": "integer", "minimum": 1},
+        "meanSpecBytes": {"$ref": "#/$defs/ratio"},
+        "statementsPerSpec": {"$ref": "#/$defs/ratio"},
+        "edgeDensity": {"$ref": "#/$defs/ratio"}
+      }
+    },
     "$schema": {"type": "string"},
     "schemaVersion": {"const": "1.0"},
     "datasetId": {"type": "string", "pattern": "^core-[a-z0-9-]+-v[0-9]+$"},

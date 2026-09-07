@@ -5,6 +5,7 @@
   "generatorVersion": "1.0",
   "seed": 130363,
   "counts": {"workspaces": 20, "specs": 1000, "statements": 1000, "relations": 20000},
+  "shape": {"specBytes": 841432, "meanSpecBytes": {"numerator": 841432, "denominator": 1000}, "statementsPerSpec": {"numerator": 1000, "denominator": 1000}, "edgeDensity": {"numerator": 20000, "denominator": 999000}},
   "benchmark": {
     "contextRoot": "REQ-000001",
     "contextDocuments": 20,

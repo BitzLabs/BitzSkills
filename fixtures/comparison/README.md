@@ -9,3 +9,7 @@ The five task definitions, protocol, answer key, and result schema are versioned
 
 Validate `tasks/*.json` with `task.schema.json`, `protocol.json` with `protocol.schema.json`, `answer-key.json` with
 `answer-key.schema.json`, and observations with `result.schema.json`.
+
+Run `uv run fixtures/validate_step0p.py` from the repository root to validate the fixed inputs and schemas together with
+performance datasets. Future observation schemas are checked structurally; participant results are collected after Core exists.
+The Core 1.0 exclusions in [performance scope](../performance/README.md#6-scope-exclusions) apply to these tasks as well.

@@ -56,3 +56,30 @@ Negative values are recorded as zero. Both series and the derived value must be 
 Accepted baseline results belong under `fixtures/performance/baselines/<environment-id>/<core-commit>.json`. No baseline result is
 created before an executable Core exists. Updating a dataset, environment comparison key, measurement rule, or accepted baseline
 requires review in the same change; measured output is never silently rewritten.
+
+## 5. Input shape and Step 0-P validation
+
+`shape` measures only generated `.spec/requirements/REQ-*.md` files (UTF-8 bytes including frontmatter).
+`specBytes` is their total byte count; `meanSpecBytes` is that count divided by SPEC count N;
+`statementsPerSpec` is statement count divided by N. `edgeDensity` is directed relation count E divided by
+N × (N − 1), excluding self edges and including cross-workspace edges across the entire federation.
+Ratios retain unreduced integer numerators and denominators. All values must match exactly; no tolerance is applied.
+Context document and workspace counts are checked separately by the generator. Input bytes do not prove the eventual
+Core presentation byte budget; that is measured after Core implementation.
+
+From a fresh checkout with CPython 3.11+ and uv available, run:
+
+```text
+uv run fixtures/validate_step0p.py
+```
+
+The script pins validator dependencies, validates input JSON and all schemas (including future result schemas), checks references,
+generates each dataset twice, compares counts/shape/digest, and checks rejection of corrupted shape expectations.
+The first run needs package download access; cached dependencies allow subsequent offline execution with `uv run --offline`.
+No measured result is fabricated before Core exists. This command covers Step 0-P and is an entry point for the future Step 0B suite.
+
+## 6. Scope exclusions
+
+Performance and comparison protocols exclude MCP, actual Profiles, Projection Digest, formatter/style linter,
+ID renumbering assistance, and finer-grained test selectors from Core 1.0 acceptance.
+The 10,000-SPEC and `limit +/- 1` hard-limit cases belong to conformance/safety tests, not the normal performance SLO.
