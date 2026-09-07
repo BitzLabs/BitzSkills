@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "comparison-result.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "protocolVersion", "participantId", "taskId", "condition", "order", "metrics", "accepted", "findings"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "protocolVersion": {"const": "1.0"},
+    "participantId": {"type": "string", "minLength": 1},
+    "taskId": {"type": "string", "pattern": "^CMP-[0-9]{3}$"},
+    "condition": {"enum": ["baseline", "bitz"]},
+    "order": {"type": "integer", "minimum": 1, "maximum": 10},
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["completionMs", "authoringMs", "reviewMs", "detectedDefects"],
+      "properties": {
+        "completionMs": {"type": "integer", "minimum": 0},
+        "authoringMs": {"type": "integer", "minimum": 0},
+        "reviewMs": {"type": "integer", "minimum": 0},
+        "detectedDefects": {"type": "integer", "minimum": 0}
+      }
+    },
+    "accepted": {"type": "boolean"},
+    "findings": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^CMP-[0-9]{3}:D-[0-9]{2}$"}}
+  }
+}

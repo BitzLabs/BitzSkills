@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dataset.schema.json",
+  "title": "Bitz Core 1.0 performance dataset",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "datasetId", "kind", "generatorVersion", "seed", "counts", "benchmark", "expectedTreeDigest"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": "1.0"},
+    "datasetId": {"type": "string", "pattern": "^core-[a-z0-9-]+-v[0-9]+$"},
+    "kind": {"enum": ["single", "federation"]},
+    "generatorVersion": {"const": "1.0"},
+    "seed": {"type": "integer", "minimum": 0},
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workspaces", "specs", "statements", "relations"],
+      "properties": {
+        "workspaces": {"type": "integer", "minimum": 1},
+        "specs": {"type": "integer", "minimum": 1},
+        "statements": {"type": "integer", "minimum": 1},
+        "relations": {"type": "integer", "minimum": 0}
+      }
+    },
+    "benchmark": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contextRoot", "contextDocuments", "contextWorkspaces", "maxPresentationBytes"],
+      "properties": {
+        "contextRoot": {"type": "string", "minLength": 1},
+        "contextDocuments": {"const": 20},
+        "contextWorkspaces": {"type": "integer", "minimum": 1},
+        "maxPresentationBytes": {"const": 131072},
+        "changedPath": {"type": "string", "minLength": 1},
+        "changedAppendUtf8": {"type": "string", "minLength": 1},
+        "verifyTarget": {"type": "string", "minLength": 1},
+        "noopCommand": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+      }
+    },
+    "expectedTreeDigest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"kind": {"const": "single"}}, "required": ["kind"]},
+      "then": {
+        "properties": {
+          "counts": {"properties": {"workspaces": {"const": 1}}},
+          "benchmark": {"required": ["changedPath", "changedAppendUtf8", "verifyTarget", "noopCommand"], "properties": {"contextWorkspaces": {"const": 1}}}
+        }
+      },
+      "else": {"properties": {"benchmark": {"properties": {"contextWorkspaces": {"const": 3}}}}}
+    }
+  ]
+}

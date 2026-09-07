@@ -396,6 +396,13 @@ doctor仕様が値の所有者をADR-045とする現状は解消する。
 
 ### 5.5 `FIN-PERF-001`: 性能受入成果物が未作成
 
+**状態: 修正採用・基準入力／環境／測定protocol／比較task反映済み、実測baseline待ち。**
+
+単一と連合の固定dataset manifest、決定論的generator、期待tree digest、reference environment、7つの測定case、
+run result Schemaを`fixtures/performance`へ追加した。人間向けの5つの対比較task、blind answer key、結果Schema、
+成功基準は`fixtures/comparison`へ分離した。Step 0-Pは成果物をStep 1開始前に固定し、実測は対象実装後に行う順序へ
+訂正した。Core実行体が未実装のため、実測baselineだけが未作成である。
+
 [品質属性と安全境界](../02.設計書/02_品質属性と安全境界.md#4-性能予算)が要求する
 version管理済み基準fixture、環境manifest、比較task、成功基準を作成する。
 [実装計画 Step 0-P](12_Core-1.0実装計画.md#3-step-0-p-実証条件)は「Step 1と並行」と

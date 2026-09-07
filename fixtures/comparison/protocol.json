@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "protocolVersion": "1.0",
+  "taskIds": ["CMP-001", "CMP-002", "CMP-003", "CMP-004", "CMP-005"],
+  "minimumParticipantsPerCondition": 3,
+  "assignment": "balanced-ab-ba",
+  "controls": {
+    "network": false,
+    "externalAssistance": false,
+    "timeStarts": "when the participant opens the brief",
+    "timeStops": "when the participant submits the deliverable",
+    "blindReview": true
+  },
+  "metrics": ["completionMs", "authoringMs", "reviewMs", "detectedDefects"],
+  "successCriteria": {
+    "allSubmittedDeliverablesAccepted": true,
+    "criticalDefectRecallPercent": 100,
+    "maximumMedianRegressionPercentPerTimeMetric": 10,
+    "minimumImprovedTimeMetricPercent": 10,
+    "alternativeImprovement": "bitz detects more seeded defects than baseline without exceeding the time regression limit"
+  }
+}

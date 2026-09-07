@@ -40,7 +40,8 @@ Digestの計算手順は[Context Digest正規化仕様](../03.詳細設計/00_�
 
 ## 3. Step 0-P: 実証条件
 
-Step 1と並行して固定する。
+入力、generator、期待digest、reference environment、測定protocol、比較task、成功基準はStep 1開始前に固定する。
+Core実行結果と人間による比較結果は、それぞれの対象機能が実装された後に取得する。
 
 - 通常Markdownまたは従来EARSを使う比較taskを5件固定する。
 - 完了時間、仕様記述時間、review時間、欠陥検出数を定義する。
@@ -49,6 +50,10 @@ Step 1と並行して固定する。
 - Core 1.0対象外機能を確認する。
 
 完了条件は、比較方法と成功基準が実装前に固定されていることである。
+
+成果物の正本は[`fixtures/performance`](../../fixtures/performance/README.md)と
+[`fixtures/comparison`](../../fixtures/comparison/README.md)である。基準treeはversion管理したmanifestとgeneratorから再生成し、
+件数と期待tree digestが一致しなければ測定を開始しない。
 
 ## 4. Step 1: 骨格と`doctor`
 

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "taskId": "CMP-004",
+  "title": "Trace and specification defect review",
+  "objective": "Review a change set and report specification, relation, state, and coverage defects.",
+  "baselineMode": "markdown",
+  "brief": ["REQ-BULK-DELETE contains a new MUST statement but its test plan covers only the older single-delete statement.", "TECH-BULK-API declares a strong requires relation to missing REQ-999999.", "The Git base and current copies both say status approved, but the approved REQ-BULK-DELETE normative response changed.", "One candidate line starts with malformed extension [risk:LEVEL=high] before ACTOR.", "Report each independent defect once and identify release blockers."],
+  "conditions": {
+    "baseline": ["Represent and review the brief as ordinary Markdown, links, and a prose test plan."],
+    "bitz": ["Represent and review the same brief as .spec using context and check evidence."]
+  },
+  "completionCriteria": ["Every critical seeded defect is reported.", "Duplicate symptoms of the same cause are not double counted.", "Advisory issues are separated from blockers."],
+  "metricTags": ["completionMs", "authoringMs", "reviewMs", "detectedDefects"]
+}

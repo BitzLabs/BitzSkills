@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "comparison-answer-key.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "defects"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": "1.0"},
+    "defects": {
+      "type": "object",
+      "minProperties": 5,
+      "maxProperties": 5,
+      "patternProperties": {
+        "^CMP-[0-9]{3}$": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "critical", "summary"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^CMP-[0-9]{3}:D-[0-9]{2}$"},
+              "critical": {"type": "boolean"},
+              "summary": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

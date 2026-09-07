@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "environmentId": "core-1-linux-i5-13500h",
+  "comparisonKey": {
+    "os": "Linux",
+    "architecture": "x86_64",
+    "cpuModel": "13th Gen Intel(R) Core(TM) i5-13500H",
+    "logicalCores": 16,
+    "minimumRamBytes": 8053063680,
+    "storageClass": "local-ssd",
+    "filesystem": "ext4"
+  },
+  "requiredTools": {
+    "pythonImplementation": "CPython",
+    "pythonVersion": "3.11.x",
+    "minimumGitVersion": "2.30",
+    "memoryAccounting": "cgroup-v2-process-tree"
+  },
+  "isolation": {
+    "networkDisabled": true,
+    "persistentCoreCache": false,
+    "report": false,
+    "parallelCases": false
+  }
+}

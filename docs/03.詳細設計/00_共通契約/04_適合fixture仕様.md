@@ -582,4 +582,14 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 `--report`なし、JSON出力、Coreの永続cacheなし、OS file cache暖機1回後の5回中央値とする。
 性能fixtureは合否matrixへ含めず、回帰検査として独立に運用する。
 
+基準入力はrepository rootの[`fixtures/performance`](../../../fixtures/performance/README.md)に置く。version管理した
+dataset manifest、generator version、期待tree digestの3つが一致した生成treeだけを測定へ使用する。単一workspaceは
+300 SPEC／1,000 statement／5,000 relation、連合は20 workspace／1,000 SPEC／20,000 relationとする。
+測定case、固定SLO、reference environment、観測結果fieldは同directoryのJSONを正とする。referenceのcomparison keyと
+一致しないrunは`not_comparable`であり、性能gateの成功または失敗へ数えない。
+
+人間による完了時間、仕様記述時間、review時間、欠陥検出数は
+[`fixtures/comparison`](../../../fixtures/comparison/README.md)のprotocol、5 task、blind answer keyで測定し、
+Core processのwall-clock／memory結果へ混ぜない。
+
 `limit + 1`のhard-limit fixtureは性能SLOの対象ではなく、安全な停止だけを検査する。

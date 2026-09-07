@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "environment": "environments/core-1-reference.json",
+  "warmupRuns": 1,
+  "measuredRuns": 5,
+  "statistic": "median",
+  "regression": {"relativePercent": 10, "absoluteNoiseMs": 50},
+  "cases": [
+    {"id": "single-changed-check", "dataset": "core-single-v1", "argv": ["check", "--format", "json"], "maxMedianWallMs": 1000, "maxPeakRssBytes": 209715200},
+    {"id": "single-context-20", "dataset": "core-single-v1", "argv": ["context", "REQ-000001", "--format", "json"], "maxMedianWallMs": 1000, "maxPeakRssBytes": 209715200},
+    {"id": "single-full-check", "dataset": "core-single-v1", "argv": ["check", "--full", "--format", "json"], "maxMedianWallMs": 5000, "maxPeakRssBytes": 209715200},
+    {"id": "single-doctor", "dataset": "core-single-v1", "argv": ["doctor", "--format", "json"], "maxMedianWallMs": 2000, "maxPeakRssBytes": 209715200},
+    {"id": "single-verify-overhead", "dataset": "core-single-v1", "argv": ["verify", "REQ-000300", "--format", "json"], "baseline": ["python3", ".perf/noop_command.py", "tests/perf_noop.test"], "maxDerivedOverheadMs": 500, "maxPeakRssBytes": 209715200},
+    {"id": "federation-full-check", "dataset": "core-federation-v1", "argv": ["check", "--all-workspaces", "--format", "json"], "maxMedianWallMs": 30000, "maxPeakRssBytes": 209715200},
+    {"id": "federation-context-20", "dataset": "core-federation-v1", "argv": ["context", "REQ-000001", "--format", "json"], "maxMedianWallMs": 1000, "maxPeakRssBytes": 209715200}
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "environment.schema.json",
+  "title": "Bitz Core 1.0 performance reference environment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "environmentId", "comparisonKey", "requiredTools", "isolation"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": "1.0"},
+    "environmentId": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+    "comparisonKey": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["os", "architecture", "cpuModel", "logicalCores", "minimumRamBytes", "storageClass", "filesystem"],
+      "properties": {
+        "os": {"const": "Linux"},
+        "architecture": {"const": "x86_64"},
+        "cpuModel": {"type": "string", "minLength": 1},
+        "logicalCores": {"type": "integer", "minimum": 1},
+        "minimumRamBytes": {"type": "integer", "minimum": 1073741824},
+        "storageClass": {"const": "local-ssd"},
+        "filesystem": {"type": "string", "minLength": 1}
+      }
+    },
+    "requiredTools": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pythonImplementation", "pythonVersion", "minimumGitVersion", "memoryAccounting"],
+      "properties": {
+        "pythonImplementation": {"const": "CPython"},
+        "pythonVersion": {"const": "3.11.x"},
+        "minimumGitVersion": {"const": "2.30"},
+        "memoryAccounting": {"const": "cgroup-v2-process-tree"}
+      }
+    },
+    "isolation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["networkDisabled", "persistentCoreCache", "report", "parallelCases"],
+      "properties": {
+        "networkDisabled": {"const": true},
+        "persistentCoreCache": {"const": false},
+        "report": {"const": false},
+        "parallelCases": {"const": false}
+      }
+    }
+  }
+}

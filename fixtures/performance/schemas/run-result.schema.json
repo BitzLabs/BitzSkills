@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "run-result.schema.json",
+  "title": "Bitz Core 1.0 performance run result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "startedAt", "environmentId", "datasetDigests", "coreVersion", "coreCommit", "observedEnvironment", "comparability", "comparisonMismatches", "cases"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": "1.0"},
+    "startedAt": {"type": "string", "format": "date-time"},
+    "environmentId": {"type": "string", "minLength": 1},
+    "datasetDigests": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+    },
+    "coreVersion": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "coreCommit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "observedEnvironment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["os", "kernel", "architecture", "cpuModel", "logicalCores", "ramBytes", "storageClass", "filesystem", "python", "git"],
+      "properties": {
+        "os": {"type": "string"}, "kernel": {"type": "string"}, "architecture": {"type": "string"},
+        "cpuModel": {"type": "string"}, "logicalCores": {"type": "integer", "minimum": 1},
+        "ramBytes": {"type": "integer", "minimum": 1}, "storageClass": {"type": "string"},
+        "filesystem": {"type": "string"}, "python": {"type": "string"}, "git": {"type": "string"}
+      }
+    },
+    "comparability": {"enum": ["comparable", "not_comparable"]},
+    "comparisonMismatches": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "coldWallMs", "wallMs", "medianWallMs", "peakRssBytes", "maximumPeakRssBytes", "exitCodes", "status"],
+        "properties": {
+          "id": {"type": "string"}, "coldWallMs": {"type": "number", "minimum": 0},
+          "wallMs": {"type": "array", "minItems": 5, "maxItems": 5, "items": {"type": "number", "minimum": 0}},
+          "medianWallMs": {"type": "number", "minimum": 0},
+          "peakRssBytes": {"type": "array", "minItems": 5, "maxItems": 5, "items": {"type": "integer", "minimum": 0}},
+          "maximumPeakRssBytes": {"type": "integer", "minimum": 0},
+          "exitCodes": {"type": "array", "minItems": 5, "maxItems": 5, "items": {"type": "integer", "minimum": 0, "maximum": 4}},
+          "derivedOverheadMs": {"type": "number", "minimum": 0},
+          "status": {"enum": ["passed", "failed", "not_comparable"]}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "benchmark-plan.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "environment", "warmupRuns", "measuredRuns", "statistic", "regression", "cases"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": "1.0"},
+    "environment": {"type": "string", "minLength": 1},
+    "warmupRuns": {"const": 1},
+    "measuredRuns": {"const": 5},
+    "statistic": {"const": "median"},
+    "regression": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relativePercent", "absoluteNoiseMs"],
+      "properties": {
+        "relativePercent": {"type": "number", "minimum": 0},
+        "absoluteNoiseMs": {"type": "number", "minimum": 0}
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "dataset", "argv", "maxPeakRssBytes"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "dataset": {"type": "string", "minLength": 1},
+          "argv": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "baseline": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "maxMedianWallMs": {"type": "number", "minimum": 0},
+          "maxDerivedOverheadMs": {"type": "number", "minimum": 0},
+          "maxPeakRssBytes": {"type": "integer", "minimum": 1}
+        },
+        "oneOf": [
+          {"required": ["maxMedianWallMs"], "not": {"required": ["maxDerivedOverheadMs"]}},
+          {"required": ["baseline", "maxDerivedOverheadMs"], "not": {"required": ["maxMedianWallMs"]}}
+        ]
+      }
+    }
+  }
+}

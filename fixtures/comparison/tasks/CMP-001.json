@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "taskId": "CMP-001",
+  "title": "Password-reset requirement authoring",
+  "objective": "Turn an ambiguous product brief into a reviewable requirement and verification outline.",
+  "baselineMode": "markdown",
+  "brief": ["A user can request a password-reset link by email.", "The link must be secure and should expire.", "Support must be able to explain rejected reset attempts."],
+  "conditions": {
+    "baseline": ["Write ordinary Markdown using the team's usual headings.", "Record dependencies and tests in prose."],
+    "bitz": ["Write a REQ with valid Frontmatter and EARS-AI statements.", "Declare typed relations and test coverage paths explicitly."]
+  },
+  "completionCriteria": ["Expiry, one-time use, account-enumeration resistance, and auditable rejection are unambiguous.", "Each mandatory behavior has a verification approach."],
+  "metricTags": ["completionMs", "authoringMs", "reviewMs", "detectedDefects"]
+}

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "taskId": "CMP-002",
+  "title": "Session-expiry impact analysis",
+  "objective": "Identify every directly affected specification and implementation area after a session lifetime change.",
+  "baselineMode": "markdown",
+  "brief": ["SESSION-POLICY defines interactive lifetime as 24 hours and is used by AUTH-SERVICE and MOBILE-SESSION-UI.", "Change interactive session lifetime from 24 hours to 8 hours.", "API-TOKEN-POLICY and RESET-TOKEN-POLICY are related reading but must not change.", "MOBILE-SESSION-UI caches the displayed expiry time and has its own test plan."],
+  "conditions": {
+    "baseline": ["Represent the brief as linked ordinary Markdown and use repository search.", "Return an impact list with reasons."],
+    "bitz": ["Represent the same brief with typed .spec relations and use context/check evidence.", "Return the same impact list with statement references."]
+  },
+  "completionCriteria": ["Session policy, authentication implementation, mobile display, and their tests are included.", "API-token and reset-token specifications are explicitly excluded with reasons."],
+  "metricTags": ["completionMs", "authoringMs", "reviewMs", "detectedDefects"]
+}

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0",
+  "datasetId": "core-federation-v1",
+  "kind": "federation",
+  "generatorVersion": "1.0",
+  "seed": 130363,
+  "counts": {"workspaces": 20, "specs": 1000, "statements": 1000, "relations": 20000},
+  "benchmark": {
+    "contextRoot": "REQ-000001",
+    "contextDocuments": 20,
+    "contextWorkspaces": 3,
+    "maxPresentationBytes": 131072
+  },
+  "expectedTreeDigest": "sha256:ad519b9442984ab9bce488ba1aa05277e9077bad178f89378a90e5f458134c25"
+}

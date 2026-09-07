@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "taskId": "CMP-005",
+  "title": "Verification evidence handoff",
+  "objective": "Decide whether a change is ready for human approval and prepare a concise evidence handoff.",
+  "baselineMode": "legacy-ears",
+  "brief": ["REQ-A has current context digest sha256:aaaa and no test mapping for AC-02.", "REQ-B has current digest sha256:bbbb and its command terminates by timeout.", "REQ-C has current digest sha256:cccc and its command exits 0.", "A previous report for REQ-A records digest sha256:dddd and passed.", "Decide readiness without treating the previous report as current evidence."],
+  "conditions": {
+    "baseline": ["Represent the brief as legacy EARS documents, test logs, and a previous review report."],
+    "bitz": ["Represent the same brief with current context digests, target results, binding references, and command results."]
+  },
+  "completionCriteria": ["The untested MUST and timeout are both blockers.", "The passing target remains distinguishable.", "Stale evidence is excluded and the next action is explicit."],
+  "metricTags": ["completionMs", "authoringMs", "reviewMs", "detectedDefects"]
+}

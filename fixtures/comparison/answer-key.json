@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "defects": {
+    "CMP-001": [
+      {"id": "CMP-001:D-01", "critical": true, "summary": "Expiry duration is unspecified."},
+      {"id": "CMP-001:D-02", "critical": true, "summary": "One-time token consumption is unspecified."},
+      {"id": "CMP-001:D-03", "critical": true, "summary": "Account enumeration behavior is unspecified."},
+      {"id": "CMP-001:D-04", "critical": false, "summary": "Auditable rejection evidence is unspecified."}
+    ],
+    "CMP-002": [
+      {"id": "CMP-002:D-01", "critical": true, "summary": "Mobile cached expiry display is affected."},
+      {"id": "CMP-002:D-02", "critical": false, "summary": "API-token policy is not affected."},
+      {"id": "CMP-002:D-03", "critical": false, "summary": "Password-reset expiry is not affected."}
+    ],
+    "CMP-003": [
+      {"id": "CMP-003:D-01", "critical": true, "summary": "Encryption decision is a strong dependency."},
+      {"id": "CMP-003:D-02", "critical": true, "summary": "Shared retention policy is required."},
+      {"id": "CMP-003:D-03", "critical": false, "summary": "Adjacent UI preference must not become normative."}
+    ],
+    "CMP-004": [
+      {"id": "CMP-004:D-01", "critical": true, "summary": "A mandatory statement has no test coverage."},
+      {"id": "CMP-004:D-02", "critical": true, "summary": "A strong relation target is missing."},
+      {"id": "CMP-004:D-03", "critical": true, "summary": "An approved requirement changed without allowed transition evidence."},
+      {"id": "CMP-004:D-04", "critical": false, "summary": "One EARS-AI extension is malformed."}
+    ],
+    "CMP-005": [
+      {"id": "CMP-005:D-01", "critical": true, "summary": "One MUST is untested."},
+      {"id": "CMP-005:D-02", "critical": true, "summary": "One current command timed out."},
+      {"id": "CMP-005:D-03", "critical": true, "summary": "The previous report has a stale Context Digest."},
+      {"id": "CMP-005:D-04", "critical": false, "summary": "The independent passing target should be retained."}
+    ]
+  }
+}

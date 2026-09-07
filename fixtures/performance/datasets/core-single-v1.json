@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "datasetId": "core-single-v1",
+  "kind": "single",
+  "generatorVersion": "1.0",
+  "seed": 104729,
+  "counts": {"workspaces": 1, "specs": 300, "statements": 1000, "relations": 5000},
+  "benchmark": {
+    "contextRoot": "REQ-000001",
+    "contextDocuments": 20,
+    "contextWorkspaces": 1,
+    "maxPresentationBytes": 131072,
+    "changedPath": ".spec/requirements/REQ-000020.md",
+    "changedAppendUtf8": "\n<!-- core-single-v1 changed-check -->\n",
+    "verifyTarget": "REQ-000300",
+    "noopCommand": ["python3", ".perf/noop_command.py", "tests/perf_noop.test"]
+  },
+  "expectedTreeDigest": "sha256:0693e6ec926d4a411766796831e87c011004342810a5e6f3393e7afcd52c546c"
+}

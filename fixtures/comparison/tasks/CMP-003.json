@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "taskId": "CMP-003",
+  "title": "Audit-export implementation context",
+  "objective": "Assemble the minimum complete context needed to implement a tenant-scoped audit export.",
+  "baselineMode": "legacy-ears",
+  "brief": ["AUDIT-EXPORT requires ASYNC-JOBS and TENANT-BOUNDARY.", "AUDIT-EXPORT and AUDIT-VIEWER both require RETENTION-POLICY.", "AUDIT-EXPORT requires accepted decision ADR-ENCRYPTION.", "UI-DATE-PREFERENCE is adjacent reference material and is not a strong dependency."],
+  "conditions": {
+    "baseline": ["Represent the brief with legacy EARS text and untyped Markdown links.", "Produce an implementation context packet."],
+    "bitz": ["Represent the brief with typed relations and resolve purpose=implement.", "Separate normative, adjacent, and reference material in the packet."]
+  },
+  "completionCriteria": ["All strong dependencies and the encryption decision are present.", "The UI preference is not promoted to a mandatory implementation constraint.", "No unrelated document is included."],
+  "metricTags": ["completionMs", "authoringMs", "reviewMs", "detectedDefects"]
+}
