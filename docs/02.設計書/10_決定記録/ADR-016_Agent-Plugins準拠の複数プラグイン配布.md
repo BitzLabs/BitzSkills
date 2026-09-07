@@ -126,7 +126,10 @@ Agent Plugins 1.0の標準manifestで解決できず、クライアント固有�
 - [Agent Plugins Specification 1.0.0](https://agent-plugins.org/specification)
 - [GitHub Copilot CLI plugin reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference)
 
-関連文書: [01_共通アーキテクチャ.md](../01_共通アーキテクチャ.md), [03_CLI統合設計.md](../03_CLI統合設計.md), [06_運用設計.md](../06_運用設計.md), [07_セキュリティとガバナンス.md](../07_セキュリティとガバナンス.md), [08_実装ロードマップ.md](../08_実装ロードマップ.md), [ADR-009](ADR-009_小規模チーム向け軽量コアとEARS-AI中核化.md)
+関連文書: [システム構成](../01_システム構成.md), [操作仕様](../../03.詳細設計/03_操作仕様/README.md),
+[運用手順](../04_運用手順.md), [品質属性と安全境界](../02_品質属性と安全境界.md),
+[Core 1.0実装計画](../../04.提案資料/12_Core-1.0実装計画.md),
+[ADR-009](ADR-009_小規模チーム向け軽量コアとEARS-AI中核化.md)
 
 ## Revision History
 
@@ -134,3 +137,4 @@ Agent Plugins 1.0の標準manifestで解決できず、クライアント固有�
 |---|---|---|
 | 2026-08-27 | 初版を作成 | — |
 | 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |
+| 2026-09-07 | 仕様構造再編後の現行linkへ更新 | `FIN-DOC-001` |

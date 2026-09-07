@@ -412,6 +412,11 @@ version管理済み基準fixture、環境manifest、比較task、成功基準を
 
 ### 6.1 `FIN-DOC-001`: accepted ADRの旧link
 
+**状態: 修正済み。**
+
+ADR-001の2件を現行EARS-AI適合性・移行仕様へ、ADR-016の5件を再編後のシステム構成、操作仕様、運用手順、
+品質属性と安全境界、Core 1.0実装計画へ更新した。accepted ADRの内部相対link検査は0件である。
+
 現行の`docs/02.設計書`主要文書と`docs/03.詳細設計`では相対linkと見出しanchorの不整合を検出しなかった。
 一方、accepted ADRではADR-001に2件、ADR-016に5件の旧相対linkが残る。
 
