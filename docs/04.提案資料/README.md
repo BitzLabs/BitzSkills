@@ -41,7 +41,7 @@
 | [22_モノレポ残存P1裁定案.md](22_モノレポ残存P1裁定案.md) | FED-CROSS-002〜007の裁定案 | **Accepted**（ADR-042と正本へ反映済み） |
 | [23_モノレポ残存P2裁定案.md](23_モノレポ残存P2裁定案.md) | モノレポ残存P2 6件の裁定案 | **Accepted**（ADR-043と正本へ反映済み） |
 | [24_Core-1.0実装着手方針.md](24_Core-1.0実装着手方針.md) | 実装着手可能性と欠落 | **Accepted**（G1〜G8裁定・反映済み、G9は実装計画へ） |
-| [25_Core-1.0実装前最終レビューと修正提案.md](25_Core-1.0実装前最終レビューと修正提案.md) | 02.設計書、03.詳細設計の実装前最終点検 | **Open**（P0契約反映済み、実fixture・P1・gate再検証待ち） |
+| [25_Core-1.0実装前最終レビューと修正提案.md](25_Core-1.0実装前最終レビューと修正提案.md) | 02.設計書、03.詳細設計の実装前最終点検 | **Accepted / Reflected**（Step 0B実施中、実装着手gate Closed） |
 
 ## 3. 検討結果の要約
 
@@ -515,7 +515,7 @@ accepted ADR 8件のlinkは現構造へ訂正した。G9は着手gateに含め�
 [実装計画](12_Core-1.0実装計画.md)へStep 0と骨格優先の実行順を反映し、Step 0をClosedとした。
 実装着手gateはOpenである。
 
-## 23. 実装前最終レビュー（2026-09-04、裁定待ち）
+## 23. 実装前最終レビュー（2026-09-04、裁定・反映済み）
 
 提案24の反映後、提案資料01〜24を検討履歴、`02.設計書`を目的・境界、`03.詳細設計`を機械契約の正として
 再度横断し、規範だけから独立した2実装が同じ結果を再現できるかを
@@ -530,5 +530,19 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 提案25は、契約修正、fixture/Schema/CI準備だけを先行可能とし、P0を閉じるStep 0B、
 機械検証、golden Digest、有限時間のtimeout試験を完了してからgateを再判定することを提案する。
 
-2026-09-07までにP0 6件の裁定を正本へ反映し、manifest、公開結果、Frontmatterのmachine-readable Schemaと
-追加matrixを整備した。P0の契約残件はない。実fixture成果物、P1 5件、Step 0Bのcross-checkとgate再検証は未完了である。
+提案25のD1〜D8を採用し、P0 6件とP1 5件を正本、Schema、matrixまたは性能受入成果物へ反映した。
+提案の裁定・反映は完了したが、実fixture成果物、実測baseline、Step 0Bのcross-checkとgate再検証は未完了である。
+
+## 24. 実装前最終レビューの反映状況（2026-09-07）
+
+提案25の採否と実装着手gateを分離して管理する。提案25はAccepted / Reflectedであり、現在のgateはClosedである。
+
+| 区分 | 現在の状態 | 残件 |
+|---|---|---|
+| P0 6件 | 契約、Schema、matrixへ反映済み | 実入力、期待結果、golden Digestの実fixture化 |
+| P1 5件 | 契約または性能受入成果物へ反映済み | process等の実fixture、Core実装後の性能baseline |
+| P2文書衛生 | accepted ADR linkとREADME状態を修正済み | — |
+| 自己適用 | 実装計画へ配置済み | grammar、Schema、check安定後に`.spec/`を作成 |
+| Step 0B | 実施中 | 全Schema検証、Diagnostic閉包、2系統cross-check、gate再判定 |
+
+実装着手gateをOpenへ戻すのは、提案25 §9の再開条件を満たす自動検査結果を同一commitで確認した後とする。
