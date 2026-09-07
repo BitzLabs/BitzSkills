@@ -176,6 +176,9 @@ status、scope、件数は除外しない。一致するtokenが1行に複数あ
 Context Digest fixtureは、Digest入力のCanonical JSONをUTF-8・BOMなし・末尾改行なしのbyte列として
 `expected/context.canonical.json`へ置き、そのbyte列から計算した小文字16進64桁の値を`sha256:`付きで
 期待結果へ記録する。harnessはCanonical JSONのbyte一致とDigest文字列の一致を別々に検査する。
+単一workspaceのgoldenは`SINGLE-042`、連合のgoldenは`MONO-002-01`が所有する。両fixtureはmanifestから個別に
+再構築した隔離済みcopyを2つ実行し、Canonical JSONとDigestが各回でbyte一致することも検査する。locale、入力fileの作成順、cacheの有無を
+一度に混ぜず、個別の再現性試験として同じgolden値へ一致させる。
 
 ## 5. 副作用の検査
 
@@ -272,7 +275,7 @@ Context Digest fixtureは、Digest入力のCanonical JSONをUTF-8・BOMなし・
 
 | fixture | 主な入力 | operation | status／exit | 必須確認 |
 |---|---|---|---|---|
-| `SINGLE-042` | 固定入力の完全解決 | context | passed／0 | 期待Digest値と完全一致 |
+| `SINGLE-042` | 固定入力の完全解決 | context | passed／0 | Canonical JSON byte列と期待Digest値が完全一致、2回実行も一致 |
 | `SINGLE-043-01` | 固定起点を`--detail`付きで解決 | context --detail | passed／0 | `SINGLE-042`とDigest、`resolution`が一致 |
 | `SINGLE-043-02` | 固定起点を`--expand`付きで解決 | context --expand | passed／0 | `SINGLE-042`とDigest、`resolution`が一致 |
 | `SINGLE-044-01` | 本文の空行数だけを変更 | context | passed／0 | Digestが変化する |
@@ -453,13 +456,17 @@ Context Digest fixtureは、Digest入力のCanonical JSONをUTF-8・BOMなし・
 | `SINGLE-120-02` | `changes`省略TASKに変更差分あり | explicit TASK check | failed／1 | `SPEC-TASK-BOUNDARY-001`だけ |
 | `SINGLE-120-03` | REQに正しい型の`changes` | check | passed_with_warnings／0 | `SPEC-FM-UNAVAILABLE-001`だけ |
 | `SINGLE-120-04` | REQに型不正の`changes` | check | failed／1 | `SPEC-FM-SCHEMA-001`だけ、利用不能warningなし |
+| `SINGLE-121` | Core 1.0の固定Digest入力 | context | passed／0 | `digestVersion`と`resolverVersion`がともに`1.0` |
+| `SINGLE-122` | 同一pathでcommand／coversが異なるtest対応 | context | passed／0 | `(path, commandSortKey, covers)`の完全順序 |
+| `SINGLE-123` | 同一namespace／termでvalueが異なるextension | context | passed_with_warnings／0 | `(namespace, term, valueSortKey)`の完全順序 |
+| `SINGLE-124` | 非path文字列とargvにreverse solidusを含む | context --purpose verify | passed／0 | path型field以外のreverse solidusを保持 |
 
 ## 7. 最小matrix: モノレポ連合
 
 | fixture | 主な入力 | operation | status／exit | 必須確認 |
 |---|---|---|---|---|
 | `MONO-001` | 別workspaceに同じlocal ID | check all | passed／0 | 修飾IDで衝突しない |
-| `MONO-002-01` | 横断`refines`と直接coverage | context | passed／0 | 修飾edge、Digest、coverage |
+| `MONO-002-01` | 横断`refines`と直接coverage | context | passed／0 | 修飾edge、coverage、Canonical JSONとDigestのgolden完全一致、2回実行も一致 |
 | `MONO-002-02` | 横断`refines`と直接coverage | verify | passed／0 | 修飾edge、Digest、coverage |
 | `MONO-003` | 非修飾で別workspaceだけにあるtarget | check all | failed／1 | `SPEC-MONOREPO-REF-001`だけ |
 | `MONO-004-01` | context時に存在workspace内のtarget不在 | context | failed／1 | `SPEC-RELATION-MISSING-001`だけ |

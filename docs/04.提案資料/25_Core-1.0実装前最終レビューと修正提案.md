@@ -324,6 +324,12 @@ scalar、scalar配列、通常mapだけを許可し、object配列を明示的�
 
 ### 5.1 `FIN-DIGEST-001`: Context Digestの残存非決定性
 
+**状態: 修正採用・契約／matrix反映済み、golden実fixture反映待ち。**
+
+Core 1.0の`resolverVersion`を`"1.0"`へ固定し、文字正規化後にsortする処理順、`tests`とextensionの完全な
+tuple順序、path型5 fieldだけのseparator変換を正本へ反映した。単一`SINGLE-042`と連合`MONO-002-01`をgoldenの
+所有fixtureとし、`SINGLE-121`〜`124`を追加した。対応する入力tree、Canonical JSON、期待結果は未作成である。
+
 - `resolverVersion`のCore 1.0値を`"1.0"`等へ固定する。
 - `tests`のsortを`(path, command, covers)`等の完全順序にするか、同一pathの複数要素を禁止する。
 - extensionのsortへ`value`を加えるか、同一namespace/termの重複を禁止する。

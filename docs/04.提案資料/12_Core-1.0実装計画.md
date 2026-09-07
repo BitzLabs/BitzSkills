@@ -86,7 +86,7 @@ Step 1と並行して固定する。
 - relation Diagnosticの1 edge 1 primary規則
 
 完了条件は、参照切れ、循環、上限、Digest不一致を部分成功にせず、`SINGLE-027`〜`054`が通過し、
-`SINGLE-107`〜`112`が通過し、固定fixtureのDigestが規定値と完全一致することである。
+`SINGLE-107`〜`112`、`121`〜`124`が通過し、`SINGLE-042`のCanonical JSONとDigestが規定値にbyte一致することである。
 
 ## 7. Step 4: verify
 
@@ -113,6 +113,7 @@ Step 1と並行して固定する。
 
 完了条件は、同名ローカルIDを持つmember、横断refinement、所有境界違反を決定論的に区別し、
 `check --all-workspaces`と`verify --all-workspaces`が基準性能を満たし、`MONO-001`〜`025`が通過することである。
+`MONO-002-01`のCanonical JSONとDigestが連合golden値にbyte一致し、2回実行でも変化しないことを含む。
 別member所有bindingを1回だけ実行し、request targetとowner memberのstatusへ反映してもcommand実体とdurationを
 複製しない。
 

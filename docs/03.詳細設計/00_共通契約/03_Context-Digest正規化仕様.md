@@ -14,11 +14,15 @@ Core 1.0適合ではない。
 ## 2. 全体手順
 
 1. 完全解決が成立し、設定が適合していることを確認する。不成立ならDigestを計算しない。
-2. §3のdigest inputをmemory上のJSON valueとして構成する。
-3. 全stringへ§4の文字正規化を適用する。
-4. §5に従いRFC 8785 JSON Canonicalization Schemeでserializeし、UTF-8 byte列を得る。
-5. byte列のSHA-256を計算し、小文字16進64桁へ変換する。
-6. `sha256:`を前置した`sha256:[0-9a-f]{64}`を結果へ格納する。
+2. §3の材料をfieldの型を保持した未整列のmemory上のJSON valueとして収集する。
+3. §4のfield型別文字正規化を適用する。
+4. §3の重複排除とsortを正規化後の値へ適用し、最終digest inputを構成する。
+5. §5に従いRFC 8785 JSON Canonicalization Schemeでserializeし、UTF-8 byte列を得る。
+6. byte列のSHA-256を計算し、小文字16進64桁へ変換する。
+7. `sha256:`を前置した`sha256:[0-9a-f]{64}`を結果へ格納する。
+
+文字正規化より前の値や、filesystem、parser、graph走査の列挙順でsortしてはならない。正規化により同一になる値が
+存在しても、同一入力から同じ配列とbyte列を得られる順序でなければならない。
 
 ## 3. digest input
 
@@ -48,7 +52,7 @@ digest inputは次のkeyだけを持つJSON objectとする。全keyを必須と
 | `digestVersion` | string | 本仕様のmajor.minor。Core 1.0は`"1.0"` |
 | `specSchemaVersion` | string | request workspaceの実効SPEC Schema version |
 | `earsAiVersion` | string | request workspaceの実効EARS-AI version |
-| `resolverVersion` | string | Context Resolverのmajor.minor |
+| `resolverVersion` | string | Context Resolver契約のmajor.minor。Core 1.0は`"1.0"` |
 | `purpose` | enum | `interpret`、`implement`、`verify` |
 | `requestWorkspaceId` | string | request workspaceの実効ID。単一workspaceも実効IDを使う |
 | `roots` | string[] | 起点の連合正規ID。重複排除しcode point辞書順 |
@@ -118,8 +122,11 @@ Core既知fieldだけを上記の固定keyで保持する。値の規則は次�
 - `relations`は5つのCore語彙keyをすべて置き、未宣言は空配列とする。targetは連合正規形式へ展開し、
   重複排除しcode point辞書順に並べる。
 - `implements`と`changes`は宣言pathをworkspace root相対の`/` separatorへ正規化し、重複排除して辞書順に並べる。
-- `tests`は`path`、`covers`、`command`だけを持つobjectとし、`covers`を修飾形式・辞書順、`command`未宣言をnull、
-  要素全体を`path`のcode point辞書順に並べる。
+- `tests`は`path`、`covers`、`command`だけを持つobjectとし、`covers`を修飾形式へ変換してcode point辞書順、
+  `command`未宣言をnullとする。要素全体は正規化後の`(path, commandSortKey, covers)`で昇順に並べる。
+  `commandSortKey`はnullをstringより前とし、string同士はcode point辞書順とする。`covers`同士は要素ごとの
+  code point辞書式比較とし、一方が他方のprefixなら短い配列を先にする。完全に同じtupleの要素数は保持し、
+  Digest生成時に追加の重複排除を行わない。
 - `verify`と`changes`は非該当種別でもkeyを置き、値をnullまたは空配列とする。
 - `x-`拡張fieldは含めない。Coreはこれを合否、Context、command、権限へ使用しないため、
   Contextの同一性判定にも使用しない。
@@ -159,8 +166,10 @@ Semantic IRから次のkeyだけを保持する。
 
 `documentId`、`localId`、`source`、`raw`、`untrustedText`、`unknownExtensions`は含めない。文書IDは`id`から、
 source位置は`bodyText`から導けるためである。`reason`はSemantic IRと同じく、理由付き`SHOULD`では正規化後の
-text、理由なし`SHOULD`と`MUST`／`MAY`ではnullとする。`extensions`は`namespace`、`term`の順でcode point辞書順に
-並べ、`value`未指定はnullとする。opaque extensionの保持有無はCore解析結果を変えないが、Digestの材料には含める。
+text、理由なし`SHOULD`と`MUST`／`MAY`ではnullとする。`value`未指定はnullとする。`extensions`は正規化後の
+`(namespace, term, valueSortKey)`で昇順に並べる。`valueSortKey`はnullをstringより前とし、string同士はcode point
+辞書順とする。完全に同じtupleの要素数は保持する。同じ`namespace`／`term`へ異なる`value`を持つextensionを禁止せず、
+opaque extensionを失わない。opaque extensionの有無はCore解析結果の合否を変えないが、Digestの材料には含める。
 
 `documents[].statements`はContextが収録する対象statementではなく、当該文書が所有する全規範文とする。
 対象statementの選択はcoverageとConstraint Ledgerが保持し、Digestの材料にしない。
@@ -199,12 +208,27 @@ context仕様 §6のallowlistだけをkey固定のobjectとして保持する。
 
 ## 4. 文字正規化
 
-serialize前に、digest input中の全stringのkeyと値へ次を適用する。
+§2の材料収集後、sortとserializeの前に、digest input中の全stringのkeyと値へ次を適用する。
 
 1. Unicode NFCへ正規化する。
 2. LFを唯一の改行とする。§3.1.2で正規化済みの`bodyText`を再変換しない。
-3. path separatorを`/`とする。
-4. 制御文字を除去または置換しない。原文の値を保持する。
+3. 次に列挙するpath型fieldだけでU+005C REVERSE SOLIDUSをU+002F SOLIDUSへ変換する。
+4. 制御文字を除去または置換せず、trimとcase変換も行わない。
+
+path separator変換の対象は次だけである。
+
+- `workspaces[].path`
+- `documents[].frontmatter.implements[]`
+- `documents[].frontmatter.tests[].path`
+- `documents[].frontmatter.changes[]`
+- `settings.commands[].cwd`
+
+`title`、`bodyText`、statementの意味field、extension `value`、`settings.commands[].argv[]`、ID、workspace ID、
+relation targetはpathに見える内容を含んでもseparator変換しない。Frontmatterと設定で`/`を要求する入力pathは通常この
+変換前から正規形であり、本規則はOS内部表現が混入してもdigest inputの最終境界を固定するために適用する。
+
+配列の重複排除、sort、tuple比較はすべて本節の正規化後の値を使用する。正規化により完全に同じobjectとなる複数要素は
+同じbyte表現なので相対順がDigestへ影響しない。明示的に重複排除を規定した配列以外では要素数を保持する。
 
 比較のための正規化であり、正本fileを書き換えない。
 
@@ -235,6 +259,10 @@ hashはSHA-256とし、上記UTF-8 byte列だけを入力とする。結果は�
   不完全な材料からDigestを作らない。
 - `digestVersion`、`resolverVersion`、材料の意味を変更する場合はCore majorまたはminorを上げ、
   過去のDigest値を同じversionで再定義しない。
+
+Core 1.0の`digestVersion`と`resolverVersion`はともに`"1.0"`であり、package patch version、Git commit、実装言語、
+設定から導出しない。Digest入力構造、正規化、serializationの意味変更は`digestVersion`、Context閉包、適用可能性、
+target展開の意味変更は`resolverVersion`を上げる。patch releaseではどちらも変更しない。
 
 適合fixtureは、固定入力に対する期待Digest値を`expected/context.json`へ含める。
 fixtureの配置と比較方法は[適合fixture仕様](04_適合fixture仕様.md)に従う。
