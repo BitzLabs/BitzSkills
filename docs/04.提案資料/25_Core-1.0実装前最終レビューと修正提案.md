@@ -1,6 +1,6 @@
 # Core 1.0実装前最終レビューと修正提案
 
-- 状態: Open（裁定・正本反映待ち）
+- 状態: Open（P0契約反映済み、実fixture・P1・gate再検証待ち）
 - 実施日: 2026-09-04
 - 基準branch: `bitz_next`
 - 基準commit: `f47d14704dd4352cc08af538bd3633f4a030573d`
@@ -290,6 +290,13 @@ test対象へ含めるかが一致しない。
 
 ### 4.6 `FIN-FM-001`: Frontmatter型とYAML subsetが内部矛盾する
 
+**状態: 修正採用・契約／Schema／matrix反映済み、実fixture反映待ち。**
+
+共通YAML構文層と入力別Schemaを分離し、Draft 2020-12の
+`fixtures/conformance/frontmatter.schema.json`を追加した。`tests`だけにobject配列を許可し、null、空値、
+Unicode code point単位のtitle長、内部未知key、配列とtest tupleの重複、TASK `changes`の省略時意味を固定した。
+`SINGLE-114`〜`120`を適合matrixへ追加したが、対応する実成果物は未作成である。
+
 #### 問題
 
 [文書・Frontmatter・状態仕様 §3](../03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md#3-共通field)は
@@ -440,7 +447,7 @@ Step 6まで遅らせず、grammar、Schema、checkが安定した時点で自�
 
 次を全件満たしたcommitに対して再レビューする。
 
-- [ ] P0 6件に裁定があり、`docs/03.詳細設計`へ反映済み
+- [x] P0 6件に裁定があり、`docs/03.詳細設計`へ反映済み
 - [ ] 公開JSON例がmachine-readable Schemaを全件通過
 - [ ] 規範上の全非成功条件がDiagnostic registryへ対応
 - [ ] grammarに未定義token/nonterminalがない

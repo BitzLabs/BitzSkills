@@ -27,6 +27,7 @@ fixtures/conformance/monorepo/<fixture-id>/manifest.json
 fixtures/conformance/monorepo/<fixture-id>/expected/<operation>.json
 fixtures/conformance/manifest.schema.json
 fixtures/conformance/result.schema.json
+fixtures/conformance/frontmatter.schema.json
 ```
 
 `repo/`はbase commitを作る前の入力treeとする。`changes/`は`setup.operations[]`の`source`からだけ参照できる
@@ -36,6 +37,8 @@ version管理する。Git履歴とbase commit後の状態はmanifestだけから
 `manifest.schema.json`は全manifestが従うmachine-readable Schemaであり、harnessは実行前にmanifestを検証する。
 `result.schema.json`はCore 1.0の全公開JSON結果が従うDraft 2020-12 Schemaである。harnessは期待JSONを実行前、
 実結果とreportをnormalizer適用前に検証し、いずれかが不適合ならfixture比較自体をerrorにする。
+`frontmatter.schema.json`はYAML解析後のFrontmatter構造が従うDraft 2020-12 Schemaである。harnessは配置directoryから
+文書種別別definitionを選び、Core実行とは独立に正例を受理、Schema反例を拒否することを確認する。
 
 1つのfixtureは1回のinvocation、1種類の独立原因、1つの期待status、1つの期待exit codeだけを持つ。
 並び順や集約を検査するfixtureは、同じ原因を複数位置で発生させてよいが、別の原因を混ぜてはならない。
@@ -426,6 +429,30 @@ Context Digest fixtureは、Digest入力のCanonical JSONをUTF-8・BOMなし・
 | `SINGLE-112-03` | ADR起点 | check | passed／0 | 文書検査だけを行う |
 | `SINGLE-112-04` | ADR起点 | verify | 結果なし／4 | stdout結果なし、reportなし |
 | `SINGLE-113` | 文書IDと同文書のstatement IDを複数指定 | verify | passed／0 | 起点、statement、bindingを各規定時点で重複排除 |
+| `SINGLE-114` | `tests` object配列を持つREQ | check | passed／0 | Frontmatter Schema正例、規範例との一致 |
+| `SINGLE-115-01` | 最小REQ Frontmatter | check | passed／0 | REQ definitionを通過 |
+| `SINGLE-115-02` | 最小TECH Frontmatter | check | passed／0 | TECH definitionを通過 |
+| `SINGLE-115-03` | 最小ADR Frontmatter | check | passed／0 | ADR definitionを通過 |
+| `SINGLE-115-04` | `changes`省略の最小TASK Frontmatter | check | passed／0 | TASK definitionを通過、許可path 0件 |
+| `SINGLE-116-01` | titleが120 Unicode code point | check | passed／0 | 境界値を受理 |
+| `SINGLE-116-02` | titleが121 Unicode code point | check | failed／1 | `SPEC-FM-SCHEMA-001`だけ |
+| `SINGLE-116-03` | titleが空string | check | failed／1 | `SPEC-FM-SCHEMA-001`だけ |
+| `SINGLE-116-04` | titleが空白だけ | check | failed／1 | `SPEC-FM-SCHEMA-001`だけ |
+| `SINGLE-116-05` | titleが改行を含む | check | failed／1 | `SPEC-FM-SCHEMA-001`だけ |
+| `SINGLE-117-01` | 必須field欠如 | check | failed／1 | `SPEC-FM-REQUIRED-001`だけ |
+| `SINGLE-117-02` | Core標準fieldがnull | check | failed／1 | `SPEC-FM-SCHEMA-001`だけ |
+| `SINGLE-117-03` | `tests[].covers`が空配列 | check | failed／1 | `SPEC-FM-SCHEMA-001`だけ |
+| `SINGLE-118-01` | scalar配列の重複 | check | failed／1 | `SPEC-FM-SCHEMA-001`だけ |
+| `SINGLE-118-02` | `covers`順だけが異なる重複test要素 | check | failed／1 | key tupleにより`SPEC-FM-SCHEMA-001`だけ |
+| `SINGLE-118-03` | 同じtest pathでcommandまたはcoversが異なる | check | passed／0 | 異なるtest対応として受理 |
+| `SINGLE-119-01` | `relations`内の未知key | check | failed／1 | `SPEC-FM-SCHEMA-001`だけ |
+| `SINGLE-119-02` | `tests[]`内の未知key | check | failed／1 | `SPEC-FM-SCHEMA-001`だけ |
+| `SINGLE-119-03` | top-level未知field | check | passed_with_warnings／0 | `SPEC-FM-UNKNOWN-001`だけ |
+| `SINGLE-119-04` | `x-`拡張field | check | passed／0 | 値を保持しDiagnosticなし |
+| `SINGLE-120-01` | TASK `changes: []`と変更差分なし | explicit TASK check | passed／0 | 省略と同じ許可path 0件 |
+| `SINGLE-120-02` | `changes`省略TASKに変更差分あり | explicit TASK check | failed／1 | `SPEC-TASK-BOUNDARY-001`だけ |
+| `SINGLE-120-03` | REQに正しい型の`changes` | check | passed_with_warnings／0 | `SPEC-FM-UNAVAILABLE-001`だけ |
+| `SINGLE-120-04` | REQに型不正の`changes` | check | failed／1 | `SPEC-FM-SCHEMA-001`だけ、利用不能warningなし |
 
 ## 7. 最小matrix: モノレポ連合
 

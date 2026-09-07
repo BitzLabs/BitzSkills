@@ -69,8 +69,8 @@ priorityが最小の行だけをprimaryとして返す。同じpriorityの候補
 | `CONFIG-KEY-UNKNOWN` | all | `SPEC-CONFIG-UNKNOWN-001` | warning | passed_with_warnings | file | `continue` | 151 | 同一majorの未知標準key |
 | `WORKSPACE-ENTRY-UNKNOWN` | check, doctor | `SPEC-WORKSPACE-UNKNOWN-001` | warning | passed_with_warnings | file | `continue` | 160 | `.spec/`内の未知fileまたはdirectory |
 | `FM-YAML-SYNTAX` | parse | `SPEC-FM-SCHEMA-001` | error | failed | file | `skip-document` | 170 | Frontmatter YAMLの構文不正 |
-| `FM-YAML-FORBIDDEN` | parse | `SPEC-FM-SCHEMA-001` | error | failed | file | `skip-document` | 171 | custom tag、anchor、alias、merge key、重複key |
-| `FM-FIELD-TYPE` | parse | `SPEC-FM-SCHEMA-001` | error | failed | file | `skip-document` | 172 | Frontmatter fieldの型または値域不正 |
+| `FM-YAML-FORBIDDEN` | parse | `SPEC-FM-SCHEMA-001` | error | failed | file | `skip-document` | 171 | custom tag、anchor、alias、merge key、複雑key、複数document、重複mapping key |
+| `FM-FIELD-TYPE` | parse | `SPEC-FM-SCHEMA-001` | error | failed | file | `skip-document` | 172 | Frontmatter fieldの型・値域、null・空値、配列重複、内部未知key |
 | `FM-FIELD-REQUIRED` | parse | `SPEC-FM-REQUIRED-001` | error | failed | file | `skip-document` | 173 | Frontmatter必須field欠如 |
 | `FM-FIELD-UNAVAILABLE` | parse | `SPEC-FM-UNAVAILABLE-001` | warning | passed_with_warnings | file | `continue` | 180 | 文書種別では利用できないCore field |
 | `FM-FIELD-UNKNOWN` | parse | `SPEC-FM-UNKNOWN-001` | warning | passed_with_warnings | file | `continue` | 181 | `x-`で始まらない未知field |

@@ -136,11 +136,13 @@ CLIは対象範囲、Git比較基準、出力形式、report、timeout短縮だ�
 
 ## 8. YAML制約
 
-- UTF-8のYAML 1.2 subset
-- scalar、配列、通常mapだけ。object配列は`monorepo.members`だけで使用する
-- custom tag、anchor、alias、merge keyを禁止
-- 重複keyをerror
-- 日時、8進数、`yes`／`no`などの暗黙型変換を行わない
+- UTF-8のYAML 1.2 subsetとし、mapping keyはstringだけを許可する
+- custom tag、anchor、alias、merge key、複雑key、複数YAML documentを禁止する
+- YAML解釈後に同じstringとなる重複mapping keyをerrorとする。Unicode正規化やcase変換は行わない
+- timestampを暗黙変換せずstringとして扱う。`yes`／`no`はstringでありbooleanにしない。先頭`0`を8進数として扱わない
+- scalarはnull、string、boolean、10進integer、有限10進numberのいずれかとする
+- 構文層はscalar、scalar配列、string keyの通常mapを表現できる。許可する入れ子構造と値域は入力ごとのSchemaが決める
+- 設定Schemaは`monorepo.members`だけにobject配列を許可し、Frontmatter Schemaは`tests`だけにobject配列を許可する
 - file size 64 KiB以下
 - network accessなし
 

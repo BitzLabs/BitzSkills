@@ -41,7 +41,7 @@
 | [22_モノレポ残存P1裁定案.md](22_モノレポ残存P1裁定案.md) | FED-CROSS-002〜007の裁定案 | **Accepted**（ADR-042と正本へ反映済み） |
 | [23_モノレポ残存P2裁定案.md](23_モノレポ残存P2裁定案.md) | モノレポ残存P2 6件の裁定案 | **Accepted**（ADR-043と正本へ反映済み） |
 | [24_Core-1.0実装着手方針.md](24_Core-1.0実装着手方針.md) | 実装着手可能性と欠落 | **Accepted**（G1〜G8裁定・反映済み、G9は実装計画へ） |
-| [25_Core-1.0実装前最終レビューと修正提案.md](25_Core-1.0実装前最終レビューと修正提案.md) | 02.設計書、03.詳細設計の実装前最終点検 | **Open**（P0 6件、P1 5件の裁定・反映待ち） |
+| [25_Core-1.0実装前最終レビューと修正提案.md](25_Core-1.0実装前最終レビューと修正提案.md) | 02.設計書、03.詳細設計の実装前最終点検 | **Open**（P0契約反映済み、実fixture・P1・gate再検証待ち） |
 
 ## 3. 検討結果の要約
 
@@ -529,3 +529,6 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 提案24でOpenとした実装着手gateは、これらの不足により本レビュー時点では**No-Go**とする。
 提案25は、契約修正、fixture/Schema/CI準備だけを先行可能とし、P0を閉じるStep 0B、
 機械検証、golden Digest、有限時間のtimeout試験を完了してからgateを再判定することを提案する。
+
+2026-09-07までにP0 6件の裁定を正本へ反映し、manifest、公開結果、Frontmatterのmachine-readable Schemaと
+追加matrixを整備した。P0の契約残件はない。実fixture成果物、P1 5件、Step 0Bのcross-checkとgate再検証は未完了である。

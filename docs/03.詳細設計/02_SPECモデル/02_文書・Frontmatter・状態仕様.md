@@ -20,6 +20,11 @@ Coreは現在集合の重複を`SPEC-ID-DUPLICATE-001`／failedとして検出�
 ## 2. Frontmatter
 
 すべてのSPEC Markdownはfile先頭に1つのYAML Frontmatterを持つ。前にBOM、空行、commentを置かない。
+解析後の構造はDraft 2020-12の
+[`fixtures/conformance/frontmatter.schema.json`](../../../fixtures/conformance/frontmatter.schema.json)に従う。
+Coreは配置directoryから文書種別を決め、同Schemaの`reqFrontmatter`、`techFrontmatter`、`adrFrontmatter`、
+`taskFrontmatter`の対応する定義を選んで検証する。Schema rootの`oneOf`は独立validator用であり、directoryによる
+種別決定を置き換えない。
 
 ```yaml
 ---
@@ -49,7 +54,7 @@ verify: default
 | `implements` | string[] | No | 実装file path |
 | `tests` | object[] | No | test pathとcoverage |
 | `verify` | string | No | 文書既定command名 |
-| `changes` | string[] | TASKのみNo | 許可する変更path |
+| `changes` | string[] | No（TASKだけで利用可） | 許可する変更path。省略と`[]`は許可pathなし |
 
 文書種別はdirectoryから決め、`type`を重複して持たない。配列は重複を許さない。
 
@@ -57,7 +62,28 @@ verify: default
 - ADR: `relations`
 - TASK: `relations`、`changes`
 
-文書種別では利用できないCore fieldは`SPEC-FM-UNAVAILABLE-001`／warningとする。
+文書種別では利用できないCore fieldは、型と値域が妥当なら`SPEC-FM-UNAVAILABLE-001`／warningとする。
+型または値域が不正なら先に`SPEC-FM-SCHEMA-001`を返し、利用不能warningを重ねない。
+
+### 3.1 null、空、文字数
+
+Core標準fieldはすべて`null`を禁止する。`id`、`title`、`status`、`verify`、`tests[].path`、
+`tests[].command`は空stringを禁止する。`title`は改行を含まない1〜120 Unicode code pointとし、少なくとも
+1 code pointの非空白文字を含める。測定前のtrim、Unicode正規化、case変換を行わない。
+
+`relations`の空mapと、`relations.*`、`implements`、`tests`、`changes`の空配列は許可する。
+`tests[].covers`は1件以上を必要とする。任意fieldの省略は許可するが、空stringや`null`を省略の代用にしない。
+TASKの`changes`を省略または`[]`にした場合、明示TASK `check`で許可される変更pathは0件であり、変更差分があれば
+境界外として扱う。
+
+### 3.2 未知keyと拡張値
+
+Frontmatter直下の`x-`で始まるfieldは許可して保持し、それ以外の未知fieldはSchemaを通過させたうえで
+`SPEC-FM-UNKNOWN-001`／warningとする。`relations`と`tests[]`は閉じたobjectであり、定義されていない内部keyを
+`SPEC-FM-SCHEMA-001`とする。`refs`は既存の専用規則により`SPEC-RELATION-LEGACY-001`を返す。
+
+拡張fieldと未知fieldの値は、共通YAML subsetのscalar、scalar配列、またはstring keyのmapに限る。
+その内部でobject配列は使用できない。Coreは値を変更せず保持するが、合否、Context、command、権限へ使用しない。
 
 ## 4. relation field
 
@@ -165,11 +191,17 @@ x-risk: medium
 
 ## 11. YAML制約
 
-- UTF-8 YAML 1.2 subset
+- 構文層は[workspace・設定仕様 §8](01_workspace・設定仕様.md#8-yaml制約)の共通YAML 1.2 subset
 - Frontmatter 32 KiB以下、文書全体1 MiB以下
-- custom tag、anchor、alias、merge key、重複keyを禁止
-- scalar、scalar配列、通常mapだけを許可
-- 日時の暗黙型変換を行わない
+- 標準fieldの構造はFrontmatter Schemaを正とし、`tests`だけobject配列を許可
+- mapping keyの同値性はYAML解釈後のstringのcode point完全一致で判定する
+- Frontmatter内の全配列は、fieldごとに次の重複規則を適用する
+
+scalar配列の重複は、YAML解釈後の値と型の完全一致で判定し、Unicode正規化、case変換、path補正を行わない。
+`tests`要素は`(path, commandの有無と値, covers集合)`をkey tupleとする。`covers`集合は値のcode point辞書順で
+比較するため、記述順だけが異なる要素も重複である。mapping keyの記述順は同値性へ影響しない。
+同じ`path`でも`command`または`covers`が異なる要素は許可する。重複配列はfieldの値域不正として
+`SPEC-FM-SCHEMA-001`を返す。
 
 Frontmatter YAMLの構文不正、禁止構文、重複key、fieldの型・値域不正は
 `SPEC-FM-SCHEMA-001`／error／`failed`とする。必須field欠如だけは

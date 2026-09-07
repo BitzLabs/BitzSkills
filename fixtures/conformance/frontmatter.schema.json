@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "frontmatter.schema.json",
+  "title": "Bitz Core 1.0 SPEC Frontmatter",
+  "description": "Schema for the YAML-decoded Frontmatter value. Core selects the document-kind definition from the containing directory.",
+  "oneOf": [
+    { "$ref": "#/$defs/reqFrontmatter" },
+    { "$ref": "#/$defs/techFrontmatter" },
+    { "$ref": "#/$defs/adrFrontmatter" },
+    { "$ref": "#/$defs/taskFrontmatter" }
+  ],
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "pattern": "^(?=.*\\S)[^\\r\\n]*$"
+    },
+    "commandName": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,31}$"
+    },
+    "scalar": {
+      "type": ["string", "number", "integer", "boolean", "null"]
+    },
+    "scalarArray": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/scalar" }
+    },
+    "extensionValue": {
+      "oneOf": [
+        { "$ref": "#/$defs/scalar" },
+        { "$ref": "#/$defs/scalarArray" },
+        { "$ref": "#/$defs/extensionMap" }
+      ]
+    },
+    "extensionMap": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/extensionValue" }
+    },
+    "idString": {
+      "type": "string",
+      "pattern": "^(?:(?:[a-z][a-z0-9-]{0,31})::)?(?:REQ|TECH|ADR|TASK)-[0-9]{3,}(?::[A-Z][A-Z0-9-]*-[0-9]{2,})?$"
+    },
+    "idArray": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/idString" }
+    },
+    "pathString": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\u0000)(?!.*[*?\\[]).+$"
+    },
+    "pathArray": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/pathString" }
+    },
+    "relations": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requires": { "$ref": "#/$defs/idArray" },
+        "refines": { "$ref": "#/$defs/idArray" },
+        "addresses": { "$ref": "#/$defs/idArray" },
+        "supersedes": { "$ref": "#/$defs/idArray" },
+        "related": { "$ref": "#/$defs/idArray" }
+      }
+    },
+    "test": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "covers"],
+      "properties": {
+        "path": { "$ref": "#/$defs/pathString" },
+        "covers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/idString" }
+        },
+        "command": { "$ref": "#/$defs/commandName" }
+      }
+    },
+    "tests": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/test" }
+    },
+    "frontmatter": {
+      "type": "object",
+      "required": ["id", "title", "status"],
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "title": { "$ref": "#/$defs/title" },
+        "status": { "$ref": "#/$defs/nonEmptyString" },
+        "relations": { "$ref": "#/$defs/relations" },
+        "implements": { "$ref": "#/$defs/pathArray" },
+        "tests": { "$ref": "#/$defs/tests" },
+        "verify": { "$ref": "#/$defs/commandName" },
+        "changes": { "$ref": "#/$defs/pathArray" },
+        "refs": { "$ref": "#/$defs/scalarArray" }
+      },
+      "additionalProperties": { "$ref": "#/$defs/extensionValue" }
+    },
+    "reqFrontmatter": {
+      "allOf": [
+        { "$ref": "#/$defs/frontmatter" },
+        {
+          "properties": {
+            "id": { "type": "string", "pattern": "^REQ-[0-9]{3,}$" },
+            "status": { "enum": ["draft", "approved", "outdated", "rejected"] }
+          }
+        }
+      ]
+    },
+    "techFrontmatter": {
+      "allOf": [
+        { "$ref": "#/$defs/frontmatter" },
+        {
+          "properties": {
+            "id": { "type": "string", "pattern": "^TECH-[0-9]{3,}$" },
+            "status": { "enum": ["draft", "approved", "outdated", "rejected"] }
+          }
+        }
+      ]
+    },
+    "adrFrontmatter": {
+      "allOf": [
+        { "$ref": "#/$defs/frontmatter" },
+        {
+          "properties": {
+            "id": { "type": "string", "pattern": "^ADR-[0-9]{3,}$" },
+            "status": { "enum": ["proposed", "accepted", "rejected", "superseded"] }
+          }
+        }
+      ]
+    },
+    "taskFrontmatter": {
+      "allOf": [
+        { "$ref": "#/$defs/frontmatter" },
+        {
+          "properties": {
+            "id": { "type": "string", "pattern": "^TASK-[0-9]{3,}$" },
+            "status": { "enum": ["open", "done", "cancelled"] }
+          }
+        }
+      ]
+    }
+  }
+}
