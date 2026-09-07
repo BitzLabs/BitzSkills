@@ -304,9 +304,9 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 |---|---|---|---|---|
 | `SINGLE-055` | test成功 | verify | passed／0 | `targetResults[]`、`commands[]`1件、`bindingId`が`<ws>::<name>` |
 | `SINGLE-056` | testの非0終了 | verify | failed／1 | `termination: exit`、`exitCode`非0 |
-| `SINGLE-057` | command起動不能 | verify | error／3 | `SPEC-VERIFY-COMMAND-001`、`exitCode: null` |
+| `SINGLE-057` | 実行bit付きだがOSが拒否する実行形式 | verify | error／3 | 事前検査後の`spawn_error`、`SPEC-VERIFY-COMMAND-001`、空excerpt |
 | `SINGLE-058` | signal終了 | verify | error／3 | `termination: signal` |
-| `SINGLE-059` | timeout | verify | error／3 | `SPEC-VERIFY-TIMEOUT-001`、実効値は`min(CLI, 設定)` |
+| `SINGLE-059` | timeout後も終了しない直接process | verify | error／3 | `SPEC-VERIFY-TIMEOUT-001`、force kill、timeout到達から5秒以内 |
 | `SINGLE-060` | 対象MUSTが未tested | verify | blocked／2 | `CTX-COVERAGE-TEST-001`、testを開始しない |
 | `SINGLE-061` | command名を解決できない | verify | blocked／2 | `SPEC-VERIFY-BLOCKED-001` |
 | `SINGLE-062` | 引数なしで対象0件 | verify | blocked／2 | `SPEC-VERIFY-BLOCKED-002`、空CIを成功にしない |
@@ -316,8 +316,8 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-066` | 規範文なしTECHの文書単位test | verify | passed／0 | `statements: []`でも`bindingRefs`を持つ |
 | `SINGLE-067` | cancelled TASK起点 | verify | blocked／2 | `CTX-STATE-001` |
 | `SINGLE-068` | done TASK起点 | verify | passed／0 | 再検証を許可 |
-| `SINGLE-069-01` | 成功commandのstdout／stderrが64 KiBを超える | verify | passed／0 | pipeを止めず、redacted末尾抜粋とtruncated flagを保持 |
-| `SINGLE-069-02` | 非0終了commandのstdout／stderrが64 KiBを超える | verify | failed／1 | pipeを止めず、redacted末尾抜粋とtruncated flagを保持 |
+| `SINGLE-069-01` | 成功commandのstdout／stderrが64 KiBを超える | verify | passed／0 | pipeを止めず、redacted UTF-8末尾65,536 byteとtruncated flagを保持 |
+| `SINGLE-069-02` | 非0終了commandのstdout／stderrが64 KiBを超える | verify | failed／1 | pipeを止めず、redacted UTF-8末尾65,536 byteとtruncated flagを保持 |
 
 ### 6.7 出力とreport
 
@@ -471,6 +471,22 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-125-04` | 書込みなしcommandによるverify | verify | passed／0 | test processを除くCore書込み0件 |
 | `SINGLE-125-05` | 明示report付きcheckのCore副作用 | check --report | passed／0 | 最終report 1件だけ、一時file残存0件 |
 | `SINGLE-125-06` | reportの排他的作成失敗 | check --report | error／3 | 既存file不変、一時file残存0件 |
+| `SINGLE-126-01` | argv要素が非string | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |
+| `SINGLE-126-02` | argv[0]が空string | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |
+| `SINGLE-126-03` | argv要素にNUL | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |
+| `SINGLE-126-04` | argv templateが256要素超過 | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |
+| `SINGLE-126-05` | argv templateの1要素が32 KiB超過 | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |
+| `SINGLE-126-06` | argv templateのbyte総和が1 MiB超過 | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |
+| `SINGLE-126-07` | argv[1:]に空string | verify | passed／0 | 空の1引数として変更せず渡す |
+| `SINGLE-126-08` | `{tests}`展開後argv上限超過 | verify | blocked／2 | `SPEC-VERIFY-BLOCKED-001`、spawnなし、`bindingRefs: []` |
+| `SINGLE-126-09` | PATH上に実行fileがない | verify | blocked／2 | `SPEC-VERIFY-BLOCKED-001`、spawn_errorにしない |
+| `SINGLE-126-10` | stdinを読むcommand | verify | passed／0 | null deviceから即時EOF |
+| `SINGLE-126-11` | localeと任意環境変数を読むcommand | verify | passed／0 | 起動環境を継承し、`PWD`だけ実効cwd |
+| `SINGLE-126-12` | 子孫processがstdout／stderr FDを保持 | verify | error／3 | timeout到達から5秒以内、EOFを待たない |
+| `SINGLE-126-13` | timeoutしたbindingの後に独立binding | verify | error／3 | 後続bindingを実行して結果を保持 |
+| `SINGLE-126-14` | 不正UTF-8、CR、ESC、C0／DEL／C1 | verify | passed／0 | U+FFFD、LF、`\\uNNNN`へ決定論的変換 |
+| `SINGLE-126-15` | 環境secretと定型secretがchunk境界をまたぐ | verify | passed／0 | 全対象を`[REDACTED]`へ置換し生値なし |
+| `SINGLE-126-16` | redactionで公開文字列が64 KiB超 | verify | passed／0 | code point境界の末尾保持、rawが上限内ならtruncated false |
 
 ## 7. 最小matrix: モノレポ連合
 

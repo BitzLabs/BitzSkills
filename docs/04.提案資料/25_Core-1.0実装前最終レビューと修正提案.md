@@ -357,6 +357,13 @@ cacheを例外扱いできる。次のいずれかへ統一する。
 
 ### 5.3 `FIN-PROC-001`: verify processの安全性とliveness
 
+**状態: 修正採用・契約／Schema／matrix反映済み、実fixture反映待ち。**
+
+argv templateと展開後上限、実行file／PATH解決、環境継承、stdin、spawn前blockedと`spawn_error`の境界、
+timeoutから5秒以内の直接process停止とpipe閉鎖を正本へ反映した。出力のincremental UTF-8 decode、制御文字表記、
+secret mask、redaction後末尾65,536 byteも固定し、結果Schemaのtermination整合条件と`SINGLE-126`を追加した。
+対応する実fixtureは未作成である。
+
 次をcommand実行契約へ追加する。
 
 - argv要素の型、空文字、長さ、NUL、`argv[0]`のPATH解決

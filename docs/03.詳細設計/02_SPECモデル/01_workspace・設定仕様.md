@@ -104,7 +104,12 @@ safety:
 
 ## 6. command定義
 
-command名は`[a-z][a-z0-9-]{0,31}`とする。値は空でないargv配列、または`argv`と任意`cwd`のmapとする。
+command名は`[a-z][a-z0-9-]{0,31}`とする。値はargv配列、または`argv`と任意`cwd`のmapとする。argv templateは
+1〜256要素のstring配列、各要素はUTF-8で32 KiB以下、配列全体はUTF-8で1 MiB以下とする。全要素でNULを禁止し、
+`argv[0]`は空stringを禁止する。`argv[1:]`の空stringは正規の引数として保持する。違反は
+`SPEC-CONFIG-SCHEMA-001`とし、command実行へ進まない。
+
+argvのbyte数はYAML表記、配列区切り、終端NULを含めず、各stringをUTF-8 encodeしたbyte数とその総和で測定する。
 
 ```yaml
 verify:
@@ -120,6 +125,8 @@ verify:
 - `{tests}`は対象test pathを個別argv要素へ展開する。
 - 文字列内埋込み、環境変数展開、command置換、pipe、redirectを行わない。
 - `{tests}`がなければargvをそのまま1回実行する。
+- `{tests}`展開後のargvは最大10,000要素、各要素32 KiB以下、全体1 MiB以下とする。超過したbindingは起動せず
+  `SPEC-VERIFY-BLOCKED-001`とする。
 - `cwd`はworkspace相対の既存directoryとし、絶対path、`..`、root外symlinkを禁止する。
 - `cwd`指定時、test pathはその配下に限り、argvへ`cwd`相対で展開する。
 - command名をbinding IDとする。異なる名前の定義を内容が同じという理由で統合しない。

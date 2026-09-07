@@ -140,7 +140,10 @@ priorityが最小の行だけをprimaryとして返す。同じpriorityの候補
 | `VERIFY-BINDING-MISSING` | verify | `SPEC-VERIFY-BLOCKED-001` | error | blocked | file | `skip-target` | 600 | testまたはcommand定義不足 |
 | `VERIFY-TARGETS-EMPTY` | verify | `SPEC-VERIFY-BLOCKED-002` | error | blocked | invocation | `stop-operation` | 601 | 単一workspaceまたは連合全体の対象0件 |
 | `VERIFY-MEMBER-TARGETS-EMPTY` | verify | `SPEC-VERIFY-BLOCKED-002` | warning | passed_with_warnings | file | `skip-workspace` | 602 | 連合member単位の対象0件 |
-| `VERIFY-SPAWN-ERROR` | verify | `SPEC-VERIFY-COMMAND-001` | error | error | environment | `skip-binding` | 610 | command起動不能 |
+| `VERIFY-ARGV-EXPANDED-LIMIT` | verify | `SPEC-VERIFY-BLOCKED-001` | error | blocked | file | `skip-binding` | 603 | `{tests}`展開後argvが要素数またはbyte上限超過 |
+| `VERIFY-CWD-UNAVAILABLE` | verify | `SPEC-VERIFY-BLOCKED-001` | error | blocked | file | `skip-binding` | 604 | command cwdが不在または実行時に利用不能 |
+| `VERIFY-EXECUTABLE-UNAVAILABLE` | verify | `SPEC-VERIFY-BLOCKED-001` | error | blocked | environment | `skip-binding` | 605 | PATHまたは明示pathから通常の実行可能fileを解決不能 |
+| `VERIFY-SPAWN-ERROR` | verify | `SPEC-VERIFY-COMMAND-001` | error | error | environment | `skip-binding` | 610 | 事前検査通過後のrace、resource不足、OS errorでprocess生成失敗 |
 | `VERIFY-SIGNAL` | verify | `SPEC-VERIFY-COMMAND-001` | error | error | environment | `skip-binding` | 611 | commandがsignal終了 |
 | `VERIFY-TIMEOUT` | verify | `SPEC-VERIFY-TIMEOUT-001` | error | error | environment | `skip-binding` | 612 | command timeout |
 | `REPORT-WRITE` | check, verify | `SPEC-REPORT-WRITE-001` | error | error | file | `stop-operation` | 700 | 明示reportの排他的作成または書込み失敗 |

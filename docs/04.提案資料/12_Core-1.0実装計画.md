@@ -98,7 +98,8 @@ Canonical JSONとDigestが規定値にbyte一致することである。
 完了条件は、test成功、非0、起動失敗、signal、timeout、対象0件をfixtureで区別でき、異なる2 Contextを持つtarget、
 共有binding、Context非成功targetの混在を正しい`targetResults[]`へ対応付けられることである。`--report`なしでは
 成功・非成功とも既存reportを変更せず、新しいfileを作らない。`SINGLE-055`〜`069`、`SINGLE-107`〜`108`、
-`110`、`112`〜`113`、`125-04`が通過する。
+`110`、`112`〜`113`、`125-04`、`126`が通過する。timeout fixtureは子孫がpipeを保持してもtimeout到達から
+5秒以内に結果を確定し、計画済みの独立bindingを継続する。
 
 ## 8. Step 5: モノレポ連合
 

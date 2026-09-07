@@ -69,10 +69,37 @@ workspaceが異なればcommand名と内容が同じでも別bindingとする。
 - 1件がfailed/errorでも解決済みの独立bindingを継続する。
 - Core 1.0は並列実行とfail-fast optionを提供しない。
 
-実効timeoutは`min(CLI cap, 設定timeout)`で、CLI未指定時は設定値を使う。Coreが停止を保証するのは直接起動した
-processまでで、子孫processはcommand側の責務とする。
+argv templateと展開後argvの型・上限は[workspace・設定仕様 §6](../02_SPECモデル/01_workspace・設定仕様.md#6-command定義)に
+従う。公開結果の`argv`は実行fileを絶対pathへ置換せず、`{tests}`だけを展開した値を保持する。
 
-stdout/stderrは終了までdrainし、各末尾64 KiBをredactionした公開抜粋として保持する。Coreは出力自然言語を合否へ使わない。
+### 5.1 実行fileと環境
+
+`argv[0]`に`/`があれば、絶対pathはそのpath、相対pathは実効`cwd`を基準に解決する。`/`がなければ、実効環境の
+`PATH`を左から探索する。空または相対PATH要素は実効`cwd`を基準にし、platformの通常の実行可能file規則を適用する。
+doctorとverifyは同じ解決関数を使用する。通常fileでない、存在しない、または実行不能ならprocessを開始せず、
+`SPEC-VERIFY-BLOCKED-001`／blockedとする。
+
+test processの環境はCore起動時の環境をcopyし、`PATH`、`LANG`、`LC_*`を含め値を変更しない。`PWD`だけを実効`cwd`の
+絶対pathへ合わせる。`.env`、Frontmatter、本文から環境を追加せず、環境変数名と値を公開結果、report、Diagnosticへ
+出力しない。stdinはnull deviceへ接続して即時EOF、stdoutとstderrは別pipeとしてspawn時から並行drainする。
+shell、terminal、対話入力を使用しない。
+
+### 5.2 timeoutと有限時間終了
+
+実効timeoutは1〜3,600秒の`min(CLI cap, 設定timeout)`で、CLI未指定時は設定値を使う。monotonic clockでspawn成功から
+測定する。processはplatformが許す場合に新しいprocess groupで起動し、次の状態機械を適用する。
+
+1. timeout到達時に直接processとprocess groupへgraceful terminationを送る。
+2. 2秒後も直接processが生存していればforce killする。process groupと子孫へのforce killはplatformが許す範囲で行う。
+3. さらに2秒、stdout／stderrをdrainしながら直接processの終了を待つ。
+4. EOFがなくてもCore側のread handleを閉じ、timeout到達から5秒以内にbinding結果を確定する。
+
+直接processの停止を保証対象とし、子孫停止はbest effortとする。ただし子孫がstdout／stderrのwrite handleを保持しても
+EOFを無期限に待たない。timeout処理開始後にsignal終了を観測しても`termination: timeout`、`exitCode: null`とする。
+timeoutしたbindingの後も計画済みの独立bindingを続行する。timeout前にsignal終了した場合は`termination: signal`とする。
+
+stdout/stderrは通常終了時のEOF、またはtimeout状態機械によるread handle閉鎖までdrainし、各末尾64 KiBをredactionした
+公開抜粋として保持する。Coreは出力自然言語を合否へ使わない。
 
 ## 6. command結果
 
@@ -80,11 +107,20 @@ stdout/stderrは終了までdrainし、各末尾64 KiBをredactionした公開�
 |---|---|---|
 | `exit`、code 0 | 通常成功 | passed |
 | `exit`、code非0 | test不合格 | failed |
-| `spawn_error` | 起動不能 | error |
+| `spawn_error` | 事前検査後のprocess生成呼出し失敗 | error |
 | `signal` | signal終了 | error |
 | `timeout` | timeout | error |
 
 coverage、command、環境不足はtestを開始せずblockedとする。
+
+「環境不足」は、spawn前に検出した実行file／cwdの不在・実行不能と、展開後argv上限超過を指す。これらは
+`commands[]`へ実行結果を作らず、影響targetの`bindingRefs`を空にする。`spawn_error`は、この事前検査を通過した後に
+OSのprocess生成を呼び出し、race、resource不足、またはOS errorで失敗した場合だけとする。この場合はcommand結果を
+`termination: spawn_error`、`exitCode: null`、空excerpt、両truncated flag falseで記録する。
+
+spawn前にblockedとなったbindingのDiagnosticは、単一workspaceではtop-level、連合ではbinding所有workspaceへ1件だけ置き、
+共有targetごとに複製しない。影響targetはDiagnosticを複製せずstatusを`blocked`、`bindingRefs: []`とする。
+spawn後のcommand結果は通常どおり1件を`commands[]`へ置き、参照targetはその`bindingId`を保持して結果statusを集約する。
 
 ## 7. 引数なし実行
 
@@ -176,9 +212,9 @@ code、test、環境に対する実行時述語で、Frontmatter状態ではな�
 
 | code | result | 条件 |
 |---|---|---|
-| `SPEC-VERIFY-BLOCKED-001` | blocked | testまたはcommand不足 |
+| `SPEC-VERIFY-BLOCKED-001` | blocked | test／command不足、展開argv上限、cwdまたは実行file不足 |
 | `SPEC-VERIFY-BLOCKED-002` | blocked／passed_with_warnings | 単一・連合全体の対象0件／連合member単位の対象0件 |
-| `SPEC-VERIFY-COMMAND-001` | error | 起動不能またはsignal |
+| `SPEC-VERIFY-COMMAND-001` | error | 事前検査後のprocess生成失敗またはsignal |
 | `SPEC-VERIFY-TIMEOUT-001` | error | timeout |
 | `CTX-COVERAGE-TEST-001` | blocked | 対象MUSTが未tested |
 | `SPEC-MONOREPO-DEPENDENCY-001` | blocked | 別unitの非成功によりtarget Contextまたはbindingを構成不能 |

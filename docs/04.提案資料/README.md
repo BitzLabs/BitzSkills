@@ -333,7 +333,7 @@ P1はすべて裁定済みである。
 |---|---|---|
 | EDGE-001 | 修正採用 | `(workspaceId, documentId)`で基準版と現在版を対応付け、管理済みSPEC削除を拒否。ADR-032をADR-037で置換 |
 | EDGE-002 | 縮小採用 | 既存Rationaleで途中成果物の処遇を記録し、変更を伴うフェーズだけを個別commitへ分離 |
-| EDGE-003 | 縮小採用 | verifyを決定論的に逐次実行し、出力を各64 KiB、timeout保証を直接processへ限定 |
+| EDGE-003 | 縮小採用 | verifyを決定論的に逐次実行し、timeout停止保証を直接processへ限定。有限時間回収は後続`FIN-PROC-001`で補完 |
 | EDGE-004 | 縮小採用 | `SPEC-INPUT-READ-001`を追加し、原子的snapshotはCore 1.0の非目標とする |
 
 Git全履歴走査、tombstone索引、`Stopped`専用status、空commit、verify並列scheduler、OS横断の
