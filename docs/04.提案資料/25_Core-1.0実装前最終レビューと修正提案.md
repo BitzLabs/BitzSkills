@@ -377,6 +377,13 @@ secret mask、redaction後末尾65,536 byteも固定し、結果Schemaのtermina
 
 ### 5.4 `FIN-CLI-001`: CLI既定値とADR依存
 
+**状態: 修正採用・契約／matrix反映済み、実fixture反映待ち。**
+
+共通argv解析として単一optionの重複、反復可能option、空target／空値、timeout表記、targetとworkspaceの不存在を固定した。
+`--report`は任意pathを取らないboolean flagとし、既定formatと規定保存先を明文化した。CPython／Git下限、配布物名、
+runtime依存、YAML loader条件を詳細設計の正本へ移し、ADR-045は判断理由として維持した。`SINGLE-127`を追加したが、
+対応する実fixtureは未作成である。
+
 - `context`、`check`、`verify`、`doctor`の既定formatを規範化する。
 - `--timeout`の1〜3,600秒をADRだけでなくverify仕様へ記載する。
 - duplicate option、空target列、`--report`のpathと排他、未知targetの処理を確定する。

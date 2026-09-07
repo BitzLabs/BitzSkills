@@ -20,6 +20,8 @@ bitz check --all-workspaces
   [--report]
 ```
 
+共通argv解析、重複option、空値、target不存在は
+[Core実行環境・CLI基盤契約 §5・§6](../00_共通契約/06_Core実行環境・CLI基盤契約.md#5-共通cli-argv解析)に従う。
 明示対象はREQ、TECH、ADR、TASKの文書ID、statement ID、SPEC Markdown pathとする。statement IDとpathは
 所有文書IDへ正規化する。連合ではactive／`--workspace`で選択したworkspaceの非修飾IDとpath、または修飾IDを
 受け付け、1回の単独操作の対象workspaceを1つに限定する。code path、test path、directory、不正ID/path、

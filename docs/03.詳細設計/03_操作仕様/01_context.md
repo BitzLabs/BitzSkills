@@ -17,6 +17,8 @@ bitz context <spec-or-statement-id>...
   [--workspace <workspace-id>]
 ```
 
+共通argv解析、重複option、空値、target不存在は
+[Core実行環境・CLI基盤契約 §5・§6](../00_共通契約/06_Core実行環境・CLI基盤契約.md#5-共通cli-argv解析)に従う。
 purpose既定値は`interpret`、detail既定値は`standard`とする。起点は文書IDとstatement IDだけを受け付け、
 path、code、testを受け付けない。単一workspaceでは非修飾IDだけを受け付ける。連合ではactive workspaceの
 非修飾IDまたは修飾IDを受け付け、全起点の所有workspaceを1つに限定する。`--workspace`は非修飾IDの解決基準を
@@ -24,6 +26,9 @@ path、code、testを受け付けない。単一workspaceでは非修飾IDだけ
 連合正規ID辞書順に正規化する。
 
 `--format`の既定値は`markdown`である。
+
+起点を1件も指定しない場合と、空stringを起点として渡した場合は終了コード4とする。構文上妥当な起点がcatalogに
+存在しない場合は操作を開始し、`CTX-ROOT-MISSING-001`／failedを返す。既知起点へ置換しない。
 
 `expand`は完全解決集合にある文書だけを`full`提示へ昇格する。集合外IDは`CTX-PROJECTION-001`／failedとし、
 暗黙に依存へ追加しない。連合では非修飾`expand`をrequest workspaceから、修飾`expand`を連合索引から解決する。

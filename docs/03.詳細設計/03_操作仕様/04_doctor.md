@@ -15,6 +15,8 @@ bitz doctor [--format text|json]
   [--require-capability <capability-name>]...
 ```
 
+共通argv解析、重複option、空値、実行環境は
+[Core実行環境・CLI基盤契約](../00_共通契約/06_Core実行環境・CLI基盤契約.md)に従う。
 plugin情報を指定する場合はID、version、required API、capabilityを1つの要求として扱い、一部を暗黙補完しない。
 `--format`の既定値は`text`である。
 
@@ -52,7 +54,7 @@ checkが依存出力不足だけで実行不能なら`SPEC-MONOREPO-DEPENDENCY-0
 ### 3.1 実行環境の下限
 
 検査1は次の下限と比較する。値は
-[ADR-045](../../02.設計書/10_決定記録/ADR-045_実行環境と配布物の確定.md)が所有する。
+[Core実行環境・CLI基盤契約 §2・§4](../00_共通契約/06_Core実行環境・CLI基盤契約.md#2-実行環境と配布物)が所有する。
 
 | 対象 | 下限 | 不適合時 |
 |---|---|---|

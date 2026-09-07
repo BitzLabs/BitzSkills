@@ -273,6 +273,8 @@ JSON consumerは`schemaVersion` majorを確認した後、次の排他的外形�
 
 CLI引数の構文不正、排他違反、未知option、解決不能な明示Git revision、構文上妥当でもcatalogにない
 `--workspace`は終了コード4とし、Core操作結果とreportを生成しない。
+argvの重複、空値、値表記、target不存在の共通境界は
+[Core実行環境・CLI基盤契約 §5・§6](06_Core実行環境・CLI基盤契約.md#5-共通cli-argv解析)に従う。
 
 終了コード4は操作statusでもDiagnosticでもなく、Core操作を開始しなかったことを表す。出力は
 `--format`の指定にかかわらず次に固定する。
@@ -431,7 +433,8 @@ textはDiagnosticの`evidence`と`extensions`を出力しない。完全な機�
 
 ## 8. report
 
-`check`と`verify`はstatusにかかわらず、`--report`が指定された場合だけ`.spec/reports/`へ結果JSONを保存する。
+`--report`は値を取らないflagであり、`check`と`verify`はstatusにかかわらず、指定された場合だけ
+`.spec/reports/`へ結果JSONを保存する。任意の保存pathは受け付けない。
 `--report`がなければ標準出力と終了コードだけを返し、既存reportを変更せず、新しいfileも作らない。
 `--format json`は標準出力の形式だけを変え、保存を含意しない。引数不正、`context`、`doctor`はreportを保存しない。
 reportは排他的に作成し、既存fileを上書きしない。原子的作成の一時fileは同じreport directoryだけに置き、成功時に

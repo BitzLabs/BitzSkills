@@ -38,6 +38,7 @@ Core 1.0は単一workspaceと、同一Git repository内の明示的なモノレ�
 | 共通 | [安全な入出力・互換性](00_共通契約/02_安全な入出力・互換性.md) | I/O、上限、Git縮退、永続cache禁止 |
 | 共通 | [Context Digest正規化仕様](00_共通契約/03_Context-Digest正規化仕様.md) | digest input、正規化、serialization、hash |
 | 共通 | [適合fixture仕様](00_共通契約/04_適合fixture仕様.md) | fixture配置、manifest、normalizer、期待matrix |
+| 共通 | [Core実行環境・CLI基盤契約](00_共通契約/06_Core実行環境・CLI基盤契約.md) | 配布物、runtime依存、YAML/Git、共通argv解析 |
 | 言語 | [言語・Semantic IR仕様](01_EARS-AI/01_言語・Semantic-IR仕様.md) | EARS-AI構文、Parser、IR |
 | 言語 | [適合性・移行仕様](01_EARS-AI/02_適合性・移行仕様.md) | version、適合、旧版移行 |
 | 言語 | [例・アンチパターン](01_EARS-AI/03_例・アンチパターン.md) | 記述例 |

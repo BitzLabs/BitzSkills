@@ -185,13 +185,13 @@ Context Digest fixtureは、Digest入力のCanonical JSONをUTF-8・BOMなし・
 全fixtureは実行前後でGit statusとfilesystem manifestを比較する。
 
 - `--report`なしでは、成功・非成功にかかわらずfile生成、既存report更新、workspace内外へのCore書込みを0件とする。
-- `--report`指定時は`check`と`verify`だけが指定先へ1件を排他的作成する。
+- `--report`指定時は`check`と`verify`だけが規定先へ1件を排他的作成する。
 - 引数不正、`context`、`doctor`は`--report`の指定有無にかかわらずreportを作らない。
 - Coreは`.spec/`、code、testを変更しない。
 
 harnessはfixtureごとにrepositoryと別の空directoryを`HOME`、`XDG_CACHE_HOME`、`TMPDIR`として割り当て、その3 treeも
 実行前後で比較する。Coreが暗黙に永続cache、index、lock file、作業用directoryを作ればfixture失敗とする。
-明示reportの原子的作成に使う一時fileは指定report directory内だけに許し、操作終了時には残存0件とする。
+明示reportの原子的作成に使う一時fileは規定report directory内だけに許し、操作終了時には残存0件とする。
 verifyのCore副作用fixtureはfileを書かない固定test commandを使い、test process自身の副作用と分離する。
 
 ## 6. 最小matrix: 単一workspace
@@ -327,10 +327,10 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-070-02` | `--report`なしの失敗check | check | failed／1 | file生成0件、既存report不変 |
 | `SINGLE-070-03` | `--report`なしの成功verify | verify | passed／0 | file生成0件、既存report不変 |
 | `SINGLE-070-04` | `--report`なしの失敗verify | verify | failed／1 | file生成0件、既存report不変 |
-| `SINGLE-071-01` | 明示`--report`付きの成功check | check | passed／0 | 指定先へ1件を排他的作成 |
-| `SINGLE-071-02` | 明示`--report`付きの失敗check | check | failed／1 | 指定先へ1件を排他的作成 |
-| `SINGLE-071-03` | 明示`--report`付きの成功verify | verify | passed／0 | 指定先へ1件を排他的作成 |
-| `SINGLE-071-04` | 明示`--report`付きの失敗verify | verify | failed／1 | 指定先へ1件を排他的作成 |
+| `SINGLE-071-01` | 明示`--report`付きの成功check | check | passed／0 | 規定先へ1件を排他的作成 |
+| `SINGLE-071-02` | 明示`--report`付きの失敗check | check | failed／1 | 規定先へ1件を排他的作成 |
+| `SINGLE-071-03` | 明示`--report`付きの成功verify | verify | passed／0 | 規定先へ1件を排他的作成 |
+| `SINGLE-071-04` | 明示`--report`付きの失敗verify | verify | failed／1 | 規定先へ1件を排他的作成 |
 | `SINGLE-072` | report保存先が書込み不能 | check --report | error／3 | `SPEC-REPORT-WRITE-001`、元結果を端末へ保持 |
 | `SINGLE-073-01` | `context`へ`--report` | context | 結果なし／4 | 未知optionとして引数不正 |
 | `SINGLE-073-02` | `doctor`へ`--report` | doctor | 結果なし／4 | 未知optionとして引数不正 |
@@ -487,6 +487,25 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-126-14` | 不正UTF-8、CR、ESC、C0／DEL／C1 | verify | passed／0 | U+FFFD、LF、`\\uNNNN`へ決定論的変換 |
 | `SINGLE-126-15` | 環境secretと定型secretがchunk境界をまたぐ | verify | passed／0 | 全対象を`[REDACTED]`へ置換し生値なし |
 | `SINGLE-126-16` | redactionで公開文字列が64 KiB超 | verify | passed／0 | code point境界の末尾保持、rawが上限内ならtruncated false |
+| `SINGLE-127-01` | `--format`を2回指定 | check | 結果なし／4 | 同値でも重複optionとして操作開始前に拒否 |
+| `SINGLE-127-02` | `--full`を2回指定 | check | 結果なし／4 | 重複flagとして操作開始前に拒否 |
+| `SINGLE-127-03` | 異なる`--expand`を反復 | context | passed／0 | 反復を受理し、連合正規ID辞書順 |
+| `SINGLE-127-04` | 同じ`--expand`値を反復 | context | passed／0 | 1件へ重複排除 |
+| `SINGLE-127-05` | 空stringの明示target | check | 結果なし／4 | 引数なしcheckへ置換しない |
+| `SINGLE-127-06` | 起点0件のcontext | context | 結果なし／4 | 操作結果とreportなし |
+| `SINGLE-127-07` | `--workspace`の値が空string | doctor | 結果なし／4 | option値不足と同じく操作開始前に拒否 |
+| `SINGLE-127-08` | `--timeout 0` | verify | 結果なし／4 | 下限外 |
+| `SINGLE-127-09` | `--timeout 3601` | verify | 結果なし／4 | 上限外 |
+| `SINGLE-127-10` | `--timeout +1` | verify | 結果なし／4 | 非canonical十進表記 |
+| `SINGLE-127-11` | `--report=out.json` | check | 結果なし／4 | 未知option形式、任意pathへ書かない |
+| `SINGLE-127-12` | `--format json --report` | check | passed／0 | 両optionを受理し、標準出力JSONと規定reportを生成 |
+| `SINGLE-127-13` | catalogにない構文上妥当な起点 | context | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
+| `SINGLE-127-14` | catalogにない`--workspace` | doctor | 結果なし／4 | workspace探索後、Core操作結果なし |
+| `SINGLE-127-15` | Git 2.29を解決 | doctor | passed_with_warnings／0 | Git不在へ縮退し、下限値は詳細設計から取得 |
+| `SINGLE-127-16` | Git 2.30を解決 | doctor | passed／0 | 下限境界を利用可能として扱う |
+| `SINGLE-127-17` | Core package metadata | consumer test | accepted／0 | distribution、import package、CLI名は`bitz`、requires-pythonは3.11以上 |
+| `SINGLE-127-18` | build metadataとlock file | consumer test | accepted／0 | runtime依存は標準libraryとexact lock済みYAML library 1つだけ |
+| `SINGLE-127-19` | CPython 3.11でCoreを起動 | doctor | passed／0 | 3.11で利用できない構文／標準library APIへの依存なし |
 
 ## 7. 最小matrix: モノレポ連合
 
@@ -541,9 +560,9 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `MONO-021-07` | `commandDefinitionCount = 10,001` | check all | blocked／2 | `dimension=commandDefinitionCount`、`limit=10000`、早期停止 |
 | `MONO-021-08` | `verifyBindingCount = 10,001` | verify all | blocked／2 | `dimension=verifyBindingCount`、`limit=10000`、早期停止 |
 | `MONO-022-01` | 既定の連合check | check all | passed／0 | report file 0件 |
-| `MONO-022-02` | 明示`--report`付き連合check | check all | passed／0 | 指定先へreport 1件 |
+| `MONO-022-02` | 明示`--report`付き連合check | check all | passed／0 | 規定先へreport 1件 |
 | `MONO-022-03` | 既定の連合verify | verify all | passed／0 | report file 0件 |
-| `MONO-022-04` | 明示`--report`付き連合verify | verify all | passed／0 | 指定先へreport 1件 |
+| `MONO-022-04` | 明示`--report`付き連合verify | verify all | passed／0 | 規定先へreport 1件 |
 | `MONO-023-01` | 単一workspace JSON | consumer test | accepted／0 | 単一外形として受理 |
 | `MONO-023-02` | 連合JSON | consumer test | accepted／0 | 連合外形として受理 |
 | `MONO-023-03` | 単一／連合fieldの混在JSON | consumer test | rejected／1 | 排他的外形として拒否 |

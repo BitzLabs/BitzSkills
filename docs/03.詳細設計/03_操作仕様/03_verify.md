@@ -19,6 +19,8 @@ bitz verify --all-workspaces
   [--report]
 ```
 
+共通argv解析、重複option、空値、target不存在は
+[Core実行環境・CLI基盤契約 §5・§6](../00_共通契約/06_Core実行環境・CLI基盤契約.md#5-共通cli-argv解析)に従う。
 明示対象はREQ ID、TECH ID、statement ID、TASK ID、REQ/TECH/TASK Markdown pathとする。pathはFrontmatter IDへ
 正規化する。連合ではactive／`--workspace`で選択したworkspaceの非修飾IDとpath、または修飾IDを受け付け、
 1回の単独操作の対象workspaceを1つに限定する。code/test path、directory、ADR、異なるworkspaceを所有する
@@ -28,7 +30,8 @@ bitz verify --all-workspaces
 root一致は要求しない。明示対象と`--workspace`に排他的である。各workspaceへ引数なし
 verifyを適用し、結果を集約する。
 
-`--format`の既定値は`text`である。明示対象は`scope: selected`、引数なしは`scope: all`、
+`--format`の既定値は`text`である。`--timeout`は共通argv契約の1〜3,600秒だけを受理する。明示対象は
+`scope: selected`、引数なしは`scope: all`、
 `--all-workspaces`は`scope: all-workspaces`とする。
 
 ## 3. 対象
