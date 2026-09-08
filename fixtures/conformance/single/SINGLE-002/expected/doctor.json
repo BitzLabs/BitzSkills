@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "doctor",
+  "status": "blocked",
+  "workspace": {
+    "id": null,
+    "path": "."
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-DOCTOR-WORKSPACE-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": ".spec/bitz.yamlがありません",
+      "source": {
+        "kind": "environment",
+        "component": "workspace",
+        "identifier": "."
+      },
+      "suggestedAction": ".spec/bitz.yamlを次の内容で作成してください:\nschemaVersion: \"1.0\"\nlanguage: ja\nearsAi: \"1.0\"\n.gitignoreへ.spec/reports/を追加し、bitz check --fullを実行してください"
+    }
+  ],
+  "core": {
+    "version": "1.0.0",
+    "apiVersion": "1.0",
+    "capabilities": [
+      "context.v1",
+      "check.v1",
+      "verify.v1",
+      "doctor.v1",
+      "monorepo.v1"
+    ]
+  },
+  "checks": [
+    {
+      "name": "core",
+      "status": "passed"
+    },
+    {
+      "name": "workspace",
+      "status": "blocked"
+    },
+    {
+      "name": "git",
+      "status": "passed"
+    }
+  ]
+}

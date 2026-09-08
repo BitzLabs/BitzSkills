@@ -1,0 +1,30 @@
+{
+  "fixtureId": "SINGLE-002",
+  "description": "設定不在",
+  "setup": {
+    "git": true,
+    "operations": [
+      {
+        "op": "delete",
+        "path": ".gitkeep"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

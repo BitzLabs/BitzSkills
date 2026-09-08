@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "blocked",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-CONFIG-SCHEMA-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "未対応のSchema majorです",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/bitz.yaml",
+        "key": "schemaVersion"
+      }
+    }
+  ],
+  "scope": "full",
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "checkedDocumentCount": 0,
+  "checkedStatementCount": 0
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "error",
+  "workspace": {
+    "id": null,
+    "path": "."
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-CONFIG-SCHEMA-001",
+      "severity": "error",
+      "resultStatus": "error",
+      "summary": "languageはstringで指定してください",
+      "source": {
+        "kind": "file",
+        "workspaceId": null,
+        "path": ".spec/bitz.yaml",
+        "key": "language"
+      }
+    }
+  ],
+  "scope": "full",
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "checkedDocumentCount": 0,
+  "checkedStatementCount": 0
+}

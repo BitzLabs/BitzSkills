@@ -3,15 +3,54 @@ import json
 import copy
 from pathlib import Path
 import tempfile
+import shutil
 import unittest
 from unittest.mock import patch
 
 import validate_step0b as audit
 from conformance.diagnostic_coverage import LEDGER, validate
 from conformance.target_vectors import HERE as TARGET_HERE, validate as validate_targets
+from conformance.initial_fixtures import validate as validate_initial, compare_state
 
 
 class AuditTests(unittest.TestCase):
+    def test_initial_fixtures(self):
+        result = validate_initial()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(len(result["prepared"]), 5)
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_initial_fixture_rejects_corrupted_evidence(self):
+        mutations = [
+            ("SINGLE-004-01/expected/check.json", lambda value: value.update(status="passed")),
+            ("SINGLE-004-02/expected/check.json", lambda value: value["diagnostics"][0]["source"].update(key="language")),
+            ("SINGLE-003/manifest.json", lambda value: value["invocation"]["argv"].remove("--full")),
+            ("SINGLE-001/side-effects.json", lambda value: value["after"]["cache"].update(lock={"kind": "directory"})),
+            ("SINGLE-001/side-effects.json", lambda value: value["before"]["repository"][".spec/bitz.yaml"].update(sha256="0" * 64)),
+            ("SINGLE-002/expected/doctor.json", lambda value: value["diagnostics"][0].pop("suggestedAction")),
+        ]
+        for relative, mutate in mutations:
+            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                shutil.copytree(audit.FIXTURES / "single", root / "single")
+                for name in ("manifest", "result", "side-effects"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = root / "single" / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_initial(root)["errors"])
+
+    def test_side_effect_comparison_rejects_each_changed_boundary(self):
+        state = json.loads((audit.FIXTURES / "single/SINGLE-001/side-effects.json").read_text())["after"]
+        for name in ("repository", "home", "cache", "temporary"):
+            changed = copy.deepcopy(state)
+            changed[name]["unexpected"] = {"kind": "directory"}
+            self.assertEqual(compare_state(state, changed), [name])
+        changed = copy.deepcopy(state)
+        changed["git"]["index"] = "changed index"
+        self.assertEqual(compare_state(state, changed), ["git"])
+
     def test_target_vectors(self):
         data = json.loads((TARGET_HERE / "targets/cases.json").read_text())
         self.assertEqual(validate_targets(data)["errors"], [])

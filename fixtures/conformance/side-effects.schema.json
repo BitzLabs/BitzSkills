@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Read-only fixture side-effect expectations",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "policy", "before", "after"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "policy": {"const": "read-only"},
+    "before": {"$ref": "#/$defs/state"},
+    "after": {"$ref": "#/$defs/state"}
+  },
+  "$defs": {
+    "entry": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["kind"], "properties": {"kind": {"const": "directory"}}},
+        {"type": "object", "additionalProperties": false, "required": ["kind", "executable", "sha256"], "properties": {
+          "kind": {"const": "file"}, "executable": {"type": "boolean"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }},
+        {"type": "object", "additionalProperties": false, "required": ["kind", "target"], "properties": {
+          "kind": {"const": "symlink"}, "target": {"type": "string"}
+        }}
+      ]
+    },
+    "tree": {
+      "type": "object", "additionalProperties": {"$ref": "#/$defs/entry"},
+      "propertyNames": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*\\\\)(?!.*\\u0000).+$"}
+    },
+    "state": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repository", "git", "home", "cache", "temporary"],
+      "properties": {
+        "repository": {"$ref": "#/$defs/tree"},
+        "git": {
+          "type": "object", "additionalProperties": false, "required": ["status", "index"],
+          "properties": {"status": {"type": "string"}, "index": {"type": "string"}}
+        },
+        "home": {"$ref": "#/$defs/tree"},
+        "cache": {"$ref": "#/$defs/tree"},
+        "temporary": {"$ref": "#/$defs/tree"}
+      }
+    }
+  }
+}
