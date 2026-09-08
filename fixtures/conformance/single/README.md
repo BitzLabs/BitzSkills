@@ -88,5 +88,5 @@ hostのPATHに同名commandがあっても結果が変わらない構成とす�
 
 検証はCoreもYAML設定判定も実装しない。afterは期待値だけであり、Core実行後の実測値ではない。
 Core実装後のGate Bで、実stdout/終了コード、実before/after、索引構築へ進まないことを確認する。
-9件の準備が通っても、matrix残302件、golden Context Digest、全体の副作用期待値、
+この9件に加えて[EARS-AI構文・候補抽出の7件](ears-review.md)を準備した。matrix残295件、golden Context Digest、全体の副作用期待値、
 fresh checkoutでのGate A全検証は残る。

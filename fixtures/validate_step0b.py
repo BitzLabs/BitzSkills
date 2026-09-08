@@ -17,6 +17,7 @@ sys.dont_write_bytecode = True
 from conformance.diagnostic_coverage import validate as validate_diagnostic_coverage
 from conformance.target_vectors import validate as validate_target_vectors
 from conformance.initial_fixtures import validate as validate_initial_fixtures
+from conformance.ears_fixtures import validate as validate_ears_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -164,7 +165,7 @@ def registry():
 
 
 def main():
-    checks = {"public_json": public_json(), "grammar": grammar(), "matrix": matrix(), "registry": registry(), "links": links(), "target_vectors": validate_target_vectors(), "initial_fixtures": validate_initial_fixtures()}
+    checks = {"public_json": public_json(), "grammar": grammar(), "matrix": matrix(), "registry": registry(), "links": links(), "target_vectors": validate_target_vectors(), "initial_fixtures": validate_initial_fixtures(), "ears_fixtures": validate_ears_fixtures()}
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_step0p.py")], capture_output=True, text=True, timeout=60)
     checks["step0p"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
     helpers = subprocess.run([sys.executable, "-B", str(FIXTURES / "test_harness.py")], capture_output=True, text=True, timeout=30)

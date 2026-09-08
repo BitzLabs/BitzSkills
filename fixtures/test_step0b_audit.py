@@ -11,9 +11,49 @@ import validate_step0b as audit
 from conformance.diagnostic_coverage import LEDGER, validate
 from conformance.target_vectors import HERE as TARGET_HERE, validate as validate_targets
 from conformance.initial_fixtures import validate as validate_initial, compare_state, check_command_preconditions
+from conformance.ears_fixtures import validate as validate_ears
 
 
 class AuditTests(unittest.TestCase):
+    def test_ears_fixtures(self):
+        result = validate_ears()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(len(result["prepared"]), 7)
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_ears_rejects_corrupted_expectations(self):
+        mutations = [
+            ("SINGLE-007", lambda value: value["diagnostics"][0]["source"].update(column=71)),
+            ("SINGLE-008", lambda value: value["diagnostics"][0].update(severity="error")),
+            ("SINGLE-009-01", lambda value: value.update(diagnostics=[])),
+            ("SINGLE-009-02", lambda value: value.update(checkedDocumentCount=1)),
+            ("SINGLE-009-03", lambda value: value["diagnostics"][0]["source"].update(line=15)),
+            ("SINGLE-010-01", lambda value: value.update(checkedStatementCount=2)),
+            ("SINGLE-010-02", lambda value: value.update(status="failed")),
+        ]
+        for identifier, mutate in mutations:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                shutil.copytree(audit.FIXTURES / "single" / identifier, root / "single" / identifier)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = root / "single" / identifier / "expected/check.json"
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_ears(root, [identifier])["errors"])
+
+    def test_ears_rejects_removed_valid_statement(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            identifier = "SINGLE-007"
+            shutil.copytree(audit.FIXTURES / "single" / identifier, root / "single" / identifier)
+            for name in ("manifest", "result", "side-effects", "frontmatter"):
+                shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+            path = root / "single" / identifier / "repo/.spec/requirements/REQ-001.md"
+            path.write_text("\n".join(line for line in path.read_text().splitlines() if not line.startswith("- [REQ-001:AC-01]")) + "\n")
+            self.assertTrue(validate_ears(root, [identifier])["errors"])
+
     def test_initial_fixtures(self):
         result = validate_initial()
         self.assertEqual(result["errors"], [])
