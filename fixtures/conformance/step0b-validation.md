@@ -11,8 +11,8 @@
 | Other JSON examples | 5 Semantic IR / Digest material examples parsed; not certified by the result Schema |
 | EBNF references | 33 definitions plus 3 explicitly prose-defined lexical sets; no unresolved reference |
 | Diagnostic review (updated 2026-09-08) | 119 conditions mapped to 17 source documents; three open issues resolved; ledger and regression checks passed |
-| Matrix inventory | 311 IDs, no duplicate or family/suffix collision; 16 prepared, 295 real fixtures missing |
-| EARS fixtures | SINGLE-007, 008, 009-01/02/03, 010-01/02: fixed REQ bytes, Frontmatter Schema, complete expected results, Unicode token positions and two isolated setups checked; position/severity/count/input corruption rejected |
+| Matrix inventory | 311 IDs, no duplicate or family/suffix collision; 21 prepared, 290 real fixtures missing |
+| EARS fixtures | SINGLE-007, 008, 009-01/02/03, 010-01/02, 011, 012-01/02/03, 013: fixed REQ bytes, Frontmatter Schema, complete expected results, Unicode token/end-of-line positions and two isolated setups checked; position/severity/code/count/input corruption rejected |
 | Initial fixtures | SINGLE-001, 002, 003, 004-01/02, 005-01/02, 006-01/02: manifest/result/side-effect schemas and reviewed input checks passed; two isolated setups each matched fixed before snapshots |
 | Command preconditions | Absent explicit executable / absent cwd isolated; /bin/true executable prerequisite checked without running commands; extra or missing causes rejected by regression tests |
 | Target vectors (2026-09-08) | 18 basic combinations + 7 supplementary cases; four ordered sets, input-order invariance and rejection regression checks passed |
@@ -24,7 +24,7 @@
 | Step 0-P | Passed again via the integrated command |
 
 The Git and process vectors are infrastructure tests, not conformance fixtures or Core acceptance results.
-Read-only before/after expectations are fixed for the nine introduction/config and seven EARS cases; the remaining cases still need expectations.
+Read-only before/after expectations are fixed for the nine introduction/config and twelve EARS cases; the remaining cases still need expectations.
 The initial fixtures have not run Core. Their after snapshots are expectations, not observed Core side effects.
 Exact doctor check names and Diagnostic strings chosen for this batch are recorded in [the initial fixture review](single/README.md).
 Structural registry and matrix checks cannot prove semantic coverage or single-cause isolation. Diagnostic semantic decisions are

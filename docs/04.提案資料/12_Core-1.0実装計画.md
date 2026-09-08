@@ -89,8 +89,8 @@ generator、helper、harnessへ落とし込み、fresh checkoutから再現で�
 
 部分検証の入口は`uv run fixtures/validate_step0b.py`。公開JSON、grammar参照、link、Git setup、process helper、
 副作用比較の自己試験、Step 0-P、Diagnostic意味網羅の対応台帳検証、target期待集合25ケースを統合済みである。
-適合fixture 311件中、導入・設定9件とEARS-AI構文・候補抽出7件は入力・期待JSON・副作用期待値を作成し、隔離setupの2回一致を検証した。
-残295件の適合fixture、golden Context Digest、残fixtureの副作用期待値は未完了であり、全Gate A検証の完了は宣言しない。
+適合fixture 311件中、導入・設定9件とEARS-AI構文・候補抽出・拡張12件は入力・期待JSON・副作用期待値を作成し、隔離setupの2回一致を検証した。
+残290件の適合fixture、golden Context Digest、残fixtureの副作用期待値は未完了であり、全Gate A検証の完了は宣言しない。
 
 このStepで実装してよいのはSchema検証、fixture generator、reference計算、grammar検査、matrix検査、
 process用test helper、副作用比較harness、独立cross-checkである。`doctor`、`context`、`check`、`verify`、

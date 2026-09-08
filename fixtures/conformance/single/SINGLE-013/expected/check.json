@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "passed_with_warnings",
+  "scope": "full",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "checkedDocumentCount": 1,
+  "checkedStatementCount": 2,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "EAI-EXT-UNKNOWN-001",
+      "severity": "warning",
+      "resultStatus": "passed_with_warnings",
+      "summary": "未知namespaceのextensionを保持します",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/requirements/REQ-001.md",
+        "line": 16,
+        "column": 19
+      }
+    }
+  ]
+}

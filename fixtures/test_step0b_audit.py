@@ -18,7 +18,7 @@ class AuditTests(unittest.TestCase):
     def test_ears_fixtures(self):
         result = validate_ears()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(len(result["prepared"]), 7)
+        self.assertEqual(len(result["prepared"]), 12)
         self.assertEqual(result["core_execution"], "Not run")
 
     def test_ears_rejects_corrupted_expectations(self):
@@ -30,6 +30,11 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-009-03", lambda value: value["diagnostics"][0]["source"].update(line=15)),
             ("SINGLE-010-01", lambda value: value.update(checkedStatementCount=2)),
             ("SINGLE-010-02", lambda value: value.update(status="failed")),
+            ("SINGLE-011", lambda value: value["diagnostics"][0].update(severity="warning")),
+            ("SINGLE-012-01", lambda value: value["diagnostics"][0].update(code="EAI-CORE-SYNTAX-002")),
+            ("SINGLE-012-02", lambda value: value["diagnostics"][0]["source"].update(column=3)),
+            ("SINGLE-012-03", lambda value: value["diagnostics"][0]["source"].update(column=78)),
+            ("SINGLE-013", lambda value: value.update(checkedStatementCount=1)),
         ]
         for identifier, mutate in mutations:
             with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:

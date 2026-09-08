@@ -12,7 +12,7 @@ It also executes Step 0-P validation and the fixture infrastructure self-tests.
 Pinned dependencies are declared in the script; the first run requires package download access.
 
 Exit 0 means Gate A is allowed; exit 1 means errors or outstanding evidence remain. Currently exit 1 is expected:
-295 of the 311 matrix fixtures, independent golden Context Digests,
+290 of the 311 matrix fixtures, independent golden Context Digests,
 and per-fixture side-effect expectations are still outstanding. Missing fixtures are listed individually.
 Static checks do not prove that a fixture has only one independent cause. Diagnostic mappings have a reviewed ledger:
 see [Diagnostic review](diagnostic-review.md). The audit checks its integrity and source freshness, not natural-language semantics.
@@ -25,7 +25,7 @@ and read-only before/after expectations. Two isolated setups are checked against
 This validates preparation evidence, not Core execution or observed post-operation side effects.
 The missing-cwd case requires an executable `/bin/true` on the Linux validation host; missing prerequisites fail the audit.
 
-[EARS fixtures](single/ears-review.md) add seven syntax/ID/candidate cases, bringing preparation to 16/311.
+[EARS fixtures](single/ears-review.md) provide twelve syntax/ID/candidate/extension cases, bringing preparation to 21/311.
 Their fixed REQ inputs, Frontmatter schema, full expected JSON, token positions, and two isolated setups are audited.
 This does not implement or certify the Core Scanner/Parser.
 

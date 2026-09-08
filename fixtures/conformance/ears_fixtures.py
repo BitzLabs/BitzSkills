@@ -70,6 +70,59 @@ CASES = json.loads(r'''
   ]
 ]
 ''')
+CASES.extend(json.loads(r'''
+[
+  [
+    "SINGLE-011",
+    "draft",
+    "- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。",
+    "EAI-CORE-ID-002",
+    "failed",
+    3
+  ],
+  [
+    "SINGLE-012-01",
+    "approved",
+    "- [REQ-001:AC-02] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT 秘密情報を出力しない。",
+    "EAI-CORE-SYNTAX-004",
+    "failed",
+    56
+  ],
+  [
+    "SINGLE-012-02",
+    "approved",
+    "- [REQ-001:AC-02] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] ログに `secret を出力しない。",
+    "EAI-CORE-SYNTAX-005",
+    "failed",
+    73
+  ],
+  [
+    "SINGLE-012-03",
+    "approved",
+    "- [REQ-001:AC-02] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない",
+    "EAI-CORE-SYNTAX-006",
+    "failed",
+    79
+  ],
+  [
+    "SINGLE-013",
+    "approved",
+    "- [REQ-001:AC-02] [quality:LEVEL=\"basic\"] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。",
+    "EAI-EXT-UNKNOWN-001",
+    "passed_with_warnings",
+    19
+  ]
+]
+'''))
+SUMMARIES = {
+    "EAI-CORE-ID-001": "規範文IDの形式が不正です",
+    "EAI-CORE-ID-002": "規範文IDが重複しています",
+    "EAI-CORE-SYNTAX-001": "tagの順序が不正です",
+    "EAI-CORE-SYNTAX-004": "tagが閉じられていません",
+    "EAI-CORE-SYNTAX-005": "code spanが閉じられていません",
+    "EAI-CORE-SYNTAX-006": "規範文末の句点がありません",
+    "EAI-EXT-UNKNOWN-001": "未知namespaceのextensionを保持します",
+}
 GOOD = "- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。"
 SPEC_PATH = ".spec/requirements/REQ-001.md"
 
@@ -108,7 +161,7 @@ def validate(root=HERE, identifiers=None):
             diagnostics = [] if code is None else [{
                 "code": code, "severity": "error" if status == "failed" else "warning",
                 "resultStatus": status,
-                "summary": "規範文IDの形式が不正です" if code == "EAI-CORE-ID-001" else "tagの順序が不正です",
+                "summary": SUMMARIES[code],
                 "source": {"kind": "file", "workspaceId": "root", "path": SPEC_PATH, "line": 16, "column": column},
             }]
             expected = {
@@ -116,7 +169,7 @@ def validate(root=HERE, identifiers=None):
                 "workspace": {"id": "root", "path": "."},
                 "revision": {"base": "0" * 40, "commit": "0" * 40, "dirty": False},
                 "checkedDocumentCount": 0 if status == "failed" else 1,
-                "checkedStatementCount": 0 if status == "failed" else 1, "durationMs": 0,
+                "checkedStatementCount": 0 if status == "failed" else 2 if identifier == "SINGLE-013" else 1, "durationMs": 0,
                 "diagnostics": diagnostics,
             }
             if result != expected:
@@ -129,8 +182,10 @@ def validate(root=HERE, identifiers=None):
             fm_validator.validate(dict(value.split(": ", 1) for value in fm_lines))
             if code:
                 source_line = document.decode().splitlines()[15]
-                token = "[REASON]" if code == "EAI-CORE-SYNTAX-001" else "["
-                if source_line.index(token) + 1 != column:
+                tokens = {"EAI-CORE-SYNTAX-001": "[REASON]", "EAI-CORE-SYNTAX-004": "[CONSTRAINT",
+                          "EAI-CORE-SYNTAX-005": "`", "EAI-EXT-UNKNOWN-001": "[quality:"}
+                position = len(source_line) + 1 if code == "EAI-CORE-SYNTAX-006" else source_line.index(tokens.get(code, "[")) + 1
+                if position != column:
                     raise ValueError("Diagnostic column does not point to reviewed token")
             effects = json.loads((fixture / "side-effects.json").read_text())
             validators["side-effects"].validate(effects)
