@@ -77,6 +77,12 @@ argv templateと展開後argvの型・上限は[workspace・設定仕様 §6](..
 
 ### 5.1 実行fileと環境
 
+binding所有workspaceの設定fileがGit利用可能時にindexで未追跡なら、`VERIFY-CONFIG-UNTRACKED`として起動を遮断する。
+Git不在の単一workspaceは現在設定を使う縮退契約に従い、連合はglobal preflightで遮断する。
+test pathが所有境界・存在検査を通過しても実効cwdの配下にない場合は、`VERIFY-TEST-OUTSIDE-CWD`として遮断する。
+いずれも`SPEC-VERIFY-BLOCKED-001`／error／blocked、`source.kind: file`とし、前者のsourceは設定file、
+後者のsourceは該当test対応を宣言したSPECとする。独立bindingは継続し、以下の事前検査blockedと同じ証跡規則を使う。
+
 `argv[0]`に`/`があれば、絶対pathはそのpath、相対pathは実効`cwd`を基準に解決する。`/`がなければ、実効環境の
 `PATH`を左から探索する。空または相対PATH要素は実効`cwd`を基準にし、platformの通常の実行可能file規則を適用する。
 doctorとverifyは同じ解決関数を使用する。通常fileでない、存在しない、または実行不能ならprocessを開始せず、
@@ -215,11 +221,11 @@ code、test、環境に対する実行時述語で、Frontmatter状態ではな�
 
 | code | result | 条件 |
 |---|---|---|
-| `SPEC-VERIFY-BLOCKED-001` | blocked | test／command不足、展開argv上限、cwdまたは実行file不足 |
+| `SPEC-VERIFY-BLOCKED-001` | blocked | test／command不足、未追跡設定、cwd配下外test、展開argv上限、cwdまたは実行file不足 |
 | `SPEC-VERIFY-BLOCKED-002` | blocked／passed_with_warnings | 単一・連合全体の対象0件／連合member単位の対象0件 |
 | `SPEC-VERIFY-COMMAND-001` | error | 事前検査後のprocess生成失敗またはsignal |
 | `SPEC-VERIFY-TIMEOUT-001` | error | timeout |
-| `CTX-COVERAGE-TEST-001` | blocked | 対象MUSTが未tested |
+| `CTX-COVERAGE-TEST-001` | blocked／passed_with_warnings | 対象MUSTが未tested／対象SHOULDが未tested |
 | `SPEC-MONOREPO-DEPENDENCY-001` | blocked | 別unitの非成功によりtarget Contextまたはbindingを構成不能 |
 
 report生成、秘密情報、result集約は共通契約に従う。

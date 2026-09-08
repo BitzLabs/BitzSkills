@@ -129,6 +129,10 @@ verify:
   `SPEC-VERIFY-BLOCKED-001`とする。
 - `cwd`はworkspace相対の既存directoryとし、絶対path、`..`、root外symlinkを禁止する。
 - `cwd`指定時、test pathはその配下に限り、argvへ`cwd`相対で展開する。
+  所有境界とpath存在を確認した後、同一workspace内でもtest pathが実効cwd配下にない場合は、verifyのbinding解決で
+  `SPEC-VERIFY-BLOCKED-001`／blockedとし、そのbindingを起動しない。包含はcanonical pathのsegment境界で判定する。
+  `{tests}`の有無にかかわらず適用する。checkはpathの型・存在・所有境界、doctorは実行file・cwdまでを検査し、
+  選択test集合とcwdの包含検査はverifyだけが行う。
 - command名をbinding IDとする。異なる名前の定義を内容が同じという理由で統合しない。
 
 Frontmatterと本文はcommand argv、cwd、環境変数を定義できない。

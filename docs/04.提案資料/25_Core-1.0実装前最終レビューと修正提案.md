@@ -506,7 +506,7 @@ Step 6まで遅らせず、grammar、Schema、checkが安定した時点で自�
 
 - [x] P0 6件に裁定があり、`docs/03.詳細設計`へ反映済み
 - [x] 公開JSON例がmachine-readable Schemaを全件通過
-- [ ] 規範上の全非成功条件がDiagnostic registryへ対応
+- [x] 規範上の全非成功条件がDiagnostic registryへ対応
 - [x] grammarに未定義token/nonterminalがない
 - [ ] target種別×purposeの期待集合fixtureが存在
 - [ ] fixture matrixに選択的期待、複数原因、`元status`がない
@@ -520,9 +520,11 @@ Step 6まで遅らせず、grammar、Schema、checkが安定した時点で自�
 
 実行入口は`uv run fixtures/validate_step0b.py`。公開結果等10例、EBNF 33定義、相対link 218件、
 Git 7状態の2回再現とprocess helper自己試験を検証した。Semantic IRとDigest材料の5例はJSON構文確認だけであり、
-公開結果Schemaの対象ではない。registry 115条件の構造確認は、全非成功条件の意味的な網羅確認を代替しない。
+公開結果Schemaの対象ではない。2026-09-08にDiagnostic意味網羅レビューを実施し、119条件を17根拠文書へ対応付け、
+発見した3件の未裁定条件を解消した。対応台帳の欠落・未知ID・根拠改変・未裁定条件残存を検証する。
+判断根拠とDiagnosticを生成しない条件は[Diagnostic意味網羅レビュー](../../fixtures/conformance/diagnostic-review.md)に記録した。
 matrix 311件の実fixtureは未作成である。詳細は[Step 0B検証記録](../../fixtures/conformance/step0b-validation.md)を参照する。
-未完了の意味検証と実fixtureがあるため、コマンドは終了コード1、Gate A `Blocked`を返す。
+未完了のtarget集合、golden Digest、実fixture等があるため、コマンドは終了コード1、Gate A `Blocked`を返す。
 
 従来の「実装計画のStep 0BがClosed」は判定結果を判定条件に含める自己参照であるため削除する。
 上記の自動検査結果と実行環境を同一commitへ記録した時点で、Step 0Bを`Complete`、Gate Aを`Allowed`とする。

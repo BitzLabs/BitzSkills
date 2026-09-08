@@ -1,0 +1,290 @@
+{
+  "schemaVersion": "1.0",
+  "reviewStatus": "Passed",
+  "sources": {
+    "docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md": "8a4faea7e6d141e7fd3c2041339faa20b1d7d1e96fba34623173588c76b99f6a",
+    "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "283b8fa75f94ae7c52df7b526f389f33a9f9553e8db6f51751c0afa9749c3200",
+    "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md": "57f0f75a36703cafe577d34a23653df6e81ac255691183a0888a76c18aed80c0",
+    "docs/03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md": "9f8e7dd5c104cada3424a1fd036388f1de199dbb8316305bdae6769aea983ba2",
+    "docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md": "37d509ab099072c5c288b5ec8049d9c3c27c556c9813175e6fd77fc8dd9abb92",
+    "docs/03.詳細設計/02_SPECモデル/03_文書種別・本文テンプレート.md": "b2bdc98bf06dc74cd70bf32f6f2c304d1044b207d9e944ed2383456e9e664b32",
+    "docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md": "d2716934b6cdd0b90bd6b462cf3122f882a2b1add65124fef9953f697c825a53",
+    "docs/03.詳細設計/02_SPECモデル/05_モノレポSPEC連合仕様.md": "8d10c282e1c4abd2a8580fb1a76e09e4a682138ca9908604ece89b566d86b740",
+    "docs/03.詳細設計/03_操作仕様/01_context.md": "0edc34aac2abfd276c8bd649483853f00bd7126b70ad182f9e89ed4a71ef5883",
+    "docs/03.詳細設計/03_操作仕様/02_check.md": "c0eb4c2facde152a80e2304e6a0aee8bfe7598512cf7af05d3d97cf3e3adc2a7",
+    "docs/03.詳細設計/03_操作仕様/03_verify.md": "e982727a6918bfdb7ff742628072f01c465bcee47f12bcc18b4b0a1f9ab4cbd8",
+    "docs/03.詳細設計/03_操作仕様/04_doctor.md": "a014a9d86405a3c7122dd9a01a40808a58b3e0d1b3ae3388d7cce7fdb035406e",
+    "docs/03.詳細設計/03_操作仕様/README.md": "a520a10c2b81fc39d3b09b218d12eeed756c04c04ceac1b4fc9c489d041a6eda",
+    "docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md": "e861b0c665e30216a6964f8bce495b4409f2d9a7d998efcb6cb9c7636387c4de",
+    "docs/03.詳細設計/01_EARS-AI/02_適合性・移行仕様.md": "683af29dcfe77db6052da960e938b8f367a00fb0b4670199c6aeeee83ec31b05",
+    "docs/03.詳細設計/01_EARS-AI/03_例・アンチパターン.md": "f1fe362cc97666e1b81368f6669d1fc3b7650499aa1bd1b6a06ef3f320c96e75",
+    "docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md": "588d63ec25ace72ad05d0da2a42007907bdb6127bcc11fa44baa6ae77f67ac9c"
+  },
+  "groups": [
+    {
+      "id": "input",
+      "conditionIds": [
+        "INPUT-IO-CONFIG",
+        "INPUT-UTF8-CONFIG",
+        "INPUT-IO-SPEC",
+        "INPUT-UTF8-SPEC",
+        "INPUT-BOM-CONFIG",
+        "INPUT-BOM-SPEC",
+        "INPUT-LIMIT-CONFIG",
+        "INPUT-LIMIT-SPEC",
+        "INPUT-LIMIT-FRONTMATTER",
+        "INPUT-LIMIT-SPEC-COUNT",
+        "INPUT-LIMIT-STATEMENT-COUNT",
+        "INPUT-LIMIT-ARRAY-COUNT"
+      ],
+      "sources": [
+        "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md"
+      ],
+      "rationale": "§1、§2、§4: 入力の復号失敗とI/O障害、BOM、寸法上限を別条件として扱う。"
+    },
+    {
+      "id": "config",
+      "conditionIds": [
+        "CONFIG-YAML-SYNTAX",
+        "CONFIG-YAML-FORBIDDEN",
+        "CONFIG-FIELD-TYPE",
+        "CONFIG-FIELD-REQUIRED",
+        "CONFIG-SCHEMA-MAJOR",
+        "EARS-SCHEMA-MAJOR",
+        "CONFIG-SCHEMA-MINOR-NEWER",
+        "CONFIG-KEY-PROFILES",
+        "CONFIG-KEY-UNKNOWN"
+      ],
+      "sources": [
+        "docs/03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md",
+        "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md",
+        "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md"
+      ],
+      "rationale": "設定型・必須・YAML禁止・版互換性。doctorのEARS版は専用条件。"
+    },
+    {
+      "id": "workspace",
+      "conditionIds": [
+        "WORKSPACE-CONFIG-MISSING",
+        "WORKSPACE-ENTRY-UNKNOWN"
+      ],
+      "sources": [
+        "docs/03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md",
+        "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md"
+      ],
+      "rationale": "§1、§3: 設定不在と未知entry。cacheは未知entry規則だけ適用。"
+    },
+    {
+      "id": "frontmatter",
+      "conditionIds": [
+        "FM-YAML-SYNTAX",
+        "FM-YAML-FORBIDDEN",
+        "FM-FIELD-TYPE",
+        "FM-FIELD-REQUIRED",
+        "FM-FIELD-UNAVAILABLE",
+        "FM-FIELD-UNKNOWN"
+      ],
+      "sources": [
+        "docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md"
+      ],
+      "rationale": "§2、§3、§11: 型不正を利用不能warningより先にし、必須欠如とYAML不正を区別。"
+    },
+    {
+      "id": "language",
+      "conditionIds": [
+        "EAI-SYNTAX-CODE-UNCLOSED",
+        "EAI-SYNTAX-CODE-UNCLOSED-DRAFT",
+        "EAI-SYNTAX-TAG-UNCLOSED",
+        "EAI-SYNTAX-TAG-UNCLOSED-DRAFT",
+        "EAI-ID-FORMAT",
+        "EAI-ID-DUPLICATE",
+        "EAI-SYNTAX-TAG-ORDER",
+        "EAI-SYNTAX-TAG-ORDER-DRAFT",
+        "EAI-SYNTAX-TAG-REQUIRED",
+        "EAI-SYNTAX-TAG-REQUIRED-DRAFT",
+        "EAI-SYNTAX-TRIGGER-MULTIPLE",
+        "EAI-SYNTAX-TRIGGER-MULTIPLE-DRAFT",
+        "EAI-SYNTAX-PERIOD-MISSING",
+        "EAI-SYNTAX-PERIOD-MISSING-DRAFT",
+        "EAI-SEM-OPERAND-MISSING",
+        "EAI-SEM-OPERAND-MISSING-DRAFT",
+        "EAI-SHOULD-REASON-MISSING",
+        "EAI-EXTENSION-UNKNOWN"
+      ],
+      "sources": [
+        "docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md",
+        "docs/03.詳細設計/02_SPECモデル/03_文書種別・本文テンプレート.md"
+      ],
+      "rationale": "構文エラーのdraft降格とIDエラー非降格。SHOULD理由と未知extensionはwarning。"
+    },
+    {
+      "id": "document",
+      "conditionIds": [
+        "DOC-FILE-NAME-ID",
+        "DOC-ID-DUPLICATE",
+        "DOC-REQ-STATEMENT-EMPTY",
+        "DOC-STYLE-H1",
+        "DOC-STYLE-SECTION",
+        "DOC-STYLE-PLACEMENT"
+      ],
+      "sources": [
+        "docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md",
+        "docs/03.詳細設計/02_SPECモデル/03_文書種別・本文テンプレート.md"
+      ],
+      "rationale": "文書ID・ファイル名・H1・REQ必須section・許可位置。文書重複と句ID重複を区別。"
+    },
+    {
+      "id": "relations",
+      "conditionIds": [
+        "RELATION-LEGACY-REFS",
+        "RELATION-TARGET-MISSING-STRONG",
+        "RELATION-TARGET-MISSING-RELATED",
+        "RELATION-TYPE",
+        "RELATION-CYCLE"
+      ],
+      "sources": [
+        "docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md",
+        "docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md"
+      ],
+      "rationale": "§5.1: strong missingとrelated missing、型不正と循環。旧refsは専用条件。"
+    },
+    {
+      "id": "trace",
+      "conditionIds": [
+        "TRACE-PATH-APPROVED",
+        "TRACE-PATH-DRAFT",
+        "TRACE-COVERAGE-INVALID"
+      ],
+      "sources": [
+        "docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md",
+        "docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md"
+      ],
+      "rationale": "path不正とdraft未作成予定、covers不在・対応重複。実効cwd配下外はverify binding解決で別途遮断。"
+    },
+    {
+      "id": "context",
+      "conditionIds": [
+        "CTX-ROOT-MISSING-EXPLICIT",
+        "CTX-ROOT-MISSING-DERIVED",
+        "CTX-TASK-DEPENDENCY",
+        "CTX-STATE-INAPPLICABLE",
+        "CTX-STATE-SUPERSEDED",
+        "CTX-STATE-SUCCESSORS",
+        "CTX-CLOSURE-LIMIT",
+        "CTX-COVERAGE-TASK-MUST",
+        "CTX-COVERAGE-TASK-SHOULD",
+        "CTX-COVERAGE-TEST-SHOULD",
+        "CTX-COVERAGE-TEST-MUST",
+        "CTX-COVERAGE-TEST-MUST-IMPLEMENT",
+        "CTX-DIGEST-STALE",
+        "CTX-PROJECTION-OUTSIDE",
+        "CTX-PROJECTION-LIMIT"
+      ],
+      "sources": [
+        "docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md",
+        "docs/03.詳細設計/03_操作仕様/01_context.md",
+        "docs/03.詳細設計/03_操作仕様/03_verify.md",
+        "docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md"
+      ],
+      "rationale": "起点・適用状態・閉包上限・coverage・stale・projection。coverageはpurposeとMUST/SHOULDを区別。"
+    },
+    {
+      "id": "check",
+      "conditionIds": [
+        "CHECK-STATE-TRANSITION",
+        "CHECK-DOCUMENT-DELETED",
+        "CHECK-APPROVED-MEANING",
+        "CHECK-TASK-BOUNDARY",
+        "CHECK-TASK-NO-GIT",
+        "CHECK-IMPACT-OUTDATED",
+        "CHECK-GIT-DEGRADED"
+      ],
+      "sources": [
+        "docs/03.詳細設計/03_操作仕様/02_check.md",
+        "docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md",
+        "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md"
+      ],
+      "rationale": "状態遷移・削除・承認済みREQ保護・TASK境界・影響候補・Git縮退。"
+    },
+    {
+      "id": "verify",
+      "conditionIds": [
+        "VERIFY-BINDING-MISSING",
+        "VERIFY-TARGETS-EMPTY",
+        "VERIFY-MEMBER-TARGETS-EMPTY",
+        "VERIFY-ARGV-EXPANDED-LIMIT",
+        "VERIFY-CWD-UNAVAILABLE",
+        "VERIFY-EXECUTABLE-UNAVAILABLE",
+        "VERIFY-SPAWN-ERROR",
+        "VERIFY-SIGNAL",
+        "VERIFY-TIMEOUT",
+        "VERIFY-CONFIG-UNTRACKED",
+        "VERIFY-TEST-OUTSIDE-CWD"
+      ],
+      "sources": [
+        "docs/03.詳細設計/03_操作仕様/03_verify.md",
+        "docs/03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md",
+        "docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md"
+      ],
+      "rationale": "binding不足、対象0件、展開後上限、事前環境不足とspawn後障害を区別。非0 exitはDiagnosticなし。 未追跡設定はGit利用可能時に遮断。cwd包含はverifyだけで検査し独立bindingを継続。"
+    },
+    {
+      "id": "report",
+      "conditionIds": [
+        "REPORT-WRITE"
+      ],
+      "sources": [
+        "docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md",
+        "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md"
+      ],
+      "rationale": "明示reportの排他的作成失敗。既存stdout結果を失わせない。"
+    },
+    {
+      "id": "doctor",
+      "conditionIds": [
+        "DOCTOR-RUNTIME-VERSION",
+        "DOCTOR-CORE-START",
+        "DOCTOR-PLUGIN-FORMAT",
+        "DOCTOR-API-VERSION",
+        "DOCTOR-CAPABILITY",
+        "DOCTOR-WORKSPACE-MISSING",
+        "DOCTOR-EARS-VERSION",
+        "DOCTOR-GIT-DEGRADED",
+        "DOCTOR-COMMAND-FILE",
+        "DOCTOR-COMMAND-CWD"
+      ],
+      "sources": [
+        "docs/03.詳細設計/03_操作仕様/04_doctor.md",
+        "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md"
+      ],
+      "rationale": "runtime、plugin/API、capability、workspace、EARS版、Git、実行fileとcwd。独立checkを継続。"
+    },
+    {
+      "id": "federation",
+      "conditionIds": [
+        "MONO-REF-QUALIFIER",
+        "MONO-REF-UNQUALIFIED",
+        "MONO-REF-WORKSPACE",
+        "MONO-OWNERSHIP",
+        "MONO-CONFIG",
+        "MONO-MEMBER",
+        "MONO-ID",
+        "MONO-PATH",
+        "MONO-GIT",
+        "MONO-VERSION",
+        "MONO-UNREGISTERED",
+        "MONO-LIMIT",
+        "MONO-DEPENDENCY",
+        "MONO-DEPENDENCY-DOCTOR"
+      ],
+      "sources": [
+        "docs/03.詳細設計/02_SPECモデル/05_モノレポSPEC連合仕様.md",
+        "docs/03.詳細設計/03_操作仕様/02_check.md",
+        "docs/03.詳細設計/03_操作仕様/03_verify.md",
+        "docs/03.詳細設計/03_操作仕様/04_doctor.md"
+      ],
+      "rationale": "preflightの優先順位と局所target/check継続。既知の別repository/worktreeはPATH/failed、境界確定不能はGIT/blocked。"
+    }
+  ],
+  "openIssues": []
+}

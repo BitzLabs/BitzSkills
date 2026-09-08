@@ -13,6 +13,8 @@ import unicodedata
 from urllib.parse import unquote
 
 from jsonschema import Draft202012Validator, ValidationError
+sys.dont_write_bytecode = True
+from conformance.diagnostic_coverage import validate as validate_diagnostic_coverage
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -148,8 +150,9 @@ def registry():
     for row in rows:
         if row[3].strip() not in {"info", "warning", "error"} or row[4].strip() not in {"passed", "passed_with_warnings", "failed", "blocked", "error"}:
             errors.append(f"{row[0]}: invalid vocabulary")
-    return {"conditions": len(rows), "errors": errors,
-            "semantic_coverage": "Pending: every normative failure condition still needs a reviewed conditionId mapping"}
+    coverage = validate_diagnostic_coverage()
+    coverage["errors"] = errors + coverage["errors"]
+    return coverage
 
 
 def main():
@@ -162,9 +165,11 @@ def main():
     checks["audit_self_tests"] = {"status": "Passed" if audit_tests.returncode == 0 else "Failed", "errors": [] if audit_tests.returncode == 0 else [audit_tests.stderr]}
     # These checks are deliberately not certified by structural checks or helper tests.
     # Replace each entry only with a check of its actual, reviewed evidence.
-    pending = ["Diagnostic semantic coverage", "target expansion vectors",
+    pending = ["target expansion vectors",
                "independent golden Context Digest", "per-fixture side-effect expectations",
                "conformance inputs and expectations", "full Gate A fresh-checkout repeatability"]
+    if checks["registry"]["semantic_coverage"] != "Passed":
+        pending.insert(0, "Diagnostic semantic coverage")
     passed = not pending and all(not result.get("errors") for result in checks.values())
     report = {"gateA": "Allowed" if passed else "Blocked", "checks": checks, "pending": pending}
     print(json.dumps(report, ensure_ascii=False, sort_keys=True, indent=2))

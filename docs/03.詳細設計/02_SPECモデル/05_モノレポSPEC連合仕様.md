@@ -308,8 +308,10 @@ global preflightでroot設定の構文、型またはIDが不正で有効なiden
   超過後も入力を読み続けることは要求しない。
 - 通常操作でも横断参照と逆参照に必要な軽量索引はcatalog全体から作る。
 - 変更workspaceと到達workspaceを完全解析し、無関係workspaceの本文解析を避ける。
-- Gitが利用できない、repository rootを確定できない、またはmember pathが別worktree／repositoryへ解決される場合、
-  連合操作は`SPEC-MONOREPO-GIT-001`／`blocked`とする。単一workspaceの縮退契約は変更しない。
+- Gitが利用できない、またはrepository rootと所有境界を確定できない場合、連合操作は
+  `SPEC-MONOREPO-GIT-001`／`blocked`とする。境界を確定した結果、member pathが別worktree／repositoryへ解決されると
+  判明した場合は§5.1に従い`SPEC-MONOREPO-PATH-001`／`failed`とする。同じ原因へ両codeを返さない。
+  単一workspaceの縮退契約は変更しない。
 
 ### 10.1 計算量とmemory
 

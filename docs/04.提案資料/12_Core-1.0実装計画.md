@@ -88,7 +88,7 @@ Core実行結果と人間による比較結果は、それぞれの対象機能�
 generator、helper、harnessへ落とし込み、fresh checkoutから再現できることを示す。
 
 部分検証の入口は`uv run fixtures/validate_step0b.py`。公開JSON、grammar参照、link、Git setup、process helper、
-副作用比較の自己試験、Step 0-Pを統合済みである。311件の適合fixture、Diagnostic意味網羅、target期待集合、
+副作用比較の自己試験、Step 0-P、Diagnostic意味網羅の対応台帳検証を統合済みである。311件の適合fixture、target期待集合、
 golden Context Digest、各fixtureの副作用期待値は残件であり、全Gate A検証の完了は宣言しない。
 
 このStepで実装してよいのはSchema検証、fixture generator、reference計算、grammar検査、matrix検査、

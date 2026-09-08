@@ -1,14 +1,37 @@
 """Regression checks that malformed evidence is not silently accepted."""
 import json
+import copy
 from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
 
 import validate_step0b as audit
+from conformance.diagnostic_coverage import LEDGER, validate
 
 
 class AuditTests(unittest.TestCase):
+    def test_diagnostic_ledger_rejects_missing_unknown_and_stale(self):
+        original = json.loads(LEDGER.read_text())
+        self.assertEqual(validate(original)["errors"], [])
+        self.assertEqual(validate(original)["semantic_coverage"], "Passed")
+        missing = copy.deepcopy(original)
+        missing["groups"][0]["conditionIds"].pop()
+        self.assertTrue(validate(missing)["errors"])
+        unknown = copy.deepcopy(original)
+        unknown["groups"][0]["conditionIds"].append("UNKNOWN-CONDITION")
+        self.assertTrue(validate(unknown)["errors"])
+        stale = copy.deepcopy(original)
+        stale["sources"][next(iter(stale["sources"]))] = "0" * 64
+        self.assertTrue(validate(stale)["errors"])
+        false_pass = copy.deepcopy(original)
+        false_pass["reviewStatus"] = "Passed"
+        false_pass["openIssues"] = ["UNRESOLVED-CONDITION"]
+        self.assertTrue(validate(false_pass)["errors"])
+        pending = copy.deepcopy(false_pass)
+        pending["reviewStatus"] = "Pending"
+        self.assertEqual(validate(pending)["semantic_coverage"], "Pending")
+
     def test_invalid_public_result_is_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

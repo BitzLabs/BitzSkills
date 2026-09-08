@@ -59,7 +59,7 @@ priorityが最小の行だけをprimaryとして返す。同じpriorityの候補
 | `INPUT-LIMIT-STATEMENT-COUNT` | parse | `SPEC-INPUT-LIMIT-001` | error | failed | file | `skip-document` | 130 | 1文書の規範文数が1,000超過 |
 | `INPUT-LIMIT-ARRAY-COUNT` | parse | `SPEC-INPUT-LIMIT-001` | error | failed | file | `skip-document` | 130 | 1文書の関係・path配列の項目数が1,000超過 |
 | `CONFIG-YAML-SYNTAX` | all | `SPEC-CONFIG-SCHEMA-001` | error | error | file | `stop-operation` | 140 | 設定YAMLの構文不正 |
-| `CONFIG-YAML-FORBIDDEN` | all | `SPEC-CONFIG-SCHEMA-001` | error | error | file | `stop-operation` | 141 | custom tag、anchor、alias、merge key、重複key |
+| `CONFIG-YAML-FORBIDDEN` | all | `SPEC-CONFIG-SCHEMA-001` | error | error | file | `stop-operation` | 141 | custom tag、anchor、alias、merge key、複雑key、複数document、重複mapping key |
 | `CONFIG-FIELD-TYPE` | all | `SPEC-CONFIG-SCHEMA-001` | error | error | file | `stop-operation` | 142 | 設定fieldの型または値域不正 |
 | `CONFIG-FIELD-REQUIRED` | all | `SPEC-CONFIG-SCHEMA-001` | error | error | file | `stop-operation` | 143 | 設定の必須field欠如 |
 | `CONFIG-SCHEMA-MAJOR` | all | `SPEC-CONFIG-SCHEMA-001` | error | blocked | file | `stop-operation` | 144 | 未対応Schema major |
@@ -123,10 +123,11 @@ priorityが最小の行だけをprimaryとして返す。同じpriorityの候補
 | `CTX-STATE-SUPERSEDED` | context, verify | `CTX-STATE-SUPERSEDED-001` | error | blocked | file | `skip-target` | 412 | 起点または依存先が置換済み |
 | `CTX-STATE-SUCCESSORS` | context, verify | `CTX-STATE-SUPERSEDED-002` | error | failed | file | `skip-target` | 413 | 有効な後継が複数 |
 | `CTX-CLOSURE-LIMIT` | context, verify | `CTX-LIMIT-001` | error | blocked | file | `skip-target` | 420 | 完全Context閉包が文書数またはbyte上限超過 |
-| `CTX-COVERAGE-TASK-MUST` | context | `CTX-COVERAGE-TASK-001` | warning | passed_with_warnings | file | `continue` | 430 | implement対象MUSTが未addressed |
-| `CTX-COVERAGE-TASK-SHOULD` | context | `CTX-COVERAGE-TASK-001` | warning | passed_with_warnings | file | `continue` | 431 | implement対象SHOULDが未addressed |
-| `CTX-COVERAGE-TEST-SHOULD` | context, verify | `CTX-COVERAGE-TEST-001` | warning | passed_with_warnings | file | `continue` | 432 | 対象SHOULDが未tested |
-| `CTX-COVERAGE-TEST-MUST` | verify | `CTX-COVERAGE-TEST-001` | error | blocked | file | `skip-target` | 433 | 対象MUSTが未tested |
+| `CTX-COVERAGE-TASK-MUST` | context | `CTX-COVERAGE-TASK-001` | warning | passed_with_warnings | file | `continue` | 430 | purpose=implement対象MUSTが未addressed |
+| `CTX-COVERAGE-TASK-SHOULD` | context | `CTX-COVERAGE-TASK-001` | warning | passed_with_warnings | file | `continue` | 431 | purpose=implement対象SHOULDが未addressed |
+| `CTX-COVERAGE-TEST-SHOULD` | context, verify | `CTX-COVERAGE-TEST-001` | warning | passed_with_warnings | file | `continue` | 432 | purpose=implementまたはverify対象SHOULDが未tested |
+| `CTX-COVERAGE-TEST-MUST` | context, verify | `CTX-COVERAGE-TEST-001` | error | blocked | file | `skip-target` | 433 | purpose=verify対象MUSTが未tested |
+| `CTX-COVERAGE-TEST-MUST-IMPLEMENT` | context | `CTX-COVERAGE-TEST-001` | warning | passed_with_warnings | file | `continue` | 434 | purpose=implement対象MUSTが未tested |
 | `CTX-DIGEST-STALE` | context | `CTX-STALE-001` | error | blocked | invocation | `stop-operation` | 440 | expected Digest不一致 |
 | `CTX-PROJECTION-OUTSIDE` | context | `CTX-PROJECTION-001` | error | failed | invocation | `stop-operation` | 441 | expand対象が完全解決集合外 |
 | `CTX-PROJECTION-LIMIT` | context | `CTX-PROJECTION-LIMIT-001` | error | failed | invocation | `stop-operation` | 442 | detail／expandによる提示量hard limit超過 |
@@ -143,6 +144,8 @@ priorityが最小の行だけをprimaryとして返す。同じpriorityの候補
 | `VERIFY-ARGV-EXPANDED-LIMIT` | verify | `SPEC-VERIFY-BLOCKED-001` | error | blocked | file | `skip-binding` | 603 | `{tests}`展開後argvが要素数またはbyte上限超過 |
 | `VERIFY-CWD-UNAVAILABLE` | verify | `SPEC-VERIFY-BLOCKED-001` | error | blocked | file | `skip-binding` | 604 | command cwdが不在または実行時に利用不能 |
 | `VERIFY-EXECUTABLE-UNAVAILABLE` | verify | `SPEC-VERIFY-BLOCKED-001` | error | blocked | environment | `skip-binding` | 605 | PATHまたは明示pathから通常の実行可能fileを解決不能 |
+| `VERIFY-CONFIG-UNTRACKED` | verify | `SPEC-VERIFY-BLOCKED-001` | error | blocked | file | `skip-binding` | 606 | Git利用可能時にbinding所有workspaceの設定fileがindexで未追跡 |
+| `VERIFY-TEST-OUTSIDE-CWD` | verify | `SPEC-VERIFY-BLOCKED-001` | error | blocked | file | `skip-binding` | 607 | 存在・所有境界が妥当なtest pathが実効cwd配下にない |
 | `VERIFY-SPAWN-ERROR` | verify | `SPEC-VERIFY-COMMAND-001` | error | error | environment | `skip-binding` | 610 | 事前検査通過後のrace、resource不足、OS errorでprocess生成失敗 |
 | `VERIFY-SIGNAL` | verify | `SPEC-VERIFY-COMMAND-001` | error | error | environment | `skip-binding` | 611 | commandがsignal終了 |
 | `VERIFY-TIMEOUT` | verify | `SPEC-VERIFY-TIMEOUT-001` | error | error | environment | `skip-binding` | 612 | command timeout |
@@ -185,7 +188,11 @@ doctorの設定checkは§3の`CONFIG-*`条件を使用する。`SPEC-DOCTOR-CONF
 | `MONO-VERSION` | all | `SPEC-MONOREPO-VERSION-001` | error | blocked | file | `stop-federation` | 950 | memberのSchemaまたはEARS-AIが未対応major |
 | `MONO-UNREGISTERED` | all | `SPEC-MONOREPO-UNREGISTERED-001` | error | blocked | file | `stop-federation` | 960 | Git既知設定または選択設定がcatalogに未登録 |
 | `MONO-LIMIT` | all | `SPEC-MONOREPO-LIMIT-001` | error | blocked | file | `stop-federation` | 970 | member数または連合snapshot resource上限超過 |
-| `MONO-DEPENDENCY` | all | `SPEC-MONOREPO-DEPENDENCY-001` | error | blocked | file | `skip-workspace` | 980 | 別unitの非成功により依存処理を安全に継続不能 |
+| `MONO-DEPENDENCY` | context, verify | `SPEC-MONOREPO-DEPENDENCY-001` | error | blocked | file | `skip-target` | 980 | 具体的Diagnosticのないtargetが別unitの非成功によりContextまたはbindingを構成不能 |
+| `MONO-DEPENDENCY-DOCTOR` | doctor | `SPEC-MONOREPO-DEPENDENCY-001` | error | blocked | file | `skip-check` | 980 | 具体的Diagnosticのないdoctor checkが別unitの非成功により依存出力を得られない |
+
+`check`は依存先を解釈できないsourceへ具体的なrelation Diagnosticを返し、上記の派生遮断を追加しない。
+`context`は部分Bundleを成功にせず、`verify`は独立targetとbinding、`doctor`は独立checkを継続する。
 
 global preflightの同じraw原因に複数行が成立する場合は、設定構文・型、catalog、workspace ID、path、Git境界、
 version、未登録設定、resource上限の順でprimaryを選ぶ。この列挙は上表のpriorityより優先する局所規則ではなく、

@@ -12,10 +12,10 @@ It also executes Step 0-P validation and the fixture infrastructure self-tests.
 Pinned dependencies are declared in the script; the first run requires package download access.
 
 Exit 0 means Gate A is allowed; exit 1 means errors or outstanding evidence remain. Currently exit 1 is expected:
-the 311 matrix fixtures, target vectors, independent golden Context Digests, semantic Diagnostic coverage,
+the 311 matrix fixtures, target vectors, independent golden Context Digests,
 and per-fixture side-effect expectations are still outstanding. Missing fixtures are listed individually.
-Static checks do not prove that a fixture has only one independent cause, or that every prose failure condition
-has a Diagnostic mapping. Those semantic reviews remain required.
+Static checks do not prove that a fixture has only one independent cause. Diagnostic mappings have a reviewed ledger:
+see [Diagnostic review](diagnostic-review.md). The audit checks its integrity and source freshness, not natural-language semantics.
 
 The `harness-input` directory contains infrastructure test inputs, not `SINGLE-*` or `MONO-*` acceptance fixtures.
 `harness.py` builds isolated Git repositories and compares files, executable bits, symlink targets, and directories.
