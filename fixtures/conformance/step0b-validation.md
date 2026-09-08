@@ -12,6 +12,7 @@
 | EBNF references | 33 definitions plus 3 explicitly prose-defined lexical sets; no unresolved reference |
 | Diagnostic review (updated 2026-09-08) | 119 conditions mapped to 17 source documents; three open issues resolved; ledger and regression checks passed |
 | Matrix inventory | 311 IDs, no duplicate or family/suffix collision; all 311 real fixtures missing |
+| Target vectors (2026-09-08) | 18 basic combinations + 7 supplementary cases; four ordered sets, input-order invariance and rejection regression checks passed |
 | Relative links | 218 references in current contracts and accepted ADRs; no missing target/anchor |
 | Git infrastructure | unborn, clean, worktree, staged, rename, delete, create; two identical setups per vector |
 | Snapshot comparison | Content, executable bit, symlink target changes detected; unsafe path traversal rejected |
@@ -23,5 +24,5 @@ The Git and process vectors are infrastructure tests, not conformance fixtures o
 The side-effect comparator is tested, but read-only/report/cache before/after expectations must still be fixed for each acceptance case.
 Structural registry and matrix checks cannot prove semantic coverage or single-cause isolation. Diagnostic semantic decisions are
 recorded in [the reviewed ledger](diagnostic-review.md); the validator detects missing mappings and changed source documents.
-Target-expansion vectors, independently computed golden Context Digests, complete acceptance inputs/results,
+Independently computed golden Context Digests, complete acceptance inputs/results,
 and a complete fresh-checkout Gate A run remain pending. No Gate A approval or Core implementation is included.

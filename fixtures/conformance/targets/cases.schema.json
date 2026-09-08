@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractSha256",
+    "cases"
+  ],
+  "properties": {
+    "contractSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 18,
+      "items": {
+        "$ref": "#/$defs/case"
+      }
+    }
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "status",
+        "statements",
+        "requires",
+        "refines",
+        "addresses",
+        "related"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "REQ",
+            "TECH",
+            "ADR",
+            "TASK"
+          ]
+        },
+        "status": {
+          "enum": [
+            "approved",
+            "accepted",
+            "open",
+            "done"
+          ]
+        },
+        "statements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "line"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        },
+        "requires": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "refines": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "addresses": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "related": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "rootKind",
+        "purpose",
+        "roots",
+        "graph",
+        "matrixFamilies",
+        "expected"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rootKind": {
+          "enum": [
+            "REQ",
+            "TECH",
+            "TECH_EMPTY",
+            "STATEMENT",
+            "TASK",
+            "ADR"
+          ]
+        },
+        "purpose": {
+          "enum": [
+            "interpret",
+            "implement",
+            "verify"
+          ]
+        },
+        "roots": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "graph": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "matrixFamilies": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^(SINGLE|MONO)-[0-9]{3}$"
+          }
+        },
+        "expected": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "outcome",
+                "rootDocuments",
+                "contextDocuments",
+                "targetStatements",
+                "adjacentStatements"
+              ],
+              "properties": {
+                "outcome": {
+                  "const": "expanded"
+                },
+                "rootDocuments": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "contextDocuments": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "targetStatements": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "adjacentStatements": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "outcome",
+                "exitCode"
+              ],
+              "properties": {
+                "outcome": {
+                  "const": "invocation_error"
+                },
+                "exitCode": {
+                  "const": 4
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

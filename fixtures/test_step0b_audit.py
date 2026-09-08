@@ -8,9 +8,34 @@ from unittest.mock import patch
 
 import validate_step0b as audit
 from conformance.diagnostic_coverage import LEDGER, validate
+from conformance.target_vectors import HERE as TARGET_HERE, validate as validate_targets
 
 
 class AuditTests(unittest.TestCase):
+    def test_target_vectors(self):
+        data = json.loads((TARGET_HERE / "targets/cases.json").read_text())
+        self.assertEqual(validate_targets(data)["errors"], [])
+        missing = copy.deepcopy(data)
+        missing["cases"] = [c for c in missing["cases"] if c["id"] != "BASIC-ADR-verify"]
+        self.assertTrue(validate_targets(missing)["errors"])
+        leaked = copy.deepcopy(data)
+        case = next(c for c in leaked["cases"] if c["id"] == "REFINEMENT-TRANSITIVE")
+        case["expected"]["targetStatements"].append("REQ-009:AC-01")
+        self.assertTrue(validate_targets(leaked)["errors"])
+        wrong_order = copy.deepcopy(data)
+        case = next(c for c in wrong_order["cases"] if c["id"] == "SOURCE-LINE-ORDER")
+        case["expected"]["targetStatements"].reverse()
+        self.assertTrue(validate_targets(wrong_order)["errors"])
+        bad_id = copy.deepcopy(data)
+        bad_id["cases"][0]["graph"][0]["requires"] = ["REQ-999"]
+        self.assertTrue(validate_targets(bad_id)["errors"])
+        stale = copy.deepcopy(data)
+        stale["contractSha256"] = "0" * 64
+        self.assertTrue(validate_targets(stale)["errors"])
+        wrong_kind = copy.deepcopy(data)
+        wrong_kind["cases"][0]["rootKind"] = "TASK"
+        self.assertTrue(validate_targets(wrong_kind)["errors"])
+
     def test_diagnostic_ledger_rejects_missing_unknown_and_stale(self):
         original = json.loads(LEDGER.read_text())
         self.assertEqual(validate(original)["errors"], [])

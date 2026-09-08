@@ -15,6 +15,7 @@ from urllib.parse import unquote
 from jsonschema import Draft202012Validator, ValidationError
 sys.dont_write_bytecode = True
 from conformance.diagnostic_coverage import validate as validate_diagnostic_coverage
+from conformance.target_vectors import validate as validate_target_vectors
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -156,7 +157,7 @@ def registry():
 
 
 def main():
-    checks = {"public_json": public_json(), "grammar": grammar(), "matrix": matrix(), "registry": registry(), "links": links()}
+    checks = {"public_json": public_json(), "grammar": grammar(), "matrix": matrix(), "registry": registry(), "links": links(), "target_vectors": validate_target_vectors()}
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_step0p.py")], capture_output=True, text=True, timeout=60)
     checks["step0p"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
     helpers = subprocess.run([sys.executable, "-B", str(FIXTURES / "test_harness.py")], capture_output=True, text=True, timeout=30)
@@ -165,11 +166,12 @@ def main():
     checks["audit_self_tests"] = {"status": "Passed" if audit_tests.returncode == 0 else "Failed", "errors": [] if audit_tests.returncode == 0 else [audit_tests.stderr]}
     # These checks are deliberately not certified by structural checks or helper tests.
     # Replace each entry only with a check of its actual, reviewed evidence.
-    pending = ["target expansion vectors",
-               "independent golden Context Digest", "per-fixture side-effect expectations",
+    pending = ["independent golden Context Digest", "per-fixture side-effect expectations",
                "conformance inputs and expectations", "full Gate A fresh-checkout repeatability"]
     if checks["registry"]["semantic_coverage"] != "Passed":
         pending.insert(0, "Diagnostic semantic coverage")
+    if checks["target_vectors"]["status"] != "Passed":
+        pending.insert(0, "target expansion vectors")
     passed = not pending and all(not result.get("errors") for result in checks.values())
     report = {"gateA": "Allowed" if passed else "Blocked", "checks": checks, "pending": pending}
     print(json.dumps(report, ensure_ascii=False, sort_keys=True, indent=2))

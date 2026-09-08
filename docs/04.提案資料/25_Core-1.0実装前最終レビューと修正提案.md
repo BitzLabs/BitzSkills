@@ -508,7 +508,7 @@ Step 6まで遅らせず、grammar、Schema、checkが安定した時点で自�
 - [x] 公開JSON例がmachine-readable Schemaを全件通過
 - [x] 規範上の全非成功条件がDiagnostic registryへ対応
 - [x] grammarに未定義token/nonterminalがない
-- [ ] target種別×purposeの期待集合fixtureが存在
+- [x] target種別×purposeの期待集合fixtureが存在
 - [ ] fixture matrixに選択的期待、複数原因、`元status`がない
 - [x] Git base/current/staged/worktree/unbornをmanifestから再現可能
 - [ ] 単一と連合のCanonical JSONおよびgolden Context Digestが独立した2系統のreference計算で一致
@@ -524,7 +524,9 @@ Git 7状態の2回再現とprocess helper自己試験を検証した。Semantic 
 発見した3件の未裁定条件を解消した。対応台帳の欠落・未知ID・根拠改変・未裁定条件残存を検証する。
 判断根拠とDiagnosticを生成しない条件は[Diagnostic意味網羅レビュー](../../fixtures/conformance/diagnostic-review.md)に記録した。
 matrix 311件の実fixtureは未作成である。詳細は[Step 0B検証記録](../../fixtures/conformance/step0b-validation.md)を参照する。
-未完了のtarget集合、golden Digest、実fixture等があるため、コマンドは終了コード1、Gate A `Blocked`を返す。
+2026-09-08にtarget種別×purposeの18基本ケースと7追加ケースを固定し、4集合の順序と入力順序不変性を検証した。
+設計・範囲は[target期待集合](../../fixtures/conformance/targets/README.md)を参照する。Core実装の受入は別工程とする。
+未完了のgolden Digest、実fixture等があるため、コマンドは終了コード1、Gate A `Blocked`を返す。
 
 従来の「実装計画のStep 0BがClosed」は判定結果を判定条件に含める自己参照であるため削除する。
 上記の自動検査結果と実行環境を同一commitへ記録した時点で、Step 0Bを`Complete`、Gate Aを`Allowed`とする。

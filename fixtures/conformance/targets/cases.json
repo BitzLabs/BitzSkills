@@ -1,0 +1,1370 @@
+{
+  "schemaVersion": "1.0",
+  "contractSha256": "d2716934b6cdd0b90bd6b462cf3122f882a2b1add65124fef9953f697c825a53",
+  "cases": [
+    {
+      "id": "BASIC-REQ-interpret",
+      "rootKind": "REQ",
+      "purpose": "interpret",
+      "roots": [
+        "REQ-001"
+      ],
+      "graph": [
+        {
+          "id": "REQ-001",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-001:AC-01",
+              "line": 10
+            },
+            {
+              "id": "REQ-001:AC-02",
+              "line": 11
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "REQ-001"
+        ],
+        "contextDocuments": [
+          "REQ-001"
+        ],
+        "targetStatements": [],
+        "adjacentStatements": []
+      },
+      "matrixFamilies": [
+        "SINGLE-107"
+      ]
+    },
+    {
+      "id": "BASIC-REQ-implement",
+      "rootKind": "REQ",
+      "purpose": "implement",
+      "roots": [
+        "REQ-001"
+      ],
+      "graph": [
+        {
+          "id": "REQ-001",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-001:AC-01",
+              "line": 10
+            },
+            {
+              "id": "REQ-001:AC-02",
+              "line": 11
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "REQ-001"
+        ],
+        "contextDocuments": [
+          "REQ-001"
+        ],
+        "targetStatements": [
+          "REQ-001:AC-01",
+          "REQ-001:AC-02"
+        ],
+        "adjacentStatements": []
+      },
+      "matrixFamilies": [
+        "SINGLE-107"
+      ]
+    },
+    {
+      "id": "BASIC-REQ-verify",
+      "rootKind": "REQ",
+      "purpose": "verify",
+      "roots": [
+        "REQ-001"
+      ],
+      "graph": [
+        {
+          "id": "REQ-001",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-001:AC-01",
+              "line": 10
+            },
+            {
+              "id": "REQ-001:AC-02",
+              "line": 11
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "REQ-001"
+        ],
+        "contextDocuments": [
+          "REQ-001"
+        ],
+        "targetStatements": [
+          "REQ-001:AC-01",
+          "REQ-001:AC-02"
+        ],
+        "adjacentStatements": []
+      },
+      "matrixFamilies": [
+        "SINGLE-107"
+      ]
+    },
+    {
+      "id": "BASIC-TECH-interpret",
+      "rootKind": "TECH",
+      "purpose": "interpret",
+      "roots": [
+        "TECH-001"
+      ],
+      "graph": [
+        {
+          "id": "TECH-001",
+          "kind": "TECH",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "TECH-001:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "TECH-001"
+        ],
+        "contextDocuments": [
+          "TECH-001"
+        ],
+        "targetStatements": [],
+        "adjacentStatements": []
+      },
+      "matrixFamilies": [
+        "SINGLE-108"
+      ]
+    },
+    {
+      "id": "BASIC-TECH-implement",
+      "rootKind": "TECH",
+      "purpose": "implement",
+      "roots": [
+        "TECH-001"
+      ],
+      "graph": [
+        {
+          "id": "TECH-001",
+          "kind": "TECH",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "TECH-001:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "TECH-001"
+        ],
+        "contextDocuments": [
+          "TECH-001"
+        ],
+        "targetStatements": [
+          "TECH-001:AC-01"
+        ],
+        "adjacentStatements": []
+      },
+      "matrixFamilies": [
+        "SINGLE-108"
+      ]
+    },
+    {
+      "id": "BASIC-TECH-verify",
+      "rootKind": "TECH",
+      "purpose": "verify",
+      "roots": [
+        "TECH-001"
+      ],
+      "graph": [
+        {
+          "id": "TECH-001",
+          "kind": "TECH",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "TECH-001:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "TECH-001"
+        ],
+        "contextDocuments": [
+          "TECH-001"
+        ],
+        "targetStatements": [
+          "TECH-001:AC-01"
+        ],
+        "adjacentStatements": []
+      },
+      "matrixFamilies": [
+        "SINGLE-108"
+      ]
+    },
+    {
+      "id": "BASIC-TECH_EMPTY-interpret",
+      "rootKind": "TECH_EMPTY",
+      "purpose": "interpret",
+      "roots": [
+        "TECH-001"
+      ],
+      "graph": [
+        {
+          "id": "TECH-001",
+          "kind": "TECH",
+          "status": "approved",
+          "statements": [],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "TECH-001"
+        ],
+        "contextDocuments": [
+          "TECH-001"
+        ],
+        "targetStatements": [],
+        "adjacentStatements": []
+      },
+      "matrixFamilies": [
+        "SINGLE-108"
+      ]
+    },
+    {
+      "id": "BASIC-TECH_EMPTY-implement",
+      "rootKind": "TECH_EMPTY",
+      "purpose": "implement",
+      "roots": [
+        "TECH-001"
+      ],
+      "graph": [
+        {
+          "id": "TECH-001",
+          "kind": "TECH",
+          "status": "approved",
+          "statements": [],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "TECH-001"
+        ],
+        "contextDocuments": [
+          "TECH-001"
+        ],
+        "targetStatements": [],
+        "adjacentStatements": []
+      },
+      "matrixFamilies": [
+        "SINGLE-108"
+      ]
+    },
+    {
+      "id": "BASIC-TECH_EMPTY-verify",
+      "rootKind": "TECH_EMPTY",
+      "purpose": "verify",
+      "roots": [
+        "TECH-001"
+      ],
+      "graph": [
+        {
+          "id": "TECH-001",
+          "kind": "TECH",
+          "status": "approved",
+          "statements": [],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "TECH-001"
+        ],
+        "contextDocuments": [
+          "TECH-001"
+        ],
+        "targetStatements": [],
+        "adjacentStatements": []
+      },
+      "matrixFamilies": [
+        "SINGLE-108"
+      ]
+    },
+    {
+      "id": "BASIC-STATEMENT-interpret",
+      "rootKind": "STATEMENT",
+      "purpose": "interpret",
+      "roots": [
+        "REQ-001:AC-01"
+      ],
+      "graph": [
+        {
+          "id": "REQ-001",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-001:AC-01",
+              "line": 10
+            },
+            {
+              "id": "REQ-001:AC-02",
+              "line": 11
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "REQ-001"
+        ],
+        "contextDocuments": [
+          "REQ-001"
+        ],
+        "targetStatements": [],
+        "adjacentStatements": [
+          "REQ-001:AC-02"
+        ]
+      },
+      "matrixFamilies": [
+        "SINGLE-109"
+      ]
+    },
+    {
+      "id": "BASIC-STATEMENT-implement",
+      "rootKind": "STATEMENT",
+      "purpose": "implement",
+      "roots": [
+        "REQ-001:AC-01"
+      ],
+      "graph": [
+        {
+          "id": "REQ-001",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-001:AC-01",
+              "line": 10
+            },
+            {
+              "id": "REQ-001:AC-02",
+              "line": 11
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "REQ-001"
+        ],
+        "contextDocuments": [
+          "REQ-001"
+        ],
+        "targetStatements": [
+          "REQ-001:AC-01"
+        ],
+        "adjacentStatements": [
+          "REQ-001:AC-02"
+        ]
+      },
+      "matrixFamilies": [
+        "SINGLE-109"
+      ]
+    },
+    {
+      "id": "BASIC-STATEMENT-verify",
+      "rootKind": "STATEMENT",
+      "purpose": "verify",
+      "roots": [
+        "REQ-001:AC-01"
+      ],
+      "graph": [
+        {
+          "id": "REQ-001",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-001:AC-01",
+              "line": 10
+            },
+            {
+              "id": "REQ-001:AC-02",
+              "line": 11
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "REQ-001"
+        ],
+        "contextDocuments": [
+          "REQ-001"
+        ],
+        "targetStatements": [
+          "REQ-001:AC-01"
+        ],
+        "adjacentStatements": [
+          "REQ-001:AC-02"
+        ]
+      },
+      "matrixFamilies": [
+        "SINGLE-109"
+      ]
+    },
+    {
+      "id": "BASIC-TASK-interpret",
+      "rootKind": "TASK",
+      "purpose": "interpret",
+      "roots": [
+        "TASK-001"
+      ],
+      "graph": [
+        {
+          "id": "TASK-001",
+          "kind": "TASK",
+          "status": "open",
+          "statements": [],
+          "requires": [],
+          "refines": [],
+          "addresses": [
+            "REQ-001:AC-01"
+          ],
+          "related": []
+        },
+        {
+          "id": "REQ-001",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-001:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "TASK-001"
+        ],
+        "contextDocuments": [
+          "TASK-001"
+        ],
+        "targetStatements": [],
+        "adjacentStatements": []
+      },
+      "matrixFamilies": [
+        "SINGLE-110"
+      ]
+    },
+    {
+      "id": "BASIC-TASK-implement",
+      "rootKind": "TASK",
+      "purpose": "implement",
+      "roots": [
+        "TASK-001"
+      ],
+      "graph": [
+        {
+          "id": "TASK-001",
+          "kind": "TASK",
+          "status": "open",
+          "statements": [],
+          "requires": [],
+          "refines": [],
+          "addresses": [
+            "REQ-001:AC-01"
+          ],
+          "related": []
+        },
+        {
+          "id": "REQ-001",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-001:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "TASK-001"
+        ],
+        "contextDocuments": [
+          "TASK-001",
+          "REQ-001"
+        ],
+        "targetStatements": [
+          "REQ-001:AC-01"
+        ],
+        "adjacentStatements": []
+      },
+      "matrixFamilies": [
+        "SINGLE-110"
+      ]
+    },
+    {
+      "id": "BASIC-TASK-verify",
+      "rootKind": "TASK",
+      "purpose": "verify",
+      "roots": [
+        "TASK-001"
+      ],
+      "graph": [
+        {
+          "id": "TASK-001",
+          "kind": "TASK",
+          "status": "open",
+          "statements": [],
+          "requires": [],
+          "refines": [],
+          "addresses": [
+            "REQ-001:AC-01"
+          ],
+          "related": []
+        },
+        {
+          "id": "REQ-001",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-001:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "TASK-001"
+        ],
+        "contextDocuments": [
+          "TASK-001",
+          "REQ-001"
+        ],
+        "targetStatements": [
+          "REQ-001:AC-01"
+        ],
+        "adjacentStatements": []
+      },
+      "matrixFamilies": [
+        "SINGLE-110"
+      ]
+    },
+    {
+      "id": "BASIC-ADR-interpret",
+      "rootKind": "ADR",
+      "purpose": "interpret",
+      "roots": [
+        "ADR-001"
+      ],
+      "graph": [
+        {
+          "id": "ADR-001",
+          "kind": "ADR",
+          "status": "accepted",
+          "statements": [],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "ADR-001"
+        ],
+        "contextDocuments": [
+          "ADR-001"
+        ],
+        "targetStatements": [],
+        "adjacentStatements": []
+      },
+      "matrixFamilies": [
+        "SINGLE-112"
+      ]
+    },
+    {
+      "id": "BASIC-ADR-implement",
+      "rootKind": "ADR",
+      "purpose": "implement",
+      "roots": [
+        "ADR-001"
+      ],
+      "graph": [
+        {
+          "id": "ADR-001",
+          "kind": "ADR",
+          "status": "accepted",
+          "statements": [],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "invocation_error",
+        "exitCode": 4
+      },
+      "matrixFamilies": [
+        "SINGLE-112"
+      ]
+    },
+    {
+      "id": "BASIC-ADR-verify",
+      "rootKind": "ADR",
+      "purpose": "verify",
+      "roots": [
+        "ADR-001"
+      ],
+      "graph": [
+        {
+          "id": "ADR-001",
+          "kind": "ADR",
+          "status": "accepted",
+          "statements": [],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "invocation_error",
+        "exitCode": 4
+      },
+      "matrixFamilies": [
+        "SINGLE-112"
+      ]
+    },
+    {
+      "id": "REFINEMENT-TRANSITIVE",
+      "rootKind": "REQ",
+      "purpose": "verify",
+      "roots": [
+        "REQ-001"
+      ],
+      "graph": [
+        {
+          "id": "REQ-001",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-001:AC-01",
+              "line": 10
+            },
+            {
+              "id": "REQ-001:AC-02",
+              "line": 11
+            }
+          ],
+          "requires": [
+            "REQ-009"
+          ],
+          "refines": [],
+          "addresses": [],
+          "related": [
+            "REQ-099"
+          ]
+        },
+        {
+          "id": "REQ-009",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-009:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        },
+        {
+          "id": "REQ-099",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-099:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        },
+        {
+          "id": "TECH-002",
+          "kind": "TECH",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "TECH-002:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [
+            "REQ-001:AC-01"
+          ],
+          "addresses": [],
+          "related": []
+        },
+        {
+          "id": "TECH-003",
+          "kind": "TECH",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "TECH-003:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [
+            "TECH-002:AC-01"
+          ],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "REQ-001"
+        ],
+        "contextDocuments": [
+          "REQ-001",
+          "REQ-009",
+          "TECH-002",
+          "TECH-003"
+        ],
+        "targetStatements": [
+          "REQ-001:AC-01",
+          "REQ-001:AC-02",
+          "TECH-002:AC-01",
+          "TECH-003:AC-01"
+        ],
+        "adjacentStatements": []
+      },
+      "matrixFamilies": [
+        "SINGLE-107"
+      ]
+    },
+    {
+      "id": "STATEMENT-ADJACENT",
+      "rootKind": "STATEMENT",
+      "purpose": "verify",
+      "roots": [
+        "REQ-001:AC-01"
+      ],
+      "graph": [
+        {
+          "id": "REQ-001",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-001:AC-01",
+              "line": 10
+            },
+            {
+              "id": "REQ-001:AC-02",
+              "line": 11
+            }
+          ],
+          "requires": [
+            "REQ-009"
+          ],
+          "refines": [],
+          "addresses": [],
+          "related": [
+            "REQ-099"
+          ]
+        },
+        {
+          "id": "REQ-009",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-009:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        },
+        {
+          "id": "REQ-099",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-099:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        },
+        {
+          "id": "TECH-002",
+          "kind": "TECH",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "TECH-002:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [
+            "REQ-001:AC-01"
+          ],
+          "addresses": [],
+          "related": []
+        },
+        {
+          "id": "TECH-003",
+          "kind": "TECH",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "TECH-003:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [
+            "TECH-002:AC-01"
+          ],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "REQ-001"
+        ],
+        "contextDocuments": [
+          "REQ-001",
+          "REQ-009",
+          "TECH-002",
+          "TECH-003"
+        ],
+        "targetStatements": [
+          "REQ-001:AC-01",
+          "TECH-002:AC-01",
+          "TECH-003:AC-01"
+        ],
+        "adjacentStatements": [
+          "REQ-001:AC-02"
+        ]
+      },
+      "matrixFamilies": [
+        "SINGLE-109"
+      ]
+    },
+    {
+      "id": "MULTI-ROOT-DEDUP",
+      "rootKind": "REQ",
+      "purpose": "verify",
+      "roots": [
+        "REQ-001:AC-01",
+        "REQ-001",
+        "REQ-001"
+      ],
+      "graph": [
+        {
+          "id": "REQ-001",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-001:AC-01",
+              "line": 10
+            },
+            {
+              "id": "REQ-001:AC-02",
+              "line": 11
+            }
+          ],
+          "requires": [
+            "REQ-009"
+          ],
+          "refines": [],
+          "addresses": [],
+          "related": [
+            "REQ-099"
+          ]
+        },
+        {
+          "id": "REQ-009",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-009:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        },
+        {
+          "id": "REQ-099",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-099:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        },
+        {
+          "id": "TECH-002",
+          "kind": "TECH",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "TECH-002:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [
+            "REQ-001:AC-01"
+          ],
+          "addresses": [],
+          "related": []
+        },
+        {
+          "id": "TECH-003",
+          "kind": "TECH",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "TECH-003:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [
+            "TECH-002:AC-01"
+          ],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "REQ-001"
+        ],
+        "contextDocuments": [
+          "REQ-001",
+          "REQ-009",
+          "TECH-002",
+          "TECH-003"
+        ],
+        "targetStatements": [
+          "REQ-001:AC-01",
+          "REQ-001:AC-02",
+          "TECH-002:AC-01",
+          "TECH-003:AC-01"
+        ],
+        "adjacentStatements": []
+      },
+      "matrixFamilies": [
+        "SINGLE-113"
+      ]
+    },
+    {
+      "id": "TASK-REQUIRES-NOT-TARGET",
+      "rootKind": "TASK",
+      "purpose": "verify",
+      "roots": [
+        "TASK-001"
+      ],
+      "graph": [
+        {
+          "id": "TASK-001",
+          "kind": "TASK",
+          "status": "open",
+          "statements": [],
+          "requires": [
+            "TASK-002"
+          ],
+          "refines": [],
+          "addresses": [
+            "REQ-001:AC-01"
+          ],
+          "related": []
+        },
+        {
+          "id": "TASK-002",
+          "kind": "TASK",
+          "status": "done",
+          "statements": [],
+          "requires": [],
+          "refines": [],
+          "addresses": [
+            "REQ-009:AC-01"
+          ],
+          "related": []
+        },
+        {
+          "id": "REQ-001",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-001:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        },
+        {
+          "id": "REQ-009",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-009:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "TASK-001"
+        ],
+        "contextDocuments": [
+          "TASK-001",
+          "REQ-001",
+          "TASK-002"
+        ],
+        "targetStatements": [
+          "REQ-001:AC-01"
+        ],
+        "adjacentStatements": []
+      },
+      "matrixFamilies": [
+        "SINGLE-110"
+      ]
+    },
+    {
+      "id": "OPEN-TASK-IMPLEMENT",
+      "rootKind": "REQ",
+      "purpose": "implement",
+      "roots": [
+        "REQ-001"
+      ],
+      "graph": [
+        {
+          "id": "REQ-001",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-001:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        },
+        {
+          "id": "TASK-001",
+          "kind": "TASK",
+          "status": "open",
+          "statements": [],
+          "requires": [],
+          "refines": [],
+          "addresses": [
+            "REQ-001:AC-01"
+          ],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "REQ-001"
+        ],
+        "contextDocuments": [
+          "REQ-001",
+          "TASK-001"
+        ],
+        "targetStatements": [
+          "REQ-001:AC-01"
+        ],
+        "adjacentStatements": []
+      },
+      "matrixFamilies": [
+        "SINGLE-107"
+      ]
+    },
+    {
+      "id": "FEDERATED-SAME-LOCAL-ID",
+      "rootKind": "REQ",
+      "purpose": "verify",
+      "roots": [
+        "root::REQ-001"
+      ],
+      "graph": [
+        {
+          "id": "root::REQ-001",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "root::REQ-001:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        },
+        {
+          "id": "web::REQ-001",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "web::REQ-001:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [
+            "root::REQ-001:AC-01"
+          ],
+          "addresses": [],
+          "related": []
+        },
+        {
+          "id": "other::REQ-001",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "other::REQ-001:AC-01",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "root::REQ-001"
+        ],
+        "contextDocuments": [
+          "root::REQ-001",
+          "web::REQ-001"
+        ],
+        "targetStatements": [
+          "root::REQ-001:AC-01",
+          "web::REQ-001:AC-01"
+        ],
+        "adjacentStatements": []
+      },
+      "matrixFamilies": [
+        "MONO-002",
+        "SINGLE-107"
+      ]
+    },
+    {
+      "id": "SOURCE-LINE-ORDER",
+      "rootKind": "REQ",
+      "purpose": "verify",
+      "roots": [
+        "REQ-001"
+      ],
+      "graph": [
+        {
+          "id": "REQ-001",
+          "kind": "REQ",
+          "status": "approved",
+          "statements": [
+            {
+              "id": "REQ-001:AC-01",
+              "line": 20
+            },
+            {
+              "id": "REQ-001:AC-02",
+              "line": 10
+            }
+          ],
+          "requires": [],
+          "refines": [],
+          "addresses": [],
+          "related": []
+        }
+      ],
+      "expected": {
+        "outcome": "expanded",
+        "rootDocuments": [
+          "REQ-001"
+        ],
+        "contextDocuments": [
+          "REQ-001"
+        ],
+        "targetStatements": [
+          "REQ-001:AC-02",
+          "REQ-001:AC-01"
+        ],
+        "adjacentStatements": []
+      },
+      "matrixFamilies": [
+        "SINGLE-113"
+      ]
+    }
+  ]
+}
