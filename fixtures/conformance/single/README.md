@@ -1,7 +1,7 @@
 # 初回実fixture: 導入と設定
 
-2026-09-08。対象は `SINGLE-001`、`002`、`003`、`004-01`、`004-02`。
-この5件は入力・唯一の期待JSON・副作用期待値を持つ。Coreの実行結果ではない。
+2026-09-08。対象は `SINGLE-001`、`002`、`003`、`004-01`、`004-02`、`005-01`、`005-02`、`006-01`、`006-02`。
+この9件は入力・唯一の期待JSON・副作用期待値を持つ。Coreの実行結果ではない。
 
 ## 設計と単一原因レビュー
 
@@ -12,9 +12,14 @@
 | SINGLE-003 | schemaVersionをstringの2.0に変更 | check --full --base HEAD --format json | blocked / 2 |
 | SINGLE-004-01 | languageをintegerの42に変更 | check --full --base HEAD --format json | error / 3 |
 | SINGLE-004-02 | 必須earsAiだけを削除 | check --full --base HEAD --format json | error / 3 |
+| SINGLE-005-01 | 未知key futureOptionだけを追加 | check --full --base HEAD --format json | passed_with_warnings / 0 |
+| SINGLE-005-02 | 予約key profilesだけを追加 | check --full --base HEAD --format json | passed_with_warnings / 0 |
+| SINGLE-006-01 | command実行fileだけが不在 | doctor --format json | blocked / 2 |
+| SINGLE-006-02 | command cwdだけが不在 | doctor --format json | blocked / 2 |
 
 最小設定はdoctor仕様の `schemaVersion: "1.0"`、`language: ja`、`earsAi: "1.0"`。
-code、test、SPEC文書、command binding、monorepo宣言は置かず、別原因のDiagnosticを混ぜない。
+code、test、SPEC文書、monorepo宣言は置かず、別原因のDiagnosticを混ぜない。
+command bindingは006系だけにdefaultを1件置く。
 checkは入力を固定metadataでcommitして明示HEADを比較基準にする。Git不在・unbornの縮退を混ぜない。
 doctorはGit利用可能なunborn repositoryで実行し、履歴差分の検査は要求しない。
 SINGLE-002の空repoをGitで保持するためだけに `.gitkeep` を置き、setupで除去してから実行する。
@@ -43,6 +48,14 @@ SINGLE-002の空repoをGitで保持するためだけに `.gitkeep` を置き、
   summaryは各 `expected/check.json` の日本語文字列を固定値とする。
 - 設定不在はenvironment sourceの `component: workspace, identifier: .` とし、
   suggestedActionへ作成先・貼付け可能な最小設定・gitignore追記・次のcheckを含める。
+- 005系は `SPEC-CONFIG-UNKNOWN-001` / warning / passed_with_warningsを1件だけ返す。
+  `source.key` はそれぞれ `futureOption`、`profiles`。未知keyの値 `preserve-me` と予約keyの値
+  `legacy-profile` は保持し、profilesを設定機能として解釈しない。文書0件のfull checkは両checked countを0とする。
+- 006系は `SPEC-DOCTOR-COMMAND-001` / error / blockedを1件だけ返す。
+  sourceはregistryどおりfileで、`workspaceId: root`、`path: .spec/bitz.yaml`、keyはそれぞれ
+  `verify.commands.default.argv`、`verify.commands.default.cwd`。line・column・evidence・修復案は付加しない。
+  checksは001と同じ順序でcommandだけblocked。独立なimpact checkは続けてinfoとし、別のDiagnosticは追加しない。
+  005・006系ともsummaryは各expected JSONの固定文字列とする。
 - durationは0、Core patchは0、Git commit IDは40桁の0を期待JSONの代表値とする。
   実値は既存の共通normalizerだけで比較する。Gitのdirty、Core major/minorやCapability順序は除外しない。
 
@@ -64,8 +77,16 @@ report directory、永続cache、lock、作業fileの残存を許可しない。
 2. 各入力を新しい隔離directoryに2回setupし、各回が固定before snapshotと一致すること。
 3. 入力byte列がレビュー済みの単一原因と一致し、read-onlyの期待afterがbeforeと一致すること。
 4. 回帰試験でstatus、source.key、argv、修復手順、副作用期待値の破損を拒否すること。
+5. 005系のwarningをerrorへ変更した場合やDiagnosticの重複、006系の原因keyやcheck statusの破損を拒否すること。
+
+006-01は `argv: ["./missing-command"]`、`cwd: .`。実行fileの明示pathが存在しないことを確認し、
+hostのPATHに同名commandがあっても結果が変わらない構成とする。
+006-02は `argv: ["/bin/true"]`、`cwd: missing-directory`。このfixture環境はLinux/POSIXで
+`/bin/true`が通常の実行可能fileとして利用可能であることを要求し、未導入・実行不可は準備検証のerrorとする。
+実効cwdが不在でも実行fileの絶対pathは独立に確認できる。PATHは上書きせず、Git利用を壊さない。
+準備検証でcommandを起動することはない。実際のdoctorがcommandを起動しないことはGate Bで別途確認する。
 
 検証はCoreもYAML設定判定も実装しない。afterは期待値だけであり、Core実行後の実測値ではない。
 Core実装後のGate Bで、実stdout/終了コード、実before/after、索引構築へ進まないことを確認する。
-5件の準備が通っても、matrix残306件、golden Context Digest、全体の副作用期待値、
+9件の準備が通っても、matrix残302件、golden Context Digest、全体の副作用期待値、
 fresh checkoutでのGate A全検証は残る。

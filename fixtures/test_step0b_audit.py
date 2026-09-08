@@ -10,14 +10,14 @@ from unittest.mock import patch
 import validate_step0b as audit
 from conformance.diagnostic_coverage import LEDGER, validate
 from conformance.target_vectors import HERE as TARGET_HERE, validate as validate_targets
-from conformance.initial_fixtures import validate as validate_initial, compare_state
+from conformance.initial_fixtures import validate as validate_initial, compare_state, check_command_preconditions
 
 
 class AuditTests(unittest.TestCase):
     def test_initial_fixtures(self):
         result = validate_initial()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(len(result["prepared"]), 5)
+        self.assertEqual(len(result["prepared"]), 9)
         self.assertEqual(result["core_execution"], "Not run")
 
     def test_initial_fixture_rejects_corrupted_evidence(self):
@@ -28,6 +28,10 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-001/side-effects.json", lambda value: value["after"]["cache"].update(lock={"kind": "directory"})),
             ("SINGLE-001/side-effects.json", lambda value: value["before"]["repository"][".spec/bitz.yaml"].update(sha256="0" * 64)),
             ("SINGLE-002/expected/doctor.json", lambda value: value["diagnostics"][0].pop("suggestedAction")),
+            ("SINGLE-005-01/expected/check.json", lambda value: value["diagnostics"][0].update(severity="error")),
+            ("SINGLE-005-02/expected/check.json", lambda value: value["diagnostics"].append(copy.deepcopy(value["diagnostics"][0]))),
+            ("SINGLE-006-01/expected/doctor.json", lambda value: value["diagnostics"][0]["source"].update(key="verify.commands.default.cwd")),
+            ("SINGLE-006-02/expected/doctor.json", lambda value: value["checks"][6].update(status="passed")),
         ]
         for relative, mutate in mutations:
             with self.subTest(relative=relative), tempfile.TemporaryDirectory() as temporary:
@@ -40,6 +44,23 @@ class AuditTests(unittest.TestCase):
                 mutate(value)
                 path.write_text(json.dumps(value))
                 self.assertTrue(validate_initial(root)["errors"])
+
+    def test_command_cases_reject_additional_or_missing_causes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            check_command_preconditions("SINGLE-006-01", root)
+            check_command_preconditions("SINGLE-006-02", root)
+            with self.assertRaises(ValueError):
+                check_command_preconditions("SINGLE-006-02", root, root / "absent-executable")
+            with patch("conformance.initial_fixtures.os.access", return_value=False):
+                with self.assertRaises(ValueError):
+                    check_command_preconditions("SINGLE-006-02", root)
+            (root / "missing-command").write_text("unexpected")
+            with self.assertRaises(ValueError):
+                check_command_preconditions("SINGLE-006-01", root)
+            (root / "missing-directory").mkdir()
+            with self.assertRaises(ValueError):
+                check_command_preconditions("SINGLE-006-02", root)
 
     def test_side_effect_comparison_rejects_each_changed_boundary(self):
         state = json.loads((audit.FIXTURES / "single/SINGLE-001/side-effects.json").read_text())["after"]

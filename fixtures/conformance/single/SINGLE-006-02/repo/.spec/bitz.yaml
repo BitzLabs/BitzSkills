@@ -1,0 +1,8 @@
+schemaVersion: "1.0"
+language: ja
+earsAi: "1.0"
+verify:
+  commands:
+    default:
+      argv: ["/bin/true"]
+      cwd: missing-directory

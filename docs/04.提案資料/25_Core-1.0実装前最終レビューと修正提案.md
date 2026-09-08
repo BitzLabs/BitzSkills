@@ -523,8 +523,8 @@ Git 7状態の2回再現とprocess helper自己試験を検証した。Semantic 
 公開結果Schemaの対象ではない。2026-09-08にDiagnostic意味網羅レビューを実施し、119条件を17根拠文書へ対応付け、
 発見した3件の未裁定条件を解消した。対応台帳の欠落・未知ID・根拠改変・未裁定条件残存を検証する。
 判断根拠とDiagnosticを生成しない条件は[Diagnostic意味網羅レビュー](../../fixtures/conformance/diagnostic-review.md)に記録した。
-matrix 311件中、導入・設定の5件は入力・manifest・完全期待JSON・read-only副作用期待値を作成し、
-各2回の隔離setupを固定snapshotと照合した。実fixture残件は306件であり、Coreは未実行である。
+matrix 311件中、導入・設定の9件は入力・manifest・完全期待JSON・read-only副作用期待値を作成し、
+各2回の隔離setupを固定snapshotと照合した。実fixture残件は302件であり、Coreは未実行である。
 設計上の期待値選択は[初回fixtureレビュー](../../fixtures/conformance/single/README.md)、
 検証結果は[Step 0B検証記録](../../fixtures/conformance/step0b-validation.md)を参照する。
 2026-09-08にtarget種別×purposeの18基本ケースと7追加ケースを固定し、4集合の順序と入力順序不変性を検証した。

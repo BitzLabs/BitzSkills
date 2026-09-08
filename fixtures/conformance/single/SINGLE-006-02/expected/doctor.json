@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "doctor",
+  "status": "blocked",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-DOCTOR-COMMAND-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "command cwdを解決できません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/bitz.yaml",
+        "key": "verify.commands.default.cwd"
+      }
+    }
+  ],
+  "core": {
+    "version": "1.0.0",
+    "apiVersion": "1.0",
+    "capabilities": [
+      "context.v1",
+      "check.v1",
+      "verify.v1",
+      "doctor.v1",
+      "monorepo.v1"
+    ]
+  },
+  "checks": [
+    {
+      "name": "core",
+      "status": "passed"
+    },
+    {
+      "name": "workspace",
+      "status": "passed"
+    },
+    {
+      "name": "config",
+      "status": "passed"
+    },
+    {
+      "name": "schema",
+      "status": "passed"
+    },
+    {
+      "name": "ears",
+      "status": "passed"
+    },
+    {
+      "name": "git",
+      "status": "passed"
+    },
+    {
+      "name": "command",
+      "status": "blocked"
+    },
+    {
+      "name": "impact",
+      "status": "info"
+    }
+  ]
+}

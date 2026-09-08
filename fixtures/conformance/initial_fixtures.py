@@ -1,5 +1,6 @@
-"""Audit the five introduction/config fixtures; never invokes or emulates Core."""
+"""Audit introduction/config fixtures; never invokes or emulates Core."""
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -15,6 +16,10 @@ CASES = {
     "SINGLE-003": ("check", "blocked", 2),
     "SINGLE-004-01": ("check", "error", 3),
     "SINGLE-004-02": ("check", "error", 3),
+    "SINGLE-005-01": ("check", "passed_with_warnings", 0),
+    "SINGLE-005-02": ("check", "passed_with_warnings", 0),
+    "SINGLE-006-01": ("doctor", "blocked", 2),
+    "SINGLE-006-02": ("doctor", "blocked", 2),
 }
 # Independent, deliberately limited review of the single cause in each input.
 # This is not a YAML parser or a production configuration validator.
@@ -24,6 +29,25 @@ CONFIGS = {
     "SINGLE-004-01": 'schemaVersion: "1.0"\nlanguage: 42\nearsAi: "1.0"\n',
     "SINGLE-004-02": 'schemaVersion: "1.0"\nlanguage: ja\n',
 }
+CONFIGS.update({
+    "SINGLE-005-01": CONFIGS["SINGLE-001"] + "futureOption: preserve-me\n",
+    "SINGLE-005-02": CONFIGS["SINGLE-001"] + "profiles: legacy-profile\n",
+    "SINGLE-006-01": CONFIGS["SINGLE-001"] + 'verify:\n  commands:\n    default:\n      argv: ["./missing-command"]\n      cwd: .\n',
+    "SINGLE-006-02": CONFIGS["SINGLE-001"] + 'verify:\n  commands:\n    default:\n      argv: ["/bin/true"]\n      cwd: missing-directory\n',
+})
+
+
+def check_command_preconditions(identifier, repository, executable=Path("/bin/true")):
+    if identifier == "SINGLE-006-01":
+        missing = repository / "missing-command"
+        if missing.exists() or missing.is_symlink():
+            raise ValueError("command-file case requires absent explicit executable and existing cwd")
+    elif identifier == "SINGLE-006-02":
+        if not executable.is_file() or not os.access(executable, os.X_OK):
+            raise ValueError("cwd case requires executable /bin/true in the Linux fixture environment")
+        missing = repository / "missing-directory"
+        if missing.exists() or missing.is_symlink():
+            raise ValueError("command-cwd case requires absent cwd")
 
 
 def observe(repository, external):
@@ -71,23 +95,27 @@ def validate(root=HERE):
             diagnostics = result["diagnostics"]
             if len(diagnostics) != (0 if identifier == "SINGLE-001" else 1):
                 raise ValueError("unexpected number of independent causes")
-            identity = "root" if identifier in {"SINGLE-001", "SINGLE-003"} else None
+            identity = None if identifier in {"SINGLE-002", "SINGLE-004-01", "SINGLE-004-02"} else "root"
             if result["workspace"] != {"id": identity, "path": "."}:
                 raise ValueError("incorrect workspace identity")
             if operation == "check":
-                key = {"SINGLE-003": "schemaVersion", "SINGLE-004-01": "language", "SINGLE-004-02": "earsAi"}[identifier]
+                warning = identifier.startswith("SINGLE-005-")
+                key = {"SINGLE-003": "schemaVersion", "SINGLE-004-01": "language", "SINGLE-004-02": "earsAi",
+                       "SINGLE-005-01": "futureOption", "SINGLE-005-02": "profiles"}[identifier]
                 if (result["scope"] != "full" or result["checkedDocumentCount"] != 0 or result["checkedStatementCount"] != 0
                         or result["revision"] is None or result["revision"]["dirty"]):
-                    raise ValueError("config rejection must precede indexing with clean committed revision")
+                    raise ValueError("config-only fixture requires zero document counts and clean committed revision")
                 diagnostic = diagnostics[0]
-                if (diagnostic["code"] != "SPEC-CONFIG-SCHEMA-001" or diagnostic["severity"] != "error"
+                if (diagnostic["code"] != ("SPEC-CONFIG-UNKNOWN-001" if warning else "SPEC-CONFIG-SCHEMA-001")
+                        or diagnostic["severity"] != ("warning" if warning else "error")
                         or diagnostic["resultStatus"] != status
                         or diagnostic["source"] != {"kind": "file", "workspaceId": identity, "path": ".spec/bitz.yaml", "key": key}):
                     raise ValueError("incorrect configuration Diagnostic")
             else:
-                checks = ([{"name": name, "status": "info" if name == "impact" else "passed"}
+                checks = ([{"name": name, "status": "info" if name == "impact" else
+                            "blocked" if name == "command" and identifier.startswith("SINGLE-006-") else "passed"}
                            for name in ("core", "workspace", "config", "schema", "ears", "git", "command", "impact")]
-                          if identifier == "SINGLE-001" else [
+                          if identifier != "SINGLE-002" else [
                               {"name": "core", "status": "passed"}, {"name": "workspace", "status": "blocked"},
                               {"name": "git", "status": "passed"}])
                 if result["checks"] != checks or result["core"] != {
@@ -95,7 +123,14 @@ def validate(root=HERE):
                     "capabilities": ["context.v1", "check.v1", "verify.v1", "doctor.v1", "monorepo.v1"],
                 }:
                     raise ValueError("incorrect doctor checks or Core 1.0 expectation")
-                if diagnostics:
+                if identifier.startswith("SINGLE-006-"):
+                    key = "verify.commands.default." + ("argv" if identifier.endswith("01") else "cwd")
+                    diagnostic = diagnostics[0]
+                    if (diagnostic["code"] != "SPEC-DOCTOR-COMMAND-001" or diagnostic["severity"] != "error"
+                            or diagnostic["resultStatus"] != "blocked" or diagnostic["source"] != {
+                                "kind": "file", "workspaceId": "root", "path": ".spec/bitz.yaml", "key": key}):
+                        raise ValueError("incorrect command Diagnostic")
+                elif diagnostics:
                     diagnostic = diagnostics[0]
                     if (diagnostic["code"] != "SPEC-DOCTOR-WORKSPACE-001" or diagnostic["severity"] != "error"
                             or diagnostic["resultStatus"] != "blocked" or diagnostic["source"] != {
@@ -128,6 +163,7 @@ def validate(root=HERE):
                         raise ValueError("input differs from reviewed cause")
                     if identifier == "SINGLE-002" and (repository / ".spec").exists():
                         raise ValueError("missing-workspace fixture must have no .spec directory")
+                    check_command_preconditions(identifier, repository)
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:
             errors.append(f"{identifier}: {str(error).split(chr(10))[0]}")
