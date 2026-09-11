@@ -14,9 +14,62 @@ from conformance.initial_fixtures import validate as validate_initial, compare_s
 from conformance.ears_fixtures import validate as validate_ears
 from conformance.document_fixtures import validate as validate_documents
 from conformance.trace_fixtures import validate as validate_trace
+from conformance.graph_fixtures import validate as validate_graph
 
 
 class AuditTests(unittest.TestCase):
+    def test_graph_fixtures(self):
+        result = validate_graph()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(len(result["prepared"]), 4)
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_graph_rejects_corrupted_evidence(self):
+        mutations = [
+            ("SINGLE-015", lambda v: v.update(checkedDocumentCount=1)),
+            ("SINGLE-015", lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0]))),
+            ("SINGLE-015", lambda v: v["diagnostics"][0].update(suggestedAction="TECH-002へ改番")),
+            ("SINGLE-022-01", lambda v: v["diagnostics"][0].update(code="SPEC-RELATION-MISSING-001")),
+            ("SINGLE-022-02", lambda v: v["diagnostics"][0]["source"].update(key="relations.requires")),
+            ("SINGLE-022-03", lambda v: v.update(status="failed")),
+            ("SINGLE-022-03", lambda v: v.update(checkedDocumentCount=0)),
+        ]
+        for identifier, mutate in mutations:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / "expected/check.json"
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_graph(root, [identifier])["errors"])
+
+    def test_graph_rejects_changed_cause_and_side_effects(self):
+        for identifier, mutation in [("SINGLE-015", "remove-duplicate"), ("SINGLE-022-01", "missing-target"),
+                ("SINGLE-022-02", "weak-edge"), ("SINGLE-022-03", "cache-write")]:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / "repo/.spec/technical/TECH-001.md"
+                if mutation == "remove-duplicate":
+                    (fixture / "repo/.spec/technical/TECH-001-b.md").unlink()
+                elif mutation == "missing-target":
+                    path.write_text(path.read_text().replace("requires: [TECH-001]", "requires: [TECH-999]"))
+                elif mutation == "weak-edge":
+                    path.write_text(path.read_text().replace("refines:", "related:"))
+                else:
+                    path = fixture / "side-effects.json"
+                    value = json.loads(path.read_text())
+                    value["after"]["cache"]["unexpected"] = {"kind": "directory"}
+                    path.write_text(json.dumps(value))
+                self.assertTrue(validate_graph(root, [identifier])["errors"])
+
     def test_trace_fixtures(self):
         result = validate_trace()
         self.assertEqual(result["errors"], [])

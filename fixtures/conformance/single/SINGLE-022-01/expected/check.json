@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "failed",
+  "scope": "full",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "checkedDocumentCount": 1,
+  "checkedStatementCount": 0,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "CTX-CYCLE-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "requiresに禁止循環があります",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/technical/TECH-001.md",
+        "key": "relations.requires"
+      }
+    }
+  ]
+}

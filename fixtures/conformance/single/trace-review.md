@@ -58,5 +58,5 @@ trace_fixtures.pyは固定入力byte列、レビュー済みFrontmatter値のSch
 回帰試験は二重診断、missingとtypeの取り違え、独立TECHの検査漏れ、draft severity、covers source、
 report指定、cache書込み期待、参照先・test・commandの欠落、path作成、refs自動変換を拒否する。
 
-36/311件を準備済み、実fixture残275件とする。ID重複と循環のfixture、golden Digest、全体の副作用期待値、
+[ID重複・循環の4件](graph-review.md)を追加し、40/311件を準備済み、実fixture残271件とする。golden Digest、全体の副作用期待値、
 fresh checkoutの全Gate A検証は引き続き残る。Gate AはBlockedである。

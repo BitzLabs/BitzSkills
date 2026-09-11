@@ -72,5 +72,5 @@ after snapshotはbeforeと同一の期待値であり、Core実行後の実測�
 正常規範文の削除を拒否する。実際の候補抽出、構文検査、停止・継続、stdout、終了コード、副作用はGate Bで受け入れる。
 追加回帰試験では重複IDのwarning降格、未閉鎖tagのcode取り違え、code spanと行末の位置違い、
 extension警告による後続解析の省略を表す件数改変を拒否する。
-2026-09-11追記: 導入・設定9件と[文書構造・UTF-8の9件](document-review.md)、[関係・path・coverageの6件](trace-review.md)と合わせて36/311件を準備済み。
-残275件とgolden Context Digest等があるためGate AはBlockedのままとする。
+2026-09-11追記: 導入・設定9件と[文書構造・UTF-8の9件](document-review.md)、[関係・path・coverageの6件](trace-review.md)、[ID重複・循環の4件](graph-review.md)と合わせて40/311件を準備済み。
+残271件とgolden Context Digest等があるためGate AはBlockedのままとする。

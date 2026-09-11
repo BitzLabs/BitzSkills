@@ -12,7 +12,7 @@ It also executes Step 0-P validation and the fixture infrastructure self-tests.
 Pinned dependencies are declared in the script; the first run requires package download access.
 
 Exit 0 means Gate A is allowed; exit 1 means errors or outstanding evidence remain. Currently exit 1 is expected:
-275 of the 311 matrix fixtures, independent golden Context Digests,
+271 of the 311 matrix fixtures, independent golden Context Digests,
 and per-fixture side-effect expectations are still outstanding. Missing fixtures are listed individually.
 Static checks do not prove that a fixture has only one independent cause. Diagnostic mappings have a reviewed ledger:
 see [Diagnostic review](diagnostic-review.md). The audit checks its integrity and source freshness, not natural-language semantics.
@@ -35,8 +35,12 @@ Frontmatter and side-effect schemas, and two isolated setups are audited. Skip/c
 of repaired UTF-8 or additional causes are covered by regression checks. Core acceptance remains in Gate B.
 
 [Trace fixtures](single/trace-review.md) add six strong-reference, relation-type, legacy refs, path and coverage cases,
-bringing preparation to 36/311. The audit verifies complete expected JSON, fixed input bytes, reviewed Frontmatter values,
+with fixed preparation evidence. The audit verifies complete expected JSON, fixed input bytes, reviewed Frontmatter values,
 read-only snapshots and two isolated setups, with mutation tests for missing or additional causes.
+
+[Graph fixtures](single/graph-review.md) add four duplicate-document-ID and requires/refines/related self-cycle cases,
+bringing preparation to 40/311. Complete expectations, reviewed Frontmatter values and two isolated setups are checked;
+mutation tests reject changed causes, duplicate diagnostics, renumber suggestions and side effects.
 
 The `harness-input` directory contains infrastructure test inputs, not `SINGLE-*` or `MONO-*` acceptance fixtures.
 `harness.py` builds isolated Git repositories and compares files, executable bits, symlink targets, and directories.
