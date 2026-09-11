@@ -12,7 +12,7 @@ It also executes Step 0-P validation and the fixture infrastructure self-tests.
 Pinned dependencies are declared in the script; the first run requires package download access.
 
 Exit 0 means Gate A is allowed; exit 1 means errors or outstanding evidence remain. Currently exit 1 is expected:
-266 of the 311 matrix fixtures, independent golden Context Digests,
+261 of the 311 matrix fixtures, independent golden Context Digests,
 and per-fixture side-effect expectations are still outstanding. Missing fixtures are listed individually.
 Static checks do not prove that a fixture has only one independent cause. Diagnostic mappings have a reviewed ledger:
 see [Diagnostic review](diagnostic-review.md). The audit checks its integrity and source freshness, not natural-language semantics.
@@ -43,8 +43,12 @@ with fixed preparation evidence. Complete expectations, reviewed Frontmatter val
 mutation tests reject changed causes, duplicate diagnostics, renumber suggestions and side effects.
 
 [Git fixtures](single/git-review.md) add five forbidden transition, new document, deletion, rename and approved-meaning cases,
-bringing preparation to 45/311. HEAD and index blobs and working-tree bytes are checked directly, alongside complete
+with fixed preparation evidence. HEAD and index blobs and working-tree bytes are checked directly, alongside complete
 expected results, read-only snapshots and two isolated setups. Mutation tests reject unintended staging or commits.
+
+[Approved-REQ exemption fixtures](single/exempt-review.md) add five implements/tests/related/extension/prose-only changes,
+bringing preparation to 50/311. Supporting files exist unchanged in HEAD; only the REQ changes in the worktree.
+They use the Git fixture audit, with complete success expectations and mutation tests for additional causes.
 
 The `harness-input` directory contains infrastructure test inputs, not `SINGLE-*` or `MONO-*` acceptance fixtures.
 `harness.py` builds isolated Git repositories and compares files, executable bits, symlink targets, and directories.

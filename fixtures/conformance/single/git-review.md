@@ -59,5 +59,5 @@ path集合・各blobをレビュー済みbase/currentと照合する。worktree�
 実行後Git差分の消去を拒否する。また実repositoryへ誤ったstage/commitを行い、HEAD/index照合が拒否することを確認する。
 Core出力、副作用、実際の遷移判定はGate Bで受け入れる。
 
-45/311件を準備済み、実fixture残266件とする。golden Digest、残fixtureの副作用期待値、
+[保護対象外変更の5件](exempt-review.md)を追加し、50/311件を準備済み、実fixture残261件とする。golden Digest、残fixtureの副作用期待値、
 fresh checkoutからの全Gate A検証は未完了であり、Gate AはBlockedを維持する。

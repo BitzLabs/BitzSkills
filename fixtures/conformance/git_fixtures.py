@@ -1,5 +1,6 @@
 """Fixed base/current Git fixture evidence, without Core state/check logic."""
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -26,11 +27,38 @@ CASES = {
     "SINGLE-031": (REQ_PATH, DOCUMENT, "update", DOCUMENT.replace("文書の検査", "変更後の文書検査"), "failed",
         "SPEC-SAFETY-APPROVED-001", "title", "approved REQの意味変更時にstatusが戻されていません"),
 }
+EXEMPT_FIELDS = {
+    "SINGLE-032-01": ("implements: [src/contract.py]\n", {"implements": ["src/contract.py"]}),
+    "SINGLE-032-02": ("tests:\n  - path: tests/test_contract.py\n    covers: [REQ-001:AC-01]\n    command: default\n",
+        {"tests": [{"path": "tests/test_contract.py", "covers": ["REQ-001:AC-01"], "command": "default"}]}),
+    "SINGLE-032-03": ("relations:\n  related: [TECH-001]\n", {"relations": {"related": ["TECH-001"]}}),
+    "SINGLE-032-04": ("x-risk: low\n", {"x-risk": "low"}),
+    "SINGLE-032-05": ("", {}),
+}
+for identifier, (fields, _) in EXEMPT_FIELDS.items():
+    current = DOCUMENT.replace("status: approved\n---", "status: approved\n" + fields + "---", 1)
+    if identifier == "SINGLE-032-05":
+        current = DOCUMENT.replace("文書構造を検査する。", "文書構造を検査する。説明だけを補足する。")
+    CASES[identifier] = (REQ_PATH, DOCUMENT, "update", current, "passed", None, None,
+                         "approved REQの保護対象外変更: " + (next(iter(EXEMPT_FIELDS[identifier][1]), "説明文")))
+
+
+def support_files(identifier):
+    """Unchanged inputs already present in HEAD; only the REQ may change."""
+    files = {".spec/bitz.yaml": CONFIGS["SINGLE-001"].encode()}
+    if identifier == "SINGLE-032-01":
+        files["src/contract.py"] = b"# Existing implementation path; no behavior claimed.\n"
+    elif identifier == "SINGLE-032-02":
+        files["tests/test_contract.py"] = b'raise RuntimeError("check must not execute this file")\n'
+        files[".spec/bitz.yaml"] += b'verify:\n  commands:\n    default:\n      argv: ["/bin/true"]\n      cwd: .\n'
+    elif identifier == "SINGLE-032-03":
+        files[TECH_PATH] = TECH.encode()
+    return files
 
 
 def reviewed_inputs(identifier):
     path, base, operation, current, *_ = CASES[identifier]
-    files = {"repo/.spec/bitz.yaml": CONFIGS["SINGLE-001"].encode()}
+    files = {"repo/" + name: content for name, content in support_files(identifier).items()}
     if base is not None:
         files["repo/" + path] = base.encode()
     if operation in {"create", "update"}:
@@ -60,15 +88,15 @@ def reviewed_result(identifier):
         source["key"] = key
     return {"schemaVersion": "1.0", "operation": "check", "status": status, "scope": "full",
         "workspace": {"id": "root", "path": "."}, "revision": {"base": "0" * 40, "commit": "0" * 40, "dirty": True},
-        "checkedDocumentCount": 0 if identifier == "SINGLE-029" else 1,
-        "checkedStatementCount": 1 if identifier == "SINGLE-031" else 0, "durationMs": 0,
+        "checkedDocumentCount": 0 if identifier == "SINGLE-029" else 2 if identifier == "SINGLE-032-03" else 1,
+        "checkedStatementCount": 1 if path == REQ_PATH else 0, "durationMs": 0,
         "diagnostics": [] if code is None else [{"code": code, "severity": "error", "resultStatus": status, "summary": summary, "source": source}]}
 
 
 def check_git_states(repository, identifier):
     """Check real HEAD/index/worktree contents against the reviewed transition."""
     path, base, operation, current, *_ = CASES[identifier]
-    base_files = {".spec/bitz.yaml": CONFIGS["SINGLE-001"].encode()}
+    base_files = support_files(identifier)
     if base is not None:
         base_files[path] = base.encode()
     head_paths = git(repository, "ls-tree", "-r", "--name-only", "-z", "HEAD").decode().split("\0")[:-1]
@@ -77,7 +105,7 @@ def check_git_states(repository, identifier):
     for name, content in base_files.items():
         if git(repository, "show", "HEAD:" + name) != content:
             raise ValueError("HEAD bytes differ from reviewed base")
-    current_files = {".spec/bitz.yaml": CONFIGS["SINGLE-001"].encode()}
+    current_files = support_files(identifier)
     if current is not None:
         current_files[RENAMED_PATH if operation == "rename" else path] = current.encode()
     index_files = current_files if operation == "rename" else base_files
@@ -120,8 +148,16 @@ def validate(root=HERE, identifiers=None):
             validator = Draft202012Validator({"$ref": f"#/$defs/{kind}", "$defs": schema["$defs"]})
             for document in (base, current):
                 if document is not None:
-                    # These fixed documents contain exactly three plain-string fields.
-                    validator.validate(dict(line.split(": ", 1) for line in document.splitlines()[1:4]))
+                    # Fixed YAML/value pairs only, not a general YAML parser.
+                    fm = dict(line.split(": ", 1) for line in document.splitlines()[1:4])
+                    if identifier in EXEMPT_FIELDS and document == current:
+                        fm.update(EXEMPT_FIELDS[identifier][1])
+                    validator.validate(fm)
+            if identifier == "SINGLE-032-03":
+                Draft202012Validator({"$ref": "#/$defs/techFrontmatter", "$defs": schema["$defs"]}).validate(
+                    {"id": "TECH-001", "title": "前提技術", "status": "approved"})
+            if identifier == "SINGLE-032-02" and (not Path("/bin/true").is_file() or not os.access("/bin/true", os.X_OK)):
+                raise ValueError("test declaration case requires executable /bin/true on the Linux fixture host")
             if effects["before"] != effects["after"]:
                 raise ValueError("read-only expectation permits writes")
             previous = None

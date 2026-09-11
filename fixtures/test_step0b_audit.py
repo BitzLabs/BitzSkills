@@ -23,7 +23,7 @@ class AuditTests(unittest.TestCase):
     def test_git_transition_fixtures(self):
         result = validate_git_fixtures()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(len(result["prepared"]), 5)
+        self.assertEqual(len(result["prepared"]), 10)
         self.assertEqual(result["core_execution"], "Not run")
 
     def test_git_fixtures_reject_corrupted_evidence(self):
@@ -34,6 +34,13 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-030", "manifest.json", lambda v: v["setup"]["operations"].pop()),
             ("SINGLE-031", "expected/check.json", lambda v: v["diagnostics"][0].update(code="SPEC-STYLE-H1-001")),
             ("SINGLE-031", "side-effects.json", lambda v: v["after"]["git"].update(status="")),
+            ("SINGLE-032-01", "expected/check.json", lambda v: v.update(status="failed")),
+            ("SINGLE-032-02", "expected/check.json", lambda v: v.update(checkedStatementCount=0)),
+            ("SINGLE-032-03", "expected/check.json", lambda v: v.update(checkedDocumentCount=1)),
+            ("SINGLE-032-04", "expected/check.json", lambda v: v["diagnostics"].append({"code": "SPEC-FM-UNKNOWN-001",
+                "severity": "warning", "resultStatus": "passed_with_warnings", "summary": "unexpected warning",
+                "source": {"kind": "file", "workspaceId": "root", "path": ".spec/requirements/REQ-001.md"}})),
+            ("SINGLE-032-05", "expected/check.json", lambda v: v["revision"].update(dirty=False)),
         ]
         for identifier, relative, mutate in mutations:
             with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
@@ -49,7 +56,8 @@ class AuditTests(unittest.TestCase):
                 self.assertTrue(validate_git_fixtures(root, [identifier])["errors"])
 
     def test_git_state_audit_rejects_staging_or_committing_changes(self):
-        for identifier in ("SINGLE-027", "SINGLE-028", "SINGLE-029", "SINGLE-030", "SINGLE-031"):
+        for identifier in ("SINGLE-027", "SINGLE-028", "SINGLE-029", "SINGLE-030", "SINGLE-031",
+                           "SINGLE-032-01", "SINGLE-032-02", "SINGLE-032-03", "SINGLE-032-04", "SINGLE-032-05"):
             with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
                 repo = fixture_setup(audit.FIXTURES / "single" / identifier, git_manifest(identifier), Path(temporary) / "repo")
                 check_git_states(repo, identifier)
@@ -58,6 +66,25 @@ class AuditTests(unittest.TestCase):
                     fixture_git(repo, "commit", "-m", "incorrect new base")
                 with self.assertRaises(ValueError):
                     check_git_states(repo, identifier)
+
+    def test_exempt_changes_reject_additional_causes(self):
+        for identifier, mutation in [("SINGLE-032-01", "missing-implementation"), ("SINGLE-032-02", "bad-covers"),
+                ("SINGLE-032-03", "strong-relation"), ("SINGLE-032-04", "unknown-key"), ("SINGLE-032-05", "meaning-change")]:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / "changes/document.md"
+                if mutation == "missing-implementation":
+                    (fixture / "repo/src/contract.py").unlink()
+                else:
+                    before, after = {"bad-covers": ("covers: [REQ-001:AC-01]", "covers: [REQ-001:AC-99]"),
+                        "strong-relation": ("related:", "requires:"), "unknown-key": ("x-risk:", "risk:"),
+                        "meaning-change": ("秘密情報を出力しない", "秘密情報を出力する")}[mutation]
+                    path.write_text(path.read_text().replace(before, after))
+                self.assertTrue(validate_git_fixtures(root, [identifier])["errors"])
 
     def test_graph_fixtures(self):
         result = validate_graph()

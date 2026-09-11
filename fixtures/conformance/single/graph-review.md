@@ -59,5 +59,5 @@ read-only副作用Schemaを確認する。汎用Parserやgraph探索は実装し
 refinesからrelatedへの変更、診断code/keyの取り違え、relatedの誤失敗、cache書込み期待を拒否する。
 実際のCoreによる検出、停止・継続、結果と副作用はGate Bで受け入れる。
 
-[Git基準版の5件](git-review.md)を追加し、45/311件を準備済み、実fixture残266件とする。golden Digest、残fixtureの副作用期待値、
+[Git基準版の5件](git-review.md)と[保護対象外変更の5件](exempt-review.md)を追加し、50/311件を準備済み、実fixture残261件とする。golden Digest、残fixtureの副作用期待値、
 fresh checkoutからの全Gate A検証は未完了であり、Gate AはBlockedを維持する。

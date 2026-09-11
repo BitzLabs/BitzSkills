@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a15f0fc46ffc390ff0fcf944b013bd5707387cc419231d80177079a250a45b32"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "b226f24ef6e21dfd86592aeef96991e07d2f70ed9b7dcba60d2ce7f839542f26"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_contract.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "00a3c149a21c4582e0f62becf60284f0576130c8911e2b51d07b6438bf4827da"
+      }
+    },
+    "git": {
+      "status": " M .spec/requirements/REQ-001.md\n",
+      "index": "100644 288b477d38aa854e1bb27beef1ed8458cc2a9340 0\t.spec/bitz.yaml\n100644 3037a6941da82ecaf80e9d6b946e00b89572d3ba 0\t.spec/requirements/REQ-001.md\n100644 5743da5bea87421194e682a4429529271408fb86 0\ttests/test_contract.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a15f0fc46ffc390ff0fcf944b013bd5707387cc419231d80177079a250a45b32"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "b226f24ef6e21dfd86592aeef96991e07d2f70ed9b7dcba60d2ce7f839542f26"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_contract.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "00a3c149a21c4582e0f62becf60284f0576130c8911e2b51d07b6438bf4827da"
+      }
+    },
+    "git": {
+      "status": " M .spec/requirements/REQ-001.md\n",
+      "index": "100644 288b477d38aa854e1bb27beef1ed8458cc2a9340 0\t.spec/bitz.yaml\n100644 3037a6941da82ecaf80e9d6b946e00b89572d3ba 0\t.spec/requirements/REQ-001.md\n100644 5743da5bea87421194e682a4429529271408fb86 0\ttests/test_contract.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}
