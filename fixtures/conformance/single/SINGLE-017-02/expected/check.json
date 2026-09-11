@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "failed",
+  "scope": "full",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "checkedDocumentCount": 1,
+  "checkedStatementCount": 1,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-STYLE-SECTION-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "REQ必須section Verificationがありません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/requirements/REQ-001.md"
+      }
+    }
+  ]
+}

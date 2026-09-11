@@ -533,7 +533,7 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 提案25のD1〜D8を採用し、P0 6件とP1 5件を正本、Schema、matrixまたは性能受入成果物へ反映した。
 提案の裁定・反映は完了したが、実fixture成果物、実測baseline、Step 0Bのcross-checkとgate再検証は未完了である。
 
-## 24. 実装前最終レビューの反映状況（2026-09-07）
+## 24. 実装前最終レビューの反映状況（2026-09-11更新）
 
 提案25の採否と実装着手可否を分離して管理する。提案25はAccepted / Reflectedであり、現在のGate Aは
 `Blocked`である。Gate条件の正本は[実装計画 §1.1](12_Core-1.0実装計画.md#11-進行状態とgate)とする。
@@ -544,7 +544,7 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 | P1 5件 | 契約または性能受入成果物へ反映済み | process helper等の検証基盤、Core実装後の受入結果と性能baseline |
 | P2文書衛生 | accepted ADR linkとREADME状態を修正済み | — |
 | 自己適用 | 実装計画へ配置済み | Step 2完了後に`.spec/`を作成し、Gate Cで最終判定 |
-| Step 0B | `In progress` | 公開JSON・grammar・link・Git/process基盤・Diagnostic意味網羅・target集合25ケース・実fixture21件（導入設定9＋EARS 12）の準備を検証済み。実fixture残290件、golden Digest等が残件 |
+| Step 0B | `In progress` | 公開JSON・grammar・link・Git/process基盤・Diagnostic意味網羅・target集合25ケース・実fixture30件（導入設定9＋EARS 12＋文書構造・UTF-8 9）の準備を検証済み。実fixture残281件、golden Digest等が残件 |
 | Step 0-P | `Complete` | 基準入力・比較条件を固定し一括検証済み。実測はCore実装後 |
 | Gate A | `Blocked` | fresh checkoutから単一commandで2回一致する自動検査結果を記録 |
 | Gate B | `Pending` | 各StepのCore実装を固定済みfixtureへ通して判定 |

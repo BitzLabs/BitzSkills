@@ -12,9 +12,58 @@ from conformance.diagnostic_coverage import LEDGER, validate
 from conformance.target_vectors import HERE as TARGET_HERE, validate as validate_targets
 from conformance.initial_fixtures import validate as validate_initial, compare_state, check_command_preconditions
 from conformance.ears_fixtures import validate as validate_ears
+from conformance.document_fixtures import validate as validate_documents
 
 
 class AuditTests(unittest.TestCase):
+    def test_document_fixtures(self):
+        result = validate_documents()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(len(result["prepared"]), 9)
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_documents_reject_corrupted_evidence(self):
+        mutations = [
+            ("SINGLE-014", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(path=".spec/requirements/REQ-001.md")),
+            ("SINGLE-016", "expected/check.json", lambda v: v.update(checkedDocumentCount=1)),
+            ("SINGLE-017-01", "expected/check.json", lambda v: v.update(checkedDocumentCount=0)),
+            ("SINGLE-017-02", "expected/check.json", lambda v: v["diagnostics"][0].update(code="SPEC-REQ-STATEMENT-001")),
+            ("SINGLE-017-03", "expected/check.json", lambda v: v.update(checkedStatementCount=1)),
+            ("SINGLE-018-01", "expected/check.json", lambda v: v.update(status="passed_with_warnings")),
+            ("SINGLE-018-02", "manifest.json", lambda v: v["invocation"]["argv"].append("--report")),
+            ("SINGLE-018-03", "side-effects.json", lambda v: v["after"]["home"].update(unexpected={"kind": "directory"})),
+            ("SINGLE-019", "expected/check.json", lambda v: v.update(status="error")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                shutil.copytree(audit.FIXTURES / "single" / identifier, root / "single" / identifier)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_documents(root, [identifier])["errors"])
+
+    def test_documents_reject_repaired_input_and_extra_cause(self):
+        for mutation in ("repair-utf8", "extra-document", "config"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                identifier = "SINGLE-019"
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / "repo/.spec/requirements/REQ-001.md"
+                if mutation == "repair-utf8":
+                    path.write_bytes(path.read_bytes().replace(b"\xff", "�".encode()))
+                elif mutation == "extra-document":
+                    path.with_name("REQ-002.md").write_text("another cause")
+                else:
+                    (fixture / "repo/.spec/bitz.yaml").write_text("schemaVersion: 2\n")
+                self.assertTrue(validate_documents(root, [identifier])["errors"])
+
     def test_ears_fixtures(self):
         result = validate_ears()
         self.assertEqual(result["errors"], [])

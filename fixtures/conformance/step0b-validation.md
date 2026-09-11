@@ -1,8 +1,8 @@
 # Step 0B validation progress
 
-- Date: 2026-09-08
+- Date: 2026-09-11
 - Command: `uv run fixtures/validate_step0b.py`
-- Runtime: CPython 3.14.4, Linux/POSIX, uv 0.11.32; validator versions pinned in script metadata.
+- Runtime: CPython 3.14.6, Linux/POSIX, uv 0.11.32; validator versions pinned in script metadata.
 - Gate A: `Blocked`; command exit code: 1 (outstanding evidence).
 
 | Check | Evidence |
@@ -11,8 +11,9 @@
 | Other JSON examples | 5 Semantic IR / Digest material examples parsed; not certified by the result Schema |
 | EBNF references | 33 definitions plus 3 explicitly prose-defined lexical sets; no unresolved reference |
 | Diagnostic review (updated 2026-09-08) | 119 conditions mapped to 17 source documents; three open issues resolved; ledger and regression checks passed |
-| Matrix inventory | 311 IDs, no duplicate or family/suffix collision; 21 prepared, 290 real fixtures missing |
+| Matrix inventory | 311 IDs, no duplicate or family/suffix collision; 30 prepared, 281 real fixtures missing |
 | EARS fixtures | SINGLE-007, 008, 009-01/02/03, 010-01/02, 011, 012-01/02/03, 013: fixed REQ bytes, Frontmatter Schema, complete expected results, Unicode token/end-of-line positions and two isolated setups checked; position/severity/code/count/input corruption rejected |
+| Document fixtures (2026-09-11) | SINGLE-014, 016, 017-01/02/03, 018-01/02/03, 019: fixed input bytes including invalid UTF-8, complete expected JSON, Frontmatter and side-effect schemas, and two isolated setups each passed; skip/continue counts, Diagnostic, report, side-effect and input corruption rejected |
 | Initial fixtures | SINGLE-001, 002, 003, 004-01/02, 005-01/02, 006-01/02: manifest/result/side-effect schemas and reviewed input checks passed; two isolated setups each matched fixed before snapshots |
 | Command preconditions | Absent explicit executable / absent cwd isolated; /bin/true executable prerequisite checked without running commands; extra or missing causes rejected by regression tests |
 | Target vectors (2026-09-08) | 18 basic combinations + 7 supplementary cases; four ordered sets, input-order invariance and rejection regression checks passed |
@@ -24,10 +25,16 @@
 | Step 0-P | Passed again via the integrated command |
 
 The Git and process vectors are infrastructure tests, not conformance fixtures or Core acceptance results.
-Read-only before/after expectations are fixed for the nine introduction/config and twelve EARS cases; the remaining cases still need expectations.
+Read-only before/after expectations are fixed for the nine introduction/config, twelve EARS and nine document cases; the remaining cases still need expectations.
 The initial fixtures have not run Core. Their after snapshots are expectations, not observed Core side effects.
 Exact doctor check names and Diagnostic strings chosen for this batch are recorded in [the initial fixture review](single/README.md).
 Structural registry and matrix checks cannot prove semantic coverage or single-cause isolation. Diagnostic semantic decisions are
 recorded in [the reviewed ledger](diagnostic-review.md); the validator detects missing mappings and changed source documents.
 Independently computed golden Context Digests, complete acceptance inputs/results,
 and a complete fresh-checkout Gate A run remain pending. No Gate A approval or Core implementation is included.
+
+The 2026-09-11 run used the pinned Step 0B uv environment Python directly (`python -B fixtures/validate_step0b.py`),
+following the initial `uv run` baseline. The integrated audit and regression suites reported no errors.
+Two full audit reports matched byte for byte; both returned exit code 1 for the outstanding evidence.
+This is working-tree repeatability, not the pending fresh-checkout Gate A certification.
+Document expectation choices are recorded in [the document fixture review](single/document-review.md).
