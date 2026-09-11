@@ -12,7 +12,7 @@ It also executes Step 0-P validation and the fixture infrastructure self-tests.
 Pinned dependencies are declared in the script; the first run requires package download access.
 
 Exit 0 means Gate A is allowed; exit 1 means errors or outstanding evidence remain. Currently exit 1 is expected:
-281 of the 311 matrix fixtures, independent golden Context Digests,
+275 of the 311 matrix fixtures, independent golden Context Digests,
 and per-fixture side-effect expectations are still outstanding. Missing fixtures are listed individually.
 Static checks do not prove that a fixture has only one independent cause. Diagnostic mappings have a reviewed ledger:
 see [Diagnostic review](diagnostic-review.md). The audit checks its integrity and source freshness, not natural-language semantics.
@@ -30,9 +30,13 @@ Their fixed REQ inputs, Frontmatter schema, full expected JSON, token positions,
 This does not implement or certify the Core Scanner/Parser.
 
 [Document fixtures](single/document-review.md) add nine filename, required statement/heading, placement,
-ignored style and invalid UTF-8 cases, bringing preparation to 30/311. Fixed input bytes, complete expected JSON,
+ignored style and invalid UTF-8 cases, with fixed preparation evidence. Fixed input bytes, complete expected JSON,
 Frontmatter and side-effect schemas, and two isolated setups are audited. Skip/continue counts and the rejection
 of repaired UTF-8 or additional causes are covered by regression checks. Core acceptance remains in Gate B.
+
+[Trace fixtures](single/trace-review.md) add six strong-reference, relation-type, legacy refs, path and coverage cases,
+bringing preparation to 36/311. The audit verifies complete expected JSON, fixed input bytes, reviewed Frontmatter values,
+read-only snapshots and two isolated setups, with mutation tests for missing or additional causes.
 
 The `harness-input` directory contains infrastructure test inputs, not `SINGLE-*` or `MONO-*` acceptance fixtures.
 `harness.py` builds isolated Git repositories and compares files, executable bits, symlink targets, and directories.

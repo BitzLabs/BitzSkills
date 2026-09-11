@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "failed",
+  "scope": "full",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "checkedDocumentCount": 2,
+  "checkedStatementCount": 1,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-RELATION-LEGACY-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "旧refs fieldは使用できません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/requirements/REQ-001.md",
+        "key": "refs"
+      }
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a15f0fc46ffc390ff0fcf944b013bd5707387cc419231d80177079a250a45b32"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "7718d3cdbe08a322ca80de2c74092602130291b0a4bc5064cd53b0d8d48a6799"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_contract.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "00a3c149a21c4582e0f62becf60284f0576130c8911e2b51d07b6438bf4827da"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 288b477d38aa854e1bb27beef1ed8458cc2a9340 0\t.spec/bitz.yaml\n100644 7e278aedba67f1b6b25f0ffa7fd58f04af93f284 0\t.spec/requirements/REQ-001.md\n100644 5743da5bea87421194e682a4429529271408fb86 0\ttests/test_contract.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a15f0fc46ffc390ff0fcf944b013bd5707387cc419231d80177079a250a45b32"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "7718d3cdbe08a322ca80de2c74092602130291b0a4bc5064cd53b0d8d48a6799"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_contract.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "00a3c149a21c4582e0f62becf60284f0576130c8911e2b51d07b6438bf4827da"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 288b477d38aa854e1bb27beef1ed8458cc2a9340 0\t.spec/bitz.yaml\n100644 7e278aedba67f1b6b25f0ffa7fd58f04af93f284 0\t.spec/requirements/REQ-001.md\n100644 5743da5bea87421194e682a4429529271408fb86 0\ttests/test_contract.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

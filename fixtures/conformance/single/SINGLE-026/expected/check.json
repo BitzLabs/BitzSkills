@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "failed",
+  "scope": "full",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "checkedDocumentCount": 1,
+  "checkedStatementCount": 1,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-TEST-COVERAGE-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "coversが存在しない規範文を参照しています",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/requirements/REQ-001.md",
+        "key": "tests[0].covers"
+      }
+    }
+  ]
+}

@@ -13,9 +13,72 @@ from conformance.target_vectors import HERE as TARGET_HERE, validate as validate
 from conformance.initial_fixtures import validate as validate_initial, compare_state, check_command_preconditions
 from conformance.ears_fixtures import validate as validate_ears
 from conformance.document_fixtures import validate as validate_documents
+from conformance.trace_fixtures import validate as validate_trace
 
 
 class AuditTests(unittest.TestCase):
+    def test_trace_fixtures(self):
+        result = validate_trace()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(len(result["prepared"]), 6)
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_trace_rejects_corrupted_evidence(self):
+        mutations = [
+            ("SINGLE-020", "expected/check.json", lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0]))),
+            ("SINGLE-021", "expected/check.json", lambda v: v["diagnostics"][0].update(code="SPEC-RELATION-MISSING-001")),
+            ("SINGLE-023", "expected/check.json", lambda v: v.update(checkedDocumentCount=1)),
+            ("SINGLE-024", "expected/check.json", lambda v: v["diagnostics"][0].update(severity="warning")),
+            ("SINGLE-025", "expected/check.json", lambda v: v.update(status="failed")),
+            ("SINGLE-026", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(key="tests[0].path")),
+            ("SINGLE-026", "manifest.json", lambda v: v["invocation"]["argv"].append("--report")),
+            ("SINGLE-024", "side-effects.json", lambda v: v["after"]["cache"].update(unexpected={"kind": "directory"})),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                shutil.copytree(audit.FIXTURES / "single" / identifier, root / "single" / identifier)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_trace(root, [identifier])["errors"])
+
+    def test_trace_rejects_missing_or_additional_causes(self):
+        cases = [("SINGLE-020", "resolve"), ("SINGLE-021", "remove-target"), ("SINGLE-023", "convert-refs"),
+                 ("SINGLE-024", "create-path"), ("SINGLE-025", "approve"), ("SINGLE-026", "remove-test"),
+                 ("SINGLE-026", "repair-covers"), ("SINGLE-026", "remove-command")]
+        for identifier, mutation in cases:
+            with self.subTest(identifier=identifier, mutation=mutation), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                repo = fixture / "repo"
+                req = repo / ".spec/requirements/REQ-001.md"
+                if mutation == "resolve":
+                    req.with_name("REQ-999.md").write_text(req.read_text().replace("REQ-001", "REQ-999"))
+                elif mutation == "remove-target":
+                    (repo / ".spec/technical/TECH-001.md").unlink()
+                elif mutation == "convert-refs":
+                    req.write_text(req.read_text().replace("refs: [TECH-001]", "relations:\n  requires: [TECH-001]"))
+                elif mutation == "create-path":
+                    (repo / "src").mkdir()
+                    (repo / "src/missing.py").write_text("pass\n")
+                elif mutation == "approve":
+                    req.write_text(req.read_text().replace("status: draft", "status: approved"))
+                elif mutation == "remove-test":
+                    (repo / "tests/test_contract.py").unlink()
+                elif mutation == "repair-covers":
+                    req.write_text(req.read_text().replace("AC-99", "AC-01"))
+                else:
+                    config = repo / ".spec/bitz.yaml"
+                    config.write_text(config.read_text().split("verify:")[0])
+                self.assertTrue(validate_trace(root, [identifier])["errors"])
+
     def test_document_fixtures(self):
         result = validate_documents()
         self.assertEqual(result["errors"], [])

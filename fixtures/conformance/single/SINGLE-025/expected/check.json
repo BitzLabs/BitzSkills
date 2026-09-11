@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "passed_with_warnings",
+  "scope": "full",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "checkedDocumentCount": 1,
+  "checkedStatementCount": 1,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-PATH-INVALID-001",
+      "severity": "warning",
+      "resultStatus": "passed_with_warnings",
+      "summary": "draftの実装pathは未作成です",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/requirements/REQ-001.md",
+        "key": "implements"
+      }
+    }
+  ]
+}

@@ -17,12 +17,12 @@
       ".spec/requirements/REQ-001.md": {
         "kind": "file",
         "executable": false,
-        "sha256": "90b0503ee7e985489efb14ffd806ca2b27c306157b44c0c9f041810b864be7c5"
+        "sha256": "bea9940177f0ae031128fb1a0b608daa77669ca9109fb1e2fa51bfa492c47144"
       }
     },
     "git": {
       "status": "",
-      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 74162289edba355c2cc9d501eb9590bc5307d5d8 0\t.spec/requirements/REQ-001.md\n"
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 1f434cf75e55d72853d6bea25c30b62fde69ee50 0\t.spec/requirements/REQ-001.md\n"
     },
     "home": {},
     "cache": {},
@@ -44,12 +44,12 @@
       ".spec/requirements/REQ-001.md": {
         "kind": "file",
         "executable": false,
-        "sha256": "90b0503ee7e985489efb14ffd806ca2b27c306157b44c0c9f041810b864be7c5"
+        "sha256": "bea9940177f0ae031128fb1a0b608daa77669ca9109fb1e2fa51bfa492c47144"
       }
     },
     "git": {
       "status": "",
-      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 74162289edba355c2cc9d501eb9590bc5307d5d8 0\t.spec/requirements/REQ-001.md\n"
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 1f434cf75e55d72853d6bea25c30b62fde69ee50 0\t.spec/requirements/REQ-001.md\n"
     },
     "home": {},
     "cache": {},

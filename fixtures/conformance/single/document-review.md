@@ -60,5 +60,6 @@ read-onlyのafterはbeforeと同じ期待値であり、Coreによる実測値�
 HOMEへの書込み期待、UTF-8不正のstatus変更・置換文字への修復、余分な文書・設定不正を拒否する。
 実際のCore出力と副作用はGate Bで確認する。
 
-導入・設定9件、EARS 12件と合わせて30/311件を準備した。
-実fixture残281件、golden Digest、全体の副作用期待値、fresh checkoutの全Gate A検証は未完了である。
+導入・設定9件、EARS 12件、[関係・path・coverageの6件](trace-review.md)と合わせて36/311件を準備した。
+017-02と018-01の末尾の余分な空行を除去し、固定入力とsnapshotも同期した。意味上の期待値は変更しない。
+実fixture残275件、golden Digest、全体の副作用期待値、fresh checkoutの全Gate A検証は未完了である。

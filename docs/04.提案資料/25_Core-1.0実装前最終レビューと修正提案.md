@@ -523,10 +523,12 @@ Git 7状態の2回再現とprocess helper自己試験を検証した。Semantic 
 公開結果Schemaの対象ではない。2026-09-08にDiagnostic意味網羅レビューを実施し、119条件を17根拠文書へ対応付け、
 発見した3件の未裁定条件を解消した。対応台帳の欠落・未知ID・根拠改変・未裁定条件残存を検証する。
 判断根拠とDiagnosticを生成しない条件は[Diagnostic意味網羅レビュー](../../fixtures/conformance/diagnostic-review.md)に記録した。
-matrix 311件中、導入・設定9件、EARS-AI構文・候補抽出・拡張12件、文書構造・UTF-8 9件は入力・manifest・完全期待JSON・read-only副作用期待値を作成し、
-各2回の隔離setupを固定snapshotと照合した。実fixture残件は281件であり、Coreは未実行である。
+matrix 311件中、導入・設定9件、EARS-AI構文・候補抽出・拡張12件、文書構造・UTF-8 9件、関係・path・coverage 6件は入力・manifest・完全期待JSON・read-only副作用期待値を作成し、
+各2回の隔離setupを固定snapshotと照合した。実fixture残件は275件であり、Coreは未実行である。
 2026-09-11に文書構造・UTF-8の9件を追加し、完全期待JSONと副作用期待値、各2回の隔離setupを検証した。
 期待値の選択は[文書fixtureレビュー](../../fixtures/conformance/single/document-review.md)を参照する。
+同日に関係・path・coverageの6件を追加し、同じ準備検証と回帰試験を通過した。
+期待値の選択は[trace fixtureレビュー](../../fixtures/conformance/single/trace-review.md)を参照する。
 EARS-AIの期待値選択と検証範囲は[EARS fixtureレビュー](../../fixtures/conformance/single/ears-review.md)に記録した。
 設計上の期待値選択は[初回fixtureレビュー](../../fixtures/conformance/single/README.md)、
 検証結果は[Step 0B検証記録](../../fixtures/conformance/step0b-validation.md)を参照する。

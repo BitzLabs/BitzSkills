@@ -26,14 +26,14 @@ CASES = {
         "SPEC-REQ-STATEMENT-001", "approved REQに妥当な規範文がありません", {}, (0, 0)),
     "SINGLE-017-01": (REQ_PATH, DOCUMENT.replace("# REQ-001 文書の検査", "# REQ-001 異なる見出し").encode(),
         "SPEC-STYLE-H1-001", "H1がFrontmatterと一致しません", {"line": 7, "column": 1}, (1, 1)),
-    "SINGLE-017-02": (REQ_PATH, (HEADER + INTENT + AC).encode(),
+    "SINGLE-017-02": (REQ_PATH, ((HEADER + INTENT + AC).rstrip() + "\n").encode(),
         "SPEC-STYLE-SECTION-001", "REQ必須section Verificationがありません", {}, (1, 1)),
     "SINGLE-017-03": (ADR_PATH, (
         "---\nid: ADR-001\ntitle: 文書の検査\nstatus: accepted\n---\n\n# ADR-001 文書の検査\n\n"
         "## Context\n\n判断の背景。\n\n## Decision\n\n" + GOOD.replace("REQ-001", "ADR-001") +
         "\n\n## Consequences\n\n規範契約はREQへ置く。\n").encode(),
         "SPEC-STYLE-PLACEMENT-001", "ADRに規範行を配置できません", {"line": 15, "column": 3}, (1, 0)),
-    "SINGLE-018-01": (REQ_PATH, (HEADER + VERIFICATION + "\n" + AC + INTENT).encode(),
+    "SINGLE-018-01": (REQ_PATH, ((HEADER + VERIFICATION + "\n" + AC + INTENT).rstrip() + "\n").encode(),
         None, None, {}, (1, 1)),
     "SINGLE-018-02": (REQ_PATH, (DOCUMENT + "\n## Notes\n").encode(),
         None, None, {}, (1, 1)),
