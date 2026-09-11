@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "failed",
+  "scope": "full",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": true
+  },
+  "checkedDocumentCount": 0,
+  "checkedStatementCount": 0,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-STATE-TRANSITION-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "管理済みSPECが削除されています",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/technical/TECH-001.md"
+      }
+    }
+  ]
+}

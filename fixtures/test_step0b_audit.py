@@ -15,9 +15,50 @@ from conformance.ears_fixtures import validate as validate_ears
 from conformance.document_fixtures import validate as validate_documents
 from conformance.trace_fixtures import validate as validate_trace
 from conformance.graph_fixtures import validate as validate_graph
+from conformance.git_fixtures import validate as validate_git_fixtures, check_git_states, reviewed_manifest as git_manifest
+from conformance.harness import setup as fixture_setup, git as fixture_git
 
 
 class AuditTests(unittest.TestCase):
+    def test_git_transition_fixtures(self):
+        result = validate_git_fixtures()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(len(result["prepared"]), 5)
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_git_fixtures_reject_corrupted_evidence(self):
+        mutations = [
+            ("SINGLE-027", "expected/check.json", lambda v: v.update(status="passed")),
+            ("SINGLE-028", "expected/check.json", lambda v: v["revision"].update(dirty=False)),
+            ("SINGLE-029", "expected/check.json", lambda v: v.update(checkedDocumentCount=1)),
+            ("SINGLE-030", "manifest.json", lambda v: v["setup"]["operations"].pop()),
+            ("SINGLE-031", "expected/check.json", lambda v: v["diagnostics"][0].update(code="SPEC-STYLE-H1-001")),
+            ("SINGLE-031", "side-effects.json", lambda v: v["after"]["git"].update(status="")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_git_fixtures(root, [identifier])["errors"])
+
+    def test_git_state_audit_rejects_staging_or_committing_changes(self):
+        for identifier in ("SINGLE-027", "SINGLE-028", "SINGLE-029", "SINGLE-030", "SINGLE-031"):
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                repo = fixture_setup(audit.FIXTURES / "single" / identifier, git_manifest(identifier), Path(temporary) / "repo")
+                check_git_states(repo, identifier)
+                fixture_git(repo, "add", "-A")
+                if identifier == "SINGLE-030":
+                    fixture_git(repo, "commit", "-m", "incorrect new base")
+                with self.assertRaises(ValueError):
+                    check_git_states(repo, identifier)
+
     def test_graph_fixtures(self):
         result = validate_graph()
         self.assertEqual(result["errors"], [])

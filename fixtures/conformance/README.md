@@ -12,7 +12,7 @@ It also executes Step 0-P validation and the fixture infrastructure self-tests.
 Pinned dependencies are declared in the script; the first run requires package download access.
 
 Exit 0 means Gate A is allowed; exit 1 means errors or outstanding evidence remain. Currently exit 1 is expected:
-271 of the 311 matrix fixtures, independent golden Context Digests,
+266 of the 311 matrix fixtures, independent golden Context Digests,
 and per-fixture side-effect expectations are still outstanding. Missing fixtures are listed individually.
 Static checks do not prove that a fixture has only one independent cause. Diagnostic mappings have a reviewed ledger:
 see [Diagnostic review](diagnostic-review.md). The audit checks its integrity and source freshness, not natural-language semantics.
@@ -39,8 +39,12 @@ with fixed preparation evidence. The audit verifies complete expected JSON, fixe
 read-only snapshots and two isolated setups, with mutation tests for missing or additional causes.
 
 [Graph fixtures](single/graph-review.md) add four duplicate-document-ID and requires/refines/related self-cycle cases,
-bringing preparation to 40/311. Complete expectations, reviewed Frontmatter values and two isolated setups are checked;
+with fixed preparation evidence. Complete expectations, reviewed Frontmatter values and two isolated setups are checked;
 mutation tests reject changed causes, duplicate diagnostics, renumber suggestions and side effects.
+
+[Git fixtures](single/git-review.md) add five forbidden transition, new document, deletion, rename and approved-meaning cases,
+bringing preparation to 45/311. HEAD and index blobs and working-tree bytes are checked directly, alongside complete
+expected results, read-only snapshots and two isolated setups. Mutation tests reject unintended staging or commits.
 
 The `harness-input` directory contains infrastructure test inputs, not `SINGLE-*` or `MONO-*` acceptance fixtures.
 `harness.py` builds isolated Git repositories and compares files, executable bits, symlink targets, and directories.

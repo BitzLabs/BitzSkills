@@ -89,6 +89,6 @@ hostのPATHに同名commandがあっても結果が変わらない構成とす�
 検証はCoreもYAML設定判定も実装しない。afterは期待値だけであり、Core実行後の実測値ではない。
 Core実装後のGate Bで、実stdout/終了コード、実before/after、索引構築へ進まないことを確認する。
 この9件に加えて[EARS-AI構文・候補抽出・拡張の12件](ears-review.md)と
-[文書構造・UTF-8の9件](document-review.md)、[関係・path・coverageの6件](trace-review.md)、[ID重複・循環の4件](graph-review.md)を準備した。
-計40/311件、matrix残271件、golden Context Digest、全体の副作用期待値、
+[文書構造・UTF-8の9件](document-review.md)、[関係・path・coverageの6件](trace-review.md)、[ID重複・循環の4件](graph-review.md)、[Git基準版の5件](git-review.md)を準備した。
+計45/311件、matrix残266件、golden Context Digest、全体の副作用期待値、
 fresh checkoutでのGate A全検証は残る。
