@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "passed",
+  "scope": "changed",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": [],
+  "selection": {
+    "changedPathCount": 0,
+    "targetDocumentCount": 0,
+    "excludedCodeTestPathCount": 0
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "passed_with_warnings",
+  "scope": "full",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": true
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-IMPACT-OUTDATED-001",
+      "severity": "warning",
+      "resultStatus": "passed_with_warnings",
+      "summary": "TECH-002が強く依存するTECH-001が変更されています。再確認してください",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/technical/TECH-002.md",
+        "key": "relations.requires"
+      }
+    }
+  ],
+  "checkedDocumentCount": 4,
+  "checkedStatementCount": 0
+}

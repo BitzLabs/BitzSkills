@@ -18,9 +18,81 @@ from conformance.graph_fixtures import validate as validate_graph
 from conformance.git_fixtures import validate as validate_git_fixtures, check_git_states, reviewed_manifest as git_manifest
 from conformance.harness import setup as fixture_setup, git as fixture_git
 from conformance.task_fixtures import validate as validate_tasks, check_git_states as check_task_git_states, reviewed_manifest as task_manifest
+from conformance.selection_fixtures import validate as validate_selection, check_git_states as check_selection_git_states, reviewed_manifest as selection_manifest
 
 
 class AuditTests(unittest.TestCase):
+    def test_git_selection_fixtures(self):
+        result = validate_selection()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-033", "SINGLE-039", "SINGLE-040", "SINGLE-041"])
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_git_selection_rejects_corrupted_evidence(self):
+        mutations = [
+            ("SINGLE-033", "expected/check.json", lambda v: v.update(status="failed")),
+            ("SINGLE-033", "expected/check.json", lambda v: v["diagnostics"].clear()),
+            ("SINGLE-033", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(path=".spec/technical/TECH-003.md")),
+            ("SINGLE-033", "expected/check.json", lambda v: v["diagnostics"].append({**copy.deepcopy(v["diagnostics"][0]),
+                "source": {"kind": "file", "workspaceId": "root", "path": ".spec/technical/TECH-004.md"}})),
+            ("SINGLE-039", "expected/check.json", lambda v: v.update(revision={"base": "0" * 40, "commit": "0" * 40, "dirty": True})),
+            ("SINGLE-039", "expected/check.json", lambda v: v["diagnostics"].append({"code": "SPEC-GIT-DEGRADED-001",
+                "severity": "warning", "resultStatus": "passed_with_warnings", "summary": "Git不在",
+                "source": {"kind": "environment", "component": "git", "identifier": "git"}})),
+            ("SINGLE-039", "manifest.json", lambda v: v["invocation"]["argv"].extend(["--base", "HEAD"])),
+            ("SINGLE-040", "expected/check.json", lambda v: v["selection"].update(targetDocumentCount=1)),
+            ("SINGLE-040", "expected/check.json", lambda v: v["revision"].update(dirty=True)),
+            ("SINGLE-041", "expected/check.json", lambda v: v["selection"].update(changedPathCount=1)),
+            ("SINGLE-041", "expected/check.json", lambda v: v["selection"].update(excludedCodeTestPathCount=0)),
+            ("SINGLE-041", "manifest.json", lambda v: v["setup"]["operations"].pop(1)),
+            ("SINGLE-041", "side-effects.json", lambda v: v["after"]["git"].update(status="")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_selection(root, [identifier])["errors"])
+
+    def test_selection_inputs_reject_changed_causes(self):
+        mutations = [
+            ("SINGLE-033", "repo/.spec/technical/TECH-002.md", "requires:", "related:"),
+            ("SINGLE-033", "repo/.spec/technical/TECH-003.md", "related:", "requires:"),
+            ("SINGLE-033", "changes/tech.md", "改訂した前提技術", "前提技術"),
+            ("SINGLE-041", "repo/.spec/technical/TECH-001.md", "status: approved", "status: approved\nimplements: [src/unowned.py]"),
+        ]
+        for identifier, relative, before, after in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                path.write_text(path.read_text().replace(before, after))
+                self.assertTrue(validate_selection(root, [identifier])["errors"])
+
+    def test_selection_git_state_rejects_unborn_commit_or_index_changes(self):
+        for identifier in ("SINGLE-033", "SINGLE-039", "SINGLE-040", "SINGLE-041"):
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                repository = fixture_setup(audit.FIXTURES / "single" / identifier, selection_manifest(identifier), Path(temporary) / "repo")
+                check_selection_git_states(repository, identifier)
+                if identifier == "SINGLE-040":
+                    (repository / "unexpected.py").write_text("# new change\n")
+                fixture_git(repository, "add", "-A")
+                if identifier == "SINGLE-039":
+                    with self.assertRaises(ValueError):
+                        check_selection_git_states(repository, identifier)
+                    fixture_git(repository, "commit", "-m", "incorrect initial commit")
+                with self.assertRaises(ValueError):
+                    check_selection_git_states(repository, identifier)
+
     def test_task_scope_fixtures(self):
         result = validate_tasks()
         self.assertEqual(result["errors"], [])

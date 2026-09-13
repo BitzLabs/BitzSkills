@@ -1,0 +1,40 @@
+{
+  "fixtureId": "SINGLE-033",
+  "description": "changed TECHの直接strong逆参照だけを影響候補にする",
+  "setup": {
+    "git": true,
+    "operations": [
+      {
+        "op": "update",
+        "path": ".spec/technical/TECH-001.md",
+        "source": "changes/tech.md"
+      }
+    ],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    }
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--full",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed_with_warnings",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

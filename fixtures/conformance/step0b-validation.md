@@ -11,7 +11,7 @@
 | Other JSON examples | 5 Semantic IR / Digest material examples parsed; not certified by the result Schema |
 | EBNF references | 33 definitions plus 3 explicitly prose-defined lexical sets; no unresolved reference |
 | Diagnostic review (updated 2026-09-08) | 119 conditions mapped to 17 source documents; three open issues resolved; ledger and regression checks passed |
-| Matrix inventory | 311 IDs, no duplicate or family/suffix collision; 53 prepared, 258 real fixtures missing |
+| Matrix inventory | 311 IDs, no duplicate or family/suffix collision; 57 prepared, 254 real fixtures missing |
 | EARS fixtures | SINGLE-007, 008, 009-01/02/03, 010-01/02, 011, 012-01/02/03, 013: fixed REQ bytes, Frontmatter Schema, complete expected results, Unicode token/end-of-line positions and two isolated setups checked; position/severity/code/count/input corruption rejected |
 | Document fixtures (2026-09-11) | SINGLE-014, 016, 017-01/02/03, 018-01/02/03, 019: fixed input bytes including invalid UTF-8, complete expected JSON, Frontmatter and side-effect schemas, and two isolated setups each passed; skip/continue counts, Diagnostic, report, side-effect and input corruption rejected |
 | Trace fixtures (2026-09-11) | SINGLE-020, 021, 023, 024, 025, 026: fixed YAML/decoded Frontmatter pairs, complete expected JSON, read-only snapshots and two isolated setups each passed; duplicate diagnostics, wrong primary/count/severity/source, input repair and additional causes rejected |
@@ -19,6 +19,7 @@
 | Git fixtures (2026-09-11) | SINGLE-027–031: fixed HEAD/index/worktree contents, transitions/new/deleted/renamed/approved-meaning cases, complete JSON and read-only snapshots; two isolated setups and mutation tests passed |
 | Approved-REQ exemptions (2026-09-11) | SINGLE-032-01–05: implements/tests/related/x-field/prose-only changes, unchanged supporting files, complete success JSON, two isolated HEAD/index/worktree comparisons and mutation tests passed |
 | TASK scopes (2026-09-14) | SINGLE-034, 035-01/02: identical two-path unstaged changes, explicit TASK segment-boundary failure versus changed/full success; complete JSON, HEAD/index/worktree and read-only snapshots checked in two isolated setups; corrupted scope, source, selection counts, permissions and staging rejected |
+| Git selection/impact (2026-09-14) | SINGLE-033, 039–041: direct strong dependency warning with weak/transitive controls, unborn full fallback, clean empty selection, staged unowned code and untracked test; complete JSON, HEAD/index/worktree and read-only snapshots checked in two isolated setups; corrupted diagnostics, revision, counts, ownership and Git state rejected |
 | Initial fixtures | SINGLE-001, 002, 003, 004-01/02, 005-01/02, 006-01/02: manifest/result/side-effect schemas and reviewed input checks passed; two isolated setups each matched fixed before snapshots |
 | Command preconditions | Absent explicit executable / absent cwd isolated; /bin/true executable prerequisite checked without running commands; extra or missing causes rejected by regression tests |
 | Target vectors (2026-09-08) | 18 basic combinations + 7 supplementary cases; four ordered sets, input-order invariance and rejection regression checks passed |
@@ -30,7 +31,7 @@
 | Step 0-P | Passed again via the integrated command |
 
 The Git and process vectors are infrastructure tests, not conformance fixtures or Core acceptance results.
-Read-only before/after expectations are fixed for the nine introduction/config, twelve EARS, nine document, six trace, four graph, ten Git/approved-exemption and three TASK-scope cases; the remaining cases still need expectations.
+Read-only before/after expectations are fixed for the nine introduction/config, twelve EARS, nine document, six trace, four graph, ten Git/approved-exemption three TASK-scope and four Git selection/impact cases; the remaining cases still need expectations.
 The initial fixtures have not run Core. Their after snapshots are expectations, not observed Core side effects.
 Exact doctor check names and Diagnostic strings chosen for this batch are recorded in [the initial fixture review](single/README.md).
 Structural registry and matrix checks cannot prove semantic coverage or single-cause isolation. Diagnostic semantic decisions are
@@ -65,3 +66,10 @@ Both runs used the pinned Step 0B uv environment Python directly (`python -B fix
 and returned exit code 1 solely for pending Gate A evidence. Prepared fixtures: 53/311; missing: 258.
 This certifies working-tree preparation repeatability, not Core behavior or the fresh-checkout Gate A condition.
 Expectation choices are recorded in [the TASK fixture review](single/task-review.md).
+
+The subsequent 2026-09-14 Git selection/impact batch passed integrated checks and regression suites.
+Both pinned-environment `python -B fixtures/validate_step0b.py` runs produced byte-identical reports,
+with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 57/311; missing: 254.
+HEAD/index/worktree comparisons include the empty unborn index and the staged-code/untracked-test split.
+Expectation choices are recorded in [the Git selection/impact review](single/selection-review.md).
+This remains working-tree preparation evidence; Core behavior and fresh-checkout Gate A certification are pending.

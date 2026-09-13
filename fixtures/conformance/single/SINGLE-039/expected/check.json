@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "passed",
+  "scope": "full",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "revision": null,
+  "durationMs": 0,
+  "diagnostics": [],
+  "checkedDocumentCount": 1,
+  "checkedStatementCount": 0
+}

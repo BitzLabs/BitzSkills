@@ -23,6 +23,7 @@ from conformance.trace_fixtures import validate as validate_trace_fixtures
 from conformance.graph_fixtures import validate as validate_graph_fixtures
 from conformance.git_fixtures import validate as validate_git_fixtures
 from conformance.task_fixtures import validate as validate_task_fixtures
+from conformance.selection_fixtures import validate as validate_selection_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -174,6 +175,7 @@ def main():
     checks["graph_fixtures"] = validate_graph_fixtures()
     checks["git_fixtures"] = validate_git_fixtures()
     checks["task_fixtures"] = validate_task_fixtures()
+    checks["selection_fixtures"] = validate_selection_fixtures()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_step0p.py")], capture_output=True, text=True, timeout=60)
     checks["step0p"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
     helpers = subprocess.run([sys.executable, "-B", str(FIXTURES / "test_harness.py")], capture_output=True, text=True, timeout=30)

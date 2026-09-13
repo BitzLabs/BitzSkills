@@ -1,0 +1,48 @@
+{
+  "fixtureId": "SINGLE-041",
+  "description": "未所有codeとtest変更を件数だけに残すcheck",
+  "setup": {
+    "git": true,
+    "operations": [
+      {
+        "op": "update",
+        "path": "src/unowned.py",
+        "source": "changes/code.py"
+      },
+      {
+        "op": "stage",
+        "paths": [
+          "src/unowned.py"
+        ]
+      },
+      {
+        "op": "create",
+        "path": "tests/test_unowned.py",
+        "source": "changes/test.py"
+      }
+    ],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    }
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}
