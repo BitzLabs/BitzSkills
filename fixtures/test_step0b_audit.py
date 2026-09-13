@@ -17,9 +17,68 @@ from conformance.trace_fixtures import validate as validate_trace
 from conformance.graph_fixtures import validate as validate_graph
 from conformance.git_fixtures import validate as validate_git_fixtures, check_git_states, reviewed_manifest as git_manifest
 from conformance.harness import setup as fixture_setup, git as fixture_git
+from conformance.task_fixtures import validate as validate_tasks, check_git_states as check_task_git_states, reviewed_manifest as task_manifest
 
 
 class AuditTests(unittest.TestCase):
+    def test_task_scope_fixtures(self):
+        result = validate_tasks()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-034", "SINGLE-035-01", "SINGLE-035-02"])
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_task_scope_rejects_corrupted_evidence(self):
+        mutations = [
+            ("SINGLE-034", "expected/check.json", lambda v: v.update(status="passed")),
+            ("SINGLE-034", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(path="src/inside.py")),
+            ("SINGLE-034", "manifest.json", lambda v: v["invocation"]["argv"].remove("TASK-001")),
+            ("SINGLE-035-01", "expected/check.json", lambda v: v["selection"].update(targetDocumentCount=0)),
+            ("SINGLE-035-01", "expected/check.json", lambda v: v["selection"].update(excludedCodeTestPathCount=0)),
+            ("SINGLE-035-02", "expected/check.json", lambda v: v.update(checkedStatementCount=1)),
+            ("SINGLE-035-02", "expected/check.json", lambda v: v["diagnostics"].append({
+                "code": "SPEC-TASK-BOUNDARY-001", "severity": "warning", "resultStatus": "passed_with_warnings",
+                "summary": "境界未実施", "source": {"kind": "file", "workspaceId": "root", "path": "src2/outside.py"}})),
+            ("SINGLE-035-02", "side-effects.json", lambda v: v["after"]["git"].update(status="")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_tasks(root, [identifier])["errors"])
+
+    def test_task_inputs_reject_widened_permission_and_missing_selection(self):
+        for relative, before, after in [
+            ("repo/.spec/tasks/TASK-001.md", "changes: [src/]", "changes: [src/, src2/]"),
+            ("changes/task.md", "説明を補足する。", ""),
+        ]:
+            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single/SINGLE-035-01"
+                shutil.copytree(audit.FIXTURES / "single/SINGLE-035-01", fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                path.write_text(path.read_text().replace(before, after))
+                self.assertTrue(validate_tasks(root, ["SINGLE-035-01"])["errors"])
+
+    def test_task_git_state_rejects_staged_or_committed_changes(self):
+        for action in ("stage", "commit"):
+            with self.subTest(action=action), tempfile.TemporaryDirectory() as temporary:
+                repository = fixture_setup(audit.FIXTURES / "single/SINGLE-034", task_manifest("SINGLE-034"), Path(temporary) / "repo")
+                check_task_git_states(repository)
+                fixture_git(repository, "add", "-A")
+                if action == "commit":
+                    fixture_git(repository, "commit", "-m", "incorrect base")
+                with self.assertRaises(ValueError):
+                    check_task_git_states(repository)
+
     def test_git_transition_fixtures(self):
         result = validate_git_fixtures()
         self.assertEqual(result["errors"], [])
