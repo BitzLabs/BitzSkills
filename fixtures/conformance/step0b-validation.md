@@ -394,3 +394,16 @@ See [the default display review](single/presentation-review.md) for scope and ev
 Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
 No renderer, Git reader or Core was implemented or executed. Markdown byte equality (SINGLE-104-01) and the
 three projection fixtures stay outstanding with the remaining Context and Digest work.
+
+SINGLE-104-01 passed two byte-identical integrated audits in the pinned CPython 3.14.6 environment.
+All check errors were empty; exit 1 denotes pending Gate A evidence. Prepared: 174/311; missing: 137.
+The Markdown presentation was undefined beyond the section order, so proposal 26 fixed the whole rendering
+and context仕様 §9 now carries it; the reviewed source hash was refreshed. `markdown_reference.py` is a
+fixture-side reference computation of that contract, and the committed Bundle must equal its output byte for
+byte. The audit additionally rejects a changed section order, an altered or unfenced body, a body fence that
+is not longer than the longest run inside it, a second H1, and any duration token. The golden context corpus
+is unchanged, so the Digest and the JSON counterpart stay identical to SINGLE-042.
+See [the Markdown proposal](../../docs/04.提案資料/26_context-Markdown提示仕様案.md) for the decided points.
+Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
+No Core renderer was implemented or executed. The three projection fixtures of §6.11 and the four `context`
+cases of §6.10 stay outstanding with the remaining Digest corpus work.

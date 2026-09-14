@@ -101,6 +101,39 @@ class AuditTests(unittest.TestCase):
                 value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
                 self.assertTrue(presentation_fixtures.validate(root, [identifier])["errors"])
 
+    def test_presentation_markdown_audit_rejects_altered_bundles(self):
+        identifier = "SINGLE-104-01"
+        mutations = [
+            lambda v: v.replace("## Work Boundary\n\n- none\n\n", "", 1),
+            lambda v: v.replace("- projection: detail=standard", "- projection: detail=full", 1),
+            lambda v: v.replace("秘密情報を出力しない。\n", "秘密情報を出力しない。\u001b[31m\n", 1),
+            lambda v: v.replace("# Context Bundle\n", "# Context Bundle\n\n- durationMs: 24\n", 1),
+            lambda v: v.replace("\n## Advisory Documents\n\n- none\n", "\n"),
+        ]
+        for index, mutate in enumerate(mutations):
+            with self.subTest(mutation=index), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                path = root / "single" / identifier / "expected/context.txt"
+                path.write_text(mutate(path.read_text()))
+                self.assertTrue(presentation_fixtures.validate(root, [identifier])["errors"])
+
+    def test_presentation_markdown_reference_follows_the_fixed_rules(self):
+        from conformance import markdown_reference
+        result = presentation_fixtures.reviewed_result("SINGLE-104-01")
+        text = markdown_reference.render(result)
+        self.assertEqual(text.count("# Context Bundle"), 1)
+        self.assertEqual([line[3:] for line in text.splitlines() if line.startswith("## ")][:1],
+                         ["Bundle Manifest"])
+        # A body holding a longer backtick run must widen the fence.
+        document = copy.deepcopy(result["documents"][0])
+        document["bodyText"] = "````\ncode\n````\n"
+        self.assertEqual(markdown_reference.fence(document["bodyText"]), "`" * 5)
+        self.assertIn("`````markdown", markdown_reference.document_block(document))
+        # compact keeps the heading and drops the body.
+        compact = markdown_reference.document_block(result["documents"][0], "compact")
+        self.assertNotIn("bodyText", compact)
+        self.assertIn("### REQ-001 — .spec/requirements/REQ-001.md", compact)
+
     def test_presentation_audit_rejects_output_from_the_silent_command(self):
         identifier = "SINGLE-106-04"
         with tempfile.TemporaryDirectory() as temporary:

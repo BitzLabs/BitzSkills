@@ -42,6 +42,7 @@
 | [23_モノレポ残存P2裁定案.md](23_モノレポ残存P2裁定案.md) | モノレポ残存P2 6件の裁定案 | **Accepted**（ADR-043と正本へ反映済み） |
 | [24_Core-1.0実装着手方針.md](24_Core-1.0実装着手方針.md) | 実装着手可能性と欠落 | **Accepted**（G1〜G8裁定・反映済み、G9は実装計画へ） |
 | [25_Core-1.0実装前最終レビューと修正提案.md](25_Core-1.0実装前最終レビューと修正提案.md) | 02.設計書、03.詳細設計の実装前最終点検 | **Accepted / Reflected**（Step 0B実施中、Gate A `Blocked`） |
+| [26_context-Markdown提示仕様案.md](26_context-Markdown提示仕様案.md) | contextの既定Markdown提示 | **Accepted / Reflected**（P0 3件・P1 4件を裁定し§9と`SINGLE-104-01`へ反映済み） |
 
 ## 3. 検討結果の要約
 
@@ -544,7 +545,7 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 | P1 5件 | 契約または性能受入成果物へ反映済み | process helper等の検証基盤、Core実装後の受入結果と性能baseline |
 | P2文書衛生 | accepted ADR linkとREADME状態を修正済み | — |
 | 自己適用 | 実装計画へ配置済み | Step 2完了後に`.spec/`を作成し、Gate Cで最終判定 |
-| Step 0B | `In progress` | 公開JSON・grammar・link・Git/process基盤・Diagnostic意味網羅・target集合25ケース・実fixture173件（導入設定9＋EARS 12＋文書構造・UTF-8 9＋関係・path・coverage 6＋ID重複・循環4＋Git基準版・保護対象外10＋TASK境界3＋Git対象選択・影響候補4＋Git環境3＋Context非成功6＋Context Digest 6＋expand反復2＋stale・上限・coverage 6＋verify実行・事前block 6＋verify binding共有3＋verify process終了3＋verify出力抜粋2＋文書単位binding1＋done TASK起点1＋report非作成4＋引数不正15＋report作成・保存失敗・JSON併用6＋text出力・制御文字・診断順序4＋BOM・Frontmatter 11＋寸法上限・未知entry 7＋registry閉包7＋Scanner・位置16＋既定表示・revision 7）の準備を検証済み。matrix §6.5 contextとDigestと§6.6 verifyは全32件完了。matrix §6.5 contextとDigestは全16件完了し、単一workspaceのgolden Digestは独立2系統のreference計算で一致を確認済み。実fixture残138件、連合golden Digest等が残件 |
+| Step 0B | `In progress` | 公開JSON・grammar・link・Git/process基盤・Diagnostic意味網羅・target集合25ケース・実fixture174件（導入設定9＋EARS 12＋文書構造・UTF-8 9＋関係・path・coverage 6＋ID重複・循環4＋Git基準版・保護対象外10＋TASK境界3＋Git対象選択・影響候補4＋Git環境3＋Context非成功6＋Context Digest 6＋expand反復2＋stale・上限・coverage 6＋verify実行・事前block 6＋verify binding共有3＋verify process終了3＋verify出力抜粋2＋文書単位binding1＋done TASK起点1＋report非作成4＋引数不正15＋report作成・保存失敗・JSON併用6＋text出力・制御文字・診断順序4＋BOM・Frontmatter 11＋寸法上限・未知entry 7＋registry閉包7＋Scanner・位置16＋既定表示・revision 8）の準備を検証済み。matrix §6.5 contextとDigestと§6.6 verifyは全32件完了。matrix §6.5 contextとDigestは全16件完了し、単一workspaceのgolden Digestは独立2系統のreference計算で一致を確認済み。実fixture残137件、連合golden Digest等が残件 |
 | Step 0-P | `Complete` | 基準入力・比較条件を固定し一括検証済み。実測はCore実装後 |
 | Gate A | `Blocked` | fresh checkoutから単一commandで2回一致する自動検査結果を記録 |
 | Gate B | `Pending` | 各StepのCore実装を固定済みfixtureへ通して判定 |

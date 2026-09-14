@@ -1,0 +1,27 @@
+{
+  "fixtureId": "SINGLE-104-01",
+  "description": "format省略のcontextが既定のMarkdown提示を返す",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "REQ-001",
+      "--purpose",
+      "verify"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "markdown",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0,
+    "textFile": "expected/context.txt"
+  }
+}

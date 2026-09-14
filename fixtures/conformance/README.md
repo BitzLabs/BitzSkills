@@ -12,7 +12,7 @@ It also executes Step 0-P validation and the fixture infrastructure self-tests.
 Pinned dependencies are declared in the script; the first run requires package download access.
 
 Exit 0 means Gate A is allowed; exit 1 means errors or outstanding evidence remain. Currently exit 1 is expected:
-138 of the 311 matrix fixtures, the independent federation golden Context Digest,
+137 of the 311 matrix fixtures, the independent federation golden Context Digest,
 and per-fixture side-effect expectations are still outstanding. Missing fixtures are listed individually.
 Static checks do not prove that a fixture has only one independent cause. Diagnostic mappings have a reviewed ledger:
 see [Diagnostic review](diagnostic-review.md). The audit checks its integrity and source freshness, not natural-language semantics.
@@ -111,4 +111,9 @@ That batch brought preparation to 166/311.
 [Default display fixtures](single/presentation-review.md) add the omitted `--format` for check, verify and
 doctor, the committed context revision and the Git-absent verify revision, a command with no output, and the
 same condition on two verify targets. The summary line is re-derived from the JSON counterpart, and the
-revision shape is observed in the isolated repository. Current preparation: 173/311; 138 remain.
+revision shape is observed in the isolated repository. That batch brought preparation to 173/311.
+
+SINGLE-104-01 follows the Markdown presentation decided in proposal 26 and now fixed in context仕様 §9.
+`markdown_reference.py` renders that contract from a reviewed result, and the audit compares the committed
+Bundle against it while checking the section order, untouched bodies and the absence of a duration token.
+Current preparation: 174/311; 137 remain.

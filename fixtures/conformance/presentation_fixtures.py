@@ -15,7 +15,7 @@ import tempfile
 
 from jsonschema import Draft202012Validator, ValidationError
 
-from . import digest_crosscheck, digest_reference
+from . import digest_crosscheck, digest_reference, markdown_reference
 from . import digest_fixtures, report_absent_fixtures, verify_fixtures, verify_output_fixtures
 from .harness import setup, git, snapshot
 from .initial_fixtures import CONFIGS, observe, compare_state
@@ -38,6 +38,7 @@ TEXT = {
 }
 # ID: (operation, status, exit code, description)
 CASES = {
+    "SINGLE-104-01": ("context", "passed", 0, "format省略のcontextが既定のMarkdown提示を返す"),
     "SINGLE-104-02": ("check", "passed", 0, "format省略のcheckがtext要約行を出す"),
     "SINGLE-104-03": ("verify", "passed", 0, "format省略のverifyがtext要約行を出す"),
     "SINGLE-104-04": ("doctor", "passed", 0, "format省略のdoctorがscope=なしのtext要約行を出す"),
@@ -46,7 +47,8 @@ CASES = {
     "SINGLE-106-04": ("verify", "passed", 0, "出力のないcommandを空excerptとtruncated falseで返す"),
     "SINGLE-106-05": ("verify", "failed", 1, "2 targetの同一条件をtextのdiagnostics総数へ数える"),
 }
-TEXT_CASES = set(TEXT)
+MARKDOWN_CASES = {"SINGLE-104-01"}
+TEXT_CASES = set(TEXT) | MARKDOWN_CASES
 GIT_ABSENT = {"SINGLE-105-02"}
 COMMITTED = {"SINGLE-104-02", "SINGLE-105-01"}
 STAGED = {"SINGLE-104-03", "SINGLE-106-04", "SINGLE-106-05"}
@@ -94,8 +96,9 @@ def reviewed_manifest(identifier):
         argv = [*argv, "--format", "text"]
     elif identifier not in TEXT_CASES:
         argv = [*argv, "--format", "json"]
-    expect = {"status": status, "exitCode": exit_code,
-              "stdout": "text" if identifier in TEXT_CASES else "json",
+    stdout = ("markdown" if identifier in MARKDOWN_CASES
+              else "text" if identifier in TEXT_CASES else "json")
+    expect = {"status": status, "exitCode": exit_code, "stdout": stdout,
               "resultFile": f"expected/{operation}.json", "reportFileCount": 0}
     if identifier in TEXT_CASES:
         expect["textFile"] = f"expected/{operation}.txt"
@@ -127,6 +130,8 @@ def reviewed_result(identifier):
         return {"schemaVersion": "1.0", "operation": "doctor", "status": "passed",
                 "workspace": {"id": "root", "path": "."}, "durationMs": 0, "diagnostics": [],
                 "core": copy.deepcopy(CORE), "checks": doctor_checks()}
+    if identifier == "SINGLE-104-01":
+        return digest_fixtures.reviewed_result("SINGLE-042", GOLDEN)
     if identifier == "SINGLE-105-01":
         result = digest_fixtures.reviewed_result("SINGLE-042", GOLDEN)
         result["revision"] = {"commit": "0" * 40, "dirty": False}
@@ -197,6 +202,37 @@ def observe_silence(repository):
         raise ValueError("the reviewed command must succeed and write nothing")
 
 
+def check_markdown(path, result):
+    """The committed Markdown must equal the reference rendering of §9 and keep
+    the section order, the untouched bodies and no duration token."""
+    text = path.read_bytes()
+    if text != markdown_reference.render(result).encode():
+        raise ValueError("Markdown differs from the reference rendering of the reviewed result")
+    value = text.decode()
+    if "\r" in value or not value.endswith("\n") or value.endswith("\n\n"):
+        raise ValueError("Markdown must use LF and end with exactly one newline")
+    if "\n\n\n" in value:
+        raise ValueError("Markdown must not hold consecutive blank lines")
+    # Headings inside a presented body belong to the SPEC, not to the Bundle.
+    outside = value
+    for document in result["documents"]:
+        body = document.get("bodyText")
+        if body is None:
+            continue
+        marker = markdown_reference.fence(body)
+        block = f"{marker}markdown\n{body}{marker}\n"
+        if value.count(block) != 1:
+            raise ValueError("a body is missing, altered, or not fenced above its longest run")
+        outside = outside.replace(block, "", 1)
+    headings = [line[3:] for line in outside.splitlines() if line.startswith("## ")]
+    if headings != markdown_reference.SECTIONS:
+        raise ValueError("section headings differ from the fixed order")
+    if [line for line in outside.splitlines() if line.startswith("# ")] != ["# Context Bundle"]:
+        raise ValueError("the Bundle must carry exactly one reviewed H1")
+    if "durationMs" in outside or re.search(r"\(\d+ms\)", outside):
+        raise ValueError("Markdown must not present a duration")
+
+
 def observe_state(repository, external, identifier):
     """Git absence is recorded as an explicit null, never as an empty status."""
     if identifier not in GIT_ABSENT:
@@ -222,7 +258,9 @@ def validate(root=HERE, identifiers=None):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
                 raise ValueError("manifest or result differs from reviewed single condition")
-            if identifier in TEXT_CASES:
+            if identifier in MARKDOWN_CASES:
+                check_markdown(fixture / f"expected/{operation}.txt", result)
+            elif identifier in TEXT_CASES:
                 text = (fixture / f"expected/{operation}.txt").read_bytes()
                 if text != TEXT[identifier].encode():
                     raise ValueError("text differs from the reviewed complete output")

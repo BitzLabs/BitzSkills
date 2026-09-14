@@ -1,0 +1,116 @@
+# Context Bundle
+
+## Bundle Manifest
+
+- operation: context
+- status: passed
+- purpose: verify
+- workspace: root (.)
+- roots: REQ-001
+- contextDigest: sha256:7344dadb951732bd515e8912cda26fa21a6ff4346b8ffba0c649b0d32002bd22
+- revision: null
+- resolution: complete=true, documentCount=2, unresolvedStrongRelations=0
+- projection: detail=standard, expanded=none
+
+## Diagnostics and Coverage Gaps
+
+- coverage: MUST unaddressed: REQ-001:AC-01
+- coverage: SHOULD unaddressed: REQ-001:AC-02
+
+## Normative Constraint Ledger
+
+### REQ-001:AC-01
+
+- documentId: REQ-001
+- documentRole: root
+- modality: MUST
+- reason: null
+- actor: TargetSystem
+- activation: ALWAYS
+- operation: CONSTRAINT 秘密情報を出力しない
+
+### REQ-001:AC-02
+
+- documentId: REQ-001
+- documentRole: root
+- modality: SHOULD
+- reason: 確認のため
+- actor: TargetSystem
+- activation: WHEN 保存した場合
+- operation: THEN 結果を返す
+
+## Root Intent
+
+### REQ-001 — .spec/requirements/REQ-001.md
+
+- kind: requirement
+- status: approved
+- projection: full
+- reachedBy: root
+- statementRefs: REQ-001:AC-01, REQ-001:AC-02
+- frontmatter: {"id":"REQ-001","status":"approved","title":"認証Contextの基準"}
+- untrustedText: true
+- bodyText:
+
+```markdown
+# REQ-001 認証Contextの基準
+
+## Intent
+
+Digest goldenの固定要求を定義する。
+
+## Acceptance Criteria
+
+- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。
+- [REQ-001:AC-02] [ACTOR:TargetSystem] [WHEN] 保存した場合 [SHOULD] [REASON] 確認のため [THEN] 結果を返す。
+
+## Verification
+
+tests/test_auth.pyとtests/test_session.pyで確認する。
+```
+
+## Required Context
+
+- none
+
+## Applicable Refinements
+
+### TECH-001 — .spec/technical/TECH-001.md
+
+- kind: technical
+- status: approved
+- projection: full
+- reachedBy: refines:TECH-001
+- statementRefs: none
+- frontmatter: {"id":"TECH-001","implements":["src/auth.py","src/session.py"],"relations":{"refines":["REQ-001"],"related":["ADR-001"]},"status":"approved","tests":[{"command":"default","covers":["REQ-001:AC-01"],"path":"tests/test_auth.py"},{"command":"default","covers":["REQ-001:AC-02"],"path":"tests/test_session.py"}],"title":"認証の実装方針"}
+- untrustedText: true
+- bodyText:
+
+```markdown
+# TECH-001 認証の実装方針
+
+## Context
+
+規範文を持たない実装方針。
+
+| 項目 | 値 |
+|---|---|
+| 方式 | token |
+```
+
+## Replacement Candidates
+
+- none
+
+## Work Boundary
+
+- none
+
+## Verification Bindings
+
+- tests/test_auth.py: covers REQ-001:AC-01 (command: default)
+- tests/test_session.py: covers REQ-001:AC-02 (command: default)
+
+## Advisory Documents
+
+- none

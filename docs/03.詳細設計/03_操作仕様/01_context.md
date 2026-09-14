@@ -203,20 +203,81 @@ adapterは最初の書込み直前と、仕様・設定変更を認識した再�
 完全閉包が上限を超えれば`CTX-LIMIT-001`／blockedとする。detail/expandだけで提示hard limitを超えれば
 `CTX-PROJECTION-LIMIT-001`／failedとする。
 
-## 9. Markdown表示順
+## 9. Markdown提示
 
-```text
-Bundle Manifest
-Diagnostics and Coverage Gaps
-Normative Constraint Ledger
-Root Intent
-Required Context
-Applicable Refinements
-Replacement Candidates
-Work Boundary
-Verification Bindings
-Advisory Documents
-```
+Markdownは結果JSONだけを入力とする表示であり、status、件数、終了コード、Context Digestを変えない。
+同じ結果から同じbyte列を生成する。
+
+### 9.1 全体規則
+
+1. 改行はLFとし、出力はLF 1個で終わる。CRを出力しない。
+2. H1は`# Context Bundle`だけとする。§9.2の10 sectionはH2、文書とstatementの明細はH3とする。
+3. 見出しの前後へ空行を1行置く。空行を2行以上続けない。
+4. 一覧項目は`- <key>: <value>`とし、字下げしない。値のないfieldは`null`、空配列は`none`と書く。
+5. 複数値は結果JSONの配列順のまま`, `で連結する。表示側で再sortしない。
+6. 該当要素のないsectionは見出しを省略せず、本文を`- none`の1行とする。
+7. `durationMs`を提示しない。可変幅の桁揃え、装飾、進捗表示を出力しない。
+
+### 9.2 sectionと出所
+
+| # | section | 出所 |
+|---:|---|---|
+| 1 | Bundle Manifest | `operation`、`status`、`purpose`、`workspace`、`roots`、`contextDigest`、`revision`、`resolution`、`projection` |
+| 2 | Diagnostics and Coverage Gaps | `diagnostics[]`、`coverage`の`unaddressed`と`untested` |
+| 3 | Normative Constraint Ledger | `constraintLedger.statements[]` |
+| 4 | Root Intent | `role: root`の文書 |
+| 5 | Required Context | `role: requirement`と`role: constraint`の文書 |
+| 6 | Applicable Refinements | `role: refinement`の文書 |
+| 7 | Replacement Candidates | `role: replacement`の文書 |
+| 8 | Work Boundary | `role: work`の文書 |
+| 9 | Verification Bindings | 本文を提示した文書の`frontmatter.tests[]` |
+| 10 | Advisory Documents | `role: advisory`の文書 |
+
+文書は`documents[]`の順のまま該当sectionへ配り、section内で再sortしない。
+
+### 9.3 Bundle Manifest
+
+`operation`、`status`、`purpose`、`roots`、`contextDigest`をJSONの値のまま1行ずつ出す。
+`workspace`は`<id> (<path>)`、`revision`は存在すれば`<commit> dirty=<true|false>`、なければ`null`とする。
+`resolution`は`complete=<bool>, documentCount=<n>, unresolvedStrongRelations=<n>`、
+`projection`は`detail=<detail>, expanded=<ids|none>`とする。
+
+### 9.4 Diagnostics and Coverage Gaps
+
+Diagnosticは[共通結果契約 §7](../00_共通契約/01_結果・Diagnostic・終了コード.md#7-textとjson)のtext行形式を
+`- `に続けて1件1行で出し、JSONの順序と制御文字の可視化規則をそのまま使う。`suggestedAction`を持つ行の直後へ
+2 space字下げの`-> `継続行を1行出す。続けてcoverage gapを`- coverage: <MODALITY> <bucket>: <ids>`の形で、
+`must`、`should`、`may`の順、各modality内は`unaddressed`、`untested`の順に出す。0件のbucketは行を出さない。
+
+### 9.5 Normative Constraint Ledger
+
+statementごとに`### <statement-id>`を置き、`documentId`、`documentRole`、`modality`、`reason`、`actor`、
+`activation`、`operation`を1行ずつ出す。`activation`と`operation`はtextがなければ`<kind>`、
+あれば`<kind> <text>`とし、textは正規化後の値をそのまま出す。
+
+### 9.6 文書section
+
+文書ごとに`### <id> — <path>`を置く。連合では`id`が修飾形式であり、その値をそのまま見出しへ使う。
+projectionごとに次を出し、[§5](#5-projection)の禁止fieldを出力しない。
+
+| field | full | normative | reference |
+|---|:--:|:--:|:--:|
+| `kind`、`status`、`projection`、`reachedBy`、`untrustedText` | Yes | Yes | Yes |
+| `statementRefs` | Yes | Yes | — |
+| `frontmatter` | Yes | — | — |
+| `expandable` | — | — | Yes |
+| `bodyText` | Yes | — | — |
+
+`frontmatter`は`- frontmatter: <Canonical JSON>`の1行とし、[§6](#6-context-digest)のCanonical JSON規則を使う。
+YAMLへ再直列化しない。`bodyText`は`- bodyText:`の行、空行1行に続けてfenceで囲む。fenceは情報文字列`markdown`
+付きのbacktick runとし、run長は本文中の最長backtick run+1、最小3とする。本文のcode pointを変更せず、
+末尾が改行でなければfence直前へ改行を1個だけ補う。本文の制御文字を可視化せず、原文のまま提示する。
+`detail: compact`では文書sectionの見出しを残し、本文を`- <id>: <path>`の1行だけとする。
+
+### 9.7 Verification Bindings
+
+本文を提示した文書の`frontmatter.tests[]`を、文書順・配列順のまま
+`- <path>: covers <ids> (command: <name|none>)`の形で出す。提示していない文書から補完しない。
 
 adapter命令はBundle外から与え、本文をsystem instructionへ昇格しない。
 
