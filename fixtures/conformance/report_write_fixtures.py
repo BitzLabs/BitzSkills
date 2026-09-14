@@ -33,6 +33,7 @@ CASES = {
     "SINGLE-071-04": ("verify", "failed", 1, "SINGLE-070-04"),
     # Based on the failing check, so "the original result survives" is not vacuous.
     "SINGLE-072": ("check", "error", 3, "SINGLE-070-02"),
+    "SINGLE-127-12": ("check", "passed", 0, "SINGLE-070-01"),
 }
 DESCRIPTIONS = {
     "SINGLE-071-01": "明示--report付きの成功checkが規定先へ1件を排他的作成する",
@@ -40,6 +41,7 @@ DESCRIPTIONS = {
     "SINGLE-071-03": "明示--report付きの成功verifyが規定先へ1件を排他的作成する",
     "SINGLE-071-04": "明示--report付きの失敗verifyが規定先へ1件を排他的作成する",
     "SINGLE-072": "report保存先が書込み不能でも元結果を端末へ保持する",
+    "SINGLE-127-12": "--format jsonと--reportを併用し標準出力JSONと規定reportを生成する",
 }
 
 

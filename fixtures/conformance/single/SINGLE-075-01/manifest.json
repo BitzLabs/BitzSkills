@@ -1,0 +1,35 @@
+{
+  "fixtureId": "SINGLE-075-01",
+  "description": "text出力のstatus・件数・DiagnosticがJSON結果と一致する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--full",
+      "--base",
+      "HEAD",
+      "--format",
+      "text"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "text",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0,
+    "textFile": "expected/check.txt"
+  }
+}

@@ -50,18 +50,70 @@ from conformance.report_absent_fixtures import validate as validate_report_absen
 from conformance.cli_error_fixtures import validate as validate_cli_errors
 from conformance import report_write_fixtures
 from conformance.report_write_fixtures import validate as validate_report_write
+from conformance import text_fixtures
 
 
 class AuditTests(unittest.TestCase):
+    def test_text_fixtures_and_json_parity(self):
+        result = text_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-075-01", "SINGLE-075-02"])
+        self.assertEqual(result["core_execution"], "Not run")
+        for identifier, original in text_fixtures.CASES.items():
+            counterpart = report_absent_fixtures.reviewed_result(original)
+            lines = text_fixtures.TEXT[identifier].splitlines()
+            self.assertEqual(lines[0], f"check {counterpart['status']} scope={counterpart['scope']} "
+                             f"targets={counterpart['checkedDocumentCount']} "
+                             f"diagnostics={len(counterpart['diagnostics'])} (0ms)")
+            self.assertEqual(len(lines), 1 + len(counterpart["diagnostics"]))
+
+    def test_text_normalization_preserves_everything_except_duration(self):
+        expected = text_fixtures.TEXT["SINGLE-075-02"].encode()
+        normalize = text_fixtures.normalize_text
+        self.assertEqual(normalize(expected), normalize(expected.replace(b"(0ms)", b"(123ms)")))
+        for changed in (expected.replace(b"targets=3", b"targets=2"),
+                        expected.replace(b"failed", b"passed"),
+                        expected.replace(b"md:::", b"md:"), expected.rstrip(b"\n"),
+                        expected.replace(b"(0ms)", b"(1.5ms)"),
+                        expected.replace(b"(0ms)", "(１２ms)".encode())):
+            self.assertNotEqual(normalize(expected), normalize(changed))
+
+    def test_text_audit_rejects_tampered_evidence(self):
+        mutations = [("SINGLE-075-01", "manifest.json", lambda v: v["expect"].update(reportFileCount=1)),
+                     ("SINGLE-075-02", "expected/check.json", lambda v: v.update(status="passed")),
+                     ("SINGLE-075-01", "side-effects.json", lambda v: v["after"].update(cache={"new": {"kind": "directory"}}))]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(text_fixtures.validate(root, [identifier])["errors"])
+        for replacement in ("targets=2", "diagnostics=0"):
+            with self.subTest(replacement=replacement), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single/SINGLE-075-02"
+                shutil.copytree(audit.FIXTURES / "single/SINGLE-075-02", fixture)
+                for name in ("manifest", "result", "side-effects"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / "expected/check.txt"
+                path.write_text(path.read_text().replace("targets=3" if replacement.startswith("targets") else "diagnostics=1", replacement))
+                self.assertTrue(text_fixtures.validate(root, ["SINGLE-075-02"])["errors"])
+
     def test_report_write_fixtures(self):
         result = validate_report_write()
         self.assertEqual(result["errors"], [])
         self.assertEqual(result["prepared"], ["SINGLE-071-01", "SINGLE-071-02", "SINGLE-071-03",
-                                              "SINGLE-071-04", "SINGLE-072"])
+                                              "SINGLE-071-04", "SINGLE-072", "SINGLE-127-12"])
         self.assertEqual(result["core_execution"], "Not run")
 
     def test_explicit_report_creates_exactly_one_file(self):
-        for identifier in ("SINGLE-071-01", "SINGLE-071-02", "SINGLE-071-03", "SINGLE-071-04"):
+        for identifier in ("SINGLE-071-01", "SINGLE-071-02", "SINGLE-071-03", "SINGLE-071-04", "SINGLE-127-12"):
             fixture = audit.FIXTURES / "single" / identifier
             manifest = json.loads((fixture / "manifest.json").read_text())
             effects = json.loads((fixture / "side-effects.json").read_text())

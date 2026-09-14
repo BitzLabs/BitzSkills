@@ -1,0 +1,2 @@
+check failed scope=full targets=3 diagnostics=1 (0ms)
+root:.spec/technical/TECH-001.md::: error: SPEC-RELATION-MISSING-001: strong relationの参照先が存在しません

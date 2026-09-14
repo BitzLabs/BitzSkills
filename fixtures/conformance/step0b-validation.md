@@ -284,3 +284,18 @@ See [the missing-selection review](single/missing-selection-review.md) for input
 Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
 Core was not executed. Remaining fixtures, federation golden Digest and full fresh-checkout Gate A
 repeatability remain pending; these runs certify preparation only.
+
+The subsequent 2026-09-14 output-format batch passed integrated checks and regression suites.
+Two runs of fixtures/validate_step0b.py through the cached pinned validator Python with -B produced
+byte-identical reports, with no check errors and exit 1 for pending Gate A evidence.
+Prepared fixtures: 123/311; missing: 188. Each new fixture passed two isolated setup comparisons.
+SINGLE-075-01/02 retain the complete JSON counterpart while selecting text output. Their fixed UTF-8
+text preserves status, scope, document count and Diagnostic count; missing source line/column fields
+remain empty. Duration-only byte normalization rejects changes to status/counts/spacing/newlines,
+non-ASCII digits and fractional duration spelling. Mutation tests reject altered JSON, text counts
+and side-effect expectations. SINGLE-127-12 explicitly combines --format json and --report, preserving
+existing files and permitting exactly one report with no temporary-file residue.
+See [the output-format review](single/output-format-review.md) for expectation choices and limits.
+Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
+Core was not executed; actual text rendering, report contents and side effects remain Gate B work.
+Remaining fixtures, federation golden Digest and full fresh-checkout Gate A repeatability stay pending.
