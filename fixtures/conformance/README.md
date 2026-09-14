@@ -12,7 +12,7 @@ It also executes Step 0-P validation and the fixture infrastructure self-tests.
 Pinned dependencies are declared in the script; the first run requires package download access.
 
 Exit 0 means Gate A is allowed; exit 1 means errors or outstanding evidence remain. Currently exit 1 is expected:
-251 of the 311 matrix fixtures, independent golden Context Digests,
+246 of the 311 matrix fixtures, independent golden Context Digests,
 and per-fixture side-effect expectations are still outstanding. Missing fixtures are listed individually.
 Static checks do not prove that a fixture has only one independent cause. Diagnostic mappings have a reviewed ledger:
 see [Diagnostic review](diagnostic-review.md). The audit checks its integrity and source freshness, not natural-language semantics.
@@ -54,6 +54,9 @@ They use the Git fixture audit, with complete success expectations and mutation 
 [Git selection/impact fixtures](single/selection-review.md) add four direct-dependency, unborn and empty/unowned selection cases.
 [Git environment fixtures](single/git-environment-review.md) add invalid-base and Git-absence cases, bringing preparation to 60/311.
 The latter fix CLI error stream shape without matching human reason text and use null Git snapshots only for explicitly absent Git.
+
+[Context failure fixtures](single/context-failure-review.md) add five missing-root, unfinished-task, superseded-root/dependency and duplicate-successor cases, bringing preparation to 65/311.
+Complete non-success JSON, empty Bundle expectations, unborn Git snapshots and mutation tests are checked without running Core.
 
 The `harness-input` directory contains infrastructure test inputs, not `SINGLE-*` or `MONO-*` acceptance fixtures.
 `harness.py` builds isolated Git repositories and compares files, executable bits, symlink targets, and directories.

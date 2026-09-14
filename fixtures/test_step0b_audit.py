@@ -21,9 +21,77 @@ from conformance.task_fixtures import validate as validate_tasks, check_git_stat
 from conformance.selection_fixtures import validate as validate_selection, check_git_states as check_selection_git_states, reviewed_manifest as selection_manifest
 from conformance.git_environment_fixtures import (validate as validate_git_environment, check_cli_error_output,
     check_environment, reviewed_manifest as environment_manifest)
+from conformance.context_failure_fixtures import (validate as validate_context_failures,
+    check_unborn as check_context_unborn, reviewed_manifest as context_failure_manifest)
 
 
 class AuditTests(unittest.TestCase):
+    def test_context_failure_fixtures(self):
+        result = validate_context_failures()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-050", "SINGLE-051", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053"])
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_context_failures_reject_partial_success_or_replacement(self):
+        mutations = [
+            ("SINGLE-050", "expected/context.json", lambda v: v["diagnostics"][0].update(source={"kind": "file", "path": ".spec/technical/TECH-001.md"})),
+            ("SINGLE-050", "expected/context.json", lambda v: v.update(roots=["TECH-001"])),
+            ("SINGLE-051", "expected/context.json", lambda v: v.update(status="passed")),
+            ("SINGLE-051", "expected/context.json", lambda v: v["diagnostics"][0].update(code="CTX-STATE-001")),
+            ("SINGLE-052-01", "expected/context.json", lambda v: v.update(roots=["TECH-002"])),
+            ("SINGLE-052-01", "expected/context.json", lambda v: v.update(contextDigest="sha256:" + "0" * 64)),
+            ("SINGLE-052-02", "expected/context.json", lambda v: v["resolution"].update(complete=True)),
+            ("SINGLE-052-02", "expected/context.json", lambda v: v["resolution"].update(documentCount=1)),
+            ("SINGLE-052-02", "expected/context.json", lambda v: v["coverage"]["must"].update(total=["REQ-001:AC-01"])),
+            ("SINGLE-053", "expected/context.json", lambda v: v["diagnostics"][0].update(code="CTX-STATE-SUPERSEDED-001")),
+            ("SINGLE-053", "expected/context.json", lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0]))),
+            ("SINGLE-053", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(3, "interpret")),
+            ("SINGLE-053", "side-effects.json", lambda v: v["after"].update(git=None)),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_context_failures(root, [identifier])["errors"])
+
+    def test_context_failure_inputs_reject_repaired_or_changed_causes(self):
+        mutations = [
+            ("SINGLE-050", ".spec/technical/TECH-001.md", "TECH-001", "TECH-999"),
+            ("SINGLE-051", ".spec/tasks/TASK-002.md", "status: open", "status: done"),
+            ("SINGLE-052-01", ".spec/technical/TECH-002.md", "supersedes:", "related:"),
+            ("SINGLE-052-02", ".spec/technical/TECH-003.md", "requires:", "related:"),
+            ("SINGLE-053", ".spec/technical/TECH-003.md", "status: approved", "status: draft"),
+        ]
+        for identifier, relative, before, after in mutations:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / "repo" / relative
+                path.write_text(path.read_text().replace(before, after))
+                self.assertTrue(validate_context_failures(root, [identifier])["errors"])
+
+    def test_context_failure_git_state_rejects_staging_or_commit(self):
+        for identifier in ("SINGLE-050", "SINGLE-051", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053"):
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                repo = fixture_setup(audit.FIXTURES / "single" / identifier, context_failure_manifest(identifier), Path(temporary) / "repo")
+                check_context_unborn(repo, identifier)
+                fixture_git(repo, "add", "-A")
+                with self.assertRaises(ValueError):
+                    check_context_unborn(repo, identifier)
+                fixture_git(repo, "commit", "-m", "unexpected initial commit")
+                with self.assertRaises(ValueError):
+                    check_context_unborn(repo, identifier)
+
     def test_git_environment_fixtures(self):
         result = validate_git_environment()
         self.assertEqual(result["errors"], [])

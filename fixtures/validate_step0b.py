@@ -25,6 +25,7 @@ from conformance.git_fixtures import validate as validate_git_fixtures
 from conformance.task_fixtures import validate as validate_task_fixtures
 from conformance.selection_fixtures import validate as validate_selection_fixtures
 from conformance.git_environment_fixtures import validate as validate_git_environment_fixtures
+from conformance.context_failure_fixtures import validate as validate_context_failure_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -183,6 +184,7 @@ def main():
     checks["task_fixtures"] = validate_task_fixtures()
     checks["selection_fixtures"] = validate_selection_fixtures()
     checks["git_environment_fixtures"] = validate_git_environment_fixtures()
+    checks["context_failure_fixtures"] = validate_context_failure_fixtures()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_step0p.py")], capture_output=True, text=True, timeout=60)
     checks["step0p"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
     helpers = subprocess.run([sys.executable, "-B", str(FIXTURES / "test_harness.py")], capture_output=True, text=True, timeout=30)

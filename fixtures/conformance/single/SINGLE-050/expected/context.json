@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "failed",
+  "purpose": "interpret",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "TECH-999"
+  ],
+  "contextDigest": null,
+  "revision": null,
+  "resolution": {
+    "complete": false,
+    "documentCount": 0,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "CTX-ROOT-MISSING-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "起点TECH-999が存在しません",
+      "source": {
+        "kind": "invocation",
+        "argument": "TECH-999"
+      }
+    }
+  ]
+}
