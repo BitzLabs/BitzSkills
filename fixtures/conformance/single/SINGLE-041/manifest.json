@@ -33,6 +33,8 @@
     "cwd": ".",
     "argv": [
       "check",
+      "--base",
+      "HEAD",
       "--format",
       "json"
     ],

@@ -1,31 +1,25 @@
 {
-  "fixtureId": "SINGLE-040",
-  "description": "変更集合が空のcheck",
+  "fixtureId": "SINGLE-037",
+  "description": "Git不在でのcheck縮退とTASK境界",
   "setup": {
-    "git": true,
-    "operations": [],
-    "baseCommit": {
-      "message": "base",
-      "paths": [
-        "."
-      ]
-    }
+    "git": false,
+    "operations": []
   },
   "invocation": {
     "runner": "bitz",
     "cwd": ".",
     "argv": [
       "check",
-      "--base",
-      "HEAD",
       "--format",
       "json"
     ],
-    "env": {}
+    "env": {
+      "PATH": "/dev/null"
+    }
   },
   "expect": {
-    "status": "passed",
     "exitCode": 0,
+    "status": "passed_with_warnings",
     "stdout": "json",
     "resultFile": "expected/check.json",
     "reportFileCount": 0

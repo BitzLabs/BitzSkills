@@ -1,6 +1,6 @@
 {
-  "fixtureId": "SINGLE-040",
-  "description": "変更集合が空のcheck",
+  "fixtureId": "SINGLE-036",
+  "description": "解決不能なGit基準版",
   "setup": {
     "git": true,
     "operations": [],
@@ -17,17 +17,16 @@
     "argv": [
       "check",
       "--base",
-      "HEAD",
+      "fixture-missing-base",
+      "--report",
       "--format",
       "json"
     ],
     "env": {}
   },
   "expect": {
-    "status": "passed",
-    "exitCode": 0,
-    "stdout": "json",
-    "resultFile": "expected/check.json",
+    "exitCode": 4,
+    "stdout": "none",
     "reportFileCount": 0
   }
 }

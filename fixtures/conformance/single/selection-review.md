@@ -9,8 +9,8 @@
 |---|---|---|---|
 | SINGLE-033 | approved TECH-001のtitleと対応H1だけを未stage変更。TECH-002がrequires、003がrelatedで001を参照し、004が002をrequires | check --full --base HEAD --format json | full、passed_with_warnings / 0、TECH-002への影響候補warningだけ |
 | SINGLE-039 | Git init済み、commit・ref・index entryなし。最小設定とapproved TECH-001が未追跡 | check --format json | full、passed / 0、revision=null |
-| SINGLE-040 | 最小設定とapproved TECH-001をcommit済み。変更なし | check --format json | changed、passed / 0、selectionの3件数がすべて0 |
-| SINGLE-041 | 最小設定とapproved TECH-001と未所有codeをcommit済み。code更新をstageし、未所有testを未追跡で追加 | check --format json | changed、passed / 0、変更2・対象文書0・未所有除外2 |
+| SINGLE-040 | 最小設定とapproved TECH-001をcommit済み。変更なし | check --base HEAD --format json | changed、passed / 0、selectionの3件数がすべて0 |
+| SINGLE-041 | 最小設定とapproved TECH-001と未所有codeをcommit済み。code更新をstageし、未所有testを未追跡で追加 | check --base HEAD --format json | changed、passed / 0、変更2・対象文書0・未所有除外2 |
 
 全TECHは規範文を持たず、implements/tests/verifyを宣言しない。commandを定義・実行しない。
 設定不正、Git不在、状態遷移不正、REQ意味変更保護を原因へ混ぜない。
@@ -53,3 +53,6 @@ HEAD解決失敗だけでGit不在とunbornを混同しない。041のindexは�
 本番の対象選択・影響判定・YAML parserは実装しない。実結果と副作用の受入はGate Bで行う。
 
 準備済み57/311件、残254件。golden Digest等とfresh checkoutからの全Gate A検証は未完了で、Gate AはBlockedを維持する。
+
+後続のGit環境fixture作成時に、040・041の明示--base HEADを補正した。入力と期待結果は不変である。
+詳細は[Git環境fixtureレビュー](git-environment-review.md)を参照する。

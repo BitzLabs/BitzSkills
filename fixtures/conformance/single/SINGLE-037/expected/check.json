@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "passed_with_warnings",
+  "scope": "full",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "revision": null,
+  "checkedDocumentCount": 1,
+  "checkedStatementCount": 0,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-GIT-DEGRADED-001",
+      "severity": "warning",
+      "resultStatus": "passed_with_warnings",
+      "summary": "Git不在のため全体checkへ縮退します。承認済みREQ保護、状態遷移、管理済みSPEC削除の差分検査は実施できません",
+      "source": {
+        "kind": "environment",
+        "component": "git",
+        "identifier": "git"
+      }
+    }
+  ]
+}

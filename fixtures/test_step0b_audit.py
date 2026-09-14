@@ -19,9 +19,98 @@ from conformance.git_fixtures import validate as validate_git_fixtures, check_gi
 from conformance.harness import setup as fixture_setup, git as fixture_git
 from conformance.task_fixtures import validate as validate_tasks, check_git_states as check_task_git_states, reviewed_manifest as task_manifest
 from conformance.selection_fixtures import validate as validate_selection, check_git_states as check_selection_git_states, reviewed_manifest as selection_manifest
+from conformance.git_environment_fixtures import (validate as validate_git_environment, check_cli_error_output,
+    check_environment, reviewed_manifest as environment_manifest)
 
 
 class AuditTests(unittest.TestCase):
+    def test_git_environment_fixtures(self):
+        result = validate_git_environment()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-036", "SINGLE-037", "SINGLE-038"])
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_cli_error_stream_contract(self):
+        for reason in ("unknown revision", "基準版を解決できません"):
+            check_cli_error_output(4, b"", ("bitz: check: " + reason + "\n").encode())
+        for exit_code, stdout, stderr in (
+            (1, b"", b"bitz: check: missing base\n"),
+            (4, b"{}", b"bitz: check: missing base\n"),
+            (4, b"\n", b"bitz: check: missing base\n"),
+            (4, b"", b"bitz: check: \n"),
+            (4, b"", b"bitz: check:    \n"),
+            (4, b"", b"bitz: check: reason\nusage\n"),
+            (4, b"", b"bitz: check: \x1b[31mreason\n"),
+            (4, b"", b"bitz: check: reason\xff\n"),
+            (4, b"", b"wrong prefix: reason\n"),
+        ):
+            with self.subTest(exit_code=exit_code, stdout=stdout, stderr=stderr), self.assertRaises(ValueError):
+                check_cli_error_output(exit_code, stdout, stderr)
+
+    def test_git_environment_rejects_corrupted_evidence(self):
+        mutations = [
+            ("SINGLE-036", "manifest.json", lambda v: v["expect"].update(status="error")),
+            ("SINGLE-036", "cli-output.json", lambda v: v.update(stdout="{}")),
+            ("SINGLE-036", "cli-output.json", lambda v: v.update(stderrLineCount=2)),
+            ("SINGLE-036", "side-effects.json", lambda v: v["after"]["repository"].pop(".spec/reports/existing.json")),
+            ("SINGLE-037", "manifest.json", lambda v: v["invocation"].update(env={})),
+            ("SINGLE-037", "expected/check.json", lambda v: v.update(status="passed")),
+            ("SINGLE-037", "side-effects.json", lambda v: v.update(before={**v["before"], "git": {"status": "", "index": ""}},
+                after={**v["after"], "git": {"status": "", "index": ""}})),
+            ("SINGLE-038", "expected/check.json", lambda v: v["diagnostics"][0].update(code="SPEC-GIT-DEGRADED-001")),
+            ("SINGLE-038", "expected/check.json", lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0]))),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_git_environment(root, [identifier])["errors"])
+
+    def test_git_environment_setup_rejects_resolvable_base_or_git_presence(self):
+        for identifier in ("SINGLE-036", "SINGLE-037", "SINGLE-038"):
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                manifest = environment_manifest(identifier)
+                repo = fixture_setup(audit.FIXTURES / "single" / identifier, manifest, Path(temporary) / "repo")
+                check_environment(repo, identifier, manifest)
+                if identifier == "SINGLE-036":
+                    fixture_git(repo, "branch", "fixture-missing-base")
+                else:
+                    manifest["invocation"]["env"] = {"PATH": "/usr/bin"}
+                    with self.assertRaises(ValueError):
+                        check_environment(repo, identifier, manifest)
+                    manifest = environment_manifest(identifier)
+                    fixture_git(repo, "init", "--initial-branch=fixture")
+                with self.assertRaises(ValueError):
+                    check_environment(repo, identifier, manifest)
+
+    def test_matrix_enforces_explicit_base_contract(self):
+        for identifier, kind in (("SINGLE-040", "required"), ("SINGLE-037", "forbidden")):
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / "manifest.json"
+                value = json.loads(path.read_text())
+                argv = value["invocation"]["argv"]
+                if kind == "required":
+                    index = argv.index("--base")
+                    del argv[index:index + 2]
+                else:
+                    argv.extend(["--base", "HEAD"])
+                path.write_text(json.dumps(value))
+                with patch.object(audit, "FIXTURES", root):
+                    errors = audit.matrix()["errors"]
+                self.assertTrue(any("requires explicit --base" in e or "forbids --base" in e for e in errors), errors)
+
     def test_git_selection_fixtures(self):
         result = validate_selection()
         self.assertEqual(result["errors"], [])

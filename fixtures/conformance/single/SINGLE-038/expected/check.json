@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "blocked",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "revision": null,
+  "checkedDocumentCount": 1,
+  "checkedStatementCount": 0,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-TASK-BOUNDARY-002",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "Git不在のためTASK-001の変更境界を検査できません",
+      "source": {
+        "kind": "environment",
+        "component": "git",
+        "identifier": "git"
+      }
+    }
+  ]
+}

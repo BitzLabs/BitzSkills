@@ -65,7 +65,8 @@ def reviewed_manifest(identifier):
             {"op": "update", "path": "src/unowned.py", "source": "changes/code.py"},
             {"op": "stage", "paths": ["src/unowned.py"]},
             {"op": "create", "path": "tests/test_unowned.py", "source": "changes/test.py"}]
-    args = ["--full", "--base", "HEAD"] if identifier == "SINGLE-033" else []
+    args = (["--full", "--base", "HEAD"] if identifier == "SINGLE-033"
+            else [] if identifier == "SINGLE-039" else ["--base", "HEAD"])
     descriptions = {"SINGLE-033": "changed TECHの直接strong逆参照だけを影響候補にする",
         "SINGLE-039": "unborn repositoryの引数なしcheck", "SINGLE-040": "変更集合が空のcheck",
         "SINGLE-041": "未所有codeとtest変更を件数だけに残すcheck"}

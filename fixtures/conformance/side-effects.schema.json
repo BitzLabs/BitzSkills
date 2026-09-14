@@ -32,7 +32,7 @@
       "properties": {
         "repository": {"$ref": "#/$defs/tree"},
         "git": {
-          "type": "object", "additionalProperties": false, "required": ["status", "index"],
+          "type": ["object", "null"], "additionalProperties": false, "required": ["status", "index"],
           "properties": {"status": {"type": "string"}, "index": {"type": "string"}}
         },
         "home": {"$ref": "#/$defs/tree"},

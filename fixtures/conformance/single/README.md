@@ -89,6 +89,6 @@ hostのPATHに同名commandがあっても結果が変わらない構成とす�
 検証はCoreもYAML設定判定も実装しない。afterは期待値だけであり、Core実行後の実測値ではない。
 Core実装後のGate Bで、実stdout/終了コード、実before/after、索引構築へ進まないことを確認する。
 この9件に加えて[EARS-AI構文・候補抽出・拡張の12件](ears-review.md)と
-[文書構造・UTF-8の9件](document-review.md)、[関係・path・coverageの6件](trace-review.md)、[ID重複・循環の4件](graph-review.md)、[Git基準版の5件](git-review.md)、[保護対象外変更の5件](exempt-review.md)と[TASK境界の3件](task-review.md)、[Git対象選択・影響候補の4件](selection-review.md)を準備した。
-計57/311件、matrix残254件、golden Context Digest、全体の副作用期待値、
+[文書構造・UTF-8の9件](document-review.md)、[関係・path・coverageの6件](trace-review.md)、[ID重複・循環の4件](graph-review.md)、[Git基準版の5件](git-review.md)、[保護対象外変更の5件](exempt-review.md)と[TASK境界の3件](task-review.md)、[Git対象選択・影響候補の4件](selection-review.md)、[Git基準版エラー・Git不在の3件](git-environment-review.md)を準備した。
+計60/311件、matrix残251件、golden Context Digest、全体の副作用期待値、
 fresh checkoutでのGate A全検証は残る。
