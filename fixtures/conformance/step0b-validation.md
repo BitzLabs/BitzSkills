@@ -341,3 +341,21 @@ See [the input-limit review](single/input-limit-review.md) for scope and evidenc
 Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
 No limit check or Core was implemented or executed. Actual continuation units and counts are Gate B work.
 Remaining fixtures, federation golden Digest and full fresh-checkout Gate A repeatability stay pending.
+
+The registry-closure batch completed matrix §6.9 and passed two byte-identical integrated audits in the
+pinned CPython 3.14.6 environment. All check errors were empty; exit 1 denotes pending Gate A evidence.
+Prepared: 150/311; missing: 161. SINGLE-089 fixes the 1-based code point position of a reason-less SHOULD
+and keeps the document counted; SINGLE-090 carries only the advisory relation to an absent target.
+SINGLE-091 differs from the minimal configuration by one anchor; SINGLE-092 reuses the reviewed type-error
+configuration under doctor and returns the shared configuration code with four executed checks.
+SINGLE-093 differs from SINGLE-001 by Git absence alone, with a null Git snapshot and the four
+`lostGuarantees` names now fixed in the doctor contract; the reviewed source hash was refreshed.
+SINGLE-094 returns the check workspace-missing condition rather than the doctor-only code, and SINGLE-095
+differs from the minimal configuration by the EARS-AI major alone. Both isolated setups match the fixed
+snapshot per fixture. Regression checks reject changed positions, severity, workspace identity, doctor check
+status, lost guarantees, codes and side effects, repaired inputs and an added workspace.
+See [the registry closure review](single/registry-closure-review.md) for scope and evidence.
+Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
+No YAML loader, Git probe, doctor procedure or Core was implemented or executed. Actual check continuation
+and doctor output are Gate B work. Remaining fixtures, federation golden Digest and full fresh-checkout
+Gate A repeatability stay pending.

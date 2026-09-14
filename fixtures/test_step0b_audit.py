@@ -53,9 +53,58 @@ from conformance.report_write_fixtures import validate as validate_report_write
 from conformance import text_fixtures
 from conformance import frontmatter_fixtures
 from conformance import input_limit_fixtures
+from conformance import registry_closure_fixtures
 
 
 class AuditTests(unittest.TestCase):
+    def test_registry_closure_fixtures(self):
+        result = registry_closure_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-089", "SINGLE-090", "SINGLE-091",
+                                              "SINGLE-092", "SINGLE-093", "SINGLE-094", "SINGLE-095"])
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_registry_closure_audit_rejects_changed_expectations(self):
+        mutations = [
+            ("SINGLE-089", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(column=48)),
+            ("SINGLE-090", "expected/check.json", lambda v: v["diagnostics"][0].update(severity="error")),
+            ("SINGLE-091", "expected/check.json", lambda v: v["workspace"].update(id="root")),
+            ("SINGLE-092", "expected/doctor.json", lambda v: v["checks"][2].update(status="passed")),
+            ("SINGLE-093", "expected/doctor.json", lambda v: v["checks"][5]["lostGuarantees"].pop()),
+            ("SINGLE-093", "side-effects.json",
+             lambda v: v["before"].update(git={"status": "", "index": ""})),
+            ("SINGLE-094", "expected/check.json",
+             lambda v: v["diagnostics"][0].update(code="SPEC-DOCTOR-WORKSPACE-001")),
+            ("SINGLE-095", "side-effects.json",
+             lambda v: v["after"].update(cache={"ears": {"kind": "directory"}})),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, file=relative), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
+                self.assertTrue(registry_closure_fixtures.validate(root, [identifier])["errors"])
+
+    def test_registry_closure_audit_rejects_repaired_or_extended_inputs(self):
+        module = registry_closure_fixtures
+        # Repairing the sole cause, or adding the workspace the case denies, must not pass.
+        flips = {
+            "SINGLE-089": (module.REQ_PATH, module.DOCUMENT.encode()),
+            "SINGLE-090": (module.REQ_PATH, module.DOCUMENT.encode()),
+            "SINGLE-091": (module.CONFIG_PATH, module.CONFIG.encode()),
+            "SINGLE-092": (module.CONFIG_PATH, module.CONFIG.encode()),
+            "SINGLE-093": (module.CONFIG_PATH, module.ANCHOR_CONFIG.encode()),
+            "SINGLE-094": (module.CONFIG_PATH, module.CONFIG.encode()),
+            "SINGLE-095": (module.CONFIG_PATH, module.CONFIG.encode()),
+        }
+        for identifier, (relative, content) in flips.items():
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                path = root / "single" / identifier / "repo" / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(content)
+                self.assertTrue(registry_closure_fixtures.validate(root, [identifier])["errors"])
+
     def test_input_limit_fixtures(self):
         result = input_limit_fixtures.validate()
         self.assertEqual(result["errors"], [])

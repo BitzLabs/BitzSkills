@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "passed_with_warnings",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "EAI-CORE-SHOULD-001",
+      "severity": "warning",
+      "resultStatus": "passed_with_warnings",
+      "summary": "SHOULDに[REASON]がありません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/requirements/REQ-001.md",
+        "line": 15,
+        "column": 49
+      }
+    }
+  ],
+  "scope": "full",
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "checkedDocumentCount": 1,
+  "checkedStatementCount": 1
+}

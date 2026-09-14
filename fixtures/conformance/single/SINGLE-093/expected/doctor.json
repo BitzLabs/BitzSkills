@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "doctor",
+  "status": "passed_with_warnings",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-DOCTOR-GIT-001",
+      "severity": "warning",
+      "resultStatus": "passed_with_warnings",
+      "summary": "Git不在のため差分に依存する保証を提供できません",
+      "source": {
+        "kind": "environment",
+        "component": "git",
+        "identifier": "git"
+      }
+    }
+  ],
+  "core": {
+    "version": "1.0.0",
+    "apiVersion": "1.0",
+    "capabilities": [
+      "context.v1",
+      "check.v1",
+      "verify.v1",
+      "doctor.v1",
+      "monorepo.v1"
+    ]
+  },
+  "checks": [
+    {
+      "name": "core",
+      "status": "passed"
+    },
+    {
+      "name": "workspace",
+      "status": "passed"
+    },
+    {
+      "name": "config",
+      "status": "passed"
+    },
+    {
+      "name": "schema",
+      "status": "passed"
+    },
+    {
+      "name": "ears",
+      "status": "passed"
+    },
+    {
+      "name": "git",
+      "status": "warning",
+      "lostGuarantees": [
+        "approved-diff-protection",
+        "deletion-detection",
+        "status-transition",
+        "task-boundary"
+      ]
+    },
+    {
+      "name": "command",
+      "status": "passed"
+    },
+    {
+      "name": "impact",
+      "status": "info"
+    }
+  ]
+}

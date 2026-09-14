@@ -87,7 +87,9 @@ earsAi: "1.0"
 ## 6. Git不在
 
 単一workspaceではCore全体の起動失敗にはせず、承認済みREQ保護、状態遷移、削除検出、TASK境界の失われる
-保証を列挙する。連合ではrepository境界と所有範囲を確定できないため`SPEC-MONOREPO-GIT-001`／blockedとする。
+保証を列挙する。`checks[]`の`git`はこの4件を`lostGuarantees`へ`approved-diff-protection`、
+`deletion-detection`、`status-transition`、`task-boundary`の安定名で重複なく辞書順に置く。
+連合ではrepository境界と所有範囲を確定できないため`SPEC-MONOREPO-GIT-001`／blockedとする。
 
 ## 7. 結果
 

@@ -1,0 +1,27 @@
+{
+  "fixtureId": "SINGLE-093",
+  "description": "Git不在の単一workspace doctorを警告で継続する",
+  "setup": {
+    "git": false,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--format",
+      "json"
+    ],
+    "env": {
+      "PATH": "/dev/null"
+    }
+  },
+  "expect": {
+    "status": "passed_with_warnings",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

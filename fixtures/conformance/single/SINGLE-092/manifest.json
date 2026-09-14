@@ -1,0 +1,25 @@
+{
+  "fixtureId": "SINGLE-092",
+  "description": "doctorの設定型不正をconfig checkと共通codeで返す",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "error",
+    "exitCode": 3,
+    "stdout": "json",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0
+  }
+}

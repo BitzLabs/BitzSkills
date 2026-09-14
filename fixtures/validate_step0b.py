@@ -42,6 +42,7 @@ from conformance.report_write_fixtures import validate as validate_report_write_
 from conformance.text_fixtures import validate as validate_text_fixtures
 from conformance.frontmatter_fixtures import validate as validate_frontmatter_fixtures
 from conformance.input_limit_fixtures import validate as validate_input_limit_fixtures
+from conformance.registry_closure_fixtures import validate as validate_registry_closure_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -217,6 +218,7 @@ def main():
     checks["text_fixtures"] = validate_text_fixtures()
     checks["frontmatter_fixtures"] = validate_frontmatter_fixtures()
     checks["input_limit_fixtures"] = validate_input_limit_fixtures()
+    checks["registry_closure_fixtures"] = validate_registry_closure_fixtures()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_step0p.py")], capture_output=True, text=True, timeout=60)
     checks["step0p"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
     helpers = subprocess.run([sys.executable, "-B", str(FIXTURES / "test_harness.py")], capture_output=True, text=True, timeout=30)
