@@ -167,3 +167,20 @@ stream is drained and the read handle closed rather than waiting for an EOF that
 Expectation choices and their limits are recorded in
 [the verify process review](single/verify-process-review.md).
 These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
+
+The subsequent 2026-09-14 verify output and document-binding batch passed integrated checks and
+regression suites. Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced
+byte-identical reports, with no check errors and exit code 1 for pending Gate A evidence.
+Prepared fixtures: 92/311; missing: 219.
+SINGLE-069-01/02 fix a 70,400-byte stream of 64-byte lines whose first and last lines are marked
+differently, so the committed 64 KiB excerpt provably holds the tail marker and not the head marker;
+the audit runs the command file and compares the produced tail byte for byte. Both share one Context
+Digest because the script body is not Digest material, while their exit codes differ.
+SINGLE-066 targets a TECH with no normative statement and a document-level test, reporting statements []
+together with a bindingRefs entry and covers [TECH-001], which the Frontmatter contract permits only for
+such a TECH.
+SINGLE-068 is still absent on purpose: whether the documents owning a root TASK's addresses targets are
+part of the verify Context is not settled by the normative documents, and a fixture must not enter the
+executable set ahead of its contract. Expectation choices, the reasoning and the reported gap are
+recorded in [the verify output review](single/verify-output-review.md).
+These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.

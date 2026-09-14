@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "547ba586e9702117f4178f03c73a1d970b41d62b46e472437e46d1c538894e91"
+      },
+      "src": {
+        "kind": "directory"
+      },
+      "src/auth.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "891db46eb3458220b0b14e13475275304f8091d580143003f669440b4c0102aa"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_auth.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "13eead6681ce261ab5fc34eb64cab2c8fc9a8d0cd832a862dff27bc6c43597b2"
+      }
+    },
+    "git": {
+      "status": "A  .spec/bitz.yaml\nA  .spec/technical/TECH-001.md\nA  src/auth.py\nA  tests/test_auth.py\n",
+      "index": "100644 cf2e1fa96cd3cf541643dbf6e8a690a148085c43 0\t.spec/bitz.yaml\n100644 680c9ff4281eb79fba96b912b4139ec0c0887367 0\t.spec/technical/TECH-001.md\n100644 8642af6ea1b0eaa19fec17d915c3075b68aeb331 0\tsrc/auth.py\n100644 d5b5cf850e89e86989784db5751e3379bb87af09 0\ttests/test_auth.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "547ba586e9702117f4178f03c73a1d970b41d62b46e472437e46d1c538894e91"
+      },
+      "src": {
+        "kind": "directory"
+      },
+      "src/auth.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "891db46eb3458220b0b14e13475275304f8091d580143003f669440b4c0102aa"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_auth.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "13eead6681ce261ab5fc34eb64cab2c8fc9a8d0cd832a862dff27bc6c43597b2"
+      }
+    },
+    "git": {
+      "status": "A  .spec/bitz.yaml\nA  .spec/technical/TECH-001.md\nA  src/auth.py\nA  tests/test_auth.py\n",
+      "index": "100644 cf2e1fa96cd3cf541643dbf6e8a690a148085c43 0\t.spec/bitz.yaml\n100644 680c9ff4281eb79fba96b912b4139ec0c0887367 0\t.spec/technical/TECH-001.md\n100644 8642af6ea1b0eaa19fec17d915c3075b68aeb331 0\tsrc/auth.py\n100644 d5b5cf850e89e86989784db5751e3379bb87af09 0\ttests/test_auth.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

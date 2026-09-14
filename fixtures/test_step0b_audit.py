@@ -36,9 +36,127 @@ from conformance import verify_binding_fixtures
 from conformance.verify_binding_fixtures import validate as validate_verify_bindings
 from conformance import verify_process_fixtures
 from conformance.verify_process_fixtures import validate as validate_verify_process
+from conformance import verify_output_fixtures
+from conformance.verify_output_fixtures import validate as validate_verify_output
+from conformance import verify_document_fixtures
+from conformance.verify_document_fixtures import validate as validate_verify_document
 
 
 class AuditTests(unittest.TestCase):
+    def test_verify_document_fixture(self):
+        result = validate_verify_document()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-066"])
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_document_level_binding_has_no_statements(self):
+        result = json.loads((audit.FIXTURES / "single/SINGLE-066/expected/verify.json").read_text())
+        verify_document_fixtures.check_document_binding(result)
+        target = result["targetResults"][0]
+        self.assertEqual(target["statements"], [])
+        self.assertEqual(target["bindingRefs"], ["root::default"])
+        self.assertEqual(result["commands"][0]["covers"], ["TECH-001"])
+        self.assertEqual(result["status"], "passed")
+
+    def test_document_audit_rejects_a_statement_bearing_or_unbound_target(self):
+        statement = ("- [TECH-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] "
+                     "[CONSTRAINT] 秘密情報を出力しない。")
+        mutations = [
+            ("expected/verify.json", lambda v: v["targetResults"][0].update(statements=["TECH-001:AC-01"])),
+            ("expected/verify.json", lambda v: v["targetResults"][0].update(bindingRefs=[])),
+            ("expected/verify.json", lambda v: v["commands"][0].update(covers=["TECH-001:AC-01"])),
+        ]
+        for relative, mutate in mutations:
+            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single/SINGLE-066"
+                shutil.copytree(audit.FIXTURES / "single/SINGLE-066", fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_verify_document(root, ["SINGLE-066"])["errors"])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = root / "single/SINGLE-066"
+            shutil.copytree(audit.FIXTURES / "single/SINGLE-066", fixture)
+            for name in ("manifest", "result", "side-effects", "frontmatter"):
+                shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+            path = fixture / "repo" / verify_document_fixtures.TECH_PATH
+            path.write_text(path.read_text().rstrip(chr(10)) + chr(10) * 2 + statement + chr(10))
+            self.assertTrue(validate_verify_document(root, ["SINGLE-066"])["errors"])
+
+    def test_verify_output_fixtures(self):
+        result = validate_verify_output()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-069-01", "SINGLE-069-02"])
+        self.assertEqual(result["core_execution"], "Not run")
+        self.assertTrue(result["observed_output"])
+
+    def test_excerpt_is_the_tail_not_the_head(self):
+        verify_output_fixtures.check_excerpt_shape()
+        for identifier in verify_output_fixtures.CASES:
+            result = json.loads((audit.FIXTURES / "single" / identifier / "expected/verify.json").read_text())
+            command = result["commands"][0]
+            for excerpt in (command["stdoutExcerpt"], command["stderrExcerpt"]):
+                self.assertEqual(len(excerpt.encode()), verify_output_fixtures.LIMIT, identifier)
+                self.assertIn(verify_output_fixtures.TAIL, excerpt, identifier)
+                self.assertNotIn(verify_output_fixtures.HEAD, excerpt, identifier)
+            self.assertTrue(command["stdoutTruncated"], identifier)
+            self.assertTrue(command["stderrTruncated"], identifier)
+
+    def test_output_fixtures_share_one_context_but_differ_in_outcome(self):
+        first = json.loads((audit.FIXTURES / "single/SINGLE-069-01/expected/verify.json").read_text())
+        second = json.loads((audit.FIXTURES / "single/SINGLE-069-02/expected/verify.json").read_text())
+        # The script body is not Digest material, so the Context is the same.
+        self.assertEqual(first["targetResults"][0]["contextDigest"],
+                         second["targetResults"][0]["contextDigest"])
+        self.assertEqual((first["status"], second["status"]), ("passed", "failed"))
+        self.assertEqual((first["commands"][0]["exitCode"], second["commands"][0]["exitCode"]), (0, 1))
+
+    def test_output_audit_rejects_tampered_expectations(self):
+        head_excerpt = verify_output_fixtures.HEAD + chr(10) + verify_output_fixtures.EXCERPT[
+            :verify_output_fixtures.LIMIT - verify_output_fixtures.LINE_BYTES]
+        mutations = [
+            ("SINGLE-069-01", "expected/verify.json",
+             lambda v: v["commands"][0].update(stdoutTruncated=False)),
+            ("SINGLE-069-01", "expected/verify.json",
+             lambda v: v["commands"][0].update(stdoutExcerpt=head_excerpt)),
+            ("SINGLE-069-01", "expected/verify.json",
+             lambda v: v["commands"][0].update(stderrExcerpt="")),
+            ("SINGLE-069-02", "expected/verify.json", lambda v: v.update(status="passed")),
+            ("SINGLE-069-02", "expected/verify.json",
+             lambda v: v["commands"][0].update(exitCode=0, status="passed")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_verify_output(root, [identifier])["errors"])
+
+    def test_output_audit_rejects_a_command_that_stays_under_the_limit(self):
+        short = "#!/bin/sh" + chr(10) + 'echo "short"' + chr(10) + "exit 0" + chr(10)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = root / "single/SINGLE-069-01"
+            shutil.copytree(audit.FIXTURES / "single/SINGLE-069-01", fixture)
+            for name in ("manifest", "result", "side-effects", "frontmatter"):
+                shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+            path = fixture / "repo" / verify_output_fixtures.COMMAND_PATH
+            mode = path.stat().st_mode
+            path.write_text(short)
+            path.chmod(mode)
+            self.assertTrue(validate_verify_output(root, ["SINGLE-069-01"])["errors"])
+
     def test_verify_process_fixtures(self):
         result = validate_verify_process()
         self.assertEqual(result["errors"], [])
