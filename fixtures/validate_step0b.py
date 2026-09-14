@@ -40,6 +40,7 @@ from conformance.report_absent_fixtures import validate as validate_report_absen
 from conformance.cli_error_fixtures import validate as validate_cli_error_fixtures
 from conformance.report_write_fixtures import validate as validate_report_write_fixtures
 from conformance.text_fixtures import validate as validate_text_fixtures
+from conformance.frontmatter_fixtures import validate as validate_frontmatter_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -213,6 +214,7 @@ def main():
     checks["cli_error_fixtures"] = validate_cli_error_fixtures()
     checks["report_write_fixtures"] = validate_report_write_fixtures()
     checks["text_fixtures"] = validate_text_fixtures()
+    checks["frontmatter_fixtures"] = validate_frontmatter_fixtures()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_step0p.py")], capture_output=True, text=True, timeout=60)
     checks["step0p"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
     helpers = subprocess.run([sys.executable, "-B", str(FIXTURES / "test_harness.py")], capture_output=True, text=True, timeout=30)

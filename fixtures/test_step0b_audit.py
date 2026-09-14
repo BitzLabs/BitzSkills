@@ -51,9 +51,52 @@ from conformance.cli_error_fixtures import validate as validate_cli_errors
 from conformance import report_write_fixtures
 from conformance.report_write_fixtures import validate as validate_report_write
 from conformance import text_fixtures
+from conformance import frontmatter_fixtures
 
 
 class AuditTests(unittest.TestCase):
+    def test_frontmatter_fixtures(self):
+        result = frontmatter_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-081", "SINGLE-082", "SINGLE-084", "SINGLE-085", "SINGLE-086",
+                                              "SINGLE-087-01", "SINGLE-087-02", "SINGLE-087-03", "SINGLE-087-04", "SINGLE-087-05", "SINGLE-088"])
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_frontmatter_audit_rejects_changed_status_counts_and_input(self):
+        mutations = [
+            ("SINGLE-081", "expected/check.json", lambda v: v.update(checkedDocumentCount=0)),
+            ("SINGLE-082", "expected/check.json", lambda v: v["diagnostics"].clear()),
+            ("SINGLE-084", "expected/check.json", lambda v: v["diagnostics"][0].update(code="SPEC-FM-UNKNOWN-001")),
+            ("SINGLE-085", "expected/check.json", lambda v: v.update(status="failed")),
+            ("SINGLE-086", "expected/check.json", lambda v: v.update(checkedDocumentCount=1, checkedStatementCount=1)),
+            ("SINGLE-087-05", "expected/check.json", lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0]))),
+            ("SINGLE-088", "side-effects.json", lambda v: v["after"].update(cache={"index": {"kind": "directory"}})),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
+                self.assertTrue(frontmatter_fixtures.validate(root, [identifier])["errors"])
+        for identifier in frontmatter_fixtures.CASES:
+            with self.subTest(repaired_input=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                # Repair the sole input condition; the old expected Diagnostic must no longer pass.
+                if identifier == "SINGLE-081":
+                    path = fixture / "repo/.spec/bitz.yaml"
+                    path.write_bytes(path.read_bytes()[3:])
+                else:
+                    (fixture / "repo" / frontmatter_fixtures.REQ_PATH).write_text(frontmatter_fixtures.DOCUMENT)
+                self.assertTrue(frontmatter_fixtures.validate(root, [identifier])["errors"])
+
     def test_text_fixtures_and_json_parity(self):
         result = text_fixtures.validate()
         self.assertEqual(result["errors"], [])

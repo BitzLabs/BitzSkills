@@ -299,3 +299,15 @@ See [the output-format review](single/output-format-review.md) for expectation c
 Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
 Core was not executed; actual text rendering, report contents and side effects remain Gate B work.
 Remaining fixtures, federation golden Digest and full fresh-checkout Gate A repeatability stay pending.
+
+The subsequent 2026-09-14 BOM/Frontmatter batch passed integrated checks and regression suites.
+Two runs through the cached pinned validator Python with -B produced byte-identical audit reports,
+with no check errors and exit 1 for pending Gate A evidence. Prepared fixtures: 134/311; missing: 177.
+SINGLE-081/082/084/085 continue with one checked document/statement after their single warning.
+SINGLE-086/087-01..05/088 skip the malformed document with one Schema Diagnostic and zero counts.
+Each fixture passed two isolated setup comparisons. Mutation tests reject repaired input bytes,
+wrong counts/status/codes, removed or duplicated Diagnostics and new cache side effects.
+See [the BOM/Frontmatter review](single/frontmatter-review.md) for input and expectation choices.
+Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
+No YAML loader or Core was implemented/executed. Actual continuation, rejection and side effects are
+Gate B work. Remaining fixtures, federation golden Digest and full fresh-checkout Gate A stay pending.
