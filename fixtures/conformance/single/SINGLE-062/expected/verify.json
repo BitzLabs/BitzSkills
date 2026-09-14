@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "blocked",
+  "scope": "all",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [],
+  "revision": null,
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-VERIFY-BLOCKED-002",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "verify対象が0件です",
+      "source": {
+        "kind": "invocation"
+      }
+    }
+  ]
+}

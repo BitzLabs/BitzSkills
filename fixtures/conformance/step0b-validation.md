@@ -122,3 +122,17 @@ context.maxDocuments/maxBytes from configuration instead of assuming defaults, a
 transitive refinement chain. Expectation choices and their limits are recorded in
 [the non-success Context review](single/context-limit-review.md).
 These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
+
+The subsequent 2026-09-14 verify batch passed integrated checks and regression suites.
+Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced byte-identical reports,
+with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 83/311; missing: 228.
+SINGLE-055/056 execute a command and SINGLE-060/061/062/067 stop before any spawn.
+Unlike the Context fixtures these stage their inputs, because verify blocks startup on a configuration
+untracked in the index; a base commit is not usable since verify has no --base, so the repository stays
+unborn with a populated index and revision is null. The audit reads the index back for every case.
+SINGLE-055 reports the Digest committed by SINGLE-042; the audit enforces that a target Digest is
+present exactly where the Context still resolved, and that bindingRefs and commands[] describe the
+same executions. Diagnostic placement follows the registry continuation unit: skip-target conditions
+stay on the target, and the stop-operation empty-target condition is top level.
+Expectation choices and their limits are recorded in [the verify review](single/verify-review.md).
+These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
