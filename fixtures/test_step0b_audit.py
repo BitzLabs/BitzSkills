@@ -7,6 +7,8 @@ import shutil
 import unittest
 from unittest.mock import patch
 
+from jsonschema import Draft202012Validator, ValidationError
+
 import validate_step0b as audit
 from conformance.diagnostic_coverage import LEDGER, validate
 from conformance.target_vectors import HERE as TARGET_HERE, validate as validate_targets
@@ -46,9 +48,104 @@ from conformance.verify_task_root_fixtures import validate as validate_verify_ta
 from conformance import cli_error_fixtures, report_absent_fixtures
 from conformance.report_absent_fixtures import validate as validate_report_absent
 from conformance.cli_error_fixtures import validate as validate_cli_errors
+from conformance import report_write_fixtures
+from conformance.report_write_fixtures import validate as validate_report_write
 
 
 class AuditTests(unittest.TestCase):
+    def test_report_write_fixtures(self):
+        result = validate_report_write()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-071-01", "SINGLE-071-02", "SINGLE-071-03",
+                                              "SINGLE-071-04", "SINGLE-072"])
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_explicit_report_creates_exactly_one_file(self):
+        for identifier in ("SINGLE-071-01", "SINGLE-071-02", "SINGLE-071-03", "SINGLE-071-04"):
+            fixture = audit.FIXTURES / "single" / identifier
+            manifest = json.loads((fixture / "manifest.json").read_text())
+            effects = json.loads((fixture / "side-effects.json").read_text())
+            self.assertIn("--report", manifest["invocation"]["argv"], identifier)
+            self.assertEqual(manifest["expect"]["reportFileCount"], 1, identifier)
+            self.assertEqual(effects["policy"], "explicit-report", identifier)
+            self.assertEqual(effects["report"]["createdCount"], 1, identifier)
+            self.assertEqual(effects["report"]["temporaryFilesRemaining"], 0, identifier)
+            # The pre-existing report proves exclusive creation rather than replacement.
+            self.assertIn(report_write_fixtures.EXISTING_REPORT,
+                          effects["before"]["repository"], identifier)
+            self.assertEqual(effects["before"], effects["after"], identifier)
+
+    def test_report_name_pattern_matches_the_specified_grammar(self):
+        pattern = report_write_fixtures.NAME_PATTERN
+        for name in ("20000101T000000Z-check.json", "20260914T112233Z-verify-2.json"):
+            self.assertRegex(name, pattern)
+        for name in ("check.json", "20000101T000000Z-check-0.json", "20000101T000000Z-context.json",
+                     "20000101T000000Z-check.json.tmp", "20000101T00000Z-check.json"):
+            self.assertNotRegex(name, pattern)
+
+    def test_blocked_report_keeps_the_original_result(self):
+        result = json.loads((audit.FIXTURES / "single/SINGLE-072/expected/check.json").read_text())
+        source = json.loads((audit.FIXTURES / "single/SINGLE-070-02/expected/check.json").read_text())
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(source["status"], "failed")
+        for key in ("scope", "revision", "checkedDocumentCount", "checkedStatementCount"):
+            self.assertEqual(result[key], source[key], key)
+        self.assertEqual([d["code"] for d in result["diagnostics"]],
+                         [d["code"] for d in source["diagnostics"]] + ["SPEC-REPORT-WRITE-001"])
+        effects = json.loads((audit.FIXTURES / "single/SINGLE-072/side-effects.json").read_text())
+        self.assertEqual(effects["policy"], "read-only")
+        self.assertNotIn("report", effects)
+
+    def test_side_effects_schema_pairs_policy_with_report(self):
+        schema = json.loads((audit.FIXTURES / "side-effects.schema.json").read_text())
+        validator = Draft202012Validator(schema)
+        base = json.loads((audit.FIXTURES / "single/SINGLE-071-01/side-effects.json").read_text())
+        validator.validate(base)
+        missing = copy.deepcopy(base)
+        missing.pop("report")
+        with self.assertRaises(ValidationError):
+            validator.validate(missing)
+        surplus = copy.deepcopy(base)
+        surplus["policy"] = "read-only"
+        with self.assertRaises(ValidationError):
+            validator.validate(surplus)
+        zero = copy.deepcopy(base)
+        zero["report"]["createdCount"] = 0
+        with self.assertRaises(ValidationError):
+            validator.validate(zero)
+        leftover = copy.deepcopy(base)
+        leftover["report"]["temporaryFilesRemaining"] = 1
+        with self.assertRaises(ValidationError):
+            validator.validate(leftover)
+
+    def test_report_write_audit_rejects_tampered_expectations(self):
+        mutations = [
+            ("SINGLE-071-01", "manifest.json", lambda v: v["expect"].update(reportFileCount=0)),
+            ("SINGLE-071-01", "manifest.json",
+             lambda v: v["invocation"].update(argv=["check", "--full", "--base", "HEAD",
+                                                    "--format", "json"])),
+            ("SINGLE-071-02", "side-effects.json", lambda v: v["report"].update(createdCount=2)),
+            ("SINGLE-071-03", "side-effects.json",
+             lambda v: v["report"].update(namePattern="^.*$")),
+            ("SINGLE-071-04", "side-effects.json",
+             lambda v: v["before"]["repository"].pop(report_write_fixtures.EXISTING_REPORT)),
+            ("SINGLE-072", "expected/check.json", lambda v: v.update(status="failed")),
+            ("SINGLE-072", "expected/check.json", lambda v: v.update(diagnostics=v["diagnostics"][1:])),
+            ("SINGLE-072", "expected/check.json", lambda v: v.update(checkedDocumentCount=0)),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_report_write(root, [identifier])["errors"])
+
     def test_report_absent_and_cli_error_fixtures(self):
         absent = validate_report_absent()
         self.assertEqual(absent["errors"], [])

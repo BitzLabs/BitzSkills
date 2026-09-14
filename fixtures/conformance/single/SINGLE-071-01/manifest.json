@@ -1,0 +1,35 @@
+{
+  "fixtureId": "SINGLE-071-01",
+  "description": "明示--report付きの成功checkが規定先へ1件を排他的作成する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--full",
+      "--base",
+      "HEAD",
+      "--format",
+      "json",
+      "--report"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 1
+  }
+}

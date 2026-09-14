@@ -1,44 +1,193 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Read-only fixture side-effect expectations",
+  "title": "Fixture side-effect expectations",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "policy", "before", "after"],
+  "required": [
+    "schemaVersion",
+    "policy",
+    "before",
+    "after"
+  ],
   "properties": {
-    "schemaVersion": {"const": "1.0"},
-    "policy": {"const": "read-only"},
-    "before": {"$ref": "#/$defs/state"},
-    "after": {"$ref": "#/$defs/state"}
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "policy": {
+      "enum": [
+        "read-only",
+        "explicit-report"
+      ],
+      "description": "read-only: the run creates, updates and removes nothing. explicit-report: the run additionally creates report.createdCount files under report.directory. Report file names carry a generation time and sequence, so they cannot be named here; before and after therefore describe only the paths that already existed, and every one of them must be unchanged."
+    },
+    "before": {
+      "$ref": "#/$defs/state"
+    },
+    "after": {
+      "$ref": "#/$defs/state"
+    },
+    "report": {
+      "$ref": "#/$defs/report"
+    }
   },
   "$defs": {
     "entry": {
       "oneOf": [
-        {"type": "object", "additionalProperties": false, "required": ["kind"], "properties": {"kind": {"const": "directory"}}},
-        {"type": "object", "additionalProperties": false, "required": ["kind", "executable", "sha256"], "properties": {
-          "kind": {"const": "file"}, "executable": {"type": "boolean"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
-        }},
-        {"type": "object", "additionalProperties": false, "required": ["kind", "target"], "properties": {
-          "kind": {"const": "symlink"}, "target": {"type": "string"}
-        }}
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "directory"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "executable",
+            "sha256"
+          ],
+          "properties": {
+            "kind": {
+              "const": "file"
+            },
+            "executable": {
+              "type": "boolean"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "target"
+          ],
+          "properties": {
+            "kind": {
+              "const": "symlink"
+            },
+            "target": {
+              "type": "string"
+            }
+          }
+        }
       ]
     },
     "tree": {
-      "type": "object", "additionalProperties": {"$ref": "#/$defs/entry"},
-      "propertyNames": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*\\\\)(?!.*\\u0000).+$"}
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/entry"
+      },
+      "propertyNames": {
+        "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*\\\\)(?!.*\\u0000).+$"
+      }
     },
     "state": {
-      "type": "object", "additionalProperties": false,
-      "required": ["repository", "git", "home", "cache", "temporary"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "git",
+        "home",
+        "cache",
+        "temporary"
+      ],
       "properties": {
-        "repository": {"$ref": "#/$defs/tree"},
-        "git": {
-          "type": ["object", "null"], "additionalProperties": false, "required": ["status", "index"],
-          "properties": {"status": {"type": "string"}, "index": {"type": "string"}}
+        "repository": {
+          "$ref": "#/$defs/tree"
         },
-        "home": {"$ref": "#/$defs/tree"},
-        "cache": {"$ref": "#/$defs/tree"},
-        "temporary": {"$ref": "#/$defs/tree"}
+        "git": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "index"
+          ],
+          "properties": {
+            "status": {
+              "type": "string"
+            },
+            "index": {
+              "type": "string"
+            }
+          }
+        },
+        "home": {
+          "$ref": "#/$defs/tree"
+        },
+        "cache": {
+          "$ref": "#/$defs/tree"
+        },
+        "temporary": {
+          "$ref": "#/$defs/tree"
+        }
+      }
+    },
+    "report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "directory",
+        "createdCount",
+        "namePattern",
+        "temporaryFilesRemaining"
+      ],
+      "properties": {
+        "directory": {
+          "const": ".spec/reports"
+        },
+        "createdCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "namePattern": {
+          "type": "string",
+          "minLength": 1
+        },
+        "temporaryFilesRemaining": {
+          "const": 0
+        }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "policy": {
+            "const": "explicit-report"
+          }
+        },
+        "required": [
+          "policy"
+        ]
+      },
+      "then": {
+        "required": [
+          "report"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "report"
+          ]
+        }
+      }
+    }
+  ]
 }

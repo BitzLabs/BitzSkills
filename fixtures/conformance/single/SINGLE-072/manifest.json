@@ -1,0 +1,35 @@
+{
+  "fixtureId": "SINGLE-072",
+  "description": "report保存先が書込み不能でも元結果を端末へ保持する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--full",
+      "--base",
+      "HEAD",
+      "--format",
+      "json",
+      "--report"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "error",
+    "exitCode": 3,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

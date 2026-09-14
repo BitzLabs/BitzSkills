@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "error",
+  "scope": "full",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "checkedDocumentCount": 3,
+  "checkedStatementCount": 2,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-RELATION-MISSING-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "strong relationの参照先が存在しません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/technical/TECH-001.md",
+        "key": "relations.requires"
+      }
+    },
+    {
+      "code": "SPEC-REPORT-WRITE-001",
+      "severity": "error",
+      "resultStatus": "error",
+      "summary": "report保存先へ排他的に作成できません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/reports"
+      }
+    }
+  ]
+}

@@ -221,3 +221,24 @@ a wrong prefix, an empty reason, a second line and a non-4 exit code.
 Expectation choices and their limits are recorded in
 [the report absence review](single/report-absence-review.md).
 These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
+
+The subsequent 2026-09-14 explicit-report batch passed integrated checks and regression suites.
+Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced byte-identical reports,
+with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 107/311; missing: 204.
+side-effects.schema.json now takes policy explicit-report with a report object, and the schema pairs the
+two so that explicit-report requires report and read-only forbids it. Report file names carry a
+generation time and sequence which the common normalizer excludes, so before and after describe only
+pre-existing paths, all of which must be unchanged, and the report object carries the delta.
+The audit requires the committed name pattern to accept a well-formed name and reject a missing
+timestamp, a zero sequence, another operation and a leftover .tmp suffix.
+Each SINGLE-071-* corpus keeps a pre-existing report, because creating into an empty directory would not
+distinguish exclusive creation from replacement. The four cases reuse the reviewed results of the
+SINGLE-070-* pair, since saving a report does not change the computed result.
+SINGLE-072 is based on the failing check rather than the passing one, so that "the original result
+survives" is not vacuous: the result body is unchanged, SPEC-RELATION-MISSING-001 survives,
+SPEC-REPORT-WRITE-001 is appended and the status rises from failed to error. Its destination is blocked
+by a regular file at .spec/reports rather than by a directory mode, because Git does not record
+directory permissions and a fresh checkout would not restore one.
+Expectation choices and their limits are recorded in
+[the explicit-report review](single/report-write-review.md).
+These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
