@@ -22,11 +22,14 @@ CLI_OUTPUT = {"exitCode": 4, "stdout": "", "stderrPrefix": "bitz: check: ",
               "stderrLineCount": 1, "stderrReasonRequired": True, "stderrTerminalControls": False}
 
 
-def check_cli_error_output(exit_code, stdout, stderr):
+def check_cli_error_output(exit_code, stdout, stderr, operation="check"):
+    """One safe stderr line for any operation's argument error; shared by every
+    exit-4 fixture so the contract is stated once."""
     if exit_code != 4 or stdout != b"":
         raise ValueError("CLI argument error must have exit 4 and empty stdout")
+    prefix = f"bitz: {operation}: "
     text = stderr.decode("utf-8")
-    if not re.fullmatch(r"bitz: check: [^\x00-\x1f\x7f-\x9f]+\n", text) or not text[len("bitz: check: "):-1].strip():
+    if not re.fullmatch(re.escape(prefix) + r"[^\x00-\x1f\x7f-\x9f]+\n", text) or not text[len(prefix):-1].strip():
         raise ValueError("CLI stderr must contain one safe line with a nonempty reason")
 
 

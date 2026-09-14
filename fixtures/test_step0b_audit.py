@@ -19,7 +19,8 @@ from conformance.git_fixtures import validate as validate_git_fixtures, check_gi
 from conformance.harness import setup as fixture_setup, git as fixture_git
 from conformance.task_fixtures import validate as validate_tasks, check_git_states as check_task_git_states, reviewed_manifest as task_manifest
 from conformance.selection_fixtures import validate as validate_selection, check_git_states as check_selection_git_states, reviewed_manifest as selection_manifest
-from conformance.git_environment_fixtures import (validate as validate_git_environment, check_cli_error_output,
+from conformance.git_environment_fixtures import (validate as validate_git_environment,
+    check_cli_error_output,
     check_environment, reviewed_manifest as environment_manifest)
 from conformance.context_failure_fixtures import (validate as validate_context_failures,
     check_unborn as check_context_unborn, reviewed_manifest as context_failure_manifest)
@@ -42,9 +43,93 @@ from conformance import verify_document_fixtures
 from conformance.verify_document_fixtures import validate as validate_verify_document
 from conformance import verify_task_root_fixtures
 from conformance.verify_task_root_fixtures import validate as validate_verify_task_root
+from conformance import cli_error_fixtures, report_absent_fixtures
+from conformance.report_absent_fixtures import validate as validate_report_absent
+from conformance.cli_error_fixtures import validate as validate_cli_errors
 
 
 class AuditTests(unittest.TestCase):
+    def test_report_absent_and_cli_error_fixtures(self):
+        absent = validate_report_absent()
+        self.assertEqual(absent["errors"], [])
+        self.assertEqual(absent["prepared"], ["SINGLE-070-01", "SINGLE-070-02",
+                                              "SINGLE-070-03", "SINGLE-070-04"])
+        errors = validate_cli_errors()
+        self.assertEqual(errors["errors"], [])
+        self.assertEqual(errors["prepared"], ["SINGLE-073-01", "SINGLE-073-02", "SINGLE-074-01",
+                                              "SINGLE-074-02", "SINGLE-074-03"])
+        for result in (absent, errors):
+            self.assertEqual(result["core_execution"], "Not run")
+
+    def test_no_report_run_leaves_the_existing_report_untouched(self):
+        for identifier in report_absent_fixtures.CASES:
+            fixture = audit.FIXTURES / "single" / identifier
+            manifest = json.loads((fixture / "manifest.json").read_text())
+            effects = json.loads((fixture / "side-effects.json").read_text())
+            report_absent_fixtures.check_report_expectation(manifest, effects)
+            self.assertNotIn("--report", manifest["invocation"]["argv"], identifier)
+            self.assertEqual(manifest["expect"]["reportFileCount"], 0, identifier)
+            self.assertIn(report_absent_fixtures.EXISTING_REPORT,
+                          effects["before"]["repository"], identifier)
+
+    def test_argument_errors_carry_no_result_and_no_report(self):
+        for identifier, (operation, _, _) in cli_error_fixtures.CASES.items():
+            fixture = audit.FIXTURES / "single" / identifier
+            manifest = json.loads((fixture / "manifest.json").read_text())
+            self.assertEqual(manifest["expect"],
+                             {"exitCode": 4, "stdout": "none", "reportFileCount": 0}, identifier)
+            self.assertFalse((fixture / "expected").exists(), identifier)
+            output = json.loads((fixture / "cli-output.json").read_text())
+            self.assertEqual(output["stderrPrefix"], "bitz: " + operation + ": ", identifier)
+            self.assertEqual(output["stderrLineCount"], 1, identifier)
+            self.assertFalse(output["stderrTerminalControls"], identifier)
+
+    def test_shared_stderr_contract_is_operation_aware(self):
+        for operation in ("context", "doctor", "check", "verify"):
+            check_cli_error_output(4, b"", ("bitz: " + operation + ": reason" + chr(10)).encode(), operation)
+            with self.assertRaises(ValueError):
+                check_cli_error_output(4, b"", ("bitz: other: reason" + chr(10)).encode(), operation)
+            with self.assertRaises(ValueError):
+                check_cli_error_output(4, b"", ("bitz: " + operation + ": " + chr(10)).encode(), operation)
+            with self.assertRaises(ValueError):
+                check_cli_error_output(0, b"", ("bitz: " + operation + ": reason" + chr(10)).encode(), operation)
+
+    def test_report_group_audit_rejects_tampered_expectations(self):
+        mutations = [
+            (validate_report_absent, "SINGLE-070-01", "manifest.json",
+             lambda v: v["expect"].update(reportFileCount=1)),
+            (validate_report_absent, "SINGLE-070-01", "manifest.json",
+             lambda v: v["invocation"]["argv"].append("--report")),
+            (validate_report_absent, "SINGLE-070-02", "expected/check.json",
+             lambda v: v.update(status="passed", diagnostics=[])),
+            (validate_report_absent, "SINGLE-070-02", "expected/check.json",
+             lambda v: v.update(checkedDocumentCount=1)),
+            (validate_report_absent, "SINGLE-070-03", "expected/verify.json",
+             lambda v: v.update(status="failed")),
+            (validate_report_absent, "SINGLE-070-04", "side-effects.json",
+             lambda v: v["after"]["repository"].pop(report_absent_fixtures.EXISTING_REPORT)),
+            (validate_cli_errors, "SINGLE-073-01", "manifest.json",
+             lambda v: v["expect"].update(status="failed")),
+            (validate_cli_errors, "SINGLE-073-02", "cli-output.json",
+             lambda v: v.update(stderrPrefix="bitz: check: ")),
+            (validate_cli_errors, "SINGLE-074-01", "cli-output.json",
+             lambda v: v.update(stderrLineCount=2)),
+            (validate_cli_errors, "SINGLE-074-02", "manifest.json",
+             lambda v: v["invocation"].update(argv=["verify", "REQ-001", "--format", "json"])),
+        ]
+        for validator, identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validator(root, [identifier])["errors"])
+
     def test_verify_task_root_fixture(self):
         result = validate_verify_task_root()
         self.assertEqual(result["errors"], [])

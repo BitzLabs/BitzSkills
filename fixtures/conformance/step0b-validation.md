@@ -202,3 +202,22 @@ cancelled root is blocked with neither. AC-02 is deliberately unaddressed, so ne
 its test may enter the binding. Expectation choices and their limits are recorded in
 [the done TASK root review](single/verify-task-root-review.md).
 These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
+
+The subsequent 2026-09-14 report-absence and argument-error batch passed integrated checks and
+regression suites. Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced
+byte-identical reports, with no check errors and exit code 1 for pending Gate A evidence.
+Prepared fixtures: 102/311; missing: 209.
+SINGLE-070-01/02/03/04 cover both operations on both outcomes without --report. Each corpus already
+holds .spec/reports/existing.json, because a corpus without one could only show that no new file was
+created and never that an existing report survived; the audit refuses a fixture whose snapshot lacks it.
+The two verify cases reuse the reviewed results of SINGLE-055 and SINGLE-056 directly, since the added
+report file is not SPEC material and the Context is unchanged.
+SINGLE-073-01/02 and SINGLE-074-01/02/03 carry no status and no result file, which the manifest contract
+allows only when no common result exists. SINGLE-074-03 is a lexical ID error rather than an absent ID,
+which the CLI contract separates from CTX-ROOT-MISSING-001.
+The stderr contract was hard-wired to check and is now operation-aware, so all five fixtures and the
+earlier Git-environment one share one statement of it; the audit exercises it per operation and rejects
+a wrong prefix, an empty reason, a second line and a non-4 exit code.
+Expectation choices and their limits are recorded in
+[the report absence review](single/report-absence-review.md).
+These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.

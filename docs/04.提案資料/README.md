@@ -544,7 +544,7 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 | P1 5件 | 契約または性能受入成果物へ反映済み | process helper等の検証基盤、Core実装後の受入結果と性能baseline |
 | P2文書衛生 | accepted ADR linkとREADME状態を修正済み | — |
 | 自己適用 | 実装計画へ配置済み | Step 2完了後に`.spec/`を作成し、Gate Cで最終判定 |
-| Step 0B | `In progress` | 公開JSON・grammar・link・Git/process基盤・Diagnostic意味網羅・target集合25ケース・実fixture93件（導入設定9＋EARS 12＋文書構造・UTF-8 9＋関係・path・coverage 6＋ID重複・循環4＋Git基準版・保護対象外10＋TASK境界3＋Git対象選択・影響候補4＋Git環境3＋Context非成功5＋Context Digest 6＋stale・上限・coverage 6＋verify実行・事前block 6＋verify binding共有3＋verify process終了3＋verify出力抜粋2＋文書単位binding1＋done TASK起点1）の準備を検証済み。matrix §6.5 contextとDigestと§6.6 verifyは全32件完了。matrix §6.5 contextとDigestは全16件完了し、単一workspaceのgolden Digestは独立2系統のreference計算で一致を確認済み。実fixture残218件、連合golden Digest等が残件 |
+| Step 0B | `In progress` | 公開JSON・grammar・link・Git/process基盤・Diagnostic意味網羅・target集合25ケース・実fixture102件（導入設定9＋EARS 12＋文書構造・UTF-8 9＋関係・path・coverage 6＋ID重複・循環4＋Git基準版・保護対象外10＋TASK境界3＋Git対象選択・影響候補4＋Git環境3＋Context非成功5＋Context Digest 6＋stale・上限・coverage 6＋verify実行・事前block 6＋verify binding共有3＋verify process終了3＋verify出力抜粋2＋文書単位binding1＋done TASK起点1＋report非作成4＋引数不正5）の準備を検証済み。matrix §6.5 contextとDigestと§6.6 verifyは全32件完了。matrix §6.5 contextとDigestは全16件完了し、単一workspaceのgolden Digestは独立2系統のreference計算で一致を確認済み。実fixture残209件、連合golden Digest等が残件 |
 | Step 0-P | `Complete` | 基準入力・比較条件を固定し一括検証済み。実測はCore実装後 |
 | Gate A | `Blocked` | fresh checkoutから単一commandで2回一致する自動検査結果を記録 |
 | Gate B | `Pending` | 各StepのCore実装を固定済みfixtureへ通して判定 |

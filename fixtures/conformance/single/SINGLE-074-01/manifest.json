@@ -1,0 +1,25 @@
+{
+  "fixtureId": "SINGLE-074-01",
+  "description": "明示対象と--fullの排他違反を拒否する",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "REQ-001",
+      "--full",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 4,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}
