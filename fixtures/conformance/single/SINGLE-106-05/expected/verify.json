@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "failed",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "REQ-900",
+      "status": "failed",
+      "contextDigest": null,
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": [
+        {
+          "code": "CTX-ROOT-MISSING-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "起点REQ-900が存在しません",
+          "source": {
+            "kind": "invocation",
+            "argument": "REQ-900"
+          }
+        }
+      ]
+    },
+    {
+      "target": "REQ-901",
+      "status": "failed",
+      "contextDigest": null,
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": [
+        {
+          "code": "CTX-ROOT-MISSING-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "起点REQ-901が存在しません",
+          "source": {
+            "kind": "invocation",
+            "argument": "REQ-901"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": null,
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": []
+}

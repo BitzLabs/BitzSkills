@@ -409,6 +409,7 @@ text出力は次の3部からなる。Diagnosticが0件なら要約行だけを�
 - 要約行は常に1行目とし、statusと件数をJSON結果と一致させる。doctorは`scope=`を出さない。
 - Diagnostic行はJSONの`diagnostics`と同じ順序で1件1行とし、`source.kind`が`file`以外の場合は
   `<component>`または`invocation`を先頭fieldへ置く。`line`と`column`を持たない場合は当該fieldを省略せず空にする。
+  `file`以外の行では`path`、`line`、`column`を空fieldのまま残し、`identifier`と`argument`をtextへ出さない。
 - `suggestedAction`を持つDiagnosticだけ、直後へ2 space字下げの継続行を1行出す。
 - 全体操作ではworkspace要素のDiagnosticをworkspace処理順に続けて出し、top-level Diagnosticを先に置く。
   verifyのtarget固有Diagnosticは、所有するtop-levelまたはworkspaceのDiagnosticに続け、target ID順で出す。

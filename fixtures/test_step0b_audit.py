@@ -55,9 +55,60 @@ from conformance import frontmatter_fixtures
 from conformance import input_limit_fixtures
 from conformance import registry_closure_fixtures
 from conformance import scanner_fixtures
+from conformance import presentation_fixtures
 
 
 class AuditTests(unittest.TestCase):
+    def test_presentation_fixtures(self):
+        result = presentation_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(presentation_fixtures.CASES))
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_presentation_audit_rejects_text_and_revision_mismatches(self):
+        mutations = [
+            ("SINGLE-104-02", "expected/check.txt", lambda v: v.replace(b"targets=3", b"targets=2")),
+            ("SINGLE-104-03", "expected/verify.txt", lambda v: v.replace(b"scope=selected ", b"")),
+            ("SINGLE-104-04", "expected/doctor.txt",
+             lambda v: v.replace(b"doctor passed ", b"doctor passed scope=full ")),
+            ("SINGLE-106-05", "expected/verify.txt", lambda v: v.rsplit(b"invocation", 1)[0]),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                path = root / "single" / identifier / relative
+                path.write_bytes(mutate(path.read_bytes()))
+                self.assertTrue(presentation_fixtures.validate(root, [identifier])["errors"])
+
+    def test_presentation_audit_rejects_changed_results(self):
+        mutations = [
+            ("SINGLE-105-01", "expected/context.json", lambda v: v.update(revision=None)),
+            ("SINGLE-105-02", "expected/verify.json",
+             lambda v: v.update(revision={"commit": "0" * 40, "dirty": False})),
+            ("SINGLE-106-04", "expected/verify.json",
+             lambda v: v["commands"][0].update(stdoutTruncated=True)),
+            ("SINGLE-106-05", "expected/verify.json",
+             lambda v: v["targetResults"].pop()),
+            ("SINGLE-104-04", "side-effects.json",
+             lambda v: v["after"].update(cache={"doctor": {"kind": "directory"}})),
+            ("SINGLE-105-02", "side-effects.json",
+             lambda v: v["before"].update(git={"status": "", "index": ""})),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, file=relative), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
+                self.assertTrue(presentation_fixtures.validate(root, [identifier])["errors"])
+
+    def test_presentation_audit_rejects_output_from_the_silent_command(self):
+        identifier = "SINGLE-106-04"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_fixture(temporary, identifier)
+            path = root / "single" / identifier / "repo" / presentation_fixtures.verify_output_fixtures.COMMAND_PATH
+            path.write_text("#!/bin/sh\necho noise\nexit 0\n")
+            self.assertTrue(presentation_fixtures.validate(root, [identifier])["errors"])
+
     def test_scanner_fixtures(self):
         result = scanner_fixtures.validate()
         self.assertEqual(result["errors"], [])

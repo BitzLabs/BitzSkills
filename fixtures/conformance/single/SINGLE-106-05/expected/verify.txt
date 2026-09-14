@@ -1,0 +1,3 @@
+verify failed scope=selected targets=2 diagnostics=2 (0ms)
+invocation:::: error: CTX-ROOT-MISSING-001: 起点REQ-900が存在しません
+invocation:::: error: CTX-ROOT-MISSING-001: 起点REQ-901が存在しません

@@ -1,0 +1,33 @@
+{
+  "fixtureId": "SINGLE-104-02",
+  "description": "format省略のcheckがtext要約行を出す",
+  "setup": {
+    "git": true,
+    "operations": [],
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    }
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--full",
+      "--base",
+      "HEAD"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "text",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0,
+    "textFile": "expected/check.txt"
+  }
+}

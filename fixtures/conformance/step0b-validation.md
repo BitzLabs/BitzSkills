@@ -376,3 +376,21 @@ Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Li
 No Scanner, Lexer, Parser or Core was implemented or executed. Actual candidate extraction and emitted
 positions are Gate B work. Remaining fixtures, federation golden Digest and full fresh-checkout Gate A
 repeatability stay pending.
+
+The default-display batch passed two byte-identical integrated audits in the pinned CPython 3.14.6
+environment. All check errors were empty; exit 1 denotes pending Gate A evidence. Prepared: 173/311;
+missing: 138. SINGLE-104-02/03/04 omit --format and fix the text summary line for check, verify and doctor;
+the audit re-derives operation, status, targets and diagnostics from the JSON counterpart through the
+published derivation and rejects a doctor line that carries scope=. SINGLE-105-01 adds a base commit to the
+golden context corpus and fixes the current revision, with the real 40 digit lowercase commit, the clean
+worktree and the per-operation revision shape observed in each isolated setup. SINGLE-105-02 removes Git
+entirely and keeps revision and the Git snapshot null. SINGLE-106-04 reuses the truncation corpus with a
+silent script, observed to exit 0 and write nothing, and fixes empty excerpts with both truncated flags
+false. SINGLE-106-05 returns the same root-missing condition on two targets and counts both in the text
+summary. The text contract now states that non-file Diagnostic lines keep path, line and column empty, and
+the reviewed source hash was refreshed; the committed-fixture --base rule now applies to check alone, since
+context and verify have no base option.
+See [the default display review](single/presentation-review.md) for scope and evidence.
+Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
+No renderer, Git reader or Core was implemented or executed. Markdown byte equality (SINGLE-104-01) and the
+three projection fixtures stay outstanding with the remaining Context and Digest work.

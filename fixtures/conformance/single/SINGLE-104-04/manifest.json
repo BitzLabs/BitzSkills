@@ -1,0 +1,24 @@
+{
+  "fixtureId": "SINGLE-104-04",
+  "description": "format省略のdoctorがscope=なしのtext要約行を出す",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "text",
+    "resultFile": "expected/doctor.json",
+    "reportFileCount": 0,
+    "textFile": "expected/doctor.txt"
+  }
+}

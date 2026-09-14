@@ -44,6 +44,7 @@ from conformance.frontmatter_fixtures import validate as validate_frontmatter_fi
 from conformance.input_limit_fixtures import validate as validate_input_limit_fixtures
 from conformance.registry_closure_fixtures import validate as validate_registry_closure_fixtures
 from conformance.scanner_fixtures import validate as validate_scanner_fixtures
+from conformance.presentation_fixtures import validate as validate_presentation_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -145,7 +146,8 @@ def matrix():
             manifest = json.loads(path.read_text())
             validator.validate(manifest)
             argv = manifest["invocation"]["argv"]
-            if "baseCommit" in manifest["setup"] and "--base" not in argv:
+            # Only check accepts --base; context, verify and doctor have no base option.
+            if argv[0] == "check" and "baseCommit" in manifest["setup"] and "--base" not in argv:
                 errors.append(f"{path}: committed fixture requires explicit --base")
             if not manifest["setup"]["git"] and "--base" in argv:
                 errors.append(f"{path}: Git-absent fixture forbids --base")
@@ -221,6 +223,7 @@ def main():
     checks["input_limit_fixtures"] = validate_input_limit_fixtures()
     checks["registry_closure_fixtures"] = validate_registry_closure_fixtures()
     checks["scanner_fixtures"] = validate_scanner_fixtures()
+    checks["presentation_fixtures"] = validate_presentation_fixtures()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_step0p.py")], capture_output=True, text=True, timeout=60)
     checks["step0p"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
     helpers = subprocess.run([sys.executable, "-B", str(FIXTURES / "test_harness.py")], capture_output=True, text=True, timeout=30)

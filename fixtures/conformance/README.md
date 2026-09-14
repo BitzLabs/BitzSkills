@@ -12,7 +12,7 @@ It also executes Step 0-P validation and the fixture infrastructure self-tests.
 Pinned dependencies are declared in the script; the first run requires package download access.
 
 Exit 0 means Gate A is allowed; exit 1 means errors or outstanding evidence remain. Currently exit 1 is expected:
-145 of the 311 matrix fixtures, the independent federation golden Context Digest,
+138 of the 311 matrix fixtures, the independent federation golden Context Digest,
 and per-fixture side-effect expectations are still outstanding. Missing fixtures are listed individually.
 Static checks do not prove that a fixture has only one independent cause. Diagnostic mappings have a reviewed ledger:
 see [Diagnostic review](diagnostic-review.md). The audit checks its integrity and source freshness, not natural-language semantics.
@@ -106,4 +106,9 @@ the four `lostGuarantees` names. That batch brought preparation to 150/311.
 spans, unknown escapes, unclosed quoted extension values, four candidate-suppression constructs, four
 malformed IDs, misplaced reason fields, a code point column after multi-byte text and TAB, and the two
 shared-cause primaries. The four `context` cases of that section remain outstanding.
-Current preparation: 166/311; 145 remain.
+That batch brought preparation to 166/311.
+
+[Default display fixtures](single/presentation-review.md) add the omitted `--format` for check, verify and
+doctor, the committed context revision and the Git-absent verify revision, a command with no output, and the
+same condition on two verify targets. The summary line is re-derived from the JSON counterpart, and the
+revision shape is observed in the isolated repository. Current preparation: 173/311; 138 remain.
