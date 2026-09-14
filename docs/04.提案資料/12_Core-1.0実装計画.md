@@ -89,9 +89,9 @@ generator、helper、harnessへ落とし込み、fresh checkoutから再現で�
 
 部分検証の入口は`uv run fixtures/validate_step0b.py`。公開JSON、grammar参照、link、Git setup、process helper、
 副作用比較の自己試験、Step 0-P、Diagnostic意味網羅の対応台帳検証、target期待集合25ケースを統合済みである。
-適合fixture 311件中、導入・設定9件、EARS-AI構文・候補抽出・拡張12件、文書構造・UTF-8 9件、関係・path・coverage 6件、ID重複・循環4件、Git基準版・保護対象外変更10件、TASK境界3件、Git対象選択・影響候補4件、Git基準版エラー・Git不在3件、Context非成功5件、Context Digest 6件、stale・expand・閉包上限・提示上限・implement coverage 6件、verify実行・事前block 6件は入力・期待JSON・副作用期待値を作成し、隔離setupの2回一致を検証した。matrix §6.5「contextとDigest」は全16件を完了した。
+適合fixture 311件中、導入・設定9件、EARS-AI構文・候補抽出・拡張12件、文書構造・UTF-8 9件、関係・path・coverage 6件、ID重複・循環4件、Git基準版・保護対象外変更10件、TASK境界3件、Git対象選択・影響候補4件、Git基準版エラー・Git不在3件、Context非成功5件、Context Digest 6件、stale・expand・閉包上限・提示上限・implement coverage 6件、verify実行・事前block 6件、verify binding共有3件は入力・期待JSON・副作用期待値を作成し、隔離setupの2回一致を検証した。matrix §6.5「contextとDigest」は全16件を完了した。
 単一workspaceのgolden Canonical JSONとContext Digestは`SINGLE-042`が所有し、独立に記述した2系統のreference計算がbyte一致することを検証した。
-残228件の適合fixture、連合golden Context Digest（`MONO-002-01`）、残fixtureの副作用期待値は未完了であり、全Gate A検証の完了は宣言しない。
+残225件の適合fixture、連合golden Context Digest（`MONO-002-01`）、残fixtureの副作用期待値は未完了であり、全Gate A検証の完了は宣言しない。
 
 このStepで実装してよいのはSchema検証、fixture generator、reference計算、grammar検査、matrix検査、
 process用test helper、副作用比較harness、独立cross-checkである。`doctor`、`context`、`check`、`verify`、

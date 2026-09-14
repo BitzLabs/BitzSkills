@@ -32,9 +32,99 @@ from conformance.context_coverage_fixtures import validate as validate_context_c
 from conformance.projection_limit_fixtures import validate as validate_projection_limit
 from conformance import verify_fixtures
 from conformance.verify_fixtures import validate as validate_verify
+from conformance import verify_binding_fixtures
+from conformance.verify_binding_fixtures import validate as validate_verify_bindings
 
 
 class AuditTests(unittest.TestCase):
+    def test_verify_binding_fixtures(self):
+        result = validate_verify_bindings()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-063", "SINGLE-064", "SINGLE-065"])
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_shared_binding_runs_once_with_distinct_target_digests(self):
+        for identifier in ("SINGLE-063", "SINGLE-064"):
+            result = json.loads((audit.FIXTURES / "single" / identifier / "expected/verify.json").read_text())
+            verify_binding_fixtures.check_sharing(identifier, result)
+            self.assertEqual(len(result["commands"]), 1, identifier)
+            self.assertEqual(result["commands"][0]["tests"],
+                             [verify_binding_fixtures.SHARED_TEST], identifier)
+            digests = [target["contextDigest"] for target in result["targetResults"]]
+            self.assertEqual(len(set(digests)), 2, identifier)
+
+    def test_mixed_targets_execute_only_the_passing_half(self):
+        result = json.loads((audit.FIXTURES / "single/SINGLE-064/expected/verify.json").read_text())
+        blocked = [t for t in result["targetResults"] if t["status"] == "blocked"]
+        passing = [t for t in result["targetResults"] if t["status"] == "passed"]
+        self.assertEqual(len(blocked), 1)
+        self.assertEqual(len(passing), 1)
+        self.assertEqual(blocked[0]["bindingRefs"], [])
+        self.assertEqual(passing[0]["bindingRefs"], ["root::default"])
+        # The executed command must only claim the passing target's statements.
+        self.assertEqual(result["commands"][0]["covers"], ["REQ-002:AC-01"])
+        self.assertEqual(result["status"], "blocked")
+
+    def test_command_without_placeholder_is_not_expanded(self):
+        result = json.loads((audit.FIXTURES / "single/SINGLE-065/expected/verify.json").read_text())
+        command = result["commands"][0]
+        self.assertEqual(command["argv"], ["/bin/true"])
+        self.assertEqual(len(command["tests"]), 2)
+        for path in command["tests"]:
+            self.assertNotIn(path, command["argv"])
+
+    def test_binding_audit_rejects_tampered_expectations(self):
+        shared = verify_binding_fixtures.SHARED_TEST
+        mutations = [
+            ("SINGLE-063", "expected/verify.json",
+             lambda v: v["commands"].append(copy.deepcopy(v["commands"][0]))),
+            ("SINGLE-063", "expected/verify.json",
+             lambda v: v["commands"][0].update(argv=["/bin/true", shared, shared],
+                                               tests=[shared, shared])),
+            ("SINGLE-063", "expected/verify.json",
+             lambda v: v["targetResults"][1].update(contextDigest=v["targetResults"][0]["contextDigest"])),
+            ("SINGLE-064", "expected/verify.json",
+             lambda v: v["targetResults"][0].update(bindingRefs=["root::default"])),
+            ("SINGLE-064", "expected/verify.json", lambda v: v.update(status="passed")),
+            ("SINGLE-064", "expected/verify.json",
+             lambda v: v["commands"][0].update(covers=["REQ-001:AC-01", "REQ-002:AC-01"])),
+            ("SINGLE-065", "expected/verify.json",
+             lambda v: v["commands"][0].update(argv=["/bin/true", "tests/test_auth.py",
+                                                     "tests/test_session.py"])),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_verify_bindings(root, [identifier])["errors"])
+
+    def test_binding_audit_rejects_a_repaired_or_shifted_corpus(self):
+        mutations = [
+            ("SINGLE-064", "repo/.spec/technical/TECH-001.md",
+             lambda t: t.replace("implements: [src/auth.py]\n", "implements: [src/auth.py]\ntests:\n  - path: tests/test_shared.py\n    covers: [REQ-001:AC-01]\n    command: default\n")),
+            ("SINGLE-063", "repo/.spec/technical/TECH-002.md",
+             lambda t: t.replace("tests/test_shared.py", "tests/test_other.py")),
+            ("SINGLE-065", "repo/.spec/bitz.yaml",
+             lambda t: t.replace('["/bin/true"]', '["/bin/true", "{tests}"]')),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                path.write_text(mutate(path.read_text()))
+                self.assertTrue(validate_verify_bindings(root, [identifier])["errors"])
+
     def test_verify_fixtures(self):
         result = validate_verify()
         self.assertEqual(result["errors"], [])

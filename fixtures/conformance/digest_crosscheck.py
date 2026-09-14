@@ -202,10 +202,17 @@ def closure(documents, root, purpose):
                 if target in statements:
                     reached.setdefault(identifier, 1)
                     accounted.add((identifier, "addresses", target))
+    # A workspace may hold several independent roots. Only an edge that touches
+    # this closure has to be accounted for; one entirely outside it belongs to a
+    # different Context and is not this computation's business.
     for identifier, document in documents.items():
         for key in STRONG:
             for target in _relations(document["frontmatter"])[key]:
-                if (target in documents or target in statements) and (identifier, key, target) not in accounted:
+                if not (target in documents or target in statements):
+                    continue
+                owner = target.split(":")[0]
+                touches = identifier in reached or target in reached or owner in reached
+                if touches and (identifier, key, target) not in accounted:
                     raise ValueError("corpus holds a strong edge outside the reviewed closure")
     return sorted(reached, key=lambda identifier: (reached[identifier],
                                                    KIND_RANK[documents[identifier]["kind"]], identifier))

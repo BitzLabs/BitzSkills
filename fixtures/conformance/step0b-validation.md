@@ -136,3 +136,17 @@ same executions. Diagnostic placement follows the registry continuation unit: sk
 stay on the target, and the stop-operation empty-target condition is top level.
 Expectation choices and their limits are recorded in [the verify review](single/verify-review.md).
 These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
+
+The subsequent 2026-09-14 verify binding batch passed integrated checks and regression suites.
+Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced byte-identical reports,
+with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 86/311; missing: 225.
+SINGLE-063 and SINGLE-064 use a two-root workspace so two targets request one command name: each target
+reports its own Digest while a single command entity runs the deduplicated shared test path once.
+SINGLE-064 keeps the blocked target at bindingRefs [] and excludes its statement from the executed
+command's covers. SINGLE-065 pins that a command template without {tests} is executed once and never
+receives the paths. Reference B's strong-edge guard now fires only for edges touching the closure being
+computed, because a workspace may legitimately hold several independent roots.
+SINGLE-066 and SINGLE-068 are deferred to their own step; both need closure behavior this reference does
+not yet derive. Expectation choices and their limits are recorded in
+[the verify binding review](single/verify-binding-review.md).
+These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.

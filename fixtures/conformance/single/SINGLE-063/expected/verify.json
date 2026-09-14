@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "passed",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "REQ-001",
+      "status": "passed",
+      "contextDigest": "sha256:3834a3700f066e184a5cf6fc9083b8932504ed54e957295bdba4f25ac75e2531",
+      "statements": [
+        "REQ-001:AC-01"
+      ],
+      "bindingRefs": [
+        "root::default"
+      ],
+      "diagnostics": []
+    },
+    {
+      "target": "REQ-002",
+      "status": "passed",
+      "contextDigest": "sha256:6fb9e773d077d75c4f8300d697645074d8c6874ee96063c74f367880b27637e9",
+      "statements": [
+        "REQ-002:AC-01"
+      ],
+      "bindingRefs": [
+        "root::default"
+      ],
+      "diagnostics": []
+    }
+  ],
+  "revision": null,
+  "commands": [
+    {
+      "bindingId": "root::default",
+      "workspaceId": "root",
+      "name": "default",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/test_shared.py"
+      ],
+      "tests": [
+        "tests/test_shared.py"
+      ],
+      "covers": [
+        "REQ-001:AC-01",
+        "REQ-002:AC-01"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": []
+}
