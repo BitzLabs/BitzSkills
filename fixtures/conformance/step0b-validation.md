@@ -106,3 +106,19 @@ allows only for `[SHOULD]`. Expectation choices and their limits are recorded in
 The federation golden (MONO-002-01) is still missing, so the federation half of the Gate A Digest
 condition remains open. These are preparation checks, not observed Core behavior or complete
 fresh-checkout Gate A certification.
+
+The subsequent 2026-09-14 non-success Context batch passed integrated checks and regression suites.
+Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced byte-identical reports,
+with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 77/311; missing: 234.
+This completes the context and Digest section of the matrix (SINGLE-042 through SINGLE-054).
+Two rules are applied across the group and enforced by the audit: a non-success Context delivers no
+Bundle material, and contextDigest is non-null exactly when complete resolution held.
+SINGLE-046 and SINGLE-047 report the Digest committed by SINGLE-042 rather than a separate constant.
+SINGLE-049 crosses the fixed 1 MiB presentation hard limit with 1,071,063 bytes of body text while its
+standard presentation and closure stay inside the configured maxima.
+SINGLE-054 has its own implement-purpose digest input, which records no binding and adds the
+addressing TASK. Reference B gained two fixes found by writing it against these corpora: it now reads
+context.maxDocuments/maxBytes from configuration instead of assuming defaults, and follows the
+transitive refinement chain. Expectation choices and their limits are recorded in
+[the non-success Context review](single/context-limit-review.md).
+These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.

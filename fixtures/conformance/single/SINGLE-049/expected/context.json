@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "failed",
+  "purpose": "verify",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "REQ-001"
+  ],
+  "contextDigest": "sha256:93940a63e3fa1de2fb0216f718d536c666017b1df77ffff1149f2bde718565d6",
+  "revision": null,
+  "resolution": {
+    "complete": true,
+    "documentCount": 4,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "full",
+    "expanded": []
+  },
+  "documents": [],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "CTX-PROJECTION-LIMIT-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "detail fullの提示量が1 MiBのhard limitを超過します",
+      "source": {
+        "kind": "invocation",
+        "argument": "--detail"
+      }
+    }
+  ]
+}

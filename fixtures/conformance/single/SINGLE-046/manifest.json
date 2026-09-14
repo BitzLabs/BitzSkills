@@ -1,0 +1,30 @@
+{
+  "fixtureId": "SINGLE-046",
+  "description": "expect-digest不一致でstaleを検出し新しい仕様を暗黙受諾しない",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "REQ-001",
+      "--purpose",
+      "verify",
+      "--expect-digest",
+      "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

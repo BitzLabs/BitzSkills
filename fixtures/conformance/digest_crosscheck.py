@@ -176,18 +176,36 @@ def load_documents(repository):
     return documents
 
 
-def closure(documents, root):
-    """Reviewed verify/interpret closure for this corpus: the root plus every
-    applicable document that refines it. The corpus is asserted to contain no
-    other strong edge, so no general expansion rule is implemented here."""
-    reached = {root: 0}
+def closure(documents, root, purpose):
+    """Reviewed closure for these corpora: the root, the transitive chain of
+    applicable documents that refine it, and for `implement` every open TASK that
+    addresses one of the root's statements. Any strong edge the rule cannot
+    account for is rejected rather than silently absorbed, so this stays a corpus
+    reader and not a general target-expansion implementation."""
+    reached, accounted = {root: 0}, set()
+    statements = {statement["id"] for statement in read_statements(documents[root]["body"])}
+    frontier = [root]
+    while frontier:
+        current = frontier.pop(0)
+        for identifier, document in sorted(documents.items()):
+            if identifier in reached or document["frontmatter"]["status"] not in APPLICABLE_STATUS:
+                continue
+            if current in _relations(document["frontmatter"])["refines"]:
+                reached[identifier] = reached[current] + 1
+                accounted.add((identifier, "refines", current))
+                frontier.append(identifier)
+    if purpose == "implement":
+        for identifier, document in documents.items():
+            if document["kind"] != "task" or document["frontmatter"]["status"] not in APPLICABLE_STATUS:
+                continue
+            for target in _relations(document["frontmatter"])["addresses"]:
+                if target in statements:
+                    reached.setdefault(identifier, 1)
+                    accounted.add((identifier, "addresses", target))
     for identifier, document in documents.items():
-        relations = _relations(document["frontmatter"])
-        if root in relations["refines"] and document["frontmatter"]["status"] in APPLICABLE_STATUS:
-            reached[identifier] = 1
         for key in STRONG:
-            for target in relations[key]:
-                if identifier != root and target != root and target in documents:
+            for target in _relations(document["frontmatter"])[key]:
+                if (target in documents or target in statements) and (identifier, key, target) not in accounted:
                     raise ValueError("corpus holds a strong edge outside the reviewed closure")
     return sorted(reached, key=lambda identifier: (reached[identifier],
                                                    KIND_RANK[documents[identifier]["kind"]], identifier))
@@ -196,10 +214,12 @@ def closure(documents, root):
 def build(repository, root="REQ-001", purpose="verify", workspace_id="root"):
     config = read_yaml((repository / ".spec/bitz.yaml").read_text(encoding="utf-8"))
     documents = load_documents(repository)
-    selected = closure(documents, root)
+    selected = closure(documents, root, purpose)
     commands, entries = config.get("verify", {}).get("commands", {}), []
     used = set()
-    for identifier in selected:
+    # Only `verify` names command in its closure, so only `verify` can make the
+    # Bundle reference one; `interpret` and `implement` record no binding.
+    for identifier in selected if purpose == "verify" else []:
         for test in _tests(documents[identifier]["frontmatter"]):
             if test["command"] is not None:
                 used.add(test["command"])
@@ -208,6 +228,9 @@ def build(repository, root="REQ-001", purpose="verify", workspace_id="root"):
         entries.append({"workspaceId": workspace_id, "name": name,
                         "argv": list(command["argv"]), "cwd": command.get("cwd", ".")})
     timeout = int(config.get("verify", {}).get("timeoutSeconds", 300))
+    limits = config.get("context", {})
+    context_settings = {"maxDocuments": int(limits.get("maxDocuments", 20)),
+                        "maxBytes": int(limits.get("maxBytes", 131072))}
     payload = {
         "digestVersion": "1.0",
         "specSchemaVersion": config["schemaVersion"],
@@ -222,7 +245,7 @@ def build(repository, root="REQ-001", purpose="verify", workspace_id="root"):
         "settings": {
             "workspaces": [{"id": workspace_id, "schemaVersion": config["schemaVersion"],
                             "earsAi": config["earsAi"], "language": config["language"]}],
-            "context": {"maxDocuments": 20, "maxBytes": 131072},
+            "context": context_settings,
             "verifyTimeouts": [{"workspaceId": workspace_id, "timeoutSeconds": timeout}] if entries else [],
             "commands": entries,
         },

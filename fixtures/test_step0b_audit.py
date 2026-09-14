@@ -25,9 +25,171 @@ from conformance.context_failure_fixtures import (validate as validate_context_f
     check_unborn as check_context_unborn, reviewed_manifest as context_failure_manifest)
 from conformance import digest_crosscheck, digest_reference
 from conformance.digest_fixtures import validate as validate_digest
+from conformance import context_limit_fixtures
+from conformance.context_limit_fixtures import validate as validate_context_limits
+from conformance import context_coverage_fixtures, projection_limit_fixtures
+from conformance.context_coverage_fixtures import validate as validate_context_coverage
+from conformance.projection_limit_fixtures import validate as validate_projection_limit
 
 
 class AuditTests(unittest.TestCase):
+    def test_context_coverage_and_projection_limit_fixtures(self):
+        coverage = validate_context_coverage()
+        self.assertEqual(coverage["errors"], [])
+        self.assertEqual(coverage["prepared"], ["SINGLE-054"])
+        projection = validate_projection_limit()
+        self.assertEqual(projection["errors"], [])
+        self.assertEqual(projection["prepared"], ["SINGLE-049"])
+        for result in (coverage, projection):
+            self.assertEqual(result["core_execution"], "Not run")
+            self.assertEqual(result["references"], 2)
+
+    def test_implement_digest_differs_from_the_verify_golden(self):
+        """purpose is digest material, and implement records no binding, so the two
+        canonical forms must not collide."""
+        golden = (audit.FIXTURES / "single/SINGLE-042/expected/context.canonical.json").read_bytes()
+        implement = (audit.FIXTURES / "single/SINGLE-054/expected/context.canonical.json").read_bytes()
+        self.assertNotEqual(golden, implement)
+        payload = json.loads(implement.decode())
+        self.assertEqual(payload["purpose"], "implement")
+        self.assertEqual(payload["settings"]["commands"], [])
+        self.assertEqual(payload["settings"]["verifyTimeouts"], [])
+        self.assertEqual([d["id"] for d in payload["documents"]], ["REQ-001", "TASK-001", "TECH-001"])
+
+    def test_coverage_buckets_partition_their_totals(self):
+        result = json.loads((audit.FIXTURES / "single/SINGLE-054/expected/context.json").read_text())
+        context_coverage_fixtures.check_coverage(result)
+        broken = copy.deepcopy(result)
+        broken["coverage"]["must"]["addressed"] = ["REQ-001:AC-01"]
+        with self.assertRaises(ValueError):
+            context_coverage_fixtures.check_coverage(broken)
+        no_cause = copy.deepcopy(result)
+        no_cause["coverage"]["must"]["addressed"] = ["REQ-001:AC-01"]
+        no_cause["coverage"]["must"]["unaddressed"] = []
+        with self.assertRaises(ValueError):
+            context_coverage_fixtures.check_coverage(no_cause)
+
+    def test_projection_limit_corpus_actually_crosses_only_the_full_limit(self):
+        projection_limit_fixtures.check_limits(projection_limit_fixtures.reviewed_inputs())
+        # Same documents, bodies too small to cross the hard limit.
+        small = {path: (value[0], value[1], value[2], f"# {value[0]} {value[1]}\n")
+                 for path, value in projection_limit_fixtures.DOCUMENTS.items()}
+        with patch.object(projection_limit_fixtures, "DOCUMENTS", small):
+            with self.assertRaises(ValueError):
+                projection_limit_fixtures.check_limits(projection_limit_fixtures.reviewed_inputs())
+        # A standard presentation that already crosses the limit would not isolate detail.
+        huge = {path: (value[0], value[1], value[2],
+                       value[3] if value[0] != "TECH-001" else "x" * (2 * projection_limit_fixtures.HARD_LIMIT_BYTES))
+                for path, value in projection_limit_fixtures.DOCUMENTS.items()}
+        with patch.object(projection_limit_fixtures, "DOCUMENTS", huge):
+            with self.assertRaises(ValueError):
+                projection_limit_fixtures.check_limits(projection_limit_fixtures.reviewed_inputs())
+
+    def test_coverage_and_projection_audits_reject_tampered_expectations(self):
+        mutations = [
+            (validate_context_coverage, "SINGLE-054", "expected/context.json",
+             lambda v: v.update(status="passed")),
+            (validate_context_coverage, "SINGLE-054", "expected/context.json",
+             lambda v: v["coverage"]["must"].update(addressed=["REQ-001:AC-01"], unaddressed=[])),
+            (validate_context_coverage, "SINGLE-054", "expected/context.json",
+             lambda v: v["resolution"].update(documentCount=2)),
+            (validate_context_coverage, "SINGLE-054", "manifest.json",
+             lambda v: v["invocation"]["argv"].__setitem__(3, "verify")),
+            (validate_projection_limit, "SINGLE-049", "expected/context.json",
+             lambda v: v["projection"].update(detail="standard")),
+            (validate_projection_limit, "SINGLE-049", "expected/context.json",
+             lambda v: v.update(contextDigest=None)),
+            (validate_projection_limit, "SINGLE-049", "expected/context.json",
+             lambda v: v["diagnostics"][0].update(code="CTX-LIMIT-001")),
+        ]
+        for validator, identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                shutil.copytree(audit.FIXTURES / "single/SINGLE-042", root / "single/SINGLE-042")
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validator(root, [identifier])["errors"])
+
+    def test_context_limit_fixtures(self):
+        result = validate_context_limits()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-046", "SINGLE-047", "SINGLE-048-01", "SINGLE-048-02"])
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_stale_and_projection_report_the_committed_golden_digest(self):
+        """046 and 047 resolve completely, so they must carry the same Digest the
+        golden fixture committed, not a separately invented constant."""
+        golden = (audit.FIXTURES / "single/SINGLE-042/expected/context.canonical.json").read_bytes()
+        expected = digest_reference.digest(golden)
+        for identifier in ("SINGLE-046", "SINGLE-047"):
+            result = json.loads((audit.FIXTURES / "single" / identifier / "expected/context.json").read_text())
+            self.assertEqual(result["contextDigest"], expected, identifier)
+            self.assertTrue(result["resolution"]["complete"], identifier)
+        for identifier in ("SINGLE-048-01", "SINGLE-048-02"):
+            result = json.loads((audit.FIXTURES / "single" / identifier / "expected/context.json").read_text())
+            self.assertIsNone(result["contextDigest"], identifier)
+            self.assertFalse(result["resolution"]["complete"], identifier)
+
+    def test_non_success_context_delivers_no_bundle(self):
+        for identifier in context_limit_fixtures.CASES:
+            result = json.loads((audit.FIXTURES / "single" / identifier / "expected/context.json").read_text())
+            self.assertEqual(result["documents"], [], identifier)
+            self.assertEqual(result["constraintLedger"]["statements"], [], identifier)
+            self.assertEqual(result["projection"]["expanded"], [], identifier)
+            self.assertEqual(len(result["diagnostics"]), 1, identifier)
+
+    def test_context_limit_audit_rejects_tampered_expectations(self):
+        mutations = [
+            ("SINGLE-046", "expected/context.json", lambda v: v.update(status="failed")),
+            ("SINGLE-046", "expected/context.json", lambda v: v.update(contextDigest=None)),
+            ("SINGLE-046", "expected/context.json", lambda v: v["documents"].append({"id": "REQ-001"})),
+            ("SINGLE-046", "manifest.json", lambda v: v["expect"].update(exitCode=1)),
+            ("SINGLE-047", "expected/context.json", lambda v: v["projection"].update(expanded=["ADR-001"])),
+            ("SINGLE-047", "expected/context.json", lambda v: v["diagnostics"][0].update(code="CTX-STALE-001")),
+            ("SINGLE-048-01", "expected/context.json", lambda v: v["resolution"].update(complete=True)),
+            ("SINGLE-048-01", "expected/context.json", lambda v: v.update(contextDigest="sha256:" + "0" * 64)),
+            ("SINGLE-048-02", "expected/context.json", lambda v: v["diagnostics"][0].update(severity="warning")),
+            ("SINGLE-048-02", "side-effects.json", lambda v: v["after"].update(home={"x": {"kind": "directory"}})),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_context_limits(root, [identifier])["errors"])
+
+    def test_limit_cases_must_actually_cross_their_configured_limit(self):
+        mutations = [
+            ("SINGLE-048-02", "repo/.spec/requirements/REQ-001.md",
+             lambda t: t.replace(context_limit_fixtures.PADDING, "")),
+            ("SINGLE-048-01", "repo/.spec/bitz.yaml",
+             lambda t: t.replace("maxDocuments: 1", "maxDocuments: 20")),
+            ("SINGLE-046", "repo/.spec/bitz.yaml",
+             lambda t: t + "context:\n  maxDocuments: 1\n"),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                path.write_text(mutate(path.read_text()))
+                self.assertTrue(validate_context_limits(root, [identifier])["errors"])
+
     def test_digest_fixtures(self):
         result = validate_digest()
         self.assertEqual(result["errors"], [])
