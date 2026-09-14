@@ -32,6 +32,7 @@ from conformance.context_coverage_fixtures import validate as validate_context_c
 from conformance.projection_limit_fixtures import validate as validate_projection_limit_fixtures
 from conformance.verify_fixtures import validate as validate_verify_fixtures
 from conformance.verify_binding_fixtures import validate as validate_verify_binding_fixtures
+from conformance.verify_process_fixtures import validate as validate_verify_process_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -197,6 +198,7 @@ def main():
     checks["projection_limit_fixtures"] = validate_projection_limit_fixtures()
     checks["verify_fixtures"] = validate_verify_fixtures()
     checks["verify_binding_fixtures"] = validate_verify_binding_fixtures()
+    checks["verify_process_fixtures"] = validate_verify_process_fixtures()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_step0p.py")], capture_output=True, text=True, timeout=60)
     checks["step0p"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
     helpers = subprocess.run([sys.executable, "-B", str(FIXTURES / "test_harness.py")], capture_output=True, text=True, timeout=30)

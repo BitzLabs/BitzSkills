@@ -150,3 +150,20 @@ SINGLE-066 and SINGLE-068 are deferred to their own step; both need closure beha
 not yet derive. Expectation choices and their limits are recorded in
 [the verify binding review](single/verify-binding-review.md).
 These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
+
+The subsequent 2026-09-14 verify process batch passed integrated checks and regression suites.
+Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced byte-identical reports,
+with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 89/311; missing: 222.
+SINGLE-057, 058 and 059 all fail after the pre-checks pass, so each records a commands[] entry with a
+null exit code and error status while keeping bindingRefs, and each Diagnostic sits at top level with an
+environment source, matching the registry's skip-binding classification.
+The audit runs each fixture's own command file directly, never through Core, to confirm the input still
+produces the reviewed cause. That found two defects in the fixtures themselves: the first hang script
+exited on a group SIGTERM because its foreground sleep was killed, and the audit was signalling before
+the shell had installed its trap. The script now tolerates a killed foreground sleep, its pipe-holding
+child ignores TERM, and it prints a readiness line after installing the trap which the audit waits for.
+That readiness line is also the expected stdoutExcerpt of SINGLE-059, which can only appear if the
+stream is drained and the read handle closed rather than waiting for an EOF that never comes.
+Expectation choices and their limits are recorded in
+[the verify process review](single/verify-process-review.md).
+These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.

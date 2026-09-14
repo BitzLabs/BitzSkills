@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "error",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "REQ-001",
+      "status": "error",
+      "contextDigest": "sha256:487c49912eec7b34dd60f1d8a5f44c57177e1dd37801ea8773fa201db9581d39",
+      "statements": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "bindingRefs": [
+        "root::default"
+      ],
+      "diagnostics": []
+    }
+  ],
+  "revision": null,
+  "commands": [
+    {
+      "bindingId": "root::default",
+      "workspaceId": "root",
+      "name": "default",
+      "status": "error",
+      "termination": "signal",
+      "cwd": ".",
+      "argv": [
+        "bin/signal.sh",
+        "tests/test_auth.py",
+        "tests/test_session.py"
+      ],
+      "tests": [
+        "tests/test_auth.py",
+        "tests/test_session.py"
+      ],
+      "covers": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "exitCode": null,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-VERIFY-COMMAND-001",
+      "severity": "error",
+      "resultStatus": "error",
+      "summary": "commandがsignalで終了しました",
+      "source": {
+        "kind": "environment",
+        "component": "command",
+        "identifier": "root::default"
+      }
+    }
+  ]
+}

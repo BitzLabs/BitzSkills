@@ -1,0 +1,33 @@
+{
+  "fixtureId": "SINGLE-059",
+  "description": "timeout後も終了しない直接processを有限時間で確定する",
+  "setup": {
+    "git": true,
+    "operations": [
+      {
+        "op": "stage",
+        "paths": [
+          "."
+        ]
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "REQ-001",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "error",
+    "exitCode": 3,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

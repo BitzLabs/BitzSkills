@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "error",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "REQ-001",
+      "status": "error",
+      "contextDigest": "sha256:c8b034cac6de355b8d75ebdb951d1d8f9c7cbbf7efadbcd25e1bd2157d2b4e2a",
+      "statements": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "bindingRefs": [
+        "root::default"
+      ],
+      "diagnostics": []
+    }
+  ],
+  "revision": null,
+  "commands": [
+    {
+      "bindingId": "root::default",
+      "workspaceId": "root",
+      "name": "default",
+      "status": "error",
+      "termination": "spawn_error",
+      "cwd": ".",
+      "argv": [
+        "bin/badformat",
+        "tests/test_auth.py",
+        "tests/test_session.py"
+      ],
+      "tests": [
+        "tests/test_auth.py",
+        "tests/test_session.py"
+      ],
+      "covers": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "exitCode": null,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-VERIFY-COMMAND-001",
+      "severity": "error",
+      "resultStatus": "error",
+      "summary": "commandの実行形式をOSが拒否しprocessを生成できません",
+      "source": {
+        "kind": "environment",
+        "component": "command",
+        "identifier": "root::default"
+      }
+    }
+  ]
+}

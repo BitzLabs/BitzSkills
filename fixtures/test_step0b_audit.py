@@ -34,9 +34,102 @@ from conformance import verify_fixtures
 from conformance.verify_fixtures import validate as validate_verify
 from conformance import verify_binding_fixtures
 from conformance.verify_binding_fixtures import validate as validate_verify_bindings
+from conformance import verify_process_fixtures
+from conformance.verify_process_fixtures import validate as validate_verify_process
 
 
 class AuditTests(unittest.TestCase):
+    def test_verify_process_fixtures(self):
+        result = validate_verify_process()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-057", "SINGLE-058", "SINGLE-059"])
+        self.assertEqual(result["core_execution"], "Not run")
+        self.assertTrue(result["observed_terminations"])
+
+    def test_non_exit_terminations_report_no_exit_code(self):
+        expected = {"SINGLE-057": "spawn_error", "SINGLE-058": "signal", "SINGLE-059": "timeout"}
+        for identifier, termination in expected.items():
+            result = json.loads((audit.FIXTURES / "single" / identifier / "expected/verify.json").read_text())
+            command = result["commands"][0]
+            self.assertEqual(command["termination"], termination, identifier)
+            self.assertIsNone(command["exitCode"], identifier)
+            self.assertEqual(command["status"], "error", identifier)
+            self.assertEqual(result["status"], "error", identifier)
+            # The binding was reached, so the target still references it.
+            self.assertEqual(result["targetResults"][0]["bindingRefs"], ["root::default"], identifier)
+            self.assertEqual(len(result["diagnostics"]), 1, identifier)
+            self.assertEqual(result["diagnostics"][0]["source"]["kind"], "environment", identifier)
+
+    def test_spawn_error_keeps_both_excerpts_empty(self):
+        result = json.loads((audit.FIXTURES / "single/SINGLE-057/expected/verify.json").read_text())
+        command = result["commands"][0]
+        self.assertEqual(command["stdoutExcerpt"], "")
+        self.assertEqual(command["stderrExcerpt"], "")
+        self.assertFalse(command["stdoutTruncated"])
+        self.assertFalse(command["stderrTruncated"])
+
+    def test_timeout_fixture_keeps_the_drained_readiness_line(self):
+        result = json.loads((audit.FIXTURES / "single/SINGLE-059/expected/verify.json").read_text())
+        command = result["commands"][0]
+        self.assertEqual(command["stdoutExcerpt"], verify_process_fixtures.READY + chr(10))
+        self.assertEqual(command["timeoutSeconds"], 1)
+        self.assertFalse(command["stdoutTruncated"])
+
+    def test_process_audit_rejects_tampered_expectations(self):
+        mutations = [
+            ("SINGLE-057", "expected/verify.json", lambda v: v["commands"][0].update(exitCode=0)),
+            ("SINGLE-057", "expected/verify.json", lambda v: v["commands"][0].update(termination="exit", exitCode=1)),
+            ("SINGLE-058", "expected/verify.json", lambda v: v["diagnostics"][0].update(code="SPEC-VERIFY-TIMEOUT-001")),
+            ("SINGLE-058", "expected/verify.json", lambda v: v.update(status="failed")),
+            ("SINGLE-059", "expected/verify.json", lambda v: v["commands"][0].update(timeoutSeconds=300)),
+            ("SINGLE-059", "expected/verify.json", lambda v: v["commands"][0].update(stdoutExcerpt="")),
+            ("SINGLE-059", "expected/verify.json", lambda v: v["targetResults"][0].update(bindingRefs=[])),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_verify_process(root, [identifier])["errors"])
+
+    def test_process_audit_rejects_inputs_that_no_longer_cause_the_failure(self):
+        """The audit runs each command file itself, so a corpus that stopped being
+        hostile must fail rather than quietly keep the old expectation."""
+        mutations = [
+            # A file the OS accepts spawns successfully, so there is no spawn error.
+            ("SINGLE-057", "repo/bin/badformat", lambda t: "#!/bin/sh\nexit 0\n"),
+            # A command that honours TERM never needs a force kill.
+            ("SINGLE-059", "repo/bin/hang.sh", lambda t: "#!/bin/sh\nsleep 60\n"),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                mode = path.stat().st_mode
+                path.write_text(mutate(path.read_text()))
+                path.chmod(mode)
+                self.assertTrue(validate_verify_process(root, [identifier])["errors"])
+
+    def test_process_audit_rejects_a_lost_executable_bit(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = root / "single/SINGLE-058"
+            shutil.copytree(audit.FIXTURES / "single/SINGLE-058", fixture)
+            for name in ("manifest", "result", "side-effects", "frontmatter"):
+                shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+            (fixture / "repo/bin/signal.sh").chmod(0o644)
+            self.assertTrue(validate_verify_process(root, ["SINGLE-058"])["errors"])
+
     def test_verify_binding_fixtures(self):
         result = validate_verify_bindings()
         self.assertEqual(result["errors"], [])

@@ -1,0 +1,9 @@
+schemaVersion: "1.0"
+language: ja
+earsAi: "1.0"
+verify:
+  timeoutSeconds: 1
+  commands:
+    default:
+      argv: ["bin/hang.sh", "{tests}"]
+      cwd: .
