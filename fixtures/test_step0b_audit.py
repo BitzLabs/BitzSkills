@@ -54,9 +54,51 @@ from conformance import text_fixtures
 from conformance import frontmatter_fixtures
 from conformance import input_limit_fixtures
 from conformance import registry_closure_fixtures
+from conformance import scanner_fixtures
 
 
 class AuditTests(unittest.TestCase):
+    def test_scanner_fixtures(self):
+        result = scanner_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(scanner_fixtures.CASES))
+        self.assertEqual(len(result["prepared"]), 16)
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_scanner_audit_rejects_changed_positions_and_primaries(self):
+        mutations = [
+            ("SINGLE-096-02", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(column=72)),
+            ("SINGLE-099-01", "expected/check.json", lambda v: v.update(checkedStatementCount=0)),
+            ("SINGLE-100-04", "expected/check.json",
+             lambda v: v["diagnostics"][0].update(code="EAI-CORE-SYNTAX-002")),
+            ("SINGLE-101-03", "expected/check.json",
+             lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0]))),
+            ("SINGLE-102", "expected/check.json", lambda v: v["diagnostics"][0]["source"].pop("column")),
+            # The shared raw cause must keep the reviewed primary, not the lower-priority condition.
+            ("SINGLE-103-01", "expected/check.json",
+             lambda v: v["diagnostics"][0].update(code="EAI-CORE-SYNTAX-004")),
+            ("SINGLE-103-02", "side-effects.json",
+             lambda v: v["after"].update(cache={"scanner": {"kind": "directory"}})),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
+                self.assertTrue(scanner_fixtures.validate(root, [identifier])["errors"])
+
+    def test_scanner_audit_rejects_unwrapped_or_replaced_statements(self):
+        module = scanner_fixtures
+        for identifier in module.CASES:
+            unwrapped = {"SINGLE-099-01": module.CANDIDATE, "SINGLE-099-02": module.CANDIDATE,
+                         "SINGLE-099-03": module.CANDIDATE, "SINGLE-099-04": module.CANDIDATE}
+            line = unwrapped.get(identifier, "- [x] 確認済み。")
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                path = root / "single" / identifier / "repo" / module.SPEC_PATH
+                path.write_text(module.reviewed_document("approved", line))
+                self.assertTrue(scanner_fixtures.validate(root, [identifier])["errors"])
+
     def test_registry_closure_fixtures(self):
         result = registry_closure_fixtures.validate()
         self.assertEqual(result["errors"], [])

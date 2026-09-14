@@ -12,7 +12,7 @@ It also executes Step 0-P validation and the fixture infrastructure self-tests.
 Pinned dependencies are declared in the script; the first run requires package download access.
 
 Exit 0 means Gate A is allowed; exit 1 means errors or outstanding evidence remain. Currently exit 1 is expected:
-161 of the 311 matrix fixtures, the independent federation golden Context Digest,
+145 of the 311 matrix fixtures, the independent federation golden Context Digest,
 and per-fixture side-effect expectations are still outstanding. Missing fixtures are listed individually.
 Static checks do not prove that a fixture has only one independent cause. Diagnostic mappings have a reviewed ledger:
 see [Diagnostic review](diagnostic-review.md). The audit checks its integrity and source freshness, not natural-language semantics.
@@ -100,4 +100,10 @@ That batch brought preparation to 143/311.
 [Registry closure fixtures](single/registry-closure-review.md) complete matrix §6.9 with the reason-less
 SHOULD warning, the missing `related` target, forbidden configuration YAML, the doctor configuration and
 Git-absence cases, the missing workspace and the unsupported EARS-AI major. The doctor contract now fixes
-the four `lostGuarantees` names. Current preparation: 150/311; 161 remain.
+the four `lostGuarantees` names. That batch brought preparation to 150/311.
+
+[Scanner and position fixtures](single/scanner-review.md) add the sixteen §6.10 check cases: run-length code
+spans, unknown escapes, unclosed quoted extension values, four candidate-suppression constructs, four
+malformed IDs, misplaced reason fields, a code point column after multi-byte text and TAB, and the two
+shared-cause primaries. The four `context` cases of that section remain outstanding.
+Current preparation: 166/311; 145 remain.

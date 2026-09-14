@@ -359,3 +359,20 @@ Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Li
 No YAML loader, Git probe, doctor procedure or Core was implemented or executed. Actual check continuation
 and doctor output are Gate B work. Remaining fixtures, federation golden Digest and full fresh-checkout
 Gate A repeatability stay pending.
+
+The Scanner/position batch passed two byte-identical integrated audits in the pinned CPython 3.14.6
+environment. All check errors were empty; exit 1 denotes pending Gate A evidence. Prepared: 166/311;
+missing: 145. Sixteen §6.10 check fixtures keep the reviewed EARS document and replace line 16 alone.
+Each Diagnostic column is re-derived from the fixed bytes as a 1-based code point offset, including the
+multi-byte and TAB case. The two shared-cause fixtures fix the registry priority primaries, and the four
+suppression fixtures wrap one identical statement-like text in a backtick fence, a tilde fence, a quote and
+a four-space indent. Failed cases count zero documents and statements; suppression cases count the single
+valid statement on line 15. Both isolated setups match the fixed snapshot per fixture. Regression checks
+reject shifted columns, changed counts and codes, duplicated diagnostics, a dropped position field, side
+effects, replaced statements and unwrapped constructs. The four `context` cases of §6.10 stay outstanding
+because they require complete Semantic IR and Digest comparisons.
+See [the Scanner review](single/scanner-review.md) for scope and evidence.
+Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
+No Scanner, Lexer, Parser or Core was implemented or executed. Actual candidate extraction and emitted
+positions are Gate B work. Remaining fixtures, federation golden Digest and full fresh-checkout Gate A
+repeatability stay pending.
