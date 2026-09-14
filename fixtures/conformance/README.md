@@ -12,7 +12,7 @@ It also executes Step 0-P validation and the fixture infrastructure self-tests.
 Pinned dependencies are declared in the script; the first run requires package download access.
 
 Exit 0 means Gate A is allowed; exit 1 means errors or outstanding evidence remain. Currently exit 1 is expected:
-175 of the 311 matrix fixtures, the independent federation golden Context Digest,
+168 of the 311 matrix fixtures, the independent federation golden Context Digest,
 and per-fixture side-effect expectations are still outstanding. Missing fixtures are listed individually.
 Static checks do not prove that a fixture has only one independent cause. Diagnostic mappings have a reviewed ledger:
 see [Diagnostic review](diagnostic-review.md). The audit checks its integrity and source freshness, not natural-language semantics.
@@ -90,4 +90,9 @@ That batch brought preparation to 134/311.
 That batch brought preparation to 135/311.
 
 [Diagnostic ordering](single/diagnostic-order-review.md) fixes three independent same-condition errors.
-Current preparation: 136/311; 175 remain.
+That batch brought preparation to 136/311.
+
+[Input limit fixtures](single/input-limit-review.md) add the 64 KiB configuration, 1 MiB SPEC Markdown,
+32 KiB Frontmatter, statement-count and array-count cases, plus the unknown `.spec/` entry. Inputs are generated
+from reviewed constants and measured again, so the audit rejects a fixture that crosses any other dimension.
+Current preparation: 143/311; 168 remain.

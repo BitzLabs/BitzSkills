@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "failed",
+  "scope": "full",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "checkedDocumentCount": 1,
+  "checkedStatementCount": 1,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-INPUT-LIMIT-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "1文書の関係・path配列の項目数が1,000上限を超過しました",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/requirements/REQ-001.md",
+        "key": "tests[0].covers"
+      }
+    }
+  ]
+}

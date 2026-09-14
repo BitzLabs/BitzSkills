@@ -52,9 +52,69 @@ from conformance import report_write_fixtures
 from conformance.report_write_fixtures import validate as validate_report_write
 from conformance import text_fixtures
 from conformance import frontmatter_fixtures
+from conformance import input_limit_fixtures
 
 
 class AuditTests(unittest.TestCase):
+    def test_input_limit_fixtures(self):
+        result = input_limit_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-078", "SINGLE-079-01", "SINGLE-079-02",
+                                              "SINGLE-080-01", "SINGLE-080-02", "SINGLE-080-03", "SINGLE-083"])
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_input_limit_audit_rejects_changed_expectations(self):
+        mutations = [
+            ("SINGLE-078", "expected/check.json", lambda v: v.update(checkedDocumentCount=1)),
+            ("SINGLE-079-01", "expected/check.json",
+             lambda v: v["diagnostics"][0]["source"].update(path=".spec/bitz.yaml")),
+            ("SINGLE-079-02", "expected/check.json",
+             lambda v: v["diagnostics"][0].update(code="SPEC-INPUT-READ-001")),
+            ("SINGLE-080-01", "expected/check.json", lambda v: v.update(checkedStatementCount=999)),
+            ("SINGLE-080-02", "expected/check.json", lambda v: v["diagnostics"][0].update(severity="warning")),
+            ("SINGLE-080-03", "expected/check.json", lambda v: v["diagnostics"][0]["source"].pop("key")),
+            ("SINGLE-083", "side-effects.json",
+             lambda v: v["after"].update(cache={"limits": {"kind": "directory"}})),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
+                self.assertTrue(input_limit_fixtures.validate(root, [identifier])["errors"])
+
+    def test_input_limit_audit_rejects_inputs_that_move_across_the_limit(self):
+        module = input_limit_fixtures
+        # Each replacement moves the fixture to the other side of its reviewed dimension.
+        flips = {
+            "SINGLE-078": (module.CONFIG_PATH, module.CONFIG.encode()),
+            "SINGLE-079-01": (module.REQ_PATH, module.DOCUMENT.encode()),
+            "SINGLE-079-02": (module.REQ_PATH, module.DOCUMENT.encode()),
+            "SINGLE-080-01": (module.REQ_PATH,
+                              module.requirement(module.ITEM_LIMIT + 1, module.covers_ids(module.ITEM_LIMIT))),
+            "SINGLE-080-02": (module.REQ_PATH,
+                              module.requirement(module.ITEM_LIMIT, module.covers_ids(module.ITEM_LIMIT))),
+            "SINGLE-080-03": (module.REQ_PATH,
+                              module.requirement(module.ITEM_LIMIT, module.covers_ids(module.ITEM_LIMIT))),
+            "SINGLE-083": (module.UNKNOWN_PATH, None),
+        }
+        for identifier, (relative, content) in flips.items():
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                path = root / "single" / identifier / "repo" / relative
+                if content is None:
+                    path.unlink()
+                else:
+                    path.write_bytes(content)
+                self.assertTrue(input_limit_fixtures.validate(root, [identifier])["errors"])
+
+    def copy_fixture(self, temporary, identifier):
+        root = Path(temporary)
+        shutil.copytree(audit.FIXTURES / "single" / identifier, root / "single" / identifier)
+        for name in ("manifest", "result", "side-effects"):
+            shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+        return root
+
     def test_frontmatter_fixtures(self):
         result = frontmatter_fixtures.validate()
         self.assertEqual(result["errors"], [])
