@@ -1,0 +1,24 @@
+{
+  "fixtureId": "SINGLE-127-05",
+  "description": "空stringの明示targetを引数なしcheckへ置換せず拒否する",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 4,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

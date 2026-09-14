@@ -12,7 +12,7 @@ It also executes Step 0-P validation and the fixture infrastructure self-tests.
 Pinned dependencies are declared in the script; the first run requires package download access.
 
 Exit 0 means Gate A is allowed; exit 1 means errors or outstanding evidence remain. Currently exit 1 is expected:
-246 of the 311 matrix fixtures, independent golden Context Digests,
+195 of the 311 matrix fixtures, the independent federation golden Context Digest,
 and per-fixture side-effect expectations are still outstanding. Missing fixtures are listed individually.
 Static checks do not prove that a fixture has only one independent cause. Diagnostic mappings have a reviewed ledger:
 see [Diagnostic review](diagnostic-review.md). The audit checks its integrity and source freshness, not natural-language semantics.
@@ -69,3 +69,7 @@ helper/harness behavior, not the future Core process runner's acceptance.
 
 Validation runtime: Linux/POSIX with Python 3.11+ and Git. The audit writes temporary fixture repositories only;
 it does not update acceptance results or documentation automatically.
+
+[CLI boundary fixtures](single/cli-boundary-review.md) add nine duplicate-option, empty-argument,
+timeout-range/notation and report-syntax cases. Preparation now covers 116/311 fixtures; 195 remain.
+All fourteen argument-error fixtures share the output contract and two isolated setup checks.

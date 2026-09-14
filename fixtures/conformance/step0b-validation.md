@@ -242,3 +242,18 @@ directory permissions and a fresh checkout would not restore one.
 Expectation choices and their limits are recorded in
 [the explicit-report review](single/report-write-review.md).
 These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
+
+The subsequent 2026-09-14 CLI boundary batch passed integrated checks and regression suites.
+Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced byte-identical reports,
+with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 116/311; missing: 195.
+SINGLE-127-01/02/05/06/07/08/09/10/11 cover duplicate options, empty arguments, a missing context root,
+timeout boundaries/notation and arbitrary report-path syntax. All nine carry exit 4 without a result
+body or report; their fixed before/after snapshots prohibit writes in the repository and isolated
+HOME/cache/TMPDIR, and preserve Git status/index. Each setup was reproduced twice.
+Mutation tests reject removal of invalid arguments, replacement with valid timeout values and a new
+out.json path. The existing operation-aware stderr checks remain shared by all fourteen CLI cases.
+Expectation choices and limits are recorded in [the CLI boundary review](single/cli-boundary-review.md).
+Host: Linux 6.18.33.2-microsoft-standard-WSL2, x86_64, CPython 3.14.4, Git 2.53.0;
+validator dependencies remain pinned in the entry script.
+These are preparation checks, not observed Core behavior, CPython 3.11 acceptance or complete
+fresh-checkout Gate A certification. Federation golden Digest and remaining fixture evidence stay pending.

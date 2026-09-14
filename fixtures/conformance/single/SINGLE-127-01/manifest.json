@@ -1,0 +1,25 @@
+{
+  "fixtureId": "SINGLE-127-01",
+  "description": "同値の--format重複を操作開始前に拒否する",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--format",
+      "json",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 4,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

@@ -2,7 +2,8 @@
 
 `SINGLE-073-01/02` reject `--report` on the operations that never write one, and
 `SINGLE-074-01/02/03` reject an exclusive option pair, a code path target and a
-lexically invalid ID. All five return no common result: exit code 4, no JSON body,
+lexically invalid ID. SINGLE-127 adds duplicate, empty, timeout and report syntax
+boundaries. All return no common result: exit code 4, no JSON body,
 one stderr line, and no report.
 """
 import json
@@ -30,6 +31,24 @@ CASES = {
                       "verify targetへのcode path指定を拒否する"),
     "SINGLE-074-03": ("check", ["REQ-1", "--format", "json"],
                       "構文不正な文書IDを拒否する"),
+    "SINGLE-127-01": ("check", ["--format", "json", "--format", "json"],
+                      "同値の--format重複を操作開始前に拒否する"),
+    "SINGLE-127-02": ("check", ["--full", "--full", "--format", "json"],
+                      "--fullの重複を操作開始前に拒否する"),
+    "SINGLE-127-05": ("check", ["", "--format", "json"],
+                      "空stringの明示targetを引数なしcheckへ置換せず拒否する"),
+    "SINGLE-127-06": ("context", ["--format", "json"],
+                      "起点0件のcontextを操作開始前に拒否する"),
+    "SINGLE-127-07": ("doctor", ["--workspace", "", "--format", "json"],
+                      "空stringのworkspace値を操作開始前に拒否する"),
+    "SINGLE-127-08": ("verify", ["REQ-001", "--timeout", "0", "--format", "json"],
+                      "timeoutの下限外0を拒否する"),
+    "SINGLE-127-09": ("verify", ["REQ-001", "--timeout", "3601", "--format", "json"],
+                      "timeoutの上限外3601を拒否する"),
+    "SINGLE-127-10": ("verify", ["REQ-001", "--timeout", "+1", "--format", "json"],
+                      "timeoutの非canonical十進表記+1を拒否する"),
+    "SINGLE-127-11": ("check", ["--report=out.json", "--format", "json"],
+                      "reportの任意path指定形式を拒否する"),
 }
 
 

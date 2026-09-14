@@ -154,7 +154,10 @@ class AuditTests(unittest.TestCase):
         errors = validate_cli_errors()
         self.assertEqual(errors["errors"], [])
         self.assertEqual(errors["prepared"], ["SINGLE-073-01", "SINGLE-073-02", "SINGLE-074-01",
-                                              "SINGLE-074-02", "SINGLE-074-03"])
+                                              "SINGLE-074-02", "SINGLE-074-03",
+                                              "SINGLE-127-01", "SINGLE-127-02", "SINGLE-127-05",
+                                              "SINGLE-127-06", "SINGLE-127-07", "SINGLE-127-08",
+                                              "SINGLE-127-09", "SINGLE-127-10", "SINGLE-127-11"])
         for result in (absent, errors):
             self.assertEqual(result["core_execution"], "Not run")
 
@@ -213,6 +216,24 @@ class AuditTests(unittest.TestCase):
              lambda v: v.update(stderrLineCount=2)),
             (validate_cli_errors, "SINGLE-074-02", "manifest.json",
              lambda v: v["invocation"].update(argv=["verify", "REQ-001", "--format", "json"])),
+            (validate_cli_errors, "SINGLE-127-01", "manifest.json",
+             lambda v: v["invocation"].update(argv=["check", "--format", "json"])),
+            (validate_cli_errors, "SINGLE-127-02", "manifest.json",
+             lambda v: v["invocation"]["argv"].remove("--full")),
+            (validate_cli_errors, "SINGLE-127-05", "manifest.json",
+             lambda v: v["invocation"]["argv"].remove("")),
+            (validate_cli_errors, "SINGLE-127-06", "manifest.json",
+             lambda v: v["invocation"]["argv"].append("REQ-001")),
+            (validate_cli_errors, "SINGLE-127-07", "manifest.json",
+             lambda v: v["invocation"]["argv"].__setitem__(2, "root")),
+            (validate_cli_errors, "SINGLE-127-08", "manifest.json",
+             lambda v: v["invocation"]["argv"].__setitem__(3, "1")),
+            (validate_cli_errors, "SINGLE-127-09", "manifest.json",
+             lambda v: v["invocation"]["argv"].__setitem__(3, "3600")),
+            (validate_cli_errors, "SINGLE-127-10", "manifest.json",
+             lambda v: v["invocation"]["argv"].__setitem__(3, "1")),
+            (validate_cli_errors, "SINGLE-127-11", "side-effects.json",
+             lambda v: v["after"]["repository"].update({"out.json": {"kind": "directory"}})),
         ]
         for validator, identifier, relative, mutate in mutations:
             with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
