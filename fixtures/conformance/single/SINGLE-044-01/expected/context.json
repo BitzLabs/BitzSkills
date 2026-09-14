@@ -1,0 +1,168 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "verify",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "REQ-001"
+  ],
+  "contextDigest": "sha256:42b9cff62d17c4abdf282d8ac02ae1ba142fb0e52bf29e63e77d2a761dacc90a",
+  "revision": null,
+  "resolution": {
+    "complete": true,
+    "documentCount": 2,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "root"
+      ],
+      "statementRefs": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "frontmatter": {
+        "id": "REQ-001",
+        "title": "認証Contextの基準",
+        "status": "approved"
+      },
+      "bodyText": "# REQ-001 認証Contextの基準\n\n## Intent\n\nDigest goldenの固定要求を定義する。\n\n\n## Acceptance Criteria\n\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。\n- [REQ-001:AC-02] [ACTOR:TargetSystem] [WHEN] 保存した場合 [SHOULD] [REASON] 確認のため [THEN] 結果を返す。\n\n## Verification\n\ntests/test_auth.pyとtests/test_session.pyで確認する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-001",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "refines:TECH-001"
+      ],
+      "statementRefs": [],
+      "frontmatter": {
+        "id": "TECH-001",
+        "title": "認証の実装方針",
+        "status": "approved",
+        "relations": {
+          "refines": [
+            "REQ-001"
+          ],
+          "related": [
+            "ADR-001"
+          ]
+        },
+        "implements": [
+          "src/auth.py",
+          "src/session.py"
+        ],
+        "tests": [
+          {
+            "path": "tests/test_auth.py",
+            "covers": [
+              "REQ-001:AC-01"
+            ],
+            "command": "default"
+          },
+          {
+            "path": "tests/test_session.py",
+            "covers": [
+              "REQ-001:AC-02"
+            ],
+            "command": "default"
+          }
+        ]
+      },
+      "bodyText": "# TECH-001 認証の実装方針\n\n## Context\n\n規範文を持たない実装方針。\n\n| 項目 | 値 |\n|---|---|\n| 方式 | token |\n",
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": [
+      {
+        "id": "REQ-001:AC-01",
+        "documentId": "REQ-001",
+        "documentRole": "root",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "秘密情報を出力しない"
+        }
+      },
+      {
+        "id": "REQ-001:AC-02",
+        "documentId": "REQ-001",
+        "documentRole": "root",
+        "modality": "SHOULD",
+        "reason": "確認のため",
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "WHEN",
+          "text": "保存した場合"
+        },
+        "operation": {
+          "kind": "THEN",
+          "text": "結果を返す"
+        }
+      }
+    ]
+  },
+  "coverage": {
+    "must": {
+      "total": [
+        "REQ-001:AC-01"
+      ],
+      "addressed": [],
+      "tested": [
+        "REQ-001:AC-01"
+      ],
+      "unaddressed": [
+        "REQ-001:AC-01"
+      ],
+      "untested": []
+    },
+    "should": {
+      "total": [
+        "REQ-001:AC-02"
+      ],
+      "addressed": [],
+      "tested": [
+        "REQ-001:AC-02"
+      ],
+      "unaddressed": [
+        "REQ-001:AC-02"
+      ],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

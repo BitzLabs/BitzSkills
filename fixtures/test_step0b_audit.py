@@ -23,9 +23,133 @@ from conformance.git_environment_fixtures import (validate as validate_git_envir
     check_environment, reviewed_manifest as environment_manifest)
 from conformance.context_failure_fixtures import (validate as validate_context_failures,
     check_unborn as check_context_unborn, reviewed_manifest as context_failure_manifest)
+from conformance import digest_crosscheck, digest_reference
+from conformance.digest_fixtures import validate as validate_digest
 
 
 class AuditTests(unittest.TestCase):
+    def test_digest_fixtures(self):
+        result = validate_digest()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-042", "SINGLE-043-01", "SINGLE-043-02",
+                                              "SINGLE-044-01", "SINGLE-044-02", "SINGLE-045"])
+        self.assertEqual(result["core_execution"], "Not run")
+        self.assertEqual(result["references"], 2)
+
+    def test_two_references_agree_and_separate_the_family(self):
+        """A states the digest input; B rebuilds it from the tree. Both must agree,
+        and the matrix's equal/unequal pairs must hold as bytes, not only as hashes."""
+        canonical = {}
+        for identifier in digest_reference.CASES:
+            fixture = audit.FIXTURES / "single" / identifier
+            manifest = json.loads((fixture / "manifest.json").read_text())
+            with tempfile.TemporaryDirectory() as temporary:
+                repository = fixture_setup(fixture, manifest, Path(temporary) / "repo")
+                derived = digest_crosscheck.canonical_bytes(digest_crosscheck.build(repository))
+            literal = digest_reference.canonical_bytes(digest_reference.reviewed_digest_input(identifier))
+            self.assertEqual(literal, derived)
+            self.assertEqual(digest_reference.digest(literal), digest_crosscheck.digest(derived))
+            self.assertEqual(literal, (fixture / "expected/context.canonical.json").read_bytes())
+            canonical[identifier] = literal
+        golden = canonical["SINGLE-042"]
+        for identifier, value in canonical.items():
+            if identifier in digest_reference.SAME_AS_GOLDEN:
+                self.assertEqual(value, golden, identifier)
+            else:
+                self.assertNotEqual(value, golden, identifier)
+        self.assertNotEqual(canonical["SINGLE-044-01"], canonical["SINGLE-044-02"])
+
+    def test_canonical_json_is_rfc8785_shaped(self):
+        golden = (audit.FIXTURES / "single/SINGLE-042/expected/context.canonical.json").read_bytes()
+        self.assertFalse(golden.startswith(b"\xef\xbb\xbf"))
+        self.assertFalse(golden.endswith(b"\n"))
+        self.assertNotIn(b'": ', golden)
+        self.assertNotIn(b", ", golden.replace(", ".encode(), b", "))
+        payload = json.loads(golden.decode("utf-8"))
+        self.assertEqual(list(payload), sorted(payload))
+        self.assertEqual(digest_reference.canonical_bytes(payload), golden)
+
+    def test_digest_audit_rejects_tampered_expectations(self):
+        mutations = [
+            ("SINGLE-042", "expected/context.json", lambda v: v.update(contextDigest="sha256:" + "0" * 64)),
+            ("SINGLE-042", "expected/context.json", lambda v: v.update(status="passed_with_warnings")),
+            ("SINGLE-042", "expected/context.json", lambda v: v["resolution"].update(documentCount=3)),
+            ("SINGLE-042", "expected/context.json", lambda v: v["coverage"]["must"].update(untested=["REQ-001:AC-01"])),
+            ("SINGLE-042", "expected/context.json", lambda v: v["documents"][1].update(projection="normative")),
+            ("SINGLE-042", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(3, "implement")),
+            ("SINGLE-042", "manifest.json", lambda v: v["expect"].update(reportFileCount=1)),
+            ("SINGLE-043-01", "expected/context.json", lambda v: v["projection"].update(detail="standard")),
+            ("SINGLE-043-02", "expected/context.json", lambda v: v["projection"].update(expanded=[])),
+            ("SINGLE-045", "side-effects.json", lambda v: v["after"].update(cache={"index": {"kind": "directory"}})),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_digest(root, [identifier])["errors"])
+
+    def test_digest_audit_rejects_changed_inputs_and_canonical_bytes(self):
+        """A changed input must invalidate the committed Canonical JSON, and an
+        x-only change must not be accepted as a Digest-visible difference."""
+        mutations = [
+            ("SINGLE-042", "repo/.spec/requirements/REQ-001.md", lambda t: t.replace("秘密情報を出力しない", "秘密情報を記録しない")),
+            ("SINGLE-042", "repo/.spec/technical/TECH-001.md", lambda t: t.replace("command: default", "command: other")),
+            ("SINGLE-042", "repo/.spec/bitz.yaml", lambda t: t.replace('"{tests}"', '"tests"')),
+            ("SINGLE-045", "repo/.spec/technical/TECH-001.md", lambda t: t.replace("x-owners: [team-platform]", "x-owners: [team-auth]\nchanges: [src/auth.py]")),
+            ("SINGLE-044-01", "repo/.spec/requirements/REQ-001.md", lambda t: t.replace("\n\n\n## Acceptance Criteria", "\n\n## Acceptance Criteria")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                path.write_text(mutate(path.read_text()))
+                self.assertTrue(validate_digest(root, [identifier])["errors"])
+
+    def test_digest_audit_rejects_a_replaced_canonical_file(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture = root / "single/SINGLE-042"
+            shutil.copytree(audit.FIXTURES / "single/SINGLE-042", fixture)
+            for name in ("manifest", "result", "side-effects", "frontmatter"):
+                shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+            canonical = fixture / "expected/context.canonical.json"
+            canonical.write_bytes(canonical.read_bytes() + b"\n")
+            self.assertTrue(validate_digest(root, ["SINGLE-042"])["errors"])
+
+    def test_crosscheck_rejects_a_corpus_it_cannot_account_for(self):
+        """Reference B must refuse inputs outside the reviewed closure instead of
+        silently producing some other digest input."""
+        fixture = audit.FIXTURES / "single/SINGLE-042"
+        manifest = json.loads((fixture / "manifest.json").read_text())
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = fixture_setup(fixture, manifest, Path(temporary) / "repo")
+            extra = repository / ".spec/technical/TECH-002.md"
+            extra.write_text("---\nid: TECH-002\ntitle: 別方針\nstatus: approved\n"
+                             "relations:\n  requires: [TECH-001]\n---\n\n# TECH-002 別方針\n\n## Context\n\n別。\n")
+            with self.assertRaises(ValueError):
+                digest_crosscheck.build(repository)
+
+    def test_crosscheck_rejects_a_non_canonical_statement(self):
+        fixture = audit.FIXTURES / "single/SINGLE-042"
+        manifest = json.loads((fixture / "manifest.json").read_text())
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = fixture_setup(fixture, manifest, Path(temporary) / "repo")
+            path = repository / ".spec/requirements/REQ-001.md"
+            path.write_text(path.read_text().replace("[MUST] [CONSTRAINT]", "[MUST] [REASON] 理由 [CONSTRAINT]"))
+            with self.assertRaises(ValueError):
+                digest_crosscheck.build(repository)
+
     def test_context_failure_fixtures(self):
         result = validate_context_failures()
         self.assertEqual(result["errors"], [])

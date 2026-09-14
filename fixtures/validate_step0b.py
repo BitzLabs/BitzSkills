@@ -26,6 +26,7 @@ from conformance.task_fixtures import validate as validate_task_fixtures
 from conformance.selection_fixtures import validate as validate_selection_fixtures
 from conformance.git_environment_fixtures import validate as validate_git_environment_fixtures
 from conformance.context_failure_fixtures import validate as validate_context_failure_fixtures
+from conformance.digest_fixtures import validate as validate_digest_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -185,6 +186,7 @@ def main():
     checks["selection_fixtures"] = validate_selection_fixtures()
     checks["git_environment_fixtures"] = validate_git_environment_fixtures()
     checks["context_failure_fixtures"] = validate_context_failure_fixtures()
+    checks["digest_fixtures"] = validate_digest_fixtures()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_step0p.py")], capture_output=True, text=True, timeout=60)
     checks["step0p"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
     helpers = subprocess.run([sys.executable, "-B", str(FIXTURES / "test_harness.py")], capture_output=True, text=True, timeout=30)
@@ -193,8 +195,12 @@ def main():
     checks["audit_self_tests"] = {"status": "Passed" if audit_tests.returncode == 0 else "Failed", "errors": [] if audit_tests.returncode == 0 else [audit_tests.stderr]}
     # These checks are deliberately not certified by structural checks or helper tests.
     # Replace each entry only with a check of its actual, reviewed evidence.
-    pending = ["independent golden Context Digest", "per-fixture side-effect expectations",
-               "conformance inputs and expectations", "full Gate A fresh-checkout repeatability"]
+    pending = ["per-fixture side-effect expectations", "conformance inputs and expectations",
+               "full Gate A fresh-checkout repeatability",
+               # MONO-002-01 owns the federation golden and has no fixture yet.
+               "independent federation golden Context Digest"]
+    if checks["digest_fixtures"]["status"] != "Passed":
+        pending.insert(0, "independent single-workspace golden Context Digest")
     if checks["registry"]["semantic_coverage"] != "Passed":
         pending.insert(0, "Diagnostic semantic coverage")
     if checks["target_vectors"]["status"] != "Passed":

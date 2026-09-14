@@ -92,3 +92,17 @@ The five cases fix requested roots, exact failure diagnostics, null Digest and e
 Unborn repository checks and mutations reject invented commits, staged inputs, implicit successor replacement and partial success.
 Expectation choices are recorded in [the Context failure review](single/context-failure-review.md).
 These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
+
+The subsequent 2026-09-14 Context Digest batch passed integrated checks and regression suites.
+Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced byte-identical reports,
+with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 71/311; missing: 240.
+SINGLE-042 owns the single-workspace golden Canonical JSON and Digest; SINGLE-043-01/02 and SINGLE-045
+are byte-identical to it, and SINGLE-044-01/02 differ from it and from each other.
+Two independently written reference computations agree: A states the digest input as reviewed literals,
+B rebuilds it from the fixture's own tree with a separate reader and a separate RFC 8785 emitter.
+Writing B independently found and fixed a defect in B: it accepted `[MUST] [REASON]`, which the EBNF
+allows only for `[SHOULD]`. Expectation choices and their limits are recorded in
+[the Digest fixture review](single/digest-review.md).
+The federation golden (MONO-002-01) is still missing, so the federation half of the Gate A Digest
+condition remains open. These are preparation checks, not observed Core behavior or complete
+fresh-checkout Gate A certification.

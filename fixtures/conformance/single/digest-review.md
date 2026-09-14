@@ -1,0 +1,87 @@
+# Context Digest fixture review
+
+Covers `SINGLE-042`, `SINGLE-043-01/02`, `SINGLE-044-01/02`, `SINGLE-045`.
+`SINGLE-042` owns the single-workspace golden Canonical JSON and Digest
+([適合fixture仕様 §4](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#4-共通normalizer)).
+These are reviewed expectations, not observed Core behaviour.
+
+## Shared corpus
+
+One fixed corpus is copied into each fixture; nothing is shared by symlink or parent reference.
+
+| path | role |
+|---|---|
+| `.spec/bitz.yaml` | `schemaVersion`/`language`/`earsAi` plus one `default` command with a `{tests}` template |
+| `.spec/requirements/REQ-001.md` | root. `AC-01` MUST/ALWAYS/CONSTRAINT, `AC-02` SHOULD/WHEN/THEN with `[REASON]` |
+| `.spec/technical/TECH-001.md` | `refines: [REQ-001]`, `related: [ADR-001]`, two `implements`, two `tests`, `x-owners` |
+| `.spec/decisions/ADR-001.md` | target of a weak relation only |
+| `src/*.py`, `tests/*.py` | declared `implements` and `tests[].path` must exist as regular files |
+
+## Reviewed decisions
+
+1. **purpose is `verify`.** Only `verify` names `command` in its closure
+   ([関係・トレースモデル §6.3](../../../docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md#63-verify)),
+   so it is the purpose that populates `settings.commands` and `settings.verifyTimeouts` — the
+   richest digest settings material. §6.6 verify fixtures also carry per-target Digests, so the
+   golden is computed under the purpose those fixtures will reuse.
+2. **`addressed` is empty and `unaddressed` holds every target statement.** Under `verify` no TASK
+   enters the closure, so nothing `addresses` the targets. `CTX-COVERAGE-TASK-*` is registered for
+   `purpose=implement` only
+   ([Diagnostic registry](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md)),
+   so a non-empty `unaddressed` raises no Diagnostic here and the status stays `passed`.
+   Both targets are tested, so `CTX-COVERAGE-TEST-*` does not apply either.
+3. **No extensions anywhere.** Core 1.0 loads no Profile Manifest, so every extension namespace is
+   unknown and would return `EAI-EXT-UNKNOWN-001`/warning, which cannot coexist with the matrix's
+   `passed`/0. `statements[].extensions` is therefore `[]` in every fixture, and the extension
+   sort rule of
+   [Digest正規化 §3.1.3](../../../docs/03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md#313-statements)
+   is **not** exercised by this family. It needs a fixture whose expected status tolerates a warning.
+4. **Unborn repository, `revision: null`.** `context` has no `--base` option, and a fixture with
+   `setup.baseCommit` must pass `--base`, so a Digest fixture cannot hold a base commit. The Digest
+   does not take `revision` as material, so this does not weaken the golden.
+5. **`activation.text` is `null` for `ALWAYS` in the digest input, and absent from the result.**
+   Digest input may not create optional keys
+   ([§5](../../../docs/03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md#5-serializationとhash)),
+   while `result.schema.json` requires `activation.text` to be a non-empty string when present.
+   The two representations differ deliberately.
+6. **Result `frontmatter` carries declared fields only; digest `frontmatter` fills all fixed keys.**
+   [context仕様 §5](../../../docs/03.詳細設計/03_操作仕様/01_context.md#5-projection) presents the
+   allowed declared fields, while
+   [Digest正規化 §3.1.1](../../../docs/03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md#311-frontmatterのprojection)
+   fixes five relation keys and empty arrays. `x-owners` appears in neither: Core does not use `x-`
+   for Context, which is exactly what `SINGLE-045` pins.
+7. **`reachedBy` for `TECH-001` is `refines:TECH-001`.** The document is reached by traversing its own
+   `refines` edge backwards from the root, and §5 defines the token as `<relation>:<source-id>`,
+   where the source of that edge is `TECH-001`.
+8. **`TECH-001` is projected `full`.** `standard` projects distance-1 documents as `full`
+   (context仕様 §5), so `--detail full` in `SINGLE-043-01` changes only `projection.detail` and
+   `--expand TECH-001` in `SINGLE-043-02` changes only `projection.expanded`. Both leave `documents[]`
+   and the Digest untouched, which is the property the matrix asks for.
+
+## Two independent reference computations
+
+Gate A requires the golden to agree across two independent reference computations.
+
+| reference | source of the digest input | serializer |
+|---|---|---|
+| A (`digest_reference.py`) | reviewed literals | recursive string builder, keys sorted by UTF-16BE bytes |
+| B (`digest_crosscheck.py`) | the fixture's own `repo/` tree | streaming byte emitter, keys sorted by explicit code-unit lists |
+
+B imports none of A's literals. It re-reads `bitz.yaml` and the Markdown documents with a narrow
+reader for this corpus shape, recovers Frontmatter, normalises the body, parses the statements, and
+applies the dedup/sort rules itself. The audit runs B against a freshly built repository twice per
+fixture and compares the bytes with A and with the committed
+`expected/context.canonical.json`.
+
+Writing B independently found a real defect in it: the statement pattern accepted `[MUST] [REASON]`,
+which the EBNF allows only for `[SHOULD]`. B now rejects it, and a regression test pins that.
+
+## Limits
+
+- No Core has run. Every expectation is reviewed, not observed; Gate B decides agreement with Core.
+- B is scoped to this corpus. It refuses a strong edge outside the reviewed closure rather than
+  generalising, so it is not a target-expansion implementation.
+- The federation golden (`MONO-002-01`) is still missing, so the federation half of the Gate A
+  Digest condition remains open.
+- Equality across `SINGLE-042/043/045` is checked as Canonical JSON bytes, not only as hash strings,
+  so a serializer change cannot hide behind a matching hash.
