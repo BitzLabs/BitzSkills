@@ -1,0 +1,25 @@
+{
+  "fixtureId": "SINGLE-127-14",
+  "description": "catalogにないworkspaceを探索後に終了コード4で拒否する",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--workspace",
+      "missing",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 4,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

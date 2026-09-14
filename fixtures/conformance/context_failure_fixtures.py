@@ -18,6 +18,7 @@ CASES = {
     "SINGLE-052-01": ("TECH-001", "implement", "blocked", "CTX-STATE-SUPERSEDED-001", "起点TECH-001はTECH-002に置換されています"),
     "SINGLE-052-02": ("TECH-003", "implement", "blocked", "CTX-STATE-SUPERSEDED-001", "依存先TECH-001はTECH-002に置換されています"),
     "SINGLE-053": ("TECH-001", "implement", "failed", "CTX-STATE-SUPERSEDED-002", "TECH-001の有効な後継が複数存在します"),
+    "SINGLE-127-13": ("TECH-999", "interpret", "failed", "CTX-ROOT-MISSING-001", "起点TECH-999が存在しません"),
 }
 TASK = "---\nid: TASK-001\ntitle: 先行作業の確認\nstatus: open\n---\n\n# TASK-001 先行作業の確認\n\n## Objective\n\n先行作業の完了を確認する。\n"
 
@@ -29,7 +30,7 @@ def reviewed_documents(identifier):
         return {TASK_PATH: (root, {"id": "TASK-001", "title": "先行作業の確認", "status": "open", "relations": {"requires": ["TASK-002"]}}),
             ".spec/tasks/TASK-002.md": (TASK.replace("TASK-001", "TASK-002"), {"id": "TASK-002", "title": "先行作業の確認", "status": "open"})}
     documents = {TECH_PATH: (TECH, {"id": "TECH-001", "title": "前提技術", "status": "approved"})}
-    if identifier != "SINGLE-050":
+    if identifier not in {"SINGLE-050", "SINGLE-127-13"}:
         for number in ([2, 3] if identifier == "SINGLE-053" else [2]):
             spec_id = f"TECH-{number:03}"
             doc = TECH.replace("TECH-001", spec_id).replace("status: approved\n---", "status: approved\nrelations:\n  supersedes: [TECH-001]\n---", 1)
@@ -55,7 +56,7 @@ def reviewed_manifest(identifier):
 
 def reviewed_result(identifier):
     root, purpose, status, code, summary = CASES[identifier]
-    if identifier == "SINGLE-050":
+    if identifier in {"SINGLE-050", "SINGLE-127-13"}:
         source = {"kind": "invocation", "argument": "TECH-999"}
     elif identifier == "SINGLE-051":
         source = {"kind": "file", "workspaceId": "root", "path": TASK_PATH, "key": "relations.requires"}

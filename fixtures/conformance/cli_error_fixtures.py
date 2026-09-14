@@ -49,6 +49,8 @@ CASES = {
                       "timeoutの非canonical十進表記+1を拒否する"),
     "SINGLE-127-11": ("check", ["--report=out.json", "--format", "json"],
                       "reportの任意path指定形式を拒否する"),
+    "SINGLE-127-14": ("doctor", ["--workspace", "missing", "--format", "json"],
+                      "catalogにないworkspaceを探索後に終了コード4で拒否する"),
 }
 
 

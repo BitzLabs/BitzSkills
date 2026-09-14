@@ -271,3 +271,16 @@ Validator runtime: CPython 3.14.6; jsonschema 4.23.0, attrs 26.1.0, jsonschema-s
 referencing 0.37.0, rpds-py 2026.6.3, typing-extensions 4.13.2; Linux/WSL2, Git 2.53.0.
 Core was not executed. The full fresh-checkout Gate A check, remaining fixture evidence and federation
 golden Digest remain pending.
+
+The subsequent 2026-09-14 missing-selection batch passed integrated checks and regression suites.
+Two runs of fixtures/validate_step0b.py through the cached pinned validator Python with -B produced
+byte-identical reports, with no check errors and exit 1 for pending Gate A evidence.
+Prepared fixtures: 120/311; missing: 191. Each new fixture passed two isolated setup comparisons.
+SINGLE-127-13 preserves the requested missing root and emits failed/1 with an incomplete, empty Context
+and CTX-ROOT-MISSING-001. SINGLE-127-14 selects a syntactically valid but absent workspace and emits
+exit 4 without a common result. Mutation tests reject changing the workspace to root, confusing the
+exit/status contracts, making the failed Context complete and changing its Diagnostic source.
+See [the missing-selection review](single/missing-selection-review.md) for input and expectation choices.
+Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
+Core was not executed. Remaining fixtures, federation golden Digest and full fresh-checkout Gate A
+repeatability remain pending; these runs certify preparation only.

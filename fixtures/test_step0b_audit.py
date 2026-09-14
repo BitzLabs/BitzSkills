@@ -157,7 +157,7 @@ class AuditTests(unittest.TestCase):
                                               "SINGLE-074-02", "SINGLE-074-03",
                                               "SINGLE-127-01", "SINGLE-127-02", "SINGLE-127-05",
                                               "SINGLE-127-06", "SINGLE-127-07", "SINGLE-127-08",
-                                              "SINGLE-127-09", "SINGLE-127-10", "SINGLE-127-11"])
+                                              "SINGLE-127-09", "SINGLE-127-10", "SINGLE-127-11", "SINGLE-127-14"])
         for result in (absent, errors):
             self.assertEqual(result["core_execution"], "Not run")
 
@@ -234,6 +234,10 @@ class AuditTests(unittest.TestCase):
              lambda v: v["invocation"]["argv"].__setitem__(3, "1")),
             (validate_cli_errors, "SINGLE-127-11", "side-effects.json",
              lambda v: v["after"]["repository"].update({"out.json": {"kind": "directory"}})),
+            (validate_cli_errors, "SINGLE-127-14", "manifest.json",
+             lambda v: v["invocation"]["argv"].__setitem__(2, "root")),
+            (validate_cli_errors, "SINGLE-127-14", "manifest.json",
+             lambda v: v["expect"].update(status="failed", exitCode=1)),
         ]
         for validator, identifier, relative, mutate in mutations:
             with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
@@ -989,7 +993,7 @@ class AuditTests(unittest.TestCase):
     def test_context_failure_fixtures(self):
         result = validate_context_failures()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], ["SINGLE-050", "SINGLE-051", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053"])
+        self.assertEqual(result["prepared"], ["SINGLE-050", "SINGLE-051", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053", "SINGLE-127-13"])
         self.assertEqual(result["core_execution"], "Not run")
 
     def test_context_failures_reject_partial_success_or_replacement(self):
@@ -1007,6 +1011,9 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-053", "expected/context.json", lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0]))),
             ("SINGLE-053", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(3, "interpret")),
             ("SINGLE-053", "side-effects.json", lambda v: v["after"].update(git=None)),
+            ("SINGLE-127-13", "manifest.json", lambda v: v["expect"].update(exitCode=4)),
+            ("SINGLE-127-13", "expected/context.json", lambda v: v["diagnostics"][0]["source"].update(argument="TECH-001")),
+            ("SINGLE-127-13", "expected/context.json", lambda v: v["resolution"].update(complete=True)),
         ]
         for identifier, relative, mutate in mutations:
             with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
