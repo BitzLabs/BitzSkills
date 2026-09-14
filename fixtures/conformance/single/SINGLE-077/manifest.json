@@ -1,0 +1,35 @@
+{
+  "fixtureId": "SINGLE-077",
+  "description": "同じDiagnostic条件が3文書で発生しpath辞書順でJSONとtextへ出力する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--full",
+      "--base",
+      "HEAD",
+      "--format",
+      "text"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "text",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0,
+    "textFile": "expected/check.txt"
+  }
+}

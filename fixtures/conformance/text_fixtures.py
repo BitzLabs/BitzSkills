@@ -12,7 +12,7 @@ from .harness import setup
 from .initial_fixtures import observe, compare_state
 
 HERE = Path(__file__).resolve().parent
-CASES = {"SINGLE-075-01": "SINGLE-070-01", "SINGLE-075-02": "SINGLE-070-02", "SINGLE-076": "SINGLE-070-02"}
+CASES = {"SINGLE-075-01": "SINGLE-070-01", "SINGLE-075-02": "SINGLE-070-02", "SINGLE-076": "SINGLE-070-02", "SINGLE-077": "SINGLE-070-02"}
 CONTROL_PATH = ".spec/technical/TECH-001-\x1b[31m\t\x7f\x85.md"
 CONTROL_SUMMARY = "参照元" + CONTROL_PATH + "のstrong relation参照先が存在しません"
 TEXT = {
@@ -26,6 +26,20 @@ TEXT["SINGLE-076"] = (
     "root:.spec/technical/TECH-001-\\u001b[31m\\u0009\\u007f\\u0085.md::: error: SPEC-RELATION-MISSING-001: "
     "参照元.spec/technical/TECH-001-\\u001b[31m\\u0009\\u007f\\u0085.mdのstrong relation参照先が存在しません\n"
 )
+ORDER_IDS = ("TECH-001", "TECH-002", "TECH-010")
+TEXT["SINGLE-077"] = "check failed scope=full targets=5 diagnostics=3 (0ms)\n" + "".join(
+    f"root:.spec/technical/{identifier}.md::: error: SPEC-RELATION-MISSING-001: strong relationの参照先が存在しません\n"
+    for identifier in ORDER_IDS)
+
+
+def reviewed_inputs(identifier):
+    inputs = source.reviewed_inputs(CASES[identifier])
+    if identifier == "SINGLE-077":
+        # Deliberately add the extra inputs in reverse lexical order.
+        document = inputs[source.digest_reference.TECH_PATH]
+        for spec_id in reversed(ORDER_IDS[1:]):
+            inputs[f".spec/technical/{spec_id}.md"] = document.replace(b"TECH-001", spec_id.encode())
+    return inputs
 
 
 def escape_field(value):
@@ -39,6 +53,11 @@ def reviewed_result(identifier):
         result["revision"]["dirty"] = True
         result["diagnostics"][0]["source"]["path"] = CONTROL_PATH
         result["diagnostics"][0]["summary"] = CONTROL_SUMMARY
+    elif identifier == "SINGLE-077":
+        result["checkedDocumentCount"] = 5
+        original = result["diagnostics"][0]
+        result["diagnostics"] = [dict(original, source=dict(original["source"], path=f".spec/technical/{spec_id}.md"))
+                                 for spec_id in ORDER_IDS]
     return result
 
 
@@ -51,6 +70,8 @@ def reviewed_manifest(identifier):
     if identifier == "SINGLE-076":
         manifest["description"] = "Diagnostic summaryとpathの制御文字を小文字Unicode escapeで表示する"
         manifest["setup"]["operations"] = [{"op": "rename", "from": source.digest_reference.TECH_PATH, "to": CONTROL_PATH}]
+    elif identifier == "SINGLE-077":
+        manifest["description"] = "同じDiagnostic条件が3文書で発生しpath辞書順でJSONとtextへ出力する"
     return manifest
 
 
@@ -78,7 +99,7 @@ def validate(root=HERE, identifiers=None):
             # Committed text uses a fixed duration; only actual output is variable at Gate B.
             if (fixture / "expected/check.txt").read_bytes() != TEXT[identifier].encode():
                 raise ValueError("text differs from the reviewed complete output")
-            inputs = source.reviewed_inputs(original)
+            inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]

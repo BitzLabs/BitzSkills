@@ -320,3 +320,10 @@ text alone uses lowercase four-digit escapes. Regression checks cover the full C
 LF/TAB, adjacent visible characters and literal backslashes. Diagnostic semantic conditions are unchanged;
 the reviewed source hash was refreshed. See the terminal-control review for scope and evidence.
 No Core was executed. Remaining fixture evidence, federation golden and fresh-checkout Gate A stay pending.
+
+SINGLE-077 passed two byte-identical integrated audits in the pinned CPython 3.14.6 environment.
+All check errors were empty; exit 1 denotes pending Gate A evidence. Prepared: 136/311; missing: 175.
+Three TECH documents independently reference missing TECH-999. JSON/text retain all three Diagnostics
+in path order and count all five documents/two statements. Both isolated setups match the fixed snapshot.
+Regression checks reject reversed/missing Diagnostics and a reduced document count. See the diagnostic-order
+review for scope. Core execution, remaining fixtures, federation golden and full Gate A remain pending.

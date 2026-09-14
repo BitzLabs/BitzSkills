@@ -100,10 +100,10 @@ class AuditTests(unittest.TestCase):
     def test_text_fixtures_and_json_parity(self):
         result = text_fixtures.validate()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], ["SINGLE-075-01", "SINGLE-075-02", "SINGLE-076"])
+        self.assertEqual(result["prepared"], ["SINGLE-075-01", "SINGLE-075-02", "SINGLE-076", "SINGLE-077"])
         self.assertEqual(result["core_execution"], "Not run")
         for identifier, original in text_fixtures.CASES.items():
-            counterpart = report_absent_fixtures.reviewed_result(original)
+            counterpart = text_fixtures.reviewed_result(identifier)
             lines = text_fixtures.TEXT[identifier].splitlines()
             self.assertEqual(lines[0], f"check {counterpart['status']} scope={counterpart['scope']} "
                              f"targets={counterpart['checkedDocumentCount']} "
@@ -140,6 +140,9 @@ class AuditTests(unittest.TestCase):
 
     def test_text_audit_rejects_tampered_evidence(self):
         mutations = [("SINGLE-075-01", "manifest.json", lambda v: v["expect"].update(reportFileCount=1)),
+                     ("SINGLE-077", "expected/check.json", lambda v: v["diagnostics"].reverse()),
+                     ("SINGLE-077", "expected/check.json", lambda v: v["diagnostics"].pop()),
+                     ("SINGLE-077", "expected/check.json", lambda v: v.update(checkedDocumentCount=3)),
                      ("SINGLE-075-02", "expected/check.json", lambda v: v.update(status="passed")),
                      ("SINGLE-075-01", "side-effects.json", lambda v: v["after"].update(cache={"new": {"kind": "directory"}}))]
         for identifier, relative, mutate in mutations:
