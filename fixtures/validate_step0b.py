@@ -35,6 +35,7 @@ from conformance.verify_binding_fixtures import validate as validate_verify_bind
 from conformance.verify_process_fixtures import validate as validate_verify_process_fixtures
 from conformance.verify_output_fixtures import validate as validate_verify_output_fixtures
 from conformance.verify_document_fixtures import validate as validate_verify_document_fixtures
+from conformance.verify_task_root_fixtures import validate as validate_verify_task_root_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -203,6 +204,7 @@ def main():
     checks["verify_process_fixtures"] = validate_verify_process_fixtures()
     checks["verify_output_fixtures"] = validate_verify_output_fixtures()
     checks["verify_document_fixtures"] = validate_verify_document_fixtures()
+    checks["verify_task_root_fixtures"] = validate_verify_task_root_fixtures()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_step0p.py")], capture_output=True, text=True, timeout=60)
     checks["step0p"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
     helpers = subprocess.run([sys.executable, "-B", str(FIXTURES / "test_harness.py")], capture_output=True, text=True, timeout=30)

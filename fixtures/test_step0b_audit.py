@@ -40,9 +40,75 @@ from conformance import verify_output_fixtures
 from conformance.verify_output_fixtures import validate as validate_verify_output
 from conformance import verify_document_fixtures
 from conformance.verify_document_fixtures import validate as validate_verify_document
+from conformance import verify_task_root_fixtures
+from conformance.verify_task_root_fixtures import validate as validate_verify_task_root
 
 
 class AuditTests(unittest.TestCase):
+    def test_verify_task_root_fixture(self):
+        result = validate_verify_task_root()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-068"])
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_done_task_root_is_reverifiable_and_cancelled_is_not(self):
+        done = json.loads((audit.FIXTURES / "single/SINGLE-068/expected/verify.json").read_text())
+        cancelled = json.loads((audit.FIXTURES / "single/SINGLE-067/expected/verify.json").read_text())
+        verify_task_root_fixtures.check_done_root(done)
+        self.assertEqual((done["status"], cancelled["status"]), ("passed", "blocked"))
+        self.assertEqual(done["targetResults"][0]["bindingRefs"], ["root::default"])
+        self.assertEqual(cancelled["targetResults"][0]["bindingRefs"], [])
+        # A cancelled root never reaches its addressed statements; a done root does.
+        self.assertEqual(cancelled["targetResults"][0]["statements"], [])
+        self.assertEqual(done["targetResults"][0]["statements"], ["REQ-001:AC-01"])
+
+    def test_task_root_context_holds_the_addressed_owner(self):
+        """関係・トレースモデル §6.3: a TASK root brings the documents owning its
+        addresses targets into the Context, so the Digest covers all three."""
+        canonical = digest_reference.canonical_bytes(
+            verify_task_root_fixtures.reviewed_digest_input())
+        payload = json.loads(canonical.decode())
+        self.assertEqual([d["id"] for d in payload["documents"]],
+                         ["REQ-001", "TASK-001", "TECH-001"])
+        self.assertEqual(payload["roots"], ["TASK-001"])
+        golden = (audit.FIXTURES / "single/SINGLE-042/expected/context.canonical.json").read_bytes()
+        self.assertNotEqual(canonical, golden)
+
+    def test_task_root_audit_rejects_tampered_expectations(self):
+        mutations = [
+            ("expected/verify.json", lambda v: v["targetResults"][0].update(statements=[])),
+            ("expected/verify.json",
+             lambda v: v["targetResults"][0].update(statements=["REQ-001:AC-01", "REQ-001:AC-02"])),
+            ("expected/verify.json",
+             lambda v: v["commands"][0].update(tests=["tests/test_auth.py", "tests/test_session.py"])),
+            ("expected/verify.json", lambda v: v["targetResults"][0].update(bindingRefs=[])),
+            ("expected/verify.json", lambda v: v.update(status="blocked")),
+        ]
+        for relative, mutate in mutations:
+            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single/SINGLE-068"
+                shutil.copytree(audit.FIXTURES / "single/SINGLE-068", fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_verify_task_root(root, ["SINGLE-068"])["errors"])
+
+    def test_task_root_audit_rejects_a_status_change(self):
+        for status in ("open", "cancelled"):
+            with self.subTest(status=status), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single/SINGLE-068"
+                shutil.copytree(audit.FIXTURES / "single/SINGLE-068", fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                path = fixture / "repo" / verify_task_root_fixtures.TASK_PATH
+                path.write_text(path.read_text().replace("status: done", "status: " + status))
+                self.assertTrue(validate_verify_task_root(root, ["SINGLE-068"])["errors"])
+
     def test_verify_document_fixture(self):
         result = validate_verify_document()
         self.assertEqual(result["errors"], [])

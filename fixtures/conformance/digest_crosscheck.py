@@ -177,14 +177,27 @@ def load_documents(repository):
 
 
 def closure(documents, root, purpose):
-    """Reviewed closure for these corpora: the root, the transitive chain of
-    applicable documents that refine it, and for `implement` every open TASK that
-    addresses one of the root's statements. Any strong edge the rule cannot
-    account for is rejected rather than silently absorbed, so this stays a corpus
-    reader and not a general target-expansion implementation."""
+    """Reviewed closure for these corpora: the root, for a TASK root the documents
+    owning what it addresses, the transitive chain of applicable documents that
+    refine anything reached, and for `implement` every open TASK that addresses one
+    of the root's statements. Any strong edge the rule cannot account for is
+    rejected rather than silently absorbed, so this stays a corpus reader and not a
+    general target-expansion implementation."""
     reached, accounted = {root: 0}, set()
-    statements = {statement["id"] for statement in read_statements(documents[root]["body"])}
+    owned = {identifier: {statement["id"] for statement in read_statements(document["body"])}
+             for identifier, document in documents.items()}
+    known_statements = {identifier for ids in owned.values() for identifier in ids}
     frontier = [root]
+    # 関係・トレースモデル §6.3: a TASK root verifies what it addresses, so the
+    # documents owning those targets are Context material.
+    if documents[root]["kind"] == "task":
+        for target in _relations(documents[root]["frontmatter"])["addresses"]:
+            owner = target.split(":")[0]
+            if owner not in documents:
+                raise ValueError("the TASK root addresses a target this corpus does not own")
+            reached.setdefault(owner, 1)
+            accounted.add((root, "addresses", target))
+            frontier.append(owner)
     while frontier:
         current = frontier.pop(0)
         for identifier, document in sorted(documents.items()):
@@ -199,7 +212,7 @@ def closure(documents, root, purpose):
             if document["kind"] != "task" or document["frontmatter"]["status"] not in APPLICABLE_STATUS:
                 continue
             for target in _relations(document["frontmatter"])["addresses"]:
-                if target in statements:
+                if target in owned.get(root, set()):
                     reached.setdefault(identifier, 1)
                     accounted.add((identifier, "addresses", target))
     # A workspace may hold several independent roots. Only an edge that touches
@@ -208,7 +221,7 @@ def closure(documents, root, purpose):
     for identifier, document in documents.items():
         for key in STRONG:
             for target in _relations(document["frontmatter"])[key]:
-                if not (target in documents or target in statements):
+                if not (target in documents or target in known_statements):
                     continue
                 owner = target.split(":")[0]
                 touches = identifier in reached or target in reached or owner in reached

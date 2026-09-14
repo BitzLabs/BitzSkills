@@ -184,3 +184,21 @@ part of the verify Context is not settled by the normative documents, and a fixt
 executable set ahead of its contract. Expectation choices, the reasoning and the reported gap are
 recorded in [the verify output review](single/verify-output-review.md).
 These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
+
+The subsequent 2026-09-14 done-TASK root batch passed integrated checks and regression suites.
+Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced byte-identical reports,
+with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 93/311; missing: 218.
+This completes matrix §6.6 verify, all 16 rows.
+SINGLE-068 required settling a contract first: 関係・トレースモデル §6.3 now states that a TASK root brings
+its addresses targets and their owning documents into contextDocuments, that the interpret closure rules
+then apply from those documents, and that unlike implement the root TASK's requires closure is excluded.
+No decision changed. The target-expansion reference calculation already implemented that reading, so all
+25 expected target sets are unchanged, and no Diagnostic condition is added because an unresolvable
+addresses target is already SPEC-RELATION-MISSING-001. The audit detected the edit by itself through the
+source hashes pinned in diagnostic-coverage.json and targets/cases.json, and those were re-pinned only
+after the re-review recorded in diagnostic-review.md.
+The fixture pairs with SINGLE-067: a done root is re-verifiable with its own Digest and binding, while a
+cancelled root is blocked with neither. AC-02 is deliberately unaddressed, so neither its statement nor
+its test may enter the binding. Expectation choices and their limits are recorded in
+[the done TASK root review](single/verify-task-root-review.md).
+These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
