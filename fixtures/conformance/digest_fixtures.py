@@ -59,6 +59,10 @@ def reviewed_result(identifier, context_digest):
     _, req_body, tech_body, _ = CASES[identifier]
     detail = "full" if identifier == "SINGLE-043-01" else "standard"
     expanded = ["TECH-001"] if identifier == "SINGLE-043-02" else []
+    if identifier == "SINGLE-127-03":
+        expanded = ["REQ-001", "TECH-001"]
+    elif identifier == "SINGLE-127-04":
+        expanded = ["TECH-001"]
     return {
         "schemaVersion": "1.0", "operation": "context", "status": "passed", "purpose": "verify",
         "workspace": {"id": "root", "path": "."},

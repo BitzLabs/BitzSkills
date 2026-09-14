@@ -257,3 +257,17 @@ Host: Linux 6.18.33.2-microsoft-standard-WSL2, x86_64, CPython 3.14.4, Git 2.53.
 validator dependencies remain pinned in the entry script.
 These are preparation checks, not observed Core behavior, CPython 3.11 acceptance or complete
 fresh-checkout Gate A certification. Federation golden Digest and remaining fixture evidence stay pending.
+
+The subsequent 2026-09-14 repeated-expand batch passed integrated checks and regression suites.
+The first run used `uv run fixtures/validate_step0b.py`; the second invoked the same cached, pinned
+validator environment's Python directly with `-B`. Both audit reports were byte-identical, with no
+check errors and exit 1 only for pending Gate A evidence. Prepared fixtures: 118/311; missing: 193.
+SINGLE-127-03 supplies TECH-001 then REQ-001 and expects sorted expansion IDs; SINGLE-127-04 repeats
+TECH-001 and expects one ID. Complete result bodies retain the golden resolution, coverage and Digest.
+Two independent references agree with committed Canonical JSON, and both isolated setups per fixture
+agree with fixed read-only snapshots. Mutation tests reject unsorted/duplicate expansion IDs and a
+missing repeated option. See [the repeated-expand review](single/expand-repeat-review.md).
+Validator runtime: CPython 3.14.6; jsonschema 4.23.0, attrs 26.1.0, jsonschema-specifications 2025.9.1,
+referencing 0.37.0, rpds-py 2026.6.3, typing-extensions 4.13.2; Linux/WSL2, Git 2.53.0.
+Core was not executed. The full fresh-checkout Gate A check, remaining fixture evidence and federation
+golden Digest remain pending.

@@ -1,0 +1,32 @@
+{
+  "fixtureId": "SINGLE-127-03",
+  "description": "異なるexpand値を反復し、入力順に依存せず正規ID辞書順で返す",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "REQ-001",
+      "--purpose",
+      "verify",
+      "--expand",
+      "TECH-001",
+      "--expand",
+      "REQ-001",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

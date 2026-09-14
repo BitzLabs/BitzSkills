@@ -1,0 +1,32 @@
+{
+  "fixtureId": "SINGLE-127-04",
+  "description": "同じexpand値を反復し、1件へ重複排除する",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "REQ-001",
+      "--purpose",
+      "verify",
+      "--expand",
+      "TECH-001",
+      "--expand",
+      "TECH-001",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

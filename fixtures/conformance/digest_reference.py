@@ -101,6 +101,8 @@ CASES = {
     "SINGLE-044-01": ([], REQ_BODY_BLANK_LINES, TECH_BODY, "team-auth"),
     "SINGLE-044-02": ([], REQ_BODY, TECH_BODY_TABLE_PADDING, "team-auth"),
     "SINGLE-045": ([], REQ_BODY, TECH_BODY, "team-platform"),
+    "SINGLE-127-03": (["--expand", "TECH-001", "--expand", "REQ-001"], REQ_BODY, TECH_BODY, "team-auth"),
+    "SINGLE-127-04": (["--expand", "TECH-001", "--expand", "TECH-001"], REQ_BODY, TECH_BODY, "team-auth"),
 }
 DESCRIPTIONS = {
     "SINGLE-042": "固定入力の完全解決に対する単一workspace golden Digest",
@@ -109,9 +111,11 @@ DESCRIPTIONS = {
     "SINGLE-044-01": "本文の空行数変更がDigestを変える",
     "SINGLE-044-02": "表の桁揃え変更がDigestを変える",
     "SINGLE-045": "x-拡張fieldの変更がDigestを変えない",
+    "SINGLE-127-03": "異なるexpand値を反復し、入力順に依存せず正規ID辞書順で返す",
+    "SINGLE-127-04": "同じexpand値を反復し、1件へ重複排除する",
 }
 # Fixtures whose digest input is byte-identical to the golden.
-SAME_AS_GOLDEN = ("SINGLE-042", "SINGLE-043-01", "SINGLE-043-02", "SINGLE-045")
+SAME_AS_GOLDEN = ("SINGLE-042", "SINGLE-043-01", "SINGLE-043-02", "SINGLE-045", "SINGLE-127-03", "SINGLE-127-04")
 
 
 def reviewed_inputs(identifier):

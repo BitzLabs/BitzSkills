@@ -864,7 +864,8 @@ class AuditTests(unittest.TestCase):
         result = validate_digest()
         self.assertEqual(result["errors"], [])
         self.assertEqual(result["prepared"], ["SINGLE-042", "SINGLE-043-01", "SINGLE-043-02",
-                                              "SINGLE-044-01", "SINGLE-044-02", "SINGLE-045"])
+                                              "SINGLE-044-01", "SINGLE-044-02", "SINGLE-045",
+                                              "SINGLE-127-03", "SINGLE-127-04"])
         self.assertEqual(result["core_execution"], "Not run")
         self.assertEqual(result["references"], 2)
 
@@ -912,6 +913,9 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-042", "manifest.json", lambda v: v["expect"].update(reportFileCount=1)),
             ("SINGLE-043-01", "expected/context.json", lambda v: v["projection"].update(detail="standard")),
             ("SINGLE-043-02", "expected/context.json", lambda v: v["projection"].update(expanded=[])),
+            ("SINGLE-127-03", "expected/context.json", lambda v: v["projection"].update(expanded=["TECH-001", "REQ-001"])),
+            ("SINGLE-127-04", "expected/context.json", lambda v: v["projection"].update(expanded=["TECH-001", "TECH-001"])),
+            ("SINGLE-127-03", "manifest.json", lambda v: v["invocation"].update(argv=["context", "REQ-001", "--purpose", "verify", "--expand", "TECH-001", "--format", "json"])),
             ("SINGLE-045", "side-effects.json", lambda v: v["after"].update(cache={"index": {"kind": "directory"}})),
         ]
         for identifier, relative, mutate in mutations:
