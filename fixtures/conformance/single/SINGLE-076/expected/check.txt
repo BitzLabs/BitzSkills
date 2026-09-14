@@ -1,0 +1,2 @@
+check failed scope=full targets=3 diagnostics=1 (0ms)
+root:.spec/technical/TECH-001-\u001b[31m\u0009\u007f\u0085.md::: error: SPEC-RELATION-MISSING-001: 参照元.spec/technical/TECH-001-\u001b[31m\u0009\u007f\u0085.mdのstrong relation参照先が存在しません

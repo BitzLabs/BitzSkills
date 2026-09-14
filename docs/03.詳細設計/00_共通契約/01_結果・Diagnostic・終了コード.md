@@ -416,6 +416,13 @@ text出力は次の3部からなる。Diagnosticが0件なら要約行だけを�
 
 textはDiagnosticの`evidence`と`extensions`を出力しない。完全な機械可読情報は`--format json`を使う。
 
+Diagnostic行とsuggestedAction継続行を組み立てる前に、表示する各field内のC0（U+0000〜U+001F）、
+DEL（U+007F）、C1（U+0080〜U+009F）を、backslash 1文字と`u`、小文字16進4桁からなる
+ASCII表記へ置換する。LFは`\u000a`、TABは`\u0009`、ESCは`\u001b`とし、field内の改行やタブも
+保持せず可視化する。その他の文字は変更せず、terminal制御sequenceを解釈しない。
+これはtext表示だけの変換であり、JSON結果・reportのfield値やDiagnosticのsort順序は変更しない。
+行形式が付ける改行、区切り、継続行の2 space字下げは変換対象に含めない。
+
 `targets=<n>`と`diagnostics=<n>`は次のJSON導出式へ固定し、表示側で別に数えない。
 
 | operation／scope | `targets` |

@@ -12,13 +12,34 @@ from .harness import setup
 from .initial_fixtures import observe, compare_state
 
 HERE = Path(__file__).resolve().parent
-CASES = {"SINGLE-075-01": "SINGLE-070-01", "SINGLE-075-02": "SINGLE-070-02"}
+CASES = {"SINGLE-075-01": "SINGLE-070-01", "SINGLE-075-02": "SINGLE-070-02", "SINGLE-076": "SINGLE-070-02"}
+CONTROL_PATH = ".spec/technical/TECH-001-\x1b[31m\t\x7f\x85.md"
+CONTROL_SUMMARY = "参照元" + CONTROL_PATH + "のstrong relation参照先が存在しません"
 TEXT = {
     "SINGLE-075-01": "check passed scope=full targets=3 diagnostics=0 (0ms)\n",
     "SINGLE-075-02": "check failed scope=full targets=3 diagnostics=1 (0ms)\n"
                      "root:.spec/technical/TECH-001.md::: error: SPEC-RELATION-MISSING-001: "
                      "strong relationの参照先が存在しません\n",
 }
+TEXT["SINGLE-076"] = (
+    "check failed scope=full targets=3 diagnostics=1 (0ms)\n"
+    "root:.spec/technical/TECH-001-\\u001b[31m\\u0009\\u007f\\u0085.md::: error: SPEC-RELATION-MISSING-001: "
+    "参照元.spec/technical/TECH-001-\\u001b[31m\\u0009\\u007f\\u0085.mdのstrong relation参照先が存在しません\n"
+)
+
+
+def escape_field(value):
+    """Bounded fixture reference for the user-approved text field escaping rule."""
+    return "".join(f"\\u{ord(c):04x}" if ord(c) < 32 or 127 <= ord(c) <= 159 else c for c in value)
+
+
+def reviewed_result(identifier):
+    result = source.reviewed_result(CASES[identifier])
+    if identifier == "SINGLE-076":
+        result["revision"]["dirty"] = True
+        result["diagnostics"][0]["source"]["path"] = CONTROL_PATH
+        result["diagnostics"][0]["summary"] = CONTROL_SUMMARY
+    return result
 
 
 def reviewed_manifest(identifier):
@@ -27,6 +48,9 @@ def reviewed_manifest(identifier):
     manifest["description"] = "text出力のstatus・件数・DiagnosticがJSON結果と一致する"
     manifest["invocation"]["argv"][-1] = "text"
     manifest["expect"].update(stdout="text", textFile="expected/check.txt")
+    if identifier == "SINGLE-076":
+        manifest["description"] = "Diagnostic summaryとpathの制御文字を小文字Unicode escapeで表示する"
+        manifest["setup"]["operations"] = [{"op": "rename", "from": source.digest_reference.TECH_PATH, "to": CONTROL_PATH}]
     return manifest
 
 
@@ -49,7 +73,7 @@ def validate(root=HERE, identifiers=None):
             effects = json.loads((fixture / "side-effects.json").read_text())
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
-            if manifest != reviewed_manifest(identifier) or result != source.reviewed_result(original):
+            if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
                 raise ValueError("manifest or JSON counterpart differs from the reviewed case")
             # Committed text uses a fixed duration; only actual output is variable at Gate B.
             if (fixture / "expected/check.txt").read_bytes() != TEXT[identifier].encode():

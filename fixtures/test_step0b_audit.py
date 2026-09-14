@@ -100,7 +100,7 @@ class AuditTests(unittest.TestCase):
     def test_text_fixtures_and_json_parity(self):
         result = text_fixtures.validate()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], ["SINGLE-075-01", "SINGLE-075-02"])
+        self.assertEqual(result["prepared"], ["SINGLE-075-01", "SINGLE-075-02", "SINGLE-076"])
         self.assertEqual(result["core_execution"], "Not run")
         for identifier, original in text_fixtures.CASES.items():
             counterpart = report_absent_fixtures.reviewed_result(original)
@@ -120,6 +120,23 @@ class AuditTests(unittest.TestCase):
                         expected.replace(b"(0ms)", b"(1.5ms)"),
                         expected.replace(b"(0ms)", "(１２ms)".encode())):
             self.assertNotEqual(normalize(expected), normalize(changed))
+
+    def test_diagnostic_field_escaping_covers_control_boundaries(self):
+        escape = text_fixtures.escape_field
+        self.assertEqual(escape("\n\t\r\x1b\x7f\x85"), r"\u000a\u0009\u000d\u001b\u007f\u0085")
+        for point in list(range(32)) + list(range(127, 160)):
+            self.assertEqual(escape(chr(point)), "\\u" + format(point, "04x"))
+        visible = " 空白\\u001b[31m日本語~\u00a0"
+        self.assertEqual(escape(visible), visible)
+        result = text_fixtures.reviewed_result("SINGLE-076")
+        diagnostic = result["diagnostics"][0]
+        self.assertIn("\x1b", diagnostic["source"]["path"])
+        self.assertIn("\x1b", diagnostic["summary"])
+        output = text_fixtures.TEXT["SINGLE-076"]
+        self.assertIn(escape(diagnostic["source"]["path"]), output)
+        self.assertIn(escape(diagnostic["summary"]), output)
+        self.assertEqual(len(output.splitlines()), 2)
+        self.assertFalse(any(ord(c) < 32 or 127 <= ord(c) <= 159 for c in output.replace("\n", "")))
 
     def test_text_audit_rejects_tampered_evidence(self):
         mutations = [("SINGLE-075-01", "manifest.json", lambda v: v["expect"].update(reportFileCount=1)),
