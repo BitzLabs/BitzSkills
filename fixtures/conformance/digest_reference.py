@@ -127,6 +127,12 @@ QUOTED_VALUE = 'say "hello"'
 CASES["SINGLE-098-01"] = ([], QUOTED_BODY, TECH_BODY, "team-auth")
 DESCRIPTIONS["SINGLE-098-01"] = "未知extensionのquoted DQUOTEを解除しopaque値を保持する"
 
+CODE_TEXT = r'値 `one` と ``two`[MUST]\[`` と ```three``end``` を保持する'
+CODE_VALUE = r'値 one と two`[MUST]\[ と three``end を保持する'
+CODE_BODY = REQ_BODY.replace("秘密情報を出力しない", CODE_TEXT)
+CASES["SINGLE-096-01"] = ([], CODE_BODY, TECH_BODY, "team-auth")
+DESCRIPTIONS["SINGLE-096-01"] = "異なる長さのcode spanを同長runで閉じ外側の区切りだけを除く"
+
 # These matrix dimensions deliberately reuse the golden corpus: its second
 # statement has a non-null SHOULD reason, and its full documents exercise the
 # projection schema without changing semantic resolution.
@@ -194,6 +200,8 @@ def reviewed_digest_input(identifier):
     statements = [dict(statement) for statement in STATEMENTS]
     if identifier == "SINGLE-097-01":
         statements[0] = {**statements[0], "operation": {"kind": "CONSTRAINT", "text": DECODED_TEXT}}
+    if identifier == "SINGLE-096-01":
+        statements[0] = {**statements[0], "operation": {"kind": "CONSTRAINT", "text": CODE_VALUE}}
     if identifier == "SINGLE-098-01":
         statements[0] = {**statements[0], "extensions": [
             {"namespace": "quality", "term": "LEVEL", "value": QUOTED_VALUE}]}

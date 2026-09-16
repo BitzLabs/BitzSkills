@@ -1232,12 +1232,21 @@ class AuditTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             list(files(fixture, duplicate))
 
+    def test_code_span_reference_uses_maximal_equal_runs(self):
+        decode = digest_crosscheck.unescape_text
+        self.assertEqual(decode(digest_reference.CODE_TEXT), digest_reference.CODE_VALUE)
+        self.assertEqual(decode("`[MUST]`"), "[MUST]")
+        self.assertEqual(decode("``a`b```c``"), "a`b```c")
+        for text in ("`a", "``a`", "`a``", "``a```"):
+            with self.subTest(text=text), self.assertRaises(ValueError):
+                decode(text)
+
     def test_digest_fixtures(self):
         result = validate_digest()
         self.assertEqual(result["errors"], [])
         self.assertEqual(result["prepared"], ["SINGLE-042", "SINGLE-043-01", "SINGLE-043-02",
                                               "SINGLE-044-01", "SINGLE-044-02", "SINGLE-045",
-                                              "SINGLE-127-03", "SINGLE-127-04", "SINGLE-097-01", "SINGLE-098-01",
+                                              "SINGLE-127-03", "SINGLE-127-04", "SINGLE-097-01", "SINGLE-098-01", "SINGLE-096-01",
                                               "SINGLE-101-01", "SINGLE-106-01", "SINGLE-121", "SINGLE-106-02"])
         self.assertEqual(result["core_execution"], "Not run")
         self.assertEqual(result["references"], 2)
@@ -1277,6 +1286,9 @@ class AuditTests(unittest.TestCase):
 
     def test_digest_audit_rejects_tampered_expectations(self):
         mutations = [
+            ("SINGLE-096-01", "expected/parser-ir.json", lambda v: v[0]["operation"].update(text=digest_reference.CODE_TEXT)),
+            ("SINGLE-096-01", "expected/parser-ir.json", lambda v: v[0]["operation"].update(text=digest_reference.CODE_VALUE.replace("`", ""))),
+            ("SINGLE-096-01", "expected/context.json", lambda v: v["constraintLedger"]["statements"][0]["operation"].update(text="lost span content")),
             ("SINGLE-098-01", "expected/parser-ir.json", lambda v: v[0].update(unknownExtensions=[])),
             ("SINGLE-098-01", "expected/parser-ir.json", lambda v: v[0]["extensions"][0].update(value="lost quote")),
             ("SINGLE-098-01", "expected/context.json", lambda v: v.update(status="passed", diagnostics=[])),

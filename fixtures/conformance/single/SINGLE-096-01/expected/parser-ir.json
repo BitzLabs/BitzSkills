@@ -1,0 +1,53 @@
+[
+  {
+    "id": "REQ-001:AC-01",
+    "actor": "TargetSystem",
+    "activation": {
+      "kind": "ALWAYS"
+    },
+    "modality": "MUST",
+    "reason": null,
+    "operation": {
+      "kind": "CONSTRAINT",
+      "text": "値 one と two`[MUST]\\[ と three``end を保持する"
+    },
+    "extensions": [],
+    "schemaVersion": "1.0",
+    "documentId": "REQ-001",
+    "localId": "AC-01",
+    "source": {
+      "path": ".spec/requirements/REQ-001.md",
+      "line": 15,
+      "column": 3
+    },
+    "unknownExtensions": [],
+    "untrustedText": true,
+    "raw": "- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 値 `one` と ``two`[MUST]\\[`` と ```three``end``` を保持する。"
+  },
+  {
+    "id": "REQ-001:AC-02",
+    "actor": "TargetSystem",
+    "activation": {
+      "kind": "WHEN",
+      "text": "保存した場合"
+    },
+    "modality": "SHOULD",
+    "reason": "確認のため",
+    "operation": {
+      "kind": "THEN",
+      "text": "結果を返す"
+    },
+    "extensions": [],
+    "schemaVersion": "1.0",
+    "documentId": "REQ-001",
+    "localId": "AC-02",
+    "source": {
+      "path": ".spec/requirements/REQ-001.md",
+      "line": 16,
+      "column": 3
+    },
+    "unknownExtensions": [],
+    "untrustedText": true,
+    "raw": "- [REQ-001:AC-02] [ACTOR:TargetSystem] [WHEN] 保存した場合 [SHOULD] [REASON] 確認のため [THEN] 結果を返す。"
+  }
+]

@@ -120,6 +120,8 @@ alnum        = alpha | digit ;
 `backtick-run`は連続するbacktickの極大列として読み取る。開始runと同じ個数のbacktickからなる最初のrunだけを
 終了delimiterとする。
 異なる長さのrunは`code-char`として保持する。code span内ではescapeとtagを解釈しない。
+Semantic IRのtextへは開始・終了のbacktick runを除いた内容だけを保持する。内部の異なる長さのrunは残す。
+span外のtextと連結した後、§4のSP／TAB正規化を適用する。区切りを含む原文は`raw`と文書本文へ保持する。
 `text`の終了位置は次に現れる未escapeの既知tag開始で決める。operationの`text`では、code span外にある行末直前の
 最後の`.`または`。`を`period`とし、それ以前を`text`とする。空の`text`は許可しない。
 

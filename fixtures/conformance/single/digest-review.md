@@ -125,3 +125,12 @@ goldenと同じだが、Digestにはopaque extensionと原文が入るため別�
 完全IRのextensionsとunknownExtensionsは同じ要素を出現順で保持する。
 原文、解除値、unknownExtensions、warning省略、診断位置の改変を拒否する。
 入力、完全IR、公開JSON、Canonical JSON、副作用snapshotは独立した実fixtureとして保存する。
+
+## 2026-09-17: code span
+
+ユーザー裁定に従い、Semantic IRへはcode spanの外側delimiterを除いた内容を保持する。
+SINGLE-096-01は1・2・3 backtickのspanを同一行に置く。内部の異なる長さのrun、
+[MUST]、backslashと角括弧は解釈せず保持する。reference Aは解除後の文字列をliteralで固定し、
+reference Bは極大runの長さを数え、同長runだけで閉じる。rawとbodyTextは原文を保持する。
+完全IR・JSON・Canonical JSON・source・副作用を検証し、外側delimiterの残留、内部run欠落、
+未閉鎖runの誤受理を拒否する。matrix §6.10の全20件の準備が完了した。

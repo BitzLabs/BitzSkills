@@ -1,0 +1,34 @@
+{
+  "parserChecks": [
+    {
+      "path": ".spec/requirements/REQ-001.md",
+      "resultFile": "expected/parser-ir.json"
+    }
+  ],
+  "fixtureId": "SINGLE-096-01",
+  "description": "異なる長さのcode spanを同長runで閉じ外側の区切りだけを除く",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "REQ-001",
+      "--purpose",
+      "verify",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

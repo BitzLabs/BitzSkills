@@ -45,7 +45,7 @@ def reviewed_manifest(identifier):
     tail = CASES[identifier][0]
     return {
         **({"parserChecks": [{"path": REQ_RESULT_PATH, "resultFile": "expected/parser-ir.json"}]}
-           if identifier in {"SINGLE-097-01", "SINGLE-098-01", "SINGLE-101-01"} else {}),
+           if identifier in {"SINGLE-096-01", "SINGLE-097-01", "SINGLE-098-01", "SINGLE-101-01"} else {}),
         "fixtureId": identifier,
         "description": DESCRIPTIONS[identifier],
         "setup": {"git": True, "operations": []},
@@ -68,6 +68,8 @@ def reviewed_result(identifier, context_digest):
     ledger = [dict(statement) for statement in LEDGER]
     if identifier == "SINGLE-097-01":
         ledger[0] = {**ledger[0], "operation": {"kind": "CONSTRAINT", "text": digest_reference.DECODED_TEXT}}
+    if identifier == "SINGLE-096-01":
+        ledger[0] = {**ledger[0], "operation": {"kind": "CONSTRAINT", "text": digest_reference.CODE_VALUE}}
     result = {
         "schemaVersion": "1.0", "operation": "context", "status": "passed", "purpose": "verify",
         "workspace": {"id": "root", "path": "."},

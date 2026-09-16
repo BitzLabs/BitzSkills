@@ -453,3 +453,16 @@ Both exited 1 for outstanding Gate A evidence. Complete IR, source, opaque/unkno
 extension value, public result, Canonical JSON and read-only snapshots are checked.
 No Core was run. Code spans, reference projection, federation golden, remaining
 fixtures and fresh-checkout certification remain pending.
+
+## 2026-09-17: code-span acceptance
+
+Prepared: 181/311; missing: 130. SINGLE-096-01 completes the 20 cases of matrix §6.10.
+The approved semantics remove outer delimiters only; unequal internal runs and
+span-internal tag/escape-like text remain literal. Full IR, raw/source, JSON and
+Canonical JSON are fixed. Two independent reference computations and two isolated
+setups agree. Equal-run termination and malformed-run regression checks passed.
+Two integrated runs in the same pinned CPython 3.14.6 environment were byte-identical
+with no check errors, both exit 1 for pending Gate A evidence.
+Report SHA-256: `e4c52beaeb441737c9a8f96f18e4d59b1f9a4bc766f738c60238685d78f272ca`.
+No Core was run. Reference projection, remaining fixtures, federation golden and
+fresh-checkout Gate A certification remain pending.

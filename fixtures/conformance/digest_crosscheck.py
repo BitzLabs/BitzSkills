@@ -109,8 +109,7 @@ STATEMENT = re.compile(
 
 
 def unescape_text(text):
-    """The fixture reader handles escapes outside code spans only. Unsupported
-    constructs fail closed; this is not the production Parser."""
+    """A narrow fixture-side text decoder; never used as the production Parser."""
     out, index = [], 0
     while index < len(text):
         char = text[index]
@@ -120,7 +119,23 @@ def unescape_text(text):
                 raise ValueError("unknown or trailing escape in reference corpus")
             out.append(text[index])
         elif char == "`":
-            raise ValueError("code spans require their own reviewed reference vector")
+            start = index
+            while index < len(text) and text[index] == "`":
+                index += 1
+            width, content_start = index - start, index
+            while index < len(text):
+                if text[index] != "`":
+                    index += 1
+                    continue
+                run_start = index
+                while index < len(text) and text[index] == "`":
+                    index += 1
+                if index - run_start == width:
+                    out.append(text[content_start:run_start])
+                    break
+            else:
+                raise ValueError("unclosed code span in reference corpus")
+            continue
         else:
             out.append(char)
         index += 1
