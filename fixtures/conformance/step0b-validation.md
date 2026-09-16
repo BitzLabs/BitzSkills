@@ -407,3 +407,18 @@ See [the Markdown proposal](../../docs/04.提案資料/26_context-Markdown提示
 Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
 No Core renderer was implemented or executed. The three projection fixtures of §6.11 and the four `context`
 cases of §6.10 stay outstanding with the remaining Digest corpus work.
+
+## 2026-09-17: reason, full projection and Digest versions
+
+Added SINGLE-101-01, SINGLE-106-01 and SINGLE-121. Prepared: 177/311; missing: 134.
+Two `uv run fixtures/validate_step0b.py` runs produced byte-identical reports;
+all check errors were empty. Both exited 1 solely for outstanding Gate A evidence.
+Report SHA-256: `49554c146d9e524c0310e4700806c912ef10388cb595018284936033dd7c784e`.
+The existing pinned uv environment and dependencies were used; no runtime changes were made.
+Each new fixture has its own complete input, manifest, expected result, Canonical JSON
+and read-only snapshots. Two isolated setups and the two independent Digest references
+agree. Mutation checks reject missing reason, forbidden/missing full projection fields,
+and changed digestVersion/resolverVersion.
+See [the Digest review](single/digest-review.md). Core was not run.
+The normative/reference projections, remaining scanner Context cases, federation golden
+and full fresh-checkout Gate A evidence remain pending.

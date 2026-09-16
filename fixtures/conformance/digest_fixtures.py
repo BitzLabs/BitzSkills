@@ -57,7 +57,7 @@ def reviewed_manifest(identifier):
 
 def reviewed_result(identifier, context_digest):
     _, req_body, tech_body, _ = CASES[identifier]
-    detail = "full" if identifier == "SINGLE-043-01" else "standard"
+    detail = "full" if identifier in {"SINGLE-043-01", "SINGLE-106-01"} else "standard"
     expanded = ["TECH-001"] if identifier == "SINGLE-043-02" else []
     if identifier == "SINGLE-127-03":
         expanded = ["REQ-001", "TECH-001"]

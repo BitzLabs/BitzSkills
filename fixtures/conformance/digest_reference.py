@@ -114,8 +114,19 @@ DESCRIPTIONS = {
     "SINGLE-127-03": "異なるexpand値を反復し、入力順に依存せず正規ID辞書順で返す",
     "SINGLE-127-04": "同じexpand値を反復し、1件へ重複排除する",
 }
+# These matrix dimensions deliberately reuse the golden corpus: its second
+# statement has a non-null SHOULD reason, and its full documents exercise the
+# projection schema without changing semantic resolution.
+for identifier, tail, description in (
+    ("SINGLE-101-01", [], "理由付きSHOULDのreasonと完全Digest材料を比較する"),
+    ("SINGLE-106-01", ["--detail", "full"], "full projectionの必須fieldと禁止fieldを検証する"),
+    ("SINGLE-121", [], "固定Digest入力のdigestVersionとresolverVersionを検証する"),
+):
+    CASES[identifier] = (tail, REQ_BODY, TECH_BODY, "team-auth")
+    DESCRIPTIONS[identifier] = description
+
 # Fixtures whose digest input is byte-identical to the golden.
-SAME_AS_GOLDEN = ("SINGLE-042", "SINGLE-043-01", "SINGLE-043-02", "SINGLE-045", "SINGLE-127-03", "SINGLE-127-04")
+SAME_AS_GOLDEN = ("SINGLE-042", "SINGLE-043-01", "SINGLE-043-02", "SINGLE-045", "SINGLE-127-03", "SINGLE-127-04", "SINGLE-101-01", "SINGLE-106-01", "SINGLE-121")
 
 
 def reviewed_inputs(identifier):

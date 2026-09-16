@@ -85,3 +85,14 @@ which the EBNF allows only for `[SHOULD]`. B now rejects it, and a regression te
   Digest condition remains open.
 - Equality across `SINGLE-042/043/045` is checked as Canonical JSON bytes, not only as hash strings,
   so a serializer change cannot hide behind a matching hash.
+
+## 2026-09-17: reason、full projection、versionの専用fixture
+
+`SINGLE-101-01`、`SINGLE-106-01`、`SINGLE-121`は既存golden corpusを使用する。
+理由付きSHOULDはREQの第2句に存在し、LedgerのreasonとCanonical JSON内の全statementを
+固定する。fullは`--detail full`を明示し、各文書の必須fieldと禁止fieldを結果Schemaで検証する。
+versionはCanonical JSONのdigestVersionとresolverVersionがともに1.0であることを固定する。
+いずれも入力、manifest、完全期待JSON、Canonical JSON、副作用snapshotを保持し、
+独立2系統の計算と2回の隔離setupを既存goldenと同じ検証へ通す。
+reason除去、fullへのexpandable追加・bodyText欠落、両version改変を拒否する回帰検査を追加した。
+Core実行や出力観測は含まない。

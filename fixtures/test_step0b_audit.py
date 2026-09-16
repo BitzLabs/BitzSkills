@@ -1219,7 +1219,8 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(result["errors"], [])
         self.assertEqual(result["prepared"], ["SINGLE-042", "SINGLE-043-01", "SINGLE-043-02",
                                               "SINGLE-044-01", "SINGLE-044-02", "SINGLE-045",
-                                              "SINGLE-127-03", "SINGLE-127-04"])
+                                              "SINGLE-127-03", "SINGLE-127-04",
+                                              "SINGLE-101-01", "SINGLE-106-01", "SINGLE-121"])
         self.assertEqual(result["core_execution"], "Not run")
         self.assertEqual(result["references"], 2)
 
@@ -1258,6 +1259,11 @@ class AuditTests(unittest.TestCase):
 
     def test_digest_audit_rejects_tampered_expectations(self):
         mutations = [
+            ("SINGLE-101-01", "expected/context.json", lambda v: v["constraintLedger"]["statements"][1].update(reason=None)),
+            ("SINGLE-106-01", "expected/context.json", lambda v: v["documents"][0].update(expandable=True)),
+            ("SINGLE-106-01", "expected/context.json", lambda v: v["documents"][0].pop("bodyText")),
+            ("SINGLE-121", "expected/context.canonical.json", lambda v: v.update(resolverVersion="1.1")),
+            ("SINGLE-121", "expected/context.canonical.json", lambda v: v.update(digestVersion="1.1")),
             ("SINGLE-042", "expected/context.json", lambda v: v.update(contextDigest="sha256:" + "0" * 64)),
             ("SINGLE-042", "expected/context.json", lambda v: v.update(status="passed_with_warnings")),
             ("SINGLE-042", "expected/context.json", lambda v: v["resolution"].update(documentCount=3)),
