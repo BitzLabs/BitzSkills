@@ -13,7 +13,7 @@ import tempfile
 
 from jsonschema import Draft202012Validator, ValidationError
 
-from . import digest_crosscheck, digest_reference
+from . import digest_crosscheck, digest_reference, parser_expectations
 from .digest_reference import CASES, DESCRIPTIONS, SAME_AS_GOLDEN
 from .harness import setup
 from .initial_fixtures import observe, compare_state
@@ -44,6 +44,8 @@ COVERAGE = {
 def reviewed_manifest(identifier):
     tail = CASES[identifier][0]
     return {
+        **({"parserChecks": [{"path": REQ_RESULT_PATH, "resultFile": "expected/parser-ir.json"}]}
+           if identifier in {"SINGLE-097-01", "SINGLE-101-01"} else {}),
         "fixtureId": identifier,
         "description": DESCRIPTIONS[identifier],
         "setup": {"git": True, "operations": []},
@@ -63,7 +65,10 @@ def reviewed_result(identifier, context_digest):
         expanded = ["REQ-001", "TECH-001"]
     elif identifier == "SINGLE-127-04":
         expanded = ["TECH-001"]
-    return {
+    ledger = [dict(statement) for statement in LEDGER]
+    if identifier == "SINGLE-097-01":
+        ledger[0] = {**ledger[0], "operation": {"kind": "CONSTRAINT", "text": digest_reference.DECODED_TEXT}}
+    result = {
         "schemaVersion": "1.0", "operation": "context", "status": "passed", "purpose": "verify",
         "workspace": {"id": "root", "path": "."},
         "roots": ["REQ-001"],
@@ -89,11 +94,20 @@ def reviewed_result(identifier, context_digest):
                                         "command": "default"}]},
              "bodyText": tech_body, "untrustedText": True},
         ],
-        "constraintLedger": {"statements": [dict(statement) for statement in LEDGER]},
+        "constraintLedger": {"statements": ledger},
         "coverage": json.loads(json.dumps(COVERAGE)),
         "durationMs": 0,
         "diagnostics": [],
     }
+
+    if identifier == "SINGLE-106-02":
+        result["resolution"]["documentCount"] = 3
+        result["documents"].append({
+            "id": "TECH-002", "kind": "technical", "status": "approved", "role": "refinement",
+            "path": digest_reference.NORMATIVE_PATH, "projection": "normative",
+            "reachedBy": ["refines:TECH-002"], "statementRefs": [], "untrustedText": True,
+        })
+    return result
 
 
 def references(identifier, repository):
@@ -157,6 +171,7 @@ def validate(root=HERE, identifiers=None):
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
                         raise ValueError("isolated setup differs from fixed snapshot")
                     previous = actual
+                    parser_expectations.validate_checks(fixture, manifest, repository)
                     computed = references(identifier, repository)
                     if computed != canonical:
                         raise ValueError("committed Canonical JSON differs from the reference computation")

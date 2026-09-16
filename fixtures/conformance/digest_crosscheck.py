@@ -107,6 +107,25 @@ STATEMENT = re.compile(
     r"\[(?P<operation>THEN|GENERATE|CONSTRAINT)\] (?P<text>.+)[.。]$")
 
 
+def unescape_text(text):
+    """The fixture reader handles escapes outside code spans only. Unsupported
+    constructs fail closed; this is not the production Parser."""
+    out, index = [], 0
+    while index < len(text):
+        char = text[index]
+        if char == "\\":
+            index += 1
+            if index == len(text) or text[index] not in '[]\\`"':
+                raise ValueError("unknown or trailing escape in reference corpus")
+            out.append(text[index])
+        elif char == "`":
+            raise ValueError("code spans require their own reviewed reference vector")
+        else:
+            out.append(char)
+        index += 1
+    return re.sub(r"[ \t]+", " ", "".join(out).strip(" \t"))
+
+
 def read_statements(body):
     statements = []
     for line in body.split("\n"):
@@ -127,10 +146,10 @@ def read_statements(body):
         statements.append({
             "id": match.group("id"),
             "actor": match.group("actor"),
-            "activation": {"kind": kind, "text": text},
+            "activation": {"kind": kind, "text": unescape_text(text) if text is not None else None},
             "modality": match.group("modality"),
-            "reason": reason[len(" [REASON] "):] if reason else None,
-            "operation": {"kind": match.group("operation"), "text": match.group("text")},
+            "reason": unescape_text(reason[len(" [REASON] "):]) if reason else None,
+            "operation": {"kind": match.group("operation"), "text": unescape_text(match.group("text"))},
             "extensions": [],
         })
     return statements

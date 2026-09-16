@@ -21,6 +21,7 @@ fixtures/conformance/single/<fixture-id>/changes/...
 fixtures/conformance/single/<fixture-id>/manifest.json
 fixtures/conformance/single/<fixture-id>/expected/<operation>.json
 fixtures/conformance/single/<fixture-id>/expected/<operation>.txt
+fixtures/conformance/single/<fixture-id>/expected/parser-ir.json
 fixtures/conformance/monorepo/<fixture-id>/repo/...
 fixtures/conformance/monorepo/<fixture-id>/changes/...
 fixtures/conformance/monorepo/<fixture-id>/manifest.json
@@ -40,6 +41,7 @@ version管理する。Git履歴とbase commit後の状態はmanifestだけから
 `frontmatter.schema.json`はYAML解析後のFrontmatter構造が従うDraft 2020-12 Schemaである。harnessは配置directoryから
 文書種別別definitionを選び、Core実行とは独立に正例を受理、Schema反例を拒否することを確認する。
 
+内部Parser受入は§4.1の追加比較とし、公開invocationを増やさない。
 1つのfixtureは1回のinvocation、1種類の独立原因、1つの期待status、1つの期待exit codeだけを持つ。
 並び順や集約を検査するfixtureは、同じ原因を複数位置で発生させてよいが、別の原因を混ぜてはならない。
 同じ論点の入力変種、operation変種、成功／非成功変種はfixture ID、入力directory、manifestを分ける。
@@ -100,6 +102,7 @@ fixture IDは`SINGLE-NNN`または`MONO-NNN`をcase familyとし、分割が必�
 | `expect.resultFile` | No | 期待JSON。`stdout: none`では持たない |
 | `expect.textFile` | No | 期待textまたはMarkdown。`stdout: text|markdown`で必須 |
 | `expect.reportFileCount` | Yes | 実行後に`.spec/reports/`へ増える件数 |
+| `parserChecks` | No | §4.1の内部Parser受入。`path`と`resultFile`を持つ配列 |
 
 `runner: bitz`はshellを介さず、repositoryで検査対象の`bitz` entry pointを実行する。
 `runner: consumer`と`runner: migration`はCore配布物に含める固定compatibility harnessをshellなしで実行し、
@@ -179,6 +182,29 @@ Context Digest fixtureは、Digest入力のCanonical JSONをUTF-8・BOMなし・
 単一workspaceのgoldenは`SINGLE-042`、連合のgoldenは`MONO-002-01`が所有する。両fixtureはmanifestから個別に
 再構築した隔離済みcopyを2つ実行し、Canonical JSONとDigestが各回でbyte一致することも検査する。locale、入力fileの作成順、cacheの有無を
 一度に混ぜず、個別の再現性試験として同じgolden値へ一致させる。
+
+### 4.1 内部Parser受入
+
+`context`の公開結果にはSemantic IRの`source`や`raw`を追加しない。matrixが要求する
+完全IR比較は、同じfixture入力を使う内部Parser受入として行う。公開invocationでは従来どおり
+結果JSONとContext Digestを比較し、内部比較の成功で公開結果の比較を代用しない。
+
+`parserChecks`を持つmanifestは、次のobjectを1件以上列挙する。未知fieldを禁止する。
+
+- `path`: setup後のrepository root相対の文書path。通常fileに限定する。
+- `resultFile`: `expected/`配下の完全IR期待JSON。各checkは異なる入力pathと期待fileを持つ。
+
+期待JSONは文書が所有する全規範文のSemantic IR object配列とし、sourceのline、column、ID順で保持する。
+fieldは[EARS-AI仕様 §6](../01_EARS-AI/01_言語・Semantic-IR仕様.md#6-semantic-ir)に従う。
+`source.path`は入力path、位置はFrontmatterを含む元fileのUnicode code point単位の1始まりとする。
+`source.column`はstatement IDの開始角括弧を指す。`raw`はlist markerを含む候補行全体で、改行を含めない。
+source、raw、unknownExtensionsを含む全field、値、配列順、nullと省略を比較し、normalizerで除外しない。
+
+Step 0Bでは固定した入力・完全IR期待値の整合と検証器の改変検出だけを確認する。
+Step 2のGate Bでは、実装側のtest adapterが実際のScanner／Parserを同じsetup済み入力へ適用し、
+得られた全Semantic IRを完全比較する。公開CLI option、公開runner、製品の出力fieldは追加しない。
+adapterが存在しない場合は未受入とし、fixture側reference計算を実装の代わりに呼んで合格にしてはならない。
+内部Parser呼出しにも§5のread-only副作用条件を適用する。該当context機能のGate Bでは、別途その公開結果を比較する。
 
 ## 5. 副作用の検査
 
@@ -381,11 +407,11 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 
 | fixture | 主な入力 | operation | status／exit | 必須確認 |
 |---|---|---|---|---|
-| `SINGLE-096-01` | 1行に異なる長さを含む複数code span | context | passed／0 | 同じrun長だけで閉じ、IRのtextとsourceを完全比較 |
+| `SINGLE-096-01` | 1行に異なる長さを含む複数code span | context | passed／0 | 同じrun長だけで閉じ、内部Parser受入で完全IR（text・sourceを含む）、公開JSONとDigestを比較 |
 | `SINGLE-096-02` | 開始と同じrun長の終了delimiterなし | check | failed／1 | `EAI-CORE-SYNTAX-005`だけ、開始backtickのline／column |
-| `SINGLE-097-01` | textの`\[`、`\]`、`\\`、``\` ``、`\"` | context | passed／0 | IRでは各escapeを1 code pointへ解除 |
+| `SINGLE-097-01` | textの`\[`、`\]`、`\\`、``\` ``、`\"` | context | passed／0 | 内部Parser受入で各escapeを1 code pointへ解除した完全IR、公開JSONとDigestを比較 |
 | `SINGLE-097-02` | 未知escape | check | failed／1 | `EAI-CORE-SYNTAX-004`だけ、backslashのline／column |
-| `SINGLE-098-01` | quoted extension value内のescaped DQUOTE | context | passed／0 | opaque valueとIRを完全比較 |
+| `SINGLE-098-01` | quoted extension value内のescaped DQUOTE | context | passed／0 | 内部Parser受入でopaque valueを含む完全IR、公開JSONとDigestを比較 |
 | `SINGLE-098-02` | quoted extension value未閉鎖 | check | failed／1 | `EAI-CORE-SYNTAX-004`だけ、開始DQUOTEのline／column |
 | `SINGLE-099-01` | backtick fenced code内の規範文様文字列 | check | passed／0 | 候補を0件として扱う |
 | `SINGLE-099-02` | tilde fenced code内の規範文様文字列 | check | passed／0 | 候補を0件として扱う |
@@ -395,7 +421,7 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-100-02` | 未知uppercase prefix ID | check | failed／1 | 候補化し、`EAI-CORE-ID-001`だけ |
 | `SINGLE-100-03` | 3階層ID | check | failed／1 | 候補化し、`EAI-CORE-ID-001`だけ |
 | `SINGLE-100-04` | `[ACTOR:...]`から始まるID欠落行 | check | failed／1 | 候補化し、`EAI-CORE-ID-001`だけ |
-| `SINGLE-101-01` | `[SHOULD] [REASON] <text>` | context | passed／0 | IRの`reason`とDigestを完全比較 |
+| `SINGLE-101-01` | `[SHOULD] [REASON] <text>` | context | passed／0 | 内部Parser受入で`reason`を含む完全IR、公開JSONとDigestを比較 |
 | `SINGLE-101-02` | `[MUST] [REASON] <text>` | check | failed／1 | `EAI-CORE-SYNTAX-001`だけ |
 | `SINGLE-101-03` | `[MAY] [REASON] <text>` | check | failed／1 | `EAI-CORE-SYNTAX-001`だけ |
 | `SINGLE-102` | multi-byte文字とTABの後に不正tag | check | failed／1 | Unicode code point単位の1始まりline／columnを完全比較 |

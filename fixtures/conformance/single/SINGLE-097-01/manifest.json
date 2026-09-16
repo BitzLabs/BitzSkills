@@ -5,8 +5,8 @@
       "resultFile": "expected/parser-ir.json"
     }
   ],
-  "fixtureId": "SINGLE-101-01",
-  "description": "理由付きSHOULDのreasonと完全Digest材料を比較する",
+  "fixtureId": "SINGLE-097-01",
+  "description": "textの5種類の既知escapeを各1 code pointへ解除する",
   "setup": {
     "git": true,
     "operations": []

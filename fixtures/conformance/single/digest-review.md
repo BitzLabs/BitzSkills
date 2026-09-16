@@ -96,3 +96,22 @@ versionはCanonical JSONのdigestVersionとresolverVersionがともに1.0であ�
 独立2系統の計算と2回の隔離setupを既存goldenと同じ検証へ通す。
 reason除去、fullへのexpandable追加・bodyText欠落、両version改変を拒否する回帰検査を追加した。
 Core実行や出力観測は含まない。
+
+## 2026-09-17: 内部Parser受入とescape・normative
+
+ユーザー裁定により、公開context Schemaへsourceを追加せず、完全IRの比較を内部Parser受入へ分離した。
+適合fixture仕様 §4.1とmanifestのparserChecksが入力path・期待JSONを固定する。
+Step 0Bではreview済み値を入力byte列と照合し、Step 2のGate Bでは実Parserから得た
+全IRを比較する。fixture referenceを呼ぶだけでCore受入とはしない。
+
+- SINGLE-097-01: 5種類の既知escapeを1行で検査する。reference Aは解除後textを明示した
+  literal、reference Bは入力から左→右のescape解除を行う。完全IRはline 15/16、column 3、
+  raw候補行、source path、全意味fieldを固定し、公開JSONとCanonical JSONは従来どおり完全比較する。
+- SINGLE-101-01: 同じ内部受入を追加し、理由付きSHOULDの全IRを固定する。
+- SINGLE-106-02: TECH-001をrefineする距離2のTECH-002を追加する。statementやtestを増やさず、
+  documentCountだけが3となる。TECH-002のprojectionはnormative、statementRefsは空配列、
+  frontmatter/bodyText/expandableは省略する。新文書を含むDigestは2系統の計算で照合する。
+
+source位置、raw、解除後text、reasonの改変、normativeへのbodyText追加とstatementRefs欠落、
+Parser期待値の不存在・path逸脱・重複を拒否する。新しいreference readerはcode spanを
+未対応のまま受理せず、専用vectorの確定を要求する。

@@ -422,3 +422,22 @@ and changed digestVersion/resolverVersion.
 See [the Digest review](single/digest-review.md). Core was not run.
 The normative/reference projections, remaining scanner Context cases, federation golden
 and full fresh-checkout Gate A evidence remain pending.
+
+## 2026-09-17: internal Parser evidence and normative projection
+
+Prepared: 179/311; missing: 132. Added SINGLE-097-01 and SINGLE-106-02, and added
+complete internal Parser IR expectations to SINGLE-101-01.
+Two pinned-environment `python -B fixtures/validate_step0b.py` runs produced
+byte-identical reports, with no check errors; both exit 1 for outstanding Gate A evidence.
+Report SHA-256: `145b9efd0b02033a4f5d9b3148ec6a4f8a5c5e7da9606c5414a4f98669a99027`.
+Runtime: the existing CPython 3.14.6 Step 0B uv environment, Linux/POSIX; dependency pins unchanged.
+The five text escapes and source/raw/meaning fields agree with fixed full IR expectations.
+A distance-two refinement exercises normative projection field omission.
+Input, complete JSON, Canonical JSON and snapshots are fixed; two isolated setups and
+two independent Digest computations agree. Mutation checks cover semantic fields,
+source positions, raw, projection fields and missing/unsafe/duplicate Parser references.
+The accepted split is specified in fixture contract §4.1: Step 2 must compare the real
+Parser's full IR, while public context acceptance continues comparing JSON and Digest.
+No Core Parser or operation was implemented or executed. Code-span and quoted-extension
+expectations remain pending semantic decisions; reference projection and federation
+golden, other missing fixtures and fresh-checkout Gate A certification also remain pending.

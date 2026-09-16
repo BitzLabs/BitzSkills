@@ -114,6 +114,13 @@ DESCRIPTIONS = {
     "SINGLE-127-03": "異なるexpand値を反復し、入力順に依存せず正規ID辞書順で返す",
     "SINGLE-127-04": "同じexpand値を反復し、1件へ重複排除する",
 }
+# Escaped text is reviewed as literal input and literal semantic value separately.
+ESCAPED_TEXT = r'記号 \[ \] \\ \` \" を保持する'
+DECODED_TEXT = '記号 [ ] \\ ` " を保持する'
+ESCAPED_BODY = REQ_BODY.replace("秘密情報を出力しない", ESCAPED_TEXT)
+CASES["SINGLE-097-01"] = ([], ESCAPED_BODY, TECH_BODY, "team-auth")
+DESCRIPTIONS["SINGLE-097-01"] = "textの5種類の既知escapeを各1 code pointへ解除する"
+
 # These matrix dimensions deliberately reuse the golden corpus: its second
 # statement has a non-null SHOULD reason, and its full documents exercise the
 # projection schema without changing semantic resolution.
@@ -125,6 +132,14 @@ for identifier, tail, description in (
     CASES[identifier] = (tail, REQ_BODY, TECH_BODY, "team-auth")
     DESCRIPTIONS[identifier] = description
 
+# A distance-two refinement exercises normative presentation without adding
+# statements, paths, commands or another independent condition.
+NORMATIVE_PATH = ".spec/technical/TECH-002.md"
+NORMATIVE_BODY = "# TECH-002 間接の具体化\n\n## Context\n\n直接の実装方針をさらに具体化する。\n"
+NORMATIVE_HEAD = "---\nid: TECH-002\ntitle: 間接の具体化\nstatus: approved\nrelations:\n  refines: [TECH-001]\n---\n\n"
+CASES["SINGLE-106-02"] = ([], REQ_BODY, TECH_BODY, "team-auth")
+DESCRIPTIONS["SINGLE-106-02"] = "距離2のrefinementをnormativeで提示し禁止fieldを省略する"
+
 # Fixtures whose digest input is byte-identical to the golden.
 SAME_AS_GOLDEN = ("SINGLE-042", "SINGLE-043-01", "SINGLE-043-02", "SINGLE-045", "SINGLE-127-03", "SINGLE-127-04", "SINGLE-101-01", "SINGLE-106-01", "SINGLE-121")
 
@@ -133,6 +148,8 @@ def reviewed_inputs(identifier):
     _, req_body, tech_body, owners = CASES[identifier]
     tech = "---\n" + TECH_HEAD_FIELDS + f"x-owners: [{owners}]\n---\n\n" + tech_body
     return {
+        **({NORMATIVE_PATH: (NORMATIVE_HEAD + NORMATIVE_BODY).encode()}
+           if identifier == "SINGLE-106-02" else {}),
         CONFIG_PATH: CONFIG.encode(),
         REQ_PATH: (REQ_HEAD + "\n" + req_body).encode(),
         TECH_PATH: tech.encode(),
@@ -168,7 +185,10 @@ EMPTY_RELATIONS = {"requires": [], "refines": [], "addresses": [], "supersedes":
 
 def reviewed_digest_input(identifier):
     _, req_body, tech_body, _ = CASES[identifier]
-    return {
+    statements = [dict(statement) for statement in STATEMENTS]
+    if identifier == "SINGLE-097-01":
+        statements[0] = {**statements[0], "operation": {"kind": "CONSTRAINT", "text": DECODED_TEXT}}
+    result = {
         "digestVersion": "1.0",
         "specSchemaVersion": "1.0",
         "earsAiVersion": "1.0",
@@ -195,7 +215,7 @@ def reviewed_digest_input(identifier):
                     "changes": [],
                 },
                 "bodyText": req_body,
-                "statements": [dict(statement) for statement in STATEMENTS],
+                "statements": statements,
                 "strongRelations": [],
             },
             {
@@ -232,6 +252,18 @@ def reviewed_digest_input(identifier):
             ],
         },
     }
+
+    if identifier == "SINGLE-106-02":
+        result["documents"].append({
+            "id": "TECH-002", "workspaceId": "root", "kind": "technical", "status": "approved",
+            "applicability": "applicable",
+            "frontmatter": {"id": "TECH-002", "title": "間接の具体化", "status": "approved",
+                            "relations": {**EMPTY_RELATIONS, "refines": ["TECH-001"]},
+                            "implements": [], "tests": [], "verify": None, "changes": []},
+            "bodyText": NORMATIVE_BODY, "statements": [],
+            "strongRelations": [{"relation": "refines", "target": "TECH-001"}],
+        })
+    return result
 
 
 # --- RFC 8785 serializer (reference A) ---------------------------------------------

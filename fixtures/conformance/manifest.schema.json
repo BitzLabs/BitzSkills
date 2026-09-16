@@ -16,7 +16,18 @@
     },
     "setup": { "$ref": "#/$defs/setup" },
     "invocation": { "$ref": "#/$defs/invocation" },
-    "expect": { "$ref": "#/$defs/expect" }
+    "expect": { "$ref": "#/$defs/expect" },
+    "parserChecks": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {
+        "type": "object", "required": ["path", "resultFile"],
+        "properties": {
+          "path": { "$ref": "#/$defs/strictPath" },
+          "resultFile": { "$ref": "#/$defs/strictPath" }
+        },
+        "additionalProperties": false
+      }
+    }
   },
   "allOf": [
     {

@@ -14,6 +14,7 @@ from urllib.parse import unquote
 
 from jsonschema import Draft202012Validator, ValidationError
 sys.dont_write_bytecode = True
+from conformance import parser_expectations
 from conformance.diagnostic_coverage import validate as validate_diagnostic_coverage
 from conformance.target_vectors import validate as validate_target_vectors
 from conformance.initial_fixtures import validate as validate_initial_fixtures
@@ -172,6 +173,11 @@ def matrix():
                             or result["status"] != manifest["expect"].get("status")
                             or status_exit[result["status"]] != manifest["expect"]["exitCode"]):
                         errors.append(f"{path}: manifest/result operation, status or exit code mismatch")
+            for _, expected_ir in parser_expectations.files(path.parent, manifest):
+                value = json.loads(expected_ir.read_text())
+                if not isinstance(value, list):
+                    errors.append(f"{path}: Parser expectation must be a full IR array")
+                referenced.add(expected_ir.resolve())
             unreferenced = {p.resolve() for p in (path.parent / "expected").glob("*") if p.is_file()} - referenced
             # Canonical bytes are compared separately by the golden digest check.
             unreferenced = {p for p in unreferenced if p.name != "context.canonical.json"}

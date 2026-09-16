@@ -1,12 +1,6 @@
 {
-  "parserChecks": [
-    {
-      "path": ".spec/requirements/REQ-001.md",
-      "resultFile": "expected/parser-ir.json"
-    }
-  ],
-  "fixtureId": "SINGLE-101-01",
-  "description": "理由付きSHOULDのreasonと完全Digest材料を比較する",
+  "fixtureId": "SINGLE-106-02",
+  "description": "距離2のrefinementをnormativeで提示し禁止fieldを省略する",
   "setup": {
     "git": true,
     "operations": []

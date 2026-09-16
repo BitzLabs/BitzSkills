@@ -1214,13 +1214,31 @@ class AuditTests(unittest.TestCase):
                 path.write_text(mutate(path.read_text()))
                 self.assertTrue(validate_context_limits(root, [identifier])["errors"])
 
+    def test_parser_checks_reject_missing_unsafe_and_duplicate_references(self):
+        from conformance.parser_expectations import files
+        identifier = "SINGLE-097-01"
+        fixture = audit.FIXTURES / "single" / identifier
+        manifest = json.loads((fixture / "manifest.json").read_text())
+        self.assertEqual(len(list(files(fixture, manifest))), 1)
+        for field, value in (("path", "../outside.md"), ("path", "/tmp/outside.md"),
+                             ("resultFile", "expected/missing.json"),
+                             ("resultFile", "expected/../manifest.json")):
+            changed = copy.deepcopy(manifest)
+            changed["parserChecks"][0][field] = value
+            with self.subTest(field=field, value=value), self.assertRaises(ValueError):
+                list(files(fixture, changed))
+        duplicate = copy.deepcopy(manifest)
+        duplicate["parserChecks"].append(copy.deepcopy(duplicate["parserChecks"][0]))
+        with self.assertRaises(ValueError):
+            list(files(fixture, duplicate))
+
     def test_digest_fixtures(self):
         result = validate_digest()
         self.assertEqual(result["errors"], [])
         self.assertEqual(result["prepared"], ["SINGLE-042", "SINGLE-043-01", "SINGLE-043-02",
                                               "SINGLE-044-01", "SINGLE-044-02", "SINGLE-045",
-                                              "SINGLE-127-03", "SINGLE-127-04",
-                                              "SINGLE-101-01", "SINGLE-106-01", "SINGLE-121"])
+                                              "SINGLE-127-03", "SINGLE-127-04", "SINGLE-097-01",
+                                              "SINGLE-101-01", "SINGLE-106-01", "SINGLE-121", "SINGLE-106-02"])
         self.assertEqual(result["core_execution"], "Not run")
         self.assertEqual(result["references"], 2)
 
@@ -1259,6 +1277,13 @@ class AuditTests(unittest.TestCase):
 
     def test_digest_audit_rejects_tampered_expectations(self):
         mutations = [
+            ("SINGLE-097-01", "expected/parser-ir.json", lambda v: v[0]["source"].update(column=2)),
+            ("SINGLE-097-01", "expected/parser-ir.json", lambda v: v[0]["source"].update(line=1)),
+            ("SINGLE-097-01", "expected/parser-ir.json", lambda v: v[0].update(raw="normalized raw")),
+            ("SINGLE-097-01", "expected/parser-ir.json", lambda v: v[0]["operation"].update(text="lost escapes")),
+            ("SINGLE-101-01", "expected/parser-ir.json", lambda v: v[1].update(reason=None)),
+            ("SINGLE-106-02", "expected/context.json", lambda v: v["documents"][2].update(bodyText="forbidden body")),
+            ("SINGLE-106-02", "expected/context.json", lambda v: v["documents"][2].pop("statementRefs")),
             ("SINGLE-101-01", "expected/context.json", lambda v: v["constraintLedger"]["statements"][1].update(reason=None)),
             ("SINGLE-106-01", "expected/context.json", lambda v: v["documents"][0].update(expandable=True)),
             ("SINGLE-106-01", "expected/context.json", lambda v: v["documents"][0].pop("bodyText")),
