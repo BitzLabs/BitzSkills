@@ -115,3 +115,13 @@ Step 0Bではreview済み値を入力byte列と照合し、Step 2のGate Bでは
 source位置、raw、解除後text、reasonの改変、normativeへのbodyText追加とstatementRefs欠落、
 Parser期待値の不存在・path逸脱・重複を拒否する。新しいreference readerはcode spanを
 未対応のまま受理せず、専用vectorの確定を要求する。
+
+## 2026-09-17: quoted extension
+
+SINGLE-098-01のmatrix statusをユーザー裁定に従いpassed_with_warningsへ訂正した。
+quality:LEVELのquoted値にescaped DQUOTEを置き、解除後の値 `say "hello"` を固定する。
+未知namespaceのDiagnosticはline 15、column 19に1件だけ出す。Ledgerの規範意味は
+goldenと同じだが、Digestにはopaque extensionと原文が入るため別の値となる。
+完全IRのextensionsとunknownExtensionsは同じ要素を出現順で保持する。
+原文、解除値、unknownExtensions、warning省略、診断位置の改変を拒否する。
+入力、完全IR、公開JSON、Canonical JSON、副作用snapshotは独立した実fixtureとして保存する。

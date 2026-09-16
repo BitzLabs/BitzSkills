@@ -411,7 +411,7 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-096-02` | 開始と同じrun長の終了delimiterなし | check | failed／1 | `EAI-CORE-SYNTAX-005`だけ、開始backtickのline／column |
 | `SINGLE-097-01` | textの`\[`、`\]`、`\\`、``\` ``、`\"` | context | passed／0 | 内部Parser受入で各escapeを1 code pointへ解除した完全IR、公開JSONとDigestを比較 |
 | `SINGLE-097-02` | 未知escape | check | failed／1 | `EAI-CORE-SYNTAX-004`だけ、backslashのline／column |
-| `SINGLE-098-01` | quoted extension value内のescaped DQUOTE | context | passed／0 | 内部Parser受入でopaque valueを含む完全IR、公開JSONとDigestを比較 |
+| `SINGLE-098-01` | 未知quality namespaceのquoted extension value内のescaped DQUOTE | context | passed_with_warnings／0 | 内部Parser受入でopaque valueを含む完全IR、公開JSONとDigestを比較 |
 | `SINGLE-098-02` | quoted extension value未閉鎖 | check | failed／1 | `EAI-CORE-SYNTAX-004`だけ、開始DQUOTEのline／column |
 | `SINGLE-099-01` | backtick fenced code内の規範文様文字列 | check | passed／0 | 候補を0件として扱う |
 | `SINGLE-099-02` | tilde fenced code内の規範文様文字列 | check | passed／0 | 候補を0件として扱う |

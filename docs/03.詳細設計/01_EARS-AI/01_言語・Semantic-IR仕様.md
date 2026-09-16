@@ -220,6 +220,8 @@ Lexer token、Markdown装飾、区切り文字の具象nodeは公開Schemaに含
 
 - `text`は正規化後の値を保持する。
 - `reason`は`SHOULD`の`[REASON]` text、理由なし`SHOULD`ではnull、`MUST`／`MAY`ではnullとする。
+- `extensions`は出現順の`{namespace, term, value}`配列とし、値未指定はnull、quoted valueはescape解除後の文字列を保持する。
+- `unknownExtensions`は`extensions`のうち未知namespaceの要素を同じobject形・出現順で保持する。重複も保持する。
 - `raw`は診断と原文参照のため保持する。
 - `untrustedText`は常にtrueで、extensionが解除できない。
 - JSONをCoreとadapter間の機械契約とする。

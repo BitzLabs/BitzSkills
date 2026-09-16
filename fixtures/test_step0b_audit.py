@@ -1237,7 +1237,7 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(result["errors"], [])
         self.assertEqual(result["prepared"], ["SINGLE-042", "SINGLE-043-01", "SINGLE-043-02",
                                               "SINGLE-044-01", "SINGLE-044-02", "SINGLE-045",
-                                              "SINGLE-127-03", "SINGLE-127-04", "SINGLE-097-01",
+                                              "SINGLE-127-03", "SINGLE-127-04", "SINGLE-097-01", "SINGLE-098-01",
                                               "SINGLE-101-01", "SINGLE-106-01", "SINGLE-121", "SINGLE-106-02"])
         self.assertEqual(result["core_execution"], "Not run")
         self.assertEqual(result["references"], 2)
@@ -1277,6 +1277,10 @@ class AuditTests(unittest.TestCase):
 
     def test_digest_audit_rejects_tampered_expectations(self):
         mutations = [
+            ("SINGLE-098-01", "expected/parser-ir.json", lambda v: v[0].update(unknownExtensions=[])),
+            ("SINGLE-098-01", "expected/parser-ir.json", lambda v: v[0]["extensions"][0].update(value="lost quote")),
+            ("SINGLE-098-01", "expected/context.json", lambda v: v.update(status="passed", diagnostics=[])),
+            ("SINGLE-098-01", "expected/context.json", lambda v: v["diagnostics"][0]["source"].update(column=20)),
             ("SINGLE-097-01", "expected/parser-ir.json", lambda v: v[0]["source"].update(column=2)),
             ("SINGLE-097-01", "expected/parser-ir.json", lambda v: v[0]["source"].update(line=1)),
             ("SINGLE-097-01", "expected/parser-ir.json", lambda v: v[0].update(raw="normalized raw")),

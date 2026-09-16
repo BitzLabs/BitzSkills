@@ -101,6 +101,7 @@ def normalize_body(raw):
 
 STATEMENT = re.compile(
     r"^- \[(?P<id>[A-Za-z0-9:\-]+)\] "
+    r'(?P<extensions>(?:\[[a-z][a-z0-9]*:[A-Z][A-Z0-9_]*(?:="(?:[^"\\\r\n]|\\[\[\]\\`"])*")?\] )*)'
     r"\[ACTOR:(?P<actor>[A-Za-z][A-Za-z0-9_\-]*)\] "
     r"(?P<activation>\[ALWAYS\]|\[(?:WHEN|WHILE|WHERE|IF_ERROR)\] .+?) "
     r"\[(?P<modality>MUST|SHOULD|MAY)\](?P<reason> \[REASON\] .+?)? "
@@ -124,6 +125,25 @@ def unescape_text(text):
             out.append(char)
         index += 1
     return re.sub(r"[ \t]+", " ", "".join(out).strip(" \t"))
+
+
+EXTENSION = re.compile(r'\[(?P<namespace>[a-z][a-z0-9]*):(?P<term>[A-Z][A-Z0-9_]*)(?:="(?P<value>(?:[^"\\\r\n]|\\[\[\]\\`"])*)")?\] ')
+
+
+def read_extensions(raw):
+    entries, cursor = [], 0
+    for match in EXTENSION.finditer(raw):
+        if match.start() != cursor:
+            raise ValueError("unsupported extension in reference corpus")
+        value = match.group("value")
+        # Quoted values decode only escapes; unlike text their spaces are opaque.
+        if value is not None:
+            value = re.sub(r'\\([\[\]\\`"])', r'\1', value)
+        entries.append({"namespace": match.group("namespace"), "term": match.group("term"), "value": value})
+        cursor = match.end()
+    if cursor != len(raw):
+        raise ValueError("unsupported extension in reference corpus")
+    return entries
 
 
 def read_statements(body):
@@ -150,7 +170,7 @@ def read_statements(body):
             "modality": match.group("modality"),
             "reason": unescape_text(reason[len(" [REASON] "):]) if reason else None,
             "operation": {"kind": match.group("operation"), "text": unescape_text(match.group("text"))},
-            "extensions": [],
+            "extensions": read_extensions(match.group("extensions")),
         })
     return statements
 

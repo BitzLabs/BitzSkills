@@ -121,6 +121,12 @@ ESCAPED_BODY = REQ_BODY.replace("秘密情報を出力しない", ESCAPED_TEXT)
 CASES["SINGLE-097-01"] = ([], ESCAPED_BODY, TECH_BODY, "team-auth")
 DESCRIPTIONS["SINGLE-097-01"] = "textの5種類の既知escapeを各1 code pointへ解除する"
 
+QUOTED_EXTENSION = r'[quality:LEVEL="say \"hello\""]'
+QUOTED_BODY = REQ_BODY.replace('[ACTOR:TargetSystem]', QUOTED_EXTENSION + ' [ACTOR:TargetSystem]', 1)
+QUOTED_VALUE = 'say "hello"'
+CASES["SINGLE-098-01"] = ([], QUOTED_BODY, TECH_BODY, "team-auth")
+DESCRIPTIONS["SINGLE-098-01"] = "未知extensionのquoted DQUOTEを解除しopaque値を保持する"
+
 # These matrix dimensions deliberately reuse the golden corpus: its second
 # statement has a non-null SHOULD reason, and its full documents exercise the
 # projection schema without changing semantic resolution.
@@ -188,6 +194,9 @@ def reviewed_digest_input(identifier):
     statements = [dict(statement) for statement in STATEMENTS]
     if identifier == "SINGLE-097-01":
         statements[0] = {**statements[0], "operation": {"kind": "CONSTRAINT", "text": DECODED_TEXT}}
+    if identifier == "SINGLE-098-01":
+        statements[0] = {**statements[0], "extensions": [
+            {"namespace": "quality", "term": "LEVEL", "value": QUOTED_VALUE}]}
     result = {
         "digestVersion": "1.0",
         "specSchemaVersion": "1.0",

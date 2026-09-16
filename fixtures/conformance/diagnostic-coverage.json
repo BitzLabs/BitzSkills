@@ -15,7 +15,7 @@
     "docs/03.詳細設計/03_操作仕様/03_verify.md": "e982727a6918bfdb7ff742628072f01c465bcee47f12bcc18b4b0a1f9ab4cbd8",
     "docs/03.詳細設計/03_操作仕様/04_doctor.md": "1e968a684f114de2c99b686bc5e30b11cf2053f165557fe405a4db65550534e3",
     "docs/03.詳細設計/03_操作仕様/README.md": "a520a10c2b81fc39d3b09b218d12eeed756c04c04ceac1b4fc9c489d041a6eda",
-    "docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md": "e861b0c665e30216a6964f8bce495b4409f2d9a7d998efcb6cb9c7636387c4de",
+    "docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md": "bbeedf148eab51949b9a6c6749a172227704ab016e20bab3289f0b7acd033c8a",
     "docs/03.詳細設計/01_EARS-AI/02_適合性・移行仕様.md": "683af29dcfe77db6052da960e938b8f367a00fb0b4670199c6aeeee83ec31b05",
     "docs/03.詳細設計/01_EARS-AI/03_例・アンチパターン.md": "f1fe362cc97666e1b81368f6669d1fc3b7650499aa1bd1b6a06ef3f320c96e75",
     "docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md": "e8ff08a6d2e2d29d7e502a0e2173f8ba3e1ea84823205344d775ae83f42197bc"

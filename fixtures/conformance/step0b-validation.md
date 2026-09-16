@@ -441,3 +441,15 @@ Parser's full IR, while public context acceptance continues comparing JSON and D
 No Core Parser or operation was implemented or executed. Code-span and quoted-extension
 expectations remain pending semantic decisions; reference projection and federation
 golden, other missing fixtures and fresh-checkout Gate A certification also remain pending.
+
+## 2026-09-17: quoted extension acceptance
+
+Prepared: 180/311; missing: 131. SINGLE-098-01 fixes escaped DQUOTE in a quality
+extension, with passed_with_warnings as explicitly approved. Two integrated
+`python -B fixtures/validate_step0b.py` runs in the existing pinned CPython 3.14.6
+environment produced byte-identical reports; all check errors were empty.
+Report SHA-256: `edecc666b3ad04a7da27816272fbd398de2a242027511d9d19d2888668df4d07`.
+Both exited 1 for outstanding Gate A evidence. Complete IR, source, opaque/unknown
+extension value, public result, Canonical JSON and read-only snapshots are checked.
+No Core was run. Code spans, reference projection, federation golden, remaining
+fixtures and fresh-checkout certification remain pending.

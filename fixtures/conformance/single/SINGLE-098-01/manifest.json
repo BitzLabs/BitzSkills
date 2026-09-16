@@ -1,0 +1,34 @@
+{
+  "parserChecks": [
+    {
+      "path": ".spec/requirements/REQ-001.md",
+      "resultFile": "expected/parser-ir.json"
+    }
+  ],
+  "fixtureId": "SINGLE-098-01",
+  "description": "未知extensionのquoted DQUOTEを解除しopaque値を保持する",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "REQ-001",
+      "--purpose",
+      "verify",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed_with_warnings",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

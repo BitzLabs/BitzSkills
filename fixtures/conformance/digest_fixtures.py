@@ -45,14 +45,14 @@ def reviewed_manifest(identifier):
     tail = CASES[identifier][0]
     return {
         **({"parserChecks": [{"path": REQ_RESULT_PATH, "resultFile": "expected/parser-ir.json"}]}
-           if identifier in {"SINGLE-097-01", "SINGLE-101-01"} else {}),
+           if identifier in {"SINGLE-097-01", "SINGLE-098-01", "SINGLE-101-01"} else {}),
         "fixtureId": identifier,
         "description": DESCRIPTIONS[identifier],
         "setup": {"git": True, "operations": []},
         "invocation": {"runner": "bitz", "cwd": ".",
                        "argv": ["context", "REQ-001", "--purpose", "verify", *tail, "--format", "json"],
                        "env": {}},
-        "expect": {"status": "passed", "exitCode": 0, "stdout": "json",
+        "expect": {"status": "passed_with_warnings" if identifier == "SINGLE-098-01" else "passed", "exitCode": 0, "stdout": "json",
                    "resultFile": "expected/context.json", "reportFileCount": 0},
     }
 
@@ -100,6 +100,12 @@ def reviewed_result(identifier, context_digest):
         "diagnostics": [],
     }
 
+    if identifier == "SINGLE-098-01":
+        result["status"] = "passed_with_warnings"
+        result["diagnostics"] = [{"code": "EAI-EXT-UNKNOWN-001", "severity": "warning",
+            "resultStatus": "passed_with_warnings", "summary": "未知namespaceのextensionを保持します",
+            "source": {"kind": "file", "workspaceId": "root", "path": REQ_RESULT_PATH,
+                       "line": 15, "column": 19}}]
     if identifier == "SINGLE-106-02":
         result["resolution"]["documentCount"] = 3
         result["documents"].append({

@@ -50,7 +50,7 @@ def validate_checks(fixture, manifest, repository):
             actual.append({"schemaVersion": "1.0", **semantic, "documentId": fm["id"],
                            "localId": semantic["id"].split(":")[1],
                            "source": {"path": relative, "line": number, "column": raw.index("[") + 1},
-                           "unknownExtensions": [], "untrustedText": True, "raw": raw})
+                           "unknownExtensions": [dict(entry) for entry in semantic["extensions"]], "untrustedText": True, "raw": raw})
         expected = json.loads(path.read_text())
         if expected != actual:
             raise ValueError("complete Parser IR differs from reviewed source/semantic evidence")
