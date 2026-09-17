@@ -95,3 +95,23 @@ workspace・設定仕様 §6へ、単一設定fileの64 KiB上限によりtempla
 
 - 新規のDiagnostic条件は生じず、既存条件の意味も変わらない。119条件・14論点群の対応に変更はない。
 - 上記を確認したうえで、台帳が固定するworkspace・設定仕様のhashを更新した。
+
+## 2026-09-17の再レビュー（role割当、draft refinement、verifyの起点TASK）
+
+残りの適合fixtureを作成する過程で、期待値を一意に決められない規範の欠落3件と矛盾1件を確認し、次のとおり裁定した。
+いずれも既存の決定を変えず規範の欠落を埋めるもので、新規ADRは起こさない。
+
+- 関係・トレースモデル §7へrole割当表を追加した。`requires`または`addresses`で到達したREQは`requirement`、
+  TECHとaccepted ADRは`constraint`、起点以外のTASKは`work`とする。複数に該当する文書は表の上から最初のroleとする。
+- 関係・トレースモデル §6.1へ、interpretでは閉包内の文書を`refines`する`draft`文書をadvisoryとして含め、
+  その先を辿らないことを追記した。文書・Frontmatter・状態仕様 §7の「`draft`は`interpret`でadvisory」を
+  閉包規則へ接続するもので、implementとverifyの閉包は変わらない。
+- context仕様 §4・§5へ、`statementRefs[]`は所有する全規範文、Constraint Ledgerとcoverageの各modalityは
+  対象statementだけ、`coverage.adjacent`は`adjacentStatements`と同じ内容・順序であることを追記した。
+- verifyの起点TASKについて、§6.3本文（`requires`閉包を含めない）とmatrix `SINGLE-110`行・target vector
+  `TASK-REQUIRES-NOT-TARGET`（先行TASKをContextへ含める）が矛盾していた。§6.3を正とし、matrix行、vectorの
+  期待値、参照計算を修正した。2026-09-14の再レビューで「期待値の変更は0件」としたのは誤りで、参照計算は
+  起点TASKの`requires`もverifyで辿っていた。今回の修正で変わった期待集合はこの1ケースだけである。
+
+新規のDiagnostic条件は生じない。119条件・14論点群の対応に変更はない。
+上記を確認したうえで、台帳と`targets/cases.json`が固定する根拠文書hashを更新した。

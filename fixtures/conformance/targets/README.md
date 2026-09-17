@@ -21,7 +21,7 @@ interpretのtargetStatementsは空である。statement起点では指定句以�
 | REFINEMENT-TRANSITIVE | 推移的refinementはtarget、requires先はContextだけ、relatedは追加しない |
 | STATEMENT-ADJACENT | 指定句とrefinementだけtarget、兄弟句はadjacent |
 | MULTI-ROOT-DEDUP | 文書・句・重複起点の和集合、targetへ選ばれた句をadjacentから除外 |
-| TASK-REQUIRES-NOT-TARGET | 起点TASKのaddresses先だけ対象義務、先行done TASKのaddressesを義務へ追加しない |
+| TASK-REQUIRES-NOT-TARGET | verifyの起点TASKはaddresses先だけ対象義務、先行done TASKとそのaddresses先をContextへ含めない |
 | OPEN-TASK-IMPLEMENT | implementで対象句をaddressesするopen TASKをContextへ追加 |
 | FEDERATED-SAME-LOCAL-ID | 同名local IDをworkspace別に区別し、横断refinementを対象へ追加 |
 | SOURCE-LINE-ORDER | ID辞書順よりsource line順を優先 |
@@ -38,3 +38,6 @@ Schema、18組合せの網羅、ID/型・参照存在、強い依存の非循環
 回帰試験では組合せ欠落、requires先のtarget混入、順序誤り、未知参照を検出する。
 期待値を実行中に再生成・更新しない。referenceはこの固定graphの準備検証用であり、製品Parserや完全なContext Resolverではない。
 CoreのJSON出力、状態判定、binding、Digestとの一致はGate Bで別途検証する。
+
+2026-09-17: 関係・トレースモデル §6.3に合わせ、TASK-REQUIRES-NOT-TARGETの`contextDocuments`から先行TASK-002を外した。
+参照計算もverifyの起点TASKで`requires`を辿らないよう修正し、他の24ケースの期待集合は変わらないことを確認した。

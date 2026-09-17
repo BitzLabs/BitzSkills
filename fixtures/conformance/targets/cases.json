@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "contractSha256": "08524e806815e40a847e1fd0daad26f2cba586f34f5ec9b962d247198d86f40a",
+  "contractSha256": "543a7105e5881f2061afbabc02e07294abefb72ce9957dd8c7b678eea43a7bd4",
   "cases": [
     {
       "id": "BASIC-REQ-interpret",
@@ -1178,8 +1178,7 @@
         ],
         "contextDocuments": [
           "TASK-001",
-          "REQ-001",
-          "TASK-002"
+          "REQ-001"
         ],
         "targetStatements": [
           "REQ-001:AC-01"

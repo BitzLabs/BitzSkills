@@ -100,8 +100,11 @@ def reference(case):
     while queue:
         current = queue.pop(0)
         n = nodes[current]
-        neighbors = {owner(t) for t in n["requires"] + n["refines"]}
-        if current in root_docs and n["kind"] == "TASK" and purpose != "interpret":
+        task_root = current in root_docs and n["kind"] == "TASK" and purpose != "interpret"
+        # 関係・トレースモデル §6.3: verifyの起点TASKはrequires閉包を含めない。
+        followed = [] if task_root and purpose == "verify" else n["requires"]
+        neighbors = {owner(t) for t in followed + n["refines"]}
+        if task_root:
             neighbors.update(owner(t) for t in n["addresses"])
         for candidate in nodes.values():
             if any(owner(t) == current for t in candidate["refines"]):

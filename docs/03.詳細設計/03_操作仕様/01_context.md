@@ -116,6 +116,8 @@ ADRは`purpose=interpret`だけで起点にできる。ADRへ`implement`また�
 
 `resolution.complete: true`は型、状態、循環、上限を含む完全解決が成立したことを示す。
 `constraintLedger`はapplicable文書の対象statementをSemantic IRの意味fieldで1回だけ保持する。
+statement起点の兄弟句とadvisory文書の規範文はLedgerとcoverageの各modalityへ含めない。
+`coverage.adjacent`は`TargetExpansion`の`adjacentStatements`を同じ順序で保持し、該当がなければ空配列とする。
 `reason`は全statementで必須とし、理由付き`SHOULD`では正規化後のtext、それ以外ではnullとする。
 連合ではtop-level `workspace`をrequest workspaceとし、`roots`、文書`id`、statement参照を修飾形式で返す。
 各`documents[]`は`workspaceId`を持ち、`path`はそのworkspace root相対とする。
@@ -148,8 +150,10 @@ edgeは重複排除し、`source`、`relation`、`target`の辞書順とする�
 | `normative` | `statementRefs[]` | `frontmatter`、`bodyText`、`expandable` |
 | `reference` | `expandable` | `statementRefs`、`frontmatter`、`bodyText` |
 
-`statementRefs[]`はsource line、ID順、`frontmatter`は許可fieldを正規化したobject、`bodyText`は原文の現行本文、
+`statementRefs[]`は当該文書が所有する全規範文のIDをsource line、ID順で保持し、対象statementかどうかで絞らない。
+`frontmatter`は許可fieldを正規化したobject、`bodyText`は原文の現行本文、
 `expandable`は完全解決集合内で`--expand`可能ならtrueとする。nullで省略を代用せず、禁止fieldは出力しない。
+roleの割当ては[関係・トレースモデル §7](../02_SPECモデル/04_関係・トレースモデル.md#7-決定論的探索)に従う。
 
 `standard`は起点、TASK、replacement、距離1文書をfull、間接constraint/refinementをnormative、advisoryを
 referenceとする。`compact`は原文を省略してManifest、Diagnostic、Ledger、coverage、境界、参照を返す。

@@ -440,7 +440,7 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-105-02` | Gitなしverifyのrevision | verify | passed／0 | `revision: null` |
 | `SINGLE-106-01` | Context full projection | context | passed／0 | fullだけの必須fieldと禁止fieldをSchema検証 |
 | `SINGLE-106-02` | Context normative projection | context | passed／0 | normativeだけの必須fieldと禁止fieldをSchema検証 |
-| `SINGLE-106-03` | Context reference projection | context | passed／0 | referenceだけの必須fieldと禁止fieldをSchema検証 |
+| `SINGLE-106-03` | interpretで起点をrefineするdraft文書 | context | passed／0 | advisoryをreferenceで提示し、必須fieldと禁止fieldをSchema検証 |
 | `SINGLE-106-04` | stdout、stderrとも空のverify command | verify | passed／0 | 空excerpt、両truncated false |
 | `SINGLE-106-05` | 2 targetに同じDiagnostic条件 | verify | failed／1 | textの`diagnostics`は両target上のDiagnostic総数 |
 
@@ -453,7 +453,7 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-108-01` | 規範文ありTECHにrefinementとrequires先がある | context --purpose verify | passed／0 | 4集合を完全比較 |
 | `SINGLE-108-02` | `SINGLE-108-01`と同じ起点 | verify | passed／0 | contextと同じtarget statement集合 |
 | `SINGLE-109` | statement起点と兄弟句 | context --purpose implement | passed／0 | 指定句とrefinementはtarget、兄弟句はadjacent |
-| `SINGLE-110` | TASKのaddresses先とrequires先TASK | context --purpose verify | passed／0 | 自身のaddresses先だけtarget、requires先はContextだけ |
+| `SINGLE-110` | TASKのaddresses先とrequires先TASK | context --purpose verify | passed／0 | 自身のaddresses先だけtarget、requires先TASKとそのaddresses先をContextへ含めない |
 | `SINGLE-111-01` | catalogにない明示文書ID | check | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
 | `SINGLE-111-02` | 所有文書はあるがstatement IDが不在 | check | failed／1 | `CTX-ROOT-MISSING-001`、所有文書checkへ置換しない |
 | `SINGLE-111-03` | catalogにない構文上妥当なSPEC path | check | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
