@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "99a1eb7f489fea4289529633b832da69a7c0320cd4d72cb4267e7c12918722c6"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-010.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "9d8607bf5f0adb0963b144d15490c34341506e3a4ecd4f550f8882008b2fdef8"
+      },
+      "apps": {
+        "kind": "directory"
+      },
+      "apps/web": {
+        "kind": "directory"
+      },
+      "apps/web/tests": {
+        "kind": "directory"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_login.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      }
+    },
+    "git": {
+      "status": "M  .spec/bitz.yaml\nR  apps/web/.spec/technical/TECH-010.md -> .spec/technical/TECH-010.md\nD  apps/web/.spec/bitz.yaml\nR  apps/web/tests/test_login.py -> tests/test_login.py\n",
+      "index": "100644 cf2e1fa96cd3cf541643dbf6e8a690a148085c43 0\t.spec/bitz.yaml\n100644 2e14e502cb530e5135b589ceabe00ba9ed484eb0 0\t.spec/requirements/REQ-001.md\n100644 089b6f19a955b39b24152c468ad51c82068e6ed1 0\t.spec/technical/TECH-010.md\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/test_login.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "99a1eb7f489fea4289529633b832da69a7c0320cd4d72cb4267e7c12918722c6"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-010.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "9d8607bf5f0adb0963b144d15490c34341506e3a4ecd4f550f8882008b2fdef8"
+      },
+      "apps": {
+        "kind": "directory"
+      },
+      "apps/web": {
+        "kind": "directory"
+      },
+      "apps/web/tests": {
+        "kind": "directory"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_login.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3f042f69f32aea4503cf56722f296ce64b4e000a31498ad6b0c6eb4899ff5fa3"
+      }
+    },
+    "git": {
+      "status": "M  .spec/bitz.yaml\nR  apps/web/.spec/technical/TECH-010.md -> .spec/technical/TECH-010.md\nD  apps/web/.spec/bitz.yaml\nR  apps/web/tests/test_login.py -> tests/test_login.py\n",
+      "index": "100644 cf2e1fa96cd3cf541643dbf6e8a690a148085c43 0\t.spec/bitz.yaml\n100644 2e14e502cb530e5135b589ceabe00ba9ed484eb0 0\t.spec/requirements/REQ-001.md\n100644 089b6f19a955b39b24152c468ad51c82068e6ed1 0\t.spec/technical/TECH-010.md\n100644 1b207872b0fd546fbfb9338d624f5a8eb5c8c95e 0\ttests/test_login.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

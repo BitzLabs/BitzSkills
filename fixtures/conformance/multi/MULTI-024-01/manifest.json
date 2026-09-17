@@ -1,0 +1,61 @@
+{
+  "fixtureId": "MULTI-024-01",
+  "description": "複合workspace化を1つの原子的な変更集合として適用する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": ".spec/bitz.yaml",
+        "source": "changes/root.yaml"
+      },
+      {
+        "op": "create",
+        "path": "apps/web/.spec/bitz.yaml",
+        "source": "changes/member.yaml"
+      },
+      {
+        "op": "rename",
+        "from": ".spec/technical/TECH-010.md",
+        "to": "apps/web/.spec/technical/TECH-010.md"
+      },
+      {
+        "op": "update",
+        "path": "apps/web/.spec/technical/TECH-010.md",
+        "source": "changes/tech.md"
+      },
+      {
+        "op": "rename",
+        "from": "tests/test_login.py",
+        "to": "apps/web/tests/test_login.py"
+      },
+      {
+        "op": "stage",
+        "paths": [
+          "."
+        ]
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "migration",
+    "cwd": ".",
+    "argv": [
+      "to-multi-workspace"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "outcome": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/migration.json",
+    "reportFileCount": 0
+  }
+}

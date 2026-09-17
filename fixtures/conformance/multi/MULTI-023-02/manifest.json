@@ -1,0 +1,30 @@
+{
+  "fixtureId": "MULTI-023-02",
+  "description": "複合workspaceの結果を全体外形として受理する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "consumer",
+    "cwd": ".",
+    "argv": [
+      "result-shape",
+      "result.json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "outcome": "accepted",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/consumer.json",
+    "reportFileCount": 0
+  }
+}

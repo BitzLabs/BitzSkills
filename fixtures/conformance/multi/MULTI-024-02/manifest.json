@@ -1,0 +1,60 @@
+{
+  "fixtureId": "MULTI-024-02",
+  "description": "複合workspace化を単一workspaceへ完全に戻す",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "update",
+        "path": ".spec/bitz.yaml",
+        "source": "changes/root.yaml"
+      },
+      {
+        "op": "rename",
+        "from": "apps/web/.spec/technical/TECH-010.md",
+        "to": ".spec/technical/TECH-010.md"
+      },
+      {
+        "op": "update",
+        "path": ".spec/technical/TECH-010.md",
+        "source": "changes/tech.md"
+      },
+      {
+        "op": "rename",
+        "from": "apps/web/tests/test_login.py",
+        "to": "tests/test_login.py"
+      },
+      {
+        "op": "delete",
+        "path": "apps/web/.spec"
+      },
+      {
+        "op": "stage",
+        "paths": [
+          "."
+        ]
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "migration",
+    "cwd": ".",
+    "argv": [
+      "rollback"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "outcome": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/migration.json",
+    "reportFileCount": 0
+  }
+}

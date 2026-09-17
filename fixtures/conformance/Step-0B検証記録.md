@@ -631,3 +631,16 @@ apiの独立bindingを実行する。`MULTI-015`はmember単位の対象0件をw
 status集約の取り違え、依存先を解決可能に直した入力を拒否することを確認した。
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `dae472e1ed294fc3ebd677545ceeecbc430096ad0101f69cf9d757397ad07c44`。
+
+## 2026-09-18: reportと結果外形の移行
+
+準備済み284/310、残り26件（`MULTI-007-02/03`、`MULTI-020-*`、`MULTI-021-*`）。
+`MULTI-022-01..04`は、checkとverifyの既定実行と明示`--report`を対にし、既定は0件、明示時はroot workspaceの
+`.spec/reports/`へ1件を排他的に作成することを固定した。対の2件は結果本体が完全に一致する。
+`MULTI-023-01..03`はdual-read consumerの排他的外形を固定し、受理するJSONが公開結果Schemaへ適合すること、
+混在JSONが適合しないことをSchemaそのもので確かめる。`MULTI-024-01..03`はmigration runnerのcase名を
+`to-multi-workspace`と`rollback`に確定し、複合workspace化、完全rollback、修飾参照が残る部分rollbackを分けた。
+監査試験を5件追加し、既定実行でのreport作成、名前patternの緩和、結果本体の変化、outcomeの取り違え、
+部分rollbackを完全rollbackへ直した入力を拒否することを確認した。
+同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
+Report SHA-256: `a3f4a70d60adc69bd2a2de6311e19157aa238fb15b9bdc6c4942baeaac15a1be`。

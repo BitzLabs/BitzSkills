@@ -63,7 +63,7 @@ from conformance import environment_fixtures
 from conformance import target_vectors
 from conformance import multi_catalog_fixtures, multi_digest_fixtures, multi_identity_fixtures
 from conformance import multi_member_fixtures, multi_ownership_fixtures, multi_reference
-from conformance import multi_verify_fixtures
+from conformance import multi_verify_fixtures, multi_report_fixtures, multi_compat_fixtures
 
 
 class AuditTests(unittest.TestCase):
@@ -782,6 +782,69 @@ class AuditTests(unittest.TestCase):
             path.write_text(path.read_text().replace("TECH-020:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 監査logを保持する",
                                                      "TECH-020:AC-02] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 監査logを保持する"))
             result = multi_verify_fixtures.validate(root, {"MULTI-012"})
+        self.assertEqual(result["status"], "Failed")
+
+    def test_multi_report_fixtures(self):
+        result = multi_report_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(multi_report_fixtures.CASES))
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_multi_report_audit_rejects_wrong_policy_and_changed_body(self):
+        mutations = [
+            # 既定の全体操作はfileを作らない。
+            ("MULTI-022-01", "side-effects.json",
+             lambda v: v.update(policy="explicit-report", report={
+                 "directory": ".spec/reports", "createdCount": 1,
+                 "namePattern": multi_report_fixtures.NAME_PATTERN, "temporaryFilesRemaining": 0})),
+            ("MULTI-022-02", "side-effects.json", lambda v: v["report"].update(createdCount=2)),
+            ("MULTI-022-02", "side-effects.json", lambda v: v["report"].update(temporaryFilesRemaining=1)),
+            ("MULTI-022-02", "side-effects.json", lambda v: v["report"].update(namePattern="^.*$")),
+            ("MULTI-022-02", "manifest.json", lambda v: v["expect"].update(reportFileCount=0)),
+            # reportの有無で結果本体は変わらない。
+            ("MULTI-022-04", "expected/verify.json", lambda v: v["workspaces"][1].update(commands=[])),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertEqual(multi_report_fixtures.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_compat_fixtures(self):
+        result = multi_compat_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(multi_compat_fixtures.CASES))
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_multi_compat_audit_rejects_wrong_outcomes(self):
+        mutations = [
+            ("MULTI-023-01", "expected/consumer.json", lambda v: v.update(outcome="rejected")),
+            ("MULTI-023-03", "manifest.json", lambda v: v["expect"].update(exitCode=0)),
+            ("MULTI-024-01", "expected/migration.json", lambda v: v.update(outcome="accepted")),
+            ("MULTI-024-03", "expected/migration.json", lambda v: v.update(outcome="passed")),
+            ("MULTI-024-02", "manifest.json", lambda v: v["setup"].update(operations=[])),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertEqual(multi_compat_fixtures.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_compat_audit_rejects_complete_rollback_as_partial(self):
+        """部分rollbackのcaseは、修飾参照が残っていなければ証拠にならない。"""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-024-03")
+            path = root / "multi/MULTI-024-03/changes/tech.md"
+            path.write_bytes(path.read_bytes().replace(b"platform::REQ-001:AC-01", b"REQ-001:AC-01"))
+            result = multi_compat_fixtures.validate(root, {"MULTI-024-03"})
         self.assertEqual(result["status"], "Failed")
 
     def test_frontmatter_boundary_evidence(self):

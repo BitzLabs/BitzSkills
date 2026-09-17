@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "scope": "all-workspaces",
+  "status": "passed",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "platform",
+      "path": ".",
+      "status": "passed",
+      "checkedDocumentCount": 1,
+      "checkedStatementCount": 1,
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "web",
+      "path": "apps/web",
+      "status": "passed",
+      "checkedDocumentCount": 1,
+      "checkedStatementCount": 0,
+      "durationMs": 0,
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}
