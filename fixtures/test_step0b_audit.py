@@ -508,7 +508,7 @@ class AuditTests(unittest.TestCase):
         inputs = limit.reviewed_inputs()
         limit.check_single_limit(inputs)
         inputs[".spec/technical/TECH-001.md"] = b"---\nid: TECH-001\n---\n"
-        with self.assertRaisesRegex(ValueError, "does not exceed"):
+        with self.assertRaisesRegex(ValueError, "byte上限を超えていません"):
             limit.check_single_limit(inputs)
 
     def test_frontmatter_fixtures(self):

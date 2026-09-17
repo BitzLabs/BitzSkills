@@ -84,31 +84,31 @@ def check_policy(identifier, manifest, effects, inputs):
     _, operation, _ = CASES[identifier]
     argv = manifest["invocation"]["argv"]
     if argv[0] != operation or manifest["invocation"]["env"]:
-        raise ValueError("invocation must run the reviewed operation without extra environment")
+        raise ValueError("起動は審査済み操作を追加環境なしで実行する必要があります")
     if effects["before"] != effects["after"]:
-        raise ValueError("every pre-existing path must stay unchanged")
+        raise ValueError("既存pathはすべて不変である必要があります")
     if any(effects["before"][name] for name in ("home", "cache", "temporary")):
-        raise ValueError("HOME, cache and temp trees must start empty")
+        raise ValueError("HOME、cache、temp treeは空で開始する必要があります")
     repository = effects["before"]["repository"]
     if identifier == "SINGLE-125-06":
         if "--report" not in argv or manifest["expect"]["reportFileCount"] != 0 or effects["policy"] != "read-only":
-            raise ValueError("the failed save must request a report and create nothing")
+            raise ValueError("保存失敗のcaseはreportを要求し、何も作らない必要があります")
         if repository.get(REPORT_DIRECTORY) != {"kind": "symlink", "target": LINK_TARGET}:
-            raise ValueError("the report directory must be a symlink that is not followed")
+            raise ValueError("report directoryは辿らないsymlinkである必要があります")
         if repository.get("report-store", {}).get("kind") != "directory" or STORE_REPORT not in repository:
-            raise ValueError("the symlink must resolve to an existing directory with a report")
+            raise ValueError("symlinkはreportを持つ既存directoryへ解決する必要があります")
         return
     if identifier == "SINGLE-125-05":
         if "--report" not in argv or manifest["expect"]["reportFileCount"] != 1:
-            raise ValueError("the explicit-report case must request exactly one report")
+            raise ValueError("明示reportのcaseはreportをちょうど1件要求する必要があります")
         report_write_fixtures.check_report_contract("SINGLE-071-01", manifest, effects, None)
         return
     if "--report" in argv or manifest["expect"]["reportFileCount"] != 0 or effects["policy"] != "read-only":
-        raise ValueError("read-only cases must not request or permit a report")
+        raise ValueError("read-onlyのcaseはreportを要求も許可もできません")
     if any(name == REPORT_DIRECTORY or name.startswith(REPORT_DIRECTORY + "/") for name in repository):
-        raise ValueError("read-only cases must start without a report directory")
+        raise ValueError("read-onlyのcaseはreport directoryなしで開始する必要があります")
     if identifier == "SINGLE-125-04" and NO_WRITE_COMMAND.encode() not in inputs[".spec/bitz.yaml"]:
-        raise ValueError("verify must use the fixed non-writing test command")
+        raise ValueError("verifyは書込みをしない固定test commandを使う必要があります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -127,19 +127,19 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", json.loads(result_bytes)), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier, root):
-                raise ValueError("manifest differs from the audited source invocation")
+                raise ValueError("manifestが監査済みsourceの起動と異なります")
             # 期待結果はsource fixtureの監査済みfileとbyte一致させ、副作用の観点で結果を変えない。
             if result_bytes != (root / "single" / source / f"expected/{operation}.json").read_bytes():
-                raise ValueError("expected result differs from the audited source result")
+                raise ValueError("期待結果が監査済みsourceの結果と異なります")
             if sorted(p.name for p in (fixture / "expected").iterdir()) != [f"{operation}.json"]:
-                raise ValueError("unreferenced expected files are not allowed")
+                raise ValueError("参照されない期待fileは許可しません")
             if effects != reviewed_effects(identifier, effects["before"]):
-                raise ValueError("side-effect expectation differs from reviewed policy")
+                raise ValueError("副作用期待が審査済みpolicyと異なります")
             inputs = reviewed_inputs(identifier, root)
             if read_tree(fixture / "repo") != inputs:
-                raise ValueError("input differs from the audited source corpus")
+                raise ValueError("入力が監査済みsourceのcorpusと異なります")
             if (fixture / "changes").exists():
-                raise ValueError("these cases apply no change files")
+                raise ValueError("このcaseは変更fileを適用しません")
             check_policy(identifier, manifest, effects, inputs)
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-side-effects-") as temporary:
@@ -152,7 +152,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError,

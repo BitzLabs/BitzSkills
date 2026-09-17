@@ -467,21 +467,18 @@ Report SHA-256: `e4c52beaeb441737c9a8f96f18e4d59b1f9a4bc766f738c60238685d78f272c
 No Core was run. Reference projection, remaining fixtures, federation golden and
 fresh-checkout Gate A certification remain pending.
 
-## 2026-09-17: Frontmatter boundaries
+## 2026-09-17: Frontmatter境界
 
-Prepared: 201/311; missing: 110. SINGLE-114, 115-01〜04, 116-01〜05, 117-01〜03,
-118-01, 119-01〜04, 120-03 and 120-04 fix minimal REQ/TECH/ADR/TASK definitions,
-the 120/121 code point title boundary, blank/multi-line/null/missing titles, empty
-and duplicate arrays, unknown keys, `x-` extensions and REQ `changes` precedence.
-Independently decoded flow values agree with the reviewed fields and the Frontmatter
-Schema verdict. Two isolated setups match the read-only snapshot. Mutation tests
-reject changed status, counts, codes, duplicated or removed diagnostics, cache
-writes and a repaired 121 code point title.
-Two integrated runs in the same pinned CPython 3.14.6 environment were byte-identical
-with no check errors, both exit 1 for pending Gate A evidence.
-Report SHA-256: `db8b0defde675722225f72962027265855afbe953971a3379b4bbba0a3e39582`.
-No Core was run. SINGLE-118-02/03, 120-01/02, remaining fixtures, federation golden
-and fresh-checkout Gate A certification remain pending.
+準備済み201/311、残り110件。SINGLE-114、115-01〜04、116-01〜05、117-01〜03、118-01、119-01〜04、
+120-03、120-04で、REQ／TECH／ADR／TASKの最小definition、titleの120／121 code point境界、空白・複数行・null・
+欠落のtitle、空・重複配列、未知key、`x-`拡張、REQの`changes`の優先順位を固定した。
+独立にdecodeしたflow valueは審査済みfieldおよびFrontmatter Schemaの判定と一致した。2回の隔離setupは
+read-only snapshotと一致した。回帰試験はstatus・件数・codeの改変、二重または削除した診断、cache書込み、
+境界内へ修復した121 code point titleを拒否する。
+同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
+Report SHA-256: `db8b0defde675722225f72962027265855afbe953971a3379b4bbba0a3e39582`。
+Coreは実行していない。SINGLE-118-02／03、120-01／02、残りの適合fixture、連合golden、fresh checkoutでの
+Gate A認定は未完了である。
 
 ## 2026-09-17: Frontmatter境界の追補
 

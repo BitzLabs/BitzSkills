@@ -118,10 +118,10 @@ SINGLE-104-01 follows the Markdown presentation decided in proposal 26 and now f
 Bundle against it while checking the section order, untouched bodies and the absence of a duration token.
 Current preparation: 174/311; 137 remain.
 
-[Frontmatter boundary fixtures](single/frontmatter-boundary-review.md) add twenty definition, title-length,
-required/null, empty/duplicate array, unknown-key, `x-` extension and REQ `changes` cases. Each field is written
-as a JSON flow value, decoded independently and checked against `frontmatter.schema.json`.
-SINGLE-118-02/03 and 120-01/02 remain outstanding. Current preparation: 201/311; 110 remain.
+[Frontmatter境界fixture](single/frontmatter-boundary-review.md)として、種別definition、title長、必須／null、
+空・重複配列、未知key、`x-`拡張、REQの`changes`の20件を加えた。各fieldはJSON構文のflow valueとして書き、
+独立にdecodeして`frontmatter.schema.json`と照合する。
+この時点でSINGLE-118-02／03と120-01／02は未作成であり、準備済みは201/311、残りは110件だった。
 
 Frontmatter境界の追補として、SINGLE-118-02／03（test要素のkey tuple重複判定）と120-01／02（`changes`空・省略TASKの
 明示TASK check）を加え、matrixの114〜120を完了した。準備済みは205/311、残りは106件である。

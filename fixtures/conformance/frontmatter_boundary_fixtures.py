@@ -175,14 +175,14 @@ def check_git_states(identifier, repository):
     """HEADとindexはbase入力、作業treeは変更適用後と一致することをbyteで確認する。"""
     base = reviewed_inputs(identifier)
     if set(git(repository, 'ls-files', '-z').decode().split('\0')[:-1]) != set(base):
-        raise ValueError('index paths differ from reviewed base')
+        raise ValueError('indexのpathが審査済みbaseと異なります')
     for path, content in base.items():
         if git(repository, 'show', 'HEAD:' + path) != content or git(repository, 'show', ':' + path) != content:
-            raise ValueError('HEAD/index bytes differ from reviewed base')
+            raise ValueError('HEADまたはindexのbyte列が審査済みbaseと異なります')
     actual = {p.relative_to(repository).as_posix(): p.read_bytes() for p in repository.rglob('*')
               if p.is_file() and '.git' not in p.relative_to(repository).parts}
     if actual != current_tree(identifier):
-        raise ValueError('worktree differs from reviewed change')
+        raise ValueError('作業treeが審査済みの変更と異なります')
 
 
 def validate(root=HERE, identifiers=None):
@@ -232,7 +232,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects['before'], actual) or (previous is not None and previous != actual):
-                        raise ValueError('isolated setup differs from fixed snapshot')
+                        raise ValueError('隔離setupが固定snapshotと異なります')
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:
