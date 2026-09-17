@@ -12,7 +12,7 @@ status: superseded
 
 ## Decision
 
-`bitz-quality` の診断および品質プロファイルからGate語彙を除去し、フロー非依存の `checkpoint` へ一般化する。
+`bitz-quality` の診断および品質ProfileからGate語彙を除去し、flow非依存の `checkpoint` へ一般化する。
 
 - `bitz-quality` は「どのcheckpointでどの重大度が致命か」までを所有する。
 - checkpoint識別子は `bitz-env` が管理する共通語彙とし、`spec-validate`、`pre-implementation`、`post-implementation`、`compliance-audit`、`sync` を初期値とする。
@@ -22,23 +22,23 @@ status: superseded
 ### 理由
 
 - 依存方向の宣言を後退させずに矛盾を解消できる。
-- `bitz-sdd` を使わない利用形態（CI上での仕様検証のみ、他フローエンジンとの併用）で `bitz-quality` を単体利用できる。
+- `bitz-sdd` を使わない利用形態（CI上での仕様検証のみ、他flowエンジンとの併用）で `bitz-quality` を単体利用できる。
 - Gate定義の変更が `bitz-quality` の破壊的変更にならない。
 
 ## Consequences
 
 - [05_QA品質保証設計.md](../05_QA品質保証設計.md) の診断形式から `gate` を削除し `checkpoint` を追加する。
-- [04_SDDプロセス設計.md](../04_SDDプロセス設計.md) にGate↔checkpoint対応表を追加する。
-- 品質プロファイルのスキーマはcheckpoint単位で判定条件を持つ。
+- [04_SDD process設計.md](../04_SDDプロセス設計.md) にGate↔checkpoint対応表を追加する。
+- 品質ProfileのSchemaはcheckpoint単位で判定条件を持つ。
 
 ## Alternatives
 
-1. **Gate IDを `bitz-env` の共通語彙へ昇格**: 却下。Gateは開発フロー概念であり、`bitz-env` の「業務ロジックを持たない」責務に反する。
+1. **Gate IDを `bitz-env` の共通語彙へ昇格**: 却下。Gateは開発flow概念であり、`bitz-env` の「業務ロジックを持たない」責務に反する。
 2. **依存方向の宣言を緩める**: 却下。設計原則3・4の実効性を失う。
 
 ## Notes
 
-関連文書: [01_共通アーキテクチャ.md](../01_共通アーキテクチャ.md), [04_SDDプロセス設計.md](../04_SDDプロセス設計.md), [05_QA品質保証設計.md](../05_QA品質保証設計.md)
+関連文書: [01_共通アーキテクチャ.md](../01_共通アーキテクチャ.md), [04_SDD process設計.md](../04_SDDプロセス設計.md), [05_QA品質保証設計.md](../05_QA品質保証設計.md)
 
 ## Revision History
 

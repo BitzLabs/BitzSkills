@@ -20,7 +20,7 @@ relations:
 
 ## Context
 
-旧設計は、複数プラグイン、6段階Gate、永続run、複雑なpolicyスコープ、独立AuditAgent、
+旧設計は、複数plugin、6段階Gate、永続run、複雑なpolicy scope、独立AuditAgent、
 多段の品質検証、2種類の実行体配布をCore 1.0へ含めていた。この構成は包括的だが、個人から数人の
 開発では導入・実行・保守コストが便益を上回る可能性が高い。
 
@@ -34,38 +34,38 @@ relations:
 3. EARS-AIの保証を構文・構造・参照へ限定し、自由記述の意味やLLMの決定論性を保証しない。
 4. Core 1.0の公開操作を`check`、`verify`、`doctor`の3つに限定する。
 5. 設定を`.spec/bitz.yaml`へ一本化し、Gitを設定・承認・監査の基本境界とする。
-6. L0構文、L1静的トレース、実行可能な受入テストを最初の垂直スライスとして実装する。
+6. L0構文、L1静的トレース、実行可能な受入testを最初の垂直スライスとして実装する。
 7. LLM評価は`advisory`とし、単独で合否を決めない。
-8. 成功時の詳細レポート、永続run、複雑なwaiver、外部署名policyを必須にしない。
+8. 成功時の詳細report、永続run、複雑なwaiver、外部署名policyを必須にしない。
 9. PyPI + `uv`だけを初期配布とし、単一バイナリは需要確認後に検討する。
 10. EARS-AI Profile、DDD、多言語AST、独立AuditAgent、自動逆同期は1.0後の任意拡張とする。
 
 決定9の初期配布形態は、[ADR-016](ADR-016_Agent-Plugins準拠の複数plugin配布.md)により、
-GitHubマーケットプレイス上のAgent Plugins 1.0.0パッケージをAI利用者向けの主要経路とし、
+GitHubマーケットプレイス上のAgent Plugins 1.0.0 packageをAI利用者向けの主要経路とし、
 PyPI + `uv`をスタンドアロン実行体の代替経路として維持する形へ改訂された。
 
 ### 性能判断
 
 - 変更範囲の`bitz check`は1秒以内を目標とする。
-- 既定処理でネットワーク、LLM、フックを使用しない。
-- 追加機能は実タスクで完了時間、欠陥率、レビュー負荷のいずれかを改善した場合だけ既定化する。
+- 既定処理でnetwork、LLM、フックを使用しない。
+- 追加機能は実タスクで完了時間、欠陥率、review負荷のいずれかを改善した場合だけ既定化する。
 
 ### 理由
 
 - 小規模チームでは、敵対的な内部者より誤操作と検証漏れへの対策が重要である。
-- EARS-AIの価値を、巨大なプロセス基盤が完成する前に検証できる。
-- リンク検査だけでなく実行テストまで早期に通し、形式上の合格と振る舞いの正しさを混同しない。
-- 既存のGit、CI、テスト資産を再利用し、専用台帳の重複を避けられる。
+- EARS-AIの価値を、巨大なprocess基盤が完成する前に検証できる。
+- link検査だけでなく実行testまで早期に通し、形式上の合格と振る舞いの正しさを混同しない。
+- 既存のGit、CI、test資産を再利用し、専用台帳の重複を避けられる。
 
 ## Consequences
 
 - ADR-002〜004、006〜008は履歴として保持するが、現在の設計判断には使用しない。
 - EARS-AI Core 1.0は維持し、ProfileはDeferred Draftとする。
-- 設計の中心はプラグイン間のGate制御から、EARS-AIと軽量な検証ループへ移る。
+- 設計の中心はplugin間のGate制御から、EARS-AIと軽量な検証ループへ移る。
 
 ## Alternatives
 
-1. **旧設計をそのまま実装する**: 初期スコープと処理負荷が大きく、価値検証が遅れる。
+1. **旧設計をそのまま実装する**: 初期scopeと処理負荷が大きく、価値検証が遅れる。
 2. **EARS-AIを廃止してMarkdownだけにする**: 製品の中心価値と機械可読な契約面を失う。
 3. **EARS-AIを形式仕様言語として扱う**: 自由記述本文に形式意味論がなく、保証を過大表示する。
 4. **全ProfileをCore 1.0へ含める**: 未検証の語彙と実装負荷が通常利用へ流入する。
@@ -77,8 +77,8 @@ PyPI + `uv`をスタンドアロン実行体の代替経路として維持する
 | 対象 | 後継ADR | 内容 |
 |---|---|---|
 | Decision 4 | [ADR-010](ADR-010_型付き依存とContext-Resolutionの中核化.md) | 公開操作へ`context`を追加し、3つから4つへ改訂 |
-| Decision 9 | [ADR-016](ADR-016_Agent-Plugins準拠の複数plugin配布.md) | 初期配布をAgent Plugins 1.0.0パッケージ主体へ改訂 |
-| ADR-003から引き継いだDiagnostic所有者の扱い | [ADR-011](ADR-011_Diagnostic所有者とcode命名規約.md) | Diagnostic所有者とコード命名規約を改訂。番号付きDecisionには対応項目がない |
+| Decision 9 | [ADR-016](ADR-016_Agent-Plugins準拠の複数plugin配布.md) | 初期配布をAgent Plugins 1.0.0 package主体へ改訂 |
+| ADR-003から引き継いだDiagnostic所有者の扱い | [ADR-011](ADR-011_Diagnostic所有者とcode命名規約.md) | Diagnostic所有者とcode命名規約を改訂。番号付きDecisionには対応項目がない |
 
 ## Revision History
 

@@ -1,13 +1,13 @@
-# SDDフロー
+# SDD flow
 
 ## 1. 目的
 
-SDDフローはCoreの公開操作を使って開発を進めるadapter／Skillの契約である。Coreはフロー状態、Human Review、
+SDD flowはCoreの公開操作を使って開発を進めるadapter／Skillの契約である。Coreはflow状態、Human Review、
 commitを保持せず、各段階で決定論的な検査結果を返す。
 
-## 2. フロー選択
+## 2. flow選択
 
-| 条件 | フロー |
+| 条件 | flow |
 |---|---|
 | 通常のbug fix、局所機能、refactoring | Small Flow |
 | 公開API、永続data、security、費用、法令、SLO、複数moduleへ影響 | Full Flow |
@@ -25,7 +25,7 @@ Intent -> Context -> Pre-check -> Implement -> Post-check -> Verify -> Human Rev
 4. **Implement**: 最初の書込み直前にContext Digestを再照合し、境界内のcodeとtestを変更する。
 5. **Post-check**: `bitz check`を再実行する。TASK起点では`bitz check <TASK-ID>`で`changes`を検査する。
 6. **Verify**: `purpose=verify`を解決し、`bitz verify <ID>`が通過statusであることを確認する。
-7. **Human Review**: 対応句、test結果、最終diff、未証明事項を人間が確認する。
+7. **Human Review**: 対応句、test結果、最終差分、未証明事項を人間が確認する。
 8. **Done**: TASK起点なら`done`へ変更し、最終`bitz check <TASK-ID>`を通してGitへ記録する。
 
 Context、check、verifyは`passed`または`passed_with_warnings`だけを通過statusとする。Contextはさらに
@@ -62,9 +62,9 @@ Spikeは本番成果物と分離した実験である。
 - Spike成果物をそのまま本番へmergeしない。
 - 採用実装はSmall FlowまたはFull Flowで作る。
 
-Profileタグ、専用run状態、Gate engineはCore 1.0に追加しない。
+Profile tag、専用run状態、Gate engineはCore 1.0に追加しない。
 
-## 6. プリフライト
+## 6. 事前検査
 
 実装開始には次を要求する。
 
@@ -91,29 +91,29 @@ Profileタグ、専用run状態、Gate engineはCore 1.0に追加しない。
 戻り、そこからPre-check、Post-check、verify、Human Reviewを省略せず再実行する。解消しなければ取り止める。
 
 最終Human Reviewの否決は自動再試行回数へ含めない。人間がIntent、Context、Implementのいずれかの戻り先、
-または取り止めを選び、Doneへ直接進めない。
+または取止めを選び、Doneへ直接進めない。
 
-## 8. 取り止め
+## 8. 取止め
 
 Done前は人間判断で取り止められる。`draft` REQ/TECHは`rejected`、`open` TASKは`cancelled`へ変更できる。
 理由は任意の`Notes`、ADR、Issue、commitへ記録し、変更後の`bitz check <ID>`を通してGitへ記録する。
 
-Coreは取り止めを推測せず、code/test差分を削除しない。既に`approved`のREQ/TECHは`rejected`へ戻さず、
+Coreは取止めを推測せず、code/test差分を削除しない。既に`approved`のREQ/TECHは`rejected`へ戻さず、
 必要なら`outdated`と後継判断で扱う。
 
-## 9. モノレポ横断作業
+## 9. 複合workspace横断作業
 
-共通要求が複数workspaceへ影響する場合、federation rootに共通REQまたはADRを置き、各memberのREQ／TECHが
+共通要求が複数workspaceへ影響する場合、root workspaceに共通REQまたはADRを置き、各memberのREQ／TECHが
 修飾IDで具体化する。実装とtestは所有memberへ置き、作業TASKもmemberごとに分ける。
 
 1. 共通要求の`purpose=interpret` Contextをreviewする。
 2. memberごとに`purpose=implement` Context、Pre-check、実装、Post-check、verifyを行う。
 3. 横断Contextの到達先と、各memberの所有境界をHuman Reviewで確認する。
-4. 統合前に同じGit／federation rootを発見できるdirectoryで`check --all-workspaces --base <統合先先端>`と
+4. 統合前に同じGit／root workspaceを発見できるdirectoryで`check --all-workspaces --base <統合先先端>`と
    `verify --all-workspaces`を実行する。
 
 独立した複数workspaceを1つのContext requestの複数起点にせず、memberごとにrequestを分ける。
-全体操作はworkspace単独フローのHuman Reviewを代替しない。
+全体操作はworkspace単独flowのHuman Reviewを代替しない。
 
 ## 10. 並行開発
 
@@ -121,7 +121,7 @@ Core 1.0は専用`Integrate`段階と自動改番支援を持たない。作業b
 次を実施する。
 
 1. `bitz check --full --base <統合先先端>`を実行する。
-2. 同じworkspace内に重複IDがあれば、人間が片方を当該workspaceの未使用IDへ改番し、Frontmatter、ファイル名、
+2. 同じworkspace内に重複IDがあれば、人間が片方を当該workspaceの未使用IDへ改番し、Frontmatter、file名、
    関係、`covers`、`addresses`を更新する。別workspaceの同名ローカルIDは改番しない。
 3. 同じcheckを再実行する。
 4. 通過後に通常のreviewとmergeを行う。
@@ -136,7 +136,7 @@ Coreは勝者、敗者、新IDを決めない。
 - 未tested `MUST`が0件である。
 - 必須testが実行され成功している。
 - 省略・未証明事項が表示されている。
-- 人間が最終diffを確認している。
+- 人間が最終差分を確認している。
 - TASK起点では`done`への変更後に最終checkが通過している。
 - 完了結果がGitへ記録されている。
-- 連合横断作業では、全workspaceのcheckとverifyの集約結果が通過statusである。
+- 複合workspace横断作業では、全workspaceのcheckとverifyの集約結果が通過statusである。

@@ -21,7 +21,7 @@ Capability、Diagnostic code）と`federation`（結果JSONのfield、継続単�
 本文の名前と識別子が3種類に分かれると、読み手が同じ構成を指していると判断しにくい。
 
 `monorepo`はrepositoryの形態を表す語であり、Coreの機能は1つのrepository内で複数のworkspaceを束ねることにある。
-Core 1.0は未リリースで、これらの識別子を公開したことはない。
+Core 1.0は未releaseで、これらの識別子を公開したことはない。
 
 ## Decision
 

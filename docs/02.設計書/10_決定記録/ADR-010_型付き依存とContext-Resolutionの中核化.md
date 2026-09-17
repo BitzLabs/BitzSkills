@@ -15,7 +15,7 @@ relations:
 ## Context
 
 汎用`refs`による参照だけでは、前提、具体化、実装対象、単なる関連を区別できない。旧開発では依存が
-エージェントへ正しく伝わらず、必要な仕様の未参照、受入条件の実装漏れ、古い解釈での作業継続が発生した。
+agentへ正しく伝わらず、必要な仕様の未参照、受入条件の実装漏れ、古い解釈での作業継続が発生した。
 
 ADR-009はCore 1.0の公開操作を3つに限定したが、EARS-AIを構造化しても、関連文脈を決定論的に選択する
 機能がなければ中心価値を十分に実現できない。
@@ -25,25 +25,25 @@ ADR-009はCore 1.0の公開操作を3つに限定したが、EARS-AIを構造化
 1. 汎用`refs`を、`requires`、`refines`、`addresses`、`supersedes`、`related`の型付き関係へ置き換える。
 2. 強い関係の完全な閉包をローカル・非LLMで解決する`bitz context`をCore 1.0へ追加する。
 3. 上限超過、参照切れ、循環、適用不能状態では部分的なContext Bundleを成功扱いしない。
-4. EARS-AIの`MUST`規範文とテストファイルを句単位で対応付ける。
-5. Context Digestを返し、編集前の再照合で古いコンテキストに基づく変更を停止する。
+4. EARS-AIの`MUST`規範文とtest fileを句単位で対応付ける。
+5. Context Digestを返し、編集前の再照合で古いContextに基づく変更を停止する。
 6. 通常のContext Resolutionを1秒以内、既定20文書・128 KiBに抑える。
-7. 専用グラフDB、埋込み検索、LLMによる依存推定、永続runは導入しない。
+7. 専用graph DB、埋込み検索、LLMによる依存推定、永続runは導入しない。
 
 ## Consequences
 
 - Core 1.0の公開操作は`context`、`check`、`verify`、`doctor`の4つになる。
 - Frontmatterは汎用`refs`より厳密になるが、依存の意味と探索方向が安定する。
-- `MUST`句ごとのテスト対応記述が必要になり、記述量は少し増える。
-- エージェントは文書探索を独自実装せず、同じContext Bundleを利用できる。
-- 意味的な矛盾検出やテストassertionの十分性は、引き続き人間と実行テストの責務である。
+- `MUST`句ごとのtest対応記述が必要になり、記述量は少し増える。
+- agentは文書探索を独自実装せず、同じContext Bundleを利用できる。
+- 意味的な矛盾検出やtest assertionの十分性は、引き続き人間と実行testの責務である。
 
 ## Alternatives
 
 1. **汎用`refs`を再帰探索する**: 関係の意味が不明で、過剰収集と不足を区別できない。
-2. **全文書を常に渡す**: 小規模リポジトリでもノイズとトークン消費が増え、重要制約が埋もれる。
+2. **全文書を常に渡す**: 小規模repositoryでもノイズとtoken消費が増え、重要制約が埋もれる。
 3. **LLMに関連文書を選ばせる**: 同じ入力でも選択が変わり、依存漏れを機械的に失敗扱いできない。
-4. **深度上限だけで打ち切る**: 末端の制約を欠いた部分コンテキストを正常に見せてしまう。
+4. **深度上限だけで打ち切る**: 末端の制約を欠いた部分Contextを正常に見せてしまう。
 
 ## Notes
 
@@ -53,7 +53,7 @@ ADR-009はCore 1.0の公開操作を3つに限定したが、EARS-AIを構造化
 |---|---|---|
 | Decision 1（`supersedes`） | [ADR-012](ADR-012_置換済みREQ・TECHの適用禁止.md) | 置換済みREQ/TECHを逆参照で判定し、`implement`／`verify`で`blocked`とする規則を追加 |
 | Decision 2、5 | [ADR-014](ADR-014_Semantic-IRと段階的Context-Projection.md) | 段階的Projectionを追加し、Context DigestからProjectionの違いを除外 |
-| Decision 5 | [ADR-015](ADR-015_SPEC改訂履歴の必須化.md) | 改訂履歴を非規範メタデータとし、`semanticHash`と`fileHash`を分離 |
+| Decision 5 | [ADR-015](ADR-015_SPEC改訂履歴の必須化.md) | 改訂履歴を非規範metadataとし、`semanticHash`と`fileHash`を分離 |
 
 ## Revision History
 

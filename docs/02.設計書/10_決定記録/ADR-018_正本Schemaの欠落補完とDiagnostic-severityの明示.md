@@ -14,8 +14,8 @@ relations:
 
 ## Context
 
-ADR-009以降、Profile、モノレポ連合、Revision History、Agent Plugins配布を段階的に追加した。
-その結果、上位文書が前提とする設定キー・Frontmatter項目・実行パラメータ・診断severityが、
+ADR-009以降、Profile、複合workspace、Revision History、Agent Plugins配布を段階的に追加した。
+その結果、上位文書が前提とする設定key・Frontmatter項目・実行パラメーター・診断severityが、
 下位の正本Schemaに定義されないまま残った箇所が5件生じた。
 
 いずれも文書間で相反する2つの規則があるのではなく、**片方に定義が存在しない**。
@@ -24,60 +24,60 @@ ADR-009以降、Profile、モノレポ連合、Revision History、Agent Plugins�
 
 | # | 欠落 | 参照側 | 正本側 |
 |---:|---|---|---|
-| 1 | `profiles`設定キー | 拡張プロファイル仕様、doctor仕様、モノレポ仕様 | `bitz.yaml`仕様にキーなし |
-| 2 | `verify`の実行位置 | `bitz.yaml`仕様が`cwd`を定義 | 参照・トレース・検証仕様が実行位置をworkspaceルートへ固定 |
+| 1 | `profiles`設定key | 拡張Profile仕様、doctor仕様、複合workspace仕様 | `bitz.yaml`仕様にkeyなし |
+| 2 | `verify`の実行位置 | `bitz.yaml`仕様が`cwd`を定義 | 参照・トレース・検証仕様が実行位置をworkspace rootへ固定 |
 | 3 | Frontmatterの責任者項目 | Core構文仕様が`owners`を指示 | Frontmatter共通仕様に`owners`なし |
-| 4 | `EAI-*`のseverity | 共通アーキテクチャが終了コードをseverityから決定 | AST・パーサー仕様にseverity列なし |
-| 5 | Profile間依存 | 拡張プロファイル仕様が`dependencies`を許可 | ADR-016が拡張間の必須依存を禁止 |
+| 4 | `EAI-*`のseverity | 共通アーキテクチャが終了コードをseverityから決定 | AST・Parser仕様にseverity列なし |
+| 5 | Profile間依存 | 拡張Profile仕様が`dependencies`を許可 | ADR-016が拡張間の必須依存を禁止 |
 
 ## Decision
 
-1. `.spec/bitz.yaml`へ`profiles`を予約キーとして追加する。Core 1.0は型だけを検査し、
-   未知キー警告を出さず、互換性判定とContext Digestへ使用しない。
-   `doctor`とモノレポ全体検査のProfile互換性判定は、Profileの正式実装まで行わない。
-2. `bitz verify`は解決した`verify.commands[].cwd`で実行する。`cwd`未指定のコマンドだけ、
-   テストを所有するワークスペースルートを実行位置とする。テストパスの重複排除は
+1. `.spec/bitz.yaml`へ`profiles`を予約keyとして追加する。Core 1.0は型だけを検査し、
+   未知key警告を出さず、互換性判定とContext Digestへ使用しない。
+   `doctor`と複合workspace全体検査のProfile互換性判定は、Profileの正式実装まで行わない。
+2. `bitz verify`は解決した`verify.commands[].cwd`で実行する。`cwd`未指定のcommandだけ、
+   testを所有するworkspace rootを実行位置とする。test pathの重複排除は
    `argv`と`cwd`の組を単位とする。
 3. 作成者・承認者・説明責任者はCoreの共通Frontmatter項目にせず、`x-owners`などの
    プロジェクト拡張で表す。EARS-AI規格本文の`owners`の記述を`x-`拡張へ改める。
 4. `EAI-*`診断へseverityを定義する。構文・意味系は`error`とし、所有文書が`draft`の場合だけ
-   `warning`へ降格する。ID系3コードは`status`にかかわらず`error`とする。
+   `warning`へ降格する。ID系3 codeは`status`にかかわらず`error`とする。
    `EAI-CORE-LANG-001`と`EAI-EXT-UNKNOWN-001`は`warning`とする。
 5. Profile Manifestから`dependencies`を削除し、Profile間の依存宣言を無条件に禁止する。
 
 ## Consequences
 
 - Profile未実装のままでも、`profiles`宣言が警告を生まずに前方互換の枠として機能する。
-- `cwd`を持つ検証コマンドが仕様どおり動作し、結果JSONの`cwd`と実行位置が一致する。
-- `ACTOR`と責任者の分離が、規格本文と正本Schemaで同じキー名を指すようになる。
-- 全`EAI-*`コードがseverityを持ち、終了コードが文書から決定できる。
+- `cwd`を持つ検証commandが仕様どおり動作し、結果JSONの`cwd`と実行位置が一致する。
+- `ACTOR`と責任者の分離が、規格本文と正本Schemaで同じkey名を指すようになる。
+- 全`EAI-*` codeがseverityを持ち、終了コードが文書から決定できる。
 - Profile間の共有語彙が必要になった場合、Coreの公開語彙への昇格が唯一の経路になる。
 - マーケットプレイスCIへ、Profile Manifestの`dependencies`不在検査が加わる。
 - 結果JSONの`commands[].argv`と`commands[].tests`は、`cwd`が`"."`でない場合に一致しない。
-  レポートを読む側はこの差を前提にする。
+  reportを読む側はこの差を前提にする。
 
 ## Alternatives
 
-1. **`profiles`の参照を4文書から削除する**: Profile正式実装時に同じキーを再導入することになり、
+1. **`profiles`の参照を4文書から削除する**: Profile正式実装時に同じkeyを再導入することになり、
    その時点で警告を受けていた既存設定との整合を別途取る必要が生じる。
 2. **Frontmatterの共通項目へ`owners`を追加する**:
-   [02_specディレクトリ仕様](../../03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md)の「owner、日時などは必要なプロジェクトだけが
-   拡張する」と、SPECファイル規定 原則3の両方を変更する必要があり、影響範囲が逆側の修正より大きい。
+   [02_spec directory仕様](../../03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md)の「owner、日時などは必要なプロジェクトだけが
+   拡張する」と、SPEC file規定 原則3の両方を変更する必要があり、影響範囲が逆側の修正より大きい。
 3. **severityを実装裁量に委ねる**: 同一fixtureから同一Diagnosticを得る適合性試験が成立しない。
 4. **Profile依存をManifestで解決する**: Agent Plugins 1.0に依存解決機構がなく、
    単体導入時に未解決依存を検出できない（ADR-016）。
 
 ## Notes
 
-本ADRは[04.提案資料/03_設計書・詳細設計レビューと改訂提案](../../04.提案資料/03_設計書・詳細設計reviewと改訂提案.md)
+本ADRは[04.提案資料/03_設計書・詳細設計reviewと改訂提案](../../04.提案資料/03_設計書・詳細設計reviewと改訂提案.md)
 §2のP1 5件に対する裁定であり、同書 附録Aの差分を適用して確定した。
 本ADR作成時点では同書のP2・P3は未裁定であり、本ADRの対象外とした。その後、P2はADR-019、
 決定記録の自己適合性はADR-020、P3は提案資料READMEの裁定として反映済みである。
 
-Decision 2のテストパス重複排除単位`(argv, cwd)`は、[ADR-030](ADR-030_verify実行bindingの正規識別子と重複排除単位の統一.md)が
+Decision 2のtest path重複排除単位`(argv, cwd)`は、[ADR-030](ADR-030_verify実行bindingの正規識別子と重複排除単位の統一.md)が
 `(workspaceId, 正規化argv template, 正規化cwd)`へ置き換えた。本ADRの他のDecisionは有効である。
 
-Decision 1の`profiles`予約キーとProfile互換性の判断、およびDecision 2のbinding同一性は、
+Decision 1の`profiles`予約keyとProfile互換性の判断、およびDecision 2のbinding同一性は、
 [ADR-039](ADR-039_Core-1.0仕様構造の再編とscope縮小.md)がCore 1.0の対象外またはcommand名単位へ変更した。
 Decision 3〜5と、Decision 2の`cwd`実行規則は有効である。
 
@@ -85,7 +85,7 @@ Decision 4の`EAI-CORE-LANG-001`に対するseverityは、Diagnosticを返すver
 Core 1.0は自然言語を決定論的に識別しないため、現行のEARS-AI契約とDiagnostic registryは同codeを予約済みとし、
 公開結果へ返さない。これは他の`EAI-*` severity判断を変更しない。
 
-関連文書: [EARS-AI規格/01](../../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md), [EARS-AI規格/02](../../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md), [EARS-AI規格/06](../../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md), [SPECファイル規定/02](../../03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md), [SPECファイル規定/03](../../03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md), [SPECファイル規定/06](../../03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md), [SPECファイル規定/11](../../03.詳細設計/03_操作仕様/04_doctor.md), [SPECファイル規定/12](../../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md)
+関連文書: [EARS-AI規格/01](../../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md), [EARS-AI規格/02](../../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md), [EARS-AI規格/06](../../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md), [SPEC file規定/02](../../03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md), [SPEC file規定/03](../../03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md), [SPEC file規定/06](../../03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md), [SPEC file規定/11](../../03.詳細設計/03_操作仕様/04_doctor.md), [SPEC file規定/12](../../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md)
 
 ## Revision History
 

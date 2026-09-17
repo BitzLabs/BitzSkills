@@ -14,7 +14,7 @@ relations:
 ## Context
 
 TASKの`requires`は「TASK実行前に必要なSPECまたは先行TASK」を示し、TASK間の`requires`循環は実行順序を
-決められないためエラーとしている。一方、Context Resolution仕様の状態表は`open` TASKをWork、`done` TASKを
+決められないためerrorとしている。一方、Context Resolution仕様の状態表は`open` TASKをWork、`done` TASKを
 Historyへ分類するだけで、`open`の先行TASKをblocking条件にしていない。
 
 このため`TASK-B(open) requires TASK-A(open)`という宣言があっても、TASK-Bを起点とする
@@ -31,15 +31,15 @@ Historyへ分類するだけで、`open`の先行TASKをblocking条件にして�
    依存しないためである。
 4. `requires`が指すREQ、TECH、accepted ADRに対する既存の適用可能性判定は変更しない。本決定はTASK
    targetの状態ガードだけを追加する。
-5. TASK間循環は従来どおり`CTX-CYCLE-001`とし、状態ガードと別コードで識別できるようにする。
+5. TASK間循環は従来どおり`CTX-CYCLE-001`とし、状態ガードと別codeで識別できるようにする。
 6. 実行順序を持たない単なる関連作業には`related`を使い、`requires`を使わない。
 
 ## Consequences
 
 - 「先行TASK」の宣言が実行可能性の機械契約になり、`open -> open`と`done -> open`で開始可否が一意になる。
 - 先行TASKを`done`にし忘れた作業は`blocked`となるため、TASKの完了操作が運用上必須になる。
-- `interpret`は従来どおり成功するため、仕様の読み取りと計画立案は先行TASKの状態に妨げられない。
-- 循環検査と状態ガードがDiagnosticコードで区別でき、利用者が取るべき対処を判別できる。
+- `interpret`は従来どおり成功するため、仕様の読取りと計画立案は先行TASKの状態に妨げられない。
+- 循環検査と状態ガードがDiagnostic codeで区別でき、利用者が取るべき対処を判別できる。
 
 ## Alternatives
 
@@ -52,14 +52,14 @@ Historyへ分類するだけで、`open`の先行TASKをblocking条件にして�
 
 ## Notes
 
-- 本ADRは2026-08-31のユースケース・フロー遷移レビューUC-FLOW-002に対する裁定である。
-- 先行TASKを`done`へ遷移させるフロー終端と、`done` TASK自身を起点にしたpurpose別挙動は
+- 本ADRは2026-08-31のユースケース・flow遷移review UC-FLOW-002に対する裁定である。
+- 先行TASKを`done`へ遷移させるflow終端と、`done` TASK自身を起点にしたpurpose別挙動は
   [ADR-034](ADR-034_TASK完了終端とdone起点操作の確定.md)で補完する。Decision 1の先行依存条件は変更しない。
 - [ADR-036](ADR-036_flow取止めと不採用履歴の保持.md)が追加した`cancelled` TASKも`done`ではないため、
   Decision 1の条件を満たさない。依存の除去または代替TASKへの更新が必要である。
-- 関連文書: [SPECファイル規定/05](../../03.詳細設計/02_SPECモデル/03_文書種別・本文template.md),
-  [SPECファイル規定/06](../../03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md),
-  [SPECファイル規定/10](../../03.詳細設計/03_操作仕様/01_context.md)
+- 関連文書: [SPEC file規定/05](../../03.詳細設計/02_SPECモデル/03_文書種別・本文template.md),
+  [SPEC file規定/06](../../03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md),
+  [SPEC file規定/10](../../03.詳細設計/03_操作仕様/01_context.md)
 
 ## Revision History
 

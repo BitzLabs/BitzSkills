@@ -11,7 +11,7 @@ relations:
 
 ## Context
 
-文書間でID階層の記述が食い違っていた。Core構文仕様は `REQ-001:AC-01` の2階層を例示する一方、`.spec/` ディレクトリ仕様は `REQ-001:AC-01:R-01` の3階層を、親子2行に分割した箇条書きで例示していた。後者はACTORと規範強度を欠き、Core構文の1行1文モデルにも適合しない。旧検討版の記法が残存したものである。
+文書間でID階層の記述が食い違っていた。Core構文仕様は `REQ-001:AC-01` の2階層を例示する一方、`.spec/` directory仕様は `REQ-001:AC-01:R-01` の3階層を、親子2行に分割した箇条書きで例示していた。後者はACTORと規範強度を欠き、Core構文の1行1文モデルにも適合しない。旧検討版の記法が残存したものである。
 
 ## Decision
 
@@ -23,7 +23,7 @@ local-id    = 1*( ALPHA / DIGIT / "-" )      ; 例 AC-01, SPEC-04, CONST-01
 statement-id = document-id, ":", local-id
 ```
 
-現在の`local-id`字句規則とCore文書prefixは[ADR-013](ADR-013_文書IDとローカルIDの字句規則訂正.md)で
+現在の`local-id`字句規則とCore文書接頭辞は[ADR-013](ADR-013_文書IDとローカルIDの字句規則訂正.md)で
 訂正されている。実装はEARS-AI Core構文仕様を正とする。
 
 - 1つの規範文は1行で完結し、ID、ACTOR、発動条件、規範強度、処理種別を必ず備える。
@@ -39,7 +39,7 @@ statement-id = document-id, ":", local-id
 
 ## Consequences
 
-- [02_specディレクトリ仕様.md](../../03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md) の例を Core 1.0 準拠へ修正する。
+- [02_spec directory仕様.md](../../03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md) の例を Core 1.0 準拠へ修正する。
 - 移行表に「親子分割記法 → 発動条件を繰り返した複数の規範文」を追加する。
 - 移行ツールは3階層IDを検出した場合、決定論的に変換できないため人間確認へ回す。
 
@@ -50,10 +50,10 @@ statement-id = document-id, ":", local-id
 
 ## Notes
 
-Decisionのうち`local-id`の字句規則とCore文書prefixは[ADR-013](ADR-013_文書IDとローカルIDの字句規則訂正.md)が
+Decisionのうち`local-id`の字句規則とCore文書接頭辞は[ADR-013](ADR-013_文書IDとローカルIDの字句規則訂正.md)が
 置き換えた。2階層固定という決定と、規範文の分割規則は変更されていない。
 
-関連文書: [02_specディレクトリ仕様.md](../../03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md), [EARS-AI規格/01_Core構文仕様.md](../../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md)
+関連文書: [02_spec directory仕様.md](../../03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md), [EARS-AI規格/01_Core構文仕様.md](../../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md)
 
 ## Revision History
 
@@ -62,5 +62,5 @@ Decisionのうち`local-id`の字句規則とCore文書prefixは[ADR-013](ADR-01
 | 2026-08-25 | 初版を作成 | — |
 | 2026-08-25 | 文書IDとローカルIDの字句規則をADR-013で訂正 | `ADR-013` |
 | 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |
-| 2026-08-31 | 部分改訂の対象箇所（`local-id`字句規則とprefix）を明示 | `ADR-013` |
+| 2026-08-31 | 部分改訂の対象箇所（`local-id`字句規則と接頭辞）を明示 | `ADR-013` |
 | 2026-09-03 | ADR-039の再編に合わせて関連文書linkを現構造へ更新（非意味的訂正） | 提案24 G8 |

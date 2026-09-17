@@ -27,7 +27,7 @@ harnessの外部仕様は次の点で閉じていない。このため`SINGLE-12
 
 ## Decision
 
-1. **検査対象の受取り**: harnessは検査対象Coreをsource directoryまたはwheelとしてCLI引数で受け取り、manifestへ
+1. **検査対象の受取り**: harnessは検査対象Coreをsource directoryまたはwheelとしてCLI引数で受取り、manifestへ
    書かない。要求されるCPython minorごとに`uv`でrepositoryと隔離HOMEの外に環境を作り、候補とlock済み依存だけを
    導入する。`runner: bitz`はその環境のconsole script `bitz`をshellなしで起動する。環境構築はinvocationの前に行い、
    Coreの副作用比較には含めない。
@@ -48,7 +48,7 @@ harnessの外部仕様は次の点で閉じていない。このため`SINGLE-12
    `MONO-024`の作成時に同じ形で固定する。
 5. **package runner**: package metadataとlock fileの検査は、Core配布物ではなくfixture harnessの参照実装が行う
    `runner: package`とする。Core実行体を起動せず、候補のsource tree、build成果物、Decision 1の隔離環境の導入
-   metadataを検査し、Decision 4と同じ出力・終了コードを返す。caseは`metadata`（distribution名、import package名、
+   metadataを検査し、Decision 4と同じ出力・終了コードを返す。caseは`metadata`（配布物名、import package名、
    console script名が`bitz`で、requires-pythonが3.11以上を許す）と`dependencies`（runtime依存が標準libraryと
    lock fileでexact versionへ固定したYAML library 1つだけ）の2つとする。
 

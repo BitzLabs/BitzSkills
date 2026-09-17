@@ -24,7 +24,7 @@ statement-id = document-id, ":", local-id
 
 - 文書IDの数字部分は3桁以上とする。
 - ローカルIDは英数字で開始し、先頭・末尾ハイフンと連続ハイフンを推奨しない。
-- Core 1.0の配置可能な文書prefixは`REQ`、`TECH`、`ADR`、`TASK`とする。
+- Core 1.0の配置可能な文書接頭辞は`REQ`、`TECH`、`ADR`、`TASK`とする。
 
 ### 理由
 
@@ -36,7 +36,7 @@ statement-id = document-id, ":", local-id
 
 - ADR-005のEBNFは本ADRで訂正され、実装はEARS-AI Core構文仕様を正とする。
 - EARS-AI Core構文仕様、配置・命名規則、ADR-005の3文書が同じ字句規則を指す。
-- `DOMAIN`や`RULE`などDeferred Profileの概念名は、Core 1.0の文書prefixとして使用できない。
+- `DOMAIN`や`RULE`などDeferred Profileの概念名は、Core 1.0の文書接頭辞として使用できない。
 
 ## Revision History
 
