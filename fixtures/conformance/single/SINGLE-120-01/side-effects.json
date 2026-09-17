@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "65eb142ddad42efda167d483f6dc5cb39ac9e656fee7b32aef4f39a22ceb1fc7"
+      },
+      "src": {
+        "kind": "directory"
+      },
+      "src/app.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a6a016f1cdc6fa0d715c261ed3147f4e0ad7f59a534130685f49f8f48686176f"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 9bb32c224db1732052729eaebb8adce04a574bb4 0\t.spec/tasks/TASK-001.md\n100644 62a0161c9eab0d2d827a7795cc8831d1324e3bd9 0\tsrc/app.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "65eb142ddad42efda167d483f6dc5cb39ac9e656fee7b32aef4f39a22ceb1fc7"
+      },
+      "src": {
+        "kind": "directory"
+      },
+      "src/app.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a6a016f1cdc6fa0d715c261ed3147f4e0ad7f59a534130685f49f8f48686176f"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 786140defb3b8c65a27d56a3909d4cd22cac57b3 0\t.spec/bitz.yaml\n100644 9bb32c224db1732052729eaebb8adce04a574bb4 0\t.spec/tasks/TASK-001.md\n100644 62a0161c9eab0d2d827a7795cc8831d1324e3bd9 0\tsrc/app.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

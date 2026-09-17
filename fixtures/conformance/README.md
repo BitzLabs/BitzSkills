@@ -122,3 +122,6 @@ Current preparation: 174/311; 137 remain.
 required/null, empty/duplicate array, unknown-key, `x-` extension and REQ `changes` cases. Each field is written
 as a JSON flow value, decoded independently and checked against `frontmatter.schema.json`.
 SINGLE-118-02/03 and 120-01/02 remain outstanding. Current preparation: 201/311; 110 remain.
+
+Frontmatter境界の追補として、SINGLE-118-02／03（test要素のkey tuple重複判定）と120-01／02（`changes`空・省略TASKの
+明示TASK check）を加え、matrixの114〜120を完了した。準備済みは205/311、残りは106件である。

@@ -482,3 +482,15 @@ with no check errors, both exit 1 for pending Gate A evidence.
 Report SHA-256: `db8b0defde675722225f72962027265855afbe953971a3379b4bbba0a3e39582`.
 No Core was run. SINGLE-118-02/03, 120-01/02, remaining fixtures, federation golden
 and fresh-checkout Gate A certification remain pending.
+
+## 2026-09-17: Frontmatter境界の追補
+
+準備済み205/311、残り106件。SINGLE-118-02、118-03、120-01、120-02を加え、matrixの114〜120を完了した。
+118-02／03は`tests`要素を`(path, commandの有無と値, covers集合)`のkey tupleで独立に比較し、
+JSON Schemaの`uniqueItems`では検出できないcovers順だけの重複を拒否、command／coversの異なる要素を受理する。
+120-01／02は明示TASK checkで、`changes: []`かつ差分なしの通過と、`changes`省略かつ未stage差分の
+`SPEC-TASK-BOUNDARY-001`を固定した。HEAD／indexのblobと作業treeのbyteを2回の隔離setupで照合した。
+回帰試験は受理への改変、covers順の修復、件数・source・argvの改変、差分の消去とstageの追加を拒否する。
+同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
+Report SHA-256: `0fff1aa3a4d4ca4b2bbc3e21ac59549a39bc0b5f516ee2cf8a3eaa72ca155bc0`。
+Coreは実行していない。残りの適合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。

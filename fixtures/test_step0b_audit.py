@@ -294,7 +294,7 @@ class AuditTests(unittest.TestCase):
         from conformance import frontmatter_boundary_fixtures as boundaries
         report = boundaries.validate()
         self.assertEqual(report["errors"], [])
-        self.assertEqual(len(report["prepared"]), 20)
+        self.assertEqual(len(report["prepared"]), 24)
         self.assertEqual(report["core_execution"], "Not run")
         mutations = [
             ("SINGLE-116-01", "expected/check.json", lambda v: v.update(status="failed")),
@@ -304,6 +304,14 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-120-04", "expected/check.json", lambda v: v["diagnostics"].append(v["diagnostics"][0])),
             ("SINGLE-119-03", "expected/check.json", lambda v: v["diagnostics"].clear()),
             ("SINGLE-119-04", "side-effects.json", lambda v: v["after"].update(cache={"index": {"kind": "directory"}})),
+            # key tupleによる重複を受理へ戻す改変と、別test対応を重複扱いにする改変を拒否する。
+            ("SINGLE-118-02", "expected/check.json", lambda v: v.update(status="passed", diagnostics=[])),
+            ("SINGLE-118-03", "expected/check.json", lambda v: v.update(checkedStatementCount=1)),
+            # 空changesを変更許可と取り違える改変、境界違反を文書skipとして数える改変を拒否する。
+            ("SINGLE-120-01", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(1, "--full")),
+            ("SINGLE-120-02", "expected/check.json", lambda v: v.update(checkedDocumentCount=0)),
+            ("SINGLE-120-02", "expected/check.json", lambda v: v["diagnostics"][0]["source"].update(key="changes")),
+            ("SINGLE-120-02", "side-effects.json", lambda v: v["after"]["git"].update(status="")),
         ]
         for identifier, relative, mutate in mutations:
             with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
@@ -318,6 +326,24 @@ class AuditTests(unittest.TestCase):
             shutil.copy2(audit.FIXTURES / "frontmatter.schema.json", root)
             path = root / "single" / identifier / "repo" / boundaries.spec_path(identifier)
             path.write_text(path.read_text().replace("界" * 121, "界" * 120))
+            self.assertTrue(boundaries.validate(root, [identifier])["errors"])
+        # covers順の入替えを同順へ修復すると単一原因でなくなるため拒否する。
+        with tempfile.TemporaryDirectory() as temporary:
+            identifier = "SINGLE-118-02"
+            root = self.copy_fixture(temporary, identifier)
+            shutil.copy2(audit.FIXTURES / "frontmatter.schema.json", root)
+            path = root / "single" / identifier / "repo" / boundaries.spec_path(identifier)
+            path.write_text(path.read_text().replace('["REQ-001:AC-02", "REQ-001:AC-01"]', '["REQ-001:AC-01", "REQ-001:AC-02"]'))
+            self.assertTrue(boundaries.validate(root, [identifier])["errors"])
+        # 変更差分をindexへstageした状態は、未stage差分の期待と一致しないため拒否する。
+        with tempfile.TemporaryDirectory() as temporary:
+            identifier = "SINGLE-120-02"
+            root = self.copy_fixture(temporary, identifier)
+            shutil.copy2(audit.FIXTURES / "frontmatter.schema.json", root)
+            path = root / "single" / identifier / "manifest.json"
+            value = json.loads(path.read_text())
+            value["setup"]["operations"].append({"op": "stage", "paths": ["src/app.py"]})
+            path.write_text(json.dumps(value))
             self.assertTrue(boundaries.validate(root, [identifier])["errors"])
 
     def test_frontmatter_fixtures(self):
