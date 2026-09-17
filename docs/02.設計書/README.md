@@ -43,7 +43,7 @@ LLM出力の決定論性、実装の完全性は保証せず、人間reviewとte
 |---|---|
 | [01_システム構成.md](01_システム構成.md) | component、依存、公開操作、scope |
 | [02_品質属性と安全境界.md](02_品質属性と安全境界.md) | 品質、性能、脅威、最小権限 |
-| [03_SDDフロー.md](03_SDDフロー.md) | Small/Full/Spikeと完了条件 |
+| [03_SDD-flow.md](03_SDD-flow.md) | Small/Full/Spikeと完了条件 |
 | [04_運用手順.md](04_運用手順.md) | 導入、日常操作、CI、復旧 |
 | [05_ユースケース.md](05_ユースケース.md) | 公開操作とフローの受入シナリオ |
 | [10_決定記録](10_決定記録/README.md) | 判断理由と代替案の履歴 |
@@ -61,11 +61,11 @@ LLM出力の決定論性、実装の完全性は保証せず、人間reviewとte
 - 永続run、承認service、workflow engine
 - 複数Git repository、Git submodule、network越しSPECの連合
 
-モノレポSPEC連合は[ADR-040](10_決定記録/ADR-040_モノレポSPEC連合をCore-1.0へ再導入する.md)により
+モノレポSPEC連合は[ADR-040](10_決定記録/ADR-040_複合workspaceをCore-1.0へ再導入する.md)により
 Core 1.0へ含める。verifyのtarget別証跡と明示report保存は
 [ADR-041](10_決定記録/ADR-041_verify対象別証跡とreport明示保存の分離.md)に従う。その他の対象外機能は
 [ADR-039](10_決定記録/ADR-039_Core-1.0仕様構造の再編とscope縮小.md)の簡素化判断を維持する。連合のworkspace
 identity、所有境界、公開Schema、CLI、resourceと性能条件は
-[ADR-042](10_決定記録/ADR-042_モノレポ連合のidentity・所有境界・公開契約を確定する.md)で確定した。継続、
+[ADR-042](10_決定記録/ADR-042_複合workspaceの同一性・所有境界・公開契約を確定する.md)で確定した。継続、
 TASK境界、rollback、計算量、適合条件は
-[ADR-043](10_決定記録/ADR-043_モノレポ連合の継続・TASK境界・適合契約を確定する.md)で確定した。
+[ADR-043](10_決定記録/ADR-043_複合workspaceの継続・TASK境界・適合契約を確定する.md)で確定した。

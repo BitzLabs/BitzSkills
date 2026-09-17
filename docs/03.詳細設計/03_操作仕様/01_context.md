@@ -122,7 +122,7 @@ statement起点の兄弟句とadvisory文書の規範文はLedgerとcoverageの�
 連合ではtop-level `workspace`をrequest workspaceとし、`roots`、文書`id`、statement参照を修飾形式で返す。
 各`documents[]`は`workspaceId`を持ち、`path`はそのworkspace root相対とする。
 `resolution.workspaces`と`resolution.crossWorkspaceEdges`のfield、内容、順序は
-[モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)に従い、連合結果では必須とする。
+[モノレポSPEC連合仕様](../02_SPECモデル/05_複合workspace仕様.md)に従い、連合結果では必須とする。
 
 連合結果の追加Schemaを次に示す。単一workspaceではこれらの追加fieldを省略する。
 

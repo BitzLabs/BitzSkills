@@ -148,7 +148,7 @@ workspace固有検査を該当workspace要素へ置く。完全JSON例は
 
 Core自体が未導入でdoctorを呼べない場合、adapterは静的な導入手順だけを示し、Core判定を代替しない。
 連合固有Diagnosticと全体結果外形は
-[モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)に従う。
+[モノレポSPEC連合仕様](../02_SPECモデル/05_複合workspace仕様.md)に従う。
 
 設定不適合は`SPEC-CONFIG-SCHEMA-001`だけをDiagnosticへ置き、doctorのconfig check itemがそのDiagnosticを参照する。
 `SPEC-DOCTOR-CONFIG-001`と`SPEC-DOCTOR-CACHE-001`は予約済みとし、公開結果へ返さない。Core 1.0は永続cacheを

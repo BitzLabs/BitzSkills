@@ -176,7 +176,7 @@ CIは標準出力と終了コードを既定とし、artifactが必要なjobだ�
 |---|---|
 | `03_verify.md` | target単位Context、結果Schema、binding採用条件、verified述語を置換 |
 | `01_結果・Diagnostic・終了コード.md` | `targetResults[]`の集約と明示report保存を定義 |
-| `05_モノレポSPEC連合仕様.md` | member結果と共有bindingの参照規則だけを同期 |
+| `05_複合workspace仕様.md` | member結果と共有bindingの参照規則だけを同期 |
 | `12_Core-1.0実装計画.md` | multi-context、共有binding、非成功混在fixtureを追加 |
 | レビュー16・20、README | P0の裁定と反映状態を記録 |
 

@@ -22,7 +22,7 @@ ADR-015は「既存SPECはCore 1.0適合前に`Revision History`を追加する�
 ## Decision
 
 1. 決定記録の全ADRへFrontmatter（`id`、`title`、`status`、`relations`）を追加する。
-   状態は[補助SPEC仕様](../../03.詳細設計/02_SPECモデル/03_文書種別・本文テンプレート.md) §3の
+   状態は[補助SPEC仕様](../../03.詳細設計/02_SPECモデル/03_文書種別・本文template.md) §3の
    小文字語彙を使い、状態と後継関係はFrontmatterを正とする。
 2. H1を`# <id> <title>`、H2を`Context`、`Decision`、`Consequences`、任意の`Alternatives`、
    `Notes`、最終H2の`Revision History`へ統一する。
@@ -57,7 +57,7 @@ ADR-015は「既存SPECはCore 1.0適合前に`Revision History`を追加する�
 
 ## Notes
 
-本ADRは[04.提案資料/03_設計書・詳細設計レビューと改訂提案.md](../../04.提案資料/03_設計書・詳細設計レビューと改訂提案.md)
+本ADRは[04.提案資料/03_設計書・詳細設計reviewと改訂提案.md](../../04.提案資料/03_設計書・詳細設計reviewと改訂提案.md)
 §3.7に対する裁定であり、同書 附録B.7の手順で適用した。
 
 Decision 4のうち、`Amends`相当を`related`だけで表すとした部分は

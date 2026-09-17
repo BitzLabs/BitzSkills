@@ -16,7 +16,7 @@ relations:
 
 `bitz verify`の実行単位について、3つの正本が異なる識別子を使っていた。
 
-- [ADR-018](ADR-018_正本Schemaの欠落補完と診断severityの明示.md)はテストパスの重複排除を
+- [ADR-018](ADR-018_正本Schemaの欠落補完とDiagnostic-severityの明示.md)はテストパスの重複排除を
   `argv`と`cwd`の組で行うと定めた。
 - `bitz.yaml`仕様は`{tests}`を持たないコマンドを設定argvのまま1回実行すると定めた。
 - [モノレポSPEC連合仕様](../../03.詳細設計/02_SPECファイル規定/12_モノレポSPEC連合仕様.md)は実行済み判定を

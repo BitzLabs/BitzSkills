@@ -88,7 +88,7 @@ global preflight非成功ならworkspace別検査を開始しない。preflight�
 
 `--all-workspaces`ではrepository全体で1つの基準commitを使い、基準版と現在版の両catalogからworkspace修飾IDで
 文書を対応付ける。member削除または移動時の扱いは
-[モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)に従う。
+[モノレポSPEC連合仕様](../02_SPECモデル/05_複合workspace仕様.md)に従う。
 
 初回連合化では、baseのrepository root設定が`multiWorkspace`と明示`workspace.id`を持たない場合だけ、実効ID `root`を
 currentのfederation root IDへ比較上で写像する。連合化後のID renameは推定せず、member pathだけの移動は同じIDで
@@ -189,7 +189,7 @@ Coreは意味的影響を断定せず、statusを自動変更しない。`relate
 | `SPEC-STYLE-PLACEMENT-001` | failed | 規範文が文書種別ごとの許可位置外 |
 
 Core 1.0は`idCollisions`、`SPEC-BASE-AMBIGUOUS-001`、H2順序・空節・疑似節Diagnosticを返さない。
-連合固有Diagnosticは[モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)が所有する。
+連合固有Diagnosticは[モノレポSPEC連合仕様](../02_SPECモデル/05_複合workspace仕様.md)が所有する。
 
 本表は検索用索引である。全条件のcode、severity、status、source、継続単位、primary優先順位は
 [Diagnostic registry](../00_共通契約/05_Diagnostic-registry.md)が所有する。

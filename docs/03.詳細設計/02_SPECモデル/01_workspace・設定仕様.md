@@ -13,7 +13,7 @@ Core 1.0は単一workspaceと、1つのGit repository内の明示的なworkspace
 
 単一workspaceの実効IDは`workspace.id`、省略時は`root`とし、pathは`.`とする。Git rootの設定が
 `multiWorkspace.members`を宣言する場合は、
-[モノレポSPEC連合仕様](05_モノレポSPEC連合仕様.md)のcatalog検証、active workspace決定、所有境界を適用する。
+[モノレポSPEC連合仕様](05_複合workspace仕様.md)のcatalog検証、active workspace決定、所有境界を適用する。
 
 ## 2. 標準配置
 
@@ -93,7 +93,7 @@ safety:
 
 `profiles`はCore 1.0の標準keyではない。検出した場合は`SPEC-CONFIG-UNKNOWN-001`／warningとし、判定、Context Digest、
 操作へ使用しない。`workspace`と`multiWorkspace`の組合せ、member field、path制約は
-[モノレポSPEC連合仕様](05_モノレポSPEC連合仕様.md)が定義する。
+[モノレポSPEC連合仕様](05_複合workspace仕様.md)が定義する。
 
 未知の標準keyは同一majorの前方互換性のため`SPEC-CONFIG-UNKNOWN-001`／warningとし、値を変更しない。
 型不正と必須key欠如は`SPEC-CONFIG-SCHEMA-001`／error／`error`、未知Schema majorは
@@ -101,7 +101,7 @@ safety:
 
 `workspace`と`multiWorkspace`は未リリースの初回Core 1.0 Schemaに含まれる。モノレポ非対応の公開済みCore 1.0との
 移行分岐、追加feature marker、Schema major引上げは設けない。連合内のworkspace IDは永続identityであり、
-初回連合化とbase/current対応は[モノレポSPEC連合仕様](05_モノレポSPEC連合仕様.md#41-workspace-identity)に従う。
+初回連合化とbase/current対応は[モノレポSPEC連合仕様](05_複合workspace仕様.md#41-workspace-identity)に従う。
 
 ## 6. command定義
 
@@ -170,4 +170,4 @@ CLIは対象範囲、Git比較基準、出力形式、report、timeout短縮だ�
 SPECへ記録するpathはworkspace root相対、separatorは`/`とする。絶対path、`..`、NUL、glob、root外symlinkを
 禁止する。Git管理外の生成物と依存cacheを`implements`または`tests`へ指定しない。
 連合では、workspace root内であっても別memberの所有領域を参照できない。federation rootによるmember配下の
-所有も禁止し、詳細は[モノレポSPEC連合仕様](05_モノレポSPEC連合仕様.md)に従う。
+所有も禁止し、詳細は[モノレポSPEC連合仕様](05_複合workspace仕様.md)に従う。

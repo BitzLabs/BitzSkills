@@ -271,4 +271,4 @@ P1-2は`compact`でも見出しを残す。P1-3は連合の修飾IDをそのま�
 3. `diagnostic-coverage.json`の当該source hashを更新する。
 4. `SINGLE-104-01`のcorpus（`SINGLE-042`と同一）、manifest、期待JSON、期待Markdown、副作用期待値を作成し、
    監査へMarkdown byte一致と、要約値がJSON結果と一致することの検査を追加する。
-5. `fixtures/conformance/step0b-validation.md`と実装計画の件数を更新する。
+5. `fixtures/conformance/Step-0B検証記録.md`と実装計画の件数を更新する。

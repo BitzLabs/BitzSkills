@@ -4,7 +4,7 @@
 
 本書はContext Digestの入力document、正規化、serialization、hash計算をbyte単位で定義する。
 Digestへ含める材料の選定と除外は[context仕様 §6](../03_操作仕様/01_context.md#6-context-digest)、
-連合固有の材料は[モノレポSPEC連合仕様 §6](../02_SPECモデル/05_モノレポSPEC連合仕様.md#6-横断索引とcontext)が
+連合固有の材料は[モノレポSPEC連合仕様 §6](../02_SPECモデル/05_複合workspace仕様.md#6-横断索引とcontext)が
 所有する。本書は同じ材料集合から同じ64桁を得るための手順だけを所有する。
 
 Context Digestは`--expect-digest`によるstale検出、`targetResults[]`の検証証跡、適合fixtureの比較値として
@@ -176,7 +176,7 @@ opaque extensionを失わない。opaque extensionの有無はCore解析結果�
 
 ### 3.2 crossWorkspaceEdges
 
-[モノレポSPEC連合仕様 §6](../02_SPECモデル/05_モノレポSPEC連合仕様.md#6-横断索引とcontext)の
+[モノレポSPEC連合仕様 §6](../02_SPECモデル/05_複合workspace仕様.md#6-横断索引とcontext)の
 `resolution.crossWorkspaceEdges`と同じ内容、同じ順序、同じ重複排除規則を使う。
 単一workspaceでは空配列とする。
 

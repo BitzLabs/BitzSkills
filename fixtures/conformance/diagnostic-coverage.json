@@ -3,18 +3,18 @@
   "reviewStatus": "Passed",
   "sources": {
     "docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md": "1f013d08341cd74e21ef51087a22e6cb3b6f3295c9e9b6fcf30ab6439ad16149",
-    "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "3d8383a9c0ab8dcee0dc79121f219ff55414bb85f26aced8ba2d9f3a2aa12f04",
+    "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "b2a7fdb541daf8de55a5b67501b2125f00fa8b7110ebb9424186ac5012220db5",
     "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md": "3e0153846e8460a530cc2a4b274841d1a9c87906b71f31b974d4326f767a3252",
-    "docs/03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md": "bd79aacd5b96723dd72699495d76418506a288eed03334d32d30a77439252c8b",
-    "docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md": "37d509ab099072c5c288b5ec8049d9c3c27c556c9813175e6fd77fc8dd9abb92",
-    "docs/03.詳細設計/02_SPECモデル/03_文書種別・本文テンプレート.md": "b2bdc98bf06dc74cd70bf32f6f2c304d1044b207d9e944ed2383456e9e664b32",
-    "docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md": "c46cd98f0d3bd1218effb798a309de7e48dfe6bb6a79d6cb791c0954adee8906",
-    "docs/03.詳細設計/02_SPECモデル/05_モノレポSPEC連合仕様.md": "acdc510647ce7c763f3b230c35f34069c9b8d76bab52d3c075eda8313e706c30",
-    "docs/03.詳細設計/03_操作仕様/01_context.md": "ac2e9f1fbc4bdb29f1d8638e7b8315f4ea968bf12eae34155301d7b195cd28ee",
-    "docs/03.詳細設計/03_操作仕様/02_check.md": "04f1885915c200552d5501b396c79234d173481c26c4501ad7124e3c1eb8b4bb",
-    "docs/03.詳細設計/03_操作仕様/03_verify.md": "deebfd446a0aa2d46acd763bac8fa9fe5c18460601bed5ae18728586e1a34349",
-    "docs/03.詳細設計/03_操作仕様/04_doctor.md": "f3926f7387420ef8172dc055c6c059ca72fed627ae6385279818eb094636bb2e",
-    "docs/03.詳細設計/03_操作仕様/README.md": "a520a10c2b81fc39d3b09b218d12eeed756c04c04ceac1b4fc9c489d041a6eda",
+    "docs/03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md": "4edcb8250e0b4e608c431dfc378fa2fc71faa434d5523af87effd9e805214a0e",
+    "docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md": "7f8c2dd60d3e70a481a943010fdccd3210f3a0b51276f934baadb0f185d072d5",
+    "docs/03.詳細設計/02_SPECモデル/03_文書種別・本文template.md": "b2bdc98bf06dc74cd70bf32f6f2c304d1044b207d9e944ed2383456e9e664b32",
+    "docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md": "968d1d11de9e0f7af7e30638ce5d9bd5f673c015e05cc19a674d1577a20ccdb3",
+    "docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md": "acdc510647ce7c763f3b230c35f34069c9b8d76bab52d3c075eda8313e706c30",
+    "docs/03.詳細設計/03_操作仕様/01_context.md": "62ac5d62691b632c85a20888544f57301e43be9bc1ff5b1e6687c6aacb4f2347",
+    "docs/03.詳細設計/03_操作仕様/02_check.md": "fe074a8dc62ec8f9744362f604987cf759191f998aba3ad336ab87913b0ff4cf",
+    "docs/03.詳細設計/03_操作仕様/03_verify.md": "1fd13305fab75ad0f82c7ade237241e24eedd8a4f8a902f5513ed0a58a1ade94",
+    "docs/03.詳細設計/03_操作仕様/04_doctor.md": "739769d989d2123a520d91be962453fde8349e41b79392fb3b45b2507909ba36",
+    "docs/03.詳細設計/03_操作仕様/README.md": "043372741496e49777946ab50739386651b4d209345c121bdce3e3780869b7d5",
     "docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md": "e58b01c5bbbf6ff93defe6ebbdb503e6611c15f56876e9b83fa127bea741e883",
     "docs/03.詳細設計/01_EARS-AI/02_適合性・移行仕様.md": "683af29dcfe77db6052da960e938b8f367a00fb0b4670199c6aeeee83ec31b05",
     "docs/03.詳細設計/01_EARS-AI/03_例・アンチパターン.md": "f1fe362cc97666e1b81368f6669d1fc3b7650499aa1bd1b6a06ef3f320c96e75",
@@ -113,7 +113,7 @@
       ],
       "sources": [
         "docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md",
-        "docs/03.詳細設計/02_SPECモデル/03_文書種別・本文テンプレート.md"
+        "docs/03.詳細設計/02_SPECモデル/03_文書種別・本文template.md"
       ],
       "rationale": "構文エラーのdraft降格とIDエラー非降格。SHOULD理由と未知extensionはwarning。"
     },
@@ -129,7 +129,7 @@
       ],
       "sources": [
         "docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md",
-        "docs/03.詳細設計/02_SPECモデル/03_文書種別・本文テンプレート.md"
+        "docs/03.詳細設計/02_SPECモデル/03_文書種別・本文template.md"
       ],
       "rationale": "文書ID・ファイル名・H1・REQ必須section・許可位置。文書重複と句ID重複を区別。"
     },
@@ -278,7 +278,7 @@
         "MULTI-DEPENDENCY-DOCTOR"
       ],
       "sources": [
-        "docs/03.詳細設計/02_SPECモデル/05_モノレポSPEC連合仕様.md",
+        "docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md",
         "docs/03.詳細設計/03_操作仕様/02_check.md",
         "docs/03.詳細設計/03_操作仕様/03_verify.md",
         "docs/03.詳細設計/03_操作仕様/04_doctor.md"

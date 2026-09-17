@@ -94,7 +94,7 @@ Core 1.0の設計は、EARS-AI、単一workspaceのSPEC、型付き依存、Cont
 - ADR-026のtimeoutとcommand結果Schemaは維持するが、binding同一性と公開Digest構成はDecision 9、10で変更する。
 - 再評価条件は提案11のS1〜S7を参照する。
 - Decision 5のモノレポ延期、対応するConsequences、および本項の再導入条件は
-  [ADR-040](ADR-040_モノレポSPEC連合をCore-1.0へ再導入する.md)で置き換えられた。Decision 1〜4、6〜13と、
+  [ADR-040](ADR-040_複合workspaceをCore-1.0へ再導入する.md)で置き換えられた。Decision 1〜4、6〜13と、
   モノレポ以外のscope縮小は変更しない。
 
 ## Revision History

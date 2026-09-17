@@ -17,31 +17,31 @@
 
 | 文書 | 対象 | 状態 |
 |---|---|---|
-| [01_詳細設計レビューと改訂提案.md](01_詳細設計レビューと改訂提案.md) | 03.詳細設計 全19文書 | **Closed**（32件裁定済み、評価のみ1件） |
-| [02_Antigravity_詳細設計レビューと改訂提案.md](02_Antigravity_詳細設計レビューと改訂提案.md) | 02.設計書、03.詳細設計 | **Closed**（4件裁定済み） |
-| [03_設計書・詳細設計レビューと改訂提案.md](03_設計書・詳細設計レビューと改訂提案.md) | 02.設計書、03.詳細設計 | **Closed**（17件裁定済み） |
-| [04_Core-1.0_P1残存契約レビューと改訂提案.md](04_Core-1.0_P1残存契約レビューと改訂提案.md) | 02.設計書、03.詳細設計 | **Closed**（P1 3件裁定・反映済み） |
-| [05_Core-1.0_P2残存運用契約レビューと改訂提案.md](05_Core-1.0_P2残存運用契約レビューと改訂提案.md) | 02.設計書、03.詳細設計 | **Closed**（P2 7件裁定・反映済み） |
-| [06_Core-1.0_P3記述整合レビューと改訂提案.md](06_Core-1.0_P3記述整合レビューと改訂提案.md) | 02.設計書、03.詳細設計 | **Closed**（P3 6件裁定・反映済み） |
-| [07_ユースケース・フロー遷移レビューと修正提案.md](07_ユースケース・フロー遷移レビューと修正提案.md) | 02.設計書、03.詳細設計 | **Closed**（8件裁定・反映済み） |
-| [08_フロー終端・遷移条件レビューと修正提案.md](08_フロー終端・遷移条件レビューと修正提案.md) | 02.設計書、03.詳細設計 | **Closed**（8件裁定・反映済み） |
-| [09_Core-1.0_実装前異常ケースレビューと修正提案.md](09_Core-1.0_実装前異常ケースレビューと修正提案.md) | 02.設計書、03.詳細設計 | **Closed**（4件裁定・反映済み） |
+| [01_詳細設計reviewと改訂提案.md](01_詳細設計reviewと改訂提案.md) | 03.詳細設計 全19文書 | **Closed**（32件裁定済み、評価のみ1件） |
+| [02_Antigravity_詳細設計reviewと改訂提案.md](02_Antigravity_詳細設計reviewと改訂提案.md) | 02.設計書、03.詳細設計 | **Closed**（4件裁定済み） |
+| [03_設計書・詳細設計reviewと改訂提案.md](03_設計書・詳細設計reviewと改訂提案.md) | 02.設計書、03.詳細設計 | **Closed**（17件裁定済み） |
+| [04_Core-1.0_P1残存契約reviewと改訂提案.md](04_Core-1.0_P1残存契約reviewと改訂提案.md) | 02.設計書、03.詳細設計 | **Closed**（P1 3件裁定・反映済み） |
+| [05_Core-1.0_P2残存運用契約reviewと改訂提案.md](05_Core-1.0_P2残存運用契約reviewと改訂提案.md) | 02.設計書、03.詳細設計 | **Closed**（P2 7件裁定・反映済み） |
+| [06_Core-1.0_P3記述整合reviewと改訂提案.md](06_Core-1.0_P3記述整合reviewと改訂提案.md) | 02.設計書、03.詳細設計 | **Closed**（P3 6件裁定・反映済み） |
+| [07_ユースケース・flow遷移reviewと修正提案.md](07_ユースケース・flow遷移reviewと修正提案.md) | 02.設計書、03.詳細設計 | **Closed**（8件裁定・反映済み） |
+| [08_flow終端・遷移条件reviewと修正提案.md](08_flow終端・遷移条件reviewと修正提案.md) | 02.設計書、03.詳細設計 | **Closed**（8件裁定・反映済み） |
+| [09_Core-1.0_実装前異常case-reviewと修正提案.md](09_Core-1.0_実装前異常case-reviewと修正提案.md) | 02.設計書、03.詳細設計 | **Closed**（4件裁定・反映済み） |
 | [10_並行開発におけるID重複対策の検討と提案.md](10_並行開発におけるID重複対策の検討と提案.md) | 02.設計書、03.詳細設計 | **Closed**（採決事項9件・裁定事項16件を裁定・反映済み） |
 | [11_仕様構造の再編とCore-1.0簡素化提案.md](11_仕様構造の再編とCore-1.0簡素化提案.md) | 02.設計書、03.詳細設計 | **Closed**（11件採用・ADR-039と正本へ反映済み） |
 | [12_Core-1.0実装計画.md](12_Core-1.0実装計画.md) | Core 1.0実装順序 | **Active**（非規範の実装計画） |
-| [13_モノレポ連合モデル・不変条件レビュー.md](13_モノレポ連合モデル・不変条件レビュー.md) | 連合モデル・不変条件 | **Closed**（P1裁定時にP2も解消） |
-| [14_ID・横断関係・Contextレビュー.md](14_ID・横断関係・Contextレビュー.md) | ID・横断関係・Context | **Closed**（P1・P2裁定済み） |
-| [15_CLI・対象選択・結果集約レビュー.md](15_CLI・対象選択・結果集約レビュー.md) | CLI・対象選択・結果集約 | **Closed**（P1・P2裁定済み） |
-| [16_verify実行モデルレビュー.md](16_verify実行モデルレビュー.md) | verify実行モデル | **Closed**（ADR-041で5件裁定・反映済み） |
-| [17_セキュリティ・信頼境界レビュー.md](17_セキュリティ・信頼境界レビュー.md) | セキュリティ・信頼境界 | **Closed**（P1・P2裁定済み） |
-| [18_互換性・移行・運用レビュー.md](18_互換性・移行・運用レビュー.md) | 互換性・移行・運用 | **Closed**（P1・P2裁定済み） |
-| [19_実装可能性・性能・文書構造レビュー.md](19_実装可能性・性能・文書構造レビュー.md) | 実装可能性・性能・文書構造 | **Closed**（P1・P2裁定済み） |
-| [20_モノレポCore-1.0横断レビュー.md](20_モノレポCore-1.0横断レビュー.md) | レビュー13〜19の横断整理 | **Closed**（P0・P1・P2裁定済み） |
+| [13_複合workspaceモデル・不変条件review.md](13_複合workspaceモデル・不変条件review.md) | 連合モデル・不変条件 | **Closed**（P1裁定時にP2も解消） |
+| [14_ID・横断関係・Context-review.md](14_ID・横断関係・Context-review.md) | ID・横断関係・Context | **Closed**（P1・P2裁定済み） |
+| [15_CLI・対象選択・結果集約review.md](15_CLI・対象選択・結果集約review.md) | CLI・対象選択・結果集約 | **Closed**（P1・P2裁定済み） |
+| [16_verify実行モデルreview.md](16_verify実行モデルreview.md) | verify実行モデル | **Closed**（ADR-041で5件裁定・反映済み） |
+| [17_セキュリティ・信頼境界review.md](17_セキュリティ・信頼境界review.md) | セキュリティ・信頼境界 | **Closed**（P1・P2裁定済み） |
+| [18_互換性・移行・運用review.md](18_互換性・移行・運用review.md) | 互換性・移行・運用 | **Closed**（P1・P2裁定済み） |
+| [19_実装可能性・性能・文書構造review.md](19_実装可能性・性能・文書構造review.md) | 実装可能性・性能・文書構造 | **Closed**（P1・P2裁定済み） |
+| [20_複合workspace-Core-1.0横断review.md](20_複合workspace-Core-1.0横断review.md) | レビュー13〜19の横断整理 | **Closed**（P0・P1・P2裁定済み） |
 | [21_P0_verify証跡Schema検討.md](21_P0_verify証跡Schema検討.md) | FED-CROSS-001のSchema案 | **Accepted**（ADR-041と正本へ反映済み） |
-| [22_モノレポ残存P1裁定案.md](22_モノレポ残存P1裁定案.md) | FED-CROSS-002〜007の裁定案 | **Accepted**（ADR-042と正本へ反映済み） |
-| [23_モノレポ残存P2裁定案.md](23_モノレポ残存P2裁定案.md) | モノレポ残存P2 6件の裁定案 | **Accepted**（ADR-043と正本へ反映済み） |
+| [22_複合workspace残存P1裁定案.md](22_複合workspace残存P1裁定案.md) | FED-CROSS-002〜007の裁定案 | **Accepted**（ADR-042と正本へ反映済み） |
+| [23_複合workspace残存P2裁定案.md](23_複合workspace残存P2裁定案.md) | モノレポ残存P2 6件の裁定案 | **Accepted**（ADR-043と正本へ反映済み） |
 | [24_Core-1.0実装着手方針.md](24_Core-1.0実装着手方針.md) | 実装着手可能性と欠落 | **Accepted**（G1〜G8裁定・反映済み、G9は実装計画へ） |
-| [25_Core-1.0実装前最終レビューと修正提案.md](25_Core-1.0実装前最終レビューと修正提案.md) | 02.設計書、03.詳細設計の実装前最終点検 | **Accepted / Reflected**（Step 0B実施中、Gate A `Blocked`） |
+| [25_Core-1.0実装前最終reviewと修正提案.md](25_Core-1.0実装前最終reviewと修正提案.md) | 02.設計書、03.詳細設計の実装前最終点検 | **Accepted / Reflected**（Step 0B実施中、Gate A `Blocked`） |
 | [26_context-Markdown提示仕様案.md](26_context-Markdown提示仕様案.md) | contextの既定Markdown提示 | **Accepted / Reflected**（P0 3件・P1 4件を裁定し§9と`SINGLE-104-01`へ反映済み） |
 | [27_適合harness外部仕様の検討.md](27_適合harness外部仕様の検討.md) | 適合harnessの検査対象・実行環境・runner | **Accepted / Reflected**（4件を裁定しADR-046と正本へ反映済み） |
 
@@ -76,14 +76,14 @@ Core 1.0へ再導入した。
 
 主な反映先は次のとおり。
 
-- [ADR-011](../02.設計書/10_決定記録/ADR-011_Diagnostic所有者とコード命名規約.md)
+- [ADR-011](../02.設計書/10_決定記録/ADR-011_Diagnostic所有者とcode命名規約.md)
 - [ADR-012](../02.設計書/10_決定記録/ADR-012_置換済みREQ・TECHの適用禁止.md)
 - [ADR-013](../02.設計書/10_決定記録/ADR-013_文書IDとローカルIDの字句規則訂正.md)
 - [ADR-014](../02.設計書/10_決定記録/ADR-014_Semantic-IRと段階的Context-Projection.md)
 - [ADR-039](../02.設計書/10_決定記録/ADR-039_Core-1.0仕様構造の再編とscope縮小.md)
-- [ADR-040](../02.設計書/10_決定記録/ADR-040_モノレポSPEC連合をCore-1.0へ再導入する.md)
+- [ADR-040](../02.設計書/10_決定記録/ADR-040_複合workspaceをCore-1.0へ再導入する.md)
 - [ADR-041](../02.設計書/10_決定記録/ADR-041_verify対象別証跡とreport明示保存の分離.md)
-- [ADR-042](../02.設計書/10_決定記録/ADR-042_モノレポ連合のidentity・所有境界・公開契約を確定する.md)
+- [ADR-042](../02.設計書/10_決定記録/ADR-042_複合workspaceの同一性・所有境界・公開契約を確定する.md)
 - [EARS-AI言語・Semantic IR仕様](../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md)
 - [関係・トレースモデル](../03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md)
 - [context仕様](../03.詳細設計/03_操作仕様/01_context.md)
@@ -170,8 +170,8 @@ P1の5件（`profiles`設定キー、`verify`の`cwd`、Frontmatter `owners`、`
 Profile `dependencies`）は、いずれも「どちらが正か」ではなく「片方に定義がない」型の欠落であり、
 実装者が仕様から動作を決定できない。
 
-2026-08-31にP1の5件を裁定し、[ADR-018](../02.設計書/10_決定記録/ADR-018_正本Schemaの欠落補完と診断severityの明示.md)として記録して正本へ反映した。
-適用差分は[03_設計書・詳細設計レビューと改訂提案.md](03_設計書・詳細設計レビューと改訂提案.md) 附録A、
+2026-08-31にP1の5件を裁定し、[ADR-018](../02.設計書/10_決定記録/ADR-018_正本Schemaの欠落補完とDiagnostic-severityの明示.md)として記録して正本へ反映した。
+適用差分は[03_設計書・詳細設計reviewと改訂提案.md](03_設計書・詳細設計reviewと改訂提案.md) 附録A、
 裁定内容は同書 §5の表を正とする。
 
 | 項目 | 裁定 | 対応 |
@@ -215,7 +215,7 @@ Profile `dependencies`）は、いずれも「どちらが正か」ではなく�
 
 レビュー03の反映後に、Diagnostic共通契約、規範行候補Scanner、`bitz verify`の明示対象へ
 実装分岐が残っていることを確認した。3件を
-[04_Core-1.0_P1残存契約レビューと改訂提案.md](04_Core-1.0_P1残存契約レビューと改訂提案.md)へ記録し、
+[04_Core-1.0_P1残存契約reviewと改訂提案.md](04_Core-1.0_P1残存契約reviewと改訂提案.md)へ記録し、
 [ADR-021](../02.設計書/10_決定記録/ADR-021_Diagnostic-severity・操作status・source-Schemaの分離.md)、
 [ADR-022](../02.設計書/10_決定記録/ADR-022_規範行候補抽出とID構文検証の分離.md)、
 [ADR-023](../02.設計書/10_決定記録/ADR-023_verify明示対象とpath入力の確定.md)として裁定した。
@@ -232,7 +232,7 @@ P1 3件の正本反映を完了したため、Core 1.0の設計レビューゲ�
 
 P1反映後の正本について、状態遷移、Git差分、`check`入力、verify実行、TASK接続、Diagnostic集約、
 レポート生成の実装分岐を確認した。レビュー03の旧P2 7件とは別の指摘として、
-[05_Core-1.0_P2残存運用契約レビューと改訂提案.md](05_Core-1.0_P2残存運用契約レビューと改訂提案.md)へ記録した。
+[05_Core-1.0_P2残存運用契約reviewと改訂提案.md](05_Core-1.0_P2残存運用契約reviewと改訂提案.md)へ記録した。
 
 | 項目 | 裁定 | 対応 |
 |---|---|---|
@@ -249,7 +249,7 @@ P2 7件の正本反映を完了したため、Core 1.0の設計レビューゲ�
 
 P2反映後の正本について、TASK要約、JSON例、Digest表記、レポート名、Diagnostic表の同期を確認した。
 レビュー03の旧P3 5件とは別の指摘として、
-[06_Core-1.0_P3記述整合レビューと改訂提案.md](06_Core-1.0_P3記述整合レビューと改訂提案.md)へ記録した。
+[06_Core-1.0_P3記述整合reviewと改訂提案.md](06_Core-1.0_P3記述整合reviewと改訂提案.md)へ記録した。
 
 | 項目 | 裁定 | 対応 |
 |---|---|---|
@@ -279,17 +279,17 @@ UC-FLOW-005と006はCoreの機械契約を追加しないため、本文反映�
 
 | ID | 裁定 | 主なADR |
 |---|---|---|
-| UC-FLOW-001 | Small/Full Flowを`Pre-check -> Implement -> Post-check`骨格へ改訂し、TASK起点は実装後に`bitz check <TASK-ID>`で境界を強制する | [ADR-028](../02.設計書/10_決定記録/ADR-028_開発フローの実装後検査とTASK境界の接続.md) |
+| UC-FLOW-001 | Small/Full Flowを`Pre-check -> Implement -> Post-check`骨格へ改訂し、TASK起点は実装後に`bitz check <TASK-ID>`で境界を強制する | [ADR-028](../02.設計書/10_決定記録/ADR-028_開発flowの実装後検査とTASK境界の接続.md) |
 | UC-FLOW-002 | TASK起点の`implement`／`verify`で`requires`先TASKの`done`を要求し、未完了は`CTX-TASK-DEPENDENCY-001`／`blocked`とする | [ADR-029](../02.設計書/10_決定記録/ADR-029_TASK先行依存の状態ガード.md) |
 | UC-FLOW-003 | 検証binding識別子を`(workspaceId, 正規化argv template, 正規化cwd)`へ統一し、`{tests}`の有無にかかわらず1回実行とする | [ADR-030](../02.設計書/10_決定記録/ADR-030_verify実行bindingの正規識別子と重複排除単位の統一.md) |
-| UC-FLOW-004 | 変更code/test pathを`implements`・`tests[].path`の逆索引から所有REQ/TECHへ正規化し、未所有pathは対象外（件数のみ）とする | [ADR-031](../02.設計書/10_決定記録/ADR-031_変更コード・テストからの検査対象選択.md) |
+| UC-FLOW-004 | 変更code/test pathを`implements`・`tests[].path`の逆索引から所有REQ/TECHへ正規化し、未所有pathは対象外（件数のみ）とする | [ADR-031](../02.設計書/10_決定記録/ADR-031_変更code・testからの検査対象選択.md) |
 | UC-FLOW-005 | 機械起点をREQ・TECH・規範文・`open` TASKに限り、SPECを作らない変更をCore保証外と明示する | 本文反映 |
 | UC-FLOW-006 | Full Flowへ否決edgeと`Done`を追加し、レビューの承認・否決をCoreの機械契約に含めないと明示する | 本文反映 |
 | UC-FLOW-007 | 2時点比較で意味の再利用を判定せず、管理済みSPECの削除禁止と現在集合の重複検出へ限定する | [ADR-037](../02.設計書/10_決定記録/ADR-037_Git基準版間のSPEC同一性と削除規則.md) |
 | UC-FLOW-008 | ADRの部分改訂を許可し、後継ADRのDecision・旧ADRの`Notes`・旧ADRの`Revision History`の3点で記録する | [ADR-033](../02.設計書/10_決定記録/ADR-033_部分改訂ADRの記録規約.md) |
 
 指摘、修正候補、反映先、受入条件、裁定結果は
-[07_ユースケース・フロー遷移レビューと修正提案.md](07_ユースケース・フロー遷移レビューと修正提案.md)を正とする。
+[07_ユースケース・flow遷移reviewと修正提案.md](07_ユースケース・flow遷移reviewと修正提案.md)を正とする。
 8件すべてを裁定・反映し、本レビューはCloseした。
 
 ## 13. フロー終端・遷移条件レビュー（2026-08-31、8件裁定・反映済み）
@@ -317,13 +317,13 @@ UC-FLOW-005と006はCoreの機械契約を追加しないため、本文反映�
 | UC-FLOW-015 | 採用・反映済み | TASKの`changes`境界を明示checkだけで検査し、暗黙選択では文書検査だけを行う |
 
 UC-FLOW-010と013は
-[ADR-035](../02.設計書/10_決定記録/ADR-035_check空対象とフロー通過statusの確定.md)として正本へ反映した。
+[ADR-035](../02.設計書/10_決定記録/ADR-035_check空対象とflow通過statusの確定.md)として正本へ反映した。
 UC-FLOW-016は
-[ADR-036](../02.設計書/10_決定記録/ADR-036_フロー取り止めと不採用履歴の保持.md)として正本へ反映した。
+[ADR-036](../02.設計書/10_決定記録/ADR-036_flow取止めと不採用履歴の保持.md)として正本へ反映した。
 P1はすべて裁定済みである。
 
 指摘、修正候補、反映先、受入条件は
-[08_フロー終端・遷移条件レビューと修正提案.md](08_フロー終端・遷移条件レビューと修正提案.md)を正とする。
+[08_flow終端・遷移条件reviewと修正提案.md](08_flow終端・遷移条件reviewと修正提案.md)を正とする。
 8件すべてを裁定・反映し、本レビューはClosedした。実装根拠にはADR-034、ADR-035、ADR-036と
 反映後の正本を使用する。
 
@@ -341,7 +341,7 @@ P1はすべて裁定済みである。
 Git全履歴走査、tombstone索引、`Stopped`専用status、空commit、verify並列scheduler、OS横断の
 process-tree完全制御、ファイルシステム全体の原子的snapshotは、Core 1.0には過大として採用しない。
 理由と再評価条件は
-[09_Core-1.0_実装前異常ケースレビューと修正提案.md](09_Core-1.0_実装前異常ケースレビューと修正提案.md)を正とする。
+[09_Core-1.0_実装前異常case-reviewと修正提案.md](09_Core-1.0_実装前異常case-reviewと修正提案.md)を正とする。
 4件すべてを裁定・反映し、本レビューはClosedした。
 
 ## 15. 並行開発におけるID重複対策（2026-09-01、裁定・反映済み）
@@ -426,7 +426,7 @@ Projection Digestなどは、提案11の再評価条件を満たすまでCore 1.
 ## 17. モノレポSPEC連合のCore 1.0再導入（2026-09-02、裁定・反映済み）
 
 対象モノレポで1.0から安定したworkspace ID、横断参照、所有境界を持たせるため、
-[ADR-040](../02.設計書/10_決定記録/ADR-040_モノレポSPEC連合をCore-1.0へ再導入する.md)で
+[ADR-040](../02.設計書/10_決定記録/ADR-040_複合workspaceをCore-1.0へ再導入する.md)で
 ADR-039 Decision 5だけを部分改訂した。旧仕様をそのまま戻さず、明示catalog、修飾ID、横断Context、
 `--all-workspaces`を再編後の責務境界へ追加した。
 
@@ -439,7 +439,7 @@ command名単位のverify、Context Digestだけを公開hashとする方針、P
 
 ADR-040反映後の作業ツリーを固定し、7観点を互いに独立してレビューした。結果はP0 1件、P1 18件、P2 10件の
 計29件である。同じ原因を別観点から検出した指摘を、
-[横断レビュー](20_モノレポCore-1.0横断レビュー.md)で7つの裁定単位へ統合した。
+[横断レビュー](20_複合workspace-Core-1.0横断review.md)で7つの裁定単位へ統合した。
 
 | 横断課題 | 優先度 | 要旨 |
 |---|---|---|
@@ -472,26 +472,26 @@ report保存条件は、独立履歴branchで確認した並行PR／worktree検�
 
 ## 20. モノレポ残存P1の裁定（2026-09-03、裁定・反映済み）
 
-P0反映後に残るP1 15件を[提案22](22_モノレポ残存P1裁定案.md)で再整理した。Core 1.0が未リリースという
+P0反映後に残るP1 15件を[提案22](22_複合workspace残存P1裁定案.md)で再整理した。Core 1.0が未リリースという
 確認済み事実により`FED-MIG-001`はversion gateを追加せず解消でき、正本への追加裁定が必要な実質残件は14件である。
 
 残件は、初回公開とidentity、catalog完全性と所有境界、公開Schema、CLI境界、resource上限、性能受入条件の
 6単位へ統合し、全点を採用した。判断理由を
-[ADR-042](../02.設計書/10_決定記録/ADR-042_モノレポ連合のidentity・所有境界・公開契約を確定する.md)、
+[ADR-042](../02.設計書/10_決定記録/ADR-042_複合workspaceの同一性・所有境界・公開契約を確定する.md)、
 機械契約を詳細設計、移行と性能条件を運用手順・実装計画へ反映した。これによりP0・P1 gateはClosedとする。
 設計レビュー全体は残るP2 6件の裁定まで完了としない。
 
 ## 21. モノレポ残存P2の裁定（2026-09-03、裁定・反映済み）
 
 P1反映後に残ったDiagnostic優先順位、非成功後の継続、TASK directory境界、consumer rollback、計算量、
-conformance matrixの6件を[提案23](23_モノレポ残存P2裁定案.md)で具体化した。
+conformance matrixの6件を[提案23](23_複合workspace残存P2裁定案.md)で具体化した。
 
 提案は、global preflightだけを全停止境界とし、その後は文書・target・binding単位で独立処理を継続する。
 TASKの許可集合は字句Git path、所有集合はbase/current双方のcanonical pathで判定する。運用はdual-read consumerを
 先行配備し、連合化とrollbackを同じ変更単位にする。受入ではgraph sizeへ線形な索引memory、最大Context閉包へ
 線形な一時memory、hard-limit fixture、期待JSON matrixを固定する。
 
-6件を一括採用し、[ADR-043](../02.設計書/10_決定記録/ADR-043_モノレポ連合の継続・TASK境界・適合契約を確定する.md)と
+6件を一括採用し、[ADR-043](../02.設計書/10_決定記録/ADR-043_複合workspaceの継続・TASK境界・適合契約を確定する.md)と
 各正本へ反映した。レビュー14、15、17、18、19と横断レビュー20のP2をClosedとし、モノレポCore 1.0の
 設計レビューを完了する。実装受入にはversion管理した期待JSON matrixの全通過を要求する。
 
@@ -521,7 +521,7 @@ accepted ADR 8件のlinkは現構造へ訂正した。G9は着手gateに含め�
 
 提案24の反映後、提案資料01〜24を検討履歴、`02.設計書`を目的・境界、`03.詳細設計`を機械契約の正として
 再度横断し、規範だけから独立した2実装が同じ結果を再現できるかを
-[提案25](25_Core-1.0実装前最終レビューと修正提案.md)で点検した。
+[提案25](25_Core-1.0実装前最終reviewと修正提案.md)で点検した。
 
 設計方針、scope、安全境界、モノレポidentityと所有境界は妥当であり、全面再設計は不要である。
 一方、適合fixtureの再現性、Diagnostic閉包、EARS-AI grammar、公開結果Schema、target展開、
@@ -555,7 +555,7 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 2026-09-17の単一fixture作成で、role割当、interpretのdraft refinement、statement起点の提示、verifyの起点TASKの
 `requires`を裁定し、関係・トレースモデル §6.1・§6.4・§7、context仕様 §4・§5、matrix `SINGLE-106-03`・`110`行へ
 本文反映した（既存決定の欠落補完のためADRは起こさない）。経緯は
-[Diagnostic台帳の再レビュー](../../fixtures/conformance/diagnostic-review.md)に記録した。
+[Diagnostic台帳の再レビュー](../../fixtures/conformance/Diagnostic意味網羅review.md)に記録した。
 
 同日、`SINGLE-127-15`〜`19`を作成するため[提案27](27_適合harness外部仕様の検討.md)で適合harnessの外部仕様を検討し、
 検査対象の受取り、Python・Git versionの指定、JSON互換runner、package runnerを
@@ -564,6 +564,6 @@ Gate Cには全matrixを下限CPython 3.11と基準環境の2環境で通す条�
 
 表記統一のため[用語集](../用語集.md)を定め、複数のworkspaceを束ねる構成を「複合workspace」と呼ぶことにした。あわせて[ADR-047](../02.設計書/10_決定記録/ADR-047_複合workspaceの識別子をmultiWorkspaceへ改名する.md)で、識別子を`multiWorkspace`、`SPEC-MULTI-*`、`MULTI-*`へ改名した。本READMEと裁定済みの提案資料の履歴部分は当時の識別子を残す。
 
-Gate Aを`Allowed`へ変更するのは、[提案25 §9.1](25_Core-1.0実装前最終レビューと修正提案.md#91-gate-a-実装着手可能性)の
+Gate Aを`Allowed`へ変更するのは、[提案25 §9.1](25_Core-1.0実装前最終reviewと修正提案.md#91-gate-a-実装着手可能性)の
 Core非依存条件を満たす自動検査結果と実行環境を同一commitで確認した後とする。Core本体の挙動はGate Aで要求せず、
 対応するGate Bと最終のGate Cで判定する。

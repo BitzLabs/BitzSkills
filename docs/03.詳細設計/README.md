@@ -44,9 +44,9 @@ Core 1.0は単一workspaceと、同一Git repository内の明示的なモノレ�
 | 言語 | [例・アンチパターン](01_EARS-AI/03_例・アンチパターン.md) | 記述例 |
 | SPEC | [workspace・設定仕様](02_SPECモデル/01_workspace・設定仕様.md) | 探索、配置、`bitz.yaml` |
 | SPEC | [文書・Frontmatter・状態仕様](02_SPECモデル/02_文書・Frontmatter・状態仕様.md) | 共通field、状態遷移 |
-| SPEC | [文書種別・本文テンプレート](02_SPECモデル/03_文書種別・本文テンプレート.md) | REQ/TECH/ADR/TASK |
+| SPEC | [文書種別・本文テンプレート](02_SPECモデル/03_文書種別・本文template.md) | REQ/TECH/ADR/TASK |
 | SPEC | [関係・トレースモデル](02_SPECモデル/04_関係・トレースモデル.md) | 関係型、閉包、coverage、path |
-| SPEC | [モノレポSPEC連合仕様](02_SPECモデル/05_モノレポSPEC連合仕様.md) | catalog、修飾ID、所有境界、横断解決、全体操作 |
+| SPEC | [モノレポSPEC連合仕様](02_SPECモデル/05_複合workspace仕様.md) | catalog、修飾ID、所有境界、横断解決、全体操作 |
 | 操作 | [操作仕様](03_操作仕様/README.md) | 4操作の一覧と所有境界 |
 
 ## 4. 非目標

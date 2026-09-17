@@ -53,7 +53,7 @@ ADRとTASKも状態値の列挙だけで、許可遷移と終端状態が確定�
 - 本ADRは2026-08-31のP2残存契約レビュー「状態遷移の不一致」に対する裁定である。
 - TASKの`open -> done`を開発フローの終端へ配置する手順と、`done` TASKのpurpose別起点可否は
   [ADR-034](ADR-034_TASK完了終端とdone起点操作の確定.md)で補完する。Decision 5の許可遷移は変更しない。
-- Decision 1、2、5は、[ADR-036](ADR-036_フロー取り止めと不採用履歴の保持.md)により部分改訂された。
+- Decision 1、2、5は、[ADR-036](ADR-036_flow取止めと不採用履歴の保持.md)により部分改訂された。
   REQ／TECHへ`rejected`、TASKへ`cancelled`を追加する。Decision 3、4、6、7は変更しない。
 
 ## Revision History

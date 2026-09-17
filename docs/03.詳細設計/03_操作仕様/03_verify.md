@@ -257,7 +257,7 @@ owner workspace順、command名順に実行し、参照しないtargetへ結果�
 
 workspace単位の引数なし対象が0件の場合、`SPEC-VERIFY-BLOCKED-002`をwarningとしてmember結果を
 `passed_with_warnings`にする。連合全体の対象が0件の場合だけerror／`blocked`とする。結果は
-[モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)の集約外形を使う。
+[モノレポSPEC連合仕様](../02_SPECモデル/05_複合workspace仕様.md)の集約外形を使う。
 
 全target解決前に、現在treeのGit既知`.spec/bitz.yaml`、catalog、ID、path、Git境界、未対応major、resource上限を
 共通preflightで検査する。非成功ならtarget解決とcommand実行を開始しない。全体結果はtop-levelに
