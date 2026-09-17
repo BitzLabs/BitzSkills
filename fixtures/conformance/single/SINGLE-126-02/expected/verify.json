@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "error",
+  "scope": "selected",
+  "workspace": {
+    "id": null,
+    "path": "."
+  },
+  "targetResults": [],
+  "revision": null,
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-CONFIG-SCHEMA-001",
+      "severity": "error",
+      "resultStatus": "error",
+      "summary": "argv[0]は空stringにできません",
+      "source": {
+        "kind": "file",
+        "workspaceId": null,
+        "path": ".spec/bitz.yaml",
+        "key": "verify.commands.default.argv[0]"
+      }
+    }
+  ]
+}

@@ -133,3 +133,8 @@ SINGLE-125-06は発生条件の裁定待ちである。準備済みは210/311、
 
 SINGLE-125-06は、`.spec/reports`をrepository内directoryへのsymlinkにした保存失敗として追加した。
 symlinkを解決せず保存失敗とする規定を結果・Diagnostic・終了コード §8へ追加している。準備済みは211/311、残りは100件である。
+
+[verify argv・実行環境・出力変換fixture](single/verify-runtime-review.md)として、SINGLE-126-01〜05、07、09〜16を加えた。
+argv template違反5件、空引数・PATH解決不能・stdin・環境継承、子孫がpipeを保持するtimeout、timeout後の独立binding、
+制御文字変換、chunk境界をまたぐredaction、redaction後の64 KiB超過を固定する。実行caseはfixture自身のscriptを
+直接観測する。126-06は設定64 KiB上限との矛盾、126-08はfixture規模のため保留した。準備済みは225/311、残りは86件である。

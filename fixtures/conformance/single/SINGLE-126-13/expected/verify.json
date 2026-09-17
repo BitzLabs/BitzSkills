@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "error",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "REQ-001",
+      "status": "error",
+      "contextDigest": "sha256:ca45f1c674229454af7e884b92515a6b78686b8b063c52a99bf9c9e2fa3816bb",
+      "statements": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "bindingRefs": [
+        "root::alpha",
+        "root::beta"
+      ],
+      "diagnostics": []
+    }
+  ],
+  "revision": null,
+  "commands": [
+    {
+      "bindingId": "root::alpha",
+      "workspaceId": "root",
+      "name": "alpha",
+      "status": "error",
+      "termination": "timeout",
+      "cwd": ".",
+      "argv": [
+        "bin/hang.sh",
+        "tests/test_auth.py"
+      ],
+      "tests": [
+        "tests/test_auth.py"
+      ],
+      "covers": [
+        "REQ-001:AC-01"
+      ],
+      "exitCode": null,
+      "timeoutSeconds": 1,
+      "stdoutExcerpt": "hang-ready\n",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    },
+    {
+      "bindingId": "root::beta",
+      "workspaceId": "root",
+      "name": "beta",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/test_session.py"
+      ],
+      "tests": [
+        "tests/test_session.py"
+      ],
+      "covers": [
+        "REQ-001:AC-02"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 1,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-VERIFY-TIMEOUT-001",
+      "severity": "error",
+      "resultStatus": "error",
+      "summary": "commandが実効timeout 1秒で終了しませんでした",
+      "source": {
+        "kind": "environment",
+        "component": "command",
+        "identifier": "root::alpha"
+      }
+    }
+  ]
+}

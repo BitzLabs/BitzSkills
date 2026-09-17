@@ -1,0 +1,35 @@
+{
+  "fixtureId": "SINGLE-126-16",
+  "description": "redactionで64 KiBを超えた公開文字列をcode point境界の末尾で保持する",
+  "setup": {
+    "git": true,
+    "operations": [
+      {
+        "op": "stage",
+        "paths": [
+          "."
+        ]
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "REQ-001",
+      "--format",
+      "json"
+    ],
+    "env": {
+      "BITZ_FIXTURE_SECRET": "qz"
+    }
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

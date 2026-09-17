@@ -521,3 +521,17 @@ symlink、symlink先directory、既存reportの不変をread-only snapshotで固
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `6ba25afc010d4f839244d4a2f26f3488703d62d67c8f3e70a2209531e3311b81`。
 Coreは実行していない。残りの適合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。
+
+## 2026-09-17: verify argv・実行環境・出力変換
+
+準備済み225/311、残り86件。SINGLE-126-01〜05、07、09〜16を追加した。
+126-01〜05は設定のflow配列を独立にdecodeし、argv template規則の違反がちょうど1件であることを確認した。
+126-07、10、11はfixture自身のscriptを直接起動し、期待入力でだけ成功することを観測した。126-11は
+POSIX shが`PWD`を再計算するため、awkで環境を読む。126-12は別sessionの子孫が直接process終了後も
+5秒以上pipeを保持することを、126-13はSINGLE-059と同じhang観測と後続`/bin/true`の成功を観測した。
+126-14〜16はraw出力から独立の参照変換（制御文字、redaction、code point境界の末尾保持）で期待抜粋を再計算した。
+各fixtureを2回の隔離setupで照合し、Context Digestは2系統のreferenceで一致した。
+126-06は`bitz.yaml`の64 KiB上限により`SPEC-CONFIG-SCHEMA-001`へ到達できないため、126-08はfixture規模のため保留した。
+同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
+Report SHA-256: `242dd2b0bce32f6e233c849292e3d1d56e00296f5521f3b6285b84a5f5e7c8fd`。
+Coreは実行していない。126-06、126-08、残りの適合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。

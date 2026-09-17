@@ -44,6 +44,8 @@ from conformance.text_fixtures import validate as validate_text_fixtures
 from conformance.frontmatter_fixtures import validate as validate_frontmatter_fixtures
 from conformance.frontmatter_boundary_fixtures import validate as validate_frontmatter_boundaries
 from conformance.side_effect_fixtures import validate as validate_side_effect_fixtures
+from conformance.verify_argv_fixtures import validate as validate_verify_argv_fixtures
+from conformance.verify_stream_fixtures import validate as validate_verify_stream_fixtures
 from conformance.input_limit_fixtures import validate as validate_input_limit_fixtures
 from conformance.registry_closure_fixtures import validate as validate_registry_closure_fixtures
 from conformance.scanner_fixtures import validate as validate_scanner_fixtures
@@ -230,6 +232,8 @@ def main():
     checks["frontmatter_fixtures"] = validate_frontmatter_fixtures()
     checks["frontmatter_boundary_fixtures"] = validate_frontmatter_boundaries()
     checks["side_effect_fixtures"] = validate_side_effect_fixtures()
+    checks["verify_argv_fixtures"] = validate_verify_argv_fixtures()
+    checks["verify_stream_fixtures"] = validate_verify_stream_fixtures()
     checks["input_limit_fixtures"] = validate_input_limit_fixtures()
     checks["registry_closure_fixtures"] = validate_registry_closure_fixtures()
     checks["scanner_fixtures"] = validate_scanner_fixtures()

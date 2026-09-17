@@ -398,6 +398,92 @@ class AuditTests(unittest.TestCase):
                         path.write_bytes(content)
                 self.assertTrue(effects.validate(root, [identifier])["errors"])
 
+    def test_verify_argv_evidence(self):
+        from conformance import verify_argv_fixtures as argv
+        report = argv.validate()
+        self.assertEqual(report["errors"], [])
+        self.assertEqual(len(report["prepared"]), 9)
+        self.assertEqual(report["core_execution"], "Not run")
+        mutations = [
+            # 設定違反のkey・code・停止形の改変、実行caseの環境・argv・status改変を拒否する。
+            ("SINGLE-126-01", "expected/verify.json", lambda v: v["diagnostics"][0]["source"].update(key="verify.commands.default.argv")),
+            ("SINGLE-126-02", "expected/verify.json", lambda v: v["workspace"].update(id="root")),
+            ("SINGLE-126-03", "expected/verify.json", lambda v: v["diagnostics"][0].update(code="SPEC-VERIFY-BLOCKED-001")),
+            ("SINGLE-126-04", "expected/verify.json", lambda v: v["diagnostics"].append(v["diagnostics"][0])),
+            ("SINGLE-126-05", "manifest.json", lambda v: v["expect"].update(exitCode=2)),
+            ("SINGLE-126-07", "expected/verify.json", lambda v: v["commands"][0]["argv"].remove("")),
+            ("SINGLE-126-09", "expected/verify.json", lambda v: v["targetResults"][0].update(bindingRefs=["root::default"])),
+            ("SINGLE-126-09", "expected/verify.json", lambda v: v["targetResults"][0].update(diagnostics=v["diagnostics"])),
+            ("SINGLE-126-10", "expected/verify.json", lambda v: v.update(status="error")),
+            ("SINGLE-126-11", "manifest.json", lambda v: v["invocation"]["env"].pop("PWD")),
+            ("SINGLE-126-11", "expected/verify.json", lambda v: v["commands"][0].update(argv=["./probe.awk", *v["commands"][0]["tests"]])),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
+                self.assertTrue(argv.validate(root, [identifier])["errors"])
+        # 2つ目の違反を混ぜた設定は単一原因でなくなるため拒否する。
+        self.assertEqual(argv.template_violations(["/bin/true", 42, "a\0b"]),
+                         [argv.ARGV_KEY + "[1]", argv.ARGV_KEY + "[2]"])
+        self.assertEqual(argv.template_violations(["x"] * 256), [])
+        self.assertEqual(argv.template_violations(["a" * (32 * 1024)]), [])
+        # 直接観測は、期待と異なる挙動のscriptを拒否する。
+        broken = {
+            "SINGLE-126-07": "#!/bin/sh\nexit 0\n",
+            "SINGLE-126-10": "#!/bin/sh\nexit 0\n",
+            "SINGLE-126-11": "#!/usr/bin/awk -f\nBEGIN { exit 0 }\n",
+        }
+        for identifier, script in broken.items():
+            with self.subTest(identifier=identifier, script="broken"), tempfile.TemporaryDirectory() as temporary:
+                repository = Path(temporary) / "repo"
+                shutil.copytree(audit.FIXTURES / "single" / identifier / "repo", repository)
+                (repository / argv.SCRIPTS[identifier][0]).write_text(script)
+                with self.assertRaises(ValueError):
+                    argv.observe_command(identifier, repository)
+
+    def test_verify_stream_evidence(self):
+        from conformance import verify_stream_fixtures as stream
+        report = stream.validate()
+        self.assertEqual(report["errors"], [])
+        self.assertEqual(len(report["prepared"]), 5)
+        mutations = [
+            ("SINGLE-126-12", "expected/verify.json", lambda v: v["commands"][0].update(termination="signal")),
+            ("SINGLE-126-13", "expected/verify.json", lambda v: v["commands"].pop()),
+            ("SINGLE-126-13", "expected/verify.json", lambda v: v["targetResults"][0].update(bindingRefs=["root::alpha"])),
+            ("SINGLE-126-14", "expected/verify.json", lambda v: v["commands"][0].update(stderrExcerpt="err\r\n")),
+            ("SINGLE-126-15", "expected/verify.json", lambda v: v["commands"][0].update(stdoutExcerpt=v["commands"][0]["stdoutExcerpt"].replace("password=[REDACTED]", "password=hunter2"))),
+            ("SINGLE-126-15", "manifest.json", lambda v: v["invocation"].update(env={})),
+            ("SINGLE-126-16", "expected/verify.json", lambda v: v["commands"][0].update(stdoutTruncated=True)),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
+                self.assertTrue(stream.validate(root, [identifier])["errors"])
+        # 参照変換の読みを固定する。
+        self.assertEqual(stream.convert_controls(b"a\r\nb\rc\x1b\x7f\t"), "a\nb\nc\\u001b\\u007f\t")
+        self.assertEqual(stream.redact("x password=abc\nAuthorization:q\n", {}), "x password=[REDACTED]\nAuthorization:[REDACTED]\n")
+        self.assertEqual(stream.excerpt("\u3042" + "a" * (stream.LIMIT - 1)), "a" * (stream.LIMIT - 1))
+        # setsidで子孫を逃がさないscriptはpipeがすぐ閉じるため拒否する。
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary) / "repo"
+            shutil.copytree(audit.FIXTURES / "single" / "SINGLE-126-12" / "repo", repository)
+            path = repository / "bin/orphan.sh"
+            path.write_text(path.read_text().replace("setsid sh -c 'trap \"\" TERM; ", "sh -c '"))
+            with self.assertRaises(ValueError):
+                stream.observe_command("SINGLE-126-12", repository)
+        # 出力を変えたscriptは独立変換の結果が期待と一致しないため拒否する。
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary) / "repo"
+            shutil.copytree(audit.FIXTURES / "single" / "SINGLE-126-14" / "repo", repository)
+            path = repository / "bin/controls.sh"
+            path.write_text(path.read_text().replace("\\033", "E"))
+            with self.assertRaises(ValueError):
+                stream.observe_command("SINGLE-126-14", repository)
+
     def test_frontmatter_fixtures(self):
         result = frontmatter_fixtures.validate()
         self.assertEqual(result["errors"], [])

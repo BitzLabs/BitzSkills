@@ -1,0 +1,35 @@
+{
+  "fixtureId": "SINGLE-126-15",
+  "description": "chunk境界をまたぐ環境secretと定型secretをすべて置換する",
+  "setup": {
+    "git": true,
+    "operations": [
+      {
+        "op": "stage",
+        "paths": [
+          "."
+        ]
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "REQ-001",
+      "--format",
+      "json"
+    ],
+    "env": {
+      "BITZ_FIXTURE_TOKEN": "s3cr3t-env-value-0123456789"
+    }
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

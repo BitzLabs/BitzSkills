@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "blocked",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "REQ-001",
+      "status": "blocked",
+      "contextDigest": "sha256:4361951a5a346191ede3ee043ec03b8d0c566ce7f6a6d70ec3416e6a7d756fb4",
+      "statements": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "bindingRefs": [],
+      "diagnostics": []
+    }
+  ],
+  "revision": null,
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-VERIFY-BLOCKED-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "command実行fileをPATHから解決できません",
+      "source": {
+        "kind": "environment",
+        "component": "command",
+        "identifier": "root::default"
+      }
+    }
+  ]
+}
