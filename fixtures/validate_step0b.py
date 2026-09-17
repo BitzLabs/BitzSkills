@@ -57,6 +57,7 @@ from conformance.ordering_fixtures import validate as validate_ordering_fixtures
 from conformance.environment_fixtures import validate as validate_environment_fixtures
 from conformance.multi_digest_fixtures import validate as validate_multi_digest_fixtures
 from conformance.multi_identity_fixtures import validate as validate_multi_identity_fixtures
+from conformance.multi_catalog_fixtures import validate as validate_multi_catalog_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -258,6 +259,7 @@ def main():
     checks["environment_fixtures"] = validate_environment_fixtures()
     checks["multi_digest_fixtures"] = validate_multi_digest_fixtures()
     checks["multi_identity_fixtures"] = validate_multi_identity_fixtures()
+    checks["multi_catalog_fixtures"] = validate_multi_catalog_fixtures()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_step0p.py")], capture_output=True, text=True, timeout=60)
     checks["step0p"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
     helpers = subprocess.run([sys.executable, "-B", str(FIXTURES / "test_harness.py")], capture_output=True, text=True, timeout=30)

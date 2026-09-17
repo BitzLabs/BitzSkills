@@ -51,6 +51,25 @@ def member_config(workspace_id, command):
     )
 
 
+def plain_config(workspace_id):
+    """commandを持たないworkspace設定。catalogの検査だけを見るfixtureが使う。"""
+    return ('schemaVersion: "1.0"\n'
+            "language: ja\n"
+            'earsAi: "1.0"\n'
+            "workspace:\n"
+            f"  id: {workspace_id}\n")
+
+
+def root_config(members, root_id="platform"):
+    """catalogのrootの設定。membersは列挙順の(ID, path)である。"""
+    lines = ['schemaVersion: "1.0"\n', "language: ja\n", 'earsAi: "1.0"\n',
+             "workspace:\n", f"  id: {root_id}\n", "multiWorkspace:\n", "  members:\n"]
+    for workspace_id, path in members:
+        lines.append(f"    - id: {workspace_id}\n")
+        lines.append(f"      path: {path}\n")
+    return "".join(lines)
+
+
 WEB_CONFIG = member_config("web", "frontend")
 API_CONFIG = member_config("api", "backend")
 

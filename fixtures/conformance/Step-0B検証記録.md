@@ -591,3 +591,16 @@ golden: `sha256:72661dba40f08eb57cc1a57fe36d9a60f67df24826b4ebfdbbd8afb77c6f1fd3
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `a5ec6d0027188193a43a71bd5f231fc50cd3661bd07b8fd9e1d72414c600869b`。
 Coreは実行していない。複合workspaceの残り52件、fresh checkoutでのGate A認定は未完了である。
+
+## 2026-09-18: catalogと環境の事前検査
+
+準備済み262/310、残り48件（すべて複合workspace）。全体事前検査の4つの停止を1件ずつ固定した。
+`MULTI-005`は未知`--workspace`が操作結果もreportも作らない終了コード4、`MULTI-006`はGitが知る
+catalog未登録の設定、`MULTI-007-01`はmemberの入れ子、`MULTI-019`はGit不在である。
+いずれも`workspaces: []`で停止し、member処理を始めない。Git不在は`setup.git: false`と起動環境の`PATH`で表し、
+副作用の期待値のGit状態は明示的なnullとした。監査試験を3件追加し、部分的なmember結果、warningへの縮退、
+codeの取り違え、終了コード1への置換、入力をflatなmember pathへ直した写しを拒否することを確認した。
+同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
+Report SHA-256: `dd94c0faa244388a795af24271d6cf6bb896c480899020ab8a5b349481f28eec`。
+`MULTI-007-02`（submodule）と`MULTI-007-03`（別worktree）は、fixtureがGitのmetadataを作る手段を必要とするため
+この記録には含まない。

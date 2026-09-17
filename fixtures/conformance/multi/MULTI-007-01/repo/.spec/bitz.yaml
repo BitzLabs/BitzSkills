@@ -1,0 +1,11 @@
+schemaVersion: "1.0"
+language: ja
+earsAi: "1.0"
+workspace:
+  id: platform
+multiWorkspace:
+  members:
+    - id: web
+      path: apps/web
+    - id: inner
+      path: apps/web/inner

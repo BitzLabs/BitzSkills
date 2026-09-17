@@ -61,7 +61,7 @@ from conformance import expansion_fixtures
 from conformance import ordering_fixtures
 from conformance import environment_fixtures
 from conformance import target_vectors
-from conformance import multi_digest_fixtures, multi_identity_fixtures, multi_reference
+from conformance import multi_catalog_fixtures, multi_digest_fixtures, multi_identity_fixtures, multi_reference
 
 
 class AuditTests(unittest.TestCase):
@@ -599,6 +599,54 @@ class AuditTests(unittest.TestCase):
                 b"  refines: [REQ-001]\n",
                 b"  refines: [REQ-001]\ntests:\n  - path: tests/missing.py\n    covers: [REQ-001:AC-01]\n"))
             result = multi_identity_fixtures.validate(root, {"MULTI-003"})
+        self.assertEqual(result["status"], "Failed")
+
+    def test_multi_catalog_fixtures(self):
+        result = multi_catalog_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(multi_catalog_fixtures.CASES))
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_multi_catalog_audit_rejects_partial_results_and_wrong_stops(self):
+        mutations = [
+            # 事前検査の非成功はmember結果を作らない。
+            ("MULTI-006", "expected/check.json",
+             lambda v: v["workspaces"].append({"id": "web", "path": "apps/web", "status": "passed",
+                                               "checkedDocumentCount": 1, "checkedStatementCount": 0,
+                                               "durationMs": 0, "diagnostics": []})),
+            ("MULTI-006", "expected/check.json", lambda v: v.update(status="failed")),
+            ("MULTI-006", "expected/check.json",
+             lambda v: v["diagnostics"][0]["source"].update(workspaceId="platform")),
+            # Git不在はwarningへの縮退ではなく遮断とする。
+            ("MULTI-019", "expected/doctor.json",
+             lambda v: v["checks"][1].update(status="warning")),
+            ("MULTI-019", "expected/doctor.json",
+             lambda v: v["diagnostics"][0].update(code="SPEC-MULTI-PATH-001")),
+            ("MULTI-007-01", "expected/doctor.json", lambda v: v.update(status="blocked")),
+            ("MULTI-005", "manifest.json", lambda v: v["expect"].update(exitCode=1)),
+            ("MULTI-005", "cli-output.json", lambda v: v.update(stderrLineCount=2)),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertEqual(multi_catalog_fixtures.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_catalog_audit_rejects_registered_or_flat_members(self):
+        """入力が条件を満たさなくなった写しは、期待値が同じでも受理しない。"""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-007-01")
+            path = root / "multi/MULTI-007-01/repo/.spec/bitz.yaml"
+            path.write_text(path.read_text().replace("apps/web/inner", "libs/inner"))
+            (root / "multi/MULTI-007-01/repo/libs/inner/.spec").mkdir(parents=True)
+            shutil.copy2(root / "multi/MULTI-007-01/repo/apps/web/inner/.spec/bitz.yaml",
+                         root / "multi/MULTI-007-01/repo/libs/inner/.spec/bitz.yaml")
+            shutil.rmtree(root / "multi/MULTI-007-01/repo/apps/web/inner")
+            result = multi_catalog_fixtures.validate(root, {"MULTI-007-01"})
         self.assertEqual(result["status"], "Failed")
 
     def test_frontmatter_boundary_evidence(self):

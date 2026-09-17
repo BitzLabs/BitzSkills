@@ -11,7 +11,7 @@ matrixの一覧、現行の設計契約と承認済みADRの相対linkを監査�
 固定した依存はscriptに宣言してあり、初回はpackageのdownloadが必要である。
 
 終了コード0はGate Aの許可、1はerrorまたは未完了の証拠が残っていることを表す。現在は1が想定どおりである
-（2026-09-18時点で、matrix 310件のうち複合workspaceの52件と、fixtureごとの副作用期待値が未完了）。
+（2026-09-18時点で、matrix 310件のうち複合workspaceの48件と、fixtureごとの副作用期待値が未完了）。
 未作成のfixtureは個別に列挙される。
 静的な検査では、fixtureが独立した原因を1つだけ持つことを証明できない。Diagnosticの対応はreview済みの台帳で管理する
 （[Diagnostic意味網羅review](Diagnostic意味網羅review.md)）。監査は台帳の整合と根拠文書の鮮度を検査し、自然言語の意味は検査しない。
@@ -20,6 +20,8 @@ matrixの一覧、現行の設計契約と承認済みADRの相対linkを監査�
 固定corpusを持つ。golden Context Digestは、単一workspaceと同じく独立した2系統の参照計算で照合する。
 [修飾IDの解決](multi/修飾IDの解決review.md)は、同じlocal IDの非衝突、非修飾参照、存在workspaceの不在target、
 不在起点の4つを1件ずつ切り分ける。
+[catalogと環境の事前検査](multi/catalogと環境の事前検査review.md)は、未知`--workspace`、未登録設定、memberの入れ子、
+Git不在の4つの停止を切り分ける。
 
 [target vector](targets/README.md)は、種別とpurposeの18組合せと、graphの7ケースを固定する。監査は4つの順序付き集合を
 限定した参照計算と比べ、入力順に依存しないことを検査する。Coreの実行やbindingを保証するものではない。

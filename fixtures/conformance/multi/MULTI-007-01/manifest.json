@@ -1,0 +1,32 @@
+{
+  "fixtureId": "MULTI-007-01",
+  "description": "memberの入れ子をmember path不正として拒否する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "reportFileCount": 0,
+    "resultFile": "expected/doctor.json"
+  }
+}

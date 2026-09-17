@@ -1,0 +1,25 @@
+{
+  "fixtureId": "MULTI-005",
+  "description": "catalogにない--workspaceを操作結果なしで拒否する",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--workspace",
+      "missing",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 4,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

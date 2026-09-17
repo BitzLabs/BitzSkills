@@ -1,0 +1,28 @@
+{
+  "fixtureId": "MULTI-019",
+  "description": "Git不在の複合workspaceを遮断する",
+  "setup": {
+    "git": false,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {
+      "PATH": "/dev/null"
+    }
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "reportFileCount": 0,
+    "resultFile": "expected/doctor.json"
+  }
+}
