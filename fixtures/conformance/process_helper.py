@@ -1,4 +1,4 @@
-"""Hostile child behaviors for future verify fixtures; not a Core runner."""
+"""将来のverify fixture用の、扱いにくい子processの挙動（Coreのrunnerではない）。"""
 import os
 import signal
 import subprocess
@@ -21,4 +21,4 @@ elif mode == "timeout":
     print("waiting", flush=True)
     time.sleep(60)
 else:
-    raise SystemExit("unknown helper mode")
+    raise SystemExit("未知のhelper modeです")

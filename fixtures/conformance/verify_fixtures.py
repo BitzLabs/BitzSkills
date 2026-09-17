@@ -1,12 +1,10 @@
-"""Reviewed verify vectors that need no process behaviour; runs no Core operation.
+"""processの挙動を必要としないreview済みのverify vector（Core操作は実行しない）。
 
-Covers the executing success and failure shapes and the four conditions that stop
-before any command is spawned. Process-level vectors (spawn error, signal,
-timeout, output truncation) are owned by a separate batch.
+commandを実行する成功・失敗の形と、commandのspawn前に停止する4つの条件を扱う。
+process単位のvector（spawn error、signal、timeout、出力の切り詰め）は別の群が持つ。
 
-Every fixture stages its inputs: verify blocks startup when the workspace
-configuration is untracked in the index (VERIFY-CONFIG-UNTRACKED), so an unborn
-repository with nothing staged could never reach a command.
+すべてのfixtureは入力をstageする。workspaceの設定がindexで未追跡だとverifyは起動を
+遮断する（VERIFY-CONFIG-UNTRACKED）ため、何もstageしないunbornのrepositoryではcommandに到達できない。
 """
 import copy
 import json
@@ -56,7 +54,7 @@ CASES = {
 def technical_document(tests_block):
     head = digest_reference.TECH_HEAD_FIELDS.replace(BOTH_TESTS, tests_block, 1)
     if tests_block != BOTH_TESTS and head == digest_reference.TECH_HEAD_FIELDS:
-        raise ValueError("the reviewed tests block is no longer present in the shared corpus")
+        raise ValueError("review済みのtests blockが共有corpusにもうありません")
     return "---\n" + head + "x-owners: [team-auth]\n---\n\n" + digest_reference.TECH_BODY
 
 
@@ -82,7 +80,7 @@ def reviewed_inputs(identifier):
 
 
 def reviewed_digest_input(identifier):
-    """Only the two fixtures whose Context still resolves need a Digest."""
+    """Digestが必要なのは、Contextが解決する2件のfixtureだけである。"""
     payload = copy.deepcopy(digest_reference.reviewed_digest_input("SINGLE-042"))
     if identifier == "SINGLE-056":
         payload["settings"]["commands"][0]["argv"] = ["/bin/false", "{tests}"]
@@ -161,7 +159,7 @@ def reviewed_result(identifier):
             "target": targets[0],
             "status": status,
             "contextDigest": context_digest(identifier),
-            # A cancelled TASK root never reaches its addressed statements.
+            # cancelledのTASK起点は、addressesする規範文に到達しない。
             "statements": [] if identifier == "SINGLE-067" else list(STATEMENTS),
             "bindingRefs": ["root::default"] if executed else [],
             "diagnostics": target_diagnostic(identifier),
@@ -180,21 +178,21 @@ def reviewed_result(identifier):
 
 
 def check_evidence(identifier, result):
-    """A target that did not reach execution must carry no binding, and a Digest
-    exists only where the Context still resolved."""
+    """実行に至らなかったtargetはbindingを持たず、Digestは
+    Contextが解決した場合にだけ存在する。"""
     for target in result["targetResults"]:
         if target["bindingRefs"] and not result["commands"]:
-            raise ValueError("a binding is referenced but no command was executed")
+            raise ValueError("bindingが参照されているのにcommandが実行されていません")
         if not target["bindingRefs"] and result["commands"]:
-            raise ValueError("a command ran for a target that requires no binding")
+            raise ValueError("bindingを要求しないtargetのためにcommandが実行されています")
         if target["contextDigest"] != context_digest(identifier):
-            raise ValueError("target Digest differs from the reviewed Context")
+            raise ValueError("targetのDigestが審査済みのContextと異なります")
     referenced = {ref for target in result["targetResults"] for ref in target["bindingRefs"]}
     if referenced != {command["bindingId"] for command in result["commands"]}:
-        raise ValueError("bindingRefs and commands do not describe the same executions")
+        raise ValueError("bindingRefsとcommandsが同じ実行を表していません")
     for command in result["commands"]:
         if command["bindingId"] != f"{command['workspaceId']}::{command['name']}":
-            raise ValueError("bindingId must be <workspace-id>::<command-name>")
+            raise ValueError("bindingIdは<workspace-id>::<command-name>である必要があります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -212,16 +210,16 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("invocation or complete result differs from reviewed expectation")
+                raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
             check_evidence(identifier, result)
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("input differs from the reviewed corpus")
+                raise ValueError("入力が審査済みcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only expectation permits writes")
+                raise ValueError("read-only期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-verify-") as temporary:
                 for run in range(2):
@@ -230,24 +228,24 @@ def validate(root=HERE, identifiers=None):
                     repository = setup(fixture, manifest, sandbox / "repo")
                     if not digest_crosscheck.read_yaml(
                             (repository / ".spec/bitz.yaml").read_text(encoding="utf-8")):
-                        raise ValueError("the workspace configuration is unreadable")
+                        raise ValueError("workspaceの設定を読めません")
                     tracked = subprocess.run(
                         ["git", "ls-files", "--", ".spec/bitz.yaml"], cwd=repository,
                         capture_output=True, text=True, timeout=10).stdout.strip()
                     if tracked != ".spec/bitz.yaml":
-                        raise ValueError("verify requires the configuration tracked in the index")
+                        raise ValueError("verifyにはindexで追跡されている設定が必要です")
                     external = {name: sandbox / name for name in ("home", "cache", "temporary")}
                     for path in external.values():
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
                     expected_digest = context_digest(identifier)
                     if expected_digest is not None:
                         derived = digest_crosscheck.canonical_bytes(digest_crosscheck.build(repository))
                         if digest_crosscheck.digest(derived) != expected_digest:
-                            raise ValueError("reference A and reference B disagree on the target Digest")
+                            raise ValueError("reference AとBのtargetのDigestが一致しません")
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError,
                 subprocess.SubprocessError) as error:

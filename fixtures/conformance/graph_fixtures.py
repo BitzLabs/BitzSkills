@@ -1,4 +1,4 @@
-"""Reviewed duplicate-ID and self-cycle evidence; not a Core graph implementation."""
+"""review済みのID重複・自己循環の証拠（Coreのgraph実装ではない）。"""
 import json
 from pathlib import Path
 import subprocess
@@ -64,18 +64,18 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("invocation or complete result differs from reviewed expectation")
+                raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name] for name, p in files.items()):
-                raise ValueError("input differs from reviewed single cause")
-            # Fixed YAML/value pair only; graph constraints intentionally lie outside JSON Schema.
+                raise ValueError("入力が審査済みの単一原因と異なります")
+            # YAMLと値の組だけを固定する。graphの制約は意図してJSON Schemaの外に置く。
             fm = {"id": "TECH-001", "title": "前提技術", "status": "approved"}
             if relation:
                 fm["relations"] = {relation: ["TECH-001"]}
             frontmatter.validate(fm)
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only expectation permits writes")
+                raise ValueError("read-only期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-graph-fixtures-") as temporary:
                 for run in range(2):
@@ -87,7 +87,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

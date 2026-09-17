@@ -1,9 +1,8 @@
-"""Reviewed done-TASK root vector; runs no Core operation.
+"""done TASKを起点とするreview済みvector（Core操作は実行しない）。
 
-`SINGLE-068` verifies a TASK whose status is `done`. It is the success counterpart
-of `SINGLE-067`, where a cancelled root is blocked. Its Context follows
-[関係・トレースモデル §6.3]: a TASK root brings the documents owning its
-`addresses` targets into `contextDocuments`.
+`SINGLE-068`は、statusが`done`のTASKをverifyする。cancelledの起点を遮断する`SINGLE-067`に
+対応する成功側のfixtureである。Contextは[関係・トレースモデル §6.3]に従い、TASKの起点は
+`addresses`の対象を所有する文書を`contextDocuments`に加える。
 """
 import copy
 import json
@@ -31,7 +30,7 @@ TASK_DOCUMENT = (
     "\n## Objective\n\nAC-01を実装した。done TASKは再検証できる。\n"
 )
 TASK_BODY = TASK_DOCUMENT[TASK_DOCUMENT.index("\n---\n") + 5:].lstrip("\n")
-# Only AC-01 is addressed, so AC-02 is not a target and its test is not resolved.
+# AC-01だけをaddressesするので、AC-02はtargetではなく、そのtestも解決しない。
 TARGET_STATEMENTS = ["REQ-001:AC-01"]
 TEST_PATHS = ["tests/test_auth.py"]
 
@@ -53,7 +52,7 @@ def reviewed_digest_input():
         "bodyText": TASK_BODY, "statements": [],
         "strongRelations": [{"relation": "addresses", "target": "REQ-001:AC-01"}],
     }
-    # documents[] is ordered by code point: REQ-001 < TASK-001 < TECH-001.
+    # documents[]はコードポイント順: REQ-001 < TASK-001 < TECH-001。
     payload["documents"].insert(1, task)
     return payload
 
@@ -98,12 +97,12 @@ def reviewed_result():
 def check_done_root(result):
     target = result["targetResults"][0]
     if target["status"] != "passed" or target["diagnostics"]:
-        raise ValueError("a done TASK root must be re-verifiable without a Diagnostic")
+        raise ValueError("done TASKの起点はDiagnosticなしで再検証できる必要があります")
     if target["statements"] != TARGET_STATEMENTS:
-        raise ValueError("the target statements must come from the TASK's addresses only")
+        raise ValueError("target規範文はTASKのaddressesだけから来る必要があります")
     command = result["commands"][0]
     if "tests/test_session.py" in command["tests"] or "REQ-001:AC-02" in command["covers"]:
-        raise ValueError("an unaddressed statement must not pull its test into the binding")
+        raise ValueError("addressesしていない規範文のtestをbindingへ入れてはいけません")
 
 
 def validate(root=HERE, identifiers=None):
@@ -122,21 +121,21 @@ def validate(root=HERE, identifiers=None):
         for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
             validators[name].validate(value)
         if manifest != reviewed_manifest() or result != reviewed_result():
-            raise ValueError("invocation or complete result differs from reviewed expectation")
+            raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
         check_done_root(result)
         inputs = reviewed_inputs()
         frontmatter, _ = digest_crosscheck.split_document(inputs[TASK_PATH].decode())
         Draft202012Validator({"$ref": "#/$defs/taskFrontmatter",
                               "$defs": schema["$defs"]}).validate(frontmatter)
         if frontmatter["status"] != "done":
-            raise ValueError("the reviewed cause requires a done TASK root")
+            raise ValueError("審査済みの原因にはdone TASKの起点が必要です")
         files = {p.relative_to(fixture / "repo").as_posix(): p
                  for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
         if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                             for name, p in files.items()):
-            raise ValueError("input differs from the reviewed corpus")
+            raise ValueError("入力が審査済みcorpusと異なります")
         if effects["before"] != effects["after"]:
-            raise ValueError("read-only expectation permits writes")
+            raise ValueError("read-only期待値が書込みを許しています")
         previous = None
         with tempfile.TemporaryDirectory(prefix="bitz-verify-task-root-") as temporary:
             for run in range(2):
@@ -148,12 +147,12 @@ def validate(root=HERE, identifiers=None):
                     path.mkdir()
                 actual = observe(repository, external)
                 if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                    raise ValueError("isolated setup differs from fixed snapshot")
+                    raise ValueError("隔離setupが固定snapshotと異なります")
                 previous = actual
                 derived = digest_crosscheck.canonical_bytes(
                     digest_crosscheck.build(repository, root="TASK-001"))
                 if derived != digest_reference.canonical_bytes(reviewed_digest_input()):
-                    raise ValueError("reference A and reference B disagree on the Canonical JSON")
+                    raise ValueError("reference AとBのCanonical JSONが一致しません")
         prepared.append(IDENTIFIER)
     except (OSError, ValueError, KeyError, TypeError, ValidationError,
             subprocess.SubprocessError) as error:

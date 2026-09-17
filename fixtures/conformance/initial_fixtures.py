@@ -1,4 +1,4 @@
-"""Audit introduction/config fixtures; never invokes or emulates Core."""
+"""導入・設定fixtureを監査する。Coreを起動も模倣もしない。"""
 import json
 import os
 from pathlib import Path
@@ -21,8 +21,8 @@ CASES = {
     "SINGLE-006-01": ("doctor", "blocked", 2),
     "SINGLE-006-02": ("doctor", "blocked", 2),
 }
-# Independent, deliberately limited review of the single cause in each input.
-# This is not a YAML parser or a production configuration validator.
+# 各入力の単一原因を、意図して限定した範囲で独立にreviewする。
+# YAML parserでも、本番の設定validatorでもない。
 CONFIGS = {
     "SINGLE-001": 'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "1.0"\n',
     "SINGLE-003": 'schemaVersion: "2.0"\nlanguage: ja\nearsAi: "1.0"\n',
@@ -41,13 +41,13 @@ def check_command_preconditions(identifier, repository, executable=Path("/bin/tr
     if identifier == "SINGLE-006-01":
         missing = repository / "missing-command"
         if missing.exists() or missing.is_symlink():
-            raise ValueError("command-file case requires absent explicit executable and existing cwd")
+            raise ValueError("command fileのcaseには、存在しない明示の実行fileと、存在するcwdが必要です")
     elif identifier == "SINGLE-006-02":
         if not executable.is_file() or not os.access(executable, os.X_OK):
-            raise ValueError("cwd case requires executable /bin/true in the Linux fixture environment")
+            raise ValueError("cwdのcaseには、Linuxのfixture環境に実行可能な/bin/trueが必要です")
         missing = repository / "missing-directory"
         if missing.exists() or missing.is_symlink():
-            raise ValueError("command-cwd case requires absent cwd")
+            raise ValueError("command cwdのcaseには、存在しないcwdが必要です")
 
 
 def observe(repository, external):
@@ -62,7 +62,7 @@ def observe(repository, external):
 
 
 def compare_state(expected, observed):
-    """Do not normalize away new files, changed Git index, or external caches."""
+    """新しいfile、変わったGit index、外部のcacheを正規化で消さない。"""
     return [name for name in sorted(expected.keys() | observed.keys()) if expected.get(name) != observed.get(name)]
 
 
@@ -86,31 +86,31 @@ def validate(root=HERE):
                     or manifest["invocation"] != {"runner": "bitz", "cwd": ".", "argv": expected_argv, "env": {}}
                     or expect != {"status": status, "exitCode": exit_code, "stdout": "json",
                                   "resultFile": f"expected/{operation}.json", "reportFileCount": 0}):
-                raise ValueError("manifest differs from reviewed single-cause invocation")
+                raise ValueError("manifestが審査済みの単一原因の起動と異なります")
             expected_path = safe_path(fixture, expect["resultFile"])
             result = json.loads(expected_path.read_text())
             validators["result"].validate(result)
             if result["operation"] != operation or result["status"] != status:
-                raise ValueError("manifest/result operation or status mismatch")
+                raise ValueError("manifestと結果の操作またはstatusが一致しません")
             diagnostics = result["diagnostics"]
             if len(diagnostics) != (0 if identifier == "SINGLE-001" else 1):
-                raise ValueError("unexpected number of independent causes")
+                raise ValueError("独立した原因の数が想定と異なります")
             identity = None if identifier in {"SINGLE-002", "SINGLE-004-01", "SINGLE-004-02"} else "root"
             if result["workspace"] != {"id": identity, "path": "."}:
-                raise ValueError("incorrect workspace identity")
+                raise ValueError("workspaceの同一性が正しくありません")
             if operation == "check":
                 warning = identifier.startswith("SINGLE-005-")
                 key = {"SINGLE-003": "schemaVersion", "SINGLE-004-01": "language", "SINGLE-004-02": "earsAi",
                        "SINGLE-005-01": "futureOption", "SINGLE-005-02": "profiles"}[identifier]
                 if (result["scope"] != "full" or result["checkedDocumentCount"] != 0 or result["checkedStatementCount"] != 0
                         or result["revision"] is None or result["revision"]["dirty"]):
-                    raise ValueError("config-only fixture requires zero document counts and clean committed revision")
+                    raise ValueError("設定だけのfixtureは文書数0と、cleanなcommit済みrevisionが必要です")
                 diagnostic = diagnostics[0]
                 if (diagnostic["code"] != ("SPEC-CONFIG-UNKNOWN-001" if warning else "SPEC-CONFIG-SCHEMA-001")
                         or diagnostic["severity"] != ("warning" if warning else "error")
                         or diagnostic["resultStatus"] != status
                         or diagnostic["source"] != {"kind": "file", "workspaceId": identity, "path": ".spec/bitz.yaml", "key": key}):
-                    raise ValueError("incorrect configuration Diagnostic")
+                    raise ValueError("設定のDiagnosticが正しくありません")
             else:
                 checks = ([{"name": name, "status": "info" if name == "impact" else
                             "blocked" if name == "command" and identifier.startswith("SINGLE-006-") else "passed"}
@@ -122,27 +122,27 @@ def validate(root=HERE):
                     "version": "1.0.0", "apiVersion": "1.0",
                     "capabilities": ["context.v1", "check.v1", "verify.v1", "doctor.v1", "multiWorkspace.v1"],
                 }:
-                    raise ValueError("incorrect doctor checks or Core 1.0 expectation")
+                    raise ValueError("doctorのcheckまたはCore 1.0の期待値が正しくありません")
                 if identifier.startswith("SINGLE-006-"):
                     key = "verify.commands.default." + ("argv" if identifier.endswith("01") else "cwd")
                     diagnostic = diagnostics[0]
                     if (diagnostic["code"] != "SPEC-DOCTOR-COMMAND-001" or diagnostic["severity"] != "error"
                             or diagnostic["resultStatus"] != "blocked" or diagnostic["source"] != {
                                 "kind": "file", "workspaceId": "root", "path": ".spec/bitz.yaml", "key": key}):
-                        raise ValueError("incorrect command Diagnostic")
+                        raise ValueError("commandのDiagnosticが正しくありません")
                 elif diagnostics:
                     diagnostic = diagnostics[0]
                     if (diagnostic["code"] != "SPEC-DOCTOR-WORKSPACE-001" or diagnostic["severity"] != "error"
                             or diagnostic["resultStatus"] != "blocked" or diagnostic["source"] != {
                                 "kind": "environment", "component": "workspace", "identifier": "."}):
-                        raise ValueError("incorrect missing-workspace Diagnostic")
+                        raise ValueError("workspace不在のDiagnosticが正しくありません")
                     action = diagnostic.get("suggestedAction", "")
                     if any(text not in action for text in (".spec/bitz.yaml", CONFIGS["SINGLE-001"], ".gitignore", ".spec/reports/", "bitz check --full")):
-                        raise ValueError("missing pasteable recovery instructions")
+                        raise ValueError("貼り付けて使える復旧手順がありません")
             effects = json.loads((fixture / "side-effects.json").read_text())
             validators["side-effects"].validate(effects)
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only fixture permits side effects")
+                raise ValueError("read-onlyのfixtureが副作用を許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-initial-fixtures-") as temporary:
                 for run in range(2):
@@ -154,15 +154,15 @@ def validate(root=HERE):
                         directory.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual):
-                        raise ValueError("setup differs from fixed before snapshot")
+                        raise ValueError("setupが固定した実行前snapshotと異なります")
                     if previous is not None and actual != previous:
-                        raise ValueError("two isolated setups differ")
+                        raise ValueError("隔離した2回のsetupが異なります")
                     previous = actual
                     config = repository / ".spec/bitz.yaml"
                     if identifier in CONFIGS and config.read_bytes() != CONFIGS[identifier].encode():
-                        raise ValueError("input differs from reviewed cause")
+                        raise ValueError("入力が審査済みの原因と異なります")
                     if identifier == "SINGLE-002" and (repository / ".spec").exists():
-                        raise ValueError("missing-workspace fixture must have no .spec directory")
+                        raise ValueError("workspace不在のfixtureは.spec directoryを持ってはいけません")
                     check_command_preconditions(identifier, repository)
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

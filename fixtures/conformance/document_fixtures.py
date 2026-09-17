@@ -1,4 +1,4 @@
-"""Reviewed document fixture evidence; no Core parsing or check implementation."""
+"""review済みの文書fixtureの証拠（Coreの構文解析や検査は実装しない）。"""
 import json
 from pathlib import Path
 import subprocess
@@ -18,7 +18,7 @@ INTENT = "## Intent\n\n文書構造を検査する。\n\n"
 AC = f"## Acceptance Criteria\n\n{GOOD}\n\n"
 VERIFICATION = "## Verification\n\nCore実装後に確認する。現時点では未証明。\n"
 DOCUMENT = HEADER + INTENT + AC + VERIFICATION
-# ID: (path, complete input, Diagnostic code, summary, source details, doc/statement counts)
+# ID: (path, 完全な入力, Diagnostic code, summary, sourceの詳細, 文書・規範文の件数)
 CASES = {
     "SINGLE-014": (".spec/requirements/REQ-002.md", DOCUMENT.encode(),
         "SPEC-FILE-NAME-001", "file名IDとFrontmatter IDが一致しません", {"key": "id"}, (0, 0)),
@@ -80,28 +80,28 @@ def validate(root=HERE, identifiers=None):
             manifest = json.loads((fixture / "manifest.json").read_text())
             validators["manifest"].validate(manifest)
             if manifest != reviewed_manifest(identifier):
-                raise ValueError("manifest differs from reviewed invocation")
+                raise ValueError("manifestが審査済みの起動と異なります")
             result = json.loads((fixture / "expected/check.json").read_text())
             validators["result"].validate(result)
             if result != reviewed_result(identifier):
-                raise ValueError("result differs from reviewed complete expectation")
+                raise ValueError("結果が審査済みの完全な期待値と異なります")
             if (fixture / "repo" / path).read_bytes() != document:
-                raise ValueError("document bytes differ from reviewed single cause")
-            # Validate only the three fixed plain-string fields, even in the invalid UTF-8 case.
+                raise ValueError("文書のbyte列が審査済みの単一原因と異なります")
+            # 不正なUTF-8のcaseでも、固定した3つの平文fieldだけを検証する。
             frontmatter = dict(line.decode().split(": ", 1) for line in document.splitlines()[1:4])
             kind = "adrFrontmatter" if identifier == "SINGLE-017-03" else "reqFrontmatter"
             Draft202012Validator({"$ref": f"#/$defs/{kind}", "$defs": fm_schema["$defs"]}).validate(frontmatter)
             effects = json.loads((fixture / "side-effects.json").read_text())
             validators["side-effects"].validate(effects)
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only expectation permits writes")
-            # Reject coherent snapshot/input tampering too, including additional files.
+                raise ValueError("read-only期待値が書込みを許しています")
+            # 追加fileを含め、snapshotと入力を揃えて改変した場合も拒否する。
             input_files = {p.relative_to(fixture / "repo").as_posix()
                            for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if input_files != {".spec/bitz.yaml", path}:
-                raise ValueError("additional input introduces an unreviewed cause")
+                raise ValueError("追加の入力が審査していない原因を持ち込んでいます")
             if (fixture / "repo/.spec/bitz.yaml").read_bytes() != CONFIGS["SINGLE-001"].encode():
-                raise ValueError("configuration differs from reviewed minimal input")
+                raise ValueError("設定が審査済みの最小入力と異なります")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-document-fixtures-") as temporary:
                 for run in range(2):
@@ -113,7 +113,7 @@ def validate(root=HERE, identifiers=None):
                         directory.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

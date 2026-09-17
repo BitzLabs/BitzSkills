@@ -1,8 +1,7 @@
-"""Reviewed implement-purpose coverage vector; runs no Core operation.
+"""implementのpurposeのcoverageを固定するreview済みvector（Core操作は実行しない）。
 
-`SINGLE-054` is the one Context fixture in this group with a success status, so
-it is the only one that delivers a full Bundle and a computed Digest. The Digest
-is cross-checked by the same two independent references as the golden family.
+`SINGLE-054`はこの群で唯一成功statusのContext fixtureであり、完全なBundleと計算した
+Digestを返す唯一のfixtureである。Digestは、golden群と同じ独立した2系統の参照計算で照合する。
 """
 import json
 from pathlib import Path
@@ -36,8 +35,8 @@ TASK_DOCUMENT = (
     "AC-02を実装する。AC-01を`addresses`するTASKは意図的に置かない。\n"
 )
 TASK_BODY = TASK_DOCUMENT[TASK_DOCUMENT.index("\n---\n") + 5:].lstrip("\n")
-# Only AC-02 is addressed, so the MUST statement AC-01 stays unaddressed and
-# raises exactly one CTX-COVERAGE-TASK-001 warning.
+# AC-02だけをaddressesするので、MUSTのAC-01はunaddressedのまま残り、
+# CTX-COVERAGE-TASK-001の警告がちょうど1件出る。
 COVERAGE = {
     "must": {"total": ["REQ-001:AC-01"], "addressed": [], "tested": ["REQ-001:AC-01"],
              "unaddressed": ["REQ-001:AC-01"], "untested": []},
@@ -53,8 +52,8 @@ def reviewed_inputs():
 
 
 def reviewed_digest_input():
-    """`implement` adds the addressing TASK to the closure but, unlike `verify`,
-    does not name command, so settings records no binding."""
+    """`implement`は`addresses`するTASKを閉包に加えるが、`verify`と異なり
+    commandを挙げないので、settingsはbindingを記録しない。"""
     payload = digest_reference.reviewed_digest_input("SINGLE-042")
     payload["purpose"] = "implement"
     payload["settings"]["verifyTimeouts"] = []
@@ -79,7 +78,7 @@ def reviewed_digest_input():
         "statements": [],
         "strongRelations": [{"relation": "addresses", "target": "REQ-001:AC-02"}],
     }
-    # documents[] is ordered by code point: REQ-001 < TASK-001 < TECH-001.
+    # documents[]はコードポイント順: REQ-001 < TASK-001 < TECH-001。
     payload["documents"].insert(1, task)
     return payload
 
@@ -98,8 +97,8 @@ def reviewed_manifest():
 
 
 def reviewed_result(context_digest):
-    # The REQ and TECH presentation is unchanged from the golden fixture; only the
-    # addressing TASK is added, so the two stay in step by construction.
+    # REQとTECHの提示はgolden fixtureと同じで、addressesするTASKだけを加える。
+    # そのため両者は構成上ずれない。
     documents = json.loads(json.dumps(
         reviewed_verify_result("SINGLE-042", context_digest)["documents"]))
     documents.append({
@@ -140,7 +139,7 @@ def references(repository):
     derived = digest_crosscheck.canonical_bytes(
         digest_crosscheck.build(repository, purpose="implement"))
     if literal != derived:
-        raise ValueError("reference A and reference B disagree on the Canonical JSON")
+        raise ValueError("reference AとBのCanonical JSONが一致しません")
     return literal
 
 
@@ -149,13 +148,13 @@ def check_coverage(result):
     for modality in ("must", "should", "may"):
         bucket = buckets[modality]
         if set(bucket["addressed"]) - set(bucket["total"]) or set(bucket["tested"]) - set(bucket["total"]):
-            raise ValueError("coverage reports a statement outside its own total")
+            raise ValueError("coverageが自身のtotal外の規範文を報告しています")
         if sorted(bucket["addressed"] + bucket["unaddressed"]) != sorted(bucket["total"]):
-            raise ValueError("addressed and unaddressed must partition total")
+            raise ValueError("addressedとunaddressedはtotalを分割する必要があります")
         if sorted(bucket["tested"] + bucket["untested"]) != sorted(bucket["total"]):
-            raise ValueError("tested and untested must partition total")
+            raise ValueError("testedとuntestedはtotalを分割する必要があります")
     if not buckets["must"]["unaddressed"]:
-        raise ValueError("the reviewed cause requires an unaddressed MUST")
+        raise ValueError("審査済みの原因にはunaddressedのMUSTが必要です")
 
 
 def validate(root=HERE, identifiers=None):
@@ -175,25 +174,25 @@ def validate(root=HERE, identifiers=None):
             validators[name].validate(value)
         canonical = (fixture / "expected/context.canonical.json").read_bytes()
         if canonical.endswith(b"\n") or canonical.startswith(b"\xef\xbb\xbf"):
-            raise ValueError("Canonical JSON must be UTF-8 without a BOM or trailing newline")
+            raise ValueError("Canonical JSONはBOMと末尾改行のないUTF-8である必要があります")
         if manifest != reviewed_manifest():
-            raise ValueError("invocation differs from reviewed expectation")
+            raise ValueError("起動条件が審査済み期待値と異なります")
         if result != reviewed_result(digest_reference.digest(canonical)):
-            raise ValueError("complete result differs from reviewed expectation")
+            raise ValueError("完全結果が審査済み期待値と異なります")
         check_coverage(result)
         golden = (root / "single/SINGLE-042/expected/context.canonical.json").read_bytes()
         if canonical == golden:
-            raise ValueError("implement must not reuse the verify golden digest input")
+            raise ValueError("implementはverifyのgolden Digest材料を再利用してはいけません")
         inputs = reviewed_inputs()
         files = {p.relative_to(fixture / "repo").as_posix(): p
                  for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
         if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                             for name, p in files.items()):
-            raise ValueError("input differs from the reviewed corpus")
+            raise ValueError("入力が審査済みcorpusと異なります")
         frontmatter, _ = digest_crosscheck.split_document(inputs[TASK_PATH].decode())
         Draft202012Validator({"$ref": "#/$defs/taskFrontmatter", "$defs": schema["$defs"]}).validate(frontmatter)
         if effects["before"] != effects["after"]:
-            raise ValueError("read-only expectation permits writes")
+            raise ValueError("read-only期待値が書込みを許しています")
         previous = None
         with tempfile.TemporaryDirectory(prefix="bitz-context-coverage-") as temporary:
             for run in range(2):
@@ -205,10 +204,10 @@ def validate(root=HERE, identifiers=None):
                     path.mkdir()
                 actual = observe(repository, external)
                 if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                    raise ValueError("isolated setup differs from fixed snapshot")
+                    raise ValueError("隔離setupが固定snapshotと異なります")
                 previous = actual
                 if references(repository) != canonical:
-                    raise ValueError("committed Canonical JSON differs from the reference computation")
+                    raise ValueError("commitしたCanonical JSONが参照計算と異なります")
         prepared.append(IDENTIFIER)
     except (OSError, ValueError, KeyError, TypeError, ValidationError,
             subprocess.SubprocessError) as error:

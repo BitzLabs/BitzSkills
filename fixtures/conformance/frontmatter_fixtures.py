@@ -1,4 +1,4 @@
-"""Fixed BOM/Frontmatter evidence; does not implement a YAML loader or Core."""
+"""固定したBOM・Frontmatterの証拠（YAML loaderもCoreも実装しない）。"""
 import json
 from pathlib import Path
 import subprocess
@@ -12,7 +12,7 @@ from .initial_fixtures import CONFIGS, observe, compare_state
 
 HERE = Path(__file__).resolve().parent
 CONFIG_PATH = ".spec/bitz.yaml"
-# ID: replacement for title line, condition code, source key, human reason.
+# ID: titleの行の置換え, 条件code, source key, 人向けの理由
 CASES = {
     "SINGLE-081": (None, "SPEC-INPUT-BOM-001", None, "設定file先頭のBOMを除いて解析を続行します"),
     "SINGLE-082": (None, "SPEC-INPUT-BOM-001", None, "SPEC file先頭のBOMを除いて解析を続行します"),
@@ -80,13 +80,13 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("manifest or result differs from reviewed single condition")
+                raise ValueError("manifestまたは結果が審査済みの単一条件と異なります")
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name] for name, p in files.items()):
-                raise ValueError("input differs from the reviewed corpus")
+                raise ValueError("入力が審査済みcorpusと異なります")
             if effects["policy"] != "read-only" or effects["before"] != effects["after"]:
-                raise ValueError("BOM and Frontmatter processing must not write files")
+                raise ValueError("BOMとFrontmatterの処理はfileを書いてはいけません")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-frontmatter-") as temporary:
                 for run in range(2):
@@ -98,7 +98,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

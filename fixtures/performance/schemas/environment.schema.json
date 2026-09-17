@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "environment.schema.json",
-  "title": "Bitz Core 1.0 performance reference environment",
+  "title": "Bitz Core 1.0 性能測定の基準環境",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "environmentId", "comparisonKey", "requiredTools", "isolation"],

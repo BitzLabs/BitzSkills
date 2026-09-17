@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "task.schema.json",
-  "title": "Bitz Core 1.0 comparison task",
+  "title": "Bitz Core 1.0 比較task",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "taskId", "title", "objective", "baselineMode", "brief", "conditions", "completionCriteria", "metricTags"],

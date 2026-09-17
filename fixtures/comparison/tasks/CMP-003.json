@@ -1,14 +1,14 @@
 {
   "schemaVersion": "1.0",
   "taskId": "CMP-003",
-  "title": "Audit-export implementation context",
-  "objective": "Assemble the minimum complete context needed to implement a tenant-scoped audit export.",
+  "title": "監査exportの実装Context",
+  "objective": "tenant単位の監査exportの実装に必要な、最小で完全なContextを組み立てる。",
   "baselineMode": "legacy-ears",
-  "brief": ["AUDIT-EXPORT requires ASYNC-JOBS and TENANT-BOUNDARY.", "AUDIT-EXPORT and AUDIT-VIEWER both require RETENTION-POLICY.", "AUDIT-EXPORT requires accepted decision ADR-ENCRYPTION.", "UI-DATE-PREFERENCE is adjacent reference material and is not a strong dependency."],
+  "brief": ["AUDIT-EXPORTはASYNC-JOBSとTENANT-BOUNDARYをrequiresする。", "AUDIT-EXPORTとAUDIT-VIEWERは、どちらもRETENTION-POLICYをrequiresする。", "AUDIT-EXPORTは、acceptedの決定ADR-ENCRYPTIONをrequiresする。", "UI-DATE-PREFERENCEは隣接する参考資料であり、強い依存ではない。"],
   "conditions": {
-    "baseline": ["Represent the brief with legacy EARS text and untyped Markdown links.", "Produce an implementation context packet."],
-    "bitz": ["Represent the brief with typed relations and resolve purpose=implement.", "Separate normative, adjacent, and reference material in the packet."]
+    "baseline": ["課題文を従来のEARSの文と、型のないMarkdownのlinkで表す。", "実装Contextの資料一式を作る。"],
+    "bitz": ["課題文を型付きのrelationで表し、purpose=implementで解決する。", "資料一式の中で、規範、隣接、参考の資料を分ける。"]
   },
-  "completionCriteria": ["All strong dependencies and the encryption decision are present.", "The UI preference is not promoted to a mandatory implementation constraint.", "No unrelated document is included."],
+  "completionCriteria": ["すべての強い依存と暗号化の決定がある。", "UIの設定を、必須の実装制約に格上げしない。", "無関係な文書を含まない。"],
   "metricTags": ["completionMs", "authoringMs", "reviewMs", "detectedDefects"]
 }

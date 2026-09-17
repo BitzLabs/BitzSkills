@@ -6,7 +6,7 @@
   "required": ["schemaVersion", "protocolVersion", "participantId", "taskId", "condition", "order", "metrics", "accepted", "findings"],
   "properties": {
     "schemaVersion": {"const": "1.0"},
-    "protocolVersion": {"const": "1.0"},
+    "protocolVersion": {"const": "1.1"},
     "participantId": {"type": "string", "minLength": 1},
     "taskId": {"type": "string", "pattern": "^CMP-[0-9]{3}$"},
     "condition": {"enum": ["baseline", "bitz"]},

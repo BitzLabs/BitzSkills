@@ -7,7 +7,7 @@
   "properties": {
     "$schema": {"type": "string"},
     "schemaVersion": {"const": "1.0"},
-    "protocolVersion": {"const": "1.0"},
+    "protocolVersion": {"const": "1.1"},
     "taskIds": {"type": "array", "minItems": 5, "maxItems": 5, "uniqueItems": true, "items": {"type": "string", "pattern": "^CMP-[0-9]{3}$"}},
     "minimumParticipantsPerCondition": {"type": "integer", "minimum": 1},
     "assignment": {"const": "balanced-ab-ba"},

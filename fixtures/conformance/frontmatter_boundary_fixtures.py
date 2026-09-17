@@ -1,8 +1,7 @@
-"""Reviewed decoded-Frontmatter boundary vectors; no YAML loader or Core.
+"""decode後のFrontmatterの境界を固定するreview済みvector（YAML loaderもCoreもない）。
 
-Each field is serialized using JSON syntax as a YAML flow value. Reading these
-individual values with json.loads independently verifies the corpus/value pair.
-The actual YAML loader and check behavior remain Step 2 acceptance work.
+各fieldは、JSONの構文をYAMLのflow valueとして使って書く。個々の値をjson.loadsで読むことで、
+corpusと値の組を独立に確認する。実際のYAML loaderと検査の挙動はStep 2の受入で扱う。
 """
 import copy
 import json
@@ -25,7 +24,7 @@ TWO_STATEMENTS = ('REQ-001:AC-01', 'REQ-001:AC-02')
 # 明示TASK checkで変更差分を与えるcode path。
 CHANGED_PATH = 'src/app.py'
 BASE = {'id': 'REQ-001', 'title': TITLE, 'status': 'approved'}
-# ID -> decoded fields, primary code (None = success), diagnostic key, description.
+# ID -> decode後のfield, primaryのcode（None = 成功）, Diagnostic key, 説明
 CASES = {}
 
 def add(identifier, updates, code=None, key=None, description='', remove=()):
@@ -201,25 +200,25 @@ def validate(root=HERE, identifiers=None):
             for name, value in (('manifest', manifest), ('result', result), ('side-effects', effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError('manifest or result differs from reviewed single condition')
+                raise ValueError('manifestまたは結果が審査済みの単一条件と異なります')
             inputs = reviewed_inputs(identifier)
             expected = {**{'repo/' + name: content for name, content in inputs.items()}, **changes_inputs(identifier)}
             files = {p.relative_to(fixture).as_posix(): p for directory in ('repo', 'changes')
                      for p in (fixture / directory).rglob('*') if p.is_file() or p.is_symlink()}
             if set(files) != set(expected) or any(p.is_symlink() or p.read_bytes() != expected[name] or p.stat().st_mode & 0o111 for name, p in files.items()):
-                raise ValueError('input bytes or file modes differ from reviewed corpus')
+                raise ValueError('入力のbyte列またはfile modeが審査済みcorpusと異なります')
             fields = CASES[identifier][0]
             header = inputs[spec_path(identifier)].decode().split('---\n')[1]
             decoded = {key: json.loads(value) for key, value in (line.split(': ', 1) for line in header.splitlines())}
             if fields != decoded:
-                raise ValueError('fixed YAML flow values differ from independently decoded fields')
+                raise ValueError('固定したYAMLのflow valueが独立にdecodeしたfieldと異なります')
             definition = KINDS[fields['id'].split('-')[0]][1]
             validator = Draft202012Validator({'$ref': '#/$defs/' + definition, '$defs': schema['$defs']})
             failures = list(validator.iter_errors(decoded))
             if (bool(failures) or duplicate_tests(decoded)) != rejected(identifier):
-                raise ValueError('Frontmatter Schema disagrees with reviewed acceptance')
+                raise ValueError('Frontmatter Schemaの判定が審査済みの受理と一致しません')
             if effects['policy'] != 'read-only' or effects['before'] != effects['after']:
-                raise ValueError('Frontmatter check must not write files')
+                raise ValueError('Frontmatterの検査はfileを書いてはいけません')
             previous = None
             with tempfile.TemporaryDirectory(prefix='bitz-fm-boundary-') as temporary:
                 for run in range(2):

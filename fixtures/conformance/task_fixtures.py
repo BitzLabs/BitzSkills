@@ -1,4 +1,4 @@
-"""Reviewed TASK scope fixtures; no production selection or boundary logic."""
+"""review済みのTASK境界fixture（本番の対象選択や境界の処理はない）。"""
 import json
 from pathlib import Path
 import subprocess
@@ -16,7 +16,7 @@ CURRENT_TASK = TASK.replace("変更境界を確認する。", "変更境界を�
 BASE = {".spec/bitz.yaml": CONFIGS["SINGLE-001"].encode(), TASK_PATH: TASK.encode(),
         "src/inside.py": b"# unchanged allowed path\n", "src2/outside.py": b"# before\n"}
 CURRENT = {**BASE, TASK_PATH: CURRENT_TASK.encode(), "src2/outside.py": b"# after\n"}
-# The same two unstaged paths exercise all three invocation scopes.
+# 同じ未stageの2 pathで、起動の3つのscopeをすべて検査する。
 CASES = {"SINGLE-034": ("selected", ["TASK-001"], "failed"),
          "SINGLE-035-01": ("changed", [], "passed"),
          "SINGLE-035-02": ("full", ["--full"], "passed")}
@@ -56,18 +56,18 @@ def reviewed_inputs():
 
 
 def check_git_states(repository):
-    """Compare exact Git blobs, not an inferred TASK boundary decision."""
+    """推論したTASK境界の判定ではなく、Gitのblobそのものを比べる。"""
     for revision, path_args in (("HEAD:", ("ls-tree", "-r", "--name-only", "-z", "HEAD")),
                                 (":", ("ls-files", "-z"))):
         if set(git(repository, *path_args).decode().split("\0")[:-1]) != set(BASE):
-            raise ValueError("HEAD/index paths differ from reviewed base")
+            raise ValueError("HEADまたはindexのpathが審査済みの基準版と異なります")
         for path, content in BASE.items():
             if git(repository, "show", revision + path) != content:
-                raise ValueError("HEAD/index bytes differ from reviewed base")
+                raise ValueError("HEADまたはindexのbyte列が審査済みの基準版と異なります")
     actual = {p.relative_to(repository).as_posix(): p.read_bytes() for p in repository.rglob("*")
               if p.is_file() and ".git" not in p.relative_to(repository).parts}
     if actual != CURRENT:
-        raise ValueError("worktree differs from reviewed two-path change")
+        raise ValueError("作業treeが審査済みの2 pathの変更と異なります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -87,16 +87,16 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("manifest or complete result differs from reviewed scope expectation")
+                raise ValueError("manifestまたは完全結果が審査済みのscopeの期待値と異なります")
             files = {p.relative_to(fixture).as_posix(): p for directory in ("repo", "changes")
                      for p in (fixture / directory).rglob("*") if p.is_file() or p.is_symlink()}
             expected = reviewed_inputs()
             if set(files) != set(expected) or any(p.is_symlink() or p.read_bytes() != expected[name] for name, p in files.items()):
-                raise ValueError("input differs from reviewed TASK/segment boundary case")
-            # Fixed YAML/value pair review only; no general YAML parser.
+                raise ValueError("入力が審査済みのTASK・segment境界のcaseと異なります")
+            # YAMLと値の固定した組だけをreviewする。汎用のYAML parserではない。
             frontmatter.validate({"id": "TASK-001", "title": "変更境界の検査", "status": "open", "changes": ["src/"]})
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only expectation permits writes")
+                raise ValueError("read-only期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-task-fixtures-") as temporary:
                 for run in range(2):
@@ -109,7 +109,7 @@ def validate(root=HERE, identifiers=None):
                         directory.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and actual != previous):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

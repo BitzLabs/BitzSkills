@@ -1,9 +1,8 @@
-"""Reviewed explicit-report vectors; runs no Core operation.
+"""明示reportを固定するreview済みvector（Core操作は実行しない）。
 
-`SINGLE-071-01..04` pin that `--report` creates exactly one file in `.spec/reports/`
-for `check` and `verify`, on success and on failure alike, and `SINGLE-072` pins
-that an unusable report destination is an error which still returns the original
-result to the terminal.
+`SINGLE-071-01..04`は、`check`と`verify`で、成功・失敗のどちらでも`--report`が
+`.spec/reports/`にちょうど1件のfileを作ることを固定する。`SINGLE-072`は、使えないreportの保存先が
+errorになり、それでも元の結果を端末へ返すことを固定する。
 """
 import json
 from pathlib import Path
@@ -22,16 +21,16 @@ REPORT_DIRECTORY = ".spec/reports"
 EXISTING_REPORT = report_absent_fixtures.EXISTING_REPORT
 # 結果・Diagnostic・終了コード §8: <YYYYMMDDTHHMMSSZ>-<operation>[-<sequence>].json
 NAME_PATTERN = r"^[0-9]{8}T[0-9]{6}Z-(?:check|verify)(?:-[1-9][0-9]*)?\.json$"
-# A regular file where the report directory belongs: version-controllable, unlike a
-# directory mode, which Git does not record and a fresh checkout would not restore.
+# report directoryの位置に置く通常file。directoryの権限と異なりversion管理できる。
+# Gitはdirectoryの権限を記録せず、fresh checkoutでは復元されない。
 BLOCKING_FILE = b"this path occupies the report directory\n"
-# id: (operation, status, exit code, source fixture for the reviewed result)
+# id: (操作, status, 終了コード, review済みの結果の元fixture)
 CASES = {
     "SINGLE-071-01": ("check", "passed", 0, "SINGLE-070-01"),
     "SINGLE-071-02": ("check", "failed", 1, "SINGLE-070-02"),
     "SINGLE-071-03": ("verify", "passed", 0, "SINGLE-070-03"),
     "SINGLE-071-04": ("verify", "failed", 1, "SINGLE-070-04"),
-    # Based on the failing check, so "the original result survives" is not vacuous.
+    # 「元の結果が残る」が空疎にならないよう、失敗するcheckに基づく。
     "SINGLE-072": ("check", "error", 3, "SINGLE-070-02"),
     "SINGLE-127-12": ("check", "passed", 0, "SINGLE-070-01"),
 }
@@ -48,7 +47,7 @@ DESCRIPTIONS = {
 def reviewed_inputs(identifier):
     inputs = dict(report_absent_fixtures.reviewed_inputs(CASES[identifier][3]))
     if identifier == "SINGLE-072":
-        # The report directory cannot exist, because a regular file occupies its path.
+        # 通常fileがpathを占めるので、report directoryは存在できない。
         del inputs[EXISTING_REPORT]
         inputs[REPORT_DIRECTORY] = BLOCKING_FILE
     return inputs
@@ -73,10 +72,10 @@ def reviewed_result(identifier):
     operation, status, _, source = CASES[identifier]
     result = json.loads(json.dumps(report_absent_fixtures.reviewed_result(source)))
     if identifier != "SINGLE-072":
-        # Saving a report does not change the result that was already computed.
+        # reportを保存しても、計算済みの結果は変わらない。
         return result
-    # The original result and its Diagnostics stay on the terminal; only the status
-    # and the save failure are added.
+    # 元の結果とそのDiagnosticは端末に残り、statusと
+    # 保存の失敗だけが加わる。
     result["status"] = "error"
     result["diagnostics"] = result["diagnostics"] + [{
         "code": "SPEC-REPORT-WRITE-001", "severity": "error", "resultStatus": "error",
@@ -96,36 +95,36 @@ def reviewed_effects(identifier, state):
 
 def check_report_contract(identifier, manifest, effects, result):
     if "--report" not in manifest["invocation"]["argv"]:
-        raise ValueError("this group must pass --report")
+        raise ValueError("この群は--reportを渡す必要があります")
     expected = manifest["expect"]["reportFileCount"]
     if identifier == "SINGLE-072":
         if effects["policy"] != "read-only" or "report" in effects or expected != 0:
-            raise ValueError("a failed save must leave the tree untouched")
+            raise ValueError("保存に失敗した場合はtreeを変えてはいけません")
         source = report_absent_fixtures.reviewed_result(CASES[identifier][3])
         keys = ("status", "diagnostics")
         if {k: v for k, v in result.items() if k not in keys} != {
                 k: v for k, v in source.items() if k not in keys}:
-            raise ValueError("the original result must survive on the terminal")
+            raise ValueError("元の結果は端末に残る必要があります")
         if ([d["code"] for d in result["diagnostics"]]
                 != [d["code"] for d in source["diagnostics"]] + ["SPEC-REPORT-WRITE-001"]):
-            raise ValueError("the save failure must be appended to the original Diagnostics")
+            raise ValueError("保存の失敗は元のDiagnosticに追加する必要があります")
         if not source["diagnostics"]:
-            raise ValueError("this case must start from a result that already has Diagnostics")
+            raise ValueError("このcaseは既にDiagnosticを持つ結果から始める必要があります")
         return
     if effects["policy"] != "explicit-report" or effects["report"]["createdCount"] != expected:
-        raise ValueError("the created report count differs from the manifest")
+        raise ValueError("作成したreportの件数がmanifestと異なります")
     if effects["report"]["temporaryFilesRemaining"] != 0:
-        raise ValueError("atomic creation must leave no temporary file")
+        raise ValueError("原子的な作成は一時fileを残してはいけません")
     operation = manifest["invocation"]["argv"][0]
     sample = f"20000101T000000Z-{operation}.json"
     if not re.fullmatch(effects["report"]["namePattern"], sample):
-        raise ValueError("the reviewed name pattern rejects a valid report name")
+        raise ValueError("review済みの名前のpatternが妥当なreport名を拒否しています")
     for bad in (f"{operation}.json", f"20000101T000000Z-{operation}-0.json",
                 f"20000101T000000Z-context.json", f"20000101T000000Z-{operation}.json.tmp"):
         if re.fullmatch(effects["report"]["namePattern"], bad):
-            raise ValueError("the reviewed name pattern accepts an invalid report name")
+            raise ValueError("review済みの名前のpatternが不正なreport名を受理しています")
     if EXISTING_REPORT not in effects["before"]["repository"]:
-        raise ValueError("exclusive creation is untested without a pre-existing report")
+        raise ValueError("既存のreportがないと排他的な作成を検査できません")
 
 
 def validate(root=HERE, identifiers=None):
@@ -144,18 +143,18 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("invocation or complete result differs from reviewed expectation")
+                raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
             if effects != reviewed_effects(identifier, effects["before"]):
-                raise ValueError("side-effect expectation differs from reviewed policy")
+                raise ValueError("副作用の期待値が審査済みのpolicyと異なります")
             check_report_contract(identifier, manifest, effects, result)
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("input differs from the reviewed corpus")
+                raise ValueError("入力が審査済みcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("every path that already existed must be unchanged")
+                raise ValueError("既に存在したpathはすべて不変である必要があります")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-report-write-") as temporary:
                 for run in range(2):
@@ -165,15 +164,15 @@ def validate(root=HERE, identifiers=None):
                     reports = repository / REPORT_DIRECTORY
                     if identifier == "SINGLE-072":
                         if not reports.is_file():
-                            raise ValueError("the blocked case requires a file at the report path")
+                            raise ValueError("blockedのcaseにはreport pathにfileが必要です")
                     elif not reports.is_dir():
-                        raise ValueError("the report directory must exist before the run")
+                        raise ValueError("report directoryは実行前に存在する必要があります")
                     external = {name: sandbox / name for name in ("home", "cache", "temporary")}
                     for path in external.values():
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError,

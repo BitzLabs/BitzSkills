@@ -1,8 +1,8 @@
-"""Fixed grammar/Scanner/position evidence for matrix §6.10 check cases.
+"""matrix §6.10のcheckのcaseについて、文法・Scanner・位置を固定した証拠。
 
-No Scanner, Lexer, Parser or Core is implemented here. Each fixture reuses the
-reviewed EARS document and changes exactly one line, so the audit can re-derive
-the reviewed 1-based code point column from the fixed bytes.
+Scanner、Lexer、Parser、Coreは実装しない。各fixtureはreview済みのEARS文書を再利用し、
+ちょうど1行だけを変える。そのため監査は、固定したbyte列から、review済みの
+1始まりのコードポイントの列を導き直せる。
 """
 import json
 from pathlib import Path
@@ -19,7 +19,7 @@ HERE = Path(__file__).resolve().parent
 CONFIG_PATH = ".spec/bitz.yaml"
 STATEMENT_LINE = 16
 BASE = "- [REQ-001:AC-02] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] "
-# One fixed statement-like text; only the surrounding construct differs per suppression case.
+# 規範文風のtextは1つに固定し、抑止のcaseごとに周りの構文だけを変える。
 CANDIDATE = "- [REQ-001:AC-99] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 候補にしない。"
 SUPPRESSION = {
     "SINGLE-099-01": "```text\n" + CANDIDATE + "\n```",
@@ -27,7 +27,7 @@ SUPPRESSION = {
     "SINGLE-099-03": "> " + CANDIDATE,
     "SINGLE-099-04": "    " + CANDIDATE,
 }
-# ID: (line 16 content, Diagnostic code, summary, anchor token, reviewed column)
+# ID: (16行目の内容, Diagnostic code, summary, anchor token, review済みの列)
 CASES = {
     "SINGLE-096-02": (BASE + "ログに ``secret` を出力しない。", "EAI-CORE-SYNTAX-005",
                       "code spanが閉じられていません", "``", 73),
@@ -115,37 +115,37 @@ def reviewed_result(identifier):
 
 
 def check_positions(identifier, document):
-    """Re-derive the reviewed column from the fixed document, in code points."""
+    """review済みの列を、固定した文書からコードポイント単位で導き直す。"""
     line_text, code, _, anchor, column = CASES[identifier]
     lines = document.decode().splitlines()
     if lines[STATEMENT_LINE - 1] != line_text.splitlines()[0]:
-        raise ValueError("reviewed line 16 differs from the fixed document")
+        raise ValueError("review済みの16行目が固定した文書と異なります")
     if code is None:
         if anchor is not None or column is not None:
-            raise ValueError("a successful case must not fix a Diagnostic position")
+            raise ValueError("成功するcaseはDiagnosticの位置を固定してはいけません")
         return
     position = lines[STATEMENT_LINE - 1].index(anchor) + 1
     if position != column:
-        raise ValueError("Diagnostic column does not point to the reviewed token")
+        raise ValueError("Diagnosticの列がreview済みのtokenを指していません")
 
 
 def check_suppression(identifier, document):
-    """Only the surrounding construct may differ between the suppression cases."""
+    """抑止のcaseの間で異なってよいのは、周りの構文だけである。"""
     if identifier not in SUPPRESSION:
         return
     block = SUPPRESSION[identifier].split("\n")
     if identifier in {"SINGLE-099-01", "SINGLE-099-02"}:
         fence = "```" if identifier.endswith("01") else "~~~"
         if block[0] != fence + "text" or block[-1] != fence or block[1] != CANDIDATE or len(block) != 3:
-            raise ValueError("fenced case must wrap the fixed candidate text alone")
+            raise ValueError("fenceのcaseは固定した候補textだけを囲む必要があります")
     elif identifier == "SINGLE-099-03":
         if len(block) != 1 or block[0] != "> " + CANDIDATE:
-            raise ValueError("quoted case must prefix the fixed candidate text alone")
+            raise ValueError("引用のcaseは固定した候補textだけに接頭辞を付ける必要があります")
     elif len(block) != 1 or block[0] != "    " + CANDIDATE or "\t" in block[0]:
-        raise ValueError("indented case needs exactly four leading spaces and no TAB")
+        raise ValueError("indentのcaseには、先頭にちょうど4つの空白とTABのないことが必要です")
     text = document.decode()
     if text.count(CANDIDATE) != 1 or SUPPRESSION[identifier] not in text:
-        raise ValueError("the suppressed text must appear exactly once inside its construct")
+        raise ValueError("抑止するtextは、その構文の中にちょうど1回現れる必要があります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -163,17 +163,17 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("manifest or result differs from reviewed single condition")
+                raise ValueError("manifestまたは結果が審査済みの単一条件と異なります")
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("input differs from the reviewed corpus")
+                raise ValueError("入力が審査済みcorpusと異なります")
             check_positions(identifier, inputs[SPEC_PATH])
             check_suppression(identifier, inputs[SPEC_PATH])
             if effects["policy"] != "read-only" or effects["before"] != effects["after"]:
-                raise ValueError("scanning must not write files")
+                raise ValueError("候補の走査はfileを書いてはいけません")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-scanner-") as temporary:
                 for run in range(2):
@@ -185,7 +185,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

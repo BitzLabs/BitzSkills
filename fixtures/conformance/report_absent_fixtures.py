@@ -1,8 +1,8 @@
-"""Reviewed `--report`-absent vectors; runs no Core operation.
+"""`--report`を指定しない場合を固定するreview済みvector（Core操作は実行しない）。
 
-`SINGLE-070-01/02/03/04` pin that neither `check` nor `verify` writes anything
-without `--report`, on success and on failure alike. Each corpus already holds a
-report file, so "既存report不変" is a property the snapshot can actually fail.
+`SINGLE-070-01/02/03/04`は、`--report`がなければ、成功でも失敗でも`check`と`verify`が
+何も書かないことを固定する。各corpusは既にreport fileを持つので、「既存report不変」は
+snapshotで実際に不合格になり得る性質である。
 """
 import json
 from pathlib import Path
@@ -21,7 +21,7 @@ EXISTING_REPORT_BODY = b'{"schemaVersion": "1.0", "note": "pre-existing report"}
 MISSING_REQUIRE = "relations:\n  requires: [TECH-999]\n  refines: [REQ-001]\n  related: [ADR-001]\n"
 CHECK_DOCUMENTS = 3
 CHECK_STATEMENTS = 2
-# id: (operation, status, exit code)
+# id: (操作, status, 終了コード)
 CASES = {
     "SINGLE-070-01": ("check", "passed", 0),
     "SINGLE-070-02": ("check", "failed", 1),
@@ -55,7 +55,7 @@ def reviewed_manifest(identifier):
         plan = {"git": True, "baseCommit": {"message": "base", "paths": ["."]}, "operations": []}
         argv = ["check", "--full", "--base", "HEAD", "--format", "json"]
     else:
-        # verify blocks on an untracked configuration and takes no --base.
+        # verifyは未追跡の設定で停止し、--baseを取らない。
         plan = {"git": True, "operations": [{"op": "stage", "paths": ["."]}]}
         argv = ["verify", "REQ-001", "--format", "json"]
     return {
@@ -71,7 +71,7 @@ def reviewed_manifest(identifier):
 def reviewed_result(identifier):
     operation, status, _ = CASES[identifier]
     if operation == "verify":
-        # The extra report file is not SPEC material, so the Context is unchanged.
+        # 追加のreport fileはSPECの材料ではないので、Contextは変わらない。
         return verify_fixtures.reviewed_result(
             "SINGLE-055" if identifier == "SINGLE-070-03" else "SINGLE-056")
     diagnostics = [] if status == "passed" else [{
@@ -90,14 +90,14 @@ def reviewed_result(identifier):
 
 def check_report_expectation(manifest, effects):
     if manifest["expect"]["reportFileCount"] != 0:
-        raise ValueError("this group runs without --report, so no file may be created")
+        raise ValueError("この群は--reportなしで実行するので、fileを作ってはいけません")
     if "--report" in manifest["invocation"]["argv"]:
-        raise ValueError("the reviewed invocation must not pass --report")
+        raise ValueError("review済みの起動は--reportを渡してはいけません")
     before = effects["before"]["repository"]
     if EXISTING_REPORT not in before:
-        raise ValueError("the corpus must already hold a report, or immutability is untested")
+        raise ValueError("corpusが既にreportを持っていないと、不変性を検査できません")
     if before != effects["after"]["repository"]:
-        raise ValueError("an existing report must survive the run byte for byte")
+        raise ValueError("既存のreportは実行後もbyte単位で残る必要があります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -116,16 +116,16 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("invocation or complete result differs from reviewed expectation")
+                raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
             check_report_expectation(manifest, effects)
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("input differs from the reviewed corpus")
+                raise ValueError("入力が審査済みcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only expectation permits writes")
+                raise ValueError("read-only期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-report-absent-") as temporary:
                 for run in range(2):
@@ -137,7 +137,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError,

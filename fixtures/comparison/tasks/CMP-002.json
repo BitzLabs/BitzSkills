@@ -1,14 +1,14 @@
 {
   "schemaVersion": "1.0",
   "taskId": "CMP-002",
-  "title": "Session-expiry impact analysis",
-  "objective": "Identify every directly affected specification and implementation area after a session lifetime change.",
+  "title": "sessionの有効期限の影響分析",
+  "objective": "sessionの有効期間を変えた後に、直接影響を受ける仕様と実装の範囲をすべて特定する。",
   "baselineMode": "markdown",
-  "brief": ["SESSION-POLICY defines interactive lifetime as 24 hours and is used by AUTH-SERVICE and MOBILE-SESSION-UI.", "Change interactive session lifetime from 24 hours to 8 hours.", "API-TOKEN-POLICY and RESET-TOKEN-POLICY are related reading but must not change.", "MOBILE-SESSION-UI caches the displayed expiry time and has its own test plan."],
+  "brief": ["SESSION-POLICYは対話sessionの有効期間を24時間と定め、AUTH-SERVICEとMOBILE-SESSION-UIが使う。", "対話sessionの有効期間を24時間から8時間に変える。", "API-TOKEN-POLICYとRESET-TOKEN-POLICYは関連する資料だが、変えてはならない。", "MOBILE-SESSION-UIは表示する有効期限をcacheし、独自のtest計画を持つ。"],
   "conditions": {
-    "baseline": ["Represent the brief as linked ordinary Markdown and use repository search.", "Return an impact list with reasons."],
-    "bitz": ["Represent the same brief with typed .spec relations and use context/check evidence.", "Return the same impact list with statement references."]
+    "baseline": ["課題文をlinkでつないだ通常のMarkdownで表し、repositoryの検索を使う。", "理由を付けた影響の一覧を返す。"],
+    "bitz": ["同じ課題文を型付きの.specのrelationで表し、context／checkの証拠を使う。", "同じ影響の一覧を、規範文の参照を付けて返す。"]
   },
-  "completionCriteria": ["Session policy, authentication implementation, mobile display, and their tests are included.", "API-token and reset-token specifications are explicitly excluded with reasons."],
+  "completionCriteria": ["sessionのpolicy、認証の実装、mobileの表示、それらのtestを含む。", "API tokenと再設定tokenの仕様を、理由を付けて明示的に除外する。"],
   "metricTags": ["completionMs", "authoringMs", "reviewMs", "detectedDefects"]
 }

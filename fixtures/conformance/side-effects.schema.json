@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Fixture side-effect expectations",
+  "title": "fixtureの副作用期待値",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -18,7 +18,7 @@
         "read-only",
         "explicit-report"
       ],
-      "description": "read-only: the run creates, updates and removes nothing. explicit-report: the run additionally creates report.createdCount files under report.directory. Report file names carry a generation time and sequence, so they cannot be named here; before and after therefore describe only the paths that already existed, and every one of them must be unchanged."
+      "description": "read-only: 実行は何も作成・更新・削除しない。explicit-report: 実行はさらにreport.directoryの下にreport.createdCount件のfileを作成する。report file名は生成時刻と連番を含むのでここでは名指しできない。そのためbeforeとafterは既に存在したpathだけを記述し、それらはすべて不変でなければならない。"
     },
     "before": {
       "$ref": "#/$defs/state"

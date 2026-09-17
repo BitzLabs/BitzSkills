@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate deterministic Core 1.0 performance fixture trees."""
+"""決定論的なCore 1.0の性能fixture treeを生成する。"""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ def req_id(number: int) -> str:
 
 def add_relation(relations: dict[tuple[str, int], list[str]], owner: tuple[str, int], target: str) -> None:
     if target in relations[owner]:
-        raise ValueError(f"duplicate relation: {owner} -> {target}")
+        raise ValueError(f"関係が重複しています: {owner} -> {target}")
     relations[owner].append(target)
 
 
@@ -42,7 +42,7 @@ def single_model(manifest: dict) -> tuple[list[str], dict[tuple[str, int], int],
         if remaining == 0:
             break
     if remaining:
-        raise ValueError(f"cannot allocate {remaining} single-workspace relations")
+        raise ValueError(f"単一workspaceの関係{remaining}件を割り当てられません")
     return workspace_ids, statement_counts, relations
 
 
@@ -79,7 +79,7 @@ def federation_model(manifest: dict) -> tuple[list[str], dict[tuple[str, int], i
         if remaining == 0:
             break
     if remaining:
-        raise ValueError(f"cannot allocate {remaining} federation relations")
+        raise ValueError(f"複合workspaceの関係{remaining}件を割り当てられません")
     return workspace_ids, statement_counts, relations
 
 
@@ -165,7 +165,7 @@ def write_tree(root: Path, manifest: dict) -> tuple[dict, dict[tuple[str, int], 
     elif kind == "multiWorkspace":
         workspace_ids, statement_counts, relations = federation_model(manifest)
     else:
-        raise ValueError(f"unsupported kind: {kind}")
+        raise ValueError(f"未対応の種別です: {kind}")
 
     for workspace_id in workspace_ids:
         base = workspace_path(root, workspace_id)
@@ -212,24 +212,24 @@ def canonical_target(owner: str, target: str) -> tuple[str, int]:
 
 def validate_model(manifest: dict, stats: dict, relations: dict[tuple[str, int], list[str]], root: Path) -> None:
     if stats != manifest["counts"]:
-        raise ValueError(f"count mismatch: expected {manifest['counts']}, got {stats}")
+        raise ValueError(f"件数が一致しません: 期待値 {manifest['counts']}、実際 {stats}")
     observed_shape = measure_shape(root, stats)
     if observed_shape != manifest["shape"]:
-        raise ValueError(f"shape mismatch: expected {manifest['shape']}, got {observed_shape}")
+        raise ValueError(f"形状が一致しません: 期待値 {manifest['shape']}、実際 {observed_shape}")
 
     nodes = set(relations)
     for owner, targets in relations.items():
         for target in targets:
             resolved = canonical_target(owner[0], target)
             if resolved not in nodes:
-                raise ValueError(f"missing relation target: {owner} -> {target}")
+                raise ValueError(f"関係の参照先がありません: {owner} -> {target}")
 
     visiting: set[tuple[str, int]] = set()
     visited: set[tuple[str, int]] = set()
 
     def visit(node: tuple[str, int]) -> None:
         if node in visiting:
-            raise ValueError(f"relation cycle at {node}")
+            raise ValueError(f"関係が{node}で循環しています")
         if node in visited:
             return
         visiting.add(node)
@@ -254,14 +254,14 @@ def validate_model(manifest: dict, stats: dict, relations: dict[tuple[str, int],
     expected_docs = manifest["benchmark"]["contextDocuments"]
     expected_workspaces = manifest["benchmark"]["contextWorkspaces"]
     if len(reached) != expected_docs or len({node[0] for node in reached}) != expected_workspaces:
-        raise ValueError(f"context shape mismatch: documents={len(reached)}, workspaces={len({node[0] for node in reached})}")
+        raise ValueError(f"Contextの形状が一致しません: 文書={len(reached)}、workspace={len({node[0] for node in reached})}")
 
     context_input_bytes = 0
     for workspace_id, number in reached:
         path = workspace_path(root, workspace_id) / ".spec" / "requirements" / f"{req_id(number)}.md"
         context_input_bytes += path.stat().st_size
     if context_input_bytes > manifest["benchmark"]["maxPresentationBytes"]:
-        raise ValueError(f"context input exceeds presentation budget: {context_input_bytes}")
+        raise ValueError(f"Contextの入力が提示の予算を超えています: {context_input_bytes}")
 
 
 def measure_shape(root: Path, stats: dict) -> dict:
@@ -300,15 +300,15 @@ def main() -> int:
     args = parse_args()
     manifest = json.loads(args.manifest.read_text())
     if manifest.get("generatorVersion") != GENERATOR_VERSION:
-        raise ValueError("generatorVersion mismatch")
+        raise ValueError("generatorVersionが一致しません")
     if args.output.exists() and any(args.output.iterdir()):
-        raise ValueError(f"output must be absent or empty: {args.output}")
+        raise ValueError(f"出力先は存在しないか空である必要があります: {args.output}")
     args.output.mkdir(parents=True, exist_ok=True)
     stats, relations = write_tree(args.output, manifest)
     validate_model(manifest, stats, relations, args.output)
     digest = tree_digest(args.output)
     if not args.print_digest and digest != manifest["expectedTreeDigest"]:
-        raise ValueError(f"tree digest mismatch: expected {manifest['expectedTreeDigest']}, got {digest}")
+        raise ValueError(f"tree digestが一致しません: 期待値 {manifest['expectedTreeDigest']}、実際 {digest}")
     result = {"datasetId": manifest["datasetId"], "treeDigest": digest, "counts": stats, "shape": measure_shape(args.output, stats)}
     json.dump(result, sys.stdout, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     sys.stdout.write("\n")

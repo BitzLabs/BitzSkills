@@ -1,4 +1,4 @@
-"""Fixed relation/path/coverage evidence audit, not a Core resolver."""
+"""関係・path・coverageを固定した証拠の監査（Coreのresolverではない）。"""
 import json
 import os
 from pathlib import Path
@@ -14,8 +14,8 @@ from .initial_fixtures import CONFIGS, observe, compare_state
 HERE = Path(__file__).resolve().parent
 TECH_PATH = ".spec/technical/TECH-001.md"
 TECH = "---\nid: TECH-001\ntitle: 前提技術\nstatus: approved\n---\n\n# TECH-001 前提技術\n\n## Context\n\n規範文を持たない前提技術。\n"
-# Literal YAML and its independently reviewed value; no general YAML parser here.
-# id: (YAML fields, decoded fields, code, source key, summary, status, document count)
+# literalのYAMLと、独立にreviewしたその値。汎用のYAML parserはここにはない。
+# id: (YAMLのfield, decode後のfield, code, source key, summary, status, 文書数)
 CASES = {
     "SINGLE-020": ("relations:\n  requires: [REQ-999]\n", {"relations": {"requires": ["REQ-999"]}},
         "SPEC-RELATION-MISSING-001", "relations.requires", "strong relationの参照先が存在しません", "failed", 1),
@@ -84,17 +84,17 @@ def validate(root=HERE, identifiers=None):
             manifest = json.loads((fixture / "manifest.json").read_text())
             validators["manifest"].validate(manifest)
             if manifest != reviewed_manifest(identifier):
-                raise ValueError("manifest differs from reviewed invocation")
+                raise ValueError("manifestが審査済みの起動と異なります")
             result = json.loads((fixture / "expected/check.json").read_text())
             validators["result"].validate(result)
             if result != reviewed_result(identifier):
-                raise ValueError("result differs from reviewed complete expectation")
+                raise ValueError("結果が審査済みの完全な期待値と異なります")
             inputs = reviewed_inputs(identifier)
             actual_files = {p.relative_to(fixture / "repo").as_posix(): p for p in (fixture / "repo").rglob("*")
                             if p.is_file() or p.is_symlink()}
             if set(actual_files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                       for name, p in actual_files.items()):
-                raise ValueError("input differs from reviewed single cause")
+                raise ValueError("入力が審査済みの単一原因と異なります")
             fm = {"id": "REQ-001", "title": "文書の検査", "status": "draft" if identifier == "SINGLE-025" else "approved",
                   **CASES[identifier][1]}
             Draft202012Validator({"$ref": "#/$defs/reqFrontmatter", "$defs": fm_schema["$defs"]}).validate(fm)
@@ -102,11 +102,11 @@ def validate(root=HERE, identifiers=None):
                 Draft202012Validator({"$ref": "#/$defs/techFrontmatter", "$defs": fm_schema["$defs"]}).validate(
                     {"id": "TECH-001", "title": "前提技術", "status": "approved"})
             if identifier == "SINGLE-026" and (not Path("/bin/true").is_file() or not os.access("/bin/true", os.X_OK)):
-                raise ValueError("coverage case requires executable /bin/true on the Linux fixture host")
+                raise ValueError("coverageのcaseには、Linuxのfixture hostに実行可能な/bin/trueが必要です")
             effects = json.loads((fixture / "side-effects.json").read_text())
             validators["side-effects"].validate(effects)
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only expectation permits writes")
+                raise ValueError("read-only期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-trace-fixtures-") as temporary:
                 for run in range(2):
@@ -118,7 +118,7 @@ def validate(root=HERE, identifiers=None):
                         directory.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

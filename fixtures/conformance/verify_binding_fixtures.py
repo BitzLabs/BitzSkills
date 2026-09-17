@@ -1,9 +1,8 @@
-"""Reviewed multi-binding verify vectors; runs no Core operation.
+"""複数bindingのverifyを固定するreview済みvector（Core操作は実行しない）。
 
-`SINGLE-063` and `SINGLE-064` use a two-root workspace so that two targets can
-request the same command name, and `SINGLE-065` removes the `{tests}` placeholder
-from the command template. Each target resolves its own Context, so each carries
-its own Digest, while the command is executed once.
+`SINGLE-063`と`SINGLE-064`は、2つのtargetが同じcommand名を要求できるよう、起点を2つ持つ
+workspaceを使う。`SINGLE-065`はcommand templateから`{tests}`の置換位置を除く。各targetは
+固有のContextを解決するので固有のDigestを持ち、commandは1回だけ実行する。
 """
 import copy
 import json
@@ -47,7 +46,7 @@ def technical(number, with_tests=True):
             f"\n# TECH-00{number} {title}\n\n## Context\n\n規範文を持たない実装方針。\n")
 
 
-# id: (targets, status, exit code, whether TECH-001 declares tests)
+# id: (targets, status, 終了コード, TECH-001がtestsを宣言するか)
 CASES = {
     "SINGLE-063": (["REQ-001", "REQ-002"], "passed", 0, True),
     "SINGLE-064": (["REQ-001", "REQ-002"], "blocked", 2, False),
@@ -157,7 +156,7 @@ def reviewed_result(identifier):
         command = {
             "bindingId": "root::default", "workspaceId": "root", "name": "default",
             "status": "passed", "termination": "exit", "cwd": ".",
-            # No {tests} placeholder, so the paths are not appended and argv runs once.
+            # {tests}の置換位置がないので、pathを追加せず、argvを1回実行する。
             "argv": ["/bin/true"],
             "tests": ["tests/test_auth.py", "tests/test_session.py"],
             "covers": ["REQ-001:AC-01", "REQ-001:AC-02"],
@@ -184,7 +183,7 @@ def reviewed_result(identifier):
         command = {
             "bindingId": "root::default", "workspaceId": "root", "name": "default",
             "status": "passed", "termination": "exit", "cwd": ".",
-            # The shared path is deduplicated before expansion, so it appears once.
+            # 共有pathは展開前に重複排除するので、1回だけ現れる。
             "argv": ["/bin/true", SHARED_TEST], "tests": [SHARED_TEST], "covers": covers,
             "exitCode": 0, "timeoutSeconds": 300, "stdoutExcerpt": "", "stderrExcerpt": "",
             "stdoutTruncated": False, "stderrTruncated": False, "durationMs": 0}
@@ -200,25 +199,25 @@ def reviewed_result(identifier):
 
 
 def check_sharing(identifier, result):
-    """One command entity for every target that requested it, executed once, with
-    the referenced test paths deduplicated."""
+    """要求したtargetすべてに対してcommand実体を1つにし、1回だけ実行し、
+    参照するtest pathを重複排除する。"""
     commands = result["commands"]
     if len(commands) != 1:
-        raise ValueError("the shared binding must be a single command entity")
+        raise ValueError("共有bindingは単一のcommand実体である必要があります")
     command = commands[0]
     if len(command["tests"]) != len(set(command["tests"])):
-        raise ValueError("test paths were not deduplicated")
+        raise ValueError("test pathが重複排除されていません")
     if command["argv"].count(SHARED_TEST) > 1:
-        raise ValueError("a deduplicated path was expanded more than once")
+        raise ValueError("重複排除したpathが複数回展開されています")
     requesting = [target for target in result["targetResults"] if target["bindingRefs"]]
     if {ref for target in requesting for ref in target["bindingRefs"]} != {command["bindingId"]}:
-        raise ValueError("requesting targets do not all reference the single binding")
+        raise ValueError("要求したtargetがすべて単一のbindingを参照していません")
     digests = [target["contextDigest"] for target in result["targetResults"]]
     if len(set(digests)) != len(digests) or None in digests:
-        raise ValueError("each target must resolve its own non-null Context Digest")
+        raise ValueError("各targetは固有のnullでないContext Digestを解決する必要があります")
     for target in result["targetResults"]:
         if target["status"] != "passed" and target["bindingRefs"]:
-            raise ValueError("a non-success target must request no binding")
+            raise ValueError("非成功のtargetはbindingを要求してはいけません")
 
 
 def validate(root=HERE, identifiers=None):
@@ -236,7 +235,7 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("invocation or complete result differs from reviewed expectation")
+                raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
             if identifier != "SINGLE-065":
                 check_sharing(identifier, result)
             inputs = reviewed_inputs(identifier)
@@ -244,9 +243,9 @@ def validate(root=HERE, identifiers=None):
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("input differs from the reviewed corpus")
+                raise ValueError("入力が審査済みcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only expectation permits writes")
+                raise ValueError("read-only期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-verify-binding-") as temporary:
                 for run in range(2):
@@ -258,13 +257,13 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
                     for target in result["targetResults"]:
                         derived = digest_crosscheck.canonical_bytes(
                             digest_crosscheck.build(repository, root=target["target"]))
                         if digest_crosscheck.digest(derived) != target["contextDigest"]:
-                            raise ValueError(f"references disagree on the Digest of {target['target']}")
+                            raise ValueError(f"参照計算どうしで{target['target']}のDigestが一致しません")
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError,
                 subprocess.SubprocessError) as error:

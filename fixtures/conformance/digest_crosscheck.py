@@ -1,11 +1,10 @@
-"""Context Digest reference computation B: derived from the input tree.
+"""Context Digestの参照計算B: 入力treeから導出する。
 
-Reference A (digest_reference) states the reviewed digest input as literals.
-This module never imports those literals. It reads the fixture's own repo/ tree,
-recovers Frontmatter, body and normative statements with a deliberately narrow
-reader for the corpus shape, applies the ordering rules itself, and emits
-canonical bytes through a second, separately written RFC 8785 emitter. Agreement
-between the two is the Gate A cross-check; neither is a Core implementation.
+参照計算A（digest_reference）は、review済みのDigest材料をliteralで記述する。
+本moduleはそのliteralを読み込まない。fixture自身のrepo/ treeを読み、入力の形に限定した
+読取り処理でFrontmatter、本文、規範文を取り出し、並び順の規則を自分で適用し、別に書いた
+2つ目のRFC 8785 serializerでCanonical JSONのbyte列を出力する。両者の一致がGate Aの
+照合であり、どちらもCoreの実装ではない。
 """
 import hashlib
 import re
@@ -24,7 +23,7 @@ APPLICABLE_STATUS = {"approved", "accepted", "open", "done"}
 CORE_FRONTMATTER = ("id", "title", "status", "relations", "implements", "tests", "verify", "changes")
 
 
-# --- restricted readers ------------------------------------------------------------
+# --- 限定した読取り処理 ------------------------------------------------------------
 
 def _scalar(text):
     text = text.strip()
@@ -46,7 +45,7 @@ def _value(text):
 
 
 def read_block(lines, index, indent):
-    """Read one block sequence or block map whose members sit at `indent`."""
+    """要素が`indent`の位置にあるblock sequenceまたはblock mapを1つ読む。"""
     if index < len(lines) and lines[index].startswith(" " * indent + "- "):
         items = []
         while index < len(lines) and lines[index].startswith(" " * indent + "- "):
@@ -66,7 +65,7 @@ def read_block(lines, index, indent):
         if current < indent:
             break
         if current > indent:
-            raise ValueError("unexpected indentation in fixture YAML")
+            raise ValueError("fixture YAMLのindentが想定と異なります")
         key, _, rest = line.strip().partition(":")
         if rest.strip():
             mapping[key] = _value(rest)
@@ -84,7 +83,7 @@ def read_yaml(text):
 
 def split_document(text):
     if not text.startswith("---\n"):
-        raise ValueError("fixture document must start with a Frontmatter block")
+        raise ValueError("fixture文書はFrontmatter blockで始まる必要があります")
     end = text.index("\n---\n", 3)
     return read_yaml(text[4:end + 1]), text[end + 5:]
 
@@ -109,14 +108,14 @@ STATEMENT = re.compile(
 
 
 def unescape_text(text):
-    """A narrow fixture-side text decoder; never used as the production Parser."""
+    """fixture側の限定したtext decoder。本番のParserとしては使わない。"""
     out, index = [], 0
     while index < len(text):
         char = text[index]
         if char == "\\":
             index += 1
             if index == len(text) or text[index] not in '[]\\`"':
-                raise ValueError("unknown or trailing escape in reference corpus")
+                raise ValueError("参照corpusに未知または末尾のescapeがあります")
             out.append(text[index])
         elif char == "`":
             start = index
@@ -134,7 +133,7 @@ def unescape_text(text):
                     out.append(text[content_start:run_start])
                     break
             else:
-                raise ValueError("unclosed code span in reference corpus")
+                raise ValueError("参照corpusに閉じていないcode spanがあります")
             continue
         else:
             out.append(char)
@@ -149,15 +148,15 @@ def read_extensions(raw):
     entries, cursor = [], 0
     for match in EXTENSION.finditer(raw):
         if match.start() != cursor:
-            raise ValueError("unsupported extension in reference corpus")
+            raise ValueError("参照corpusに未対応のextensionがあります")
         value = match.group("value")
-        # Quoted values decode only escapes; unlike text their spaces are opaque.
+        # quoted値はescapeだけを解除する。textと異なり、その中の空白は不透明に扱う。
         if value is not None:
             value = re.sub(r'\\([\[\]\\`"])', r'\1', value)
         entries.append({"namespace": match.group("namespace"), "term": match.group("term"), "value": value})
         cursor = match.end()
     if cursor != len(raw):
-        raise ValueError("unsupported extension in reference corpus")
+        raise ValueError("参照corpusに未対応のextensionがあります")
     return entries
 
 
@@ -168,16 +167,16 @@ def read_statements(body):
             continue
         match = STATEMENT.match(line)
         if not match:
-            raise ValueError(f"corpus statement is not in canonical form: {line}")
+            raise ValueError(f"corpusの規範文が正規形ではありません: {line}")
         activation = match.group("activation")
         if activation == "[ALWAYS]":
             kind, text = "ALWAYS", None
         else:
             kind, _, text = activation[1:].partition("] ")
         reason = match.group("reason")
-        # should-modality = "[SHOULD]", [ SP, reason ]; MUST and MAY take no reason.
+        # should-modality = "[SHOULD]", [ SP, reason ]。MUSTとMAYはreasonを取らない。
         if reason and match.group("modality") != "SHOULD":
-            raise ValueError(f"[REASON] is only valid with [SHOULD]: {line}")
+            raise ValueError(f"[REASON]は[SHOULD]にだけ使えます: {line}")
         statements.append({
             "id": match.group("id"),
             "actor": match.group("actor"),
@@ -190,7 +189,7 @@ def read_statements(body):
     return statements
 
 
-# --- digest input assembly ---------------------------------------------------------
+# --- Digest材料の組立て ---------------------------------------------------------
 
 def _relations(frontmatter):
     declared = frontmatter.get("relations", {})
@@ -231,19 +230,17 @@ def load_documents(repository):
 
 
 def closure(documents, root, purpose):
-    """Reviewed closure for these corpora (関係・トレースモデル §6.1〜§6.4).
+    """これらのcorpusに対するreview済みの閉包（関係・トレースモデル §6.1〜§6.4）。
 
-    The root document, and for a TASK root outside interpret the documents owning
-    what it addresses. From every applicable document reached: its `requires`
-    targets (except the root TASK's under verify, §6.3), its `refines` targets,
-    and the applicable documents that refine it or one of its statements. Under
-    interpret a draft refiner is kept as advisory and not expanded (§6.1 6.).
-    Under implement every open TASK addressing a target statement is added. Any
-    strong edge touching the closure that the rule does not account for is
-    rejected rather than silently absorbed, so this stays a corpus reader and not
-    a general target-expansion implementation.
+    起点の文書と、interpret以外のTASK起点ではそのTASKがaddressesする対象を所有する文書を含める。
+    到達した適用対象の文書それぞれから、`requires`の対象（verifyでの起点TASKのものを除く。§6.3）、
+    `refines`の対象、その文書またはその規範文をrefineする適用対象の文書をたどる。interpretでは、
+    draftのrefine元をadvisoryとして保持し、展開しない（§6.1 6.）。implementでは、対象の規範文を
+    addressesするopenのTASKをすべて加える。規則で説明できない強いedgeが閉包に接していれば、
+    黙って取り込まずに拒否する。そのため、これはcorpusの読取り処理にとどまり、汎用のtarget展開の
+    実装にはならない。
 
-    Returns (ordered document IDs, advisory document IDs).
+    戻り値は（並べた文書ID、advisoryの文書ID）である。
     """
     def owner(reference):
         return reference.split(":")[0]
@@ -253,14 +250,14 @@ def closure(documents, root, purpose):
     known_statements = {identifier for ids in owned.values() for identifier in ids}
     root_document = owner(root)
     if root_document not in documents or (root != root_document and root not in known_statements):
-        raise ValueError("the root is not owned by this corpus")
+        raise ValueError("起点がこのcorpusに存在しません")
     root_kind = documents[root_document]["kind"]
     reached, advisory, accounted = {root_document: 0}, set(), set()
     frontier = [root_document]
 
     def reach(identifier, distance):
         if identifier not in documents:
-            raise ValueError("a strong edge leaves this corpus")
+            raise ValueError("強いedgeがこのcorpusの外を指しています")
         if identifier not in reached:
             reached[identifier] = distance
             frontier.append(identifier)
@@ -309,9 +306,9 @@ def closure(documents, root, purpose):
                     accounted.add((identifier, "addresses", target))
                     if identifier not in reached:
                         reached[identifier] = reached[owner(target)] + 1
-    # A workspace may hold several independent roots. Only an edge that touches
-    # this closure has to be accounted for; one entirely outside it belongs to a
-    # different Context and is not this computation's business.
+    # 1つのworkspaceは独立した起点を複数持ち得る。説明が必要なのは、この閉包に触れる
+    # edgeだけである。閉包の完全に外にあるedgeは別のContextに属し、
+    # この計算の対象ではない。
     for identifier, document in documents.items():
         for key in STRONG:
             for target in _relations(document["frontmatter"])[key]:
@@ -319,7 +316,7 @@ def closure(documents, root, purpose):
                     continue
                 touches = identifier in reached or target in reached or owner(target) in reached
                 if touches and (identifier, key, target) not in accounted:
-                    raise ValueError("corpus holds a strong edge outside the reviewed closure")
+                    raise ValueError("corpusに審査済み閉包の外の強いedgeがあります")
     ordered = sorted(reached, key=lambda identifier: (reached[identifier],
                                                       KIND_RANK[documents[identifier]["kind"]], identifier))
     return ordered, advisory
@@ -352,8 +349,8 @@ def build(repository, root="REQ-001", purpose="verify", workspace_id="root"):
     selected, advisory = closure(documents, root, purpose)
     commands, entries = config.get("verify", {}).get("commands", {}), []
     used = set()
-    # Only `verify` names command in its closure, so only `verify` can make the
-    # Bundle reference one; `interpret` and `implement` record no binding.
+    # 閉包でcommandを挙げるのは`verify`だけなので、Bundleがcommandを参照し得るのも
+    # `verify`だけである。`interpret`と`implement`はbindingを記録しない。
     for identifier in selected if purpose == "verify" else []:
         if identifier in advisory:
             continue
@@ -436,7 +433,7 @@ def normalize_strings(value):
     return value
 
 
-# --- RFC 8785 emitter (reference B) ------------------------------------------------
+# --- RFC 8785 serializer（参照計算B） ------------------------------------------------
 
 def _code_units(text):
     return [int.from_bytes(text.encode("utf-16-be")[position:position + 2], "big")
@@ -487,7 +484,7 @@ def _emit(value, out):
             _emit(value[key], out)
         out += b"}"
     else:
-        raise TypeError("unsupported digest input value")
+        raise TypeError("Digest材料に未対応の値があります")
 
 
 def canonical_bytes(value):

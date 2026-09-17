@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "dataset.schema.json",
-  "title": "Bitz Core 1.0 performance dataset",
+  "title": "Bitz Core 1.0 性能dataset",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "datasetId", "kind", "generatorVersion", "seed", "counts", "shape", "benchmark", "expectedTreeDigest"],

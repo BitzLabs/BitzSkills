@@ -3,7 +3,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["jsonschema==4.23.0", "attrs==26.1.0", "jsonschema-specifications==2025.9.1", "referencing==0.37.0", "rpds-py==2026.6.3", "typing-extensions==4.13.2"]
 # ///
-"""Validate Step 0-P inputs without a Core executable. Run with uv run."""
+"""Core実行体なしでStep 0-Pの入力を検証する。uv runで実行する。"""
 import copy
 import json
 from pathlib import Path
@@ -56,14 +56,14 @@ def main():
                 runs.append(subprocess.check_output(command, text=True))
             assert runs[0] == runs[1], identifier
             results.append(json.loads(runs[0]))
-            # A corrupted shape must be rejected even when the original digest is retained.
+            # 元のdigestを残したままでも、壊した形状は拒否しなければならない。
             mutated = copy.deepcopy(read(manifest))
             mutated["shape"]["specBytes"] += 1
             bad_manifest = Path(temporary) / f"{identifier}-bad.json"
             bad_manifest.write_text(json.dumps(mutated), encoding="utf-8")
             command = [sys.executable, str(ROOT / "performance/scripts/generate_fixture.py"), str(bad_manifest), str(Path(temporary) / f"{identifier}-bad")]
             rejected = subprocess.run(command, capture_output=True, text=True)
-            assert rejected.returncode != 0 and "shape mismatch" in rejected.stderr
+            assert rejected.returncode != 0 and "形状が一致しません" in rejected.stderr
     print(json.dumps({"status": "Passed", "schemas": len(schemas), "inputs": validated, "generationRunsPerDataset": 2, "shapeRejectionChecks": len(datasets), "datasets": results}, ensure_ascii=False, sort_keys=True, indent=2))
 
 

@@ -1,14 +1,14 @@
 {
   "schemaVersion": "1.0",
   "taskId": "CMP-001",
-  "title": "Password-reset requirement authoring",
-  "objective": "Turn an ambiguous product brief into a reviewable requirement and verification outline.",
+  "title": "password再設定の要求の記述",
+  "objective": "曖昧な製品の課題文を、reviewできる要求と検証の概要にする。",
   "baselineMode": "markdown",
-  "brief": ["A user can request a password-reset link by email.", "The link must be secure and should expire.", "Support must be able to explain rejected reset attempts."],
+  "brief": ["利用者はemailでpassword再設定のlinkを要求できる。", "linkは安全でなければならず、有効期限を持つべきである。", "supportは、拒否された再設定の試行を説明できなければならない。"],
   "conditions": {
-    "baseline": ["Write ordinary Markdown using the team's usual headings.", "Record dependencies and tests in prose."],
-    "bitz": ["Write a REQ with valid Frontmatter and EARS-AI statements.", "Declare typed relations and test coverage paths explicitly."]
+    "baseline": ["teamの通常の見出しを使い、通常のMarkdownで書く。", "依存とtestを散文で記録する。"],
+    "bitz": ["妥当なFrontmatterとEARS-AIの規範文を持つREQを書く。", "型付きのrelationとtestの網羅pathを明示的に宣言する。"]
   },
-  "completionCriteria": ["Expiry, one-time use, account-enumeration resistance, and auditable rejection are unambiguous.", "Each mandatory behavior has a verification approach."],
+  "completionCriteria": ["有効期限、1回限りの使用、accountの列挙への耐性、監査できる拒否が曖昧でない。", "必須の振る舞いごとに検証の方法がある。"],
   "metricTags": ["completionMs", "authoringMs", "reviewMs", "detectedDefects"]
 }

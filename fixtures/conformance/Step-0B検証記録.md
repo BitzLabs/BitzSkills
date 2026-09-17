@@ -554,3 +554,15 @@ Coreは実行していない。複合workspaceのfixture、そのgolden Digest�
 旧構成の文書を指すもの）で、改名による増加はない。台帳とtarget vectorの根拠文書hashは再review後に更新した。
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `fb0d2efe0a442145d47e47be364a80d45849c0d0af187f4c57769db1ca15e5f5`（改名前と同じ）。
+
+## 2026-09-17: 文言の統一
+
+用語集 §2に従い、設計書・ADR、詳細設計、提案資料、fixtureの記録の本文を統一し、英文の記録を翻訳した。
+Pythonは43 fileのコメント、docstring、検査の失敗文言を日本語にし、JSON Schemaの`title`と`description`も日本語にした。
+fixtureの入力byte列（`tests/test_contract.py`などに書く`RuntimeError`の文言）、期待出力、Gitの状態、
+validator reportの値（`pending`の文言を含む）は英語のまま残した。文言を照合する監査試験と、
+`validate_step0p.py`の形状不一致の照合は、新しい文言に合わせて直した。台帳とtarget vectorの根拠文書hashは再review後に更新した。
+監査試験145件と基盤の自己試験3件は成功した。link切れは統一前と同じ107件である。
+同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
+Report SHA-256: `fb0d2efe0a442145d47e47be364a80d45849c0d0af187f4c57769db1ca15e5f5`（統一前と同じ）。
+Coreは実行していない。複合workspaceのfixture、そのgolden Digest、fresh checkoutでのGate A認定は未完了である。

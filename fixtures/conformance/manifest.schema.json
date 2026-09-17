@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "manifest.schema.json",
-  "title": "Bitz Core 1.0 conformance fixture manifest",
+  "title": "Bitz Core 1.0 適合fixture manifest",
   "type": "object",
   "additionalProperties": false,
   "required": ["fixtureId", "description", "setup", "invocation", "expect"],

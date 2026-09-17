@@ -37,3 +37,11 @@ benchmark case `federation-full-check`・`federation-context-20`を`multi-worksp
 
 - 単一workspace: `sha256:0693e6ec926d4a411766796831e87c011004342810a5e6f3393e7afcd52c546c`（不変）
 - 複合workspace: `sha256:1626b4d08eb9a05e8cdeef71f125292dfc71495f175119c6f99bd76c5b837a54`（旧`sha256:ad519b94…`から更新）
+
+## 2026-09-17: 文言の統一
+
+用語集 §2に従い、比較taskの題名、目的、課題文、条件、完了条件、正解表の要約、protocolの計時と代替の成功条件を
+日本語にした。IDと列挙値は変えない。`fixtures/comparison/README.md`の規則に従い、protocol versionを1.0から1.1へ上げ、
+`protocol.schema.json`と`result.schema.json`の定数も合わせた。参加者の観測値はまだないので、旧versionの結果は存在しない。
+性能のSchemaの`title`も日本語にした。generatorの失敗文言を日本語にしたので、形状不一致の検査はその文言を照合する。
+期待tree digestは変わらず、`uv run fixtures/validate_step0p.py`は成功した。

@@ -1,4 +1,4 @@
-"""Reviewed text/JSON parity fixtures; no production renderer or Core execution."""
+"""textとJSONの一致を固定するreview済みfixture（本番の描画処理もCoreの実行もない）。"""
 import json
 from pathlib import Path
 import re
@@ -35,7 +35,7 @@ TEXT["SINGLE-077"] = "check failed scope=full targets=5 diagnostics=3 (0ms)\n" +
 def reviewed_inputs(identifier):
     inputs = source.reviewed_inputs(CASES[identifier])
     if identifier == "SINGLE-077":
-        # Deliberately add the extra inputs in reverse lexical order.
+        # 追加の入力は意図して辞書順の逆に加える。
         document = inputs[source.digest_reference.TECH_PATH]
         for spec_id in reversed(ORDER_IDS[1:]):
             inputs[f".spec/technical/{spec_id}.md"] = document.replace(b"TECH-001", spec_id.encode())
@@ -43,7 +43,7 @@ def reviewed_inputs(identifier):
 
 
 def escape_field(value):
-    """Bounded fixture reference for the user-approved text field escaping rule."""
+    """ユーザーが承認したtext fieldのescape規則について、範囲を限定したfixtureの参照計算。"""
     return "".join(f"\\u{ord(c):04x}" if ord(c) < 32 or 127 <= ord(c) <= 159 else c for c in value)
 
 
@@ -76,7 +76,7 @@ def reviewed_manifest(identifier):
 
 
 def normalize_text(value):
-    """Only the byte-level duration token may vary (fixture contract section 4)."""
+    """変わってよいのは、byte単位の所要時間tokenだけである（fixture契約 §4）。"""
     return re.sub(rb"\([0-9]+ms\)", b"(<duration>ms)", value)
 
 
@@ -95,19 +95,19 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("manifest or JSON counterpart differs from the reviewed case")
-            # Committed text uses a fixed duration; only actual output is variable at Gate B.
+                raise ValueError("manifestまたは対応するJSONが審査済みのcaseと異なります")
+            # commitしたtextは固定の所要時間を使う。Gate Bで変わってよいのは実際の出力だけである。
             if (fixture / "expected/check.txt").read_bytes() != TEXT[identifier].encode():
-                raise ValueError("text differs from the reviewed complete output")
+                raise ValueError("textがreview済みの完全な出力と異なります")
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("input differs from the JSON counterpart")
+                raise ValueError("入力が対応するJSONと異なります")
             source.check_report_expectation(manifest, effects)
             if effects["policy"] != "read-only" or effects["before"] != effects["after"]:
-                raise ValueError("text formatting must not permit writes")
+                raise ValueError("textの整形は書込みを許してはいけません")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-text-") as temporary:
                 for run in range(2):
@@ -119,7 +119,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

@@ -1,8 +1,7 @@
-"""Reviewed non-success Context vectors: stale Digest, out-of-set expand, closure limits.
+"""Context非成功を固定するreview済みvector: staleなDigest、集合外のexpand、閉包の上限。
 
-No Core operation is implemented or emulated here. These fixtures share the
-Digest corpus so that the reported Digest, where one exists, is the committed
-golden value rather than a separately invented constant.
+Core操作を実装も模倣もしない。これらのfixtureはDigestの入力を共有し、Digestを返す場合は
+別に作った定数ではなく、commitしたgoldenの値を返す。
 """
 import json
 from pathlib import Path
@@ -25,12 +24,12 @@ EMPTY_COVERAGE = {
        for modality in ("must", "should", "may")},
     "adjacent": [],
 }
-# 4 KiB is the lowest configurable context.maxBytes, so the padding only has to
-# push the standard presentation past it, not past the 128 KiB default.
+# 4 KiBは設定できるcontext.maxBytesの最小値なので、詰め物は標準の提示をこれより
+# 大きくすればよく、既定の128 KiBを越える必要はない。
 PADDING_LINE = "この段落は標準提示のbyte数を上限検査のために増やす固定文である。\n"
 PADDING = PADDING_LINE * 40
 
-# id: (option tail, extra config, REQ body, status, exit code, complete, documentCount,
+# id: (optionの残り, 追加の設定, REQの本文, status, 終了コード, complete, documentCount,
 #      digest, Diagnostic code, source, summary)
 CASES = {
     "SINGLE-046": (
@@ -106,19 +105,19 @@ def reviewed_result(identifier):
 
 
 def check_presentation_size(identifier, inputs):
-    """The configured limit must actually be crossed by the fixture's own input,
-    so the expectation does not depend on how generously bytes are counted."""
+    """設定した上限は、fixture自身の入力で実際に越えなければならない。
+    そうすれば、期待値がbyteの数え方の寛容さに依存しない。"""
     _, extra_config, *_ = CASES[identifier]
     if identifier == "SINGLE-048-01":
         documents = [name for name in inputs if name.startswith(".spec/") and name.endswith(".md")]
         if len(documents) <= 1:
-            raise ValueError("document-count case needs more documents than the configured limit")
+            raise ValueError("文書数のcaseには設定上限より多くの文書が必要です")
     if identifier == "SINGLE-048-02":
         presented = len(inputs[digest_reference.REQ_PATH]) + len(inputs[digest_reference.TECH_PATH])
         if presented <= 4096:
-            raise ValueError("byte-limit case does not exceed the configured maxBytes")
+            raise ValueError("byte上限のcaseが設定したmaxBytesを超えていません")
     if identifier in {"SINGLE-046", "SINGLE-047"} and extra_config:
-        raise ValueError("stale and projection cases must keep the golden configuration")
+        raise ValueError("staleとprojectionのcaseはgoldenの設定を保つ必要があります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -136,20 +135,20 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("invocation or complete result differs from reviewed expectation")
+                raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
             if result["documents"] or result["constraintLedger"]["statements"]:
-                raise ValueError("a non-success Context must not deliver Bundle material")
+                raise ValueError("非成功のContextはBundleの材料を返してはいけません")
             if (result["contextDigest"] is None) is result["resolution"]["complete"]:
-                raise ValueError("Digest presence must follow complete resolution")
+                raise ValueError("Digestの有無は完全解決に従う必要があります")
             inputs = reviewed_inputs(identifier)
             check_presentation_size(identifier, inputs)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("input differs from the reviewed corpus")
+                raise ValueError("入力が審査済みcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only expectation permits writes")
+                raise ValueError("read-only期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-context-limit-") as temporary:
                 for run in range(2):
@@ -161,7 +160,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError,

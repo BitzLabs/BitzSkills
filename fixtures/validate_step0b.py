@@ -3,7 +3,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["jsonschema==4.23.0", "attrs==26.1.0", "jsonschema-specifications==2025.9.1", "referencing==0.37.0", "rpds-py==2026.6.3", "typing-extensions==4.13.2"]
 # ///
-"""Read-only Step 0B audit. Missing evidence never counts as a pass."""
+"""読取り専用のStep 0B監査。証拠の欠落を合格として数えない。"""
 import json
 from pathlib import Path
 import re
@@ -85,11 +85,11 @@ def links():
             destination = (path.parent / target).resolve() if target else path
             checked += 1
             if not destination.exists():
-                errors.append(f"{path.relative_to(ROOT)}: missing {link}")
+                errors.append(f"{path.relative_to(ROOT)}: link先がありません {link}")
             elif anchor and destination.suffix == ".md":
                 headings = re.findall(r"^#{1,6}\s+(.+)$", destination.read_text(), re.M)
                 if anchor not in {slug(h) for h in headings}:
-                    errors.append(f"{path.relative_to(ROOT)}: missing anchor {link}")
+                    errors.append(f"{path.relative_to(ROOT)}: anchorがありません {link}")
     return {"checked": checked, "errors": errors}
 
 
@@ -123,13 +123,13 @@ def grammar():
     path = DETAIL / "01_EARS-AI/01_言語・Semantic-IR仕様.md"
     source = "\n".join(blocks(path, "ebnf"))
     definitions = re.findall(r"^([A-Za-z][A-Za-z0-9-]*)\s*=", source, re.M)
-    # EBNF quoted terminals do not use C-style backslash escaping.
+    # EBNFのquoted terminalはC言語風のbackslash escapeを使わない。
     unquoted = re.sub(r'"[^"]*"|\x27[^\x27]*\x27', "", source)
     references = set(re.findall(r"[A-Za-z][A-Za-z0-9-]*", unquoted))
     lexical = {"plain-char", "qchar", "code-char"}
     errors = sorted(references - set(definitions) - lexical)
     if len(definitions) != len(set(definitions)):
-        errors.append("duplicate definition")
+        errors.append("定義が重複しています")
     return {"definitions": len(definitions), "prose_lexical_definitions": sorted(lexical), "errors": errors}
 
 
@@ -139,16 +139,16 @@ def matrix():
     ids = [identifier for identifier, _ in rows]
     errors = []
     if len(ids) != len(set(ids)):
-        errors.append("duplicate matrix ID")
+        errors.append("matrix IDが重複しています")
     for identifier, row in rows:
         if identifier.rsplit("-", 1)[0] in ids:
-            errors.append(f"{identifier}: family and suffixed ID coexist")
+            errors.append(f"{identifier}: familyのIDと接尾辞付きIDが併存しています")
         if re.search(r"元status|passed/0、failed/1", row):
-            errors.append(f"{identifier}: ambiguous expected result")
+            errors.append(f"{identifier}: 期待結果が曖昧です")
     found = {p.parent.name for p in FIXTURES.glob("*/*/manifest.json")}
     missing = sorted(set(ids) - found)
     for identifier in sorted(found - set(ids)):
-        errors.append(f"{identifier}: no matrix row")
+        errors.append(f"{identifier}: matrixに行がありません")
     validator = Draft202012Validator(json.loads((FIXTURES / "manifest.schema.json").read_text()))
     result_validator = Draft202012Validator(json.loads((FIXTURES / "result.schema.json").read_text()))
     for path in sorted(FIXTURES.glob("*/*/manifest.json")):
@@ -156,22 +156,22 @@ def matrix():
             manifest = json.loads(path.read_text())
             validator.validate(manifest)
             argv = manifest["invocation"]["argv"]
-            # Only check accepts --base; context, verify and doctor have no base option.
+            # --baseを受け付けるのはcheckだけで、context、verify、doctorは基準版のoptionを持たない。
             if argv[0] == "check" and "baseCommit" in manifest["setup"] and "--base" not in argv:
-                errors.append(f"{path}: committed fixture requires explicit --base")
+                errors.append(f"{path}: commit済みfixtureには明示の--baseが必要です")
             if not manifest["setup"]["git"] and "--base" in argv:
-                errors.append(f"{path}: Git-absent fixture forbids --base")
+                errors.append(f"{path}: Git不在fixtureでは--baseを使えません")
             if manifest["fixtureId"] != path.parent.name:
-                errors.append(f"{path}: fixtureId differs from directory")
+                errors.append(f"{path}: fixtureIdがdirectory名と異なります")
             if not (path.parent / "repo").is_dir():
-                errors.append(f"{path}: missing repo directory")
+                errors.append(f"{path}: repo directoryがありません")
             referenced = set()
             for key in ("resultFile", "textFile"):
                 if key not in manifest["expect"]:
                     continue
                 expected = (path.parent / manifest["expect"][key]).resolve()
                 if not expected.is_relative_to((path.parent / "expected").resolve()) or not expected.is_file():
-                    errors.append(f"{path}: missing or unsafe {key}")
+                    errors.append(f"{path}: {key}が存在しないか安全ではありません")
                     continue
                 referenced.add(expected)
                 if key == "resultFile" and manifest["invocation"]["runner"] == "bitz":
@@ -181,7 +181,7 @@ def matrix():
                     if (result["operation"] != manifest["invocation"]["argv"][0]
                             or result["status"] != manifest["expect"].get("status")
                             or status_exit[result["status"]] != manifest["expect"]["exitCode"]):
-                        errors.append(f"{path}: manifest/result operation, status or exit code mismatch")
+                        errors.append(f"{path}: manifestと結果の操作、status、終了コードが一致しません")
                 elif key == "resultFile":
                     # bitz以外のrunnerの標準出力はoutcomeだけを持つobjectである（ADR-046）。
                     outcome = manifest["expect"]["outcome"]
@@ -191,13 +191,13 @@ def matrix():
             for _, expected_ir in parser_expectations.files(path.parent, manifest):
                 value = json.loads(expected_ir.read_text())
                 if not isinstance(value, list):
-                    errors.append(f"{path}: Parser expectation must be a full IR array")
+                    errors.append(f"{path}: Parserの期待値は完全なIRの配列である必要があります")
                 referenced.add(expected_ir.resolve())
             unreferenced = {p.resolve() for p in (path.parent / "expected").glob("*") if p.is_file()} - referenced
-            # Canonical bytes are compared separately by the golden digest check.
+            # Canonical JSONのbyte列は、golden Digestの検査で別に比べる。
             unreferenced = {p for p in unreferenced if p.name != "context.canonical.json"}
             if unreferenced:
-                errors.append(f"{path}: unreferenced expectations")
+                errors.append(f"{path}: 参照されていない期待値があります")
         except (ValueError, ValidationError) as error:
             errors.append(f"{path.relative_to(ROOT)}: {str(error).split(chr(10))[0]}")
     return {"matrix_ids": len(ids), "missing_fixtures": missing, "errors": errors}
@@ -209,10 +209,10 @@ def registry():
     ids = [r[0] for r in rows]
     errors = []
     if not rows or len(ids) != len(set(ids)):
-        errors.append("empty registry or duplicate conditionId")
+        errors.append("registryが空か、conditionIdが重複しています")
     for row in rows:
         if row[3].strip() not in {"info", "warning", "error"} or row[4].strip() not in {"passed", "passed_with_warnings", "failed", "blocked", "error"}:
-            errors.append(f"{row[0]}: invalid vocabulary")
+            errors.append(f"{row[0]}: 語彙が不正です")
     coverage = validate_diagnostic_coverage()
     coverage["errors"] = errors + coverage["errors"]
     return coverage
@@ -260,11 +260,11 @@ def main():
     checks["infrastructure_self_tests"] = {"status": "Passed" if helpers.returncode == 0 else "Failed", "errors": [] if helpers.returncode == 0 else [helpers.stderr]}
     audit_tests = subprocess.run([sys.executable, "-B", str(ROOT / "fixtures/test_step0b_audit.py")], capture_output=True, text=True, timeout=30)
     checks["audit_self_tests"] = {"status": "Passed" if audit_tests.returncode == 0 else "Failed", "errors": [] if audit_tests.returncode == 0 else [audit_tests.stderr]}
-    # These checks are deliberately not certified by structural checks or helper tests.
-    # Replace each entry only with a check of its actual, reviewed evidence.
+    # これらの検査は、構造の検査やhelperの試験では意図して保証しない。
+    # 各項目は、実際のreview済みの証拠の検査でだけ置き換える。
     pending = ["per-fixture side-effect expectations", "conformance inputs and expectations",
                "full Gate A fresh-checkout repeatability",
-               # MULTI-002-01 owns the federation golden and has no fixture yet.
+               # MULTI-002-01が複合workspaceのgoldenを所有するが、fixtureはまだない。
                "independent multi-workspace golden Context Digest"]
     if checks["digest_fixtures"]["status"] != "Passed":
         pending.insert(0, "independent single-workspace golden Context Digest")

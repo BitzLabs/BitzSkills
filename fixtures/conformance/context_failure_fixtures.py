@@ -1,4 +1,4 @@
-"""Reviewed Context failure vectors; no production resolver or Digest code."""
+"""Context非成功を固定するreview済みvector（本番のresolverやDigestの処理はない）。"""
 import json
 from pathlib import Path
 import subprocess
@@ -24,7 +24,7 @@ TASK = "---\nid: TASK-001\ntitle: 先行作業の確認\nstatus: open\n---\n\n# 
 
 
 def reviewed_documents(identifier):
-    # Fixed YAML/value pairs; relation meaning is reviewed, never inferred here.
+    # YAMLと値の組を固定する。relationの意味はreview済みで、ここでは推測しない。
     if identifier == "SINGLE-051":
         root = TASK.replace("status: open\n---", "status: open\nrelations:\n  requires: [TASK-002]\n---", 1)
         return {TASK_PATH: (root, {"id": "TASK-001", "title": "先行作業の確認", "status": "open", "relations": {"requires": ["TASK-002"]}}),
@@ -74,19 +74,19 @@ def reviewed_result(identifier):
 def check_unborn(repository, identifier):
     git(repository, "rev-parse", "--git-dir")
     if git(repository, "symbolic-ref", "HEAD").decode().strip() != "refs/heads/fixture":
-        raise ValueError("unexpected unborn branch")
+        raise ValueError("unbornのbranchが想定と異なります")
     try:
         git(repository, "rev-parse", "--verify", "HEAD")
     except subprocess.CalledProcessError:
         pass
     else:
-        raise ValueError("Context fixture unexpectedly has a commit")
+        raise ValueError("Context fixtureに想定外のcommitがあります")
     if git(repository, "for-each-ref") or git(repository, "ls-files", "-z"):
-        raise ValueError("Context fixture must have no refs or staged paths")
+        raise ValueError("Context fixtureはrefもstage済みpathも持ってはいけません")
     actual = {p.relative_to(repository).as_posix(): p.read_bytes() for p in repository.rglob("*")
               if p.is_file() and ".git" not in p.relative_to(repository).parts}
     if actual != reviewed_inputs(identifier):
-        raise ValueError("Context fixture worktree differs from reviewed input")
+        raise ValueError("Context fixtureの作業treeが審査済み入力と異なります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -105,16 +105,16 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("invocation or complete result differs from reviewed expectation")
+                raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name] for name, p in files.items()):
-                raise ValueError("input differs from reviewed single cause")
+                raise ValueError("入力が審査済みの単一原因と異なります")
             for path, (_, fm) in reviewed_documents(identifier).items():
                 kind = "taskFrontmatter" if path.startswith(".spec/tasks/") else "techFrontmatter"
                 Draft202012Validator({"$ref": "#/$defs/" + kind, "$defs": schema["$defs"]}).validate(fm)
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only expectation permits writes")
+                raise ValueError("read-only期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-context-failure-") as temporary:
                 for run in range(2):
@@ -127,7 +127,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

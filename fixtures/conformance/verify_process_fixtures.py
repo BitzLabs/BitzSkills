@@ -1,10 +1,9 @@
-"""Reviewed process-termination verify vectors; runs no Core operation.
+"""processの終了を固定するreview済みのverify vector（Core操作は実行しない）。
 
-`SINGLE-057`, `SINGLE-058` and `SINGLE-059` each fail after the pre-checks pass,
-so every one records a `commands[]` entry rather than a pre-spawn block. The audit
-runs each fixture's own command file directly — never through Core — to confirm the
-input really produces the reviewed termination, so the expectation is not merely
-asserted.
+`SINGLE-057`、`SINGLE-058`、`SINGLE-059`はいずれも事前検査の通過後に失敗するので、
+spawn前の停止ではなく`commands[]`の要素を記録する。監査は各fixture自身のcommand fileを、
+Coreを介さず直接実行し、入力が実際にreview済みの終了を起こすことを確認する。期待値は
+主張するだけのものではない。
 """
 import copy
 import json
@@ -25,24 +24,24 @@ from .initial_fixtures import observe, compare_state
 HERE = Path(__file__).resolve().parent
 TEST_PATHS = ["tests/test_auth.py", "tests/test_session.py"]
 STATEMENTS = ["REQ-001:AC-01", "REQ-001:AC-02"]
-# A regular file carrying the executable bit whose format the kernel refuses:
-# no ELF magic and no shebang, so execve fails with ENOEXEC after the pre-checks pass.
+# 実行bitを持つが、kernelが形式を拒否する通常file。
+# ELFのmagicもshebangもないので、事前検査の通過後にexecveがENOEXECで失敗する。
 BAD_FORMAT = "this file is executable but is not a program\n"
 SIGNAL_SCRIPT = "#!/bin/sh\nkill -TERM $$\n"
-# Ignores SIGTERM and leaves a child holding the inherited stdout/stderr pipes, so
-# neither graceful termination nor EOF can end the binding on their own. The readiness
-# line is printed only after the trap is installed, and the surviving child keeps the
-# pipe open afterwards, so a reader that waits for EOF never finishes.
+# SIGTERMを無視し、継承した標準出力・標準エラー出力のpipeを保持する子processを残す。
+# そのためgraceful terminationでもEOFでもbindingを終えられない。準備完了の
+# 行はtrapの設定後にだけ出力し、生き残った子processがその後もpipeを開いたままにするので、
+# EOFを待つ読取り側は終わらない。
 READY = "hang-ready"
 HANG_SCRIPT = (
     "#!/bin/sh\n"
     "trap '' TERM\n"
-    # The child ignores TERM too, so it keeps the inherited pipes open after a
-    # group-wide graceful termination.
+    # 子processもTERMを無視するので、process group全体へのgraceful terminationの後も
+    # 継承したpipeを開いたままにする。
     "sh -c \"trap '' TERM; sleep 60\" &\n"
     "echo " + READY + "\n"
-    # A killed foreground sleep must not end the script, or a group TERM would be
-    # enough and the fixture would never require a force kill.
+    # 前景のsleepが終了されてもscriptを終えてはいけない。そうしないとprocess groupへの
+    # TERMで足りてしまい、fixtureが強制終了を必要としなくなる。
     "i=0\n"
     "while [ \"$i\" -lt 60 ]; do\n"
     "    sleep 1\n"
@@ -101,8 +100,8 @@ def context_digest(identifier):
 
 
 def expected_stdout(identifier):
-    """Only the timeout fixture writes, and it writes exactly one readiness line
-    before its descendant holds the pipe open."""
+    """書き込むのはtimeoutのfixtureだけで、子孫がpipeを開いたまま保持する前に、
+    準備完了の行をちょうど1行書く。"""
     return READY + "\n" if identifier == "SINGLE-059" else ""
 
 
@@ -145,38 +144,38 @@ def reviewed_result(identifier):
 
 
 def observe_termination(identifier, repository):
-    """Run the fixture's own command file directly to confirm the reviewed cause.
-    This is a fixture-side observation of the input, not a Core verify run."""
+    """fixture自身のcommand fileを直接実行し、review済みの原因を確認する。
+    入力のfixture側の観測であり、Coreのverifyの実行ではない。"""
     path, _, termination, _, _ = COMMANDS[identifier]
     executable = repository / path
     if not (executable.is_file() and os.access(executable, os.X_OK)):
-        raise ValueError("the command file must be a regular executable before spawn")
+        raise ValueError("command fileはspawn前に通常の実行可能fileである必要があります")
     if termination == "spawn_error":
         try:
             subprocess.run([str(executable)], cwd=repository, capture_output=True, timeout=10)
         except OSError:
             return
-        raise ValueError("the command file was accepted by the OS, so no spawn error occurs")
+        raise ValueError("command fileをOSが受理したので、spawn errorが起きません")
     if termination == "signal":
         completed = subprocess.run([str(executable)], cwd=repository, capture_output=True, timeout=10)
         if completed.returncode != -signal.SIGTERM:
-            raise ValueError("the command did not terminate by signal")
+            raise ValueError("commandがsignalで終了しませんでした")
         return
-    # timeout: graceful termination must be insufficient and a force kill must end it.
+    # timeout: graceful terminationでは足りず、強制終了で終わらなければならない。
     process = subprocess.Popen([str(executable)], cwd=repository, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, start_new_session=True, text=True)
     try:
         deadline = time.monotonic() + 5
-        # Wait for the readiness line, so the trap is already installed. Signalling
-        # before it would only prove that an unprotected startup can be killed.
+        # trapが設定済みになるよう、準備完了の行を待つ。それより前にsignalを送っても、
+        # 保護されていない起動直後を終了できることしか示せない。
         if not select.select([process.stdout], [], [], 5)[0]:
-            raise ValueError("the command produced no readiness line")
+            raise ValueError("commandが準備完了の行を出力しませんでした")
         if process.stdout.readline().strip() != READY:
-            raise ValueError("the command did not announce readiness")
+            raise ValueError("commandが準備完了を知らせませんでした")
         os.killpg(process.pid, signal.SIGTERM)
         time.sleep(0.5)
         if process.poll() is not None:
-            raise ValueError("the command stopped on graceful termination, so no force kill is needed")
+            raise ValueError("commandがgraceful terminationで停止したので、強制終了が必要ありません")
         os.killpg(process.pid, signal.SIGKILL)
         process.wait(timeout=max(0.1, deadline - time.monotonic()))
     finally:
@@ -203,25 +202,25 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("invocation or complete result differs from reviewed expectation")
+                raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
             command = result["commands"][0]
             if command["exitCode"] is not None or command["status"] != "error":
-                raise ValueError("a non-exit termination must report no exit code and error status")
+                raise ValueError("exit以外の終了は、終了コードなしとerror statusを返す必要があります")
             if command["stdoutExcerpt"] != expected_stdout(identifier) or command["stderrExcerpt"]:
-                raise ValueError("command excerpts differ from the reviewed output")
+                raise ValueError("commandの抜粋がreview済みの出力と異なります")
             inputs = reviewed_inputs(identifier)
             expected_executables = executables(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs):
-                raise ValueError("input differs from the reviewed corpus")
+                raise ValueError("入力が審査済みcorpusと異なります")
             for name, path in files.items():
                 if path.is_symlink() or path.read_bytes() != inputs[name]:
-                    raise ValueError("input differs from the reviewed corpus")
+                    raise ValueError("入力が審査済みcorpusと異なります")
                 if bool(path.stat().st_mode & 0o111) != (name in expected_executables):
-                    raise ValueError(f"executable bit of {name} differs from the reviewed input")
+                    raise ValueError(f"{name}の実行bitが審査済み入力と異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only expectation permits writes")
+                raise ValueError("read-only期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-verify-process-") as temporary:
                 for run in range(2):
@@ -233,15 +232,15 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
                     derived = digest_crosscheck.canonical_bytes(digest_crosscheck.build(repository))
                     if digest_crosscheck.digest(derived) != context_digest(identifier):
-                        raise ValueError("references disagree on the target Digest")
+                        raise ValueError("参照計算どうしでtargetのDigestが一致しません")
                     if run == 0:
                         observe_termination(identifier, repository)
                     if compare_state(effects["after"], observe(repository, external)):
-                        raise ValueError("observing the command changed the fixture state")
+                        raise ValueError("commandの観測でfixtureの状態が変わりました")
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError,
                 subprocess.SubprocessError) as error:

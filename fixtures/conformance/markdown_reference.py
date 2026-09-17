@@ -1,8 +1,7 @@
-"""Reference rendering of the Markdown presentation fixed by context仕様 §9.
+"""context仕様 §9が定めるMarkdown提示の参照描画。
 
-This is fixture-side reference computation, not a Core renderer: it consumes a
-reviewed result JSON and produces the byte sequence §9 prescribes, so a committed
-expectation can be compared against an independently written derivation.
+Coreの描画処理ではなく、fixture側の参照計算である。review済みの結果JSONを読み、§9が定める
+byte列を出力する。そのため、commitした期待値を、独立に書いた導出と比べられる。
 """
 import re
 
@@ -21,7 +20,7 @@ def joined(values):
 
 
 def fence(body):
-    """Longer than every backtick run inside the body, and never shorter than three."""
+    """本文中のどのbacktick runよりも長く、3未満にはならない。"""
     longest = max((len(run) for run in re.findall(r"`+", body)), default=0)
     return "`" * max(3, longest + 1)
 
@@ -117,7 +116,7 @@ def bindings_lines(result):
 
 
 def render(result):
-    """The complete Markdown byte sequence for one reviewed context result."""
+    """review済みのcontext結果1件に対する、完全なMarkdownのbyte列。"""
     detail = result["projection"]["detail"]
     parts = ["# Context Bundle\n"]
     for section in SECTIONS:

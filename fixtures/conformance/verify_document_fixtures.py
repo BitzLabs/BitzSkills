@@ -1,8 +1,7 @@
-"""Reviewed document-level binding vector; runs no Core operation.
+"""文書単位のbindingを固定するreview済みvector（Core操作は実行しない）。
 
-`SINGLE-066` targets a TECH that owns no normative statement and declares a
-document-level test, so the target reports `statements: []` while still holding a
-`bindingRefs` entry.
+`SINGLE-066`は、規範文を持たず文書単位のtestを宣言するTECHをtargetにする。そのため
+targetは`statements: []`を返しつつ、`bindingRefs`の要素を持つ。
 """
 import json
 from pathlib import Path
@@ -21,7 +20,7 @@ TECH_PATH = ".spec/technical/TECH-001.md"
 TEST_PATH = "tests/test_auth.py"
 TITLE = "文書単位testの実装方針"
 # 文書・Frontmatter仕様 §: only a TECH without normative statements may put a
-# document ID in covers, which is exactly the document-level binding this fixture pins.
+# coversに文書IDを置く。これがこのfixtureの固定する文書単位のbindingである。
 TECH_FRONTMATTER = (
     f"id: TECH-001\ntitle: {TITLE}\nstatus: approved\n"
     "implements: [src/auth.py]\n"
@@ -90,7 +89,7 @@ def reviewed_result():
         "workspace": {"id": "root", "path": "."},
         "targetResults": [{
             "target": "TECH-001", "status": "passed", "contextDigest": context_digest(),
-            # No normative statement is owned, but the document-level binding stands.
+            # 規範文は所有しないが、文書単位のbindingは成立する。
             "statements": [], "bindingRefs": ["root::default"], "diagnostics": []}],
         "revision": None,
         "commands": [{
@@ -107,11 +106,11 @@ def reviewed_result():
 def check_document_binding(result):
     target = result["targetResults"][0]
     if target["statements"]:
-        raise ValueError("a TECH without normative statements must report no statements")
+        raise ValueError("規範文のないTECHは規範文を返してはいけません")
     if not target["bindingRefs"]:
-        raise ValueError("the document-level test must still produce a binding")
+        raise ValueError("文書単位のtestでもbindingを作る必要があります")
     if result["commands"][0]["covers"] != ["TECH-001"]:
-        raise ValueError("the document-level binding must cover the document itself")
+        raise ValueError("文書単位のbindingは文書自身を対象にする必要があります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -130,21 +129,21 @@ def validate(root=HERE, identifiers=None):
         for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
             validators[name].validate(value)
         if manifest != reviewed_manifest() or result != reviewed_result():
-            raise ValueError("invocation or complete result differs from reviewed expectation")
+            raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
         check_document_binding(result)
         inputs = reviewed_inputs()
         frontmatter, body = digest_crosscheck.split_document(inputs[TECH_PATH].decode())
         Draft202012Validator({"$ref": "#/$defs/techFrontmatter",
                               "$defs": schema["$defs"]}).validate(frontmatter)
         if digest_crosscheck.read_statements(digest_crosscheck.normalize_body(body)):
-            raise ValueError("the reviewed cause requires a TECH with no normative statement")
+            raise ValueError("審査済みの原因には規範文のないTECHが必要です")
         files = {p.relative_to(fixture / "repo").as_posix(): p
                  for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
         if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                             for name, p in files.items()):
-            raise ValueError("input differs from the reviewed corpus")
+            raise ValueError("入力が審査済みcorpusと異なります")
         if effects["before"] != effects["after"]:
-            raise ValueError("read-only expectation permits writes")
+            raise ValueError("read-only期待値が書込みを許しています")
         previous = None
         with tempfile.TemporaryDirectory(prefix="bitz-verify-document-") as temporary:
             for run in range(2):
@@ -156,12 +155,12 @@ def validate(root=HERE, identifiers=None):
                     path.mkdir()
                 actual = observe(repository, external)
                 if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                    raise ValueError("isolated setup differs from fixed snapshot")
+                    raise ValueError("隔離setupが固定snapshotと異なります")
                 previous = actual
                 derived = digest_crosscheck.canonical_bytes(
                     digest_crosscheck.build(repository, root="TECH-001"))
                 if derived != digest_reference.canonical_bytes(reviewed_digest_input()):
-                    raise ValueError("reference A and reference B disagree on the Canonical JSON")
+                    raise ValueError("reference AとBのCanonical JSONが一致しません")
         prepared.append(IDENTIFIER)
     except (OSError, ValueError, KeyError, TypeError, ValidationError,
             subprocess.SubprocessError) as error:

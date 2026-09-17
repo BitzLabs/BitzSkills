@@ -1,4 +1,4 @@
-"""Fixed base/current Git fixture evidence, without Core state/check logic."""
+"""基準版・現在版を固定したGit fixtureの証拠（Coreの状態・検査の処理はない）。"""
 import json
 import os
 from pathlib import Path
@@ -17,7 +17,7 @@ TASK_PATH = ".spec/tasks/TASK-001.md"
 RENAMED_PATH = ".spec/technical/TECH-001-renamed.md"
 TASK = "---\nid: TASK-001\ntitle: 完了した作業\nstatus: done\n---\n\n# TASK-001 完了した作業\n\n## Objective\n\n状態遷移を確認する。\n"
 CHANGE = "changes/document.md"
-# id: (base document path, base bytes, operation, current bytes, status, code, key, summary)
+# id: (基準版の文書path, 基準版のbyte列, 操作, 現在のbyte列, status, code, key, summary)
 CASES = {
     "SINGLE-027": (TASK_PATH, TASK, "update", TASK.replace("status: done", "status: open"), "failed",
         "SPEC-STATE-TRANSITION-001", "status", "done TASKをopenへ戻すことはできません"),
@@ -44,7 +44,7 @@ for identifier, (fields, _) in EXEMPT_FIELDS.items():
 
 
 def support_files(identifier):
-    """Unchanged inputs already present in HEAD; only the REQ may change."""
+    """HEADに既にある変わらない入力。変わってよいのはREQだけ。"""
     files = {".spec/bitz.yaml": CONFIGS["SINGLE-001"].encode()}
     if identifier == "SINGLE-032-01":
         files["src/contract.py"] = b"# Existing implementation path; no behavior claimed.\n"
@@ -94,31 +94,31 @@ def reviewed_result(identifier):
 
 
 def check_git_states(repository, identifier):
-    """Check real HEAD/index/worktree contents against the reviewed transition."""
+    """実際のHEAD／index／作業treeの内容を、審査済みの遷移と照合する。"""
     path, base, operation, current, *_ = CASES[identifier]
     base_files = support_files(identifier)
     if base is not None:
         base_files[path] = base.encode()
     head_paths = git(repository, "ls-tree", "-r", "--name-only", "-z", "HEAD").decode().split("\0")[:-1]
     if set(head_paths) != set(base_files):
-        raise ValueError("HEAD paths differ from reviewed base")
+        raise ValueError("HEADのpathが審査済みの基準版と異なります")
     for name, content in base_files.items():
         if git(repository, "show", "HEAD:" + name) != content:
-            raise ValueError("HEAD bytes differ from reviewed base")
+            raise ValueError("HEADのbyte列が審査済みの基準版と異なります")
     current_files = support_files(identifier)
     if current is not None:
         current_files[RENAMED_PATH if operation == "rename" else path] = current.encode()
     index_files = current_files if operation == "rename" else base_files
     index_paths = git(repository, "ls-files", "-z").decode().split("\0")[:-1]
     if set(index_paths) != set(index_files):
-        raise ValueError("index paths differ from reviewed staging state")
+        raise ValueError("indexのpathが審査済みのstage状態と異なります")
     for name, content in index_files.items():
         if git(repository, "show", ":" + name) != content:
-            raise ValueError("index bytes differ from reviewed staging state")
+            raise ValueError("indexのbyte列が審査済みのstage状態と異なります")
     actual_files = {p.relative_to(repository).as_posix(): p.read_bytes() for p in repository.rglob("*")
                     if p.is_file() and ".git" not in p.relative_to(repository).parts}
     if actual_files != current_files:
-        raise ValueError("worktree differs from reviewed current state")
+        raise ValueError("作業treeが審査済みの現在の状態と異なります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -137,18 +137,18 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("manifest or complete result differs from reviewed expectation")
+                raise ValueError("manifestまたは完全結果が審査済み期待値と異なります")
             files = {p.relative_to(fixture).as_posix(): p for directory in ("repo", "changes")
                      for p in (fixture / directory).rglob("*") if p.is_file() or p.is_symlink()}
             expected_files = reviewed_inputs(identifier)
             if set(files) != set(expected_files) or any(p.is_symlink() or p.read_bytes() != expected_files[name] for name, p in files.items()):
-                raise ValueError("base or change bytes differ from reviewed single cause")
+                raise ValueError("基準版または変更のbyte列が審査済みの単一原因と異なります")
             path, base, _, current, *_ = CASES[identifier]
             kind = "taskFrontmatter" if path == TASK_PATH else "reqFrontmatter" if path == REQ_PATH else "techFrontmatter"
             validator = Draft202012Validator({"$ref": f"#/$defs/{kind}", "$defs": schema["$defs"]})
             for document in (base, current):
                 if document is not None:
-                    # Fixed YAML/value pairs only, not a general YAML parser.
+                    # YAMLと値の組だけを固定する。汎用のYAML parserではない。
                     fm = dict(line.split(": ", 1) for line in document.splitlines()[1:4])
                     if identifier in EXEMPT_FIELDS and document == current:
                         fm.update(EXEMPT_FIELDS[identifier][1])
@@ -157,9 +157,9 @@ def validate(root=HERE, identifiers=None):
                 Draft202012Validator({"$ref": "#/$defs/techFrontmatter", "$defs": schema["$defs"]}).validate(
                     {"id": "TECH-001", "title": "前提技術", "status": "approved"})
             if identifier == "SINGLE-032-02" and (not Path("/bin/true").is_file() or not os.access("/bin/true", os.X_OK)):
-                raise ValueError("test declaration case requires executable /bin/true on the Linux fixture host")
+                raise ValueError("test宣言のcaseには、Linuxのfixture hostに実行可能な/bin/trueが必要です")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only expectation permits writes")
+                raise ValueError("read-only期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-git-fixtures-") as temporary:
                 for run in range(2):
@@ -172,7 +172,7 @@ def validate(root=HERE, identifiers=None):
                         directory.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and actual != previous):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, IndexError, TypeError, ValidationError, subprocess.SubprocessError) as error:

@@ -2,32 +2,32 @@
   "schemaVersion": "1.0",
   "defects": {
     "CMP-001": [
-      {"id": "CMP-001:D-01", "critical": true, "summary": "Expiry duration is unspecified."},
-      {"id": "CMP-001:D-02", "critical": true, "summary": "One-time token consumption is unspecified."},
-      {"id": "CMP-001:D-03", "critical": true, "summary": "Account enumeration behavior is unspecified."},
-      {"id": "CMP-001:D-04", "critical": false, "summary": "Auditable rejection evidence is unspecified."}
+      {"id": "CMP-001:D-01", "critical": true, "summary": "有効期限の長さが規定されていない。"},
+      {"id": "CMP-001:D-02", "critical": true, "summary": "tokenを1回だけ使えることが規定されていない。"},
+      {"id": "CMP-001:D-03", "critical": true, "summary": "accountの列挙に対する振る舞いが規定されていない。"},
+      {"id": "CMP-001:D-04", "critical": false, "summary": "監査できる拒否の証拠が規定されていない。"}
     ],
     "CMP-002": [
-      {"id": "CMP-002:D-01", "critical": true, "summary": "Mobile cached expiry display is affected."},
-      {"id": "CMP-002:D-02", "critical": false, "summary": "API-token policy is not affected."},
-      {"id": "CMP-002:D-03", "critical": false, "summary": "Password-reset expiry is not affected."}
+      {"id": "CMP-002:D-01", "critical": true, "summary": "mobileでcacheした有効期限の表示が影響を受ける。"},
+      {"id": "CMP-002:D-02", "critical": false, "summary": "API tokenのpolicyは影響を受けない。"},
+      {"id": "CMP-002:D-03", "critical": false, "summary": "password再設定の有効期限は影響を受けない。"}
     ],
     "CMP-003": [
-      {"id": "CMP-003:D-01", "critical": true, "summary": "Encryption decision is a strong dependency."},
-      {"id": "CMP-003:D-02", "critical": true, "summary": "Shared retention policy is required."},
-      {"id": "CMP-003:D-03", "critical": false, "summary": "Adjacent UI preference must not become normative."}
+      {"id": "CMP-003:D-01", "critical": true, "summary": "暗号化の決定は強い依存である。"},
+      {"id": "CMP-003:D-02", "critical": true, "summary": "共有する保持policyが必要である。"},
+      {"id": "CMP-003:D-03", "critical": false, "summary": "隣接するUIの設定を規範にしてはならない。"}
     ],
     "CMP-004": [
-      {"id": "CMP-004:D-01", "critical": true, "summary": "A mandatory statement has no test coverage."},
-      {"id": "CMP-004:D-02", "critical": true, "summary": "A strong relation target is missing."},
-      {"id": "CMP-004:D-03", "critical": true, "summary": "An approved requirement changed without allowed transition evidence."},
-      {"id": "CMP-004:D-04", "critical": false, "summary": "One EARS-AI extension is malformed."}
+      {"id": "CMP-004:D-01", "critical": true, "summary": "必須の規範文にtestの網羅がない。"},
+      {"id": "CMP-004:D-02", "critical": true, "summary": "強いrelationの対象が存在しない。"},
+      {"id": "CMP-004:D-03", "critical": true, "summary": "approvedの要求が、許可された遷移の証拠なしに変わった。"},
+      {"id": "CMP-004:D-04", "critical": false, "summary": "EARS-AIのextensionが1つ不正である。"}
     ],
     "CMP-005": [
-      {"id": "CMP-005:D-01", "critical": true, "summary": "One MUST is untested."},
-      {"id": "CMP-005:D-02", "critical": true, "summary": "One current command timed out."},
-      {"id": "CMP-005:D-03", "critical": true, "summary": "The previous report has a stale Context Digest."},
-      {"id": "CMP-005:D-04", "critical": false, "summary": "The independent passing target should be retained."}
+      {"id": "CMP-005:D-01", "critical": true, "summary": "MUSTが1つtestされていない。"},
+      {"id": "CMP-005:D-02", "critical": true, "summary": "現在のcommandが1つtimeoutした。"},
+      {"id": "CMP-005:D-03", "critical": true, "summary": "以前のreportのContext Digestがstaleである。"},
+      {"id": "CMP-005:D-04", "critical": false, "summary": "独立して成功したtargetは残すべきである。"}
     ]
   }
 }

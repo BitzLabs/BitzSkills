@@ -1,4 +1,4 @@
-"""Fixed invalid-base/Git-absence evidence and output assertions, not Core logic."""
+"""不正な基準版・Git不在の固定した証拠と出力の検査（Coreの処理ではない）。"""
 import json
 from pathlib import Path
 import re
@@ -17,20 +17,20 @@ HERE = Path(__file__).resolve().parent
 CASES = ("SINGLE-036", "SINGLE-037", "SINGLE-038")
 MISSING_BASE = "fixture-missing-base"
 TASK = "---\nid: TASK-001\ntitle: Git不在の境界検査\nstatus: open\n---\n\n# TASK-001 Git不在の境界検査\n\n## Objective\n\nGit基準版を必要とする境界検査を確認する。\n"
-# Human wording is not a machine contract; only the normative stream shape is fixed.
+# 人向けの文言は機械の契約ではない。規範が定めるstreamの形だけを固定する。
 CLI_OUTPUT = {"exitCode": 4, "stdout": "", "stderrPrefix": "bitz: check: ",
               "stderrLineCount": 1, "stderrReasonRequired": True, "stderrTerminalControls": False}
 
 
 def check_cli_error_output(exit_code, stdout, stderr, operation="check"):
-    """One safe stderr line for any operation's argument error; shared by every
-    exit-4 fixture so the contract is stated once."""
+    """どの操作の引数不正でも、安全な標準エラー出力を1行だけ出す。終了コード4の
+    fixtureすべてで共有し、契約を1か所で述べる。"""
     if exit_code != 4 or stdout != b"":
-        raise ValueError("CLI argument error must have exit 4 and empty stdout")
+        raise ValueError("CLIの引数不正は終了コード4と空の標準出力でなければなりません")
     prefix = f"bitz: {operation}: "
     text = stderr.decode("utf-8")
     if not re.fullmatch(re.escape(prefix) + r"[^\x00-\x1f\x7f-\x9f]+\n", text) or not text[len(prefix):-1].strip():
-        raise ValueError("CLI stderr must contain one safe line with a nonempty reason")
+        raise ValueError("CLIの標準エラー出力は、空でない理由を持つ安全な1行でなければなりません")
 
 
 def reviewed_inputs(identifier):
@@ -80,34 +80,34 @@ def check_environment(repository, identifier, manifest):
         except subprocess.CalledProcessError:
             pass
         else:
-            raise ValueError("invalid base unexpectedly resolves")
+            raise ValueError("不正な基準版が想定外に解決されています")
         expected = reviewed_inputs(identifier)
         for revision, args in (("HEAD:", ("ls-tree", "-r", "--name-only", "-z", "HEAD")), (":", ("ls-files", "-z"))):
             if set(git(repository, *args).decode().split("\0")[:-1]) != set(expected):
-                raise ValueError("invalid-base HEAD/index paths changed")
+                raise ValueError("不正な基準版のHEADまたはindexのpathが変わっています")
             for path, content in expected.items():
                 if git(repository, "show", revision + path) != content:
-                    raise ValueError("invalid-base HEAD/index bytes changed")
+                    raise ValueError("不正な基準版のHEADまたはindexのbyte列が変わっています")
     else:
-        # Non-directory absolute PATH prevents current-directory and host PATH fallback.
+        # directoryでない絶対pathをPATHにして、current directoryとhostのPATHへの退避を防ぐ。
         if manifest["invocation"]["env"] != {"PATH": "/dev/null"} or not Path("/dev/null").is_char_device():
-            raise ValueError("Git-absent fixture requires Linux /dev/null PATH")
+            raise ValueError("Git不在fixtureにはLinuxの/dev/nullをPATHにする必要があります")
         if shutil.which("git", path=manifest["invocation"]["env"]["PATH"]) is not None:
-            raise ValueError("Git resolves in the fixture invocation environment")
-        # The host may place Git metadata above the temporary directory. No Git
-        # executable is available to the invocation; do not probe with host Git.
+            raise ValueError("fixtureの起動環境でGitが解決されています")
+        # hostが一時directoryより上にGitのmetadataを置いている場合がある。起動環境では
+        # Gitの実行fileを使えないので、hostのGitで調べない。
         if (repository / ".git").exists() or (repository / ".git").is_symlink():
-            raise ValueError("Git-absent fixture must not contain Git metadata")
+            raise ValueError("Git不在fixtureはGitのmetadataを含んではいけません")
     actual = {p.relative_to(repository).as_posix(): p.read_bytes() for p in repository.rglob("*")
               if p.is_file() and ".git" not in p.relative_to(repository).parts}
     if actual != reviewed_inputs(identifier):
-        raise ValueError("worktree differs from reviewed environment input")
+        raise ValueError("作業treeが審査済みの環境入力と異なります")
 
 
 def observe_environment(repository, external, identifier):
     if identifier == "SINGLE-036":
         return observe(repository, external)
-    # Explicit absence, never an empty successful Git status or a swallowed Git error.
+    # 明示的な不在として扱う。空の成功したGit statusや、握りつぶしたGitのerrorにはしない。
     return {"repository": snapshot(repository), "git": None,
             **{name: snapshot(path) for name, path in external.items()}}
 
@@ -127,26 +127,26 @@ def validate(root=HERE, identifiers=None):
             validators["manifest"].validate(manifest)
             validators["side-effects"].validate(effects)
             if manifest != reviewed_manifest(identifier):
-                raise ValueError("manifest differs from reviewed environment case")
+                raise ValueError("manifestが審査済みの環境caseと異なります")
             if identifier == "SINGLE-036":
                 if json.loads((fixture / "cli-output.json").read_text()) != CLI_OUTPUT:
-                    raise ValueError("CLI output contract differs from reviewed stream shape")
+                    raise ValueError("CLI出力の契約が審査済みのstreamの形と異なります")
                 if (fixture / "expected").exists():
-                    raise ValueError("exit 4 must not have an operation result")
+                    raise ValueError("終了コード4は操作結果を持ってはいけません")
             else:
                 result = json.loads((fixture / "expected/check.json").read_text())
                 validators["result"].validate(result)
                 if result != reviewed_result(identifier):
-                    raise ValueError("complete result differs from reviewed Git absence")
+                    raise ValueError("完全結果が審査済みのGit不在と異なります")
             files = {p.relative_to(fixture / "repo").as_posix(): p for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             expected = reviewed_inputs(identifier)
             if set(files) != set(expected) or any(p.is_symlink() or p.read_bytes() != expected[name] for name, p in files.items()):
-                raise ValueError("input differs from reviewed single environment cause")
+                raise ValueError("入力が審査済みの単一の環境原因と異なります")
             task = identifier == "SINGLE-038"
             Draft202012Validator({"$ref": "#/$defs/" + ("taskFrontmatter" if task else "techFrontmatter"), "$defs": schema["$defs"]}).validate(
                 {"id": "TASK-001" if task else "TECH-001", "title": "Git不在の境界検査" if task else "前提技術", "status": "open" if task else "approved"})
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only expectation permits writes")
+                raise ValueError("read-only期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-git-environment-") as temporary:
                 for run in range(2):
@@ -159,7 +159,7 @@ def validate(root=HERE, identifiers=None):
                         directory.mkdir()
                     actual = observe_environment(repository, external, identifier)
                     if compare_state(effects["before"], actual) or (previous is not None and actual != previous):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

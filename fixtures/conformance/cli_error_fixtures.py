@@ -1,10 +1,9 @@
-"""Reviewed argument-error vectors; runs no Core operation.
+"""引数不正を固定するreview済みvector（Core操作は実行しない）。
 
-`SINGLE-073-01/02` reject `--report` on the operations that never write one, and
-`SINGLE-074-01/02/03` reject an exclusive option pair, a code path target and a
-lexically invalid ID. SINGLE-127 adds duplicate, empty, timeout and report syntax
-boundaries. All return no common result: exit code 4, no JSON body,
-one stderr line, and no report.
+`SINGLE-073-01/02`は、reportを書かない操作に渡した`--report`を拒否する。
+`SINGLE-074-01/02/03`は、排他optionの組、code pathのtarget、字句上不正なIDを拒否する。
+SINGLE-127は、重複、空値、timeout、reportの構文の境界を加える。いずれも共通結果を返さず、
+終了コード4、JSON本文なし、標準エラー出力1行、reportなしとなる。
 
 SINGLE-112-02/04は、字句上妥当でcorpusに存在するADR-001を`interpret`以外の
 起点に指定した場合を拒否する。
@@ -22,7 +21,7 @@ from .harness import setup
 from .initial_fixtures import observe, compare_state
 
 HERE = Path(__file__).resolve().parent
-# id: (operation, argv tail, description)
+# id: (操作, argvの残り, 説明)
 CASES = {
     "SINGLE-073-01": ("context", ["REQ-001", "--report"],
                       "contextは--reportを未知optionとして拒否する"),
@@ -78,21 +77,21 @@ def reviewed_manifest(identifier):
         "description": description,
         "setup": {"git": True, "operations": []},
         "invocation": {"runner": "bitz", "cwd": ".", "argv": [operation, *tail], "env": {}},
-        # No status: argv is rejected before any common result exists.
+        # statusを持たない: 共通結果ができる前にargvを拒否する。
         "expect": {"exitCode": 4, "stdout": "none", "reportFileCount": 0},
     }
 
 
 def check_contract(identifier, manifest):
     if "status" in manifest["expect"] or "resultFile" in manifest["expect"]:
-        raise ValueError("an argument error produces no common result")
+        raise ValueError("引数不正は共通結果を作りません")
     if manifest["expect"]["reportFileCount"] != 0:
-        raise ValueError("an argument error must not write a report")
+        raise ValueError("引数不正はreportを書いてはいけません")
     operation = CASES[identifier][0]
     if manifest["invocation"]["argv"][0] != operation:
-        raise ValueError("manifest operation differs from the reviewed case")
+        raise ValueError("manifestの操作が審査済みcaseと異なります")
     if identifier.startswith("SINGLE-073") and "--report" not in manifest["invocation"]["argv"]:
-        raise ValueError("the report-flag cases must pass --report")
+        raise ValueError("report flagのcaseは--reportを渡す必要があります")
     if identifier.startswith("SINGLE-112"):
         argv = manifest["invocation"]["argv"]
         # ADR-001は存在するため、起点を不正にする原因はpurposeまたは操作だけである。
@@ -100,8 +99,8 @@ def check_contract(identifier, manifest):
             raise ValueError("ADR起点caseは存在するADR-001を指定する必要があります")
         if argv[0] == "context" and argv[argv.index("--purpose") + 1] == "interpret":
             raise ValueError("ADR起点はinterpretでは妥当です")
-    # The shared helper owns the stderr contract; exercise it for this operation so a
-    # prefix or reason that stopped matching cannot pass unnoticed.
+    # 標準エラー出力の契約は共通helperが持つ。この操作で動かし、接頭辞や理由が一致しなくなった
+    # ことを見逃さないようにする。
     check_cli_error_output(4, b"", f"bitz: {operation}: reason\n".encode(), operation)
     for bad in (f"bitz: {operation}: \n", f"bitz: other: reason\n",
                 f"bitz: {operation}: reason\nextra\n"):
@@ -109,7 +108,7 @@ def check_contract(identifier, manifest):
             check_cli_error_output(4, b"", bad.encode(), operation)
         except ValueError:
             continue
-        raise ValueError("the stderr contract accepts output it should reject")
+        raise ValueError("標準エラー出力の契約が拒否すべき出力を受理しています")
 
 
 def validate(root=HERE, identifiers=None):
@@ -126,20 +125,20 @@ def validate(root=HERE, identifiers=None):
             validators["manifest"].validate(manifest)
             validators["side-effects"].validate(effects)
             if manifest != reviewed_manifest(identifier):
-                raise ValueError("invocation differs from reviewed expectation")
+                raise ValueError("起動条件が審査済み期待値と異なります")
             if json.loads((fixture / "cli-output.json").read_text()) != cli_output(identifier):
-                raise ValueError("CLI output expectation differs from the reviewed contract")
+                raise ValueError("CLI出力の期待値が審査済みの契約と異なります")
             check_contract(identifier, manifest)
             if (fixture / "expected").exists():
-                raise ValueError("an argument error fixture has no expected result file")
+                raise ValueError("引数不正fixtureは期待結果fileを持ちません")
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("input differs from the reviewed corpus")
+                raise ValueError("入力が審査済みcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only expectation permits writes")
+                raise ValueError("read-only期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-cli-error-") as temporary:
                 for run in range(2):
@@ -151,7 +150,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError,

@@ -1,9 +1,8 @@
-"""Fixed registry-closure evidence for matrix §6.9: statement, relation,
-configuration, doctor and workspace conditions that must each be returned alone.
+"""matrix §6.9のregistry閉包を固定した証拠。規範文、relation、設定、doctor、workspaceの条件を、
+それぞれ単独で返さなければならない。
 
-No Core operation, YAML loader or Git probe is implemented here. Reviewed inputs
-are reused where an equivalent cause already has fixed bytes, so a fixture adds a
-new operation or result shape rather than a second reading of the same input.
+Core操作、YAML loader、Gitの調査は実装しない。同等の原因に固定したbyte列がある場合は
+review済みの入力を再利用し、fixtureは同じ入力の2つ目の読み方ではなく、新しい操作や結果の形を加える。
 """
 import json
 from pathlib import Path
@@ -27,7 +26,7 @@ EARS_MAJOR_CONFIG = 'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "2.0"\n'
 SHOULD_STATEMENT = "- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [SHOULD] [CONSTRAINT] 秘密情報を出力しない。"
 RELATED = "relations:\n  related: [TECH-999]\n"
 MISSING_TARGET = "TECH-999"
-# Reviewed 1-based Unicode code point position of [SHOULD] in the fixed document.
+# 固定した文書での、[SHOULD]のreview済みの1始まりのUnicodeコードポイント位置。
 SHOULD_LINE, SHOULD_COLUMN = 15, 49
 EXIT = {"passed": 0, "passed_with_warnings": 0, "failed": 1, "blocked": 2, "error": 3}
 CORE = {"version": "1.0.0", "apiVersion": "1.0",
@@ -150,48 +149,48 @@ def reviewed_result(identifier):
 
 
 def check_conditions(identifier, inputs):
-    """Re-derive each single cause from the fixed bytes, never from the prose."""
+    """各単一原因を、散文からではなく固定したbyte列から導き直す。"""
     if identifier == "SINGLE-089":
         document = inputs[REQ_PATH].decode()
         if "[REASON]" in document or document.count("[SHOULD]") != 1:
-            raise ValueError("SHOULD case needs exactly one modality and no reason field")
+            raise ValueError("SHOULDのcaseには、ちょうど1つのmodalityとreason fieldのないことが必要です")
         line = document.splitlines()[SHOULD_LINE - 1]
         if line.find("[SHOULD]") + 1 != SHOULD_COLUMN or not line.startswith("- [REQ-001:AC-01]"):
-            raise ValueError("reviewed [SHOULD] position differs from the fixed document")
+            raise ValueError("review済みの[SHOULD]の位置が固定した文書と異なります")
     if identifier == "SINGLE-090":
         document = inputs[REQ_PATH].decode()
         if document.count(MISSING_TARGET) != 1 or "requires" in document or "refines" in document:
-            raise ValueError("advisory case must carry only the related relation")
+            raise ValueError("advisoryのcaseはrelated関係だけを持つ必要があります")
         if any(MISSING_TARGET in name for name in inputs):
-            raise ValueError("advisory target must stay absent from the corpus")
+            raise ValueError("advisoryの参照先はcorpusに存在してはいけません")
     if identifier == "SINGLE-091":
         config = inputs[CONFIG_PATH].decode()
         if config.replace("&label ", "") != CONFIG or "*label" in config:
-            raise ValueError("forbidden-syntax case must differ from the minimal config by the anchor alone")
+            raise ValueError("禁止構文のcaseは、最小の設定とanchorだけが異なる必要があります")
     if identifier == "SINGLE-092" and inputs[CONFIG_PATH] != CONFIGS["SINGLE-004-01"].encode():
-        raise ValueError("doctor config case must reuse the reviewed type-error input")
+        raise ValueError("doctorの設定caseはreview済みの型誤りの入力を再利用する必要があります")
     if identifier == "SINGLE-094" and (set(inputs) != {KEEP_PATH} or inputs[KEEP_PATH]):
-        raise ValueError("workspace-missing case needs one empty non-SPEC file and no configuration")
+        raise ValueError("workspace不在のcaseには、空のSPECでないfile 1件と、設定がないことが必要です")
     if identifier == "SINGLE-095":
         config = inputs[CONFIG_PATH].decode()
         if config.replace('earsAi: "2.0"', 'earsAi: "1.0"') != CONFIG:
-            raise ValueError("EARS major case must differ from the minimal config by the version alone")
+            raise ValueError("EARS majorのcaseは、最小の設定とversionだけが異なる必要があります")
     configured = any(name.startswith(".spec/") for name in inputs)
     if configured == (identifier == "SINGLE-094"):
-        raise ValueError("workspace presence contradicts the reviewed case")
+        raise ValueError("workspaceの有無が審査済みのcaseと矛盾します")
 
 
 def check_environment(identifier, repository, manifest):
-    """Git absence is an observed property of the isolated setup, not an assertion."""
+    """Git不在は断定ではなく、隔離setupで観測する性質である。"""
     if CASES[identifier]["git"]:
         return observe
     if manifest["invocation"]["env"] != {"PATH": "/dev/null"} or not Path("/dev/null").is_char_device():
-        raise ValueError("Git-absent fixture requires the Linux /dev/null PATH")
+        raise ValueError("Git不在fixtureにはLinuxの/dev/nullのPATHが必要です")
     if shutil.which("git", path=manifest["invocation"]["env"]["PATH"]) is not None:
-        raise ValueError("Git resolves in the fixture invocation environment")
+        raise ValueError("fixtureの起動環境でGitが解決されています")
     if (repository / ".git").exists() or (repository / ".git").is_symlink():
-        raise ValueError("Git-absent fixture must not contain Git metadata")
-    # Explicit absence, never an empty successful Git status.
+        raise ValueError("Git不在fixtureはGitのmetadataを含んではいけません")
+    # 明示的な不在として扱い、空の成功したGit statusにはしない。
     return lambda root, external: {"repository": snapshot(root), "git": None,
                                    **{name: snapshot(path) for name, path in external.items()}}
 
@@ -212,18 +211,18 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("manifest or result differs from reviewed single condition")
+                raise ValueError("manifestまたは結果が審査済みの単一条件と異なります")
             inputs = reviewed_inputs(identifier)
             check_conditions(identifier, inputs)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("input differs from the reviewed corpus")
+                raise ValueError("入力が審査済みcorpusと異なります")
             if effects["policy"] != "read-only" or effects["before"] != effects["after"]:
-                raise ValueError("these conditions must not write files")
+                raise ValueError("これらの条件はfileを書いてはいけません")
             if (effects["before"]["git"] is None) is CASES[identifier]["git"]:
-                raise ValueError("Git snapshot presence contradicts the reviewed environment")
+                raise ValueError("Git snapshotの有無が審査済みの環境と矛盾します")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-registry-closure-") as temporary:
                 for run in range(2):
@@ -236,7 +235,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observer(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

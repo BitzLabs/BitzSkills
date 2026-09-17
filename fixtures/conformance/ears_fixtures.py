@@ -1,4 +1,4 @@
-"""Fixed EARS fixture evidence audit, not a Core Scanner/Lexer/Parser."""
+"""固定したEARS fixtureの証拠の監査（CoreのScanner／Lexer／Parserではない）。"""
 import json
 from pathlib import Path
 import subprocess
@@ -155,7 +155,7 @@ def validate(root=HERE, identifiers=None):
                         "argv": ["check", "--full", "--base", "HEAD", "--format", "json"], "env": {}}
                     or manifest["expect"] != {"status": status, "exitCode": 1 if status == "failed" else 0,
                         "stdout": "json", "resultFile": "expected/check.json", "reportFileCount": 0}):
-                raise ValueError("manifest differs from reviewed invocation")
+                raise ValueError("manifestが審査済みの起動と異なります")
             result = json.loads((fixture / "expected/check.json").read_text())
             validators["result"].validate(result)
             diagnostics = [] if code is None else [{
@@ -173,11 +173,11 @@ def validate(root=HERE, identifiers=None):
                 "diagnostics": diagnostics,
             }
             if result != expected:
-                raise ValueError("result differs from reviewed complete expectation")
+                raise ValueError("結果が審査済みの完全な期待値と異なります")
             document = (fixture / "repo" / SPEC_PATH).read_bytes()
             if document != reviewed_document(doc_status, line).encode():
-                raise ValueError("REQ input differs from reviewed single cause")
-            # Only the fixed three plain-string fields above; not a general YAML reader.
+                raise ValueError("REQの入力が審査済みの単一原因と異なります")
+            # 上の固定した3つの平文fieldだけを読む。汎用のYAML readerではない。
             fm_lines = document.decode().splitlines()[1:4]
             fm_validator.validate(dict(value.split(": ", 1) for value in fm_lines))
             if code:
@@ -186,11 +186,11 @@ def validate(root=HERE, identifiers=None):
                           "EAI-CORE-SYNTAX-005": "`", "EAI-EXT-UNKNOWN-001": "[quality:"}
                 position = len(source_line) + 1 if code == "EAI-CORE-SYNTAX-006" else source_line.index(tokens.get(code, "[")) + 1
                 if position != column:
-                    raise ValueError("Diagnostic column does not point to reviewed token")
+                    raise ValueError("Diagnosticの列が審査済みのtokenを指していません")
             effects = json.loads((fixture / "side-effects.json").read_text())
             validators["side-effects"].validate(effects)
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only expectation permits writes")
+                raise ValueError("read-only期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-ears-fixtures-") as temporary:
                 for run in range(2):
@@ -201,10 +201,10 @@ def validate(root=HERE, identifiers=None):
                     for directory in external.values():
                         directory.mkdir()
                     if (repository / ".spec/bitz.yaml").read_bytes() != CONFIGS["SINGLE-001"].encode():
-                        raise ValueError("nonminimal configuration adds another cause")
+                        raise ValueError("最小でない設定が別の原因を加えています")
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and actual != previous):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

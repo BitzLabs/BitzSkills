@@ -1,9 +1,8 @@
-"""Reviewed presentation hard-limit vector; runs no Core operation.
+"""提示のhard limitを固定するreview済みvector（Core操作は実行しない）。
 
-`SINGLE-049` resolves completely inside the configured closure limits and then
-fails only because `--detail full` would present more than the fixed 1 MiB
-presentation hard limit. The corpus is built so that the standard presentation
-stays small while the full presentation crosses the limit.
+`SINGLE-049`は設定した閉包の上限内で完全に解決し、`--detail full`では固定した1 MiBの
+提示hard limitを超えるという理由だけで失敗する。標準の提示は小さく保ち、fullの提示だけが
+上限を越えるようにcorpusを作る。
 """
 import json
 from pathlib import Path
@@ -20,8 +19,8 @@ from .initial_fixtures import observe, compare_state
 HERE = Path(__file__).resolve().parent
 IDENTIFIER = "SINGLE-049"
 HARD_LIMIT_BYTES = 1048576
-# Both closure dimensions are configured at their maxima, so the closure passes and
-# only the fixed presentation hard limit can be crossed.
+# 閉包の2つの次元を最大値に設定して閉包を通過させ、
+# 固定した提示のhard limitだけを越え得るようにする。
 CONFIG = digest_reference.CONFIG + "context:\n  maxDocuments: 100\n  maxBytes: 1048576\n"
 REQ_HEAD = "---\nid: REQ-001\ntitle: 提示量の基準\nstatus: approved\n---\n"
 REQ_BODY = (
@@ -40,8 +39,8 @@ REQ_BODY = (
     "提示量の上限で確認する。\n"
 )
 PAD_LINE = "この段落は提示hard limitを超えるための固定本文であり、意味を持たない。\n"
-# Chosen so the two indirect refinements together exceed 1 MiB of body text while
-# each file stays under the 1 MiB single-document input limit.
+# 間接の2件のrefinementの本文が合わせて1 MiBを超え、
+# 各fileは1文書あたり1 MiBの入力上限を下回るように選んだ。
 PAD_REPEAT = 5300
 SMALL_TECH_BODY = "# TECH-001 直接の具体化\n\n## Context\n\n距離1の具体化。\n"
 
@@ -129,7 +128,7 @@ def reviewed_result(context_digest):
         "contextDigest": context_digest,
         "revision": None,
         "resolution": {"complete": True, "documentCount": 4, "unresolvedStrongRelations": 0},
-        # `detail` echoes the requested mode; `expanded` lists what was actually applied.
+        # `detail`は要求したmodeを示し、`expanded`は実際に適用したものを並べる。
         "projection": {"detail": "full", "expanded": []},
         "documents": [],
         "constraintLedger": {"statements": []},
@@ -144,20 +143,20 @@ def reviewed_result(context_digest):
 
 
 def check_limits(inputs):
-    """The corpus must cross the presentation hard limit only under `--detail full`:
-    every large body is projected `normative` at `standard` and `full` at `full`."""
+    """corpusは`--detail full`のときだけ提示のhard limitを越えなければならない。
+    大きな本文は、`standard`では`normative`、`full`では`full`で提示する。"""
     bodies = {"REQ-001": REQ_BODY, **{DOCUMENTS[path][0]: DOCUMENTS[path][3] for path in DOCUMENTS}}
     full = sum(len(body.encode()) for body in bodies.values())
     standard = sum(len(bodies[identifier].encode()) for identifier in ("REQ-001", "TECH-001"))
     if full <= HARD_LIMIT_BYTES:
-        raise ValueError("full presentation does not exceed the 1 MiB hard limit")
+        raise ValueError("fullの提示が1 MiBのhard limitを超えていません")
     if standard >= HARD_LIMIT_BYTES:
-        raise ValueError("standard presentation must stay inside the hard limit")
+        raise ValueError("標準の提示はhard limit内に収まる必要があります")
     for path, payload in inputs.items():
         if path.endswith(".md") and len(payload) >= HARD_LIMIT_BYTES:
-            raise ValueError("a single SPEC file must stay under the 1 MiB input limit")
+            raise ValueError("SPEC file 1件は1 MiBの入力上限を下回る必要があります")
     if len(bodies) > 100:
-        raise ValueError("the document count must stay inside the configured closure limit")
+        raise ValueError("文書数は設定した閉包の上限内に収まる必要があります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -176,22 +175,22 @@ def validate(root=HERE, identifiers=None):
             validators[name].validate(value)
         canonical = (fixture / "expected/context.canonical.json").read_bytes()
         if canonical.endswith(b"\n") or canonical.startswith(b"\xef\xbb\xbf"):
-            raise ValueError("Canonical JSON must be UTF-8 without a BOM or trailing newline")
+            raise ValueError("Canonical JSONはBOMと末尾改行のないUTF-8である必要があります")
         if manifest != reviewed_manifest():
-            raise ValueError("invocation differs from reviewed expectation")
+            raise ValueError("起動条件が審査済み期待値と異なります")
         if result != reviewed_result(digest_reference.digest(canonical)):
-            raise ValueError("complete result differs from reviewed expectation")
+            raise ValueError("完全結果が審査済み期待値と異なります")
         if result["documents"] or result["constraintLedger"]["statements"]:
-            raise ValueError("a non-success Context must not deliver Bundle material")
+            raise ValueError("非成功のContextはBundleの材料を返してはいけません")
         inputs = reviewed_inputs()
         check_limits(inputs)
         files = {p.relative_to(fixture / "repo").as_posix(): p
                  for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
         if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                             for name, p in files.items()):
-            raise ValueError("input differs from the reviewed corpus")
+            raise ValueError("入力が審査済みcorpusと異なります")
         if effects["before"] != effects["after"]:
-            raise ValueError("read-only expectation permits writes")
+            raise ValueError("read-only期待値が書込みを許しています")
         previous = None
         with tempfile.TemporaryDirectory(prefix="bitz-projection-limit-") as temporary:
             for run in range(2):
@@ -203,17 +202,17 @@ def validate(root=HERE, identifiers=None):
                     path.mkdir()
                 actual = observe(repository, external)
                 if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                    raise ValueError("isolated setup differs from fixed snapshot")
+                    raise ValueError("隔離setupが固定snapshotと異なります")
                 previous = actual
                 literal = digest_reference.canonical_bytes(reviewed_digest_input())
                 derived = digest_crosscheck.canonical_bytes(digest_crosscheck.build(repository))
                 if literal != derived:
-                    raise ValueError("reference A and reference B disagree on the Canonical JSON")
+                    raise ValueError("reference AとBのCanonical JSONが一致しません")
                 if literal != canonical:
-                    raise ValueError("committed Canonical JSON differs from the reference computation")
+                    raise ValueError("commitしたCanonical JSONが参照計算と異なります")
                 order = [document["id"] for document in json.loads(derived.decode())["documents"]]
                 if order != ORDER:
-                    raise ValueError("digest documents are not in the reviewed order")
+                    raise ValueError("Digestの文書がreview済みの順序ではありません")
         prepared.append(IDENTIFIER)
     except (OSError, ValueError, KeyError, TypeError, ValidationError,
             subprocess.SubprocessError) as error:

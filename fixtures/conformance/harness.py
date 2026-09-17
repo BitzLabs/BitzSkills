@@ -1,4 +1,4 @@
-"""Fixture setup and snapshots only; does not implement any Core operation."""
+"""fixtureのsetupとsnapshotだけを扱う。Core操作は実装しない。"""
 import hashlib
 import os
 from pathlib import Path
@@ -29,15 +29,15 @@ def safe_path(root, relative, allow_dot=False):
     if allow_dot and relative == ".":
         return root
     if not relative or "\0" in relative or "\\" in relative or Path(relative).is_absolute() or any(part in {"", ".", ".."} for part in relative.split("/")):
-        raise ValueError(f"unsafe fixture path: {relative!r}")
+        raise ValueError(f"安全でないfixture pathです: {relative!r}")
     if relative.split("/")[0] == ".git":
-        raise ValueError("fixture operation cannot mutate Git metadata")
+        raise ValueError("fixtureの操作はGitのmetadataを変更できません")
     target = root / relative
     for parent in target.parents:
         if parent == root:
             break
         if parent.is_symlink():
-            raise ValueError("fixture path traverses symlink")
+            raise ValueError("fixture pathがsymlinkを経由しています")
     return target
 
 
@@ -51,15 +51,15 @@ def git(root, *args):
 
 def setup(fixture, manifest, destination):
     if destination.exists():
-        raise ValueError("setup destination must not exist")
+        raise ValueError("setup先は存在してはいけません")
     if (fixture / "repo/.git").exists():
-        raise ValueError("fixture source must not contain Git metadata")
+        raise ValueError("fixtureの元directoryはGitのmetadataを含んではいけません")
     shutil.copytree(fixture / "repo", destination, symlinks=True)
     plan = manifest["setup"]
     if plan["git"]:
         git(destination, "init", "--initial-branch=fixture")
     elif "baseCommit" in plan or any(op["op"] == "stage" for op in plan["operations"]):
-        raise ValueError("Git operations require setup.git")
+        raise ValueError("Gitの操作にはsetup.gitが必要です")
     if "baseCommit" in plan:
         paths = plan["baseCommit"]["paths"]
         for path in paths:
@@ -77,10 +77,10 @@ def setup(fixture, manifest, destination):
         exists = path.exists() or path.is_symlink()
         if kind in {"create", "update"}:
             if (kind == "create" and exists) or (kind == "update" and (not exists or (path.is_dir() and not path.is_symlink()))):
-                raise ValueError("create/update precondition failed")
+                raise ValueError("create／updateの前提条件を満たしていません")
             source = safe_path(fixture, operation["source"])
             if not operation["source"].startswith("changes/") or not (source.is_file() or source.is_symlink()):
-                raise ValueError("source must be a changes file or symlink")
+                raise ValueError("sourceはchangesのfileまたはsymlinkである必要があります")
             if exists:
                 path.unlink()
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -90,7 +90,7 @@ def setup(fixture, manifest, destination):
                 shutil.copy2(source, path)
         elif kind == "delete":
             if not exists:
-                raise ValueError("delete target missing")
+                raise ValueError("削除対象が存在しません")
             if path.is_symlink() or path.is_file():
                 path.unlink()
             else:
@@ -98,9 +98,9 @@ def setup(fixture, manifest, destination):
         elif kind == "rename":
             target = safe_path(destination, operation["to"])
             if not exists or target.exists() or target.is_symlink():
-                raise ValueError("rename precondition failed")
+                raise ValueError("renameの前提条件を満たしていません")
             target.parent.mkdir(parents=True, exist_ok=True)
             path.rename(target)
         else:
-            raise ValueError(f"unknown setup operation: {kind}")
+            raise ValueError(f"未知のsetup操作です: {kind}")
     return destination

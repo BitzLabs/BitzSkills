@@ -1,9 +1,8 @@
-"""Fixed default-display and revision evidence for matrix §6.11.
+"""matrix §6.11の既定表示とrevisionを固定した証拠。
 
-No renderer, Git reader or Core operation is implemented here. Each fixture
-reuses a reviewed corpus and result, and changes exactly one presentation or
-environment property: the omitted --format, the presence of a commit, an empty
-command output, or the same condition on two targets.
+描画処理、Gitの読取り、Core操作は実装しない。各fixtureはreview済みのcorpusと結果を再利用し、
+提示または環境の性質をちょうど1つだけ変える。`--format`の省略、commitの有無、空のcommand出力、
+2つのtargetでの同一条件である。
 """
 import copy
 import json
@@ -36,7 +35,7 @@ TEXT = {
     "SINGLE-106-05": "verify failed scope=selected targets=2 diagnostics=2 (0ms)\n" + "".join(
         f"invocation:::: error: CTX-ROOT-MISSING-001: 起点{root}が存在しません\n" for root in MISSING_ROOTS),
 }
-# ID: (operation, status, exit code, description)
+# ID: (操作, status, 終了コード, 説明)
 CASES = {
     "SINGLE-104-01": ("context", "passed", 0, "format省略のcontextが既定のMarkdown提示を返す"),
     "SINGLE-104-02": ("check", "passed", 0, "format省略のcheckがtext要約行を出す"),
@@ -148,12 +147,12 @@ def reviewed_result(identifier):
 
 
 def check_summary_line(identifier, result, text):
-    """The reviewed text must agree with the JSON counterpart through the
-    published derivation, not through a separately counted display."""
+    """review済みのtextは、別に数えた表示ではなく、公開した導出手順を通して
+    対応するJSONと一致しなければならない。"""
     lines = text.decode().splitlines()
     match = SUMMARY_PATTERN.match(lines[0])
     if match is None:
-        raise ValueError("summary line does not follow the reviewed shape")
+        raise ValueError("要約行がreview済みの形に従っていません")
     operation = result["operation"]
     targets = {"check": lambda: result.get("checkedDocumentCount"),
                "verify": lambda: len(result.get("targetResults", [])),
@@ -162,58 +161,58 @@ def check_summary_line(identifier, result, text):
         len(target["diagnostics"]) for target in result.get("targetResults", []))
     if (match["operation"] != operation or match["status"] != result["status"]
             or int(match["targets"]) != targets or int(match["diagnostics"]) != diagnostics):
-        raise ValueError("summary line differs from the JSON derivation")
+        raise ValueError("要約行がJSONからの導出と異なります")
     if (match["scope"] is None) != (operation == "doctor") or (
             match["scope"] is not None and match["scope"] != result["scope"]):
-        raise ValueError("doctor must omit scope= and other operations must report it")
+        raise ValueError("doctorはscope=を省略し、他の操作はこれを表示する必要があります")
     if len(lines) != 1 + diagnostics:
-        raise ValueError("one line per Diagnostic must follow the summary line")
+        raise ValueError("要約行の後にDiagnosticごとに1行が続く必要があります")
 
 
 def check_revision(identifier, result, repository):
-    """Observe the isolated repository instead of trusting the placeholder."""
+    """置き場所の値を信頼せず、隔離したrepositoryを観測する。"""
     operation = CASES[identifier][0]
     if operation == "doctor":
         if "revision" in result:
-            raise ValueError("doctor results carry no revision")
+            raise ValueError("doctorの結果はrevisionを持ちません")
         return
     revision = result["revision"]
     if identifier not in COMMITTED:
         if revision is not None:
-            raise ValueError("a fixture without a commit must report revision null")
+            raise ValueError("commitのないfixtureはrevision nullを返す必要があります")
         return
     commit = git(repository, "rev-parse", "HEAD").decode().strip()
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
-        raise ValueError("the isolated setup did not produce a 40 digit lowercase commit")
+        raise ValueError("隔離setupが40桁の小文字のcommitを作りませんでした")
     if git(repository, "status", "--porcelain=v1").decode() != "":
-        raise ValueError("a clean revision expectation requires a clean worktree")
-    # check carries the base revision as well; context and verify carry only the current one.
+        raise ValueError("cleanなrevisionの期待値にはcleanな作業treeが必要です")
+    # checkは基準版のrevisionも持つ。contextとverifyは現在のrevisionだけを持つ。
     expected = {"base", "commit", "dirty"} if operation == "check" else {"commit", "dirty"}
     if set(revision) != expected or revision["dirty"]:
-        raise ValueError("revision must be the reviewed clean shape for this operation")
+        raise ValueError("revisionはこの操作のreview済みのcleanな形である必要があります")
 
 
 def observe_silence(repository):
     executable = repository / verify_output_fixtures.COMMAND_PATH
     if not (executable.is_file() and os.access(executable, os.X_OK)):
-        raise ValueError("the command file must be a regular executable")
+        raise ValueError("command fileは通常の実行可能fileである必要があります")
     completed = subprocess.run([str(executable)], cwd=repository, capture_output=True, timeout=60)
     if completed.returncode != 0 or completed.stdout or completed.stderr:
-        raise ValueError("the reviewed command must succeed and write nothing")
+        raise ValueError("review済みのcommandは成功し、何も書いてはいけません")
 
 
 def check_markdown(path, result):
-    """The committed Markdown must equal the reference rendering of §9 and keep
-    the section order, the untouched bodies and no duration token."""
+    """commitしたMarkdownは§9の参照描画と一致し、sectionの順序、
+    変更しない本文、所要時間tokenがないことを保たなければならない。"""
     text = path.read_bytes()
     if text != markdown_reference.render(result).encode():
-        raise ValueError("Markdown differs from the reference rendering of the reviewed result")
+        raise ValueError("Markdownがreview済みの結果の参照描画と異なります")
     value = text.decode()
     if "\r" in value or not value.endswith("\n") or value.endswith("\n\n"):
-        raise ValueError("Markdown must use LF and end with exactly one newline")
+        raise ValueError("MarkdownはLFを使い、改行1個で終わる必要があります")
     if "\n\n\n" in value:
-        raise ValueError("Markdown must not hold consecutive blank lines")
-    # Headings inside a presented body belong to the SPEC, not to the Bundle.
+        raise ValueError("Markdownは連続した空行を持ってはいけません")
+    # 提示した本文の中の見出しはSPECに属し、Bundleには属さない。
     outside = value
     for document in result["documents"]:
         body = document.get("bodyText")
@@ -222,19 +221,19 @@ def check_markdown(path, result):
         marker = markdown_reference.fence(body)
         block = f"{marker}markdown\n{body}{marker}\n"
         if value.count(block) != 1:
-            raise ValueError("a body is missing, altered, or not fenced above its longest run")
+            raise ValueError("本文がない、変更されている、または最長runより長いfenceで囲まれていません")
         outside = outside.replace(block, "", 1)
     headings = [line[3:] for line in outside.splitlines() if line.startswith("## ")]
     if headings != markdown_reference.SECTIONS:
-        raise ValueError("section headings differ from the fixed order")
+        raise ValueError("sectionの見出しが固定した順序と異なります")
     if [line for line in outside.splitlines() if line.startswith("# ")] != ["# Context Bundle"]:
-        raise ValueError("the Bundle must carry exactly one reviewed H1")
+        raise ValueError("BundleはreviewしたH1をちょうど1つ持つ必要があります")
     if "durationMs" in outside or re.search(r"\(\d+ms\)", outside):
-        raise ValueError("Markdown must not present a duration")
+        raise ValueError("Markdownは所要時間を提示してはいけません")
 
 
 def observe_state(repository, external, identifier):
-    """Git absence is recorded as an explicit null, never as an empty status."""
+    """Git不在は空のstatusではなく、明示的なnullとして記録する。"""
     if identifier not in GIT_ABSENT:
         return observe(repository, external)
     return {"repository": snapshot(repository), "git": None,
@@ -257,28 +256,28 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("manifest or result differs from reviewed single condition")
+                raise ValueError("manifestまたは結果が審査済みの単一条件と異なります")
             if identifier in MARKDOWN_CASES:
                 check_markdown(fixture / f"expected/{operation}.txt", result)
             elif identifier in TEXT_CASES:
                 text = (fixture / f"expected/{operation}.txt").read_bytes()
                 if text != TEXT[identifier].encode():
-                    raise ValueError("text differs from the reviewed complete output")
+                    raise ValueError("textがreview済みの完全な出力と異なります")
                 check_summary_line(identifier, result, text)
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs):
-                raise ValueError("input differs from the reviewed corpus")
+                raise ValueError("入力が審査済みcorpusと異なります")
             for name, path in files.items():
                 if path.is_symlink() or path.read_bytes() != inputs[name]:
-                    raise ValueError("input differs from the reviewed corpus")
+                    raise ValueError("入力が審査済みcorpusと異なります")
                 if bool(path.stat().st_mode & 0o111) != (name in executables(identifier)):
-                    raise ValueError(f"executable bit of {name} differs from the reviewed input")
+                    raise ValueError(f"{name}の実行bitが審査済み入力と異なります")
             if effects["policy"] != "read-only" or effects["before"] != effects["after"]:
-                raise ValueError("presentation must not write files")
+                raise ValueError("提示はfileを書いてはいけません")
             if (effects["before"]["git"] is None) is (identifier not in GIT_ABSENT):
-                raise ValueError("Git snapshot presence contradicts the reviewed environment")
+                raise ValueError("Git snapshotの有無が審査済みの環境と矛盾します")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-presentation-") as temporary:
                 for run in range(2):
@@ -290,18 +289,18 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe_state(repository, external, identifier)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
                     check_revision(identifier, result, repository)
                     if identifier == "SINGLE-106-04" and run == 0:
                         observe_silence(repository)
                         if compare_state(effects["after"], observe(repository, external)):
-                            raise ValueError("observing the command changed the fixture state")
+                            raise ValueError("commandの観測でfixtureの状態が変わりました")
                     if result.get("contextDigest") or any(
                             target["contextDigest"] for target in result.get("targetResults", [])):
                         derived = digest_crosscheck.canonical_bytes(digest_crosscheck.build(repository))
                         if digest_crosscheck.digest(derived) != context_digest(identifier):
-                            raise ValueError("references disagree on the Context Digest")
+                            raise ValueError("参照計算どうしでContext Digestが一致しません")
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:
             errors.append(f"{identifier}: {str(error).split(chr(10))[0]}")

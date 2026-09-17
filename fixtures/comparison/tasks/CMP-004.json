@@ -1,14 +1,14 @@
 {
   "schemaVersion": "1.0",
   "taskId": "CMP-004",
-  "title": "Trace and specification defect review",
-  "objective": "Review a change set and report specification, relation, state, and coverage defects.",
+  "title": "traceと仕様の欠陥review",
+  "objective": "変更の組をreviewし、仕様、relation、状態、網羅の欠陥を報告する。",
   "baselineMode": "markdown",
-  "brief": ["REQ-BULK-DELETE contains a new MUST statement but its test plan covers only the older single-delete statement.", "TECH-BULK-API declares a strong requires relation to missing REQ-999999.", "The Git base and current copies both say status approved, but the approved REQ-BULK-DELETE normative response changed.", "One candidate line starts with malformed extension [risk:LEVEL=high] before ACTOR.", "Report each independent defect once and identify release blockers."],
+  "brief": ["REQ-BULK-DELETEは新しいMUSTの規範文を持つが、そのtest計画は古い単一削除の規範文だけを網羅する。", "TECH-BULK-APIは、存在しないREQ-999999への強いrequires relationを宣言する。", "Gitの基準版と現在版はどちらもstatusがapprovedだが、approvedのREQ-BULK-DELETEの規範の応答が変わった。", "候補行の1つが、ACTORの前に不正なextension [risk:LEVEL=high]で始まる。", "独立した欠陥をそれぞれ1回だけ報告し、releaseを止める欠陥を特定する。"],
   "conditions": {
-    "baseline": ["Represent and review the brief as ordinary Markdown, links, and a prose test plan."],
-    "bitz": ["Represent and review the same brief as .spec using context and check evidence."]
+    "baseline": ["課題文を通常のMarkdown、link、散文のtest計画で表してreviewする。"],
+    "bitz": ["同じ課題文を.specで表し、contextとcheckの証拠を使ってreviewする。"]
   },
-  "completionCriteria": ["Every critical seeded defect is reported.", "Duplicate symptoms of the same cause are not double counted.", "Advisory issues are separated from blockers."],
+  "completionCriteria": ["仕込んだ重大な欠陥をすべて報告する。", "同じ原因による重複した症状を二重に数えない。", "advisoryの問題を、releaseを止める欠陥と分ける。"],
   "metricTags": ["completionMs", "authoringMs", "reviewMs", "detectedDefects"]
 }

@@ -1,14 +1,14 @@
 {
   "schemaVersion": "1.0",
-  "protocolVersion": "1.0",
+  "protocolVersion": "1.1",
   "taskIds": ["CMP-001", "CMP-002", "CMP-003", "CMP-004", "CMP-005"],
   "minimumParticipantsPerCondition": 3,
   "assignment": "balanced-ab-ba",
   "controls": {
     "network": false,
     "externalAssistance": false,
-    "timeStarts": "when the participant opens the brief",
-    "timeStops": "when the participant submits the deliverable",
+    "timeStarts": "参加者が課題文を開いた時点",
+    "timeStops": "参加者が成果物を提出した時点",
     "blindReview": true
   },
   "metrics": ["completionMs", "authoringMs", "reviewMs", "detectedDefects"],
@@ -17,6 +17,6 @@
     "criticalDefectRecallPercent": 100,
     "maximumMedianRegressionPercentPerTimeMetric": 10,
     "minimumImprovedTimeMetricPercent": 10,
-    "alternativeImprovement": "bitz detects more seeded defects than baseline without exceeding the time regression limit"
+    "alternativeImprovement": "時間の悪化の上限を越えずに、bitzが基準条件より多くの仕込んだ欠陥を検出する"
   }
 }

@@ -1,4 +1,4 @@
-"""Reviewed Git selection/impact evidence; does not implement Core selection."""
+"""review済みのGit対象選択・影響候補の証拠（Coreの対象選択は実装しない）。"""
 import json
 from pathlib import Path
 import subprocess
@@ -13,7 +13,7 @@ from .trace_fixtures import TECH, TECH_PATH
 HERE = Path(__file__).resolve().parent
 CASES = ("SINGLE-033", "SINGLE-039", "SINGLE-040", "SINGLE-041")
 DEPENDENT_PATH = ".spec/technical/TECH-002.md"
-# Fixed YAML/value pairs for the changed dependency and three control documents.
+# 変更した依存と、対照となる3文書について、YAMLと値の組を固定する。
 DOCUMENTS = {TECH_PATH: TECH}
 FRONTMATTER = {TECH_PATH: {"id": "TECH-001", "title": "前提技術", "status": "approved"}}
 for number, relation, target in ((2, "requires", "TECH-001"), (3, "related", "TECH-001"), (4, "requires", "TECH-002")):
@@ -99,18 +99,18 @@ def reviewed_result(identifier):
 def check_git_states(repository, identifier):
     base = base_files(identifier)
     if identifier == "SINGLE-039":
-        # Failed HEAD resolution alone must not certify an unborn repository.
+        # HEADの解決失敗だけでunbornのrepositoryと認めてはいけない。
         git(repository, "rev-parse", "--git-dir")
         if git(repository, "symbolic-ref", "HEAD").decode().strip() != "refs/heads/fixture":
-            raise ValueError("unborn HEAD must reference the fixture branch")
+            raise ValueError("unbornのHEADはfixtureのbranchを指す必要があります")
         try:
             git(repository, "rev-parse", "--verify", "HEAD")
         except subprocess.CalledProcessError:
             pass
         else:
-            raise ValueError("unborn fixture has a commit")
+            raise ValueError("unbornのfixtureにcommitがあります")
         if git(repository, "for-each-ref") or git(repository, "ls-files", "-z"):
-            raise ValueError("unborn fixture must have no refs or staged paths")
+            raise ValueError("unbornのfixtureはrefもstage済みpathも持ってはいけません")
     else:
         index = dict(base)
         if identifier == "SINGLE-041":
@@ -118,14 +118,14 @@ def check_git_states(repository, identifier):
         for revision, args, expected in (("HEAD:", ("ls-tree", "-r", "--name-only", "-z", "HEAD"), base),
                                         (":", ("ls-files", "-z"), index)):
             if set(git(repository, *args).decode().split("\0")[:-1]) != set(expected):
-                raise ValueError("HEAD/index paths differ from reviewed selection case")
+                raise ValueError("HEADまたはindexのpathが審査済みの選択caseと異なります")
             for path, content in expected.items():
                 if git(repository, "show", revision + path) != content:
-                    raise ValueError("HEAD/index bytes differ from reviewed selection case")
+                    raise ValueError("HEADまたはindexのbyte列が審査済みの選択caseと異なります")
     actual = {p.relative_to(repository).as_posix(): p.read_bytes() for p in repository.rglob("*")
               if p.is_file() and ".git" not in p.relative_to(repository).parts}
     if actual != current_files(identifier):
-        raise ValueError("worktree differs from reviewed selection case")
+        raise ValueError("作業treeが審査済みの選択caseと異なります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -145,20 +145,20 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("manifest or complete result differs from reviewed scope expectation")
+                raise ValueError("manifestまたは完全結果が審査済みのscopeの期待値と異なります")
             files = {p.relative_to(fixture).as_posix(): p for directory in ("repo", "changes")
                      for p in (fixture / directory).rglob("*") if p.is_file() or p.is_symlink()}
             expected = reviewed_inputs(identifier)
             if set(files) != set(expected) or any(p.is_symlink() or p.read_bytes() != expected[name] for name, p in files.items()):
-                raise ValueError("input differs from reviewed Git selection case")
-            # Fixed YAML/value pair review only; no general YAML parser.
+                raise ValueError("入力が審査済みのGit対象選択caseと異なります")
+            # YAMLと値の固定した組だけをreviewする。汎用のYAML parserではない。
             for path in base_files(identifier):
                 if path in FRONTMATTER:
                     frontmatter.validate(FRONTMATTER[path])
             if identifier == "SINGLE-033":
                 frontmatter.validate({"id": "TECH-001", "title": "改訂した前提技術", "status": "approved"})
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only expectation permits writes")
+                raise ValueError("read-only期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-selection-fixtures-") as temporary:
                 for run in range(2):
@@ -171,7 +171,7 @@ def validate(root=HERE, identifiers=None):
                         directory.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and actual != previous):
-                        raise ValueError("isolated setup differs from fixed snapshot")
+                        raise ValueError("隔離setupが固定snapshotと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

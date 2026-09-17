@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "frontmatter.schema.json",
   "title": "Bitz Core 1.0 SPEC Frontmatter",
-  "description": "Schema for the YAML-decoded Frontmatter value. Core selects the document-kind definition from the containing directory.",
+  "description": "YAMLをdecodeしたFrontmatterの値のSchema。Coreは、文書を置いたdirectoryから文書種別の定義を選ぶ。",
   "oneOf": [
     { "$ref": "#/$defs/reqFrontmatter" },
     { "$ref": "#/$defs/techFrontmatter" },

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "result.schema.json",
-  "title": "Bitz Core 1.0 result",
+  "title": "Bitz Core 1.0 結果",
   "oneOf": [
     {"$ref": "#/$defs/contextResult"},
     {"$ref": "#/$defs/checkChangedResult"},

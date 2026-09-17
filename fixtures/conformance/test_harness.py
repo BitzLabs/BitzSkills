@@ -1,4 +1,4 @@
-"""Bounded self-tests for fixture infrastructure (Linux/POSIX)."""
+"""fixture基盤の、時間上限のある自己試験（Linux／POSIX）。"""
 import json
 import os
 from pathlib import Path

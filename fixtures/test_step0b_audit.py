@@ -1,4 +1,4 @@
-"""Regression checks that malformed evidence is not silently accepted."""
+"""不正な証拠を黙って受理しないことを確認する回帰試験。"""
 import json
 import copy
 from pathlib import Path
@@ -324,12 +324,12 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(text.count("# Context Bundle"), 1)
         self.assertEqual([line[3:] for line in text.splitlines() if line.startswith("## ")][:1],
                          ["Bundle Manifest"])
-        # A body holding a longer backtick run must widen the fence.
+        # より長いbacktick runを含む本文では、fenceを長くしなければならない。
         document = copy.deepcopy(result["documents"][0])
         document["bodyText"] = "````\ncode\n````\n"
         self.assertEqual(markdown_reference.fence(document["bodyText"]), "`" * 5)
         self.assertIn("`````markdown", markdown_reference.document_block(document))
-        # compact keeps the heading and drops the body.
+        # compactは見出しを残し、本文を落とす。
         compact = markdown_reference.document_block(result["documents"][0], "compact")
         self.assertNotIn("bodyText", compact)
         self.assertIn("### REQ-001 — .spec/requirements/REQ-001.md", compact)
@@ -358,7 +358,7 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-101-03", "expected/check.json",
              lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0]))),
             ("SINGLE-102", "expected/check.json", lambda v: v["diagnostics"][0]["source"].pop("column")),
-            # The shared raw cause must keep the reviewed primary, not the lower-priority condition.
+            # 共有するraw原因は、優先度の低い条件ではなく、review済みのprimaryを保つ必要がある。
             ("SINGLE-103-01", "expected/check.json",
              lambda v: v["diagnostics"][0].update(code="EAI-CORE-SYNTAX-004")),
             ("SINGLE-103-02", "side-effects.json",
@@ -413,7 +413,7 @@ class AuditTests(unittest.TestCase):
 
     def test_registry_closure_audit_rejects_repaired_or_extended_inputs(self):
         module = registry_closure_fixtures
-        # Repairing the sole cause, or adding the workspace the case denies, must not pass.
+        # 唯一の原因を修復した場合や、caseが否定するworkspaceを加えた場合は通過してはいけない。
         flips = {
             "SINGLE-089": (module.REQ_PATH, module.DOCUMENT.encode()),
             "SINGLE-090": (module.REQ_PATH, module.DOCUMENT.encode()),
@@ -460,7 +460,7 @@ class AuditTests(unittest.TestCase):
 
     def test_input_limit_audit_rejects_inputs_that_move_across_the_limit(self):
         module = input_limit_fixtures
-        # Each replacement moves the fixture to the other side of its reviewed dimension.
+        # 各置換えは、fixtureをreview済みの次元の反対側へ移す。
         flips = {
             "SINGLE-078": (module.CONFIG_PATH, module.CONFIG.encode()),
             "SINGLE-079-01": (module.REQ_PATH, module.DOCUMENT.encode()),
@@ -745,7 +745,7 @@ class AuditTests(unittest.TestCase):
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects"):
                     shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
-                # Repair the sole input condition; the old expected Diagnostic must no longer pass.
+                # 唯一の入力条件を修復する。古い期待Diagnosticでは通過してはいけない。
                 if identifier == "SINGLE-081":
                     path = fixture / "repo/.spec/bitz.yaml"
                     path.write_bytes(path.read_bytes()[3:])
@@ -841,7 +841,7 @@ class AuditTests(unittest.TestCase):
             self.assertEqual(effects["policy"], "explicit-report", identifier)
             self.assertEqual(effects["report"]["createdCount"], 1, identifier)
             self.assertEqual(effects["report"]["temporaryFilesRemaining"], 0, identifier)
-            # The pre-existing report proves exclusive creation rather than replacement.
+            # 既存のreportは、置換ではなく排他的な作成であることを示す。
             self.assertIn(report_write_fixtures.EXISTING_REPORT,
                           effects["before"]["repository"], identifier)
             self.assertEqual(effects["before"], effects["after"], identifier)
@@ -1042,13 +1042,13 @@ class AuditTests(unittest.TestCase):
         self.assertEqual((done["status"], cancelled["status"]), ("passed", "blocked"))
         self.assertEqual(done["targetResults"][0]["bindingRefs"], ["root::default"])
         self.assertEqual(cancelled["targetResults"][0]["bindingRefs"], [])
-        # A cancelled root never reaches its addressed statements; a done root does.
+        # cancelledの起点はaddressesする規範文に到達せず、doneの起点は到達する。
         self.assertEqual(cancelled["targetResults"][0]["statements"], [])
         self.assertEqual(done["targetResults"][0]["statements"], ["REQ-001:AC-01"])
 
     def test_task_root_context_holds_the_addressed_owner(self):
-        """関係・トレースモデル §6.3: a TASK root brings the documents owning its
-        addresses targets into the Context, so the Digest covers all three."""
+        """関係・トレースモデル §6.3: TASKの起点は、addressesの対象を所有する文書を
+        Contextに加えるので、Digestは3文書すべてを含む。"""
         canonical = digest_reference.canonical_bytes(
             verify_task_root_fixtures.reviewed_digest_input())
         payload = json.loads(canonical.decode())
@@ -1160,7 +1160,7 @@ class AuditTests(unittest.TestCase):
     def test_output_fixtures_share_one_context_but_differ_in_outcome(self):
         first = json.loads((audit.FIXTURES / "single/SINGLE-069-01/expected/verify.json").read_text())
         second = json.loads((audit.FIXTURES / "single/SINGLE-069-02/expected/verify.json").read_text())
-        # The script body is not Digest material, so the Context is the same.
+        # scriptの本文はDigest材料ではないので、Contextは同じである。
         self.assertEqual(first["targetResults"][0]["contextDigest"],
                          second["targetResults"][0]["contextDigest"])
         self.assertEqual((first["status"], second["status"]), ("passed", "failed"))
@@ -1223,7 +1223,7 @@ class AuditTests(unittest.TestCase):
             self.assertIsNone(command["exitCode"], identifier)
             self.assertEqual(command["status"], "error", identifier)
             self.assertEqual(result["status"], "error", identifier)
-            # The binding was reached, so the target still references it.
+            # bindingに到達したので、targetは引き続きそれを参照する。
             self.assertEqual(result["targetResults"][0]["bindingRefs"], ["root::default"], identifier)
             self.assertEqual(len(result["diagnostics"]), 1, identifier)
             self.assertEqual(result["diagnostics"][0]["source"]["kind"], "environment", identifier)
@@ -1267,12 +1267,12 @@ class AuditTests(unittest.TestCase):
                 self.assertTrue(validate_verify_process(root, [identifier])["errors"])
 
     def test_process_audit_rejects_inputs_that_no_longer_cause_the_failure(self):
-        """The audit runs each command file itself, so a corpus that stopped being
-        hostile must fail rather than quietly keep the old expectation."""
+        """監査はcommand fileを自分で実行するので、扱いにくい挙動をしなくなった
+        corpusは、古い期待値を黙って保たずに失敗しなければならない。"""
         mutations = [
-            # A file the OS accepts spawns successfully, so there is no spawn error.
+            # OSが受理するfileはspawnに成功するので、spawn errorにはならない。
             ("SINGLE-057", "repo/bin/badformat", lambda t: "#!/bin/sh\nexit 0\n"),
-            # A command that honours TERM never needs a force kill.
+            # TERMに従うcommandは強制終了を必要としない。
             ("SINGLE-059", "repo/bin/hang.sh", lambda t: "#!/bin/sh\nsleep 60\n"),
         ]
         for identifier, relative, mutate in mutations:
@@ -1322,7 +1322,7 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(len(passing), 1)
         self.assertEqual(blocked[0]["bindingRefs"], [])
         self.assertEqual(passing[0]["bindingRefs"], ["root::default"])
-        # The executed command must only claim the passing target's statements.
+        # 実行したcommandは、通過したtargetの規範文だけを対象として主張しなければならない。
         self.assertEqual(result["commands"][0]["covers"], ["REQ-002:AC-01"])
         self.assertEqual(result["status"], "blocked")
 
@@ -1398,13 +1398,13 @@ class AuditTests(unittest.TestCase):
             (audit.FIXTURES / "single/SINGLE-042/expected/context.canonical.json").read_bytes())
         result = json.loads((audit.FIXTURES / "single/SINGLE-055/expected/verify.json").read_text())
         self.assertEqual(result["targetResults"][0]["contextDigest"], golden)
-        # A changed command argv is Digest material, so 056 must not reuse it.
+        # 変えたcommandのargvはDigest材料なので、056はこれを再利用してはいけない。
         failing = json.loads((audit.FIXTURES / "single/SINGLE-056/expected/verify.json").read_text())
         self.assertNotEqual(failing["targetResults"][0]["contextDigest"], golden)
 
     def test_verify_fixtures_stage_their_configuration(self):
-        """verify blocks on an untracked configuration, so no fixture may leave
-        .spec/bitz.yaml out of the index."""
+        """verifyは未追跡の設定で停止するので、どのfixtureも
+        .spec/bitz.yamlをindexから外してはいけない。"""
         for identifier in verify_fixtures.CASES:
             manifest = json.loads((audit.FIXTURES / "single" / identifier / "manifest.json").read_text())
             self.assertEqual(manifest["setup"]["operations"], [{"op": "stage", "paths": ["."]}], identifier)
@@ -1496,8 +1496,8 @@ class AuditTests(unittest.TestCase):
             self.assertEqual(result["references"], 2)
 
     def test_implement_digest_differs_from_the_verify_golden(self):
-        """purpose is digest material, and implement records no binding, so the two
-        canonical forms must not collide."""
+        """purposeはDigest材料であり、implementはbindingを記録しないので、2つの
+        Canonical JSONは衝突してはいけない。"""
         golden = (audit.FIXTURES / "single/SINGLE-042/expected/context.canonical.json").read_bytes()
         implement = (audit.FIXTURES / "single/SINGLE-054/expected/context.canonical.json").read_bytes()
         self.assertNotEqual(golden, implement)
@@ -1522,13 +1522,13 @@ class AuditTests(unittest.TestCase):
 
     def test_projection_limit_corpus_actually_crosses_only_the_full_limit(self):
         projection_limit_fixtures.check_limits(projection_limit_fixtures.reviewed_inputs())
-        # Same documents, bodies too small to cross the hard limit.
+        # 文書は同じで、本文はhard limitを越えるには小さい。
         small = {path: (value[0], value[1], value[2], f"# {value[0]} {value[1]}\n")
                  for path, value in projection_limit_fixtures.DOCUMENTS.items()}
         with patch.object(projection_limit_fixtures, "DOCUMENTS", small):
             with self.assertRaises(ValueError):
                 projection_limit_fixtures.check_limits(projection_limit_fixtures.reviewed_inputs())
-        # A standard presentation that already crosses the limit would not isolate detail.
+        # 標準の提示が既に上限を越えていると、detailの効果を分離できない。
         huge = {path: (value[0], value[1], value[2],
                        value[3] if value[0] != "TECH-001" else "x" * (2 * projection_limit_fixtures.HARD_LIMIT_BYTES))
                 for path, value in projection_limit_fixtures.DOCUMENTS.items()}
@@ -1574,8 +1574,8 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(result["core_execution"], "Not run")
 
     def test_stale_and_projection_report_the_committed_golden_digest(self):
-        """046 and 047 resolve completely, so they must carry the same Digest the
-        golden fixture committed, not a separately invented constant."""
+        """046と047は完全に解決するので、別に作った定数ではなく、
+        golden fixtureがcommitしたのと同じDigestを持たなければならない。"""
         golden = (audit.FIXTURES / "single/SINGLE-042/expected/context.canonical.json").read_bytes()
         expected = digest_reference.digest(golden)
         for identifier in ("SINGLE-046", "SINGLE-047"):
@@ -1679,8 +1679,8 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(result["references"], 2)
 
     def test_two_references_agree_and_separate_the_family(self):
-        """A states the digest input; B rebuilds it from the tree. Both must agree,
-        and the matrix's equal/unequal pairs must hold as bytes, not only as hashes."""
+        """AはDigest材料を記述し、Bはtreeから組み立て直す。両者は一致しなければならず、
+        matrixの一致・不一致の組はhashだけでなくbyte列で成り立たなければならない。"""
         canonical = {}
         for identifier in digest_reference.CASES:
             fixture = audit.FIXTURES / "single" / identifier
@@ -1760,8 +1760,8 @@ class AuditTests(unittest.TestCase):
                 self.assertTrue(validate_digest(root, [identifier])["errors"])
 
     def test_digest_audit_rejects_changed_inputs_and_canonical_bytes(self):
-        """A changed input must invalidate the committed Canonical JSON, and an
-        x-only change must not be accepted as a Digest-visible difference."""
+        """変えた入力はcommitしたCanonical JSONを無効にしなければならず、
+        `x-`だけの変更をDigestに現れる差として受理してはいけない。"""
         mutations = [
             ("SINGLE-042", "repo/.spec/requirements/REQ-001.md", lambda t: t.replace("秘密情報を出力しない", "秘密情報を記録しない")),
             ("SINGLE-042", "repo/.spec/technical/TECH-001.md", lambda t: t.replace("command: default", "command: other")),
@@ -1792,8 +1792,8 @@ class AuditTests(unittest.TestCase):
             self.assertTrue(validate_digest(root, ["SINGLE-042"])["errors"])
 
     def test_crosscheck_rejects_a_corpus_it_cannot_account_for(self):
-        """Reference B must refuse inputs outside the reviewed closure instead of
-        silently producing some other digest input."""
+        """参照計算Bは、別のDigest材料を黙って作らず、
+        review済みの閉包の外の入力を拒否しなければならない。"""
         fixture = audit.FIXTURES / "single/SINGLE-042"
         manifest = json.loads((fixture / "manifest.json").read_text())
         with tempfile.TemporaryDirectory() as temporary:
@@ -1968,7 +1968,7 @@ class AuditTests(unittest.TestCase):
                 path.write_text(json.dumps(value))
                 with patch.object(audit, "FIXTURES", root):
                     errors = audit.matrix()["errors"]
-                self.assertTrue(any("requires explicit --base" in e or "forbids --base" in e for e in errors), errors)
+                self.assertTrue(any("明示の--baseが必要です" in e or "--baseを使えません" in e for e in errors), errors)
 
     def test_git_selection_fixtures(self):
         result = validate_selection()
@@ -2501,7 +2501,7 @@ class AuditTests(unittest.TestCase):
         self.assertGreater(result["matrix_ids"], 0)
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            # Preserve real schemas but provide no acceptance fixture directories.
+            # 実際のSchemaは残し、受入fixtureのdirectoryは置かない。
             for name in ("manifest.schema.json", "result.schema.json"):
                 (root / name).write_text((audit.FIXTURES / name).read_text())
             with patch.object(audit, "FIXTURES", root):
