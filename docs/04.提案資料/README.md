@@ -2,16 +2,16 @@
 
 ## 1. 位置づけ
 
-本ディレクトリは、確定した設計（[02.設計書](../02.設計書/README.md)、
-[03.詳細設計](../03.詳細設計/)）に対するレビュー原文と、その裁定状況を保持する。
+本directoryは、確定した設計（[02.設計書](../02.設計書/README.md)、
+[03.詳細設計](../03.詳細設計/)）に対するreview原文と、その裁定状況を保持する。
 
 - 設計書本文は「現在の決定内容」を述べる
 - [決定記録](../02.設計書/10_決定記録/README.md)は「なぜその決定に至ったか」を保持する
-- 各レビュー文書は「決定を変えるべきかもしれない材料」を原文のまま保持する
+- 各review文書は「決定を変えるべきかもしれない材料」を、[用語集](../用語集.md)による文言統一を除き原文のまま保持する
 - 本READMEは「何を採用し、何を残したか」の最新状態を保持する
 
-提案が裁定されたら、設計書本文と決定記録へ反映する。レビュー文書内の行番号や
-改訂例はレビュー時点のスナップショットであり、裁定後の仕様の正にはしない。
+提案が裁定されたら、設計書本文と決定記録へ反映する。review文書内の行番号や
+改訂例はreview時点のsnapshotであり、裁定後の仕様の正にはしない。
 
 ## 2. 一覧
 
@@ -29,17 +29,17 @@
 | [10_並行開発におけるID重複対策の検討と提案.md](10_並行開発におけるID重複対策の検討と提案.md) | 02.設計書、03.詳細設計 | **Closed**（採決事項9件・裁定事項16件を裁定・反映済み） |
 | [11_仕様構造の再編とCore-1.0簡素化提案.md](11_仕様構造の再編とCore-1.0簡素化提案.md) | 02.設計書、03.詳細設計 | **Closed**（11件採用・ADR-039と正本へ反映済み） |
 | [12_Core-1.0実装計画.md](12_Core-1.0実装計画.md) | Core 1.0実装順序 | **Active**（非規範の実装計画） |
-| [13_複合workspaceモデル・不変条件review.md](13_複合workspaceモデル・不変条件review.md) | 連合モデル・不変条件 | **Closed**（P1裁定時にP2も解消） |
+| [13_複合workspaceモデル・不変条件review.md](13_複合workspaceモデル・不変条件review.md) | 複合workspaceモデル・不変条件 | **Closed**（P1裁定時にP2も解消） |
 | [14_ID・横断関係・Context-review.md](14_ID・横断関係・Context-review.md) | ID・横断関係・Context | **Closed**（P1・P2裁定済み） |
 | [15_CLI・対象選択・結果集約review.md](15_CLI・対象選択・結果集約review.md) | CLI・対象選択・結果集約 | **Closed**（P1・P2裁定済み） |
 | [16_verify実行モデルreview.md](16_verify実行モデルreview.md) | verify実行モデル | **Closed**（ADR-041で5件裁定・反映済み） |
 | [17_セキュリティ・信頼境界review.md](17_セキュリティ・信頼境界review.md) | セキュリティ・信頼境界 | **Closed**（P1・P2裁定済み） |
 | [18_互換性・移行・運用review.md](18_互換性・移行・運用review.md) | 互換性・移行・運用 | **Closed**（P1・P2裁定済み） |
 | [19_実装可能性・性能・文書構造review.md](19_実装可能性・性能・文書構造review.md) | 実装可能性・性能・文書構造 | **Closed**（P1・P2裁定済み） |
-| [20_複合workspace-Core-1.0横断review.md](20_複合workspace-Core-1.0横断review.md) | レビュー13〜19の横断整理 | **Closed**（P0・P1・P2裁定済み） |
+| [20_複合workspace-Core-1.0横断review.md](20_複合workspace-Core-1.0横断review.md) | review 13〜19の横断整理 | **Closed**（P0・P1・P2裁定済み） |
 | [21_P0_verify証跡Schema検討.md](21_P0_verify証跡Schema検討.md) | FED-CROSS-001のSchema案 | **Accepted**（ADR-041と正本へ反映済み） |
 | [22_複合workspace残存P1裁定案.md](22_複合workspace残存P1裁定案.md) | FED-CROSS-002〜007の裁定案 | **Accepted**（ADR-042と正本へ反映済み） |
-| [23_複合workspace残存P2裁定案.md](23_複合workspace残存P2裁定案.md) | モノレポ残存P2 6件の裁定案 | **Accepted**（ADR-043と正本へ反映済み） |
+| [23_複合workspace残存P2裁定案.md](23_複合workspace残存P2裁定案.md) | 複合workspace残存P2 6件の裁定案 | **Accepted**（ADR-043と正本へ反映済み） |
 | [24_Core-1.0実装着手方針.md](24_Core-1.0実装着手方針.md) | 実装着手可能性と欠落 | **Accepted**（G1〜G8裁定・反映済み、G9は実装計画へ） |
 | [25_Core-1.0実装前最終reviewと修正提案.md](25_Core-1.0実装前最終reviewと修正提案.md) | 02.設計書、03.詳細設計の実装前最終点検 | **Accepted / Reflected**（Step 0B実施中、Gate A `Blocked`） |
 | [26_context-Markdown提示仕様案.md](26_context-Markdown提示仕様案.md) | contextの既定Markdown提示 | **Accepted / Reflected**（P0 3件・P1 4件を裁定し§9と`SINGLE-104-01`へ反映済み） |
@@ -47,32 +47,32 @@
 
 ## 3. 検討結果の要約
 
-レビュー01とAntigravityレビューは2026-08-27時点で全提案を裁定した。
-以下の§3〜§7はレビュー01・02を閉じた時点の記述である。レビュー03と後続レビューは§8以降を正とする。
-レビュー01〜11は全提案を裁定・反映済みである。レビュー11では仕様の責務境界とCore 1.0 scopeを再評価し、
+review 01とAntigravity reviewは2026-08-27時点で全提案を裁定した。
+以下の§3〜§7はreview 01・02を閉じた時点の記述である。review 03と後続reviewは§8以降を正とする。
+review 01〜11は全提案を裁定・反映済みである。review 11では仕様の責務境界とCore 1.0 scopeを再評価し、
 11件をADR-039と再編後の正本へ反映した。Core 1.0へ入れない案は再評価条件を明記した。
 
 | 文書 | 反映済み・修正反映済み | Core 1.0未採用 | 1.1以降の候補 | 評価のみ |
 |---|---:|---:|---:|---:|
-| レビュー01 | 27 | 3 | 2 | 1 |
-| Antigravityレビュー | 1 | 2 | 1 | 0 |
+| review 01 | 27 | 3 | 2 | 1 |
+| Antigravity review | 1 | 2 | 1 | 0 |
 
-1.1以降の候補も原則としてCore 1.0に対しては不採用であり、自動的な実装予定ではない。各レビュー文書に記載した
-実測条件を満たした場合に限り、新しい提案またはADRとして再起票する。モノレポ連合だけは後発のADR-040で
+1.1以降の候補も原則としてCore 1.0に対しては不採用であり、自動的な実装予定ではない。各review文書に記載した
+実測条件を満たした場合に限り、新しい提案またはADRとして再起票する。複合workspaceだけは後発のADR-040で
 Core 1.0へ再導入した。
 
 | 区分 | 判断 | 進捗 |
 |---|---|---|
-| 識別子・構文 | 3桁以上のID、許可prefix、括弧・エスケープの字句優先順位を採用 | 完了 |
+| 識別子・構文 | 3桁以上のID、許可接頭辞、括弧・escapeの字句優先順位を採用 | 完了 |
 | 置換済み要件 | `supersedes` の逆参照を含め、置換済みREQ・TECHの適用を遮断 | 完了 |
-| Diagnostic | コードの所有者と命名規則をADRで固定し、スタイル診断を追加 | 完了 |
+| Diagnostic | codeの所有者と命名規則をADRで固定し、style診断を追加 | 完了 |
 | 検証契約 | 引数なしverify、全体Frontmatter索引、対象限定AST、`cwd`、coverage強度を明記 | 完了 |
 | doctor・Git | doctorの出力契約、Git情報取得のフォールバック、reportsのGit除外を明記 | 完了 |
 | 導入計画 | Phase 0の試験対象を5件へ縮小し、小規模開発向けの軽量性を優先 | 完了 |
 | EARS-AI表現 | 詳細な構文木ではなく、要求の意味軸を保持する軽量Semantic IRとしてASTを定義 | 完了 |
 | Context提示 | 完全解決と提示量を分離し、Constraint Ledgerと3段階Projectionを採用 | 完了 |
-| モノレポ | 提案11の延期をADR-040で部分改訂し、現行の簡素化を維持して再導入 | Core 1.0対象 |
-| 配布 | Agent Plugins 1.0準拠の`bitz-core`と独立拡張、GitHubマーケットプレイス、doctorプリフライトを採用 | 完了 |
+| 複合workspace | 提案11の延期をADR-040で部分改訂し、現行の簡素化を維持して再導入 | Core 1.0対象 |
+| 配布 | Agent Plugins 1.0準拠の`bitz-core`と独立拡張、GitHubマーケットプレイス、doctor事前検査を採用 | 完了 |
 
 主な反映先は次のとおり。
 
@@ -95,7 +95,7 @@ Core 1.0へ再導入した。
 
 | 事項 | 1.0での判断 | 再評価条件 |
 |---|---|---|
-| 汎用テストselector/nodeid | ファイル単位を維持 | 複数ランナーで偽陽性が日常的に発生し、共通契約を定義できる |
+| 汎用test selector/nodeid | file単位を維持 | 複数runnerで偽陽性が日常的に発生し、共通契約を定義できる |
 | purpose別の`refines`省略 | 完全閉包を維持 | 上限超過が実タスクで反復し、意味を欠落させないstatement起点規則を証明できる |
 | `bitz check --strict` | 共通終了コードと可視化を維持 | warning種別ごとのCI昇格需要が確認される |
 | `bitz fmt` | 公開操作へ追加しない | EARS-AI表記揺れが主要な運用負荷になる |
@@ -105,37 +105,37 @@ Core 1.0へ再導入した。
 | 削除済みIDのGit履歴tombstone索引 | 管理済みSPECの削除禁止と現在集合の重複検出に限定 | Core検査を迂回したID再利用事故が確認され、shallow clone時も決定論的な検出範囲を定義できる |
 | 未所有code/test pathのwarning化 | 対象外（件数のみ）を維持 | SPEC整備率が高い運用で、未所有pathの見落としが実害として確認される |
 | ADR改訂関係の型付き語彙・`x-amends` | 3点記録の規約を維持 | 改訂関係の機械追跡が実測で必要になる（ADR-020 Decision 4、ADR-033） |
-| ファイル数によるcache bypass | 固定閾値を設けない | benchmarkでcache I/Oが支配的と判明する |
+| file数によるcache bypass | 固定閾値を設けない | benchmarkでcache I/Oが支配的と判明する |
 
 ## 5. クローズ判定
 
-- 次期版の構想、共通設計、EARS-AI規格、SPECファイル規定は設計済み
+- 次期版の構想、共通設計、EARS-AI規格、SPEC file規定は設計済み
 - 旧版の試行錯誤から有効な依存解決・境界検証を選別し、軽量な中核へ反映済み
 - 全提案に採否、理由、反映先または再評価条件を記録済み
 - 実装前に解消すべき契約矛盾は正本へ反映済み
-- 実装コード、性能ベンチマーク、1.1以降の拡張機能は未着手
+- 実装code、性能benchmark、1.1以降の拡張機能は未着手
 
-したがってレビュー01・02の設計レビューゲートは**完了**とする。次の工程はCore 1.0の最小垂直スライス実装である。
-将来候補は本ディレクトリから直接実装せず、新しい実測結果と裁定を伴う提案またはADRから開始する。
+したがってreview 01・02の設計reviewゲートは**完了**とする。次の工程はCore 1.0の最小垂直スライス実装である。
+将来候補は本directoryから直接実装せず、新しい実測結果と裁定を伴う提案またはADRから開始する。
 
-## 6. クローズ後レビュー
+## 6. クローズ後review
 
-2026-08-27に、提案項目の網羅性、裁定と正本の対応、未決表現、将来候補の再評価条件をレビューした。
+2026-08-27に、提案項目の網羅性、裁定と正本の対応、未決表現、将来候補の再評価条件をreviewした。
 
-レビュー中に、補助SPECの関係図へADRの`requires`がない不整合と、旧版調査refが短縮SHAのままの
+review中に、補助SPECの関係図へADRの`requires`がない不整合と、旧版調査refが短縮SHAのままの
 記述を検出した。前者は現契約を関係図へ反映し、後者は到達可能性を確認して完全SHAへ修正した。
 
-- レビュー01の32提案と評価1件、Antigravityレビューの4提案に裁定がある
-- 各ファイルの状態は`Closed`で一致し、未チェック項目はない
+- review 01の32提案と評価1件、Antigravity reviewの4提案に裁定がある
+- 各fileの状態は`Closed`で一致し、未検査項目はない
 - 採用項目は設計書、詳細設計、ADRのいずれかを正本とし、提案原文を規範化していない
 - 未採用項目は理由を持ち、将来候補は再評価条件を持つ
 - Core 1.0の実装を止める未裁定事項はない
 
-修正後のレビュー結果は**残存指摘なし（クローズ可）**とする。
+修正後のreview結果は**残存指摘なし（クローズ可）**とする。
 
-## 7. 外部CLIレビュー
+## 7. 外部CLI review
 
-2026-08-27にagyへ設計書全体の独立レビューを依頼した。総合判定は
+2026-08-27にagyへ設計書全体の独立reviewを依頼した。総合判定は
 「合格（一部軽微な不整合あり）」で、3件の指摘を正本と照合して次のように裁定した。
 
 | 指摘 | 裁定 | 対応 |
@@ -145,28 +145,28 @@ Core 1.0へ再導入した。
 | Context性能目標の128 KiB条件が一部で省略 | 採用・反映済み | 実装ロードマップとContext Resolution仕様を共通アーキテクチャに統一 |
 
 Claude Codeは通常サンドボックス内でAnthropic APIのDNS timeoutとなったが、外部通信を許可した
-読取り専用実行で設計書全体のレビューを完了した。5件の指摘を正本と照合し、すべて採用・反映した。
+読取り専用実行で設計書全体のreviewを完了した。5件の指摘を正本と照合し、すべて採用・反映した。
 
 | 指摘 | 裁定 | 対応 |
 |---|---|---|
 | doctorで`bitz.yaml`不在とSchema不正が同じ`blocked` | 修正採用・反映済み | 不在と未対応majorは`blocked`、構文・型・必須項目不正は`error`へ分離 |
 | REQ必須H2の列挙に`Verification`がない | 採用・反映済み | 要求SPEC仕様の必須節へ追加 |
-| Context Bundle例の文書直下に未定義`expandable`がある | 採用・反映済み | 重複フィールドを削除し、`revisionHistory.expandable`へ一本化 |
+| Context Bundle例の文書直下に未定義`expandable`がある | 採用・反映済み | 重複fieldを削除し、`revisionHistory.expandable`へ一本化 |
 | 運用設計のContext性能目標に128 KiB条件がない | 採用・反映済み | 共通アーキテクチャ、ロードマップ、詳細仕様と統一 |
-| Constraint Ledgerの`role`がSemantic IRで未定義 | 採用・反映済み | `documentRole`へ改称し、所有文書から導出するContextメタデータとして定義 |
+| Constraint Ledgerの`role`がSemantic IRで未定義 | 採用・反映済み | `documentRole`へ改称し、所有文書から導出するContext metadataとして定義 |
 
-## 8. レビュー03（2026-08-31、裁定済み）
+## 8. review 03（2026-08-31、裁定済み）
 
-裁定済み提案の反映後の正本を対象に、独立レビューを実施した。既裁定の論点は再提起せず、
+裁定済み提案の反映後の正本を対象に、独立reviewを実施した。既裁定の論点は再提起せず、
 反映によって生じた接続部の不整合と未指摘の欠落だけを扱う。
 
 | 区分 | 件数 | 主な内容 |
 |---|---:|---|
-| P1 | 5 | 上位文書が前提とする設定キー・フィールド・モードが正本Schemaに存在しない |
-| P2 | 7 | 引数なし`verify`の対象漏れ、モノレポ段階導入時の集約status、`doctor`判定、自己適合性 |
+| P1 | 5 | 上位文書が前提とする設定key・field・モードが正本Schemaに存在しない |
+| P2 | 7 | 引数なし`verify`の対象漏れ、複合workspace段階導入時の集約status、`doctor`判定、自己適合性 |
 | P3 | 5 | CLI文法、表区分、severity記載の整合 |
 
-P1の5件（`profiles`設定キー、`verify`の`cwd`、Frontmatter `owners`、`EAI-*`のseverity、
+P1の5件（`profiles`設定key、`verify`の`cwd`、Frontmatter `owners`、`EAI-*`のseverity、
 Profile `dependencies`）は、いずれも「どちらが正か」ではなく「片方に定義がない」型の欠落であり、
 実装者が仕様から動作を決定できない。
 
@@ -176,8 +176,8 @@ Profile `dependencies`）は、いずれも「どちらが正か」ではなく�
 
 | 項目 | 裁定 | 対応 |
 |---|---|---|
-| `profiles`設定キーが`bitz.yaml`にない | 採用 | 予約キーとして追加。Core 1.0では型のみ検査し判定に不使用 |
-| `verify`が`cwd`を無視 | 採用 | 解決した`cwd`で実行。未指定時のみworkspaceルート |
+| `profiles`設定keyが`bitz.yaml`にない | 採用 | 予約keyとして追加。Core 1.0では型のみ検査し判定に不使用 |
+| `verify`が`cwd`を無視 | 採用 | 解決した`cwd`で実行。未指定時のみworkspace root |
 | Frontmatter `owners`が未定義 | 修正採用 | 共通項目へ追加せず、規格本文を`x-owners`へ統一 |
 | `EAI-*`にseverityがない | 採用 | severity列と`draft`降格規則を追加。ID系は`draft`でもerror |
 | Profile `dependencies`がADR-016と矛盾 | 採用 | Manifestから削除し、Profile間依存を無条件禁止 |
@@ -189,11 +189,11 @@ Profile `dependencies`）は、いずれも「どちらが正か」ではなく�
 | 項目 | 裁定 | 対応 |
 |---|---|---|
 | 存在しない「厳格モード」の記述 | 採用 | 未知拡張をwarning固定とし記述を削除 |
-| 規範文なしTECHが引数なしverifyの対象外 | 採用 | `tests`宣言のあるものを対象へ追加。句単位カバレッジ判定は対象外 |
-| 0件memberが`verify --all-workspaces`全体を`blocked`にする | 採用 | member単位はwarning、連合全体0件だけerror |
+| 規範文なしTECHが引数なしverifyの対象外 | 採用 | `tests`宣言のあるものを対象へ追加。句単位coverage判定は対象外 |
+| 0件memberが`verify --all-workspaces`全体を`blocked`にする | 採用 | member単位はwarning、複合workspace全体0件だけerror |
 | `doctor`検査1の`error`とADR-016の`blocked`の食い違い | 採用 | 版不適合と起動失敗を分離し`SPEC-DOCTOR-CORE-002`を追加 |
 | `bitz verify`に`--format`がない | 採用 | 公開文法へ追加し`--all-workspaces`形を分離 |
-| 横断テストの重複排除スコープが未定義 | 採用 | 実行済み集合を連合全体で1つに統一 |
+| 横断testの重複排除scopeが未定義 | 採用 | 実行済み集合を複合workspace全体で1つに統一 |
 | 決定記録が自らの本文構造規定に非適合 | 修正採用 | 本文構造規定だけを適用（配置・命名規則は対象外）。ADR 20件を適合 |
 
 2026-08-31にP3の5件を裁定した。いずれも既存の決定を変更せず、決まっている内容を読み取れる形に
@@ -207,13 +207,13 @@ Profile `dependencies`）は、いずれも「どちらが正か」ではなく�
 | `check`読取り専用の表現が3文書で異なる | 採用 | 最も正確な表現へ統一 |
 | `CTX-COVERAGE-*`にseverityがない | 採用 | `implement`でwarning、`verify`で`blocked`を表へ明記 |
 
-レビュー03の全17件が裁定済みとなり、Core 1.0の設計レビューゲートは再び**完了**とする。
-未着手として残るのは実装コード、性能ベンチマーク、1.1以降の拡張機能である。
-本レビューで追加した決定記録はADR-018、ADR-019、ADR-020の3件である。
+review 03の全17件が裁定済みとなり、Core 1.0の設計reviewゲートは再び**完了**とする。
+未着手として残るのは実装code、性能benchmark、1.1以降の拡張機能である。
+本reviewで追加した決定記録はADR-018、ADR-019、ADR-020の3件である。
 
-## 9. P1残存契約レビュー（2026-08-31、裁定済み）
+## 9. P1残存契約review（2026-08-31、裁定済み）
 
-レビュー03の反映後に、Diagnostic共通契約、規範行候補Scanner、`bitz verify`の明示対象へ
+review 03の反映後に、Diagnostic共通契約、規範行候補Scanner、`bitz verify`の明示対象へ
 実装分岐が残っていることを確認した。3件を
 [04_Core-1.0_P1残存契約reviewと改訂提案.md](04_Core-1.0_P1残存契約reviewと改訂提案.md)へ記録し、
 [ADR-021](../02.設計書/10_決定記録/ADR-021_Diagnostic-severity・操作status・source-Schemaの分離.md)、
@@ -224,14 +224,14 @@ Profile `dependencies`）は、いずれも「どちらが正か」ではなく�
 |---|---|---|
 | Diagnosticのseverity・status・source | 採用・反映済み | severityと操作statusを分離し、`source.kind`を`file`、`environment`、`invocation`で定義 |
 | 不正規範行の検出 | 採用・反映済み | 候補抽出とID構文検証を分離し、`SPEC-REQ-STATEMENT-001`を追加 |
-| `verify`明示対象 | 採用・反映済み | REQ、TECH、規範文、TASK、SPECファイルpathへ限定し、コード・テストpathとADRを拒否 |
+| `verify`明示対象 | 採用・反映済み | REQ、TECH、規範文、TASK、SPEC file pathへ限定し、code・test pathとADRを拒否 |
 
-P1 3件の正本反映を完了したため、Core 1.0の設計レビューゲートを再び**完了**とする。
+P1 3件の正本反映を完了したため、Core 1.0の設計reviewゲートを再び**完了**とする。
 
-## 10. P2残存運用契約レビュー（2026-08-31、裁定済み）
+## 10. P2残存運用契約review（2026-08-31、裁定済み）
 
 P1反映後の正本について、状態遷移、Git差分、`check`入力、verify実行、TASK接続、Diagnostic集約、
-レポート生成の実装分岐を確認した。レビュー03の旧P2 7件とは別の指摘として、
+report生成の実装分岐を確認した。review 03の旧P2 7件とは別の指摘として、
 [05_Core-1.0_P2残存運用契約reviewと改訂提案.md](05_Core-1.0_P2残存運用契約reviewと改訂提案.md)へ記録した。
 
 | 項目 | 裁定 | 対応 |
@@ -241,14 +241,14 @@ P1反映後の正本について、状態遷移、Git差分、`check`入力、ve
 | verify timeout・command結果・Digest | 採用・反映済み | [ADR-026](../02.設計書/10_決定記録/ADR-026_verify実行binding・timeout・結果Schemaの確定.md) |
 | TASKと規範文なしTECH、`adjacent` | 修正採用・反映済み | 既存型制約をTASK・Context・verifyへ同期 |
 | Diagnostic効果・集約・workspace source | 採用・反映済み | [ADR-027](../02.設計書/10_決定記録/ADR-027_Diagnostic結果効果・集約・workspace-sourceの確定.md) |
-| レポート生成条件 | 後続改訂 | 当時は非成功時の自動保存へ統一。ADR-041でstatusを問わず明示`--report`時だけへ変更 |
+| report生成条件 | 後続改訂 | 当時は非成功時の自動保存へ統一。ADR-041でstatusを問わず明示`--report`時だけへ変更 |
 
-P2 7件の正本反映を完了したため、Core 1.0の設計レビューゲートを再び**完了**とする。
+P2 7件の正本反映を完了したため、Core 1.0の設計reviewゲートを再び**完了**とする。
 
-## 11. P3記述整合レビュー（2026-08-31、裁定済み）
+## 11. P3記述整合review（2026-08-31、裁定済み）
 
-P2反映後の正本について、TASK要約、JSON例、Digest表記、レポート名、Diagnostic表の同期を確認した。
-レビュー03の旧P3 5件とは別の指摘として、
+P2反映後の正本について、TASK要約、JSON例、Digest表記、report名、Diagnostic表の同期を確認した。
+review 03の旧P3 5件とは別の指摘として、
 [06_Core-1.0_P3記述整合reviewと改訂提案.md](06_Core-1.0_P3記述整合reviewと改訂提案.md)へ記録した。
 
 | 項目 | 裁定 | 対応 |
@@ -257,12 +257,12 @@ P2反映後の正本について、TASK要約、JSON例、Digest表記、レポ�
 | warning結果のJSON例 | 採用・反映済み | warningの根拠を追加し、単純な外形例は`passed`へ変更 |
 | `check`結果例の`revision` | 採用・反映済み | `base`、`commit`、`dirty`を追加 |
 | SHA-256表記 | 採用・反映済み | `sha256:[0-9a-f]{64}`へ統一 |
-| レポートファイル名 | 採用・反映済み | UTC basic形式と衝突時連番を正規形へ明記 |
+| report file名 | 採用・反映済み | UTC basic形式と衝突時連番を正規形へ明記 |
 | Diagnostic表の列名 | 採用・反映済み | `resultStatus`へ統一 |
 
-P3 6件の正本反映を完了したため、Core 1.0の設計レビューゲートを再び**完了**とする。
+P3 6件の正本反映を完了したため、Core 1.0の設計reviewゲートを再び**完了**とする。
 
-## 12. ユースケース・フロー遷移レビュー（2026-08-31、全8件裁定済み）
+## 12. ユースケース・flow遷移review（2026-08-31、全8件裁定済み）
 
 [ユースケース設計](../02.設計書/05_ユースケース.md)の作成時に、状態遷移matrixではなく
 ユースケース間の接続に残る8件の実装分岐を確認した。
@@ -274,7 +274,7 @@ P3 6件の正本反映を完了したため、Core 1.0の設計レビューゲ�
 | P3 | 1 | ADR部分改訂の追跡方法 | 裁定・反映済み |
 
 P1 3件はADR-028〜030、P2のうち2件はADR-031・032、P3 1件はADR-033として裁定し、正本へ反映した。
-ADR-032は後続の実装前異常ケースレビューで[ADR-037](../02.設計書/10_決定記録/ADR-037_Git基準版間のSPEC同一性と削除規則.md)により置き換えた。
+ADR-032は後続の実装前異常case reviewで[ADR-037](../02.設計書/10_決定記録/ADR-037_Git基準版間のSPEC同一性と削除規則.md)により置き換えた。
 UC-FLOW-005と006はCoreの機械契約を追加しないため、本文反映だけで裁定した。
 
 | ID | 裁定 | 主なADR |
@@ -284,17 +284,17 @@ UC-FLOW-005と006はCoreの機械契約を追加しないため、本文反映�
 | UC-FLOW-003 | 検証binding識別子を`(workspaceId, 正規化argv template, 正規化cwd)`へ統一し、`{tests}`の有無にかかわらず1回実行とする | [ADR-030](../02.設計書/10_決定記録/ADR-030_verify実行bindingの正規識別子と重複排除単位の統一.md) |
 | UC-FLOW-004 | 変更code/test pathを`implements`・`tests[].path`の逆索引から所有REQ/TECHへ正規化し、未所有pathは対象外（件数のみ）とする | [ADR-031](../02.設計書/10_決定記録/ADR-031_変更code・testからの検査対象選択.md) |
 | UC-FLOW-005 | 機械起点をREQ・TECH・規範文・`open` TASKに限り、SPECを作らない変更をCore保証外と明示する | 本文反映 |
-| UC-FLOW-006 | Full Flowへ否決edgeと`Done`を追加し、レビューの承認・否決をCoreの機械契約に含めないと明示する | 本文反映 |
+| UC-FLOW-006 | Full Flowへ否決edgeと`Done`を追加し、reviewの承認・否決をCoreの機械契約に含めないと明示する | 本文反映 |
 | UC-FLOW-007 | 2時点比較で意味の再利用を判定せず、管理済みSPECの削除禁止と現在集合の重複検出へ限定する | [ADR-037](../02.設計書/10_決定記録/ADR-037_Git基準版間のSPEC同一性と削除規則.md) |
 | UC-FLOW-008 | ADRの部分改訂を許可し、後継ADRのDecision・旧ADRの`Notes`・旧ADRの`Revision History`の3点で記録する | [ADR-033](../02.設計書/10_決定記録/ADR-033_部分改訂ADRの記録規約.md) |
 
 指摘、修正候補、反映先、受入条件、裁定結果は
 [07_ユースケース・flow遷移reviewと修正提案.md](07_ユースケース・flow遷移reviewと修正提案.md)を正とする。
-8件すべてを裁定・反映し、本レビューはCloseした。
+8件すべてを裁定・反映し、本reviewはCloseした。
 
-## 13. フロー終端・遷移条件レビュー（2026-08-31、8件裁定・反映済み）
+## 13. flow終端・遷移条件review（2026-08-31、8件裁定・反映済み）
 
-レビュー07の8件を裁定・反映した状態で、開発フローとSPEC状態機械を終端と遷移条件の観点から再確認した。
+review 07の8件を裁定・反映した状態で、開発flowとSPEC状態機械を終端と遷移条件の観点から再確認した。
 
 | 優先度 | 裁定済み | 未裁定 | 主な残存内容 |
 |---|---:|---:|---|
@@ -310,7 +310,7 @@ UC-FLOW-005と006はCoreの機械契約を追加しないため、本文反映�
 | UC-FLOW-009 | 修正採用・反映済み | TASK起点の`Done`をHuman Review、`open -> done`、Revision History更新、変更後の最終`check`、Git記録の順に固定 |
 | UC-FLOW-012 | 採用・反映済み | `done` TASKは`implement`を`blocked`、`verify`と`interpret`を許可し、明示`check`も許可 |
 | UC-FLOW-010 | 採用・反映済み | 引数なし変更範囲`check`の対象0件は、他のDiagnosticがなければ`passed`とし、選択件数を結果へ記録 |
-| UC-FLOW-013 | 採用・反映済み | checkは`passed`または`passed_with_warnings`でフローを通過し、`--strict`は追加しない |
+| UC-FLOW-013 | 採用・反映済み | checkは`passed`または`passed_with_warnings`でflowを通過し、`--strict`は追加しない |
 | UC-FLOW-016 | 採用・反映済み | Done前の`Stopped`、REQ／TECHの`rejected`と不採用理由、TASKの`cancelled`と中止理由を追加し、Historyとして保持 |
 | UC-FLOW-011 | 修正採用・反映済み | Human Review否決を理由別にIntent、Context、Implementへ戻し、再作業しない場合は`Stopped`とする |
 | UC-FLOW-014 | 案1採用・反映済み | ADR部分改訂を設計資料のローカル規約に限定し、Coreは文書全体の後継化だけを認識する |
@@ -324,25 +324,25 @@ P1はすべて裁定済みである。
 
 指摘、修正候補、反映先、受入条件は
 [08_flow終端・遷移条件reviewと修正提案.md](08_flow終端・遷移条件reviewと修正提案.md)を正とする。
-8件すべてを裁定・反映し、本レビューはClosedした。実装根拠にはADR-034、ADR-035、ADR-036と
+8件すべてを裁定・反映し、本reviewはClosedした。実装根拠にはADR-034、ADR-035、ADR-036と
 反映後の正本を使用する。
 
-## 14. 実装前異常ケースレビュー（2026-09-01、4件裁定・反映済み）
+## 14. 実装前異常case review（2026-09-01、4件裁定・反映済み）
 
-実装着手前に、削除・rename、取り止め後の途中成果物、verify異常終了、入力読取り障害を再確認した。
+実装着手前に、削除・rename、取止め後の途中成果物、verify異常終了、入力読取り障害を再確認した。
 
 | ID | 裁定 | 対応 |
 |---|---|---|
 | EDGE-001 | 修正採用 | `(workspaceId, documentId)`で基準版と現在版を対応付け、管理済みSPEC削除を拒否。ADR-032をADR-037で置換 |
-| EDGE-002 | 縮小採用 | 既存Rationaleで途中成果物の処遇を記録し、変更を伴うフェーズだけを個別commitへ分離 |
+| EDGE-002 | 縮小採用 | 既存Rationaleで途中成果物の処遇を記録し、変更を伴うphaseだけを個別commitへ分離 |
 | EDGE-003 | 縮小採用 | verifyを決定論的に逐次実行し、timeout停止保証を直接processへ限定。有限時間回収は後続`FIN-PROC-001`で補完 |
 | EDGE-004 | 縮小採用 | `SPEC-INPUT-READ-001`を追加し、原子的snapshotはCore 1.0の非目標とする |
 
 Git全履歴走査、tombstone索引、`Stopped`専用status、空commit、verify並列scheduler、OS横断の
-process-tree完全制御、ファイルシステム全体の原子的snapshotは、Core 1.0には過大として採用しない。
+process-tree完全制御、filesystem全体の原子的snapshotは、Core 1.0には過大として採用しない。
 理由と再評価条件は
 [09_Core-1.0_実装前異常case-reviewと修正提案.md](09_Core-1.0_実装前異常case-reviewと修正提案.md)を正とする。
-4件すべてを裁定・反映し、本レビューはClosedした。
+4件すべてを裁定・反映し、本reviewはClosedした。
 
 ## 15. 並行開発におけるID重複対策（2026-09-01、裁定・反映済み）
 
@@ -350,7 +350,7 @@ process-tree完全制御、ファイルシステム全体の原子的snapshotは
 > `Integrate`段階はCore 1.0から延期された。現行契約には使用しない。
 
 並行branchで独立採番された文書IDの衝突は、当初の設計では検出できるがmerge後にしか検出できなかった。
-予防機構と早期検出機構がなく、正規ファイル名が`<ID>-<slug>.md`を許すためGitのadd/add conflictも働かない。
+予防機構と早期検出機構がなく、正規file名が`<ID>-<slug>.md`を許すためGitのadd/add conflictも働かない。
 検討経緯は
 [10_並行開発におけるID重複対策の検討と提案.md](10_並行開発におけるID重複対策の検討と提案.md)、
 当時の決定は[ADR-038](../02.設計書/10_決定記録/ADR-038_並行開発のID衝突解決と統合段階.md)に記録した。
@@ -364,12 +364,12 @@ process-tree完全制御、ファイルシステム全体の原子的snapshotは
 | 論点 | 確定した方針 |
 |---|---|
 | 先勝ちの基準 | 統合先branchの先端に存在する側を勝者とする。commit時刻、`semanticHash`、Git rename検出を使わない |
-| 正規手順 | 統合先との合流をGitへ記録した後の木で改番する。勝者が旧IDを保持するためキーが消えない |
+| 正規手順 | 統合先との合流をGitへ記録した後の木で改番する。勝者が旧IDを保持するためkeyが消えない |
 | 改番の実行主体 | Skill／拡張へ委譲し、Coreは検出と機械可読な提示に限る。公開操作は4つのまま非変更系 |
-| 新IDの採番 | 同一workspace・同一種別の全IDの最大値+1。ゼロ埋め幅の異なるIDは別IDとする |
+| 新IDの採番 | 同一workspace・同一種別の全IDの最大値+1。0埋め幅の異なるIDは別IDとする |
 | 対象種別 | REQ、TECH、TASK、ADR |
 | Frontmatter | 改番を表す項目を追加しない。記録は`Revision History`へ置く |
-| 開発フロー | 骨格へ`Integrate`を追加。完了条件はPR mergeを含めず、統合先先端を基準版とする再検査の通過まで |
+| 開発flow | 骨格へ`Integrate`を追加。完了条件はPR mergeを含めず、統合先先端を基準版とする再検査の通過まで |
 | CIの基準版 | `--base <統合先先端>`へ統一。検査対象の木が統合先先端を含むことを前提とする |
 
 新しい入力機構、永続台帳、Git履歴走査は追加していない。ADR-037が裁定した「削除と再作成の交差」に対する
@@ -383,17 +383,17 @@ process-tree完全制御、ファイルシステム全体の原子的snapshotは
   するが、基準版は自branchの外側にあるため、branch内で`open -> done`まで進めたTASKは`[new] -> done`と
   なり許可された遷移に含まれない。実装すれば`done` TASKを含むPRを一律に`failed`にする。基準版に存在
   しない文書は現在値の語彙だけを検査する規則を確定した（丙-2）。承認済みREQ保護が「Git基準版に存在
-  しない新規ファイルは変更前状態との比較対象外とする」としているのと同じ原則である。
+  しない新規fileは変更前状態との比較対象外とする」としているのと同じ原則である。
 - **§4.2の判定表が§3.1と矛盾していた。** 「両方が基準版に存在する＝発生しない」としていたが、slugの
-  異なる同一IDファイルはGitがconflictにせず、合流commitのtreeには2件入る。`SPEC-BASE-AMBIGUOUS-001`／
+  異なる同一ID fileはGitがconflictにせず、合流commitのtreeには2件入る。`SPEC-BASE-AMBIGUOUS-001`／
   error／`blocked`として扱う（甲-1、乙-1）。
 - **IDDUP-005の推奨が実装できなかった。** 改番pathを`rewriteSites`から境界検査の対象外にする案は、
-  境界検査の時点で重複が解消し`idCollisions`が空になるため成立しない。P1で確定したcommit規約とフロー
+  境界検査の時点で重複が解消し`idCollisions`が空になるため成立しない。P1で確定したcommit規約とflow
   順序が既に解になっており、追加したのは基準版の条件1文だけである（丙-3）。
 - **改番でDigestが変化しないという受入条件が成立しなかった。** `semanticHash`は正規化Frontmatterを含む
   ため、`id`の変更はContext Digestを変える。`Revision History`への追記だけが意味集合の外にある（甲-3）。
 - **IDDUP-009の理由付けが誤っていた。** 敗者の削除が許されるのはADR-037 Decision 4（未追跡SPECの破棄）
-  ではなく、勝者が同じ文書IDを保持しキーが消えないためである（丁-2）。
+  ではなく、勝者が同じ文書IDを保持しkeyが消えないためである（丁-2）。
 
 ### 15.3 安全側へ倒した判断
 
@@ -413,19 +413,19 @@ ULID等への変更、基準版の重複pathから代表を選ぶ案も採らな
 
 ## 16. 仕様構造の再編とCore 1.0簡素化（2026-09-01、裁定・反映済み）
 
-既存レビューで契約の欠落と不整合を解消した結果、同じ規則を設計書、詳細設計、ユースケース、運用、ADRへ
+既存reviewで契約の欠落と不整合を解消した結果、同じ規則を設計書、詳細設計、ユースケース、運用、ADRへ
 同期するコストが顕在化した。構造化設計、KISS、YAGNI、DRYの観点から、規範の所有者を1か所へ固定し、
 Core 1.0を単一workspaceの垂直スライスへ戻す案を
 [11_仕様構造の再編とCore-1.0簡素化提案.md](11_仕様構造の再編とCore-1.0簡素化提案.md)に記録した。
 
 STRUCT-001〜011をすべて採用し、[ADR-039](../02.設計書/10_決定記録/ADR-039_Core-1.0仕様構造の再編とscope縮小.md)、
-再編後の`docs/02.設計書`と`docs/03.詳細設計`へ反映した。モノレポ連合、ID改番支援、Profile実行基盤、
-Projection Digestなどは、提案11の再評価条件を満たすまでCore 1.0へ戻さない。このうちモノレポ延期だけは、
+再編後の`docs/02.設計書`と`docs/03.詳細設計`へ反映した。複合workspace、ID改番支援、Profile実行基盤、
+Projection Digestなどは、提案11の再評価条件を満たすまでCore 1.0へ戻さない。このうち複合workspace延期だけは、
 2026-09-02の後続判断で部分改訂した。
 
-## 17. モノレポSPEC連合のCore 1.0再導入（2026-09-02、裁定・反映済み）
+## 17. 複合workspaceのCore 1.0再導入（2026-09-02、裁定・反映済み）
 
-対象モノレポで1.0から安定したworkspace ID、横断参照、所有境界を持たせるため、
+対象monorepoで1.0から安定したworkspace ID、横断参照、所有境界を持たせるため、
 [ADR-040](../02.設計書/10_決定記録/ADR-040_複合workspaceをCore-1.0へ再導入する.md)で
 ADR-039 Decision 5だけを部分改訂した。旧仕様をそのまま戻さず、明示catalog、修飾ID、横断Context、
 `--all-workspaces`を再編後の責務境界へ追加した。
@@ -435,23 +435,23 @@ command名単位のverify、Context Digestだけを公開hashとする方針、P
 規範は再編後の`docs/02.設計書`と`docs/03.詳細設計`、実装順序は更新後の
 [12_Core-1.0実装計画](12_Core-1.0実装計画.md)へ反映済みである。
 
-## 18. モノレポCore 1.0再レビュー（2026-09-02、レビュー時点）
+## 18. 複合workspaceCore 1.0再review（2026-09-02、review時点）
 
-ADR-040反映後の作業ツリーを固定し、7観点を互いに独立してレビューした。結果はP0 1件、P1 18件、P2 10件の
+ADR-040反映後の作業treeを固定し、7観点を互いに独立してreviewした。結果はP0 1件、P1 18件、P2 10件の
 計29件である。同じ原因を別観点から検出した指摘を、
-[横断レビュー](20_複合workspace-Core-1.0横断review.md)で7つの裁定単位へ統合した。
+[横断review](20_複合workspace-Core-1.0横断review.md)で7つの裁定単位へ統合した。
 
 | 横断課題 | 優先度 | 要旨 |
 |---|---|---|
 | FED-CROSS-001 | P0 / Closed | 複数target verifyを単一`contextDigest`で証明できない |
 | FED-CROSS-002 | P1 | 旧Coreが同一Schema majorの`monorepo`を無視できる可能性がある |
 | FED-CROSS-003 | P1 | 未登録SPECとsymlinkを含む所有境界の完全性が不足する |
-| FED-CROSS-004 | P1 | Context、連合結果、bindingの公開Schemaが閉じていない |
+| FED-CROSS-004 | P1 | Context、複合workspaceの結果、bindingの公開Schemaが閉じていない |
 | FED-CROSS-005 | P1 | 全体操作の起点、未知workspace、継続、revisionが未確定である |
-| FED-CROSS-006 | P1 | workspace identityと移行・rollback契約が不足する |
+| FED-CROSS-006 | P1 | workspace同一性と移行・rollback契約が不足する |
 | FED-CROSS-007 | P1 | resource数値、性能測定、期待JSON fixtureが不足する |
 
-設計方針は条件付き採用を維持するが、設計レビューゲートは再度**未完了**とする。§17のContext Digest配置は、
+設計方針は条件付き採用を維持するが、設計reviewゲートは再度**未完了**とする。§17のContext Digest配置は、
 単一targetには成立するものの複数targetでは成立しないことが判明した。FED-CROSS-001は後続ADR-041で裁定・反映した。
 この時点では残るP1裁定まで実装着手を保留した。P1は後続の§20とADR-042で裁定・反映済みである。
 
@@ -461,50 +461,50 @@ FED-CROSS-001を[提案21](21_P0_verify証跡Schema検討.md)で具体化し、
 [ADR-041](../02.設計書/10_決定記録/ADR-041_verify対象別証跡とreport明示保存の分離.md)として裁定した。
 
 - targetごとにContextを解決し、`targetResults[]`を検証証跡の正本とする
-- top-levelの単一`contextDigest`、`targets[]`、`statements[]`を廃止する
+- 最上位の単一`contextDigest`、`targets[]`、`statements[]`を廃止する
 - binding IDを単一workspaceでも`<workspace-id>::<command-name>`へ統一する
 - Context／coverageが非成功のtargetだけが要求するbindingは実行しない
-- target、workspace、top-levelのstatusを段階別に集約する
+- target、workspace、最上位のstatusを段階別に集約する
 - `check`と`verify`はstatusにかかわらず`--report`指定時だけ結果fileを保存する
 
 report保存条件は、独立履歴branchで確認した並行PR／worktree検査の残留file事例を踏まえた。Git除外は維持するが、
 自動保存の根拠には使わない。これによりFED-VER-001〜005とFED-CROSS-001をClosedとする。
 
-## 20. モノレポ残存P1の裁定（2026-09-03、裁定・反映済み）
+## 20. 複合workspace残存P1の裁定（2026-09-03、裁定・反映済み）
 
-P0反映後に残るP1 15件を[提案22](22_複合workspace残存P1裁定案.md)で再整理した。Core 1.0が未リリースという
+P0反映後に残るP1 15件を[提案22](22_複合workspace残存P1裁定案.md)で再整理した。Core 1.0が未releaseという
 確認済み事実により`FED-MIG-001`はversion gateを追加せず解消でき、正本への追加裁定が必要な実質残件は14件である。
 
-残件は、初回公開とidentity、catalog完全性と所有境界、公開Schema、CLI境界、resource上限、性能受入条件の
+残件は、初回公開と同一性、catalog完全性と所有境界、公開Schema、CLI境界、resource上限、性能受入条件の
 6単位へ統合し、全点を採用した。判断理由を
 [ADR-042](../02.設計書/10_決定記録/ADR-042_複合workspaceの同一性・所有境界・公開契約を確定する.md)、
 機械契約を詳細設計、移行と性能条件を運用手順・実装計画へ反映した。これによりP0・P1 gateはClosedとする。
-設計レビュー全体は残るP2 6件の裁定まで完了としない。
+設計review全体は残るP2 6件の裁定まで完了としない。
 
-## 21. モノレポ残存P2の裁定（2026-09-03、裁定・反映済み）
+## 21. 複合workspace残存P2の裁定（2026-09-03、裁定・反映済み）
 
 P1反映後に残ったDiagnostic優先順位、非成功後の継続、TASK directory境界、consumer rollback、計算量、
 conformance matrixの6件を[提案23](23_複合workspace残存P2裁定案.md)で具体化した。
 
-提案は、global preflightだけを全停止境界とし、その後は文書・target・binding単位で独立処理を継続する。
+提案は、全体事前検査だけを全停止境界とし、その後は文書・target・binding単位で独立処理を継続する。
 TASKの許可集合は字句Git path、所有集合はbase/current双方のcanonical pathで判定する。運用はdual-read consumerを
-先行配備し、連合化とrollbackを同じ変更単位にする。受入ではgraph sizeへ線形な索引memory、最大Context閉包へ
+先行配備し、複合workspace化とrollbackを同じ変更単位にする。受入ではgraph sizeへ線形な索引memory、最大Context閉包へ
 線形な一時memory、hard-limit fixture、期待JSON matrixを固定する。
 
 6件を一括採用し、[ADR-043](../02.設計書/10_決定記録/ADR-043_複合workspaceの継続・TASK境界・適合契約を確定する.md)と
-各正本へ反映した。レビュー14、15、17、18、19と横断レビュー20のP2をClosedとし、モノレポCore 1.0の
-設計レビューを完了する。実装受入にはversion管理した期待JSON matrixの全通過を要求する。
+各正本へ反映した。review 14、15、17、18、19と横断review 20のP2をClosedとし、複合workspaceCore 1.0の
+設計reviewを完了する。実装受入にはversion管理した期待JSON matrixの全通過を要求する。
 
 ## 22. 実装着手可能性の点検（2026-09-03、裁定・反映済み）
 
-設計レビューgateがすべてClosedしたため、確定した規範だけで実装へ着手できるかを
+設計review gateがすべてClosedしたため、確定した規範だけで実装へ着手できるかを
 [提案24](24_Core-1.0実装着手方針.md)で点検した。「Coreが何をするか」の契約は実装可能な水準に達している。
 
 不足するのは「実装が何を出力すれば適合と言えるか」を閉じる契約である。G1〜G9のうち、
 Context DigestのCanonical JSON未定義（G1）と、適合fixture matrixが非規範文書にしかないこと（G2）は
-受入基準そのものであり、これを閉じるまでコード着手を保留する。G3〜G7は既存の裁定に反さず記述の追補で足りる。
+受入基準そのものであり、これを閉じるまでcode着手を保留する。G3〜G7は既存の裁定に反さず記述の追補で足りる。
 
-提案24は、コードを書かないStep 0で上記を閉じ、その後の実行順をdoctorと結果配管を先に通す
+提案24は、codeを書かないStep 0で上記を閉じ、その後の実行順をdoctorと結果配管を先に通す
 骨格優先へ変更することを求めた。
 
 同日、G1〜G8を全件採用して正本へ反映した。Context Digestの正規化と適合fixtureは
@@ -517,36 +517,36 @@ accepted ADR 8件のlinkは現構造へ訂正した。G9は着手gateに含め�
 [実装計画](12_Core-1.0実装計画.md)へStep 0と骨格優先の実行順を反映し、Step 0をClosedとした。
 実装着手gateはOpenである。
 
-## 23. 実装前最終レビュー（2026-09-04、裁定・反映済み）
+## 23. 実装前最終review（2026-09-04、裁定・反映済み）
 
 提案24の反映後、提案資料01〜24を検討履歴、`02.設計書`を目的・境界、`03.詳細設計`を機械契約の正として
 再度横断し、規範だけから独立した2実装が同じ結果を再現できるかを
 [提案25](25_Core-1.0実装前最終reviewと修正提案.md)で点検した。
 
-設計方針、scope、安全境界、モノレポidentityと所有境界は妥当であり、全面再設計は不要である。
-一方、適合fixtureの再現性、Diagnostic閉包、EARS-AI grammar、公開結果Schema、target展開、
+設計方針、scope、安全境界、複合workspaceidentityと所有境界は妥当であり、全面再設計は不要である。
+一方、適合fixtureの再現性、Diagnostic閉包、EARS-AI文法、公開結果Schema、target展開、
 Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process、CLIとADR依存、
 性能受入成果物にもP1 5件が残る。
 
-提案24でOpenとした実装着手gateは、これらの不足により本レビュー時点では**No-Go**とする。
+提案24でOpenとした実装着手gateは、これらの不足により本review時点では**No-Go**とする。
 提案25は、契約修正、fixture/Schema/CI準備だけを先行可能とし、P0を閉じるStep 0B、
 機械検証、golden Digest、有限時間のtimeout試験を完了してからgateを再判定することを提案する。
 
 提案25のD1〜D8を採用し、P0 6件とP1 5件を正本、Schema、matrixまたは性能受入成果物へ反映した。
 提案の裁定・反映は完了したが、実fixture成果物、実測baseline、Step 0Bのcross-checkとgate再検証は未完了である。
 
-## 24. 実装前最終レビューの反映状況（2026-09-17更新）
+## 24. 実装前最終reviewの反映状況（2026-09-17更新）
 
 提案25の採否と実装着手可否を分離して管理する。提案25はAccepted / Reflectedであり、現在のGate Aは
 `Blocked`である。Gate条件の正本は[実装計画 §1.1](12_Core-1.0実装計画.md#11-進行状態とgate)とする。
 
 | 区分 | 現在の状態 | 残件 |
 |---|---|---|
-| P0 6件 | 契約、Schema、matrixへ反映済み | 実入力、期待結果の実fixture化（単一workspaceのgolden Digestは`SINGLE-042`で確定済み、連合`MULTI-002-01`は未作成） |
+| P0 6件 | 契約、Schema、matrixへ反映済み | 実入力、期待結果の実fixture化（単一workspaceのgolden Digestは`SINGLE-042`で確定済み、複合workspace`MULTI-002-01`は未作成） |
 | P1 5件 | 契約または性能受入成果物へ反映済み | process helper等の検証基盤、Core実装後の受入結果と性能baseline |
 | P2文書衛生 | accepted ADR linkとREADME状態を修正済み | — |
 | 自己適用 | 実装計画へ配置済み | Step 2完了後に`.spec/`を作成し、Gate Cで最終判定 |
-| Step 0B | `In progress` | 公開JSON・grammar・link・Git/process基盤・Diagnostic意味網羅・target集合25ケース・実fixture250件（導入設定9＋EARS 12＋文書構造・UTF-8 9＋関係・path・coverage 6＋ID重複・循環4＋Git基準版・保護対象外10＋TASK境界3＋Git対象選択・影響候補4＋Git環境3＋Context非成功6＋Context Digest 6＋expand反復2＋stale・上限・coverage 6＋verify実行・事前block 6＋verify binding共有3＋verify process終了3＋verify出力抜粋2＋文書単位binding1＋done TASK起点1＋report非作成4＋引数不正15＋report作成・保存失敗・JSON併用6＋text出力・制御文字・診断順序4＋BOM・Frontmatter 11＋寸法上限・未知entry 7＋registry閉包7＋Scanner・位置16＋既定表示・revision 8＋理由付きSHOULD・full projection・Digest version 3＋escape・normative projection 2＋quoted extension 1＋code span 1＋Frontmatter境界24＋Core副作用6＋verify argv・実行環境・出力変換15＋明示起点の不在・ADR起点8＋共通target展開・advisory提示8＋Digest材料の順序・reverse solidus 3＋実行環境・配布物5）の準備を検証済み。matrix §6.5 contextとDigest（16件）と§6.6 verifyは全32件完了し、単一workspaceのgolden Digestは独立2系統のreference計算で一致を確認済み。単一workspaceの実fixtureは全250件完了。連合`MULTI-*`60件、連合golden Digest等が残件 |
+| Step 0B | `In progress` | 公開JSON・文法・link・Git/process基盤・Diagnostic意味網羅・target集合25 case・実fixture250件（導入設定9＋EARS 12＋文書構造・UTF-8 9＋関係・path・coverage 6＋ID重複・循環4＋Git基準版・保護対象外10＋TASK境界3＋Git対象選択・影響候補4＋Git環境3＋Context非成功6＋Context Digest 6＋expand反復2＋stale・上限・coverage 6＋verify実行・事前block 6＋verify binding共有3＋verify process終了3＋verify出力抜粋2＋文書単位binding1＋done TASK起点1＋report非作成4＋引数不正15＋report作成・保存失敗・JSON併用6＋text出力・制御文字・診断順序4＋BOM・Frontmatter 11＋寸法上限・未知entry 7＋registry閉包7＋Scanner・位置16＋既定表示・revision 8＋理由付きSHOULD・full projection・Digest version 3＋escape・normative projection 2＋quoted extension 1＋code span 1＋Frontmatter境界24＋Core副作用6＋verify argv・実行環境・出力変換15＋明示起点の不在・ADR起点8＋共通target展開・advisory提示8＋Digest材料の順序・reverse solidus 3＋実行環境・配布物5）の準備を検証済み。matrix §6.5 contextとDigest（16件）と§6.6 verifyは全32件完了し、単一workspaceのgolden Digestは独立2系統のreference計算で一致を確認済み。単一workspaceの実fixtureは全250件完了。複合workspace`MULTI-*`60件、複合workspaceのgolden Digest等が残件 |
 | Step 0-P | `Complete` | 基準入力・比較条件を固定し一括検証済み。実測はCore実装後 |
 | Gate A | `Blocked` | fresh checkoutから単一commandで2回一致する自動検査結果を記録 |
 | Gate B | `Pending` | 各StepのCore実装を固定済みfixtureへ通して判定 |
@@ -555,7 +555,7 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 2026-09-17の単一fixture作成で、role割当、interpretのdraft refinement、statement起点の提示、verifyの起点TASKの
 `requires`を裁定し、関係・トレースモデル §6.1・§6.4・§7、context仕様 §4・§5、matrix `SINGLE-106-03`・`110`行へ
 本文反映した（既存決定の欠落補完のためADRは起こさない）。経緯は
-[Diagnostic台帳の再レビュー](../../fixtures/conformance/Diagnostic意味網羅review.md)に記録した。
+[Diagnostic台帳の再review](../../fixtures/conformance/Diagnostic意味網羅review.md)に記録した。
 
 同日、`SINGLE-127-15`〜`19`を作成するため[提案27](27_適合harness外部仕様の検討.md)で適合harnessの外部仕様を検討し、
 検査対象の受取り、Python・Git versionの指定、JSON互換runner、package runnerを

@@ -1,4 +1,4 @@
-# Core 1.0 P2残存運用契約レビューと改訂提案
+# Core 1.0 P2残存運用契約reviewと改訂提案
 
 **状態**: **Closed（P2 7件裁定・反映済み）**
 
@@ -6,14 +6,14 @@
 
 **裁定日**: 2026-08-31
 
-> 後続改訂: 本レビューで採用した非成功時report自動保存は、2026-09-02の
+> 後続改訂: 本reviewで採用した非成功時report自動保存は、2026-09-02の
 > [ADR-041](../02.設計書/10_決定記録/ADR-041_verify対象別証跡とreport明示保存の分離.md)で、
 > statusを問わず明示`--report`時だけの保存へ変更した。
 
 ## 1. 目的
 
-P1残存契約レビューを反映した正本を対象に、出荷までに実装差を解消すべき運用契約を再確認した。
-レビュー03の旧P2 7件はADR-019／020で裁定済みであり、本書はその後に残った別の7件を扱う。
+P1残存契約reviewを反映した正本を対象に、出荷までに実装差を解消すべき運用契約を再確認した。
+review 03の旧P2 7件はADR-019／020で裁定済みであり、本書はその後に残った別の7件を扱う。
 現在の正本は`docs/02.設計書`と`docs/03.詳細設計`であり、本書の例だけを実装根拠にしない。
 
 ## 2. P2指摘
@@ -26,7 +26,7 @@ P1残存契約レビューを反映した正本を対象に、出荷までに実
 ### 2.2 Gitの基準版と変更集合が未定義
 
 変更範囲検査、承認済みREQ保護、TASK境界が同じ「Gitの基準版」を参照する一方、HEAD、index、
-merge-base、未追跡ファイルの扱いが確定していなかった。clean checkoutのCIでbranch内変更を検査する方法もなかった。
+merge-base、未追跡fileの扱いが確定していなかった。clean checkoutのCIでbranch内変更を検査する方法もなかった。
 
 ### 2.3 `bitz check`の明示対象が未定義
 
@@ -43,12 +43,12 @@ merge-base、未追跡ファイルの扱いが確定していなかった。clea
 Contextの型制約はTASKから規範文なしTECHへの`addresses`を許可したが、TASK仕様と明示verifyは
 規範文だけを前提にしていた。規範文ID起点の兄弟句を`adjacent`へ表示する規則も、coverage説明へ反映されていなかった。
 
-### 2.6 Diagnostic集約とモノレポsourceが不十分
+### 2.6 Diagnostic集約と複合workspacesourceが不十分
 
-Diagnosticインスタンスに操作効果がなく、条件付きstatusを持つコードを機械的に区別できなかった。
-集約順序は操作ごとに重複し、workspace相対pathだけでは連合内の同名pathを一意にできなかった。
+Diagnosticインスタンスに操作効果がなく、条件付きstatusを持つcodeを機械的に区別できなかった。
+集約順序は操作ごとに重複し、workspace相対pathだけでは複合workspace内の同名pathを一意にできなかった。
 
-### 2.7 レポート生成条件が一致しない
+### 2.7 report生成条件が一致しない
 
 失敗時の自動保存と`--report`指定時だけの保存が文書間で混在し、`context`が存在しない`--report`を
 受け付けるようにも読めた。
@@ -63,7 +63,7 @@ Diagnosticインスタンスに操作効果がなく、条件付きstatusを持�
 | verify実行契約 | 採用・反映済み | [ADR-026](../02.設計書/10_決定記録/ADR-026_verify実行binding・timeout・結果Schemaの確定.md)。timeout cap、command結果、Digest入力を定義 |
 | TASK接続 | 修正採用・反映済み | 規範文なしTECHの文書単位testsと、規範文ID起点の`adjacent`を正本へ接続 |
 | Diagnostic集約 | 採用・反映済み | [ADR-027](../02.設計書/10_決定記録/ADR-027_Diagnostic結果効果・集約・workspace-sourceの確定.md)。`resultStatus`、`workspaceId`、共通集約順を定義 |
-| レポート生成 | 修正採用・反映済み | 既存の失敗時保存を正とし、`failed`／`blocked`／`error`だけ自動保存。引数不正とcontextは保存しない |
+| report生成 | 修正採用・反映済み | 既存の失敗時保存を正とし、`failed`／`blocked`／`error`だけ自動保存。引数不正とcontextは保存しない |
 
 ## 4. 主な反映先
 
@@ -92,9 +92,9 @@ Diagnosticインスタンスに操作効果がなく、条件付きstatusを持�
 - [x] TASKが規範文なしTECHを対象にしたverifyと、規範文ID起点の`adjacent`が定義されている
 - [x] Diagnostic単位の`resultStatus`とfile sourceの`workspaceId`がある
 - [x] 全操作が同じstatus集約順位を使用する
-- [x] レポートの自動保存、明示保存、非保存条件が排他的に定義されている
+- [x] reportの自動保存、明示保存、非保存条件が排他的に定義されている
 
 ## 6. クローズ判定
 
 P2 7件はADR-024〜027と正本同期として裁定・反映した。状態遷移、Git差分、CLI入力、verify実行、
-Diagnostic集約、レポート書込みの実装分岐を解消したため、P2残存運用契約レビューは**完了**とする。
+Diagnostic集約、report書込みの実装分岐を解消したため、P2残存運用契約reviewは**完了**とする。

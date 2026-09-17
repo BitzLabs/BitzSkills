@@ -1,4 +1,4 @@
-# モノレポ残存P2裁定案
+# 複合workspace残存P2裁定案
 
 - 状態: Accepted（ADR-043と正本へ反映済み）
 - 作成日: 2026-09-03
@@ -9,14 +9,14 @@
 
 ## 1. 目的
 
-モノレポCore 1.0横断レビューで残ったP2 6件を、実装受入試験までに判定できる契約へ落とす。
-P1で確定した公開Schema、global preflight、canonical所有境界、resource上限、性能fixtureは変更せず、
+複合workspaceCore 1.0横断reviewで残ったP2 6件を、実装受入試験までに判定できる契約へ落とす。
+P1で確定した公開Schema、全体事前検査、canonical所有境界、resource上限、性能fixtureは変更せず、
 次の不足だけを閉じる。
 
 1. 同じ横断参照失敗へ複数のDiagnosticを返さない優先順位
 2. workspace非成功後に継続または遮断する処理単位
-3. TASK directory prefixとsymlinkを組み合わせた境界比較
-4. 連合結果consumerの切替とrollback
+3. TASK directory接頭辞とsymlinkを組み合わせた境界比較
+4. 複合workspaceの結果consumerの切替とrollback
 5. hard limit付近の計算量とmemory受入条件
 6. status、終了コード、Diagnostic、reportを固定する適合matrix
 
@@ -29,14 +29,14 @@ P1で確定した公開Schema、global preflight、canonical所有境界、resou
 
 | ID | 推奨裁定 | 主な反映先 |
 |---|---|---|
-| `FED-CTX-003` | qualifier、workspace、target、型の順で1 edge 1 Diagnosticにする | 関係モデル、Context、連合仕様、共通結果 |
-| `FED-CLI-004` | global preflightだけ全停止し、その後は文書・target・binding依存閉包で継続する | 連合仕様、check、verify、doctor |
+| `FED-CTX-003` | qualifier、workspace、target、型の順で1 edge 1 Diagnosticにする | 関係モデル、Context、複合workspace仕様、共通結果 |
+| `FED-CLI-004` | 全体事前検査だけ全停止し、その後は文書・target・binding依存閉包で継続する | 複合workspace仕様、check、verify、doctor |
 | `FED-SEC-004` | TASK境界の許可判定は字句path、所有判定はbase/current双方のcanonical pathで行う | 関係モデル、check、安全な入出力 |
 | `FED-MIG-005` | consumerを先にdual-read化し、移行単位とrollback単位を一致させる | 運用手順、共通結果、実装計画 |
-| `FED-IMP-004` | 索引memoryを入力graphへ線形、target一時memoryを最大閉包へ線形に制限する | 連合仕様、品質属性、実装計画 |
+| `FED-IMP-004` | 索引memoryを入力graphへ線形、target一時memoryを最大閉包へ線形に制限する | 複合workspace仕様、品質属性、実装計画 |
 | `FED-IMP-005` | version管理fixtureと期待JSON matrixをCore 1.0受入gateにする | 実装計画、各操作仕様 |
 
-Diagnostic整理では、未リリースの初回1.0であることを利用して
+Diagnostic整理では、未releaseの初回1.0であることを利用して
 `CTX-RELATION-MISSING-001`を公開結果から除き、欠落targetを`SPEC-RELATION-MISSING-001`へ統一する。
 既に公開されたcodeの意味変更や移行互換は発生しない。
 
@@ -67,7 +67,7 @@ CLI引数として渡した起点IDが不在なら、edgeの欠落ではない�
 ### 3.2 code整理
 
 - `SPEC-MONOREPO-REF-001`の「targetを解決不能」を、修飾構文、非修飾横断参照、未知workspaceに限定する。
-- `SPEC-RELATION-MISSING-001`を単一workspaceと連合に共通する「存在するworkspace内のstrong target不在」とする。
+- `SPEC-RELATION-MISSING-001`を単一workspaceと複合workspaceに共通する「存在するworkspace内のstrong target不在」とする。
 - `CTX-RELATION-MISSING-001`はCore 1.0の公開結果で使用せず、予約済みcodeとして移行表に残す。
 - `CTX-RELATION-TYPE-001`は、存在を確認できたsource／target間の型不適合だけに使う。
 
@@ -84,20 +84,20 @@ Diagnosticの並び順は既存のsource順を変えない。優先順位は「�
 
 ### 4.1 全停止境界
 
-ADR-042でglobal preflightとした次の不適合だけは、全workspaceの文書処理、Context解決、command実行を開始せず、
+ADR-042で全体事前検査とした次の不適合だけは、全workspaceの文書処理、Context解決、command実行を開始せず、
 `workspaces: []`で停止する。
 
-- federation rootとcatalogの構文・型・identity
-- member ID、path、設定対応、nested federation
+- root workspaceとcatalogの構文・型・同一性
+- member ID、path、設定対応、入れ子の複合workspace
 - Git repository、worktree、submoduleとGit既知未登録設定
 - 未対応Schema／EARS-AI major
-- 連合resource hard limit
+- 複合workspaceのresource hard limit
 
 これは安全な処理順を構成できない失敗であり、通常のworkspace非成功とは区別する。
 
 ### 4.2 継続判定の単位
 
-preflight通過後は、workspace全体の静的な成功／失敗だけで継続可否を決めない。次を処理単位とする。
+事前検査通過後は、workspace全体の静的な成功／失敗だけで継続可否を決めない。次を処理単位とする。
 
 | 操作 | 独立して継続する単位 | 依存として遮断する条件 |
 |---|---|---|
@@ -154,17 +154,17 @@ workspaceの設定とし、根本原因fileは`evidence`だけから参照する
 TASK `changes`は、変更を許可する**字句Git path集合**を表す。symlink解決後の実path集合やglobではない。
 
 - file entryは正規化後のpathと完全一致する変更だけを許可する。
-- 末尾`/`のdirectory prefixは、同じpath segment列をprefixに持つ子孫fileを許可する。
+- 末尾`/`のdirectory接頭辞は、同じpath segment列を接頭辞に持つ子孫fileを許可する。
 - `src/`は`src/a.ts`を許可するが、`src2/a.ts`、`alias/a.ts`を許可しない。
-- directory prefix自身と変更pathはUnicode NFC、`/` separator、filesystemのcase比較keyを用いる。
-- trailing `/`は再帰許可を示す型印であり、`*`や任意の文字列prefixとして扱わない。
+- directory接頭辞自身と変更pathはUnicode NFC、`/`区切り文字、filesystemのcase比較keyを用いる。
+- trailing `/`は再帰許可を示す型印であり、`*`や任意の文字列接頭辞として扱わない。
 
 許可集合との比較とは別に、宣言pathと変更pathの双方へADR-042のcanonical所有判定を適用する。
 所有境界不適合を先に`SPEC-MONOREPO-OWNERSHIP-001`とし、安全なpathだけをTASK境界と比較する。
 
 ### 5.2 symlink
 
-symlink entry自体の変更は、そのentryがある字句Git pathのfile変更として扱う。directory prefixは配下にある
+symlink entry自体の変更は、そのentryがある字句Git pathのfile変更として扱う。directory接頭辞は配下にある
 symlink entryの変更を許可できるが、symlink解決先の別の字句pathへ許可を拡張しない。
 
 例えば`src/link -> ../generated`が同じworkspace内にあっても、`changes: [src/]`は`src/link` entryの変更を
@@ -189,52 +189,52 @@ TASK自身のfileと明示生成reportを比較対象から除く既存規則は
 
 ### 6.1 結果の識別
 
-JSON consumerは最初に`schemaVersion` majorを検査し、その後に次の排他的外形で単一／連合を識別する。
+JSON consumerは最初に`schemaVersion` majorを検査し、その後に次の排他的外形で単一／複合workspaceを識別する。
 
 | 外形 | 判定 |
 |---|---|
 | `workspace`あり、`federation`／`workspaces`なし | workspace単独結果 |
-| `workspace`なし、`federation`と`workspaces`あり | 連合全体結果 |
+| `workspace`なし、`federation`と`workspaces`あり | 複合workspace全体結果 |
 | 両方ある、または必要fieldが両方ない | consumer側Schema error |
 
-修飾IDの`::`、report file名、current directoryから結果種別を推測しない。連合操作を有効にするadapter／CIは、
+修飾IDの`::`、report file名、current directoryから結果種別を推測しない。複合workspace操作を有効にするadapter／CIは、
 事前のdoctorまたはCore API handshakeで`monorepo.v1`を確認する。check／verify結果そのものへCapabilityを複製しない。
 
 ### 6.2 切替順序
 
-連合化は次の順序で行う。
+複合workspace化は次の順序で行う。
 
-1. 全consumerを単一／連合のdual-readへ更新し、旧単一fixtureと新連合fixtureの両方を通す。
+1. 全consumerを単一／複合workspaceのdual-readへ更新し、旧単一fixtureと新複合workspaceのfixtureの両方を通す。
 2. CIへ新Coreと`monorepo.v1`確認を導入するが、まだ単一操作を維持する。
 3. ADR-042の原子的変更集合としてcatalog、member設定、修飾参照、CI全体操作を切り替える。
 4. `doctor --all-workspaces`、`check --all-workspaces`、`verify --all-workspaces`を実行する。
-5. 明示`--report`を使うjobだけ連合reportの保存・artifact収集へ切り替える。
+5. 明示`--report`を使うjobだけ複合workspaceのreportの保存・成果物収集へ切り替える。
 
-Coreは過去reportを入力にしない。旧単一reportは履歴artifactとして読取り専用で保持できるが、連合reportの
+Coreは過去reportを入力にしない。旧単一reportは履歴成果物として読取り専用で保持できるが、複合workspaceのreportの
 workspace件数、status、時系列集約へ混ぜない。同じ`schemaVersion: "1.0"`でも上記の排他的外形で区別する。
 
 ### 6.3 rollback単位
 
-rollback可能なのは、連合化変更とその後の変更を安全に分離できる間だけである。次を同じrollback releaseへ含める。
+rollback可能なのは、複合workspace化変更とその後の変更を安全に分離できる間だけである。次を同じrollback releaseへ含める。
 
 - root catalogと全member設定
 - 修飾した関係、coverage、TASK参照
 - CIの`--all-workspaces`呼出しとCapability gate
 - report収集、annotation、dashboardなどproducer依存consumer
-- 連合化に伴うroot ID写像後の参照
+- 複合workspace化に伴うroot ID写像後の参照
 
 consumerのdual-read対応は残してよいが、producerだけを単一形式へ戻して混在結果を1回の集約へ入れない。
-過去の連合reportを単一形式へ書き換えず、rollback時点でartifact系列を分ける。
+過去の複合workspaceのreportを単一形式へ書き換えず、rollback時点で成果物系列を分ける。
 
-rollback後は単一workspaceの`doctor`、`check --full`、`verify`を実行する。連合化後に追加された横断要求、member固有SPEC、
-code変更を失わずに上記一式を戻せない場合、Core 1.0は自動down migrationを行わず、rollbackではなく連合状態の
+rollback後は単一workspaceの`doctor`、`check --full`、`verify`を実行する。複合workspace化後に追加された横断要求、member固有SPEC、
+code変更を失わずに上記一式を戻せない場合、Core 1.0は自動down migrationを行わず、rollbackではなく複合workspace状態の
 forward fixを選ぶ。
 
 ### 6.4 受入条件
 
-- dual-read consumerが単一結果と連合結果を排他的に識別する。
+- dual-read consumerが単一結果と複合workspaceの結果を排他的に識別する。
 - 両外形を混ぜた結果を拒否する。
-- 旧reportを現在の連合集約へ混ぜない。
+- 旧reportを現在の複合workspace集約へ混ぜない。
 - migration commitのrevert fixtureで単一操作へ戻り、修飾参照が残らない。
 - 部分rollback fixtureを成功扱いしない。
 
@@ -259,7 +259,7 @@ forward fixを選ぶ。
 
 ### 7.2 受入れる上界
 
-- catalog discoveryと上限計数は`O(B + F)`時間とし、可能なdimensionは完全parse前に打ち切る。
+- catalog探索と上限計数は`O(B + F)`時間とし、可能なdimensionは完全parse前に打ち切る。
 - global Frontmatter／関係索引は`O(B + F + S + E + T + C)`時間、`O(F + S + E + T + C)`memoryとする。
   全file本文を索引の一部として同時保持しない。
 - 1 targetのContext解決はvisited集合を使い、到達部分graphに対して`O(Bq + Dq + Eq + Tq)`時間・memoryとする。
@@ -269,7 +269,7 @@ forward fixを選ぶ。
   `O(F + S + E + T + C + max(Bw, maxq(Bq + Dq + Eq + Tq)) + V + R)`とする。
 - targetごとの完全Bundle本文を全target分同時保持しない。Digest、statement、binding参照へ縮約後、次targetへ進む。
 - 決定論的出力のsortは要素数`K`ごとに`O(K log K)`を許容するが、workspaceまたは文書の全組合せmatrixを作らない。
-- commandの実行時間とtest runner自身のmemoryはCoreの計算量から除き、Coreが保持するstdout／stderrは既存上限を守る。
+- commandの実行時間とtest runner自身のmemoryはCoreの計算量から除き、Coreが保持する標準出力／標準エラー出力は既存上限を守る。
 
 これらは公開結果を減らすための近似を許す規則ではない。完全性と決定論を維持したうえで、不要な全組合せと
 全Context同時保持を禁止する実装制約である。
@@ -312,7 +312,7 @@ manifestは実行directory、argv、環境前提、Git base/current、期待終�
 | `MONO-002` | 横断`refines`と直接coverage | context、verify | passed／0 | 修飾edge、Digest、coverage |
 | `MONO-003` | 非修飾で別workspaceだけにあるtarget | check all | failed／1 | `SPEC-MONOREPO-REF-001`だけ |
 | `MONO-004` | 存在workspace内のtarget不在 | context、check | failed／1 | `SPEC-RELATION-MISSING-001`だけ |
-| `MONO-005` | 未知`--workspace` | check | 結果なし／4 | stdout結果なし、reportなし |
+| `MONO-005` | 未知`--workspace` | check | 結果なし／4 | 標準出力結果なし、reportなし |
 | `MONO-006` | Git既知の未登録設定 | check all | blocked／2 | `workspaces: []`、commandなし |
 | `MONO-007` | member入れ子、submodule、別worktree | doctor all | failed／1 | `SPEC-MONOREPO-PATH-001` |
 | `MONO-008` | symlinkで別memberを所有 | check all | failed／1 | ownership code、TASK codeなし |
@@ -323,19 +323,19 @@ manifestは実行directory、argv、環境前提、Git base/current、期待終�
 | `MONO-013` | 異なる2 Context、共有binding | verify all | passed／0 | Digest 2件、command 1件 |
 | `MONO-014` | command失敗後に独立bindingあり | verify all | failed／1 | 後続bindingも実行 |
 | `MONO-015` | 1 memberだけ対象0件 | verify all | passed_with_warnings／0 | member warning、空配列 |
-| `MONO-016` | 連合全体で対象0件 | verify all | blocked／2 | 空CIを成功にしない |
+| `MONO-016` | 複合workspace全体で対象0件 | verify all | blocked／2 | 空CIを成功にしない |
 | `MONO-017` | ID維持のmember path移動 | check all with base | passed／0 | 同一workspace扱い |
 | `MONO-018` | ID変更またはmember削除 | check all with base | failed／1 | 管理済みSPEC削除検査 |
 | `MONO-019` | Git不在 | doctor all | blocked／2 | `SPEC-MONOREPO-GIT-001` |
 | `MONO-020` | 各resourceの`limit - 1`／`limit` | check／verify all | passed／0 | 境界内を誤遮断しない |
 | `MONO-021` | 各resourceの`limit + 1` | check／verify all | blocked／2 | dimension、limit、早期停止 |
 | `MONO-022` | default実行と明示`--report` | check／verify all | 元statusと同じ | default 0 file、明示時だけ1 file |
-| `MONO-023` | 単一／連合／混在JSON | consumer test | accept／reject | 排他的外形とdual-read |
+| `MONO-023` | 単一／複合workspace／混在JSON | consumer test | accept／reject | 排他的外形とdual-read |
 | `MONO-024` | migrationと完全／部分rollback | migration test | pass／reject | 原子的切替、部分rollback拒否 |
 
 1つのrepoへ複数の独立原因を混ぜず、同じ行で複数variantを示したfixtureも入力directoryとmanifestを分ける。
 各manifestには正確なstatusと終了コードを1つだけ記録する。`MONO-012`ではinvalid文書のowner memberを`failed`、
-それを必要とするtargetを`SPEC-MONOREPO-DEPENDENCY-001`／`blocked`、独立targetを通過とし、top-levelは最悪値の
+それを必要とするtargetを`SPEC-MONOREPO-DEPENDENCY-001`／`blocked`、独立targetを通過とし、最上位は最悪値の
 `failed`に固定する。
 
 ### 8.3 reportと副作用
@@ -353,18 +353,18 @@ manifestは実行directory、argv、環境前提、Git base/current、期待終�
 3. **受入**: 計算量、hard-limit memory、期待JSON matrix
 
 判断理由はADR-043へ記録し、ADR-042のP2残件記述を完了へ更新した。機械契約は既存の所有文書へ分配し、
-連合仕様へ全操作の詳細JSONを重複定義しない。
+複合workspace仕様へ全操作の詳細JSONを重複定義しない。
 
 | 反映先 | 内容 |
 |---|---|
 | 関係・トレースモデル | relation missing codeと優先順位 |
-| モノレポSPEC連合仕様 | 継続規則、依存遮断code、計算量 |
+| 複合workspace仕様 | 継続規則、依存遮断code、計算量 |
 | 共通結果 | Diagnostic生成優先、consumer外形 |
 | 安全な入出力 | base/current symlinkとTASK字句境界 |
 | context／check／verify／doctor | 操作別の継続、code同期、fixture参照 |
 | 運用手順 | dual-read切替とrollback条件 |
 | 品質属性・実装計画 | 線形memory、hard-limit RSS、適合matrix |
-| レビュー13〜20、提案README | P2 Closedと設計レビュー完了 |
+| review 13〜20、提案README | P2 Closedと設計review完了 |
 
 ## 10. 裁定
 
@@ -373,7 +373,7 @@ manifestは実行directory、argv、環境前提、Git base/current、期待終�
 
 採用後の最終gateは次とする。
 
-- 設計レビュー: P0、P1、P2 Closed
+- 設計review: P0、P1、P2 Closed
 - 実装着手: 可
 - Core 1.0受入: version管理されたmatrixと期待JSONの全通過が必要
 - 1.0非目標: 自動workspace rename、自動down migration、必須並列化、fail-fast option
@@ -381,4 +381,4 @@ manifestは実行directory、argv、環境前提、Git base/current、期待終�
 ## 11. 反映結果
 
 Diagnostic優先順位、継続単位、TASK境界、consumer rollback、計算量、適合matrixをADR-043と各正本へ反映した。
-レビュー14、15、17、18、19の残存P2と横断レビューのP2 gateをClosedとし、モノレポCore 1.0設計レビューを完了する。
+review 14、15、17、18、19の残存P2と横断reviewのP2 gateをClosedとし、複合workspaceCore 1.0設計reviewを完了する。

@@ -1,8 +1,8 @@
-# モノレポ連合モデル・不変条件レビュー
+# 複合workspaceモデル・不変条件review
 
 - 状態: Closed
 - 実施日: 2026-09-02
-- 基準: branch `bitz_next`、HEAD `0097f2839e15a697cea5a8e4cb413a77562201ab`＋未コミット設計
+- 基準: branch `bitz_next`、HEAD `0097f2839e15a697cea5a8e4cb413a77562201ab`＋未commit設計
 - 規範文書digest: `b292eed96f8d607c49e380bdb500c10a0c896c2e2c41bea415c4fd14aa38aaba`
 - 観点: catalog、workspace決定、path、所有者、追加・移動・削除
 
@@ -12,7 +12,7 @@
 暗黙再帰探索を禁止した判断も、fixtureやsubmoduleを取り込まない安全性に寄与する。
 
 ただし、「未登録workspaceがないこと」を全体検査の完了条件にしている一方、未登録`.spec/`を発見する入力が
-定義されていない。この1点は、連合の完全性保証を実装不能にするP1である。
+定義されていない。この1点は、複合workspaceの完全性保証を実装不能にするP1である。
 
 ## 2. 指摘一覧
 
@@ -23,11 +23,11 @@
 
 ## 3. FED-INV-001 未登録workspace検出
 
-[連合仕様 §2](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#2-配置とcatalog)は、catalogにない
+[複合workspace仕様 §2](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#2-配置とcatalog)は、catalogにない
 `.spec/`をrepository全体から再帰探索しない。[同仕様 §3](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#3-workspace決定)
 の`SPEC-MONOREPO-UNREGISTERED-001`は、通常操作で実際に選択された設定だけを検出できる。
 
-一方、[ユースケース UC-11](../02.設計書/05_ユースケース.md#13-uc-11-モノレポ横断要求)は未登録memberがないことを
+一方、[ユースケース UC-11](../02.設計書/05_ユースケース.md#13-uc-11-複合workspace横断要求)は未登録memberがないことを
 全体checkの完了条件とし、品質属性も未登録workspaceを所有境界上の脅威としている。catalogだけを入力にする
 `check --all-workspaces`は、catalog外の設定の存在を列挙できないため、この完了条件を証明できない。
 
@@ -50,22 +50,22 @@
 
 ## 5. 成立を確認した不変条件
 
-- federation rootはGit repository root直下だけに置かれる。
-- rootと全memberの`workspace.id`は必須かつ連合内一意である。
+- root workspaceはGit repository root直下だけに置かれる。
+- rootと全memberの`workspace.id`は必須かつ複合workspace内一意である。
 - member pathは同一・親子・symlink・submodule・別repositoryを許さない。
-- federation rootはmember配下のcode、test、TASK `changes`、command `cwd`を所有しない。
+- root workspaceはmember配下のcode、test、TASK `changes`、command `cwd`を所有しない。
 - 設定はworkspace間で継承されない。
 - 文書IDはworkspace内一意であり、別workspaceの同名IDを許可する。
-- 連合が成立しないGit不在時は単一workspaceへ暗黙縮退しない。
+- 複合workspaceが成立しないGit不在時は単一workspaceへ暗黙縮退しない。
 
 ## 6. 判定
 
-P0はない。FED-INV-001を裁定してfixture化すれば、連合モデルの実装へ進める。
+P0はない。FED-INV-001を裁定してfixture化すれば、複合workspaceモデルの実装へ進める。
 
 ## 7. P1裁定（2026-09-03）
 
 `FED-INV-001`は[ADR-042](../02.設計書/10_決定記録/ADR-042_複合workspaceの同一性・所有境界・公開契約を確定する.md)
 で採用した。全体操作はGit既知の`.spec/bitz.yaml`とcatalogを比較し、集合差を
 `SPEC-MONOREPO-UNREGISTERED-001`／blockedにする。filesystem全体の任意探索は追加しない。
-同ADRでworkspace IDを永続identity、ID維持のpath変更を移動、ID変更を削除＋追加としたため、`FED-INV-002`も
-随伴してClosedとする。本レビューの残件はない。
+同ADRでworkspace IDを永続同一性、ID維持のpath変更を移動、ID変更を削除＋追加としたため、`FED-INV-002`も
+随伴してClosedとする。本reviewの残件はない。

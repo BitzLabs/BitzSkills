@@ -1,17 +1,17 @@
-# セキュリティ・信頼境界レビュー
+# セキュリティ・信頼境界review
 
 - 状態: Closed（P1・P2裁定済み）
 - 実施日: 2026-09-02
-- 基準: branch `bitz_next`、HEAD `0097f2839e15a697cea5a8e4cb413a77562201ab`＋未コミット設計
+- 基準: branch `bitz_next`、HEAD `0097f2839e15a697cea5a8e4cb413a77562201ab`＋未commit設計
 - 規範文書digest: `b292eed96f8d607c49e380bdb500c10a0c896c2e2c41bea415c4fd14aa38aaba`
 - 観点: catalog信頼、path正規化、symlink、Git境界、所有境界、command実行
 
 ## 1. 結論
 
-明示catalog、設定非継承、member間のpath非重複、Git不在時のfail-closedは、連合の入力範囲を小さく保つ。
-また、Coreがprocess sandboxを提供せずrepository管理者を信頼する既存境界は、モノレポ導入後も変わっていない。
+明示catalog、設定非継承、member間のpath非重複、Git不在時のfail-closedは、複合workspaceの入力範囲を小さく保つ。
+また、Coreがprocess sandboxを提供せずrepository管理者を信頼する既存境界は、複合workspace導入後も変わっていない。
 
-一方、所有検査を字句pathだけで実装すると、federation rootがmember内を指すsymlinkを所有できる余地がある。
+一方、所有検査を字句pathだけで実装すると、root workspaceがmember内を指すsymlinkを所有できる余地がある。
 現行の一般規則が禁止するのはworkspace外へ出るsymlinkであり、memberはroot workspaceの字句的な内側だからである。
 全所有pathの実体をworkspace境界と照合する規則が実装前に必要である。
 
@@ -19,19 +19,19 @@
 
 | ID | 優先度 | 指摘 | 影響 |
 |---|---|---|---|
-| FED-SEC-001 | P1 | root所有pathからmember内へ入るsymlinkの扱いが未定義 | federation rootがmemberのcode/test/cwdを迂回所有できる |
-| FED-SEC-002 | P1 | 未登録`.spec/`は選択時しか検出せず、連合全体検査でも網羅しない | repository内にcatalog外のSPEC境界が残る |
+| FED-SEC-001 | P1 | root所有pathからmember内へ入るsymlinkの扱いが未定義 | root workspaceがmemberのcode/test/cwdを迂回所有できる |
+| FED-SEC-002 | P1 | 未登録`.spec/`は選択時しか検出せず、複合workspace全体検査でも網羅しない | repository内にcatalog外のSPEC境界が残る |
 | FED-SEC-003 | P1 | path包含判定の正規化手順が完全には定義されていない | OS・実装ごとに所有者判定が分岐する |
-| FED-SEC-004 | P2 | TASK `changes`のdirectory prefixとsymlinkの組合せが未規定 | 明示checkの変更境界がmemberをまたぐ可能性がある |
+| FED-SEC-004 | P2 | TASK `changes`のdirectory接頭辞とsymlinkの組合せが未規定 | 明示checkの変更境界がmemberをまたぐ可能性がある |
 
 ## 3. FED-SEC-001 symlinkによる所有境界の迂回
 
-[連合仕様 §5](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#5-所有境界)はfederation rootによる
+[複合workspace仕様 §5](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#5-所有境界)はroot workspaceによる
 member配下の`implements`、test、TASK、cwd所有を禁止する。しかしroot直下の`shared -> apps/web/src`という
 symlinkを`shared/auth.ts`として参照した場合の判定順がない。一般の安全規則が「workspace外へ解決されるpath」を
 禁止するだけなら、このpathはrepository root内なので通過し得る。
 
-設定、SPEC、`implements`、`tests[].path`、TASK `changes`、command `cwd`の全てについて、各path componentの
+設定、SPEC、`implements`、`tests[].path`、TASK `changes`、command `cwd`のすべてについて、各path componentの
 symlinkを解決したcanonical pathを求め、次を順に検査する規則を推奨する。
 
 1. repositoryの実path内にある
@@ -44,43 +44,43 @@ symlinkそのものを全面禁止するか、同一所有領域内だけ許可�
 
 ## 4. FED-SEC-002 catalog外SPEC
 
-[連合仕様 §2](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#2-配置とcatalog)は再帰探索しないとし、
+[複合workspace仕様 §2](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#2-配置とcatalog)は再帰探索しないとし、
 §3はcatalog外`.spec/`を「選択した場合」にだけblockedとする。したがって`--all-workspaces`や`doctor`が成功しても、
 Git管理された`tools/legacy/.spec/bitz.yaml`が未登録のまま残り得る。
 
-暗黙member追加は不要だが、連合全体の完全性を名乗る操作ではGit indexと選択したbase/current treeにある
+暗黙member追加は不要だが、複合workspace全体の完全性を名乗る操作ではGit indexと選択したbase/current treeにある
 `**/.spec/bitz.yaml`だけを軽量列挙し、catalogとの集合差を診断するのが安全である。filesystem全体の再帰探索は
 不要であり、vendorや未追跡生成物を入力へ加えない。これを行わない場合は、保証を「catalog登録workspaceだけの
 完全検査」へ明示的に狭める必要がある。
 
-## 5. FED-SEC-003 canonical containment
+## 5. FED-SEC-003 正規化後の包含判定
 
 member pathについては実directory、symlink、submodule、別repository、実path重複を検査するが、次が未固定である。
 
-- `.`と`..`除去、separator正規化、symlink解決の順序
+- `.`と`..`除去、区切り文字正規化、symlink解決の順序
 - case-insensitive filesystemでの同一path判定
 - Git worktree、junction、mountをどのGit境界情報で拒否するか
 - catalog path、設定path、所有対象pathで同じcanonicalizerを使うか
 - 検査後からopen／process起動までにpathが差し替わる競合をCore 1.0でどこまで扱うか
 
 原子的filesystem snapshotは既に非目標でよい。少なくとも「Git rootの実path」「workspace rootの実path」
-「対象の実path」を同一手順で正規化し、境界判定はseparator単位で行うことを共通I/O契約へ置く必要がある。
+「対象の実path」を同一手順で正規化し、境界判定は区切り文字単位で行うことを共通I/O契約へ置く必要がある。
 
 ## 6. FED-SEC-004 TASK directory境界
 
-TASK `changes`はfileとdirectory prefixを許す。directoryがsymlinkである場合や、directory自身はroot所有領域でも
+TASK `changes`はfileとdirectory接頭辞を許す。directoryがsymlinkである場合や、directory自身はroot所有領域でも
 配下の一部がmemberへ解決される場合に、変更集合との比較を字句pathと実pathのどちらで行うかがない。
-明示checkではGitの変更pathをworkspace所有者へ割り当てた後、TASK prefixもcanonicalな所有領域へ制限し、
+明示checkではGitの変更pathをworkspace所有者へ割り当てた後、TASK接頭辞もcanonicalな所有領域へ制限し、
 異なるworkspaceへ割り当てられた変更を1つのTASKで許可しない規則が必要である。
 
 ## 7. 成立を確認した境界
 
 - catalogへ環境変数、glob、暗黙探索を持ち込まない。
 - member設定を継承せず、workspaceごとのcommand、cwd、timeoutを使用する。
-- nested federation、submodule、別repository、別worktreeを対象外にする。
-- Git境界を確定できない連合操作をblockedにする。
+- 入れ子の複合workspace、submodule、別repository、別worktreeを対象外にする。
+- Git境界を確定できない複合workspace操作をblockedにする。
 - commandはrepository管理者が明示設定した信頼済み入力であり、Coreはprocess sandboxではない。
-- stdout／stderr上限、timeout、逐次実行という既存の実行制限を維持する。
+- 標準出力／標準エラー出力上限、timeout、逐次実行という既存の実行制限を維持する。
 
 ## 8. 判定
 
@@ -91,10 +91,10 @@ fail-closedの方向は妥当である。FED-SEC-001〜003を解消し、canonic
 
 `FED-SEC-001`〜`003`は[ADR-042](../02.設計書/10_決定記録/ADR-042_複合workspaceの同一性・所有境界・公開契約を確定する.md)
 で採用した。全所有pathへ共通canonicalizerを適用し、symlink解決後の実pathとGit metadataで所有領域を照合する。
-Git既知の未登録設定も全体preflightで拒否する。P1はClosedとし、TASK directory境界のP2だけを残す。
+Git既知の未登録設定も全体事前検査で拒否する。P1はClosedとし、TASK directory境界のP2だけを残す。
 
 ## 10. P2裁定（2026-09-03）
 
 `FED-SEC-004`は[ADR-043](../02.設計書/10_決定記録/ADR-043_複合workspaceの継続・TASK境界・適合契約を確定する.md)で
 採用した。TASK `changes`の許可集合を字句Git path、所有集合をcanonical pathとして分離し、追加はcurrent、削除はbase、
-変更は双方を検査する。symlink解決先へdirectory prefixの許可を拡張しない。これにより本レビューをClosedとする。
+変更は双方を検査する。symlink解決先へdirectory接頭辞の許可を拡張しない。これにより本reviewをClosedとする。

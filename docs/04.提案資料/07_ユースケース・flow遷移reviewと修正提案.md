@@ -1,4 +1,4 @@
-# ユースケース・フロー遷移レビューと修正提案
+# ユースケース・flow遷移reviewと修正提案
 
 **状態**: **Closed（8件裁定・反映済み）**
 
@@ -10,7 +10,7 @@
 ## 1. 目的
 
 [ユースケース設計](../02.設計書/09_ユースケース設計.md)の作成にあたり、`docs/02.設計書`と
-`docs/03.詳細設計`の利用者フロー、SPEC状態遷移、TASK依存、検証実行を横断して確認した。
+`docs/03.詳細設計`の利用者flow、SPEC状態遷移、TASK依存、検証実行を横断して確認した。
 本書は、状態遷移matrixの外側に残る不整合と実装分岐を記録し、裁定候補を示す。
 
 現在の正本は`docs/02.設計書`と`docs/03.詳細設計`である。本書の修正例は、裁定と正本反映が完了するまで
@@ -20,7 +20,7 @@
 
 REQ/TECH、ADR、TASKの状態遷移matrixは、上位設計、詳細仕様、ADR-024で一致している。
 一方、Small FlowとTASK境界、先行TASKの完了条件、verifyの重複排除単位にP1相当の不整合がある。
-さらに、変更コードからSPECへの逆引き、Intent起点、Full Flowの戻り先、削除済みID、ADR部分改訂に
+さらに、変更codeからSPECへの逆引き、Intent起点、Full Flowの戻り先、削除済みID、ADR部分改訂に
 実装者が一意に判断できない箇所がある。
 
 ## 3. 指摘一覧
@@ -29,10 +29,10 @@ REQ/TECH、ADR、TASKの状態遷移matrixは、上位設計、詳細仕様、AD
 |---|:--:|---|---|---|
 | UC-FLOW-001 | P1 | Small Flowの`check`位置とTASK境界検査が接続していない | 境界外変更をDoneまで検出しない | 裁定・反映済み（ADR-028） |
 | UC-FLOW-002 | P1 | `requires`先行TASKが`open`でも後続TASKを停止しない | 未完了の先行作業を飛び越える | 裁定・反映済み（ADR-029） |
-| UC-FLOW-003 | P1 | 単一workspaceと連合でverify重複排除単位が異なる | コマンド実行回数と結果が実装依存になる | 裁定・反映済み（ADR-030） |
-| UC-FLOW-004 | P2 | 変更コード・テストから検査対象SPECへの逆引きが未定義 | コードだけの変更で通常`check`が空になる可能性 | 裁定・反映済み（ADR-031） |
+| UC-FLOW-003 | P1 | 単一workspaceと複合workspaceでverify重複排除単位が異なる | command実行回数と結果が実装依存になる | 裁定・反映済み（ADR-030） |
+| UC-FLOW-004 | P2 | 変更code・testから検査対象SPECへの逆引きが未定義 | codeだけの変更で通常`check`が空になる可能性 | 裁定・反映済み（ADR-031） |
 | UC-FLOW-005 | P2 | Small FlowのIntent起点語彙が一致しない | リファクタリング等の開始方法が不定 | 裁定・反映済み（本文反映） |
-| UC-FLOW-006 | P2 | Full FlowにDoneとレビュー否決時の戻り先がない | 完了・再作業条件が不定 | 裁定・反映済み（本文反映） |
+| UC-FLOW-006 | P2 | Full FlowにDoneとreview否決時の戻り先がない | 完了・再作業条件が不定 | 裁定・反映済み（本文反映） |
 | UC-FLOW-007 | P2 | 削除済みID再利用禁止の履歴範囲が未定義 | commitをまたぐ再利用を検出できない | 裁定・反映済み（ADR-032） |
 | UC-FLOW-008 | P3 | ADRの部分改訂を`related`で表しつつ、READMEは`supersedes`を要求 | accepted ADR間の優先関係が人間依存 | 裁定・反映済み（ADR-033） |
 
@@ -42,7 +42,7 @@ REQ/TECH、ADR、TASKの状態遷移matrixは、上位設計、詳細仕様、AD
 
 #### 現状
 
-- SDDプロセス設計の図は`Intent -> Context -> Check -> Implement -> Verify -> Done`である。
+- SDD process設計の図は`Intent -> Context -> Check -> Implement -> Verify -> Done`である。
 - 同書は`Check`で変更境界を確認すると説明する。
 - 運用設計は編集直後に`bitz check`を実行する。
 - ADR-025は、TASK IDまたはTASK pathを明示した`check`だけが`changes`境界を強制すると定める。
@@ -62,7 +62,7 @@ Intent -> Context -> Pre-check -> Implement -> Post-check -> Verify -> Human Rev
                                      +-------------+------------+
 ```
 
-- `Pre-check`はSPECと既存作業ツリーの不適合を確認する。
+- `Pre-check`はSPECと既存作業treeの不適合を確認する。
 - `Post-check`は実装後の成果物を確認する。
 - TASK起点では`bitz check <TASK-ID>`を必須とし、`changes`境界を検査する。
 - test failureは`Implement`へ、仕様矛盾・意味変更は人間確認へ戻す。
@@ -77,7 +77,7 @@ Intent -> Context -> Pre-check -> Implement -> Post-check -> Verify -> Human Rev
 
 #### 受入条件
 
-- TASK起点のfixtureで境界外コード変更が`Post-check`で必ず検出される。
+- TASK起点のfixtureで境界外code変更が`Post-check`で必ず検出される。
 - 実装後に静的検査を行わずDoneへ到達するedgeがない。
 
 ### 4.2 UC-FLOW-002: 先行TASKの状態ガード
@@ -95,7 +95,7 @@ TASK `requires`は先行TASKを表し、TASK間循環を禁止する。一方、
 
 - TASKを起点とする`purpose=implement|verify`では、`requires`先TASKがすべて`done`であることを要求する。
 - `open`の先行TASKが残る場合は`CTX-TASK-DEPENDENCY-001`／error／`blocked`を返す。
-- `interpret`では停止せず、未完了先行TASKをwork dependencyとして表示する。
+- `interpret`では停止せず、未完了先行TASKをwork依存として表示する。
 - 単に関連する作業は`related`とし、`requires`を使わない。
 
 #### 主な反映先
@@ -113,14 +113,14 @@ TASK `requires`は先行TASKを表し、TASK間循環を禁止する。一方、
 
 #### 現状
 
-- ADR-018はテストpathの重複排除を`argv`と`cwd`の組で行う。
-- `{tests}`がないコマンドは設定argvを1回だけ実行する。
-- 連合仕様は実行済み判定を`(workspace-id, command, test-path)`とする。
+- ADR-018はtest pathの重複排除を`argv`と`cwd`の組で行う。
+- `{tests}`がないcommandは設定argvを1回だけ実行する。
+- 複合workspace仕様は実行済み判定を`(workspace-id, command, test-path)`とする。
 
 #### 問題
 
-同一command bindingに複数test pathがある場合、単一workspaceでは1回、連合ではpathごとに複数回と
-解釈できる。command名が異なるが`argv`と`cwd`が同じ場合も、ADR-018と連合キーで結果が異なる。
+同一command bindingに複数test pathがある場合、単一workspaceでは1回、複合workspaceではpathごとに複数回と
+解釈できる。command名が異なるが`argv`と`cwd`が同じ場合も、ADR-018と複合workspace keyで結果が異なる。
 
 #### 提案
 
@@ -129,7 +129,7 @@ TASK `requires`は先行TASKを表し、TASK間循環を禁止する。一方、
 3. `{tests}`ありは、重複排除後の全pathを1回展開してbindingを1回実行する。
 4. `{tests}`なしは、test path数にかかわらずbindingを1回実行する。
 5. 実効timeoutは実行結果に保持するが、bindingの同一性は設定timeoutを含むContext Digestで保護する。
-6. 単一workspace、引数なしverify、連合全体verifyで同じ規則を使用する。
+6. 単一workspace、引数なしverify、複合workspace全体verifyで同じ規則を使用する。
 
 #### 主な反映先
 
@@ -141,14 +141,14 @@ TASK `requires`は先行TASKを表し、TASK間循環を禁止する。一方、
 #### 受入条件
 
 - 同一binding・複数path、別名同一binding、同名別workspace、`{tests}`なしの実行回数fixtureを持つ。
-- 単一workspaceと連合で、同じ所有workspaceの実行回数が一致する。
+- 単一workspaceと複合workspaceで、同じ所有workspaceの実行回数が一致する。
 
-### 4.4 UC-FLOW-004: 変更コード・テストからSPECへの逆引き
+### 4.4 UC-FLOW-004: 変更code・testからSPECへの逆引き
 
 #### 現状
 
 `check`はGit変更集合を起点にする一方、詳細な通常実行の記述は変更SPEC、その強い依存、直接逆参照を
-主語としており、変更コード・テストをどのSPECへ正規化するか定義していない。上位設計の`outdated`説明は
+主語としており、変更code・testをどのSPECへ正規化するか定義していない。上位設計の`outdated`説明は
 実装変更の影響候補を含む。
 
 #### 提案
@@ -171,7 +171,7 @@ TASK `requires`は先行TASKを表し、TASK間循環を禁止する。一方、
 
 #### 現状
 
-Small FlowのIntentはREQまたはEARS-AI規範文を要求するが、プリフライトは「対象REQまたは意図」とする。
+Small FlowのIntentはREQまたはEARS-AI規範文を要求するが、事前検査は「対象REQまたは意図」とする。
 `bitz context`は生の意図文字列を起点にせず、SPECまたは規範文IDを要求する。
 
 #### 提案
@@ -179,7 +179,7 @@ Small FlowのIntentはREQまたはEARS-AI規範文を要求するが、プリフ
 - Small Flowの機械起点をREQ、TECH、規範文、open TASKのいずれかに限定する。
 - TASK起点は`addresses`と`requires`から適用要求を解決する。
 - 生の意図しかない場合は、実装前にREQ、TECH、TASKのいずれかへ記録する。
-- SPECを作るほどでない作業を許す場合は、Core保証外の簡易フローとして明示的に分離する。
+- SPECを作るほどでない作業を許す場合は、Core保証外の簡易flowとして明示的に分離する。
 
 ### 4.6 UC-FLOW-006: Full Flowの完了と戻り先
 
@@ -219,8 +219,8 @@ Pre-check -> Implement -> Post-check -> Verify -> Human Review -> Done
 
 1. **Core保証にする**: 対象branchの到達可能Git履歴からID tombstone索引を構築する範囲、性能上限、
    shallow clone時の縮退を定義する。
-2. **レビュー規則にする**: Coreが保証するのは現在集合とGit基準版間の再利用検出までと明記し、
-   長期的な再利用禁止はGitレビューの責務とする。
+2. **review規則にする**: Coreが保証するのは現在集合とGit基準版間の再利用検出までと明記し、
+   長期的な再利用禁止はGit reviewの責務とする。
 
 軽量Coreの方針からは2を初期案とし、実際のID再利用事故が確認された場合に履歴索引を再評価する。
 
@@ -259,10 +259,10 @@ P1の3件は機械契約または既存ADRの意味へ影響するため、正�
 
 - [x] Small Flowに実装後`check`とTASK明示境界検査がある
 - [x] TASK `requires`先の`open`／`done`で開始可否が一意になる
-- [x] verifyのbinding IDと実行回数が単一・連合で一致する
+- [x] verifyのbinding IDと実行回数が単一・複合workspaceで一致する
 - [x] code/testだけの変更から`check`対象が一意に決まる
 - [x] raw intent、REQ、TECH、TASKの開始条件が区別される
-- [x] Full Flowの全レビューに承認・否決edgeとDoneがある
+- [x] Full Flowの全reviewに承認・否決edgeとDoneがある
 - [x] 削除済みID再利用禁止の機械保証範囲が明示される
 - [x] accepted ADR間の部分改訂を正本から追跡できる
 
@@ -273,7 +273,7 @@ P1の3件は機械契約または既存ADRの意味へ影響するため、正�
 §4.1の提案を採用し、[ADR-028](../02.設計書/10_決定記録/ADR-028_開発flowの実装後検査とTASK境界の接続.md)
 として裁定した。Small Flowを`Intent -> Context -> Pre-check -> Implement -> Post-check -> Verify ->
 Human Review -> Done`へ改訂し、TASK起点では`Post-check`で`bitz check <TASK-ID>`を必須とした。
-Full Flowも同じPre-check／Post-check配置を共有する。Full Flowのレビュー否決edgeはUC-FLOW-006として
+Full Flowも同じPre-check／Post-check配置を共有する。Full Flowのreview否決edgeはUC-FLOW-006として
 分離し、本裁定には含めない。
 
 反映先: `02.設計書/04_SDDプロセス設計.md`、`02.設計書/06_運用設計.md`、`02.設計書/08_実装ロードマップ.md`、
@@ -301,7 +301,7 @@ Full Flowも同じPre-check／Post-check配置を共有する。Full Flowのレ�
 `--all-workspaces`で同じ規則を使う。CLI実効timeoutはbindingの同一性へ含めず、設定timeoutはADR-026の
 Context Digestが保護する。
 
-ADR-018 Decision 2の`(argv, cwd)`とモノレポSPEC連合仕様の`(workspace-id, command, test-path)`は
+ADR-018 Decision 2の`(argv, cwd)`と複合workspace仕様の`(workspace-id, command, test-path)`は
 本裁定で置き換えた。ADR-018とADR-026の該当箇所へは、後継の所在をNotesとRevision Historyで注記した。
 accepted ADRの部分改訂表現そのものはUC-FLOW-008として未裁定であり、確定後に同じ規則へ移行する。
 
@@ -323,12 +323,12 @@ P1裁定時点で、P2 4件（UC-FLOW-004〜007）とP3 1件（UC-FLOW-008）が
 変更test pathを`tests[].path`の逆索引から所有REQ/TECHへ正規化する。
 
 提案が保留した「未所有code/test pathをwarningにするか対象外にするか」は**対象外**（件数のみ結果へ残す）
-とした。SPECが未整備のコードが大半である段階的導入を前提とするため、warningにすると通常のコード変更が
-常時`passed_with_warnings`となり、影響候補warningのシグナルが埋没する。モノレポの対象0件memberを
+とした。SPECが未整備のcodeが大半である段階的導入を前提とするため、warningにすると通常のcode変更が
+常時`passed_with_warnings`となり、影響候補warningのsignalが埋没する。複合workspaceの対象0件memberを
 warning止まりにしたADR-019の方針とも揃う。
 
 同じく提案が求めた性能測定は不要と判断した。`implements`と`tests[].path`はFrontmatter項目であり、
-逆索引は§2が全SPECから構築済みの軽量索引から得られる。追加のファイル走査が発生しないため、変更範囲
+逆索引は§2が全SPECから構築済みの軽量索引から得られる。追加のfile走査が発生しないため、変更範囲
 `check`の1秒以内という目標に影響しない。
 
 あわせて`outdated`の説明から「実装変更」を削除した。影響候補`SPEC-IMPACT-OUTDATED-001`は変更された
@@ -340,13 +340,13 @@ REQ/TECHへの逆参照だけを対象としており、実装変更を起点に
 
 ### 8.2 UC-FLOW-005
 
-§4.5の提案を採用した。指摘の中核はADR-028が既に解消しており（Small Flowの Intent とプリフライトが
+§4.5の提案を採用した。指摘の中核はADR-028が既に解消しており（Small Flowの Intent と事前検査が
 REQ、TECH、規範文、`open` TASKで一致）、残る3点を本文へ明記した。機械契約を追加しないためADRは作らない。
 
 1. Coreは生の意図文字列を起点にしない。`bitz context`はSPEC IDまたは規範文IDを要求する。
 2. TASK起点は`addresses`と`requires`から適用要求を解決する。
 3. SPECを作らずに行う変更はCore保証外とし、句単位coverage、TASK変更境界、Digest再照合の保証を伴わない。
-   この区別のために専用フローや公開操作を追加しない。
+   この区別のために専用flowや公開操作を追加しない。
 
 反映先: `02.設計書/04_SDDプロセス設計.md`、`02.設計書/09_ユースケース設計.md`
 
@@ -354,8 +354,8 @@ REQ、TECH、規範文、`open` TASKで一致）、残る3点を本文へ明記�
 
 §4.6の図と戻り先をそのまま採用した。Coreへ新しい契約を追加しないためADRは作らない。
 
-採用にあたり、次の1点を明示的に追加した。レビューの承認と否決は人間とAI CLIの進行契約であり、Coreの
-機械契約ではない。Coreはレビュー状態も否決も保持せず、Gate状態機械を持たない。戻り先の合流点でCoreが
+採用にあたり、次の1点を明示的に追加した。reviewの承認と否決は人間とAI CLIの進行契約であり、Coreの
+機械契約ではない。Coreはreview状態も否決も保持せず、Gate状態機械を持たない。戻り先の合流点でCoreが
 行うのは、再取得したContextの完全解決とDigest照合だけである。これを書かないとCoreがGate状態を持つ
 読みが復活し、Gate語彙を廃したADR-002からADR-009への経緯と衝突する。
 
@@ -364,16 +364,16 @@ ADR-028 Decision 6への追記
 
 ### 8.4 UC-FLOW-007
 
-§4.7の案2（レビュー規則）を採用し、
+§4.7の案2（review規則）を採用し、
 [ADR-032](../02.設計書/10_決定記録/ADR-032_ID再利用検出のCore保証範囲.md)として裁定した。
 
 採用理由は提案書が挙げた軽量性ではなく、**決定論性**である。到達可能Git履歴からtombstone索引を作ると、
-shallow cloneの深度によって同じ作業ツリーに対する`EAI-CORE-ID-003`の有無が変わる。「同一入力から同一
+shallow cloneの深度によって同じ作業treeに対する`EAI-CORE-ID-003`の有無が変わる。「同一入力から同一
 Semantic IRとDiagnosticを再現できる」はPhase 1の完了条件でありCore 1.0の中核契約であるため、clone深度で
 結果が変わる検査をCore保証へ入れない。
 
 `EAI-CORE-ID-003`は「Git基準版に存在し現在は削除されているIDの再出現」と定義し、基準版がない場合は
-実施不能として縮退表へ加えた。それ以前の履歴での再利用禁止はGitレビューの責務とする。再評価条件は
+実施不能として縮退表へ加えた。それ以前の履歴での再利用禁止はGit reviewの責務とする。再評価条件は
 実際のID再利用事故の確認とし、提案資料README §4へ記録した。
 
 反映先: `03.詳細設計/01_EARS-AI規格/01_Core構文仕様.md`、
@@ -409,8 +409,8 @@ Decision項目は置き換わっておらず、部分改訂ではなく明確化
    Decision本文を書き換えない。
 4. `x-amends`と`amends`相当の新しい関係型は追加しない。
 
-`x-amends`を採らなかった理由は、本ディレクトリが`docs/`配下の設計資料でCoreが走査しないため
-（ADR-020 Decision 5）、検証器を持たないFrontmatterキーは書式だけが残って実態と乖離することにある。
+`x-amends`を採らなかった理由は、本directoryが`docs/`配下の設計資料でCoreが走査しないため
+（ADR-020 Decision 5）、検証器を持たないFrontmatter keyは書式だけが残って実態と乖離することにある。
 ADR-020 Decision 4も新しい関係型の追加条件を「改訂関係の機械追跡が実測で必要になった場合」としており、
 その条件をまだ満たさない。
 
@@ -426,6 +426,6 @@ ADR-033自身がADR-020 Decision 4の部分改訂であり、本規約の最初�
 ## 10. クローズ判定
 
 P1 3件はADR-028〜030、P2 4件はADR-031〜032と本文反映、P3 1件はADR-033として裁定し、いずれも正本へ
-反映した。適合性fixtureと実装コードはロードマップに従ってPhase 1以降で作成する。
-ユースケース・フロー遷移レビューは**完了**とする。
+反映した。適合性fixtureと実装codeはロードマップに従ってPhase 1以降で作成する。
+ユースケース・flow遷移reviewは**完了**とする。
 

@@ -1,26 +1,26 @@
-# 実装可能性・性能・文書構造レビュー
+# 実装可能性・性能・文書構造review
 
 - 状態: Closed（P1・P2裁定済み）
 - 実施日: 2026-09-02
-- 基準: branch `bitz_next`、HEAD `0097f2839e15a697cea5a8e4cb413a77562201ab`＋未コミット設計
+- 基準: branch `bitz_next`、HEAD `0097f2839e15a697cea5a8e4cb413a77562201ab`＋未commit設計
 - 規範文書digest: `b292eed96f8d607c49e380bdb500c10a0c896c2e2c41bea415c4fd14aa38aaba`
 - 観点: 実装分割、公開Schema、resource上限、性能目標、fixture、規範所有者
 
 ## 1. 結論
 
 catalog読込み、横断索引、対象workspaceの完全解析、操作固有処理という層分けは実装可能である。
-連合固有規則を1文書へ集約し、操作仕様が差分だけを所有する構造も、旧仕様の復元より保守しやすい。
+複合workspace固有規則を1文書へ集約し、操作仕様が差分だけを所有する構造も、旧仕様の復元より保守しやすい。
 
-ただし、性能目標とresource limitは検証条件が不足し、Context、連合結果、verify結果の公開Schemaにも未閉鎖部分がある。
+ただし、性能目標とresource limitは検証条件が不足し、Context、複合workspaceの結果、verify結果の公開Schemaにも未閉鎖部分がある。
 これらはアルゴリズムの難しさではなく受入条件の不足であり、実装着手前にfixtureとSchemaを固定すれば解消できる。
 
 ## 2. 指摘一覧
 
 | ID | 優先度 | 指摘 | 影響 |
 |---|---|---|---|
-| FED-IMP-001 | P1 | 連合性能目標の測定条件が不足している | 合否を再現できず最適化完了を判定できない |
-| FED-IMP-002 | P1 | 10,000 SPEC以外の連合resource上限に数値がない | `SPEC-MONOREPO-LIMIT-001`の発火条件が実装依存になる |
-| FED-IMP-003 | P1 | 連合Context・操作結果・verify結果Schemaが閉じていない | adapterとfixtureを確定できない |
+| FED-IMP-001 | P1 | 複合workspace性能目標の測定条件が不足している | 合否を再現できず最適化完了を判定できない |
+| FED-IMP-002 | P1 | 10,000 SPEC以外の複合workspaceのresource上限に数値がない | `SPEC-MONOREPO-LIMIT-001`の発火条件が実装依存になる |
+| FED-IMP-003 | P1 | 複合workspaceのContext・操作結果・verify結果Schemaが閉じていない | adapterとfixtureを確定できない |
 | FED-IMP-004 | P2 | hard limit時のmemory・計算量目標がない | 逐次実行でも索引構築でresourceを使い切り得る |
 | FED-IMP-005 | P2 | conformance fixtureの期待JSONとstatus matrixが未定義 | 実装間の適合性を客観比較できない |
 
@@ -33,17 +33,17 @@ catalog読込み、横断索引、対象workspaceの完全解析、操作固有�
 - cold cache／warm cache、試行回数、中央値・上位百分位
 - 1 SPECあたりbyte、関係edge数、横断edge比率
 - 変更workspace数と到達workspace数
-- Git status／diffを測定へ含めるか
+- Git status／差分を測定へ含めるか
 - report書込み、JSON整形を含めるか
 
 規範値を特定機種へ固定する必要はない。標準fixture repositoryと基準実行環境を実装計画へ置き、例えば5回の
 warm run中央値、process全体elapsedという測定法を固定すれば、回帰gateとして使える。
 
-## 4. FED-IMP-002 resource limit
+## 4. FED-IMP-002 resource上限
 
-[連合仕様 §10](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#10-上限とgit前提)はSPEC file 10,000件、
-関係索引、入力byteの上限を連合全体へ適用するとするが、後二者の数値と数え方がない。共通hard limitを参照するなら
-参照先と連合時の集約式が必要である。
+[複合workspace仕様 §10](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#10-上限とgit前提)はSPEC file 10,000件、
+関係索引、入力byteの上限を複合workspace全体へ適用するとするが、後二者の数値と数え方がない。共通hard limitを参照するなら
+参照先と複合workspace時の集約式が必要である。
 
 少なくとも次を固定する。
 
@@ -56,7 +56,7 @@ member数上限だけ先に検査し、その後の全体resource超過は同じ
 
 ## 5. FED-IMP-003 公開Schema
 
-独立レビューで確認した未閉鎖部分は次のとおりである。
+独立reviewで確認した未閉鎖部分は次のとおりである。
 
 - Context Bundle追加fieldの型、必須性、null、重複排除
 - Context Digestへ入れる「実効設定」の正規化対象
@@ -65,7 +65,7 @@ member数上限だけ先に検査し、その後の全体resource超過は同じ
 - workspace途中失敗時の空配列、件数、Diagnostic配置
 
 これらは別々のadapterへ実装規則を委ねず、共通結果Schema、Context仕様、verify仕様の各所有者へ完全なfield表と
-canonical JSON例を1つずつ追加すべきである。連合仕様には重複定義せず参照だけを残す。
+canonical JSON例を1つずつ追加すべきである。複合workspace仕様には重複定義せず参照だけを残す。
 
 ## 6. FED-IMP-004 計算量とmemory
 
@@ -76,7 +76,7 @@ target数×閉包sizeのmemoryを消費する。横断索引を共有し、Conte
 全体操作は逐次という公開契約なので、将来並列化してもresource上限を変えない。Core 1.0では並列schedulerを追加せず、
 実測で単一Contextと全体checkの目標を確認する方針が妥当である。
 
-## 7. FED-IMP-005 conformance matrix
+## 7. FED-IMP-005 適合matrix
 
 実装計画のfixture列挙は方向として十分だが、入力と期待結果がまだ文章に留まる。最低限、次をversion管理されたfixtureと
 期待JSONへ落とす必要がある。
@@ -88,18 +88,18 @@ target数×閉包sizeのmemoryを消費する。横断索引を共有し、Conte
 - 2つの異なるContextを持つmulti-target verify
 - 共有binding、blocked targetと通過targetの混在、command失敗後の継続
 - workspace ID維持のpath移動、ID変更、member削除
-- 0件member、連合全体0件、未知workspace、Git不在、resource境界値
+- 0件member、複合workspace全体0件、未知workspace、Git不在、resource境界値
 
-各fixtureにstatus、exit code、Diagnostic code、順序、report生成有無を持たせる。
+各fixtureにstatus、終了コード、Diagnostic code、順序、report生成有無を持たせる。
 
 ## 8. 成立を確認した実装構造
 
-- 連合差分の規範所有者が`05_複合workspace仕様.md`に集約されている。
+- 複合workspace差分の規範所有者が`05_複合workspace仕様.md`に集約されている。
 - 設定Schema、共通結果、各操作仕様の既存所有権を維持している。
-- federation root先頭、workspace ID辞書順、逐次実行で決定論的にできる。
+- root workspace先頭、workspace ID辞書順、逐次実行で決定論的にできる。
 - 軽量全体索引と到達workspaceだけの完全解析を分離できる。
-- nested federation、複数repository、必須並列化を除外している。
-- 既存4操作のまま連合対象選択を追加し、新しい公開操作を増やしていない。
+- 入れ子の複合workspace、複数repository、必須並列化を除外している。
+- 既存4操作のまま複合workspace対象選択を追加し、新しい公開操作を増やしていない。
 
 ## 9. 判定
 
@@ -109,7 +109,7 @@ FED-IMP-001・002をbenchmark／limit fixtureへ落としてから実装受入ga
 ## 10. P1裁定（2026-09-03）
 
 `FED-IMP-001`〜`003`は[ADR-042](../02.設計書/10_決定記録/ADR-042_複合workspaceの同一性・所有境界・公開契約を確定する.md)
-で採用した。通常規模の性能fixtureと10,000 SPECのhard-limit fixtureを分離し、連合resource数値、5回中央値、
+で採用した。通常規模の性能fixtureと10,000 SPECのhard-limit fixtureを分離し、複合workspaceのresource数値、5回中央値、
 Context／全体結果Schemaを正本と実装計画へ反映した。P1はClosedとし、計算量目標と期待JSON適合matrixのP2を残す。
 
 ## 11. P2裁定（2026-09-03）
@@ -117,5 +117,5 @@ Context／全体結果Schemaを正本と実装計画へ反映した。P1はClose
 `FED-IMP-004`と`FED-IMP-005`は
 [ADR-043](../02.設計書/10_決定記録/ADR-043_複合workspaceの継続・TASK境界・適合契約を確定する.md)で採用した。
 索引memoryを入力graph、target一時memoryを最大Context閉包へ線形とし、全target Bundleの同時保持を禁止した。
-resource dimension別の境界fixture、hard-limit時の1 GiB RSS受入、単独／連合consumerとrollbackを含む期待JSON matrixを
-固定した。これにより本レビューをClosedとする。
+resource dimension別の境界fixture、hard-limit時の1 GiB RSS受入、単独／複合workspaceのconsumerとrollbackを含む期待JSON matrixを
+固定した。これにより本reviewをClosedとする。

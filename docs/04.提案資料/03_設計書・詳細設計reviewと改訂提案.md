@@ -1,7 +1,7 @@
-# 設計書・詳細設計レビューと改訂提案
+# 設計書・詳細設計reviewと改訂提案
 
 - 対象: [`docs/02.設計書`](../02.設計書/README.md) 全9文書 + 決定記録17件、[`docs/03.詳細設計`](../03.詳細設計/) 全19文書
-- 観点: 実装者 / 運用者 / AIエージェント / 文書自身の自己適合性
+- 観点: 実装者 / 運用者 / AI agent / 文書自身の自己適合性
 - 状態: **Closed（全項目裁定済み）**
 - 作成日: 2026-08-31
 - P1裁定日: 2026-08-31（[ADR-018](../02.設計書/10_決定記録/ADR-018_正本Schemaの欠落補完とDiagnostic-severityの明示.md)）
@@ -11,11 +11,11 @@
 
 ## 0. 読み方
 
-本書は[レビュー01](01_詳細設計reviewと改訂提案.md)と[Antigravityレビュー](02_Antigravity_詳細設計reviewと改訂提案.md)の
-裁定（2026-08-27）を反映した現行正本を対象とする独立レビューである。既に裁定済みの論点は再提起せず、
+本書は[review 01](01_詳細設計reviewと改訂提案.md)と[Antigravity review](02_Antigravity_詳細設計reviewと改訂提案.md)の
+裁定（2026-08-27）を反映した現行正本を対象とする独立reviewである。既に裁定済みの論点は再提起せず、
 反映作業の結果として生じた接続部の不整合と、これまで指摘されていない欠落だけを扱う。
 
-各項目は次の形式で記述する。行番号は2026-08-31時点のスナップショットであり、仕様の正にはしない。
+各項目は次の形式で記述する。行番号は2026-08-31時点のsnapshotであり、仕様の正にはしない。
 
 - **現状**: 該当箇所の記述（`ファイル:行`）
 - **問題**: 実装または運用で何が起きるか
@@ -29,16 +29,16 @@
 
 ## 1. 総評
 
-裁定済み提案の反映は正確である。特に次の3点は、前回レビューからの改善として評価する。
+裁定済み提案の反映は正確である。特に次の3点は、前回reviewからの改善として評価する。
 
 - Context Resolutionが「完全解決」と「提示量」を分離し、`semanticHash` / `fileHash`、
   Context Digest / Projection Digestを二重化した点。改訂履歴の追加が実装のstale判定を壊さない構造になっている
-- モノレポ連合を、暗黙探索ではなく明示カタログ + 修飾IDで定義し、所有境界とテスト対応の越境条件を
+- 複合workspaceを、暗黙探索ではなく明示catalog + 修飾IDで定義し、所有境界とtest対応の越境条件を
   「直接`refines`する句だけ」へ限定した点。権限と責務の境界が機械判定可能な形で閉じている
-- 診断コードの所有者・形式・永続性をADR-011で固定し、`SPEC-*`側に条件とseverityの表を持たせた点
+- 診断codeの所有者・形式・永続性をADR-011で固定し、`SPEC-*`側に条件とseverityの表を持たせた点
 
-一方、機能追加（Profile、モノレポ、Revision History、Agent Plugins配布）が複数のADRで段階的に
-行われた結果、**上位文書が前提とする設定キー・フィールド・モードが、下位の正本Schemaに存在しない**
+一方、機能追加（Profile、複合workspace、Revision History、Agent Plugins配布）が複数のADRで段階的に
+行われた結果、**上位文書が前提とする設定key・field・モードが、下位の正本Schemaに存在しない**
 という型の欠落が5件残っている（§2）。いずれも「どちらが正か」ではなく「片方に定義がない」ため、
 実装者は仕様から動作を決定できない。
 
@@ -51,7 +51,7 @@
 本節の5件は**すべて採用し、正本へ反映済み**である（[ADR-018](../02.設計書/10_決定記録/ADR-018_正本Schemaの欠落補完とDiagnostic-severityの明示.md)）。
 適用した差分は[附録A](#附録a-p1修正案適用可能な差分)に残す。以下の「現状」は適用前の記述である。
 
-### 2.1 `profiles`設定キーが`bitz.yaml`のSchemaに存在しない
+### 2.1 `profiles`設定keyが`bitz.yaml`のSchemaに存在しない
 
 **現状**
 
@@ -64,7 +64,7 @@
 
 **問題**
 
-`bitz.yaml`仕様は「未知の標準キーは、同じmajor内の前方互換性のため警告して保持する」と定めている。
+`bitz.yaml`仕様は「未知の標準keyは、同じmajor内の前方互換性のため警告して保持する」と定めている。
 したがって`profiles: {...}`を書いたプロジェクトは、Profile版を宣言したつもりで**警告付きの無視**を受ける。
 
 同時に`doctor`と`check --all-workspaces`はProfile majorの互換性を検査すると宣言しているが、
@@ -75,32 +75,32 @@
 
 Profileの有効化はCore 1.0の対象外（`01_EARS-AI規格/README.md`）である以上、次のいずれかで揃える。
 
-- 案A（推奨）: `02_bitz.yaml仕様.md §3`へ`profiles`を**予約キー**として追加する。
+- 案A（推奨）: `02_bitz.yaml仕様.md §3`へ`profiles`を**予約key**として追加する。
   型は`map<namespace, major.minor>`、Core 1.0では値を保持するが検査へ使用しないと明記する。
   `doctor`と`check --all-workspaces`のProfile互換性検査は「宣言がある場合だけ」と条件を付ける。
-- 案B: `02_拡張プロファイル仕様.md:39`から`profiles`の記述を削除し、`doctor`仕様・モノレポ仕様から
+- 案B: `02_拡張プロファイル仕様.md:39`から`profiles`の記述を削除し、`doctor`仕様・複合workspace仕様から
   Profileの語を外す。Profile版指定はProfile正式導入時に新設する。
 
 いずれの場合も、Core 1.0で検査しないなら`doctor`のDiagnostic `SPEC-DOCTOR-EARS-001`の条件文から
 Profileを除く。
 
-### 2.2 `verify`の実行ディレクトリが`verify.commands[].cwd`を無視している
+### 2.2 `verify`の実行directoryが`verify.commands[].cwd`を無視している
 
 **現状**
 
-- `02_bitz.yaml仕様.md:95-99` — `cwd`はワークスペースルート相対の既存ディレクトリとし、
-  「`cwd`指定時は全テストパスがその配下にあることを要求し、`{tests}`へは`cwd`相対へ正規化したパスを展開する」
+- `02_bitz.yaml仕様.md:95-99` — `cwd`はworkspace root相対の既存directoryとし、
+  「`cwd`指定時は全test pathがその配下にあることを要求し、`{tests}`へは`cwd`相対へ正規化したpathを展開する」
 - `06_参照・トレース・検証仕様.md:92` — 手順6「`{tests}`をargvへ安全に展開し、
-  **テストを所有するワークスペースルートで実行する**」
+  **testを所有するworkspace rootで実行する**」
 
 **問題**
 
 `bitz.yaml`側は`cwd: frontend`を指定できる設計だが、`verify`の実行手順は実行位置を
-ワークスペースルートに固定している。`npm test`のようにpackage rootでの実行を前提とするコマンドは、
+workspace rootに固定している。`npm test`のようにpackage rootでの実行を前提とするcommandは、
 仕様どおり実装すると常に起動失敗（`error`）になる。
 
 `06_参照・トレース・検証仕様.md:149`の結果JSON例は`"cwd": "."`であり、
-「`cwd`はワークスペースルート相対の実行位置を表す」（同:160）と説明している。
+「`cwd`はworkspace root相対の実行位置を表す」（同:160）と説明している。
 つまり結果Schemaは`cwd`が変わりうる前提だが、実行手順だけがそれを反映していない。
 
 **提案**
@@ -108,11 +108,11 @@ Profileを除く。
 `06_参照・トレース・検証仕様.md §5`の手順6を次へ改める。
 
 > 6. `{tests}`をargvへ安全に展開し、解決した`cwd`で実行する。`cwd`が未指定の場合は
->    テストを所有するワークスペースルートを実行位置とする。
+>    testを所有するworkspace rootを実行位置とする。
 
-あわせて§5の手順5「同じコマンドを使うテストパスを重複排除する」の重複排除キーを
+あわせて§5の手順5「同じcommandを使うtest pathを重複排除する」の重複排除keyを
 `(command, cwd)`単位であることが読み取れる表現へ改める。`12_モノレポSPEC連合仕様.md:309`の
-実行単位`(workspace-id, command, test-path)`は`cwd`がコマンド定義に従属するため変更不要である。
+実行単位`(workspace-id, command, test-path)`は`cwd`がcommand定義に従属するため変更不要である。
 
 ### 2.3 Frontmatterに`owners`が定義されていない
 
@@ -122,12 +122,12 @@ Profileを除く。
 - `01_EARS-AI規格/08_記述例・アンチパターン.md:44` — 「承認者はFrontmatterへ記録し、実行主体をACTORにする」
 - `02_SPECファイル規定/03_Frontmatter共通仕様.md:34-43` — 共通項目は`id`、`title`、`status`、
   `relations`、`implements`、`tests`、`verify`のみ
-- 同`:133` — 「`x-`で始まらない未知のキーは警告する」
+- 同`:133` — 「`x-`で始まらない未知のkeyは警告する」
 - 同`:129` — 拡張の例として`x-owner: auth-team`
 
 **問題**
 
-Core構文仕様は`owners`という具体的なキー名でACTORとの責務分離を説明しているが、
+Core構文仕様は`owners`という具体的なkey名でACTORとの責務分離を説明しているが、
 Frontmatterの正本Schemaに`owners`はない。規格の指示どおり`owners:`と書くと
 `bitz check`が警告を出し、警告を避けるには`x-owners:`と書く必要がある。
 
@@ -138,14 +138,14 @@ Frontmatterの正本Schemaに`owners`はない。規格の指示どおり`owners
 
 `03_Frontmatter共通仕様.md §2`へ`owners`を任意の共通項目として追加する。
 
-| キー | 型 | 必須 | 意味 |
+| key | 型 | 必須 | 意味 |
 |---|---|:--:|---|
 | `owners` | string[] | No | 作成・承認・説明責任を負う主体の識別子。Coreは合否判定へ使用しない |
 
 Coreが判定へ使わない項目を共通語彙へ入れることを避けるなら、代わりに
 `01_Core構文仕様.md:29`と`08_記述例・アンチパターン.md:44`を
 「Frontmatterの`x-`拡張（例: `x-owners`）で管理する」へ改め、`03_Frontmatter共通仕様.md:129`の
-例を`x-owners`へ揃える。**どちらでもよいが、規格本文と正本Schemaのキー名は一致させる。**
+例を`x-owners`へ揃える。**どちらでもよいが、規格本文と正本Schemaのkey名は一致させる。**
 
 ### 2.4 EARS-AI Core Diagnosticにseverityが定義されていない
 
@@ -153,7 +153,7 @@ Coreが判定へ使わない項目を共通語彙へ入れることを避ける�
 
 - `01_EARS-AI規格/06_AST・パーサー仕様.md:95-109` — Diagnostic一覧は`コード`と`意味`の2列のみ
 - `02_SPECファイル規定/06_参照・トレース・検証仕様.md:179-201` — `SPEC-*`一覧は`コード`、`severity`、`条件`の3列
-- `02_SPECファイル規定/04_要求SPEC仕様.md:90-92` — `draft`では「不完全なEARS-AI行はエラーではなく**警告にできる**」
+- `02_SPECファイル規定/04_要求SPEC仕様.md:90-92` — `draft`では「不完全なEARS-AI行はerrorではなく**警告にできる**」
 - `01_共通アーキテクチャ.md:196-202` — statusと終了コードはseverityから決まる
 
 **問題**
@@ -162,17 +162,17 @@ Coreが判定へ使わない項目を共通語彙へ入れることを避ける�
 `bitz check`の終了コードはDiagnosticのseverityから決まるため、
 たとえば`EAI-CORE-LANG-001`（正本言語との不一致）が`error`か`warning`かで
 CIが落ちるかどうかが変わる。`02_specディレクトリ仕様.md:168`と`01_Core構文仕様.md:267`は
-「異なる言語の文書を即時エラーにはしない」「警告としてよい」とするが、これは実装者の裁量を残す表現であり、
+「異なる言語の文書を即時errorにはしない」「警告としてよい」とするが、これは実装者の裁量を残す表現であり、
 同一fixtureから同一Diagnosticを得るという適合性試験（`03_CLI統合設計.md:272`）と両立しない。
 
 さらに`04_要求SPEC仕様.md`の「警告にできる」は、状態依存のseverityが存在することを示唆するが、
-どのコードが状態依存かの一覧がない。
+どのcodeが状態依存かの一覧がない。
 
 **提案**
 
 `06_AST・パーサー仕様.md §6`の表へ`severity`列を追加し、状態依存のものは条件を明記する。
 
-| コード | severity | 意味 |
+| code | severity | 意味 |
 |---|---|---|
 | `EAI-CORE-SYNTAX-001`〜`006` | error（`draft`ではwarning） | … |
 | `EAI-CORE-ID-001`〜`003` | error | … |
@@ -191,13 +191,13 @@ CIが落ちるかどうかが変わる。`02_specディレクトリ仕様.md:168
 - `01_EARS-AI規格/02_拡張プロファイル仕様.md:30` — Profile Manifestに`dependencies: []`
 - 同`:53` — 「Profile間の意味的依存は `dependencies` に明記した場合に限る」
 - 同`:54` — 「Profile依存をProfile Manifestに明記し、循環依存を禁止する」
-- `ADR-016:50` — 「将来の拡張も`bitz-core`だけへ依存し、拡張プラグイン間の必須依存を禁止する」
-- `ADR-016:108-110` — 「拡張プラグイン間の依存」を却下案として明記
-- `03_CLI統合設計.md:237` — 「拡張は`bitz-core`だけへ依存し、別の拡張プラグインを必須依存にしない」
+- `ADR-016:50` — 「将来の拡張も`bitz-core`だけへ依存し、拡張plugin間の必須依存を禁止する」
+- `ADR-016:108-110` — 「拡張plugin間の依存」を却下案として明記
+- `03_CLI統合設計.md:237` — 「拡張は`bitz-core`だけへ依存し、別の拡張pluginを必須依存にしない」
 
 **問題**
 
-Profileは所有プラグイン（`bitz-ddd`、`bitz-quality`等）が提供する。
+Profileは所有plugin（`bitz-ddd`、`bitz-quality`等）が提供する。
 `quality` Profileが`ddd` Profileを`dependencies`へ書けるなら、それは`bitz-quality`が
 `bitz-ddd`へ必須依存することと同義であり、ADR-016が却下した構成そのものになる。
 
@@ -231,9 +231,9 @@ Profile Manifest側に依存機構を置いても解決手段は存在しない�
 **問題**
 
 Core 1.0に厳格モードは存在しない。`bitz check --strict`は
-[レビュー01 §6.1](01_詳細設計reviewと改訂提案.md)で「Core 1.0の共通終了コードを変える`--strict`は未採用」と
-裁定されており、`03_CLI統合設計.md:36`の公開文法にも該当オプションはない。
-`02_bitz.yaml仕様.md`にも厳格化の設定キーはない。
+[review 01 §6.1](01_詳細設計reviewと改訂提案.md)で「Core 1.0の共通終了コードを変える`--strict`は未採用」と
+裁定されており、`03_CLI統合設計.md:36`の公開文法にも該当optionはない。
+`02_bitz.yaml仕様.md`にも厳格化の設定keyはない。
 
 存在しないモードの動作が規格本文に残っているため、実装者は`--strict`相当の実装を試み、
 裁定済みの不採用判断を再導入するおそれがある。
@@ -244,7 +244,7 @@ Core 1.0に厳格モードは存在しない。`bitz check --strict`は
 将来の厳格化は、`SPEC-*`側の運用と同じく`--strict`ではなくwarning種別の可視化で扱う旨を
 注記するか、記述自体を落とす。
 
-### 3.2 規範文を持たないTECHのテスト対応が、引数なし`verify`で永久に実行されない
+### 3.2 規範文を持たないTECHのtest対応が、引数なし`verify`で永久に実行されない
 
 **現状**
 
@@ -254,25 +254,25 @@ Core 1.0に厳格モードは存在しない。`bitz check --strict`は
 
 **問題**
 
-規範文を持たないTECHは、文書IDを`covers`にしてテスト対応を宣言できる。
+規範文を持たないTECHは、文書IDを`covers`にしてtest対応を宣言できる。
 一方で引数なし`verify`の対象からは明示的に除外されている。したがって、
-そのテストは`bitz verify <TECH-ID>`を人が手で叩いた場合しか実行されず、
+そのtestは`bitz verify <TECH-ID>`を人が手で叩いた場合しか実行されず、
 CI標準の`bitz verify`（`06_運用設計.md:56`）では一度も走らない。
 
 さらに`06_参照・トレース・検証仕様.md:105`は「`draft`と`outdated`は除外件数だけを返す」とだけ書き、
-規範文を持たないTECHの除外を可視化しないため、利用者は宣言したテストが実行されていないことに気づけない。
+規範文を持たないTECHの除外を可視化しないため、利用者は宣言したtestが実行されていないことに気づけない。
 
 **提案**
 
 次のいずれかを採る。
 
-- 案A（推奨）: 引数なし`verify`の対象へ「テスト対応を持つ`approved`のTECH」を加える。
-  規範文がないTECHは句単位カバレッジ判定（§5.1手順3）の対象外とし、
-  テストの実行と終了コードだけで`passed` / `failed`を決める
-- 案B: 規範文を持たないTECHの文書ID`covers`を廃止し、テスト対応をREQ/TECHの規範文へ必ず結び付ける。
+- 案A（推奨）: 引数なし`verify`の対象へ「test対応を持つ`approved`のTECH」を加える。
+  規範文がないTECHは句単位coverage判定（§5.1手順3）の対象外とし、
+  testの実行と終了コードだけで`passed` / `failed`を決める
+- 案B: 規範文を持たないTECHの文書ID`covers`を廃止し、test対応をREQ/TECHの規範文へ必ず結び付ける。
   この場合は`03_Frontmatter共通仕様.md:81`と`06_参照・トレース・検証仕様.md:50`の例外を削除する
 
-案Aを採る場合、`§5.1`の除外報告へ「テスト対応を持たない対象の件数」も含め、
+案Aを採る場合、`§5.1`の除外報告へ「test対応を持たない対象の件数」も含め、
 沈黙による未実行を作らない。
 
 ### 3.3 対象0件のmemberが`verify --all-workspaces`全体を`blocked`にする
@@ -285,23 +285,23 @@ CI標準の`bitz verify`（`06_運用設計.md:56`）では一度も走らない
 
 **問題**
 
-モノレポ連合の導入は段階的に進むのが通常であり、`.spec/bitz.yaml`だけを置いて
+複合workspaceの導入は段階的に進むのが通常であり、`.spec/bitz.yaml`だけを置いて
 まだ`approved`のREQを持たないmemberが必ず存在する。現契約では、そのmemberが
 `SPEC-VERIFY-BLOCKED-002`を返し、最悪値規則によって`bitz verify --all-workspaces`が
-連合全体で`blocked`（終了コード2）になる。
+複合workspace全体で`blocked`（終了コード2）になる。
 
 「空のCIを成功扱いしない」という意図は単一workspaceでは正しいが、
-連合全体へそのまま適用すると、**1つでも未着手のmemberがあるとCIが永久に赤**になる。
+複合workspace全体へそのまま適用すると、**1つでも未着手のmemberがあるとCIが永久に赤**になる。
 利用者はCIから`--all-workspaces`を外すことで回避するため、
-横断検証というモノレポ連合の主目的が使われなくなる。
+横断検証という複合workspaceの主目的が使われなくなる。
 
 **提案**
 
-`06_参照・トレース・検証仕様.md §5.2`へ、連合全体実行時の0件の扱いを定義する。
+`06_参照・トレース・検証仕様.md §5.2`へ、複合workspace全体実行時の0件の扱いを定義する。
 
 - member単位の対象0件は`SPEC-VERIFY-BLOCKED-002`を`info`または`warning`として報告し、
   そのworkspaceのstatusを`passed_with_warnings`とする
-- **連合内の全workspaceで対象が0件の場合だけ**、連合全体を`blocked`とする
+- **複合workspace内の全workspaceで対象が0件の場合だけ**、複合workspace全体を`blocked`とする
 - 集約結果のworkspace別statusに0件であった事実を残す
 
 単一workspaceの現行動作（0件は`blocked`）は変更しない。
@@ -313,7 +313,7 @@ CI標準の`bitz verify`（`06_運用設計.md:56`）では一度も走らない
 - `11_doctor仕様.md:27` — 検査1「Core実行体、MCP server、Pythonの対応版」は
   「起動不能・実行環境不適合は`error`」
 - `ADR-016:81` — 「不在または非互換時は`blocked`と具体的な導入・更新手順を返す」
-- `01_共通アーキテクチャ.md:105` — `doctor`は「不適合時の`blocked`と、プラグインまたは実行体の
+- `01_共通アーキテクチャ.md:105` — `doctor`は「不適合時の`blocked`と、pluginまたは実行体の
   具体的な導入・更新手順」を返す
 - `01_共通アーキテクチャ.md:200-201` — `failed`＝成果物が不適合、`blocked`＝前提不足、`error`＝ツール障害
 
@@ -323,7 +323,7 @@ CI標準の`bitz verify`（`06_運用設計.md:56`）では一度も走らない
 `error`が定める**ツール障害**ではない。現状では、同じ事象を
 `doctor`仕様が終了コード3、ADR-016と共通アーキテクチャが終了コード2としている。
 
-呼出し側の拡張プラグインは`blocked`を導入手順の提示、`error`を障害報告として扱い分けるため、
+呼出し側の拡張pluginは`blocked`を導入手順の提示、`error`を障害報告として扱い分けるため、
 どちらが返るかで利用者へ出るメッセージが変わる。
 
 **提案**
@@ -342,7 +342,7 @@ CI標準の`bitz verify`（`06_運用設計.md:56`）では一度も走らない
 **現状**
 
 - `03_CLI統合設計.md:38` — `bitz verify [spec-or-statement-id|paths...] [--workspace ...|--all-workspaces] [--report]`
-- `01_共通アーキテクチャ.md:121` — 「JSONと詳細レポートは`--format json`または`--report`で生成する」
+- `01_共通アーキテクチャ.md:121` — 「JSONと詳細reportは`--format json`または`--report`で生成する」
 - `06_参照・トレース・検証仕様.md:130-157` — `operation: "verify"`の結果JSON例
 - `02_bitz.yaml仕様.md:106` — 「`bitz check --format json`と`bitz doctor --format json`は、
   秘密情報を含まない実効設定を結果へ含めてよい」
@@ -351,21 +351,21 @@ CI標準の`bitz verify`（`06_運用設計.md:56`）では一度も走らない
 
 `context`、`check`、`doctor`には`--format`があるが`verify`にはない。
 共通結果形式は全操作共通であり、`verify`の結果JSON Schemaも定義されているため、
-CI・スクリプトからの機械利用には`verify`のJSON出力が必要になる。
-現状では`--report`でファイルへ書いてから読むしかなく、
+CI・scriptからの機械利用には`verify`のJSON出力が必要になる。
+現状では`--report`でfileへ書いてから読むしかなく、
 「成功時の出力と保存物を最小化する」（`README.md:31`）という設計原則と衝突する。
 
 **提案**
 
 `03_CLI統合設計.md §3`と`06_参照・トレース・検証仕様.md`へ
 `bitz verify ... [--format text|json] [--report]`を追加する。
-`--format json`は標準出力へ結果を返し、ファイルを生成しない点を明記する。
+`--format json`は標準出力へ結果を返し、fileを生成しない点を明記する。
 
-### 3.6 モノレポ横断テストの重複排除スコープが未定義
+### 3.6 複合workspace横断testの重複排除scopeが未定義
 
 **現状**
 
-- `06_参照・トレース・検証仕様.md:108` — 引数なし`verify`は「同じコマンド定義を使うテストパスは
+- `06_参照・トレース・検証仕様.md:108` — 引数なし`verify`は「同じcommand定義を使うtest pathは
   **全対象で**重複排除し、1回の実行へまとめる」
 - 同`:116-119` — `--all-workspaces`は「workspaceごとに§5.1を実行する」、
   「実行済み判定は`(workspace-id, command, test-path)`で行う」
@@ -375,32 +375,32 @@ CI・スクリプトからの機械利用には`verify`のJSON出力が必要に
 **問題**
 
 共通REQ `platform::REQ-001:AC-01`を`web::TECH-010`が`refines`し、
-`tests/auth/login.test.ts`で`covers`する構成では、同じテストが2回解決される。
+`tests/auth/login.test.ts`で`covers`する構成では、同じtestが2回解決される。
 
-1. federation rootの`platform::REQ-001`を対象にした§5.1（横断テスト対応を含む）
+1. root workspaceの`platform::REQ-001`を対象にした§5.1（横断test対応を含む）
 2. web workspaceの`web::TECH-010`を対象にした§5.1
 
 `(workspace-id, command, test-path)`はいずれも`(web, frontend, tests/auth/login.test.ts)`で一致するが、
 §5.1の重複排除は「全対象で」（＝1回の§5.1実行内）と定義されており、
 workspaceをまたいだ実行済み判定がその範囲に入るかが読み取れない。
-素直に「workspaceごとに§5.1を実行」と実装すると、横断テストは連合全体で2回実行される。
+素直に「workspaceごとに§5.1を実行」と実装すると、横断testは複合workspace全体で2回実行される。
 
 **提案**
 
 `06_参照・トレース・検証仕様.md §5.2`へ次を明記する。
 
-> `--all-workspaces`の実行済み判定は連合全体で1つの集合として保持する。
+> `--all-workspaces`の実行済み判定は複合workspace全体で1つの集合として保持する。
 > 先行workspaceで実行済みの`(workspace-id, command, test-path)`は再実行せず、
 > 結果を参照した対象へ同じ終了コードを対応付ける。
 
 あわせて、結果JSONのworkspace別`commands`が、実行実体を持つworkspaceと
 結果を参照するworkspaceのどちらへ現れるかを定義する。
 
-### 3.7 決定記録ディレクトリ自身がSPEC文書規定へ適合していない
+### 3.7 決定記録directory自身がSPEC文書規定へ適合していない
 
 **現状**
 
-- `02.設計書/10_決定記録/README.md:7` — 「本ディレクトリは、Bitz AI-SDDプラグイン群自身の開発に対する
+- `02.設計書/10_決定記録/README.md:7` — 「本directoryは、Bitz AI-SDD plugin群自身の開発に対する
   `.spec/decisions/` 相当物である」
 - `08_Markdown本文構成・スタイル.md:99` — 「機械的に識別するH2名は英語の固定語彙とする」
 - 同`:224-239` — ADRの必須H2は`Context`、`Decision`、`Consequences`、最終H2に`Revision History`
@@ -443,7 +443,7 @@ Phase 1のfixtureとしてそのまま再利用できる。
 `10_決定記録/README.md §2`の記載規則も、本文追記型からFrontmatter + `Revision History`型へ改める。
 
 規定を緩める方向で解決する場合は、`10_決定記録/README.md:7`から
-「`.spec/decisions/` 相当物である」を削除し、本ディレクトリが設計資料であって
+「`.spec/decisions/` 相当物である」を削除し、本directoryが設計資料であって
 SPEC規定の適用対象ではないことを明記する。ただしその場合、
 Core 1.0出荷前に規定を実文書で検証する機会が失われる。
 
@@ -507,13 +507,13 @@ bitz check --all-workspaces [--format text|json] [--report]
 
 **現状**
 
-- `03_CLI統合設計.md:87` — 「Core 1.0はフックなしで完結する。フックは性能、互換性、攻撃面を増やすため既定で無効とし、明示コマンドで解決できない実例が複数確認されるまで導入しない」
-- `07_セキュリティとガバナンス.md:73` — 「MCP serverとhooksはローカルコードを実行しうるため、公開前レビューと利用者への権限説明を必須とする」
+- `03_CLI統合設計.md:87` — 「Core 1.0はフックなしで完結する。フックは性能、互換性、攻撃面を増やすため既定で無効とし、明示commandで解決できない実例が複数確認されるまで導入しない」
+- `07_セキュリティとガバナンス.md:73` — 「MCP serverとhooksはローカルcodeを実行しうるため、公開前reviewと利用者への権限説明を必須とする」
 - `ADR-016:56` — agents、commands、hooksは「必要な場合だけreverse-domain namespaceへ置く」
 
 **問題**
 
-Core 1.0はhooksを導入しないと明言する一方、供給網要件はhooksのレビューを必須としている。
+Core 1.0はhooksを導入しないと明言する一方、供給網要件はhooksのreviewを必須としている。
 両立はするが（クライアント固有拡張としてのhooksは配布されうる）、
 その関係が明示されていないため、「hooksを実装してよいのか」が読み取れない。
 
@@ -521,8 +521,8 @@ Core 1.0はhooksを導入しないと明言する一方、供給網要件はhook
 
 `07_セキュリティとガバナンス.md §6`の該当行へ条件を付ける。
 
-> MCP serverと、reverse-domain namespaceへ隔離したクライアント固有hooksはローカルコードを
-> 実行しうるため、公開前レビューと利用者への権限説明を必須とする。`bitz-core`と`bitz-sdd`は
+> MCP serverと、reverse-domain namespaceへ隔離したクライアント固有hooksはローカルcodeを
+> 実行しうるため、公開前reviewと利用者への権限説明を必須とする。`bitz-core`と`bitz-sdd`は
 > Core 1.0でhooksを同梱しない（[03_CLI統合設計](../02.設計書/03_CLI統合設計.md) §6）。
 
 ### 4.4 「`bitz check`は読取り専用」と`--report`の関係
@@ -548,7 +548,7 @@ Core 1.0はhooksを導入しないと明言する一方、供給網要件はhook
 > `.spec/reports/`へ結果を書き出す。それ以外の生成物を残さない。
 
 `07_セキュリティとガバナンス.md §3`の「`check`は読取り専用とする」も
-「`check`はSPECとコードを変更しない」へ改める。
+「`check`はSPECとcodeを変更しない」へ改める。
 
 ### 4.5 `CTX-COVERAGE-*`のseverityが未定義
 
@@ -557,11 +557,11 @@ Core 1.0はhooksを導入しないと明言する一方、供給網要件はhook
 - `10_Context Resolution仕様.md:405-406` — `CTX-COVERAGE-TASK-001` / `CTX-COVERAGE-TEST-001`の
   表に結果statusの記載がない（他の`CTX-*`は「結果は`blocked`」等を持つ）
 - 同`:329-330` — 「REQ起点の`implement`では…未addressedをwarning、未testedをwarningとする」
-  「`verify`では未testedの`MUST`が1件でもあればテスト実行前に`blocked`とする」
+  「`verify`では未testedの`MUST`が1件でもあればtest実行前に`blocked`とする」
 
 **問題**
 
-同一コードがpurposeによってwarningと`blocked`のどちらにもなる。本文には書かれているが、
+同一codeがpurposeによってwarningと`blocked`のどちらにもなる。本文には書かれているが、
 Diagnostic表からは読み取れない。`SPEC-PATH-INVALID-001`が
 「error / warning」と条件付きseverityを表へ書いている前例があるため、揃っていない。
 
@@ -569,39 +569,39 @@ Diagnostic表からは読み取れない。`SPEC-PATH-INVALID-001`が
 
 表へpurpose条件を含むseverityを追加する。
 
-| コード | severity / 結果 | 条件 |
+| code | severity / 結果 | 条件 |
 |---|---|---|
 | `CTX-COVERAGE-TASK-001` | warning | 対象`MUST`をaddressするTASKがない（`implement`のみ） |
-| `CTX-COVERAGE-TEST-001` | `implement`ではwarning、`verify`では`blocked` | 対象`MUST`にテスト対応がない |
+| `CTX-COVERAGE-TEST-001` | `implement`ではwarning、`verify`では`blocked` | 対象`MUST`にtest対応がない |
 
 ## 5. 裁定表（記入用）
 
 | 項目 | 優先度 | 裁定 | 反映先または理由 |
 |---|---|---|---|
-| 2.1 `profiles`設定キー | P1 | 採用・反映済み | ADR-018。`bitz.yaml` §3へ予約キーを追加し、doctor・モノレポのProfile判定を保留 |
+| 2.1 `profiles`設定key | P1 | 採用・反映済み | ADR-018。`bitz.yaml` §3へ予約keyを追加し、doctor・複合workspaceのProfile判定を保留 |
 | 2.2 `verify`の`cwd` | P1 | 採用・反映済み | ADR-018。参照・トレース・検証仕様 §5-6を`cwd`実行へ改め、結果JSONの`argv`と`tests`の関係を定義 |
 | 2.3 Frontmatter `owners` | P1 | 修正採用・反映済み | ADR-018。共通項目へ追加せず、規格本文を`x-owners`へ統一 |
-| 2.4 `EAI-*`のseverity | P1 | 採用・反映済み | ADR-018。AST・パーサー仕様 §6へseverity列と`draft`降格規則を追加 |
+| 2.4 `EAI-*`のseverity | P1 | 採用・反映済み | ADR-018。AST・Parser仕様 §6へseverity列と`draft`降格規則を追加 |
 | 2.5 Profile `dependencies` | P1 | 採用・反映済み | ADR-018。Manifestから削除し、Profile間依存を無条件禁止 |
 | 3.1 厳格モード | P2 | 採用・反映済み | ADR-019。未知拡張をwarning固定とし、厳格モードの記述を削除 |
 | 3.2 規範文なしTECHのverify | P2 | 採用・反映済み | ADR-019。案Aを採用し、`tests`宣言のある規範文なしTECHを引数なしverifyの対象へ追加 |
-| 3.3 0件memberの集約status | P2 | 採用・反映済み | ADR-019。member単位はwarning、連合全体0件だけerror。`SPEC-VERIFY-BLOCKED-002`を条件付きseverityへ |
+| 3.3 0件memberの集約status | P2 | 採用・反映済み | ADR-019。member単位はwarning、複合workspace全体0件だけerror。`SPEC-VERIFY-BLOCKED-002`を条件付きseverityへ |
 | 3.4 `doctor`検査1の判定 | P2 | 採用・反映済み | ADR-019。版不適合を`blocked`、起動失敗を`error`へ分離し`SPEC-DOCTOR-CORE-002`を追加 |
 | 3.5 `verify --format` | P2 | 採用・反映済み | ADR-019。公開文法へ`--format text|json`を追加し`--all-workspaces`形を分離 |
-| 3.6 横断テスト重複排除 | P2 | 採用・反映済み | ADR-019。実行済み集合を連合全体で1つに統一 |
+| 3.6 横断test重複排除 | P2 | 採用・反映済み | ADR-019。実行済み集合を複合workspace全体で1つに統一 |
 | 3.7 決定記録の自己適合性 | P2 | 修正採用・反映済み | ADR-020。本文構造規定だけを適用し、配置・命名規則は対象外と明記。ADR 20件を適合 |
 | 4.1 `--all-workspaces`の文法 | P3 | 採用・反映済み | `check`を`verify`と同じ2行形式へ分離。`doctor`は対象ID・pathを取らないため結合形を維持 |
 | 4.2 `Revision History`の表区分 | P3 | 採用・反映済み | 旧SPEC知見§4から§3へ移動し、簡素化して採用した知見として記載 |
 | 4.3 hooksの記述 | P3 | 採用・反映済み | 供給網要件の対象をクライアント固有hooksへ限定し、Core 1.0非同梱を併記 |
-| 4.4 `check`読取り専用の表現 | P3 | 採用・反映済み | 3文書を「SPECとコードを変更せず、書き出すのは`--report`指定時と失敗時のレポートだけ」へ統一 |
+| 4.4 `check`読取り専用の表現 | P3 | 採用・反映済み | 3文書を「SPECとcodeを変更せず、書き出すのは`--report`指定時と失敗時のreportだけ」へ統一 |
 | 4.5 `CTX-COVERAGE-*`のseverity | P3 | 採用・反映済み | §9の規則を§12の表へ転記。`implement`でwarning、`verify`で`blocked` |
 
 ## 6. 実装前チェックリスト
 
 - [x] §2の5件について、正本Schemaへ定義を追加するか、参照側の記述を削除するかを裁定した（ADR-018）
 - [ ] `verify`の実行位置（`cwd`）が結果JSONの`cwd`と一致する実装になっている（仕様は反映済み）
-- [x] `EAI-*`、`SPEC-*`、`CTX-*`の全コードにseverityまたは結果statusがある
-- [x] モノレポ連合の段階導入（未着手member混在）でCIが赤にならないことを確認した（ADR-019、仕様上）
+- [x] `EAI-*`、`SPEC-*`、`CTX-*`の全codeにseverityまたは結果statusがある
+- [x] 複合workspaceの段階導入（未着手member混在）でCIが赤にならないことを確認した（ADR-019、仕様上）
 - [x] `10_決定記録/`の扱い（規定へ適合させる／適用対象外と明記する）を裁定した（ADR-020）
 
 ---
@@ -618,22 +618,22 @@ Diagnostic表からは読み取れない。`SPEC-PATH-INVALID-001`が
 ADR-013（文書IDとローカルIDの字句規則訂正）の前例に倣い、5件をまとめて1件のADRへ記録する（A.6）。
 個別ADRへ分割すると、いずれも「訂正」であるため理由の記述が重複する。
 
-適用対象は7ファイル、変更は15箇所である。
+適用対象は7 file、変更は15箇所である。
 
-| 修正案 | 対象ファイル | 箇所 |
+| 修正案 | 対象file | 箇所 |
 |---|---|---:|
-| ① `profiles`予約キー | `02_bitz.yaml仕様`、`02_拡張プロファイル仕様`、`11_doctor仕様`、`12_モノレポSPEC連合仕様` | 5 |
+| ① `profiles`予約key | `02_bitz.yaml仕様`、`02_拡張プロファイル仕様`、`11_doctor仕様`、`12_モノレポSPEC連合仕様` | 5 |
 | ② `verify`の`cwd` | `06_参照・トレース・検証仕様`、`12_モノレポSPEC連合仕様` | 3 |
 | ③ `owners`の表記統一 | `01_Core構文仕様`、`08_記述例・アンチパターン`、`03_Frontmatter共通仕様` | 3 |
 | ④ `EAI-*`のseverity | `06_AST・パーサー仕様`、`04_要求SPEC仕様`、`01_Core構文仕様` | 3 |
 | ⑤ Profile `dependencies` | `02_拡張プロファイル仕様` | 2 |
 
-### A.1 修正案① — `profiles`をCore 1.0の予約キーとする
+### A.1 修正案① — `profiles`をCore 1.0の予約keyとする
 
-**採る案**: レビュー本文の案A（予約キーとして追加）。
+**採る案**: review本文の案A（予約keyとして追加）。
 
-案Bの「参照側4箇所から削除」を採らない理由は、Profileの正式実装時に同じキーを再導入することになり、
-その時点で`profiles`が「未知の標準キー」として警告を出していた既存プロジェクトとの整合を
+案Bの「参照側4箇所から削除」を採らない理由は、Profileの正式実装時に同じkeyを再導入することになり、
+その時点で`profiles`が「未知の標準key」として警告を出していた既存プロジェクトとの整合を
 別途取る必要が生じるためである。前方互換の予約枠を今のうちに確保するほうが総コストが小さい。
 
 #### 変更1: `03.詳細設計/02_SPECファイル規定/02_bitz.yaml仕様.md` §3 Schema表
@@ -644,7 +644,7 @@ ADR-013（文書IDとローカルIDの字句規則訂正）の前例に倣い、
 | `profiles` | map | No | `{}` | Profile名前空間から`major.minor`への対応。Core 1.0では保持のみ |
 ```
 
-同§の「未知の標準キーは、…」で始まる段落（`:62-63`）の直後へ、次の段落を追加する。
+同§の「未知の標準keyは、…」で始まる段落（`:62-63`）の直後へ、次の段落を追加する。
 
 ```markdown
 `profiles`はProfileの正式実装まで予約キーとする。Core 1.0は値の型（`map<string, string>`、
@@ -683,7 +683,7 @@ ADR-013（文書IDとローカルIDの字句規則訂正）の前例に倣い、
 | 8a | `profiles`宣言 | Core 1.0では判定せず、宣言内容と未登録名前空間を情報として表示 |
 ```
 
-同ファイル §7 の`SPEC-DOCTOR-EARS-001`（`:121`）を次へ改める。
+同file §7 の`SPEC-DOCTOR-EARS-001`（`:121`）を次へ改める。
 
 - **before**
 
@@ -711,7 +711,7 @@ ADR-013（文書IDとローカルIDの字句規則訂正）の前例に倣い、
 3. SchemaとEARS-AIのmajor互換性。Profileの互換性はCore 1.0では判定しない
 ```
 
-#### 変更5: 同ファイル §10 `SPEC-MONOREPO-VERSION-001`（`:222`）
+#### 変更5: 同file §10 `SPEC-MONOREPO-VERSION-001`（`:222`）
 
 - **before**
 
@@ -751,7 +751,7 @@ ADR-013（文書IDとローカルIDの字句規則訂正）の前例に倣い、
    テストを所有するワークスペースルートを実行位置とする。
 ```
 
-#### 変更2: 同ファイル §6 結果JSONの説明（`:160`）
+#### 変更2: 同file §6 結果JSONの説明（`:160`）
 
 - **before**
 
@@ -785,14 +785,14 @@ ADR-013（文書IDとローカルIDの字句規則訂正）の前例に倣い、
 
 #### 適合性fixture
 
-- `cwd: frontend`を持つコマンドが`<workspace>/frontend`で起動され、`argv`のテストパスが
+- `cwd: frontend`を持つcommandが`<workspace>/frontend`で起動され、`argv`のtest pathが
   `frontend`相対へ正規化されている
-- 同じテストパスを`cwd`違いの2コマンドが参照する場合、重複排除されず2回実行される
+- 同じtest pathを`cwd`違いの2 commandが参照する場合、重複排除されず2回実行される
 - `cwd`未指定時の結果JSONが`"cwd": "."`である
 
 ### A.3 修正案③ — `owners`を`x-owners`へ統一する
 
-**採る案**: レビュー本文で並記した2案のうち、**規格側を正本Schemaへ合わせる案**を採る。
+**採る案**: review本文で並記した2案のうち、**規格側を正本Schemaへ合わせる案**を採る。
 
 決め手は`02.設計書/02_specディレクトリ仕様.md:92`である。
 
@@ -802,7 +802,7 @@ ADR-013（文書IDとローカルIDの字句規則訂正）の前例に倣い、
 上位設計は既に「ownerは共通項目ではなくプロジェクト拡張」と決めており、
 `03_Frontmatter共通仕様.md:129`の`x-owner`例もこれに従っている。
 規格本文の`owners`だけが取り残されている。共通項目へ`owners`を追加すると、
-この上位設計とSPECファイル規定 原則3「必須項目を少なくし、同じ事実を複数ファイルへ複製しない」の
+この上位設計とSPEC file規定 原則3「必須項目を少なくし、同じ事実を複数fileへ複製しない」の
 両方を変更する必要が生じるため、影響が最小の側を直す。
 
 #### 変更1: `03.詳細設計/01_EARS-AI規格/01_Core構文仕様.md:29`
@@ -859,7 +859,7 @@ x-risk: medium
 
 #### 適合性fixture
 
-- `owners:`を持つFrontmatterが`x-`非接頭辞の未知キーとして警告される（既存動作の明文化）
+- `owners:`を持つFrontmatterが`x-`非接頭辞の未知keyとして警告される（既存動作の明文化）
 - `x-owners:`が警告なしで保持され、Context Digestへ影響しない
 
 ### A.4 修正案④ — `EAI-*`診断へseverityを定義する
@@ -888,7 +888,7 @@ x-risk: medium
 | `EAI-EXT-CONFLICT-001` | error | 拡張競合 |
 ```
 
-同表の直後（「診断コードは永続識別子とし、…」の前）へ次を追加する。
+同表の直後（「診断codeは永続識別子とし、…」の前）へ次を追加する。
 
 ```markdown
 `draft`での降格は、所有文書の`status`が`draft`である場合だけ適用する。ID系3コードは、
@@ -930,12 +930,12 @@ Profile診断のseverityは各Profile文書が同じ形式で定義する。
 異なる言語の文書は`EAI-CORE-LANG-001`／warningとし、構文解析自体を停止しない。
 ```
 
-`02.設計書/02_specディレクトリ仕様.md` §11 の「異なる言語の文書を即時エラーにはしない」は
+`02.設計書/02_specディレクトリ仕様.md` §11 の「異なる言語の文書を即時errorにはしない」は
 warningを許す表現であり、変更不要である。
 
 #### 適合性fixture
 
-- 各`EAI-*`コードについて、`approved`と`draft`の同一入力で終了コードが仕様どおり分かれる
+- 各`EAI-*` codeについて、`approved`と`draft`の同一入力で終了コードが仕様どおり分かれる
 - `draft`の`EAI-CORE-ID-002`（重複）が`failed`／終了コード1になる
 - `EAI-CORE-LANG-001`だけを含む実行が`passed_with_warnings`／終了コード0になる
 
@@ -945,7 +945,7 @@ warningを許す表現であり、変更不要である。
 
 `dependencies: []`の1行を削除する。
 
-#### 変更2: 同ファイル §5 競合規則（`:53-54`）
+#### 変更2: 同file §5 競合規則（`:53-54`）
 
 - **before**
 
@@ -972,7 +972,7 @@ Agent Plugins 1.0には依存解決機構がなく、Manifestへ依存を書い�
 #### 適合性fixture
 
 マーケットプレイスCIの静的検査（`ADR-016` §4）へ、
-Profile Manifestに`dependencies`キーが存在しないことの検査を追加する。
+Profile Manifestに`dependencies` keyが存在しないことの検査を追加する。
 
 ### A.6 ADR-018草案
 
@@ -1042,18 +1042,18 @@ ADR-009以降、Profile、モノレポ連合、Revision History、Agent Plugins�
 ### A.7 適用順序と検証
 
 修正案の間に依存はないため、任意の順で適用できる。ただし①はADR-016、②は
-モノレポ仕様、④は共通アーキテクチャの終了コード規則を参照するため、
+複合workspace仕様、④は共通アーキテクチャの終了コード規則を参照するため、
 適用後に次の観点で通読する。
 
-1. `bitz.yaml`の全キーが§3の表に現れるか（`profiles`追加後の網羅性）
+1. `bitz.yaml`の全keyが§3の表に現れるか（`profiles`追加後の網羅性）
 2. `verify`の実行位置に関する記述が、`02_bitz.yaml仕様` §4、`06_参照` §5-6、
    `12_モノレポ` §8で一致するか
 3. `owners`の文字列が`x-owners`以外で残っていないか
-4. `EAI-*`、`SPEC-*`、`CTX-*`の全コードがseverityまたは結果statusを持つか
+4. `EAI-*`、`SPEC-*`、`CTX-*`の全codeがseverityまたは結果statusを持つか
    （`CTX-COVERAGE-*`は§4.5の対象であり、P3として別に裁定する）
 5. `dependencies`の文字列がProfile文脈で残っていないか
 
-検証コマンドの例は次のとおり。
+検証commandの例は次のとおり。
 
 ```text
 grep -rn "owners" docs/03.詳細設計/ | grep -v "x-owners"
@@ -1078,17 +1078,17 @@ grep -rn "ワークスペースルートで実行" docs/03.詳細設計/
 | 区分 | 対象 | 内容 | 記録先 |
 |---|---|---|---|
 | 契約の訂正 | §3.1〜3.6 | 検証対象、縮退判定、公開文法の欠落と食い違い | ADR-019 |
-| 文書規約の適用 | §3.7 | 決定記録ディレクトリ自身をSPEC本文構造規定へ適合させる | ADR-020 |
+| 文書規約の適用 | §3.7 | 決定記録directory自身をSPEC本文構造規定へ適合させる | ADR-020 |
 
 §3.7はADRの書き方そのものを変える決定であり、他6件と理由が独立している。
 1件のADRへ混ぜると、後から「なぜADRの構成を変えたか」を追跡しにくくなる。
 
-適用対象は6ファイル＋決定記録18件、変更は§3.1〜3.6で11箇所である。
+適用対象は6 file＋決定記録18件、変更は§3.1〜3.6で11箇所である。
 
 ### B.1 修正案⑥ — 「厳格モード」を削除する（§3.1）
 
 Core 1.0に厳格モードは存在せず、`bitz check --strict`は
-[レビュー01 §6.1](01_詳細設計reviewと改訂提案.md)で未採用と裁定済みである。
+[review 01 §6.1](01_詳細設計reviewと改訂提案.md)で未採用と裁定済みである。
 
 #### 変更1: `03.詳細設計/01_EARS-AI規格/02_拡張プロファイル仕様.md` §6（`:59`）
 
@@ -1109,7 +1109,7 @@ Core 1.0に厳格モードは存在せず、`bitz check --strict`は
 
 ### B.2 修正案⑦ — 規範文を持たないTECHを引数なし`verify`の対象へ含める（§3.2）
 
-**採る案**: レビュー本文の案A。
+**採る案**: review本文の案A。
 
 案B（文書ID`covers`の廃止）を採らない理由は、
 [補助SPEC仕様](../03.詳細設計/02_SPECファイル規定/05_補助SPEC仕様.md) §2が
@@ -1169,13 +1169,13 @@ TASKの`addresses`先として「規範文を持たないTECH」を明示的に�
 
 - 規範文なし・`tests`ありの`approved` TECHが、引数なし`verify`で実行される
 - 規範文なし・`tests`なしの`approved` TECHが、除外件数へ計上され`blocked`を起こさない
-- 除外理由ごとの内訳（`draft`／`outdated`／テスト対応なし）が結果へ現れる
+- 除外理由ごとの内訳（`draft`／`outdated`／test対応なし）が結果へ現れる
 
-### B.3 修正案⑧ — 連合全体実行での対象0件を`blocked`にしない（§3.3）
+### B.3 修正案⑧ — 複合workspace全体実行での対象0件を`blocked`にしない（§3.3）
 
 単一workspaceの現行動作（0件は`blocked`）は変更しない。
 `--all-workspaces`のmember単位でだけ、`SPEC-VERIFY-BLOCKED-002`をwarningへ降格する。
-`SPEC-PATH-INVALID-001`が既に条件付きseverityを持つため、コードは増やさない。
+`SPEC-PATH-INVALID-001`が既に条件付きseverityを持つため、codeは増やさない。
 
 #### 変更1: `03.詳細設計/02_SPECファイル規定/06_参照・トレース・検証仕様.md` §5.2 の末尾へ追加
 
@@ -1203,8 +1203,8 @@ TASKの`addresses`先として「規範文を持たないTECH」を明示的に�
 
 #### 適合性fixture
 
-- SPECを持たないmemberを1つ含む連合で`verify --all-workspaces`が`passed_with_warnings`になる
-- 全memberが0件の連合で`blocked`になる
+- SPECを持たないmemberを1つ含む複合workspaceで`verify --all-workspaces`が`passed_with_warnings`になる
+- 全memberが0件の複合workspaceで`blocked`になる
 - 単一workspaceの0件が従来どおり`blocked`になる
 
 ### B.4 修正案⑨ — `doctor`検査1を版不適合と起動失敗へ分ける（§3.4）
@@ -1268,7 +1268,7 @@ bitz verify --all-workspaces [--format text|json] [--report]
 ```
 
 `--all-workspaces`が対象ID・pathを受け付けない制約
-（[モノレポSPEC連合仕様](../03.詳細設計/02_SPECファイル規定/12_モノレポSPEC連合仕様.md) §4）を
+（[複合workspace仕様](../03.詳細設計/02_SPECファイル規定/12_モノレポSPEC連合仕様.md) §4）を
 文法上でも表す。§4.1の`check`と同じ分割形式である。
 
 #### 変更2: `03.詳細設計/02_SPECファイル規定/06_参照・トレース・検証仕様.md` §6 冒頭
@@ -1306,7 +1306,7 @@ bitz verify --all-workspaces [--format text|json] [--report]
   `.spec/reports/`へ書き込まない
 - `bitz verify REQ-001 --all-workspaces`が引数不正（終了コード4）になる
 
-### B.6 修正案⑪ — 連合全体での実行済み判定を1つの集合にする（§3.6）
+### B.6 修正案⑪ — 複合workspace全体での実行済み判定を1つの集合にする（§3.6）
 
 #### 変更1: `03.詳細設計/02_SPECファイル規定/06_参照・トレース・検証仕様.md` §5.2
 
@@ -1347,7 +1347,7 @@ bitz verify --all-workspaces [--format text|json] [--report]
 #### 適合性fixture
 
 - 共通REQをmember側TECHが`refines`し横断`covers`する構成で、
-  `verify --all-workspaces`のテスト実行回数が1回である
+  `verify --all-workspaces`のtest実行回数が1回である
 - 参照側workspaceの対象statusが、実行側の終了コードと一致する
 
 ### B.7 修正案⑫ — 決定記録を本文構造規定へ適合させる（§3.7）
@@ -1355,9 +1355,9 @@ bitz verify --all-workspaces [--format text|json] [--report]
 #### 適用範囲の確定
 
 [配置・命名・探索規則](../03.詳細設計/02_SPECファイル規定/01_配置・命名・探索規則.md)は
-`.spec/`配下の探索とファイル名を対象とする規則であり、`docs/`配下の本ディレクトリには適用しない。
+`.spec/`配下の探索とfile名を対象とする規則であり、`docs/`配下の本directoryには適用しない。
 適合させるのは、人間とAIが情報の所在を推測せずに読むための
-[Markdown本文構成・スタイル](../03.詳細設計/02_SPECファイル規定/08_Markdown本文構成・スタイル.md)である。
+[Markdown本文構成・style](../03.詳細設計/02_SPECファイル規定/08_Markdown本文構成・スタイル.md)である。
 
 したがって次を適用対象とする。
 
@@ -1367,8 +1367,8 @@ bitz verify --all-workspaces [--format text|json] [--report]
 | H1 `# <id> <title>` | する |
 | ADRの固定H2と順序 | する |
 | 最終H2 `Revision History` | する |
-| ファイル名 `<ID>-<slug>.md` | **しない**（`docs/`配下であり、改名は27文書67リンクの書換えを伴う） |
-| `.spec/`配下への配置 | **しない**（本ディレクトリは設計資料である） |
+| file名 `<ID>-<slug>.md` | **しない**（`docs/`配下であり、改名は27文書67 linkの書換えを伴う） |
+| `.spec/`配下への配置 | **しない**（本directoryは設計資料である） |
 
 #### 変更1: 全18件のFrontmatter追加
 
@@ -1493,7 +1493,7 @@ relations:
 現行の8種類のH2構成は、`SPEC-STYLE-SECTION-002`の反例fixtureとしてGit履歴から取得できる。
 
 [08_実装ロードマップ](../02.設計書/08_実装ロードマップ.md) Phase 1の成果物
-「Golden fixture、異常・境界値テスト」へ、この18件を追加する。
+「Golden fixture、異常・境界値test」へ、この18件を追加する。
 
 ### B.8 ADR-019草案
 
@@ -1623,7 +1623,7 @@ B.8のADR-019を作成した後に、ADR-019とADR-020を含めて一括で適�
 4. 既存18件をB.7の変換で適合させる（ADR-019を含めて19件）
 5. 決定記録README §2の記載規則を更新する
 
-検証コマンドは次のとおり。
+検証commandは次のとおり。
 
 ```text
 grep -rn "厳格モード" docs/
@@ -1663,7 +1663,7 @@ H2の一意集合が規定の6語だけになれば適合である。
 
 | 項目 | 変更する決定 |
 |---|---|
-| 4.1 `--all-workspaces`の文法 | なし。[モノレポSPEC連合仕様](../03.詳細設計/02_SPECファイル規定/12_モノレポSPEC連合仕様.md) §4の既存規則を文法へ写すだけ |
+| 4.1 `--all-workspaces`の文法 | なし。[複合workspace仕様](../03.詳細設計/02_SPECファイル規定/12_モノレポSPEC連合仕様.md) §4の既存規則を文法へ写すだけ |
 | 4.2 `Revision History`の表区分 | なし。ADR-015の裁定を反映した際の分類誤りの訂正 |
 | 4.3 hooksの記述 | なし。[03_CLI統合設計](../02.設計書/03_CLI統合設計.md) §6と[ADR-016](../02.設計書/10_決定記録/ADR-016_Agent-Plugins準拠の複数plugin配布.md) §2の関係を明記するだけ |
 | 4.4 `check`読取り専用の表現 | なし。3つの表現のうち最も正確なものへ統一 |
@@ -1671,7 +1671,7 @@ H2の一意集合が規定の6語だけになれば適合である。
 
 裁定の記録は本書§5の表と[04.提案資料/README.md](README.md)に残す。
 
-適用対象は5ファイル、変更は7箇所である。
+適用対象は5 file、変更は7箇所である。
 
 ### C.1 修正案⑬ — `check --all-workspaces`を文法上で分離する（§4.1）
 
@@ -1789,9 +1789,9 @@ bitz check --all-workspaces [--format text|json] [--report]
 
 ### C.5 修正案⑰ — `CTX-COVERAGE-*`のseverityを表へ書く（§4.5）
 
-`10_Context Resolution仕様.md` §12の表は、多くのコードで「結果は`blocked`」のように
+`10_Context Resolution仕様.md` §12の表は、多くのcodeで「結果は`blocked`」のように
 結果statusを条件欄へ書いている。§12末尾の段落は型不正・参照切れ・循環・状態不適合・上限超過・
-Digest不一致を扱うが、coverage系2コードには触れていない。
+Digest不一致を扱うが、coverage系2 codeには触れていない。
 一方§9の本文はpurpose別の扱いを既に定めている。
 
 #### 変更1: `03.詳細設計/02_SPECファイル規定/10_Context Resolution仕様.md` §12
@@ -1810,14 +1810,14 @@ Digest不一致を扱うが、coverage系2コードには触れていない。
 | `CTX-COVERAGE-TEST-001` | 対象`MUST`にテスト対応がない。`implement`でwarning、`verify`で`blocked` |
 ```
 
-`SPEC-PATH-INVALID-001`が条件付きseverityを持つ前例に倣い、コードは増やさない。
-`interpret`は§9の表により`coverage`自体を省略するため、両コードとも発生しない。
+`SPEC-PATH-INVALID-001`が条件付きseverityを持つ前例に倣い、codeは増やさない。
+`interpret`は§9の表により`coverage`自体を省略するため、両codeとも発生しない。
 
 #### 適合性fixture
 
 - 未addressedの`MUST`を持つ`implement` requestが`passed_with_warnings`／終了コード0になる
-- 未testedの`MUST`を持つ`verify` requestが`blocked`／終了コード2になり、テストを実行しない
-- 同じ入力の`interpret` requestに両コードが現れない
+- 未testedの`MUST`を持つ`verify` requestが`blocked`／終了コード2になり、testを実行しない
+- 同じ入力の`interpret` requestに両codeが現れない
 
 ### C.6 適用順序と検証
 
@@ -1833,7 +1833,7 @@ grep -n "CTX-COVERAGE" "docs/03.詳細設計/02_SPECファイル規定/10_Contex
 `check`と`verify`がそれぞれ2行に分かれ、`09_旧SPEC知見`の§4に`Revision History`行がなく、
 「読取り専用」の断定が0件、`CTX-COVERAGE-*`の2行にseverityがあれば適用漏れはない。
 
-### C.7 レビュー03のクローズ手順
+### C.7 review 03のクローズ手順
 
 P3の適用後、本書は全17件が裁定済みとなる。次の手順で閉じる。
 
@@ -1843,5 +1843,5 @@ P3の適用後、本書は全17件が裁定済みとなる。次の手順で閉�
 4. 同README §8へ、P3の裁定表とクローズ判定を追記する
 5. §6実装前チェックリストの残項目を確認する
 
-クローズ後、Core 1.0の設計レビューゲートは再び**完了**となる。
-未着手として残るのは実装コード、性能ベンチマーク、1.1以降の拡張機能である。
+クローズ後、Core 1.0の設計reviewゲートは再び**完了**となる。
+未着手として残るのは実装code、性能benchmark、1.1以降の拡張機能である。

@@ -8,13 +8,13 @@
   その他を正本と[実装計画](12_Core-1.0実装計画.md)へ反映済み
 - 基準commit: `c72ccc7`
 - 対象: [02.設計書](../02.設計書/README.md)、[03.詳細設計](../03.詳細設計/README.md)の実装着手可能性
-- 入力: 提案01〜23（提案12を除き全てClosed）、ADR-001〜043
-- 前提: 実装コードは未着手であり、repositoryは設計文書だけを保持する
+- 入力: 提案01〜23（提案12を除きすべてClosed）、ADR-001〜043
+- 前提: 実装codeは未着手であり、repositoryは設計文書だけを保持する
 
 ## 1. 総合判定
 
-設計レビューのP0・P1・P2 gateは提案20〜23とADR-041〜043で全てClosedであり、
-「Coreが何をするか」の規範契約は実装可能な水準に達している。単一workspaceと明示連合の
+設計reviewのP0・P1・P2 gateは提案20〜23とADR-041〜043ですべてClosedであり、
+「Coreが何をするか」の規範契約は実装可能な水準に達している。単一workspaceと明示複合workspaceの
 責務境界、Diagnostic所有者、status集約、所有境界、resource上限は相互に整合している。
 
 一方で「実装が何を出力すれば適合と言えるか」を閉じる契約に欠落がある。以下のG1〜G4は、
@@ -30,17 +30,17 @@ Phase 1と並行して閉じられる。
 | G5 | 境界 | MCP面が参照されるだけで未仕様 | P1 |
 | G6 | 契約 | 非成功時のtext出力契約が未定義 | P2 |
 | G7 | 実装 | 実行環境・配布物の規範記述がない | P2 |
-| G8 | 衛生 | accepted ADRから旧構造への壊れたリンク | P2 |
+| G8 | 衛生 | accepted ADRから旧構造への壊れたlink | P2 |
 | G9 | 実証 | 自身の`.spec/`が存在しない | P2 |
 
 ## 2. G1: Context DigestのCanonical JSON
 
-[context仕様 §6](../03.詳細設計/03_操作仕様/01_context.md#6-context-digest)は材料のallowlistを
+[context仕様 §6](../03.詳細設計/03_操作仕様/01_context.md#6-context-digest)は材料の許可リストを
 確定しているが、「Canonical JSON化」の内容を定義していない。次が未確定である。
 
 - keyの並び順、byte単位かcode point単位か
-- Unicode正規化の適用範囲（NFCの対象を`text`だけとするか全stringとするか）
-- 数値、boolean、null、省略fieldの符号化と「nullと未設定」の区別
+- Unicode正規化の適用範囲（NFCの対象を`text`だけとするか全文字列とするか）
+- 数値、真偽値、null、省略fieldの符号化と「nullと未設定」の区別
 - 配列の順序規則（材料ごとに辞書順か、Bundle内の提示順か）
 - 「現行本文の意味内容」の具体的なbyte表現
 
@@ -58,10 +58,10 @@ Phase 1の完了条件へ「固定fixtureのDigestが規定値と一致する」
 
 [実装計画 §6](12_Core-1.0実装計画.md)は適合matrixの正本を
 [提案23 §8](23_複合workspace残存P2裁定案.md#8-f-適合fixtureと期待matrix)としている。しかし
-[本ディレクトリのREADME §1](README.md)は「レビュー文書は裁定後の仕様の正にしない」と定めており、
+[本directoryのREADME §1](README.md)は「review文書は裁定後の仕様の正にしない」と定めており、
 1.0の受入基準が非規範文書にだけ存在する状態になっている。
 
-加えて、`MONO-001`〜`MONO-024`は連合だけを対象とする。EARS-AI構文、状態遷移、承認済みREQ保護、
+加えて、`MONO-001`〜`MONO-024`は複合workspaceだけを対象とする。EARS-AI構文、状態遷移、承認済みREQ保護、
 TASK境界、Git縮退、Context上限、projectionといった単一workspaceの契約に対応するmatrixがない。
 
 **方針**: fixture配置、manifest Schema、共通normalizer、期待matrixを
@@ -132,7 +132,7 @@ doctorの検査1は「Core実行体、Python version、起動」で不適合を`
 
 ## 9. G8: 文書衛生
 
-`docs/`全体で相対linkの参照切れが181件ある。superseded ADRとClosedしたレビュー文書は
+`docs/`全体で相対linkの参照切れが181件ある。superseded ADRとClosedしたreview文書は
 時点snapshotであり許容されるが、現行決定を保持する`accepted` ADRのうち次の8件が
 ADR-039の再編前の構造（`02_SPECファイル規定/`、`02.設計書/0X_...`）を指している。
 
@@ -161,7 +161,7 @@ Phase 3の完了条件へ含める。これは最も安価な適合試験と実�
 
 ### 11.1 Step 0を追加する
 
-Phase 1の前に、コードを書かない仕様確定stepを置く。成果物は文書2件とADR 2件である。
+Phase 1の前に、codeを書かない仕様確定stepを置く。成果物は文書2件とADR 2件である。
 
 | 成果物 | 対象 |
 |---|---|
@@ -176,7 +176,7 @@ Phase 1の前に、コードを書かない仕様確定stepを置く。成果物
 ### 11.2 実行順を「骨格優先」へ変える
 
 現行計画はdoctorをPhase 3に置くが、doctorは設定読込み、workspace／catalog発見、結果・Diagnostic・
-終了コードの配管という、他3操作が全て使う土台だけで成立する最小の操作である。ここを先に通すと、
+終了コードの配管という、他3操作がすべて使う土台だけで成立する最小の操作である。ここを先に通すと、
 以後の全phaseが同じ公開面から検証できる。
 
 | Step | 内容 | 完了条件 |
@@ -186,7 +186,7 @@ Phase 1の前に、コードを書かない仕様確定stepを置く。成果物
 | 2 | 候補Scanner、Lexer、Parser、Semantic IR、文書モデル、索引 | 同一入力から同一IRとDiagnosticを再現する |
 | 3 | 関係・閉包・Constraint Ledger・coverage・Context Digest・`context`、`check` | 固定fixtureのDigestが規定値と一致し、部分Contextを成功にしない |
 | 4 | binding解決、`{tests}`展開、cwd、timeout、`targetResults[]`、`verify` | 成功・非0・起動失敗・signal・timeout・0件をfixtureで区別する |
-| 5 | 連合catalog、修飾ID、所有境界、横断Context、`--all-workspaces` | `MONO-001`〜`024`が全て通過する |
+| 5 | 複合workspaceのcatalog、修飾ID、所有境界、横断Context、`--all-workspaces` | `MONO-001`〜`024`がすべて通過する |
 | 6 | 自身の`.spec/`によるSDD垂直スライス | 通常Markdown条件との比較で改善を確認する |
 
 Phase 0の実証条件（比較task 5件、基準fixture、測定手順）は現行計画のまま、Step 1と並行して固定する。
@@ -194,7 +194,7 @@ Phase 0の実証条件（比較task 5件、基準fixture、測定手順）は現
 
 ## 12. 着手可否
 
-- G1、G2を閉じるまでコード着手を保留する。両者は受入基準そのものであり、後から追加すると
+- G1、G2を閉じるまでcode着手を保留する。両者は受入基準そのものであり、後から追加すると
   Phase 1〜4の成果物を作り直すことになる。
 - G3〜G7はStep 0で同時に閉じる。いずれも既存の裁定に反さず、記述の追補で足りる。
 - G8、G9はStep 1以降と並行して進めてよい。

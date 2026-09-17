@@ -1,4 +1,4 @@
-# Core 1.0実装前最終レビューと修正提案
+# Core 1.0実装前最終reviewと修正提案
 
 - 状態: Accepted / Reflected（Step 0B実施中、Gate A `Blocked`）
 - 実施日: 2026-09-04
@@ -10,11 +10,11 @@
 
 ## 1. 結論
 
-Core 1.0の設計方針、責務境界、安全原則、単一workspaceとモノレポ連合の基本モデルは妥当であり、
+Core 1.0の設計方針、責務境界、安全原則、単一workspaceと複合workspaceの基本モデルは妥当であり、
 全面的な再設計は必要ない。一方、現在の規範文書だけから互いに独立した2実装が同一の入力、結果、
 Diagnostic、Digest、fixture判定を再現できる状態には達していない。
 
-したがって、本レビュー時点の実装着手判定は**No-Go**とする。
+したがって、本review時点の実装着手判定は**No-Go**とする。
 [提案24](24_Core-1.0実装着手方針.md)でOpenとしたgateは、§8のStep 0Bを完了するまで再度閉じることを提案する。
 
 ただし、次は先行してよい。
@@ -24,11 +24,11 @@ Diagnostic、Digest、fixture判定を再現できる状態には達していな
 - 仕様から振る舞いを確定しない内部interfaceの雛形
 - 本提案のP0を閉じるための試験入力と期待値の作成
 
-Schema検証、fixture generator、reference計算、grammar・matrix検査、process用test helper、
+Schema検証、fixture generator、reference計算、文法・matrix検査、process用test helper、
 副作用比較harness、独立cross-checkはStep 0Bの検証基盤として先行してよい。
 Parser、Context Resolver、Diagnostic生成、Digest、check、verifyの製品実装は、Gate Aが`Allowed`となった後に開始する。
 
-## 2. レビュー方法と判定基準
+## 2. review方法と判定基準
 
 ### 2.1 確認範囲
 
@@ -42,13 +42,13 @@ Parser、Context Resolver、Diagnostic生成、Digest、check、verifyの製品�
 5. Context Digestの決定性
 6. fixtureの再現性と期待値比較
 7. Git、path、process、cache、reportの安全境界
-8. モノレポ連合、失敗分離、resource上限、性能受入
+8. 複合workspace、失敗分離、resource上限、性能受入
 9. 相対link、見出しanchor、JSON例、ADR metadataの構造整合
 
 ### 2.2 Go判定基準
 
 [詳細設計README](../03.詳細設計/README.md#1-規範性)と
-[実装計画 Step 0](12_Core-1.0実装計画.md#2-step-0-仕様確定コードを書かない)に従い、
+[実装計画 Step 0](12_Core-1.0実装計画.md#2-step-0-仕様確定codeを書かない)に従い、
 次をすべて満たす場合だけGoとする。
 
 - ADRや提案資料を読まず、規範文書だけで公開挙動を一意に実装できる
@@ -56,15 +56,15 @@ Parser、Context Resolver、Diagnostic生成、Digest、check、verifyの製品�
 - 公開JSONとtextのfield、型、必須性、null、順序、既定値を完全比較できる
 - fixtureの入力状態をmanifestから再現し、1つの正確な期待結果と比較できる
 - 同一入力からContext Digestを独立実装間で一致させられる
-- timeout、resource上限、path境界、read-only性を有限時間内に検証するfixtureとharnessが固定されている
+- timeout、resource上限、path境界、読取り専用性を有限時間内に検証するfixtureとharnessが固定されている
 
 ## 3. Gate summary
 
 | 領域 | 判定 | 概要 |
 |---|---|---|
 | 設計方針・scope | Pass | local/offline、明示操作、Core非変更、LLM非判定の境界は一貫 |
-| 単一workspace・連合モデル | Pass with conditions | identity、所有境界、preflight、独立継続は妥当。対象展開に残件 |
-| 公開機械契約 | Fail | 結果Schema、grammar、Frontmatter型、Diagnostic閉包が未確定 |
+| 単一workspace・複合workspaceモデル | Pass with conditions | 同一性、所有境界、事前検査、独立継続は妥当。対象展開に残件 |
+| 公開機械契約 | Fail | 結果Schema、文法、Frontmatter型、Diagnostic閉包が未確定 |
 | 適合受入 | Fail | matrixとmanifestが自己矛盾し、期待成果物が未作成 |
 | 決定性 | Fail | Digestと一部sortにtie、型外正規化、version値の未確定がある |
 | 安全性 | Pass with conditions | 基本原則は妥当。cacheとprocess終了契約に残件 |
@@ -81,7 +81,7 @@ Parser、Context Resolver、Diagnostic生成、Digest、check、verifyの製品�
 
 `setup`は`operations[]`方式を採用した。create、update、delete、rename、stageの適用順とpath境界を固定し、
 Gitのclean、staged、worktree、rename、delete、unbornをmanifestだけから再現できる契約へ改訂した。
-1 ID 1 invocation、1原因種別、1 statusまたはoutcome、1 exit codeとし、競合していたmatrix行をsuffix付きIDへ分割した。
+1 ID 1 invocation、1原因種別、1 statusまたはoutcome、1終了コードとし、競合していたmatrix行を接尾辞付きIDへ分割した。
 text normalizerはduration tokenだけを置換し、Digest fixtureはCanonical JSON byte列と`sha256:`値を別々に比較する。
 
 実際の`repo/`、`manifest.json`、`expected/*`は、FIN-DIAG-001、FIN-EAI-001、FIN-OUT-001、FIN-TARGET-001、
@@ -110,7 +110,7 @@ Step 1以降の完了条件を客観的に判定できない。
 
 #### 修正案
 
-1. 1 IDを1 invocation、1独立原因、1 exit code、1 statusへ分割する。
+1. 1 IDを1 invocation、1独立原因、1終了コード、1 statusへ分割する。
 2. `setup`へ次のいずれかを規範化する。
    - `base/`と`current/`の2 tree
    - base commit後に適用する固定patchと`stagePaths[]`
@@ -175,14 +175,14 @@ doctorの設定不正は`SPEC-CONFIG-SCHEMA-001`だけを返し、config check i
 - codeのない非成功規則が0件である
 - 同一原因に対する重複Diagnosticの有無と優先順位がfixtureで固定される
 
-### 4.3 `FIN-EAI-001`: EARS-AI grammarと候補Scannerが未完結
+### 4.3 `FIN-EAI-001`: EARS-AI文法と候補Scannerが未完結
 
 **状態: 修正採用・契約／matrix反映済み、実fixture反映待ち。**
 
 [言語・Semantic IR仕様](../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md)をISO/IEC 14977相当の
 EBNFへ統一し、全nonterminal、Unicode code point、escape、quoted value、同長runで閉じるcode spanを定義した。
 候補Scannerをfence、blockquote、indent、IDらしいtokenを含む状態機械として固定し、Lexerの最長一致、位置計算、
-primary syntax順も明記した。`SHOULD`理由は`[REASON]` fieldとしてSemantic IRとContext Digestへ保持する。
+primary構文順も明記した。`SHOULD`理由は`[REASON]` fieldとしてSemantic IRとContext Digestへ保持する。
 自然言語の決定論的識別はCore 1.0のscope外とし、`EAI-CORE-LANG-001`を予約済みcodeへ移した。
 `SINGLE-096`〜`103`を適合matrixへ追加したが、対応するmanifest、入力repository、期待出力は未作成である。
 
@@ -193,13 +193,13 @@ primary syntax順も明記した。`SHOULD`理由は`[REASON]` fieldとしてSem
 `%x`、`/`、`*`が混在する。
 
 [同仕様 §5](../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md#5-規範行候補)の
-「文書IDらしいtoken」は字句規則になっておらず、短いID、未知prefix、3階層、ID欠落を
+「文書IDらしいtoken」は字句規則になっておらず、短いID、未知接頭辞、3階層、ID欠落を
 どこまで候補に含めるかが実装依存になる。複数backtick code span、quoted value、escape解除、
 `SHOULD`理由、`EAI-CORE-LANG-001`の言語判定も決定手順が不足する。
 
 #### 修正案
 
-1. grammar記法をISO EBNF相当またはABNFのどちらか1つへ統一する。
+1. 文法記法をISO EBNF相当またはABNFのどちらか1つへ統一する。
 2. UTF-8 code point単位のtoken、escape、quoted value、code spanを完全定義する。
 3. 候補Scannerを有限状態機械または同等の擬似codeで定義する。
 4. `SHOULD`理由を構文fieldにするか、理由なしwarning規則をCore 1.0から除く。
@@ -208,15 +208,15 @@ primary syntax順も明記した。`SHOULD`理由は`[REASON]` fieldとしてSem
 
 #### 完了条件
 
-- grammarに未定義nonterminalがない
+- 文法に未定義nonterminalがない
 - 候補抽出、parse、Diagnostic位置をfixtureで完全比較できる
-- 同一行へ返すprimary syntax codeが一意である
+- 同一行へ返すprimary構文codeが一意である
 
 ### 4.4 `FIN-OUT-001`: 公開結果Schemaとtext出力が完全ではない
 
 **状態: 修正採用・契約／Schema／matrix反映済み、実fixture反映待ち。**
 
-Draft 2020-12の`fixtures/conformance/result.schema.json`を追加し、context、check、verify、doctorの単一／連合結果を
+Draft 2020-12の`fixtures/conformance/result.schema.json`を追加し、context、check、verify、doctorの単一／複合workspaceの結果を
 排他的variantとして固定した。required、null、未知field、40桁commit、projection別field、既定format、text件数の
 導出式を本文と同期した。verify process出力はredaction済み末尾抜粋と切捨てflagを公開結果へ保持する。
 `SINGLE-104`〜`106`を適合matrixへ追加したが、対応する実成果物は未作成である。
@@ -224,8 +224,8 @@ Draft 2020-12の`fixtures/conformance/result.schema.json`を追加し、context�
 #### 問題
 
 [共通結果](../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#2-共通結果)では
-`scope`と`revision`の必須性が「操作依存」のままであり、4操作と単一／連合の完全なvariantが
-machine-readable Schemaになっていない。
+`scope`と`revision`の必須性が「操作依存」のままであり、4操作と単一／複合workspaceの完全なvariantが
+機械可読Schemaになっていない。
 
 残件は次のとおりである。
 
@@ -233,22 +233,22 @@ machine-readable Schemaになっていない。
 - 各操作の既定`--format`がない
 - Context `documents[]`の`full`、`normative`、`reference`別field、null、省略条件が完全でない
 - `revision`のbase、commit、dirtyと`null`になる条件が操作別に閉じていない
-- textの`targets=<n>`がcontext、check、doctor、連合で何を数えるか不明である
-- 全体結果のtop-levelとmember Diagnosticを`diagnostics=<n>`へどう数えるか不明である
-- verifyが保持するstdout/stderr抜粋の公開fieldがない
+- textの`targets=<n>`がcontext、check、doctor、複合workspaceで何を数えるか不明である
+- 全体結果の最上位とmember Diagnosticを`diagnostics=<n>`へどう数えるか不明である
+- verifyが保持する標準出力/stderr抜粋の公開fieldがない
 
 #### 修正案
 
 1. JSON Schema Draft 2020-12等で共通定義と操作別`oneOf`をversion管理する。
-2. 各fieldのrequired、nullable、enum、additionalProperties、配列順を文書とSchemaで一致させる。
+2. 各fieldのrequired、nullable、列挙値、additionalProperties、配列順を文書とSchemaで一致させる。
 3. Git commitは40桁小文字16進へ統一する。
 4. 4操作の既定formatを明示する。
 5. text件数をJSON上のどのfieldまたは導出式へ対応させるか定義する。
-6. process抜粋を公開しないなら表示もしない。公開するならredacted excerpt Schemaを追加する。
+6. process抜粋を公開しないなら表示もしない。公開するならredacted抜粋Schemaを追加する。
 
 #### 完了条件
 
-- 単一／連合、成功／非成功の全期待JSONがSchema validationを通過する
+- 単一／複合workspace、成功／非成功の全期待JSONがSchema検証を通過する
 - 例示JSONと規範Schemaの不一致が0件である
 - text要約の全tokenをJSON結果から一意に導出できる
 
@@ -266,7 +266,7 @@ applicable refinement、TASK、重複排除時点を固定した。`requires`先
 [関係・トレースモデル §8](../03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md#8-coverage)は
 REQ／規範文ありTECHのtarget statementを「所有statementとapplicable refinement」とする。
 一方、[verify仕様 §3](../03.詳細設計/03_操作仕様/03_verify.md#3-対象)は
-「所有statementとapplicable dependency/refinement」とし、dependencyが所有するstatementを
+「所有statementとapplicable依存/refinement」とし、依存が所有するstatementを
 test対象へ含めるかが一致しない。
 
 また、次が未確定である。
@@ -280,7 +280,7 @@ test対象へ含めるかが一致しない。
 
 1. `TargetExpansion(root, purpose)`を関係仕様に1つだけ定義し、各操作は参照する。
 2. 出力を`rootDocuments`、`contextDocuments`、`targetStatements`、`adjacentStatements`へ分離する。
-3. dependencyはContext材料かtest義務かをpurposeごとに明記する。
+3. 依存はContext材料かtest義務かをpurposeごとに明記する。
 4. 明示target不存在を終了コード4または`CTX-ROOT-MISSING-001`のどちらかへ統一する。
 5. ADRを起点にできる操作とpurposeを明記する。
 
@@ -290,7 +290,7 @@ test対象へ含めるかが一致しない。
 - root種別ごとの期待集合をfixtureで完全比較できる
 - 不存在targetが操作、入力形式、workspaceによって揺れない
 
-### 4.6 `FIN-FM-001`: Frontmatter型とYAML subsetが内部矛盾する
+### 4.6 `FIN-FM-001`: Frontmatter型とYAML部分集合が内部矛盾する
 
 **状態: 修正採用・契約／Schema／matrix反映済み、実fixture反映待ち。**
 
@@ -312,15 +312,15 @@ scalar、scalar配列、通常mapだけを許可し、object配列を明示的�
 #### 修正案
 
 1. 文書Frontmatterの完全な構造Schemaを追加し、`tests` object配列を明示的に許可する。
-2. 設定YAMLとFrontmatter YAMLの共通subsetと個別追加型を分離する。
+2. 設定YAMLとFrontmatter YAMLの共通部分集合と個別追加型を分離する。
 3. duplicate判定を正規化後の構造等値またはkey tupleで定義する。
-4. null、空string、空配列、省略の許否をfieldごとに定義する。
+4. null、空文字列、空配列、省略の許否をfieldごとに定義する。
 5. 文字数をUnicode code point等の測定単位で固定する。
 
 #### 完了条件
 
 - 全正例FrontmatterがSchemaを通過し、全禁止例が一意なDiagnosticで失敗する
-- `tests`を含む規範例とYAML subsetが矛盾しない
+- `tests`を含む規範例とYAML部分集合が矛盾しない
 
 ## 5. P1: 該当componentの実装前に閉じる項目
 
@@ -329,18 +329,18 @@ scalar、scalar配列、通常mapだけを許可し、object配列を明示的�
 **状態: 修正採用・契約／matrix反映済み、golden実fixture反映待ち。**
 
 Core 1.0の`resolverVersion`を`"1.0"`へ固定し、文字正規化後にsortする処理順、`tests`とextensionの完全な
-tuple順序、path型5 fieldだけのseparator変換を正本へ反映した。単一`SINGLE-042`と連合`MONO-002-01`をgoldenの
+tuple順序、path型5 fieldだけの区切り文字変換を正本へ反映した。単一`SINGLE-042`と複合workspace`MONO-002-01`をgoldenの
 所有fixtureとし、`SINGLE-121`〜`124`を追加した。対応する入力tree、Canonical JSON、期待結果は未作成である。
 
 - `resolverVersion`のCore 1.0値を`"1.0"`等へ固定する。
 - `tests`のsortを`(path, command, covers)`等の完全順序にするか、同一pathの複数要素を禁止する。
 - extensionのsortへ`value`を加えるか、同一namespace/termの重複を禁止する。
-- path separator変換は全stringではなくpath型fieldだけへ適用する。
-- golden Canonical JSONとdigestを最低1件、単一と連合で固定する。
+- path区切り文字変換は全文字列ではなくpath型fieldだけへ適用する。
+- golden Canonical JSONとdigestを最低1件、単一と複合workspaceで固定する。
 
 対象: [Context Digest正規化仕様](../03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md)
 
-### 5.2 `FIN-IO-001`: read-onlyとcache writeの境界
+### 5.2 `FIN-IO-001`: 読取り専用とcache writeの境界
 
 **状態: 修正採用・契約／matrix反映済み、実fixture反映待ち。**
 
@@ -348,7 +348,7 @@ Core 1.0の永続cacheをscope外とし、同一invocation内で破棄するmemo
 明示reportだけに限定し、report一時fileの配置、rename、失敗時除去を固定した。doctorからcache検査を外し、
 `SPEC-DOCTOR-CACHE-001`を予約した。`SINGLE-125-01`〜`06`を追加したが、実fixtureは未作成である。
 
-`context`と`doctor`はfileを書かない、`check`は既定でread-onlyとする一方、共通契約とfixtureは
+`context`と`doctor`はfileを書かない、`check`は既定で読取り専用とする一方、共通契約とfixtureは
 cacheを例外扱いできる。次のいずれかへ統一する。
 
 1. Core 1.0の全適合試験でcache writeを既定無効にする
@@ -361,7 +361,7 @@ cacheを例外扱いできる。次のいずれかへ統一する。
 
 **状態: 修正採用・契約／Schema／matrix反映済み、実fixture反映待ち。**
 
-argv templateと展開後上限、実行file／PATH解決、環境継承、stdin、spawn前blockedと`spawn_error`の境界、
+argv templateと展開後上限、実行file／PATH解決、環境継承、標準入力、spawn前blockedと`spawn_error`の境界、
 timeoutから5秒以内の直接process停止とpipe閉鎖を正本へ反映した。出力のincremental UTF-8 decode、制御文字表記、
 secret mask、redaction後末尾65,536 byteも固定し、結果Schemaのtermination整合条件と`SINGLE-126`を追加した。
 対応する実fixtureは未作成である。
@@ -369,9 +369,9 @@ secret mask、redaction後末尾65,536 byteも固定し、結果Schemaのtermina
 次をcommand実行契約へ追加する。
 
 - argv要素の型、空文字、長さ、NUL、`argv[0]`のPATH解決
-- 継承する環境変数、追加／除去する環境、locale、stdinの扱い
+- 継承する環境変数、追加／除去する環境、locale、標準入力の扱い
 - timeout時のsignal、猶予時間、直接processの終了確認、pipeを閉じる条件
-- 子孫processがstdout/stderr FDを保持した場合でも操作が有限時間で戻る条件
+- 子孫processが標準出力/stderr FDを保持した場合でも操作が有限時間で戻る条件
 - `spawn_error`と「環境不足によるblocked」の境界
 - 抜粋の切捨て、制御文字無害化、secret maskの決定規則
 
@@ -382,7 +382,7 @@ secret mask、redaction後末尾65,536 byteも固定し、結果Schemaのtermina
 **状態: 修正採用・契約／matrix反映済み、実fixture反映待ち。**
 
 共通argv解析として単一optionの重複、反復可能option、空target／空値、timeout表記、targetとworkspaceの不存在を固定した。
-`--report`は任意pathを取らないboolean flagとし、既定formatと規定保存先を明文化した。CPython／Git下限、配布物名、
+`--report`は任意pathを取らない真偽値flagとし、既定formatと規定保存先を明文化した。CPython／Git下限、配布物名、
 runtime依存、YAML loader条件を詳細設計の正本へ移し、ADR-045は判断理由として維持した。`SINGLE-127`を追加したが、
 対応する実fixtureは未作成である。
 
@@ -400,7 +400,7 @@ doctor仕様が値の所有者をADR-045とする現状は解消する。
 
 **状態: 修正採用・基準入力／環境／測定protocol／比較task反映済み、実測baseline待ち。**
 
-単一と連合の固定dataset manifest、決定論的generator、期待tree digest、reference environment、7つの測定case、
+単一と複合workspaceの固定dataset manifest、決定論的generator、期待tree digest、reference environment、7つの測定case、
 run result Schemaを`fixtures/performance`へ追加した。人間向けの5つの対比較task、blind answer key、結果Schema、
 成功基準は`fixtures/comparison`へ分離した。Step 0-Pは成果物をStep 1開始前に固定し、実測は対象実装後に行う順序へ
 訂正した。Core実行体が未実装のため、実測baselineだけが未作成である。
@@ -438,12 +438,12 @@ Accepted / Reflectedへ更新した。新設§24で提案の採否と実装着�
 Step 0Bの現在状態と残件を記録した。
 
 指摘対象は現構造の提案資料README §23であり、本提案作成時の「§22」は節番号の誤記である。見出しと一覧の
-Open表示を「裁定・反映済み」へ訂正し、本提案による再レビュー結果を次節へ追加する。
+Open表示を「裁定・反映済み」へ訂正し、本提案による再review結果を次節へ追加する。
 
 ### 6.3 `FIN-SELF-001`: 自身の`.spec/`による実証
 
 基準commitに`.spec/`は存在しない。これは提案24で着手gate外と裁定済みのためP0へ戻さないが、
-Step 6まで遅らせず、grammar、Schema、checkが安定した時点で自身の仕様を作成する方がよい。
+Step 6まで遅らせず、文法、Schema、checkが安定した時点で自身の仕様を作成する方がよい。
 自己適用により、文書作成負荷、Context量、Diagnosticの実用性を性能試験より早く確認できる。
 
 ## 7. 確認できた強み
@@ -454,8 +454,8 @@ Step 6まで遅らせず、grammar、Schema、checkが安定した時点で自�
    提案資料を検討履歴とする所有階層は明確である。
 2. Coreはlocal/offlineで動作し、LLMやtest出力の自然言語を合否判定へ使わない。
 3. `context`、`doctor`、`check`、`verify`の責務分離と、暗黙のSPEC変更を行わない原則は妥当である。
-4. モノレポの明示catalog、永続workspace ID、修飾ID、canonical所有境界、global preflightは整合している。
-5. global preflight後に文書、target、binding単位で独立処理を継続する方針は、可用性と失敗分離を両立する。
+4. 複合workspaceの明示catalog、永続workspace ID、修飾ID、canonical所有境界、全体事前検査は整合している。
+5. 全体事前検査後に文書、target、binding単位で独立処理を継続する方針は、可用性と失敗分離を両立する。
 6. verifyの`targetResults[] -> bindingRefs[] -> commands[]`証跡とreport明示保存は監査可能性が高い。
 7. status 0〜3と引数不正exit 4を分ける基本モデルは明確である。
 8. 現行正本の相対link・anchor、JSON例の構文、ADR 45件のID・status・H1・Revision Historyは概ね整合している。
@@ -466,7 +466,7 @@ Step 6まで遅らせず、grammar、Schema、checkが安定した時点で自�
 
 | 順序 | 作業 | 主対象 | 完了証拠 |
 |---:|---|---|---|
-| 1 | grammar、Frontmatter、公開結果、Diagnostic registryを閉じる | P0-2〜4、6 | Schema validation、parser vectors |
+| 1 | 文法、Frontmatter、公開結果、Diagnostic registryを閉じる | P0-2〜4、6 | Schema validation、parser vectors |
 | 2 | target展開とDigestを確定する | P0-5、P1-1 | target集合fixture、golden digest |
 | 3 | fixture manifestとmatrixを分割する | P0-1 | 全IDに実入力と単一期待値 |
 | 4 | cache、process、CLI、実行環境を確定する | P1-2〜4 | 副作用snapshot、process helper、timeout harness、CLI fixture |
@@ -482,8 +482,8 @@ Step 6まで遅らせず、grammar、Schema、checkが安定した時点で自�
 | `00_共通契約/02_安全な入出力・互換性.md` | cache write、process出力、redaction |
 | `00_共通契約/03_Context-Digest正規化仕様.md` | version、完全sort、path型限定正規化、golden値 |
 | `00_共通契約/04_適合fixture仕様.md` | 1 ID 1結果、Git setup、normalizer、実成果物対応 |
-| `01_EARS-AI/01_言語・Semantic-IR仕様.md` | 完全grammar、Scanner、escape、SHOULD理由 |
-| `02_SPECモデル/01_workspace・設定仕様.md` | argv、YAML subset、実行環境規範 |
+| `01_EARS-AI/01_言語・Semantic-IR仕様.md` | 完全文法、Scanner、escape、SHOULD理由 |
+| `02_SPECモデル/01_workspace・設定仕様.md` | argv、YAML部分集合、実行環境規範 |
 | `02_SPECモデル/02_文書・Frontmatter・状態仕様.md` | 完全Frontmatter Schema、object配列、null・重複 |
 | `02_SPECモデル/04_関係・トレースモデル.md` | `TargetExpansion`の単一所有 |
 | `03_操作仕様/*.md` | 既定format、target不存在、process、結果variant参照 |
@@ -498,21 +498,21 @@ Step 6まで遅らせず、grammar、Schema、checkが安定した時点で自�
 |---|---|---|
 | Gate A: 実装着手可能性 | 規範、fixture、期待値、検証基盤の再現性を確認 | 依存しない |
 | Gate B: Step別実装受入 | 各StepのCore実装を固定済みfixtureで確認 | 依存する |
-| Gate C: Core 1.0リリース受入 | 全適合、性能、自己適用を含む出荷判定 | 依存する |
+| Gate C: Core 1.0 release受入 | 全適合、性能、自己適用を含む出荷判定 | 依存する |
 
 ### 9.1 Gate A: 実装着手可能性
 
 次を全件満たしたcommitに対して実装着手を再判定する。
 
 - [x] P0 6件に裁定があり、`docs/03.詳細設計`へ反映済み
-- [x] 公開JSON例がmachine-readable Schemaを全件通過
+- [x] 公開JSON例が機械可読Schemaを全件通過
 - [x] 規範上の全非成功条件がDiagnostic registryへ対応
-- [x] grammarに未定義token/nonterminalがない
+- [x] 文法に未定義token/nonterminalがない
 - [x] target種別×purposeの期待集合fixtureが存在
 - [ ] fixture matrixに選択的期待、複数原因、`元status`がない
 - [x] Git base/current/staged/worktree/unbornをmanifestから再現可能
-- [ ] 単一と連合のCanonical JSONおよびgolden Context Digestが独立した2系統のreference計算で一致
-- [ ] read-only、report、cacheの変更前後snapshotと許可書込みが固定され、比較harnessを自己検査可能
+- [ ] 単一と複合workspaceのCanonical JSONおよびgolden Context Digestが独立した2系統のreference計算で一致
+- [ ] 読取り専用、report、cacheの変更前後snapshotと許可書込みが固定され、比較harnessを自己検査可能
 - [x] timeout、signal、子process、pipe保持を再現するhelperと有限時間で失敗できるharnessが存在
 - [x] 性能基準fixture、generator、期待tree digest、環境manifestがversion管理済み
 - [x] 現行正本とaccepted ADRの相対link検査が0件
@@ -520,35 +520,35 @@ Step 6まで遅らせず、grammar、Schema、checkが安定した時点で自�
 
 実行入口は`uv run fixtures/validate_step0b.py`。公開結果等10例、EBNF 33定義、相対link 218件、
 Git 7状態の2回再現とprocess helper自己試験を検証した。Semantic IRとDigest材料の5例はJSON構文確認だけであり、
-公開結果Schemaの対象ではない。2026-09-08にDiagnostic意味網羅レビューを実施し、119条件を17根拠文書へ対応付け、
+公開結果Schemaの対象ではない。2026-09-08にDiagnostic意味網羅reviewを実施し、119条件を17根拠文書へ対応付け、
 発見した3件の未裁定条件を解消した。対応台帳の欠落・未知ID・根拠改変・未裁定条件残存を検証する。
-判断根拠とDiagnosticを生成しない条件は[Diagnostic意味網羅レビュー](../../fixtures/conformance/Diagnostic意味網羅review.md)に記録した。
-matrix 311件中、導入・設定9件、EARS-AI構文・候補抽出・拡張12件、文書構造・UTF-8 9件、関係・path・coverage 6件、ID重複・循環4件、Git基準版・保護対象外変更10件、TASK境界3件、Git対象選択・影響候補4件、Git基準版エラー・Git不在3件、Context非成功5件は入力・manifest・完全期待JSON・read-only副作用期待値を作成し、
+判断根拠とDiagnosticを生成しない条件は[Diagnostic意味網羅review](../../fixtures/conformance/Diagnostic意味網羅review.md)に記録した。
+matrix 311件中、導入・設定9件、EARS-AI構文・候補抽出・拡張12件、文書構造・UTF-8 9件、関係・path・coverage 6件、ID重複・循環4件、Git基準版・保護対象外変更10件、TASK境界3件、Git対象選択・影響候補4件、Git基準版error・Git不在3件、Context非成功5件は入力・manifest・完全期待JSON・読取り専用副作用期待値を作成し、
 各2回の隔離setupを固定snapshotと照合した。実fixture残件は246件であり、Coreは未実行である。
 2026-09-11に文書構造・UTF-8の9件を追加し、完全期待JSONと副作用期待値、各2回の隔離setupを検証した。
-期待値の選択は[文書fixtureレビュー](../../fixtures/conformance/single/文書構造・UTF-8-review.md)を参照する。
+期待値の選択は[文書fixture review](../../fixtures/conformance/single/文書構造・UTF-8-review.md)を参照する。
 同日に関係・path・coverageの6件を追加し、同じ準備検証と回帰試験を通過した。
-期待値の選択は[trace fixtureレビュー](../../fixtures/conformance/single/関係・path・coverage-review.md)を参照する。
+期待値の選択は[trace fixture review](../../fixtures/conformance/single/関係・path・coverage-review.md)を参照する。
 さらにID重複・循環の4件を追加し、各2回の隔離setupと回帰試験を通過した。
-期待値の選択は[graph fixtureレビュー](../../fixtures/conformance/single/文書ID重複・循環review.md)を参照する。
+期待値の選択は[graph fixture review](../../fixtures/conformance/single/文書ID重複・循環review.md)を参照する。
 Git基準版の5件も追加し、HEAD・index・worktreeの直接照合、各2回の隔離setupと回帰試験を通過した。
-期待値の選択は[Git fixtureレビュー](../../fixtures/conformance/single/Git基準版・状態遷移review.md)を参照する。
+期待値の選択は[Git fixture review](../../fixtures/conformance/single/Git基準版・状態遷移review.md)を参照する。
 approved REQの保護対象外変更5件も追加し、同じGit状態照合と回帰試験を通過した。
-期待値の選択は[保護対象外fixtureレビュー](../../fixtures/conformance/single/approved-REQの保護対象外変更review.md)を参照する。
+期待値の選択は[保護対象外fixture review](../../fixtures/conformance/single/approved-REQの保護対象外変更review.md)を参照する。
 2026-09-14にTASK境界の3件（SINGLE-034、035-01〜02）を追加した。
-期待値の選択は[TASK fixtureレビュー](../../fixtures/conformance/single/TASK境界・対象選択review.md)を参照する。
+期待値の選択は[TASK fixture review](../../fixtures/conformance/single/TASK境界・対象選択review.md)を参照する。
 同日にGit対象選択・影響候補の4件（SINGLE-033、039〜041）を追加した。
-期待値の選択は[Git対象選択fixtureレビュー](../../fixtures/conformance/single/Git対象選択・影響候補review.md)を参照する。
-さらにGit基準版エラー・Git不在の3件（SINGLE-036〜038）を追加し、040・041の明示base指定を補正した。
-期待値と検証範囲は[Git環境fixtureレビュー](../../fixtures/conformance/single/Git基準版error・Git不在review.md)を参照する。
+期待値の選択は[Git対象選択fixture review](../../fixtures/conformance/single/Git対象選択・影響候補review.md)を参照する。
+さらにGit基準版error・Git不在の3件（SINGLE-036〜038）を追加し、040・041の明示base指定を補正した。
+期待値と検証範囲は[Git環境fixture review](../../fixtures/conformance/single/Git基準版error・Git不在review.md)を参照する。
 Context非成功の5件（SINGLE-050、051、052-01〜02、053）も追加した。
-期待値と検証範囲は[Context非成功fixtureレビュー](../../fixtures/conformance/single/Context非成功review.md)を参照する。
-EARS-AIの期待値選択と検証範囲は[EARS fixtureレビュー](../../fixtures/conformance/single/EARS-AI構文・候補抽出review.md)に記録した。
-設計上の期待値選択は[初回fixtureレビュー](../../fixtures/conformance/single/README.md)、
+期待値と検証範囲は[Context非成功fixture review](../../fixtures/conformance/single/Context非成功review.md)を参照する。
+EARS-AIの期待値選択と検証範囲は[EARS fixture review](../../fixtures/conformance/single/EARS-AI構文・候補抽出review.md)に記録した。
+設計上の期待値選択は[初回fixture review](../../fixtures/conformance/single/README.md)、
 検証結果は[Step 0B検証記録](../../fixtures/conformance/Step-0B検証記録.md)を参照する。
-2026-09-08にtarget種別×purposeの18基本ケースと7追加ケースを固定し、4集合の順序と入力順序不変性を検証した。
+2026-09-08にtarget種別×purposeの18基本caseと7追加caseを固定し、4集合の順序と入力順序不変性を検証した。
 設計・範囲は[target期待集合](../../fixtures/conformance/targets/README.md)を参照する。Core実装の受入は別工程とする。
-未完了のgolden Digest、実fixture等があるため、コマンドは終了コード1、Gate A `Blocked`を返す。
+未完了のgolden Digest、実fixture等があるため、commandは終了コード1、Gate A `Blocked`を返す。
 
 従来の「実装計画のStep 0BがClosed」は判定結果を判定条件に含める自己参照であるため削除する。
 上記の自動検査結果と実行環境を同一commitへ記録した時点で、Step 0Bを`Complete`、Gate Aを`Allowed`とする。
@@ -556,10 +556,10 @@ EARS-AIの期待値選択と検証範囲は[EARS fixtureレビュー](../../fixt
 ### 9.2 Gate B: Step別実装受入
 
 Gate Aで固定したfixture、期待値、helper、harnessへ各StepのCore実装を通す。Git状態の解釈、Coreが生成するDigest、
-read-only・report・cacheの実副作用、timeout・signal・子processの実終了動作は、対応componentを実装したStepの
+読取り専用・report・cacheの実副作用、timeout・signal・子processの実終了動作は、対応componentを実装したStepの
 完了条件として判定する。Gate AではこれらのCore実行結果を要求しない。
 
-### 9.3 Gate C: Core 1.0リリース受入
+### 9.3 Gate C: Core 1.0 release受入
 
 全StepのGate B通過後、全conformance fixture、性能baselineとSLO、決定性、副作用・process受入、
 `FIN-SELF-001`の自己適用、通常Markdown条件との比較、未解決P0/P1がないことをまとめて判定する。
@@ -572,7 +572,7 @@ read-only・report・cacheの実副作用、timeout・signal・子processの実�
 | D2 | §4の6件をP0として全件採用する |
 | D3 | §5の5件を該当component実装前のP1として採用する |
 | D4 | fixtureは文書上のmatrixだけでなく、実入力・manifest・期待結果までversion管理する |
-| D5 | 公開結果とFrontmatterへmachine-readable Schemaを追加する |
+| D5 | 公開結果とFrontmatterへ機械可読Schemaを追加する |
 | D6 | Diagnostic registryと`TargetExpansion`を単一所有者へ集約する |
 | D7 | ADR-045の現行規範値を詳細設計へ移し、ADRは理由の記録へ戻す |
 | D8 | P0反映後、§9.1を満たす自動検査結果を添えてGate Aを再判定し、Core実行結果はGate B/Cで判定する |

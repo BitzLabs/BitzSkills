@@ -1,4 +1,4 @@
-# フロー終端・遷移条件レビューと修正提案
+# flow終端・遷移条件reviewと修正提案
 
 **状態**: **Closed（8件裁定・反映済み）**
 
@@ -8,8 +8,8 @@
 
 ## 1. 目的
 
-[ユースケース・フロー遷移レビュー](07_ユースケース・flow遷移reviewと修正提案.md)の8件を裁定・反映した
-状態で、開発フローとSPEC状態機械を終端と遷移条件の観点から再確認した。ADR-028〜033の適用によって
+[ユースケース・flow遷移review](07_ユースケース・flow遷移reviewと修正提案.md)の8件を裁定・反映した
+状態で、開発flowとSPEC状態機械を終端と遷移条件の観点から再確認した。ADR-028〜033の適用によって
 新たに生じた接続と、既存の終端定義の欠落を記録する。
 
 現在の正本は`docs/02.設計書`と`docs/03.詳細設計`である。本書の修正例は裁定前の原文として保持し、
@@ -19,7 +19,7 @@
 
 ADR-028で確定したSmall/Full Flowの骨格、ADR-024の状態遷移matrix、共通statusの集約順位は一貫している。
 一方、ADR-029が`requires`先TASKの`done`を実行可能性のゲートにしたことで、`open -> done`遷移を
-実行する箇所がフローに存在しないという終端の欠落が顕在化した。またADR-031が検査対象集合の空を正常経路に
+実行する箇所がflowに存在しないという終端の欠落が顕在化した。またADR-031が検査対象集合の空を正常経路に
 したため、引数なし`check`の0件時statusが未定義であることが問題になる。この2件をP1として起票した。
 
 2026-09-01にUC-FLOW-009を修正採用、UC-FLOW-012を採用し、
@@ -35,14 +35,14 @@ ADR-028で確定したSmall/Full Flowの骨格、ADR-024の状態遷移matrix、
 
 | ID | 優先度 | 指摘 | 主な影響 | 状態 |
 |---|:--:|---|---|---|
-| UC-FLOW-009 | P1 | TASKの`open -> done`遷移がフローのどの段階にもない | 後続TASKが恒久的に`blocked`になる | 修正採用・反映済み（ADR-034） |
-| UC-FLOW-010 | P1 | 引数なし`check`の検査対象0件時のstatusが未定義 | SPEC未整備コードの変更でCIが停止し得る | 採用・反映済み（ADR-035） |
+| UC-FLOW-009 | P1 | TASKの`open -> done`遷移がflowのどの段階にもない | 後続TASKが恒久的に`blocked`になる | 修正採用・反映済み（ADR-034） |
+| UC-FLOW-010 | P1 | 引数なし`check`の検査対象0件時のstatusが未定義 | SPEC未整備codeの変更でCIが停止し得る | 採用・反映済み（ADR-035） |
 | UC-FLOW-011 | P2 | Small FlowにHuman Review否決の戻り先がない | Small Flowだけ再作業経路が不定 | 修正採用・反映済み（本文反映） |
 | UC-FLOW-012 | P2 | `done` TASKを起点にした`implement`／`verify`の可否が未定義 | 終端状態のTASKから作業を再開できてしまう | 採用・反映済み（ADR-034） |
 | UC-FLOW-013 | P2 | Pre-check／Post-checkの通過条件に`passed_with_warnings`が含まれるか不明 | warning時にVerifyへ進めるかが実装依存 | 採用・反映済み（ADR-035） |
 | UC-FLOW-014 | P3 | ADR部分改訂規約が決定記録READMEにしかなく、補助SPEC仕様は無条件の`superseded`のまま | 利用者の`.spec/decisions/`で同じ不整合が再発する | 案1採用・反映済み（ローカル規約） |
-| UC-FLOW-015 | P3 | 引数なし`check`でTASKが対象になっても`changes`境界は検査されない | 明示対象と正規化対象の差が読み取りにくい | 採用・反映済み（明示check限定） |
-| UC-FLOW-016 | P2 | フロー途中の提案・設計取り止めと、不採用理由を残す状態がない | `draft`や`open`が残り続け、将来の設計で判断理由を再利用できない | 採用・反映済み（ADR-036） |
+| UC-FLOW-015 | P3 | 引数なし`check`でTASKが対象になっても`changes`境界は検査されない | 明示対象と正規化対象の差が読取りにくい | 採用・反映済み（明示check限定） |
+| UC-FLOW-016 | P2 | flow途中の提案・設計取止めと、不採用理由を残す状態がない | `draft`や`open`が残り続け、将来の設計で判断理由を再利用できない | 採用・反映済み（ADR-036） |
 
 ### 3.1 UC-FLOW-009／012の裁定
 
@@ -79,8 +79,8 @@ ADR-034と反映後の正本を使用する。
 
 | ID | 裁定 | 反映内容 |
 |---|---|---|
-| UC-FLOW-011 | 修正採用 | Small FlowのHuman Review否決を要求・目的、依存・設計・Context、コード・テスト・diffに分類し、Intent、Context、Implementへ戻す。戻った地点以降を再実行し、再作業しない場合は`Stopped`とする。人間主導の再作業は自動リトライ回数へ含めない |
-| UC-FLOW-014 | 案1採用 | ADR-033の部分改訂を本リポジトリの設計資料に限定する。Coreが`.spec/decisions/`で認識する後継化は文書全体の`supersedes`／`superseded`だけとし、部分改訂を検査またはContextへ暗黙適用しない |
+| UC-FLOW-011 | 修正採用 | Small FlowのHuman Review否決を要求・目的、依存・設計・Context、code・test・差分に分類し、Intent、Context、Implementへ戻す。戻った地点以降を再実行し、再作業しない場合は`Stopped`とする。人間主導の再作業は自動リトライ回数へ含めない |
+| UC-FLOW-014 | 案1採用 | ADR-033の部分改訂を本repositoryの設計資料に限定する。Coreが`.spec/decisions/`で認識する後継化は文書全体の`supersedes`／`superseded`だけとし、部分改訂を検査またはContextへ暗黙適用しない |
 | UC-FLOW-015 | 採用 | TASKの`changes`境界はTASK ID／pathを明示したcheckだけで検査する。引数なし、`--full`、`--all-workspaces`で選択されたTASKは文書検査だけを行い、境界未実施をwarningにしない |
 
 3件とも既存ADRのDecisionを変更せず、本文とADR Notesの明確化として反映した。UC-FLOW-011はADR-036の
@@ -89,15 +89,15 @@ ADR-034と反映後の正本を使用する。
 
 ## 4. 修正提案
 
-### 4.1 UC-FLOW-009: TASK完了遷移のフロー配置
+### 4.1 UC-FLOW-009: TASK完了遷移のflow配置
 
 #### 現状
 
 - 補助SPEC仕様 §4はTASKの許可遷移を`open -> done`とし、`done`を終端状態とする。
 - [ADR-029](../02.設計書/10_決定記録/ADR-029_TASK先行依存の状態ガード.md)は、TASK起点の
   `implement`／`verify`で`requires`先TASKがすべて`done`であることを要求する。
-- SDDプロセス設計のSmall Flow、Full Flow、完了条件、運用設計の日常運用に、TASKを`done`へ遷移させる
-  段階が存在しない。`done`という語はプリフライトの先行TASK条件にしか現れない。
+- SDD process設計のSmall Flow、Full Flow、完了条件、運用設計の日常運用に、TASKを`done`へ遷移させる
+  段階が存在しない。`done`という語は事前検査の先行TASK条件にしか現れない。
 
 #### 問題
 
@@ -111,7 +111,7 @@ ADR-029以前は、TASK状態は表示上の区分にすぎず、遷移し忘れ
   遷移させる」とする。
 - 遷移はVerifyとHuman Reviewの後に行う。`done`化を先に行うとUC-FLOW-012の未定義領域へ入るため、
   順序を固定する。
-- `bitz check <TASK-ID>`の境界検査はTASK自身のファイルを比較対象から除くため、同じ変更にTASKの
+- `bitz check <TASK-ID>`の境界検査はTASK自身のfileを比較対象から除くため、同じ変更にTASKの
   status変更を含めても境界外変更にならないことを明記する。
 - 完了条件へ「TASK起点では対象TASKが`done`である」を追加する。
 
@@ -124,7 +124,7 @@ ADR-029以前は、TASK状態は表示上の区分にすぎず、遷移し忘れ
 
 #### 受入条件
 
-- TASK起点フローのfixtureで、完了後に対象TASKが`done`になる。
+- TASK起点flowのfixtureで、完了後に対象TASKが`done`になる。
 - `TASK-B requires TASK-A`の連続作業が、人手の追加操作なしにTASK-A完了後へ進める。
 
 ### 4.2 UC-FLOW-010: 検査対象0件時のcheck status
@@ -139,9 +139,9 @@ ADR-029以前は、TASK状態は表示上の区分にすぎず、遷移し忘れ
 
 #### 問題
 
-ADR-031により、SPECを持たないコードだけを変更したcommitで検査対象が空になることは異常ではなく正常経路に
+ADR-031により、SPECを持たないcodeだけを変更したcommitで検査対象が空になることは異常ではなく正常経路に
 なった。しかし0件時のstatusが未定義であるため、実装が`verify`の規則を模倣すると、SPEC未整備の
-リポジトリで通常のコード変更のたびにCIが`blocked`で停止する。`check`と`verify`で0件の意味が逆である
+repositoryで通常のcode変更のたびにCIが`blocked`で停止する。`check`と`verify`で0件の意味が逆である
 ことを、正本が明示していない。
 
 #### 提案
@@ -161,7 +161,7 @@ ADR-031により、SPECを持たないコードだけを変更したcommitで検
 
 #### 受入条件
 
-- SPECを持たないコードだけを変更したfixtureで、引数なし`check`が`passed`かつ終了コード0になる。
+- SPECを持たないcodeだけを変更したfixtureで、引数なし`check`が`passed`かつ終了コード0になる。
 - 同じfixtureで対象外path件数が結果に残る。
 
 ### 4.3 UC-FLOW-011: Small FlowのHuman Review否決
@@ -170,12 +170,12 @@ ADR-031により、SPECを持たないコードだけを変更したcommitで検
 
 Full Flow §3は「Human Review否決は理由に応じてIntent、Context、Implementのいずれかへ戻す」を持つ。
 Small Flow §2の図と手順には`Human Review`から戻るedgeがなく、§6のリトライ表もコンパイル・Lint・
-単体テスト、一時的ツール障害、仕様矛盾・権限不足の3種別だけを扱う。
+単体test、一時的ツール障害、仕様矛盾・権限不足の3種別だけを扱う。
 
 #### 問題
 
-ADR-028は両フローの骨格を共通化したが、否決経路はFull Flowにしか書かれていない。Small Flowで
-人間が最終diffを否決した場合の戻り先が正本にない。
+ADR-028は両flowの骨格を共通化したが、否決経路はFull Flowにしか書かれていない。Small Flowで
+人間が最終差分を否決した場合の戻り先が正本にない。
 
 #### 提案
 
@@ -183,7 +183,7 @@ ADR-028は両フローの骨格を共通化したが、否決経路はFull Flow�
   Implementのいずれかへ戻す。
 - Small Flow図へ`Human Review`から`Implement`への戻りedgeを追加し、Intent・Contextへの戻りは
   本文で示す（Full Flowと同じ表現に揃える）。
-- リトライ上限到達時と否決確定時は`Done`へ到達しない停止であることを、両フローで同じ語で書く。
+- リトライ上限到達時と否決確定時は`Done`へ到達しない停止であることを、両flowで同じ語で書く。
 
 #### 主な反映先
 
@@ -216,7 +216,7 @@ TASKのstatusを区別しない。
 
 - `done` TASKを`implement`の起点にした場合は`CTX-STATE-001`／`blocked`とし、新しいTASKの作成を
   `suggestedAction`へ示す。
-- `verify`の起点は許可する。完了済み作業の再検証はCIとレビューで必要になるためである。許可する場合は
+- `verify`の起点は許可する。完了済み作業の再検証はCIとreviewで必要になるためである。許可する場合は
   状態表のblocking条件へ「`implement`の起点」と明記し、空欄のままにしない。
 - `interpret`は従来どおり許可し、`done` TASKをHistoryとして返す。
 - 参照・トレース・検証仕様 §5の明示対象表へ、TASK IDの行にstatus条件を追記する。
@@ -238,7 +238,7 @@ TASKのstatusを区別しない。
 #### 問題
 
 「非成功」に`passed_with_warnings`が含まれるかが読み取れない。影響候補`SPEC-IMPACT-OUTDATED-001`、
-スタイルwarning、`SPEC-PATH-INVALID-001`の`draft`降格は、いずれも正常な作業中に発生し得る。これらで
+style warning、`SPEC-PATH-INVALID-001`の`draft`降格は、いずれも正常な作業中に発生し得る。これらで
 Verifyへ進めないと、通常のSmall Flowが完了しない。
 
 #### 提案
@@ -264,7 +264,7 @@ Verifyへ進めないと、通常のSmall Flowが完了しない。
 
 #### 問題
 
-決定記録README §1は、本ディレクトリを実プロジェクトの`.spec/decisions/`相当物と位置づけている。
+決定記録README §1は、本directoryを実プロジェクトの`.spec/decisions/`相当物と位置づけている。
 同じ組織が2つの異なる規約を持つことになり、利用者側でも部分改訂のたびに同じ判断が必要になる。
 
 #### 提案
@@ -288,8 +288,8 @@ Verifyへ進めないと、通常のSmall Flowが完了しない。
 #### 現状
 
 [ADR-025](../02.設計書/10_決定記録/ADR-025_Git基準版とcheck明示対象の確定.md)により、`changes`境界検査は
-TASK IDまたはTASKファイルpathを明示した`check`だけが行う。ADR-031により、引数なし`check`でも変更された
-TASKファイルは所有文書へ正規化され、検査対象に含まれる。
+TASK IDまたはTASK file pathを明示した`check`だけが行う。ADR-031により、引数なし`check`でも変更された
+TASK fileは所有文書へ正規化され、検査対象に含まれる。
 
 #### 問題
 
@@ -306,7 +306,7 @@ TASKファイルは所有文書へ正規化され、検査対象に含まれる�
 
 - `03.詳細設計/02_SPECファイル規定/06_参照・トレース・検証仕様.md` §4
 
-### 4.8 UC-FLOW-016: フロー途中の取り止めと不採用理由の保持
+### 4.8 UC-FLOW-016: flow途中の取止めと不採用理由の保持
 
 #### 現状
 
@@ -318,19 +318,19 @@ TASKファイルは所有文書へ正規化され、検査対象に含まれる�
 
 取り止めた文書を削除すると、不採用理由、比較したトレードオフ、再検討条件が失われる。`draft`または
 `open`のまま残すと、進行中の作業と取り止めた作業を区別できない。過去の`implements`や`tests`をそのまま
-現行索引へ含めると、不採用案がコード所有者または検証対象として選択される。
+現行索引へ含めると、不採用案がcode所有者または検証対象として選択される。
 
 #### 提案
 
-- Done前の任意段階から、人間の明示判断でフロー終端`Stopped`へ進める。Coreは取り止めを推測しない。
+- Done前の任意段階から、人間の明示判断でflow終端`Stopped`へ進める。Coreは取止めを推測しない。
 - REQ／TECHに終端`rejected`を追加し、`draft -> rejected`を許可する。`approved -> rejected`は禁止し、
   適用済み契約は`outdated`と後続判断で扱う。
 - `rejected`では`Rejection Rationale`を必須とし、不採用理由、根拠・トレードオフ、再検討条件を残す。
 - TASKに終端`cancelled`を追加し、`open -> cancelled`を許可する。`Cancellation Rationale`へ理由、得た知見、
   再計画条件を残す。`cancelled`は依存を充足しない。
 - 不採用・中止文書は`interpret`でHistoryとして返し、`check`できる一方、`implement`／`verify`では停止する。
-  `rejected`のパス・検証情報は履歴表示だけに残し、所有逆索引、検証対象、coverage、パス存在検査、
-  検証コマンド解決から除外する。
+  `rejected`のpath・検証情報は履歴表示だけに残し、所有逆索引、検証対象、coverage、path存在検査、
+  検証command解決から除外する。
 - 状態、理由、Revision Historyを同じ変更へ記録し、`bitz check <ID>`通過後にGitへ記録する。
 
 #### 主な反映先
@@ -345,7 +345,7 @@ TASKファイルは所有文書へ正規化され、検査対象に含まれる�
   ADR-036で一致している。
 - 共通statusの集約順位`error > failed > blocked > passed_with_warnings > passed`は全操作で共通であり、
   操作別の再定義がない。
-- Full Flowの否決edge、`Done`への接続、レビューがCoreの機械契約でないことの明示は、ADR-028とUC-FLOW-006の
+- Full Flowの否決edge、`Done`への接続、reviewがCoreの機械契約でないことの明示は、ADR-028とUC-FLOW-006の
   裁定どおり反映されている。
 - `verified`が文書状態ではなく実行時述語であることは、上位設計と詳細設計で一致している。
 - Context Resolutionの`failed`と`blocked`の使い分け（成果物不適合か、操作継続不能か）は一貫している。
@@ -355,18 +355,18 @@ TASKファイルは所有文書へ正規化され、検査対象に含まれる�
 
 UC-FLOW-009と012はADR-034、UC-FLOW-010と013はADR-035、UC-FLOW-016はADR-036として裁定した。
 UC-FLOW-011、014、015は既存契約の明確化として本文とADR Notesへ反映した。未裁定項目はなく、
-本レビューをClosedとする。
+本reviewをClosedとする。
 
 ## 7. 実装前チェックリスト
 
-- [x] TASKの`open -> done`遷移がフローの特定段階に置かれている
+- [x] TASKの`open -> done`遷移がflowの特定段階に置かれている
 - [x] `TASK-B requires TASK-A`の連続作業が追加操作なしに進む
 - [x] 引数なし`check`の対象0件時のstatusが定義されている
 - [x] `check`と`verify`で0件の意味の違いが明示されている
 - [x] Small FlowとFull FlowでHuman Review否決の戻り先が一致している
 - [x] `done` TASKを起点にした`implement`／`verify`／`interpret`の結果が一意になる
 - [x] Pre-check／Post-checkの通過条件がstatusで定義されている
-- [x] Done前に人間が取り止めを選び、`Stopped`へ終了できる
+- [x] Done前に人間が取止めを選び、`Stopped`へ終了できる
 - [x] REQ／TECHの不採用理由とTASKの中止理由が終端状態とともに保持される
 - [x] 不採用・中止文書が現行の実装・検証・所有逆索引へ混入しない
 - [x] ADR部分改訂規約の適用範囲がCoreとプロジェクト規約で区別されている

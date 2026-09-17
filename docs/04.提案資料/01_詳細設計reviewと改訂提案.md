@@ -1,15 +1,15 @@
-# 詳細設計レビューと改訂提案
+# 詳細設計reviewと改訂提案
 
 - 対象: [`docs/03.詳細設計/`](../03.詳細設計/) 全19文書
 - 基準: [`docs/02.設計書/`](../02.設計書/) 全9文書 + 決定記録16件
-- 観点: システムエンジニア / ソフトウェア開発者 / 運用者 / AIエージェント
+- 観点: システムエンジニア / ソフトウェア開発者 / 運用者 / AI agent
 - 状態: **Closed（全項目裁定済み）**
 - 作成日: 2026-08-25
 - 裁定日: 2026-08-27
 
 ## 0. 裁定結果
 
-本書はレビュー時点の提案原文として保存し、次の裁定をもって閉じる。現行契約の正本は
+本書はreview時点の提案原文として保存し、次の裁定をもって閉じる。現行契約の正本は
 [`docs/02.設計書`](../02.設計書/README.md)と[`docs/03.詳細設計`](../03.詳細設計/)であり、
 本書の行番号、例、推奨案を実装根拠として使用しない。
 
@@ -17,23 +17,23 @@
 |---|---|---|
 | 3.1 ID字句規則 | 反映済み | ADR-013、Core構文、配置・命名規則で3桁以上と先頭英数字を統一 |
 | 3.2 置換済みREQ/TECH | 反映済み | ADR-012とContext Resolutionで起点・強い依存を`blocked`化 |
-| 3.3 汎用テストセレクタ | Core 1.0未採用 | ランナー間でselector構文と実行単位が異なるためファイル単位を維持。偽陽性の実測後にランナー別adapterとして再評価 |
-| 3.4 Diagnostic所有者 | 反映済み | ADR-011で所有者、コード形式、永続性を確定 |
-| 3.5 スタイル診断 | 反映済み | Markdown本文構成と参照・トレース仕様へコードとseverityを追加 |
+| 3.3 汎用test selector | Core 1.0未採用 | runner間でselector構文と実行単位が異なるためfile単位を維持。偽陽性の実測後にrunner別adapterとして再評価 |
+| 3.4 Diagnostic所有者 | 反映済み | ADR-011で所有者、code形式、永続性を確定 |
+| 3.5 style診断 | 反映済み | Markdown本文構成と参照・トレース仕様へcodeとseverityを追加 |
 | 3.6 引数なしverify | 反映済み | 対象、継続規則、集約status、空対象を定義 |
 | 3.7 `refines`逆参照の限定 | Core 1.0未採用 | purposeによる意味閉包の省略を避け、完全閉包と上限超過時の原因edge提示を維持。実測で頻発した場合にstatement起点APIを再評価 |
-| 3.8 prefix整合 | 反映済み | Core文書種別をREQ/TECH/ADR/TASKへ限定し、Profile例を修正 |
-| 4.1 Git縮退 | 反映済み | 更新・互換性・安全性とdoctorへ縮退マトリクスを追加 |
+| 3.8接頭辞整合 | 反映済み | Core文書種別をREQ/TECH/ADR/TASKへ限定し、Profile例を修正 |
+| 4.1 Git縮退 | 反映済み | 更新・互換性・安全性とdoctorへ縮退matrixを追加 |
 | 4.2 性能予算 | 反映済み | 基準規模の目標と事故防止hard limitを分離 |
-| 4.3 全件軽量索引 | 反映済み | Frontmatter索引と対象限定の完全解析を分離。モノレポ連合にも拡張 |
+| 4.3 全件軽量索引 | 反映済み | Frontmatter索引と対象限定の完全解析を分離。複合workspaceにも拡張 |
 | 4.4 doctor詳細設計 | 反映済み | 独立したdoctor仕様とDiagnosticを追加 |
-| 5.1 字句優先順位 | 反映済み | コードスパン、escape、タグ開始、通常文字の順を定義 |
+| 5.1 字句優先順位 | 反映済み | code span、escape、tag開始、通常文字の順を定義 |
 | 5.2 強い関係0件の文言 | 反映済み | 強い関係を持たない文書は合法と明記 |
 | 5.3 検証`cwd` | 反映済み | `verify.commands`と結果Schemaへworkspace相対`cwd`を追加 |
-| 5.4 実行argv証跡 | 反映済み | レポートへ展開後`argv`と`cwd`を記録。提案どおりContext Digestはコマンド名を対象とする |
+| 5.4 実行argv証跡 | 反映済み | reportへ展開後`argv`と`cwd`を記録。提案どおりContext Digestはcommand名を対象とする |
 | 5.5 legacy refs severity | 反映済み | `SPEC-RELATION-LEGACY-001`をerrorとして定義 |
 | 6.1 warningのCI制御 | 修正反映済み | 影響候補件数をcheck結果とdoctorで可視化。Core 1.0の共通終了コードを変える`--strict`は未採用 |
-| 6.2 reportsのGit管理 | 反映済み | `.spec/reports/`を既定のGit除外対象とし、CI artifactを長期証跡とする |
+| 6.2 reportsのGit管理 | 反映済み | `.spec/reports/`を既定のGit除外対象とし、CI成果物を長期証跡とする |
 | 6.3 初回導入支援 | 反映済み | doctorが最小設定、作成先、次の操作を提示 |
 | 7.1 肯定的評価 | 評価のみ | 裁定対象なし |
 | 7.2 coverage構造 | 反映済み | `must`、`should`、`may`と`adjacent`を定義 |
@@ -41,9 +41,9 @@
 | 7.4 Digest再照合 | 修正反映済み | 時間閾値を採らず、最初の書込み直前と仕様・設定変更を認識した再開時に実施 |
 | 7.5 `bitz fmt` | 1.1以降の候補 | formatter需要を実測してから公開操作追加を裁定 |
 | 8.1 実証条件 | 反映済み | Phase 0を5件へ縮小し、EARS-AI比較をParser完成後へ移動 |
-| 9.1 ADR一覧の改訂関係 | 修正反映済み | 一覧の関連文書欄と各ADRの追記型リンクで後続裁定を可視化 |
+| 9.1 ADR一覧の改訂関係 | 修正反映済み | 一覧の関連文書欄と各ADRの追記型linkで後続裁定を可視化 |
 | 9.2 ADRの`requires` | 修正反映済み | 制限案は採らず、accepted ADRを前提にできる契約を維持。補助SPECの関係図をContext Resolutionと統一 |
-| 9.3 未信頼SPEC文字列 | 反映済み | 本文、Frontmatter自由記述、外部リンク等を未信頼入力として一括規定 |
+| 9.3 未信頼SPEC文字列 | 反映済み | 本文、Frontmatter自由記述、外部link等を未信頼入力として一括規定 |
 | 9.4 旧版調査ref | 反映済み | 到達可能性を確認し、commitを完全SHAへ展開 |
 | 9.5 EBNF相互参照 | 修正反映済み | 同一Core構文仕様内の意味軸と正規構文へ集約 |
 | 9.6 後置Profile拡張 | 1.1以降の候補 | Core 1.0では前置拡張だけを確定し、実Profileの必要性が判明してから構文拡張を裁定 |
@@ -83,7 +83,7 @@
 - 部分 Context Bundle を成功扱いしない
   （[10_Context Resolution:219](../03.詳細設計/02_SPECファイル規定/10_Context%20Resolution仕様.md)）。
   fail-open を塞ぐ設計として一貫している
-- 「リンクの存在 ≠ 要求充足」を全文書で言い切っている
+- 「linkの存在 ≠ 要求充足」を全文書で言い切っている
   （`02_specディレクトリ:98`、`03_Frontmatter:84`、`10_Context Resolution:187`）
 
 一方、詳細設計へ降りたことで上位設計との齟齬が発生している。うち8件（§3）は、
@@ -107,7 +107,7 @@
 **問題**
 
 `REQ-1000` が Core Parser では `EAI-CORE-ID-001`、配置・命名規則では合法になる。
-性能予算の基準リポジトリが「規範文1,000件・仕様ファイル300件」（`06_運用設計:49`）である以上、
+性能予算の基準repositoryが「規範文1,000件・仕様file 300件」（`06_運用設計:49`）である以上、
 文書IDの4桁到達は現実的である。
 
 **提案**
@@ -138,8 +138,8 @@ ADR は追記型で書き換えないため、ADR-005 側には「EBNF の正は
 `supersedes` で置換された REQ/TECH は `approved` のまま残り、`implement` / `verify` の
 正当な起点になる。さらに `10:75` により、後継文書は **advisory 区分**へ入る。
 
-advisory 文書は規範として適用してはならない（`10:105`）ため、エージェントは
-「適用可能な規範は旧要求だけ、後継は参考情報」というバンドルを受け取る。意図と逆である。
+advisory 文書は規範として適用してはならない（`10:105`）ため、agentは
+「適用可能な規範は旧要求だけ、後継は参考情報」というBundleを受け取る。意図と逆である。
 
 `10:98` の状態表は `outdated` を起点にした場合を blocking と定めているが、
 置換済み文書は `outdated` にならないため、この防御を通過する。
@@ -160,19 +160,19 @@ advisory 文書は規範として適用してはならない（`10:105`）ため
 状態追加を許容するなら、REQ/TECH へ `superseded` を追加して `10:98` の表へ行を足す案も成立する。
 その場合は `03_Frontmatter §5` と `02_specディレクトリ:103-116` の状態遷移図も同時に改訂する。
 
-### 3.3 `{tests}` がファイル単位のため、無関係な失敗で `failed` になる
+### 3.3 `{tests}` がfile単位のため、無関係な失敗で `failed` になる
 
 **現状**
 
-- `02_bitz.yaml:65` — `{tests}` は対象要求の `tests` を1パスずつ argv へ展開する
-- `06_参照:84` — コマンド終了コード0を `passed`、0以外を `failed` とする
-- `03_Frontmatter:66-70` — `tests[].path` はテスト**ファイル**、`covers` は規範文ID配列
+- `02_bitz.yaml:65` — `{tests}` は対象要求の `tests` を1 pathずつ argv へ展開する
+- `06_参照:84` — command終了コード0を `passed`、0以外を `failed` とする
+- `03_Frontmatter:66-70` — `tests[].path` はtest**file**、`covers` は規範文ID配列
 
 **問題**
 
-1つのテストファイルが複数要求分のテストを含む構成は一般的である。
-`tests/auth/test_service.py` が REQ-001 と REQ-002 のテストを含む場合、
-`bitz verify REQ-001` は REQ-002 のテストも実行し、
+1つのtest fileが複数要求分のtestを含む構成は一般的である。
+`tests/auth/test_service.py` が REQ-001 と REQ-002 のtestを含む場合、
+`bitz verify REQ-001` は REQ-002 のtestも実行し、
 **REQ-002 の失敗によって REQ-001 が `failed` と判定される**。
 
 逆方向（REQ-002 の失敗が REQ-001 の成功に隠れる）は起きないが、
@@ -180,7 +180,7 @@ advisory 文書は規範として適用してはならない（`10:105`）ため
 
 **提案**
 
-`tests[].path` にテスト単位の識別子（nodeid）を許可する。
+`tests[].path` にtest単位の識別子（nodeid）を許可する。
 
 ```yaml
 tests:
@@ -190,16 +190,16 @@ tests:
     command: default
 ```
 
-- 区切りは `::` とし、`::` より前をファイルパスとして存在検査する（`06_参照:39` の検査規則を拡張）。
-- pytest / vitest / go test など主要ランナーが同形式を受理するため、`{tests}` の展開規則は変更不要。
-- ファイル単位指定も従来どおり許可し、ファイル専用構成を選ぶプロジェクトを妨げない。
+- 区切りは `::` とし、`::` より前をfile pathとして存在検査する（`06_参照:39` の検査規則を拡張）。
+- pytest / vitest / go test など主要runnerが同形式を受理するため、`{tests}` の展開規則は変更不要。
+- file単位指定も従来どおり許可し、file専用構成を選ぶプロジェクトを妨げない。
 
 nodeid を採用しない場合は、代替として `03_Frontmatter §4` へ
-「1つのテストファイルは1つの文書の規範文専用とする」を規約として明記し、
+「1つのtest fileは1つの文書の規範文専用とする」を規約として明記し、
 違反を `SPEC-TEST-COVERAGE-002` として検出する必要がある。
-ただしこの制約はテスト側の構成を強く縛るため、nodeid 案を推奨する。
+ただしこの制約はtest側の構成を強く縛るため、nodeid 案を推奨する。
 
-### 3.4 診断コード命名規約の正本が失効している
+### 3.4 診断code命名規約の正本が失効している
 
 **現状**
 
@@ -211,60 +211,60 @@ nodeid を採用しない場合は、代替として `03_Frontmatter §4` へ
 | ADR-003 の規定 | 現状の実体 |
 |---|---|
 | `<OWNER>-<CATEGORY>-<NNN>` の3セグメント固定 | `EAI-CORE-SYNTAX-001`、`SPEC-CONFIG-SCHEMA-001`、`CTX-ROOT-MISSING-001` は4セグメント |
-| Diagnostic 正本スキーマは `bitz-env` が所有 | `bitz-core` が所有（`01_共通アーキ §6`、`06_AST:5`） |
+| Diagnostic 正本Schemaは `bitz-env` が所有 | `bitz-core` が所有（`01_共通アーキ §6`、`06_AST:5`） |
 
 3セグメント規約に適合しているのは Profile 側の `BD-AGG-001` / `BQ-TRACE-001` だけである。
 
 **問題**
 
-現行の診断コード体系に正本が存在しない。新規コードを追加するときの規則が決められず、
-`EAI-EXT-UNKNOWN-001` のような既存コードの正当性も根拠を失う。
+現行の診断code体系に正本が存在しない。新規codeを追加するときの規則が決められず、
+`EAI-EXT-UNKNOWN-001` のような既存codeの正当性も根拠を失う。
 OWNER 一覧の管理主体も、廃止された `bitz-env` のまま宙に浮いている。
 
 **提案**
 
 ADR-011 を新設し、次を追認する。
 
-1. 診断コードは `<OWNER>-<AREA>-<CATEGORY>-<NNN>` の4セグメントを基本とする。
+1. 診断codeは `<OWNER>-<AREA>-<CATEGORY>-<NNN>` の4セグメントを基本とする。
    `AREA` を省略した3セグメント形式（`BD-AGG-001`）も許容し、Profile はこちらを既定とする。
 2. `OWNER` 一覧の管理主体を `bitz-core` とする。`EAI` / `SPEC` / `CTX` を Core が予約する。
-3. Diagnostic 正本スキーマの所有者を `bitz-core` と明記する（`01_共通アーキ §6` の追認）。
-4. コードは永続識別子とし、再利用と意味変更を禁止する（ADR-003 から継承）。
+3. Diagnostic 正本Schemaの所有者を `bitz-core` と明記する（`01_共通アーキ §6` の追認）。
+4. codeは永続識別子とし、再利用と意味変更を禁止する（ADR-003 から継承）。
 
 あわせて `02_拡張プロファイル:20` と `06_AST:71` の参照先を ADR-011 へ貼り替える。
 
-### 3.5 文書スタイル検査の診断コードが未定義
+### 3.5 文書style検査の診断codeが未定義
 
 **現状**
 
 `08_Markdown本文構成・スタイル:146-154` の検査レベル表は error を4種類定める。
 
-| 条件 | severity | 診断コード |
+| 条件 | severity | 診断code |
 |---|---|---|
 | H1がない、複数ある、Frontmatterと不一致 | error | 未定義 |
 | 必須H2がない | error | 未定義 |
 | H2が未定義または順序違反 | error | 未定義 |
-| EARS-AI規範文が許可セクション外にある | error | 未定義 |
-| 太字ラベルが標準セクションを代替 | warning | `SPEC-STYLE-PSEUDO-001`（`08:40`） |
+| EARS-AI規範文が許可section外にある | error | 未定義 |
+| 太字ラベルが標準sectionを代替 | warning | `SPEC-STYLE-PSEUDO-001`（`08:40`） |
 
 **問題**
 
-`bitz check` の検査順序6番目「文書スタイルと規範文の配置」（`06_参照:56`）に組み込まれているが、
-返すべき診断コードが4種類とも存在しない。`SPEC-STYLE-PSEUDO-001` も
-`06_参照 §8` の SPEC-* 一覧に載っておらず、コード表が単一の正本になっていない。
+`bitz check` の検査順序6番目「文書styleと規範文の配置」（`06_参照:56`）に組み込まれているが、
+返すべき診断codeが4種類とも存在しない。`SPEC-STYLE-PSEUDO-001` も
+`06_参照 §8` の SPEC-* 一覧に載っておらず、code表が単一の正本になっていない。
 
 **提案**
 
 `06_参照 §8` の表へ次を追加し、`08_Markdown` 側は参照に留める。
 
-| コード | 条件 | severity |
+| code | 条件 | severity |
 |---|---|---|
 | `SPEC-STYLE-H1-001` | H1が不在、複数、またはFrontmatterと不一致 | error |
 | `SPEC-STYLE-SECTION-001` | 必須H2がない | error |
 | `SPEC-STYLE-SECTION-002` | H2が未定義、または定義順に反する | error |
-| `SPEC-STYLE-PLACEMENT-001` | EARS-AI規範文が許可セクション外にある | error |
-| `SPEC-STYLE-PSEUDO-001` | 太字ラベルが標準セクションを代替 | warning |
-| `SPEC-STYLE-EMPTY-001` | 空の任意セクション | warning |
+| `SPEC-STYLE-PLACEMENT-001` | EARS-AI規範文が許可section外にある | error |
+| `SPEC-STYLE-PSEUDO-001` | 太字ラベルが標準sectionを代替 | warning |
+| `SPEC-STYLE-EMPTY-001` | 空の任意section | warning |
 
 ### 3.6 引数なし `bitz verify` の挙動が未定義
 
@@ -275,7 +275,7 @@ ADR-011 を新設し、次を追認する。
 
 **問題**
 
-CI の標準コマンドがこれである（`06_運用設計:37`）にもかかわらず、次が未定義である。
+CI の標準commandがこれである（`06_運用設計:37`）にもかかわらず、次が未定義である。
 
 - 対象は `approved` のみか、`draft` / `outdated` を含むか
 - 1件でも未 tested `MUST` があれば全体を `blocked` とするか、当該SPECのみ `blocked` として残りを実行するか
@@ -292,11 +292,11 @@ Core 1.0 で最も外部から観測される挙動であり、後から変更�
    `draft` と `outdated` は対象外とし、件数のみ結果へ報告する。
 2. 対象ごとに `purpose=verify` の Context Bundle を解決する。
    未 tested の `MUST` を持つ対象は、その対象のみ `blocked` とし、他の対象の実行を妨げない。
-3. 同一コマンドの対象はテストパスを重複排除して1回にまとめる（指定時と同じ規則）。
+3. 同一commandの対象はtest pathを重複排除して1回にまとめる（指定時と同じ規則）。
 4. 集約 status は各対象の最悪値とする。優先順は
    `error` > `failed` > `blocked` > `passed_with_warnings` > `passed`。
 5. 対象が0件の場合は `blocked` とし、`SPEC-VERIFY-BLOCKED-002`（検証対象が存在しない）を返す。
-   空リポジトリで CI が緑になることを防ぐ。
+   空repositoryで CI が緑になることを防ぐ。
 
 ### 3.7 `refines` の逆参照探索が上限爆発を起こす
 
@@ -325,24 +325,24 @@ purpose 別に逆参照の範囲を非対称化する。`10_Context Resolution �
 |---|---|
 | `interpret` | 現状どおり、対象文書を refine する `approved` 文書をすべて含める |
 | `implement` | 起点が規範文なら、その規範文を refine する文書のみ含める。起点が文書なら `--include-refiners` 指定時のみ |
-| `verify` | 対象規範文のテスト対応に関与する refinement のみ含める |
+| `verify` | 対象規範文のtest対応に関与する refinement のみ含める |
 
 あわせて `CTX-LIMIT-001` の `suggestedAction` に、超過原因となった edge 種別
 （逆参照 refines か、`requires` 連鎖か）を含めることを必須とし、
 利用者が分割対象を特定できるようにする。
 
-### 3.8 EARS-AI の prefix と `.spec/` の文書種別が対応していない
+### 3.8 EARS-AI の 接頭辞 と `.spec/` の文書種別が対応していない
 
 **現状**
 
-- `01_Core構文:15` — prefix 例に `REQ, TECH, DOMAIN, PLAN, TASK, ADR, RULE` を列挙
+- `01_Core構文:15` — 接頭辞 例に `REQ, TECH, DOMAIN, PLAN, TASK, ADR, RULE` を列挙
 - `08_記述例:16-17` — `RULE-020:STEP-01`、`DOMAIN-010:CONST-01` を正例として提示
 - `01_配置・命名:49-54` — Core 1.0 が定義するIDは `REQ` / `TECH` / `ADR` / `TASK` の4種類のみ
-- `03_Frontmatter:104` — 文書種別は配置ディレクトリから決定する
+- `03_Frontmatter:104` — 文書種別は配置directoryから決定する
 
 **問題**
 
-`RULE-*` と `DOMAIN-*` は、Core 1.0 の `.spec/` に配置先ディレクトリが存在しない。
+`RULE-*` と `DOMAIN-*` は、Core 1.0 の `.spec/` に配置先directoryが存在しない。
 記述例が「Core 1.0 では書けない規範文」を正例として示している状態にある。
 
 `02_specディレクトリ:20` は `domain/` を必須構造にしないと明記しているため、
@@ -352,7 +352,7 @@ purpose 別に逆参照の範囲を非対称化する。`10_Context Resolution �
 
 いずれかを選択する。
 
-1. `01_Core構文:15` の prefix コメントを `REQ, TECH, ADR, TASK` の4種へ揃え、
+1. `01_Core構文:15` の 接頭辞 コメントを `REQ, TECH, ADR, TASK` の4種へ揃え、
    `08_記述例 §2` の Profile 組合せ例を `REQ` / `TECH` ベースへ書き換える。
 2. `08_記述例 §2` に「Profile と追加文書種別が導入された場合の例であり、Core 1.0 の
    `.spec/` には配置先がない」と明記する。
@@ -386,7 +386,7 @@ Profile 自体が Deferred Draft であることを踏まえると、1 を推奨
 | 承認済み要求の保護 | 実施しない | warning（`bitz check` 開始時にも表示） |
 | TASK 変更境界検査 | `blocked` | `SPEC-TASK-BOUNDARY-002` |
 | 影響候補（逆参照）の検出 | 全体検査として実施 | 変化なし |
-| `verify` レポートの `revision` | `null` を記録 | info |
+| `verify` reportの `revision` | `null` を記録 | info |
 
 `04_要求SPEC:106` は保護不能を `bitz doctor` の警告としているが、
 `bitz check` 実行時にも1行で表示すべきである。doctor を実行しない利用者が、
@@ -396,8 +396,8 @@ Profile 自体が Deferred Draft であることを踏まえると、1 を推奨
 
 **現状**
 
-- `06_運用設計:49` — 基準リポジトリは仕様ファイル300件、規範文1,000件、参照5,000件
-- `07_更新・互換性・安全性:41` — SPECファイル数上限 10,000
+- `06_運用設計:49` — 基準repositoryは仕様file 300件、規範文1,000件、参照5,000件
+- `07_更新・互換性・安全性:41` — SPEC file数上限 10,000
 - `10_Context Resolution:221` — 「10,000 SPEC の索引作成を除き」1秒以内を目標
 
 **問題**
@@ -409,9 +409,9 @@ Profile 自体が Deferred Draft であることを踏まえると、1 を推奨
 
 次のいずれかを採る。
 
-1. `06_運用設計 §5` に「性能目標は基準リポジトリ規模に対するものであり、
+1. `06_運用設計 §5` に「性能目標は基準repository規模に対するものであり、
    `07:41` の上限は事故防止の実装境界である。上限近傍の性能は保証しない」と明記する。
-2. SPECファイル数上限を 2,000 程度へ引き下げ、基準との倍率を現実的な範囲へ収める。
+2. SPEC file数上限を 2,000 程度へ引き下げ、基準との倍率を現実的な範囲へ収める。
 
 Core 1.0 の対象規模を踏まえると 1 で足りる。ただし明記は必須とする。
 
@@ -426,10 +426,10 @@ Core 1.0 の対象規模を踏まえると 1 で足りる。ただし明記は�
 **問題**
 
 「自分を `requires` している文書」は自文書から導出できないため、
-逆参照の解決には全ファイルの Frontmatter 索引が必要である。
+逆参照の解決には全fileの Frontmatter 索引が必要である。
 つまり「変更範囲だけ検査」でも全件走査は避けられない。
 
-この事実が書かれていないため、実装者が「変更ファイルだけ読めばよい」と誤解し、
+この事実が書かれていないため、実装者が「変更fileだけ読めばよい」と誤解し、
 1秒目標を満たす代わりに逆参照検査を落とす恐れがある。
 
 **提案**
@@ -438,7 +438,7 @@ Core 1.0 の対象規模を踏まえると 1 で足りる。ただし明記は�
 
 - Frontmatter と関係の索引は常に全 SPEC を対象に構築する。
 - EARS-AI AST の完全解析と本文検査は、変更範囲・その強い依存閉包・直接の逆参照に限定する。
-- 索引構築コストはキャッシュ（`07:65`）の主対象とする。
+- 索引構築コストはcache（`07:65`）の主対象とする。
 
 ### 4.4 `bitz doctor` に詳細設計が存在しない
 
@@ -450,18 +450,18 @@ Core 1.0 の対象規模を踏まえると 1 で足りる。ただし明記は�
 **問題**
 
 `doctor` は「Git が利用可能か = 承認保護と境界検査が有効か」を報告する要の役割を負う
-（`04_要求SPEC:106`、`06_参照:70`）。にもかかわらず出力契約と診断コードが未定義である。
+（`04_要求SPEC:106`、`06_参照:70`）。にもかかわらず出力契約と診断codeが未定義である。
 
 **提案**
 
 `03.詳細設計/02_SPECファイル規定/` へ `11_doctor仕様.md` を追加し、次を定める。
 
-- 検査項目: コア版 / Python版 / `.spec/` 構造 / `bitz.yaml` Schema / EARS-AI 版互換性 /
-  Git 利用可否 / `verify.commands` の実行ファイル解決可否 / キャッシュ健全性
-- 診断コード: `SPEC-DOCTOR-*` 系（`-CORE-001` 版不整合、`-GIT-001` Git不在、
-  `-COMMAND-001` 実行ファイル未解決、`-CACHE-001` キャッシュ破損 ほか）
+- 検査項目: Core版 / Python版 / `.spec/` 構造 / `bitz.yaml` Schema / EARS-AI 版互換性 /
+  Git 利用可否 / `verify.commands` の実行file解決可否 / cache健全性
+- 診断code: `SPEC-DOCTOR-*` 系（`-CORE-001` 版不整合、`-GIT-001` Git不在、
+  `-COMMAND-001` 実行file未解決、`-CACHE-001` cache破損 ほか）
 - 出力: 検査項目ごとの `ok` / `warning` / `error` と、修復手順を含む `suggestedAction`
-- `.spec/` 未検出時は、貼り付け可能な最小 `bitz.yaml` を提示する（§6.3 参照）
+- `.spec/` 未検出時は、貼付け可能な最小 `bitz.yaml` を提示する（§6.3 参照）
 
 ## 5. P2 — ソフトウェア開発者観点
 
@@ -480,47 +480,47 @@ escaped      = "\", ( "[" / "]" / "\" / BACKTICK ) ;
 **問題**
 
 1. `plain-char` は `[`(%x5B) だけを除外しており、`]`(%x5D) は `%x5C-7E` に含まれるため素で書ける。
-   一方 `§3.3-4` は「リテラルの `[` または `]` を書く場合はエスケープする」と述べる。文法と散文が不一致。
-2. `plain-char` に `\`(%x5C) が含まれるため、`\x` のような非エスケープのバックスラッシュも合法である。
+   一方 `§3.3-4` は「literalの `[` または `]` を書く場合はescapeする」と述べる。文法と散文が不一致。
+2. `plain-char` に `\`(%x5C) が含まれるため、`\x` のような非escapeのバックスラッシュも合法である。
    `escaped` と `plain-char` のどちらを優先するかが未定義で、実装者によって挙動が分かれる。
 
 **提案**
 
 `§3.3` の字句規則へ次を追加する。
 
-- `]` はコードスパン外でもリテラルとして許容する。エスケープは推奨に留める（散文側を修正）。
+- `]` はcode span外でもliteralとして許容する。escapeは推奨に留める（散文側を修正）。
 - Lexer は `\` に到達したら次の1文字を検査し、`[` `]` `\` `` ` `` のいずれかであれば
   `escaped` として消費する。いずれでもなければ `\` を `plain-char` として扱う。
 
-あわせて、コードスパンが二重バッククォート記法（`` `` ` `` ``）に非対応であることを
+あわせて、code spanが二重バッククォート記法（`` `` ` `` ``）に非対応であることを
 `§3.3` に明記する。Core 1.0 の割り切りとして妥当だが、書かれていないと実装者が悩む。
 
 ### 5.2 `06_参照:30` の文言が二通りに読める
 
 **現状**
 
-> 強い関係が0件に解決される場合はエラーとする。
+> 強い関係が0件に解決される場合はerrorとする。
 
 **問題**
 
 「強い関係の target が0件に解決される（＝参照切れ）」の意図と読めるが、
-「強い関係を1件も持たない文書はエラー」とも読める。後者で実装されると、
-`requires` を持たない独立した REQ がすべてエラーになる。
+「強い関係を1件も持たない文書はerror」とも読める。後者で実装されると、
+`requires` を持たない独立した REQ がすべてerrorになる。
 
 **提案**
 
-「強い関係の target がいずれの文書IDにも解決されない場合はエラーとする」へ改める。
+「強い関係の target がいずれの文書IDにも解決されない場合はerrorとする」へ改める。
 
-### 5.3 検証コマンドの作業ディレクトリを指定できない
+### 5.3 検証commandの作業directoryを指定できない
 
 **現状**
 
 - `02_bitz.yaml:62` — `frontend: [npm, test, "--", "{tests}"]` を設定例として提示
-- `06_参照:81` — `{tests}` を argv へ展開し、**ワークスペースルート**で実行する
+- `06_参照:81` — `{tests}` を argv へ展開し、**workspace root**で実行する
 
 **問題**
 
-モノレポで `frontend/` 配下の `package.json` を使うテストは、ルート実行では成立しない。
+複合workspaceで `frontend/` 配下の `package.json` を使うtestは、root実行では成立しない。
 設定例として提示されている構成が、仕様上動作しない。
 
 **提案**
@@ -536,38 +536,38 @@ verify:
       cwd: frontend
 ```
 
-- `cwd` はワークスペースルート相対とし、絶対パスと `..` を禁止する（`01_配置・命名:74` と同じ制約）。
-- `{tests}` へ展開するパスは、`cwd` 指定時も**ワークスペースルート相対のまま**とするか、
-  `cwd` 相対へ変換するかを明記する。ランナーの慣習に合わせ、`cwd` 相対を推奨する。
+- `cwd` はworkspace root相対とし、絶対pathと `..` を禁止する（`01_配置・命名:74` と同じ制約）。
+- `{tests}` へ展開するpathは、`cwd` 指定時も**workspace root相対のまま**とするか、
+  `cwd` 相対へ変換するかを明記する。runnerの慣習に合わせ、`cwd` 相対を推奨する。
 - 配列形式（従来記法）は `argv` のみ指定した省略形として引き続き許可する。
 
-拡張を避ける場合は、`02_bitz.yaml §4` へ「Core 1.0 の検証コマンドはワークスペースルートで
-実行する。別ディレクトリが必要な場合はラッパースクリプトを経由する」と明記し、
+拡張を避ける場合は、`02_bitz.yaml §4` へ「Core 1.0 の検証commandはworkspace rootで
+実行する。別directoryが必要な場合はラッパーscriptを経由する」と明記し、
 `frontend` の例を差し替える。
 
-### 5.4 検証レポートに実行 argv が残らない
+### 5.4 検証reportに実行 argv が残らない
 
 **現状**
 
-- `06_参照:109-117` — レポートの `commands[]` はコマンド**名**、テストパス、終了コード、所要時間のみ
-- `10_Context Resolution:199` — Context Digest に含めるのは「検証コマンド**名**」
+- `06_参照:109-117` — reportの `commands[]` はcommand**名**、test path、終了コード、所要時間のみ
+- `10_Context Resolution:199` — Context Digest に含めるのは「検証command**名**」
 
 **問題**
 
 `bitz.yaml` の `verify.commands.default` を `[pytest, -q, "{tests}"]` から `[echo, ok]` へ
-書き換えても、Context Digest もレポートも変化しない。
+書き換えても、Context Digest もreportも変化しない。
 
-結果として、レポートから「何を実行して合格したか」を復元できない。
+結果として、reportから「何を実行して合格したか」を復元できない。
 これは本設計が最も避けようとしている「形式上の合格」に近い状態である。
 
 **提案**
 
-- レポートの `commands[]` へ、`{tests}` 展開後の argv を `argv` として記録する。
-  argv は Git 管理された `bitz.yaml` 由来であり、シェルを介さず環境変数展開も行わないため
+- reportの `commands[]` へ、`{tests}` 展開後の argv を `argv` として記録する。
+  argv は Git 管理された `bitz.yaml` 由来であり、shellを介さず環境変数展開も行わないため
   （`02_bitz.yaml:66`）、秘密情報の混入経路がない。
-- Context Digest には引き続きコマンド名のみを含める。argv の変更で digest が変わると、
-  ランナーのバージョン差替えのたびに stale 扱いになるためである。
-  ただし `10 §10` へ「argv の内容は digest の対象外であり、証跡はレポートで担保する」と明記する。
+- Context Digest には引き続きcommand名のみを含める。argv の変更で digest が変わると、
+  runnerのversion差替えのたびに stale 扱いになるためである。
+  ただし `10 §10` へ「argv の内容は digest の対象外であり、証跡はreportで担保する」と明記する。
 
 ### 5.5 `SPEC-RELATION-LEGACY-001` の severity が未定義
 
@@ -578,7 +578,7 @@ verify:
 
 **問題**
 
-error か warning かが書かれていない。`03_Frontmatter:125` は「`x-` で始まらない未知のキーは警告する」
+error か warning かが書かれていない。`03_Frontmatter:125` は「`x-` で始まらない未知のkeyは警告する」
 と定めるため、既定では warning になるが、移行を促す意図なら error であるべきである。
 
 **提案**
@@ -595,7 +595,7 @@ error か warning かが書かれていない。`03_Frontmatter:125` は「`x-` 
 
 - `01_共通アーキ:106-112` — `passed_with_warnings` の終了コードは 0
 - `06_運用設計:37` — CI の標準は `bitz check --full` と `bitz verify`
-- `03_CLI統合:22-27` — 公開操作に `--strict` / `--max-warnings` に相当するオプションがない
+- `03_CLI統合:22-27` — 公開操作に `--strict` / `--max-warnings` に相当するoptionがない
 
 **問題**
 
@@ -604,7 +604,7 @@ error か warning かが書かれていない。`03_Frontmatter:125` は「`x-` 
 - `SPEC-IMPACT-OUTDATED-001`（強い依存先の変更による影響候補）
 - 未 addressed の `MUST`、未対応の `SHOULD`
 - `related` の参照切れ
-- 未知キー、太字疑似セクション
+- 未知key、太字疑似section
 
 特に影響候補は、`outdated` への遷移が人間の手動操作のみである（`06_参照:66`、`09:32`）ため、
 放置すると「影響を受けた可能性のある `approved` 要求」が
@@ -615,7 +615,7 @@ error か warning かが書かれていない。`03_Frontmatter:125` は「`x-` 
 
 1. `bitz check --strict` を追加し、warning を終了コード1として扱う。
    実装コストは小さく、CI での運用選択肢を与える効果が大きい。
-2. `bitz check --full` の成功時サマリへ、影響候補（`SPEC-IMPACT-OUTDATED-001`）の件数を含める。
+2. `bitz check --full` の成功時要約へ、影響候補（`SPEC-IMPACT-OUTDATED-001`）の件数を含める。
 3. `bitz doctor` の検査項目へ「未解消の影響候補件数」を追加し、棚卸しの入口を作る。
 4. `05_QA §8` の例外規定へ「warning は既定で CI を止めない。放置し続けた場合に
    何が保証されなくなるか」を1段落で明記する。
@@ -624,27 +624,27 @@ error か warning かが書かれていない。`03_Frontmatter:125` は「`x-` 
 
 **現状**
 
-- `02_specディレクトリ:141` — キャッシュは `.gitignore` 対象とする
-- `06_参照:134` — 長期証跡が必要なら CI 結果または明示生成レポートを使う
+- `02_specディレクトリ:141` — cacheは `.gitignore` 対象とする
+- `06_参照:134` — 長期証跡が必要なら CI 結果または明示生成reportを使う
 - `.spec/reports/` 自体の Git 管理方針は、どの文書にも記述がない
 
 **問題**
 
-方針が書かれていないため、利用者は自然にコミットする。
+方針が書かれていないため、利用者は自然にcommitする。
 `09_旧SPEC知見の評価:32` が「`.spec/verification/` の恒常的証跡」を簡素化対象として挙げているが、
 gitignore の指示がなければ同じ問題が形を変えて再発する。
 
-具体的には、並行して作業する複数のセッション・worktree が同一の `reports/` を書き換え、
-コミット対象に他セッションの成果物が混入する。旧版で実際に発生した障害パターンである。
+具体的には、並行して作業する複数のsession・worktree が同一の `reports/` を書き換え、
+commit対象に他sessionの成果物が混入する。旧版で実際に発生した障害パターンである。
 
 **提案**
 
 `02_specディレクトリ §9` および `01_配置・命名 §3` へ次を明記する。
 
 - `.spec/reports/` は既定で `.gitignore` 対象とする。
-- 長期証跡が必要な場合は、CI のアーティファクトとして保存するか、
-  レビュー添付として PR へ貼る。リポジトリへコミットしない。
-- 初期テンプレートの `.gitignore` に `.spec/reports/` を含める。
+- 長期証跡が必要な場合は、CI の成果物として保存するか、
+  review添付として PR へ貼る。repositoryへcommitしない。
+- 初期templateの `.gitignore` に `.spec/reports/` を含める。
 
 あわせて `07:73` の「同名時は連番を付ける」について、連番の位置と形式
 （例: `20260825T103000Z-verify-2.json`）を明記する。秒精度のため、
@@ -655,38 +655,38 @@ gitignore の指示がなければ同じ問題が形を変えて再発する。
 **現状**
 
 - `06_運用設計:11` — `uv tool install bitz` → `bitz doctor` → `bitz check --full`
-- `01_配置・命名:11` — Git リポジトリ内に `.spec/bitz.yaml` が見つからない場合は `blocked`
-- `03_CLI統合:30` — 初期化はテンプレートのコピーまたはスキルで行い、専用 CLI を必須にしない
-- `06_運用設計:16` — AI CLI プラグインは任意であり、コア単体でも全検査を実行できる
+- `01_配置・命名:11` — Git repository内に `.spec/bitz.yaml` が見つからない場合は `blocked`
+- `03_CLI統合:30` — 初期化はtemplateのコピーまたはスキルで行い、専用 CLI を必須にしない
+- `06_運用設計:16` — AI CLI pluginは任意であり、Core単体でも全検査を実行できる
 
 **問題**
 
-コア単体利用者（明示的に想定されている）は、`.spec/bitz.yaml` を手書きすることになる。
+Core単体利用者（明示的に想定されている）は、`.spec/bitz.yaml` を手書きすることになる。
 導入手順の2番目で停止し、次に何をすべきかが CLI から得られない。
 
 **提案**
 
 `bitz init` を追加せず、`bitz doctor` の出力で解決する。
 
-- `.spec/` が見つからない場合、`blocked` とともに貼り付け可能な最小 `bitz.yaml`
-  （`02_bitz.yaml §2` の最小例）と、作成先パスを表示する。
+- `.spec/` が見つからない場合、`blocked` とともに貼付け可能な最小 `bitz.yaml`
+  （`02_bitz.yaml §2` の最小例）と、作成先pathを表示する。
 - 併せて `.gitignore` へ追加すべき行（§6.2）も提示する。
 
 専用サブシステムを増やさずに導入体験を解決でき、`03_CLI統合:30` の方針とも整合する。
 
-## 7. P2 — AIエージェント観点
+## 7. P2 — AI agent観点
 
 ### 7.1 評価できる点
 
-`10_Context Resolution §9`（句単位カバレッジ）と `§13`（アダプター契約）は、
+`10_Context Resolution §9`（句単位coverage）と `§13`（adapter契約）は、
 本設計で最も価値の高い部分だと評価する。
 
-- 「`verify` では未 tested の `MUST` が1件でもあればテスト実行前に `blocked`」（`10:186`）は、
-  エージェントが最も犯しやすい「一部だけ実装して完了報告」を構造的に防ぐ
+- 「`verify` では未 tested の `MUST` が1件でもあればtest実行前に `blocked`」（`10:186`）は、
+  agentが最も犯しやすい「一部だけ実装して完了報告」を構造的に防ぐ
 - Markdown bundle の固定表示順（`10:164-172`）で
   `Diagnostics and Coverage Gaps` を `Root Intent` の**前**に置いた判断は、
   読み飛ばされない位置として正しい
-- `untrustedText` を AST とドキュメントの両レベルで保持し、Profile による解除を禁じた点
+- `untrustedText` を AST と文書の両レベルで保持し、Profile による解除を禁じた点
   （`06_AST:45`）も適切である
 
 以下は、この価値を実装で損なわないための補強である。
@@ -702,7 +702,7 @@ gitignore の指示がなければ同じ問題が形を変えて再発する。
 **問題**
 
 `SHOULD` / `MAY` の集計結果を JSON のどこへ入れるかが未定義である。
-`coverage` はエージェントが機械的に読む中心データであり、曖昧さは直接ミスにつながる。
+`coverage` はagentが機械的に読む中心データであり、曖昧さは直接誤りにつながる。
 
 **提案**
 
@@ -725,18 +725,18 @@ gitignore の指示がなければ同じ問題が形を変えて再発する。
 **現状**
 
 - `implement` — 未 addressed は「対象句を `addresses` する TASK がない」（`10:184`）
-- `verify` — 未 tested は「テスト対応がない」（`10:186`）
+- `verify` — 未 tested は「test対応がない」（`10:186`）
 
 **問題**
 
-同じキー名が purpose によって異なる意味を持つ。bundle に `purpose` は含まれるため
-判別自体は可能だが、エージェントの誤読を招きやすい。
+同じkey名が purpose によって異なる意味を持つ。bundle に `purpose` は含まれるため
+判別自体は可能だが、agentの誤読を招きやすい。
 
 **提案**
 
-`10 §9` へ、キーと purpose の対応表を明示する。
+`10 §9` へ、keyと purpose の対応表を明示する。
 `unaddressed` を `implement` 専用、`untested` を `implement` / `verify` 共通と定め、
-`interpret` では両方を省略する（存在しないキーとして扱う）ことを明記する。
+`interpret` では両方を省略する（存在しないkeyとして扱う）ことを明記する。
 
 ### 7.4 Context Digest 再照合の粒度が未定義
 
@@ -746,15 +746,15 @@ gitignore の指示がなければ同じ問題が形を変えて再発する。
 
 **問題**
 
-エージェントは1タスクで5〜10ファイルを編集する。「編集直前」が各編集の直前を指すなら、
-1秒 × N のオーバーヘッドが加わり、`03_CLI統合` の薄いアダプター方針とも合わない。
+agentは1タスクで5〜10 fileを編集する。「編集直前」が各編集の直前を指すなら、
+1秒 × N のオーバーヘッドが加わり、`03_CLI統合` の薄いadapter方針とも合わない。
 
 **提案**
 
 `10 §13` の項目5を次へ改める。
 
 - 同一 TASK（起点が同じ Bundle）における**最初の書込みの直前に1回**再照合する。
-- 作業中断から30分以上経過して再開する場合、および `.spec/` 配下のファイルが
+- 作業中断から30分以上経過して再開する場合、および `.spec/` 配下のfileが
   自身以外によって変更された可能性を認識した場合に、追加で再照合する。
 
 ### 7.5 EARS-AI の記述コストが整形手段の不在で過大評価される
@@ -771,12 +771,12 @@ gitignore の指示がなければ同じ問題が形を変えて再発する。
 LLM が EARS-AI を生成する場合、次の機械的な誤りが高頻度で発生すると予想される。
 
 - 行末句点の欠落（`EAI-CORE-SYNTAX-006`）
-- 本文中の未エスケープ `[`（`EAI-CORE-SYNTAX-004`）
-- タグ順序の誤り（`EAI-CORE-SYNTAX-001`）
+- 本文中の未escape `[`（`EAI-CORE-SYNTAX-004`）
+- tag順序の誤り（`EAI-CORE-SYNTAX-001`）
 - 全角ピリオド `．` の使用（`period` は `.` と `。` のみ）
 
 いずれも意味を変えずに機械的に修正可能である。
-Serializer は既に存在するが、それを利用する公開コマンドがないため、
+Serializer は既に存在するが、それを利用する公開commandがないため、
 **Phase 4 の記述負荷評価が「整形手段がない状態の EARS-AI」を測ることになる**。
 比較として不公平であり、EARS-AI の価値を過小評価する結果を招く。
 
@@ -784,9 +784,9 @@ Serializer は既に存在するが、それを利用する公開コマンドが
 
 `bitz fmt` を Phase 1 の成果物へ追加する。
 
-- 対象は EARS-AI 規範文の正規化のみ（タグ順序、空白正規化、句点補完、`．` → `。`）。
+- 対象は EARS-AI 規範文の正規化のみ（tag順序、空白正規化、句点補完、`．` → `。`）。
 - 承認済み REQ の規範文本文は対象外とする（`07:22` の保護と整合）。
-- 既定は dry-run（提案 diff の表示）とし、`--write` で原子的置換を行う。
+- 既定は dry-run（提案 差分 の表示）とし、`--write` で原子的置換を行う。
 - Parser / Validator の読取り専用契約は維持する。`fmt` は独立した書込み操作とする。
 
 これにより `07:12` との衝突を避けつつ、記述負荷を実運用に近い条件で測定できる。
@@ -829,93 +829,93 @@ EARS-AI を用いたタスクを20件実施することになり、前提が成�
 |---|---|---|
 | 9.1 | `10_決定記録/README.md:20-29` | ADR-009 の決定#4「公開操作を3つに限定」は ADR-010 で4つへ改訂されている。ADR 冒頭に `Amended by` があるため運用は正しいが、一覧表からは読み取れない。表へ「Amended by」列を追加する |
 | 9.2 | `10_Context Resolution:55`、`05_補助SPEC:98-108` | 前者は ADR に `requires` を許可するが、後者の関係方向表に ADR 行がない。ADR が REQ を `requires` すると閉包が肥大化しやすいため、ADR は `related` と `supersedes` のみに絞ることを推奨する。いずれにせよ2文書を一致させる |
-| 9.3 | `10_Context Resolution:143` | document の `untrustedText` は本文を対象とするが、Frontmatter の `title` と `x-` 拡張の扱いが未記述。インジェクションは `title` にも記述できる。「Bundle 内の SPEC 由来テキストはすべて untrusted として扱う」と一文で括る |
-| 9.4 | `09_旧SPEC知見の評価:5` | 一時ブランチ名 `design/flw-tsk-106-safety-boundary` と short SHA `2cd4ff1` を直書きしている。当該 worktree は現在 prunable。full SHA へ置き換える |
+| 9.3 | `10_Context Resolution:143` | document の `untrustedText` は本文を対象とするが、Frontmatter の `title` と `x-` 拡張の扱いが未記述。インジェクションは `title` にも記述できる。「Bundle 内の SPEC 由来textはすべて untrusted として扱う」と一文で括る |
+| 9.4 | `09_旧SPEC知見の評価:5` | 一時branch名 `design/flw-tsk-106-safety-boundary` と short SHA `2cd4ff1` を直書きしている。当該 worktree は現在 prunable。full SHA へ置き換える |
 | 9.5 | `01_Core構文:13-18`、`§3.2` | EBNF が2ブロックに分かれ、`3DIGIT`（§2.1）と `DIGIT`（§3.2）を突き合わせる必要がある。統合するか相互参照を明記する |
-| 9.6 | `01_Core構文 §3.1`、`06_AST §5` | Profile 拡張タグがすべて ACTOR の前に集まるため、Profile 昇格後は先頭に7〜8タグが並ぶ（`08_記述例:75` が該当）。Core 1.0 では実害がないが、後置拡張の余地を拡張点として予約しておくと後方互換で導入しやすい |
-| 9.7 | `03_CLI統合 §5` | 能力不足時の動作表に、Context Digest 不一致（終了コード2）の行がない。アダプターが `blocked` をツール障害と誤解して握り潰す経路を塞ぐため、明示する |
+| 9.6 | `01_Core構文 §3.1`、`06_AST §5` | Profile 拡張tagがすべて ACTOR の前に集まるため、Profile 昇格後は先頭に7〜8 tagが並ぶ（`08_記述例:75` が該当）。Core 1.0 では実害がないが、後置拡張の余地を拡張点として予約しておくと後方互換で導入しやすい |
+| 9.7 | `03_CLI統合 §5` | 能力不足時の動作表に、Context Digest 不一致（終了コード2）の行がない。adapterが `blocked` をツール障害と誤解して握り潰す経路を塞ぐため、明示する |
 
-## 10. 対応候補一覧（裁定前スナップショット）
+## 10. 対応候補一覧（裁定前snapshot）
 
 新規 ADR が必要と考える項目を再掲する。
 
 | 提案 ADR | 内容 | 関連節 |
 |---|---|---|
-| ADR-011 | 診断コード命名規約と Diagnostic 所有者の再定義（ADR-003 の後継） | §3.4 |
+| ADR-011 | 診断code命名規約と Diagnostic 所有者の再定義（ADR-003 の後継） | §3.4 |
 | ADR-012 | 置換済み REQ/TECH の扱い（状態追加 or 逆参照 blocking） | §3.2 |
-| ADR-013 | テスト対応の粒度（ファイル単位 / nodeid 単位） | §3.3 |
+| ADR-013 | test対応の粒度（file単位 / nodeid 単位） | §3.3 |
 
-レビュー時点で文書修正候補として挙げた項目は次のとおり。現在の採否と反映状態は§0を正とする。
+review時点で文書修正候補として挙げた項目は次のとおり。現在の採否と反映状態は§0を正とする。
 
 - §3.1 `document-id` / `local-id` の EBNF 統一
-- §3.5 スタイル検査の診断コード定義
+- §3.5 style検査の診断code定義
 - §3.6 引数なし `bitz verify` の定義
 - §3.7 purpose 別の逆参照 refines 範囲
-- §3.8 prefix と文書種別の対応
-- §4.1 Git 非依存時の縮退マトリクス
+- §3.8接頭辞 と文書種別の対応
+- §4.1 Git 非依存時の縮退matrix
 - §4.2 性能目標の適用範囲明記
 - §4.3 索引構築範囲の明記
 - §4.4 `bitz doctor` 詳細設計の新規作成
 - §5.1 字句規則の曖昧性解消
 - §5.2 `06_参照:30` の文言修正
-- §5.3 検証コマンドの `cwd`
-- §5.4 レポートへの argv 記録
+- §5.3 検証commandの `cwd`
+- §5.4 reportへの argv 記録
 - §5.5 `SPEC-RELATION-LEGACY-001` の severity
 - §6.1 `--strict` の追加と影響候補の可視化
 - §6.2 `.spec/reports/` の gitignore 方針
 - §6.3 `bitz doctor` による導入支援
 - §7.2 `coverage` の規範強度別構造化
-- §7.3 purpose とキーの対応表
+- §7.3 purpose とkeyの対応表
 - §7.4 Digest 再照合の粒度
 - §7.5 `bitz fmt` の Phase 1 追加
 - §8.1 実証条件の縮小
 - §9.1〜9.7 記述整合
 
-## 11. Agent Plugins 1.0と複数プラグイン配布の追加検討
+## 11. Agent Plugins 1.0と複数plugin配布の追加検討
 
 ### 11.1 結論
 
-基本配布単位をAgent Plugins 1.0.0準拠パッケージへ変更し、GitHubでホストする1つの
-マーケットプレイスから複数プラグインを個別提供する。単一の巨大プラグインには集約しない。
+基本配布単位をAgent Plugins 1.0.0準拠packageへ変更し、GitHubでホストする1つの
+マーケットプレイスから複数pluginを個別提供する。単一の巨大pluginには集約しない。
 
-| 区分 | プラグイン | 位置づけ |
+| 区分 | plugin | 位置づけ |
 |---|---|---|
 | 必須 | `bitz-core` | EARS-AI、Semantic IR、Context、check、verify、doctor、MCP |
 | 基本拡張 | `bitz-sdd` | 通常のAI-SDD利用で推奨するSmall Flow |
-| 将来拡張 | `bitz-quality` | 品質レビューとLLM advisory |
+| 将来拡張 | `bitz-quality` | 品質reviewとLLM advisory |
 | 将来拡張 | `bitz-ddd` | DDD Profile |
 | 将来拡張 | `bitz-sync` | 仕様・実装差分と改訂提案 |
 
 拡張はすべて`bitz-core`の公開契約だけへ依存し、拡張間の必須依存を禁止する。これにより利用者は
 必要な機能だけを導入でき、SDDを使わないEARS-AI検査・CI用途では`bitz-core`単独で運用できる。
 
-### 11.2 Coreのプラグイン化
+### 11.2 Coreのplugin化
 
 `bitz-core`をAgent Pluginとして提供することは可能である。移植可能な実行境界は`mcp.json`に定義する
-stdio MCP serverとし、SkillsへParserや判定を複製しない。スタンドアロンCLIも同じCoreライブラリと
+stdio MCP serverとし、SkillsへParserや判定を複製しない。スタンドアロンCLIも同じCore libraryと
 結果Schemaを使用する。
 
-ただし、Agent Plugins 1.0はOS別実行体の選択やPythonランタイム導入を標準化していない。そのため、
+ただし、Agent Plugins 1.0はOS別実行体の選択やPython runtime導入を標準化していない。そのため、
 対応環境では自己完結実行体を同梱できる構造とし、PyPI + `uv`はCI、非LLM利用、自己完結実行体を
-提供しない環境の明示的な代替経路として残す。プラグイン起動時の動的取得は行わない。
+提供しない環境の明示的な代替経路として残す。plugin起動時の動的取得は行わない。
 
 ### 11.3 依存確認を`doctor`へ集約
 
-Agent Plugins 1.0の標準manifestにはプラグイン間依存の解決機構がない。そこで各拡張は処理開始時に、
+Agent Plugins 1.0の標準manifestにはplugin間依存の解決機構がない。そこで各拡張は処理開始時に、
 自身のID、版、要求Core API範囲、要求Capabilityを`bitz doctor`または`bitz_doctor`へ渡す。
 Core API major不一致、範囲外、Capability不足は`blocked`とし、具体的な導入・更新手順を返す。
 
 Core自体がなく`doctor`を呼べない場合だけ、拡張Skillが静的な導入案内を返す。SkillがCoreの解析・判定を
-代替してはならない。`doctor`は初回利用、セッション再開、版変更後に実行し、全ツール呼出し前には
+代替してはならない。`doctor`は初回利用、session再開、版変更後に実行し、全ツール呼出し前には
 繰り返さない。
 
 ### 11.4 精査による修正点
 
-当初案の`.spec/bitz.yaml`をインストール済みプラグイン台帳とする方式は採用しない。Agent Plugins 1.0には
-導入済みプラグインを横断列挙する標準APIがなく、Core CLIから実在を確認できないためである。
+当初案の`.spec/bitz.yaml`をinstall済みplugin台帳とする方式は採用しない。Agent Plugins 1.0には
+導入済みpluginを横断列挙する標準APIがなく、Core CLIから実在を確認できないためである。
 `.spec/bitz.yaml`は引き続きプロジェクト設定の正本に限定する。
 
-また、別プラグインのruntimeやschemaを`../bitz-core`のようなパスで共有しない。各プラグインは個別に
+また、別pluginのruntimeやschemaを`../bitz-core`のようなpathで共有しない。各pluginは個別に
 コピーされる前提で自己完結させる。共通処理はCoreのMCP APIとして公開し、拡張固有の決定論的処理が
 必要な場合は、その拡張自身へ自己完結MCP serverを同梱する。
 

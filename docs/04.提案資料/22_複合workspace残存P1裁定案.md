@@ -1,37 +1,37 @@
-# モノレポ残存P1裁定案
+# 複合workspace残存P1裁定案
 
 - 状態: Accepted / Reflected
 - 実施日: 2026-09-02
 - 裁定日: 2026-09-03
 - 基準commit: `3a74bb1`
 - 対象: `FED-CROSS-002`〜`FED-CROSS-007`
-- 前提: Core 1.0は仕様検討段階であり、モノレポ非対応版を含め未リリース
+- 前提: Core 1.0は仕様検討段階であり、複合workspace非対応版を含め未release
 - 裁定: [ADR-042](../02.設計書/10_決定記録/ADR-042_複合workspaceの同一性・所有境界・公開契約を確定する.md)
 
 ## 1. 結論
 
-P0反映後に残るP1は15件である。このうち`FED-MIG-001`は、Core 1.0が未リリースという確認済みの事実により、
+P0反映後に残るP1は15件である。このうち`FED-MIG-001`は、Core 1.0が未releaseという確認済みの事実により、
 旧1.0とのversion gateを追加せず閉じられる。したがって、正本へ追加する必要がある実質的なP1は14件である。
 
 14件は個別に裁定するより、次の6単位で一括して不変条件を固定する方が矛盾を作らない。
 
 | 裁定単位 | 対象P1 | 推奨 |
 |---|---|---|
-| A. 初回公開とidentity | `MIG-001`〜`003` | 未リリース前提、永続workspace ID、原子的連合化を採用 |
+| A. 初回公開と同一性 | `MIG-001`〜`003` | 未release前提、永続workspace ID、原子的複合workspace化を採用 |
 | B. catalog完全性と所有境界 | `INV-001`、`SEC-001`〜`003` | Git既知設定の差分検査と共通canonicalizerを採用 |
-| C. Contextと全体結果Schema | `CTX-001`〜`002`、`CLI-003`、`IMP-003` | field、必須性、順序、Digest allowlistを固定 |
-| D. CLI境界 | `CLI-001`〜`002` | discovery基準とし、未知workspaceは終了コード4 |
-| E. resource上限 | `IMP-002` | 連合全体のbyte、statement、edge、trace、binding上限を数値化 |
+| C. Contextと全体結果Schema | `CTX-001`〜`002`、`CLI-003`、`IMP-003` | field、必須性、順序、Digest許可リストを固定 |
+| D. CLI境界 | `CLI-001`〜`002` | 探索基準とし、未知workspaceは終了コード4 |
+| E. resource上限 | `IMP-002` | 複合workspace全体のbyte、statement、edge、trace、binding上限を数値化 |
 | F. 性能受入条件 | `IMP-001` | 標準fixture、測定方法、基準環境を固定 |
 
-推奨案はいずれもモノレポの機能追加ではない。明示catalog、4つの既存操作、逐次実行、設定非継承という
+推奨案はいずれも複合workspaceの機能追加ではない。明示catalog、4つの既存操作、逐次実行、設定非継承という
 ADR-040のscopeを維持したまま、実装ごとに分岐し得る境界を閉じるものである。
 
-## 2. A. 初回公開とworkspace identity
+## 2. A. 初回公開とworkspace同一性
 
 ### 2.1 初回1.0の互換性境界
 
-Core 1.0は未リリースであり、モノレポ非対応のCore 1.0 Schemaを外部互換性対象として扱う必要はない。
+Core 1.0は未releaseであり、複合workspace非対応のCore 1.0 Schemaを外部互換性対象として扱う必要はない。
 `workspace`と`monorepo`を初回1.0 Schemaの一部として公開する。
 
 - Schema majorの引上げ、必須feature marker、旧1.0向け移行猶予は追加しない
@@ -40,36 +40,36 @@ Core 1.0は未リリースであり、モノレポ非対応のCore 1.0 Schemaを
 
 これにより`FED-MIG-001`をrelease事実による**解消**とする。
 
-### 2.2 永続identity
+### 2.2 永続同一性
 
-workspace IDは連合内の表示名ではなく永続identityとする。
+workspace IDは複合workspace内の表示名ではなく永続同一性とする。
 
-- 連合化後のworkspace ID renameはCore 1.0で非対応とする
+- 複合workspace化後のworkspace ID renameはCore 1.0で非対応とする
 - member pathの移動は、base/current catalogで同じIDを保持する限り同一workspaceとして扱う
 - IDが変わった場合はrename推定をせず、旧workspaceの削除と新workspaceの追加として扱う
 - catalogからmemberを削除した場合、base側memberの管理済みSPECへ既存の削除検査を適用する
-- reportは判定入力ではなく明示生成物なのでidentity移行や再読込みの対象にしない
+- reportは判定入力ではなく明示生成物なので同一性移行や再読込みの対象にしない
 
-単一workspaceから初めて連合化する比較に限り、次の一方向写像を認める。
+単一workspaceから初めて複合workspace化する比較に限り、次の一方向写像を認める。
 
 ```text
 base: repository rootの同じ.spec、monorepoなし、workspace.id省略による実効root
   -> current: federation rootの明示workspace.id
 ```
 
-この写像は初回連合化時のGit比較だけに使う。baseに明示IDがある場合、currentのfederation rootは同じIDを
+この写像は初回複合workspace化時のGit比較だけに使う。baseに明示IDがある場合、currentのroot workspaceは同じIDを
 維持しなければならない。暗黙`root`から明示IDへの切替でも修飾IDとContext Digestは変わるため、旧結果を現在の
 証跡として扱わない。
 
-### 2.3 原子的な連合化
+### 2.3 原子的な複合workspace化
 
 不完全catalogを一時的に許すmigration modeは追加しない。次を同じ変更集合で切り替える。
 
-1. federation rootの`workspace.id`と`monorepo.members`
+1. root workspaceの`workspace.id`と`monorepo.members`
 2. 全member設定の`workspace.id`
 3. workspaceを越える`relations`と`tests[].covers`の修飾ID
 4. CIの`doctor --all-workspaces`、`check --all-workspaces`と必要な`verify --all-workspaces`
-5. JSON consumerの連合結果対応
+5. JSON consumerの複合workspaceの結果対応
 
 適用前に変更後treeでdoctorとcheckを実行し、失敗時は上記一式を同じ変更単位で戻す。段階移行を支えるために
 catalog不整合をwarningへ弱めない。
@@ -79,7 +79,7 @@ catalog不整合をwarningへ弱めない。
 ### 3.1 Git既知設定による完全性
 
 filesystem全体の任意directoryを再帰探索する方針は採らない。一方、`--all-workspaces`は、Gitが認識する
-`.spec/bitz.yaml`候補とcatalogの集合差を共通preflightで検査する。
+`.spec/bitz.yaml`候補とcatalogの集合差を共通事前検査で検査する。
 
 | 操作 | 列挙するsnapshot |
 |---|---|
@@ -88,8 +88,8 @@ filesystem全体の任意directoryを再帰探索する方針は採らない。�
 | `doctor --all-workspaces` | `HEAD` treeと現在tree。unborn時は現在treeだけ |
 
 現在snapshotはworking treeに存在するtracked／staged pathと、未追跡かつ非ignoreの正確な末尾
-`.spec/bitz.yaml`をGitのpath列挙から得る。各snapshot自身が連合を宣言する場合だけ、そのsnapshot自身のroot設定と
-catalog登録member設定を差し引く。初回連合化前の単一workspace snapshotにはrepository全体の不存在保証を遡及適用しない。
+`.spec/bitz.yaml`をGitのpath列挙から得る。各snapshot自身が複合workspaceを宣言する場合だけ、そのsnapshot自身のroot設定と
+catalog登録member設定を差し引く。初回複合workspace化前の単一workspace snapshotにはrepository全体の不存在保証を遡及適用しない。
 ignored path、submodule内部、別repository、任意の`.spec` directoryは列挙しない。候補が残れば、暗黙memberへせず
 `SPEC-MONOREPO-UNREGISTERED-001`／`blocked`とする。
 
@@ -101,11 +101,11 @@ workspace単独操作はrepository全体の不存在保証を表明しない。�
 member path、SPEC path、`implements`、`tests[].path`、TASK `changes`、command `cwd`は同じ手順で判定する。
 
 1. Gitからrepository rootを確定し、その実pathを基準にする
-2. 入力をUTF-8/NFCと`/` separatorへ正規化する
+2. 入力をUTF-8/NFCと`/`区切り文字へ正規化する
 3. 許可されたroot／cwdの`.`とTASK directory末尾`/`を先に種別化し、それ以外の絶対path、空segment、`.`、
    `..`、NUL、globを字句段階で拒否する
 4. 存在する各ancestorを`lstat`し、symlinkを解決して実pathを得る
-5. 存在しない予定pathは、最も近い既存ancestorの実pathへ検査済みsuffixを連結する
+5. 存在しない予定pathは、最も近い既存ancestorの実pathへ検査済み接尾辞を連結する
 6. filesystemのcase sensitivityに従う比較keyを作り、path segment境界で包含を判定する
 7. Git root、worktree、submodule、別repositoryの境界をGit metadataでも照合する
 
@@ -113,31 +113,31 @@ member rootとworkspaceの`.spec`設定経路はsymlinkを禁止する。code、
 解決する場合だけ許容し、別workspace、memberの`.spec`、repository外へ解決した場合は
 `SPEC-MONOREPO-OWNERSHIP-001`とする。
 
-所有領域は、各member rootと「repository rootから全member領域を除いたfederation root領域」で互いに素にする。
+所有領域は、各member rootと「repository rootから全member領域を除いたroot workspace領域」で互いに素にする。
 同一または親子関係にあるmember実path、case-insensitive filesystemで同一になるpath、nested repository／worktree、
 submoduleは`SPEC-MONOREPO-PATH-001`とする。複数fileを横断する原子的snapshotとTOCTOU完全防止は非目標を維持する。
 
 ## 4. C. 公開Schemaの閉鎖
 
-### 4.1 連合Context
+### 4.1 複合workspaceのContext
 
-連合Contextでは次を必須とし、単一workspaceでは連合固有fieldを省略する。
+複合workspaceのContextでは次を必須とし、単一workspaceでは複合workspace固有fieldを省略する。
 
 | field | 型 | 必須条件 | 制約 |
 |---|---|---|---|
-| `documents[].workspaceId` | string | 連合 | 文書所有workspace。`documents[].id`は修飾形式 |
-| `resolution.workspaces` | object[] | 連合 | 1件以上。`{id, path}`だけを持つ |
-| `resolution.workspaces[].id` | string | 連合 | 到達workspace ID。重複不可 |
-| `resolution.workspaces[].path` | string | 連合 | repository root相対。rootは`.` |
-| `resolution.crossWorkspaceEdges` | object[] | 連合 | 0件でも空配列を返す |
-| `crossWorkspaceEdges[].relation` | enum | 連合 | `requires`、`refines`、`addresses`、`supersedes`、`related` |
-| `crossWorkspaceEdges[].source` | string | 連合 | 修飾document ID |
-| `crossWorkspaceEdges[].target` | string | 連合 | 修飾document IDまたはstatement ID |
+| `documents[].workspaceId` | string | 複合workspace | 文書所有workspace。`documents[].id`は修飾形式 |
+| `resolution.workspaces` | object[] | 複合workspace | 1件以上。`{id, path}`だけを持つ |
+| `resolution.workspaces[].id` | string | 複合workspace | 到達workspace ID。重複不可 |
+| `resolution.workspaces[].path` | string | 複合workspace | repository root相対。rootは`.` |
+| `resolution.crossWorkspaceEdges` | object[] | 複合workspace | 0件でも空配列を返す |
+| `crossWorkspaceEdges[].relation` | enum | 複合workspace | `requires`、`refines`、`addresses`、`supersedes`、`related` |
+| `crossWorkspaceEdges[].source` | string | 複合workspace | 修飾document ID |
+| `crossWorkspaceEdges[].target` | string | 複合workspace | 修飾document IDまたはstatement ID |
 
 `resolution.workspaces`はrequest workspaceを先頭、その後をID辞書順にする。edgeは重複排除し、`source`、
 `relation`、`target`の辞書順にする。到達文書間のworkspace境界を越えるedgeだけを収録する。
 
-### 4.2 Context Digestの設定allowlist
+### 4.2 Context Digestの設定許可リスト
 
 「到達workspaceの`bitz.yaml`全体」ではなく、Contextの意味解決または収録bindingに実際に使った設定を
 次のCanonical構造へ射影する。
@@ -157,26 +157,26 @@ CLI timeout capは除外する。設定不適合はDigest計算前に停止し�
 
 共通の`federation`、`workspaces[]` fieldに加え、操作別の必須fieldを次へ固定する。
 
-| 操作 | top-level固有field | 各`workspaces[]`の固有field |
+| 操作 | 最上位固有field | 各`workspaces[]`の固有field |
 |---|---|---|
 | check | `scope: "all-workspaces"`、`revision` | `checkedDocumentCount`、`checkedStatementCount` |
 | verify | `scope: "all-workspaces"`、`revision` | `targetResults[]`、`commands[]` |
 | doctor | `core`、global `checks[]` | workspace固有`checks[]` |
 
-操作固有配列は0件でも省略しない。`revision`はrepository全体で1件だけをtop-levelに置き、memberへ複製しない。
-verifyのcommand実体はowner workspaceの`commands[]`に1件だけ置く。top-levelへ操作固有件数を重複保持せず、必要な
+操作固有配列は0件でも省略しない。`revision`はrepository全体で1件だけを最上位に置き、memberへ複製しない。
+verifyのcommand実体はowner workspaceの`commands[]`に1件だけ置く。最上位へ操作固有件数を重複保持せず、必要な
 件数は各配列またはmember countの和から導出する。共通fieldを含む各操作の完全JSON例を正本へ追加する。
 
-global preflightがroot設定の構文、型またはID不正で止まり、有効なfederation IDを構成できない場合に限り、
-`federation`を`{"id": null, "path": "."}`とする。それ以外の全体結果では`id`を必須stringとする。この例外を設けず
-不正なraw IDを結果identityへ使ったり、成果物不適合をinvocation errorへ変えたりしない。同じidentity確定前の
+全体事前検査がroot設定の構文、型またはID不正で止まり、有効なfederation IDを構成できない場合に限り、
+`federation`を`{"id": null, "path": "."}`とする。それ以外の全体結果では`id`を必須文字列とする。この例外を設けず
+不正なraw IDを結果同一性へ使ったり、成果物不適合をinvocation errorへ変えたりしない。同じ同一性確定前の
 設定Diagnosticだけは`source.workspaceId: null`を許し、root設定pathを`.spec/bitz.yaml`とする。
 
 これにより`FED-IMP-003`のうちADR-041で閉じたverify証跡部分と、未解決だったContext／全体結果部分の双方が閉じる。
 
 ## 5. D. CLIと処理開始境界
 
-「federation rootでだけ`--all-workspaces`」はcurrent directoryの完全一致ではなく、discovery結果を意味する。
+「root workspaceでだけ`--all-workspaces`」はcurrent directoryの完全一致ではなく、探索結果を意味する。
 同じGit repository内のrootまたはmember配下から起動しても、repository rootのcatalogを発見できれば同じ全体操作になる。
 repository外、Git root不明、複数候補など一意に発見できない場合は処理を開始しない。
 
@@ -184,21 +184,21 @@ repository外、Git root不明、複数候補など一意に発見できない�
 
 - workspace結果、JSON結果、reportを生成しない
 - catalog lookup完了まではworkspace固有処理を開始しない
-- 字句不正、排他違反、未知workspaceを同じinvocation validation段階で扱う
+- 字句不正、排他違反、未知workspaceを同じinvocation検証段階で扱う
 - `SPEC-MONOREPO-MEMBER-001`から「未知の選択ID」を外し、同codeはcatalog/member成果物の不整合だけに使う
 
-全体処理ではcatalog、workspace ID/path、Git境界、未対応Schema/EARS-AI major、resource上限をglobal preflightとする。
-preflightが非成功ならmember処理とverify commandを開始せず、top-level Diagnostic、`workspaces: []`を持つ結果を返す。
-member文書不適合やtest失敗後の継続規則はP2で詳細化できるが、global preflightを越えた独立memberを継続できるという
+全体処理ではcatalog、workspace ID/path、Git境界、未対応Schema/EARS-AI major、resource上限を全体事前検査とする。
+事前検査が非成功ならmember処理とverify commandを開始せず、最上位Diagnostic、`workspaces: []`を持つ結果を返す。
+member文書不適合やtest失敗後の継続規則はP2で詳細化できるが、全体事前検査を越えた独立memberを継続できるという
 現在方針は維持する。
 
-## 6. E. 連合resource上限
+## 6. E. 複合workspaceのresource上限
 
-既存のfile単位上限に加え、1つの連合snapshotへ次を適用する。
+既存のfile単位上限に加え、1つの複合workspaceのsnapshotへ次を適用する。
 
 | dimension | hard limit | 数え方 |
 |---|---:|---|
-| `memberCount` | 100 | `monorepo.members`要素数。federation rootは除く |
+| `memberCount` | 100 | `monorepo.members`要素数。root workspaceは除く |
 | `specFileCount` | 10,000 | catalog内全workspaceのSPEC Markdown数 |
 | `inputBytes` | 256 MiB | 全`bitz.yaml`とSPEC Markdownのraw byte合計 |
 | `statementCount` | 100,000 | 全EARS-AI規範文数 |
@@ -222,7 +222,7 @@ Diagnostic `evidence`は`dimension`、`limit`、および早期停止時の`obse
 
 ### 7.1 標準fixture
 
-- 20 workspace（federation rootを含む）
+- 20 workspace（root workspaceを含む）
 - SPEC 1,000件、relation edge 20,000件
 - 平均SPEC byte、statement数、edge密度をmanifestへ固定
 - 横断Contextは3 workspaceへ到達し、20文書、標準提示128 KiB以下
@@ -244,33 +244,33 @@ Diagnostic `evidence`は`dimension`、`limit`、および早期停止時の`obse
 
 | ID | 本案での扱い | 主な正本反映先 |
 |---|---|---|
-| `FED-INV-001` | Git既知設定のcatalog差分検査 | 連合仕様、check、doctor、verify |
-| `FED-CTX-001` | 連合Context fieldを完全Schema化 | context仕様 |
-| `FED-CTX-002` | Digest設定allowlistを固定 | context仕様 |
-| `FED-CLI-001` | federation discovery基準へ固定 | 連合仕様、各操作仕様 |
-| `FED-CLI-002` | 未知workspaceを終了コード4へ変更 | 共通結果、連合仕様 |
+| `FED-INV-001` | Git既知設定のcatalog差分検査 | 複合workspace仕様、check、doctor、verify |
+| `FED-CTX-001` | 複合workspaceのContext fieldを完全Schema化 | context仕様 |
+| `FED-CTX-002` | Digest設定許可リストを固定 | context仕様 |
+| `FED-CLI-001` | 複合workspaceの探索基準へ固定 | 複合workspace仕様、各操作仕様 |
+| `FED-CLI-002` | 未知workspaceを終了コード4へ変更 | 共通結果、複合workspace仕様 |
 | `FED-CLI-003` | 操作別member fieldを固定 | 共通結果、各操作仕様 |
-| `FED-SEC-001` | symlink解決後の所有領域で判定 | 安全な入出力、連合仕様 |
-| `FED-SEC-002` | 全体操作のGit既知設定を検査 | 連合仕様 |
-| `FED-SEC-003` | canonicalization順序を固定 | 安全な入出力、連合仕様 |
-| `FED-MIG-001` | 未リリース事実によりversion gate不要 | ADR-042、互換性契約 |
-| `FED-MIG-002` | 初回root写像とDigest変更を明記 | 新規ADR、連合仕様 |
-| `FED-MIG-003` | 原子的連合化を要求 | 運用手順、実装計画 |
+| `FED-SEC-001` | symlink解決後の所有領域で判定 | 安全な入出力、複合workspace仕様 |
+| `FED-SEC-002` | 全体操作のGit既知設定を検査 | 複合workspace仕様 |
+| `FED-SEC-003` | canonicalization順序を固定 | 安全な入出力、複合workspace仕様 |
+| `FED-MIG-001` | 未release事実によりversion gate不要 | ADR-042、互換性契約 |
+| `FED-MIG-002` | 初回root写像とDigest変更を明記 | 新規ADR、複合workspace仕様 |
+| `FED-MIG-003` | 原子的複合workspace化を要求 | 運用手順、実装計画 |
 | `FED-IMP-001` | 標準fixtureと5回中央値を固定 | 品質属性、実装計画 |
-| `FED-IMP-002` | 連合resource上限を数値化 | 安全な入出力、連合仕様 |
+| `FED-IMP-002` | 複合workspaceのresource上限を数値化 | 安全な入出力、複合workspace仕様 |
 | `FED-IMP-003` | Context／全体結果Schemaを閉鎖 | context、共通結果、各操作仕様 |
 
 ## 9. 裁定と反映結果
 
 次の6点を一括採用した。
 
-1. 未リリースの初回1.0 Schemaとして連合を公開し、workspace IDを永続identityにする
+1. 未releaseの初回1.0 Schemaとして複合workspaceを公開し、workspace IDを永続同一性にする
 2. 全体操作でGit既知設定のcatalog差分とcanonical所有境界を検査する
-3. 連合Context、Digest allowlist、操作別member結果を完全Schema化する
-4. `--all-workspaces`をdiscovery基準とし、未知`--workspace`を終了コード4にする
-5. 連合全体resource上限を数値で固定する
+3. 複合workspaceのContext、Digest許可リスト、操作別member結果を完全Schema化する
+4. `--all-workspaces`を探索基準とし、未知`--workspace`を終了コード4にする
+5. 複合workspace全体resource上限を数値で固定する
 6. 標準性能fixtureと再現可能な測定手順を固定する
 
-identityと初回公開境界をADR-042へ記録し、詳細Schema、上限、完全JSON例、性能条件、移行手順を正本と実装計画へ
+同一性と初回公開境界をADR-042へ記録し、詳細Schema、上限、完全JSON例、性能条件、移行手順を正本と実装計画へ
 反映した。これにより本資料が扱うP1 15件をClosedとする。P2の継続判定、Diagnostic優先順位、TASK directory境界、
 rollback consumer詳細、計算量目標、conformance matrixは、このP1反映後のSchemaを前提に独立して裁定する。

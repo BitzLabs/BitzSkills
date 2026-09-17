@@ -4,13 +4,13 @@
 - 実施日: 2026-09-02
 - 基準commit: `b070c6e`
 - 対象: `FED-VER-001`、`FED-CROSS-001`
-- 前提: Core 1.0は仕様検討段階で未リリース
+- 前提: Core 1.0は仕様検討段階で未release
 - 裁定: [ADR-041](../02.設計書/10_決定記録/ADR-041_verify対象別証跡とreport明示保存の分離.md)
 
 ## 1. 解決する問題
 
 `verify`は、明示対象、引数なし実行、`--all-workspaces`で複数のContextを解決できる。一方、現在の結果Schemaは
-top-levelに`contextDigest`を1つだけ持つため、次の対応を表せない。
+最上位に`contextDigest`を1つだけ持つため、次の対応を表せない。
 
 ```text
 target -> Context Digest -> statement -> binding -> command result
@@ -44,11 +44,11 @@ target間でstatementやtestが重複してもよい。statementは各targetの�
 
 ### 3.2 `targetResults[]`を正本にする
 
-top-levelの`targets[]`、`contextDigest`、`statements[]`を廃止し、次を置く。
+最上位の`targets[]`、`contextDigest`、`statements[]`を廃止し、次を置く。
 
 | field | 型 | 必須 | 意味 |
 |---|---|:--:|---|
-| `target` | string | Yes | 正規target ID。連合では修飾形式 |
+| `target` | string | Yes | 正規target ID。複合workspaceでは修飾形式 |
 | `status` | enum | Yes | Context、coverage、参照binding結果の最悪値 |
 | `contextDigest` | string/null | Yes | 完全ContextのDigest。Contextを構成できない場合だけnull |
 | `statements` | string[] | Yes | このtargetが検証する規範文。重複なし辞書順 |
@@ -63,7 +63,7 @@ top-levelの`targets[]`、`contextDigest`、`statements[]`を廃止し、次を�
 単一workspaceを含め、binding IDを`<workspace-id>::<command-name>`へ統一する。workspace ID省略時の実効値は`root`である。
 `commands[]`の各要素は`bindingId`と`workspaceId`を必須とし、`targetResults[].bindingRefs`から一意に参照できるようにする。
 
-単一workspaceと連合でSchemaを分岐させず、連合時だけIDの修飾規則が変わるのはSPEC targetとstatementに限定する。
+単一workspaceと複合workspaceでSchemaを分岐させず、複合workspace時だけIDの修飾規則が変わるのはSPEC targetとstatementに限定する。
 
 ### 3.4 実行計画への採用条件
 
@@ -83,8 +83,8 @@ target statusは次の最悪値で計算する。
 Context解決status + coverage status + 全bindingRefsのcommand status
 ```
 
-top-levelまたはworkspace statusは、全target status、所有するcommand実体のstatus、当該scopeのDiagnosticを集約する。
-command失敗は参照targetのstatusへ反映し、連合ではcommand owner workspaceのstatusにも反映するが、command実体と
+最上位またはworkspace statusは、全target status、所有するcommand実体のstatus、当該scopeのDiagnosticを集約する。
+command失敗は参照targetのstatusへ反映し、複合workspaceではcommand owner workspaceのstatusにも反映するが、command実体と
 durationを複製しない。
 
 ### 3.6 `verified`述語
@@ -96,9 +96,9 @@ durationを複製しない。
 3. 対象となる全`MUST`にtest対応がある
 4. 全`bindingRefs`がちょうど1件の`commands[]`を参照する
 5. 参照する全commandが`passed`である
-6. top-level `revision`がこの実行時のcode／test状態を表す
+6. 最上位`revision`がこの実行時のcode／test状態を表す
 
-結果全体の通過は全targetがverifiedであることに加え、targetを持たないowner commandやtop-level Diagnosticも
+結果全体の通過は全targetがverifiedであることに加え、targetを持たないowner commandや最上位Diagnosticも
 通過statusであることを要求する。
 
 ### 3.7 結果生成と保存を分離する
@@ -107,7 +107,7 @@ durationを複製しない。
 成功・非成功を問わず`--report`指定時だけfileを保存する。`--report`がなければ既存reportを変更せず、新規作成もしない。
 
 並行PR／worktreeの検査で生成reportが差分や残留fileになった既存事例を踏まえ、Git除外を自動保存の根拠にしない。
-CIは標準出力と終了コードを既定とし、artifactが必要なjobだけ`--report`を明示する。
+CIは標準出力と終了コードを既定とし、成果物が必要なjobだけ`--report`を明示する。
 
 ## 4. 推奨結果例
 
@@ -168,7 +168,7 @@ CIは標準出力と終了コードを既定とし、artifactが必要なjobだ�
 - `commands[].bindingId`は結果内で一意
 - `commands[].covers`は、当該bindingを参照する通過targetのstatement和集合
 - 同じbindingを参照するtarget数にかかわらずcommand実体は1件
-- top-level `status`は子要素より良いstatusにならない
+- 最上位`status`は子要素より良いstatusにならない
 
 ## 6. 正本への反映範囲
 
@@ -178,10 +178,10 @@ CIは標準出力と終了コードを既定とし、artifactが必要なjobだ�
 | `01_結果・Diagnostic・終了コード.md` | `targetResults[]`の集約と明示report保存を定義 |
 | `05_複合workspace仕様.md` | member結果と共有bindingの参照規則だけを同期 |
 | `12_Core-1.0実装計画.md` | multi-context、共有binding、非成功混在fixtureを追加 |
-| レビュー16・20、README | P0の裁定と反映状態を記録 |
+| review 16・20、README | P0の裁定と反映状態を記録 |
 
 公開hashの種類、command名binding、Context Digestの計算材料は変えない。report自動保存の既存裁定を変更するため、
-理由をADR-041へ記録した。未リリースの初回1.0 Schemaなので、旧verify結果との移行fieldは設けない。
+理由をADR-041へ記録した。未releaseの初回1.0 Schemaなので、旧verify結果との移行fieldは設けない。
 
 ## 7. 裁定案
 
@@ -189,7 +189,7 @@ CIは標準出力と終了コードを既定とし、artifactが必要なjobだ�
 
 1. targetごとにContextを解決する
 2. `targetResults[]`をverified証跡の正本にする
-3. top-level `targets[]`、`contextDigest`、`statements[]`を廃止する
+3. 最上位`targets[]`、`contextDigest`、`statements[]`を廃止する
 4. binding IDを単一workspaceを含め`<workspace-id>::<command-name>`へ統一する
 5. 非成功targetだけが要求するbindingは実行しない
 6. target statusと全体statusを別々に集約する

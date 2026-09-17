@@ -15,7 +15,7 @@
 ## 1. 目的
 
 規範設計と実装順序を分離し、公開面の配管を先に通したうえで、workspace単独のEARS-AI記述から
-test実行までの垂直スライスを実証し、同じ契約をモノレポ連合へ拡張する。
+test実行までの垂直スライスを実証し、同じ契約を複合workspaceへ拡張する。
 Step番号と完了条件は計画であり、Core APIの規範ではない。
 
 適合条件の正本は[適合fixture仕様](../03.詳細設計/00_共通契約/04_適合fixture仕様.md)、
@@ -38,13 +38,13 @@ Core 1.0のGateは次の3層とする。
 |---|---|---|---|
 | Gate A: 実装着手可能性 | Step 1開始前 | 規範、fixture、期待値、検証基盤がCore実行体なしで再現可能 | `Blocked` |
 | Gate B: Step別実装受入 | 各Step完了時 | 当該StepのCore実装が固定済みfixtureへ適合 | `Pending` |
-| Gate C: Core 1.0リリース受入 | 全Step完了後 | 全適合、性能、自己適用を含む出荷可能性 | `Pending` |
+| Gate C: Core 1.0 release受入 | 全Step完了後 | 全適合、性能、自己適用を含む出荷可能性 | `Pending` |
 
 Gate条件の正本は本書、fixture構造と比較方法の正本は
 [適合fixture仕様](../03.詳細設計/00_共通契約/04_適合fixture仕様.md)とする。提案資料は判断理由と移行履歴、
 提案資料READMEは現在状態の要約だけを持つ。
 
-## 2. Step 0: 仕様確定（コードを書かない）
+## 2. Step 0: 仕様確定（codeを書かない）
 
 状態は`Complete`である。成果物は次とし、いずれも[提案24](24_Core-1.0実装着手方針.md)の裁定に対応する。
 Step 0完了はGate Aの必要条件だが、それだけでStep 1の開始を許可しない。
@@ -73,7 +73,7 @@ Core実行結果と人間による比較結果は、それぞれの対象機能�
 
 - 通常Markdownまたは従来EARSを使う比較taskを5件固定する。
 - 完了時間、仕様記述時間、review時間、欠陥検出数を定義する。
-- 単一workspaceと、20 workspace、SPEC 1,000件、relation 20,000件の基準連合fixtureを固定する。
+- 単一workspaceと、20 workspace、SPEC 1,000件、relation 20,000件の基準複合workspaceのfixtureを固定する。
 - 平均file byte、statement数、edge密度、横断Contextの到達workspace数と基準環境manifestを固定する。
 - Core 1.0対象外機能を確認する。
 
@@ -88,28 +88,28 @@ Core実行結果と人間による比較結果は、それぞれの対象機能�
 状態は`In progress`、Gate Aは`Blocked`である。Step 0で確定した契約を機械検証可能な入力、期待値、
 generator、helper、harnessへ落とし込み、fresh checkoutから再現できることを示す。
 
-部分検証の入口は`uv run fixtures/validate_step0b.py`。公開JSON、grammar参照、link、Git setup、process helper、
-副作用比較の自己試験、Step 0-P、Diagnostic意味網羅の対応台帳検証、target期待集合25ケースを統合済みである。
-適合fixture 310件中、導入・設定9件、EARS-AI構文・候補抽出・拡張12件、文書構造・UTF-8 9件、関係・path・coverage 6件、ID重複・循環4件、Git基準版・保護対象外変更10件、TASK境界3件、Git対象選択・影響候補4件、Git基準版エラー・Git不在3件、Context非成功6件、Context Digest 6件、expand反復2件、stale・expand・閉包上限・提示上限・implement coverage 6件、verify実行・事前block 6件、verify binding共有3件、verify process終了3件、verify出力抜粋2件、文書単位binding 1件、done TASK起点1件、report非作成4件、引数不正15件、report作成・保存失敗・JSON併用6件、text出力・制御文字・診断順序4件、BOM・Frontmatter 11件、寸法上限・未知entry 7件、registry閉包7件、Scanner・位置16件、既定表示・revision 8件、理由付きSHOULD・full projection・Digest version 3件、escape・normative projection 2件、quoted extension 1件、code span 1件、Frontmatter境界24件、Core副作用6件、verify argv・実行環境・出力変換15件、明示起点の不在・ADR起点8件、共通target展開・advisory提示8件、Digest材料の順序・reverse solidus 3件、実行環境・配布物5件は入力・期待JSON・副作用期待値を作成し、隔離setupの2回一致を検証した。matrix §6.5「contextとDigest」と§6.6「verify」は全32件を完了した。§6.8「上限」6件、§6.9「Diagnostic registry閉包」19件、§6.11「公開結果Schemaと既定表示」11件と§6.12「共通target展開」を含め、単一workspaceの§6は全250件を完了した。
+部分検証の入口は`uv run fixtures/validate_step0b.py`。公開JSON、文法参照、link、Git setup、process helper、
+副作用比較の自己試験、Step 0-P、Diagnostic意味網羅の対応台帳検証、target期待集合25 caseを統合済みである。
+適合fixture 310件中、導入・設定9件、EARS-AI構文・候補抽出・拡張12件、文書構造・UTF-8 9件、関係・path・coverage 6件、ID重複・循環4件、Git基準版・保護対象外変更10件、TASK境界3件、Git対象選択・影響候補4件、Git基準版error・Git不在3件、Context非成功6件、Context Digest 6件、expand反復2件、stale・expand・閉包上限・提示上限・implement coverage 6件、verify実行・事前block 6件、verify binding共有3件、verify process終了3件、verify出力抜粋2件、文書単位binding 1件、done TASK起点1件、report非作成4件、引数不正15件、report作成・保存失敗・JSON併用6件、text出力・制御文字・診断順序4件、BOM・Frontmatter 11件、寸法上限・未知entry 7件、registry閉包7件、Scanner・位置16件、既定表示・revision 8件、理由付きSHOULD・full projection・Digest version 3件、escape・normative projection 2件、quoted extension 1件、code span 1件、Frontmatter境界24件、Core副作用6件、verify argv・実行環境・出力変換15件、明示起点の不在・ADR起点8件、共通target展開・advisory提示8件、Digest材料の順序・reverse solidus 3件、実行環境・配布物5件は入力・期待JSON・副作用期待値を作成し、隔離setupの2回一致を検証した。matrix §6.5「contextとDigest」と§6.6「verify」は全32件を完了した。§6.8「上限」6件、§6.9「Diagnostic registry閉包」19件、§6.11「公開結果Schemaと既定表示」11件と§6.12「共通target展開」を含め、単一workspaceの§6は全250件を完了した。
 単一workspaceのgolden Canonical JSONとContext Digestは`SINGLE-042`が所有し、独立に記述した2系統のreference計算がbyte一致することを検証した。
-残60件の適合fixture（連合`MULTI-*`）、連合golden Context Digest（`MULTI-002-01`）、残fixtureの副作用期待値は未完了であり、全Gate A検証の完了は宣言しない。
+残60件の適合fixture（複合workspace`MULTI-*`）、複合workspaceのgolden Context Digest（`MULTI-002-01`）、残fixtureの副作用期待値は未完了であり、全Gate A検証の完了は宣言しない。
 Git shim、`uv`環境、`bitz.compat`、`runner: package`の起動規則は[ADR-046](../02.設計書/10_決定記録/ADR-046_適合harnessの検査対象・実行環境・runnerを確定する.md)で確定したが、harnessの実行部はCore実装と合わせてGate Bで作る。
 
-このStepで実装してよいのはSchema検証、fixture generator、reference計算、grammar検査、matrix検査、
+このStepで実装してよいのはSchema検証、fixture generator、reference計算、文法検査、matrix検査、
 process用test helper、副作用比較harness、独立cross-checkである。`doctor`、`context`、`check`、`verify`、
 本番Parser、target展開、Digest生成、process runnerの公開挙動を実装してはならない。
 
 Gate Aを`Allowed`にする条件は次の全件である。
 
 - P0 6件が規範文書へ反映されている
-- 公開JSON例がmachine-readable Schemaを全件通過する
+- 公開JSON例が機械可読Schemaを全件通過する
 - 規範上の全非成功条件がDiagnostic registryへ対応する
-- grammarに未定義tokenまたはnonterminalがない
+- 文法に未定義tokenまたはnonterminalがない
 - target種別とpurposeの全組合せに対する期待集合fixtureが存在する
 - fixture matrixに選択的期待、複数原因、`元status`がない
 - Gitのbase、current、staged、worktree、unbornをmanifestから再現できる
-- 単一と連合のCanonical JSONおよびgolden Context Digestが独立した2系統のreference計算で一致する
-- read-only、report、cacheの変更前後snapshotと許可書込みが固定され、副作用比較harness自体を自己検査できる
+- 単一と複合workspaceのCanonical JSONおよびgolden Context Digestが独立した2系統のreference計算で一致する
+- 読取り専用、report、cacheの変更前後snapshotと許可書込みが固定され、副作用比較harness自体を自己検査できる
 - timeout、signal、子process、pipe保持を再現するhelperと有限時間で失敗できるharnessが存在する
 - 性能基準fixture、決定論的generator、期待tree digest、reference environmentがversion管理されている
 - 現行正本とaccepted ADRの相対link検査が0件である
@@ -127,7 +127,7 @@ Gate Aを`Allowed`にする条件は次の全件である。
 - CLI引数解析、`--format`、終了コード0〜4、引数不正時の標準エラー1行
 - 共通結果外形、Diagnostic Schema、source、順序規則、status集約
 - text出力の要約行とDiagnostic行
-- `bitz.yaml`のYAML subset読込みと禁止構文の拒否
+- `bitz.yaml`のYAML部分集合読込みと禁止構文の拒否
 - 単一workspaceの探索と`doctor`（Core、実行環境version、設定、Git、command）
 
 完了条件は、`SINGLE-001`〜`006`、`SINGLE-070`〜`078`、`SINGLE-081`、`083`、`091`〜`095`、
@@ -170,21 +170,21 @@ Canonical JSONとDigestが規定値にbyte一致することである。
 `110`、`112`〜`113`、`125-04`、`126`、`127-08`〜`10`が通過する。timeout fixtureは子孫がpipeを保持してもtimeout到達から
 5秒以内に結果を確定し、計画済みの独立bindingを継続する。
 
-## 8. Step 5: モノレポ連合
+## 8. Step 5: 複合workspace
 
 - 明示catalog、active workspace、修飾ID
 - 横断Frontmatter索引、完全Context、Context Digest
 - code／test／TASK／cwdの所有境界とcanonical path判定
 - `--workspace`と`--all-workspaces`
-- workspace別`targetResults[]`、共有command結果、集約status、明示連合report
+- workspace別`targetResults[]`、共有command結果、集約status、明示複合workspaceのreport
 - 未登録member、path重複、Git不在、横断参照、対象0件
 - Git既知の未登録設定、symlink所有迂回、case差、初回root ID写像、member移動・削除
 - 文書・target・binding単位の継続と`SPEC-MONOREPO-DEPENDENCY-001`
-- 単一／連合dual-read consumer、原子的rollback、部分rollback拒否
+- 単一／複合workspaceのdual-read consumer、原子的rollback、部分rollback拒否
 
 完了条件は、同名ローカルIDを持つmember、横断refinement、所有境界違反を決定論的に区別し、
 `check --all-workspaces`と`verify --all-workspaces`が基準性能を満たし、`MULTI-001`〜`025`が通過することである。
-`MULTI-002-01`のCanonical JSONとDigestが連合golden値にbyte一致し、2回実行でも変化しないことを含む。
+`MULTI-002-01`のCanonical JSONとDigestが複合workspaceのgolden値にbyte一致し、2回実行でも変化しないことを含む。
 別member所有bindingを1回だけ実行し、request targetとowner memberのstatusへ反映してもcommand実体とdurationを
 複製しない。
 
@@ -201,14 +201,14 @@ SPEC作成 -> context -> pre-check -> code/test変更 -> post-check -> verify ->
 
 通常Markdown条件と比較し、完了時間、欠陥率、review負荷のいずれも改善しない機能を既定経路へ追加しない。
 
-### 9.1 Gate C: Core 1.0リリース受入
+### 9.1 Gate C: Core 1.0 release受入
 
 全StepのGate Bが`Passed`した後、次を全件満たした場合だけGate Cを`Passed`とする。
 
 - 全conformance fixtureが、下限CPython 3.11と基準環境の2環境で通過する。`invocation.python`を指定したfixtureは指定versionだけで判定する
 - 性能baselineを基準環境で取得し、§10のSLOを満たす
-- 単一と連合のCanonical JSONおよびContext Digestが2回実行でbyte一致する
-- read-only、report、cache、timeout、signal、子processの受入試験が通過する
+- 単一と複合workspaceのCanonical JSONおよびContext Digestが2回実行でbyte一致する
+- 読取り専用、report、cache、timeout、signal、子processの受入試験が通過する
 - bitz-core自身の`.spec/`でSmall Flowを完走する
 - 通常Markdown条件との完了時間、欠陥率、review負荷の比較結果を記録する
 - 未解決のP0またはP1がない
