@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "scope": "all-workspaces",
+  "status": "passed_with_warnings",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "platform",
+      "path": ".",
+      "status": "passed",
+      "targetResults": [
+        {
+          "target": "platform::REQ-001",
+          "status": "passed",
+          "contextDigest": "sha256:bb424d0132327699a35583f928c1d419c8b5325c128180a7121bc27e8d6721b4",
+          "statements": [
+            "platform::REQ-001:AC-01"
+          ],
+          "bindingRefs": [
+            "web::frontend"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [],
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "api",
+      "path": "services/api",
+      "status": "passed_with_warnings",
+      "targetResults": [],
+      "commands": [],
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-VERIFY-BLOCKED-002",
+          "severity": "warning",
+          "resultStatus": "passed_with_warnings",
+          "summary": "検証対象がありません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "api",
+            "path": ".spec/bitz.yaml"
+          }
+        }
+      ]
+    },
+    {
+      "id": "web",
+      "path": "apps/web",
+      "status": "passed",
+      "targetResults": [
+        {
+          "target": "web::TECH-010",
+          "status": "passed",
+          "contextDigest": "sha256:d790a4953dca4e94b75e9abe94ca4529bf0bb00afe63fc325ef8cd5d5a3b5f2d",
+          "statements": [],
+          "bindingRefs": [
+            "web::frontend"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [
+        {
+          "bindingId": "web::frontend",
+          "workspaceId": "web",
+          "name": "frontend",
+          "status": "passed",
+          "termination": "exit",
+          "cwd": ".",
+          "argv": [
+            "/bin/true",
+            "tests/auth/test_login.py"
+          ],
+          "tests": [
+            "tests/auth/test_login.py"
+          ],
+          "covers": [
+            "platform::REQ-001:AC-01"
+          ],
+          "exitCode": 0,
+          "timeoutSeconds": 300,
+          "stdoutExcerpt": "",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "durationMs": 0
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "scope": "all-workspaces",
+  "status": "blocked",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "platform",
+      "path": ".",
+      "status": "passed_with_warnings",
+      "targetResults": [],
+      "commands": [],
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-VERIFY-BLOCKED-002",
+          "severity": "warning",
+          "resultStatus": "passed_with_warnings",
+          "summary": "検証対象がありません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "platform",
+            "path": ".spec/bitz.yaml"
+          }
+        }
+      ]
+    },
+    {
+      "id": "api",
+      "path": "services/api",
+      "status": "passed_with_warnings",
+      "targetResults": [],
+      "commands": [],
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-VERIFY-BLOCKED-002",
+          "severity": "warning",
+          "resultStatus": "passed_with_warnings",
+          "summary": "検証対象がありません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "api",
+            "path": ".spec/bitz.yaml"
+          }
+        }
+      ]
+    },
+    {
+      "id": "web",
+      "path": "apps/web",
+      "status": "passed_with_warnings",
+      "targetResults": [],
+      "commands": [],
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-VERIFY-BLOCKED-002",
+          "severity": "warning",
+          "resultStatus": "passed_with_warnings",
+          "summary": "検証対象がありません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "web",
+            "path": ".spec/bitz.yaml"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-VERIFY-BLOCKED-002",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "検証対象がありません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "platform",
+        "path": ".spec/bitz.yaml"
+      }
+    }
+  ]
+}

@@ -1,0 +1,144 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "scope": "all-workspaces",
+  "status": "failed",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "platform",
+      "path": ".",
+      "status": "failed",
+      "targetResults": [
+        {
+          "target": "platform::REQ-001",
+          "status": "failed",
+          "contextDigest": "sha256:63c4817ce8b15d7c65739ddf62137ebc253dde8f07fc0b98f0a8ff9bcea85709",
+          "statements": [
+            "platform::REQ-001:AC-01"
+          ],
+          "bindingRefs": [
+            "web::frontend"
+          ],
+          "diagnostics": []
+        },
+        {
+          "target": "platform::REQ-002",
+          "status": "passed",
+          "contextDigest": "sha256:e2b94b3a184ead29317aff933a0a127c366d8d67b0885b86bc0e0f0e972ab2ef",
+          "statements": [
+            "platform::REQ-002:AC-01"
+          ],
+          "bindingRefs": [
+            "api::backend"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [],
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "api",
+      "path": "services/api",
+      "status": "passed",
+      "targetResults": [
+        {
+          "target": "api::TECH-030",
+          "status": "passed",
+          "contextDigest": "sha256:8983927fd993b7f91bb9bc38ea13bd3fc7aa2dceab450e4134aa420e8d30df13",
+          "statements": [],
+          "bindingRefs": [
+            "api::backend"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [
+        {
+          "bindingId": "api::backend",
+          "workspaceId": "api",
+          "name": "backend",
+          "status": "passed",
+          "termination": "exit",
+          "cwd": ".",
+          "argv": [
+            "/bin/true",
+            "tests/test_report.py"
+          ],
+          "tests": [
+            "tests/test_report.py"
+          ],
+          "covers": [
+            "platform::REQ-002:AC-01"
+          ],
+          "exitCode": 0,
+          "timeoutSeconds": 300,
+          "stdoutExcerpt": "",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "durationMs": 0
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "web",
+      "path": "apps/web",
+      "status": "failed",
+      "targetResults": [
+        {
+          "target": "web::TECH-010",
+          "status": "failed",
+          "contextDigest": "sha256:96e3fecd943af2fea15e84b8cfedec2eb1e1782e201fc257588ac74a959fa022",
+          "statements": [],
+          "bindingRefs": [
+            "web::frontend"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [
+        {
+          "bindingId": "web::frontend",
+          "workspaceId": "web",
+          "name": "frontend",
+          "status": "failed",
+          "termination": "exit",
+          "cwd": ".",
+          "argv": [
+            "/bin/false",
+            "tests/auth/test_login.py"
+          ],
+          "tests": [
+            "tests/auth/test_login.py"
+          ],
+          "covers": [
+            "platform::REQ-001:AC-01"
+          ],
+          "exitCode": 1,
+          "timeoutSeconds": 300,
+          "stdoutExcerpt": "",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "durationMs": 0
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

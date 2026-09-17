@@ -1,0 +1,176 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "scope": "all-workspaces",
+  "status": "failed",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "platform",
+      "path": ".",
+      "status": "blocked",
+      "targetResults": [
+        {
+          "target": "platform::REQ-001",
+          "status": "blocked",
+          "contextDigest": null,
+          "statements": [],
+          "bindingRefs": [],
+          "diagnostics": [
+            {
+              "code": "SPEC-MULTI-DEPENDENCY-001",
+              "severity": "error",
+              "resultStatus": "blocked",
+              "summary": "依存するworkspaceの非成功によりContextを構成できません",
+              "source": {
+                "kind": "file",
+                "workspaceId": "platform",
+                "path": ".spec/requirements/REQ-001.md"
+              },
+              "evidence": {
+                "stage": "context",
+                "dependencyWorkspaces": [
+                  "api"
+                ],
+                "dependencySpecRefs": [
+                  "api::TECH-020"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "target": "platform::REQ-002",
+          "status": "passed",
+          "contextDigest": "sha256:e2b94b3a184ead29317aff933a0a127c366d8d67b0885b86bc0e0f0e972ab2ef",
+          "statements": [
+            "platform::REQ-002:AC-01"
+          ],
+          "bindingRefs": [
+            "api::backend"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [],
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "api",
+      "path": "services/api",
+      "status": "failed",
+      "targetResults": [
+        {
+          "target": "api::TECH-020",
+          "status": "failed",
+          "contextDigest": null,
+          "statements": [],
+          "bindingRefs": [],
+          "diagnostics": [
+            {
+              "code": "EAI-CORE-ID-002",
+              "severity": "error",
+              "resultStatus": "failed",
+              "summary": "規範文IDが文書内で重複しています",
+              "source": {
+                "kind": "file",
+                "workspaceId": "api",
+                "path": ".spec/technical/TECH-020.md",
+                "line": 13,
+                "column": 3
+              }
+            }
+          ]
+        },
+        {
+          "target": "api::TECH-030",
+          "status": "passed",
+          "contextDigest": "sha256:8983927fd993b7f91bb9bc38ea13bd3fc7aa2dceab450e4134aa420e8d30df13",
+          "statements": [],
+          "bindingRefs": [
+            "api::backend"
+          ],
+          "diagnostics": []
+        }
+      ],
+      "commands": [
+        {
+          "bindingId": "api::backend",
+          "workspaceId": "api",
+          "name": "backend",
+          "status": "passed",
+          "termination": "exit",
+          "cwd": ".",
+          "argv": [
+            "/bin/true",
+            "tests/test_report.py"
+          ],
+          "tests": [
+            "tests/test_report.py"
+          ],
+          "covers": [
+            "platform::REQ-002:AC-01"
+          ],
+          "exitCode": 0,
+          "timeoutSeconds": 300,
+          "stdoutExcerpt": "",
+          "stderrExcerpt": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "durationMs": 0
+        }
+      ],
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "web",
+      "path": "apps/web",
+      "status": "blocked",
+      "targetResults": [
+        {
+          "target": "web::TECH-010",
+          "status": "blocked",
+          "contextDigest": null,
+          "statements": [],
+          "bindingRefs": [],
+          "diagnostics": [
+            {
+              "code": "SPEC-MULTI-DEPENDENCY-001",
+              "severity": "error",
+              "resultStatus": "blocked",
+              "summary": "依存するworkspaceの非成功によりContextを構成できません",
+              "source": {
+                "kind": "file",
+                "workspaceId": "web",
+                "path": ".spec/technical/TECH-010.md"
+              },
+              "evidence": {
+                "stage": "context",
+                "dependencyWorkspaces": [
+                  "api"
+                ],
+                "dependencySpecRefs": [
+                  "api::TECH-020"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "commands": [],
+      "durationMs": 0,
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

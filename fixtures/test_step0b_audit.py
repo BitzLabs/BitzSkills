@@ -63,6 +63,7 @@ from conformance import environment_fixtures
 from conformance import target_vectors
 from conformance import multi_catalog_fixtures, multi_digest_fixtures, multi_identity_fixtures
 from conformance import multi_member_fixtures, multi_ownership_fixtures, multi_reference
+from conformance import multi_verify_fixtures
 
 
 class AuditTests(unittest.TestCase):
@@ -725,6 +726,62 @@ class AuditTests(unittest.TestCase):
             path = root / "multi/MULTI-018-01/changes/bitz.yaml"
             path.write_text(path.read_text().replace("webui", "web"))
             result = multi_member_fixtures.validate(root, {"MULTI-018-01"})
+        self.assertEqual(result["status"], "Failed")
+
+    def test_multi_verify_fixtures(self):
+        result = multi_verify_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(multi_verify_fixtures.DESCRIPTIONS))
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_multi_verify_shares_one_binding_between_two_contexts(self):
+        result = multi_verify_fixtures.reviewed_result("MULTI-013")
+        digests = {entry["contextDigest"] for workspace in result["workspaces"]
+                   for entry in workspace["targetResults"]}
+        commands = [command for workspace in result["workspaces"] for command in workspace["commands"]]
+        self.assertEqual(len(digests), 2)
+        self.assertEqual(len(commands), 1)
+        self.assertEqual(commands[0]["bindingId"], "web::frontend")
+
+    def test_multi_verify_audit_rejects_wrong_aggregation_and_bindings(self):
+        mutations = [
+            # 遮断されたtargetはDigestもbindingも持たない。
+            ("MULTI-012", "expected/verify.json",
+             lambda v: v["workspaces"][2]["targetResults"][0].update(bindingRefs=["web::frontend"])),
+            ("MULTI-012", "expected/verify.json", lambda v: v.update(status="blocked")),
+            ("MULTI-012", "expected/verify.json",
+             lambda v: v["workspaces"][1]["targetResults"][0].update(status="blocked")),
+            # 共有bindingを2回実行しない。
+            ("MULTI-013", "expected/verify.json",
+             lambda v: v["workspaces"][0].update(commands=v["workspaces"][1]["commands"])),
+            ("MULTI-013", "expected/verify.json",
+             lambda v: v["workspaces"][1]["targetResults"][0].update(
+                 contextDigest=v["workspaces"][0]["targetResults"][0]["contextDigest"])),
+            # 失敗したcommandの後も独立bindingを実行する。
+            ("MULTI-014", "expected/verify.json", lambda v: v["workspaces"][1].update(commands=[])),
+            ("MULTI-015", "expected/verify.json", lambda v: v.update(status="passed")),
+            ("MULTI-016", "expected/verify.json", lambda v: v.update(status="passed_with_warnings")),
+            ("MULTI-016", "expected/verify.json", lambda v: v.update(diagnostics=[])),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertEqual(multi_verify_fixtures.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_verify_audit_rejects_resolvable_dependency(self):
+        """派生遮断のcaseは、依存先がinvalidでなければ証拠にならない。"""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-012")
+            path = root / "multi/MULTI-012/repo/services/api/.spec/technical/TECH-020.md"
+            path.write_text(path.read_text().replace("TECH-020:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 監査logを保持する",
+                                                     "TECH-020:AC-02] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 監査logを保持する"))
+            result = multi_verify_fixtures.validate(root, {"MULTI-012"})
         self.assertEqual(result["status"], "Failed")
 
     def test_frontmatter_boundary_evidence(self):

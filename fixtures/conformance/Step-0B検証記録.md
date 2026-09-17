@@ -617,3 +617,17 @@ Report SHA-256: `dd94c0faa244388a795af24271d6cf6bb896c480899020ab8a5b349481f28ee
 入力をweb内へ向けたsymlinkやID変更なしのcatalogへ直した写しを拒否することを確認した。
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `b1be564fc094dadff33736e16d86f2a3b3ed7a5245bab5b993735acddbadb734`。
+
+## 2026-09-18: 複合workspace全体のverify
+
+準備済み274/310、残り36件（すべて複合workspace）。`verify --all-workspaces`の4つの場面を固定した。
+`MULTI-012`は規範文IDが重複するinvalid文書への強い依存を`SPEC-MULTI-DEPENDENCY-001`／`blocked`とし、
+独立targetの`api::backend`は実行する。最上位statusは最悪値順で`failed`になる。
+`MULTI-013`は2つのContext（Digest 2件）が同じbinding 1件を共有し、`MULTI-014`はwebのcommand失敗後も
+apiの独立bindingを実行する。`MULTI-015`はmember単位の対象0件をwarning、`MULTI-016`は複合workspace全体の
+対象0件をerror／`blocked`とし、空のCIを成功にしない。
+通過targetのDigestは、review済みliteral（参照計算A）と入力treeからの導出（参照計算B）でbyte一致を確認した。
+監査試験を4件追加し、遮断targetへのbinding付与、共有bindingの二重実行、Digestの同一化、失敗後のbinding省略、
+status集約の取り違え、依存先を解決可能に直した入力を拒否することを確認した。
+同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
+Report SHA-256: `dae472e1ed294fc3ebd677545ceeecbc430096ad0101f69cf9d757397ad07c44`。
