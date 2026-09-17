@@ -1,74 +1,64 @@
-# verify process termination fixture review
+# verify process終了fixture review
 
-Covers `SINGLE-057`, `SINGLE-058` and `SINGLE-059` from
-[適合fixture仕様 §6.6](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#66-verify).
-`SINGLE-069-01/02` (output truncation) and the deferred `SINGLE-066`/`SINGLE-068` are separate steps.
-These are reviewed expectations, not observed Core behaviour.
+[適合fixture仕様 §6.6](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#66-verify)の
+`SINGLE-057`、`SINGLE-058`、`SINGLE-059`を扱う。`SINGLE-069-01/02`（出力の切り詰め）と、保留した
+`SINGLE-066`／`SINGLE-068`は別の段階で扱う。いずれもreview済みの期待値であり、Coreの挙動を観測したものではない。
 
-## All three fail after the pre-checks pass
+## 3件とも事前検査を通過した後に失敗する
 
-[verify仕様 §6](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#6-command結果) separates the
-"環境不足" conditions, which produce no `commands[]` entry and empty `bindingRefs`, from failures that
-happen once process creation has been attempted. These three belong to the second group, so each one
-records a `commands[]` entry, keeps `bindingRefs: ["root::default"]`, and reports
-`exitCode: null` with `status: error` — the result schema enforces that combination for every
-non-`exit` termination.
+[verify仕様 §6](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#6-command結果)は、`commands[]`の要素を作らず
+`bindingRefs`を空にする「環境不足」と、process生成を試みた後の失敗とを分ける。3件は後者に属するので、いずれも
+`commands[]`の要素を記録し、`bindingRefs: ["root::default"]`を保ち、`exitCode: null`と`status: error`を返す。
+結果Schemaは、`exit`以外のすべての終了理由にこの組合せを強制する。
 
-The Diagnostic sits at top level with `source.kind: environment`, which is what the registry fixes for
-`VERIFY-SPAWN-ERROR`, `VERIFY-SIGNAL` and `VERIFY-TIMEOUT`; all three are `skip-binding`, and
-[verify仕様 §6](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#6-command結果) places a binding
-Diagnostic at top level in a single workspace.
+Diagnosticは`source.kind: environment`で最上位に置く。registryが`VERIFY-SPAWN-ERROR`、`VERIFY-SIGNAL`、
+`VERIFY-TIMEOUT`に定める形であり、3件とも継続単位は`skip-binding`である。
+[verify仕様 §6](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#6-command結果)は、単一workspaceではbindingの
+Diagnosticを最上位に置く。
 
-| fixture | command file | termination | code |
+| fixture | command file | 終了理由 | code |
 |---|---|---|---|
 | `SINGLE-057` | `bin/badformat` | `spawn_error` | `SPEC-VERIFY-COMMAND-001` |
 | `SINGLE-058` | `bin/signal.sh` | `signal` | `SPEC-VERIFY-COMMAND-001` |
 | `SINGLE-059` | `bin/hang.sh` | `timeout` | `SPEC-VERIFY-TIMEOUT-001` |
 
-`bin/badformat` is a regular file carrying the executable bit whose content is neither ELF nor a
-shebang script. [verify仕様 §5.1](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#51-実行fileと環境)
-rejects a file that is not regular, absent, or not executable *before* spawning; this file passes all
-three, and `execve` then fails with `ENOEXEC`. Because Core uses no shell, there is no fallback
-interpretation. That is exactly the matrix's "実行bit付きだがOSが拒否する実行形式".
+`bin/badformat`は実行bitを持つ通常fileで、内容はELFでもshebang付きscriptでもない。
+[verify仕様 §5.1](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#51-実行fileと環境)は、通常fileでない、存在しない、
+実行不能なfileをspawnの*前*に拒否する。このfileは3条件をすべて通過し、その後`execve`が`ENOEXEC`で失敗する。
+Coreはshellを使わないので、代わりに解釈する経路もない。これがmatrixの「実行bit付きだがOSが拒否する実行形式」である。
 
-## The audit runs the command files itself
+## 監査はcommand fileを自分で実行する
 
-Each fixture's own command file is executed directly — never through Core — to confirm the input still
-produces the reviewed cause: that `bin/badformat` raises an OS error on spawn, that `bin/signal.sh`
-terminates with `SIGTERM`, and that `bin/hang.sh` survives a group-wide graceful termination and needs
-a force kill. Without this the expectations would be assertions about a corpus nobody had run.
+各fixtureのcommand fileを、Coreを介さず直接実行し、入力がreview済みの原因を今も再現することを確かめる。
+`bin/badformat`がspawn時にOSのerrorを起こすこと、`bin/signal.sh`が`SIGTERM`で終了すること、`bin/hang.sh`が
+process group全体へのgraceful terminationを生き延びて強制終了を必要とすることである。これがなければ、期待値は
+誰も実行していない入力についての主張になる。
 
-This found two real defects while the batch was being written, both in the fixture, not in the audit:
+この回の作成中に、実際の欠陥が2件見つかった。どちらも監査ではなくfixtureの欠陥である。
 
-1. The first `bin/hang.sh` ran `sleep 60` in the foreground. A group `SIGTERM` killed the sleep, the
-   shell's wait returned, and the script exited — so the fixture would never have required a force
-   kill. The loop now tolerates a killed foreground sleep, and the pipe-holding child ignores `TERM`
-   as well.
-2. The audit signalled immediately after spawn, before the shell had installed its trap, so it was
-   only proving that an unprotected startup can be killed. The script now prints a readiness line
-   *after* installing the trap, and the audit waits for that line before signalling.
+1. 最初の`bin/hang.sh`は前景で`sleep 60`を実行していた。process groupへの`SIGTERM`でsleepが終了すると、shellの
+   waitが戻ってscriptが終了するため、強制終了が必要にならなかった。現在は、前景のsleepが終了されてもloopを続け、
+   pipeを保持する子processも`TERM`を無視する。
+2. 監査がspawnの直後、shellがtrapを設定する前にsignalを送っていたため、保護されていない起動直後を終了できることしか
+   示していなかった。現在のscriptはtrapの設定*後*に準備完了の行を出力し、監査はその行を待ってからsignalを送る。
 
-## `SINGLE-059` keeps its readiness line
+## `SINGLE-059`は準備完了の行を保持する
 
-Because the readiness line is real output, it is also the fixture's expected `stdoutExcerpt`
-(`"hang-ready\n"`). That is worth more than an empty excerpt: the descendant keeps the inherited pipe
-open forever, so the line can only appear in the result if Core drains the stream and closes its read
-handle on the timeout state machine instead of waiting for EOF
-([verify仕様 §5.2](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#52-timeoutと有限時間終了)).
-`stdoutTruncated` stays `false` because the raw stream is far below 64 KiB.
+準備完了の行は実際の出力なので、fixtureの期待する`stdoutExcerpt`（`"hang-ready\n"`）にもなる。空の抜粋より価値が
+ある。子孫が継承したpipeを開いたまま保持するため、この行が結果に現れるのは、CoreがEOFを待たず、timeoutの状態機械で
+streamを読み切ってread handleを閉じる場合だけである
+（[verify仕様 §5.2](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#52-timeoutと有限時間終了)）。
+元のstreamは64 KiBを大きく下回るので、`stdoutTruncated`は`false`のままである。
 
-The effective timeout is set to 1 second through `verify.timeoutSeconds`, the lowest the configuration
-accepts, so the fixture stays fast while still exercising the state machine. That value is Digest
-material, so `SINGLE-059` carries its own Context Digest, as do `SINGLE-057` and `SINGLE-058` through
-their `argv` templates.
+実効timeoutは、設定が受け付ける最小値である1秒を`verify.timeoutSeconds`で与える。状態機械を通しつつfixtureを速く
+保てる。この値はDigest材料なので`SINGLE-059`は固有のContext Digestを持つ。`SINGLE-057`と`SINGLE-058`も、`argv`
+templateによって固有のDigestを持つ。
 
-## Limits
+## 限界
 
-- No Core has run. Gate B decides agreement with Core, including the requirement that the binding is
-  finalised within 5 seconds of the timeout being reached.
-- The audit demonstrates that a force kill is *necessary* for `bin/hang.sh`; it does not measure
-  Core's own 2-second escalation schedule, which has no observable surface until Core exists.
-- `ENOEXEC` is the reference environment's behaviour for a non-ELF, non-shebang executable file on
-  Linux, which is the environment fixed for Step 0B. The fixture pins the observable outcome, a failed
-  spawn, rather than the specific errno.
-- `/bin/sh` is `dash` in the reference environment; the scripts use POSIX constructs only.
+- Coreは実行していない。timeout到達から5秒以内にbindingの結果を確定する要件を含め、Coreとの一致はGate Bで判定する。
+- 監査は、`bin/hang.sh`に強制終了が*必要*であることを示す。Core自身の2秒の段階的な終了手順は、Coreができるまで
+  観測する手段がないため測らない。
+- `ENOEXEC`は、Step 0Bで固定した基準環境のLinuxが、ELFでもshebangでもない実行可能fileに対して示す挙動である。
+  fixtureは特定のerrnoではなく、観測できる結果（spawnの失敗）を固定する。
+- 基準環境の`/bin/sh`は`dash`であり、scriptはPOSIXの構文だけを使う。

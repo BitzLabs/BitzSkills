@@ -1,4 +1,4 @@
-# 実行環境・配布物fixtureレビュー
+# 実行環境・配布物fixture review
 
 2026-09-17。SINGLE-127-15〜19の5件を追加する。作成前に適合harnessの外部仕様を
 [提案27](../../../docs/04.提案資料/27_適合harness外部仕様の検討.md)で検討し、
@@ -29,7 +29,7 @@ fixture側へ数値を直書きしない。127-15はGitを起動できるが下�
 確認する。3.11で使えない構文・APIへの依存がないことは、Gate Cで全matrixを3.11でも通す条件で担保する。
 
 127-17／18の出力は`{"outcome": "accepted"}`である。caseの内容は適合fixture仕様 §3のrunner表が定め、
-auditはcase名が同表にあることと、matrix行が`package test`であることを確認する。
+監査はcase名が同表にあることと、matrix行が`package test`であることを確認する。
 
 ## 準備検証
 

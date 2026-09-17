@@ -1,7 +1,7 @@
-# Context非成功fixtureレビュー
+# Context非成功fixture review
 
 2026-09-14。SINGLE-050、051、052-01〜02、053の5件について、Core実装前の固定入力・完全期待JSON・
-read-only副作用期待値を作成する。これらはCoreが返した観測結果ではない。
+読取り専用副作用期待値を作成する。これらはCoreが返した観測結果ではない。
 
 ## 入力と単一原因
 
@@ -18,7 +18,7 @@ contextは--baseを受け付けず、commitを必要としないためbaseCommit
 TECHは規範文・implements・tests・commandを持たず、TASKはaddressesとchangesを持たない。
 これによりcoverage不足、path不在、command不在、REQ保護を原因へ混ぜない。
 
-050ではID字句自体は妥当であり、引数エラーexit 4にせず操作結果を返す。存在するTECH-001へ起点を置換しない。
+050ではID字句自体は妥当であり、引数error exit 4にせず操作結果を返す。存在するTECH-001へ起点を置換しない。
 051のrequiresは存在するTASKへの型が正しい関係で、循環もない。単に先行TASKが未doneであることだけが遮断原因である。
 052系は旧TECHのstatusをapprovedのまま保持する。後継の存在を逆索引で検出し、statusのdraft/outdatedとは区別する。
 interpretで後継を提示する経路と混ぜないようimplementを明示する。052-02では起点TECH-003自体は置換されていない。
@@ -50,11 +50,11 @@ interpretで後継を提示する経路と混ぜないようimplementを明示�
 
 ## 準備検証
 
-context_failure_fixtures.pyは固定入力byte列、レビュー済みFrontmatter値のSchema、manifest、完全期待JSON、
-read-only副作用期待値を照合する。起点・閉包の展開、状態適用可否、Digest計算などの製品処理は実装しない。
+context_failure_fixtures.pyは固定入力byte列、review済みFrontmatter値のSchema、manifest、完全期待JSON、
+読取り専用副作用期待値を照合する。起点・閉包の展開、状態適用可否、Digest計算などの製品処理は実装しない。
 各2回の隔離setupで、Git repository・symbolic HEADの存在、HEAD未解決、ref/index空集合、worktree内容を確認する。
 repository、Git status/index、HOME/cache/TMPDIRのsnapshotを固定値へ照合し、before=afterを要求する。
-Core実行後の観測値ではなく、副作用ゼロの期待値である。
+Core実行後の観測値ではなく、副作用0の期待値である。
 
 回帰試験では起点の差替え、非成功の成功化、誤ったDiagnostic、Digestの捏造、resolutionの成功化、
 文書件数・coverageの部分出力、後継重複診断の降格・二重化、purposeの変更、Git snapshotの消去を拒否する。

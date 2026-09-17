@@ -1,4 +1,4 @@
-# 既定表示・revision fixtureレビュー
+# 既定表示・revision fixture review
 
 2026-09-14。matrix §6.11のうち7件（SINGLE-104-02/03/04、105-01/02、106-04/05）を追加する。
 Markdown byte一致を要する104-01と、新しいContext corpusとgolden Digestを要する106-01/02/03は同節の残件とする。
@@ -21,7 +21,7 @@ Markdown byte一致を要する104-01と、新しいContext corpusとgolden Dige
 104-02/03/04は`--format`を渡さず、既定値がcheck・verify・doctorでtextであることを固定する。
 要約行は固定文字列で持つが、監査はJSON対応物から導出式どおりに再計算して照合する。
 targetsはcheckが`checkedDocumentCount`、verifyが`targetResults`の件数、doctorが`checks`の件数であり、
-diagnosticsはtop-levelとtarget上のDiagnosticの総数である。doctorだけが`scope=`を出さないことも検査する。
+diagnosticsは最上位とtarget上のDiagnosticの総数である。doctorだけが`scope=`を出さないことも検査する。
 
 105-01はSINGLE-042との差分をbase commitだけにし、`revision`を現在版の`commit`と`dirty`に固定する。
 期待JSONのcommitは他fixtureと同じ0埋めのplaceholderとし、監査は隔離setupの実HEADが40桁小文字16進であること、
@@ -31,7 +31,7 @@ worktreeが清潔であること、operationごとのrevision形（checkは`base
 
 106-04はSINGLE-069-01と同じcorpus・同じcommand pathで、scriptだけを無出力へ替える。
 scriptの本文はDigest材料ではないため、target Digestは同じ値になる。監査はfixture自身のscriptを実行し、
-終了コード0と両stream空を観測してから、excerptが空でtruncatedがfalseであることを固定する。
+終了コード0と両stream空を観測してから、抜粋が空でtruncatedがfalseであることを固定する。
 106-05は構文上妥当で不在の明示起点2件を渡し、同じ`CTX-ROOT-MISSING-001`を両targetへ独立に生じさせる。
 targetのDigestはnull、`bindingRefs`と`commands`は空で、textの`diagnostics`は2である。
 `source.kind`が`file`以外のtext行は先頭fieldに`invocation`を置き、path・line・columnを空fieldのまま残す。

@@ -1,4 +1,4 @@
-# 上限・未知entry fixtureレビュー
+# 上限・未知entry fixture review
 
 2026-09-14。SINGLE-078、079-01/02、080-01/02/03、083の7件を追加する。
 根拠は[安全な入出力・互換性](../../../docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md)§4のresource上限、
@@ -32,11 +32,11 @@ SINGLE-080-03は差分をcovers 1件だけにする。1,001件目も解決する
 SINGLE-083は`.spec/notes.txt`をSPEC pathではないentryとして1件だけ置き、warning後も文書検査を継続して1／1とする。
 
 診断sourceは、file寸法の上限は対象file path、配列項目数は`tests[0].covers` keyを付ける。
-規範文数とFrontmatter寸法は単一keyへ原因を帰せないためkeyを付けない。line/column、evidence、suggestedActionは
+規範文数とFrontmatter寸法は単一keyへ原因を帰せないためkeyを付けない。line/column、証跡、suggestedActionは
 この期待値では付加しない。診断summaryは期待JSONの文字列を固定する。
 
 入力byte列・manifest・完全結果・副作用Schemaを検証し、隔離Git repositoryを2回setupして固定snapshotへ照合する。
 baselineへ入力をcommitし、report・cache等への書込みは許可しない。
-回帰試験は件数・コード・severity・source・keyの改変と副作用の許容を拒否し、さらに各fixtureの入力を上限の反対側へ
+回帰試験は件数・code・severity・source・keyの改変と副作用の許容を拒否し、さらに各fixtureの入力を上限の反対側へ
 差し替える改変も拒否する。上限検査もYAML parserもCoreも実装しない。
 実際の継続単位（`stop-operation`と`skip-document`）と検査件数の観測はGate Bで受け入れる。

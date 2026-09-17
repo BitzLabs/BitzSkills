@@ -1,4 +1,4 @@
-# TASK境界・対象選択fixtureレビュー
+# TASK境界・対象選択fixture review
 
 2026-09-14。SINGLE-034、SINGLE-035-01〜02の3件について、同じ入力を異なるcheck scopeで検査する
 完全期待値を固定する。Coreの実行結果ではない。
@@ -19,7 +19,7 @@ src2/outside.pyのcomment変更だけを未stageで行う。src/inside.pyは存�
 034はsrc/とsrc2/をsegment境界で区別し、src2/outside.pyだけを境界外とする。
 TASK自身の変更は境界比較対象から除外されるため、2件目のDiagnosticを追加しない。
 sourceは違反したfileのworkspaceId=root、path=src2/outside.pyとし、summaryはexpected/check.jsonの値に固定する。
-line、key、evidence、suggestedActionは付加しない。このsource位置と文言は今回の受入期待値として選択した値である。
+line、key、証跡、suggestedActionは付加しない。このsource位置と文言は今回の受入期待値として選択した値である。
 
 035-01ではTASKの説明変更により、引数なしでもTASKが確実に選ばれる。変更path数は2、対象文書数は1、
 未所有code/testの除外path数は1。TASKのchangesはcode所有逆索引を作らない。
@@ -34,14 +34,14 @@ selected/fullでは完全検査文書数1、規範文数0とし、changedだけ�
 
 ## 準備検証の範囲
 
-task_fixtures.pyはレビュー済みの固定byte列、manifest、完全期待JSON、Frontmatter Schema、read-only副作用期待値を照合する。
+task_fixtures.pyはreview済みの固定byte列、manifest、完全期待JSON、Frontmatter Schema、読取り専用副作用期待値を照合する。
 各2回の隔離setupでHEAD/indexのpathとblob、worktreeの全file byte列、Git status/index、HOME/cache/TMPDIRを確認する。
 本番のtarget選択やpath境界判定、汎用YAML解析は実装しない。
 
 回帰試験では境界違反の成功化、sourceのsrc/への変更、明示TASK指定の除去、対象・除外件数の誤り、
 fullへのwarning混入、規範文数の誤り、副作用期待値の変更、許可範囲の拡大、TASK選択原因の消去を拒否する。
 実repositoryの変更をstage/commitした場合にもHEAD/index照合が失敗することを確認する。
-Coreの実stdout、終了コード、境界判定、実副作用はGate Bで受け入れる。
+Coreの実標準出力、終了コード、境界判定、実副作用はGate Bで受け入れる。
 
 準備済みは53/311件、残258件。golden Digest等とfresh checkoutからの全Gate A検証は未完了であり、
 Gate AはBlockedを維持する。

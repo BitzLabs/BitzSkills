@@ -1,4 +1,4 @@
-# 文書ID重複・循環fixtureレビュー
+# 文書ID重複・循環fixture review
 
 2026-09-11。SINGLE-015、022-01/02/03の4件について入力・完全期待JSON・副作用期待値を固定する。
 Coreの重複検出やgraph探索の実装結果ではない。
@@ -34,7 +34,7 @@ skip-documentにはしない。このため022系の完全検査文書数は1と
 - 022-01/02は1つの自己edgeを原因とし、sourceを`.spec/technical/TECH-001.md`、
   keyをそれぞれ`relations.requires`、`relations.refines`とする。参照切れや型違反を重ねない。
 - source kindはfile、workspaceIdはroot。非成功のseverityはerror、resultStatusはfailed。
-- summaryは各expected/check.jsonの日本語文字列で固定する。line/column、specRefs、evidence、
+- summaryは各expected/check.jsonの日本語文字列で固定する。line/column、specRefs、証跡、
   suggestedAction、idCollisionsは付加しない。新IDや書換え箇所を提案しない。
 - 022-03はDiagnosticを空配列とし、warningも出さない。
 - Git IDとdurationだけ既存normalizerの代表値を使い、その他のfieldや件数を比較から除外しない。
@@ -50,8 +50,8 @@ skip-documentにはしない。このため022系の完全検査文書数は1と
 
 ## 準備検証
 
-graph_fixtures.pyは固定入力byte列とFrontmatterのレビュー済み値、manifest、完全期待JSON、
-read-only副作用Schemaを確認する。汎用Parserやgraph探索は実装しない。
+graph_fixtures.pyは固定入力byte列とFrontmatterのreview済み値、manifest、完全期待JSON、
+読取り専用副作用Schemaを確認する。汎用Parserやgraph探索は実装しない。
 各fixtureを独立した2つのGit repositoryへsetupし、repository・Git status/index・HOME・cache・TMPDIRを
 固定before snapshotと照合する。afterはbeforeと一致する期待値であり、Core実行後の観測値ではない。
 

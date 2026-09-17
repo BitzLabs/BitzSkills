@@ -1,4 +1,4 @@
-# Digest材料の完全順序・reverse solidus fixtureレビュー
+# Digest材料の完全順序・reverse solidus fixture review
 
 2026-09-17。SINGLE-122、123、124の3件を追加する。
 根拠は[Context Digest正規化仕様 §3・§4](../../../docs/03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md#3-digest-input)、
@@ -18,7 +18,7 @@ Canonical JSONを`expected/context.canonical.json`へ置き、goldenと異なる
 | SINGLE-124 | TECH-001のtitle、AC-01のtext（`\\`のescape）、command argv templateにreverse solidusを含める | passed／0 |
 
 122の正規順は`(path, commandSortKey, covers)`で、`command`なし、`default`の`[AC-01]`、`default`の
-`[AC-01, AC-02]`（prefixの短い方が先）、`other`の順になる。Digest材料では`command: null`、Bundleの
+`[AC-01, AC-02]`（接頭辞の短い方が先）、`other`の順になる。Digest材料では`command: null`、Bundleの
 `frontmatter.tests[]`ではSINGLE-042のnull・空値省略と同じく`command` keyを省略する。Bundleも同じ正規順で返す。
 Bundleが参照するcommandは`default`と`other`の2件で、名前順に収録する。
 

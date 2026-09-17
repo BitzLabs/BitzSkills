@@ -1,70 +1,64 @@
-# verify output and document-binding fixture review
+# verify出力・文書単位binding fixture review
 
-Covers `SINGLE-069-01`, `SINGLE-069-02` and `SINGLE-066` from
-[適合fixture仕様 §6.6](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#66-verify).
-`SINGLE-068` remains open; see "The one row still missing" below.
-These are reviewed expectations, not observed Core behaviour.
+[適合fixture仕様 §6.6](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#66-verify)の
+`SINGLE-069-01`、`SINGLE-069-02`、`SINGLE-066`を扱う。`SINGLE-068`は未作成である（後述の「残る1行」を参照）。
+いずれもreview済みの期待値であり、Coreの挙動を観測したものではない。
 
-## The excerpt must be provably the tail
+## 抜粋が末尾であることを証明できるようにする
 
-[安全な入出力・互換性 §9](../../../docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md#9-process出力)
-keeps the last 65,536 bytes of the redacted stream and sets `*Truncated` only when the raw stream
-exceeded that. An excerpt made of uniform filler would satisfy a tail rule, a head rule and a
-"keep everything" bug equally well, so the fixed output is marked at both ends:
+[安全な入出力・互換性 §9](../../../docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md#9-process出力)は、
+redaction後のstreamの末尾65,536 byteを保持し、元のstreamがそれを超えた場合にだけ`*Truncated`を立てる。一様な
+詰め物だけの抜粋では、末尾を残す規則、先頭を残す規則、すべてを残す欠陥のどれでも同じ結果になるため、固定した
+出力の両端に目印を置く。
 
-- line 1 is the head marker, lines 2–1099 are filler, line 1100 is the tail marker
-- every line is exactly 64 bytes, so 65,536 bytes lands on a line boundary and the expected excerpt
-  needs no assumption about a split line
-- 1,100 × 64 = 70,400 bytes, so the first 76 lines fall outside the excerpt
+- 1行目は先頭の目印、2〜1099行目は詰め物、1100行目は末尾の目印とする
+- 各行をちょうど64 byteにして、65,536 byteが行の境界に来るようにし、期待する抜粋が行の分割を仮定しないようにする
+- 1,100 × 64 = 70,400 byteなので、最初の76行は抜粋の外に出る
 
-The expected excerpt therefore contains the tail marker and **not** the head marker, and the audit
-asserts both. `check_excerpt_shape` additionally refuses an excerpt that is not exactly 64 KiB, and
-refuses output text that collides with any redaction keyword, so redaction stays the identity here and
-the expectation is not silently rewritten by a masking rule.
+したがって期待する抜粋は末尾の目印を含み、先頭の目印を**含まない**。監査は両方を確認する。さらに
+`check_excerpt_shape`は、ちょうど64 KiBでない抜粋と、redactionのkeywordと衝突する出力textを拒否する。これにより
+redactionはこの出力を変えず、期待値がmaskingの規則で知らないうちに書き換わらない。
 
-The audit runs each fixture's own command file and compares the produced tail byte for byte with the
-committed excerpt, so this is not merely an assertion about a stream nobody generated.
+監査は各fixture自身のcommand fileを実行し、生成された末尾とcommitした抜粋をbyte単位で比べる。誰も生成していない
+streamについての主張にはならない。
 
-`SINGLE-069-01` exits 0 and `SINGLE-069-02` exits 1. The script body is not Digest material, so both
-share one Context Digest while differing in outcome — a property a regression test pins, because it
-shows the Digest tracks the specification and not the run.
+`SINGLE-069-01`は0、`SINGLE-069-02`は1で終了する。scriptの本文はDigest材料ではないので、両者は結果が異なっても
+1つのContext Digestを共有する。Digestが実行ではなく仕様を追跡していることを示す性質なので、回帰試験で固定する。
 
-## `SINGLE-066`: a binding without statements
+## `SINGLE-066`: 規範文のないbinding
 
-The target is a TECH that owns no normative statement and declares a document-level test.
-[文書・Frontmatter・状態仕様](../../../docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md)
-permits a document ID in `covers` only for such a TECH, which is exactly the shape this fixture needs:
-`covers: [TECH-001]`. [関係・トレースモデル §6.4](../../../docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)
-rule 5 makes `targetStatements` empty for a root of that kind while keeping the document-level binding.
+targetは、規範文を持たず文書単位のtestを宣言するTECHである。
+[文書・Frontmatter・状態仕様](../../../docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md)は、
+このようなTECHに限って`covers`へ文書IDを書くことを許し、このfixtureに必要な形はまさに`covers: [TECH-001]`である。
+[関係・トレースモデル §6.4](../../../docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)
+の規則5は、この種類の起点で`targetStatements`を空にし、文書単位のbindingを保持する。
 
-So `targetResults[0]` reports `statements: []` together with `bindingRefs: ["root::default"]`, which is
-the combination the matrix row names. The corpus keeps the TECH standalone — no relations — so the
-closure is the root alone and no resolver question is left open. The audit re-parses the document and
-refuses the fixture if a normative statement ever appears in it.
+そのため`targetResults[0]`は、`statements: []`と`bindingRefs: ["root::default"]`を同時に返す。matrixの行が挙げる
+組合せである。入力のTECHは関係を持たず単独なので、閉包は起点だけであり、解決の論点は残らない。監査は文書を構文解析し
+直し、規範文が現れた場合はfixtureを拒否する。
 
-## The one row still missing
+## 残る1行
 
-`SINGLE-068` (done TASK root) is deliberately still absent. Its expectation depends on a question the
-normative documents do not settle: whether the documents owning a root TASK's `addresses` targets are
-part of the **verify** Context.
+`SINGLE-068`（done TASKの起点）は、意図してまだ作らない。期待値が、規範文書で決着していない論点に依存するためである。
+起点TASKが`addresses`する参照先を所有する文書が、**verify**のContextに含まれるかという論点である。
 
-- [関係・トレースモデル §6.2](../../../docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md#62-implement)
-  states the `addresses` closure explicitly for `implement`.
-- §6.3 `verify` says only "interpretに加えて対象statementのtest対応、command、実装pathを含める。
-  TASKは起点指定時だけ含める。" and `interpret` never follows `addresses`.
-- Yet [verify仕様 §3](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#3-対象) requires a TASK target
-  to verify its `addresses` targets, which is unusable if those documents are outside the Context.
+- [関係・トレースモデル §6.2](../../../docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md#62-implement)は、
+  `implement`について`addresses`の閉包を明示している。
+- §6.3の`verify`は「interpretに加えて対象statementのtest対応、command、実装pathを含める。TASKは起点指定時だけ
+  含める。」とだけ述べ、`interpret`は`addresses`をたどらない。
+- 一方、[verify仕様 §3](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#3-対象)はTASK targetが`addresses`する
+  参照先を検証することを求めており、その文書がContextの外にあれば実行できない。
 
-The coherent reading is that they are included, but that is a normative decision, and
-[適合fixture仕様 §3.3](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#33-実成果物との対応)
-forbids adding a fixture whose contract is unsettled: the expectation must arrive with the contract
-change, not ahead of it. The gap is therefore reported rather than encoded.
+一貫した読み方は「含まれる」だが、これは規範上の決定であり、
+[適合fixture仕様 §3.3](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#33-実成果物との対応)は
+契約が未確定のfixtureの追加を禁じている。期待値は契約の変更と同時に追加するもので、先行してはならない。そのため、
+この欠落はfixtureにせず報告する。（その後、§6.3へ明記して`SINGLE-068`を追加した。
+[done TASK起点review](done-TASK起点review.md)を参照。）
 
-## Limits
+## 限界
 
-- No Core has run. Gate B decides agreement with Core.
-- Redaction is the identity on this fixed output. The interaction between an over-limit stream and a
-  redaction that lengthens the text — where `*Truncated` must still follow the *raw* size — is not
-  exercised by these two fixtures.
-- The excerpt boundary is exercised only on a line boundary and in ASCII, so the code-point-boundary
-  rule for a multi-byte character split across the 64 KiB edge is not pinned here.
+- Coreは実行していない。Coreとの一致はGate Bで判定する。
+- この固定した出力では、redactionは値を変えない。上限を超えるstreamと、textを長くするredactionの組合せ
+  （その場合も`*Truncated`は*元の*大きさに従う）は、この2件では検査しない（後に`SINGLE-126-16`で検査した）。
+- 抜粋の境界は、ASCIIの行の境界でだけ検査している。64 KiBの境目でmulti-byte文字が分かれる場合の、
+  コードポイント境界の規則はここでは固定しない。

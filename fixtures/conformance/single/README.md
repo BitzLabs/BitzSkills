@@ -3,14 +3,14 @@
 2026-09-08。対象は `SINGLE-001`、`002`、`003`、`004-01`、`004-02`、`005-01`、`005-02`、`006-01`、`006-02`。
 この9件は入力・唯一の期待JSON・副作用期待値を持つ。Coreの実行結果ではない。
 
-## 設計と単一原因レビュー
+## 設計と単一原因review
 
 | ID | 独立原因 | 実行 | status / exit |
 |---|---|---|---|
 | SINGLE-001 | なし。最小設定だけ | doctor --format json | passed / 0 |
 | SINGLE-002 | 設定不在だけ | doctor --format json | blocked / 2 |
-| SINGLE-003 | schemaVersionをstringの2.0に変更 | check --full --base HEAD --format json | blocked / 2 |
-| SINGLE-004-01 | languageをintegerの42に変更 | check --full --base HEAD --format json | error / 3 |
+| SINGLE-003 | schemaVersionを文字列の2.0に変更 | check --full --base HEAD --format json | blocked / 2 |
+| SINGLE-004-01 | languageを整数の42に変更 | check --full --base HEAD --format json | error / 3 |
 | SINGLE-004-02 | 必須earsAiだけを削除 | check --full --base HEAD --format json | error / 3 |
 | SINGLE-005-01 | 未知key futureOptionだけを追加 | check --full --base HEAD --format json | passed_with_warnings / 0 |
 | SINGLE-005-02 | 予約key profilesだけを追加 | check --full --base HEAD --format json | passed_with_warnings / 0 |
@@ -40,11 +40,11 @@ SINGLE-002の空repoをGitで保持するためだけに `.gitkeep` を置き、
   `impact` はinfo、他はpassed。plugin要求がなく、単一workspaceなのでplugin・Capability要求・catalogの項目は置かない。
   command定義0件はcommand check成功、影響候補0件はimpact checkのinfoとし、追加Diagnosticは出さない。
 - SINGLE-002は `core: passed, workspace: blocked, git: passed`。
-  独立なGit確認を続け、設定に依存する後続checkは出力しない。連合の依存遮断Diagnosticは単一workspaceへ追加しない。
-- 未知majorのSINGLE-003は構造的に有効な設定から既定identity `root` を確定後、互換性検査で停止する。
-  型不正・必須key欠如・設定不在のケースはidentity確定前なので `workspace.id: null`。
+  独立なGit確認を続け、設定に依存する後続checkは出力しない。複合workspaceの依存遮断Diagnosticは単一workspaceへ追加しない。
+- 未知majorのSINGLE-003は構造的に有効な設定から既定同一性`root` を確定後、互換性検査で停止する。
+  型不正・必須key欠如・設定不在のcaseは同一性確定前なので `workspace.id: null`。
 - checkのDiagnosticは `source.key` をそれぞれ `schemaVersion`、`language`、`earsAi` とする。
-  line・column、evidence、specRefs、extensions、suggestedActionはこの3件では付加しない。
+  line・column、証跡、specRefs、extensions、suggestedActionはこの3件では付加しない。
   summaryは各 `expected/check.json` の日本語文字列を固定値とする。
 - 設定不在はenvironment sourceの `component: workspace, identifier: .` とし、
   suggestedActionへ作成先・貼付け可能な最小設定・gitignore追記・次のcheckを含める。
@@ -53,14 +53,14 @@ SINGLE-002の空repoをGitで保持するためだけに `.gitkeep` を置き、
   `legacy-profile` は保持し、profilesを設定機能として解釈しない。文書0件のfull checkは両checked countを0とする。
 - 006系は `SPEC-DOCTOR-COMMAND-001` / error / blockedを1件だけ返す。
   sourceはregistryどおりfileで、`workspaceId: root`、`path: .spec/bitz.yaml`、keyはそれぞれ
-  `verify.commands.default.argv`、`verify.commands.default.cwd`。line・column・evidence・修復案は付加しない。
+  `verify.commands.default.argv`、`verify.commands.default.cwd`。line・column・証跡・修復案は付加しない。
   checksは001と同じ順序でcommandだけblocked。独立なimpact checkは続けてinfoとし、別のDiagnosticは追加しない。
   005・006系ともsummaryは各expected JSONの固定文字列とする。
 - durationは0、Core patchは0、Git commit IDは40桁の0を期待JSONの代表値とする。
   実値は既存の共通normalizerだけで比較する。Gitのdirty、Core major/minorやCapability順序は除外しない。
 
 これらは今回追加した受入期待値の選択であり、既存Coreで観測した値ではない。
-将来変更する場合は仕様との整合をレビューし、期待値とレビュー記録を同じ変更で更新する。
+将来変更する場合は仕様との整合をreviewし、期待値とreview記録を同じ変更で更新する。
 
 ## 副作用期待値と検証
 
@@ -75,7 +75,7 @@ report directory、永続cache、lock、作業fileの残存を許可しない。
 
 1. manifest / result / side-effectsのSchema適合、操作・status・終了コード・単一原因との整合。
 2. 各入力を新しい隔離directoryに2回setupし、各回が固定before snapshotと一致すること。
-3. 入力byte列がレビュー済みの単一原因と一致し、read-onlyの期待afterがbeforeと一致すること。
+3. 入力byte列がreview済みの単一原因と一致し、読取り専用の期待afterがbeforeと一致すること。
 4. 回帰試験でstatus、source.key、argv、修復手順、副作用期待値の破損を拒否すること。
 5. 005系のwarningをerrorへ変更した場合やDiagnosticの重複、006系の原因keyやcheck statusの破損を拒否すること。
 
@@ -87,8 +87,8 @@ hostのPATHに同名commandがあっても結果が変わらない構成とす�
 準備検証でcommandを起動することはない。実際のdoctorがcommandを起動しないことはGate Bで別途確認する。
 
 検証はCoreもYAML設定判定も実装しない。afterは期待値だけであり、Core実行後の実測値ではない。
-Core実装後のGate Bで、実stdout/終了コード、実before/after、索引構築へ進まないことを確認する。
+Core実装後のGate Bで、実標準出力/終了コード、実before/after、索引構築へ進まないことを確認する。
 この9件に加えて[EARS-AI構文・候補抽出・拡張の12件](EARS-AI構文・候補抽出review.md)と
-[文書構造・UTF-8の9件](文書構造・UTF-8-review.md)、[関係・path・coverageの6件](関係・path・coverage-review.md)、[ID重複・循環の4件](文書ID重複・循環review.md)、[Git基準版の5件](Git基準版・状態遷移review.md)、[保護対象外変更の5件](approved-REQの保護対象外変更review.md)と[TASK境界の3件](TASK境界・対象選択review.md)、[Git対象選択・影響候補の4件](Git対象選択・影響候補review.md)、[Git基準版エラー・Git不在の3件](Git基準版error・Git不在review.md)、[Context非成功の5件](Context非成功review.md)を準備した。
+[文書構造・UTF-8の9件](文書構造・UTF-8-review.md)、[関係・path・coverageの6件](関係・path・coverage-review.md)、[ID重複・循環の4件](文書ID重複・循環review.md)、[Git基準版の5件](Git基準版・状態遷移review.md)、[保護対象外変更の5件](approved-REQの保護対象外変更review.md)と[TASK境界の3件](TASK境界・対象選択review.md)、[Git対象選択・影響候補の4件](Git対象選択・影響候補review.md)、[Git基準版error・Git不在の3件](Git基準版error・Git不在review.md)、[Context非成功の5件](Context非成功review.md)を準備した。
 計65/311件、matrix残246件、golden Context Digest、全体の副作用期待値、
 fresh checkoutでのGate A全検証は残る。

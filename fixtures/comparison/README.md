@@ -1,15 +1,15 @@
-# Core 1.0 comparison tasks
+# Core 1.0の比較task
 
-This directory evaluates authoring and review effectiveness; it is separate from machine performance fixtures. Each task has
-equivalent baseline Markdown and Bitz conditions. Participants must not read `answer-key.json` before completing a task.
+本directoryは、仕様の記述とreviewの効果を評価する。機械の性能fixtureとは別である。各taskは、通常のMarkdownによる
+基準条件と、Bitzによる条件を同等に持つ。参加者はtaskを完了するまで`answer-key.json`を読んではならない。
 
-Use `protocol.json` as the normative procedure. Assign conditions in balanced AB/BA order, use a clean task copy, prohibit network
-and external assistance, and record all four required metrics. A task is complete only when its completion criteria pass blind review.
-The five task definitions, protocol, answer key, and result schema are versioned together; changing one requires a new protocol version.
+手順の正本は`protocol.json`とする。条件はAB／BAの均衡した順序で割り当て、taskのclean copyを使い、networkと外部の
+支援を禁止し、必須の4指標をすべて記録する。taskは、完了条件が盲検のreviewを通過した場合だけ完了とする。
+5件のtask定義、protocol、正解表、結果Schemaはまとめてversion管理し、1つを変える場合はprotocolの新しいversionを作る。
 
-Validate `tasks/*.json` with `task.schema.json`, `protocol.json` with `protocol.schema.json`, `answer-key.json` with
-`answer-key.schema.json`, and observations with `result.schema.json`.
+`tasks/*.json`は`task.schema.json`、`protocol.json`は`protocol.schema.json`、`answer-key.json`は
+`answer-key.schema.json`、観測値は`result.schema.json`で検証する。
 
-Run `uv run fixtures/validate_step0p.py` from the repository root to validate the fixed inputs and schemas together with
-performance datasets. Future observation schemas are checked structurally; participant results are collected after Core exists.
-The Core 1.0 exclusions in [performance scope](../performance/README.md#6-scope-exclusions) apply to these tasks as well.
+repository rootで`uv run fixtures/validate_step0p.py`を実行すると、固定した入力とSchemaを、性能datasetとあわせて検証する。
+将来の観測値Schemaは構造だけを検査し、参加者の結果はCoreができた後に集める。
+[性能fixtureの対象外](../performance/README.md#6-対象外)に挙げたCore 1.0の対象外機能は、これらのtaskにも適用する。

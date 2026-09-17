@@ -1,4 +1,4 @@
-# 出力形式fixtureレビュー
+# 出力形式fixture review
 
 2026-09-14。SINGLE-075-01/02とSINGLE-127-12を追加する。
 根拠は[結果契約 §7・§8](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#7-textとjson)、
@@ -26,4 +26,4 @@ status、件数、空field、改行、非ASCII数字や小数表記を正規化�
 
 各fixtureのSchema・期待値・入力byte列、2回の隔離setupと固定snapshot一致を検査する。
 textの件数改変、JSON statusの改変、副作用許可の拡大を拒否する回帰試験を追加する。
-Coreは実行せず、text rendererも実装しない。実stdout、実report内容、実副作用の受入はGate Bで行う。
+Coreは実行せず、text rendererも実装しない。実標準出力、実report内容、実副作用の受入はGate Bで行う。

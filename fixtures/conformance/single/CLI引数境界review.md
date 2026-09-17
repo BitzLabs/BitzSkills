@@ -1,14 +1,14 @@
-# CLI引数境界fixtureレビュー
+# CLI引数境界fixture review
 
-2026-09-14。SINGLE-127の引数解析エラー9件を追加する。CoreのCLI解析は実装・実行しない。
+2026-09-14。SINGLE-127の引数解析error 9件を追加する。CoreのCLI解析は実装・実行しない。
 
 | ID | 唯一の不正条件 | 期待 |
 |---|---|---|
 | SINGLE-127-01 | `--format json`を2回指定 | 同値でも重複を拒否 |
 | SINGLE-127-02 | `--full`を2回指定 | 重複flagを拒否 |
-| SINGLE-127-05 | checkのtargetに空stringを1件指定 | 引数なしcheckへ置換せず拒否 |
+| SINGLE-127-05 | checkのtargetに空文字列を1件指定 | 引数なしcheckへ置換せず拒否 |
 | SINGLE-127-06 | contextの起点を指定しない | 必須起点の不足を拒否 |
-| SINGLE-127-07 | doctorの`--workspace`値が空string | workspace探索前に拒否 |
+| SINGLE-127-07 | doctorの`--workspace`値が空文字列 | workspace探索前に拒否 |
 | SINGLE-127-08 | verifyの`--timeout 0` | 下限外を拒否 |
 | SINGLE-127-09 | verifyの`--timeout 3601` | 上限外を拒否 |
 | SINGLE-127-10 | verifyの`--timeout +1` | 数値範囲内でも非canonical表記を拒否 |
@@ -22,7 +22,7 @@
 既存の`cli-output.json`とoperation別の出力検査を共用する。
 
 入力は既存SINGLE-042の有効な単一workspace corpusを物理copyし、引数以外の不正を混ぜない。
-REQ-001は存在し、timeoutケースへ未知targetを混ぜない。空stringはmanifestのargv配列で保持し、
+REQ-001は存在し、timeout caseへ未知targetを混ぜない。空文字列はmanifestのargv配列で保持し、
 shellを介して消失させない。checkのbase指定は不要で、argv拒否後にGit基準版を解決してはならない。
 副作用期待値はrepository、Git status/index、隔離HOME/cache/TMPDIRのbefore/after完全一致とする。
 

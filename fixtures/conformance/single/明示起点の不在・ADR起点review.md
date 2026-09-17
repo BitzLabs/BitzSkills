@@ -1,4 +1,4 @@
-# 明示起点の不在・ADR起点fixtureレビュー
+# 明示起点の不在・ADR起点fixture review
 
 2026-09-17。SINGLE-111-01〜04と112-01〜04の8件を追加する。
 根拠は[CLI基盤契約 §6](../../../docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md#6-targetとworkspaceの不存在)、
@@ -25,7 +25,7 @@ checkは基準版commitを作り`--base HEAD`を明示するclean状態で実行
 
 111-04はverifyの慣例に従い、commitせず入力をstageする（設定がindexに無いと起動前に停止するため）。
 SINGLE-106-05の1起点版であり、targetは`contextDigest: null`、`statements: []`、`bindingRefs: []`、
-`commands: []`、top-levelの`diagnostics: []`とする。
+`commands: []`、最上位の`diagnostics: []`とする。
 
 ## ADR起点
 

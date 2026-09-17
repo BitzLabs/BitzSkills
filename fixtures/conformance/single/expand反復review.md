@@ -1,4 +1,4 @@
-# expand反復fixtureレビュー
+# expand反復fixture review
 
 2026-09-14。SINGLE-127-03とSINGLE-127-04を追加する。
 根拠は[CLI基盤契約 §5](../../../docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md#5-共通cli-argv解析)、
@@ -11,8 +11,8 @@
 | SINGLE-127-04 | TECH-001、TECH-001 | TECH-001 |
 
 異なる値は意図的に辞書順の逆で渡し、入力順のまま返す実装を区別する。同値反復は拒否せず1件へまとめる。
-非反復optionがエラーになるSINGLE-127-01/02と対をなす。
-単一workspaceでは非修飾IDを使用し、連合での修飾ID解決はこの2件の検証対象に含めない。
+非反復optionがerrorになるSINGLE-127-01/02と対をなす。
+単一workspaceでは非修飾IDを使用し、複合workspaceでの修飾ID解決はこの2件の検証対象に含めない。
 
 入力byte列と副作用snapshotはSINGLE-042と同一。purposeはverifyで、REQ-001とTECH-001はいずれも
 完全解決集合内に存在する。REQ-001は既にrootとしてfull提示だが、明示expandの正規化集合には保持する。

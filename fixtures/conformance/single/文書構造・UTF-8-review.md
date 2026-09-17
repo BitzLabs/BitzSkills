@@ -1,4 +1,4 @@
-# 文書構造・UTF-8 fixtureレビュー
+# 文書構造・UTF-8 fixture review
 
 2026-09-11。SINGLE-014、016、017-01/02/03、018-01/02/03、019の9件を追加する。
 入力と受入期待値の準備であり、Coreの実装結果ではない。文書ID重複のSINGLE-015は今回の対象に含めない。
@@ -39,12 +39,12 @@ styleの3件はcontinueなので全検査を続け、非成功でも文書数は
 - 014は実在するREQ-002.mdを指し、source.keyはidとする。
 - 017-01はH1の7行1列、017-03は候補行IDの15行3列を指す。
 - 016、017-02、019はfile単位。欠落位置や復号不能位置のline/columnを推測しない。
-- summaryは各expected/check.jsonの固定値。suggestedAction、specRefs、evidenceは付加しない。
+- summaryは各expected/check.jsonの固定値。suggestedAction、specRefs、証跡は付加しない。
 - Git IDとdurationだけは既存normalizer用の代表値とし、status、件数、配列、sourceは比較から除外しない。
 
 これらの任意fieldと文字列は今回固定した受入期待値であり、Coreから採取したものではない。
 根拠は[文書・Frontmatter仕様 §1](../../../docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md)、
-[本文テンプレート §1・§2・§4・§7](../../../docs/03.詳細設計/02_SPECモデル/03_文書種別・本文template.md)、
+[本文template §1・§2・§4・§7](../../../docs/03.詳細設計/02_SPECモデル/03_文書種別・本文template.md)、
 [Diagnostic registry](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md)、
 [check仕様 §4・§9](../../../docs/03.詳細設計/03_操作仕様/02_check.md)、
 [適合matrix §6.2](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md)である。
@@ -52,9 +52,9 @@ styleの3件はcontinueなので全検査を続け、非成功でも文書数は
 ## 検証範囲
 
 document_fixtures.pyはmanifest、完全期待JSON、Frontmatterの固定3 field、副作用期待値のSchemaと、
-レビュー済み入力byte列を検査する。余分なfileや最小設定の変更も拒否する。汎用Parserは実装しない。
+review済み入力byte列を検査する。余分なfileや最小設定の変更も拒否する。汎用Parserは実装しない。
 各fixtureのrepository、Git status/index、HOME、cache、TMPDIRを独立した2回のsetupで固定snapshotと照合する。
-read-onlyのafterはbeforeと同じ期待値であり、Coreによる実測値ではない。
+読取り専用のafterはbeforeと同じ期待値であり、Coreによる実測値ではない。
 
 回帰試験はskip/continue件数、ADR候補の件数、診断path/code、styleへのwarning追加、report指定、
 HOMEへの書込み期待、UTF-8不正のstatus変更・置換文字への修復、余分な文書・設定不正を拒否する。

@@ -1,25 +1,25 @@
-# Git基準版エラー・Git不在fixtureレビュー
+# Git基準版error・Git不在fixture review
 
 2026-09-14。SINGLE-036〜038の3件を追加する。Coreの実行結果ではなく、入力・manifest・唯一の期待値・
 副作用期待値を固定したStep 0Bの準備証拠である。
 
-## ケースと期待値
+## caseと期待値
 
 | ID | 入力・呼出し | 期待値 |
 |---|---|---|
-| SINGLE-036 | 最小設定・approved TECH・既存reportをcommit済み。check --base fixture-missing-base --report --format json | 終了コード4、stdout空、stderrに理由1行、結果JSONなし、既存report不変・新規reportなし |
+| SINGLE-036 | 最小設定・approved TECH・既存reportをcommit済み。check --base fixture-missing-base --report --format json | 終了コード4、標準出力空、標準エラー出力に理由1行、結果JSONなし、既存report不変・新規reportなし |
 | SINGLE-037 | Gitを実行できない環境の最小設定・approved TECH。check --format json | full、passed_with_warnings / 0、SPEC-GIT-DEGRADED-001のみ、revision=null |
 | SINGLE-038 | 同じGit不在環境の最小設定・open TASK。check TASK-001 --format json | selected、blocked / 2、SPEC-TASK-BOUNDARY-002のみ、revision=null |
 
 036はHEADが正常に解決でき、指定したfixture-missing-baseだけが解決できないことを確認する。
 既存reportは.spec/reports/existing.jsonの固定byte列で、変更前後snapshotへ含める。
---report指定を加えても引数エラー時には新しいreportも部分結果も出さない期待を固定する。
+--report指定を加えても引数error時には新しいreportも部分結果も出さない期待を固定する。
 manifestにはstatus/resultFile/textFileを置かず、expected/の結果fileも作らない。
 
-stderrの自然言語文言は機械判定に使わないという正本に従い、fixture直下のcli-output.jsonは
-stdout空・終了コード4・stderrのprefix・非空理由・1行・端末制御文字禁止だけを固定する。
+標準エラー出力の自然言語文言は機械判定に使わないという正本に従い、fixture直下のcli-output.jsonは
+標準出力空・終了コード4・標準エラー出力の接頭辞・非空理由・1行・端末制御文字禁止だけを固定する。
 check_cli_error_outputはその出力形状を検査するtest用assertionであり、Coreのargv解析ではない。
-日本語・英語の異なる理由文が通ること、空理由・複数行・制御文字・不正UTF-8・stdoutへの空JSONなどが
+日本語・英語の異なる理由文が通ること、空理由・複数行・制御文字・不正UTF-8・標準出力への空JSONなどが
 拒否されることを自己試験する。manifestの公開fieldや規範Schemaは増やさない。
 
 037・038ではsetup.git=falseに加え、invocation.envのPATHをLinuxの非directory /dev/nullへ固定する。
@@ -57,7 +57,7 @@ warning消去、TASK診断の置換・重複を拒否する。無効refが実際
 ## 前回fixtureの補正
 
 適合fixture仕様 §3はbaseCommitがあるfixtureに明示--baseを要求する。
-前回のSINGLE-040・041に不足していた--base HEADをmanifestとレビュー済みargvへ追加した。
+前回のSINGLE-040・041に不足していた--base HEADをmanifestとreview済みargvへ追加した。
 Git入力、対象集合、期待JSON、副作用期待値は変わらない。unbornの039には--baseを加えない。
 matrix検査へ明示baseの欠落とGit不在時のbase指定を検出する規則・回帰試験を追加した。
 

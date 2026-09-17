@@ -1,4 +1,4 @@
-# Scanner・位置 fixtureレビュー
+# Scanner・位置 fixture review
 
 2026-09-14。matrix §6.10のcheck 16件（SINGLE-096-02、097-02、098-02、099-01〜04、100-01〜04、
 101-02/03、102、103-01/02）を追加する。IRとDigestの完全比較を要する`context` 4件
@@ -16,8 +16,8 @@
 | SINGLE-099-02 | tilde fence内 | — | passed／0 | — |
 | SINGLE-099-03 | 引用内 | — | passed／0 | — |
 | SINGLE-099-04 | 4 SP indent | — | passed／0 | — |
-| SINGLE-100-01 | 桁不足の既知prefix | `EAI-CORE-ID-001` | failed／1 | 16, 3 |
-| SINGLE-100-02 | 未知uppercase prefix | `EAI-CORE-ID-001` | failed／1 | 16, 3 |
+| SINGLE-100-01 | 桁不足の既知接頭辞 | `EAI-CORE-ID-001` | failed／1 | 16, 3 |
+| SINGLE-100-02 | 未知uppercase接頭辞 | `EAI-CORE-ID-001` | failed／1 | 16, 3 |
 | SINGLE-100-03 | 3階層ID | `EAI-CORE-ID-001` | failed／1 | 16, 3 |
 | SINGLE-100-04 | `[ACTOR:...]`始まりのID欠落 | `EAI-CORE-ID-001` | failed／1 | 16, 3 |
 | SINGLE-101-02 | `[MUST] [REASON]` | `EAI-CORE-SYNTAX-001` | failed／1 | 16, 56 |

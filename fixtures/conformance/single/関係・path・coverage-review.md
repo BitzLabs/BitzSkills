@@ -1,4 +1,4 @@
-# 関係・path・coverage fixtureレビュー
+# 関係・path・coverage fixture review
 
 2026-09-11。SINGLE-020、021、023、024、025、026の6件の入力と完全期待値を固定する。
 Coreの関係解決、path検査、coverage判定を実装・実行した結果ではない。
@@ -39,9 +39,9 @@ checkの文書検査完了を、非成功の関係を含むContext閉包が完�
 - sourceはfile、workspaceId root、path `.spec/requirements/REQ-001.md`。
   source.keyは順に`relations.requires`、`relations.refines`、`refs`、`implements`、`implements`、`tests[0].covers`。
   配列の原因要素が各1件であるため、関係とimplementsはfield keyで固定する。
-- line/column、specRefs、evidence、suggestedActionは付加しない。summaryはexpected JSONの固定日本語文字列とする。
+- line/column、specRefs、証跡、suggestedActionは付加しない。summaryはexpected JSONの固定日本語文字列とする。
 - Git IDとdurationだけ既存normalizer用の代表値を使う。件数・診断順・任意fieldを比較から除外しない。
-- repo、Git status/index、HOME、cache、TMPDIRのread-only before/afterを固定し、許可書込みを0件とする。
+- repo、Git status/index、HOME、cache、TMPDIRの読取り専用before/afterを固定し、許可書込みを0件とする。
 
 これらの任意field・文字列は今回の受入期待値の選択であり、既存Coreから採取したものではない。
 根拠は[関係・トレースモデル §4・§5.1・§9](../../../docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md)、
@@ -52,7 +52,7 @@ checkの文書検査完了を、非成功の関係を含むContext閉包が完�
 
 ## 準備検証
 
-trace_fixtures.pyは固定入力byte列、レビュー済みFrontmatter値のSchema、manifest、完全期待JSON、
+trace_fixtures.pyは固定入力byte列、review済みFrontmatter値のSchema、manifest、完全期待JSON、
 副作用Schemaを照合する。FrontmatterのYAML原文と対応する値は固定ペアであり、汎用YAML parserは実装しない。
 各2回の隔離setupを固定snapshotと比較し、余分なfile、原因の修復、別原因の混入を拒否する。
 回帰試験は二重診断、missingとtypeの取り違え、独立TECHの検査漏れ、draft severity、covers source、

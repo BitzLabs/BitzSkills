@@ -1,483 +1,446 @@
-# Step 0B validation progress
+# Step 0B検証記録
 
-- Date: 2026-09-17（下表は2026-09-14時点の構成。以後の追加は末尾の日付節を参照）
-- Command: `uv run fixtures/validate_step0b.py`
-- Runtime: CPython 3.14.6, Linux/POSIX, uv 0.11.32; validator versions pinned in script metadata.
-- Gate A: `Blocked`; command exit code: 1 (outstanding evidence).
+- 日付: 2026-09-17（下表は2026-09-14時点の構成。以後の追加は末尾の日付節を参照）
+- command: `uv run fixtures/validate_step0b.py`
+- 検証環境: CPython 3.14.6、Linux／POSIX、uv 0.11.32。validatorの依存versionはscriptのmetadataで固定した。
+- Gate A: `Blocked`。commandの終了コードは1（未完了の証拠が残るため）。
 
-| Check | Evidence |
+| 検査 | 証拠 |
 |---|---|
-| Public JSON | 10 examples passed: operation results, Diagnostic and fixture manifest |
-| Other JSON examples | 5 Semantic IR / Digest material examples parsed; not certified by the result Schema |
-| EBNF references | 33 definitions plus 3 explicitly prose-defined lexical sets; no unresolved reference |
-| Diagnostic review (updated 2026-09-08) | 119 conditions mapped to 17 source documents; three open issues resolved; ledger and regression checks passed |
-| Matrix inventory | 310 IDs（2026-09-17時点）、重複とfamily／suffix衝突なし。準備済み250件、未作成60件（連合のみ） |
-| EARS fixtures | SINGLE-007, 008, 009-01/02/03, 010-01/02, 011, 012-01/02/03, 013: fixed REQ bytes, Frontmatter Schema, complete expected results, Unicode token/end-of-line positions and two isolated setups checked; position/severity/code/count/input corruption rejected |
-| Document fixtures (2026-09-11) | SINGLE-014, 016, 017-01/02/03, 018-01/02/03, 019: fixed input bytes including invalid UTF-8, complete expected JSON, Frontmatter and side-effect schemas, and two isolated setups each passed; skip/continue counts, Diagnostic, report, side-effect and input corruption rejected |
-| Trace fixtures (2026-09-11) | SINGLE-020, 021, 023, 024, 025, 026: fixed YAML/decoded Frontmatter pairs, complete expected JSON, read-only snapshots and two isolated setups each passed; duplicate diagnostics, wrong primary/count/severity/source, input repair and additional causes rejected |
-| Graph fixtures (2026-09-11) | SINGLE-015, 022-01/02/03: duplicate TECH IDs and self-referential requires/refines/related, fixed complete results and read-only snapshots; two isolated setups and mutation tests passed |
-| Git fixtures (2026-09-11) | SINGLE-027–031: fixed HEAD/index/worktree contents, transitions/new/deleted/renamed/approved-meaning cases, complete JSON and read-only snapshots; two isolated setups and mutation tests passed |
-| Approved-REQ exemptions (2026-09-11) | SINGLE-032-01–05: implements/tests/related/x-field/prose-only changes, unchanged supporting files, complete success JSON, two isolated HEAD/index/worktree comparisons and mutation tests passed |
-| TASK scopes (2026-09-14) | SINGLE-034, 035-01/02: identical two-path unstaged changes, explicit TASK segment-boundary failure versus changed/full success; complete JSON, HEAD/index/worktree and read-only snapshots checked in two isolated setups; corrupted scope, source, selection counts, permissions and staging rejected |
-| Git selection/impact (2026-09-14) | SINGLE-033, 039–041: direct strong dependency warning with weak/transitive controls, unborn full fallback, clean empty selection, staged unowned code and untracked test; complete JSON, HEAD/index/worktree and read-only snapshots checked in two isolated setups; corrupted diagnostics, revision, counts, ownership and Git state rejected |
-| Git environment (2026-09-14) | SINGLE-036–038: invalid explicit base with --report preserves existing report and emits no result; Git-absent full/selected results use null revision and null Git snapshots; two isolated setups, CLI stream assertions and mutation tests passed |
-| Context failures (2026-09-14) | SINGLE-050, 051, 052-01/02, 053: missing root, unfinished predecessor TASK, superseded root/dependency and multiple successors; complete non-success JSON, null Digest and unborn revision, empty Bundle/coverage, two isolated setups and mutation tests passed |
-| Initial fixtures | SINGLE-001, 002, 003, 004-01/02, 005-01/02, 006-01/02: manifest/result/side-effect schemas and reviewed input checks passed; two isolated setups each matched fixed before snapshots |
-| Command preconditions | Absent explicit executable / absent cwd isolated; /bin/true executable prerequisite checked without running commands; extra or missing causes rejected by regression tests |
-| Target vectors (2026-09-08) | 18 basic combinations + 7 supplementary cases; four ordered sets, input-order invariance and rejection regression checks passed |
-| Relative links | 230 references in current contracts and accepted ADRs（2026-09-17時点）; no missing target/anchor |
-| Git infrastructure | unborn, clean, worktree, staged, rename, delete, create; two identical setups per vector |
-| Snapshot comparison | Content, executable bit, symlink target changes detected; unsafe path traversal rejected |
-| Process helpers | Exit 0/7, SIGTERM, timeout, descendant pipe holding; isolated process groups cleaned up within bounded tests |
-| Audit regression checks | Invalid public result and unknown grammar reference rejected; Semantic IR correctly classified; missing fixtures detected; initial result/status/key/argv/recovery and snapshot mutations rejected |
-| Step 0-P | Passed again via the integrated command |
+| 公開JSON | 操作結果、Diagnostic、fixture manifestの例10件が通過 |
+| その他のJSON例 | Semantic IR／Digest材料の例5件を構文解析。結果Schemaによる保証はしない |
+| EBNFの参照 | 定義33件と、散文で定義した字句集合3件。未解決の参照なし |
+| Diagnostic review（2026-09-08更新） | 119条件を根拠文書17件へ対応付け。未解決の論点3件を解消し、台帳と回帰試験が通過 |
+| matrixの一覧 | 310 ID（2026-09-17時点）、重複とfamily／接尾辞衝突なし。準備済み250件、未作成60件（複合workspaceのみ） |
+| EARS fixture | SINGLE-007、008、009-01/02/03、010-01/02、011、012-01/02/03、013: 固定したREQのbyte列、Frontmatter Schema、完全な期待結果、Unicodeのtoken・行末の位置、隔離した2回のsetupを確認。位置・severity・code・件数・入力の改変を拒否 |
+| 文書fixture（2026-09-11） | SINGLE-014、016、017-01/02/03、018-01/02/03、019: 不正なUTF-8を含む固定入力、完全な期待JSON、FrontmatterとSchemaの副作用期待値、隔離した2回のsetupがそれぞれ通過。skip／継続の件数、Diagnostic、report、副作用、入力の改変を拒否 |
+| trace fixture（2026-09-11） | SINGLE-020、021、023、024、025、026: YAMLとdecode後のFrontmatterの組、完全な期待JSON、読取り専用snapshot、隔離した2回のsetupがそれぞれ通過。Diagnosticの重複、誤ったprimary・件数・severity・source、入力の修復、原因の追加を拒否 |
+| graph fixture（2026-09-11） | SINGLE-015、022-01/02/03: TECH IDの重複と、requires／refines／relatedの自己参照。固定した完全な結果と読取り専用snapshot。隔離した2回のsetupと改変試験が通過 |
+| Git fixture（2026-09-11） | SINGLE-027〜031: HEAD／index／作業treeの内容を固定し、遷移・新規・削除・rename・承認済みの意味変更を扱う。完全なJSONと読取り専用snapshot。隔離した2回のsetupと改変試験が通過 |
+| 承認済みREQの保護対象外（2026-09-11） | SINGLE-032-01〜05: implements／tests／related／`x-` field／散文だけの変更、変わらない補助file、完全な成功JSON。HEAD／index／作業treeの比較を隔離した2回で行い、改変試験が通過 |
+| TASK境界（2026-09-14） | SINGLE-034、035-01/02: 同じ2 pathの未stage変更で、明示TASKのsegment境界の失敗と、変更範囲・全体の成功を比べる。完全なJSON、HEAD／index／作業tree、読取り専用snapshotを隔離した2回で確認。scope、source、選択件数、権限、stageの改変を拒否 |
+| Git対象選択・影響候補（2026-09-14） | SINGLE-033、039〜041: 直接の強い依存による警告と、弱い・推移的な依存の対照、unbornでの全体への縮退、変更のない空の選択、stage済みの所有者のないcode、未追跡のtest。完全なJSON、HEAD／index／作業tree、読取り専用snapshotを隔離した2回で確認。Diagnostic、revision、件数、所有、Git状態の改変を拒否 |
+| Git環境（2026-09-14） | SINGLE-036〜038: `--report`付きの不正な明示基準版は既存reportを保ち結果を出さない。Git不在の全体・選択の結果はrevisionとGit snapshotをnullにする。隔離した2回のsetup、CLIのstreamの確認、改変試験が通過 |
+| Context非成功（2026-09-14） | SINGLE-050、051、052-01/02、053: 起点不在、未完了の先行TASK、置換済みの起点・依存先、後継の重複。完全な非成功JSON、nullのDigestとunbornのrevision、空のBundle／coverage。隔離した2回のsetupと改変試験が通過 |
+| 初期fixture | SINGLE-001、002、003、004-01/02、005-01/02、006-01/02: manifest・結果・副作用のSchemaと、review済みの入力の検査が通過。隔離した2回のsetupがそれぞれ固定した実行前snapshotと一致 |
+| commandの前提 | 明示した実行fileの不在と、cwdの不在を分離。commandを実行せずに`/bin/true`の実行可能性を確認。原因の追加・欠落を回帰試験で拒否 |
+| target vector（2026-09-08） | 基本の組合せ18件＋補足7件。順序付き集合4つ、入力順への非依存、拒否の回帰試験が通過 |
+| 相対link | 現行の契約と承認済みADRの参照230件（2026-09-17時点）。参照先・anchorの欠落なし |
+| Git基盤 | unborn、clean、作業tree、stage、rename、削除、作成。vectorごとに同じsetupを2回 |
+| snapshotの比較 | 内容、実行bit、symlinkの参照先の変更を検出。安全でないpathの移動を拒否 |
+| process helper | 終了コード0／7、SIGTERM、timeout、子孫によるpipeの保持。時間上限のある試験で、隔離したprocess groupを片付ける |
+| 監査の回帰試験 | 不正な公開結果と未知の文法参照を拒否。Semantic IRを正しく分類。未作成のfixtureを検出。初期fixtureの結果・status・key・argv・復旧手順・snapshotの改変を拒否 |
+| Step 0-P | 統合commandから再度通過 |
 
-The Git and process vectors are infrastructure tests, not conformance fixtures or Core acceptance results.
-Read-only before/after expectations are fixed for the nine introduction/config, twelve EARS, nine document, six trace, four graph, ten Git/approved-exemption three TASK-scope and four Git selection/impact and three Git environment and five Context failure cases; the remaining cases still need expectations.
-The initial fixtures have not run Core. Their after snapshots are expectations, not observed Core side effects.
-Exact doctor check names and Diagnostic strings chosen for this batch are recorded in [the initial fixture review](single/README.md).
-Structural registry and matrix checks cannot prove semantic coverage or single-cause isolation. Diagnostic semantic decisions are
-recorded in [the reviewed ledger](Diagnostic意味網羅review.md); the validator detects missing mappings and changed source documents.
-Independently computed golden Context Digests, complete acceptance inputs/results,
-and a complete fresh-checkout Gate A run remain pending. No Gate A approval or Core implementation is included.
+Gitとprocessのvectorは基盤の試験であり、適合fixtureやCoreの受入結果ではない。
+読取り専用の実行前後の期待値は、導入・設定9件、EARS 12件、文書9件、trace 6件、graph 4件、Git・保護対象外10件、
+TASK境界3件、Git対象選択・影響候補4件、Git環境3件、Context非成功5件について固定した。残りのcaseにはまだ期待値が必要である。
+初期fixtureはCoreを実行していない。実行後のsnapshotは期待値であり、観測したCoreの副作用ではない。
+この回で選んだdoctorのcheck名とDiagnosticの文字列は、[初期fixtureのreview](single/README.md)に記録した。
+registryとmatrixの構造検査では、意味の網羅や単一原因への分離を証明できない。Diagnosticの意味上の判断は
+[review済みの台帳](Diagnostic意味網羅review.md)に記録し、validatorは対応の欠落と根拠文書の変更を検出する。
+独立に計算したgolden Context Digest、完全な受入の入力と結果、fresh checkoutからのGate Aの全体実行は未完了である。
+Gate Aの承認とCoreの実装は含まない。
 
-The 2026-09-11 run used the pinned Step 0B uv environment Python directly (`python -B fixtures/validate_step0b.py`),
-following the initial `uv run` baseline. The integrated audit and regression suites reported no errors.
-Two full audit reports matched byte for byte; both returned exit code 1 for the outstanding evidence.
-This is working-tree repeatability, not the pending fresh-checkout Gate A certification.
-Document expectation choices are recorded in [the document fixture review](single/文書構造・UTF-8-review.md).
+2026-09-11の実行は、最初の`uv run`による基準の後、固定したStep 0Bのuv環境のPythonを直接使った
+（`python -B fixtures/validate_step0b.py`）。統合監査と回帰試験はerrorを報告しなかった。
+監査reportの全体2件はbyte単位で一致し、未完了の証拠のため両方とも終了コード1を返した。
+これは作業treeでの再現性であり、未完了のfresh checkoutでのGate A認定ではない。
+文書の期待値の選択は[文書fixtureのreview](single/文書構造・UTF-8-review.md)に記録した。
 
-The subsequent six-case trace batch passed the integrated audit and regression suites, with two byte-identical reports.
-Document fixtures SINGLE-017-02 and SINGLE-018-01 had surplus trailing blank lines removed; fixed inputs and snapshots were refreshed.
-Trace expectation choices are recorded in [the trace fixture review](single/関係・path・coverage-review.md).
+続くtraceの6件は、統合監査と回帰試験を通過し、reportの2件はbyte一致した。
+文書fixtureのSINGLE-017-02とSINGLE-018-01から余分な末尾の空行を除き、固定入力とsnapshotを更新した。
+traceの期待値の選択は[trace fixtureのreview](single/関係・path・coverage-review.md)に記録した。
 
-The subsequent four-case graph batch passed integrated checks and regression suites; two full audit reports matched byte for byte.
-Graph expectation choices and their limits are recorded in [the graph fixture review](single/文書ID重複・循環review.md).
-Working-tree repeatability does not certify the pending fresh-checkout Gate A condition.
+続くgraphの4件は、統合検査と回帰試験を通過し、監査reportの全体2件はbyte一致した。
+graphの期待値の選択と限界は[graph fixtureのreview](single/文書ID重複・循環review.md)に記録した。
+作業treeでの再現性は、未完了のfresh checkoutでのGate A条件を保証しない。
 
-The subsequent five-case Git batch passed integrated checks and regression suites; two full audit reports matched byte for byte.
-HEAD and index blobs were checked directly against fixed base/current content in addition to snapshots.
-Git expectation choices are recorded in [the Git fixture review](single/Git基準版・状態遷移review.md).
+続くGitの5件は、統合検査と回帰試験を通過し、監査reportの全体2件はbyte一致した。
+snapshotに加えて、HEADとindexのblobを固定した基準版・現在版の内容と直接照合した。
+Gitの期待値の選択は[Git fixtureのreview](single/Git基準版・状態遷移review.md)に記録した。
 
-The subsequent five-case approved-exemption batch passed integrated checks and regression suites; two full audit reports matched byte for byte.
-The Git audit now prepares ten cases, with unchanged supporting inputs checked in HEAD/index/worktree.
-Expectation choices are recorded in [the approved-exemption review](single/approved-REQの保護対象外変更review.md).
+続く保護対象外の5件は、統合検査と回帰試験を通過し、監査reportの全体2件はbyte一致した。
+Gitの監査は10件を準備するようになり、変わらない補助入力をHEAD／index／作業treeで確認する。
+期待値の選択は[保護対象外変更のreview](single/approved-REQの保護対象外変更review.md)に記録した。
 
-The 2026-09-14 TASK batch passed integrated checks and regression suites; two full audit reports matched byte for byte.
-Both runs used the pinned Step 0B uv environment Python directly (`python -B fixtures/validate_step0b.py`)
-and returned exit code 1 solely for pending Gate A evidence. Prepared fixtures: 53/311; missing: 258.
-This certifies working-tree preparation repeatability, not Core behavior or the fresh-checkout Gate A condition.
-Expectation choices are recorded in [the TASK fixture review](single/TASK境界・対象選択review.md).
+2026-09-14のTASKの回は、統合検査と回帰試験を通過し、監査reportの全体2件はbyte一致した。
+2回とも固定したStep 0Bのuv環境のPythonを直接使い（`python -B fixtures/validate_step0b.py`）、未完了のGate Aの
+証拠だけを理由に終了コード1を返した。準備済み53/311、未作成258件。
+これは作業treeでの準備の再現性の保証であり、Coreの挙動やfresh checkoutでのGate A条件の保証ではない。
+期待値の選択は[TASK fixtureのreview](single/TASK境界・対象選択review.md)に記録した。
 
-The subsequent 2026-09-14 Git selection/impact batch passed integrated checks and regression suites.
-Both pinned-environment `python -B fixtures/validate_step0b.py` runs produced byte-identical reports,
-with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 57/311; missing: 254.
-HEAD/index/worktree comparisons include the empty unborn index and the staged-code/untracked-test split.
-Expectation choices are recorded in [the Git selection/impact review](single/Git対象選択・影響候補review.md).
-This remains working-tree preparation evidence; Core behavior and fresh-checkout Gate A certification are pending.
+続く2026-09-14のGit対象選択・影響候補の回は、統合検査と回帰試験を通過した。
+固定した環境での`python -B fixtures/validate_step0b.py`の2回はbyte一致したreportを出し、check errorはなく、
+未完了のGate Aの証拠により終了コード1だった。準備済み57/311、未作成254件。
+HEAD／index／作業treeの比較は、unbornの空のindexと、stage済みのcode・未追跡のtestの分かれ方を含む。
+期待値の選択は[Git対象選択・影響候補のreview](single/Git対象選択・影響候補review.md)に記録した。
+これは引き続き作業treeでの準備の証拠であり、Coreの挙動とfresh checkoutでのGate A認定は未完了である。
 
-The subsequent 2026-09-14 Git environment batch passed integrated checks and regression suites.
-Two pinned-environment `python -B fixtures/validate_step0b.py` runs produced byte-identical reports,
-with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 60/311; missing: 251.
-The new cases fix invalid-base stream shape and report preservation, and distinguish absent Git from an empty Git status.
-SINGLE-040/041 now explicitly pass --base HEAD as required by the fixture contract; expected results and snapshots are unchanged.
-Matrix regression checks reject omitted required base or a base supplied to a Git-absent case.
-Expectation choices are recorded in [the Git environment review](single/Git基準版error・Git不在review.md).
-These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
+続く2026-09-14のGit環境の回は、統合検査と回帰試験を通過した。
+固定した環境での`python -B fixtures/validate_step0b.py`の2回はbyte一致したreportを出し、check errorはなく、
+未完了のGate Aの証拠により終了コード1だった。準備済み60/311、未作成251件。
+新しいcaseは、不正な基準版のstreamの形とreportの保持を固定し、Git不在と空のGit statusを区別する。
+SINGLE-040/041は、fixture契約どおり`--base HEAD`を明示するようにした。期待結果とsnapshotは変わらない。
+matrixの回帰試験は、必須の基準版の省略と、Git不在のcaseへの基準版の指定を拒否する。
+期待値の選択は[Git環境のreview](single/Git基準版error・Git不在review.md)に記録した。
+これらは準備の検査であり、観測したCoreの挙動や、fresh checkoutでのGate Aの完全な認定ではない。
 
-The subsequent 2026-09-14 Context failure batch passed integrated checks and regression suites.
-Two pinned-environment `python -B fixtures/validate_step0b.py` runs produced byte-identical reports,
-with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 65/311; missing: 246.
-The five cases fix requested roots, exact failure diagnostics, null Digest and empty non-success Bundle data.
-Unborn repository checks and mutations reject invented commits, staged inputs, implicit successor replacement and partial success.
-Expectation choices are recorded in [the Context failure review](single/Context非成功review.md).
-These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
+続く2026-09-14のContext非成功の回は、統合検査と回帰試験を通過した。
+固定した環境での`python -B fixtures/validate_step0b.py`の2回はbyte一致したreportを出し、check errorはなく、
+未完了のGate Aの証拠により終了コード1だった。準備済み65/311、未作成246件。
+5件は、要求した起点、正確な失敗のDiagnostic、nullのDigest、空の非成功Bundleを固定する。
+unbornのrepositoryの検査と改変試験は、作ったcommit、stageした入力、暗黙の後継への置換え、部分的な成功を拒否する。
+期待値の選択は[Context非成功のreview](single/Context非成功review.md)に記録した。
+これらは準備の検査であり、観測したCoreの挙動や、fresh checkoutでのGate Aの完全な認定ではない。
 
-The subsequent 2026-09-14 Context Digest batch passed integrated checks and regression suites.
-Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced byte-identical reports,
-with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 71/311; missing: 240.
-SINGLE-042 owns the single-workspace golden Canonical JSON and Digest; SINGLE-043-01/02 and SINGLE-045
-are byte-identical to it, and SINGLE-044-01/02 differ from it and from each other.
-Two independently written reference computations agree: A states the digest input as reviewed literals,
-B rebuilds it from the fixture's own tree with a separate reader and a separate RFC 8785 emitter.
-Writing B independently found and fixed a defect in B: it accepted `[MUST] [REASON]`, which the EBNF
-allows only for `[SHOULD]`. Expectation choices and their limits are recorded in
-[the Digest fixture review](single/Context-Digest-review.md).
-The federation golden (MULTI-002-01) is still missing, so the federation half of the Gate A Digest
-condition remains open. These are preparation checks, not observed Core behavior or complete
-fresh-checkout Gate A certification.
+続く2026-09-14のContext Digestの回は、統合検査と回帰試験を通過した。
+固定した環境での`uv run fixtures/validate_step0b.py`の2回はbyte一致したreportを出し、check errorはなく、
+未完了のGate Aの証拠により終了コード1だった。準備済み71/311、未作成240件。
+SINGLE-042は単一workspaceのgolden Canonical JSONとDigestを所有する。SINGLE-043-01/02とSINGLE-045はそれと
+byte一致し、SINGLE-044-01/02はそれとも互いとも異なる。
+独立に書いた2系統の参照計算が一致する。Aはreview済みのliteralでDigest材料を記述し、Bはfixture自身のtreeから、
+別の読取り処理と別のRFC 8785 serializerで組み立て直す。
+Bを独立に書いたことで、B自身の欠陥を1件見つけて直した。EBNFでは`[SHOULD]`にだけ許される`[MUST] [REASON]`を
+受理していた。期待値の選択と限界は[Digest fixtureのreview](single/Context-Digest-review.md)に記録した。
+複合workspaceのgolden（MULTI-002-01）は未作成であり、Gate AのDigest条件のうち複合workspace側は未完了である。
+これらは準備の検査であり、観測したCoreの挙動や、fresh checkoutでのGate Aの完全な認定ではない。
 
-The subsequent 2026-09-14 non-success Context batch passed integrated checks and regression suites.
-Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced byte-identical reports,
-with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 77/311; missing: 234.
-This completes the context and Digest section of the matrix (SINGLE-042 through SINGLE-054).
-Two rules are applied across the group and enforced by the audit: a non-success Context delivers no
-Bundle material, and contextDigest is non-null exactly when complete resolution held.
-SINGLE-046 and SINGLE-047 report the Digest committed by SINGLE-042 rather than a separate constant.
-SINGLE-049 crosses the fixed 1 MiB presentation hard limit with 1,071,063 bytes of body text while its
-standard presentation and closure stay inside the configured maxima.
-SINGLE-054 has its own implement-purpose digest input, which records no binding and adds the
-addressing TASK. Reference B gained two fixes found by writing it against these corpora: it now reads
-context.maxDocuments/maxBytes from configuration instead of assuming defaults, and follows the
-transitive refinement chain. Expectation choices and their limits are recorded in
-[the non-success Context review](single/Context-stale・上限・coverage-review.md).
-These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
+続く2026-09-14の非成功Contextの回は、統合検査と回帰試験を通過した。
+固定した環境での`uv run fixtures/validate_step0b.py`の2回はbyte一致したreportを出し、check errorはなく、
+未完了のGate Aの証拠により終了コード1だった。準備済み77/311、未作成234件。
+これでmatrixのcontextとDigestの節（SINGLE-042〜SINGLE-054）が完了する。
+群全体に2つの規則を適用し、監査が強制する。非成功のContextはBundleの材料を返さないこと、
+contextDigestは完全解決が成立した場合に限りnullでないことである。
+SINGLE-046とSINGLE-047は、別の定数ではなくSINGLE-042がcommitしたDigestを返す。
+SINGLE-049は、標準の提示と閉包を設定の最大値に収めたまま、本文1,071,063 byteで固定の1 MiBの提示hard limitを越える。
+SINGLE-054は、implementのpurposeによる固有のDigest材料を持ち、bindingを記録せず、`addresses`するTASKを加える。
+これらの入力に対して参照計算Bを書いたことで、2点を直した。既定値を仮定せず設定から
+context.maxDocuments／maxBytesを読むこと、推移的なrefinementの連鎖をたどることである。期待値の選択と限界は
+[非成功Contextのreview](single/Context-stale・上限・coverage-review.md)に記録した。
+これらは準備の検査であり、観測したCoreの挙動や、fresh checkoutでのGate Aの完全な認定ではない。
 
-The subsequent 2026-09-14 verify batch passed integrated checks and regression suites.
-Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced byte-identical reports,
-with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 83/311; missing: 228.
-SINGLE-055/056 execute a command and SINGLE-060/061/062/067 stop before any spawn.
-Unlike the Context fixtures these stage their inputs, because verify blocks startup on a configuration
-untracked in the index; a base commit is not usable since verify has no --base, so the repository stays
-unborn with a populated index and revision is null. The audit reads the index back for every case.
-SINGLE-055 reports the Digest committed by SINGLE-042; the audit enforces that a target Digest is
-present exactly where the Context still resolved, and that bindingRefs and commands[] describe the
-same executions. Diagnostic placement follows the registry continuation unit: skip-target conditions
-stay on the target, and the stop-operation empty-target condition is top level.
-Expectation choices and their limits are recorded in [the verify review](single/verify実行・事前ブロックreview.md).
-These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
+続く2026-09-14のverifyの回は、統合検査と回帰試験を通過した。
+固定した環境での`uv run fixtures/validate_step0b.py`の2回はbyte一致したreportを出し、check errorはなく、
+未完了のGate Aの証拠により終了コード1だった。準備済み83/311、未作成228件。
+SINGLE-055/056はcommandを実行し、SINGLE-060/061/062/067はspawnの前に停止する。
+verifyはindexで未追跡の設定があると起動を遮断するため、Context fixtureと異なり入力をstageする。verifyには
+`--base`がないので基準commitは使えず、repositoryはindexに内容を持つunbornのままで、revisionはnullである。
+監査は全caseでindexを読み戻す。
+SINGLE-055はSINGLE-042がcommitしたDigestを返す。監査は、Contextが解決した場合に限りtargetのDigestがあること、
+bindingRefsとcommands[]が同じ実行を表すことを強制する。Diagnosticの置き場所はregistryの継続単位に従い、
+skip-targetの条件はtargetに、stop-operationの対象0件の条件は最上位に置く。
+期待値の選択と限界は[verifyのreview](single/verify実行・事前ブロックreview.md)に記録した。
+これらは準備の検査であり、観測したCoreの挙動や、fresh checkoutでのGate Aの完全な認定ではない。
 
-The subsequent 2026-09-14 verify binding batch passed integrated checks and regression suites.
-Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced byte-identical reports,
-with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 86/311; missing: 225.
-SINGLE-063 and SINGLE-064 use a two-root workspace so two targets request one command name: each target
-reports its own Digest while a single command entity runs the deduplicated shared test path once.
-SINGLE-064 keeps the blocked target at bindingRefs [] and excludes its statement from the executed
-command's covers. SINGLE-065 pins that a command template without {tests} is executed once and never
-receives the paths. Reference B's strong-edge guard now fires only for edges touching the closure being
-computed, because a workspace may legitimately hold several independent roots.
-SINGLE-066 and SINGLE-068 are deferred to their own step; both need closure behavior this reference does
-not yet derive. Expectation choices and their limits are recorded in
-[the verify binding review](single/verify-binding-review.md).
-These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
+続く2026-09-14のverify bindingの回は、統合検査と回帰試験を通過した。
+固定した環境での`uv run fixtures/validate_step0b.py`の2回はbyte一致したreportを出し、check errorはなく、
+未完了のGate Aの証拠により終了コード1だった。準備済み86/311、未作成225件。
+SINGLE-063とSINGLE-064は、2つのtargetが1つのcommand名を要求するよう、起点を2つ持つworkspaceを使う。
+各targetは固有のDigestを返し、1つのcommand実体が重複排除した共有test pathを1回だけ実行する。
+SINGLE-064はblockedのtargetをbindingRefs []に保ち、その規範文を実行したcommandのcoversから除く。SINGLE-065は、
+{tests}のないcommand templateを1回だけ実行し、pathを渡さないことを固定する。workspaceは独立した起点を
+複数持ち得るので、参照計算Bの強いedgeの検査は、計算中の閉包に触れるedgeにだけ働くようにした。
+SINGLE-066とSINGLE-068は専用の段階へ保留した。どちらも、この参照計算がまだ導出しない閉包の挙動を必要とする。
+期待値の選択と限界は[verify bindingのreview](single/verify-binding-review.md)に記録した。
+これらは準備の検査であり、観測したCoreの挙動や、fresh checkoutでのGate Aの完全な認定ではない。
 
-The subsequent 2026-09-14 verify process batch passed integrated checks and regression suites.
-Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced byte-identical reports,
-with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 89/311; missing: 222.
-SINGLE-057, 058 and 059 all fail after the pre-checks pass, so each records a commands[] entry with a
-null exit code and error status while keeping bindingRefs, and each Diagnostic sits at top level with an
-environment source, matching the registry's skip-binding classification.
-The audit runs each fixture's own command file directly, never through Core, to confirm the input still
-produces the reviewed cause. That found two defects in the fixtures themselves: the first hang script
-exited on a group SIGTERM because its foreground sleep was killed, and the audit was signalling before
-the shell had installed its trap. The script now tolerates a killed foreground sleep, its pipe-holding
-child ignores TERM, and it prints a readiness line after installing the trap which the audit waits for.
-That readiness line is also the expected stdoutExcerpt of SINGLE-059, which can only appear if the
-stream is drained and the read handle closed rather than waiting for an EOF that never comes.
-Expectation choices and their limits are recorded in
-[the verify process review](single/verify-process終了review.md).
-These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
+続く2026-09-14のverify processの回は、統合検査と回帰試験を通過した。
+固定した環境での`uv run fixtures/validate_step0b.py`の2回はbyte一致したreportを出し、check errorはなく、
+未完了のGate Aの証拠により終了コード1だった。準備済み89/311、未作成222件。
+SINGLE-057、058、059はいずれも事前検査の通過後に失敗するので、bindingRefsを保ったまま、nullの終了コードと
+error statusを持つcommands[]の要素を記録する。Diagnosticはregistryのskip-bindingの分類どおり、environmentの
+sourceで最上位に置く。
+監査は各fixture自身のcommand fileを、Coreを介さず直接実行し、入力がreview済みの原因を今も再現することを確認する。
+これによりfixture自身の欠陥を2件見つけた。最初のhang scriptは前景のsleepが終了されるとprocess groupへの
+SIGTERMで終了してしまい、監査はshellがtrapを設定する前にsignalを送っていた。現在のscriptは前景のsleepが
+終了されても続行し、pipeを保持する子processはTERMを無視し、trapの設定後に準備完了の行を出力する。監査はその行を待つ。
+この準備完了の行はSINGLE-059の期待するstdoutExcerptでもあり、来ないEOFを待たずにstreamを読み切って
+read handleを閉じた場合にだけ現れる。
+期待値の選択と限界は[verify processのreview](single/verify-process終了review.md)に記録した。
+これらは準備の検査であり、観測したCoreの挙動や、fresh checkoutでのGate Aの完全な認定ではない。
 
-The subsequent 2026-09-14 verify output and document-binding batch passed integrated checks and
-regression suites. Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced
-byte-identical reports, with no check errors and exit code 1 for pending Gate A evidence.
-Prepared fixtures: 92/311; missing: 219.
-SINGLE-069-01/02 fix a 70,400-byte stream of 64-byte lines whose first and last lines are marked
-differently, so the committed 64 KiB excerpt provably holds the tail marker and not the head marker;
-the audit runs the command file and compares the produced tail byte for byte. Both share one Context
-Digest because the script body is not Digest material, while their exit codes differ.
-SINGLE-066 targets a TECH with no normative statement and a document-level test, reporting statements []
-together with a bindingRefs entry and covers [TECH-001], which the Frontmatter contract permits only for
-such a TECH.
-SINGLE-068 is still absent on purpose: whether the documents owning a root TASK's addresses targets are
-part of the verify Context is not settled by the normative documents, and a fixture must not enter the
-executable set ahead of its contract. Expectation choices, the reasoning and the reported gap are
-recorded in [the verify output review](single/verify出力・文書単位binding-review.md).
-These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
+続く2026-09-14のverify出力・文書単位bindingの回は、統合検査と回帰試験を通過した。
+固定した環境での`uv run fixtures/validate_step0b.py`の2回はbyte一致したreportを出し、check errorはなく、
+未完了のGate Aの証拠により終了コード1だった。準備済み92/311、未作成219件。
+SINGLE-069-01/02は、64 byteの行から成る70,400 byteのstreamを固定し、最初と最後の行に異なる目印を置く。
+これにより、commitした64 KiBの抜粋が末尾の目印を含み先頭の目印を含まないことを証明できる。監査はcommand fileを
+実行し、生成された末尾をbyte単位で比べる。scriptの本文はDigest材料ではないので、終了コードが異なっても
+両者は1つのContext Digestを共有する。
+SINGLE-066は、規範文を持たず文書単位のtestを持つTECHをtargetにし、statements []、bindingRefsの要素、
+covers [TECH-001]を返す。Frontmatterの契約は、このようなTECHに限ってこれを許す。
+SINGLE-068は意図してまだ作らない。起点TASKが`addresses`する参照先を所有する文書がverifyのContextに含まれるかを、
+規範文書が決めておらず、契約より先にfixtureを実行対象へ入れてはならないためである。期待値の選択、理由、
+報告した欠落は[verify出力のreview](single/verify出力・文書単位binding-review.md)に記録した。
+これらは準備の検査であり、観測したCoreの挙動や、fresh checkoutでのGate Aの完全な認定ではない。
 
-The subsequent 2026-09-14 done-TASK root batch passed integrated checks and regression suites.
-Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced byte-identical reports,
-with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 93/311; missing: 218.
-This completes matrix §6.6 verify, all 16 rows.
-SINGLE-068 required settling a contract first: 関係・トレースモデル §6.3 now states that a TASK root brings
-its addresses targets and their owning documents into contextDocuments, that the interpret closure rules
-then apply from those documents, and that unlike implement the root TASK's requires closure is excluded.
-No decision changed. The target-expansion reference calculation already implemented that reading, so all
-25 expected target sets are unchanged, and no Diagnostic condition is added because an unresolvable
-addresses target is already SPEC-RELATION-MISSING-001. The audit detected the edit by itself through the
-source hashes pinned in diagnostic-coverage.json and targets/cases.json, and those were re-pinned only
-after the re-review recorded in Diagnostic意味網羅review.md.
-The fixture pairs with SINGLE-067: a done root is re-verifiable with its own Digest and binding, while a
-cancelled root is blocked with neither. AC-02 is deliberately unaddressed, so neither its statement nor
-its test may enter the binding. Expectation choices and their limits are recorded in
-[the done TASK root review](single/done-TASK起点review.md).
-These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
+続く2026-09-14のdone TASK起点の回は、統合検査と回帰試験を通過した。
+固定した環境での`uv run fixtures/validate_step0b.py`の2回はbyte一致したreportを出し、check errorはなく、
+未完了のGate Aの証拠により終了コード1だった。準備済み93/311、未作成218件。
+これでmatrix §6.6のverify、全16行が完了する。
+SINGLE-068には先に契約の確定が必要だった。関係・トレースモデル §6.3は現在、起点TASKが`addresses`する参照先と
+その所有文書をcontextDocumentsへ含め、その文書からinterpretの閉包規則を適用し、implementと異なり起点TASKの
+requires閉包を含めないと定める。
+決定は変えていない。target展開の参照計算は既にこの読みを実装しており、25ケースの期待集合は変わらない
+（2026-09-17訂正: 実際には参照計算がverifyでも起点TASKのrequiresをたどっており、後に1ケースを修正した）。
+解決できない`addresses`の参照先は既存のSPEC-RELATION-MISSING-001になるので、Diagnosticの条件も追加しない。
+監査は、diagnostic-coverage.jsonとtargets/cases.jsonが固定する根拠文書hashによってこの編集を自分で検出し、
+hashはDiagnostic意味網羅review.mdに再reviewを記録した後にだけ更新した。
+このfixtureはSINGLE-067と対になる。doneの起点は固有のDigestとbindingで再検証でき、cancelledの起点はどちらも持たず
+blockedになる。AC-02は意図して`addresses`せず、その規範文もtestもbindingへ入れない。期待値の選択と限界は
+[done TASK起点のreview](single/done-TASK起点review.md)に記録した。
+これらは準備の検査であり、観測したCoreの挙動や、fresh checkoutでのGate Aの完全な認定ではない。
 
-The subsequent 2026-09-14 report-absence and argument-error batch passed integrated checks and
-regression suites. Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced
-byte-identical reports, with no check errors and exit code 1 for pending Gate A evidence.
-Prepared fixtures: 102/311; missing: 209.
-SINGLE-070-01/02/03/04 cover both operations on both outcomes without --report. Each corpus already
-holds .spec/reports/existing.json, because a corpus without one could only show that no new file was
-created and never that an existing report survived; the audit refuses a fixture whose snapshot lacks it.
-The two verify cases reuse the reviewed results of SINGLE-055 and SINGLE-056 directly, since the added
-report file is not SPEC material and the Context is unchanged.
-SINGLE-073-01/02 and SINGLE-074-01/02/03 carry no status and no result file, which the manifest contract
-allows only when no common result exists. SINGLE-074-03 is a lexical ID error rather than an absent ID,
-which the CLI contract separates from CTX-ROOT-MISSING-001.
-The stderr contract was hard-wired to check and is now operation-aware, so all five fixtures and the
-earlier Git-environment one share one statement of it; the audit exercises it per operation and rejects
-a wrong prefix, an empty reason, a second line and a non-4 exit code.
-Expectation choices and their limits are recorded in
-[the report absence review](single/report非作成・引数不正review.md).
-These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
+続く2026-09-14のreport非作成・引数不正の回は、統合検査と回帰試験を通過した。
+固定した環境での`uv run fixtures/validate_step0b.py`の2回はbyte一致したreportを出し、check errorはなく、
+未完了のGate Aの証拠により終了コード1だった。準備済み102/311、未作成209件。
+SINGLE-070-01/02/03/04は、`--report`なしで両操作の両結果を扱う。各入力は既に.spec/reports/existing.jsonを持つ。
+これがない入力では、新しいfileを作らないことしか示せず、既存のreportが残ることを示せないためである。監査は
+snapshotにこのfileがないfixtureを拒否する。
+追加したreport fileはSPECの材料ではなくContextも変わらないので、verifyの2件はSINGLE-055とSINGLE-056の
+review済みの結果を直接使う。
+SINGLE-073-01/02とSINGLE-074-01/02/03はstatusも結果fileも持たない。manifestの契約は、共通結果がない場合にだけ
+これを許す。SINGLE-074-03は、IDの不在ではなく字句のIDの誤りであり、CLI契約はこれをCTX-ROOT-MISSING-001と区別する。
+標準エラー出力の契約はcheckに固定されていたが、操作を区別するように改め、5件と以前のGit環境の1件が1つの契約を
+共有する。監査は操作ごとにこれを動かし、誤った接頭辞、空の理由、2行目、4以外の終了コードを拒否する。
+期待値の選択と限界は[report非作成のreview](single/report非作成・引数不正review.md)に記録した。
+これらは準備の検査であり、観測したCoreの挙動や、fresh checkoutでのGate Aの完全な認定ではない。
 
-The subsequent 2026-09-14 explicit-report batch passed integrated checks and regression suites.
-Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced byte-identical reports,
-with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 107/311; missing: 204.
-side-effects.schema.json now takes policy explicit-report with a report object, and the schema pairs the
-two so that explicit-report requires report and read-only forbids it. Report file names carry a
-generation time and sequence which the common normalizer excludes, so before and after describe only
-pre-existing paths, all of which must be unchanged, and the report object carries the delta.
-The audit requires the committed name pattern to accept a well-formed name and reject a missing
-timestamp, a zero sequence, another operation and a leftover .tmp suffix.
-Each SINGLE-071-* corpus keeps a pre-existing report, because creating into an empty directory would not
-distinguish exclusive creation from replacement. The four cases reuse the reviewed results of the
-SINGLE-070-* pair, since saving a report does not change the computed result.
-SINGLE-072 is based on the failing check rather than the passing one, so that "the original result
-survives" is not vacuous: the result body is unchanged, SPEC-RELATION-MISSING-001 survives,
-SPEC-REPORT-WRITE-001 is appended and the status rises from failed to error. Its destination is blocked
-by a regular file at .spec/reports rather than by a directory mode, because Git does not record
-directory permissions and a fresh checkout would not restore one.
-Expectation choices and their limits are recorded in
-[the explicit-report review](single/明示report-review.md).
-These are preparation checks, not observed Core behavior or complete fresh-checkout Gate A certification.
+続く2026-09-14の明示reportの回は、統合検査と回帰試験を通過した。
+固定した環境での`uv run fixtures/validate_step0b.py`の2回はbyte一致したreportを出し、check errorはなく、
+未完了のGate Aの証拠により終了コード1だった。準備済み107/311、未作成204件。
+side-effects.schema.jsonは、report objectを伴うpolicy explicit-reportを受け付けるようになり、Schemaは
+explicit-reportにreportを必須とし、read-onlyにはこれを禁止する。report file名は共通normalizerが除外する
+生成時刻と連番を含むので、beforeとafterは既存のpathだけを記述し（すべて不変でなければならない）、
+report objectが差分を持つ。
+監査は、commitした名前のpatternが正しい形式の名前を受理し、時刻の欠落、0の連番、他の操作、残った.tmp接尾辞を
+拒否することを要求する。
+空のdirectoryへの作成では排他的な作成と置換を区別できないので、各SINGLE-071-*の入力は既存のreportを持つ。
+reportを保存しても計算済みの結果は変わらないので、4件はSINGLE-070-*の組のreview済みの結果を使う。
+SINGLE-072は、「元の結果が残る」ことが空疎にならないよう、成功ではなく失敗するcheckに基づく。結果の本体は変わらず、
+SPEC-RELATION-MISSING-001が残り、SPEC-REPORT-WRITE-001が追加され、statusがfailedからerrorへ上がる。
+Gitはdirectoryの権限を記録せずfresh checkoutで復元されないため、保存先はdirectoryの権限ではなく
+.spec/reportsに置いた通常fileで塞ぐ。
+期待値の選択と限界は[明示reportのreview](single/明示report-review.md)に記録した。
+これらは準備の検査であり、観測したCoreの挙動や、fresh checkoutでのGate Aの完全な認定ではない。
 
-The subsequent 2026-09-14 CLI boundary batch passed integrated checks and regression suites.
-Two pinned-environment `uv run fixtures/validate_step0b.py` runs produced byte-identical reports,
-with no check errors and exit code 1 for pending Gate A evidence. Prepared fixtures: 116/311; missing: 195.
-SINGLE-127-01/02/05/06/07/08/09/10/11 cover duplicate options, empty arguments, a missing context root,
-timeout boundaries/notation and arbitrary report-path syntax. All nine carry exit 4 without a result
-body or report; their fixed before/after snapshots prohibit writes in the repository and isolated
-HOME/cache/TMPDIR, and preserve Git status/index. Each setup was reproduced twice.
-Mutation tests reject removal of invalid arguments, replacement with valid timeout values and a new
-out.json path. The existing operation-aware stderr checks remain shared by all fourteen CLI cases.
-Expectation choices and limits are recorded in [the CLI boundary review](single/CLI引数境界review.md).
-Host: Linux 6.18.33.2-microsoft-standard-WSL2, x86_64, CPython 3.14.4, Git 2.53.0;
-validator dependencies remain pinned in the entry script.
-These are preparation checks, not observed Core behavior, CPython 3.11 acceptance or complete
-fresh-checkout Gate A certification. Federation golden Digest and remaining fixture evidence stay pending.
+続く2026-09-14のCLI引数境界の回は、統合検査と回帰試験を通過した。
+固定した環境での`uv run fixtures/validate_step0b.py`の2回はbyte一致したreportを出し、check errorはなく、
+未完了のGate Aの証拠により終了コード1だった。準備済み116/311、未作成195件。
+SINGLE-127-01/02/05/06/07/08/09/10/11は、optionの重複、空の引数、contextの起点の欠落、timeoutの境界・表記、
+任意のreport pathの構文を扱う。9件とも結果の本体とreportなしで終了コード4を返す。固定した実行前後のsnapshotは、
+repositoryと隔離したHOME／cache／TMPDIRへの書込みを禁じ、Gitのstatus／indexを保つ。各setupを2回再現した。
+改変試験は、不正な引数の削除、妥当なtimeout値への置換え、新しいout.jsonのpathを拒否する。操作を区別する既存の
+標準エラー出力の検査は、CLIの14件すべてで共有する。
+期待値の選択と限界は[CLI引数境界のreview](single/CLI引数境界review.md)に記録した。
+host: Linux 6.18.33.2-microsoft-standard-WSL2、x86_64、CPython 3.14.4、Git 2.53.0。
+validatorの依存は入口のscriptで固定したままである。
+これらは準備の検査であり、観測したCoreの挙動、CPython 3.11での受入、fresh checkoutでのGate Aの完全な認定ではない。
+複合workspaceのgolden Digestと、残りのfixtureの証拠は未完了である。
 
-The subsequent 2026-09-14 repeated-expand batch passed integrated checks and regression suites.
-The first run used `uv run fixtures/validate_step0b.py`; the second invoked the same cached, pinned
-validator environment's Python directly with `-B`. Both audit reports were byte-identical, with no
-check errors and exit 1 only for pending Gate A evidence. Prepared fixtures: 118/311; missing: 193.
-SINGLE-127-03 supplies TECH-001 then REQ-001 and expects sorted expansion IDs; SINGLE-127-04 repeats
-TECH-001 and expects one ID. Complete result bodies retain the golden resolution, coverage and Digest.
-Two independent references agree with committed Canonical JSON, and both isolated setups per fixture
-agree with fixed read-only snapshots. Mutation tests reject unsorted/duplicate expansion IDs and a
-missing repeated option. See [the repeated-expand review](single/expand反復review.md).
-Validator runtime: CPython 3.14.6; jsonschema 4.23.0, attrs 26.1.0, jsonschema-specifications 2025.9.1,
-referencing 0.37.0, rpds-py 2026.6.3, typing-extensions 4.13.2; Linux/WSL2, Git 2.53.0.
-Core was not executed. The full fresh-checkout Gate A check, remaining fixture evidence and federation
-golden Digest remain pending.
+続く2026-09-14のexpand反復の回は、統合検査と回帰試験を通過した。
+1回目は`uv run fixtures/validate_step0b.py`、2回目はcacheした同じ固定環境のPythonを`-B`付きで直接起動した。
+監査reportの2件はbyte一致し、check errorはなく、未完了のGate Aの証拠によってだけ終了コード1だった。
+準備済み118/311、未作成193件。
+SINGLE-127-03はTECH-001、REQ-001の順に与えて整列したexpand IDを期待し、SINGLE-127-04はTECH-001を反復して
+IDを1件だけ期待する。完全な結果の本体は、goldenのresolution、coverage、Digestを保つ。
+独立した2系統の参照計算がcommitしたCanonical JSONと一致し、fixtureごとの隔離した2回のsetupが固定した
+読取り専用snapshotと一致する。改変試験は、整列していない・重複したexpand IDと、反復したoptionの欠落を拒否する。
+[expand反復のreview](single/expand反復review.md)を参照。
+validatorの実行環境: CPython 3.14.6。jsonschema 4.23.0、attrs 26.1.0、jsonschema-specifications 2025.9.1、
+referencing 0.37.0、rpds-py 2026.6.3、typing-extensions 4.13.2。Linux／WSL2、Git 2.53.0。
+Coreは実行していない。fresh checkoutでのGate Aの全体検査、残りのfixtureの証拠、複合workspaceのgolden Digestは未完了である。
 
-The subsequent 2026-09-14 missing-selection batch passed integrated checks and regression suites.
-Two runs of fixtures/validate_step0b.py through the cached pinned validator Python with -B produced
-byte-identical reports, with no check errors and exit 1 for pending Gate A evidence.
-Prepared fixtures: 120/311; missing: 191. Each new fixture passed two isolated setup comparisons.
-SINGLE-127-13 preserves the requested missing root and emits failed/1 with an incomplete, empty Context
-and CTX-ROOT-MISSING-001. SINGLE-127-14 selects a syntactically valid but absent workspace and emits
-exit 4 without a common result. Mutation tests reject changing the workspace to root, confusing the
-exit/status contracts, making the failed Context complete and changing its Diagnostic source.
-See [the missing-selection review](single/起点・workspace不存在review.md) for input and expectation choices.
-Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
-Core was not executed. Remaining fixtures, federation golden Digest and full fresh-checkout Gate A
-repeatability remain pending; these runs certify preparation only.
+続く2026-09-14の起点・workspace不存在の回は、統合検査と回帰試験を通過した。
+cacheした固定のvalidatorのPythonによる`-B`付きのfixtures/validate_step0b.pyの2回はbyte一致したreportを出し、
+check errorはなく、未完了のGate Aの証拠により終了コード1だった。
+準備済み120/311、未作成191件。新しいfixtureはそれぞれ隔離した2回のsetupの比較を通過した。
+SINGLE-127-13は要求した不在の起点を保ち、不完全で空のContextとCTX-ROOT-MISSING-001を伴うfailed／1を返す。
+SINGLE-127-14は、構文上妥当だが存在しないworkspaceを選び、共通結果なしで終了コード4を返す。改変試験は、
+workspaceのrootへの変更、終了コードとstatusの契約の混同、失敗したContextの完全化、Diagnosticのsourceの変更を拒否する。
+入力と期待値の選択は[起点・workspace不存在のreview](single/起点・workspace不存在review.md)を参照。
+実行環境は上に記録したのと同じ固定のCPython 3.14.6のvalidator環境、Linux／WSL2、Git 2.53.0。
+Coreは実行していない。残りのfixture、複合workspaceのgolden Digest、fresh checkoutでのGate Aの全体の再現性は
+未完了であり、これらの実行は準備だけを保証する。
 
-The subsequent 2026-09-14 output-format batch passed integrated checks and regression suites.
-Two runs of fixtures/validate_step0b.py through the cached pinned validator Python with -B produced
-byte-identical reports, with no check errors and exit 1 for pending Gate A evidence.
-Prepared fixtures: 123/311; missing: 188. Each new fixture passed two isolated setup comparisons.
-SINGLE-075-01/02 retain the complete JSON counterpart while selecting text output. Their fixed UTF-8
-text preserves status, scope, document count and Diagnostic count; missing source line/column fields
-remain empty. Duration-only byte normalization rejects changes to status/counts/spacing/newlines,
-non-ASCII digits and fractional duration spelling. Mutation tests reject altered JSON, text counts
-and side-effect expectations. SINGLE-127-12 explicitly combines --format json and --report, preserving
-existing files and permitting exactly one report with no temporary-file residue.
-See [the output-format review](single/出力形式review.md) for expectation choices and limits.
-Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
-Core was not executed; actual text rendering, report contents and side effects remain Gate B work.
-Remaining fixtures, federation golden Digest and full fresh-checkout Gate A repeatability stay pending.
+続く2026-09-14の出力形式の回は、統合検査と回帰試験を通過した。
+cacheした固定のvalidatorのPythonによる`-B`付きのfixtures/validate_step0b.pyの2回はbyte一致したreportを出し、
+check errorはなく、未完了のGate Aの証拠により終了コード1だった。
+準備済み123/311、未作成188件。新しいfixtureはそれぞれ隔離した2回のsetupの比較を通過した。
+SINGLE-075-01/02は、text出力を選びつつ対応する完全なJSONを保つ。固定したUTF-8のtextはstatus、scope、文書数、
+Diagnostic数を保ち、sourceの行・列がないfieldは空のままにする。所要時間だけのbyte正規化は、status・件数・空白・
+改行の変更、ASCII以外の数字、小数の所要時間表記を拒否する。改変試験は、変えたJSON、textの件数、副作用の期待値を
+拒否する。SINGLE-127-12は`--format json`と`--report`を明示的に組み合わせ、既存のfileを保ち、一時fileを残さずに
+ちょうど1件のreportを許す。
+期待値の選択と限界は[出力形式のreview](single/出力形式review.md)を参照。
+実行環境は上に記録したのと同じ固定のCPython 3.14.6のvalidator環境、Linux／WSL2、Git 2.53.0。
+Coreは実行していない。実際のtextの描画、reportの内容、副作用はGate Bの作業である。
+残りのfixture、複合workspaceのgolden Digest、fresh checkoutでのGate Aの全体の再現性は未完了である。
 
-The subsequent 2026-09-14 BOM/Frontmatter batch passed integrated checks and regression suites.
-Two runs through the cached pinned validator Python with -B produced byte-identical audit reports,
-with no check errors and exit 1 for pending Gate A evidence. Prepared fixtures: 134/311; missing: 177.
-SINGLE-081/082/084/085 continue with one checked document/statement after their single warning.
-SINGLE-086/087-01..05/088 skip the malformed document with one Schema Diagnostic and zero counts.
-Each fixture passed two isolated setup comparisons. Mutation tests reject repaired input bytes,
-wrong counts/status/codes, removed or duplicated Diagnostics and new cache side effects.
-See [the BOM/Frontmatter review](single/BOM・Frontmatter-review.md) for input and expectation choices.
-Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
-No YAML loader or Core was implemented/executed. Actual continuation, rejection and side effects are
-Gate B work. Remaining fixtures, federation golden Digest and full fresh-checkout Gate A stay pending.
+続く2026-09-14のBOM・Frontmatterの回は、統合検査と回帰試験を通過した。
+cacheした固定のvalidatorのPythonによる`-B`付きの2回はbyte一致した監査reportを出し、check errorはなく、
+未完了のGate Aの証拠により終了コード1だった。準備済み134/311、未作成177件。
+SINGLE-081/082/084/085は、1件の警告の後、検査した文書と規範文を1件ずつ数えて続行する。
+SINGLE-086/087-01〜05/088は、Schema Diagnosticを1件出して形式不正の文書をskipし、件数を0にする。
+各fixtureは隔離した2回のsetupの比較を通過した。改変試験は、修復した入力byte列、誤った件数・status・code、
+削除または重複したDiagnostic、新しいcacheへの副作用を拒否する。
+入力と期待値の選択は[BOM・Frontmatterのreview](single/BOM・Frontmatter-review.md)を参照。
+実行環境は上に記録したのと同じ固定のCPython 3.14.6のvalidator環境、Linux／WSL2、Git 2.53.0。
+YAML loaderもCoreも実装・実行していない。実際の続行、拒否、副作用はGate Bの作業である。
+残りのfixture、複合workspaceのgolden Digest、fresh checkoutでのGate Aは未完了である。
 
-The Diagnostic-control batch passed two byte-identical integrated audits in the pinned CPython 3.14.6
-environment. All check errors were empty; exit 1 denotes pending Gate A evidence. Prepared: 135/311;
-missing: 176. SINGLE-076 passed two isolated setups with a control-character path generated by rename.
-The approved field escaping rule was added to the result contract. JSON retains original field values;
-text alone uses lowercase four-digit escapes. Regression checks cover the full C0/DEL/C1 ranges,
-LF/TAB, adjacent visible characters and literal backslashes. Diagnostic semantic conditions are unchanged;
-the reviewed source hash was refreshed. See the terminal-control review for scope and evidence.
-No Core was executed. Remaining fixture evidence, federation golden and fresh-checkout Gate A stay pending.
+Diagnostic制御文字の回は、固定したCPython 3.14.6環境で、byte一致した統合監査を2回通過した。
+check errorはすべて空で、終了コード1は未完了のGate Aの証拠を表す。準備済み135/311、未作成176件。
+SINGLE-076は、renameで作った制御文字を含むpathで、隔離した2回のsetupを通過した。
+承認済みのfieldのescape規則を結果契約へ追加した。JSONは元のfield値を保ち、textだけが小文字4桁のescapeを使う。
+回帰試験はC0／DEL／C1の全範囲、LF／TAB、隣接する可視文字、literalのbackslashを扱う。Diagnosticの意味上の
+条件は変わらず、review済みの根拠文書hashを更新した。範囲と証拠は端末制御文字のreviewを参照。
+Coreは実行していない。残りのfixtureの証拠、複合workspaceのgolden、fresh checkoutでのGate Aは未完了である。
 
-SINGLE-077 passed two byte-identical integrated audits in the pinned CPython 3.14.6 environment.
-All check errors were empty; exit 1 denotes pending Gate A evidence. Prepared: 136/311; missing: 175.
-Three TECH documents independently reference missing TECH-999. JSON/text retain all three Diagnostics
-in path order and count all five documents/two statements. Both isolated setups match the fixed snapshot.
-Regression checks reject reversed/missing Diagnostics and a reduced document count. See the diagnostic-order
-review for scope. Core execution, remaining fixtures, federation golden and full Gate A remain pending.
+SINGLE-077は、固定したCPython 3.14.6環境で、byte一致した統合監査を2回通過した。
+check errorはすべて空で、終了コード1は未完了のGate Aの証拠を表す。準備済み136/311、未作成175件。
+3件のTECH文書が、それぞれ独立に不在のTECH-999を参照する。JSONとtextは3件のDiagnosticをpath順にすべて保ち、
+5文書と2規範文をすべて数える。隔離した2回のsetupは固定したsnapshotと一致する。
+回帰試験は、逆順や欠落したDiagnosticと、減らした文書数を拒否する。範囲はDiagnostic順序のreviewを参照。
+Coreの実行、残りのfixture、複合workspaceのgolden、Gate Aの全体は未完了である。
 
-The input-limit batch passed two byte-identical integrated audits in the pinned CPython 3.14.6 environment.
-All check errors were empty; exit 1 denotes pending Gate A evidence. Prepared: 143/311; missing: 168.
-SINGLE-078/079-01/079-02 cross the 64 KiB configuration, 1 MiB SPEC Markdown and 32 KiB Frontmatter limits,
-each with the other dimensions inside their limits. SINGLE-080-01 fills 1,000 statements and 1,000 covers
-exactly and stays successful; 080-02 adds one statement and 080-03 one covers entry, backed by a second
-one-statement REQ so the extra reference still resolves. SINGLE-083 keeps one non-SPEC file directly under
-`.spec/`. The audit measures the generated bytes again and rejects any fixture that crosses another dimension.
-Both isolated setups match the fixed snapshot per fixture. Regression checks reject changed counts, codes,
-severity, source, keys and side effects, and inputs moved to the other side of their limit.
-See [the input-limit review](single/上限・未知entry-review.md) for scope and evidence.
-Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
-No limit check or Core was implemented or executed. Actual continuation units and counts are Gate B work.
-Remaining fixtures, federation golden Digest and full fresh-checkout Gate A repeatability stay pending.
+入力上限の回は、固定したCPython 3.14.6環境で、byte一致した統合監査を2回通過した。
+check errorはすべて空で、終了コード1は未完了のGate Aの証拠を表す。準備済み143/311、未作成168件。
+SINGLE-078/079-01/079-02は、他の次元を上限内に保ったまま、64 KiBの設定、1 MiBのSPEC Markdown、
+32 KiBのFrontmatterの上限をそれぞれ越える。SINGLE-080-01は規範文1,000件とcovers 1,000件をちょうど満たして
+成功のまま残り、080-02は規範文を1件、080-03はcoversを1件加える。追加の参照が解決するよう、規範文1件の
+2つ目のREQで支える。SINGLE-083は、SPECでないfileを1件`.spec/`直下に置く。監査は生成したbyte数を測り直し、
+他の次元を越えるfixtureを拒否する。
+fixtureごとに隔離した2回のsetupが固定したsnapshotと一致する。回帰試験は、変えた件数、code、severity、source、
+key、副作用と、上限の反対側へ移した入力を拒否する。
+範囲と証拠は[入力上限のreview](single/上限・未知entry-review.md)を参照。
+実行環境は上に記録したのと同じ固定のCPython 3.14.6のvalidator環境、Linux／WSL2、Git 2.53.0。
+上限の検査もCoreも実装・実行していない。実際の継続単位と件数はGate Bの作業である。
+残りのfixture、複合workspaceのgolden Digest、fresh checkoutでのGate Aの全体の再現性は未完了である。
 
-The registry-closure batch completed matrix §6.9 and passed two byte-identical integrated audits in the
-pinned CPython 3.14.6 environment. All check errors were empty; exit 1 denotes pending Gate A evidence.
-Prepared: 150/311; missing: 161. SINGLE-089 fixes the 1-based code point position of a reason-less SHOULD
-and keeps the document counted; SINGLE-090 carries only the advisory relation to an absent target.
-SINGLE-091 differs from the minimal configuration by one anchor; SINGLE-092 reuses the reviewed type-error
-configuration under doctor and returns the shared configuration code with four executed checks.
-SINGLE-093 differs from SINGLE-001 by Git absence alone, with a null Git snapshot and the four
-`lostGuarantees` names now fixed in the doctor contract; the reviewed source hash was refreshed.
-SINGLE-094 returns the check workspace-missing condition rather than the doctor-only code, and SINGLE-095
-differs from the minimal configuration by the EARS-AI major alone. Both isolated setups match the fixed
-snapshot per fixture. Regression checks reject changed positions, severity, workspace identity, doctor check
-status, lost guarantees, codes and side effects, repaired inputs and an added workspace.
-See [the registry closure review](single/registry閉包review.md) for scope and evidence.
-Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
-No YAML loader, Git probe, doctor procedure or Core was implemented or executed. Actual check continuation
-and doctor output are Gate B work. Remaining fixtures, federation golden Digest and full fresh-checkout
-Gate A repeatability stay pending.
+registry閉包の回はmatrix §6.9を完了し、固定したCPython 3.14.6環境で、byte一致した統合監査を2回通過した。
+check errorはすべて空で、終了コード1は未完了のGate Aの証拠を表す。準備済み150/311、未作成161件。
+SINGLE-089は、理由のないSHOULDの1始まりのコードポイント位置を固定し、文書を数えたまま残す。SINGLE-090は、
+不在の参照先へのadvisoryな関係だけを持つ。SINGLE-091は、最小の設定とanchor 1つだけが異なる。SINGLE-092は、
+review済みの型誤りの設定をdoctorで再利用し、実行したcheck 4件とともに共通の設定codeを返す。
+SINGLE-093は、SINGLE-001とGit不在だけが異なり、nullのGit snapshotを持つ。doctorの契約には`lostGuarantees`の
+4つの名前を固定し、review済みの根拠文書hashを更新した。
+SINGLE-094はdoctor専用のcodeではなくcheckのworkspace不在の条件を返し、SINGLE-095は最小の設定とEARS-AIの
+majorだけが異なる。fixtureごとに隔離した2回のsetupが固定したsnapshotと一致する。回帰試験は、変えた位置、
+severity、workspaceの同一性、doctorのcheck status、失われる保証、code、副作用と、修復した入力、追加した
+workspaceを拒否する。
+範囲と証拠は[registry閉包のreview](single/registry閉包review.md)を参照。
+実行環境は上に記録したのと同じ固定のCPython 3.14.6のvalidator環境、Linux／WSL2、Git 2.53.0。
+YAML loader、Gitの調査、doctorの手順、Coreのいずれも実装・実行していない。実際のcheckの続行とdoctorの出力は
+Gate Bの作業である。残りのfixture、複合workspaceのgolden Digest、fresh checkoutでのGate Aの全体の再現性は未完了である。
 
-The Scanner/position batch passed two byte-identical integrated audits in the pinned CPython 3.14.6
-environment. All check errors were empty; exit 1 denotes pending Gate A evidence. Prepared: 166/311;
-missing: 145. Sixteen §6.10 check fixtures keep the reviewed EARS document and replace line 16 alone.
-Each Diagnostic column is re-derived from the fixed bytes as a 1-based code point offset, including the
-multi-byte and TAB case. The two shared-cause fixtures fix the registry priority primaries, and the four
-suppression fixtures wrap one identical statement-like text in a backtick fence, a tilde fence, a quote and
-a four-space indent. Failed cases count zero documents and statements; suppression cases count the single
-valid statement on line 15. Both isolated setups match the fixed snapshot per fixture. Regression checks
-reject shifted columns, changed counts and codes, duplicated diagnostics, a dropped position field, side
-effects, replaced statements and unwrapped constructs. The four `context` cases of §6.10 stay outstanding
-because they require complete Semantic IR and Digest comparisons.
-See [the Scanner review](single/Scanner・位置review.md) for scope and evidence.
-Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
-No Scanner, Lexer, Parser or Core was implemented or executed. Actual candidate extraction and emitted
-positions are Gate B work. Remaining fixtures, federation golden Digest and full fresh-checkout Gate A
-repeatability stay pending.
+Scanner・位置の回は、固定したCPython 3.14.6環境で、byte一致した統合監査を2回通過した。
+check errorはすべて空で、終了コード1は未完了のGate Aの証拠を表す。準備済み166/311、未作成145件。
+§6.10のcheck fixture 16件は、review済みのEARS文書を保ち、16行目だけを置き換える。
+各Diagnosticの列は、multi-byte文字とTABのcaseを含め、固定したbyte列から1始まりのコードポイントの位置として
+導き直す。原因を共有する2件はregistryの優先順位によるprimaryを固定し、抑止の4件は、同じ規範文風のtextを
+backtickのfence、tildeのfence、引用、4 spaceのindentで囲む。失敗するcaseは文書も規範文も0件と数え、抑止のcaseは
+15行目の妥当な規範文1件を数える。fixtureごとに隔離した2回のsetupが固定したsnapshotと一致する。回帰試験は、
+ずらした列、変えた件数とcode、重複したDiagnostic、欠落した位置field、副作用、置き換えた規範文、囲みを外した構文を
+拒否する。§6.10の`context`の4件は、完全なSemantic IRとDigestの比較を必要とするため未作成のままとした。
+範囲と証拠は[Scannerのreview](single/Scanner・位置review.md)を参照。
+実行環境は上に記録したのと同じ固定のCPython 3.14.6のvalidator環境、Linux／WSL2、Git 2.53.0。
+Scanner、Lexer、Parser、Coreのいずれも実装・実行していない。実際の候補抽出と出力する位置はGate Bの作業である。
+残りのfixture、複合workspaceのgolden Digest、fresh checkoutでのGate Aの全体の再現性は未完了である。
 
-The default-display batch passed two byte-identical integrated audits in the pinned CPython 3.14.6
-environment. All check errors were empty; exit 1 denotes pending Gate A evidence. Prepared: 173/311;
-missing: 138. SINGLE-104-02/03/04 omit --format and fix the text summary line for check, verify and doctor;
-the audit re-derives operation, status, targets and diagnostics from the JSON counterpart through the
-published derivation and rejects a doctor line that carries scope=. SINGLE-105-01 adds a base commit to the
-golden context corpus and fixes the current revision, with the real 40 digit lowercase commit, the clean
-worktree and the per-operation revision shape observed in each isolated setup. SINGLE-105-02 removes Git
-entirely and keeps revision and the Git snapshot null. SINGLE-106-04 reuses the truncation corpus with a
-silent script, observed to exit 0 and write nothing, and fixes empty excerpts with both truncated flags
-false. SINGLE-106-05 returns the same root-missing condition on two targets and counts both in the text
-summary. The text contract now states that non-file Diagnostic lines keep path, line and column empty, and
-the reviewed source hash was refreshed; the committed-fixture --base rule now applies to check alone, since
-context and verify have no base option.
-See [the default display review](single/既定表示・revision-review.md) for scope and evidence.
-Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
-No renderer, Git reader or Core was implemented or executed. Markdown byte equality (SINGLE-104-01) and the
-three projection fixtures stay outstanding with the remaining Context and Digest work.
+既定表示の回は、固定したCPython 3.14.6環境で、byte一致した統合監査を2回通過した。
+check errorはすべて空で、終了コード1は未完了のGate Aの証拠を表す。準備済み173/311、未作成138件。
+SINGLE-104-02/03/04は`--format`を省略し、check、verify、doctorのtextの要約行を固定する。監査は、公開した
+導出手順で対応するJSONから操作、status、targets、diagnosticsを導き直し、scope=を含むdoctorの行を拒否する。
+SINGLE-105-01はgoldenのcontextの入力に基準commitを加え、現在のrevisionを固定する。実際の40桁の小文字commit、
+cleanな作業tree、操作ごとのrevisionの形を、各隔離setupで観測する。SINGLE-105-02はGitを完全に除き、revisionと
+Git snapshotをnullに保つ。SINGLE-106-04は、切り詰めの入力を、0で終了し何も書かないことを観測した無出力の
+scriptで再利用し、空の抜粋と、両方falseの切り詰めflagを固定する。SINGLE-106-05は、2つのtargetで同じ起点不在の
+条件を返し、textの要約で両方を数える。textの契約には、file以外のDiagnostic行はpath、行、列を空にすることを明記し、
+review済みの根拠文書hashを更新した。contextとverifyには基準版のoptionがないので、commit済みfixtureの`--base`の
+規則はcheckだけに適用するようにした。
+範囲と証拠は[既定表示のreview](single/既定表示・revision-review.md)を参照。
+実行環境は上に記録したのと同じ固定のCPython 3.14.6のvalidator環境、Linux／WSL2、Git 2.53.0。
+描画処理、Gitの読取り、Coreのいずれも実装・実行していない。Markdownのbyte一致（SINGLE-104-01）とprojectionの
+fixture 3件は、残りのContextとDigestの作業とともに未作成である。
 
-SINGLE-104-01 passed two byte-identical integrated audits in the pinned CPython 3.14.6 environment.
-All check errors were empty; exit 1 denotes pending Gate A evidence. Prepared: 174/311; missing: 137.
-The Markdown presentation was undefined beyond the section order, so proposal 26 fixed the whole rendering
-and context仕様 §9 now carries it; the reviewed source hash was refreshed. `markdown_reference.py` is a
-fixture-side reference computation of that contract, and the committed Bundle must equal its output byte for
-byte. The audit additionally rejects a changed section order, an altered or unfenced body, a body fence that
-is not longer than the longest run inside it, a second H1, and any duration token. The golden context corpus
-is unchanged, so the Digest and the JSON counterpart stay identical to SINGLE-042.
-See [the Markdown proposal](../../docs/04.提案資料/26_context-Markdown提示仕様案.md) for the decided points.
-Runtime: the same pinned CPython 3.14.6 validator environment recorded above, Linux/WSL2, Git 2.53.0.
-No Core renderer was implemented or executed. The three projection fixtures of §6.11 and the four `context`
-cases of §6.10 stay outstanding with the remaining Digest corpus work.
+SINGLE-104-01は、固定したCPython 3.14.6環境で、byte一致した統合監査を2回通過した。
+check errorはすべて空で、終了コード1は未完了のGate Aの証拠を表す。準備済み174/311、未作成137件。
+Markdownの提示はsectionの順序以外が未定義だったため、提案26で描画全体を決め、現在はcontext仕様 §9が持つ。
+review済みの根拠文書hashを更新した。`markdown_reference.py`はその契約をfixture側で計算する参照計算であり、
+commitしたBundleはその出力とbyte単位で一致しなければならない。監査はさらに、変えたsectionの順序、変更した・
+fenceで囲まない本文、内部の最長runより長くないfence、2つ目のH1、所要時間のtokenを拒否する。goldenの
+contextの入力は変わらないので、DigestとJSONはSINGLE-042と同一のままである。
+決めた論点は[Markdown提示の提案](../../docs/04.提案資料/26_context-Markdown提示仕様案.md)を参照。
+実行環境は上に記録したのと同じ固定のCPython 3.14.6のvalidator環境、Linux／WSL2、Git 2.53.0。
+Coreの描画処理は実装・実行していない。§6.11のprojectionのfixture 3件と、§6.10の`context`の4件は、残りの
+Digestの入力の作業とともに未作成である。
 
-## 2026-09-17: reason, full projection and Digest versions
+## 2026-09-17: reason、full projection、Digestのversion
 
-Added SINGLE-101-01, SINGLE-106-01 and SINGLE-121. Prepared: 177/311; missing: 134.
-Two `uv run fixtures/validate_step0b.py` runs produced byte-identical reports;
-all check errors were empty. Both exited 1 solely for outstanding Gate A evidence.
-Report SHA-256: `49554c146d9e524c0310e4700806c912ef10388cb595018284936033dd7c784e`.
-The existing pinned uv environment and dependencies were used; no runtime changes were made.
-Each new fixture has its own complete input, manifest, expected result, Canonical JSON
-and read-only snapshots. Two isolated setups and the two independent Digest references
-agree. Mutation checks reject missing reason, forbidden/missing full projection fields,
-and changed digestVersion/resolverVersion.
-See [the Digest review](single/Context-Digest-review.md). Core was not run.
-The normative/reference projections, remaining scanner Context cases, federation golden
-and full fresh-checkout Gate A evidence remain pending.
+SINGLE-101-01、SINGLE-106-01、SINGLE-121を追加した。準備済み177/311、未作成134件。
+`uv run fixtures/validate_step0b.py`の2回はbyte一致したreportを出し、check errorはすべて空だった。
+両方とも、未完了のGate Aの証拠だけを理由に終了コード1を返した。
+Report SHA-256: `49554c146d9e524c0310e4700806c912ef10388cb595018284936033dd7c784e`。
+既存の固定したuv環境と依存を使い、実行環境は変えていない。
+新しいfixtureはそれぞれ、完全な入力、manifest、期待結果、Canonical JSON、読取り専用snapshotを持つ。
+隔離した2回のsetupと、独立した2系統のDigest参照計算が一致する。改変試験は、reasonの欠落、fullのprojectionの
+禁止field・必須fieldの欠落、変えたdigestVersion／resolverVersionを拒否する。
+[Digestのreview](single/Context-Digest-review.md)を参照。Coreは実行していない。
+normative／referenceのprojection、残りのScannerのContextのcase、複合workspaceのgolden、fresh checkoutでのGate Aの
+全体の証拠は未完了である。
 
-## 2026-09-17: internal Parser evidence and normative projection
+## 2026-09-17: 内部Parserの証拠とnormative projection
 
-Prepared: 179/311; missing: 132. Added SINGLE-097-01 and SINGLE-106-02, and added
-complete internal Parser IR expectations to SINGLE-101-01.
-Two pinned-environment `python -B fixtures/validate_step0b.py` runs produced
-byte-identical reports, with no check errors; both exit 1 for outstanding Gate A evidence.
-Report SHA-256: `145b9efd0b02033a4f5d9b3148ec6a4f8a5c5e7da9606c5414a4f98669a99027`.
-Runtime: the existing CPython 3.14.6 Step 0B uv environment, Linux/POSIX; dependency pins unchanged.
-The five text escapes and source/raw/meaning fields agree with fixed full IR expectations.
-A distance-two refinement exercises normative projection field omission.
-Input, complete JSON, Canonical JSON and snapshots are fixed; two isolated setups and
-two independent Digest computations agree. Mutation checks cover semantic fields,
-source positions, raw, projection fields and missing/unsafe/duplicate Parser references.
-The accepted split is specified in fixture contract §4.1: Step 2 must compare the real
-Parser's full IR, while public context acceptance continues comparing JSON and Digest.
-No Core Parser or operation was implemented or executed. Code-span and quoted-extension
-expectations remain pending semantic decisions; reference projection and federation
-golden, other missing fixtures and fresh-checkout Gate A certification also remain pending.
+準備済み179/311、未作成132件。SINGLE-097-01とSINGLE-106-02を追加し、SINGLE-101-01に内部Parserの完全なIRの
+期待値を加えた。
+固定した環境での`python -B fixtures/validate_step0b.py`の2回はbyte一致したreportを出し、check errorはなく、
+両方とも未完了のGate Aの証拠により終了コード1だった。
+Report SHA-256: `145b9efd0b02033a4f5d9b3148ec6a4f8a5c5e7da9606c5414a4f98669a99027`。
+実行環境: 既存のCPython 3.14.6のStep 0Bのuv環境、Linux／POSIX。依存の固定は変えていない。
+textの5種類のescapeと、source・raw・意味のfieldが、固定した完全なIRの期待値と一致する。
+距離2のrefinementで、normative projectionのfield省略を検査する。
+入力、完全なJSON、Canonical JSON、snapshotを固定し、隔離した2回のsetupと、独立した2系統のDigest計算が一致する。
+改変試験は、意味のfield、sourceの位置、raw、projectionのfieldと、欠落・安全でない・重複したParserの参照を扱う。
+受け入れた分担は適合fixture仕様 §4.1に定めた。Step 2では実際のParserの完全なIRを比べ、公開のcontextの受入は
+引き続きJSONとDigestを比べる。
+CoreのParserも操作も実装・実行していない。code spanとquoted extensionの期待値は意味の決定待ちであり、
+reference projection、複合workspaceのgolden、他の未作成fixture、fresh checkoutでのGate A認定も未完了である。
 
-## 2026-09-17: quoted extension acceptance
+## 2026-09-17: quoted extensionの受入
 
-Prepared: 180/311; missing: 131. SINGLE-098-01 fixes escaped DQUOTE in a quality
-extension, with passed_with_warnings as explicitly approved. Two integrated
-`python -B fixtures/validate_step0b.py` runs in the existing pinned CPython 3.14.6
-environment produced byte-identical reports; all check errors were empty.
-Report SHA-256: `edecc666b3ad04a7da27816272fbd398de2a242027511d9d19d2888668df4d07`.
-Both exited 1 for outstanding Gate A evidence. Complete IR, source, opaque/unknown
-extension value, public result, Canonical JSON and read-only snapshots are checked.
-No Core was run. Code spans, reference projection, federation golden, remaining
-fixtures and fresh-checkout certification remain pending.
+準備済み180/311、未作成131件。SINGLE-098-01は、quality extensionでescapeしたDQUOTEを固定し、明示的に承認された
+passed_with_warningsとする。既存の固定したCPython 3.14.6環境での`python -B fixtures/validate_step0b.py`による
+統合実行2回はbyte一致したreportを出し、check errorはすべて空だった。
+Report SHA-256: `edecc666b3ad04a7da27816272fbd398de2a242027511d9d19d2888668df4d07`。
+両方とも未完了のGate Aの証拠により終了コード1だった。完全なIR、source、opaque／未知のextensionの値、公開結果、
+Canonical JSON、読取り専用snapshotを検査する。
+Coreは実行していない。code span、reference projection、複合workspaceのgolden、残りのfixture、fresh checkoutでの
+認定は未完了である。
 
-## 2026-09-17: code-span acceptance
+## 2026-09-17: code spanの受入
 
-Prepared: 181/311; missing: 130. SINGLE-096-01 completes the 20 cases of matrix §6.10.
-The approved semantics remove outer delimiters only; unequal internal runs and
-span-internal tag/escape-like text remain literal. Full IR, raw/source, JSON and
-Canonical JSON are fixed. Two independent reference computations and two isolated
-setups agree. Equal-run termination and malformed-run regression checks passed.
-Two integrated runs in the same pinned CPython 3.14.6 environment were byte-identical
-with no check errors, both exit 1 for pending Gate A evidence.
-Report SHA-256: `e4c52beaeb441737c9a8f96f18e4d59b1f9a4bc766f738c60238685d78f272ca`.
-No Core was run. Reference projection, remaining fixtures, federation golden and
-fresh-checkout Gate A certification remain pending.
+準備済み181/311、未作成130件。SINGLE-096-01でmatrix §6.10の20件が完了する。
+承認済みの意味は、外側の区切りだけを除くことである。長さの異なる内部のrunと、span内部のtag・escape風のtextは
+literalのまま残す。完全なIR、raw／source、JSON、Canonical JSONを固定する。独立した2系統の参照計算と、隔離した
+2回のsetupが一致する。同じ長さのrunでの終了と、形式不正のrunの回帰試験が通過した。
+同じ固定したCPython 3.14.6環境での統合実行2回はbyte一致し、check errorはなく、両方とも未完了のGate Aの証拠により
+終了コード1だった。
+Report SHA-256: `e4c52beaeb441737c9a8f96f18e4d59b1f9a4bc766f738c60238685d78f272ca`。
+Coreは実行していない。reference projection、残りのfixture、複合workspaceのgolden、fresh checkoutでのGate A認定は
+未完了である。
 
 ## 2026-09-17: Frontmatter境界
 
 準備済み201/311、残り110件。SINGLE-114、115-01〜04、116-01〜05、117-01〜03、118-01、119-01〜04、
 120-03、120-04で、REQ／TECH／ADR／TASKの最小definition、titleの120／121 code point境界、空白・複数行・null・
 欠落のtitle、空・重複配列、未知key、`x-`拡張、REQの`changes`の優先順位を固定した。
-独立にdecodeしたflow valueは審査済みfieldおよびFrontmatter Schemaの判定と一致した。2回の隔離setupは
-read-only snapshotと一致した。回帰試験はstatus・件数・codeの改変、二重または削除した診断、cache書込み、
+独立にdecodeしたflow valueはreview済みfieldおよびFrontmatter Schemaの判定と一致した。2回の隔離setupは
+読取り専用snapshotと一致した。回帰試験はstatus・件数・codeの改変、二重または削除した診断、cache書込み、
 境界内へ修復した121 code point titleを拒否する。
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `db8b0defde675722225f72962027265855afbe953971a3379b4bbba0a3e39582`。
-Coreは実行していない。SINGLE-118-02／03、120-01／02、残りの適合fixture、連合golden、fresh checkoutでの
+Coreは実行していない。SINGLE-118-02／03、120-01／02、残りの適合fixture、複合workspaceのgolden、fresh checkoutでの
 Gate A認定は未完了である。
 
 ## 2026-09-17: Frontmatter境界の追補
@@ -490,12 +453,12 @@ JSON Schemaの`uniqueItems`では検出できないcovers順だけの重複を�
 回帰試験は受理への改変、covers順の修復、件数・source・argvの改変、差分の消去とstageの追加を拒否する。
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `0fff1aa3a4d4ca4b2bbc3e21ac59549a39bc0b5f516ee2cf8a3eaa72ca155bc0`。
-Coreは実行していない。残りの適合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。
+Coreは実行していない。残りの適合fixture、複合workspaceのgolden、fresh checkoutでのGate A認定は未完了である。
 
 ## 2026-09-17: Core副作用
 
 準備済み210/311、残り101件。SINGLE-125-01〜05を追加した。source fixture（042、001、070-01、055、071-01）と
-同じ起動・入力を使い、期待結果fileはsourceとbyte一致させた。125-01〜04は`.spec/reports/`を置かないread-only、
+同じ起動・入力を使い、期待結果fileはsourceとbyte一致させた。125-01〜04は`.spec/reports/`を置かない読取り専用、
 HOME／cache／tempは空で固定し、125-04は書込みなしcommand `/bin/true`に限定した。125-05は最終report 1件、
 一時file残存0件、既存report不変を要求する。各fixtureを2回の隔離setupで照合した。
 回帰試験は書込み許容、外部treeの事前汚染、report要求・件数・policyの改変、追加環境変数、
@@ -504,20 +467,20 @@ SINGLE-125-06は、時刻固定も障害注入もできないfixture形式では
 決定論的に起こせないため保留した。
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `09eb848bfd50680e20ed3fa13eb6f0c4b860281810957f182eff436b8b23e457`。
-Coreは実行していない。SINGLE-125-06、残りの適合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。
+Coreは実行していない。SINGLE-125-06、残りの適合fixture、複合workspaceのgolden、fresh checkoutでのGate A認定は未完了である。
 
 ## 2026-09-17: report directoryのsymlink（SINGLE-125-06）
 
 準備済み211/311、残り100件。`.spec`または`.spec/reports`がsymlinkなら解決せず保存失敗とする規定を
 結果・Diagnostic・終了コード §8へ、`.spec/reports`をentry種別にかかわらず既知entryとする規定を
 workspace・設定仕様 §3へ追加し、registryの`REPORT-WRITE`行へ注記した。新規条件はなく、
-Diagnostic台帳は3文書のhashだけを再レビュー後に更新した。
+Diagnostic台帳は3文書のhashだけを再review後に更新した。
 SINGLE-125-06はSINGLE-072と同じ起動・期待結果で、`.spec/reports`を`../report-store`へのsymlinkに替えた。
-symlink、symlink先directory、既存reportの不変をread-only snapshotで固定し、2回の隔離setupで照合した。
+symlink、symlink先directory、既存reportの不変を読取り専用snapshotで固定し、2回の隔離setupで照合した。
 監査の`copy_fixture`はsymlinkをsymlinkのままcopyするよう修正した。
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `6ba25afc010d4f839244d4a2f26f3488703d62d67c8f3e70a2209531e3311b81`。
-Coreは実行していない。残りの適合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。
+Coreは実行していない。残りの適合fixture、複合workspaceのgolden、fresh checkoutでのGate A認定は未完了である。
 
 ## 2026-09-17: verify argv・実行環境・出力変換
 
@@ -531,55 +494,55 @@ POSIX shが`PWD`を再計算するため、awkで環境を読む。126-12は別s
 126-06は`bitz.yaml`の64 KiB上限により`SPEC-CONFIG-SCHEMA-001`へ到達できないため、126-08はfixture規模のため保留した。
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `242dd2b0bce32f6e233c849292e3d1d56e00296f5521f3b6285b84a5f5e7c8fd`。
-Coreは実行していない。126-06、126-08、残りの適合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。
+Coreは実行していない。126-06、126-08、残りの適合fixture、複合workspaceのgolden、fresh checkoutでのGate A認定は未完了である。
 
 ## 2026-09-17: argv上限の裁定とSINGLE-126-08
 
 準備済み226/310、残り84件。SINGLE-126-06は`bitz.yaml`の64 KiB上限により`SPEC-CONFIG-SCHEMA-001`へ到達できないため、
-裁定でmatrixから削除し、workspace・設定仕様 §6へ注記した。Diagnostic台帳は同文書のhashだけを再レビュー後に更新した。
+裁定でmatrixから削除し、workspace・設定仕様 §6へ注記した。Diagnostic台帳は同文書のhashだけを再review後に更新した。
 SINGLE-126-08は規範文なしTECH 35文書、test path 280件（各約3,770 byte）で、引数なしverifyの展開後argvが
 1,055,609 byteとなりbyte上限だけを超える。設定・Frontmatter・文書・要素数・要素長・path長が上限内であること、
 1文書分を除くと上限内へ戻ることを独立に確認した。35 targetのContext Digestは2系統のreferenceで一致した。
 fixtureは入力と副作用snapshotで約9 MiBである。
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `f40dbfc6f38683207e31d53e7fde47d33232b708791a994b51dd980f1ebd8206`。
-Coreは実行していない。残りの適合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。
+Coreは実行していない。残りの適合fixture、複合workspaceのgolden、fresh checkoutでのGate A認定は未完了である。
 
 ## 2026-09-17: 明示起点の不在・ADR起点、共通target展開、Digest材料の順序
 
 準備済み245/310、残り65件。SINGLE-106-03、107-01／02、108-01／02、109、110、111-01〜04、112-01〜04、113、
 122〜124の19件を追加した。作成前に、role割当、interpretのdraft refinement、statement起点の提示、
-verifyの起点TASKの`requires`を裁定して正本へ反映し、Diagnostic台帳とtarget vectorの根拠hashを再レビュー後に更新した。
-target vectorは`TASK-REQUIRES-NOT-TARGET`の期待集合だけが変わり、他の24ケースは不変である。
+verifyの起点TASKの`requires`を裁定して正本へ反映し、Diagnostic台帳とtarget vectorの根拠hashを再review後に更新した。
+target vectorは`TASK-REQUIRES-NOT-TARGET`の期待集合だけが変わり、他の24 caseは不変である。
 reference B（`digest_crosscheck.py`）を`requires`の追跡、statementへの`refines`、draft advisory、
 command省略時の文書`verify`解決、extensionの正規順へ拡張し、既存fixtureのCanonical JSONが不変であることを確認した。
 新規のContext Digestはすべて2系統のreferenceで一致した。各fixtureを2回の隔離setupで照合した。
 SINGLE-127-15〜19は、偽Gitの配置、`consumer` runnerのargv、CPython 3.11の選択が未確定のため保留した。
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `23f787eb283aa4fe0f877ac020ceb070fa6b116282a2046bbd1cd079eca47c8c`。
-Coreは実行していない。SINGLE-127-15〜19、連合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。
+Coreは実行していない。SINGLE-127-15〜19、複合workspaceのfixture、複合workspaceのgolden、fresh checkoutでのGate A認定は未完了である。
 
 ## 2026-09-17: 適合harness外部仕様の裁定と実行環境・配布物
 
-準備済み250/310、残り60件（すべて連合）。提案27とADR-046で、検査対象の受取り（source／wheelと`uv`隔離環境）、
+準備済み250/310、残り60件（すべて複合workspace）。提案27とADR-046で、検査対象の受取り（source／wheelと`uv`隔離環境）、
 `invocation.python`、`invocation.gitVersion`とGit shim、`bitz.compat`によるconsumer／migration runner、
 harness側の`runner: package`を裁定し、適合fixture仕様、実行環境契約 §4（`git --version`による版取得）、
 実装計画のGate C（全matrixを3.11と基準環境で通す）、manifest Schemaへ反映した。
-Diagnostic台帳は実行環境契約のhashだけを再レビュー後に更新した。
+Diagnostic台帳は実行環境契約のhashだけを再review後に更新した。
 SINGLE-127-15〜19を追加し、Git版と下限CPythonを規範本文から読み取ってmanifestと照合した。
 統合検証へ、bitz以外のrunnerの期待結果が`{"outcome": ...}`だけであることの検査を加えた。
 各fixtureを2回の隔離setupで照合した。shim生成、`uv`環境構築、package検査の実行部は未作成である。
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `08eda7ecd76069a296e42d1a429a81f22cccfcb16a1f529cdf5de790b3fdaba8`。
-Coreは実行していない。連合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。
+Coreは実行していない。複合workspaceのfixture、複合workspaceのgolden、fresh checkoutでのGate A認定は未完了である。
 
 ## 2026-09-17: 複合workspaceの識別子の改名
 
 準備済み250/310、残り60件（すべて複合workspace）。ADR-047に従い、設定key、Capability、結果field、Diagnostic code、
 condition ID、継続単位、fixture ID（`MONO-*`→`MULTI-*`）、結果SchemaのSchema定義名、性能datasetを改名した。
 doctorの期待結果11件はCapability一覧の`multiWorkspace.v1`だけが変わり、manifest Schemaとmatrix検査は
-`MULTI-*`を受け付ける。Diagnostic台帳とtarget vectorの根拠文書hashは再レビュー後に更新した。
-target vectorの期待集合25ケースは変わらない。性能datasetの期待tree digestは設定keyの変更分だけ更新した。
+`MULTI-*`を受け付ける。Diagnostic台帳とtarget vectorの根拠文書hashは再review後に更新した。
+target vectorの期待集合25 caseは変わらない。性能datasetの期待tree digestは設定keyの変更分だけ更新した。
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `fb0d2efe0a442145d47e47be364a80d45849c0d0af187f4c57769db1ca15e5f5`。
 Coreは実行していない。複合workspaceのfixture、そのgolden Digest、fresh checkoutでのGate A認定は未完了である。
@@ -588,6 +551,6 @@ Coreは実行していない。複合workspaceのfixture、そのgolden Digest�
 
 用語集 §7に従い78件のfile名を改名し、参照322箇所、ADR 16件の`title`とH1、台帳の根拠文書keyを直した。
 提案資料とfixtureの記録を含む全Markdownでlinkを検査し、link切れは改名前と同じ107件（置換済みの旧ADRが
-旧構成の文書を指すもの）で、改名による増加はない。台帳とtarget vectorの根拠文書hashは再レビュー後に更新した。
+旧構成の文書を指すもの）で、改名による増加はない。台帳とtarget vectorの根拠文書hashは再review後に更新した。
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `fb0d2efe0a442145d47e47be364a80d45849c0d0af187f4c57769db1ca15e5f5`（改名前と同じ）。

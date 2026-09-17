@@ -1,70 +1,64 @@
-# Report-absence and argument-error fixture review
+# report非作成・引数不正fixture review
 
-Covers `SINGLE-070-01/02/03/04` and `SINGLE-073-01/02`, `SINGLE-074-01/02/03` from
-[適合fixture仕様 §6.7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#67-出力とreport).
-These are reviewed expectations, not observed Core behaviour.
+[適合fixture仕様 §6.7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#67-出力とreport)の
+`SINGLE-070-01/02/03/04`と、`SINGLE-073-01/02`、`SINGLE-074-01/02/03`を扱う。
+いずれもreview済みの期待値であり、Coreの挙動を観測したものではない。
 
-## An existing report makes immutability testable
+## 既存のreportを置くことで、不変性を検査できる
 
-The matrix asks for "file生成0件、既存report不変". A corpus with no report can only demonstrate the
-first half: a run that silently rewrote an existing report would still show zero *new* files. Every
-`SINGLE-070-*` corpus therefore already holds `.spec/reports/existing.json`, and the audit refuses a
-fixture whose snapshot lacks it, so the immutability half cannot quietly become untested.
+matrixは「file生成0件、既存report不変」を求める。reportのない入力では前半しか示せない。既存のreportを黙って
+書き換える実行でも、*新しい*fileは0件に見えるからである。そのため`SINGLE-070-*`の入力にはすべて
+`.spec/reports/existing.json`を置き、snapshotにこのfileがないfixtureを監査が拒否する。不変性の半分が、
+知らないうちに検査されなくなることはない。
 
-The four cases cover both operations on both outcomes, because "does it write without `--report`" is
-a different question on a failing run than on a passing one:
+「`--report`なしで書き込むか」は、成功する実行と失敗する実行とで別の問いなので、4件で両操作の両結果を扱う。
 
-| fixture | operation | status |
+| fixture | 操作 | status |
 |---|---|---|
-| `SINGLE-070-01` | `check --full --base HEAD` | `passed`/0 |
-| `SINGLE-070-02` | `check --full --base HEAD` | `failed`/1 |
-| `SINGLE-070-03` | `verify REQ-001` | `passed`/0 |
-| `SINGLE-070-04` | `verify REQ-001` | `failed`/1 |
+| `SINGLE-070-01` | `check --full --base HEAD` | `passed`／0 |
+| `SINGLE-070-02` | `check --full --base HEAD` | `failed`／1 |
+| `SINGLE-070-03` | `verify REQ-001` | `passed`／0 |
+| `SINGLE-070-04` | `verify REQ-001` | `failed`／1 |
 
-The two verify cases reuse the reviewed results of `SINGLE-055` and `SINGLE-056` directly rather than
-restating them. The added report file is not SPEC material, so the Context and its Digest are
-unchanged, and importing the result keeps the two groups from drifting apart.
+verifyの2件は、`SINGLE-055`と`SINGLE-056`のreview済みの結果を書き直さずに直接使う。追加したreport fileは
+SPECの材料ではないので、ContextとそのDigestは変わらない。結果を読み込むことで、2つの群がずれていくことを防ぐ。
 
-The check cases count three documents and two statements: `REQ-001` with its two statements, `TECH-001`,
-and `ADR-001`. That matches the existing convention, where an ADR is a checked document contributing no
-statements. `SINGLE-070-02` fails through a single cause — `TECH-001` requires a missing `TECH-999` —
-which is the same `SPEC-RELATION-MISSING-001` shape already reviewed in the trace batch.
+checkの2件は、3文書と2規範文を数える。2規範文を持つ`REQ-001`、`TECH-001`、`ADR-001`である。これは、ADRを
+規範文を持たない検査対象文書とする既存の慣例と一致する。`SINGLE-070-02`は、`TECH-001`が存在しない`TECH-999`を
+`requires`するという単一の原因で失敗する。trace群でreview済みの`SPEC-RELATION-MISSING-001`と同じ形である。
 
-The check group uses a base commit and passes `--base HEAD` as the fixture contract requires, while the
-verify group stages instead, because `verify` has no `--base` and blocks on an untracked configuration.
+checkの群はfixture契約どおり基準commitを作って`--base HEAD`を渡す。verifyの群は、`verify`に`--base`がなく、
+未追跡の設定で停止するため、代わりにstageする。
 
-## Argument errors produce no result at all
+## 引数不正は結果を一切返さない
 
-`expect` for all five carries no `status` and no `resultFile`, which the manifest contract allows only
-when the invocation returns no common result. The audit rejects a manifest that adds either.
+5件の`expect`は`status`も`resultFile`も持たない。manifestの契約は、起動が共通結果を返さない場合にだけこれを許す。
+どちらかを追加したmanifestは監査が拒否する。
 
-| fixture | invocation | rejected because |
+| fixture | 起動 | 拒否の理由 |
 |---|---|---|
-| `SINGLE-073-01` | `context REQ-001 --report` | only `check` and `verify` accept `--report` |
-| `SINGLE-073-02` | `doctor --report` | same |
-| `SINGLE-074-01` | `check REQ-001 --full` | `--full` and an explicit target are exclusive |
-| `SINGLE-074-02` | `verify src/auth.py` | a code path is not a verify target |
-| `SINGLE-074-03` | `check REQ-1` | fewer than three digits is not a document ID |
+| `SINGLE-073-01` | `context REQ-001 --report` | `--report`を受け付けるのは`check`と`verify`だけ |
+| `SINGLE-073-02` | `doctor --report` | 同上 |
+| `SINGLE-074-01` | `check REQ-001 --full` | `--full`と明示targetは排他 |
+| `SINGLE-074-02` | `verify src/auth.py` | code pathはverifyのtargetではない |
+| `SINGLE-074-03` | `check REQ-1` | 3桁未満は文書IDではない |
 
-`SINGLE-074-03` is deliberately a *lexical* error rather than an absent ID.
-[CLI基盤契約 §6](../../../docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md#6-targetとworkspaceの不存在)
-separates the two: a syntactically valid but absent ID starts the operation and returns
-`CTX-ROOT-MISSING-001`/failed, while an ill-formed one never starts it. `REQ-1` fails the
-`[0-9]{3,}` rule, so it can only be the second.
+`SINGLE-074-03`は、IDの不在ではなく、意図して*字句*の誤りにしている。
+[CLI基盤契約 §6](../../../docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md#6-targetとworkspaceの不存在)は
+両者を分ける。構文上妥当だが存在しないIDは操作を開始して`CTX-ROOT-MISSING-001`／failedを返し、形式不正のIDは
+操作を開始しない。`REQ-1`は`[0-9]{3,}`の規則を満たさないので、後者にしかなり得ない。
 
-## One stderr contract, now operation-aware
+## 標準エラー出力の契約を1つにし、操作を区別できるようにした
 
-The stderr expectation lived in the Git-environment batch and was hard-wired to `bitz: check: `.
-Rather than copy it, `check_cli_error_output` now takes the operation, so all five fixtures and the
-earlier one share a single statement of the contract: exit 4, empty stdout, exactly one line, a
-non-empty reason, and no terminal control characters. Each fixture's `cli-output.json` records its own
-prefix, and the audit exercises the helper on that operation, rejecting a wrong prefix, an empty
-reason, a second line and a non-4 exit code.
+標準エラー出力の期待値はGit環境の群にあり、`bitz: check: `に固定されていた。これをcopyせず、
+`check_cli_error_output`が操作を受け取るように改め、5件と以前の1件が1つの契約を共有する。終了コード4、
+空の標準出力、ちょうど1行、空でない理由、端末制御文字なし、である。各fixtureの`cli-output.json`はそれぞれの
+接頭辞を記録し、監査はその操作でhelperを動かして、誤った接頭辞、空の理由、2行目、4以外の終了コードを拒否する。
 
-## Limits
+## 限界
 
-- No Core has run. Gate B decides agreement with Core.
-- The reason text after the prefix is deliberately unconstrained; only its presence and safety are
-  fixed, so wording changes do not break the matrix.
-- `SINGLE-074-01` pins one exclusive pair. The other exclusions in the public syntax — around
-  `--all-workspaces` — are not covered by this fixture.
+- Coreは実行していない。Coreとの一致はGate Bで判定する。
+- 接頭辞の後の理由文は意図して制約しない。存在することと安全であることだけを固定し、文言の変更でmatrixが
+  壊れないようにする。
+- `SINGLE-074-01`は排他の組を1つだけ固定する。公開構文にある他の排他（`--all-workspaces`まわり）は、このfixtureでは
+  扱わない。

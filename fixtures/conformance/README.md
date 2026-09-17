@@ -1,122 +1,115 @@
-# Step 0B conformance preparation
+# Step 0Bの適合fixture準備
 
-Run from the repository root:
+repository rootで次を実行する。
 
 ```text
 uv run fixtures/validate_step0b.py
 ```
 
-The command audits public result/Diagnostic/manifest JSON examples, schema structure, EBNF references,
-registry structure, matrix inventory, and relative links in current design contracts and accepted ADRs.
-It also executes Step 0-P validation and the fixture infrastructure self-tests.
-Pinned dependencies are declared in the script; the first run requires package download access.
+このcommandは、公開の結果・Diagnostic・manifestのJSON例、Schemaの構造、EBNFの参照、registryの構造、
+matrixの一覧、現行の設計契約と承認済みADRの相対linkを監査する。Step 0-Pの検証とfixture基盤の自己試験も実行する。
+固定した依存はscriptに宣言してあり、初回はpackageのdownloadが必要である。
 
-Exit 0 means Gate A is allowed; exit 1 means errors or outstanding evidence remain. Currently exit 1 is expected:
-137 of the 311 matrix fixtures, the independent multi-workspace golden Context Digest,
-and per-fixture side-effect expectations are still outstanding. Missing fixtures are listed individually.
-Static checks do not prove that a fixture has only one independent cause. Diagnostic mappings have a reviewed ledger:
-see [Diagnostic review](Diagnostic意味網羅review.md). The audit checks its integrity and source freshness, not natural-language semantics.
+終了コード0はGate Aの許可、1はerrorまたは未完了の証拠が残っていることを表す。現在は1が想定どおりである
+（2026-09-17時点で、matrix 310件のうち複合workspaceの60件、複合workspaceのgolden Context Digest、fixtureごとの
+副作用期待値が未完了）。未作成のfixtureは個別に列挙される。
+静的な検査では、fixtureが独立した原因を1つだけ持つことを証明できない。Diagnosticの対応はreview済みの台帳で管理する
+（[Diagnostic意味網羅review](Diagnostic意味網羅review.md)）。監査は台帳の整合と根拠文書の鮮度を検査し、自然言語の意味は検査しない。
 
-[Target vectors](targets/README.md) fix 18 kind/purpose combinations and seven graph cases. The audit compares four ordered
-sets with a limited reference calculation and checks input-order invariance. This does not certify Core execution or bindings.
+[target vector](targets/README.md)は、種別とpurposeの18組合せと、graphの7ケースを固定する。監査は4つの順序付き集合を
+限定した参照計算と比べ、入力順に依存しないことを検査する。Coreの実行やbindingを保証するものではない。
 
-[Initial single-workspace fixtures](single/README.md) provide nine real inputs, manifests, complete expected JSON results,
-and read-only before/after expectations. Two isolated setups are checked against each fixed before snapshot.
-This validates preparation evidence, not Core execution or observed post-operation side effects.
-The missing-cwd case requires an executable `/bin/true` on the Linux validation host; missing prerequisites fail the audit.
+[単一workspaceの初期fixture](single/README.md)は、実入力9件、manifest、完全な期待JSON、read-onlyの実行前後の
+期待値を持つ。隔離した2回のsetupを、それぞれ固定した実行前snapshotと照合する。
+これは準備証拠の検証であり、Coreの実行や操作後に観測した副作用の検証ではない。
+cwd不在のcaseは、Linuxの検証hostに実行可能な`/bin/true`を要求する。前提が欠ければ監査は失敗する。
 
-[EARS fixtures](single/EARS-AI構文・候補抽出review.md) provide twelve syntax/ID/candidate/extension cases.
-Their fixed REQ inputs, Frontmatter schema, full expected JSON, token positions, and two isolated setups are audited.
-This does not implement or certify the Core Scanner/Parser.
+[EARS fixture](single/EARS-AI構文・候補抽出review.md)は、構文・ID・候補・拡張の12ケースを持つ。
+固定したREQ入力、Frontmatter Schema、完全な期待JSON、tokenの位置、隔離した2回のsetupを監査する。
+CoreのScannerやParserを実装・保証するものではない。
 
-[Document fixtures](single/文書構造・UTF-8-review.md) add nine filename, required statement/heading, placement,
-ignored style and invalid UTF-8 cases, with fixed preparation evidence. Fixed input bytes, complete expected JSON,
-Frontmatter and side-effect schemas, and two isolated setups are audited. Skip/continue counts and the rejection
-of repaired UTF-8 or additional causes are covered by regression checks. Core acceptance remains in Gate B.
+[文書fixture](single/文書構造・UTF-8-review.md)は、file名、必須の規範文・見出し、配置、無視するstyle、不正なUTF-8の
+9ケースを、固定した準備証拠とともに加える。固定した入力byte列、完全な期待JSON、FrontmatterとSchemaの副作用期待値、
+隔離した2回のsetupを監査する。skip／継続の件数と、修復したUTF-8や追加の原因の拒否は回帰試験で扱う。
+Coreの受入はGate Bで行う。
 
-[Trace fixtures](single/関係・path・coverage-review.md) add six strong-reference, relation-type, legacy refs, path and coverage cases,
-with fixed preparation evidence. The audit verifies complete expected JSON, fixed input bytes, reviewed Frontmatter values,
-read-only snapshots and two isolated setups, with mutation tests for missing or additional causes.
+[trace fixture](single/関係・path・coverage-review.md)は、強い参照、relationの型、旧`refs`、path、coverageの6ケースを、
+固定した準備証拠とともに加える。完全な期待JSON、固定した入力byte列、review済みのFrontmatter値、read-onlyのsnapshot、
+隔離した2回のsetupを検証し、原因の欠落や追加を改変試験で拒否する。
 
-[Graph fixtures](single/文書ID重複・循環review.md) add four duplicate-document-ID and requires/refines/related self-cycle cases,
-with fixed preparation evidence. Complete expectations, reviewed Frontmatter values and two isolated setups are checked;
-mutation tests reject changed causes, duplicate diagnostics, renumber suggestions and side effects.
+[graph fixture](single/文書ID重複・循環review.md)は、文書IDの重複と、requires／refines／relatedの自己循環の4ケースを、
+固定した準備証拠とともに加える。完全な期待値、review済みのFrontmatter値、隔離した2回のsetupを検査し、
+改変試験で原因の変更、Diagnosticの重複、改番の提案、副作用を拒否する。
 
-[Git fixtures](single/Git基準版・状態遷移review.md) add five forbidden transition, new document, deletion, rename and approved-meaning cases,
-with fixed preparation evidence. HEAD and index blobs and working-tree bytes are checked directly, alongside complete
-expected results, read-only snapshots and two isolated setups. Mutation tests reject unintended staging or commits.
+[Git fixture](single/Git基準版・状態遷移review.md)は、禁止された遷移、新規文書、削除、rename、承認済みの意味変更の
+5ケースを、固定した準備証拠とともに加える。HEADとindexのblob、作業treeのbyte列を直接検査し、完全な期待結果、
+read-onlyのsnapshot、隔離した2回のsetupも確認する。改変試験で意図しないstageやcommitを拒否する。
 
-[Approved-REQ exemption fixtures](single/approved-REQの保護対象外変更review.md) add five implements/tests/related/extension/prose-only changes,
-bringing preparation to 50/311. Supporting files exist unchanged in HEAD; only the REQ changes in the worktree.
-They use the Git fixture audit, with complete success expectations and mutation tests for additional causes.
+[承認済みREQの保護対象外fixture](single/approved-REQの保護対象外変更review.md)は、implements／tests／related／拡張／散文だけの
+変更5ケースを加え、準備済みを50/311にした。補助fileはHEADのまま変わらず、作業treeではREQだけが変わる。
+Git fixtureの監査を使い、完全な成功期待値と、追加の原因を拒否する改変試験を持つ。
 
-[TASK scope fixtures](single/TASK境界・対象選択review.md) add three explicit/changed/full boundary cases.
-[Git selection/impact fixtures](single/Git対象選択・影響候補review.md) add four direct-dependency, unborn and empty/unowned selection cases.
-[Git environment fixtures](single/Git基準版error・Git不在review.md) add invalid-base and Git-absence cases, bringing preparation to 60/311.
-The latter fix CLI error stream shape without matching human reason text and use null Git snapshots only for explicitly absent Git.
+[TASK境界fixture](single/TASK境界・対象選択review.md)は、明示・変更範囲・全体の境界の3ケースを加える。
+[Git対象選択・影響候補fixture](single/Git対象選択・影響候補review.md)は、直接依存、unborn、空または所有者のない選択の4ケースを加える。
+[Git環境fixture](single/Git基準版error・Git不在review.md)は、不正な基準版とGit不在のケースを加え、準備済みを60/311にした。
+後者は、人向けの理由文を照合せずにCLIのerror出力の形を固定し、明示的にGitがない場合だけGitのsnapshotをnullにする。
 
-[Context failure fixtures](single/Context非成功review.md) add five missing-root, unfinished-task, superseded-root/dependency and duplicate-successor cases, bringing preparation to 65/311.
-Complete non-success JSON, empty Bundle expectations, unborn Git snapshots and mutation tests are checked without running Core.
+[Context非成功fixture](single/Context非成功review.md)は、起点不在、未完了のTASK、置換済みの起点・依存先、後継の重複の
+5ケースを加え、準備済みを65/311にした。完全な非成功JSON、空のBundleの期待値、unbornのGit snapshot、改変試験を、
+Coreを実行せずに検査する。
 
-The `harness-input` directory contains infrastructure test inputs, not `SINGLE-*` or `MULTI-*` acceptance fixtures.
-`harness.py` builds isolated Git repositories and compares files, executable bits, symlink targets, and directories.
-Snapshots exclude `.git`; self-tests compare Git status and index separately. Setup rejects parent traversal and
-symlink ancestors. It never runs a Core operation. Callers must validate full acceptance manifests against the schema.
+`harness-input` directoryは基盤の試験入力であり、`SINGLE-*`や`MULTI-*`の受入fixtureではない。
+`harness.py`は隔離したGit repositoryを作り、file、実行bit、symlinkの参照先、directoryを比較する。
+snapshotは`.git`を除き、自己試験はGitのstatusとindexを別に比較する。setupは親directoryへの移動とsymlinkの祖先を
+拒否する。Coreの操作は実行しない。呼出し側は、受入manifest全体をSchemaで検証しなければならない。
 
-`process_helper.py` reproduces successful/nonzero exits, signal termination, timeout, and a descendant holding pipes.
-`test_harness.py` bounds those tests and kills only the isolated process group it created. These tests demonstrate
-helper/harness behavior, not the future Core process runner's acceptance.
+`process_helper.py`は、正常・非0の終了、signalによる終了、timeout、pipeを保持する子孫を再現する。
+`test_harness.py`はこれらの試験に時間の上限を設け、自分が作った隔離process groupだけを強制終了する。これらの試験は
+helperとharnessの振る舞いを示すもので、将来のCoreのprocess runnerの受入ではない。
 
-Validation runtime: Linux/POSIX with Python 3.11+ and Git. The audit writes temporary fixture repositories only;
-it does not update acceptance results or documentation automatically.
+検証環境: Python 3.11以上とGitがあるLinux／POSIX。監査は一時的なfixture repositoryだけを書き込み、
+受入結果や文書を自動更新しない。
 
-[CLI boundary fixtures](single/CLI引数境界review.md) add nine duplicate-option, empty-argument,
-timeout-range/notation and report-syntax cases. That batch brought preparation to 116/311 fixtures.
-The fourteen argument-error fixtures in that batch share the output contract and two isolated setup checks.
+[CLI引数境界fixture](single/CLI引数境界review.md)は、optionの重複、空の引数、timeoutの範囲・表記、reportの構文の
+9ケースを加え、準備済みを116/311にした。この時点の引数不正fixture 14件は、出力契約と隔離した2回のsetupの検査を共有する。
 
-[Repeated expand fixtures](single/expand反復review.md) add sorted distinct values and duplicate
-removal, with two independent Digest references and two isolated setups. That batch brought preparation to 118/311.
+[expand反復fixture](single/expand反復review.md)は、異なる値の整列と重複排除を、2系統のDigest参照計算と隔離した
+2回のsetupとともに加え、準備済みを118/311にした。
 
-[Missing selection fixtures](single/起点・workspace不存在review.md) distinguish a missing context root
-(failed/1 with a result) from a missing workspace (exit 4 without a result). That batch brought preparation to 120/311.
+[起点・workspace不存在fixture](single/起点・workspace不存在review.md)は、contextの起点不在（結果を伴うfailed／1）と、
+workspace不在（結果のない終了コード4）を区別する。準備済みは120/311になった。
 
-[Output format fixtures](single/出力形式review.md) add successful/failed check text output and
-JSON with explicit report. That batch brought preparation to 123/311.
+[出力形式fixture](single/出力形式review.md)は、checkの成功・失敗のtext出力と、明示report付きのJSONを加え、
+準備済みを123/311にした。
 
-[BOM and Frontmatter fixtures](single/BOM・Frontmatter-review.md) add eleven warning/skip-document cases.
-That batch brought preparation to 134/311.
+[BOM・Frontmatter fixture](single/BOM・Frontmatter-review.md)は、警告と文書skipの11ケースを加え、準備済みを134/311にした。
 
-[Diagnostic control characters](single/Diagnostic-text制御文字review.md) fix the approved visible escaping rule.
-That batch brought preparation to 135/311.
+[Diagnostic-text制御文字](single/Diagnostic-text制御文字review.md)は、承認済みの可視化escapeの規則を固定し、
+準備済みを135/311にした。
 
-[Diagnostic ordering](single/Diagnostic順序review.md) fixes three independent same-condition errors.
-That batch brought preparation to 136/311.
+[Diagnostic順序](single/Diagnostic順序review.md)は、独立した同一条件のerror 3件を固定し、準備済みを136/311にした。
 
-[Input limit fixtures](single/上限・未知entry-review.md) add the 64 KiB configuration, 1 MiB SPEC Markdown,
-32 KiB Frontmatter, statement-count and array-count cases, plus the unknown `.spec/` entry. Inputs are generated
-from reviewed constants and measured again, so the audit rejects a fixture that crosses any other dimension.
-That batch brought preparation to 143/311.
+[上限・未知entry fixture](single/上限・未知entry-review.md)は、64 KiBの設定、1 MiBのSPEC Markdown、32 KiBのFrontmatter、
+規範文数と配列要素数のケースと、`.spec/`内の未知entryを加える。入力はreview済みの定数から生成して測り直すため、
+他の次元の上限を越えるfixtureを監査が拒否する。準備済みは143/311になった。
 
-[Registry closure fixtures](single/registry閉包review.md) complete matrix §6.9 with the reason-less
-SHOULD warning, the missing `related` target, forbidden configuration YAML, the doctor configuration and
-Git-absence cases, the missing workspace and the unsupported EARS-AI major. The doctor contract now fixes
-the four `lostGuarantees` names. That batch brought preparation to 150/311.
+[registry閉包fixture](single/registry閉包review.md)は、理由のないSHOULDの警告、`related`の参照先不在、禁止された設定YAML、
+doctorの設定・Git不在のケース、workspace不在、未対応のEARS-AI majorを加え、matrix §6.9を完了する。
+doctorの契約で`lostGuarantees`の4つの名前を固定した。準備済みは150/311になった。
 
-[Scanner and position fixtures](single/Scanner・位置review.md) add the sixteen §6.10 check cases: run-length code
-spans, unknown escapes, unclosed quoted extension values, four candidate-suppression constructs, four
-malformed IDs, misplaced reason fields, a code point column after multi-byte text and TAB, and the two
-shared-cause primaries. The four `context` cases of that section remain outstanding.
-That batch brought preparation to 166/311.
+[Scanner・位置fixture](single/Scanner・位置review.md)は、§6.10のcheck 16ケースを加える。run長によるcode span、
+未知のescape、閉じていないquoted extensionの値、候補を抑止する4つの構文、形式不正のID 4件、位置違いの理由field、
+multi-byte文字とTABの後のコードポイント列、原因を共有する2件のprimaryである。同節の`context`の4ケースは未作成だった。
+準備済みは166/311になった。
 
-[Default display fixtures](single/既定表示・revision-review.md) add the omitted `--format` for check, verify and
-doctor, the committed context revision and the Git-absent verify revision, a command with no output, and the
-same condition on two verify targets. The summary line is re-derived from the JSON counterpart, and the
-revision shape is observed in the isolated repository. That batch brought preparation to 173/311.
+[既定表示・revision fixture](single/既定表示・revision-review.md)は、check、verify、doctorの`--format`省略、
+commit済みのcontextのrevision、Git不在のverifyのrevision、出力のないcommand、2件のverify targetでの同一条件を加える。
+要約行は対応するJSONから導き直し、revisionの形は隔離したrepositoryで観測する。準備済みは173/311になった。
 
-SINGLE-104-01 follows the Markdown presentation decided in proposal 26 and now fixed in context仕様 §9.
-`markdown_reference.py` renders that contract from a reviewed result, and the audit compares the committed
-Bundle against it while checking the section order, untouched bodies and the absence of a duration token.
-Current preparation: 174/311; 137 remain.
+SINGLE-104-01は、提案26で決めcontext仕様 §9へ固定したMarkdown提示に従う。
+`markdown_reference.py`がreview済みの結果からその契約どおりに描画し、監査はcommitしたBundleをそれと比べ、
+sectionの順序、本文を変えないこと、duration tokenがないことを検査する。
+この時点の準備済みは174/311、残りは137件だった。
 
 [Frontmatter境界fixture](single/Frontmatter境界review.md)として、種別definition、title長、必須／null、
 空・重複配列、未知key、`x-`拡張、REQの`changes`の20件を加えた。各fieldはJSON構文のflow valueとして書き、
@@ -135,7 +128,7 @@ SINGLE-125-06は、`.spec/reports`をrepository内directoryへのsymlinkにし�
 symlinkを解決せず保存失敗とする規定を結果・Diagnostic・終了コード §8へ追加している。準備済みは211/311、残りは100件である。
 
 [verify argv・実行環境・出力変換fixture](single/verify-argv・実行環境・出力変換review.md)として、SINGLE-126-01〜05、07、09〜16を加えた。
-argv template違反5件、空引数・PATH解決不能・stdin・環境継承、子孫がpipeを保持するtimeout、timeout後の独立binding、
+argv template違反5件、空引数・PATH解決不能・標準入力・環境継承、子孫がpipeを保持するtimeout、timeout後の独立binding、
 制御文字変換、chunk境界をまたぐredaction、redaction後の64 KiB超過を固定する。実行caseはfixture自身のscriptを
 直接観測する。126-06は設定64 KiB上限との矛盾、126-08はfixture規模のため保留した。準備済みは225/311、残りは86件である。
 
@@ -153,9 +146,9 @@ interpretのcontextと明示checkだけで受理することを固定する。
 
 [Digest材料の完全順序・reverse solidus fixture](single/Digest材料の完全順序review.md)として、SINGLE-122〜124を加えた。
 同一pathのtest対応と同一namespace／termのextensionの正規順、path型以外のreverse solidus保持を固定する。
-準備済みは245/310、残りは65件（SINGLE-127-15〜19と連合60件）である。
+準備済みは245/310、残りは65件（SINGLE-127-15〜19と複合workspace60件）である。
 
 [実行環境・配布物fixture](single/実行環境・配布物review.md)として、SINGLE-127-15〜19を加えた。作成前に
 適合harnessの外部仕様をADR-046で裁定し、manifestへ`invocation.python`と`invocation.gitVersion`、runnerへ
 `package`を追加した。Git版と下限CPythonは実行環境契約の本文から読み取る。単一workspaceのmatrixは全250件を
-準備済みとなり、残りは連合60件である。
+準備済みとなり、残りは複合workspace60件である。

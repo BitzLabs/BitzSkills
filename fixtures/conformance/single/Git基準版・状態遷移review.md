@@ -1,4 +1,4 @@
-# Git基準版・状態遷移fixtureレビュー
+# Git基準版・状態遷移fixture review
 
 2026-09-11。SINGLE-027〜031の5件について実入力、base/current、完全期待JSON、副作用期待値を固定する。
 Coreの状態比較・変更保護を実装した結果ではない。
@@ -35,11 +35,11 @@ titleは意味変更対象なので保護に失敗するが、H1不一致、規�
 - 非成功のDiagnosticは1件、error / failed、file source、workspaceId root。
 - 027はTASK-001.mdのkey status、031はREQ-001.mdのkey titleを指す。
 - 029はbaseに存在したTECH-001.mdを指す。currentにないpathをsourceに使い、line/column/keyは省略する。
-- summaryは各expected JSONの固定文字列。evidence、specRefs、suggestedActionは付加しない。
+- summaryは各expected JSONの固定文字列。証跡、specRefs、suggestedActionは付加しない。
 - source位置・任意fieldの選択は今回固定した期待値であり、既存Coreから取得したものではない。
 
 before/afterはsetup後、Core実行直前と直後の状態を表す。beforeをHEADのclean treeと混同しない。
-既存の未stage更新、新規未追跡file、削除、staged renameをそのまま保持するread-only期待値を固定する。
+既存の未stage更新、新規未追跡file、削除、staged renameをそのまま保持する読取り専用期待値を固定する。
 repoの全path・byte hash・実行bit、Git status/index、HOME・cache・TMPDIRを比較する。
 Coreが変更をstage、commit、修復したり、report/cacheを新規作成したりすることを許可しない。
 
@@ -52,7 +52,7 @@ Coreが変更をstage、commit、修復したり、report/cacheを新規作成�
 
 git_fixtures.pyはbase入力とchangesのbyte列、manifest、完全期待JSON、Frontmatter、副作用Schemaを確認する。
 各fixtureを独立した2つのrepositoryへsetupし、固定snapshotに加えてGitから読み出したHEADとindexの
-path集合・各blobをレビュー済みbase/currentと照合する。worktreeのfile集合・byte列も直接照合する。
+path集合・各blobをreview済みbase/currentと照合する。worktreeのfile集合・byte列も直接照合する。
 これはGit状態の準備確認であり、Coreの遷移判定や意味変更判定を実装するものではない。
 
 回帰試験では失敗の成功化、dirtyの消去、削除文書の件数加算、renameのstage省略、診断code取り違え、

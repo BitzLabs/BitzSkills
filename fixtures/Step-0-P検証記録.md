@@ -1,30 +1,30 @@
-# Step 0-P validation
+# Step 0-P検証記録
 
-- Date: 2026-09-07
-- Result: `Passed`
-- Command: `uv run fixtures/validate_step0p.py`
-- Validation runtime: CPython 3.14.4, Linux; dependencies pinned in the script metadata.
-- Scope: preparation of performance/comparison inputs; this is not a Core performance baseline or Gate A approval.
+- 日付: 2026-09-07
+- 結果: `Passed`
+- command: `uv run fixtures/validate_step0p.py`
+- 検証環境: CPython 3.14.4、Linux。依存はscriptのmetadataで固定した。
+- 範囲: 性能・比較の入力の準備。Coreの性能baselineでも、Gate Aの承認でもない。
 
-| Check | Result |
+| 検査 | 結果 |
 |---|---|
-| Draft 2020-12 schema structure | 8 schemas passed, including both future result schemas |
-| Dataset, environment, plan, task, protocol, answer-key inputs | 11 JSON inputs passed |
-| Benchmark dataset/environment references and task inventory | Passed |
-| Single dataset generation | 2 runs matched: 300 SPEC, 1,000 statements, 5,000 relations |
-| Federation dataset generation | 2 runs matched: 20 workspaces, 1,000 SPEC, 1,000 statements, 20,000 relations |
-| Shape expectations | Exact byte count, statements/SPEC and directed edge density matched |
-| Corrupted shape expectations | Both datasets rejected |
-| Context input closure | Generator confirmed 20 documents, 1/3 workspaces and input byte budget |
+| Draft 2020-12 Schemaの構造 | 将来使う結果Schema 2件を含む8件が通過 |
+| dataset、環境、計画、task、protocol、正解表の入力 | JSON入力11件が通過 |
+| benchmarkのdataset・環境の参照とtask一覧 | 通過 |
+| 単一workspaceのdataset生成 | 2回の生成が一致: SPEC 300件、規範文1,000件、関係5,000件 |
+| 複合workspaceのdataset生成（当時の名称はfederation） | 2回の生成が一致: workspace 20件、SPEC 1,000件、規範文1,000件、関係20,000件 |
+| 形状の期待値 | byte数、SPECあたりの規範文数、有向edge密度が一致 |
+| 形状を壊した期待値 | 両datasetとも拒否 |
+| Context入力の閉包 | generatorが20文書、1／3 workspace、入力byte予算を確認 |
 
-Expected tree digests remained unchanged:
+期待tree digestは変わらなかった。
 
-- Single: `sha256:0693e6ec926d4a411766796831e87c011004342810a5e6f3393e7afcd52c546c`
-- Federation: `sha256:ad519b9442984ab9bce488ba1aa05277e9077bad178f89378a90e5f458134c25`
+- 単一workspace: `sha256:0693e6ec926d4a411766796831e87c011004342810a5e6f3393e7afcd52c546c`
+- 複合workspace（当時の名称はFederation）: `sha256:ad519b9442984ab9bce488ba1aa05277e9077bad178f89378a90e5f458134c25`
 
-The validation runtime is distinct from the CPython 3.11.x performance reference environment.
-Core output size, performance baseline, and participant observations remain pending until the relevant Core implementation exists.
-Step 0B still requires the conformance fixtures and its complete fresh-checkout validation command; Step 0-P completion does not open Gate A.
+検証環境は、性能の基準環境（CPython 3.11.x）とは別である。
+Coreの出力サイズ、性能baseline、参加者の観測値は、該当するCore実装ができるまで保留する。
+Step 0Bには適合fixtureと、fresh checkoutから全体を検証するcommandがまだ必要である。Step 0-Pの完了だけではGate Aを開かない。
 
 ## 2026-09-17: 複合workspaceの識別子の改名
 

@@ -5,18 +5,18 @@
 
 ## 入力と期待値
 
-`cases.json`は索引で解決済みの小さなgraph、起点、purpose、固定期待値を持つ。単一は非修飾、連合は修飾IDを使う。
-`cases.schema.json`は未知field・期待配列の重複を拒否する。根拠契約のhashを固定し、変更時は期待値の再レビューを要求する。
-GraphはREQ/TECH approved、ADR accepted、TASK open/doneに限定する。適用不能状態の診断は既存適合matrixの別ケースで扱う。
+`cases.json`は索引で解決済みの小さなgraph、起点、purpose、固定期待値を持つ。単一は非修飾、複合workspaceは修飾IDを使う。
+`cases.schema.json`は未知field・期待配列の重複を拒否する。根拠契約のhashを固定し、変更時は期待値の再reviewを要求する。
+GraphはREQ/TECH approved、ADR accepted、TASK open/doneに限定する。適用不能状態の診断は既存適合matrixの別caseで扱う。
 
-REQ、規範文ありTECH、規範文なしTECH、statement、TASK、ADRの6種類×3 purposeを18基本ケースで固定した。
-ADRのimplement/verifyはcontext CLIの拒否期待であり、TargetExpansionがエラーobjectを返すというAPI追加ではない。
-成功ケースの4配列はrootDocuments、contextDocuments、targetStatements、adjacentStatementsで、要素・順序を完全比較する。
+REQ、規範文ありTECH、規範文なしTECH、statement、TASK、ADRの6種類×3 purposeを18基本caseで固定した。
+ADRのimplement/verifyはcontext CLIの拒否期待であり、TargetExpansionがerror objectを返すというAPI追加ではない。
+成功caseの4配列はrootDocuments、contextDocuments、targetStatements、adjacentStatementsで、要素・順序を完全比較する。
 interpretのtargetStatementsは空である。statement起点では指定句以外の兄弟句をadjacentとする。
 
-## 追加7ケース
+## 追加7 case
 
-| ケース | 確認内容 |
+| case | 確認内容 |
 |---|---|
 | REFINEMENT-TRANSITIVE | 推移的refinementはtarget、requires先はContextだけ、relatedは追加しない |
 | STATEMENT-ADJACENT | 指定句とrefinementだけtarget、兄弟句はadjacent |
@@ -40,7 +40,7 @@ Schema、18組合せの網羅、ID/型・参照存在、強い依存の非循環
 CoreのJSON出力、状態判定、binding、Digestとの一致はGate Bで別途検証する。
 
 2026-09-17: 関係・トレースモデル §6.3に合わせ、TASK-REQUIRES-NOT-TARGETの`contextDocuments`から先行TASK-002を外した。
-参照計算もverifyの起点TASKで`requires`を辿らないよう修正し、他の24ケースの期待集合は変わらないことを確認した。
+参照計算もverifyの起点TASKで`requires`を辿らないよう修正し、他の24 caseの期待集合は変わらないことを確認した。
 
 2026-09-17: ADR-047に従い、`FEDERATED-SAME-LOCAL-ID`を`MULTI-WORKSPACE-SAME-LOCAL-ID`、matrix familyの`MONO-*`を`MULTI-*`へ改名した。
-関係・トレースモデルの変更はDiagnostic codeの改名だけで、25ケースの期待集合は変わらない。
+関係・トレースモデルの変更はDiagnostic codeの改名だけで、25 caseの期待集合は変わらない。

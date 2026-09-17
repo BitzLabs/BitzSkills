@@ -1,6 +1,6 @@
-# Git対象選択・影響候補fixtureレビュー
+# Git対象選択・影響候補fixture review
 
-2026-09-14。SINGLE-033、039、040、041の4件について、入力・Git状態・完全期待JSON・read-only副作用期待値を固定する。
+2026-09-14。SINGLE-033、039、040、041の4件について、入力・Git状態・完全期待JSON・読取り専用副作用期待値を固定する。
 これはCore実行結果ではなく、Step 0Bの受入準備である。
 
 ## 入力と単一原因
@@ -20,8 +20,8 @@
 弱いrelated参照の003と、変更されていない002に依存する004へ影響を伝播しない。
 TECHのtitle変更はapproved REQ保護の対象外であり、title/H1は同時に更新してH1不一致を避ける。
 sourceはTECH-002のrelations.requires、summaryはexpected/check.jsonの文字列を今回の受入期待値として選択した。
-line、column、evidence、suggestedActionは付加しない。full検査文書数は4、規範文数は0。
-全TECHのstatusはapprovedのままで、Coreによるoutdatedへの自動変更をread-only期待値で許さない。
+line、column、証跡、suggestedActionは付加しない。full検査文書数は4、規範文数は0。
+全TECHのstatusはapprovedのままで、Coreによるoutdatedへの自動変更を読取り専用期待値で許さない。
 
 039はGit自体が使用可能なunborn状態である。Git不在warningを追加せず、明示--baseも指定しない。
 empty treeや架空commitをrevisionへ置かず、全体検査文書数1・規範文数0を返す。
@@ -41,7 +41,7 @@ dirtyは033・041でtrue、040でfalseとする。全件durationMs=0で、既存
 
 ## 準備検証
 
-selection_fixtures.pyはレビュー済みbyte列と固定Frontmatter値、manifest、完全期待JSON、副作用期待値のSchemaを照合する。
+selection_fixtures.pyはreview済みbyte列と固定Frontmatter値、manifest、完全期待JSON、副作用期待値のSchemaを照合する。
 各2回の隔離setupでHEAD/indexのpathとblob、worktreeのfile集合とbyte列、Git status/index、HOME/cache/TMPDIRを検査する。
 039はGit repositoryの存在、HEADのsymbolic ref、HEAD解決失敗、refとindexの空集合を個別に確認する。
 HEAD解決失敗だけでGit不在とunbornを混同しない。041のindexは更新済みcodeを含み、未追跡testを含まない。
@@ -55,4 +55,4 @@ HEAD解決失敗だけでGit不在とunbornを混同しない。041のindexは�
 準備済み57/311件、残254件。golden Digest等とfresh checkoutからの全Gate A検証は未完了で、Gate AはBlockedを維持する。
 
 後続のGit環境fixture作成時に、040・041の明示--base HEADを補正した。入力と期待結果は不変である。
-詳細は[Git環境fixtureレビュー](Git基準版error・Git不在review.md)を参照する。
+詳細は[Git環境fixture review](Git基準版error・Git不在review.md)を参照する。

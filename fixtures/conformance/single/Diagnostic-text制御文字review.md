@@ -18,4 +18,4 @@ NULをfile名に使う試験ではない。report生成0件で、Git status/inde
 
 Schema・完全結果・入力byte列・2回の隔離setupを検証する。Diagnostic registryの条件・severity・statusには
 変更がなく、意味網羅台帳は結果契約の参照hashだけを更新した。
-Coreの表示実装は追加せず、実際のstdoutと副作用はGate Bで検証する。
+Coreの表示実装は追加せず、実際の標準出力と副作用はGate Bで検証する。

@@ -1,4 +1,4 @@
-# 共通target展開・advisory提示fixtureレビュー
+# 共通target展開・advisory提示fixture review
 
 2026-09-17。SINGLE-106-03、107-01／02、108-01／02、109、110、113の8件を追加する。
 根拠は[関係・トレースモデル §6・§7](../../../docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md#6-purpose別の閉包)、
@@ -9,7 +9,7 @@
 ## 作成前の裁定
 
 期待値を一意に決められない規範の欠落3件と矛盾1件を、作成前に次のとおり裁定し、正本へ反映した。
-経緯は[Diagnostic台帳の再レビュー](../Diagnostic意味網羅review.md)に記録した。
+経緯は[Diagnostic台帳の再review](../Diagnostic意味網羅review.md)に記録した。
 
 | 論点 | 裁定 | 反映先 |
 |---|---|---|
@@ -58,7 +58,7 @@ byte一致を確認する。reference Bは、`requires`の追跡、statementへ�
 
 ## 準備検証
 
-`expansion_fixtures.py`は、manifest・完全期待JSON・副作用期待値のSchema、入力byte列、YAMLの審査済み解釈と
+`expansion_fixtures.py`は、manifest・完全期待JSON・副作用期待値のSchema、入力byte列、YAMLのreview済み解釈と
 Frontmatter Schema、2回の隔離setupのGit状態とsnapshotを照合する。4集合はcontext結果から独立に読み戻して
 literalと比較する。回帰試験は、roleの入替え、距離2のfull化、advisoryへのstatementRefs追加とLedger収録、
 statementRefsの対象句への絞込み、adjacentの欠落、兄弟句のcoverage混入、先行TASKのContext混入、

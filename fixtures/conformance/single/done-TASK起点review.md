@@ -1,64 +1,60 @@
-# done TASK root fixture review
+# done TASK起点fixture review
 
-Covers `SINGLE-068`, the last row of
-[適合fixture仕様 §6.6](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#66-verify).
-With it the verify section is complete.
-This is a reviewed expectation, not observed Core behaviour.
+[適合fixture仕様 §6.6](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#66-verify)の最後の行である
+`SINGLE-068`を扱う。これでverifyの節は完了する。
+review済みの期待値であり、Coreの挙動を観測したものではない。
 
-## The contract was settled first
+## 先に契約を確定した
 
-This fixture was held back in two earlier batches because its expectation depended on an unsettled
-question: whether the documents owning a root TASK's `addresses` targets belong to the **verify**
-Context. [適合fixture仕様 §3.3](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#33-実成果物との対応)
-forbids adding a fixture ahead of its contract, so the contract was settled first.
+このfixtureは、期待値が未確定の論点に依存していたため、それまでの2回の作業では保留していた。起点TASKが
+`addresses`する参照先を所有する文書が、**verify**のContextに含まれるかという論点である。
+[適合fixture仕様 §3.3](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#33-実成果物との対応)は、
+契約より先にfixtureを追加することを禁じているため、先に契約を確定した。
 
-[関係・トレースモデル §6.3](../../../docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md#63-verify)
-now states it directly: a TASK root brings its `addresses` targets and the documents owning them into
-`contextDocuments`, the `interpret` closure rules then apply from those documents, and unlike
-`implement` the root TASK's `requires` closure is **not** included.
+[関係・トレースモデル §6.3](../../../docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md#63-verify)は現在、
+これを直接述べている。起点TASKは、`addresses`する参照先とそれを所有する文書を`contextDocuments`へ含め、
+その文書から`interpret`の閉包規則を適用する。`implement`と異なり、起点TASKの`requires`閉包は含め**ない**。
 
-No new decision was taken. [verify仕様 §3](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#3-対象)
-already required a TASK target to verify its `addresses` targets, which is unusable if those documents
-sit outside the Context; §6.3 simply did not say so. Two independent confirmations that this is a
-completeness fix rather than a change:
+新しい決定はしていない。[verify仕様 §3](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#3-対象)は、TASK targetが
+`addresses`する参照先を検証することを既に求めており、その文書がContextの外にあれば実行できない。§6.3がそれを
+書いていなかっただけである。変更ではなく欠落の補完であることは、次の2点で独立に確認した。
 
-1. The target-expansion reference calculation has implemented exactly this reading since the vectors
-   were first reviewed, and **all 25 expected target sets are unchanged** by the edit.
-2. No Diagnostic condition is added. `addresses` is a strong relation, so an unresolvable target is
-   already `SPEC-RELATION-MISSING-001`; the registry's 119 conditions are untouched.
+1. target展開の参照計算は、vectorを最初にreviewした時点からこの読みを実装しており、この編集で**25ケースの期待集合は
+   変わらない**。（2026-09-17訂正: 参照計算はverifyの起点TASKでも`requires`をたどっていた。§6.3を正として
+   `TASK-REQUIRES-NOT-TARGET`の期待集合と参照計算を修正した。経緯は
+   [Diagnostic意味網羅review](../Diagnostic意味網羅review.md)を参照。）
+2. Diagnosticの条件は追加しない。`addresses`は強い関係なので、解決できない参照先は既存の
+   `SPEC-RELATION-MISSING-001`になる。registryの119条件は変わらない。
 
-The audit noticed the edit on its own — both the Diagnostic review ledger and `targets/cases.json` pin
-a hash of that document and refused to pass until the fixed expectations had been re-reviewed. The
-re-review outcome is recorded in [the Diagnostic review](../Diagnostic意味網羅review.md), and only then were
-the hashes re-pinned.
+監査はこの編集を自分で検出した。Diagnostic reviewの台帳と`targets/cases.json`がこの文書のhashを固定しており、
+固定した期待値をreviewし直すまで通過しなかった。再reviewの結果を[Diagnostic意味網羅review](../Diagnostic意味網羅review.md)
+に記録し、その後でhashを更新した。
 
-## The fixture
+## fixture
 
-`TASK-001` is `done` and addresses `REQ-001:AC-01` only. It is the success counterpart of
-`SINGLE-067`, where a cancelled root is blocked.
+`TASK-001`は`done`で、`REQ-001:AC-01`だけを`addresses`する。起点がcancelledでblockedになる
+`SINGLE-067`の、成功側の対である。
 
 | | `SINGLE-067` cancelled | `SINGLE-068` done |
 |---|---|---|
-| status | `blocked`/2 | `passed`/0 |
-| `contextDigest` | `null` | its own value |
+| status | `blocked`／2 | `passed`／0 |
+| `contextDigest` | `null` | 固有の値 |
 | `statements` | `[]` | `["REQ-001:AC-01"]` |
 | `bindingRefs` | `[]` | `["root::default"]` |
 
-The Context holds three documents — the TASK root, `REQ-001` which owns the addressed statement, and
-`TECH-001` which refines `REQ-001` and carries the test correspondence — so `documents[]` in the
-digest input is `REQ-001, TASK-001, TECH-001` in code point order.
+Contextは3文書を持つ。起点のTASK、`addresses`する規範文を所有する`REQ-001`、`REQ-001`を具体化しtest対応を持つ
+`TECH-001`である。したがってDigest材料の`documents[]`は、コードポイント順に`REQ-001, TASK-001, TECH-001`となる。
 
-**`AC-02` is deliberately not addressed.** It is a statement of the same REQ, but a TASK root's targets
-come from its own `addresses`, not from the owning document's full statement set. So `AC-02` is not a
-target, and the test that covers it is not pulled into the binding: `tests` holds only
-`tests/test_auth.py` and `covers` only `REQ-001:AC-01`. The audit rejects a result that lets either
-leak in, which is what distinguishes a TASK root from the REQ root of `SINGLE-055`.
+**`AC-02`は意図して`addresses`しない。** 同じREQの規範文だが、起点TASKのtargetは所有文書の全規範文ではなく、
+TASK自身の`addresses`から決まる。そのため`AC-02`はtargetにならず、それを対象にするtestもbindingへ入らない。
+`tests`は`tests/test_auth.py`だけ、`covers`は`REQ-001:AC-01`だけを持つ。どちらかが混入した結果を監査は拒否する。
+これが、`SINGLE-055`のREQ起点とTASK起点を区別する点である。
 
-## Limits
+## 限界
 
-- No Core has run. Gate B decides agreement with Core.
-- The fixture pins a TASK root whose `addresses` target resolves. The non-success branch the new
-  sentence also fixes — an unresolvable `addresses` target must fail the target rather than empty it —
-  has no fixture in this matrix and is covered only by the existing relation-missing rows.
-- The root TASK here declares no `requires`, so the clause excluding the `requires` closure under
-  `verify` is stated but not discriminated by this fixture.
+- Coreは実行していない。Coreとの一致はGate Bで判定する。
+- このfixtureは、`addresses`する参照先が解決できるTASK起点を固定する。追記した文が定めるもう一方の非成功の分岐
+  （解決できない`addresses`の参照先は、targetを空にせず失敗させる）はmatrixにfixtureがなく、既存の
+  relation不在の行だけで扱う。
+- この起点TASKは`requires`を宣言しないため、verifyで`requires`閉包を含めない規定は、このfixtureでは判別しない
+  （後に`SINGLE-110`で判別した）。
