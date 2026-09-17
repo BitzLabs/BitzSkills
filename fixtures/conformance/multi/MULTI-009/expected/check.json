@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "scope": "selected",
+  "status": "failed",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": true
+  },
+  "checkedDocumentCount": 1,
+  "checkedStatementCount": 0,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-TASK-BOUNDARY-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "src2/outside.pyはweb::TASK-010の許可変更path外です",
+      "source": {
+        "kind": "file",
+        "workspaceId": "web",
+        "path": "src2/outside.py"
+      }
+    }
+  ]
+}

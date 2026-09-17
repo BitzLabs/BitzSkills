@@ -1,0 +1,9 @@
+schemaVersion: "1.0"
+language: ja
+earsAi: "1.0"
+workspace:
+  id: platform
+multiWorkspace:
+  members:
+    - id: api
+      path: services/api

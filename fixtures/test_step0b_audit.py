@@ -61,7 +61,8 @@ from conformance import expansion_fixtures
 from conformance import ordering_fixtures
 from conformance import environment_fixtures
 from conformance import target_vectors
-from conformance import multi_catalog_fixtures, multi_digest_fixtures, multi_identity_fixtures, multi_reference
+from conformance import multi_catalog_fixtures, multi_digest_fixtures, multi_identity_fixtures
+from conformance import multi_member_fixtures, multi_ownership_fixtures, multi_reference
 
 
 class AuditTests(unittest.TestCase):
@@ -647,6 +648,83 @@ class AuditTests(unittest.TestCase):
                          root / "multi/MULTI-007-01/repo/libs/inner/.spec/bitz.yaml")
             shutil.rmtree(root / "multi/MULTI-007-01/repo/apps/web/inner")
             result = multi_catalog_fixtures.validate(root, {"MULTI-007-01"})
+        self.assertEqual(result["status"], "Failed")
+
+    def test_multi_ownership_fixtures(self):
+        result = multi_ownership_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(multi_ownership_fixtures.CASES))
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_multi_ownership_audit_rejects_wrong_codes_and_relaxed_links(self):
+        mutations = [
+            # 所有境界の違反をTASK境界のcodeへ置き換えない。
+            ("MULTI-008", "expected/check.json",
+             lambda v: v["workspaces"][2]["diagnostics"][0].update(code="SPEC-TASK-BOUNDARY-001")),
+            ("MULTI-008", "expected/check.json",
+             lambda v: v["workspaces"][2].update(status="passed")),
+            ("MULTI-009", "expected/check.json",
+             lambda v: v["diagnostics"][0]["source"].update(path="src/inside.py")),
+            ("MULTI-009", "manifest.json", lambda v: v["setup"].update(operations=[])),
+            ("MULTI-010", "expected/check.json",
+             lambda v: v["diagnostics"][0].update(code="SPEC-TASK-BOUNDARY-001")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertEqual(multi_ownership_fixtures.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_ownership_audit_rejects_inward_symlink(self):
+        """所有境界のcaseは、別memberへ出るsymlinkでなければ証拠にならない。"""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-008")
+            link = root / "multi/MULTI-008/repo/apps/web/src/shared.py"
+            link.unlink()
+            link.symlink_to("inside.py")
+            result = multi_ownership_fixtures.validate(root, {"MULTI-008"})
+        self.assertEqual(result["status"], "Failed")
+
+    def test_multi_member_fixtures(self):
+        result = multi_member_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(multi_member_fixtures.CASES))
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_multi_member_audit_rejects_dropped_members_and_wrong_counts(self):
+        mutations = [
+            # 非成功のmemberの後ろにあるmemberの件数を落とさない。
+            ("MULTI-011", "expected/check.json", lambda v: v["workspaces"][2].update(checkedDocumentCount=0)),
+            ("MULTI-011", "expected/check.json", lambda v: v["workspaces"].pop()),
+            ("MULTI-011", "expected/check.json", lambda v: v["workspaces"][1].update(status="blocked")),
+            # path移動はID変更ではない。
+            ("MULTI-017", "expected/check.json", lambda v: v["workspaces"][2].update(id="webui")),
+            ("MULTI-017", "expected/check.json", lambda v: v.update(status="failed")),
+            ("MULTI-018-01", "expected/check.json", lambda v: v.update(diagnostics=[])),
+            ("MULTI-018-02", "expected/check.json",
+             lambda v: v["diagnostics"][0]["source"].update(workspaceId="platform")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertEqual(multi_member_fixtures.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_member_audit_rejects_unchanged_catalog(self):
+        """ID変更のcaseは、pathを保ったままIDを変えた入力でなければ証拠にならない。"""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-018-01")
+            path = root / "multi/MULTI-018-01/changes/bitz.yaml"
+            path.write_text(path.read_text().replace("webui", "web"))
+            result = multi_member_fixtures.validate(root, {"MULTI-018-01"})
         self.assertEqual(result["status"], "Failed")
 
     def test_frontmatter_boundary_evidence(self):

@@ -1,0 +1,44 @@
+{
+  "fixtureId": "MULTI-018-02",
+  "description": "memberの削除を管理済みSPECの削除として検査する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "delete",
+        "path": "apps/web"
+      },
+      {
+        "op": "update",
+        "path": ".spec/bitz.yaml",
+        "source": "changes/bitz.yaml"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "resultFile": "expected/check.json",
+    "reportFileCount": 0
+  }
+}

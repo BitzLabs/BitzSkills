@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "scope": "all-workspaces",
+  "status": "failed",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "platform",
+      "path": ".",
+      "status": "passed",
+      "checkedDocumentCount": 1,
+      "checkedStatementCount": 2,
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "api",
+      "path": "services/api",
+      "status": "passed",
+      "checkedDocumentCount": 0,
+      "checkedStatementCount": 0,
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "web",
+      "path": "apps/web",
+      "status": "failed",
+      "checkedDocumentCount": 1,
+      "checkedStatementCount": 0,
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-MULTI-OWNERSHIP-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "src/shared.pyの解決先がwebの所有範囲外です",
+          "source": {
+            "kind": "file",
+            "workspaceId": "web",
+            "path": ".spec/technical/TECH-010.md",
+            "key": "implements"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

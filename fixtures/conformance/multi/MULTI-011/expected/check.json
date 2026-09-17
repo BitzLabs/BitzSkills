@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "scope": "all-workspaces",
+  "status": "failed",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "workspaces": [
+    {
+      "id": "platform",
+      "path": ".",
+      "status": "passed",
+      "checkedDocumentCount": 1,
+      "checkedStatementCount": 2,
+      "durationMs": 0,
+      "diagnostics": []
+    },
+    {
+      "id": "api",
+      "path": "services/api",
+      "status": "failed",
+      "checkedDocumentCount": 1,
+      "checkedStatementCount": 0,
+      "durationMs": 0,
+      "diagnostics": [
+        {
+          "code": "SPEC-FILE-NAME-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "file名IDとFrontmatter IDが一致しません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "api",
+            "path": ".spec/technical/TECH-020.md"
+          }
+        }
+      ]
+    },
+    {
+      "id": "web",
+      "path": "apps/web",
+      "status": "passed",
+      "checkedDocumentCount": 1,
+      "checkedStatementCount": 0,
+      "durationMs": 0,
+      "diagnostics": []
+    }
+  ],
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

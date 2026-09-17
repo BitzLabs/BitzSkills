@@ -604,3 +604,16 @@ codeの取り違え、終了コード1への置換、入力をflatなmember path
 Report SHA-256: `dd94c0faa244388a795af24271d6cf6bb896c480899020ab8a5b349481f28eec`。
 `MULTI-007-02`（submodule）と`MULTI-007-03`（別worktree）は、fixtureがGitのmetadataを作る手段を必要とするため
 この記録には含まない。
+
+## 2026-09-18: 所有境界とmemberの変更
+
+準備済み269/310、残り41件（すべて複合workspace）。所有境界とTASK境界、memberの独立性、catalogの変更を固定した。
+`MULTI-008`は別memberへ出るsymlinkの`implements`宣言、`MULTI-009`は`src/`が`src2/`を許可しない字句境界、
+`MULTI-010`は基準版と現在版の双方で行うsymlinkの所有判定である。`MULTI-010`の基準版は、Git treeのentry mode
+`120000`とlink targetを監査が直接確かめる。`MULTI-011`は1つのmemberの非成功が後続memberの件数を落とさないこと、
+`MULTI-017`／`018-01`／`018-02`はmember pathの移動、workspace IDの変更、memberの削除を扱う。
+後者2件は管理済みSPECの削除検査として最上位のDiagnosticへ置き、member結果へ複製しない。
+監査試験を6件追加し、codeの取り違え、後続memberの件数の切詰め、member要素の削除、
+入力をweb内へ向けたsymlinkやID変更なしのcatalogへ直した写しを拒否することを確認した。
+同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
+Report SHA-256: `b1be564fc094dadff33736e16d86f2a3b3ed7a5245bab5b993735acddbadb734`。

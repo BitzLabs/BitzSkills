@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "scope": "selected",
+  "status": "failed",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": true
+  },
+  "checkedDocumentCount": 1,
+  "checkedStatementCount": 0,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-MULTI-OWNERSHIP-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "src/linkの基準版のsymlinkがwebの所有範囲外を指します",
+      "source": {
+        "kind": "file",
+        "workspaceId": "web",
+        "path": "src/link"
+      }
+    }
+  ]
+}
