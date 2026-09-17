@@ -18,7 +18,7 @@
 | SINGLE-006-02 | command cwdだけが不在 | doctor --format json | blocked / 2 |
 
 最小設定はdoctor仕様の `schemaVersion: "1.0"`、`language: ja`、`earsAi: "1.0"`。
-code、test、SPEC文書、monorepo宣言は置かず、別原因のDiagnosticを混ぜない。
+code、test、SPEC文書、`multiWorkspace`宣言は置かず、別原因のDiagnosticを混ぜない。
 command bindingは006系だけにdefaultを1件置く。
 checkは入力を固定metadataでcommitして明示HEADを比較基準にする。Git不在・unbornの縮退を混ぜない。
 doctorはGit利用可能なunborn repositoryで実行し、履歴差分の検査は要求しない。

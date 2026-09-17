@@ -23,7 +23,7 @@ interpretのtargetStatementsは空である。statement起点では指定句以�
 | MULTI-ROOT-DEDUP | 文書・句・重複起点の和集合、targetへ選ばれた句をadjacentから除外 |
 | TASK-REQUIRES-NOT-TARGET | verifyの起点TASKはaddresses先だけ対象義務、先行done TASKとそのaddresses先をContextへ含めない |
 | OPEN-TASK-IMPLEMENT | implementで対象句をaddressesするopen TASKをContextへ追加 |
-| FEDERATED-SAME-LOCAL-ID | 同名local IDをworkspace別に区別し、横断refinementを対象へ追加 |
+| MULTI-WORKSPACE-SAME-LOCAL-ID | 同名local IDをworkspace別に区別し、横断refinementを対象へ追加 |
 | SOURCE-LINE-ORDER | ID辞書順よりsource line順を優先 |
 
 `matrixFamilies`は関連する論点の索引であり、そのfamilyの全適合試験を完了したという意味ではない。
@@ -41,3 +41,6 @@ CoreのJSON出力、状態判定、binding、Digestとの一致はGate Bで別�
 
 2026-09-17: 関係・トレースモデル §6.3に合わせ、TASK-REQUIRES-NOT-TARGETの`contextDocuments`から先行TASK-002を外した。
 参照計算もverifyの起点TASKで`requires`を辿らないよう修正し、他の24ケースの期待集合は変わらないことを確認した。
+
+2026-09-17: ADR-047に従い、`FEDERATED-SAME-LOCAL-ID`を`MULTI-WORKSPACE-SAME-LOCAL-ID`、matrix familyの`MONO-*`を`MULTI-*`へ改名した。
+関係・トレースモデルの変更はDiagnostic codeの改名だけで、25ケースの期待集合は変わらない。

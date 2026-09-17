@@ -71,9 +71,11 @@ MCP serverが必要な場合はadapter側がCLIのJSON結果を包めば足り�
   [操作仕様/README](../../03.詳細設計/03_操作仕様/README.md)、
   [結果・Diagnostic・終了コード](../../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md)、
   [doctor仕様](../../03.詳細設計/03_操作仕様/04_doctor.md)。
+- Capability `monorepo.v1`は、後続の[ADR-047](ADR-047_複合workspaceの識別子をmultiWorkspaceへ改名する.md)で`multiWorkspace.v1`へ改名した。
 
 ## Revision History
 
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-09-03 | MCP面をCore 1.0のscope外とし、公開面をCLIとJSON結果へ限定 | 提案24 G5 |
+| 2026-09-17 | 複合workspaceの識別子の改名を後続決定へ接続 | ADR-047 |

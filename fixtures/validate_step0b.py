@@ -135,7 +135,7 @@ def grammar():
 
 def matrix():
     text = (COMMON / "04_適合fixture仕様.md").read_text()
-    rows = re.findall(r"^\| `(SINGLE-\d{3}(?:-\d{2})?|MONO-\d{3}(?:-\d{2})?)` \|(.*)$", text, re.M)
+    rows = re.findall(r"^\| `(SINGLE-\d{3}(?:-\d{2})?|MULTI-\d{3}(?:-\d{2})?)` \|(.*)$", text, re.M)
     ids = [identifier for identifier, _ in rows]
     errors = []
     if len(ids) != len(set(ids)):
@@ -264,8 +264,8 @@ def main():
     # Replace each entry only with a check of its actual, reviewed evidence.
     pending = ["per-fixture side-effect expectations", "conformance inputs and expectations",
                "full Gate A fresh-checkout repeatability",
-               # MONO-002-01 owns the federation golden and has no fixture yet.
-               "independent federation golden Context Digest"]
+               # MULTI-002-01 owns the federation golden and has no fixture yet.
+               "independent multi-workspace golden Context Digest"]
     if checks["digest_fixtures"]["status"] != "Passed":
         pending.insert(0, "independent single-workspace golden Context Digest")
     if checks["registry"]["semantic_coverage"] != "Passed":

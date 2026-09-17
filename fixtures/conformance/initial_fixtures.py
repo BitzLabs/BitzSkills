@@ -120,7 +120,7 @@ def validate(root=HERE):
                               {"name": "git", "status": "passed"}])
                 if result["checks"] != checks or result["core"] != {
                     "version": "1.0.0", "apiVersion": "1.0",
-                    "capabilities": ["context.v1", "check.v1", "verify.v1", "doctor.v1", "monorepo.v1"],
+                    "capabilities": ["context.v1", "check.v1", "verify.v1", "doctor.v1", "multiWorkspace.v1"],
                 }:
                     raise ValueError("incorrect doctor checks or Core 1.0 expectation")
                 if identifier.startswith("SINGLE-006-"):

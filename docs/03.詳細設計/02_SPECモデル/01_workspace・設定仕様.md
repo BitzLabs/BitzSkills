@@ -12,7 +12,7 @@ Core 1.0は単一workspaceと、1つのGit repository内の明示的なworkspace
 5. symlinkを辿ってworkspace外のSPECを読み込まない。
 
 単一workspaceの実効IDは`workspace.id`、省略時は`root`とし、pathは`.`とする。Git rootの設定が
-`monorepo.members`を宣言する場合は、
+`multiWorkspace.members`を宣言する場合は、
 [モノレポSPEC連合仕様](05_モノレポSPEC連合仕様.md)のcatalog検証、active workspace決定、所有境界を適用する。
 
 ## 2. 標準配置
@@ -81,10 +81,10 @@ safety:
 | `verify.commands` | map | No | `{}` | command名からbinding定義 |
 | `safety.protectApprovedRequirements` | boolean | No | `true` | Git差分保護 |
 | `workspace.id` | string | No | `root` | `[a-z][a-z0-9-]{0,31}`。連合root/memberは必須 |
-| `monorepo.members` | object[] | No | — | federation rootだけ。`id`とrepository root相対`path` |
-| `monorepo.maxMembers` | integer | No | `20` | 1〜100。`members`指定時だけ使用可 |
+| `multiWorkspace.members` | object[] | No | — | federation rootだけ。`id`とrepository root相対`path` |
+| `multiWorkspace.maxMembers` | integer | No | `20` | 1〜100。`members`指定時だけ使用可 |
 
-`monorepo.members`要素は次のfieldだけを持つ。
+`multiWorkspace.members`要素は次のfieldだけを持つ。
 
 | key | 型 | 必須 | 制約 |
 |---|---|:--:|---|
@@ -92,14 +92,14 @@ safety:
 | `path` | string | Yes | repository root相対directory。所有境界は連合仕様に従う |
 
 `profiles`はCore 1.0の標準keyではない。検出した場合は`SPEC-CONFIG-UNKNOWN-001`／warningとし、判定、Context Digest、
-操作へ使用しない。`workspace`と`monorepo`の組合せ、member field、path制約は
+操作へ使用しない。`workspace`と`multiWorkspace`の組合せ、member field、path制約は
 [モノレポSPEC連合仕様](05_モノレポSPEC連合仕様.md)が定義する。
 
 未知の標準keyは同一majorの前方互換性のため`SPEC-CONFIG-UNKNOWN-001`／warningとし、値を変更しない。
 型不正と必須key欠如は`SPEC-CONFIG-SCHEMA-001`／error／`error`、未知Schema majorは
 同code／error／`blocked`とする。
 
-`workspace`と`monorepo`は未リリースの初回Core 1.0 Schemaに含まれる。モノレポ非対応の公開済みCore 1.0との
+`workspace`と`multiWorkspace`は未リリースの初回Core 1.0 Schemaに含まれる。モノレポ非対応の公開済みCore 1.0との
 移行分岐、追加feature marker、Schema major引上げは設けない。連合内のworkspace IDは永続identityであり、
 初回連合化とbase/current対応は[モノレポSPEC連合仕様](05_モノレポSPEC連合仕様.md#41-workspace-identity)に従う。
 
@@ -156,7 +156,7 @@ CLIは対象範囲、Git比較基準、出力形式、report、timeout短縮だ�
 - timestampを暗黙変換せずstringとして扱う。`yes`／`no`はstringでありbooleanにしない。先頭`0`を8進数として扱わない
 - scalarはnull、string、boolean、10進integer、有限10進numberのいずれかとする
 - 構文層はscalar、scalar配列、string keyの通常mapを表現できる。許可する入れ子構造と値域は入力ごとのSchemaが決める
-- 設定Schemaは`monorepo.members`だけにobject配列を許可し、Frontmatter Schemaは`tests`だけにobject配列を許可する
+- 設定Schemaは`multiWorkspace.members`だけにobject配列を許可し、Frontmatter Schemaは`tests`だけにobject配列を許可する
 - file size 64 KiB以下
 - network accessなし
 

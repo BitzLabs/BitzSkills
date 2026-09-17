@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
-  "datasetId": "core-federation-v1",
-  "kind": "federation",
+  "datasetId": "core-multi-workspace-v1",
+  "kind": "multiWorkspace",
   "generatorVersion": "1.0",
   "seed": 130363,
   "counts": {"workspaces": 20, "specs": 1000, "statements": 1000, "relations": 20000},
@@ -12,5 +12,5 @@
     "contextWorkspaces": 3,
     "maxPresentationBytes": 131072
   },
-  "expectedTreeDigest": "sha256:ad519b9442984ab9bce488ba1aa05277e9077bad178f89378a90e5f458134c25"
+  "expectedTreeDigest": "sha256:1626b4d08eb9a05e8cdeef71f125292dfc71495f175119c6f99bd76c5b837a54"
 }

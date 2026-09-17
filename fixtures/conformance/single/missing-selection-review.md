@@ -15,7 +15,7 @@ TECH-001が存在する有効なworkspaceでTECH-999だけを指定し、字句�
 Diagnostic sourceはinvocationのTECH-999。既知TECH-001への自動置換は許さない。
 このケースは単一起点であり、複数起点の部分不在の継続契約は対象外。
 
-SINGLE-127-14は既存の有効なSINGLE-042 corpusを使う。monorepo宣言がないためworkspace identityはrootだけであり、
+SINGLE-127-14は既存の有効なSINGLE-042 corpusを使う。`multiWorkspace`宣言がないためworkspace identityはrootだけであり、
 `missing`は空stringでも不正な字句でもなく、探索後に不在と判定する。
 SINGLE-127-07の空workspace値（探索前拒否）と区別し、Core操作の共通結果・statusは作らない。
 標準出力なし、`bitz: doctor: <reason>`の標準エラー1行、理由必須・端末制御文字なしを固定する。

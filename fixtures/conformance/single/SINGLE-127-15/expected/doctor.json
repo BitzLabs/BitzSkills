@@ -28,7 +28,7 @@
       "check.v1",
       "verify.v1",
       "doctor.v1",
-      "monorepo.v1"
+      "multiWorkspace.v1"
     ]
   },
   "checks": [

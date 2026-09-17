@@ -81,7 +81,7 @@ which the EBNF allows only for `[SHOULD]`. B now rejects it, and a regression te
 - No Core has run. Every expectation is reviewed, not observed; Gate B decides agreement with Core.
 - B is scoped to this corpus. It refuses a strong edge outside the reviewed closure rather than
   generalising, so it is not a target-expansion implementation.
-- The federation golden (`MONO-002-01`) is still missing, so the federation half of the Gate A
+- The federation golden (`MULTI-002-01`) is still missing, so the federation half of the Gate A
   Digest condition remains open.
 - Equality across `SINGLE-042/043/045` is checked as Canonical JSON bytes, not only as hash strings,
   so a serializer change cannot hide behind a matching hash.

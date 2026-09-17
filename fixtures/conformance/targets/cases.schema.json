@@ -165,7 +165,7 @@
           "uniqueItems": true,
           "items": {
             "type": "string",
-            "pattern": "^(SINGLE|MONO)-[0-9]{3}$"
+            "pattern": "^(SINGLE|MULTI)-[0-9]{3}$"
           }
         },
         "expected": {

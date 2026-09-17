@@ -87,6 +87,7 @@ ADR-039はCore 1.0の最小垂直スライスを先に実証するため、連�
   [ADR-042](ADR-042_モノレポ連合のidentity・所有境界・公開契約を確定する.md)で補完した。Decision 4の
   federation root条件はGit／federation discovery条件へ、Decision 8のresource契約は連合全体の数値表へ同ADRで
   置き換えた。
+- 設定key `monorepo`とCapability `monorepo.v1`は、後続の[ADR-047](ADR-047_複合workspaceの識別子をmultiWorkspaceへ改名する.md)で`multiWorkspace`、`multiWorkspace.v1`へ改名した。
 
 ## Revision History
 
@@ -95,3 +96,4 @@ ADR-039はCore 1.0の最小垂直スライスを先に実証するため、連�
 | 2026-09-02 | 現行の簡素化を維持してモノレポSPEC連合をCore 1.0へ再導入 | ADR-017, ADR-039 |
 | 2026-09-02 | verify結果のtarget別証跡を後続決定へ接続 | ADR-041 |
 | 2026-09-03 | Decision 1、3、5、7を補完し、Decision 4と8を部分改訂 | ADR-042 |
+| 2026-09-17 | 複合workspaceの識別子の改名を後続決定へ接続 | ADR-047 |

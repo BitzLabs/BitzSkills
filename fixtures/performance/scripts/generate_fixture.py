@@ -113,7 +113,7 @@ def render_config(kind: str, workspace_ids: list[str], workspace_id: str) -> byt
             "      cwd: .",
         ])
     elif workspace_id == "root":
-        lines.extend(["monorepo:", "  maxMembers: 20", "  members:"])
+        lines.extend(["multiWorkspace:", "  maxMembers: 20", "  members:"])
         for member_id in workspace_ids[1:]:
             lines.extend([f"    - id: {member_id}", f"      path: workspaces/{member_id}"])
     return ("\n".join(lines) + "\n").encode()
@@ -162,7 +162,7 @@ def write_tree(root: Path, manifest: dict) -> tuple[dict, dict[tuple[str, int], 
     kind = manifest["kind"]
     if kind == "single":
         workspace_ids, statement_counts, relations = single_model(manifest)
-    elif kind == "federation":
+    elif kind == "multiWorkspace":
         workspace_ids, statement_counts, relations = federation_model(manifest)
     else:
         raise ValueError(f"unsupported kind: {kind}")

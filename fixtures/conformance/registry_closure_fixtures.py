@@ -31,7 +31,7 @@ MISSING_TARGET = "TECH-999"
 SHOULD_LINE, SHOULD_COLUMN = 15, 49
 EXIT = {"passed": 0, "passed_with_warnings": 0, "failed": 1, "blocked": 2, "error": 3}
 CORE = {"version": "1.0.0", "apiVersion": "1.0",
-        "capabilities": ["context.v1", "check.v1", "verify.v1", "doctor.v1", "monorepo.v1"]}
+        "capabilities": ["context.v1", "check.v1", "verify.v1", "doctor.v1", "multiWorkspace.v1"]}
 LOST_GUARANTEES = ["approved-diff-protection", "deletion-detection", "status-transition", "task-boundary"]
 # docs/03.詳細設計/03_操作仕様/04_doctor.md §3: the reviewed check order.
 DOCTOR_ORDER = ("core", "workspace", "config", "schema", "ears", "git", "command", "impact")

@@ -12,7 +12,7 @@
 | repository root | 対象Git repositoryのroot |
 | workspace | 1つの`.spec/bitz.yaml`、SPEC、所有code/testからなる単位 |
 | federation root | repository rootにあるworkspace。連合catalogと共通SPECを所有する |
-| member | `monorepo.members`へ明示登録された子workspace |
+| member | `multiWorkspace.members`へ明示登録された子workspace |
 | active workspace | workspace単独操作のローカルID、設定、report出力先を決めるworkspace |
 | request workspace | `context`の全起点を所有し、上限と非修飾IDの解決基準になるworkspace |
 
@@ -38,7 +38,7 @@ language: ja
 earsAi: "1.0"
 workspace:
   id: platform
-monorepo:
+multiWorkspace:
   maxMembers: 20
   members:
     - id: web
@@ -61,7 +61,7 @@ workspace:
 
 - federation rootと全memberで`workspace.id`を必須とし、連合内で一意にする。
 - catalogの`id`とmember設定の`workspace.id`は一致させる。
-- memberは`monorepo`を宣言できず、連合を入れ子にしない。
+- memberは`multiWorkspace`を宣言できず、連合を入れ子にしない。
 - member pathはrepository root相対の実directoryとする。絶対path、`.`、空path、`..`、glob、symlink、
   Git submodule、別Git repositoryを禁止する。
 - member path同士の同一、親子、実path解決後の重複を禁止する。
@@ -72,19 +72,19 @@ workspace:
   未登録設定だけを拒否する。全体操作は§8のGit既知設定preflightを行うが、filesystem全体の任意directoryは
   再帰探索しない。
 
-`monorepo.maxMembers`の既定は20、指定範囲は1〜100、Core hard limitは100とする。`members`が実効上限を
-超えれば`blocked`とする。0 memberの`monorepo`は設定不適合とする。
+`multiWorkspace.maxMembers`の既定は20、指定範囲は1〜100、Core hard limitは100とする。`members`が実効上限を
+超えれば`blocked`とする。0 memberの`multiWorkspace`は設定不適合とする。
 
 ## 3. workspace決定
 
 Coreは先にGit repository rootを確定し、次の順でworkspaceを決める。
 
-1. repository rootの`.spec/bitz.yaml`に`monorepo.members`がなければ、通常の単一workspace探索を使う。
+1. repository rootの`.spec/bitz.yaml`に`multiWorkspace.members`がなければ、通常の単一workspace探索を使う。
 2. 連合では、指定pathまたはcurrent directoryからrepository rootへ親方向に探索し、最も近い
    `.spec/bitz.yaml`を候補にする。
 3. 候補がrepository root設定ならfederation root、catalogのpathと設定IDが一致すれば該当memberをactiveにする。
 4. 連合内で選択された別`.spec/`がcatalogにない場合は、単独workspaceとして使わず
-   `SPEC-MONOREPO-UNREGISTERED-001`／`blocked`とする。
+   `SPEC-MULTI-UNREGISTERED-001`／`blocked`とする。
 5. `--workspace <id>`はcatalog内のrootまたはmember IDと完全一致でactive workspaceを置き換える。字句不正、
    構文上妥当だがcatalogにないIDはともにinvocation errorとして終了コード4とし、操作結果とreportを生成しない。
 
@@ -126,7 +126,7 @@ workspace IDは連合内の永続identityとし、Core 1.0はrenameを推定ま�
 維持したmember path変更は同一workspaceの移動とする。ID変更は、pathが同じでも旧workspaceの削除と新workspaceの
 追加として扱う。catalogからmemberを削除した場合、base側workspaceの管理済みSPECへ既存の削除検査を適用する。
 
-単一workspaceから初めて連合化するGit比較に限り、baseがrepository rootの同じ`.spec`を使い、`monorepo`がなく、
+単一workspaceから初めて連合化するGit比較に限り、baseがrepository rootの同じ`.spec`を使い、`multiWorkspace`がなく、
 `workspace.id`を省略している場合、baseの実効ID `root`をcurrentの明示federation root IDへ一方向写像する。
 baseに明示IDがある場合はcurrentのfederation rootも同じIDを維持しなければならない。この写像はGit比較だけに使い、
 連合化後の修飾IDとContext Digestを旧値のまま維持しない。
@@ -179,8 +179,8 @@ canonicalな所有領域を判定する。
 
 member rootとworkspaceの`.spec/bitz.yaml`へ至るdirectoryはsymlinkを禁止する。code、test、TASK、cwdのsymlinkは
 同じ所有領域内へ解決する場合だけ許可する。repository外、別workspace、memberの`.spec`へ解決すれば
-`SPEC-MONOREPO-OWNERSHIP-001`とする。member実path同士の同一、親子、case-insensitive filesystemでの同一と、
-nested repository／worktree、submoduleは`SPEC-MONOREPO-PATH-001`とする。
+`SPEC-MULTI-OWNERSHIP-001`とする。member実path同士の同一、親子、case-insensitive filesystemでの同一と、
+nested repository／worktree、submoduleは`SPEC-MULTI-PATH-001`とする。
 
 ### 5.2 TASK directory境界
 
@@ -231,7 +231,7 @@ Context Digestには、通常の材料に加えてrequest workspace ID、到達w
 - 1件以上のbindingを収録したworkspaceの既定値適用後`verify.timeoutSeconds`
 - Bundleが参照するcommandだけのcommand名、argv、既定値適用後cwd。command名辞書順
 
-絶対path、未到達workspace、未使用command、`monorepo.members`の列挙順、`monorepo.maxMembers`、`safety`、出力形式、
+絶対path、未到達workspace、未使用command、`multiWorkspace.members`の列挙順、`multiWorkspace.maxMembers`、`safety`、出力形式、
 report、CLI timeout capは含めない。設定不適合はDigest計算前に停止する。Context文書数とbyte上限はrequest workspaceの
 設定を使い、Core hard limitを超えられない。
 
@@ -257,9 +257,9 @@ discoveryはGit rootとrepository root直下の`.spec/bitz.yaml`という候補p
 全体操作はworkspace処理前に、Gitが認識する`.spec/bitz.yaml`候補とroot＋catalog設定をsnapshotごとに比較する。
 現在snapshotではworking treeに存在するtracked／staged pathと未追跡かつ非ignore pathを対象にし、checkは指定base
 snapshot、doctorはHEAD snapshotも対象にする。verifyは現在snapshotだけを対象にする。各snapshot自身のroot設定が
-`monorepo`を宣言する場合だけ、そのsnapshot自身のcatalogとの差分を検査する。初回連合化前の単一workspace snapshotへ
+`multiWorkspace`を宣言する場合だけ、そのsnapshot自身のcatalogとの差分を検査する。初回連合化前の単一workspace snapshotへ
 repository全体の不存在保証を遡及適用しない。ignored path、submodule内部、別repositoryは列挙しない。集合差があれば
-`SPEC-MONOREPO-UNREGISTERED-001`／`blocked`とし、暗黙memberにはしない。
+`SPEC-MULTI-UNREGISTERED-001`／`blocked`とし、暗黙memberにはしない。
 
 catalog、workspace ID/path、member設定対応、Git境界、未対応Schema/EARS-AI major、連合resource上限を
 global preflightとする。非成功ならmember処理、Context解決、verify commandを開始せず、`workspaces: []`で結果を返す。
@@ -270,7 +270,7 @@ target strong relation閉包、verifyのbindingを継続判定の単位にする
 `supersedes`とbinding ownerを依存とし、`related`は後続処理を遮断しない。
 
 根本原因を持つunitとは別のtargetまたはdoctor checkが依存出力を得られない場合だけ、
-`SPEC-MONOREPO-DEPENDENCY-001`／`blocked`を返す。`evidence`は`stage`、重複なし辞書順の
+`SPEC-MULTI-DEPENDENCY-001`／`blocked`を返す。`evidence`は`stage`、重複なし辞書順の
 `dependencyWorkspaces[]`、`dependencySpecRefs[]`を持つ。既に同じunitへmissing、type、state、coverageなど
 具体的Diagnosticがあれば同義の派生遮断を追加しない。targetに置く場合の`source`はtarget所有SPEC、doctor checkでは
 判定不能になったworkspaceの`.spec/bitz.yaml`とし、root原因fileをsourceへ複製せず`evidence`から参照する。
@@ -279,12 +279,12 @@ binding、0件判定は各[操作仕様](../03_操作仕様/README.md)が定義�
 
 ## 9. 連合結果とreport
 
-全体操作は共通結果の`workspace`の代わりに`federation`と`workspaces`を持つ。workspace処理順、Diagnostic配置、
+全体操作は共通結果の`workspace`の代わりに`multiWorkspace`と`workspaces`を持つ。workspace処理順、Diagnostic配置、
 集約status、件数、report出力先は[結果・Diagnostic・終了コード](../00_共通契約/01_結果・Diagnostic・終了コード.md)
 が定義する。verifyの各member結果は操作仕様の`targetResults[]`を持ち、共有command実体は所有memberへ1回だけ置く。
 `--report`なしの全体操作はstatusにかかわらずfileを作らない。
 
-global preflightでroot設定の構文、型またはIDが不正で有効なidentityを構成できない場合だけ、`federation`を
+global preflightでroot設定の構文、型またはIDが不正で有効なidentityを構成できない場合だけ、`multiWorkspace`を
 `{"id": null, "path": "."}`とする。それ以外は有効なIDを必須とし、不正なraw値をidentityに使わない。
 
 ## 10. 上限とGit前提
@@ -303,14 +303,14 @@ global preflightでroot設定の構文、型またはIDが不正で有効なiden
 | `verifyBindingCount` | 10,000 | 1回のverify実行計画にあるbinding数 |
 
 - `check --base`のbase/currentは各snapshotへ個別に同じ上限を適用する。重複参照は重複排除前に数える。
-- 上限超過は連合全体を`SPEC-MONOREPO-LIMIT-001`／`blocked`とし、部分結果やcommand実行へ進まない。
+- 上限超過は連合全体を`SPEC-MULTI-LIMIT-001`／`blocked`とし、部分結果やcommand実行へ進まない。
 - limit Diagnostic `evidence`は`dimension`、`limit`、早期停止時の`observedAtLeast`を持つ。正確な全件数を得るために
   超過後も入力を読み続けることは要求しない。
 - 通常操作でも横断参照と逆参照に必要な軽量索引はcatalog全体から作る。
 - 変更workspaceと到達workspaceを完全解析し、無関係workspaceの本文解析を避ける。
 - Gitが利用できない、またはrepository rootと所有境界を確定できない場合、連合操作は
-  `SPEC-MONOREPO-GIT-001`／`blocked`とする。境界を確定した結果、member pathが別worktree／repositoryへ解決されると
-  判明した場合は§5.1に従い`SPEC-MONOREPO-PATH-001`／`failed`とする。同じ原因へ両codeを返さない。
+  `SPEC-MULTI-GIT-001`／`blocked`とする。境界を確定した結果、member pathが別worktree／repositoryへ解決されると
+  判明した場合は§5.1に従い`SPEC-MULTI-PATH-001`／`failed`とする。同じ原因へ両codeを返さない。
   単一workspaceの縮退契約は変更しない。
 
 ### 10.1 計算量とmemory
@@ -339,17 +339,17 @@ resource dimensionごとに他dimensionを通常規模へ保った`limit - 1`、
 
 | code | severity | `resultStatus` | 条件 |
 |---|---|---|---|
-| `SPEC-MONOREPO-CONFIG-001` | error | `failed` | `monorepo`の型、件数、配置、root条件が不正 |
-| `SPEC-MONOREPO-MEMBER-001` | error | `failed` | member設定不在、catalogとのID不一致、nested federation |
-| `SPEC-MONOREPO-VERSION-001` | error | `blocked` | memberのSchemaまたはEARS-AIが未対応major |
-| `SPEC-MONOREPO-PATH-001` | error | `failed` | member pathが不正、重複、入れ子、symlink、submodule、別repository |
-| `SPEC-MONOREPO-ID-001` | error | `failed` | workspace IDが不正または重複 |
-| `SPEC-MONOREPO-UNREGISTERED-001` | error | `blocked` | 選択した設定、または全体preflightのGit既知設定がcatalogに未登録 |
-| `SPEC-MONOREPO-REF-001` | error | `failed` | 修飾ID不正、別workspaceだけにあるtargetの非修飾参照、未知workspace |
-| `SPEC-MONOREPO-OWNERSHIP-001` | error | `failed` | SPEC、code、test、TASK、cwdが所有境界を越える |
-| `SPEC-MONOREPO-DEPENDENCY-001` | error | `blocked` | 別unitの非成功によりtargetまたはdoctor checkを安全に継続不能 |
-| `SPEC-MONOREPO-LIMIT-001` | error | `blocked` | member数または連合全体resource上限を超過 |
-| `SPEC-MONOREPO-GIT-001` | error | `blocked` | Git repository境界またはmember所有範囲を確定不能 |
+| `SPEC-MULTI-CONFIG-001` | error | `failed` | `multiWorkspace`の型、件数、配置、root条件が不正 |
+| `SPEC-MULTI-MEMBER-001` | error | `failed` | member設定不在、catalogとのID不一致、nested federation |
+| `SPEC-MULTI-VERSION-001` | error | `blocked` | memberのSchemaまたはEARS-AIが未対応major |
+| `SPEC-MULTI-PATH-001` | error | `failed` | member pathが不正、重複、入れ子、symlink、submodule、別repository |
+| `SPEC-MULTI-ID-001` | error | `failed` | workspace IDが不正または重複 |
+| `SPEC-MULTI-UNREGISTERED-001` | error | `blocked` | 選択した設定、または全体preflightのGit既知設定がcatalogに未登録 |
+| `SPEC-MULTI-REF-001` | error | `failed` | 修飾ID不正、別workspaceだけにあるtargetの非修飾参照、未知workspace |
+| `SPEC-MULTI-OWNERSHIP-001` | error | `failed` | SPEC、code、test、TASK、cwdが所有境界を越える |
+| `SPEC-MULTI-DEPENDENCY-001` | error | `blocked` | 別unitの非成功によりtargetまたはdoctor checkを安全に継続不能 |
+| `SPEC-MULTI-LIMIT-001` | error | `blocked` | member数または連合全体resource上限を超過 |
+| `SPEC-MULTI-GIT-001` | error | `blocked` | Git repository境界またはmember所有範囲を確定不能 |
 
 ## 12. 非目標
 

@@ -32,8 +32,8 @@ def validate(ledger=None, root=ROOT):
         "CTX-COVERAGE-TEST-MUST": ("context, verify", "error", "blocked", "skip-target"),
         "CTX-COVERAGE-TEST-MUST-IMPLEMENT": ("context", "warning", "passed_with_warnings", "continue"),
         "CTX-COVERAGE-TEST-SHOULD": ("context, verify", "warning", "passed_with_warnings", "continue"),
-        "MONO-DEPENDENCY": ("context, verify", "error", "blocked", "skip-target"),
-        "MONO-DEPENDENCY-DOCTOR": ("doctor", "error", "blocked", "skip-check"),
+        "MULTI-DEPENDENCY": ("context, verify", "error", "blocked", "skip-target"),
+        "MULTI-DEPENDENCY-DOCTOR": ("doctor", "error", "blocked", "skip-check"),
         "VERIFY-CONFIG-UNTRACKED": ("verify", "error", "blocked", "skip-binding"),
         "VERIFY-TEST-OUTSIDE-CWD": ("verify", "error", "blocked", "skip-binding"),
     }

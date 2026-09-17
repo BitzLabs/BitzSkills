@@ -29,7 +29,7 @@ Gitの版は`git --version`を起動し、標準出力1行目を`git version <ma
 majorとminorはASCII数字だけの十進整数として数値比較し、`<残り>`は比較に使わない。非0終了または解析できない出力は
 実行不能として扱う。
 下限未満、PATHから解決不能、または実行不能なGitはGit不在として共通の縮退契約を適用する。連合操作では
-`SPEC-MONOREPO-GIT-001`／blockedとする。Coreの通常操作はnetworkへ接続せず、Gitにもnetwork操作を要求しない。
+`SPEC-MULTI-GIT-001`／blockedとする。Coreの通常操作はnetworkへ接続せず、Gitにもnetwork操作を要求しない。
 
 ## 5. 共通CLI argv解析
 

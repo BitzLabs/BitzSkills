@@ -25,3 +25,15 @@ Expected tree digests remained unchanged:
 The validation runtime is distinct from the CPython 3.11.x performance reference environment.
 Core output size, performance baseline, and participant observations remain pending until the relevant Core implementation exists.
 Step 0B still requires the conformance fixtures and its complete fresh-checkout validation command; Step 0-P completion does not open Gate A.
+
+## 2026-09-17: 複合workspaceの識別子の改名
+
+ADR-047に従い、dataset `core-federation-v1`を`core-multi-workspace-v1`、種別`federation`を`multiWorkspace`、
+benchmark case `federation-full-check`・`federation-context-20`を`multi-workspace-full-check`・
+`multi-workspace-context-20`へ改名した。generatorが書き出す設定keyも`monorepo`から`multiWorkspace`へ改めた。
+
+旧generatorと新generatorの生成物を比べ、差分は`.spec/bitz.yaml`の設定key 1行だけであることを確認した。
+件数、SPECのbyte数、edge密度は変わらない。新generatorでの生成2回は一致した。
+
+- 単一workspace: `sha256:0693e6ec926d4a411766796831e87c011004342810a5e6f3393e7afcd52c546c`（不変）
+- 複合workspace: `sha256:1626b4d08eb9a05e8cdeef71f125292dfc71495f175119c6f99bd76c5b837a54`（旧`sha256:ad519b94…`から更新）

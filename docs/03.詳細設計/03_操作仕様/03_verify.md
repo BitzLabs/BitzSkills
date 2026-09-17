@@ -226,7 +226,7 @@ code、test、環境に対する実行時述語で、Frontmatter状態ではな�
 | `SPEC-VERIFY-COMMAND-001` | error | 事前検査後のprocess生成失敗またはsignal |
 | `SPEC-VERIFY-TIMEOUT-001` | error | timeout |
 | `CTX-COVERAGE-TEST-001` | blocked／passed_with_warnings | 対象MUSTが未tested／対象SHOULDが未tested |
-| `SPEC-MONOREPO-DEPENDENCY-001` | blocked | 別unitの非成功によりtarget Contextまたはbindingを構成不能 |
+| `SPEC-MULTI-DEPENDENCY-001` | blocked | 別unitの非成功によりtarget Contextまたはbindingを構成不能 |
 
 report生成、秘密情報、result集約は共通契約に従う。
 
@@ -251,7 +251,7 @@ command実体、member Diagnosticの最悪値とする。これにより横断te
 どちらからも隠さず、command結果自体と所要時間は複製しない。
 
 非成功文書をstrong閉包に必要とするtargetは完全Contextを作らず、別unitの根本原因だけで実行不能なら
-`SPEC-MONOREPO-DEPENDENCY-001`／blocked、`contextDigest: null`、`bindingRefs: []`とする。既にmissing、type、state、
+`SPEC-MULTI-DEPENDENCY-001`／blocked、`contextDigest: null`、`bindingRefs: []`とする。既にmissing、type、state、
 coverageなど具体的Diagnosticがあるtargetへ同codeを重ねない。1つのcommandがfailed／errorでも、計画済みの後続bindingを
 owner workspace順、command名順に実行し、参照しないtargetへ結果を波及させない。
 

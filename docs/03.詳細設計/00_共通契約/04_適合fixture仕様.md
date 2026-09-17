@@ -9,7 +9,7 @@
 Core 1.0の実装受入は、version管理した本matrixの全fixtureが通過することを条件とする。
 matrixは最小集合であり、実装は追加fixtureを持ってよいが、本matrixの行を削除・緩和できない。
 
-`MONO-*`の由来は[提案23 §8](../../04.提案資料/23_モノレポ残存P2裁定案.md#8-f-適合fixtureと期待matrix)、
+`MULTI-*`の由来は[提案23 §8](../../04.提案資料/23_モノレポ残存P2裁定案.md#8-f-適合fixtureと期待matrix)、
 `SINGLE-*`の由来は[提案24](../../04.提案資料/24_Core-1.0実装着手方針.md)である。提案資料は検討履歴であり、
 適合条件の正は本書とする。
 
@@ -22,10 +22,10 @@ fixtures/conformance/single/<fixture-id>/manifest.json
 fixtures/conformance/single/<fixture-id>/expected/<operation>.json
 fixtures/conformance/single/<fixture-id>/expected/<operation>.txt
 fixtures/conformance/single/<fixture-id>/expected/parser-ir.json
-fixtures/conformance/monorepo/<fixture-id>/repo/...
-fixtures/conformance/monorepo/<fixture-id>/changes/...
-fixtures/conformance/monorepo/<fixture-id>/manifest.json
-fixtures/conformance/monorepo/<fixture-id>/expected/<operation>.json
+fixtures/conformance/multi/<fixture-id>/repo/...
+fixtures/conformance/multi/<fixture-id>/changes/...
+fixtures/conformance/multi/<fixture-id>/manifest.json
+fixtures/conformance/multi/<fixture-id>/expected/<operation>.json
 fixtures/conformance/manifest.schema.json
 fixtures/conformance/result.schema.json
 fixtures/conformance/frontmatter.schema.json
@@ -47,8 +47,8 @@ version管理する。Git履歴とbase commit後の状態はmanifestだけから
 同じ論点の入力変種、operation変種、成功／非成功変種はfixture ID、入力directory、manifestを分ける。
 共通入力を物理的に共有するsymlink、hardlink、親directory参照は使用しない。
 
-fixture IDは`SINGLE-NNN`または`MONO-NNN`をcase familyとし、分割が必要なfamilyは
-`SINGLE-NNN-NN`または`MONO-NNN-NN`を使う。計画文書の`SINGLE-001`〜`006`のような範囲表記は、
+fixture IDは`SINGLE-NNN`または`MULTI-NNN`をcase familyとし、分割が必要なfamilyは
+`SINGLE-NNN-NN`または`MULTI-NNN-NN`を使う。計画文書の`SINGLE-001`〜`006`のような範囲表記は、
 その範囲に属するsuffix付きfixtureをすべて含む。suffixなしのfamily IDとsuffix付きIDを同時に使ってはならない。
 
 ## 3. manifest
@@ -117,7 +117,7 @@ fixture harnessの参照実装が検査対象のsource tree、build成果物、�
 | runner | case（`argv[0]`） | 内容 |
 |---|---|---|
 | `consumer` | `result-shape <path>` | 指定JSONを[共通結果契約 §2](01_結果・Diagnostic・終了コード.md#2-共通結果)の排他的外形で判定する |
-| `migration` | `MONO-024`で固定 | 連合化と完全rollbackの適用、部分rollbackの拒否 |
+| `migration` | `MULTI-024`で固定 | 連合化と完全rollbackの適用、部分rollbackの拒否 |
 | `package` | `metadata` | distribution名、import package名、console script名が`bitz`で、requires-pythonが3.11以上を許す |
 | `package` | `dependencies` | runtime依存が標準libraryと、lock fileでexact versionへ固定したYAML library 1つだけ |
 
@@ -207,7 +207,7 @@ status、scope、件数は除外しない。一致するtokenが1行に複数あ
 Context Digest fixtureは、Digest入力のCanonical JSONをUTF-8・BOMなし・末尾改行なしのbyte列として
 `expected/context.canonical.json`へ置き、そのbyte列から計算した小文字16進64桁の値を`sha256:`付きで
 期待結果へ記録する。harnessはCanonical JSONのbyte一致とDigest文字列の一致を別々に検査する。
-単一workspaceのgoldenは`SINGLE-042`、連合のgoldenは`MONO-002-01`が所有する。両fixtureはmanifestから個別に
+単一workspaceのgoldenは`SINGLE-042`、連合のgoldenは`MULTI-002-01`が所有する。両fixtureはmanifestから個別に
 再構築した隔離済みcopyを2つ実行し、Canonical JSONとDigestが各回でbyte一致することも検査する。locale、入力fileの作成順、cacheの有無を
 一度に混ぜず、個別の再現性試験として同じgolden値へ一致させる。
 
@@ -564,69 +564,69 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 
 | fixture | 主な入力 | operation | status／exit | 必須確認 |
 |---|---|---|---|---|
-| `MONO-001` | 別workspaceに同じlocal ID | check all | passed／0 | 修飾IDで衝突しない |
-| `MONO-002-01` | 横断`refines`と直接coverage | context | passed／0 | 修飾edge、coverage、Canonical JSONとDigestのgolden完全一致、2回実行も一致 |
-| `MONO-002-02` | 横断`refines`と直接coverage | verify | passed／0 | 修飾edge、Digest、coverage |
-| `MONO-003` | 非修飾で別workspaceだけにあるtarget | check all | failed／1 | `SPEC-MONOREPO-REF-001`だけ |
-| `MONO-004-01` | context時に存在workspace内のtarget不在 | context | failed／1 | `SPEC-RELATION-MISSING-001`だけ |
-| `MONO-004-02` | check時に存在workspace内のtarget不在 | check | failed／1 | `SPEC-RELATION-MISSING-001`だけ |
-| `MONO-005` | 未知`--workspace` | check | 結果なし／4 | stdout結果なし、reportなし |
-| `MONO-006` | Git既知の未登録設定 | check all | blocked／2 | `workspaces: []`、commandなし |
-| `MONO-007-01` | member入れ子 | doctor all | failed／1 | `SPEC-MONOREPO-PATH-001` |
-| `MONO-007-02` | memberがsubmodule | doctor all | failed／1 | `SPEC-MONOREPO-PATH-001` |
-| `MONO-007-03` | memberが別worktree | doctor all | failed／1 | `SPEC-MONOREPO-PATH-001` |
-| `MONO-008` | symlinkで別memberを所有 | check all | failed／1 | ownership code、TASK codeなし |
-| `MONO-009` | `src/`と`src2/`のTASK変更 | explicit TASK check | failed／1 | segment境界 |
-| `MONO-010` | base/currentでsymlink target変更 | explicit TASK check | failed／1 | 双方の所有判定 |
-| `MONO-011` | 1 member文書failed、後続member独立 | check all | failed／1 | 後続member件数を保持 |
-| `MONO-012` | invalid文書をstrong依存するtarget | verify all | failed／1 | 依存targetはblocked、独立targetは実行 |
-| `MONO-013` | 異なる2 Context、共有binding | verify all | passed／0 | Digest 2件、command 1件 |
-| `MONO-014` | command失敗後に独立bindingあり | verify all | failed／1 | 後続bindingも実行 |
-| `MONO-015` | 1 memberだけ対象0件 | verify all | passed_with_warnings／0 | member warning、空配列 |
-| `MONO-016` | 連合全体で対象0件 | verify all | blocked／2 | 空CIを成功にしない |
-| `MONO-017` | ID維持のmember path移動 | check all with base | passed／0 | 同一workspace扱い |
-| `MONO-018-01` | memberのworkspace ID変更 | check all with base | failed／1 | 管理済みSPEC削除検査 |
-| `MONO-018-02` | member削除 | check all with base | failed／1 | 管理済みSPEC削除検査 |
-| `MONO-019` | Git不在 | doctor all | blocked／2 | `SPEC-MONOREPO-GIT-001` |
-| `MONO-020-01` | `memberCount = 99` | check all | passed／0 | 境界内を誤遮断しない |
-| `MONO-020-02` | `memberCount = 100` | check all | passed／0 | 境界値を誤遮断しない |
-| `MONO-020-03` | `specFileCount = 9,999` | check all | passed／0 | 境界内を誤遮断しない |
-| `MONO-020-04` | `specFileCount = 10,000` | check all | passed／0 | 境界値を誤遮断しない |
-| `MONO-020-05` | `inputBytes = 268,435,455` | check all | passed／0 | 境界内を誤遮断しない |
-| `MONO-020-06` | `inputBytes = 268,435,456` | check all | passed／0 | 境界値を誤遮断しない |
-| `MONO-020-07` | `statementCount = 99,999` | check all | passed／0 | 境界内を誤遮断しない |
-| `MONO-020-08` | `statementCount = 100,000` | check all | passed／0 | 境界値を誤遮断しない |
-| `MONO-020-09` | `relationEdgeCount = 999,999` | check all | passed／0 | 境界内を誤遮断しない |
-| `MONO-020-10` | `relationEdgeCount = 1,000,000` | check all | passed／0 | 境界値を誤遮断しない |
-| `MONO-020-11` | `traceEntryCount = 999,999` | check all | passed／0 | 境界内を誤遮断しない |
-| `MONO-020-12` | `traceEntryCount = 1,000,000` | check all | passed／0 | 境界値を誤遮断しない |
-| `MONO-020-13` | `commandDefinitionCount = 9,999` | check all | passed／0 | 境界内を誤遮断しない |
-| `MONO-020-14` | `commandDefinitionCount = 10,000` | check all | passed／0 | 境界値を誤遮断しない |
-| `MONO-020-15` | `verifyBindingCount = 9,999` | verify all | passed／0 | 境界内を誤遮断しない |
-| `MONO-020-16` | `verifyBindingCount = 10,000` | verify all | passed／0 | 境界値を誤遮断しない |
-| `MONO-021-01` | `memberCount = 101` | check all | blocked／2 | `dimension=memberCount`、`limit=100`、早期停止 |
-| `MONO-021-02` | `specFileCount = 10,001` | check all | blocked／2 | `dimension=specFileCount`、`limit=10000`、早期停止 |
-| `MONO-021-03` | `inputBytes = 268,435,457` | check all | blocked／2 | `dimension=inputBytes`、`limit=268435456`、早期停止 |
-| `MONO-021-04` | `statementCount = 100,001` | check all | blocked／2 | `dimension=statementCount`、`limit=100000`、早期停止 |
-| `MONO-021-05` | `relationEdgeCount = 1,000,001` | check all | blocked／2 | `dimension=relationEdgeCount`、`limit=1000000`、早期停止 |
-| `MONO-021-06` | `traceEntryCount = 1,000,001` | check all | blocked／2 | `dimension=traceEntryCount`、`limit=1000000`、早期停止 |
-| `MONO-021-07` | `commandDefinitionCount = 10,001` | check all | blocked／2 | `dimension=commandDefinitionCount`、`limit=10000`、早期停止 |
-| `MONO-021-08` | `verifyBindingCount = 10,001` | verify all | blocked／2 | `dimension=verifyBindingCount`、`limit=10000`、早期停止 |
-| `MONO-022-01` | 既定の連合check | check all | passed／0 | report file 0件 |
-| `MONO-022-02` | 明示`--report`付き連合check | check all | passed／0 | 規定先へreport 1件 |
-| `MONO-022-03` | 既定の連合verify | verify all | passed／0 | report file 0件 |
-| `MONO-022-04` | 明示`--report`付き連合verify | verify all | passed／0 | 規定先へreport 1件 |
-| `MONO-023-01` | 単一workspace JSON | consumer test | accepted／0 | 単一外形として受理 |
-| `MONO-023-02` | 連合JSON | consumer test | accepted／0 | 連合外形として受理 |
-| `MONO-023-03` | 単一／連合fieldの混在JSON | consumer test | rejected／1 | 排他的外形として拒否 |
-| `MONO-024-01` | 連合形式へのmigration | migration test | passed／0 | 原子的に切り替える |
-| `MONO-024-02` | 完全rollback | migration test | passed／0 | 旧形式へ完全に戻る |
-| `MONO-024-03` | 部分rollback | migration test | rejected／1 | 部分rollbackを拒否 |
-| `MONO-025-01` | 存在workspaceの不在修飾target | check | failed／1 | `CTX-ROOT-MISSING-001`、未知`--workspace`と区別 |
-| `MONO-025-02` | 存在workspaceの不在修飾target | verify | failed／1 | target Diagnosticに`CTX-ROOT-MISSING-001` |
+| `MULTI-001` | 別workspaceに同じlocal ID | check all | passed／0 | 修飾IDで衝突しない |
+| `MULTI-002-01` | 横断`refines`と直接coverage | context | passed／0 | 修飾edge、coverage、Canonical JSONとDigestのgolden完全一致、2回実行も一致 |
+| `MULTI-002-02` | 横断`refines`と直接coverage | verify | passed／0 | 修飾edge、Digest、coverage |
+| `MULTI-003` | 非修飾で別workspaceだけにあるtarget | check all | failed／1 | `SPEC-MULTI-REF-001`だけ |
+| `MULTI-004-01` | context時に存在workspace内のtarget不在 | context | failed／1 | `SPEC-RELATION-MISSING-001`だけ |
+| `MULTI-004-02` | check時に存在workspace内のtarget不在 | check | failed／1 | `SPEC-RELATION-MISSING-001`だけ |
+| `MULTI-005` | 未知`--workspace` | check | 結果なし／4 | stdout結果なし、reportなし |
+| `MULTI-006` | Git既知の未登録設定 | check all | blocked／2 | `workspaces: []`、commandなし |
+| `MULTI-007-01` | member入れ子 | doctor all | failed／1 | `SPEC-MULTI-PATH-001` |
+| `MULTI-007-02` | memberがsubmodule | doctor all | failed／1 | `SPEC-MULTI-PATH-001` |
+| `MULTI-007-03` | memberが別worktree | doctor all | failed／1 | `SPEC-MULTI-PATH-001` |
+| `MULTI-008` | symlinkで別memberを所有 | check all | failed／1 | ownership code、TASK codeなし |
+| `MULTI-009` | `src/`と`src2/`のTASK変更 | explicit TASK check | failed／1 | segment境界 |
+| `MULTI-010` | base/currentでsymlink target変更 | explicit TASK check | failed／1 | 双方の所有判定 |
+| `MULTI-011` | 1 member文書failed、後続member独立 | check all | failed／1 | 後続member件数を保持 |
+| `MULTI-012` | invalid文書をstrong依存するtarget | verify all | failed／1 | 依存targetはblocked、独立targetは実行 |
+| `MULTI-013` | 異なる2 Context、共有binding | verify all | passed／0 | Digest 2件、command 1件 |
+| `MULTI-014` | command失敗後に独立bindingあり | verify all | failed／1 | 後続bindingも実行 |
+| `MULTI-015` | 1 memberだけ対象0件 | verify all | passed_with_warnings／0 | member warning、空配列 |
+| `MULTI-016` | 連合全体で対象0件 | verify all | blocked／2 | 空CIを成功にしない |
+| `MULTI-017` | ID維持のmember path移動 | check all with base | passed／0 | 同一workspace扱い |
+| `MULTI-018-01` | memberのworkspace ID変更 | check all with base | failed／1 | 管理済みSPEC削除検査 |
+| `MULTI-018-02` | member削除 | check all with base | failed／1 | 管理済みSPEC削除検査 |
+| `MULTI-019` | Git不在 | doctor all | blocked／2 | `SPEC-MULTI-GIT-001` |
+| `MULTI-020-01` | `memberCount = 99` | check all | passed／0 | 境界内を誤遮断しない |
+| `MULTI-020-02` | `memberCount = 100` | check all | passed／0 | 境界値を誤遮断しない |
+| `MULTI-020-03` | `specFileCount = 9,999` | check all | passed／0 | 境界内を誤遮断しない |
+| `MULTI-020-04` | `specFileCount = 10,000` | check all | passed／0 | 境界値を誤遮断しない |
+| `MULTI-020-05` | `inputBytes = 268,435,455` | check all | passed／0 | 境界内を誤遮断しない |
+| `MULTI-020-06` | `inputBytes = 268,435,456` | check all | passed／0 | 境界値を誤遮断しない |
+| `MULTI-020-07` | `statementCount = 99,999` | check all | passed／0 | 境界内を誤遮断しない |
+| `MULTI-020-08` | `statementCount = 100,000` | check all | passed／0 | 境界値を誤遮断しない |
+| `MULTI-020-09` | `relationEdgeCount = 999,999` | check all | passed／0 | 境界内を誤遮断しない |
+| `MULTI-020-10` | `relationEdgeCount = 1,000,000` | check all | passed／0 | 境界値を誤遮断しない |
+| `MULTI-020-11` | `traceEntryCount = 999,999` | check all | passed／0 | 境界内を誤遮断しない |
+| `MULTI-020-12` | `traceEntryCount = 1,000,000` | check all | passed／0 | 境界値を誤遮断しない |
+| `MULTI-020-13` | `commandDefinitionCount = 9,999` | check all | passed／0 | 境界内を誤遮断しない |
+| `MULTI-020-14` | `commandDefinitionCount = 10,000` | check all | passed／0 | 境界値を誤遮断しない |
+| `MULTI-020-15` | `verifyBindingCount = 9,999` | verify all | passed／0 | 境界内を誤遮断しない |
+| `MULTI-020-16` | `verifyBindingCount = 10,000` | verify all | passed／0 | 境界値を誤遮断しない |
+| `MULTI-021-01` | `memberCount = 101` | check all | blocked／2 | `dimension=memberCount`、`limit=100`、早期停止 |
+| `MULTI-021-02` | `specFileCount = 10,001` | check all | blocked／2 | `dimension=specFileCount`、`limit=10000`、早期停止 |
+| `MULTI-021-03` | `inputBytes = 268,435,457` | check all | blocked／2 | `dimension=inputBytes`、`limit=268435456`、早期停止 |
+| `MULTI-021-04` | `statementCount = 100,001` | check all | blocked／2 | `dimension=statementCount`、`limit=100000`、早期停止 |
+| `MULTI-021-05` | `relationEdgeCount = 1,000,001` | check all | blocked／2 | `dimension=relationEdgeCount`、`limit=1000000`、早期停止 |
+| `MULTI-021-06` | `traceEntryCount = 1,000,001` | check all | blocked／2 | `dimension=traceEntryCount`、`limit=1000000`、早期停止 |
+| `MULTI-021-07` | `commandDefinitionCount = 10,001` | check all | blocked／2 | `dimension=commandDefinitionCount`、`limit=10000`、早期停止 |
+| `MULTI-021-08` | `verifyBindingCount = 10,001` | verify all | blocked／2 | `dimension=verifyBindingCount`、`limit=10000`、早期停止 |
+| `MULTI-022-01` | 既定の連合check | check all | passed／0 | report file 0件 |
+| `MULTI-022-02` | 明示`--report`付き連合check | check all | passed／0 | 規定先へreport 1件 |
+| `MULTI-022-03` | 既定の連合verify | verify all | passed／0 | report file 0件 |
+| `MULTI-022-04` | 明示`--report`付き連合verify | verify all | passed／0 | 規定先へreport 1件 |
+| `MULTI-023-01` | 単一workspace JSON | consumer test | accepted／0 | 単一外形として受理 |
+| `MULTI-023-02` | 連合JSON | consumer test | accepted／0 | 連合外形として受理 |
+| `MULTI-023-03` | 単一／連合fieldの混在JSON | consumer test | rejected／1 | 排他的外形として拒否 |
+| `MULTI-024-01` | 連合形式へのmigration | migration test | passed／0 | 原子的に切り替える |
+| `MULTI-024-02` | 完全rollback | migration test | passed／0 | 旧形式へ完全に戻る |
+| `MULTI-024-03` | 部分rollback | migration test | rejected／1 | 部分rollbackを拒否 |
+| `MULTI-025-01` | 存在workspaceの不在修飾target | check | failed／1 | `CTX-ROOT-MISSING-001`、未知`--workspace`と区別 |
+| `MULTI-025-02` | 存在workspaceの不在修飾target | verify | failed／1 | target Diagnosticに`CTX-ROOT-MISSING-001` |
 
-`MONO-012`ではinvalid文書のowner memberを`failed`、それを必要とするtargetを
-`SPEC-MONOREPO-DEPENDENCY-001`／`blocked`、独立targetを通過とし、top-levelは最悪値の`failed`に固定する。
+`MULTI-012`ではinvalid文書のowner memberを`failed`、それを必要とするtargetを
+`SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立targetを通過とし、top-levelは最悪値の`failed`に固定する。
 
 ## 8. 性能fixture
 

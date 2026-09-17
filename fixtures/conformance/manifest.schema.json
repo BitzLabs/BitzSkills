@@ -8,7 +8,7 @@
   "properties": {
     "fixtureId": {
       "type": "string",
-      "pattern": "^(SINGLE|MONO)-[0-9]{3}(?:-[0-9]{2})?$"
+      "pattern": "^(SINGLE|MULTI)-[0-9]{3}(?:-[0-9]{2})?$"
     },
     "description": {
       "type": "string",

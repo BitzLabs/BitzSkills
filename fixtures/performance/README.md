@@ -18,13 +18,13 @@ Validate `datasets/*.json` with `schemas/dataset.schema.json`, `environments/*.j
 | Dataset | Fixed shape | Benchmark targets |
 |---|---|---|
 | `core-single-v1` | 300 SPEC, 1,000 statements, 5,000 relations | changed check, full check, doctor, 20-document context, verify overhead |
-| `core-federation-v1` | 20 workspaces, 1,000 SPEC, 1,000 statements, 20,000 relations | all-workspaces check, 3-workspace/20-document context |
+| `core-multi-workspace-v1` | 20 workspaces, 1,000 SPEC, 1,000 statements, 20,000 relations | all-workspaces check, 3-workspace/20-document context |
 
 Generate into a new or empty destination and verify the reported digest:
 
 ```text
 python3 fixtures/performance/scripts/generate_fixture.py fixtures/performance/datasets/core-single-v1.json <output>
-python3 fixtures/performance/scripts/generate_fixture.py fixtures/performance/datasets/core-federation-v1.json <output>
+python3 fixtures/performance/scripts/generate_fixture.py fixtures/performance/datasets/core-multi-workspace-v1.json <output>
 ```
 
 The tree digest is SHA-256 over files in relative-path Unicode code-point order. For each file the hash input is the UTF-8

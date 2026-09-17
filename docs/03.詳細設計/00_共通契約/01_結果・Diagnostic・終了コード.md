@@ -34,7 +34,7 @@ Diagnostic条件と公開値は[Diagnostic registry](05_Diagnostic-registry.md)�
 | `status` | enum | Yes | 操作全体のstatus |
 | `scope` | string | check／verifyだけYes | checkは`changed`、`selected`、`full`、`all-workspaces`、verifyは`selected`、`all`、`all-workspaces` |
 | `workspace` | object | workspace単独操作でYes | 対象またはrequest workspaceの`id`と`path`。identity確定前だけ`id: null` |
-| `federation` | object | 全体操作でYes | federation rootの`id`と`path: "."`。root identity不成立時だけ`id: null` |
+| `multiWorkspace` | object | 全体操作でYes | federation rootの`id`と`path: "."`。root identity不成立時だけ`id: null` |
 | `workspaces` | array | 全体操作でYes | 処理順のworkspace別結果。操作固有fieldを保持 |
 | `revision` | object/null | context／check／verifyでYes | Git基準版と実行時状態。doctorでは禁止 |
 | `durationMs` | integer | Yes | 非負の経過ms |
@@ -53,11 +53,11 @@ Core 1.0 producerはSchemaにないfieldを出力しない。consumerは同じma
 | context | workspace-local | `workspace`、`purpose`、`roots`、`contextDigest`、`revision`、`resolution`、`projection`、`documents`、`constraintLedger`、`coverage`。連合固有field禁止 |
 | context | workspace-federated | localと同じfieldに加え`documents[].workspaceId`、`resolution.workspaces`、`resolution.crossWorkspaceEdges` |
 | check | workspace | `workspace`、`scope`、`revision`。`changed`は`selection`、`selected`／`full`は2つのchecked count |
-| check | federation | `federation`、`workspaces`、`scope: all-workspaces`、`revision` |
+| check | federation | `multiWorkspace`、`workspaces`、`scope: all-workspaces`、`revision` |
 | verify | workspace | `workspace`、`scope`、`targetResults`、`commands`、`revision` |
-| verify | federation | `federation`、`workspaces`、`scope: all-workspaces`、`revision` |
+| verify | federation | `multiWorkspace`、`workspaces`、`scope: all-workspaces`、`revision` |
 | doctor | workspace | `workspace`、`core`、`checks` |
-| doctor | federation | `federation`、`workspaces`、`core`、`checks` |
+| doctor | federation | `multiWorkspace`、`workspaces`、`core`、`checks` |
 
 `contextDigest`は完全Contextを構成できない場合だけnullとする。`revision`の規則は次のとおりである。
 
@@ -78,10 +78,10 @@ Core 1.0 producerはSchemaにないfieldを出力しない。consumerは同じma
 
 単一workspaceでは設定した`workspace.id`、省略時は`root`を使い、pathを`.`とする。連合内のworkspace単独操作では
 実際のworkspace IDとrepository root相対pathを返す。`--all-workspaces`結果は`workspace`を持たず、
-`federation`と`workspaces`を持つ。top-level statusはtop-level Diagnosticと全workspace結果へ同じ最悪値規則を
+`multiWorkspace`と`workspaces`を持つ。top-level statusはtop-level Diagnosticと全workspace結果へ同じ最悪値規則を
 適用して集約する。
 
-| `federation` field | 型 | 必須 | 意味 |
+| `multiWorkspace` field | 型 | 必須 | 意味 |
 |---|---|:--:|---|
 | `id` | string/null | Yes | 有効なfederation root ID。identity確定前のglobal preflight失敗時だけnull |
 | `path` | string | Yes | 常に`.` |
@@ -95,7 +95,7 @@ federation rootを先頭、その後をworkspace ID辞書順に保持する。
   "operation": "check",
   "scope": "all-workspaces",
   "status": "passed",
-  "federation": {"id": "platform", "path": "."},
+  "multiWorkspace": {"id": "platform", "path": "."},
   "workspaces": [
     {"id": "platform", "path": ".", "status": "passed", "checkedDocumentCount": 20, "checkedStatementCount": 40, "durationMs": 40, "diagnostics": []},
     {"id": "api", "path": "services/api", "status": "passed", "checkedDocumentCount": 25, "checkedStatementCount": 50, "durationMs": 50, "diagnostics": []},
@@ -144,7 +144,7 @@ owner workspaceの`commands[]`へ1件だけ置く。top-levelへ操作固有件�
   "operation": "verify",
   "scope": "all-workspaces",
   "status": "passed_with_warnings",
-  "federation": {"id": "platform", "path": "."},
+  "multiWorkspace": {"id": "platform", "path": "."},
   "workspaces": [
     {
       "id": "platform",
@@ -214,11 +214,11 @@ owner workspaceの`commands[]`へ1件だけ置く。top-levelへ操作固有件�
   "schemaVersion": "1.0",
   "operation": "doctor",
   "status": "passed",
-  "federation": {"id": "platform", "path": "."},
+  "multiWorkspace": {"id": "platform", "path": "."},
   "core": {
     "version": "1.0.0",
     "apiVersion": "1.0",
-    "capabilities": ["context.v1", "check.v1", "verify.v1", "doctor.v1", "monorepo.v1"]
+    "capabilities": ["context.v1", "check.v1", "verify.v1", "doctor.v1", "multiWorkspace.v1"]
   },
   "checks": [
     {"name": "git", "status": "passed"},
@@ -248,17 +248,17 @@ owner workspaceの`commands[]`へ1件だけ置く。top-levelへ操作固有件�
 ```
 
 global preflightがroot設定の構文、型、ID不正で停止し、有効なfederation IDを構成できない場合だけ、
-`federation`を`{"id": null, "path": "."}`、`workspaces`を空配列にする。その他の全体結果の`federation.id`は
+`multiWorkspace`を`{"id": null, "path": "."}`、`workspaces`を空配列にする。その他の全体結果の`multiWorkspace.id`は
 有効なstringとする。不正なraw IDを結果identityへ転記しない。
 
 JSON consumerは`schemaVersion` majorを確認した後、次の排他的外形で結果種別を識別する。
 
-- `workspace`を持ち、`federation`と`workspaces`を持たない: workspace単独結果
-- `workspace`を持たず、`federation`と`workspaces`を持つ: 全体結果
+- `workspace`を持ち、`multiWorkspace`と`workspaces`を持たない: workspace単独結果
+- `workspace`を持たず、`multiWorkspace`と`workspaces`を持つ: 全体結果
 - 両方を持つ、または必要fieldをどちらも持たない: Schema不適合
 
 修飾IDの`::`、report file名、current directoryから結果種別を推測しない。連合producerを有効にするadapter／CIは、
-事前にCore APIまたはdoctorで`monorepo.v1`を確認する。Coreは過去reportを合否入力にせず、単一と連合のreportを
+事前にCore APIまたはdoctorで`multiWorkspace.v1`を確認する。Coreは過去reportを合否入力にせず、単一と連合のreportを
 同じ実行結果として集約しない。
 
 ## 3. statusと終了コード

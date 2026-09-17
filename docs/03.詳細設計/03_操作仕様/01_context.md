@@ -190,7 +190,7 @@ Context Digestは次をCanonical JSON化したSHA-256である。形式は`sha25
 - code/test fileの内容
 - CLI timeout cap
 - 未到達workspaceの設定、本文、catalog列挙順
-- `monorepo.maxMembers`、未使用command、`safety`
+- `multiWorkspace.maxMembers`、未使用command、`safety`
 
 設定の構文、型、必須fieldまたは参照commandが不適合ならDigest計算前に停止し、不完全な設定からDigestを作らない。
 

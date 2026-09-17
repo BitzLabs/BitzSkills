@@ -91,6 +91,7 @@ symlinkも防げない。
 - ADR-041のtarget別verify証跡と明示`--report`だけの保存条件は変更しない。
 - 本ADRでP2として残した継続、Diagnostic、TASK境界、rollback、計算量、適合matrixは
   [ADR-043](ADR-043_モノレポ連合の継続・TASK境界・適合契約を確定する.md)で確定した。
+- 結果field `federation`、設定key `monorepo`、`SPEC-MONOREPO-*`は、後続の[ADR-047](ADR-047_複合workspaceの識別子をmultiWorkspaceへ改名する.md)で`multiWorkspace`、`SPEC-MULTI-*`へ改名した。
 
 ## Revision History
 
@@ -98,3 +99,4 @@ symlinkも防げない。
 |---|---|---|
 | 2026-09-03 | モノレポ残存P1のidentity、所有境界、Schema、CLI、resource、性能条件を確定 | FED-CROSS-002〜007 |
 | 2026-09-03 | 本ADRで残したP2の後続裁定を記録 | ADR-043 |
+| 2026-09-17 | 複合workspaceの識別子の改名を後続決定へ接続 | ADR-047 |

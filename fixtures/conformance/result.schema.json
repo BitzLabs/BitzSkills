@@ -6,11 +6,11 @@
     {"$ref": "#/$defs/contextResult"},
     {"$ref": "#/$defs/checkChangedResult"},
     {"$ref": "#/$defs/checkCountedResult"},
-    {"$ref": "#/$defs/checkFederationResult"},
+    {"$ref": "#/$defs/checkMultiWorkspaceResult"},
     {"$ref": "#/$defs/verifyResult"},
-    {"$ref": "#/$defs/verifyFederationResult"},
+    {"$ref": "#/$defs/verifyMultiWorkspaceResult"},
     {"$ref": "#/$defs/doctorResult"},
-    {"$ref": "#/$defs/doctorFederationResult"}
+    {"$ref": "#/$defs/doctorMultiWorkspaceResult"}
   ],
   "$defs": {
     "status": {
@@ -44,7 +44,7 @@
       },
       "additionalProperties": false
     },
-    "federation": {
+    "multiWorkspace": {
       "type": "object",
       "required": ["id", "path"],
       "properties": {
@@ -371,11 +371,11 @@
       },
       "additionalProperties": false
     },
-    "checkFederationResult": {
+    "checkMultiWorkspaceResult": {
       "allOf": [
         {"$ref": "#/$defs/baseResult"},
-        {"type": "object", "required": ["scope", "federation", "workspaces", "revision"], "properties": {
-          "operation": {"const": "check"}, "scope": {"const": "all-workspaces"}, "federation": {"$ref": "#/$defs/federation"},
+        {"type": "object", "required": ["scope", "multiWorkspace", "workspaces", "revision"], "properties": {
+          "operation": {"const": "check"}, "scope": {"const": "all-workspaces"}, "multiWorkspace": {"$ref": "#/$defs/multiWorkspace"},
           "workspaces": {"type": "array", "items": {"$ref": "#/$defs/checkWorkspace"}}, "revision": {"$ref": "#/$defs/revisionCheck"}
         }}
       ],
@@ -454,11 +454,11 @@
       },
       "additionalProperties": false
     },
-    "verifyFederationResult": {
+    "verifyMultiWorkspaceResult": {
       "allOf": [
         {"$ref": "#/$defs/baseResult"},
-        {"type": "object", "required": ["scope", "federation", "workspaces", "revision"], "properties": {
-          "operation": {"const": "verify"}, "scope": {"const": "all-workspaces"}, "federation": {"$ref": "#/$defs/federation"},
+        {"type": "object", "required": ["scope", "multiWorkspace", "workspaces", "revision"], "properties": {
+          "operation": {"const": "verify"}, "scope": {"const": "all-workspaces"}, "multiWorkspace": {"$ref": "#/$defs/multiWorkspace"},
           "workspaces": {"type": "array", "items": {"$ref": "#/$defs/verifyWorkspace"}}, "revision": {"$ref": "#/$defs/revisionCurrent"}
         }}
       ],
@@ -502,11 +502,11 @@
       },
       "additionalProperties": false
     },
-    "doctorFederationResult": {
+    "doctorMultiWorkspaceResult": {
       "allOf": [
         {"$ref": "#/$defs/baseResult"},
-        {"type": "object", "required": ["federation", "workspaces", "core", "checks"], "properties": {
-          "operation": {"const": "doctor"}, "federation": {"$ref": "#/$defs/federation"},
+        {"type": "object", "required": ["multiWorkspace", "workspaces", "core", "checks"], "properties": {
+          "operation": {"const": "doctor"}, "multiWorkspace": {"$ref": "#/$defs/multiWorkspace"},
           "workspaces": {"type": "array", "items": {"$ref": "#/$defs/doctorWorkspace"}},
           "core": {"$ref": "#/$defs/core"}, "checks": {"type": "array", "items": {"$ref": "#/$defs/doctorCheck"}}
         }}

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "contractSha256": "543a7105e5881f2061afbabc02e07294abefb72ce9957dd8c7b678eea43a7bd4",
+  "contractSha256": "c46cd98f0d3bd1218effb798a309de7e48dfe6bb6a79d6cb791c0954adee8906",
   "cases": [
     {
       "id": "BASIC-REQ-interpret",
@@ -1244,7 +1244,7 @@
       ]
     },
     {
-      "id": "FEDERATED-SAME-LOCAL-ID",
+      "id": "MULTI-WORKSPACE-SAME-LOCAL-ID",
       "rootKind": "REQ",
       "purpose": "verify",
       "roots": [
@@ -1315,7 +1315,7 @@
         "adjacentStatements": []
       },
       "matrixFamilies": [
-        "MONO-002",
+        "MULTI-002",
         "SINGLE-107"
       ]
     },

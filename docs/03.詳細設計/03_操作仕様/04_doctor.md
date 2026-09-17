@@ -48,7 +48,7 @@ Git境界、未対応major、resource上限のglobal preflightが非成功なら
 
 preflight通過後はcheck項目を継続単位とする。先行checkの出力を必要としないCore、plugin、Capability、Gitは
 可能な範囲で継続し、設定を解釈できないときのcommand／cwdなど依存checkは実行しない。根本Diagnosticとは別の
-checkが依存出力不足だけで実行不能なら`SPEC-MONOREPO-DEPENDENCY-001`／blockedとし、同じcheckへ具体的原因を
+checkが依存出力不足だけで実行不能なら`SPEC-MULTI-DEPENDENCY-001`／blockedとし、同じcheckへ具体的原因を
 重複させない。
 
 ### 3.1 実行環境の下限
@@ -59,14 +59,14 @@ checkが依存出力不足だけで実行不能なら`SPEC-MONOREPO-DEPENDENCY-0
 | 対象 | 下限 | 不適合時 |
 |---|---|---|
 | CPython | 3.11 | `SPEC-DOCTOR-CORE-001`／blocked |
-| Git | 2.30 | Git不在として扱い、単一workspaceはwarning、連合は`SPEC-MONOREPO-GIT-001`／blocked |
+| Git | 2.30 | Git不在として扱い、単一workspaceはwarning、連合は`SPEC-MULTI-GIT-001`／blocked |
 
 下限は環境ごとに変更できる設定値にしない。Core実行体を起動できない場合は
 `SPEC-DOCTOR-CORE-002`／errorとし、version比較へ進まない。
 
 ## 4. Capability
 
-Core 1.0は`context.v1`、`check.v1`、`verify.v1`、`doctor.v1`、`monorepo.v1`を公開する。未知Capabilityは不足とする。
+Core 1.0は`context.v1`、`check.v1`、`verify.v1`、`doctor.v1`、`multiWorkspace.v1`を公開する。未知Capabilityは不足とする。
 Core API minor差は要求rangeと全Capabilityを満たす場合だけ許可する。
 
 doctorはclient固有plugin install先を探索せず、`bitz.yaml`をplugin台帳にしない。plugin情報が渡されない通常実行は
@@ -89,7 +89,7 @@ earsAi: "1.0"
 単一workspaceではCore全体の起動失敗にはせず、承認済みREQ保護、状態遷移、削除検出、TASK境界の失われる
 保証を列挙する。`checks[]`の`git`はこの4件を`lostGuarantees`へ`approved-diff-protection`、
 `deletion-detection`、`status-transition`、`task-boundary`の安定名で重複なく辞書順に置く。
-連合ではrepository境界と所有範囲を確定できないため`SPEC-MONOREPO-GIT-001`／blockedとする。
+連合ではrepository境界と所有範囲を確定できないため`SPEC-MULTI-GIT-001`／blockedとする。
 
 ## 7. 結果
 
@@ -102,7 +102,7 @@ earsAi: "1.0"
   "core": {
     "version": "1.0.0",
     "apiVersion": "1.0",
-    "capabilities": ["context.v1", "check.v1", "verify.v1", "doctor.v1", "monorepo.v1"]
+    "capabilities": ["context.v1", "check.v1", "verify.v1", "doctor.v1", "multiWorkspace.v1"]
   },
   "checks": [
     {"name": "git", "status": "warning", "lostGuarantees": ["approved-diff-protection", "task-boundary"]}
@@ -144,7 +144,7 @@ workspace固有検査を該当workspace要素へ置く。完全JSON例は
 | `SPEC-DOCTOR-EARS-001` | blocked | EARS-AI major非互換 |
 | `SPEC-DOCTOR-GIT-001` | passed_with_warnings | Git不在 |
 | `SPEC-DOCTOR-COMMAND-001` | blocked | command/cwd解決不能 |
-| `SPEC-MONOREPO-DEPENDENCY-001` | blocked | 先行する別unitの出力不足でworkspace固有checkを実行不能 |
+| `SPEC-MULTI-DEPENDENCY-001` | blocked | 先行する別unitの出力不足でworkspace固有checkを実行不能 |
 
 Core自体が未導入でdoctorを呼べない場合、adapterは静的な導入手順だけを示し、Core判定を代替しない。
 連合固有Diagnosticと全体結果外形は

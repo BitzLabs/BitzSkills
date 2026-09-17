@@ -26,7 +26,7 @@
     "$schema": {"type": "string"},
     "schemaVersion": {"const": "1.0"},
     "datasetId": {"type": "string", "pattern": "^core-[a-z0-9-]+-v[0-9]+$"},
-    "kind": {"enum": ["single", "federation"]},
+    "kind": {"enum": ["single", "multiWorkspace"]},
     "generatorVersion": {"const": "1.0"},
     "seed": {"type": "integer", "minimum": 0},
     "counts": {

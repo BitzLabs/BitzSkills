@@ -103,7 +103,7 @@ B rebuilds it from the fixture's own tree with a separate reader and a separate 
 Writing B independently found and fixed a defect in B: it accepted `[MUST] [REASON]`, which the EBNF
 allows only for `[SHOULD]`. Expectation choices and their limits are recorded in
 [the Digest fixture review](single/digest-review.md).
-The federation golden (MONO-002-01) is still missing, so the federation half of the Gate A Digest
+The federation golden (MULTI-002-01) is still missing, so the federation half of the Gate A Digest
 condition remains open. These are preparation checks, not observed Core behavior or complete
 fresh-checkout Gate A certification.
 
@@ -572,3 +572,14 @@ SINGLE-127-15〜19を追加し、Git版と下限CPythonを規範本文から読�
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `08eda7ecd76069a296e42d1a429a81f22cccfcb16a1f529cdf5de790b3fdaba8`。
 Coreは実行していない。連合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。
+
+## 2026-09-17: 複合workspaceの識別子の改名
+
+準備済み250/310、残り60件（すべて複合workspace）。ADR-047に従い、設定key、Capability、結果field、Diagnostic code、
+condition ID、継続単位、fixture ID（`MONO-*`→`MULTI-*`）、結果SchemaのSchema定義名、性能datasetを改名した。
+doctorの期待結果11件はCapability一覧の`multiWorkspace.v1`だけが変わり、manifest Schemaとmatrix検査は
+`MULTI-*`を受け付ける。Diagnostic台帳とtarget vectorの根拠文書hashは再レビュー後に更新した。
+target vectorの期待集合25ケースは変わらない。性能datasetの期待tree digestは設定keyの変更分だけ更新した。
+同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
+Report SHA-256: `fb0d2efe0a442145d47e47be364a80d45849c0d0af187f4c57769db1ca15e5f5`。
+Coreは実行していない。複合workspaceのfixture、そのgolden Digest、fresh checkoutでのGate A認定は未完了である。

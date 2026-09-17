@@ -90,7 +90,7 @@ global preflight非成功ならworkspace別検査を開始しない。preflight�
 文書を対応付ける。member削除または移動時の扱いは
 [モノレポSPEC連合仕様](../02_SPECモデル/05_モノレポSPEC連合仕様.md)に従う。
 
-初回連合化では、baseのrepository root設定が`monorepo`と明示`workspace.id`を持たない場合だけ、実効ID `root`を
+初回連合化では、baseのrepository root設定が`multiWorkspace`と明示`workspace.id`を持たない場合だけ、実効ID `root`を
 currentのfederation root IDへ比較上で写像する。連合化後のID renameは推定せず、member pathだけの移動は同じIDで
 対応付ける。catalogから消えたmemberの管理済みSPECは削除検査の対象から外さない。
 
@@ -151,7 +151,7 @@ Coreは意味的影響を断定せず、statusを自動変更しない。`relate
 `scope: changed`では`selection`を必須とする。text出力も同じ3件数を使う。
 明示対象は`scope: selected`、`--full`とGit不在／unborn時の全体縮退は`scope: full`とし、両scopeでは
 `checkedDocumentCount`と`checkedStatementCount`を必須にする。`selection`は`changed`だけで出力する。
-`--all-workspaces`では`scope: all-workspaces`と共通の`federation`、`workspaces`外形を使用し、各memberの
+`--all-workspaces`では`scope: all-workspaces`と共通の`multiWorkspace`、`workspaces`外形を使用し、各memberの
 `checkedDocumentCount`、`checkedStatementCount`とDiagnosticをmember結果へ保持する。両件数は非負integerで必須とし、
 全SPECを完全検査した文書数と規範文数を表す。repository共通の`revision`はtop-levelに1件だけ置き、member結果へ
 複製しない。完全JSON例は[共通結果契約](../00_共通契約/01_結果・Diagnostic・終了コード.md#21-check全体結果)を正とする。

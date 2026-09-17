@@ -542,11 +542,11 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 
 | 区分 | 現在の状態 | 残件 |
 |---|---|---|
-| P0 6件 | 契約、Schema、matrixへ反映済み | 実入力、期待結果の実fixture化（単一workspaceのgolden Digestは`SINGLE-042`で確定済み、連合`MONO-002-01`は未作成） |
+| P0 6件 | 契約、Schema、matrixへ反映済み | 実入力、期待結果の実fixture化（単一workspaceのgolden Digestは`SINGLE-042`で確定済み、連合`MULTI-002-01`は未作成） |
 | P1 5件 | 契約または性能受入成果物へ反映済み | process helper等の検証基盤、Core実装後の受入結果と性能baseline |
 | P2文書衛生 | accepted ADR linkとREADME状態を修正済み | — |
 | 自己適用 | 実装計画へ配置済み | Step 2完了後に`.spec/`を作成し、Gate Cで最終判定 |
-| Step 0B | `In progress` | 公開JSON・grammar・link・Git/process基盤・Diagnostic意味網羅・target集合25ケース・実fixture250件（導入設定9＋EARS 12＋文書構造・UTF-8 9＋関係・path・coverage 6＋ID重複・循環4＋Git基準版・保護対象外10＋TASK境界3＋Git対象選択・影響候補4＋Git環境3＋Context非成功6＋Context Digest 6＋expand反復2＋stale・上限・coverage 6＋verify実行・事前block 6＋verify binding共有3＋verify process終了3＋verify出力抜粋2＋文書単位binding1＋done TASK起点1＋report非作成4＋引数不正15＋report作成・保存失敗・JSON併用6＋text出力・制御文字・診断順序4＋BOM・Frontmatter 11＋寸法上限・未知entry 7＋registry閉包7＋Scanner・位置16＋既定表示・revision 8＋理由付きSHOULD・full projection・Digest version 3＋escape・normative projection 2＋quoted extension 1＋code span 1＋Frontmatter境界24＋Core副作用6＋verify argv・実行環境・出力変換15＋明示起点の不在・ADR起点8＋共通target展開・advisory提示8＋Digest材料の順序・reverse solidus 3＋実行環境・配布物5）の準備を検証済み。matrix §6.5 contextとDigest（16件）と§6.6 verifyは全32件完了し、単一workspaceのgolden Digestは独立2系統のreference計算で一致を確認済み。単一workspaceの実fixtureは全250件完了。連合`MONO-*`60件、連合golden Digest等が残件 |
+| Step 0B | `In progress` | 公開JSON・grammar・link・Git/process基盤・Diagnostic意味網羅・target集合25ケース・実fixture250件（導入設定9＋EARS 12＋文書構造・UTF-8 9＋関係・path・coverage 6＋ID重複・循環4＋Git基準版・保護対象外10＋TASK境界3＋Git対象選択・影響候補4＋Git環境3＋Context非成功6＋Context Digest 6＋expand反復2＋stale・上限・coverage 6＋verify実行・事前block 6＋verify binding共有3＋verify process終了3＋verify出力抜粋2＋文書単位binding1＋done TASK起点1＋report非作成4＋引数不正15＋report作成・保存失敗・JSON併用6＋text出力・制御文字・診断順序4＋BOM・Frontmatter 11＋寸法上限・未知entry 7＋registry閉包7＋Scanner・位置16＋既定表示・revision 8＋理由付きSHOULD・full projection・Digest version 3＋escape・normative projection 2＋quoted extension 1＋code span 1＋Frontmatter境界24＋Core副作用6＋verify argv・実行環境・出力変換15＋明示起点の不在・ADR起点8＋共通target展開・advisory提示8＋Digest材料の順序・reverse solidus 3＋実行環境・配布物5）の準備を検証済み。matrix §6.5 contextとDigest（16件）と§6.6 verifyは全32件完了し、単一workspaceのgolden Digestは独立2系統のreference計算で一致を確認済み。単一workspaceの実fixtureは全250件完了。連合`MULTI-*`60件、連合golden Digest等が残件 |
 | Step 0-P | `Complete` | 基準入力・比較条件を固定し一括検証済み。実測はCore実装後 |
 | Gate A | `Blocked` | fresh checkoutから単一commandで2回一致する自動検査結果を記録 |
 | Gate B | `Pending` | 各StepのCore実装を固定済みfixtureへ通して判定 |
@@ -561,6 +561,8 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 検査対象の受取り、Python・Git versionの指定、JSON互換runner、package runnerを
 [ADR-046](../02.設計書/10_決定記録/ADR-046_適合harnessの検査対象・実行環境・runnerを確定する.md)として裁定した。
 Gate Cには全matrixを下限CPython 3.11と基準環境の2環境で通す条件を加えた。
+
+表記統一のため[用語集](../用語集.md)を定め、複数のworkspaceを束ねる構成を「複合workspace」と呼ぶことにした。あわせて[ADR-047](../02.設計書/10_決定記録/ADR-047_複合workspaceの識別子をmultiWorkspaceへ改名する.md)で、識別子を`multiWorkspace`、`SPEC-MULTI-*`、`MULTI-*`へ改名した。本READMEと裁定済みの提案資料の履歴部分は当時の識別子を残す。
 
 Gate Aを`Allowed`へ変更するのは、[提案25 §9.1](25_Core-1.0実装前最終レビューと修正提案.md#91-gate-a-実装着手可能性)の
 Core非依存条件を満たす自動検査結果と実行環境を同一commitで確認した後とする。Core本体の挙動はGate Aで要求せず、

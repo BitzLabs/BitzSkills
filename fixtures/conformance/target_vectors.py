@@ -144,7 +144,7 @@ def validate(data=None):
     if pairs != {(k, p) for k in KINDS for p in PURPOSES}:
         errors.append("missing basic kind/purpose combination")
     matrix = (HERE.parents[1] / "docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md").read_text()
-    families = set(re.findall(r"\| `((?:SINGLE|MONO)-\d{3})(?:-\d{2})?`", matrix))
+    families = set(re.findall(r"\| `((?:SINGLE|MULTI)-\d{3})(?:-\d{2})?`", matrix))
     for case in data["cases"]:
         try:
             if not set(case["matrixFamilies"]) <= families:

@@ -203,7 +203,7 @@ context仕様 §6のallowlistだけをkey固定のobjectとして保持する。
 - `verifyTimeouts`はbindingを1件以上収録したworkspaceだけを`workspaceId`辞書順に並べ、既定値を適用する。
 - `commands`はBundleが参照するcommandだけを`workspaceId`、`name`の順で辞書順に並べる。`argv`は
   `{tests}`を展開しないtemplateのまま保持し、`cwd`は未指定時`.`とする。
-- `monorepo.maxMembers`、`safety`、未到達workspaceの設定、未使用command、CLI timeout cap、
+- `multiWorkspace.maxMembers`、`safety`、未到達workspaceの設定、未使用command、CLI timeout cap、
   出力形式、`--report`は含めない。
 
 ## 4. 文字正規化

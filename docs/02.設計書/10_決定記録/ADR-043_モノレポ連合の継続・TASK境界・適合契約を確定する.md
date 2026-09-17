@@ -82,9 +82,11 @@ TASK境界では、symlink解決後の実pathを許可prefixとの比較に使�
 - 詳細な優先順位、継続単位、計算量、適合matrixは`docs/03.詳細設計`と実装計画を正本とする。
 - 検討経緯とP2対応表は[提案23](../../04.提案資料/23_モノレポ残存P2裁定案.md)に記録する。
 - ADR-041のtarget別証跡と明示`--report`だけの保存条件、ADR-042の初回1.0公開前提を維持する。
+- 継続単位`stop-federation`、condition ID `MONO-*`、fixture ID `MONO-NNN`は、後続の[ADR-047](ADR-047_複合workspaceの識別子をmultiWorkspaceへ改名する.md)で`stop-multi-workspace`、`MULTI-*`、`MULTI-NNN`へ改名した。
 
 ## Revision History
 
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-09-03 | モノレポ残存P2の継続、TASK境界、rollback、計算量、適合契約を確定 | FED-CTX-003ほか5件 |
+| 2026-09-17 | 複合workspaceの識別子の改名を後続決定へ接続 | ADR-047 |

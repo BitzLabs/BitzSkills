@@ -34,15 +34,15 @@ codeは既存の`SPEC-VERIFY-BLOCKED-001`、error／blocked、file、skip-bindin
 
 workspace設定 §6はtest pathをcwd配下に限定するが、双方が存在し同一workspace内にある場合の
 違反について、設定Schema不正、trace path不正、verify binding遮断のどれを返すかが未確定である。
-VERIFY-CWD-UNAVAILABLEはcwd不在、MONO-OWNERSHIPは所有境界越えであり、そのまま同じ原因に当てはめられない。
+VERIFY-CWD-UNAVAILABLEはcwd不在、MULTI-OWNERSHIPは所有境界越えであり、そのまま同じ原因に当てはめられない。
 裁定: 所有境界・存在検査後にverifyだけが包含検査を行い、`VERIFY-TEST-OUTSIDE-CWD`へ対応付ける。
 codeは`SPEC-VERIFY-BLOCKED-001`、error／blocked、file、skip-bindingとする。sourceはtest対応の宣言SPEC。
 check/doctorの責務をtarget別binding解決へ拡張しない。`{tests}`なしでも同じ条件を適用する。
 
 ### DG-OPEN-003: 別repository/worktreeへのmember path
 
-連合仕様 §5.1・§11は既知の別repository/worktreeへのmember pathをSPEC-MONOREPO-PATH-001／failedとするが、
-§10は同じ解決結果をSPEC-MONOREPO-GIT-001／blockedにも含めている。既知の不適合と境界確定不能を
+連合仕様 §5.1・§11は既知の別repository/worktreeへのmember pathをSPEC-MULTI-PATH-001／failedとするが、
+§10は同じ解決結果をSPEC-MULTI-GIT-001／blockedにも含めている。既知の不適合と境界確定不能を
 区別する方針を採用した。既知の別repository/worktreeはPATH／failed、境界を確定できない場合はGIT／blockedとし、
 §10を§5.1と整合させた。同じ原因へ両codeを返さない。
 
@@ -121,7 +121,18 @@ workspace・設定仕様 §6へ、単一設定fileの64 KiB上限によりtempla
 ADR-046に従い、Core実行環境・CLI基盤契約 §4へ、Gitの版を`git --version`の出力1行目から解析し、非0終了や
 解析できない出力を実行不能として扱うことを追記した。下限未満・PATH解決不能・実行不能をGit不在とする既存の
 縮退契約へ入力を1つ明示しただけで、単一workspaceの`SPEC-DOCTOR-GIT-001`／warning、連合の
-`SPEC-MONOREPO-GIT-001`／blockedの条件と継続単位は変わらない。
+`SPEC-MULTI-GIT-001`／blockedの条件と継続単位は変わらない。
 
 - 新規のDiagnostic条件は生じない。119条件・14論点群の対応に変更はない。
 - 上記を確認したうえで、台帳が固定するCore実行環境・CLI基盤契約のhashを更新した。
+
+## 2026-09-17の再レビュー（複合workspaceの識別子の改名）
+
+ADR-047に従い、設定key `monorepo`を`multiWorkspace`、Capability `monorepo.v1`を`multiWorkspace.v1`、
+結果field `federation`を`multiWorkspace`、Diagnostic code `SPEC-MONOREPO-*`を`SPEC-MULTI-*`、condition ID
+`MONO-*`を`MULTI-*`、継続単位`stop-federation`を`stop-multi-workspace`へ改名した。
+
+- 条件の意味、severity、status、source、継続単位、優先順位は変えていない。14件のcondition IDは同じ条件のまま
+  名前だけを改めた。119条件・14論点群の対応に変更はない。論点群ID `federation`は`multiWorkspace`へ改めた。
+- 改名はCore 1.0の公開前に限る一回だけの例外であり、旧ID `MONO-*`を別の条件へ再利用しない。
+- 上記を確認したうえで、台帳が固定する根拠文書のhashを更新した。

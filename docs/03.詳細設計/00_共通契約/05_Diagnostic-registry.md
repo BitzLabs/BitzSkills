@@ -28,7 +28,7 @@ continuationは次の閉じた語彙を使う。
 | 値 | 意味 |
 |---|---|
 | `stop-operation` | 操作全体を停止する |
-| `stop-federation` | global preflightで停止し、member処理を開始しない |
+| `stop-multi-workspace` | global preflightで停止し、member処理を開始しない |
 | `skip-workspace` | 当該workspaceの依存処理を省略し、独立workspaceを継続する |
 | `skip-document` | 当該文書の後続処理を省略し、独立文書を継続する |
 | `skip-edge` | 当該relation edgeの後続解決だけを省略する |
@@ -176,20 +176,20 @@ doctorの設定checkは§3の`CONFIG-*`条件を使用する。`SPEC-DOCTOR-CONF
 
 | conditionId | operations | code | severity | status | source | continuation | priority | 条件 |
 |---|---|---|---|---|---|---|---:|---|
-| `MONO-REF-QUALIFIER` | context, check, verify | `SPEC-MONOREPO-REF-001` | error | failed | file | `skip-edge` | 301 | 修飾ID構文不正 |
-| `MONO-REF-UNQUALIFIED` | context, check, verify | `SPEC-MONOREPO-REF-001` | error | failed | file | `skip-edge` | 302 | targetが別workspaceだけに存在する非修飾参照 |
-| `MONO-REF-WORKSPACE` | context, check, verify | `SPEC-MONOREPO-REF-001` | error | failed | file | `skip-edge` | 303 | 修飾workspace不在 |
-| `MONO-OWNERSHIP` | context, check, verify | `SPEC-MONOREPO-OWNERSHIP-001` | error | failed | file | `skip-target` | 490 | SPEC、code、test、TASK、cwdの所有境界違反 |
-| `MONO-CONFIG` | all | `SPEC-MONOREPO-CONFIG-001` | error | failed | file | `stop-federation` | 900 | `monorepo`の型、件数、配置、root条件不正 |
-| `MONO-MEMBER` | all | `SPEC-MONOREPO-MEMBER-001` | error | failed | file | `stop-federation` | 910 | member設定不在、catalog ID不一致、nested federation |
-| `MONO-ID` | all | `SPEC-MONOREPO-ID-001` | error | failed | file | `stop-federation` | 920 | workspace ID不正または重複 |
-| `MONO-PATH` | all | `SPEC-MONOREPO-PATH-001` | error | failed | file | `stop-federation` | 930 | member path不正、重複、入れ子、symlink、submodule、別repository |
-| `MONO-GIT` | all | `SPEC-MONOREPO-GIT-001` | error | blocked | environment | `stop-federation` | 940 | Git repository境界またはmember所有範囲を確定不能 |
-| `MONO-VERSION` | all | `SPEC-MONOREPO-VERSION-001` | error | blocked | file | `stop-federation` | 950 | memberのSchemaまたはEARS-AIが未対応major |
-| `MONO-UNREGISTERED` | all | `SPEC-MONOREPO-UNREGISTERED-001` | error | blocked | file | `stop-federation` | 960 | Git既知設定または選択設定がcatalogに未登録 |
-| `MONO-LIMIT` | all | `SPEC-MONOREPO-LIMIT-001` | error | blocked | file | `stop-federation` | 970 | member数または連合snapshot resource上限超過 |
-| `MONO-DEPENDENCY` | context, verify | `SPEC-MONOREPO-DEPENDENCY-001` | error | blocked | file | `skip-target` | 980 | 具体的Diagnosticのないtargetが別unitの非成功によりContextまたはbindingを構成不能 |
-| `MONO-DEPENDENCY-DOCTOR` | doctor | `SPEC-MONOREPO-DEPENDENCY-001` | error | blocked | file | `skip-check` | 980 | 具体的Diagnosticのないdoctor checkが別unitの非成功により依存出力を得られない |
+| `MULTI-REF-QUALIFIER` | context, check, verify | `SPEC-MULTI-REF-001` | error | failed | file | `skip-edge` | 301 | 修飾ID構文不正 |
+| `MULTI-REF-UNQUALIFIED` | context, check, verify | `SPEC-MULTI-REF-001` | error | failed | file | `skip-edge` | 302 | targetが別workspaceだけに存在する非修飾参照 |
+| `MULTI-REF-WORKSPACE` | context, check, verify | `SPEC-MULTI-REF-001` | error | failed | file | `skip-edge` | 303 | 修飾workspace不在 |
+| `MULTI-OWNERSHIP` | context, check, verify | `SPEC-MULTI-OWNERSHIP-001` | error | failed | file | `skip-target` | 490 | SPEC、code、test、TASK、cwdの所有境界違反 |
+| `MULTI-CONFIG` | all | `SPEC-MULTI-CONFIG-001` | error | failed | file | `stop-multi-workspace` | 900 | `multiWorkspace`の型、件数、配置、root条件不正 |
+| `MULTI-MEMBER` | all | `SPEC-MULTI-MEMBER-001` | error | failed | file | `stop-multi-workspace` | 910 | member設定不在、catalog ID不一致、nested federation |
+| `MULTI-ID` | all | `SPEC-MULTI-ID-001` | error | failed | file | `stop-multi-workspace` | 920 | workspace ID不正または重複 |
+| `MULTI-PATH` | all | `SPEC-MULTI-PATH-001` | error | failed | file | `stop-multi-workspace` | 930 | member path不正、重複、入れ子、symlink、submodule、別repository |
+| `MULTI-GIT` | all | `SPEC-MULTI-GIT-001` | error | blocked | environment | `stop-multi-workspace` | 940 | Git repository境界またはmember所有範囲を確定不能 |
+| `MULTI-VERSION` | all | `SPEC-MULTI-VERSION-001` | error | blocked | file | `stop-multi-workspace` | 950 | memberのSchemaまたはEARS-AIが未対応major |
+| `MULTI-UNREGISTERED` | all | `SPEC-MULTI-UNREGISTERED-001` | error | blocked | file | `stop-multi-workspace` | 960 | Git既知設定または選択設定がcatalogに未登録 |
+| `MULTI-LIMIT` | all | `SPEC-MULTI-LIMIT-001` | error | blocked | file | `stop-multi-workspace` | 970 | member数または連合snapshot resource上限超過 |
+| `MULTI-DEPENDENCY` | context, verify | `SPEC-MULTI-DEPENDENCY-001` | error | blocked | file | `skip-target` | 980 | 具体的Diagnosticのないtargetが別unitの非成功によりContextまたはbindingを構成不能 |
+| `MULTI-DEPENDENCY-DOCTOR` | doctor | `SPEC-MULTI-DEPENDENCY-001` | error | blocked | file | `skip-check` | 980 | 具体的Diagnosticのないdoctor checkが別unitの非成功により依存出力を得られない |
 
 `check`は依存先を解釈できないsourceへ具体的なrelation Diagnosticを返し、上記の派生遮断を追加しない。
 `context`は部分Bundleを成功にせず、`verify`は独立targetとbinding、`doctor`は独立checkを継続する。
