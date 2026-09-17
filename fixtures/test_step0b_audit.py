@@ -484,6 +484,33 @@ class AuditTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 stream.observe_command("SINGLE-126-14", repository)
 
+    def test_verify_argv_limit_evidence(self):
+        from conformance import verify_argv_limit_fixtures as limit
+        report = limit.validate()
+        self.assertEqual(report["errors"], [])
+        self.assertEqual(report["prepared"], ["SINGLE-126-08"])
+        mutations = [
+            # spawnした扱い、targetへのDiagnostic複製、bindingの参照、source種別の改変を拒否する。
+            ("expected/verify.json", lambda v: v.update(commands=[{"bindingId": "root::default"}])),
+            ("expected/verify.json", lambda v: v["targetResults"][0].update(diagnostics=v["diagnostics"])),
+            ("expected/verify.json", lambda v: v["targetResults"][3].update(bindingRefs=["root::default"])),
+            ("expected/verify.json", lambda v: v["diagnostics"][0].update(source={"kind": "environment", "component": "command", "identifier": "root::default"})),
+            ("expected/verify.json", lambda v: v["targetResults"][5].update(contextDigest=v["targetResults"][6]["contextDigest"])),
+            ("manifest.json", lambda v: v["invocation"]["argv"].insert(1, "TECH-001")),
+        ]
+        for relative, mutate in mutations:
+            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, "SINGLE-126-08")
+                path = root / "single" / "SINGLE-126-08" / relative
+                value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
+                self.assertTrue(limit.validate(root, ["SINGLE-126-08"])["errors"])
+        # 1文書分のpathを削ると上限内へ戻るため、超過条件を満たさない入力として拒否する。
+        inputs = limit.reviewed_inputs()
+        limit.check_single_limit(inputs)
+        inputs[".spec/technical/TECH-001.md"] = b"---\nid: TECH-001\n---\n"
+        with self.assertRaisesRegex(ValueError, "does not exceed"):
+            limit.check_single_limit(inputs)
+
     def test_frontmatter_fixtures(self):
         result = frontmatter_fixtures.validate()
         self.assertEqual(result["errors"], [])

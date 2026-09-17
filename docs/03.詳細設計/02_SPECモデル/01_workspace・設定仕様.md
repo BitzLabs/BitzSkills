@@ -111,6 +111,8 @@ command名は`[a-z][a-z0-9-]{0,31}`とする。値はargv配列、または`argv
 `SPEC-CONFIG-SCHEMA-001`とし、command実行へ進まない。
 
 argvのbyte数はYAML表記、配列区切り、終端NULを含めず、各stringをUTF-8 encodeしたbyte数とその総和で測定する。
+単一の設定fileは64 KiB上限を持つため、template全体1 MiB上限を超える設定はその前に`SPEC-INPUT-LIMIT-001`となる。
+template全体の上限は、設定fileの上限と独立に保持する防御上の上限であり、適合matrixでは個別に検査しない。
 
 ```yaml
 verify:

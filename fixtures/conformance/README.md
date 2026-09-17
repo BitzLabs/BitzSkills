@@ -138,3 +138,7 @@ symlinkを解決せず保存失敗とする規定を結果・Diagnostic・終了
 argv template違反5件、空引数・PATH解決不能・stdin・環境継承、子孫がpipeを保持するtimeout、timeout後の独立binding、
 制御文字変換、chunk境界をまたぐredaction、redaction後の64 KiB超過を固定する。実行caseはfixture自身のscriptを
 直接観測する。126-06は設定64 KiB上限との矛盾、126-08はfixture規模のため保留した。準備済みは225/311、残りは86件である。
+
+SINGLE-126-06は、設定64 KiB上限により到達できないため裁定でmatrixから削除した（matrixは310件）。
+SINGLE-126-08は、約3,770 byteのtest path 280件を規範文なしTECH 35文書へ置き、引数なしverifyの展開後argvだけが
+byte総和1 MiBを超える入力として追加した。準備済みは226/310、残りは84件である。

@@ -86,3 +86,12 @@ symlinkなら解決せず保存失敗とする」ことを、workspace・設定�
   `stop-operation`）が担い、119条件・14論点群の対応に変更はない。
 - `.spec/reports`が通常fileの場合（SINGLE-072）と同じ扱いに揃えるもので、未知entry warningを追加しない。
 - 上記を確認したうえで、台帳が固定する3文書のhashを更新した。
+
+## 2026-09-17の再レビュー（argv template全体の上限）
+
+workspace・設定仕様 §6へ、単一設定fileの64 KiB上限によりtemplate全体1 MiB上限を超える設定は先に
+`SPEC-INPUT-LIMIT-001`となること、template全体の上限は防御上の上限として保持し適合matrixでは個別に検査しないことを
+追記した。これに伴いmatrixからSINGLE-126-06を削除した。
+
+- 新規のDiagnostic条件は生じず、既存条件の意味も変わらない。119条件・14論点群の対応に変更はない。
+- 上記を確認したうえで、台帳が固定するworkspace・設定仕様のhashを更新した。

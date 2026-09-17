@@ -1,6 +1,6 @@
 # verify argv・実行環境・出力変換fixtureレビュー
 
-2026-09-17。SINGLE-126-01〜05、07、09〜16の14件を追加する。126-06と126-08は後述の理由で保留する。
+2026-09-17。SINGLE-126-01〜05、07〜16の15件を追加する。126-06は裁定によりmatrixから削除した（後述）。
 根拠は[workspace・設定仕様 §6](../../../docs/03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md#6-command定義)、
 [verify仕様 §5・§6](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#5-command実行)、
 [安全な入出力 §9](../../../docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md#9-process出力)、
@@ -48,7 +48,7 @@ auditは、実効`PWD`なら成功し、古い`PWD`、任意変数の欠落、`L
 |---|---|---|---|
 | SINGLE-126-12 | timeout 1秒、`setsid`で別sessionへ移った子孫がpipeを8秒保持 | error／3 | `termination: timeout`、`exitCode: null`、抜粋は`orphan-ready\n` |
 | SINGLE-126-13 | `alpha`がtimeout、辞書順で後の`beta`は`/bin/true` | error／3 | 2 commandとも記録し、`beta`はpassed、Diagnosticは`root::alpha`のtimeoutだけ |
-| SINGLE-126-14 | 不正UTF-8、CRLF、単独CR、ESC、C0、DEL、C1、TAB | passed／0 | U+FFFD、LF、``等の小文字16進、TABは保持 |
+| SINGLE-126-14 | 不正UTF-8、CRLF、単独CR、ESC、C0、DEL、C1、TAB | passed／0 | U+FFFD、LF、`\u001b`等の小文字16進、TABは保持 |
 | SINGLE-126-15 | 環境secretと定型secretをsleepで分割出力 | passed／0 | 全対象が`[REDACTED]`、生値なし |
 | SINGLE-126-16 | 環境secret `qz`（2 byte）の6,553回反復 | passed／0 | redaction後65,537 byte、末尾をcode point境界で65,534 byte保持、`stdoutTruncated: false` |
 
@@ -78,11 +78,27 @@ timeoutのsignal化、後続binding結果の削除、CR残存、secret生値の�
 いずれも拒否する。期待と異なる挙動のscript（常に成功するscript、setsidを使わないscript、ESCを出さないscript）も
 直接観測で拒否する。Core、process runner、redaction実装は作らない。実際の挙動はGate Bで受け入れる。
 
-## 保留するfixture
+## SINGLE-126-08: `{tests}`展開後argvの上限超過（`verify_argv_limit_fixtures.py`）
+
+要素32 KiBはpath長上限のため超過できず、10,000要素は約1万fileを要するため、byte総和1 MiBの超過を使う。
+`tests/`以下の14段（各250 byte）のdirectoryに、約3,770 byteのtest pathを280件置き、規範文なしのapproved TECH
+35文書へ8件ずつ（Frontmatter 32 KiB上限内）宣言する。各文書は自身の文書IDを`covers`に持つ。
+
+引数なし`verify --format json`は35文書をtargetにし（`scope: all`）、全targetが同じ`default` bindingを要求するため、
+展開後argvは`/bin/true`と280 pathで1,055,609 byteとなり、byte上限だけを超える。1文書分を除くと上限内へ戻るため、
+超過は全targetの和集合で初めて生じる。bindingは起動せず、top-levelに`SPEC-VERIFY-BLOCKED-001`
+（`VERIFY-ARGV-EXPANDED-LIMIT`、source は`.spec/bitz.yaml`の`verify.commands.default.argv`）を1件だけ置く。
+35 targetはいずれも`blocked`、`bindingRefs: []`、`statements: []`で、Context Digestは各文書1件のContextについて
+独立した2系統のreferenceで一致させる。`commands`は空である。
+
+auditは、設定・Frontmatter・文書の入力上限、要素数・要素長の上限、path長4,000 byte未満がすべて内側に
+収まり、byte総和だけが超過することを独立に確認する。fixtureは入力と副作用snapshotで約9 MiBとなる。
+回帰試験では、command記録の追加、targetへのDiagnostic複製、binding参照、source種別の改変、Digestの入替え、
+明示targetへの置換、上限内へ戻した入力を拒否する。
+
+## 削除したfixture
 
 - **SINGLE-126-06（argv templateのbyte総和が1 MiB超過）**: `bitz.yaml`自体が64 KiB上限であり、YAMLにはanchorも
-  展開もないため、1 MiBを超えるtemplateを持つ設定は先に`SPEC-INPUT-LIMIT-001`で拒否される。
-  現行仕様では`SPEC-CONFIG-SCHEMA-001`に到達できず、matrixと仕様の整合を裁定する必要がある。
-- **SINGLE-126-08（`{tests}`展開後argvの上限超過）**: 到達は可能だが、要素32 KiBはpath長上限のため超過できず、
-  10,000要素は約1万file、1 MiBは約4,000 byteのpathを約260件（Frontmatter 32 KiB上限のためTECH約38文書）必要とする。
-  fixtureは数MiBになるため、作成方針を確認してから追加する。
+  展開もないため、1 MiBを超えるtemplateを持つ設定は先に`SPEC-INPUT-LIMIT-001`で拒否され、
+  `SPEC-CONFIG-SCHEMA-001`に到達できない。2026-09-17の裁定でmatrixから削除し、workspace・設定仕様 §6へ
+  その旨を注記した。matrixは310件となる。

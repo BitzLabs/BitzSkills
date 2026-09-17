@@ -535,3 +535,15 @@ POSIX shが`PWD`を再計算するため、awkで環境を読む。126-12は別s
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `242dd2b0bce32f6e233c849292e3d1d56e00296f5521f3b6285b84a5f5e7c8fd`。
 Coreは実行していない。126-06、126-08、残りの適合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。
+
+## 2026-09-17: argv上限の裁定とSINGLE-126-08
+
+準備済み226/310、残り84件。SINGLE-126-06は`bitz.yaml`の64 KiB上限により`SPEC-CONFIG-SCHEMA-001`へ到達できないため、
+裁定でmatrixから削除し、workspace・設定仕様 §6へ注記した。Diagnostic台帳は同文書のhashだけを再レビュー後に更新した。
+SINGLE-126-08は規範文なしTECH 35文書、test path 280件（各約3,770 byte）で、引数なしverifyの展開後argvが
+1,055,609 byteとなりbyte上限だけを超える。設定・Frontmatter・文書・要素数・要素長・path長が上限内であること、
+1文書分を除くと上限内へ戻ることを独立に確認した。35 targetのContext Digestは2系統のreferenceで一致した。
+fixtureは入力と副作用snapshotで約9 MiBである。
+同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
+Report SHA-256: `f40dbfc6f38683207e31d53e7fde47d33232b708791a994b51dd980f1ebd8206`。
+Coreは実行していない。残りの適合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。

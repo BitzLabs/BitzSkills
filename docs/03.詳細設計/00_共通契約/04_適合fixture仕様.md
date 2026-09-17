@@ -502,7 +502,6 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-126-03` | argv要素にNUL | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |
 | `SINGLE-126-04` | argv templateが256要素超過 | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |
 | `SINGLE-126-05` | argv templateの1要素が32 KiB超過 | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |
-| `SINGLE-126-06` | argv templateのbyte総和が1 MiB超過 | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |
 | `SINGLE-126-07` | argv[1:]に空string | verify | passed／0 | 空の1引数として変更せず渡す |
 | `SINGLE-126-08` | `{tests}`展開後argv上限超過 | verify | blocked／2 | `SPEC-VERIFY-BLOCKED-001`、spawnなし、`bindingRefs: []` |
 | `SINGLE-126-09` | PATH上に実行fileがない | verify | blocked／2 | `SPEC-VERIFY-BLOCKED-001`、spawn_errorにしない |

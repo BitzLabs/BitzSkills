@@ -1,0 +1,309 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "blocked",
+  "scope": "all",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "TECH-001",
+      "status": "blocked",
+      "contextDigest": "sha256:643c46c4264f2f6a2bf3fef564ba299f909381814181a73788ab5994beba83ac",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-002",
+      "status": "blocked",
+      "contextDigest": "sha256:db5bd57c350ee2f9c0077137c13d73b65c400590291ba0abf810dbf405ed6b96",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-003",
+      "status": "blocked",
+      "contextDigest": "sha256:dd59dc07444264892c53545b13ecd335b1d90014e71861ac2372a9a6a0c79b11",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-004",
+      "status": "blocked",
+      "contextDigest": "sha256:9e30c2a35de32a227f62a5e1ff09094c0a44f96a5500bde7507dab5b2e52c63a",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-005",
+      "status": "blocked",
+      "contextDigest": "sha256:819ca6afedb29c56d1d4cc6de2dafeed1494bbc561b2b303febf6f600cd9d660",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-006",
+      "status": "blocked",
+      "contextDigest": "sha256:6080f2d105a9d78c88a51c706dca89303da82568e22ce0ff792027e6607e5e6d",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-007",
+      "status": "blocked",
+      "contextDigest": "sha256:5c2676e28db5bd8ab65d4b71db57597761c19bff25151eb1ae6bcc24967791da",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-008",
+      "status": "blocked",
+      "contextDigest": "sha256:8ad7483f8607ce6ecc2cdd66b0e55b05b36e996533ce01d8cc9e9fd88f11c4f5",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-009",
+      "status": "blocked",
+      "contextDigest": "sha256:650a38911f1b92a509060cf68fe08ab5afa999f818c325d7de98c6d22c5cda91",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-010",
+      "status": "blocked",
+      "contextDigest": "sha256:1eb2d1d794c581c4719c5307219b91e4ae4295da905972d8d9a46c3b4e57db7e",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-011",
+      "status": "blocked",
+      "contextDigest": "sha256:23d20655c7771b67ee3c163d1dcddbb3ffd19d96a826731d73f04ed065debcee",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-012",
+      "status": "blocked",
+      "contextDigest": "sha256:13762adf3890cc1cfa1163f7e98f7de24eb52fd903e964e0cf91722b86898dd0",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-013",
+      "status": "blocked",
+      "contextDigest": "sha256:9036bbfc7dc9e57d7896a03c553bb2e1a9059742d22b20f494cdb8408de2a89d",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-014",
+      "status": "blocked",
+      "contextDigest": "sha256:26b57ed041582bcece2e9e5d347a856f8b37d6d5ba474254ba333bbfbe6939d2",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-015",
+      "status": "blocked",
+      "contextDigest": "sha256:c38d634477ca03baf7f657aff2535db6f1f74faa199f45cf63a5af184e7598de",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-016",
+      "status": "blocked",
+      "contextDigest": "sha256:beac263e6851d1fa3ebb099746e52896a544f95da3f88a93180726f905ff666a",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-017",
+      "status": "blocked",
+      "contextDigest": "sha256:6154f603faa8e42557c51daf5b65194b485b61f4f2ba94de7d89e3fc8a5f1ae7",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-018",
+      "status": "blocked",
+      "contextDigest": "sha256:33010ee26c82a20c0388dd94ea6637f75be731c5b59dd4a8108e90b4467712d1",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-019",
+      "status": "blocked",
+      "contextDigest": "sha256:33a0f1c8a09808575b5b97a8ca2f3ece09e686a3a77595987960e52a834793df",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-020",
+      "status": "blocked",
+      "contextDigest": "sha256:22cfbcb9d2820a1739a5b03b709994b84fe45a023276419410ee2432c89fbe2c",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-021",
+      "status": "blocked",
+      "contextDigest": "sha256:5fac2aa91adc9cf073d4447afaccb5d472bf895cfd22c92adc30f9c9fcf22f40",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-022",
+      "status": "blocked",
+      "contextDigest": "sha256:6fe12cbc8fe192db181ee3ac93c39053cc034b22514005ea3a02c8a39e41beea",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-023",
+      "status": "blocked",
+      "contextDigest": "sha256:5544099d3ce112a35c43cd34de88e2424547b7177eeaa8b9d2b5b79813700b11",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-024",
+      "status": "blocked",
+      "contextDigest": "sha256:9baa2cfc434b87773fe0be7e247846387ab5e5b69c5b80f85b79891099278c61",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-025",
+      "status": "blocked",
+      "contextDigest": "sha256:071e499b2bf5a724657d57c27e16c24b123f46db10def497bdb5bf468f36ab1b",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-026",
+      "status": "blocked",
+      "contextDigest": "sha256:6ffd86b846ed7e525d5606b08dc3cc3d69dd7b2571f32535a8e166c53873beb9",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-027",
+      "status": "blocked",
+      "contextDigest": "sha256:d6502a7a6ddcce2905121b5629ca1d52f02bbad87a2521f30e6ed2ef998aaf89",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-028",
+      "status": "blocked",
+      "contextDigest": "sha256:65ba795f4883c4d285b668c571d2d239eefdd9417b7643f134e414fe1c0e9a84",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-029",
+      "status": "blocked",
+      "contextDigest": "sha256:254a87451f12b1c7f879200e592a75e6960530fc51e97b5ef7aaeabbfaa30af0",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-030",
+      "status": "blocked",
+      "contextDigest": "sha256:f54985bde22273152b70386a7d012dbacd8ff667bad4ea185aeee640b93ab0a5",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-031",
+      "status": "blocked",
+      "contextDigest": "sha256:41d5275bf11e241efc954c55fe9df74dffd4d3f855f2a190a1883f673f2263b0",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-032",
+      "status": "blocked",
+      "contextDigest": "sha256:808c6d2cbc0fe9a720327b4a203dc2be2f16eadc5e1481b344c471c56161f0f8",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-033",
+      "status": "blocked",
+      "contextDigest": "sha256:cdec158a5c7d2124b5735d6efdf0376e25a6fb05d99a3f53af1083defd9cc8c5",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-034",
+      "status": "blocked",
+      "contextDigest": "sha256:c513f8e93ed50726f187da93b0e252a4ac35d78c9d9ea7ce134310cbd0337324",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    },
+    {
+      "target": "TECH-035",
+      "status": "blocked",
+      "contextDigest": "sha256:96928bc5f5c1489755d44314c521de625a1241befa0178cb8585a8b0fda59ffe",
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": []
+    }
+  ],
+  "revision": null,
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-VERIFY-BLOCKED-001",
+      "severity": "error",
+      "resultStatus": "blocked",
+      "summary": "{tests}展開後のargvがbyte上限1 MiBを超えます",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/bitz.yaml",
+        "key": "verify.commands.default.argv"
+      }
+    }
+  ]
+}
