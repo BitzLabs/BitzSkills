@@ -35,21 +35,21 @@ fixtures/conformance/frontmatter.schema.json
 固定入力であり、実行repositoryへは自動でcopyしない。通常fileのbyte列と実行bit、symlinkのlink文字列を
 version管理する。Git履歴とbase commit後の状態はmanifestだけから構築する。
 `expected/<operation>.txt`はtext出力を比較するfixtureだけが持つ。
-`manifest.schema.json`は全manifestが従うmachine-readable Schemaであり、harnessは実行前にmanifestを検証する。
+`manifest.schema.json`は全manifestが従う機械可読Schemaであり、harnessは実行前にmanifestを検証する。
 `result.schema.json`はCore 1.0の全公開JSON結果が従うDraft 2020-12 Schemaである。harnessは期待JSONを実行前、
 実結果とreportをnormalizer適用前に検証し、いずれかが不適合ならfixture比較自体をerrorにする。
 `frontmatter.schema.json`はYAML解析後のFrontmatter構造が従うDraft 2020-12 Schemaである。harnessは配置directoryから
 文書種別別definitionを選び、Core実行とは独立に正例を受理、Schema反例を拒否することを確認する。
 
 内部Parser受入は§4.1の追加比較とし、公開invocationを増やさない。
-1つのfixtureは1回のinvocation、1種類の独立原因、1つの期待status、1つの期待exit codeだけを持つ。
+1つのfixtureは1回のinvocation、1種類の独立原因、1つの期待status、1つの期待終了コードだけを持つ。
 並び順や集約を検査するfixtureは、同じ原因を複数位置で発生させてよいが、別の原因を混ぜてはならない。
 同じ論点の入力変種、operation変種、成功／非成功変種はfixture ID、入力directory、manifestを分ける。
 共通入力を物理的に共有するsymlink、hardlink、親directory参照は使用しない。
 
 fixture IDは`SINGLE-NNN`または`MULTI-NNN`をcase familyとし、分割が必要なfamilyは
 `SINGLE-NNN-NN`または`MULTI-NNN-NN`を使う。計画文書の`SINGLE-001`〜`006`のような範囲表記は、
-その範囲に属するsuffix付きfixtureをすべて含む。suffixなしのfamily IDとsuffix付きIDを同時に使ってはならない。
+その範囲に属する接尾辞付きfixtureをすべて含む。接尾辞なしのfamily IDと接尾辞付きIDを同時に使ってはならない。
 
 ## 3. manifest
 
@@ -117,8 +117,8 @@ fixture harnessの参照実装が検査対象のsource tree、build成果物、�
 | runner | case（`argv[0]`） | 内容 |
 |---|---|---|
 | `consumer` | `result-shape <path>` | 指定JSONを[共通結果契約 §2](01_結果・Diagnostic・終了コード.md#2-共通結果)の排他的外形で判定する |
-| `migration` | `MULTI-024`で固定 | 連合化と完全rollbackの適用、部分rollbackの拒否 |
-| `package` | `metadata` | distribution名、import package名、console script名が`bitz`で、requires-pythonが3.11以上を許す |
+| `migration` | `MULTI-024`で固定 | 複合workspace化と完全rollbackの適用、部分rollbackの拒否 |
+| `package` | `metadata` | 配布物名、import package名、console script名が`bitz`で、requires-pythonが3.11以上を許す |
 | `package` | `dependencies` | runtime依存が標準libraryと、lock fileでexact versionへ固定したYAML library 1つだけ |
 
 manifestは1つの正確な終了コードとstatusまたはoutcomeを記録する。範囲、選択肢、条件分岐、`元statusと同じ`、
@@ -131,7 +131,7 @@ manifestは1つの正確な終了コードとstatusまたはoutcomeを記録す�
 harnessは各fixtureを新しい一時directoryへcopyし、次の順でsetupする。
 
 1. `repo/`の通常fileとdirectoryを一時directoryへcopyする。symlinkはsymlinkとして再作成する。
-2. `setup.git: true`なら`git init`し、identity、時刻、default branch名をharnessの固定値にする。
+2. `setup.git: true`なら`git init`し、同一性、時刻、default branch名をharnessの固定値にする。
 3. `setup.baseCommit`があれば、その`paths[]`だけをstageして1 commitを作る。
 4. `setup.operations[]`を配列順に適用する。
 5. Git index、working tree、file種別、file byte列がmanifestどおりであることを確認してからinvocationを開始する。
@@ -191,7 +191,7 @@ shimを使わない。`gitVersion`と`env.PATH`は同時に指定しない。Cor
 
 比較前に、実際の結果と期待JSONの双方へ同じnormalizerを適用する。除外するのは次だけとする。
 
-- `durationMs`（top-level、`workspaces[]`、`commands[]`のすべて）
+- `durationMs`（最上位、`workspaces[]`、`commands[]`のすべて）
 - report file名に含まれる生成時刻と連番
 - Git commit ID。`revision.base`と`revision.commit`は「40桁の小文字16進」であることだけを検査する
 - `core.version`のpatch部
@@ -207,7 +207,7 @@ status、scope、件数は除外しない。一致するtokenが1行に複数あ
 Context Digest fixtureは、Digest入力のCanonical JSONをUTF-8・BOMなし・末尾改行なしのbyte列として
 `expected/context.canonical.json`へ置き、そのbyte列から計算した小文字16進64桁の値を`sha256:`付きで
 期待結果へ記録する。harnessはCanonical JSONのbyte一致とDigest文字列の一致を別々に検査する。
-単一workspaceのgoldenは`SINGLE-042`、連合のgoldenは`MULTI-002-01`が所有する。両fixtureはmanifestから個別に
+単一workspaceのgoldenは`SINGLE-042`、複合workspaceのgoldenは`MULTI-002-01`が所有する。両fixtureはmanifestから個別に
 再構築した隔離済みcopyを2つ実行し、Canonical JSONとDigestが各回でbyte一致することも検査する。locale、入力fileの作成順、cacheの有無を
 一度に混ぜず、個別の再現性試験として同じgolden値へ一致させる。
 
@@ -232,7 +232,7 @@ Step 0Bでは固定した入力・完全IR期待値の整合と検証器の改�
 Step 2のGate Bでは、実装側のtest adapterが実際のScanner／Parserを同じsetup済み入力へ適用し、
 得られた全Semantic IRを完全比較する。公開CLI option、公開runner、製品の出力fieldは追加しない。
 adapterが存在しない場合は未受入とし、fixture側reference計算を実装の代わりに呼んで合格にしてはならない。
-内部Parser呼出しにも§5のread-only副作用条件を適用する。該当context機能のGate Bでは、別途その公開結果を比較する。
+内部Parser呼出しにも§5の読取り専用副作用条件を適用する。該当context機能のGate Bでは、別途その公開結果を比較する。
 
 ## 5. 副作用の検査
 
@@ -271,7 +271,7 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-007` | approved REQのtag順序不正 | check | failed／1 | `EAI-CORE-SYNTAX-001`、行・列 |
 | `SINGLE-008` | 同じ違反をdraftで持つ | check | passed_with_warnings／0 | 同codeがwarningへ降格 |
 | `SINGLE-009-01` | 桁不足ID | check | failed／1 | `EAI-CORE-ID-001`。本文として見逃さない |
-| `SINGLE-009-02` | 未知prefix ID | check | failed／1 | `EAI-CORE-ID-001`。本文として見逃さない |
+| `SINGLE-009-02` | 未知接頭辞ID | check | failed／1 | `EAI-CORE-ID-001`。本文として見逃さない |
 | `SINGLE-009-03` | 3階層ID | check | failed／1 | `EAI-CORE-ID-001`。本文として見逃さない |
 | `SINGLE-010-01` | GFM checkbox | check | passed／0 | 候補Scannerが誤検出しない |
 | `SINGLE-010-02` | code span内の角括弧 | check | passed／0 | 候補Scannerが誤検出しない |
@@ -319,11 +319,11 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-032-03` | `related`だけの変更 | check --base | passed／0 | 保護対象外 |
 | `SINGLE-032-04` | `x-`拡張fieldだけの変更 | check --base | passed／0 | 保護対象外 |
 | `SINGLE-032-05` | 説明文だけの変更 | check --base | passed／0 | 保護対象外 |
-| `SINGLE-033` | strong dependencyの変更 | check --base | passed_with_warnings／0 | `SPEC-IMPACT-OUTDATED-001` |
+| `SINGLE-033` | strong依存の変更 | check --base | passed_with_warnings／0 | `SPEC-IMPACT-OUTDATED-001` |
 | `SINGLE-034` | 明示TASKの`src/`と`src2/` | check TASK-ID | failed／1 | `SPEC-TASK-BOUNDARY-001`、segment境界 |
 | `SINGLE-035-01` | 引数なしcheckでTASKが選ばれる | check | passed／0 | 境界未実施をwarningにしない |
 | `SINGLE-035-02` | `check --full`でTASKが選ばれる | check --full | passed／0 | 境界未実施をwarningにしない |
-| `SINGLE-036` | 解決できない`--base` | check | 結果なし／4 | stdout結果なし、reportなし |
+| `SINGLE-036` | 解決できない`--base` | check | 結果なし／4 | 標準出力結果なし、reportなし |
 | `SINGLE-037` | Git不在の引数なしcheck | check | passed_with_warnings／0 | `SPEC-GIT-DEGRADED-001`、失われる保証を明示 |
 | `SINGLE-038` | Git不在の明示TASK check | check TASK-ID | blocked／2 | `SPEC-TASK-BOUNDARY-002` |
 | `SINGLE-039` | unborn repository | check | passed／0 | 全体check、`revision: null` |
@@ -358,7 +358,7 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 |---|---|---|---|---|
 | `SINGLE-055` | test成功 | verify | passed／0 | `targetResults[]`、`commands[]`1件、`bindingId`が`<ws>::<name>` |
 | `SINGLE-056` | testの非0終了 | verify | failed／1 | `termination: exit`、`exitCode`非0 |
-| `SINGLE-057` | 実行bit付きだがOSが拒否する実行形式 | verify | error／3 | 事前検査後の`spawn_error`、`SPEC-VERIFY-COMMAND-001`、空excerpt |
+| `SINGLE-057` | 実行bit付きだがOSが拒否する実行形式 | verify | error／3 | 事前検査後の`spawn_error`、`SPEC-VERIFY-COMMAND-001`、空抜粋 |
 | `SINGLE-058` | signal終了 | verify | error／3 | `termination: signal` |
 | `SINGLE-059` | timeout後も終了しない直接process | verify | error／3 | `SPEC-VERIFY-TIMEOUT-001`、force kill、timeout到達から5秒以内 |
 | `SINGLE-060` | 対象MUSTが未tested | verify | blocked／2 | `CTX-COVERAGE-TEST-001`、testを開始しない |
@@ -370,8 +370,8 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-066` | 規範文なしTECHの文書単位test | verify | passed／0 | `statements: []`でも`bindingRefs`を持つ |
 | `SINGLE-067` | cancelled TASK起点 | verify | blocked／2 | `CTX-STATE-001` |
 | `SINGLE-068` | done TASK起点 | verify | passed／0 | 再検証を許可 |
-| `SINGLE-069-01` | 成功commandのstdout／stderrが64 KiBを超える | verify | passed／0 | pipeを止めず、redacted UTF-8末尾65,536 byteとtruncated flagを保持 |
-| `SINGLE-069-02` | 非0終了commandのstdout／stderrが64 KiBを超える | verify | failed／1 | pipeを止めず、redacted UTF-8末尾65,536 byteとtruncated flagを保持 |
+| `SINGLE-069-01` | 成功commandの標準出力／標準エラー出力が64 KiBを超える | verify | passed／0 | pipeを止めず、redacted UTF-8末尾65,536 byteとtruncated flagを保持 |
+| `SINGLE-069-02` | 非0終了commandの標準出力／標準エラー出力が64 KiBを超える | verify | failed／1 | pipeを止めず、redacted UTF-8末尾65,536 byteとtruncated flagを保持 |
 
 ### 6.7 出力とreport
 
@@ -431,7 +431,7 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-094` | `.spec/bitz.yaml`不在 | check | blocked／2 | `SPEC-WORKSPACE-MISSING-001`だけ |
 | `SINGLE-095` | 未知EARS-AI major | check | blocked／2 | `SPEC-EARS-VERSION-001`だけ |
 
-### 6.10 EARS-AI grammar、Scanner、位置
+### 6.10 EARS-AI文法、Scanner、位置
 
 | fixture | 主な入力 | operation | status／exit | 必須確認 |
 |---|---|---|---|---|
@@ -445,8 +445,8 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-099-02` | tilde fenced code内の規範文様文字列 | check | passed／0 | 候補を0件として扱う |
 | `SINGLE-099-03` | blockquote内の規範文様文字列 | check | passed／0 | 候補を0件として扱う |
 | `SINGLE-099-04` | 4 SP indentの規範文様文字列 | check | passed／0 | 候補を0件として扱う |
-| `SINGLE-100-01` | 短い既知prefix ID | check | failed／1 | 候補化し、`EAI-CORE-ID-001`だけ |
-| `SINGLE-100-02` | 未知uppercase prefix ID | check | failed／1 | 候補化し、`EAI-CORE-ID-001`だけ |
+| `SINGLE-100-01` | 短い既知接頭辞ID | check | failed／1 | 候補化し、`EAI-CORE-ID-001`だけ |
+| `SINGLE-100-02` | 未知uppercase接頭辞ID | check | failed／1 | 候補化し、`EAI-CORE-ID-001`だけ |
 | `SINGLE-100-03` | 3階層ID | check | failed／1 | 候補化し、`EAI-CORE-ID-001`だけ |
 | `SINGLE-100-04` | `[ACTOR:...]`から始まるID欠落行 | check | failed／1 | 候補化し、`EAI-CORE-ID-001`だけ |
 | `SINGLE-101-01` | `[SHOULD] [REASON] <text>` | context | passed／0 | 内部Parser受入で`reason`を含む完全IR、公開JSONとDigestを比較 |
@@ -460,16 +460,16 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 
 | fixture | 主な入力 | operation | status／exit | 必須確認 |
 |---|---|---|---|---|
-| `SINGLE-104-01` | format省略のcontext | context | passed／0 | stdoutは期待Markdownとbyte一致 |
-| `SINGLE-104-02` | format省略のcheck | check | passed／0 | stdoutはtext |
-| `SINGLE-104-03` | format省略のverify | verify | passed／0 | stdoutはtext |
-| `SINGLE-104-04` | format省略のdoctor | doctor | passed／0 | stdoutはtext、`scope=`なし |
+| `SINGLE-104-01` | format省略のcontext | context | passed／0 | 標準出力は期待Markdownとbyte一致 |
+| `SINGLE-104-02` | format省略のcheck | check | passed／0 | 標準出力はtext |
+| `SINGLE-104-03` | format省略のverify | verify | passed／0 | 標準出力はtext |
+| `SINGLE-104-04` | format省略のdoctor | doctor | passed／0 | 標準出力はtext、`scope=`なし |
 | `SINGLE-105-01` | Gitありcontextのrevision | context | passed／0 | commitは40桁小文字16進 |
 | `SINGLE-105-02` | Gitなしverifyのrevision | verify | passed／0 | `revision: null` |
 | `SINGLE-106-01` | Context full projection | context | passed／0 | fullだけの必須fieldと禁止fieldをSchema検証 |
 | `SINGLE-106-02` | Context normative projection | context | passed／0 | normativeだけの必須fieldと禁止fieldをSchema検証 |
 | `SINGLE-106-03` | interpretで起点をrefineするdraft文書 | context | passed／0 | advisoryをreferenceで提示し、必須fieldと禁止fieldをSchema検証 |
-| `SINGLE-106-04` | stdout、stderrとも空のverify command | verify | passed／0 | 空excerpt、両truncated false |
+| `SINGLE-106-04` | 標準出力、標準エラー出力とも空のverify command | verify | passed／0 | 空抜粋、両truncated false |
 | `SINGLE-106-05` | 2 targetに同じDiagnostic条件 | verify | failed／1 | textの`diagnostics`は両target上のDiagnostic総数 |
 
 ### 6.12 共通target展開
@@ -487,9 +487,9 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-111-03` | catalogにない構文上妥当なSPEC path | check | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
 | `SINGLE-111-04` | catalogにない明示文書ID | verify | failed／1 | target Diagnosticに`CTX-ROOT-MISSING-001` |
 | `SINGLE-112-01` | ADR起点 | context --purpose interpret | passed／0 | target statementは空 |
-| `SINGLE-112-02` | ADR起点 | context --purpose implement | 結果なし／4 | stdout結果なし、reportなし |
+| `SINGLE-112-02` | ADR起点 | context --purpose implement | 結果なし／4 | 標準出力結果なし、reportなし |
 | `SINGLE-112-03` | ADR起点 | check | passed／0 | 文書検査だけを行う |
-| `SINGLE-112-04` | ADR起点 | verify | 結果なし／4 | stdout結果なし、reportなし |
+| `SINGLE-112-04` | ADR起点 | verify | 結果なし／4 | 標準出力結果なし、reportなし |
 | `SINGLE-113` | 文書IDと同文書のstatement IDを複数指定 | verify | passed／0 | 起点、statement、bindingを各規定時点で重複排除 |
 | `SINGLE-114` | `tests` object配列を持つREQ | check | passed／0 | Frontmatter Schema正例、規範例との一致 |
 | `SINGLE-115-01` | 最小REQ Frontmatter | check | passed／0 | REQ definitionを通過 |
@@ -498,7 +498,7 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-115-04` | `changes`省略の最小TASK Frontmatter | check | passed／0 | TASK definitionを通過、許可path 0件 |
 | `SINGLE-116-01` | titleが120 Unicode code point | check | passed／0 | 境界値を受理 |
 | `SINGLE-116-02` | titleが121 Unicode code point | check | failed／1 | `SPEC-FM-SCHEMA-001`だけ |
-| `SINGLE-116-03` | titleが空string | check | failed／1 | `SPEC-FM-SCHEMA-001`だけ |
+| `SINGLE-116-03` | titleが空文字列 | check | failed／1 | `SPEC-FM-SCHEMA-001`だけ |
 | `SINGLE-116-04` | titleが空白だけ | check | failed／1 | `SPEC-FM-SCHEMA-001`だけ |
 | `SINGLE-116-05` | titleが改行を含む | check | failed／1 | `SPEC-FM-SCHEMA-001`だけ |
 | `SINGLE-117-01` | 必須field欠如 | check | failed／1 | `SPEC-FM-REQUIRED-001`だけ |
@@ -509,7 +509,7 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-118-03` | 同じtest pathでcommandまたはcoversが異なる | check | passed／0 | 異なるtest対応として受理 |
 | `SINGLE-119-01` | `relations`内の未知key | check | failed／1 | `SPEC-FM-SCHEMA-001`だけ |
 | `SINGLE-119-02` | `tests[]`内の未知key | check | failed／1 | `SPEC-FM-SCHEMA-001`だけ |
-| `SINGLE-119-03` | top-level未知field | check | passed_with_warnings／0 | `SPEC-FM-UNKNOWN-001`だけ |
+| `SINGLE-119-03` | 最上位未知field | check | passed_with_warnings／0 | `SPEC-FM-UNKNOWN-001`だけ |
 | `SINGLE-119-04` | `x-`拡張field | check | passed／0 | 値を保持しDiagnosticなし |
 | `SINGLE-120-01` | TASK `changes: []`と変更差分なし | explicit TASK check | passed／0 | 省略と同じ許可path 0件 |
 | `SINGLE-120-02` | `changes`省略TASKに変更差分あり | explicit TASK check | failed／1 | `SPEC-TASK-BOUNDARY-001`だけ |
@@ -525,28 +525,28 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-125-04` | 書込みなしcommandによるverify | verify | passed／0 | test processを除くCore書込み0件 |
 | `SINGLE-125-05` | 明示report付きcheckのCore副作用 | check --report | passed／0 | 最終report 1件だけ、一時file残存0件 |
 | `SINGLE-125-06` | `.spec/reports`がrepository内directoryへのsymlink | check --report | error／3 | `SPEC-REPORT-WRITE-001`、symlink先の既存file不変、一時file残存0件 |
-| `SINGLE-126-01` | argv要素が非string | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |
-| `SINGLE-126-02` | argv[0]が空string | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |
+| `SINGLE-126-01` | argv要素が非文字列 | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |
+| `SINGLE-126-02` | argv[0]が空文字列 | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |
 | `SINGLE-126-03` | argv要素にNUL | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |
 | `SINGLE-126-04` | argv templateが256要素超過 | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |
 | `SINGLE-126-05` | argv templateの1要素が32 KiB超過 | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |
-| `SINGLE-126-07` | argv[1:]に空string | verify | passed／0 | 空の1引数として変更せず渡す |
+| `SINGLE-126-07` | argv[1:]に空文字列 | verify | passed／0 | 空の1引数として変更せず渡す |
 | `SINGLE-126-08` | `{tests}`展開後argv上限超過 | verify | blocked／2 | `SPEC-VERIFY-BLOCKED-001`、spawnなし、`bindingRefs: []` |
 | `SINGLE-126-09` | PATH上に実行fileがない | verify | blocked／2 | `SPEC-VERIFY-BLOCKED-001`、spawn_errorにしない |
-| `SINGLE-126-10` | stdinを読むcommand | verify | passed／0 | null deviceから即時EOF |
+| `SINGLE-126-10` | 標準入力を読むcommand | verify | passed／0 | null deviceから即時EOF |
 | `SINGLE-126-11` | localeと任意環境変数を読むcommand | verify | passed／0 | 起動環境を継承し、`PWD`だけ実効cwd |
-| `SINGLE-126-12` | 子孫processがstdout／stderr FDを保持 | verify | error／3 | timeout到達から5秒以内、EOFを待たない |
+| `SINGLE-126-12` | 子孫processが標準出力／標準エラー出力FDを保持 | verify | error／3 | timeout到達から5秒以内、EOFを待たない |
 | `SINGLE-126-13` | timeoutしたbindingの後に独立binding | verify | error／3 | 後続bindingを実行して結果を保持 |
 | `SINGLE-126-14` | 不正UTF-8、CR、ESC、C0／DEL／C1 | verify | passed／0 | U+FFFD、LF、`\\uNNNN`へ決定論的変換 |
 | `SINGLE-126-15` | 環境secretと定型secretがchunk境界をまたぐ | verify | passed／0 | 全対象を`[REDACTED]`へ置換し生値なし |
 | `SINGLE-126-16` | redactionで公開文字列が64 KiB超 | verify | passed／0 | code point境界の末尾保持、rawが上限内ならtruncated false |
 | `SINGLE-127-01` | `--format`を2回指定 | check | 結果なし／4 | 同値でも重複optionとして操作開始前に拒否 |
 | `SINGLE-127-02` | `--full`を2回指定 | check | 結果なし／4 | 重複flagとして操作開始前に拒否 |
-| `SINGLE-127-03` | 異なる`--expand`を反復 | context | passed／0 | 反復を受理し、連合正規ID辞書順 |
+| `SINGLE-127-03` | 異なる`--expand`を反復 | context | passed／0 | 反復を受理し、正規ID辞書順 |
 | `SINGLE-127-04` | 同じ`--expand`値を反復 | context | passed／0 | 1件へ重複排除 |
-| `SINGLE-127-05` | 空stringの明示target | check | 結果なし／4 | 引数なしcheckへ置換しない |
+| `SINGLE-127-05` | 空文字列の明示target | check | 結果なし／4 | 引数なしcheckへ置換しない |
 | `SINGLE-127-06` | 起点0件のcontext | context | 結果なし／4 | 操作結果とreportなし |
-| `SINGLE-127-07` | `--workspace`の値が空string | doctor | 結果なし／4 | option値不足と同じく操作開始前に拒否 |
+| `SINGLE-127-07` | `--workspace`の値が空文字列 | doctor | 結果なし／4 | option値不足と同じく操作開始前に拒否 |
 | `SINGLE-127-08` | `--timeout 0` | verify | 結果なし／4 | 下限外 |
 | `SINGLE-127-09` | `--timeout 3601` | verify | 結果なし／4 | 上限外 |
 | `SINGLE-127-10` | `--timeout +1` | verify | 結果なし／4 | 非canonical十進表記 |
@@ -556,11 +556,11 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-127-14` | catalogにない`--workspace` | doctor | 結果なし／4 | workspace探索後、Core操作結果なし |
 | `SINGLE-127-15` | Git 2.29を解決 | doctor | passed_with_warnings／0 | Git不在へ縮退し、下限値は詳細設計から取得 |
 | `SINGLE-127-16` | Git 2.30を解決 | doctor | passed／0 | 下限境界を利用可能として扱う |
-| `SINGLE-127-17` | Core package metadata | package test | accepted／0 | distribution、import package、CLI名は`bitz`、requires-pythonは3.11以上 |
+| `SINGLE-127-17` | Core package metadata | package test | accepted／0 | 配布物、import package、CLI名は`bitz`、requires-pythonは3.11以上 |
 | `SINGLE-127-18` | build metadataとlock file | package test | accepted／0 | runtime依存は標準libraryとexact lock済みYAML library 1つだけ |
 | `SINGLE-127-19` | CPython 3.11でCoreを起動 | doctor | passed／0 | 3.11で利用できない構文／標準library APIへの依存なし |
 
-## 7. 最小matrix: モノレポ連合
+## 7. 最小matrix: 複合workspace
 
 | fixture | 主な入力 | operation | status／exit | 必須確認 |
 |---|---|---|---|---|
@@ -570,7 +570,7 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `MULTI-003` | 非修飾で別workspaceだけにあるtarget | check all | failed／1 | `SPEC-MULTI-REF-001`だけ |
 | `MULTI-004-01` | context時に存在workspace内のtarget不在 | context | failed／1 | `SPEC-RELATION-MISSING-001`だけ |
 | `MULTI-004-02` | check時に存在workspace内のtarget不在 | check | failed／1 | `SPEC-RELATION-MISSING-001`だけ |
-| `MULTI-005` | 未知`--workspace` | check | 結果なし／4 | stdout結果なし、reportなし |
+| `MULTI-005` | 未知`--workspace` | check | 結果なし／4 | 標準出力結果なし、reportなし |
 | `MULTI-006` | Git既知の未登録設定 | check all | blocked／2 | `workspaces: []`、commandなし |
 | `MULTI-007-01` | member入れ子 | doctor all | failed／1 | `SPEC-MULTI-PATH-001` |
 | `MULTI-007-02` | memberがsubmodule | doctor all | failed／1 | `SPEC-MULTI-PATH-001` |
@@ -583,7 +583,7 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `MULTI-013` | 異なる2 Context、共有binding | verify all | passed／0 | Digest 2件、command 1件 |
 | `MULTI-014` | command失敗後に独立bindingあり | verify all | failed／1 | 後続bindingも実行 |
 | `MULTI-015` | 1 memberだけ対象0件 | verify all | passed_with_warnings／0 | member warning、空配列 |
-| `MULTI-016` | 連合全体で対象0件 | verify all | blocked／2 | 空CIを成功にしない |
+| `MULTI-016` | 複合workspace全体で対象0件 | verify all | blocked／2 | 空CIを成功にしない |
 | `MULTI-017` | ID維持のmember path移動 | check all with base | passed／0 | 同一workspace扱い |
 | `MULTI-018-01` | memberのworkspace ID変更 | check all with base | failed／1 | 管理済みSPEC削除検査 |
 | `MULTI-018-02` | member削除 | check all with base | failed／1 | 管理済みSPEC削除検査 |
@@ -612,21 +612,21 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `MULTI-021-06` | `traceEntryCount = 1,000,001` | check all | blocked／2 | `dimension=traceEntryCount`、`limit=1000000`、早期停止 |
 | `MULTI-021-07` | `commandDefinitionCount = 10,001` | check all | blocked／2 | `dimension=commandDefinitionCount`、`limit=10000`、早期停止 |
 | `MULTI-021-08` | `verifyBindingCount = 10,001` | verify all | blocked／2 | `dimension=verifyBindingCount`、`limit=10000`、早期停止 |
-| `MULTI-022-01` | 既定の連合check | check all | passed／0 | report file 0件 |
-| `MULTI-022-02` | 明示`--report`付き連合check | check all | passed／0 | 規定先へreport 1件 |
-| `MULTI-022-03` | 既定の連合verify | verify all | passed／0 | report file 0件 |
-| `MULTI-022-04` | 明示`--report`付き連合verify | verify all | passed／0 | 規定先へreport 1件 |
+| `MULTI-022-01` | 既定の複合workspaceのcheck | check all | passed／0 | report file 0件 |
+| `MULTI-022-02` | 明示`--report`付き複合workspaceのcheck | check all | passed／0 | 規定先へreport 1件 |
+| `MULTI-022-03` | 既定の複合workspaceのverify | verify all | passed／0 | report file 0件 |
+| `MULTI-022-04` | 明示`--report`付き複合workspaceのverify | verify all | passed／0 | 規定先へreport 1件 |
 | `MULTI-023-01` | 単一workspace JSON | consumer test | accepted／0 | 単一外形として受理 |
-| `MULTI-023-02` | 連合JSON | consumer test | accepted／0 | 連合外形として受理 |
-| `MULTI-023-03` | 単一／連合fieldの混在JSON | consumer test | rejected／1 | 排他的外形として拒否 |
-| `MULTI-024-01` | 連合形式へのmigration | migration test | passed／0 | 原子的に切り替える |
+| `MULTI-023-02` | 複合workspaceのJSON | consumer test | accepted／0 | 複合workspace外形として受理 |
+| `MULTI-023-03` | 単一／複合workspaceのfieldの混在JSON | consumer test | rejected／1 | 排他的外形として拒否 |
+| `MULTI-024-01` | 複合workspace形式へのmigration | migration test | passed／0 | 原子的に切り替える |
 | `MULTI-024-02` | 完全rollback | migration test | passed／0 | 旧形式へ完全に戻る |
 | `MULTI-024-03` | 部分rollback | migration test | rejected／1 | 部分rollbackを拒否 |
 | `MULTI-025-01` | 存在workspaceの不在修飾target | check | failed／1 | `CTX-ROOT-MISSING-001`、未知`--workspace`と区別 |
 | `MULTI-025-02` | 存在workspaceの不在修飾target | verify | failed／1 | target Diagnosticに`CTX-ROOT-MISSING-001` |
 
 `MULTI-012`ではinvalid文書のowner memberを`failed`、それを必要とするtargetを
-`SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立targetを通過とし、top-levelは最悪値の`failed`に固定する。
+`SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立targetを通過とし、最上位は最悪値の`failed`に固定する。
 
 ## 8. 性能fixture
 
@@ -637,7 +637,7 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 
 基準入力はrepository rootの[`fixtures/performance`](../../../fixtures/performance/README.md)に置く。version管理した
 dataset manifest、generator version、期待tree digestの3つが一致した生成treeだけを測定へ使用する。単一workspaceは
-300 SPEC／1,000 statement／5,000 relation、連合は20 workspace／1,000 SPEC／20,000 relationとする。
+300 SPEC／1,000 statement／5,000 relation、複合workspaceは20 workspace／1,000 SPEC／20,000 relationとする。
 測定case、固定SLO、reference environment、観測結果fieldは同directoryのJSONを正とする。referenceのcomparison keyと
 一致しないrunは`not_comparable`であり、性能gateの成功または失敗へ数えない。
 

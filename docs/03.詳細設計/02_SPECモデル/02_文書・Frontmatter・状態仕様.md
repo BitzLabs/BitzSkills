@@ -68,11 +68,11 @@ verify: default
 ### 3.1 null、空、文字数
 
 Core標準fieldはすべて`null`を禁止する。`id`、`title`、`status`、`verify`、`tests[].path`、
-`tests[].command`は空stringを禁止する。`title`は改行を含まない1〜120 Unicode code pointとし、少なくとも
+`tests[].command`は空文字列を禁止する。`title`は改行を含まない1〜120 Unicode code pointとし、少なくとも
 1 code pointの非空白文字を含める。測定前のtrim、Unicode正規化、case変換を行わない。
 
 `relations`の空mapと、`relations.*`、`implements`、`tests`、`changes`の空配列は許可する。
-`tests[].covers`は1件以上を必要とする。任意fieldの省略は許可するが、空stringや`null`を省略の代用にしない。
+`tests[].covers`は1件以上を必要とする。任意fieldの省略は許可するが、空文字列や`null`を省略の代用にしない。
 TASKの`changes`を省略または`[]`にした場合、明示TASK `check`で許可される変更pathは0件であり、変更差分があれば
 境界外として扱う。
 
@@ -82,7 +82,7 @@ Frontmatter直下の`x-`で始まるfieldは許可して保持し、それ以外
 `SPEC-FM-UNKNOWN-001`／warningとする。`relations`と`tests[]`は閉じたobjectであり、定義されていない内部keyを
 `SPEC-FM-SCHEMA-001`とする。`refs`は既存の専用規則により`SPEC-RELATION-LEGACY-001`を返す。
 
-拡張fieldと未知fieldの値は、共通YAML subsetのscalar、scalar配列、またはstring keyのmapに限る。
+拡張fieldと未知fieldの値は、共通YAML部分集合のscalar、scalar配列、または文字列keyのmapに限る。
 その内部でobject配列は使用できない。Coreは値を変更せず保持するが、合否、Context、command、権限へ使用しない。
 
 ## 4. relation field
@@ -110,9 +110,9 @@ Core語彙は`requires`、`refines`、`addresses`、`supersedes`、`related`だ�
 | `command` | string | No | `bitz.yaml` command名 |
 
 REQまたはEARS-AIを含むTECHでは`covers`へ同じ文書の規範文IDを指定する。規範文を持たないTECHだけ文書IDを
-指定できる。存在しない句と同じ対応の重複はerrorとする。モノレポで文書が別workspaceの文書または規範文を
+指定できる。存在しない句と同じ対応の重複はerrorとする。複合workspaceで文書が別workspaceの文書または規範文を
 直接`refines`する場合だけ、そのtargetを修飾IDで`covers`に指定できる。横断coverageの詳細は
-[モノレポSPEC連合仕様](05_複合workspace仕様.md)に従う。
+[複合workspace仕様](05_複合workspace仕様.md)に従う。
 
 command名は`tests[].command`、文書の`verify`の順で解決する。どちらもない場合、または解決したcommand名が
 `bitz.yaml`に存在しない場合、`verify`は`SPEC-VERIFY-BLOCKED-001`／blockedとする。
@@ -173,7 +173,7 @@ Core検査を迂回した過去の削除後再利用をGit全履歴から検出�
 「削除したIDを別の意味へ再利用しない」は規範として維持するが、Core 1.0はこれを機械検査しない。
 Coreが保証するのは現在集合の重複検出（`SPEC-ID-DUPLICATE-001`）と、基準版から現在版への
 管理済みSPEC削除の検出（`SPEC-STATE-TRANSITION-001`）までであり、2時点比較では同一文書の改訂と
-別の意味での再出現を区別できない。基準版より前の履歴における再利用の禁止はGitレビューの責務とする。
+別の意味での再出現を区別できない。基準版より前の履歴における再利用の禁止はGit reviewの責務とする。
 [ADR-032](../../02.設計書/10_決定記録/ADR-032_ID再利用検出のCore保証範囲.md)が定義していた
 `EAI-CORE-ID-003`は、[ADR-037](../../02.設計書/10_決定記録/ADR-037_Git基準版間のSPEC同一性と削除規則.md)に
 よる置換に伴いCore 1.0の公開Diagnosticから外し、codeを予約済みとする。
@@ -191,10 +191,10 @@ x-risk: medium
 
 ## 11. YAML制約
 
-- 構文層は[workspace・設定仕様 §8](01_workspace・設定仕様.md#8-yaml制約)の共通YAML 1.2 subset
+- 構文層は[workspace・設定仕様 §8](01_workspace・設定仕様.md#8-yaml制約)の共通YAML 1.2部分集合
 - Frontmatter 32 KiB以下、文書全体1 MiB以下
 - 標準fieldの構造はFrontmatter Schemaを正とし、`tests`だけobject配列を許可
-- mapping keyの同値性はYAML解釈後のstringのcode point完全一致で判定する
+- mapping keyの同値性はYAML解釈後の文字列のcode point完全一致で判定する
 - Frontmatter内の全配列は、fieldごとに次の重複規則を適用する
 
 scalar配列の重複は、YAML解釈後の値と型の完全一致で判定し、Unicode正規化、case変換、path補正を行わない。

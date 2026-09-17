@@ -23,7 +23,7 @@ bitz check --all-workspaces
 共通argv解析、重複option、空値、target不存在は
 [Core実行環境・CLI基盤契約 §5・§6](../00_共通契約/06_Core実行環境・CLI基盤契約.md#5-共通cli-argv解析)に従う。
 明示対象はREQ、TECH、ADR、TASKの文書ID、statement ID、SPEC Markdown pathとする。statement IDとpathは
-所有文書IDへ正規化する。連合ではactive／`--workspace`で選択したworkspaceの非修飾IDとpath、または修飾IDを
+所有文書IDへ正規化する。複合workspaceではactive／`--workspace`で選択したworkspaceの非修飾IDとpath、または修飾IDを
 受け付け、1回の単独操作の対象workspaceを1つに限定する。code path、test path、directory、不正ID/path、
 異なるworkspaceを所有する対象の混在は引数不正で終了コード4とする。
 
@@ -31,7 +31,7 @@ bitz check --all-workspaces
 構文自体が不正なID/pathの終了コード4と区別する。ADRは文書検査対象にできるが、test義務へ展開しない。
 
 `--full`と明示対象は排他的である。引数なしはGit変更集合を起点にする。
-`--all-workspaces`は同じGit rootとfederation rootを探索起点から一意に発見できる場合だけ許可し、current directoryの
+`--all-workspaces`は同じGit rootとroot workspaceを探索起点から一意に発見できる場合だけ許可し、current directoryの
 root一致は要求しない。明示対象、`--full`、`--workspace`と排他的である。
 全体操作は`--full`を含意し、catalog、全workspace、横断関係、所有境界を検査する。
 
@@ -39,7 +39,7 @@ root一致は要求しない。明示対象、`--full`、`--workspace`と排他�
 
 ## 3. 共通索引と完全検査
 
-どのscopeでも単一workspaceまたは連合catalog全体の軽量Frontmatter索引を構築する。EARS-AI ASTと本文の
+どのscopeでも単一workspaceまたは複合workspaceのcatalog全体の軽量Frontmatter索引を構築する。EARS-AI ASTと本文の
 完全検査対象は次とする。
 
 - 明示対象: `TargetExpansion(root, interpret)`の`contextDocuments`と直接逆参照
@@ -49,13 +49,13 @@ root一致は要求しない。明示対象、`--full`、`--workspace`と排他�
 
 軽量索引の構築と対象文書の完全解析を混同しない。
 展開規則は[関係・トレースモデル §6.4](../02_SPECモデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)を正とする。
-`--all-workspaces`は共通preflightでbase/currentのGit既知`.spec/bitz.yaml`を、連合を宣言している各snapshot自身の
-catalogと比較する。初回連合化前の単一workspace baseへ全体列挙を適用しない。catalog、ID、path、Git境界、
+`--all-workspaces`は共通事前検査でbase/currentのGit既知`.spec/bitz.yaml`を、複合workspaceを宣言している各snapshot自身の
+catalogと比較する。初回複合workspace化前の単一workspace baseへ全体列挙を適用しない。catalog、ID、path、Git境界、
 未対応major、resource上限が非成功ならworkspace別検査を開始しない。
 
 ## 4. 検査順序
 
-1. `bitz.yaml` Schema、連合catalog、互換性
+1. `bitz.yaml` Schema、複合workspaceのcatalog、互換性
 2. file名、Frontmatter、ID一意性
 3. EARS-AI構文と文書ID整合
 4. relationのID、型、状態、循環
@@ -64,9 +64,9 @@ catalogと比較する。初回連合化前の単一workspace baseへ全体列�
 7. 状態遷移と管理済みSPEC削除
 8. 承認済みREQ保護
 9. 明示TASKの`changes`境界
-10. changed strong dependencyの直接逆参照による影響候補
+10. changed strong依存の直接逆参照による影響候補
 
-global preflight非成功ならworkspace別検査を開始しない。preflight通過後に後段へ進めないerrorがあっても、
+全体事前検査非成功ならworkspace別検査を開始しない。事前検査通過後に後段へ進めないerrorがあっても、
 独立fileのDiagnosticは可能な範囲で返す。継続単位は文書と、その文書をsourceとするedgeであり、別workspaceの
 非成功だけを理由に無関係な文書検査を省略しない。strong targetを解釈できないsourceは具体的なrelation Diagnosticを
 持つ非成功とし、その依存閉包だけを完全Contextとして扱わない。
@@ -88,10 +88,10 @@ global preflight非成功ならworkspace別検査を開始しない。preflight�
 
 `--all-workspaces`ではrepository全体で1つの基準commitを使い、基準版と現在版の両catalogからworkspace修飾IDで
 文書を対応付ける。member削除または移動時の扱いは
-[モノレポSPEC連合仕様](../02_SPECモデル/05_複合workspace仕様.md)に従う。
+[複合workspace仕様](../02_SPECモデル/05_複合workspace仕様.md)に従う。
 
-初回連合化では、baseのrepository root設定が`multiWorkspace`と明示`workspace.id`を持たない場合だけ、実効ID `root`を
-currentのfederation root IDへ比較上で写像する。連合化後のID renameは推定せず、member pathだけの移動は同じIDで
+初回複合workspace化では、baseのrepository root設定が`multiWorkspace`と明示`workspace.id`を持たない場合だけ、実効ID `root`を
+currentのroot workspace IDへ比較上で写像する。複合workspace化後のID renameは推定せず、member pathだけの移動は同じIDで
 対応付ける。catalogから消えたmemberの管理済みSPECは削除検査の対象から外さない。
 
 ## 6. 引数なし対象選択
@@ -105,7 +105,7 @@ currentのfederation root IDへ比較上で写像する。連合化後のID rena
 どの逆索引にも該当しないcode/test pathは対象外とし、Diagnosticを出さず件数だけを結果へ残す。
 rejected REQ/TECHは所有逆索引へ含めない。
 
-連合のworkspace単独操作では、選択workspaceが所有するchanged pathだけを起点にする。横断する強い依存閉包と
+複合workspaceのworkspace単独操作では、選択workspaceが所有するchanged pathだけを起点にする。横断する強い依存閉包と
 直接逆参照は通常どおり辿るが、別workspaceの無関係な変更を対象へ混ぜない。
 
 対象文書が0件で、設定、索引、Git縮退を含む他Diagnosticがなければpassedとする。設定検査と索引構築は省略しない。
@@ -115,7 +115,7 @@ rejected REQ/TECHは所有逆索引へ含めない。
 TASK IDまたはTASK pathを明示した場合だけ、同じGit基準版からの変更pathを`changes`と比較する。境界外変更は
 `SPEC-TASK-BOUNDARY-001`／failedとする。TASK自身のfileと明示生成reportは比較対象から除く。
 
-`changes`のfileは正規化した字句Git pathの完全一致、末尾`/`のdirectory prefixはpath segment単位の子孫一致で
+`changes`のfileは正規化した字句Git pathの完全一致、末尾`/`のdirectory接頭辞はpath segment単位の子孫一致で
 変更を許可する。symlink解決先の別の字句pathへ許可を拡張しない。宣言pathと変更pathには所有境界検査を先に適用し、
 追加はcurrent、削除はbase、変更とsymlink変更はbase/current双方、renameはsourceとdestinationの2 pathを検査する。
 所有境界不適合と`SPEC-TASK-BOUNDARY-001`を同じpathへ重複して返さない。
@@ -152,8 +152,8 @@ Coreは意味的影響を断定せず、statusを自動変更しない。`relate
 明示対象は`scope: selected`、`--full`とGit不在／unborn時の全体縮退は`scope: full`とし、両scopeでは
 `checkedDocumentCount`と`checkedStatementCount`を必須にする。`selection`は`changed`だけで出力する。
 `--all-workspaces`では`scope: all-workspaces`と共通の`multiWorkspace`、`workspaces`外形を使用し、各memberの
-`checkedDocumentCount`、`checkedStatementCount`とDiagnosticをmember結果へ保持する。両件数は非負integerで必須とし、
-全SPECを完全検査した文書数と規範文数を表す。repository共通の`revision`はtop-levelに1件だけ置き、member結果へ
+`checkedDocumentCount`、`checkedStatementCount`とDiagnosticをmember結果へ保持する。両件数は非負整数で必須とし、
+全SPECを完全検査した文書数と規範文数を表す。repository共通の`revision`は最上位に1件だけ置き、member結果へ
 複製しない。完全JSON例は[共通結果契約](../00_共通契約/01_結果・Diagnostic・終了コード.md#21-check全体結果)を正とする。
 
 ## 10. Git不在
@@ -182,14 +182,14 @@ Coreは意味的影響を断定せず、statusを自動変更しない。`relate
 | `SPEC-STATE-TRANSITION-001` | failed | 禁止遷移または管理済みSPEC削除 |
 | `SPEC-TASK-BOUNDARY-001` | failed | 明示TASK境界外変更 |
 | `SPEC-TASK-BOUNDARY-002` | blocked | Git不在でTASK境界不能 |
-| `SPEC-IMPACT-OUTDATED-001` | passed_with_warnings | strong dependency変更 |
+| `SPEC-IMPACT-OUTDATED-001` | passed_with_warnings | strong依存変更 |
 | `SPEC-GIT-DEGRADED-001` | passed_with_warnings | Git不在で差分依存保証を省略 |
 | `SPEC-STYLE-H1-001` | failed | H1不正 |
 | `SPEC-STYLE-SECTION-001` | failed | REQ必須section不在・空 |
 | `SPEC-STYLE-PLACEMENT-001` | failed | 規範文が文書種別ごとの許可位置外 |
 
 Core 1.0は`idCollisions`、`SPEC-BASE-AMBIGUOUS-001`、H2順序・空節・疑似節Diagnosticを返さない。
-連合固有Diagnosticは[モノレポSPEC連合仕様](../02_SPECモデル/05_複合workspace仕様.md)が所有する。
+複合workspace固有Diagnosticは[複合workspace仕様](../02_SPECモデル/05_複合workspace仕様.md)が所有する。
 
 本表は検索用索引である。全条件のcode、severity、status、source、継続単位、primary優先順位は
 [Diagnostic registry](../00_共通契約/05_Diagnostic-registry.md)が所有する。

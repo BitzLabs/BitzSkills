@@ -3,7 +3,7 @@
 ## 1. 適用範囲
 
 EARS-AI Coreは、全Bitz操作が同じ構造として解析する最小要求言語を定義する。自由記述の意味的正しさ、
-SDDフロー、品質指標、DDD modelは定義しない。
+SDD flow、品質指標、DDD modelは定義しない。
 
 Markdownは人間が編集する正本、Semantic IRは決定論的な検査・Context・traceに使う派生表現である。
 Semantic IRを正本fileとして保存しない。
@@ -66,7 +66,7 @@ statement-id = document-id, ":", local-id ;
 ## 3. 正規構文
 
 本節はISO/IEC 14977相当のEBNFだけを使用する。`,`は連接、`|`は選択、`[ ... ]`は省略可能、
-`{ ... }`は0回以上の繰返し、`;`は規則終端、引用符内はterminalを表す。ABNFの`%x`、`n*element`、`/`を使用しない。
+`{ ... }`は0回以上の繰返し、`;`は規則終端、引用符内は端末を表す。ABNFの`%x`、`n*element`、`/`を使用しない。
 入力は妥当なUTF-8から復号したUnicode scalar value列とし、文法は1 code point単位で評価する。
 
 ```ebnf
@@ -149,7 +149,7 @@ Lexerは行を左から右へ1回走査し、`TEXT`、`CODE_SPAN`、`TAG`、`SP`
 quoted value内ではDQUOTE、既知escape、qcharの順とする。tokenの開始・終了offsetとDiagnosticのline／columnは
 Unicode code point単位の1始まりとし、TAB、結合文字、全角文字も各1 columnと数える。改行code pointはtokenに含めない。
 
-同じraw原因から複数のsyntax候補が生じる場合は、未閉鎖code span、未閉鎖／不正tag、ID形式、tag順序、
+同じraw原因から複数の構文候補が生じる場合は、未閉鎖code span、未閉鎖／不正tag、ID形式、tag順序、
 必須tag不足、発動条件複数、句点欠落、operand不足の順でprimaryを1件だけ返す。別位置の独立原因はそれぞれ返す。
 [Diagnostic registry](../00_共通契約/05_Diagnostic-registry.md)のpriorityはこの順序と一致させる。
 
@@ -179,22 +179,22 @@ for each line:
   if IsCandidateToken(token): emit candidate(line, cursor + 3)
 ```
 
-opening fenceのrun後にinfo stringがあってもopeningとする。closing fenceにinfo stringは許可しない。
+opening fenceのrun後にinfo文字列があってもopeningとする。closing fenceにinfo文字列は許可しない。
 引用は先頭0〜3 SPの直後が`>`である行を指し、引用内のlistを候補にしない。TABをindentまたはSPとして扱わない。
 `cursor + 3`は最初の`[`の1始まりcolumnである。
 
 `IsCandidateToken`は次のいずれかを満たす場合だけtrueとする。判定はASCIIかつcase-sensitiveで、tokenの妥当性を要求しない。
 
 1. `REQ`、`TECH`、`ADR`、`TASK`のいずれかで始まる。
-2. ASCII uppercaseで始まり、`-`または`:`を1個以上含む。未知prefix、桁不足、3階層を候補に残すための規則である。
+2. ASCII uppercaseで始まり、`-`または`:`を1個以上含む。未知接頭辞、桁不足、3階層を候補に残すための規則である。
 3. `ACTOR`、`ALWAYS`、`WHEN`、`WHILE`、`WHERE`、`IF_ERROR`、`MUST`、`SHOULD`、`MAY`、
    `REASON`、`THEN`、`GENERATE`、`CONSTRAINT`のいずれかで始まる。ID欠落と不正Core tagを候補に残す。
-4. `lower, { lower | digit }, ":"`に一致するprefixを持つ。extensionから始まるID欠落を候補に残す。
+4. `lower, { lower | digit }, ":"`に一致する接頭辞を持つ。extensionから始まるID欠落を候補に残す。
 
 Scannerは角括弧の閉鎖、statement ID、tag、extensionの妥当性を判定しない。候補をbyte変更せず
 Lexer／Parser／Validatorへ渡す。候補でない行へIDや規範強度を要求しない。
 
-これにより、桁数不足、未知prefix、3階層、ID欠落を通常本文として見逃さない。
+これにより、桁数不足、未知接頭辞、3階層、ID欠落を通常本文として見逃さない。
 
 ## 6. Semantic IR
 

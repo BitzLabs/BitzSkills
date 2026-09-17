@@ -1,4 +1,4 @@
-# 文書種別・本文テンプレート
+# 文書種別・本文template
 
 ## 1. 共通規則
 
@@ -98,7 +98,7 @@ changes:
 `requires`先TASKは`implement`または`verify`時にすべて`done`でなければならない。未完了またはcancelledなら
 `CTX-TASK-DEPENDENCY-001`／blockedとする。
 
-`changes`はfile pathまたは末尾`/`のdirectory prefixを持つ。glob、絶対path、`..`を禁止する。TASK ID/pathを
+`changes`はfile pathまたは末尾`/`のdirectory接頭辞を持つ。glob、絶対path、`..`を禁止する。TASK ID/pathを
 明示した`check`だけが境界を強制する。
 
 TASK内のEARS-AI候補行は`SPEC-STYLE-PLACEMENT-001`／failedとし、対象契約は`addresses`で参照する。

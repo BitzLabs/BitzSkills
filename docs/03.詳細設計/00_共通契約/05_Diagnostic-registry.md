@@ -28,7 +28,7 @@ continuationは次の閉じた語彙を使う。
 | 値 | 意味 |
 |---|---|
 | `stop-operation` | 操作全体を停止する |
-| `stop-multi-workspace` | global preflightで停止し、member処理を開始しない |
+| `stop-multi-workspace` | 全体事前検査で停止し、member処理を開始しない |
 | `skip-workspace` | 当該workspaceの依存処理を省略し、独立workspaceを継続する |
 | `skip-document` | 当該文書の後続処理を省略し、独立文書を継続する |
 | `skip-edge` | 当該relation edgeの後続解決だけを省略する |
@@ -136,11 +136,11 @@ priorityが最小の行だけをprimaryとして返す。同じpriorityの候補
 | `CHECK-APPROVED-MEANING` | check | `SPEC-SAFETY-APPROVED-001` | error | failed | file | `continue` | 510 | approved REQの意味変更時にstatusを戻していない |
 | `CHECK-TASK-BOUNDARY` | check | `SPEC-TASK-BOUNDARY-001` | error | failed | file | `continue` | 520 | 明示TASKの境界外変更 |
 | `CHECK-TASK-NO-GIT` | check | `SPEC-TASK-BOUNDARY-002` | error | blocked | environment | `stop-operation` | 521 | Git不在で明示TASK境界を検査不能 |
-| `CHECK-IMPACT-OUTDATED` | check | `SPEC-IMPACT-OUTDATED-001` | warning | passed_with_warnings | file | `continue` | 530 | changed strong dependencyを持つapproved文書 |
+| `CHECK-IMPACT-OUTDATED` | check | `SPEC-IMPACT-OUTDATED-001` | warning | passed_with_warnings | file | `continue` | 530 | changed strong依存を持つapproved文書 |
 | `CHECK-GIT-DEGRADED` | check | `SPEC-GIT-DEGRADED-001` | warning | passed_with_warnings | environment | `continue` | 540 | Git不在で差分依存保証を省略 |
 | `VERIFY-BINDING-MISSING` | verify | `SPEC-VERIFY-BLOCKED-001` | error | blocked | file | `skip-target` | 600 | testまたはcommand定義不足 |
-| `VERIFY-TARGETS-EMPTY` | verify | `SPEC-VERIFY-BLOCKED-002` | error | blocked | invocation | `stop-operation` | 601 | 単一workspaceまたは連合全体の対象0件 |
-| `VERIFY-MEMBER-TARGETS-EMPTY` | verify | `SPEC-VERIFY-BLOCKED-002` | warning | passed_with_warnings | file | `skip-workspace` | 602 | 連合member単位の対象0件 |
+| `VERIFY-TARGETS-EMPTY` | verify | `SPEC-VERIFY-BLOCKED-002` | error | blocked | invocation | `stop-operation` | 601 | 単一workspaceまたは複合workspace全体の対象0件 |
+| `VERIFY-MEMBER-TARGETS-EMPTY` | verify | `SPEC-VERIFY-BLOCKED-002` | warning | passed_with_warnings | file | `skip-workspace` | 602 | 複合workspaceのmember単位の対象0件 |
 | `VERIFY-ARGV-EXPANDED-LIMIT` | verify | `SPEC-VERIFY-BLOCKED-001` | error | blocked | file | `skip-binding` | 603 | `{tests}`展開後argvが要素数またはbyte上限超過 |
 | `VERIFY-CWD-UNAVAILABLE` | verify | `SPEC-VERIFY-BLOCKED-001` | error | blocked | file | `skip-binding` | 604 | command cwdが不在または実行時に利用不能 |
 | `VERIFY-EXECUTABLE-UNAVAILABLE` | verify | `SPEC-VERIFY-BLOCKED-001` | error | blocked | environment | `skip-binding` | 605 | PATHまたは明示pathから通常の実行可能fileを解決不能 |
@@ -148,11 +148,11 @@ priorityが最小の行だけをprimaryとして返す。同じpriorityの候補
 | `VERIFY-TEST-OUTSIDE-CWD` | verify | `SPEC-VERIFY-BLOCKED-001` | error | blocked | file | `skip-binding` | 607 | 存在・所有境界が妥当なtest pathが実効cwd配下にない |
 | `VERIFY-SPAWN-ERROR` | verify | `SPEC-VERIFY-COMMAND-001` | error | error | environment | `skip-binding` | 610 | 事前検査通過後のrace、resource不足、OS errorでprocess生成失敗 |
 | `VERIFY-SIGNAL` | verify | `SPEC-VERIFY-COMMAND-001` | error | error | environment | `skip-binding` | 611 | commandがsignal終了 |
-| `VERIFY-TIMEOUT` | verify | `SPEC-VERIFY-TIMEOUT-001` | error | error | environment | `skip-binding` | 612 | command timeout |
+| `VERIFY-TIMEOUT` | verify | `SPEC-VERIFY-TIMEOUT-001` | error | error | environment | `skip-binding` | 612 | commandのtimeout |
 | `REPORT-WRITE` | check, verify | `SPEC-REPORT-WRITE-001` | error | error | file | `stop-operation` | 700 | 明示reportの排他的作成または書込み失敗。report directoryがdirectory以外またはsymlinkの場合を含む |
 
 test commandが正常起動して非0で終了した場合はDiagnosticを生成しない。command結果の`termination: exit`と
-非0`exitCode`がtarget、workspace、top-levelを`failed`へ集約する。
+非0`exitCode`がtarget、workspace、最上位を`failed`へ集約する。
 
 ## 6. doctor
 
@@ -172,7 +172,7 @@ test commandが正常起動して非0で終了した場合はDiagnosticを生成
 doctorの設定checkは§3の`CONFIG-*`条件を使用する。`SPEC-DOCTOR-CONFIG-001`は返さず、doctorの
 `checks[]`にあるconfig項目が同じ`SPEC-CONFIG-SCHEMA-001` Diagnosticを参照する。
 
-## 7. モノレポ連合
+## 7. 複合workspace
 
 | conditionId | operations | code | severity | status | source | continuation | priority | 条件 |
 |---|---|---|---|---|---|---|---:|---|
@@ -181,20 +181,20 @@ doctorの設定checkは§3の`CONFIG-*`条件を使用する。`SPEC-DOCTOR-CONF
 | `MULTI-REF-WORKSPACE` | context, check, verify | `SPEC-MULTI-REF-001` | error | failed | file | `skip-edge` | 303 | 修飾workspace不在 |
 | `MULTI-OWNERSHIP` | context, check, verify | `SPEC-MULTI-OWNERSHIP-001` | error | failed | file | `skip-target` | 490 | SPEC、code、test、TASK、cwdの所有境界違反 |
 | `MULTI-CONFIG` | all | `SPEC-MULTI-CONFIG-001` | error | failed | file | `stop-multi-workspace` | 900 | `multiWorkspace`の型、件数、配置、root条件不正 |
-| `MULTI-MEMBER` | all | `SPEC-MULTI-MEMBER-001` | error | failed | file | `stop-multi-workspace` | 910 | member設定不在、catalog ID不一致、nested federation |
+| `MULTI-MEMBER` | all | `SPEC-MULTI-MEMBER-001` | error | failed | file | `stop-multi-workspace` | 910 | member設定不在、catalog ID不一致、入れ子の複合workspace |
 | `MULTI-ID` | all | `SPEC-MULTI-ID-001` | error | failed | file | `stop-multi-workspace` | 920 | workspace ID不正または重複 |
 | `MULTI-PATH` | all | `SPEC-MULTI-PATH-001` | error | failed | file | `stop-multi-workspace` | 930 | member path不正、重複、入れ子、symlink、submodule、別repository |
 | `MULTI-GIT` | all | `SPEC-MULTI-GIT-001` | error | blocked | environment | `stop-multi-workspace` | 940 | Git repository境界またはmember所有範囲を確定不能 |
 | `MULTI-VERSION` | all | `SPEC-MULTI-VERSION-001` | error | blocked | file | `stop-multi-workspace` | 950 | memberのSchemaまたはEARS-AIが未対応major |
 | `MULTI-UNREGISTERED` | all | `SPEC-MULTI-UNREGISTERED-001` | error | blocked | file | `stop-multi-workspace` | 960 | Git既知設定または選択設定がcatalogに未登録 |
-| `MULTI-LIMIT` | all | `SPEC-MULTI-LIMIT-001` | error | blocked | file | `stop-multi-workspace` | 970 | member数または連合snapshot resource上限超過 |
+| `MULTI-LIMIT` | all | `SPEC-MULTI-LIMIT-001` | error | blocked | file | `stop-multi-workspace` | 970 | member数または複合workspaceのsnapshot resource上限超過 |
 | `MULTI-DEPENDENCY` | context, verify | `SPEC-MULTI-DEPENDENCY-001` | error | blocked | file | `skip-target` | 980 | 具体的Diagnosticのないtargetが別unitの非成功によりContextまたはbindingを構成不能 |
 | `MULTI-DEPENDENCY-DOCTOR` | doctor | `SPEC-MULTI-DEPENDENCY-001` | error | blocked | file | `skip-check` | 980 | 具体的Diagnosticのないdoctor checkが別unitの非成功により依存出力を得られない |
 
 `check`は依存先を解釈できないsourceへ具体的なrelation Diagnosticを返し、上記の派生遮断を追加しない。
 `context`は部分Bundleを成功にせず、`verify`は独立targetとbinding、`doctor`は独立checkを継続する。
 
-global preflightの同じraw原因に複数行が成立する場合は、設定構文・型、catalog、workspace ID、path、Git境界、
+全体事前検査の同じraw原因に複数行が成立する場合は、設定構文・型、catalog、workspace ID、path、Git境界、
 version、未登録設定、resource上限の順でprimaryを選ぶ。この列挙は上表のpriorityより優先する局所規則ではなく、
 priority 900〜970を説明するものである。
 

@@ -22,11 +22,11 @@ bitz verify --all-workspaces
 共通argv解析、重複option、空値、target不存在は
 [Core実行環境・CLI基盤契約 §5・§6](../00_共通契約/06_Core実行環境・CLI基盤契約.md#5-共通cli-argv解析)に従う。
 明示対象はREQ ID、TECH ID、statement ID、TASK ID、REQ/TECH/TASK Markdown pathとする。pathはFrontmatter IDへ
-正規化する。連合ではactive／`--workspace`で選択したworkspaceの非修飾IDとpath、または修飾IDを受け付け、
+正規化する。複合workspaceではactive／`--workspace`で選択したworkspaceの非修飾IDとpath、または修飾IDを受け付け、
 1回の単独操作の対象workspaceを1つに限定する。code/test path、directory、ADR、異なるworkspaceを所有する
 対象の混在は引数不正で終了コード4とする。
 
-`--all-workspaces`は同じGit rootとfederation rootを探索起点から一意に発見できる場合だけ許可し、current directoryの
+`--all-workspaces`は同じGit rootとroot workspaceを探索起点から一意に発見できる場合だけ許可し、current directoryの
 root一致は要求しない。明示対象と`--workspace`に排他的である。各workspaceへ引数なし
 verifyを適用し、結果を集約する。
 
@@ -78,7 +78,7 @@ argv templateと展開後argvの型・上限は[workspace・設定仕様 §6](..
 ### 5.1 実行fileと環境
 
 binding所有workspaceの設定fileがGit利用可能時にindexで未追跡なら、`VERIFY-CONFIG-UNTRACKED`として起動を遮断する。
-Git不在の単一workspaceは現在設定を使う縮退契約に従い、連合はglobal preflightで遮断する。
+Git不在の単一workspaceは現在設定を使う縮退契約に従い、複合workspaceは全体事前検査で遮断する。
 test pathが所有境界・存在検査を通過しても実効cwdの配下にない場合は、`VERIFY-TEST-OUTSIDE-CWD`として遮断する。
 いずれも`SPEC-VERIFY-BLOCKED-001`／error／blocked、`source.kind: file`とし、前者のsourceは設定file、
 後者のsourceは該当test対応を宣言したSPECとする。独立bindingは継続し、以下の事前検査blockedと同じ証跡規則を使う。
@@ -90,8 +90,8 @@ doctorとverifyは同じ解決関数を使用する。通常fileでない、存�
 
 test processの環境はCore起動時の環境をcopyし、`PATH`、`LANG`、`LC_*`を含め値を変更しない。`PWD`だけを実効`cwd`の
 絶対pathへ合わせる。`.env`、Frontmatter、本文から環境を追加せず、環境変数名と値を公開結果、report、Diagnosticへ
-出力しない。stdinはnull deviceへ接続して即時EOF、stdoutとstderrは別pipeとしてspawn時から並行drainする。
-shell、terminal、対話入力を使用しない。
+出力しない。標準入力はnull deviceへ接続して即時EOF、標準出力と標準エラー出力は別pipeとしてspawn時から並行drainする。
+shell、端末、対話入力を使用しない。
 
 ### 5.2 timeoutと有限時間終了
 
@@ -100,14 +100,14 @@ shell、terminal、対話入力を使用しない。
 
 1. timeout到達時に直接processとprocess groupへgraceful terminationを送る。
 2. 2秒後も直接processが生存していればforce killする。process groupと子孫へのforce killはplatformが許す範囲で行う。
-3. さらに2秒、stdout／stderrをdrainしながら直接processの終了を待つ。
+3. さらに2秒、標準出力／標準エラー出力をdrainしながら直接processの終了を待つ。
 4. EOFがなくてもCore側のread handleを閉じ、timeout到達から5秒以内にbinding結果を確定する。
 
-直接processの停止を保証対象とし、子孫停止はbest effortとする。ただし子孫がstdout／stderrのwrite handleを保持しても
+直接processの停止を保証対象とし、子孫停止はbest effortとする。ただし子孫が標準出力／標準エラー出力のwrite handleを保持しても
 EOFを無期限に待たない。timeout処理開始後にsignal終了を観測しても`termination: timeout`、`exitCode: null`とする。
 timeoutしたbindingの後も計画済みの独立bindingを続行する。timeout前にsignal終了した場合は`termination: signal`とする。
 
-stdout/stderrは通常終了時のEOF、またはtimeout状態機械によるread handle閉鎖までdrainし、各末尾64 KiBをredactionした
+標準出力/stderrは通常終了時のEOF、またはtimeout状態機械によるread handle閉鎖までdrainし、各末尾64 KiBをredactionした
 公開抜粋として保持する。Coreは出力自然言語を合否へ使わない。
 
 ## 6. command結果
@@ -125,9 +125,9 @@ coverage、command、環境不足はtestを開始せずblockedとする。
 「環境不足」は、spawn前に検出した実行file／cwdの不在・実行不能と、展開後argv上限超過を指す。これらは
 `commands[]`へ実行結果を作らず、影響targetの`bindingRefs`を空にする。`spawn_error`は、この事前検査を通過した後に
 OSのprocess生成を呼び出し、race、resource不足、またはOS errorで失敗した場合だけとする。この場合はcommand結果を
-`termination: spawn_error`、`exitCode: null`、空excerpt、両truncated flag falseで記録する。
+`termination: spawn_error`、`exitCode: null`、空抜粋、両truncated flag falseで記録する。
 
-spawn前にblockedとなったbindingのDiagnosticは、単一workspaceではtop-level、連合ではbinding所有workspaceへ1件だけ置き、
+spawn前にblockedとなったbindingのDiagnosticは、単一workspaceでは最上位、複合workspaceではbinding所有workspaceへ1件だけ置き、
 共有targetごとに複製しない。影響targetはDiagnosticを複製せずstatusを`blocked`、`bindingRefs: []`とする。
 spawn後のcommand結果は通常どおり1件を`commands[]`へ置き、参照targetはその`bindingId`を保持して結果statusを集約する。
 
@@ -189,11 +189,11 @@ spawn後のcommand結果は通常どおり1件を`commands[]`へ置き、参照t
 ```
 
 `targetResults[]`はtarget、Context、statement、binding、結果を結ぶ検証証跡の正本であり、target ID辞書順とする。
-top-levelに`targets`、`contextDigest`、`statements`を重複して持たない。
+最上位に`targets`、`contextDigest`、`statements`を重複して持たない。
 
 | `targetResults[]` field | 型 | 必須 | 意味 |
 |---|---|:--:|---|
-| `target` | string | Yes | 正規target ID。連合では修飾形式 |
+| `target` | string | Yes | 正規target ID。複合workspaceでは修飾形式 |
 | `status` | enum | Yes | Context、coverage、全`bindingRefs`の最悪status |
 | `contextDigest` | string/null | Yes | 完全ContextのDigest。Contextを構成できない場合だけnull |
 | `statements` | string[] | Yes | targetが検証する規範文。重複なし辞書順 |
@@ -206,12 +206,12 @@ top-levelに`targets`、`contextDigest`、`statements`を重複して持たな�
 
 `commands[]`はcommand名単位の実行実体である。単一workspaceを含め、`workspaceId`と
 `bindingId: <workspace-id>::<command-name>`を必須とする。`argv`は展開後、`tests`はworkspace相対宣言path、`cwd`は
-workspace root相対で未指定時`.`とする。通常終了以外は`exitCode: null`とする。連合内では対象、句、`covers`のIDを
+workspace root相対で未指定時`.`とする。通常終了以外は`exitCode: null`とする。複合workspace内では対象、句、`covers`のIDを
 修飾形式で返す。
 
-全commandは`stdoutExcerpt`、`stderrExcerpt`、`stdoutTruncated`、`stderrTruncated`を必須とする。excerptは
-[安全な入出力 §9](../00_共通契約/02_安全な入出力・互換性.md#9-process出力)でredactionした末尾64 KiB以下のstringで、
-出力なしは空stringとする。対応する元streamが64 KiBを超えた場合だけ`*Truncated: true`とする。
+全commandは`stdoutExcerpt`、`stderrExcerpt`、`stdoutTruncated`、`stderrTruncated`を必須とする。抜粋は
+[安全な入出力 §9](../00_共通契約/02_安全な入出力・互換性.md#9-process出力)でredactionした末尾64 KiB以下の文字列で、
+出力なしは空文字列とする。対応する元streamが64 KiBを超えた場合だけ`*Truncated: true`とする。
 
 1つのtargetが`verified`であるのは、target statusが通過status、`contextDigest`が非null、対象となる全`MUST`に
 test対応があり、全`bindingRefs`がちょうど1件のpassed commandを参照する場合である。`verified`は特定Context Digest、
@@ -222,7 +222,7 @@ code、test、環境に対する実行時述語で、Frontmatter状態ではな�
 | code | result | 条件 |
 |---|---|---|
 | `SPEC-VERIFY-BLOCKED-001` | blocked | test／command不足、未追跡設定、cwd配下外test、展開argv上限、cwdまたは実行file不足 |
-| `SPEC-VERIFY-BLOCKED-002` | blocked／passed_with_warnings | 単一・連合全体の対象0件／連合member単位の対象0件 |
+| `SPEC-VERIFY-BLOCKED-002` | blocked／passed_with_warnings | 単一・複合workspace全体の対象0件／複合workspaceのmember単位の対象0件 |
 | `SPEC-VERIFY-COMMAND-001` | error | 事前検査後のprocess生成失敗またはsignal |
 | `SPEC-VERIFY-TIMEOUT-001` | error | timeout |
 | `CTX-COVERAGE-TEST-001` | blocked／passed_with_warnings | 対象MUSTが未tested／対象SHOULDが未tested |
@@ -239,8 +239,8 @@ primary優先順位は[Diagnostic registry](../00_共通契約/05_Diagnostic-reg
 
 ## 10. 全体実行
 
-`verify --all-workspaces`はfederation rootを先頭、その後をworkspace ID辞書順に処理する。実行済みbinding集合は
-連合全体で1つ保持し、横断refinementが参照する同じ`(workspaceId, commandName)`を二重実行しない。preflight通過後は
+`verify --all-workspaces`はroot workspaceを先頭、その後をworkspace ID辞書順に処理する。実行済みbinding集合は
+複合workspace全体で1つ保持し、横断refinementが参照する同じ`(workspaceId, commandName)`を二重実行しない。事前検査通過後は
 workspace全体ではなくtargetのstrong relation閉包とbindingを継続単位とし、失敗したworkspaceがあっても、
 依存しない後続targetの解決とbindingを継続する。
 
@@ -256,11 +256,11 @@ coverageなど具体的Diagnosticがあるtargetへ同codeを重ねない。1つ
 owner workspace順、command名順に実行し、参照しないtargetへ結果を波及させない。
 
 workspace単位の引数なし対象が0件の場合、`SPEC-VERIFY-BLOCKED-002`をwarningとしてmember結果を
-`passed_with_warnings`にする。連合全体の対象が0件の場合だけerror／`blocked`とする。結果は
-[モノレポSPEC連合仕様](../02_SPECモデル/05_複合workspace仕様.md)の集約外形を使う。
+`passed_with_warnings`にする。複合workspace全体の対象が0件の場合だけerror／`blocked`とする。結果は
+[複合workspace仕様](../02_SPECモデル/05_複合workspace仕様.md)の集約外形を使う。
 
 全target解決前に、現在treeのGit既知`.spec/bitz.yaml`、catalog、ID、path、Git境界、未対応major、resource上限を
-共通preflightで検査する。非成功ならtarget解決とcommand実行を開始しない。全体結果はtop-levelに
+共通事前検査で検査する。非成功ならtarget解決とcommand実行を開始しない。全体結果は最上位に
 `scope: all-workspaces`とrepository共通`revision`を1件持つ。各workspace結果は0件でも省略しない
 `targetResults[]`と`commands[]`を持ち、revisionを複製しない。完全JSON例は
 [共通結果契約](../00_共通契約/01_結果・Diagnostic・終了コード.md#22-verify全体結果)を正とする。

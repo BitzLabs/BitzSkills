@@ -19,8 +19,8 @@ Diagnostic条件と公開値は[Diagnostic registry](../00_共通契約/05_Diagn
 
 ## 3. 共通原則
 
-- Core 1.0は単一workspaceと、同一Git repository内の明示的なモノレポ連合を扱う。
-- 連合の修飾ID、所有境界、全体操作は[モノレポSPEC連合仕様](../02_SPECモデル/05_複合workspace仕様.md)を使う。
+- Core 1.0は単一workspaceと、同一Git repository内の明示的な複合workspaceを扱う。
+- 複合workspaceの修飾ID、所有境界、全体操作は[複合workspace仕様](../02_SPECモデル/05_複合workspace仕様.md)を使う。
 - networkとLLMを合否処理に使わない。
 - 同じ入力とversionから同じ対象、順序、Diagnosticを返す。
 - CoreはSPEC、code、test、Gitを変更しない。`check`と`verify`のfile書込みは明示`--report`だけとする。

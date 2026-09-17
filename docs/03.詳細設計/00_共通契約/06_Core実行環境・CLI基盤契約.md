@@ -8,7 +8,7 @@
 ## 2. 実行環境と配布物
 
 - Core 1.0はCPython 3.11以上を対象とする。実装は3.11で利用できる構文と標準library APIだけを使用する。
-- PyPI distribution名、import package名、CLI実行体名はすべて`bitz`とする。
+- PyPI配布物名、import package名、CLI実行体名はすべて`bitz`とする。
 - Agent Plugins経路のplugin IDは`bitz-core`と`bitz-sdd`とし、`bitz-core`がCLIを同梱または参照する。
   どの配布経路でも利用者が起動するcommandは`bitz`である。
 - runtime依存はPython標準libraryとYAML解析library 1つだけに限る。YAML解析libraryはlock fileでexact versionへ固定し、
@@ -19,7 +19,7 @@
 
 YAML解析libraryはYAML 1.2を解釈できるsafe/read-only loaderとして使用し、任意objectの構築やcode実行を許可しない。
 Coreは値をSchemaへ渡す前に、custom tag、anchor、alias、merge key、複雑key、複数document、重複mapping keyを
-明示的に拒否する。timestamp、`yes`／`no`、先頭`0`をlibrary既定の日時、boolean、8進数へ暗黙変換しない。
+明示的に拒否する。timestamp、`yes`／`no`、先頭`0`をlibrary既定の日時、真偽値、8進数へ暗黙変換しない。
 受理するscalarと入力別構造はworkspace・設定仕様とFrontmatter仕様を正とし、libraryの既定挙動を仕様の代わりにしない。
 
 ## 4. Git
@@ -28,7 +28,7 @@ Gitは2.30以上を対象とし、CLI実行体をargvで直接起動する。she
 Gitの版は`git --version`を起動し、標準出力1行目を`git version <major>.<minor>[.<残り>]`として解析する。
 majorとminorはASCII数字だけの十進整数として数値比較し、`<残り>`は比較に使わない。非0終了または解析できない出力は
 実行不能として扱う。
-下限未満、PATHから解決不能、または実行不能なGitはGit不在として共通の縮退契約を適用する。連合操作では
+下限未満、PATHから解決不能、または実行不能なGitはGit不在として共通の縮退契約を適用する。複合workspace操作では
 `SPEC-MULTI-GIT-001`／blockedとする。Coreの通常操作はnetworkへ接続せず、Gitにもnetwork操作を要求しない。
 
 ## 5. 共通CLI argv解析
@@ -41,9 +41,9 @@ CLIはoperation固有処理、workspace探索、file読取りより前にargvを
 反復可能なのは、公開構文が`...`を付けた`context --expand`と`doctor --require-capability`だけである。
 反復可能optionの同じ値は入力順によらず1件へ重複排除し、操作仕様のsort規則を適用する。
 
-空stringの位置引数と空stringのoption値は省略として扱わず終了コード4とする。空白だけの値も、該当するID、path、enum、
+空文字列の位置引数と空文字列のoption値は省略として扱わず終了コード4とする。空白だけの値も、該当するID、path、列挙値、
 versionまたはrangeの構文に一致しないため終了コード4とする。`context`は1件以上の起点を必須とする。`check`と`verify`の
-位置引数0件は各仕様が定める引数なし操作であり、空string 1件とは異なる。
+位置引数0件は各仕様が定める引数なし操作であり、空文字列1件とは異なる。
 
 `verify --timeout`はASCII数字だけの十進表記で、先頭`0`を含まない`1`〜`3600`を受理する。符号、小数、指数表記、
 桁区切り、前後空白は終了コード4とする。
@@ -60,6 +60,6 @@ targetの字句または種別が操作の公開構文に適合しない場合�
 
 ## 7. report flag
 
-`--report`は値を取らないboolean flagで、`check`と`verify`だけが受理する。任意の保存pathをCLIから指定する機能は
+`--report`は値を取らない真偽値flagで、`check`と`verify`だけが受理する。任意の保存pathをCLIから指定する機能は
 Core 1.0に含めず、`--report=<path>`は未知option形式として終了コード4とする。保存directoryとfile名、排他的作成、
 失敗処理は結果・Diagnostic・終了コード仕様のreport契約に従う。`--format json`は`--report`を含意せず、両者は排他でない。

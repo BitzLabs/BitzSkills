@@ -2,7 +2,7 @@
 
 ## 1. workspace決定
 
-Core 1.0は単一workspaceと、1つのGit repository内の明示的なworkspace連合を扱う。
+Core 1.0は単一workspaceと、1つのGit repository内の明示的な複合workspaceを扱う。
 
 1. 指定pathまたはcurrent directoryから親方向へ`.spec/bitz.yaml`を探索する。
 2. Git利用時はrepository境界を越えない。
@@ -13,7 +13,7 @@ Core 1.0は単一workspaceと、1つのGit repository内の明示的なworkspace
 
 単一workspaceの実効IDは`workspace.id`、省略時は`root`とし、pathは`.`とする。Git rootの設定が
 `multiWorkspace.members`を宣言する場合は、
-[モノレポSPEC連合仕様](05_複合workspace仕様.md)のcatalog検証、active workspace決定、所有境界を適用する。
+[複合workspace仕様](05_複合workspace仕様.md)のcatalog検証、active workspace決定、所有境界を適用する。
 
 ## 2. 標準配置
 
@@ -73,44 +73,44 @@ safety:
 | key | 型 | 必須 | 既定 | 制約 |
 |---|---|:--:|---|---|
 | `schemaVersion` | string | Yes | — | Core 1.0では`"1.0"` |
-| `language` | string | No | `ja` | BCP 47 language tag |
+| `language` | string | No | `ja` | BCP 47の言語tag |
 | `earsAi` | string | Yes | — | `major.minor` |
 | `context.maxDocuments` | integer | No | `20` | 1〜100 |
 | `context.maxBytes` | integer | No | `131072` | 4,096〜1,048,576 |
 | `verify.timeoutSeconds` | integer | No | `300` | 1〜3,600 |
 | `verify.commands` | map | No | `{}` | command名からbinding定義 |
 | `safety.protectApprovedRequirements` | boolean | No | `true` | Git差分保護 |
-| `workspace.id` | string | No | `root` | `[a-z][a-z0-9-]{0,31}`。連合root/memberは必須 |
-| `multiWorkspace.members` | object[] | No | — | federation rootだけ。`id`とrepository root相対`path` |
+| `workspace.id` | string | No | `root` | `[a-z][a-z0-9-]{0,31}`。root workspace/memberは必須 |
+| `multiWorkspace.members` | object[] | No | — | root workspaceだけ。`id`とrepository root相対`path` |
 | `multiWorkspace.maxMembers` | integer | No | `20` | 1〜100。`members`指定時だけ使用可 |
 
 `multiWorkspace.members`要素は次のfieldだけを持つ。
 
 | key | 型 | 必須 | 制約 |
 |---|---|:--:|---|
-| `id` | string | Yes | `workspace.id`と同じ字句規則。連合内で一意 |
-| `path` | string | Yes | repository root相対directory。所有境界は連合仕様に従う |
+| `id` | string | Yes | `workspace.id`と同じ字句規則。複合workspace内で一意 |
+| `path` | string | Yes | repository root相対directory。所有境界は複合workspace仕様に従う |
 
 `profiles`はCore 1.0の標準keyではない。検出した場合は`SPEC-CONFIG-UNKNOWN-001`／warningとし、判定、Context Digest、
 操作へ使用しない。`workspace`と`multiWorkspace`の組合せ、member field、path制約は
-[モノレポSPEC連合仕様](05_複合workspace仕様.md)が定義する。
+[複合workspace仕様](05_複合workspace仕様.md)が定義する。
 
 未知の標準keyは同一majorの前方互換性のため`SPEC-CONFIG-UNKNOWN-001`／warningとし、値を変更しない。
 型不正と必須key欠如は`SPEC-CONFIG-SCHEMA-001`／error／`error`、未知Schema majorは
 同code／error／`blocked`とする。
 
-`workspace`と`multiWorkspace`は未リリースの初回Core 1.0 Schemaに含まれる。モノレポ非対応の公開済みCore 1.0との
-移行分岐、追加feature marker、Schema major引上げは設けない。連合内のworkspace IDは永続identityであり、
-初回連合化とbase/current対応は[モノレポSPEC連合仕様](05_複合workspace仕様.md#41-workspace-identity)に従う。
+`workspace`と`multiWorkspace`は未releaseの初回Core 1.0 Schemaに含まれる。複合workspace非対応の公開済みCore 1.0との
+移行分岐、追加feature marker、Schema major引上げは設けない。複合workspace内のworkspace IDは永続同一性であり、
+初回複合workspace化とbase/current対応は[複合workspace仕様](05_複合workspace仕様.md#41-workspace-identity)に従う。
 
 ## 6. command定義
 
 command名は`[a-z][a-z0-9-]{0,31}`とする。値はargv配列、または`argv`と任意`cwd`のmapとする。argv templateは
-1〜256要素のstring配列、各要素はUTF-8で32 KiB以下、配列全体はUTF-8で1 MiB以下とする。全要素でNULを禁止し、
-`argv[0]`は空stringを禁止する。`argv[1:]`の空stringは正規の引数として保持する。違反は
+1〜256要素の文字列配列、各要素はUTF-8で32 KiB以下、配列全体はUTF-8で1 MiB以下とする。全要素でNULを禁止し、
+`argv[0]`は空文字列を禁止する。`argv[1:]`の空文字列は正規の引数として保持する。違反は
 `SPEC-CONFIG-SCHEMA-001`とし、command実行へ進まない。
 
-argvのbyte数はYAML表記、配列区切り、終端NULを含めず、各stringをUTF-8 encodeしたbyte数とその総和で測定する。
+argvのbyte数はYAML表記、配列区切り、終端NULを含めず、各文字列をUTF-8 encodeしたbyte数とその総和で測定する。
 単一の設定fileは64 KiB上限を持つため、template全体1 MiB上限を超える設定はその前に`SPEC-INPUT-LIMIT-001`となる。
 template全体の上限は、設定fileの上限と独立に保持する防御上の上限であり、適合matrixでは個別に検査しない。
 
@@ -150,12 +150,12 @@ CLIは対象範囲、Git比較基準、出力形式、report、timeout短縮だ�
 
 ## 8. YAML制約
 
-- UTF-8のYAML 1.2 subsetとし、mapping keyはstringだけを許可する
+- UTF-8のYAML 1.2部分集合とし、mapping keyは文字列だけを許可する
 - custom tag、anchor、alias、merge key、複雑key、複数YAML documentを禁止する
-- YAML解釈後に同じstringとなる重複mapping keyをerrorとする。Unicode正規化やcase変換は行わない
-- timestampを暗黙変換せずstringとして扱う。`yes`／`no`はstringでありbooleanにしない。先頭`0`を8進数として扱わない
-- scalarはnull、string、boolean、10進integer、有限10進numberのいずれかとする
-- 構文層はscalar、scalar配列、string keyの通常mapを表現できる。許可する入れ子構造と値域は入力ごとのSchemaが決める
+- YAML解釈後に同じ文字列となる重複mapping keyをerrorとする。Unicode正規化やcase変換は行わない
+- timestampを暗黙変換せず文字列として扱う。`yes`／`no`は文字列であり真偽値にしない。先頭`0`を8進数として扱わない
+- scalarはnull、文字列、真偽値、10進整数、有限10進numberのいずれかとする
+- 構文層はscalar、scalar配列、文字列keyの通常mapを表現できる。許可する入れ子構造と値域は入力ごとのSchemaが決める
 - 設定Schemaは`multiWorkspace.members`だけにobject配列を許可し、Frontmatter Schemaは`tests`だけにobject配列を許可する
 - file size 64 KiB以下
 - network accessなし
@@ -167,7 +167,7 @@ CLIは対象範囲、Git比較基準、出力形式、report、timeout短縮だ�
 
 ## 9. path
 
-SPECへ記録するpathはworkspace root相対、separatorは`/`とする。絶対path、`..`、NUL、glob、root外symlinkを
+SPECへ記録するpathはworkspace root相対、区切り文字は`/`とする。絶対path、`..`、NUL、glob、root外symlinkを
 禁止する。Git管理外の生成物と依存cacheを`implements`または`tests`へ指定しない。
-連合では、workspace root内であっても別memberの所有領域を参照できない。federation rootによるmember配下の
-所有も禁止し、詳細は[モノレポSPEC連合仕様](05_複合workspace仕様.md)に従う。
+複合workspaceでは、workspace root内であっても別memberの所有領域を参照できない。root workspaceによるmember配下の
+所有も禁止し、詳細は[複合workspace仕様](05_複合workspace仕様.md)に従う。
