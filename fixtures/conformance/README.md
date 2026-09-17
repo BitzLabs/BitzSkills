@@ -154,3 +154,8 @@ interpretのcontextと明示checkだけで受理することを固定する。
 [Digest材料の完全順序・reverse solidus fixture](single/ordering-review.md)として、SINGLE-122〜124を加えた。
 同一pathのtest対応と同一namespace／termのextensionの正規順、path型以外のreverse solidus保持を固定する。
 準備済みは245/310、残りは65件（SINGLE-127-15〜19と連合60件）である。
+
+[実行環境・配布物fixture](single/environment-review.md)として、SINGLE-127-15〜19を加えた。作成前に
+適合harnessの外部仕様をADR-046で裁定し、manifestへ`invocation.python`と`invocation.gitVersion`、runnerへ
+`package`を追加した。Git版と下限CPythonは実行環境契約の本文から読み取る。単一workspaceのmatrixは全250件を
+準備済みとなり、残りは連合60件である。

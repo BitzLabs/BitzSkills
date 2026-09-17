@@ -9,7 +9,8 @@
   [ADR-042](../02.設計書/10_決定記録/ADR-042_モノレポ連合のidentity・所有境界・公開契約を確定する.md)、
   [ADR-043](../02.設計書/10_決定記録/ADR-043_モノレポ連合の継続・TASK境界・適合契約を確定する.md)、
   [ADR-044](../02.設計書/10_決定記録/ADR-044_MCP面をCore-1.0のscope外とする.md)、
-  [ADR-045](../02.設計書/10_決定記録/ADR-045_実行環境と配布物の確定.md)
+  [ADR-045](../02.設計書/10_決定記録/ADR-045_実行環境と配布物の確定.md)、
+  [ADR-046](../02.設計書/10_決定記録/ADR-046_適合harnessの検査対象・実行環境・runnerを確定する.md)
 
 ## 1. 目的
 
@@ -89,10 +90,10 @@ generator、helper、harnessへ落とし込み、fresh checkoutから再現で�
 
 部分検証の入口は`uv run fixtures/validate_step0b.py`。公開JSON、grammar参照、link、Git setup、process helper、
 副作用比較の自己試験、Step 0-P、Diagnostic意味網羅の対応台帳検証、target期待集合25ケースを統合済みである。
-適合fixture 310件中、導入・設定9件、EARS-AI構文・候補抽出・拡張12件、文書構造・UTF-8 9件、関係・path・coverage 6件、ID重複・循環4件、Git基準版・保護対象外変更10件、TASK境界3件、Git対象選択・影響候補4件、Git基準版エラー・Git不在3件、Context非成功6件、Context Digest 6件、expand反復2件、stale・expand・閉包上限・提示上限・implement coverage 6件、verify実行・事前block 6件、verify binding共有3件、verify process終了3件、verify出力抜粋2件、文書単位binding 1件、done TASK起点1件、report非作成4件、引数不正15件、report作成・保存失敗・JSON併用6件、text出力・制御文字・診断順序4件、BOM・Frontmatter 11件、寸法上限・未知entry 7件、registry閉包7件、Scanner・位置16件、既定表示・revision 8件、理由付きSHOULD・full projection・Digest version 3件、escape・normative projection 2件、quoted extension 1件、code span 1件、Frontmatter境界24件、Core副作用6件、verify argv・実行環境・出力変換15件、明示起点の不在・ADR起点8件、共通target展開・advisory提示8件、Digest材料の順序・reverse solidus 3件は入力・期待JSON・副作用期待値を作成し、隔離setupの2回一致を検証した。matrix §6.5「contextとDigest」と§6.6「verify」は全32件を完了した。§6.8「上限」6件、§6.9「Diagnostic registry閉包」19件、§6.11「公開結果Schemaと既定表示」11件も完了した。
+適合fixture 310件中、導入・設定9件、EARS-AI構文・候補抽出・拡張12件、文書構造・UTF-8 9件、関係・path・coverage 6件、ID重複・循環4件、Git基準版・保護対象外変更10件、TASK境界3件、Git対象選択・影響候補4件、Git基準版エラー・Git不在3件、Context非成功6件、Context Digest 6件、expand反復2件、stale・expand・閉包上限・提示上限・implement coverage 6件、verify実行・事前block 6件、verify binding共有3件、verify process終了3件、verify出力抜粋2件、文書単位binding 1件、done TASK起点1件、report非作成4件、引数不正15件、report作成・保存失敗・JSON併用6件、text出力・制御文字・診断順序4件、BOM・Frontmatter 11件、寸法上限・未知entry 7件、registry閉包7件、Scanner・位置16件、既定表示・revision 8件、理由付きSHOULD・full projection・Digest version 3件、escape・normative projection 2件、quoted extension 1件、code span 1件、Frontmatter境界24件、Core副作用6件、verify argv・実行環境・出力変換15件、明示起点の不在・ADR起点8件、共通target展開・advisory提示8件、Digest材料の順序・reverse solidus 3件、実行環境・配布物5件は入力・期待JSON・副作用期待値を作成し、隔離setupの2回一致を検証した。matrix §6.5「contextとDigest」と§6.6「verify」は全32件を完了した。§6.8「上限」6件、§6.9「Diagnostic registry閉包」19件、§6.11「公開結果Schemaと既定表示」11件と§6.12「共通target展開」を含め、単一workspaceの§6は全250件を完了した。
 単一workspaceのgolden Canonical JSONとContext Digestは`SINGLE-042`が所有し、独立に記述した2系統のreference計算がbyte一致することを検証した。
-残65件の適合fixture（実行環境・配布物の`SINGLE-127-15`〜`19`と連合60件）、連合golden Context Digest（`MONO-002-01`）、残fixtureの副作用期待値は未完了であり、全Gate A検証の完了は宣言しない。
-`SINGLE-127-15`〜`19`と`MONO-023`は、偽Gitの配置、`consumer` runnerのargv、CPython 3.11の選択といったharness側の外部仕様が未確定である。
+残60件の適合fixture（連合`MONO-*`）、連合golden Context Digest（`MONO-002-01`）、残fixtureの副作用期待値は未完了であり、全Gate A検証の完了は宣言しない。
+Git shim、`uv`環境、`bitz.compat`、`runner: package`の起動規則は[ADR-046](../02.設計書/10_決定記録/ADR-046_適合harnessの検査対象・実行環境・runnerを確定する.md)で確定したが、harnessの実行部はCore実装と合わせてGate Bで作る。
 
 このStepで実装してよいのはSchema検証、fixture generator、reference計算、grammar検査、matrix検査、
 process用test helper、副作用比較harness、独立cross-checkである。`doctor`、`context`、`check`、`verify`、
@@ -204,7 +205,7 @@ SPEC作成 -> context -> pre-check -> code/test変更 -> post-check -> verify ->
 
 全StepのGate Bが`Passed`した後、次を全件満たした場合だけGate Cを`Passed`とする。
 
-- 全conformance fixtureが通過する
+- 全conformance fixtureが、下限CPython 3.11と基準環境の2環境で通過する。`invocation.python`を指定したfixtureは指定versionだけで判定する
 - 性能baselineを基準環境で取得し、§10のSLOを満たす
 - 単一と連合のCanonical JSONおよびContext Digestが2回実行でbyte一致する
 - read-only、report、cache、timeout、signal、子processの受入試験が通過する

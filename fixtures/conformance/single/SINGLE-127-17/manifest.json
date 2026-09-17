@@ -1,0 +1,23 @@
+{
+  "fixtureId": "SINGLE-127-17",
+  "description": "package metadataの名前とrequires-pythonを検査する",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "package",
+    "cwd": ".",
+    "argv": [
+      "metadata"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "outcome": "accepted",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/package.json",
+    "reportFileCount": 0
+  }
+}

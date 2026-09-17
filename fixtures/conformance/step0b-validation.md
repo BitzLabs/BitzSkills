@@ -11,7 +11,7 @@
 | Other JSON examples | 5 Semantic IR / Digest material examples parsed; not certified by the result Schema |
 | EBNF references | 33 definitions plus 3 explicitly prose-defined lexical sets; no unresolved reference |
 | Diagnostic review (updated 2026-09-08) | 119 conditions mapped to 17 source documents; three open issues resolved; ledger and regression checks passed |
-| Matrix inventory | 310 IDs（2026-09-17時点）、重複とfamily／suffix衝突なし。準備済み245件、未作成65件 |
+| Matrix inventory | 310 IDs（2026-09-17時点）、重複とfamily／suffix衝突なし。準備済み250件、未作成60件（連合のみ） |
 | EARS fixtures | SINGLE-007, 008, 009-01/02/03, 010-01/02, 011, 012-01/02/03, 013: fixed REQ bytes, Frontmatter Schema, complete expected results, Unicode token/end-of-line positions and two isolated setups checked; position/severity/code/count/input corruption rejected |
 | Document fixtures (2026-09-11) | SINGLE-014, 016, 017-01/02/03, 018-01/02/03, 019: fixed input bytes including invalid UTF-8, complete expected JSON, Frontmatter and side-effect schemas, and two isolated setups each passed; skip/continue counts, Diagnostic, report, side-effect and input corruption rejected |
 | Trace fixtures (2026-09-11) | SINGLE-020, 021, 023, 024, 025, 026: fixed YAML/decoded Frontmatter pairs, complete expected JSON, read-only snapshots and two isolated setups each passed; duplicate diagnostics, wrong primary/count/severity/source, input repair and additional causes rejected |
@@ -25,7 +25,7 @@
 | Initial fixtures | SINGLE-001, 002, 003, 004-01/02, 005-01/02, 006-01/02: manifest/result/side-effect schemas and reviewed input checks passed; two isolated setups each matched fixed before snapshots |
 | Command preconditions | Absent explicit executable / absent cwd isolated; /bin/true executable prerequisite checked without running commands; extra or missing causes rejected by regression tests |
 | Target vectors (2026-09-08) | 18 basic combinations + 7 supplementary cases; four ordered sets, input-order invariance and rejection regression checks passed |
-| Relative links | 223 references in current contracts and accepted ADRs（2026-09-17時点）; no missing target/anchor |
+| Relative links | 230 references in current contracts and accepted ADRs（2026-09-17時点）; no missing target/anchor |
 | Git infrastructure | unborn, clean, worktree, staged, rename, delete, create; two identical setups per vector |
 | Snapshot comparison | Content, executable bit, symlink target changes detected; unsafe path traversal rejected |
 | Process helpers | Exit 0/7, SIGTERM, timeout, descendant pipe holding; isolated process groups cleaned up within bounded tests |
@@ -558,3 +558,17 @@ SINGLE-127-15〜19は、偽Gitの配置、`consumer` runnerのargv、CPython 3.1
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `23f787eb283aa4fe0f877ac020ceb070fa6b116282a2046bbd1cd079eca47c8c`。
 Coreは実行していない。SINGLE-127-15〜19、連合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。
+
+## 2026-09-17: 適合harness外部仕様の裁定と実行環境・配布物
+
+準備済み250/310、残り60件（すべて連合）。提案27とADR-046で、検査対象の受取り（source／wheelと`uv`隔離環境）、
+`invocation.python`、`invocation.gitVersion`とGit shim、`bitz.compat`によるconsumer／migration runner、
+harness側の`runner: package`を裁定し、適合fixture仕様、実行環境契約 §4（`git --version`による版取得）、
+実装計画のGate C（全matrixを3.11と基準環境で通す）、manifest Schemaへ反映した。
+Diagnostic台帳は実行環境契約のhashだけを再レビュー後に更新した。
+SINGLE-127-15〜19を追加し、Git版と下限CPythonを規範本文から読み取ってmanifestと照合した。
+統合検証へ、bitz以外のrunnerの期待結果が`{"outcome": ...}`だけであることの検査を加えた。
+各fixtureを2回の隔離setupで照合した。shim生成、`uv`環境構築、package検査の実行部は未作成である。
+同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
+Report SHA-256: `08eda7ecd76069a296e42d1a429a81f22cccfcb16a1f529cdf5de790b3fdaba8`。
+Coreは実行していない。連合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。

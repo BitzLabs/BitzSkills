@@ -59,6 +59,7 @@ from conformance import presentation_fixtures
 from conformance import target_root_fixtures
 from conformance import expansion_fixtures
 from conformance import ordering_fixtures
+from conformance import environment_fixtures
 from conformance import target_vectors
 
 
@@ -195,6 +196,48 @@ class AuditTests(unittest.TestCase):
                          [None, "b"])
         payload = json.loads(ordering_fixtures.canonical("SINGLE-122").decode())
         self.assertEqual([c["name"] for c in payload["settings"]["commands"]], ["default", "other"])
+
+    def test_environment_fixtures(self):
+        result = environment_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(environment_fixtures.CASES))
+
+    def test_environment_audit_rejects_wrong_versions_and_mixed_causes(self):
+        mutations = [
+            # 下限未満は下限の直前、下限は同じ版でなければならない。
+            ("SINGLE-127-15", "manifest.json", lambda v: v["invocation"].update(gitVersion="2.30.0")),
+            ("SINGLE-127-16", "manifest.json", lambda v: v["invocation"].update(gitVersion="2.31.0")),
+            ("SINGLE-127-15", "expected/doctor.json", lambda v: v.update(diagnostics=[])),
+            ("SINGLE-127-19", "manifest.json", lambda v: v["invocation"].update(python="3.12")),
+            ("SINGLE-127-17", "expected/package.json", lambda v: v.update(outcome="rejected")),
+            ("SINGLE-127-18", "manifest.json", lambda v: v["invocation"].update(argv=["metadata"])),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                result = environment_fixtures.validate(root, {identifier})
+                self.assertEqual(result["status"], "Failed")
+
+    def test_manifest_schema_limits_harness_fields(self):
+        validator = Draft202012Validator(json.loads((audit.FIXTURES / "manifest.schema.json").read_text()))
+        base = json.loads((audit.FIXTURES / "single/SINGLE-127-15/manifest.json").read_text())
+        validator.validate(base)
+        invalid = [
+            dict(base, invocation=dict(base["invocation"], env={"PATH": "/usr/bin"})),
+            dict(base, invocation=dict(base["invocation"], gitVersion="2.30")),
+            dict(base, invocation=dict(base["invocation"], python="3.11.4")),
+        ]
+        package = json.loads((audit.FIXTURES / "single/SINGLE-127-17/manifest.json").read_text())
+        validator.validate(package)
+        invalid.append(dict(package, invocation=dict(package["invocation"], python="3.11")))
+        for manifest in invalid:
+            with self.subTest(invocation=manifest["invocation"]):
+                self.assertFalse(validator.is_valid(manifest))
 
     def test_verify_task_root_does_not_follow_requires(self):
         """関係・トレースモデル §6.3: verifyだけが起点TASKのrequires先を辿らない。"""

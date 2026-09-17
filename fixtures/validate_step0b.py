@@ -54,6 +54,7 @@ from conformance.presentation_fixtures import validate as validate_presentation_
 from conformance.target_root_fixtures import validate as validate_target_root_fixtures
 from conformance.expansion_fixtures import validate as validate_expansion_fixtures
 from conformance.ordering_fixtures import validate as validate_ordering_fixtures
+from conformance.environment_fixtures import validate as validate_environment_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -181,6 +182,12 @@ def matrix():
                             or result["status"] != manifest["expect"].get("status")
                             or status_exit[result["status"]] != manifest["expect"]["exitCode"]):
                         errors.append(f"{path}: manifest/result operation, status or exit code mismatch")
+                elif key == "resultFile":
+                    # bitz以外のrunnerの標準出力はoutcomeだけを持つobjectである（ADR-046）。
+                    outcome = manifest["expect"]["outcome"]
+                    if (json.loads(expected.read_text()) != {"outcome": outcome}
+                            or manifest["expect"]["exitCode"] != (1 if outcome == "rejected" else 0)):
+                        errors.append(f"{path}: outcomeの出力または終了コードが規定と異なります")
             for _, expected_ir in parser_expectations.files(path.parent, manifest):
                 value = json.loads(expected_ir.read_text())
                 if not isinstance(value, list):
@@ -246,6 +253,7 @@ def main():
     checks["target_root_fixtures"] = validate_target_root_fixtures()
     checks["expansion_fixtures"] = validate_expansion_fixtures()
     checks["ordering_fixtures"] = validate_ordering_fixtures()
+    checks["environment_fixtures"] = validate_environment_fixtures()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_step0p.py")], capture_output=True, text=True, timeout=60)
     checks["step0p"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
     helpers = subprocess.run([sys.executable, "-B", str(FIXTURES / "test_harness.py")], capture_output=True, text=True, timeout=30)
