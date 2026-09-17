@@ -494,3 +494,17 @@ JSON Schemaの`uniqueItems`では検出できないcovers順だけの重複を�
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `0fff1aa3a4d4ca4b2bbc3e21ac59549a39bc0b5f516ee2cf8a3eaa72ca155bc0`。
 Coreは実行していない。残りの適合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。
+
+## 2026-09-17: Core副作用
+
+準備済み210/311、残り101件。SINGLE-125-01〜05を追加した。source fixture（042、001、070-01、055、071-01）と
+同じ起動・入力を使い、期待結果fileはsourceとbyte一致させた。125-01〜04は`.spec/reports/`を置かないread-only、
+HOME／cache／tempは空で固定し、125-04は書込みなしcommand `/bin/true`に限定した。125-05は最終report 1件、
+一時file残存0件、既存report不変を要求する。各fixtureを2回の隔離setupで照合した。
+回帰試験は書込み許容、外部treeの事前汚染、report要求・件数・policyの改変、追加環境変数、
+report directoryの追加、書込みcommandへの置換を拒否する。
+SINGLE-125-06は、時刻固定も障害注入もできないfixture形式では、SINGLE-072と異なる排他的作成失敗を
+決定論的に起こせないため保留した。
+同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
+Report SHA-256: `09eb848bfd50680e20ed3fa13eb6f0c4b860281810957f182eff436b8b23e457`。
+Coreは実行していない。SINGLE-125-06、残りの適合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。

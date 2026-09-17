@@ -125,3 +125,8 @@ SINGLE-118-02/03 and 120-01/02 remain outstanding. Current preparation: 201/311;
 
 Frontmatter境界の追補として、SINGLE-118-02／03（test要素のkey tuple重複判定）と120-01／02（`changes`空・省略TASKの
 明示TASK check）を加え、matrixの114〜120を完了した。準備済みは205/311、残りは106件である。
+
+[Core副作用fixture](single/side-effect-review.md)として、SINGLE-125-01〜05を加えた。監査済みsource fixtureと
+同じ起動・入力・期待結果を使い、context、doctor、reportなしcheck、書込みなしverifyでは`.spec/reports/`を置かずに
+書込み0件を、明示report付きcheckでは最終report 1件だけと一時file残存0件を固定する。
+SINGLE-125-06は発生条件の裁定待ちである。準備済みは210/311、残りは101件である。

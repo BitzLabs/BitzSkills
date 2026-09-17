@@ -346,6 +346,53 @@ class AuditTests(unittest.TestCase):
             path.write_text(json.dumps(value))
             self.assertTrue(boundaries.validate(root, [identifier])["errors"])
 
+    def test_side_effect_evidence(self):
+        from conformance import side_effect_fixtures as effects
+        report = effects.validate()
+        self.assertEqual(report["errors"], [])
+        self.assertEqual(len(report["prepared"]), 5)
+        self.assertEqual(report["core_execution"], "Not run")
+
+        def fixture_root(temporary, identifier):
+            # source fixtureとの一致を検査するため、sourceも一緒にcopyする。
+            root = self.copy_fixture(temporary, identifier)
+            source = effects.CASES[identifier][0]
+            shutil.copytree(audit.FIXTURES / "single" / source, root / "single" / source)
+            return root
+
+        mutations = [
+            # 書込みの許容、外部treeの事前汚染、report要求の追加、件数改変を拒否する。
+            ("SINGLE-125-01", "side-effects.json", lambda v: v["after"]["cache"].update(index={"kind": "directory"})),
+            ("SINGLE-125-02", "side-effects.json", lambda v: [v[k]["home"].update(lock={"kind": "directory"}) for k in ("before", "after")]),
+            ("SINGLE-125-03", "manifest.json", lambda v: v["invocation"]["argv"].append("--report")),
+            ("SINGLE-125-03", "manifest.json", lambda v: v["expect"].update(reportFileCount=1)),
+            ("SINGLE-125-04", "manifest.json", lambda v: v["invocation"]["env"].update(HOME="/tmp")),
+            ("SINGLE-125-04", "expected/verify.json", lambda v: v.update(status="failed")),
+            ("SINGLE-125-05", "side-effects.json", lambda v: v["report"].update(temporaryFilesRemaining=1)),
+            ("SINGLE-125-05", "side-effects.json", lambda v: v["report"].update(createdCount=2)),
+            ("SINGLE-125-05", "side-effects.json", lambda v: v.update(policy="read-only")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = fixture_root(temporary, identifier)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
+                self.assertTrue(effects.validate(root, [identifier])["errors"])
+        # read-only caseへreport directoryを置く改変、verify commandを書込みcommandへ替える改変を拒否する。
+        for identifier, name, content in [
+                ("SINGLE-125-03", ".spec/reports/existing.json", b"{}\n"),
+                ("SINGLE-125-04", ".spec/bitz.yaml", None)]:
+            with self.subTest(identifier=identifier, name=name), tempfile.TemporaryDirectory() as temporary:
+                root = fixture_root(temporary, identifier)
+                for base in (root / "single" / identifier / "repo", root / "single" / effects.CASES[identifier][0] / "repo"):
+                    path = base / name
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    if content is None:
+                        path.write_bytes(path.read_bytes().replace(b'"/bin/true"', b'"/usr/bin/touch"'))
+                    else:
+                        path.write_bytes(content)
+                self.assertTrue(effects.validate(root, [identifier])["errors"])
+
     def test_frontmatter_fixtures(self):
         result = frontmatter_fixtures.validate()
         self.assertEqual(result["errors"], [])
