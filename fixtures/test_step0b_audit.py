@@ -290,6 +290,36 @@ class AuditTests(unittest.TestCase):
             shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
         return root
 
+    def test_frontmatter_boundary_evidence(self):
+        from conformance import frontmatter_boundary_fixtures as boundaries
+        report = boundaries.validate()
+        self.assertEqual(report["errors"], [])
+        self.assertEqual(len(report["prepared"]), 20)
+        self.assertEqual(report["core_execution"], "Not run")
+        mutations = [
+            ("SINGLE-116-01", "expected/check.json", lambda v: v.update(status="failed")),
+            ("SINGLE-116-02", "expected/check.json", lambda v: v.update(checkedDocumentCount=1)),
+            ("SINGLE-115-04", "expected/check.json", lambda v: v.update(checkedStatementCount=1)),
+            ("SINGLE-117-01", "expected/check.json", lambda v: v["diagnostics"][0].update(code="SPEC-FM-SCHEMA-001")),
+            ("SINGLE-120-04", "expected/check.json", lambda v: v["diagnostics"].append(v["diagnostics"][0])),
+            ("SINGLE-119-03", "expected/check.json", lambda v: v["diagnostics"].clear()),
+            ("SINGLE-119-04", "side-effects.json", lambda v: v["after"].update(cache={"index": {"kind": "directory"}})),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                shutil.copy2(audit.FIXTURES / "frontmatter.schema.json", root)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
+                self.assertTrue(boundaries.validate(root, [identifier])["errors"])
+        with tempfile.TemporaryDirectory() as temporary:
+            identifier = "SINGLE-116-02"
+            root = self.copy_fixture(temporary, identifier)
+            shutil.copy2(audit.FIXTURES / "frontmatter.schema.json", root)
+            path = root / "single" / identifier / "repo" / boundaries.spec_path(identifier)
+            path.write_text(path.read_text().replace("界" * 121, "界" * 120))
+            self.assertTrue(boundaries.validate(root, [identifier])["errors"])
+
     def test_frontmatter_fixtures(self):
         result = frontmatter_fixtures.validate()
         self.assertEqual(result["errors"], [])

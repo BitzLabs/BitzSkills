@@ -89,9 +89,9 @@ generator、helper、harnessへ落とし込み、fresh checkoutから再現で�
 
 部分検証の入口は`uv run fixtures/validate_step0b.py`。公開JSON、grammar参照、link、Git setup、process helper、
 副作用比較の自己試験、Step 0-P、Diagnostic意味網羅の対応台帳検証、target期待集合25ケースを統合済みである。
-適合fixture 311件中、導入・設定9件、EARS-AI構文・候補抽出・拡張12件、文書構造・UTF-8 9件、関係・path・coverage 6件、ID重複・循環4件、Git基準版・保護対象外変更10件、TASK境界3件、Git対象選択・影響候補4件、Git基準版エラー・Git不在3件、Context非成功6件、Context Digest 6件、expand反復2件、stale・expand・閉包上限・提示上限・implement coverage 6件、verify実行・事前block 6件、verify binding共有3件、verify process終了3件、verify出力抜粋2件、文書単位binding 1件、done TASK起点1件、report非作成4件、引数不正15件、report作成・保存失敗・JSON併用6件、text出力・制御文字・診断順序4件、BOM・Frontmatter 11件、寸法上限・未知entry 7件、registry閉包7件、Scanner・位置16件、既定表示・revision 8件、理由付きSHOULD・full projection・Digest version 3件、escape・normative projection 2件、quoted extension 1件、code span 1件は入力・期待JSON・副作用期待値を作成し、隔離setupの2回一致を検証した。matrix §6.5「contextとDigest」と§6.6「verify」は全32件を完了した。§6.8「上限」6件と§6.9「Diagnostic registry閉包」19件も完了した。
+適合fixture 311件中、導入・設定9件、EARS-AI構文・候補抽出・拡張12件、文書構造・UTF-8 9件、関係・path・coverage 6件、ID重複・循環4件、Git基準版・保護対象外変更10件、TASK境界3件、Git対象選択・影響候補4件、Git基準版エラー・Git不在3件、Context非成功6件、Context Digest 6件、expand反復2件、stale・expand・閉包上限・提示上限・implement coverage 6件、verify実行・事前block 6件、verify binding共有3件、verify process終了3件、verify出力抜粋2件、文書単位binding 1件、done TASK起点1件、report非作成4件、引数不正15件、report作成・保存失敗・JSON併用6件、text出力・制御文字・診断順序4件、BOM・Frontmatter 11件、寸法上限・未知entry 7件、registry閉包7件、Scanner・位置16件、既定表示・revision 8件、理由付きSHOULD・full projection・Digest version 3件、escape・normative projection 2件、quoted extension 1件、code span 1件、Frontmatter境界20件は入力・期待JSON・副作用期待値を作成し、隔離setupの2回一致を検証した。matrix §6.5「contextとDigest」と§6.6「verify」は全32件を完了した。§6.8「上限」6件と§6.9「Diagnostic registry閉包」19件も完了した。
 単一workspaceのgolden Canonical JSONとContext Digestは`SINGLE-042`が所有し、独立に記述した2系統のreference計算がbyte一致することを検証した。
-残130件の適合fixture、連合golden Context Digest（`MONO-002-01`）、残fixtureの副作用期待値は未完了であり、全Gate A検証の完了は宣言しない。
+残110件の適合fixture、連合golden Context Digest（`MONO-002-01`）、残fixtureの副作用期待値は未完了であり、全Gate A検証の完了は宣言しない。
 
 このStepで実装してよいのはSchema検証、fixture generator、reference計算、grammar検査、matrix検査、
 process用test helper、副作用比較harness、独立cross-checkである。`doctor`、`context`、`check`、`verify`、

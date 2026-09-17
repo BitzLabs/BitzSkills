@@ -117,3 +117,8 @@ SINGLE-104-01 follows the Markdown presentation decided in proposal 26 and now f
 `markdown_reference.py` renders that contract from a reviewed result, and the audit compares the committed
 Bundle against it while checking the section order, untouched bodies and the absence of a duration token.
 Current preparation: 174/311; 137 remain.
+
+[Frontmatter boundary fixtures](single/frontmatter-boundary-review.md) add twenty definition, title-length,
+required/null, empty/duplicate array, unknown-key, `x-` extension and REQ `changes` cases. Each field is written
+as a JSON flow value, decoded independently and checked against `frontmatter.schema.json`.
+SINGLE-118-02/03 and 120-01/02 remain outstanding. Current preparation: 201/311; 110 remain.
