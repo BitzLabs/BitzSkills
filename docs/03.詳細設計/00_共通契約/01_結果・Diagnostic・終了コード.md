@@ -50,14 +50,14 @@ Core 1.0 producerはSchemaにないfieldを出力しない。consumerは同じma
 
 | operation | variant | 必須の識別・操作field |
 |---|---|---|
-| context | workspace-local | `workspace`、`purpose`、`roots`、`contextDigest`、`revision`、`resolution`、`projection`、`documents`、`constraintLedger`、`coverage`。複合workspace固有field禁止 |
-| context | workspace-federated | localと同じfieldに加え`documents[].workspaceId`、`resolution.workspaces`、`resolution.crossWorkspaceEdges` |
-| check | workspace | `workspace`、`scope`、`revision`。`changed`は`selection`、`selected`／`full`は2つのchecked count |
-| check | federation | `multiWorkspace`、`workspaces`、`scope: all-workspaces`、`revision` |
-| verify | workspace | `workspace`、`scope`、`targetResults`、`commands`、`revision` |
-| verify | federation | `multiWorkspace`、`workspaces`、`scope: all-workspaces`、`revision` |
-| doctor | workspace | `workspace`、`core`、`checks` |
-| doctor | federation | `multiWorkspace`、`workspaces`、`core`、`checks` |
+| context | 単一workspace | `workspace`、`purpose`、`roots`、`contextDigest`、`revision`、`resolution`、`projection`、`documents`、`constraintLedger`、`coverage`。複合workspace固有field禁止 |
+| context | 複合workspace内 | localと同じfieldに加え`documents[].workspaceId`、`resolution.workspaces`、`resolution.crossWorkspaceEdges` |
+| check | workspace単独 | `workspace`、`scope`、`revision`。`changed`は`selection`、`selected`／`full`は2つのchecked count |
+| check | 複合workspace全体 | `multiWorkspace`、`workspaces`、`scope: all-workspaces`、`revision` |
+| verify | workspace単独 | `workspace`、`scope`、`targetResults`、`commands`、`revision` |
+| verify | 複合workspace全体 | `multiWorkspace`、`workspaces`、`scope: all-workspaces`、`revision` |
+| doctor | workspace単独 | `workspace`、`core`、`checks` |
+| doctor | 複合workspace全体 | `multiWorkspace`、`workspaces`、`core`、`checks` |
 
 `contextDigest`は完全Contextを構成できない場合だけnullとする。`revision`の規則は次のとおりである。
 
@@ -247,7 +247,7 @@ owner workspaceの`commands[]`へ1件だけ置く。最上位へ操作固有件�
 }
 ```
 
-全体事前検査がroot設定の構文、型、ID不正で停止し、有効なfederation IDを構成できない場合だけ、
+全体事前検査がroot設定の構文、型、ID不正で停止し、有効なroot workspace IDを構成できない場合だけ、
 `multiWorkspace`を`{"id": null, "path": "."}`、`workspaces`を空配列にする。その他の全体結果の`multiWorkspace.id`は
 有効な文字列とする。不正なraw IDを結果同一性へ転記しない。
 
@@ -433,8 +433,8 @@ ASCII表記へ置換する。LFは`\u000a`、TABは`\u0009`、ESCは`\u001b`と�
 | check／`all-workspaces` | 全`workspaces[].checkedDocumentCount`の和 |
 | verify／`selected`、`all` | `targetResults.length` |
 | verify／`all-workspaces` | 全`workspaces[].targetResults.length`の和 |
-| doctor workspace | `checks.length` |
-| doctor federation | 最上位`checks.length`と全`workspaces[].checks.length`の和 |
+| doctor workspace単独 | `checks.length` |
+| doctor 複合workspace全体 | 最上位`checks.length`と全`workspaces[].checks.length`の和 |
 
 `diagnostics`は結果treeに実在するDiagnosticの総数である。最上位`diagnostics`、全`workspaces[].diagnostics`、
 全`targetResults[].diagnostics`の長さを合計する。Diagnosticを複製して件数を合わせてはならない。

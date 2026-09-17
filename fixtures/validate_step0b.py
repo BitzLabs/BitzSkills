@@ -258,7 +258,7 @@ def main():
     checks["step0p"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
     helpers = subprocess.run([sys.executable, "-B", str(FIXTURES / "test_harness.py")], capture_output=True, text=True, timeout=30)
     checks["infrastructure_self_tests"] = {"status": "Passed" if helpers.returncode == 0 else "Failed", "errors": [] if helpers.returncode == 0 else [helpers.stderr]}
-    audit_tests = subprocess.run([sys.executable, "-B", str(ROOT / "fixtures/test_step0b_audit.py")], capture_output=True, text=True, timeout=30)
+    audit_tests = subprocess.run([sys.executable, "-B", str(ROOT / "fixtures/test_step0b_audit.py")], capture_output=True, text=True, timeout=180)
     checks["audit_self_tests"] = {"status": "Passed" if audit_tests.returncode == 0 else "Failed", "errors": [] if audit_tests.returncode == 0 else [audit_tests.stderr]}
     # これらの検査は、構造の検査やhelperの試験では意図して保証しない。
     # 各項目は、実際のreview済みの証拠の検査でだけ置き換える。

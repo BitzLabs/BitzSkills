@@ -20,7 +20,7 @@
 
 ```text
 repository/
-├── .spec/                       # federation root・共通要求
+├── .spec/                       # 複合workspaceのroot・共通要求
 │   └── bitz.yaml
 ├── apps/web/
 │   └── .spec/bitz.yaml          # web member

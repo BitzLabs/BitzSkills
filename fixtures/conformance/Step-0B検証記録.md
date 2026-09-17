@@ -566,3 +566,12 @@ validator reportの値（`pending`の文言を含む）は英語のまま残し�
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `fb0d2efe0a442145d47e47be364a80d45849c0d0af187f4c57769db1ca15e5f5`（統一前と同じ）。
 Coreは実行していない。複合workspaceのfixture、そのgolden Digest、fresh checkoutでのGate A認定は未完了である。
+
+## 2026-09-18: federationの残りの言換え
+
+結果契約の表の種別名と複合workspace仕様の注記に残っていた「federation」を、用語集 §4.7に従って
+単一workspace、複合workspace内、workspace単独、複合workspace全体、root workspace IDへ改めた。
+性能generatorの内部関数名`federation_model`も`multi_workspace_model`へ改めた。台帳の根拠文書hashは再review後に更新した。
+監査試験の子processの時間上限は、試験145件の所要21秒に対し30秒では余裕がないため180秒へ広げた。
+同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
+Report SHA-256: `fb0d2efe0a442145d47e47be364a80d45849c0d0af187f4c57769db1ca15e5f5`（変更前と同じ）。

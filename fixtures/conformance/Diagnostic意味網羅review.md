@@ -153,3 +153,12 @@ Schema表の型名、code block、inline code、Diagnostic code、condition ID�
 
 - 文言統一のみで、規範の変更はない。119条件・14論点群の対応に変更はない。
 - 上記を確認したうえで、台帳とtarget vectorが固定する根拠文書のhashを更新した。
+
+## 2026-09-18の再review（federationの残りの言換え）
+
+用語集 §4.7に従い、結果契約の表の種別名（`workspace-local`、`workspace-federated`、`workspace`、`federation`）を
+単一workspace、複合workspace内、workspace単独、複合workspace全体へ改め、複合workspace仕様の構成図の注記と、
+`multiWorkspace.id`の説明に残っていた「federation ID」をroot workspace IDへ直した。
+
+- 文言統一のみで、規範の変更はない。119条件・14論点群の対応に変更はない。
+- 上記を確認したうえで、台帳が固定する根拠文書のhashを更新した。

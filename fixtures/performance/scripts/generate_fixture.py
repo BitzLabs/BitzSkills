@@ -46,7 +46,7 @@ def single_model(manifest: dict) -> tuple[list[str], dict[tuple[str, int], int],
     return workspace_ids, statement_counts, relations
 
 
-def federation_model(manifest: dict) -> tuple[list[str], dict[tuple[str, int], int], dict[tuple[str, int], list[str]]]:
+def multi_workspace_model(manifest: dict) -> tuple[list[str], dict[tuple[str, int], int], dict[tuple[str, int], list[str]]]:
     workspace_ids = ["root"] + [f"ws{number:02d}" for number in range(1, 20)]
     statement_counts = {(workspace_id, number): 1 for workspace_id in workspace_ids for number in range(1, 51)}
     relations: dict[tuple[str, int], list[str]] = defaultdict(list)
@@ -163,7 +163,7 @@ def write_tree(root: Path, manifest: dict) -> tuple[dict, dict[tuple[str, int], 
     if kind == "single":
         workspace_ids, statement_counts, relations = single_model(manifest)
     elif kind == "multiWorkspace":
-        workspace_ids, statement_counts, relations = federation_model(manifest)
+        workspace_ids, statement_counts, relations = multi_workspace_model(manifest)
     else:
         raise ValueError(f"未対応の種別です: {kind}")
 

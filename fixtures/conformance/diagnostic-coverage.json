@@ -9,7 +9,7 @@
     "docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md": "2adf0555e7220e7e6b5b4ffb4193a35a405c2308773d20d923e8c509f0793d9f",
     "docs/03.詳細設計/02_SPECモデル/03_文書種別・本文template.md": "dbb8555e4b87e13feaf17c0f5a05097613c2ba40274f2b3f781d7af5578c380f",
     "docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md": "efbbbcc39710aa8a8f942e63e06aaa2dd6c8c43c06b0d8a11930c469667113f6",
-    "docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md": "645235672e91f5564f044090e4a5b491356376f0bd7df5aa633142b5cf77fea1",
+    "docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md": "659471be4d599468b986b5c2f7c05d8921132d16bc2dfb8387847c36bc6899c7",
     "docs/03.詳細設計/03_操作仕様/01_context.md": "096f16c7d575e9aa104a2b3d01f9a6da151ea7668a6ff3ab1acccbac80df7b4f",
     "docs/03.詳細設計/03_操作仕様/02_check.md": "c3278109c0ca6fe0bb08b27d6f8ff386239ef142b6490dab57f8a3d38c91896e",
     "docs/03.詳細設計/03_操作仕様/03_verify.md": "4d9426423f828b2a12f27402ee6a2a27f7348ad61c2ace296b850a89ae96def4",
@@ -18,7 +18,7 @@
     "docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md": "852a3512a841766262ca32cd620e8c7ef3b9589b3efadaa9334ee5622b16fdfb",
     "docs/03.詳細設計/01_EARS-AI/02_適合性・移行仕様.md": "37f4f8ba9ea1db12c0f4a94c68b09bb42cad3009a24a8310215126b122496543",
     "docs/03.詳細設計/01_EARS-AI/03_例・アンチパターン.md": "f1fe362cc97666e1b81368f6669d1fc3b7650499aa1bd1b6a06ef3f320c96e75",
-    "docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md": "c02197aa090821f74525be68b6c2c23e1c9affae63141bdfba0a2187deb9d0a3"
+    "docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md": "263b7fa26282247d535a42d46087e2e20e3a6228b64ed93136a0e3660eaf7195"
   },
   "groups": [
     {
