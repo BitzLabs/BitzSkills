@@ -1,6 +1,6 @@
 # Core副作用fixtureレビュー
 
-2026-09-17。SINGLE-125-01〜05の5件を追加する。SINGLE-125-06は発生条件が未確定のため含めない（後述）。
+2026-09-17。SINGLE-125-01〜06の6件を追加する。SINGLE-125-06は発生条件を確定してから追加した（後述）。
 根拠は[適合fixture仕様 §5](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#5-副作用の検査)、
 [安全な入出力 §2](../../../docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md#2-読取りと書込み)、
 [結果・Diagnostic・終了コード §8](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#8-report)である。
@@ -12,6 +12,7 @@
 | SINGLE-125-03 | SINGLE-070-01 | `check --full --base HEAD --format json` | passed／0 | read-only |
 | SINGLE-125-04 | SINGLE-055 | `verify REQ-001 --format json` | passed／0 | read-only |
 | SINGLE-125-05 | SINGLE-071-01 | `check --full --base HEAD --format json --report` | passed／0 | explicit-report（1件） |
+| SINGLE-125-06 | SINGLE-072 | `check --full --base HEAD --format json --report` | error／3 | read-only（保存失敗） |
 
 各caseは、別moduleで監査済みのsource fixtureと同じ起動・入力・期待結果を使う。manifestは`fixtureId`と
 `description`だけを差し替え、期待結果fileはsourceとbyte一致させる。副作用の観点で結果を変えないためである。
@@ -32,10 +33,17 @@ auditは各fixtureを隔離repositoryへ2回setupし、固定snapshotと相互�
 read-only caseへのreport directory追加、verify commandの書込みcommandへの置換をいずれも拒否する。
 Core、process runner、report writerは実装しない。実際の書込み有無はGate Bで受け入れる。
 
-## SINGLE-125-06を保留する理由
+## SINGLE-125-06: symlinkのreport directory
 
-matrixの条件は「reportの排他的作成失敗」「既存file不変、一時file残存0件」である。
-fixture形式で固定できるのはfileとsymlinkの配置だけで、時刻の固定や障害注入はできない。
-report名は生成時刻を含むため、既存fileとの名前衝突を決定論的に起こせない。
-仕様上一意に失敗させられる入力は「`.spec/reports`の位置に通常fileがある」だけだが、これはSINGLE-072と同一になる。
-発生条件の裁定後に、同じ変更で唯一の期待fileを追加する。
+matrixの当初条件は「reportの排他的作成失敗」だった。fixture形式では時刻の固定も障害注入もできず、
+同一秒の名前衝突は連番で回避されるため、名前衝突では失敗しない。仕様だけで一意に失敗させられる入力は
+「`.spec/reports`の位置に通常file」だけで、SINGLE-072と同一になる。
+そこで2026-09-17に、`.spec`または`.spec/reports`がsymlinkなら解決せず保存失敗とする規定を
+結果・Diagnostic・終了コード §8へ追加し、matrixの条件をこの入力へ具体化した。
+
+入力はSINGLE-072と同じcorpusで、`.spec/reports`の通常fileを`../report-store`へのsymlinkに替え、
+`report-store/existing.json`（既存report）を置く。起動と期待結果はSINGLE-072とbyte一致し、
+失敗check由来の元Diagnosticに`SPEC-REPORT-WRITE-001`が続く。副作用はread-onlyで、symlink自体、
+symlink先のdirectoryと既存reportがすべて不変であり、symlink先へ一時fileもreportも作らないことを固定する。
+回帰試験では、symlink先への新規file許容、symlinkを通常directoryとする期待、report 1件の許容、
+期待statusの改変を拒否する。

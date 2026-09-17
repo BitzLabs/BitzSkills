@@ -74,3 +74,15 @@ check/doctorの責務をtarget別binding解決へ拡張しない。`{tests}`な�
 - target展開の期待集合25ケースは、参照計算が以前からこの読みを実装しており、期待値の変更は0件である。
   変更は文書側の欠落を埋めるものであり、reviewされた期待に文書を合わせた。
 - 上記を確認したうえで、台帳と`targets/cases.json`が固定する根拠文書hashを更新した。
+
+## 2026-09-17の再レビュー（report directoryのsymlink）
+
+SINGLE-125-06の発生条件を確定するため、結果・Diagnostic・終了コード §8に「`.spec`または`.spec/reports`が
+symlinkなら解決せず保存失敗とする」ことを、workspace・設定仕様 §3に「`.spec/reports`はentry種別にかかわらず
+既知entryとし探索しない」ことを追記した。registryの`REPORT-WRITE`行には、directory以外またはsymlinkの場合を
+含むことを注記した。
+
+- 新規のDiagnostic条件は生じない。既存の`REPORT-WRITE`（`SPEC-REPORT-WRITE-001`、error／error、file、
+  `stop-operation`）が担い、119条件・14論点群の対応に変更はない。
+- `.spec/reports`が通常fileの場合（SINGLE-072）と同じ扱いに揃えるもので、未知entry warningを追加しない。
+- 上記を確認したうえで、台帳が固定する3文書のhashを更新した。

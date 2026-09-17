@@ -45,6 +45,7 @@ Core 1.0は単一workspaceと、1つのGit repository内の明示的なworkspace
 | `.spec/tasks/**/*.md` | TASK | 存在時 |
 | `.spec/reports/*.json` | 結果 | 入力にしない |
 
+`.spec/reports`はentry種別（directory、file、symlink）にかかわらず既知entryとし、探索せず、未知entryとしても扱わない。
 `.spec/`内の未知file/directoryは`SPEC-WORKSPACE-UNKNOWN-001`／warningとする。hidden、一時file、Markdown以外の成果物を暗黙にSPECとして
 読み込まない。
 

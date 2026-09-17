@@ -285,7 +285,7 @@ class AuditTests(unittest.TestCase):
 
     def copy_fixture(self, temporary, identifier):
         root = Path(temporary)
-        shutil.copytree(audit.FIXTURES / "single" / identifier, root / "single" / identifier)
+        shutil.copytree(audit.FIXTURES / "single" / identifier, root / "single" / identifier, symlinks=True)
         for name in ("manifest", "result", "side-effects"):
             shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
         return root
@@ -350,14 +350,14 @@ class AuditTests(unittest.TestCase):
         from conformance import side_effect_fixtures as effects
         report = effects.validate()
         self.assertEqual(report["errors"], [])
-        self.assertEqual(len(report["prepared"]), 5)
+        self.assertEqual(len(report["prepared"]), 6)
         self.assertEqual(report["core_execution"], "Not run")
 
         def fixture_root(temporary, identifier):
             # source fixtureとの一致を検査するため、sourceも一緒にcopyする。
             root = self.copy_fixture(temporary, identifier)
             source = effects.CASES[identifier][0]
-            shutil.copytree(audit.FIXTURES / "single" / source, root / "single" / source)
+            shutil.copytree(audit.FIXTURES / "single" / source, root / "single" / source, symlinks=True)
             return root
 
         mutations = [
@@ -371,6 +371,11 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-125-05", "side-effects.json", lambda v: v["report"].update(temporaryFilesRemaining=1)),
             ("SINGLE-125-05", "side-effects.json", lambda v: v["report"].update(createdCount=2)),
             ("SINGLE-125-05", "side-effects.json", lambda v: v.update(policy="read-only")),
+            # symlinkを辿って書く期待、symlinkを通常directoryとする期待、report作成の許容を拒否する。
+            ("SINGLE-125-06", "side-effects.json", lambda v: v["after"]["repository"].update({"report-store/new.json": v["after"]["repository"]["report-store/existing.json"]})),
+            ("SINGLE-125-06", "side-effects.json", lambda v: [v[k]["repository"].update({".spec/reports": {"kind": "directory"}}) for k in ("before", "after")]),
+            ("SINGLE-125-06", "manifest.json", lambda v: v["expect"].update(reportFileCount=1)),
+            ("SINGLE-125-06", "expected/check.json", lambda v: v.update(status="failed")),
         ]
         for identifier, relative, mutate in mutations:
             with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:

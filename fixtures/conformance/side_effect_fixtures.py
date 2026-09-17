@@ -1,18 +1,21 @@
-"""Core副作用fixture（SINGLE-125-01〜05）の審査済み証跡。Coreは実行しない。
+"""Core副作用fixture（SINGLE-125-01〜06）の審査済み証跡。Coreは実行しない。
 
 各caseは、別moduleで監査済みのsource fixtureと同じ入力・起動・期待結果を使い、
 副作用の観点だけを独立に固定する。125-01〜04は`.spec/reports/`自体を置かず、
 Coreがreport directoryや一時fileを暗黙作成しないことをsnapshotで失敗させられるようにする。
 125-05は明示report付きcheckで、最終report 1件だけを許し、一時file残存0件を要求する。
+125-06は`.spec/reports`をrepository内directoryへのsymlinkにし、Coreが解決せず保存失敗とすること、
+symlink先の既存fileを変えず、一時fileを残さないことを固定する。
 """
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
 
 from jsonschema import Draft202012Validator, ValidationError
 
-from . import report_write_fixtures
+from . import report_absent_fixtures, report_write_fixtures
 from .harness import setup
 from .initial_fixtures import observe, compare_state
 
@@ -25,19 +28,39 @@ CASES = {
     "SINGLE-125-03": ("SINGLE-070-01", "check", "reportなしcheckがrepository・HOME・cache・tempへ書き込まない"),
     "SINGLE-125-04": ("SINGLE-055", "verify", "書込みなしcommandのverifyでCoreが何も書き込まない"),
     "SINGLE-125-05": ("SINGLE-071-01", "check", "明示report付きcheckが最終report 1件だけを作り一時fileを残さない"),
+    # 保存失敗の結果はSINGLE-072と同一。失敗させる入力だけをsymlinkへ替える。
+    "SINGLE-125-06": ("SINGLE-072", "check", "symlinkのreport directoryを解決せず保存失敗とし既存fileと一時fileを残さない"),
 }
+# 125-06のsymlink先。repository内に置き、既存reportの不変をsnapshotで検査できるようにする。
+LINK_TARGET = "../report-store"
+STORE_REPORT = "report-store/existing.json"
 # 125-04のtest commandはfileを書かない固定commandに限る。test process自身の副作用と分離するため。
 NO_WRITE_COMMAND = 'argv: ["/bin/true", "{tests}"]'
 
 
 def read_tree(directory):
-    return {p.relative_to(directory).as_posix(): p for p in directory.rglob("*") if p.is_file() or p.is_symlink()}
+    """通常fileはbyte列、symlinkは("symlink", link文字列)で返す。symlinkは辿らない。"""
+    tree = {}
+    for current, directories, files in os.walk(directory):
+        for name in directories + files:
+            path = Path(current) / name
+            if path.is_symlink():
+                tree[path.relative_to(directory).as_posix()] = ("symlink", os.readlink(path))
+            elif path.is_file():
+                tree[path.relative_to(directory).as_posix()] = path.read_bytes()
+    return tree
 
 
 def reviewed_inputs(identifier, root=HERE):
-    """source fixtureの入力。125-01〜04では既存reportとreport directoryを除く。"""
+    """source fixtureの入力。125-01〜04では既存reportとreport directoryを除き、125-06ではsymlinkへ替える。"""
     source = CASES[identifier][0]
-    inputs = {name: path.read_bytes() for name, path in read_tree(root / "single" / source / "repo").items()}
+    inputs = read_tree(root / "single" / source / "repo")
+    if identifier == "SINGLE-125-06":
+        # SINGLE-072の「report位置の通常file」を、directoryへのsymlinkと既存reportへ置き換える。
+        del inputs[REPORT_DIRECTORY]
+        inputs[REPORT_DIRECTORY] = ("symlink", LINK_TARGET)
+        inputs[STORE_REPORT] = report_absent_fixtures.EXISTING_REPORT_BODY
+        return inputs
     if identifier != "SINGLE-125-05":
         inputs = {name: content for name, content in inputs.items()
                   if not name.startswith(REPORT_DIRECTORY + "/")}
@@ -67,6 +90,14 @@ def check_policy(identifier, manifest, effects, inputs):
     if any(effects["before"][name] for name in ("home", "cache", "temporary")):
         raise ValueError("HOME, cache and temp trees must start empty")
     repository = effects["before"]["repository"]
+    if identifier == "SINGLE-125-06":
+        if "--report" not in argv or manifest["expect"]["reportFileCount"] != 0 or effects["policy"] != "read-only":
+            raise ValueError("the failed save must request a report and create nothing")
+        if repository.get(REPORT_DIRECTORY) != {"kind": "symlink", "target": LINK_TARGET}:
+            raise ValueError("the report directory must be a symlink that is not followed")
+        if repository.get("report-store", {}).get("kind") != "directory" or STORE_REPORT not in repository:
+            raise ValueError("the symlink must resolve to an existing directory with a report")
+        return
     if identifier == "SINGLE-125-05":
         if "--report" not in argv or manifest["expect"]["reportFileCount"] != 1:
             raise ValueError("the explicit-report case must request exactly one report")
@@ -105,9 +136,7 @@ def validate(root=HERE, identifiers=None):
             if effects != reviewed_effects(identifier, effects["before"]):
                 raise ValueError("side-effect expectation differs from reviewed policy")
             inputs = reviewed_inputs(identifier, root)
-            files = read_tree(fixture / "repo")
-            if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
-                                                for name, p in files.items()):
+            if read_tree(fixture / "repo") != inputs:
                 raise ValueError("input differs from the audited source corpus")
             if (fixture / "changes").exists():
                 raise ValueError("these cases apply no change files")

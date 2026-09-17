@@ -496,7 +496,7 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-125-03` | reportなしcheckのCore副作用 | check | passed／0 | repository、HOME、cache、tempへの書込み0件 |
 | `SINGLE-125-04` | 書込みなしcommandによるverify | verify | passed／0 | test processを除くCore書込み0件 |
 | `SINGLE-125-05` | 明示report付きcheckのCore副作用 | check --report | passed／0 | 最終report 1件だけ、一時file残存0件 |
-| `SINGLE-125-06` | reportの排他的作成失敗 | check --report | error／3 | 既存file不変、一時file残存0件 |
+| `SINGLE-125-06` | `.spec/reports`がrepository内directoryへのsymlink | check --report | error／3 | `SPEC-REPORT-WRITE-001`、symlink先の既存file不変、一時file残存0件 |
 | `SINGLE-126-01` | argv要素が非string | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |
 | `SINGLE-126-02` | argv[0]が空string | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |
 | `SINGLE-126-03` | argv要素にNUL | verify | error／3 | `SPEC-CONFIG-SCHEMA-001`だけ、spawnなし |

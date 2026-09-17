@@ -149,7 +149,7 @@ priorityが最小の行だけをprimaryとして返す。同じpriorityの候補
 | `VERIFY-SPAWN-ERROR` | verify | `SPEC-VERIFY-COMMAND-001` | error | error | environment | `skip-binding` | 610 | 事前検査通過後のrace、resource不足、OS errorでprocess生成失敗 |
 | `VERIFY-SIGNAL` | verify | `SPEC-VERIFY-COMMAND-001` | error | error | environment | `skip-binding` | 611 | commandがsignal終了 |
 | `VERIFY-TIMEOUT` | verify | `SPEC-VERIFY-TIMEOUT-001` | error | error | environment | `skip-binding` | 612 | command timeout |
-| `REPORT-WRITE` | check, verify | `SPEC-REPORT-WRITE-001` | error | error | file | `stop-operation` | 700 | 明示reportの排他的作成または書込み失敗 |
+| `REPORT-WRITE` | check, verify | `SPEC-REPORT-WRITE-001` | error | error | file | `stop-operation` | 700 | 明示reportの排他的作成または書込み失敗。report directoryがdirectory以外またはsymlinkの場合を含む |
 
 test commandが正常起動して非0で終了した場合はDiagnosticを生成しない。command結果の`termination: exit`と
 非0`exitCode`がtarget、workspace、top-levelを`failed`へ集約する。

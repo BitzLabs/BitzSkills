@@ -1,0 +1,166 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/decisions": {
+        "kind": "directory"
+      },
+      ".spec/decisions/ADR-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "0ca092adfd45d06effdca1c90ed2c2bb0b99e9de61c0f17d6b0f1a824ee00402"
+      },
+      ".spec/reports": {
+        "kind": "symlink",
+        "target": "../report-store"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a39f7fbe79bf00b2e60826a55b4ea5942e3cb78436d2dbfe83150395833d29f2"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8df2ca0a50b76da248e77cb99bed6365d7be5320eb1e309f3c076ba554220136"
+      },
+      "report-store": {
+        "kind": "directory"
+      },
+      "report-store/existing.json": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "93b92ca5577b6881a742c9ec16dc51204e90b4c869577f75be291e7a50b15918"
+      },
+      "src": {
+        "kind": "directory"
+      },
+      "src/auth.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "891db46eb3458220b0b14e13475275304f8091d580143003f669440b4c0102aa"
+      },
+      "src/session.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "47a8c4927771862af2a7dd2d1776e68d6ef06055fa6ef6de596a76b38a6e0303"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_auth.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "13eead6681ce261ab5fc34eb64cab2c8fc9a8d0cd832a862dff27bc6c43597b2"
+      },
+      "tests/test_session.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "b5f76024fd4602d6f06bc31cdface8ff12a70455d0b0e8bb12b6435a40cf3abc"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 cf2e1fa96cd3cf541643dbf6e8a690a148085c43 0\t.spec/bitz.yaml\n100644 8bd435d34e6d3456f83de8fcace436b9c2ad1785 0\t.spec/decisions/ADR-001.md\n120000 ae270fe7599d1fe2735dc2258dda750c072bcb8f 0\t.spec/reports\n100644 4f5f38a6c97828daf281ead771a3d761b5798cd4 0\t.spec/requirements/REQ-001.md\n100644 b9bcf90b43d3804ba051ff63c7559a27c47c2f6d 0\t.spec/technical/TECH-001.md\n100644 282264f72036843d7ef27bfac448bf9f11167cf8 0\treport-store/existing.json\n100644 8642af6ea1b0eaa19fec17d915c3075b68aeb331 0\tsrc/auth.py\n100644 288c4c1c7dc99b08d8bdc182acf2b89b8dc1ee9f 0\tsrc/session.py\n100644 d5b5cf850e89e86989784db5751e3379bb87af09 0\ttests/test_auth.py\n100644 76350e9def174e2d13192a3a487b67da81fc9afa 0\ttests/test_session.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/decisions": {
+        "kind": "directory"
+      },
+      ".spec/decisions/ADR-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "0ca092adfd45d06effdca1c90ed2c2bb0b99e9de61c0f17d6b0f1a824ee00402"
+      },
+      ".spec/reports": {
+        "kind": "symlink",
+        "target": "../report-store"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a39f7fbe79bf00b2e60826a55b4ea5942e3cb78436d2dbfe83150395833d29f2"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8df2ca0a50b76da248e77cb99bed6365d7be5320eb1e309f3c076ba554220136"
+      },
+      "report-store": {
+        "kind": "directory"
+      },
+      "report-store/existing.json": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "93b92ca5577b6881a742c9ec16dc51204e90b4c869577f75be291e7a50b15918"
+      },
+      "src": {
+        "kind": "directory"
+      },
+      "src/auth.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "891db46eb3458220b0b14e13475275304f8091d580143003f669440b4c0102aa"
+      },
+      "src/session.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "47a8c4927771862af2a7dd2d1776e68d6ef06055fa6ef6de596a76b38a6e0303"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_auth.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "13eead6681ce261ab5fc34eb64cab2c8fc9a8d0cd832a862dff27bc6c43597b2"
+      },
+      "tests/test_session.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "b5f76024fd4602d6f06bc31cdface8ff12a70455d0b0e8bb12b6435a40cf3abc"
+      }
+    },
+    "git": {
+      "status": "",
+      "index": "100644 cf2e1fa96cd3cf541643dbf6e8a690a148085c43 0\t.spec/bitz.yaml\n100644 8bd435d34e6d3456f83de8fcace436b9c2ad1785 0\t.spec/decisions/ADR-001.md\n120000 ae270fe7599d1fe2735dc2258dda750c072bcb8f 0\t.spec/reports\n100644 4f5f38a6c97828daf281ead771a3d761b5798cd4 0\t.spec/requirements/REQ-001.md\n100644 b9bcf90b43d3804ba051ff63c7559a27c47c2f6d 0\t.spec/technical/TECH-001.md\n100644 282264f72036843d7ef27bfac448bf9f11167cf8 0\treport-store/existing.json\n100644 8642af6ea1b0eaa19fec17d915c3075b68aeb331 0\tsrc/auth.py\n100644 288c4c1c7dc99b08d8bdc182acf2b89b8dc1ee9f 0\tsrc/session.py\n100644 d5b5cf850e89e86989784db5751e3379bb87af09 0\ttests/test_auth.py\n100644 76350e9def174e2d13192a3a487b67da81fc9afa 0\ttests/test_session.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

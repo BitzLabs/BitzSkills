@@ -130,3 +130,6 @@ Frontmatter境界の追補として、SINGLE-118-02／03（test要素のkey tupl
 同じ起動・入力・期待結果を使い、context、doctor、reportなしcheck、書込みなしverifyでは`.spec/reports/`を置かずに
 書込み0件を、明示report付きcheckでは最終report 1件だけと一時file残存0件を固定する。
 SINGLE-125-06は発生条件の裁定待ちである。準備済みは210/311、残りは101件である。
+
+SINGLE-125-06は、`.spec/reports`をrepository内directoryへのsymlinkにした保存失敗として追加した。
+symlinkを解決せず保存失敗とする規定を結果・Diagnostic・終了コード §8へ追加している。準備済みは211/311、残りは100件である。

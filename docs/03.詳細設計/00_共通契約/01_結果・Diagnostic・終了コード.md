@@ -447,6 +447,8 @@ ASCII表記へ置換する。LFは`\u000a`、TABは`\u0009`、ESCは`\u001b`と�
 `--format json`は標準出力の形式だけを変え、保存を含意しない。引数不正、`context`、`doctor`はreportを保存しない。
 reportは排他的に作成し、既存fileを上書きしない。原子的作成の一時fileは同じreport directoryだけに置き、成功時に
 renameし、失敗時に除去する。操作終了後に一時fileを残さない。
+report directoryはworkspace rootから`lstat`で辿り、`.spec`または`.spec/reports`がsymlinkなら解決せず、
+directory以外のentryと同じく保存失敗とする。symlink先のdirectoryへ一時fileもreportも作らない。
 
 workspace単独reportは対象workspace、全体reportはfederation rootの`.spec/reports/`へ保存する。
 ファイル名は`.spec/reports/<YYYYMMDDTHHMMSSZ>-<operation>[-<sequence>].json`とする。同一秒の衝突は

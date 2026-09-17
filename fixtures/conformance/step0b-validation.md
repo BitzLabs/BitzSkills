@@ -508,3 +508,16 @@ SINGLE-125-06は、時刻固定も障害注入もできないfixture形式では
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `09eb848bfd50680e20ed3fa13eb6f0c4b860281810957f182eff436b8b23e457`。
 Coreは実行していない。SINGLE-125-06、残りの適合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。
+
+## 2026-09-17: report directoryのsymlink（SINGLE-125-06）
+
+準備済み211/311、残り100件。`.spec`または`.spec/reports`がsymlinkなら解決せず保存失敗とする規定を
+結果・Diagnostic・終了コード §8へ、`.spec/reports`をentry種別にかかわらず既知entryとする規定を
+workspace・設定仕様 §3へ追加し、registryの`REPORT-WRITE`行へ注記した。新規条件はなく、
+Diagnostic台帳は3文書のhashだけを再レビュー後に更新した。
+SINGLE-125-06はSINGLE-072と同じ起動・期待結果で、`.spec/reports`を`../report-store`へのsymlinkに替えた。
+symlink、symlink先directory、既存reportの不変をread-only snapshotで固定し、2回の隔離setupで照合した。
+監査の`copy_fixture`はsymlinkをsymlinkのままcopyするよう修正した。
+同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
+Report SHA-256: `6ba25afc010d4f839244d4a2f26f3488703d62d67c8f3e70a2209531e3311b81`。
+Coreは実行していない。残りの適合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。
