@@ -182,7 +182,7 @@
       "additionalProperties": false,
       "required": ["runner", "cwd", "argv", "env"],
       "properties": {
-        "runner": { "enum": ["bitz", "consumer", "migration"] },
+        "runner": { "enum": ["bitz", "consumer", "migration", "package"] },
         "cwd": { "$ref": "#/$defs/repoPath" },
         "argv": {
           "type": "array",
@@ -192,8 +192,28 @@
         "env": {
           "type": "object",
           "additionalProperties": { "type": "string" }
+        },
+        "python": {
+          "description": "runner bitzだけ。起動するCPythonの<major>.<minor>。",
+          "type": "string",
+          "pattern": "^[1-9][0-9]*\\.(?:0|[1-9][0-9]*)$"
+        },
+        "gitVersion": {
+          "description": "runner bitzだけ。Git shimが返す<major>.<minor>.<patch>。env.PATHと同時に指定しない。",
+          "type": "string",
+          "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": { "not": { "properties": { "runner": { "const": "bitz" } } } },
+          "then": { "not": { "anyOf": [{ "required": ["python"] }, { "required": ["gitVersion"] }] } }
+        },
+        {
+          "if": { "required": ["gitVersion"] },
+          "then": { "properties": { "env": { "not": { "required": ["PATH"] } } } }
+        }
+      ]
     },
     "expect": {
       "type": "object",

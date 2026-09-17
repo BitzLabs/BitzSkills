@@ -115,3 +115,13 @@ workspace・設定仕様 §6へ、単一設定fileの64 KiB上限によりtempla
 
 新規のDiagnostic条件は生じない。119条件・14論点群の対応に変更はない。
 上記を確認したうえで、台帳と`targets/cases.json`が固定する根拠文書hashを更新した。
+
+## 2026-09-17の再レビュー（Git版の取得方法）
+
+ADR-046に従い、Core実行環境・CLI基盤契約 §4へ、Gitの版を`git --version`の出力1行目から解析し、非0終了や
+解析できない出力を実行不能として扱うことを追記した。下限未満・PATH解決不能・実行不能をGit不在とする既存の
+縮退契約へ入力を1つ明示しただけで、単一workspaceの`SPEC-DOCTOR-GIT-001`／warning、連合の
+`SPEC-MONOREPO-GIT-001`／blockedの条件と継続単位は変わらない。
+
+- 新規のDiagnostic条件は生じない。119条件・14論点群の対応に変更はない。
+- 上記を確認したうえで、台帳が固定するCore実行環境・CLI基盤契約のhashを更新した。

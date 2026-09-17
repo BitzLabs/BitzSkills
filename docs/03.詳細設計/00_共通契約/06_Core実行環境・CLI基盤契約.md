@@ -25,6 +25,9 @@ Coreは値をSchemaへ渡す前に、custom tag、anchor、alias、merge key、�
 ## 4. Git
 
 Gitは2.30以上を対象とし、CLI実行体をargvで直接起動する。shell、libgit2 binding、Git機能の独自再実装を使用しない。
+Gitの版は`git --version`を起動し、標準出力1行目を`git version <major>.<minor>[.<残り>]`として解析する。
+majorとminorはASCII数字だけの十進整数として数値比較し、`<残り>`は比較に使わない。非0終了または解析できない出力は
+実行不能として扱う。
 下限未満、PATHから解決不能、または実行不能なGitはGit不在として共通の縮退契約を適用する。連合操作では
 `SPEC-MONOREPO-GIT-001`／blockedとする。Coreの通常操作はnetworkへ接続せず、Gitにもnetwork操作を要求しない。
 

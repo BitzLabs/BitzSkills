@@ -91,12 +91,14 @@ fixture IDは`SINGLE-NNN`または`MONO-NNN`をcase familyとし、分割が必�
 | `setup.git` | Yes | Git repositoryを作るか。`false`はGit不在fixture |
 | `setup.baseCommit` | No | 基準版commitの作り方。省略時はcommitを作らない |
 | `setup.operations` | Yes | base commit後に順番に適用する操作。0件でも配列を置く |
-| `invocation.runner` | Yes | `bitz`、`consumer`、`migration`のいずれか |
+| `invocation.runner` | Yes | `bitz`、`consumer`、`migration`、`package`のいずれか |
 | `invocation.cwd` | Yes | `repo/`相対の実行directory |
 | `invocation.argv` | Yes | 選択したrunnerへ渡す引数列。`bitz`では`bitz`に続く引数。shellを介さない |
 | `invocation.env` | Yes | 追加環境変数。0件でもkeyを置く |
+| `invocation.python` | No | `bitz`だけ。起動するCPythonの`<major>.<minor>`。§3.4 |
+| `invocation.gitVersion` | No | `bitz`だけ。Git shimが返す`<major>.<minor>.<patch>`。§3.4 |
 | `expect.status` | No | 共通結果を返すinvocationでは必須。引数不正で共通結果を返さない場合だけ省略 |
-| `expect.outcome` | No | `consumer`と`migration`だけで必須。`accepted`、`rejected`、`passed`のいずれか |
+| `expect.outcome` | No | `consumer`、`migration`、`package`だけで必須。`accepted`、`rejected`、`passed`のいずれか |
 | `expect.exitCode` | Yes | 期待終了コード |
 | `expect.stdout` | Yes | `json`、`text`、`markdown`、`none`のいずれか |
 | `expect.resultFile` | No | 期待JSON。`stdout: none`では持たない |
@@ -104,9 +106,20 @@ fixture IDは`SINGLE-NNN`または`MONO-NNN`をcase familyとし、分割が必�
 | `expect.reportFileCount` | Yes | 実行後に`.spec/reports/`へ増える件数 |
 | `parserChecks` | No | §4.1の内部Parser受入。`path`と`resultFile`を持つ配列 |
 
-`runner: bitz`はshellを介さず、repositoryで検査対象の`bitz` entry pointを実行する。
-`runner: consumer`と`runner: migration`はCore配布物に含める固定compatibility harnessをshellなしで実行し、
-Core共通結果の`status`ではなく`outcome`を返す。この2 runnerのargvと終了コードは各manifestで固定する。
+`runner: bitz`はshellを介さず、§3.4の隔離環境にある検査対象のconsole script `bitz`を実行する。
+`runner: consumer`と`runner: migration`はCore配布物のmodule `bitz.compat`を、同じ隔離環境で
+`python -m bitz.compat <runner> <argv...>`としてshellなしで実行する。`runner: package`はCore実行体を起動せず、
+fixture harnessの参照実装が検査対象のsource tree、build成果物、隔離環境の導入metadataを検査する。
+この3 runnerはCore共通結果の`status`ではなく`outcome`を返す。標準出力は`{"outcome": "<値>"}`のJSON 1件とLFで、
+`expect.resultFile`は同じobjectを持つ。終了コードは`accepted`と`passed`が0、`rejected`が1であり、
+それ以外の終了はfixture errorとする。
+
+| runner | case（`argv[0]`） | 内容 |
+|---|---|---|
+| `consumer` | `result-shape <path>` | 指定JSONを[共通結果契約 §2](01_結果・Diagnostic・終了コード.md#2-共通結果)の排他的外形で判定する |
+| `migration` | `MONO-024`で固定 | 連合化と完全rollbackの適用、部分rollbackの拒否 |
+| `package` | `metadata` | distribution名、import package名、console script名が`bitz`で、requires-pythonが3.11以上を許す |
+| `package` | `dependencies` | runtime依存が標準libraryと、lock fileでexact versionへ固定したYAML library 1つだけ |
 
 manifestは1つの正確な終了コードとstatusまたはoutcomeを記録する。範囲、選択肢、条件分岐、`元statusと同じ`、
 `成功・非成功`のような入力依存表現を書かない。
@@ -158,6 +171,21 @@ manifestだけに存在するID、参照先がないfile、manifestから参照�
 
 期待結果のfieldとDiagnosticが後続の規範修正で変わる場合も、選択的期待値を置いてはならない。
 当該fixtureを未確定のまま実行対象へ入れず、契約確定と同じ変更で唯一の期待fileを追加する。
+
+### 3.4 検査対象と実行環境
+
+harnessは検査対象Coreをsource directoryまたはwheelとしてCLI引数で受け取り、manifestへ書かない。
+要求されるCPython minorごとに、`uv`でrepository、`HOME`、`XDG_CACHE_HOME`、`TMPDIR`のいずれとも別のdirectoryへ
+環境を作り、候補とlock済み依存だけを導入する。環境構築はsetupより前に行い、§5の副作用比較へ含めない。
+
+`invocation.python`を指定したfixtureは、そのminorのCPythonで作った環境を使う。該当するCPythonを用意できなければ
+fixture errorとし、skipしない。省略したfixtureは基準環境のCPythonを使う。
+
+`invocation.gitVersion`を指定したfixtureでは、harnessはinvocation専用の空directoryへ実行可能な`git` shimを置き、
+そのdirectoryを起動環境の`PATH`の先頭へ加える。shimはargvが`--version`だけのとき`git version <gitVersion>`と
+LFを標準出力へ書いて終了0とし、それ以外のargvはshim作成時に解決した実Gitへ変更せず渡す。§3.1のsetupは
+shimを使わない。`gitVersion`と`env.PATH`は同時に指定しない。Coreの版判定は
+[Core実行環境・CLI基盤契約 §4](06_Core実行環境・CLI基盤契約.md#4-git)に従う。
 
 ## 4. 共通normalizer
 
@@ -528,8 +556,8 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-127-14` | catalogにない`--workspace` | doctor | 結果なし／4 | workspace探索後、Core操作結果なし |
 | `SINGLE-127-15` | Git 2.29を解決 | doctor | passed_with_warnings／0 | Git不在へ縮退し、下限値は詳細設計から取得 |
 | `SINGLE-127-16` | Git 2.30を解決 | doctor | passed／0 | 下限境界を利用可能として扱う |
-| `SINGLE-127-17` | Core package metadata | consumer test | accepted／0 | distribution、import package、CLI名は`bitz`、requires-pythonは3.11以上 |
-| `SINGLE-127-18` | build metadataとlock file | consumer test | accepted／0 | runtime依存は標準libraryとexact lock済みYAML library 1つだけ |
+| `SINGLE-127-17` | Core package metadata | package test | accepted／0 | distribution、import package、CLI名は`bitz`、requires-pythonは3.11以上 |
+| `SINGLE-127-18` | build metadataとlock file | package test | accepted／0 | runtime依存は標準libraryとexact lock済みYAML library 1つだけ |
 | `SINGLE-127-19` | CPython 3.11でCoreを起動 | doctor | passed／0 | 3.11で利用できない構文／標準library APIへの依存なし |
 
 ## 7. 最小matrix: モノレポ連合

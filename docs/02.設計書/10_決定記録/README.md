@@ -87,3 +87,4 @@
 | [ADR-043](ADR-043_モノレポ連合の継続・TASK境界・適合契約を確定する.md) | モノレポ連合の継続・TASK境界・適合契約を確定する | accepted | ADR-028・041・042, SPECモデル/04・05, 操作仕様 |
 | [ADR-044](ADR-044_MCP面をCore-1.0のscope外とする.md) | MCP面をCore 1.0のscope外とする | accepted | ADR-009・016, 詳細設計README, 操作仕様, 共通結果 |
 | [ADR-045](ADR-045_実行環境と配布物の確定.md) | 実行環境と配布物の確定 | accepted | ADR-009・016, doctor仕様, workspace・設定仕様, 運用手順 |
+| [ADR-046](ADR-046_適合harnessの検査対象・実行環境・runnerを確定する.md) | 適合harnessの検査対象・実行環境・runnerを確定する | accepted | ADR-043・045, 適合fixture仕様, CLI基盤契約, 実装計画 |
