@@ -575,3 +575,19 @@ Coreは実行していない。複合workspaceのfixture、そのgolden Digest�
 監査試験の子processの時間上限は、試験145件の所要21秒に対し30秒では余裕がないため180秒へ広げた。
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `fb0d2efe0a442145d47e47be364a80d45849c0d0af187f4c57769db1ca15e5f5`（変更前と同じ）。
+
+## 2026-09-18: 複合workspaceのgolden Digestと修飾IDの解決
+
+準備済み258/310、残り52件（すべて複合workspace）。root workspace `platform`とmember `web`／`api`からなる
+固定corpusを作り、`MULTI-002-01`が複合workspaceのgolden Context Digestを所有する。
+Digest材料は、review済みliteralによる参照計算A（`multi_reference`）と、入力treeから導出する参照計算B
+（`multi_crosscheck`）で照合し、2回の隔離setupでもbyte一致した。
+golden: `sha256:72661dba40f08eb57cc1a57fe36d9a60f67df24826b4ebfdbbd8afb77c6f1fd3`。
+`MULTI-002-02`は同じ材料をverifyの側から固定し、targetのDigestがgoldenとbyte一致することを要求する。
+`MULTI-001`／`003`／`004-01/02`／`025-01/02`は、同じcorpusの3変種で修飾IDの4つの結末を1件ずつ切り分けた。
+各変種が原因を1つだけ持つことは、散文ではなく入力から確かめる。監査試験を7件追加し、
+材料の並び、workspace IDの付け替え、codeの取り違え、終了コード4への置換、入力への2つ目の原因を拒否することを確認した。
+統合検証のpendingから複合workspaceのgolden Digestが外れ、fixture未作成の残りは52件になった。
+同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
+Report SHA-256: `a5ec6d0027188193a43a71bd5f231fc50cd3661bd07b8fd9e1d72414c600869b`。
+Coreは実行していない。複合workspaceの残り52件、fresh checkoutでのGate A認定は未完了である。

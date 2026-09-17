@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "scope": "selected",
+  "status": "failed",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "checkedDocumentCount": 2,
+  "checkedStatementCount": 2,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-RELATION-MISSING-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "strong relationの参照先が存在しません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "web",
+        "path": ".spec/technical/TECH-010.md",
+        "key": "relations.requires"
+      }
+    }
+  ]
+}

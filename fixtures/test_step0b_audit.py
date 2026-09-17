@@ -61,6 +61,7 @@ from conformance import expansion_fixtures
 from conformance import ordering_fixtures
 from conformance import environment_fixtures
 from conformance import target_vectors
+from conformance import multi_digest_fixtures, multi_identity_fixtures, multi_reference
 
 
 class AuditTests(unittest.TestCase):
@@ -489,6 +490,116 @@ class AuditTests(unittest.TestCase):
         for name in ("manifest", "result", "side-effects"):
             shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
         return root
+
+    def copy_multi_fixture(self, temporary, identifier):
+        root = Path(temporary)
+        shutil.copytree(audit.FIXTURES / "multi" / identifier, root / "multi" / identifier, symlinks=True)
+        for name in ("manifest", "result", "side-effects", "frontmatter"):
+            shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+        return root
+
+    def test_multi_digest_fixtures(self):
+        result = multi_digest_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(multi_digest_fixtures.CASES))
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_multi_golden_material_holds_qualified_ids_and_reached_workspaces(self):
+        material = multi_reference.reviewed_digest_input()
+        self.assertEqual(material["requestWorkspaceId"], "platform")
+        self.assertEqual([entry["id"] for entry in material["workspaces"]], ["platform", "api", "web"])
+        self.assertEqual([document["id"] for document in material["documents"]],
+                         ["api::TECH-010", "platform::REQ-001", "web::TECH-010"])
+        self.assertEqual([edge["source"] for edge in material["crossWorkspaceEdges"]],
+                         ["api::TECH-010", "web::TECH-010"])
+        # 設定は到達workspaceだけへ射影し、catalogの列挙順とmaxMembersを材料へ入れない。
+        self.assertEqual([entry["id"] for entry in material["settings"]["workspaces"]],
+                         ["api", "platform", "web"])
+        self.assertNotIn("maxMembers", json.dumps(material))
+
+    def test_multi_digest_audit_rejects_changed_material(self):
+        mutations = [
+            ("MULTI-002-01", "expected/context.json",
+             lambda v: v["resolution"]["workspaces"].reverse()),
+            ("MULTI-002-01", "expected/context.json",
+             lambda v: v["resolution"]["crossWorkspaceEdges"].clear()),
+            ("MULTI-002-01", "expected/context.json",
+             lambda v: v.update(contextDigest="sha256:" + "0" * 64)),
+            # memberの文書は所有workspaceを持つ。root workspaceへ付け替えない。
+            ("MULTI-002-01", "expected/context.json",
+             lambda v: v["documents"][1].update(workspaceId="platform")),
+            ("MULTI-002-02", "expected/verify.json",
+             lambda v: v["targetResults"][0].update(bindingRefs=["web::frontend"])),
+            ("MULTI-002-02", "expected/verify.json",
+             lambda v: v["commands"][0].update(workspaceId="platform")),
+            ("MULTI-002-02", "manifest.json", lambda v: v["setup"].pop("baseCommit")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertEqual(multi_digest_fixtures.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_golden_material_follows_the_input_tree(self):
+        """入力treeを変えれば参照計算Bの材料も変わり、commitしたCanonical JSONと一致しなくなる。"""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-002-01")
+            path = root / "multi/MULTI-002-01/repo/apps/web/.spec/technical/TECH-010.md"
+            path.write_bytes(path.read_bytes().replace(b"command: frontend", b"command: backend"))
+            result = multi_digest_fixtures.validate(root, {"MULTI-002-01"})
+        self.assertEqual(result["status"], "Failed")
+
+    def test_multi_identity_fixtures(self):
+        result = multi_identity_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(multi_identity_fixtures.CASES))
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_multi_identity_audit_rejects_mixed_causes_and_wrong_codes(self):
+        mutations = [
+            # 同じlocal IDの衝突を、非成功や件数の変更で置き換えない。
+            ("MULTI-001", "expected/check.json", lambda v: v.update(status="failed")),
+            ("MULTI-001", "expected/check.json",
+             lambda v: v["workspaces"][1].update(checkedStatementCount=2)),
+            ("MULTI-001", "expected/check.json", lambda v: v["workspaces"].reverse()),
+            # 非修飾参照と、存在workspaceの不在targetを取り違えない。
+            ("MULTI-003", "expected/check.json",
+             lambda v: v["workspaces"][2]["diagnostics"][0].update(code="SPEC-RELATION-MISSING-001")),
+            ("MULTI-004-01", "expected/context.json",
+             lambda v: v["diagnostics"][0].update(code="SPEC-MULTI-REF-001")),
+            ("MULTI-004-01", "expected/context.json",
+             lambda v: v["resolution"].update(complete=True)),
+            ("MULTI-004-02", "expected/check.json", lambda v: v.update(checkedDocumentCount=1)),
+            # 不在起点は終了コード4ではなく、操作結果として返す。
+            ("MULTI-025-01", "manifest.json", lambda v: v["expect"].update(exitCode=4)),
+            ("MULTI-025-02", "expected/verify.json",
+             lambda v: v.update(diagnostics=v["targetResults"][0]["diagnostics"])),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertEqual(multi_identity_fixtures.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_identity_audit_rejects_second_cause_in_the_corpus(self):
+        """変種は原因を1つだけ持つ。入力へ2つ目の原因を足した写しは受理しない。"""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-003")
+            path = root / "multi/MULTI-003/repo/apps/web/.spec/technical/TECH-010.md"
+            path.write_bytes(path.read_bytes().replace(
+                b"  refines: [REQ-001]\n",
+                b"  refines: [REQ-001]\ntests:\n  - path: tests/missing.py\n    covers: [REQ-001:AC-01]\n"))
+            result = multi_identity_fixtures.validate(root, {"MULTI-003"})
+        self.assertEqual(result["status"], "Failed")
 
     def test_frontmatter_boundary_evidence(self):
         from conformance import frontmatter_boundary_fixtures as boundaries

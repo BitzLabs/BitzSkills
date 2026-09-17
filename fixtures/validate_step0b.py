@@ -55,6 +55,8 @@ from conformance.target_root_fixtures import validate as validate_target_root_fi
 from conformance.expansion_fixtures import validate as validate_expansion_fixtures
 from conformance.ordering_fixtures import validate as validate_ordering_fixtures
 from conformance.environment_fixtures import validate as validate_environment_fixtures
+from conformance.multi_digest_fixtures import validate as validate_multi_digest_fixtures
+from conformance.multi_identity_fixtures import validate as validate_multi_identity_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -254,6 +256,8 @@ def main():
     checks["expansion_fixtures"] = validate_expansion_fixtures()
     checks["ordering_fixtures"] = validate_ordering_fixtures()
     checks["environment_fixtures"] = validate_environment_fixtures()
+    checks["multi_digest_fixtures"] = validate_multi_digest_fixtures()
+    checks["multi_identity_fixtures"] = validate_multi_identity_fixtures()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_step0p.py")], capture_output=True, text=True, timeout=60)
     checks["step0p"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
     helpers = subprocess.run([sys.executable, "-B", str(FIXTURES / "test_harness.py")], capture_output=True, text=True, timeout=30)
@@ -263,9 +267,9 @@ def main():
     # これらの検査は、構造の検査やhelperの試験では意図して保証しない。
     # 各項目は、実際のreview済みの証拠の検査でだけ置き換える。
     pending = ["per-fixture side-effect expectations", "conformance inputs and expectations",
-               "full Gate A fresh-checkout repeatability",
-               # MULTI-002-01が複合workspaceのgoldenを所有するが、fixtureはまだない。
-               "independent multi-workspace golden Context Digest"]
+               "full Gate A fresh-checkout repeatability"]
+    if checks["multi_digest_fixtures"]["status"] != "Passed":
+        pending.insert(0, "independent multi-workspace golden Context Digest")
     if checks["digest_fixtures"]["status"] != "Passed":
         pending.insert(0, "independent single-workspace golden Context Digest")
     if checks["registry"]["semantic_coverage"] != "Passed":

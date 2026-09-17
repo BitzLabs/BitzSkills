@@ -1,0 +1,225 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "verify",
+  "workspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "roots": [
+    "platform::REQ-001"
+  ],
+  "contextDigest": "sha256:72661dba40f08eb57cc1a57fe36d9a60f67df24826b4ebfdbbd8afb77c6f1fd3",
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "resolution": {
+    "complete": true,
+    "documentCount": 3,
+    "unresolvedStrongRelations": 0,
+    "workspaces": [
+      {
+        "id": "platform",
+        "path": "."
+      },
+      {
+        "id": "api",
+        "path": "services/api"
+      },
+      {
+        "id": "web",
+        "path": "apps/web"
+      }
+    ],
+    "crossWorkspaceEdges": [
+      {
+        "relation": "refines",
+        "source": "api::TECH-010",
+        "target": "platform::REQ-001:AC-02"
+      },
+      {
+        "relation": "refines",
+        "source": "web::TECH-010",
+        "target": "platform::REQ-001:AC-01"
+      }
+    ]
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "platform::REQ-001",
+      "workspaceId": "platform",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "root"
+      ],
+      "statementRefs": [
+        "platform::REQ-001:AC-01",
+        "platform::REQ-001:AC-02"
+      ],
+      "frontmatter": {
+        "id": "platform::REQ-001",
+        "title": "認証Contextの基準",
+        "status": "approved"
+      },
+      "bodyText": "# REQ-001 認証Contextの基準\n\n## Intent\n\n複合workspaceのDigest goldenの固定要求を定義する。\n\n## Acceptance Criteria\n\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。\n- [REQ-001:AC-02] [ACTOR:TargetSystem] [WHEN] 保存した場合 [SHOULD] [REASON] 確認のため [THEN] 結果を返す。\n\n## Verification\n\napps/webとservices/apiのtestで確認する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "api::TECH-010",
+      "workspaceId": "api",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-010.md",
+      "projection": "full",
+      "reachedBy": [
+        "refines:api::TECH-010"
+      ],
+      "statementRefs": [],
+      "frontmatter": {
+        "id": "api::TECH-010",
+        "title": "API側のsession実装方針",
+        "status": "approved",
+        "relations": {
+          "refines": [
+            "platform::REQ-001:AC-02"
+          ]
+        },
+        "implements": [
+          "src/session.py"
+        ],
+        "tests": [
+          {
+            "path": "tests/test_session.py",
+            "covers": [
+              "platform::REQ-001:AC-02"
+            ],
+            "command": "backend"
+          }
+        ]
+      },
+      "bodyText": "# TECH-010 API側のsession実装方針\n\n## Context\n\nroot workspaceのSHOULDをapiのsession処理で実装する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "web::TECH-010",
+      "workspaceId": "web",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-010.md",
+      "projection": "full",
+      "reachedBy": [
+        "refines:web::TECH-010"
+      ],
+      "statementRefs": [],
+      "frontmatter": {
+        "id": "web::TECH-010",
+        "title": "Web側の認証実装方針",
+        "status": "approved",
+        "relations": {
+          "refines": [
+            "platform::REQ-001:AC-01"
+          ]
+        },
+        "implements": [
+          "src/auth/login.py"
+        ],
+        "tests": [
+          {
+            "path": "tests/auth/test_login.py",
+            "covers": [
+              "platform::REQ-001:AC-01"
+            ],
+            "command": "frontend"
+          }
+        ]
+      },
+      "bodyText": "# TECH-010 Web側の認証実装方針\n\n## Context\n\nroot workspaceのMUSTをwebのlogin処理で実装する。\n",
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": [
+      {
+        "id": "platform::REQ-001:AC-01",
+        "documentId": "platform::REQ-001",
+        "documentRole": "root",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "秘密情報を出力しない"
+        }
+      },
+      {
+        "id": "platform::REQ-001:AC-02",
+        "documentId": "platform::REQ-001",
+        "documentRole": "root",
+        "modality": "SHOULD",
+        "reason": "確認のため",
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "WHEN",
+          "text": "保存した場合"
+        },
+        "operation": {
+          "kind": "THEN",
+          "text": "結果を返す"
+        }
+      }
+    ]
+  },
+  "coverage": {
+    "must": {
+      "total": [
+        "platform::REQ-001:AC-01"
+      ],
+      "addressed": [],
+      "tested": [
+        "platform::REQ-001:AC-01"
+      ],
+      "unaddressed": [
+        "platform::REQ-001:AC-01"
+      ],
+      "untested": []
+    },
+    "should": {
+      "total": [
+        "platform::REQ-001:AC-02"
+      ],
+      "addressed": [],
+      "tested": [
+        "platform::REQ-001:AC-02"
+      ],
+      "unaddressed": [
+        "platform::REQ-001:AC-02"
+      ],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}
