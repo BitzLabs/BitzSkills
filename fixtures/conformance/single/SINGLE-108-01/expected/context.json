@@ -1,0 +1,206 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "verify",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "TECH-001"
+  ],
+  "contextDigest": "sha256:e7acfef3f813499fd66e4f784bb8b2a9cada291a05e930de2dd3fc313ce65c55",
+  "revision": null,
+  "resolution": {
+    "complete": true,
+    "documentCount": 3,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "TECH-001",
+      "kind": "technical",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/technical/TECH-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "root"
+      ],
+      "statementRefs": [
+        "TECH-001:AC-01",
+        "TECH-001:AC-02"
+      ],
+      "frontmatter": {
+        "id": "TECH-001",
+        "title": "規範文を持つ技術契約",
+        "status": "approved",
+        "relations": {
+          "requires": [
+            "TECH-009"
+          ]
+        },
+        "tests": [
+          {
+            "path": "tests/test_contract.py",
+            "covers": [
+              "TECH-001:AC-01",
+              "TECH-001:AC-02"
+            ],
+            "command": "default"
+          }
+        ]
+      },
+      "bodyText": "# TECH-001 規範文を持つ技術契約\n\n## Context\n\n具体化する技術契約。\n\n## Contract\n\n- [TECH-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 応答形式を固定する。\n- [TECH-001:AC-02] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 応答時間を記録する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-004",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-004.md",
+      "projection": "full",
+      "reachedBy": [
+        "refines:TECH-004"
+      ],
+      "statementRefs": [
+        "TECH-004:AC-01"
+      ],
+      "frontmatter": {
+        "id": "TECH-004",
+        "title": "契約の具体化",
+        "status": "approved",
+        "relations": {
+          "refines": [
+            "TECH-001:AC-01"
+          ]
+        },
+        "tests": [
+          {
+            "path": "tests/test_detail.py",
+            "covers": [
+              "TECH-004:AC-01"
+            ],
+            "command": "default"
+          }
+        ]
+      },
+      "bodyText": "# TECH-004 契約の具体化\n\n## Context\n\n具体化する技術契約。\n\n## Contract\n\n- [TECH-004:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 形式の詳細を定める。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-009",
+      "kind": "technical",
+      "status": "approved",
+      "role": "constraint",
+      "path": ".spec/technical/TECH-009.md",
+      "projection": "full",
+      "reachedBy": [
+        "requires:TECH-001"
+      ],
+      "statementRefs": [
+        "TECH-009:AC-01"
+      ],
+      "frontmatter": {
+        "id": "TECH-009",
+        "title": "前提技術契約",
+        "status": "approved"
+      },
+      "bodyText": "# TECH-009 前提技術契約\n\n## Context\n\n具体化する技術契約。\n\n## Contract\n\n- [TECH-009:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 前提形式を定義する。\n",
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": [
+      {
+        "id": "TECH-001:AC-01",
+        "documentId": "TECH-001",
+        "documentRole": "root",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "応答形式を固定する"
+        }
+      },
+      {
+        "id": "TECH-001:AC-02",
+        "documentId": "TECH-001",
+        "documentRole": "root",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "応答時間を記録する"
+        }
+      },
+      {
+        "id": "TECH-004:AC-01",
+        "documentId": "TECH-004",
+        "documentRole": "refinement",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "形式の詳細を定める"
+        }
+      }
+    ]
+  },
+  "coverage": {
+    "must": {
+      "total": [
+        "TECH-001:AC-01",
+        "TECH-001:AC-02",
+        "TECH-004:AC-01"
+      ],
+      "addressed": [],
+      "tested": [
+        "TECH-001:AC-01",
+        "TECH-001:AC-02",
+        "TECH-004:AC-01"
+      ],
+      "unaddressed": [
+        "TECH-001:AC-01",
+        "TECH-001:AC-02",
+        "TECH-004:AC-01"
+      ],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

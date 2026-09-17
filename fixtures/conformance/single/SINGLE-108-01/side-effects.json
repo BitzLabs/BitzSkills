@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a50a78d2dcf2333282c8541d54b9ce9738e07f1f8b4375dff08dde1df1c5fc96"
+      },
+      ".spec/technical/TECH-004.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "ebffcac532ba9f9cf9bffff19ca0c70f903b4cbaeab259daffd5d4696193ef81"
+      },
+      ".spec/technical/TECH-009.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "1273bd0166bc906b790abe8b707a42b1b795bd4c1faecf46be1e3327f9cf164b"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_contract.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "422ddd49cee4e2ce70f4a3332e412461439a46bbc939f9d62ff2f000ae7620e0"
+      },
+      "tests/test_detail.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "422ddd49cee4e2ce70f4a3332e412461439a46bbc939f9d62ff2f000ae7620e0"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/technical/TECH-001.md\n?? .spec/technical/TECH-004.md\n?? .spec/technical/TECH-009.md\n?? tests/test_contract.py\n?? tests/test_detail.py\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a50a78d2dcf2333282c8541d54b9ce9738e07f1f8b4375dff08dde1df1c5fc96"
+      },
+      ".spec/technical/TECH-004.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "ebffcac532ba9f9cf9bffff19ca0c70f903b4cbaeab259daffd5d4696193ef81"
+      },
+      ".spec/technical/TECH-009.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "1273bd0166bc906b790abe8b707a42b1b795bd4c1faecf46be1e3327f9cf164b"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_contract.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "422ddd49cee4e2ce70f4a3332e412461439a46bbc939f9d62ff2f000ae7620e0"
+      },
+      "tests/test_detail.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "422ddd49cee4e2ce70f4a3332e412461439a46bbc939f9d62ff2f000ae7620e0"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/technical/TECH-001.md\n?? .spec/technical/TECH-004.md\n?? .spec/technical/TECH-009.md\n?? tests/test_contract.py\n?? tests/test_detail.py\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

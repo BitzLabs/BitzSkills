@@ -1,0 +1,24 @@
+{
+  "fixtureId": "SINGLE-112-04",
+  "description": "ADR起点のverifyを引数不正として拒否する",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "ADR-001",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 4,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

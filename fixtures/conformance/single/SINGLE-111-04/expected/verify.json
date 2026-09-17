@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "failed",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "REQ-009",
+      "status": "failed",
+      "contextDigest": null,
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": [
+        {
+          "code": "CTX-ROOT-MISSING-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "起点REQ-009が存在しません",
+          "source": {
+            "kind": "invocation",
+            "argument": "REQ-009"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": null,
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": []
+}

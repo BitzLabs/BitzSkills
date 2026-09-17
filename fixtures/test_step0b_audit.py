@@ -56,9 +56,166 @@ from conformance import input_limit_fixtures
 from conformance import registry_closure_fixtures
 from conformance import scanner_fixtures
 from conformance import presentation_fixtures
+from conformance import target_root_fixtures
+from conformance import expansion_fixtures
+from conformance import ordering_fixtures
+from conformance import target_vectors
 
 
 class AuditTests(unittest.TestCase):
+    def test_target_root_fixtures(self):
+        result = target_root_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(target_root_fixtures.CASES))
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_target_root_audit_rejects_substituted_roots(self):
+        mutations = [
+            # 不在起点を終了コード4や既知文書のcheckへ置き換えない。
+            ("SINGLE-111-01", "expected/check.json", lambda v: v.update(checkedDocumentCount=1)),
+            ("SINGLE-111-02", "expected/check.json",
+             lambda v: v["diagnostics"][0]["source"].update(argument="REQ-001")),
+            ("SINGLE-111-03", "manifest.json", lambda v: v["expect"].update(exitCode=4)),
+            ("SINGLE-111-04", "expected/verify.json",
+             lambda v: v["targetResults"][0].update(bindingRefs=["root::default"])),
+            ("SINGLE-111-04", "expected/verify.json",
+             lambda v: v["targetResults"][0].update(diagnostics=[])),
+            # ADR起点はtest義務へ展開せず、Digest材料もADRだけである。
+            ("SINGLE-112-01", "expected/context.json",
+             lambda v: v["constraintLedger"]["statements"].append({"id": "REQ-001:AC-01"})),
+            ("SINGLE-112-01", "expected/context.json",
+             lambda v: v.update(contextDigest="sha256:" + "0" * 64)),
+            ("SINGLE-112-03", "expected/check.json", lambda v: v.update(checkedStatementCount=1)),
+            ("SINGLE-112-03", "manifest.json", lambda v: v["setup"].pop("baseCommit")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                shutil.copy2(audit.FIXTURES / "frontmatter.schema.json", root)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                result = target_root_fixtures.validate(root, {identifier})
+                self.assertEqual(result["status"], "Failed")
+
+    def test_expansion_fixtures(self):
+        result = expansion_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(expansion_fixtures.CASES))
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_expansion_audit_rejects_changed_sets_and_roles(self):
+        def document(index, **changes):
+            return lambda v: v["documents"][index].update(changes)
+        mutations = [
+            # requires先のroleは種別で決まり、REQはrequirement、TECHはconstraintである。
+            ("SINGLE-107-01", "expected/context.json", document(1, role="constraint")),
+            ("SINGLE-108-01", "expected/context.json", document(2, role="requirement")),
+            # 距離2のrefinementはnormativeで提示する。
+            ("SINGLE-107-01", "expected/context.json", document(3, projection="full")),
+            # advisoryはreferenceだけで提示し、本文やstatementRefsを持たない。
+            ("SINGLE-106-03", "expected/context.json", document(1, statementRefs=["TECH-005:AC-01"])),
+            ("SINGLE-106-03", "expected/context.json",
+             lambda v: v["constraintLedger"]["statements"].append({"id": "TECH-005:AC-01"})),
+            # statementRefsは所有する全規範文、兄弟句はadjacentだけに置く。
+            ("SINGLE-109", "expected/context.json", document(0, statementRefs=["REQ-001:AC-01"])),
+            ("SINGLE-109", "expected/context.json", lambda v: v["coverage"].update(adjacent=[])),
+            ("SINGLE-109", "expected/context.json",
+             lambda v: v["coverage"]["must"]["total"].append("REQ-001:AC-02")),
+            # verifyの起点TASKはrequires先TASKをContextへ含めない。
+            ("SINGLE-110", "expected/context.json",
+             lambda v: v["documents"].append(dict(v["documents"][0], id="TASK-002", role="work",
+                                                  reachedBy=["requires:TASK-001"]))),
+            # verifyはcontextと同じtarget集合とDigestを使う。
+            ("SINGLE-107-02", "expected/verify.json",
+             lambda v: v["targetResults"][0]["statements"].pop()),
+            ("SINGLE-108-02", "expected/verify.json",
+             lambda v: v["targetResults"][0].update(contextDigest="sha256:" + "0" * 64)),
+            ("SINGLE-113", "expected/verify.json", lambda v: v["targetResults"].pop()),
+            ("SINGLE-113", "expected/verify.json",
+             lambda v: v["commands"][0]["tests"].append("tests/test_root.py")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                for source in ("SINGLE-107-01", "SINGLE-108-01"):
+                    if not (root / "single" / source).exists():
+                        shutil.copytree(audit.FIXTURES / "single" / source, root / "single" / source)
+                shutil.copy2(audit.FIXTURES / "frontmatter.schema.json", root)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                result = expansion_fixtures.validate(root, {identifier})
+                self.assertEqual(result["status"], "Failed")
+
+    def test_ordering_fixtures(self):
+        result = ordering_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(ordering_fixtures.CASES))
+
+    def test_ordering_audit_rejects_declared_order_and_converted_separators(self):
+        def canonical(transform):
+            def mutate(raw):
+                value = json.loads(raw.decode())
+                transform(value)
+                return digest_reference.canonical_bytes(value)
+            return mutate
+        mutations = [
+            # 宣言順のままでは完全順序にならない。
+            ("SINGLE-122", "expected/context.canonical.json",
+             canonical(lambda v: v["documents"][1]["frontmatter"]["tests"].reverse())),
+            ("SINGLE-123", "expected/context.canonical.json",
+             canonical(lambda v: v["documents"][0]["statements"][0]["extensions"].reverse())),
+            # path型以外のreverse solidusをsolidusへ変換しない。
+            ("SINGLE-124", "expected/context.canonical.json",
+             lambda raw: raw.replace(b"src\\\\auth", b"src/auth")),
+            ("SINGLE-123", "expected/context.json",
+             lambda raw: json.dumps(dict(json.loads(raw), diagnostics=json.loads(raw)["diagnostics"][:1])).encode()),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_fixture(temporary, identifier)
+                shutil.copy2(audit.FIXTURES / "frontmatter.schema.json", root)
+                path = root / "single" / identifier / relative
+                before = path.read_bytes()
+                path.write_bytes(mutate(before))
+                self.assertNotEqual(path.read_bytes(), before)
+                result = ordering_fixtures.validate(root, {identifier})
+                self.assertEqual(result["status"], "Failed")
+
+    def test_reference_b_resolves_omitted_command_and_sorts_extensions(self):
+        statement = {"extensions": [{"namespace": "q", "term": "L", "value": "b"},
+                                    {"namespace": "q", "term": "L", "value": None}]}
+        self.assertEqual([e["value"] for e in digest_crosscheck._sorted_extensions(statement)["extensions"]],
+                         [None, "b"])
+        payload = json.loads(ordering_fixtures.canonical("SINGLE-122").decode())
+        self.assertEqual([c["name"] for c in payload["settings"]["commands"]], ["default", "other"])
+
+    def test_verify_task_root_does_not_follow_requires(self):
+        """関係・トレースモデル §6.3: verifyだけが起点TASKのrequires先を辿らない。"""
+        data = json.loads((target_vectors.HERE / "targets/cases.json").read_text())
+        case = next(c for c in data["cases"] if c["id"] == "TASK-REQUIRES-NOT-TARGET")
+        self.assertEqual(target_vectors.reference(case)["contextDocuments"], ["TASK-001", "REQ-001"])
+        implement = dict(case, purpose="implement")
+        self.assertIn("TASK-002", target_vectors.reference(implement)["contextDocuments"])
+
+    def test_target_root_audit_rejects_adr_reference_in_corpus(self):
+        original = target_root_fixtures.reviewed_inputs
+
+        def with_reference(identifier):
+            inputs = original(identifier)
+            if identifier.startswith("SINGLE-112"):
+                inputs[".spec/technical/TECH-001.md"] = b"related: [ADR-001]\n"
+            return inputs
+        with patch.object(target_root_fixtures, "reviewed_inputs", with_reference):
+            result = target_root_fixtures.validate(identifiers={"SINGLE-112-03"})
+        self.assertEqual(result["status"], "Failed")
+
     def test_presentation_fixtures(self):
         result = presentation_fixtures.validate()
         self.assertEqual(result["errors"], [])
@@ -726,6 +883,7 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(errors["errors"], [])
         self.assertEqual(errors["prepared"], ["SINGLE-073-01", "SINGLE-073-02", "SINGLE-074-01",
                                               "SINGLE-074-02", "SINGLE-074-03",
+                                              "SINGLE-112-02", "SINGLE-112-04",
                                               "SINGLE-127-01", "SINGLE-127-02", "SINGLE-127-05",
                                               "SINGLE-127-06", "SINGLE-127-07", "SINGLE-127-08",
                                               "SINGLE-127-09", "SINGLE-127-10", "SINGLE-127-11", "SINGLE-127-14"])
@@ -787,6 +945,11 @@ class AuditTests(unittest.TestCase):
              lambda v: v.update(stderrLineCount=2)),
             (validate_cli_errors, "SINGLE-074-02", "manifest.json",
              lambda v: v["invocation"].update(argv=["verify", "REQ-001", "--format", "json"])),
+            # ADR起点をinterpretへ戻すと妥当な起点になり、引数不正ではなくなる。
+            (validate_cli_errors, "SINGLE-112-02", "manifest.json",
+             lambda v: v["invocation"]["argv"].__setitem__(3, "interpret")),
+            (validate_cli_errors, "SINGLE-112-04", "manifest.json",
+             lambda v: v["invocation"]["argv"].__setitem__(1, "REQ-001")),
             (validate_cli_errors, "SINGLE-127-01", "manifest.json",
              lambda v: v["invocation"].update(argv=["check", "--format", "json"])),
             (validate_cli_errors, "SINGLE-127-02", "manifest.json",

@@ -1,0 +1,28 @@
+{
+  "fixtureId": "SINGLE-108-01",
+  "description": "規範文ありTECH起点の4集合を完全比較する",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "TECH-001",
+      "--purpose",
+      "verify",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

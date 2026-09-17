@@ -1,0 +1,134 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "verify",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "TASK-001"
+  ],
+  "contextDigest": "sha256:2dfc562685434837fa7d379305e6621975c332bcb53e873c720854d181deebc3",
+  "revision": null,
+  "resolution": {
+    "complete": true,
+    "documentCount": 2,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "TASK-001",
+      "kind": "task",
+      "status": "open",
+      "role": "root",
+      "path": ".spec/tasks/TASK-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "root"
+      ],
+      "statementRefs": [],
+      "frontmatter": {
+        "id": "TASK-001",
+        "title": "対象句の実装",
+        "status": "open",
+        "relations": {
+          "requires": [
+            "TASK-002"
+          ],
+          "addresses": [
+            "REQ-001:AC-01"
+          ]
+        }
+      },
+      "bodyText": "# TASK-001 対象句の実装\n\n## Objective\n\n対象句を実装する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "requirement",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "addresses:TASK-001"
+      ],
+      "statementRefs": [
+        "REQ-001:AC-01"
+      ],
+      "frontmatter": {
+        "id": "REQ-001",
+        "title": "TASKの対象要求",
+        "status": "approved",
+        "tests": [
+          {
+            "path": "tests/test_root.py",
+            "covers": [
+              "REQ-001:AC-01"
+            ],
+            "command": "default"
+          }
+        ]
+      },
+      "bodyText": "# REQ-001 TASKの対象要求\n\n## Intent\n\ntarget展開の検査に使う固定要求。\n\n## Acceptance Criteria\n\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 入力を検証する。\n\n## Verification\n\n宣言したtestで確認する。\n",
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": [
+      {
+        "id": "REQ-001:AC-01",
+        "documentId": "REQ-001",
+        "documentRole": "requirement",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "入力を検証する"
+        }
+      }
+    ]
+  },
+  "coverage": {
+    "must": {
+      "total": [
+        "REQ-001:AC-01"
+      ],
+      "addressed": [
+        "REQ-001:AC-01"
+      ],
+      "tested": [
+        "REQ-001:AC-01"
+      ],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

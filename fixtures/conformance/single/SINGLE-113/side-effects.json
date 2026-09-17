@@ -1,0 +1,140 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3053efe8b8b54f8d91aa76ff22a76b87b7ef06238e18f854009c44f3a48816eb"
+      },
+      ".spec/requirements/REQ-009.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "80a9b0dffc072535a5e13acbb2efe7ac5cdc35e491e0985cdb40def850736683"
+      },
+      ".spec/requirements/REQ-099.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "036c2bc6f2d3fe851ff7e269e54f2190d9fabe2e94ef78607524c7c7e84fbc46"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "6f4b4aca06f48fa1a6a271c9161a753e2ee3f351677c28a6e596a354c7a290d1"
+      },
+      ".spec/technical/TECH-003.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "ea99e439b0a5da212e49c8e5637226520c02260942b6c0b6ef15892351fb07ae"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_direct.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "422ddd49cee4e2ce70f4a3332e412461439a46bbc939f9d62ff2f000ae7620e0"
+      },
+      "tests/test_indirect.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "422ddd49cee4e2ce70f4a3332e412461439a46bbc939f9d62ff2f000ae7620e0"
+      },
+      "tests/test_root.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "422ddd49cee4e2ce70f4a3332e412461439a46bbc939f9d62ff2f000ae7620e0"
+      }
+    },
+    "git": {
+      "status": "A  .spec/bitz.yaml\nA  .spec/requirements/REQ-001.md\nA  .spec/requirements/REQ-009.md\nA  .spec/requirements/REQ-099.md\nA  .spec/technical/TECH-002.md\nA  .spec/technical/TECH-003.md\nA  tests/test_direct.py\nA  tests/test_indirect.py\nA  tests/test_root.py\n",
+      "index": "100644 cf2e1fa96cd3cf541643dbf6e8a690a148085c43 0\t.spec/bitz.yaml\n100644 6313caa06ce8a0fb032186af4aa880314c192bff 0\t.spec/requirements/REQ-001.md\n100644 bf20858a33c7ed985a06e7297f1c024e50b642a2 0\t.spec/requirements/REQ-009.md\n100644 e89aa9a117465abf9bac8a27077297c5420a8d35 0\t.spec/requirements/REQ-099.md\n100644 19e10ec8f33a64d4949db9741d377c09b7c32d34 0\t.spec/technical/TECH-002.md\n100644 3a2c2689ab0b2f70f5b43e861e6e5f7d0db3cacc 0\t.spec/technical/TECH-003.md\n100644 fdc4f2b908e8b0577846aa0b49a80a45729f2039 0\ttests/test_direct.py\n100644 fdc4f2b908e8b0577846aa0b49a80a45729f2039 0\ttests/test_indirect.py\n100644 fdc4f2b908e8b0577846aa0b49a80a45729f2039 0\ttests/test_root.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3053efe8b8b54f8d91aa76ff22a76b87b7ef06238e18f854009c44f3a48816eb"
+      },
+      ".spec/requirements/REQ-009.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "80a9b0dffc072535a5e13acbb2efe7ac5cdc35e491e0985cdb40def850736683"
+      },
+      ".spec/requirements/REQ-099.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "036c2bc6f2d3fe851ff7e269e54f2190d9fabe2e94ef78607524c7c7e84fbc46"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "6f4b4aca06f48fa1a6a271c9161a753e2ee3f351677c28a6e596a354c7a290d1"
+      },
+      ".spec/technical/TECH-003.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "ea99e439b0a5da212e49c8e5637226520c02260942b6c0b6ef15892351fb07ae"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_direct.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "422ddd49cee4e2ce70f4a3332e412461439a46bbc939f9d62ff2f000ae7620e0"
+      },
+      "tests/test_indirect.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "422ddd49cee4e2ce70f4a3332e412461439a46bbc939f9d62ff2f000ae7620e0"
+      },
+      "tests/test_root.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "422ddd49cee4e2ce70f4a3332e412461439a46bbc939f9d62ff2f000ae7620e0"
+      }
+    },
+    "git": {
+      "status": "A  .spec/bitz.yaml\nA  .spec/requirements/REQ-001.md\nA  .spec/requirements/REQ-009.md\nA  .spec/requirements/REQ-099.md\nA  .spec/technical/TECH-002.md\nA  .spec/technical/TECH-003.md\nA  tests/test_direct.py\nA  tests/test_indirect.py\nA  tests/test_root.py\n",
+      "index": "100644 cf2e1fa96cd3cf541643dbf6e8a690a148085c43 0\t.spec/bitz.yaml\n100644 6313caa06ce8a0fb032186af4aa880314c192bff 0\t.spec/requirements/REQ-001.md\n100644 bf20858a33c7ed985a06e7297f1c024e50b642a2 0\t.spec/requirements/REQ-009.md\n100644 e89aa9a117465abf9bac8a27077297c5420a8d35 0\t.spec/requirements/REQ-099.md\n100644 19e10ec8f33a64d4949db9741d377c09b7c32d34 0\t.spec/technical/TECH-002.md\n100644 3a2c2689ab0b2f70f5b43e861e6e5f7d0db3cacc 0\t.spec/technical/TECH-003.md\n100644 fdc4f2b908e8b0577846aa0b49a80a45729f2039 0\ttests/test_direct.py\n100644 fdc4f2b908e8b0577846aa0b49a80a45729f2039 0\ttests/test_indirect.py\n100644 fdc4f2b908e8b0577846aa0b49a80a45729f2039 0\ttests/test_root.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

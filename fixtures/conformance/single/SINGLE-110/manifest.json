@@ -1,0 +1,28 @@
+{
+  "fixtureId": "SINGLE-110",
+  "description": "verifyの起点TASKはaddresses先だけをtargetとし、requires先TASKを含めない",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "TASK-001",
+      "--purpose",
+      "verify",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

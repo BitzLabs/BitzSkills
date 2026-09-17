@@ -231,44 +231,84 @@ def load_documents(repository):
 
 
 def closure(documents, root, purpose):
-    """Reviewed closure for these corpora: the root, for a TASK root the documents
-    owning what it addresses, the transitive chain of applicable documents that
-    refine anything reached, and for `implement` every open TASK that addresses one
-    of the root's statements. Any strong edge the rule cannot account for is
-    rejected rather than silently absorbed, so this stays a corpus reader and not a
-    general target-expansion implementation."""
-    reached, accounted = {root: 0}, set()
-    owned = {identifier: {statement["id"] for statement in read_statements(document["body"])}
+    """Reviewed closure for these corpora (関係・トレースモデル §6.1〜§6.4).
+
+    The root document, and for a TASK root outside interpret the documents owning
+    what it addresses. From every applicable document reached: its `requires`
+    targets (except the root TASK's under verify, §6.3), its `refines` targets,
+    and the applicable documents that refine it or one of its statements. Under
+    interpret a draft refiner is kept as advisory and not expanded (§6.1 6.).
+    Under implement every open TASK addressing a target statement is added. Any
+    strong edge touching the closure that the rule does not account for is
+    rejected rather than silently absorbed, so this stays a corpus reader and not
+    a general target-expansion implementation.
+
+    Returns (ordered document IDs, advisory document IDs).
+    """
+    def owner(reference):
+        return reference.split(":")[0]
+
+    owned = {identifier: [statement["id"] for statement in read_statements(document["body"])]
              for identifier, document in documents.items()}
     known_statements = {identifier for ids in owned.values() for identifier in ids}
-    frontier = [root]
-    # 関係・トレースモデル §6.3: a TASK root verifies what it addresses, so the
-    # documents owning those targets are Context material.
-    if documents[root]["kind"] == "task":
-        for target in _relations(documents[root]["frontmatter"])["addresses"]:
-            owner = target.split(":")[0]
-            if owner not in documents:
-                raise ValueError("the TASK root addresses a target this corpus does not own")
-            reached.setdefault(owner, 1)
-            accounted.add((root, "addresses", target))
-            frontier.append(owner)
+    root_document = owner(root)
+    if root_document not in documents or (root != root_document and root not in known_statements):
+        raise ValueError("the root is not owned by this corpus")
+    root_kind = documents[root_document]["kind"]
+    reached, advisory, accounted = {root_document: 0}, set(), set()
+    frontier = [root_document]
+
+    def reach(identifier, distance):
+        if identifier not in documents:
+            raise ValueError("a strong edge leaves this corpus")
+        if identifier not in reached:
+            reached[identifier] = distance
+            frontier.append(identifier)
+
+    if root_kind == "task" and purpose != "interpret":
+        for target in _relations(documents[root_document]["frontmatter"])["addresses"]:
+            accounted.add((root_document, "addresses", target))
+            reach(owner(target), 1)
+        if purpose == "verify":
+            # §6.3: verifyの起点TASKはrequires閉包を含めない。辿らない辺として記録する。
+            for target in _relations(documents[root_document]["frontmatter"])["requires"]:
+                accounted.add((root_document, "requires", target))
     while frontier:
         current = frontier.pop(0)
+        if current in advisory:
+            continue
+        relations = _relations(documents[current]["frontmatter"])
+        for key in ("requires", "refines"):
+            for target in relations[key]:
+                if (current, key, target) in accounted:
+                    continue
+                accounted.add((current, key, target))
+                reach(owner(target), reached[current] + 1)
+        mine = {current, *owned.get(current, [])}
         for identifier, document in sorted(documents.items()):
-            if identifier in reached or document["frontmatter"]["status"] not in APPLICABLE_STATUS:
+            refined = [target for target in _relations(document["frontmatter"])["refines"] if target in mine]
+            if not refined or identifier in reached:
                 continue
-            if current in _relations(document["frontmatter"])["refines"]:
-                reached[identifier] = reached[current] + 1
-                accounted.add((identifier, "refines", current))
-                frontier.append(identifier)
+            status = document["frontmatter"]["status"]
+            if status in APPLICABLE_STATUS:
+                pass
+            elif status == "draft" and purpose == "interpret":
+                advisory.add(identifier)
+            else:
+                continue
+            for target in refined:
+                accounted.add((identifier, "refines", target))
+            reach(identifier, reached[current] + 1)
     if purpose == "implement":
-        for identifier, document in documents.items():
-            if document["kind"] != "task" or document["frontmatter"]["status"] not in APPLICABLE_STATUS:
+        targets = target_statements(documents, owned, root, reached, advisory)
+        for identifier, document in sorted(documents.items()):
+            if document["kind"] != "task" or document["frontmatter"]["status"] != "open":
                 continue
             for target in _relations(document["frontmatter"])["addresses"]:
-                if target in owned.get(root, set()):
-                    reached.setdefault(identifier, 1)
+                if target in targets:
                     accounted.add((identifier, "addresses", target))
+                    if identifier not in reached:
+                        reached[identifier] = reached[owner(target)] + 1
     # A workspace may hold several independent roots. Only an edge that touches
     # this closure has to be accounted for; one entirely outside it belongs to a
     # different Context and is not this computation's business.
@@ -277,26 +317,52 @@ def closure(documents, root, purpose):
             for target in _relations(document["frontmatter"])[key]:
                 if not (target in documents or target in known_statements):
                     continue
-                owner = target.split(":")[0]
-                touches = identifier in reached or target in reached or owner in reached
+                touches = identifier in reached or target in reached or owner(target) in reached
                 if touches and (identifier, key, target) not in accounted:
                     raise ValueError("corpus holds a strong edge outside the reviewed closure")
-    return sorted(reached, key=lambda identifier: (reached[identifier],
-                                                   KIND_RANK[documents[identifier]["kind"]], identifier))
+    ordered = sorted(reached, key=lambda identifier: (reached[identifier],
+                                                      KIND_RANK[documents[identifier]["kind"]], identifier))
+    return ordered, advisory
+
+
+def target_statements(documents, owned, root, reached, advisory):
+    """§6.4: 文書起点は所有句、statement起点は指定句。applicable refinementの句を推移的に加える。"""
+    if root in owned:
+        selected = {root, *owned[root]} if documents[root]["kind"] != "task" else set(
+            _relations(documents[root]["frontmatter"])["addresses"])
+    else:
+        selected = {root}
+    changed = True
+    while changed:
+        changed = False
+        for identifier in reached:
+            if identifier in advisory or documents[identifier]["kind"] == "task":
+                continue
+            if identifier not in selected and any(
+                    target in selected for target in _relations(documents[identifier]["frontmatter"])["refines"]):
+                selected.update({identifier, *owned[identifier]})
+                changed = True
+    known = {statement for ids in owned.values() for statement in ids}
+    return selected & known
 
 
 def build(repository, root="REQ-001", purpose="verify", workspace_id="root"):
     config = read_yaml((repository / ".spec/bitz.yaml").read_text(encoding="utf-8"))
     documents = load_documents(repository)
-    selected = closure(documents, root, purpose)
+    selected, advisory = closure(documents, root, purpose)
     commands, entries = config.get("verify", {}).get("commands", {}), []
     used = set()
     # Only `verify` names command in its closure, so only `verify` can make the
     # Bundle reference one; `interpret` and `implement` record no binding.
     for identifier in selected if purpose == "verify" else []:
-        for test in _tests(documents[identifier]["frontmatter"]):
-            if test["command"] is not None:
-                used.add(test["command"])
+        if identifier in advisory:
+            continue
+        frontmatter = documents[identifier]["frontmatter"]
+        for test in _tests(frontmatter):
+            # command名はtests[].command、文書のverifyの順で解決する。
+            name = test["command"] if test["command"] is not None else frontmatter.get("verify")
+            if name is not None:
+                used.add(name)
     for name in sorted(used):
         command = commands[name]
         entries.append({"workspaceId": workspace_id, "name": name,
@@ -334,7 +400,7 @@ def build(repository, root="REQ-001", purpose="verify", workspace_id="root"):
             "workspaceId": workspace_id,
             "kind": document["kind"],
             "status": frontmatter["status"],
-            "applicability": "applicable",
+            "applicability": "advisory" if identifier in advisory else "applicable",
             "frontmatter": {
                 "id": frontmatter["id"],
                 "title": frontmatter["title"],
@@ -346,10 +412,18 @@ def build(repository, root="REQ-001", purpose="verify", workspace_id="root"):
                 "changes": _paths(frontmatter.get("changes", [])),
             },
             "bodyText": document["body"],
-            "statements": sorted(read_statements(document["body"]), key=lambda item: item["id"]),
+            "statements": sorted((_sorted_extensions(item) for item in read_statements(document["body"])),
+                                 key=lambda item: item["id"]),
             "strongRelations": [{"relation": key, "target": target} for key, target in strong],
         })
     return normalize_strings(payload)
+
+
+def _sorted_extensions(statement):
+    """Digest正規化 §3.1.3: extensionを(namespace, term, valueSortKey)で並べる。nullはstringより前。"""
+    ordered = sorted(statement["extensions"], key=lambda item: (
+        item["namespace"], item["term"], item["value"] is not None, item["value"] or ""))
+    return {**statement, "extensions": ordered}
 
 
 def normalize_strings(value):

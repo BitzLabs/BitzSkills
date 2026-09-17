@@ -1,0 +1,26 @@
+{
+  "fixtureId": "SINGLE-112-02",
+  "description": "ADR起点のimplement contextを引数不正として拒否する",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "ADR-001",
+      "--purpose",
+      "implement",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "exitCode": 4,
+    "stdout": "none",
+    "reportFileCount": 0
+  }
+}

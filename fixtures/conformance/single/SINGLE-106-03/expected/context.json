@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "interpret",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "REQ-001"
+  ],
+  "contextDigest": "sha256:3bf944a0195d0e7368fa83011127e655ace8c2f0bf0d3af42142557e60794d2a",
+  "revision": null,
+  "resolution": {
+    "complete": true,
+    "documentCount": 2,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "root"
+      ],
+      "statementRefs": [
+        "REQ-001:AC-01"
+      ],
+      "frontmatter": {
+        "id": "REQ-001",
+        "title": "advisory提示の起点",
+        "status": "approved"
+      },
+      "bodyText": "# REQ-001 advisory提示の起点\n\n## Intent\n\ntarget展開の検査に使う固定要求。\n\n## Acceptance Criteria\n\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 入力を検証する。\n\n## Verification\n\n宣言したtestで確認する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-005",
+      "kind": "technical",
+      "status": "draft",
+      "role": "advisory",
+      "path": ".spec/technical/TECH-005.md",
+      "projection": "reference",
+      "reachedBy": [
+        "refines:TECH-005"
+      ],
+      "expandable": true,
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

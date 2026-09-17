@@ -1,0 +1,192 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "implement",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "REQ-001:AC-01"
+  ],
+  "contextDigest": "sha256:13b0a49b981c215b26a849b6d1c74fa251dcccfd330ba89da387e3b66052aa2f",
+  "revision": null,
+  "resolution": {
+    "complete": true,
+    "documentCount": 3,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "root"
+      ],
+      "statementRefs": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "frontmatter": {
+        "id": "REQ-001",
+        "title": "兄弟句を持つ要求",
+        "status": "approved",
+        "tests": [
+          {
+            "path": "tests/test_root.py",
+            "covers": [
+              "REQ-001:AC-01",
+              "REQ-001:AC-02"
+            ],
+            "command": "default"
+          }
+        ]
+      },
+      "bodyText": "# REQ-001 兄弟句を持つ要求\n\n## Intent\n\ntarget展開の検査に使う固定要求。\n\n## Acceptance Criteria\n\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 入力を検証する。\n- [REQ-001:AC-02] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 結果を記録する。\n\n## Verification\n\n宣言したtestで確認する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-002",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-002.md",
+      "projection": "full",
+      "reachedBy": [
+        "refines:TECH-002"
+      ],
+      "statementRefs": [
+        "TECH-002:AC-01"
+      ],
+      "frontmatter": {
+        "id": "TECH-002",
+        "title": "直接の具体化",
+        "status": "approved",
+        "relations": {
+          "refines": [
+            "REQ-001:AC-01"
+          ]
+        },
+        "tests": [
+          {
+            "path": "tests/test_direct.py",
+            "covers": [
+              "TECH-002:AC-01"
+            ],
+            "command": "default"
+          }
+        ]
+      },
+      "bodyText": "# TECH-002 直接の具体化\n\n## Context\n\n具体化する技術契約。\n\n## Contract\n\n- [TECH-002:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 入力形式を固定する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TASK-001",
+      "kind": "task",
+      "status": "open",
+      "role": "work",
+      "path": ".spec/tasks/TASK-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "addresses:TASK-001"
+      ],
+      "statementRefs": [],
+      "frontmatter": {
+        "id": "TASK-001",
+        "title": "指定句の実装",
+        "status": "open",
+        "relations": {
+          "addresses": [
+            "REQ-001:AC-01",
+            "TECH-002:AC-01"
+          ]
+        },
+        "changes": [
+          "src/validate.py"
+        ]
+      },
+      "bodyText": "# TASK-001 指定句の実装\n\n## Objective\n\n対象句を実装する。\n",
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": [
+      {
+        "id": "REQ-001:AC-01",
+        "documentId": "REQ-001",
+        "documentRole": "root",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "入力を検証する"
+        }
+      },
+      {
+        "id": "TECH-002:AC-01",
+        "documentId": "TECH-002",
+        "documentRole": "refinement",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "入力形式を固定する"
+        }
+      }
+    ]
+  },
+  "coverage": {
+    "must": {
+      "total": [
+        "REQ-001:AC-01",
+        "TECH-002:AC-01"
+      ],
+      "addressed": [
+        "REQ-001:AC-01",
+        "TECH-002:AC-01"
+      ],
+      "tested": [
+        "REQ-001:AC-01",
+        "TECH-002:AC-01"
+      ],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": [
+      "REQ-001:AC-02"
+    ]
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

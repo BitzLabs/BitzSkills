@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "passed",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "REQ-001",
+      "status": "passed",
+      "contextDigest": "sha256:60005cf3c317953e8c3c246bdeda7f0cf2498aa239d8bbd086eda93b50ac728f",
+      "statements": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02",
+        "TECH-002:AC-01",
+        "TECH-003:AC-01"
+      ],
+      "bindingRefs": [
+        "root::default"
+      ],
+      "diagnostics": []
+    },
+    {
+      "target": "REQ-001:AC-01",
+      "status": "passed",
+      "contextDigest": "sha256:464c55f42a09da94e659bb11564ea2b175c9a1b4f0c75b465e9c85c523d694a7",
+      "statements": [
+        "REQ-001:AC-01",
+        "TECH-002:AC-01",
+        "TECH-003:AC-01"
+      ],
+      "bindingRefs": [
+        "root::default"
+      ],
+      "diagnostics": []
+    }
+  ],
+  "revision": null,
+  "commands": [
+    {
+      "bindingId": "root::default",
+      "workspaceId": "root",
+      "name": "default",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/test_direct.py",
+        "tests/test_indirect.py",
+        "tests/test_root.py"
+      ],
+      "tests": [
+        "tests/test_direct.py",
+        "tests/test_indirect.py",
+        "tests/test_root.py"
+      ],
+      "covers": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02",
+        "TECH-002:AC-01",
+        "TECH-003:AC-01"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": []
+}

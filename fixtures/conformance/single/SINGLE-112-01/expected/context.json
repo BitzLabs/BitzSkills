@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "interpret",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "ADR-001"
+  ],
+  "contextDigest": "sha256:672a88d91e48d5b6328ada16cf6b8bd28fea71cc983a7a8a0c739d912b54fb4a",
+  "revision": null,
+  "resolution": {
+    "complete": true,
+    "documentCount": 1,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "ADR-001",
+      "kind": "decision",
+      "status": "accepted",
+      "role": "root",
+      "path": ".spec/decisions/ADR-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "root"
+      ],
+      "statementRefs": [],
+      "frontmatter": {
+        "id": "ADR-001",
+        "title": "認証方式の選定",
+        "status": "accepted"
+      },
+      "bodyText": "# ADR-001 認証方式の選定\n\n## Context\n\n判断の背景。\n\n## Decision\n\ntoken方式を採用する。\n\n## Consequences\n\n規範契約はREQへ置く。\n",
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

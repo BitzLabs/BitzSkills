@@ -51,6 +51,9 @@ from conformance.input_limit_fixtures import validate as validate_input_limit_fi
 from conformance.registry_closure_fixtures import validate as validate_registry_closure_fixtures
 from conformance.scanner_fixtures import validate as validate_scanner_fixtures
 from conformance.presentation_fixtures import validate as validate_presentation_fixtures
+from conformance.target_root_fixtures import validate as validate_target_root_fixtures
+from conformance.expansion_fixtures import validate as validate_expansion_fixtures
+from conformance.ordering_fixtures import validate as validate_ordering_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -240,6 +243,9 @@ def main():
     checks["registry_closure_fixtures"] = validate_registry_closure_fixtures()
     checks["scanner_fixtures"] = validate_scanner_fixtures()
     checks["presentation_fixtures"] = validate_presentation_fixtures()
+    checks["target_root_fixtures"] = validate_target_root_fixtures()
+    checks["expansion_fixtures"] = validate_expansion_fixtures()
+    checks["ordering_fixtures"] = validate_ordering_fixtures()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_step0p.py")], capture_output=True, text=True, timeout=60)
     checks["step0p"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
     helpers = subprocess.run([sys.executable, "-B", str(FIXTURES / "test_harness.py")], capture_output=True, text=True, timeout=30)

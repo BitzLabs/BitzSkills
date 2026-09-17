@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "check",
+  "status": "failed",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "revision": {
+    "base": "0000000000000000000000000000000000000000",
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "checkedDocumentCount": 0,
+  "checkedStatementCount": 0,
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "CTX-ROOT-MISSING-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "起点.spec/requirements/REQ-009.mdが存在しません",
+      "source": {
+        "kind": "invocation",
+        "argument": ".spec/requirements/REQ-009.md"
+      }
+    }
+  ]
+}

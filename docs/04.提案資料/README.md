@@ -545,11 +545,16 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 | P1 5件 | 契約または性能受入成果物へ反映済み | process helper等の検証基盤、Core実装後の受入結果と性能baseline |
 | P2文書衛生 | accepted ADR linkとREADME状態を修正済み | — |
 | 自己適用 | 実装計画へ配置済み | Step 2完了後に`.spec/`を作成し、Gate Cで最終判定 |
-| Step 0B | `In progress` | 公開JSON・grammar・link・Git/process基盤・Diagnostic意味網羅・target集合25ケース・実fixture226件（導入設定9＋EARS 12＋文書構造・UTF-8 9＋関係・path・coverage 6＋ID重複・循環4＋Git基準版・保護対象外10＋TASK境界3＋Git対象選択・影響候補4＋Git環境3＋Context非成功6＋Context Digest 6＋expand反復2＋stale・上限・coverage 6＋verify実行・事前block 6＋verify binding共有3＋verify process終了3＋verify出力抜粋2＋文書単位binding1＋done TASK起点1＋report非作成4＋引数不正15＋report作成・保存失敗・JSON併用6＋text出力・制御文字・診断順序4＋BOM・Frontmatter 11＋寸法上限・未知entry 7＋registry閉包7＋Scanner・位置16＋既定表示・revision 8＋理由付きSHOULD・full projection・Digest version 3＋escape・normative projection 2＋quoted extension 1＋code span 1＋Frontmatter境界24＋Core副作用6＋verify argv・実行環境・出力変換15）の準備を検証済み。matrix §6.5 contextとDigest（16件）と§6.6 verifyは全32件完了し、単一workspaceのgolden Digestは独立2系統のreference計算で一致を確認済み。実fixture残84件、連合golden Digest等が残件 |
+| Step 0B | `In progress` | 公開JSON・grammar・link・Git/process基盤・Diagnostic意味網羅・target集合25ケース・実fixture245件（導入設定9＋EARS 12＋文書構造・UTF-8 9＋関係・path・coverage 6＋ID重複・循環4＋Git基準版・保護対象外10＋TASK境界3＋Git対象選択・影響候補4＋Git環境3＋Context非成功6＋Context Digest 6＋expand反復2＋stale・上限・coverage 6＋verify実行・事前block 6＋verify binding共有3＋verify process終了3＋verify出力抜粋2＋文書単位binding1＋done TASK起点1＋report非作成4＋引数不正15＋report作成・保存失敗・JSON併用6＋text出力・制御文字・診断順序4＋BOM・Frontmatter 11＋寸法上限・未知entry 7＋registry閉包7＋Scanner・位置16＋既定表示・revision 8＋理由付きSHOULD・full projection・Digest version 3＋escape・normative projection 2＋quoted extension 1＋code span 1＋Frontmatter境界24＋Core副作用6＋verify argv・実行環境・出力変換15＋明示起点の不在・ADR起点8＋共通target展開・advisory提示8＋Digest材料の順序・reverse solidus 3）の準備を検証済み。matrix §6.5 contextとDigest（16件）と§6.6 verifyは全32件完了し、単一workspaceのgolden Digestは独立2系統のreference計算で一致を確認済み。実fixture残65件（`SINGLE-127-15`〜`19`はharness外部仕様が未確定、連合60件は未着手）、連合golden Digest等が残件 |
 | Step 0-P | `Complete` | 基準入力・比較条件を固定し一括検証済み。実測はCore実装後 |
 | Gate A | `Blocked` | fresh checkoutから単一commandで2回一致する自動検査結果を記録 |
 | Gate B | `Pending` | 各StepのCore実装を固定済みfixtureへ通して判定 |
 | Gate C | `Pending` | 全適合、性能、決定性、副作用、process、自己適用をまとめて判定 |
+
+2026-09-17の単一fixture作成で、role割当、interpretのdraft refinement、statement起点の提示、verifyの起点TASKの
+`requires`を裁定し、関係・トレースモデル §6.1・§6.4・§7、context仕様 §4・§5、matrix `SINGLE-106-03`・`110`行へ
+本文反映した（既存決定の欠落補完のためADRは起こさない）。経緯は
+[Diagnostic台帳の再レビュー](../../fixtures/conformance/diagnostic-review.md)に記録した。
 
 Gate Aを`Allowed`へ変更するのは、[提案25 §9.1](25_Core-1.0実装前最終レビューと修正提案.md#91-gate-a-実装着手可能性)の
 Core非依存条件を満たす自動検査結果と実行環境を同一commitで確認した後とする。Core本体の挙動はGate Aで要求せず、

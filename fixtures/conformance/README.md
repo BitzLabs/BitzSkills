@@ -142,3 +142,15 @@ argv template違反5件、空引数・PATH解決不能・stdin・環境継承、
 SINGLE-126-06は、設定64 KiB上限により到達できないため裁定でmatrixから削除した（matrixは310件）。
 SINGLE-126-08は、約3,770 byteのtest path 280件を規範文なしTECH 35文書へ置き、引数なしverifyの展開後argvだけが
 byte総和1 MiBを超える入力として追加した。準備済みは226/310、残りは84件である。
+
+[明示起点の不在・ADR起点fixture](single/target-root-review.md)として、SINGLE-111-01〜04と112-01〜04を加えた。
+構文上妥当な不在起点を終了コード4や既知文書の検査へ置き換えず`CTX-ROOT-MISSING-001`で返すこと、ADR起点は
+interpretのcontextと明示checkだけで受理することを固定する。
+
+[共通target展開・advisory提示fixture](single/expansion-review.md)として、SINGLE-106-03、107-01／02、108-01／02、
+109、110、113を加えた。作成前にrole割当、draft refinement、statement起点の提示、verifyの起点TASKの`requires`を
+裁定して正本へ反映した。contextの4集合を完全比較し、同じ起点のverifyが同じtarget集合とDigestを使うことを確認する。
+
+[Digest材料の完全順序・reverse solidus fixture](single/ordering-review.md)として、SINGLE-122〜124を加えた。
+同一pathのtest対応と同一namespace／termのextensionの正規順、path型以外のreverse solidus保持を固定する。
+準備済みは245/310、残りは65件（SINGLE-127-15〜19と連合60件）である。

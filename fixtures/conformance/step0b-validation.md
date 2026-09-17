@@ -1,6 +1,6 @@
 # Step 0B validation progress
 
-- Date: 2026-09-14
+- Date: 2026-09-17（下表は2026-09-14時点の構成。以後の追加は末尾の日付節を参照）
 - Command: `uv run fixtures/validate_step0b.py`
 - Runtime: CPython 3.14.6, Linux/POSIX, uv 0.11.32; validator versions pinned in script metadata.
 - Gate A: `Blocked`; command exit code: 1 (outstanding evidence).
@@ -11,7 +11,7 @@
 | Other JSON examples | 5 Semantic IR / Digest material examples parsed; not certified by the result Schema |
 | EBNF references | 33 definitions plus 3 explicitly prose-defined lexical sets; no unresolved reference |
 | Diagnostic review (updated 2026-09-08) | 119 conditions mapped to 17 source documents; three open issues resolved; ledger and regression checks passed |
-| Matrix inventory | 311 IDs, no duplicate or family/suffix collision; 65 prepared, 246 real fixtures missing |
+| Matrix inventory | 310 IDs（2026-09-17時点）、重複とfamily／suffix衝突なし。準備済み245件、未作成65件 |
 | EARS fixtures | SINGLE-007, 008, 009-01/02/03, 010-01/02, 011, 012-01/02/03, 013: fixed REQ bytes, Frontmatter Schema, complete expected results, Unicode token/end-of-line positions and two isolated setups checked; position/severity/code/count/input corruption rejected |
 | Document fixtures (2026-09-11) | SINGLE-014, 016, 017-01/02/03, 018-01/02/03, 019: fixed input bytes including invalid UTF-8, complete expected JSON, Frontmatter and side-effect schemas, and two isolated setups each passed; skip/continue counts, Diagnostic, report, side-effect and input corruption rejected |
 | Trace fixtures (2026-09-11) | SINGLE-020, 021, 023, 024, 025, 026: fixed YAML/decoded Frontmatter pairs, complete expected JSON, read-only snapshots and two isolated setups each passed; duplicate diagnostics, wrong primary/count/severity/source, input repair and additional causes rejected |
@@ -25,7 +25,7 @@
 | Initial fixtures | SINGLE-001, 002, 003, 004-01/02, 005-01/02, 006-01/02: manifest/result/side-effect schemas and reviewed input checks passed; two isolated setups each matched fixed before snapshots |
 | Command preconditions | Absent explicit executable / absent cwd isolated; /bin/true executable prerequisite checked without running commands; extra or missing causes rejected by regression tests |
 | Target vectors (2026-09-08) | 18 basic combinations + 7 supplementary cases; four ordered sets, input-order invariance and rejection regression checks passed |
-| Relative links | 218 references in current contracts and accepted ADRs; no missing target/anchor |
+| Relative links | 223 references in current contracts and accepted ADRs（2026-09-17時点）; no missing target/anchor |
 | Git infrastructure | unborn, clean, worktree, staged, rename, delete, create; two identical setups per vector |
 | Snapshot comparison | Content, executable bit, symlink target changes detected; unsafe path traversal rejected |
 | Process helpers | Exit 0/7, SIGTERM, timeout, descendant pipe holding; isolated process groups cleaned up within bounded tests |
@@ -544,3 +544,17 @@ fixtureは入力と副作用snapshotで約9 MiBである。
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `f40dbfc6f38683207e31d53e7fde47d33232b708791a994b51dd980f1ebd8206`。
 Coreは実行していない。残りの適合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。
+
+## 2026-09-17: 明示起点の不在・ADR起点、共通target展開、Digest材料の順序
+
+準備済み245/310、残り65件。SINGLE-106-03、107-01／02、108-01／02、109、110、111-01〜04、112-01〜04、113、
+122〜124の19件を追加した。作成前に、role割当、interpretのdraft refinement、statement起点の提示、
+verifyの起点TASKの`requires`を裁定して正本へ反映し、Diagnostic台帳とtarget vectorの根拠hashを再レビュー後に更新した。
+target vectorは`TASK-REQUIRES-NOT-TARGET`の期待集合だけが変わり、他の24ケースは不変である。
+reference B（`digest_crosscheck.py`）を`requires`の追跡、statementへの`refines`、draft advisory、
+command省略時の文書`verify`解決、extensionの正規順へ拡張し、既存fixtureのCanonical JSONが不変であることを確認した。
+新規のContext Digestはすべて2系統のreferenceで一致した。各fixtureを2回の隔離setupで照合した。
+SINGLE-127-15〜19は、偽Gitの配置、`consumer` runnerのargv、CPython 3.11の選択が未確定のため保留した。
+同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
+Report SHA-256: `23f787eb283aa4fe0f877ac020ceb070fa6b116282a2046bbd1cd079eca47c8c`。
+Coreは実行していない。SINGLE-127-15〜19、連合fixture、連合golden、fresh checkoutでのGate A認定は未完了である。

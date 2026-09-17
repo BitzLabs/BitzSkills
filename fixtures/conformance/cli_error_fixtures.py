@@ -5,6 +5,9 @@
 lexically invalid ID. SINGLE-127 adds duplicate, empty, timeout and report syntax
 boundaries. All return no common result: exit code 4, no JSON body,
 one stderr line, and no report.
+
+SINGLE-112-02/04は、字句上妥当でcorpusに存在するADR-001を`interpret`以外の
+起点に指定した場合を拒否する。
 """
 import json
 from pathlib import Path
@@ -31,6 +34,10 @@ CASES = {
                       "verify targetへのcode path指定を拒否する"),
     "SINGLE-074-03": ("check", ["REQ-1", "--format", "json"],
                       "構文不正な文書IDを拒否する"),
+    "SINGLE-112-02": ("context", ["ADR-001", "--purpose", "implement", "--format", "json"],
+                      "ADR起点のimplement contextを引数不正として拒否する"),
+    "SINGLE-112-04": ("verify", ["ADR-001", "--format", "json"],
+                      "ADR起点のverifyを引数不正として拒否する"),
     "SINGLE-127-01": ("check", ["--format", "json", "--format", "json"],
                       "同値の--format重複を操作開始前に拒否する"),
     "SINGLE-127-02": ("check", ["--full", "--full", "--format", "json"],
@@ -86,6 +93,13 @@ def check_contract(identifier, manifest):
         raise ValueError("manifest operation differs from the reviewed case")
     if identifier.startswith("SINGLE-073") and "--report" not in manifest["invocation"]["argv"]:
         raise ValueError("the report-flag cases must pass --report")
+    if identifier.startswith("SINGLE-112"):
+        argv = manifest["invocation"]["argv"]
+        # ADR-001は存在するため、起点を不正にする原因はpurposeまたは操作だけである。
+        if argv[1] != "ADR-001" or digest_reference.ADR_PATH not in reviewed_inputs(identifier):
+            raise ValueError("ADR起点caseは存在するADR-001を指定する必要があります")
+        if argv[0] == "context" and argv[argv.index("--purpose") + 1] == "interpret":
+            raise ValueError("ADR起点はinterpretでは妥当です")
     # The shared helper owns the stderr contract; exercise it for this operation so a
     # prefix or reason that stopped matching cannot pass unnoticed.
     check_cli_error_output(4, b"", f"bitz: {operation}: reason\n".encode(), operation)

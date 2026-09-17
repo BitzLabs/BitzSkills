@@ -1,0 +1,242 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "verify",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "REQ-001"
+  ],
+  "contextDigest": "sha256:60005cf3c317953e8c3c246bdeda7f0cf2498aa239d8bbd086eda93b50ac728f",
+  "revision": null,
+  "resolution": {
+    "complete": true,
+    "documentCount": 4,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "root"
+      ],
+      "statementRefs": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "frontmatter": {
+        "id": "REQ-001",
+        "title": "展開の起点要求",
+        "status": "approved",
+        "relations": {
+          "requires": [
+            "REQ-009"
+          ],
+          "related": [
+            "REQ-099"
+          ]
+        },
+        "tests": [
+          {
+            "path": "tests/test_root.py",
+            "covers": [
+              "REQ-001:AC-01",
+              "REQ-001:AC-02"
+            ],
+            "command": "default"
+          }
+        ]
+      },
+      "bodyText": "# REQ-001 展開の起点要求\n\n## Intent\n\ntarget展開の検査に使う固定要求。\n\n## Acceptance Criteria\n\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 入力を検証する。\n- [REQ-001:AC-02] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 結果を記録する。\n\n## Verification\n\n宣言したtestで確認する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "REQ-009",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "requirement",
+      "path": ".spec/requirements/REQ-009.md",
+      "projection": "full",
+      "reachedBy": [
+        "requires:REQ-001"
+      ],
+      "statementRefs": [
+        "REQ-009:AC-01"
+      ],
+      "frontmatter": {
+        "id": "REQ-009",
+        "title": "前提要求",
+        "status": "approved"
+      },
+      "bodyText": "# REQ-009 前提要求\n\n## Intent\n\ntarget展開の検査に使う固定要求。\n\n## Acceptance Criteria\n\n- [REQ-009:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 前提を満たす。\n\n## Verification\n\n宣言したtestで確認する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-002",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-002.md",
+      "projection": "full",
+      "reachedBy": [
+        "refines:TECH-002"
+      ],
+      "statementRefs": [
+        "TECH-002:AC-01"
+      ],
+      "frontmatter": {
+        "id": "TECH-002",
+        "title": "直接の具体化",
+        "status": "approved",
+        "relations": {
+          "refines": [
+            "REQ-001:AC-01"
+          ]
+        },
+        "tests": [
+          {
+            "path": "tests/test_direct.py",
+            "covers": [
+              "TECH-002:AC-01"
+            ],
+            "command": "default"
+          }
+        ]
+      },
+      "bodyText": "# TECH-002 直接の具体化\n\n## Context\n\n具体化する技術契約。\n\n## Contract\n\n- [TECH-002:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 入力形式を固定する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-003",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-003.md",
+      "projection": "normative",
+      "reachedBy": [
+        "refines:TECH-003"
+      ],
+      "statementRefs": [
+        "TECH-003:AC-01"
+      ],
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": [
+      {
+        "id": "REQ-001:AC-01",
+        "documentId": "REQ-001",
+        "documentRole": "root",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "入力を検証する"
+        }
+      },
+      {
+        "id": "REQ-001:AC-02",
+        "documentId": "REQ-001",
+        "documentRole": "root",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "結果を記録する"
+        }
+      },
+      {
+        "id": "TECH-002:AC-01",
+        "documentId": "TECH-002",
+        "documentRole": "refinement",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "入力形式を固定する"
+        }
+      },
+      {
+        "id": "TECH-003:AC-01",
+        "documentId": "TECH-003",
+        "documentRole": "refinement",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "形式違反を拒否する"
+        }
+      }
+    ]
+  },
+  "coverage": {
+    "must": {
+      "total": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02",
+        "TECH-002:AC-01",
+        "TECH-003:AC-01"
+      ],
+      "addressed": [],
+      "tested": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02",
+        "TECH-002:AC-01",
+        "TECH-003:AC-01"
+      ],
+      "unaddressed": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02",
+        "TECH-002:AC-01",
+        "TECH-003:AC-01"
+      ],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}
