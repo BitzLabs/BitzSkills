@@ -664,3 +664,16 @@ verify実行計画のdimensionを優先して報告する規則を加え、`comp
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `154cac445a806f94d0767c64bd5407a1336cbff7c3dd8f22cc3507f1c3c9aa73`。
 残るpendingは、Coreと照合した入力・期待値（Gate B）と、fresh checkoutからのGate A全体実行である。
+
+## 2026-09-18: fresh checkoutでの再現性と実行bitの修正
+
+commit済みのrepositoryを`git clone`した写しで統合検証とscale検証を実行した。最初の実行で、
+`bin/*.sh`など14件の実行bitがGitのindexへ入っていないことがわかり、監査試験5件が失敗した。
+このrepositoryは`core.fileMode=false`のため、作業treeの実行bitがindexへ記録されていなかった。
+副作用期待値を正として`git update-index --chmod=+x`で直し、統合検証へ、repo/配下の入力1,730件について
+Gitのindexの実行bitと副作用期待値の一致を照合する検査を加えた。
+
+修正後、fresh checkoutと作業treeの統合検証reportはbyte一致した。
+Report SHA-256: `c81f0f402f624d69cc80ba5abd09e45806edfd8f3572db2f0bd135313896ba27`（両者同じ）。
+scale検証もfresh checkoutで24件すべてPassedとなり、tree digestを含む結果は作業treeと同じであった（36秒）。
+監査試験175件と基盤の自己試験6件は成功した。Gate Aは、Coreと照合した入力・期待値が残るためBlockedのままである。
