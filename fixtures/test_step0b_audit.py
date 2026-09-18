@@ -64,6 +64,7 @@ from conformance import target_vectors
 from conformance import multi_catalog_fixtures, multi_digest_fixtures, multi_identity_fixtures
 from conformance import multi_member_fixtures, multi_ownership_fixtures, multi_reference
 from conformance import multi_verify_fixtures, multi_report_fixtures, multi_compat_fixtures
+from conformance import multi_generator, multi_limit_fixtures
 
 
 class AuditTests(unittest.TestCase):
@@ -845,6 +846,61 @@ class AuditTests(unittest.TestCase):
             path = root / "multi/MULTI-024-03/changes/tech.md"
             path.write_bytes(path.read_bytes().replace(b"platform::REQ-001:AC-01", b"REQ-001:AC-01"))
             result = multi_compat_fixtures.validate(root, {"MULTI-024-03"})
+        self.assertEqual(result["status"], "Failed")
+
+    def test_multi_limit_fixtures(self):
+        result = multi_limit_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(multi_limit_fixtures.CASES))
+        self.assertEqual(result["generated_profiles"], "reduced")
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_multi_limit_matrix_covers_every_dimension(self):
+        """8 dimension×（limit-1、limit、limit+1）を1件ずつ持つ。"""
+        cases = multi_limit_fixtures.CASES
+        self.assertEqual(len(cases), 24)
+        for dimension, limit in multi_generator.LIMITS.items():
+            values = sorted(value for name, (kind, value, _) in cases.items() if kind == dimension)
+            self.assertEqual(values, [limit - 1, limit, limit + 1], dimension)
+
+    def test_multi_generator_counts_only_the_targeted_dimension(self):
+        """生成器の計数は生成計画を読まない。狙った以外のdimensionは上限内に収まる。"""
+        for dimension in multi_generator.DIMENSIONS:
+            value = max(5, multi_generator.LIMITS[dimension] // 1000)
+            totals = multi_generator.count(multi_generator.emit(multi_generator.plan(dimension, value)))
+            self.assertEqual(totals[dimension], value, dimension)
+            for name, observed in totals.items():
+                self.assertLessEqual(observed, multi_generator.LIMITS[name], (dimension, name))
+
+    def test_multi_limit_audit_rejects_changed_datasets_and_digests(self):
+        mutations = [
+            ("MULTI-020-01", "dataset.json", lambda v: v.update(value=v["value"] - 1)),
+            ("MULTI-020-01", "dataset.json", lambda v: v.update(crosses=True)),
+            ("MULTI-021-01", "dataset.json", lambda v: v.update(crosses=False)),
+            ("MULTI-021-01", "manifest.json",
+             lambda v: v["expect"].update(resultDigest="sha256:" + "0" * 64)),
+            ("MULTI-021-01", "manifest.json", lambda v: v["expect"].update(status="failed", exitCode=1)),
+            ("MULTI-020-03", "manifest.json",
+             lambda v: v["setup"]["generate"].update(dataset="missing.json")),
+            ("MULTI-020-03", "side-effects.json", lambda v: v.update(policy="explicit-report")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertEqual(multi_limit_fixtures.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_limit_audit_rejects_committed_input_tree(self):
+        """生成fixtureはrepo/と期待fileを持たない。"""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-020-01")
+            (root / "multi/MULTI-020-01/repo/.spec").mkdir(parents=True)
+            (root / "multi/MULTI-020-01/repo/.spec/bitz.yaml").write_text("schemaVersion: \"1.0\"\n")
+            result = multi_limit_fixtures.validate(root, {"MULTI-020-01"})
         self.assertEqual(result["status"], "Failed")
 
     def test_frontmatter_boundary_evidence(self):

@@ -306,6 +306,8 @@ binding、0件判定は各[操作仕様](../03_操作仕様/README.md)が定義�
 - 上限超過は複合workspace全体を`SPEC-MULTI-LIMIT-001`／`blocked`とし、部分結果やcommand実行へ進まない。
 - limit Diagnostic `evidence`は`dimension`、`limit`、早期停止時の`observedAtLeast`を持つ。正確な全件数を得るために
   超過後も入力を読み続けることは要求しない。
+- `verifyBindingCount`は`commandDefinitionCount`の部分集合なので、両方が同時に超過し得る。複数のdimensionが
+  同時に超過する場合は、verify実行計画のdimensionを優先して報告する。
 - 通常操作でも横断参照と逆参照に必要な軽量索引はcatalog全体から作る。
 - 変更workspaceと到達workspaceを完全解析し、無関係workspaceの本文解析を避ける。
 - Gitが利用できない、またはrepository rootと所有境界を確定できない場合、複合workspace操作は

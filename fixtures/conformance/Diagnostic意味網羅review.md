@@ -162,3 +162,13 @@ Schema表の型名、code block、inline code、Diagnostic code、condition ID�
 
 - 文言統一のみで、規範の変更はない。119条件・14論点群の対応に変更はない。
 - 上記を確認したうえで、台帳が固定する根拠文書のhashを更新した。
+
+## 2026-09-18の再review（上限の同時超過）
+
+`verifyBindingCount`はbindingが必ずcommand定義の部分集合になるため、`commandDefinitionCount`と同時にしか
+超過できない。複合workspace仕様 §10へ、複数のdimensionが同時に超過する場合はverify実行計画のdimensionを
+優先して報告する規則を1文加えた。
+
+- `SPEC-MULTI-LIMIT-001`の条件、severity、status、source、継続単位は変えていない。119条件・14論点群の対応に変更はない。
+- 適合fixture `MULTI-021-08`はこの規則に従い、`evidence.dimension`を`verifyBindingCount`とする。
+- 上記を確認したうえで、台帳が固定する根拠文書のhashを更新した。

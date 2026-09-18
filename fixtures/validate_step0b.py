@@ -63,6 +63,7 @@ from conformance.multi_member_fixtures import validate as validate_multi_member_
 from conformance.multi_verify_fixtures import validate as validate_multi_verify_fixtures
 from conformance.multi_report_fixtures import validate as validate_multi_report_fixtures
 from conformance.multi_compat_fixtures import validate as validate_multi_compat_fixtures
+from conformance.multi_limit_fixtures import validate as validate_multi_limit_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "docs/03.詳細設計"
@@ -154,6 +155,8 @@ def matrix():
         if re.search(r"元status|passed/0、failed/1", row):
             errors.append(f"{identifier}: 期待結果が曖昧です")
     found = {p.parent.name for p in FIXTURES.glob("*/*/manifest.json")}
+    without_effects = sorted(p.parent.name for p in FIXTURES.glob("*/*/manifest.json")
+                             if not (p.parent / "side-effects.json").is_file())
     missing = sorted(set(ids) - found)
     for identifier in sorted(found - set(ids)):
         errors.append(f"{identifier}: matrixに行がありません")
@@ -171,7 +174,15 @@ def matrix():
                 errors.append(f"{path}: Git不在fixtureでは--baseを使えません")
             if manifest["fixtureId"] != path.parent.name:
                 errors.append(f"{path}: fixtureIdがdirectory名と異なります")
-            if not (path.parent / "repo").is_dir():
+            generated = "generate" in manifest["setup"]
+            if generated:
+                # 生成fixtureはrepo/を持たず、dataset manifestから入力を作る（ADR-048）。
+                dataset = path.parent / manifest["setup"]["generate"]["dataset"]
+                if (path.parent / "repo").exists() or not dataset.is_file():
+                    errors.append(f"{path}: 生成fixtureにdataset manifestがありません")
+                if "resultFile" in manifest["expect"]:
+                    errors.append(f"{path}: 生成fixtureの期待結果はdigestで固定します")
+            elif not (path.parent / "repo").is_dir():
                 errors.append(f"{path}: repo directoryがありません")
             referenced = set()
             for key in ("resultFile", "textFile"):
@@ -208,7 +219,8 @@ def matrix():
                 errors.append(f"{path}: 参照されていない期待値があります")
         except (ValueError, ValidationError) as error:
             errors.append(f"{path.relative_to(ROOT)}: {str(error).split(chr(10))[0]}")
-    return {"matrix_ids": len(ids), "missing_fixtures": missing, "errors": errors}
+    return {"matrix_ids": len(ids), "missing_fixtures": missing,
+            "fixtures_without_side_effects": without_effects, "errors": errors}
 
 
 def registry():
@@ -270,6 +282,7 @@ def main():
     checks["multi_verify_fixtures"] = validate_multi_verify_fixtures()
     checks["multi_report_fixtures"] = validate_multi_report_fixtures()
     checks["multi_compat_fixtures"] = validate_multi_compat_fixtures()
+    checks["multi_limit_fixtures"] = validate_multi_limit_fixtures()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_step0p.py")], capture_output=True, text=True, timeout=60)
     checks["step0p"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
     helpers = subprocess.run([sys.executable, "-B", str(FIXTURES / "test_harness.py")], capture_output=True, text=True, timeout=30)
@@ -278,8 +291,9 @@ def main():
     checks["audit_self_tests"] = {"status": "Passed" if audit_tests.returncode == 0 else "Failed", "errors": [] if audit_tests.returncode == 0 else [audit_tests.stderr]}
     # これらの検査は、構造の検査やhelperの試験では意図して保証しない。
     # 各項目は、実際のreview済みの証拠の検査でだけ置き換える。
-    pending = ["per-fixture side-effect expectations", "conformance inputs and expectations",
-               "full Gate A fresh-checkout repeatability"]
+    pending = ["conformance inputs and expectations", "full Gate A fresh-checkout repeatability"]
+    if checks["matrix"]["missing_fixtures"] or checks["matrix"]["fixtures_without_side_effects"]:
+        pending.insert(0, "per-fixture side-effect expectations")
     if checks["multi_digest_fixtures"]["status"] != "Passed":
         pending.insert(0, "independent multi-workspace golden Context Digest")
     if checks["digest_fixtures"]["status"] != "Passed":

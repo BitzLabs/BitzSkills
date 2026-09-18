@@ -89,3 +89,4 @@
 | [ADR-045](ADR-045_実行環境と配布物の確定.md) | 実行環境と配布物の確定 | accepted | ADR-009・016, doctor仕様, workspace・設定仕様, 運用手順 |
 | [ADR-046](ADR-046_適合harnessの検査対象・実行環境・runnerを確定する.md) | 適合harnessの検査対象・実行環境・runnerを確定する | accepted | ADR-043・045, 適合fixture仕様, CLI基盤契約, 実装計画 |
 | [ADR-047](ADR-047_複合workspaceの識別子をmultiWorkspaceへ改名する.md) | 複合workspaceの識別子をmultiWorkspaceへ改名する | accepted | ADR-040・042・043, 用語集, 設定仕様, 結果契約, Diagnostic registry, 適合fixture仕様 |
+| [ADR-048](ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md) | 適合fixtureの生成入力とGit構造operationを確定する | accepted | ADR-046, 適合fixture仕様, manifest Schema, fixture harness |

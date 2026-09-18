@@ -1,0 +1,38 @@
+{
+  "fixtureId": "MULTI-021-02",
+  "description": "SPEC file数10,001の超過を早期に停止する",
+  "setup": {
+    "git": true,
+    "generate": {
+      "dataset": "dataset.json",
+      "treeDigest": "sha256:409b6922f0ee0a8241d2de8b416918d49d22d2767cbcb5a23bcb2597d22fa0a0"
+    },
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultDigest": "sha256:eb74523da601f8e8a9b30be32b66cdd75b205ddda9e487ca6d4bfc93c90ecc18",
+    "reportFileCount": 0
+  }
+}

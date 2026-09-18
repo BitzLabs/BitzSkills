@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0",
+  "fixtureId": "MULTI-020-10",
+  "dimension": "relationEdgeCount",
+  "value": 1000000,
+  "limit": 1000000,
+  "crosses": false,
+  "dimensions": {
+    "memberCount": 2,
+    "specFileCount": 1003,
+    "inputBytes": 13176563,
+    "statementCount": 3,
+    "relationEdgeCount": 1000000,
+    "traceEntryCount": 6,
+    "commandDefinitionCount": 3,
+    "verifyBindingCount": 3
+  }
+}

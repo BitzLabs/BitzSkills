@@ -1,0 +1,38 @@
+{
+  "fixtureId": "MULTI-020-01",
+  "description": "member数99の境界内を誤って遮断しない",
+  "setup": {
+    "git": true,
+    "generate": {
+      "dataset": "dataset.json",
+      "treeDigest": "sha256:cb00f7d1ba5bf85a98e49b032795234d307481fb2fc5ab703b2437e44e059d78"
+    },
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultDigest": "sha256:82c01dd95a7650701e3ef0741575daf4995610d9f9ca27f6b1e1e1711ea78814",
+    "reportFileCount": 0
+  }
+}

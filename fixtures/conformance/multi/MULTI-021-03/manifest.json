@@ -1,0 +1,38 @@
+{
+  "fixtureId": "MULTI-021-03",
+  "description": "入力byte数268,435,457の超過を早期に停止する",
+  "setup": {
+    "git": true,
+    "generate": {
+      "dataset": "dataset.json",
+      "treeDigest": "sha256:8ea91b333963ba50de10b5df4412cee666f37918dfbf92eb7d23307e84ac9eb3"
+    },
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultDigest": "sha256:f6ecf6141f5183c81ec6cb07dc08aa7dc94d82a740825ff3695075e5a30ef7cb",
+    "reportFileCount": 0
+  }
+}

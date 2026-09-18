@@ -1,0 +1,38 @@
+{
+  "fixtureId": "MULTI-020-14",
+  "description": "command定義数10,000の境界内を誤って遮断しない",
+  "setup": {
+    "git": true,
+    "generate": {
+      "dataset": "dataset.json",
+      "treeDigest": "sha256:426025ed3e0b8602adadee4fe48749e2b2cc90d28ea2a26e8a637f072f38a771"
+    },
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultDigest": "sha256:9d827ad3a5fb499b25663e7225b976a69e20dcfda64b6411e3f157843afe3260",
+    "reportFileCount": 0
+  }
+}

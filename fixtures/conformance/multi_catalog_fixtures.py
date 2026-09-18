@@ -2,7 +2,8 @@
 
 全体事前検査が非成功なら、member処理もContext解決もcommandも始めずに`workspaces: []`で結果を返す。
 この群は、その停止条件を1件ずつ切り分ける。`MULTI-005`は未知`--workspace`が操作結果を作らないこと、
-`MULTI-006`はGitが知っているcatalog未登録の設定、`MULTI-007-01`はmemberの入れ子、`MULTI-019`はGit不在である。
+`MULTI-006`はGitが知っているcatalog未登録の設定、`MULTI-007-01/02/03`はmember pathの入れ子・submodule・別worktree、
+`MULTI-019`はGit不在である。
 """
 import json
 from pathlib import Path
@@ -13,7 +14,7 @@ from jsonschema import Draft202012Validator, ValidationError
 
 from . import multi_crosscheck, multi_reference
 from .git_environment_fixtures import check_cli_error_output
-from .harness import setup, snapshot
+from .harness import git, setup, snapshot
 from .initial_fixtures import observe, compare_state
 
 HERE = Path(__file__).resolve().parent
@@ -28,12 +29,18 @@ UNREGISTERED = {
     # 未登録の設定はworkspaceではないので、所有workspaceを持たない。
     "source": {"kind": "file", "workspaceId": None, "path": UNREGISTERED_PATH},
 }
-NESTED_PATH = {
-    "code": "SPEC-MULTI-PATH-001", "severity": "error", "resultStatus": "failed",
-    "summary": "member pathが別のmemberの配下にあります",
-    "source": {"kind": "file", "workspaceId": "platform", "path": ".spec/bitz.yaml",
-               "key": "multiWorkspace.members"},
-}
+def path_diagnostic(summary):
+    return {
+        "code": "SPEC-MULTI-PATH-001", "severity": "error", "resultStatus": "failed",
+        "summary": summary,
+        "source": {"kind": "file", "workspaceId": "platform", "path": ".spec/bitz.yaml",
+                   "key": "multiWorkspace.members"},
+    }
+
+
+NESTED_PATH = path_diagnostic("member pathが別のmemberの配下にあります")
+SUBMODULE_PATH = path_diagnostic("member pathがGit submoduleです")
+WORKTREE_PATH = path_diagnostic("member pathが別のworktreeです")
 NO_GIT = {
     "code": "SPEC-MULTI-GIT-001", "severity": "error", "resultStatus": "blocked",
     "summary": "Git repositoryの境界を確定できません",
@@ -47,11 +54,18 @@ CASES = {
                   True, "blocked", 2, "Gitが知るcatalog未登録の設定で全体操作を遮断する"),
     "MULTI-007-01": ("nested", ["doctor", "--all-workspaces", "--format", "json"], True,
                      "failed", 1, "memberの入れ子をmember path不正として拒否する"),
+    "MULTI-007-02": ("submodule", ["doctor", "--all-workspaces", "--format", "json"], True,
+                     "failed", 1, "memberがGit submoduleである構成を拒否する"),
+    "MULTI-007-03": ("worktree", ["doctor", "--all-workspaces", "--format", "json"], True,
+                     "failed", 1, "memberが別のworktreeである構成を拒否する"),
     "MULTI-019": ("golden", ["doctor", "--all-workspaces", "--format", "json"], False,
                   "blocked", 2, "Git不在の複合workspaceを遮断する"),
 }
 RESULT_FILES = {"MULTI-006": "expected/check.json", "MULTI-007-01": "expected/doctor.json",
+                "MULTI-007-02": "expected/doctor.json", "MULTI-007-03": "expected/doctor.json",
                 "MULTI-019": "expected/doctor.json"}
+MEMBER_SOURCE = "changes/member"
+MEMBER_SOURCE_CONFIG = f"{MEMBER_SOURCE}/.spec/bitz.yaml"
 
 
 def reviewed_inputs(corpus):
@@ -61,12 +75,19 @@ def reviewed_inputs(corpus):
         # catalogはweb、apiだけを登録し、libs/nativeの設定はGitが知るだけの未登録workspaceとする。
         return {**multi_reference.reviewed_inputs(),
                 UNREGISTERED_PATH: multi_reference.plain_config("native").encode()}
+    if corpus == "nested":
+        return {
+            multi_reference.ROOT_CONFIG_PATH: multi_reference.root_config(
+                [("web", "apps/web"), ("inner", "apps/web/inner")]).encode(),
+            multi_reference.ROOT_REQ_PATH: (multi_reference.REQ_HEAD + "\n" + multi_reference.REQ_BODY).encode(),
+            multi_reference.WEB_CONFIG_PATH: multi_reference.plain_config("web").encode(),
+            INNER_CONFIG_PATH: multi_reference.plain_config("inner").encode(),
+        }
+    # submoduleと別worktreeは、member pathをGitの構造として作るので、member設定をchanges/へ置く。
     return {
-        multi_reference.ROOT_CONFIG_PATH: multi_reference.root_config(
-            [("web", "apps/web"), ("inner", "apps/web/inner")]).encode(),
+        multi_reference.ROOT_CONFIG_PATH: multi_reference.root_config([("web", "apps/web")]).encode(),
         multi_reference.ROOT_REQ_PATH: (multi_reference.REQ_HEAD + "\n" + multi_reference.REQ_BODY).encode(),
-        multi_reference.WEB_CONFIG_PATH: multi_reference.plain_config("web").encode(),
-        INNER_CONFIG_PATH: multi_reference.plain_config("inner").encode(),
+        MEMBER_SOURCE_CONFIG: multi_reference.plain_config("web").encode(),
     }
 
 
@@ -74,7 +95,11 @@ def reviewed_manifest(identifier):
     corpus, argv, git, status, exit_code, description = CASES[identifier]
     setup_plan = {"git": git, "operations": []}
     if git and identifier != "MULTI-005":
-        setup_plan = {"git": True, "baseCommit": {"message": "base", "paths": ["."]}, "operations": []}
+        operations = []
+        if corpus in {"submodule", "worktree"}:
+            operations = [{"op": corpus, "path": "apps/web", "source": MEMBER_SOURCE}]
+        setup_plan = {"git": True, "baseCommit": {"message": "base", "paths": ["."]},
+                      "operations": operations}
     expect = {"exitCode": exit_code, "stdout": "json" if status else "none", "reportFileCount": 0}
     if status:
         expect = {"status": status, **expect, "resultFile": RESULT_FILES[identifier]}
@@ -123,7 +148,9 @@ def doctor_result(identifier):
     else:
         checks = [{"name": "core", "status": "passed"}, {"name": "git", "status": "passed"},
                   {"name": "catalog", "status": "failed"}]
-        status, diagnostic = "failed", NESTED_PATH
+        status = "failed"
+        diagnostic = {"MULTI-007-01": NESTED_PATH, "MULTI-007-02": SUBMODULE_PATH,
+                      "MULTI-007-03": WORKTREE_PATH}[identifier]
     return {
         "schemaVersion": "1.0", "operation": "doctor", "status": status,
         "multiWorkspace": {"id": "platform", "path": "."},
@@ -158,6 +185,25 @@ def check_precondition(identifier, repository):
         for _, path in members:
             if not (repository / path / ".spec/bitz.yaml").is_file():
                 raise ValueError("入れ子のcaseでも、各memberは自身の設定を持つ必要があります")
+    if corpus == "submodule":
+        entry = git(repository, "ls-files", "--stage", "--", "apps/web").decode().split()
+        if not entry or entry[0] != "160000":
+            raise ValueError("submoduleのcaseは、gitlinkとして記録されている必要があります")
+        if "apps/web" not in (repository / ".gitmodules").read_text(encoding="utf-8"):
+            raise ValueError("submoduleのcaseは、.gitmodulesの登録が必要です")
+        if not (repository / "apps/web/.git").is_dir():
+            raise ValueError("submoduleのcaseは、別repositoryの実体が必要です")
+    if corpus == "worktree":
+        marker = repository / "apps/web/.git"
+        if not marker.is_file() or not marker.read_text(encoding="utf-8").startswith("gitdir:"):
+            raise ValueError("別worktreeのcaseは、gitdirを指す.git fileが必要です")
+        if "apps/web" not in git(repository, "worktree", "list").decode():
+            raise ValueError("別worktreeのcaseは、同じrepositoryのworktreeである必要があります")
+        if git(repository, "ls-files", "--stage", "--", "apps/web").decode().strip():
+            raise ValueError("別worktreeのmember pathは親のindexへ記録しません")
+    if corpus in {"submodule", "worktree"}:
+        if not (repository / "apps/web/.spec/bitz.yaml").is_file():
+            raise ValueError("member設定がなければ、原因がmember pathではなくmember設定になります")
     if identifier == "MULTI-019" and (repository / ".git").exists():
         raise ValueError("Git不在のcaseにGitのmetadataがあります")
     if identifier == "MULTI-005":
@@ -196,8 +242,12 @@ def validate(root=HERE, identifiers=None):
                 if result["workspaces"]:
                     raise ValueError("事前検査の非成功はmember結果を持ちません")
             inputs = reviewed_inputs(CASES[identifier][0])
-            files = {p.relative_to(fixture / "repo").as_posix(): p
-                     for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
+            files = {}
+            for directory in ("repo", "changes"):
+                prefix = "" if directory == "repo" else f"{directory}/"
+                for path in (fixture / directory).rglob("*"):
+                    if path.is_file() or path.is_symlink():
+                        files[prefix + path.relative_to(fixture / directory).as_posix()] = path
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[key]
                                                 for key, p in files.items()):
                 raise ValueError("入力が審査済みcorpusと異なります")

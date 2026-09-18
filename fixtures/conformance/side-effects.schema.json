@@ -5,13 +5,48 @@
   "additionalProperties": false,
   "required": [
     "schemaVersion",
-    "policy",
-    "before",
-    "after"
+    "policy"
+  ],
+  "oneOf": [
+    {
+      "required": [
+        "before",
+        "after"
+      ],
+      "not": {
+        "required": [
+          "stateDigest"
+        ]
+      }
+    },
+    {
+      "required": [
+        "stateDigest"
+      ],
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "before"
+            ]
+          },
+          {
+            "required": [
+              "after"
+            ]
+          }
+        ]
+      }
+    }
   ],
   "properties": {
     "schemaVersion": {
       "const": "1.0"
+    },
+    "stateDigest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "生成fixtureの実行前後の観測値のCanonical JSONのSHA-256。file単位の一覧の代わりに使う。"
     },
     "policy": {
       "enum": [

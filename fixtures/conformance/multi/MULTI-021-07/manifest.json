@@ -1,0 +1,38 @@
+{
+  "fixtureId": "MULTI-021-07",
+  "description": "command定義数10,001の超過を早期に停止する",
+  "setup": {
+    "git": true,
+    "generate": {
+      "dataset": "dataset.json",
+      "treeDigest": "sha256:e7f498711f3bae0b2e960fa8d7726b851a122481c7de622368d02364426d9963"
+    },
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultDigest": "sha256:0544f9904a10331368f2fab5332e9d02c13ae09abc9ce88494aade6bdad2e609",
+    "reportFileCount": 0
+  }
+}

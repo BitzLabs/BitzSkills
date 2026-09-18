@@ -1,0 +1,38 @@
+{
+  "fixtureId": "MULTI-021-04",
+  "description": "規範文数100,001の超過を早期に停止する",
+  "setup": {
+    "git": true,
+    "generate": {
+      "dataset": "dataset.json",
+      "treeDigest": "sha256:34a989ecaf1cd0db775f63b847c20452e9cbd08efd977c50ec822d97346561d1"
+    },
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultDigest": "sha256:9cc32674ec1fb5efc76f933de691fd77bc718921514ee6b912c0349cd588a007",
+    "reportFileCount": 0
+  }
+}

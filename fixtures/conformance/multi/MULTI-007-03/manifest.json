@@ -1,0 +1,38 @@
+{
+  "fixtureId": "MULTI-007-03",
+  "description": "memberが別のworktreeである構成を拒否する",
+  "setup": {
+    "git": true,
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": [
+      {
+        "op": "worktree",
+        "path": "apps/web",
+        "source": "changes/member"
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "doctor",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "failed",
+    "exitCode": 1,
+    "stdout": "json",
+    "reportFileCount": 0,
+    "resultFile": "expected/doctor.json"
+  }
+}

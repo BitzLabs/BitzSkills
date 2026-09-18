@@ -1,0 +1,36 @@
+{
+  "fixtureId": "MULTI-020-16",
+  "description": "verify binding数10,000の境界内を誤って遮断しない",
+  "setup": {
+    "git": true,
+    "generate": {
+      "dataset": "dataset.json",
+      "treeDigest": "sha256:e7cd063ac2c3ef8a40664b130fe77d68692cf448887398d48f56fa3270ee61b3"
+    },
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "--all-workspaces",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultDigest": "sha256:f30a18ed5095179fb4e15edbfced144a7d00e7a51a19e333e0c985e4113ffe87",
+    "reportFileCount": 0
+  }
+}

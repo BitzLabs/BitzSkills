@@ -1,0 +1,38 @@
+{
+  "fixtureId": "MULTI-021-06",
+  "description": "trace項目数1,000,001の超過を早期に停止する",
+  "setup": {
+    "git": true,
+    "generate": {
+      "dataset": "dataset.json",
+      "treeDigest": "sha256:914cd987ec1f422246304a39873a2d8e32f7b7a7d76efe468cbf3a13403adfb5"
+    },
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultDigest": "sha256:d181a349c8ca9082fe6b1df2581acd9ed1f2832ea2dde23f4ba5201f037d5274",
+    "reportFileCount": 0
+  }
+}

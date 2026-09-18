@@ -1,0 +1,38 @@
+{
+  "fixtureId": "MULTI-020-10",
+  "description": "relation edge数1,000,000の境界内を誤って遮断しない",
+  "setup": {
+    "git": true,
+    "generate": {
+      "dataset": "dataset.json",
+      "treeDigest": "sha256:0cc6d5f9ca46799a68475f28e1ed7a9c0d0a447f80ea555fd8623c6b9fa93d2d"
+    },
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultDigest": "sha256:2c2b986a6b00a9a30dacf4dca2d1fa0b09ef3019e4f9ab06d30a33883bf02748",
+    "reportFileCount": 0
+  }
+}

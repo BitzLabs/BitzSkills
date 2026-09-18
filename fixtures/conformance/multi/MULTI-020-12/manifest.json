@@ -1,0 +1,38 @@
+{
+  "fixtureId": "MULTI-020-12",
+  "description": "trace項目数1,000,000の境界内を誤って遮断しない",
+  "setup": {
+    "git": true,
+    "generate": {
+      "dataset": "dataset.json",
+      "treeDigest": "sha256:b4d15ceee60dd9f77425d740e6ab7b648d9e7fe06b3aa0888e2ec1fd66ec341e"
+    },
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultDigest": "sha256:2c2b986a6b00a9a30dacf4dca2d1fa0b09ef3019e4f9ab06d30a33883bf02748",
+    "reportFileCount": 0
+  }
+}

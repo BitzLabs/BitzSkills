@@ -123,6 +123,21 @@
         "to": { "$ref": "#/$defs/strictPath" }
       }
     },
+    "gitStructure": {
+      "type": "object", "additionalProperties": false, "required": ["op", "path", "source"],
+      "properties": {
+        "op": { "enum": ["submodule", "worktree"] },
+        "path": { "$ref": "#/$defs/strictPath" },
+        "source": { "$ref": "#/$defs/sourcePath" }
+      }
+    },
+    "generate": {
+      "type": "object", "additionalProperties": false, "required": ["dataset", "treeDigest"],
+      "properties": {
+        "dataset": { "type": "string", "pattern": "^[A-Za-z0-9._-]+\\.json$" },
+        "treeDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
     "stage": {
       "type": "object",
       "additionalProperties": false,
@@ -137,7 +152,8 @@
         { "$ref": "#/$defs/createOrUpdate" },
         { "$ref": "#/$defs/delete" },
         { "$ref": "#/$defs/rename" },
-        { "$ref": "#/$defs/stage" }
+        { "$ref": "#/$defs/stage" },
+        { "$ref": "#/$defs/gitStructure" }
       ]
     },
     "setup": {
@@ -146,6 +162,7 @@
       "required": ["git", "operations"],
       "properties": {
         "git": { "type": "boolean" },
+        "generate": { "$ref": "#/$defs/generate" },
         "baseCommit": { "$ref": "#/$defs/baseCommit" },
         "operations": {
           "type": "array",
@@ -164,7 +181,7 @@
                     "operations": {
                       "contains": {
                         "type": "object",
-                        "properties": { "op": { "const": "stage" } },
+                        "properties": { "op": { "enum": ["stage", "submodule", "worktree"] } },
                         "required": ["op"]
                       }
                     }
@@ -231,6 +248,7 @@
         },
         "stdout": { "enum": ["json", "text", "markdown", "none"] },
         "resultFile": { "$ref": "#/$defs/strictPath" },
+        "resultDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
         "textFile": { "$ref": "#/$defs/strictPath" },
         "canonicalFile": { "$ref": "#/$defs/strictPath" },
         "reportFileCount": { "type": "integer", "minimum": 0 }
@@ -245,6 +263,7 @@
                 { "required": ["status"] },
                 { "required": ["outcome"] },
                 { "required": ["resultFile"] },
+                { "required": ["resultDigest"] },
                 { "required": ["textFile"] }
               ]
             }
@@ -264,7 +283,12 @@
         },
         {
           "if": { "properties": { "stdout": { "const": "json" } }, "required": ["stdout"] },
-          "then": { "required": ["resultFile"] }
+          "then": {
+            "oneOf": [
+              { "required": ["resultFile"], "not": { "required": ["resultDigest"] } },
+              { "required": ["resultDigest"], "not": { "required": ["resultFile"] } }
+            ]
+          }
         },
         {
           "if": { "properties": { "stdout": { "const": "text" } }, "required": ["stdout"] },

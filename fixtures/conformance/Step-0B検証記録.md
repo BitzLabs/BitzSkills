@@ -644,3 +644,23 @@ Report SHA-256: `dae472e1ed294fc3ebd677545ceeecbc430096ad0101f69cf9d757397ad07c4
 部分rollbackを完全rollbackへ直した入力を拒否することを確認した。
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
 Report SHA-256: `a3f4a70d60adc69bd2a2de6311e19157aa238fb15b9bdc6c4942baeaac15a1be`。
+
+## 2026-09-18: resource上限の境界とmember pathのGit構造
+
+準備済み310/310。matrixの未作成fixtureは0件になった。
+`MULTI-007-02/03`は、ADR-048で加えた`submodule`と`worktree`のsetup operationでmember pathのGit構造を作る。
+生成したgitlink、`.gitmodules`、worktreeの`.git` fileは2回のsetupで同じになり、副作用の比較からは
+入れ子のGitのmetadataを除外する。
+`MULTI-020-01..16`と`MULTI-021-01..08`は、8 dimensionの`limit - 1`、`limit`、`limit + 1`をdataset manifestから
+生成する。入力、期待結果、副作用期待値をversion管理せず、tree digest、`expect.resultDigest`、`stateDigest`で固定した。
+`MULTI-021-08`は`verifyBindingCount`と`commandDefinitionCount`が同時に超過するため、複合workspace仕様 §10へ
+verify実行計画のdimensionを優先して報告する規則を加え、`companionDimensions`へ明示した。
+台帳の根拠文書hashは再review後に更新した。
+
+既定の統合検証は縮小profileで生成器の決定論と計数を照合する。実寸の照合は`uv run fixtures/validate_scale.py`で
+24件すべてを生成し、tree digest、期待結果のdigest、隔離setup 2回のstate digestを照合した（37秒、status Passed）。
+最大入力は256 MiB（`MULTI-021-03`、308 file）、最多fileは10,027件（`MULTI-021-08`）である。
+監査試験を5件、harnessの自己試験を3件追加した。
+同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、Gate A未完了により両方exit 1。
+Report SHA-256: `154cac445a806f94d0767c64bd5407a1336cbff7c3dd8f22cc3507f1c3c9aa73`。
+残るpendingは、Coreと照合した入力・期待値（Gate B）と、fresh checkoutからのGate A全体実行である。

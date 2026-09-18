@@ -24,6 +24,7 @@ fixtures/conformance/single/<fixture-id>/expected/<operation>.txt
 fixtures/conformance/single/<fixture-id>/expected/parser-ir.json
 fixtures/conformance/multi/<fixture-id>/repo/...
 fixtures/conformance/multi/<fixture-id>/changes/...
+fixtures/conformance/multi/<fixture-id>/dataset.json
 fixtures/conformance/multi/<fixture-id>/manifest.json
 fixtures/conformance/multi/<fixture-id>/expected/<operation>.json
 fixtures/conformance/manifest.schema.json
@@ -35,6 +36,7 @@ fixtures/conformance/frontmatter.schema.json
 固定入力であり、実行repositoryへは自動でcopyしない。通常fileのbyte列と実行bit、symlinkのlink文字列を
 version管理する。Git履歴とbase commit後の状態はmanifestだけから構築する。
 `expected/<operation>.txt`はtext出力を比較するfixtureだけが持つ。
+`dataset.json`は`setup.generate`を持つ生成fixtureだけが持ち、そのfixtureは`repo/`を持たない（§3.5）。
 `manifest.schema.json`は全manifestが従う機械可読Schemaであり、harnessは実行前にmanifestを検証する。
 `result.schema.json`はCore 1.0の全公開JSON結果が従うDraft 2020-12 Schemaである。harnessは期待JSONを実行前、
 実結果とreportをnormalizer適用前に検証し、いずれかが不適合ならfixture比較自体をerrorにする。
@@ -89,24 +91,26 @@ fixture IDは`SINGLE-NNN`または`MULTI-NNN`をcase familyとし、分割が必
 | `fixtureId` | Yes | 本matrixのID |
 | `description` | Yes | 検査する論点の1行要約 |
 | `setup.git` | Yes | Git repositoryを作るか。`false`はGit不在fixture |
+| `setup.generate` | No | 生成入力。`repo/`と排他。§3.5 |
 | `setup.baseCommit` | No | 基準版commitの作り方。省略時はcommitを作らない |
 | `setup.operations` | Yes | base commit後に順番に適用する操作。0件でも配列を置く |
 | `invocation.runner` | Yes | `bitz`、`consumer`、`migration`、`package`のいずれか |
 | `invocation.cwd` | Yes | `repo/`相対の実行directory |
 | `invocation.argv` | Yes | 選択したrunnerへ渡す引数列。`bitz`では`bitz`に続く引数。shellを介さない |
 | `invocation.env` | Yes | 追加環境変数。0件でもkeyを置く |
-| `invocation.python` | No | `bitz`だけ。起動するCPythonの`<major>.<minor>`。§3.4 |
-| `invocation.gitVersion` | No | `bitz`だけ。Git shimが返す`<major>.<minor>.<patch>`。§3.4 |
+| `invocation.python` | No | `bitz`だけ。起動するCPythonの`<major>.<minor>`。§3.5 |
+| `invocation.gitVersion` | No | `bitz`だけ。Git shimが返す`<major>.<minor>.<patch>`。§3.5 |
 | `expect.status` | No | 共通結果を返すinvocationでは必須。引数不正で共通結果を返さない場合だけ省略 |
 | `expect.outcome` | No | `consumer`、`migration`、`package`だけで必須。`accepted`、`rejected`、`passed`のいずれか |
 | `expect.exitCode` | Yes | 期待終了コード |
 | `expect.stdout` | Yes | `json`、`text`、`markdown`、`none`のいずれか |
 | `expect.resultFile` | No | 期待JSON。`stdout: none`では持たない |
+| `expect.resultDigest` | No | 生成fixtureの期待結果のCanonical JSONのSHA-256。`resultFile`と排他 |
 | `expect.textFile` | No | 期待textまたはMarkdown。`stdout: text|markdown`で必須 |
 | `expect.reportFileCount` | Yes | 実行後に`.spec/reports/`へ増える件数 |
 | `parserChecks` | No | §4.1の内部Parser受入。`path`と`resultFile`を持つ配列 |
 
-`runner: bitz`はshellを介さず、§3.4の隔離環境にある検査対象のconsole script `bitz`を実行する。
+`runner: bitz`はshellを介さず、§3.5の隔離環境にある検査対象のconsole script `bitz`を実行する。
 `runner: consumer`と`runner: migration`はCore配布物のmodule `bitz.compat`を、同じ隔離環境で
 `python -m bitz.compat <runner> <argv...>`としてshellなしで実行する。`runner: package`はCore実行体を起動せず、
 fixture harnessの参照実装が検査対象のsource tree、build成果物、隔離環境の導入metadataを検査する。
@@ -158,8 +162,13 @@ dereferenceせず、link文字列そのものをcopy・比較する。
 | `delete` | `path` | `path`がfile、symlink、またはdirectoryとして存在する | symlinkをdereferenceせず対象treeだけを削除する |
 | `rename` | `from`, `to` | `from`が存在し、`to`が存在しない | file、symlink、directory treeを同じfilesystem内で移動する |
 | `stage` | `paths` | `setup.git: true` | 列挙pathだけに`git add -A -- <paths...>`相当を適用する |
+| `submodule` | `path`, `source` | `path`が存在せず`setup.git: true` | `source` directoryの内容を持つ別repositoryを`path`へ作り、親のindexへgitlinkと`.gitmodules`を記録する |
+| `worktree` | `path`, `source` | `path`が存在せず`setup.git: true` | `source` directoryの内容だけを持つcommitを作り、`path`を同じrepositoryの別worktreeとして追加する |
 
 未知fieldは禁止する。`paths`は1件以上で重複を禁止し、`.`はrepository全体を明示するときだけ許可する。
+`submodule`と`worktree`の`source`だけは`changes/`配下のdirectoryを指し、その中の通常fileとsymlinkを再現する。
+両opはharnessの固定した同一性、時刻、branch名を使い、2回のsetupで同じGit構造とcommit IDを与える
+（[ADR-048](../../02.設計書/10_決定記録/ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md)）。
 create、update、renameで親directoryがなければharnessが作成する。delete後に空になった親directoryは残す。
 renameとdeleteのGit上の判定はGit自身に委ねるが、期待するindex／working tree状態は後続の`stage`有無で一意に決まる。
 
@@ -172,7 +181,27 @@ manifestだけに存在するID、参照先がないfile、manifestから参照�
 期待結果のfieldとDiagnosticが後続の規範修正で変わる場合も、選択的期待値を置いてはならない。
 当該fixtureを未確定のまま実行対象へ入れず、契約確定と同じ変更で唯一の期待fileを追加する。
 
-### 3.4 検査対象と実行環境
+### 3.4 生成入力
+
+resource上限の境界のように、入力treeをversion管理できない大きさになるfixtureは、`repo/`の代わりに
+`setup.generate`を持つ。`setup.generate`は`dataset`（fixture directory相対のdataset manifest）と
+`treeDigest`（生成treeの期待digest）を必須とし、未知fieldを禁止する。harnessは§3.1のsetupより前に
+dataset manifestから入力treeを決定論的に生成し、digestが一致しなければfixture errorとする。
+
+tree digestは、生成treeの全fileをpath昇順に並べ、`<repository root相対path>`、NUL、`<内容のbyte長を8 byte big endianで表した値>`、
+`<内容>`を連結したbyte列のSHA-256とし、`sha256:`を前置した小文字16進64桁とする。生成器は同じbyte列を
+filesystemへ書かずに流せるものとし、digestの照合へ実体化を要求しない。
+
+生成fixtureは期待結果と副作用期待値も同じdataset manifestから導き、`expect.resultDigest`（期待結果の
+Canonical JSONのSHA-256）と副作用の`stateDigest`で固定する。`expect.resultFile`と`resultDigest`は排他とし、
+生成物を期待fileとしてversion管理しない。reviewの対象は生成器とdataset manifestとする。
+
+dataset manifestは、越える1つのdimensionと、その他のdimensionを通常規模へ保つbaselineだけを持つ。
+生成器はfixture harness側の参照実装であり、Coreの実装ではない。Step 0Bの既定の検証は、同じdataset manifestを
+一定比率で縮小したprofileで生成器の決定論とdimensionの計数を照合し、実寸の生成とtree digestの照合は
+独立したscale検証で行う。Gate Aの認定はscale検証の記録を必要とする。
+
+### 3.5 検査対象と実行環境
 
 harnessは検査対象Coreをsource directoryまたはwheelとしてCLI引数で受け取り、manifestへ書かない。
 要求されるCPython minorごとに、`uv`でrepository、`HOME`、`XDG_CACHE_HOME`、`TMPDIR`のいずれとも別のdirectoryへ
@@ -242,6 +271,12 @@ adapterが存在しない場合は未受入とし、fixture側reference計算を
 - `--report`指定時は`check`と`verify`だけが規定先へ1件を排他的作成する。
 - 引数不正、`context`、`doctor`は`--report`の指定有無にかかわらずreportを作らない。
 - Coreは`.spec/`、code、testを変更しない。
+
+生成fixtureの副作用期待値は、実行前後の観測値をCanonical JSONのSHA-256（`stateDigest`）で固定する。
+読取り専用の要求は同じで、実行前後の観測値が同じdigestになることを要求する。
+
+filesystem manifestは、入れ子を含むすべての`.git` directoryと、別worktreeの`.git` fileを除外する。
+Gitのmetadataそのものは比較対象ではなく、作業treeのfileと親repositoryのstatus・indexで観測する。
 
 harnessはfixtureごとにrepositoryと別の空directoryを`HOME`、`XDG_CACHE_HOME`、`TMPDIR`として割り当て、その3 treeも
 実行前後で比較する。Coreが暗黙に永続cache、index、lock file、作業用directoryを作ればfixture失敗とする。

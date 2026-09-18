@@ -1,0 +1,38 @@
+{
+  "fixtureId": "MULTI-020-03",
+  "description": "SPEC file数9,999の境界内を誤って遮断しない",
+  "setup": {
+    "git": true,
+    "generate": {
+      "dataset": "dataset.json",
+      "treeDigest": "sha256:a14d78d07f2aee9d326d55eaddc761f44536e1749b46deda3deca69dce14f847"
+    },
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultDigest": "sha256:89b1044ebc72d0c1bc8bf424a4fa9085db34c8e399257d5c3a9f168893e3888e",
+    "reportFileCount": 0
+  }
+}

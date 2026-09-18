@@ -1,0 +1,38 @@
+{
+  "fixtureId": "MULTI-021-01",
+  "description": "member数101の超過を早期に停止する",
+  "setup": {
+    "git": true,
+    "generate": {
+      "dataset": "dataset.json",
+      "treeDigest": "sha256:06aa71a18f7858d91c59d07029908a1ce920c80d84ae39426a6c1293973411b7"
+    },
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultDigest": "sha256:3403e03d2f03281b28969007ebe5e66a16909ea9faa7047bc5fc0c9755b99188",
+    "reportFileCount": 0
+  }
+}

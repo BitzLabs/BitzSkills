@@ -85,6 +85,7 @@ harnessの外部仕様は次の点で閉じていない。このため`SINGLE-12
   [Core実行環境・CLI基盤契約](../../03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md)、
   [実装計画](../../04.提案資料/12_Core-1.0実装計画.md)、`fixtures/conformance/manifest.schema.json`。
 - fixture ID `MONO-023`、`MONO-024`は、後続の[ADR-047](ADR-047_複合workspaceの識別子をmultiWorkspaceへ改名する.md)で`MULTI-023`、`MULTI-024`へ改名した。
+- fixtureが`repo/`で表せない入力（上限境界の生成入力、member pathのsubmodule／別worktree）は、後続の[ADR-048](ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md)で`setup.generate`とGit構造operationとして加えた。
 
 ## Revision History
 
@@ -92,3 +93,4 @@ harnessの外部仕様は次の点で閉じていない。このため`SINGLE-12
 |---|---|---|
 | 2026-09-17 | 検査対象の受取り、Python・Git versionの指定、JSON互換runner、package runnerを確定 | 提案27 |
 | 2026-09-17 | 複合workspaceの識別子の改名を後続決定へ接続 | ADR-047 |
+| 2026-09-18 | fixtureの生成入力とGit構造operationを後続決定へ接続 | ADR-048 |

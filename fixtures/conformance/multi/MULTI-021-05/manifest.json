@@ -1,0 +1,38 @@
+{
+  "fixtureId": "MULTI-021-05",
+  "description": "relation edge数1,000,001の超過を早期に停止する",
+  "setup": {
+    "git": true,
+    "generate": {
+      "dataset": "dataset.json",
+      "treeDigest": "sha256:bfbf152271b6941c158677ad4116a12fb02fb928a381a854e51e9d9d8d2fd113"
+    },
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "blocked",
+    "exitCode": 2,
+    "stdout": "json",
+    "resultDigest": "sha256:4451623ac8db5ba593a55631755121fc00da78604a623cdf2275c03097b0c47a",
+    "reportFileCount": 0
+  }
+}

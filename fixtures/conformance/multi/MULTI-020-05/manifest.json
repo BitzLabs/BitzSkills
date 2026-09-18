@@ -1,0 +1,38 @@
+{
+  "fixtureId": "MULTI-020-05",
+  "description": "入力byte数268,435,455の境界内を誤って遮断しない",
+  "setup": {
+    "git": true,
+    "generate": {
+      "dataset": "dataset.json",
+      "treeDigest": "sha256:fcb224be62499e7ce772559c4c2b03b67b4cd648799a0152249a1841244e8eaf"
+    },
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultDigest": "sha256:7b4d7c8b39d7430b5b62ea1bb0e6821875af1354510c920210e13903cd67091c",
+    "reportFileCount": 0
+  }
+}

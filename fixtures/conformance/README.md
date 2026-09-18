@@ -11,8 +11,14 @@ matrixの一覧、現行の設計契約と承認済みADRの相対linkを監査�
 固定した依存はscriptに宣言してあり、初回はpackageのdownloadが必要である。
 
 終了コード0はGate Aの許可、1はerrorまたは未完了の証拠が残っていることを表す。現在は1が想定どおりである
-（2026-09-18時点で、matrix 310件のうち複合workspaceの26件と、fixtureごとの副作用期待値が未完了）。
-未作成のfixtureは個別に列挙される。
+（2026-09-18時点で、matrix 310件はすべて準備済みであり、Coreと照合した入力・期待値と、fresh checkoutからの
+Gate A全体実行が未完了）。未作成のfixtureは個別に列挙される。
+
+上限境界の24件は入力を生成するため、実寸の照合は次のcommandで行う。
+
+```text
+uv run fixtures/validate_scale.py
+```
 静的な検査では、fixtureが独立した原因を1つだけ持つことを証明できない。Diagnosticの対応はreview済みの台帳で管理する
 （[Diagnostic意味網羅review](Diagnostic意味網羅review.md)）。監査は台帳の整合と根拠文書の鮮度を検査し、自然言語の意味は検査しない。
 
@@ -28,6 +34,8 @@ memberの非成功の独立性、member pathの移動とID変更・削除を扱�
 member単位と全体の対象0件を扱う。
 [reportと結果外形の移行](multi/reportと結果外形の移行review.md)は、既定と明示`--report`の対、dual-read consumerの
 排他的外形、複合workspace化と完全・部分rollbackを扱う。
+[resource上限の境界](multi/resource上限の境界review.md)は、8 dimensionの`limit - 1`、`limit`、`limit + 1`を
+dataset manifestから生成し、期待結果と副作用をdigestで固定する。
 
 [target vector](targets/README.md)は、種別とpurposeの18組合せと、graphの7ケースを固定する。監査は4つの順序付き集合を
 限定した参照計算と比べ、入力順に依存しないことを検査する。Coreの実行やbindingを保証するものではない。

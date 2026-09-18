@@ -1,0 +1,38 @@
+{
+  "fixtureId": "MULTI-020-08",
+  "description": "規範文数100,000の境界内を誤って遮断しない",
+  "setup": {
+    "git": true,
+    "generate": {
+      "dataset": "dataset.json",
+      "treeDigest": "sha256:cb99eab1ba3efa78fb67f1d5557670b4467188912acf366ce6c370b8b93758c2"
+    },
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "check",
+      "--all-workspaces",
+      "--base",
+      "HEAD",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultDigest": "sha256:663f4edb7d70cce5e1d7a47459173c0963e0d61a7e6e656b746d8b24e7547091",
+    "reportFileCount": 0
+  }
+}

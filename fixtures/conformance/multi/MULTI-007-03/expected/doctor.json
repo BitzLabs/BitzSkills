@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "doctor",
+  "status": "failed",
+  "multiWorkspace": {
+    "id": "platform",
+    "path": "."
+  },
+  "core": {
+    "version": "1.0.0",
+    "apiVersion": "1.0",
+    "capabilities": [
+      "context.v1",
+      "check.v1",
+      "verify.v1",
+      "doctor.v1",
+      "multiWorkspace.v1"
+    ]
+  },
+  "checks": [
+    {
+      "name": "core",
+      "status": "passed"
+    },
+    {
+      "name": "git",
+      "status": "passed"
+    },
+    {
+      "name": "catalog",
+      "status": "failed"
+    }
+  ],
+  "workspaces": [],
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "SPEC-MULTI-PATH-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "member pathが別のworktreeです",
+      "source": {
+        "kind": "file",
+        "workspaceId": "platform",
+        "path": ".spec/bitz.yaml",
+        "key": "multiWorkspace.members"
+      }
+    }
+  ]
+}
