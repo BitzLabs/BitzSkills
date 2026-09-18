@@ -223,6 +223,38 @@ def matrix():
             "fixtures_without_side_effects": without_effects, "errors": errors}
 
 
+def executable_bits():
+    """fixture入力の実行bitが、Gitのindexと副作用期待値で一致することを確かめる。
+
+    core.fileMode=falseのrepositoryでは、作業treeの実行bitがindexへ入らないことがある。その場合、
+    fresh checkoutで入力が変わり、監査だけが通ってしまう。
+    """
+    expected, errors = {}, []
+    for path in sorted(FIXTURES.glob("*/*/side-effects.json")):
+        effects = json.loads(path.read_text())
+        if "before" not in effects:
+            continue
+        for relative, entry in effects["before"]["repository"].items():
+            # beforeはsetup後の状態なので、operationsが作ったfileも含む。repo/にある入力だけを見る。
+            source = path.parent / "repo" / relative
+            if entry.get("kind") == "file" and source.is_file():
+                expected[str(source.relative_to(ROOT))] = entry["executable"]
+    listing = subprocess.run(["git", "ls-files", "-s", "--", str(FIXTURES.relative_to(ROOT))],
+                             cwd=ROOT, capture_output=True, text=True, timeout=60)
+    if listing.returncode != 0:
+        return {"checked": 0, "errors": [listing.stderr.strip() or "git ls-filesが失敗しました"]}
+    modes = {}
+    for line in listing.stdout.splitlines():
+        mode, _, _, name = line.replace("\t", " ").split(None, 3)
+        modes[name] = mode
+    for name, executable in sorted(expected.items()):
+        if name not in modes:
+            errors.append(f"{name}: fixtureの入力がversion管理されていません")
+        elif (modes[name] == "100755") != executable:
+            errors.append(f"{name}: Gitのindexの実行bitが副作用期待値と異なります")
+    return {"checked": len(expected), "errors": errors}
+
+
 def registry():
     path = COMMON / "05_Diagnostic-registry.md"
     rows = re.findall(r"^\| `([^`]+)` \| ([^|]+) \| `([^`]+)` \| ([^|]+) \| ([^|]+) \| ([^|]+) \| `([^`]+)` \| (\d+) \| (.*)\|$", path.read_text(), re.M)
@@ -283,6 +315,7 @@ def main():
     checks["multi_report_fixtures"] = validate_multi_report_fixtures()
     checks["multi_compat_fixtures"] = validate_multi_compat_fixtures()
     checks["multi_limit_fixtures"] = validate_multi_limit_fixtures()
+    checks["executable_bits"] = executable_bits()
     perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_step0p.py")], capture_output=True, text=True, timeout=60)
     checks["step0p"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
     helpers = subprocess.run([sys.executable, "-B", str(FIXTURES / "test_harness.py")], capture_output=True, text=True, timeout=30)
