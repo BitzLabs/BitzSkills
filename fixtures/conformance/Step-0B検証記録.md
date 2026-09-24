@@ -677,3 +677,20 @@ Gitのindexの実行bitと副作用期待値の一致を照合する検査を加
 Report SHA-256: `c81f0f402f624d69cc80ba5abd09e45806edfd8f3572db2f0bd135313896ba27`（両者同じ）。
 scale検証もfresh checkoutで24件すべてPassedとなり、tree digestを含む結果は作業treeと同じであった（36秒）。
 監査試験175件と基盤の自己試験6件は成功した。Gate Aは、Coreと照合した入力・期待値が残るためBlockedのままである。
+
+## 2026-09-24: 「適合fixtureの入力・期待値」の判定を検査へ置き換え
+
+統合commandの`pending`には、2026-09-07の初版から`conformance inputs and expectations`が固定で残っていた。
+これは適合fixtureの入力と期待値を実際に作ったかという条件であり、Coreの実行結果との照合ではない。
+前2節で「Coreと照合した入力・期待値（Gate B）」と書いたのは誤りである。Core実行結果との照合は、
+実装計画 §3.1と提案25 §9.2のとおりGate Bで行い、Gate Aでは要求しない。
+
+この項目を`fixture_coverage`検査へ置き換えた。fixture群の検査は、入力・期待値・隔離setupの検証に成功したIDだけを
+`prepared`へ入れる。`fixture_coverage`は、matrixの全IDがいずれかの検査の`prepared`に含まれ、matrixにないIDが
+含まれないことを確かめる。fixtureのdirectoryが存在するだけで、どの検査も入力と期待値を見ていない状態を拒否するためである。
+現在はmatrix 310件のすべてが検証済みで、重複して数えるIDはない。監査試験を1件追加し、IDの欠落、
+matrixにないID、空のmatrixを拒否することを確認した。
+
+同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、両方exit 1。
+監査試験176件は成功した。残るpendingは、fresh checkoutからのGate A全体実行の1項目である。
+Report SHA-256: `eb7a77a88abd15d07020e2f3df0f3cd3da35c7a00a2dcd06fb1bbf9ba5d40dc6`。

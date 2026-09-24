@@ -142,9 +142,13 @@ def grammar():
     return {"definitions": len(definitions), "prose_lexical_definitions": sorted(lexical), "errors": errors}
 
 
-def matrix():
+def matrix_rows():
     text = (COMMON / "04_適合fixture仕様.md").read_text()
-    rows = re.findall(r"^\| `(SINGLE-\d{3}(?:-\d{2})?|MULTI-\d{3}(?:-\d{2})?)` \|(.*)$", text, re.M)
+    return re.findall(r"^\| `(SINGLE-\d{3}(?:-\d{2})?|MULTI-\d{3}(?:-\d{2})?)` \|(.*)$", text, re.M)
+
+
+def matrix():
+    rows = matrix_rows()
     ids = [identifier for identifier, _ in rows]
     errors = []
     if len(ids) != len(set(ids)):
@@ -221,6 +225,21 @@ def matrix():
             errors.append(f"{path.relative_to(ROOT)}: {str(error).split(chr(10))[0]}")
     return {"matrix_ids": len(ids), "missing_fixtures": missing,
             "fixtures_without_side_effects": without_effects, "errors": errors}
+
+
+def fixture_coverage(checks):
+    """matrixの全IDについて、入力と期待値の検証に成功したfixture群の検査があることを確かめる。
+
+    fixture群の検査は、入力・期待値・隔離setupの検証に成功したIDだけを`prepared`へ入れる。
+    fixtureのdirectoryが存在するだけでは、どの検査も入力と期待値を見ていない可能性が残る。
+    Core実行結果との照合はGate Bで行い、ここでは扱わない。
+    """
+    ids = {identifier for identifier, _ in matrix_rows()}
+    verified = {identifier for result in checks.values() for identifier in result.get("prepared", [])}
+    errors = [f"{identifier}: 入力と期待値を検証したfixture群の検査がありません" for identifier in sorted(ids - verified)]
+    errors += [f"{identifier}: matrixに行がありません" for identifier in sorted(verified - ids)]
+    return {"matrix_ids": len(ids), "verified": len(ids & verified),
+            "status": "Passed" if ids and not errors else "Failed", "errors": errors}
 
 
 def executable_bits():
@@ -322,9 +341,12 @@ def main():
     checks["infrastructure_self_tests"] = {"status": "Passed" if helpers.returncode == 0 else "Failed", "errors": [] if helpers.returncode == 0 else [helpers.stderr]}
     audit_tests = subprocess.run([sys.executable, "-B", str(ROOT / "fixtures/test_step0b_audit.py")], capture_output=True, text=True, timeout=180)
     checks["audit_self_tests"] = {"status": "Passed" if audit_tests.returncode == 0 else "Failed", "errors": [] if audit_tests.returncode == 0 else [audit_tests.stderr]}
+    checks["fixture_coverage"] = fixture_coverage(checks)
     # これらの検査は、構造の検査やhelperの試験では意図して保証しない。
     # 各項目は、実際のreview済みの証拠の検査でだけ置き換える。
-    pending = ["conformance inputs and expectations", "full Gate A fresh-checkout repeatability"]
+    pending = ["full Gate A fresh-checkout repeatability"]
+    if checks["fixture_coverage"]["status"] != "Passed":
+        pending.insert(0, "conformance inputs and expectations")
     if checks["matrix"]["missing_fixtures"] or checks["matrix"]["fixtures_without_side_effects"]:
         pending.insert(0, "per-fixture side-effect expectations")
     if checks["multi_digest_fixtures"]["status"] != "Passed":

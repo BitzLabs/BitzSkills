@@ -2921,6 +2921,20 @@ class AuditTests(unittest.TestCase):
                 missing = audit.matrix()
         self.assertEqual(len(missing["missing_fixtures"]), missing["matrix_ids"])
 
+    def test_fixture_coverage_requires_a_verified_family_for_every_matrix_id(self):
+        ids = [identifier for identifier, _ in audit.matrix_rows()]
+        complete = {"a_fixtures": {"prepared": ids[:10]}, "b_fixtures": {"prepared": ids[10:]}, "links": {"errors": []}}
+        self.assertEqual(audit.fixture_coverage(complete)["status"], "Passed")
+        # 検証に失敗したfixtureはpreparedへ入らない。directoryが存在しても網羅とは数えない。
+        dropped = audit.fixture_coverage({"a_fixtures": {"prepared": ids[:10]}, "b_fixtures": {"prepared": ids[11:]}})
+        self.assertEqual(dropped["status"], "Failed")
+        self.assertEqual(len(dropped["errors"]), 1)
+        self.assertTrue(dropped["errors"][0].startswith(f"{ids[10]}: "))
+        unknown = audit.fixture_coverage({"a_fixtures": {"prepared": ids + ["SINGLE-999"]}})
+        self.assertEqual(unknown["status"], "Failed")
+        with patch.object(audit, "matrix_rows", return_value=[]):
+            self.assertEqual(audit.fixture_coverage({})["status"], "Failed")
+
 
 if __name__ == "__main__":
     unittest.main()

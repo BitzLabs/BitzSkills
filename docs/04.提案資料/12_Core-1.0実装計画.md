@@ -96,7 +96,7 @@ generator、helper、harnessへ落とし込み、fresh checkoutから再現で�
 複合workspaceのgolden Canonical JSONとContext Digestは`MULTI-002-01`が所有し、単一workspaceと同じく独立した2系統のreference計算でbyte一致することを検証した。
 上限境界の24件（`MULTI-020-*`、`MULTI-021-*`）は[ADR-048](../02.設計書/10_決定記録/ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md)に従いdataset manifestから入力を生成し、実寸の照合は`uv run fixtures/validate_scale.py`で行う。
 2026-09-18にはcommit済みのrepositoryを`git clone`した写しで統合検証とscale検証を実行し、作業treeと同じ結果になることを[Step 0B検証記録](../../fixtures/conformance/Step-0B検証記録.md)へ記録した。
-統合commandは、Coreと照合した入力・期待値と、fresh checkoutからのGate A全体実行を未完了の証拠として残しており、全Gate A検証の完了は宣言しない。
+統合commandは、matrixの全IDについて入力と期待値の検証に成功したfixture群の検査があることを確かめる。fresh checkoutからのGate A全体実行は未完了の証拠として残しており、全Gate A検証の完了は宣言しない。
 Git shim、`uv`環境、`bitz.compat`、`runner: package`の起動規則は[ADR-046](../02.設計書/10_決定記録/ADR-046_適合harnessの検査対象・実行環境・runnerを確定する.md)で確定したが、harnessの実行部はCore実装と合わせてGate Bで作る。
 
 このStepで実装してよいのはSchema検証、fixture generator、reference計算、文法検査、matrix検査、
