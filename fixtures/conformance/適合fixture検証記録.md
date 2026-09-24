@@ -737,3 +737,21 @@ commit `bd369cc58c0c825176322d01c3995a99c436e963`に対して`uv run fixtures/ce
 | 統合検証 | 2つのcloneでReport SHA-256が両方`7bdd1d79b1056f692009179fae9152264524d58d8b74a8ef843442846edd2fe7`。作業treeの2回の実行とも同じ。link 270件、matrix 310件すべて検証済み |
 | scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`d4b0e6aa89898a2c004ef14207b6f1bd9dc327e9a2a87ec70f51ff1b78b6a08d`（前回と同じ） |
 | 実行環境 | CPython 3.14.6、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.53.0、Linux x86_64 |
+
+## 2026-09-24: commandと記録の改名、生成物の除外、Gate Aの再認定
+
+Gate A後も使い続けるcommandと記録から工程名を外し、役割の名前へ改めた。統合commandは
+`validate_conformance.py`、監査試験は`test_conformance_audit.py`、性能基準と比較taskの検証は
+`validate_benchmarks.py`、本書は`適合fixture検証記録.md`とした。統合検証のcheck名`step0p`は`benchmarks`、
+認定commandの出力key`step0b`は`conformance`へ改めた。検査の内容は変えていない。
+`cdeeec6`で誤ってcommitした`fixtures/conformance/__pycache__/`の`.pyc` 7件をversion管理から外し、
+repository rootへ`.gitignore`を置いた。`validate_scale.py`もbytecodeを書かないようにした。
+
+commit `b0760003b4e8d11b010799b5c2f073c4fd9ac021`に対して`uv run fixtures/certify_gate_a.py`を実行し、
+`gateA: "Allowed"`、error 0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 統合検証 | 2つのcloneでReport SHA-256が両方`4ce4da5218c58ef32c9b5ac44c22f205d99dc0e5643d152c85fa1065cd17c581`。作業treeの2回の実行とも同じ |
+| scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`d4b0e6aa89898a2c004ef14207b6f1bd9dc327e9a2a87ec70f51ff1b78b6a08d`（前回と同じ） |
+| 実行環境 | CPython 3.14.6、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.53.0、Linux x86_64 |
