@@ -12,6 +12,7 @@ from jsonschema import Draft202012Validator, ValidationError
 import validate_conformance as audit
 from conformance.schemas import schema_path
 import certify_gate_a as certify
+from conformance import step_assignment
 from conformance.diagnostic_coverage import LEDGER, validate
 from conformance.target_vectors import HERE as TARGET_HERE, validate as validate_targets
 from conformance.initial_fixtures import validate as validate_initial, compare_state, check_command_preconditions
@@ -2936,6 +2937,39 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(unknown["status"], "Failed")
         with patch.object(audit, "matrix_rows", return_value=[]):
             self.assertEqual(audit.fixture_coverage({})["status"], "Failed")
+
+    def test_step_assignment_matches_the_plan(self):
+        result = step_assignment.validate()
+        self.assertEqual(result["errors"], [])
+        ids = step_assignment.matrix_ids()
+        # 枝番だけの終端は同じfamilyの枝番の範囲、3桁どうしはfamilyの範囲として読む。
+        text = "## 4. Step 1\n\n完了条件は、`SINGLE-127-05`〜`07`、`070`〜`071`が通過する。\n"
+        for heading in ("## 5. Step 2", "## 6. Step 3", "## 7. Step 4", "## 8. Step 5"):
+            text += f"\n{heading}\n\n完了条件は、`MULTI-001`が通過する。\n"
+        steps = step_assignment.plan_steps(text, ids)
+        self.assertEqual(steps[1], {"SINGLE-127-05", "SINGLE-127-06", "SINGLE-127-07", "SINGLE-070-01", "SINGLE-070-02",
+                                    "SINGLE-070-03", "SINGLE-070-04", "SINGLE-071-01", "SINGLE-071-02", "SINGLE-071-03",
+                                    "SINGLE-071-04"})
+
+    def test_step_assignment_rejects_drift_from_the_plan(self):
+        original = json.loads((audit.FIXTURES / "steps.json").read_text())
+        plan = step_assignment.PLAN.read_text()
+
+        def run(document, plan_text=plan):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                (root / "single").symlink_to(audit.FIXTURES / "single")
+                (root / "steps.json").write_text(json.dumps(document))
+                return step_assignment.validate(root, plan_text)
+
+        self.assertEqual(run(original)["errors"], [])
+        dropped = copy.deepcopy(original)
+        dropped["steps"][0]["fixtures"].pop()
+        self.assertTrue(run(dropped)["errors"])
+        misplaced = copy.deepcopy(original)
+        misplaced["steps"][1]["parserChecks"].append(misplaced["steps"][1]["fixtures"].pop(0))
+        self.assertTrue(run(misplaced)["errors"])
+        self.assertTrue(run(original, plan.replace("`SINGLE-001`〜`006`、", "`SINGLE-002`〜`006`、", 1))["errors"])
 
     @staticmethod
     def certification_runs(pending=None, errors=None, conformance_exit=1, scale_status="Passed"):

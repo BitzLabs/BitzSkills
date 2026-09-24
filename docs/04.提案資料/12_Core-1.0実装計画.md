@@ -49,6 +49,10 @@ Gate Aの認定後にmatrixまたはfixtureを変更した場合は、
 再認定が通過するまでGate Aは`Blocked`とする。Gate Bが`Passed`のStepに属するfixtureを変更した場合は、
 そのStepのGate Bを判定し直す。
 
+Step nのGate Bは、Step 1からnまでの完了条件のfixtureをすべて通過することを条件とする。
+各Stepの完了fixtureの機械可読な写しを`fixtures/conformance/steps.json`に置き、本書の完了条件との一致を
+統合検証で検査する。Gate Bの認定は`tests/bitz-core/certify_gate_b.py`が行う（[ADR-052](../02.設計書/10_決定記録/ADR-052_Gate-Bの実行と認定の構成を確定する.md)）。
+
 ## 2. Step 0: 仕様確定（codeを書かない）
 
 状態は`Complete`である。成果物は次とし、いずれも[提案24](24_Core-1.0実装着手方針.md)の裁定に対応する。
@@ -136,7 +140,8 @@ Gate Aを`Allowed`にする条件は次の全件である。
 Coreは`plugins/bitz-core`、Core固有の試験は`tests/bitz-core/`へ置き、試験は`unittest`で書く
 （[ADR-049](../02.設計書/10_決定記録/ADR-049_Coreのsource配置と試験の構成を確定する.md)）。
 
-- 適合fixture harness: manifest実行、共通normalizer、副作用比較、終了コード判定
+- 適合fixture harness: manifest実行、共通normalizer、副作用比較、終了コード判定。入口は`fixtures/run_conformance.py`とし、
+  期待出力を返す偽のCoreで自己試験する。Gate Bの認定command `tests/bitz-core/certify_gate_b.py`も作る
 - CLI引数解析、`--format`、終了コード0〜4、引数不正時の標準エラー1行
 - 共通結果外形、Diagnostic Schema、source、順序規則、status集約
 - text出力の要約行とDiagnostic行

@@ -29,6 +29,9 @@ reportが2つのcloneでbyte一致し、scale検証が両方で成功して所�
 uv run fixtures/certify_gate_a.py
 ```
 
+各Stepの完了fixtureは`steps.json`に置く。正本は実装計画であり、統合検証が両者の一致を検査する（ADR-052）。
+実装計画の完了条件を変えるときは、`steps.json`も同じcommitで直す。
+
 Gate Aの認定後にmatrixやfixtureを変更するときは、
 [適合fixture仕様 §1.1](../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#11-matrixとfixtureの変更)に従う。
 Coreの出力は期待値を直す根拠にならず、期待値の訂正と削除・緩和には人間の管理者の承認を要する。

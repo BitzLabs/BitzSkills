@@ -18,6 +18,7 @@ from conformance import parser_expectations
 from conformance.schemas import CONTRACT as CONTRACT_SCHEMAS, schema_path
 from conformance.diagnostic_coverage import validate as validate_diagnostic_coverage
 from conformance.target_vectors import validate as validate_target_vectors
+from conformance.step_assignment import validate as validate_step_assignment
 from conformance.initial_fixtures import validate as validate_initial_fixtures
 from conformance.ears_fixtures import validate as validate_ears_fixtures
 from conformance.document_fixtures import validate as validate_document_fixtures
@@ -343,6 +344,7 @@ def main():
     audit_tests = subprocess.run([sys.executable, "-B", str(ROOT / "fixtures/test_conformance_audit.py")], capture_output=True, text=True, timeout=180)
     checks["audit_self_tests"] = {"status": "Passed" if audit_tests.returncode == 0 else "Failed", "errors": [] if audit_tests.returncode == 0 else [audit_tests.stderr]}
     checks["fixture_coverage"] = fixture_coverage(checks)
+    checks["step_assignment"] = validate_step_assignment()
     # これらの検査は、構造の検査やhelperの試験では意図して保証しない。
     # 各項目は、実際のreview済みの証拠の検査でだけ置き換える。
     # このcommandは自分がfresh checkoutで動いているかを判定できない。
