@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "changes型不正は利用不能warningより先に拒否する",
+      "summary": "Frontmatter changesはstringの配列が必要です",
       "source": {
         "kind": "file",
         "workspaceId": "root",

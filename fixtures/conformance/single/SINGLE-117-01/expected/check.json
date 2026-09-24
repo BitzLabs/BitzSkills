@@ -20,7 +20,7 @@
       "code": "SPEC-FM-REQUIRED-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "必須titleの欠落を拒否する",
+      "summary": "Frontmatterの必須field titleがありません",
       "source": {
         "kind": "file",
         "workspaceId": "root",

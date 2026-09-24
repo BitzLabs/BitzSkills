@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "relations内の未知keyを拒否する",
+      "summary": "relationsに未知のkey futureがあります",
       "source": {
         "kind": "file",
         "workspaceId": "root",

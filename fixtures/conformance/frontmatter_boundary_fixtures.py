@@ -61,6 +61,22 @@ add('SINGLE-120-02', {'id': 'TASK-001', 'status': 'open'}, 'SPEC-TASK-BOUNDARY-0
     'changes省略のTASKは変更差分を許可pathなしとして拒否する')
 add('SINGLE-120-03', {'changes': ['src/ignored.py']}, 'SPEC-FM-UNAVAILABLE-001', 'changes', '正しい型のREQ changesは利用不能warningにする')
 add('SINGLE-120-04', {'changes': 42}, 'SPEC-FM-SCHEMA-001', 'changes', 'changes型不正は利用不能warningより先に拒否する')
+# 利用者へ示すDiagnosticのsummary。manifestのdescription（検査の論点）とは別に持つ。
+# 同じ条件の既存fixtureと文面をそろえる（119-03はSINGLE-085、120-03はSINGLE-084）。
+SUMMARIES = {
+    **{'SINGLE-116-' + suffix: 'Frontmatter titleは改行を含まない1〜120文字で指定してください'
+       for suffix in ('02', '03', '04', '05')},
+    'SINGLE-117-01': 'Frontmatterの必須field titleがありません',
+    'SINGLE-117-02': 'Frontmatter titleにnullは指定できません',
+    'SINGLE-117-03': 'tests[].coversは1件以上指定してください',
+    'SINGLE-118-01': 'relations.relatedに重複した値があります',
+    'SINGLE-118-02': 'testsに重複した要素があります',
+    'SINGLE-119-01': 'relationsに未知のkey futureがあります',
+    'SINGLE-119-02': 'testsの要素に未知のkey futureがあります',
+    'SINGLE-119-03': '未知のFrontmatter fieldを無視します',
+    'SINGLE-120-03': 'REQではchangesを使用できません',
+    'SINGLE-120-04': 'Frontmatter changesはstringの配列が必要です',
+}
 WARNINGS = {'SPEC-FM-UNKNOWN-001', 'SPEC-FM-UNAVAILABLE-001'}
 # 文書をskipするFrontmatter診断。TASK境界違反は文書自体を受理したうえでのfailedである。
 REJECTIONS = {'SPEC-FM-SCHEMA-001', 'SPEC-FM-REQUIRED-001'}
@@ -150,7 +166,7 @@ def reviewed_result(identifier):
                             'source': {'kind': 'file', 'workspaceId': 'root', 'path': CHANGED_PATH}})
     elif code is not None:
         diagnostics.append({'code': code, 'severity': 'warning' if code in WARNINGS else 'error',
-                            'resultStatus': current, 'summary': description,
+                            'resultStatus': current, 'summary': SUMMARIES[identifier],
                             'source': {'kind': 'file', 'workspaceId': 'root', 'path': spec_path(identifier), 'key': key}})
     statements = len(statement_ids(identifier)) if accepted and fields['id'].startswith('REQ-') else 0
     return {'schemaVersion': '1.0', 'operation': 'check', 'status': current,

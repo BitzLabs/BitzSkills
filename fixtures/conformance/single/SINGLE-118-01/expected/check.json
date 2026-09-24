@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "scalar配列の重複を拒否する",
+      "summary": "relations.relatedに重複した値があります",
       "source": {
         "kind": "file",
         "workspaceId": "root",

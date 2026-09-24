@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "titleの文字数・非空・単一行条件を検査する",
+      "summary": "Frontmatter titleは改行を含まない1〜120文字で指定してください",
       "source": {
         "kind": "file",
         "workspaceId": "root",

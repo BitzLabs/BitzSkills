@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "covers順だけが異なるtest要素をkey tupleで重複とする",
+      "summary": "testsに重複した要素があります",
       "source": {
         "kind": "file",
         "workspaceId": "root",

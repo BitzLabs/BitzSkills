@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "空coversを拒否する",
+      "summary": "tests[].coversは1件以上指定してください",
       "source": {
         "kind": "file",
         "workspaceId": "root",

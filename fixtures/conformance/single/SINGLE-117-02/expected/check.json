@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "Core fieldのnullを拒否する",
+      "summary": "Frontmatter titleにnullは指定できません",
       "source": {
         "kind": "file",
         "workspaceId": "root",

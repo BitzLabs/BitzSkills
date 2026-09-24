@@ -20,7 +20,7 @@
       "code": "SPEC-FM-SCHEMA-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "tests内の未知keyを拒否する",
+      "summary": "testsの要素に未知のkey futureがあります",
       "source": {
         "kind": "file",
         "workspaceId": "root",
