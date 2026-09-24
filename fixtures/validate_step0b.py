@@ -344,6 +344,8 @@ def main():
     checks["fixture_coverage"] = fixture_coverage(checks)
     # これらの検査は、構造の検査やhelperの試験では意図して保証しない。
     # 各項目は、実際のreview済みの証拠の検査でだけ置き換える。
+    # このcommandは自分がfresh checkoutで動いているかを判定できない。
+    # この項目はcertify_gate_a.pyが、独立したcheckoutでの再実行によって判定する。
     pending = ["full Gate A fresh-checkout repeatability"]
     if checks["fixture_coverage"]["status"] != "Passed":
         pending.insert(0, "conformance inputs and expectations")

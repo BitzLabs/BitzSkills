@@ -10,14 +10,23 @@ uv run fixtures/validate_step0b.py
 matrixの一覧、現行の設計契約と承認済みADRの相対linkを監査する。Step 0-Pの検証とfixture基盤の自己試験も実行する。
 固定した依存はscriptに宣言してあり、初回はpackageのdownloadが必要である。
 
-終了コード0はGate Aの許可、1はerrorまたは未完了の証拠が残っていることを表す。現在は1が想定どおりである
-（2026-09-24時点で、matrix 310件はすべて入力と期待値を検証済みであり、fresh checkoutからの
-Gate A全体実行だけが未完了）。未作成のfixtureは個別に列挙される。
+このcommandは部分検証であり、終了コードは常に1である。自分がfresh checkoutで動いているかを判定できないため、
+`pending`に`full Gate A fresh-checkout repeatability`を必ず残す。それ以外の未完了の証拠やerrorがあれば、
+reportに個別に列挙される。未作成のfixtureも同様である。
 
 上限境界の24件は入力を生成するため、実寸の照合は次のcommandで行う。
 
 ```text
 uv run fixtures/validate_scale.py
+```
+
+Gate Aの判定は次のcommandで行う。作業treeにcommitされていない変更がないことを確かめたうえで、HEADから独立した
+cloneを2つ作り、それぞれで上の2つのcommandを実行する。統合検証のerrorが0件、未完了の証拠が上記の1項目だけで、
+reportが2つのcloneでbyte一致し、scale検証が両方で成功して所要時間を除き一致すれば、`gateA: "Allowed"`と
+終了コード0を返す。出力には対象commit、各reportのSHA-256、実行環境を含む。
+
+```text
+uv run fixtures/certify_gate_a.py
 ```
 静的な検査では、fixtureが独立した原因を1つだけ持つことを証明できない。Diagnosticの対応はreview済みの台帳で管理する
 （[Diagnostic意味網羅review](Diagnostic意味網羅review.md)）。監査は台帳の整合と根拠文書の鮮度を検査し、自然言語の意味は検査しない。

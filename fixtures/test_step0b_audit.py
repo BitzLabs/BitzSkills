@@ -10,6 +10,7 @@ from unittest.mock import patch
 from jsonschema import Draft202012Validator, ValidationError
 
 import validate_step0b as audit
+import certify_gate_a as certify
 from conformance.diagnostic_coverage import LEDGER, validate
 from conformance.target_vectors import HERE as TARGET_HERE, validate as validate_targets
 from conformance.initial_fixtures import validate as validate_initial, compare_state, check_command_preconditions
@@ -2934,6 +2935,58 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(unknown["status"], "Failed")
         with patch.object(audit, "matrix_rows", return_value=[]):
             self.assertEqual(audit.fixture_coverage({})["status"], "Failed")
+
+    @staticmethod
+    def certification_runs(pending=None, errors=None, step0b_exit=1, scale_status="Passed"):
+        report = {"gateA": "Blocked", "pending": [certify.CERTIFIED] if pending is None else pending,
+                  "checks": {"links": {"errors": errors or []}, "fixture_coverage": {"status": "Passed", "errors": []}}}
+        step0b = {"exitCode": step0b_exit, "stdout": json.dumps(report).encode()}
+        scale = {"exitCode": 0 if scale_status == "Passed" else 1,
+                 "stdout": json.dumps({"status": scale_status, "durationSeconds": 37.0, "results": [], "errors": []}).encode()}
+        return [step0b, dict(step0b)], [scale, dict(scale)]
+
+    def test_gate_a_certification_accepts_identical_fresh_checkouts(self):
+        step0b, scale = self.certification_runs()
+        self.assertEqual(certify.judge(step0b, scale), [])
+        # 所要時間だけが異なるscale検証は一致として扱う。
+        scale[1] = {"exitCode": 0, "stdout": scale[1]["stdout"].replace(b"37.0", b"41.5")}
+        self.assertEqual(certify.judge(step0b, scale), [])
+
+    def test_gate_a_certification_rejects_incomplete_or_unrepeatable_evidence(self):
+        cases = {
+            "他の未完了の証拠": self.certification_runs(pending=["conformance inputs and expectations", certify.CERTIFIED]),
+            "認定対象の項目の欠落": self.certification_runs(pending=[]),
+            "errorのある検査": self.certification_runs(errors=["broken link"]),
+            "統合検証の終了コード": self.certification_runs(step0b_exit=0),
+            "scale検証の失敗": self.certification_runs(scale_status="Failed"),
+        }
+        step0b, scale = self.certification_runs()
+        cases["checkout数"] = (step0b[:1], scale[:1])
+        cases["reportのbyte不一致"] = (
+            [step0b[0], {"exitCode": 1, "stdout": step0b[1]["stdout"] + b"\n"}], scale)
+        cases["scale結果の不一致"] = (
+            step0b, [scale[0], {"exitCode": 0, "stdout": scale[1]["stdout"].replace(b'"results": []', b'"results": [1]')}])
+        cases["JSONでないreport"] = ([{"exitCode": 1, "stdout": b"not json"}] * 2, scale)
+        for name, (runs, scales) in cases.items():
+            with self.subTest(name):
+                self.assertTrue(certify.judge(runs, scales))
+
+    def test_gate_a_certification_requires_a_committed_worktree(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for args in (("init", "--quiet"), ("config", "user.email", "audit@example.invalid"),
+                         ("config", "user.name", "audit")):
+                certify.git(*args, cwd=root)
+            (root / "tracked.txt").write_text("a\n")
+            certify.git("add", "tracked.txt", cwd=root)
+            certify.git("commit", "--quiet", "-m", "init", cwd=root)
+            with patch.object(certify, "ROOT", root):
+                self.assertEqual(certify.worktree_errors(), [])
+                (root / "untracked.txt").write_text("b\n")
+                self.assertTrue(certify.worktree_errors())
+                (root / "untracked.txt").unlink()
+                (root / "tracked.txt").write_text("changed\n")
+                self.assertTrue(certify.worktree_errors())
 
 
 if __name__ == "__main__":
