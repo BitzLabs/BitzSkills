@@ -2,7 +2,13 @@
 
 import unittest
 
-from bitz.resultmodel import diagnostic_sort_key, doctor_status, sort_diagnostics, worst_status
+from bitz.resultmodel import (
+    EXIT_CODE_BY_STATUS,
+    diagnostic_sort_key,
+    doctor_status,
+    sort_diagnostics,
+    worst_status,
+)
 
 
 def _diag(workspace_id, path, line=None, column=None, code="Z-Z-999", spec_refs=None):
@@ -30,6 +36,18 @@ class WorstStatusTests(unittest.TestCase):
         self.assertEqual(worst_status(["passed_with_warnings", "blocked"]), "blocked")
         self.assertEqual(worst_status(["blocked", "failed"]), "failed")
         self.assertEqual(worst_status(["failed", "error"]), "error")
+
+
+class ExitCodeTests(unittest.TestCase):
+    def test_each_status_maps_to_contract_exit_code(self):
+        self.assertEqual(
+            EXIT_CODE_BY_STATUS,
+            {"passed": 0, "passed_with_warnings": 0, "failed": 1, "blocked": 2, "error": 3},
+        )
+
+    def test_argument_error_code_is_not_a_result_status(self):
+        # 終了コード4はCLI引数不正専用で、結果statusから導かない（結果契約 §2）。
+        self.assertNotIn(4, EXIT_CODE_BY_STATUS.values())
 
 
 class DoctorStatusTests(unittest.TestCase):

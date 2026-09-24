@@ -225,6 +225,9 @@ Canonical JSONとDigestが規定値にbyte一致することである。`096-01`
 Step 2完了時点でbitz-core自身の`.spec/`を作り、以後の実装をSmall Flowで進める。
 最初のREQはParserと結果契約に対するものとし、Coreが自分自身をcheck・verifyできる状態をStep 4の完了条件へ含める。
 
+2026-09-25にrepository rootへ`.spec/`を作り、REQ-001（EARS-AI規範文の解析）とREQ-002（status集約と終了コード）を
+`draft`で起票した。Core自身の`bitz check --full`は`passed`である。contextとverifyがStep 3、4で揃うまでは`check`だけで運用する。
+
 その上でREQ 1件について次を通す。
 
 ```text

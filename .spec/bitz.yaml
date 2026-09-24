@@ -1,0 +1,10 @@
+schemaVersion: "1.0"
+language: ja
+earsAi: "1.0"
+verify:
+  commands:
+    default:
+      argv: [uv, run, --project, plugins/bitz-core, python, tests/bitz-core/run_test_files.py, "{tests}"]
+      cwd: .
+safety:
+  protectApprovedRequirements: true
