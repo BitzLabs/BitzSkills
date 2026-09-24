@@ -37,7 +37,7 @@ Core 1.0のGateは次の3層とする。
 | Gate | 判定時点 | 判定対象 | 現在状態 |
 |---|---|---|---|
 | Gate A: 実装着手可能性 | Step 1開始前 | 規範、fixture、期待値、検証基盤がCore実行体なしで再現可能 | `Allowed` |
-| Gate B: Step別実装受入 | 各Step完了時 | 当該StepのCore実装が固定済みfixtureへ適合 | `Pending` |
+| Gate B: Step別実装受入 | 各Step完了時 | 当該StepのCore実装が固定済みfixtureへ適合 | Step 1 `Passed`、Step 2〜5 `Pending` |
 | Gate C: Core 1.0 release受入 | 全Step完了後 | 全適合、性能、自己適用を含む出荷可能性 | `Pending` |
 
 Gate条件の正本は本書、fixture構造と比較方法の正本は
@@ -139,6 +139,10 @@ Gate Aを`Allowed`にする条件は次の全件である。
 他3操作が同じ土台を使う。ここを先に通し、以後の全Stepを同じ公開面から検証する。
 Coreは`plugins/bitz-core`、Core固有の試験は`tests/bitz-core/`へ置き、試験は`unittest`で書く
 （[ADR-049](../02.設計書/10_決定記録/ADR-049_Coreのsource配置と試験の構成を確定する.md)）。
+
+状態は`Complete`、Step 1のGate Bは`Passed`である。2026-09-24にcommit `28c3cd1`へ
+`uv run tests/bitz-core/certify_gate_b.py --step 1`を実行し、完了条件の34件がすべて通過した。
+結果と実行環境は[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録した。
 
 - 適合fixture harness: manifest実行、共通normalizer、副作用比較、終了コード判定。入口は`fixtures/run_conformance.py`とし、
   期待出力を返す偽のCoreで自己試験する。Gate Bの認定command `tests/bitz-core/certify_gate_b.py`も作る
