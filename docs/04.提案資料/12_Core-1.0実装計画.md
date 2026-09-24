@@ -36,7 +36,7 @@ Core 1.0のGateは次の3層とする。
 
 | Gate | 判定時点 | 判定対象 | 現在状態 |
 |---|---|---|---|
-| Gate A: 実装着手可能性 | Step 1開始前 | 規範、fixture、期待値、検証基盤がCore実行体なしで再現可能 | `Blocked` |
+| Gate A: 実装着手可能性 | Step 1開始前 | 規範、fixture、期待値、検証基盤がCore実行体なしで再現可能 | `Allowed` |
 | Gate B: Step別実装受入 | 各Step完了時 | 当該StepのCore実装が固定済みfixtureへ適合 | `Pending` |
 | Gate C: Core 1.0 release受入 | 全Step完了後 | 全適合、性能、自己適用を含む出荷可能性 | `Pending` |
 
@@ -85,7 +85,7 @@ Core実行結果と人間による比較結果は、それぞれの対象機能�
 
 ### 3.1 Step 0B: Gate A実証基盤
 
-状態は`In progress`、Gate Aは`Blocked`である。Step 0で確定した契約を機械検証可能な入力、期待値、
+状態は`Complete`、Gate Aは`Allowed`である。Step 0で確定した契約を機械検証可能な入力、期待値、
 generator、helper、harnessへ落とし込み、fresh checkoutから再現できることを示す。
 
 部分検証の入口は`uv run fixtures/validate_step0b.py`。公開JSON、文法参照、link、Git setup、process helper、
@@ -98,6 +98,7 @@ generator、helper、harnessへ落とし込み、fresh checkoutから再現で�
 2026-09-18にはcommit済みのrepositoryを`git clone`した写しで統合検証とscale検証を実行し、作業treeと同じ結果になることを[Step 0B検証記録](../../fixtures/conformance/Step-0B検証記録.md)へ記録した。
 統合commandは、matrixの全IDについて入力と期待値の検証に成功したfixture群の検査があることを確かめる。ただし自分がfresh checkoutで動いているかを判定できないため、fresh checkoutからのGate A全体実行を未完了の証拠として常に残す。
 Gate Aの判定は`uv run fixtures/certify_gate_a.py`で行う。このcommandは、HEADから独立したcloneを2つ作り、それぞれで統合検証とscale検証を実行する。統合検証のreportがbyte一致し、未完了の証拠が上記の1項目だけで、scale検証が両方で成功して一致すれば、`gateA: "Allowed"`を返す。
+2026-09-24にcommit `cf2fa3d`へ実行して`Allowed`を得た。結果と実行環境は[Step 0B検証記録](../../fixtures/conformance/Step-0B検証記録.md)に記録した。
 Git shim、`uv`環境、`bitz.compat`、`runner: package`の起動規則は[ADR-046](../02.設計書/10_決定記録/ADR-046_適合harnessの検査対象・実行環境・runnerを確定する.md)で確定したが、harnessの実行部はCore実装と合わせてGate Bで作る。
 
 このStepで実装してよいのはSchema検証、fixture generator、reference計算、文法検査、matrix検査、

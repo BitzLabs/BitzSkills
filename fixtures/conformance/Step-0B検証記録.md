@@ -3,7 +3,8 @@
 - 日付: 2026-09-17（下表は2026-09-14時点の構成。以後の追加は末尾の日付節を参照）
 - command: `uv run fixtures/validate_step0b.py`
 - 検証環境: CPython 3.14.6、Linux／POSIX、uv 0.11.32。validatorの依存versionはscriptのmetadataで固定した。
-- Gate A: `Blocked`。commandの終了コードは1（未完了の証拠が残るため）。
+- Gate A: `Allowed`（2026-09-24、`uv run fixtures/certify_gate_a.py`で認定。末尾の節を参照）。
+  統合commandの終了コードは常に1である（fresh checkoutの判定を認定commandへ委ねるため）。
 
 | 検査 | 証拠 |
 |---|---|
@@ -694,3 +695,25 @@ matrixにないID、空のmatrixを拒否することを確認した。
 同じpin済みCPython 3.14.6環境での統合実行2回はbyte一致し、check errorは0件、両方exit 1。
 監査試験176件は成功した。残るpendingは、fresh checkoutからのGate A全体実行の1項目である。
 Report SHA-256: `eb7a77a88abd15d07020e2f3df0f3cd3da35c7a00a2dcd06fb1bbf9ba5d40dc6`。
+
+## 2026-09-24: Gate Aの認定
+
+`uv run fixtures/certify_gate_a.py`を追加し、commit `cf2fa3d02837e5790526e3c928b7aeea4d618bd3`に対して実行した。
+このcommandは作業treeがcommit済みであることを確かめ、HEADから独立したcloneを2つ作り、それぞれで統合検証と
+scale検証を1回ずつ実行する。同じcloneで2回実行すると、1回目が残したfileが2回目の入力になり得るためである。
+統合検証は自分がfresh checkoutで動いているかを判定できないため、`pending`に
+`full Gate A fresh-checkout repeatability`を常に残す。認定commandは、errorのある検査が0件で未完了の証拠がこの
+1項目だけであること、reportがclone間でbyte一致すること、scale検証が両方で成功し所要時間を除いて一致することを求める。
+監査試験を3件追加し、他の未完了の証拠、errorのある検査、終了コード、reportとscale結果の不一致、checkout数、
+不正なJSON、未commitの作業treeを拒否することを確認した。監査試験は179件すべて成功した。
+
+| 項目 | 結果 |
+|---|---|
+| 判定 | `gateA: "Allowed"`、終了コード0、error 0件（所要2分43秒） |
+| 統合検証 | 2つのcloneで終了コード1、未完了の証拠は上記の1項目だけ。Report SHA-256は両方`eb7a77a88abd15d07020e2f3df0f3cd3da35c7a00a2dcd06fb1bbf9ba5d40dc6`で、作業treeの実行とも同じ |
+| scale検証 | 2つのcloneで24件すべてPassed。所要時間を除いた結果のSHA-256は両方`d4b0e6aa89898a2c004ef14207b6f1bd9dc327e9a2a87ec70f51ff1b78b6a08d` |
+| 実行環境 | CPython 3.14.6、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.53.0、Linux x86_64 |
+| Core実行 | なし |
+
+実装計画 §3.1のGate A条件を全件満たしたため、Step 0Bを`Complete`、Gate Aを`Allowed`とし、Step 1の開始を許可する。
+Coreの実行結果と期待値の一致は、各StepのGate Bで判定する。

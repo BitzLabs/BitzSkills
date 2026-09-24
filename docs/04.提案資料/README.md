@@ -41,7 +41,7 @@
 | [22_複合workspace残存P1裁定案.md](22_複合workspace残存P1裁定案.md) | FED-CROSS-002〜007の裁定案 | **Accepted**（ADR-042と正本へ反映済み） |
 | [23_複合workspace残存P2裁定案.md](23_複合workspace残存P2裁定案.md) | 複合workspace残存P2 6件の裁定案 | **Accepted**（ADR-043と正本へ反映済み） |
 | [24_Core-1.0実装着手方針.md](24_Core-1.0実装着手方針.md) | 実装着手可能性と欠落 | **Accepted**（G1〜G8裁定・反映済み、G9は実装計画へ） |
-| [25_Core-1.0実装前最終reviewと修正提案.md](25_Core-1.0実装前最終reviewと修正提案.md) | 02.設計書、03.詳細設計の実装前最終点検 | **Accepted / Reflected**（Step 0B実施中、Gate A `Blocked`） |
+| [25_Core-1.0実装前最終reviewと修正提案.md](25_Core-1.0実装前最終reviewと修正提案.md) | 02.設計書、03.詳細設計の実装前最終点検 | **Accepted / Reflected**（Step 0B完了、Gate A `Allowed`） |
 | [26_context-Markdown提示仕様案.md](26_context-Markdown提示仕様案.md) | contextの既定Markdown提示 | **Accepted / Reflected**（P0 3件・P1 4件を裁定し§9と`SINGLE-104-01`へ反映済み） |
 | [27_適合harness外部仕様の検討.md](27_適合harness外部仕様の検討.md) | 適合harnessの検査対象・実行環境・runner | **Accepted / Reflected**（4件を裁定しADR-046と正本へ反映済み） |
 
@@ -538,7 +538,7 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 ## 24. 実装前最終reviewの反映状況（2026-09-24更新）
 
 提案25の採否と実装着手可否を分離して管理する。提案25はAccepted / Reflectedであり、現在のGate Aは
-`Blocked`である。Gate条件の正本は[実装計画 §1.1](12_Core-1.0実装計画.md#11-進行状態とgate)とする。
+`Allowed`である（2026-09-24、commit `cf2fa3d`で認定）。Gate条件の正本は[実装計画 §1.1](12_Core-1.0実装計画.md#11-進行状態とgate)とする。
 
 | 区分 | 現在の状態 | 残件 |
 |---|---|---|
@@ -546,9 +546,9 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 | P1 5件 | 契約または性能受入成果物へ反映済み | process helper等の検証基盤、Core実装後の受入結果と性能baseline |
 | P2文書衛生 | accepted ADR linkとREADME状態を修正済み | — |
 | 自己適用 | 実装計画へ配置済み | Step 2完了後に`.spec/`を作成し、Gate Cで最終判定 |
-| Step 0B | `In progress` | 公開JSON・文法・link・Git/process基盤・Diagnostic意味網羅・target集合25 case・実fixture 310件（単一workspace 250件、複合workspace 60件。内訳は[実装計画 §3.1](12_Core-1.0実装計画.md#31-step-0b-gate-a実証基盤)）の準備を検証済み。golden Digestは単一・複合workspaceとも独立2系統のreference計算で一致。上限境界24件はscale検証で実寸を照合済み。2026-09-18にfresh checkoutでも統合検証とscale検証が作業treeと一致。fresh checkoutからのGate A全体実行を自動検査で記録することが残件 |
+| Step 0B | `Complete` | 公開JSON・文法・link・Git/process基盤・Diagnostic意味網羅・target集合25 case・実fixture 310件（単一workspace 250件、複合workspace 60件。内訳は[実装計画 §3.1](12_Core-1.0実装計画.md#31-step-0b-gate-a実証基盤)）の準備を検証済み。golden Digestは単一・複合workspaceとも独立2系統のreference計算で一致。上限境界24件はscale検証で実寸を照合済み。2026-09-18にfresh checkoutでも統合検証とscale検証が作業treeと一致。2026-09-24に`uv run fixtures/certify_gate_a.py`が独立した2つのcloneで統合検証とscale検証を再実行し、結果の一致を確認 |
 | Step 0-P | `Complete` | 基準入力・比較条件を固定し一括検証済み。実測はCore実装後 |
-| Gate A | `Blocked` | fresh checkoutから単一commandで2回一致する自動検査結果を記録 |
+| Gate A | `Allowed` | —（認定結果と実行環境は[Step 0B検証記録](../../fixtures/conformance/Step-0B検証記録.md)に記録） |
 | Gate B | `Pending` | 各StepのCore実装を固定済みfixtureへ通して判定 |
 | Gate C | `Pending` | 全適合、性能、決定性、副作用、process、自己適用をまとめて判定 |
 

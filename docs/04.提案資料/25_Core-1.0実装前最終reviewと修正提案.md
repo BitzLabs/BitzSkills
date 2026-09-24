@@ -1,6 +1,6 @@
 # Core 1.0実装前最終reviewと修正提案
 
-- 状態: Accepted / Reflected（Step 0B実施中、Gate A `Blocked`）
+- 状態: Accepted / Reflected（Step 0B完了、Gate A `Allowed`）
 - 実施日: 2026-09-04
 - 基準branch: `bitz_next`
 - 基準commit: `f47d14704dd4352cc08af538bd3633f4a030573d`
@@ -509,14 +509,14 @@ Step 6まで遅らせず、文法、Schema、checkが安定した時点で自身
 - [x] 規範上の全非成功条件がDiagnostic registryへ対応
 - [x] 文法に未定義token/nonterminalがない
 - [x] target種別×purposeの期待集合fixtureが存在
-- [ ] fixture matrixに選択的期待、複数原因、`元status`がない
+- [x] fixture matrixに選択的期待、複数原因、`元status`がない
 - [x] Git base/current/staged/worktree/unbornをmanifestから再現可能
-- [ ] 単一と複合workspaceのCanonical JSONおよびgolden Context Digestが独立した2系統のreference計算で一致
-- [ ] 読取り専用、report、cacheの変更前後snapshotと許可書込みが固定され、比較harnessを自己検査可能
+- [x] 単一と複合workspaceのCanonical JSONおよびgolden Context Digestが独立した2系統のreference計算で一致
+- [x] 読取り専用、report、cacheの変更前後snapshotと許可書込みが固定され、比較harnessを自己検査可能
 - [x] timeout、signal、子process、pipe保持を再現するhelperと有限時間で失敗できるharnessが存在
 - [x] 性能基準fixture、generator、期待tree digest、環境manifestがversion管理済み
 - [x] 現行正本とaccepted ADRの相対link検査が0件
-- [ ] 全検査をCore実行体に依存しない単一commandでfresh checkoutから実行でき、2回の結果が一致
+- [x] 全検査をCore実行体に依存しない単一commandでfresh checkoutから実行でき、2回の結果が一致
 
 実行入口は`uv run fixtures/validate_step0b.py`。公開結果等10例、EBNF 33定義、相対link 218件、
 Git 7状態の2回再現とprocess helper自己試験を検証した。Semantic IRとDigest材料の5例はJSON構文確認だけであり、
@@ -552,6 +552,10 @@ EARS-AIの期待値選択と検証範囲は[EARS fixture review](../../fixtures/
 
 従来の「実装計画のStep 0BがClosed」は判定結果を判定条件に含める自己参照であるため削除する。
 上記の自動検査結果と実行環境を同一commitへ記録した時点で、Step 0Bを`Complete`、Gate Aを`Allowed`とする。
+
+2026-09-24、commit `cf2fa3d`に対して`uv run fixtures/certify_gate_a.py`を実行し、独立した2つのcloneで統合検証と
+scale検証の結果が一致することを確認した。これにより上記の全件を満たし、Step 0Bを`Complete`、Gate Aを`Allowed`とした。
+認定結果と実行環境は[Step 0B検証記録](../../fixtures/conformance/Step-0B検証記録.md)に記録した。
 
 ### 9.2 Gate B: Step別実装受入
 
