@@ -117,7 +117,10 @@ def setup(fixture, manifest, destination, generated=None):
             if source.is_symlink():
                 path.symlink_to(os.readlink(source))
             else:
-                shutil.copy2(source, path)
+                # mtimeを引き継がない。同じsizeの置換で、base commitより古いmtimeと再利用されたinodeが
+                # index上のstat情報と一致すると、Gitが内容を比べずに未変更と判定するためである。
+                shutil.copyfile(source, path)
+                shutil.copymode(source, path)
         elif kind == "delete":
             if not exists:
                 raise ValueError("削除対象が存在しません")
