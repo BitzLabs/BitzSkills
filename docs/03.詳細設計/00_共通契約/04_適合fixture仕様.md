@@ -151,7 +151,7 @@ fixture harnessの参照実装が検査対象のsource tree、build成果物、�
 |---|---|---|
 | `consumer` | `result-shape <path>` | 指定JSONを[共通結果契約 §2](01_結果・Diagnostic・終了コード.md#2-共通結果)の排他的外形で判定する |
 | `migration` | `MULTI-024`で固定 | 複合workspace化と完全rollbackの適用、部分rollbackの拒否 |
-| `package` | `metadata` | 配布物名、import package名、console script名が`bitz`で、requires-pythonが3.11以上を許す |
+| `package` | `metadata` | 配布物名、import package名、console script名が`bitz`で、requires-pythonが3.12以上を許す |
 | `package` | `dependencies` | runtime依存が標準libraryと、lock fileでexact versionへ固定したYAML library 1つだけ |
 
 manifestは1つの正確な終了コードとstatusまたはoutcomeを記録する。範囲、選択肢、条件分岐、`元statusと同じ`、
@@ -620,9 +620,9 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-127-14` | catalogにない`--workspace` | doctor | 結果なし／4 | workspace探索後、Core操作結果なし |
 | `SINGLE-127-15` | Git 2.29を解決 | doctor | passed_with_warnings／0 | Git不在へ縮退し、下限値は詳細設計から取得 |
 | `SINGLE-127-16` | Git 2.30を解決 | doctor | passed／0 | 下限境界を利用可能として扱う |
-| `SINGLE-127-17` | Core package metadata | package test | accepted／0 | 配布物、import package、CLI名は`bitz`、requires-pythonは3.11以上 |
+| `SINGLE-127-17` | Core package metadata | package test | accepted／0 | 配布物、import package、CLI名は`bitz`、requires-pythonは3.12以上 |
 | `SINGLE-127-18` | build metadataとlock file | package test | accepted／0 | runtime依存は標準libraryとexact lock済みYAML library 1つだけ |
-| `SINGLE-127-19` | CPython 3.11でCoreを起動 | doctor | passed／0 | 3.11で利用できない構文／標準library APIへの依存なし |
+| `SINGLE-127-19` | CPython 3.12でCoreを起動 | doctor | passed／0 | 3.12で利用できない構文／標準library APIへの依存なし |
 
 ## 7. 最小matrix: 複合workspace
 

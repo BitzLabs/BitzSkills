@@ -561,6 +561,8 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 検査対象の受取り、Python・Git versionの指定、JSON互換runner、package runnerを
 [ADR-046](../02.設計書/10_決定記録/ADR-046_適合harnessの検査対象・実行環境・runnerを確定する.md)として裁定した。
 Gate Cには全matrixを下限CPython 3.11と基準環境の2環境で通す条件を加えた。
+2026-09-24に[ADR-053](../02.設計書/10_決定記録/ADR-053_CPythonの下限を3.12へ引き上げる.md)で下限と基準環境を
+CPython 3.12へ引き上げ、`SINGLE-127-19`を`python: "3.12"`へ改めた。
 
 表記統一のため[用語集](../用語集.md)を定め、複数のworkspaceを束ねる構成を「複合workspace」と呼ぶことにした。あわせて[ADR-047](../02.設計書/10_決定記録/ADR-047_複合workspaceの識別子をmultiWorkspaceへ改名する.md)で、識別子を`multiWorkspace`、`SPEC-MULTI-*`、`MULTI-*`へ改名した。本READMEと裁定済みの提案資料の履歴部分は当時の識別子を残す。
 

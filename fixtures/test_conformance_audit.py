@@ -215,7 +215,7 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-127-15", "manifest.json", lambda v: v["invocation"].update(gitVersion="2.30.0")),
             ("SINGLE-127-16", "manifest.json", lambda v: v["invocation"].update(gitVersion="2.31.0")),
             ("SINGLE-127-15", "expected/doctor.json", lambda v: v.update(diagnostics=[])),
-            ("SINGLE-127-19", "manifest.json", lambda v: v["invocation"].update(python="3.12")),
+            ("SINGLE-127-19", "manifest.json", lambda v: v["invocation"].update(python="3.13")),
             ("SINGLE-127-17", "expected/package.json", lambda v: v.update(outcome="rejected")),
             ("SINGLE-127-18", "manifest.json", lambda v: v["invocation"].update(argv=["metadata"])),
         ]

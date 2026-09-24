@@ -58,7 +58,7 @@ checkが依存出力不足だけで実行不能なら`SPEC-MULTI-DEPENDENCY-001`
 
 | 対象 | 下限 | 不適合時 |
 |---|---|---|
-| CPython | 3.11 | `SPEC-DOCTOR-CORE-001`／blocked |
+| CPython | 3.12 | `SPEC-DOCTOR-CORE-001`／blocked |
 | Git | 2.30 | Git不在として扱い、単一workspaceはwarning、複合workspaceは`SPEC-MULTI-GIT-001`／blocked |
 
 下限は環境ごとに変更できる設定値にしない。Core実行体を起動できない場合は

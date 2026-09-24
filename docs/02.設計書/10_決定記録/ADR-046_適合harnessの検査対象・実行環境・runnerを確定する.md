@@ -86,6 +86,9 @@ harnessの外部仕様は次の点で閉じていない。このため`SINGLE-12
   [実装計画](../../04.提案資料/12_Core-1.0実装計画.md)、`fixtures/conformance/manifest.schema.json`。
 - fixture ID `MONO-023`、`MONO-024`は、後続の[ADR-047](ADR-047_複合workspaceの識別子をmultiWorkspaceへ改名する.md)で`MULTI-023`、`MULTI-024`へ改名した。
 - fixtureが`repo/`で表せない入力（上限境界の生成入力、member pathのsubmodule／別worktree）は、後続の[ADR-048](ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md)で`setup.generate`とGit構造operationとして加えた。
+- Decision 2の下限版（`python: "3.11"`とGate Cの下限CPython 3.11）とDecision 5の`metadata` caseのrequires-pythonは、
+  後続の[ADR-053](ADR-053_CPythonの下限を3.12へ引き上げる.md)で3.12へ部分改訂した。`invocation.python`の意味と
+  他のDecisionは変更していない。
 
 ## Revision History
 
@@ -94,3 +97,4 @@ harnessの外部仕様は次の点で閉じていない。このため`SINGLE-12
 | 2026-09-17 | 検査対象の受取り、Python・Git versionの指定、JSON互換runner、package runnerを確定 | 提案27 |
 | 2026-09-17 | 複合workspaceの識別子の改名を後続決定へ接続 | ADR-047 |
 | 2026-09-18 | fixtureの生成入力とGit構造operationを後続決定へ接続 | ADR-048 |
+| 2026-09-24 | Decision 2の下限版とDecision 5のrequires-pythonを3.12へ部分改訂 | ADR-053 |

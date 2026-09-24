@@ -12,7 +12,7 @@
   },
   "requiredTools": {
     "pythonImplementation": "CPython",
-    "pythonVersion": "3.11.x",
+    "pythonVersion": "3.12.x",
     "minimumGitVersion": "2.30",
     "memoryAccounting": "cgroup-v2-process-tree"
   },

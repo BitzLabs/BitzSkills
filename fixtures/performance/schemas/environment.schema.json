@@ -29,7 +29,7 @@
       "required": ["pythonImplementation", "pythonVersion", "minimumGitVersion", "memoryAccounting"],
       "properties": {
         "pythonImplementation": {"const": "CPython"},
-        "pythonVersion": {"const": "3.11.x"},
+        "pythonVersion": {"const": "3.12.x"},
         "minimumGitVersion": {"const": "2.30"},
         "memoryAccounting": {"const": "cgroup-v2-process-tree"}
       }

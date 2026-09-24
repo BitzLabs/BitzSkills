@@ -14,7 +14,7 @@
       "json"
     ],
     "env": {},
-    "python": "3.11"
+    "python": "3.12"
   },
   "expect": {
     "status": "passed",

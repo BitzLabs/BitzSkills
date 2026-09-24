@@ -90,9 +90,12 @@ source directoryまたはwheelとして受け取り、`runner: package`が候補
   [Core 1.0実装計画 §4](../../04.提案資料/12_Core-1.0実装計画.md#4-step-1-骨格とdoctor)。
 - build backend、YAML libraryの選定、pluginからCLIを起動する方法は本ADRで決めない。
   build backendはbuild時だけの依存であり、ADR-045のruntime依存の制約を受けない。
+- Decision 1の図にあるrequires-python（`>=3.11`）は、後続の
+  [ADR-053](ADR-053_CPythonの下限を3.12へ引き上げる.md)で`>=3.12`へ部分改訂した。配置は変更していない。
 
 ## Revision History
 
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-09-24 | Coreのsource tree、独立uv project、src layout、`tests/bitz-core`と`unittest`、`fixtures/`との責務を確定 | 実装計画 §4 |
+| 2026-09-24 | Decision 1のrequires-pythonを`>=3.12`へ部分改訂 | ADR-053 |

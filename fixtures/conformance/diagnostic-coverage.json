@@ -4,7 +4,7 @@
   "sources": {
     "docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md": "936e2df9edd552f958a75e1981de4515f4ab92afb6c8830fe998ce2384f741cf",
     "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "5ec338d6f49f5c35b176ff11d76d9e6d15c560dbd049ea3f7624834d93d7e571",
-    "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md": "41343a802ec8dcf7f45246a16503ae708462a26cc8b91ee02a50aec3651d6891",
+    "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md": "4ff59a7666ffd67956564de45d88603d24f0f71b90c4debba24fad5e9a91d45f",
     "docs/03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md": "5accd6fed0da62f9dadf9d32793b724d0d4480818370fea88b1bf5eefa7aa6b2",
     "docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md": "3335f0b3866c76f01a7bdf7ce23164e1906d3fa155352b9338082dda7dcd7fc0",
     "docs/03.詳細設計/02_SPECモデル/03_文書種別・本文template.md": "dbb8555e4b87e13feaf17c0f5a05097613c2ba40274f2b3f781d7af5578c380f",
@@ -13,7 +13,7 @@
     "docs/03.詳細設計/03_操作仕様/01_context.md": "096f16c7d575e9aa104a2b3d01f9a6da151ea7668a6ff3ab1acccbac80df7b4f",
     "docs/03.詳細設計/03_操作仕様/02_check.md": "c3278109c0ca6fe0bb08b27d6f8ff386239ef142b6490dab57f8a3d38c91896e",
     "docs/03.詳細設計/03_操作仕様/03_verify.md": "4d9426423f828b2a12f27402ee6a2a27f7348ad61c2ace296b850a89ae96def4",
-    "docs/03.詳細設計/03_操作仕様/04_doctor.md": "719309dc89266564c982355035c360271f825ba0e07d47c35d144695368f2d6c",
+    "docs/03.詳細設計/03_操作仕様/04_doctor.md": "c5396d341b7b9f5a8a0a85254ecde1963349999a62f943efbb25599c06166d3f",
     "docs/03.詳細設計/03_操作仕様/README.md": "b791c76c9595b8638a00cd1cd85bbb8089b2e3aace8f61efefd541bc44379134",
     "docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md": "852a3512a841766262ca32cd620e8c7ef3b9589b3efadaa9334ee5622b16fdfb",
     "docs/03.詳細設計/01_EARS-AI/02_適合性・移行仕様.md": "37f4f8ba9ea1db12c0f4a94c68b09bb42cad3009a24a8310215126b122496543",
