@@ -315,13 +315,25 @@ def _check_sections(h2_index: list[tuple[int, str]], lines: list[str], path: str
 
 
 def _process_document(spec_dir: str, path: str, kind: str, workspace_id: str) -> DocEntry:
-    entry = DocEntry(path=path, kind=kind)
     abs_path = os.path.join(spec_dir, path[len(".spec/") :])
 
     raw, ok = _read_bytes(abs_path)
     if not ok:
+        entry = DocEntry(path=path, kind=kind)
         entry.hard = [_mk("SPEC-INPUT-READ-001", "error", "error", messages.SPEC_IO_UNREADABLE, path, workspace_id)]
         return entry
+    return _process_document_content(raw, path, kind, workspace_id)
+
+
+def _process_document_content(raw: bytes, path: str, kind: str, workspace_id: str) -> DocEntry:
+    """byte列から:class:`DocEntry`を組み立てる（`_process_document`のfile読取り以降を共有する）。
+
+    Git基準版の文書解析（:func:`build_base_catalog`）でも同じ関数を使う（`02_check.md`の
+    「基準版の文書の解析は現在版と同じFrontmatter/Parserを使う」）。ファイル読取り自体のI/O error
+    （`SPEC-INPUT-READ-001`）だけは呼び出し側（`_process_document`）の責務であり、ここには含めない。
+    """
+
+    entry = DocEntry(path=path, kind=kind)
     if len(raw) > SPEC_SIZE_LIMIT_BYTES:
         entry.hard = [_mk("SPEC-INPUT-LIMIT-001", "error", "failed", messages.SPEC_SIZE_LIMIT, path, workspace_id)]
         return entry
@@ -584,4 +596,52 @@ def build_catalog(
             result.checked_statement_count += e.statement_count
 
     result.entries = entries
+    return result
+
+
+def _kind_for_base_path(path: str) -> str | None:
+    """workspace root相対path（``.spec/<dir>/...``）からSPEC種別を推定する。"""
+
+    parts = path.split("/")
+    if len(parts) < 2 or parts[0] != ".spec":
+        return None
+    return DIR_TO_KIND.get(parts[1])
+
+
+def build_base_catalog(
+    git_executable: str,
+    cwd: str,
+    env: dict[str, str],
+    base_rev: str,
+    workspace_root: str,
+    workspace_id: str,
+) -> dict[str, DocEntry]:
+    """Git基準版``base_rev``時点の文書catalogを``doc_id -> DocEntry``で返す（`02_check.md §5・§9`）。
+
+    現在版と同じ:func:`_process_document_content`を使う（`基準版の文書の解析は現在版と同じ
+    Frontmatter/Parserを使う`）。Frontmatterが壊れている、file名IDと不一致、EARS-AI構文が壊れている
+    などskip-document相当（``entry.hard is not None``）のbase文書は、推測でDiagnosticを作らず
+    比較対象から静かに除く（状態遷移・承認済みREQ保護のいずれも、既に壊れていた基準版文書との
+    差分を機械的に断定できないため）。ID重複時は最初に見つかった（path昇順の）文書だけを使う。
+    """
+
+    from . import gitutil  # 遅延import（循環importを避ける）。
+
+    paths = sorted(gitutil.list_base_spec_paths(git_executable, cwd, env, base_rev, workspace_root))
+    result: dict[str, DocEntry] = {}
+    for path in paths:
+        if not path.endswith(".md"):
+            continue
+        kind = _kind_for_base_path(path)
+        if kind is None:
+            continue
+        raw = gitutil.show_base_file(git_executable, cwd, env, base_rev, workspace_root, path)
+        if raw is None:
+            continue
+        entry = _process_document_content(raw, path, kind, workspace_id)
+        if entry.hard is not None or entry.duplicate:
+            continue
+        if entry.doc_id is None or entry.doc_id in result:
+            continue
+        result[entry.doc_id] = entry
     return result

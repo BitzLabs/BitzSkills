@@ -1,38 +1,38 @@
 """`bitz check` 操作（`03_操作仕様/02_check.md`）。
 
-Step 2 Phase Bで`scope: full`（catalog全体の軽量Frontmatter索引・EARS-AI・style検査）を実装した。
-Phase Cは同じcatalogを使って次を追加する。
+Step 2 Phase Bで`scope: full`（catalog全体の軽量Frontmatter索引・EARS-AI・style検査）、
+Step 2 Phase Cでrelation・path・coverage検査と明示対象（`scope: selected`）・明示TASK境界検査を
+実装した。Step 3 Phase 3Aは残りを実装する。
 
-- `scope: full`向けのrelation（存在・型・legacy `refs`・循環）・`implements`/`tests[].path`存在・
-  `tests[].covers`妥当性検査（`relations.py`）
-- 明示対象（`scope: selected`）: 構文検査済みの対象を catalog で解決し、
-  :func:`bitz.targetexpand.target_expansion` （`関係・トレースモデル §6.4`）で
-  `contextDocuments` を求める
-- 明示TASK境界検査（`check.md §7`）
+- `scope: changed`（引数なしのGit変更起点、`check.md §6`）
+- 状態遷移と管理済みSPEC削除検出（`02_文書・Frontmatter・状態仕様.md §6・§9`）
+- 承認済みREQ保護（同 §8）
+- 影響候補（`check.md §8`）
+- Git不在時の全体check縮退（`SPEC-GIT-DEGRADED-001`）
+- 明示`--report`の保存（`00_共通契約/02_安全な入出力・互換性.md §8`）
 
-`scope: changed`（引数なしのGit変更起点）、状態遷移・削除検出・承認済みREQ保護・影響候補は
-Step 3以降で実装するため、引数なしはStep 1と同じ`NotImplementedOperation`のままとする。
+状態遷移・管理済みSPEC削除・承認済みREQ保護・影響候補は`basecompare.py`、report保存は
+`reportio.py`に切り出す。
 """
 
 from __future__ import annotations
 
 import time
 
+from . import basecompare
 from . import config as config_mod
 from . import document as document_mod
 from . import gitutil
 from . import messages
 from . import relations as relations_mod
+from . import reportio
 from . import targetexpand
 from .cliargs import ParsedArgs
 from .config import Diagnostic
 from .document import DocEntry
 from .errors import CliArgError
-from .notimpl import NotImplementedOperation
 from .resultmodel import EXIT_CODE_BY_STATUS, sort_diagnostics, status_from_diagnostics
 from .workspace import locate_workspace
-
-NOT_IMPLEMENTED_REASON = "check: scope=changedの本体処理はStep 3以降で実装する"
 
 
 def _resolve_target(
@@ -219,16 +219,14 @@ def _filter_catalog_diagnostics_for_scope(
 
 
 def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
-    scope: str
+    scope_requested: str
     if parsed.positionals:
-        scope = "selected"
+        scope_requested = "selected"
     elif "--full" in parsed.flags:
-        scope = "full"
+        scope_requested = "full"
     else:
-        raise NotImplementedOperation(NOT_IMPLEMENTED_REASON)
-    if "--report" in parsed.flags:
-        # TODO(Step 3): 明示reportの排他的作成を実装する。黙って無視するとreportがあるように見えるため止める。
-        raise NotImplementedOperation("check: --reportの保存はStep 3以降で実装する")
+        scope_requested = "changed"
+    want_report = "--report" in parsed.flags
 
     started = time.monotonic_ns() // 1_000_000
     git = gitutil.detect_git(cwd, env)
@@ -245,7 +243,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             if base_commit is None:
                 raise CliArgError("check", f"--baseを解決できません: {base_arg}")
         if head_commit is None:
-            # TODO(Step 3): unborn repositoryの全体check縮退（SINGLE-039）を実装する。
+            # unborn repository: revisionをnullへ縮退する（安全な入出力仕様 §8）。
             revision = None
         else:
             dirty = gitutil.is_dirty(git.executable, cwd, env)
@@ -254,6 +252,18 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         if "--base" in parsed.single:
             raise CliArgError("check", f"--baseを解決できません: {base_arg}")
         revision = None
+
+    # `scope: changed`（引数なし）はGit基準版が解決できない場合`scope: full`へ縮退する
+    # （check.md §10、安全な入出力仕様 §8）。Git不在の縮退だけ`SPEC-GIT-DEGRADED-001`／warningで
+    # 示す。unborn repository（Git利用可能だがHEAD不在）は黙って全体checkへ縮退する。
+    scope = scope_requested
+    git_degraded = False
+    if scope_requested == "changed" and revision is None:
+        scope = "full"
+        if not git.available:
+            git_degraded = True
+
+    base_commit: str | None = revision["base"] if revision is not None else None
 
     loc = locate_workspace(cwd, git, env)
     requested_workspace = parsed.single.get("--workspace")
@@ -271,6 +281,18 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     workspace_id: str | None
     checked_document_count = 0
     checked_statement_count = 0
+    selection: dict | None = None
+
+    if git_degraded:
+        diagnostics.append(
+            {
+                "code": "SPEC-GIT-DEGRADED-001",
+                "severity": "warning",
+                "resultStatus": "passed_with_warnings",
+                "summary": messages.GIT_DEGRADED_FULL_FALLBACK,
+                "source": {"kind": "environment", "component": "git", "identifier": "git"},
+            }
+        )
 
     if loc.config_path is None:
         workspace_id = None
@@ -297,6 +319,25 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
 
             id_index = relations_mod.build_id_index(catalog.entries)
             statement_index = relations_mod.build_statement_index(catalog.entries)
+            current_by_path = {e.path: e for e in relations_mod.valid_entries(catalog.entries)}
+
+            # --- Git基準版が解決できた場合だけの横断検査（`check.md §5・§6・§8`）の下ごしらえ。
+            # 実際のDiagnostic生成はscope別の完全検査対象（`full_check_ids`）確定後に行う
+            # （`scope: selected`は完全検査対象だけへ絞る。`check.md §5`「同じ基準版を対象選択、
+            # 状態遷移、削除検出、REQ保護、TASK境界へ使用」）。
+            base_by_id: dict[str, DocEntry] = {}
+            changed_paths: list[gitutil.ChangedPath] = []
+            if base_commit is not None:
+                base_by_id = basecompare.load_base_catalog(
+                    git, cwd, env, base_commit, loc.root, workspace_id
+                )
+                if git.available and git.executable:
+                    changed_paths = gitutil.collect_changed_paths(
+                        git.executable, cwd, env, base_commit, loc.root
+                    )
+            base_by_path = {e.path: e for e in base_by_id.values()}
+
+            current_ids_present = {e.doc_id for e in catalog.entries if e.doc_id is not None}
 
             if scope == "full":
                 # `--full`はcatalog全体が完全検査対象（check.md §3）。sourceを絞らない。
@@ -304,7 +345,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 checked_document_count = catalog.checked_document_count
                 checked_statement_count = catalog.checked_statement_count
                 extra_diags: list[Diagnostic] = []
-            else:
+            elif scope == "selected":
                 # `scope: selected`の完全検査対象は`TargetExpansion(root, interpret).contextDocuments`と
                 # それらへの直接逆参照の和集合だけに限る（check.md §3）。
                 root_diags, context_ids, task_roots = _resolve_selected_roots(parsed, id_index, statement_index)
@@ -320,7 +361,6 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                         checked_document_count += 1
                         checked_statement_count += entry.statement_count
 
-                base_commit = revision["base"] if revision is not None else None
                 task_diags: list[Diagnostic] = []
                 for task_entry in task_roots:
                     task_diags.extend(
@@ -330,30 +370,98 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                     )
                 extra_diags = root_diags + task_diags
                 catalog_diags = _filter_catalog_diagnostics_for_scope(catalog_diags, catalog.entries, checked_paths)
+            else:
+                # `scope: changed`: Git変更集合から選んだ所有文書、強い依存閉包、直接逆参照が
+                # 完全検査対象（check.md §3・§6）。
+                implements_index = basecompare.build_reverse_index(id_index, "implements")
+                tests_index = basecompare.build_reverse_index(id_index, "tests")
+                owning_ids, changed_path_count, excluded_count = basecompare.changed_selection(
+                    changed_paths, current_by_path, base_by_path, implements_index, tests_index
+                )
+                strong_closure = basecompare.strong_dependency_closure(owning_ids, id_index)
+                full_check_ids = owning_ids | strong_closure
+                full_check_ids |= _direct_reverse_references(full_check_ids, id_index, statement_index)
+                source_ids = full_check_ids
+                checked_paths = {e.path for e in catalog.entries if e.doc_id in full_check_ids}
+                catalog_diags = _filter_catalog_diagnostics_for_scope(catalog_diags, catalog.entries, checked_paths)
+                extra_diags = []
+                selection = {
+                    "changedPathCount": changed_path_count,
+                    "targetDocumentCount": len(owning_ids),
+                    "excludedCodeTestPathCount": excluded_count,
+                }
 
             relation_diags = relations_mod.check_relations(catalog.entries, workspace_id, source_ids=source_ids)
             path_diags = relations_mod.check_paths(catalog.entries, loc.root, workspace_id, source_ids=source_ids)
             coverage_diags = relations_mod.check_coverage(catalog.entries, workspace_id, source_ids=source_ids)
+
+            # `scope: selected`は完全検査対象（`full_check_ids`＝`source_ids`）だけへ状態遷移・
+            # 承認済みREQ保護・影響候補を絞る（検収指摘: `check.md §5`はscopeを限定しない）。
+            # `scope: full`・`changed`は従来どおり絞らない（未変更文書は基準版と現在版が同一内容の
+            # ため、これらの検査は自然にno-opになり安全）。
+            base_source_ids = full_check_ids if scope == "selected" else None
+            base_diags: list[Diagnostic] = []
+            if base_commit is not None:
+                base_diags.extend(
+                    basecompare.state_transition_diagnostics(
+                        base_by_id,
+                        id_index,
+                        workspace_id,
+                        current_ids_present=current_ids_present,
+                        source_ids=base_source_ids,
+                    )
+                )
+                base_diags.extend(
+                    basecompare.approved_protection_diagnostics(
+                        base_by_id, id_index, workspace_id, source_ids=base_source_ids
+                    )
+                )
+                changed_doc_ids = basecompare.changed_spec_document_ids(
+                    changed_paths, current_by_path, base_by_path
+                )
+                base_diags.extend(
+                    basecompare.impact_candidate_diagnostics(
+                        changed_doc_ids, id_index, workspace_id, source_ids=base_source_ids
+                    )
+                )
 
             diagnostics.extend(d.to_dict() for d in catalog_diags)
             diagnostics.extend(d.to_dict() for d in relation_diags)
             diagnostics.extend(d.to_dict() for d in path_diags)
             diagnostics.extend(d.to_dict() for d in coverage_diags)
             diagnostics.extend(d.to_dict() for d in extra_diags)
-        # TODO(Step 3以降): 状態遷移、承認済みREQ保護、changed-only対象選択、影響候補を実装する。
+            diagnostics.extend(d.to_dict() for d in base_diags)
 
     diagnostics = sort_diagnostics(diagnostics)
     status = status_from_diagnostics(diagnostics)
-    result = {
+    result: dict = {
         "schemaVersion": "1.0",
         "operation": "check",
         "status": status,
         "scope": scope,
         "workspace": {"id": workspace_id, "path": "."},
         "revision": revision,
-        "checkedDocumentCount": checked_document_count,
-        "checkedStatementCount": checked_statement_count,
-        "durationMs": max(0, time.monotonic_ns() // 1_000_000 - started),
-        "diagnostics": diagnostics,
     }
+    if scope == "changed":
+        result["selection"] = selection if selection is not None else {
+            "changedPathCount": 0,
+            "targetDocumentCount": 0,
+            "excludedCodeTestPathCount": 0,
+        }
+    else:
+        result["checkedDocumentCount"] = checked_document_count
+        result["checkedStatementCount"] = checked_statement_count
+    result["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
+    result["diagnostics"] = diagnostics
+
+    if want_report:
+        write_workspace_root = loc.root if loc.root is not None else cwd
+        failure = reportio.write_report(write_workspace_root, workspace_id, "check", result)
+        if failure is not None:
+            diagnostics = list(result["diagnostics"])
+            diagnostics.append(failure.to_dict())
+            result["diagnostics"] = diagnostics
+            status = status_from_diagnostics(diagnostics)
+            result["status"] = status
+
     return result, EXIT_CODE_BY_STATUS[status]

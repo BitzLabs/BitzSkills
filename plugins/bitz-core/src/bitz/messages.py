@@ -203,3 +203,36 @@ def task_boundary_no_git(task_id: str) -> str:
 
 def root_missing_explicit(target: str) -> str:
     return f"起点{target}が存在しません"
+
+
+# --- 状態遷移・管理済みSPEC削除（`CHECK-STATE-*`） ------------------------------
+
+DOCUMENT_DELETED = "管理済みSPECが削除されています"
+
+
+def state_transition_forbidden(kind: str, from_status: str, to_status: str) -> str:
+    return f"{from_status} {kind}を{to_status}へ戻すことはできません"
+
+
+# --- 承認済みREQ保護（`CHECK-APPROVED-MEANING`） --------------------------------
+
+APPROVED_MEANING_CHANGED = "approved REQの意味変更時にstatusが戻されていません"
+
+
+# --- 影響候補（`CHECK-IMPACT-OUTDATED`） ---------------------------------------
+
+def impact_outdated(source_id: str, changed_id: str) -> str:
+    return f"{source_id}が強く依存する{changed_id}が変更されています。再確認してください"
+
+
+# --- Git縮退（`CHECK-GIT-DEGRADED`） -------------------------------------------
+
+GIT_DEGRADED_FULL_FALLBACK = (
+    "Git不在のため全体checkへ縮退します。"
+    "承認済みREQ保護、状態遷移、管理済みSPEC削除の差分検査は実施できません"
+)
+
+
+# --- report保存（`REPORT-WRITE`） ----------------------------------------------
+
+REPORT_WRITE_FAILED = "report保存先へ排他的に作成できません"

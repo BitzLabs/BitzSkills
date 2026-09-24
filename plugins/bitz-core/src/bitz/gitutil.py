@@ -282,6 +282,85 @@ def collect_changed_paths(
     return changed
 
 
+def list_base_spec_paths(
+    executable: str, cwd: str, env: dict[str, str], base_rev: str, workspace_root: str
+) -> list[str]:
+    """``base_rev``時点の``.spec/``配下file一覧をworkspace root相対pathで返す（`check.md §5・§9`）。
+
+    `git ls-tree -r`はtree構造をたどるだけでcwdに依存しない。返るpathは常にrepository root相対で
+    あるため、:func:`collect_changed_paths`と同じくworkspace rootとの相対offsetを引いて変換する。
+    symlink（mode ``120000``）はSPEC文書として扱わない（workspace・設定仕様 §1-5と同じ規則）。
+    """
+
+    offset = _repo_root_relative_offset(executable, cwd, env, workspace_root)
+    if offset in (None, ".", ""):
+        subdir = ".spec"
+    else:
+        subdir = f"{offset.rstrip('/')}/.spec"
+    try:
+        proc = _run(
+            [executable, "--no-optional-locks", "ls-tree", "-r", "-z", base_rev, "--", subdir],
+            cwd,
+            env,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    if proc.returncode != 0:
+        return []
+    tokens = proc.stdout.split("\0")
+    if tokens and tokens[-1] == "":
+        tokens = tokens[:-1]
+    out: list[str] = []
+    for tok in tokens:
+        if "\t" not in tok:
+            continue
+        meta, path = tok.split("\t", 1)
+        parts = meta.split(" ")
+        if len(parts) < 2:
+            continue
+        mode, obj_type = parts[0], parts[1]
+        if obj_type != "blob" or mode == "120000":
+            continue
+        rel = _to_workspace_relative(path, offset)
+        if rel is not None:
+            out.append(rel)
+    return out
+
+
+def show_base_file(
+    executable: str,
+    cwd: str,
+    env: dict[str, str],
+    base_rev: str,
+    workspace_root: str,
+    workspace_rel_path: str,
+) -> bytes | None:
+    """``base_rev``時点の``workspace_rel_path``の内容をbyte列で返す（存在しなければ``None``）。
+
+    ``git show``の出力をbyte列のまま受け取り、encodingの復号は呼び出し側（`document.py`）へ委ねる
+    （`SPEC-INPUT-READ-001`のUTF-8検査と同じpathを再利用するため）。
+    """
+
+    offset = _repo_root_relative_offset(executable, cwd, env, workspace_root)
+    if offset in (None, ".", ""):
+        repo_path = workspace_rel_path
+    else:
+        repo_path = f"{offset.rstrip('/')}/{workspace_rel_path}"
+    try:
+        proc = subprocess.run(
+            [executable, "--no-optional-locks", "show", f"{base_rev}:{repo_path}"],
+            cwd=cwd,
+            env=env,
+            capture_output=True,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if proc.returncode != 0:
+        return None
+    return proc.stdout
+
+
 def is_config_tracked(executable: str, cwd: str, env: dict[str, str], path: str) -> bool:
     try:
         proc = _run(
