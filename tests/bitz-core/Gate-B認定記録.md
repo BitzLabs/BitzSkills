@@ -33,3 +33,46 @@ Step 1のCoreが後続Stepへ残した暫定実装は次のとおりである。
 - 設定の未知keyの警告は最上位keyだけを対象とする。
 - 参照harnessは生成fixture（`setup.generate`）、`stateDigest`形式の副作用期待値、実行環境に依存するprocess出力の抜粋の正規化に
   まだ対応しておらず、該当fixtureはerrorとなる。いずれもStep 4以降の完了条件に属する。
+
+## 2026-09-25: Step 2
+
+commit `da819d71cc448462af2c5d55f0c3b8f19d998651`に対して`uv run tests/bitz-core/certify_gate_b.py --step 2`を実行し、
+`gateB: {"step": 2, "result": "Passed"}`、error 0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1と2の完了fixture 131件（Step 2は`SINGLE-007`〜`026`、`070-01`〜`02`、`075-01`〜`02`、`076`〜`077`、`079`〜`090`、`096`〜`103`、`104-02`、`114`〜`120`の97件）と、`parserChecks` 4件（`SINGLE-096-01`、`097-01`、`098-01`、`101-01`） |
+| 参照harness | 2つのcloneで各cloneの`plugins/bitz-core`をbuildし、131件すべてpassed。所要時間と検査対象のpathを除いた結果のSHA-256は両方`aa099ee29d40fecbf7487e08c8d5a04d09f829b11e1f6649cc36cca3fd9bbcbc` |
+| Parser adapter | 2つのcloneで`tests/bitz-core/parser_adapter.py`が終了コード0、標準出力が一致。4件の全Semantic IRが期待値と完全一致した。作業treeでの標準出力のSHA-256は`dfbe4dfba63f86a2d6bcf3714da19356c94b5b95e55ac3f00bb9d4e187a324a9` |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験（`uv run --project plugins/bitz-core python -m unittest discover -s tests/bitz-core -t tests/bitz-core`）は282件がすべて成功した。
+fixtureの入力行をParserへ直接与え、`check`経由の期待値にあるEARS-AI Diagnostic 23件のcode、line、columnとの一致も別に確かめた。
+Diagnosticの順序が`PYTHONHASHSEED`に依存しないことは、同じ入力を5つのseedで実行して確かめた。
+
+仕様の記述だけでは一意に決まらず、実装で次のとおり解釈した。仕様側の明確化を要する候補として残す。
+
+- 規範文IDの文書部分がFrontmatterの`id`と異なる場合（check.md §4の「文書ID整合」）は、registryに専用の行がないため
+  `EAI-CORE-ID-001`（draftでもerror）とする。
+- `tests[].covers`は、宣言文書自身の規範文、規範文を持たない宣言文書自身の文書ID、宣言文書が`relations.refines`で
+  直接参照する文書の規範文または規範文そのもの、のいずれかだけを受け付ける。文書・Frontmatter仕様 §5の字面は
+  「同じ文書の規範文ID」だが、Gate A認定済みの正例（`SINGLE-042`〜`070`系で規範文なしTECHが`refines`先REQの規範文を
+  `covers`する）と両立させるため、関係モデル §9の「直接`refines`」の原理にそろえた。
+- `requires`のtargetが`accepted`以外のADRである場合は`CTX-RELATION-TYPE-001`とする（関係モデル §4の型表が
+  `accepted ADR`を型として定義しているため）。draft REQなどの適用可能性は`context`の`CTX-STATE-*`で扱う。
+- 同じ`relations.<name>`の中の複数の参照切れは、edgeごとに1件ずつ返す。`source.key`は添字を持たないため、
+  同じcode・path・keyのDiagnosticが並ぶ。
+- 単一workspaceがGit rootより下にある場合、Gitの変更pathをworkspace相対へ変換し、workspace外の変更はTASK境界の
+  比較対象から除く（SPECのpath表記で表せないため）。
+- `.spec/`配下（`reports`を除く）のsymlinkは辿らず、`SPEC-WORKSPACE-UNKNOWN-001`とする。
+- 期待位置に現れたCore tagは、期待するtagが同じ行の後方にあれば`EAI-CORE-SYNTAX-001`、なければ`EAI-CORE-SYNTAX-002`とする。
+  Core tagでも妥当なextensionでもないtagは`EAI-CORE-SYNTAX-004`（summary「tagが不正です」）とする。
+- EARS-AIの`local-id`（`alnum, { alnum | "-" }`）はFrontmatter Schemaの`idString`の規範文部分
+  （`[A-Z][A-Z0-9-]*-[0-9]{2,}`）より広い。Frontmatterから参照できない規範文IDを書けるが、Core 1.0は両者を別々に検査する。
+
+Step 2のCoreが後続Stepへ残した暫定実装は次のとおりである。いずれも該当Stepの完了fixtureで判定する。
+
+- `check`の引数なし（`scope: changed`）、状態遷移、管理済みSPEC削除、承認済みREQ保護、影響候補は未実装で、
+  引数なしの`check`は終了コード3を返す。
+- `TargetExpansion`は`purpose=interpret`だけを実装し、`implement`と`verify`は例外を送出する。
+- `check --report`、`context`、`verify`の本体はStep 1から変わらず未実装である。
