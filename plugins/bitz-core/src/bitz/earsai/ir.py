@@ -54,10 +54,18 @@ HARD_SYNTAX_CONDITIONS = frozenset(
 SOFT_CONDITIONS = frozenset({CONDITION_SHOULD_REASON_MISSING, CONDITION_EXTENSION_UNKNOWN})
 
 
-def condition(kind: str, line: int, column: int) -> dict:
-    """1件のconditionを組み立てる。`line`／`column`は1始まりUnicode code point単位。"""
+def condition(kind: str, line: int, column: int, *, detail: str | None = None) -> dict:
+    """1件のconditionを組み立てる。`line`／`column`は1始まりUnicode code point単位。
 
-    return {"kind": kind, "line": line, "column": column}
+    `detail`は`CONDITION_TAG_UNCLOSED`の原因種別（"escape"／"quote"／"unclosed"／"invalid"）
+    をPhase B（`document.py`）が文面選択に使うためのbest-effort補助情報で、
+    与えられたときだけ含める（他のkindは常にNone、辞書には現れない）。
+    """
+
+    d = {"kind": kind, "line": line, "column": column}
+    if detail is not None:
+        d["detail"] = detail
+    return d
 
 
 def build_semantic_ir(

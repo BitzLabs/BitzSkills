@@ -150,19 +150,32 @@ def _operation_predicate(content: str) -> bool:
 
 
 class _StatementBreak(Exception):
-    """1候補行の構文解析を打ち切り、単一conditionを返すための内部例外。"""
+    """1候補行の構文解析を打ち切り、単一conditionを返すための内部例外。
 
-    def __init__(self, kind: str, column: int) -> None:
+    `detail`は`CONDITION_TAG_UNCLOSED`の原因種別（"escape"／"quote"／"unclosed"／"invalid"）を
+    呼び出し側（document.py）が文面選択に使うためのbest-effort補助情報。他のkindでは常にNone。
+    """
+
+    def __init__(self, kind: str, column: int, *, detail: str | None = None) -> None:
         super().__init__(kind)
         self.kind = kind
         self.column = column
+        self.detail = detail
 
 
 def _bracket(line: str, pos: int) -> tuple[str, int]:
     try:
         return lexer.read_bracket(line, pos)
     except LexError as error:
-        raise _StatementBreak(error.condition, error.offset + 1) from error
+        raise _StatementBreak(error.condition, error.offset + 1, detail=error.detail) from error
+
+
+def _wrong_slot_break(content: str, line: str, search_from: int, predicate, column: int) -> "_StatementBreak":
+    """`_classify_wrong_slot`の結果をkindへ応じたdetail付き`_StatementBreak`へ包む。"""
+
+    kind = _classify_wrong_slot(content, line, search_from, predicate)
+    detail = "invalid" if kind == ir_mod.CONDITION_TAG_UNCLOSED else None
+    return _StatementBreak(kind, column, detail=detail)
 
 
 def _require_tag(line: str, pos: int, predicate) -> tuple[str, int]:
@@ -177,7 +190,7 @@ def _require_tag(line: str, pos: int, predicate) -> tuple[str, int]:
         content, next_pos = _bracket(line, pos)
         if predicate(content):
             return content, next_pos
-        raise _StatementBreak(_classify_wrong_slot(content, line, next_pos, predicate), pos + 1)
+        raise _wrong_slot_break(content, line, next_pos, predicate, pos + 1)
     if _search_later(line, pos, predicate):
         raise _StatementBreak(ir_mod.CONDITION_TAG_ORDER, pos + 1)
     raise _StatementBreak(ir_mod.CONDITION_TAG_REQUIRED, pos + 1)
@@ -211,10 +224,10 @@ def _parse_statement_pieces(line: str, id_column: int) -> tuple[dict, list[dict]
             break
         match = lexer.EXTENSION_RE.match(content)
         if not match:
-            raise _StatementBreak(_classify_wrong_slot(content, line, next_pos, _actor_predicate), tag_pos + 1)
+            raise _wrong_slot_break(content, line, next_pos, _actor_predicate, tag_pos + 1)
         value = match.group("value")
         if value is not None and not _is_valid_extension_value(value):
-            raise _StatementBreak(ir_mod.CONDITION_TAG_UNCLOSED, tag_pos + 1)
+            raise _StatementBreak(ir_mod.CONDITION_TAG_UNCLOSED, tag_pos + 1, detail="invalid")
         if value is not None and value.startswith('"'):
             value = lexer.decode_escapes(value[1:-1])
         extensions.append({"namespace": match.group("ns"), "term": match.group("term"), "value": value})
@@ -229,7 +242,7 @@ def _parse_statement_pieces(line: str, id_column: int) -> tuple[dict, list[dict]
         raise _StatementBreak(ir_mod.CONDITION_OPERAND_MISSING, actor_tag_pos + 1)
     actor = content[len("ACTOR:"):]
     if not lexer.ACTOR_ID_RE.match(actor):
-        raise _StatementBreak(ir_mod.CONDITION_TAG_UNCLOSED, actor_tag_pos + 1)
+        raise _StatementBreak(ir_mod.CONDITION_TAG_UNCLOSED, actor_tag_pos + 1, detail="invalid")
     if next_pos >= len(line) or line[next_pos] != " ":
         raise _StatementBreak(ir_mod.CONDITION_TAG_REQUIRED, actor_tag_pos + 1)
     pos = next_pos + 1
@@ -247,7 +260,7 @@ def _parse_statement_pieces(line: str, id_column: int) -> tuple[dict, list[dict]
         try:
             raw_text, text_end = lexer.scan_text_until_bracket(line, next_pos + 1)
         except LexError as error:
-            raise _StatementBreak(error.condition, error.offset + 1) from error
+            raise _StatementBreak(error.condition, error.offset + 1, detail=error.detail) from error
         text = lexer.normalize_text(raw_text)
         if not text:
             raise _StatementBreak(ir_mod.CONDITION_OPERAND_MISSING, activation_tag_pos + 1)
@@ -280,7 +293,7 @@ def _parse_statement_pieces(line: str, id_column: int) -> tuple[dict, list[dict]
             try:
                 raw_reason, reason_end = lexer.scan_text_until_bracket(line, peek_next + 1)
             except LexError as error:
-                raise _StatementBreak(error.condition, error.offset + 1) from error
+                raise _StatementBreak(error.condition, error.offset + 1, detail=error.detail) from error
             reason_text = lexer.normalize_text(raw_reason)
             if not reason_text:
                 raise _StatementBreak(ir_mod.CONDITION_OPERAND_MISSING, peek_pos + 1)
@@ -297,17 +310,17 @@ def _parse_statement_pieces(line: str, id_column: int) -> tuple[dict, list[dict]
     try:
         op_text, period, trailing_bracket_pos = lexer.scan_operation_text(line, next_pos + 1)
     except LexError as error:
-        raise _StatementBreak(error.condition, error.offset + 1) from error
+        raise _StatementBreak(error.condition, error.offset + 1, detail=error.detail) from error
     if trailing_bracket_pos is not None:
         # operationの後にtagは許されない（§3特例、§4.3の未escape'['終端規則）。
         # 閉じなければ不正tag、閉じてCore tag keywordなら順序不正、それ以外は不正tag。
         try:
             trailing_content, _end = lexer.read_bracket(line, trailing_bracket_pos)
-        except LexError:
-            raise _StatementBreak(ir_mod.CONDITION_TAG_UNCLOSED, trailing_bracket_pos + 1) from None
+        except LexError as error:
+            raise _StatementBreak(ir_mod.CONDITION_TAG_UNCLOSED, trailing_bracket_pos + 1, detail=error.detail) from None
         if _looks_like_core_tag(trailing_content):
             raise _StatementBreak(ir_mod.CONDITION_TAG_ORDER, trailing_bracket_pos + 1)
-        raise _StatementBreak(ir_mod.CONDITION_TAG_UNCLOSED, trailing_bracket_pos + 1)
+        raise _StatementBreak(ir_mod.CONDITION_TAG_UNCLOSED, trailing_bracket_pos + 1, detail="invalid")
     if period is None:
         raise _StatementBreak(ir_mod.CONDITION_PERIOD_MISSING, len(line) + 1)
     if not op_text:
@@ -345,7 +358,7 @@ def parse_statement(line: str, line_number: int, id_column: int) -> tuple[dict |
     try:
         pieces, soft_conditions, _ = _parse_statement_pieces(line, id_column)
     except _StatementBreak as brk:
-        return None, [ir_mod.condition(brk.kind, line_number, brk.column)]
+        return None, [ir_mod.condition(brk.kind, line_number, brk.column, detail=brk.detail)]
     for cond in soft_conditions:
         cond["line"] = line_number
     return pieces, soft_conditions

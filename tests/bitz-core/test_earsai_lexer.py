@@ -35,17 +35,27 @@ class ReadBracketTests(unittest.TestCase):
             read_bracket("[MUST no close", 0)
         self.assertEqual(cm.exception.condition, ir_mod.CONDITION_TAG_UNCLOSED)
         self.assertEqual(cm.exception.offset, 0)
+        self.assertEqual(cm.exception.detail, "unclosed")
 
     def test_unclosed_quoted_value_reports_opening_dquote_position(self):
         with self.assertRaises(LexError) as cm:
             read_bracket('[q:T="never closes] tail', 0)
         self.assertEqual(cm.exception.condition, ir_mod.CONDITION_TAG_UNCLOSED)
         self.assertEqual(cm.exception.offset, 5)
+        self.assertEqual(cm.exception.detail, "quote")
 
     def test_unknown_escape_reports_backslash_position(self):
         with self.assertRaises(LexError) as cm:
             read_bracket(r"[a\qb]", 0)
         self.assertEqual(cm.exception.offset, 2)
+        self.assertEqual(cm.exception.detail, "escape")
+
+    def test_nested_unescaped_bracket_reports_opening_position_with_unclosed_detail(self):
+        with self.assertRaises(LexError) as cm:
+            read_bracket("[a [b] c]", 0)
+        self.assertEqual(cm.exception.condition, ir_mod.CONDITION_TAG_UNCLOSED)
+        self.assertEqual(cm.exception.offset, 0)
+        self.assertEqual(cm.exception.detail, "unclosed")
 
 
 class TextScanningTests(unittest.TestCase):

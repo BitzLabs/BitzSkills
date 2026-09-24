@@ -31,12 +31,18 @@ _SP_TAB_RUN_RE = re.compile(r"[ \t]+")
 
 
 class LexError(Exception):
-    """字句規則違反。`condition` はir.pyの`CONDITION_*`、`offset`は0始まりcode point offset。"""
+    """字句規則違反。`condition` はir.pyの`CONDITION_*`、`offset`は0始まりcode point offset。
 
-    def __init__(self, condition: str, offset: int) -> None:
+    `detail`は`CONDITION_TAG_UNCLOSED`の原因種別（"escape"／"quote"／"unclosed"）を
+    呼び出し側（parser.py）がDiagnostic文面選択に使うためのbest-effort補助情報。
+    他のconditionでは常にNone。
+    """
+
+    def __init__(self, condition: str, offset: int, detail: str | None = None) -> None:
         super().__init__(condition)
         self.condition = condition
         self.offset = offset
+        self.detail = detail
 
 
 def normalize_text(value: str) -> str:
@@ -86,7 +92,7 @@ def read_bracket(line: str, pos: int) -> tuple[str, int]:
             if i + 1 < n and line[i + 1] in ESCAPABLE:
                 i += 2
                 continue
-            raise LexError(ir_mod.CONDITION_TAG_UNCLOSED, i)
+            raise LexError(ir_mod.CONDITION_TAG_UNCLOSED, i, detail="escape")
         if ch == '"':
             if in_quote:
                 in_quote = False
@@ -96,13 +102,13 @@ def read_bracket(line: str, pos: int) -> tuple[str, int]:
             i += 1
             continue
         if not in_quote and ch == "[":
-            raise LexError(ir_mod.CONDITION_TAG_UNCLOSED, pos)
+            raise LexError(ir_mod.CONDITION_TAG_UNCLOSED, pos, detail="unclosed")
         if not in_quote and ch == "]":
             return line[pos + 1:i], i + 1
         i += 1
     if in_quote:
-        raise LexError(ir_mod.CONDITION_TAG_UNCLOSED, quote_start)
-    raise LexError(ir_mod.CONDITION_TAG_UNCLOSED, pos)
+        raise LexError(ir_mod.CONDITION_TAG_UNCLOSED, quote_start, detail="quote")
+    raise LexError(ir_mod.CONDITION_TAG_UNCLOSED, pos, detail="unclosed")
 
 
 def _read_code_span(line: str, start: int) -> tuple[str, int]:
@@ -146,7 +152,7 @@ def scan_text_until_bracket(line: str, pos: int) -> tuple[str, int]:
                 out.append(line[i + 1])
                 i += 2
                 continue
-            raise LexError(ir_mod.CONDITION_TAG_UNCLOSED, i)
+            raise LexError(ir_mod.CONDITION_TAG_UNCLOSED, i, detail="escape")
         if ch == "`":
             content, end = _read_code_span(line, i)
             out.append(content)
@@ -183,7 +189,7 @@ def scan_operation_text(line: str, pos: int) -> tuple[str | None, str | None, in
                 atoms.append(("char", i, i + 2, line[i + 1]))
                 i += 2
                 continue
-            raise LexError(ir_mod.CONDITION_TAG_UNCLOSED, i)
+            raise LexError(ir_mod.CONDITION_TAG_UNCLOSED, i, detail="escape")
         if ch == "`":
             start = i
             content, end = _read_code_span(line, i)

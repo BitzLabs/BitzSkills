@@ -90,16 +90,13 @@ def _fence_run(line: str, start: int) -> tuple[str, int] | None:
     return ch, run_len
 
 
-def scan_candidates(text: str) -> list[Candidate]:
-    """文書全体（Frontmatterを含む）から規範文候補を抽出する。
+def _iter_line_contexts(lines: list[str]):
+    """行ごとに``(1始まり行番号, line, indent, excluded)``をyieldする（§5 fence状態機械）。
 
-    行番号は元file基準の1始まりとする。fence・blockquote・4 SP indentの内側、
-    GFM checkboxは候補にしない（SINGLE-099-*、SINGLE-010-01）。
+    ``excluded``がTrueの行はfence内・4 SP indent内・blockquote直後のいずれかであり、
+    候補行判定（`scan_candidates`）と見出し判定（`document.py`のH1／H2検出）が
+    同じcontext除外規則を共有するための唯一の実装箇所。
     """
-
-    normalized = normalize_newlines(text)
-    lines = normalized.split("\n")
-    candidates: list[Candidate] = []
 
     state_fence: tuple[str, int] | None = None  # (opening文字, run長) またはNormal時None
 
@@ -115,20 +112,56 @@ def scan_candidates(text: str) -> list[Candidate]:
                     rest = line[indent + run[1]:]
                     if rest == "" or set(rest) == {" "}:
                         state_fence = None
+            yield line_number, line, indent, True
             continue
 
         if indent <= 3:
             run = _fence_run(line, indent)
             if run is not None:
                 state_fence = (run[0], run[1])
+                yield line_number, line, indent, True
                 continue
 
         if indent >= 4:
+            yield line_number, line, indent, True
             continue
 
         cursor = indent
         if cursor < len(line) and line[cursor] == ">":
+            yield line_number, line, indent, True
             continue
+
+        yield line_number, line, indent, False
+
+
+def normal_line_numbers(text: str) -> set[int]:
+    """fence・4 SP indent・blockquote直後を除いた行番号（1始まり）を返す。
+
+    見出し（H1／H2）検出が候補行検出と同じcontext除外規則を共有するために使う
+    （`document.py`）。
+    """
+
+    normalized = normalize_newlines(text)
+    lines = normalized.split("\n")
+    return {ln for ln, _line, _indent, excluded in _iter_line_contexts(lines) if not excluded}
+
+
+def scan_candidates(text: str) -> list[Candidate]:
+    """文書全体（Frontmatterを含む）から規範文候補を抽出する。
+
+    行番号は元file基準の1始まりとする。fence・blockquote・4 SP indentの内側、
+    GFM checkboxは候補にしない（SINGLE-099-*、SINGLE-010-01）。
+    """
+
+    normalized = normalize_newlines(text)
+    lines = normalized.split("\n")
+    candidates: list[Candidate] = []
+
+    for line_number, line, indent, excluded in _iter_line_contexts(lines):
+        if excluded:
+            continue
+
+        cursor = indent
         if line[cursor:cursor + 3] != "- [":
             continue
 

@@ -10,6 +10,7 @@ from __future__ import annotations
 import time
 
 from . import config as config_mod
+from . import document as document_mod
 from . import gitutil
 from .cliargs import ParsedArgs
 from .errors import CliArgError
@@ -70,6 +71,8 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
 
     diagnostics: list[dict] = []
     workspace_id: str | None
+    checked_document_count = 0
+    checked_statement_count = 0
 
     if loc.config_path is None:
         workspace_id = None
@@ -88,8 +91,15 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         # 停止有無にかかわらずBOM／未知key／profilesのwarning（`continue`継続単位）を残す。
         diagnostics.extend(d.to_dict() for d in outcome.diagnostics)
         diagnostics.extend(d.to_dict() for d in outcome.warnings)
-        # TODO(Step2以降): 全SPECのEARS-AI／Schema／関係／状態検査を実装し、
-        # checkedDocumentCount／checkedStatementCountを実件数へ置き換える。
+        # 全体事前検査（設定）が非成功なら文書検査を開始しない（check.md §4「1」）。
+        if not outcome.stop:
+            assert loc.root is not None
+            catalog = document_mod.build_catalog(loc.root, workspace_id)
+            diagnostics.extend(d.to_dict() for d in catalog.diagnostics)
+            checked_document_count = catalog.checked_document_count
+            checked_statement_count = catalog.checked_statement_count
+        # TODO(Step3以降): relation解決、implements/testsのpath存在、covers解決、
+        # 状態遷移、承認済みREQ保護、TASK境界検査を実装する（Phase C）。
 
     diagnostics = sort_diagnostics(diagnostics)
     status = status_from_diagnostics(diagnostics)
@@ -100,8 +110,8 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         "scope": "full",
         "workspace": {"id": workspace_id, "path": "."},
         "revision": revision,
-        "checkedDocumentCount": 0,
-        "checkedStatementCount": 0,
+        "checkedDocumentCount": checked_document_count,
+        "checkedStatementCount": checked_statement_count,
         "durationMs": max(0, time.monotonic_ns() // 1_000_000 - started),
         "diagnostics": diagnostics,
     }

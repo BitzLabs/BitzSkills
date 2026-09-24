@@ -136,7 +136,10 @@ class SyntaxErrorConditionTests(unittest.TestCase):
     def test_unclosed_tag_no_ir(self):
         result = _one("- [REQ-001:AC-01] [ACTOR:X] [ALWAYS] [MUST] [THEN a。\n")
         self.assertEqual(result.statements, [])
-        self.assertEqual(result.conditions, [{"kind": ir_mod.CONDITION_TAG_UNCLOSED, "line": 1, "column": 45}])
+        self.assertEqual(
+            result.conditions,
+            [{"kind": ir_mod.CONDITION_TAG_UNCLOSED, "line": 1, "column": 45, "detail": "unclosed"}],
+        )
 
     def test_id_format_unknown_prefix(self):
         result = _one("- [XYZ-001:AC-01] [ACTOR:X] [ALWAYS] [MUST] [THEN] a。\n")
@@ -256,7 +259,10 @@ class OperationTrailingBracketTests(unittest.TestCase):
         text = "- [REQ-001:AC-01] [ACTOR:X] [ALWAYS] [MUST] [CONSTRAINT] keep [zzz] open。\n"
         result = _one(text)
         self.assertEqual(result.statements, [])
-        self.assertEqual(result.conditions, [{"kind": ir_mod.CONDITION_TAG_UNCLOSED, "line": 1, "column": 63}])
+        self.assertEqual(
+            result.conditions,
+            [{"kind": ir_mod.CONDITION_TAG_UNCLOSED, "line": 1, "column": 63, "detail": "invalid"}],
+        )
 
     def test_full_width_and_tab_before_unknown_bracket_reported_in_single_120(self):
         # SINGLE-102相当: 全角文字とTABの後に未知tagを置いても、[の位置をcode point単位で報告する。
@@ -279,7 +285,10 @@ class BracketInteriorBracketTests(unittest.TestCase):
         text = "- [REQ-01:AC-02 [ACTOR:TargetSystem] [ALWAYS] [MUST] [THEN] a。\n"
         result = _one(text)
         self.assertEqual(result.statements, [])
-        self.assertEqual(result.conditions, [{"kind": ir_mod.CONDITION_TAG_UNCLOSED, "line": 1, "column": 3}])
+        self.assertEqual(
+            result.conditions,
+            [{"kind": ir_mod.CONDITION_TAG_UNCLOSED, "line": 1, "column": 3, "detail": "unclosed"}],
+        )
         self.assertEqual(text[2], "[")
 
     def test_escaped_bracket_inside_extension_value_does_not_break(self):
@@ -308,7 +317,8 @@ class ExtensionValueGrammarTests(unittest.TestCase):
         result = _one(text)
         self.assertEqual(result.statements, [])
         self.assertEqual(
-            result.conditions, [{"kind": ir_mod.CONDITION_TAG_UNCLOSED, "line": 1, "column": 19}]
+            result.conditions,
+            [{"kind": ir_mod.CONDITION_TAG_UNCLOSED, "line": 1, "column": 19, "detail": "invalid"}],
         )
 
     def test_value_with_two_quoted_segments_is_tag_unclosed(self):
@@ -362,6 +372,23 @@ class WrongSlotClassificationTests(unittest.TestCase):
         result = _one(text)
         self.assertEqual(result.statements, [])
         self.assertEqual(result.conditions[0]["kind"], ir_mod.CONDITION_TAG_UNCLOSED)
+        # 閉じているが妥当なCore tagでもextensionでもないbracketは"invalid" detailを持つ
+        # （2026-09作業依頼#7: document.pyが「tagが不正です」文面を選ぶために使う）。
+        self.assertEqual(result.conditions[0]["detail"], "invalid")
+
+    def test_invalid_actor_identifier_has_invalid_detail(self):
+        text = "- [REQ-001:AC-01] [ACTOR:1bad] [ALWAYS] [MUST] [THEN] a。\n"
+        result = _one(text)
+        self.assertEqual(result.statements, [])
+        self.assertEqual(result.conditions[0]["kind"], ir_mod.CONDITION_TAG_UNCLOSED)
+        self.assertEqual(result.conditions[0]["detail"], "invalid")
+
+    def test_invalid_extension_value_has_invalid_detail(self):
+        text = "- [REQ-001:AC-01] [q:T=] [ACTOR:X] [ALWAYS] [MUST] [THEN] a。\n"
+        result = _one(text)
+        self.assertEqual(result.statements, [])
+        self.assertEqual(result.conditions[0]["kind"], ir_mod.CONDITION_TAG_UNCLOSED)
+        self.assertEqual(result.conditions[0]["detail"], "invalid")
 
 
 if __name__ == "__main__":
