@@ -97,3 +97,4 @@ treeと`changes/`の差替えfileだけで表す。複合workspaceの最小matri
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-09-18 | 生成入力`setup.generate`、段階的な検証、Git構造operationを確定 | 適合fixture仕様 §2・§3.2 |
+| 2026-09-24 | Decision 3の既定の統合検証`fixtures/validate_step0b.py`を`fixtures/validate_conformance.py`へ改名（非意味的な訂正） | 適合fixture検証記録 |

@@ -57,7 +57,7 @@ check/doctorの責務をtarget別binding解決へ拡張しない。`{tests}`な�
 
 ## 検証と完了条件
 
-`uv run fixtures/validate_step0b.py`は台帳の整合性と変更検出を実行する。回帰検査は対応欠落、未知ID、
+`uv run fixtures/validate_conformance.py`は台帳の整合性と変更検出を実行する。回帰検査は対応欠落、未知ID、
 根拠改変、未裁定条件が残る場合の非完了を確認する。修正した条件に対する期待operation/status/continuationも固定する。
 上記3件の裁定を規範・registry・台帳へ反映した。119条件を14論点群・17根拠文書へ対応付け、未裁定事項は0件とする。
 判定は人手で確認した規範対応のreview結果であり、自然言語の意味をvalidatorが自動証明するものではない。

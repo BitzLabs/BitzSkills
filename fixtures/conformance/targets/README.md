@@ -32,7 +32,7 @@ interpretのtargetStatementsは空である。statement起点では指定句以�
 
 ## 検証
 
-`uv run fixtures/validate_step0b.py`から`target_vectors.py`を実行する。
+`uv run fixtures/validate_conformance.py`から`target_vectors.py`を実行する。
 固定期待値を検証用reference graph計算と照合し、入力graph・起点・関係・statement配列を反転しても一致することを検査する。
 Schema、18組合せの網羅、ID/型・参照存在、強い依存の非循環、matrix family参照、根拠契約のhashも検査する。
 回帰試験では組合せ欠落、requires先のtarget混入、順序誤り、未知参照を検出する。

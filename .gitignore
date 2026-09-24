@@ -1,0 +1,9 @@
+# Pythonの生成物
+__pycache__/
+*.py[cod]
+
+# uvとbuildの生成物（各pluginのproject directoryに作られる）
+.venv/
+build/
+dist/
+*.egg-info/

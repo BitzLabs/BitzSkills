@@ -68,7 +68,7 @@ Contextの文書数とworkspace数は、generatorが別に検査する。入力�
 CPython 3.11以上と`uv`があるfresh checkoutで、次を実行する。
 
 ```text
-uv run fixtures/validate_step0p.py
+uv run fixtures/validate_benchmarks.py
 ```
 
 このscriptは検証用の依存を固定し、入力JSONとすべてのSchema（将来の結果Schemaを含む）を検証し、参照を検査し、

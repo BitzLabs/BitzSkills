@@ -5,7 +5,7 @@
 # ///
 """上限境界fixtureを実寸で生成して照合する（Core操作は実行しない）。uv runで実行する。
 
-既定の統合検証（validate_step0b.py）は縮小profileだけを生成する。本commandは
+既定の統合検証（validate_conformance.py）は縮小profileだけを生成する。本commandは
 [ADR-048](../docs/02.設計書/10_決定記録/ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md)の
 段階的な検証の実寸側であり、dataset manifestから入力treeを作り、tree digest、期待結果のdigest、
 副作用のstate digestを照合する。Gate Aの認定にはこの記録が必要である。
@@ -17,6 +17,7 @@ import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.dont_write_bytecode = True
 sys.path.insert(0, str(ROOT / "fixtures"))
 
 from conformance import multi_crosscheck, multi_generator, multi_limit_fixtures  # noqa: E402

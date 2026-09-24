@@ -71,7 +71,7 @@ HOME / XDG_CACHE_HOME / TMPDIRの3隔離treeを固定する。許可書込みは
 `.git` 内部fileは既存snapshot契約に従って除外し、Git statusとindexは別に比較する。
 report directory、永続cache、lock、作業fileの残存を許可しない。明示reportを許すfixtureはこのSchemaの対象外。
 
-`uv run fixtures/validate_step0b.py` の `initial_fixtures` は次を検査する。
+`uv run fixtures/validate_conformance.py` の `initial_fixtures` は次を検査する。
 
 1. manifest / result / side-effectsのSchema適合、操作・status・終了コード・単一原因との整合。
 2. 各入力を新しい隔離directoryに2回setupし、各回が固定before snapshotと一致すること。

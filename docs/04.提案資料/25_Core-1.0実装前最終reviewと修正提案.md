@@ -545,7 +545,7 @@ Context非成功の5件（SINGLE-050、051、052-01〜02、053）も追加した
 期待値と検証範囲は[Context非成功fixture review](../../fixtures/conformance/single/Context非成功review.md)を参照する。
 EARS-AIの期待値選択と検証範囲は[EARS fixture review](../../fixtures/conformance/single/EARS-AI構文・候補抽出review.md)に記録した。
 設計上の期待値選択は[初回fixture review](../../fixtures/conformance/single/README.md)、
-検証結果は[Step 0B検証記録](../../fixtures/conformance/Step-0B検証記録.md)を参照する。
+検証結果は[適合fixture検証記録](../../fixtures/conformance/適合fixture検証記録.md)を参照する。
 2026-09-08にtarget種別×purposeの18基本caseと7追加caseを固定し、4集合の順序と入力順序不変性を検証した。
 設計・範囲は[target期待集合](../../fixtures/conformance/targets/README.md)を参照する。Core実装の受入は別工程とする。
 未完了のgolden Digest、実fixture等があるため、commandは終了コード1、Gate A `Blocked`を返す。
@@ -555,7 +555,7 @@ EARS-AIの期待値選択と検証範囲は[EARS fixture review](../../fixtures/
 
 2026-09-24、commit `cf2fa3d`に対して`uv run fixtures/certify_gate_a.py`を実行し、独立した2つのcloneで統合検証と
 scale検証の結果が一致することを確認した。これにより上記の全件を満たし、Step 0Bを`Complete`、Gate Aを`Allowed`とした。
-認定結果と実行環境は[Step 0B検証記録](../../fixtures/conformance/Step-0B検証記録.md)に記録した。
+認定結果と実行環境は[適合fixture検証記録](../../fixtures/conformance/適合fixture検証記録.md)に記録した。
 
 ### 9.2 Gate B: Step別実装受入
 

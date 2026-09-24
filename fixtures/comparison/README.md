@@ -10,6 +10,6 @@
 `tasks/*.json`は`task.schema.json`、`protocol.json`は`protocol.schema.json`、`answer-key.json`は
 `answer-key.schema.json`、観測値は`result.schema.json`で検証する。
 
-repository rootで`uv run fixtures/validate_step0p.py`を実行すると、固定した入力とSchemaを、性能datasetとあわせて検証する。
+repository rootで`uv run fixtures/validate_benchmarks.py`を実行すると、固定した入力とSchemaを、性能datasetとあわせて検証する。
 将来の観測値Schemaは構造だけを検査し、参加者の結果はCoreができた後に集める。
 [性能fixtureの対象外](../performance/README.md#6-対象外)に挙げたCore 1.0の対象外機能は、これらのtaskにも適用する。

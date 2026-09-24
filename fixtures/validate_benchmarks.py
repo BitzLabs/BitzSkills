@@ -3,7 +3,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["jsonschema==4.23.0", "attrs==26.1.0", "jsonschema-specifications==2025.9.1", "referencing==0.37.0", "rpds-py==2026.6.3", "typing-extensions==4.13.2"]
 # ///
-"""Core実行体なしでStep 0-Pの入力を検証する。uv runで実行する。"""
+"""Core実行体なしで、性能基準と比較taskの入力（Step 0-Pで固定）を検証する。uv runで実行する。"""
 import copy
 import json
 from pathlib import Path
@@ -48,7 +48,7 @@ def main():
     protocol = read(ROOT / "comparison/protocol.json")
     assert sorted(protocol["taskIds"]) == sorted(p.stem for p in ROOT.glob("comparison/tasks/*.json"))
     results = []
-    with tempfile.TemporaryDirectory(prefix="bitz-step0p-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="bitz-benchmarks-") as temporary:
         for identifier, manifest in sorted(datasets.items()):
             runs = []
             for index in range(2):

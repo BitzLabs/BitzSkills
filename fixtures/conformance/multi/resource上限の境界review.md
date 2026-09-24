@@ -41,7 +41,7 @@ reviewの対象は生成器（`multi_generator.py`）とdataset manifestであ�
 
 ## 検証は2段階に分ける
 
-既定の統合検証（`uv run fixtures/validate_step0b.py`）は、同じdataset manifestを一定比率で縮小したprofileで
+既定の統合検証（`uv run fixtures/validate_conformance.py`）は、同じdataset manifestを一定比率で縮小したprofileで
 生成器の決定論とdimensionの計数を照合する。上限も同じ比率で縮めるので、越える／越えないの関係は保たれる。
 実寸の生成、tree digest、期待結果のdigest、副作用のstate digestの照合は`uv run fixtures/validate_scale.py`が行い、
 Gate Aの認定にはその記録を必要とする。

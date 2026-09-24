@@ -6,7 +6,7 @@
 """Gate Aの認定command。commit済みのHEADをfresh checkoutし、Step 0Bの検証を照合する（Core操作は実行しない）。
 
 実装計画 §3.1のGate A条件のうち「Core実行体へ依存しない単一commandでfresh checkoutから再実行でき、
-2回の結果が一致する」を判定する。validate_step0b.pyは自分がfresh checkoutで動いているかを判定できないため、
+2回の結果が一致する」を判定する。validate_conformance.pyは自分がfresh checkoutで動いているかを判定できないため、
 その`pending`に残る1項目だけをこのcommandで置き換える。
 [ADR-048](../docs/02.設計書/10_決定記録/ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md)が
 Gate Aの認定に求めるscale検証も、同じcheckoutで実行する。uv runで実行する。
@@ -26,7 +26,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 CERTIFIED = "full Gate A fresh-checkout repeatability"
 CHECKOUTS = 2
-STEP0B = ["fixtures/validate_step0b.py"]
+CONFORMANCE = ["fixtures/validate_conformance.py"]
 SCALE = ["fixtures/validate_scale.py"]
 
 
@@ -62,16 +62,16 @@ def scale_body(stdout):
     return report
 
 
-def judge(step0b, scale):
+def judge(conformance, scale):
     """checkoutごとの実行結果から、認定を妨げる理由を列挙する。空なら認定できる。
 
     統合検証は、errorのある検査がなく、未完了の証拠がこのcommandの認定する1項目だけで、
     全checkoutのreportがbyte一致することを求める。scale検証は全checkoutで成功し、所要時間を除いて一致することを求める。
     """
     errors = []
-    if len(step0b) != CHECKOUTS or len(scale) != CHECKOUTS:
+    if len(conformance) != CHECKOUTS or len(scale) != CHECKOUTS:
         return [f"checkoutは{CHECKOUTS}つ必要です"]
-    for index, result in enumerate(step0b, 1):
+    for index, result in enumerate(conformance, 1):
         try:
             report = json.loads(result["stdout"])
             failed = sorted(name for name, check in report["checks"].items() if check.get("errors"))
@@ -85,7 +85,7 @@ def judge(step0b, scale):
             errors.append(f"統合検証{index}: このcommandで認定できない未完了の証拠があります")
         if result["exitCode"] != 1:
             errors.append(f"統合検証{index}: 終了コードが1ではありません")
-    if len({result["stdout"] for result in step0b}) != 1:
+    if len({result["stdout"] for result in conformance}) != 1:
         errors.append("統合検証のreportがcheckout間でbyte一致しません")
     bodies = []
     for index, result in enumerate(scale, 1):
@@ -127,25 +127,25 @@ def main():
     if head.returncode != 0:
         errors.append("HEADのcommitがありません")
     commit = head.stdout.strip() or None
-    step0b, scale = [], []
+    conformance, scale = [], []
     if not errors:
         try:
             with tempfile.TemporaryDirectory(prefix="bitz-gate-a-") as temporary:
                 for index in range(CHECKOUTS):
                     directory = Path(temporary) / f"checkout{index}"
                     checkout(commit, directory)
-                    step0b.append(run(uv, STEP0B, directory, 600))
+                    conformance.append(run(uv, CONFORMANCE, directory, 600))
                     scale.append(run(uv, SCALE, directory, 900))
         except (OSError, RuntimeError, subprocess.SubprocessError) as error:
             errors.append(str(error).split("\n")[0])
         else:
-            errors = judge(step0b, scale)
+            errors = judge(conformance, scale)
     report = {
         "commit": commit,
         "gateA": "Allowed" if not errors else "Blocked",
         "certifies": CERTIFIED,
         "coreExecution": "Not run",
-        "step0b": [{"exitCode": result["exitCode"], "reportSha256": sha256(result["stdout"])} for result in step0b],
+        "conformance": [{"exitCode": result["exitCode"], "reportSha256": sha256(result["stdout"])} for result in conformance],
         "scale": [{"exitCode": result["exitCode"], "resultSha256": scale_digest(result["stdout"])} for result in scale],
         "environment": {
             "python": platform.python_version(),

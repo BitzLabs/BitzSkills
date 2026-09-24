@@ -3,7 +3,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["jsonschema==4.23.0", "attrs==26.1.0", "jsonschema-specifications==2025.9.1", "referencing==0.37.0", "rpds-py==2026.6.3", "typing-extensions==4.13.2"]
 # ///
-"""読取り専用のStep 0B監査。証拠の欠落を合格として数えない。"""
+"""適合fixtureの読取り専用の監査。証拠の欠落を合格として数えない。"""
 import json
 from pathlib import Path
 import re
@@ -336,11 +336,11 @@ def main():
     checks["multi_compat_fixtures"] = validate_multi_compat_fixtures()
     checks["multi_limit_fixtures"] = validate_multi_limit_fixtures()
     checks["executable_bits"] = executable_bits()
-    perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_step0p.py")], capture_output=True, text=True, timeout=60)
-    checks["step0p"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
+    perf = subprocess.run([sys.executable, str(ROOT / "fixtures/validate_benchmarks.py")], capture_output=True, text=True, timeout=60)
+    checks["benchmarks"] = json.loads(perf.stdout) if perf.returncode == 0 else {"errors": [perf.stderr]}
     helpers = subprocess.run([sys.executable, "-B", str(FIXTURES / "test_harness.py")], capture_output=True, text=True, timeout=30)
     checks["infrastructure_self_tests"] = {"status": "Passed" if helpers.returncode == 0 else "Failed", "errors": [] if helpers.returncode == 0 else [helpers.stderr]}
-    audit_tests = subprocess.run([sys.executable, "-B", str(ROOT / "fixtures/test_step0b_audit.py")], capture_output=True, text=True, timeout=180)
+    audit_tests = subprocess.run([sys.executable, "-B", str(ROOT / "fixtures/test_conformance_audit.py")], capture_output=True, text=True, timeout=180)
     checks["audit_self_tests"] = {"status": "Passed" if audit_tests.returncode == 0 else "Failed", "errors": [] if audit_tests.returncode == 0 else [audit_tests.stderr]}
     checks["fixture_coverage"] = fixture_coverage(checks)
     # これらの検査は、構造の検査やhelperの試験では意図して保証しない。

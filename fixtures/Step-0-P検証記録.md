@@ -2,7 +2,7 @@
 
 - 日付: 2026-09-07
 - 結果: `Passed`
-- command: `uv run fixtures/validate_step0p.py`
+- command: `uv run fixtures/validate_step0p.py`（2026-09-24に`validate_benchmarks.py`へ改名。本書は当時の名前のまま残す）
 - 検証環境: CPython 3.14.4、Linux。依存はscriptのmetadataで固定した。
 - 範囲: 性能・比較の入力の準備。Coreの性能baselineでも、Gate Aの承認でもない。
 

@@ -3,7 +3,7 @@
 repository rootで次を実行する。
 
 ```text
-uv run fixtures/validate_step0b.py
+uv run fixtures/validate_conformance.py
 ```
 
 このcommandは、公開の結果・Diagnostic・manifestのJSON例、Schemaの構造、EBNFの参照、registryの構造、

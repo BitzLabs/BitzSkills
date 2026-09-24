@@ -548,7 +548,7 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 | 自己適用 | 実装計画へ配置済み | Step 2完了後に`.spec/`を作成し、Gate Cで最終判定 |
 | Step 0B | `Complete` | 公開JSON・文法・link・Git/process基盤・Diagnostic意味網羅・target集合25 case・実fixture 310件（単一workspace 250件、複合workspace 60件。内訳は[実装計画 §3.1](12_Core-1.0実装計画.md#31-step-0b-gate-a実証基盤)）の準備を検証済み。golden Digestは単一・複合workspaceとも独立2系統のreference計算で一致。上限境界24件はscale検証で実寸を照合済み。2026-09-18にfresh checkoutでも統合検証とscale検証が作業treeと一致。2026-09-24に`uv run fixtures/certify_gate_a.py`が独立した2つのcloneで統合検証とscale検証を再実行し、結果の一致を確認 |
 | Step 0-P | `Complete` | 基準入力・比較条件を固定し一括検証済み。実測はCore実装後 |
-| Gate A | `Allowed` | —（認定結果と実行環境は[Step 0B検証記録](../../fixtures/conformance/Step-0B検証記録.md)に記録） |
+| Gate A | `Allowed` | —（認定結果と実行環境は[適合fixture検証記録](../../fixtures/conformance/適合fixture検証記録.md)に記録） |
 | Gate B | `Pending` | 各StepのCore実装を固定済みfixtureへ通して判定 |
 | Gate C | `Pending` | 全適合、性能、決定性、副作用、process、自己適用をまとめて判定 |
 

@@ -65,7 +65,7 @@ Step 0完了はGate Aの必要条件だが、それだけでStep 1の開始を�
 ## 3. Step 0-P: 実証条件
 
 状態は`Complete`である。入力形状、対象外機能、比較方法、成功基準を固定し、
-`uv run fixtures/validate_step0p.py`でSchema検証と2回生成一致を確認した。
+`uv run fixtures/validate_benchmarks.py`でSchema検証と2回生成一致を確認した。
 検証記録は[Step 0-P検証結果](../../fixtures/Step-0-P検証記録.md)を参照する。
 
 入力、generator、期待digest、reference environment、測定protocol、比較task、成功基準はStep 1開始前に固定する。
@@ -88,17 +88,17 @@ Core実行結果と人間による比較結果は、それぞれの対象機能�
 状態は`Complete`、Gate Aは`Allowed`である。Step 0で確定した契約を機械検証可能な入力、期待値、
 generator、helper、harnessへ落とし込み、fresh checkoutから再現できることを示す。
 
-部分検証の入口は`uv run fixtures/validate_step0b.py`。公開JSON、文法参照、link、Git setup、process helper、
+部分検証の入口は`uv run fixtures/validate_conformance.py`。公開JSON、文法参照、link、Git setup、process helper、
 副作用比較の自己試験、Step 0-P、Diagnostic意味網羅の対応台帳検証、target期待集合25 caseを統合済みである。
 適合fixture 310件中、導入・設定9件、EARS-AI構文・候補抽出・拡張12件、文書構造・UTF-8 9件、関係・path・coverage 6件、ID重複・循環4件、Git基準版・保護対象外変更10件、TASK境界3件、Git対象選択・影響候補4件、Git基準版error・Git不在3件、Context非成功6件、Context Digest 6件、expand反復2件、stale・expand・閉包上限・提示上限・implement coverage 6件、verify実行・事前block 6件、verify binding共有3件、verify process終了3件、verify出力抜粋2件、文書単位binding 1件、done TASK起点1件、report非作成4件、引数不正15件、report作成・保存失敗・JSON併用6件、text出力・制御文字・診断順序4件、BOM・Frontmatter 11件、寸法上限・未知entry 7件、registry閉包7件、Scanner・位置16件、既定表示・revision 8件、理由付きSHOULD・full projection・Digest version 3件、escape・normative projection 2件、quoted extension 1件、code span 1件、Frontmatter境界24件、Core副作用6件、verify argv・実行環境・出力変換15件、明示起点の不在・ADR起点8件、共通target展開・advisory提示8件、Digest材料の順序・reverse solidus 3件、実行環境・配布物5件は入力・期待JSON・副作用期待値を作成し、隔離setupの2回一致を検証した。matrix §6.5「contextとDigest」と§6.6「verify」は全32件を完了した。§6.8「上限」6件、§6.9「Diagnostic registry閉包」19件、§6.11「公開結果Schemaと既定表示」11件と§6.12「共通target展開」を含め、単一workspaceの§6は全250件を完了した。
 単一workspaceのgolden Canonical JSONとContext Digestは`SINGLE-042`が所有し、独立に記述した2系統のreference計算がbyte一致することを検証した。
 複合workspaceの§7は`MULTI-*`全60件を作成し、matrixの310件はすべて入力・期待JSON・副作用期待値を持つ。
 複合workspaceのgolden Canonical JSONとContext Digestは`MULTI-002-01`が所有し、単一workspaceと同じく独立した2系統のreference計算でbyte一致することを検証した。
 上限境界の24件（`MULTI-020-*`、`MULTI-021-*`）は[ADR-048](../02.設計書/10_決定記録/ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md)に従いdataset manifestから入力を生成し、実寸の照合は`uv run fixtures/validate_scale.py`で行う。
-2026-09-18にはcommit済みのrepositoryを`git clone`した写しで統合検証とscale検証を実行し、作業treeと同じ結果になることを[Step 0B検証記録](../../fixtures/conformance/Step-0B検証記録.md)へ記録した。
+2026-09-18にはcommit済みのrepositoryを`git clone`した写しで統合検証とscale検証を実行し、作業treeと同じ結果になることを[適合fixture検証記録](../../fixtures/conformance/適合fixture検証記録.md)へ記録した。
 統合commandは、matrixの全IDについて入力と期待値の検証に成功したfixture群の検査があることを確かめる。ただし自分がfresh checkoutで動いているかを判定できないため、fresh checkoutからのGate A全体実行を未完了の証拠として常に残す。
 Gate Aの判定は`uv run fixtures/certify_gate_a.py`で行う。このcommandは、HEADから独立したcloneを2つ作り、それぞれで統合検証とscale検証を実行する。統合検証のreportがbyte一致し、未完了の証拠が上記の1項目だけで、scale検証が両方で成功して一致すれば、`gateA: "Allowed"`を返す。
-2026-09-24にcommit `cf2fa3d`へ実行して`Allowed`を得た。結果と実行環境は[Step 0B検証記録](../../fixtures/conformance/Step-0B検証記録.md)に記録した。
+2026-09-24にcommit `cf2fa3d`へ実行して`Allowed`を得た。結果と実行環境は[適合fixture検証記録](../../fixtures/conformance/適合fixture検証記録.md)に記録した。
 Git shim、`uv`環境、`bitz.compat`、`runner: package`の起動規則は[ADR-046](../02.設計書/10_決定記録/ADR-046_適合harnessの検査対象・実行環境・runnerを確定する.md)で確定したが、harnessの実行部はCore実装と合わせてGate Bで作る。
 
 このStepで実装してよいのはSchema検証、fixture generator、reference計算、文法検査、matrix検査、

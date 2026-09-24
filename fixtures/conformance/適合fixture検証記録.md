@@ -1,7 +1,10 @@
-# Step 0B検証記録
+# 適合fixture検証記録
 
 - 日付: 2026-09-17（下表は2026-09-14時点の構成。以後の追加は末尾の日付節を参照）
-- command: `uv run fixtures/validate_step0b.py`
+- command: `uv run fixtures/validate_conformance.py`
+- 名前の変更: 2026-09-24に、本書を`Step-0B検証記録.md`から、統合commandを`validate_step0b.py`から、
+  監査試験を`test_step0b_audit.py`から、Step 0-Pの検証commandを`validate_step0p.py`から改めた。
+  それより前の節は当時の名前のまま残す。
 - 検証環境: CPython 3.14.6、Linux／POSIX、uv 0.11.32。validatorの依存versionはscriptのmetadataで固定した。
 - Gate A: `Allowed`（2026-09-24、`uv run fixtures/certify_gate_a.py`で認定。末尾の節を参照）。
   統合commandの終了コードは常に1である（fresh checkoutの判定を認定commandへ委ねるため）。
