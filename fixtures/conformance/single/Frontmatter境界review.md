@@ -47,6 +47,8 @@ checkがtestを実行しないことを入力側でも示す。
 120-01／02だけは`check TASK-001 --base HEAD --format json`で明示TASK checkを行う。両者とも`src/app.py`をbaseへ入れ、
 120-02だけがsetup operationで作業treeの同fileを更新する。stageもcommitもしない。監査はHEADとindexのblobがbase入力、
 作業treeが変更適用後と一致することをbyteで確認する。境界違反の診断文面とsourceの形は`SINGLE-034`に揃える。
+他のDiagnosticの`summary`は利用者へ示す文面であり、manifestの`description`（検査の論点）とは別に持つ。
+同じ条件の既存fixtureがあれば文面を揃える（119-03は`SINGLE-085`、120-03は`SINGLE-084`）。
 
 `tests`の重複判定は、仕様どおり`(path, commandの有無と値, covers集合)`のkey tupleで独立に計算する。
 JSON Schemaの`uniqueItems`は配列順を区別するため、118-02を検出できない。監査はSchema違反またはkey tuple重複を
