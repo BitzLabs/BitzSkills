@@ -111,6 +111,7 @@ class DocEntry:
     statement_count: int = 0
     warnings: list[Diagnostic] = field(default_factory=list)
     hard: list[Diagnostic] | None = None  # 非None＝この文書はskip-document
+    duplicate: bool = False  # True＝ID重複によりskip-document（Phase Cのrelation/path解決索引から除く）
 
 
 @dataclass
@@ -561,6 +562,7 @@ def build_catalog(
             group_sorted = sorted(group, key=lambda e: e.path)
             for e in group_sorted:
                 duplicate_entries.add(id(e))
+                e.duplicate = True
             first = group_sorted[0]
             result.diagnostics.append(
                 _mk("SPEC-ID-DUPLICATE-001", "error", "failed", messages.doc_id_duplicate(doc_id), first.path, workspace_id, key="id")

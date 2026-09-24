@@ -8,6 +8,8 @@ fixtureのexpected/*.jsonが`summary`を完全一致で比較するため、文�
 
 from __future__ import annotations
 
+import re
+
 # --- 入出力・上限（`INPUT-*`） -------------------------------------------------
 
 SPEC_UTF8_INVALID = "SPEC fileをUTF-8として復号できません"
@@ -150,3 +152,54 @@ EAI_PERIOD_MISSING = "規範文末の句点がありません"
 EAI_OPERAND_MISSING = "operandが不足しています"
 EAI_SHOULD_REASON_MISSING = "SHOULDに[REASON]がありません"
 EAI_EXTENSION_UNKNOWN = "未知namespaceのextensionを保持します"
+
+
+# --- 関係・trace（`RELATION-*`、`TRACE-*`） -------------------------------------
+
+#: text出力の制御文字無害化（`結果・Diagnostic・終了コード仕様 §7`）と同じ判定を、
+#: summaryへ埋め込むpath自体にも使う（制御文字を含むpathを埋め込む場合だけ経路情報を
+#: summaryへ足す。通常pathは埋め込まない固定文言を使う）。
+_CONTROL_CHAR_RE = re.compile(r"[\x00-\x1f\x7f\x80-\x9f]")
+
+RELATION_MISSING_STRONG = "strong relationの参照先が存在しません"
+
+
+def relation_missing_strong(source_path: str) -> str:
+    if _CONTROL_CHAR_RE.search(source_path):
+        return f"参照元{source_path}のstrong relation参照先が存在しません"
+    return RELATION_MISSING_STRONG
+
+
+def relation_type_mismatch(source_kind: str, target_kind: str, relation: str) -> str:
+    return f"{source_kind}から{target_kind}への{relation}は許可されません"
+
+
+def relation_cycle(relation: str) -> str:
+    return f"{relation}に禁止循環があります"
+
+
+RELATION_LEGACY_REFS = "旧refs fieldは使用できません"
+RELATION_ADVISORY_MISSING = "relatedの参照先が存在しません"
+
+IMPLEMENTS_PATH_MISSING = "実装pathが存在しません"
+IMPLEMENTS_PATH_DRAFT = "draftの実装pathは未作成です"
+TEST_PATH_MISSING = "testのpathが存在しません"
+TEST_PATH_DRAFT = "draftのtest pathは未作成です"
+
+TEST_COVERAGE_INVALID = "coversが存在しない規範文を参照しています"
+
+
+# --- TASK境界（`CHECK-TASK-*`） -----------------------------------------------
+
+def task_boundary_violation(path: str, task_id: str) -> str:
+    return f"{path}は{task_id}の許可変更path外です"
+
+
+def task_boundary_no_git(task_id: str) -> str:
+    return f"Git不在のため{task_id}の変更境界を検査できません"
+
+
+# --- 明示対象の解決（`CTX-ROOT-MISSING-*`） -------------------------------------
+
+def root_missing_explicit(target: str) -> str:
+    return f"起点{target}が存在しません"

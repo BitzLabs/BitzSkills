@@ -9,8 +9,8 @@ def _diagnostic_line(d: dict) -> list[str]:
     src = d["source"]
     if src.get("kind") == "file":
         wid = src.get("workspaceId")
-        wid_s = "" if wid is None else wid
-        path = src.get("path", "")
+        wid_s = "" if wid is None else sanitize_control_chars(wid)
+        path = sanitize_control_chars(src.get("path", ""))
         line = str(src["line"]) if "line" in src else ""
         column = str(src["column"]) if "column" in src else ""
         head = f"{wid_s}:{path}:{line}:{column}"
