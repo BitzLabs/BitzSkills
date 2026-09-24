@@ -128,6 +128,8 @@ Gate Aを`Allowed`にする条件は次の全件である。
 
 `doctor`は設定読込み、workspace発見、結果・Diagnostic・終了コードの配管だけで成立する最小の操作であり、
 他3操作が同じ土台を使う。ここを先に通し、以後の全Stepを同じ公開面から検証する。
+Coreは`plugins/bitz-core`、Core固有の試験は`tests/bitz-core/`へ置き、試験は`unittest`で書く
+（[ADR-049](../02.設計書/10_決定記録/ADR-049_Coreのsource配置と試験の構成を確定する.md)）。
 
 - 適合fixture harness: manifest実行、共通normalizer、副作用比較、終了コード判定
 - CLI引数解析、`--format`、終了コード0〜4、引数不正時の標準エラー1行
