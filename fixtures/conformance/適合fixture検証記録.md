@@ -772,3 +772,25 @@ commit `b6ce52cb35d7668af3da07f249bfde46701af78c`に対して`uv run fixtures/ce
 | 統合検証 | 2つのcloneでReport SHA-256が両方`84ef185d4c4376040987c8b66f8b922d108591ecbb2060499b5cc851c5bdcece`。作業treeの2回の実行とも同じ |
 | scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`d4b0e6aa89898a2c004ef14207b6f1bd9dc327e9a2a87ec70f51ff1b78b6a08d`（前回と同じ） |
 | 実行環境 | CPython 3.14.6、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.53.0、Linux x86_64 |
+
+## 2026-09-24: CPythonの下限の引上げ、setupのmtime修正、Gate Aの再認定
+
+`992a5c4`で、setupの`update` operationが`changes/`のfileのmtimeを引き継がないようにした。同じsizeの置換で
+mtimeがbase commitより古いままだと、inodeが再利用された環境ではindexのstat情報と一致し、Gitが内容を比べずに
+未変更と判定する。この環境（Git 2.43.0）ではSINGLE-027の隔離setupが`git status`に変更を示さず、統合検証と
+監査試験が失敗していた。変更前のHEADのcloneでも同じ失敗を再現し、修正後は3回のsetupがすべて固定snapshotと
+一致した。入力と期待値は変えていない。
+
+`7e7cc10`で、[ADR-053](../../docs/02.設計書/10_決定記録/ADR-053_CPythonの下限を3.12へ引き上げる.md)に従い
+CPythonの下限と性能の基準環境を3.12へ引き上げた。SINGLE-127-19の`invocation.python`を`"3.12"`へ改め、
+[実行環境・配布物fixture review](single/実行環境・配布物review.md)へ記録した。Diagnostic台帳を再reviewし、
+根拠文書2件のhashを更新した。監査試験の改変値（127-19のpython）を、新しい下限と異なる`"3.13"`へ改めた。
+
+commit `7e7cc10553d65d50669a337773dcf9413f5001c1`に対して`uv run fixtures/certify_gate_a.py`を実行し、
+`gateA: "Allowed"`、error 0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 統合検証 | 2つのcloneでReport SHA-256が両方`aa6c503d8faa69c4c8bfee41e26ca2ead0cb8644e35490edc6a4449d03be6fc5`。作業treeの2回の実行とも同じ |
+| scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`d4b0e6aa89898a2c004ef14207b6f1bd9dc327e9a2a87ec70f51ff1b78b6a08d`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
