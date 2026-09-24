@@ -37,7 +37,7 @@ Core 1.0のGateは次の3層とする。
 | Gate | 判定時点 | 判定対象 | 現在状態 |
 |---|---|---|---|
 | Gate A: 実装着手可能性 | Step 1開始前 | 規範、fixture、期待値、検証基盤がCore実行体なしで再現可能 | `Allowed` |
-| Gate B: Step別実装受入 | 各Step完了時 | 当該StepのCore実装が固定済みfixtureへ適合 | Step 1〜2 `Passed`、Step 3〜5 `Pending` |
+| Gate B: Step別実装受入 | 各Step完了時 | 当該StepのCore実装が固定済みfixtureへ適合 | Step 1〜3 `Passed`、Step 4〜5 `Pending` |
 | Gate C: Core 1.0 release受入 | 全Step完了後 | 全適合、性能、自己適用を含む出荷可能性 | `Pending` |
 
 Gate条件の正本は本書、fixture構造と比較方法の正本は
@@ -188,6 +188,10 @@ Coreは`plugins/bitz-core`、Core固有の試験は`tests/bitz-core/`へ置き�
 `107-01`、`108-01`、`109`、`110`、`111-01`〜`03`、`112-01`〜`03`、`121`〜`124`、`125-01`、`125-03`、`125-05`〜`06`、
 `127-03`〜`04`、`127-12`〜`13`が通過し、`SINGLE-042`の
 Canonical JSONとDigestが規定値にbyte一致することである。`096-01`、`097-01`、`098-01`、`101-01`は公開のcontext結果を比較する。
+
+状態は`Complete`、Step 3のGate Bは`Passed`である。2026-09-25にcommit `139376a`へ
+`uv run tests/bitz-core/certify_gate_b.py --step 3`を実行し、Step 1〜3の完了条件の202件と`parserChecks`4件がすべて通過した。
+結果と実行環境は[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録した。
 
 ## 7. Step 4: verify
 

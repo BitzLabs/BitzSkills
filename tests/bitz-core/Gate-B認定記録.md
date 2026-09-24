@@ -76,3 +76,38 @@ Step 2のCoreが後続Stepへ残した暫定実装は次のとおりである。
   引数なしの`check`は終了コード3を返す。
 - `TargetExpansion`は`purpose=interpret`だけを実装し、`implement`と`verify`は例外を送出する。
 - `check --report`、`context`、`verify`の本体はStep 1から変わらず未実装である。
+
+## 2026-09-25: Step 3
+
+commit `139376ac3196f58c7f13d47f7f47a8473674c9d2`に対して`uv run tests/bitz-core/certify_gate_b.py --step 3`を実行し、
+`gateB: {"step": 3, "result": "Passed"}`、error 0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜3の完了fixture 202件（Step 3は`SINGLE-027`〜`054`、`071-01`〜`02`、`072`、`096-01`、`097-01`、`098-01`、`101-01`、`104-01`、`105-01`、`106-01`〜`03`、`107-01`、`108-01`、`109`、`110`、`111-01`〜`03`、`112-01`〜`03`、`121`〜`124`、`125-01`、`125-03`、`125-05`〜`06`、`127-03`〜`04`、`127-12`〜`13`の71件）と、`parserChecks` 4件 |
+| 参照harness | 2つのcloneで202件すべてpassed。所要時間と検査対象のpathを除いた結果のSHA-256は両方`e7dbcf8c83a6dd7b8580995fb032f8ebc5a6f724abddb3e98c62c8bebfff0719` |
+| Parser adapter | 2つのcloneで終了コード0、標準出力が一致。作業treeでの標準出力のSHA-256は`dfbe4dfba63f86a2d6bcf3714da19356c94b5b95e55ac3f00bb9d4e187a324a9`（Step 2と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は370件がすべて成功した。Context Digestはfixture側のreference計算を読まず、仕様だけから独立に実装し、
+golden値（`SINGLE-042`）へ一致した。`SINGLE-107-01`、`122`、`123`の入力へ`context`を`PYTHONHASHSEED`の3値で実行し、
+結果JSONが同一であることを確かめた。
+
+仕様の記述だけでは一意に決まらず、実装で次のとおり解釈した。仕様側の明確化を要する候補として残す。
+
+- `CTX-LIMIT-001`のbyte上限は、指定した`--detail`にかかわらず`standard`提示の量で測る（安全な入出力 §4の
+  「ContextのSemantic IRと標準提示」、`SINGLE-049`）。
+- Digestの`settings.commands`と`verifyTimeouts`は、`purpose=verify`でbindingを収録した場合だけ置く（`SINGLE-054`）。
+- Markdownの文書sectionでは`untrustedText`を`frontmatter`の後、`bodyText`の前に出す（`SINGLE-104-01`。context仕様 §9.6の表の並びとは異なる）。
+- `--detail compact`のJSONでは全文書を`reference`提示とする。fixtureがなく未検証である。
+- `standard`では、距離2以上の`requirement`文書を`full`のままとする（仕様は「間接constraint/refinementをnormative」とだけ定める）。
+- `reachedBy`の`<relation>:<source-id>`の`source-id`は、relationを宣言した文書のIDとする（`SINGLE-107-01`、`108-01`）。
+- 明示対象checkでは、状態遷移、承認済みREQ保護、影響候補を完全検査対象の文書だけへ適用し、管理済みSPEC削除は報告しない。
+- `SPEC-GIT-DEGRADED-001`は引数なしcheckの縮退だけで返し、明示`--full`では返さない（安全な入出力 §8）。
+- 承認済みREQ保護で比較する規範文の意味は、Semantic IRの`actor`、`activation`、`modality`、`reason`、`operation`、`extensions`とする。
+- 影響候補の起点は、Gitの変更pathから直接写像される`.spec/`配下のREQ/TECHだけとする。
+
+Step 3のCoreが後続Stepへ残した暫定実装は次のとおりである。
+
+- `verify`の本体と`verify --report`は未実装である。
+- 複合workspace（修飾ID、`--all-workspaces`、`resolution.workspaces`）は未実装である。
