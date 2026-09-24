@@ -755,3 +755,20 @@ commit `b0760003b4e8d11b010799b5c2f073c4fd9ac021`に対して`uv run fixtures/ce
 | 統合検証 | 2つのcloneでReport SHA-256が両方`4ce4da5218c58ef32c9b5ac44c22f205d99dc0e5643d152c85fa1065cd17c581`。作業treeの2回の実行とも同じ |
 | scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`d4b0e6aa89898a2c004ef14207b6f1bd9dc327e9a2a87ec70f51ff1b78b6a08d`（前回と同じ） |
 | 実行環境 | CPython 3.14.6、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.53.0、Linux x86_64 |
+
+## 2026-09-24: Step一覧の機械可読化とGate Aの再認定
+
+ADR-052に従い、各Stepの完了fixtureを`steps.json`に置き、統合検証へ`step_assignment`検査を加えた。
+実装計画の完了条件の散文を読み、`steps.json`との一致、全matrix IDの公開結果比較の割当て、
+`parserChecks`を持つ4件のParser受入の割当てを確かめる。件数はStep 1が34件、Step 2が97件とParser受入4件、
+Step 3が71件、Step 4が54件、Step 5が60件である。監査試験を2件追加し、範囲表記の読み方と、
+一覧からの欠落、Parser受入への誤った配置、実装計画側の変更を拒否することを確認した。監査試験は181件すべて成功した。
+
+commit `b6ce52cb35d7668af3da07f249bfde46701af78c`に対して`uv run fixtures/certify_gate_a.py`を実行し、
+`gateA: "Allowed"`、error 0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 統合検証 | 2つのcloneでReport SHA-256が両方`84ef185d4c4376040987c8b66f8b922d108591ecbb2060499b5cc851c5bdcece`。作業treeの2回の実行とも同じ |
+| scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`d4b0e6aa89898a2c004ef14207b6f1bd9dc327e9a2a87ec70f51ff1b78b6a08d`（前回と同じ） |
+| 実行環境 | CPython 3.14.6、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.53.0、Linux x86_64 |
