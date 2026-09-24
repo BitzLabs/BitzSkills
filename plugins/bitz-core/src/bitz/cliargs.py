@@ -184,6 +184,10 @@ def parse_context(rest: list[str]) -> ParsedArgs:
     purpose = parsed.single.get("--purpose", "interpret")
     if purpose not in ("interpret", "implement", "verify"):
         raise CliArgError(op, f"--purposeの値が不正です: {purpose}")
+    if purpose != "interpret":
+        for t in parsed.positionals:
+            if lex.is_document_id(t, frozenset({"ADR"})) or lex.is_statement_id(t, frozenset({"ADR"})):
+                raise CliArgError(op, f"ADR起点にpurpose={purpose}は指定できません: {t}")
     detail = parsed.single.get("--detail", "standard")
     if detail not in ("compact", "standard", "full"):
         raise CliArgError(op, f"--detailの値が不正です: {detail}")

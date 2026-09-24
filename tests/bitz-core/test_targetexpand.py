@@ -210,24 +210,26 @@ class RootFormTests(unittest.TestCase):
             self.assertIsNone(result)
 
 
-class UnimplementedPurposeTests(unittest.TestCase):
-    """`implement`/`verify`はStep 3で実装するまで、黙ってinterpretと同じ結果を返してはならない。"""
+class ImplementVerifyPurposeTests(unittest.TestCase):
+    """`implement`/`verify`はStep 3で実装済み。素のREQ起点（依存なし）で基本形を確認する。"""
 
-    def test_implement_purpose_raises(self):
+    def test_implement_purpose_returns_target_statements(self):
         with tempfile.TemporaryDirectory() as root:
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
             _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
             id_index, stmt_index = _indexes(root)
-            with self.assertRaises(NotImplementedError):
-                te_mod.target_expansion("REQ-001", "implement", id_index, stmt_index)
+            result = te_mod.target_expansion("REQ-001", "implement", id_index, stmt_index)
+            self.assertEqual(result.errors, [])
+            self.assertEqual(result.target_statements, ["REQ-001:AC-01"])
 
-    def test_verify_purpose_raises(self):
+    def test_verify_purpose_returns_target_statements(self):
         with tempfile.TemporaryDirectory() as root:
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
             _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
             id_index, stmt_index = _indexes(root)
-            with self.assertRaises(NotImplementedError):
-                te_mod.target_expansion("REQ-001", "verify", id_index, stmt_index)
+            result = te_mod.target_expansion("REQ-001", "verify", id_index, stmt_index)
+            self.assertEqual(result.errors, [])
+            self.assertEqual(result.target_statements, ["REQ-001:AC-01"])
 
 
 if __name__ == "__main__":

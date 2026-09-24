@@ -106,6 +106,7 @@ class DocEntry:
     title: str | None = None
     status: str | None = None
     frontmatter: dict | None = None
+    body: str | None = None  # frontmatter終端直後から文書末尾までの生本文（正規化前、newline統一のみ済）。
     statements: list[dict] = field(default_factory=list)
     counted: bool = False
     statement_count: int = 0
@@ -390,6 +391,7 @@ def _process_document_content(raw: bytes, path: str, kind: str, workspace_id: st
     entry.warnings.extend(_issue_to_diag(i, path, workspace_id) for i in outcome.soft)
     fm = outcome.value
     entry.frontmatter = fm
+    entry.body = body
     entry.doc_id = fm["id"]
     entry.title = fm["title"]
     entry.status = fm["status"]

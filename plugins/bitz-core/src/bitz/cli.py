@@ -10,8 +10,10 @@ import os
 import sys
 
 from . import check as check_op
+from . import context as context_op
 from . import doctor as doctor_op
 from .cliargs import parse_argv
+from .contextrender import render_context_markdown
 from .errors import CliArgError
 from .notimpl import NotImplementedOperation
 from .textrender import render_check_text, render_doctor_text
@@ -47,7 +49,12 @@ def main(argv: list[str] | None = None) -> int:
             fmt = parsed.single.get("--format", "text")
             _emit(result, fmt, render_check_text)
             return exit_code
-        # context／verifyの本体処理はStep 3／4で実装する。
+        if parsed.operation == "context":
+            result, exit_code = context_op.run(parsed, cwd, env)
+            fmt = parsed.single.get("--format", "markdown")
+            _emit(result, fmt, render_context_markdown)
+            return exit_code
+        # verifyの本体処理はStep 4で実装する。
         raise NotImplementedOperation(
             f"{parsed.operation}: 本体処理はStep 2以降で実装する"
         )

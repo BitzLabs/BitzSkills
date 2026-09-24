@@ -236,3 +236,49 @@ GIT_DEGRADED_FULL_FALLBACK = (
 # --- report保存（`REPORT-WRITE`） ----------------------------------------------
 
 REPORT_WRITE_FAILED = "report保存先へ排他的に作成できません"
+
+
+# --- context（`CTX-*`） -----------------------------------------------------
+
+
+def task_dependency_incomplete(prereq_task_id: str) -> str:
+    return f"先行{prereq_task_id}が完了していません"
+
+
+def state_inapplicable(doc_id: str) -> str:
+    return f"{doc_id}は現在のpurposeに適用できません"
+
+
+def state_superseded_origin(doc_id: str, successor_id: str) -> str:
+    return f"起点{doc_id}は{successor_id}に置換されています"
+
+
+def state_superseded_dependency(doc_id: str, successor_id: str) -> str:
+    return f"依存先{doc_id}は{successor_id}に置換されています"
+
+
+def state_superseded_multiple(doc_id: str) -> str:
+    return f"{doc_id}の有効な後継が複数存在します"
+
+
+CTX_LIMIT_DOCUMENTS = "完全Context閉包が文書数上限を超過しました"
+CTX_LIMIT_BYTES = "完全Context閉包がbyte上限を超過しました"
+
+
+def coverage_task_unaddressed(modality: str, stmt_id: str) -> str:
+    return f"implement対象の{modality} {stmt_id}を実装するTASKがありません"
+
+
+def coverage_test_untested(modality: str, stmt_id: str) -> str:
+    return f"{modality} {stmt_id}がtestされていません"
+
+
+def projection_outside(expand_id: str) -> str:
+    return f"expand対象{expand_id}は完全解決集合にありません"
+
+
+def projection_limit_exceeded(detail: str) -> str:
+    return f"detail {detail}の提示量が1 MiBのhard limitを超過します"
+
+
+CTX_STALE_MISMATCH = "期待Digestが現在のContext Digestと一致しません"
