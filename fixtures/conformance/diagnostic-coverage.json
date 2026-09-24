@@ -6,7 +6,7 @@
     "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "5ec338d6f49f5c35b176ff11d76d9e6d15c560dbd049ea3f7624834d93d7e571",
     "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md": "41343a802ec8dcf7f45246a16503ae708462a26cc8b91ee02a50aec3651d6891",
     "docs/03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md": "5accd6fed0da62f9dadf9d32793b724d0d4480818370fea88b1bf5eefa7aa6b2",
-    "docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md": "2adf0555e7220e7e6b5b4ffb4193a35a405c2308773d20d923e8c509f0793d9f",
+    "docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md": "3335f0b3866c76f01a7bdf7ce23164e1906d3fa155352b9338082dda7dcd7fc0",
     "docs/03.詳細設計/02_SPECモデル/03_文書種別・本文template.md": "dbb8555e4b87e13feaf17c0f5a05097613c2ba40274f2b3f781d7af5578c380f",
     "docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md": "efbbbcc39710aa8a8f942e63e06aaa2dd6c8c43c06b0d8a11930c469667113f6",
     "docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md": "e86f8903e4c01a7f26d87af106c0baa6c0cda553dc22d27dc79bac901d2483f5",
@@ -18,7 +18,7 @@
     "docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md": "852a3512a841766262ca32cd620e8c7ef3b9589b3efadaa9334ee5622b16fdfb",
     "docs/03.詳細設計/01_EARS-AI/02_適合性・移行仕様.md": "37f4f8ba9ea1db12c0f4a94c68b09bb42cad3009a24a8310215126b122496543",
     "docs/03.詳細設計/01_EARS-AI/03_例・アンチパターン.md": "f1fe362cc97666e1b81368f6669d1fc3b7650499aa1bd1b6a06ef3f320c96e75",
-    "docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md": "263b7fa26282247d535a42d46087e2e20e3a6228b64ed93136a0e3660eaf7195"
+    "docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md": "61cb40d63413e346a2d0e0db16e8c6ff6ecb47663fc13783fa10af3a90013c60"
   },
   "groups": [
     {

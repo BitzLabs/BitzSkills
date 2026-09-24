@@ -15,6 +15,7 @@ import tempfile
 
 from jsonschema import Draft202012Validator, ValidationError
 
+from .schemas import schema_path
 from . import multi_crosscheck, multi_reference
 from .harness import setup
 from .initial_fixtures import observe, compare_state
@@ -460,7 +461,7 @@ def check_corpus(identifier, repository, result):
 
 def validate(root=HERE, identifiers=None):
     errors, prepared = [], []
-    validators = {name: Draft202012Validator(json.loads((root / f"{name}.schema.json").read_text()))
+    validators = {name: Draft202012Validator(json.loads(schema_path(root, name).read_text()))
                   for name in ("manifest", "result", "side-effects")}
     for identifier in DESCRIPTIONS:
         if identifiers is not None and identifier not in identifiers:

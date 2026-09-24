@@ -18,6 +18,7 @@ import time
 
 from jsonschema import Draft202012Validator, ValidationError
 
+from .schemas import schema_path
 from . import digest_reference, verify_fixtures, verify_process_fixtures
 from .verify_argv_fixtures import check_host_environment, check_inputs, check_setups
 
@@ -325,7 +326,7 @@ def observe_command(identifier, repository):
 
 def validate(root=HERE, identifiers=None):
     errors, prepared = [], []
-    validators = {name: Draft202012Validator(json.loads((root / f"{name}.schema.json").read_text()))
+    validators = {name: Draft202012Validator(json.loads(schema_path(root, name).read_text()))
                   for name in ("manifest", "result", "side-effects")}
     for identifier in CASES:
         if identifiers is not None and identifier not in identifiers:

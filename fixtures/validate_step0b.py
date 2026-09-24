@@ -15,6 +15,7 @@ from urllib.parse import unquote
 from jsonschema import Draft202012Validator, ValidationError
 sys.dont_write_bytecode = True
 from conformance import parser_expectations
+from conformance.schemas import CONTRACT as CONTRACT_SCHEMAS, schema_path
 from conformance.diagnostic_coverage import validate as validate_diagnostic_coverage
 from conformance.target_vectors import validate as validate_target_vectors
 from conformance.initial_fixtures import validate as validate_initial_fixtures
@@ -103,8 +104,8 @@ def links():
 
 
 def public_json():
-    schema = json.loads((FIXTURES / "result.schema.json").read_text())
-    for path in FIXTURES.glob("*.schema.json"):
+    schema = json.loads(schema_path(FIXTURES, "result").read_text())
+    for path in sorted(FIXTURES.glob("*.schema.json")) + sorted(CONTRACT_SCHEMAS.glob("*.schema.json")):
         Draft202012Validator.check_schema(json.loads(path.read_text()))
     validators = {
         "result": Draft202012Validator(schema),
@@ -165,7 +166,7 @@ def matrix():
     for identifier in sorted(found - set(ids)):
         errors.append(f"{identifier}: matrixに行がありません")
     validator = Draft202012Validator(json.loads((FIXTURES / "manifest.schema.json").read_text()))
-    result_validator = Draft202012Validator(json.loads((FIXTURES / "result.schema.json").read_text()))
+    result_validator = Draft202012Validator(json.loads(schema_path(FIXTURES, "result").read_text()))
     for path in sorted(FIXTURES.glob("*/*/manifest.json")):
         try:
             manifest = json.loads(path.read_text())

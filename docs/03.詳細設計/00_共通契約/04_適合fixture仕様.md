@@ -28,8 +28,6 @@ fixtures/conformance/multi/<fixture-id>/dataset.json
 fixtures/conformance/multi/<fixture-id>/manifest.json
 fixtures/conformance/multi/<fixture-id>/expected/<operation>.json
 fixtures/conformance/manifest.schema.json
-fixtures/conformance/result.schema.json
-fixtures/conformance/frontmatter.schema.json
 ```
 
 `repo/`はbase commitを作る前の入力treeとする。`changes/`は`setup.operations[]`の`source`からだけ参照できる
@@ -38,6 +36,8 @@ version管理する。Git履歴とbase commit後の状態はmanifestだけから
 `expected/<operation>.txt`はtext出力を比較するfixtureだけが持つ。
 `dataset.json`は`setup.generate`を持つ生成fixtureだけが持ち、そのfixtureは`repo/`を持たない（§3.5）。
 `manifest.schema.json`は全manifestが従う機械可読Schemaであり、harnessは実行前にmanifestを検証する。
+契約の正本である公開結果とFrontmatterのSchemaは[`docs/03.詳細設計/schemas/`](../schemas/)に置き、
+fixtureは参照するだけで写しを持たない（[ADR-050](../../02.設計書/10_決定記録/ADR-050_契約Schemaの正本を詳細設計へ置く.md)）。
 `result.schema.json`はCore 1.0の全公開JSON結果が従うDraft 2020-12 Schemaである。harnessは期待JSONを実行前、
 実結果とreportをnormalizer適用前に検証し、いずれかが不適合ならfixture比較自体をerrorにする。
 `frontmatter.schema.json`はYAML解析後のFrontmatter構造が従うDraft 2020-12 Schemaである。harnessは配置directoryから

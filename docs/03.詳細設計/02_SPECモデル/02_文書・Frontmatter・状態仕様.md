@@ -21,9 +21,9 @@ Coreは現在集合の重複を`SPEC-ID-DUPLICATE-001`／failedとして検出�
 
 すべてのSPEC Markdownはfile先頭に1つのYAML Frontmatterを持つ。前にBOM、空行、commentを置かない。
 解析後の構造はDraft 2020-12の
-[`fixtures/conformance/frontmatter.schema.json`](../../../fixtures/conformance/frontmatter.schema.json)に従う。
+[`schemas/frontmatter.schema.json`](../schemas/frontmatter.schema.json)に従う。
 Coreは配置directoryから文書種別を決め、同Schemaの`reqFrontmatter`、`techFrontmatter`、`adrFrontmatter`、
-`taskFrontmatter`の対応する定義を選んで検証する。Schema rootの`oneOf`は独立validator用であり、directoryによる
+`taskFrontmatter`の対応する定義と同じ判定で検証する。CoreがSchema fileを実行時に読むことは要求しない。Schema rootの`oneOf`は独立validator用であり、directoryによる
 種別決定を置き換えない。
 
 ```yaml

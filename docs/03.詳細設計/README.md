@@ -48,6 +48,8 @@ Core 1.0は単一workspaceと、同一Git repository内の明示的な複合work
 | SPEC | [関係・トレースモデル](02_SPECモデル/04_関係・トレースモデル.md) | 関係型、閉包、coverage、path |
 | SPEC | [複合workspace仕様](02_SPECモデル/05_複合workspace仕様.md) | catalog、修飾ID、所有境界、横断解決、全体操作 |
 | 操作 | [操作仕様](03_操作仕様/README.md) | 4操作の一覧と所有境界 |
+| Schema | [`schemas/result.schema.json`](schemas/result.schema.json) | 公開JSON結果の機械可読な正本 |
+| Schema | [`schemas/frontmatter.schema.json`](schemas/frontmatter.schema.json) | YAML解析後のFrontmatter構造の機械可読な正本 |
 
 ## 4. 非目標
 

@@ -12,6 +12,7 @@ import tempfile
 
 from jsonschema import Draft202012Validator, ValidationError
 
+from .schemas import schema_path
 from .document_fixtures import DOCUMENT, REQ_PATH
 from .ears_fixtures import GOOD
 from .harness import setup, snapshot
@@ -197,7 +198,7 @@ def check_environment(identifier, repository, manifest):
 
 def validate(root=HERE, identifiers=None):
     errors, prepared = [], []
-    validators = {name: Draft202012Validator(json.loads((root / f"{name}.schema.json").read_text()))
+    validators = {name: Draft202012Validator(json.loads(schema_path(root, name).read_text()))
                   for name in ("manifest", "result", "side-effects")}
     for identifier in CASES:
         if identifiers is not None and identifier not in identifiers:

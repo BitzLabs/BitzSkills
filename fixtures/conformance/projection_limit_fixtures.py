@@ -11,6 +11,7 @@ import tempfile
 
 from jsonschema import Draft202012Validator, ValidationError
 
+from .schemas import schema_path
 from . import digest_crosscheck, digest_reference
 from .context_limit_fixtures import EMPTY_COVERAGE
 from .harness import setup
@@ -164,7 +165,7 @@ def validate(root=HERE, identifiers=None):
         return {"prepared": [], "setups_per_fixture": 2, "core_execution": "Not run",
                 "status": "Passed", "errors": []}
     errors, prepared = [], []
-    validators = {name: Draft202012Validator(json.loads((root / f"{name}.schema.json").read_text()))
+    validators = {name: Draft202012Validator(json.loads(schema_path(root, name).read_text()))
                   for name in ("manifest", "result", "side-effects")}
     fixture = root / "single" / IDENTIFIER
     try:

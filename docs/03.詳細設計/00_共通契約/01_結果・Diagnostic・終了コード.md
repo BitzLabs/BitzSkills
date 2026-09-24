@@ -4,7 +4,7 @@
 
 本書は全Core操作が共有する結果外形、status、Diagnostic Schema、終了コード、report生成条件を定義する。
 Diagnostic条件と公開値は[Diagnostic registry](05_Diagnostic-registry.md)、操作固有fieldと検出処理は各操作仕様が定義する。
-機械可読な正本は[`fixtures/conformance/result.schema.json`](../../../fixtures/conformance/result.schema.json)とし、
+機械可読な正本は[`schemas/result.schema.json`](../schemas/result.schema.json)とし、
 本文の表・例とSchemaが異なる場合は不適合として同じ変更で修正する。
 
 ## 2. 共通結果

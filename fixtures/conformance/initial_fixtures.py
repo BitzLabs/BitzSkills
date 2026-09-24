@@ -7,6 +7,7 @@ import tempfile
 
 from jsonschema import Draft202012Validator, ValidationError
 
+from .schemas import schema_path
 from .harness import git, safe_path, setup, snapshot
 
 HERE = Path(__file__).resolve().parent
@@ -68,7 +69,7 @@ def compare_state(expected, observed):
 
 def validate(root=HERE):
     errors, prepared = [], []
-    validators = {name: Draft202012Validator(json.loads((root / f"{name}.schema.json").read_text()))
+    validators = {name: Draft202012Validator(json.loads(schema_path(root, name).read_text()))
                   for name in ("manifest", "result", "side-effects")}
     for identifier, (operation, status, exit_code) in CASES.items():
         fixture = root / "single" / identifier

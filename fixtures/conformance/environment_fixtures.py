@@ -13,6 +13,7 @@ import tempfile
 
 from jsonschema import Draft202012Validator, ValidationError
 
+from .schemas import schema_path
 from .harness import git, setup
 from .initial_fixtures import CONFIGS, observe, compare_state
 from .registry_closure_fixtures import CORE, LOST_GUARANTEES, doctor_checks
@@ -110,7 +111,7 @@ def check_contract(identifier, manifest):
 
 def validate(root=HERE, identifiers=None):
     errors, prepared = [], []
-    validators = {name: Draft202012Validator(json.loads((root / f"{name}.schema.json").read_text()))
+    validators = {name: Draft202012Validator(json.loads(schema_path(root, name).read_text()))
                   for name in ("manifest", "result", "side-effects")}
     for identifier in CASES:
         if identifiers is not None and identifier not in identifiers:

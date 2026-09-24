@@ -12,6 +12,7 @@ import tempfile
 
 from jsonschema import Draft202012Validator, ValidationError
 
+from .schemas import schema_path
 from . import digest_reference, report_absent_fixtures, verify_fixtures
 from .harness import setup
 from .initial_fixtures import observe, compare_state
@@ -129,7 +130,7 @@ def check_report_contract(identifier, manifest, effects, result):
 
 def validate(root=HERE, identifiers=None):
     errors, prepared = [], []
-    validators = {name: Draft202012Validator(json.loads((root / f"{name}.schema.json").read_text()))
+    validators = {name: Draft202012Validator(json.loads(schema_path(root, name).read_text()))
                   for name in ("manifest", "result", "side-effects")}
     for identifier in CASES:
         if identifiers is not None and identifier not in identifiers:

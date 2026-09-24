@@ -91,3 +91,4 @@
 | [ADR-047](ADR-047_複合workspaceの識別子をmultiWorkspaceへ改名する.md) | 複合workspaceの識別子をmultiWorkspaceへ改名する | accepted | ADR-040・042・043, 用語集, 設定仕様, 結果契約, Diagnostic registry, 適合fixture仕様 |
 | [ADR-048](ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md) | 適合fixtureの生成入力とGit構造operationを確定する | accepted | ADR-046, 適合fixture仕様, manifest Schema, fixture harness |
 | [ADR-049](ADR-049_Coreのsource配置と試験の構成を確定する.md) | Coreのsource配置と試験の構成を確定する | accepted | ADR-016・045・046, システム構成, 実装計画 |
+| [ADR-050](ADR-050_契約Schemaの正本を詳細設計へ置く.md) | 契約Schemaの正本を詳細設計へ置く | accepted | ADR-045・046・049, 結果契約, Frontmatter仕様, 適合fixture仕様, 詳細設計README |

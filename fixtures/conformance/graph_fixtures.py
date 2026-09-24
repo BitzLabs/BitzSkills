@@ -6,6 +6,7 @@ import tempfile
 
 from jsonschema import Draft202012Validator, ValidationError
 
+from .schemas import schema_path
 from .harness import setup
 from .initial_fixtures import CONFIGS, observe, compare_state
 from .trace_fixtures import TECH, TECH_PATH
@@ -49,9 +50,9 @@ def reviewed_result(identifier):
 
 def validate(root=HERE, identifiers=None):
     errors, prepared = [], []
-    validators = {name: Draft202012Validator(json.loads((root / f"{name}.schema.json").read_text()))
+    validators = {name: Draft202012Validator(json.loads(schema_path(root, name).read_text()))
                   for name in ("manifest", "result", "side-effects")}
-    schema = json.loads((root / "frontmatter.schema.json").read_text())
+    schema = json.loads(schema_path(root, "frontmatter").read_text())
     frontmatter = Draft202012Validator({"$ref": "#/$defs/techFrontmatter", "$defs": schema["$defs"]})
     for identifier, relation in CASES.items():
         if identifiers is not None and identifier not in identifiers:

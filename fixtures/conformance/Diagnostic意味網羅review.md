@@ -172,3 +172,14 @@ Schema表の型名、code block、inline code、Diagnostic code、condition ID�
 - `SPEC-MULTI-LIMIT-001`の条件、severity、status、source、継続単位は変えていない。119条件・14論点群の対応に変更はない。
 - 適合fixture `MULTI-021-08`はこの規則に従い、`evidence.dimension`を`verifyBindingCount`とする。
 - 上記を確認したうえで、台帳が固定する根拠文書のhashを更新した。
+
+## 2026-09-24の再review（契約Schemaの正本の移動）
+
+[ADR-050](../../docs/02.設計書/10_決定記録/ADR-050_契約Schemaの正本を詳細設計へ置く.md)に従い、公開結果とFrontmatterの
+Schemaの正本を`docs/03.詳細設計/schemas/`へ移した。結果契約 §1とFrontmatter仕様 §2のlinkを移転先へ直し、
+Frontmatter仕様 §2の「定義を選んで検証する」を、定義と同じ判定で検証し、Schema fileを実行時に読むことは
+要求しない、という意味に明確化した。
+
+- Schemaの内容と、拒否する構造は変えていない。Frontmatterの判定の対象と結果は同じであり、実装方法だけを明確にした。
+- 119条件・14論点群の対応に変更はない。
+- 上記を確認したうえで、台帳が固定する根拠文書のhashを更新した。

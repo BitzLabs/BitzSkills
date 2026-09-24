@@ -10,6 +10,7 @@ from unittest.mock import patch
 from jsonschema import Draft202012Validator, ValidationError
 
 import validate_step0b as audit
+from conformance.schemas import schema_path
 import certify_gate_a as certify
 from conformance.diagnostic_coverage import LEDGER, validate
 from conformance.target_vectors import HERE as TARGET_HERE, validate as validate_targets
@@ -98,7 +99,7 @@ class AuditTests(unittest.TestCase):
             with self.subTest(identifier=identifier, relative=relative), \
                     tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_fixture(temporary, identifier)
-                shutil.copy2(audit.FIXTURES / "frontmatter.schema.json", root)
+                shutil.copy2(schema_path(audit.FIXTURES, "frontmatter"), root)
                 path = root / "single" / identifier / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -150,7 +151,7 @@ class AuditTests(unittest.TestCase):
                 for source in ("SINGLE-107-01", "SINGLE-108-01"):
                     if not (root / "single" / source).exists():
                         shutil.copytree(audit.FIXTURES / "single" / source, root / "single" / source)
-                shutil.copy2(audit.FIXTURES / "frontmatter.schema.json", root)
+                shutil.copy2(schema_path(audit.FIXTURES, "frontmatter"), root)
                 path = root / "single" / identifier / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -186,7 +187,7 @@ class AuditTests(unittest.TestCase):
             with self.subTest(identifier=identifier, relative=relative), \
                     tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_fixture(temporary, identifier)
-                shutil.copy2(audit.FIXTURES / "frontmatter.schema.json", root)
+                shutil.copy2(schema_path(audit.FIXTURES, "frontmatter"), root)
                 path = root / "single" / identifier / relative
                 before = path.read_bytes()
                 path.write_bytes(mutate(before))
@@ -492,14 +493,14 @@ class AuditTests(unittest.TestCase):
         root = Path(temporary)
         shutil.copytree(audit.FIXTURES / "single" / identifier, root / "single" / identifier, symlinks=True)
         for name in ("manifest", "result", "side-effects"):
-            shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+            shutil.copy2(schema_path(audit.FIXTURES, name), root)
         return root
 
     def copy_multi_fixture(self, temporary, identifier):
         root = Path(temporary)
         shutil.copytree(audit.FIXTURES / "multi" / identifier, root / "multi" / identifier, symlinks=True)
         for name in ("manifest", "result", "side-effects", "frontmatter"):
-            shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+            shutil.copy2(schema_path(audit.FIXTURES, name), root)
         return root
 
     def test_multi_digest_fixtures(self):
@@ -930,14 +931,14 @@ class AuditTests(unittest.TestCase):
         for identifier, relative, mutate in mutations:
             with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
                 root = self.copy_fixture(temporary, identifier)
-                shutil.copy2(audit.FIXTURES / "frontmatter.schema.json", root)
+                shutil.copy2(schema_path(audit.FIXTURES, "frontmatter"), root)
                 path = root / "single" / identifier / relative
                 value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
                 self.assertTrue(boundaries.validate(root, [identifier])["errors"])
         with tempfile.TemporaryDirectory() as temporary:
             identifier = "SINGLE-116-02"
             root = self.copy_fixture(temporary, identifier)
-            shutil.copy2(audit.FIXTURES / "frontmatter.schema.json", root)
+            shutil.copy2(schema_path(audit.FIXTURES, "frontmatter"), root)
             path = root / "single" / identifier / "repo" / boundaries.spec_path(identifier)
             path.write_text(path.read_text().replace("界" * 121, "界" * 120))
             self.assertTrue(boundaries.validate(root, [identifier])["errors"])
@@ -945,7 +946,7 @@ class AuditTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             identifier = "SINGLE-118-02"
             root = self.copy_fixture(temporary, identifier)
-            shutil.copy2(audit.FIXTURES / "frontmatter.schema.json", root)
+            shutil.copy2(schema_path(audit.FIXTURES, "frontmatter"), root)
             path = root / "single" / identifier / "repo" / boundaries.spec_path(identifier)
             path.write_text(path.read_text().replace('["REQ-001:AC-02", "REQ-001:AC-01"]', '["REQ-001:AC-01", "REQ-001:AC-02"]'))
             self.assertTrue(boundaries.validate(root, [identifier])["errors"])
@@ -953,7 +954,7 @@ class AuditTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             identifier = "SINGLE-120-02"
             root = self.copy_fixture(temporary, identifier)
-            shutil.copy2(audit.FIXTURES / "frontmatter.schema.json", root)
+            shutil.copy2(schema_path(audit.FIXTURES, "frontmatter"), root)
             path = root / "single" / identifier / "manifest.json"
             value = json.loads(path.read_text())
             value["setup"]["operations"].append({"op": "stage", "paths": ["src/app.py"]})
@@ -1148,7 +1149,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
                 self.assertTrue(frontmatter_fixtures.validate(root, [identifier])["errors"])
@@ -1158,7 +1159,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 # 唯一の入力条件を修復する。古い期待Diagnosticでは通過してはいけない。
                 if identifier == "SINGLE-081":
                     path = fixture / "repo/.spec/bitz.yaml"
@@ -1221,7 +1222,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -1233,7 +1234,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single/SINGLE-075-02"
                 shutil.copytree(audit.FIXTURES / "single/SINGLE-075-02", fixture)
                 for name in ("manifest", "result", "side-effects"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / "expected/check.txt"
                 path.write_text(path.read_text().replace("targets=3" if replacement.startswith("targets") else "diagnostics=1", replacement))
                 self.assertTrue(text_fixtures.validate(root, ["SINGLE-075-02"])["errors"])
@@ -1324,7 +1325,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -1436,7 +1437,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -1488,7 +1489,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single/SINGLE-068"
                 shutil.copytree(audit.FIXTURES / "single/SINGLE-068", fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -1502,7 +1503,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single/SINGLE-068"
                 shutil.copytree(audit.FIXTURES / "single/SINGLE-068", fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / "repo" / verify_task_root_fixtures.TASK_PATH
                 path.write_text(path.read_text().replace("status: done", "status: " + status))
                 self.assertTrue(validate_verify_task_root(root, ["SINGLE-068"])["errors"])
@@ -1536,7 +1537,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single/SINGLE-066"
                 shutil.copytree(audit.FIXTURES / "single/SINGLE-066", fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -1547,7 +1548,7 @@ class AuditTests(unittest.TestCase):
             fixture = root / "single/SINGLE-066"
             shutil.copytree(audit.FIXTURES / "single/SINGLE-066", fixture)
             for name in ("manifest", "result", "side-effects", "frontmatter"):
-                shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                shutil.copy2(schema_path(audit.FIXTURES, name), root)
             path = fixture / "repo" / verify_document_fixtures.TECH_PATH
             path.write_text(path.read_text().rstrip(chr(10)) + chr(10) * 2 + statement + chr(10))
             self.assertTrue(validate_verify_document(root, ["SINGLE-066"])["errors"])
@@ -1600,7 +1601,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -1614,7 +1615,7 @@ class AuditTests(unittest.TestCase):
             fixture = root / "single/SINGLE-069-01"
             shutil.copytree(audit.FIXTURES / "single/SINGLE-069-01", fixture)
             for name in ("manifest", "result", "side-effects", "frontmatter"):
-                shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                shutil.copy2(schema_path(audit.FIXTURES, name), root)
             path = fixture / "repo" / verify_output_fixtures.COMMAND_PATH
             mode = path.stat().st_mode
             path.write_text(short)
@@ -1673,7 +1674,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -1695,7 +1696,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 mode = path.stat().st_mode
                 path.write_text(mutate(path.read_text()))
@@ -1708,7 +1709,7 @@ class AuditTests(unittest.TestCase):
             fixture = root / "single/SINGLE-058"
             shutil.copytree(audit.FIXTURES / "single/SINGLE-058", fixture)
             for name in ("manifest", "result", "side-effects", "frontmatter"):
-                shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                shutil.copy2(schema_path(audit.FIXTURES, name), root)
             (fixture / "repo/bin/signal.sh").chmod(0o644)
             self.assertTrue(validate_verify_process(root, ["SINGLE-058"])["errors"])
 
@@ -1773,7 +1774,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -1795,7 +1796,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 path.write_text(mutate(path.read_text()))
                 self.assertTrue(validate_verify_bindings(root, [identifier])["errors"])
@@ -1869,7 +1870,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -1893,7 +1894,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 path.write_text(mutate(path.read_text()))
                 self.assertTrue(validate_verify(root, [identifier])["errors"])
@@ -1974,7 +1975,7 @@ class AuditTests(unittest.TestCase):
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 shutil.copytree(audit.FIXTURES / "single/SINGLE-042", root / "single/SINGLE-042")
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -2028,7 +2029,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -2050,7 +2051,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 path.write_text(mutate(path.read_text()))
                 self.assertTrue(validate_context_limits(root, [identifier])["errors"])
@@ -2166,7 +2167,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -2189,7 +2190,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 path.write_text(mutate(path.read_text()))
                 self.assertTrue(validate_digest(root, [identifier])["errors"])
@@ -2200,7 +2201,7 @@ class AuditTests(unittest.TestCase):
             fixture = root / "single/SINGLE-042"
             shutil.copytree(audit.FIXTURES / "single/SINGLE-042", fixture)
             for name in ("manifest", "result", "side-effects", "frontmatter"):
-                shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                shutil.copy2(schema_path(audit.FIXTURES, name), root)
             canonical = fixture / "expected/context.canonical.json"
             canonical.write_bytes(canonical.read_bytes() + b"\n")
             self.assertTrue(validate_digest(root, ["SINGLE-042"])["errors"])
@@ -2259,7 +2260,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -2280,7 +2281,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / "repo" / relative
                 path.write_text(path.read_text().replace(before, after))
                 self.assertTrue(validate_context_failures(root, [identifier])["errors"])
@@ -2339,7 +2340,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -2370,7 +2371,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / "manifest.json"
                 value = json.loads(path.read_text())
                 argv = value["invocation"]["argv"]
@@ -2415,7 +2416,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -2435,7 +2436,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 path.write_text(path.read_text().replace(before, after))
                 self.assertTrue(validate_selection(root, [identifier])["errors"])
@@ -2480,7 +2481,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -2497,7 +2498,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single/SINGLE-035-01"
                 shutil.copytree(audit.FIXTURES / "single/SINGLE-035-01", fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 path.write_text(path.read_text().replace(before, after))
                 self.assertTrue(validate_tasks(root, ["SINGLE-035-01"])["errors"])
@@ -2541,7 +2542,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -2568,7 +2569,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / "changes/document.md"
                 if mutation == "missing-implementation":
                     (fixture / "repo/src/contract.py").unlink()
@@ -2601,7 +2602,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / "expected/check.json"
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -2616,7 +2617,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / "repo/.spec/technical/TECH-001.md"
                 if mutation == "remove-duplicate":
                     (fixture / "repo/.spec/technical/TECH-001-b.md").unlink()
@@ -2653,7 +2654,7 @@ class AuditTests(unittest.TestCase):
                 root = Path(temporary)
                 shutil.copytree(audit.FIXTURES / "single" / identifier, root / "single" / identifier)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = root / "single" / identifier / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -2670,7 +2671,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 repo = fixture / "repo"
                 req = repo / ".spec/requirements/REQ-001.md"
                 if mutation == "resolve":
@@ -2716,7 +2717,7 @@ class AuditTests(unittest.TestCase):
                 root = Path(temporary)
                 shutil.copytree(audit.FIXTURES / "single" / identifier, root / "single" / identifier)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = root / "single" / identifier / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -2731,7 +2732,7 @@ class AuditTests(unittest.TestCase):
                 fixture = root / "single" / identifier
                 shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = fixture / "repo/.spec/requirements/REQ-001.md"
                 if mutation == "repair-utf8":
                     path.write_bytes(path.read_bytes().replace(b"\xff", "�".encode()))
@@ -2767,7 +2768,7 @@ class AuditTests(unittest.TestCase):
                 root = Path(temporary)
                 shutil.copytree(audit.FIXTURES / "single" / identifier, root / "single" / identifier)
                 for name in ("manifest", "result", "side-effects", "frontmatter"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = root / "single" / identifier / "expected/check.json"
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -2780,7 +2781,7 @@ class AuditTests(unittest.TestCase):
             identifier = "SINGLE-007"
             shutil.copytree(audit.FIXTURES / "single" / identifier, root / "single" / identifier)
             for name in ("manifest", "result", "side-effects", "frontmatter"):
-                shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                shutil.copy2(schema_path(audit.FIXTURES, name), root)
             path = root / "single" / identifier / "repo/.spec/requirements/REQ-001.md"
             path.write_text("\n".join(line for line in path.read_text().splitlines() if not line.startswith("- [REQ-001:AC-01]")) + "\n")
             self.assertTrue(validate_ears(root, [identifier])["errors"])
@@ -2809,7 +2810,7 @@ class AuditTests(unittest.TestCase):
                 root = Path(temporary)
                 shutil.copytree(audit.FIXTURES / "single", root / "single")
                 for name in ("manifest", "result", "side-effects"):
-                    shutil.copy2(audit.FIXTURES / f"{name}.schema.json", root)
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
                 path = root / "single" / relative
                 value = json.loads(path.read_text())
                 mutate(value)
@@ -2916,8 +2917,8 @@ class AuditTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             # 実際のSchemaは残し、受入fixtureのdirectoryは置かない。
-            for name in ("manifest.schema.json", "result.schema.json"):
-                (root / name).write_text((audit.FIXTURES / name).read_text())
+            for name in ("manifest", "result"):
+                (root / f"{name}.schema.json").write_text(schema_path(audit.FIXTURES, name).read_text())
             with patch.object(audit, "FIXTURES", root):
                 missing = audit.matrix()
         self.assertEqual(len(missing["missing_fixtures"]), missing["matrix_ids"])
