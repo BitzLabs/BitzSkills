@@ -717,3 +717,20 @@ scale検証を1回ずつ実行する。同じcloneで2回実行すると、1回�
 
 実装計画 §3.1のGate A条件を全件満たしたため、Step 0Bを`Complete`、Gate Aを`Allowed`とし、Step 1の開始を許可する。
 Coreの実行結果と期待値の一致は、各StepのGate Bで判定する。
+
+## 2026-09-24: 契約Schemaの移動とGate Aの再認定
+
+ADR-050に従い、`result.schema.json`と`frontmatter.schema.json`の正本を`docs/03.詳細設計/schemas/`へ移した。
+検証器と試験は`fixtures/conformance/schemas.py`の`schema_path`で契約Schemaを正本から読み、fixture形式の
+`manifest.schema.json`と`side-effects.schema.json`は従来どおりfixtureのrootから読む。Schemaの内容は変えていない。
+結果契約 §1とFrontmatter仕様 §2の変更に合わせてDiagnostic台帳を再reviewし、根拠文書2件のhashを更新した
+（[Diagnostic意味網羅review](Diagnostic意味網羅review.md)）。
+
+commit `bd369cc58c0c825176322d01c3995a99c436e963`に対して`uv run fixtures/certify_gate_a.py`を実行し、
+`gateA: "Allowed"`、error 0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 統合検証 | 2つのcloneでReport SHA-256が両方`7bdd1d79b1056f692009179fae9152264524d58d8b74a8ef843442846edd2fe7`。作業treeの2回の実行とも同じ。link 270件、matrix 310件すべて検証済み |
+| scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`d4b0e6aa89898a2c004ef14207b6f1bd9dc327e9a2a87ec70f51ff1b78b6a08d`（前回と同じ） |
+| 実行環境 | CPython 3.14.6、uv 0.11.32（x86_64-unknown-linux-gnu）、git 2.53.0、Linux x86_64 |
