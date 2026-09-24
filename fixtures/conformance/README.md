@@ -28,6 +28,10 @@ reportが2つのcloneでbyte一致し、scale検証が両方で成功して所�
 ```text
 uv run fixtures/certify_gate_a.py
 ```
+
+Gate Aの認定後にmatrixやfixtureを変更するときは、
+[適合fixture仕様 §1.1](../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#11-matrixとfixtureの変更)に従う。
+Coreの出力は期待値を直す根拠にならず、期待値の訂正と削除・緩和には人間の管理者の承認を要する。
 静的な検査では、fixtureが独立した原因を1つだけ持つことを証明できない。Diagnosticの対応はreview済みの台帳で管理する
 （[Diagnostic意味網羅review](Diagnostic意味網羅review.md)）。監査は台帳の整合と根拠文書の鮮度を検査し、自然言語の意味は検査しない。
 

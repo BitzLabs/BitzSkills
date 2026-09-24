@@ -44,6 +44,11 @@ Gate条件の正本は本書、fixture構造と比較方法の正本は
 [適合fixture仕様](../03.詳細設計/00_共通契約/04_適合fixture仕様.md)とする。提案資料は判断理由と移行履歴、
 提案資料READMEは現在状態の要約だけを持つ。
 
+Gate Aの認定後にmatrixまたはfixtureを変更した場合は、
+[適合fixture仕様 §1.1](../03.詳細設計/00_共通契約/04_適合fixture仕様.md#11-matrixとfixtureの変更)に従ってGate Aを再認定する。
+再認定が通過するまでGate Aは`Blocked`とする。Gate Bが`Passed`のStepに属するfixtureを変更した場合は、
+そのStepのGate Bを判定し直す。
+
 ## 2. Step 0: 仕様確定（codeを書かない）
 
 状態は`Complete`である。成果物は次とし、いずれも[提案24](24_Core-1.0実装着手方針.md)の裁定に対応する。

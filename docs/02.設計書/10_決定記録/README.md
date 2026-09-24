@@ -92,3 +92,4 @@
 | [ADR-048](ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md) | 適合fixtureの生成入力とGit構造operationを確定する | accepted | ADR-046, 適合fixture仕様, manifest Schema, fixture harness |
 | [ADR-049](ADR-049_Coreのsource配置と試験の構成を確定する.md) | Coreのsource配置と試験の構成を確定する | accepted | ADR-016・045・046, システム構成, 実装計画 |
 | [ADR-050](ADR-050_契約Schemaの正本を詳細設計へ置く.md) | 契約Schemaの正本を詳細設計へ置く | accepted | ADR-045・046・049, 結果契約, Frontmatter仕様, 適合fixture仕様, 詳細設計README |
+| [ADR-051](ADR-051_適合fixtureの変更手続きを確定する.md) | 適合fixtureの変更手続きを確定する | accepted | ADR-046・049・050, 適合fixture仕様, 実装計画 |
