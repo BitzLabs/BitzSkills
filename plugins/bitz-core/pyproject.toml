@@ -1,0 +1,15 @@
+[project]
+name = "bitz"
+version = "1.0.0"
+description = "Bitz Core 1.0 — SPEC駆動開発を支えるCLI"
+requires-python = ">=3.12"
+dependencies = [
+    "ruamel.yaml==0.19.1",
+]
+
+[project.scripts]
+bitz = "bitz.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
