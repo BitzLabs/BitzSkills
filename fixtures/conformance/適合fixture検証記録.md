@@ -794,3 +794,22 @@ commit `7e7cc10553d65d50669a337773dcf9413f5001c1`に対して`uv run fixtures/ce
 | 統合検証 | 2つのcloneでReport SHA-256が両方`aa6c503d8faa69c4c8bfee41e26ca2ead0cb8644e35490edc6a4449d03be6fc5`。作業treeの2回の実行とも同じ |
 | scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`d4b0e6aa89898a2c004ef14207b6f1bd9dc327e9a2a87ec70f51ff1b78b6a08d`（前回と同じ） |
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+## 2026-09-25: Frontmatter境界fixtureのsummary修正とGate Aの再認定
+
+`d05d218`で、SINGLE-116〜120のうちDiagnosticを持つ14件の期待`summary`を改めた。manifestの`description`
+（検査の論点、例「titleの文字数・非空・単一行条件を検査する」）がそのまま利用者向けの文面に入っていたため、
+生成器に`SUMMARIES`を別に持たせ、同じ条件の既存fixtureと文面を揃えた（119-03は`SINGLE-085`、120-03は`SINGLE-084`）。
+code、severity、status、件数、sourceは変えていない。全fixtureの期待`summary`をmanifestの`description`と照合し、
+他に一致する37件はいずれも`description`自体が利用者向けの文面であることを確認した。
+`cd90961`で[Frontmatter境界fixture review](single/Frontmatter境界review.md)へこの方針を記録した。
+対象はすべてStep 2の割当てであり、Gate B Step 1の認定（`28c3cd1`）には影響しない。
+
+commit `cd9096121441e53cb7e3d9b5566f576b87847c0a`に対して`uv run fixtures/certify_gate_a.py`を実行し、
+`gateA: "Allowed"`、error 0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 統合検証 | 2つのcloneでReport SHA-256が両方`aa6c503d8faa69c4c8bfee41e26ca2ead0cb8644e35490edc6a4449d03be6fc5`（前回と同じ。Reportは検査の状態だけを持ち期待値の文面を含まない） |
+| scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`d4b0e6aa89898a2c004ef14207b6f1bd9dc327e9a2a87ec70f51ff1b78b6a08d`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
