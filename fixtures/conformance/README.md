@@ -173,3 +173,6 @@ interpretのcontextと明示checkだけで受理することを固定する。
 適合harnessの外部仕様をADR-046で裁定し、manifestへ`invocation.python`と`invocation.gitVersion`、runnerへ
 `package`を追加した。Git版と下限CPythonは実行環境契約の本文から読み取る。単一workspaceのmatrixは全250件を
 準備済みとなり、残りは複合workspace60件である。
+
+複合workspaceの60件は、冒頭に挙げた`multi/`の7つのreviewで作成した。2026-09-18時点で、matrix 310件は
+すべて準備済みである。

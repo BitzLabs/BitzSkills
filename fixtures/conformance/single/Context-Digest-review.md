@@ -71,7 +71,8 @@ Bを独立に書いたことで、B自身の欠陥が1件見つかった。規�
 
 - Coreは実行していない。期待値はすべてreview済みのもので観測値ではない。Coreとの一致はGate Bで判定する。
 - Bはこの入力に限定している。review済みの閉包の外にある強いedgeは、一般化せずに拒否するため、target展開の実装ではない。
-- 複合workspaceのgolden（`MULTI-002-01`）は未作成であり、Gate AのDigest条件のうち複合workspace側は未完了である。
+- 複合workspaceのgolden（`MULTI-002-01`）は本reviewの対象外であり、
+  [複合workspace golden Digest fixture review](../multi/複合workspace-golden-Digest-review.md)で扱う。
 - `SINGLE-042/043/045`の一致はhash文字列だけでなくCanonical JSONのbyte列で検査する。serializerの変更が
   hashの一致に隠れることはない。
 

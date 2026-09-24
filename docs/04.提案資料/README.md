@@ -535,18 +535,18 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 提案25のD1〜D8を採用し、P0 6件とP1 5件を正本、Schema、matrixまたは性能受入成果物へ反映した。
 提案の裁定・反映は完了したが、実fixture成果物、実測baseline、Step 0Bのcross-checkとgate再検証は未完了である。
 
-## 24. 実装前最終reviewの反映状況（2026-09-17更新）
+## 24. 実装前最終reviewの反映状況（2026-09-24更新）
 
 提案25の採否と実装着手可否を分離して管理する。提案25はAccepted / Reflectedであり、現在のGate Aは
 `Blocked`である。Gate条件の正本は[実装計画 §1.1](12_Core-1.0実装計画.md#11-進行状態とgate)とする。
 
 | 区分 | 現在の状態 | 残件 |
 |---|---|---|
-| P0 6件 | 契約、Schema、matrixへ反映済み | 実入力、期待結果の実fixture化（単一workspaceのgolden Digestは`SINGLE-042`で確定済み、複合workspace`MULTI-002-01`は未作成） |
+| P0 6件 | 契約、Schema、matrixへ反映済み | 実入力と期待結果は310件すべてfixture化済み（golden Digestは`SINGLE-042`と`MULTI-002-01`で確定）。統合検証はCoreと照合した入力・期待値を未完了として残す |
 | P1 5件 | 契約または性能受入成果物へ反映済み | process helper等の検証基盤、Core実装後の受入結果と性能baseline |
 | P2文書衛生 | accepted ADR linkとREADME状態を修正済み | — |
 | 自己適用 | 実装計画へ配置済み | Step 2完了後に`.spec/`を作成し、Gate Cで最終判定 |
-| Step 0B | `In progress` | 公開JSON・文法・link・Git/process基盤・Diagnostic意味網羅・target集合25 case・実fixture250件（導入設定9＋EARS 12＋文書構造・UTF-8 9＋関係・path・coverage 6＋ID重複・循環4＋Git基準版・保護対象外10＋TASK境界3＋Git対象選択・影響候補4＋Git環境3＋Context非成功6＋Context Digest 6＋expand反復2＋stale・上限・coverage 6＋verify実行・事前block 6＋verify binding共有3＋verify process終了3＋verify出力抜粋2＋文書単位binding1＋done TASK起点1＋report非作成4＋引数不正15＋report作成・保存失敗・JSON併用6＋text出力・制御文字・診断順序4＋BOM・Frontmatter 11＋寸法上限・未知entry 7＋registry閉包7＋Scanner・位置16＋既定表示・revision 8＋理由付きSHOULD・full projection・Digest version 3＋escape・normative projection 2＋quoted extension 1＋code span 1＋Frontmatter境界24＋Core副作用6＋verify argv・実行環境・出力変換15＋明示起点の不在・ADR起点8＋共通target展開・advisory提示8＋Digest材料の順序・reverse solidus 3＋実行環境・配布物5）の準備を検証済み。matrix §6.5 contextとDigest（16件）と§6.6 verifyは全32件完了し、単一workspaceのgolden Digestは独立2系統のreference計算で一致を確認済み。単一workspaceの実fixtureは全250件完了。複合workspace`MULTI-*`60件、複合workspaceのgolden Digest等が残件 |
+| Step 0B | `In progress` | 公開JSON・文法・link・Git/process基盤・Diagnostic意味網羅・target集合25 case・実fixture 310件（単一workspace 250件、複合workspace 60件。内訳は[実装計画 §3.1](12_Core-1.0実装計画.md#31-step-0b-gate-a実証基盤)）の準備を検証済み。golden Digestは単一・複合workspaceとも独立2系統のreference計算で一致。上限境界24件はscale検証で実寸を照合済み。2026-09-18にfresh checkoutでも統合検証とscale検証が作業treeと一致。統合commandが未完了とする、Coreと照合した入力・期待値と、fresh checkoutからのGate A全体実行が残件 |
 | Step 0-P | `Complete` | 基準入力・比較条件を固定し一括検証済み。実測はCore実装後 |
 | Gate A | `Blocked` | fresh checkoutから単一commandで2回一致する自動検査結果を記録 |
 | Gate B | `Pending` | 各StepのCore実装を固定済みfixtureへ通して判定 |
