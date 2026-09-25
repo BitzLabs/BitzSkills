@@ -291,7 +291,7 @@ class StatementDocumentIdMismatchTests(unittest.TestCase):
             catalog = doc_mod.build_catalog(root, WORKSPACE_ID)
             id_fmt = [d for d in catalog.diagnostics if d.code == "EAI-CORE-ID-001"]
             self.assertEqual(len(id_fmt), 1)
-            self.assertEqual(id_fmt[0].summary, "規範文IDの形式が不正です")
+            self.assertEqual(id_fmt[0].summary, "規範文IDの文書部分が文書IDと一致しません")
             self.assertEqual(catalog.checked_document_count, 0)
 
 

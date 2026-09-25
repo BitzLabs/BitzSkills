@@ -180,6 +180,81 @@ class TargetStatusAggregationTests(unittest.TestCase):
         self.assertEqual(result["targetResults"][0]["status"], "failed")
 
 
+class BindingMissingTests(unittest.TestCase):
+    def test_undefined_command_keeps_context_digest_and_reports_each_binding(self):
+        # C6（SINGLE-061訂正）: testまたはcommand定義そのものが不足しbindingを構成できない
+        # 場合（skip-target）でも、Contextを構成できる限りcontextDigestは非nullで返し、
+        # 独立した原因（testエントリ単位）はそれぞれDiagnosticを返す（verify仕様 §8、
+        # registry §2）。
+        with tempfile.TemporaryDirectory() as tmp:
+            _write(tmp, ".spec/bitz.yaml", _bitz_yaml('    default:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n'))
+            _write(
+                tmp,
+                ".spec/technical/TECH-001.md",
+                """---
+id: TECH-001
+title: 検査対象
+status: approved
+relations:
+  refines: [REQ-001]
+implements: [src/x.py]
+tests:
+  - path: tests/test_a.py
+    covers: [REQ-001:AC-01]
+    command: missing
+  - path: tests/test_b.py
+    covers: [REQ-001:AC-02]
+    command: missing
+---
+
+# TECH-001 検査対象
+
+## Context
+
+規範文を持たない。
+""",
+            )
+            _write(
+                tmp,
+                ".spec/requirements/REQ-001.md",
+                """---
+id: REQ-001
+title: 検査対象
+status: approved
+---
+
+# REQ-001 検査対象
+
+## Intent
+
+意図。
+
+## Acceptance Criteria
+
+- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。
+- [REQ-001:AC-02] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。
+
+## Verification
+
+test/test_a.pyとtest/test_b.pyで確認する。
+""",
+            )
+            _write(tmp, "tests/test_a.py", "def test_a():\n    assert True\n")
+            _write(tmp, "tests/test_b.py", "def test_b():\n    assert True\n")
+            _write(tmp, "src/x.py", "x = 1\n")
+            _init_repo(tmp)
+            result, exit_code = _run_verify(tmp, ["REQ-001"])
+        self.assertEqual(exit_code, 2)
+        target = result["targetResults"][0]
+        self.assertEqual(target["status"], "blocked")
+        self.assertIsNotNone(target["contextDigest"])
+        self.assertEqual(target["bindingRefs"], [])
+        codes = [d["code"] for d in target["diagnostics"]]
+        self.assertEqual(codes, ["SPEC-VERIFY-BLOCKED-001", "SPEC-VERIFY-BLOCKED-001"])
+        keys = sorted(d["source"]["key"] for d in target["diagnostics"])
+        self.assertEqual(keys, ["tests[0].command", "tests[1].command"])
+
+
 class SpawnBeforeBlockedTests(unittest.TestCase):
     def test_untracked_config_blocks_binding(self):
         with tempfile.TemporaryDirectory() as tmp:

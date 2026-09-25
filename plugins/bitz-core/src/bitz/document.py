@@ -436,8 +436,8 @@ def _process_document_content(raw: bytes, path: str, kind: str, workspace_id: st
                 _mk(code, "error", "failed", summary, path, workspace_id, line=cond["line"], column=cond["column"])
             )
 
-    # --- 規範文IDの文書ID整合（check.md §4「3」）。registryに専用行がないため、
-    # 規範文ID形式不正と同じEAI-CORE-ID-001／EAI-ID-FORMAT扱いとする（draftでもerror、
+    # --- 規範文IDの文書ID整合（check.md §4「3」、registry条件行EAI-ID-DOCUMENT-MISMATCH）。
+    # codeはID形式不正と同じEAI-CORE-ID-001だが、summaryは専用文言とする（draftでもerror、
     # skip-document）。
     for stmt in parse_result.statements:
         if stmt["documentId"] != entry.doc_id:
@@ -446,7 +446,7 @@ def _process_document_content(raw: bytes, path: str, kind: str, workspace_id: st
                     "EAI-CORE-ID-001",
                     "error",
                     "failed",
-                    messages.EAI_ID_FORMAT,
+                    messages.EAI_ID_DOCUMENT_MISMATCH,
                     path,
                     workspace_id,
                     line=stmt["source"]["line"],

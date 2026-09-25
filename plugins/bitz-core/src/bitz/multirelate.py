@@ -108,11 +108,11 @@ def _qualified_relations_view(entry: DocEntry, owner_ws_id: str) -> DocEntry:
     return replace(entry, frontmatter=new_fm)
 
 
-def _mk(code, severity, status, summary, path, workspace_id, *, key=None) -> Diagnostic:
+def _mk(code, severity, status, summary, path, workspace_id, *, key=None, evidence=None) -> Diagnostic:
     src: dict = {"kind": "file", "workspaceId": workspace_id, "path": path}
     if key is not None:
         src["key"] = key
-    return Diagnostic(code=code, severity=severity, resultStatus=status, summary=summary, source=src)
+    return Diagnostic(code=code, severity=severity, resultStatus=status, summary=summary, source=src, evidence=evidence)
 
 
 def parse_qualified(ref: str) -> tuple[str, str] | None:
@@ -224,21 +224,21 @@ def field_diagnostics(
                     diags.append(
                         _mk(
                             "SPEC-MULTI-REF-001", "error", "failed", messages.MULTI_REF_QUALIFIER_INVALID,
-                            entry.path, ws_id, key=f"relations.{relation}",
+                            entry.path, ws_id, key=f"relations.{relation}", evidence=ref,
                         )
                     )
                 elif payload == "unqualified-elsewhere":
                     diags.append(
                         _mk(
                             "SPEC-MULTI-REF-001", "error", "failed", messages.MULTI_REF_UNQUALIFIED,
-                            entry.path, ws_id, key=f"relations.{relation}",
+                            entry.path, ws_id, key=f"relations.{relation}", evidence=ref,
                         )
                     )
                 elif payload == "workspace-unknown":
                     diags.append(
                         _mk(
                             "SPEC-MULTI-REF-001", "error", "failed", messages.MULTI_REF_WORKSPACE_UNKNOWN,
-                            entry.path, ws_id, key=f"relations.{relation}",
+                            entry.path, ws_id, key=f"relations.{relation}", evidence=ref,
                         )
                     )
                 else:  # missing
@@ -247,6 +247,7 @@ def field_diagnostics(
                             _mk(
                                 "SPEC-RELATION-ADVISORY-MISSING-001", "warning", "passed_with_warnings",
                                 messages.RELATION_ADVISORY_MISSING, entry.path, ws_id, key=f"relations.{relation}",
+                                evidence=ref,
                             )
                         )
                     else:
@@ -254,7 +255,7 @@ def field_diagnostics(
                             _mk(
                                 "SPEC-RELATION-MISSING-001", "error", "failed",
                                 messages.relation_missing_strong(entry.path), entry.path, ws_id,
-                                key=f"relations.{relation}",
+                                key=f"relations.{relation}", evidence=ref,
                             )
                         )
                 continue
@@ -264,7 +265,7 @@ def field_diagnostics(
                     _mk(
                         "CTX-RELATION-TYPE-001", "error", "failed",
                         messages.relation_type_mismatch(entry.kind, target_entry.kind, relation),
-                        entry.path, ws_id, key=f"relations.{relation}",
+                        entry.path, ws_id, key=f"relations.{relation}", evidence=ref,
                     )
                 )
 
@@ -487,25 +488,22 @@ def coverage_diagnostics(
             if not isinstance(t, dict):
                 continue
             covers = t.get("covers") or []
-            invalid = False
+            # covers要素を単位とするDiagnostic（結果契約 §4）。独立した原因（配列の各要素）は
+            # それぞれprimaryを持つため、最初の不正参照で打ち切らず全要素を検査する。
             for ref in covers:
                 q = parse_qualified(ref)
                 local_part = q[1] if q is not None else ref
                 if ":" in local_part:
-                    if ref not in allowed_statement_ids:
-                        invalid = True
-                        break
+                    valid = ref in allowed_statement_ids
                 else:
-                    if ref not in allowed_doc_ids:
-                        invalid = True
-                        break
-            if invalid:
-                diags.append(
-                    _mk(
-                        "SPEC-TEST-COVERAGE-001", "error", "failed", messages.TEST_COVERAGE_INVALID,
-                        entry.path, ws_id, key=f"tests[{idx}].covers",
+                    valid = ref in allowed_doc_ids
+                if not valid:
+                    diags.append(
+                        _mk(
+                            "SPEC-TEST-COVERAGE-001", "error", "failed", messages.TEST_COVERAGE_INVALID,
+                            entry.path, ws_id, key=f"tests[{idx}].covers", evidence=ref,
+                        )
                     )
-                )
     return diags
 
 

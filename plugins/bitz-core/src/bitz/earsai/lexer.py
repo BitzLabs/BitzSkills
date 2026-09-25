@@ -21,7 +21,8 @@ MODALITY_KEYWORDS = ("MUST", "SHOULD", "MAY")
 OPERATION_KEYWORDS = ("THEN", "GENERATE", "CONSTRAINT")
 CORE_TAG_KEYWORDS = ("ACTOR",) + ACTIVATION_KEYWORDS + MODALITY_KEYWORDS + ("REASON",) + OPERATION_KEYWORDS
 
-STATEMENT_ID_RE = re.compile(r"^(REQ|TECH|ADR|TASK)-[0-9]{3,}:[A-Za-z0-9][A-Za-z0-9-]*$")
+#: local-id = upper, { upper | digit | "-" }, "-", digit, digit, { digit } （ADR-054、EARS-AI仕様 §2.1）。
+STATEMENT_ID_RE = re.compile(r"^(REQ|TECH|ADR|TASK)-[0-9]{3,}:[A-Z][A-Z0-9-]*-[0-9]{2,}$")
 ACTOR_ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]*$")
 EXTENSION_RE = re.compile(r"^(?P<ns>[a-z][a-z0-9]*):(?P<term>[A-Z][A-Z0-9_]*)(?:=(?P<value>.*))?$")
 #: bare-value = bare-char, { bare-char } ; bare-char = alnum | "-" | "_" | "." （§3）。

@@ -360,6 +360,9 @@ class PerEdgePrimaryTests(unittest.TestCase):
             for d in diags:
                 self.assertEqual(d.code, "SPEC-RELATION-MISSING-001")
                 self.assertEqual(d.source["key"], "relations.requires")
+            # 同じkey（relations.requires）に複数の参照切れがあっても、evidenceで区別できる
+            # （結果契約 §4。SINGLE-133）。
+            self.assertEqual([d.evidence for d in diags], ["REQ-998", "REQ-999"])
 
     def test_missing_and_type_mismatch_both_reported_independently(self):
         with tempfile.TemporaryDirectory() as root:
@@ -565,6 +568,22 @@ class CoverageTests(unittest.TestCase):
             diags = rel_mod.check_coverage(catalog.entries, WORKSPACE_ID)
             self.assertEqual([d.code for d in diags], ["SPEC-TEST-COVERAGE-001"])
             self.assertEqual(diags[0].source["key"], "tests[0].covers")
+
+    def test_covers_multiple_invalid_refs_each_get_a_diagnostic(self):
+        # 結果契約 §4「covers要素を単位とするDiagnostic」: 1つのcovers配列に不正な参照が
+        # 複数あれば、要素ごとに1件ずつevidenceで区別されたDiagnosticを返す（最初の1件で
+        # 打ち切らない）。妥当な参照は無視する。
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            fm = "tests:\n  - path: tests/test_x.py\n    covers: [REQ-001:AC-98, REQ-001:AC-01, REQ-001:AC-99]\n"
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001", extra_frontmatter=fm))
+            _write(root, "tests/test_x.py", "pass\n")
+            catalog = _build(root)
+            diags = rel_mod.check_coverage(catalog.entries, WORKSPACE_ID)
+            self.assertEqual([d.code for d in diags], ["SPEC-TEST-COVERAGE-001", "SPEC-TEST-COVERAGE-001"])
+            for d in diags:
+                self.assertEqual(d.source["key"], "tests[0].covers")
+            self.assertEqual([d.evidence for d in diags], ["REQ-001:AC-98", "REQ-001:AC-99"])
 
     def test_covers_existing_statement_is_ok(self):
         with tempfile.TemporaryDirectory() as root:

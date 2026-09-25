@@ -626,11 +626,15 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         role = roles[doc_id]
         if role == "advisory":
             return "reference"
-        if role in ("root", "work", "replacement"):
+        # full projectionにするのは起点・TASK（work）・replacement・requirement・constraintと、
+        # それら以外の距離1の文書（context仕様 §5）。requirement/constraintを距離で
+        # normativeへ落とさないのは、requires/addressesで到達したそれらのstatementが
+        # targetStatementsへ昇格せずConstraint Ledgerへ収録されないため（ADR-014 Decision 4）。
+        if role in ("root", "work", "replacement", "requirement", "constraint"):
             return "full"
         if expansion.document_distance.get(doc_id, 0) <= 1:
             return "full"
-        if role in ("refinement", "constraint"):
+        if role == "refinement":
             return "normative"
         return "full"
 

@@ -154,6 +154,35 @@ class SyntaxErrorConditionTests(unittest.TestCase):
         result = _one("- [REQ-001:AC-01:extra] [ACTOR:X] [ALWAYS] [MUST] [THEN] a。\n")
         self.assertEqual(result.conditions[0]["kind"], ir_mod.CONDITION_ID_FORMAT)
 
+    # ADR-054 / EARS-AI仕様 §2.1: local-id = upper, { upper | digit | "-" }, "-", digit, digit, { digit }。
+    def test_local_id_lowercase_without_hyphen_is_id_format(self):
+        result = _one("- [REQ-001:ac1] [ACTOR:X] [ALWAYS] [MUST] [THEN] a。\n")
+        self.assertEqual(result.statements, [])
+        self.assertEqual(result.conditions[0]["kind"], ir_mod.CONDITION_ID_FORMAT)
+
+    def test_local_id_uppercase_without_trailing_digit_pair_is_id_format(self):
+        result = _one("- [REQ-001:AC1] [ACTOR:X] [ALWAYS] [MUST] [THEN] a。\n")
+        self.assertEqual(result.statements, [])
+        self.assertEqual(result.conditions[0]["kind"], ir_mod.CONDITION_ID_FORMAT)
+
+    def test_local_id_single_trailing_digit_is_id_format(self):
+        # 末尾は最低2桁必要（digit, digit, {digit}）。1桁だけでは不正。
+        result = _one("- [REQ-001:AC-1] [ACTOR:X] [ALWAYS] [MUST] [THEN] a。\n")
+        self.assertEqual(result.statements, [])
+        self.assertEqual(result.conditions[0]["kind"], ir_mod.CONDITION_ID_FORMAT)
+
+    def test_local_id_with_internal_hyphen_and_two_digit_suffix_is_valid(self):
+        result = _one("- [REQ-001:A-B-01] [ACTOR:X] [ALWAYS] [MUST] [THEN] a。\n")
+        self.assertEqual(result.conditions, [])
+        self.assertEqual(len(result.statements), 1)
+        self.assertEqual(result.statements[0]["localId"], "A-B-01")
+
+    def test_local_id_with_three_digit_suffix_is_valid(self):
+        result = _one("- [REQ-001:AC-001] [ACTOR:X] [ALWAYS] [MUST] [THEN] a。\n")
+        self.assertEqual(result.conditions, [])
+        self.assertEqual(len(result.statements), 1)
+        self.assertEqual(result.statements[0]["localId"], "AC-001")
+
     def test_tag_order_reason_after_must(self):
         result = _one("- [REQ-001:AC-01] [ACTOR:X] [ALWAYS] [MUST] [REASON] x [THEN] a。\n")
         self.assertEqual(result.statements, [])

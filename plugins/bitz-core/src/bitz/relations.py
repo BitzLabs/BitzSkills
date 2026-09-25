@@ -40,11 +40,11 @@ _STRONG_RELATIONS = ("requires", "refines", "addresses", "supersedes")
 _ALL_RELATIONS = (*_STRONG_RELATIONS, "related")
 
 
-def _mk(code, severity, status, summary, path, workspace_id, *, key=None) -> Diagnostic:
+def _mk(code, severity, status, summary, path, workspace_id, *, key=None, evidence=None) -> Diagnostic:
     src: dict = {"kind": "file", "workspaceId": workspace_id, "path": path}
     if key is not None:
         src["key"] = key
-    return Diagnostic(code=code, severity=severity, resultStatus=status, summary=summary, source=src)
+    return Diagnostic(code=code, severity=severity, resultStatus=status, summary=summary, source=src, evidence=evidence)
 
 
 def valid_entries(entries: list[DocEntry]) -> list[DocEntry]:
@@ -190,6 +190,7 @@ def _field_diagnostics(
                             entry.path,
                             workspace_id,
                             key=f"relations.{relation}",
+                            evidence=ref,
                         )
                     )
                 else:
@@ -202,6 +203,7 @@ def _field_diagnostics(
                             entry.path,
                             workspace_id,
                             key=f"relations.{relation}",
+                            evidence=ref,
                         )
                     )
                 continue
@@ -215,6 +217,7 @@ def _field_diagnostics(
                         entry.path,
                         workspace_id,
                         key=f"relations.{relation}",
+                        evidence=ref,
                     )
                 )
 
@@ -468,26 +471,24 @@ def check_coverage(
             if not isinstance(t, dict):
                 continue
             covers = t.get("covers") or []
-            invalid = False
+            # covers要素を単位とするDiagnostic（結果契約 §4）。独立した原因（配列の各要素）は
+            # それぞれprimaryを持つため、最初の不正参照で打ち切らず全要素を検査する。
             for ref in covers:
                 if ":" in ref:
-                    if ref not in allowed_statement_ids:
-                        invalid = True
-                        break
+                    valid = ref in allowed_statement_ids
                 else:
-                    if ref not in allowed_doc_ids:
-                        invalid = True
-                        break
-            if invalid:
-                diags.append(
-                    _mk(
-                        "SPEC-TEST-COVERAGE-001",
-                        "error",
-                        "failed",
-                        messages.TEST_COVERAGE_INVALID,
-                        entry.path,
-                        workspace_id,
-                        key=f"tests[{idx}].covers",
+                    valid = ref in allowed_doc_ids
+                if not valid:
+                    diags.append(
+                        _mk(
+                            "SPEC-TEST-COVERAGE-001",
+                            "error",
+                            "failed",
+                            messages.TEST_COVERAGE_INVALID,
+                            entry.path,
+                            workspace_id,
+                            key=f"tests[{idx}].covers",
+                            evidence=ref,
+                        )
                     )
-                )
     return diags

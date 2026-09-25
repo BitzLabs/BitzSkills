@@ -179,6 +179,53 @@ class ProjectionFieldTests(unittest.TestCase):
             for key in ("statementRefs", "frontmatter", "bodyText"):
                 self.assertNotIn(key, advisory_doc)
 
+    def test_distance2_requirement_and_constraint_stay_full_not_normative(self):
+        # context仕様 §5: full projectionにするのは起点・TASK・replacement・requirement・
+        # constraintと距離1の文書。距離2以上のrequirement/constraintも、距離だけを理由に
+        # normativeへ落とさない（ADR-014 Decision 4。SINGLE-106-06と同型）。
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(
+                root,
+                ".spec/requirements/REQ-001.md",
+                _req("REQ-001", extra_frontmatter="relations:\n  requires: [TECH-010]\n"),
+            )
+            _write(
+                root,
+                ".spec/technical/TECH-010.md",
+                _tech("TECH-010", extra_frontmatter="relations:\n  requires: [REQ-020]\n", with_statement=False),
+            )
+            _write(root, ".spec/requirements/REQ-020.md", _req("REQ-020"))
+            result, _ = _run_context(root, ["REQ-001"], purpose="verify")
+            by_id = {d["id"]: d for d in result["documents"]}
+            self.assertEqual(by_id["TECH-010"]["role"], "constraint")
+            self.assertEqual(by_id["TECH-010"]["projection"], "full")
+            self.assertEqual(by_id["REQ-020"]["role"], "requirement")
+            self.assertEqual(by_id["REQ-020"]["projection"], "full")
+
+    def test_distance2_refinement_is_normative(self):
+        # 距離2以上のrefinementはnormative projectionにする（起点・TASK・replacement・
+        # requirement・constraintではないため。context仕様 §5）。
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            _write(
+                root,
+                ".spec/technical/TECH-002.md",
+                _tech("TECH-002", extra_frontmatter="relations:\n  refines: [REQ-001]\n"),
+            )
+            _write(
+                root,
+                ".spec/technical/TECH-003.md",
+                _tech("TECH-003", extra_frontmatter="relations:\n  refines: [TECH-002]\n"),
+            )
+            result, _ = _run_context(root, ["REQ-001"], purpose="verify")
+            by_id = {d["id"]: d for d in result["documents"]}
+            self.assertEqual(by_id["TECH-002"]["role"], "refinement")
+            self.assertEqual(by_id["TECH-002"]["projection"], "full")
+            self.assertEqual(by_id["TECH-003"]["role"], "refinement")
+            self.assertEqual(by_id["TECH-003"]["projection"], "normative")
+
     def test_expand_upgrades_reference_to_full(self):
         with tempfile.TemporaryDirectory() as root:
             _write(root, ".spec/bitz.yaml", _bitz_yaml())

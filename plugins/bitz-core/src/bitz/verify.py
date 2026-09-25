@@ -279,30 +279,32 @@ def _compute_verify_digest(
     if multi_active:
         assert config_for is not None and ws_path_by_id is not None
         reached = sorted({_owner(d) for d in context_documents} - {workspace_id})
-        binding_ws_ids: set[str] = set()
         referenced_commands_multi: set[tuple[str, str]] = set()
         for doc_id in context_documents:
             owner = _owner(doc_id)
             for t in id_index[doc_id].frontmatter.get("tests") or []:
                 name = t.get("command")
                 if name:
-                    binding_ws_ids.add(owner)
                     referenced_commands_multi.add((owner, name))
+        # `purpose=verify`のBundleがbindingとして実際に収録した場合だけcommand/timeoutを含める
+        # （context仕様 §6）。command名が定義未解決（bindingを構成できない）なら含めない。
+        commands_settings = []
+        binding_ws_ids: set[str] = set()
+        for wid, name in sorted(referenced_commands_multi):
+            cfg = config_for(wid)
+            resolved = (cfg.get("_resolvedCommands") or {}).get(name)
+            if resolved is None:
+                continue
+            binding_ws_ids.add(wid)
+            commands_settings.append(
+                {"workspaceId": wid, "name": name, "argv": list(resolved["argv"]), "cwd": resolved.get("cwd", ".")}
+            )
         verify_timeouts = []
         for wid in sorted(binding_ws_ids):
             cfg = config_for(wid)
             vcfg = cfg.get("verify") or {}
             verify_timeouts.append(
                 {"workspaceId": wid, "timeoutSeconds": vcfg.get("timeoutSeconds", context_mod.DEFAULT_VERIFY_TIMEOUT)}
-            )
-        commands_settings = []
-        for wid, name in sorted(referenced_commands_multi):
-            cfg = config_for(wid)
-            resolved = (cfg.get("_resolvedCommands") or {}).get(name)
-            if resolved is None:
-                continue
-            commands_settings.append(
-                {"workspaceId": wid, "name": name, "argv": list(resolved["argv"]), "cwd": resolved.get("cwd", ".")}
             )
         settings_ws_ids = sorted(set(reached) | {workspace_id})
         settings_workspaces = []
@@ -320,13 +322,14 @@ def _compute_verify_digest(
             {"id": w, "path": ws_path_by_id.get(w, ".")} for w in reached
         ]
     else:
-        has_binding = any((id_index[d].frontmatter.get("tests") or []) for d in context_documents)
         referenced_commands: set[str] = set()
         for doc_id in context_documents:
             for t in id_index[doc_id].frontmatter.get("tests") or []:
                 name = t.get("command")
                 if name:
                     referenced_commands.add(name)
+        # `purpose=verify`のBundleがbindingとして実際に収録した場合だけcommand/timeoutを含める
+        # （context仕様 §6）。command名が定義未解決（bindingを構成できない）なら含めない。
         commands_settings = []
         for name in sorted(referenced_commands):
             resolved = resolved_commands.get(name)
@@ -335,6 +338,7 @@ def _compute_verify_digest(
             commands_settings.append(
                 {"workspaceId": workspace_id, "name": name, "argv": list(resolved["argv"]), "cwd": resolved.get("cwd", ".")}
             )
+        has_binding = bool(commands_settings)
         verify_timeouts = (
             [{"workspaceId": workspace_id, "timeoutSeconds": verify_cfg.get("timeoutSeconds", context_mod.DEFAULT_VERIFY_TIMEOUT)}]
             if has_binding
@@ -580,44 +584,50 @@ def _process_single_target(
         root_entry = id_index[root_id]
         doc_unit = root_entry.kind == "TECH" and not root_entry.statements
 
-    binding_missing_diag: dict | None = None
+    # skip-target（VERIFY-BINDING-MISSING）: testまたはcommand定義そのものが不足しbindingを
+    # 構成できない条件。独立した原因（testエントリ単位）はそれぞれDiagnosticを返す（同一エントリを
+    # 複数statementが指しても、同じraw原因（同じpath/key）へは1件に畳む）。
+    binding_missing_diags: list[dict] = []
+    seen_missing_keys: set[tuple[str, str]] = set()
+
+    def _add_binding_missing(owner: str, path: str, idx: int, name: str | None) -> None:
+        seen_key = (path, f"tests[{idx}].command")
+        if seen_key in seen_missing_keys:
+            return
+        seen_missing_keys.add(seen_key)
+        label = name if name else "(未指定)"
+        binding_missing_diags.append(
+            _file_diag(
+                "SPEC-VERIFY-BLOCKED-001", "error", "blocked", messages.verify_command_undefined(label),
+                owner, path, key=f"tests[{idx}].command",
+            )
+        )
+
     if doc_unit:
         for idx, t in enumerate(root_entry.frontmatter.get("tests") or []):
-            if binding_missing_diag is not None:
-                break
             name = t.get("command") or root_entry.frontmatter.get("verify")
             cmds = resolved_commands_for(workspace_id)
             if not name or name not in cmds:
-                label = name if name else "(未指定)"
-                binding_missing_diag = _file_diag(
-                    "SPEC-VERIFY-BLOCKED-001", "error", "blocked", messages.verify_command_undefined(label),
-                    workspace_id, root_entry.path, key=f"tests[{idx}].command",
-                )
-                break
+                _add_binding_missing(workspace_id, root_entry.path, idx, name)
+                continue
             for c in (t.get("covers") or []):
                 needed_pairs.append((workspace_id, name, t["path"], _canon_id(c)))
     else:
         cover_ids = list(target_statements)
         for cover_id in cover_ids:
-            if binding_missing_diag is not None:
-                break
             for doc_entry, idx, t, owner in covering_tests(cover_id):
                 name = t.get("command") or doc_entry.frontmatter.get("verify")
                 cmds = resolved_commands_for(owner)
                 if not name or name not in cmds:
-                    label = name if name else "(未指定)"
-                    binding_missing_diag = _file_diag(
-                        "SPEC-VERIFY-BLOCKED-001", "error", "blocked", messages.verify_command_undefined(label),
-                        owner, doc_entry.path, key=f"tests[{idx}].command",
-                    )
-                    break
+                    _add_binding_missing(owner, doc_entry.path, idx, name)
+                    continue
                 needed_pairs.append((owner, name, t["path"], _canon_id(cover_id)))
 
-    if binding_missing_diag is not None:
-        entry_out["diagnostics"] = [binding_missing_diag]
+    if binding_missing_diags:
+        entry_out["diagnostics"] = sort_diagnostics(binding_missing_diags)
         entry_out["status"] = "blocked"
         entry_out["bindingRefs"] = []
-        entry_out["contextDigest"] = None
+        entry_out["contextDigest"] = context_digest
         return entry_out, []
 
     entry_out["bindingRefs"] = sorted({f"{ws}::{name}" for ws, name, _p, _c in needed_pairs})
