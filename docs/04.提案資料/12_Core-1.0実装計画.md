@@ -228,6 +228,9 @@ Core自身の`.spec/`は、REQを`approved`にした複製で`verify`が通過�
 別member所有bindingを1回だけ実行し、request targetとowner memberのstatusへ反映してもcommand実体とdurationを
 複製しない。
 
+状態は`In progress`である。2026-09-25時点でStep 1〜5の完了条件310件のうち304件がCoreで通過する（commit `29c5006`）。
+残る6件はfixtureと規範文が食い違い、訂正には人間の管理者の承認を要する。内訳は[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録した。
+
 ## 9. Step 6: SDD垂直スライスと自己適用
 
 Step 2完了時点でbitz-core自身の`.spec/`を作り、以後の実装をSmall Flowで進める。

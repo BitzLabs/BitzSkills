@@ -140,3 +140,22 @@ memory peakが5 MB未満に収まる（出力総量に比例しない）。timeo
 - 1つのtargetにbinding不足の原因が複数あっても最初の1件だけを返し、そのtargetの`contextDigest`をnullとする（`SINGLE-061`）。
 
 Step 4のCoreが後続Stepへ残した暫定実装は、複合workspace（`--all-workspaces`、修飾ID、`resolution.workspaces`）だけである。
+
+## 2026-09-25: Step 5（未認定）
+
+状態は`In progress`である。2026-09-25時点でStep 1〜5の完了条件310件のうち304件がCoreで通過する
+（commit `29c5006`、`uv run fixtures/run_conformance.py --core plugins/bitz-core --step 5`）。
+残る6件は、fixtureと規範文が食い違うため、Coreを規範文どおりに実装すると通過しない。
+[ADR-051](../../docs/02.設計書/10_決定記録/ADR-051_適合fixtureの変更手続きを確定する.md)により、訂正には人間の管理者の承認を要する。
+
+| fixture | 食い違い |
+|---|---|
+| `MULTI-020-09`、`020-10` | 生成器が1つの`relations.requires`へ同じIDを最大1,000回並べる。文書・Frontmatter仕様 §11は配列の重複を`SPEC-FM-SCHEMA-001`とするが、fixtureは`passed`を期待する |
+| `MULTI-020-15`、`020-16`、`021-08` | 生成したTECHのFrontmatterが最大64,758 byteで、安全な入出力 §4のFrontmatter上限32 KiBを超える。fixtureはbindingの実行または`verifyBindingCount`の超過を期待する |
+| `MULTI-012` | 期待する`EAI-CORE-ID-002`の`line`が見出し行（13行目）を指し、summaryも同じ条件の`SINGLE-011`（2回目の出現位置、「規範文IDが重複しています」）と異なる |
+
+次の2件は、Gate A認定済みのfixtureどうし、またはfixtureと規範文が食い違うが、Coreをfixtureへ合わせて通過させている。
+
+- `multiWorkspace.maxMembers`: 複合workspace仕様 §2は既定20の実効上限を超えれば`blocked`とするが、`MULTI-020-01`〜`02`は
+  `maxMembers`を省略したままmember 99と100で`passed`、`MULTI-021-01`はlimit 100で遮断する。Coreはmember数をhard limit 100だけで判定する。
+- file名IDが不一致の文書の`checkedDocumentCount`: `SINGLE-014`は0、`MULTI-011`のmember結果は1を期待する。

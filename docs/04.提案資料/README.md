@@ -553,6 +553,7 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 | Step 2 | `Complete` | EARS-AIの候補Scanner・Parser・Semantic IRとParser adapter、文書catalogとFrontmatter検証、関係・path・coverageの検査、明示TASKの境界検査を実装済み |
 | Step 3 | `Complete` | `check`の基準版比較・引数なしcheck・明示report、`context`操作とContext Digest、Markdown提示を実装済み |
 | Step 4 | `Complete` | `verify`操作、test processの実行とtimeout、出力のredaction、実行file解決のdoctorとの共通化を実装済み |
+| Step 5 | `In progress` | 複合workspaceの事前検査、横断解決、check・context・verify、`bitz.compat`を実装済み。310件中304件が通過し、fixtureと規範文が食い違う6件は訂正の承認待ち（[実装計画 §8](12_Core-1.0実装計画.md#8-step-5-複合workspace)） |
 | Gate B | Step 1〜4 `Passed`、Step 5 `Pending` | 各StepのCore実装を固定済みfixtureへ通して判定。認定結果は[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録 |
 | Gate C | `Pending` | 全適合、性能、決定性、副作用、process、自己適用をまとめて判定 |
 
