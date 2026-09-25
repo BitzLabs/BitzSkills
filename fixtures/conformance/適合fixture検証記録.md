@@ -864,3 +864,24 @@ commit `f6cfebb73db38e92c259161f46e4f7500d3dea16`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 訂正した fixtureはいずれもStep 5の完了条件に属し、Gate Bが`Passed`のStep（1〜4）の fixtureは変えていない。
+
+## 2026-09-26: 明記した規範文への追従とGate Aの再認定
+
+2026-09-25に管理者が承認した方針に従い、`e0793b5`で実装時の仕様解釈を規範文へ明記し（新ADR-054を含む）、
+`235f329`でfixtureを追従させた。matrixは318件（単一workspace 258件、複合workspace 60件）になった。
+
+- 追加（ADR-051の追加）: `SINGLE-128`〜`133`、`SINGLE-106-06`〜`07`。根拠の規範文はmatrixの条件欄と各reviewに記録した。
+- 期待値の訂正（管理者承認）: `SINGLE-061`（verify仕様 §8に合わせ`contextDigest`を計算値、独立した原因をそれぞれ返す）。
+- 期待値の追加: relationとcoversのDiagnosticへ`evidence`（結果契約 §4）。比較の範囲を広げる変更であり緩和に当たらない。
+- Diagnostic台帳の根拠文書hashと`targets/cases.json`の`contractSha256`を再reviewして更新した。
+
+commit `235f329079deb4d15a4f97acb19ce957fdb2c9bd`に対して`uv run fixtures/certify_gate_a.py`を実行し、
+`gateA: "Allowed"`、error 0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 統合検証 | 2つのcloneでReport SHA-256が両方`9cdc3de71e1adf14ff8d2be29ec5d58d343456bd3e8d128a9af8bcf049ef5992`（matrixの件数の変更により前回から変わった） |
+| scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 2〜4に属するfixtureを変えたため、ADR-051によりStep 2〜5のGate Bを判定し直す（Coreの追従後）。
