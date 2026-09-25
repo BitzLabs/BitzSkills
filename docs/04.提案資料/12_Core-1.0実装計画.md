@@ -37,7 +37,7 @@ Core 1.0のGateは次の3層とする。
 | Gate | 判定時点 | 判定対象 | 現在状態 |
 |---|---|---|---|
 | Gate A: 実装着手可能性 | Step 1開始前 | 規範、fixture、期待値、検証基盤がCore実行体なしで再現可能 | `Allowed` |
-| Gate B: Step別実装受入 | 各Step完了時 | 当該StepのCore実装が固定済みfixtureへ適合 | Step 1〜3 `Passed`、Step 4〜5 `Pending` |
+| Gate B: Step別実装受入 | 各Step完了時 | 当該StepのCore実装が固定済みfixtureへ適合 | Step 1〜4 `Passed`、Step 5 `Pending` |
 | Gate C: Core 1.0 release受入 | 全Step完了後 | 全適合、性能、自己適用を含む出荷可能性 | `Pending` |
 
 Gate条件の正本は本書、fixture構造と比較方法の正本は
@@ -205,6 +205,10 @@ Canonical JSONとDigestが規定値にbyte一致することである。`096-01`
 `071-03`〜`04`、`104-03`、`105-02`、`106-04`〜`05`、`107`〜`108`、`110`、`111-04`、`112`〜`113`、`125-04`、`126`、
 `127-08`〜`10`が通過する。timeout fixtureは子孫がpipeを保持してもtimeout到達から
 5秒以内に結果を確定し、計画済みの独立bindingを継続する。
+
+状態は`Complete`、Step 4のGate Bは`Passed`である。2026-09-25にcommit `cac5b08`へ
+`uv run tests/bitz-core/certify_gate_b.py --step 4`を実行し、Step 1〜4の完了条件の250件と`parserChecks`4件がすべて通過した。
+Core自身の`.spec/`は、REQを`approved`にした複製で`verify`が通過することを確かめた。結果は[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録した。
 
 ## 8. Step 5: 複合workspace
 

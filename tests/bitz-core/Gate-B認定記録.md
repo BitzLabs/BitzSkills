@@ -111,3 +111,32 @@ Step 3のCoreが後続Stepへ残した暫定実装は次のとおりである。
 
 - `verify`の本体と`verify --report`は未実装である。
 - 複合workspace（修飾ID、`--all-workspaces`、`resolution.workspaces`）は未実装である。
+
+## 2026-09-25: Step 4
+
+commit `cac5b0818dd82de0a86e2aac5e93464bf39f7e4c`に対して`uv run tests/bitz-core/certify_gate_b.py --step 4`を実行し、
+`gateB: {"step": 4, "result": "Passed"}`、error 0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜4の完了fixture 250件（Step 4は`SINGLE-055`〜`069`、`070-03`〜`04`、`071-03`〜`04`、`104-03`、`105-02`、`106-04`〜`05`、`107`〜`108`、`110`、`111-04`、`112`〜`113`、`125-04`、`126`、`127-08`〜`10`）と、`parserChecks` 4件 |
+| 参照harness | 2つのcloneで250件すべてpassed。所要時間と検査対象のpathを除いた結果のSHA-256は両方`9f5072973618ee24d2d0aec7e3f2608a3925cf43cf2ceee26727cb40d4be91b7` |
+| Parser adapter | 2つのcloneで終了コード0、標準出力が一致（Step 2から変化なし） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は432件がすべて成功した。process出力のredactionは、secretを含む入力をランダムな300通りと全byte位置の
+2分割でchunkへ分けて与え、一括投入と同じ結果になり、secretが残らないことを確かめた。10 MiBの出力でもredactionの
+memory peakが5 MB未満に収まる（出力総量に比例しない）。timeout系fixtureの後に子孫processが残らないことも確かめた。
+
+実装計画 §9の「Coreが自分自身をcheck・verifyできる状態」について、repository rootの`.spec/`のREQ-001とREQ-002を
+一時的に`approved`へ変えた複製で`bitz verify`を実行し、両targetが`passed`（binding 1件、試験83件）となることを確かめた。
+現在のREQはいずれも`draft`であり、`approved`への変更は人間の確認を待つ。
+
+仕様の記述だけでは一意に決まらず、実装で次のとおり解釈した。
+
+- spawn前に遮断したbindingのDiagnosticの置き場所は、registryのcontinuationで分ける。`skip-target`の条件
+  （`VERIFY-BINDING-MISSING`）はtargetの`diagnostics`、`skip-binding`の条件は最上位の`diagnostics`へ置く
+  （`SINGLE-061`、`126-08`、`126-09`）。
+- 1つのtargetにbinding不足の原因が複数あっても最初の1件だけを返し、そのtargetの`contextDigest`をnullとする（`SINGLE-061`）。
+
+Step 4のCoreが後続Stepへ残した暫定実装は、複合workspace（`--all-workspaces`、修飾ID、`resolution.workspaces`）だけである。
