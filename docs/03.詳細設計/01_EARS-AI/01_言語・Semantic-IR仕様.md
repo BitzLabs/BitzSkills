@@ -17,7 +17,7 @@ Semantic IRを正本fileとして保存しない。
 ```ebnf
 document-id  = prefix, "-", digit, digit, digit, { digit } ;
 prefix       = "REQ" | "TECH" | "ADR" | "TASK" ;
-local-id     = alnum, { alnum | "-" } ;
+local-id     = upper, { upper | digit | "-" }, "-", digit, digit, { digit } ;
 statement-id = document-id, ":", local-id ;
 ```
 
@@ -153,6 +153,14 @@ Unicode code point単位の1始まりとし、TAB、結合文字、全角文字�
 必須tag不足、発動条件複数、句点欠落、operand不足の順でprimaryを1件だけ返す。別位置の独立原因はそれぞれ返す。
 [Diagnostic registry](../00_共通契約/05_Diagnostic-registry.md)のpriorityはこの順序と一致させる。
 
+期待するtagの出現位置に別のtagが現れた場合、次のいずれかで判定する。
+
+1. 期待するtagが同じ行の後方（code span外）に存在する: tag順序不正（`EAI-CORE-SYNTAX-001`）とする。
+2. 期待するtagが同じ行のどこにも存在しない: 必須tag不足（`EAI-CORE-SYNTAX-002`）とする。
+3. その位置のtagがCore tagでも妥当なextensionでもない: 不正tag（`EAI-CORE-SYNTAX-004`）とする。
+
+この規則は`operation`の後に続くtag（末尾extensionを含む）にも同じ順で適用する。
+
 ## 5. 規範行候補
 
 候補抽出と完全構文検証を分離する。
@@ -265,7 +273,7 @@ opaque extensionを削除しない。Core 1.0は公開`bitz fmt`を提供しな�
 | `EAI-CORE-SYNTAX-004` | error／draftはwarning | `failed`／`passed_with_warnings` | 不正escape、未閉鎖quoted value、不正・未閉鎖tag |
 | `EAI-CORE-SYNTAX-005` | error／draftはwarning | `failed`／`passed_with_warnings` | 未閉鎖code span |
 | `EAI-CORE-SYNTAX-006` | error／draftはwarning | `failed`／`passed_with_warnings` | 句点欠落 |
-| `EAI-CORE-ID-001` | error | `failed` | ID形式不正 |
+| `EAI-CORE-ID-001` | error | `failed` | ID形式不正、または規範文IDの文書部分がFrontmatter `id`と不一致（draftでもerror） |
 | `EAI-CORE-ID-002` | error | `failed` | 規範文ID重複 |
 | `EAI-CORE-SEM-001` | error／draftはwarning | `failed`／`passed_with_warnings` | operand不足 |
 | `EAI-CORE-SHOULD-001` | warning | `passed_with_warnings` | `SHOULD`の理由field不足 |

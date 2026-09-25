@@ -109,9 +109,14 @@ Core語彙は`requires`、`refines`、`addresses`、`supersedes`、`related`だ�
 | `covers` | string[] | Yes | 対応する規範文ID |
 | `command` | string | No | `bitz.yaml` command名 |
 
-REQまたはEARS-AIを含むTECHでは`covers`へ同じ文書の規範文IDを指定する。規範文を持たないTECHだけ文書IDを
-指定できる。存在しない句と同じ対応の重複はerrorとする。複合workspaceで文書が別workspaceの文書または規範文を
-直接`refines`する場合だけ、そのtargetを修飾IDで`covers`に指定できる。横断coverageの詳細は
+`covers`に指定できる値は次のいずれかに限る。
+
+(a) 宣言文書自身の規範文ID
+(b) 規範文を持たない宣言文書自身の文書ID
+(c) 宣言文書が`relations.refines`で直接参照する文書の規範文ID、または直接参照する規範文そのもの
+
+存在しない句と同じ対応の重複はerrorとする。複合workspaceで(c)のtargetが別workspaceの文書または規範文である
+場合、そのtargetを修飾IDで`covers`に指定できる。横断coverageの詳細は
 [複合workspace仕様](05_複合workspace仕様.md)に従う。
 
 command名は`tests[].command`、文書の`verify`の順で解決する。どちらもない場合、または解決したcommand名が
@@ -159,6 +164,10 @@ test対応は対象宣言であり、assertionの十分性を証明しない。
 
 保護有効時、`check`はGit基準版の`approved` REQと現在版を比較する。`title`、EARS-AI規範文、強い関係を
 変更しながらstatusを`draft`または`outdated`へ戻していない場合、`SPEC-SAFETY-APPROVED-001`／failedとする。
+
+ここで比較する「EARS-AI規範文」は、Semantic IRの意味field（`actor`、`activation`、`modality`、`reason`、
+`operation`、`extensions`。[Context Digest正規化仕様 §3.1.3](../00_共通契約/03_Context-Digest正規化仕様.md#313-statements)
+と同じ集合）を指し、`source`・`raw`などの位置情報や原文の字面は含めない。
 
 `implements`、`tests`、`verify`、`related`、`x-`拡張、説明文だけの変更は意味変更に含めない。
 Git基準版に存在しない新規REQは比較対象外とする。

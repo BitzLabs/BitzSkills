@@ -308,6 +308,9 @@ binding、0件判定は各[操作仕様](../03_操作仕様/README.md)が定義�
   超過後も入力を読み続けることは要求しない。
 - `verifyBindingCount`は`commandDefinitionCount`の部分集合なので、両方が同時に超過し得る。複数のdimensionが
   同時に超過する場合は、verify実行計画のdimensionを優先して報告する。
+- `verify`では`commandDefinitionCount`の判定を実行計画の確定後（対象展開とbinding重複排除が終わった後）に行う。
+  同時に`verifyBindingCount`も超過していれば`verifyBindingCount`を報告し、`commandDefinitionCount`だけが超過
+  していればそれを報告する。いずれの判定も、超過を検出した時点でcommandを1件も起動する前に行う。
 - 通常操作でも横断参照と逆参照に必要な軽量索引はcatalog全体から作る。
 - 変更workspaceと到達workspaceを完全解析し、無関係workspaceの本文解析を避ける。
 - Gitが利用できない、またはrepository rootと所有境界を確定できない場合、複合workspace操作は

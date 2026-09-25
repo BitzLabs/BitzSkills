@@ -154,6 +154,19 @@ fixture harnessの参照実装が検査対象のsource tree、build成果物、�
 | `package` | `metadata` | 配布物名、import package名、console script名が`bitz`で、requires-pythonが3.12以上を許す |
 | `package` | `dependencies` | runtime依存が標準libraryと、lock fileでexact versionへ固定したYAML library 1つだけ |
 
+`migration`は、setupで適用済みの変更集合が、原子的な複合workspace化（`root`から`multiWorkspace`宣言とmember
+登録への一括切替え）、または完全なrollback（複合workspace宣言と修飾参照を残さず単一workspace形式へ戻す）に
+なっているかを読取り専用で検証する。修飾参照が1件でも残る部分rollbackは`rejected`とする。Core（`bitz.compat`）は
+この検証のためにfileを書き換えない。
+
+`consumer result-shape`は、指定JSONが次のどちらか一方の外形だけを満たす場合に`accepted`とする。
+
+- 単一workspace外形: 最上位に`workspace`を持ち、`multiWorkspace`と`workspaces`を持たない。
+- 複合workspace外形: 最上位に`multiWorkspace`と`workspaces`の両方を持ち、`workspace`を持たない。
+
+両外形の固有key（`workspace`と、`multiWorkspace`または`workspaces`）を同時に持つ場合、またはどちらの固有keyも
+持たない場合は排他的外形の違反として`rejected`とする。
+
 manifestは1つの正確な終了コードとstatusまたはoutcomeを記録する。範囲、選択肢、条件分岐、`元statusと同じ`、
 `成功・非成功`のような入力依存表現を書かない。
 `setup.baseCommit`を持つfixtureは`--base`をargvへ明示する。Coreはdefault branchとmerge-baseを

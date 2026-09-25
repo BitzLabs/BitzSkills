@@ -95,3 +95,4 @@
 | [ADR-051](ADR-051_適合fixtureの変更手続きを確定する.md) | 適合fixtureの変更手続きを確定する | accepted | ADR-046・049・050, 適合fixture仕様, 実装計画 |
 | [ADR-052](ADR-052_Gate-Bの実行と認定の構成を確定する.md) | Gate Bの実行と認定の構成を確定する | accepted | ADR-046・049・051, 実装計画, steps.json |
 | [ADR-053](ADR-053_CPythonの下限を3.12へ引き上げる.md) | CPythonの下限を3.12へ引き上げる | accepted | ADR-045・046・049・051, 実行環境・CLI基盤契約, doctor仕様, 適合fixture仕様, 実装計画 |
+| [ADR-054](ADR-054_規範文のlocal-idをFrontmatterの参照形式へそろえる.md) | 規範文のlocal-idをFrontmatterの参照形式へそろえる | accepted | ADR-005・013・051, EARS-AI言語・Semantic IR仕様 |

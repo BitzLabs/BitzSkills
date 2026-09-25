@@ -341,6 +341,11 @@ error > failed > blocked > passed_with_warnings > passed
 tool障害の`error`のいずれにも対応できる。warningの`resultStatus`は`passed_with_warnings`、infoは`passed`を
 原則とし、warningと`blocked`を組み合わせない。
 
+relation edgeまたは`covers`要素を単位とするDiagnostic（`SPEC-RELATION-MISSING-001`、
+`SPEC-RELATION-ADVISORY-MISSING-001`、`CTX-RELATION-TYPE-001`、`SPEC-MULTI-REF-001`、
+`SPEC-TEST-COVERAGE-001`）は、上の例と同じ形で`evidence`に参照先を宣言どおりの文字列で持つ。同じ`source.key`を
+持つ複数件が生じても、`evidence`により各件が参照先で区別できる。この規則はsort規則を変更しない。
+
 ## 5. source
 
 | `kind` | 必須field | 任意field | 用途 |

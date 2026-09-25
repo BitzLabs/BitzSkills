@@ -49,6 +49,9 @@ Core 1.0は単一workspaceと、1つのGit repository内の明示的な複合wor
 `.spec/`内の未知file/directoryは`SPEC-WORKSPACE-UNKNOWN-001`／warningとする。hidden、一時file、Markdown以外の成果物を暗黙にSPECとして
 読み込まない。
 
+`.spec/`配下（`.spec/reports`を除く）のsymlinkは、fileへのsymlinkとdirectoryへのsymlinkのいずれも辿らず、
+その内容を読まない。symlink自体を未知entryとして扱い、`SPEC-WORKSPACE-UNKNOWN-001`／warningとする。
+
 ## 4. `bitz.yaml`
 
 ```yaml

@@ -200,8 +200,10 @@ context仕様 §6の許可リストだけをkey固定のobjectとして保持す
 
 - `workspaces`は到達workspaceだけを`id`辞書順に並べる。
 - `context`はrequest workspaceの既定値適用後の値だけとする。
+- `verifyTimeouts`と`commands`は、`purpose=verify`のBundleがbindingとして収録したcommandだけから作る。
+  `purpose`が`implement`または`interpret`のBundleでは、いずれも空配列とする。
 - `verifyTimeouts`はbindingを1件以上収録したworkspaceだけを`workspaceId`辞書順に並べ、既定値を適用する。
-- `commands`はBundleが参照するcommandだけを`workspaceId`、`name`の順で辞書順に並べる。`argv`は
+- `commands`はbindingが参照するcommandだけを`workspaceId`、`name`の順で辞書順に並べる。`argv`は
   `{tests}`を展開しないtemplateのまま保持し、`cwd`は未指定時`.`とする。
 - `multiWorkspace.maxMembers`、`safety`、未到達workspaceの設定、未使用command、CLI timeout cap、
   出力形式、`--report`は含めない。

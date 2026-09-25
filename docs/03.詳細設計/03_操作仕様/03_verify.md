@@ -127,8 +127,17 @@ coverage、command、環境不足はtestを開始せずblockedとする。
 OSのprocess生成を呼び出し、race、resource不足、またはOS errorで失敗した場合だけとする。この場合はcommand結果を
 `termination: spawn_error`、`exitCode: null`、空抜粋、両truncated flag falseで記録する。
 
-spawn前にblockedとなったbindingのDiagnosticは、単一workspaceでは最上位、複合workspaceではbinding所有workspaceへ1件だけ置き、
-共有targetごとに複製しない。影響targetはDiagnosticを複製せずstatusを`blocked`、`bindingRefs: []`とする。
+spawn前に遮断したDiagnosticの置き場所は、[Diagnostic registry](../00_共通契約/05_Diagnostic-registry.md)の
+continuationで分ける。
+
+- `skip-target`（`VERIFY-BINDING-MISSING`など、testまたはcommand定義そのものが不足しbindingを構成できない
+  条件）は、当該targetの`diagnostics`へ置く。
+- `skip-binding`（`VERIFY-ARGV-EXPANDED-LIMIT`、`VERIFY-CWD-UNAVAILABLE`、`VERIFY-EXECUTABLE-UNAVAILABLE`、
+  `VERIFY-CONFIG-UNTRACKED`、`VERIFY-TEST-OUTSIDE-CWD`など、bindingを構成できるがspawn前に当該binding単位で
+  遮断する条件）は、単一workspaceでは最上位、複合workspaceではbinding所有workspaceへ1件だけ置き、
+  共有targetごとに複製しない。
+
+いずれの場合も影響targetはDiagnosticを複製せずstatusを`blocked`、`bindingRefs: []`とする。
 spawn後のcommand結果は通常どおり1件を`commands[]`へ置き、参照targetはその`bindingId`を保持して結果statusを集約する。
 
 ## 7. 引数なし実行

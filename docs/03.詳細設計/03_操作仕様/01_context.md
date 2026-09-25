@@ -143,6 +143,8 @@ edgeは重複排除し、`source`、`relation`、`target`の辞書順とする�
 
 全projectionは`id`、`kind`、`status`、`role`、`path`、`projection`、`reachedBy[]`、`untrustedText: true`を必須とする。
 `reachedBy[]`は起点なら`root`、到達edgeなら`<relation>:<source-id>`を保持し、重複排除後のcode point辞書順とする。
+`source-id`は、statement単位のrelation（`refines`の対象がstatementである場合など）でも、その`relation`を
+宣言した文書のID（statement IDではない）とする。
 
 | projection | 追加必須field | 禁止field |
 |---|---|---|
@@ -155,9 +157,18 @@ edgeは重複排除し、`source`、`relation`、`target`の辞書順とする�
 `expandable`は完全解決集合内で`--expand`可能ならtrueとする。nullで省略を代用せず、禁止fieldは出力しない。
 roleの割当ては[関係・トレースモデル §7](../02_SPECモデル/04_関係・トレースモデル.md#7-決定論的探索)に従う。
 
-`standard`は起点、TASK、replacement、距離1文書をfull、間接constraint/refinementをnormative、advisoryを
-referenceとする。`compact`は原文を省略してManifest、Diagnostic、Ledger、coverage、境界、参照を返す。
-`full`は全解決文書をfull提示する。
+`standard`は文書のroleで既定projectionを決める。full projectionにするのは起点（`root`）、TASK（`work`）、
+replacement、requirement、constraintと、距離1の文書である。normative projectionにするのは、それら以外の
+距離2以上のrefinementである（その規範文はNormative Constraint Ledgerに収録される）。reference projectionに
+するのはadvisoryである。`compact`は原文を省略してManifest、Diagnostic、Ledger、coverage、境界、参照を返し、
+全文書をreference提示とする。`full`は全解決文書をfull提示する。
+
+requirementとconstraintをnormativeにせずfullにするのは、`requires`／`addresses`で到達したそれらの所有statementは
+`targetStatements`へ昇格せず（[関係・トレースモデル §6.4](../02_SPECモデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)
+規則4）、Constraint Ledgerに収録されない（本仕様§4）ためである。normativeにすると、それらが持つ`MUST`の本文が
+projectionからもLedgerからも失われ、依存距離を理由に必須制約を参照だけへ落とさないというADR-014 Decision 4に
+反する。roleを先に適用し（起点、TASK、replacement、requirement、constraintはfull、advisoryはreference）、依存距離は
+refinementをfullとnormativeへ分けるときだけ使う本節の規則は、ADR-014 Decision 5と整合する。
 
 どのdetailでも完全解決、全対象`MUST`、Constraint Ledgerを省略しない。提示方法の変更はContext Digestを
 変えない。Core 1.0はProjection Digestを返さない。
@@ -179,8 +190,10 @@ Context Digestは次をCanonical JSON化したSHA-256である。形式は`sha25
 
 - 到達workspaceごとの`schemaVersion`、`earsAi`、`language`
 - request workspaceだけの既定値適用後`context.maxDocuments`と`context.maxBytes`
-- bindingを1件以上収録したworkspaceの既定値適用後`verify.timeoutSeconds`
-- Bundleが参照するcommandだけの名前、argv template、既定値適用後cwd。command名辞書順
+- `purpose=verify`のBundleがbindingとして収録した場合だけの、bindingを1件以上収録したworkspaceの
+  既定値適用後`verify.timeoutSeconds`。`implement`と`interpret`では空配列とする
+- `purpose=verify`のBundleがbindingとして収録した場合だけの、bindingが参照するcommandだけの名前、
+  argv template、既定値適用後cwd。command名辞書順。`implement`と`interpret`では空配列とする
 
 次は含めない。
 
@@ -204,8 +217,9 @@ adapterは最初の書込み直前と、仕様・設定変更を認識した再�
 ## 8. 上限
 
 既定20文書、128 KiB、hard limit 100文書、1 MiBとする。意味依存にdepth上限を設けない。
-完全閉包が上限を超えれば`CTX-LIMIT-001`／blockedとする。detail/expandだけで提示hard limitを超えれば
-`CTX-PROJECTION-LIMIT-001`／failedとする。
+完全閉包が上限を超えれば`CTX-LIMIT-001`／blockedとする。byte上限は、指定した`--detail`にかかわらず、
+`standard`提示（[安全な入出力 §4「ContextのSemantic IRと標準提示」](../00_共通契約/02_安全な入出力・互換性.md#4-resource上限)）
+の量で測る。detail/expandだけで提示hard limitを超えれば`CTX-PROJECTION-LIMIT-001`／failedとする。
 
 ## 9. Markdown提示
 
@@ -271,6 +285,9 @@ projectionごとに次を出し、[§5](#5-projection)の禁止fieldを出力し
 | `frontmatter` | Yes | — | — |
 | `expandable` | — | — | Yes |
 | `bodyText` | Yes | — | — |
+
+出力するfieldの並びは`kind`、`status`、`projection`、`reachedBy`、`statementRefs`、`frontmatter`、
+`untrustedText`、`expandable`、`bodyText`の順で固定し、上表で禁止されるfieldは省く。
 
 `frontmatter`は`- frontmatter: <Canonical JSON>`の1行とし、[§6](#6-context-digest)のCanonical JSON規則を使う。
 YAMLへ再直列化しない。`bodyText`は`- bodyText:`の行、空行1行に続けてfenceで囲む。fenceは情報文字列`markdown`

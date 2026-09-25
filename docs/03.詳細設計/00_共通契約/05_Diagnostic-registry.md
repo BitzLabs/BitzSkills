@@ -41,6 +41,9 @@ continuationは次の閉じた語彙を使う。
 priorityが最小の行だけをprimaryとして返す。同じpriorityの候補が残る場合は本registryの上から先にある行を返す。
 独立したraw原因はそれぞれprimaryを持ち、結果内の表示順は共通結果契約のsort規則に従う。
 
+relation edgeまたは`covers`要素を単位とするDiagnosticの`evidence`規則は
+[共通結果契約 §4](01_結果・Diagnostic・終了コード.md#4-diagnostic-schema)を正とする。
+
 ## 3. 入力、設定、Frontmatter
 
 | conditionId | operations | code | severity | status | source | continuation | priority | 条件 |
@@ -84,6 +87,7 @@ priorityが最小の行だけをprimaryとして返す。同じpriorityの候補
 | `EAI-SYNTAX-TAG-UNCLOSED` | parse | `EAI-CORE-SYNTAX-004` | error | failed | file | `skip-document` | 201 | draft以外の不正escape、未閉鎖quoted value、不正または未閉鎖tag |
 | `EAI-SYNTAX-TAG-UNCLOSED-DRAFT` | parse | `EAI-CORE-SYNTAX-004` | warning | passed_with_warnings | file | `continue` | 201 | draftの不正escape、未閉鎖quoted value、不正または未閉鎖tag |
 | `EAI-ID-FORMAT` | parse | `EAI-CORE-ID-001` | error | failed | file | `skip-document` | 202 | 規範文ID形式不正 |
+| `EAI-ID-DOCUMENT-MISMATCH` | parse | `EAI-CORE-ID-001` | error | failed | file | `skip-document` | 202 | 規範文IDの文書部分がFrontmatter `id`と一致しない。draftでもerrorとする |
 | `EAI-ID-DUPLICATE` | parse | `EAI-CORE-ID-002` | error | failed | file | `skip-document` | 203 | 規範文ID重複 |
 | `EAI-SYNTAX-TAG-ORDER` | parse | `EAI-CORE-SYNTAX-001` | error | failed | file | `skip-document` | 204 | draft以外のtag順序不正 |
 | `EAI-SYNTAX-TAG-ORDER-DRAFT` | parse | `EAI-CORE-SYNTAX-001` | warning | passed_with_warnings | file | `continue` | 204 | draftのtag順序不正 |

@@ -49,6 +49,10 @@ root一致は要求しない。明示対象、`--full`、`--workspace`と排他�
 
 軽量索引の構築と対象文書の完全解析を混同しない。
 展開規則は[関係・トレースモデル §6.4](../02_SPECモデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)を正とする。
+
+明示対象では、状態遷移（検査順序7）、承認済みREQ保護（検査順序8）、影響候補（検査順序10）を、上の完全検査対象
+（`TargetExpansion(root, interpret)`の`contextDocuments`と直接逆参照）の文書だけへ適用する。この完全検査対象に
+含まれ得ない文書（削除された文書を含む）は、これらの検査の対象にならない。
 `--all-workspaces`は共通事前検査でbase/currentのGit既知`.spec/bitz.yaml`を、複合workspaceを宣言している各snapshot自身の
 catalogと比較する。初回複合workspace化前の単一workspace baseへ全体列挙を適用しない。catalog、ID、path、Git境界、
 未対応major、resource上限が非成功ならworkspace別検査を開始しない。
@@ -57,7 +61,8 @@ catalogと比較する。初回複合workspace化前の単一workspace baseへ�
 
 1. `bitz.yaml` Schema、複合workspaceのcatalog、互換性
 2. file名、Frontmatter、ID一意性
-3. EARS-AI構文と文書ID整合
+3. EARS-AI構文と文書ID整合（規範文IDの文書部分がFrontmatter `id`と一致しない場合を含み、`EAI-CORE-ID-001`とする。
+   draftでもerrorとする）
 4. relationのID、型、状態、循環
 5. `implements`、test対応、command解決
 6. H1、REQ必須section、規範文配置
@@ -84,7 +89,8 @@ catalogと比較する。初回複合workspace化前の単一workspace baseへ�
 記録する。revisionを解決できなければ終了コード4とする。
 
 基準版と現在版はdocument IDで対応付け、pathだけの変更はrenameとする。基準版IDが現在版にない場合は
-管理済みSPEC削除としてfailedとする。
+管理済みSPEC削除としてfailedとする。ただし明示対象は完全検査対象（§3）の文書だけを検査するため、削除された
+文書は完全検査対象に入り得ず、明示対象では管理済みSPEC削除を報告しない。
 
 `--all-workspaces`ではrepository全体で1つの基準commitを使い、基準版と現在版の両catalogからworkspace修飾IDで
 文書を対応付ける。member削除または移動時の扱いは
@@ -115,6 +121,11 @@ rejected REQ/TECHは所有逆索引へ含めない。
 TASK IDまたはTASK pathを明示した場合だけ、同じGit基準版からの変更pathを`changes`と比較する。境界外変更は
 `SPEC-TASK-BOUNDARY-001`／failedとする。TASK自身のfileと明示生成reportは比較対象から除く。
 
+単一workspaceのTASK境界は、workspace root配下の変更だけを比較対象とする。Git rootがworkspace rootより上に
+ある場合、Gitの変更pathをworkspace相対へ変換し、workspace外の変更は比較対象から除く（SPECのpath表記が
+workspace相対であるため、workspace外の変更を表せない）。これは、複合workspaceのworkspace単独操作で
+「選択workspaceが所有するchanged pathだけを起点にする」（§6）のと同じ考え方である。
+
 `changes`のfileは正規化した字句Git pathの完全一致、末尾`/`のdirectory接頭辞はpath segment単位の子孫一致で
 変更を許可する。symlink解決先の別の字句pathへ許可を拡張しない。宣言pathと変更pathには所有境界検査を先に適用し、
 追加はcurrent、削除はbase、変更とsymlink変更はbase/current双方、renameはsourceとdestinationの2 pathを検査する。
@@ -125,7 +136,10 @@ TASK IDまたはTASK pathを明示した場合だけ、同じGit基準版から�
 
 ## 8. 影響候補
 
-changed REQ/TECHへ強く依存するapproved文書を`SPEC-IMPACT-OUTDATED-001`／warningとして示す。
+起点とする「changed REQ/TECH」は、§5の変更集合のうち§6の表で「SPEC path」からFrontmatter IDへ写像した
+REQ/TECHだけとする。同じ表の「code path」「test path」から逆索引で写像したREQ/TECHは起点に含めない。
+
+起点のchanged REQ/TECHへ強く依存するapproved文書を`SPEC-IMPACT-OUTDATED-001`／warningとして示す。
 Coreは意味的影響を断定せず、statusを自動変更しない。`related`、code、test変更を影響候補の起点にしない。
 
 ## 9. 結果
@@ -159,8 +173,10 @@ Coreは意味的影響を断定せず、statusを自動変更しない。`relate
 ## 10. Git不在
 
 単一workspaceの引数なしcheckは全体checkへ縮退する。REQ保護、遷移、削除検出の失われる保証を
-`SPEC-GIT-DEGRADED-001`／warningで示す。
-明示TASK境界だけはblockedとする。詳細は[安全な入出力](../00_共通契約/02_安全な入出力・互換性.md)に従う。
+`SPEC-GIT-DEGRADED-001`／warningで示す。`SPEC-GIT-DEGRADED-001`は引数なしcheckの縮退でだけ返し、
+明示`--full`および明示対象では返さない（Git不在でも構文、Schema、関係、Context、明示対象checkを継続する。
+[安全な入出力 §8「Git不在時」](../00_共通契約/02_安全な入出力・互換性.md#8-git不在時)を参照）。
+明示TASK境界だけはblockedとする。
 
 ## 11. Diagnostic
 
