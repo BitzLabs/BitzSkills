@@ -427,13 +427,28 @@ def _validate_catalog(
         return all_diags, None
 
     # --- UNREGISTERED stage（960） --------------------------------------------------
+    # 各snapshotは自身のcatalogとだけ比較する（複合workspace仕様 §8「各snapshot自身のroot設定が
+    # multiWorkspaceを宣言する場合だけ、そのsnapshot自身のcatalogとの差分を検査する」）。base
+    # snapshotがcurrentと異なるmember構成（例: member pathのrename）を持つ場合、base snapshotの
+    # 既知設定はbase snapshot自身のcatalogへ照合し、current側の既知設定はcurrent catalogへ照合する
+    # （どちらか一方の集合だけで比較すると、IDを保ったmember移動を誤ってunregisteredにする）。
     if git.available and git.executable:
-        known: set[str] = set()
-        for rev in extra_config_revs:
-            known.update(gitutil.list_tree_config_paths(git.executable, cwd, env, rev))
-        known.update(gitutil.list_working_config_paths(git.executable, cwd, env))
         catalog_paths = {".spec/bitz.yaml"} | {f"{rec.path}/.spec/bitz.yaml" for rec in members}
-        extra = sorted(known - catalog_paths)
+        extra_set: set[str] = set()
+        for rev in extra_config_revs:
+            rev_map = base_workspace_map(git, cwd, env, rev, root)
+            if not rev_map:
+                # このrevはmultiWorkspaceを宣言していない（単一workspaceから複合workspace化する前の
+                # snapshot）。repository全体の不存在保証を遡及適用しない（複合workspace仕様 §8）。
+                continue
+            rev_catalog_paths = {
+                ".spec/bitz.yaml" if p == "." else f"{p}/.spec/bitz.yaml" for p in rev_map.values()
+            }
+            rev_known = set(gitutil.list_tree_config_paths(git.executable, cwd, env, rev))
+            extra_set |= rev_known - rev_catalog_paths
+        current_known = set(gitutil.list_working_config_paths(git.executable, cwd, env))
+        extra_set |= current_known - catalog_paths
+        extra = sorted(extra_set)
         if extra:
             return [
                 _diag(
@@ -593,6 +608,75 @@ def _check_resource_limits(
                 return _limit_diag(root_id, dim, HARD_LIMITS[dim], totals[dim])
 
     return None
+
+
+def ordered_workspaces(pre: "PrecheckResult") -> list[tuple[str, str, str]]:
+    """``(workspace_id, root_abs, repository_root相対path)``をroot先頭、以降ID辞書順で返す(§8)。"""
+
+    out: list[tuple[str, str, str]] = [(pre.root_id, pre.repo_root, ".")]
+    for m in sorted(pre.members, key=lambda r: r.id):
+        out.append((m.id, m.root, m.path))
+    return out
+
+
+def base_workspace_map(
+    git: gitutil.GitInfo,
+    cwd: str,
+    env: dict[str, str],
+    base_rev: str | None,
+    repo_root: str,
+    *,
+    current_root_id: str | None = None,
+) -> dict[str, str]:
+    """``base_rev``時点のroot／member catalogを``{workspace_id: repository_root相対path}``で返す。
+
+    root workspaceのIDは基準版のFrontmatter``workspace.id``をそのまま使う。基準版のroot設定が
+    ``multiWorkspace``を宣言していない場合は、``current_root_id``が与えられ、かつ基準版が
+    ``workspace.id``を省略しているときに限り、単一workspaceから初めて複合workspace化するGit比較の
+    写像（複合workspace仕様 §4.1後段）として基準版の実効ID`root`を``current_root_id``へ
+    一方向写像した``{current_root_id: "."}``を返す（状態遷移・削除検出・承認済みREQ保護の
+    base/current対応にだけ使う）。``current_root_id``を渡さない呼び出し（全体事前検査のGit既知設定
+    比較。複合workspace仕様 §8「初回複合workspace化前の単一workspace snapshotへrepository全体の
+    不存在保証を遡及適用しない」）では、この写像を行わず引き続き空dictを返す。
+    """
+
+    if base_rev is None or not git.available or git.executable is None:
+        return {}
+    raw = gitutil.show_base_file(git.executable, cwd, env, base_rev, repo_root, ROOT_CONFIG_PATH)
+    if raw is None:
+        return {}
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return {}
+    try:
+        value = parse_yaml_subset(text)
+    except (YamlSyntaxError, YamlForbiddenError):
+        return {}
+    if not isinstance(value, dict):
+        return {}
+    mw = value.get("multiWorkspace")
+    if not isinstance(mw, dict):
+        if current_root_id is not None:
+            ws_block = value.get("workspace")
+            has_explicit_id = isinstance(ws_block, dict) and isinstance(ws_block.get("id"), str)
+            if not has_explicit_id:
+                return {current_root_id: "."}
+        return {}
+    members_raw = mw.get("members")
+    if not isinstance(members_raw, list):
+        return {}
+    ws_block = value.get("workspace")
+    root_id = ws_block.get("id") if isinstance(ws_block, dict) and isinstance(ws_block.get("id"), str) else "root"
+    result: dict[str, str] = {root_id: "."}
+    for raw_member in members_raw:
+        if (
+            isinstance(raw_member, dict)
+            and isinstance(raw_member.get("id"), str)
+            and isinstance(raw_member.get("path"), str)
+        ):
+            result[raw_member["id"]] = raw_member["path"]
+    return result
 
 
 def precheck(

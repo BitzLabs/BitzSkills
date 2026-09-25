@@ -361,6 +361,33 @@ def show_base_file(
     return proc.stdout
 
 
+def base_tree_entry_mode(
+    executable: str, cwd: str, env: dict[str, str], rev: str, workspace_root: str, workspace_rel_path: str
+) -> str | None:
+    """``rev``時点の``workspace_rel_path``のGit modeを返す（`120000`＝symlink）。不在なら``None``。
+
+    複合workspace仕様 §5.2「base treeのsymlinkはGit treeのmodeとlink targetから解決する」を実装する。
+    """
+
+    offset = _repo_root_relative_offset(executable, cwd, env, workspace_root)
+    if offset in (None, ".", ""):
+        repo_path = workspace_rel_path
+    else:
+        repo_path = f"{offset.rstrip('/')}/{workspace_rel_path}"
+    try:
+        proc = _run([executable, "--no-optional-locks", "ls-tree", rev, "--", repo_path], cwd, env)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if proc.returncode != 0:
+        return None
+    line = proc.stdout.strip().split("\n")[0] if proc.stdout.strip() else ""
+    if not line:
+        return None
+    meta, _, _path = line.partition("\t")
+    parts = meta.split(" ")
+    return parts[0] if parts and parts[0] else None
+
+
 def list_tree_config_paths(executable: str, cwd: str, env: dict[str, str], rev: str) -> list[str]:
     """``rev``時点でGitが認識する``.spec/bitz.yaml``のrepository root相対pathを返す（`複合workspace仕様 §8`）。
 
@@ -398,8 +425,14 @@ def list_working_config_paths(executable: str, cwd: str, env: dict[str, str]) ->
     """現在snapshot（working tree）でGitが認識する``.spec/bitz.yaml``のrepository root相対pathを返す。
 
     tracked／staged path（``git ls-files``）と未追跡かつ非ignore path（``ls-files --others``）の
-    和集合を対象にする（`複合workspace仕様 §8`）。
+    和集合を対象にする（`複合workspace仕様 §8`）。``git ls-files``はindex上のtracked pathを
+    working treeでの実在有無に関わらず返すため、`.spec/bitz.yaml`へ実際にworking treeで
+    到達できるpathだけへ絞る（複合workspace仕様 §8「working treeに存在するtracked／staged path」。
+    file移動後の旧pathがindex上に残っていても、working tree上は既に存在しないため対象にしない）。
     """
+
+    toplevel = show_toplevel(executable, cwd, env)
+    root = os.path.abspath(toplevel) if toplevel else os.path.abspath(cwd)
 
     paths: set[str] = set()
     try:
@@ -415,7 +448,13 @@ def list_working_config_paths(executable: str, cwd: str, env: dict[str, str]) ->
                 paths.add(p)
     for c in _ls_files_others_z(executable, cwd, env):
         paths.add(c.path)
-    return sorted(p for p in paths if p == ".spec/bitz.yaml" or p.endswith("/.spec/bitz.yaml"))
+    return sorted(
+        p
+        for p in paths
+        if (p == ".spec/bitz.yaml" or p.endswith("/.spec/bitz.yaml"))
+        and os.path.isfile(os.path.join(root, *p.split("/")))
+        and not os.path.islink(os.path.join(root, *p.split("/")))
+    )
 
 
 def list_submodule_paths(executable: str, cwd: str, env: dict[str, str]) -> set[str]:

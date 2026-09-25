@@ -90,13 +90,22 @@ def resolve_ref(ref: str, id_index: dict[str, DocEntry], statement_index: dict[s
 def _resolve_ref(ref: str, id_index: dict[str, DocEntry], statement_index: dict[str, dict]):
     """``ref``（文書IDまたはstatement ID）を解決する。
 
-    複合workspace修飾子（``workspace::``）はPhase Cの範囲外のため、解決対象を持たない参照として
-    扱う（stripせずそのまま索引を引く。単一workspaceのIDには``::``を含まないため常に不一致になる）。
+    複合workspace修飾子（``workspace::``）を含む参照は、修飾子を含めた完全な文字列を索引keyとして
+    そのまま引く（Step 5B。呼び出し側が``id_index``／``statement_index``へ``"ws::local"``形式の
+    keyを用意していれば横断解決できる。単一workspaceのIDには``::``を含まないため、この分岐は
+    単一workspace専用の索引に対しては常に不一致になり、挙動を変えない）。statement suffixの``:``は
+    修飾子部分の``::``を除いた残りだけで判定する（``ws::DOC-001:AC-01``のように修飾子と statement
+    suffixが両方存在する形を正しく扱う）。
 
     戻り値は``(target_entry, target_doc_id)``。解決できなければ``(None, None)``。
     """
 
-    if ":" in ref:
+    if "::" in ref:
+        _ws, _, local = ref.partition("::")
+        has_stmt_suffix = ":" in local
+    else:
+        has_stmt_suffix = ":" in ref
+    if has_stmt_suffix:
         stmt = statement_index.get(ref)
         if stmt is None:
             return None, None

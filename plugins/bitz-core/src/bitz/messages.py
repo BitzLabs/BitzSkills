@@ -376,3 +376,22 @@ def multi_limit_exceeded(dimension: str, limit: int) -> str:
     }
     label = _LABELS.get(dimension, dimension)
     return f"{label}が上限{limit:,}を超過しました"
+
+
+# --- 複合workspace修飾ID解決・所有境界（Step 5B、`SPEC-MULTI-REF-001`／`SPEC-MULTI-OWNERSHIP-001`） ---
+
+MULTI_REF_QUALIFIER_INVALID = "修飾IDの形式が不正です"
+MULTI_REF_UNQUALIFIED = "非修飾の参照先が別workspaceにだけ存在します"
+MULTI_REF_WORKSPACE_UNKNOWN = "修飾workspaceがcatalogに存在しません"
+
+
+def multi_ownership_resolved(path: str, workspace_id: str) -> str:
+    return f"{path}の解決先が{workspace_id}の所有範囲外です"
+
+
+def multi_ownership_symlink_base(path: str, workspace_id: str) -> str:
+    return f"{path}の基準版のsymlinkが{workspace_id}の所有範囲外を指します"
+
+
+def multi_ownership_symlink_current(path: str, workspace_id: str) -> str:
+    return f"{path}の現在版のsymlinkが{workspace_id}の所有範囲外を指します"
