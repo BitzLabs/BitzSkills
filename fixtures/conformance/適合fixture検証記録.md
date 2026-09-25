@@ -813,3 +813,28 @@ commit `cd9096121441e53cb7e3d9b5566f576b87847c0a`に対して`uv run fixtures/ce
 | 統合検証 | 2つのcloneでReport SHA-256が両方`aa6c503d8faa69c4c8bfee41e26ca2ead0cb8644e35490edc6a4449d03be6fc5`（前回と同じ。Reportは検査の状態だけを持ち期待値の文面を含まない） |
 | scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`d4b0e6aa89898a2c004ef14207b6f1bd9dc327e9a2a87ec70f51ff1b78b6a08d`（前回と同じ） |
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+## 2026-09-25: 生成fixtureとstateDigestの判定対応とGate Aの再認定
+
+`dbeb9af`で、参照harnessが生成fixture（`setup.generate`）と`stateDigest`形式の副作用期待値を判定できるようにした。
+これまではStep 5の24件（`MULTI-020-01`〜`16`、`MULTI-021-01`〜`08`）をfixture errorとしていた。
+dataset manifestから`multi_generator`で入力treeを生成して`treeDigest`を照合し（§3.4）、実結果を共通normalizerへ通した
+Canonical JSONのSHA-256を`resultDigest`と比較し、setup後と実行後の観測状態のdigestを`stateDigest`と比較する（§5）。
+`durationMs`は§4の除外対象であり、期待digestがliteral 0で固定しているため、実結果側も削除ではなく0へ置き換える。
+除外fieldと比較の範囲は変えていない。`read-only`以外のpolicyを持つ`stateDigest`は、report file名の時刻と連番を
+単一digestで固定できないため、これまでどおり未対応として拒否する。
+
+ADR-051の非意味的な変更（検証基盤の整備）にあたり、fixtureの入力、期待値、副作用期待値は変えていない。
+偽のCoreに生成fixtureの期待結果を審査済みの参照計算から再構成させ、`MULTI-020-01`、`020-16`、`021-01`が通過し、
+結果の1箇所改変と副作用1件の追加がそれぞれ当該fixtureだけを不通過にすることを自己試験で確かめた。
+監査試験では、harnessの計算が`MULTI-021`の8件と`MULTI-020-01`〜`02`の`resultDigest`、`MULTI-020-01`と`021-01`の
+`stateDigest`を再現することを確かめた。変更後もStep 1〜4のCoreは250件すべて通過した。
+
+commit `dbeb9af4cc70ba363bc404f3482881d018c5501e`に対して`uv run fixtures/certify_gate_a.py`を実行し、
+`gateA: "Allowed"`、error 0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 統合検証 | 2つのcloneでReport SHA-256が両方`aa6c503d8faa69c4c8bfee41e26ca2ead0cb8644e35490edc6a4449d03be6fc5`（前回と同じ） |
+| scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`d4b0e6aa89898a2c004ef14207b6f1bd9dc327e9a2a87ec70f51ff1b78b6a08d`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
