@@ -10,6 +10,7 @@ import os
 import sys
 
 from . import config as config_mod
+from . import execfile
 from . import gitutil
 from .cliargs import ParsedArgs
 from .errors import CliArgError
@@ -75,17 +76,7 @@ def _append_git_check(git: gitutil.GitInfo, checks: list[dict], diagnostics: lis
 
 
 def _resolve_command_file(argv0: str, cwd: str, env: dict[str, str]) -> bool:
-    if "/" in argv0:
-        candidate = argv0 if os.path.isabs(argv0) else os.path.join(cwd, argv0)
-        return os.path.isfile(candidate) and os.access(candidate, os.X_OK)
-    path_value = env.get("PATH", "")
-    for directory in path_value.split(os.pathsep):
-        if not directory:
-            continue
-        candidate = os.path.join(directory, argv0)
-        if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
-            return True
-    return False
+    return execfile.resolve_executable(argv0, cwd, env) is not None
 
 
 def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:

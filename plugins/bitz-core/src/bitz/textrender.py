@@ -56,3 +56,18 @@ def render_check_text(result: dict) -> str:
     for d in result.get("diagnostics", []):
         lines.extend(_diagnostic_line(d))
     return "\n".join(lines) + "\n"
+
+
+def render_verify_text(result: dict) -> str:
+    target_results = result.get("targetResults", [])
+    n_targets = len(target_results)
+    diags = list(result.get("diagnostics", []))
+    for t in target_results:
+        diags.extend(t.get("diagnostics", []))
+    lines = [
+        f"verify {result['status']} scope={result.get('scope')} targets={n_targets} "
+        f"diagnostics={len(diags)} ({result['durationMs']}ms)"
+    ]
+    for d in diags:
+        lines.extend(_diagnostic_line(d))
+    return "\n".join(lines) + "\n"

@@ -282,3 +282,51 @@ def projection_limit_exceeded(detail: str) -> str:
 
 
 CTX_STALE_MISMATCH = "期待Digestが現在のContext Digestと一致しません"
+
+
+# --- verify command argv（設定`SPEC-CONFIG-SCHEMA-001`） --------------------------
+
+CONFIG_ARGV_LENGTH_INVALID = "argv templateは256要素以下で指定してください"
+CONFIG_ARGV_ELEMENT_NOT_STRING = "argvの要素はstringで指定してください"
+CONFIG_ARGV_FIRST_EMPTY = "argv[0]は空stringにできません"
+CONFIG_ARGV_ELEMENT_NUL = "argvの要素にNULは使用できません"
+CONFIG_ARGV_ELEMENT_TOO_LONG = "argvの各要素はUTF-8で32 KiB以下で指定してください"
+
+
+# --- verify（`SPEC-VERIFY-*`、`CTX-STATE-*`） ------------------------------------
+
+VERIFY_TARGETS_EMPTY = "verify対象が0件です"
+VERIFY_SPAWN_ERROR = "commandの実行形式をOSが拒否しprocessを生成できません"
+VERIFY_SIGNAL = "commandがsignalで終了しました"
+VERIFY_EXECUTABLE_UNAVAILABLE = "command実行fileをPATHから解決できません"
+VERIFY_ARGV_EXPANDED_LIMIT = "{tests}展開後のargvがbyte上限1 MiBを超えます"
+VERIFY_CONFIG_UNTRACKED = "設定fileがGit管理下で未追跡です"
+VERIFY_TEST_OUTSIDE_CWD = "test pathが実効cwd配下にありません"
+
+
+def verify_timeout(seconds: int) -> str:
+    return f"commandが実効timeout {seconds}秒で終了しませんでした"
+
+
+def verify_command_undefined(name: str) -> str:
+    return f"command名{name}が設定に定義されていません"
+
+
+def verify_coverage_untested(modality: str, stmt_id: str) -> str:
+    return f"対象{modality} {stmt_id}にtest対応がありません"
+
+
+def verify_executable_unavailable_path() -> str:
+    return "command実行fileを解決できません"
+
+
+def verify_argv_expanded_count_limit() -> str:
+    return "{tests}展開後のargvの要素数が上限10,000を超えます"
+
+
+def verify_cwd_unavailable() -> str:
+    return "command cwdが利用できません"
+
+
+def state_task_cancelled(doc_id: str) -> str:
+    return f"起点{doc_id}はcancelledでありverifyに適用できません"

@@ -337,7 +337,20 @@ def target_expansion(
                     }
                 )
         elif entry.kind == "TASK":
-            if entry.status == "cancelled" or (purpose == "implement" and entry.status == "done"):
+            if entry.status == "cancelled":
+                summary = (
+                    messages.state_task_cancelled(doc_id) if is_root else messages.state_inapplicable(doc_id)
+                )
+                errors.append(
+                    {
+                        "code": "CTX-STATE-001",
+                        "severity": "error",
+                        "resultStatus": "blocked",
+                        "summary": summary,
+                        "doc_id": doc_id,
+                    }
+                )
+            elif purpose == "implement" and entry.status == "done":
                 errors.append(
                     {
                         "code": "CTX-STATE-001",

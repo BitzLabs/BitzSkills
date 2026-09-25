@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from . import lex
+from . import messages
 from .yamlsafe import YamlForbiddenError, YamlSyntaxError, parse_yaml_subset
 
 CONFIG_PATH = ".spec/bitz.yaml"
@@ -146,7 +147,23 @@ def _add_required_error(diags: list[Diagnostic], key: str) -> None:
     )
 
 
+def _argv_diag(key: str, summary: str) -> Diagnostic:
+    return Diagnostic(
+        code="SPEC-CONFIG-SCHEMA-001",
+        severity="error",
+        resultStatus="error",
+        summary=summary,
+        source=_file_source(None, key),
+    )
+
+
 def _validate_command(name: str, raw: object, diags: list[Diagnostic]) -> dict | None:
+    """command定義を検査する（`workspace・設定仕様 §6`）。
+
+    argv要素ごとの違反はfixture（`SINGLE-126-01`〜`05`）が要求する文言・
+    ``argv[<index>]``形式のsource keyで個別に返す。
+    """
+
     prefix = f"verify.commands.{name}"
     if isinstance(raw, list):
         raw = {"argv": raw}
@@ -155,21 +172,29 @@ def _validate_command(name: str, raw: object, diags: list[Diagnostic]) -> dict |
         return None
     argv = raw.get("argv")
     cwd = raw.get("cwd", ".")
-    if not isinstance(argv, list) or not argv or not all(isinstance(a, str) for a in argv):
-        _add_type_error(diags, f"{prefix}.argv", "文字列配列")
+    if not isinstance(argv, list) or not (1 <= len(argv) <= 256):
+        diags.append(_argv_diag(f"{prefix}.argv", messages.CONFIG_ARGV_LENGTH_INVALID))
         return None
-    if argv[0] == "":
-        _add_type_error(diags, f"{prefix}.argv", "argv[0]が空でない文字列配列")
+    ok = True
+    for index, value in enumerate(argv):
+        key = f"{prefix}.argv[{index}]"
+        if not isinstance(value, str):
+            diags.append(_argv_diag(key, messages.CONFIG_ARGV_ELEMENT_NOT_STRING))
+            ok = False
+            continue
+        if index == 0 and value == "":
+            diags.append(_argv_diag(key, messages.CONFIG_ARGV_FIRST_EMPTY))
+            ok = False
+        if "\x00" in value:
+            diags.append(_argv_diag(key, messages.CONFIG_ARGV_ELEMENT_NUL))
+            ok = False
+        if len(value.encode("utf-8")) > 32 * 1024:
+            diags.append(_argv_diag(key, messages.CONFIG_ARGV_ELEMENT_TOO_LONG))
+            ok = False
+    if not ok:
         return None
     if not isinstance(cwd, str):
         _add_type_error(diags, f"{prefix}.cwd", "string")
-        return None
-    total_bytes = sum(len(a.encode("utf-8")) for a in argv)
-    if len(argv) > 256 or any(len(a.encode("utf-8")) > 32 * 1024 for a in argv) or total_bytes > 1024 * 1024:
-        _add_type_error(diags, f"{prefix}.argv", "上限内の文字列配列")
-        return None
-    if any("\x00" in a for a in argv):
-        _add_type_error(diags, f"{prefix}.argv", "NULを含まない文字列配列")
         return None
     return {"argv": argv, "cwd": cwd}
 
