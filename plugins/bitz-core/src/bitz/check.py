@@ -484,7 +484,11 @@ def _run_all_workspaces_members(
                 "id": wid,
                 "path": relpath,
                 "status": ws_status,
-                "checkedDocumentCount": len(entries),
+                # 単一workspaceと同じく、skip-document（Frontmatter・file名・EARS構文のhard、ID重複）の
+                # 文書は数えない（check仕様 §9「全SPECを完全検査した文書数」、SINGLE-014・MULTI-011）。
+                "checkedDocumentCount": sum(
+                    1 for e in entries if e.counted and e.hard is None and not e.duplicate
+                ),
                 "checkedStatementCount": per_ws_stmt_count[wid],
                 "durationMs": 0,
                 "diagnostics": diag_dicts,

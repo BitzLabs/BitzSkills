@@ -335,6 +335,33 @@ class GitBoundaryTests(unittest.TestCase):
 
 
 class ResourceLimitTests(unittest.TestCase):
+    def _precheck_with_members(self, count, max_members_line=""):
+        members_raw = "\n".join(f"    - id: w{i}\n      path: apps/w{i}" for i in range(count))
+        root_yaml = ROOT_YAML + f"multiWorkspace:\n{max_members_line}  members:\n{members_raw}\n"
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _write(root, ".spec/bitz.yaml", root_yaml)
+            for i in range(count):
+                _write_member(root, f"apps/w{i}", f"w{i}")
+            _init_repo(root)
+            git = gitutil.detect_git(str(root), dict(os.environ))
+            return multiws.precheck(str(root), git, dict(os.environ), extra_config_revs=[])
+
+    def test_member_count_uses_default_max_members_20(self):
+        """maxMembers省略時は既定20が実効上限になる（複合workspace仕様 §2）。"""
+        self.assertTrue(self._precheck_with_members(20).ok)
+        pre = self._precheck_with_members(21)
+        self.assertFalse(pre.ok)
+        self.assertEqual(pre.diagnostics[0].code, "SPEC-MULTI-LIMIT-001")
+        self.assertEqual(pre.diagnostics[0].evidence, {"dimension": "memberCount", "limit": 20, "observedAtLeast": 21})
+
+    def test_member_count_uses_explicit_max_members(self):
+        """明示したmaxMembersがhard limitより狭ければ、それを実効上限にする。"""
+        self.assertTrue(self._precheck_with_members(3, "  maxMembers: 3\n").ok)
+        pre = self._precheck_with_members(4, "  maxMembers: 3\n")
+        self.assertFalse(pre.ok)
+        self.assertEqual(pre.diagnostics[0].evidence["limit"], 3)
+
     def test_member_count_over_hard_limit_stops_early(self):
         """memberCount dimensionはCore hard limit（既定100）に対して判定する（`複合workspace仕様 §10`）。
 

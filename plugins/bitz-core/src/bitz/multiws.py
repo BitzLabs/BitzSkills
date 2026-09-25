@@ -565,12 +565,13 @@ def _check_resource_limits(
     *,
     skip_dimensions: frozenset[str] = frozenset(),
 ) -> Diagnostic | None:
-    # memberCount dimensionはCore hard limit（100）に対して判定する（`複合workspace仕様 §10`の
-    # resource上限表）。`multiWorkspace.maxMembers`（既定20、範囲1〜100）による、より狭い実効上限の
-    # 運用時強制はStep 5Aの対象fixtureにないため、hard limitとの二重実装を避けここでは行わない。
+    # memberCountは`multiWorkspace.maxMembers`（既定20、範囲1〜100）の実効上限で判定し、Core hard limit
+    # 100を超えない（複合workspace仕様 §2・§10）。値域は_validate_catalogで検査済み。
     member_count = len(members)
-    if member_count > HARD_LIMITS["memberCount"]:
-        return _limit_diag(root_id, "memberCount", HARD_LIMITS["memberCount"], member_count)
+    max_members = (root_config.get("multiWorkspace") or {}).get("maxMembers", 20)
+    member_limit = min(max_members, HARD_LIMITS["memberCount"])
+    if member_count > member_limit:
+        return _limit_diag(root_id, "memberCount", member_limit, member_count)
 
     totals = {k: 0 for k in _LIMIT_DIMENSION_ORDER}
 
