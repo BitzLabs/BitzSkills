@@ -192,3 +192,23 @@ Core固有の単体試験は508件がすべて成功した。複合workspaceのg
 - `consumer result-shape`は、最上位の`workspace`と`multiWorkspace`／`workspaces`の有無だけで排他的外形を判定する。
 - `verify --all-workspaces`は`commandDefinitionCount`の上限を実行計画の確定後に判定し、`verifyBindingCount`と同時に
   超過した場合は`verifyBindingCount`を報告する（command起動前）。
+
+## 2026-09-26: Step 1〜5の再判定
+
+Step 2〜5の節に残した実装時の仕様解釈を、2026-09-25に管理者が承認した方針で規範文へ明記し（`e0793b5`、ADR-054を含む）、
+fixtureを追従させ（`235f329`、Gate A再認定は[適合fixture検証記録](../../fixtures/conformance/適合fixture検証記録.md)）、
+Coreを追従させた（`ac48fa0`）。Gate Bが`Passed`のStepに属するfixtureを変えたため、ADR-051によりStep 1〜5を判定し直した。
+これにより、各節の「仕様側の明確化を要する候補」はすべて規範文に反映済みである。
+
+commit `ac48fa0dca0bc8ca1ed65b2ee21a88acfcb41d4d`に対して`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、error 0件を得た。Step nのGate BはStep 1からnまでを累積して判定するため、
+この結果はStep 1〜5の再判定を兼ねる。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 318件（追加した`SINGLE-106-06`〜`07`、`128`〜`133`と訂正した`SINGLE-061`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのcloneで318件すべてpassed。所要時間と検査対象のpathを除いた結果のSHA-256は両方`77b2f92060330ffff17ccd39ce1acbc04af2b2c519af2d5484a7306a92d5235a` |
+| Parser adapter | 2つのcloneで終了コード0、標準出力が一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は517件がすべて成功した。

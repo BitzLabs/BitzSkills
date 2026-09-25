@@ -231,6 +231,7 @@ Core自身の`.spec/`は、REQを`approved`にした複製で`verify`が通過�
 状態は`Complete`、Step 5のGate Bは`Passed`である。規範文と食い違っていたfixtureを管理者の承認を得て訂正し、
 2026-09-25にcommit `12ec48e`へ`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行して、Step 1〜5の
 完了条件の310件と`parserChecks`4件がすべて通過した。結果は[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録した。
+2026-09-26に規範文の明記とfixtureの追加・訂正に合わせてStep 1〜5を判定し直し、commit `ac48fa0`で318件が通過した。
 
 ## 9. Step 6: SDD垂直スライスと自己適用
 
