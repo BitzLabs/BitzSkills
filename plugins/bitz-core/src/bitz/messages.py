@@ -330,3 +330,49 @@ def verify_cwd_unavailable() -> str:
 
 def state_task_cancelled(doc_id: str) -> str:
     return f"起点{doc_id}はcancelledでありverifyに適用できません"
+
+
+# --- 複合workspace（`SPEC-MULTI-*`） ---------------------------------------------
+
+MULTI_CONFIG_NOT_MAP = "multiWorkspaceはmapで指定してください"
+MULTI_CONFIG_MEMBERS_REQUIRED = "multiWorkspace.membersは1件以上指定してください"
+MULTI_CONFIG_MEMBERS_TYPE = "multiWorkspace.membersは配列で指定してください"
+MULTI_CONFIG_MEMBER_ENTRY_TYPE = "multiWorkspace.membersの要素はmapで指定してください"
+MULTI_CONFIG_MAX_MEMBERS_RANGE = "multiWorkspace.maxMembersは1〜100のintegerで指定してください"
+
+MEMBER_CONFIG_MISSING = "memberの.spec/bitz.yamlがありません"
+MEMBER_ID_MISMATCH = "memberの設定workspace.idがcatalogのidと一致しません"
+MEMBER_NESTED_MULTIWORKSPACE = "memberはmultiWorkspaceを宣言できません"
+
+MULTI_ID_INVALID = "workspace idの形式が不正です"
+MULTI_ID_DUPLICATE = "workspace idが複合workspace内で重複しています"
+
+MULTI_PATH_INVALID = "member pathの形式が不正です"
+MULTI_PATH_DUPLICATE = "member pathが重複しています"
+MULTI_PATH_NESTED = "member pathが別のmemberの配下にあります"
+MULTI_PATH_SYMLINK = "member pathの経路にsymlinkが含まれています"
+MULTI_PATH_SUBMODULE = "member pathがGit submoduleです"
+MULTI_PATH_WORKTREE = "member pathが別のworktreeです"
+MULTI_PATH_SEPARATE_REPO = "member pathが別のGit repositoryです"
+
+MULTI_GIT_BOUNDARY_UNKNOWN = "Git repositoryの境界を確定できません"
+
+MULTI_VERSION_SCHEMA_MAJOR = "memberのschemaVersionが未対応majorです"
+MULTI_VERSION_EARS_MAJOR = "memberのearsAiが未対応majorです"
+
+MULTI_UNREGISTERED = "Gitが認識する設定fileがcatalogに登録されていません"
+
+
+def multi_limit_exceeded(dimension: str, limit: int) -> str:
+    _LABELS = {
+        "memberCount": "member数",
+        "specFileCount": "SPEC file数",
+        "inputBytes": "入力byte数",
+        "statementCount": "規範文数",
+        "relationEdgeCount": "relation edge数",
+        "traceEntryCount": "trace項目数",
+        "commandDefinitionCount": "command定義数",
+        "verifyBindingCount": "verify binding数",
+    }
+    label = _LABELS.get(dimension, dimension)
+    return f"{label}が上限{limit:,}を超過しました"

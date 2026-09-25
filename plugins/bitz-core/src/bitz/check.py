@@ -24,6 +24,7 @@ from . import config as config_mod
 from . import document as document_mod
 from . import gitutil
 from . import messages
+from . import multiws
 from . import relations as relations_mod
 from . import reportio
 from . import targetexpand
@@ -31,6 +32,7 @@ from .cliargs import ParsedArgs
 from .config import Diagnostic
 from .document import DocEntry
 from .errors import CliArgError
+from .notimpl import NotImplementedOperation
 from .resultmodel import EXIT_CODE_BY_STATUS, sort_diagnostics, status_from_diagnostics
 from .workspace import locate_workspace
 
@@ -218,7 +220,62 @@ def _filter_catalog_diagnostics_for_scope(
     return out
 
 
+def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
+    """`check --all-workspaces`（`複合workspace仕様 §8`）。
+
+    Step 5Aは全体事前検査だけを実装する。事前検査通過後のmember単位のcheck（横断relation解決、
+    checkedDocumentCount／checkedStatementCountの集計）はStep 5B以降で実装するため、通過した場合は
+    既存のNotImplementedOperationの作法で明示的に停止する（黙って成功にしない）。
+    """
+
+    started = time.monotonic_ns() // 1_000_000
+    git = gitutil.detect_git(cwd, env)
+    base_arg = parsed.single.get("--base", "HEAD")
+
+    revision: dict | None = None
+    resolved_base: str | None = None
+    if git.available and git.executable:
+        head_commit = gitutil.resolve_commit(git.executable, cwd, env, "HEAD")
+        resolved_base = head_commit
+        if "--base" in parsed.single:
+            resolved_base = gitutil.resolve_commit(git.executable, cwd, env, base_arg)
+            if resolved_base is None:
+                raise CliArgError("check", f"--baseを解決できません: {base_arg}")
+        if head_commit is not None:
+            dirty = gitutil.is_dirty(git.executable, cwd, env)
+            revision = {"base": resolved_base, "commit": head_commit, "dirty": dirty}
+    else:
+        if "--base" in parsed.single:
+            raise CliArgError("check", f"--baseを解決できません: {base_arg}")
+
+    extra_revs = [resolved_base] if resolved_base is not None else []
+    pre = multiws.precheck(cwd, git, env, extra_config_revs=extra_revs)
+    if pre.discovery_failed:
+        raise CliArgError("check", "複合workspaceのroot設定を発見できません")
+
+    if pre.ok:
+        raise NotImplementedOperation("check --all-workspaces: member処理はStep 5B以降で実装する")
+
+    diagnostics = sort_diagnostics([d.to_dict() for d in pre.diagnostics])
+    status = status_from_diagnostics(diagnostics)
+    result: dict = {
+        "schemaVersion": "1.0",
+        "operation": "check",
+        "status": status,
+        "scope": "all-workspaces",
+        "multiWorkspace": {"id": pre.root_id, "path": "."},
+        "workspaces": [],
+        "revision": revision,
+        "durationMs": max(0, time.monotonic_ns() // 1_000_000 - started),
+        "diagnostics": diagnostics,
+    }
+    return result, EXIT_CODE_BY_STATUS[status]
+
+
 def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
+    if "--all-workspaces" in parsed.flags:
+        return _run_all_workspaces(parsed, cwd, env)
+
     scope_requested: str
     if parsed.positionals:
         scope_requested = "selected"

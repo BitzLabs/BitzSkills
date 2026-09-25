@@ -65,6 +65,7 @@ class Diagnostic:
     summary: str
     source: dict
     specRefs: list[str] | None = None
+    evidence: object = None
     suggestedAction: str | None = None
 
     def to_dict(self) -> dict:
@@ -77,6 +78,8 @@ class Diagnostic:
         }
         if self.specRefs:
             d["specRefs"] = self.specRefs
+        if self.evidence is not None:
+            d["evidence"] = self.evidence
         if self.suggestedAction:
             d["suggestedAction"] = self.suggestedAction
         return d

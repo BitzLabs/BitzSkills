@@ -12,8 +12,10 @@ import sys
 from . import config as config_mod
 from . import execfile
 from . import gitutil
+from . import multiws
 from .cliargs import ParsedArgs
 from .errors import CliArgError
+from .notimpl import NotImplementedOperation
 from .resultmodel import doctor_status, sort_diagnostics, worst_status
 from .workspace import locate_workspace
 
@@ -79,7 +81,72 @@ def _resolve_command_file(argv0: str, cwd: str, env: dict[str, str]) -> bool:
     return execfile.resolve_executable(argv0, cwd, env) is not None
 
 
+def _run_all_workspaces(cwd: str, env: dict[str, str]) -> tuple[dict, int]:
+    """`doctor --all-workspaces`（`複合workspace仕様 §8`、`04_doctor.md`）。
+
+    Step 5Aは全体事前検査だけを実装する。通過後のmember単位のdoctor checkはStep 5B以降で実装する。
+    """
+
+    started = _now_ms()
+    git = gitutil.detect_git(cwd, env)
+
+    checks: list[dict] = []
+    python_ok = sys.version_info[:2] >= (3, 12)
+    checks.append({"name": "core", "status": "passed" if python_ok else "blocked"})
+    if not python_ok:
+        diagnostics = [
+            {
+                "code": "SPEC-DOCTOR-CORE-001",
+                "severity": "error",
+                "resultStatus": "blocked",
+                "summary": "実行環境のCPython versionが下限未満です",
+                "source": {"kind": "environment", "component": "core"},
+            }
+        ]
+        return _build_multi_result(None, checks, diagnostics, started)
+
+    pre = multiws.precheck(cwd, git, env, extra_config_revs=["HEAD"])
+    if pre.discovery_failed:
+        raise CliArgError("doctor", "複合workspaceのroot設定を発見できません")
+
+    checks.append({"name": "git", "status": pre.git_status})
+    if pre.catalog_status is not None:
+        checks.append({"name": "catalog", "status": pre.catalog_status})
+
+    if pre.ok:
+        raise NotImplementedOperation("doctor --all-workspaces: member処理はStep 5B以降で実装する")
+
+    diagnostics = [d.to_dict() for d in pre.diagnostics]
+    return _build_multi_result(pre.root_id, checks, diagnostics, started)
+
+
+def _build_multi_result(
+    root_id: str | None, checks: list[dict], diagnostics: list[dict], started: int
+) -> tuple[dict, int]:
+    diagnostics = sort_diagnostics(diagnostics)
+    status = doctor_status(checks, diagnostics)
+    result = {
+        "schemaVersion": "1.0",
+        "operation": "doctor",
+        "status": status,
+        "multiWorkspace": {"id": root_id, "path": "."},
+        "core": {
+            "version": CORE_VERSION,
+            "apiVersion": CORE_API_VERSION,
+            "capabilities": list(CORE_CAPABILITIES),
+        },
+        "checks": checks,
+        "workspaces": [],
+        "durationMs": _elapsed_ms(started),
+        "diagnostics": diagnostics,
+    }
+    return result, _exit_code(status)
+
+
 def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
+    if "--all-workspaces" in parsed.flags:
+        return _run_all_workspaces(cwd, env)
+
     started = _now_ms()
     git = gitutil.detect_git(cwd, env)
     loc = locate_workspace(cwd, git, env)

@@ -361,6 +361,104 @@ def show_base_file(
     return proc.stdout
 
 
+def list_tree_config_paths(executable: str, cwd: str, env: dict[str, str], rev: str) -> list[str]:
+    """``rev``時点でGitが認識する``.spec/bitz.yaml``のrepository root相対pathを返す（`複合workspace仕様 §8`）。
+
+    symlink（mode ``120000``）とGit submoduleのgitlink（mode ``160000``）は対象にしない。
+    """
+
+    try:
+        proc = _run(
+            [executable, "--no-optional-locks", "ls-tree", "-r", "-z", rev], cwd, env
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    if proc.returncode != 0:
+        return []
+    tokens = proc.stdout.split("\0")
+    if tokens and tokens[-1] == "":
+        tokens = tokens[:-1]
+    out: list[str] = []
+    for tok in tokens:
+        if "\t" not in tok:
+            continue
+        meta, path = tok.split("\t", 1)
+        parts = meta.split(" ")
+        if len(parts) < 2:
+            continue
+        mode, obj_type = parts[0], parts[1]
+        if obj_type != "blob" or mode == "120000":
+            continue
+        if path == ".spec/bitz.yaml" or path.endswith("/.spec/bitz.yaml"):
+            out.append(path)
+    return out
+
+
+def list_working_config_paths(executable: str, cwd: str, env: dict[str, str]) -> list[str]:
+    """現在snapshot（working tree）でGitが認識する``.spec/bitz.yaml``のrepository root相対pathを返す。
+
+    tracked／staged path（``git ls-files``）と未追跡かつ非ignore path（``ls-files --others``）の
+    和集合を対象にする（`複合workspace仕様 §8`）。
+    """
+
+    paths: set[str] = set()
+    try:
+        proc = _run(
+            [executable, "--no-optional-locks", "ls-files", "-z", "--full-name"], cwd, env
+        )
+    except (OSError, subprocess.SubprocessError):
+        proc = None
+    if proc is not None and proc.returncode == 0:
+        tokens = proc.stdout.split("\0")
+        for p in tokens:
+            if p:
+                paths.add(p)
+    for c in _ls_files_others_z(executable, cwd, env):
+        paths.add(c.path)
+    return sorted(p for p in paths if p == ".spec/bitz.yaml" or p.endswith("/.spec/bitz.yaml"))
+
+
+def list_submodule_paths(executable: str, cwd: str, env: dict[str, str]) -> set[str]:
+    """working tree indexにgitlink（mode ``160000``）として記録されたrepository root相対pathを返す。"""
+
+    try:
+        proc = _run(
+            [executable, "--no-optional-locks", "ls-files", "-z", "--full-name", "--stage"], cwd, env
+        )
+    except (OSError, subprocess.SubprocessError):
+        return set()
+    if proc.returncode != 0:
+        return set()
+    tokens = proc.stdout.split("\0")
+    out: set[str] = set()
+    for tok in tokens:
+        if not tok or "\t" not in tok:
+            continue
+        meta, path = tok.split("\t", 1)
+        parts = meta.split(" ")
+        if parts and parts[0] == "160000":
+            out.add(path)
+    return out
+
+
+def list_worktree_paths(executable: str, cwd: str, env: dict[str, str]) -> set[str]:
+    """``git worktree list``が返す全worktreeの実path（絶対path）の集合を返す（自身を含む）。"""
+
+    try:
+        proc = _run(
+            [executable, "--no-optional-locks", "worktree", "list", "--porcelain"], cwd, env
+        )
+    except (OSError, subprocess.SubprocessError):
+        return set()
+    if proc.returncode != 0:
+        return set()
+    out: set[str] = set()
+    for line in proc.stdout.splitlines():
+        if line.startswith("worktree "):
+            out.add(os.path.abspath(line[len("worktree ") :].strip()))
+    return out
+
+
 def is_config_tracked(executable: str, cwd: str, env: dict[str, str], path: str) -> bool:
     try:
         proc = _run(
