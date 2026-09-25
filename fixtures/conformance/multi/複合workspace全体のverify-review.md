@@ -54,6 +54,29 @@ Contextが完成するtargetのDigestは、review済みliteral（参照計算A�
 入力treeからの導出（参照計算B、`multi_crosscheck`）とCanonical JSONのbyte列まで照合する。
 `blocked`または`failed`のtargetは`contextDigest: null`であり、照合の対象にしない。
 
+## 訂正（2026-09-25）：MULTI-012のEAI-CORE-ID-002 source
+
+根拠の規範文：文書・Frontmatter・状態仕様と同じ規約を単一workspaceで固定した`SINGLE-011`の期待値
+（2回目の出現行を`source.line`とし、summaryを「規範文IDが重複しています」とする）、
+[EARS-AI 言語・Semantic-IR仕様](../../../docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md)と
+[Diagnostic registry](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md)の
+`EAI-CORE-ID-002`（規範文IDの文書内重複）。
+
+食い違い：`MULTI-012`の`api::TECH-020`診断は`source.line: 13`（`TECH-020.md`の見出し行より前の
+`## Context`行）と、summary「規範文IDが文書内で重複しています」を期待していた。同じ条件の
+`SINGLE-011`は2回目の出現行（`AC-01`を2つ持つ規範文のうち後の行）とsummary「規範文IDが重複しています」
+を期待しており、`MULTI-012`だけ異なるsource位置と表現になっていた。`TECH-020.md`の2回目の出現は
+20行目（`- [TECH-020:AC-01] ... 監査logを保持する。`）である。
+
+訂正内容：`MULTI-012`の`EAI-CORE-ID-002`診断を、`source.line: 20`、summary「規範文IDが重複しています」へ
+訂正した（`fixtures/conformance/multi_verify_fixtures.py`の`DUPLICATE_ID`、
+`fixtures/conformance/multi/MULTI-012/expected/verify.json`）。column（3）、入力repo
+（`services/api/.spec/technical/TECH-020.md`）は変えていない。
+
+2026-09-25に管理者（ユーザー）が、ADR-051（[適合fixtureの変更手続きを確定する](../../../docs/02.設計書/10_決定記録/ADR-051_適合fixtureの変更手続きを確定する.md)）
+と適合fixture仕様 §1.1「期待値の訂正」に基づき、この訂正を承認した。根拠は規範文だけであり、
+Coreの観測出力は参照していない。
+
 ## 限界
 
 - Coreは実行していない。command実行、抜粋、所要時間はGate Bで判定する。

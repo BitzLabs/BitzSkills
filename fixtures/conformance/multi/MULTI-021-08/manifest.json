@@ -1,36 +1,36 @@
 {
-  "fixtureId": "MULTI-021-08",
   "description": "verify binding数10,001の超過を早期に停止する",
-  "setup": {
-    "git": true,
-    "generate": {
-      "dataset": "dataset.json",
-      "treeDigest": "sha256:770c82ed082f79965930ae182dc69ebf99cd0d66cc217c5e8f3e07815d98c361"
-    },
-    "baseCommit": {
-      "message": "base",
-      "paths": [
-        "."
-      ]
-    },
-    "operations": []
+  "expect": {
+    "exitCode": 2,
+    "reportFileCount": 0,
+    "resultDigest": "sha256:342d20d3877131050ad20acb5b73da61ad221f1a020e938299b07c24778c96b1",
+    "status": "blocked",
+    "stdout": "json"
   },
+  "fixtureId": "MULTI-021-08",
   "invocation": {
-    "runner": "bitz",
-    "cwd": ".",
     "argv": [
       "verify",
       "--all-workspaces",
       "--format",
       "json"
     ],
-    "env": {}
+    "cwd": ".",
+    "env": {},
+    "runner": "bitz"
   },
-  "expect": {
-    "status": "blocked",
-    "exitCode": 2,
-    "stdout": "json",
-    "resultDigest": "sha256:342d20d3877131050ad20acb5b73da61ad221f1a020e938299b07c24778c96b1",
-    "reportFileCount": 0
+  "setup": {
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "generate": {
+      "dataset": "dataset.json",
+      "treeDigest": "sha256:7f2305c99d4b046c32535214ed19536c853468dd405ed54f2dd62c3376d16f2b"
+    },
+    "git": true,
+    "operations": []
   }
 }

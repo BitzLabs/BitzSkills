@@ -1,21 +1,21 @@
 {
-  "schemaVersion": "1.0",
-  "fixtureId": "MULTI-021-08",
-  "dimension": "verifyBindingCount",
-  "value": 10001,
-  "limit": 10000,
-  "crosses": true,
-  "dimensions": {
-    "memberCount": 12,
-    "specFileCount": 13,
-    "inputBytes": 2543755,
-    "statementCount": 10001,
-    "relationEdgeCount": 0,
-    "traceEntryCount": 20002,
-    "commandDefinitionCount": 10001,
-    "verifyBindingCount": 10001
-  },
   "companionDimensions": [
     "commandDefinitionCount"
-  ]
+  ],
+  "crosses": true,
+  "dimension": "verifyBindingCount",
+  "dimensions": {
+    "commandDefinitionCount": 10001,
+    "inputBytes": 2547395,
+    "memberCount": 12,
+    "relationEdgeCount": 0,
+    "specFileCount": 39,
+    "statementCount": 10001,
+    "traceEntryCount": 20002,
+    "verifyBindingCount": 10001
+  },
+  "fixtureId": "MULTI-021-08",
+  "limit": 10000,
+  "schemaVersion": "1.0",
+  "value": 10001
 }

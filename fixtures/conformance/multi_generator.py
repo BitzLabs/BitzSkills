@@ -26,6 +26,9 @@ ITEMS_PER_DOCUMENT = 1000
 COMMANDS_PER_WORKSPACE = 800
 PADDING_PER_DOCUMENT = 900000
 BASE_MEMBERS = 2
+# 文書・Frontmatter・状態仕様 §11のFrontmatter 32 KiB上限を守るため、1つのbinding文書へ置く
+# test対応（binding）の件数はこれ以下にする（389件で32,759 byteが実測上の上限。安全側に300とする）。
+BINDINGS_PER_DOCUMENT = 300
 PADDING_LINE = "この段落は入力byte数を上限の境界へ合わせるための固定文である。\n"
 FILLER_BODY = "## Context\n\n上限境界の入力を満たすための固定文書である。\n"
 
@@ -110,6 +113,11 @@ def render_config(profile, index):
              "workspace:\n", f"  id: {workspace_id}\n"]
     if index == 0 and len(workspaces) > 1:
         lines.append("multiWorkspace:\n")
+        if profile["dimension"] == "memberCount":
+            # member数の境界はCore hard limit（複合workspace仕様 §2・§10）を明示して検査する。
+            # maxMembersを省略すると既定値20が効き、99・100 memberのfixtureが既定上限で
+            # 遮断されてしまう（境界内passedの期待と矛盾する）。
+            lines.append(f"  maxMembers: {LIMITS['memberCount']}\n")
         lines.append("  members:\n")
         for member in workspaces[1:]:
             lines.append(f"    - id: {member}\n")
@@ -150,9 +158,11 @@ def render_statement_document(document_id, statements):
     return (head + "".join(body)).encode("utf-8")
 
 
-def render_edge_document(document_id, target, edges):
+def render_edge_document(document_id, targets):
+    """1文書に、targetsが指す実在文書へのrequires edgeを置く。targetsは重複しない（文書・
+    Frontmatter・状態仕様 §11。scalar配列の重複は`SPEC-FM-SCHEMA-001`となるため）。"""
     head = [f"---\nid: {document_id}\ntitle: 上限境界の関係\nstatus: approved\nrelations:\n  requires: ["]
-    head.append(", ".join([target] * edges))
+    head.append(", ".join(targets))
     head.append("]\n---\n")
     return ("".join(head) + f"\n# {document_id} 上限境界の関係\n\n## Context\n\n関係の件数を満たす。\n").encode("utf-8")
 
@@ -185,31 +195,47 @@ def emit(profile):
     """(repository root相対path, 内容)をpath昇順に依存しない決定論的な順序で流す。"""
     workspaces = profile["workspaces"]
     entries = []
-    command_cursor, test_cursor, document_number = 1, 1, 1
+    test_cursor, document_number = 1, 1
     for index, workspace_id in enumerate(workspaces):
         prefix = "" if index == 0 else f"{workspace_path(workspace_id)}/"
         entries.append((f"{prefix}.spec/bitz.yaml", render_config(profile, index)))
         statements = profile["bindings"][index]
-        document_id = f"TECH-{document_number:06d}"
-        document_number += 1
         for offset in range(statements):
             entries.append((f"{prefix}tests/test_{test_cursor + offset:05d}.py",
                             b"def test_generated():\n    assert True\n"))
-        entries.append((f"{prefix}.spec/technical/{document_id}.md",
-                        render_binding_document(document_id, statements, 1, test_cursor)))
+        # Frontmatter 32 KiB上限（文書・Frontmatter・状態仕様 §11）を守るため、1 workspace分の
+        # test対応をBINDINGS_PER_DOCUMENTごとの複数文書へ分ける（通常はbindings数が小さく1文書のまま）。
+        chunk_test_cursor = test_cursor
+        command_offset = 0
+        for size in chunks(statements, BINDINGS_PER_DOCUMENT) or [0]:
+            document_id = f"TECH-{document_number:06d}"
+            document_number += 1
+            entries.append((f"{prefix}.spec/technical/{document_id}.md",
+                            render_binding_document(document_id, size, command_offset + 1,
+                                                     chunk_test_cursor)))
+            chunk_test_cursor += size
+            command_offset += size
         test_cursor += statements
-        command_cursor = 1
-    anchor = "TECH-000001"
     for statements in profile["statementDocuments"]:
         document_id = f"TECH-{document_number:06d}"
         document_number += 1
         entries.append((f".spec/technical/{document_id}.md",
                         render_statement_document(document_id, statements)))
-    for edges in profile["edgeDocuments"]:
-        document_id = f"TECH-{document_number:06d}"
-        document_number += 1
-        entries.append((f".spec/technical/{document_id}.md",
-                        render_edge_document(document_id, anchor, edges)))
+    if profile["edgeDocuments"]:
+        # 配列内のtargetを重複させないため、relationのtarget専用の実在文書を別途置く
+        # （文書・Frontmatter・状態仕様 §11。1文書の配列上限ITEMS_PER_DOCUMENT件を用意すれば足りる）。
+        target_count = min(ITEMS_PER_DOCUMENT, max(profile["edgeDocuments"]))
+        targets = []
+        for _ in range(target_count):
+            document_id = f"TECH-{document_number:06d}"
+            document_number += 1
+            targets.append(document_id)
+            entries.append((f".spec/technical/{document_id}.md", render_filler_document(document_id)))
+        for edges in profile["edgeDocuments"]:
+            document_id = f"TECH-{document_number:06d}"
+            document_number += 1
+            entries.append((f".spec/technical/{document_id}.md",
+                            render_edge_document(document_id, targets[:edges])))
     path_cursor = 1
     for items in profile["traceDocuments"]:
         document_id = f"TASK-{document_number:06d}"

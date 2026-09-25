@@ -160,11 +160,12 @@ def _binding_digests(entries, repository):
     (`validate_scale.py`の`binding_digests`と同じ手順。二重実装を避けるため同じ`multi_crosscheck`を使う)。
     """
     digests = {}
-    for workspace, document in multi_limit_fixtures.binding_documents(entries).items():
+    for workspace, documents in multi_limit_fixtures.binding_documents(entries).items():
         workspace_id = "platform" if workspace == "." else workspace.rsplit("/", 1)[-1]
-        target = f"{workspace_id}::{document['id']}"
-        digests[target] = multi_crosscheck.digest(
-            multi_crosscheck.canonical_bytes(multi_crosscheck.build(repository, target)))
+        for document in documents:
+            target = f"{workspace_id}::{document['id']}"
+            digests[target] = multi_crosscheck.digest(
+                multi_crosscheck.canonical_bytes(multi_crosscheck.build(repository, target)))
     return digests
 
 

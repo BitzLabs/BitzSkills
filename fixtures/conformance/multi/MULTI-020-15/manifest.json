@@ -1,36 +1,36 @@
 {
-  "fixtureId": "MULTI-020-15",
   "description": "verify binding数9,999の境界内を誤って遮断しない",
-  "setup": {
-    "git": true,
-    "generate": {
-      "dataset": "dataset.json",
-      "treeDigest": "sha256:daf99243e57bc3ec918f2d24b24ffee86bf0a2511c4ddf73b3b9c93976a17c87"
-    },
-    "baseCommit": {
-      "message": "base",
-      "paths": [
-        "."
-      ]
-    },
-    "operations": []
+  "expect": {
+    "exitCode": 0,
+    "reportFileCount": 0,
+    "resultDigest": "sha256:61df581a3851f71759ddfd2afecf14adda46634f2553de472d8f191f4bd565a8",
+    "status": "passed",
+    "stdout": "json"
   },
+  "fixtureId": "MULTI-020-15",
   "invocation": {
-    "runner": "bitz",
-    "cwd": ".",
     "argv": [
       "verify",
       "--all-workspaces",
       "--format",
       "json"
     ],
-    "env": {}
+    "cwd": ".",
+    "env": {},
+    "runner": "bitz"
   },
-  "expect": {
-    "status": "passed",
-    "exitCode": 0,
-    "stdout": "json",
-    "resultDigest": "sha256:c21d406fda7d129151837b5c41c6e4e4a05adf8e57cce501dca7c084387d508f",
-    "reportFileCount": 0
+  "setup": {
+    "baseCommit": {
+      "message": "base",
+      "paths": [
+        "."
+      ]
+    },
+    "generate": {
+      "dataset": "dataset.json",
+      "treeDigest": "sha256:fa5e826073ed7d12742bd1c6b6bead98ac5275adb9cfbde17aa8e537cbf91413"
+    },
+    "git": true,
+    "operations": []
   }
 }

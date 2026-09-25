@@ -111,8 +111,9 @@ def reviewed_result(identifier):
     if identifier == "MULTI-011":
         workspaces = [
             workspace_entry("platform", ".", documents=1, statements=2),
-            # 非成功のmemberも検査した文書を数える。後続のwebは影響を受けない。
-            workspace_entry("api", "services/api", status="failed", diagnostics=[FILE_NAME]),
+            # file名IDと一致しない文書はskip-documentとなり、完全検査した文書数へ数えない
+            # （check仕様 §9・Diagnostic registry。SINGLE-014と同じ扱い）。後続のwebは影響を受けない。
+            workspace_entry("api", "services/api", status="failed", documents=0, diagnostics=[FILE_NAME]),
             workspace_entry("web", "apps/web"),
         ]
         diagnostics = []

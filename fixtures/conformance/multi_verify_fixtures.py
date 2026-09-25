@@ -38,9 +38,11 @@ NO_TARGET = {
 }
 DUPLICATE_ID = {
     "code": "EAI-CORE-ID-002", "severity": "error", "resultStatus": "failed",
-    "summary": "規範文IDが文書内で重複しています",
+    # SINGLE-011（規範文ID重複の単一workspace版）と同じ規約に合わせる：2回目の出現行を指し、
+    # summaryは「規範文IDが重複しています」（Diagnostic registry・EARS-AI仕様）。
+    "summary": "規範文IDが重複しています",
     "source": {"kind": "file", "workspaceId": "api", "path": ".spec/technical/TECH-020.md",
-               "line": 13, "column": 3},
+               "line": 20, "column": 3},
 }
 
 

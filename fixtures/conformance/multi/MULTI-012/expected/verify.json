@@ -75,12 +75,12 @@
               "code": "EAI-CORE-ID-002",
               "severity": "error",
               "resultStatus": "failed",
-              "summary": "規範文IDが文書内で重複しています",
+              "summary": "規範文IDが重複しています",
               "source": {
                 "kind": "file",
                 "workspaceId": "api",
                 "path": ".spec/technical/TECH-020.md",
-                "line": 13,
+                "line": 20,
                 "column": 3
               }
             }

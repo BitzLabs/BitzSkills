@@ -151,7 +151,12 @@ def reviewed_result(identifier, counts=None):
 
 
 def binding_documents(entries):
-    """生成したtreeから、workspaceごとのbinding文書（ID、規範文、test対応）を読み取る。"""
+    """生成したtreeから、workspaceごとのbinding文書（ID、規範文、test対応）の列を読み取る。
+
+    Frontmatter 32 KiB上限（文書・Frontmatter・状態仕様 §11）を守るため、1 workspaceのtest対応は
+    複数のbinding文書へ分けて生成することがある（multi_generator.BINDINGS_PER_DOCUMENT）。
+    そのため1 workspaceにつき複数件のbinding文書を保持できるよう、値はlistで返す。
+    """
     documents = {}
     for path, content in entries:
         if not path.endswith(".md"):
@@ -172,34 +177,39 @@ def binding_documents(entries):
         identifier = head.split("\nid: ", 1)[1].split("\n", 1)[0]
         statements = [line[3:].split("]", 1)[0] for line in body.split("\n")
                       if multi_generator.STATEMENT.match(line)]
-        documents[workspace] = {"id": identifier, "statements": statements, "tests": tests}
+        documents.setdefault(workspace, []).append(
+            {"id": identifier, "statements": statements, "tests": tests})
     return documents
 
 
 def passed_binding_result(entries, digests):
-    """binding境界のverify結果。生成したtreeのbinding文書とtest対応から組み立てる。"""
+    """binding境界のverify結果。生成treeのbinding文書とtest対応から組み立てる。"""
     documents = binding_documents(entries)
     workspaces = []
     for workspace in sorted(documents, key=lambda path: ("" if path == "." else path)):
-        document = documents[workspace]
         workspace_id = "platform" if workspace == "." else workspace.rsplit("/", 1)[-1]
-        target = f"{workspace_id}::{document['id']}"
-        commands = [{
-            "bindingId": f"{workspace_id}::{entry['command']}", "workspaceId": workspace_id,
-            "name": entry["command"], "status": "passed", "termination": "exit", "cwd": ".",
-            "argv": ["/bin/true", entry["path"]], "tests": [entry["path"]],
-            "covers": [f"{workspace_id}::{entry['covers']}"], "exitCode": 0, "timeoutSeconds": 300,
-            "stdoutExcerpt": "", "stderrExcerpt": "", "stdoutTruncated": False,
-            "stderrTruncated": False, "durationMs": 0,
-        } for entry in sorted(document["tests"], key=lambda item: item["command"])]
-        workspaces.append({
-            "id": workspace_id, "path": workspace, "status": "passed",
-            "targetResults": [{
+        target_results = []
+        commands = []
+        for document in documents[workspace]:
+            target = f"{workspace_id}::{document['id']}"
+            document_commands = [{
+                "bindingId": f"{workspace_id}::{entry['command']}", "workspaceId": workspace_id,
+                "name": entry["command"], "status": "passed", "termination": "exit", "cwd": ".",
+                "argv": ["/bin/true", entry["path"]], "tests": [entry["path"]],
+                "covers": [f"{workspace_id}::{entry['covers']}"], "exitCode": 0, "timeoutSeconds": 300,
+                "stdoutExcerpt": "", "stderrExcerpt": "", "stdoutTruncated": False,
+                "stderrTruncated": False, "durationMs": 0,
+            } for entry in sorted(document["tests"], key=lambda item: item["command"])]
+            target_results.append({
                 "target": target, "status": "passed", "contextDigest": digests[target],
                 "statements": [f"{workspace_id}::{statement}" for statement in document["statements"]],
-                "bindingRefs": [command["bindingId"] for command in commands],
+                "bindingRefs": [command["bindingId"] for command in document_commands],
                 "diagnostics": [],
-            }],
+            })
+            commands.extend(document_commands)
+        workspaces.append({
+            "id": workspace_id, "path": workspace, "status": "passed",
+            "targetResults": target_results,
             "commands": commands, "durationMs": 0, "diagnostics": [],
         })
     return {

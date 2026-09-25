@@ -43,6 +43,27 @@ IDを保ったpath変更は同一workspaceの移動、ID変更は旧workspaceの
 監査は、基準版のcatalogをGitのblobから読み、現在版のcatalogと突き合わせて、各fixtureが名乗るとおりの
 変更になっていることを確かめる。IDを元へ戻した写しは拒否する。
 
+## 訂正（2026-09-25）：MULTI-011のcheckedDocumentCount
+
+根拠の規範文：[check操作仕様 §9](../../../docs/03.詳細設計/03_操作仕様/02_check.md#9-結果)
+「`checkedDocumentCount`は全SPECを完全検査した文書数」、
+[Diagnostic registry](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md)の`skip-document`
+（file名IDとFrontmatter IDが一致しない文書は完全検査せずskip-documentとする）。
+
+食い違い：`MULTI-011`のapi member結果は、file名IDが一致せずskip-documentになった文書
+（`services/api/.spec/technical/TECH-020.md`、Frontmatter IDは`TECH-010`）を`checkedDocumentCount: 1`と
+数えていた。同じ条件の単一workspace fixture`SINGLE-014`は`checkedDocumentCount: 0`であり、規範文と
+矛盾していた。
+
+訂正内容：`MULTI-011`のapi member結果の`checkedDocumentCount`を`0`へ訂正した
+（`fixtures/conformance/multi_member_fixtures.py`の`reviewed_result`、
+`fixtures/conformance/multi/MULTI-011/expected/check.json`）。他のworkspace（platform、web）の
+件数、`status`、Diagnosticの内容には影響しない。
+
+2026-09-25に管理者（ユーザー）が、ADR-051（[適合fixtureの変更手続きを確定する](../../../docs/02.設計書/10_決定記録/ADR-051_適合fixtureの変更手続きを確定する.md)）
+と適合fixture仕様 §1.1「期待値の訂正」に基づき、この訂正を承認した。根拠は規範文だけであり、
+Coreの観測出力は参照していない。
+
 ## 限界
 
 - Coreは実行していない。Diagnosticの文面と、検査した文書数の実際の値はGate Bで判定する。

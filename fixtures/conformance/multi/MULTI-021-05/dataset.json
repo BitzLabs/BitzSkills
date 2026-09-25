@@ -1,18 +1,18 @@
 {
-  "schemaVersion": "1.0",
-  "fixtureId": "MULTI-021-05",
-  "dimension": "relationEdgeCount",
-  "value": 1000001,
-  "limit": 1000000,
   "crosses": true,
+  "dimension": "relationEdgeCount",
   "dimensions": {
-    "memberCount": 2,
-    "specFileCount": 1004,
-    "inputBytes": 13176751,
-    "statementCount": 3,
-    "relationEdgeCount": 1000001,
-    "traceEntryCount": 6,
     "commandDefinitionCount": 3,
+    "inputBytes": 13375751,
+    "memberCount": 2,
+    "relationEdgeCount": 1000001,
+    "specFileCount": 2004,
+    "statementCount": 3,
+    "traceEntryCount": 6,
     "verifyBindingCount": 3
-  }
+  },
+  "fixtureId": "MULTI-021-05",
+  "limit": 1000000,
+  "schemaVersion": "1.0",
+  "value": 1000001
 }

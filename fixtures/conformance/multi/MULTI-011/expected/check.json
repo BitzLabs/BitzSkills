@@ -21,7 +21,7 @@
       "id": "api",
       "path": "services/api",
       "status": "failed",
-      "checkedDocumentCount": 1,
+      "checkedDocumentCount": 0,
       "checkedStatementCount": 0,
       "durationMs": 0,
       "diagnostics": [
