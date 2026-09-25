@@ -9,7 +9,7 @@ implements:
   - plugins/bitz-core/src/bitz/earsai/ir.py
 tests:
   - path: tests/bitz-core/test_earsai_parser.py
-    covers: [REQ-001:AC-01, REQ-001:AC-02, REQ-001:AC-03]
+    covers: [REQ-001:AC-01, REQ-001:AC-02, REQ-001:AC-03, REQ-001:AC-05, REQ-001:AC-06]
   - path: tests/bitz-core/test_earsai_scanner.py
     covers: [REQ-001:AC-04]
 verify: default
@@ -28,6 +28,8 @@ SPEC文書の規範文を、全操作が同じ構造として扱えるSemantic I
 - [REQ-001:AC-02] [ACTOR:BitzCore] [IF_ERROR] 1つの候補行で同じraw原因から複数の構文条件が成立した場合 [MUST] [THEN] Diagnostic registryのpriorityが最小の条件だけを返す。
 - [REQ-001:AC-03] [ACTOR:BitzCore] [ALWAYS] [MUST] [CONSTRAINT] 同一入力と同一versionから同一のSemantic IRと構文条件を返す。
 - [REQ-001:AC-04] [ACTOR:BitzCore] [WHEN] fenced code block、引用、4 SP以上のindent、task listの行を走査する場合 [MUST] [THEN] その行を規範行候補にしない。
+- [REQ-001:AC-05] [ACTOR:BitzCore] [WHEN] 規範文のtextを確定する場合 [MUST] [THEN] code spanの開始・終了runを除き、既知escapeを1 code pointへ解除し、code span外の連続SP・TABを1個のSPへ正規化した値をSemantic IRへ保持する。
+- [REQ-001:AC-06] [ACTOR:BitzCore] [ALWAYS] [MUST] [CONSTRAINT] Semantic IRと構文条件のsource位置を、Frontmatterを含む元fileのUnicode code point単位で1始まりの行と列として返す。
 
 ## Verification
 
