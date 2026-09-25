@@ -51,6 +51,9 @@ HARD_LIMITS: dict[str, int] = {
     "relationEdgeCount": 1_000_000,
     "traceEntryCount": 1_000_000,
     "commandDefinitionCount": 10_000,
+    # `verifyBindingCount`は事前検査（catalog全体のsnapshot走査）では計数しない。1回のverify
+    # 実行計画のbinding数だけに適用するため`verify.py`が自分で数える（複合workspace仕様 §10）。
+    "verifyBindingCount": 10_000,
 }
 
 # 早期停止時にどのdimensionを優先して報告するか（§10「複数のdimensionが同時に超過する場合は…」の
@@ -332,6 +335,8 @@ def _validate_catalog(
     cwd: str,
     env: dict[str, str],
     extra_config_revs: list[str],
+    *,
+    skip_limit_dimensions: frozenset[str] = frozenset(),
 ) -> tuple[list[Diagnostic], list[MemberRecord] | None]:
     """catalog・ID・path・version・未登録設定を検証する（優先順位900〜960。GITは呼び出し側で解決済み）。
 
@@ -461,7 +466,7 @@ def _validate_catalog(
     # --- LIMIT stage（970） -------------------------------------------------------
     # 上限超過は複合workspace全体を停止する単一のraw原因であり、`複合workspace仕様 §10`のとおり
     # 最初に検出したdimensionで早期停止する（複数member個別の独立raw原因とは扱いが異なる）。
-    limit_diag = _check_resource_limits(root, root_id, root_config, members)
+    limit_diag = _check_resource_limits(root, root_id, root_config, members, skip_dimensions=skip_limit_dimensions)
     if limit_diag is not None:
         return [limit_diag], None
 
@@ -535,8 +540,10 @@ def _scan_document_counts(text: str) -> tuple[int, int, int]:
     return len(candidates), rel_count, trace_count
 
 
-def _first_exceeded(totals: dict[str, int]) -> str | None:
+def _first_exceeded(totals: dict[str, int], skip_dimensions: frozenset[str] = frozenset()) -> str | None:
     for dim in _LIMIT_DIMENSION_ORDER:
+        if dim in skip_dimensions:
+            continue
         if totals[dim] > HARD_LIMITS[dim]:
             return dim
     return None
@@ -551,7 +558,12 @@ def _limit_diag(root_id: str, dimension: str, limit: int, observed: int) -> Diag
 
 
 def _check_resource_limits(
-    root: str, root_id: str, root_config: dict, members: list[MemberRecord]
+    root: str,
+    root_id: str,
+    root_config: dict,
+    members: list[MemberRecord],
+    *,
+    skip_dimensions: frozenset[str] = frozenset(),
 ) -> Diagnostic | None:
     # memberCount dimensionはCore hard limit（100）に対して判定する（`複合workspace仕様 §10`の
     # resource上限表）。`multiWorkspace.maxMembers`（既定20、範囲1〜100）による、より狭い実効上限の
@@ -573,7 +585,7 @@ def _check_resource_limits(
         if isinstance(commands, dict):
             totals["commandDefinitionCount"] += len(commands)
 
-        dim = _first_exceeded(totals)
+        dim = _first_exceeded(totals, skip_dimensions)
         if dim:
             return _limit_diag(root_id, dim, HARD_LIMITS[dim], totals[dim])
 
@@ -584,7 +596,7 @@ def _check_resource_limits(
                 continue
             totals["specFileCount"] += 1
             totals["inputBytes"] += size
-            dim = _first_exceeded(totals)
+            dim = _first_exceeded(totals, skip_dimensions)
             if dim:
                 return _limit_diag(root_id, dim, HARD_LIMITS[dim], totals[dim])
 
@@ -603,10 +615,13 @@ def _check_resource_limits(
             totals["statementCount"] += stmt_count
             totals["relationEdgeCount"] += rel_count
             totals["traceEntryCount"] += trace_count
-            dim = _first_exceeded(totals)
+            dim = _first_exceeded(totals, skip_dimensions)
             if dim:
                 return _limit_diag(root_id, dim, HARD_LIMITS[dim], totals[dim])
 
+    dim = _first_exceeded(totals, skip_dimensions)
+    if dim:
+        return _limit_diag(root_id, dim, HARD_LIMITS[dim], totals[dim])
     return None
 
 
@@ -680,13 +695,26 @@ def base_workspace_map(
 
 
 def precheck(
-    cwd: str, git: gitutil.GitInfo, env: dict[str, str], *, extra_config_revs: list[str] | None = None
+    cwd: str,
+    git: gitutil.GitInfo,
+    env: dict[str, str],
+    *,
+    extra_config_revs: list[str] | None = None,
+    skip_limit_dimensions: frozenset[str] = frozenset(),
 ) -> PrecheckResult:
     """`--all-workspaces`の全体事前検査（`複合workspace仕様 §8`）。
 
     ``extra_config_revs``は現在snapshotに加えてGit既知設定を比較するrevisionの一覧
     （checkの`--base`、doctorのHEADなど。§8「checkは指定base snapshot、doctorはHEAD snapshotも
     対象にする」）。
+
+    ``skip_limit_dimensions``は全体事前検査のresource上限判定から除外するdimension名の集合
+    （空集合が既定＝従来どおり全dimensionを判定する）。`verifyBindingCount`は
+    `commandDefinitionCount`の部分集合であり両方が同時に超過し得るが、複数dimensionが同時に
+    超過する場合はverify実行計画のdimensionを優先して報告する（複合workspace仕様 §10）。
+    `verify --all-workspaces`は自分のbinding計画からverifyBindingCountを直接数えるため、
+    ここでは`commandDefinitionCount`を渡して一般事前検査の早期停止を避け、verify側の判定を
+    優先させる。check／doctorは空集合のまま呼び出し、この判定順を変えない。
     """
 
     root, cfg_path, git_confirmed = _locate_root(cwd, git, env)
@@ -718,7 +746,9 @@ def precheck(
         )
 
     revs = list(extra_config_revs or [])
-    catalog_diags, members = _validate_catalog(root, root_id, outcome.config, git, cwd, env, revs)
+    catalog_diags, members = _validate_catalog(
+        root, root_id, outcome.config, git, cwd, env, revs, skip_limit_dimensions=skip_limit_dimensions
+    )
     if catalog_diags:
         status = worst_status([d.resultStatus for d in catalog_diags])
         return PrecheckResult(

@@ -97,7 +97,12 @@ def _resolve_ref(ref: str, id_index: dict[str, DocEntry], statement_index: dict[
     修飾子部分の``::``を除いた残りだけで判定する（``ws::DOC-001:AC-01``のように修飾子と statement
     suffixが両方存在する形を正しく扱う）。
 
-    戻り値は``(target_entry, target_doc_id)``。解決できなければ``(None, None)``。
+    戻り値は``(target_entry, target_doc_id)``。解決できなければ``(None, None)``。``target_doc_id``は
+    複合workspace正規表現の統合索引で解決できるよう、``ref``自体が修飾済み（``"::"``を含む）文書ID
+    参照のときは``ref``をそのまま返す（``entry.doc_id``は常にDocEntry自身のbareなlocal IDであり、
+    修飾aliasを経由して解決した他workspaceの文書では、それをcontext追跡keyに使うと同じbare local ID
+    を持つ別workspaceの文書と衝突する。単一workspace／active workspace自身の非修飾refでは
+    ``entry.doc_id``のまま＝挙動を変えない）。
     """
 
     if "::" in ref:
@@ -112,7 +117,9 @@ def _resolve_ref(ref: str, id_index: dict[str, DocEntry], statement_index: dict[
         doc_id = stmt["documentId"]
         return id_index.get(doc_id), doc_id
     entry = id_index.get(ref)
-    return entry, (entry.doc_id if entry is not None else None)
+    if entry is None:
+        return None, None
+    return entry, (ref if "::" in ref else entry.doc_id)
 
 
 def _target_kind_ok(entry: DocEntry, relation: str, ref: str, target_entry: DocEntry) -> bool:

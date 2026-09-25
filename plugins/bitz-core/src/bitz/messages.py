@@ -363,6 +363,11 @@ MULTI_VERSION_EARS_MAJOR = "memberのearsAiが未対応majorです"
 MULTI_UNREGISTERED = "Gitが認識する設定fileがcatalogに登録されていません"
 
 
+MULTI_VERIFY_TARGETS_EMPTY = "検証対象がありません"
+
+MULTI_DEPENDENCY_CONTEXT = "依存するworkspaceの非成功によりContextを構成できません"
+
+
 def multi_limit_exceeded(dimension: str, limit: int) -> str:
     _LABELS = {
         "memberCount": "member数",

@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import os
+from dataclasses import replace
 
 from . import document as document_mod
 from . import lex
@@ -27,6 +28,84 @@ from .document import DocEntry
 
 _STRONG_RELATIONS = ("requires", "refines", "addresses", "supersedes")
 _ALL_RELATIONS = (*_STRONG_RELATIONS, "related")
+
+
+def _qualify_local_ref(ref: str, owner_ws_id: str) -> str:
+    """非修飾``ref``を``owner_ws_id``で修飾する。既に修飾済み（``"::"``を含む）ならそのまま返す。"""
+
+    if not isinstance(ref, str) or "::" in ref:
+        return ref
+    return f"{owner_ws_id}::{ref}"
+
+
+def _qualified_relations_view(entry: DocEntry, owner_ws_id: str) -> DocEntry:
+    """``entry``の`relations`と`tests[].covers`の非修飾targetを``owner_ws_id``で修飾したviewを返す。
+
+    複合workspace仕様 §4「`relations`と`tests[].covers`は同じworkspaceを参照するとき非修飾形式を
+    許可し、別workspaceを参照するとき複合workspaceの正規形式を必須とする」に基づき、非修飾targetは
+    **宣言元（＝``entry``自身）の所有workspace**で解決しなければならない。
+
+    `targetexpand.py`／`relations._resolve_ref`は単一のflat `id_index`/`statement_index`を前提とし、
+    宣言元workspaceの文脈を持たない。この統合索引を組み立てる段（本moduleの
+    :func:`build_multi_context`・:func:`merge_indices`）で、active workspace以外の各workspaceの
+    entryについてだけ、前もって非修飾targetを宣言元workspaceで修飾しておけば、既存の解決経路
+    （`relations._resolve_ref`が``"::"``を含む参照をそのまま索引keyとして引く）がそのまま
+    正しく機能する。
+
+    `entry.frontmatter`の`id`・`doc_id`・`statements`など識別子そのものは変更しない
+    （`build_id_index`／`build_statement_index`のkeyは影響を受けない）。変更が無ければ``entry``自身を
+    そのまま返す（不要なcopyを作らない）。修飾は冪等（`_normalize_frontmatter`等が行うDigest材料の
+    正規化と同じ``_canon``相当の規則）なので、Bundle出力・Digest材料の正規化結果はこの前処理の
+    有無で変わらない。
+    """
+
+    fm = entry.frontmatter
+    if not isinstance(fm, dict):
+        return entry
+
+    relations_raw = fm.get("relations")
+    new_relations = None
+    if isinstance(relations_raw, dict):
+        rebuilt: dict = {}
+        changed = False
+        for key, vals in relations_raw.items():
+            if isinstance(vals, list):
+                new_vals = [_qualify_local_ref(v, owner_ws_id) for v in vals]
+                if new_vals != vals:
+                    changed = True
+                rebuilt[key] = new_vals
+            else:
+                rebuilt[key] = vals
+        if changed:
+            new_relations = rebuilt
+
+    tests_raw = fm.get("tests")
+    new_tests = None
+    if isinstance(tests_raw, list):
+        rebuilt_tests = []
+        changed_tests = False
+        for t in tests_raw:
+            if isinstance(t, dict) and isinstance(t.get("covers"), list):
+                new_covers = [_qualify_local_ref(c, owner_ws_id) for c in t["covers"]]
+                if new_covers != t["covers"]:
+                    changed_tests = True
+                    nt = dict(t)
+                    nt["covers"] = new_covers
+                    rebuilt_tests.append(nt)
+                    continue
+            rebuilt_tests.append(t)
+        if changed_tests:
+            new_tests = rebuilt_tests
+
+    if new_relations is None and new_tests is None:
+        return entry
+
+    new_fm = dict(fm)
+    if new_relations is not None:
+        new_fm["relations"] = new_relations
+    if new_tests is not None:
+        new_fm["tests"] = new_tests
+    return replace(entry, frontmatter=new_fm)
 
 
 def _mk(code, severity, status, summary, path, workspace_id, *, key=None) -> Diagnostic:
@@ -431,7 +510,7 @@ def coverage_diagnostics(
 
 
 def build_multi_context(
-    active_ws_id: str, active_entries: list[DocEntry], pre: "multiws.PrecheckResult"
+    active_ws_id: str, active_entries: list[DocEntry], pre: "multiws.PrecheckResult", *, keep_body: bool = False
 ):
     """複合workspace内のworkspace単独check（明示修飾対象）向けの横断解決材料を組み立てる。
 
@@ -454,17 +533,77 @@ def build_multi_context(
     merged_stmt_index: dict[str, dict] = dict(local_stmt_indices[active_ws_id])
     known_ws_ids: set[str] = set()
 
+    # active workspace自身にも修飾aliasを重ねる（宣言側は読み手のactiveを知らず、常に自身の実IDで
+    # 他workspaceを修飾するため、他workspaceの文書がactive workspaceを`"<active>::local"`形式で
+    # 参照する場合も解決できる必要がある）。foreign workspaceのaliasと異なり、ここではdictを複製せず
+    # 同じ値（bareな`id`/`documentId`のまま）を追加keyとして重ねるだけにする。target_expansionの
+    # 逆参照走査（`_refines_targets`/`_refines_target_statements`）はresolve結果の`documentId`／`id`を
+    # 正準表現として使うため、active workspace自身の統一表現（常にbare）を保つ必要がある。
+    for local_id, entry in local_id_indices[active_ws_id].items():
+        merged_id_index[f"{active_ws_id}::{local_id}"] = entry
+    for local_sid, stmt in local_stmt_indices[active_ws_id].items():
+        merged_stmt_index[f"{active_ws_id}::{local_sid}"] = stmt
+
     for wid, root, _relpath in multiws.ordered_workspaces(pre):
         known_ws_ids.add(wid)
         if wid == active_ws_id:
             continue
         catalog = document_mod.build_catalog(root, wid)
-        for e in catalog.entries:
-            e.body = None
-        lid = relations_mod.build_id_index(catalog.entries)
-        lstmt = relations_mod.build_statement_index(catalog.entries)
+        if not keep_body:
+            for e in catalog.entries:
+                e.body = None
+        qualified_entries = [_qualified_relations_view(e, wid) for e in catalog.entries]
+        lid = relations_mod.build_id_index(qualified_entries)
+        lstmt = relations_mod.build_statement_index(qualified_entries)
         local_id_indices[wid] = lid
         local_stmt_indices[wid] = lstmt
+        for local_id, entry in lid.items():
+            merged_id_index[f"{wid}::{local_id}"] = entry
+        for local_sid, stmt in lstmt.items():
+            qid = f"{wid}::{local_sid}"
+            new_stmt = dict(stmt)
+            new_stmt["id"] = qid
+            new_stmt["documentId"] = f"{wid}::{stmt['documentId']}"
+            merged_stmt_index[qid] = new_stmt
+
+    return merged_id_index, merged_stmt_index, local_id_indices, local_stmt_indices, known_ws_ids
+
+
+def merge_indices(active_ws_id: str, entries_by_ws: dict[str, list[DocEntry]]):
+    """:func:`build_multi_context`と同じ戻り値形状を、**既に読み込み済みの**catalog entriesから組み立てる。
+
+    `verify --all-workspaces`はmemberごとに別のworkspaceをactiveとして`TargetExpansion`を呼ぶため、
+    :func:`build_multi_context`をそのままmember数だけ呼ぶと、他workspaceのcatalogをmember数
+    （おおむね）二乗の回数だけdiskから読み直すことになる（複合workspace仕様 §10.1
+    「全体verifyの解決時間はO(Σq(...))を許容する」だが、catalog自体の再parseはfile I/Oを伴うため
+    避けられるなら避ける）。呼び出し側が1度だけ全workspaceのcatalogを読み、``entries_by_ws``
+    （``{workspace_id: entries}``）として渡せば、本関数は索引構築（`build_id_index`／
+    `build_statement_index`、いずれもO(そのworkspaceの文書・statement数)）だけをmemberごとに
+    やり直す。
+    """
+
+    local_id_indices: dict[str, dict[str, DocEntry]] = {}
+    local_stmt_indices: dict[str, dict[str, dict]] = {}
+    for wid, entries in entries_by_ws.items():
+        # active workspace自身は非修飾のまま（既存の統一表現）。他workspaceだけ、非修飾target
+        # （同workspace参照、複合workspace仕様 §4）を宣言元workspaceで修飾したviewを使う。
+        use_entries = entries if wid == active_ws_id else [_qualified_relations_view(e, wid) for e in entries]
+        local_id_indices[wid] = relations_mod.build_id_index(use_entries)
+        local_stmt_indices[wid] = relations_mod.build_statement_index(use_entries)
+    merged_id_index: dict[str, DocEntry] = dict(local_id_indices[active_ws_id])
+    merged_stmt_index: dict[str, dict] = dict(local_stmt_indices[active_ws_id])
+    known_ws_ids: set[str] = set(entries_by_ws)
+
+    for local_id, entry in local_id_indices[active_ws_id].items():
+        merged_id_index[f"{active_ws_id}::{local_id}"] = entry
+    for local_sid, stmt in local_stmt_indices[active_ws_id].items():
+        merged_stmt_index[f"{active_ws_id}::{local_sid}"] = stmt
+
+    for wid in entries_by_ws:
+        if wid == active_ws_id:
+            continue
+        lid = local_id_indices[wid]
+        lstmt = local_stmt_indices[wid]
         for local_id, entry in lid.items():
             merged_id_index[f"{wid}::{local_id}"] = entry
         for local_sid, stmt in lstmt.items():

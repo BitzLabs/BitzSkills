@@ -69,7 +69,15 @@ def _refines_targets(entry: DocEntry, id_index: dict[str, DocEntry], statement_i
 def _refines_target_statements(
     entry: DocEntry, id_index: dict[str, DocEntry], statement_index: dict[str, dict]
 ) -> list[str]:
-    """``entry``の`relations.refines`のうち、statement ID形式の参照だけをそのまま返す。"""
+    """``entry``の`relations.refines`のうち、statement ID形式の参照の解決済み正準statement IDを返す。
+
+    複合workspaceでは``ref``の綴り（宣言側の修飾形式）ではなく、``statement_index``で実際に
+    解決したstatement dictの``id``を正準表現として返す（Step 5C）。同じ統合索引の中では、active
+    workspace自身のstatementは常にbare表現、他workspaceのstatementは常に`ws::local`表現で
+    一意に定まるため、これにより呼び出し側（`_applicable_refinement_statements`）のfrontier比較
+    （bare/修飾のいずれか一方に統一された表現同士の比較）が常に成立する。単一workspaceでは
+    ``ref``自体が唯一の表現なので、この変更は挙動を変えない（statement_index[ref]["id"] == ref）。
+    """
 
     if entry.kind not in ("REQ", "TECH"):
         return []
@@ -79,8 +87,12 @@ def _refines_target_statements(
         if ":" not in ref:
             continue
         target_entry, _target_doc_id = _resolve_ref(ref, id_index, statement_index)
-        if target_entry is not None and ref not in out:
-            out.append(ref)
+        if target_entry is None:
+            continue
+        stmt = statement_index.get(ref)
+        canonical_id = stmt["id"] if stmt is not None else ref
+        if canonical_id not in out:
+            out.append(canonical_id)
     return out
 
 
@@ -487,19 +499,24 @@ def target_expansion(
         frontier = [stmt_id]
         while frontier:
             target = frontier.pop(0)
-            candidates = []
+            candidates: list[tuple[str, DocEntry]] = []
             for cand_id, cand_entry in id_index.items():
                 if cand_entry.kind not in ("REQ", "TECH") or not _is_applicable(cand_entry):
                     continue
                 if target in _refines_target_statements(cand_entry, id_index, statement_index):
-                    candidates.append(cand_entry)
-            for cand_entry in sorted(candidates, key=lambda e: e.doc_id):
-                _ensure_in_context(cand_entry.doc_id, "refines", cand_entry.doc_id)
+                    candidates.append((cand_id, cand_entry))
+            # ``cand_id``はid_indexの索引key（複合workspaceでは他workspaceの候補が`ws::local`修飾
+            # 形式）であり、``cand_entry.doc_id``（常にbare）ではなくこちらをcontext追跡keyに使う
+            # （単一workspaceでは両者が一致するため挙動を変えない）。
+            for cand_id, cand_entry in sorted(candidates, key=lambda pair: pair[0]):
+                _ensure_in_context(cand_id, "refines", cand_id)
+                ws_prefix = cand_id.partition("::")[0] if "::" in cand_id else None
                 for stmt in cand_entry.statements:
-                    if stmt["id"] not in seen:
-                        seen.add(stmt["id"])
-                        out.append(stmt["id"])
-                        frontier.append(stmt["id"])
+                    sid = f"{ws_prefix}::{stmt['id']}" if ws_prefix is not None else stmt["id"]
+                    if sid not in seen:
+                        seen.add(sid)
+                        out.append(sid)
+                        frontier.append(sid)
         return out
 
     target_statements: list[str] = []
