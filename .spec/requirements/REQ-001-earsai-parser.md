@@ -1,7 +1,7 @@
 ---
 id: REQ-001
 title: EARS-AI規範文の解析
-status: draft
+status: approved
 implements:
   - plugins/bitz-core/src/bitz/earsai/scanner.py
   - plugins/bitz-core/src/bitz/earsai/lexer.py

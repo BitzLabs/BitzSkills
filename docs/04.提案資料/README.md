@@ -545,7 +545,7 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 | P0 6件 | 契約、Schema、matrixへ反映済み | 実入力と期待結果はmatrixの全件（2026-09-26時点で318件）をfixture化済み（golden Digestは`SINGLE-042`と`MULTI-002-01`で確定）。統合検証がmatrixの全IDの検証を確認 |
 | P1 5件 | 契約または性能受入成果物へ反映済み | process helper等の検証基盤、Core実装後の受入結果と性能baseline |
 | P2文書衛生 | accepted ADR linkとREADME状態を修正済み | — |
-| 自己適用 | repository rootに`.spec/`を作成済み（2026-09-25、REQ-001 Parser、REQ-002 結果契約。いずれも`draft`） | 人間の確認後に`approved`へ。contextとverifyの実装後にSmall Flowで運用し、Gate Cで最終判定 |
+| 自己適用 | repository rootに`.spec/`を作成済み（REQ-001 Parser、REQ-002 結果契約。2026-09-26に`approved`）。Core自身のcheck・context・verifyが通過 | Step 6のSmall Flow完走と通常Markdown条件との比較、Gate Cで最終判定 |
 | Step 0B | `Complete` | 公開JSON・文法・link・Git/process基盤・Diagnostic意味網羅・target集合25 case・実fixture 310件（単一workspace 250件、複合workspace 60件。内訳は[実装計画 §3.1](12_Core-1.0実装計画.md#31-step-0b-gate-a実証基盤)）の準備を検証済み。golden Digestは単一・複合workspaceとも独立2系統のreference計算で一致。上限境界24件はscale検証で実寸を照合済み。2026-09-18にfresh checkoutでも統合検証とscale検証が作業treeと一致。2026-09-24に`uv run fixtures/certify_gate_a.py`が独立した2つのcloneで統合検証とscale検証を再実行し、結果の一致を確認 |
 | Step 0-P | `Complete` | 基準入力・比較条件を固定し一括検証済み。実測はCore実装後 |
 | Gate A | `Allowed` | —（認定結果と実行環境は[適合fixture検証記録](../../fixtures/conformance/適合fixture検証記録.md)に記録） |

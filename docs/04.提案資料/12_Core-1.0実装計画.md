@@ -240,6 +240,9 @@ Step 2完了時点でbitz-core自身の`.spec/`を作り、以後の実装をSma
 
 2026-09-25にrepository rootへ`.spec/`を作り、REQ-001（EARS-AI規範文の解析）とREQ-002（status集約と終了コード）を
 `draft`で起票した。Core自身の`bitz check --full`は`passed`である。contextとverifyがStep 3、4で揃うまでは`check`だけで運用する。
+2026-09-26に管理者が両REQの内容を確認して`approved`へ変更した。Core自身の`bitz verify`は2 targetとも`passed`
+（binding 1件、試験94件）、`bitz context --purpose implement`は通過status（未addressedの`MUST`をwarningで示す）であり、
+Coreが自分自身をcheck・context・verifyできる状態になった。
 
 その上でREQ 1件について次を通す。
 

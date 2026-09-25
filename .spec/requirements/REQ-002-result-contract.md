@@ -1,7 +1,7 @@
 ---
 id: REQ-002
 title: 操作結果のstatus集約と終了コード
-status: draft
+status: approved
 implements:
   - plugins/bitz-core/src/bitz/resultmodel.py
   - plugins/bitz-core/src/bitz/cli.py
