@@ -129,5 +129,63 @@ class FakeCoreMutationTests(unittest.TestCase):
         self.assertTrue(any("report(" in difference for difference in mutated["differences"]), mutated)
 
 
+# 生成fixture(適合fixture仕様3.4・3.5)の代表: check(memberCount境界、passed)、
+# verify(verifyBindingCount境界、passed)、blocked(memberCount超過)の3形状を1件ずつ。
+# specFileCount・inputBytesなど実寸生成が重いdimensionは避け、memberCountとverifyBindingCountの
+# 境界(13 workspace程度)だけを選ぶ。生成fixtureは期待JSONをfileとして持たないため、
+# 偽Coreの応答は`multi_generator`と`multi_limit_fixtures`(fixture harness側の審査済み参照計算。
+# Coreの実装ではない)から`fake_core.py`が再構成する。
+GENERATE_FIXTURE_IDS = ["MULTI-020-01", "MULTI-020-16", "MULTI-021-01"]
+
+
+class GenerateFixtureSelfTests(unittest.TestCase):
+    """生成fixtureのharness判定能力の自己試験(ADR-052 Decision 5と同じ考え方)。
+
+    `runner.py`が`setup.generate`(入力treeの決定論的生成とtreeDigest照合)、`resultDigest`
+    (Canonical JSONのSHA-256による期待結果比較)、`stateDigest`(副作用の期待値比較)を
+    仕様どおりに判定できることを、実際にwheelをbuildして確かめる。
+    """
+
+    def test_generate_fixtures_pass_against_matching_fake_core(self):
+        with tempfile.TemporaryDirectory(prefix="bitz-fakecore-generate-") as tmp:
+            core_dir = Path(tmp) / "core"
+            build_fake_core(core_dir, GENERATE_FIXTURE_IDS)
+            report = _run_harness(core_dir, GENERATE_FIXTURE_IDS)
+        failing = [entry for entry in report["fixtures"] if entry["result"] != "passed"]
+        self.assertEqual(failing, [], report["fixtures"])
+        self.assertEqual(report["counts"], {"passed": len(GENERATE_FIXTURE_IDS), "failed": 0, "error": 0})
+        self.assertTrue(report["allPassed"])
+
+    def test_generate_fixture_mutated_result_fails_alone(self):
+        """resultDigestが固定する期待結果を1箇所改変すると、errorではなくfailedになる。"""
+        mutate_id = "MULTI-021-01"
+        with tempfile.TemporaryDirectory(prefix="bitz-fakecore-generate-mutate-") as tmp:
+            core_dir = Path(tmp) / "core"
+            build_fake_core(core_dir, GENERATE_FIXTURE_IDS, mutate=mutate_id)
+            report = _run_harness(core_dir, GENERATE_FIXTURE_IDS)
+        results = {entry["id"]: entry["result"] for entry in report["fixtures"]}
+        self.assertEqual(results.get(mutate_id), "failed", results)
+        for identifier, result in results.items():
+            if identifier != mutate_id:
+                self.assertEqual(result, "passed", results)
+        mutated = next(entry for entry in report["fixtures"] if entry["id"] == mutate_id)
+        self.assertTrue(any("resultDigest" in difference for difference in mutated["differences"]), mutated)
+
+    def test_generate_fixture_extra_side_effect_fails_alone(self):
+        """read-onlyの前提(stateDigest)へ、実行がfileを1件足すとfailedになる(errorにならない)。"""
+        mutate_id = "MULTI-020-01"
+        with tempfile.TemporaryDirectory(prefix="bitz-fakecore-generate-effect-") as tmp:
+            core_dir = Path(tmp) / "core"
+            build_fake_core(core_dir, GENERATE_FIXTURE_IDS, mutate_side_effect=mutate_id)
+            report = _run_harness(core_dir, GENERATE_FIXTURE_IDS)
+        results = {entry["id"]: entry["result"] for entry in report["fixtures"]}
+        self.assertEqual(results.get(mutate_id), "failed", results)
+        for identifier, result in results.items():
+            if identifier != mutate_id:
+                self.assertEqual(result, "passed", results)
+        mutated = next(entry for entry in report["fixtures"] if entry["id"] == mutate_id)
+        self.assertTrue(any("stateDigest" in difference for difference in mutated["differences"]), mutated)
+
+
 if __name__ == "__main__":
     unittest.main()

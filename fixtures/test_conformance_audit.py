@@ -906,6 +906,64 @@ class AuditTests(unittest.TestCase):
             result = multi_limit_fixtures.validate(root, {"MULTI-020-01"})
         self.assertEqual(result["status"], "Failed")
 
+    def test_harness_reproduces_generate_fixture_result_digest_for_crosses_cases(self):
+        """`runner.py`のresultDigest比較手順(`normalize_result(..., zero_duration=True)`を
+        `digest_reference`でCanonical JSON化してSHA-256を取る)が、生成fixtureの審査済み
+        resultDigestを、Core実行なしで再現することを確かめる(適合fixture仕様3.4・3.5)。
+
+        `crosses`側は`blocked_result(identifier)`だけから決まり実寸生成を要らないため、
+        8dimension全件を軽量に照合できる(実寸生成の照合は`validate_scale.py`が行う)。
+        """
+        from conformance.runner import normalize_result
+
+        for identifier, (dimension, value, crosses) in multi_limit_fixtures.CASES.items():
+            if not crosses:
+                continue
+            manifest = json.loads((audit.FIXTURES / "multi" / identifier / "manifest.json").read_text())
+            body = multi_limit_fixtures.blocked_result(identifier)
+            normalized, warnings = normalize_result(body, zero_duration=True)
+            self.assertEqual(warnings, [], identifier)
+            digest = digest_reference.digest(digest_reference.canonical_bytes(normalized))
+            self.assertEqual(digest, manifest["expect"]["resultDigest"], identifier)
+
+    def test_harness_reproduces_generate_fixture_result_digest_for_member_boundary(self):
+        """境界内(passed)側もmemberCount次元(実寸生成が軽い)で同じ手順を照合する。"""
+        from conformance.runner import normalize_result
+
+        for identifier in ("MULTI-020-01", "MULTI-020-02"):
+            manifest = json.loads((audit.FIXTURES / "multi" / identifier / "manifest.json").read_text())
+            dataset = json.loads((audit.FIXTURES / "multi" / identifier / "dataset.json").read_text())
+            entries = multi_generator.generate(dataset)
+            body = multi_limit_fixtures.passed_check_result(multi_generator.workspace_counts(entries))
+            normalized, warnings = normalize_result(body, zero_duration=True)
+            self.assertEqual(warnings, [], identifier)
+            digest = digest_reference.digest(digest_reference.canonical_bytes(normalized))
+            self.assertEqual(digest, manifest["expect"]["resultDigest"], identifier)
+
+    def test_harness_reproduces_generate_fixture_state_digest(self):
+        """`runner.py`のstateDigest比較手順(観測状態のCanonical JSONのSHA-256)が、
+        生成fixtureの審査済みstateDigestを、Core実行なしで再現することを確かめる(適合fixture仕様5)。
+        """
+        from conformance.runner import _state_digest
+        from conformance.harness import setup as fixture_setup, tree_digest_bytes
+        from conformance.initial_fixtures import observe
+
+        for identifier in ("MULTI-020-01", "MULTI-021-01"):
+            fixture = audit.FIXTURES / "multi" / identifier
+            manifest = json.loads((fixture / "manifest.json").read_text())
+            dataset = json.loads((fixture / "dataset.json").read_text())
+            effects = json.loads((fixture / "side-effects.json").read_text())
+            entries = multi_generator.generate(dataset)
+            self.assertEqual(tree_digest_bytes(entries), manifest["setup"]["generate"]["treeDigest"], identifier)
+            with tempfile.TemporaryDirectory() as temporary:
+                sandbox = Path(temporary)
+                repository = fixture_setup(fixture, manifest, sandbox / "repo", generated=entries)
+                external = {name: sandbox / name for name in ("home", "cache", "temporary")}
+                for path in external.values():
+                    path.mkdir()
+                state = observe(repository, external)
+            self.assertEqual(_state_digest(state), effects["stateDigest"], identifier)
+
     def test_frontmatter_boundary_evidence(self):
         from conformance import frontmatter_boundary_fixtures as boundaries
         report = boundaries.validate()

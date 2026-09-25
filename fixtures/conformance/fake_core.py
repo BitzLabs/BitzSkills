@@ -3,9 +3,13 @@
 期待どおりの出力をそのまま返す偽の`bitz` source treeを、呼び出し側が指定した一時directoryへ
 生成する。生成物(source tree、uv.lock、build成果物)はrepositoryへ置かず、この生成器だけを
 commit対象にする。生成はfixtures/conformanceの内容だけから決定論的に行い、`bitz`をimportしない
-(ADR-049 Decision 6)。`setup.generate`を持つ生成fixtureと`runner: package`は対象外とする
-(packageはCore実行体を起動せず`package_check.py`が直接source tree・wheel・venvを検査するため、
-pyproject.toml・uv.lockの内容そのものが検査対象になる)。
+(ADR-049 Decision 6)。`runner: package`は対象外とする(packageはCore実行体を起動せず
+`package_check.py`が直接source tree・wheel・venvを検査するため、pyproject.toml・uv.lockの
+内容そのものが検査対象になる)。
+
+`setup.generate`を持つ生成fixture(適合fixture仕様3.4・3.5)は期待JSONをfileとして持たないため、
+`multi_generator`でdataset manifestから入力treeを再現し、`multi_limit_fixtures`(fixture harness側の
+審査済み参照計算。Coreの実装ではない)で期待結果そのものを組み立てて応答にする。
 """
 import base64
 import copy
@@ -19,6 +23,7 @@ import tempfile
 
 from jsonschema import Draft202012Validator
 
+from . import multi_crosscheck, multi_generator, multi_limit_fixtures
 from .harness import setup, snapshot
 from .runner import default_python_minor
 from .schemas import schema_path
@@ -149,11 +154,66 @@ def _mutate_text_bytes(text_bytes, identifier):
     raise FakeCoreBuildError(f"mutate対象のtextに変更できる文字がありません: {identifier}")
 
 
-def _entry_for_fixture(identifier, host_path, mutate, mutate_report):
+def _binding_digests(entries, repository):
+    """binding境界のtargetごとのContext Digestを、生成済みrepositoryからの導出で求める
+
+    (`validate_scale.py`の`binding_digests`と同じ手順。二重実装を避けるため同じ`multi_crosscheck`を使う)。
+    """
+    digests = {}
+    for workspace, document in multi_limit_fixtures.binding_documents(entries).items():
+        workspace_id = "platform" if workspace == "." else workspace.rsplit("/", 1)[-1]
+        target = f"{workspace_id}::{document['id']}"
+        digests[target] = multi_crosscheck.digest(
+            multi_crosscheck.canonical_bytes(multi_crosscheck.build(repository, target)))
+    return digests
+
+
+def _expected_generate_result(identifier, entries, repository):
+    """生成fixtureの期待結果を、`multi_limit_fixtures`の審査済み参照計算から組み立てる
+
+    (fixture harness側の参照実装。Coreの実装ではない。`validate_scale.py`の`expected_result`と同じ規則)。
+    """
+    dimension, _value, crosses = multi_limit_fixtures.CASES[identifier]
+    if crosses:
+        return multi_limit_fixtures.blocked_result(identifier)
+    if dimension == multi_limit_fixtures.VERIFY_DIMENSION:
+        return multi_limit_fixtures.passed_binding_result(entries, _binding_digests(entries, repository))
+    return multi_limit_fixtures.passed_check_result(multi_generator.workspace_counts(entries))
+
+
+def _mutate_generate_body(payload, identifier):
+    """生成fixtureの期待結果(複合workspace形状)を1箇所だけ、Schema適合を保って改変する。
+
+    `_mutation_candidates`は単一workspaceの平らな結果形状(`checkedDocumentCount`等が最上位に
+    出現する形)を前提にしており、複合workspaceの`workspaces[]`配下の入れ子には届かない。
+    生成fixtureが返す3形状(blocked、check済み、verify済み)それぞれに閉じた改変を1つずつ用意する。
+    """
+    candidate = copy.deepcopy(payload)
+    if candidate.get("diagnostics"):
+        first = candidate["diagnostics"][0]
+        first["summary"] = (first.get("summary") or "") + "(mutated)"
+    elif candidate.get("workspaces"):
+        first = candidate["workspaces"][0]
+        if "checkedDocumentCount" in first:
+            first["checkedDocumentCount"] += 1
+        elif first.get("targetResults") and first["targetResults"][0].get("statements"):
+            statements = first["targetResults"][0]["statements"]
+            first["targetResults"][0]["statements"] = statements + [statements[-1]]
+        else:
+            raise FakeCoreBuildError(f"mutate対象を安全に改変できる既知の候補がありません: {identifier}")
+    else:
+        raise FakeCoreBuildError(f"mutate対象を安全に改変できる既知の候補がありません: {identifier}")
+    if not _result_validator().is_valid(candidate):
+        raise FakeCoreBuildError(f"mutate結果がresult.schema.jsonに適合しません: {identifier}")
+    return candidate
+
+
+EXTRA_SIDE_EFFECT_PATH = "unexpected-side-effect.txt"
+
+
+def _entry_for_fixture(identifier, host_path, mutate, mutate_report, mutate_side_effect=None):
     fixture_root = _locate_fixture_root(identifier)
     manifest = json.loads((fixture_root / "manifest.json").read_text(encoding="utf-8"))
-    if "generate" in manifest["setup"]:
-        return None
     invocation = manifest["invocation"]
     runner = invocation["runner"]
     if runner == "package":
@@ -161,12 +221,20 @@ def _entry_for_fixture(identifier, host_path, mutate, mutate_report):
         # wheel、venvを直接検査するため、応答表に載せる出力そのものが存在しない。
         return None
     expect = manifest["expect"]
+    generate_spec = manifest["setup"].get("generate")
 
     with tempfile.TemporaryDirectory(prefix=f"bitz-fakecore-gen-{identifier}-") as sandbox_text:
         sandbox = Path(sandbox_text)
-        repository = setup(fixture_root, manifest, sandbox / "repo")
+        if generate_spec:
+            dataset = json.loads((fixture_root / generate_spec["dataset"]).read_text(encoding="utf-8"))
+            entries = multi_generator.generate(dataset)
+            repository = setup(fixture_root, manifest, sandbox / "repo", generated=entries)
+        else:
+            entries = None
+            repository = setup(fixture_root, manifest, sandbox / "repo")
         cwd_path = repository if invocation["cwd"] == "." else repository / invocation["cwd"]
         tree_digest = _tree_digest(cwd_path)
+        expected_body = _expected_generate_result(identifier, entries, repository) if generate_spec else None
 
     git_version = _git_version_key(invocation, host_path)
     python_minor = invocation.get("python") or default_python_minor()
@@ -183,12 +251,21 @@ def _entry_for_fixture(identifier, host_path, mutate, mutate_report):
     report_operation = None
 
     if stdout_kind == "json":
-        original_bytes = (fixture_root / expect["resultFile"]).read_bytes()
-        stdout_bytes = _mutate_json_bytes(original_bytes, identifier) if identifier == mutate else original_bytes
+        if generate_spec:
+            body = _mutate_generate_body(expected_body, identifier) if identifier == mutate else expected_body
+            original_bytes = (json.dumps(body, ensure_ascii=False) + "\n").encode("utf-8")
+            stdout_bytes = original_bytes
+        else:
+            original_bytes = (fixture_root / expect["resultFile"]).read_bytes()
+            stdout_bytes = _mutate_json_bytes(original_bytes, identifier) if identifier == mutate else original_bytes
         # reportはCoreが標準出力とは別に保存する結果JSON(結果契約8)。標準出力とは独立に改変できる
         # ようにする(mutate_reportは標準出力を変えず、report file内容だけを改変する自己試験用)。
-        report_bytes = (_mutate_json_bytes(original_bytes, identifier)
-                        if identifier == mutate_report else original_bytes)
+        # 生成fixtureはreportFileCountが常に0のため、report内容の改変は効果を持たない。
+        if generate_spec:
+            report_bytes = original_bytes
+        else:
+            report_bytes = (_mutate_json_bytes(original_bytes, identifier)
+                            if identifier == mutate_report else original_bytes)
     elif stdout_kind in ("text", "markdown"):
         stdout_bytes = (fixture_root / expect["textFile"]).read_bytes()
         if identifier == mutate:
@@ -213,6 +290,9 @@ def _entry_for_fixture(identifier, host_path, mutate, mutate_report):
         "stderrBase64": base64.b64encode(stderr_bytes).decode("ascii"),
         "reportBase64": base64.b64encode(report_bytes).decode("ascii"),
         "reportFileCount": expect["reportFileCount"], "reportOperation": report_operation,
+        # 副作用を1件足す自己試験用(mutate_side_effect)。read-onlyのはずの実行が予期しないfileを
+        # 作り、harnessのstateDigest比較がfailedを返すことを確かめる(仕様5)。既定はNone。
+        "extraSideEffectPath": EXTRA_SIDE_EFFECT_PATH if identifier == mutate_side_effect else None,
     }
 
 
@@ -346,12 +426,21 @@ def _write_report_if_needed(entry):
         return
 
 
+def _write_extra_side_effect_if_needed(entry):
+    """偽Coreの自己試験用(mutate_side_effect)。read-onlyのはずの実行へ予期しないfileを1件足す。"""
+    path = entry.get("extraSideEffectPath")
+    if not path:
+        return
+    Path(path).write_text("side effect\\n", encoding="utf-8")
+
+
 def dispatch(module, runner, argv):
     entry = _find_response(module, runner, argv)
     if entry is None:
         sys.stderr.write("fake-core: 応答表にない起動です(argv/tree/git/pythonの組合せが未登録)\\n")
         return 99
     _write_report_if_needed(entry)
+    _write_extra_side_effect_if_needed(entry)
     if entry["stdoutKind"] == "none":
         sys.stderr.buffer.write(base64.b64decode(entry["stderrBase64"]))
     else:
@@ -411,7 +500,7 @@ def _write_source_tree(destination, responses):
         raise FakeCoreBuildError(f"偽Coreのuv lockに失敗しました: {result.stderr.strip()[:2000]}")
 
 
-def build_fake_core(destination, fixture_ids, mutate=None, mutate_report=None):
+def build_fake_core(destination, fixture_ids, mutate=None, mutate_report=None, mutate_side_effect=None):
     """偽Coreのsource treeを`destination`(空にできるdir)へ生成し、`destination`をPathで返す。
 
     `fixture_ids`はsingle/またはmulti/のfixture ID列。`mutate`を指定すると、そのfixtureの
@@ -419,13 +508,15 @@ def build_fake_core(destination, fixture_ids, mutate=None, mutate_report=None):
     `failed`になることを確かめる自己試験に使う)。`mutate_report`を指定すると、そのfixtureの
     標準出力は正しいまま、`.spec/reports/`へ保存するreport fileの内容だけを改変する
     (report内容の検証(適合fixture仕様2、結果契約8)を自己試験するためのもの。`reportFileCount`が
-    0のfixtureを指定しても効果がない)。
+    0のfixtureを指定しても効果がない)。`mutate_side_effect`を指定すると、そのfixtureの実行が
+    標準出力は正しいまま、read-onlyのはずのcwdへ予期しないfileを1件書く(副作用の検証(仕様5)を
+    自己試験するためのもの)。
     """
     host_path = os.environ.get("PATH", "")
     responses = []
     seen = {}
     for identifier in fixture_ids:
-        entry = _entry_for_fixture(identifier, host_path, mutate, mutate_report)
+        entry = _entry_for_fixture(identifier, host_path, mutate, mutate_report, mutate_side_effect)
         if entry is None:
             continue
         key = (entry["module"], entry["runner"], tuple(entry["argv"]), entry["treeDigest"],

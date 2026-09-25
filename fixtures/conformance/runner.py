@@ -16,8 +16,8 @@ import tempfile
 
 from jsonschema import Draft202012Validator, ValidationError
 
-from . import package_check
-from .harness import git, safe_path, setup, snapshot
+from . import digest_reference, multi_generator, package_check
+from .harness import git, safe_path, setup, snapshot, tree_digest_bytes
 from .initial_fixtures import compare_state, observe
 from .schemas import schema_path
 
@@ -223,9 +223,16 @@ def _validate_expected_result(fixture_root, manifest, validators):
     return payload
 
 
-def _normalize(node, warnings, top):
+def _normalize(node, warnings, top, zero_duration=False):
     if isinstance(node, dict):
-        node.pop("durationMs", None)
+        if zero_duration:
+            # 生成fixtureのresultDigestは、durationMsをliteral 0で固定したCanonical JSONの
+            # SHA-256として審査済み(multi_limit_fixtures.canonical_digest)である。実結果側も
+            # 除外(pop)ではなく0へ置換し、同じCanonical JSONを再現する(比較範囲は広げない)。
+            if "durationMs" in node:
+                node["durationMs"] = 0
+        else:
+            node.pop("durationMs", None)
         # revisionとcoreは公開結果Schema上、文書root(最上位)にしか出現しない
         # (result.schema.jsonの各operation定義。fixture corpus全件で実測済み)。
         # ネストした位置に同名keyが現れても対象にしない。
@@ -245,14 +252,14 @@ def _normalize(node, warnings, top):
                 if len(parts) >= 2:
                     core["version"] = ".".join(parts[:2])
         for value in node.values():
-            _normalize(value, warnings, top=False)
+            _normalize(value, warnings, top=False, zero_duration=zero_duration)
     elif isinstance(node, list):
         for item in node:
-            _normalize(item, warnings, top=False)
+            _normalize(item, warnings, top=False, zero_duration=zero_duration)
     return node
 
 
-def normalize_result(value):
+def normalize_result(value, zero_duration=False):
     """共通normalizer(適合fixture仕様 4)。durationMs除外、commit形式検査、core.versionのpatch除外。
 
     durationMsは名前一致であれば任意の深さで除外する(仕様が明示する最上位・workspaces[]・
@@ -260,10 +267,12 @@ def normalize_result(value):
     revisionとcoreは文書rootだけに出現するため、rootでだけ処理する。
     実行環境に依存するprocess出力の抜粋の正規化はTODO: 未実装(仕様4の最後の除外項目)。
     report file名の生成時刻と連番の正規化は、公開結果JSONに現れないため未使用(report本文比較を行わないため)。
+
+    `zero_duration`は生成fixtureのresultDigest比較だけに使う(既定はFalseで従来どおりpopする)。
     """
     import copy
     warnings = []
-    normalized = _normalize(copy.deepcopy(value), warnings, top=True)
+    normalized = _normalize(copy.deepcopy(value), warnings, top=True, zero_duration=zero_duration)
     return normalized, warnings
 
 
@@ -409,6 +418,45 @@ def _state_diff_allowing_new_reports(expected_state, actual_state, allowed_new):
     return diffs
 
 
+def _generate_and_verify(fixture_root, generate_spec):
+    """生成fixtureの入力treeをdataset manifestから決定論的に作り、treeDigestを照合する(仕様3.4・3.5)。
+
+    生成器(`multi_generator`)はfixture harness側の参照実装であり(仕様3.4)、ここでの再利用は
+    二重実装を避けるためのものであってCore実装ではない。digestが一致しなければfixture errorとする。
+    """
+    dataset_path = fixture_root / generate_spec["dataset"]
+    if not dataset_path.is_file():
+        raise FixtureError(f"dataset manifestがありません: {generate_spec['dataset']}")
+    dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
+    try:
+        entries = multi_generator.generate(dataset)
+    except ValueError as error:
+        raise FixtureError(f"生成入力がdataset manifestと一致しません: {error}") from error
+    computed = tree_digest_bytes(entries)
+    if computed != generate_spec["treeDigest"]:
+        raise FixtureError(
+            f"tree digestがmanifestと一致しません: 期待={generate_spec['treeDigest']} 実際={computed}")
+    return entries
+
+
+def _state_digest(state):
+    """副作用のstateDigest(仕様5)。観測状態のRFC 8785 Canonical JSONのSHA-256。"""
+    return digest_reference.digest(digest_reference.canonical_bytes(state))
+
+
+def _compare_side_effects_digest(side_effects, expect, after_state, new_reports):
+    differences = []
+    if len(new_reports) != expect["reportFileCount"]:
+        differences.append(
+            f"reportFileCount: 期待={expect['reportFileCount']} 実際={len(new_reports)} ({new_reports})")
+    after_digest = _state_digest(after_state)
+    if after_digest != side_effects["stateDigest"]:
+        differences.append(
+            f"副作用: 実行後の状態(stateDigest)が期待と一致しません: "
+            f"期待={side_effects['stateDigest']} 実際={after_digest}")
+    return differences
+
+
 def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp):
     """1 fixtureを実行して{"id", "result", "differences"}を返す。例外を送出しない。"""
     differences = []
@@ -421,22 +469,33 @@ def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp
             validators["side-effects"].validate(side_effects)
         except ValidationError as error:
             raise FixtureError(f"side-effects.jsonがSchemaに適合しません: {error.message}") from error
+        generated_entries = None
         if "generate" in manifest["setup"]:
-            raise FixtureError("生成fixtureは未対応です")
-        if "stateDigest" in side_effects:
-            raise FixtureError("stateDigest形式の副作用期待値は未対応です")
+            generated_entries = _generate_and_verify(fixture_root, manifest["setup"]["generate"])
+        if "stateDigest" in side_effects and side_effects["policy"] != "read-only":
+            # stateDigestは実行前後の観測値が同じ1つのdigestになることを要求する(仕様3.4・5)。
+            # explicit-reportはreport file名に生成時刻・連番を含み、after状態を単一digestで
+            # 事前に固定できないため、この組合せは未対応とする(read-onlyのstateDigestだけ対応)。
+            raise FixtureError("read-only以外のpolicyを持つstateDigest形式の副作用期待値は未対応です")
 
         with tempfile.TemporaryDirectory(prefix=f"bitz-run-{fixture_id}-", dir=base_tmp) as sandbox_text:
             sandbox = Path(sandbox_text)
-            repository = setup(fixture_root, manifest, sandbox / "repo")
+            repository = setup(fixture_root, manifest, sandbox / "repo", generated=generated_entries)
             external = {name: sandbox / name for name in ("home", "cache", "temporary")}
             for path in external.values():
                 path.mkdir()
             git_enabled = manifest["setup"]["git"]
             before_state = _observe_state(repository, external, git_enabled)
-            setup_diff = compare_state(side_effects["before"], before_state)
-            if setup_diff:
-                raise FixtureError(f"setup後の状態が期待前提と一致しません: {setup_diff}")
+            if "stateDigest" in side_effects:
+                before_digest = _state_digest(before_state)
+                if before_digest != side_effects["stateDigest"]:
+                    raise FixtureError(
+                        f"setup後の状態(stateDigest)が期待前提と一致しません: "
+                        f"期待={side_effects['stateDigest']} 実際={before_digest}")
+            else:
+                setup_diff = compare_state(side_effects["before"], before_state)
+                if setup_diff:
+                    raise FixtureError(f"setup後の状態が期待前提と一致しません: {setup_diff}")
 
             invocation = manifest["invocation"]
             minor = invocation.get("python") or default_python_minor()
@@ -482,7 +541,10 @@ def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp
 
             after_state = _observe_state(repository, external, git_enabled)
             new_reports = _new_report_files(before_state, after_state)
-            differences.extend(_compare_side_effects(side_effects, expect, before_state, after_state, new_reports))
+            if "stateDigest" in side_effects:
+                differences.extend(_compare_side_effects_digest(side_effects, expect, after_state, new_reports))
+            else:
+                differences.extend(_compare_side_effects(side_effects, expect, before_state, after_state, new_reports))
             if new_reports and manifest["invocation"]["runner"] == "bitz" and expect["stdout"] == "json":
                 differences.extend(_validate_report_contents(repository, new_reports, expected_result, validators))
 
@@ -509,10 +571,20 @@ def _compare_json(manifest, expect, expected_result, exit_code, stdout_bytes, va
             raise FixtureError(f"実結果がresult.schema.jsonに適合しません: {error.message}") from error
         if expect.get("status") is not None and actual_result.get("status") != expect["status"]:
             differences.append(f"status: 期待={expect['status']} 実際={actual_result.get('status')}")
-        normalized_actual, warnings_a = normalize_result(actual_result)
-        normalized_expected, warnings_e = normalize_result(expected_result)
-        differences.extend(f"normalizer: {message}" for message in (*warnings_a, *warnings_e))
-        differences.extend(_format_diffs(diff_json(normalized_expected, normalized_actual)))
+        if "resultDigest" in expect:
+            # 生成fixture(仕様3.4・3.5)。期待JSONを持たないため、実結果側をdurationMs=0固定の
+            # 同じnormalizerでCanonical JSON化し、審査済みdigestと文字列比較する(緩和ではなく、
+            # multi_limit_fixtures.canonical_digestが計算した期待digestの再現)。
+            normalized_actual, warnings_a = normalize_result(actual_result, zero_duration=True)
+            differences.extend(f"normalizer: {message}" for message in warnings_a)
+            actual_digest = digest_reference.digest(digest_reference.canonical_bytes(normalized_actual))
+            if actual_digest != expect["resultDigest"]:
+                differences.append(f"resultDigest: 期待={expect['resultDigest']} 実際={actual_digest}")
+        else:
+            normalized_actual, warnings_a = normalize_result(actual_result)
+            normalized_expected, warnings_e = normalize_result(expected_result)
+            differences.extend(f"normalizer: {message}" for message in (*warnings_a, *warnings_e))
+            differences.extend(_format_diffs(diff_json(normalized_expected, normalized_actual)))
     else:
         if set(actual_result) != {"outcome"}:
             raise FixtureError(f"consumer/migration/packageの標準出力はoutcomeだけを持つ必要があります: {actual_result!r}")
