@@ -1897,8 +1897,10 @@ class AuditTests(unittest.TestCase):
                 self.assertEqual(target["bindingRefs"], [], identifier)
 
     def test_digest_is_absent_exactly_where_the_context_cannot_resolve(self):
+        # SINGLE-061はcommand名を解決できないだけで、Context自体は完全に構成できる（verify仕様 §8）。
+        # `contextDigest`がnullなのはContextを構成できないSINGLE-067だけである（2026-09-26訂正）。
         expected = {"SINGLE-055": True, "SINGLE-056": True, "SINGLE-060": True,
-                    "SINGLE-061": False, "SINGLE-067": False}
+                    "SINGLE-061": True, "SINGLE-067": False}
         for identifier, resolves in expected.items():
             result = json.loads((audit.FIXTURES / "single" / identifier / "expected/verify.json").read_text())
             digest = result["targetResults"][0]["contextDigest"]
@@ -2694,7 +2696,7 @@ class AuditTests(unittest.TestCase):
     def test_trace_fixtures(self):
         result = validate_trace()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(len(result["prepared"]), 6)
+        self.assertEqual(len(result["prepared"]), 7)
         self.assertEqual(result["core_execution"], "Not run")
 
     def test_trace_rejects_corrupted_evidence(self):
@@ -2804,7 +2806,7 @@ class AuditTests(unittest.TestCase):
     def test_ears_fixtures(self):
         result = validate_ears()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(len(result["prepared"]), 12)
+        self.assertEqual(len(result["prepared"]), 17)
         self.assertEqual(result["core_execution"], "Not run")
 
     def test_ears_rejects_corrupted_expectations(self):
@@ -2821,6 +2823,9 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-012-02", lambda value: value["diagnostics"][0]["source"].update(column=3)),
             ("SINGLE-012-03", lambda value: value["diagnostics"][0]["source"].update(column=78)),
             ("SINGLE-013", lambda value: value.update(checkedStatementCount=1)),
+            ("SINGLE-128", lambda value: value["diagnostics"][0].update(summary="規範文IDの形式が不正です")),
+            ("SINGLE-130", lambda value: value.update(diagnostics=[])),
+            ("SINGLE-132", lambda value: value.update(checkedStatementCount=1)),
         ]
         for identifier, mutate in mutations:
             with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:

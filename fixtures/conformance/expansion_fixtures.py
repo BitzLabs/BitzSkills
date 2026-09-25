@@ -1,6 +1,6 @@
 """共通target展開とadvisory提示を固定するfixture（Core操作は実行しない）。
 
-matrix §6.11の`SINGLE-106-03`と§6.12の`SINGLE-107`〜`110`、`113`を扱う。
+matrix §6.11の`SINGLE-106-03`、`SINGLE-106-06`〜`07`と§6.12の`SINGLE-107`〜`110`、`113`を扱う。
 contextの期待値は4集合（rootDocuments、contextDocuments、targetStatements、adjacentStatements）を
 `roots`、`documents[]`、Constraint Ledger、`coverage.adjacent`として完全比較し、同じ起点のverifyは
 contextと同じtarget statement集合を返すことを確認する。
@@ -186,6 +186,28 @@ def corpus_advisory():
     ]
 
 
+def corpus_distance():
+    """106-06: REQ-001がTECH-010をrequiresし、TECH-010がREQ-020をrequires。距離2以上の
+    requirementとconstraintは、距離だけを理由にrefinementのようにnormativeへ落とさず、roleに基づき
+    fullで提示する（context仕様 §5、ADR-014 Decision 4・5）。"""
+    deep_statements = [("REQ-020:AC-01", "秘密鍵を保持しない")]
+    tech_head, tech_body = technical("TECH-010", "距離1の前提契約", [], "relations:\n  requires: [REQ-020]\n")
+    # 規範文0件のTECHは末尾に空sectionだけの空行を残さない（Digest材料の末尾正規化と一致させる）。
+    tech_body = tech_body.rstrip("\n") + "\n"
+    return [
+        document(".spec/requirements/REQ-001.md", requirement(
+            "REQ-001", "距離2依存の起点要求", ROOT_STATEMENTS,
+            "relations:\n  requires: [TECH-010]\n" + ROOT_TESTS_YAML),
+            fm("REQ-001", "距離2依存の起点要求", relations={"requires": ["TECH-010"]}, tests=ROOT_TESTS),
+            ROOT_STATEMENTS),
+        document(".spec/technical/TECH-010.md", (tech_head, tech_body),
+            fm("TECH-010", "距離1の前提契約", relations={"requires": ["REQ-020"]}), []),
+        document(".spec/requirements/REQ-020.md", requirement(
+            "REQ-020", "距離2の前提要求", deep_statements),
+            fm("REQ-020", "距離2の前提要求"), deep_statements),
+    ]
+
+
 # ID: (corpus, argv, 期待status, 説明)
 CASES = {
     "SINGLE-106-03": (corpus_advisory, ["context", "REQ-001", "--purpose", "interpret", "--format", "json"],
@@ -204,6 +226,11 @@ CASES = {
                    "verifyの起点TASKはaddresses先だけをtargetとし、requires先TASKを含めない"),
     "SINGLE-113": (corpus_refinement, ["verify", "REQ-001:AC-01", "REQ-001", "REQ-001:AC-01", "--format", "json"],
                    "文書IDと同文書のstatement IDを重複指定してもtargetとbindingを重複排除する"),
+    "SINGLE-106-06": (corpus_distance, ["context", "REQ-001", "--purpose", "verify", "--format", "json"],
+                      "距離2以上のrequirementとconstraintをroleに基づきfullで提示する"),
+    "SINGLE-106-07": (corpus_refinement, ["context", "REQ-001", "--purpose", "verify",
+                                          "--detail", "compact", "--format", "json"],
+                      "compact detailは全文書をreference提示にしContext Digestを変えない"),
 }
 # contextの期待展開（審査済み）。verifyは同じ起点のcontext fixtureの集合を参照する。
 EXPANSIONS = {
@@ -242,6 +269,23 @@ EXPANSIONS = {
     # 113の文書起点targetは107-01、statement起点targetは次の展開を使う。
     "REQ-001:AC-01": {"purpose": "verify", "root": "REQ-001:AC-01",
                       "ledger": ["REQ-001:AC-01", "TECH-002:AC-01", "TECH-003:AC-01"], "advisory": []},
+    "SINGLE-106-06": {"purpose": "verify", "root": "REQ-001",
+                      "documents": [("REQ-001", "root", "full", ["root"]),
+                                    ("TECH-010", "constraint", "full", ["requires:REQ-001"]),
+                                    ("REQ-020", "requirement", "full", ["requires:TECH-010"])],
+                      "ledger": ["REQ-001:AC-01", "REQ-001:AC-02"],
+                      "tested": ["REQ-001:AC-01", "REQ-001:AC-02"],
+                      "addressed": [], "adjacent": [], "advisory": []},
+    # compact detailはprojectionをreferenceへ統一するだけで、107-01と同じcorpus・purpose・
+    # 閉包を使うのでContext Digestは変わらない（context仕様 §5・§6）。
+    "SINGLE-106-07": {"purpose": "verify", "root": "REQ-001", "detail": "compact",
+                      "documents": [("REQ-001", "root", "reference", ["root"]),
+                                    ("REQ-009", "requirement", "reference", ["requires:REQ-001"]),
+                                    ("TECH-002", "refinement", "reference", ["refines:TECH-002"]),
+                                    ("TECH-003", "refinement", "reference", ["refines:TECH-003"])],
+                      "ledger": ["REQ-001:AC-01", "REQ-001:AC-02", "TECH-002:AC-01", "TECH-003:AC-01"],
+                      "tested": ["REQ-001:AC-01", "REQ-001:AC-02", "TECH-002:AC-01", "TECH-003:AC-01"],
+                      "addressed": [], "adjacent": [], "advisory": []},
 }
 KIND = {"REQ": "requirement", "TECH": "technical", "ADR": "decision", "TASK": "task"}
 
@@ -391,7 +435,7 @@ def reviewed_context(identifier):
         "workspace": {"id": "root", "path": "."}, "roots": [plan["root"]],
         "contextDigest": context_digest(identifier), "revision": None,
         "resolution": {"complete": True, "documentCount": len(plan["documents"]), "unresolvedStrongRelations": 0},
-        "projection": {"detail": "standard", "expanded": []},
+        "projection": {"detail": plan.get("detail", "standard"), "expanded": []},
         "documents": [bundle_document(identifier, *row) for row in plan["documents"]],
         "constraintLedger": {"statements": ledger},
         "coverage": {"must": must, "should": dict(empty), "may": dict(empty), "adjacent": list(plan["adjacent"])},
@@ -466,6 +510,21 @@ def check_contract(identifier, result, root):
             raise ValueError("verifyの起点TASKのrequires先とそのaddresses先をContextへ含めてはいけません")
         if identifier == "SINGLE-107-01" and "REQ-099" in [d["id"] for d in result["documents"]]:
             raise ValueError("related先をContextへ追加してはいけません")
+        if identifier == "SINGLE-106-06":
+            lookup = {d["id"]: d for d in result["documents"]}
+            for name, role in (("TECH-010", "constraint"), ("REQ-020", "requirement")):
+                if lookup[name]["role"] != role or lookup[name]["projection"] != "full":
+                    raise ValueError("距離2以上のrequirement/constraintはfull projectionである必要があります")
+            if "秘密鍵を保持しない" not in lookup["REQ-020"]["bodyText"]:
+                raise ValueError("距離2の規範文のMUST本文がBundleへ現れる必要があります")
+        if identifier == "SINGLE-106-07":
+            if result["projection"]["detail"] != "compact":
+                raise ValueError("106-07はdetail=compactを返す必要があります")
+            if any(d["projection"] != "reference" for d in result["documents"]):
+                raise ValueError("compact detailは全文書をreference提示にする必要があります")
+            expected = json.loads((root / "single/SINGLE-107-01/expected/context.json").read_text())
+            if result["contextDigest"] != expected["contextDigest"]:
+                raise ValueError("compact detailはContext Digestを変えてはいけません")
         return
     for target in result["targetResults"]:
         source = "SINGLE-113" if identifier == "SINGLE-113" else identifier.replace("-02", "-01")

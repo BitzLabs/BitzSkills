@@ -2,23 +2,23 @@
   "schemaVersion": "1.0",
   "reviewStatus": "Passed",
   "sources": {
-    "docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md": "936e2df9edd552f958a75e1981de4515f4ab92afb6c8830fe998ce2384f741cf",
+    "docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md": "f53192a6076eb3970675e587d8b88818f8b1308e933f47550ab173fe4b416049",
     "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "5ec338d6f49f5c35b176ff11d76d9e6d15c560dbd049ea3f7624834d93d7e571",
     "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md": "4ff59a7666ffd67956564de45d88603d24f0f71b90c4debba24fad5e9a91d45f",
-    "docs/03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md": "5accd6fed0da62f9dadf9d32793b724d0d4480818370fea88b1bf5eefa7aa6b2",
-    "docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md": "3335f0b3866c76f01a7bdf7ce23164e1906d3fa155352b9338082dda7dcd7fc0",
+    "docs/03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md": "16e846e724d872ebcce89904cc52988138b44a75d53d77954c3757d0f6a1a64f",
+    "docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md": "c9316d3a7a93af6b694f74721d30ba8d40a2fb680b81044632cd2cb1b2932375",
     "docs/03.詳細設計/02_SPECモデル/03_文書種別・本文template.md": "dbb8555e4b87e13feaf17c0f5a05097613c2ba40274f2b3f781d7af5578c380f",
-    "docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md": "efbbbcc39710aa8a8f942e63e06aaa2dd6c8c43c06b0d8a11930c469667113f6",
-    "docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md": "e86f8903e4c01a7f26d87af106c0baa6c0cda553dc22d27dc79bac901d2483f5",
-    "docs/03.詳細設計/03_操作仕様/01_context.md": "096f16c7d575e9aa104a2b3d01f9a6da151ea7668a6ff3ab1acccbac80df7b4f",
-    "docs/03.詳細設計/03_操作仕様/02_check.md": "c3278109c0ca6fe0bb08b27d6f8ff386239ef142b6490dab57f8a3d38c91896e",
-    "docs/03.詳細設計/03_操作仕様/03_verify.md": "4d9426423f828b2a12f27402ee6a2a27f7348ad61c2ace296b850a89ae96def4",
+    "docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md": "4bfe2f87773764c40e216b366d6429c6004ce96895a24cf6eb1cc720f4bc0e70",
+    "docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md": "64318f649449fc981f7f7c04672975157f156d28d76b981913fb445f9fa3b6ee",
+    "docs/03.詳細設計/03_操作仕様/01_context.md": "d3aa7c3650bc62e96c87da0ccc5c0c5fda56bef5c94b526ca166bc35b8272b54",
+    "docs/03.詳細設計/03_操作仕様/02_check.md": "29cebf2e872dd136c53cac79a6aaa747df66900d09f74a2c42f9cc17e396bdd9",
+    "docs/03.詳細設計/03_操作仕様/03_verify.md": "770e36bee1f7c24ed8f076e9ae1ffb8161e26772fd47f5e52746592057747b7e",
     "docs/03.詳細設計/03_操作仕様/04_doctor.md": "c5396d341b7b9f5a8a0a85254ecde1963349999a62f943efbb25599c06166d3f",
     "docs/03.詳細設計/03_操作仕様/README.md": "b791c76c9595b8638a00cd1cd85bbb8089b2e3aace8f61efefd541bc44379134",
-    "docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md": "852a3512a841766262ca32cd620e8c7ef3b9589b3efadaa9334ee5622b16fdfb",
+    "docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md": "afa1797ed935f87bdf330b0a8a51bd3980580a2fa7b91632eb13feaf7cd526c1",
     "docs/03.詳細設計/01_EARS-AI/02_適合性・移行仕様.md": "37f4f8ba9ea1db12c0f4a94c68b09bb42cad3009a24a8310215126b122496543",
     "docs/03.詳細設計/01_EARS-AI/03_例・アンチパターン.md": "f1fe362cc97666e1b81368f6669d1fc3b7650499aa1bd1b6a06ef3f320c96e75",
-    "docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md": "61cb40d63413e346a2d0e0db16e8c6ff6ecb47663fc13783fa10af3a90013c60"
+    "docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md": "ddcda6af948eea752a4c9bd902a7f7e82c892da0dc67b8127b8e738bd945779b"
   },
   "groups": [
     {
@@ -97,6 +97,7 @@
         "EAI-SYNTAX-TAG-UNCLOSED",
         "EAI-SYNTAX-TAG-UNCLOSED-DRAFT",
         "EAI-ID-FORMAT",
+        "EAI-ID-DOCUMENT-MISMATCH",
         "EAI-ID-DUPLICATE",
         "EAI-SYNTAX-TAG-ORDER",
         "EAI-SYNTAX-TAG-ORDER-DRAFT",
@@ -115,7 +116,7 @@
         "docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md",
         "docs/03.詳細設計/02_SPECモデル/03_文書種別・本文template.md"
       ],
-      "rationale": "構文エラーのdraft降格とIDエラー非降格。SHOULD理由と未知extensionはwarning。"
+      "rationale": "構文エラーのdraft降格とIDエラー非降格。規範文IDの文書部分とFrontmatter `id`の不一致はdraftでもerrorとする。SHOULD理由と未知extensionはwarning。"
     },
     {
       "id": "document",

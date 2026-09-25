@@ -26,7 +26,8 @@
         "workspaceId": "root",
         "path": ".spec/requirements/REQ-001.md",
         "key": "relations.refines"
-      }
+      },
+      "evidence": "TECH-001"
     }
   ]
 }

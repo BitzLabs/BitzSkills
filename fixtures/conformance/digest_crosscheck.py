@@ -361,6 +361,10 @@ def build(repository, root="REQ-001", purpose="verify", workspace_id="root"):
             if name is not None:
                 used.add(name)
     for name in sorted(used):
+        # 設定に定義のないcommand名はbindingを構成できない（verify §8）。Digest材料は
+        # 実際に収録できたbindingだけを持ち、未定義名を欠落として無視も例外にもしない。
+        if name not in commands:
+            continue
         command = commands[name]
         entries.append({"workspaceId": workspace_id, "name": name,
                         "argv": list(command["argv"]), "cwd": command.get("cwd", ".")})

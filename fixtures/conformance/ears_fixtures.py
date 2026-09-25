@@ -115,6 +115,52 @@ CASES.extend(json.loads(r'''
   ]
 ]
 '''))
+# EAI-ID-DOCUMENT-MISMATCH（規範文IDの文書部分がFrontmatter idと不一致、draftでもerror）とADR-054の
+# local-id文法（EARS-AI仕様 §2.1）を固定する追加case。
+CASES.extend(json.loads(r'''
+[
+  [
+    "SINGLE-128",
+    "approved",
+    "- [REQ-002:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。",
+    "EAI-CORE-ID-001",
+    "failed",
+    3
+  ],
+  [
+    "SINGLE-129",
+    "draft",
+    "- [REQ-002:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。",
+    "EAI-CORE-ID-001",
+    "failed",
+    3
+  ],
+  [
+    "SINGLE-130",
+    "approved",
+    "- [REQ-001:ac1] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。",
+    "EAI-CORE-ID-001",
+    "failed",
+    3
+  ],
+  [
+    "SINGLE-131",
+    "approved",
+    "- [REQ-001:AC1] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。",
+    "EAI-CORE-ID-001",
+    "failed",
+    3
+  ],
+  [
+    "SINGLE-132",
+    "approved",
+    "- [REQ-001:A-B-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。",
+    null,
+    "passed",
+    null
+  ]
+]
+'''))
 SUMMARIES = {
     "EAI-CORE-ID-001": "規範文IDの形式が不正です",
     "EAI-CORE-ID-002": "規範文IDが重複しています",
@@ -124,6 +170,13 @@ SUMMARIES = {
     "EAI-CORE-SYNTAX-006": "規範文末の句点がありません",
     "EAI-EXT-UNKNOWN-001": "未知namespaceのextensionを保持します",
 }
+# codeだけでは決まらない、識別子固有のsummary上書き（EAI-CORE-ID-001は2条件を共有するため）。
+SUMMARY_OVERRIDES = {
+    "SINGLE-128": "規範文IDの文書部分が文書IDと一致しません",
+    "SINGLE-129": "規範文IDの文書部分が文書IDと一致しません",
+}
+# 2つ目の規範行が実在の統語的statementであるfixture（checkedStatementCountが2件になる）。
+TWO_STATEMENT_FIXTURES = {"SINGLE-013", "SINGLE-132"}
 GOOD = "- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。"
 SPEC_PATH = ".spec/requirements/REQ-001.md"
 
@@ -162,7 +215,7 @@ def validate(root=HERE, identifiers=None):
             diagnostics = [] if code is None else [{
                 "code": code, "severity": "error" if status == "failed" else "warning",
                 "resultStatus": status,
-                "summary": SUMMARIES[code],
+                "summary": SUMMARY_OVERRIDES.get(identifier, SUMMARIES[code]),
                 "source": {"kind": "file", "workspaceId": "root", "path": SPEC_PATH, "line": 16, "column": column},
             }]
             expected = {
@@ -170,7 +223,8 @@ def validate(root=HERE, identifiers=None):
                 "workspace": {"id": "root", "path": "."},
                 "revision": {"base": "0" * 40, "commit": "0" * 40, "dirty": False},
                 "checkedDocumentCount": 0 if status == "failed" else 1,
-                "checkedStatementCount": 0 if status == "failed" else 2 if identifier == "SINGLE-013" else 1, "durationMs": 0,
+                "checkedStatementCount": 0 if status == "failed" else 2 if identifier in TWO_STATEMENT_FIXTURES else 1,
+                "durationMs": 0,
                 "diagnostics": diagnostics,
             }
             if result != expected:

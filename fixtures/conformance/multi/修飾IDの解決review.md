@@ -51,3 +51,16 @@ Contextに入る`platform::REQ-001`も完全検査するため2文書2句を数�
   この群では扱わない。`SPEC-MULTI-REF-001`の3条件のうち固定したのは`MULTI-REF-UNQUALIFIED`だけである。
 - `MULTI-004-01`は完全解決が成立しないので空のBundleを返す。到達workspaceはrequest workspaceの1件だけとし、
   `resolution.workspaces`を1件以上とする規定を満たす最小の値をreview済みの期待値とした。
+
+## 2026-09-26追記: MULTI-003とMULTI-004-01/02へevidenceを追加
+
+2026-09-25に管理者が承認した方針を反映したcommitで、結果契約 §4とregistry §2へ、relation edgeを単位とする
+Diagnosticが宣言どおりの参照先文字列を`evidence`に持つことが明記された。本reviewが扱う2条件も対象である。
+
+- `MULTI-003`（`SPEC-MULTI-REF-001`）は、`web::TECH-010`が非修飾で宣言した`refines: [REQ-001]`の宣言どおりの
+  文字列`"REQ-001"`を`evidence`として追加する。
+- `MULTI-004-01`（context、`SPEC-RELATION-MISSING-001`）と`MULTI-004-02`（check、同code）は、`web::TECH-010`が
+  宣言した`requires: [api::TECH-999]`の宣言どおりの修飾文字列`"api::TECH-999"`を`evidence`として追加する。
+
+source（workspace/path/key）は変えていない。期待Diagnosticを増やす変更であり、比較の範囲を狭める緩和には
+当たらない（[適合fixture仕様 §1.1](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#11-matrixとfixtureの変更)）。

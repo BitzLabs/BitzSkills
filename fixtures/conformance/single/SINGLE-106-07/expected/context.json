@@ -1,0 +1,183 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "verify",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "REQ-001"
+  ],
+  "contextDigest": "sha256:60005cf3c317953e8c3c246bdeda7f0cf2498aa239d8bbd086eda93b50ac728f",
+  "revision": null,
+  "resolution": {
+    "complete": true,
+    "documentCount": 4,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "compact",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "reference",
+      "reachedBy": [
+        "root"
+      ],
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "REQ-009",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "requirement",
+      "path": ".spec/requirements/REQ-009.md",
+      "projection": "reference",
+      "reachedBy": [
+        "requires:REQ-001"
+      ],
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-002",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-002.md",
+      "projection": "reference",
+      "reachedBy": [
+        "refines:TECH-002"
+      ],
+      "expandable": true,
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-003",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-003.md",
+      "projection": "reference",
+      "reachedBy": [
+        "refines:TECH-003"
+      ],
+      "expandable": true,
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": [
+      {
+        "id": "REQ-001:AC-01",
+        "documentId": "REQ-001",
+        "documentRole": "root",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "入力を検証する"
+        }
+      },
+      {
+        "id": "REQ-001:AC-02",
+        "documentId": "REQ-001",
+        "documentRole": "root",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "結果を記録する"
+        }
+      },
+      {
+        "id": "TECH-002:AC-01",
+        "documentId": "TECH-002",
+        "documentRole": "refinement",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "入力形式を固定する"
+        }
+      },
+      {
+        "id": "TECH-003:AC-01",
+        "documentId": "TECH-003",
+        "documentRole": "refinement",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "形式違反を拒否する"
+        }
+      }
+    ]
+  },
+  "coverage": {
+    "must": {
+      "total": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02",
+        "TECH-002:AC-01",
+        "TECH-003:AC-01"
+      ],
+      "addressed": [],
+      "tested": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02",
+        "TECH-002:AC-01",
+        "TECH-003:AC-01"
+      ],
+      "unaddressed": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02",
+        "TECH-002:AC-01",
+        "TECH-003:AC-01"
+      ],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

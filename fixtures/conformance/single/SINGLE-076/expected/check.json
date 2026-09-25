@@ -20,11 +20,12 @@
       "code": "SPEC-RELATION-MISSING-001",
       "severity": "error",
       "resultStatus": "failed",
-      "summary": "\u53c2\u7167\u5143.spec/technical/TECH-001-\u001b[31m\t\u007f\u0085.md\u306estrong relation\u53c2\u7167\u5148\u304c\u5b58\u5728\u3057\u307e\u305b\u3093",
+      "summary": "参照元.spec/technical/TECH-001-\u001b[31m\t.mdのstrong relation参照先が存在しません",
+      "evidence": "TECH-999",
       "source": {
         "kind": "file",
         "workspaceId": "root",
-        "path": ".spec/technical/TECH-001-\u001b[31m\t\u007f\u0085.md",
+        "path": ".spec/technical/TECH-001-\u001b[31m\t.md",
         "key": "relations.requires"
       }
     }

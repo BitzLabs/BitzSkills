@@ -75,6 +75,7 @@
         "SINGLE-024",
         "SINGLE-025",
         "SINGLE-026",
+        "SINGLE-133",
         "SINGLE-070-01",
         "SINGLE-070-02",
         "SINGLE-075-01",
@@ -140,7 +141,12 @@
         "SINGLE-120-01",
         "SINGLE-120-02",
         "SINGLE-120-03",
-        "SINGLE-120-04"
+        "SINGLE-120-04",
+        "SINGLE-128",
+        "SINGLE-129",
+        "SINGLE-130",
+        "SINGLE-131",
+        "SINGLE-132"
       ],
       "parserChecks": [
         "SINGLE-096-01",
@@ -201,6 +207,8 @@
         "SINGLE-106-01",
         "SINGLE-106-02",
         "SINGLE-106-03",
+        "SINGLE-106-06",
+        "SINGLE-106-07",
         "SINGLE-107-01",
         "SINGLE-108-01",
         "SINGLE-109",

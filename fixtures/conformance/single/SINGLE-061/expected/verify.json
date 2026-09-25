@@ -11,7 +11,7 @@
     {
       "target": "REQ-001",
       "status": "blocked",
-      "contextDigest": null,
+      "contextDigest": "sha256:871127ad92352b72bc21becfa78b83a0f4f5917d2e9921e9a7b4a3d75617ffe6",
       "statements": [
         "REQ-001:AC-01",
         "REQ-001:AC-02"
@@ -28,6 +28,18 @@
             "workspaceId": "root",
             "path": ".spec/technical/TECH-001.md",
             "key": "tests[0].command"
+          }
+        },
+        {
+          "code": "SPEC-VERIFY-BLOCKED-001",
+          "severity": "error",
+          "resultStatus": "blocked",
+          "summary": "command名missingが設定に定義されていません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "root",
+            "path": ".spec/technical/TECH-001.md",
+            "key": "tests[1].command"
           }
         }
       ]

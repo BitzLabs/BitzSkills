@@ -16,6 +16,7 @@ Coreの関係解決、path検査、coverage判定を実装・実行した結果�
 | SINGLE-024 | approved REQのimplementsが未作成src/missing.pyを宣言 | SPEC-PATH-INVALID-001 / failed / 1 | 1 / 1 |
 | SINGLE-025 | 024のstatusだけdraftへ変更 | SPEC-PATH-INVALID-001 / passed_with_warnings / 0 | 1 / 1 |
 | SINGLE-026 | 実在testのcoversが存在しない同一REQのAC-99を参照 | SPEC-TEST-COVERAGE-001 / failed / 1 | 1 / 1 |
+| SINGLE-133（2026-09-26追加） | requiresが存在しないREQ-997とREQ-998を2件参照 | SPEC-RELATION-MISSING-001 ×2 / failed / 1 | 1 / 1 |
 
 020は参照先IDの語彙・型自体は正しく、横断意図を推測しない。
 021では参照先を実在させ、REQ→TECHのrefines型違反だけを返す。TECHは規範文なしを許され、
@@ -39,7 +40,8 @@ checkの文書検査完了を、非成功の関係を含むContext閉包が完�
 - sourceはfile、workspaceId root、path `.spec/requirements/REQ-001.md`。
   source.keyは順に`relations.requires`、`relations.refines`、`refs`、`implements`、`implements`、`tests[0].covers`。
   配列の原因要素が各1件であるため、関係とimplementsはfield keyで固定する。
-- line/column、specRefs、証跡、suggestedActionは付加しない。summaryはexpected JSONの固定日本語文字列とする。
+- line/column、specRefs、suggestedActionは付加しない。summaryはexpected JSONの固定日本語文字列とする。
+  `evidence`は2026-09-26の訂正（下記参照）で、relation edge単位のDiagnostic（020、021、026）だけへ追加した。
 - Git IDとdurationだけ既存normalizer用の代表値を使う。件数・診断順・任意fieldを比較から除外しない。
 - repo、Git status/index、HOME、cache、TMPDIRの読取り専用before/afterを固定し、許可書込みを0件とする。
 
@@ -60,3 +62,28 @@ report指定、cache書込み期待、参照先・test・commandの欠落、path
 
 [ID重複・循環の4件](文書ID重複・循環review.md)と[Git基準版の5件](Git基準版・状態遷移review.md)と[保護対象外変更の5件](approved-REQの保護対象外変更review.md)を追加し、50/311件を準備済み、実fixture残261件とする。golden Digest、全体の副作用期待値、
 fresh checkoutの全Gate A検証は引き続き残る。Gate AはBlockedである。
+
+## 2026-09-26追記: relation edgeのDiagnosticへevidenceを追加、SINGLE-133を新設
+
+2026-09-25に管理者が承認した方針を反映したcommitで、[結果契約 §4](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#4-diagnostic-schema)と
+[registry §2](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md#2-status優先順位)へ、relation edgeまたは
+`covers`要素を単位とするDiagnostic（`SPEC-RELATION-MISSING-001`、`SPEC-RELATION-ADVISORY-MISSING-001`、
+`CTX-RELATION-TYPE-001`、`SPEC-MULTI-REF-001`、`SPEC-TEST-COVERAGE-001`）が、宣言どおりの参照先文字列を`evidence`に
+持つことが明記された（[適合fixture仕様 §1.1](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#11-matrixとfixtureの変更)の
+「追加」。期待Diagnosticを増やす変更であり、比較の範囲を狭める緩和ではない）。
+
+- `SINGLE-020`（`SPEC-RELATION-MISSING-001`）へ`evidence: "REQ-999"`、`SINGLE-021`（`CTX-RELATION-TYPE-001`）へ
+  `evidence: "TECH-001"`、`SINGLE-026`（`SPEC-TEST-COVERAGE-001`）へ`evidence: "REQ-001:AC-99"`を追加した。
+  いずれもsource（workspace/path/key）は変えていない。`SINGLE-023`（`SPEC-RELATION-LEGACY-001`）と`SINGLE-024`／`025`
+  （`SPEC-PATH-INVALID-001`）はこの5 codeに含まれないため`evidence`を追加していない。
+- `SINGLE-020`から派生する`SINGLE-070-02`、`071-02`、`072`、`075-02`、`076`、`077`、`125-06`（別reviewが所有）も、
+  同じDiagnosticを再利用するため`evidence: "REQ-999"`を継承する。text出力（`.txt`）は
+  [結果契約 §7](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#7-textとjson)によりevidenceを
+  出さないため変えていない。
+- 新設`SINGLE-133`は、同じ`relations.requires`配列に不在targetを2件（`REQ-997`、`REQ-998`）持ち、`workspaceId`、
+  `path`、`key`が全件同一でも`evidence`だけで各件を区別できることを固定する。2件は宣言順（＝evidenceの辞書順）で
+  並べ、[結果契約 §7](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#7-textとjson)が定める
+  `workspace/path/line/column/code/specRefs`の辞書順がすべて同値の場合の並びを、宣言順で決定論的に固定するものである。
+
+trace_fixtures.pyの`CASES`タプルへ`evidence`列（既存caseは`None`）を加え、`reviewed_result`が`evidence`が非`None`のとき
+だけfieldを出すよう直した。SINGLE-133は`evidence`をlistで表し、要素ごとに独立したDiagnosticを1件ずつ生成する。

@@ -66,6 +66,7 @@
       "severity": "error",
       "resultStatus": "failed",
       "summary": "strong relationの参照先が存在しません",
+      "evidence": "api::TECH-999",
       "source": {
         "kind": "file",
         "workspaceId": "web",

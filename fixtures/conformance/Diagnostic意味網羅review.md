@@ -194,3 +194,23 @@ ADR-053を加えた。
   継続単位は変えていない。下限未満を入力にするfixtureは従来どおりmatrixに持たない。
 - 119条件・14論点群の対応に変更はない。
 - 上記を確認したうえで、台帳が固定する根拠文書のhashを更新した。
+
+## 2026-09-26の再review（規範文IDの文書部分の不一致とcoveredのevidence明文化）
+
+2026-09-25に管理者が承認した方針を反映したcommitで、Diagnostic registryへ条件行
+`EAI-ID-DOCUMENT-MISMATCH`（`EAI-CORE-ID-001`、error／failed、file、`skip-document`、draftでもerror）を
+追加した。規範文IDの文書部分がFrontmatter `id`と一致しない場合を、既存の`EAI-ID-FORMAT`（規範文ID形式不正）と
+区別する新条件である。同じcommitで、共通結果契約 §4とregistry §2へ、relation edgeまたは`covers`要素を単位とする
+Diagnostic（`SPEC-RELATION-MISSING-001`、`SPEC-RELATION-ADVISORY-MISSING-001`、`CTX-RELATION-TYPE-001`、
+`SPEC-MULTI-REF-001`、`SPEC-TEST-COVERAGE-001`）の`evidence`規則も明文化されたが、これは既存条件の
+`evidence`fieldの記法を定めるものであり、新規condition IDではない。
+
+- `EAI-ID-DOCUMENT-MISMATCH`を論点群`language`（`docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md`、
+  `docs/03.詳細設計/02_SPECモデル/03_文書種別・本文template.md`）へ対応付けた。rationaleへ、draftでもerrorとする旨を追記した。
+- 120条件・14論点群の対応となった（119条件から1件増）。未裁定事項は0件のまま。
+- 上記を確認したうえで、台帳が固定する次の根拠文書のhashを更新した: `05_Diagnostic-registry.md`、
+  `01_結果・Diagnostic・終了コード.md`、`01_workspace・設定仕様.md`、`02_文書・Frontmatter・状態仕様.md`、
+  `04_関係・トレースモデル.md`、`05_複合workspace仕様.md`、`01_context.md`、`02_check.md`、`03_verify.md`、
+  `01_言語・Semantic-IR仕様.md`。
+- 同日、結果契約 §7のDiagnostic sort規則へ、sort keyがすべて同じDiagnosticを生成元の宣言の出現順とする1文を足した
+  （`SINGLE-133`の同じkeyの参照切れ2件の順序を規範文で決めるため）。条件の対応は変えず、同文書のhashを再度更新した。

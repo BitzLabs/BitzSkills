@@ -89,6 +89,14 @@ def reviewed_digest_input(identifier):
         technical = next(d for d in payload["documents"] if d["id"] == "TECH-001")
         technical["frontmatter"]["tests"] = [
             {"path": "tests/test_session.py", "covers": ["REQ-001:AC-02"], "command": "default"}]
+    elif identifier == "SINGLE-061":
+        # verify §8: Contextは構成できるが、どちらのtestも未定義command名(missing)のためbindingを
+        # 構成しない。未定義command名を参照するbindingはDigest材料へ収録しない。
+        technical = next(d for d in payload["documents"] if d["id"] == "TECH-001")
+        for test in technical["frontmatter"]["tests"]:
+            test["command"] = "missing"
+        payload["settings"]["commands"] = []
+        payload["settings"]["verifyTimeouts"] = []
     else:
         raise KeyError(identifier)
     return payload
@@ -97,7 +105,7 @@ def reviewed_digest_input(identifier):
 def context_digest(identifier):
     if identifier == "SINGLE-055":
         return GOLDEN
-    if identifier in {"SINGLE-056", "SINGLE-060"}:
+    if identifier in {"SINGLE-056", "SINGLE-060", "SINGLE-061"}:
         return digest_reference.digest(
             digest_reference.canonical_bytes(reviewed_digest_input(identifier)))
     return None
@@ -136,10 +144,14 @@ def target_diagnostic(identifier):
                  "source": {"kind": "file", "workspaceId": "root",
                             "path": digest_reference.REQ_PATH}}]
     if identifier == "SINGLE-061":
+        # test_auth.py(tests[0])とtest_session.py(tests[1])は、どちらも独立したbinding不足の
+        # 原因であり、それぞれprimaryとして返す（registry §2。同じcommand名を参照していても、
+        # array index単位で別raw原因とする）。
         return [{"code": "SPEC-VERIFY-BLOCKED-001", "severity": "error", "resultStatus": "blocked",
                  "summary": "command名missingが設定に定義されていません",
                  "source": {"kind": "file", "workspaceId": "root",
-                            "path": digest_reference.TECH_PATH, "key": "tests[0].command"}}]
+                            "path": digest_reference.TECH_PATH, "key": f"tests[{index}].command"}}
+                for index in (0, 1)]
     if identifier == "SINGLE-067":
         return [{"code": "CTX-STATE-001", "severity": "error", "resultStatus": "blocked",
                  "summary": "起点TASK-001はcancelledでありverifyに適用できません",

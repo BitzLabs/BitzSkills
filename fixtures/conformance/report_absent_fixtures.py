@@ -77,7 +77,7 @@ def reviewed_result(identifier):
             "SINGLE-055" if identifier == "SINGLE-070-03" else "SINGLE-056")
     diagnostics = [] if status == "passed" else [{
         "code": "SPEC-RELATION-MISSING-001", "severity": "error", "resultStatus": "failed",
-        "summary": "strong relationの参照先が存在しません",
+        "summary": "strong relationの参照先が存在しません", "evidence": "TECH-999",
         "source": {"kind": "file", "workspaceId": "root",
                    "path": digest_reference.TECH_PATH, "key": "relations.requires"}}]
     return {

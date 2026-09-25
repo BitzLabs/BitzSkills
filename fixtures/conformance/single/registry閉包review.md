@@ -43,3 +43,12 @@ SINGLE-095は最小設定との差分を`earsAi`のmajorだけに限る。Schema
 回帰試験は位置・severity・同一性・doctor check status・`lostGuarantees`・code・副作用の改変を拒否し、
 さらに各入力を修復した場合とSINGLE-094へworkspaceを足した場合も拒否する。
 YAML parser、Git検出、doctorの検査手順、Coreは実装も実行もしない。実際のcheck継続とdoctor出力はGate Bで受け入れる。
+
+## 2026-09-26追記: SINGLE-090へevidenceを追加
+
+2026-09-25に管理者が承認した方針を反映したcommitで、結果契約 §4とregistry §2へ、relation edgeを単位とする
+Diagnostic（`SPEC-RELATION-MISSING-001`、`SPEC-RELATION-ADVISORY-MISSING-001`、`CTX-RELATION-TYPE-001`、
+`SPEC-MULTI-REF-001`、`SPEC-TEST-COVERAGE-001`）が宣言どおりの参照先文字列を`evidence`に持つことが明記された。
+`SINGLE-090`（`SPEC-RELATION-ADVISORY-MISSING-001`）は不在の`related`先`TECH-999`（`MISSING_TARGET`定数）を
+`evidence`として追加する。source（workspace/path/key）は変えていない。期待Diagnosticを増やす変更であり、
+比較の範囲を狭める緩和には当たらない（[適合fixture仕様 §1.1](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#11-matrixとfixtureの変更)）。

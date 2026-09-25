@@ -26,7 +26,8 @@
         "workspaceId": "root",
         "path": ".spec/requirements/REQ-001.md",
         "key": "tests[0].covers"
-      }
+      },
+      "evidence": "REQ-001:AC-99"
     }
   ]
 }

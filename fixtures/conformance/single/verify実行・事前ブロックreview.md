@@ -26,14 +26,14 @@ fixtureに`--base`を渡すことを求めるが、`verify`にはこのoptionが
 | `SINGLE-055` | なし | commitしたgolden |
 | `SINGLE-056` | commandの`argv`を`/bin/false`へ | 固有の値（`argv` templateはDigest材料） |
 | `SINGLE-060` | `tests`を1件削除 | 固有の値 |
-| `SINGLE-061` | `command: missing` | `null` |
+| `SINGLE-061` | `command: missing`（2件とも） | 固有の値（2026-09-26訂正。下記参照） |
 | `SINGLE-062` | draftのREQだけ | targetがないのでDigestもない |
 | `SINGLE-067` | cancelledのTASK起点 | `null` |
 
-`SINGLE-061`がDigestを返さないのは、参照するcommandが不適合な場合に
-[context仕様 §6](../../../docs/03.詳細設計/03_操作仕様/01_context.md#6-context-digest)がDigestの計算前に停止するから
-である。`SINGLE-067`が返さないのは、cancelledの起点ではContextをまったく構成できないからである。監査は、Contextが
-解決した場合に限りDigestがあることを強制し、両者がずれないようにする。
+`SINGLE-061`がDigestを持つのは、`command`名が設定に定義されているかどうかは[verify §8](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#8-結果)の
+「`contextDigest`はContextを構成できない場合だけnull」に言うContext構成の失敗ではなく、Context構成後のbinding解決だけの
+失敗だからである（訂正の経緯は下記参照）。`SINGLE-067`が返さないのは、cancelledの起点ではContextをまったく構成できない
+からである。監査は、Contextが解決した場合に限りDigestがあることを強制し、両者がずれないようにする。
 
 ## Diagnosticの置き場所
 
@@ -72,6 +72,27 @@ fieldの一致に加えて、監査は次の結果を拒否する。`bindingRefs
 ## 限界
 
 - Coreは実行していない。Coreとの一致はGate Bで判定する。
-- `SINGLE-061`は、Diagnosticのsource keyを`tests[0].command`とする。registryはsourceの種類を`file`と定めるが、
-  keyは定めない。最初に宣言した要素を使う。
+- `SINGLE-061`は、Diagnosticのsource keyを`tests[0].command`と`tests[1].command`（要素ごとに1件）とする。registryは
+  sourceの種類を`file`と定めるが、keyは定めない。宣言順の各要素を使う。
 - `/bin/false`の終了コードは1とする。Step 0Bで固定した基準環境のLinuxで、coreutilsの実行fileが返す値である。
+
+## 2026-09-26の訂正（`SINGLE-061`の`contextDigest`と独立原因の分離）
+
+2026-09-25に管理者が承認した方針（規範文の記述整備）を反映したcommitで、[verify仕様 §8](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#8-結果)へ
+「`contextDigest`はContextを構成できない場合だけnull」が明記された。この規則と、[Diagnostic registry §2](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md#2-status優先順位)の
+「独立したraw原因はそれぞれprimaryを持つ」に照らすと、`SINGLE-061`の従来の期待値は2点で規範文と食い違っていた。
+
+- **`contextDigest: null`は誤りだった。** `SINGLE-061`はcommand名を解決できないだけで、REQ-001／TECH-001／ADR-001の
+  型・状態・強い関係はすべて解決し、Contextは完全に構成できる（`resolution.complete`に相当する状態）。binding解決の
+  失敗はverify固有の後続処理であり、Context構成そのものの失敗ではない。訂正後は、`command: missing`の入力から導ける
+  固有のContext Digest（`settings.commands`と`settings.verifyTimeouts`は、収録できるbindingが0件なのでともに空配列）を返す。
+- **独立原因は1件でなく2件だった。** `TECH-001`の`tests[]`は`test_auth.py`（`tests[0]`）と`test_session.py`（`tests[1]`）の
+  2要素を持ち、どちらも同じ未定義command名`missing`を参照するが、array要素として独立した2つのraw原因である。訂正前は
+  最初の要素だけを返しており、registryの「独立したraw原因はそれぞれprimary」を満たしていなかった。訂正後は`tests[0]`と
+  `tests[1]`それぞれにDiagnosticを1件ずつ返す。
+
+入力（`command: missing`）とDiagnostic単位（`skip-target`、targetの`diagnostics`）は変えていない。
+`digest_crosscheck.build`（参照計算B）も、未定義command名を参照するbindingをDigest材料から静かに除外するよう
+1箇所直した（従来は`commands[name]`が`KeyError`になり、Contextが解決するのにDigestを計算できなかった）。
+これは、[適合fixture仕様 §1.1](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#11-matrixとfixtureの変更)の
+「期待値の訂正」に当たり、規範文（verify §8、registry §2）へ合わせるものである。Core実装の観測出力を根拠にしていない。

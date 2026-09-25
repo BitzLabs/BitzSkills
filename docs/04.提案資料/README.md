@@ -542,7 +542,7 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 
 | 区分 | 現在の状態 | 残件 |
 |---|---|---|
-| P0 6件 | 契約、Schema、matrixへ反映済み | 実入力と期待結果は310件すべてfixture化済み（golden Digestは`SINGLE-042`と`MULTI-002-01`で確定）。統合検証がmatrixの全IDの検証を確認 |
+| P0 6件 | 契約、Schema、matrixへ反映済み | 実入力と期待結果はmatrixの全件（2026-09-26時点で318件）をfixture化済み（golden Digestは`SINGLE-042`と`MULTI-002-01`で確定）。統合検証がmatrixの全IDの検証を確認 |
 | P1 5件 | 契約または性能受入成果物へ反映済み | process helper等の検証基盤、Core実装後の受入結果と性能baseline |
 | P2文書衛生 | accepted ADR linkとREADME状態を修正済み | — |
 | 自己適用 | repository rootに`.spec/`を作成済み（2026-09-25、REQ-001 Parser、REQ-002 結果契約。いずれも`draft`） | 人間の確認後に`approved`へ。contextとverifyの実装後にSmall Flowで運用し、Gate Cで最終判定 |

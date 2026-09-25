@@ -39,6 +39,7 @@
           "severity": "error",
           "resultStatus": "failed",
           "summary": "非修飾の参照先が別workspaceにだけ存在します",
+          "evidence": "REQ-001",
           "source": {
             "kind": "file",
             "workspaceId": "web",

@@ -22,13 +22,13 @@ COMMIT = "0" * 40
 WEB_TECH_RESULT_PATH = ".spec/technical/TECH-010.md"
 MULTI_REF = {
     "code": "SPEC-MULTI-REF-001", "severity": "error", "resultStatus": "failed",
-    "summary": "非修飾の参照先が別workspaceにだけ存在します",
+    "summary": "非修飾の参照先が別workspaceにだけ存在します", "evidence": "REQ-001",
     "source": {"kind": "file", "workspaceId": "web", "path": WEB_TECH_RESULT_PATH,
                "key": "relations.refines"},
 }
 RELATION_MISSING = {
     "code": "SPEC-RELATION-MISSING-001", "severity": "error", "resultStatus": "failed",
-    "summary": "strong relationの参照先が存在しません",
+    "summary": "strong relationの参照先が存在しません", "evidence": "api::TECH-999",
     "source": {"kind": "file", "workspaceId": "web", "path": WEB_TECH_RESULT_PATH,
                "key": "relations.requires"},
 }

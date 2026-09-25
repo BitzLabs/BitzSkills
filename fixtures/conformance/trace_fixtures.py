@@ -16,21 +16,31 @@ HERE = Path(__file__).resolve().parent
 TECH_PATH = ".spec/technical/TECH-001.md"
 TECH = "---\nid: TECH-001\ntitle: 前提技術\nstatus: approved\n---\n\n# TECH-001 前提技術\n\n## Context\n\n規範文を持たない前提技術。\n"
 # literalのYAMLと、独立にreviewしたその値。汎用のYAML parserはここにはない。
-# id: (YAMLのfield, decode後のfield, code, source key, summary, status, 文書数)
+# id: (YAMLのfield, decode後のfield, code, source key, summary, status, 文書数, evidence)
 CASES = {
     "SINGLE-020": ("relations:\n  requires: [REQ-999]\n", {"relations": {"requires": ["REQ-999"]}},
-        "SPEC-RELATION-MISSING-001", "relations.requires", "strong relationの参照先が存在しません", "failed", 1),
+        "SPEC-RELATION-MISSING-001", "relations.requires", "strong relationの参照先が存在しません", "failed", 1,
+        "REQ-999"),
     "SINGLE-021": ("relations:\n  refines: [TECH-001]\n", {"relations": {"refines": ["TECH-001"]}},
-        "CTX-RELATION-TYPE-001", "relations.refines", "REQからTECHへのrefinesは許可されません", "failed", 2),
+        "CTX-RELATION-TYPE-001", "relations.refines", "REQからTECHへのrefinesは許可されません", "failed", 2,
+        "TECH-001"),
     "SINGLE-023": ("refs: [TECH-001]\n", {"refs": ["TECH-001"]},
-        "SPEC-RELATION-LEGACY-001", "refs", "旧refs fieldは使用できません", "failed", 2),
+        "SPEC-RELATION-LEGACY-001", "refs", "旧refs fieldは使用できません", "failed", 2, None),
     "SINGLE-024": ("implements: [src/missing.py]\n", {"implements": ["src/missing.py"]},
-        "SPEC-PATH-INVALID-001", "implements", "実装pathが存在しません", "failed", 1),
+        "SPEC-PATH-INVALID-001", "implements", "実装pathが存在しません", "failed", 1, None),
     "SINGLE-025": ("implements: [src/missing.py]\n", {"implements": ["src/missing.py"]},
-        "SPEC-PATH-INVALID-001", "implements", "draftの実装pathは未作成です", "passed_with_warnings", 1),
+        "SPEC-PATH-INVALID-001", "implements", "draftの実装pathは未作成です", "passed_with_warnings", 1, None),
     "SINGLE-026": ("tests:\n  - path: tests/test_contract.py\n    covers: [REQ-001:AC-99]\n    command: default\n",
         {"tests": [{"path": "tests/test_contract.py", "covers": ["REQ-001:AC-99"], "command": "default"}]},
-        "SPEC-TEST-COVERAGE-001", "tests[0].covers", "coversが存在しない規範文を参照しています", "failed", 1),
+        "SPEC-TEST-COVERAGE-001", "tests[0].covers", "coversが存在しない規範文を参照しています", "failed", 1,
+        "REQ-001:AC-99"),
+    # 同じsource.key（relations.requires）の下に独立した参照切れが2件ある場合、
+    # workspace／path／line／column／code／specRefsがすべて同一でも、evidenceで区別できることを固定する
+    # （結果契約 §4、registry §2。共通sort規則はevidenceを鍵にしない）。
+    "SINGLE-133": ("relations:\n  requires: [REQ-997, REQ-998]\n",
+        {"relations": {"requires": ["REQ-997", "REQ-998"]}},
+        "SPEC-RELATION-MISSING-001", "relations.requires", "strong relationの参照先が存在しません", "failed", 1,
+        ["REQ-997", "REQ-998"]),
 }
 
 
@@ -60,15 +70,22 @@ def reviewed_manifest(identifier):
 
 
 def reviewed_result(identifier):
-    _, _, code, key, summary, status, documents = CASES[identifier]
+    _, _, code, key, summary, status, documents, evidence = CASES[identifier]
+    base = {"code": code, "severity": "warning" if status == "passed_with_warnings" else "error",
+        "resultStatus": status, "summary": summary,
+        "source": {"kind": "file", "workspaceId": "root", "path": REQ_PATH, "key": key}}
+    if isinstance(evidence, list):
+        # 独立したraw原因はそれぞれprimaryを持つ（registry §2）。ここではsource（workspace/path/key）が
+        # 全件同一なので、宣言順（＝evidenceの辞書順）で並べ、evidenceだけで各件を区別する。
+        diagnostics = [{**base, "evidence": value} for value in evidence]
+    else:
+        diagnostics = [{**base, **({"evidence": evidence} if evidence is not None else {})}]
     return {
         "schemaVersion": "1.0", "operation": "check", "status": status, "scope": "full",
         "workspace": {"id": "root", "path": "."},
         "revision": {"base": "0" * 40, "commit": "0" * 40, "dirty": False},
         "checkedDocumentCount": documents, "checkedStatementCount": 1, "durationMs": 0,
-        "diagnostics": [{"code": code, "severity": "warning" if status == "passed_with_warnings" else "error",
-            "resultStatus": status, "summary": summary,
-            "source": {"kind": "file", "workspaceId": "root", "path": REQ_PATH, "key": key}}],
+        "diagnostics": diagnostics,
     }
 
 

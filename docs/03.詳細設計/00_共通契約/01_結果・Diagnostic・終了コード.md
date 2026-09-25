@@ -399,7 +399,8 @@ target、binding、doctor checkの停止・継続境界もregistryの`continuati
 - text出力はstatus、対象件数、scope、所要時間を1行で示す。
 - `--format json`は同じ結果を標準出力へ返し、追加fileを生成しない。
 - Diagnosticの順序はsource workspace ID、path、line、column、code、specRefsの辞書順とし、同一性確定前の
-  `workspaceId: null`は文字列IDより前に置く。
+  `workspaceId: null`は文字列IDより前に置く。これらがすべて同じDiagnosticは、生成元の宣言の出現順
+  （relation配列やtest対応の要素の順）とする。
 - 端末制御文字を無害化する。
 - textとJSONでstatus、件数、終了コードを変えない。
 

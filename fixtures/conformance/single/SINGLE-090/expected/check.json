@@ -18,7 +18,8 @@
         "workspaceId": "root",
         "path": ".spec/requirements/REQ-001.md",
         "key": "relations.related"
-      }
+      },
+      "evidence": "TECH-999"
     }
   ],
   "scope": "full",

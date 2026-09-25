@@ -74,3 +74,30 @@ after snapshotはbeforeと同一の期待値であり、Core実行後の実測�
 extension警告による後続解析の省略を表す件数改変を拒否する。
 2026-09-11追記: 導入・設定9件と[文書構造・UTF-8の9件](文書構造・UTF-8-review.md)、[関係・path・coverageの6件](関係・path・coverage-review.md)、[ID重複・循環の4件](文書ID重複・循環review.md)、[Git基準版の5件](Git基準版・状態遷移review.md)、[保護対象外変更の5件](approved-REQの保護対象外変更review.md)と合わせて50/311件を準備済み。
 残261件とgolden Context Digest等があるためGate AはBlockedのままとする。
+
+## 2026-09-26追記: 規範文IDの文書一致とADR-054 local-id文法（SINGLE-128〜132）
+
+2026-09-25に管理者が承認した方針を反映したcommitで、[言語・Semantic-IR仕様 §2](../../../docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md#2-字句)の
+`local-id`文法がADR-054で`upper, { upper | digit | "-" }, "-", digit, digit, { digit }`へ改まり、registryへ条件行
+`EAI-ID-DOCUMENT-MISMATCH`（規範文IDの文書部分がFrontmatter `id`と不一致、draftでもerror）が追加された
+（[適合fixture仕様 §1.1](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#11-matrixとfixtureの変更)の
+「追加」）。これに合わせ、既存の12件と同じ土台（16行目だけに検査対象を置く固定REQ-001）で5件を追加した。
+
+| ID | 検査対象 | Diagnostic | status / exit | 完全検査した文書 / 規範文 |
+|---|---|---|---|---|
+| SINGLE-128 | approved REQ-001中の`[REQ-002:AC-01]`（文書部分の不一致） | EAI-CORE-ID-001 / error | failed / 1 | 0 / 0 |
+| SINGLE-129 | draft REQ-001中の`[REQ-002:AC-01]`（同上、draftでもerror） | EAI-CORE-ID-001 / error | failed / 1 | 0 / 0 |
+| SINGLE-130 | `[REQ-001:ac1]`（local-idの先頭が小文字） | EAI-CORE-ID-001 / error | failed / 1 | 0 / 0 |
+| SINGLE-131 | `[REQ-001:AC1]`（区切りhyphenと数字がない） | EAI-CORE-ID-001 / error | failed / 1 | 0 / 0 |
+| SINGLE-132 | `[REQ-001:A-B-01]`（複数hyphenを持つ妥当な境界） | なし | passed / 0 | 1 / 2 |
+
+SINGLE-128／129は、`EAI-ID-FORMAT`（既存のSUMMARIES「規範文IDの形式が不正です」）と条件を区別するため、
+`ears_fixtures.SUMMARY_OVERRIDES`でsummaryを「規範文IDの文書部分が文書IDと一致しません」へ上書きする
+（同じ公開code `EAI-CORE-ID-001`を2条件が共有するための識別子固有の上書きであり、既存fixtureのsummaryは変えない）。
+SINGLE-132は、GOOD行（AC-01）に加えて2つ目の妥当な規範文（A-B-01）を持つため、`checkedStatementCount`が2件になる
+（既存のSINGLE-013と同じ扱いで、`ears_fixtures.TWO_STATEMENT_FIXTURES`へ加えた）。
+列は既存caseと同じ規則（候補ScannerがID開始の`[`を指す）で3列目とする。
+
+根拠は[言語・Semantic-IR仕様 §2](../../../docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md#2-字句)、
+[ADR-054](../../../docs/02.設計書/10_決定記録/ADR-054_規範文のlocal-idをFrontmatterの参照形式へそろえる.md)、
+[Diagnostic registry](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md)。Core実装の観測出力を根拠にしていない。

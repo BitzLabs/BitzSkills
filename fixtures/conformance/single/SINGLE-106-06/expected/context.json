@@ -1,0 +1,177 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed",
+  "purpose": "verify",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "REQ-001"
+  ],
+  "contextDigest": "sha256:ce90024df48a347befd1a94af23aa462b065c3a4ba60dff8d62c0f0d77025672",
+  "revision": null,
+  "resolution": {
+    "complete": true,
+    "documentCount": 3,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "root"
+      ],
+      "statementRefs": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "frontmatter": {
+        "id": "REQ-001",
+        "title": "距離2依存の起点要求",
+        "status": "approved",
+        "relations": {
+          "requires": [
+            "TECH-010"
+          ]
+        },
+        "tests": [
+          {
+            "path": "tests/test_root.py",
+            "covers": [
+              "REQ-001:AC-01",
+              "REQ-001:AC-02"
+            ],
+            "command": "default"
+          }
+        ]
+      },
+      "bodyText": "# REQ-001 距離2依存の起点要求\n\n## Intent\n\ntarget展開の検査に使う固定要求。\n\n## Acceptance Criteria\n\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 入力を検証する。\n- [REQ-001:AC-02] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 結果を記録する。\n\n## Verification\n\n宣言したtestで確認する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-010",
+      "kind": "technical",
+      "status": "approved",
+      "role": "constraint",
+      "path": ".spec/technical/TECH-010.md",
+      "projection": "full",
+      "reachedBy": [
+        "requires:REQ-001"
+      ],
+      "statementRefs": [],
+      "frontmatter": {
+        "id": "TECH-010",
+        "title": "距離1の前提契約",
+        "status": "approved",
+        "relations": {
+          "requires": [
+            "REQ-020"
+          ]
+        }
+      },
+      "bodyText": "# TECH-010 距離1の前提契約\n\n## Context\n\n具体化する技術契約。\n\n## Contract\n",
+      "untrustedText": true
+    },
+    {
+      "id": "REQ-020",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "requirement",
+      "path": ".spec/requirements/REQ-020.md",
+      "projection": "full",
+      "reachedBy": [
+        "requires:TECH-010"
+      ],
+      "statementRefs": [
+        "REQ-020:AC-01"
+      ],
+      "frontmatter": {
+        "id": "REQ-020",
+        "title": "距離2の前提要求",
+        "status": "approved"
+      },
+      "bodyText": "# REQ-020 距離2の前提要求\n\n## Intent\n\ntarget展開の検査に使う固定要求。\n\n## Acceptance Criteria\n\n- [REQ-020:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密鍵を保持しない。\n\n## Verification\n\n宣言したtestで確認する。\n",
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": [
+      {
+        "id": "REQ-001:AC-01",
+        "documentId": "REQ-001",
+        "documentRole": "root",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "入力を検証する"
+        }
+      },
+      {
+        "id": "REQ-001:AC-02",
+        "documentId": "REQ-001",
+        "documentRole": "root",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "結果を記録する"
+        }
+      }
+    ]
+  },
+  "coverage": {
+    "must": {
+      "total": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "addressed": [],
+      "tested": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "unaddressed": [
+        "REQ-001:AC-01",
+        "REQ-001:AC-02"
+      ],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": []
+}

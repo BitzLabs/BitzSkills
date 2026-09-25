@@ -44,3 +44,10 @@ CoreのJSON出力、状態判定、binding、Digestとの一致はGate Bで別�
 
 2026-09-17: ADR-047に従い、`FEDERATED-SAME-LOCAL-ID`を`MULTI-WORKSPACE-SAME-LOCAL-ID`、matrix familyの`MONO-*`を`MULTI-*`へ改名した。
 関係・トレースモデルの変更はDiagnostic codeの改名だけで、25 caseの期待集合は変わらない。
+
+2026-09-26: 2026-09-25に管理者が承認した仕様変更（`docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md`のcommit）で
+`contractSha256`が失効した。差分を確認したところ、追加された記述は§4「関係の型制約」への1段落（`requires`のADR targetが
+`accepted`以外の状態なら`CTX-RELATION-TYPE-001`とすること、状態の適用可能性は`CTX-STATE-*`側の責務であることの明確化）
+だけであり、本節が正とする§6.4 TargetExpansion(root, purpose)の記述・rootDocuments／contextDocuments／targetStatements／
+adjacentStatementsの算出規則には変更がない。したがって25 caseの期待集合・graph・matrixFamilies参照は変えず、
+`contractSha256`を新しい文書hash（`4bfe2f87773764c40e216b366d6429c6004ce96895a24cf6eb1cc720f4bc0e70`）へ更新するだけで足りる。

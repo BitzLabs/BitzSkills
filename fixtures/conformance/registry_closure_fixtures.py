@@ -63,7 +63,7 @@ CASES = {
     "SINGLE-090": {
         "operation": "check", "status": "passed_with_warnings", "git": True, "workspace": "root",
         "documents": 1, "statements": 1, "code": "SPEC-RELATION-ADVISORY-MISSING-001",
-        "summary": "relatedの参照先が存在しません",
+        "summary": "relatedの参照先が存在しません", "evidence": MISSING_TARGET,
         "source": file_source(REQ_PATH, "root", key="relations.related"),
         "description": "不在のrelatedを警告し文書の検査を続ける"},
     "SINGLE-091": {
@@ -137,7 +137,8 @@ def reviewed_result(identifier):
               "workspace": {"id": case["workspace"], "path": "."}, "durationMs": 0,
               "diagnostics": [{"code": case["code"],
                                "severity": "warning" if status == "passed_with_warnings" else "error",
-                               "resultStatus": status, "summary": case["summary"], "source": case["source"]}]}
+                               "resultStatus": status, "summary": case["summary"], "source": case["source"],
+                               **({"evidence": case["evidence"]} if "evidence" in case else {})}]}
     if case["operation"] == "doctor":
         result["core"] = CORE
         result["checks"] = case["checks"]

@@ -64,3 +64,27 @@ literalと比較する。回帰試験は、roleの入替え、距離2のfull化�
 statementRefsの対象句への絞込み、adjacentの欠落、兄弟句のcoverage混入、先行TASKのContext混入、
 verifyとcontextの集合・Digestの不一致、targetとtest pathの重複を拒否する。
 Core実装の結果ではなく、Gate Bで実出力と副作用を比較する。
+
+## 2026-09-26追記: 距離2以上のrole例外（SINGLE-106-06）とcompact detail（SINGLE-106-07）
+
+2026-09-25に管理者が承認した方針を反映したcommitで、[context仕様 §5](../../../docs/03.詳細設計/03_操作仕様/01_context.md#5-projection)へ、
+`standard`のprojection規則（roleが`root`/`work`/`replacement`/`requirement`/`constraint`ならfull、それ以外で距離2以上の
+refinementならnormative、advisoryならreference）と、ADR-014 Decision 4・5に基づく理由（requirementとconstraintを
+距離で下げるとMUSTの本文がLedgerからもprojectionからも失われる）が明記された。あわせて`compact`がroleを問わず
+全文書をreference提示にすることも明記された。これに合わせ2件を追加した。
+
+- `SINGLE-106-06`: `corpus_distance()`（REQ-001が`requires`でTECH-010（距離1、規範文なし）を、TECH-010が`requires`で
+  REQ-020（距離2、`REQ-020:AC-01`のMUSTを1件持つ）を参照する新規corpus）で、距離2の`TECH-010`とその先のREQ-020が
+  ともにfull projectionになり、`REQ-020:AC-01`のMUST本文が`REQ-020`のbodyTextに現れることを固定する。
+  `TECH-010`は規範文0件のため、Digest材料の末尾正規化（`digest_crosscheck.normalize_body`が行う末尾空行の除去）と
+  一致するよう、corpus側でも本文の末尾余分な空行を持たせないようにした（`technical()`の共有templateをそのまま
+  使うと末尾に空行が残るため、その1箇所だけ`rstrip`する）。
+- `SINGLE-106-07`: `corpus_refinement()`（`SINGLE-107-01`と同じcorpus）を`--detail compact`で解決し、全文書が
+  `reference`提示（`expandable`を持ち`statementRefs`／`frontmatter`／`bodyText`を持たない）になること、
+  Context Digestが`--detail`省略時の`SINGLE-107-01`と同じ値であることを固定する。`reviewed_context`の
+  `projection.detail`をplanの`detail`キー（既定`standard`）から読むよう一般化した。
+
+いずれもDigest材料（reference A・B）の一致、read-only副作用、2回setupの決定論を、既存caseと同じ監査で検査する。
+根拠は[context仕様 §5・§6](../../../docs/03.詳細設計/03_操作仕様/01_context.md#5-projection)、
+[ADR-014](../../../docs/02.設計書/10_決定記録/ADR-014_Semantic-IRと段階的Context-Projection.md)。
+Core実装の観測出力を根拠にしていない。

@@ -381,6 +381,7 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-024` | approved文書の`implements` path不在 | check | failed／1 | `SPEC-PATH-INVALID-001` |
 | `SINGLE-025` | draft文書の未作成予定path | check | passed_with_warnings／0 | 同codeがwarning |
 | `SINGLE-026` | 存在しない句への`covers` | check | failed／1 | `SPEC-TEST-COVERAGE-001` |
+| `SINGLE-133` | 同じ`relations.requires`に不在target2件 | check | failed／1 | `SPEC-RELATION-MISSING-001`2件、`evidence`だけで区別できる |
 
 ### 6.4 Git基準版
 
@@ -548,6 +549,8 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-106-03` | interpretで起点をrefineするdraft文書 | context | passed／0 | advisoryをreferenceで提示し、必須fieldと禁止fieldをSchema検証 |
 | `SINGLE-106-04` | 標準出力、標準エラー出力とも空のverify command | verify | passed／0 | 空抜粋、両truncated false |
 | `SINGLE-106-05` | 2 targetに同じDiagnostic条件 | verify | failed／1 | textの`diagnostics`は両target上のDiagnostic総数 |
+| `SINGLE-106-06` | `requires`の鎖で距離2以上のREQとTECH | context --purpose verify | passed／0 | 距離によらずrequirementとconstraintをfullで提示し、距離2のMUST本文がBundleに現れる |
+| `SINGLE-106-07` | `SINGLE-107-01`と同じ起点を`--detail compact`で解決 | context --purpose verify --detail compact | passed／0 | 全文書をreference提示にし、Context Digestを`--detail`省略時と同じ値にする |
 
 ### 6.12 共通target展開
 
@@ -636,6 +639,16 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `SINGLE-127-17` | Core package metadata | package test | accepted／0 | 配布物、import package、CLI名は`bitz`、requires-pythonは3.12以上 |
 | `SINGLE-127-18` | build metadataとlock file | package test | accepted／0 | runtime依存は標準libraryとexact lock済みYAML library 1つだけ |
 | `SINGLE-127-19` | CPython 3.12でCoreを起動 | doctor | passed／0 | 3.12で利用できない構文／標準library APIへの依存なし |
+
+### 6.13 規範文IDの文書一致とlocal-id文法
+
+| fixture | 主な入力 | operation | status／exit | 必須確認 |
+|---|---|---|---|---|
+| `SINGLE-128` | approved REQ-001中の`[REQ-002:AC-01]` | check | failed／1 | `EAI-CORE-ID-001`、文書部分の不一致summary |
+| `SINGLE-129` | draft REQ-001中の`[REQ-002:AC-01]` | check | failed／1 | `EAI-CORE-ID-001`、draftでもerror |
+| `SINGLE-130` | local-idの先頭が小文字`[REQ-001:ac1]` | check | failed／1 | `EAI-CORE-ID-001`、形式不正summary |
+| `SINGLE-131` | local-idに区切りhyphenと数字がない`[REQ-001:AC1]` | check | failed／1 | `EAI-CORE-ID-001`、形式不正summary |
+| `SINGLE-132` | local-idが複数hyphen`[REQ-001:A-B-01]` | check | passed／0 | ADR-054の境界を誤遮断しない |
 
 ## 7. 最小matrix: 複合workspace
 
