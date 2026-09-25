@@ -37,7 +37,7 @@ Core 1.0のGateは次の3層とする。
 | Gate | 判定時点 | 判定対象 | 現在状態 |
 |---|---|---|---|
 | Gate A: 実装着手可能性 | Step 1開始前 | 規範、fixture、期待値、検証基盤がCore実行体なしで再現可能 | `Allowed` |
-| Gate B: Step別実装受入 | 各Step完了時 | 当該StepのCore実装が固定済みfixtureへ適合 | Step 1〜4 `Passed`、Step 5 `Pending` |
+| Gate B: Step別実装受入 | 各Step完了時 | 当該StepのCore実装が固定済みfixtureへ適合 | Step 1〜5 `Passed` |
 | Gate C: Core 1.0 release受入 | 全Step完了後 | 全適合、性能、自己適用を含む出荷可能性 | `Pending` |
 
 Gate条件の正本は本書、fixture構造と比較方法の正本は
@@ -228,8 +228,9 @@ Core自身の`.spec/`は、REQを`approved`にした複製で`verify`が通過�
 別member所有bindingを1回だけ実行し、request targetとowner memberのstatusへ反映してもcommand実体とdurationを
 複製しない。
 
-状態は`In progress`である。2026-09-25時点でStep 1〜5の完了条件310件のうち304件がCoreで通過する（commit `29c5006`）。
-残る6件はfixtureと規範文が食い違い、訂正には人間の管理者の承認を要する。内訳は[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録した。
+状態は`Complete`、Step 5のGate Bは`Passed`である。規範文と食い違っていたfixtureを管理者の承認を得て訂正し、
+2026-09-25にcommit `12ec48e`へ`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行して、Step 1〜5の
+完了条件の310件と`parserChecks`4件がすべて通過した。結果は[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録した。
 
 ## 9. Step 6: SDD垂直スライスと自己適用
 

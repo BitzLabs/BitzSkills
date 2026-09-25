@@ -141,7 +141,9 @@ memory peakが5 MB未満に収まる（出力総量に比例しない）。timeo
 
 Step 4のCoreが後続Stepへ残した暫定実装は、複合workspace（`--all-workspaces`、修飾ID、`resolution.workspaces`）だけである。
 
-## 2026-09-25: Step 5（未認定）
+## 2026-09-25: Step 5（未認定時点の記録）
+
+下表の6件と2件は、同日にfixtureを規範文へ訂正して解消した（次節）。
 
 状態は`In progress`である。2026-09-25時点でStep 1〜5の完了条件310件のうち304件がCoreで通過する
 （commit `29c5006`、`uv run fixtures/run_conformance.py --core plugins/bitz-core --step 5`）。
@@ -159,3 +161,34 @@ Step 4のCoreが後続Stepへ残した暫定実装は、複合workspace（`--all
 - `multiWorkspace.maxMembers`: 複合workspace仕様 §2は既定20の実効上限を超えれば`blocked`とするが、`MULTI-020-01`〜`02`は
   `maxMembers`を省略したままmember 99と100で`passed`、`MULTI-021-01`はlimit 100で遮断する。Coreはmember数をhard limit 100だけで判定する。
 - file名IDが不一致の文書の`checkedDocumentCount`: `SINGLE-014`は0、`MULTI-011`のmember結果は1を期待する。
+
+## 2026-09-25: Step 5
+
+前節の食い違いは、管理者の承認を得てfixtureを規範文へ訂正し（`f6cfebb`、Gate A再認定は
+[適合fixture検証記録](../../fixtures/conformance/適合fixture検証記録.md)）、Coreをmember数の実効上限と
+skipした文書の件数で追従させた（`12ec48e`）。fixtureの訂正とCoreの変更は別のcommitにした。
+
+commit `12ec48e4b754efc9a87bde24f13155c2935c802a`に対して`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、error 0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 310件（Step 5は`MULTI-*`の60件）と、`parserChecks` 4件 |
+| 参照harness | 2つのcloneで310件すべてpassed。所要時間と検査対象のpathを除いた結果のSHA-256は両方`0e3ab7041c5769e4856706042aa0207edce7308421a53833378e03d066c6574d` |
+| Parser adapter | 2つのcloneで終了コード0、標準出力が一致（Step 2から変化なし） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は508件がすべて成功した。複合workspaceのgolden Digest（`MULTI-002-01`）はfixture側の参照計算を
+読まずに仕様から独立に実装して一致し、`PYTHONHASHSEED`の2値で同じ結果になる。入力byte数268,435,456の境界
+（`MULTI-020-06`）でCoreのMaximum resident set sizeは約226 MiBだった（複合workspace仕様 §10.1の目標1 GiB以下）。
+
+生成fixture（`resultDigest`）の期待結果は、独立実装の規則のもとでは文面を知る手段がないため、司令塔がfixture側の
+審査済み参照計算から再構成し、digestの一致を確かめたうえで作業者へ期待値として渡した（計算手順ではなく期待値の扱い）。
+
+仕様の記述だけでは一意に決まらず、実装で次のとおり解釈した。
+
+- `bitz.compat`の`migration`は、setupで適用済みの変更集合が原子的な複合workspace化または完全なrollbackになっているかを
+  読取り専用で検証する（fixtureの副作用期待値が`read-only`であるため）。`to-multi-workspace`はGit基準版と比較しない。
+- `consumer result-shape`は、最上位の`workspace`と`multiWorkspace`／`workspaces`の有無だけで排他的外形を判定する。
+- `verify --all-workspaces`は`commandDefinitionCount`の上限を実行計画の確定後に判定し、`verifyBindingCount`と同時に
+  超過した場合は`verifyBindingCount`を報告する（command起動前）。
