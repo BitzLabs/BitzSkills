@@ -43,6 +43,7 @@ harnessが検査対象Coreをどう受け取り、どの環境で起動し、何
    それぞれで`plugins/bitz-core`をbuildし、参照harnessと、Step 2以降ではParser adapterを実行して、
    結果がclone間で一致し、すべて通過することを求める。結果と実行環境を記録へ残す。
    `tests/`から`fixtures/`への参照はADR-049 Decision 6が許す向きである。
+   CIでの分割実行と独立2組の集約による同等の認定は[ADR-056](ADR-056_適合試験の分割実行とCIのGate-B集約を確定する.md)に従う。
 5. **参照harnessの自己試験**: `fixtures/`に、期待出力をそのまま返す偽のCoreを置く。参照harnessは偽のCoreで
    全fixtureを通過とし、出力を1箇所改変した偽のCoreでは該当fixtureを不通過とすることを、監査試験で確かめる。
 

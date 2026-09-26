@@ -52,6 +52,8 @@ Gate Aの認定後にmatrixまたはfixtureを変更した場合は、
 Step nのGate Bは、Step 1からnまでの完了条件のfixtureをすべて通過することを条件とする。
 各Stepの完了fixtureの機械可読な写しを`fixtures/conformance/steps.json`に置き、本書の完了条件との一致を
 統合検証で検査する。Gate Bの認定は`tests/bitz-core/certify_gate_b.py`が行う（[ADR-052](../02.設計書/10_決定記録/ADR-052_Gate-Bの実行と認定の構成を確定する.md)）。
+CIでは[ADR-056](../02.設計書/10_決定記録/ADR-056_適合試験の分割実行とCIのGate-B集約を確定する.md)の
+独立2組の分割実行と厳密な集約も、同じ全件のGate B認定として扱う。
 
 ## 2. Step 0: 仕様確定（codeを書かない）
 
