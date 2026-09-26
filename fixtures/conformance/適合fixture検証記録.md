@@ -899,3 +899,21 @@ commit `09dbb451dae49fa2dc1e6e844f4c98cfbb5ee30f`に対して`uv run fixtures/ce
 | 統合検証 | 2つのcloneでReport SHA-256が両方`a4e4aff06fb1d2925332456770784ce3088e155d8bfe6244b153ba04f00dc620` |
 | scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+## 2026-09-26: ADR-055の改訂後のGate Aの再認定
+
+管理者の決定により、検証環境を用意できないためGate CでmacOSの確認を行わないようADR-055と実行環境契約 §2を改め
+（`f2e5daf`）、Diagnostic台帳の根拠文書hashを更新した（`e0d25e4`）。fixtureの入力と期待値は変えていない。
+
+commit `e0d25e4ec29986961b1ad5781f60aa67be3b616a`に対する1回目の`uv run fixtures/certify_gate_a.py`は、
+2つ目のcloneのscale検証が結果を出さずに終了コード1で終わり、`gateA: "Blocked"`（`scale検証2: reportの形式が不正です`）だった。
+1つ目のcloneのscale検証と両cloneの統合検証は通過していた。認定commandはscale検証の標準エラーを記録しないため、
+原因は確定できない。diskとmemoryには十分な余裕があった。同じcommitで`uv run fixtures/validate_scale.py`を単独で実行すると
+24件すべてPassedとなり、続けて認定をやり直すと`gateA: "Allowed"`、error 0件を得た。1回目の失敗は再現しなかった。
+認定commandが失敗したcheckの標準エラーを記録するようにすることは、原因を追える形にする改善候補として残す。
+
+| 項目 | 結果（2回目） |
+|---|---|
+| 統合検証 | 2つのcloneでReport SHA-256が両方`a4e4aff06fb1d2925332456770784ce3088e155d8bfe6244b153ba04f00dc620`（前回と同じ） |
+| scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
