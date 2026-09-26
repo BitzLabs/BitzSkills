@@ -29,13 +29,17 @@ def _diagnostic_line(d: dict) -> list[str]:
 
 
 def render_doctor_text(result: dict) -> str:
-    n_targets = len(result.get("checks", []))
-    n_diag = len(result.get("diagnostics", []))
+    workspaces = result.get("workspaces", [])
+    n_targets = len(result.get("checks", [])) + sum(len(w["checks"]) for w in workspaces)
+    diagnostics = list(result.get("diagnostics", []))
+    for workspace in workspaces:
+        diagnostics.extend(workspace["diagnostics"])
+    n_diag = len(diagnostics)
     lines = [
         f"doctor {result['status']} targets={n_targets} diagnostics={n_diag} "
         f"({result['durationMs']}ms)"
     ]
-    for d in result.get("diagnostics", []):
+    for d in diagnostics:
         lines.extend(_diagnostic_line(d))
     return "\n".join(lines) + "\n"
 
