@@ -192,3 +192,40 @@ interpretのcontextと明示checkだけで受理することを固定する。
 
 複合workspaceの60件は、冒頭に挙げた`multi/`の7つのreviewで作成した。2026-09-18時点で、matrix 310件は
 すべて準備済みである。
+
+## 開発時の検証とCIの分割
+
+関連するfixtureだけを試す場合は`--fixture ID`を反復指定する。変更を固めた後に全件を1回実行する。
+直前と同じ差分の全件実行を、状況確認のためだけに繰り返さない。
+
+```sh
+uv run fixtures/run_conformance.py --core plugins/bitz-core --step 5 --suite standard
+uv run fixtures/run_conformance.py --core plugins/bitz-core --step 5 --suite scale
+uv run fixtures/run_conformance.py --core plugins/bitz-core --step 5 --shards 4 --shard 1 \
+  --progress --output <result.json> --timings <timings.json>
+```
+
+`standard`は上限境界の生成fixture以外、`scale`は`MULTI-020-*`と`MULTI-021-*`である。
+両者は互いに重複せず全件を構成する。分割は選択した集合へ適用し、各分割内は従来の順序を維持する。
+部分実行の成功は全件の認定を意味しない。
+
+`--timings`は合否reportとは別のJSONへ、fixtureごとの`durationMs`と`phasesMs`を保存する。
+`environment`はwheel buildとvenv準備を含み、最初に必要になったfixtureへ計上する。
+総時間はSchema検査やcleanupも含むため、記録した工程時間の合計とは一致しない。
+各fixture完了時に計時JSONを更新し、`--progress`では完了数・ID・結果・秒数をstderrへ出す。
+
+CIは[ADR-056](../../docs/02.設計書/10_決定記録/ADR-056_適合試験の分割実行とCIのGate-B集約を確定する.md)に従い、
+PRは独立1組、main・週次・手動は独立2組の4分割を実行する。各workerは新しいcloneでCoreをbuildする。
+`tests/bitz-core/ci_gate_b.py collect`は全分割の証跡を検査し、全件の欠落・重複・改変を拒否する。
+2組の結果とParser出力が一致した場合だけGate BをPassedとする。
+
+```sh
+uv run tests/bitz-core/ci_gate_b.py run --step 5 --replica 1 --shard 1 --shards 4 \
+  --run-id <run-attempt> --output <artifact-directory>
+uv run tests/bitz-core/ci_gate_b.py collect --step 5 --replicas 2 --shards 4 \
+  --run-id <run-attempt> --input <all-artifacts-directory> --output <gate-result.json>
+```
+
+`run`と`collect`はcleanなcommitを対象にする。成果物はrepository外、またはGit対象外directoryへ保存する。
+独立2組の認定にはreplica 1・2それぞれのshard 1〜4が必要である。同一CI run/attemptの証跡だけを受け入れるため、
+CIの再実行は全jobを対象にする。既存の`certify_gate_b.py`によるローカル認定も利用できる。

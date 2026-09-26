@@ -14,12 +14,14 @@ import json
 from pathlib import Path
 import sys
 import tempfile
+import time
 
 from jsonschema import Draft202012Validator
 
 sys.dont_write_bytecode = True
 from conformance.runner import CoreEnvironment, CoreEnvironmentError, host_tool_versions, run_fixture
 from conformance.schemas import schema_path
+from conformance.selection import step_ids, selected_ids
 
 HERE = Path(__file__).resolve().parent
 CONFORMANCE_ROOT = HERE / "conformance"
@@ -38,15 +40,7 @@ def resolve_fixture_ids(args):
             if identifier not in ordered:
                 ordered.append(identifier)
         return ordered
-    steps = json.loads((CONFORMANCE_ROOT / "steps.json").read_text(encoding="utf-8"))["steps"]
-    ordered = []
-    for step in steps:
-        if step["step"] > args.step:
-            continue
-        for identifier in step["fixtures"]:
-            if identifier not in ordered:
-                ordered.append(identifier)
-    return ordered
+    return step_ids(args.step)
 
 
 def locate_fixture_root(identifier):
@@ -66,12 +60,27 @@ def parse_args(argv):
     selector.add_argument("--fixture", action="append", dest="fixtures", metavar="ID",
                            help="single/またはmulti/のfixture IDを選ぶ。反復可能")
     parser.add_argument("--output", help="結果JSONの書き出し先。省略時は標準出力")
-    return parser.parse_args(argv)
+    parser.add_argument("--suite", choices=("full", "standard", "scale"), default="full",
+                        help="開発時の部分検査。Gate認定はfullだけを使用する")
+    parser.add_argument("--shard", type=int, default=1, help="1から始まる分割番号")
+    parser.add_argument("--shards", type=int, default=1, help="分割数")
+    parser.add_argument("--timings", help="工程別の所要時間を保存する別JSON")
+    parser.add_argument("--progress", action="store_true", help="完了したfixtureを標準エラーへ表示する")
+    args = parser.parse_args(argv)
+    if args.output and args.timings and Path(args.output).resolve() == Path(args.timings).resolve():
+        parser.error("--outputと--timingsには異なるpathを指定してください")
+    return args
 
 
 def main(argv=None):
     args = parse_args(argv)
-    fixture_ids = resolve_fixture_ids(args)
+    try:
+        fixture_ids = selected_ids(resolve_fixture_ids(args), args.suite, args.shard, args.shards)
+    except ValueError as error:
+        print(str(error), file=sys.stderr)
+        return 2
+    timing_rows = []
+    started = time.perf_counter()
     if not fixture_ids:
         print("選択されたfixtureがありません", file=sys.stderr)
         return 2
@@ -93,8 +102,20 @@ def main(argv=None):
                     report["fixtures"].append({"id": identifier, "result": "error",
                                                 "differences": [f"fixture directoryが見つかりません: {identifier}"]})
                     continue
-                report["fixtures"].append(
-                    run_fixture(fixture_root, identifier, core_environment, validators, run_work_root))
+                phases = {} if args.timings else None
+                start = time.perf_counter()
+                result = run_fixture(fixture_root, identifier, core_environment, validators, run_work_root,
+                                     timings=phases)
+                elapsed = round((time.perf_counter() - start) * 1000, 3)
+                report["fixtures"].append(result)
+                if args.timings:
+                    timing_rows.append({"id": identifier, "durationMs": elapsed,
+                                        "phasesMs": {key: round(value, 3) for key, value in phases.items()}})
+                    _emit({"durationMs": round((time.perf_counter() - started) * 1000, 3),
+                           "fixtures": timing_rows}, args.timings)
+                if args.progress:
+                    print(f"[{len(report['fixtures'])}/{len(fixture_ids)}] {identifier}: "
+                          f"{result['result']} ({elapsed / 1000:.2f}s)", file=sys.stderr, flush=True)
 
     counts = {"passed": 0, "failed": 0, "error": 0}
     for entry in report["fixtures"]:
