@@ -214,6 +214,10 @@ uv run fixtures/run_conformance.py --core plugins/bitz-core --step 5 --shards 4 
 総時間はSchema検査やcleanupも含むため、記録した工程時間の合計とは一致しない。
 各fixture完了時に計時JSONを更新し、`--progress`では完了数・ID・結果・秒数をstderrへ出す。
 
+CIの分割は、直近のmain CIで得た独立2組の中央値をdimension・境界内外ごとに保持し、LPT法で配分する。
+`fixtures/plan_conformance.py`は各分割のfixture数と予測job時間をJSONで出力する。CIでは同じ予測を
+job名とStep Summaryへ表示する。予測値は配分と所要時間の目安だけに使い、fixtureの選択や合否条件は変更しない。
+
 CIは[ADR-056](../../docs/02.設計書/10_決定記録/ADR-056_適合試験の分割実行とCIのGate-B集約を確定する.md)に従い、
 PRは独立1組、main・週次・手動は独立2組の4分割を実行する。各workerは新しいcloneでCoreをbuildする。
 `tests/bitz-core/ci_gate_b.py collect`は全分割の証跡を検査し、全件の欠落・重複・改変を拒否する。

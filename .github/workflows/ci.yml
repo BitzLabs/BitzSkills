@@ -73,33 +73,29 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       step: ${{ steps.plan.outputs.step }}
-      replicas: ${{ steps.plan.outputs.replicas }}
       replica-count: ${{ steps.plan.outputs.replica-count }}
+      matrix: ${{ steps.plan.outputs.matrix }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - id: plan
         env:
           EVENT_NAME: ${{ github.event_name }}
         run: |
-          python3 - <<'PYCODE'
-          import json, os
-          step = max(s["step"] for s in json.load(open("fixtures/conformance/steps.json"))["steps"])
-          replicas = [1] if os.environ["EVENT_NAME"] == "pull_request" else [1, 2]
-          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
-              out.write(f"step={step}\nreplicas={json.dumps(replicas)}\nreplica-count={len(replicas)}\n")
-          PYCODE
+          step=$(python3 -c 'import json; print(max(s["step"] for s in json.load(open("fixtures/conformance/steps.json"))["steps"]))')
+          replicas=2
+          if [ "$EVENT_NAME" = pull_request ]; then replicas=1; fi
+          python3 fixtures/plan_conformance.py --step "$step" --shards 4 --replicas "$replicas" \
+            --github-output "$GITHUB_OUTPUT" --github-summary "$GITHUB_STEP_SUMMARY"
 
   conformance-shards:
-    name: 適合試験 ${{ matrix.replica }} / 分割 ${{ matrix.shard }}
+    name: 適合試験 ${{ matrix.replica }} / 分割 ${{ matrix.shard }}（予測 ${{ matrix.predicted }}）
     needs: plan
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     strategy:
       fail-fast: false
       max-parallel: 4
-      matrix:
-        replica: ${{ fromJSON(needs.plan.outputs.replicas) }}
-        shard: [1, 2, 3, 4]
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
