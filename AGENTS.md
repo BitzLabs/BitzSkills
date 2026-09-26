@@ -54,6 +54,8 @@ tests/bitz-core/     # Core の単体試験と Gate B 認定
 | Gate A 認定 | `uv run fixtures/certify_gate_a.py`（clean tree 必須） |
 | Gate B 認定 | `uv run tests/bitz-core/certify_gate_b.py --step N`（clean tree 必須） |
 
+- CI（`.github/workflows/ci.yml`）は PR と main への push で監査・単体試験・適合試験を、
+  main への push・週次・手動で Gate A / Gate B 認定を実行する。CI の通過はローカル検証の代わりにならない
 - fixture を変更したら Gate A を再認定する（ADR-051）
 - 対象環境は Linux / macOS、CPython 3.12 以上（ADR-053 / ADR-055）
 
