@@ -24,3 +24,7 @@ REQ-003「明示reportの保存先をsymlinkへ逸らさない」とTASK-001。`
 | 2026-09-26 13:09 | Post-check（1回目） | `bitz check TASK-001` | passed（`changes`の範囲外の変更なし） |
 | 2026-09-26 13:09 | Verify（1回目） | `bitz verify TASK-001` | passed（REQ-003の3句、binding 1件） |
 | 2026-09-26 13:09 | Review（司令塔） | `reportio.py`の差分を目視 | 欠陥1件: `.spec/reports`のfd取得後に名前が差し替えられると、差し替え前のdirectoryへ書き成功を返す。AC-02（保存中の差し替えで`SPEC-REPORT-WRITE-001`）に反する。試験はfd取得前の差し替えだけを再現していた。Post-checkとVerifyはこの欠陥を検出できない。Implementへ差し戻し |
+| 2026-09-26 13:20 | Implement（2回目） | 実装担当が確定直後に`.spec`と`reports`の名前とfdの同一性（`st_dev`、`st_ino`）を照合し、不一致なら確定済みreportを除去して`SPEC-REPORT-WRITE-001`を返すよう修正。fd取得後の差し替え試験2件を追加 | 単体試験523件OK、適合fixture 318件passed。新しい試験は修正前の実装で失敗することを確認（陰性対照） |
+| 2026-09-26 13:20 | Post-check（2回目） | `bitz check TASK-001`、`bitz check --full` | passed（変更は`changes`の2 fileだけ） |
+| 2026-09-26 13:20 | Verify（2回目） | `bitz verify TASK-001` | passed（REQ-003の3句、試験12件） |
+| 2026-09-26 13:20 | Review（司令塔、2回目） | 差分を目視 | 欠陥なし。human reviewへ |
