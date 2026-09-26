@@ -1,7 +1,7 @@
 ---
 id: TASK-001
 title: 明示reportの保存をdirectory fd基準の操作へ改める
-status: open
+status: done
 relations:
   addresses:
     - REQ-003:AC-01
