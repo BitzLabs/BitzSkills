@@ -4,7 +4,7 @@
   "sources": {
     "docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md": "f53192a6076eb3970675e587d8b88818f8b1308e933f47550ab173fe4b416049",
     "docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md": "5ec338d6f49f5c35b176ff11d76d9e6d15c560dbd049ea3f7624834d93d7e571",
-    "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md": "4ff59a7666ffd67956564de45d88603d24f0f71b90c4debba24fad5e9a91d45f",
+    "docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md": "6836c79b03f0945b212f5e8c35851e161bb6a5e0a21060d24e441cbfef7afc31",
     "docs/03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md": "16e846e724d872ebcce89904cc52988138b44a75d53d77954c3757d0f6a1a64f",
     "docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md": "c9316d3a7a93af6b694f74721d30ba8d40a2fb680b81044632cd2cb1b2932375",
     "docs/03.詳細設計/02_SPECモデル/03_文書種別・本文template.md": "dbb8555e4b87e13feaf17c0f5a05097613c2ba40274f2b3f781d7af5578c380f",

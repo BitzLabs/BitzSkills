@@ -214,3 +214,10 @@ Diagnostic（`SPEC-RELATION-MISSING-001`、`SPEC-RELATION-ADVISORY-MISSING-001`�
   `01_言語・Semantic-IR仕様.md`。
 - 同日、結果契約 §7のDiagnostic sort規則へ、sort keyがすべて同じDiagnosticを生成元の宣言の出現順とする1文を足した
   （`SINGLE-133`の同じkeyの参照切れ2件の順序を規範文で決めるため）。条件の対応は変えず、同文書のhashを再度更新した。
+
+## 2026-09-26: 対象OSの明記に伴う根拠文書の更新
+
+[ADR-055](../../docs/02.設計書/10_決定記録/ADR-055_Core-1.0の対象OSをPOSIXに限定する.md)に従い、
+Core実行環境・CLI基盤契約 §2へ対象OS（LinuxとmacOS）と、必要なOSの機能がない環境で保証を弱めない規則を足した。
+既存の`SPEC-REPORT-WRITE-001`の条件（`REPORT-WRITE`）の範囲に収まり、条件の追加、code、severity、statusの変更はない。
+条件の対応は変えず、同文書のhashだけを更新した。
