@@ -30,7 +30,6 @@ ELEMENT_LIMIT = 32 * 1024
 PROBE_ENV = {"BITZ_FIXTURE_PROBE": "inherited-value", "LANG": "C.UTF-8", "LC_COLLATE": "C",
              "PWD": "/bitz-fixture-stale-pwd"}
 ABSENT_COMMAND = "bitz-fixture-absent-command"
-REDACTION_WORDS = ("TOKEN", "SECRET", "PASSWORD", "PASSWD", "API_KEY", "PRIVATE_KEY", "CREDENTIAL", "AUTH")
 
 ARGS_SCRIPT = (
     "#!/bin/sh\n"
@@ -249,14 +248,6 @@ def observe_command(identifier, repository):
                        {**good, "LANG": "C"}):
             if run_script(repository, identifier, arguments, env=broken, directory=directory).returncode == 0:
                 raise ValueError("Coreが作ってはならない環境をscriptが受理しています")
-
-
-def check_host_environment(expected_outputs):
-    """redaction対象名の環境変数値が期待出力に現れないことを確認する。現れれば抜粋が実行環境へ依存する。"""
-    for name, value in os.environ.items():
-        if value and any(word in name.upper() for word in REDACTION_WORDS):
-            if any(value in output for output in expected_outputs):
-                raise ValueError(f"実行環境の変数{name}が審査済み抜粋を変えてしまいます")
 
 
 def check_inputs(fixture, inputs, expected_executables):

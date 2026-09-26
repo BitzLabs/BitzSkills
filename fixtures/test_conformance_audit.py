@@ -1157,6 +1157,10 @@ class AuditTests(unittest.TestCase):
             path.write_text(path.read_text().replace("\\033", "E"))
             with self.assertRaises(ValueError):
                 stream.observe_command("SINGLE-126-14", repository)
+        # 観測は実行環境を継承しない。値`1`のredaction対象名変数があっても期待抜粋は変わらない。
+        with patch.dict(stream.os.environ, {"HOST_AUTH_FLAG": "1", "HOST_TOKEN": "err"}):
+            self.assertEqual(stream.validate(identifiers=["SINGLE-126-14"])["errors"], [])
+            self.assertEqual(stream.observation_env({"A": "b"}), {"PATH": stream.os.environ.get("PATH", ""), "A": "b"})
 
     def test_verify_argv_limit_evidence(self):
         from conformance import verify_argv_limit_fixtures as limit

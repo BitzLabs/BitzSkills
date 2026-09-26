@@ -20,7 +20,7 @@ from jsonschema import Draft202012Validator, ValidationError
 
 from .schemas import schema_path
 from . import digest_reference, verify_fixtures, verify_process_fixtures
-from .verify_argv_fixtures import check_host_environment, check_inputs, check_setups
+from .verify_argv_fixtures import check_inputs, check_setups
 
 HERE = Path(__file__).resolve().parent
 TEST_PATHS = ["tests/test_auth.py", "tests/test_session.py"]
@@ -253,11 +253,21 @@ def excerpt(text):
     return data.decode()
 
 
+def observation_env(env):
+    """観測に使う環境。PATHとfixtureのenvだけにし、実行環境へ依存させない。
+
+    runnerがCoreへ渡す環境はこれにHOME・XDG_CACHE_HOME・TMPDIRを加えたもので、どれもredaction対象名ではないため、
+    redactionする値の集合はCoreと一致する。実行環境を継承すると、redaction対象名の変数（値`1`など）が
+    観測側の抜粋だけを変えてしまう。
+    """
+    return {"PATH": os.environ.get("PATH", ""), **env}
+
+
 def run_script(repository, identifier, env):
     path = repository / CASES[identifier][2]
     if not (path.is_file() and os.access(path, os.X_OK)):
         raise ValueError("command fileは実行可能な通常fileである必要があります")
-    return subprocess.run([str(path), *TEST_PATHS], cwd=repository, env={**os.environ, **env},
+    return subprocess.run([str(path), *TEST_PATHS], cwd=repository, env=observation_env(env),
                           stdin=subprocess.DEVNULL, capture_output=True, timeout=30)
 
 
@@ -311,7 +321,7 @@ def observe_command(identifier, repository):
     raw_limit_ok = all(len(stream) <= LIMIT for stream in (completed.stdout, completed.stderr))
     if not raw_limit_ok:
         raise ValueError("truncatedをfalseに保つため、raw streamは上限内である必要があります")
-    actual = tuple(excerpt(redact(convert_controls(stream), {**os.environ, **env}))
+    actual = tuple(excerpt(redact(convert_controls(stream), observation_env(env)))
                    for stream in (completed.stdout, completed.stderr))
     if actual != EXPECTED_OUTPUT[identifier]:
         raise ValueError("独立に変換した出力が審査済み抜粋と異なります")
@@ -340,7 +350,6 @@ def validate(root=HERE, identifiers=None):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
                 raise ValueError("起動または完全な結果が審査済み期待と異なります")
-            check_host_environment(EXPECTED_OUTPUT[identifier])
             check_inputs(fixture, reviewed_inputs(identifier), executables(identifier))
             check_setups(fixture, manifest, effects, identifier, context_digest(identifier),
                          observe_command, "bitz-verify-stream-")
