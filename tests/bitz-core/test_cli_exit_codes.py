@@ -30,8 +30,11 @@ class CliExitCodeTests(unittest.TestCase):
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
         self.root = Path(self._tmp.name)
-        # 親directoryのGit repositoryやworkspaceを探索しないよう、探索をこのdirectoryで止める。
+        # Git探索のceilingだけではworkspaceの親探索は止まらない。
+        # TMPDIRが既存workspace配下でも、空のrepository境界で確実に隔離する。
         self.env = dict(os.environ, GIT_CEILING_DIRECTORIES=str(self.root.parent))
+        subprocess.run(["git", "init", "-q", str(self.root)], env=self.env, check=True,
+                       capture_output=True)
 
     def tearDown(self):
         self._tmp.cleanup()

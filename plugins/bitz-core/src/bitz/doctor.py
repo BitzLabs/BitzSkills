@@ -1,7 +1,6 @@
 """`bitz doctor` 操作（`03_操作仕様/04_doctor.md`）。
 
-Step 1範囲: Core・workspace・config・schema・ears・git・command・impactの各検査骨格。
-plugin／Capability要求、複合workspaceは対象外（Step 1のfixtureに存在しない）。
+単一workspaceと複合workspaceで設定・版・commandの診断処理を共有する。
 """
 
 from __future__ import annotations
@@ -15,9 +14,8 @@ from . import gitutil
 from . import multiws
 from .cliargs import ParsedArgs
 from .errors import CliArgError
-from .notimpl import NotImplementedOperation
 from .resultmodel import doctor_status, sort_diagnostics, worst_status
-from .workspace import locate_workspace
+from .workspace import WorkspaceLocation, locate_workspace
 
 CORE_VERSION = "1.0.0"
 CORE_API_VERSION = "1.0"
@@ -61,7 +59,10 @@ def _config_check_status(outcome: config_mod.ConfigOutcome) -> str:
     return "passed"
 
 
-def _append_git_check(git: gitutil.GitInfo, checks: list[dict], diagnostics: list[dict]) -> None:
+def _append_git_check(git: gitutil.GitInfo | None, checks: list[dict], diagnostics: list[dict]) -> None:
+    # 全体操作ではGit診断を最上位に1回だけ置く。
+    if git is None:
+        return
     if git.available:
         checks.append({"name": "git", "status": "passed"})
         return
@@ -82,10 +83,7 @@ def _resolve_command_file(argv0: str, cwd: str, env: dict[str, str]) -> bool:
 
 
 def _run_all_workspaces(cwd: str, env: dict[str, str]) -> tuple[dict, int]:
-    """`doctor --all-workspaces`（`複合workspace仕様 §8`、`04_doctor.md`）。
-
-    Step 5Aは全体事前検査だけを実装する。通過後のmember単位のdoctor checkはStep 5B以降で実装する。
-    """
+    """全体事前検査を通過したrootと全memberを診断する（複合workspace仕様 §8）。"""
 
     started = _now_ms()
     git = gitutil.detect_git(cwd, env)
@@ -113,18 +111,49 @@ def _run_all_workspaces(cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     if pre.catalog_status is not None:
         checks.append({"name": "catalog", "status": pre.catalog_status})
 
-    if pre.ok:
-        raise NotImplementedOperation("doctor --all-workspaces: member処理はStep 5B以降で実装する")
-
     diagnostics = [d.to_dict() for d in pre.diagnostics]
-    return _build_multi_result(pre.root_id, checks, diagnostics, started)
+    workspaces = []
+    if pre.ok:
+        for wid, root, path in multiws.ordered_workspaces(pre):
+            member_started = _now_ms()
+            config_path = os.path.join(root, config_mod.CONFIG_PATH)
+            outcome = config_mod.read_config(config_path, ears_version_code="SPEC-DOCTOR-EARS-001")
+            local, _ = _diagnose_workspace(
+                WorkspaceLocation(root, config_path), outcome, None, env, [], [], member_started
+            )
+            # 設定読取失敗時の既定IDではなく、catalogで確定済みの所有者を使う。
+            for diagnostic in local["diagnostics"]:
+                if diagnostic["source"]["kind"] == "file":
+                    diagnostic["source"]["workspaceId"] = wid
+            # 事前検査後に設定を読めなくなった場合も、別checkの依存失敗を明示する。
+            if outcome.stop:
+                completed = {check["name"] for check in local["checks"]}
+                for name in ("schema", "ears", "command", "impact"):
+                    if name in completed:
+                        continue
+                    local["checks"].append({"name": name, "status": "blocked"})
+                    local["diagnostics"].append({
+                        "code": "SPEC-MULTI-DEPENDENCY-001", "severity": "error", "resultStatus": "blocked",
+                        "summary": f"{name}検査に必要な設定の出力を取得できません",
+                        "evidence": {"stage": name, "dependencyWorkspaces": [wid], "dependencySpecRefs": []},
+                        "source": {"kind": "file", "workspaceId": wid, "path": config_mod.CONFIG_PATH},
+                    })
+                local["diagnostics"] = sort_diagnostics(local["diagnostics"])
+                local["status"] = doctor_status(local["checks"], local["diagnostics"])
+            workspaces.append({
+                "id": wid, "path": path, "status": local["status"], "checks": local["checks"],
+                "durationMs": _elapsed_ms(member_started), "diagnostics": local["diagnostics"],
+            })
+    return _build_multi_result(pre.root_id, checks, diagnostics, started, workspaces)
 
 
 def _build_multi_result(
-    root_id: str | None, checks: list[dict], diagnostics: list[dict], started: int
+    root_id: str | None, checks: list[dict], diagnostics: list[dict], started: int,
+    workspaces: list[dict] | None = None,
 ) -> tuple[dict, int]:
     diagnostics = sort_diagnostics(diagnostics)
-    status = doctor_status(checks, diagnostics)
+    workspaces = workspaces or []
+    status = worst_status([doctor_status(checks, diagnostics), *[w["status"] for w in workspaces]])
     result = {
         "schemaVersion": "1.0",
         "operation": "doctor",
@@ -136,7 +165,7 @@ def _build_multi_result(
             "capabilities": list(CORE_CAPABILITIES),
         },
         "checks": checks,
-        "workspaces": [],
+        "workspaces": workspaces,
         "durationMs": _elapsed_ms(started),
         "diagnostics": diagnostics,
     }
@@ -181,6 +210,14 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         result = _build_result(None, checks, diagnostics, started)
         return result, _exit_code(result["status"])
 
+    return _diagnose_workspace(loc, outcome, git, env, checks, diagnostics, started)
+
+
+def _diagnose_workspace(
+    loc: WorkspaceLocation, outcome: config_mod.ConfigOutcome | None, git: gitutil.GitInfo | None,
+    env: dict[str, str], checks: list[dict], diagnostics: list[dict], started: int,
+) -> tuple[dict, int]:
+    """workspace固有の検査。全体操作ではGitの独立検査を呼出し側へ任せる。"""
     # 2. workspace
     workspace_found = loc.config_path is not None
     checks.append({"name": "workspace", "status": "passed" if workspace_found else "blocked"})
