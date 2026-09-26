@@ -221,3 +221,4 @@ Diagnostic（`SPEC-RELATION-MISSING-001`、`SPEC-RELATION-ADVISORY-MISSING-001`�
 Core実行環境・CLI基盤契約 §2へ対象OS（LinuxとmacOS）と、必要なOSの機能がない環境で保証を弱めない規則を足した。
 既存の`SPEC-REPORT-WRITE-001`の条件（`REPORT-WRITE`）の範囲に収まり、条件の追加、code、severity、statusの変更はない。
 条件の対応は変えず、同文書のhashだけを更新した。
+- 同日、ADR-055の改訂（Gate CでmacOSを確認しない）に伴い、実行環境契約 §2へ1文を足した。条件の対応は変えず、同文書のhashだけを再度更新した。
