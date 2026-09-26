@@ -1,6 +1,6 @@
 # AGENTS.md「検証コマンド」を GitHub Actions で実行する。
 # PR と main への push では fixture 監査・単体試験・適合試験を、main への push・週次・手動では
-# clean checkout が前提の Gate A / Gate B 認定も実行する。対象は Linux と CPython 3.12（ADR-053 / ADR-055）。
+# Gate Aと、独立した2組の分割結果によるGate B認定も実行する（ADR-056）。
 name: CI
 
 on:
@@ -65,45 +65,116 @@ jobs:
           python-version: "3.12"
       - name: run_test_files.py
         run: uv run --project plugins/bitz-core python tests/bitz-core/run_test_files.py tests/bitz-core/test_*.py
+      - name: 適合harnessの計時・選択と比較の試験
+        run: uv run --with jsonschema==4.23.0 python -m unittest fixtures.conformance.test_runner fixtures.conformance.test_execution
 
-  conformance:
-    name: Coreの適合試験
+  plan:
+    name: 適合試験の分割計画
+    runs-on: ubuntu-24.04
+    outputs:
+      step: ${{ steps.plan.outputs.step }}
+      replicas: ${{ steps.plan.outputs.replicas }}
+      replica-count: ${{ steps.plan.outputs.replica-count }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: plan
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          python3 - <<'PYCODE'
+          import json, os
+          step = max(s["step"] for s in json.load(open("fixtures/conformance/steps.json"))["steps"])
+          replicas = [1] if os.environ["EVENT_NAME"] == "pull_request" else [1, 2]
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write(f"step={step}\nreplicas={json.dumps(replicas)}\nreplica-count={len(replicas)}\n")
+          PYCODE
+
+  conformance-shards:
+    name: 適合試験 ${{ matrix.replica }} / 分割 ${{ matrix.shard }}
+    needs: plan
     runs-on: ubuntu-24.04
     timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        replica: ${{ fromJSON(needs.plan.outputs.replicas) }}
+        shard: [1, 2, 3, 4]
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           version: "0.11.28"
           python-version: "3.12"
-      - name: run_conformance.py（steps.json の最終 Step まで累積）
+      - name: 独立checkoutでbuild・適合試験・Parser検査
+        env:
+          STEP: ${{ needs.plan.outputs.step }}
+          REPLICA: ${{ matrix.replica }}
+          SHARD: ${{ matrix.shard }}
+          RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
         run: |
-          step=$(python3 -c 'import json; print(max(s["step"] for s in json.load(open("fixtures/conformance/steps.json"))["steps"]))')
-          uv run fixtures/run_conformance.py --core plugins/bitz-core --step "$step" --output "$RUNNER_TEMP/conformance.json"
-      - name: 結果の保存
+          uv run tests/bitz-core/ci_gate_b.py run --step "$STEP" --replica "$REPLICA" \
+            --shard "$SHARD" --shards 4 --run-id "$RUN_ID" --output "$RUNNER_TEMP/conformance"
+      - name: 分割結果と工程別時間の保存
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
+          overwrite: true
+          name: conformance-${{ matrix.replica }}-${{ matrix.shard }}
+          path: ${{ runner.temp }}/conformance/
+          if-no-files-found: error
+
+  conformance:
+    name: Coreの適合試験
+    needs: [plan, conformance-shards]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: "0.11.28"
+          python-version: "3.12"
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          pattern: conformance-*
+          path: ${{ runner.temp }}/conformance
+          merge-multiple: true
+      - name: 全件の網羅と独立実行の一致を判定
+        env:
+          STEP: ${{ needs.plan.outputs.step }}
+          REPLICAS: ${{ needs.plan.outputs.replica-count }}
+          WORKERS_RESULT: ${{ needs.conformance-shards.result }}
+          RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          test "$WORKERS_RESULT" = success
+          uv run tests/bitz-core/ci_gate_b.py collect --step "$STEP" --replicas "$REPLICAS" \
+            --shards 4 --run-id "$RUN_ID" --input "$RUNNER_TEMP/conformance" \
+            --output "$RUNNER_TEMP/conformance-result.json"
+      - name: 集約結果の保存
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          overwrite: true
           name: conformance-result
-          path: ${{ runner.temp }}/conformance.json
+          path: ${{ runner.temp }}/conformance-result.json
           if-no-files-found: ignore
 
   certify:
-    name: Gate A / Gate B 認定
+    name: Gate A 認定
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           version: "0.11.28"
           python-version: "3.12"
       - name: certify_gate_a.py
         run: uv run fixtures/certify_gate_a.py
-      - name: certify_gate_b.py（steps.json の最終 Step）
-        run: |
-          step=$(python3 -c 'import json; print(max(s["step"] for s in json.load(open("fixtures/conformance/steps.json"))["steps"]))')
-          uv run tests/bitz-core/certify_gate_b.py --step "$step"

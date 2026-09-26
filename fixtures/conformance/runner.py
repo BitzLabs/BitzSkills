@@ -20,6 +20,7 @@ from . import digest_reference, multi_generator, package_check
 from .harness import git, safe_path, setup, snapshot, tree_digest_bytes
 from .initial_fixtures import compare_state, observe
 from .schemas import schema_path
+from .timing import timed_call
 
 HERE = Path(__file__).resolve().parent
 FIXTURES_ROOT = HERE.parent
@@ -457,7 +458,7 @@ def _compare_side_effects_digest(side_effects, expect, after_state, new_reports)
     return differences
 
 
-def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp):
+def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp, *, timings=None):
     """1 fixtureを実行して{"id", "result", "differences"}を返す。例外を送出しない。"""
     differences = []
     try:
@@ -471,7 +472,7 @@ def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp
             raise FixtureError(f"side-effects.jsonがSchemaに適合しません: {error.message}") from error
         generated_entries = None
         if "generate" in manifest["setup"]:
-            generated_entries = _generate_and_verify(fixture_root, manifest["setup"]["generate"])
+            generated_entries = timed_call(timings, "generate", _generate_and_verify, fixture_root, manifest["setup"]["generate"])
         if "stateDigest" in side_effects and side_effects["policy"] != "read-only":
             # stateDigestは実行前後の観測値が同じ1つのdigestになることを要求する(仕様3.4・5)。
             # explicit-reportはreport file名に生成時刻・連番を含み、after状態を単一digestで
@@ -480,14 +481,14 @@ def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp
 
         with tempfile.TemporaryDirectory(prefix=f"bitz-run-{fixture_id}-", dir=base_tmp) as sandbox_text:
             sandbox = Path(sandbox_text)
-            repository = setup(fixture_root, manifest, sandbox / "repo", generated=generated_entries)
+            repository = timed_call(timings, "setup", setup, fixture_root, manifest, sandbox / "repo", generated=generated_entries)
             external = {name: sandbox / name for name in ("home", "cache", "temporary")}
             for path in external.values():
                 path.mkdir()
             git_enabled = manifest["setup"]["git"]
-            before_state = _observe_state(repository, external, git_enabled)
+            before_state = timed_call(timings, "snapshotBefore", _observe_state, repository, external, git_enabled)
             if "stateDigest" in side_effects:
-                before_digest = _state_digest(before_state)
+                before_digest = timed_call(timings, "stateDigestBefore", _state_digest, before_state)
                 if before_digest != side_effects["stateDigest"]:
                     raise FixtureError(
                         f"setup後の状態(stateDigest)が期待前提と一致しません: "
@@ -499,7 +500,7 @@ def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp
 
             invocation = manifest["invocation"]
             minor = invocation.get("python") or default_python_minor()
-            venv_dir = core_environment.venv(minor)
+            venv_dir = timed_call(timings, "environment", core_environment.venv, minor)
 
             env = {"PATH": os.environ.get("PATH", ""), "HOME": str(external["home"]),
                    "XDG_CACHE_HOME": str(external["cache"]), "TMPDIR": str(external["temporary"])}
@@ -511,7 +512,7 @@ def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp
 
             if invocation["runner"] == "package":
                 try:
-                    outcome, reasons = package_check.check(
+                    outcome, reasons = timed_call(timings, "package", package_check.check,
                         invocation["argv"][0], core_environment.source_dir, core_environment.wheel_path(), venv_dir)
                 except package_check.PackageCheckError as error:
                     raise FixtureError(f"package検査を実行できません: {error}") from error
@@ -522,7 +523,7 @@ def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp
             else:
                 argv = _build_argv(manifest, venv_dir)
                 try:
-                    completed = subprocess.run(argv, cwd=cwd_path, env=env, stdin=subprocess.DEVNULL,
+                    completed = timed_call(timings, "process", subprocess.run, argv, cwd=cwd_path, env=env, stdin=subprocess.DEVNULL,
                                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                                 timeout=DEFAULT_TIMEOUT)
                 except subprocess.TimeoutExpired as error:
@@ -535,16 +536,16 @@ def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp
             if expect["stdout"] == "none":
                 differences.extend(_check_cli_output(fixture_root, manifest, exit_code, stdout_bytes, stderr_bytes))
             elif expect["stdout"] == "json":
-                differences.extend(_compare_json(manifest, expect, expected_result, exit_code, stdout_bytes, validators))
+                differences.extend(timed_call(timings, "compare", _compare_json, manifest, expect, expected_result, exit_code, stdout_bytes, validators))
             else:
                 differences.extend(_compare_text(fixture_root, expect, exit_code, stdout_bytes))
 
-            after_state = _observe_state(repository, external, git_enabled)
+            after_state = timed_call(timings, "snapshotAfter", _observe_state, repository, external, git_enabled)
             new_reports = _new_report_files(before_state, after_state)
             if "stateDigest" in side_effects:
-                differences.extend(_compare_side_effects_digest(side_effects, expect, after_state, new_reports))
+                differences.extend(timed_call(timings, "compareSideEffects", _compare_side_effects_digest, side_effects, expect, after_state, new_reports))
             else:
-                differences.extend(_compare_side_effects(side_effects, expect, before_state, after_state, new_reports))
+                differences.extend(timed_call(timings, "compareSideEffects", _compare_side_effects, side_effects, expect, before_state, after_state, new_reports))
             if new_reports and manifest["invocation"]["runner"] == "bitz" and expect["stdout"] == "json":
                 differences.extend(_validate_report_contents(repository, new_reports, expected_result, validators))
 
