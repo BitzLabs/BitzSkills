@@ -17,3 +17,4 @@ REQ-003「明示reportの保存先をsymlinkへ逸らさない」とTASK-001。`
 |---|---|---|---|
 | 2026-09-26 10:03 | SPEC作成 | REQ-003（draft）とTASK-001（open）を起票し`bitz check --full` | passed（4文書、13句） |
 | 2026-09-26 10:03 | Intent | `bitz context TASK-001 --purpose implement` | blocked（`CTX-STATE-001`、REQ-003がdraft）。人間の承認待ち |
+| 2026-09-26 10:07 | 承認 | 管理者がREQ-003の内容を確認してapprovedへ変更 | approved |

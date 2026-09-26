@@ -1,7 +1,7 @@
 ---
 id: REQ-003
 title: 明示reportの保存先をsymlinkへ逸らさない
-status: draft
+status: approved
 implements:
   - plugins/bitz-core/src/bitz/reportio.py
 tests:
