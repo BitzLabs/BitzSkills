@@ -26,6 +26,9 @@ relations:
 2. **選択と分割**: `run_conformance.py`は`--shard`と`--shards`で対象を決定的に分割する。
    合否条件は分割によって変えない。初期の配分は大規模relation・traceケースの観測とdimension別の
    推定重みを用いる。重みは性能baselineではなく、検証の配置だけを決める補助値とする。
+   main CIの独立2組から得たfixture時間の中央値で重みを校正し、境界内外で早期終了の有無を分ける。
+   固定した観測元commitとrunをコードに残し、各分割の予測job時間をCIのjob名とStep Summaryへ表示する。
+   予測値は合否、timeout、性能要件には使用しない。
    開発用に`--suite standard`と`--suite scale`を提供するが、認定は必ず`full`の全対象を使う。
 3. **独立した2組**: ADR-052 Decision 4の単一commandによる認定に加え、CIで分割結果を集約する
    認定を許可する。CIでは独立実行番号1・2の各組に対し、分割ごとに固定した同一HEADから新しいcloneを
@@ -62,4 +65,5 @@ relations:
 
 | Date | Summary | Reference |
 |---|---|---|
+| 2026-09-26 | main CIの独立2組で配分を校正し、分割ごとの予測時間表示を追加 | GitHub Actions run 36248419060 |
 | 2026-09-26 | 計時、分割、独立2組の集約とCIの重複整理を確定 | ADR-052、実装計画 |
