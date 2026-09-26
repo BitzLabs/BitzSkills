@@ -38,15 +38,18 @@ Windowsを対象に含めると、reportの保存を検査と書込みの競合�
 2. **必要な機能がない環境での挙動**: Coreは、安全性の保証に必要なOSの機能（directory fd基準のfile操作、
    `O_NOFOLLOW`、process groupへのsignal）が使えない環境で、その保証を弱めた代替動作へ切り替えない。
    明示reportの保存は書き込まずに`SPEC-REPORT-WRITE-001`を返す。
-3. **適合の確認**: Gate Cでは、Linuxに加えてmacOSでも全conformance fixtureとCore固有の試験を通す。
-   本項は[実装計画 §9.1](../../04.提案資料/12_Core-1.0実装計画.md#91-gate-c-core-10-release受入)の条件に加える。
+3. **適合の確認**: Gate Cの確認はLinuxで行う。macOSは検証環境を用意できないため、Core 1.0ではmacOSでの
+   確認を行わず、動作を検証済みとして扱わない。macOSでの利用は、POSIXの機能だけを使う実装の設計に基づく
+   ものであり、適合を保証しない。本項は[実装計画 §9.1](../../04.提案資料/12_Core-1.0実装計画.md#91-gate-c-core-10-release受入)の条件に反映する。
 4. 対象OSの追加は、Core minor以上の変更とする（ADR-045 Decision 6の下限versionの扱いと同じ）。
 
 ## Consequences
 
 - Windowsでネイティブに動かすことはCore 1.0の対象外になる。WSLでは対象になる。
 - 実装はPOSIXの機能を前提にでき、安全性の保証を弱める分岐を持たない。
-- Gate CにmacOSでの確認が加わる。macOSでdirectory fd基準の操作が動くことは、この確認で実測する。
+- Gate CでOSについて確認するのはLinuxだけである。macOSでdirectory fd基準の操作やprocess groupへのsignalが
+  期待どおり動くことは実測せず、Core 1.0ではmacOSでの動作を検証済みとして扱わない。検証環境を用意できた時点で、
+  macOSでの確認をGate Cまたは後続releaseの条件へ加えられる。
 
 ## Alternatives
 
@@ -66,3 +69,4 @@ Windowsを対象に含めると、reportの保存を検査と書込みの競合�
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-09-26 | Core 1.0の対象OSをLinuxとmacOSに限定し、Gate CにmacOSでの確認を加える | ADR-045、ADR-053 |
+| 2026-09-26 | 検証環境を用意できないため、Gate CでmacOSの確認を行わず、macOSでの動作を検証済みとして扱わないよう Decision 3とConsequencesを改める（管理者の決定） | 実装計画 §9.1 |

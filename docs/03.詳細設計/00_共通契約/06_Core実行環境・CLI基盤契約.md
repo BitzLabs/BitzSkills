@@ -9,6 +9,7 @@
 
 - Core 1.0はCPython 3.12以上を対象とする。実装は3.12で利用できる構文と標準library APIだけを使用する。
 - Core 1.0の対象OSはPOSIX系のLinuxとmacOSとする。Windowsは対象外とし、WSL上での利用を案内する。
+  適合の確認はLinuxで行い、Core 1.0はmacOSでの動作を検証しない（ADR-055）。
   安全性の保証に必要なOSの機能（directory fd基準のfile操作、`O_NOFOLLOW`、process groupへのsignal）が
   使えない環境では、保証を弱めた代替動作へ切り替えない。明示reportの保存は書き込まずに`SPEC-REPORT-WRITE-001`を返す。
 - PyPI配布物名、import package名、CLI実行体名はすべて`bitz`とする。
