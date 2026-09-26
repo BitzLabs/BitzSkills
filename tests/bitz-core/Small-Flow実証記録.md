@@ -28,3 +28,18 @@ REQ-003「明示reportの保存先をsymlinkへ逸らさない」とTASK-001。`
 | 2026-09-26 13:20 | Post-check（2回目） | `bitz check TASK-001`、`bitz check --full` | passed（変更は`changes`の2 fileだけ） |
 | 2026-09-26 13:20 | Verify（2回目） | `bitz verify TASK-001` | passed（REQ-003の3句、試験12件） |
 | 2026-09-26 13:20 | Review（司令塔、2回目） | 差分を目視 | 欠陥なし。human reviewへ |
+| 2026-09-26 13:29 | Human review | 管理者へ差分と2つの確認点（確定後の照合で不一致なら除去して失敗、POSIX以外では書き込まない）を提示 | 両方とも推奨案で承認。後者で、規範が対象OSを定めておらず、実装の「対象はPOSIXのみ」は司令塔の指示書から入った根拠のない前提だったと判明し、ADR-055（対象OSをLinuxとmacOSに限定）を起こした |
+| 2026-09-26 13:29 | Done | TASK-001をdoneにし`bitz check TASK-001`、`bitz check --full`、`bitz verify TASK-001` | すべてpassed。実装をcommit |
+
+## 所見
+
+- 工程は Intent、Context、Pre-check、Implement、Post-check、Verify、Human Review、Done の順に通った。
+  Implementは2回、Reviewでの差し戻しは1回だった。
+- **機械の検査が見つけた欠陥は0件、人間側（司令塔のReviewと管理者のhuman review）が見つけた欠陥は2件**だった。
+  1件目（fd取得後の差し替えで成功を返す）は、Post-checkとVerifyがともにpassedのまま残り、Reviewで見つかった。
+  VerifyはREQ-003の試験を実行するが、試験が再現していない経路の欠陥は検出できない。2件目（規範にない対象OSの前提）は、
+  human reviewの確認点として挙げた事項から見つかり、規範（ADR-055）の変更に至った。
+- `bitz check TASK-001`は、実装担当が`changes`の範囲外を変更しなかったことを機械的に確かめた。経過記録のように
+  範囲外のfileを同時に編集する運用は、Post-checkで境界外として検出されるため、記録を先にcommitしてから実装へ進めた。
+- `--expect-digest`による書込み直前の再照合は、Implementの2回とも通過した（途中で仕様の変更はなかった）。
+- 通常Markdown条件との完了時間、欠陥率、review負荷の比較は、比較の方法と題材を決めたうえで別に行う（Gate Cの条件）。
