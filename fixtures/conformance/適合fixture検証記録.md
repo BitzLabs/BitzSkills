@@ -917,3 +917,27 @@ commit `e0d25e4ec29986961b1ad5781f60aa67be3b616a`に対する1回目の`uv run f
 | 統合検証 | 2つのcloneでReport SHA-256が両方`a4e4aff06fb1d2925332456770784ce3088e155d8bfe6244b153ba04f00dc620`（前回と同じ） |
 | scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+## 2026-09-26: verify出力fixtureの監査を実行環境から切り離した後のGate Aの再認定
+
+Claudeデスクトップアプリから起動した環境で`uv run fixtures/validate_conformance.py`を実行すると、監査試験
+`test_verify_stream_evidence`が失敗し、`pending`に`conformance inputs and expectations`が戻った。
+SINGLE-126-14の監査は、fixtureのcommandを実行環境を継承して起動し、同じ環境でredactionして期待抜粋を再計算していた。
+アプリが設定する`CLAUDE_CODE_SDK_HAS_HOST_AUTH_REFRESH=1`は名前に`AUTH`を含むためredaction対象になり、
+値`1`が再計算した抜粋を変える。事前ガード`check_host_environment`がこれを検出して拒否していた。
+§9は非空値をすべて置換するため、短い値を照合から外す方法は採らない。runnerはCoreをPATH・HOME・XDG_CACHE_HOME・TMPDIRと
+fixtureのenvだけで起動するので、Coreの適合試験はこの変数の影響を受けていなかった。
+
+観測の環境をPATHとfixtureのenvだけにし、不要になった事前ガードを削除した（`f36ca17`）。runnerとの差の3変数は
+redaction対象名ではないため、redactionする値の集合はCoreと一致する。
+監査試験には、値`1`と`err`のredaction対象名変数を実行環境へ置いてもSINGLE-126-14が通過する確認を加えた。
+観測を実行環境の継承へ戻すとこの確認が失敗することを確かめた。fixtureの入力と期待値は変えていない。
+
+commit `f36ca17d620ea808c35729a34769935a4b088ab5`に対して、同じ変数を持つ環境のまま`uv run fixtures/certify_gate_a.py`を
+実行し、1回目で`gateA: "Allowed"`、error 0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 統合検証 | 2つのcloneでReport SHA-256が両方`a4e4aff06fb1d2925332456770784ce3088e155d8bfe6244b153ba04f00dc620`（前回と同じ） |
+| scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
