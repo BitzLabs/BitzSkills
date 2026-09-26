@@ -10,3 +10,7 @@ dist/
 
 # bitz checkとverifyの明示report（workspace仕様 §2: 既定でGit管理外）
 .spec/reports/
+
+# Claude Code のローカル状態（個人環境の設定と worktree は共有しない）
+.claude/settings.local.json
+.claude/worktrees/
