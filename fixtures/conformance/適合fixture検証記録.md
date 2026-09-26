@@ -885,3 +885,17 @@ commit `235f329079deb4d15a4f97acb19ce957fdb2c9bd`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 2〜4に属するfixtureを変えたため、ADR-051によりStep 2〜5のGate Bを判定し直す（Coreの追従後）。
+
+## 2026-09-26: 対象OSの明記後のGate Aの再認定
+
+[ADR-055](../../docs/02.設計書/10_決定記録/ADR-055_Core-1.0の対象OSをPOSIXに限定する.md)で実行環境契約 §2へ対象OSを足し（`154c37a`）、
+Diagnostic台帳の根拠文書hashを更新した（`15e3de5`）。fixtureの入力と期待値は変えていない。
+
+commit `09dbb451dae49fa2dc1e6e844f4c98cfbb5ee30f`に対して`uv run fixtures/certify_gate_a.py`を実行し、
+`gateA: "Allowed"`、error 0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 統合検証 | 2つのcloneでReport SHA-256が両方`a4e4aff06fb1d2925332456770784ce3088e155d8bfe6244b153ba04f00dc620` |
+| scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |

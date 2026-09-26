@@ -212,3 +212,10 @@ commit `ac48fa0dca0bc8ca1ed65b2ee21a88acfcb41d4d`に対して`uv run tests/bitz-
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は517件がすべて成功した。
+
+## 2026-09-26: Small Flow実証後の確認
+
+Small Flow実証（TASK-001、REQ-003）で`reportio.py`を変更した（`ce75f5f`）ため、Step 1〜5を確認した。
+commit `09dbb451dae49fa2dc1e6e844f4c98cfbb5ee30f`に対して`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、error 0件を得た。2つのcloneで318件すべてpassed、結果のSHA-256は両方
+`77b2f92060330ffff17ccd39ce1acbc04af2b2c519af2d5484a7306a92d5235a`（前回と同じ）。Parser adapterも2つのcloneで一致した。
