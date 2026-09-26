@@ -1,0 +1,109 @@
+# AGENTS.md「検証コマンド」を GitHub Actions で実行する。
+# PR と main への push では fixture 監査・単体試験・適合試験を、main への push・週次・手動では
+# clean checkout が前提の Gate A / Gate B 認定も実行する。対象は Linux と CPython 3.12（ADR-053 / ADR-055）。
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 18 * * 0"  # 毎週月曜 03:00 JST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+
+jobs:
+  audit:
+    name: 適合fixtureの監査
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+        with:
+          version: "0.11.28"
+          python-version: "3.12"
+      - name: validate_conformance.py
+        # 正常時は exit 1 で、pending は Gate A 認定だけが置き換える 1 項目になる。
+        # 判定は fixtures/certify_gate_a.py と同じ条件で行う。
+        run: |
+          set +e
+          uv run fixtures/validate_conformance.py > "$RUNNER_TEMP/audit.json"
+          code=$?
+          set -e
+          python3 - "$code" "$RUNNER_TEMP/audit.json" <<'EOF'
+          import json, sys
+          code = int(sys.argv[1])
+          report = json.load(open(sys.argv[2], encoding="utf-8"))
+          failed = sorted(name for name, check in report["checks"].items() if check.get("errors"))
+          pending = report["pending"]
+          print(json.dumps({"exitCode": code, "failed": failed, "pending": pending}, ensure_ascii=False, indent=2))
+          if failed or pending != ["full Gate A fresh-checkout repeatability"] or code != 1:
+              sys.exit("適合fixtureの監査が正常な状態ではありません")
+          EOF
+
+  unit:
+    name: Coreの単体試験
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+        with:
+          version: "0.11.28"
+          python-version: "3.12"
+      - name: run_test_files.py
+        run: uv run --project plugins/bitz-core python tests/bitz-core/run_test_files.py tests/bitz-core/test_*.py
+
+  conformance:
+    name: Coreの適合試験
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+        with:
+          version: "0.11.28"
+          python-version: "3.12"
+      - name: run_conformance.py（steps.json の最終 Step まで累積）
+        run: |
+          step=$(python3 -c 'import json; print(max(s["step"] for s in json.load(open("fixtures/conformance/steps.json"))["steps"]))')
+          uv run fixtures/run_conformance.py --core plugins/bitz-core --step "$step" --output "$RUNNER_TEMP/conformance.json"
+      - name: 結果の保存
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: conformance-result
+          path: ${{ runner.temp }}/conformance.json
+          if-no-files-found: ignore
+
+  certify:
+    name: Gate A / Gate B 認定
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+        with:
+          version: "0.11.28"
+          python-version: "3.12"
+      - name: certify_gate_a.py
+        run: uv run fixtures/certify_gate_a.py
+      - name: certify_gate_b.py（steps.json の最終 Step）
+        run: |
+          step=$(python3 -c 'import json; print(max(s["step"] for s in json.load(open("fixtures/conformance/steps.json"))["steps"]))')
+          uv run tests/bitz-core/certify_gate_b.py --step "$step"
