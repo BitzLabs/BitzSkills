@@ -3,11 +3,14 @@
 ## 1. 対象
 
 本書はCore 1.0の配布物、実行環境、共通CLI argv解析を規定する。各操作が受理するoption、target、排他関係は
-各操作仕様を正とし、本書と組み合わせて適用する。判断理由はADR-045とADR-053へ残すが、実装と適合判定は本書を使用する。
+各操作仕様を正とし、本書と組み合わせて適用する。判断理由はADR-045、ADR-053、ADR-055へ残すが、実装と適合判定は本書を使用する。
 
 ## 2. 実行環境と配布物
 
 - Core 1.0はCPython 3.12以上を対象とする。実装は3.12で利用できる構文と標準library APIだけを使用する。
+- Core 1.0の対象OSはPOSIX系のLinuxとmacOSとする。Windowsは対象外とし、WSL上での利用を案内する。
+  安全性の保証に必要なOSの機能（directory fd基準のfile操作、`O_NOFOLLOW`、process groupへのsignal）が
+  使えない環境では、保証を弱めた代替動作へ切り替えない。明示reportの保存は書き込まずに`SPEC-REPORT-WRITE-001`を返す。
 - PyPI配布物名、import package名、CLI実行体名はすべて`bitz`とする。
 - Agent Plugins経路のplugin IDは`bitz-core`と`bitz-sdd`とし、`bitz-core`がCLIを同梱または参照する。
   どの配布経路でも利用者が起動するcommandは`bitz`である。

@@ -257,6 +257,7 @@ SPEC作成 -> context -> pre-check -> code/test変更 -> post-check -> verify ->
 全StepのGate Bが`Passed`した後、次を全件満たした場合だけGate Cを`Passed`とする。
 
 - 全conformance fixtureが、下限CPython 3.12と基準環境の2環境で通過する。`invocation.python`を指定したfixtureは指定versionだけで判定する
+- 全conformance fixtureとCore固有の試験が、LinuxとmacOSで通過する（[ADR-055](../02.設計書/10_決定記録/ADR-055_Core-1.0の対象OSをPOSIXに限定する.md)）
 - 性能baselineを基準環境で取得し、§10のSLOを満たす
 - 単一と複合workspaceのCanonical JSONおよびContext Digestが2回実行でbyte一致する
 - 読取り専用、report、cache、timeout、signal、子processの受入試験が通過する
