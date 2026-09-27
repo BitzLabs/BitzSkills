@@ -1,0 +1,2 @@
+doctor blocked targets=21 diagnostics=1 (0ms)
+api:.spec/bitz.yaml::: error: SPEC-DOCTOR-COMMAND-001: command実行fileを解決できません

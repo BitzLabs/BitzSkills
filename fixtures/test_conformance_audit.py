@@ -64,7 +64,7 @@ from conformance import expansion_fixtures
 from conformance import ordering_fixtures
 from conformance import environment_fixtures
 from conformance import target_vectors
-from conformance import multi_catalog_fixtures, multi_digest_fixtures, multi_identity_fixtures
+from conformance import multi_catalog_fixtures, multi_digest_fixtures, multi_doctor_fixtures, multi_identity_fixtures
 from conformance import multi_member_fixtures, multi_ownership_fixtures, multi_reference
 from conformance import multi_verify_fixtures, multi_report_fixtures, multi_compat_fixtures
 from conformance import multi_generator, multi_limit_fixtures
@@ -654,6 +654,36 @@ class AuditTests(unittest.TestCase):
             shutil.rmtree(root / "multi/MULTI-007-01/repo/apps/web/inner")
             result = multi_catalog_fixtures.validate(root, {"MULTI-007-01"})
         self.assertEqual(result["status"], "Failed")
+
+    def test_multi_doctor_fixtures(self):
+        result = multi_doctor_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(multi_doctor_fixtures.CASES))
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_multi_doctor_audit_rejects_member_omission_and_wrong_aggregation(self):
+        mutations = [
+            ("MULTI-026-01", "expected/doctor.json", lambda v: v["workspaces"].pop()),
+            ("MULTI-026-01", "expected/doctor.json",
+             lambda v: v["workspaces"][1].update(path="apps/api")),
+            ("MULTI-026-02", "expected/doctor.json", lambda v: v.update(status="passed")),
+            ("MULTI-026-02", "expected/doctor.json",
+             lambda v: v["workspaces"][1]["diagnostics"][0]["source"].update(workspaceId="platform")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertEqual(multi_doctor_fixtures.validate(root, {identifier})["status"], "Failed")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_multi_fixture(temporary, "MULTI-026-02")
+            path = root / "multi/MULTI-026-02/expected/doctor.txt"
+            path.write_text(path.read_text().replace("diagnostics=1", "diagnostics=0"))
+            self.assertEqual(multi_doctor_fixtures.validate(root, {"MULTI-026-02"})["status"], "Failed")
 
     def test_multi_ownership_fixtures(self):
         result = multi_ownership_fixtures.validate()
