@@ -1,0 +1,157 @@
+"""Gate C Phase 1のfresh-checkout証拠をfail-closedで集約する。"""
+from __future__ import annotations
+
+import copy
+import hashlib
+import json
+import re
+
+ROLES = ("minimum", "reference")
+ENVIRONMENT_IDS = {
+    "minimum": "minimum-cpython-3-12",
+    "reference": "core-1-reference",
+}
+PYTHON_MINOR = (3, 12)
+PENDING = [
+    "performance baseline and SLO",
+    "Small Flow and Markdown comparison evidence",
+    "unresolved P0/P1 closure",
+]
+SHA256 = re.compile(r"^[0-9a-f]{64}$")
+
+
+def _error(condition: bool, message: str) -> None:
+    if not condition:
+        raise ValueError(message)
+
+
+def _python_minor(value: str) -> tuple[int, int] | None:
+    matched = re.match(r"^(\d+)\.(\d+)(?:\.|$)", value)
+    return tuple(map(int, matched.groups())) if matched else None
+
+
+def _normalized_conformance(report: dict) -> dict:
+    value = copy.deepcopy(report)
+    value.pop("core", None)
+    value.pop("environment", None)
+    for fixture in value.get("fixtures", []):
+        fixture.pop("durationMs", None)
+    return value
+
+
+def _digest(value: dict) -> str:
+    raw = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+    return hashlib.sha256(raw).hexdigest()
+
+
+def conformance_digest(report: dict) -> str:
+    return _digest(_normalized_conformance(report))
+
+
+def validate_evidence(row: dict, *, commit: str, fixture_ids: list[str]) -> dict:
+    _error(isinstance(row, dict), "証拠はobjectでなければなりません")
+    _error(row.get("schemaVersion") == 1, "証拠のschemaVersionが不正です")
+    _error(row.get("commit") == commit, "証拠のcommitが対象commitと一致しません")
+    role = row.get("role")
+    _error(role in ROLES, "未知の環境roleです")
+    _error(row.get("environmentId") == ENVIRONMENT_IDS[role],
+           "environmentIdが環境roleの規定値と一致しません")
+    _error(isinstance(row.get("requestedPython"), str) and row["requestedPython"],
+           "要求したPython実行体が記録されていません")
+    _error(isinstance(row.get("checkoutId"), str) and row["checkoutId"],
+           "checkoutIdがありません")
+    _error(row.get("cleanBefore") is True and row.get("cleanAfter") is True,
+           "fresh checkoutがcleanではありません")
+    _error(row.get("errors") == [], "実行証拠にerrorがあります")
+
+    environment = row.get("environment")
+    _error(isinstance(environment, dict), "環境証拠がありません")
+    _error(environment.get("system") == "Linux", "Gate Cの検証環境はLinuxでなければなりません")
+    _error(environment.get("implementation") == "CPython", "CPythonの証拠ではありません")
+    _error(_python_minor(environment.get("python", "")) == PYTHON_MINOR,
+           "CPython 3.12の証拠ではありません")
+    _error(isinstance(environment.get("executable"), str) and environment["executable"],
+           "Python実行体のpathがありません")
+    _error(isinstance(environment.get("machine"), str) and environment["machine"],
+           "machineの環境証拠がありません")
+    _error(isinstance(environment.get("git"), str) and environment["git"],
+           "Gitの環境証拠がありません")
+
+    conformance = row.get("conformance")
+    _error(isinstance(conformance, dict), "適合試験の証拠がありません")
+    _error(conformance.get("exitCode") == 0, "適合試験の終了コードが0ではありません")
+    report = conformance.get("report")
+    _error(isinstance(report, dict), "適合試験reportがありません")
+    _error(report.get("allPassed") is True, "適合試験が全件成功していません")
+    fixtures = report.get("fixtures")
+    _error(isinstance(fixtures, list), "適合試験のfixture結果がありません")
+    _error([entry.get("id") for entry in fixtures] == fixture_ids,
+           "適合試験のfixture集合または順序が全matrixと一致しません")
+    _error(all(entry.get("result") == "passed" and entry.get("differences") == []
+               for entry in fixtures), "適合試験に非成功または差分があります")
+    counts = report.get("counts")
+    _error(counts == {"passed": len(fixture_ids), "failed": 0, "error": 0},
+           "適合試験の件数が結果と一致しません")
+    report_environment = report.get("environment")
+    _error(isinstance(report_environment, dict), "適合試験の環境情報がありません")
+    _error(_python_minor(report_environment.get("python", "")) == PYTHON_MINOR,
+           "適合試験がCPython 3.12で実行されていません")
+    _error(isinstance(conformance.get("stderrSha256"), str)
+           and SHA256.fullmatch(conformance["stderrSha256"]) is not None,
+           "適合試験のstderrSha256が不正です")
+
+    unit = row.get("unit")
+    _error(isinstance(unit, dict), "Core単体試験の証拠がありません")
+    _error(unit.get("exitCode") == 0, "Core単体試験の終了コードが0ではありません")
+    _error(isinstance(unit.get("testsRun"), int) and unit["testsRun"] > 0,
+           "Core単体試験の実行件数がありません")
+    for name in ("stdoutSha256", "stderrSha256"):
+        _error(isinstance(unit.get(name), str) and SHA256.fullmatch(unit[name]) is not None,
+               f"Core単体試験の{name}が不正です")
+
+    return {
+        "role": role,
+        "environmentId": row["environmentId"],
+        "checkoutId": row["checkoutId"],
+        "python": environment["python"],
+        "executable": environment["executable"],
+        "fixtureCount": len(fixtures),
+        "unitTests": unit["testsRun"],
+        "conformanceSha256": conformance_digest(report),
+    }
+
+
+def collect(rows: list[dict], *, commit: str, fixture_ids: list[str]) -> dict:
+    _error(re.fullmatch(r"[0-9a-f]{40}", commit) is not None, "対象commitが40桁SHAではありません")
+    _error(len(rows) == len(ROLES), "下限環境と基準環境の2件の証拠が必要です")
+    validated = [validate_evidence(row, commit=commit, fixture_ids=fixture_ids) for row in rows]
+    by_role = {entry["role"]: entry for entry in validated}
+    _error(set(by_role) == set(ROLES) and len(by_role) == len(validated),
+           "下限環境と基準環境が1件ずつ必要です")
+    _error(len({entry["environmentId"] for entry in validated}) == len(ROLES),
+           "環境roleごとに異なるenvironmentIdが必要です")
+    _error(len({entry["checkoutId"] for entry in validated}) == len(ROLES),
+           "環境roleごとに独立したfresh checkoutが必要です")
+    _error(len({entry["conformanceSha256"] for entry in validated}) == 1,
+           "下限環境と基準環境の適合結果が一致しません")
+    _error(len({entry["unitTests"] for entry in validated}) == 1,
+           "下限環境と基準環境のCore単体試験件数が一致しません")
+
+    environments = {role: by_role[role] for role in ROLES}
+    return {
+        "schemaVersion": 1,
+        "commit": commit,
+        "gateC": "Pending",
+        "gateCFoundation": "Passed",
+        "fixtureCount": len(fixture_ids),
+        "conformanceSha256": validated[0]["conformanceSha256"],
+        "environments": environments,
+        "covered": [
+            "all conformance fixtures on CPython 3.12 minimum and reference roles",
+            "Core unit tests on Linux in both roles",
+            "cross-environment conformance determinism",
+            "read-only/report/cache/timeout/signal/child-process acceptance in the full matrix",
+        ],
+        "pending": list(PENDING),
+        "errors": [],
+    }

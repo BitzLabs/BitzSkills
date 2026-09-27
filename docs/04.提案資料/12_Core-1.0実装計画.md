@@ -273,6 +273,24 @@ SPEC作成 -> context -> pre-check -> code/test変更 -> post-check -> verify ->
 - 通常Markdown条件との完了時間、欠陥率、review負荷の比較結果を記録する
 - 未解決のP0またはP1がない
 
+Gate Cは`Pending`である。Phase 1では、下限環境と基準環境の証拠を同一の確定commitへ結び付け、
+自己申告の成功reportで通過できない集約基盤を実装する。各環境の`run`はcommit済みHEADからfresh checkoutを作り、
+CPython 3.12／Linuxで全適合fixtureとCore単体試験を実行し、実行前後のclean状態、実行体、件数、結果を記録する。
+`collect`は2つの環境role、commit、全matrixの集合と順序、終了コード、差分なし、単体試験件数、
+環境間の適合結果一致を検査する。基盤が通過しても、次を満たすまではGate Cを`Passed`にしない。
+
+- 性能baselineを基準環境で取得してSLOを判定する
+- Small Flowと通常Markdown条件の比較証拠を確定する
+- 未解決P0/P1がないことを閉包する
+
+実行入口は次のとおりである。`minimum.json`と`reference.json`は別の環境で同じcommitに対して作る。
+
+```text
+uv run tests/bitz-core/certify_gate_c.py run --role minimum --environment-id minimum-cpython-3-12 --python 3.12 --output /tmp/bitz-gate-c-minimum.json
+uv run tests/bitz-core/certify_gate_c.py run --role reference --environment-id core-1-reference --python 3.12 --output /tmp/bitz-gate-c-reference.json
+uv run tests/bitz-core/certify_gate_c.py collect --input /tmp/bitz-gate-c-minimum.json --input /tmp/bitz-gate-c-reference.json
+```
+
 ## 10. 性能受入
 
 性能はCoreの永続cacheなしで、OS file cacheの暖機1回後の5回中央値を測定する。基準環境で`check --all-workspaces`を30秒以内、
