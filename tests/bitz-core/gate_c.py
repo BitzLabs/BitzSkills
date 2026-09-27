@@ -7,10 +7,7 @@ import json
 import re
 
 ROLES = ("minimum", "reference")
-ENVIRONMENT_IDS = {
-    "minimum": "minimum-cpython-3-12",
-    "reference": "core-1-reference",
-}
+MINIMUM_ENVIRONMENT_ID = "minimum-cpython-3-12"
 PYTHON_MINOR = (3, 12)
 PENDING = [
     "performance baseline and SLO",
@@ -44,17 +41,71 @@ def _digest(value: dict) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
+def manifest_digest(manifest: dict) -> str:
+    return _digest(manifest)
+
+
+def _git_version(value: str) -> tuple[int, ...] | None:
+    matched = re.search(r"(?:^|\s)(\d+(?:\.\d+)+)(?:\s|$)", value)
+    return tuple(map(int, matched.group(1).split("."))) if matched else None
+
+
+def _version_at_least(actual: tuple[int, ...], minimum: tuple[int, ...]) -> bool:
+    width = max(len(actual), len(minimum))
+    return actual + (0,) * (width - len(actual)) >= minimum + (0,) * (width - len(minimum))
+
+
+def validate_reference_environment(environment: dict, manifest: dict) -> None:
+    _error(isinstance(manifest, dict), "基準環境manifestがありません")
+    _error(manifest.get("schemaVersion") == "1.0", "基準環境manifestのschemaVersionが不正です")
+    comparison = manifest.get("comparisonKey")
+    tools = manifest.get("requiredTools")
+    _error(isinstance(comparison, dict) and isinstance(tools, dict),
+           "基準環境manifestの比較条件がありません")
+
+    exact = {
+        "system": ("os", comparison.get("os")),
+        "machine": ("architecture", comparison.get("architecture")),
+        "cpuModel": ("cpuModel", comparison.get("cpuModel")),
+        "logicalCores": ("logicalCores", comparison.get("logicalCores")),
+        "storageClass": ("storageClass", comparison.get("storageClass")),
+        "filesystem": ("filesystem", comparison.get("filesystem")),
+        "implementation": ("pythonImplementation", tools.get("pythonImplementation")),
+        "memoryAccounting": ("memoryAccounting", tools.get("memoryAccounting")),
+    }
+    for observed, (manifest_name, expected) in exact.items():
+        _error(environment.get(observed) == expected,
+               f"基準環境の{manifest_name}がmanifestと一致しません")
+
+    ram = environment.get("ramBytes")
+    minimum_ram = comparison.get("minimumRamBytes")
+    _error(isinstance(ram, int) and isinstance(minimum_ram, int) and ram >= minimum_ram,
+           "基準環境のRAMがmanifestの下限を満たしません")
+    expected_python = tools.get("pythonVersion", "")
+    _error(expected_python.endswith(".x")
+           and environment.get("python", "").startswith(expected_python[:-1]),
+           "基準環境のPythonがmanifestと一致しません")
+    actual_git = _git_version(environment.get("git", ""))
+    minimum_git = _git_version(str(tools.get("minimumGitVersion", "")))
+    _error(actual_git is not None and minimum_git is not None
+           and _version_at_least(actual_git, minimum_git),
+           "基準環境のGitがmanifestの下限を満たしません")
+
+
 def conformance_digest(report: dict) -> str:
     return _digest(_normalized_conformance(report))
 
 
-def validate_evidence(row: dict, *, commit: str, fixture_ids: list[str]) -> dict:
+def validate_evidence(row: dict, *, commit: str, fixture_ids: list[str],
+                      reference_manifest: dict) -> dict:
     _error(isinstance(row, dict), "証拠はobjectでなければなりません")
     _error(row.get("schemaVersion") == 1, "証拠のschemaVersionが不正です")
     _error(row.get("commit") == commit, "証拠のcommitが対象commitと一致しません")
     role = row.get("role")
     _error(role in ROLES, "未知の環境roleです")
-    _error(row.get("environmentId") == ENVIRONMENT_IDS[role],
+    expected_environment_id = (MINIMUM_ENVIRONMENT_ID if role == "minimum"
+                               else reference_manifest.get("environmentId"))
+    _error(row.get("environmentId") == expected_environment_id,
            "environmentIdが環境roleの規定値と一致しません")
     _error(isinstance(row.get("requestedPython"), str) and row["requestedPython"],
            "要求したPython実行体が記録されていません")
@@ -76,6 +127,10 @@ def validate_evidence(row: dict, *, commit: str, fixture_ids: list[str]) -> dict
            "machineの環境証拠がありません")
     _error(isinstance(environment.get("git"), str) and environment["git"],
            "Gitの環境証拠がありません")
+    if role == "reference":
+        _error(row.get("referenceManifestSha256") == manifest_digest(reference_manifest),
+               "基準環境manifestのhashが対象commitと一致しません")
+        validate_reference_environment(environment, reference_manifest)
 
     conformance = row.get("conformance")
     _error(isinstance(conformance, dict), "適合試験の証拠がありません")
@@ -121,10 +176,13 @@ def validate_evidence(row: dict, *, commit: str, fixture_ids: list[str]) -> dict
     }
 
 
-def collect(rows: list[dict], *, commit: str, fixture_ids: list[str]) -> dict:
+def collect(rows: list[dict], *, commit: str, fixture_ids: list[str],
+            reference_manifest: dict) -> dict:
+    _error(isinstance(reference_manifest, dict), "基準環境manifestがありません")
     _error(re.fullmatch(r"[0-9a-f]{40}", commit) is not None, "対象commitが40桁SHAではありません")
     _error(len(rows) == len(ROLES), "下限環境と基準環境の2件の証拠が必要です")
-    validated = [validate_evidence(row, commit=commit, fixture_ids=fixture_ids) for row in rows]
+    validated = [validate_evidence(row, commit=commit, fixture_ids=fixture_ids,
+                                   reference_manifest=reference_manifest) for row in rows]
     by_role = {entry["role"]: entry for entry in validated}
     _error(set(by_role) == set(ROLES) and len(by_role) == len(validated),
            "下限環境と基準環境が1件ずつ必要です")
@@ -145,11 +203,13 @@ def collect(rows: list[dict], *, commit: str, fixture_ids: list[str]) -> dict:
         "gateCFoundation": "Passed",
         "fixtureCount": len(fixture_ids),
         "conformanceSha256": validated[0]["conformanceSha256"],
+        "referenceManifestSha256": manifest_digest(reference_manifest),
         "environments": environments,
         "covered": [
             "all conformance fixtures on CPython 3.12 minimum and reference roles",
             "Core unit tests on Linux in both roles",
             "cross-environment conformance determinism",
+            "reference environment manifest and observed comparison key",
             "read-only/report/cache/timeout/signal/child-process acceptance in the full matrix",
         ],
         "pending": list(PENDING),

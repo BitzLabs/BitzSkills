@@ -16,6 +16,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import platform
 import re
 import shutil
 import subprocess
@@ -32,6 +33,7 @@ from conformance.selection import step_ids
 
 CORE = "plugins/bitz-core"
 UNIT_RUNNER = "tests/bitz-core/run_test_files.py"
+REFERENCE_MANIFEST = Path("fixtures/performance/environments/core-1-reference.json")
 
 
 def git(*args: str, cwd: Path = ROOT) -> subprocess.CompletedProcess:
@@ -53,6 +55,66 @@ def checkout(commit: str, directory: Path) -> None:
 
 def sha256(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
+
+
+def load_reference_manifest(cwd: Path) -> dict:
+    return json.loads((cwd / REFERENCE_MANIFEST).read_text(encoding="utf-8"))
+
+
+def load_reference_manifest_at(commit: str) -> dict:
+    result = git("show", f"{commit}:{REFERENCE_MANIFEST.as_posix()}")
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip() or "対象commitの基準環境manifestを読めません")
+    return json.loads(result.stdout)
+
+
+def command_output(argv: list[str]) -> str:
+    try:
+        result = subprocess.run(argv, capture_output=True, text=True, timeout=30)
+    except OSError:
+        return ""
+    return result.stdout.strip() if result.returncode == 0 else ""
+
+
+def cpu_model() -> str:
+    try:
+        for line in Path("/proc/cpuinfo").read_text(encoding="utf-8").splitlines():
+            if line.startswith("model name"):
+                return line.partition(":")[2].strip()
+    except OSError:
+        pass
+    return platform.processor() or "unknown"
+
+
+def storage_class(source: str) -> str:
+    if not source.startswith("/dev/"):
+        return "unknown"
+    values = command_output(["lsblk", "-no", "ROTA", source]).split()
+    if values and set(values) == {"0"}:
+        return "local-ssd"
+    if "1" in values:
+        return "local-hdd"
+    return "unknown"
+
+
+def observed_host_environment(cwd: Path) -> dict:
+    source = command_output(["findmnt", "-n", "-o", "SOURCE", "-T", str(cwd)])
+    filesystem = command_output(["findmnt", "-n", "-o", "FSTYPE", "-T", str(cwd)])
+    try:
+        ram_bytes = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")
+    except (OSError, ValueError):
+        ram_bytes = 0
+    cgroup_v2 = (Path("/sys/fs/cgroup/cgroup.controllers").is_file()
+                 and Path("/sys/fs/cgroup/cgroup.procs").is_file())
+    return {
+        "kernel": platform.release(),
+        "cpuModel": cpu_model(),
+        "logicalCores": os.cpu_count() or 0,
+        "ramBytes": ram_bytes,
+        "storageClass": storage_class(source),
+        "filesystem": filesystem or "unknown",
+        "memoryAccounting": "cgroup-v2-process-tree" if cgroup_v2 else "unsupported",
+    }
 
 
 def python_environment(uv: str, python_spec: str, cwd: Path) -> dict:
@@ -102,6 +164,7 @@ def run_evidence(role: str, environment_id: str, python_spec: str) -> tuple[dict
         "commit": commit,
         "role": role,
         "environmentId": environment_id,
+        "referenceManifestSha256": None,
         "requestedPython": python_spec,
         "checkoutId": uuid.uuid4().hex,
         "cleanBefore": False,
@@ -122,6 +185,23 @@ def run_evidence(role: str, environment_id: str, python_spec: str) -> tuple[dict
             evidence["environment"] = python_environment(uv, python_spec, directory)
             evidence["environment"]["git"] = subprocess.check_output(
                 ["git", "--version"], text=True, timeout=30).strip()
+            evidence["environment"].update(observed_host_environment(directory))
+
+            if role == "reference":
+                manifest = load_reference_manifest(directory)
+                evidence["referenceManifestSha256"] = gate_c.manifest_digest(manifest)
+                if environment_id != manifest.get("environmentId"):
+                    errors.append("environmentIdが基準環境manifestと一致しません")
+                try:
+                    gate_c.validate_reference_environment(evidence["environment"], manifest)
+                except ValueError as error:
+                    errors.append(str(error))
+                if errors:
+                    evidence["cleanAfter"] = clean(directory)
+                    if not evidence["cleanBefore"] or not evidence["cleanAfter"]:
+                        errors.append("fresh checkoutが実行前後でcleanではありません")
+                    evidence["errors"] = errors
+                    return evidence, errors
 
             conformance = run_command(
                 [uv, "run", "--python", python_spec, "fixtures/run_conformance.py",
@@ -200,8 +280,10 @@ def main(argv: list[str] | None = None) -> int:
     commit = args.commit or (head.stdout.strip() if head.returncode == 0 else "")
     try:
         rows = [json.loads(Path(path).read_text(encoding="utf-8")) for path in args.input]
-        report = gate_c.collect(rows, commit=commit, fixture_ids=step_ids(5))
-    except (OSError, ValueError, json.JSONDecodeError) as error:
+        manifest = load_reference_manifest_at(commit)
+        report = gate_c.collect(rows, commit=commit, fixture_ids=step_ids(5),
+                                reference_manifest=manifest)
+    except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as error:
         report = {"schemaVersion": 1, "commit": commit, "gateC": "Failed",
                   "gateCFoundation": "Failed", "errors": [str(error).split("\n")[0]]}
         write_json(report, args.output)

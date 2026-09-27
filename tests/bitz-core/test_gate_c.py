@@ -23,10 +23,32 @@ SPEC.loader.exec_module(certify_gate_c)
 COMMIT = "a" * 40
 IDS = step_ids(5)
 EMPTY = hashlib.sha256(b"").hexdigest()
+REFERENCE_MANIFEST = {
+    "schemaVersion": "1.0",
+    "environmentId": "core-1-linux-reference",
+    "comparisonKey": {
+        "os": "Linux",
+        "architecture": "x86_64",
+        "cpuModel": "Reference CPU",
+        "logicalCores": 16,
+        "minimumRamBytes": 8_053_063_680,
+        "storageClass": "local-ssd",
+        "filesystem": "ext4",
+    },
+    "requiredTools": {
+        "pythonImplementation": "CPython",
+        "pythonVersion": "3.12.x",
+        "minimumGitVersion": "2.30",
+        "memoryAccounting": "cgroup-v2-process-tree",
+    },
+    "isolation": {"networkDisabled": True, "persistentCoreCache": False,
+                  "report": False, "parallelCases": False},
+}
 
 
 def evidence(role: str) -> dict:
-    environment_id = "minimum-cpython-3-12" if role == "minimum" else "core-1-reference"
+    environment_id = ("minimum-cpython-3-12" if role == "minimum"
+                      else REFERENCE_MANIFEST["environmentId"])
     report = {
         "core": f"/{role}/plugins/bitz-core",
         "environment": {"python": "3.12.3", "git": "git version 2.43.0"},
@@ -40,6 +62,8 @@ def evidence(role: str) -> dict:
         "commit": COMMIT,
         "role": role,
         "environmentId": environment_id,
+        "referenceManifestSha256": (gate_c.manifest_digest(REFERENCE_MANIFEST)
+                                    if role == "reference" else None),
         "requestedPython": "3.12",
         "checkoutId": f"checkout-{role}",
         "cleanBefore": True,
@@ -51,6 +75,13 @@ def evidence(role: str) -> dict:
             "implementation": "CPython",
             "executable": f"/{role}/bin/python",
             "git": "git version 2.43.0",
+            "kernel": "6.8.0",
+            "cpuModel": "Reference CPU",
+            "logicalCores": 16,
+            "ramBytes": 16_106_127_360,
+            "storageClass": "local-ssd",
+            "filesystem": "ext4",
+            "memoryAccounting": "cgroup-v2-process-tree",
         },
         "conformance": {"exitCode": 0, "report": report, "stderrSha256": EMPTY},
         "unit": {"exitCode": 0, "testsRun": 552,
@@ -61,7 +92,8 @@ def evidence(role: str) -> dict:
 
 def collected(rows=None):
     return gate_c.collect(rows or [evidence("minimum"), evidence("reference")],
-                          commit=COMMIT, fixture_ids=IDS)
+                          commit=COMMIT, fixture_ids=IDS,
+                          reference_manifest=REFERENCE_MANIFEST)
 
 
 class CollectionTests(unittest.TestCase):
@@ -70,6 +102,8 @@ class CollectionTests(unittest.TestCase):
         self.assertEqual(result["gateCFoundation"], "Passed")
         self.assertEqual(result["gateC"], "Pending")
         self.assertEqual(result["fixtureCount"], 320)
+        self.assertEqual(result["referenceManifestSha256"],
+                         gate_c.manifest_digest(REFERENCE_MANIFEST))
         self.assertEqual(result["pending"], gate_c.PENDING)
         self.assertEqual(set(result["environments"]), {"minimum", "reference"})
 
@@ -114,6 +148,33 @@ class CollectionTests(unittest.TestCase):
             with self.subTest(key=key):
                 rows = [evidence("minimum"), evidence("reference")]
                 rows[0]["environment"][key] = value
+                with self.assertRaises(ValueError):
+                    collected(rows)
+
+    def test_reference_manifest_hash_is_required(self):
+        rows = [evidence("minimum"), evidence("reference")]
+        rows[1]["referenceManifestSha256"] = EMPTY
+        with self.assertRaises(ValueError):
+            collected(rows)
+
+    def test_reference_environment_must_match_manifest(self):
+        mutations = {
+            "system": "Darwin",
+            "machine": "aarch64",
+            "cpuModel": "Another CPU",
+            "logicalCores": 8,
+            "ramBytes": REFERENCE_MANIFEST["comparisonKey"]["minimumRamBytes"] - 1,
+            "storageClass": "unknown",
+            "filesystem": "xfs",
+            "implementation": "PyPy",
+            "memoryAccounting": "unsupported",
+            "python": "3.13.0",
+            "git": "git version 2.29.9",
+        }
+        for key, value in mutations.items():
+            with self.subTest(key=key):
+                rows = [evidence("minimum"), evidence("reference")]
+                rows[1]["environment"][key] = value
                 with self.assertRaises(ValueError):
                     collected(rows)
 
