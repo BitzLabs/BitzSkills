@@ -25,14 +25,15 @@ IDS = step_ids(5)
 EMPTY = hashlib.sha256(b"").hexdigest()
 REFERENCE_MANIFEST = {
     "schemaVersion": "1.0",
-    "environmentId": "core-1-linux-reference",
+    "environmentId": "core-1-linux-wsl2-ryzen-9-9900x",
     "comparisonKey": {
         "os": "Linux",
+        "platformClass": "WSL2",
         "architecture": "x86_64",
-        "cpuModel": "Reference CPU",
-        "logicalCores": 16,
+        "cpuModel": "AMD Ryzen 9 9900X 12-Core Processor",
+        "logicalCores": 24,
         "minimumRamBytes": 8_053_063_680,
-        "storageClass": "local-ssd",
+        "storageClass": "wsl2-virtual-disk",
         "filesystem": "ext4",
     },
     "requiredTools": {
@@ -49,6 +50,19 @@ REFERENCE_MANIFEST = {
 def evidence(role: str) -> dict:
     environment_id = ("minimum-cpython-3-12" if role == "minimum"
                       else REFERENCE_MANIFEST["environmentId"])
+    host = ({
+        "kernel": "6.6.87.2-microsoft-standard-WSL2",
+        "cpuModel": "AMD Ryzen 9 9900X 12-Core Processor",
+        "logicalCores": 24,
+        "platformClass": "WSL2",
+        "storageClass": "wsl2-virtual-disk",
+    } if role == "reference" else {
+        "kernel": "6.8.0-generic",
+        "cpuModel": "Minimum CI CPU",
+        "logicalCores": 4,
+        "platformClass": "native-linux",
+        "storageClass": "local-ssd",
+    })
     report = {
         "core": f"/{role}/plugins/bitz-core",
         "environment": {"python": "3.12.3", "git": "git version 2.43.0"},
@@ -75,13 +89,10 @@ def evidence(role: str) -> dict:
             "implementation": "CPython",
             "executable": f"/{role}/bin/python",
             "git": "git version 2.43.0",
-            "kernel": "6.8.0",
-            "cpuModel": "Reference CPU",
-            "logicalCores": 16,
             "ramBytes": 16_106_127_360,
-            "storageClass": "local-ssd",
             "filesystem": "ext4",
             "memoryAccounting": "cgroup-v2-process-tree",
+            **host,
         },
         "conformance": {"exitCode": 0, "report": report, "stderrSha256": EMPTY},
         "unit": {"exitCode": 0, "testsRun": 552,
@@ -122,6 +133,9 @@ class CollectionTests(unittest.TestCase):
         wrong_id = [evidence("minimum"), evidence("reference")]
         wrong_id[1]["environmentId"] = "another-reference"
         cases.append(wrong_id)
+        same_host = [evidence("minimum"), evidence("reference")]
+        same_host[0]["environment"] = copy.deepcopy(same_host[1]["environment"])
+        cases.append(same_host)
         for rows in cases:
             with self.subTest(rows=len(rows)), self.assertRaises(ValueError):
                 collected(rows)
@@ -163,6 +177,7 @@ class CollectionTests(unittest.TestCase):
             "machine": "aarch64",
             "cpuModel": "Another CPU",
             "logicalCores": 8,
+            "platformClass": "native-linux",
             "ramBytes": REFERENCE_MANIFEST["comparisonKey"]["minimumRamBytes"] - 1,
             "storageClass": "unknown",
             "filesystem": "xfs",
@@ -222,6 +237,14 @@ class CollectionTests(unittest.TestCase):
         self.assertEqual(certify_gate_c.unit_test_count(
             b"", b"Ran 552 tests in 3.000s\n\nOK\n"), 552)
         self.assertIsNone(certify_gate_c.unit_test_count(b"552 passed", b""))
+
+    def test_platform_and_storage_class_for_wsl2(self):
+        self.assertEqual(certify_gate_c.platform_class(
+            "6.6.87.2-microsoft-standard-WSL2"), "WSL2")
+        self.assertEqual(certify_gate_c.platform_class("6.8.0-generic"),
+                         "native-linux")
+        self.assertEqual(certify_gate_c.storage_class("/dev/sdc", "WSL2"),
+                         "wsl2-virtual-disk")
 
 
 if __name__ == "__main__":

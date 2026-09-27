@@ -15,6 +15,16 @@ PENDING = [
     "unresolved P0/P1 closure",
 ]
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
+FINGERPRINT_FIELDS = (
+    "system",
+    "kernel",
+    "machine",
+    "cpuModel",
+    "logicalCores",
+    "platformClass",
+    "storageClass",
+    "filesystem",
+)
 
 
 def _error(condition: bool, message: str) -> None:
@@ -45,6 +55,20 @@ def manifest_digest(manifest: dict) -> str:
     return _digest(manifest)
 
 
+def environment_fingerprint(environment: dict) -> str:
+    values = {}
+    for field in FINGERPRINT_FIELDS:
+        value = environment.get(field)
+        if field == "logicalCores":
+            _error(isinstance(value, int) and value > 0,
+                   f"environment.{field}が不正です")
+        else:
+            _error(isinstance(value, str) and bool(value),
+                   f"environment.{field}が不正です")
+        values[field] = value
+    return _digest(values)
+
+
 def _git_version(value: str) -> tuple[int, ...] | None:
     matched = re.search(r"(?:^|\s)(\d+(?:\.\d+)+)(?:\s|$)", value)
     return tuple(map(int, matched.group(1).split("."))) if matched else None
@@ -65,6 +89,7 @@ def validate_reference_environment(environment: dict, manifest: dict) -> None:
 
     exact = {
         "system": ("os", comparison.get("os")),
+        "platformClass": ("platformClass", comparison.get("platformClass")),
         "machine": ("architecture", comparison.get("architecture")),
         "cpuModel": ("cpuModel", comparison.get("cpuModel")),
         "logicalCores": ("logicalCores", comparison.get("logicalCores")),
@@ -127,6 +152,7 @@ def validate_evidence(row: dict, *, commit: str, fixture_ids: list[str],
            "machineの環境証拠がありません")
     _error(isinstance(environment.get("git"), str) and environment["git"],
            "Gitの環境証拠がありません")
+    fingerprint = environment_fingerprint(environment)
     if role == "reference":
         _error(row.get("referenceManifestSha256") == manifest_digest(reference_manifest),
                "基準環境manifestのhashが対象commitと一致しません")
@@ -167,6 +193,7 @@ def validate_evidence(row: dict, *, commit: str, fixture_ids: list[str],
     return {
         "role": role,
         "environmentId": row["environmentId"],
+        "environmentFingerprint": fingerprint,
         "checkoutId": row["checkoutId"],
         "python": environment["python"],
         "executable": environment["executable"],
@@ -190,6 +217,8 @@ def collect(rows: list[dict], *, commit: str, fixture_ids: list[str],
            "環境roleごとに異なるenvironmentIdが必要です")
     _error(len({entry["checkoutId"] for entry in validated}) == len(ROLES),
            "環境roleごとに独立したfresh checkoutが必要です")
+    _error(len({entry["environmentFingerprint"] for entry in validated}) == len(ROLES),
+           "下限環境と基準環境が同じenvironment fingerprintです")
     _error(len({entry["conformanceSha256"] for entry in validated}) == 1,
            "下限環境と基準環境の適合結果が一致しません")
     _error(len({entry["unitTests"] for entry in validated}) == 1,

@@ -86,7 +86,16 @@ def cpu_model() -> str:
     return platform.processor() or "unknown"
 
 
-def storage_class(source: str) -> str:
+def platform_class(kernel: str) -> str:
+    lowered = kernel.lower()
+    if "microsoft" in lowered and "wsl2" in lowered:
+        return "WSL2"
+    return "native-linux"
+
+
+def storage_class(source: str, host_platform_class: str) -> str:
+    if host_platform_class == "WSL2":
+        return "wsl2-virtual-disk"
     if not source.startswith("/dev/"):
         return "unknown"
     values = command_output(["lsblk", "-no", "ROTA", source]).split()
@@ -100,6 +109,8 @@ def storage_class(source: str) -> str:
 def observed_host_environment(cwd: Path) -> dict:
     source = command_output(["findmnt", "-n", "-o", "SOURCE", "-T", str(cwd)])
     filesystem = command_output(["findmnt", "-n", "-o", "FSTYPE", "-T", str(cwd)])
+    kernel = platform.release()
+    host_platform_class = platform_class(kernel)
     try:
         ram_bytes = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")
     except (OSError, ValueError):
@@ -107,11 +118,12 @@ def observed_host_environment(cwd: Path) -> dict:
     cgroup_v2 = (Path("/sys/fs/cgroup/cgroup.controllers").is_file()
                  and Path("/sys/fs/cgroup/cgroup.procs").is_file())
     return {
-        "kernel": platform.release(),
+        "kernel": kernel,
         "cpuModel": cpu_model(),
         "logicalCores": os.cpu_count() or 0,
         "ramBytes": ram_bytes,
-        "storageClass": storage_class(source),
+        "platformClass": host_platform_class,
+        "storageClass": storage_class(source, host_platform_class),
         "filesystem": filesystem or "unknown",
         "memoryAccounting": "cgroup-v2-process-tree" if cgroup_v2 else "unsupported",
     }
