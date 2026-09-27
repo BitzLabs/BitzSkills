@@ -20,12 +20,14 @@
     "observedEnvironment": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["os", "kernel", "architecture", "cpuModel", "logicalCores", "ramBytes", "storageClass", "filesystem", "python", "git"],
+      "required": ["os", "kernel", "platformClass", "architecture", "cpuModel", "logicalCores", "ramBytes", "storageClass", "filesystem", "python", "git", "memoryAccounting"],
       "properties": {
         "os": {"type": "string"}, "kernel": {"type": "string"}, "architecture": {"type": "string"},
+        "platformClass": {"type": "string"},
         "cpuModel": {"type": "string"}, "logicalCores": {"type": "integer", "minimum": 1},
         "ramBytes": {"type": "integer", "minimum": 1}, "storageClass": {"type": "string"},
-        "filesystem": {"type": "string"}, "python": {"type": "string"}, "git": {"type": "string"}
+        "filesystem": {"type": "string"}, "python": {"type": "string"}, "git": {"type": "string"},
+        "memoryAccounting": {"type": "string"}
       }
     },
     "comparability": {"enum": ["comparable", "not_comparable"]},

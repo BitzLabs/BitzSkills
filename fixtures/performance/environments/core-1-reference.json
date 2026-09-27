@@ -1,13 +1,14 @@
 {
   "schemaVersion": "1.0",
-  "environmentId": "core-1-linux-i5-13500h",
+  "environmentId": "core-1-linux-wsl2-ryzen-9-9900x",
   "comparisonKey": {
     "os": "Linux",
+    "platformClass": "WSL2",
     "architecture": "x86_64",
-    "cpuModel": "13th Gen Intel(R) Core(TM) i5-13500H",
-    "logicalCores": 16,
+    "cpuModel": "AMD Ryzen 9 9900X 12-Core Processor",
+    "logicalCores": 24,
     "minimumRamBytes": 8053063680,
-    "storageClass": "local-ssd",
+    "storageClass": "wsl2-virtual-disk",
     "filesystem": "ext4"
   },
   "requiredTools": {

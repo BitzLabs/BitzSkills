@@ -12,14 +12,15 @@
     "comparisonKey": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["os", "architecture", "cpuModel", "logicalCores", "minimumRamBytes", "storageClass", "filesystem"],
+      "required": ["os", "platformClass", "architecture", "cpuModel", "logicalCores", "minimumRamBytes", "storageClass", "filesystem"],
       "properties": {
         "os": {"const": "Linux"},
+        "platformClass": {"enum": ["native-linux", "WSL2"]},
         "architecture": {"const": "x86_64"},
         "cpuModel": {"type": "string", "minLength": 1},
         "logicalCores": {"type": "integer", "minimum": 1},
         "minimumRamBytes": {"type": "integer", "minimum": 1073741824},
-        "storageClass": {"const": "local-ssd"},
+        "storageClass": {"enum": ["local-ssd", "wsl2-virtual-disk"]},
         "filesystem": {"type": "string", "minLength": 1}
       }
     },

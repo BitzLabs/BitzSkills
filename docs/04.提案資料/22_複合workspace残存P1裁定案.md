@@ -230,7 +230,7 @@ Diagnostic `evidence`は`dimension`、`limit`、および早期停止時の`obse
 
 ### 7.2 測定方法
 
-- clean working tree、local SSD、networkなし、`--report`なし、`--format json`
+- clean working tree、基準環境manifestのstorage class、networkなし、`--report`なし、`--format json`（ADR-057で更新）
 - Core cacheは各試行前に無効化または消去し、OS file cacheを暖める1回を測定外とする
 - その後5回実行し、process起動、Git列挙、parse、解決、JSON生成を含むwall-clock中央値を使う
 - cold run、5回の各値、中央値、peak RSSを記録する

@@ -34,13 +34,14 @@ uv run tests/bitz-core/certify_gate_c.py run \
   --role minimum --environment-id minimum-cpython-3-12 --python 3.12 \
   --output /path/to/minimum.json
 uv run tests/bitz-core/certify_gate_c.py run \
-  --role reference --environment-id core-1-linux-i5-13500h --python 3.12 \
+  --role reference --environment-id core-1-linux-wsl2-ryzen-9-9900x --python 3.12 \
   --output /path/to/reference.json
 uv run tests/bitz-core/certify_gate_c.py collect \
   --input /path/to/minimum.json --input /path/to/reference.json
 ```
 
 基準環境manifestは`fixtures/performance/environments/core-1-reference.json`である。
-Phase 1でもOS、architecture、CPU、論理core数、RAM、storage、filesystem、Python、Git、cgroup v2を実測し、
-manifestのhashと比較条件が一致しないreference証拠をfixture実行前に拒否する。network無効などのisolation条件は
+Phase 1でもOS、platform class、architecture、CPU、論理core数、RAM、storage、filesystem、Python、Git、cgroup v2を実測し、
+manifestのhashと比較条件が一致しないreference証拠、およびenvironment fingerprintが同じ2 roleを拒否する。
+network無効などのisolation条件は
 性能runnerで制御するため、性能baselineとともに引き続き未認定である。

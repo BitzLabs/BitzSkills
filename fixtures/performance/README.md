@@ -37,7 +37,8 @@ processとして実行する。基準版はcleanなcommitとし、`changed-check
 manifestの`changedAppendUtf8`のbyte列を`changedPath`へ追記する。
 
 - 基準環境は`environments/core-1-reference.json`とし、観測値を`schemas/run-result.schema.json`で記録する。
-- network接続を無効にする。local SSD、`--format json`を使い、`--report`とCoreの永続cacheは使わない。
+- network接続を無効にする。manifestのstorage class、`--format json`を使い、`--report`とCoreの永続cacheは使わない。
+  基準環境のWSL2 virtual diskを、guestから観測できない物理SSDとして推定しない。
 - 測定しない暖機を1回行った後、測定する実行を5回逐次に行う。単調時計を使い、各値と中央値を記録する。
 - 初回実行の経過時間は別に記録する。各`peakRssBytes`は、process起動直前の隔離したcgroup v2 scopeを基準とする、
   Linuxのprocess tree全体のpeak RSSの増分である。5回の値とその最大値を記録する。
