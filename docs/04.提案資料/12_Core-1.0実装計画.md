@@ -277,8 +277,9 @@ Gate Cは`Pending`である。Phase 1では、下限環境と基準環境の証�
 自己申告の成功reportで通過できない集約基盤を実装する。各環境の`run`はcommit済みHEADからfresh checkoutを作り、
 CPython 3.12／Linuxで全適合fixtureとCore単体試験を実行し、実行前後のclean状態、実行体、件数、結果を記録する。
 `collect`は2つの環境role、commit、全matrixの集合と順序、終了コード、差分なし、単体試験件数、
-環境間の適合結果一致を検査する。reference roleは基準環境manifestのhashを記録し、OS、architecture、CPU、
-論理core数、RAM、storage、filesystem、Python、Git、cgroup v2の実測値を比較条件と照合する。不一致なら
+環境間の適合結果一致を検査する。reference roleは基準環境manifestのhashを記録し、OS、platform class、
+architecture、CPU、論理core数、RAM、storage、filesystem、Python、Git、cgroup v2の実測値を比較条件と照合する。
+両roleのenvironment fingerprintが同じ場合と、referenceの比較条件が不一致の場合は
 fixture実行前に拒否する。network無効などのisolation条件は性能runnerで制御し、Phase 1では認定しない。
 基盤が通過しても、次を満たすまではGate Cを`Passed`にしない。
 
@@ -290,7 +291,7 @@ fixture実行前に拒否する。network無効などのisolation条件は性能
 
 ```text
 uv run tests/bitz-core/certify_gate_c.py run --role minimum --environment-id minimum-cpython-3-12 --python 3.12 --output /tmp/bitz-gate-c-minimum.json
-uv run tests/bitz-core/certify_gate_c.py run --role reference --environment-id core-1-linux-i5-13500h --python 3.12 --output /tmp/bitz-gate-c-reference.json
+uv run tests/bitz-core/certify_gate_c.py run --role reference --environment-id core-1-linux-wsl2-ryzen-9-9900x --python 3.12 --output /tmp/bitz-gate-c-reference.json
 uv run tests/bitz-core/certify_gate_c.py collect --input /tmp/bitz-gate-c-minimum.json --input /tmp/bitz-gate-c-reference.json
 ```
 

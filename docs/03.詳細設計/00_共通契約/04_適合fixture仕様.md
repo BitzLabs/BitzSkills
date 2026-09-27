@@ -723,8 +723,9 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 ## 8. 性能fixture
 
 性能は適合fixtureとは別に、[品質属性と安全境界 §4](../../02.設計書/02_品質属性と安全境界.md#4-性能予算)の
-基準fixtureと環境manifestで測定する。測定条件はclean working tree、local SSD、networkなし、
+基準fixtureと環境manifestで測定する。測定条件はclean working tree、manifestに固定したstorage class、networkなし、
 `--report`なし、JSON出力、Coreの永続cacheなし、OS file cache暖機1回後の5回中央値とする。
+WSL2ではvirtual diskをguestから観測できない物理SSDとして推定しない。
 性能fixtureは合否matrixへ含めず、回帰検査として独立に運用する。
 
 基準入力はrepository rootの[`fixtures/performance`](../../../fixtures/performance/README.md)に置く。version管理した

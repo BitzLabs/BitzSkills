@@ -1,7 +1,7 @@
 ---
 id: ADR-057
 title: 性能基準環境を継続利用可能なWSL2ホストへ更新する
-status: draft
+status: accepted
 relations:
   requires:
     - ADR-051
