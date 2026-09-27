@@ -941,3 +941,20 @@ commit `f36ca17d620ea808c35729a34769935a4b088ab5`に対して、同じ変数を�
 | 統合検証 | 2つのcloneでReport SHA-256が両方`a4e4aff06fb1d2925332456770784ce3088e155d8bfe6244b153ba04f00dc620`（前回と同じ） |
 | scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+## 2026-09-27: 複合workspace全体のdoctor fixture追加後のGate A再認定
+
+`doctor --all-workspaces`の成功経路とmember非成功後の継続を固定する`MULTI-026-01`〜`02`を追加した。
+matrixは320件（単一workspace 258件、複合workspace 62件）になった。監査は両fixtureの入力、完全結果、
+text出力、副作用snapshotを審査済み値と照合し、隔離setupの2回一致を確認する。
+
+commit `74ff1c8d735a99e3b9c5f55438c8f96670402cbc`に対して`uv run fixtures/certify_gate_a.py`を実行し、
+`gateA: "Allowed"`、error 0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 統合検証 | 2つのcloneでReport SHA-256が両方`e52667946a7f015bdab388682c22dbce6a056b57994ef20f0b93678f8fbf56c7` |
+| scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 5に属するfixtureを変更したため、ADR-051に従ってCore追従後にStep 1〜5を判定し直した。

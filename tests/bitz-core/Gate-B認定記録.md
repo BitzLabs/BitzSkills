@@ -219,3 +219,22 @@ Small Flow実証（TASK-001、REQ-003）で`reportio.py`を変更した（`ce75f
 commit `09dbb451dae49fa2dc1e6e844f4c98cfbb5ee30f`に対して`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
 `gateB: {"step": 5, "result": "Passed"}`、error 0件を得た。2つのcloneで318件すべてpassed、結果のSHA-256は両方
 `77b2f92060330ffff17ccd39ce1acbc04af2b2c519af2d5484a7306a92d5235a`（前回と同じ）。Parser adapterも2つのcloneで一致した。
+
+## 2026-09-27: 複合workspace全体のdoctor実装後のStep 1〜5再判定
+
+`MULTI-026-01`〜`02`の追加後、従来は未実装終了だった`doctor --all-workspaces`へrootと全memberの
+workspace固有検査、member ID順の結果、非成功後の継続、最上位status集約、text出力集計を実装した。
+fixture追加後のCore追従前には新規2件が0件passedであることを確認し、追従後には2件ともpassedとなった。
+
+commit `1b64033862841b9547dcb4048fe693a60638300c`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、error 0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 320件（`MULTI-026-01`〜`02`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのcloneで320件すべてpassed。所要時間と検査対象のpathを除いた結果のSHA-256は両方`669f222ae310eac0e86dd6b2ffda163ec49dbfe152f0d25c84c5961ead324a38` |
+| Parser adapter | 2つのcloneで終了コード0、標準出力が一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は549件がすべて成功した。

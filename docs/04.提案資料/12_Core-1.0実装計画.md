@@ -101,9 +101,11 @@ generator、helper、harnessへ落とし込み、fresh checkoutから再現で�
 
 部分検証の入口は`uv run fixtures/validate_conformance.py`。公開JSON、文法参照、link、Git setup、process helper、
 副作用比較の自己試験、Step 0-P、Diagnostic意味網羅の対応台帳検証、target期待集合25 caseを統合済みである。
+以下の内訳は最初にStep 0Bを完了した310件時点のものである。
 適合fixture 310件中、導入・設定9件、EARS-AI構文・候補抽出・拡張12件、文書構造・UTF-8 9件、関係・path・coverage 6件、ID重複・循環4件、Git基準版・保護対象外変更10件、TASK境界3件、Git対象選択・影響候補4件、Git基準版error・Git不在3件、Context非成功6件、Context Digest 6件、expand反復2件、stale・expand・閉包上限・提示上限・implement coverage 6件、verify実行・事前block 6件、verify binding共有3件、verify process終了3件、verify出力抜粋2件、文書単位binding 1件、done TASK起点1件、report非作成4件、引数不正15件、report作成・保存失敗・JSON併用6件、text出力・制御文字・診断順序4件、BOM・Frontmatter 11件、寸法上限・未知entry 7件、registry閉包7件、Scanner・位置16件、既定表示・revision 8件、理由付きSHOULD・full projection・Digest version 3件、escape・normative projection 2件、quoted extension 1件、code span 1件、Frontmatter境界24件、Core副作用6件、verify argv・実行環境・出力変換15件、明示起点の不在・ADR起点8件、共通target展開・advisory提示8件、Digest材料の順序・reverse solidus 3件、実行環境・配布物5件は入力・期待JSON・副作用期待値を作成し、隔離setupの2回一致を検証した。matrix §6.5「contextとDigest」と§6.6「verify」は全32件を完了した。§6.8「上限」6件、§6.9「Diagnostic registry閉包」19件、§6.11「公開結果Schemaと既定表示」11件と§6.12「共通target展開」を含め、単一workspaceの§6は全250件を完了した。
 単一workspaceのgolden Canonical JSONとContext Digestは`SINGLE-042`が所有し、独立に記述した2系統のreference計算がbyte一致することを検証した。
-複合workspaceの§7は`MULTI-*`全60件を作成し、matrixの310件はすべて入力・期待JSON・副作用期待値を持つ。
+複合workspaceの§7は当初の`MULTI-*`全60件を作成し、matrixの310件はすべて入力・期待JSON・副作用期待値を持つ。
+その後に単一workspace 8件と複合workspace 2件を追加し、2026-09-27時点では単一258件、複合62件の全320件である。
 複合workspaceのgolden Canonical JSONとContext Digestは`MULTI-002-01`が所有し、単一workspaceと同じく独立した2系統のreference計算でbyte一致することを検証した。
 上限境界の24件（`MULTI-020-*`、`MULTI-021-*`）は[ADR-048](../02.設計書/10_決定記録/ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md)に従いdataset manifestから入力を生成し、実寸の照合は`uv run fixtures/validate_scale.py`で行う。
 2026-09-18にはcommit済みのrepositoryを`git clone`した写しで統合検証とscale検証を実行し、作業treeと同じ結果になることを[適合fixture検証記録](../../fixtures/conformance/適合fixture検証記録.md)へ記録した。
@@ -231,8 +233,10 @@ Core自身の`.spec/`は、REQを`approved`にした複製で`verify`が通過�
 複製しない。`doctor --all-workspaces`はglobal検査を最上位へ1回だけ置き、rootと全memberのworkspace固有検査を
 処理順に返し、1 memberの非成功後も独立memberを継続して全体statusへ集約する。
 
-状態は`In progress`、Step 5のGate Bは`Pending`である。`MULTI-026-01`〜`02`を追加したため、
-Core追従後にStep 1〜5を判定し直す。以前の認定履歴は次のとおりである。規範文と食い違っていたfixtureを管理者の承認を得て訂正し、
+状態は`Complete`、Step 5のGate Bは`Passed`である。2026-09-27に`MULTI-026-01`〜`02`を追加し、
+commit `74ff1c8`でGate Aを再認定した。Core追従後のcommit `1b64033`でStep 1〜5を判定し直し、
+320件と`parserChecks`4件がすべて通過した。認定値は[適合fixture検証記録](../../fixtures/conformance/適合fixture検証記録.md)と
+[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録した。以前の認定履歴は次のとおりである。規範文と食い違っていたfixtureを管理者の承認を得て訂正し、
 2026-09-25にcommit `12ec48e`へ`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行して、Step 1〜5の
 完了条件の310件と`parserChecks`4件がすべて通過した。結果は[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録した。
 2026-09-26に規範文の明記とfixtureの追加・訂正に合わせてStep 1〜5を判定し直し、commit `ac48fa0`で318件が通過した。
