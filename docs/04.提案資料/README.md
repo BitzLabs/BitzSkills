@@ -44,6 +44,7 @@
 | [25_Core-1.0実装前最終reviewと修正提案.md](25_Core-1.0実装前最終reviewと修正提案.md) | 02.設計書、03.詳細設計の実装前最終点検 | **Accepted / Reflected**（Step 0B完了、Gate A `Allowed`） |
 | [26_context-Markdown提示仕様案.md](26_context-Markdown提示仕様案.md) | contextの既定Markdown提示 | **Accepted / Reflected**（P0 3件・P1 4件を裁定し§9と`SINGLE-104-01`へ反映済み） |
 | [27_適合harness外部仕様の検討.md](27_適合harness外部仕様の検討.md) | 適合harnessの検査対象・実行環境・runner | **Accepted / Reflected**（4件を裁定しADR-046と正本へ反映済み） |
+| [28_日本語表記の立て直し計画.md](28_日本語表記の立て直し計画.md) | 文書の日本語表記と用語集（ユビキタス言語一覧） | **Active**（フェーズ1とパイロットを実施。訳語は[用語集](../用語集.md) §13で決定済み） |
 
 ## 3. 検討結果の要約
 
