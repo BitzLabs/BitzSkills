@@ -555,7 +555,7 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 | Step 4 | `Complete` | `verify`操作、test processの実行とtimeout、出力のredaction、実行file解決のdoctorとの共通化を実装済み |
 | Step 5 | `Complete` | 複合workspaceの事前検査、横断解決、check・context・verify、`bitz.compat`を実装済み |
 | Gate B | Step 1〜5 `Passed` | 各StepのCore実装を固定済みfixtureへ通して判定。認定結果は[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録 |
-| Gate C | `Pending` | 全適合、性能、決定性、副作用、process、自己適用をまとめて判定 |
+| Gate C | `Pending`（Phase 1基盤を実装） | 下限／基準の2環境証拠をfresh checkoutから採取・集約する。性能baseline、通常Markdown比較、P0/P1閉包が残る |
 
 2026-09-17の単一fixture作成で、role割当、interpretのdraft refinement、statement起点の提示、verifyの起点TASKの
 `requires`を裁定し、関係・トレースモデル §6.1・§6.4・§7、context仕様 §4・§5、matrix `SINGLE-106-03`・`110`行へ
