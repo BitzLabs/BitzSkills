@@ -225,12 +225,14 @@ Core自身の`.spec/`は、REQを`approved`にした複製で`verify`が通過�
 - 単一／複合workspaceのdual-read consumer、原子的rollback、部分rollback拒否
 
 完了条件は、同名ローカルIDを持つmember、横断refinement、所有境界違反を決定論的に区別し、
-`check --all-workspaces`と`verify --all-workspaces`が基準性能を満たし、`MULTI-001`〜`025`が通過することである。
+`check --all-workspaces`と`verify --all-workspaces`が基準性能を満たし、`MULTI-001`〜`026`が通過することである。
 `MULTI-002-01`のCanonical JSONとDigestが複合workspaceのgolden値にbyte一致し、2回実行でも変化しないことを含む。
 別member所有bindingを1回だけ実行し、request targetとowner memberのstatusへ反映してもcommand実体とdurationを
-複製しない。
+複製しない。`doctor --all-workspaces`はglobal検査を最上位へ1回だけ置き、rootと全memberのworkspace固有検査を
+処理順に返し、1 memberの非成功後も独立memberを継続して全体statusへ集約する。
 
-状態は`Complete`、Step 5のGate Bは`Passed`である。規範文と食い違っていたfixtureを管理者の承認を得て訂正し、
+状態は`In progress`、Step 5のGate Bは`Pending`である。`MULTI-026-01`〜`02`を追加したため、
+Core追従後にStep 1〜5を判定し直す。以前の認定履歴は次のとおりである。規範文と食い違っていたfixtureを管理者の承認を得て訂正し、
 2026-09-25にcommit `12ec48e`へ`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行して、Step 1〜5の
 完了条件の310件と`parserChecks`4件がすべて通過した。結果は[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録した。
 2026-09-26に規範文の明記とfixtureの追加・訂正に合わせてStep 1〜5を判定し直し、commit `ac48fa0`で318件が通過した。

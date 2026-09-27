@@ -714,6 +714,8 @@ verifyのCore副作用fixtureはfileを書かない固定test commandを使い�
 | `MULTI-024-03` | 部分rollback | migration test | rejected／1 | 部分rollbackを拒否 |
 | `MULTI-025-01` | 存在workspaceの不在修飾target | check | failed／1 | `CTX-ROOT-MISSING-001`、未知`--workspace`と区別 |
 | `MULTI-025-02` | 存在workspaceの不在修飾target | verify | failed／1 | target Diagnosticに`CTX-ROOT-MISSING-001` |
+| `MULTI-026-01` | catalog事前検査を通過するrootと2 member | doctor all | passed／0 | root先頭・member ID順、global／member checkを分離 |
+| `MULTI-026-02` | 1 memberのcommand不在 | doctor all | blocked／2 | 後続memberを継続、member Diagnosticと全体statusを集約、text件数 |
 
 `MULTI-012`ではinvalid文書のowner memberを`failed`、それを必要とするtargetを
 `SPEC-MULTI-DEPENDENCY-001`／`blocked`、独立targetを通過とし、最上位は最悪値の`failed`に固定する。

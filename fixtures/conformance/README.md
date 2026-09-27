@@ -48,6 +48,8 @@ Git不在の4つの停止を切り分ける。
 memberの非成功の独立性、member pathの移動とID変更・削除を扱う。
 [複合workspace全体のverify](multi/複合workspace全体のverify-review.md)は、派生遮断、共有binding、失敗後の継続、
 member単位と全体の対象0件を扱う。
+[複合workspace全体のdoctor](multi/複合workspace全体のdoctor-review.md)は、rootと全memberの診断順、
+global／member checkの分離、member非成功後の継続、statusとtext件数の集約を扱う。
 [reportと結果外形の移行](multi/reportと結果外形の移行review.md)は、既定と明示`--report`の対、dual-read consumerの
 排他的外形、複合workspace化と完全・部分rollbackを扱う。
 [resource上限の境界](multi/resource上限の境界review.md)は、8 dimensionの`limit - 1`、`limit`、`limit + 1`を

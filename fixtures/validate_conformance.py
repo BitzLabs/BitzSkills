@@ -60,6 +60,7 @@ from conformance.environment_fixtures import validate as validate_environment_fi
 from conformance.multi_digest_fixtures import validate as validate_multi_digest_fixtures
 from conformance.multi_identity_fixtures import validate as validate_multi_identity_fixtures
 from conformance.multi_catalog_fixtures import validate as validate_multi_catalog_fixtures
+from conformance.multi_doctor_fixtures import validate as validate_multi_doctor_fixtures
 from conformance.multi_ownership_fixtures import validate as validate_multi_ownership_fixtures
 from conformance.multi_member_fixtures import validate as validate_multi_member_fixtures
 from conformance.multi_verify_fixtures import validate as validate_multi_verify_fixtures
@@ -330,6 +331,7 @@ def main():
     checks["multi_digest_fixtures"] = validate_multi_digest_fixtures()
     checks["multi_identity_fixtures"] = validate_multi_identity_fixtures()
     checks["multi_catalog_fixtures"] = validate_multi_catalog_fixtures()
+    checks["multi_doctor_fixtures"] = validate_multi_doctor_fixtures()
     checks["multi_ownership_fixtures"] = validate_multi_ownership_fixtures()
     checks["multi_member_fixtures"] = validate_multi_member_fixtures()
     checks["multi_verify_fixtures"] = validate_multi_verify_fixtures()

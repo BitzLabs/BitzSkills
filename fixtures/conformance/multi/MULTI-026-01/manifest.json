@@ -1,0 +1,1 @@
+{"fixtureId":"MULTI-026-01","description":"rootと全memberを順序どおりdoctor診断する","setup":{"git":true,"baseCommit":{"message":"base","paths":["."]},"operations":[]},"invocation":{"runner":"bitz","cwd":"apps/web","argv":["doctor","--all-workspaces","--format","json"],"env":{}},"expect":{"status":"passed","exitCode":0,"stdout":"json","resultFile":"expected/doctor.json","reportFileCount":0}}
