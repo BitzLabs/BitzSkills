@@ -2,8 +2,8 @@
 
 ## 1. 目的
 
-対象SPECのContextを再解決し、対象`MUST`にtest対応があることを確認して、`bitz.yaml`に定義されたcommandを
-実行する。LLMを使わず、要求、test、実行結果を対応付ける。
+検証対象（target）のコンテキストを再解決し、対象の`MUST`にテスト対応があることを確認して、`bitz.yaml`に定義した
+コマンドを実行する。LLMを使わず、要求、テスト、実行結果を対応付ける。
 
 ## 2. 公開操作
 
@@ -19,138 +19,147 @@ bitz verify --all-workspaces
   [--report]
 ```
 
-共通argv解析、重複option、空値、target不存在は
+引数列の共通の解析、オプションの重複、空の値、対象の不在は
 [Core実行環境・CLI基盤契約 §5・§6](../00_共通契約/06_Core実行環境・CLI基盤契約.md#5-cliの引数列の共通の解析)に従う。
-明示対象はREQ ID、TECH ID、statement ID、TASK ID、REQ/TECH/TASK Markdown pathとする。pathはFrontmatter IDへ
-正規化する。複合workspaceではactive／`--workspace`で選択したworkspaceの非修飾IDとpath、または修飾IDを受け付け、
-1回の単独操作の対象workspaceを1つに限定する。code/test path、directory、ADR、異なるworkspaceを所有する
-対象の混在は引数不正で終了コード4とする。
+明示対象は、REQ ID、TECH ID、規範文ID、TASK ID、またはREQ、TECH、TASKのMarkdownのパスとする。パスはフロントマターの
+IDへ正規化する。複合ワークスペースでは、作業ワークスペースまたは`--workspace`で選択したワークスペースの非修飾IDと
+パス、または修飾IDを受け付け、1回の単独操作の対象ワークスペースを1つに限定する。コード・テストのパス、ディレクトリ、
+ADR、または異なるワークスペースが所有する検証対象が混在する場合は、引数不正として終了コード4とする。
 
-`--all-workspaces`は同じGit rootとroot workspaceを探索起点から一意に発見できる場合だけ許可し、current directoryの
-root一致は要求しない。明示対象と`--workspace`に排他的である。各workspaceへ引数なし
-verifyを適用し、結果を集約する。
+`--all-workspaces`は、同じGitのリポジトリのルートとルートワークスペースを、探索の開始位置から一意に発見できる
+場合だけ許可し、現在のディレクトリとルートの一致を要求しない。`--all-workspaces`は、明示対象とも`--workspace`とも
+排他的である。各ワークスペースへ引数なしの`verify`を適用し、結果を集約する。
 
-`--format`の既定値は`text`である。`--timeout`は共通argv契約の1〜3,600秒だけを受理する。明示対象は
+`--format`の既定値は`text`である。`--timeout`は共通の引数列契約の1〜3,600秒だけを受理する。明示対象は
 `scope: selected`、引数なしは`scope: all`、
 `--all-workspaces`は`scope: all-workspaces`とする。
 
-## 3. 対象
+## 3. 検証対象
 
-対象集合は[関係・トレースモデル §6.4](../02_SPECモデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)の
-`TargetExpansion(root, verify)`だけから得る。REQ／規範文ありTECHは所有statementとapplicable refinement、
-statement起点は指定句とapplicable refinement、TASKは自身の`addresses`先とapplicable refinementを対象にする。
-`requires`先はContext材料であり、そのstatementまたはTASKの`addresses`先をtest義務へ追加しない。
-規範文なしTECHはstatement集合を空にして文書単位`tests`を使う。done TASKは再検証でき、cancelled TASKは
-`CTX-STATE-001`／blockedとする。
+検証対象の集合は、[関係・トレースモデル §6.4](../02_SPECモデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)の
+`TargetExpansion(root, verify)`だけから得る。REQまたは規範文のあるTECHは所有する規範文と具体化文書、
+規範文起点は指定した規範文と具体化文書、TASKは自身の`addresses`先と具体化文書を対象にする。
+`requires`先はコンテキストの材料であり、その規範文またはTASKの`addresses`先をテストの義務へ追加しない。
+規範文のないTECHは規範文の集合を空にし、文書単位の`tests`を使う。状態`done`のTASKは再検証でき、状態`cancelled`の
+TASKは診断`CTX-STATE-001`（`blocked`）とする。
 
-複数対象はIDへ正規化し、target IDを重複排除して辞書順に並べる。各targetは別々の`purpose=verify` Contextを持つ。
-statement集合はtargetごとに重複排除し、command bindingの実行計画だけを全targetで統合する。
-構文上妥当な明示targetがcatalogに存在しない場合は`CTX-ROOT-MISSING-001`／failedを当該targetへ返す。
-構文不正または許可されないADR、code/test path、directoryは引数不正として終了コード4にする。
+複数の検証対象はIDへ正規化し、検証対象のIDを重複排除して辞書順に並べる。検証対象ごとに別々の目的`verify`の
+コンテキストを持つ。規範文の集合は検証対象ごとに重複排除し、テスト割当て（binding）の実行計画だけを全検証対象で統合する。
+構文上妥当な明示した検証対象がカタログに存在しない場合は、診断`CTX-ROOT-MISSING-001`（`failed`）を当該検証対象へ
+返す。構文が不正、または許可されないADR、コード・テストのパス、ディレクトリを指定した場合は、引数不正として
+終了コード4にする。
 
 ## 4. 処理
 
-1. 正規化したtargetごとに`purpose=verify` Contextを完全解決する。
-2. 各targetの起点と強い依存の適用可能性、先行TASKのdoneを確認する。
-3. target statementを確定し、全`MUST`へ1件以上のtest対応を要求する。
-4. Contextとcoverageが通過statusのtargetについてtest pathとcommand名を解決し、`bindingRefs[]`を作る。
-5. 全通過targetの`bindingRefs`を和集合にし、同じ`(workspaceId, commandName)`に属するtest pathを
-   所有workspace相対pathで重複排除して辞書順に並べる。
-6. workspace処理順、command名辞書順でbindingを逐次実行する。
-7. command結果を参照targetへ反映し、target、workspace、操作全体のstatusを集約する。
-8. targetごとのContext Digest、対象句、binding参照と、実行ごとのtimeout、終了理由、終了コード、所要時間を記録する。
+1. 正規化した検証対象ごとに、目的`verify`のコンテキストを完全解決する。
+2. 各検証対象の起点と、強い関係の参照先の適用可能性、先行するTASKが状態`done`であることを確認する。
+3. 対象規範文を確定し、全`MUST`へ1件以上のテスト対応を要求する。
+4. コンテキストとカバレッジが通過状態の検証対象について、テストのパスとコマンド名を解決し、`bindingRefs[]`を作る。
+5. 通過したすべての検証対象の`bindingRefs`を和集合にし、同じ`(workspaceId, commandName)`に属するテストのパスを
+   所有ワークスペース（owner workspace）相対のパスで重複排除して辞書順に並べる。
+6. ワークスペースの処理順、コマンド名の辞書順でテスト割当てを逐次実行する。
+7. コマンドの結果を参照する検証対象へ反映し、検証対象、ワークスペース、操作全体の状態を集約する。
+8. 検証対象ごとのコンテキストのハッシュ値、対象規範文、テスト割当ての参照と、実行ごとのタイムアウト、終了理由、
+   終了コード、所要時間を記録する。
 
-異なるcommand名はargv/cwdが同じでも別bindingとして実行する。同じworkspaceの同じcommand名は1回だけ実行する。
-workspaceが異なればcommand名と内容が同じでも別bindingとする。
+コマンド名が異なれば、引数列と作業ディレクトリが同じでも別のテスト割当てとして実行する。同じワークスペースの
+同じコマンド名は1回だけ実行する。ワークスペースが異なれば、コマンド名と内容が同じでも別のテスト割当てとする。
 
-## 5. command実行
+## 5. コマンドの実行
 
-- `{tests}`がある場合、重複排除したpathを1回だけargvへ展開する。
-- `{tests}`がない場合、path数にかかわらずargvを1回実行する。
-- testを所有するworkspaceが設定した`cwd`で実行し、未指定はそのworkspace rootとする。
-- shellを介さない。
-- 1件がfailed/errorでも解決済みの独立bindingを継続する。
-- Core 1.0は並列実行とfail-fast optionを提供しない。
+- `{tests}`がある場合は、重複排除したパスを1回だけ引数列へ展開する。
+- `{tests}`がない場合は、パスの数にかかわらず引数列を1回実行する。
+- テストを所有するワークスペースが設定した`cwd`で実行し、指定がなければそのワークスペースのルートとする。
+- シェルを介さない。
+- 1件が`failed`または`error`でも、解決済みの独立したテスト割当てを継続する。
+- Core 1.0は並列実行と最初の失敗での停止のオプションを提供しない。
 
-argv templateと展開後argvの型・上限は[workspace・設定仕様 §6](../02_SPECモデル/01_workspace・設定仕様.md#6-command定義)に
-従う。公開結果の`argv`は実行fileを絶対pathへ置換せず、`{tests}`だけを展開した値を保持する。
+引数列テンプレートと展開した後の引数列の型・上限は
+[ワークスペース・設定仕様 §6](../02_SPECモデル/01_workspace・設定仕様.md#6-コマンドの定義)に従う。公開結果の`argv`は
+実行ファイルを絶対パスへ置換せず、`{tests}`だけを展開した値を保持する。
 
-### 5.1 実行fileと環境
+### 5.1 実行ファイルと環境
 
-binding所有workspaceの設定fileがGit利用可能時にindexで未追跡なら、`VERIFY-CONFIG-UNTRACKED`として起動を遮断する。
-Git不在の単一workspaceは現在設定を使う縮退契約に従い、複合workspaceは全体事前検査で遮断する。
-test pathが所有境界・存在検査を通過しても実効cwdの配下にない場合は、`VERIFY-TEST-OUTSIDE-CWD`として遮断する。
-いずれも`SPEC-VERIFY-BLOCKED-001`／error／blocked、`source.kind: file`とし、前者のsourceは設定file、
-後者のsourceは該当test対応を宣言したSPECとする。独立bindingは継続し、以下の事前検査blockedと同じ証跡規則を使う。
+テスト割当てを所有するワークスペースの設定ファイルが、Gitを利用できるときにインデックスで未追跡であれば、
+`VERIFY-CONFIG-UNTRACKED`として起動を遮断する。Git不在の単一ワークスペースは現在の設定を使う縮退の契約に従い、
+複合ワークスペースは全体事前検査で遮断する。テストのパスが所有境界・存在の検査を通過しても、実効`cwd`の配下に
+ない場合は、`VERIFY-TEST-OUTSIDE-CWD`として遮断する。いずれも診断`SPEC-VERIFY-BLOCKED-001`（重大度`error`、
+結果への効果`blocked`）、`source.kind: file`とし、前者の`source`は設定ファイル、
+後者の`source`は該当するテスト対応を宣言した仕様文書とする。独立したテスト割当ては継続し、後述する起動前検査の`blocked`と同じ証跡の規則を使う。
 
-`argv[0]`に`/`があれば、絶対pathはそのpath、相対pathは実効`cwd`を基準に解決する。`/`がなければ、実効環境の
-`PATH`を左から探索する。空または相対PATH要素は実効`cwd`を基準にし、platformの通常の実行可能file規則を適用する。
-doctorとverifyは同じ解決関数を使用する。通常fileでない、存在しない、または実行不能ならprocessを開始せず、
-`SPEC-VERIFY-BLOCKED-001`／blockedとする。
+`argv[0]`に`/`があれば、絶対パスはそのパス、相対パスは実効`cwd`を基準に解決する。`/`がなければ、実効環境の
+`PATH`を左から探索する。空または相対の`PATH`要素は実効`cwd`を基準にし、プラットフォームの通常の実行可能ファイルの
+規則を適用する。`doctor`と`verify`は同じ解決関数を使用する。通常のファイルでない、存在しない、または実行できない
+ならプロセスを開始せず、診断`SPEC-VERIFY-BLOCKED-001`（`blocked`）とする。
 
-test processの環境はCore起動時の環境をcopyし、`PATH`、`LANG`、`LC_*`を含め値を変更しない。`PWD`だけを実効`cwd`の
-絶対pathへ合わせる。`.env`、Frontmatter、本文から環境を追加せず、環境変数名と値を公開結果、report、Diagnosticへ
-出力しない。標準入力はnull deviceへ接続して即時EOF、標準出力と標準エラー出力は別pipeとしてspawn時から並行drainする。
-shell、端末、対話入力を使用しない。
+テストのプロセスの環境は、Core起動時の環境を複製し、`PATH`、`LANG`、`LC_*`を含め値を変更しない。`PWD`だけを実効
+`cwd`の絶対パスへ合わせる。`.env`、フロントマター、本文から環境を追加せず、環境変数の名前と値を公開結果、
+レポート、診断へ出力しない。標準入力はnullデバイスへ接続して直ちにEOFとし、標準出力と標準エラー出力は別々の
+パイプとしてプロセスの起動から並行して汲み出す。シェル、端末、対話入力を使用しない。
 
-### 5.2 timeoutと有限時間終了
+### 5.2 タイムアウトと有限時間での終了
 
-実効timeoutは1〜3,600秒の`min(CLI cap, 設定timeout)`で、CLI未指定時は設定値を使う。monotonic clockでspawn成功から
-測定する。processはplatformが許す場合に新しいprocess groupで起動し、次の状態機械を適用する。
+実効タイムアウト（effective timeout）は1〜3,600秒の`min(CLI cap, 設定timeout)`で、CLIの指定がなければ設定の値を使う。単調に増加する
+時計で、起動の成功からの経過を測定する。プロセスは、プラットフォームが許す場合に新しいプロセスグループで起動し、
+次の状態機械を適用する。
 
-1. timeout到達時に直接processとprocess groupへgraceful terminationを送る。
-2. 2秒後も直接processが生存していればforce killする。process groupと子孫へのforce killはplatformが許す範囲で行う。
-3. さらに2秒、標準出力／標準エラー出力をdrainしながら直接processの終了を待つ。
-4. EOFがなくてもCore側のread handleを閉じ、timeout到達から5秒以内にbinding結果を確定する。
+1. タイムアウトに到達したときに、直接のプロセスとプロセスグループへ終了の要求を送る。
+2. 2秒後も直接のプロセスが生存していれば強制終了する。プロセスグループと子孫への強制終了は、プラットフォームが
+   許す範囲で行う。
+3. さらに2秒、標準出力と標準エラー出力を汲み出しながら直接のプロセスの終了を待つ。
+4. EOFがなくてもCore側の読取り用のハンドルを閉じ、タイムアウトへの到達から5秒以内にテスト割当ての結果を確定する。
 
-直接processの停止を保証対象とし、子孫停止はbest effortとする。ただし子孫が標準出力／標準エラー出力のwrite handleを保持しても
-EOFを無期限に待たない。timeout処理開始後にsignal終了を観測しても`termination: timeout`、`exitCode: null`とする。
-timeoutしたbindingの後も計画済みの独立bindingを続行する。timeout前にsignal終了した場合は`termination: signal`とする。
+直接のプロセスの停止を保証の対象とし、子孫の停止は保証せず、可能な範囲で行う。ただし、子孫が標準出力または
+標準エラー出力の書込み用のハンドルを保持していても、EOFを無期限に待たない。タイムアウトの処理を始めた後に
+シグナルによる終了を観測しても、`termination: timeout`、`exitCode: null`とする。タイムアウトしたテスト割当ての
+後も、計画済みの独立したテスト割当てを継続する。タイムアウトの前にシグナルによる終了があった場合は
+`termination: signal`とする。
 
-標準出力/stderrは通常終了時のEOF、またはtimeout状態機械によるread handle閉鎖までdrainし、各末尾64 KiBをredactionした
-公開抜粋として保持する。Coreは出力自然言語を合否へ使わない。
+標準出力と標準エラー出力は、通常終了時のEOF、またはタイムアウトの状態機械による読取り用のハンドルの閉鎖までを汲み出し、
+末尾それぞれ64 KiBを伏せ字化した公開の抜粋として保持する。Coreは、出力の自然言語を合否には使わない。
 
-## 6. command結果
+## 6. コマンドの結果
 
-| termination | 条件 | status |
+| 終了種別 | 条件 | 状態 |
 |---|---|---|
-| `exit`、code 0 | 通常成功 | passed |
-| `exit`、code非0 | test不合格 | failed |
-| `spawn_error` | 事前検査後のprocess生成呼出し失敗 | error |
-| `signal` | signal終了 | error |
-| `timeout` | timeout | error |
+| `exit`、コード0 | 通常の成功 | `passed` |
+| `exit`、コード非0 | テストの失敗 | `failed` |
+| `spawn_error` | 起動前検査の後のプロセスの生成呼出しの失敗 | `error` |
+| `signal` | シグナルによる終了 | `error` |
+| `timeout` | タイムアウト | `error` |
 
-coverage、command、環境不足はtestを開始せずblockedとする。
+カバレッジ、コマンド、環境の不足は、テストを開始せずに`blocked`とする。
 
-「環境不足」は、spawn前に検出した実行file／cwdの不在・実行不能と、展開後argv上限超過を指す。これらは
-`commands[]`へ実行結果を作らず、影響targetの`bindingRefs`を空にする。`spawn_error`は、この事前検査を通過した後に
-OSのprocess生成を呼び出し、race、resource不足、またはOS errorで失敗した場合だけとする。この場合はcommand結果を
-`termination: spawn_error`、`exitCode: null`、空抜粋、両truncated flag falseで記録する。
+「環境の不足」は、起動前に検出した実行ファイルまたは`cwd`の不在・実行不能と、展開した後の引数列の上限超過を指す。
+これらは`commands[]`へ実行結果を作らず、影響を受ける検証対象の`bindingRefs`を空にする。`spawn_error`は、この
+起動前検査を通過した後にOSのプロセス生成を呼び出し、競合状態、リソースの不足、またはOSのエラーで失敗した場合
+だけとする。この場合はコマンドの結果を、`termination: spawn_error`、`exitCode: null`、空の抜粋、
+`stdoutTruncated`と`stderrTruncated`をともに`false`として記録する。
 
-spawn前に遮断したDiagnosticの置き場所は、[Diagnostic registry](../00_共通契約/05_Diagnostic-registry.md)の
-continuationで分ける。
+起動前に遮断した診断の置き場所は、[診断レジストリ](../00_共通契約/05_Diagnostic-registry.md)の継続単位で分ける。
 
-- `skip-target`（`VERIFY-BINDING-MISSING`など、testまたはcommand定義そのものが不足しbindingを構成できない
-  条件）は、当該targetの`diagnostics`へ置く。
+- `skip-target`（`VERIFY-BINDING-MISSING`など、テストまたはコマンドの定義そのものが不足し、テスト割当てを
+  構成できない条件）は、当該検証対象の`diagnostics`へ置く。
 - `skip-binding`（`VERIFY-ARGV-EXPANDED-LIMIT`、`VERIFY-CWD-UNAVAILABLE`、`VERIFY-EXECUTABLE-UNAVAILABLE`、
-  `VERIFY-CONFIG-UNTRACKED`、`VERIFY-TEST-OUTSIDE-CWD`など、bindingを構成できるがspawn前に当該binding単位で
-  遮断する条件）は、単一workspaceでは最上位、複合workspaceではbinding所有workspaceへ1件だけ置き、
-  共有targetごとに複製しない。
+  `VERIFY-CONFIG-UNTRACKED`、`VERIFY-TEST-OUTSIDE-CWD`など、テスト割当ては構成できるが起動前に当該テスト割当て
+  の単位で遮断する条件）は、単一ワークスペースでは最上位、複合ワークスペースでは
+  テスト割当てを所有するワークスペースへ1件だけ置き、共有する検証対象ごとに複製しない。
 
-いずれの場合も影響targetはDiagnosticを複製せずstatusを`blocked`、`bindingRefs: []`とする。
-spawn後のcommand結果は通常どおり1件を`commands[]`へ置き、参照targetはその`bindingId`を保持して結果statusを集約する。
+いずれの場合も、影響を受ける検証対象は診断を複製せず、状態を`blocked`、`bindingRefs: []`とする。
+起動後のコマンドの結果は、通常どおり1件を`commands[]`へ置き、参照する検証対象はその`bindingId`を保持して結果の
+状態を集約する。
 
-## 7. 引数なし実行
+## 7. 引数なしの実行
 
 次を対象にする。
 
-- approved REQ
-- approved TECHのうち、statementを持つもの
-- approved TECHのうち、statementを持たず`tests`を宣言するもの
+- `approved`のREQ
+- `approved`のTECHのうち、規範文を持つもの
+- `approved`のTECHのうち、規範文を持たず`tests`を宣言するもの
 
-対象ごとにContextを解決し、未tested MUSTを持つ対象は`contextDigest`を保持したままblocked、`bindingRefs: []`として
-独立対象を継続する。同じcommand名のtest pathは通過target全体でまとめ、1回実行する。対象0件は
-`SPEC-VERIFY-BLOCKED-002`／blockedとし、空CIを成功にしない。
+対象ごとにコンテキストを解決し、未テストの`MUST`を持つ対象は、`contextDigest`を保持したまま`blocked`、
+`bindingRefs: []`として、独立した対象を継続する。同じコマンド名のテストのパスは、通過したすべての検証対象で
+まとめて1回実行する。対象が0件の場合は、診断`SPEC-VERIFY-BLOCKED-002`（`blocked`）とし、空のCIを成功にしない。
 
 ## 8. 結果
 
@@ -197,79 +206,85 @@ spawn後のcommand結果は通常どおり1件を`commands[]`へ置き、参照t
 }
 ```
 
-`targetResults[]`はtarget、Context、statement、binding、結果を結ぶ検証証跡の正本であり、target ID辞書順とする。
-最上位に`targets`、`contextDigest`、`statements`を重複して持たない。
+`targetResults[]`は、検証対象、コンテキスト、規範文、テスト割当て、結果を結び付ける検証証跡（verification evidence）の正本であり、検証対象のID辞書順とする。最上位に`targets`、`contextDigest`、`statements`を重複して
+持たない。
 
-| `targetResults[]` field | 型 | 必須 | 意味 |
+| `targetResults[]`のフィールド | 型 | 必須 | 内容 |
 |---|---|:--:|---|
-| `target` | string | Yes | 正規target ID。複合workspaceでは修飾形式 |
-| `status` | enum | Yes | Context、coverage、全`bindingRefs`の最悪status |
-| `contextDigest` | string/null | Yes | 完全ContextのDigest。Contextを構成できない場合だけnull |
-| `statements` | string[] | Yes | targetが検証する規範文。重複なし辞書順 |
-| `bindingRefs` | string[] | Yes | 必要なbinding ID。重複なし辞書順 |
-| `diagnostics` | array | Yes | target固有Diagnostic |
+| `target` | 文字列 | ○ | 検証対象の正規ID。複合ワークスペースでは修飾ID |
+| `status` | 列挙値 | ○ | コンテキスト、カバレッジ、すべての`bindingRefs`の最悪の状態 |
+| `contextDigest` | 文字列または`null` | ○ | 完全解決したコンテキストのハッシュ値。コンテキストを構成できない場合だけ`null` |
+| `statements` | 文字列の配列 | ○ | 検証対象が検証する規範文。重複なし辞書順 |
+| `bindingRefs` | 文字列の配列 | ○ | 必要なテスト割当てのID。重複なし辞書順 |
+| `diagnostics` | 配列 | ○ | 検証対象に固有の診断 |
 
-規範文なしTECHは`statements: []`でも文書単位testの`bindingRefs`を持てる。Context解決またはcoverageが
-非成功のtargetだけが要求するbindingは実行せず、実行計画作成前に非成功となったtargetは`bindingRefs: []`とする。
-別の通過targetも同じbindingを要求する場合は1回実行し、その結果を通過targetへだけ反映する。
+規範文のないTECHは`statements: []`でも文書単位のテストの`bindingRefs`を持てる。コンテキストの解決または
+カバレッジが非成功の検証対象だけが要求するテスト割当ては実行せず、実行計画の作成前に非成功となった検証対象は
+`bindingRefs: []`とする。別の通過した検証対象も同じテスト割当てを要求する場合は1回実行し、その結果を通過した
+検証対象へだけ反映する。
 
-`commands[]`はcommand名単位の実行実体である。単一workspaceを含め、`workspaceId`と
-`bindingId: <workspace-id>::<command-name>`を必須とする。`argv`は展開後、`tests`はworkspace相対宣言path、`cwd`は
-workspace root相対で未指定時`.`とする。通常終了以外は`exitCode: null`とする。複合workspace内では対象、句、`covers`のIDを
-修飾形式で返す。
+`commands[]`は、コマンド名単位の実行の実体である。単一ワークスペースを含め、`workspaceId`と
+`bindingId: <workspace-id>::<command-name>`を必須とする。`argv`は展開した後の値、`tests`はワークスペース相対の
+宣言パス、`cwd`はワークスペースのルート相対とし、指定がなければ`.`とする。通常終了以外は`exitCode: null`とする。
+複合ワークスペースの中では、検証対象、規範文、`covers`のIDを修飾IDで返す。
 
-全commandは`stdoutExcerpt`、`stderrExcerpt`、`stdoutTruncated`、`stderrTruncated`を必須とする。抜粋は
-[安全な入出力 §9](../00_共通契約/02_安全な入出力・互換性.md#9-プロセスの出力)でredactionした末尾64 KiB以下の文字列で、
-出力なしは空文字列とする。対応する元streamが64 KiBを超えた場合だけ`*Truncated: true`とする。
+すべての`commands`は`stdoutExcerpt`、`stderrExcerpt`、`stdoutTruncated`、`stderrTruncated`を必須とする。抜粋は
+[安全な入出力 §9](../00_共通契約/02_安全な入出力・互換性.md#9-プロセスの出力)で伏せ字化した末尾64 KiB以下の
+文字列で、出力なしは空文字列とする。対応する元のストリームが64 KiBを超えた場合だけ`*Truncated: true`とする。
 
-1つのtargetが`verified`であるのは、target statusが通過status、`contextDigest`が非null、対象となる全`MUST`に
-test対応があり、全`bindingRefs`がちょうど1件のpassed commandを参照する場合である。`verified`は特定Context Digest、
-code、test、環境に対する実行時述語で、Frontmatter状態ではない。Context Digestが変われば以前の成功を現在の根拠にしない。
+1つの検証対象が検証済み（`verified`）であるのは、検証対象の状態が通過状態、`contextDigest`が非`null`、対象と
+なるすべての`MUST`にテスト対応があり、すべての`bindingRefs`がちょうど1件の`passed`のコマンドを参照する場合で
+ある。`verified`は特定のコンテキストのハッシュ値、コード、テスト、環境に対する実行時の述語で、フロントマターの
+状態ではない。コンテキストのハッシュ値が変われば、以前の成功を現在の根拠にしない。
 
-## 9. Diagnostic
+## 9. 診断
 
-| code | result | 条件 |
+| 診断コード | 結果 | 条件 |
 |---|---|---|
-| `SPEC-VERIFY-BLOCKED-001` | blocked | test／command不足、未追跡設定、cwd配下外test、展開argv上限、cwdまたは実行file不足 |
-| `SPEC-VERIFY-BLOCKED-002` | blocked／passed_with_warnings | 単一・複合workspace全体の対象0件／複合workspaceのmember単位の対象0件 |
-| `SPEC-VERIFY-COMMAND-001` | error | 事前検査後のprocess生成失敗またはsignal |
-| `SPEC-VERIFY-TIMEOUT-001` | error | timeout |
-| `CTX-COVERAGE-TEST-001` | blocked／passed_with_warnings | 対象MUSTが未tested／対象SHOULDが未tested |
-| `SPEC-MULTI-DEPENDENCY-001` | blocked | 別unitの非成功によりtarget Contextまたはbindingを構成不能 |
+| `SPEC-VERIFY-BLOCKED-001` | `blocked` | テストまたはコマンドの不足、未追跡の設定、`cwd`の配下外のテスト、展開した引数列の上限、`cwd`または実行ファイルの不足 |
+| `SPEC-VERIFY-BLOCKED-002` | `blocked`／`passed_with_warnings` | 単一・複合ワークスペース全体の対象0件／複合ワークスペースのメンバー単位の対象0件 |
+| `SPEC-VERIFY-COMMAND-001` | `error` | 起動前検査の後のプロセス生成の失敗またはシグナル |
+| `SPEC-VERIFY-TIMEOUT-001` | `error` | タイムアウト |
+| `CTX-COVERAGE-TEST-001` | `blocked`／`passed_with_warnings` | 対象の`MUST`が未テスト／対象の`SHOULD`が未テスト |
+| `SPEC-MULTI-DEPENDENCY-001` | `blocked` | 別の単位の非成功により検証対象のコンテキストまたはテスト割当てを構成不能 |
 
-report生成、秘密情報、result集約は共通契約に従う。
+レポートの生成、秘密情報、結果の集約は共通契約に従う。
 
-本表は検索用索引である。`verify`はtargetごとに`purpose=verify` Contextを
+本表は検索用の索引である。`verify`は検証対象ごとに目的`verify`のコンテキストを
 完全解決するため、これに加えて`CTX-ROOT-MISSING-001`、`CTX-CYCLE-001`、`CTX-RELATION-TYPE-001`、
 `SPEC-RELATION-MISSING-001`、`CTX-STATE-SUPERSEDED-001`、`CTX-STATE-SUPERSEDED-002`、`CTX-LIMIT-001`、
-`CTX-TASK-DEPENDENCY-001`をtargetの`diagnostics`へ返し得る。これらのtargetは`bindingRefs: []`とし、
-Contextを構成できない場合は`contextDigest: null`とする。全条件のcode、severity、status、source、継続単位、
-primary優先順位は[Diagnostic registry](../00_共通契約/05_Diagnostic-registry.md)が所有する。
+`CTX-TASK-DEPENDENCY-001`を検証対象の`diagnostics`へ返し得る。これらの検証対象は`bindingRefs: []`とし、
+コンテキストを構成できない場合は`contextDigest: null`とする。全条件の診断コード、重大度、結果への効果、発生元、
+継続単位、主診断の優先順位は[診断レジストリ](../00_共通契約/05_Diagnostic-registry.md)が所有する。
 
-## 10. 全体実行
+## 10. 全体操作での検証
 
-`verify --all-workspaces`はroot workspaceを先頭、その後をworkspace ID辞書順に処理する。実行済みbinding集合は
-複合workspace全体で1つ保持し、横断refinementが参照する同じ`(workspaceId, commandName)`を二重実行しない。事前検査通過後は
-workspace全体ではなくtargetのstrong relation閉包とbindingを継続単位とし、失敗したworkspaceがあっても、
-依存しない後続targetの解決とbindingを継続する。
+`verify --all-workspaces`はルートワークスペースを先頭、その後をワークスペースIDの辞書順に処理する。実行済みの
+テスト割当ての集合は複合ワークスペース全体で1つ保持し、ワークスペースを横断する具体化文書が参照する同じ
+`(workspaceId, commandName)`を二重実行しない。全体事前検査を通過した後は、ワークスペース全体ではなく検証対象の強い関係の閉包
+とテスト割当てを継続単位とし、失敗したワークスペースがあっても、依存しない後続の検証対象の解決とテスト割当てを
+継続する。
 
-全workspaceのtarget Contextを先に解決し、通過targetのbinding和集合をworkspace処理順、command名辞書順で実行する。
-command実体は所有workspaceのmember結果の`commands[]`へ1回だけ置く。各member結果は`targetResults[]`を持ち、
-各targetの`bindingRefs[]`から別memberが所有する実行結果も参照できる。member statusは全target status、所有する
-command実体、member Diagnosticの最悪値とする。これにより横断testの失敗を依頼側targetと実行所有側memberの
-どちらからも隠さず、command結果自体と所要時間は複製しない。
+すべてのワークスペースの検証対象のコンテキストを先に解決し、通過した検証対象のテスト割当ての和集合を
+ワークスペースの処理順、コマンド名の辞書順で実行する。コマンドの実体は所有ワークスペースのメンバーの結果の
+`commands[]`へ1回だけ置く。各メンバーの結果は`targetResults[]`を持ち、各検証対象の`bindingRefs[]`から別の
+メンバーが所有する実行結果も参照できる。メンバーの状態は、すべての検証対象の状態、所有するコマンドの実体、
+メンバーの診断の最悪値とする。これによりワークスペースを横断するテストの失敗を依頼側の検証対象と実行を所有する側のメンバーの
+どちらからも隠さず、コマンドの結果自体と所要時間は複製しない。
 
-非成功文書をstrong閉包に必要とするtargetは完全Contextを作らず、別unitの根本原因だけで実行不能なら
-`SPEC-MULTI-DEPENDENCY-001`／blocked、`contextDigest: null`、`bindingRefs: []`とする。既にmissing、type、state、
-coverageなど具体的Diagnosticがあるtargetへ同codeを重ねない。1つのcommandがfailed／errorでも、計画済みの後続bindingを
-owner workspace順、command名順に実行し、参照しないtargetへ結果を波及させない。
+非成功の文書を強い関係の閉包に必要とする検証対象は完全解決したコンテキストを作らず、別の単位の根本原因だけで実行不能
+なら`SPEC-MULTI-DEPENDENCY-001`（`blocked`）、`contextDigest: null`、`bindingRefs: []`とする。既に不在、型、
+状態、カバレッジなど具体的な診断がある検証対象へ同じコードを重ねない。1つのコマンドが`failed`または`error`
+でも、計画済みの後続のテスト割当てを、所有ワークスペース順、コマンド名順に実行し、参照しない検証対象へ結果を
+波及させない。
 
-workspace単位の引数なし対象が0件の場合、`SPEC-VERIFY-BLOCKED-002`をwarningとしてmember結果を
-`passed_with_warnings`にする。複合workspace全体の対象が0件の場合だけerror／`blocked`とする。結果は
-[複合workspace仕様](../02_SPECモデル/05_複合workspace仕様.md)の集約外形を使う。
+ワークスペース単位の引数なしの対象が0件の場合、`SPEC-VERIFY-BLOCKED-002`を重大度`warning`としてメンバーの結果を
+`passed_with_warnings`にする。複合ワークスペース全体の対象が0件の場合だけ、重大度`error`、結果への効果`blocked`とする。結果は
+[複合ワークスペース仕様](../02_SPECモデル/05_複合workspace仕様.md)の集約の外形を使う。
 
-全target解決前に、現在treeのGit既知`.spec/bitz.yaml`、catalog、ID、path、Git境界、未対応major、resource上限を
-共通事前検査で検査する。非成功ならtarget解決とcommand実行を開始しない。全体結果は最上位に
-`scope: all-workspaces`とrepository共通`revision`を1件持つ。各workspace結果は0件でも省略しない
-`targetResults[]`と`commands[]`を持ち、revisionを複製しない。完全JSON例は
-[共通結果契約](../00_共通契約/01_結果・Diagnostic・終了コード.md#22-verifyの全体結果)を正とする。
+すべての検証対象を解決する前に、現在のスナップショットでGitが認識している`.spec/bitz.yaml`、カタログ、ID、パス、Gitの
+境界、非対応のメジャーバージョン、リソースの上限を全体事前検査で検査する。非成功なら検証対象の解決とコマンド
+の実行を開始しない。全体結果は最上位に`scope: all-workspaces`とリポジトリに共通の`revision`を1件持つ。各
+ワークスペースの結果は0件でも省略しない`targetResults[]`と`commands[]`を持ち、`revision`を複製しない。完全な
+JSONの例は
+[結果・診断・終了コードの仕様](../00_共通契約/01_結果・Diagnostic・終了コード.md#22-verifyの全体結果)を正とする。

@@ -2,60 +2,61 @@
 
 ## 1. 規範性
 
-本directoryはCore 1.0の機械契約の正本である。ADRは判断理由、`docs/02.設計書`は目的と境界、
-`docs/04.提案資料`は検討履歴であり、実装時の規範値は本directoryを使用する。
+本ディレクトリは、Core 1.0の機械契約の正本である。ADRは判断の理由、`docs/02.設計書`は目的と境界、
+`docs/04.提案資料`は検討の履歴であり、実装時の規範値は本ディレクトリを使用する。
 
-矛盾時は次の所有境界に従う。
+矛盾するときは、次の文書の分担に従う。
 
-1. 共通status、Diagnostic、report、安全な入出力、Context Digest正規化、適合fixture: `00_共通契約`
-2. EARS-AI字句、構文、Semantic IR: `01_EARS-AI`
-3. workspace、設定、文書、状態、関係、trace: `02_SPECモデル`
-4. CLI入力、対象選択、操作結果: `03_操作仕様`
+1. 共通の状態、診断、レポート、安全な入出力、コンテキストのハッシュ値の正規化、適合fixture: `00_共通契約`
+2. EARS-AIの字句、構文、意味中間表現: `01_EARS-AI`
+3. ワークスペース、設定、文書、状態、関係、トレース: `02_SPECモデル`
+4. CLI入力、対象の選択、操作の結果: `03_操作仕様`
 
 ADRを読まなければ実装できない契約を本仕様へ残してはならない。
-適合条件の正本は[適合fixture仕様](00_共通契約/04_適合fixture仕様.md)であり、提案資料の期待matrixを
+適合条件の正本は[適合fixture仕様](00_共通契約/04_適合fixture仕様.md)であり、提案資料の期待値のmatrixを
 受入基準の正にしない。
 
-## 2. Core 1.0 scope
+## 2. Core 1.0の対象範囲
 
-Core 1.0は単一workspaceと、同一Git repository内の明示的な複合workspaceを対象とし、次を提供する。
+Core 1.0は、単一ワークスペースと、同一のGitリポジトリの中の明示的な複合ワークスペースを対象とし、次を提供する。
 
-- EARS-AI ParserとSemantic IR
-- `.spec/`文書モデルと型付き依存
-- 完全ContextとContext Digest
+- EARS-AIの構文解析器と意味中間表現
+- `.spec/`の文書モデルと型付きの依存
+- 完全解決したコンテキストとコンテキストのハッシュ値
 - `context`、`check`、`verify`、`doctor`
-- Git差分保護とtest command実行
-- workspace修飾ID、所有境界、横断Context、全体検査・検証
+- Gitの差分保護とテストコマンドの実行
+- ワークスペースの修飾ID、所有境界、ワークスペースを横断するコンテキスト、全体操作（`check`と`verify`の`--all-workspaces`）
 
-複数Git repositoryの複合workspace、自動改番、Profile実行基盤、Projection Digest、必須Revision Historyは対象外である。
+複数のGitリポジトリにまたがる複合ワークスペース、自動改番、プロファイルの実行基盤、提示内容のハッシュ値、
+必須の`Revision History`節は対象外である。
 
 ## 3. 文書一覧
 
 | 区分 | 文書 | 所有する契約 |
 |---|---|---|
-| 共通 | [結果・Diagnostic・終了コード](00_共通契約/01_結果・Diagnostic・終了コード.md) | status、共通結果、Diagnostic、report |
-| 共通 | [Diagnostic registry](00_共通契約/05_Diagnostic-registry.md) | 条件、code、severity、status、source、継続単位、primary優先順位 |
-| 共通 | [安全な入出力・互換性](00_共通契約/02_安全な入出力・互換性.md) | I/O、上限、Git縮退、永続cache禁止 |
-| 共通 | [Context Digest正規化仕様](00_共通契約/03_Context-Digest正規化仕様.md) | digest input、正規化、serialization、hash |
-| 共通 | [適合fixture仕様](00_共通契約/04_適合fixture仕様.md) | fixture配置、manifest、normalizer、期待matrix |
-| 共通 | [Core実行環境・CLI基盤契約](00_共通契約/06_Core実行環境・CLI基盤契約.md) | 配布物、runtime依存、YAML/Git、共通argv解析 |
-| 言語 | [言語・Semantic IR仕様](01_EARS-AI/01_言語・Semantic-IR仕様.md) | EARS-AI構文、Parser、IR |
-| 言語 | [適合性・移行仕様](01_EARS-AI/02_適合性・移行仕様.md) | version、適合、旧版移行 |
+| 共通 | [結果・診断・終了コード](00_共通契約/01_結果・Diagnostic・終了コード.md) | 状態、共通結果、診断、レポート |
+| 共通 | [診断レジストリ](00_共通契約/05_Diagnostic-registry.md) | 条件、診断コード、重大度、結果への効果、発生元、継続単位、主診断の優先順位 |
+| 共通 | [安全な入出力・互換性](00_共通契約/02_安全な入出力・互換性.md) | I/O、上限、Gitの縮退、永続キャッシュの禁止 |
+| 共通 | [コンテキストのハッシュ値の正規化仕様](00_共通契約/03_Context-Digest正規化仕様.md) | ハッシュ値の材料、正規化、直列化、ハッシュ値の計算 |
+| 共通 | [適合fixture仕様](00_共通契約/04_適合fixture仕様.md) | fixtureの配置、マニフェスト、正規化器、期待値のmatrix |
+| 共通 | [Core実行環境・CLI基盤契約](00_共通契約/06_Core実行環境・CLI基盤契約.md) | 配布物、ランタイムの依存、YAML・Git、共通の引数列の解析 |
+| 言語 | [言語・意味中間表現仕様](01_EARS-AI/01_言語・Semantic-IR仕様.md) | EARS-AIの構文、構文解析器、意味中間表現 |
+| 言語 | [適合性・移行仕様](01_EARS-AI/02_適合性・移行仕様.md) | バージョン、適合、旧版からの移行 |
 | 言語 | [例・アンチパターン](01_EARS-AI/03_例・アンチパターン.md) | 記述例 |
-| SPEC | [workspace・設定仕様](02_SPECモデル/01_workspace・設定仕様.md) | 探索、配置、`bitz.yaml` |
-| SPEC | [文書・Frontmatter・状態仕様](02_SPECモデル/02_文書・Frontmatter・状態仕様.md) | 共通field、状態遷移 |
-| SPEC | [文書種別・本文template](02_SPECモデル/03_文書種別・本文template.md) | REQ/TECH/ADR/TASK |
-| SPEC | [関係・トレースモデル](02_SPECモデル/04_関係・トレースモデル.md) | 関係型、閉包、coverage、path |
-| SPEC | [複合workspace仕様](02_SPECモデル/05_複合workspace仕様.md) | catalog、修飾ID、所有境界、横断解決、全体操作 |
-| 操作 | [操作仕様](03_操作仕様/README.md) | 4操作の一覧と所有境界 |
-| Schema | [`schemas/result.schema.json`](schemas/result.schema.json) | 公開JSON結果の機械可読な正本 |
-| Schema | [`schemas/frontmatter.schema.json`](schemas/frontmatter.schema.json) | YAML解析後のFrontmatter構造の機械可読な正本 |
+| 仕様文書 | [ワークスペース・設定仕様](02_SPECモデル/01_workspace・設定仕様.md) | 探索、配置、`bitz.yaml` |
+| 仕様文書 | [文書・Frontmatter・状態仕様](02_SPECモデル/02_文書・Frontmatter・状態仕様.md) | 共通フィールド、状態遷移 |
+| 仕様文書 | [文書種別・本文template](02_SPECモデル/03_文書種別・本文template.md) | REQ・TECH・ADR・TASK |
+| 仕様文書 | [関係・トレースモデル](02_SPECモデル/04_関係・トレースモデル.md) | 関係型、閉包、カバレッジ、パス |
+| 仕様文書 | [複合ワークスペース仕様](02_SPECモデル/05_複合workspace仕様.md) | カタログ、修飾ID、所有境界、横断の解決、全体操作 |
+| 操作 | [操作仕様](03_操作仕様/README.md) | 4操作の一覧と文書の分担 |
+| スキーマ | [`schemas/result.schema.json`](schemas/result.schema.json) | 公開するJSON結果の機械可読な正本 |
+| スキーマ | [`schemas/frontmatter.schema.json`](schemas/frontmatter.schema.json) | YAML解析後のフロントマターの構造の機械可読な正本 |
 
 ## 4. 非目標
 
-- 複数Git repository、Git submodule、network越しSPECの複合workspace
-- Profile Manifestと外部Validator
-- 永続run、承認service、workflow engine
-- LLMによる意味合否
-- code symbolまたはassertion意味の自動trace
-- DOCX、PDF、databaseを正本にする運用
+- 複数のGitリポジトリ、Gitのサブモジュール、ネットワーク越しの仕様文書による複合ワークスペース
+- プロファイルのマニフェストと外部の検証プログラム
+- 永続的な実行、承認サービス、ワークフローエンジン
+- LLMによる意味の合否
+- コードのシンボルまたはアサーションの意味の自動トレース
+- DOCX、PDF、データベースを正本にする運用

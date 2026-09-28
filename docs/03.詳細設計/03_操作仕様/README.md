@@ -1,26 +1,26 @@
 # 操作仕様
 
-## 1. 所有境界
+## 1. 文書の分担
 
-各操作仕様は自身のCLI入力、対象選択、処理順、操作固有結果、Diagnosticの検出処理を所有する。
-Diagnostic条件と公開値は[Diagnostic registry](../00_共通契約/05_Diagnostic-registry.md)が所有する。
-共通status、Diagnostic field、report条件は[共通契約](../00_共通契約/01_結果・Diagnostic・終了コード.md)、
-共通argv解析と実行環境は[Core実行環境・CLI基盤契約](../00_共通契約/06_Core実行環境・CLI基盤契約.md)、
-関係とcoverageは[関係・トレースモデル](../02_SPECモデル/04_関係・トレースモデル.md)を使用する。
+各操作仕様は、自身のCLI入力、対象の選択、処理順、操作固有の結果、診断の検出処理を所有する。
+診断の条件と公開する値は[診断レジストリ](../00_共通契約/05_Diagnostic-registry.md)が所有する。
+共通の状態、診断のフィールド、レポートの条件は[結果・診断・終了コードの仕様](../00_共通契約/01_結果・Diagnostic・終了コード.md)、
+共通の引数列の解析と実行環境は[Core実行環境・CLI基盤契約](../00_共通契約/06_Core実行環境・CLI基盤契約.md)、
+関係とカバレッジは[関係・トレースモデル](../02_SPECモデル/04_関係・トレースモデル.md)を使用する。
 
 ## 2. 一覧
 
 | 操作 | 文書 | 主目的 |
 |---|---|---|
-| `context` | [01_context.md](01_context.md) | 完全Contextとstale防止 |
-| `check` | [02_check.md](02_check.md) | 静的検査とGit差分保護 |
-| `verify` | [03_verify.md](03_verify.md) | statement対応test実行 |
+| `context` | [01_context.md](01_context.md) | 完全解決したコンテキストと古くなったコンテキスト一式の使用の防止 |
+| `check` | [02_check.md](02_check.md) | 静的検査とGitの差分保護 |
+| `verify` | [03_verify.md](03_verify.md) | 規範文対応のテストの実行 |
 | `doctor` | [04_doctor.md](04_doctor.md) | 導入・互換性・環境診断 |
 
 ## 3. 共通原則
 
-- Core 1.0は単一workspaceと、同一Git repository内の明示的な複合workspaceを扱う。
-- 複合workspaceの修飾ID、所有境界、全体操作は[複合workspace仕様](../02_SPECモデル/05_複合workspace仕様.md)を使う。
-- networkとLLMを合否処理に使わない。
-- 同じ入力とversionから同じ対象、順序、Diagnosticを返す。
-- CoreはSPEC、code、test、Gitを変更しない。`check`と`verify`のfile書込みは明示`--report`だけとする。
+- Core 1.0は、単一ワークスペースと、同一のGitリポジトリの中の明示的な複合ワークスペースを扱う。
+- 複合ワークスペースの修飾ID、所有境界、全体操作は[複合ワークスペース仕様](../02_SPECモデル/05_複合workspace仕様.md)を使う。
+- ネットワークとLLMを合否の処理に使わない。
+- 同じ入力とバージョンから、同じ対象、順序、診断を返す。
+- Coreは仕様文書、コード、テスト、Gitを変更しない。`check`と`verify`のファイルの書込みは、明示した`--report`だけとする。

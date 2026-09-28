@@ -2,8 +2,9 @@
 
 ## 1. 目的
 
-起点SPECまたはEARS-AI statementから、解釈・実装・検証に必要な文書を型付き関係で完全解決し、
-目的別Context Bundleを返す。依存の完全解決とLLMへの提示量を分離する。
+起点（root）に指定した仕様文書またはEARS-AIの規範文から、解釈・実装・検証に必要な文書を
+型付きの関係でたどって完全解決（complete resolution）し、目的に応じたコンテキスト一式（Context Bundle）を返す。
+依存の完全解決と、LLMへ提示する量とは分けて扱う。
 
 ## 2. 公開操作
 
@@ -17,40 +18,41 @@ bitz context <spec-or-statement-id>...
   [--workspace <workspace-id>]
 ```
 
-共通argv解析、重複option、空値、target不存在は
+引数列の共通の解析、オプションの重複、空の値、対象の不在は
 [Core実行環境・CLI基盤契約 §5・§6](../00_共通契約/06_Core実行環境・CLI基盤契約.md#5-cliの引数列の共通の解析)に従う。
-purpose既定値は`interpret`、detail既定値は`standard`とする。起点は文書IDとstatement IDだけを受け付け、
-path、code、testを受け付けない。単一workspaceでは非修飾IDだけを受け付ける。複合workspaceではactive workspaceの
-非修飾IDまたは修飾IDを受け付け、全起点の所有workspaceを1つに限定する。`--workspace`は非修飾IDの解決基準を
-明示し、起点所有者と一致しなければならない。`--all-workspaces`は提供しない。複数起点は重複排除して
-正規ID辞書順に正規化する。
+`--purpose`の既定値は`interpret`、`--detail`の既定値は`standard`とする。起点に指定できるのは文書IDと規範文IDだけであり、
+パス、コード、テストは指定できない。単一ワークスペースでは非修飾IDだけを受け付ける。複合ワークスペースでは、
+作業ワークスペースの非修飾IDまたは修飾IDを受け付け、すべての起点を所有するワークスペースが1つでなければならない。
+`--workspace`は非修飾IDを解決する基準のワークスペースを明示するものであり、起点の所有ワークスペース（owner workspace）と
+一致しなければならない。`--all-workspaces`は提供しない。複数の起点は重複排除し、正規IDの辞書順に正規化する。
 
 `--format`の既定値は`markdown`である。
 
-起点を1件も指定しない場合と、空文字列を起点として渡した場合は終了コード4とする。構文上妥当な起点がcatalogに
-存在しない場合は操作を開始し、`CTX-ROOT-MISSING-001`／failedを返す。既知起点へ置換しない。
+起点を1件も指定しない場合と、空文字列を起点に指定した場合は、終了コード4とする。起点が構文上は正しいもののカタログに
+存在しない場合は、操作を開始したうえで診断`CTX-ROOT-MISSING-001`（`failed`）を返す。既知の別の起点へ置き換えない。
 
-`expand`は完全解決集合にある文書だけを`full`提示へ昇格する。集合外IDは`CTX-PROJECTION-001`／failedとし、
-暗黙に依存へ追加しない。複合workspaceでは非修飾`expand`をrequest workspaceから、修飾`expand`を複合workspace索引から解決する。
+`--expand`は、完全解決した集合にある文書だけを提示形式（projection）`full`へ昇格する。集合の外のIDは診断
+`CTX-PROJECTION-001`（`failed`）とし、暗黙に依存へ加えない。複合ワークスペースでは、非修飾IDの`--expand`を
+起点ワークスペースから、修飾IDの`--expand`を複合ワークスペースの軽量な索引から解決する。
 
 ## 3. 処理
 
-1. request workspace、複合workspaceのcatalog、workspace設定を解決する。
-2. 単一workspaceまたは複合workspaceのcatalog内の全SPECから軽量索引を構築する。
+1. 起点ワークスペース、複合ワークスペースのカタログ、ワークスペースの設定を解決する。
+2. 単一ワークスペース、または複合ワークスペースのカタログに含まれるすべての仕様文書から、軽量な索引を作る。
 3. ID、型、状態、強い関係、循環を検査する。
-4. [TargetExpansion](../02_SPECモデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)で起点、
-   purpose別閉包、対象statement、adjacent statementを完全解決する。
-5. Context上限を検査する。
-6. 文書をroleへ分類し、Constraint Ledgerとcoverageを生成する。
-7. Context Digestを計算する。
-8. detailとexpandに応じた提示を生成する。
-9. `--expect-digest`があれば現在Digestと比較する。
+4. 対象展開（[`TargetExpansion`](../02_SPECモデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)）で、起点、
+   目的ごとの閉包、対象規範文、隣接規範文を完全解決する。
+5. コンテキスト（Context）の上限を検査する。
+6. 文書を役割に分類し、制約台帳（Constraint Ledger）とカバレッジを作る。
+7. コンテキストのハッシュ値（Context Digest）を計算する。
+8. 詳細度（detail）と展開指定（expand）に応じて提示を作る。
+9. `--expect-digest`が指定されていれば、現在のハッシュ値と比べる。
 
-強い関係の一部を解決できない場合、部分Bundleを成功結果として返さない。
-ADRは`purpose=interpret`だけで起点にできる。ADRへ`implement`または`verify`を指定した場合は、
-対応する対象義務がないため引数不正として終了コード4とし、結果を生成しない。
+強い関係の一部を解決できない場合は、一部が欠けたコンテキスト一式を成功の結果として返さない。
+ADRを起点にできるのは、目的が`interpret`のときだけである。ADRに目的`implement`または`verify`を指定した場合は、
+対応する対象規範文がないため引数不正として終了コード4とし、結果を作らない。
 
-## 4. Context Bundle
+## 4. コンテキスト一式
 
 ```json
 {
@@ -114,224 +116,234 @@ ADRは`purpose=interpret`だけで起点にできる。ADRへ`implement`また�
 }
 ```
 
-`resolution.complete: true`は型、状態、循環、上限を含む完全解決が成立したことを示す。
-`constraintLedger`はapplicable文書の対象statementをSemantic IRの意味fieldで1回だけ保持する。
-statement起点の兄弟句とadvisory文書の規範文はLedgerとcoverageの各modalityへ含めない。
+`resolution.complete: true`は、型、状態、循環、上限を含めて完全解決が成立したことを示す。
+`constraintLedger`は、適用可能な文書が持つ対象規範文を、意味中間表現の意味フィールドで
+1回だけ保持する。隣接規範文と、適用可能性が`advisory`の文書の規範文は、制約台帳にも、
+カバレッジの各規範強度にも含めない。
 `coverage.adjacent`は`TargetExpansion`の`adjacentStatements`を同じ順序で保持し、該当がなければ空配列とする。
-`reason`は全statementで必須とし、理由付き`SHOULD`では正規化後のtext、それ以外ではnullとする。
-複合workspaceでは最上位`workspace`をrequest workspaceとし、`roots`、文書`id`、statement参照を修飾形式で返す。
-各`documents[]`は`workspaceId`を持ち、`path`はそのworkspace root相対とする。
-`resolution.workspaces`と`resolution.crossWorkspaceEdges`のfield、内容、順序は
-[複合workspace仕様](../02_SPECモデル/05_複合workspace仕様.md)に従い、複合workspaceの結果では必須とする。
+`reason`はすべての規範文で必須とし、理由付きの`SHOULD`では正規化した後のテキスト、それ以外では`null`とする。
+複合ワークスペースでは、最上位の`workspace`を起点ワークスペースとし、`roots`、文書の`id`、規範文IDを修飾IDで返す。
+`documents[]`の各要素は`workspaceId`を持ち、`path`はそのワークスペースのルートからの相対パスとする。
+`resolution.workspaces`と`resolution.crossWorkspaceEdges`のフィールド、内容、順序は
+[複合ワークスペース仕様](../02_SPECモデル/05_複合workspace仕様.md)に従い、複合ワークスペースの結果では必須とする。
 
-複合workspaceの結果の追加Schemaを次に示す。単一workspaceではこれらの追加fieldを省略する。
+複合ワークスペースの結果に加わるスキーマを次に示す。単一ワークスペースでは、これらのフィールドを省略する。
 
-| field | 型 | 必須 | 内容 |
+| フィールド | 型 | 必須 | 内容 |
 |---|---|:--:|---|
-| `documents[].workspaceId` | string | Yes | 所有workspace ID。文書`id`は修飾形式 |
-| `resolution.workspaces` | object[] | Yes | 1件以上の到達workspace。request workspaceを先頭、以降ID辞書順 |
-| `resolution.workspaces[].id` | string | Yes | 重複しないworkspace ID |
-| `resolution.workspaces[].path` | string | Yes | repository root相対path。rootは`.` |
-| `resolution.crossWorkspaceEdges` | object[] | Yes | 横断edge。0件でも空配列 |
-| `crossWorkspaceEdges[].relation` | enum | Yes | `requires`、`refines`、`addresses`、`supersedes`、`related` |
-| `crossWorkspaceEdges[].source` | string | Yes | 修飾document ID |
-| `crossWorkspaceEdges[].target` | string | Yes | 修飾document IDまたはstatement ID |
+| `documents[].workspaceId` | 文字列 | ○ | 所有ワークスペースのID。文書の`id`は修飾ID |
+| `resolution.workspaces` | オブジェクトの配列 | ○ | 到達ワークスペース。1件以上。起点ワークスペースを先頭に置き、以降はIDの辞書順 |
+| `resolution.workspaces[].id` | 文字列 | ○ | 重複しないワークスペースID |
+| `resolution.workspaces[].path` | 文字列 | ○ | リポジトリのルートからの相対パス。ルートワークスペースは`.` |
+| `resolution.crossWorkspaceEdges` | オブジェクトの配列 | ○ | ワークスペースをまたぐエッジ。0件でも空配列 |
+| `crossWorkspaceEdges[].relation` | 列挙値 | ○ | `requires`、`refines`、`addresses`、`supersedes`、`related` |
+| `crossWorkspaceEdges[].source` | 文字列 | ○ | 修飾した文書ID |
+| `crossWorkspaceEdges[].target` | 文字列 | ○ | 修飾した文書IDまたは規範文ID |
 
-edgeは重複排除し、`source`、`relation`、`target`の辞書順とする。workspace境界を越えないedgeは収録しない。
+エッジは重複排除し、`source`、`relation`、`target`の辞書順とする。ワークスペースの境界を越えないエッジは収録しない。
 
-## 5. Projection
+## 5. 提示形式
 
-全projectionは`id`、`kind`、`status`、`role`、`path`、`projection`、`reachedBy[]`、`untrustedText: true`を必須とする。
-`reachedBy[]`は起点なら`root`、到達edgeなら`<relation>:<source-id>`を保持し、重複排除後のcode point辞書順とする。
-`source-id`は、statement単位のrelation（`refines`の対象がstatementである場合など）でも、その`relation`を
-宣言した文書のID（statement IDではない）とする。
+どの提示形式でも、`id`、`kind`、`status`、`role`、`path`、`projection`、`reachedBy[]`、`untrustedText: true`を必須とする。
+`reachedBy[]`には、起点であれば`root`を入れ、到達したエッジごとに`<relation>:<source-id>`を入れる。
+重複排除した後のコードポイント辞書順とする。`source-id`は、規範文単位の関係（`refines`の参照先が規範文である場合など）でも、
+その関係を宣言した文書のID（規範文IDではない）とする。
 
-| projection | 追加必須field | 禁止field |
+| 提示形式 | 追加で必須のフィールド | 禁止するフィールド |
 |---|---|---|
 | `full` | `statementRefs[]`、`frontmatter`、`bodyText` | `expandable` |
 | `normative` | `statementRefs[]` | `frontmatter`、`bodyText`、`expandable` |
 | `reference` | `expandable` | `statementRefs`、`frontmatter`、`bodyText` |
 
-`statementRefs[]`は当該文書が所有する全規範文のIDをsource line、ID順で保持し、対象statementかどうかで絞らない。
-`frontmatter`は許可fieldを正規化したobject、`bodyText`は原文の現行本文、
-`expandable`は完全解決集合内で`--expand`可能ならtrueとする。nullで省略を代用せず、禁止fieldは出力しない。
-roleの割当ては[関係・トレースモデル §7](../02_SPECモデル/04_関係・トレースモデル.md#7-決定論的探索)に従う。
+`statementRefs[]`は、その文書が所有するすべての規範文のIDを、行番号、IDの順で保持する。対象規範文かどうかで絞り込まない。
+`frontmatter`は許可されたフィールドを正規化したオブジェクト、`bodyText`は原文の現行本文とする。
+`expandable`は、完全解決した集合の中にあって`--expand`で指定できる場合に`true`とする。
+省略の代わりに`null`を出力せず、禁止するフィールドは出力しない。
+役割の割当ては[関係・トレースモデル §7](../02_SPECモデル/04_関係・トレースモデル.md#7-決定論的探索)に従う。
 
-`standard`は文書のroleで既定projectionを決める。full projectionにするのは起点（`root`）、TASK（`work`）、
-replacement、requirement、constraintと、距離1の文書である。normative projectionにするのは、それら以外の
-距離2以上のrefinementである（その規範文はNormative Constraint Ledgerに収録される）。reference projectionに
-するのはadvisoryである。`compact`は原文を省略してManifest、Diagnostic、Ledger、coverage、境界、参照を返し、
-全文書をreference提示とする。`full`は全解決文書をfull提示する。
+詳細度`standard`では、文書の役割で既定の提示形式を決める。提示形式を`full`にするのは、起点（`root`）、
+TASK（`work`）、後継（`replacement`）、要求（`requirement`）、制約（`constraint`）と、距離1の文書である。
+`normative`にするのは、それ以外の距離2以上の具体化文書である（その規範文は制約台帳に収録される）。
+`reference`にするのは役割`advisory`の文書である。詳細度`compact`では原文を省略し、`Bundle Manifest`、診断、
+制約台帳、カバレッジ、境界、参照を返し、すべての文書を提示形式`reference`にする。詳細度`full`では、
+解決したすべての文書を提示形式`full`にする。
 
-requirementとconstraintをnormativeにせずfullにするのは、`requires`／`addresses`で到達したそれらの所有statementは
+役割`requirement`と`constraint`の文書を`normative`ではなく`full`にするのは、`requires`または`addresses`で到達したそれらの文書が所有する規範文は
 `targetStatements`へ昇格せず（[関係・トレースモデル §6.4](../02_SPECモデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)
-規則4）、Constraint Ledgerに収録されない（本仕様§4）ためである。normativeにすると、それらが持つ`MUST`の本文が
-projectionからもLedgerからも失われ、依存距離を理由に必須制約を参照だけへ落とさないというADR-014 Decision 4に
-反する。roleを先に適用し（起点、TASK、replacement、requirement、constraintはfull、advisoryはreference）、依存距離は
-refinementをfullとnormativeへ分けるときだけ使う本節の規則は、ADR-014 Decision 5と整合する。
+の規則4）、制約台帳に収録されない（本仕様§4）ためである。`normative`にすると、それらが持つ`MUST`の本文が
+提示からも制約台帳からも失われ、依存の距離を理由に必須の制約を参照だけへ落とさないという、ADR-014の`Decision`の4番目の項目に
+反する。役割を先に適用し（`root`、`work`、`replacement`、`requirement`、`constraint`は`full`、`advisory`は`reference`）、
+依存の距離は具体化文書を
+`full`と`normative`に分けるときだけ使うという本節の規則は、ADR-014の`Decision`の5番目の項目と整合する。
 
-どのdetailでも完全解決、全対象`MUST`、Constraint Ledgerを省略しない。提示方法の変更はContext Digestを
-変えない。Core 1.0はProjection Digestを返さない。
+どの詳細度でも、完全解決、`MUST`の対象規範文すべて、制約台帳を省略しない。提示の方法を変えても、コンテキストのハッシュ値は
+変わらない。Core 1.0は提示内容のハッシュ値（Projection Digest）を返さない。
 
-## 6. Context Digest
+## 6. コンテキストのハッシュ値
 
-Context Digestは次をCanonical JSON化したSHA-256である。形式は`sha256:[0-9a-f]{64}`とする。
+コンテキストのハッシュ値は、次の材料を正規JSONにしたもののSHA-256である。
+形式は`sha256:[0-9a-f]{64}`とする。
 
-- SPEC Schema、EARS-AI、Context Resolverのversion
-- purpose、request workspace IDと起点の正規ID
-- 閉包内文書のID、種別、状態、適用区分、正規化Frontmatter、現行本文の意味内容
+- 仕様文書のスキーマ、EARS-AI、コンテキスト解決器のバージョン
+- 目的、起点ワークスペースのID、起点の正規ID
+- 閉包に含まれる文書のID、種別、状態、適用可能性、正規化したフロントマター、現行本文の意味内容
 - 強い関係
-- EARS-AI Semantic IRのCanonical意味field
-- `implements`、test対応、command名、argv template、cwd、設定timeout、TASK `changes`
-- Contextに影響する実効設定
-- 到達workspaceのID、repository root相対path、修飾edge
+- EARS-AIの意味中間表現が持つ正規の意味フィールド
+- `implements`、テスト対応、コマンド名、引数列テンプレート、作業ディレクトリ、
+  設定したタイムアウト、TASKの`changes`
+- コンテキストに影響する実効設定
+- 到達ワークスペースのID、リポジトリのルートからの相対パス、修飾したエッジ
 
-「Contextに影響する実効設定」は、到達workspaceの設定全体ではなく次の許可リストとする。
+「コンテキストに影響する実効設定」は、到達ワークスペースの設定全体ではなく、次の許可リストとする。
 
-- 到達workspaceごとの`schemaVersion`、`earsAi`、`language`
-- request workspaceだけの既定値適用後`context.maxDocuments`と`context.maxBytes`
-- `purpose=verify`のBundleがbindingとして収録した場合だけの、bindingを1件以上収録したworkspaceの
-  既定値適用後`verify.timeoutSeconds`。`implement`と`interpret`では空配列とする
-- `purpose=verify`のBundleがbindingとして収録した場合だけの、bindingが参照するcommandだけの名前、
-  argv template、既定値適用後cwd。command名辞書順。`implement`と`interpret`では空配列とする
+- 到達ワークスペースごとの`schemaVersion`、`earsAi`、`language`
+- 起点ワークスペースだけの`context.maxDocuments`と`context.maxBytes`（既定値を適用した後の値）
+- 目的が`verify`のコンテキスト一式では、テスト割当てを1件以上収録したワークスペースの`verify.timeoutSeconds`
+  （既定値を適用した後の値）。目的が`implement`または`interpret`のときは空配列とする
+- 目的が`verify`のコンテキスト一式では、収録したテスト割当てが参照するコマンドだけの名前、引数列テンプレート、
+  作業ディレクトリ（既定値を適用した後の値）。コマンド名の辞書順とする。目的が`implement`または`interpret`のときは空配列とする
 
 次は含めない。
 
-- 生成時刻、絶対path、cache位置、出力形式
-- detail、expand、各文書projection、実際の提示内容
-- Git/PR/ADRにある変更履歴
-- code/test fileの内容
-- CLI timeout cap
-- 未到達workspaceの設定、本文、catalog列挙順
-- `multiWorkspace.maxMembers`、未使用command、`safety`
+- 生成時刻、絶対パス、キャッシュの位置、出力形式
+- 詳細度、展開指定、各文書の提示形式、実際の提示内容
+- Git、PR、ADRにある変更履歴
+- コードとテストのファイルの内容
+- CLIの`--timeout`の値
+- 到達ワークスペースでないワークスペースの設定と本文、カタログでの列挙順
+- `multiWorkspace.maxMembers`、使われないコマンド、`safety`
 
-設定の構文、型、必須fieldまたは参照commandが不適合ならDigest計算前に停止し、不完全な設定からDigestを作らない。
+設定の構文、型、必須フィールド、参照するコマンドのいずれかが不適合であれば、ハッシュ値を計算する前に停止し、
+不完全な設定からハッシュ値を作らない。
 
-公開するhashはContext Digestだけとする。文書単位hashと提示内容digestは内部実装に限定する。
+公開するハッシュ値はコンテキストのハッシュ値だけとする。文書単位のハッシュ値と提示内容のハッシュ値は内部実装にとどめる。
 
-## 7. stale検出
+## 7. 取得後の仕様変更の検出
 
-adapterは最初の書込み直前と、仕様・設定変更を認識した再開時に同じrequestを`--expect-digest`付きで再実行する。
-一致しなければ`CTX-STALE-001`／blockedとし、新しい仕様を暗黙受諾しない。
+アダプターは、最初の書込みの直前と、仕様または設定の変更を認識して作業を再開するときに、同じリクエストを
+`--expect-digest`付きで再実行し、取得後の仕様変更を検出する（stale detection）。ハッシュ値が一致しなければ診断`CTX-STALE-001`（`blocked`）とし、
+新しい仕様を暗黙に受け入れない。
 
 ## 8. 上限
 
-既定20文書、128 KiB、hard limit 100文書、1 MiBとする。意味依存にdepth上限を設けない。
-完全閉包が上限を超えれば`CTX-LIMIT-001`／blockedとする。byte上限は、指定した`--detail`にかかわらず、
-`standard`提示（[安全な入出力 §4「コンテキストの意味中間表現と標準の提示」](../00_共通契約/02_安全な入出力・互換性.md#4-リソースの上限)）
-の量で測る。detail/expandだけで提示hard limitを超えれば`CTX-PROJECTION-LIMIT-001`／failedとする。
+上限の既定値は20文書と128 KiB、絶対上限は100文書と1 MiBとする。意味上の依存には深さの上限を設けない。
+完全な閉包が上限を超えた場合は、診断`CTX-LIMIT-001`（`blocked`）とする。バイト数の上限は、指定した`--detail`に
+かかわらず、詳細度`standard`で提示したときの量
+（[安全な入出力 §4「コンテキストの意味中間表現と標準の提示」](../00_共通契約/02_安全な入出力・互換性.md#4-リソースの上限)）で測る。
+詳細度または展開指定だけが原因で提示量が絶対上限を超えた場合は、診断`CTX-PROJECTION-LIMIT-001`（`failed`）とする。
 
-## 9. Markdown提示
+## 9. Markdownでの提示
 
-Markdownは結果JSONだけを入力とする表示であり、status、件数、終了コード、Context Digestを変えない。
-同じ結果から同じbyte列を生成する。
+Markdownでの提示は結果のJSONだけを入力とする表示であり、結果の状態、件数、終了コード、コンテキストのハッシュ値を変えない。
+同じ結果からは同じバイト列を生成する。
 
-### 9.1 全体規則
+### 9.1 全体の規則
 
 1. 改行はLFとし、出力はLF 1個で終わる。CRを出力しない。
-2. H1は`# Context Bundle`だけとする。§9.2の10 sectionはH2、文書とstatementの明細はH3とする。
-3. 見出しの前後へ空行を1行置く。空行を2行以上続けない。
-4. 一覧項目は`- <key>: <value>`とし、字下げしない。値のないfieldは`null`、空配列は`none`と書く。
-5. 複数値は結果JSONの配列順のまま`, `で連結する。表示側で再sortしない。
-6. 該当要素のないsectionは見出しを省略せず、本文を`- none`の1行とする。
+2. H1は`# Context Bundle`だけとする。§9.2の10個の節はH2、文書と規範文の明細はH3とする。
+3. 見出しの前後に空行を1行置く。空行を2行以上続けない。
+4. 一覧の項目は`- <key>: <value>`とし、字下げしない。値のないフィールドは`null`、空配列は`none`と書く。
+5. 複数の値は、結果のJSONの配列の順のまま`, `で連結する。表示の側で並べ替えない。
+6. 該当する要素のない節も見出しを省略せず、本文を`- none`の1行とする。
 7. `durationMs`を提示しない。可変幅の桁揃え、装飾、進捗表示を出力しない。
 
-### 9.2 sectionと出所
+### 9.2 節と出所
 
-| # | section | 出所 |
+| # | 節 | 出所 |
 |---:|---|---|
-| 1 | Bundle Manifest | `operation`、`status`、`purpose`、`workspace`、`roots`、`contextDigest`、`revision`、`resolution`、`projection` |
-| 2 | Diagnostics and Coverage Gaps | `diagnostics[]`、`coverage`の`unaddressed`と`untested` |
-| 3 | Normative Constraint Ledger | `constraintLedger.statements[]` |
-| 4 | Root Intent | `role: root`の文書 |
-| 5 | Required Context | `role: requirement`と`role: constraint`の文書 |
-| 6 | Applicable Refinements | `role: refinement`の文書 |
-| 7 | Replacement Candidates | `role: replacement`の文書 |
-| 8 | Work Boundary | `role: work`の文書 |
-| 9 | Verification Bindings | 本文を提示した文書の`frontmatter.tests[]` |
-| 10 | Advisory Documents | `role: advisory`の文書 |
+| 1 | `Bundle Manifest` | `operation`、`status`、`purpose`、`workspace`、`roots`、`contextDigest`、`revision`、`resolution`、`projection` |
+| 2 | `Diagnostics and Coverage Gaps` | `diagnostics[]`、`coverage`の`unaddressed`と`untested` |
+| 3 | `Normative Constraint Ledger` | `constraintLedger.statements[]` |
+| 4 | `Root Intent` | 役割が`root`の文書 |
+| 5 | `Required Context` | 役割が`requirement`または`constraint`の文書 |
+| 6 | `Applicable Refinements` | 役割が`refinement`の文書 |
+| 7 | `Replacement Candidates` | 役割が`replacement`の文書 |
+| 8 | `Work Boundary` | 役割が`work`の文書 |
+| 9 | `Verification Bindings` | 本文を提示した文書の`frontmatter.tests[]` |
+| 10 | `Advisory Documents` | 役割が`advisory`の文書 |
 
-文書は`documents[]`の順のまま該当sectionへ配り、section内で再sortしない。
+文書は`documents[]`の順のまま該当する節へ振り分け、節の中で並べ替えない。
 
-### 9.3 Bundle Manifest
+### 9.3 `Bundle Manifest`
 
 `operation`、`status`、`purpose`、`roots`、`contextDigest`をJSONの値のまま1行ずつ出す。
 `workspace`は`<id> (<path>)`、`revision`は存在すれば`<commit> dirty=<true|false>`、なければ`null`とする。
 `resolution`は`complete=<bool>, documentCount=<n>, unresolvedStrongRelations=<n>`、
 `projection`は`detail=<detail>, expanded=<ids|none>`とする。
 
-### 9.4 Diagnostics and Coverage Gaps
+### 9.4 `Diagnostics and Coverage Gaps`
 
-Diagnosticは[共通結果契約 §7](../00_共通契約/01_結果・Diagnostic・終了コード.md#7-テキストとjson)のtext行形式を
-`- `に続けて1件1行で出し、JSONの順序と制御文字の可視化規則をそのまま使う。`suggestedAction`を持つ行の直後へ
-2 space字下げの`-> `継続行を1行出す。続けてcoverage gapを`- coverage: <MODALITY> <bucket>: <ids>`の形で、
-`must`、`should`、`may`の順、各modality内は`unaddressed`、`untested`の順に出す。0件のbucketは行を出さない。
+診断は、[結果・診断・終了コードの仕様 §7](../00_共通契約/01_結果・Diagnostic・終了コード.md#7-テキストとjson)のテキスト行の形式で、
+`- `に続けて1件1行で出す。JSONでの順序と、制御文字の可視化の規則をそのまま使う。`suggestedAction`を持つ行の直後には、
+半角スペース2個で字下げした`-> `の継続行を1行出す。続けて、カバレッジの不足（coverage gap）を`- coverage: <MODALITY> <bucket>: <ids>`の形で、
+規範強度は`must`、`should`、`may`の順、各規範強度の中は`unaddressed`、`untested`の順に出す。0件の`<bucket>`は行を出さない。
 
-### 9.5 Normative Constraint Ledger
+### 9.5 `Normative Constraint Ledger`
 
-statementごとに`### <statement-id>`を置き、`documentId`、`documentRole`、`modality`、`reason`、`actor`、
-`activation`、`operation`を1行ずつ出す。`activation`と`operation`はtextがなければ`<kind>`、
-あれば`<kind> <text>`とし、textは正規化後の値をそのまま出す。
+規範文ごとに`### <statement-id>`を置き、`documentId`、`documentRole`、`modality`、`reason`、`actor`、
+`activation`、`operation`を1行ずつ出す。`activation`と`operation`は、テキストがなければ`<kind>`、
+あれば`<kind> <text>`とし、テキストは正規化した後の値をそのまま出す。
 
-### 9.6 文書section
+### 9.6 文書の節
 
-文書ごとに`### <id> — <path>`を置く。複合workspaceでは`id`が修飾形式であり、その値をそのまま見出しへ使う。
-projectionごとに次を出し、[§5](#5-projection)の禁止fieldを出力しない。
+文書ごとに`### <id> — <path>`を置く。複合ワークスペースでは`id`が修飾IDであり、その値をそのまま見出しに使う。
+提示形式ごとに次のフィールドを出し、[§5](#5-提示形式)で禁止したフィールドは出力しない。
 
-| field | full | normative | reference |
+| フィールド | `full` | `normative` | `reference` |
 |---|:--:|:--:|:--:|
-| `kind`、`status`、`projection`、`reachedBy`、`untrustedText` | Yes | Yes | Yes |
-| `statementRefs` | Yes | Yes | — |
-| `frontmatter` | Yes | — | — |
-| `expandable` | — | — | Yes |
-| `bodyText` | Yes | — | — |
+| `kind`、`status`、`projection`、`reachedBy`、`untrustedText` | ○ | ○ | ○ |
+| `statementRefs` | ○ | ○ | — |
+| `frontmatter` | ○ | — | — |
+| `expandable` | — | — | ○ |
+| `bodyText` | ○ | — | — |
 
-出力するfieldの並びは`kind`、`status`、`projection`、`reachedBy`、`statementRefs`、`frontmatter`、
-`untrustedText`、`expandable`、`bodyText`の順で固定し、上表で禁止されるfieldは省く。
+出力するフィールドの並びは`kind`、`status`、`projection`、`reachedBy`、`statementRefs`、`frontmatter`、
+`untrustedText`、`expandable`、`bodyText`の順に固定し、上の表で禁止されるフィールドは省く。
 
-`frontmatter`は`- frontmatter: <Canonical JSON>`の1行とし、[§6](#6-context-digest)のCanonical JSON規則を使う。
-YAMLへ再直列化しない。`bodyText`は`- bodyText:`の行、空行1行に続けてfenceで囲む。fenceは情報文字列`markdown`
-付きのbacktick runとし、run長は本文中の最長backtick run+1、最小3とする。本文のcode pointを変更せず、
-末尾が改行でなければfence直前へ改行を1個だけ補う。本文の制御文字を可視化せず、原文のまま提示する。
-`detail: compact`では文書sectionの見出しを残し、本文を`- <id>: <path>`の1行だけとする。
+`frontmatter`は`- frontmatter: <Canonical JSON>`の1行とし、[§6](#6-コンテキストのハッシュ値)の正規JSONの規則を使う。
+YAMLへ直列化し直さない。`bodyText`は、`- bodyText:`の行と空行1行に続けて、フェンスで囲んで出す。フェンスは
+情報文字列`markdown`を付けたバッククォートの連なりとし、その長さは本文中で最も長いバッククォートの連なりより1つ長く、
+最小3とする。本文のコードポイントを変えず、本文の末尾が改行でなければ、フェンスの直前に改行を1個だけ補う。
+本文の制御文字を可視化せず、原文のまま提示する。
+詳細度が`compact`のときは文書の節の見出しを残し、本文を`- <id>: <path>`の1行だけとする。
 
-### 9.7 Verification Bindings
+### 9.7 `Verification Bindings`
 
-本文を提示した文書の`frontmatter.tests[]`を、文書順・配列順のまま
-`- <path>: covers <ids> (command: <name|none>)`の形で出す。提示していない文書から補完しない。
+本文を提示した文書の`frontmatter.tests[]`を、文書の順と配列の順のまま
+`- <path>: covers <ids> (command: <name|none>)`の形で出す。本文を提示していない文書からは補わない。
 
-adapter命令はBundle外から与え、本文をsystem instructionへ昇格しない。
+アダプターの指示はコンテキスト一式の外から与え、本文をアダプターのシステム指示へ昇格しない。
 
-## 10. Diagnostic
+## 10. 診断
 
-| code | result | 条件 |
+| 診断コード | 結果 | 条件 |
 |---|---|---|
-| `CTX-ROOT-MISSING-001` | failed | 起点ID不在 |
-| `SPEC-RELATION-MISSING-001` | failed | 存在するworkspace内のstrong target不在 |
-| `CTX-RELATION-TYPE-001` | failed | relation型不正 |
-| `CTX-CYCLE-001` | failed | 禁止循環 |
-| `CTX-TASK-DEPENDENCY-001` | blocked | 先行TASK未完了 |
-| `CTX-STATE-001` | blocked | purposeに適用不能 |
-| `CTX-STATE-SUPERSEDED-001` | blocked | 起点・依存先が置換済み |
-| `CTX-STATE-SUPERSEDED-002` | failed | 有効後継が複数 |
-| `CTX-LIMIT-001` | blocked | 完全閉包が上限超過 |
-| `CTX-COVERAGE-TASK-001` | passed_with_warnings | implement対象MUSTが未addressed |
-| `CTX-COVERAGE-TEST-001` | warning／blocked | implementではwarning、verifyではblocked |
-| `CTX-STALE-001` | blocked | expected Digest不一致 |
-| `CTX-PROJECTION-001` | failed | expand対象が解決集合外 |
-| `CTX-PROJECTION-LIMIT-001` | failed | 提示量hard limit超過 |
+| `CTX-ROOT-MISSING-001` | `failed` | 起点のIDが存在しない |
+| `SPEC-RELATION-MISSING-001` | `failed` | 存在するワークスペースの中に、強い関係の参照先が存在しない |
+| `CTX-RELATION-TYPE-001` | `failed` | 関係型が不正 |
+| `CTX-CYCLE-001` | `failed` | 禁止された循環がある |
+| `CTX-TASK-DEPENDENCY-001` | `blocked` | 先行するTASKが完了していない |
+| `CTX-STATE-001` | `blocked` | 目的に適用できない |
+| `CTX-STATE-SUPERSEDED-001` | `blocked` | 起点または依存先が置換済み |
+| `CTX-STATE-SUPERSEDED-002` | `failed` | 有効な後継が複数ある |
+| `CTX-LIMIT-001` | `blocked` | 完全な閉包が上限を超えた |
+| `CTX-COVERAGE-TASK-001` | `passed_with_warnings` | 目的`implement`の対象の`MUST`が未対応 |
+| `CTX-COVERAGE-TEST-001` | 警告／`blocked` | 目的`implement`では警告、`verify`では`blocked` |
+| `CTX-STALE-001` | `blocked` | 期待したハッシュ値と一致しない |
+| `CTX-PROJECTION-001` | `failed` | 展開指定の対象が解決した集合の外にある |
+| `CTX-PROJECTION-LIMIT-001` | `failed` | 提示量が絶対上限を超えた |
 
-strong target不在は`SPEC-RELATION-MISSING-001`へ統一し、`CTX-RELATION-MISSING-001`は公開結果で使用しない。
-修飾ID、workspace、target、型のprimary Diagnostic優先順位は
-[関係・トレースモデル](../02_SPECモデル/04_関係・トレースモデル.md#51-relation-diagnosticの優先順位)に従う。
-本表は検索用索引である。全条件のcode、severity、status、source、継続単位、primary優先順位は
-[Diagnostic registry](../00_共通契約/05_Diagnostic-registry.md)が所有する。
+強い関係の参照先の不在は`SPEC-RELATION-MISSING-001`に統一し、`CTX-RELATION-MISSING-001`は公開結果で使わない。
+修飾ID、ワークスペース、参照先、型に関する主診断の優先順位は
+[関係・トレースモデル](../02_SPECモデル/04_関係・トレースモデル.md#51-関係の診断の優先順位)に従う。
+この表は検索用の索引である。すべての条件の診断コード、重大度、結果への効果（`resultStatus`）、
+発生元、継続単位、主診断の優先順位は、[診断レジストリ](../00_共通契約/05_Diagnostic-registry.md)が所有する。
 
 
-## 11. adapter契約
+## 11. アダプターとの契約
 
-adapterは実装前にimplement Bundleを取得し、operation statusが`passed`または`passed_with_warnings`で、
-`resolution.complete: true`である場合だけ書込みを開始する。`failed`、`blocked`、`error`、引数不正では停止する。
-全`MUST`、constraint、work boundary、coverage gapを計画へ反映し、reference内容を推測しない。
-実装後はcheckを実行し、完了前にverify Bundleを再解決してverifyを呼ぶ。checkとverifyも通過statusの場合だけ
-次段階へ進める。
+アダプターは、実装の前に目的`implement`のコンテキスト一式を取得し、結果の状態が`passed`または`passed_with_warnings`で、
+かつ`resolution.complete: true`である場合にだけ書込みを始める。状態が`failed`、`blocked`、`error`の場合と、
+引数不正の場合は停止する。すべての`MUST`、制約、作業境界（work boundary）、カバレッジの不足を計画に反映し、提示形式が`reference`の
+文書の内容を推測しない。実装の後は`check`を実行し、完了の前に目的`verify`のコンテキスト一式を解決し直して`verify`を呼ぶ。
+`check`と`verify`も、通過状態である`passed`または`passed_with_warnings`の場合にだけ次の段階へ進める。
