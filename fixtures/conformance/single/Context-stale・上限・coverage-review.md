@@ -1,7 +1,7 @@
 # Context非成功・coverage fixture review
 
 `SINGLE-046`、`SINGLE-047`、`SINGLE-048-01/02`、`SINGLE-049`、`SINGLE-054`を扱い、
-[適合fixture仕様 §6.5](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#65-contextとdigest)を完了する。
+[適合fixture仕様 §6.5](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#65-contextとコンテキストのハッシュ値)を完了する。
 いずれもreview済みの期待値であり、Coreの挙動を観測したものではない。
 
 ## このfixture群に共通する2つの規則
@@ -45,8 +45,8 @@
   閉包が通過するよう閉包の2つの次元を最大値に設定し、入力は`REQ-001 ← TECH-001 ← TECH-002 ← TECH-003`の
   refinementの連鎖で、間接の2件だけを大きくする。`standard`ではこの2件を`normative`で提示し`bodyText`を
   含めない（[context仕様 §5](../../../docs/03.詳細設計/03_操作仕様/01_context.md#5-projection)）ため、測る量である
-  「ContextのSemantic IRと標準提示」
-  （[安全な入出力・互換性 §4](../../../docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md#4-resource上限)）は
+  「コンテキストの意味中間表現と標準の提示」
+  （[安全な入出力・互換性 §4](../../../docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md#4-リソースの上限)）は
   小さく、`--detail full`では本文が1,071,063 byteになる。各fileは1文書あたり1 MiBの入力上限を下回る。
 - **`projection.detail`は要求したmodeを、`projection.expanded`は実際に適用したものを示す。**
   そのため`SINGLE-049`は`detail: "full"`と`expanded: []`を、`SINGLE-047`は`detail: "standard"`と

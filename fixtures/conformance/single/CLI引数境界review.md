@@ -14,7 +14,7 @@
 | SINGLE-127-10 | verifyの`--timeout +1` | 数値範囲内でも非canonical表記を拒否 |
 | SINGLE-127-11 | checkの`--report=out.json` | 未知option形式を拒否し、任意pathへ書かない |
 
-根拠は[CLI基盤契約 §5・§7](../../../docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md#5-共通cli-argv解析)と
+根拠は[CLI基盤契約 §5・§7](../../../docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md#5-cliの引数列の共通の解析)と
 [適合fixture仕様](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md)の該当ID。
 全件で終了コード4、標準出力なし、共通結果・statusなし、report生成0件とする。
 標準エラーは`bitz: <operation>: <reason>`の1行で、理由を必須とし端末制御文字を許さない。

@@ -12,7 +12,7 @@ bindingのworkspace設定がindexで未追跡なら、`VERIFY-CONFIG-UNTRACKED`�
 stageしないunbornのrepositoryを使えたが、verify fixtureではcommandに到達せず、すべてのcaseが同じ原因になってしまう。
 
 `setup.baseCommit`ではなく`setup.operations: [{"op": "stage", "paths": ["."]}]`を使う。
-[適合fixture仕様 §3](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#3-manifest)は、基準commitを持つ
+[適合fixture仕様 §3](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#3-マニフェスト)は、基準commitを持つ
 fixtureに`--base`を渡すことを求めるが、`verify`にはこのoptionがないためである。そのためrepositoryはindexに内容を
 持つunbornのままで、`revision`は`null`である。監査はindexを読み戻して、全caseでstageされていることを確認する。
 

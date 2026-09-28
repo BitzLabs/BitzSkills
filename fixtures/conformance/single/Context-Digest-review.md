@@ -2,7 +2,7 @@
 
 `SINGLE-042`、`SINGLE-043-01/02`、`SINGLE-044-01/02`、`SINGLE-045`を扱う。
 `SINGLE-042`は単一workspaceのgolden Canonical JSONとDigestを所有する
-（[適合fixture仕様 §4](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#4-共通normalizer)）。
+（[適合fixture仕様 §4](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#4-共通正規化器)）。
 いずれもreview済みの期待値であり、Coreの挙動を観測したものではない。
 
 ## 共通の入力
@@ -31,18 +31,18 @@
 3. **extensionはどこにも置かない。** Core 1.0はProfile Manifestを読まないため、すべてのextension名前空間は未知であり、
    `EAI-EXT-UNKNOWN-001`／警告を返す。これはmatrixの`passed`／0と両立しない。そのため全fixtureで
    `statements[].extensions`は`[]`であり、
-   [Digest正規化 §3.1.3](../../../docs/03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md#313-statements)の
+   [Digest正規化 §3.1.3](../../../docs/03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md#313-規範文)の
    extensionの並び順の規則は、このfixture群では検査**しない**。警告を許す期待statusのfixtureが必要である
    （後に`SINGLE-123`で検査した）。
 4. **unbornのrepositoryで、`revision: null`とする。** `context`には`--base` optionがなく、`setup.baseCommit`を持つ
    fixtureは`--base`を渡さなければならないため、Digest fixtureは基準commitを持てない。Digestは`revision`を材料に
    しないので、goldenは弱まらない。
 5. **Digest材料では`ALWAYS`の`activation.text`を`null`とし、結果では省略する。** Digest材料は任意keyを作れない
-   （[§5](../../../docs/03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md#5-serializationとhash)）一方、
+   （[§5](../../../docs/03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md#5-直列化とハッシュ値の計算)）一方、
    `result.schema.json`は`activation.text`がある場合に空でない文字列を要求する。2つの表現は意図して異なる。
 6. **結果の`frontmatter`は宣言したfieldだけを持ち、Digestの`frontmatter`は固定keyをすべて埋める。**
    [context仕様 §5](../../../docs/03.詳細設計/03_操作仕様/01_context.md#5-projection)は許可された宣言fieldを提示し、
-   [Digest正規化 §3.1.1](../../../docs/03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md#311-frontmatterのprojection)は
+   [Digest正規化 §3.1.1](../../../docs/03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md#311-フロントマターからの抽出)は
    relation keyを5つと空配列に固定する。`x-owners`はどちらにも現れない。CoreはContextに`x-`を使わず、
    それを`SINGLE-045`が固定する。
 7. **`TECH-001`の`reachedBy`は`refines:TECH-001`とする。** この文書は、自身の`refines` edgeを起点から逆にたどって

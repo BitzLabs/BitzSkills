@@ -1,6 +1,6 @@
 # 複合workspace全体のverify fixture review
 
-[適合fixture仕様 §7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#7-最小matrix-複合workspace)の
+[適合fixture仕様 §7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#7-最小matrix-複合ワークスペース)の
 `MULTI-012`から`MULTI-016`を扱う。いずれもreview済みの期待値であり、Coreの挙動を観測したものではない。
 
 ## 継続単位はworkspaceではなくtargetとbindingである

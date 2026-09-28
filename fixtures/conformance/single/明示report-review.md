@@ -1,6 +1,6 @@
 # 明示report fixture review
 
-[適合fixture仕様 §6.7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#67-出力とreport)の
+[適合fixture仕様 §6.7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#67-出力とレポート)の
 `SINGLE-071-01/02/03/04`と`SINGLE-072`を扱う。いずれもreview済みの期待値であり、Coreの挙動を観測したものではない。
 
 ## 副作用Schemaを拡張する必要があった
@@ -10,7 +10,7 @@
 `explicit-report`は`report`を必須とし、`read-only`はこれを禁止する。
 
 report file名は生成時刻と連番を含み
-（[結果・Diagnostic・終了コード §8](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#8-report)）、
+（[結果・Diagnostic・終了コード §8](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#8-レポート)）、
 共通normalizerはちょうどそれを除外するので、作成されるfileをsnapshotで名指しできない。そのため`before`と`after`は
 既に存在したpathだけを記述し（それらはすべて不変でなければならない）、`report` objectが差分を持つ。directory、
 作成件数、名前のpattern、一時fileが残らないことである。

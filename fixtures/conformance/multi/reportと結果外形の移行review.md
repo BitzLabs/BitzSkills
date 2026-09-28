@@ -1,6 +1,6 @@
 # reportと結果外形の移行 fixture review
 
-[適合fixture仕様 §7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#7-最小matrix-複合workspace)の
+[適合fixture仕様 §7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#7-最小matrix-複合ワークスペース)の
 `MULTI-022-01..04`、`MULTI-023-01..03`、`MULTI-024-01..03`を扱う。いずれもreview済みの期待値であり、
 Coreの挙動を観測したものではない。
 
@@ -17,7 +17,7 @@ fileを作らず、明示指定時だけroot workspaceの`.spec/reports/`へ1件
 ## dual-read consumerは排他的外形で識別する
 
 `MULTI-023`はCore配布物の`bitz.compat`をconsumer runnerとして起動し、`result-shape <path>`で指定JSONを判定する。
-判定は[結果・Diagnostic・終了コード §2](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#2-共通結果)の
+判定は[結果・Diagnostic・終了コード §2](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#2-結果の形)の
 排他的外形に従う。
 
 | fixture | 入力JSON | outcome |
