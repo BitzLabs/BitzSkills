@@ -143,7 +143,7 @@ doctorの設定不正は`SPEC-CONFIG-SCHEMA-001`だけを返し、config check i
 
 #### 問題
 
-[共通契約 §6.1](../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#61-diagnostic表の閉包)は
+[共通契約 §6.1](../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#61-診断の表の閉じた集合)は
 各操作の固有codeを閉じた集合とする。しかし、次の規範条件はDiagnosticを発生させるにもかかわらず、
 対応codeまたは優先順位が明示されていない。
 
@@ -192,7 +192,7 @@ primary構文順も明記した。`SHOULD`理由は`[REASON]` fieldとしてSema
 `text`、`DQUOTE`、`qchar`、`escaped`を参照するが定義していない。記法もEBNFとABNFの
 `%x`、`/`、`*`が混在する。
 
-[同仕様 §5](../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md#5-規範行候補)の
+[同仕様 §5](../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md#5-規範文の候補)の
 「文書IDらしいtoken」は字句規則になっておらず、短いID、未知接頭辞、3階層、ID欠落を
 どこまで候補に含めるかが実装依存になる。複数backtick code span、quoted value、escape解除、
 `SHOULD`理由、`EAI-CORE-LANG-001`の言語判定も決定手順が不足する。
@@ -223,7 +223,7 @@ Draft 2020-12の`fixtures/conformance/result.schema.json`を追加し、context�
 
 #### 問題
 
-[共通結果](../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#2-共通結果)では
+[共通結果](../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#2-結果の形)では
 `scope`と`revision`の必須性が「操作依存」のままであり、4操作と単一／複合workspaceの完全なvariantが
 機械可読Schemaになっていない。
 

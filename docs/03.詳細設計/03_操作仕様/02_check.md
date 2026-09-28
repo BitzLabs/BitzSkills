@@ -21,7 +21,7 @@ bitz check --all-workspaces
 ```
 
 共通argv解析、重複option、空値、target不存在は
-[Core実行環境・CLI基盤契約 §5・§6](../00_共通契約/06_Core実行環境・CLI基盤契約.md#5-共通cli-argv解析)に従う。
+[Core実行環境・CLI基盤契約 §5・§6](../00_共通契約/06_Core実行環境・CLI基盤契約.md#5-cliの引数列の共通の解析)に従う。
 明示対象はREQ、TECH、ADR、TASKの文書ID、statement ID、SPEC Markdown pathとする。statement IDとpathは
 所有文書IDへ正規化する。複合workspaceではactive／`--workspace`で選択したworkspaceの非修飾IDとpath、または修飾IDを
 受け付け、1回の単独操作の対象workspaceを1つに限定する。code path、test path、directory、不正ID/path、
@@ -168,7 +168,7 @@ Coreは意味的影響を断定せず、statusを自動変更しない。`relate
 `--all-workspaces`では`scope: all-workspaces`と共通の`multiWorkspace`、`workspaces`外形を使用し、各memberの
 `checkedDocumentCount`、`checkedStatementCount`とDiagnosticをmember結果へ保持する。両件数は非負整数で必須とし、
 全SPECを完全検査した文書数と規範文数を表す。repository共通の`revision`は最上位に1件だけ置き、member結果へ
-複製しない。完全JSON例は[共通結果契約](../00_共通契約/01_結果・Diagnostic・終了コード.md#21-check全体結果)を正とする。
+複製しない。完全JSON例は[共通結果契約](../00_共通契約/01_結果・Diagnostic・終了コード.md#21-checkの全体結果)を正とする。
 
 ## 10. Git不在
 

@@ -20,7 +20,7 @@ bitz verify --all-workspaces
 ```
 
 共通argv解析、重複option、空値、target不存在は
-[Core実行環境・CLI基盤契約 §5・§6](../00_共通契約/06_Core実行環境・CLI基盤契約.md#5-共通cli-argv解析)に従う。
+[Core実行環境・CLI基盤契約 §5・§6](../00_共通契約/06_Core実行環境・CLI基盤契約.md#5-cliの引数列の共通の解析)に従う。
 明示対象はREQ ID、TECH ID、statement ID、TASK ID、REQ/TECH/TASK Markdown pathとする。pathはFrontmatter IDへ
 正規化する。複合workspaceではactive／`--workspace`で選択したworkspaceの非修飾IDとpath、または修飾IDを受け付け、
 1回の単独操作の対象workspaceを1つに限定する。code/test path、directory、ADR、異なるworkspaceを所有する
@@ -219,7 +219,7 @@ workspace root相対で未指定時`.`とする。通常終了以外は`exitCode
 修飾形式で返す。
 
 全commandは`stdoutExcerpt`、`stderrExcerpt`、`stdoutTruncated`、`stderrTruncated`を必須とする。抜粋は
-[安全な入出力 §9](../00_共通契約/02_安全な入出力・互換性.md#9-process出力)でredactionした末尾64 KiB以下の文字列で、
+[安全な入出力 §9](../00_共通契約/02_安全な入出力・互換性.md#9-プロセスの出力)でredactionした末尾64 KiB以下の文字列で、
 出力なしは空文字列とする。対応する元streamが64 KiBを超えた場合だけ`*Truncated: true`とする。
 
 1つのtargetが`verified`であるのは、target statusが通過status、`contextDigest`が非null、対象となる全`MUST`に
@@ -272,4 +272,4 @@ workspace単位の引数なし対象が0件の場合、`SPEC-VERIFY-BLOCKED-002`
 共通事前検査で検査する。非成功ならtarget解決とcommand実行を開始しない。全体結果は最上位に
 `scope: all-workspaces`とrepository共通`revision`を1件持つ。各workspace結果は0件でも省略しない
 `targetResults[]`と`commands[]`を持ち、revisionを複製しない。完全JSON例は
-[共通結果契約](../00_共通契約/01_結果・Diagnostic・終了コード.md#22-verify全体結果)を正とする。
+[共通結果契約](../00_共通契約/01_結果・Diagnostic・終了コード.md#22-verifyの全体結果)を正とする。

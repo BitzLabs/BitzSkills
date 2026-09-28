@@ -25,7 +25,7 @@ harnessが検査対象Coreをどう受け取り、どの環境で起動し、何
 2. 各Stepの完了fixtureは[実装計画](../../04.提案資料/12_Core-1.0実装計画.md)の散文にしかなく、機械で読めない
 3. Step nのGate Bで、Step 1からn−1の完了fixtureを再実行するか
 4. Step 2のGate Bは、参照harnessの結果に加えて、Core固有のParser adapter（`tests/bitz-core/`、
-   [適合fixture仕様 §4.1](../../03.詳細設計/00_共通契約/04_適合fixture仕様.md#41-内部parser受入)）の結果を要する。
+   [適合fixture仕様 §4.1](../../03.詳細設計/00_共通契約/04_適合fixture仕様.md#41-内部の構文解析器受入)）の結果を要する。
    ADR-049 Decision 6により`fixtures/`は`tests/`を参照できない
 5. Step 1ではCoreがまだないため、参照harness自身が正しく合否を判定できることを確かめる手段がない
 

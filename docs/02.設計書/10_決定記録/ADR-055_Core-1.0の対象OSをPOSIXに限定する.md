@@ -24,7 +24,7 @@ CPythonの版を指し、OSを指さない。
   （[verify仕様 §5.2](../../03.詳細設計/03_操作仕様/03_verify.md#52-timeoutと有限時間終了)）
 - 実行fileの解決は、通常fileと実行権限の判定を使う（同 §5.1）
 - 明示reportの保存は、`.spec`と`.spec/reports`をsymlinkを辿らないdirectory fdとして開き、そのfd基準で
-  一時fileの作成、確定、除去を行う（REQ-003、[結果・Diagnostic・終了コード §8](../../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#8-report)）
+  一時fileの作成、確定、除去を行う（REQ-003、[結果・Diagnostic・終了コード §8](../../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#8-レポート)）
 
 Windowsはdirectory fd基準の操作（`dir_fd`、`O_DIRECTORY`、`O_NOFOLLOW`）とprocess groupへのsignalを持たない。
 Windowsを対象に含めると、reportの保存を検査と書込みの競合に弱い方式へ戻すか、別の実装を用意する必要があり、

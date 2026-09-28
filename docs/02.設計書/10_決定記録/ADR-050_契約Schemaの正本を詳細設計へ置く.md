@@ -15,7 +15,7 @@ relations:
 ## Context
 
 公開JSON結果のSchema（`result.schema.json`）とFrontmatterのSchema（`frontmatter.schema.json`）は、
-[結果・Diagnostic・終了コード §1](../../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#1-所有範囲)と
+[結果・Diagnostic・終了コード §1](../../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#1-本書の範囲)と
 [文書・Frontmatter・状態仕様 §2](../../03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md#2-frontmatter)が
 機械可読な正本として参照する契約である。これらは`fixtures/conformance/`に置かれていた。
 この配置には次の問題がある。
@@ -64,7 +64,7 @@ relations:
 
 ## Notes
 
-- 反映先: [結果・Diagnostic・終了コード §1](../../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#1-所有範囲)、
+- 反映先: [結果・Diagnostic・終了コード §1](../../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#1-本書の範囲)、
   [文書・Frontmatter・状態仕様 §2](../../03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md#2-frontmatter)、
   [適合fixture仕様 §2](../../03.詳細設計/00_共通契約/04_適合fixture仕様.md)、[詳細設計README](../../03.詳細設計/README.md)、
   `fixtures/conformance/schemas.py`と各検証器。
