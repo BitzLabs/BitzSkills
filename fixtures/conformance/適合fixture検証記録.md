@@ -958,3 +958,21 @@ commit `74ff1c8d735a99e3b9c5f55438c8f96670402cbc`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 5に属するfixtureを変更したため、ADR-051に従ってCore追従後にStep 1〜5を判定し直した。
+
+## 2026-09-28: 共通契約とEARS-AIの表記の書き直し後のGate A再認定
+
+[表記規則](../../docs/表記規則.md)と[用語集](../../docs/用語集.md)に従い、詳細設計の共通契約の6文書とEARS-AIの3文書を
+日本語表記へ書き直した。見出しの変更に合わせてfixtureの記録のリンクを直し、診断の網羅表が固定する根拠文書12件のハッシュ値を、
+再レビュー（[Diagnostic意味網羅review](Diagnostic意味網羅review.md)の2026-09-28の節）のうえで更新した。
+matrix、fixtureの入力と期待値は変えていない。
+
+commit `0d1d19baeadc9630d81c5d0ff66c5315b2442620`に対して`uv run fixtures/certify_gate_a.py`を実行し、
+`gateA: "Allowed"`、error 0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 統合検証 | 2つのcloneでReport SHA-256が両方`e52667946a7f015bdab388682c22dbce6a056b57994ef20f0b93678f8fbf56c7`（前回と同じ） |
+| scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+fixtureの入力と期待値を変えていないため、Gate Bの判定し直しは要しない。
