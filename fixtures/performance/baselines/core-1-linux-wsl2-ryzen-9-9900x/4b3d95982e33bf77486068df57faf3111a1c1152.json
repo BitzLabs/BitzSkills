@@ -1,0 +1,241 @@
+{
+  "cases": [
+    {
+      "coldWallMs": 759.400796,
+      "exitCodes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "id": "single-changed-check",
+      "maximumPeakRssBytes": 29028352,
+      "medianWallMs": 734.527119,
+      "peakRssBytes": [
+        28872704,
+        27992064,
+        28512256,
+        28590080,
+        29028352
+      ],
+      "status": "passed",
+      "wallMs": [
+        754.274111,
+        729.661414,
+        729.278923,
+        734.76486,
+        734.527119
+      ]
+    },
+    {
+      "coldWallMs": 264.794272,
+      "exitCodes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "id": "single-context-20",
+      "maximumPeakRssBytes": 18722816,
+      "medianWallMs": 259.795574,
+      "peakRssBytes": [
+        17973248,
+        18534400,
+        18722816,
+        18436096,
+        18386944
+      ],
+      "status": "passed",
+      "wallMs": [
+        259.775831,
+        259.795574,
+        259.718162,
+        265.163081,
+        265.251169
+      ]
+    },
+    {
+      "coldWallMs": 749.394723,
+      "exitCodes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "id": "single-full-check",
+      "maximumPeakRssBytes": 29876224,
+      "medianWallMs": 729.439155,
+      "peakRssBytes": [
+        29876224,
+        29179904,
+        28643328,
+        28905472,
+        29609984
+      ],
+      "status": "passed",
+      "wallMs": [
+        724.086549,
+        738.877256,
+        729.156159,
+        729.439155,
+        734.460626
+      ]
+    },
+    {
+      "coldWallMs": 122.377753,
+      "exitCodes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "id": "single-doctor",
+      "maximumPeakRssBytes": 16662528,
+      "medianWallMs": 122.267075,
+      "peakRssBytes": [
+        16478208,
+        16662528,
+        16642048,
+        16592896,
+        16588800
+      ],
+      "status": "passed",
+      "wallMs": [
+        122.236021,
+        122.266849,
+        122.353002,
+        122.325345,
+        122.267075
+      ]
+    },
+    {
+      "baselineExitCodes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baselineMedianWallMs": 10.260606,
+      "baselineWallMs": [
+        30.526544,
+        10.226461,
+        10.260606,
+        20.374273,
+        10.249484
+      ],
+      "coldWallMs": 274.851383,
+      "derivedOverheadMs": 260.130354,
+      "exitCodes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "id": "single-verify-overhead",
+      "maximumPeakRssBytes": 22917120,
+      "medianWallMs": 270.39096,
+      "peakRssBytes": [
+        22712320,
+        22274048,
+        22806528,
+        22917120,
+        22396928
+      ],
+      "status": "passed",
+      "wallMs": [
+        280.14489,
+        270.39096,
+        269.824153,
+        275.033178,
+        270.096668
+      ]
+    },
+    {
+      "coldWallMs": 1949.121909,
+      "exitCodes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "id": "multi-workspace-full-check",
+      "maximumPeakRssBytes": 31956992,
+      "medianWallMs": 1948.04859,
+      "peakRssBytes": [
+        31186944,
+        31416320,
+        31956992,
+        30760960,
+        30851072
+      ],
+      "status": "passed",
+      "wallMs": [
+        1938.554785,
+        1949.032254,
+        1943.122734,
+        1948.04859,
+        1948.632612
+      ]
+    },
+    {
+      "coldWallMs": 320.72853,
+      "exitCodes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "id": "multi-workspace-context-20",
+      "maximumPeakRssBytes": 25251840,
+      "medianWallMs": 315.664352,
+      "peakRssBytes": [
+        25088000,
+        24666112,
+        24555520,
+        25251840,
+        24363008
+      ],
+      "status": "passed",
+      "wallMs": [
+        315.725892,
+        315.664352,
+        311.17116,
+        310.79172,
+        315.80533
+      ]
+    }
+  ],
+  "comparability": "comparable",
+  "comparisonMismatches": [],
+  "coreCommit": "4b3d95982e33bf77486068df57faf3111a1c1152",
+  "coreVersion": "1.0.0",
+  "datasetDigests": {
+    "core-multi-workspace-v1": "sha256:1626b4d08eb9a05e8cdeef71f125292dfc71495f175119c6f99bd76c5b837a54",
+    "core-single-v1": "sha256:0693e6ec926d4a411766796831e87c011004342810a5e6f3393e7afcd52c546c"
+  },
+  "environmentId": "core-1-linux-wsl2-ryzen-9-9900x",
+  "observedEnvironment": {
+    "architecture": "x86_64",
+    "cpuModel": "AMD Ryzen 9 9900X 12-Core Processor",
+    "filesystem": "ext4",
+    "git": "git version 2.43.0",
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "logicalCores": 24,
+    "memoryAccounting": "cgroup-v2-process-tree",
+    "os": "Linux",
+    "platformClass": "WSL2",
+    "python": "3.12.3",
+    "ramBytes": 32384372736,
+    "storageClass": "wsl2-virtual-disk"
+  },
+  "schemaVersion": "1.0",
+  "startedAt": "2026-09-28T08:59:19.173365Z"
+}

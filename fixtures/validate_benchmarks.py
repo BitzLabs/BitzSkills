@@ -5,15 +5,23 @@
 # ///
 """Core実行体なしで、性能基準と比較taskの入力（Step 0-Pで固定）を検証する。uv runで実行する。"""
 import copy
+import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 
-from jsonschema import Draft202012Validator
+from jsonschema import Draft202012Validator, FormatChecker
 
 ROOT = Path(__file__).resolve().parent
+
+RUNNER_SPEC = importlib.util.spec_from_file_location(
+    "performance_runner_for_audit", ROOT / "performance/run_benchmarks.py")
+PERFORMANCE_RUNNER = importlib.util.module_from_spec(RUNNER_SPEC)
+sys.modules[RUNNER_SPEC.name] = PERFORMANCE_RUNNER
+RUNNER_SPEC.loader.exec_module(PERFORMANCE_RUNNER)
 
 
 def read(path):
@@ -45,6 +53,36 @@ def main():
     assert (ROOT / "performance" / plan["environment"]).is_file()
     assert len({case["id"] for case in plan["cases"]}) == len(plan["cases"])
     assert all(case["dataset"] in datasets for case in plan["cases"])
+    environment = read(ROOT / "performance" / plan["environment"])
+    baseline_paths = sorted(ROOT.glob("performance/baselines/*/*.json"))
+    assert baseline_paths, "performance/baselines/*/*.json"
+    result_validator = Draft202012Validator(
+        read(ROOT / "performance/schemas/run-result.schema.json"),
+        format_checker=FormatChecker(),
+    )
+    baseline_summaries = []
+    for path in baseline_paths:
+        result = read(path)
+        result_validator.validate(result)
+        assert path.parent.name == result["environmentId"], path
+        assert path.stem == result["coreCommit"], path
+        commit = result["coreCommit"]
+        exists = subprocess.run(
+            ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
+            cwd=ROOT.parent, capture_output=True,
+        )
+        assert exists.returncode == 0, f"baselineのcommitが存在しません: {commit}"
+        ancestor = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
+            cwd=ROOT.parent, capture_output=True,
+        )
+        assert ancestor.returncode == 0, f"baselineのcommitがHEADの祖先ではありません: {commit}"
+        summary = PERFORMANCE_RUNNER.validate_accepted_baseline(
+            result, plan, environment,
+            {identifier: read(path) for identifier, path in datasets.items()})
+        summary["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+        baseline_summaries.append(summary)
+        validated += 1
     protocol = read(ROOT / "comparison/protocol.json")
     assert sorted(protocol["taskIds"]) == sorted(p.stem for p in ROOT.glob("comparison/tasks/*.json"))
     results = []
@@ -64,7 +102,15 @@ def main():
             command = [sys.executable, str(ROOT / "performance/scripts/generate_fixture.py"), str(bad_manifest), str(Path(temporary) / f"{identifier}-bad")]
             rejected = subprocess.run(command, capture_output=True, text=True)
             assert rejected.returncode != 0 and "形状が一致しません" in rejected.stderr
-    print(json.dumps({"status": "Passed", "schemas": len(schemas), "inputs": validated, "generationRunsPerDataset": 2, "shapeRejectionChecks": len(datasets), "datasets": results}, ensure_ascii=False, sort_keys=True, indent=2))
+    print(json.dumps({
+        "status": "Passed",
+        "schemas": len(schemas),
+        "inputs": validated,
+        "generationRunsPerDataset": 2,
+        "shapeRejectionChecks": len(datasets),
+        "datasets": results,
+        "baselines": baseline_summaries,
+    }, ensure_ascii=False, sort_keys=True, indent=2))
 
 
 if __name__ == "__main__":
