@@ -51,3 +51,10 @@ CoreのJSON出力、状態判定、binding、Digestとの一致はGate Bで別�
 だけであり、本節が正とする§6.4 TargetExpansion(root, purpose)の記述・rootDocuments／contextDocuments／targetStatements／
 adjacentStatementsの算出規則には変更がない。したがって25 caseの期待集合・graph・matrixFamilies参照は変えず、
 `contractSha256`を新しい文書hash（`4bfe2f87773764c40e216b366d6429c6004ce96895a24cf6eb1cc720f4bc0e70`）へ更新するだけで足りる。
+
+2026-09-29: 関係・トレースモデルの説明文を日本語表記へ書き直した（日本語表記の立て直し計画のPR 3）ため、`contractSha256`が失効した。
+表記の変更だけで、§6の展開規則は変えていない。§6.1の4.の「target」は読みを確定せず一般の「対象」と書き、
+参照計算（閉包内の起点を含む文書を`refines`する文書を加える）と矛盾しないことを独立のレビュー担当が確かめた。
+`contractSha256`を新しい文書のhashに置き換えた状態で25 caseの期待集合が参照計算と一致することも確かめた。
+25 caseの期待集合、graph、matrixFamiliesの参照は変えず、`contractSha256`を新しい文書のhash
+（`dc1880ca671dfa453ac2eca66a8bc64006f52ea10a41d6371cc3fa70cd72812d`）へ更新した。
