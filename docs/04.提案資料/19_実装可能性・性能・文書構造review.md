@@ -41,7 +41,7 @@ warm run中央値、process全体elapsedという測定法を固定すれば、�
 
 ## 4. FED-IMP-002 resource上限
 
-[複合workspace仕様 §10](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#10-上限とgit前提)はSPEC file 10,000件、
+[複合workspace仕様 §10](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#10-上限とgitの前提)はSPEC file 10,000件、
 関係索引、入力byteの上限を複合workspace全体へ適用するとするが、後二者の数値と数え方がない。共通hard limitを参照するなら
 参照先と複合workspace時の集約式が必要である。
 

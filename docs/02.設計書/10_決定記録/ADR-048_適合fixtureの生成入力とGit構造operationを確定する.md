@@ -18,7 +18,7 @@ relations:
 treeと`changes/`の差替えfileだけで表す。複合workspaceの最小matrixに残る26件は、この形では表せない。
 
 1. **上限境界の24件**（`MULTI-020-01..16`、`MULTI-021-01..08`）は、`inputBytes`が256 MiB、
-   `relationEdgeCount`と`traceEntryCount`が100万件など、[複合workspace仕様 §10](../../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#10-上限とgit前提)の
+   `relationEdgeCount`と`traceEntryCount`が100万件など、[複合workspace仕様 §10](../../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#10-上限とgitの前提)の
    hard limitの前後を入力にする。3つの値（`limit - 1`、`limit`、`limit + 1`）を8 dimension分commitすると、
    repositoryは1 GiBを超え、checkoutのたびに同じ量を展開することになる。
 2. **member pathのGit構造2件**（`MULTI-007-02`、`MULTI-007-03`）は、member pathがsubmoduleまたは別worktreeで

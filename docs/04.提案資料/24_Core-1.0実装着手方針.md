@@ -35,7 +35,7 @@ Phase 1と並行して閉じられる。
 
 ## 2. G1: Context DigestのCanonical JSON
 
-[context仕様 §6](../03.詳細設計/03_操作仕様/01_context.md#6-context-digest)は材料の許可リストを
+[context仕様 §6](../03.詳細設計/03_操作仕様/01_context.md#6-コンテキストのハッシュ値)は材料の許可リストを
 確定しているが、「Canonical JSON化」の内容を定義していない。次が未確定である。
 
 - keyの並び順、byte単位かcode point単位か
@@ -92,7 +92,7 @@ TASK境界、Git縮退、Context上限、projectionといった単一workspace�
 引数不正・排他違反・解決不能なrevision・catalogにない`--workspace`は終了コード4とし、
 「Core操作結果とreportを生成しない」とだけ定めている。`--format json`指定時に標準出力へ
 何を返すか、診断文をどこへ書くかが未定義である。adapterは
-[context仕様 §11](../03.詳細設計/03_操作仕様/01_context.md#11-adapter契約)でstatusにより分岐するが、
+[context仕様 §11](../03.詳細設計/03_操作仕様/01_context.md#11-アダプターとの契約)でstatusにより分岐するが、
 終了コード4はstatusもDiagnosticも持たない。
 
 **方針**: [共通契約 §3](../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#3-結果の状態と終了コード)へ、

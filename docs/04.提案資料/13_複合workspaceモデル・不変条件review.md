@@ -23,8 +23,8 @@
 
 ## 3. FED-INV-001 未登録workspace検出
 
-[複合workspace仕様 §2](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#2-配置とcatalog)は、catalogにない
-`.spec/`をrepository全体から再帰探索しない。[同仕様 §3](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#3-workspace決定)
+[複合workspace仕様 §2](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#2-配置とカタログ)は、catalogにない
+`.spec/`をrepository全体から再帰探索しない。[同仕様 §3](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#3-ワークスペースの決定)
 の`SPEC-MONOREPO-UNREGISTERED-001`は、通常操作で実際に選択された設定だけを検出できる。
 
 一方、[ユースケース UC-11](../02.設計書/05_ユースケース.md#13-uc-11-複合workspace横断要求)は未登録memberがないことを

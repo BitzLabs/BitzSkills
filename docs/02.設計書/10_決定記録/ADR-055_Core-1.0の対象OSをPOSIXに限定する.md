@@ -21,7 +21,7 @@ CPythonの版を指し、OSを指さない。
 一方、Core 1.0の規範と実装は、すでにPOSIXの機能を前提にしている。
 
 - `verify`のtimeout状態機械は、新しいprocess groupへの起動とgroupへのsignal送信を使う
-  （[verify仕様 §5.2](../../03.詳細設計/03_操作仕様/03_verify.md#52-timeoutと有限時間終了)）
+  （[verify仕様 §5.2](../../03.詳細設計/03_操作仕様/03_verify.md#52-タイムアウトと有限時間での終了)）
 - 実行fileの解決は、通常fileと実行権限の判定を使う（同 §5.1）
 - 明示reportの保存は、`.spec`と`.spec/reports`をsymlinkを辿らないdirectory fdとして開き、そのfd基準で
   一時fileの作成、確定、除去を行う（REQ-003、[結果・Diagnostic・終了コード §8](../../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#8-レポート)）

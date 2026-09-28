@@ -26,7 +26,7 @@ command名単位簡素化と整合している。command所有workspaceの設定
 
 ## 3. FED-VER-001 Context Digestの基数
 
-[verify仕様 §7](../03.詳細設計/03_操作仕様/03_verify.md#7-引数なし実行)は対象ごとにContextを解決する。
+[verify仕様 §7](../03.詳細設計/03_操作仕様/03_verify.md#7-引数なしの実行)は対象ごとにContextを解決する。
 明示複数対象でも、対象ごとに異なる依存閉包を持ち得る。一方、[結果 §8](../03.詳細設計/03_操作仕様/03_verify.md#8-結果)
 は最上位に`contextDigest`を1つだけ持ち、`verified`を「特定Context Digestに対する述語」と定義する。
 
