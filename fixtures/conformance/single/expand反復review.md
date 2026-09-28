@@ -1,7 +1,7 @@
 # expand反復fixture review
 
 2026-09-14。SINGLE-127-03とSINGLE-127-04を追加する。
-根拠は[CLI基盤契約 §5](../../../docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md#5-共通cli-argv解析)、
+根拠は[CLI基盤契約 §5](../../../docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md#5-cliの引数列の共通の解析)、
 [context仕様](../../../docs/03.詳細設計/03_操作仕様/01_context.md)、
 [適合fixture仕様](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md)の該当IDである。
 

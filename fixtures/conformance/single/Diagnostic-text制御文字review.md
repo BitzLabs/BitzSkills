@@ -2,7 +2,7 @@
 
 ユーザー承認により、Diagnosticのtext表示field内のC0、DEL、C1をbackslash 1文字＋u＋小文字16進4桁へ
 変換する。LF/TABも可視化し、Diagnosticを1行に保つ。規範は
-[結果契約 §7](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#7-textとjson)へ反映した。
+[結果契約 §7](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#7-テキストとjson)へ反映した。
 JSON値とreport、sort順序は変えず、行形式自体の改行・字下げも変えない。
 process抜粋のLF/TAB保持規則は別の契約であり変更しない。
 

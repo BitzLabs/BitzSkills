@@ -1,6 +1,6 @@
 # resource上限の境界 fixture review
 
-[適合fixture仕様 §7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#7-最小matrix-複合workspace)の
+[適合fixture仕様 §7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#7-最小matrix-複合ワークスペース)の
 `MULTI-020-01..16`と`MULTI-021-01..08`を扱う。いずれもreview済みの期待値であり、Coreの挙動を観測したものではない。
 
 ## 入力はcommitせず、dataset manifestから生成する
@@ -75,7 +75,7 @@ tree digest、期待結果digest、副作用state digestを生成器の実行か
 
 ## 訂正（2026-09-25）：verify binding境界のFrontmatter 32 KiB超過
 
-根拠の規範文：[安全な入出力・互換性 §4](../../../docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md#4-resource上限)
+根拠の規範文：[安全な入出力・互換性 §4](../../../docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md#4-リソースの上限)
 のFrontmatter 32 KiB上限（[文書・Frontmatter・状態仕様 §11](../../../docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md#11-yaml制約)）。
 
 食い違い：`verifyBindingCount`境界（`MULTI-020-15`・`MULTI-020-16`・`MULTI-021-08`、値9,999〜10,001）は、

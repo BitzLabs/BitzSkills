@@ -65,7 +65,7 @@ fresh checkoutの全Gate A検証は引き続き残る。Gate AはBlockedであ�
 
 ## 2026-09-26追記: relation edgeのDiagnosticへevidenceを追加、SINGLE-133を新設
 
-2026-09-25に管理者が承認した方針を反映したcommitで、[結果契約 §4](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#4-diagnostic-schema)と
+2026-09-25に管理者が承認した方針を反映したcommitで、[結果契約 §4](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#4-診断のスキーマ)と
 [registry §2](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md#2-status優先順位)へ、relation edgeまたは
 `covers`要素を単位とするDiagnostic（`SPEC-RELATION-MISSING-001`、`SPEC-RELATION-ADVISORY-MISSING-001`、
 `CTX-RELATION-TYPE-001`、`SPEC-MULTI-REF-001`、`SPEC-TEST-COVERAGE-001`）が、宣言どおりの参照先文字列を`evidence`に
@@ -78,11 +78,11 @@ fresh checkoutの全Gate A検証は引き続き残る。Gate AはBlockedであ�
   （`SPEC-PATH-INVALID-001`）はこの5 codeに含まれないため`evidence`を追加していない。
 - `SINGLE-020`から派生する`SINGLE-070-02`、`071-02`、`072`、`075-02`、`076`、`077`、`125-06`（別reviewが所有）も、
   同じDiagnosticを再利用するため`evidence: "REQ-999"`を継承する。text出力（`.txt`）は
-  [結果契約 §7](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#7-textとjson)によりevidenceを
+  [結果契約 §7](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#7-テキストとjson)によりevidenceを
   出さないため変えていない。
 - 新設`SINGLE-133`は、同じ`relations.requires`配列に不在targetを2件（`REQ-997`、`REQ-998`）持ち、`workspaceId`、
   `path`、`key`が全件同一でも`evidence`だけで各件を区別できることを固定する。2件は宣言順（＝evidenceの辞書順）で
-  並べ、[結果契約 §7](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#7-textとjson)が定める
+  並べ、[結果契約 §7](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#7-テキストとjson)が定める
   `workspace/path/line/column/code/specRefs`の辞書順がすべて同値の場合の並びを、宣言順で決定論的に固定するものである。
 
 trace_fixtures.pyの`CASES`タプルへ`evidence`列（既存caseは`None`）を加え、`reviewed_result`が`evidence`が非`None`のとき

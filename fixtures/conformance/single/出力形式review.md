@@ -1,9 +1,9 @@
 # 出力形式fixture review
 
 2026-09-14。SINGLE-075-01/02とSINGLE-127-12を追加する。
-根拠は[結果契約 §7・§8](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#7-textとjson)、
-[CLI基盤契約 §7](../../../docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md#7-report-flag)、
-[適合fixture仕様 §4](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#4-共通normalizer)と各matrix ID。
+根拠は[結果契約 §7・§8](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#7-テキストとjson)、
+[CLI基盤契約 §7](../../../docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md#7---reportフラグ)、
+[適合fixture仕様 §4](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#4-共通正規化器)と各matrix ID。
 
 | ID | 実行の違い | 期待 |
 |---|---|---|

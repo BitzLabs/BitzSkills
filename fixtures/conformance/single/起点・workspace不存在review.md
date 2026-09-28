@@ -1,7 +1,7 @@
 # 起点・workspace不存在fixture review
 
 2026-09-14。SINGLE-127-13とSINGLE-127-14を追加する。
-根拠は[CLI基盤契約 §6](../../../docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md#6-targetとworkspaceの不存在)と
+根拠は[CLI基盤契約 §6](../../../docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md#6-対象とワークスペースの不在)と
 [適合fixture仕様](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md)の該当ID。
 
 | ID | 唯一の不適合 | 期待 |

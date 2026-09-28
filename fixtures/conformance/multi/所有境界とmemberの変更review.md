@@ -1,6 +1,6 @@
 # 所有境界とmemberの変更 fixture review
 
-[適合fixture仕様 §7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#7-最小matrix-複合workspace)の
+[適合fixture仕様 §7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#7-最小matrix-複合ワークスペース)の
 `MULTI-008`、`MULTI-009`、`MULTI-010`、`MULTI-011`、`MULTI-017`、`MULTI-018-01/02`を扱う。
 いずれもreview済みの期待値であり、Coreの挙動を観測したものではない。
 

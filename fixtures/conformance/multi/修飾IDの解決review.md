@@ -1,6 +1,6 @@
 # 修飾IDの解決 fixture review
 
-[適合fixture仕様 §7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#7-最小matrix-複合workspace)の
+[適合fixture仕様 §7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#7-最小matrix-複合ワークスペース)の
 `MULTI-001`、`MULTI-003`、`MULTI-004-01/02`、`MULTI-025-01/02`を扱う。いずれもreview済みの期待値であり、
 Coreの挙動を観測したものではない。
 

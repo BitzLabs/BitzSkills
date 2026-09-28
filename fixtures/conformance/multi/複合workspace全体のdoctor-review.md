@@ -26,4 +26,4 @@ repository、Git index、home、cache、一時directoryを変更しない。
 - [doctor仕様 §3](../../../docs/03.詳細設計/03_操作仕様/04_doctor.md#3-検査順序)
 - [doctor仕様 §7](../../../docs/03.詳細設計/03_操作仕様/04_doctor.md#7-結果)
 - [複合workspace仕様 §8](../../../docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#8-全体操作の共通規則)
-- [結果・Diagnostic・終了コード §2.3](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#23-doctor全体結果)
+- [結果・Diagnostic・終了コード §2.3](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#23-doctorの全体結果)
