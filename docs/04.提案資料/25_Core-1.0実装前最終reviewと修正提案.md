@@ -263,9 +263,9 @@ applicable refinement、TASK、重複排除時点を固定した。`requires`先
 
 #### 問題
 
-[関係・トレースモデル §8](../03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md#8-coverage)は
+[関係・トレースモデル §8](../03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md#8-カバレッジ)は
 REQ／規範文ありTECHのtarget statementを「所有statementとapplicable refinement」とする。
-一方、[verify仕様 §3](../03.詳細設計/03_操作仕様/03_verify.md#3-対象)は
+一方、[verify仕様 §3](../03.詳細設計/03_操作仕様/03_verify.md#3-検証対象)は
 「所有statementとapplicable依存/refinement」とし、依存が所有するstatementを
 test対象へ含めるかが一致しない。
 
@@ -301,7 +301,7 @@ Unicode code point単位のtitle長、内部未知key、配列とtest tupleの�
 
 #### 問題
 
-[文書・Frontmatter・状態仕様 §3](../03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md#3-共通field)は
+[文書・Frontmatter・状態仕様 §3](../03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md#3-共通フィールド)は
 `tests`を`object[]`とする。一方、[同仕様 §11](../03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md#11-yaml制約)は
 scalar、scalar配列、通常mapだけを許可し、object配列を明示的に許可していない。
 設定仕様ではobject配列を`monorepo.members`だけに限定しており、文書Frontmatterとの規則も揃っていない。
@@ -375,7 +375,7 @@ secret mask、redaction後末尾65,536 byteも固定し、結果Schemaのtermina
 - `spawn_error`と「環境不足によるblocked」の境界
 - 抜粋の切捨て、制御文字無害化、secret maskの決定規則
 
-対象: [verify仕様 §5・§6](../03.詳細設計/03_操作仕様/03_verify.md#5-command実行)
+対象: [verify仕様 §5・§6](../03.詳細設計/03_操作仕様/03_verify.md#5-コマンドの実行)
 
 ### 5.4 `FIN-CLI-001`: CLI既定値とADR依存
 

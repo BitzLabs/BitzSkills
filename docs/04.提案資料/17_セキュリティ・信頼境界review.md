@@ -44,7 +44,7 @@ symlinkそのものを全面禁止するか、同一所有領域内だけ許可�
 
 ## 4. FED-SEC-002 catalog外SPEC
 
-[複合workspace仕様 §2](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#2-配置とcatalog)は再帰探索しないとし、
+[複合workspace仕様 §2](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#2-配置とカタログ)は再帰探索しないとし、
 §3はcatalog外`.spec/`を「選択した場合」にだけblockedとする。したがって`--all-workspaces`や`doctor`が成功しても、
 Git管理された`tools/legacy/.spec/bitz.yaml`が未登録のまま残り得る。
 

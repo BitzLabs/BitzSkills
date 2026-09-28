@@ -376,7 +376,7 @@ error > failed > blocked > passed_with_warnings > passed
 
 関係のエッジは、構文とスキーマ、修飾ID、ワークスペース、参照先、型の順に検査し、最初の主診断（primary Diagnostic）だけを返す。
 強い関係の参照先の不在は`SPEC-RELATION-MISSING-001`へ統一し、`CTX-RELATION-MISSING-001`はCore 1.0で使わず予約する。
-詳細は[関係・トレースモデル](../02_SPECモデル/04_関係・トレースモデル.md#51-relation-diagnosticの優先順位)に従う。
+詳細は[関係・トレースモデル](../02_SPECモデル/04_関係・トレースモデル.md#51-関係の診断の優先順位)に従う。
 
 ### 6.1 診断の表の閉じた集合
 

@@ -24,10 +24,10 @@
 
 ## 3. FED-CTX-001 複合workspaceのContext Schema
 
-[複合workspace仕様 §6](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#6-横断索引とcontext)は、
+[複合workspace仕様 §6](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#6-横断索引とコンテキスト)は、
 `documents[].workspaceId`、`resolution.workspaces[]`、`resolution.crossWorkspaceEdges[]`を追加している。
 しかし、各配列要素の型、必須性、空配列、未知field、単一workspaceでの省略可否を表として確定していない。
-[context仕様 §4](../03.詳細設計/03_操作仕様/01_context.md#4-context-bundle)のJSON例も単一workspaceだけである。
+[context仕様 §4](../03.詳細設計/03_操作仕様/01_context.md#4-コンテキスト一式)のJSON例も単一workspaceだけである。
 
 少なくとも次を正本Schemaへ追加する必要がある。
 
@@ -39,7 +39,7 @@
 
 ## 4. FED-CTX-002 Digest入力となる設定
 
-[context仕様 §6](../03.詳細設計/03_操作仕様/01_context.md#6-context-digest)は、command名、argv、cwd、timeout、
+[context仕様 §6](../03.詳細設計/03_操作仕様/01_context.md#6-コンテキストのハッシュ値)は、command名、argv、cwd、timeout、
 Contextに影響する実効設定をDigestへ含める。複合workspace仕様は到達した各workspaceの実効設定を追加するが、
 workspaceの`bitz.yaml`全体を含めるのか、閉包が参照するcommandとContext上限だけを含めるのかが明確でない。
 
