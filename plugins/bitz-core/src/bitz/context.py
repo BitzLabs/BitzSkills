@@ -363,8 +363,13 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     loc = locate_workspace(cwd, git, env)
     requested_workspace = parsed.single.get("--workspace")
 
-    # --- workspace決定（複合workspace仕様 §3）。修飾起点の所有workspaceをrequest workspaceにする。 ---
-    multi_pre: multiws.PrecheckResult | None = None
+    # --- workspace決定（複合workspace仕様 §3）。 ---------------------------------
+    # 複合workspaceではactive workspaceの非修飾IDも受け付けるため、修飾起点がある
+    # 場合だけでなく、repository rootがcatalogを宣言している場合は事前検査を行う。
+    # 単一workspaceは従来の軽量経路のままとする。
+    multi_pre: multiws.PrecheckResult | None = (
+        multiws.precheck(cwd, git, env) if multiws.is_declared(cwd, git, env) else None
+    )
     workspace_path = "."
     qualified_prefixes = {
         q[0] for r in roots_raw if (q := multirelate.parse_qualified(r)) is not None
@@ -375,20 +380,26 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         target_ws_id = next(iter(qualified_prefixes))
         if requested_workspace is not None and requested_workspace != target_ws_id:
             raise CliArgError("context", f"起点のworkspaceと--workspaceが一致しません: {target_ws_id}")
-        multi_pre = multiws.precheck(cwd, git, env)
-        if multi_pre.ok:
-            if target_ws_id == multi_pre.root_id:
+    else:
+        target_ws_id = requested_workspace
+
+    if multi_pre is not None and multi_pre.ok:
+        if target_ws_id is None and loc.config_path is not None:
+            active_outcome = config_mod.read_config(loc.config_path)
+            target_ws_id = active_outcome.workspace_id
+        if target_ws_id == multi_pre.root_id:
+            assert multi_pre.repo_root is not None
+            loc = WorkspaceLocation(
+                root=multi_pre.repo_root, config_path=os.path.join(multi_pre.repo_root, ".spec", "bitz.yaml")
+            )
+            workspace_path = "."
+        else:
+            member = next((m for m in multi_pre.members if m.id == target_ws_id), None)
+            if member is not None:
                 loc = WorkspaceLocation(
-                    root=multi_pre.repo_root, config_path=os.path.join(multi_pre.repo_root, ".spec", "bitz.yaml")
+                    root=member.root, config_path=os.path.join(member.root, ".spec", "bitz.yaml")
                 )
-                workspace_path = "."
-            else:
-                member = next((m for m in multi_pre.members if m.id == target_ws_id), None)
-                if member is not None:
-                    loc = WorkspaceLocation(
-                        root=member.root, config_path=os.path.join(member.root, ".spec", "bitz.yaml")
-                    )
-                    workspace_path = member.path
+                workspace_path = member.path
 
     outcome: config_mod.ConfigOutcome | None = None
     if loc.config_path is not None:

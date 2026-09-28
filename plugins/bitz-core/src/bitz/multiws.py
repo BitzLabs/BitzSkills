@@ -635,6 +635,21 @@ def ordered_workspaces(pre: "PrecheckResult") -> list[tuple[str, str, str]]:
     return out
 
 
+def is_declared(cwd: str, git: gitutil.GitInfo, env: dict[str, str]) -> bool:
+    """repository rootの有効な設定が複合workspaceを宣言しているかを返す。
+
+    workspace単独操作が非修飾targetを受けた場合でも、memberを含むcatalogを使う必要がある。
+    一方、単一workspaceで :func:`precheck` を実行すると``multiWorkspace``不在を設定不適合として
+    扱うため、呼び出し側はこの軽量判定を先に使う。
+    """
+
+    _root, config_path, _git_confirmed = _locate_root(cwd, git, env)
+    if config_path is None:
+        return False
+    outcome = config_mod.read_config(config_path)
+    return outcome.config is not None and "multiWorkspace" in outcome.config
+
+
 def base_workspace_map(
     git: gitutil.GitInfo,
     cwd: str,
