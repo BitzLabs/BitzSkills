@@ -166,7 +166,7 @@ test対応は対象宣言であり、assertionの十分性を証明しない。
 変更しながらstatusを`draft`または`outdated`へ戻していない場合、`SPEC-SAFETY-APPROVED-001`／failedとする。
 
 ここで比較する「EARS-AI規範文」は、Semantic IRの意味field（`actor`、`activation`、`modality`、`reason`、
-`operation`、`extensions`。[Context Digest正規化仕様 §3.1.3](../00_共通契約/03_Context-Digest正規化仕様.md#313-statements)
+`operation`、`extensions`。[Context Digest正規化仕様 §3.1.3](../00_共通契約/03_Context-Digest正規化仕様.md#313-規範文)
 と同じ集合）を指し、`source`・`raw`などの位置情報や原文の字面は含めない。
 
 `implements`、`tests`、`verify`、`related`、`x-`拡張、説明文だけの変更は意味変更に含めない。

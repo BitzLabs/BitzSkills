@@ -24,7 +24,7 @@ source directoryまたはwheelとして受け取り、`runner: package`が候補
 
 - `plugins/bitz-core`の中でのPython project、lock file、import packageの配置
 - harnessへ渡すsource directoryがどこか
-- Core実装に固有の試験（単体試験、[適合fixture仕様 §4.1](../../03.詳細設計/00_共通契約/04_適合fixture仕様.md#41-内部parser受入)の
+- Core実装に固有の試験（単体試験、[適合fixture仕様 §4.1](../../03.詳細設計/00_共通契約/04_適合fixture仕様.md#41-内部の構文解析器受入)の
   実装側test adapter）の置き場所と試験framework
 - Coreに依存しない`fixtures/`との責務分担と参照の向き
 

@@ -18,7 +18,7 @@ bitz context <spec-or-statement-id>...
 ```
 
 共通argv解析、重複option、空値、target不存在は
-[Core実行環境・CLI基盤契約 §5・§6](../00_共通契約/06_Core実行環境・CLI基盤契約.md#5-共通cli-argv解析)に従う。
+[Core実行環境・CLI基盤契約 §5・§6](../00_共通契約/06_Core実行環境・CLI基盤契約.md#5-cliの引数列の共通の解析)に従う。
 purpose既定値は`interpret`、detail既定値は`standard`とする。起点は文書IDとstatement IDだけを受け付け、
 path、code、testを受け付けない。単一workspaceでは非修飾IDだけを受け付ける。複合workspaceではactive workspaceの
 非修飾IDまたは修飾IDを受け付け、全起点の所有workspaceを1つに限定する。`--workspace`は非修飾IDの解決基準を
@@ -218,7 +218,7 @@ adapterは最初の書込み直前と、仕様・設定変更を認識した再�
 
 既定20文書、128 KiB、hard limit 100文書、1 MiBとする。意味依存にdepth上限を設けない。
 完全閉包が上限を超えれば`CTX-LIMIT-001`／blockedとする。byte上限は、指定した`--detail`にかかわらず、
-`standard`提示（[安全な入出力 §4「ContextのSemantic IRと標準提示」](../00_共通契約/02_安全な入出力・互換性.md#4-resource上限)）
+`standard`提示（[安全な入出力 §4「コンテキストの意味中間表現と標準の提示」](../00_共通契約/02_安全な入出力・互換性.md#4-リソースの上限)）
 の量で測る。detail/expandだけで提示hard limitを超えれば`CTX-PROJECTION-LIMIT-001`／failedとする。
 
 ## 9. Markdown提示
@@ -262,7 +262,7 @@ Markdownは結果JSONだけを入力とする表示であり、status、件数�
 
 ### 9.4 Diagnostics and Coverage Gaps
 
-Diagnosticは[共通結果契約 §7](../00_共通契約/01_結果・Diagnostic・終了コード.md#7-textとjson)のtext行形式を
+Diagnosticは[共通結果契約 §7](../00_共通契約/01_結果・Diagnostic・終了コード.md#7-テキストとjson)のtext行形式を
 `- `に続けて1件1行で出し、JSONの順序と制御文字の可視化規則をそのまま使う。`suggestedAction`を持つ行の直後へ
 2 space字下げの`-> `継続行を1行出す。続けてcoverage gapを`- coverage: <MODALITY> <bucket>: <ids>`の形で、
 `must`、`should`、`may`の順、各modality内は`unaddressed`、`untested`の順に出す。0件のbucketは行を出さない。

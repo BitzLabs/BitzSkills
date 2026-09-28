@@ -26,7 +26,7 @@ treeと`changes/`の差替えfileだけで表す。複合workspaceの最小matri
    version管理できない。Gitは`.git`を含むpathの追跡自体を拒否する。
 
 どちらも「fixtureが表せないから検査しない」で済ませると、matrixの行を緩和することになる。
-[適合fixture仕様 §1](../../03.詳細設計/00_共通契約/04_適合fixture仕様.md#1-所有範囲)はmatrixの行の削除・緩和を禁じている。
+[適合fixture仕様 §1](../../03.詳細設計/00_共通契約/04_適合fixture仕様.md#1-本書の範囲)はmatrixの行の削除・緩和を禁じている。
 
 ## Decision
 

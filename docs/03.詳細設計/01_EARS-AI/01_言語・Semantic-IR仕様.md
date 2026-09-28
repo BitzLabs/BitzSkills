@@ -1,18 +1,18 @@
-# EARS-AI言語・Semantic IR仕様 1.0
+# EARS-AI言語・意味中間表現仕様 1.0
 
 ## 1. 適用範囲
 
-EARS-AI Coreは、全Bitz操作が同じ構造として解析する最小要求言語を定義する。自由記述の意味的正しさ、
-SDD flow、品質指標、DDD modelは定義しない。
+EARS-AI Coreは、Bitzのすべての操作が同じ構造として解析する最小の要求言語を定義する。自由記述の意味的正しさ、
+SDDフロー、品質指標、DDDモデルは定義しない。
 
-Markdownは人間が編集する正本、Semantic IRは決定論的な検査・Context・traceに使う派生表現である。
-Semantic IRを正本fileとして保存しない。
+Markdownは人間が編集する正本であり、意味中間表現（Semantic IR）は決定論的な検査、コンテキスト、トレースに使う派生表現である。
+意味中間表現を正本のファイルとして保存しない。
 
 ## 2. 意味軸
 
 ### 2.1 ID
 
-規範文IDは`<document-id>:<local-id>`の2階層固定とする。
+規範文ID（statement ID）は`<document-id>:<local-id>`の2階層固定とする。
 
 ```ebnf
 document-id  = prefix, "-", digit, digit, digit, { digit } ;
@@ -21,43 +21,43 @@ local-id     = upper, { upper | digit | "-" }, "-", digit, digit, { digit } ;
 statement-id = document-id, ":", local-id ;
 ```
 
-- 規範文だけにIDを要求する。
+- 規範文（statement）だけにIDを要求する。
 - 3階層以上のIDを禁止する。
-- 同一workspace内で一意とする。
+- 同一ワークスペース内で一意とする。
 - 削除したIDを別の意味へ再利用しない。
 - 独立して合否判定できる結果は別IDに分ける。
 
-### 2.2 ACTOR
+### 2.2 実行主体
 
-`ACTOR`は応答、生成、制約遵守の責任を負う実行主体である。作成者、承認者、所有teamではない。
+実行主体（actor）は、応答、生成、制約の遵守に責任を負う主体である。作成者、承認者、所有チームではない。
 
 ### 2.3 発動条件
 
-| tag | 意味 |
+| タグ | 意味 |
 |---|---|
 | `ALWAYS` | 常時適用 |
-| `WHEN` | eventまたは条件成立時 |
-| `WHILE` | 状態継続中 |
+| `WHEN` | イベントの発生または条件の成立 |
+| `WHILE` | 状態が続いている間 |
 | `WHERE` | 機能・構成・環境が存在する場合 |
 | `IF_ERROR` | 異常または望ましくない条件 |
 
-1文は1つの発動条件を持つ。
+1文は1つの発動条件（activation）を持つ。
 
 ### 2.4 規範強度
 
-| tag | 意味 | 未充足 |
+| タグ | 意味 | 未充足 |
 |---|---|---|
-| `MUST` | 必須 | error |
-| `SHOULD` | 推奨 | `[REASON]`なしは`EAI-CORE-SHOULD-001`／warning |
+| `MUST` | 必須 | `error` |
+| `SHOULD` | 推奨 | `[REASON]`なしは診断`EAI-CORE-SHOULD-001`（重大度`warning`） |
 | `MAY` | 任意 | 不適合にしない |
 
-規範強度の省略を禁止する。`SHOULD`の理由は`[SHOULD] [REASON] <text>`で明示する。
-理由なしの`[SHOULD]`もparseしてSemantic IRの`reason`をnullにするが、warningを返す。
-`MUST`と`MAY`へ`[REASON]`を付けてはならない。Coreは強度と理由を保持するが、実装充足はtestまたは人間確認で判断する。
+規範強度（modality）の省略を禁止する。`SHOULD`の理由（reason）は`[SHOULD] [REASON] <text>`で明示する。
+理由なしの`[SHOULD]`も構文解析して意味中間表現の`reason`を`null`にするが、重大度`warning`を返す。
+`MUST`と`MAY`へ`[REASON]`を付けてはならない。Coreは強度と理由を保持するが、実装充足はテストまたは人間確認で判断する。
 
 ### 2.5 処理種別
 
-| tag | 意味 |
+| タグ | 意味 |
 |---|---|
 | `THEN` | 観測可能な応答 |
 | `GENERATE` | 推論を伴う成果物生成 |
@@ -66,8 +66,8 @@ statement-id = document-id, ":", local-id ;
 ## 3. 正規構文
 
 本節はISO/IEC 14977相当のEBNFだけを使用する。`,`は連接、`|`は選択、`[ ... ]`は省略可能、
-`{ ... }`は0回以上の繰返し、`;`は規則終端、引用符内は端末を表す。ABNFの`%x`、`n*element`、`/`を使用しない。
-入力は妥当なUTF-8から復号したUnicode scalar value列とし、文法は1 code point単位で評価する。
+`{ ... }`は0回以上の繰返し、`;`は規則の終端、引用符の中は終端記号を表す。ABNFの`%x`、`n*element`、`/`は使用しない。
+入力は妥当なUTF-8から復号したUnicodeのスカラー値の列とし、文法は1コードポイント単位で評価する。
 
 ```ebnf
 statement    = list-marker, SP, "[", statement-id, "]", SP,
@@ -113,59 +113,60 @@ alpha        = upper | lower ;
 alnum        = alpha | digit ;
 ```
 
-`plain-char`は`[`、`\\`、backtick、CR、LF以外のUnicode scalar valueである。`]`は単独の通常文字として許可する。
-`qchar`はDQUOTE、`\\`、CR、LF以外、`code-char`はCR、LF以外のUnicode scalar valueである。
-これら3つは否定集合であるため上の有限な生成規則とは分けて定義する。
+`plain-char`は`[`、`\\`、バッククォート、CR、LF以外のUnicodeのスカラー値である。`]`は単独の通常文字として許可する。
+`qchar`は`DQUOTE`、`\\`、CR、LF以外、`code-char`はCR、LF以外のUnicodeのスカラー値である。
+これらの3つは否定集合であるため、上の有限な生成規則とは分けて定義する。
 
-`backtick-run`は連続するbacktickの極大列として読み取る。開始runと同じ個数のbacktickからなる最初のrunだけを
-終了delimiterとする。
-異なる長さのrunは`code-char`として保持する。code span内ではescapeとtagを解釈しない。
-Semantic IRのtextへは開始・終了のbacktick runを除いた内容だけを保持する。内部の異なる長さのrunは残す。
-span外のtextと連結した後、§4のSP／TAB正規化を適用する。区切りを含む原文は`raw`と文書本文へ保持する。
-`text`の終了位置は次に現れる未escapeの既知tag開始で決める。operationの`text`では、code span外にある行末直前の
-最後の`.`または`。`を`period`とし、それ以前を`text`とする。空の`text`は許可しない。
+`backtick-run`は、連続するバッククォートの極大な連続列として読み取る。開始した連続列と同じ個数のバッククォートから成る
+最初の連続列だけを終了の区切り文字とする。
+異なる長さの連続列は`code-char`として保持する。コードスパンの中では、エスケープとタグを解釈しない。
+意味中間表現の`text`には、開始・終了のバッククォートの連続列を除いた内容だけを保持する。内部にある異なる長さの連続列は残す。
+コードスパンの外の`text`と連結した後、§4のSP／TABの正規化を適用する。区切りを含む原文は`raw`と文書の本文へ保持する。
+`text`の終了位置は、次に現れる未エスケープの既知のタグの開始位置で決める。`operation`の`text`では、コードスパンの外にある
+行末の直前にある最後の`.`または`。`を`period`とし、それより前を`text`とする。空の`text`は許可しない。
 
-quoted value内の`escaped`はescape後の1 code pointを値へ保持する。text内も同じ解除を行う。
-未知escape、未閉鎖quoted value、開始runと同じ終了runがないcode span、未閉鎖tagを受理しない。
+`quoted-value`の中の`escaped`は、エスケープ後の1コードポイントを値へ保持する。`text`の中でも同じ解除を行う。
+未知のエスケープ、未閉鎖の`quoted-value`、開始した連続列と同じ長さの終了する連続列がないコードスパン、未閉鎖のタグは受理しない。
 
-extensionはCore 1.0ではopaqueな値として保持する。CoreはProfile Manifest、外部Validator、
-Profile固有migrationを読み込まない。
-未知名前空間は`EAI-EXT-UNKNOWN-001`／warningとし、Core構文の解析を続ける。
+拡張タグ（extension）はCore 1.0では不透明な値として保持する。Coreはプロファイルマニフェスト、外部の検証プログラム、
+プロファイル固有の移行を読み込まない。
+未知の名前空間は診断`EAI-EXT-UNKNOWN-001`（重大度`warning`）とし、Coreの構文解析を続ける。
 
 ## 4. 字句規則
 
 1. 規範文は1行で完結し、行継続を認めない。
-2. code span内の`[`と`]`をtag区切りとして扱わない。
-3. code span外の未escape `[`で直前textを終了する。
-4. literal `[`はcode spanまたは`\[`で記述する。`\]`、`\\`、``\` ``も受理する。
-5. 未閉鎖tagは`EAI-CORE-SYNTAX-004`、未閉鎖code spanは`EAI-CORE-SYNTAX-005`とする。
-6. text前後のSPとTABを除去し、内部の連続SP／TABを1個のSPへ正規化する。その他のUnicode空白文字は保持する。
+2. コードスパンの中の`[`と`]`をタグの区切りとして扱わない。
+3. コードスパンの外にある未エスケープの`[`で、直前の`text`を終了する。
+4. リテラルの`[`は、コードスパンまたは`\[`で書く。`\]`、`\\`、``\` ``も受理する。
+5. 未閉鎖のタグは診断`EAI-CORE-SYNTAX-004`、未閉鎖のコードスパンは診断`EAI-CORE-SYNTAX-005`とする。
+6. `text`の前後のSPとTABを除去し、内部で連続するSP／TABを1個のSPへ正規化する。それ以外のUnicodeの空白文字は保持する。
 7. 行末の`.`または`。`を必須とする。
-8. tag順序はID、extension、ACTOR、発動条件、規範強度、処理種別とする。
+8. タグの順序は、ID、拡張タグ、実行主体、発動条件、規範強度、処理種別（operation）とする。
 
-Lexerは行を左から右へ1回走査し、`TEXT`、`CODE_SPAN`、`TAG`、`SP`、`PERIOD` tokenを返す。
-同じ位置で複数一致する場合はcode span、既知escape、tag開始、period、通常文字の順で確定する。
-`PERIOD`にするのはcode span外にある行末の`.`または`。`だけであり、それ以外の句点は`TEXT`へ含める。
-quoted value内ではDQUOTE、既知escape、qcharの順とする。tokenの開始・終了offsetとDiagnosticのline／columnは
-Unicode code point単位の1始まりとし、TAB、結合文字、全角文字も各1 columnと数える。改行code pointはtokenに含めない。
+字句解析器（Lexer）は、行を左から右へ1回走査し、`TEXT`、`CODE_SPAN`、`TAG`、`SP`、`PERIOD`のトークンを返す。
+同じ位置で複数が一致する場合は、コードスパン、既知のエスケープ、タグの開始、`period`、通常の文字の順で確定する。
+`PERIOD`にするのは、コードスパンの外にある行末の`.`または`。`だけであり、それ以外の句点は`TEXT`へ含める。
+`quoted-value`の中では`DQUOTE`、既知のエスケープ、`qchar`の順とする。トークンの開始・終了オフセットと、診断の行番号・列番号は、
+Unicodeのコードポイント単位の1始まりとし、TAB、結合文字、全角文字も各1列と数える。改行のコードポイントはトークンに含めない。
 
-同じraw原因から複数の構文候補が生じる場合は、未閉鎖code span、未閉鎖／不正tag、ID形式、tag順序、
-必須tag不足、発動条件複数、句点欠落、operand不足の順でprimaryを1件だけ返す。別位置の独立原因はそれぞれ返す。
-[Diagnostic registry](../00_共通契約/05_Diagnostic-registry.md)のpriorityはこの順序と一致させる。
+同じ元の原因から複数の構文候補が生じる場合は、未閉鎖のコードスパン、未閉鎖または不正なタグ、ID形式、タグの順序、
+必須タグの不足、発動条件が複数、句点の欠落、オペランドの不足の順で、主診断を1件だけ返す。別の位置にある独立した原因は、
+それぞれ返す。
+[診断レジストリ](../00_共通契約/05_Diagnostic-registry.md)の`priority`は、この順序と一致させる。
 
-期待するtagの出現位置に別のtagが現れた場合、次のいずれかで判定する。
+期待するタグの出現位置に別のタグが現れた場合は、次のいずれかで判定する。
 
-1. 期待するtagが同じ行の後方（code span外）に存在する: tag順序不正（`EAI-CORE-SYNTAX-001`）とする。
-2. 期待するtagが同じ行のどこにも存在しない: 必須tag不足（`EAI-CORE-SYNTAX-002`）とする。
-3. その位置のtagがCore tagでも妥当なextensionでもない: 不正tag（`EAI-CORE-SYNTAX-004`）とする。
+1. 期待するタグが同じ行の後方（コードスパンの外）に存在する場合は、タグの順序が不正（`EAI-CORE-SYNTAX-001`）とする。
+2. 期待するタグが同じ行のどこにも存在しない場合は、必須タグの不足（`EAI-CORE-SYNTAX-002`）とする。
+3. その位置のタグがCoreタグでも妥当な拡張タグでもない場合は、不正なタグ（`EAI-CORE-SYNTAX-004`）とする。
 
-この規則は`operation`の後に続くtag（末尾extensionを含む）にも同じ順で適用する。
+この規則は、`operation`の後に続くタグ（末尾の拡張タグを含む）にも、同じ順序で適用する。
 
-## 5. 規範行候補
+## 5. 規範文の候補
 
-候補抽出と完全構文検証を分離する。
+候補抽出（candidate extraction）と、完全な構文検証を分離する。
 
-ScannerはLFへ改行を正規化した後、次の状態機械を文書先頭から行単位で実行する。
+走査器（Scanner）はLFへ改行を正規化した後、次の状態機械を文書の先頭から行単位で実行する。
 
 ```text
 state = NORMAL
@@ -187,24 +188,25 @@ for each line:
   if IsCandidateToken(token): emit candidate(line, cursor + 3)
 ```
 
-opening fenceのrun後にinfo文字列があってもopeningとする。closing fenceにinfo文字列は許可しない。
-引用は先頭0〜3 SPの直後が`>`である行を指し、引用内のlistを候補にしない。TABをindentまたはSPとして扱わない。
-`cursor + 3`は最初の`[`の1始まりcolumnである。
+開始フェンスの連続列の後に情報文字列があっても、開始とみなす。終了フェンスに情報文字列は許可しない。
+引用とは、先頭の0〜3個のSPの直後が`>`である行を指し、引用の中のリストを候補にしない。TABを字下げまたはSPとして扱わない。
+`cursor + 3`は、最初の`[`の1始まりの列である。
 
-`IsCandidateToken`は次のいずれかを満たす場合だけtrueとする。判定はASCIIかつcase-sensitiveで、tokenの妥当性を要求しない。
+`IsCandidateToken`は、次のいずれかを満たす場合だけ`true`とする。判定はASCIIで、大文字と小文字を区別し、
+トークンの妥当性を要求しない。
 
 1. `REQ`、`TECH`、`ADR`、`TASK`のいずれかで始まる。
-2. ASCII uppercaseで始まり、`-`または`:`を1個以上含む。未知接頭辞、桁不足、3階層を候補に残すための規則である。
+2. ASCIIの大文字で始まり、`-`または`:`を1個以上含む。未知の接頭辞、桁数の不足、3階層のIDを候補に残すための規則である。
 3. `ACTOR`、`ALWAYS`、`WHEN`、`WHILE`、`WHERE`、`IF_ERROR`、`MUST`、`SHOULD`、`MAY`、
-   `REASON`、`THEN`、`GENERATE`、`CONSTRAINT`のいずれかで始まる。ID欠落と不正Core tagを候補に残す。
-4. `lower, { lower | digit }, ":"`に一致する接頭辞を持つ。extensionから始まるID欠落を候補に残す。
+   `REASON`、`THEN`、`GENERATE`、`CONSTRAINT`のいずれかで始まる。IDの欠落と、不正なCoreタグを候補に残す。
+4. `lower, { lower | digit }, ":"`に一致する接頭辞を持つ。拡張タグから始まるIDの欠落を候補に残す。
 
-Scannerは角括弧の閉鎖、statement ID、tag、extensionの妥当性を判定しない。候補をbyte変更せず
-Lexer／Parser／Validatorへ渡す。候補でない行へIDや規範強度を要求しない。
+走査器は、角括弧の閉鎖、規範文ID、タグ、拡張タグの妥当性を判定しない。候補を1バイトも変更せず、
+字句解析器／構文解析器（Parser）／検証プログラムへ渡す。候補でない行へ、IDや規範強度を要求しない。
 
-これにより、桁数不足、未知接頭辞、3階層、ID欠落を通常本文として見逃さない。
+これにより、桁数の不足、未知の接頭辞、3階層のID、IDの欠落を、通常の本文として見逃さない。
 
-## 6. Semantic IR
+## 6. 意味中間表現
 
 ```json
 {
@@ -225,64 +227,65 @@ Lexer／Parser／Validatorへ渡す。候補でない行へIDや規範強度を�
 }
 ```
 
-Semantic IRはID、source、actor、activation、modality、reason、operation、extensionを保持する。
-Lexer token、Markdown装飾、区切り文字の具象nodeは公開Schemaに含めない。
+意味中間表現は、`id`、`source`、`actor`、`activation`、`modality`、`reason`、`operation`、`extensions`を保持する。
+字句解析器のトークン、Markdownの装飾、区切り文字の具象ノードは、公開スキーマに含めない。
 
 - `text`は正規化後の値を保持する。
-- `reason`は`SHOULD`の`[REASON]` text、理由なし`SHOULD`ではnull、`MUST`／`MAY`ではnullとする。
-- `extensions`は出現順の`{namespace, term, value}`配列とし、値未指定はnull、quoted valueはescape解除後の文字列を保持する。
-- `unknownExtensions`は`extensions`のうち未知namespaceの要素を同じobject形・出現順で保持する。重複も保持する。
+- `reason`は、`SHOULD`の`[REASON]`の`text`とし、理由のない`SHOULD`では`null`、`MUST`または`MAY`では`null`とする。
+- `extensions`は、出現順の`{namespace, term, value}`の配列とし、値の指定がない場合は`null`、`quoted-value`の場合は
+  エスケープを解除した後の文字列を保持する。
+- `unknownExtensions`は、`extensions`のうち`namespace`が未知の要素を、同じオブジェクトの形、出現順で保持する。重複も保持する。
 - `raw`は診断と原文参照のため保持する。
-- `untrustedText`は常にtrueで、extensionが解除できない。
-- JSONをCoreとadapter間の機械契約とする。
-- `semanticHash`と`fileHash`を公開fieldにしない。
+- `untrustedText`は常に`true`とし、拡張タグで解除できない。
+- JSONを、Coreとアダプターの間の機械契約とする。
+- `semanticHash`と`fileHash`は、公開フィールドにしない。
 
-## 7. ParserとSerializer
+## 7. 構文解析器と直列化器
 
 - UTF-8を必須とする。
-- 候補Scannerを先に適用する。
-- ID、重複、tag順序、必須operand、空文字、句点、`SHOULD`理由を検証する。`MUST`または`MAY`の直後に
-  `[REASON]`があればtag順序不正として`EAI-CORE-SYNTAX-001`を返す。
-- source位置を行・列単位で保持する。
-- opaque extensionを失わない。
-- extensionの有無でCore解析結果を変えない。
-- networkとAI推論を使わない。
-- 同一入力・同一versionから同一Semantic IRを返す。
+- 走査器による候補抽出を先に適用する。
+- ID、重複、タグの順序、必須のオペランド、空の文字列、句点、`SHOULD`の理由を検証する。`MUST`または`MAY`の直後に
+  `[REASON]`があれば、タグの順序が不正として診断`EAI-CORE-SYNTAX-001`を返す。
+- `source`の位置を、行・列単位で保持する。
+- 不透明な拡張タグを失わない。
+- 拡張タグの有無で、Coreの解析結果を変えない。
+- ネットワークとAIの推論を使わない。
+- 同一の入力、同一のバージョンから、同一の意味中間表現を返す。
 
-Serializerは正規tag順へ整形できるが意味を変更しない。format変更と内容変更を同一patchへ混ぜず、
-opaque extensionを削除しない。Core 1.0は公開`bitz fmt`を提供しない。
+直列化器（Serializer）は、正規のタグの順へ整形できるが、意味を変更しない。整形による変更と内容の変更を同じパッチへ混ぜず、
+不透明な拡張タグを削除しない。Core 1.0は、公開の`bitz fmt`を提供しない。
 
 ## 8. 原子性と文体
 
 - 独立して失敗、変更、検証できる結果は別IDへ分割する。
-- 1文で複数actorへ義務を課さない。
-- 型、関数、状態、code値はcode spanにする。
+- 1つの文で、複数の実行主体へ義務を課さない。
+- 型、関数、状態、コードの値は、コードスパンにする。
 - 数値条件は単位、比較演算、許容誤差を明示する。
 - 「適切に」「必要に応じて」「高速に」など判定不能な表現を避ける。
 
-## 9. Diagnostic
+## 9. 診断
 
-本表は検索用索引である。draft差分を含む条件ごとの規範値とprimary優先順位は
-[Diagnostic registry](../00_共通契約/05_Diagnostic-registry.md)が所有する。
+本表は検索用の索引である。`draft`の差分を含む、条件ごとの規範値と主診断の優先順位は、
+[診断レジストリ](../00_共通契約/05_Diagnostic-registry.md)が所有する。
 
-| code | severity | `resultStatus` | 条件 |
+| コード | 重大度 | 結果への効果 | 条件 |
 |---|---|---|---|
-| `EAI-CORE-SYNTAX-001` | error／draftはwarning | `failed`／`passed_with_warnings` | tag順序不正 |
-| `EAI-CORE-SYNTAX-002` | error／draftはwarning | `failed`／`passed_with_warnings` | 必須tag不足 |
-| `EAI-CORE-SYNTAX-003` | error／draftはwarning | `failed`／`passed_with_warnings` | 発動条件複数 |
-| `EAI-CORE-SYNTAX-004` | error／draftはwarning | `failed`／`passed_with_warnings` | 不正escape、未閉鎖quoted value、不正・未閉鎖tag |
-| `EAI-CORE-SYNTAX-005` | error／draftはwarning | `failed`／`passed_with_warnings` | 未閉鎖code span |
-| `EAI-CORE-SYNTAX-006` | error／draftはwarning | `failed`／`passed_with_warnings` | 句点欠落 |
-| `EAI-CORE-ID-001` | error | `failed` | ID形式不正、または規範文IDの文書部分がFrontmatter `id`と不一致（draftでもerror） |
-| `EAI-CORE-ID-002` | error | `failed` | 規範文ID重複 |
-| `EAI-CORE-SEM-001` | error／draftはwarning | `failed`／`passed_with_warnings` | operand不足 |
-| `EAI-CORE-SHOULD-001` | warning | `passed_with_warnings` | `SHOULD`の理由field不足 |
-| `EAI-EXT-UNKNOWN-001` | warning | `passed_with_warnings` | opaque extension |
+| `EAI-CORE-SYNTAX-001` | `error`／`draft`は`warning` | `failed`／`passed_with_warnings` | タグの順序が不正 |
+| `EAI-CORE-SYNTAX-002` | `error`／`draft`は`warning` | `failed`／`passed_with_warnings` | 必須タグの不足 |
+| `EAI-CORE-SYNTAX-003` | `error`／`draft`は`warning` | `failed`／`passed_with_warnings` | 発動条件が複数 |
+| `EAI-CORE-SYNTAX-004` | `error`／`draft`は`warning` | `failed`／`passed_with_warnings` | 不正なエスケープ、未閉鎖の`quoted-value`、不正または未閉鎖のタグ |
+| `EAI-CORE-SYNTAX-005` | `error`／`draft`は`warning` | `failed`／`passed_with_warnings` | 未閉鎖のコードスパン |
+| `EAI-CORE-SYNTAX-006` | `error`／`draft`は`warning` | `failed`／`passed_with_warnings` | 句点の欠落 |
+| `EAI-CORE-ID-001` | `error` | `failed` | ID形式が不正、または規範文IDの文書部分がフロントマターの`id`と不一致（`draft`でも`error`とする） |
+| `EAI-CORE-ID-002` | `error` | `failed` | 規範文IDの重複 |
+| `EAI-CORE-SEM-001` | `error`／`draft`は`warning` | `failed`／`passed_with_warnings` | オペランドの不足 |
+| `EAI-CORE-SHOULD-001` | `warning` | `passed_with_warnings` | `SHOULD`の理由フィールドの不足 |
+| `EAI-EXT-UNKNOWN-001` | `warning` | `passed_with_warnings` | 不透明な拡張タグ |
 
-ID系は索引を壊すためdraftでもerrorとする。
+ID系は、索引を壊すため、`draft`でも`error`とする。
 
 ## 10. 言語
 
-1 workspace内の規範文を単一言語にすることを推奨し、正本言語は`bitz.yaml.language`で指定する。
-Core 1.0は自然言語を決定論的に識別しないため、言語差をDiagnosticまたは合否へ使用しない。
-`EAI-CORE-LANG-001`は予約済みとし、公開結果へ返さない。自動翻訳同期と意味的同一性判定も対象外とする。
+1つのワークスペースの中にある規範文は単一の言語にすることを推奨し、正本言語（language）は`bitz.yaml.language`で指定する。
+Core 1.0は自然言語を決定論的に識別しないため、言語の違いを診断または合否の判定に使わない。
+`EAI-CORE-LANG-001`は予約済みとし、公開結果へ返さない。自動翻訳の同期と、意味的な同一性の判定も対象外とする。

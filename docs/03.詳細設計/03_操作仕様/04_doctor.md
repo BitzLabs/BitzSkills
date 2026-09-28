@@ -129,7 +129,7 @@ check statusの`info`は操作statusを変えず、`warning`は`passed_with_warn
 
 単一workspaceでは最上位`checks[]`にglobalとworkspace固有検査を処理順で置く。全体結果ではglobal検査を最上位、
 workspace固有検査を該当workspace要素へ置く。完全JSON例は
-[共通結果契約](../00_共通契約/01_結果・Diagnostic・終了コード.md#23-doctor全体結果)を正とする。
+[共通結果契約](../00_共通契約/01_結果・Diagnostic・終了コード.md#23-doctorの全体結果)を正とする。
 
 ## 8. Diagnostic
 

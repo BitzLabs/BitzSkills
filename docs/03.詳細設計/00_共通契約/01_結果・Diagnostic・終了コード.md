@@ -1,13 +1,13 @@
-# 結果・Diagnostic・終了コード
+# 結果・診断・終了コード
 
-## 1. 所有範囲
+## 1. 本書の範囲
 
-本書は全Core操作が共有する結果外形、status、Diagnostic Schema、終了コード、report生成条件を定義する。
-Diagnostic条件と公開値は[Diagnostic registry](05_Diagnostic-registry.md)、操作固有fieldと検出処理は各操作仕様が定義する。
+本書は、すべての公開操作が共有する結果の形、状態（status）、診断（Diagnostic）のスキーマ、終了コード、レポートを生成する条件を定める。
+診断の条件と公開する値は[診断レジストリ](05_Diagnostic-registry.md)、操作固有のフィールドと検出処理は各操作の仕様が定める。
 機械可読な正本は[`schemas/result.schema.json`](../schemas/result.schema.json)とし、
-本文の表・例とSchemaが異なる場合は不適合として同じ変更で修正する。
+本文の表・例とスキーマが食い違う場合は不適合とし、同じ変更で修正する。
 
-## 2. 共通結果
+## 2. 結果の形
 
 ```json
 {
@@ -27,67 +27,67 @@ Diagnostic条件と公開値は[Diagnostic registry](05_Diagnostic-registry.md)�
 }
 ```
 
-| field | 型 | 必須 | 意味 |
+| フィールド | 型 | 必須 | 意味 |
 |---|---|:--:|---|
-| `schemaVersion` | string | Yes | 結果Schema major.minor |
-| `operation` | enum | Yes | `context`、`check`、`verify`、`doctor` |
-| `status` | enum | Yes | 操作全体のstatus |
-| `scope` | string | check／verifyだけYes | checkは`changed`、`selected`、`full`、`all-workspaces`、verifyは`selected`、`all`、`all-workspaces` |
-| `workspace` | object | workspace単独操作でYes | 対象またはrequest workspaceの`id`と`path`。同一性確定前だけ`id: null` |
-| `multiWorkspace` | object | 全体操作でYes | root workspaceの`id`と`path: "."`。root同一性不成立時だけ`id: null` |
-| `workspaces` | array | 全体操作でYes | 処理順のworkspace別結果。操作固有fieldを保持 |
-| `revision` | object/null | context／check／verifyでYes | Git基準版と実行時状態。doctorでは禁止 |
-| `durationMs` | integer | Yes | 非負の経過ms |
-| `diagnostics` | array | Yes | 0件以上のDiagnostic |
+| `schemaVersion` | 文字列 | ○ | 結果スキーマのメジャーバージョンとマイナーバージョン |
+| `operation` | 列挙値 | ○ | `context`、`check`、`verify`、`doctor` |
+| `status` | 列挙値 | ○ | 操作全体の結果の状態 |
+| `scope` | 文字列 | `check`または`verify`だけ○ | `check`は`changed`、`selected`、`full`、`all-workspaces`、`verify`は`selected`、`all`、`all-workspaces` |
+| `workspace` | オブジェクト | 単独操作で○ | 対象または起点ワークスペースの`id`と`path`。同一性が確定する前だけ`id: null` |
+| `multiWorkspace` | オブジェクト | 全体操作で○ | ルートワークスペースの`id`と`path: "."`。ルートの同一性が確定しないときだけ`id: null` |
+| `workspaces` | 配列 | 全体操作で○ | 処理順のワークスペース別の結果。操作固有のフィールドを保持する |
+| `revision` | オブジェクトまたは`null` | `context`、`check`、`verify`で○ | Gitの基準版と実行時の状態。`doctor`では禁止する |
+| `durationMs` | 整数 | ○ | 非負の経過ミリ秒 |
+| `diagnostics` | 配列 | ○ | 0件以上の診断 |
 
-Core 1.0 producerはSchemaにないfieldを出力しない。consumerは同じmajorの新しいminorにある未知fieldを
-保持または無視できる。未知majorは`blocked`として処理を続けない。
-各公開objectは未知fieldを禁止する。ただし、正規化Frontmatter、Diagnostic `extensions`、`evidence`のように
-別契約またはopaque値が内容を所有するfieldだけは、その所有契約のkeyを許可する。配列順は各fieldの所有仕様に従い、
-適合fixtureではkeyの有無、null、空配列、要素順を含めて比較する。
+Core 1.0の生成側は、スキーマにないフィールドを出力しない。利用側は、同じメジャーバージョンで新しいマイナーバージョンにある未知の
+フィールドを保持または無視できる。未知のメジャーバージョンは`blocked`として扱い、処理を続けない。
+各公開オブジェクトは未知のフィールドを禁止する。ただし、正規化したフロントマター、診断の`extensions`、`evidence`のように
+別の契約または不透明な値が内容を所有するフィールドだけは、その所有契約のキーを許可する。配列の順序は各フィールドを所有する仕様に従い、
+適合fixtureでは、キーの有無、`null`、空配列、要素の順序を含めて比較する。
 
-操作と結果variantの必須fieldを次に固定する。表にないvariantは存在しない。
+操作と結果の種類ごとの必須のフィールドを次のとおり固定する。下表にない組合せは存在しない。
 
-| operation | variant | 必須の識別・操作field |
+| 操作 | 結果の種類 | 必須の識別・操作フィールド |
 |---|---|---|
-| context | 単一workspace | `workspace`、`purpose`、`roots`、`contextDigest`、`revision`、`resolution`、`projection`、`documents`、`constraintLedger`、`coverage`。複合workspace固有field禁止 |
-| context | 複合workspace内 | localと同じfieldに加え`documents[].workspaceId`、`resolution.workspaces`、`resolution.crossWorkspaceEdges` |
-| check | workspace単独 | `workspace`、`scope`、`revision`。`changed`は`selection`、`selected`／`full`は2つのchecked count |
-| check | 複合workspace全体 | `multiWorkspace`、`workspaces`、`scope: all-workspaces`、`revision` |
-| verify | workspace単独 | `workspace`、`scope`、`targetResults`、`commands`、`revision` |
-| verify | 複合workspace全体 | `multiWorkspace`、`workspaces`、`scope: all-workspaces`、`revision` |
-| doctor | workspace単独 | `workspace`、`core`、`checks` |
-| doctor | 複合workspace全体 | `multiWorkspace`、`workspaces`、`core`、`checks` |
+| `context` | 単一ワークスペース | `workspace`、`purpose`、`roots`、`contextDigest`、`revision`、`resolution`、`projection`、`documents`、`constraintLedger`、`coverage`。複合ワークスペース固有のフィールドは禁止する |
+| `context` | 複合ワークスペース内 | 単一ワークスペースと同じフィールドに加え、`documents[].workspaceId`、`resolution.workspaces`、`resolution.crossWorkspaceEdges` |
+| `check` | ワークスペース単独 | `workspace`、`scope`、`revision`。`changed`は`selection`、`selected`または`full`は完全検査した文書と規範文の件数（`checkedDocumentCount`、`checkedStatementCount`）を持つ |
+| `check` | 複合ワークスペース全体 | `multiWorkspace`、`workspaces`、`scope: all-workspaces`、`revision` |
+| `verify` | ワークスペース単独 | `workspace`、`scope`、`targetResults`、`commands`、`revision` |
+| `verify` | 複合ワークスペース全体 | `multiWorkspace`、`workspaces`、`scope: all-workspaces`、`revision` |
+| `doctor` | ワークスペース単独 | `workspace`、`core`、`checks` |
+| `doctor` | 複合ワークスペース全体 | `multiWorkspace`、`workspaces`、`core`、`checks` |
 
-`contextDigest`は完全Contextを構成できない場合だけnullとする。`revision`の規則は次のとおりである。
+`contextDigest`は、完全解決したコンテキストを構成できない場合だけ`null`とする。`revision`の規則は次のとおりである。
 
-- context／verifyの非null objectは40桁小文字16進`commit`と真偽値`dirty`だけを持つ。
-- checkの非null objectは同形式の`base`、`commit`と真偽値`dirty`を持つ。
-- 単一workspaceでGit不在またはunborn repositoryなら`revision: null`とする。解決不能な明示`--base`は
-  結果を作らない終了コード4であり、nullへ縮退しない。
-- checkの`scope: changed`は解決済みGit基準版を必要とするためrevisionをnullにしない。Git不在／unbornの縮退結果は
+- `context`または`verify`の`null`でないオブジェクトは、40桁の小文字16進数の`commit`と真偽値の`dirty`だけを持つ。
+- `check`の`null`でないオブジェクトは、同じ形式の`base`、`commit`と真偽値の`dirty`を持つ。
+- 単一ワークスペースでGit不在、またはコミットのないリポジトリであれば、`revision: null`とする。解決できない明示の`--base`は
+  結果を作らない終了コード4であり、`null`へ縮退しない。
+- `check`の`scope: changed`は、解決済みのGitの基準版を必要とするため、`revision`を`null`にしない。Git不在、またはコミットのないリポジトリでの縮退結果は、
   `scope: full`とする。
-- 複合workspaceのcheck／verifyはGit境界確定が事前検査条件であるため`revision`をnullにしない。
-- doctorはGit状態をcheck itemで報告し、`revision` fieldを出力しない。
+- 複合ワークスペースの`check`または`verify`は、Gitの境界の確定が事前検査の条件であるため、`revision`を`null`にしない。
+- `doctor`は、Gitの状態を検査項目で報告し、`revision`フィールドを出力しない。
 
-非成功でも選択したvariantの必須fieldを省略しない。設定の構文・型・ID不正など、workspace同一性を構成する前に
-停止した単独結果だけ`workspace.id`をnullとし、`path`は発見したworkspace候補のrepository root相対pathとする。
-処理開始前に停止した派生配列は空、派生件数は0とする。contextは`contextDigest: null`、
-`resolution.complete: false`、空の`documents`とLedger／coverageを返す。これは部分結果の成功を意味せず、
-実際に完了した処理量だけを表す。同一性確定後は最上位と入れ子の全workspace IDを文字列にする。
+非成功でも、選択した種類に必須のフィールドを省略しない。設定の構文、型、ID不正などにより、ワークスペースの同一性を構成する前に
+停止した単独結果（workspace result）だけ、`workspace.id`を`null`とし、`path`は発見したワークスペースの候補のリポジトリのルートからの相対パスとする。
+処理を始める前に停止した場合、派生する配列は空、派生する件数は0とする。`context`は`contextDigest: null`、
+`resolution.complete: false`、空の`documents`と制約台帳・カバレッジを返す。これは部分的な結果を成功として返すものではなく、
+実際に完了した処理の量だけを表す。同一性が確定した後は、最上位と入れ子のすべてのワークスペースIDを文字列にする。
 
-単一workspaceでは設定した`workspace.id`、省略時は`root`を使い、pathを`.`とする。複合workspace内のworkspace単独操作では
-実際のworkspace IDとrepository root相対pathを返す。`--all-workspaces`結果は`workspace`を持たず、
-`multiWorkspace`と`workspaces`を持つ。最上位statusは最上位Diagnosticと全workspace結果へ同じ最悪値規則を
-適用して集約する。
+単一ワークスペースでは、設定した`workspace.id`、省略時は`root`を使い、`path`を`.`とする。複合ワークスペース内のワークスペース単独操作では、
+実際のワークスペースIDとリポジトリのルートからの相対パスを返す。`--all-workspaces`の結果は`workspace`を持たず、
+`multiWorkspace`と`workspaces`を持つ。最上位の`status`は、最上位の診断とすべてのワークスペースの結果へ、同じ最悪値の集約（worst-status aggregation）の
+規則を適用してまとめる。
 
-| `multiWorkspace` field | 型 | 必須 | 意味 |
+| `multiWorkspace`のフィールド | 型 | 必須 | 意味 |
 |---|---|:--:|---|
-| `id` | string/null | Yes | 有効なroot workspace ID。同一性確定前の全体事前検査失敗時だけnull |
-| `path` | string | Yes | 常に`.` |
+| `id` | 文字列または`null` | ○ | 有効なルートワークスペースのID。同一性が確定する前に全体事前検査が失敗したときだけ`null` |
+| `path` | 文字列 | ○ | 常に`.` |
 
-`workspaces`は全体事前検査が非成功でmember処理を開始しない場合だけ空配列にできる。処理開始後は
-root workspaceを先頭、その後をworkspace ID辞書順に保持する。
+`workspaces`は、全体事前検査が非成功で、メンバーの処理を始めない場合だけ空配列にできる。処理を始めた後は、
+ルートワークスペースを先頭に置き、その後はワークスペースIDの辞書順に保持する。
 
 ```json
 {
@@ -107,36 +107,36 @@ root workspaceを先頭、その後をworkspace ID辞書順に保持する。
 }
 ```
 
-`workspaces`は実行順を維持し、各要素に操作固有fieldを追加する。最上位`diagnostics`はcatalog、横断関係、
-集約自体のDiagnosticだけを持ち、member Diagnosticを複製しない。件数と所要時間は単純和とし、同じ実行実体を
-重複加算しない。
+`workspaces`は実行順を保ち、各要素へ操作固有のフィールドを加える。最上位の`diagnostics`は、カタログ、ワークスペースをまたぐ関係、
+集約そのものの診断だけを持ち、メンバーの診断を複製しない。件数と所要時間は単純な合計とし、同じ実行の実体を
+重複して加算しない。
 
-| `workspaces[]` field | 型 | 必須 | 意味 |
+| `workspaces[]`のフィールド | 型 | 必須 | 意味 |
 |---|---|:--:|---|
-| `id` | string | Yes | workspace ID |
-| `path` | string | Yes | repository root相対path。root workspaceは`.` |
-| `status` | enum | Yes | workspace単位status |
-| `durationMs` | integer | Yes | workspace単位の非負経過ms |
-| `diagnostics` | array | Yes | 当該workspaceが所有するDiagnostic |
+| `id` | 文字列 | ○ | ワークスペースID |
+| `path` | 文字列 | ○ | リポジトリのルートからの相対パス。ルートワークスペースは`.` |
+| `status` | 列挙値 | ○ | ワークスペース単位の状態 |
+| `durationMs` | 整数 | ○ | ワークスペース単位の非負の経過ミリ秒 |
+| `diagnostics` | 配列 | ○ | 当該ワークスペースが所有する診断 |
 
-全体操作の操作固有fieldは次を必須とする。配列は0件でも省略しない。
+全体操作で操作固有のフィールドとして必須にするものを次に示す。配列は0件でも省略しない。
 
-| 操作 | top-level field | `workspaces[]` field |
+| 操作 | 最上位のフィールド | `workspaces[]`のフィールド |
 |---|---|---|
-| check | `scope: "all-workspaces"`、`revision` | 非負整数`checkedDocumentCount`、`checkedStatementCount` |
-| verify | `scope: "all-workspaces"`、`revision` | `targetResults[]`、`commands[]` |
-| doctor | `core`、global `checks[]` | workspace固有`checks[]` |
+| `check` | `scope: "all-workspaces"`、`revision` | 非負整数の`checkedDocumentCount`、`checkedStatementCount` |
+| `verify` | `scope: "all-workspaces"`、`revision` | `targetResults[]`、`commands[]` |
+| `doctor` | `core`、最上位の`checks[]` | ワークスペース固有の`checks[]` |
 
-check／verifyの`revision`はrepository全体で1件だけを最上位へ置き、workspace要素へ複製しない。verify commandは
-owner workspaceの`commands[]`へ1件だけ置く。最上位へ操作固有件数を重複して持たず、workspace countまたは配列から
-導出する。各操作の完全な全体結果例を次に示す。
+`check`または`verify`の`revision`は、リポジトリ全体で1件だけを最上位に置き、ワークスペースの要素へ複製しない。`verify`のコマンドは
+所有ワークスペースの`commands[]`へ1件だけ置く。最上位に操作固有の件数を重複して持たせず、ワークスペースごとの件数または配列から
+導く。各操作の完全な全体結果（multi-workspace result）の例を次に示す。
 
-### 2.1 check全体結果
+### 2.1 `check`の全体結果
 
-上記JSON例をcheck全体結果の正規外形とする。`checkedDocumentCount`は当該workspaceで完全検査したSPEC文書数、
-`checkedStatementCount`は完全検査した規範文数である。
+上のJSONの例を、`check`の全体結果の正規の形とする。`checkedDocumentCount`は当該ワークスペースで完全検査した仕様文書の数、
+`checkedStatementCount`は完全検査した規範文の数である。
 
-### 2.2 verify全体結果
+### 2.2 `verify`の全体結果
 
 ```json
 {
@@ -207,7 +207,7 @@ owner workspaceの`commands[]`へ1件だけ置く。最上位へ操作固有件�
 }
 ```
 
-### 2.3 doctor全体結果
+### 2.3 `doctor`の全体結果
 
 ```json
 {
@@ -247,61 +247,61 @@ owner workspaceの`commands[]`へ1件だけ置く。最上位へ操作固有件�
 }
 ```
 
-全体事前検査がroot設定の構文、型、ID不正で停止し、有効なroot workspace IDを構成できない場合だけ、
-`multiWorkspace`を`{"id": null, "path": "."}`、`workspaces`を空配列にする。その他の全体結果の`multiWorkspace.id`は
-有効な文字列とする。不正なraw IDを結果同一性へ転記しない。
+全体事前検査が、ルートの設定の構文、型、ID不正が原因で停止し、有効なルートワークスペースのIDを構成できない場合だけ、
+`multiWorkspace`を`{"id": null, "path": "."}`、`workspaces`を空配列にする。それ以外の全体結果の`multiWorkspace.id`は
+有効な文字列とする。不正なIDの原文を結果の同一性へ転記しない。
 
-JSON consumerは`schemaVersion` majorを確認した後、次の排他的外形で結果種別を識別する。
+JSONを読む利用側は、`schemaVersion`のメジャーバージョンを確認した後、次の排他的な形で結果の種別を見分ける。
 
-- `workspace`を持ち、`multiWorkspace`と`workspaces`を持たない: workspace単独結果
-- `workspace`を持たず、`multiWorkspace`と`workspaces`を持つ: 全体結果
-- 両方を持つ、または必要fieldをどちらも持たない: Schema不適合
+- `workspace`を持ち、`multiWorkspace`と`workspaces`を持たない場合: 単独結果
+- `workspace`を持たず、`multiWorkspace`と`workspaces`を持つ場合: 全体結果
+- 両方を持つ場合、または必要なフィールドをどちらも持たない場合: スキーマの不適合
 
-修飾IDの`::`、report file名、current directoryから結果種別を推測しない。複合workspaceのproducerを有効にするadapter／CIは、
-事前にCore APIまたはdoctorで`multiWorkspace.v1`を確認する。Coreは過去reportを合否入力にせず、単一と複合workspaceのreportを
+修飾IDの`::`、レポートのファイル名、現在のディレクトリから結果の種別を推測しない。複合ワークスペースの生成側を有効にするアダプターまたはCIは、
+事前にCoreのAPIまたは`doctor`で対応機能`multiWorkspace.v1`を確認する。Coreは過去のレポートを合否の入力にせず、単一ワークスペースと複合ワークスペースのレポートを
 同じ実行結果として集約しない。
 
-## 3. statusと終了コード
+## 3. 結果の状態と終了コード
 
-| status | 意味 | 終了コード |
+| 状態 | 意味 | 終了コード |
 |---|---|---:|
-| `passed` | 問題なし | 0 |
-| `passed_with_warnings` | warningだけがある | 0 |
-| `failed` | 入力成果物またはtest結果が不適合 | 1 |
-| `blocked` | 前提不足または安全に継続不能 | 2 |
-| `error` | tool、I/O、processの障害 | 3 |
+| `passed` | 問題がない | 0 |
+| `passed_with_warnings` | 警告だけがある | 0 |
+| `failed` | 入力の成果物またはテストの結果が不適合 | 1 |
+| `blocked` | 前提が足りない、または安全に継続できない | 2 |
+| `error` | ツール、I/O、プロセスの障害 | 3 |
 
-CLI引数の構文不正、排他違反、未知option、解決不能な明示Git revision、構文上妥当でもcatalogにない
-`--workspace`は終了コード4とし、Core操作結果とreportを生成しない。
-argvの重複、空値、値表記、target不存在の共通境界は
-[Core実行環境・CLI基盤契約 §5・§6](06_Core実行環境・CLI基盤契約.md#5-共通cli-argv解析)に従う。
+CLI引数の構文の誤り、排他の違反、未知のオプション、解決できない明示のGitのリビジョン、構文上は正しいもののカタログにない
+`--workspace`は、引数不正（invalid invocation）として終了コード4とし、操作の結果とレポートを作らない。
+引数列の重複、空の値、値の表記、対象の不在についての共通の境界は
+[Core実行環境・CLI基盤契約 §5・§6](06_Core実行環境・CLI基盤契約.md#5-cliの引数列の共通の解析)に従う。
 
-終了コード4は操作statusでもDiagnosticでもなく、Core操作を開始しなかったことを表す。出力は
-`--format`の指定にかかわらず次に固定する。
+終了コード4は、操作の結果の状態でも診断でもなく、操作を始めなかったことを表す。出力は、
+`--format`の指定にかかわらず次のとおり固定する。
 
-- 標準出力へ何も書かない。JSON本体、部分結果、空objectのいずれも返さない。
-- 標準エラーへ理由を1行だけ書く。形式は`bitz: <operation-or-argv-context>: <reason>`とし、
-  端末制御文字を無害化する。
-- reportを作らず、既存reportを変更しない。
+- 標準出力へ何も書かない。JSON本体、部分的な結果、空のオブジェクトのいずれも返さない。
+- 標準エラー出力へ理由を1行だけ書く。形式は`bitz: <operation-or-argv-context>: <reason>`とし、
+  端末の制御文字を無害化する。
+- レポートを作らず、既存のレポートを変えない。
 
-adapterとCIは終了コード4を、statusによる分岐の前に終了コードだけで判別する。標準エラーの文言は
-人間向けであり、機械判定へ使用しない。
+アダプターとCIは、終了コード4を、状態による分岐の前に終了コードだけで見分ける。標準エラー出力の文言は
+人が読むためのものであり、機械の判定には使わない。
 
-`info` Diagnosticはstatusを変更しない。warningだけなら`passed_with_warnings`とする。
-複数結果は次の最悪値順で集約する。
+重大度`info`の診断は状態を変えない。`warning`だけであれば`passed_with_warnings`とする。
+複数の結果は、次の最悪値の集約の順にまとめる。
 
 ```text
 error > failed > blocked > passed_with_warnings > passed
 ```
 
-最終statusだけで個別原因を隠さず、対象別結果とDiagnosticを保持する。Core 1.0はwarningをfailedへ昇格する
+最終的な状態だけで個別の原因を隠さず、対象別の結果と診断を保つ。Core 1.0は、`warning`を`failed`へ昇格する
 `--strict`を提供しない。
 
-本表は操作statusとworkspace statusの語彙であり、Core全体で唯一とする。ただし`doctor`の`checks[]`は、
-個別検査の結果に`info`と`warning`を加えた検査単位の語彙を使う。この語彙と操作statusへの集約規則は
-[doctor仕様 §7](../03_操作仕様/04_doctor.md#7-結果)へ委譲する。他の操作は検査単位の語彙を持たない。
+上の表は、操作の状態とワークスペースの状態の語彙であり、Core全体で唯一のものとする。ただし`doctor`の`checks[]`は、
+個々の検査の結果に`info`と`warning`を加えた、検査項目の単位の語彙を使う。この語彙と操作の状態への集約の規則は
+[`doctor`仕様 §7](../03_操作仕様/04_doctor.md#7-結果)に委ねる。ほかの操作は検査項目の単位の語彙を持たない。
 
-## 4. Diagnostic Schema
+## 4. 診断のスキーマ
 
 ```json
 {
@@ -323,88 +323,88 @@ error > failed > blocked > passed_with_warnings > passed
 }
 ```
 
-必須fieldは`code`、`severity`、`resultStatus`、`summary`、`source`である。
+必須のフィールドは`code`、`severity`、`resultStatus`、`summary`、`source`である。
 
-| field | 型 | 必須 | 意味 |
+| フィールド | 型 | 必須 | 意味 |
 |---|---|:--:|---|
-| `code` | string | Yes | 永続的な機械識別子 |
-| `severity` | enum | Yes | `info`、`warning`、`error`の表示優先度 |
-| `resultStatus` | enum | Yes | このDiagnosticが操作結果へ与える効果 |
-| `summary` | string | Yes | 人間向けの短い説明 |
-| `source` | object | Yes | file、environment、invocationの判別可能なsource |
-| `specRefs` | string[] | No | 関連SPECまたは規範文ID |
-| `evidence` | string/object | No | 秘密を含まない最小根拠 |
-| `suggestedAction` | string | No | 局所的な修正案 |
-| `extensions` | object | No | 所有plugin固有情報 |
+| `code` | 文字列 | ○ | 永続的な機械可読の識別子 |
+| `severity` | 列挙値 | ○ | `info`、`warning`、`error`の表示上の優先度 |
+| `resultStatus` | 列挙値 | ○ | この診断が操作の結果へ与える効果 |
+| `summary` | 文字列 | ○ | 人に向けた短い説明 |
+| `source` | オブジェクト | ○ | `file`、`environment`、`invocation`を判別できる発生元 |
+| `specRefs` | 文字列の配列 | — | 関連する仕様文書または規範文のID |
+| `evidence` | 文字列またはオブジェクト | — | 秘密情報を含まない最小限の根拠 |
+| `suggestedAction` | 文字列 | — | 局所的な修正の案 |
+| `extensions` | オブジェクト | — | 所有するプラグイン固有の情報 |
 
-`severity`と操作statusは別軸である。例えば、error severityは成果物不適合の`failed`、前提不足の`blocked`、
-tool障害の`error`のいずれにも対応できる。warningの`resultStatus`は`passed_with_warnings`、infoは`passed`を
-原則とし、warningと`blocked`を組み合わせない。
+重大度（severity）と操作の結果の状態は別の軸である。たとえば、重大度`error`は、成果物の不適合による`failed`、前提の不足による`blocked`、
+ツールの障害による`error`のいずれにも対応できる。重大度`warning`の`resultStatus`は`passed_with_warnings`、`info`は`passed`を
+原則とし、`warning`と`blocked`を組み合わせない。
 
-relation edgeまたは`covers`要素を単位とするDiagnostic（`SPEC-RELATION-MISSING-001`、
+関係のエッジ、または`covers`要素を単位とする診断（`SPEC-RELATION-MISSING-001`、
 `SPEC-RELATION-ADVISORY-MISSING-001`、`CTX-RELATION-TYPE-001`、`SPEC-MULTI-REF-001`、
-`SPEC-TEST-COVERAGE-001`）は、上の例と同じ形で`evidence`に参照先を宣言どおりの文字列で持つ。同じ`source.key`を
-持つ複数件が生じても、`evidence`により各件が参照先で区別できる。この規則はsort規則を変更しない。
+`SPEC-TEST-COVERAGE-001`）は、上の例と同じ形で、`evidence`に参照先を宣言どおりの文字列で持つ。同じ`source.key`を
+持つ複数件が生じても、`evidence`により各件を参照先で区別できる。この規則は並べ替えの規則を変えない。
 
-## 5. source
+## 5. 発生元
 
-| `kind` | 必須field | 任意field | 用途 |
+| `kind` | 必須のフィールド | 任意のフィールド | 用途 |
 |---|---|---|---|
-| `file` | `workspaceId`、`path` | `line`、`column`、`key` | 設定、SPEC、code、test |
-| `environment` | `component` | `identifier` | Core、実行環境、Git、command、cache、plugin |
-| `invocation` | なし | `argument` | CLI引数またはadapterからの呼出し引数 |
+| `file` | `workspaceId`、`path` | `line`、`column`、`key` | 設定、仕様文書、コード、テスト |
+| `environment` | `component` | `identifier` | Core、実行環境、Git、コマンド、キャッシュ、プラグイン |
+| `invocation` | なし | `argument` | CLI引数、またはアダプターからの呼出しの引数 |
 
-単一workspaceの`file.workspaceId`は設定した実効IDを使う。複合workspaceでは所有workspaceのIDを使い、`path`はそのworkspace相対、
-`line`と`column`は1始まりとする。`workspaceId`と`path`の組でsourceを一意にし、絶対pathを返さない。
+単一ワークスペースの`file.workspaceId`は、設定した実効IDを使う。複合ワークスペースでは所有ワークスペースのIDを使い、`path`はそのワークスペースからの相対パス、
+`line`と`column`は1から始まる番号とする。`workspaceId`と`path`の組で発生元（source）を一意にし、絶対パスを返さない。
 
-設定fileの構文、型またはroot ID不正によりworkspace同一性をまだ構成できないDiagnosticだけは、必須field
-`workspaceId`を`null`とする。この場合の`path`は発見済みworkspace候補相対で、root設定は`.spec/bitz.yaml`とする。
-同一性確定後のfile sourceと、設定以外のfile sourceに`null`を使わない。
+設定ファイルの構文、型、またはルートIDの不正により、ワークスペースの同一性をまだ構成できない診断だけは、必須フィールド
+`workspaceId`を`null`とする。この場合の`path`は発見済みのワークスペースの候補からの相対パスとし、ルートの設定は`.spec/bitz.yaml`とする。
+同一性が確定した後の`file`の発生元と、設定以外の`file`の発生元には`null`を使わない。
 
-## 6. Diagnostic code
+## 6. 診断コード
 
-codeは`<OWNER>-<AREA>-<NNN>`を基本とする。
+診断コード（Diagnostic code）は`<OWNER>-<AREA>-<NNN>`を基本の形とする。
 
-| OWNER | 所有者 |
+| `OWNER` | 所有者 |
 |---|---|
 | `EAI` | EARS-AI言語 |
-| `SPEC` | SPECモデルと操作 |
-| `CTX` | Context解決とcontext操作 |
+| `SPEC` | 仕様文書モデルと操作 |
+| `CTX` | コンテキストの解決と`context`操作 |
 
-codeの再利用と意味変更を禁止する。廃止codeは予約済みとして一覧へ残すか、移行表で後継を示す。
-同じ原因に対し、file単位と規範文単位の同義Diagnosticを重複して出さない。
+`code`の再利用と意味の変更を禁止する。廃止した`code`は、予約済みとして一覧に残すか、移行表で後継を示す。
+同じ原因に対して、ファイル単位と規範文単位の同義の診断を重複して出さない。
 
-relation edgeは構文・Schema、修飾ID、workspace、target、型の順に検査し、最初のprimary Diagnosticだけを返す。
-strong target不在は`SPEC-RELATION-MISSING-001`へ統一し、`CTX-RELATION-MISSING-001`はCore 1.0で使用せず予約する。
+関係のエッジは、構文とスキーマ、修飾ID、ワークスペース、参照先、型の順に検査し、最初の主診断（primary Diagnostic）だけを返す。
+強い関係の参照先の不在は`SPEC-RELATION-MISSING-001`へ統一し、`CTX-RELATION-MISSING-001`はCore 1.0で使わず予約する。
 詳細は[関係・トレースモデル](../02_SPECモデル/04_関係・トレースモデル.md#51-relation-diagnosticの優先順位)に従う。
 
-### 6.1 Diagnostic表の閉包
+### 6.1 診断の表の閉じた集合
 
-公開Diagnostic条件の閉じた集合は[Diagnostic registry](05_Diagnostic-registry.md)だけが所有する。
-各registry行は`conditionId`、返し得る操作、code、severity、`resultStatus`、source kind、継続単位、
-primary優先順位を1つずつ持つ。各操作仕様とSPECモデル仕様のDiagnostic表は検索用索引であり、registryにないcodeや
-条件を追加したり、registryの値を上書きしたりできない。
+公開する診断の条件の閉じた集合は、[診断レジストリ](05_Diagnostic-registry.md)だけが所有する。
+レジストリの各行は、`conditionId`、返しうる操作、`code`、`severity`、`resultStatus`、発生元の種類、継続単位、
+主診断の優先順位を1つずつ持つ。各操作の仕様と仕様文書モデルの仕様にある診断の表は検索用の索引であり、レジストリにない`code`や
+条件を加えたり、レジストリの値を上書きしたりできない。
 
-同じraw原因に複数条件が成立する場合はregistryのpriorityが最小の1行だけをprimary Diagnosticとして返す。
-独立原因は別々に返し、共通のDiagnostic sort規則で並べる。予約済みcodeはregistryの予約表に残すが公開結果へ返さない。
+同じ元の原因に複数の条件が成り立つ場合は、レジストリの`priority`が最小の1行だけを主診断として返す。
+独立した原因はそれぞれ別に返し、共通の診断の並べ替えの規則で並べる。予約済みコードはレジストリの予約表に残すが、公開する結果へは返さない。
 
-`verify`のContext非成功はtargetの`diagnostics`へ置き、`bindingRefs`を空にする。全体事前検査、workspace、文書、
-target、binding、doctor checkの停止・継続境界もregistryの`continuation`へ従う。
+`verify`でコンテキストが非成功のときは、検証対象の`diagnostics`へ置き、`bindingRefs`を空にする。全体事前検査、ワークスペース、文書、
+対象、テスト割当て、`doctor`の検査項目の停止・継続の境界も、レジストリの`continuation`に従う。
 
-## 7. textとJSON
+## 7. テキストとJSON
 
-`--format`省略時の既定値はcontextが`markdown`、check、verify、doctorが`text`である。formatは表示だけを変え、
-結果内容、status、終了コード、report内容を変えない。contextは`text`を提供せず、markdownまたはjsonだけを提供する。
+`--format`を省略したときの既定値は、`context`が`markdown`、`check`、`verify`、`doctor`が`text`である。`--format`は表示だけを変え、
+結果の内容、状態、終了コード、レポートの内容を変えない。`context`は`text`を提供せず、`markdown`または`json`だけを提供する。
 
-- text出力はstatus、対象件数、scope、所要時間を1行で示す。
-- `--format json`は同じ結果を標準出力へ返し、追加fileを生成しない。
-- Diagnosticの順序はsource workspace ID、path、line、column、code、specRefsの辞書順とし、同一性確定前の
-  `workspaceId: null`は文字列IDより前に置く。これらがすべて同じDiagnosticは、生成元の宣言の出現順
-  （relation配列やtest対応の要素の順）とする。
-- 端末制御文字を無害化する。
-- textとJSONでstatus、件数、終了コードを変えない。
+- `text`の出力は、状態、対象の件数、`scope`、所要時間を1行で示す。
+- `--format json`は同じ結果を標準出力へ返し、追加のファイルを作らない。
+- 診断の順序は、発生元のワークスペースID、`path`、`line`、`column`、`code`、`specRefs`の辞書順とし、同一性が確定する前の
+  `workspaceId: null`は文字列のIDより前に置く。これらがすべて同じ診断は、生成元の宣言に現れた順
+  （関係の配列やテスト対応の要素の順）とする。
+- 端末の制御文字を無害化する。
+- `text`とJSONで、状態、件数、終了コードを変えない。
 
-text出力は次の3部からなる。Diagnosticが0件なら要約行だけを出す。
+`text`の出力は、次の3つの部分からなる。診断が0件であれば要約行（summary line）だけを出す。
 
 ```text
 <operation> <status> scope=<scope> targets=<n> diagnostics=<n> (<duration>ms)
@@ -412,53 +412,53 @@ text出力は次の3部からなる。Diagnosticが0件なら要約行だけを�
   -> <suggestedAction>
 ```
 
-- 要約行は常に1行目とし、statusと件数をJSON結果と一致させる。doctorは`scope=`を出さない。
-- Diagnostic行はJSONの`diagnostics`と同じ順序で1件1行とし、`source.kind`が`file`以外の場合は
-  `<component>`または`invocation`を先頭fieldへ置く。`line`と`column`を持たない場合は当該fieldを省略せず空にする。
-  `file`以外の行では`path`、`line`、`column`を空fieldのまま残し、`identifier`と`argument`をtextへ出さない。
-- `suggestedAction`を持つDiagnosticだけ、直後へ2 space字下げの継続行を1行出す。
-- 全体操作ではworkspace要素のDiagnosticをworkspace処理順に続けて出し、最上位Diagnosticを先に置く。
-  verifyのtarget固有Diagnosticは、所有する最上位またはworkspaceのDiagnosticに続け、target ID順で出す。
-- 色、装飾、進捗表示はCore 1.0の契約に含めない。
+- 要約行は常に1行目とし、状態と件数をJSONの結果と一致させる。`doctor`は`scope=`を出さない。
+- 診断の行は、JSONの`diagnostics`と同じ順序で1件を1行とし、`source.kind`が`file`以外の場合は、
+  `<component>`または`invocation`を先頭のフィールドに置く。`line`と`column`を持たない場合は、当該フィールドを省略せず空のままにする。
+  `file`以外の行では、`path`、`line`、`column`を空のフィールドのまま残し、`identifier`と`argument`を`text`へ出さない。
+- `suggestedAction`を持つ診断だけ、直後に半角スペース2個で字下げした継続行を1行出す。
+- 全体操作では、ワークスペースの要素の診断をワークスペースの処理順に続けて出し、最上位の診断を先に置く。
+  `verify`の検証対象固有の診断は、所有する最上位またはワークスペースの診断に続けて、検証対象のID順に出す。
+- 色、装飾、進捗表示は、Core 1.0の契約に含めない。
 
-textはDiagnosticの`evidence`と`extensions`を出力しない。完全な機械可読情報は`--format json`を使う。
+`text`は、診断の`evidence`と`extensions`を出力しない。完全な機械可読の情報には`--format json`を使う。
 
-Diagnostic行とsuggestedAction継続行を組み立てる前に、表示する各field内のC0（U+0000〜U+001F）、
-DEL（U+007F）、C1（U+0080〜U+009F）を、backslash 1文字と`u`、小文字16進4桁からなる
-ASCII表記へ置換する。LFは`\u000a`、TABは`\u0009`、ESCは`\u001b`とし、field内の改行やtabも
-保持せず可視化する。その他の文字は変更せず、端末制御sequenceを解釈しない。
-これはtext表示だけの変換であり、JSON結果・reportのfield値やDiagnosticのsort順序は変更しない。
-行形式が付ける改行、区切り、継続行の2 space字下げは変換対象に含めない。
+診断の行と`suggestedAction`の継続行を組み立てる前に、表示する各フィールドの中にあるC0（U+0000〜U+001F）、
+DEL（U+007F）、C1（U+0080〜U+009F）を、バックスラッシュ1文字と`u`、小文字16進数4桁からなる
+ASCII表記へ置き換える。LFは`\u000a`、TABは`\u0009`、ESCは`\u001b`とし、フィールド内の改行やタブも
+そのままにせず可視化する。それ以外の文字は変えず、端末の制御シーケンスを解釈しない。
+これは`text`表示だけの変換であり、JSONの結果・レポートのフィールドの値や診断の並べ替えの順序は変えない。
+行の形式が付ける改行、区切り、継続行の半角スペース2個の字下げは、変換の対象に含めない。
 
-`targets=<n>`と`diagnostics=<n>`は次のJSON導出式へ固定し、表示側で別に数えない。
+`targets=<n>`と`diagnostics=<n>`は、次のJSONからの導出式に固定し、表示の側で別に数えない。
 
-| operation／scope | `targets` |
+| 操作／`scope` | `targets` |
 |---|---:|
-| check／`changed` | `selection.targetDocumentCount` |
-| check／`selected`、`full` | `checkedDocumentCount` |
-| check／`all-workspaces` | 全`workspaces[].checkedDocumentCount`の和 |
-| verify／`selected`、`all` | `targetResults.length` |
-| verify／`all-workspaces` | 全`workspaces[].targetResults.length`の和 |
-| doctor workspace単独 | `checks.length` |
-| doctor 複合workspace全体 | 最上位`checks.length`と全`workspaces[].checks.length`の和 |
+| `check`／`changed` | `selection.targetDocumentCount` |
+| `check`／`selected`、`full` | `checkedDocumentCount` |
+| `check`／`all-workspaces` | すべての`workspaces[].checkedDocumentCount`の和 |
+| `verify`／`selected`、`all` | `targetResults.length` |
+| `verify`／`all-workspaces` | すべての`workspaces[].targetResults.length`の和 |
+| `doctor`ワークスペース単独 | `checks.length` |
+| `doctor`複合ワークスペース全体 | 最上位の`checks.length`とすべての`workspaces[].checks.length`の和 |
 
-`diagnostics`は結果treeに実在するDiagnosticの総数である。最上位`diagnostics`、全`workspaces[].diagnostics`、
-全`targetResults[].diagnostics`の長さを合計する。Diagnosticを複製して件数を合わせてはならない。
+`diagnostics`は、結果の木構造に実在する診断の総数である。最上位の`diagnostics`、すべての`workspaces[].diagnostics`、
+すべての`targetResults[].diagnostics`の長さを合計する。診断を複製して件数を合わせてはならない。
 
-## 8. report
+## 8. レポート
 
-`--report`は値を取らないflagであり、`check`と`verify`はstatusにかかわらず、指定された場合だけ
-`.spec/reports/`へ結果JSONを保存する。任意の保存pathは受け付けない。
-`--report`がなければ標準出力と終了コードだけを返し、既存reportを変更せず、新しいfileも作らない。
-`--format json`は標準出力の形式だけを変え、保存を含意しない。引数不正、`context`、`doctor`はreportを保存しない。
-reportは排他的に作成し、既存fileを上書きしない。原子的作成の一時fileは同じreport directoryだけに置き、成功時に
-renameし、失敗時に除去する。操作終了後に一時fileを残さない。
-report directoryはworkspace rootから`lstat`で辿り、`.spec`または`.spec/reports`がsymlinkなら解決せず、
-directory以外のentryと同じく保存失敗とする。symlink先のdirectoryへ一時fileもreportも作らない。
+`--report`は値を取らないフラグであり、`check`と`verify`は、状態にかかわらず、指定された場合だけ
+`.spec/reports/`へ結果のJSONを保存する。任意の保存先パスは受け付けない。
+`--report`がなければ、標準出力と終了コードだけを返し、既存のレポートを変えず、新しいファイルも作らない。
+`--format json`は標準出力の形式だけを変え、保存を意味しない。引数不正、`context`、`doctor`はレポートを保存しない。
+レポートは排他的に作成し、既存のファイルを上書きしない。原子的な作成の一時ファイルは同じレポートのディレクトリにだけ置き、成功したときに
+リネームし、失敗したときに取り除く。操作の終了後に一時ファイルを残さない。
+レポートのディレクトリは、ワークスペースのルートから`lstat`でたどり、`.spec`または`.spec/reports`がシンボリックリンクであれば解決せず、
+ディレクトリ以外のエントリと同じく保存の失敗とする。リンク先のディレクトリへ、一時ファイルもレポートも作らない。
 
-workspace単独reportは対象workspace、全体reportはroot workspaceの`.spec/reports/`へ保存する。
-file名は`.spec/reports/<YYYYMMDDTHHMMSSZ>-<operation>[-<sequence>].json`とする。同一秒の衝突は
-安全な排他的作成と1以上の連番で回避する。保存失敗は`SPEC-REPORT-WRITE-001`／error／`error`とするが、
-元の結果とDiagnosticは端末へ保持する。
+ワークスペース単独のレポートは対象のワークスペース、全体レポートはルートワークスペースの`.spec/reports/`へ保存する。
+ファイル名は`.spec/reports/<YYYYMMDDTHHMMSSZ>-<operation>[-<sequence>].json`とする。同じ秒の衝突は、
+安全な排他的作成と1以上の連番で避ける。保存の失敗は、診断`SPEC-REPORT-WRITE-001`（重大度`error`、結果への効果`error`）とするが、
+元の結果と診断は端末に保持する。
 
-reportへ環境変数値、秘密情報、標準出力/stderr全文を含めない。reportは次回の合否判定への入力にしない。
+レポートへ、環境変数の値、秘密情報、標準出力・標準エラー出力の全文を含めない。レポートは、次回の合否判定への入力にしない。

@@ -1,32 +1,32 @@
-# Context Digest正規化仕様
+# コンテキストのハッシュ値の正規化仕様
 
-## 1. 所有範囲
+## 1. 本書の範囲
 
-本書はContext Digestの入力document、正規化、serialization、hash計算をbyte単位で定義する。
-Digestへ含める材料の選定と除外は[context仕様 §6](../03_操作仕様/01_context.md#6-context-digest)、
-複合workspace固有の材料は[複合workspace仕様 §6](../02_SPECモデル/05_複合workspace仕様.md#6-横断索引とcontext)が
-所有する。本書は同じ材料集合から同じ64桁を得るための手順だけを所有する。
+本書は、コンテキストのハッシュ値（Context Digest）の材料となる入力、正規化、直列化、ハッシュ値の計算を、バイト単位で定義する。
+ハッシュ値へ含める材料の選定と除外は[`context`仕様 §6](../03_操作仕様/01_context.md#6-context-digest)が、
+複合ワークスペース固有の材料は[複合ワークスペース仕様 §6](../02_SPECモデル/05_複合workspace仕様.md#6-横断索引とcontext)が
+所有する。本書は、同じ材料の集合から同じ64桁を得るための手順だけを所有する。
 
-Context Digestは`--expect-digest`によるstale検出、`targetResults[]`の検証証跡、適合fixtureの比較値として
-公開する唯一のhashである。同じCore version、同じ入力、同じ実効設定から同じ値を返せない実装は
-Core 1.0適合ではない。
+コンテキストのハッシュ値は、`--expect-digest`による取得後の仕様変更の検出、`targetResults[]`の検証証跡、適合fixtureの比較値として
+公開する唯一のハッシュ値である。同じCoreのバージョン、同じ入力、同じ実効設定から同じ値を返せない実装は、
+Core 1.0に適合しない。
 
 ## 2. 全体手順
 
-1. 完全解決が成立し、設定が適合していることを確認する。不成立ならDigestを計算しない。
-2. §3の材料をfieldの型を保持した未整列のmemory上のJSON valueとして収集する。
-3. §4のfield型別文字正規化を適用する。
-4. §3の重複排除とsortを正規化後の値へ適用し、最終digest inputを構成する。
-5. §5に従いRFC 8785 JSON Canonicalization Schemeでserializeし、UTF-8 byte列を得る。
-6. byte列のSHA-256を計算し、小文字16進64桁へ変換する。
+1. 完全解決が成立し、設定が適合していることを確認する。成立していなければ、ハッシュ値を計算しない。
+2. §3の材料を、フィールドの型を保持した、未整列のメモリ上のJSONの値として収集する。
+3. §4のフィールドの型ごとの文字正規化を適用する。
+4. §3の重複排除と並べ替えを、正規化した後の値へ適用し、最終的なハッシュ値の材料（digest input）を構成する。
+5. §5に従い、RFC 8785 JSON Canonicalization Schemeで直列化し、UTF-8のバイト列を得る。
+6. バイト列のSHA-256を計算し、小文字の16進64桁へ変換する。
 7. `sha256:`を前置した`sha256:[0-9a-f]{64}`を結果へ格納する。
 
-文字正規化より前の値や、filesystem、parser、graph走査の列挙順でsortしてはならない。正規化により同一になる値が
-存在しても、同一入力から同じ配列とbyte列を得られる順序でなければならない。
+文字正規化より前の値や、ファイルシステム、構文解析器、グラフの走査の列挙順で並べ替えてはならない。正規化により同一になる値が
+存在しても、同一の入力から同じ配列とバイト列を得られる順序でなければならない。
 
-## 3. digest input
+## 3. ハッシュ値の材料
 
-digest inputは次のkeyだけを持つJSON objectとする。全keyを必須とし、値が空でもkeyを省略しない。
+ハッシュ値の材料は、次のキーだけを持つJSONのオブジェクトとする。すべてのキーを必須とし、値が空であってもキーを省略しない。
 
 ```json
 {
@@ -47,24 +47,25 @@ digest inputは次のkeyだけを持つJSON objectとする。全keyを必須と
 }
 ```
 
-| key | 型 | 内容 |
+| キー | 型 | 内容 |
 |---|---|---|
-| `digestVersion` | string | 本仕様のmajor.minor。Core 1.0は`"1.0"` |
-| `specSchemaVersion` | string | request workspaceの実効SPEC Schema version |
-| `earsAiVersion` | string | request workspaceの実効EARS-AI version |
-| `resolverVersion` | string | Context Resolver契約のmajor.minor。Core 1.0は`"1.0"` |
-| `purpose` | enum | `interpret`、`implement`、`verify` |
-| `requestWorkspaceId` | string | request workspaceの実効ID。単一workspaceも実効IDを使う |
-| `roots` | string[] | 起点の正規ID。重複排除しcode point辞書順 |
-| `workspaces` | object[] | 到達workspaceの`id`とrepository root相対`path`。request workspaceを先頭、以降`id`辞書順 |
-| `documents` | object[] | §3.1。`id`のcode point辞書順 |
-| `crossWorkspaceEdges` | object[] | §3.2。単一workspaceでも空配列を置く |
-| `settings` | object | §3.3 |
+| `digestVersion` | 文字列 | 本仕様の`major.minor`。Core 1.0は`"1.0"` |
+| `specSchemaVersion` | 文字列 | 起点ワークスペースの実効の仕様文書のスキーマのバージョン |
+| `earsAiVersion` | 文字列 | 起点ワークスペースの実効のEARS-AIのバージョン |
+| `resolverVersion` | 文字列 | コンテキスト解決器（Context Resolver）の契約の`major.minor`。Core 1.0は`"1.0"` |
+| `purpose` | 列挙値 | `interpret`、`implement`、`verify` |
+| `requestWorkspaceId` | 文字列 | 起点ワークスペースの実効ID。単一ワークスペースでも実効IDを使う |
+| `roots` | 文字列の配列 | 起点の正規ID。重複排除し、コードポイント辞書順に並べる |
+| `workspaces` | オブジェクトの配列 | 到達ワークスペースの`id`とリポジトリのルートからの相対`path`。起点ワークスペースを先頭に置き、以降は`id`の辞書順 |
+| `documents` | オブジェクトの配列 | §3.1。`id`のコードポイント辞書順 |
+| `crossWorkspaceEdges` | オブジェクトの配列 | §3.2。単一ワークスペースでも空配列を置く |
+| `settings` | オブジェクト | §3.3 |
 
-単一workspaceでは`workspaces`をrequest workspace1件、`path`を`.`とし、`roots`と文書`id`を非修飾形式にする。
-複合workspaceでは両者を修飾形式にする。同じ内容のContextでも複合workspace化の前後でDigestは一致しない。
+単一ワークスペースでは、`workspaces`を起点ワークスペース1件とし、`path`を`.`とし、`roots`と文書の`id`を非修飾IDにする。
+複合ワークスペースでは、両者を修飾IDにする。同じ内容のコンテキストであっても、複合ワークスペース化の前後でハッシュ値は
+一致しない。
 
-### 3.1 documents
+### 3.1 文書
 
 ```json
 {
@@ -99,56 +100,57 @@ digest inputは次のkeyだけを持つJSON objectとする。全keyを必須と
 }
 ```
 
-| key | 型 | 内容 |
+| キー | 型 | 内容 |
 |---|---|---|
-| `id` | string | 文書ID。複合workspaceでは修飾形式 |
-| `workspaceId` | string | 所有workspaceの実効ID |
-| `kind` | enum | `requirement`、`technical`、`decision`、`task` |
-| `status` | string | Frontmatterの現在状態 |
-| `applicability` | enum | `applicable`、`advisory`、`replacement` |
-| `frontmatter` | object | §3.1.1の正規化projection |
-| `bodyText` | string | §3.1.2の正規化本文 |
-| `statements` | object[] | §3.1.3。`id`のcode point辞書順 |
-| `strongRelations` | object[] | 強い関係。`relation`、`target`の順でcode point辞書順、重複排除 |
+| `id` | 文字列 | 文書ID。複合ワークスペースでは修飾ID |
+| `workspaceId` | 文字列 | 所有ワークスペースの実効ID |
+| `kind` | 列挙値 | `requirement`、`technical`、`decision`、`task` |
+| `status` | 文字列 | フロントマターの現在の状態 |
+| `applicability` | 列挙値 | `applicable`、`advisory`、`replacement` |
+| `frontmatter` | オブジェクト | §3.1.1で正規化して抽出した値 |
+| `bodyText` | 文字列 | §3.1.2で正規化した本文（body） |
+| `statements` | オブジェクトの配列 | §3.1.3。`id`のコードポイント辞書順 |
+| `strongRelations` | オブジェクトの配列 | 強い関係。`relation`、`target`の順でコードポイント辞書順に並べ、重複排除する |
 
-`role`、`projection`、到達距離、到達edge、Bundle内の提示順はdigest inputへ含めない。提示方法の変更で
-Digestを変えないためである。
+`role`、`projection`、到達距離、到達エッジ、コンテキスト一式内の提示順は、ハッシュ値の材料へ含めない。提示の方法の変更で
+ハッシュ値を変えないためである。
 
-#### 3.1.1 frontmatterのprojection
+#### 3.1.1 フロントマターからの抽出
 
-Core既知fieldだけを上記の固定keyで保持する。値の規則は次とする。
+Coreが既知のフィールドだけを、上記の固定したキーで保持する。値の規則は次のとおりとする。
 
-- `id`は複合workspaceの正規形式、`title`と`status`は原文の正規化文字列。
-- `relations`は5つのCore語彙keyをすべて置き、未宣言は空配列とする。targetは複合workspaceの正規形式へ展開し、
-  重複排除しcode point辞書順に並べる。
-- `implements`と`changes`は宣言pathをworkspace root相対の`/`区切り文字へ正規化し、重複排除して辞書順に並べる。
-- `tests`は`path`、`covers`、`command`だけを持つobjectとし、`covers`を修飾形式へ変換してcode point辞書順、
-  `command`未宣言をnullとする。要素全体は正規化後の`(path, commandSortKey, covers)`で昇順に並べる。
-  `commandSortKey`はnullを文字列より前とし、文字列同士はcode point辞書順とする。`covers`同士は要素ごとの
-  code point辞書式比較とし、一方が他方の接頭辞なら短い配列を先にする。完全に同じtupleの要素数は保持し、
-  Digest生成時に追加の重複排除を行わない。
-- `verify`と`changes`は非該当種別でもkeyを置き、値をnullまたは空配列とする。
-- `x-`拡張fieldは含めない。Coreはこれを合否、Context、command、権限へ使用しないため、
-  Contextの同一性判定にも使用しない。
-- 未知fieldと`profiles`は含めない。
+- `id`は複合ワークスペースの正規形式、`title`と`status`は原文を正規化した文字列とする。
+- `relations`は、Coreの5つの語彙のキーをすべて置き、未宣言のものは空配列とする。参照先は複合ワークスペースの
+  正規形式へ展開し、重複排除してコードポイント辞書順に並べる。
+- `implements`と`changes`は、宣言したパスをワークスペースのルートからの相対の`/`区切り文字へ正規化し、
+  重複排除して辞書順に並べる。
+- `tests`は`path`、`covers`、`command`だけを持つオブジェクトとし、`covers`を修飾IDへ変換してコードポイント辞書順に並べ、
+  `command`が未宣言の場合は`null`とする。要素全体は、正規化した後の`(path, commandSortKey, covers)`で昇順に並べる。
+  `commandSortKey`は`null`を文字列より前に置き、文字列どうしはコードポイント辞書順とする。`covers`どうしは要素ごとの
+  コードポイントの辞書式比較とし、一方が他方の接頭辞であれば短い配列を先にする。完全に同じタプルの要素数は保持し、
+  ハッシュ値の生成時に追加の重複排除を行わない。
+- `verify`と`changes`は、該当しない種別でもキーを置き、値を`null`または空配列とする。
+- `x-`拡張フィールドは含めない。Coreはこれを合否、コンテキスト、コマンド、権限に使わないため、
+  コンテキストの同一性の判定にも使わない。
+- 未知のフィールドと`profiles`は含めない。
 
-#### 3.1.2 bodyText
+#### 3.1.2 本文
 
-`bodyText`はFrontmatterの終端区切り行の直後から文書末尾までを次の順で正規化した文字列とする。
+`bodyText`は、フロントマターの終端の区切り行の直後から文書の末尾までを、次の順で正規化した文字列とする。
 
-1. BOMを除去する。
+1. BOMを除く。
 2. CRLFとCRをLFへ変換する。
-3. 各行の行末の空白類（SPとTAB）を除去する。
-4. 先頭と末尾の空行を除去する。
-5. 末尾へLFを1つ置く。空本文は空文字列とする。
+3. 各行の行末の空白類（SPとTAB）を除く。
+4. 先頭と末尾の空行を除く。
+5. 末尾へLFを1つ置く。本文が空であれば空文字列とする。
 
-Core 1.0は散文の意味変更と体裁変更を区別しない。上記以外の空行数、見出し記法、表の桁揃え、語順は
-すべてDigestへ影響する。過剰にstaleとする方向は安全側であり、変更を見落とす方向は安全側ではない。
-除外sectionは設けない。Core 1.0は`Revision History`を要求しないため、追記だけを意味集合の外に置く例外も設けない。
+Core 1.0は、散文の意味の変更と体裁の変更を区別しない。上記以外の空行の数、見出しの記法、表の桁揃え、語順は
+すべてハッシュ値に影響する。過剰に古くなったと判定する方向は安全側であり、変更を見落とす方向は安全側ではない。
+除外する節は設けない。Core 1.0は`Revision History`を要求しないため、追記だけを意味の集合の外に置く例外も設けない。
 
-#### 3.1.3 statements
+#### 3.1.3 規範文
 
-Semantic IRから次のkeyだけを保持する。
+意味中間表現から、次のキーだけを保持する。
 
 ```json
 {
@@ -165,24 +167,24 @@ Semantic IRから次のkeyだけを保持する。
 ```
 
 `documentId`、`localId`、`source`、`raw`、`untrustedText`、`unknownExtensions`は含めない。文書IDは`id`から、
-source位置は`bodyText`から導けるためである。`reason`はSemantic IRと同じく、理由付き`SHOULD`では正規化後の
-text、理由なし`SHOULD`と`MUST`／`MAY`ではnullとする。`value`未指定はnullとする。`extensions`は正規化後の
-`(namespace, term, valueSortKey)`で昇順に並べる。`valueSortKey`はnullを文字列より前とし、文字列同士はcode point
-辞書順とする。完全に同じtupleの要素数は保持する。同じ`namespace`／`term`へ異なる`value`を持つextensionを禁止せず、
-opaque extensionを失わない。opaque extensionの有無はCore解析結果の合否を変えないが、Digestの材料には含める。
+`source`の位置は`bodyText`から導けるためである。`reason`は意味中間表現と同じく、理由付きの`SHOULD`では正規化した後の
+テキスト、理由なしの`SHOULD`と`MUST`または`MAY`では`null`とする。`value`を指定していない場合は`null`とする。`extensions`は
+正規化した後の`(namespace, term, valueSortKey)`で昇順に並べる。`valueSortKey`は`null`を文字列より前とし、文字列どうしは
+コードポイント辞書順とする。完全に同じタプルの要素数は保持する。同じ`namespace`と`term`の組に異なる`value`を持つ拡張タグを
+禁止せず、不透明な拡張タグを失わない。不透明な拡張タグの有無はCoreの解析結果の合否を変えないが、ハッシュ値の材料には含める。
 
-`documents[].statements`はContextが収録する対象statementではなく、当該文書が所有する全規範文とする。
-対象statementの選択はcoverageとConstraint Ledgerが保持し、Digestの材料にしない。
+`documents[].statements`は、コンテキストが収録する対象規範文ではなく、その文書が所有するすべての規範文とする。
+対象規範文の選択はカバレッジと制約台帳が保持し、ハッシュ値の材料にしない。
 
-### 3.2 crossWorkspaceEdges
+### 3.2 ワークスペースをまたぐエッジ
 
-[複合workspace仕様 §6](../02_SPECモデル/05_複合workspace仕様.md#6-横断索引とcontext)の
-`resolution.crossWorkspaceEdges`と同じ内容、同じ順序、同じ重複排除規則を使う。
-単一workspaceでは空配列とする。
+[複合ワークスペース仕様 §6](../02_SPECモデル/05_複合workspace仕様.md#6-横断索引とcontext)の
+`resolution.crossWorkspaceEdges`と同じ内容、同じ順序、同じ重複排除の規則を使う。
+単一ワークスペースでは空配列とする。
 
-### 3.3 settings
+### 3.3 設定
 
-context仕様 §6の許可リストだけをkey固定のobjectとして保持する。
+`context`仕様 §6の許可リストだけを、キーを固定したオブジェクトとして保持する。
 
 ```json
 {
@@ -198,26 +200,26 @@ context仕様 §6の許可リストだけをkey固定のobjectとして保持す
 }
 ```
 
-- `workspaces`は到達workspaceだけを`id`辞書順に並べる。
-- `context`はrequest workspaceの既定値適用後の値だけとする。
-- `verifyTimeouts`と`commands`は、`purpose=verify`のBundleがbindingとして収録したcommandだけから作る。
-  `purpose`が`implement`または`interpret`のBundleでは、いずれも空配列とする。
-- `verifyTimeouts`はbindingを1件以上収録したworkspaceだけを`workspaceId`辞書順に並べ、既定値を適用する。
-- `commands`はbindingが参照するcommandだけを`workspaceId`、`name`の順で辞書順に並べる。`argv`は
-  `{tests}`を展開しないtemplateのまま保持し、`cwd`は未指定時`.`とする。
-- `multiWorkspace.maxMembers`、`safety`、未到達workspaceの設定、未使用command、CLI timeout cap、
+- `workspaces`は、到達ワークスペースだけを`id`の辞書順に並べる。
+- `context`は、起点ワークスペースの設定に既定値を適用した後の値だけとする。
+- `verifyTimeouts`と`commands`は、目的が`verify`のコンテキスト一式がテスト割当てとして収録したコマンドだけから作る。
+  目的が`implement`または`interpret`のコンテキスト一式では、いずれも空配列とする。
+- `verifyTimeouts`は、テスト割当てを1件以上収録したワークスペースだけを`workspaceId`の辞書順に並べ、既定値を適用する。
+- `commands`は、テスト割当てが参照するコマンドだけを`workspaceId`、`name`の順で辞書順に並べる。`argv`は
+  `{tests}`を展開しない引数列テンプレートのまま保持し、`cwd`は未指定のとき`.`とする。
+- `multiWorkspace.maxMembers`、`safety`、到達ワークスペースでないワークスペースの設定、使われないコマンド、CLIの`--timeout`の値、
   出力形式、`--report`は含めない。
 
 ## 4. 文字正規化
 
-§2の材料収集後、sortとserializeの前に、digest input中の全文字列のkeyと値へ次を適用する。
+§2の材料の収集の後、並べ替えと直列化の前に、ハッシュ値の材料に含まれるすべての文字列のキーと値へ、次を適用する。
 
 1. Unicode NFCへ正規化する。
-2. LFを唯一の改行とする。§3.1.2で正規化済みの`bodyText`を再変換しない。
-3. 次に列挙するpath型fieldだけでU+005C REVERSE SOLIDUSをU+002F SOLIDUSへ変換する。
-4. 制御文字を除去または置換せず、trimとcase変換も行わない。
+2. LFを唯一の改行とする。§3.1.2で正規化済みの`bodyText`は変換し直さない。
+3. 次に列挙するパス型のフィールドだけで、U+005C REVERSE SOLIDUSをU+002F SOLIDUSへ変換する。
+4. 制御文字を除去または置換せず、トリムと大文字・小文字の変換も行わない。
 
-path区切り文字変換の対象は次だけである。
+パスの区切り文字の変換の対象は、次だけである。
 
 - `workspaces[].path`
 - `documents[].frontmatter.implements[]`
@@ -225,46 +227,46 @@ path区切り文字変換の対象は次だけである。
 - `documents[].frontmatter.changes[]`
 - `settings.commands[].cwd`
 
-`title`、`bodyText`、statementの意味field、extension `value`、`settings.commands[].argv[]`、ID、workspace ID、
-relation targetはpathに見える内容を含んでも区切り文字変換しない。Frontmatterと設定で`/`を要求する入力pathは通常この
-変換前から正規形であり、本規則はOS内部表現が混入してもdigest inputの最終境界を固定するために適用する。
+`title`、`bodyText`、規範文の意味フィールド、拡張タグの`value`、`settings.commands[].argv[]`、ID、ワークスペースID、
+関係の参照先は、パスに見える内容を含んでいても区切り文字の変換をしない。フロントマターと設定で`/`を要求する入力のパスは、
+通常この変換の前から正規の形であり、本規則はOSの内部表現が混じってもハッシュ値の材料の最終的な境界を固定するために適用する。
 
-配列の重複排除、sort、tuple比較はすべて本節の正規化後の値を使用する。正規化により完全に同じobjectとなる複数要素は
-同じbyte表現なので相対順がDigestへ影響しない。明示的に重複排除を規定した配列以外では要素数を保持する。
+配列の重複排除、並べ替え、タプルの比較は、すべて本節で正規化した後の値を使う。正規化により完全に同じオブジェクトとなる複数の要素は、
+同じバイト表現になるので、相対の順序がハッシュ値に影響しない。明示的に重複排除を定めた配列以外では、要素数を保持する。
 
-比較のための正規化であり、正本fileを書き換えない。
+比較のための正規化であり、正本のファイルを書き換えない。
 
-## 5. serializationとhash
+## 5. 直列化とハッシュ値の計算
 
-serializationはRFC 8785 JSON Canonicalization Schemeに従う。実装は同等の結果を返す限り
-自前実装でもよいが、次を満たさなければならない。
+直列化は、RFC 8785 JSON Canonicalization Schemeに従う。実装は、同等の結果を返す限り
+自前の実装でもよいが、次を満たさなければならない。
 
 - 出力はUTF-8とし、BOM、改行、余分な空白を含めない。
-- object keyはUTF-16 code unitの昇順に並べる。
-- 数値はJSON数値のうち安全な整数だけを使う。Core 1.0のdigest inputは非整数、指数表記、
+- オブジェクトのキーは、UTF-16のコード単位の昇順に並べる。
+- 数値は、JSONの数値のうち安全な整数だけを使う。Core 1.0のハッシュ値の材料は、非整数、指数表記、
   `-0`、`NaN`、`Infinity`を持たない。
-- 文字列のescapeはRFC 8785が要求する最小集合だけとする。
-- 配列は§3で規定した順序を保持し、serializerが並べ替えない。
-- 省略可能なkeyを作らない。値がない場合はnullまたは空配列を明示する。
+- 文字列のエスケープは、RFC 8785が要求する最小の集合だけとする。
+- 配列は§3で定めた順序を保持し、直列化器が並べ替えない。
+- 省略可能なキーを作らない。値がない場合は`null`または空配列を明示する。
 
-hashはSHA-256とし、上記UTF-8 byte列だけを入力とする。結果は小文字16進64桁とし、
-`sha256:`を前置する。大文字16進、他のhash、切詰めを使わない。
+ハッシュ値の計算はSHA-256とし、上記のUTF-8のバイト列だけを入力とする。結果は小文字の16進64桁とし、
+`sha256:`を前置する。大文字の16進、他のハッシュ関数、切り詰めを使わない。
 
 ## 6. 適合
 
-適合実装は次を満たす。
+適合する実装は、次を満たす。
 
-- 同じ入力treeと同じ実効設定に対し、実行順、memory cacheの使用有無、file system上のpath、locale、
-  process環境に依存せず同じDigestを返す。
-- `--detail`、`--expand`、`--format`、`--report`、CLI timeout capの変更でDigestを変えない。
-- 設定の構文、型、必須field、参照commandが不適合な場合はDigestを計算せず、
-  不完全な材料からDigestを作らない。
-- `digestVersion`、`resolverVersion`、材料の意味を変更する場合はCore majorまたはminorを上げ、
-  過去のDigest値を同じversionで再定義しない。
+- 同じ入力の木構造と同じ実効設定に対し、実行の順序、メモリのキャッシュの使用の有無、ファイルシステム上のパス、ロケール、
+  プロセスの環境に依存せず、同じハッシュ値を返す。
+- `--detail`、`--expand`、`--format`、`--report`、CLIの`--timeout`の値の変更でハッシュ値を変えない。
+- 設定の構文、型、必須のフィールド、参照するコマンドのいずれかが不適合な場合は、ハッシュ値を計算せず、
+  不完全な材料からハッシュ値を作らない。
+- `digestVersion`、`resolverVersion`、材料の意味を変更する場合は、Coreのメジャーまたはマイナーバージョンを上げ、
+  過去のハッシュ値を同じバージョンで再定義しない。
 
-Core 1.0の`digestVersion`と`resolverVersion`はともに`"1.0"`であり、package patch version、Git commit、実装言語、
-設定から導出しない。Digest入力構造、正規化、serializationの意味変更は`digestVersion`、Context閉包、適用可能性、
-target展開の意味変更は`resolverVersion`を上げる。patch releaseではどちらも変更しない。
+Core 1.0の`digestVersion`と`resolverVersion`は、ともに`"1.0"`であり、パッケージのパッチバージョン、Gitのコミット、実装言語、
+設定から導出しない。ハッシュ値の入力構造、正規化、直列化の意味の変更は`digestVersion`を、コンテキストの閉包、適用可能性（applicability）、
+対象展開の意味の変更は`resolverVersion`を上げる。パッチリリースではどちらも変更しない。
 
-適合fixtureは、固定入力に対する期待Digest値を`expected/context.json`へ含める。
-fixtureの配置と比較方法は[適合fixture仕様](04_適合fixture仕様.md)に従う。
+適合fixtureは、固定した入力に対する期待するハッシュ値を`expected/context.json`へ含める。
+fixtureの配置と比較の方法は[適合fixture仕様](04_適合fixture仕様.md)に従う。

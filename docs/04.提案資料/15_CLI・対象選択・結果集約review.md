@@ -47,7 +47,7 @@ workspace別Diagnostic、root workspace reportという基本形も成立して�
 
 ## 5. FED-CLI-003 操作別member結果
 
-[共通結果](../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#2-共通結果)は`workspaces[]`の共通fieldを
+[共通結果](../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#2-結果の形)は`workspaces[]`の共通fieldを
 定めるが、操作固有fieldは各操作仕様へ委ねている。現状では次が完全には確定していない。
 
 - check: full scopeでmemberごとに返す対象件数
