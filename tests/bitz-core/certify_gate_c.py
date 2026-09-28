@@ -3,11 +3,12 @@
 # requires-python = ">=3.12"
 # dependencies = []
 # ///
-"""Gate C Phase 1の実行・集約command。
+"""Gate Cの実行・集約command。
 
 runはcommit済みHEADからfresh checkoutを作り、指定した環境roleで全適合fixtureとCore単体試験を実行する。
-collectはminimum/referenceの2証拠をfail-closedで照合する。Phase 1では性能baseline、比較実験、
-未解決P0/P1閉包を認定しないため、基盤が通過してもGate C自体はPendingを返す。
+collectはminimum/referenceの2証拠をfail-closedで照合し、対象commitのfresh checkoutで
+受入済み性能baselineと固定SLOを再監査する。比較実験と未解決P0/P1閉包が残るため、
+基盤と性能監査が通過してもGate C自体はPendingを返す。
 """
 from __future__ import annotations
 
@@ -34,6 +35,7 @@ from conformance.selection import step_ids
 CORE = "plugins/bitz-core"
 UNIT_RUNNER = "tests/bitz-core/run_test_files.py"
 REFERENCE_MANIFEST = Path("fixtures/performance/environments/core-1-reference.json")
+BENCHMARK_AUDIT = "fixtures/validate_benchmarks.py"
 
 
 def git(*args: str, cwd: Path = ROOT) -> subprocess.CompletedProcess:
@@ -258,6 +260,49 @@ def run_evidence(role: str, environment_id: str, python_spec: str) -> tuple[dict
     return evidence, errors
 
 
+def run_performance_evidence(commit: str) -> tuple[dict, list[str]]:
+    """対象commitのfresh checkoutで受入済み性能baselineを再監査する。"""
+    errors: list[str] = []
+    uv = shutil.which("uv")
+    evidence = {
+        "schemaVersion": 1,
+        "commit": commit,
+        "checkoutId": uuid.uuid4().hex,
+        "cleanBefore": False,
+        "cleanAfter": False,
+        "exitCode": None,
+        "report": None,
+        "stdoutSha256": None,
+        "stderrSha256": None,
+        "errors": errors,
+    }
+    if uv is None:
+        errors.append("uvが見つかりません")
+        return evidence, errors
+    try:
+        with tempfile.TemporaryDirectory(prefix="bitz-gate-c-performance-") as temporary:
+            directory = Path(temporary) / "checkout"
+            checkout(commit, directory)
+            evidence["cleanBefore"] = clean(directory)
+            audit = run_command([uv, "run", BENCHMARK_AUDIT], directory, 600)
+            evidence["exitCode"] = audit["exitCode"]
+            evidence["stdoutSha256"] = sha256(audit["stdout"])
+            evidence["stderrSha256"] = sha256(audit["stderr"])
+            try:
+                evidence["report"] = json.loads(audit["stdout"])
+            except (ValueError, UnicodeDecodeError):
+                errors.append("性能baseline監査の標準出力がJSONではありません")
+            if audit["exitCode"] != 0:
+                errors.append("性能baseline監査が成功しませんでした")
+            evidence["cleanAfter"] = clean(directory)
+            if not evidence["cleanBefore"] or not evidence["cleanAfter"]:
+                errors.append("性能baseline監査のfresh checkoutが実行前後でcleanではありません")
+    except (OSError, RuntimeError, subprocess.SubprocessError) as error:
+        errors.append(str(error).split("\n")[0])
+    evidence["errors"] = errors
+    return evidence, errors
+
+
 def write_json(value: dict, output: str | None) -> None:
     text = json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
     if output:
@@ -267,14 +312,15 @@ def write_json(value: dict, output: str | None) -> None:
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Gate C Phase 1の実行・集約command。")
+    parser = argparse.ArgumentParser(description="Gate Cの実行・集約command。")
     commands = parser.add_subparsers(dest="command", required=True)
     run = commands.add_parser("run", help="1環境のfresh-checkout証拠を作る")
     run.add_argument("--role", required=True, choices=gate_c.ROLES)
     run.add_argument("--environment-id", required=True)
     run.add_argument("--python", required=True, dest="python_spec")
     run.add_argument("--output")
-    collect = commands.add_parser("collect", help="minimum/referenceの証拠を集約する")
+    collect = commands.add_parser(
+        "collect", help="minimum/referenceと受入済み性能baselineの証拠を集約する")
     collect.add_argument("--input", required=True, action="append")
     collect.add_argument("--commit")
     collect.add_argument("--output")
@@ -293,11 +339,16 @@ def main(argv: list[str] | None = None) -> int:
     try:
         rows = [json.loads(Path(path).read_text(encoding="utf-8")) for path in args.input]
         manifest = load_reference_manifest_at(commit)
+        performance, performance_errors = run_performance_evidence(commit)
+        if performance_errors:
+            raise RuntimeError(performance_errors[0])
         report = gate_c.collect(rows, commit=commit, fixture_ids=step_ids(5),
-                                reference_manifest=manifest)
+                                reference_manifest=manifest,
+                                performance_evidence=performance)
     except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as error:
         report = {"schemaVersion": 1, "commit": commit, "gateC": "Failed",
-                  "gateCFoundation": "Failed", "errors": [str(error).split("\n")[0]]}
+                  "gateCFoundation": "Failed", "gateCPerformance": "Failed",
+                  "errors": [str(error).split("\n")[0]]}
         write_json(report, args.output)
         return 1
     write_json(report, args.output)

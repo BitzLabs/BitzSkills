@@ -75,3 +75,18 @@ Core永続cacheなし、reportなし、逐次実行を強制し、観測環境�
 初回baselineと固定SLOの受入は完了した。Gate C集約処理へこのbaseline監査を直接接続するまでは
 `accepted performance baseline integration`を未完了として残す。Small Flowと通常Markdown条件の
 比較証拠、および未解決P0/P1の閉包も残るため、Gate C全体は`Pending`を維持する。
+
+## 2026-09-28: Phase 3（性能baselineのGate C集約統合）
+
+`certify_gate_c.py collect`は、minimum／reference証拠と同じ対象commitをfresh checkoutし、
+`validate_benchmarks.py`を直接実行する。監査は受入済みbaselineのSchema、provenance、基準環境、
+dataset digest、測定値の再計算、固定SLO、dataset生成の決定性と形状陰性対照を検査する。
+
+Gate C集約は監査の対象commit、fresh checkoutのclean状態、終了コード、report hash、監査件数、
+baselineの環境ID・Core commit・case件数・file hashをfail-closedで照合する。監査の欠落、失敗、
+偽の`Passed`、重複baselineは拒否する。通過時は`gateCPerformance: "Passed"`を記録する。
+
+性能baselineのGate C集約統合は完了した。残件は次の2項目であり、Gate C全体は`Pending`を維持する。
+
+1. Small Flowと通常Markdown条件の比較証拠
+2. 未解決P0/P1の閉包
