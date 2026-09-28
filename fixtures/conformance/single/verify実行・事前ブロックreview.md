@@ -7,7 +7,7 @@ process単位の入力（`SINGLE-057`、`058`、`059`、`069-01/02`）と、複�
 
 ## verify fixtureはすべて入力をstageする
 
-[verify仕様 §5.1](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#51-実行fileと環境)は、Gitが使える状態で
+[verify仕様 §5.1](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#51-実行ファイルと環境)は、Gitが使える状態で
 bindingのworkspace設定がindexで未追跡なら、`VERIFY-CONFIG-UNTRACKED`で起動を遮断する。Context fixtureは何も
 stageしないunbornのrepositoryを使えたが、verify fixtureではcommandに到達せず、すべてのcaseが同じ原因になってしまう。
 
@@ -46,7 +46,7 @@ fixtureに`--base`を渡すことを求めるが、`verify`にはこのoptionが
 | `SINGLE-067` | `CTX-STATE-INAPPLICABLE` | `skip-target` | targetの`diagnostics` |
 | `SINGLE-062` | `VERIFY-TARGETS-EMPTY` | `stop-operation`、source `invocation` | 最上位 |
 
-[verify仕様 §6](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#6-command結果)は、単一workspaceでは*binding*の
+[verify仕様 §6](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#6-コマンドの結果)は、単一workspaceでは*binding*の
 Diagnosticを最上位に置く。ただしこれは`skip-binding`の条件（未追跡の設定、実行fileの不在、使えないcwd、argvの上限、
 cwd外のtest）に当てはまる規定である。`VERIFY-BINDING-MISSING`は`skip-target`なので、`SINGLE-061`はtargetに置く。
 
@@ -58,7 +58,7 @@ cwd外のtest）に当てはまる規定である。`VERIFY-BINDING-MISSING`は`
   両方の切り詰めflagは`false`である。
 - **`SINGLE-067`は`statements: []`を返す。** cancelledの起点は、`addresses`する参照先を展開する前に拒否される。
   検証するはずだった規範文を並べると、行われなかった作業を主張することになる。
-- **`SINGLE-062`はdraftのREQを使う。** [verify仕様 §7](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#7-引数なし実行)
+- **`SINGLE-062`はdraftのREQを使う。** [verify仕様 §7](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#7-引数なしの実行)
   はapprovedのREQとTECHだけを対象にするため、workspace自体を消さずに対象0件にする最小の入力は、draftの文書1件である。
 - **`covers`は、bindingのtestが対象にする規範文を挙げる。** `argv`は、§5と§8に従い、`{tests}`を重複排除・整列した
   pathで置き換えて展開した値を持つ。

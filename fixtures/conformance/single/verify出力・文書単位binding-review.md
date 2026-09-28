@@ -46,7 +46,7 @@ targetは、規範文を持たず文書単位のtestを宣言するTECHである
   `implement`について`addresses`の閉包を明示している。
 - §6.3の`verify`は「interpretに加えて対象statementのtest対応、command、実装pathを含める。TASKは起点指定時だけ
   含める。」とだけ述べ、`interpret`は`addresses`をたどらない。
-- 一方、[verify仕様 §3](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#3-対象)はTASK targetが`addresses`する
+- 一方、[verify仕様 §3](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#3-検証対象)はTASK targetが`addresses`する
   参照先を検証することを求めており、その文書がContextの外にあれば実行できない。
 
 一貫した読み方は「含まれる」だが、これは規範上の決定であり、

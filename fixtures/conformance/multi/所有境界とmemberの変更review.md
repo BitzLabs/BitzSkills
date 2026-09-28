@@ -6,7 +6,7 @@
 
 ## 所有境界は実pathで、TASK境界は字句pathで判定する
 
-[複合workspace仕様 §5.1・§5.2](../../../docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#51-canonical-path判定)は
+[複合workspace仕様 §5.1・§5.2](../../../docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#51-正規パスの判定)は
 2つの判定を分けて定める。fixtureもこれに合わせて別の入力で固定する。
 
 - `MULTI-008`は`apps/web/src/shared.py`をsymlinkにし、link文字列`../../../services/api/src/session.py`で
@@ -29,7 +29,7 @@ root、`api`、`web`なので、`api`が`failed`でもその後ろの`web`の`ch
 
 ## workspace IDは永続同一性、pathは移動できる
 
-[複合workspace仕様 §4.1](../../../docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#41-workspace-identity)に従い、
+[複合workspace仕様 §4.1](../../../docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#41-ワークスペースの同一性)に従い、
 IDを保ったpath変更は同一workspaceの移動、ID変更は旧workspaceの削除と新workspaceの追加として扱う。
 
 | fixture | 基準版 → 現在版 | 結末 |

@@ -22,7 +22,7 @@ Contextを解決し、`bindingRefs`の和集合を取り、`(workspaceId, comman
 ## `{tests}`は置換位置であり、末尾への追加ではない
 
 `SINGLE-065`はDigestの入力を再利用し、command templateを`["/bin/true"]`へ縮める。
-[verify仕様 §5](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#5-command実行)は、置換位置がなければpathの件数に
+[verify仕様 §5](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#5-コマンドの実行)は、置換位置がなければpathの件数に
 かかわらずargvを1回実行するため、`argv`は`["/bin/true"]`のままで、`tests`には宣言した2つのpathが並ぶ。
 test pathが`argv`へ漏れないことを回帰試験で確認する。
 `argv` templateはDigest材料なので、このfixtureはgoldenではなく固有のDigestを持つ。

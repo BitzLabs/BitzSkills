@@ -41,7 +41,7 @@
    （[§5](../../../docs/03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md#5-直列化とハッシュ値の計算)）一方、
    `result.schema.json`は`activation.text`がある場合に空でない文字列を要求する。2つの表現は意図して異なる。
 6. **結果の`frontmatter`は宣言したfieldだけを持ち、Digestの`frontmatter`は固定keyをすべて埋める。**
-   [context仕様 §5](../../../docs/03.詳細設計/03_操作仕様/01_context.md#5-projection)は許可された宣言fieldを提示し、
+   [context仕様 §5](../../../docs/03.詳細設計/03_操作仕様/01_context.md#5-提示形式)は許可された宣言fieldを提示し、
    [Digest正規化 §3.1.1](../../../docs/03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md#311-フロントマターからの抽出)は
    relation keyを5つと空配列に固定する。`x-owners`はどちらにも現れない。CoreはContextに`x-`を使わず、
    それを`SINGLE-045`が固定する。

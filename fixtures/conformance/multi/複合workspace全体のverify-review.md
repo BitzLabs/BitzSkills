@@ -5,7 +5,7 @@
 
 ## 継続単位はworkspaceではなくtargetとbindingである
 
-[verify仕様 §10](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#10-全体実行)に従い、全体verifyは
+[verify仕様 §10](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#10-全体操作での検証)に従い、全体verifyは
 root workspaceを先頭、以降をworkspace ID辞書順に処理し、通過targetのbindingを和集合として1回ずつ実行する。
 この群は、そこで起こる4つの場面を1件ずつ固定する。
 

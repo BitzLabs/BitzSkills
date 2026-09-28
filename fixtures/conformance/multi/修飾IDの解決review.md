@@ -29,7 +29,7 @@ Coreの挙動を観測したものではない。
 ## 不在の起点は終了コード4と区別する
 
 `--workspace`にcatalog外のIDを渡す場合はinvocation errorで終了コード4、操作結果もreportも作らない
-（[複合workspace仕様 §3](../../../docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#3-workspace決定)）。
+（[複合workspace仕様 §3](../../../docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#3-ワークスペースの決定)）。
 一方`MULTI-025-01/02`は、catalogにあるworkspaceを修飾に使い、その中に存在しない文書を起点に指定する。
 こちらは操作結果を返す`CTX-ROOT-MISSING-001`／`failed`／終了コード1であり、`source`は`invocation`、
 `argument`は指定したままの`api::REQ-009`とする。checkでは最上位のDiagnostic、verifyでは当該targetの

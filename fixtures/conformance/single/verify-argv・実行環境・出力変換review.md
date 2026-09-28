@@ -1,8 +1,8 @@
 # verify argv・実行環境・出力変換fixture review
 
 2026-09-17。SINGLE-126-01〜05、07〜16の15件を追加する。126-06は裁定によりmatrixから削除した（後述）。
-根拠は[workspace・設定仕様 §6](../../../docs/03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md#6-command定義)、
-[verify仕様 §5・§6](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#5-command実行)、
+根拠は[workspace・設定仕様 §6](../../../docs/03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md#6-コマンドの定義)、
+[verify仕様 §5・§6](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#5-コマンドの実行)、
 [安全な入出力 §9](../../../docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md#9-プロセスの出力)、
 [Diagnostic registry](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md)である。
 
