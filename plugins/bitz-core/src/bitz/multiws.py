@@ -490,20 +490,18 @@ def _iter_spec_md_files(workspace_root: str):
 
 
 def _extract_frontmatter_dict(text: str) -> dict:
-    if not (text.startswith("---\n") or text == "---"):
+    if not text.startswith("---\n"):
         return {}
-    lines = text.split("\n")
-    if lines[0] != "---":
+    closing = text.find("\n---\n", 4)
+    if closing < 0 and text.endswith("\n---"):
+        closing = len(text) - 4
+    if closing < 0:
         return {}
-    for i in range(1, len(lines)):
-        if lines[i] == "---":
-            raw = "\n".join(lines[1:i])
-            try:
-                value = parse_yaml_subset(raw)
-            except (YamlSyntaxError, YamlForbiddenError):
-                return {}
-            return value if isinstance(value, dict) else {}
-    return {}
+    try:
+        value = parse_yaml_subset(text[4:closing])
+    except (YamlSyntaxError, YamlForbiddenError):
+        return {}
+    return value if isinstance(value, dict) else {}
 
 
 def _scan_document_counts(text: str) -> tuple[int, int, int]:

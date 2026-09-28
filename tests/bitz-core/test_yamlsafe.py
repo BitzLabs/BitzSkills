@@ -77,6 +77,16 @@ class ForbiddenSyntaxTests(unittest.TestCase):
             parse_yaml_subset("true: 1\n")
 
 
+class CacheIsolationTests(unittest.TestCase):
+    def test_cached_value_is_independent_from_caller_mutation(self):
+        text = "a:\n  - one\n  - two\n"
+        first = parse_yaml_subset(text)
+        first["a"].append("caller-only")
+
+        second = parse_yaml_subset(text)
+        self.assertEqual(second, {"a": ["one", "two"]})
+
+
 class SyntaxErrorTests(unittest.TestCase):
     def test_malformed_flow_sequence(self):
         with self.assertRaises(YamlSyntaxError):
