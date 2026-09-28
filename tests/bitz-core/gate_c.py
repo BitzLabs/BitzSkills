@@ -10,7 +10,7 @@ ROLES = ("minimum", "reference")
 MINIMUM_ENVIRONMENT_ID = "minimum-cpython-3-12"
 PYTHON_MINOR = (3, 12)
 PENDING = [
-    "performance baseline and SLO",
+    "accepted performance baseline integration",
     "Small Flow and Markdown comparison evidence",
     "unresolved P0/P1 closure",
 ]

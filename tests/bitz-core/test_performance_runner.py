@@ -31,6 +31,83 @@ def series(walls=(10, 11, 12, 13, 14), memory: int = 100, code: int = 0) -> Seri
     )
 
 
+def accepted_baseline():
+    manifest = {
+        "environmentId": "reference",
+        "comparisonKey": {
+            "os": "Linux",
+            "platformClass": "WSL2",
+            "architecture": "x86_64",
+            "cpuModel": "Expected",
+            "logicalCores": 24,
+            "minimumRamBytes": 8_000,
+            "storageClass": "wsl2-virtual-disk",
+            "filesystem": "ext4",
+        },
+        "requiredTools": {
+            "pythonVersion": "3.12.x",
+            "minimumGitVersion": "2.30",
+            "memoryAccounting": "cgroup-v2-process-tree",
+        },
+    }
+    plan = {
+        "cases": [
+            {
+                "id": "fixed",
+                "maxMedianWallMs": 20,
+                "maxPeakRssBytes": 200,
+            },
+            {
+                "id": "derived",
+                "baseline": ["python3", "noop.py"],
+                "maxDerivedOverheadMs": 5,
+                "maxPeakRssBytes": 200,
+            },
+        ],
+    }
+    fixed = {
+        "id": "fixed",
+        "coldWallMs": 20,
+        "wallMs": [10, 11, 12, 13, 14],
+        "medianWallMs": 12,
+        "peakRssBytes": [100] * 5,
+        "maximumPeakRssBytes": 100,
+        "exitCodes": [0] * 5,
+        "status": "passed",
+    }
+    derived = {
+        "id": "derived",
+        "coldWallMs": 20,
+        "wallMs": [10, 11, 12, 13, 14],
+        "medianWallMs": 12,
+        "peakRssBytes": [100] * 5,
+        "maximumPeakRssBytes": 100,
+        "exitCodes": [0] * 5,
+        "baselineWallMs": [8, 9, 10, 11, 12],
+        "baselineMedianWallMs": 10,
+        "baselineExitCodes": [0] * 5,
+        "derivedOverheadMs": 2,
+        "status": "passed",
+    }
+    result = {
+        "environmentId": "reference",
+        "datasetDigests": {"dataset": "sha256:" + "a" * 64},
+        "observedEnvironment": {
+            "os": "Linux", "platformClass": "WSL2", "architecture": "x86_64",
+            "cpuModel": "Expected", "logicalCores": 24, "ramBytes": 16_000,
+            "storageClass": "wsl2-virtual-disk", "filesystem": "ext4",
+            "python": "3.12.3", "git": "git version 2.43.0",
+            "memoryAccounting": "cgroup-v2-process-tree",
+        },
+        "comparability": "comparable",
+        "comparisonMismatches": [],
+        "coreCommit": "a" * 40,
+        "cases": [fixed, derived],
+    }
+    datasets = {"dataset": {"expectedTreeDigest": "sha256:" + "a" * 64}}
+    return result, plan, manifest, datasets
+
+
 class FakeExecutor:
     def __init__(self, values):
         self.values = iter(values)
@@ -144,6 +221,35 @@ class PerformanceRunnerTests(unittest.TestCase):
             ["cpuModel", "filesystem", "git", "logicalCores", "memoryAccounting",
              "platformClass", "python", "ramBytes", "storageClass"],
         )
+
+    def test_accepted_baseline_recomputes_all_gate_values(self):
+        result, plan, manifest, datasets = accepted_baseline()
+        self.assertEqual(
+            run_benchmarks.validate_accepted_baseline(
+                result, plan, manifest, datasets),
+            {
+                "coreCommit": "a" * 40,
+                "environmentId": "reference",
+                "cases": 2,
+                "status": "Passed",
+            },
+        )
+
+    def test_accepted_baseline_rejects_forged_success(self):
+        for mutate in (
+            lambda result: result["cases"][0].update(medianWallMs=999),
+            lambda result: result["cases"][0].update(maximumPeakRssBytes=201),
+            lambda result: result["cases"][1].update(derivedOverheadMs=0),
+            lambda result: result["cases"][0]["exitCodes"].__setitem__(0, 1),
+            lambda result: result["observedEnvironment"].update(cpuModel="Other"),
+            lambda result: result.update(datasetDigests={"dataset": "sha256:" + "b" * 64}),
+        ):
+            with self.subTest(mutate=mutate):
+                result, plan, manifest, datasets = accepted_baseline()
+                mutate(result)
+                with self.assertRaises(run_benchmarks.BenchmarkError):
+                    run_benchmarks.validate_accepted_baseline(
+                        result, plan, manifest, datasets)
 
     def test_cgroup_path_cannot_escape_root(self):
         with tempfile.TemporaryDirectory() as temporary:

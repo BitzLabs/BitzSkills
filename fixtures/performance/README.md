@@ -71,6 +71,12 @@ process tree全体を隔離する。unitと一時directoryは各実行後に回�
 Coreができるまで、baselineの結果は作らない。dataset、環境の比較key、測定規則、受け入れたbaselineを更新する場合は、
 同じ変更でreviewを受ける。測定結果を黙って書き換えない。
 
+初回baselineは`core-1-linux-wsl2-ryzen-9-9900x`環境でCore commit
+`4b3d95982e33bf77486068df57faf3111a1c1152`を測定した結果である。`validate_benchmarks.py`は、
+baselineのSchema、pathの環境IDとcommit、commitが現在のHEADの祖先であること、観測環境のcomparison key、
+dataset digest、case集合と順序、中央値・最大RSS・verify overheadの再計算、固定SLOを検査する。
+`status: passed`という自己申告だけでは監査を通過しない。新しいbaselineを追加するときも同じ監査対象になる。
+
 ## 5. 入力の形状とStep 0-Pの検証
 
 `shape`は、生成した`.spec/requirements/REQ-*.md`だけを測る（Frontmatterを含むUTF-8のbyte数）。

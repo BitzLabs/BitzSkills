@@ -45,3 +45,33 @@ Phase 1でもOS、platform class、architecture、CPU、論理core数、RAM、st
 manifestのhashと比較条件が一致しないreference証拠、およびenvironment fingerprintが同じ2 roleを拒否する。
 network無効などのisolation条件は
 性能runnerで制御するため、性能baselineとともに引き続き未認定である。
+
+## 2026-09-28: Phase 2（初回性能baseline）
+
+基準環境`core-1-linux-wsl2-ryzen-9-9900x`で、Core commit
+`4b3d95982e33bf77486068df57faf3111a1c1152`をcleanな状態から測定した。
+runnerがPrivateNetwork、専用HOME／cache／TMP、cgroup v2 process tree memory、
+Core永続cacheなし、reportなし、逐次実行を強制し、観測環境はmanifestのcomparison keyと一致した。
+
+| case | 中央値 | 最大peak RSS | 判定 |
+|---|---:|---:|---|
+| single-changed-check | 734.527 ms | 29,028,352 byte | passed |
+| single-context-20 | 259.796 ms | 18,722,816 byte | passed |
+| single-full-check | 729.439 ms | 29,876,224 byte | passed |
+| single-doctor | 122.267 ms | 16,662,528 byte | passed |
+| single-verify-overhead | 260.130 ms（Core overhead） | 22,917,120 byte | passed |
+| multi-workspace-full-check | 1,948.049 ms | 31,956,992 byte | passed |
+| multi-workspace-context-20 | 315.664 ms | 25,251,840 byte | passed |
+
+受入成果物は
+`fixtures/performance/baselines/core-1-linux-wsl2-ryzen-9-9900x/4b3d95982e33bf77486068df57faf3111a1c1152.json`
+であり、file SHA-256は
+`7f46db745fe9a7f8fe87bce8b9e5f4e87124cd87dcf990e7fa3de7c90c61f72a`である。
+
+`validate_benchmarks.py`はSchema適合だけでなく、pathの環境IDとcommit、commitの祖先関係、
+観測環境、dataset digest、case集合と順序、中央値、最大RSS、verify overhead、固定SLOを
+測定配列から再計算する。改変した`status: passed`だけでは監査を通過できない。
+
+初回baselineと固定SLOの受入は完了した。Gate C集約処理へこのbaseline監査を直接接続するまでは
+`accepted performance baseline integration`を未完了として残す。Small Flowと通常Markdown条件の
+比較証拠、および未解決P0/P1の閉包も残るため、Gate C全体は`Pending`を維持する。

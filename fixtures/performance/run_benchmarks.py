@@ -477,6 +477,74 @@ def validate_result_schema(result: dict, schema_path: Path = RESULT_SCHEMA_PATH)
         raise BenchmarkError(f"測定結果がschemaに適合しません: {errors[0].message}")
 
 
+def validate_accepted_baseline(
+    result: dict,
+    plan: dict,
+    environment_manifest: dict,
+    dataset_manifests: dict[str, dict],
+) -> dict:
+    """受入済みbaselineが測定値から独立に再計算できることを検査する。"""
+    if result.get("environmentId") != environment_manifest.get("environmentId"):
+        raise BenchmarkError("baselineのenvironmentIdが基準環境manifestと一致しません")
+    mismatches = comparison_mismatches(
+        result.get("observedEnvironment", {}), environment_manifest)
+    if result.get("comparability") != "comparable" or result.get("comparisonMismatches") != []:
+        raise BenchmarkError("baselineが比較可能な測定結果ではありません")
+    if mismatches:
+        raise BenchmarkError(
+            f"baselineの観測環境が基準環境manifestと一致しません: {', '.join(mismatches)}")
+
+    expected_digests = {
+        identifier: manifest["expectedTreeDigest"]
+        for identifier, manifest in sorted(dataset_manifests.items())
+    }
+    if result.get("datasetDigests") != expected_digests:
+        raise BenchmarkError("baselineのdataset digestが現在のmanifestと一致しません")
+
+    cases = result.get("cases", [])
+    expected_ids = [case["id"] for case in plan["cases"]]
+    if [case.get("id") for case in cases] != expected_ids:
+        raise BenchmarkError("baselineのcase集合または順序がbenchmark planと一致しません")
+
+    for definition, measured in zip(plan["cases"], cases, strict=True):
+        identifier = definition["id"]
+        wall = measured.get("wallMs", [])
+        peak = measured.get("peakRssBytes", [])
+        if measured.get("status") != "passed":
+            raise BenchmarkError(f"baselineの{identifier}がpassedではありません")
+        if any(code != 0 for code in measured.get("exitCodes", [])):
+            raise BenchmarkError(f"baselineの{identifier}に非0の終了コードがあります")
+        if measured.get("medianWallMs") != statistics.median(wall):
+            raise BenchmarkError(f"baselineの{identifier}の中央値を再計算できません")
+        if measured.get("maximumPeakRssBytes") != max(peak):
+            raise BenchmarkError(f"baselineの{identifier}のpeak RSS最大値を再計算できません")
+        if measured["maximumPeakRssBytes"] > definition["maxPeakRssBytes"]:
+            raise BenchmarkError(f"baselineの{identifier}がmemory SLOを超過しています")
+
+        if "baseline" not in definition:
+            if measured["medianWallMs"] > definition["maxMedianWallMs"]:
+                raise BenchmarkError(f"baselineの{identifier}がelapsed time SLOを超過しています")
+            continue
+
+        baseline_wall = measured.get("baselineWallMs", [])
+        if any(code != 0 for code in measured.get("baselineExitCodes", [])):
+            raise BenchmarkError(f"baselineの{identifier}の比較commandが失敗しています")
+        if measured.get("baselineMedianWallMs") != statistics.median(baseline_wall):
+            raise BenchmarkError(f"baselineの{identifier}の比較中央値を再計算できません")
+        overhead = max(0.0, measured["medianWallMs"] - measured["baselineMedianWallMs"])
+        if measured.get("derivedOverheadMs") != overhead:
+            raise BenchmarkError(f"baselineの{identifier}のoverheadを再計算できません")
+        if overhead > definition["maxDerivedOverheadMs"]:
+            raise BenchmarkError(f"baselineの{identifier}がoverhead SLOを超過しています")
+
+    return {
+        "coreCommit": result["coreCommit"],
+        "environmentId": result["environmentId"],
+        "cases": len(cases),
+        "status": "Passed",
+    }
+
+
 def isolation_probe(executor: CgroupExecutor) -> dict:
     with tempfile.TemporaryDirectory(prefix="bitz-performance-probe-") as temporary:
         root = Path(temporary)
