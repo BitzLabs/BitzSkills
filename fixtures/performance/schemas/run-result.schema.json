@@ -46,9 +46,23 @@
           "peakRssBytes": {"type": "array", "minItems": 5, "maxItems": 5, "items": {"type": "integer", "minimum": 0}},
           "maximumPeakRssBytes": {"type": "integer", "minimum": 0},
           "exitCodes": {"type": "array", "minItems": 5, "maxItems": 5, "items": {"type": "integer", "minimum": 0, "maximum": 4}},
+          "baselineWallMs": {"type": "array", "minItems": 5, "maxItems": 5, "items": {"type": "number", "minimum": 0}},
+          "baselineMedianWallMs": {"type": "number", "minimum": 0},
+          "baselineExitCodes": {"type": "array", "minItems": 5, "maxItems": 5, "items": {"type": "integer", "minimum": 0, "maximum": 4}},
           "derivedOverheadMs": {"type": "number", "minimum": 0},
           "status": {"enum": ["passed", "failed", "not_comparable"]}
-        }
+        },
+        "allOf": [
+          {
+            "if": {"required": ["derivedOverheadMs"]},
+            "then": {"required": ["baselineWallMs", "baselineMedianWallMs", "baselineExitCodes"]},
+            "else": {"not": {"anyOf": [
+              {"required": ["baselineWallMs"]},
+              {"required": ["baselineMedianWallMs"]},
+              {"required": ["baselineExitCodes"]}
+            ]}}
+          }
+        ]
       }
     }
   }

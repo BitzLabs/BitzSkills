@@ -50,6 +50,21 @@ manifestの`changedAppendUtf8`のbyte列を`changedPath`へ追記する。
 verifyのoverheadは、同じ生成treeと5回の測定手順を使った`median(verifyの経過時間) - median(何もしないcommandの経過時間)`
 とする。負の値は0として記録する。両方の系列と、導いた値を残す。
 
+測定前に、基準環境と隔離機能だけを検査できる。
+
+```text
+uv run fixtures/performance/run_benchmarks.py probe
+```
+
+cleanなcommit済みtreeから全caseを逐次測定し、結果Schemaに適合するJSONを作る。
+
+```text
+uv run fixtures/performance/run_benchmarks.py run --output /tmp/bitz-performance.json
+```
+
+runnerはuser systemdのroot slice直下にcaseごとのtransient unitを作り、private networkとcgroup v2の
+process tree全体を隔離する。unitと一時directoryは各実行後に回収する。
+
 ## 4. 結果の所有
 
 受け入れたbaselineの結果は`fixtures/performance/baselines/<environment-id>/<core-commit>.json`に置く。実行できる
