@@ -6,14 +6,14 @@
 
 ## 3件とも事前検査を通過した後に失敗する
 
-[verify仕様 §6](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#6-command結果)は、`commands[]`の要素を作らず
+[verify仕様 §6](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#6-コマンドの結果)は、`commands[]`の要素を作らず
 `bindingRefs`を空にする「環境不足」と、process生成を試みた後の失敗とを分ける。3件は後者に属するので、いずれも
 `commands[]`の要素を記録し、`bindingRefs: ["root::default"]`を保ち、`exitCode: null`と`status: error`を返す。
 結果Schemaは、`exit`以外のすべての終了理由にこの組合せを強制する。
 
 Diagnosticは`source.kind: environment`で最上位に置く。registryが`VERIFY-SPAWN-ERROR`、`VERIFY-SIGNAL`、
 `VERIFY-TIMEOUT`に定める形であり、3件とも継続単位は`skip-binding`である。
-[verify仕様 §6](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#6-command結果)は、単一workspaceではbindingの
+[verify仕様 §6](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#6-コマンドの結果)は、単一workspaceではbindingの
 Diagnosticを最上位に置く。
 
 | fixture | command file | 終了理由 | code |
@@ -23,7 +23,7 @@ Diagnosticを最上位に置く。
 | `SINGLE-059` | `bin/hang.sh` | `timeout` | `SPEC-VERIFY-TIMEOUT-001` |
 
 `bin/badformat`は実行bitを持つ通常fileで、内容はELFでもshebang付きscriptでもない。
-[verify仕様 §5.1](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#51-実行fileと環境)は、通常fileでない、存在しない、
+[verify仕様 §5.1](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#51-実行ファイルと環境)は、通常fileでない、存在しない、
 実行不能なfileをspawnの*前*に拒否する。このfileは3条件をすべて通過し、その後`execve`が`ENOEXEC`で失敗する。
 Coreはshellを使わないので、代わりに解釈する経路もない。これがmatrixの「実行bit付きだがOSが拒否する実行形式」である。
 
@@ -47,7 +47,7 @@ process group全体へのgraceful terminationを生き延びて強制終了を�
 準備完了の行は実際の出力なので、fixtureの期待する`stdoutExcerpt`（`"hang-ready\n"`）にもなる。空の抜粋より価値が
 ある。子孫が継承したpipeを開いたまま保持するため、この行が結果に現れるのは、CoreがEOFを待たず、timeoutの状態機械で
 streamを読み切ってread handleを閉じる場合だけである
-（[verify仕様 §5.2](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#52-timeoutと有限時間終了)）。
+（[verify仕様 §5.2](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#52-タイムアウトと有限時間での終了)）。
 元のstreamは64 KiBを大きく下回るので、`stdoutTruncated`は`false`のままである。
 
 実効timeoutは、設定が受け付ける最小値である1秒を`verify.timeoutSeconds`で与える。状態機械を通しつつfixtureを速く

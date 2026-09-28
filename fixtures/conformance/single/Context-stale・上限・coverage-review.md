@@ -10,7 +10,7 @@
    非成功のfixtureでは、`documents`、`constraintLedger.statements`、`coverage`をすべて空にする。
    `stop-operation`は「操作全体を停止する」と定義され
    （[Diagnostic registry](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md)）、
-   [context仕様 §7](../../../docs/03.詳細設計/03_操作仕様/01_context.md#7-stale検出)はstaleなContextを暗黙に受け入れない
+   [context仕様 §7](../../../docs/03.詳細設計/03_操作仕様/01_context.md#7-取得後の仕様変更の検出)はstaleなContextを暗黙に受け入れない
    ことを求める。Bundleを返さないのが安全側であり、`status`を無視したadapterでも材料を使えない。
    `CTX-LIMIT-001`は「部分Bundleを返さない」と明記しており、他のcodeにもcodeごとの規則を作らず同じ形を適用する。
 2. **`contextDigest`は、完全解決が成立した場合に限りnullでない。**
@@ -44,7 +44,7 @@
 - **`SINGLE-049`**は、*固定の*上限を越える必要がある唯一のfixtureである。提示のhard limitは設定によらず1 MiBである。
   閉包が通過するよう閉包の2つの次元を最大値に設定し、入力は`REQ-001 ← TECH-001 ← TECH-002 ← TECH-003`の
   refinementの連鎖で、間接の2件だけを大きくする。`standard`ではこの2件を`normative`で提示し`bodyText`を
-  含めない（[context仕様 §5](../../../docs/03.詳細設計/03_操作仕様/01_context.md#5-projection)）ため、測る量である
+  含めない（[context仕様 §5](../../../docs/03.詳細設計/03_操作仕様/01_context.md#5-提示形式)）ため、測る量である
   「コンテキストの意味中間表現と標準の提示」
   （[安全な入出力・互換性 §4](../../../docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md#4-リソースの上限)）は
   小さく、`--detail full`では本文が1,071,063 byteになる。各fileは1文書あたり1 MiBの入力上限を下回る。

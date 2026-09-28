@@ -26,7 +26,7 @@ SINGLE-002の空repoをGitで保持するためだけに `.gitkeep` を置き、
 すべてのcopyは物理的に独立し、共通入力へのlinkは使わない。
 
 根拠は[適合fixture仕様 §6.1](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#61-導入と設定)、
-[設定仕様 §5](../../../docs/03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md#5-schema)、
+[設定仕様 §5](../../../docs/03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md#5-スキーマ)、
 [doctor仕様](../../../docs/03.詳細設計/03_操作仕様/04_doctor.md)、
 [結果契約 §2・§5](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md)、
 [Diagnostic registry](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md)。

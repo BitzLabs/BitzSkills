@@ -1,9 +1,9 @@
 # 共通target展開・advisory提示fixture review
 
 2026-09-17。SINGLE-106-03、107-01／02、108-01／02、109、110、113の8件を追加する。
-根拠は[関係・トレースモデル §6・§7](../../../docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md#6-purpose別の閉包)、
-[context仕様 §4・§5](../../../docs/03.詳細設計/03_操作仕様/01_context.md#4-context-bundle)、
-[verify仕様 §3・§4](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#3-対象)、
+根拠は[関係・トレースモデル §6・§7](../../../docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md#6-目的ごとの閉包)、
+[context仕様 §4・§5](../../../docs/03.詳細設計/03_操作仕様/01_context.md#4-コンテキスト一式)、
+[verify仕様 §3・§4](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#3-検証対象)、
 [Context Digest正規化仕様](../../../docs/03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md)である。
 
 ## 作成前の裁定
@@ -67,7 +67,7 @@ Core実装の結果ではなく、Gate Bで実出力と副作用を比較する�
 
 ## 2026-09-26追記: 距離2以上のrole例外（SINGLE-106-06）とcompact detail（SINGLE-106-07）
 
-2026-09-25に管理者が承認した方針を反映したcommitで、[context仕様 §5](../../../docs/03.詳細設計/03_操作仕様/01_context.md#5-projection)へ、
+2026-09-25に管理者が承認した方針を反映したcommitで、[context仕様 §5](../../../docs/03.詳細設計/03_操作仕様/01_context.md#5-提示形式)へ、
 `standard`のprojection規則（roleが`root`/`work`/`replacement`/`requirement`/`constraint`ならfull、それ以外で距離2以上の
 refinementならnormative、advisoryならreference）と、ADR-014 Decision 4・5に基づく理由（requirementとconstraintを
 距離で下げるとMUSTの本文がLedgerからもprojectionからも失われる）が明記された。あわせて`compact`がroleを問わず
@@ -85,6 +85,6 @@ refinementならnormative、advisoryならreference）と、ADR-014 Decision 4�
   `projection.detail`をplanの`detail`キー（既定`standard`）から読むよう一般化した。
 
 いずれもDigest材料（reference A・B）の一致、read-only副作用、2回setupの決定論を、既存caseと同じ監査で検査する。
-根拠は[context仕様 §5・§6](../../../docs/03.詳細設計/03_操作仕様/01_context.md#5-projection)、
+根拠は[context仕様 §5・§6](../../../docs/03.詳細設計/03_操作仕様/01_context.md#5-提示形式)、
 [ADR-014](../../../docs/02.設計書/10_決定記録/ADR-014_Semantic-IRと段階的Context-Projection.md)。
 Core実装の観測出力を根拠にしていない。

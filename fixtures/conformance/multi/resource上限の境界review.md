@@ -94,7 +94,7 @@ tree digest、期待結果digest、副作用state digestを生成器の実行か
 
 ## 訂正（2026-09-25）：member数境界のmaxMembers省略
 
-根拠の規範文：[複合workspace仕様 §2](../../../docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#2-配置とcatalog)
+根拠の規範文：[複合workspace仕様 §2](../../../docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#2-配置とカタログ)
 「`multiWorkspace.maxMembers`の既定は20…`members`が実効上限を超えれば`blocked`とする」。
 
 食い違い：`MULTI-020-01`（member 99）・`MULTI-020-02`（member 100）は、root設定へ`maxMembers`を

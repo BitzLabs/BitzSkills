@@ -2,8 +2,8 @@
 
 2026-09-17。SINGLE-122、123、124の3件を追加する。
 根拠は[Context Digest正規化仕様 §3・§4](../../../docs/03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md#3-ハッシュ値の材料)、
-[context仕様 §4・§5](../../../docs/03.詳細設計/03_操作仕様/01_context.md#4-context-bundle)、
-[文書・Frontmatter・状態仕様 §5](../../../docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md#5-test対応)、
+[context仕様 §4・§5](../../../docs/03.詳細設計/03_操作仕様/01_context.md#4-コンテキスト一式)、
+[文書・Frontmatter・状態仕様 §5](../../../docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md#5-テスト対応)、
 [EARS-AI仕様](../../../docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md)である。
 
 全件がSINGLE-042のcorpusを1点だけ変え、`context REQ-001 --purpose verify --format json`を実行する。
