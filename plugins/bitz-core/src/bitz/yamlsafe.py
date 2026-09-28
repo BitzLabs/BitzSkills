@@ -50,6 +50,10 @@ class YamlForbiddenError(Exception):
         return self.summary
 
 
+# YAML.parse()は呼出しごとにparser contextを作り直す。YAML facade自体は逐次呼出しで再利用し、
+# 多数のSPECを読む際のplugin探索と初期化を文書ごとに繰り返さない。
+_YAML = YAML(typ="safe")
+
 _INT_RE = re.compile(r"^[+-]?[0-9]+$")
 _FLOAT_RE = re.compile(
     r"^[+-]?(?:[0-9]+\.[0-9]*|\.[0-9]+)(?:[eE][+-]?[0-9]+)?$"
@@ -146,9 +150,8 @@ def parse_yaml_subset(text: str, *, label: str = "設定YAML") -> object:
     （既定は設定fileの「設定YAML」、Frontmatterは呼び出し側が別labelを渡す）。
     """
 
-    yaml = YAML(typ="safe")
     try:
-        events = list(yaml.parse(io.StringIO(text)))
+        events = list(_YAML.parse(io.StringIO(text)))
     except YAMLError as exc:
         mark = getattr(exc, "context_mark", None) or getattr(exc, "problem_mark", None)
         line = mark.line if mark is not None else None
