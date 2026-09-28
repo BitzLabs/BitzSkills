@@ -1,30 +1,30 @@
-# 文書・Frontmatter・状態仕様
+# 文書・フロントマター・状態仕様
 
-## 1. 文書IDとfile名
+## 1. 文書IDとファイル名
 
-| 種別 | ID | directory |
+| 種別 | ID | ディレクトリ |
 |---|---|---|
 | REQ | `REQ-[0-9]{3,}` | `requirements/` |
 | TECH | `TECH-[0-9]{3,}` | `technical/` |
 | ADR | `ADR-[0-9]{3,}` | `decisions/` |
 | TASK | `TASK-[0-9]{3,}` | `tasks/` |
 
-IDはworkspace内でcase-sensitiveに一意とし、意味を持たない安定識別子とする。欠番は正常で、削除したIDを
+文書ID（document ID）は、ワークスペースの中で大文字と小文字を区別して一意とし、意味を持たない安定した識別子とする。欠番は正常であり、削除したIDを
 別の意味へ再利用しない。
 
-file名は`<ID>.md`または`<ID>-<slug>.md`とする。先頭IDとFrontmatter `id`が異なる場合は
-`SPEC-FILE-NAME-001`／failedとする。参照解決はFrontmatter IDを使う。
+ファイル名は`<ID>.md`または`<ID>-<slug>.md`とする。先頭のIDとフロントマター（Frontmatter）の`id`が異なる場合は、診断
+`SPEC-FILE-NAME-001`（`failed`）とする。参照の解決には、フロントマターのIDを使う。
 
-Coreは現在集合の重複を`SPEC-ID-DUPLICATE-001`／failedとして検出するが、勝敗、新ID、書換え箇所を提案しない。
+Coreは現在集合の重複を診断`SPEC-ID-DUPLICATE-001`（`failed`）として検出するが、勝敗、新ID、書換え箇所を提案しない。
 
-## 2. Frontmatter
+## 2. フロントマター
 
-すべてのSPEC Markdownはfile先頭に1つのYAML Frontmatterを持つ。前にBOM、空行、commentを置かない。
-解析後の構造はDraft 2020-12の
+すべての仕様文書のMarkdownは、ファイルの先頭に1つのYAMLフロントマターを持つ。前にBOM、空行、コメントを置かない。
+解析した後の構造は、Draft 2020-12の
 [`schemas/frontmatter.schema.json`](../schemas/frontmatter.schema.json)に従う。
-Coreは配置directoryから文書種別を決め、同Schemaの`reqFrontmatter`、`techFrontmatter`、`adrFrontmatter`、
-`taskFrontmatter`の対応する定義と同じ判定で検証する。CoreがSchema fileを実行時に読むことは要求しない。Schema rootの`oneOf`は独立validator用であり、directoryによる
-種別決定を置き換えない。
+Coreは配置したディレクトリから文書種別（document kind）を決め、同じスキーマの`reqFrontmatter`、`techFrontmatter`、`adrFrontmatter`、
+`taskFrontmatter`の対応する定義と同じ判定で検証する。Coreがスキーマファイルを実行時に読むことは要求しない。スキーマのルートの`oneOf`は独立した検証プログラム用であり、ディレクトリによる
+種別の決定を置き換えない。
 
 ```yaml
 ---
@@ -43,49 +43,49 @@ verify: default
 ---
 ```
 
-## 3. 共通field
+## 3. 共通フィールド
 
-| key | 型 | 必須 | 意味 |
+| キー | 型 | 必須 | 意味 |
 |---|---|:--:|---|
-| `id` | string | Yes | 安定文書ID |
-| `title` | string | Yes | 1〜120文字の1行title |
-| `status` | string | Yes | 種別ごとの状態 |
-| `relations` | map | No | 型付きSPEC関係 |
-| `implements` | string[] | No | 実装file path |
-| `tests` | object[] | No | test pathとcoverage |
-| `verify` | string | No | 文書既定command名 |
-| `changes` | string[] | No（TASKだけで利用可） | 許可する変更path。省略と`[]`は許可pathなし |
+| `id` | 文字列 | ○ | 安定した文書ID |
+| `title` | 文字列 | ○ | 1〜120文字の1行のタイトル |
+| `status` | 文字列 | ○ | 種別ごとの状態 |
+| `relations` | マッピング | — | 型付きの仕様文書の関係 |
+| `implements` | 文字列の配列 | — | 実装ファイルのパス |
+| `tests` | オブジェクトの配列 | — | テストのパスとカバレッジ |
+| `verify` | 文字列 | — | 文書既定のコマンド名 |
+| `changes` | 文字列の配列 | —（TASKだけで使用可） | 許可する変更パス。省略と`[]`は許可パスなし |
 
-文書種別はdirectoryから決め、`type`を重複して持たない。配列は重複を許さない。
+文書種別はディレクトリから決め、`type`を重複して持たない。配列は重複を許さない。
 
-- REQ/TECH: `relations`、`implements`、`tests`、`verify`
+- REQとTECH: `relations`、`implements`、`tests`、`verify`
 - ADR: `relations`
 - TASK: `relations`、`changes`
 
-文書種別では利用できないCore fieldは、型と値域が妥当なら`SPEC-FM-UNAVAILABLE-001`／warningとする。
-型または値域が不正なら先に`SPEC-FM-SCHEMA-001`を返し、利用不能warningを重ねない。
+文書種別で利用できないCoreのフィールドは、型と値域が妥当であれば、診断`SPEC-FM-UNAVAILABLE-001`（重大度`warning`）とする。
+型または値域が不正であれば、先に診断`SPEC-FM-SCHEMA-001`を返し、利用不能の警告を重ねない。
 
-### 3.1 null、空、文字数
+### 3.1 `null`、空、文字数
 
-Core標準fieldはすべて`null`を禁止する。`id`、`title`、`status`、`verify`、`tests[].path`、
-`tests[].command`は空文字列を禁止する。`title`は改行を含まない1〜120 Unicode code pointとし、少なくとも
-1 code pointの非空白文字を含める。測定前のtrim、Unicode正規化、case変換を行わない。
+Coreの標準フィールドは、すべて`null`を禁止する。`id`、`title`、`status`、`verify`、`tests[].path`、
+`tests[].command`は空文字列を禁止する。`title`は、改行を含まない1〜120個のUnicodeコードポイントとし、少なくとも
+1コードポイントの非空白文字を含める。測定の前のトリム、Unicode正規化、大文字と小文字の変換を行わない。
 
-`relations`の空mapと、`relations.*`、`implements`、`tests`、`changes`の空配列は許可する。
-`tests[].covers`は1件以上を必要とする。任意fieldの省略は許可するが、空文字列や`null`を省略の代用にしない。
-TASKの`changes`を省略または`[]`にした場合、明示TASK `check`で許可される変更pathは0件であり、変更差分があれば
-境界外として扱う。
+`relations`の空のマッピングと、`relations.*`、`implements`、`tests`、`changes`の空配列は許可する。
+`tests[].covers`は1件以上を必要とする。任意のフィールドの省略は許可するが、空文字列や`null`を省略の代用にしない。
+TASKの`changes`を省略または`[]`にした場合、TASKを明示した`check`で許可される変更パスは0件であり、変更差分があれば
+境界の外として扱う。
 
-### 3.2 未知keyと拡張値
+### 3.2 未知キーと拡張値
 
-Frontmatter直下の`x-`で始まるfieldは許可して保持し、それ以外の未知fieldはSchemaを通過させたうえで
-`SPEC-FM-UNKNOWN-001`／warningとする。`relations`と`tests[]`は閉じたobjectであり、定義されていない内部keyを
-`SPEC-FM-SCHEMA-001`とする。`refs`は既存の専用規則により`SPEC-RELATION-LEGACY-001`を返す。
+フロントマター直下の`x-`で始まるフィールドは許可して保持し、それ以外の未知のフィールドはスキーマを通過させたうえで、
+診断`SPEC-FM-UNKNOWN-001`（重大度`warning`）とする。`relations`と`tests[]`は閉じたオブジェクトであり、定義されていない内部のキーは、
+診断`SPEC-FM-SCHEMA-001`とする。`refs`は既存の専用の規則により、診断`SPEC-RELATION-LEGACY-001`を返す。
 
-拡張fieldと未知fieldの値は、共通YAML部分集合のscalar、scalar配列、または文字列keyのmapに限る。
-その内部でobject配列は使用できない。Coreは値を変更せず保持するが、合否、Context、command、権限へ使用しない。
+拡張フィールド（extension field）と未知のフィールドの値は、共通のYAML部分集合のスカラー、スカラーの配列、または文字列キーのマッピングに限る。
+その内部でオブジェクトの配列は使用できない。Coreは値を変更せずに保持するが、合否、コンテキスト、コマンド、権限へは使わない。
 
-## 4. relation field
+## 4. 関係フィールド
 
 ```yaml
 relations:
@@ -96,122 +96,122 @@ relations:
   related: [TECH-009]
 ```
 
-Core語彙は`requires`、`refines`、`addresses`、`supersedes`、`related`だけとする。意味と型は
-[関係・トレースモデル](04_関係・トレースモデル.md)が定義する。旧`refs`は曖昧なためerrorとし、自動変換しない。
+Coreの語彙は、`requires`、`refines`、`addresses`、`supersedes`、`related`だけとする。意味と型は
+[関係・トレースモデル](04_関係・トレースモデル.md)が定義する。旧`refs`は曖昧であるため、重大度`error`とし、自動変換しない。
 
-## 5. test対応
+## 5. テスト対応
 
-`tests`要素は次を持つ。
+`tests`の要素は次を持つ。
 
-| key | 型 | 必須 | 意味 |
+| キー | 型 | 必須 | 意味 |
 |---|---|:--:|---|
-| `path` | string | Yes | workspace相対test file |
-| `covers` | string[] | Yes | 対応する規範文ID |
-| `command` | string | No | `bitz.yaml` command名 |
+| `path` | 文字列 | ○ | ワークスペース相対のテストファイル |
+| `covers` | 文字列の配列 | ○ | 対応する規範文ID |
+| `command` | 文字列 | — | `bitz.yaml`のコマンド名 |
 
-`covers`に指定できる値は次のいずれかに限る。
+`covers`に指定できる値は、次のいずれかに限る。
 
-(a) 宣言文書自身の規範文ID
-(b) 規範文を持たない宣言文書自身の文書ID
-(c) 宣言文書が`relations.refines`で直接参照する文書の規範文ID、または直接参照する規範文そのもの
+(a) 宣言する文書自身の規範文ID
+(b) 宣言する文書が規範文を持たない場合の、その文書自身の文書ID
+(c) 宣言する文書が`relations.refines`で直接参照する文書の規範文ID、または直接参照する規範文そのもの
 
-存在しない句と同じ対応の重複はerrorとする。複合workspaceで(c)のtargetが別workspaceの文書または規範文である
-場合、そのtargetを修飾IDで`covers`に指定できる。横断coverageの詳細は
-[複合workspace仕様](05_複合workspace仕様.md)に従う。
+存在しない規範文と同じ対応の重複は、重大度`error`とする。複合ワークスペースで(c)の参照先が別のワークスペースの文書または規範文である
+場合、その参照先を修飾IDで`covers`に指定できる。ワークスペースをまたぐカバレッジの詳細は
+[複合ワークスペース仕様](05_複合workspace仕様.md)に従う。
 
-command名は`tests[].command`、文書の`verify`の順で解決する。どちらもない場合、または解決したcommand名が
-`bitz.yaml`に存在しない場合、`verify`は`SPEC-VERIFY-BLOCKED-001`／blockedとする。
+コマンド名は、`tests[].command`、文書の`verify`の順で解決する。どちらもない場合、または解決したコマンド名が
+`bitz.yaml`に存在しない場合、`verify`は診断`SPEC-VERIFY-BLOCKED-001`（`blocked`）とする。
 
-test対応は対象宣言であり、assertionの十分性を証明しない。
+テスト対応（test mapping）は対象の宣言であり、アサーションの十分性を証明しない。
 
 ## 6. 状態
 
-### 6.1 REQ／TECH
+### 6.1 REQとTECH
 
 | 状態 | 意味 |
 |---|---|
-| `draft` | 編集中。構文の一部warningを許容 |
+| `draft` | 編集中。構文の一部の警告を許容 |
 | `approved` | 人間が意味を確認した適用可能な契約 |
 | `outdated` | 再確認が必要で実装・検証に適用不能 |
 | `rejected` | 不採用の終端履歴 |
 
-許可遷移は`draft -> approved|rejected`、`approved -> draft|outdated`、`outdated -> draft|approved`である。
-`rejected`は終端とする。同一状態維持を許可する。
+許可する遷移は`draft -> approved|rejected`、`approved -> draft|outdated`、`outdated -> draft|approved`である。
+`rejected`は終端とする。同一状態の維持を許可する。
 
 ### 6.2 ADR
 
-状態は`proposed`、`accepted`、`rejected`、`superseded`とする。許可遷移は
+状態は`proposed`、`accepted`、`rejected`、`superseded`とする。許可する遷移は
 `proposed -> accepted|rejected`、`accepted -> superseded`で、`rejected`と`superseded`は終端とする。
 
 ### 6.3 TASK
 
-状態は`open`、`done`、`cancelled`とする。許可遷移は`open -> done|cancelled`で、`done`と`cancelled`は終端とする。
+状態は`open`、`done`、`cancelled`とする。許可する遷移は`open -> done|cancelled`で、`done`と`cancelled`は終端とする。
 
-禁止遷移は`SPEC-STATE-TRANSITION-001`／error／failedとする。Git基準版がない場合、現在語彙だけを検査し、
-過去状態を推測しない。基準版に存在しない新規文書は現在状態が種別語彙として妥当なら許可する。
+禁止された遷移は、診断`SPEC-STATE-TRANSITION-001`（重大度`error`、結果への効果`failed`）とする。基準版がない場合は、現在の語彙だけを検査し、
+過去の状態を推測しない。基準版に存在しない新規文書は、現在の状態が種別の語彙として妥当であれば許可する。
 
 ## 7. 適用可能性
 
-- `approved` REQ/TECHと`accepted` ADRだけを規範的な強い依存先にできる。
-- `draft`は`interpret`でadvisory、`implement`/`verify`起点ではblocked。
-- `outdated`と`rejected`は強い依存先または`implement`/`verify`起点でblocked。
-- `approved`の有効な後継から`supersedes`されたREQ／TECHは適用不能になる。旧文書のstatusは自動変更せず、
-  Coreは起点を後継へ暗黙差替えしない。
-- `done` TASKは`verify`再実行と`interpret`を許し、`implement`起点ではblocked。
-- `cancelled` TASKは`interpret`だけを許す。
+- 規範的な強い依存先にできるのは、`approved`のREQとTECH、`accepted`のADRだけである。
+- `draft`は、目的が`interpret`のとき`advisory`とし、目的が`implement`または`verify`で起点にした場合は`blocked`とする。
+- `outdated`と`rejected`は、強い依存先にした場合と、目的が`implement`または`verify`で起点にした場合は、`blocked`とする。
+- `approved`の有効な後継から`supersedes`されたREQまたはTECHは、適用できなくなる。旧文書の`status`は自動変更せず、
+  Coreは起点を後継へ暗黙に差し替えない。
+- `done`のTASKは、`verify`の再実行と`interpret`を許し、目的が`implement`で起点にした場合は`blocked`とする。
+- `cancelled`のTASKは`interpret`だけを許す。
 
-## 8. 承認済みREQ保護
+## 8. 承認済み要求の保護
 
-保護有効時、`check`はGit基準版の`approved` REQと現在版を比較する。`title`、EARS-AI規範文、強い関係を
-変更しながらstatusを`draft`または`outdated`へ戻していない場合、`SPEC-SAFETY-APPROVED-001`／failedとする。
+承認済み要求の保護（approved requirement protection）が有効なとき、`check`は基準版の`approved`のREQと現在版を比較する。`title`、EARS-AIの規範文、強い関係を
+変更しながら`status`を`draft`または`outdated`へ戻していない場合は、診断`SPEC-SAFETY-APPROVED-001`（`failed`）とする。
 
-ここで比較する「EARS-AI規範文」は、Semantic IRの意味field（`actor`、`activation`、`modality`、`reason`、
-`operation`、`extensions`。[Context Digest正規化仕様 §3.1.3](../00_共通契約/03_Context-Digest正規化仕様.md#313-規範文)
-と同じ集合）を指し、`source`・`raw`などの位置情報や原文の字面は含めない。
+ここで比較する「EARS-AIの規範文」は、意味中間表現の意味フィールド（semantic fields）を指す。意味フィールドは`actor`、`activation`、`modality`、`reason`、
+`operation`、`extensions`であり、[コンテキストのハッシュ値の正規化仕様 §3.1.3](../00_共通契約/03_Context-Digest正規化仕様.md#313-規範文)
+と同じ集合である。`source`や`raw`などの位置の情報や原文の字面は含めない。
 
-`implements`、`tests`、`verify`、`related`、`x-`拡張、説明文だけの変更は意味変更に含めない。
-Git基準版に存在しない新規REQは比較対象外とする。
+`implements`、`tests`、`verify`、`related`、`x-`拡張、説明文だけの変更は、意味の変更に含めない。
+基準版に存在しない新規のREQは、比較の対象外とする。
 
 ## 9. 管理済み文書の削除
 
-基準版と現在版は`documentId`で対応付け、pathだけの変更はrenameとして同じ文書とする。基準版のIDが現在版に
-存在しない場合、種別や状態を問わず`SPEC-STATE-TRANSITION-001`／failedとする。
+基準版と現在版は`documentId`で対応付け、パスだけの変更はリネームとして同じ文書とする。基準版のIDが現在版に
+存在しない場合は、種別や状態を問わず、診断`SPEC-STATE-TRANSITION-001`（`failed`）とする。
 
-Core検査を迂回した過去の削除後再利用をGit全履歴から検出することは保証しない。
+Core検査を迂回した、過去に削除した後の再利用を、Gitの全履歴から検出することは保証しない。
 
 「削除したIDを別の意味へ再利用しない」は規範として維持するが、Core 1.0はこれを機械検査しない。
-Coreが保証するのは現在集合の重複検出（`SPEC-ID-DUPLICATE-001`）と、基準版から現在版への
-管理済みSPEC削除の検出（`SPEC-STATE-TRANSITION-001`）までであり、2時点比較では同一文書の改訂と
-別の意味での再出現を区別できない。基準版より前の履歴における再利用の禁止はGit reviewの責務とする。
+Coreが保証するのは、現在の集合における重複検出（`SPEC-ID-DUPLICATE-001`）と、基準版から現在版への
+管理済みの仕様文書の削除の検出（`SPEC-STATE-TRANSITION-001`）までであり、2時点の比較では、同一文書の改訂と
+別の意味での再出現を区別できない。基準版より前の履歴における再利用の禁止は、Gitのレビューの責務とする。
 [ADR-032](../../02.設計書/10_決定記録/ADR-032_ID再利用検出のCore保証範囲.md)が定義していた
 `EAI-CORE-ID-003`は、[ADR-037](../../02.設計書/10_決定記録/ADR-037_Git基準版間のSPEC同一性と削除規則.md)に
-よる置換に伴いCore 1.0の公開Diagnosticから外し、codeを予約済みとする。
+よる置換に伴いCore 1.0の公開する診断から外し、コードを予約済みとする。
 
 ## 10. 拡張
 
-project固有fieldは`x-<name>`とする。Coreは保持するが合否、Context、command、権限へ使用しない。
+プロジェクト固有のフィールドは`x-<name>`とする。Coreは保持するが、合否、コンテキスト、コマンド、権限へは使わない。
 
 ```yaml
 x-owners: [auth-team]
 x-risk: medium
 ```
 
-`x-`で始まらない未知fieldは`SPEC-FM-UNKNOWN-001`／warningとする。
+`x-`で始まらない未知のフィールドは、診断`SPEC-FM-UNKNOWN-001`（重大度`warning`）とする。
 
 ## 11. YAML制約
 
-- 構文層は[workspace・設定仕様 §8](01_workspace・設定仕様.md#8-yaml制約)の共通YAML 1.2部分集合
-- Frontmatter 32 KiB以下、文書全体1 MiB以下
-- 標準fieldの構造はFrontmatter Schemaを正とし、`tests`だけobject配列を許可
-- mapping keyの同値性はYAML解釈後の文字列のcode point完全一致で判定する
-- Frontmatter内の全配列は、fieldごとに次の重複規則を適用する
+- 構文の層は[ワークスペース・設定仕様 §8](01_workspace・設定仕様.md#8-yaml制約)の共通のYAML 1.2部分集合とする
+- フロントマターは32 KiB以下、文書全体は1 MiB以下とする
+- 標準フィールドの構造はフロントマターのスキーマを正とし、`tests`だけオブジェクトの配列を許可する
+- マッピングキーの同値性は、YAMLを解釈した後の文字列のコードポイントの完全一致で判定する
+- フロントマター内のすべての配列は、フィールドごとに次の重複の規則を適用する
 
-scalar配列の重複は、YAML解釈後の値と型の完全一致で判定し、Unicode正規化、case変換、path補正を行わない。
-`tests`要素は`(path, commandの有無と値, covers集合)`をkey tupleとする。`covers`集合は値のcode point辞書順で
-比較するため、記述順だけが異なる要素も重複である。mapping keyの記述順は同値性へ影響しない。
-同じ`path`でも`command`または`covers`が異なる要素は許可する。重複配列はfieldの値域不正として
-`SPEC-FM-SCHEMA-001`を返す。
+スカラーの配列の重複は、YAMLを解釈した後の値と型の完全一致で判定し、Unicode正規化、大文字と小文字の変換、パスの補正を行わない。
+`tests`の要素は`(path, commandの有無と値, covers集合)`をキーのタプルとする。`covers`の集合は、値のコードポイント辞書順で
+比較するため、記述順だけが異なる要素も重複である。マッピングキーの記述順は同値性へ影響しない。
+同じ`path`でも`command`または`covers`が異なる要素は許可する。重複する配列は、フィールドの値域不正として
+診断`SPEC-FM-SCHEMA-001`を返す。
 
-Frontmatter YAMLの構文不正、禁止構文、重複key、fieldの型・値域不正は
-`SPEC-FM-SCHEMA-001`／error／`failed`とする。必須field欠如だけは
-`SPEC-FM-REQUIRED-001`／error／`failed`とする。同じraw原因へ両codeを返さない。
+フロントマターのYAMLの構文不正、禁止された構文、キーの重複、フィールドの型・値域不正は
+診断`SPEC-FM-SCHEMA-001`（重大度`error`、結果への効果`failed`）とする。必須のフィールドの欠如だけは
+診断`SPEC-FM-REQUIRED-001`（重大度`error`、結果への効果`failed`）とする。同じ元の原因へ両方のコードを返さない。

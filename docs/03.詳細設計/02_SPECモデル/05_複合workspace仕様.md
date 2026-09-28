@@ -1,22 +1,23 @@
-# 複合workspace仕様 1.0
+# 複合ワークスペース仕様 1.0
 
-## 1. 所有範囲
+## 1. 本書の範囲
 
-本書は、1つのGit repositoryに複数の`.spec/`を置く複合workspaceのcatalog、識別子、所有境界、横断解決、全体操作を
-定義する。単一workspaceの設定fieldは[workspace・設定仕様](01_workspace・設定仕様.md)、関係型と閉包は
+本書は、1つのGitリポジトリに複数の`.spec/`を置く複合ワークスペース（multi-workspace）のカタログ、識別子、
+所有境界（ownership boundary）、横断解決、全体操作（multi-workspace operation）を定義する。単一ワークスペース
+（single workspace）の設定フィールドは[ワークスペース・設定仕様](01_workspace・設定仕様.md)、関係型と閉包は
 [関係・トレースモデル](04_関係・トレースモデル.md)、操作固有の入力と結果は各[操作仕様](../03_操作仕様/README.md)
-が所有する。本書はそれらを複合workspaceへ適用する差分だけを所有する。
+が所有する。本書はそれらを複合ワークスペースへ適用する差分だけを所有する。
 
 | 用語 | 意味 |
 |---|---|
-| repository root | 対象Git repositoryのroot |
-| workspace | 1つの`.spec/bitz.yaml`、SPEC、所有code/testからなる単位 |
-| root workspace | repository rootにあるworkspace。複合workspaceのcatalogと共通SPECを所有する |
-| member | `multiWorkspace.members`へ明示登録された子workspace |
-| active workspace | workspace単独操作のローカルID、設定、report出力先を決めるworkspace |
-| request workspace | `context`の全起点を所有し、上限と非修飾IDの解決基準になるworkspace |
+| リポジトリのルート（repository root） | 対象のGitリポジトリのルート |
+| ワークスペース | 1つの`.spec/bitz.yaml`、仕様文書、所有するコード・テストから成る単位 |
+| ルートワークスペース（root workspace） | リポジトリのルートにあるワークスペース。複合ワークスペースのカタログと共通の仕様文書を所有する |
+| メンバー | `multiWorkspace.members`へ明示登録した子のワークスペース |
+| 作業ワークスペース（active workspace） | 単独操作（single-workspace operation）のローカルID（local ID）、設定、レポートの出力先を決めるワークスペース |
+| 起点ワークスペース（request workspace） | `context`のすべての起点を所有し、上限と非修飾ID（unqualified ID）の解決の基準になるワークスペース |
 
-## 2. 配置とcatalog
+## 2. 配置とカタログ
 
 ```text
 repository/
@@ -30,7 +31,7 @@ repository/
     └── .spec/bitz.yaml          # native member
 ```
 
-root workspaceはrepository root直下だけに置く。root設定例を次に示す。
+ルートワークスペースはリポジトリのルート直下だけに置く。ルート設定の例を次に示す。
 
 ```yaml
 schemaVersion: "1.0"
@@ -49,7 +50,7 @@ multiWorkspace:
       path: libs/native
 ```
 
-memberは自身の設定を持つ。
+メンバーは自身の設定を持つ。
 
 ```yaml
 schemaVersion: "1.0"
@@ -59,45 +60,48 @@ workspace:
   id: web
 ```
 
-- root workspaceと全memberで`workspace.id`を必須とし、複合workspace内で一意にする。
-- catalogの`id`とmember設定の`workspace.id`は一致させる。
-- memberは`multiWorkspace`を宣言できず、複合workspaceを入れ子にしない。
-- member pathはrepository root相対の実directoryとする。絶対path、`.`、空path、`..`、glob、symlink、
-  Git submodule、別Git repositoryを禁止する。
-- member path同士の同一、親子、実path解決後の重複を禁止する。
-- 設定、command、安全設定、Context上限を継承しない。各workspaceは自身の`bitz.yaml`だけを使用する。
-- `language`はworkspaceごとに異なってよく、言語差だけで複合workspaceを不適合にしない。SchemaとEARS-AIの未知majorは
-  安全に横断解決できないため`blocked`とする。
-- catalogにない`.spec/`を暗黙に追加しない。workspace単独操作ではrepository全体を探索せず、選択経路上の
-  未登録設定だけを拒否する。全体操作は§8のGit既知設定事前検査を行うが、filesystem全体の任意directoryは
-  再帰探索しない。
+- ルートワークスペースと全メンバーで`workspace.id`を必須とし、複合ワークスペース内で一意にする。
+- カタログの`id`とメンバー設定の`workspace.id`は一致させる。
+- メンバーは`multiWorkspace`を宣言できず、複合ワークスペースを入れ子にしない。
+- メンバーのパスはリポジトリのルート相対の実ディレクトリとする。絶対パス、`.`、空のパス、`..`、glob、シンボリックリンク、
+  Gitのサブモジュール、別のGitリポジトリを禁止する。
+- メンバーのパスどうしの同一、親子関係、実パスを解決した後の重複を禁止する。
+- 設定、コマンド、安全設定、コンテキストの上限を継承しない。各ワークスペースは自身の`bitz.yaml`だけを使用する。
+- `language`はワークスペースごとに異なってよく、言語の違いだけでは複合ワークスペースを不適合にしない。スキーマとEARS-AIの
+  未知のメジャーバージョンは安全に横断解決できないため`blocked`とする。
+- カタログにない`.spec/`を暗黙に追加しない。単独操作ではリポジトリ全体を探索せず、選択した経路上の
+  未登録の設定だけを拒否する。全体操作は§8の、Gitが認識する設定の事前検査を行うが、ファイルシステム全体の任意の
+  ディレクトリは再帰的に探索しない。
 
-`multiWorkspace.maxMembers`の既定は20、指定範囲は1〜100、Core hard limitは100とする。`members`が実効上限を
-超えれば`blocked`とする。0 memberの`multiWorkspace`は設定不適合とする。
+`multiWorkspace.maxMembers`の既定値は20、指定できる範囲は1〜100、Coreの絶対上限は100とする。`members`が実効上限を
+超えれば`blocked`とする。メンバーが0件の`multiWorkspace`は設定不適合とする。
 
-## 3. workspace決定
+## 3. ワークスペースの決定
 
-Coreは先にGit repository rootを確定し、次の順でworkspaceを決める。
+Coreは先にGitリポジトリのルートを確定し、次の順でワークスペースを決める。
 
-1. repository rootの`.spec/bitz.yaml`に`multiWorkspace.members`がなければ、通常の単一workspace探索を使う。
-2. 複合workspaceでは、指定pathまたはcurrent directoryからrepository rootへ親方向に探索し、最も近い
+1. リポジトリのルートの`.spec/bitz.yaml`に`multiWorkspace.members`がなければ、通常の単一ワークスペースの探索を使う。
+2. 複合ワークスペースでは、指定したパスまたは現在のディレクトリからリポジトリのルートへ親の方向に探索し、最も近い
    `.spec/bitz.yaml`を候補にする。
-3. 候補がrepository root設定ならroot workspace、catalogのpathと設定IDが一致すれば該当memberをactiveにする。
-4. 複合workspace内で選択された別`.spec/`がcatalogにない場合は、単独workspaceとして使わず
-   `SPEC-MULTI-UNREGISTERED-001`／`blocked`とする。
-5. `--workspace <id>`はcatalog内のrootまたはmember IDと完全一致でactive workspaceを置き換える。字句不正、
-   構文上妥当だがcatalogにないIDはともにinvocation errorとして終了コード4とし、操作結果とreportを生成しない。
+3. 候補がリポジトリのルートの設定ならルートワークスペース、カタログのパスと設定のIDが一致すればそのメンバーを
+   作業ワークスペースにする。
+4. 複合ワークスペース内で選択した別の`.spec/`がカタログにない場合は、単独のワークスペースとして使わず、
+   診断`SPEC-MULTI-UNREGISTERED-001`（`blocked`）とする。
+5. `--workspace <id>`は、カタログ内のルートまたはメンバーのIDと完全に一致するIDで、作業ワークスペースを置き換える。
+   字句が不正な場合、構文上は妥当だがカタログにないIDの場合は、いずれも引数不正として終了コード4とし、操作結果と
+   レポートを生成しない。
 
-この終了コード4はworkspace selectorだけに適用する。構文上妥当な明示SPEC／statement targetが選択workspaceまたは
-複合workspace索引に存在しない場合は、共通target展開規則に従い`CTX-ROOT-MISSING-001`／failedを返す。
+この終了コード4は、`--workspace`によるワークスペースの指定だけに適用する。構文上は妥当な、明示した仕様文書または規範文が、選択した
+作業ワークスペースまたは複合ワークスペースの索引に存在しない場合は、対象展開の規則に従い、診断`CTX-ROOT-MISSING-001`
+（`failed`）を返す。
 
-`--workspace`を使わないpath入力はactive workspace内に限る。修飾IDを起点にする場合は、その所有workspaceを
-選択する。複数起点が異なるworkspaceを所有する場合、または`--workspace`と起点所有者が一致しない場合は
+`--workspace`を使わないパスの入力は、作業ワークスペース内に限る。修飾ID（qualified ID）を起点にする場合は、その
+所有ワークスペースを選択する。複数の起点が異なるワークスペースを所有する場合、または`--workspace`と起点の所有者が一致しない場合は
 引数不正とする。
 
 ## 4. 識別子と解決
 
-| 対象 | workspace内表現 | 複合workspace正規表現 |
+| 対象 | ワークスペース内の表現 | 複合ワークスペースの正規表現 |
 |---|---|---|
 | 文書 | `REQ-001` | `web::REQ-001` |
 | 規範文 | `REQ-001:AC-01` | `web::REQ-001:AC-01` |
@@ -108,39 +112,41 @@ qualified-statement-id = workspace-id, "::", statement-id ;
 ```
 
 `workspace-id`は`[a-z][a-z0-9-]{0,31}`、`document-id`と`statement-id`はEARS-AIの字句規則を使う。
-`::`は複合workspaceの解決envelopeであり、文書自身のID階層やEARS-AI規範文IDの2階層規則を変更しない。
+`::`は、複合ワークスペースでIDを解決するために外側に付ける修飾であり、文書自身のID階層やEARS-AI規範文IDの2階層の規則を変更しない。
 
-Frontmatterの`id`、file名、EARS-AI行のIDはworkspace内表現を使う。`relations`と`tests[].covers`は同じworkspaceを
-参照するとき非修飾形式を許可し、別workspaceを参照するとき複合workspaceの正規形式を必須とする。Coreは非修飾IDを
-別workspaceから探索しない。
+フロントマターの`id`、ファイル名、EARS-AI行のIDはワークスペース内の表現を使う。`relations`と`tests[].covers`は
+同じワークスペースを参照するとき非修飾形式を許可し、別のワークスペースを参照するとき複合ワークスペースの正規形式を
+必須とする。Coreは非修飾IDを別のワークスペースから探索しない。
 
-複合workspace内で実行したCore操作の`roots`、`targets`、`statements`、文書`id`、relation edge、Diagnostic `specRefs`は、
-member単独操作を含め複合workspaceの正規形式で返す。`source.path`と文書`path`は各workspace root相対とし、
-`source.workspaceId`または文書`workspaceId`との組で一意にする。単一workspaceの非修飾出力は維持する。
+複合ワークスペース内で実行したCore操作の`roots`、`targets`、`statements`、文書`id`、関係のエッジ、診断の`specRefs`は、
+メンバーの単独操作を含め、複合ワークスペースの正規形式で返す。`source.path`と文書`path`は各ワークスペースのルート
+相対とし、`source.workspaceId`または文書`workspaceId`との組で一意にする。単一ワークスペースの非修飾の出力は維持する。
 
-文書IDと規範文IDはworkspace内で一意とする。同じローカルIDを別workspaceが持つことは許可する。
+文書IDと規範文IDはワークスペース内で一意とする。同じローカルIDを別のワークスペースが持つことは許可する。
 
-### 4.1 workspace identity
+### 4.1 ワークスペースの同一性
 
-workspace IDは複合workspace内の永続同一性とし、Core 1.0はrenameを推定または支援しない。base/current catalogで同じIDを
-維持したmember path変更は同一workspaceの移動とする。ID変更は、pathが同じでも旧workspaceの削除と新workspaceの
-追加として扱う。catalogからmemberを削除した場合、base側workspaceの管理済みSPECへ既存の削除検査を適用する。
+ワークスペースIDは、複合ワークスペース内の永続的な同一性とし、Core 1.0はリネームを推定または支援しない。基準版と
+現在版のカタログで同じIDを維持したメンバーのパスの変更は、同一のワークスペースの移動とする。ID変更は、パスが同じ
+でも旧ワークスペースの削除と新しいワークスペースの追加として扱う。カタログからメンバーを削除した場合、基準版側の
+ワークスペースの管理済みの仕様文書へ、既存の削除検査を適用する。
 
-単一workspaceから初めて複合workspace化するGit比較に限り、baseがrepository rootの同じ`.spec`を使い、`multiWorkspace`がなく、
-`workspace.id`を省略している場合、baseの実効ID `root`をcurrentの明示root workspace IDへ一方向写像する。
-baseに明示IDがある場合はcurrentのroot workspaceも同じIDを維持しなければならない。この写像はGit比較だけに使い、
-複合workspace化後の修飾IDとContext Digestを旧値のまま維持しない。
+単一ワークスペースから初めて複合ワークスペース化するGitの比較に限り、基準版がリポジトリのルートの同じ`.spec`を使い、
+`multiWorkspace`がなく、`workspace.id`を省略している場合、基準版の実効ID`root`を、現在版の明示のルートワークスペース
+IDへ一方向に写像する。基準版に明示のIDがある場合は、現在版のルートワークスペースも同じIDを維持しなければならない。
+この写像はGitの比較だけに使い、複合ワークスペース化した後の修飾IDとコンテキストのハッシュ値を旧値のまま維持しない。
 
 ## 5. 所有境界
 
-memberのSPEC、`implements`、`tests[].path`、TASK `changes`、`verify.commands[].cwd`はmember root配下だけを
-所有する。root workspaceのSPECはrepository rootに置くが、登録member配下を`implements`、test path、
-TASK `changes`、command `cwd`として所有できない。memberの`.spec/`自体も別workspaceから所有できない。
+メンバーの仕様文書、`implements`、`tests[].path`、TASKの`changes`、`verify.commands[].cwd`は、メンバーのルート配下
+だけを所有する。ルートワークスペースの仕様文書はリポジトリのルートに置くが、登録したメンバーの配下を`implements`、
+テストのパス、TASKの`changes`、コマンドの`cwd`として所有できない。メンバーの`.spec/`自体も別のワークスペースから
+所有できない。
 
-共通要求を実装する場合、member側REQまたはTECHがroot／別memberのREQ、TECHまたは規範文を`refines`し、
-実装pathとtest pathをmember側文書へ置く。`tests[].covers`が別workspaceの規範文を指定できるのは、そのtestを
-宣言する文書が当該規範文、またはその所有文書を直接`refines`している場合だけとする。推移的なrefinementを
-根拠に任意の横断coverageを宣言できない。
+共通の要求を実装する場合、メンバー側のREQまたはTECHが、ルートまたは別のメンバーのREQ、TECHまたは規範文を`refines`
+し、実装のパスとテストのパスをメンバー側の文書へ置く。`tests[].covers`が別のワークスペースの規範文を指定できるのは、
+そのテストを宣言する文書が、当該の規範文、またはその規範文を所有する文書を直接`refines`している場合だけとする。
+推移的な具体化を根拠に、任意の横断のカバレッジを宣言できない。
 
 ```yaml
 ---
@@ -160,206 +166,218 @@ tests:
 ---
 ```
 
-横断TASKはmemberごとのTASKへ分割し、root workspace TASKから修飾`requires`で順序付ける。1つのTASKに複数の
-workspaceの`changes`を持たせない。
+横断するTASKはメンバーごとのTASKへ分割し、ルートワークスペースのTASKから修飾した`requires`で順序付ける。1つの
+TASKに複数のワークスペースの`changes`を持たせない。
 
-### 5.1 canonical path判定
+### 5.1 正規パスの判定
 
-member path、SPEC path、`implements`、`tests[].path`、TASK `changes`、command `cwd`は、次の共通手順で
-canonicalな所有領域を判定する。
+メンバーのパス、仕様文書のパス、`implements`、`tests[].path`、TASKの`changes`、コマンドの`cwd`は、次の共通の
+手順で正規の所有領域を判定する。
 
-1. Gitからrepository rootを確定し、その実pathを基準にする。
-2. 入力をUTF-8／Unicode NFCと`/`区切り文字へ正規化する。
-3. workspace rootまたはcommand `cwd`の`.`と、TASK directory接頭辞の末尾`/`を先に種別化する。それ以外の
-   絶対path、空segment、`.`、`..`、NUL、globを拒否する。
-4. 存在する各ancestorを`lstat`し、symlink解決後の実pathを得る。存在しない予定pathは、最も近い既存ancestorの
-   実pathへ検査済み接尾辞を連結する。
-5. filesystemのcase sensitivityに従う比較keyを作り、path segment境界で包含を判定する。
-6. Git metadataでもrepository root、worktree、submodule、別repositoryの境界を照合する。
+1. Gitからリポジトリのルートを確定し、その実パスを基準にする。
+2. 入力をUTF-8とUnicode NFC、区切り文字`/`へ正規化する。
+3. ワークスペースのルートまたはコマンドの`cwd`の`.`と、TASKディレクトリの接頭辞の末尾`/`を先に種別化する。
+   それ以外の絶対パス、空のセグメント、`.`、`..`、NUL、globを拒否する。
+4. 存在する各上位のディレクトリを`lstat`し、シンボリックリンクを解決した後の実パスを得る。存在しない予定のパスは、
+   最も近い、存在する上位のディレクトリの実パスへ検査済みの接尾辞を連結する。
+5. ファイルシステムの大文字と小文字の区別に従う比較キーを作り、パスのセグメント境界で包含を判定する。
+6. Gitのメタデータでも、リポジトリのルート、ワークツリー、サブモジュール、別のリポジトリの境界を照合する。
 
-member rootとworkspaceの`.spec/bitz.yaml`へ至るdirectoryはsymlinkを禁止する。code、test、TASK、cwdのsymlinkは
-同じ所有領域内へ解決する場合だけ許可する。repository外、別workspace、memberの`.spec`へ解決すれば
-`SPEC-MULTI-OWNERSHIP-001`とする。member実path同士の同一、親子、case-insensitive filesystemでの同一と、
-nested repository／worktree、submoduleは`SPEC-MULTI-PATH-001`とする。
+メンバーのルートとワークスペースの`.spec/bitz.yaml`へ至るディレクトリはシンボリックリンクを禁止する。コード、
+テスト、TASK、`cwd`のシンボリックリンクは同じ所有領域内へ解決する場合だけ許可する。リポジトリ外、別のワークスペース、
+メンバーの`.spec`へ解決すれば診断`SPEC-MULTI-OWNERSHIP-001`とする。メンバーの実パスどうしの同一、親子関係、
+大文字と小文字を区別しないファイルシステムでの同一と、入れ子のリポジトリまたはワークツリー、サブモジュールは
+診断`SPEC-MULTI-PATH-001`とする。
 
-### 5.2 TASK directory境界
+### 5.2 TASKディレクトリ境界
 
-TASK `changes`のfileと末尾`/`のdirectory接頭辞は、正規化した字句Git pathの許可集合である。fileは完全一致、
-directoryはpath segment単位の子孫一致とし、`src/`で`src2/file`を許可しない。symlink解決先の別の字句pathへ
-許可を拡張せず、symlink entry自身はその字句Git pathにあるfileとして扱う。
+TASKの`changes`のファイルと、末尾が`/`のディレクトリの接頭辞は、正規化した字句上のGitパスの許可集合である。
+ファイルは完全一致、ディレクトリはパスのセグメント単位の子孫一致とし、`src/`で`src2/file`を許可しない。
+シンボリックリンクの解決先にある別の字句パスへ許可を拡張せず、シンボリックリンクのエントリ自身は、その字句上の
+Gitパスにあるファイルとして扱う。
 
-許可判定とは別に、宣言pathと変更pathを§5.1で所有判定する。追加はcurrent、削除はbase、変更とsymlink entry変更は
-base/current双方を検査し、renameはsource削除とdestination追加の2 pathとする。base treeのsymlinkはGit treeの
-modeとlink target、currentは`lstat`から解決する。所有境界不適合を先に返し、同じpathへTASK境界外Diagnosticを
-重複させない。
+許可の判定とは別に、宣言したパスと変更したパスを§5.1で所有判定する。追加は現在版、削除は基準版、変更と
+シンボリックリンクのエントリの変更は基準版と現在版の双方を検査し、リネームは移動元の削除と移動先の追加の2つの
+パスとする。基準版のシンボリックリンクはGitのツリーオブジェクトのモードとリンク先から、現在版は`lstat`から解決する。
+所有境界の不適合を先に返し、同じパスへTASK境界（TASK boundary）の外にあることを示す診断を重複させない。
 
-## 6. 横断索引とContext
+## 6. 横断索引とコンテキスト
 
-Coreはcatalogに登録された全workspaceの軽量Frontmatter索引を作り、修飾された関係を通常の型規則で解決する。
-`context`は全起点を同じrequest workspaceに限定し、強い関係で到達した文書だけを完全閉包へ含める。
-関係しないworkspaceの本文は読み込まず、Bundleへ含めない。
+Coreはカタログに登録された全ワークスペースの軽量なフロントマター索引を作り、修飾した関係を通常の型の規則で解決する。
+`context`はすべての起点を同じ起点ワークスペースに限定し、強い関係で到達した文書だけを完全閉包へ含める。
+関係しないワークスペースの本文は読み込まず、コンテキスト一式へ含めない。
 
-Context Bundleは共通fieldに加えて次を持つ。
+コンテキスト一式は、共通のフィールドに加えて次を持つ。
 
-- 最上位`workspace`はrequest workspace
-- 各`documents[]`の`workspaceId`と複合workspace正規`id`
-- `resolution.workspaces[]`に到達workspaceの`id`とrepository root相対`path`
-- `resolution.crossWorkspaceEdges[]`に`relation`、修飾`source`、修飾`target`
+- 最上位の`workspace`は起点ワークスペース
+- 各`documents[]`の`workspaceId`と複合ワークスペースの正規の`id`
+- `resolution.workspaces[]`に到達ワークスペース（reached workspace）の`id`とリポジトリのルート相対の`path`
+- `resolution.crossWorkspaceEdges[]`に`relation`、修飾した`source`、修飾した`target`
 
-`resolution.workspaces`はrequest workspaceを先頭、その後をworkspace ID辞書順とする。
-`resolution.crossWorkspaceEdges`は`source`、`relation`、`target`の辞書順とし、workspace境界を越えないedgeを
-重複して収録しない。
+`resolution.workspaces`は起点ワークスペースを先頭に置き、その後をワークスペースIDの辞書順とする。
+`resolution.crossWorkspaceEdges`は`source`、`relation`、`target`の辞書順とし、ワークスペースの境界を越えない
+エッジを重複して収録しない。
 
-複合workspaceのContextでは`documents[].workspaceId`、`resolution.workspaces`、`resolution.crossWorkspaceEdges`を必須とする。
-`resolution.workspaces`は1件以上で、各要素は必須の文字列`id`と`path`だけを持つ。
-`resolution.crossWorkspaceEdges`は0件でも空配列を返し、各要素は次を持つ。
+複合ワークスペースのコンテキストでは、`documents[].workspaceId`、`resolution.workspaces`、
+`resolution.crossWorkspaceEdges`を必須とする。`resolution.workspaces`は1件以上で、各要素は必須の文字列`id`と
+`path`だけを持つ。`resolution.crossWorkspaceEdges`は0件でも空の配列を返し、各要素は次を持つ。
 
-| field | 型 | 必須 | 制約 |
+| フィールド | 型 | 必須 | 制約 |
 |---|---|:--:|---|
-| `relation` | enum | Yes | `requires`、`refines`、`addresses`、`supersedes`、`related` |
-| `source` | string | Yes | 修飾document ID |
-| `target` | string | Yes | 修飾document IDまたはstatement ID |
+| `relation` | 列挙値 | ○ | `requires`、`refines`、`addresses`、`supersedes`、`related` |
+| `source` | 文字列 | ○ | 修飾した文書ID |
+| `target` | 文字列 | ○ | 修飾した文書IDまたは規範文ID |
 
-単一workspaceではこれらの複合workspace固有fieldと`documents[].workspaceId`を省略する。複合workspaceの各文書IDとedge IDは修飾形式、
-文書pathは所有workspace相対とする。
+単一ワークスペースでは、これらの複合ワークスペース固有のフィールドと`documents[].workspaceId`を省略する。
+複合ワークスペースの各文書IDとエッジのIDは修飾ID、文書のパスは所有ワークスペース相対とする。
 
-Context Digestには、通常の材料に加えてrequest workspace ID、到達workspaceのIDとpath、修飾起点、修飾edgeを
-含める。実効設定は到達workspaceで実際に使用した次の許可リストへ射影する。
+コンテキストのハッシュ値には、通常の材料に加えて起点ワークスペースのID、到達ワークスペースのIDとパス、修飾した
+起点、修飾したエッジを含める。実効設定は、到達ワークスペースで実際に使用した次の許可リストへ射影する。
 
-- 到達workspaceごとの`schemaVersion`、`earsAi`、`language`
-- request workspaceだけの既定値適用後`context.maxDocuments`と`context.maxBytes`
-- 1件以上のbindingを収録したworkspaceの既定値適用後`verify.timeoutSeconds`
-- Bundleが参照するcommandだけのcommand名、argv、既定値適用後cwd。command名辞書順
+- 到達ワークスペースごとの`schemaVersion`、`earsAi`、`language`
+- 起点ワークスペースだけの、既定値を適用した後の`context.maxDocuments`と`context.maxBytes`
+- 1件以上のテスト割当てを収録したワークスペースの、既定値を適用した後の`verify.timeoutSeconds`
+- コンテキスト一式が参照するコマンドだけのコマンド名、引数列、既定値を適用した後の`cwd`。コマンド名の辞書順
 
-絶対path、未到達workspace、未使用command、`multiWorkspace.members`の列挙順、`multiWorkspace.maxMembers`、`safety`、出力形式、
-report、CLI timeout capは含めない。設定不適合はDigest計算前に停止する。Context文書数とbyte上限はrequest workspaceの
-設定を使い、Core hard limitを超えられない。
+絶対パス、未到達のワークスペース、未使用のコマンド、`multiWorkspace.members`の列挙順、`multiWorkspace.maxMembers`、
+`safety`、出力形式、レポート、CLIのタイムアウトの上限は含めない。設定不適合はハッシュ値の計算前に停止する。
+コンテキストの文書数とバイトの上限は起点ワークスペースの設定を使い、Coreの絶対上限を超えられない。
 
-## 7. workspace単独操作の共通規則
+## 7. 単独操作の共通規則
 
-`context`、`check`、`verify`、`doctor`の通常実行はactive workspaceを1つ選ぶ。横断関係の解決に必要な軽量索引と
-到達先解析は行うが、無関係memberを完全検査しない。明示pathは選択workspace root相対で解決する。
-別workspaceのpathをCLIへ直接渡さず、`--workspace`とそのworkspace相対path、または修飾IDを使う。
+`context`、`check`、`verify`、`doctor`の通常の実行は、作業ワークスペースを1つ選ぶ。横断する関係の解決に必要な
+軽量な索引と到達先の解析は行うが、無関係なメンバーを完全検査しない。明示のパスは、作業ワークスペースのルート
+相対で解決する。別のワークスペースのパスをCLIへ直接渡さず、`--workspace`とそのワークスペース相対のパス、または
+修飾IDを使う。
 
-各操作が受け付ける対象、`--workspace`との排他、処理と結果は各[操作仕様](../03_操作仕様/README.md)が定義する。
+各操作が受け付ける対象、`--workspace`との排他、処理と結果は、各[操作仕様](../03_操作仕様/README.md)が定義する。
 
 ## 8. 全体操作の共通規則
 
-`check`、`verify`、`doctor`は、current directoryまたはadapterが渡した探索pathから同じGit repository rootと
-root workspaceを一意に発見できる場合に`--all-workspaces`を受け付ける。current directoryがrepository rootと
-一致する必要はなく、member配下からも同じ複合workspace全体を選択する。発見不能または曖昧な場合はinvocation error、
-終了コード4とする。`--workspace`と排他的とする。
+`check`、`verify`、`doctor`は、現在のディレクトリまたはアダプターが渡した探索のパスから、同じGitリポジトリのルートと
+ルートワークスペースを一意に発見できる場合に`--all-workspaces`を受け付ける。現在のディレクトリがリポジトリのルートと
+一致する必要はなく、メンバーの配下からも同じ複合ワークスペース全体を選択する。発見できない場合、または曖昧な場合は
+引数不正とし、終了コード4とする。`--workspace`と排他的とする。
 
-探索はGit rootとrepository root直下の`.spec/bitz.yaml`という候補pathを確定する段階であり、設定内容の適合を
-要求しない。候補を一意に発見した後の構文、型、ID、catalog不適合はinvocation errorへ変えず、全体事前検査の
-操作結果として返す。
+探索は、リポジトリのルートと、その直下にある`.spec/bitz.yaml`という候補のパスを確定する段階であり、設定内容の
+適合を要求しない。候補を一意に発見した後の構文、型、ID、カタログの不適合は引数不正へ変えず、全体事前検査
+（multi-workspace preflight）の操作結果として返す。
 
-全体操作はworkspace処理前に、Gitが認識する`.spec/bitz.yaml`候補とroot＋catalog設定をsnapshotごとに比較する。
-現在snapshotではworking treeに存在するtracked／staged pathと未追跡かつ非ignore pathを対象にし、checkは指定base
-snapshot、doctorはHEAD snapshotも対象にする。verifyは現在snapshotだけを対象にする。各snapshot自身のroot設定が
-`multiWorkspace`を宣言する場合だけ、そのsnapshot自身のcatalogとの差分を検査する。初回複合workspace化前の単一workspace snapshotへ
-repository全体の不存在保証を遡及適用しない。ignored path、submodule内部、別repositoryは列挙しない。集合差があれば
-`SPEC-MULTI-UNREGISTERED-001`／`blocked`とし、暗黙memberにはしない。
+全体操作は、ワークスペースの処理前に、Gitが認識する`.spec/bitz.yaml`の候補と、ルートおよびカタログの設定を
+スナップショットごとに比較する。現在のスナップショットでは、作業ツリーに存在する追跡対象またはステージ済みの
+パスと、Gitが無視しない、未追跡のパスを対象にし、`check`は指定した基準版のスナップショット、`doctor`は`HEAD`の
+スナップショットも対象にする。`verify`は現在のスナップショットだけを対象にする。各スナップショット自身のルートの
+設定が`multiWorkspace`を宣言する場合だけ、そのスナップショット自身のカタログとの差分を検査する。初めて複合
+ワークスペース化する前の単一ワークスペースのスナップショットへ、リポジトリ全体の不存在保証をさかのぼって
+適用しない。Gitが無視するパス、サブモジュールの内部、別のリポジトリは列挙しない。集合の差があれば
+診断`SPEC-MULTI-UNREGISTERED-001`（`blocked`）とし、暗黙のメンバーにはしない。
 
-catalog、workspace ID/path、member設定対応、Git境界、未対応Schema/EARS-AI major、複合workspaceのresource上限を
-全体事前検査とする。非成功ならmember処理、Context解決、verify commandを開始せず、`workspaces: []`で結果を返す。
+カタログ、ワークスペースのIDとパス、メンバーの設定の対応、Gitの境界、未対応のスキーマまたはEARS-AIのメジャー
+バージョン、複合ワークスペースのリソースの上限を全体事前検査とする。非成功ならメンバーの処理、コンテキストの
+解決、テストコマンドの実行を開始せず、`workspaces: []`で結果を返す。
 
-処理順はroot workspaceを先頭、その後をworkspace IDのUnicode code point辞書順とする。Core 1.0は逐次実行し、
-並列実行を公開契約にしない。事前検査通過後はworkspace全体ではなく、checkの文書とsource edge、context／verifyの
-target strong relation閉包、verifyのbindingを継続判定の単位にする。`requires`、`refines`、`addresses`、
-`supersedes`とbinding ownerを依存とし、`related`は後続処理を遮断しない。
+処理の順序は、ルートワークスペースを先頭に置き、その後をワークスペースIDのUnicodeコードポイント辞書順とする。
+Core 1.0は逐次実行し、並列実行を公開契約にしない。全体事前検査を通過した後は、ワークスペース全体ではなく、`check`の
+文書と参照元のエッジ、`context`または`verify`の対象の強い関係の閉包、`verify`のテスト割当てを継続判定の単位に
+する。`requires`、`refines`、`addresses`、`supersedes`とテスト割当ての所有者を依存とし、`related`は後続の処理を
+遮断しない。
 
-根本原因を持つunitとは別のtargetまたはdoctor checkが依存出力を得られない場合だけ、
-`SPEC-MULTI-DEPENDENCY-001`／`blocked`を返す。`evidence`は`stage`、重複なし辞書順の
-`dependencyWorkspaces[]`、`dependencySpecRefs[]`を持つ。既に同じunitへmissing、type、state、coverageなど
-具体的Diagnosticがあれば同義の派生遮断を追加しない。targetに置く場合の`source`はtarget所有SPEC、doctor checkでは
-判定不能になったworkspaceの`.spec/bitz.yaml`とし、root原因fileをsourceへ複製せず`evidence`から参照する。
-依存SPECがないworkspace前提だけの遮断では`dependencySpecRefs`を空配列にする。操作固有の対象選択、Git基準版、
-binding、0件判定は各[操作仕様](../03_操作仕様/README.md)が定義する。
+根本の原因を持つ単位とは別の、対象または`doctor`の検査項目が、依存する出力を得られない場合だけ、
+診断`SPEC-MULTI-DEPENDENCY-001`（`blocked`）を返す。`evidence`は`stage`と、重複なしの辞書順の
+`dependencyWorkspaces[]`、`dependencySpecRefs[]`を持つ。既に同じ単位へ、不足、型、状態、カバレッジなど
+具体的な診断があれば、同じ意味の依存遮断（dependency blocking）を追加しない。対象に置く場合の`source`は対象を所有する仕様文書、
+`doctor`の検査項目では判定できなくなったワークスペースの`.spec/bitz.yaml`とし、根本原因のファイルを`source`へ
+複製せず`evidence`から参照する。依存する仕様文書がないワークスペースの前提だけの遮断では、`dependencySpecRefs`を
+空の配列にする。操作固有の対象の選択、基準版、テスト割当て、0件の判定は各[操作仕様](../03_操作仕様/README.md)
+が定義する。
 
-## 9. 複合workspaceの結果とreport
+## 9. 複合ワークスペースの結果とレポート
 
-全体操作は共通結果の`workspace`の代わりに`multiWorkspace`と`workspaces`を持つ。workspace処理順、Diagnostic配置、
-集約status、件数、report出力先は[結果・Diagnostic・終了コード](../00_共通契約/01_結果・Diagnostic・終了コード.md)
-が定義する。verifyの各member結果は操作仕様の`targetResults[]`を持ち、共有command実体は所有memberへ1回だけ置く。
-`--report`なしの全体操作はstatusにかかわらずfileを作らない。
+全体操作は、結果の`workspace`の代わりに`multiWorkspace`と`workspaces`を持つ。ワークスペースの処理順、診断の
+配置、集約した状態、件数、レポートの出力先は、[結果・診断・終了コード](../00_共通契約/01_結果・Diagnostic・終了コード.md)
+が定義する。`verify`の各メンバーの結果は、操作仕様の`targetResults[]`を持ち、共有するコマンドの実体は所有する
+メンバーへ1回だけ置く。`--report`なしの全体操作は、状態にかかわらずファイルを作らない。
 
-全体事前検査でroot設定の構文、型またはIDが不正で有効な同一性を構成できない場合だけ、`multiWorkspace`を
-`{"id": null, "path": "."}`とする。それ以外は有効なIDを必須とし、不正なraw値を同一性に使わない。
+全体事前検査でルートの設定の構文、型またはIDが不正で、有効な同一性を構成できない場合だけ、`multiWorkspace`を
+`{"id": null, "path": "."}`とする。それ以外は有効なIDを必須とし、不正な元の値を同一性に使わない。
 
-## 10. 上限とGit前提
+## 10. 上限とGitの前提
 
-- 次のCore resource上限を1つの複合workspaceのsnapshot全体へ適用する。
+- 次のCoreのリソースの上限を、1つの複合ワークスペースのスナップショット全体へ適用する。
 
-| dimension | hard limit | 数え方 |
+| 次元 | 絶対上限 | 数え方 |
 |---|---:|---|
-| `memberCount` | 100 | catalogのmember数。root workspaceを除く |
-| `specFileCount` | 10,000 | 全workspaceのSPEC Markdown数 |
-| `inputBytes` | 256 MiB | 全設定とSPEC Markdownのraw byte合計 |
+| `memberCount` | 100 | カタログのメンバー数。ルートワークスペースを除く |
+| `specFileCount` | 10,000 | 全ワークスペースの仕様文書のMarkdown数 |
+| `inputBytes` | 256 MiB | 全設定と仕様文書のMarkdownの元のバイト合計 |
 | `statementCount` | 100,000 | 全EARS-AI規範文数 |
-| `relationEdgeCount` | 1,000,000 | 全`relations` edge数 |
-| `traceEntryCount` | 1,000,000 | `implements`、test、`covers`、TASK `changes`の全項目数 |
-| `commandDefinitionCount` | 10,000 | 全workspaceのcommand定義数 |
-| `verifyBindingCount` | 10,000 | 1回のverify実行計画にあるbinding数 |
+| `relationEdgeCount` | 1,000,000 | 全`relations`のエッジ数 |
+| `traceEntryCount` | 1,000,000 | `implements`、テスト、`covers`、TASKの`changes`の全項目数 |
+| `commandDefinitionCount` | 10,000 | 全ワークスペースのコマンド定義数 |
+| `verifyBindingCount` | 10,000 | 1回の`verify`実行計画にあるテスト割当ての数 |
 
-- `check --base`のbase/currentは各snapshotへ個別に同じ上限を適用する。重複参照は重複排除前に数える。
-- 上限超過は複合workspace全体を`SPEC-MULTI-LIMIT-001`／`blocked`とし、部分結果やcommand実行へ進まない。
-- limit Diagnostic `evidence`は`dimension`、`limit`、早期停止時の`observedAtLeast`を持つ。正確な全件数を得るために
-  超過後も入力を読み続けることは要求しない。
-- `verifyBindingCount`は`commandDefinitionCount`の部分集合なので、両方が同時に超過し得る。複数のdimensionが
-  同時に超過する場合は、verify実行計画のdimensionを優先して報告する。
-- `verify`では`commandDefinitionCount`の判定を実行計画の確定後（対象展開とbinding重複排除が終わった後）に行う。
-  同時に`verifyBindingCount`も超過していれば`verifyBindingCount`を報告し、`commandDefinitionCount`だけが超過
-  していればそれを報告する。いずれの判定も、超過を検出した時点でcommandを1件も起動する前に行う。
-- 通常操作でも横断参照と逆参照に必要な軽量索引はcatalog全体から作る。
-- 変更workspaceと到達workspaceを完全解析し、無関係workspaceの本文解析を避ける。
-- Gitが利用できない、またはrepository rootと所有境界を確定できない場合、複合workspace操作は
-  `SPEC-MULTI-GIT-001`／`blocked`とする。境界を確定した結果、member pathが別worktree／repositoryへ解決されると
-  判明した場合は§5.1に従い`SPEC-MULTI-PATH-001`／`failed`とする。同じ原因へ両codeを返さない。
-  単一workspaceの縮退契約は変更しない。
+- `check --base`の基準版と現在版は、各スナップショットへ個別に同じ上限を適用する。重複する参照は、重複排除の
+  前に数える。
+- 上限超過は複合ワークスペース全体を診断`SPEC-MULTI-LIMIT-001`（`blocked`）とし、部分的な結果やコマンドの
+  実行へ進まない。
+- 上限の診断の`evidence`は`dimension`、`limit`、早期に停止したときの`observedAtLeast`を持つ。正確な全件数を
+  得るために、超過した後も入力を読み続けることは要求しない。
+- `verifyBindingCount`は`commandDefinitionCount`の部分集合なので、両方が同時に超過することがある。複数の次元が
+  同時に超過する場合は、`verify`実行計画の次元を優先して報告する。
+- `verify`では、`commandDefinitionCount`の判定を実行計画を確定した後（対象展開とテスト割当ての重複排除が
+  終わった後）に行う。同時に`verifyBindingCount`も超過していれば`verifyBindingCount`を報告し、
+  `commandDefinitionCount`だけが超過していればそれを報告する。いずれの判定も、超過を検出した時点でコマンドを
+  1件も起動する前に行う。
+- 通常の操作でも、横断する参照と逆参照に必要な軽量な索引は、カタログ全体から作る。
+- 変更したワークスペースと到達ワークスペースを完全に解析し、無関係なワークスペースの本文解析を避ける。
+- Gitが利用できない、またはリポジトリのルートと所有境界を確定できない場合、複合ワークスペースの操作は
+  診断`SPEC-MULTI-GIT-001`（`blocked`）とする。境界を確定した結果、メンバーのパスが別のワークツリーまたは
+  リポジトリへ解決されると判明した場合は、§5.1に従って診断`SPEC-MULTI-PATH-001`（`failed`）とする。同じ原因へ
+  両方のコードを返さない。単一ワークスペースの縮退契約は変更しない。
 
-### 10.1 計算量とmemory
+### 10.1 計算量とメモリ
 
-`B`を入力raw byte、`F`をSPEC file、`S`をstatement、`E`をrelation edge、`T`をtrace entry、`C`をcommand定義、
-`V`をverify binding、`R`を公開結果のtarget／statement／binding参照数とする。完全検査中の1 workspaceで同時保持する
-本文byteを`Bw`とする。target `q`のContext閉包について、本文byteを`Bq`、文書・edge・trace数を`Dq`、`Eq`、`Tq`とする。
+`B`を入力の元のバイト数、`F`を仕様文書のファイル数、`S`を規範文の数、`E`を関係のエッジ数、`T`をトレースの項目数、
+`C`をコマンドの定義数、`V`を`verify`のテスト割当ての数、`R`を公開結果の対象・規範文・テスト割当ての参照数とする。
+完全検査の間に1つのワークスペースで同時に保持する本文のバイト数を`Bw`とする。対象`q`のコンテキストの閉包に
+ついて、本文のバイト数を`Bq`、文書・エッジ・トレースの数を`Dq`、`Eq`、`Tq`とする。
 
-- 上限計数とglobal索引の時間は`O(B + F + S + E + T + C)`、索引memoryは`O(F + S + E + T + C)`とし、
-  全file本文を索引として同時保持しない。
-- 1 targetのContext解決はvisited集合を使い、`O(Bq + Dq + Eq + Tq)`時間・memoryとする。
-- 全体verifyの解決時間は`O(Σq(Bq + Dq + Eq + Tq))`を許容するが、完全BundleはtargetごとにDigest、statement、
-  binding参照へ縮約して解放する。
-- 全体verifyの一時memoryは
-  `O(F + S + E + T + C + max(Bw, maxq(Bq + Dq + Eq + Tq)) + V + R)`とし、workspaceまたは文書の
-  全組合せmatrixを作らない。決定論的sortの`O(K log K)`は許容する。
+- 上限の計数とグローバルな索引の時間は`O(B + F + S + E + T + C)`、索引のメモリは`O(F + S + E + T + C)`とし、
+  全ファイルの本文を索引として同時に保持しない。
+- 1つの対象のコンテキスト解決は、到達済みの集合を使い、`O(Bq + Dq + Eq + Tq)`の時間とメモリとする。
+- 全体`verify`の解決時間は`O(Σq(Bq + Dq + Eq + Tq))`を許容するが、完全なコンテキスト一式は、対象ごとにハッシュ値、
+  規範文、テスト割当ての参照へ縮約して解放する。
+- 全体`verify`の一時的なメモリは
+  `O(F + S + E + T + C + max(Bw, maxq(Bq + Dq + Eq + Tq)) + V + R)`とし、ワークスペースまたは文書の
+  全組合せの表を作らない。決定論的な並べ替えの`O(K log K)`は許容する。
 
-resource dimensionごとに他dimensionを通常規模へ保った`limit - 1`、`limit`、`limit + 1`を検査する。
-最大dimension fixtureは基準環境でCore peak RSS増分1 GiB以下とし、2 GiB memory limit下で正常終了させる。
-これは通常fixtureの200 MiB目標を変更せず、すべての環境へ保証する公開SLOではない。
+リソースの次元ごとに、他の次元を通常の規模に保った`limit - 1`、`limit`、`limit + 1`を検査する。
+次元を最大にしたfixtureは、基準の環境でCoreのRSSのピークの増分を1 GiB以下とし、2 GiBのメモリの上限の下で正常に
+終了させる。これは通常のfixtureの200 MiBの目標を変更せず、すべての環境へ保証する公開のSLOではない。
 
-## 11. Diagnostic
+## 11. 診断
 
-本表は検索用索引である。条件ごとの規範値とprimary優先順位は
-[Diagnostic registry](../00_共通契約/05_Diagnostic-registry.md)が所有する。
+本表は検索用の索引である。条件ごとの規範の値と主診断の優先順位は
+[診断レジストリ](../00_共通契約/05_Diagnostic-registry.md)が所有する。
 
-| code | severity | `resultStatus` | 条件 |
+| コード | 重大度 | `resultStatus` | 条件 |
 |---|---|---|---|
-| `SPEC-MULTI-CONFIG-001` | error | `failed` | `multiWorkspace`の型、件数、配置、root条件が不正 |
-| `SPEC-MULTI-MEMBER-001` | error | `failed` | member設定不在、catalogとのID不一致、入れ子の複合workspace |
-| `SPEC-MULTI-VERSION-001` | error | `blocked` | memberのSchemaまたはEARS-AIが未対応major |
-| `SPEC-MULTI-PATH-001` | error | `failed` | member pathが不正、重複、入れ子、symlink、submodule、別repository |
-| `SPEC-MULTI-ID-001` | error | `failed` | workspace IDが不正または重複 |
-| `SPEC-MULTI-UNREGISTERED-001` | error | `blocked` | 選択した設定、または全体事前検査のGit既知設定がcatalogに未登録 |
-| `SPEC-MULTI-REF-001` | error | `failed` | 修飾ID不正、別workspaceだけにあるtargetの非修飾参照、未知workspace |
-| `SPEC-MULTI-OWNERSHIP-001` | error | `failed` | SPEC、code、test、TASK、cwdが所有境界を越える |
-| `SPEC-MULTI-DEPENDENCY-001` | error | `blocked` | 別unitの非成功によりtargetまたはdoctor checkを安全に継続不能 |
-| `SPEC-MULTI-LIMIT-001` | error | `blocked` | member数または複合workspace全体resource上限を超過 |
-| `SPEC-MULTI-GIT-001` | error | `blocked` | Git repository境界またはmember所有範囲を確定不能 |
+| `SPEC-MULTI-CONFIG-001` | `error` | `failed` | `multiWorkspace`の型、件数、配置、ルートの条件が不正 |
+| `SPEC-MULTI-MEMBER-001` | `error` | `failed` | メンバーの設定の不在、カタログとのID不一致、入れ子の複合ワークスペース |
+| `SPEC-MULTI-VERSION-001` | `error` | `blocked` | メンバーのスキーマまたはEARS-AIが未対応のメジャーバージョン |
+| `SPEC-MULTI-PATH-001` | `error` | `failed` | メンバーのパスが不正、重複、入れ子、シンボリックリンク、サブモジュール、別のリポジトリ |
+| `SPEC-MULTI-ID-001` | `error` | `failed` | ワークスペースIDが不正または重複 |
+| `SPEC-MULTI-UNREGISTERED-001` | `error` | `blocked` | 選択した設定、または全体事前検査のGitが認識する設定がカタログに未登録 |
+| `SPEC-MULTI-REF-001` | `error` | `failed` | 修飾IDが不正、別のワークスペースだけにある参照先の非修飾参照、未知のワークスペース |
+| `SPEC-MULTI-OWNERSHIP-001` | `error` | `failed` | 仕様文書、コード、テスト、TASK、`cwd`が所有境界を越える |
+| `SPEC-MULTI-DEPENDENCY-001` | `error` | `blocked` | 別の単位の非成功により、対象または`doctor`の検査項目を安全に継続できない |
+| `SPEC-MULTI-LIMIT-001` | `error` | `blocked` | メンバー数または複合ワークスペース全体のリソースの上限を超過 |
+| `SPEC-MULTI-GIT-001` | `error` | `blocked` | Gitリポジトリの境界またはメンバーの所有領域を確定できない |
 
 ## 12. 非目標
 
-- 複数Git repository、network上のSPEC、Git submodule内SPECの複合workspace
-- workspace設定の継承、上書き、環境変数によるmember追加
+- 複数のGitリポジトリ、ネットワーク上の仕様文書、Gitのサブモジュール内の仕様文書の複合ワークスペース
+- ワークスペースの設定の継承、上書き、環境変数によるメンバーの追加
 - ID衝突の勝敗判定と自動改番
-- workspace間commandの内容同一性による統合
-- 全体操作の必須並列化とfail-fast option
+- ワークスペース間のコマンドの内容の同一性による統合
+- 全体操作の必須の並列化と、最初の失敗での停止のオプション

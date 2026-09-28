@@ -1,19 +1,19 @@
-# workspace・設定仕様
+# ワークスペース・設定仕様
 
-## 1. workspace決定
+## 1. ワークスペースの決定
 
-Core 1.0は単一workspaceと、1つのGit repository内の明示的な複合workspaceを扱う。
+Core 1.0は、単一ワークスペース（single workspace）と、1つのGitリポジトリ内の明示的な複合ワークスペース（multi-workspace）を扱う。
 
-1. 指定pathまたはcurrent directoryから親方向へ`.spec/bitz.yaml`を探索する。
-2. Git利用時はrepository境界を越えない。
-3. 最初に見つかった設定の親directoryをworkspace rootとする。
-4. 見つからなければ、`doctor`は`SPEC-DOCTOR-WORKSPACE-001`、他の操作は
-   `SPEC-WORKSPACE-MISSING-001`を返して`blocked`とする。
-5. symlinkを辿ってworkspace外のSPECを読み込まない。
+1. 指定したパスまたは現在のディレクトリから親の方向へ`.spec/bitz.yaml`を探索する。
+2. Gitを利用するときは、リポジトリの境界を越えない。
+3. 最初に見つかった設定の親ディレクトリを、ワークスペースのルート（workspace root）とする。
+4. 見つからなければ、`doctor`は診断`SPEC-DOCTOR-WORKSPACE-001`、ほかの操作は
+   診断`SPEC-WORKSPACE-MISSING-001`を返して`blocked`とする。
+5. シンボリックリンクをたどって、ワークスペースの外の仕様文書を読み込まない。
 
-単一workspaceの実効IDは`workspace.id`、省略時は`root`とし、pathは`.`とする。Git rootの設定が
+単一ワークスペースの実効IDは`workspace.id`、省略時は`root`とし、パスは`.`とする。リポジトリのルートの設定が
 `multiWorkspace.members`を宣言する場合は、
-[複合workspace仕様](05_複合workspace仕様.md)のcatalog検証、active workspace決定、所有境界を適用する。
+[複合ワークスペース仕様](05_複合workspace仕様.md)のカタログの検証、作業ワークスペースの決定、所有境界を適用する。
 
 ## 2. 標準配置
 
@@ -31,26 +31,26 @@ Core 1.0は単一workspaceと、1つのGit repository内の明示的な複合wor
 └── reports/
 ```
 
-`.spec/bitz.yaml`だけを必須とし、各directoryは必要になった時点で作成する。要求が1件以上ある場合は
-`requirements/`を使用する。`reports/`は既定でGit管理外とする。
+`.spec/bitz.yaml`だけを必須とし、各ディレクトリは必要になった時点で作成する。要求が1件以上ある場合は
+`requirements/`を使う。`reports/`は既定でGit管理の対象外とする。
 
 ## 3. 探索対象
 
-| path | 種別 | check |
+| パス | 種別 | 検査 |
 |---|---|---|
 | `.spec/bitz.yaml` | 設定 | 常に |
 | `.spec/requirements/**/*.md` | REQ | 対象選択に従う |
 | `.spec/technical/**/*.md` | TECH | 対象選択に従う |
 | `.spec/decisions/**/*.md` | ADR | 対象選択に従う |
-| `.spec/tasks/**/*.md` | TASK | 存在時 |
+| `.spec/tasks/**/*.md` | TASK | 存在する場合 |
 | `.spec/reports/*.json` | 結果 | 入力にしない |
 
-`.spec/reports`はentry種別（directory、file、symlink）にかかわらず既知entryとし、探索せず、未知entryとしても扱わない。
-`.spec/`内の未知file/directoryは`SPEC-WORKSPACE-UNKNOWN-001`／warningとする。hidden、一時file、Markdown以外の成果物を暗黙にSPECとして
+`.spec/reports`は、エントリの種別（ディレクトリ、ファイル、シンボリックリンク）にかかわらず既知のエントリとし、探索せず、未知のエントリとしても扱わない。
+`.spec/`内の未知のファイルまたはディレクトリは、診断`SPEC-WORKSPACE-UNKNOWN-001`（重大度`warning`）とする。隠しファイル、隠しディレクトリ、一時ファイル、Markdown以外の成果物を、暗黙に仕様文書として
 読み込まない。
 
-`.spec/`配下（`.spec/reports`を除く）のsymlinkは、fileへのsymlinkとdirectoryへのsymlinkのいずれも辿らず、
-その内容を読まない。symlink自体を未知entryとして扱い、`SPEC-WORKSPACE-UNKNOWN-001`／warningとする。
+`.spec/`配下（`.spec/reports`を除く）のシンボリックリンクは、ファイルへのシンボリックリンクとディレクトリへのシンボリックリンクのいずれもたどらず、
+その内容を読まない。シンボリックリンク自体を未知のエントリとして扱い、診断`SPEC-WORKSPACE-UNKNOWN-001`（重大度`warning`）とする。
 
 ## 4. `bitz.yaml`
 
@@ -71,51 +71,51 @@ safety:
   protectApprovedRequirements: true
 ```
 
-## 5. Schema
+## 5. スキーマ
 
-| key | 型 | 必須 | 既定 | 制約 |
+| キー | 型 | 必須 | 既定 | 制約 |
 |---|---|:--:|---|---|
-| `schemaVersion` | string | Yes | — | Core 1.0では`"1.0"` |
-| `language` | string | No | `ja` | BCP 47の言語tag |
-| `earsAi` | string | Yes | — | `major.minor` |
-| `context.maxDocuments` | integer | No | `20` | 1〜100 |
-| `context.maxBytes` | integer | No | `131072` | 4,096〜1,048,576 |
-| `verify.timeoutSeconds` | integer | No | `300` | 1〜3,600 |
-| `verify.commands` | map | No | `{}` | command名からbinding定義 |
-| `safety.protectApprovedRequirements` | boolean | No | `true` | Git差分保護 |
-| `workspace.id` | string | No | `root` | `[a-z][a-z0-9-]{0,31}`。root workspace/memberは必須 |
-| `multiWorkspace.members` | object[] | No | — | root workspaceだけ。`id`とrepository root相対`path` |
-| `multiWorkspace.maxMembers` | integer | No | `20` | 1〜100。`members`指定時だけ使用可 |
+| `schemaVersion` | 文字列 | ○ | — | Core 1.0では`"1.0"` |
+| `language` | 文字列 | — | `ja` | BCP 47の言語タグ |
+| `earsAi` | 文字列 | ○ | — | `major.minor` |
+| `context.maxDocuments` | 整数 | — | `20` | 1〜100 |
+| `context.maxBytes` | 整数 | — | `131072` | 4,096〜1,048,576 |
+| `verify.timeoutSeconds` | 整数 | — | `300` | 1〜3,600 |
+| `verify.commands` | マッピング | — | `{}` | コマンド名からテスト割当ての定義 |
+| `safety.protectApprovedRequirements` | 真偽値 | — | `true` | 承認済み要求の保護 |
+| `workspace.id` | 文字列 | — | `root` | `[a-z][a-z0-9-]{0,31}`。ルートワークスペースまたはメンバーは必須 |
+| `multiWorkspace.members` | オブジェクトの配列 | — | — | ルートワークスペースだけ。`id`とリポジトリのルートからの相対の`path` |
+| `multiWorkspace.maxMembers` | 整数 | — | `20` | 1〜100。`members`を指定したときだけ使用可 |
 
-`multiWorkspace.members`要素は次のfieldだけを持つ。
+`multiWorkspace.members`の要素は、次のフィールドだけを持つ。
 
-| key | 型 | 必須 | 制約 |
+| キー | 型 | 必須 | 制約 |
 |---|---|:--:|---|
-| `id` | string | Yes | `workspace.id`と同じ字句規則。複合workspace内で一意 |
-| `path` | string | Yes | repository root相対directory。所有境界は複合workspace仕様に従う |
+| `id` | 文字列 | ○ | `workspace.id`と同じ字句規則。複合ワークスペース内で一意 |
+| `path` | 文字列 | ○ | リポジトリのルートからの相対ディレクトリ。所有境界は複合ワークスペース仕様に従う |
 
-`profiles`はCore 1.0の標準keyではない。検出した場合は`SPEC-CONFIG-UNKNOWN-001`／warningとし、判定、Context Digest、
-操作へ使用しない。`workspace`と`multiWorkspace`の組合せ、member field、path制約は
-[複合workspace仕様](05_複合workspace仕様.md)が定義する。
+`profiles`は、Core 1.0の標準キーではない。検出した場合は、診断`SPEC-CONFIG-UNKNOWN-001`（重大度`warning`）とし、判定、コンテキストのハッシュ値、
+操作へは使わない。`workspace`と`multiWorkspace`の組合せ、メンバーのフィールド、パスの制約は、
+[複合ワークスペース仕様](05_複合workspace仕様.md)が定義する。
 
-未知の標準keyは同一majorの前方互換性のため`SPEC-CONFIG-UNKNOWN-001`／warningとし、値を変更しない。
-型不正と必須key欠如は`SPEC-CONFIG-SCHEMA-001`／error／`error`、未知Schema majorは
-同code／error／`blocked`とする。
+未知の標準キーは、同じメジャーバージョンの前方互換性のため、診断`SPEC-CONFIG-UNKNOWN-001`（重大度`warning`）とし、値を変更しない。
+型の不正と必須キーの欠如は、診断`SPEC-CONFIG-SCHEMA-001`（重大度`error`、結果への効果`error`）とし、未知のスキーマのメジャーバージョンは、
+同じコード（重大度`error`、結果への効果`blocked`）とする。
 
-`workspace`と`multiWorkspace`は未releaseの初回Core 1.0 Schemaに含まれる。複合workspace非対応の公開済みCore 1.0との
-移行分岐、追加feature marker、Schema major引上げは設けない。複合workspace内のworkspace IDは永続同一性であり、
-初回複合workspace化とbase/current対応は[複合workspace仕様](05_複合workspace仕様.md#41-workspace-identity)に従う。
+`workspace`と`multiWorkspace`は、未リリースの初回のCore 1.0のスキーマに含まれる。複合ワークスペースに非対応の公開済みのCore 1.0との
+移行の分岐、追加の機能マーカー、スキーマのメジャーバージョンの引き上げは設けない。複合ワークスペース内のワークスペースIDは永続的な同一性であり、
+初回の複合ワークスペース化と基準版・現在版の対応は、[複合ワークスペース仕様](05_複合workspace仕様.md#41-ワークスペースの同一性)に従う。
 
-## 6. command定義
+## 6. コマンドの定義
 
-command名は`[a-z][a-z0-9-]{0,31}`とする。値はargv配列、または`argv`と任意`cwd`のmapとする。argv templateは
-1〜256要素の文字列配列、各要素はUTF-8で32 KiB以下、配列全体はUTF-8で1 MiB以下とする。全要素でNULを禁止し、
-`argv[0]`は空文字列を禁止する。`argv[1:]`の空文字列は正規の引数として保持する。違反は
-`SPEC-CONFIG-SCHEMA-001`とし、command実行へ進まない。
+コマンド名は`[a-z][a-z0-9-]{0,31}`とする。値は引数列（文字列の配列）、または`argv`と任意の`cwd`のマッピングとする。引数列テンプレート（argv template）は
+1〜256要素の文字列の配列とし、各要素はUTF-8で32 KiB以下、配列全体はUTF-8で1 MiB以下とする。すべての要素でNULを禁止し、
+`argv[0]`は空文字列を禁止する。`argv[1:]`の空文字列は正規の引数として保持する。違反は、
+診断`SPEC-CONFIG-SCHEMA-001`とし、コマンドの実行へ進まない。
 
-argvのbyte数はYAML表記、配列区切り、終端NULを含めず、各文字列をUTF-8 encodeしたbyte数とその総和で測定する。
-単一の設定fileは64 KiB上限を持つため、template全体1 MiB上限を超える設定はその前に`SPEC-INPUT-LIMIT-001`となる。
-template全体の上限は、設定fileの上限と独立に保持する防御上の上限であり、適合matrixでは個別に検査しない。
+引数列のバイト数は、YAML表記、配列の区切り、終端のNULを含めず、各文字列をUTF-8でエンコードしたバイト数とその総和で測定する。
+単一の設定ファイル（configuration file）は64 KiB上限を持つため、テンプレート全体の1 MiB上限を超える設定は、その前に診断`SPEC-INPUT-LIMIT-001`となる。
+テンプレート全体の上限は、設定ファイルの上限と独立に保持する防御上の上限であり、matrixでは個別に検査しない。
 
 ```yaml
 verify:
@@ -126,51 +126,51 @@ verify:
       cwd: frontend
 ```
 
-- shellを介さずargvとして起動する。
-- `{tests}`は配列要素全体として0回または1回使用できる。
-- `{tests}`は対象test pathを個別argv要素へ展開する。
-- 文字列内埋込み、環境変数展開、command置換、pipe、redirectを行わない。
-- `{tests}`がなければargvをそのまま1回実行する。
-- `{tests}`展開後のargvは最大10,000要素、各要素32 KiB以下、全体1 MiB以下とする。超過したbindingは起動せず
-  `SPEC-VERIFY-BLOCKED-001`とする。
-- `cwd`はworkspace相対の既存directoryとし、絶対path、`..`、root外symlinkを禁止する。
-- `cwd`指定時、test pathはその配下に限り、argvへ`cwd`相対で展開する。
-  所有境界とpath存在を確認した後、同一workspace内でもtest pathが実効cwd配下にない場合は、verifyのbinding解決で
-  `SPEC-VERIFY-BLOCKED-001`／blockedとし、そのbindingを起動しない。包含はcanonical pathのsegment境界で判定する。
-  `{tests}`の有無にかかわらず適用する。checkはpathの型・存在・所有境界、doctorは実行file・cwdまでを検査し、
-  選択test集合とcwdの包含検査はverifyだけが行う。
-- command名をbinding IDとする。異なる名前の定義を内容が同じという理由で統合しない。
+- シェルを介さず、引数列として起動する。
+- `{tests}`は、配列要素全体として0回または1回使用できる。
+- `{tests}`は、対象のテストパスを個別の引数列の要素へ展開する。
+- 文字列内への埋込み、環境変数の展開、コマンドの置換、パイプ、リダイレクトを行わない。
+- `{tests}`がなければ、引数列をそのまま1回実行する。
+- `{tests}`を展開した後の引数列は、最大10,000要素、各要素32 KiB以下、全体1 MiB以下とする。上限を超えたテスト割当ては起動せず
+  診断`SPEC-VERIFY-BLOCKED-001`とする。
+- `cwd`は、ワークスペース相対の既存のディレクトリとし、絶対パス、`..`、ルートの外のシンボリックリンクを禁止する。
+- `cwd`を指定したとき、テストパスはその配下に限り、引数列へ`cwd`相対で展開する。
+  所有境界とパスの存在を確認した後、同じワークスペース内でもテストパスが実効`cwd`の配下にない場合は、`verify`のテスト割当ての解決で
+  診断`SPEC-VERIFY-BLOCKED-001`（`blocked`）とし、そのテスト割当てを起動しない。包含は正規パスのセグメントの境界で判定する。
+  `{tests}`の有無にかかわらず適用する。`check`はパスの型・存在・所有境界、`doctor`は実行ファイル・`cwd`までを検査し、
+  選択したテストの集合と`cwd`の包含検査は`verify`だけが行う。
+- コマンド名をテスト割当てのIDとする。異なる名前の定義を、内容が同じという理由で統合しない。
 
-Frontmatterと本文はcommand argv、cwd、環境変数を定義できない。
+フロントマターと本文は、コマンドの`argv`、`cwd`、環境変数を定義できない。
 
 ## 7. 実効設定
 
-CLIは対象範囲、Git比較基準、出力形式、report、timeout短縮だけを変更できる。保護解除、command差替え、
-設定timeout延長を行わない。
+CLIは、対象範囲、基準版、出力形式、レポート、タイムアウトの短縮だけを変更できる。保護の解除、コマンドの差替え、
+設定のタイムアウトの延長は行わない。
 
 `verify --timeout N`の実効値は`min(N, verify.timeoutSeconds)`とする。Coreは`.env`を読み込まず、設定値の
 文字列補間を行わない。
 
 ## 8. YAML制約
 
-- UTF-8のYAML 1.2部分集合とし、mapping keyは文字列だけを許可する
-- custom tag、anchor、alias、merge key、複雑key、複数YAML documentを禁止する
-- YAML解釈後に同じ文字列となる重複mapping keyをerrorとする。Unicode正規化やcase変換は行わない
-- timestampを暗黙変換せず文字列として扱う。`yes`／`no`は文字列であり真偽値にしない。先頭`0`を8進数として扱わない
-- scalarはnull、文字列、真偽値、10進整数、有限10進numberのいずれかとする
-- 構文層はscalar、scalar配列、文字列keyの通常mapを表現できる。許可する入れ子構造と値域は入力ごとのSchemaが決める
-- 設定Schemaは`multiWorkspace.members`だけにobject配列を許可し、Frontmatter Schemaは`tests`だけにobject配列を許可する
-- file size 64 KiB以下
-- network accessなし
+- UTF-8のYAML 1.2部分集合とし、マッピングキーは文字列だけを許可する
+- カスタムタグ、アンカー、エイリアス、マージキー、複雑なキー、複数のYAMLドキュメントを禁止する
+- YAMLを解釈した後に同じ文字列となる重複するマッピングキーは、重大度`error`とする。Unicode正規化や大文字と小文字の変換は行わない
+- タイムスタンプを暗黙に変換せず、文字列として扱う。`yes`または`no`は文字列であり、真偽値にしない。先頭の`0`を8進数として扱わない
+- スカラーは、`null`、文字列、真偽値、10進整数、有限の10進数のいずれかとする
+- 構文層は、スカラー、スカラーの配列、文字列キーの通常のマッピングを表現できる。許可する入れ子構造と値域は、入力ごとのスキーマが決める
+- 設定のスキーマは`multiWorkspace.members`だけにオブジェクトの配列を許可し、フロントマターのスキーマは`tests`だけにオブジェクトの配列を許可する
+- ファイルサイズは64 KiB以下
+- ネットワークアクセスなし
 
-上記の禁止はCoreが自身で判定する。使用するYAML実装の既定挙動を制約の代わりにしない。
-禁止構文の受理は`SPEC-CONFIG-SCHEMA-001`となるべき入力を通過させるため、値の解釈前に拒否する。
-実装が使用するYAML libraryと安全読取りの条件は
+上記の禁止は、Coreが自身で判定する。使用するYAML実装の既定の挙動を、制約の代わりにしない。
+禁止された構文の受理は、診断`SPEC-CONFIG-SCHEMA-001`となるべき入力を通過させてしまうため、値の解釈の前に拒否する。
+実装が使用するYAMLライブラリと安全な読取りの条件は、
 [Core実行環境・CLI基盤契約 §2・§3](../00_共通契約/06_Core実行環境・CLI基盤契約.md#2-実行環境と配布物)が所有する。
 
-## 9. path
+## 9. パス
 
-SPECへ記録するpathはworkspace root相対、区切り文字は`/`とする。絶対path、`..`、NUL、glob、root外symlinkを
-禁止する。Git管理外の生成物と依存cacheを`implements`または`tests`へ指定しない。
-複合workspaceでは、workspace root内であっても別memberの所有領域を参照できない。root workspaceによるmember配下の
-所有も禁止し、詳細は[複合workspace仕様](05_複合workspace仕様.md)に従う。
+仕様文書に記録するパスは、ワークスペースのルートからの相対とし、区切り文字は`/`とする。絶対パス、`..`、NUL、glob、ルートの外のシンボリックリンクを
+禁止する。Git管理外の生成物と依存関係のキャッシュを、`implements`または`tests`へ指定しない。
+複合ワークスペースでは、ワークスペースのルート内であっても、別のメンバーの所有領域を参照できない。ルートワークスペースによるメンバー配下の
+所有も禁止し、詳細は[複合ワークスペース仕様](05_複合workspace仕様.md)に従う。
