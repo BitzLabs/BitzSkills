@@ -976,3 +976,21 @@ commit `0d1d19baeadc9630d81c5d0ff66c5315b2442620`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 fixtureの入力と期待値を変えていないため、Gate Bの判定し直しは要しない。
+
+## 2026-09-29: 仕様文書モデルと操作仕様の表記の書き直し後のGate A再認定
+
+[表記規則](../../docs/表記規則.md)と[用語集](../../docs/用語集.md)に従い、詳細設計の仕様文書モデルの5文書、操作仕様の4文書とREADME、
+詳細設計のREADMEを日本語表記へ書き直した。見出しの変更に合わせてfixtureの記録のリンクを直し、診断の網羅表が固定する根拠文書12件の
+ハッシュ値と、target vectorの`contractSha256`を、再レビュー（[Diagnostic意味網羅review](Diagnostic意味網羅review.md)の2026-09-29の節、
+[target展開の期待集合](targets/README.md)の2026-09-29の記録）のうえで更新した。matrix、fixtureの入力と期待値は変えていない。
+
+commit `9a320b0c5f0944e31d9f2ea724ae8e38088f7dac`に対して`uv run fixtures/certify_gate_a.py`を実行し、
+`gateA: "Allowed"`、error 0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 統合検証 | 2つのcloneでReport SHA-256が両方`8db53cf5baa0a2db64ece1f8bb2fc8c32e357814b01a09df7fb2b85c830335ad`。前回から変わったのは、直前に入ったGate Cの性能baselineの受入れ（commit `ec058854`）が性能の検査を変えたためである。この書き直しをその前のcommitに載せた版では、前回と同じ`e52667946a7f015bdab388682c22dbce6a056b57994ef20f0b93678f8fbf56c7`だった |
+| scale検証 | 2つのcloneで24件すべてPassed。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+fixtureの入力と期待値を変えていないため、Gate Bの判定し直しは要しない。
