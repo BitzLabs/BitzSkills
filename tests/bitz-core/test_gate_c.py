@@ -1,12 +1,15 @@
-"""Gate C Phase 1の証拠集約を偽の成功報告で通せないことを検査する。"""
+"""Gate Cの証拠集約を偽の成功報告で通せないことを検査する。"""
 from __future__ import annotations
 
 import copy
 import hashlib
 import importlib.util
+import json
 from pathlib import Path
 import sys
+import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tests/bitz-core"))
@@ -101,22 +104,114 @@ def evidence(role: str) -> dict:
     }
 
 
+def performance_evidence() -> dict:
+    report = {
+        "status": "Passed",
+        "schemas": 8,
+        "inputs": 12,
+        "generationRunsPerDataset": 2,
+        "shapeRejectionChecks": 2,
+        "datasets": [{"datasetId": "core-single-v1"}],
+        "baselines": [{
+            "coreCommit": "b" * 40,
+            "environmentId": REFERENCE_MANIFEST["environmentId"],
+            "cases": 7,
+            "status": "Passed",
+            "sha256": EMPTY,
+        }],
+    }
+    encoded = (json.dumps(report, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode()
+    return {
+        "schemaVersion": 1,
+        "commit": COMMIT,
+        "checkoutId": "checkout-performance",
+        "cleanBefore": True,
+        "cleanAfter": True,
+        "exitCode": 0,
+        "report": report,
+        "stdoutSha256": hashlib.sha256(encoded).hexdigest(),
+        "stderrSha256": EMPTY,
+        "errors": [],
+    }
+
+
 def collected(rows=None):
     return gate_c.collect(rows or [evidence("minimum"), evidence("reference")],
                           commit=COMMIT, fixture_ids=IDS,
-                          reference_manifest=REFERENCE_MANIFEST)
+                          reference_manifest=REFERENCE_MANIFEST,
+                          performance_evidence=performance_evidence())
 
 
 class CollectionTests(unittest.TestCase):
-    def test_two_environment_roles_pass_foundation_but_leave_gate_c_pending(self):
+    def test_foundation_and_performance_pass_but_leave_gate_c_pending(self):
         result = collected()
         self.assertEqual(result["gateCFoundation"], "Passed")
+        self.assertEqual(result["gateCPerformance"], "Passed")
         self.assertEqual(result["gateC"], "Pending")
         self.assertEqual(result["fixtureCount"], 320)
         self.assertEqual(result["referenceManifestSha256"],
                          gate_c.manifest_digest(REFERENCE_MANIFEST))
         self.assertEqual(result["pending"], gate_c.PENDING)
         self.assertEqual(set(result["environments"]), {"minimum", "reference"})
+        self.assertEqual(result["performance"]["baselines"][0]["cases"], 7)
+
+    def test_forged_performance_success_is_rejected(self):
+        def assert_rejected(performance):
+            with self.assertRaises(ValueError):
+                gate_c.collect(
+                    [evidence("minimum"), evidence("reference")],
+                    commit=COMMIT, fixture_ids=IDS,
+                    reference_manifest=REFERENCE_MANIFEST,
+                    performance_evidence=performance,
+                )
+
+        mutations = {
+            "schemaVersion": 2,
+            "commit": "c" * 40,
+            "cleanBefore": False,
+            "cleanAfter": False,
+            "exitCode": 1,
+            "errors": ["failure"],
+            "stdoutSha256": "bad",
+            "stderrSha256": "",
+        }
+        for key, value in mutations.items():
+            with self.subTest(key=key):
+                performance = performance_evidence()
+                performance[key] = value
+                assert_rejected(performance)
+
+        report_mutations = {
+            "status": "Failed",
+            "schemas": 0,
+            "inputs": 0,
+            "generationRunsPerDataset": 1,
+            "shapeRejectionChecks": 0,
+            "baselines": [],
+        }
+        for key, value in report_mutations.items():
+            with self.subTest(report=key):
+                performance = performance_evidence()
+                performance["report"][key] = value
+                assert_rejected(performance)
+
+        baseline_mutations = {
+            "coreCommit": "bad",
+            "environmentId": "another-environment",
+            "cases": 0,
+            "status": "Failed",
+            "sha256": "bad",
+        }
+        for key, value in baseline_mutations.items():
+            with self.subTest(baseline=key):
+                performance = performance_evidence()
+                performance["report"]["baselines"][0][key] = value
+                assert_rejected(performance)
+
+        duplicate = performance_evidence()
+        duplicate["report"]["baselines"].append(
+            copy.deepcopy(duplicate["report"]["baselines"][0]))
+        assert_rejected(duplicate)
 
     def test_missing_duplicate_or_reused_environment_is_rejected(self):
         cases = [
@@ -232,6 +327,29 @@ class CollectionTests(unittest.TestCase):
                 target[key] = value
                 with self.assertRaises(ValueError):
                     collected(rows)
+
+    def test_collect_command_runs_performance_audit_for_target_commit(self):
+        performance = performance_evidence()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            inputs = []
+            for role in gate_c.ROLES:
+                path = root / f"{role}.json"
+                path.write_text(json.dumps(evidence(role)), encoding="utf-8")
+                inputs.extend(["--input", str(path)])
+            output = root / "result.json"
+            with (mock.patch.object(certify_gate_c, "load_reference_manifest_at",
+                                    return_value=REFERENCE_MANIFEST),
+                  mock.patch.object(certify_gate_c, "run_performance_evidence",
+                                    return_value=(performance, [])) as audit):
+                code = certify_gate_c.main([
+                    "collect", *inputs, "--commit", COMMIT, "--output", str(output),
+                ])
+            self.assertEqual(code, 0)
+            audit.assert_called_once_with(COMMIT)
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["gateCPerformance"], "Passed")
+            self.assertEqual(result["pending"], gate_c.PENDING)
 
     def test_unit_count_parser_accepts_unittest_summary_only(self):
         self.assertEqual(certify_gate_c.unit_test_count(

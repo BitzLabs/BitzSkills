@@ -287,6 +287,10 @@ fixture実行前に拒否する。network無効などのisolation条件は性能
 - Small Flowと通常Markdown条件の比較証拠を確定する
 - 未解決P0/P1がないことを閉包する
 
+2026-09-28に基準環境の初回性能baselineと固定SLOを受け入れ、対象commitのfresh checkoutで
+`validate_benchmarks.py`を直接実行する監査をGate C集約へ統合した。性能条件は完了し、
+残件はSmall Flowと通常Markdown条件の比較証拠、および未解決P0/P1の閉包である。
+
 実行入口は次のとおりである。`minimum.json`と`reference.json`は別の環境で同じcommitに対して作る。
 
 ```text

@@ -1,4 +1,4 @@
-"""Gate C Phase 1のfresh-checkout証拠をfail-closedで集約する。"""
+"""Gate Cのfresh-checkout証拠をfail-closedで集約する。"""
 from __future__ import annotations
 
 import copy
@@ -10,7 +10,6 @@ ROLES = ("minimum", "reference")
 MINIMUM_ENVIRONMENT_ID = "minimum-cpython-3-12"
 PYTHON_MINOR = (3, 12)
 PENDING = [
-    "accepted performance baseline integration",
     "Small Flow and Markdown comparison evidence",
     "unresolved P0/P1 closure",
 ]
@@ -77,6 +76,75 @@ def _git_version(value: str) -> tuple[int, ...] | None:
 def _version_at_least(actual: tuple[int, ...], minimum: tuple[int, ...]) -> bool:
     width = max(len(actual), len(minimum))
     return actual + (0,) * (width - len(actual)) >= minimum + (0,) * (width - len(minimum))
+
+
+def validate_performance_evidence(row: dict, *, commit: str,
+                                  reference_manifest: dict) -> dict:
+    """fresh checkoutで実行した性能fixture監査の証拠を検査する。"""
+    _error(isinstance(row, dict), "性能baseline監査証拠がありません")
+    _error(row.get("schemaVersion") == 1, "性能baseline監査証拠のschemaVersionが不正です")
+    _error(row.get("commit") == commit, "性能baseline監査証拠のcommitが対象commitと一致しません")
+    _error(isinstance(row.get("checkoutId"), str) and row["checkoutId"],
+           "性能baseline監査証拠のcheckoutIdがありません")
+    _error(row.get("cleanBefore") is True and row.get("cleanAfter") is True,
+           "性能baseline監査のfresh checkoutがcleanではありません")
+    _error(row.get("errors") == [], "性能baseline監査証拠にerrorがあります")
+    _error(row.get("exitCode") == 0, "性能baseline監査の終了コードが0ではありません")
+    for name in ("stdoutSha256", "stderrSha256"):
+        _error(isinstance(row.get(name), str) and SHA256.fullmatch(row[name]) is not None,
+               f"性能baseline監査証拠の{name}が不正です")
+
+    report = row.get("report")
+    _error(isinstance(report, dict) and report.get("status") == "Passed",
+           "性能baseline監査がPassedではありません")
+    report_bytes = (json.dumps(report, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode()
+    _error(row["stdoutSha256"] == hashlib.sha256(report_bytes).hexdigest(),
+           "性能baseline監査reportのhashが標準出力と一致しません")
+    _error(isinstance(report.get("schemas"), int) and report["schemas"] > 0,
+           "性能baseline監査のSchema件数がありません")
+    _error(isinstance(report.get("inputs"), int) and report["inputs"] > 0,
+           "性能baseline監査の入力件数がありません")
+    _error(report.get("generationRunsPerDataset") == 2,
+           "性能datasetの決定性検査が2回実行されていません")
+    _error(isinstance(report.get("shapeRejectionChecks"), int)
+           and report["shapeRejectionChecks"] > 0,
+           "性能datasetの形状陰性対照がありません")
+
+    baselines = report.get("baselines")
+    _error(isinstance(baselines, list) and baselines,
+           "受入済み性能baselineがありません")
+    expected_environment = reference_manifest.get("environmentId")
+    identities = set()
+    summaries = []
+    for baseline in baselines:
+        _error(isinstance(baseline, dict), "性能baselineの監査結果がobjectではありません")
+        core_commit = baseline.get("coreCommit")
+        environment_id = baseline.get("environmentId")
+        _error(isinstance(core_commit, str)
+               and re.fullmatch(r"[0-9a-f]{40}", core_commit) is not None,
+               "性能baselineのcoreCommitが不正です")
+        _error(environment_id == expected_environment,
+               "性能baselineのenvironmentIdが基準環境manifestと一致しません")
+        _error(isinstance(baseline.get("cases"), int) and baseline["cases"] > 0,
+               "性能baselineのcase件数がありません")
+        _error(baseline.get("status") == "Passed", "性能baselineがPassedではありません")
+        _error(isinstance(baseline.get("sha256"), str)
+               and SHA256.fullmatch(baseline["sha256"]) is not None,
+               "性能baselineのsha256が不正です")
+        identity = (environment_id, core_commit)
+        _error(identity not in identities, "性能baselineの監査結果が重複しています")
+        identities.add(identity)
+        summaries.append({
+            "environmentId": environment_id,
+            "coreCommit": core_commit,
+            "cases": baseline["cases"],
+            "sha256": baseline["sha256"],
+        })
+    return {
+        "checkoutId": row["checkoutId"],
+        "validationReportSha256": row["stdoutSha256"],
+        "baselines": summaries,
+    }
 
 
 def validate_reference_environment(environment: dict, manifest: dict) -> None:
@@ -204,7 +272,7 @@ def validate_evidence(row: dict, *, commit: str, fixture_ids: list[str],
 
 
 def collect(rows: list[dict], *, commit: str, fixture_ids: list[str],
-            reference_manifest: dict) -> dict:
+            reference_manifest: dict, performance_evidence: dict) -> dict:
     _error(isinstance(reference_manifest, dict), "基準環境manifestがありません")
     _error(re.fullmatch(r"[0-9a-f]{40}", commit) is not None, "対象commitが40桁SHAではありません")
     _error(len(rows) == len(ROLES), "下限環境と基準環境の2件の証拠が必要です")
@@ -224,22 +292,28 @@ def collect(rows: list[dict], *, commit: str, fixture_ids: list[str],
     _error(len({entry["unitTests"] for entry in validated}) == 1,
            "下限環境と基準環境のCore単体試験件数が一致しません")
 
+    performance = validate_performance_evidence(
+        performance_evidence, commit=commit, reference_manifest=reference_manifest)
+
     environments = {role: by_role[role] for role in ROLES}
     return {
         "schemaVersion": 1,
         "commit": commit,
         "gateC": "Pending",
         "gateCFoundation": "Passed",
+        "gateCPerformance": "Passed",
         "fixtureCount": len(fixture_ids),
         "conformanceSha256": validated[0]["conformanceSha256"],
         "referenceManifestSha256": manifest_digest(reference_manifest),
         "environments": environments,
+        "performance": performance,
         "covered": [
             "all conformance fixtures on CPython 3.12 minimum and reference roles",
             "Core unit tests on Linux in both roles",
             "cross-environment conformance determinism",
             "reference environment manifest and observed comparison key",
             "read-only/report/cache/timeout/signal/child-process acceptance in the full matrix",
+            "accepted performance baseline and fixed SLO audit",
         ],
         "pending": list(PENDING),
         "errors": [],
