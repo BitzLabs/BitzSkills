@@ -113,6 +113,28 @@ class SameWorkspaceUnqualifiedRefResolvedByDeclarerTests(unittest.TestCase):
             self.assertIsNotNone(result["contextDigest"])
             self.assertTrue(result["contextDigest"].startswith("sha256:"))
 
+    def test_unqualified_root_uses_declared_multi_workspace_catalog(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._repo(root)
+
+            result, exit_code = _run_context(root, "REQ-001", purpose="interpret")
+            self.assertEqual(exit_code, 0, result)
+            self.assertEqual(result["status"], "passed")
+            self.assertEqual(result["workspace"], {"id": "platform", "path": "."})
+            self.assertIn("web::TECH-010", {d["id"] for d in result["documents"]})
+
+    def test_unqualified_member_uses_declared_multi_workspace_catalog(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._repo(root)
+
+            result, exit_code = _run_context(root / "apps/web", "TECH-010", purpose="interpret")
+            self.assertEqual(exit_code, 0, result)
+            self.assertEqual(result["status"], "passed")
+            self.assertEqual(result["workspace"], {"id": "web", "path": "apps/web"})
+            self.assertIn("platform::REQ-001", {d["id"] for d in result["documents"]})
+
 
 if __name__ == "__main__":
     unittest.main()
