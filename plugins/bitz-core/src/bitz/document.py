@@ -200,17 +200,19 @@ def _read_bytes(abs_path: str) -> tuple[bytes | None, bool]:
 def _extract_frontmatter(text: str) -> tuple[str | None, str | None, int | None]:
     """(frontmatter_raw, body, closing_line_index0) を返す。frontmatterが見つからなければ全てNone。"""
 
-    if not (text.startswith("---\n") or text == "---"):
+    if not text.startswith("---\n"):
         return None, None, None
-    lines = text.split("\n")
-    if lines[0] != "---":
+    closing = text.find("\n---\n", 4)
+    marker_length = 5
+    if closing < 0 and text.endswith("\n---"):
+        closing = len(text) - 4
+        marker_length = 4
+    if closing < 0:
         return None, None, None
-    for i in range(1, len(lines)):
-        if lines[i] == "---":
-            raw = "\n".join(lines[1:i])
-            body = "\n".join(lines[i + 1 :])
-            return raw, body, i
-    return None, None, None
+    raw = text[4:closing]
+    body = text[closing + marker_length :]
+    closing_line = text.count("\n", 0, closing + 1)
+    return raw, body, closing_line
 
 
 _TOP_KEY_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_-]*):")

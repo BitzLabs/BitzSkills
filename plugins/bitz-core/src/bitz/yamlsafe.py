@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import io
 import re
+from collections import OrderedDict
+from copy import deepcopy
 from dataclasses import dataclass
 
 from ruamel.yaml import YAML
@@ -53,6 +55,12 @@ class YamlForbiddenError(Exception):
 # YAML.parse()は呼出しごとにparser contextを作り直す。YAML facade自体は逐次呼出しで再利用し、
 # 多数のSPECを読む際のplugin探索と初期化を文書ごとに繰り返さない。
 _YAML = YAML(typ="safe")
+_PARSE_CACHE_MAX_BYTES = 4 * 1024 * 1024
+_PARSE_CACHE_MAX_ENTRIES = 2048
+_PARSE_CACHE: OrderedDict[tuple[str, str], tuple[int, object]] = OrderedDict()
+_parse_cache_bytes = 0
+
+
 
 _INT_RE = re.compile(r"^[+-]?[0-9]+$")
 _FLOAT_RE = re.compile(
@@ -142,7 +150,7 @@ def _build(events: list, idx: int, path: list[str], label: str) -> tuple[object,
     raise AssertionError(f"予期しないevent: {ev!r}")
 
 
-def parse_yaml_subset(text: str, *, label: str = "設定YAML") -> object:
+def _parse_yaml_subset_uncached(text: str, label: str) -> object:
     """YAML 1.2部分集合として解析し、Pythonの値（str/int/float/bool/None/list/dict）を返す。
 
     構文不正は :class:`YamlSyntaxError`、禁止構文は :class:`YamlForbiddenError` を送出する。
@@ -175,4 +183,33 @@ def parse_yaml_subset(text: str, *, label: str = "設定YAML") -> object:
         return None
 
     value, idx = _build(events, idx, [], label)
+    return value
+
+
+def parse_yaml_subset(text: str, *, label: str = "設定YAML") -> object:
+    """YAML部分集合を解析し、呼出し側が独立して変更できる値を返す。
+
+    同一process内で同じFrontmatterを上限計数と文書解析が順に読むため、成功した解析結果だけを
+    byte上限付きで保持する。cacheの値は必ず複製して渡し、設定解決やFrontmatter検証による変更を
+    後続の読取りへ漏らさない。
+    """
+
+    global _parse_cache_bytes
+    cache_key = (label, text)
+    cached = _PARSE_CACHE.get(cache_key)
+    if cached is not None:
+        _PARSE_CACHE.move_to_end(cache_key)
+        return deepcopy(cached[1])
+
+    value = _parse_yaml_subset_uncached(text, label)
+    weight = len(text.encode("utf-8"))
+    if weight <= _PARSE_CACHE_MAX_BYTES:
+        while _PARSE_CACHE and (
+            len(_PARSE_CACHE) >= _PARSE_CACHE_MAX_ENTRIES
+            or _parse_cache_bytes + weight > _PARSE_CACHE_MAX_BYTES
+        ):
+            _old_key, (old_weight, _old_value) = _PARSE_CACHE.popitem(last=False)
+            _parse_cache_bytes -= old_weight
+        _PARSE_CACHE[cache_key] = (weight, deepcopy(value))
+        _parse_cache_bytes += weight
     return value
