@@ -12,31 +12,31 @@ relations:
 
 ## Context
 
-ADR-003はDiagnosticの正本を旧`bitz-env`へ置き、codeを3セグメント固定としていた。ADR-009で旧構成を
-廃止した後も、EARS-AIとSPEC詳細設計の一部がADR-003を参照していた。一方、現行codeは
+ADR-003は診断の正本を旧`bitz-env`へ置き、診断コードを3セグメント固定としていた。ADR-009で旧構成を
+廃止した後も、EARS-AIとSPEC詳細設計の一部がADR-003を参照していた。一方、現行の診断コードは
 `EAI-CORE-SYNTAX-001`や`SPEC-CONFIG-SCHEMA-001`の4セグメントを使用している。
 
 ## Decision
 
-1. Diagnostic共通SchemaとCore OWNER一覧は`bitz-core`が所有する。
-2. Coreは`EAI`、`SPEC`、`CTX`を予約OWNERとする。
-3. Core codeは`<OWNER>-<AREA>-<CATEGORY>-<NNN>`を基本形とする。
-4. Profileは所有pluginのOWNERを使い、`<OWNER>-<CATEGORY>-<NNN>`の3セグメントを使用してよい。
-5. codeは永続識別子とし、公開後の再利用と意味変更を禁止する。
-6. Diagnostic一覧は各規範文書が条件とseverityを定義し、共通fieldと終了コードだけを
-   `bitz-core`の共通Schemaへ集約する。
+1. 診断の共通スキーマと、Coreが使う所有者のセグメント（`<OWNER>`）の一覧は`bitz-core`が所有する。
+2. Coreは`EAI`、`SPEC`、`CTX`を、Core用に予約した所有者のセグメント（`<OWNER>`）とする。
+3. Coreの診断コードは`<OWNER>-<AREA>-<CATEGORY>-<NNN>`を基本形とする。
+4. プロファイルは、それを所有するプラグインの`<OWNER>`を使い、`<OWNER>-<CATEGORY>-<NNN>`の3セグメントを使用してよい。
+5. 診断コードは永続的な識別子とし、公開後の再利用と意味の変更を禁止する。
+6. 診断の一覧は、各規範文書が条件と重大度を定義し、共通のフィールドと終了コードだけを
+   `bitz-core`の共通スキーマへ集約する。
 
 ### 理由
 
-- 実在するcode体系と規約を一致させる。
-- 小規模Coreのために別のOWNER registryサービスを必要としない。
-- 診断から所有領域を判別でき、Profileの短いcodeも維持できる。
+- 実在する診断コードの体系と規約を一致させる。
+- 小規模なCoreのために、別の`<OWNER>`のレジストリサービスを必要としない。
+- 診断から所有領域を判別でき、プロファイルの短い診断コードも維持できる。
 
 ## Consequences
 
-- ADR-003のDiagnostic所有者と3セグメント固定規則を現在の設計判断に使用しない。
-- EARS-AI Core/ProfileとSPEC規定は本ADRを参照する。
-- 新しいCore codeは4セグメントを既定とする。
+- ADR-003が定めた診断の所有者と3セグメント固定の規則を、現在の設計判断に使用しない。
+- EARS-AI CoreとEARS-AIのプロファイルの仕様、およびSPEC規定は本ADRを参照する。
+- 新しいCoreの診断コードは4セグメントを既定とする。
 
 ## Revision History
 
@@ -44,3 +44,4 @@ ADR-003はDiagnosticの正本を旧`bitz-env`へ置き、codeを3セグメント
 |---|---|---|
 | 2026-08-25 | 初版を作成 | — |
 | 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |
+| 2026-09-29 | 説明文を日本語表記へ書き直した（意味の変更なし） | 表記規則 |

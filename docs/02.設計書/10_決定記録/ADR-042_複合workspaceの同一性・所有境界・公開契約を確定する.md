@@ -15,83 +15,84 @@ relations:
 
 ## Context
 
-ADR-040は複合workspaceをCore 1.0へ再導入したが、実装前の独立reviewで、旧Coreとの互換前提、
-workspace同一性、未登録設定の発見範囲、symlinkを含む所有判定、Contextと全体結果の完全Schema、CLIの
-処理開始境界、複合workspaceのresource上限、性能測定条件が未確定であることが分かった。
+ADR-040は複合ワークスペースをCore 1.0へ再導入したが、実装前の独立したレビューで、旧Coreとの互換の前提、
+ワークスペースの同一性、未登録の設定の発見範囲、シンボリックリンクを含む所有の判定、コンテキストと全体結果の完全なスキーマ、CLIの
+処理の開始の境界、複合ワークスペースのリソースの上限、性能の測定条件が未確定であることが分かった。
 
-このうち旧Coreとの互換性はrelease事実に依存する。Core 1.0は現在も仕様検討段階であり、複合workspace非対応の
-Core 1.0を含め外部へreleaseしていない。したがって、公開済み1.0との互換層を追加するのではなく、初回公開する
-1.0契約を完全にする必要がある。
+このうち、旧Coreとの互換性はリリースの事実に依存する。Core 1.0は現在も仕様検討の段階であり、複合ワークスペースに対応しない
+Core 1.0を含め、外部へリリースしていない。したがって、公開済みの1.0との互換層を追加するのではなく、初めて公開する
+1.0の契約を完全にする必要がある。
 
-また、filesystem全体の暗黙再帰探索はADR-040の明示catalog方針に反するが、Gitが既に認識する設定さえ比較しなければ
-`--all-workspaces`が複合workspaceの完全検査を表明できない。字句pathだけの所有判定では、root workspaceからmember内へ入る
-symlinkも防げない。
+また、ファイルシステム全体の暗黙の再帰探索はADR-040の明示的なカタログの方針に反するが、Gitがすでに認識している設定さえ比較しなければ、
+`--all-workspaces`は複合ワークスペースの完全検査を表明できない。字句上のパスだけによる所有の判定では、ルートワークスペースからメンバーの中へ入る
+シンボリックリンクも防げない。
 
 ## Decision
 
-1. `workspace`と`monorepo`は未releaseの初回Core 1.0 Schemaへ含める。Schema major、必須feature marker、
-   旧1.0向け移行猶予は追加しない。`monorepo.v1`はadapterのCapability確認に使うが、旧版拒否用gateとはしない。
-2. workspace IDを複合workspace内の永続同一性とし、Core 1.0ではrenameを対応しない。base/current catalogで同じIDを持つ
-   member path移動は同一workspaceとして扱い、ID変更は旧workspace削除と新workspace追加として扱う。初回複合workspace化時だけ、
-   repository rootの同じ`.spec`にある暗黙ID `root`をcurrentの明示root workspace IDへGit比較上で一方向写像する。
-3. 複合workspace化はroot catalog、全member設定、横断参照、CI、JSON consumerを同じ変更集合で切り替える。不完全catalogを
-   warningで許すmigration modeは追加しない。member削除にはbase側の管理済みSPEC削除検査を適用する。
-4. `check`、`verify`、`doctor`の`--all-workspaces`は、操作が使う各snapshotでGitが認識する`.spec/bitz.yaml`候補を、
-   そのsnapshotが複合workspaceを宣言する場合だけ同snapshotのcatalogと事前検査で比較する。現在snapshotはworking treeに
-   存在するtracked／staged pathと未追跡かつ非ignore pathを対象とし、ignored path、submodule内部、別repositoryを
-   暗黙参加させない。集合差は`SPEC-MONOREPO-UNREGISTERED-001`／`blocked`とする。
-5. member pathと全所有pathは同じcanonicalizerを使う。字句検査後、存在するancestorのsymlinkを解決し、Git metadataと
-   実pathのpath-segment包含でrepository、workspace、member、`.spec`境界を照合する。workspace設定経路とmember rootの
-   symlinkは禁止し、code、test、TASK、cwdは同じ所有領域内へ解決するsymlinkだけを許す。
-6. 複合workspaceのContextは`documents[].workspaceId`、`resolution.workspaces[]`、
-   `resolution.crossWorkspaceEdges[]`を必須とする。Digestへは到達workspaceで実際に使ったSchema、EARS-AI、language、
-   request workspaceのContext上限、収録bindingのtimeout／command定義だけを許可リストで含める。
-7. `--all-workspaces`はcurrent directoryの一致ではなく、同じGit rootとroot workspaceを一意に発見できることを
-   許可条件とする。未知`--workspace`はinvocation error、終了コード4、結果・reportなしとする。check／verifyの
-   `revision`は最上位に1件だけ置き、操作別member fieldを必須化する。root同一性を構成できない成果物不適合の
-   全体結果だけは`federation.id: null`を許し、同じ同一性確定前の設定Diagnosticだけ
+1. `workspace`と`monorepo`は、未リリースの初回のCore 1.0のスキーマへ含める。スキーマのメジャーバージョン、必須の機能マーカー、
+   旧1.0向けの移行の猶予は追加しない。`monorepo.v1`は、アダプターが対応機能を確認するために使うが、旧版を拒否するためのゲートとはしない。
+2. ワークスペースIDを、複合ワークスペース内の永続的な同一性とし、Core 1.0ではリネームに対応しない。基準版と現在版のカタログで同じIDを持つ
+   メンバーのパスの移動は、同一のワークスペースとして扱い、IDの変更は、旧ワークスペースの削除と新ワークスペースの追加として扱う。初めて複合ワークスペース化するときだけ、
+   リポジトリのルートの同じ`.spec`にある暗黙のワークスペースID`root`を、現在版の明示したルートワークスペースのIDへ、Gitでの比較において一方向に写像する。
+3. 複合ワークスペース化は、ルートのカタログ、すべてのメンバーの設定、横断参照、CI、JSONの利用側を、同じ変更集合で切り替える。不完全な
+   カタログを警告で許す移行モードは追加しない。メンバーの削除には、基準版側の、管理済みの仕様文書の削除の検査を適用する。
+4. `check`、`verify`、`doctor`の`--all-workspaces`は、操作が使う各スナップショットでGitが認識している`.spec/bitz.yaml`の候補を、
+   そのスナップショットが複合ワークスペースを宣言している場合だけ、同じスナップショットのカタログと事前検査で比較する。現在のスナップショットは、作業ツリーに
+   存在する追跡対象またはステージ済みのパスと、未追跡でGitが無視しないパスを対象とし、Gitが無視するパス、サブモジュールの内部、別のリポジトリを
+   暗黙に参加させない。集合の差は、診断`SPEC-MONOREPO-UNREGISTERED-001`（`blocked`）とする。
+5. メンバーのパスとすべての所有パスには、同じパスの正規化処理を使う。字句の検査の後に、存在する上位のディレクトリのシンボリックリンクを解決し、
+   Gitのメタデータと実際のパスについて、パスのセグメント単位の包含で、リポジトリ、ワークスペース、メンバー、`.spec`の境界を照合する。ワークスペースの設定経路と
+   メンバーのルートのシンボリックリンクは禁止し、コード、テスト、TASK、`cwd`は、同じ所有領域内へ解決するシンボリックリンクだけを許す。
+6. 複合ワークスペースのコンテキストは、`documents[].workspaceId`、`resolution.workspaces[]`、
+   `resolution.crossWorkspaceEdges[]`を必須とする。コンテキストのハッシュ値へは、到達ワークスペースで実際に使ったスキーマ、EARS-AI、正本言語、
+   起点ワークスペースのコンテキストの上限、収録したテスト割当てのタイムアウトとコマンドの定義だけを、許可リストで含める。
+7. `--all-workspaces`は、現在のディレクトリの一致ではなく、同じリポジトリのルートとルートワークスペースを一意に発見できることを
+   許可条件とする。未知の`--workspace`は、引数不正、終了コード4、結果とレポートなしとする。`check`と`verify`の
+   `revision`は最上位に1件だけ置き、操作ごとのメンバーのフィールドを必須にする。ルートの同一性を構成できない、成果物の不適合の
+   全体結果だけは`federation.id: null`を許し、その同一性を確定する前の設定の診断だけ
    `source.workspaceId: null`を許す。
-8. 複合workspaceのsnapshotのhard limitをmember 100、SPEC 10,000件、入力256 MiB、規範文100,000件、relation edge 1,000,000件、
-   trace entry 1,000,000件、command定義10,000件、1 verify計画のbinding 10,000件とする。超過は
-   `SPEC-MONOREPO-LIMIT-001`／`blocked`とし、dimensionとlimitをDiagnosticへ記録する。
-9. 性能回帰gateは20 workspace、SPEC 1,000件、relation 20,000件のversion管理fixtureで測定する。Core cacheに
-   依存せず、暖機1回後の5回中央値で`check --all-workspaces` 30秒以内、3 workspaceへ到達する20文書Context 1秒以内、
-   Core peak RSS増分200 MiB以内を基準環境で確認する。10,000 SPECは性能SLOではなくhard-limit fixtureとする。
-10. 本決定はADR-040 Decision 1、3、5、7の未確定境界を補完する。Decision 4の「root workspaceで」という
-    current directoryにも読める条件をGit／複合workspaceの探索条件へ、Decision 8のSPEC件数だけのresource契約を
-    Decision 8の方針を維持した数値表へ置き換える部分改訂とする。ADR-040の他のDecisionとscopeは変更しない。
+8. 複合ワークスペースのスナップショットの絶対上限を、メンバー100件、仕様文書10,000件、入力256 MiB、規範文100,000件、関係のエッジ1,000,000件、
+   トレースのエントリ1,000,000件、コマンドの定義10,000件、1回の`verify`の計画に含まれるテスト割当て10,000件とする。超過は、
+   診断`SPEC-MONOREPO-LIMIT-001`（`blocked`）とし、次元と上限を診断へ記録する。
+9. 性能回帰のゲートは、20ワークスペース、仕様文書1,000件、関係20,000件の、バージョン管理するfixtureで測定する。Coreのキャッシュに
+   依存せず、暖機を1回行った後の5回の中央値で、`check --all-workspaces`が30秒以内、3つのワークスペースへ到達する20文書のコンテキストが1秒以内、
+   CoreのピークRSSの増分が200 MiB以内であることを、基準環境で確認する。10,000件の仕様文書は、性能のSLOではなく、絶対上限のfixtureとする。
+10. 本決定は、ADR-040の`Decision`の1、3、5、7番目の項目の未確定の境界を補完する。ADR-040の`Decision`の4番目の項目の「root workspaceで」という、
+    現在のディレクトリにも読める条件を、Git／複合ワークスペースの探索条件へ置き換える。ADR-040の`Decision`の8番目の項目の、
+    仕様文書の件数だけのリソースの契約を、`Decision`の8番目の項目の方針を維持した数値表へ置き換える。これらは部分改訂とし、
+    ADR-040のほかの`Decision`の項目とスコープは変更しない。
 
 ## Consequences
 
-- 初回Core 1.0に旧1.0互換分岐を持ち込まず、複合workspaceを含む1つのSchemaとして公開できる。
-- workspace ID変更は高コストだが、Git差分、修飾ID、Digest、結果同一性を推測なしで対応付けられる。
-- filesystem全体の任意探索をせず、Git既知の未登録設定とsymlinkによる所有迂回をfail-closedにできる。
-- adapterはContextと全体結果の必須field、空配列、順序、null条件を実装前に固定できる。
-- resource上限と性能目標が分離され、巨大入力の安全停止と通常規模の回帰を別fixtureで検証できる。
-- P2として残る失敗後継続、Diagnostic優先順位、TASK directory境界、consumer rollback、計算量、適合matrixは、
-  本決定のSchemaを前提に独立裁定できる。
+- 初回のCore 1.0に旧1.0との互換の分岐を持ち込まず、複合ワークスペースを含む1つのスキーマとして公開できる。
+- ワークスペースIDの変更は高コストだが、Gitの差分、修飾ID、コンテキストのハッシュ値、結果の同一性を、推測なしで対応付けられる。
+- ファイルシステム全体の任意の探索をせず、Gitが認識している未登録の設定と、シンボリックリンクによる所有の迂回を、失敗時に通さない扱いにできる。
+- アダプターは、コンテキストと全体結果の必須のフィールド、空の配列、順序、`null`の条件を、実装前に固定できる。
+- リソースの上限と性能の目標が分離され、巨大な入力の安全な停止と、通常の規模の回帰を、別のfixtureで検証できる。
+- P2として残る、失敗した後の継続、診断の優先順位、TASKのディレクトリの境界、利用側のロールバック、計算量、適合matrixは、
+  本決定のスキーマを前提に、独立して裁定できる。
 
 ## Alternatives
 
-1. **旧1.0互換用にSchema majorまたはfeature markerを追加する**: 外部releaseがなく互換対象が存在しないため、
-   初回1.0へ不要な分岐を持ち込む。
-2. **workspace ID renameを自動推定する**: path移動、削除、再作成を意味的に区別できず、管理済みSPEC削除検査を
-   fail-openにする。
-3. **未登録`.spec`をfilesystem全体から再帰探索する**: ignored生成物、vendor、submoduleを信頼境界へ取り込み、
-   明示catalogの入力範囲を壊す。
-4. **所有境界を字句pathだけで判定する**: symlinkやcase-insensitive filesystemで別memberの実体を所有できる。
-5. **設定全体をContext Digestへ含める**: 未使用commandやmember列挙順の変更でも無関係なContextをstaleにする。
-6. **10,000 SPECへ30秒SLOを課す**: 安全上限と通常運用目標を混同し、基準複合workspace1,000 SPECという既存品質予算と
+1. **旧1.0との互換のために、スキーマのメジャーバージョンまたは機能マーカーを追加する**: 外部へのリリースがなく、互換の対象が存在しないため、
+   初回の1.0へ不要な分岐を持ち込む。
+2. **ワークスペースIDのリネームを自動で推定する**: パスの移動、削除、再作成を意味の上で区別できず、管理済みの仕様文書の削除の検査を、
+   失敗しても通過させる扱いにする。
+3. **未登録の`.spec`をファイルシステム全体から再帰的に探索する**: Gitが無視する生成物、リポジトリへ取り込んだ外部のコード、サブモジュールを信頼境界へ取り込み、
+   明示的なカタログの入力範囲を壊す。
+4. **所有境界を字句上のパスだけで判定する**: シンボリックリンクや、大文字と小文字を区別しないファイルシステムで、別のメンバーの実体を所有できる。
+5. **設定全体をコンテキストのハッシュ値へ含める**: 未使用のコマンドやメンバーの列挙順の変更でも、無関係なコンテキストが古くなる。
+6. **10,000件の仕様文書へ30秒のSLOを課す**: 安全上限と通常の運用目標を混同し、基準の複合ワークスペースの仕様文書1,000件という既存の品質予算と
    整合しない。
 
 ## Notes
 
-- 詳細なSchema、canonicalization、resource計数は`docs/03.詳細設計`を正本とする。
-- 検討経緯とP1対応表は[提案22](../../04.提案資料/22_複合workspace残存P1裁定案.md)に記録する。
-- ADR-041のtarget別verify証跡と明示`--report`だけの保存条件は変更しない。
-- 本ADRでP2として残した継続、Diagnostic、TASK境界、rollback、計算量、適合matrixは
+- 詳細なスキーマ、正規化、リソースの計数は、`docs/03.詳細設計`を正本とする。
+- 検討の経緯とP1の対応表は、[提案22](../../04.提案資料/22_複合workspace残存P1裁定案.md)に記録する。
+- ADR-041の、検証対象ごとの`verify`の証跡と、明示した`--report`だけで保存する条件は変更しない。
+- 本ADRでP2として残した継続、診断、TASKの境界、ロールバック、計算量、適合matrixは、
   [ADR-043](ADR-043_複合workspaceの継続・TASK境界・適合契約を確定する.md)で確定した。
-- 結果field `federation`、設定key `monorepo`、`SPEC-MONOREPO-*`は、後続の[ADR-047](ADR-047_複合workspaceの識別子をmultiWorkspaceへ改名する.md)で`multiWorkspace`、`SPEC-MULTI-*`へ改名した。
+- 結果のフィールド`federation`、設定キー`monorepo`、`SPEC-MONOREPO-*`は、後続の[ADR-047](ADR-047_複合workspaceの識別子をmultiWorkspaceへ改名する.md)で`multiWorkspace`、`SPEC-MULTI-*`へ改名した。
 
 ## Revision History
 
@@ -100,3 +101,4 @@ symlinkも防げない。
 | 2026-09-03 | 複合workspace残存P1の同一性、所有境界、Schema、CLI、resource、性能条件を確定 | FED-CROSS-002〜007 |
 | 2026-09-03 | 本ADRで残したP2の後続裁定を記録 | ADR-043 |
 | 2026-09-17 | 複合workspaceの識別子の改名を後続決定へ接続 | ADR-047 |
+| 2026-09-29 | 説明文を日本語表記へ書き直した（意味の変更なし） | 表記規則 |

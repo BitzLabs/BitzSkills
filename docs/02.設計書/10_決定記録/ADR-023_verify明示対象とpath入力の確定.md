@@ -12,43 +12,45 @@ relations:
 
 ## Context
 
-公開文法は`bitz verify`へSPEC ID、規範文ID、pathを渡せるとしていたが、詳細手順は要求IDと
-規範文IDしか定義していなかった。TECH、TASK、ADR、SPEC path、code path、test path、複数対象の
-扱いを実装者が決定できず、直接test pathを指定して句単位coverageを迂回する実装も可能だった。
+公開文法は、`bitz verify`へ文書ID、規範文ID、パスを渡せるとしていたが、詳細な手順はREQ IDと
+規範文IDしか定義していなかった。TECH、TASK、ADR、仕様文書のパス、コードのパス、テストのパス、複数の対象の
+扱いを実装者が決定できず、テストのパスを直接指定して、規範文単位のカバレッジを迂回する実装も可能だった。
 
 ## Decision
 
-1. Core 1.0の明示対象はREQ ID、TECH ID、規範文ID、TASK ID、REQ／TECH／TASKのSPEC file pathとする。
-2. SPEC file pathはFrontmatter IDへ正規化し、ID指定と同じ規則で処理する。
-3. code path、test path、directory、ADR ID／pathは受け付けず、引数不正として終了コード4を返す。
-4. REQ／規範文ありTECHは、文書ID指定なら所有する全規範文、規範文ID指定なら指定句を起点とする。
-   規範文ID指定時の兄弟句は`adjacent`として表示し、検証対象へ暗黙追加しない。
-5. 規範文なしTECHは宣言済み`tests`を文書単位で実行する。
-6. TASKは`addresses`に列挙された句と`requires`閉包を対象とする。
-7. 複数対象は同一request workspaceに限定し、IDへ正規化後に和集合と重複排除を行う。
-8. 形式が正しいが存在しないIDは`CTX-ROOT-MISSING-001`、不在・範囲外のSPEC pathは
-   `SPEC-PATH-INVALID-001`、実行可能なtestまたはcommand不足は`SPEC-VERIFY-BLOCKED-001`を使用する。
+1. Core 1.0の明示対象は、REQ ID、TECH ID、規範文ID、TASK ID、REQ、TECH、TASKのいずれかの仕様文書のパスとする。
+2. 仕様文書のパスはフロントマターのIDへ正規化し、ID指定と同じ規則で処理する。
+3. コードのパス、テストのパス、ディレクトリ、ADRのIDまたはパスは受け付けず、引数不正として終了コード4を返す。
+4. REQ、および規範文を持つTECHは、文書IDで指定した場合は所有するすべての規範文を、規範文IDで指定した場合は指定した規範文を、
+   起点とする。規範文IDで指定した場合の、同じ文書にあるほかの規範文は`adjacent`として表示し、
+   検証対象へ暗黙に追加しない。
+5. 規範文を持たないTECHは、宣言済みの`tests`を文書単位で実行する。
+6. TASKは、`addresses`に列挙された規範文と、`requires`の閉包を対象とする。
+7. 複数の対象は、同じ起点ワークスペースに限定し、IDへ正規化した後に、和集合を取り、重複排除する。
+8. 形式が正しいが存在しないIDは診断`CTX-ROOT-MISSING-001`を、存在しない、または範囲外の仕様文書のパスは
+   診断`SPEC-PATH-INVALID-001`を、実行可能なテストまたはコマンドの不足は診断`SPEC-VERIFY-BLOCKED-001`を使用する。
 
 ## Consequences
 
-- 明示指定と引数なしverifyの対象規則を同じContext／coverage契約へ接続できる。
-- test pathの直接指定によるcoverage迂回を防止できる。
-- TASK単位で対象句を限定した検証ができる。
-- ADRは実行可能契約を所有しないため、verify対象にならない。
-- CLI文法、Contextのtarget statement選択、verify手順を同時に更新する必要がある。
+- 明示対象を指定した`verify`と引数なしの`verify`の対象の規則を、同じコンテキストとカバレッジの契約へ接続できる。
+- テストのパスの直接指定による、カバレッジの迂回を防止できる。
+- TASK単位で、対象の規範文を限定した検証ができる。
+- ADRは実行可能な契約を所有しないため、`verify`の対象にならない。
+- CLIの文法、`context`での対象規範文の選択、`verify`の手順を、同時に更新する必要がある。
 
 ## Alternatives
 
-1. **code・test pathを受理する**: 逆索引と曖昧な多対多解決が必要で、句単位coverageを迂回できるため採用しない。
-2. **REQだけを受理する**: 規範文なしTECHとTASK境界を利用できなくなるため採用しない。
-3. **ADRも受理する**: ADRはtest、実装path、検証commandを所有しないため採用しない。
+1. **コードとテストのパスを受理する**: 逆索引と曖昧な多対多の解決が必要で、規範文単位のカバレッジを迂回できるため採用しない。
+2. **REQだけを受理する**: 規範文を持たないTECHとTASK境界を利用できなくなるため採用しない。
+3. **ADRも受理する**: ADRはテスト、実装のパス、検証のコマンドを所有しないため採用しない。
 
 ## Notes
 
-- 本ADRは2026-08-31のP1残存契約review「verify明示対象の未定義」に対する裁定である。
+- 本ADRは2026-08-31のP1の残存契約レビュー「verify明示対象の未定義」に対する裁定である。
 
 ## Revision History
 
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-08-31 | verifyの対象種別とpath入力を確定 | — |
+| 2026-09-29 | 説明文を日本語表記へ書き直した（意味の変更なし） | 表記規則 |

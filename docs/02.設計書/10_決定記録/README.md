@@ -2,41 +2,41 @@
 
 ## 1. 目的
 
-本directoryは、設計上の重要な決定とその理由を追記型で保持する。設計書本文は「現在の決定内容」を述べ、ADRは「なぜその決定に至ったか」と「検討した代替案」を保持する。
+本ディレクトリは、設計上の重要な決定とその理由を追記型で保持する。設計書本文は「現在の決定内容」を述べ、ADRは「なぜその決定に至ったか」と「検討した代替案」を保持する。
 
-実プロジェクトでは同種の記録を `.spec/decisions/` に置く。本directoryは、Bitz AI-SDD plugin群自身の
-開発に対する `.spec/decisions/` 相当物である。「相当」は目的と本文構造を指し、本directory固有の
-部分改訂ガバナンスまでCore共通契約として利用者へ課すことを意味しない。
+実プロジェクトでは同種の記録を `.spec/decisions/` に置く。本ディレクトリは、Bitz AI-SDDのプラグイン群自身の
+開発に対する `.spec/decisions/` 相当物である。「相当」は目的と本文構造を指し、本ディレクトリ固有の
+部分改訂ガバナンスまでCoreの共通契約として利用者へ課すことを意味しない。
 
 ## 2. 記載規則
 
-- ADR IDは `ADR-001` 形式の連番とし、再利用・欠番の再割当てを禁止する。
-- 各ADRはFrontmatter（`id`、`title`、`status`、`relations`）を持ち、状態は
-  `proposed`、`accepted`、`rejected`、`superseded` とする。状態と後継関係はFrontmatterを正とする。
+- ADRのIDは `ADR-001` 形式の連番とし、再利用・欠番の再割当てを禁止する。
+- 各ADRはフロントマター（`id`、`title`、`status`、`relations`）を持ち、状態は
+  `proposed`、`accepted`、`rejected`、`superseded` とする。状態と後継関係はフロントマターを正とする。
 - H1は `# <id> <title>`、H2は `Context`、`Decision`、`Consequences`、任意の `Alternatives`、
-  `Notes`、最終H2の `Revision History` とする。この固定構成は本directoryだけのローカル規則であり、
-  Core共通の本文構造要件ではない。
-- 決定を変更する場合は既存ADRのDecisionを書き換えず、後継ADRを作成する。
-- **全Decision項目が置き換わる場合**は、後継側の `relations.supersedes` に旧IDを書き、
+  `Notes`、最終H2の `Revision History` とする。この固定構成は本ディレクトリだけのローカルな規則であり、
+  Coreの共通の本文構造の要件ではない。
+- 決定を変更する場合は既存ADRの`Decision`を書き換えず、後継ADRを作成する。
+- **`Decision`のすべての項目が置き換わる場合**は、後継側の `relations.supersedes` に旧IDを書き、
   旧ADRの `status` を `superseded` にする。
-- **一部のDecision項目だけが置き換わる場合**は部分改訂とし、旧ADRは `accepted` のままとする。
-  `supersedes` / `superseded` は使わず、次の3点をすべて記録する
+- **`Decision`の項目の一部だけが置き換わる場合**は部分改訂とし、旧ADRは `accepted` のままとする。
+  `supersedes` と `superseded` は使わず、次の3点をすべて記録する
   （[ADR-033](ADR-033_部分改訂ADRの記録規約.md)）。
-  1. 後継ADRのDecision本文へ、置き換える旧ADR IDとDecision項目、および他のDecisionを
+  1. 後継ADRの`Decision`の本文へ、置き換える旧ADRのIDと`Decision`の項目、およびほかの`Decision`を
      変更しないことを明記し、`relations.related` へ旧ADRを含める。
-  2. 旧ADRの `Notes` へ、どのDecision項目がどの後継ADRへ移ったかを記載する。
-  3. 旧ADRの `Revision History` へ1行追加し、Summaryへ対象Decision項目、
-     Reference列へ後継ADR IDを書く。
-- この部分改訂規約は`docs/02.設計書/10_決定記録/`に限定する。利用者の`.spec/decisions/`に対してCoreが
-  認識する後継化は文書全体の置換だけであり、部分改訂の適用順序と3点記録を検査またはContextへ暗黙適用しない。
-  Core保証内で既存Decisionを変更する場合は、現行Decisionを統合した後継ADRで文書全体を置換する。
-- Decisionが番号付き箇条書きでないADRでは、Decision項目の代わりに該当箇所を一意に特定できる
-  語句を用いる。番号を後付けするためにDecision本文を書き換えない。
-- `x-amends` などのFrontmatter拡張keyと、`amends` 相当の新しい関係型は追加しない。
+  2. 旧ADRの `Notes` へ、`Decision`のどの項目がどの後継ADRへ移ったかを記載する。
+  3. 旧ADRの `Revision History` へ1行追加し、`Summary`の列へ対象の`Decision`の項目、
+     `Reference`の列へ後継ADRのIDを書く。
+- この部分改訂の規約は`docs/02.設計書/10_決定記録/`に限定する。利用者の`.spec/decisions/`に対してCoreが
+  認識する後継化は文書全体の置換だけであり、部分改訂の適用の順序と3点の記録を、検査またはコンテキストへ暗黙に適用しない。
+  Coreが保証する範囲で既存の`Decision`を変更する場合は、現行の`Decision`を統合した後継ADRで文書全体を置換する。
+- `Decision`が番号付きの箇条書きでないADRでは、`Decision`の項目の代わりに、該当箇所を一意に特定できる
+  語句を用いる。番号を後付けするために`Decision`の本文を書き換えない。
+- `x-amends` などのフロントマターの拡張キーと、`amends` に相当する新しい関係型は追加しない。
 - 非意味的な訂正と後継化は、旧ADRの `Revision History` へ1行で要約する。
-- 設計書本文の該当箇所からADRへlinkする。
-- 本directoryは `docs/` 配下の設計資料であり、`.spec/` の配置・命名・探索規則は適用しない。
-  適用するのは本文構造規定だけである（[ADR-020](ADR-020_決定記録をSPEC本文構造規定へ適合させる.md)）。
+- 設計書本文の該当箇所からADRへリンクする。
+- 本ディレクトリは `docs/` 配下の設計資料であり、`.spec/` の配置・命名・探索の規則は適用しない。
+  適用するのは本文構造の規定だけである（[ADR-020](ADR-020_決定記録をSPEC本文構造規定へ適合させる.md)）。
 
 ## 3. 一覧
 

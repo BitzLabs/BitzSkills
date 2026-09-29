@@ -11,21 +11,21 @@ relations:
 
 ## Context
 
-Bitzを単一pluginへ集約すると、EARS-AIの決定論的Core、SDD、品質、DDD、同期など、用途の異なる
+Bitzを単一のプラグインへ集約すると、EARS-AIの決定論的Core、SDD、品質、DDD、同期など、用途の異なる
 機能が一括導入される。個人から数人のチームが必要な機能だけを選べるようにしつつ、CLIごとの独自形式へ
 判定ロジックを複製しない配布境界が必要である。
 
-Agent Plugins 1.0.0は、root `plugin.json`、`skills/`、`mcp.json`を用い、SkillsとMCP serversを
-移植可能な構成要素として定義する。一方、標準の`plugin.json`にはplugin間依存の解決機構がなく、
-配布、導入、権限、クライアント固有機能は各クライアントの管理範囲である。
+Agent Plugins 1.0.0は、ルートの`plugin.json`、`skills/`、`mcp.json`を用い、スキルとMCPサーバーを
+移植可能な構成要素として定義する。一方、標準の`plugin.json`にはプラグイン間の依存の解決機構がなく、
+配布、導入、権限、クライアント固有の機能は各クライアントの管理範囲である。
 
 ## Decision
 
 ### 1. 配布単位
 
-GitHubでホストする1つのBitzマーケットプレイスrepositoryから、複数の独立したAgent Plugins 1.0.0
-準拠packageを提供する。各pluginは自己完結したdirectoryとし、別pluginのfileを
-相対path、symlink、install先推測で参照しない。
+GitHubでホストする1つのBitzマーケットプレイスのリポジトリから、複数の独立したAgent Plugins 1.0.0準拠の
+パッケージを提供する。各プラグインは自己完結したディレクトリとし、別のプラグインのファイルを、
+相対パス、シンボリックリンク、インストール先の推測で参照しない。
 
 ```text
 bitz-plugins/
@@ -39,87 +39,87 @@ bitz-plugins/
     └── bitz-sync/
 ```
 
-マーケットプレイス形式はAgent Plugins本体仕様ではなくクライアント管理である。クライアント別catalogが
-必要な場合も、単一のcatalog定義から生成して内容の一致をCIで検査する。
+マーケットプレイスの形式はAgent Pluginsの本体仕様ではなく、クライアントが管理するものである。クライアントごとのプラグインの一覧が
+必要な場合も、単一のプラグインの一覧の定義から生成して内容の一致をCIで検査する。
 
-| 区分 | plugin | 責務 |
+| 区分 | プラグイン | 責務 |
 |---|---|---|
-| 必須 | `bitz-core` | EARS-AI Parser、Semantic IR、Context Resolution、`check`、`verify`、`doctor`、共通Diagnostic、MCP境界 |
-| 基本拡張 | `bitz-sdd` | IntentからDoneまでのSmall Flow、SDD Profile、タスク分解 |
-| 将来拡張 | `bitz-quality` | 品質review、test十分性、LLM advisory |
-| 将来拡張 | `bitz-ddd` | DDD Profileとドメインモデリング支援 |
+| 必須 | `bitz-core` | EARS-AIの構文解析器、意味中間表現、コンテキストの解決、`check`、`verify`、`doctor`、共通の診断、MCPの境界 |
+| 基本拡張 | `bitz-sdd` | 起点の特定から完了までの簡易フロー、SDDプロファイル、タスク分解 |
+| 将来拡張 | `bitz-quality` | 品質レビュー、テストの十分性、LLMによる参考としての評価 |
+| 将来拡張 | `bitz-ddd` | DDDプロファイルとドメインモデリング支援 |
 | 将来拡張 | `bitz-sync` | 仕様と実装の差分検出、改訂候補の提示 |
 
 通常のAI-SDD利用には`bitz-core`と`bitz-sdd`を推奨するが、EARS-AI検査とCIだけを利用する場合は
-`bitz-core`単独を許可する。将来の拡張も`bitz-core`だけへ依存し、拡張plugin間の必須依存を禁止する。
+`bitz-core`単独を許可する。将来の拡張も`bitz-core`だけへ依存し、拡張プラグイン間の必須依存を禁止する。
 
 ### 2. 標準境界
 
-各packageはroot `plugin.json`で
+各パッケージはルートの`plugin.json`で
 `https://agent-plugins.org/schemas/1.0.0/plugin.schema.json`を宣言する。移植可能な機能は
-`skills/`と`mcp.json`へ置き、agents、commands、hooksなどは必要な場合だけreverse-domain namespaceへ置く。
-クライアント固有拡張がなくても、主要操作がSkillsとMCPで成立することを要求する。
+`skills/`と`mcp.json`へ置き、エージェント、コマンド、フックなどは必要な場合だけ逆ドメイン形式の名前空間へ置く。
+クライアント固有の拡張がなくても、主要操作がスキルとMCPで成立することを要求する。
 
-`bitz-core`は決定論的な処理をMCP stdio serverとスタンドアロンCLIの両方から公開する。同じ
-libraryと結果Schemaを使い、Skill、MCP adapter、CLI adapterへ判定ロジックを複製しない。
+`bitz-core`は決定論的な処理を、標準入出力のMCPサーバーとスタンドアロンのCLIの両方から公開する。同じ
+ライブラリと結果スキーマを使い、スキル、MCPのアダプター、CLIのアダプターへ判定ロジックを複製しない。
 
 ### 3. 実行体の配布
 
-GitHubマーケットプレイスをAI利用者向けの主要な発見・導入経路とする。`bitz-core` pluginは
+GitHubマーケットプレイスをAI利用者向けの主要な発見・導入経路とする。`bitz-core`プラグインは
 `mcp.json`と起動境界を所有し、対応環境で自己完結実行体を同梱できる構造にする。Python + PyPI + `uv`の
 スタンドアロン配布は、CI、非LLM利用、自己完結実行体を提供しない環境の明示的な代替経路として維持する。
 
-pluginは初回起動時を含め、Core、Python、依存packageを動的取得または自動更新しない。
+プラグインは初回の起動を含め、Core、Python、依存パッケージを動的取得または自動更新しない。
 自己完結実行体を提供できない環境では、外部`bitz`実行体の不足を`doctor`で`blocked`として案内する。
 
 ### 4. 互換性と`doctor`
 
-plugin間依存の自動解決を標準へ期待しない。各拡張は自身のplugin ID、版、要求するCore API範囲、
-Capabilityを実行前に`bitz doctor`または`bitz_doctor`へ渡す。`doctor`を互換性判定の正本とし、次を検査する。
+プラグイン間の依存の自動解決を標準へ期待しない。各拡張は自身のプラグインID、版、要求するCore APIの範囲、
+対応機能を実行前に`bitz doctor`または`bitz_doctor`へ渡す。`doctor`を互換性判定の正本とし、次を検査する。
 
-- Core実行体とMCP serverの利用可否
-- Core API、EARS-AI、Profileの版互換性
-- `context.v1`、`check.v1`、`verify.v1`、`monorepo.v1`など要求Capabilityの有無
-- `.spec/`、設定、検証command、cacheの利用可否
+- Core実行体とMCPサーバーの利用可否
+- Core API、EARS-AI、プロファイルの版の互換性
+- `context.v1`、`check.v1`、`verify.v1`、`monorepo.v1`など要求する対応機能の有無
+- `.spec/`、設定、検証コマンド、キャッシュの利用可否
 
-不在または非互換時は`blocked`と具体的な導入・更新手順を返し、SkillがCore処理を代替しない。
+不在または非互換のときは`blocked`と具体的な導入・更新手順を返し、スキルがCoreの処理を代替しない。
 Core自体が存在せず`doctor`を呼べない場合だけ、拡張の静的な導入案内を使用する。
 
-Agent Plugins 1.0にはinstall済みpluginを横断列挙する標準APIがないため、
-`.spec/bitz.yaml`をinstall済みplugin台帳にしない。マーケットプレイスCIは全pluginの
-manifest、Core API要求、拡張間依存禁止、plugin外参照禁止を静的検査する。
+Agent Plugins 1.0にはインストール済みのプラグインを横断して列挙する標準APIがないため、
+`.spec/bitz.yaml`をインストール済みプラグインの台帳にしない。マーケットプレイスのCIはすべてのプラグインの
+マニフェスト、Core APIの要求、拡張間の依存の禁止、プラグイン外の参照の禁止を静的に検査する。
 
-### 5. release
+### 5. リリース
 
-マーケットプレイスcatalogと各pluginは同一repositoryで管理し、release tagで整合した組合せを固定する。
-各pluginは独立にSemantic Versioningする。Core API majorの不一致は停止し、minor差は要求Capabilityが
-満たされる限り許可する。外部repositoryをsourceにする場合はtagだけでなくcommit SHAを固定する。
+マーケットプレイスのプラグインの一覧と各プラグインは同一のリポジトリで管理し、リリースのタグで整合した組合せを固定する。
+各プラグインは独立にセマンティックバージョニングする。Core APIのメジャーバージョンの不一致は停止し、マイナーバージョンの差は要求する対応機能が
+満たされる限り許可する。外部のリポジトリを取得元にする場合はタグだけでなくコミットのSHAを固定する。
 
 ## Consequences
 
 - 利用者は必要な機能だけを導入できる。
 - EARS-AI解釈と品質判定の所有権を`bitz-core`へ集中できる。
-- GitHub上の1 catalogで発見性と版管理を統一できる。
-- 標準にない依存自動解決を前提にしないため、クライアント差を`doctor`とCIで吸収する必要がある。
+- GitHub上の1つのプラグインの一覧で発見性と版管理を統一できる。
+- 標準にない依存の自動解決を前提にしないため、クライアントごとの差を`doctor`とCIで吸収する必要がある。
 - 自己完結実行体の対象OS、アーキテクチャ、サイズは実証してから出荷範囲を確定する必要がある。
 
 ## Alternatives
 
-### 単一の巨大plugin
+### 単一の巨大プラグイン
 
-導入は単純だが、利用しないProfile、Skill、クライアント固有機能まで配布され、権限面と更新影響が広がる。
+導入は単純だが、利用しないプロファイル、スキル、クライアント固有の機能まで配布され、権限面と更新の影響が広がる。
 
-### 拡張plugin間の依存
+### 拡張プラグイン間の依存
 
-Agent Plugins 1.0の標準manifestで解決できず、クライアント固有の依存機能へ構成全体が拘束される。
+Agent Plugins 1.0の標準のマニフェストで解決できず、クライアント固有の依存機能へ構成全体が拘束される。
 
-### 共有fileを兄弟pluginから参照
+### 共有ファイルを兄弟プラグインから参照
 
-各pluginが別directoryへコピーされる配布モデルと整合せず、install先推測と更新順序へ依存する。
+各プラグインが別のディレクトリへコピーされる配布モデルと整合せず、インストール先の推測と更新の順序へ依存する。
 
-### SkillによるCore処理の代替
+### スキルによるCore処理の代替
 
-自然言語層にParser、Context選択、合否判定が複製され、同一入力に対する再現性を失う。
+自然言語の層に構文解析器、コンテキストの選択、合否判定が複製され、同一入力に対する再現性を失う。
 
 ## Notes
 
@@ -138,3 +138,4 @@ Agent Plugins 1.0の標準manifestで解決できず、クライアント固有�
 | 2026-08-27 | 初版を作成 | — |
 | 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |
 | 2026-09-07 | 仕様構造再編後の現行linkへ更新 | `FIN-DOC-001` |
+| 2026-09-29 | 説明文を日本語表記へ書き直した（意味の変更なし） | 表記規則 |
