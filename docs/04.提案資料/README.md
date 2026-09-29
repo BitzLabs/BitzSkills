@@ -45,6 +45,8 @@
 | [26_context-Markdown提示仕様案.md](26_context-Markdown提示仕様案.md) | `context`の既定のMarkdown提示 | **`Accepted / Reflected`**（P0 3件・P1 4件を裁定し§9と`SINGLE-104-01`へ反映済み） |
 | [27_適合harness外部仕様の検討.md](27_適合harness外部仕様の検討.md) | 適合harnessの検査対象、実行環境、ランナー | **`Accepted / Reflected`**（4件を裁定しADR-046と正本へ反映済み） |
 | [28_日本語表記の立て直し計画.md](28_日本語表記の立て直し計画.md) | 文書の日本語表記と用語集（ユビキタス言語一覧） | **`Active`**（フェーズ1とパイロットを実施。訳語は[用語集](../用語集.md) §13で決定済み） |
+| [29_エージェント向けSDD・品質管理・Coreスキル化調査.md](29_エージェント向けSDD・品質管理・Coreスキル化調査.md) | SDD、品質管理、Coreスキル化の研究・実例・失敗例 | **`Draft`**（2026-09-29調査。規範ではない） |
+| [30_bitz-sdd・品質管理・Coreスキル化実装計画.md](30_bitz-sdd・品質管理・Coreスキル化実装計画.md) | `bitz-sdd`、`bitz-quality`、`bitz-core`のスキル実装 | **`Draft`**（Phase 0の裁定前） |
 
 ## 3. 検討結果の要約
 
