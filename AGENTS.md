@@ -2,6 +2,8 @@
 
 このファイルが全エージェント（Claude Code / Codex / Antigravity）共通ルールの唯一の正。
 Claude Code は `CLAUDE.md` のインポート経由で、Codex と Antigravity は本ファイルを直接読む。
+SPECの状態遷移やSDDフローなどの規範は該当する仕様書・ADRを正とし、本ファイルは上書きしない。
+齟齬を見つけた場合は仕様書に従い、差異を報告する。
 
 ## リポジトリの役割
 
@@ -36,7 +38,8 @@ tests/bitz-core/     # Core の単体試験と Gate B 認定
 
 - リポジトリ外への書き込み・上書き・削除
 - `git push`（外部公開）
-- 承認済み（`approved`）要件の意味の変更。変更するときは先に `draft` へ戻す
+- 承認済み（`approved`）のREQまたはTECHの意味の変更。ユーザーの明示承認を得てから、
+  `docs/02.設計書/03_SDD-flow.md`に従い、変更と同じ作業で先に`draft`または`outdated`へ戻す
 
 ### 検証義務
 
