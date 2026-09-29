@@ -14,288 +14,330 @@
 
 ## 1. 目的
 
-規範設計と実装順序を分離し、公開面の配管を先に通したうえで、workspace単独のEARS-AI記述から
-test実行までの垂直スライスを実証し、同じ契約を複合workspaceへ拡張する。
-Step番号と完了条件は計画であり、Core APIの規範ではない。
+規範の設計と実装の順序を分離し、公開面の配管を先に通したうえで、単一ワークスペースのEARS-AI記述から
+テストの実行までの垂直スライスを実証し、同じ契約を複合ワークスペースへ拡張する。
+Stepの番号と完了条件は計画であり、Core APIの規範ではない。
 
 適合条件の正本は[適合fixture仕様](../03.詳細設計/00_共通契約/04_適合fixture仕様.md)、
-Digestの計算手順は[Context Digest正規化仕様](../03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md)である。
-本書はそれらを再定義せず、実装順序と各Stepの完了条件だけを持つ。
+コンテキストのハッシュ値の計算手順は[コンテキストのハッシュ値の正規化仕様](../03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md)である。
+本書はそれらを再定義せず、実装の順序と各Stepの完了条件だけを持つ。
 
 ### 1.1 進行状態とGate
 
-Stepの進捗、次工程への許可、受入結果を混同しないため、次の語彙を使う。
+Stepの進捗、次の工程への許可、受入の結果を混同しないため、次の状態の語彙を使う。
 
-| 対象 | 状態語彙 | 意味 |
+| 対象 | 状態の語彙 | 意味 |
 |---|---|---|
 | Step | `Not started` / `In progress` / `Complete` | 作業そのものの進捗 |
 | Gate A | `Blocked` / `Allowed` | Step 1へ進むことの可否 |
-| Gate B / Gate C | `Pending` / `Passed` / `Failed` | 固定した検査に対する受入結果 |
+| Gate B / Gate C | `Pending` / `Passed` / `Failed` | 固定した検査に対する受入の結果 |
 
 Core 1.0のGateは次の3層とする。
 
-| Gate | 判定時点 | 判定対象 | 現在状態 |
+| Gate | 判定する時点 | 判定の対象 | 現在の状態 |
 |---|---|---|---|
-| Gate A: 実装着手可能性 | Step 1開始前 | 規範、fixture、期待値、検証基盤がCore実行体なしで再現可能 | `Allowed` |
-| Gate B: Step別実装受入 | 各Step完了時 | 当該StepのCore実装が固定済みfixtureへ適合 | Step 1〜5 `Passed` |
-| Gate C: Core 1.0 release受入 | 全Step完了後 | 全適合、性能、自己適用を含む出荷可能性 | `Pending` |
+| Gate A: 実装への着手の可否 | Step 1を開始する前 | 規範、fixture、期待値、検証基盤を、Coreの実行体なしで再現できること | `Allowed` |
+| Gate B: Stepごとの実装の受入 | 各Stepを完了したとき | 当該StepのCoreの実装が、固定済みのfixtureに適合すること | Step 1〜5 `Passed` |
+| Gate C: Core 1.0のリリース受入 | すべてのStepを完了した後 | すべての適合、性能、自己適用を含め、出荷できること | `Pending` |
 
-Gate条件の正本は本書、fixture構造と比較方法の正本は
-[適合fixture仕様](../03.詳細設計/00_共通契約/04_適合fixture仕様.md)とする。提案資料は判断理由と移行履歴、
-提案資料READMEは現在状態の要約だけを持つ。
+Gateの条件の正本は本書、fixtureの構造と比較方法の正本は
+[適合fixture仕様](../03.詳細設計/00_共通契約/04_適合fixture仕様.md)とする。提案資料は判断の理由と移行の履歴、
+提案資料のREADMEは現在の状態の要約だけを持つ。
 
-Gate Aの認定後にmatrixまたはfixtureを変更した場合は、
+Gate Aの認定（certification）の後にmatrixまたはfixtureを変更した場合は、
 [適合fixture仕様 §1.1](../03.詳細設計/00_共通契約/04_適合fixture仕様.md#11-matrixとfixtureの変更)に従ってGate Aを再認定する。
-再認定が通過するまでGate Aは`Blocked`とする。Gate Bが`Passed`のStepに属するfixtureを変更した場合は、
+再認定が通過するまで、Gate Aは`Blocked`とする。Gate Bが`Passed`のStepに属するfixtureを変更した場合は、
 そのStepのGate Bを判定し直す。
 
 Step nのGate Bは、Step 1からnまでの完了条件のfixtureをすべて通過することを条件とする。
 各Stepの完了fixtureの機械可読な写しを`fixtures/conformance/steps.json`に置き、本書の完了条件との一致を
-統合検証で検査する。Gate Bの認定は`tests/bitz-core/certify_gate_b.py`が行う（[ADR-052](../02.設計書/10_決定記録/ADR-052_Gate-Bの実行と認定の構成を確定する.md)）。
+監査で検査する。Gate Bの認定は`tests/bitz-core/certify_gate_b.py`が行う（[ADR-052](../02.設計書/10_決定記録/ADR-052_Gate-Bの実行と認定の構成を確定する.md)）。
 CIでは[ADR-056](../02.設計書/10_決定記録/ADR-056_適合試験の分割実行とCIのGate-B集約を確定する.md)の
-独立2組の分割実行と厳密な集約も、同じ全件のGate B認定として扱う。
+独立した2組の分割実行と厳密な集約も、同じ全件のGate Bの認定として扱う。
 
-## 2. Step 0: 仕様確定（codeを書かない）
+## 2. Step 0: 仕様確定（コードを書かない）
 
 状態は`Complete`である。成果物は次とし、いずれも[提案24](24_Core-1.0実装着手方針.md)の裁定に対応する。
-Step 0完了はGate Aの必要条件だが、それだけでStep 1の開始を許可しない。
+Step 0の完了はGate Aの必要条件だが、それだけではStep 1の開始を許可しない。
 
 | 成果物 | 対象 | 状態 |
 |---|---|---|
-| [Context Digest正規化仕様](../03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md) | G1 | 反映済み |
+| [コンテキストのハッシュ値の正規化仕様](../03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md) | G1 | 反映済み |
 | [適合fixture仕様](../03.詳細設計/00_共通契約/04_適合fixture仕様.md) | G2 | 反映済み |
-| Diagnostic表の閉包（共通契約 §6.1と各操作仕様） | G3 | 反映済み |
+| 診断の表の閉包（共通契約 §6.1と各操作仕様） | G3 | 反映済み |
 | 終了コード4の出力契約（共通契約 §3） | G4 | 反映済み |
 | [ADR-044](../02.設計書/10_決定記録/ADR-044_MCP面をCore-1.0のscope外とする.md) | G5 | 反映済み |
-| 非成功時のtext出力契約（共通契約 §7） | G6 | 反映済み |
-| [Core実行環境・CLI基盤契約](../03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md) | G7 | 反映済み。判断理由はADR-045 |
-| accepted ADRのlink訂正とcheck status語彙の所有 | G8 | 反映済み |
+| 非成功のときのテキスト出力の契約（共通契約 §7） | G6 | 反映済み |
+| [Core実行環境・CLI基盤契約](../03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md) | G7 | 反映済み。判断の理由はADR-045 |
+| 状態が`accepted`のADRのリンクの訂正と、`doctor`の検査項目の状態（`checks[].status`）の語彙の所有 | G8 | 反映済み |
 
 完了条件は、G1〜G8が規範文書だけを読んで一意に実装できることである。
 
 ## 3. Step 0-P: 実証条件
 
-状態は`Complete`である。入力形状、対象外機能、比較方法、成功基準を固定し、
-`uv run fixtures/validate_benchmarks.py`でSchema検証と2回生成一致を確認した。
-検証記録は[Step 0-P検証結果](../../fixtures/Step-0-P検証記録.md)を参照する。
+状態は`Complete`である。入力の形状、対象外の機能、比較の方法、成功の基準を固定し、
+`uv run fixtures/validate_benchmarks.py`でスキーマを検証し、2回の生成が一致することを確認した。
+検証の記録は[Step 0-Pの検証結果](../../fixtures/Step-0-P検証記録.md)を参照する。
 
-入力、generator、期待digest、reference environment、測定protocol、比較task、成功基準はStep 1開始前に固定する。
-Core実行結果は対象機能が実装された後に取得する。人間による比較結果は
-[ADR-058](../02.設計書/10_決定記録/ADR-058_Gate-Cから比較タスクの実測を外す.md)により、
-任意研究として扱い、Core 1.0のGate Cでは要求しない。
+入力、生成器、期待するハッシュ値、基準環境、測定のプロトコル、比較タスク、成功の基準は、Step 1を開始する前に固定する。
+Coreの実行結果は、対象の機能を実装した後に取得する。人による比較の結果は、
+[ADR-058](../02.設計書/10_決定記録/ADR-058_Gate-Cから比較タスクの実測を外す.md)により任意の研究として扱い、
+Core 1.0のGate Cでは要求しない。
 
-- 通常のMarkdownまたは従来EARSを使う比較タスクを5件固定する。
-- 完了時間、仕様記述時間、review時間、欠陥検出数を定義する。
-- 単一workspaceと、20 workspace、SPEC 1,000件、relation 20,000件の基準複合workspaceのfixtureを固定する。
-- 平均file byte、statement数、edge密度、横断Contextの到達workspace数と基準環境manifestを固定する。
-- Core 1.0対象外機能を確認する。
+- 通常のMarkdownまたは従来のEARSを使う比較タスクを5件固定する。
+- 完了時間、仕様を記述する時間、レビューの時間、欠陥の検出数を定義する。
+- 単一ワークスペースのfixtureと、20ワークスペース、仕様文書1,000件、関係20,000件から成る基準の複合ワークスペースのfixtureを固定する。
+- ファイルの平均バイト数、規範文の数、エッジの密度、横断するコンテキストの到達ワークスペースの数、基準環境のマニフェストを固定する。
+- Core 1.0の対象外の機能を確認する。
 
-完了条件は、比較方法と成功基準が実装前に固定されていることである。
+完了条件は、比較の方法と成功の基準が、実装の前に固定されていることである。
 
 成果物の正本は[`fixtures/performance`](../../fixtures/performance/README.md)と
-[`fixtures/comparison`](../../fixtures/comparison/README.md)である。基準treeはversion管理したmanifestとgeneratorから再生成し、
-件数と期待tree digestが一致しなければ測定を開始しない。
+[`fixtures/comparison`](../../fixtures/comparison/README.md)である。基準の木構造は、バージョン管理したマニフェストと生成器から再生成し、
+件数と期待する木構造のハッシュ値が一致しなければ測定を開始しない。
 
-### 3.1 Step 0B: Gate A実証基盤
+### 3.1 Step 0B: Gate Aの実証基盤
 
-状態は`Complete`、Gate Aは`Allowed`である。Step 0で確定した契約を機械検証可能な入力、期待値、
-generator、helper、harnessへ落とし込み、fresh checkoutから再現できることを示す。
+状態は`Complete`、Gate Aは`Allowed`である。Step 0で確定した契約を、機械で検証できる入力、期待値、
+生成器、ヘルパー、harnessへ落とし込み、新しいチェックアウトから再現できることを示す。
 
-部分検証の入口は`uv run fixtures/validate_conformance.py`。公開JSON、文法参照、link、Git setup、process helper、
-副作用比較の自己試験、Step 0-P、Diagnostic意味網羅の対応台帳検証、target期待集合25 caseを統合済みである。
-以下の内訳は最初にStep 0Bを完了した310件時点のものである。
-適合fixture 310件中、導入・設定9件、EARS-AI構文・候補抽出・拡張12件、文書構造・UTF-8 9件、関係・path・coverage 6件、ID重複・循環4件、Git基準版・保護対象外変更10件、TASK境界3件、Git対象選択・影響候補4件、Git基準版error・Git不在3件、Context非成功6件、Context Digest 6件、expand反復2件、stale・expand・閉包上限・提示上限・implement coverage 6件、verify実行・事前block 6件、verify binding共有3件、verify process終了3件、verify出力抜粋2件、文書単位binding 1件、done TASK起点1件、report非作成4件、引数不正15件、report作成・保存失敗・JSON併用6件、text出力・制御文字・診断順序4件、BOM・Frontmatter 11件、寸法上限・未知entry 7件、registry閉包7件、Scanner・位置16件、既定表示・revision 8件、理由付きSHOULD・full projection・Digest version 3件、escape・normative projection 2件、quoted extension 1件、code span 1件、Frontmatter境界24件、Core副作用6件、verify argv・実行環境・出力変換15件、明示起点の不在・ADR起点8件、共通target展開・advisory提示8件、Digest材料の順序・reverse solidus 3件、実行環境・配布物5件は入力・期待JSON・副作用期待値を作成し、隔離setupの2回一致を検証した。matrix §6.5「contextとDigest」と§6.6「verify」は全32件を完了した。§6.8「上限」6件、§6.9「Diagnostic registry閉包」19件、§6.11「公開結果Schemaと既定表示」11件と§6.12「共通target展開」を含め、単一workspaceの§6は全250件を完了した。
-単一workspaceのgolden Canonical JSONとContext Digestは`SINGLE-042`が所有し、独立に記述した2系統のreference計算がbyte一致することを検証した。
-複合workspaceの§7は当初の`MULTI-*`全60件を作成し、matrixの310件はすべて入力・期待JSON・副作用期待値を持つ。
-その後に単一workspace 8件と複合workspace 2件を追加し、2026-09-27時点では単一258件、複合62件の全320件である。
-複合workspaceのgolden Canonical JSONとContext Digestは`MULTI-002-01`が所有し、単一workspaceと同じく独立した2系統のreference計算でbyte一致することを検証した。
-上限境界の24件（`MULTI-020-*`、`MULTI-021-*`）は[ADR-048](../02.設計書/10_決定記録/ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md)に従いdataset manifestから入力を生成し、実寸の照合は`uv run fixtures/validate_scale.py`で行う。
-2026-09-18にはcommit済みのrepositoryを`git clone`した写しで統合検証とscale検証を実行し、作業treeと同じ結果になることを[適合fixture検証記録](../../fixtures/conformance/適合fixture検証記録.md)へ記録した。
-統合commandは、matrixの全IDについて入力と期待値の検証に成功したfixture群の検査があることを確かめる。ただし自分がfresh checkoutで動いているかを判定できないため、fresh checkoutからのGate A全体実行を未完了の証拠として常に残す。
-Gate Aの判定は`uv run fixtures/certify_gate_a.py`で行う。このcommandは、HEADから独立したcloneを2つ作り、それぞれで統合検証とscale検証を実行する。統合検証のreportがbyte一致し、未完了の証拠が上記の1項目だけで、scale検証が両方で成功して一致すれば、`gateA: "Allowed"`を返す。
-2026-09-24にcommit `cf2fa3d`へ実行して`Allowed`を得た。結果と実行環境は[適合fixture検証記録](../../fixtures/conformance/適合fixture検証記録.md)に記録した。
-Git shim、`uv`環境、`bitz.compat`、`runner: package`の起動規則は[ADR-046](../02.設計書/10_決定記録/ADR-046_適合harnessの検査対象・実行環境・runnerを確定する.md)で確定したが、harnessの実行部はCore実装と合わせてGate Bで作る。
+監査の入口は`uv run fixtures/validate_conformance.py`である。この入口へ、公開JSON、文法の参照、リンク、Gitの準備手順、
+プロセス用のヘルパー、副作用比較の自己試験、Step 0-P、診断の網羅表の検証、target vectorの期待集合25ケースを統合済みである。
+以下の内訳は、最初にStep 0Bを完了した310件の時点のものである。
+適合fixture 310件のうち、次の区分のfixtureについて、入力、期待結果、副作用の期待値を作成し、隔離した準備手順を2回適用して一致することを検証した。
 
-このStepで実装してよいのはSchema検証、fixture generator、reference計算、文法検査、matrix検査、
-process用test helper、副作用比較harness、独立cross-checkである。`doctor`、`context`、`check`、`verify`、
-本番Parser、target展開、Digest生成、process runnerの公開挙動を実装してはならない。
+- 導入・設定9件
+- EARS-AIの構文・候補抽出・拡張12件
+- 文書構造・UTF-8 9件
+- 関係・パス・カバレッジ6件
+- IDの重複・循環4件
+- 基準版・保護対象外の変更10件
+- TASK境界3件
+- Gitによる対象の選択・影響候補4件
+- 基準版のエラー・Git不在3件
+- コンテキストの非成功6件
+- コンテキストのハッシュ値6件
+- 展開指定の反復2件
+- 取得後の仕様変更の検出・展開指定・閉包の上限・提示の上限・目的`implement`のカバレッジ6件
+- `verify`の実行と、実行前の`blocked` 6件
+- `verify`のテスト割当ての共有3件
+- `verify`のプロセスの終了3件
+- `verify`の出力の抜粋2件
+- 文書単位のテスト割当て1件
+- 状態が`done`のTASKを起点とする場合1件
+- レポートを作成しない場合4件
+- 引数不正15件
+- レポートの作成、保存の失敗、JSONとの併用6件
+- テキスト出力・制御文字・診断の順序4件
+- BOM・フロントマター11件
+- 寸法の上限・未知のエントリ7件
+- 診断レジストリの閉包7件
+- 走査器・位置16件
+- 既定の表示・リビジョン8件
+- 理由付きの`SHOULD`・提示形式`full`・ハッシュ値のバージョン3件
+- エスケープ・提示形式`normative` 2件
+- 引用符付きの拡張タグ1件
+- コードスパン1件
+- フロントマターの境界24件
+- Coreの副作用6件
+- `verify`の引数列・実行環境・出力の変換15件
+- 明示した起点の不在・ADRを起点とする場合8件
+- 対象展開・`advisory`の提示8件
+- ハッシュ値の材料の順序・バックスラッシュ3件
+- 実行環境・配布物5件
+
+matrix §6.5「`context`とコンテキストのハッシュ値」と§6.6「`verify`」は全32件を完了した。§6.8「上限」6件、§6.9「診断レジストリ閉包」19件、§6.11「公開結果スキーマと既定表示」11件と§6.12「共通の対象展開」を含め、単一ワークスペースの§6は全250件を完了した。
+単一ワークスペースのgoldenの正規JSONとコンテキストのハッシュ値は`SINGLE-042`が所有し、独立に記述した2系統の参照計算がバイト単位で一致することを検証した。
+複合ワークスペースの§7は、当初の`MULTI-*`全60件を作成し、matrixの310件はすべて入力、期待結果、副作用の期待値を持つ。
+その後に単一ワークスペースの8件と複合ワークスペースの2件を追加し、2026-09-27の時点では単一が258件、複合が62件の全320件である。
+複合ワークスペースのgoldenの正規JSONとコンテキストのハッシュ値は`MULTI-002-01`が所有し、単一ワークスペースと同じく独立した2系統の参照計算でバイト単位で一致することを検証した。
+上限の境界の24件（`MULTI-020-*`、`MULTI-021-*`）は[ADR-048](../02.設計書/10_決定記録/ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md)に従ってデータセットのマニフェストから入力を生成し、実寸の照合は`uv run fixtures/validate_scale.py`で行う。
+2026-09-18には、コミット済みのリポジトリを`git clone`した写しで監査と規模の検証を実行し、作業ツリーと同じ結果になることを[適合fixture検証記録](../../fixtures/conformance/適合fixture検証記録.md)へ記録した。
+監査のコマンドは、matrixのすべてのIDについて、入力と期待値の検証に成功したfixture群の検査があることを確かめる。ただし、監査自身が新しいチェックアウトで動いているかを判定できないため、新しいチェックアウトからのGate Aの全体の実行を、未完了の証拠として常に残す。
+Gate Aの判定は`uv run fixtures/certify_gate_a.py`で行う。このコマンドは、`HEAD`から独立したクローンを2つ作り、それぞれで監査と規模の検証を実行する。監査のレポートがバイト単位で一致し、未完了の証拠が上記の1項目だけで、規模の検証が両方で成功して一致すれば、`gateA: "Allowed"`を返す。
+2026-09-24に、コミット`cf2fa3d`へ実行して`Allowed`を得た。結果と実行環境は[適合fixture検証記録](../../fixtures/conformance/適合fixture検証記録.md)に記録した。
+Gitのシム、`uv`の環境、`bitz.compat`、`runner: package`の起動の規則は[ADR-046](../02.設計書/10_決定記録/ADR-046_適合harnessの検査対象・実行環境・runnerを確定する.md)で確定したが、harnessの実行部はCoreの実装と合わせてGate Bで作る。
+
+このStepで実装してよいのは、スキーマの検証、fixtureの生成器、参照計算、文法の検査、matrixの検査、
+プロセス用のテストヘルパー、副作用比較のharness、独立した相互照合である。`doctor`、`context`、`check`、`verify`、
+本番の構文解析器、対象展開、コンテキストのハッシュ値の生成、プロセスランナーの公開の挙動を実装してはならない。
 
 Gate Aを`Allowed`にする条件は次の全件である。
 
-- P0 6件が規範文書へ反映されている
-- 公開JSON例が機械可読Schemaを全件通過する
-- 規範上の全非成功条件がDiagnostic registryへ対応する
-- 文法に未定義tokenまたはnonterminalがない
-- target種別とpurposeの全組合せに対する期待集合fixtureが存在する
-- fixture matrixに選択的期待、複数原因、`元status`がない
-- Gitのbase、current、staged、worktree、unbornをmanifestから再現できる
-- 単一と複合workspaceのCanonical JSONおよびgolden Context Digestが独立した2系統のreference計算で一致する
-- 読取り専用、report、cacheの変更前後snapshotと許可書込みが固定され、副作用比較harness自体を自己検査できる
-- timeout、signal、子process、pipe保持を再現するhelperと有限時間で失敗できるharnessが存在する
-- 性能基準fixture、決定論的generator、期待tree digest、reference environmentがversion管理されている
-- 現行正本とaccepted ADRの相対link検査が0件である
-- 上記をCore実行体へ依存しない単一commandでfresh checkoutから再実行でき、2回の結果が一致する
+- P0の6件が規範文書へ反映されている
+- 公開JSONの例のすべてが、機械可読なスキーマを通過する
+- 規範上のすべての非成功の条件が、診断レジストリへ対応する
+- 文法に未定義のトークンまたは非終端記号がない
+- 起点の種類と目的のすべての組合せに対する、期待集合のfixtureが存在する
+- fixtureのmatrixに、選択的な期待、複数の原因、`元status`がない
+- Gitの基準版、現在版、ステージ済み、作業ツリー、コミットのないリポジトリの状態を、マニフェストから再現できる
+- 単一ワークスペースと複合ワークスペースの正規JSONおよびgoldenのコンテキストのハッシュ値が、独立した2系統の参照計算で一致する
+- 読取り専用、レポート、キャッシュの変更の前後のスナップショットと、許可された書込みが固定され、副作用比較のharness自体を自己検査できる
+- タイムアウト、シグナル、子プロセス、パイプの保持を再現するヘルパーと、有限の時間で失敗できるharnessが存在する
+- 性能の基準のfixture、決定論的な生成器、期待する木構造のハッシュ値、基準環境が、バージョン管理されている
+- 現行の正本と、状態が`accepted`のADRの、相対リンクの検査結果が0件である
+- 上記を、Coreの実行体へ依存しない1つのコマンドで、新しいチェックアウトから再実行でき、2回の結果が一致する
 
-全条件を通過した自動検査結果と実行環境を同一commitへ記録した時点でStep 0Bを`Complete`、Gate Aを
+すべての条件を通過した自動検査の結果と実行環境を、同じコミットへ記録した時点で、Step 0Bを`Complete`、Gate Aを
 `Allowed`とし、Step 1の開始を許可する。Core本体と期待値の一致はGate Aに含めず、該当するGate Bで判定する。
 
 ## 4. Step 1: 骨格と`doctor`
 
-`doctor`は設定読込み、workspace発見、結果・Diagnostic・終了コードの配管だけで成立する最小の操作であり、
-他3操作が同じ土台を使う。ここを先に通し、以後の全Stepを同じ公開面から検証する。
+`doctor`は、設定の読込み、ワークスペースの発見、結果・診断・終了コードの配管だけで成立する最小の操作であり、
+ほかの3操作が同じ土台を使う。ここを先に通し、以後のすべてのStepを同じ公開面から検証する。
 Coreは`plugins/bitz-core`、Core固有の試験は`tests/bitz-core/`へ置き、試験は`unittest`で書く
 （[ADR-049](../02.設計書/10_決定記録/ADR-049_Coreのsource配置と試験の構成を確定する.md)）。
 
-状態は`Complete`、Step 1のGate Bは`Passed`である。2026-09-24にcommit `28c3cd1`へ
+状態は`Complete`、Step 1のGate Bは`Passed`である。2026-09-24にコミット`28c3cd1`へ
 `uv run tests/bitz-core/certify_gate_b.py --step 1`を実行し、完了条件の34件がすべて通過した。
 結果と実行環境は[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録した。
 
-- 適合fixture harness: manifest実行、共通normalizer、副作用比較、終了コード判定。入口は`fixtures/run_conformance.py`とし、
-  期待出力を返す偽のCoreで自己試験する。Gate Bの認定command `tests/bitz-core/certify_gate_b.py`も作る
-- CLI引数解析、`--format`、終了コード0〜4、引数不正時の標準エラー1行
-- 共通結果外形、Diagnostic Schema、source、順序規則、status集約
-- text出力の要約行とDiagnostic行
-- `bitz.yaml`のYAML部分集合読込みと禁止構文の拒否
-- 単一workspaceの探索と`doctor`（Core、実行環境version、設定、Git、command）
-- `check`の骨格: 設定・workspaceの段階で文書を読まずに停止する経路と、基準版のrevisionを解決して
-  文書0件を検査する経路
+- 適合harness: マニフェストの実行、共通の正規化器、副作用の比較、終了コードの判定。入口は`fixtures/run_conformance.py`とし、
+  期待する出力を返す偽のCoreで自己試験する。Gate Bの認定コマンド`tests/bitz-core/certify_gate_b.py`も作る
+- CLIの引数の解析、`--format`、終了コード0〜4、引数不正のときの標準エラー出力1行
+- 結果の形、診断のスキーマ、発生元、順序の規則、状態の集約
+- テキスト出力の要約行と診断の行
+- `bitz.yaml`のYAMLの部分集合の読込みと、禁止された構文の拒否
+- 単一ワークスペースの探索と`doctor`（Core、実行環境のバージョン、設定、Git、コマンド）
+- `check`の骨格: 設定・ワークスペースの段階で文書を読まずに停止する経路と、
+  基準版のリビジョンを解決して文書0件を検査する経路
 
 完了条件は、`SINGLE-001`〜`006`、`SINGLE-073`〜`074`、`078`、`091`〜`095`、`104-04`、`125-02`、
 `127-01`〜`02`、`127-05`〜`07`、`127-11`、`127-14`〜`19`が通過し、終了コード0〜4を区別できることである。
-文書の検査、context、verifyを要するfixtureは、それが初めて通過できるStepの完了条件に置く。
+文書の検査、`context`、`verify`を要するfixtureは、それが初めて通過できるStepの完了条件に置く。
 
 ## 5. Step 2: EARS-AIと文書モデル
 
-- 候補Scanner、Lexer、Parser、Semantic IR
-- Frontmatter Schema、文書ID、statement ID、状態、file名規則
-- 関係索引、逆索引、path逆索引
-- 正例・反例fixture。`parserChecks`を持つfixtureは実Parserの全Semantic IRを完全比較する
+- 走査器、字句解析器、構文解析器、意味中間表現
+- フロントマターのスキーマ、文書ID、規範文ID、状態、ファイル名の規則
+- 関係の索引、逆索引、パスの逆索引
+- 正例・反例のfixture。`parserChecks`を持つfixtureは、実際の構文解析器のすべての意味中間表現を完全に比較する
 
-完了条件は、同一入力から同一IRとDiagnosticを再現でき、`SINGLE-007`〜`026`、`128`〜`133`、`SINGLE-070-01`〜`02`、
+完了条件は、同じ入力から同じ意味中間表現と診断を再現でき、`SINGLE-007`〜`026`、`128`〜`133`、`SINGLE-070-01`〜`02`、
 `075-01`〜`02`、`076`〜`077`、`079`〜`083`、`084`〜`090`、`096`〜`103`、`104-02`、`114`〜`120`が通過することである。
-`096-01`、`097-01`、`098-01`、`101-01`はcontextのfixtureであり、このStepでは`parserChecks`のSemantic IRだけを受け入れる。
+`096-01`、`097-01`、`098-01`、`101-01`は`context`のfixtureであり、このStepでは`parserChecks`の意味中間表現だけを受け入れる。
 
-状態は`Complete`、Step 2のGate Bは`Passed`である。2026-09-25にcommit `da819d7`へ
+状態は`Complete`、Step 2のGate Bは`Passed`である。2026-09-25にコミット`da819d7`へ
 `uv run tests/bitz-core/certify_gate_b.py --step 2`を実行し、Step 1と2の完了条件の131件と`parserChecks`4件がすべて通過した。
 結果と実行環境は[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録した。
 
-## 6. Step 3: Contextとcheck
+## 6. Step 3: `context`と`check`
 
-- 強い依存の完全閉包、purpose別閉包、role分類
-- Constraint Ledger、coverage、Context Digest
-- `--expect-digest` stale検出、detailとexpandのprojection
-- changed-only check、`--full`、明示対象、Git基準版
-- REQ保護、状態遷移、管理済みSPEC削除、TASK境界、影響候補
-- relation Diagnosticの1 edge 1 primary規則
-- check結果と明示`--report`時だけの最小report
+- 強い関係の完全閉包、目的ごとの閉包、役割の分類
+- 制約台帳、カバレッジ、コンテキストのハッシュ値
+- `--expect-digest`による取得後の仕様変更の検出、詳細度と展開指定による提示形式
+- 変更範囲の検査、`--full`、明示対象、基準版
+- 承認済み要求の保護、状態遷移、管理済みの仕様文書の削除、TASK境界、影響候補
+- 関係の診断における、1つのエッジにつき主診断を1件とする規則
+- `check`の結果と、`--report`を明示したときだけの最小のレポート
 
-完了条件は、参照切れ、循環、上限、Digest不一致を部分成功にせず、`SINGLE-027`〜`054`が通過し、
+完了条件は、参照切れ、循環、上限、ハッシュ値の不一致を部分成功にせず、`SINGLE-027`〜`054`が通過し、
 `SINGLE-071-01`〜`02`、`072`、`096-01`、`097-01`、`098-01`、`101-01`、`104-01`、`105-01`、`106-01`〜`03`、
 `106-06`〜`07`、`107-01`、`108-01`、`109`、`110`、`111-01`〜`03`、`112-01`〜`03`、`121`〜`124`、`125-01`、`125-03`、`125-05`〜`06`、
 `127-03`〜`04`、`127-12`〜`13`が通過し、`SINGLE-042`の
-Canonical JSONとDigestが規定値にbyte一致することである。`096-01`、`097-01`、`098-01`、`101-01`は公開のcontext結果を比較する。
+正規JSONとコンテキストのハッシュ値が規定値にバイト単位で一致することである。`096-01`、`097-01`、`098-01`、`101-01`は公開の`context`の結果を比較する。
 
-状態は`Complete`、Step 3のGate Bは`Passed`である。2026-09-25にcommit `139376a`へ
+状態は`Complete`、Step 3のGate Bは`Passed`である。2026-09-25にコミット`139376a`へ
 `uv run tests/bitz-core/certify_gate_b.py --step 3`を実行し、Step 1〜3の完了条件の202件と`parserChecks`4件がすべて通過した。
 結果と実行環境は[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録した。
 
-## 7. Step 4: verify
+## 7. Step 4: `verify`
 
-- command名単位のbinding解決、`{tests}`展開、cwd、timeout、出力上限
-- target単位Context、`targetResults[]`、共有bindingの1回実行
-- verify結果と明示`--report`時だけの最小report
+- コマンド名を単位としたテスト割当ての解決、`{tests}`の展開、`cwd`、タイムアウト、出力の上限
+- 検証対象ごとのコンテキスト、`targetResults[]`、共有するテスト割当ての1回の実行
+- `verify`の結果と、`--report`を明示したときだけの最小のレポート
 
-完了条件は、test成功、非0、起動失敗、signal、timeout、対象0件をfixtureで区別でき、異なる2 Contextを持つtarget、
-共有binding、Context非成功targetの混在を正しい`targetResults[]`へ対応付けられることである。`--report`なしでは
-成功・非成功とも既存reportを変更せず、新しいfileを作らない。`SINGLE-055`〜`069`、`SINGLE-070-03`〜`04`、
+完了条件は、テストの成功、0以外の終了コード、起動の失敗、シグナル、タイムアウト、対象0件をfixtureで区別でき、異なる2つのコンテキストを持つ検証対象、
+共有するテスト割当て、コンテキストが非成功の検証対象が混在する場合を、正しい`targetResults[]`へ対応付けられることである。`--report`なしでは、
+成功・非成功とも既存のレポートを変更せず、新しいファイルを作らない。`SINGLE-055`〜`069`、`SINGLE-070-03`〜`04`、
 `071-03`〜`04`、`104-03`、`105-02`、`106-04`〜`05`、`107`〜`108`、`110`、`111-04`、`112`〜`113`、`125-04`、`126`、
-`127-08`〜`10`が通過する。timeout fixtureは子孫がpipeを保持してもtimeout到達から
-5秒以内に結果を確定し、計画済みの独立bindingを継続する。
+`127-08`〜`10`が通過する。タイムアウトのfixtureは、子孫のプロセスがパイプを保持しても、タイムアウトに到達してから
+5秒以内に結果を確定し、計画済みの独立したテスト割当てを継続する。
 
-状態は`Complete`、Step 4のGate Bは`Passed`である。2026-09-25にcommit `cac5b08`へ
+状態は`Complete`、Step 4のGate Bは`Passed`である。2026-09-25にコミット`cac5b08`へ
 `uv run tests/bitz-core/certify_gate_b.py --step 4`を実行し、Step 1〜4の完了条件の250件と`parserChecks`4件がすべて通過した。
 Core自身の`.spec/`は、REQを`approved`にした複製で`verify`が通過することを確かめた。結果は[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録した。
 
-## 8. Step 5: 複合workspace
+## 8. Step 5: 複合ワークスペース
 
-- 明示catalog、active workspace、修飾ID
-- 横断Frontmatter索引、完全Context、Context Digest
-- code／test／TASK／cwdの所有境界とcanonical path判定
+- 明示したカタログ、作業ワークスペース、修飾ID
+- 横断するフロントマターの索引、完全解決したコンテキスト、コンテキストのハッシュ値
+- コード、テスト、TASK、`cwd`の所有境界と、正規のパスの判定
 - `--workspace`と`--all-workspaces`
-- workspace別`targetResults[]`、共有command結果、集約status、明示複合workspaceのreport
-- 未登録member、path重複、Git不在、横断参照、対象0件
-- Git既知の未登録設定、symlink所有迂回、case差、初回root ID写像、member移動・削除
-- 文書・target・binding単位の継続と`SPEC-MONOREPO-DEPENDENCY-001`
-- 単一／複合workspaceのdual-read consumer、原子的rollback、部分rollback拒否
+- ワークスペースごとの`targetResults[]`、共有するコマンドの結果、集約した状態、明示した複合ワークスペースのレポート
+- 未登録のメンバー、パスの重複、Git不在、横断する参照、対象0件
+- Gitが認識している未登録の設定、シンボリックリンクによる所有の迂回、大文字と小文字の違い、初回のルートワークスペースのIDの写像、メンバーの移動・削除
+- 文書、対象、テスト割当てを単位とする継続と、`SPEC-MONOREPO-DEPENDENCY-001`
+- 単一ワークスペースと複合ワークスペースの二重読取りの利用側、原子的なロールバック、部分的なロールバックの拒否
 
-完了条件は、同名ローカルIDを持つmember、横断refinement、所有境界違反を決定論的に区別し、
-`check --all-workspaces`と`verify --all-workspaces`が基準性能を満たし、`MULTI-001`〜`026`が通過することである。
-`MULTI-002-01`のCanonical JSONとDigestが複合workspaceのgolden値にbyte一致し、2回実行でも変化しないことを含む。
-別member所有bindingを1回だけ実行し、request targetとowner memberのstatusへ反映してもcommand実体とdurationを
-複製しない。`doctor --all-workspaces`はglobal検査を最上位へ1回だけ置き、rootと全memberのworkspace固有検査を
-処理順に返し、1 memberの非成功後も独立memberを継続して全体statusへ集約する。
+完了条件は、同じ名前のローカルIDを持つメンバー、横断する具体化、所有境界の違反を決定論的に区別し、
+`check --all-workspaces`と`verify --all-workspaces`が基準の性能を満たし、`MULTI-001`〜`026`が通過することである。
+`MULTI-002-01`の正規JSONとコンテキストのハッシュ値が、複合ワークスペースのgolden値にバイト単位で一致し、2回実行しても変化しないことを含む。
+別のメンバーが所有するテスト割当てを1回だけ実行し、依頼側の検証対象と所有ワークスペースの状態へ反映しても、コマンドの実体と所要時間を
+複製しない。`doctor --all-workspaces`は、ワークスペースに依存しない検査を最上位へ1回だけ置き、ルートワークスペースとすべてのメンバーの、
+ワークスペース固有の検査を処理順に返し、1つのメンバーが非成功になった後も独立したメンバーを継続して、全体結果の状態へ集約する。
 
 状態は`Complete`、Step 5のGate Bは`Passed`である。2026-09-27に`MULTI-026-01`〜`02`を追加し、
-commit `74ff1c8`でGate Aを再認定した。Core追従後のcommit `1b64033`でStep 1〜5を判定し直し、
-320件と`parserChecks`4件がすべて通過した。認定値は[適合fixture検証記録](../../fixtures/conformance/適合fixture検証記録.md)と
-[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録した。以前の認定履歴は次のとおりである。規範文と食い違っていたfixtureを管理者の承認を得て訂正し、
-2026-09-25にcommit `12ec48e`へ`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行して、Step 1〜5の
+コミット`74ff1c8`でGate Aを再認定した。Coreを追従させた後のコミット`1b64033`でStep 1〜5を判定し直し、
+320件と`parserChecks`4件がすべて通過した。認定した値は[適合fixture検証記録](../../fixtures/conformance/適合fixture検証記録.md)と
+[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録した。以前の認定の履歴は次のとおりである。規範文と食い違っていたfixtureを管理者の承認を得て訂正し、
+2026-09-25にコミット`12ec48e`へ`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行して、Step 1〜5の
 完了条件の310件と`parserChecks`4件がすべて通過した。結果は[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録した。
-2026-09-26に規範文の明記とfixtureの追加・訂正に合わせてStep 1〜5を判定し直し、commit `ac48fa0`で318件が通過した。
+2026-09-26に、規範文の明記とfixtureの追加・訂正に合わせてStep 1〜5を判定し直し、コミット`ac48fa0`で318件が通過した。
 
 ## 9. Step 6: SDD垂直スライスと自己適用
 
-Step 2完了時点でbitz-core自身の`.spec/`を作り、以後の実装をSmall Flowで進める。
-最初のREQはParserと結果契約に対するものとし、Coreが自分自身をcheck・verifyできる状態をStep 4の完了条件へ含める。
+Step 2を完了した時点で、`bitz-core`自身の`.spec/`を作り、以後の実装を簡易フローで進める。
+最初のREQは構文解析器と結果の契約に対するものとし、Coreが自分自身を`check`・`verify`できる状態をStep 4の完了条件へ含める。
 
-2026-09-25にrepository rootへ`.spec/`を作り、REQ-001（EARS-AI規範文の解析）とREQ-002（status集約と終了コード）を
-`draft`で起票した。Core自身の`bitz check --full`は`passed`である。contextとverifyがStep 3、4で揃うまでは`check`だけで運用する。
-2026-09-26に管理者が両REQの内容を確認して`approved`へ変更した。Core自身の`bitz verify`は2 targetとも`passed`
-（binding 1件、試験94件）、`bitz context --purpose implement`は通過status（未addressedの`MUST`をwarningで示す）であり、
-Coreが自分自身をcheck・context・verifyできる状態になった。
+2026-09-25にリポジトリのルートへ`.spec/`を作り、REQ-001（EARS-AI規範文の解析）とREQ-002（状態の集約と終了コード）を
+`draft`で起票した。Core自身の`bitz check --full`は`passed`である。`context`と`verify`がStep 3、4で揃うまでは、`check`だけで運用する。
+2026-09-26に管理者が両REQの内容を確認して`approved`へ変更した。Core自身の`bitz verify`は2つの検証対象とも`passed`
+（テスト割当て1件、試験94件）、`bitz context --purpose implement`は通過状態（未対応の`MUST`を重大度`warning`で示す）であり、
+Coreが自分自身を`check`・`context`・`verify`できる状態になった。
 
-その上でREQ 1件について次を通す。
+その上で、REQ 1件について次を通す。
 
 ```text
 SPEC作成 -> context -> pre-check -> code/test変更 -> post-check -> verify -> human review
 ```
 
-実証では、検査結果、レビューで見つかった欠陥、差戻し、最終判断を記録する。通常のMarkdownとの定量的な比較は
-Gate Cの条件にせず、有効な比較結果を取得するまで生産性の優位性を主張しない（ADR-058）。
+実証では、検査の結果、レビューで見つかった欠陥、差戻し、最終の判断を記録する。通常のMarkdownとの定量的な比較は
+Gate Cの条件にせず、有効な比較の結果を取得するまで、生産性の優位性を主張しない（ADR-058）。
 
-### 9.1 Gate C: Core 1.0 release受入
+### 9.1 Gate C: Core 1.0のリリース受入
 
-全StepのGate Bが`Passed`した後、次を全件満たした場合だけGate Cを`Passed`とする。
+すべてのStepのGate Bが`Passed`になった後、次をすべて満たした場合だけ、Gate Cを`Passed`とする。
 
-- 全conformance fixtureが、下限CPython 3.12と基準環境の2環境で通過する。`invocation.python`を指定したfixtureは指定versionだけで判定する
-- 全conformance fixtureとCore固有の試験が、Linuxで通過する。macOSでの確認は行わない（[ADR-055](../02.設計書/10_決定記録/ADR-055_Core-1.0の対象OSをPOSIXに限定する.md)）
-- 性能baselineを基準環境で取得し、§10のSLOを満たす
-- 単一と複合workspaceのCanonical JSONおよびContext Digestが2回実行でbyte一致する
-- 読取り専用、report、cache、timeout、signal、子processの受入試験が通過する
-- bitz-core自身の`.spec/`でSmall Flowを完走する
+- すべての適合fixtureが、下限のCPython 3.12と基準環境の2つの環境で通過する。`invocation.python`を指定したfixtureは、指定したバージョンだけで判定する
+- すべての適合fixtureとCore固有の試験が、Linuxで通過する。macOSでの確認は行わない（[ADR-055](../02.設計書/10_決定記録/ADR-055_Core-1.0の対象OSをPOSIXに限定する.md)）
+- 性能のベースラインを基準環境で取得し、§10のSLOを満たす
+- 単一ワークスペースと複合ワークスペースの正規JSONおよびコンテキストのハッシュ値が、2回実行してバイト単位で一致する
+- 読取り専用、レポート、キャッシュ、タイムアウト、シグナル、子プロセスの受入試験が通過する
+- `bitz-core`自身の`.spec/`で簡易フローを完走する
 - 未解決のP0またはP1がない
 
-Gate Cは`Pending`である。Phase 1では、下限環境と基準環境の証拠を同一の確定commitへ結び付け、
-自己申告の成功reportで通過できない集約基盤を実装する。各環境の`run`はcommit済みHEADからfresh checkoutを作り、
-CPython 3.12／Linuxで全適合fixtureとCore単体試験を実行し、実行前後のclean状態、実行体、件数、結果を記録する。
-`collect`は2つの環境role、commit、全matrixの集合と順序、終了コード、差分なし、単体試験件数、
-環境間の適合結果一致を検査する。reference roleは基準環境manifestのhashを記録し、OS、platform class、
-architecture、CPU、論理core数、RAM、storage、filesystem、Python、Git、cgroup v2の実測値を比較条件と照合する。
-両roleのenvironment fingerprintが同じ場合と、referenceの比較条件が不一致の場合は
-fixture実行前に拒否する。network無効などのisolation条件は性能runnerで制御し、Phase 1では認定しない。
+Gate Cは`Pending`である。フェーズ1では、下限の環境と基準環境の証拠を、同じ確定したコミットへ結び付け、
+自己申告の成功レポートでは通過できない集約基盤を実装する。各環境の`run`は、コミット済みの`HEAD`から新しいチェックアウトを作り、
+CPython 3.12／Linuxで、すべての適合fixtureとCoreの単体試験を実行し、実行の前後のクリーンな状態、実行体、件数、結果を記録する。
+`collect`は、2つの環境のロール、コミット、全matrixの集合と順序、終了コード、差分がないこと、単体試験の件数、
+環境間の適合結果の一致を検査する。ロール`reference`は、基準環境のマニフェストのハッシュ値を記録し、OS、プラットフォームのクラス、
+アーキテクチャ、CPU、論理コア数、RAM、ストレージ、ファイルシステム、Python、Git、cgroup v2の実測値を、比較の条件と照合する。
+両方のロールの環境フィンガープリントが同じ場合と、ロール`reference`の比較の条件が一致しない場合は、
+fixtureを実行する前に拒否する。ネットワークの無効化などの隔離の条件は、性能のランナーで制御し、フェーズ1では認定しない。
 基盤が通過しても、次を満たすまではGate Cを`Passed`にしない。
 
-- 性能baselineを基準環境で取得してSLOを判定する
-- 未解決P0/P1がないことを閉包する
+- 性能のベースラインを基準環境で取得し、SLOを判定する
+- 未解決のP0/P1がないことを確かめて閉じる
 
-2026-09-28に基準環境の初回性能baselineと固定SLOを受け入れ、対象commitのfresh checkoutで
-`validate_benchmarks.py`を直接実行する監査をGate C集約へ統合した。性能条件は完了し、
-この時点の残件はSmall Flowと通常Markdown条件の比較証拠、および未解決P0/P1の閉包だった。
+2026-09-28に、基準環境の初回の性能のベースラインと固定したSLOを受け入れ、対象のコミットの新しいチェックアウトで
+`validate_benchmarks.py`を直接実行する監査を、Gate Cの集約へ統合した。性能の条件は完了し、
+この時点の残件は、簡易フローと通常のMarkdownの条件の比較の証拠と、未解決のP0/P1がないことを確かめて閉じることだった。
 
-2026-09-29にADR-058を承認し、人間による比較タスクの実測をGate Cの条件から外した。
-比較タスクの固定済み資産は任意研究用として保持する。Gate Cの残件は未解決P0/P1の閉包だけである。
+2026-09-29にADR-058を承認し、人による比較タスクの実測をGate Cの条件から外した。
+比較タスクの固定済みの資産は、任意の研究用として保持する。Gate Cの残件は、未解決のP0/P1がないことを確かめて閉じることだけである。
 
-実行入口は次のとおりである。`minimum.json`と`reference.json`は別の環境で同じcommitに対して作る。
+実行の入口は次のとおりである。`minimum.json`と`reference.json`は、別の環境で同じコミットに対して作る。
 
 ```text
 uv run tests/bitz-core/certify_gate_c.py run --role minimum --environment-id minimum-cpython-3-12 --python 3.12 --output /tmp/bitz-gate-c-minimum.json
@@ -305,23 +347,24 @@ uv run tests/bitz-core/certify_gate_c.py collect --input /tmp/bitz-gate-c-minimu
 
 ## 10. 性能受入
 
-性能はCoreの永続cacheなしで、OS file cacheの暖機1回後の5回中央値を測定する。基準環境で`check --all-workspaces`を30秒以内、
-3 workspaceへ到達する20文書・128 KiB以下のContextを1秒以内、Core peak RSS増分を200 MiB以内とする。
-10,000 SPEC fixtureは性能SLOではなくhard limitの安全停止を検証する。索引memoryは入力graph size、target一時memoryは
-最大Context閉包へ線形とし、全targetの完全Bundleを同時保持しない。resource dimensionごとに`limit - 1`、`limit`、
-`limit + 1`を分離し、最大dimension fixtureをCore peak RSS増分1 GiB以下、2 GiB memory limit下で正常終了させる。
+性能は、Coreの永続キャッシュを使わず、OSのファイルキャッシュを1回暖機した後の5回の中央値を測定する。基準環境で、`check --all-workspaces`を30秒以内、
+3つのワークスペースへ到達する20文書・128 KiB以下のコンテキストを1秒以内、CoreのピークRSSの増分を200 MiB以内とする。
+仕様文書10,000件のfixtureは、性能のSLOではなく、絶対上限の安全停止を検証する。索引のメモリは入力のグラフの大きさに、
+検証対象の一時的なメモリは最大のコンテキストの閉包に線形とし、すべての検証対象の完全なコンテキスト一式を同時に保持しない。
+リソースの次元ごとに`limit - 1`、`limit`、`limit + 1`を分離し、次元の値が最大のfixtureを、CoreのピークRSSの増分1 GiB以下、
+メモリの上限を2 GiBとした下で正常終了させる。
 
-測定条件と性能fixtureの位置づけは
+測定の条件と性能fixtureの位置づけは
 [適合fixture仕様 §8](../03.詳細設計/00_共通契約/04_適合fixture仕様.md#8-性能fixture)に従う。
-性能fixtureは合否matrixへ含めず、回帰検査として独立に運用する。
+性能fixtureはmatrixへ含めず、回帰検査として独立に運用する。
 
 ## 11. 1.0以降の再評価候補
 
-- ID改番支援
-- 実Profile
-- Projection Digest
-- formatter／style linter
-- より細粒度のtest selector
-- MCP面（[ADR-044](../02.設計書/10_決定記録/ADR-044_MCP面をCore-1.0のscope外とする.md)）
+- IDの改番の支援
+- 実際のプロファイル
+- 提示内容のハッシュ値
+- フォーマッター／スタイルのリンター
+- より細かい粒度でテストを選ぶ指定
+- MCPの面（[ADR-044](../02.設計書/10_決定記録/ADR-044_MCP面をCore-1.0のscope外とする.md)）
 
-候補は提案11の再評価条件を満たした場合だけ新しいADRから開始する。
+候補は、提案11の再評価の条件を満たした場合だけ、新しいADRから開始する。
