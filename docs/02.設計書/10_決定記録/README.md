@@ -100,3 +100,4 @@
 | [ADR-056](ADR-056_適合試験の分割実行とCIのGate-B集約を確定する.md) | 適合試験の分割実行とCIのGate B集約を確定する | accepted | ADR-048・049・051・052, CI, 適合harness |
 | [ADR-057](ADR-057_性能基準環境を継続利用可能なWSL2ホストへ更新する.md) | 性能基準環境を継続利用可能なWSL2ホストへ更新する | accepted | ADR-051・053・055, 性能fixture, Gate C |
 | [ADR-058](ADR-058_Gate-Cから比較タスクの実測を外す.md) | Gate Cから比較タスクの実測を外す | accepted | ADR-009, 実装計画, Gate C |
+| [ADR-059](ADR-059_Gate-CのP0-P1閉包を既存受入証拠で判定する.md) | Gate CのP0/P1閉包を既存受入証拠で判定する | proposed | ADR-049・052・057・058, 実装計画, Gate C |
