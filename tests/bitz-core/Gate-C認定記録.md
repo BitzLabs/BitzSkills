@@ -129,3 +129,6 @@ Diagnostic意味網羅reviewが`Passed`かつ未解決0件であることを検�
 
 Phase 5で閉包監査基盤は実装したが、変更確定後の同一commitに対する下限／基準の2環境証拠は未集約である。
 その最終集約が`gateC: "Passed"`を返すまでは、Gate Cの記録上の状態を`Pending`とする。
+
+下限環境の証拠採取は通常のCIから分離し、`.github/workflows/gate-c-minimum.yml`の
+`workflow_dispatch`で対象のrefを選んだ場合だけ起動する。pull request、`main`へのpush、定期実行では採取しない。

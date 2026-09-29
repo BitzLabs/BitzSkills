@@ -344,6 +344,8 @@ fixtureを実行する前に拒否する。ネットワークの無効化など�
 実装した後も、同じ確定したコミットに対する2環境の証拠を集約するまでは、Gate Cを`Pending`とする。
 
 実行の入口は次のとおりである。`minimum.json`と`reference.json`は、別の環境で同じコミットに対して作る。
+下限環境の証拠採取は、通常のCI、pull request、`main`へのpush、定期実行では起動しない。
+対象のrefを選んで`.github/workflows/gate-c-minimum.yml`を手動で起動した場合だけ実行する。
 
 ```text
 uv run tests/bitz-core/certify_gate_c.py run --role minimum --environment-id minimum-cpython-3-12 --python 3.12 --output /tmp/bitz-gate-c-minimum.json
