@@ -99,3 +99,4 @@
 | [ADR-055](ADR-055_Core-1.0の対象OSをPOSIXに限定する.md) | Core 1.0の対象OSをPOSIXに限定する | accepted | ADR-007・045・053, 実行環境・CLI基盤契約, 実装計画 |
 | [ADR-056](ADR-056_適合試験の分割実行とCIのGate-B集約を確定する.md) | 適合試験の分割実行とCIのGate B集約を確定する | accepted | ADR-048・049・051・052, CI, 適合harness |
 | [ADR-057](ADR-057_性能基準環境を継続利用可能なWSL2ホストへ更新する.md) | 性能基準環境を継続利用可能なWSL2ホストへ更新する | accepted | ADR-051・053・055, 性能fixture, Gate C |
+| [ADR-058](ADR-058_Gate-Cから比較タスクの実測を外す.md) | Gate Cから比較タスクの実測を外す | proposed | ADR-009, 実装計画, Gate C |
