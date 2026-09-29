@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "report.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "evaluationSetVersion", "stage", "result", "errors", "groups"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"}, "evaluationSetVersion": {"type": "string"},
+    "stage": {"enum": ["prototype", "release"]}, "result": {"enum": ["Passed", "Failed"]},
+    "errors": {"type": "array", "items": {"type": "string"}},
+    "groups": {"type": "array", "items": {"type": "object"}}
+  }
+}

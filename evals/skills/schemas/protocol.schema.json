@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "protocol.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "evaluationSetVersion", "status", "architectures", "categories", "minimumDistinctCases", "minimumRepetitions", "minimumModelFamilies", "thresholds", "invariants", "heldOut"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": "1.0"},
+    "evaluationSetVersion": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "status": {"enum": ["draft", "fixed", "retired"]},
+    "architectures": {"type": "object", "required": ["six-skill", "three-entry"], "additionalProperties": {"type": "object"}},
+    "categories": {"type": "array", "minItems": 7, "uniqueItems": true, "items": {"enum": ["explicit", "implicit", "contextual", "negative", "conflict", "behavior", "safety"]}},
+    "minimumDistinctCases": {"$ref": "#/$defs/stages"},
+    "minimumRepetitions": {"$ref": "#/$defs/stageIntegers"},
+    "minimumModelFamilies": {"$ref": "#/$defs/stageIntegers"},
+    "thresholds": {"type": "object", "required": ["prototype", "release"], "additionalProperties": {"$ref": "#/$defs/thresholds"}},
+    "invariants": {
+      "type": "object", "additionalProperties": false,
+      "required": ["deterministicChecks", "mandatorySafetyChecks", "readyWithoutEvidenceMaximum"],
+      "properties": {"deterministicChecks": {"const": 1.0}, "mandatorySafetyChecks": {"const": 1.0}, "readyWithoutEvidenceMaximum": {"const": 0}}
+    },
+    "heldOut": {
+      "type": "object", "additionalProperties": false,
+      "required": ["requiredForRelease", "storage", "record"],
+      "properties": {"requiredForRelease": {"const": true}, "storage": {"const": "runtime-supplied-non-public"}, "record": {"const": ["setVersion", "caseCount", "sha256"]}}
+    }
+  },
+  "$defs": {
+    "stageIntegers": {"type": "object", "additionalProperties": false, "required": ["prototype", "release"], "properties": {"prototype": {"type": "integer", "minimum": 1}, "release": {"type": "integer", "minimum": 1}}},
+    "stages": {"type": "object", "additionalProperties": false, "required": ["prototype", "release"], "properties": {"prototype": {"$ref": "#/$defs/categoryCounts"}, "release": {"$ref": "#/$defs/categoryCounts"}}},
+    "categoryCounts": {"type": "object", "additionalProperties": false, "required": ["explicit", "implicit", "contextual", "negative", "conflict", "behavior", "safety"], "properties": {"explicit": {"type": "integer", "minimum": 1}, "implicit": {"type": "integer", "minimum": 1}, "contextual": {"type": "integer", "minimum": 1}, "negative": {"type": "integer", "minimum": 1}, "conflict": {"type": "integer", "minimum": 1}, "behavior": {"type": "integer", "minimum": 1}, "safety": {"type": "integer", "minimum": 1}}},
+    "thresholds": {"type": "object", "additionalProperties": false, "required": ["positiveRecall", "contextualRecall", "negativeSpecificity", "conflictAccuracy", "behaviorAccuracy"], "properties": {"positiveRecall": {"type": "number", "minimum": 0, "maximum": 1}, "contextualRecall": {"type": "number", "minimum": 0, "maximum": 1}, "negativeSpecificity": {"type": "number", "minimum": 0, "maximum": 1}, "conflictAccuracy": {"type": "number", "minimum": 0, "maximum": 1}, "behaviorAccuracy": {"type": "number", "minimum": 0, "maximum": 1}}}
+  }
+}

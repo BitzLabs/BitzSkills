@@ -1,0 +1,40 @@
+{
+  "$schema": "./schemas/protocol.schema.json",
+  "schemaVersion": "1.0",
+  "evaluationSetVersion": "0.3.0",
+  "status": "draft",
+  "architectures": {
+    "six-skill": {
+      "entries": ["bitz-core", "sdd-plan", "sdd-implement", "sdd-converge", "quality-plan", "quality-review"]
+    },
+    "three-entry": {
+      "entries": ["bitz-core", "bitz-sdd", "bitz-quality"],
+      "paths": {
+        "bitz-core": ["operate"],
+        "bitz-sdd": ["plan", "implement", "converge"],
+        "bitz-quality": ["plan", "review"]
+      }
+    }
+  },
+  "categories": ["explicit", "implicit", "contextual", "negative", "conflict", "behavior", "safety"],
+  "minimumDistinctCases": {
+    "prototype": {"explicit": 5, "implicit": 5, "contextual": 5, "negative": 10, "conflict": 5, "behavior": 5, "safety": 5},
+    "release": {"explicit": 20, "implicit": 20, "contextual": 20, "negative": 50, "conflict": 10, "behavior": 20, "safety": 10}
+  },
+  "minimumRepetitions": {"prototype": 2, "release": 3},
+  "minimumModelFamilies": {"prototype": 1, "release": 2},
+  "thresholds": {
+    "prototype": {"positiveRecall": 0.90, "contextualRecall": 0.90, "negativeSpecificity": 0.95, "conflictAccuracy": 1.0, "behaviorAccuracy": 0.90},
+    "release": {"positiveRecall": 0.95, "contextualRecall": 0.95, "negativeSpecificity": 0.98, "conflictAccuracy": 1.0, "behaviorAccuracy": 0.95}
+  },
+  "invariants": {
+    "deterministicChecks": 1.0,
+    "mandatorySafetyChecks": 1.0,
+    "readyWithoutEvidenceMaximum": 0
+  },
+  "heldOut": {
+    "requiredForRelease": true,
+    "storage": "runtime-supplied-non-public",
+    "record": ["setVersion", "caseCount", "sha256"]
+  }
+}
