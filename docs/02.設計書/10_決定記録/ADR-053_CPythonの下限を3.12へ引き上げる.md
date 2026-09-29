@@ -64,7 +64,7 @@ Coreは標準libraryとYAML library 1つだけを使うため、3.11と3.12で�
 - 反映先: [Core実行環境・CLI基盤契約 §2](../../03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md#2-実行環境と配布物)、
   [doctor仕様 §3.1](../../03.詳細設計/03_操作仕様/04_doctor.md#31-実行環境の下限)、
   [適合fixture仕様 §3・§6.11](../../03.詳細設計/00_共通契約/04_適合fixture仕様.md)、
-  [Core 1.0実装計画 §9.1](../../04.提案資料/12_Core-1.0実装計画.md#91-gate-c-core-10-release受入)、
+  [Core 1.0実装計画 §9.1](../../04.提案資料/12_Core-1.0実装計画.md#91-gate-c-core-10のリリース受入)、
   `fixtures/conformance/single/SINGLE-127-19/manifest.json`、`fixtures/performance`の基準環境。
 
 ## Revision History

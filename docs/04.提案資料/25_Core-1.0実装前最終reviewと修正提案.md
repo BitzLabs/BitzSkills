@@ -48,7 +48,7 @@ Parser、Context Resolver、Diagnostic生成、Digest、check、verifyの製品�
 ### 2.2 Go判定基準
 
 [詳細設計README](../03.詳細設計/README.md#1-規範性)と
-[実装計画 Step 0](12_Core-1.0実装計画.md#2-step-0-仕様確定codeを書かない)に従い、
+[実装計画 Step 0](12_Core-1.0実装計画.md#2-step-0-仕様確定コードを書かない)に従い、
 次をすべて満たす場合だけGoとする。
 
 - ADRや提案資料を読まず、規範文書だけで公開挙動を一意に実装できる
