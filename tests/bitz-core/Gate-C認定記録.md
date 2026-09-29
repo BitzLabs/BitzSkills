@@ -101,3 +101,31 @@ Gate C集約の未完了項目から比較証拠を除いた。残件は未解�
 Gate C全体は`Pending`を維持する。
 
 1. 未解決P0/P1の閉包
+
+## 2026-09-29: Phase 5（P0/P1閉包監査）
+
+管理者が[ADR-059](../../docs/02.設計書/10_決定記録/ADR-059_Gate-CのP0-P1閉包を既存受入証拠で判定する.md)を承認した。
+正式なCore用SPECと継続的な課題追跡は、Coreを利用するbitz-sdd等の作成支援を利用可能にした後へ移行する。
+Gate Cでは、提案25が識別した次の11件を既存の受入証拠へ対応付けて閉包する。
+
+| 優先度 | ID | Gate Cで再監査する証拠 |
+|---|---|---|
+| P0 | `FIN-FIX-001` | Step 1〜5の全適合fixtureの集合、順序、完全一致 |
+| P0 | `FIN-DIAG-001` | `SINGLE-089`〜`095`、Diagnostic意味網羅review |
+| P0 | `FIN-EAI-001` | `SINGLE-096`〜`103` |
+| P0 | `FIN-OUT-001` | `SINGLE-104`〜`106` |
+| P0 | `FIN-TARGET-001` | `SINGLE-107`〜`113` |
+| P0 | `FIN-FM-001` | `SINGLE-114`〜`120` |
+| P1 | `FIN-DIGEST-001` | `SINGLE-042`、`MULTI-002-01`、`SINGLE-121`〜`124` |
+| P1 | `FIN-IO-001` | `SINGLE-125`群 |
+| P1 | `FIN-PROC-001` | `SINGLE-126`群 |
+| P1 | `FIN-CLI-001` | `SINGLE-127`群 |
+| P1 | `FIN-PERF-001` | 受入済み性能baselineと固定SLOの監査 |
+
+`priority_closure.py`は、提案25のP0/P1見出しが上記11件と一致すること、各fixture群が全matrixに存在すること、
+Diagnostic意味網羅reviewが`Passed`かつ未解決0件であることを検査する。`certify_gate_c.py collect`は、
+対象commitのfresh checkoutでこの監査を再実行し、commit、clean状態、終了コード、report hash、fixture件数、
+11件の個別証拠を`gate_c.py`で独立に照合する。欠落、未知ID、偽の件数、未解決review、改変した個別証拠は拒否する。
+
+Phase 5で閉包監査基盤は実装したが、変更確定後の同一commitに対する下限／基準の2環境証拠は未集約である。
+その最終集約が`gateC: "Passed"`を返すまでは、Gate Cの記録上の状態を`Pending`とする。

@@ -16,6 +16,7 @@ sys.path.insert(0, str(ROOT / "tests/bitz-core"))
 sys.path.insert(0, str(ROOT / "fixtures"))
 
 import gate_c
+import priority_closure
 from conformance.selection import step_ids
 
 SPEC = importlib.util.spec_from_file_location(
@@ -135,23 +136,43 @@ def performance_evidence() -> dict:
     }
 
 
+def priority_closure_evidence() -> dict:
+    report = priority_closure.audit(ROOT)
+    encoded = (json.dumps(report, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode()
+    return {
+        "schemaVersion": 1,
+        "commit": COMMIT,
+        "checkoutId": "checkout-priority-closure",
+        "cleanBefore": True,
+        "cleanAfter": True,
+        "exitCode": 0,
+        "report": report,
+        "stdoutSha256": hashlib.sha256(encoded).hexdigest(),
+        "stderrSha256": EMPTY,
+        "errors": [],
+    }
+
+
 def collected(rows=None):
     return gate_c.collect(rows or [evidence("minimum"), evidence("reference")],
                           commit=COMMIT, fixture_ids=IDS,
                           reference_manifest=REFERENCE_MANIFEST,
-                          performance_evidence=performance_evidence())
+                          performance_evidence=performance_evidence(),
+                          priority_closure_evidence=priority_closure_evidence())
 
 
 class CollectionTests(unittest.TestCase):
-    def test_foundation_and_performance_pass_but_leave_gate_c_pending(self):
+    def test_all_evidence_passes_gate_c(self):
         result = collected()
         self.assertEqual(result["gateCFoundation"], "Passed")
         self.assertEqual(result["gateCPerformance"], "Passed")
-        self.assertEqual(result["gateC"], "Pending")
+        self.assertEqual(result["gateCPriorityClosure"], "Passed")
+        self.assertEqual(result["gateC"], "Passed")
         self.assertEqual(result["fixtureCount"], 320)
         self.assertEqual(result["referenceManifestSha256"],
                          gate_c.manifest_digest(REFERENCE_MANIFEST))
-        self.assertEqual(result["pending"], ["unresolved P0/P1 closure"])
+        self.assertEqual(result["pending"], [])
+        self.assertEqual(result["priorityClosure"]["findingCount"], 11)
         self.assertEqual(set(result["environments"]), {"minimum", "reference"})
         self.assertEqual(result["performance"]["baselines"][0]["cases"], 7)
 
@@ -163,6 +184,7 @@ class CollectionTests(unittest.TestCase):
                     commit=COMMIT, fixture_ids=IDS,
                     reference_manifest=REFERENCE_MANIFEST,
                     performance_evidence=performance,
+                    priority_closure_evidence=priority_closure_evidence(),
                 )
 
         mutations = {
@@ -212,6 +234,60 @@ class CollectionTests(unittest.TestCase):
         duplicate["report"]["baselines"].append(
             copy.deepcopy(duplicate["report"]["baselines"][0]))
         assert_rejected(duplicate)
+
+    def test_forged_priority_closure_success_is_rejected(self):
+        def assert_rejected(closure):
+            with self.assertRaises(ValueError):
+                gate_c.collect(
+                    [evidence("minimum"), evidence("reference")],
+                    commit=COMMIT, fixture_ids=IDS,
+                    reference_manifest=REFERENCE_MANIFEST,
+                    performance_evidence=performance_evidence(),
+                    priority_closure_evidence=closure,
+                )
+
+        mutations = {
+            "schemaVersion": 2,
+            "commit": "c" * 40,
+            "cleanBefore": False,
+            "cleanAfter": False,
+            "exitCode": 1,
+            "errors": ["failure"],
+            "stdoutSha256": "bad",
+            "stderrSha256": "",
+        }
+        for key, value in mutations.items():
+            with self.subTest(key=key):
+                closure = priority_closure_evidence()
+                closure[key] = value
+                assert_rejected(closure)
+
+        def mutate_report(update):
+            closure = priority_closure_evidence()
+            update(closure["report"])
+            encoded = (json.dumps(closure["report"], ensure_ascii=False,
+                                  sort_keys=True, indent=2) + "\n").encode()
+            closure["stdoutSha256"] = hashlib.sha256(encoded).hexdigest()
+            return closure
+
+        report_mutations = (
+            lambda report: report.update(status="Failed"),
+            lambda report: report.update(source="another.md"),
+            lambda report: report["sourceFindings"]["P0"].pop(),
+            lambda report: report.update(diagnosticCoverage="Pending"),
+            lambda report: report.update(fixtureCount=0),
+            lambda report: report["findings"].pop(),
+            lambda report: report["findings"][0]["fixtureIds"].pop(),
+        )
+        for index, mutation in enumerate(report_mutations):
+            with self.subTest(report=index):
+                assert_rejected(mutate_report(mutation))
+
+    def test_priority_closure_audit_matches_current_tree(self):
+        report = priority_closure.audit(ROOT)
+        self.assertEqual(report["status"], "Passed")
+        self.assertEqual(report["errors"], [])
+        self.assertEqual(len(report["findings"]), 11)
 
     def test_missing_duplicate_or_reused_environment_is_rejected(self):
         cases = [
@@ -330,6 +406,7 @@ class CollectionTests(unittest.TestCase):
 
     def test_collect_command_runs_performance_audit_for_target_commit(self):
         performance = performance_evidence()
+        closure = priority_closure_evidence()
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             inputs = []
@@ -341,15 +418,19 @@ class CollectionTests(unittest.TestCase):
             with (mock.patch.object(certify_gate_c, "load_reference_manifest_at",
                                     return_value=REFERENCE_MANIFEST),
                   mock.patch.object(certify_gate_c, "run_performance_evidence",
-                                    return_value=(performance, [])) as audit):
+                                    return_value=(performance, [])) as performance_audit,
+                  mock.patch.object(certify_gate_c, "run_priority_closure_evidence",
+                                    return_value=(closure, [])) as closure_audit):
                 code = certify_gate_c.main([
                     "collect", *inputs, "--commit", COMMIT, "--output", str(output),
                 ])
             self.assertEqual(code, 0)
-            audit.assert_called_once_with(COMMIT)
+            performance_audit.assert_called_once_with(COMMIT)
+            closure_audit.assert_called_once_with(COMMIT)
             result = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(result["gateCPerformance"], "Passed")
-            self.assertEqual(result["pending"], gate_c.PENDING)
+            self.assertEqual(result["gateCPriorityClosure"], "Passed")
+            self.assertEqual(result["pending"], [])
 
     def test_unit_count_parser_accepts_unittest_summary_only(self):
         self.assertEqual(certify_gate_c.unit_test_count(

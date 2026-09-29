@@ -9,9 +9,32 @@ import re
 ROLES = ("minimum", "reference")
 MINIMUM_ENVIRONMENT_ID = "minimum-cpython-3-12"
 PYTHON_MINOR = (3, 12)
-PENDING = [
-    "unresolved P0/P1 closure",
-]
+PRIORITY_RULES = {
+    "P0": {
+        "FIN-FIX-001": {"allConformance": True, "evidence": "all-conformance"},
+        "FIN-DIAG-001": {"prefixes": ("SINGLE-089", "SINGLE-090", "SINGLE-091",
+                                             "SINGLE-092", "SINGLE-093", "SINGLE-094",
+                                             "SINGLE-095"),
+                         "evidence": "conformance-and-diagnostic-audit"},
+        "FIN-EAI-001": {"prefixes": tuple(f"SINGLE-{number:03d}" for number in range(96, 104)),
+                        "evidence": "conformance"},
+        "FIN-OUT-001": {"prefixes": ("SINGLE-104", "SINGLE-105", "SINGLE-106"),
+                        "evidence": "conformance"},
+        "FIN-TARGET-001": {"prefixes": tuple(f"SINGLE-{number:03d}" for number in range(107, 114)),
+                           "evidence": "conformance"},
+        "FIN-FM-001": {"prefixes": tuple(f"SINGLE-{number:03d}" for number in range(114, 121)),
+                       "evidence": "conformance"},
+    },
+    "P1": {
+        "FIN-DIGEST-001": {"exact": ("SINGLE-042", "MULTI-002-01", "SINGLE-121",
+                                      "SINGLE-122", "SINGLE-123", "SINGLE-124"),
+                           "evidence": "conformance"},
+        "FIN-IO-001": {"prefixes": ("SINGLE-125",), "evidence": "conformance"},
+        "FIN-PROC-001": {"prefixes": ("SINGLE-126",), "evidence": "conformance"},
+        "FIN-CLI-001": {"prefixes": ("SINGLE-127",), "evidence": "conformance"},
+        "FIN-PERF-001": {"performance": True, "evidence": "performance"},
+    },
+}
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 FINGERPRINT_FIELDS = (
     "system",
@@ -146,6 +169,72 @@ def validate_performance_evidence(row: dict, *, commit: str,
     }
 
 
+def _closure_fixture_ids(fixture_ids: list[str], rule: dict) -> list[str]:
+    if rule.get("allConformance"):
+        return fixture_ids
+    selected = [identifier for identifier in rule.get("exact", ()) if identifier in fixture_ids]
+    for prefix in rule.get("prefixes", ()):
+        selected.extend(identifier for identifier in fixture_ids
+                        if identifier == prefix or identifier.startswith(prefix + "-"))
+    return list(dict.fromkeys(selected))
+
+
+def validate_priority_closure_evidence(row: dict, *, commit: str,
+                                       fixture_ids: list[str]) -> dict:
+    """対象commitで再計算した提案25のP0/P1閉包証拠を検査する。"""
+    _error(isinstance(row, dict), "P0/P1閉包証拠がありません")
+    _error(row.get("schemaVersion") == 1, "P0/P1閉包証拠のschemaVersionが不正です")
+    _error(row.get("commit") == commit, "P0/P1閉包証拠のcommitが対象commitと一致しません")
+    _error(isinstance(row.get("checkoutId"), str) and row["checkoutId"],
+           "P0/P1閉包証拠のcheckoutIdがありません")
+    _error(row.get("cleanBefore") is True and row.get("cleanAfter") is True,
+           "P0/P1閉包監査のfresh checkoutがcleanではありません")
+    _error(row.get("exitCode") == 0, "P0/P1閉包監査の終了コードが0ではありません")
+    _error(row.get("errors") == [], "P0/P1閉包監査証拠にerrorがあります")
+    for name in ("stdoutSha256", "stderrSha256"):
+        _error(isinstance(row.get(name), str) and SHA256.fullmatch(row[name]) is not None,
+               f"P0/P1閉包監査の{name}が不正です")
+
+    report = row.get("report")
+    _error(isinstance(report, dict), "P0/P1閉包監査reportがありません")
+    _error(report.get("status") == "Passed" and report.get("errors") == [],
+           "P0/P1閉包監査が通過していません")
+    report_bytes = (json.dumps(report, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode()
+    _error(row["stdoutSha256"] == hashlib.sha256(report_bytes).hexdigest(),
+           "P0/P1閉包監査reportのhashが標準出力と一致しません")
+    _error(report.get("source") ==
+           "docs/04.提案資料/25_Core-1.0実装前最終reviewと修正提案.md",
+           "P0/P1閉包監査のsourceが不正です")
+    expected_source = {priority: list(rules) for priority, rules in PRIORITY_RULES.items()}
+    _error(report.get("sourceFindings") == expected_source,
+           "提案25のP0/P1集合が閉包対象と一致しません")
+    _error(report.get("diagnosticCoverage") == "Passed",
+           "Diagnostic意味網羅reviewが通過していません")
+    _error(report.get("fixtureCount") == len(fixture_ids),
+           "P0/P1閉包監査のfixture件数が全matrixと一致しません")
+
+    findings = report.get("findings")
+    _error(isinstance(findings, list), "P0/P1閉包監査のfindingがありません")
+    expected_rows = []
+    for priority, rules in PRIORITY_RULES.items():
+        for identifier, rule in rules.items():
+            expected_rows.append({
+                "id": identifier,
+                "priority": priority,
+                "evidence": rule["evidence"],
+                "fixtureIds": _closure_fixture_ids(fixture_ids, rule),
+            })
+    _error(findings == expected_rows, "P0/P1閉包監査の個別証拠が一致しません")
+    return {
+        "status": "Passed",
+        "findingCount": len(findings),
+        "findings": [{"id": item["id"], "priority": item["priority"],
+                      "evidence": item["evidence"], "fixtureCount": len(item["fixtureIds"])}
+                     for item in findings],
+        "stdoutSha256": row["stdoutSha256"],
+    }
+
+
 def validate_reference_environment(environment: dict, manifest: dict) -> None:
     _error(isinstance(manifest, dict), "基準環境manifestがありません")
     _error(manifest.get("schemaVersion") == "1.0", "基準環境manifestのschemaVersionが不正です")
@@ -271,7 +360,8 @@ def validate_evidence(row: dict, *, commit: str, fixture_ids: list[str],
 
 
 def collect(rows: list[dict], *, commit: str, fixture_ids: list[str],
-            reference_manifest: dict, performance_evidence: dict) -> dict:
+            reference_manifest: dict, performance_evidence: dict,
+            priority_closure_evidence: dict) -> dict:
     _error(isinstance(reference_manifest, dict), "基準環境manifestがありません")
     _error(re.fullmatch(r"[0-9a-f]{40}", commit) is not None, "対象commitが40桁SHAではありません")
     _error(len(rows) == len(ROLES), "下限環境と基準環境の2件の証拠が必要です")
@@ -293,19 +383,23 @@ def collect(rows: list[dict], *, commit: str, fixture_ids: list[str],
 
     performance = validate_performance_evidence(
         performance_evidence, commit=commit, reference_manifest=reference_manifest)
+    priority_closure = validate_priority_closure_evidence(
+        priority_closure_evidence, commit=commit, fixture_ids=fixture_ids)
 
     environments = {role: by_role[role] for role in ROLES}
     return {
         "schemaVersion": 1,
         "commit": commit,
-        "gateC": "Pending",
+        "gateC": "Passed",
         "gateCFoundation": "Passed",
         "gateCPerformance": "Passed",
+        "gateCPriorityClosure": "Passed",
         "fixtureCount": len(fixture_ids),
         "conformanceSha256": validated[0]["conformanceSha256"],
         "referenceManifestSha256": manifest_digest(reference_manifest),
         "environments": environments,
         "performance": performance,
+        "priorityClosure": priority_closure,
         "covered": [
             "all conformance fixtures on CPython 3.12 minimum and reference roles",
             "Core unit tests on Linux in both roles",
@@ -313,7 +407,8 @@ def collect(rows: list[dict], *, commit: str, fixture_ids: list[str],
             "reference environment manifest and observed comparison key",
             "read-only/report/cache/timeout/signal/child-process acceptance in the full matrix",
             "accepted performance baseline and fixed SLO audit",
+            "proposal 25 P0/P1 findings with per-finding acceptance evidence",
         ],
-        "pending": list(PENDING),
+        "pending": [],
         "errors": [],
     }
