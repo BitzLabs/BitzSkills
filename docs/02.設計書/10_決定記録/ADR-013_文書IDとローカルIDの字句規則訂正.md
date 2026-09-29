@@ -29,19 +29,19 @@ statement-id = document-id, ":", local-id
 ### 理由
 
 - `REQ-1000`以降も同じ規則で扱える。
-- ローカルIDの先頭を固定するとLexerと正規表現が一致する。
-- Deferred Profileの概念名とCore文書種別を混同しない。
+- ローカルIDの先頭を固定すると字句解析器と正規表現が一致する。
+- 延期したプロファイルの概念名とCoreの文書種別を混同しない。
 
 ## Consequences
 
 - ADR-005のEBNFは本ADRで訂正され、実装はEARS-AI Core構文仕様を正とする。
 - EARS-AI Core構文仕様、配置・命名規則、ADR-005の3文書が同じ字句規則を指す。
-- `DOMAIN`や`RULE`などDeferred Profileの概念名は、Core 1.0の文書接頭辞として使用できない。
+- `DOMAIN`や`RULE`など、延期したプロファイルの概念名は、Core 1.0の文書接頭辞として使用できない。
 
 ## Notes
 
 - `local-id`の字句規則は、後続の
-  [ADR-054](ADR-054_規範文のlocal-idをFrontmatterの参照形式へそろえる.md)でFrontmatter Schemaの`idString`と
+  [ADR-054](ADR-054_規範文のlocal-idをFrontmatterの参照形式へそろえる.md)でフロントマターのスキーマの`idString`と
   同じ集合へ部分改訂した。`document-id`の規則と配置可能な文書接頭辞は変更していない。
 
 ## Revision History
@@ -51,3 +51,4 @@ statement-id = document-id, ":", local-id
 | 2026-08-25 | 初版を作成 | — |
 | 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |
 | 2026-09-25 | `local-id`の字句規則をFrontmatter Schemaの`idString`と同じ集合へ部分改訂 | ADR-054 |
+| 2026-09-29 | 説明文を日本語表記へ書き直した（意味の変更なし） | 表記規則 |

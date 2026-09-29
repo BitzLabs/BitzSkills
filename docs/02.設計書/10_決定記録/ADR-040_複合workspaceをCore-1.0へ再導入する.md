@@ -17,77 +17,77 @@ relations:
 
 ## Context
 
-ADR-017は、1つのGit repositoryにある複数の`.spec/`を明示的な複合workspaceとして扱う設計を採用した。その後、
-ADR-039はCore 1.0の最小垂直スライスを先に実証するため、複合workspaceを1.1以降へ延期した。
+ADR-017は、1つのGitリポジトリにある複数の`.spec/`を、明示的な複合ワークスペースとして扱う設計を採用した。その後、
+ADR-039はCore 1.0の最小の垂直スライスを先に実証するため、複合ワークスペースを1.1以降へ延期した。
 
-しかし、実際の導入単位にはWeb、API、libraryなど複数の所有境界を持つmonorepoが含まれる。単一root `.spec/`へ
-全要求、設定、test commandを集約すると、各projectの独立性、Context上限、変更pathの所有責任をCore 1.0で
-検証できない。利用開始後にworkspace ID、修飾参照、結果Schemaを追加すると、1.0で作成したSPECとadapterへ
-より大きな互換性影響を与える。
+しかし、実際の導入単位には、Web、API、ライブラリなど、複数の所有境界を持つモノレポが含まれる。ルートに置く単一の`.spec/`へ
+全要求、設定、テストコマンドを集約すると、各プロジェクトの独立性、コンテキストの上限、変更パスの所有責任をCore 1.0で
+検証できない。利用開始の後にワークスペースID、修飾参照、結果スキーマを追加すると、1.0で作成した仕様文書とアダプターへ
+より大きな互換性の影響を与える。
 
-一方、ADR-039で行った文書責務の分割、command名単位のverify、単一Context Digest、Profile実行基盤の延期は、
-複合workspaceとは独立して有効である。旧仕様全体を戻すのではなく、複合workspace固有契約を1文書へ隔離してCore 1.0へ含める。
+一方、ADR-039で行った文書責務の分割、コマンド名を単位とする`verify`、単一のコンテキストのハッシュ値、プロファイルの実行基盤の延期は、
+複合ワークスペースとは独立して有効である。旧仕様全体を戻すのではなく、複合ワークスペース固有の契約を1文書へ隔離してCore 1.0へ含める。
 
 ## Decision
 
-1. Core 1.0は、単一workspaceに加え、1つのGit repository内にある複数workspaceの明示的な複合workspaceを扱う。
-   Git repository rootの`.spec/bitz.yaml`をroot workspaceとし、`monorepo.members`へmemberの`id`と`path`を
-   列挙する。暗黙の再帰探索、glob、入れ子の複合workspace、Git submodule、別repositoryは対象外とする。
-2. 文書IDはworkspace内で一意とする。複合workspace内の正規参照は`<workspace-id>::<document-id>`、規範文参照は
-   `<workspace-id>::<document-id>:<local-id>`とする。workspaceを越える参照と複合workspace内の機械結果は修飾形式を
-   使用し、探索順による暗黙解決を禁止する。
-3. memberは自身の設定、SPEC、code、test、TASK変更pathを所有する。member同士のpath重複と入れ子を禁止し、
-   root workspaceは登録member配下のcodeとtestを直接所有しない。設定はworkspace間で継承しない。
-4. 通常操作はactive workspaceを1つ選ぶ。`--workspace`は複合workspaceのcatalogから明示選択する。
-   `check`、`verify`、`doctor`はroot workspaceで`--all-workspaces`を受け付ける。全体操作はrootを先頭、
-   memberをworkspace ID辞書順で逐次処理し、結果を共通statusの最悪値規則で集約する。
-5. 横断Contextは起点から強い関係で到達するworkspaceだけを完全解決する。起点workspaceのContext上限を適用し、
-   到達workspaceのID、path、実効設定、修飾edgeをContext Digestへ含める。未到達memberの本文と設定は含めない。
-6. verify bindingはADR-039 Decision 10どおりcommand名で識別する。複合workspaceでの実行単位は
-   `(workspaceId, commandName)`とし、異なるworkspaceのcommandを統合しない。testは所有workspaceの設定と`cwd`で
-   実行する。旧ADR-030のargv/cwd内容同一性による統合は復活させない。
-7. Core 1.0は`monorepo.v1` Capabilityを公開する。Gitは単一workspaceでは引き続き縮退可能だが、複合workspaceでは
-   repository境界、member、所有範囲を確定する前提であるため、利用できなければ複合workspace操作を`blocked`にする。
-8. member既定上限は20、hard limitは100とし、SPEC file 10,000件の上限は複合workspace全体へ適用する。
-   ID自動改番、Profile実行基盤、公開hash追加、必須Revision History、厳格style検査は再導入しない。
-9. 本決定はADR-039 Decision 5と、それに対応するConsequences、Notesの複合workspace延期部分だけを置き換える。
-   ADR-039の他のDecisionは変更しない。ADR-017は旧構造に基づく履歴として`superseded`のまま保持し、現在の
+1. Core 1.0は、単一ワークスペースに加え、1つのGitリポジトリ内にある複数のワークスペースを束ねる、明示的な複合ワークスペースを扱う。
+   Gitリポジトリのルートの`.spec/bitz.yaml`をルートワークスペースとし、`monorepo.members`へメンバーの`id`と`path`を
+   列挙する。暗黙の再帰探索、glob、入れ子の複合ワークスペース、Gitのサブモジュール、別のリポジトリは対象外とする。
+2. 文書IDはワークスペース内で一意とする。複合ワークスペース内の正規の参照は`<workspace-id>::<document-id>`、規範文の参照は
+   `<workspace-id>::<document-id>:<local-id>`とする。ワークスペースを越える参照と、複合ワークスペース内の機械が読む結果は、修飾IDを
+   使用し、探索の順序による暗黙の解決を禁止する。
+3. メンバーは、自身の設定、仕様文書、コード、テスト、TASKの変更パスを所有する。メンバーどうしのパスの重複と入れ子を禁止し、
+   ルートワークスペースは、登録したメンバーの配下のコードとテストを直接所有しない。設定はワークスペース間で継承しない。
+4. 通常の操作は、作業ワークスペースを1つ選ぶ。`--workspace`は、複合ワークスペースのカタログから明示的に選択する。
+   `check`、`verify`、`doctor`は、ルートワークスペースで`--all-workspaces`を受け付ける。全体操作は、ルートを先頭に、
+   メンバーをワークスペースIDの辞書順に逐次処理し、結果を、共通の結果の状態に対する最悪値の集約でまとめる。
+5. 横断コンテキストは、起点から強い関係で到達するワークスペースだけを完全に解決する。起点ワークスペースのコンテキストの上限を適用し、
+   到達ワークスペースのID、パス、実効設定、修飾されたエッジを、コンテキストのハッシュ値へ含める。到達しないメンバーの本文と設定は含めない。
+6. `verify`のテスト割当ては、ADR-039の`Decision`の10番目の項目のとおり、コマンド名で識別する。複合ワークスペースでの実行単位は
+   `(workspaceId, commandName)`とし、異なるワークスペースのコマンドを統合しない。テストは、所有ワークスペースの設定と`cwd`で
+   実行する。旧ADR-030の、引数列と`cwd`の組の内容が同一であることによる統合は復活させない。
+7. Core 1.0は対応機能`monorepo.v1`を公開する。Gitは、単一ワークスペースでは引き続き縮退できるが、複合ワークスペースでは
+   リポジトリの境界、メンバー、所有範囲を確定する前提であるため、利用できなければ複合ワークスペースの操作の結果の状態を`blocked`にする。
+8. メンバー数の既定の上限は20、絶対上限は100とし、仕様文書10,000件の上限は複合ワークスペース全体へ適用する。
+   IDの自動改番、プロファイルの実行基盤、公開するハッシュ値の追加、必須の改訂履歴、厳格なスタイル検査は再導入しない。
+9. 本決定は、ADR-039の`Decision`の5番目の項目と、それに対応する`Consequences`と`Notes`の複合ワークスペースの延期に関する部分だけを置き換える。
+   ADR-039のほかの`Decision`の項目は変更しない。ADR-017は旧構造に基づく履歴として`superseded`のまま保持し、現在の
    機械契約は再編後の詳細設計に置く。
 
 ## Consequences
 
-- projectごとに自己完結したSPECとtest commandを維持しつつ、共通要求を決定論的に追跡できる。
-- workspace、修飾ID、所有境界、集約結果が1.0の公開契約となり、単一workspaceの結果にも将来追加の揺れが減る。
-- 複合workspaceのcatalog、横断索引、所有検査、全体操作のfixtureと性能試験がCore 1.0の実装対象へ加わる。
-- 通常Contextは依存到達範囲に限定されるため、monorepo全体の本文をLLMへ投入しない。
-- Gitを持たないdirectoryでは単一workspaceだけを利用でき、複合workspace機能は利用できない。
-- 1.0のscopeは広がるが、複合workspace固有規則を独立仕様へ集約し、各操作仕様には公開引数と操作固有差分だけを置く。
+- プロジェクトごとに自己完結した仕様文書とテストコマンドを維持しつつ、共通の要求を決定論的に追跡できる。
+- ワークスペース、修飾ID、所有境界、集約した結果が1.0の公開契約となり、単一ワークスペースの結果についても、将来の追加による揺れが減る。
+- 複合ワークスペースのカタログ、横断索引、所有検査、全体操作のfixtureと性能試験が、Core 1.0の実装対象へ加わる。
+- 通常のコンテキストは、依存が到達する範囲に限定されるため、モノレポ全体の本文をLLMへ投入しない。
+- Gitを持たないディレクトリでは、単一ワークスペースだけを利用でき、複合ワークスペースの機能は利用できない。
+- 1.0のスコープは広がるが、複合ワークスペース固有の規則を独立した仕様へ集約し、各操作仕様には、公開する引数と操作固有の差分だけを置く。
 
 ## Alternatives
 
-1. **ADR-039どおり1.1まで延期する**: 初期実装は小さくなるが、対象monorepoで単一root `.spec/`への集約を
-   強制し、1.1移行時にID、参照、結果Schemaを変更するため採用しない。
-2. **repositoryに1つの巨大な`.spec/`だけを置く**: 既存Coreで動くが、設定、test command、ID、所有境界が
-   集中し、project単位のContextと責任分離を失うため採用しない。
-3. **`.spec/`を再帰探索して自動で複合workspaceにする**: 導入設定は減るが、fixture、vendor、submoduleを意図せず取り込み、
+1. **ADR-039のとおり1.1まで延期する**: 初期の実装は小さくなるが、対象のモノレポで、ルートに置く単一の`.spec/`への集約を
+   強制し、1.1へ移行するときにID、参照、結果スキーマを変更するため採用しない。
+2. **リポジトリに1つの巨大な`.spec/`だけを置く**: 既存のCoreで動くが、設定、テストコマンド、ID、所有境界が
+   集中し、プロジェクト単位のコンテキストと責任の分離を失うため採用しない。
+3. **`.spec/`を再帰的に探索して、自動で複合ワークスペースにする**: 導入のための設定は減るが、fixture、リポジトリへ取り込んだ外部のコード、サブモジュールを意図せず取り込み、
    入力と信頼境界が不安定になるため採用しない。
-4. **旧ADR-017と旧詳細仕様をそのまま復元する**: 既に簡素化されたverify binding、Profile、hash、文書構造まで
+4. **旧ADR-017と旧詳細仕様をそのまま復元する**: すでに簡素化した`verify`のテスト割当て、プロファイル、ハッシュ値、文書構造まで
    巻き戻して矛盾を再導入するため採用しない。
-5. **複数Git repositoryも同時に扱う**: 認証、network、version pin、可用性という別の信頼境界が必要なため
+5. **複数のGitリポジトリも同時に扱う**: 認証、ネットワーク、バージョンの固定、可用性という別の信頼境界が必要なため、
    Core 1.0には含めない。
 
 ## Notes
 
-- 現行契約は[複合workspace仕様](../../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md)を含む
+- 現行の契約は、[複合ワークスペース仕様](../../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md)を含む
   `docs/03.詳細設計`に記載する。
 - ADR-039のS2〜S7に対応する簡素化と、1規則1正本の文書構造は維持する。
-- verify結果のContext Digest配置とtarget別証跡は、後続の
-  [ADR-041](ADR-041_verify対象別証跡とreport明示保存の分離.md)で明確化した。
-- Decision 1、3、5、7の未確定境界は、後続の
-  [ADR-042](ADR-042_複合workspaceの同一性・所有境界・公開契約を確定する.md)で補完した。Decision 4の
-  root workspace条件はGit／複合workspaceの探索条件へ、Decision 8のresource契約は複合workspace全体の数値表へ同ADRで
+- `verify`の結果におけるコンテキストのハッシュ値の配置と、検証対象ごとの証跡は、後続の
+  [ADR-041](ADR-041_verify対象別証跡とreport明示保存の分離.md)で明確にした。
+- `Decision`の1、3、5、7番目の項目の未確定の境界は、後続の
+  [ADR-042](ADR-042_複合workspaceの同一性・所有境界・公開契約を確定する.md)で補完した。`Decision`の4番目の項目の
+  ルートワークスペースの条件はGit／複合ワークスペースの探索条件へ、`Decision`の8番目の項目のリソースの契約は複合ワークスペース全体の数値表へ、同じADRで
   置き換えた。
-- 設定key `monorepo`とCapability `monorepo.v1`は、後続の[ADR-047](ADR-047_複合workspaceの識別子をmultiWorkspaceへ改名する.md)で`multiWorkspace`、`multiWorkspace.v1`へ改名した。
+- 設定キー`monorepo`と対応機能`monorepo.v1`は、後続の[ADR-047](ADR-047_複合workspaceの識別子をmultiWorkspaceへ改名する.md)で`multiWorkspace`、`multiWorkspace.v1`へ改名した。
 
 ## Revision History
 
@@ -97,3 +97,4 @@ ADR-039はCore 1.0の最小垂直スライスを先に実証するため、複�
 | 2026-09-02 | verify結果のtarget別証跡を後続決定へ接続 | ADR-041 |
 | 2026-09-03 | Decision 1、3、5、7を補完し、Decision 4と8を部分改訂 | ADR-042 |
 | 2026-09-17 | 複合workspaceの識別子の改名を後続決定へ接続 | ADR-047 |
+| 2026-09-29 | 説明文を日本語表記へ書き直した（意味の変更なし） | 表記規則 |

@@ -13,47 +13,48 @@ relations:
 
 ## Context
 
-Diagnosticの共通契約は`severity`と`source`を必須としていたが、Context、doctor、複合workspaceの
-Diagnostic一覧には操作結果だけを記載した行があり、severityを決定できなかった。またCore版不一致、
-Git不在、Capability不足などはfile位置を持たず、従来の`source.path`例では表現できなかった。
+診断の共通契約は`severity`と`source`を必須としていたが、`context`、`doctor`、複合ワークスペースの
+診断の一覧には、操作の結果だけを記載した行があり、重大度を決定できなかった。またCoreのバージョンの不一致、
+Git不在、対応機能の不足などはファイルの位置を持たず、従来の`source.path`の例では表現できなかった。
 
-severityと操作statusを同一視すると、前提不足を表す`blocked`やツール障害を表す`error`を、
-成果物不適合の`failed`へ誤って集約する実装が生じる。
+重大度と操作の結果の状態を同一視すると、前提の不足を表す`blocked`やツールの障害を表す`error`を、
+成果物の不適合を表す`failed`へ誤って集約する実装が生じる。
 
 ## Decision
 
-1. Diagnostic severityは`info`、`warning`、`error`の3値とする。
-2. 操作statusは`passed`、`passed_with_warnings`、`failed`、`blocked`、`error`の5値とし、
-   severityとは別軸とする。
-3. 各Diagnostic定義は、条件、severity、その条件が操作へ与えるresult statusを定義する。
-4. `info`はstatusを変更せず、`warning`だけが存在する操作は`passed_with_warnings`とする。
-   `error` severityは原因に応じて`failed`、`blocked`、`error`のいずれかへ対応できる。
-5. `source`は`kind`で判別する`file`、`environment`、`invocation`の3形式とする。
-   file由来はworkspace相対pathと任意の行・列・key、環境由来はcomponentと任意のidentifier、
-   呼出し由来は任意のargumentを保持する。
-6. EARS-AI Validatorでは、EAI error Diagnosticを成果物不適合の`failed`へ対応付ける。
-   この固有規則を全操作へ一般化しない。
+1. 診断の重大度は`info`、`warning`、`error`の3つの値とする。
+2. 操作の結果の状態は`passed`、`passed_with_warnings`、`failed`、`blocked`、`error`の5つの値とし、
+   重大度とは別の軸とする。
+3. 各診断の定義は、条件、重大度、その条件が操作へ与える結果への効果を定義する。
+4. 重大度`info`は結果の状態を変更せず、重大度が`warning`の診断だけがある操作は`passed_with_warnings`とする。
+   重大度`error`は、原因に応じて`failed`、`blocked`、`error`のいずれかへ対応できる。
+5. `source`は、`kind`で判別する`file`、`environment`、`invocation`の3つの形式とする。
+   `file`由来はワークスペース相対のパスと任意の行、列、キーを、`environment`由来は`component`と任意の`identifier`を、
+   `invocation`由来は任意の`argument`を保持する。
+6. EARS-AIの検証プログラムでは、`EAI`の診断のうち重大度`error`のものを、成果物の不適合を表す`failed`へ対応付ける。
+   この固有の規則を全操作へ一般化しない。
 
 ## Consequences
 
-- 全Diagnosticを必須field欠落なしでJSON化できる。
-- 同じ`error` severityでも、成果物不適合、前提不足、ツール障害を終了コードで区別できる。
-- Diagnosticの表示優先度と、呼出し側が分岐する操作statusを独立して利用できる。
-- 既存Diagnostic例の`source`へ`kind`を追加する必要がある。
-- Context、doctor、複合workspace、SPEC検証の一覧へseverityとresult statusの列が必要になる。
+- すべての診断を、必須フィールドの欠落なしでJSONにできる。
+- 同じ重大度`error`でも、成果物の不適合、前提の不足、ツールの障害を、終了コードで区別できる。
+- 診断の表示上の優先度と、呼出し側が分岐に使う操作の結果の状態を、独立して利用できる。
+- 既存の診断の例の`source`へ、`kind`を追加する必要がある。
+- `context`、`doctor`、複合ワークスペース、仕様文書の検証の一覧へ、重大度と結果への効果の列が必要になる。
 
 ## Alternatives
 
-1. **`source`を任意にする**: 環境診断は表現できるが、診断の発生源を機械判定できなくなるため採用しない。
-2. **severityからstatusを一意に導出する**: `blocked`と`error`を正しく区別できないため採用しない。
-3. **環境診断だけ別Schemaにする**: adapterが複数の診断型を扱うことになり、共通契約を失うため採用しない。
+1. **`source`を任意にする**: 環境に由来する診断は表現できるが、診断の発生元を機械で判定できなくなるため採用しない。
+2. **重大度から結果の状態を一意に導出する**: `blocked`と`error`を正しく区別できないため採用しない。
+3. **環境に由来する診断だけを別のスキーマにする**: アダプターが複数の診断の型を扱うことになり、共通契約を失うため採用しない。
 
 ## Notes
 
-- 本ADRは2026-08-31のP1残存契約review「Diagnostic共通契約の不足」に対する裁定である。
+- 本ADRは2026-08-31のP1の残存契約レビュー「Diagnostic共通契約の不足」に対する裁定である。
 
 ## Revision History
 
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-08-31 | severity、操作status、sourceの分離を決定 | — |
+| 2026-09-29 | 説明文を日本語表記へ書き直した（意味の変更なし） | 表記規則 |

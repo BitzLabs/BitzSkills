@@ -12,54 +12,58 @@ relations:
 
 ## Context
 
-設定仕様はCLIによるtimeout短縮を許可していたが、`bitz verify`の公開文法に該当引数がなかった。
-Context Digestは検証command名だけを含み、同じ名前の`argv`や`cwd`が変更されても以前の検証bindingと
-同じdigestになり得た。起動失敗とtimeout時のcommand結果Schema、Diagnostic codeも未定義だった。
-またTASKが規範文を持たないTECHを`addresses`できる既存契約が、明示verifyの対象選択へ接続されていなかった。
+設定仕様は、CLIによるタイムアウトの短縮を許可していたが、`bitz verify`の公開文法に該当する引数がなかった。
+コンテキストのハッシュ値は検証のコマンド名だけを含み、同じ名前の`argv`や`cwd`が変更されても、以前の検証のテスト割当てと
+同じハッシュ値になり得た。起動の失敗とタイムアウトの場合の、コマンドの結果のスキーマと診断コードも未定義だった。
+またTASKが、規範文を持たないTECHを`addresses`できる既存の契約が、明示対象を指定した`verify`の対象の選択へ
+接続されていなかった。
 
 ## Decision
 
-1. 明示verifyと`verify --all-workspaces`へ`--timeout <seconds>`を追加する。1以上3600以下の整数とし、
-   各workspaceの実効timeoutは`min(CLI指定値, verify.timeoutSeconds)`とする。未指定時は設定値を使う。
-2. Context Digestは、検証command名に加えて正規化した`argv` template、`cwd`、設定timeoutを含める。
-   CLI timeoutは実行ごとのcapでありContext Digestへ含めず、verify結果へ実効値を記録する。
+1. 明示対象を指定した`verify`と`verify --all-workspaces`へ、`--timeout <seconds>`を追加する。1以上3600以下の整数とし、
+   各ワークスペースの実効タイムアウトは`min(CLI指定値, verify.timeoutSeconds)`とする。未指定の場合は設定の値を使う。
+2. コンテキストのハッシュ値は、検証のコマンド名に加えて、正規化した引数列テンプレート（`argv`）、`cwd`、
+   設定のタイムアウトを含める。CLIのタイムアウトは実行ごとの上限であり、コンテキストのハッシュ値へ含めず、
+   `verify`の結果へ実効値を記録する。
 3. `commands[]`は`status`、`termination`、`exitCode`、`durationMs`、`timeoutSeconds`を持つ。
-   `termination`は`exit`、`timeout`、`spawn_error`、`signal`のいずれかとし、通常終了以外の`exitCode`は`null`とする。
-4. 終了コード0は`passed`、0以外は`failed`、起動失敗・signal・timeoutは`error`とする。
-5. 起動失敗またはsignal終了は`SPEC-VERIFY-COMMAND-001`／error／`error`、timeoutは
-   `SPEC-VERIFY-TIMEOUT-001`／error／`error`とする。testの非0終了はcommand結果を根拠とし、同義Diagnosticを必須にしない。
-6. timeoutの実効値と終了理由は単一workspace、複合workspace、標準出力、保存reportで同じSchemaを使う。
-7. TASKが規範文を持たないTECH IDを`addresses`する場合、そのTECHの文書単位`tests`をTASK verifyの
-   実行対象へ含める。target statementは増やさず、句単位coverageと文書単位bindingを区別する。
+   `termination`は`exit`、`timeout`、`spawn_error`、`signal`のいずれかとし、通常の終了以外の場合の`exitCode`は`null`とする。
+4. 終了コードが0の場合は`passed`、0以外の場合は`failed`、起動の失敗、シグナルによる終了、タイムアウトの場合は`error`とする。
+5. 起動の失敗またはシグナルによる終了は診断`SPEC-VERIFY-COMMAND-001`（重大度`error`、結果への効果`error`）、
+   タイムアウトは診断`SPEC-VERIFY-TIMEOUT-001`（重大度`error`、結果への効果`error`）とする。
+   テストが0以外で終了した場合は、コマンドの結果を根拠とし、同じ意味の診断を必須にしない。
+6. タイムアウトの実効値と終了の理由は、単一ワークスペース、複合ワークスペース、標準出力、保存したレポートで、
+   同じスキーマを使う。
+7. TASKが、規範文を持たないTECHのIDを`addresses`する場合、そのTECHの文書単位の`tests`を、TASKを対象とした
+   `verify`の実行対象へ含める。対象規範文は増やさず、規範文単位のカバレッジと文書単位のテスト割当てを区別する。
 
 ## Consequences
 
-- CLIのtimeout短縮を公開契約どおり実装できる。
-- command定義変更でContext Digestが変わり、古い検証bindingを現在のものと誤認しない。
-- timeout、起動不能、test失敗を機械利用側が区別できる。
-- 複合workspaceではworkspaceごとの設定値を保ったまま、単一のCLI capを適用できる。
-- 規範文なしTECHを対象とするTASKでも宣言済みtestを実行できる。
+- CLIによるタイムアウトの短縮を、公開契約どおりに実装できる。
+- コマンドの定義の変更でコンテキストのハッシュ値が変わり、古い検証のテスト割当てを現在のものと誤認しない。
+- タイムアウト、起動できない場合、テストの失敗を、機械で利用する側が区別できる。
+- 複合ワークスペースでは、ワークスペースごとの設定の値を保ったまま、CLIで指定する1つの上限を適用できる。
+- 規範文を持たないTECHを対象とするTASKでも、宣言済みのテストを実行できる。
 
 ## Alternatives
 
-1. **CLI timeoutを削除する**: 実効設定が許す安全な短縮用途を失うため採用しない。
-2. **CLI timeoutをContext Digestへ含める**: 同じ仕様解釈に対する実行ごとのcapでdigestが変わるため採用しない。
-3. **timeoutを非0終了として扱う**: testが結果を返した場合と、完了しなかった場合を区別できないため採用しない。
+1. **CLIのタイムアウトを削除する**: 実効設定が許す安全な短縮の用途を失うため採用しない。
+2. **CLIのタイムアウトをコンテキストのハッシュ値へ含める**: 同じ仕様の解釈に対する、実行ごとの上限でハッシュ値が変わるため採用しない。
+3. **タイムアウトを0以外の終了コードでの終了として扱う**: テストが結果を返した場合と、完了しなかった場合を区別できないため採用しない。
 
 ## Notes
 
-- 本ADRは2026-08-31のP2残存契約review「verify実行契約」に対する裁定である。
-- Decision 2が定めるContext Digestの構成要素は有効である。実行bindingの正規識別子と重複排除単位は
+- 本ADRは2026-08-31のP2の残存契約レビュー「verify実行契約」に対する裁定である。
+- `Decision`の2番目の項目が定めるコンテキストのハッシュ値の構成要素は有効である。テスト割当ての正規の識別子と、重複排除の単位は、
   [ADR-030](ADR-030_verify実行bindingの正規識別子と重複排除単位の統一.md)を正とする。
-- Decision 2の公開Digest構成と実行bindingの同一性は、
-  [ADR-039](ADR-039_Core-1.0仕様構造の再編とscope縮小.md)が`contextDigest`だけの公開とcommand名単位へ変更した。
-  timeout、終了理由、結果Schema、TECH文書単位bindingに関する他のDecisionは有効である。
-- target、Context Digest、binding、command結果の対応とbinding ID fieldは、後続の
+- `Decision`の2番目の項目の公開するハッシュ値の構成と、テスト割当ての同一性は、
+  [ADR-039](ADR-039_Core-1.0仕様構造の再編とscope縮小.md)が、`contextDigest`だけの公開とコマンド名の単位へ変更した。
+  タイムアウト、終了の理由、結果のスキーマ、TECHの文書単位のテスト割当てに関する他の`Decision`の項目は有効である。
+- 検証対象、コンテキストのハッシュ値、テスト割当て、コマンドの結果の対応と、テスト割当てのIDのフィールドは、後続の
   [ADR-041](ADR-041_verify対象別証跡とreport明示保存の分離.md)が補完した。
-- 2026-09-01の実装前異常case review `EDGE-003`で、timeout時にCoreが停止を保証する対象を直接起動したprocessまでと
-  明確化した。2026-09-07の`FIN-PROC-001`で有限時間回収を補完し、直接processはtimeout後2秒でforce kill、子孫は
-  best effortで停止し、子孫がpipeを保持してもtimeout到達から5秒以内に結果を確定する。標準出力と標準エラー出力は並行drainし、
-  redaction後の各末尾65,536 byteだけを保持する。
+- 2026-09-01の実装前の異常なケースのレビュー`EDGE-003`で、タイムアウトのときにCoreが停止を保証する対象を、直接起動した
+  プロセスまでと明確化した。2026-09-07の`FIN-PROC-001`で有限の時間での回収を補完し、直接起動したプロセスはタイムアウトの
+  2秒後に強制終了し、子孫は保証せず、可能な範囲で停止させ、子孫がパイプを保持していても、タイムアウトへ到達してから
+  5秒以内に結果を確定する。標準出力と標準エラー出力は並行して汲み出し、伏せ字化した後の、それぞれの末尾65,536バイトだけを保持する。
 
 ## Revision History
 
@@ -71,3 +75,4 @@ Context Digestは検証command名だけを含み、同じ名前の`argv`や`cwd`
 | 2026-09-01 | Decision 2の一部が`ADR-039`で変更されたことを注記 | `ADR-039` |
 | 2026-09-02 | target別証跡とbinding参照を後続決定へ接続 | `ADR-041` |
 | 2026-09-07 | timeout後の有限時間回収と出力保持契約を補完 | `FIN-PROC-001` |
+| 2026-09-29 | 説明文を日本語表記へ書き直した（意味の変更なし） | 表記規則 |
