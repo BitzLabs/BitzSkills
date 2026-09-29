@@ -1,7 +1,7 @@
 ---
 id: ADR-059
 title: Gate CのP0/P1閉包を既存受入証拠で判定する
-status: proposed
+status: accepted
 relations:
   related:
     - ADR-049
@@ -61,3 +61,4 @@ Gate Cで正式なSPEC追跡を要求すると、Coreを完成させるために
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-09-29 | Gate CのP0/P1閉包を既存受入証拠で判定する案を起案 | 提案25、Gate C Phase 4 |
+| 2026-09-29 | 管理者が方針を承認 | Gate C Phase 5 |

@@ -7,8 +7,8 @@
 
 runはcommit済みHEADからfresh checkoutを作り、指定した環境roleで全適合fixtureとCore単体試験を実行する。
 collectはminimum/referenceの2証拠をfail-closedで照合し、対象commitのfresh checkoutで
-受入済み性能baselineと固定SLOを再監査する。未解決P0/P1の閉包が残るため、
-基盤と性能監査が通過してもGate C自体は`Pending`を返す。
+受入済み性能baselineと固定SLO、および提案25のP0/P1 11件の個別証拠を再監査する。
+すべてが通過した場合だけGate Cを`Passed`とする。
 """
 from __future__ import annotations
 
@@ -36,6 +36,7 @@ CORE = "plugins/bitz-core"
 UNIT_RUNNER = "tests/bitz-core/run_test_files.py"
 REFERENCE_MANIFEST = Path("fixtures/performance/environments/core-1-reference.json")
 BENCHMARK_AUDIT = "fixtures/validate_benchmarks.py"
+PRIORITY_CLOSURE_AUDIT = "tests/bitz-core/priority_closure.py"
 
 
 def git(*args: str, cwd: Path = ROOT) -> subprocess.CompletedProcess:
@@ -303,6 +304,49 @@ def run_performance_evidence(commit: str) -> tuple[dict, list[str]]:
     return evidence, errors
 
 
+def run_priority_closure_evidence(commit: str) -> tuple[dict, list[str]]:
+    """対象commitのfresh checkoutでP0/P1 11件の対応証拠を再監査する。"""
+    errors: list[str] = []
+    uv = shutil.which("uv")
+    evidence = {
+        "schemaVersion": 1,
+        "commit": commit,
+        "checkoutId": uuid.uuid4().hex,
+        "cleanBefore": False,
+        "cleanAfter": False,
+        "exitCode": None,
+        "report": None,
+        "stdoutSha256": None,
+        "stderrSha256": None,
+        "errors": errors,
+    }
+    if uv is None:
+        errors.append("uvが見つかりません")
+        return evidence, errors
+    try:
+        with tempfile.TemporaryDirectory(prefix="bitz-gate-c-priority-") as temporary:
+            directory = Path(temporary) / "checkout"
+            checkout(commit, directory)
+            evidence["cleanBefore"] = clean(directory)
+            audit = run_command([uv, "run", PRIORITY_CLOSURE_AUDIT], directory, 300)
+            evidence["exitCode"] = audit["exitCode"]
+            evidence["stdoutSha256"] = sha256(audit["stdout"])
+            evidence["stderrSha256"] = sha256(audit["stderr"])
+            try:
+                evidence["report"] = json.loads(audit["stdout"])
+            except (ValueError, UnicodeDecodeError):
+                errors.append("P0/P1閉包監査の標準出力がJSONではありません")
+            if audit["exitCode"] != 0:
+                errors.append("P0/P1閉包監査が成功しませんでした")
+            evidence["cleanAfter"] = clean(directory)
+            if not evidence["cleanBefore"] or not evidence["cleanAfter"]:
+                errors.append("P0/P1閉包監査のfresh checkoutが実行前後でcleanではありません")
+    except (OSError, RuntimeError, subprocess.SubprocessError) as error:
+        errors.append(str(error).split("\n")[0])
+    evidence["errors"] = errors
+    return evidence, errors
+
+
 def write_json(value: dict, output: str | None) -> None:
     text = json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
     if output:
@@ -342,12 +386,17 @@ def main(argv: list[str] | None = None) -> int:
         performance, performance_errors = run_performance_evidence(commit)
         if performance_errors:
             raise RuntimeError(performance_errors[0])
+        priority_closure, priority_errors = run_priority_closure_evidence(commit)
+        if priority_errors:
+            raise RuntimeError(priority_errors[0])
         report = gate_c.collect(rows, commit=commit, fixture_ids=step_ids(5),
                                 reference_manifest=manifest,
-                                performance_evidence=performance)
+                                performance_evidence=performance,
+                                priority_closure_evidence=priority_closure)
     except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as error:
         report = {"schemaVersion": 1, "commit": commit, "gateC": "Failed",
                   "gateCFoundation": "Failed", "gateCPerformance": "Failed",
+                  "gateCPriorityClosure": "Failed",
                   "errors": [str(error).split("\n")[0]]}
         write_json(report, args.output)
         return 1
