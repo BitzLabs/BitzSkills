@@ -546,7 +546,7 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 | P0 6件 | 契約、Schema、matrixへ反映済み | 実入力と期待結果はmatrixの全件（2026-09-27時点で320件）をfixture化済み（golden Digestは`SINGLE-042`と`MULTI-002-01`で確定）。統合検証がmatrixの全IDの検証を確認 |
 | P1 5件 | 契約または性能受入成果物へ反映済み | process helper等の検証基盤、Core実装後の受入結果と性能baseline |
 | P2文書衛生 | accepted ADR linkとREADME状態を修正済み | — |
-| 自己適用 | repository rootに`.spec/`を作成済み（REQ-001 Parser、REQ-002 結果契約。2026-09-26に`approved`）。Core自身のcheck・context・verifyが通過 | Small FlowをREQ-003／TASK-001で完走済み（2026-09-26、[Small Flow実証記録](../../tests/bitz-core/Small-Flow実証記録.md)）。通常Markdown条件との比較とGate Cの最終判定が残る |
+| 自己適用 | repository rootに`.spec/`を作成済み（REQ-001 Parser、REQ-002 結果契約。2026-09-26に`approved`）。Core自身のcheck・context・verifyが通過 | Small FlowをREQ-003／TASK-001で完走済み（2026-09-26、[Small Flow実証記録](../../tests/bitz-core/Small-Flow実証記録.md)）。ADR-058により通常のMarkdownとの比較はGate Cの条件から除外 |
 | Step 0B | `Complete` | 公開JSON・文法・link・Git/process基盤・Diagnostic意味網羅・target集合25 case・実fixture 320件（単一workspace 258件、複合workspace 62件。内訳は[実装計画 §3.1](12_Core-1.0実装計画.md#31-step-0b-gate-a実証基盤)）の準備を検証済み。golden Digestは単一・複合workspaceとも独立2系統のreference計算で一致。上限境界24件はscale検証で実寸を照合済み。2026-09-27に`uv run fixtures/certify_gate_a.py`が独立した2つのcloneで統合検証とscale検証を再実行し、結果の一致を確認 |
 | Step 0-P | `Complete` | 基準入力・比較条件を固定し一括検証済み。実測はCore実装後 |
 | Gate A | `Allowed` | —（認定結果と実行環境は[適合fixture検証記録](../../fixtures/conformance/適合fixture検証記録.md)に記録） |
@@ -556,7 +556,7 @@ Frontmatter/YAML型にP0 6件が残る。Context Digest、cache、verify process
 | Step 4 | `Complete` | `verify`操作、test processの実行とtimeout、出力のredaction、実行file解決のdoctorとの共通化を実装済み |
 | Step 5 | `Complete` | 複合workspaceの事前検査、横断解決、check・context・verify、`bitz.compat`を実装済み |
 | Gate B | Step 1〜5 `Passed` | 各StepのCore実装を固定済みfixtureへ通して判定。認定結果は[Gate B認定記録](../../tests/bitz-core/Gate-B認定記録.md)に記録 |
-| Gate C | `Pending`（Phase 3まで実装） | 下限／基準の2環境証拠と受入済み性能baselineをfresh checkoutから採取・集約する。通常Markdown比較とP0/P1閉包が残る |
+| Gate C | `Pending`（Phase 4まで実装） | 下限／基準の2環境証拠と受入済み性能baselineをfresh checkoutから採取・集約する。残件はP0/P1閉包 |
 
 2026-09-17の単一fixture作成で、role割当、interpretのdraft refinement、statement起点の提示、verifyの起点TASKの
 `requires`を裁定し、関係・トレースモデル §6.1・§6.4・§7、context仕様 §4・§5、matrix `SINGLE-106-03`・`110`行へ

@@ -1,7 +1,7 @@
 ---
 id: ADR-058
 title: Gate Cから比較タスクの実測を外す
-status: proposed
+status: accepted
 relations:
   related:
     - ADR-009
@@ -55,3 +55,4 @@ Core 1.0のGate Cは、簡易フローと通常のMarkdownを比較し、完了�
 | Date | Summary | Reference |
 |---|---|---|
 | 2026-09-29 | Gate Cから比較タスクの実測を外す案を起案 | ADR-009、実装計画 §9.1 |
+| 2026-09-29 | 管理者が提案を承認 | Gate C Phase 4 |

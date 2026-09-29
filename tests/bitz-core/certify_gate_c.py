@@ -7,8 +7,8 @@
 
 runはcommit済みHEADからfresh checkoutを作り、指定した環境roleで全適合fixtureとCore単体試験を実行する。
 collectはminimum/referenceの2証拠をfail-closedで照合し、対象commitのfresh checkoutで
-受入済み性能baselineと固定SLOを再監査する。比較実験と未解決P0/P1閉包が残るため、
-基盤と性能監査が通過してもGate C自体はPendingを返す。
+受入済み性能baselineと固定SLOを再監査する。未解決P0/P1の閉包が残るため、
+基盤と性能監査が通過してもGate C自体は`Pending`を返す。
 """
 from __future__ import annotations
 
