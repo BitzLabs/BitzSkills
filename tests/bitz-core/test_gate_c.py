@@ -151,7 +151,7 @@ class CollectionTests(unittest.TestCase):
         self.assertEqual(result["fixtureCount"], 320)
         self.assertEqual(result["referenceManifestSha256"],
                          gate_c.manifest_digest(REFERENCE_MANIFEST))
-        self.assertEqual(result["pending"], gate_c.PENDING)
+        self.assertEqual(result["pending"], ["unresolved P0/P1 closure"])
         self.assertEqual(set(result["environments"]), {"minimum", "reference"})
         self.assertEqual(result["performance"]["baselines"][0]["cases"], 7)
 

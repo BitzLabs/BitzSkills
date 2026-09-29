@@ -80,9 +80,11 @@ Step 0完了はGate Aの必要条件だが、それだけでStep 1の開始を�
 検証記録は[Step 0-P検証結果](../../fixtures/Step-0-P検証記録.md)を参照する。
 
 入力、generator、期待digest、reference environment、測定protocol、比較task、成功基準はStep 1開始前に固定する。
-Core実行結果と人間による比較結果は、それぞれの対象機能が実装された後に取得する。
+Core実行結果は対象機能が実装された後に取得する。人間による比較結果は
+[ADR-058](../02.設計書/10_決定記録/ADR-058_Gate-Cから比較タスクの実測を外す.md)により、
+任意研究として扱い、Core 1.0のGate Cでは要求しない。
 
-- 通常Markdownまたは従来EARSを使う比較taskを5件固定する。
+- 通常のMarkdownまたは従来EARSを使う比較タスクを5件固定する。
 - 完了時間、仕様記述時間、review時間、欠陥検出数を定義する。
 - 単一workspaceと、20 workspace、SPEC 1,000件、relation 20,000件の基準複合workspaceのfixtureを固定する。
 - 平均file byte、statement数、edge密度、横断Contextの到達workspace数と基準環境manifestを固定する。
@@ -258,7 +260,8 @@ Coreが自分自身をcheck・context・verifyできる状態になった。
 SPEC作成 -> context -> pre-check -> code/test変更 -> post-check -> verify -> human review
 ```
 
-通常Markdown条件と比較し、完了時間、欠陥率、review負荷のいずれも改善しない機能を既定経路へ追加しない。
+実証では、検査結果、レビューで見つかった欠陥、差戻し、最終判断を記録する。通常のMarkdownとの定量的な比較は
+Gate Cの条件にせず、有効な比較結果を取得するまで生産性の優位性を主張しない（ADR-058）。
 
 ### 9.1 Gate C: Core 1.0 release受入
 
@@ -270,7 +273,6 @@ SPEC作成 -> context -> pre-check -> code/test変更 -> post-check -> verify ->
 - 単一と複合workspaceのCanonical JSONおよびContext Digestが2回実行でbyte一致する
 - 読取り専用、report、cache、timeout、signal、子processの受入試験が通過する
 - bitz-core自身の`.spec/`でSmall Flowを完走する
-- 通常Markdown条件との完了時間、欠陥率、review負荷の比較結果を記録する
 - 未解決のP0またはP1がない
 
 Gate Cは`Pending`である。Phase 1では、下限環境と基準環境の証拠を同一の確定commitへ結び付け、
@@ -284,12 +286,14 @@ fixture実行前に拒否する。network無効などのisolation条件は性能
 基盤が通過しても、次を満たすまではGate Cを`Passed`にしない。
 
 - 性能baselineを基準環境で取得してSLOを判定する
-- Small Flowと通常Markdown条件の比較証拠を確定する
 - 未解決P0/P1がないことを閉包する
 
 2026-09-28に基準環境の初回性能baselineと固定SLOを受け入れ、対象commitのfresh checkoutで
 `validate_benchmarks.py`を直接実行する監査をGate C集約へ統合した。性能条件は完了し、
-残件はSmall Flowと通常Markdown条件の比較証拠、および未解決P0/P1の閉包である。
+この時点の残件はSmall Flowと通常Markdown条件の比較証拠、および未解決P0/P1の閉包だった。
+
+2026-09-29にADR-058を承認し、人間による比較タスクの実測をGate Cの条件から外した。
+比較タスクの固定済み資産は任意研究用として保持する。Gate Cの残件は未解決P0/P1の閉包だけである。
 
 実行入口は次のとおりである。`minimum.json`と`reference.json`は別の環境で同じcommitに対して作る。
 

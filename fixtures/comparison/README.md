@@ -1,7 +1,10 @@
-# Core 1.0の比較task
+# Core 1.0の比較タスク
 
-本directoryは、仕様の記述とreviewの効果を評価する。機械の性能fixtureとは別である。各taskは、通常のMarkdownによる
-基準条件と、Bitzによる条件を同等に持つ。参加者はtaskを完了するまで`answer-key.json`を読んではならない。
+本ディレクトリは、仕様の記述とレビューの効果を評価する。機械の性能fixtureとは別である。各比較タスクは、
+通常のMarkdownによる基準条件と、Bitzによる条件を同等に持つ。参加者は比較タスクを完了するまで
+`answer-key.json`を読んではならない。
+
+ADR-058により、実測は任意研究として扱い、Core 1.0のGate Cまたはリリースの条件にはしない。
 
 手順の正本は`protocol.json`とする。条件はAB／BAの均衡した順序で割り当て、taskのclean copyを使い、networkと外部の
 支援を禁止し、必須の4指標をすべて記録する。taskは、完了条件が盲検のreviewを通過した場合だけ完了とする。

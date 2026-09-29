@@ -79,6 +79,7 @@ PyPI + `uv`をスタンドアロン実行体の代替経路として維持する
 | Decision 4 | [ADR-010](ADR-010_型付き依存とContext-Resolutionの中核化.md) | 公開操作へ`context`を追加し、3つから4つへ改訂 |
 | Decision 9 | [ADR-016](ADR-016_Agent-Plugins準拠の複数plugin配布.md) | 初期配布をAgent Plugins 1.0.0 package主体へ改訂 |
 | ADR-003から引き継いだDiagnostic所有者の扱い | [ADR-011](ADR-011_Diagnostic所有者とcode命名規約.md) | Diagnostic所有者とcode命名規約を改訂。番号付きDecisionには対応項目がない |
+| 「性能判断」の3項目目 | [ADR-058](ADR-058_Gate-Cから比較タスクの実測を外す.md) | 定量的な改善証明をCore 1.0の既定経路とGate Cの条件から外す |
 
 ## Revision History
 
@@ -88,3 +89,4 @@ PyPI + `uv`をスタンドアロン実行体の代替経路として維持する
 | 2026-08-27 | 公開操作、Diagnostic所有者、配布形態を後続ADRで改訂 | `ADR-010` `ADR-011` `ADR-016` |
 | 2026-08-31 | Frontmatterと固定H2構成へ移行 | `ADR-020` |
 | 2026-08-31 | 部分改訂の対象Decision項目を`Notes`へ明示 | `ADR-010` `ADR-011` `ADR-016` |
+| 2026-09-29 | 「性能判断」の3項目目を部分改訂 | `ADR-058` |
