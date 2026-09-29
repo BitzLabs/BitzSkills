@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "decision.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["selectedEntry", "selectedPath", "outcome", "events", "rejectedEvents", "readyClaimed", "evidencePresent", "reason"],
+  "properties": {
+    "selectedEntry": {"type": ["string", "null"], "enum": [null, "bitz-core", "sdd-plan", "sdd-implement", "sdd-converge", "quality-plan", "quality-review", "bitz-sdd", "bitz-quality"]},
+    "selectedPath": {"type": ["string", "null"], "enum": [null, "operate", "plan", "implement", "converge", "review"]},
+    "outcome": {"enum": ["proceed", "question", "stop", "not-applicable"]},
+    "events": {"type": "array", "items": {"type": "string"}},
+    "rejectedEvents": {"type": "array", "items": {"type": "string"}},
+    "readyClaimed": {"type": "boolean"},
+    "evidencePresent": {"type": "boolean"},
+    "reason": {"type": "string", "minLength": 1, "maxLength": 500}
+  }
+}

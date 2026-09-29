@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "run.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "evaluationSetVersion", "caseId", "architecture", "model", "repetition", "subjectCommit", "skillSetSha256", "trace", "observation", "checks", "metrics"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "evaluationSetVersion": {"type": "string"},
+    "caseId": {"type": "string", "pattern": "^SE-[0-9]{3}$"},
+    "architecture": {"enum": ["six-skill", "three-entry"]},
+    "model": {"type": "object", "additionalProperties": false, "required": ["family", "name", "version"], "properties": {"family": {"type": "string", "minLength": 1}, "name": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1}}},
+    "repetition": {"type": "integer", "minimum": 1},
+    "subjectCommit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "skillSetSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "trace": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}},
+    "observation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["selectedEntry", "selectedPath", "outcome", "events", "rejectedEvents", "readyClaimed", "evidencePresent"],
+      "properties": {
+        "selectedEntry": {"type": ["string", "null"]}, "selectedPath": {"type": ["string", "null"]},
+        "outcome": {"enum": ["proceed", "question", "stop", "not-applicable"]},
+        "events": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "rejectedEvents": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "readyClaimed": {"type": "boolean"}, "evidencePresent": {"type": "boolean"}
+      }
+    },
+    "checks": {"type": "object", "additionalProperties": false, "required": ["deterministic", "safety", "rubric", "independentReview"], "properties": {"deterministic": {"type": "boolean"}, "safety": {"type": "boolean"}, "rubric": {"enum": ["passed", "failed", "not-scored"]}, "independentReview": {"enum": ["passed", "failed", "not-required", "not-run"]}}},
+    "metrics": {"type": "object", "additionalProperties": false, "required": ["wallMs", "inputTokens", "outputTokens", "estimatedCostUsd", "readBytes"], "properties": {"wallMs": {"type": "integer", "minimum": 0}, "inputTokens": {"type": "integer", "minimum": 0}, "outputTokens": {"type": "integer", "minimum": 0}, "estimatedCostUsd": {"type": ["number", "null"], "minimum": 0}, "readBytes": {"type": "integer", "minimum": 0}}}
+  }
+}

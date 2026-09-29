@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "case.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "caseId", "category", "capability", "mode", "prompt", "context", "expected", "mandatory"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "caseId": {"type": "string", "pattern": "^SE-[0-9]{3}$"},
+    "category": {"enum": ["explicit", "implicit", "contextual", "negative", "conflict", "behavior", "safety"]},
+    "capability": {"enum": ["none", "bitz-core", "sdd-plan", "sdd-implement", "sdd-converge", "quality-plan", "quality-review"]},
+    "mode": {"enum": ["use", "do-not-use", "stop"]},
+    "prompt": {"type": "string", "minLength": 1},
+    "context": {"type": "array", "items": {"type": "string"}},
+    "expected": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sixSkill", "threeEntry", "outcome", "requiredEvents", "forbiddenEvents"],
+      "properties": {
+        "sixSkill": {"type": ["string", "null"], "enum": [null, "bitz-core", "sdd-plan", "sdd-implement", "sdd-converge", "quality-plan", "quality-review"]},
+        "threeEntry": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "object", "additionalProperties": false, "required": ["entry", "path"], "properties": {"entry": {"enum": ["bitz-core", "bitz-sdd", "bitz-quality"]}, "path": {"enum": ["operate", "plan", "implement", "converge", "review"]}}}
+          ]
+        },
+        "outcome": {"enum": ["proceed", "question", "stop", "not-applicable"]},
+        "requiredEvents": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "forbiddenEvents": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+      }
+    },
+    "mandatory": {"type": "boolean"}
+  }
+}

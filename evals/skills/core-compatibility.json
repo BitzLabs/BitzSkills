@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0",
+  "plugin": "bitz-core",
+  "pluginVersion": "1.0.0",
+  "python": ">=3.12",
+  "platforms": ["linux", "macos"],
+  "operations": {
+    "context": {"required": true, "formats": ["json", "text"]},
+    "check": {"required": true, "formats": ["json", "text"]},
+    "verify": {"required": true, "formats": ["json", "text"], "preExecutionArgvPreview": false},
+    "doctor": {"required": true, "formats": ["json", "text"]}
+  },
+  "resultContract": "docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md",
+  "compatibilityRule": "公開操作と結果契約だけへ依存し、src/bitzの内部APIへ依存しない"
+}

@@ -22,6 +22,21 @@ env:
   PYTHONDONTWRITEBYTECODE: "1"
 
 jobs:
+  skill-eval-audit:
+    name: スキル評価契約の監査
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+        with:
+          version: "0.11.28"
+          python-version: "3.12"
+      - name: 評価契約、ケース、Schemaの監査
+        run: uv run evals/skills/validate.py audit
+      - name: 評価器の単体試験
+        run: uv run --with jsonschema==4.23.0 python -m unittest tests.skills.test_skill_eval
+
   audit:
     name: 適合fixtureの監査
     runs-on: ubuntu-24.04
