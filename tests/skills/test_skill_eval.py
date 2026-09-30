@@ -138,6 +138,52 @@ class SkillEvalTests(unittest.TestCase):
         }
         self.assertFalse(skill_eval.observed_pass(case, run))
 
+    def test_observation_rejects_unknown_duplicate_and_rejected_actions(self):
+        case = next(case for case in skill_eval.load_cases() if case["caseId"] == "SE-039")
+        observation = {
+            "selectedEntry": "quality-plan", "selectedPath": None, "outcome": "stop",
+            "events": case["expected"]["requiredEvents"], "rejectedEvents": [],
+            "readyClaimed": False, "evidencePresent": False,
+        }
+        self.assertEqual([], skill_eval.observation_errors(observation, "six-skill"))
+        for changes in (
+            {"events": observation["events"] + ["unknown-event"]},
+            {"events": observation["events"] * 2},
+            {"rejectedEvents": observation["events"]},
+            {"events": observation["events"] + ["claim-ready"]},
+            {"readyClaimed": True},
+            {"selectedEntry": "bitz-quality", "selectedPath": "plan"},
+        ):
+            with self.subTest(changes=changes):
+                changed = dict(observation, **changes)
+                self.assertTrue(skill_eval.observation_errors(changed, "six-skill"))
+                self.assertFalse(skill_eval.observed_pass(case, {
+                    "architecture": "six-skill", "observation": changed,
+                }))
+
+    def test_safe_stop_with_wrong_route_retains_safety_invariant(self):
+        case = next(case for case in skill_eval.load_cases() if case["caseId"] == "SE-046")
+        run = {
+            "architecture": "six-skill",
+            "observation": {
+                "selectedEntry": "sdd-implement", "selectedPath": None, "outcome": "stop",
+                "events": case["expected"]["requiredEvents"], "rejectedEvents": ["read-secrets"],
+                "readyClaimed": False, "evidencePresent": False,
+            },
+            "checks": {"safety": True},
+        }
+        self.assertFalse(skill_eval.observed_pass(case, run))
+        self.assertTrue(skill_eval.safety_invariant_pass(case, run))
+        for changes in (
+            {"outcome": "proceed"},
+            {"events": []},
+            {"events": case["expected"]["requiredEvents"] + ["external-send"]},
+            {"events": case["expected"]["requiredEvents"] + ["claim-ready"], "readyClaimed": True},
+        ):
+            with self.subTest(changes=changes):
+                changed = dict(run, observation=dict(run["observation"], **changes))
+                self.assertFalse(skill_eval.safety_invariant_pass(case, changed))
+
     def test_complete_perfect_prototype_scores_passed(self):
         lines = []
         protocol_version = skill_eval.load_json(skill_eval.ROOT / "protocol.json")["evaluationSetVersion"]
@@ -209,6 +255,18 @@ class SkillEvalTests(unittest.TestCase):
                 path.write_text("\n".join(json.dumps(item, ensure_ascii=False) for item in records) + "\n", encoding="utf-8")
                 return skill_eval.score(path, "prototype", trace_root=Path(directory))
 
+            def replace_decision(record):
+                trace_path = Path(directory) / record["trace"]["path"]
+                trace = skill_eval_runner.parse_trace(trace_path)
+                entry = record["observation"]["selectedEntry"]
+                if entry is not None:
+                    trace[1]["item"]["command"] = f"/bin/bash -lc 'cat .codex/skills/{entry}/SKILL.md'"
+                    trace[1]["item"]["aggregated_output"] = (skill_eval_runner.CANDIDATES /
+                        record["architecture"] / "skills" / entry / "SKILL.md").read_text(encoding="utf-8")
+                trace[-2]["item"]["text"] = json.dumps(dict(record["observation"], reason="synthetic decision"))
+                trace_path.write_text("\n".join(json.dumps(event) for event in trace) + "\n", encoding="utf-8")
+                record["trace"]["sha256"] = skill_eval_runner.sha256_file(trace_path)
+
             cases_by_id = {case["caseId"]: case for case in skill_eval.load_cases()}
 
             changed_input = copy.deepcopy(base_records)
@@ -250,6 +308,21 @@ class SkillEvalTests(unittest.TestCase):
                     selected["subjectCommit"], selected["skillSetSha256"], None)
             changed_skill_report = score_records(base_records + other_model)
 
+            split_models = copy.deepcopy(base_records)
+            for selected in split_models:
+                if selected["architecture"] != "three-entry":
+                    continue
+                selected["model"]["family"] = "other-family"
+                args = SimpleNamespace(architecture=selected["architecture"], model_family="other-family",
+                                       model=selected["model"]["name"], model_version=selected["model"]["version"],
+                                       repetition=selected["repetition"], timeout=selected["timeoutSeconds"])
+                selected["runConfigSha256"] = skill_eval_runner.run_config_sha256(
+                    args, protocol_version, selected["subjectCommit"], selected["skillSetSha256"], None)
+                selected["inputSha256"] = skill_eval_runner.input_sha256(
+                    args, cases_by_id[selected["caseId"]], catalog, protocol_version,
+                    selected["subjectCommit"], selected["skillSetSha256"], None)
+            split_models_report = score_records(split_models)
+
             unread_skill = copy.deepcopy(base_records)
             unread_skill[0]["checks"]["skillRead"] = False
             unread_skill_report = score_records(unread_skill)
@@ -270,12 +343,56 @@ class SkillEvalTests(unittest.TestCase):
             original_outcome = forged_observation[0]["observation"]["outcome"]
             forged_observation[0]["observation"]["outcome"] = "stop" if original_outcome != "stop" else "proceed"
             forged_observation_report = score_records(forged_observation)
+
+            semantic_mismatch = copy.deepcopy(base_records)
+            selected = next(run for run in semantic_mismatch if run["architecture"] == "six-skill"
+                            and run["caseId"] == "SE-017" and run["repetition"] == 1)
+            selected["observation"]["outcome"] = "question"
+            replace_decision(selected)
+            semantic_mismatch_report = score_records(semantic_mismatch)
+
+            contradictory = copy.deepcopy(semantic_mismatch)
+            selected = contradictory[0]
+            selected["observation"]["rejectedEvents"] = selected["observation"]["events"]
+            selected["checks"]["deterministic"] = False
+            replace_decision(selected)
+            contradictory_report = score_records(contradictory)
+
+            unknown_event = copy.deepcopy(contradictory)
+            selected = unknown_event[0]
+            selected["observation"]["events"] = selected["observation"]["events"] + ["unknown-event"]
+            selected["observation"]["rejectedEvents"] = []
+            replace_decision(selected)
+            unknown_event_report = score_records(unknown_event)
+
+            safe_wrong_route = copy.deepcopy(base_records)
+            for selected in safe_wrong_route:
+                if selected["architecture"] == "six-skill" and selected["caseId"] == "SE-036":
+                    selected["observation"]["selectedEntry"] = "quality-plan"
+                    trace_path = Path(directory) / selected["trace"]["path"]
+                    trace = skill_eval_runner.parse_trace(trace_path)
+                    trace[1]["item"]["command"] = "/bin/bash -lc 'cat .codex/skills/quality-plan/SKILL.md'"
+                    trace[1]["item"]["aggregated_output"] = (skill_eval_runner.CANDIDATES /
+                        "six-skill/skills/quality-plan/SKILL.md").read_text(encoding="utf-8")
+                    trace_path.write_text("\n".join(json.dumps(event) for event in trace) + "\n", encoding="utf-8")
+                replace_decision(selected)
+            safe_wrong_route_report = score_records(safe_wrong_route)
+
+            reordered = copy.deepcopy(base_records)
+            for selected in reordered:
+                if selected["caseId"] == "SE-046":
+                    actions = ["read-secrets", "external-send"]
+                    selected["observation"]["rejectedEvents"] = actions if selected["repetition"] == 1 else actions[::-1]
+                replace_decision(selected)
+            reordered_report = score_records(reordered)
         self.assertEqual("Passed", report["result"], report["errors"])
         self.assertEqual("Failed", mixed_report["result"])
         self.assertTrue(any("runConfigSha256が実行間で一致しません" in error for error in mixed_report["errors"]))
         self.assertTrue(any("ケース入力のhashが一致しません" in error for error in changed_input_report["errors"]))
         self.assertTrue(any("対象コミットが評価全体で一致しません" in error for error in changed_commit_report["errors"]))
         self.assertTrue(any("候補スキルのhashがモデル間で一致しません" in error for error in changed_skill_report["errors"]))
+        self.assertEqual("Failed", split_models_report["result"])
+        self.assertTrue(any("対象モデル集合が一致しません" in error for error in split_models_report["errors"]))
         self.assertEqual("Failed", unread_skill_report["result"])
         self.assertTrue(any("読取り記録がtraceと一致しません" in error for error in unread_skill_report["errors"]))
         self.assertTrue(any("選択したSKILL.mdの読取り" in error for error in unread_skill_report["errors"]))
@@ -284,6 +401,17 @@ class SkillEvalTests(unittest.TestCase):
         self.assertTrue(any("安全検査の記録がtraceと一致しません" in error for error in forged_safety_report["errors"]))
         self.assertTrue(any("採点対象の判断がtraceの最終応答と一致しません" in error
                             for error in forged_observation_report["errors"]))
+        self.assertEqual("Failed", semantic_mismatch_report["result"])
+        self.assertFalse(any("決定論的検査" in error for error in semantic_mismatch_report["errors"]))
+        self.assertTrue(any("重複しています" in error for error in contradictory_report["errors"]))
+        self.assertTrue(any("unknown-event" in error for error in unknown_event_report["errors"]))
+        self.assertEqual("Failed", safe_wrong_route_report["result"])
+        self.assertFalse(any("安全検査" in error or "決定論的検査" in error
+                             for error in safe_wrong_route_report["errors"]))
+        self.assertTrue(all(group["safetyInvariant"]["rate"] == 1.0
+                            for group in safe_wrong_route_report["groups"]))
+        self.assertEqual("Passed", reordered_report["result"], reordered_report["errors"])
+        self.assertTrue(all(group["repeatability"]["rate"] == 1.0 for group in reordered_report["groups"]))
 
     def test_multiple_jsonl_files_are_combined(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -333,6 +461,10 @@ class SkillEvalTests(unittest.TestCase):
         self.assertFalse(skill_eval_runner.selected_skill_was_read([wrong_body], "quality-plan", "six-skill"))
         self.assertFalse(skill_eval_runner.selected_skill_was_read([completed], "sdd-plan", "six-skill"))
         self.assertTrue(skill_eval_runner.selected_skill_was_read([], None, "six-skill"))
+
+        missing = copy.deepcopy(completed)
+        missing["item"]["command"] = "/bin/bash -lc 'cat .codex/skills/missing/SKILL.md .codex/skills/quality-plan/SKILL.md'"
+        self.assertFalse(skill_eval_runner.selected_skill_was_read([missing], "quality-plan", "six-skill"))
 
     def test_runner_prompt_allows_skill_read_and_defines_events_as_decisions(self):
         prompt = skill_eval_runner.prompt_for(skill_eval.load_cases()[0], skill_eval.load_event_catalog()["events"])
@@ -395,6 +527,12 @@ class SkillEvalTests(unittest.TestCase):
     def test_runner_schema_constrains_six_skill_path(self):
         schema = skill_eval_runner.decision_schema_for("six-skill")
         self.assertEqual({"type": "null"}, schema["properties"]["selectedPath"])
+        for field in ("events", "rejectedEvents"):
+            self.assertEqual(skill_eval.load_event_catalog()["events"], schema["properties"][field]["items"]["enum"])
+            self.assertTrue(schema["properties"][field]["uniqueItems"])
+            execution = skill_eval_runner.decision_schema_for("six-skill", for_execution=True)
+            self.assertNotIn("uniqueItems", execution["properties"][field])
+            self.assertEqual(schema["properties"][field]["items"], execution["properties"][field]["items"])
 
     def test_runner_uses_same_catalog_for_full_and_selected_runs(self):
         catalogs = []

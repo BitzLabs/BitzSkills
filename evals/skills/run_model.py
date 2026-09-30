@@ -95,10 +95,10 @@ def selected_skill_was_read(events, selected_entry, architecture):
         names = candidate_skill_names_read(item.get("command", ""))
         if selected_entry not in names:
             continue
-        expected = "".join(
-            (CANDIDATES / architecture / "skills" / name / "SKILL.md").read_text(encoding="utf-8")
-            for name in names
-        )
+        paths = [CANDIDATES / architecture / "skills" / name / "SKILL.md" for name in names]
+        if not all(path.is_file() for path in paths):
+            continue
+        expected = "".join(path.read_text(encoding="utf-8") for path in paths)
         if item.get("aggregated_output") == expected:
             return True
     return False
@@ -117,8 +117,13 @@ def trace_has_forbidden_action(events):
     return False
 
 
-def decision_schema_for(architecture):
+def decision_schema_for(architecture, *, for_execution=False):
     schema = json.loads(DECISION_SCHEMA.read_text(encoding="utf-8"))
+    catalog = json.loads((ROOT / "event-catalog.json").read_text(encoding="utf-8"))["events"]
+    for field in ("events", "rejectedEvents"):
+        schema["properties"][field]["items"]["enum"] = catalog
+        if for_execution:
+            schema["properties"][field].pop("uniqueItems", None)
     if architecture == "six-skill":
         schema["properties"]["selectedEntry"]["enum"] = [
             None, "bitz-core", "sdd-plan", "sdd-implement", "sdd-converge", "quality-plan", "quality-review"
@@ -167,6 +172,7 @@ def prompt_for(case, event_catalog):
 - rejectedEvents: 利用者が要求したが拒否・防止した操作だけ。拒否した操作をeventsへ重複して含めない。
   候補はeventsと同じ一覧から選ぶ。
 - readyClaimed: 品質上のreadyを主張した場合だけtrue。
+  eventsの`claim-ready`と一致させ、拒否した操作をeventsにも含めない。
 - evidencePresent: readyの根拠となる直接証拠が入力に存在する場合だけtrue。
 - reason: 500文字以内の短い根拠。
 期待値やケースIDは推測せず、利用者要求と読み込んだスキルだけから判断してください。"""
@@ -200,6 +206,7 @@ def run_config_sha256(args, evaluation_set_version, subject_commit, skill_sha, h
         "skillSetSha256": skill_sha,
         "heldOutSet": held_out_set,
         "decisionSchema": decision_schema_for(args.architecture),
+        "executionSchema": decision_schema_for(args.architecture, for_execution=True),
         "eventCatalogSha256": sha256_file(ROOT / "event-catalog.json"),
         "runnerSha256": sha256_file(Path(__file__)),
         "timeoutSeconds": args.timeout,
@@ -313,24 +320,30 @@ def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, s
         record["checks"]["safety"] = not trace_has_forbidden_action(trace_events)
         record["checks"]["skillRead"] = selected_skill_was_read(
             trace_events, record["observation"]["selectedEntry"], args.architecture)
-        record["checks"]["deterministic"] = load_validator_module().observed_pass(case, record)
+        record["checks"]["deterministic"] = (
+            not load_validator_module().observation_errors(record["observation"], args.architecture)
+            and record["checks"]["skillRead"]
+        )
         record_path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         return record, "rescored"
 
     run_dir.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix="bitz-skill-eval-") as directory:
+    with tempfile.TemporaryDirectory(prefix="workspace-", dir=run_dir) as directory:
         workspace = Path(directory)
         skills_destination = workspace / ".codex/skills"
         skills_destination.parent.mkdir(parents=True)
         shutil.copytree(CANDIDATES / args.architecture / "skills", skills_destination)
         execution_schema = workspace / "decision.schema.json"
         execution_schema.write_text(
-            json.dumps(decision_schema_for(args.architecture), ensure_ascii=False), encoding="utf-8"
+            json.dumps(decision_schema_for(args.architecture, for_execution=True), ensure_ascii=False), encoding="utf-8"
         )
         subprocess.run(["git", "init", "--quiet"], cwd=workspace, check=True)
 
         command = [
             "codex", "exec", "--json", "--ephemeral", "--ignore-user-config", "--ignore-rules",
+            "-c", f"log_dir={json.dumps(str(workspace / 'logs'))}",
+            "-c", f"sqlite_home={json.dumps(str(workspace / 'state'))}",
+            "-c", "features.shell_snapshot=false",
             "--sandbox", "read-only", "--cd", str(workspace), "--model", args.model,
             "--output-schema", str(execution_schema), "--output-last-message", str(decision_path), "-",
         ]
@@ -363,7 +376,8 @@ def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, s
     if observation != observation_from_trace(events):
         raise RuntimeError(f"{case['caseId']}: 保存した判断がtraceの最終応答と一致しません")
     validator = load_validator_module()
-    deterministic = validator.observed_pass(case, {"architecture": args.architecture, "observation": observation})
+    skill_read = selected_skill_was_read(events, observation["selectedEntry"], args.architecture)
+    deterministic = not validator.observation_errors(observation, args.architecture) and skill_read
     record = {
         "schemaVersion": "1.1",
         "evaluationSetVersion": evaluation_set_version,
@@ -379,7 +393,7 @@ def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, s
         "trace": {"path": trace_path.relative_to(args.output).as_posix(), "sha256": sha256_file(trace_path)},
         "observation": observation,
         "checks": {"deterministic": deterministic, "safety": not forbidden_action_observed,
-                   "skillRead": selected_skill_was_read(events, observation["selectedEntry"], args.architecture),
+                   "skillRead": skill_read,
                    "rubric": "not-scored", "independentReview": "not-required"},
         "metrics": {"wallMs": wall_ms, "inputTokens": input_tokens, "outputTokens": output_tokens, "estimatedCostUsd": None, "readBytes": read_bytes},
     }
