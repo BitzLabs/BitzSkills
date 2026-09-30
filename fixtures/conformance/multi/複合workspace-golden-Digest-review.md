@@ -1,54 +1,55 @@
-# 複合workspace golden Digest fixture review
+# 複合ワークスペースのgoldenのハッシュ値のfixtureのレビュー記録
 
 [適合fixture仕様 §7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#7-最小matrix-複合ワークスペース)の
-`MULTI-002-01`と`MULTI-002-02`を扱う。いずれもreview済みの期待値であり、Coreの挙動を観測したものではない。
+`MULTI-002-01`と`MULTI-002-02`を扱う。いずれもレビュー済みの期待値であり、Coreの挙動を観測したものではない。
 
 ## corpusは1つで、3つの論点を同時に固定する
 
-root workspace `platform`はcatalogと共通要求`REQ-001`だけを持ち、member `web`（`apps/web`）と
-`api`（`services/api`）がそれぞれ`TECH-010`で1つずつ規範文を具体化する。この最小構成で次を同時に固定できる。
+ルートワークスペース`platform`は、カタログと共通のREQ`REQ-001`だけを持ち、メンバー`web`（`apps/web`）と
+`api`（`services/api`）が、それぞれ`TECH-010`で、規範文を1つずつ具体化する。この最小構成で次を同時に固定できる。
 
-- **横断`refines`**: `web::TECH-010`が`platform::REQ-001:AC-01`を、`api::TECH-010`が`:AC-02`を具体化する。
-- **横断coverage**: 各memberの`tests[].covers`が、直接`refines`している別workspaceの規範文を指す。
-  [複合workspace仕様 §5](../../../docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#5-所有境界)が許すのは
-  この直接refinementの場合だけであり、推移的なrefinementを根拠にしていない。
-- **同じlocal ID**: 2つのmemberがどちらも`TECH-010`を名乗る。修飾IDにしなければ衝突する入力である。
+- **ワークスペースをまたぐ`refines`**: `web::TECH-010`が`platform::REQ-001:AC-01`を、`api::TECH-010`が`:AC-02`を具体化する。
+- **ワークスペースをまたぐカバレッジ**: 各メンバーの`tests[].covers`が、直接`refines`している別のワークスペースの規範文を指す。
+  [複合ワークスペース仕様 §5](../../../docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#5-所有境界)が許すのは
+  この直接の具体化の場合だけであり、推移的な具体化を根拠にしていない。
+- **同じローカルID**: 2つのメンバーがどちらも`TECH-010`を名乗る。修飾IDにしなければ衝突する入力である。
 
-catalogの列挙順は`web`、`api`とした。結果と材料のworkspace順は常にrequest workspaceが先頭でID辞書順
+カタログの列挙順は`web`、`api`とした。結果と材料のワークスペースの順は、常に起点ワークスペースが先頭で、ID辞書順
 （`platform`、`api`、`web`）になるため、列挙順をそのまま出力へ写していれば監査が落ちる。
 
 ## goldenは2系統の参照計算で照合する
 
-単一workspaceの`SINGLE-042`と同じ方法を使う。`multi_reference`はreview済みのDigest材料をliteralで持ち、
-`multi_crosscheck`は同じbyte列を入力treeから導出する。後者はroot設定のcatalogを読み、workspaceごとに文書を読み、
-修飾ID、横断edge、到達workspaceだけの設定射影を自分で組み立てる。文書1件の読取りとRFC 8785 serializerは
-単一workspace側と共有し、複合workspace固有の解決だけを別に書いた。両者が一致しなければ監査は失敗する。
+単一ワークスペースの`SINGLE-042`と同じ方法を使う。`multi_reference`は、レビュー済みのハッシュ値の材料をリテラルで持ち、
+`multi_crosscheck`は、同じバイト列を入力の木構造から導出する。後者は、ルートワークスペースの設定のカタログを読み、
+ワークスペースごとに文書を読み、修飾ID、ワークスペースをまたぐエッジ、到達ワークスペースだけの設定の抽出を、自分で組み立てる。
+文書1件の読取りと、RFC 8785による正規JSONへの直列化の処理は、単一ワークスペースの側と共有し、複合ワークスペース固有の解決だけを別に書いた。
+両者が一致しなければ、監査は失敗する。
 
-材料は[Context Digest正規化仕様 §3](../../../docs/03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md#3-ハッシュ値の材料)に従い、
-`requestWorkspaceId`、到達workspaceの`id`と`path`、修飾起点、修飾edge、到達workspaceだけの設定を持つ。
-`multiWorkspace.maxMembers`、catalogの列挙順、未到達workspaceの設定は材料へ入れない。監査試験は、
-材料に`maxMembers`が現れないこと、workspaceと文書の並びが規定順であることを別に検査する。
+材料は[コンテキストのハッシュ値の正規化仕様 §3](../../../docs/03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md#3-ハッシュ値の材料)に従い、
+`requestWorkspaceId`、到達ワークスペースの`id`と`path`、修飾した起点、修飾したエッジ、到達ワークスペースだけの設定を持つ。
+`multiWorkspace.maxMembers`、カタログの列挙順、到達していないワークスペースの設定は材料へ入れない。監査試験は、
+材料に`maxMembers`が現れないこと、ワークスペースと文書の並びが規定順であることを別に検査する。
 
 golden値は`sha256:72661dba40f08eb57cc1a57fe36d9a60f67df24826b4ebfdbbd8afb77c6f1fd3`である。
 
-## `MULTI-002-02`は同じ材料をverifyの側から固定する
+## `MULTI-002-02`は同じ材料を`verify`の側から固定する
 
-`verify platform::REQ-001`は同じ`purpose=verify` Contextを再解決するので、`targetResults[0].contextDigest`は
-goldenと同じ値になる。監査は、2つのfixtureのDigest材料がbyte一致することを要求する。bindingは
-`api::backend`と`web::frontend`の2件であり、command実体は所有memberへ1件ずつ置く。root workspaceは
-commandを定義せず、bindingも持たない。
+`verify platform::REQ-001`は、同じ目的`verify`のコンテキストを再解決するので、`targetResults[0].contextDigest`はgoldenと同じ値になる。
+監査は、2つのfixtureのハッシュ値の材料がバイト単位で一致することを要求する。テスト割当ては
+`api::backend`と`web::frontend`の2件であり、コマンドの実体は、所有ワークスペースへ1件ずつ置く。ルートワークスペースは
+コマンドを定義せず、テスト割当ても持たない。
 
-## commit済みのcleanな状態を使う
+## コミット済みのクリーンな状態を使う
 
-複合workspaceのcheckとverifyはGit境界の確定を事前検査条件にするため、`revision`をnullにできない
-（[結果・Diagnostic・終了コード §2](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#2-結果の形)）。
-そのため両fixtureは`baseCommit`を持つcleanなcommit済み状態とし、期待値のcommit IDは共通normalizerが
-40桁16進としてだけ検査する固定の0埋め値を置く。単一workspaceのgolden（unborn、`revision: null`）とは
+複合ワークスペースの`check`と`verify`は、Gitの境界の確定を事前検査の条件にするため、`revision`を`null`にできない
+（[結果・診断・終了コード §2](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#2-結果の形)）。
+そのため両fixtureは、`baseCommit`を持つクリーンなコミット済みの状態とし、期待値のコミットIDには、共通の正規化器が
+40桁の16進としてだけ検査する、固定の0埋めの値を置く。単一ワークスペースのgolden（コミットのないリポジトリ、`revision: null`）とは
 この点だけが異なる。
 
 ## 限界
 
 - Coreは実行していない。実際の解決処理が同じ材料を作るかはGate Bで判定する。
-- `purpose`は`verify`だけを固定した。`interpret`と`implement`の複合workspace Digestは、
-  単一workspace側の群と同じく別のfixtureが必要である。
-- memberは2件である。member数の境界は`MULTI-020`と`MULTI-021`が扱う。
+- `purpose`は`verify`だけを固定した。`interpret`と`implement`の複合ワークスペースのコンテキストのハッシュ値は、
+  単一ワークスペースの側の群と同じく、別のfixtureが必要である。
+- メンバーは2件である。メンバー数の境界は`MULTI-020`と`MULTI-021`が扱う。

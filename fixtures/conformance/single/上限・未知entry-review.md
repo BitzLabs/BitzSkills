@@ -1,42 +1,42 @@
-# 上限・未知entry fixture review
+# 上限と未知のエントリのfixtureのレビュー記録
 
 2026-09-14。SINGLE-078、079-01/02、080-01/02/03、083の7件を追加する。
-根拠は[安全な入出力・互換性](../../../docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md)§4のresource上限、
-[workspace・設定仕様](../../../docs/03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md)§3の探索対象、
-[Diagnostic registry](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md)、
-[適合fixture仕様](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md)の各matrix IDである。
+根拠は[安全な入出力・互換性](../../../docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md)§4のリソース上限、
+[ワークスペース・設定仕様](../../../docs/03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md)§3の探索対象、
+[診断レジストリ](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md)、
+[適合fixture仕様](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md)の各matrixのIDである。
 
-| ID | 唯一の条件 | status／終了コード | 検査文書／句 |
+| ID | 唯一の条件 | 結果の状態／終了コード | 検査文書／規範文 |
 |---|---|---|---|
-| SINGLE-078 | `bitz.yaml`が64 KiB超 | failed／1 | 0／0 |
-| SINGLE-079-01 | SPEC Markdownが1 MiB超 | failed／1 | 0／0 |
-| SINGLE-079-02 | Frontmatterが32 KiB超 | failed／1 | 0／0 |
-| SINGLE-080-01 | 規範文と関係配列が上限ちょうど | passed／0 | 1／1000 |
-| SINGLE-080-02 | 1文書の規範文が1,001件 | failed／1 | 0／0 |
-| SINGLE-080-03 | 1文書の配列項目が1,001件 | failed／1 | 1／1 |
-| SINGLE-083 | `.spec/`直下の未知file | passed_with_warnings／0 | 1／1 |
+| SINGLE-078 | `bitz.yaml`が64 KiB超 | `failed`／1 | 0／0 |
+| SINGLE-079-01 | 仕様文書のMarkdownが1 MiB超 | `failed`／1 | 0／0 |
+| SINGLE-079-02 | フロントマターが32 KiB超 | `failed`／1 | 0／0 |
+| SINGLE-080-01 | 規範文と関係の配列が上限ちょうど | `passed`／0 | 1／1000 |
+| SINGLE-080-02 | 1文書の規範文が1,001件 | `failed`／1 | 0／0 |
+| SINGLE-080-03 | 1文書の配列の項目が1,001件 | `failed`／1 | 1／1 |
+| SINGLE-083 | `.spec/`直下の未知のファイル | `passed_with_warnings`／0 | 1／1 |
 
-入力は固定定数から生成し、生成後のbyte列を上限へ再度あてて、交差する次元が1つだけであることを監査で確かめる。
-上限内の次元は上限内のままであることも同時に確かめるため、prose上の主張ではなく実byte数が条件を決める。
+入力は固定の定数から生成し、生成したバイト列を上限へ再度あてて、交差する次元が1つだけであることを監査で確かめる。
+上限内の次元は上限内のままであることも同時に確かめるため、文章上の主張ではなく実際のバイト数が条件を決める。
 
-SINGLE-078はcomment行だけで64 KiBを超える。commentはkeyを増やさないため、設定Schemaの原因を重ねない。
+SINGLE-078はコメント行だけで64 KiBを超える。コメントはキーを増やさないため、設定スキーマの原因を重ねない。
 有効なREQ 1件を同梱し、`stop-operation`で検査件数が0のままであることを固定する。
-SINGLE-079-01はVerification節の後へ固定散文を足して1 MiBを超え、Frontmatterは上限内に保つ。
-SINGLE-079-02は`x-`拡張field 1件で32 KiBを超える。`x-`は未知field warningを生まず、file全体は1 MiB未満に収める。
+SINGLE-079-01は節`Verification`の後へ固定の散文を足して1 MiBを超え、フロントマターは上限内に保つ。
+SINGLE-079-02は`x-`の拡張フィールド1件で32 KiBを超える。`x-`は未知のフィールドの警告を生まず、ファイル全体は1 MiB未満に収める。
 
-SINGLE-080-01は規範文1,000件と`tests[0].covers` 1,000件をちょうど上限に置く。test pathは実在させ、
-path不在やcoverage不整合の診断を重ねない。coversは同一文書の全規範文を1件ずつ指し、対応重複を作らない。
-SINGLE-080-02はSINGLE-080-01との差分を規範文1行だけにし、coversは1,000件のままとする。
-SINGLE-080-03は差分をcovers 1件だけにする。1,001件目も解決する必要があるため、規範文1件だけのREQ-002を置く。
-これで参照先不在を重ねず、原因を配列項目数に限定できる。`skip-document`によりREQ-002だけが検査され1／1となる。
-SINGLE-083は`.spec/notes.txt`をSPEC pathではないentryとして1件だけ置き、warning後も文書検査を継続して1／1とする。
+SINGLE-080-01は規範文1,000件と`tests[0].covers` 1,000件をちょうど上限に置く。テストのパスは実在させ、
+パスの不在やカバレッジの不整合の診断を重ねない。`covers`は同一文書のすべての規範文を1件ずつ指し、対応の重複を作らない。
+SINGLE-080-02はSINGLE-080-01との差分を規範文1行だけにし、`covers`は1,000件のままとする。
+SINGLE-080-03は差分を`covers` 1件だけにする。1,001件目も解決する必要があるため、規範文1件だけのREQ-002を置く。
+これで参照先の不在を重ねず、原因を配列の項目数に限定できる。`skip-document`によりREQ-002だけが検査され1／1となる。
+SINGLE-083は`.spec/notes.txt`を仕様文書のパスではないエントリとして1件だけ置き、警告を出した後も文書の検査を継続して1／1とする。
 
-診断sourceは、file寸法の上限は対象file path、配列項目数は`tests[0].covers` keyを付ける。
-規範文数とFrontmatter寸法は単一keyへ原因を帰せないためkeyを付けない。line/column、証跡、suggestedActionは
-この期待値では付加しない。診断summaryは期待JSONの文字列を固定する。
+診断の発生元は、ファイルの寸法の上限では対象のファイルのパス、配列の項目数では`tests[0].covers`のキーを付ける。
+規範文の件数とフロントマターの寸法は、単一のキーへ原因を帰せないためキーを付けない。`line`、`column`、証跡、`suggestedAction`は
+この期待値では付加しない。診断の`summary`は、期待JSONの文字列を固定する。
 
-入力byte列・manifest・完全結果・副作用Schemaを検証し、隔離Git repositoryを2回setupして固定snapshotへ照合する。
-baselineへ入力をcommitし、report・cache等への書込みは許可しない。
-回帰試験は件数・code・severity・source・keyの改変と副作用の許容を拒否し、さらに各fixtureの入力を上限の反対側へ
-差し替える改変も拒否する。上限検査もYAML parserもCoreも実装しない。
+入力のバイト列、マニフェスト、完全な結果、副作用のスキーマを検証し、隔離したGitリポジトリに準備手順を2回適用して、固定したスナップショットへ照合する。
+基準版コミットに入力を含め、レポートやキャッシュなどへの書込みは許可しない。
+回帰試験は、件数、診断コード、重大度、発生元、キーの改変と副作用の許容を拒否し、さらに各fixtureの入力を上限の反対側へ
+差し替える改変も拒否する。上限の検査もYAMLの構文解析器もCoreも実装しない。
 実際の継続単位（`stop-operation`と`skip-document`）と検査件数の観測はGate Bで受け入れる。

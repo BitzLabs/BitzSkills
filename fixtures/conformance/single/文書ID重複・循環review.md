@@ -1,63 +1,63 @@
-# 文書ID重複・循環fixture review
+# 文書IDの重複と循環のfixtureのレビュー記録
 
-2026-09-11。SINGLE-015、022-01/02/03の4件について入力・完全期待JSON・副作用期待値を固定する。
-Coreの重複検出やgraph探索の実装結果ではない。
+2026-09-11。SINGLE-015、022-01/02/03の4件について入力・完全な期待JSON・副作用の期待値を固定する。
+Coreの重複検出やグラフの探索の実装結果ではない。
 
 ## 単一原因と期待値
 
-最小設定と規範文なしのapproved TECHを使用する。TECHの必須Frontmatter、H1、説明本文は正常で、
-code、test、command、REQ、TASKは置かない。全入力を固定metadataでcommitし、
-`check --full --base HEAD --format json`で同じbase/currentを検査する計画とする。
+最小設定と、規範文のない`approved`のTECHを使用する。TECHの必須フロントマター、H1、説明の本文は正常で、
+コード、テスト、コマンド、REQ、TASKは置かない。全入力を固定のメタデータでコミットし、
+`check --full --base HEAD --format json`で同じ基準版と現在版を検査する計画とする。
 
-| ID | 入力 | Diagnostic / status / exit | 完全検査文書 / 規範文 |
+| ID | 入力 | 診断 / 結果の状態 / 終了コード | 完全検査文書 / 規範文 |
 |---|---|---|---|
-| SINGLE-015 | TECH-001-a.mdとTECH-001-b.mdが同じTECH-001を定義 | SPEC-ID-DUPLICATE-001 / failed / 1 | 0 / 0 |
-| SINGLE-022-01 | TECH-001が自身をrequires | CTX-CYCLE-001 / failed / 1 | 1 / 0 |
-| SINGLE-022-02 | TECH-001が自身をrefines | CTX-CYCLE-001 / failed / 1 | 1 / 0 |
-| SINGLE-022-03 | TECH-001が自身をrelated | なし / passed / 0 | 1 / 0 |
+| SINGLE-015 | TECH-001-a.mdとTECH-001-b.mdが同じTECH-001を定義 | SPEC-ID-DUPLICATE-001 / `failed` / 1 | 0 / 0 |
+| SINGLE-022-01 | TECH-001が自身を`requires`で参照 | CTX-CYCLE-001 / `failed` / 1 | 1 / 0 |
+| SINGLE-022-02 | TECH-001が自身を`refines`で参照 | CTX-CYCLE-001 / `failed` / 1 | 1 / 0 |
+| SINGLE-022-03 | TECH-001が自身を`related`で参照 | なし / `passed` / 0 | 1 / 0 |
 
-015は正規file名のslug違いを使い、file名IDとFrontmatter IDを一致させる。
-規範文なしTECHなので文書ID以外のstatement重複を混ぜない。現在集合で同じ文書IDへ解決する2 fileを
-どちらもskip-documentとし、先に読んだ一方を正常文書として数えない。
+015は、正規のファイル名のスラッグ違いを使い、ファイル名のIDとフロントマターのIDを一致させる。
+規範文のないTECHなので、文書ID以外の規範文の重複を混ぜない。現在の集合で同じ文書IDへ解決する2つのファイルを、
+どちらも`skip-document`とし、先に読んだ一方を正常な文書として数えない。
 
-022系はrelation名以外を同一byte列とする。TECH→TECHの型、approved状態、参照先の実在は正常である。
-自己参照は長さ1の閉路であり、requiresとrefinesでは禁止循環、relatedでは許可される。
+022系は、関係型の名前以外を同一のバイト列とする。TECH→TECHの型、`approved`の状態、参照先の実在は正常である。
+自己参照は長さ1の閉路であり、`requires`と`refines`では禁止された循環、`related`では許可される。
 複数文書・複数経路の循環や探索順序全般の網羅を、この最小fixtureで証明するものではない。
-registryのskip-targetは循環を含むContext展開を遮断するが、checkの独立した本文検査を
-skip-documentにはしない。このため022系の完全検査文書数は1とする。
+レジストリの`skip-target`は循環を含むコンテキストの展開を遮断するが、`check`の独立した本文の検査を
+`skip-document`にはしない。このため022系の完全検査文書数は1とする。
 
-## Diagnosticの固定
+## 診断の固定
 
-- 015は1つのID衝突を1つのraw原因とし、同義のDiagnosticを2 fileへ重ねない。
-  sourceはpath辞書順で先頭の`.spec/technical/TECH-001-a.md`、keyは`id`に固定する。
-  これはこのfixtureの診断代表位置の選択であり、勝者を選ぶ規則ではない。両文書を不適合として扱う。
-- 022-01/02は1つの自己edgeを原因とし、sourceを`.spec/technical/TECH-001.md`、
-  keyをそれぞれ`relations.requires`、`relations.refines`とする。参照切れや型違反を重ねない。
-- source kindはfile、workspaceIdはroot。非成功のseverityはerror、resultStatusはfailed。
-- summaryは各expected/check.jsonの日本語文字列で固定する。line/column、specRefs、証跡、
-  suggestedAction、idCollisionsは付加しない。新IDや書換え箇所を提案しない。
-- 022-03はDiagnosticを空配列とし、warningも出さない。
-- Git IDとdurationだけ既存normalizerの代表値を使い、その他のfieldや件数を比較から除外しない。
+- 015は1つのID衝突を1つの元の原因とし、同義の診断を2つのファイルへ重ねない。
+  発生元はパスの辞書順で先頭の`.spec/technical/TECH-001-a.md`、キーは`id`に固定する。
+  これはこのfixtureの診断の代表位置の選択であり、勝者を選ぶ規則ではない。両文書を不適合として扱う。
+- 022-01/02は1つの自己エッジを原因とし、発生元を`.spec/technical/TECH-001.md`、
+  キーをそれぞれ`relations.requires`、`relations.refines`とする。参照切れや型違反を重ねない。
+- 発生元の種類（`source.kind`）は`file`、`workspaceId`は`root`。非成功の診断の重大度（`severity`）は`error`、結果への効果（`resultStatus`）は`failed`。
+- `summary`は各`expected/check.json`の日本語の文字列で固定する。`line`、`column`、`specRefs`、証跡、
+  `suggestedAction`、`idCollisions`は付加しない。新しいIDや書換え箇所を提案しない。
+- 022-03は診断を空の配列とし、警告も出さない。
+- Git IDと所要時間だけ既存の正規化器の代表値を使い、その他のフィールドや件数を比較から除外しない。
 
-診断の代表pathと任意field・文字列は今回選択した受入期待値である。
-既存正本は一般の重複集合・複雑な循環の代表source選択までは規定していないため、
-この4件から一般の代表選択algorithmを規範化しない。
-根拠は[文書IDとfile名](../../../docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md)、
+診断の代表パスと任意のフィールド・文字列は、今回選択した受入の期待値である。
+既存の正本は、一般の重複集合・複雑な循環の代表の発生元の選択までは規定していないため、
+この4件から一般の代表選択のアルゴリズムを規範化しない。
+根拠は[文書IDとファイル名](../../../docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md)、
 [関係モデル §4・§5・§7](../../../docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md)、
-[Diagnostic registry](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md)、
-[check仕様 §4・§9](../../../docs/03.詳細設計/03_操作仕様/02_check.md)、
+[診断レジストリ](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md)、
+[`check`仕様 §4・§9](../../../docs/03.詳細設計/03_操作仕様/02_check.md)、
 [適合matrix](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md)である。
 
 ## 準備検証
 
-graph_fixtures.pyは固定入力byte列とFrontmatterのreview済み値、manifest、完全期待JSON、
-読取り専用副作用Schemaを確認する。汎用Parserやgraph探索は実装しない。
-各fixtureを独立した2つのGit repositoryへsetupし、repository・Git status/index・HOME・cache・TMPDIRを
-固定before snapshotと照合する。afterはbeforeと一致する期待値であり、Core実行後の観測値ではない。
+`graph_fixtures.py`は、固定した入力のバイト列とフロントマターのレビュー済みの値、マニフェスト、完全な期待JSON、
+読取り専用の副作用のスキーマを確認する。汎用の構文解析器やグラフの探索は実装しない。
+各fixtureを独立した2つのGitリポジトリに準備手順を適用し、リポジトリ、`git status`の結果とインデックス、`HOME`、キャッシュ、`TMPDIR`を
+固定した実行前のスナップショットと照合する。実行後のスナップショットは実行前のものと一致する期待値であり、Core実行後の観測値ではない。
 
-回帰試験は片側重複の削除、重複文書の成功件数加算、二重診断、改番提案、参照先不在への変更、
-refinesからrelatedへの変更、診断code/keyの取り違え、relatedの誤失敗、cache書込み期待を拒否する。
+回帰試験は、片側の重複の削除、重複した文書の成功件数への加算、二重診断、改番の提案、参照先の不在への変更、
+`refines`から`related`への変更、診断コードとキーの取り違え、`related`の誤った失敗、キャッシュへの書込みの期待を拒否する。
 実際のCoreによる検出、停止・継続、結果と副作用はGate Bで受け入れる。
 
-[Git基準版の5件](Git基準版・状態遷移review.md)と[保護対象外変更の5件](approved-REQの保護対象外変更review.md)を追加し、50/311件を準備済み、実fixture残261件とする。golden Digest、残fixtureの副作用期待値、
-fresh checkoutからの全Gate A検証は未完了であり、Gate AはBlockedを維持する。
+[基準版の5件](Git基準版・状態遷移review.md)と[保護対象外変更の5件](approved-REQの保護対象外変更review.md)を追加し、50/311件を準備済み、実fixture残261件とする。goldenのハッシュ値、残りのfixtureの副作用の期待値、
+新しいチェックアウトからの全Gate A検証は未完了であり、Gate Aは`Blocked`を維持する。

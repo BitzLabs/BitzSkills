@@ -1,21 +1,21 @@
-# Diagnostic text制御文字の裁定とfixture
+# 診断のテキスト表示の制御文字の裁定とfixture
 
-ユーザー承認により、Diagnosticのtext表示field内のC0、DEL、C1をbackslash 1文字＋u＋小文字16進4桁へ
-変換する。LF/TABも可視化し、Diagnosticを1行に保つ。規範は
+ユーザーの承認により、診断のテキスト表示のフィールド内にあるC0、DEL、C1を、バックスラッシュ1文字＋`u`＋小文字16進4桁へ
+変換する。LFとTABも可視化し、診断を1行に保つ。規範は
 [結果契約 §7](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#7-テキストとjson)へ反映した。
-JSON値とreport、sort順序は変えず、行形式自体の改行・字下げも変えない。
-process抜粋のLF/TAB保持規則は別の契約であり変更しない。
+JSONの値とレポート、並べ替えの順序は変えず、行形式自体の改行と字下げも変えない。
+プロセス出力の抜粋にあるLFとTABの保持の規則は、別の契約であり変更しない。
 
-SINGLE-076はSINGLE-075-02の単一strong relation不在を使う。隔離setupでTECH-001のfile名slugに
-ESC＋[31m、TAB、DEL、C1 U+0085を含めてrenameする。Frontmatter IDと本文は不変であり、
-余計なfile名ID不一致や参照不正は生じない。実repositoryには制御文字を含むfile名をcommitせず、
-manifestのJSON escapeから隔離treeだけに生成する。基準commit後のrenameなのでrevision.dirtyはtrue。
+SINGLE-076は、SINGLE-075-02の、強い関係の不在が1件だけの入力を使う。隔離環境の準備手順で、TECH-001のファイル名のスラッグに、
+ESC＋`[31m`、TAB、DEL、C1のU+0085を含めてリネームする。フロントマターのIDと本文は変わらず、
+余計なファイル名とIDの不一致や参照の不正は生じない。実際のリポジトリには制御文字を含むファイル名をコミットせず、
+マニフェストのJSONのエスケープから、隔離した木構造だけに生成する。基準版のコミットの後のリネームなので、`revision.dirty`は`true`である。
 
-summaryは参照元pathを含む説明を今回の固定値として選択した。pathとsummary双方で制御文字の可視化を確認する。
-期待JSONには元のcode pointを保持し、期待textにだけ可視escapeを置く。出力は要約＋Diagnosticの2行。
-LF/TAB等すべての制御範囲、隣接する可視文字、既存backslash、非ASCII文字はfixture側referenceの回帰試験で確認する。
-NULをfile名に使う試験ではない。report生成0件で、Git status/indexを含むbefore/afterは一致させる。
+`summary`は、参照元のパスを含む説明を、今回の固定値として選択した。パスと`summary`の双方で、制御文字の可視化を確認する。
+期待JSONには元のコードポイントを保持し、期待するテキストにだけ、可視化したエスケープを置く。出力は、要約行と診断の2行である。
+LFとTABなど、制御文字のすべての範囲、隣接する可視文字、既存のバックスラッシュ、ASCII以外の文字は、fixture側の参照実装の回帰試験で確認する。
+NULをファイル名に使う試験ではない。レポートの生成は0件で、`git status`とGitのインデックスを含む`before`と`after`は一致させる。
 
-Schema・完全結果・入力byte列・2回の隔離setupを検証する。Diagnostic registryの条件・severity・statusには
-変更がなく、意味網羅台帳は結果契約の参照hashだけを更新した。
-Coreの表示実装は追加せず、実際の標準出力と副作用はGate Bで検証する。
+スキーマ、完全な結果、入力のバイト列、2回の隔離環境での準備手順を検証する。診断レジストリの条件、重大度、結果への効果には
+変更がなく、診断の網羅表は、根拠文書である結果契約のハッシュ値だけを更新した。
+Coreの表示の実装は追加せず、実際の標準出力と副作用は、Gate Bで検証する。

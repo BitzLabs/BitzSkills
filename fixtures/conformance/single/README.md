@@ -1,94 +1,94 @@
-# 初回実fixture: 導入と設定
+# 初回の実fixture: 導入と設定
 
-2026-09-08。対象は `SINGLE-001`、`002`、`003`、`004-01`、`004-02`、`005-01`、`005-02`、`006-01`、`006-02`。
-この9件は入力・唯一の期待JSON・副作用期待値を持つ。Coreの実行結果ではない。
+2026-09-08。対象は`SINGLE-001`、`002`、`003`、`004-01`、`004-02`、`005-01`、`005-02`、`006-01`、`006-02`。
+この9件は、入力、唯一の期待JSON、副作用の期待値を持つ。Coreの実行結果ではない。
 
-## 設計と単一原因review
+## 設計と単一原因のレビュー
 
-| ID | 独立原因 | 実行 | status / exit |
+| ID | 独立した原因 | 実行 | 結果の状態／終了コード |
 |---|---|---|---|
-| SINGLE-001 | なし。最小設定だけ | doctor --format json | passed / 0 |
-| SINGLE-002 | 設定不在だけ | doctor --format json | blocked / 2 |
-| SINGLE-003 | schemaVersionを文字列の2.0に変更 | check --full --base HEAD --format json | blocked / 2 |
-| SINGLE-004-01 | languageを整数の42に変更 | check --full --base HEAD --format json | error / 3 |
-| SINGLE-004-02 | 必須earsAiだけを削除 | check --full --base HEAD --format json | error / 3 |
-| SINGLE-005-01 | 未知key futureOptionだけを追加 | check --full --base HEAD --format json | passed_with_warnings / 0 |
-| SINGLE-005-02 | 予約key profilesだけを追加 | check --full --base HEAD --format json | passed_with_warnings / 0 |
-| SINGLE-006-01 | command実行fileだけが不在 | doctor --format json | blocked / 2 |
-| SINGLE-006-02 | command cwdだけが不在 | doctor --format json | blocked / 2 |
+| SINGLE-001 | なし。最小設定だけ | `doctor --format json` | `passed`／0 |
+| SINGLE-002 | 設定の不在だけ | `doctor --format json` | `blocked`／2 |
+| SINGLE-003 | `schemaVersion`を文字列の2.0に変更 | `check --full --base HEAD --format json` | `blocked`／2 |
+| SINGLE-004-01 | `language`を整数の42に変更 | `check --full --base HEAD --format json` | `error`／3 |
+| SINGLE-004-02 | 必須の`earsAi`だけを削除 | `check --full --base HEAD --format json` | `error`／3 |
+| SINGLE-005-01 | 未知のキー`futureOption`だけを追加 | `check --full --base HEAD --format json` | `passed_with_warnings`／0 |
+| SINGLE-005-02 | 予約されたキー`profiles`だけを追加 | `check --full --base HEAD --format json` | `passed_with_warnings`／0 |
+| SINGLE-006-01 | コマンドの実行ファイルだけが不在 | `doctor --format json` | `blocked`／2 |
+| SINGLE-006-02 | コマンドの作業ディレクトリ（`cwd`）だけが不在 | `doctor --format json` | `blocked`／2 |
 
-最小設定はdoctor仕様の `schemaVersion: "1.0"`、`language: ja`、`earsAi: "1.0"`。
-code、test、SPEC文書、`multiWorkspace`宣言は置かず、別原因のDiagnosticを混ぜない。
-command bindingは006系だけにdefaultを1件置く。
-checkは入力を固定metadataでcommitして明示HEADを比較基準にする。Git不在・unbornの縮退を混ぜない。
-doctorはGit利用可能なunborn repositoryで実行し、履歴差分の検査は要求しない。
-SINGLE-002の空repoをGitで保持するためだけに `.gitkeep` を置き、setupで除去してから実行する。
-すべてのcopyは物理的に独立し、共通入力へのlinkは使わない。
+最小設定は、`doctor`仕様の`schemaVersion: "1.0"`、`language: ja`、`earsAi: "1.0"`とする。
+コード、テスト、仕様文書、`multiWorkspace`の宣言は置かず、別の原因の診断を混ぜない。
+コマンド`default`の定義（`verify.commands.default`）を1件、006系だけに置く。
+`check`は、入力を固定したメタデータでコミットして、明示した`HEAD`を比較の基準版にする。Git不在やコミットのないリポジトリでの縮退を混ぜない。
+`doctor`は、Gitを利用可能な、コミットのないリポジトリで実行し、履歴の差分の検査は要求しない。
+SINGLE-002の空のリポジトリをGitで保持するためだけに`.gitkeep`を置き、準備手順で除去してから実行する。
+すべてのコピーは物理的に独立し、共通の入力へのリンクは使わない。
 
 根拠は[適合fixture仕様 §6.1](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#61-導入と設定)、
 [設定仕様 §5](../../../docs/03.詳細設計/02_SPECモデル/01_workspace・設定仕様.md#5-スキーマ)、
-[doctor仕様](../../../docs/03.詳細設計/03_操作仕様/04_doctor.md)、
+[`doctor`仕様](../../../docs/03.詳細設計/03_操作仕様/04_doctor.md)、
 [結果契約 §2・§5](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md)、
-[Diagnostic registry](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md)。
+[診断レジストリ](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md)。
 
 ## 今回固定する完全期待値
 
-従来の仕様が語彙・意味だけを規定していた部分も、今回のfixtureは次の一意な値で固定する。
-比較時にsummary、suggestedAction、checks、任意fieldを除外する規則は追加しない。
+従来の仕様が語彙と意味だけを規定していた部分も、今回のfixtureは、次の一意な値で固定する。
+比較のときに`summary`、`suggestedAction`、`checks`、任意のフィールドを除外する規則は追加しない。
 
-- SINGLE-001のchecksは処理順に `core, workspace, config, schema, ears, git, command, impact`。
-  `impact` はinfo、他はpassed。plugin要求がなく、単一workspaceなのでplugin・Capability要求・catalogの項目は置かない。
-  command定義0件はcommand check成功、影響候補0件はimpact checkのinfoとし、追加Diagnosticは出さない。
-- SINGLE-002は `core: passed, workspace: blocked, git: passed`。
-  独立なGit確認を続け、設定に依存する後続checkは出力しない。複合workspaceの依存遮断Diagnosticは単一workspaceへ追加しない。
-- 未知majorのSINGLE-003は構造的に有効な設定から既定同一性`root` を確定後、互換性検査で停止する。
-  型不正・必須key欠如・設定不在のcaseは同一性確定前なので `workspace.id: null`。
-- checkのDiagnosticは `source.key` をそれぞれ `schemaVersion`、`language`、`earsAi` とする。
-  line・column、証跡、specRefs、extensions、suggestedActionはこの3件では付加しない。
-  summaryは各 `expected/check.json` の日本語文字列を固定値とする。
-- 設定不在はenvironment sourceの `component: workspace, identifier: .` とし、
-  suggestedActionへ作成先・貼付け可能な最小設定・gitignore追記・次のcheckを含める。
-- 005系は `SPEC-CONFIG-UNKNOWN-001` / warning / passed_with_warningsを1件だけ返す。
-  `source.key` はそれぞれ `futureOption`、`profiles`。未知keyの値 `preserve-me` と予約keyの値
-  `legacy-profile` は保持し、profilesを設定機能として解釈しない。文書0件のfull checkは両checked countを0とする。
-- 006系は `SPEC-DOCTOR-COMMAND-001` / error / blockedを1件だけ返す。
-  sourceはregistryどおりfileで、`workspaceId: root`、`path: .spec/bitz.yaml`、keyはそれぞれ
-  `verify.commands.default.argv`、`verify.commands.default.cwd`。line・column・証跡・修復案は付加しない。
-  checksは001と同じ順序でcommandだけblocked。独立なimpact checkは続けてinfoとし、別のDiagnosticは追加しない。
-  005・006系ともsummaryは各expected JSONの固定文字列とする。
-- durationは0、Core patchは0、Git commit IDは40桁の0を期待JSONの代表値とする。
-  実値は既存の共通normalizerだけで比較する。Gitのdirty、Core major/minorやCapability順序は除外しない。
+- SINGLE-001の`checks`は、処理の順に`core, workspace, config, schema, ears, git, command, impact`とする。
+  `impact`は`info`、他は`passed`とする。プラグインの要求がなく、単一ワークスペースなので、プラグイン、対応機能の要求、カタログの項目は置かない。
+  コマンドの定義が0件であることは、検査項目`command`の成功、影響候補が0件であることは、検査項目`impact`の`info`とし、追加の診断は出さない。
+- SINGLE-002は`core: passed, workspace: blocked, git: passed`とする。
+  独立したGitの確認を続け、設定に依存する後続の検査項目は出力しない。複合ワークスペースの依存遮断の診断は、単一ワークスペースへ追加しない。
+- 未知のメジャーバージョンのSINGLE-003は、構造的に有効な設定から、既定の同一性`root`を確定した後、互換性の検査で停止する。
+  型の不正、必須のキーの欠如、設定の不在のケースは、同一性の確定前なので`workspace.id: null`とする。
+- `check`の診断は、`source.key`をそれぞれ`schemaVersion`、`language`、`earsAi`とする。
+  行と列、証跡、`specRefs`、`extensions`、`suggestedAction`は、この3件では付加しない。
+  `summary`は、各`expected/check.json`の日本語の文字列を固定値とする。
+- 設定の不在は、発生元の種類`environment`の`component: workspace, identifier: .`とし、
+  `suggestedAction`へ、作成先、貼り付けられる最小設定、`.gitignore`への追記、次の`check`を含める。
+- 005系は、診断`SPEC-CONFIG-UNKNOWN-001`（重大度`warning`、結果への効果`passed_with_warnings`）を1件だけ返す。
+  `source.key`はそれぞれ`futureOption`、`profiles`とする。未知のキーの値`preserve-me`と、予約されたキーの値
+  `legacy-profile`は保持し、`profiles`を設定の機能として解釈しない。文書が0件の全体検査は、2つの検査件数（`checkedDocumentCount`と`checkedStatementCount`）を0とする。
+- 006系は、診断`SPEC-DOCTOR-COMMAND-001`（重大度`error`、結果への効果`blocked`）を1件だけ返す。
+  発生元は、診断レジストリのとおり種類`file`で、`workspaceId: root`、`path: .spec/bitz.yaml`、キーはそれぞれ
+  `verify.commands.default.argv`、`verify.commands.default.cwd`とする。行と列、証跡、修復案は付加しない。
+  `checks`は001と同じ順序で、`command`だけ`blocked`とする。独立した検査項目`impact`は続けて`info`とし、別の診断は追加しない。
+  005系と006系とも、`summary`は各期待JSONの固定した文字列とする。
+- 所要時間は0、Coreのパッチは0、GitのコミットIDは40桁の0を、期待JSONの代表値とする。
+  実際の値は、既存の共通の正規化器だけで比較する。Gitの`dirty`、Coreのメジャーバージョンとマイナーバージョン、対応機能の順序は除外しない。
 
-これらは今回追加した受入期待値の選択であり、既存Coreで観測した値ではない。
-将来変更する場合は仕様との整合をreviewし、期待値とreview記録を同じ変更で更新する。
+これらは今回追加した受入の期待値の選択であり、既存のCoreで観測した値ではない。
+将来変更する場合は、仕様との整合をレビューし、期待値とレビュー記録を同じ変更で更新する。
 
-## 副作用期待値と検証
+## 副作用の期待値と検証
 
-各fixture直下の `side-effects.json` は `side-effects.schema.json` に従う補助証拠。
-manifestの公開fieldは増やさず、期待出力の `expected/` とは分離する。
-`before` と `after` にrepositoryの全path・種別・実行bit・SHA-256、Git porcelain v1 statusとstage index、
-HOME / XDG_CACHE_HOME / TMPDIRの3隔離treeを固定する。許可書込みは0件で、beforeとafterは完全一致する。
-`.git` 内部fileは既存snapshot契約に従って除外し、Git statusとindexは別に比較する。
-report directory、永続cache、lock、作業fileの残存を許可しない。明示reportを許すfixtureはこのSchemaの対象外。
+各fixture直下の`side-effects.json`は、`side-effects.schema.json`に従う補助の証拠とする。
+マニフェストの公開フィールドは増やさず、期待する出力の`expected/`とは分離する。
+`before`と`after`に、リポジトリの全パス、種別、実行ビット、SHA-256、`git status`（porcelain v1形式）とGitのインデックス、
+`HOME`・`XDG_CACHE_HOME`・`TMPDIR`の3つの隔離した木構造を固定する。許可する書込みは0件で、`before`と`after`は完全に一致する。
+`.git`の内部のファイルは、既存のスナップショットの契約に従って除外し、`git status`とGitのインデックスは別に比較する。
+レポートのディレクトリ、永続的なキャッシュ、ロック、作業用のファイルの残存を許可しない。明示したレポートを許すfixtureは、このスキーマの対象外である。
 
-`uv run fixtures/validate_conformance.py` の `initial_fixtures` は次を検査する。
+`uv run fixtures/validate_conformance.py`の`initial_fixtures`は、次を検査する。
 
-1. manifest / result / side-effectsのSchema適合、操作・status・終了コード・単一原因との整合。
-2. 各入力を新しい隔離directoryに2回setupし、各回が固定before snapshotと一致すること。
-3. 入力byte列がreview済みの単一原因と一致し、読取り専用の期待afterがbeforeと一致すること。
-4. 回帰試験でstatus、source.key、argv、修復手順、副作用期待値の破損を拒否すること。
-5. 005系のwarningをerrorへ変更した場合やDiagnosticの重複、006系の原因keyやcheck statusの破損を拒否すること。
+1. マニフェスト、結果、副作用のスキーマへの適合と、操作、結果の状態、終了コード、単一の原因との整合。
+2. 各入力を新しい隔離したディレクトリで2回準備し、各回が固定した`before`のスナップショットと一致すること。
+3. 入力のバイト列がレビュー済みの単一の原因と一致し、読取り専用の期待する`after`が`before`と一致すること。
+4. 回帰試験で、結果の状態、`source.key`、引数列、修復の手順、副作用の期待値の破損を拒否すること。
+5. 005系の警告を重大度`error`へ変更した場合や診断の重複、006系の原因のキーや検査項目の状態の破損を拒否すること。
 
-006-01は `argv: ["./missing-command"]`、`cwd: .`。実行fileの明示pathが存在しないことを確認し、
-hostのPATHに同名commandがあっても結果が変わらない構成とする。
-006-02は `argv: ["/bin/true"]`、`cwd: missing-directory`。このfixture環境はLinux/POSIXで
-`/bin/true`が通常の実行可能fileとして利用可能であることを要求し、未導入・実行不可は準備検証のerrorとする。
-実効cwdが不在でも実行fileの絶対pathは独立に確認できる。PATHは上書きせず、Git利用を壊さない。
-準備検証でcommandを起動することはない。実際のdoctorがcommandを起動しないことはGate Bで別途確認する。
+006-01は`argv: ["./missing-command"]`、`cwd: .`とする。実行ファイルの明示したパスが存在しないことを確認し、
+ホストの`PATH`に同名のコマンドがあっても結果が変わらない構成とする。
+006-02は`argv: ["/bin/true"]`、`cwd: missing-directory`とする。このfixtureの環境は、Linux/POSIXで
+`/bin/true`が通常の実行可能なファイルとして利用可能であることを要求し、未導入または実行不可は、準備検証のエラーとする。
+実効の作業ディレクトリが不在でも、実行ファイルの絶対パスは独立に確認できる。`PATH`は上書きせず、Gitの利用を壊さない。
+準備検証でコマンドを起動することはない。実際の`doctor`がコマンドを起動しないことは、Gate Bで別途確認する。
 
-検証はCoreもYAML設定判定も実装しない。afterは期待値だけであり、Core実行後の実測値ではない。
-Core実装後のGate Bで、実標準出力/終了コード、実before/after、索引構築へ進まないことを確認する。
-この9件に加えて[EARS-AI構文・候補抽出・拡張の12件](EARS-AI構文・候補抽出review.md)と
-[文書構造・UTF-8の9件](文書構造・UTF-8-review.md)、[関係・path・coverageの6件](関係・path・coverage-review.md)、[ID重複・循環の4件](文書ID重複・循環review.md)、[Git基準版の5件](Git基準版・状態遷移review.md)、[保護対象外変更の5件](approved-REQの保護対象外変更review.md)と[TASK境界の3件](TASK境界・対象選択review.md)、[Git対象選択・影響候補の4件](Git対象選択・影響候補review.md)、[Git基準版error・Git不在の3件](Git基準版error・Git不在review.md)、[Context非成功の5件](Context非成功review.md)を準備した。
-計65/311件、matrix残246件、golden Context Digest、全体の副作用期待値、
-fresh checkoutでのGate A全検証は残る。
+検証は、CoreもYAMLの設定の判定も実装しない。`after`は期待値だけであり、Core実行後の実測値ではない。
+Coreの実装後のGate Bで、実際の標準出力と終了コード、実際の`before`と`after`、索引の構築へ進まないことを確認する。
+この9件に加えて、[EARS-AI構文・候補抽出・拡張の12件](EARS-AI構文・候補抽出review.md)と
+[文書構造・UTF-8の9件](文書構造・UTF-8-review.md)、[関係・パス・カバレッジの6件](関係・path・coverage-review.md)、[ID重複・循環の4件](文書ID重複・循環review.md)、[基準版の5件](Git基準版・状態遷移review.md)、[保護対象外変更の5件](approved-REQの保護対象外変更review.md)と[TASK境界の3件](TASK境界・対象選択review.md)、[Gitの対象選択・影響候補の4件](Git対象選択・影響候補review.md)、[基準版のエラー・Git不在の3件](Git基準版error・Git不在review.md)、[コンテキストの非成功の5件](Context非成功review.md)を準備した。
+計65/311件、matrixの残りは246件で、goldenのコンテキストのハッシュ値、全体の副作用の期待値、
+新しいチェックアウトでのGate Aの全検証は残る。

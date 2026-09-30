@@ -1,49 +1,49 @@
-# Scanner・位置 fixture review
+# 走査器・位置のfixtureのレビュー記録
 
-2026-09-14。matrix §6.10のcheck 16件（SINGLE-096-02、097-02、098-02、099-01〜04、100-01〜04、
-101-02/03、102、103-01/02）を追加する。IRとDigestの完全比較を要する`context` 4件
-（096-01、097-01、098-01、101-01）は同節の残件として分離する。
-根拠は[EARS-AI言語・Semantic-IR仕様](../../../docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md)§3〜§5、
-[Diagnostic registry](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md)、
-[適合fixture仕様](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md)の各matrix IDである。
+2026-09-14。matrix §6.10の`check`の16件（SINGLE-096-02、097-02、098-02、099-01〜04、100-01〜04、
+101-02/03、102、103-01/02）を追加する。意味中間表現とハッシュ値の完全な比較を要する`context`の4件
+（096-01、097-01、098-01、101-01）は、同じ節の残りの件として分離する。
+根拠は[EARS-AI言語・意味中間表現仕様](../../../docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md)§3〜§5、
+[診断レジストリ](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md)、
+[適合fixture仕様](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md)の各matrixのIDである。
 
-| ID | 唯一の条件 | code | status／終了コード | 位置(行, 列) |
+| ID | 唯一の条件 | 診断コード | 結果の状態／終了コード | 位置（行, 列） |
 |---|---|---|---|---|
-| SINGLE-096-02 | 開始run 2に対し終了run 1 | `EAI-CORE-SYNTAX-005` | failed／1 | 16, 73 |
-| SINGLE-097-02 | 未知escape `\出` | `EAI-CORE-SYNTAX-004` | failed／1 | 16, 74 |
-| SINGLE-098-02 | quoted extension値が未閉鎖 | `EAI-CORE-SYNTAX-004` | failed／1 | 16, 34 |
-| SINGLE-099-01 | backtick fence内 | — | passed／0 | — |
-| SINGLE-099-02 | tilde fence内 | — | passed／0 | — |
-| SINGLE-099-03 | 引用内 | — | passed／0 | — |
-| SINGLE-099-04 | 4 SP indent | — | passed／0 | — |
-| SINGLE-100-01 | 桁不足の既知接頭辞 | `EAI-CORE-ID-001` | failed／1 | 16, 3 |
-| SINGLE-100-02 | 未知uppercase接頭辞 | `EAI-CORE-ID-001` | failed／1 | 16, 3 |
-| SINGLE-100-03 | 3階層ID | `EAI-CORE-ID-001` | failed／1 | 16, 3 |
-| SINGLE-100-04 | `[ACTOR:...]`始まりのID欠落 | `EAI-CORE-ID-001` | failed／1 | 16, 3 |
-| SINGLE-101-02 | `[MUST] [REASON]` | `EAI-CORE-SYNTAX-001` | failed／1 | 16, 56 |
-| SINGLE-101-03 | `[MAY] [REASON]` | `EAI-CORE-SYNTAX-001` | failed／1 | 16, 55 |
-| SINGLE-102 | 全角文字とTABの後の未escape `[` | `EAI-CORE-SYNTAX-004` | failed／1 | 16, 80 |
-| SINGLE-103-01 | 未閉鎖code spanと未閉鎖tagの同一原因 | `EAI-CORE-SYNTAX-005` | failed／1 | 16, 73 |
-| SINGLE-103-02 | 未閉鎖tagとID形式不正の同一原因 | `EAI-CORE-SYNTAX-004` | failed／1 | 16, 3 |
+| SINGLE-096-02 | 長さ2の開始の連続列に対し、長さ1の終了の連続列 | `EAI-CORE-SYNTAX-005` | `failed`／1 | 16, 73 |
+| SINGLE-097-02 | 未知のエスケープ`\出` | `EAI-CORE-SYNTAX-004` | `failed`／1 | 16, 74 |
+| SINGLE-098-02 | 引用符付きの拡張タグの値が閉じていない | `EAI-CORE-SYNTAX-004` | `failed`／1 | 16, 34 |
+| SINGLE-099-01 | バッククォートのフェンス内 | — | `passed`／0 | — |
+| SINGLE-099-02 | チルダのフェンス内 | — | `passed`／0 | — |
+| SINGLE-099-03 | 引用ブロック内 | — | `passed`／0 | — |
+| SINGLE-099-04 | 4 SPの字下げ | — | `passed`／0 | — |
+| SINGLE-100-01 | 桁不足の既知の接頭辞 | `EAI-CORE-ID-001` | `failed`／1 | 16, 3 |
+| SINGLE-100-02 | 未知の大文字の接頭辞 | `EAI-CORE-ID-001` | `failed`／1 | 16, 3 |
+| SINGLE-100-03 | 3階層のID | `EAI-CORE-ID-001` | `failed`／1 | 16, 3 |
+| SINGLE-100-04 | `[ACTOR:...]`で始まり、IDが欠落 | `EAI-CORE-ID-001` | `failed`／1 | 16, 3 |
+| SINGLE-101-02 | `[MUST] [REASON]` | `EAI-CORE-SYNTAX-001` | `failed`／1 | 16, 56 |
+| SINGLE-101-03 | `[MAY] [REASON]` | `EAI-CORE-SYNTAX-001` | `failed`／1 | 16, 55 |
+| SINGLE-102 | 全角文字とTABの後の、エスケープされていない`[` | `EAI-CORE-SYNTAX-004` | `failed`／1 | 16, 80 |
+| SINGLE-103-01 | 閉じていないコードスパンと、閉じていないタグが、同じ原因 | `EAI-CORE-SYNTAX-005` | `failed`／1 | 16, 73 |
+| SINGLE-103-02 | 閉じていないタグと、IDの形式の不正が、同じ原因 | `EAI-CORE-SYNTAX-004` | `failed`／1 | 16, 3 |
 
-全件が既存のEARS文書builderを使い、15行目の有効な規範文を保ったまま16行目だけを差し替える。
-承認済みREQに妥当な規範文が残るため、規範文不在の別条件を混ぜない。
-文書statusはすべてapprovedとし、draftのwarning分岐（SINGLE-008〜009-03）と重複させない。
-100-01〜03は§6.2のdraft版と同じ入力形で、approvedでも候補抽出が働き同じ形式不正を返すことを固定する。
-101-02は`[WHEN]`起点のSINGLE-007と異なり`[ALWAYS]`で揃え、101-03との差を規範強度だけにする。
+全件が、既存のEARS文書のビルダーを使い、15行目の有効な規範文を保ったまま、16行目だけを差し替える。
+`approved`のREQに妥当な規範文が残るため、規範文の不在という別の条件を混ぜない。
+文書の状態はすべて`approved`とし、`draft`の警告の分岐（SINGLE-008〜009-03）と重複させない。
+100-01〜03は、§6.2の`draft`の版と同じ入力の形で、`approved`でも候補抽出が働き、同じ形式の不正を返すことを固定する。
+101-02は、`[WHEN]`を発動条件とするSINGLE-007と異なり、`[ALWAYS]`で揃え、101-03との差を規範強度だけにする。
 
-列は固定byte列から`[SHOULD]`等のanchor tokenの最初の出現位置を1始まりcode pointで再計算して照合する。
-TAB、全角文字、結合文字を各1列と数える規則をSINGLE-102が固定する。
-103-01は同じ行のrawから未閉鎖code spanと未閉鎖tagの両候補が生じる形にし、registryのpriority順どおり
-`EAI-CORE-SYNTAX-005`だけをprimaryとする。103-02はID bracketを閉じないことで未閉鎖tagとID形式不正を
-同時に生じさせ、`EAI-CORE-SYNTAX-004`だけをprimaryとする。回帰試験は低優先条件への差し替えを拒否する。
+列は、固定したバイト列から、`[SHOULD]`などの基準となるトークンの最初の出現位置を、1始まりのコードポイントで再計算して照合する。
+TAB、全角文字、結合文字を各1列と数える規則を、SINGLE-102が固定する。
+103-01は、同じ行の原文から、閉じていないコードスパンと閉じていないタグの両方の候補が生じる形にし、診断レジストリの優先順位の順のとおり、
+`EAI-CORE-SYNTAX-005`だけを主診断とする。103-02は、IDの角括弧を閉じないことで、閉じていないタグとIDの形式の不正を
+同時に生じさせ、`EAI-CORE-SYNTAX-004`だけを主診断とする。回帰試験は、優先順位の低い条件への差替えを拒否する。
 
-099-01〜04は同一の規範文様textを、fence、引用、indentという構造だけ変えて包む。
-包みを外した入力は監査が拒否する。候補0件のため文書1件・規範文1件（15行目のみ）を検査したまま成功する。
-098-02の未知namespace extensionは`skip-document`のため`EAI-CORE-SYNTAX-004`だけを返し、
+099-01〜04は、同一の規範文の形をしたテキストを、フェンス、引用、字下げという構造だけを変えて包む。
+包みを外した入力は、監査が拒否する。候補が0件のため、文書1件と規範文1件（15行目のみ）を検査したまま成功する。
+098-02の未知の名前空間の拡張タグは、`skip-document`のため、`EAI-CORE-SYNTAX-004`だけを返し、
 `EAI-EXT-UNKNOWN-001`を重ねない。
 
-入力byte列・manifest・完全結果・副作用Schemaを検証し、隔離Git repositoryを2回setupして固定snapshotへ照合する。
-失敗時の検査件数は0／0、成功時は1／1で固定する。回帰試験は列のずれ、件数、code、二重診断、
-位置fieldの欠落、副作用の許容、規範文の差し替えと包みの除去を拒否する。
-Scanner、Lexer、Parser、Coreは実装も実行もしない。実際の候補抽出と位置出力はGate Bで受け入れる。
+入力のバイト列、マニフェスト、完全な結果、副作用のスキーマを検証し、隔離したGitリポジトリで準備手順を2回実行して、固定したスナップショットへ照合する。
+失敗のときの検査件数は0／0、成功のときは1／1で固定する。回帰試験は、列のずれ、件数、診断コード、診断の二重化、
+位置のフィールドの欠落、副作用の許容、規範文の差替えと包みの除去を拒否する。
+走査器、字句解析器、構文解析器、Coreは、実装も実行もしない。実際の候補抽出と位置の出力は、Gate Bで受け入れる。

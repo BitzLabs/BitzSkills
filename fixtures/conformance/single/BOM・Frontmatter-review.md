@@ -1,37 +1,37 @@
-# BOM・Frontmatter fixture review
+# BOM・フロントマターのfixtureのレビュー記録
 
 2026-09-14。SINGLE-081、082、084〜088の11件を追加する。
-根拠は[Diagnostic registry](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md)、
-[文書・Frontmatter仕様](../../../docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md)、
-[適合fixture仕様](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md)の各matrix IDである。
+根拠は[診断レジストリ](../../../docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md)、
+[文書・フロントマター仕様](../../../docs/03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md)、
+[適合fixture仕様](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md)の各matrixのIDである。
 
-| ID | 唯一の条件 | status／終了コード | 検査文書／句 |
+| ID | 唯一の条件 | 結果の状態／終了コード | 検査した文書／規範文 |
 |---|---|---|---|
-| SINGLE-081 | 設定先頭のUTF-8 BOM | passed_with_warnings／0 | 1／1 |
-| SINGLE-082 | SPEC先頭のUTF-8 BOM | passed_with_warnings／0 | 1／1 |
-| SINGLE-084 | REQにTASK専用changes | passed_with_warnings／0 | 1／1 |
-| SINGLE-085 | 未知のfutureOption field | passed_with_warnings／0 | 1／1 |
-| SINGLE-086 | titleのflow sequenceが未閉鎖 | failed／1 | 0／0 |
-| SINGLE-087-01 | titleのcustom tag | failed／1 | 0／0 |
-| SINGLE-087-02 | titleのanchor | failed／1 | 0／0 |
-| SINGLE-087-03 | titleのalias | failed／1 | 0／0 |
-| SINGLE-087-04 | merge key | failed／1 | 0／0 |
-| SINGLE-087-05 | 同値のtitle重複 | failed／1 | 0／0 |
-| SINGLE-088 | titleが整数 | failed／1 | 0／0 |
+| SINGLE-081 | 設定の先頭にあるUTF-8のBOM | `passed_with_warnings`／0 | 1／1 |
+| SINGLE-082 | 仕様文書の先頭にあるUTF-8のBOM | `passed_with_warnings`／0 | 1／1 |
+| SINGLE-084 | REQにあるTASK専用の`changes` | `passed_with_warnings`／0 | 1／1 |
+| SINGLE-085 | 未知のフィールド`futureOption` | `passed_with_warnings`／0 | 1／1 |
+| SINGLE-086 | `title`のフローシーケンスが閉じていない | `failed`／1 | 0／0 |
+| SINGLE-087-01 | `title`のカスタムタグ | `failed`／1 | 0／0 |
+| SINGLE-087-02 | `title`のアンカー | `failed`／1 | 0／0 |
+| SINGLE-087-03 | `title`のエイリアス | `failed`／1 | 0／0 |
+| SINGLE-087-04 | マージキー | `failed`／1 | 0／0 |
+| SINGLE-087-05 | `title`キーの重複（同じ値） | `failed`／1 | 0／0 |
+| SINGLE-088 | `title`が整数 | `failed`／1 | 0／0 |
 
-共通入力は既存の有効なREQ文書1件と最小設定。文書・句の欠落や関係切れを混ぜない。
-BOMは片方のfileだけへbyteで付け、warning後も文書と規範文を検査する。BOM除去は解析上だけであり、fileは変更しない。
-changesと未知fieldは無視して解析を続ける。changesに記したpathはREQのTASK境界やpath検査へ渡さない。
-構文・禁止構文・型不正はskip-documentで、本文のH1や規範文検査へ進まずSchema診断1件だけにする。
-aliasはanchorを同居させず、alias token自体の禁止を検査する。未定義aliasの解決を試みる前に拒否するため、
-別の参照解決Diagnosticは出さない。merge keyは空mappingを使い、anchor/aliasを同居させない。
-重複keyは同値を使い、後勝ち・同値許容の実装も不適合とする。
+共通の入力は、既存の有効なREQ文書1件と最小設定である。文書または規範文の欠落、関係の参照切れを混ぜない。
+BOMは片方のファイルだけにバイト列として付け、警告を出した後も文書と規範文を検査する。BOMを除くのは解析の上だけであり、ファイルは変更しない。
+`changes`と未知のフィールドは無視して解析を続ける。`changes`に記したパスは、REQのTASK境界の検査やパスの検査へ渡さない。
+構文の不正、禁止された構文、型の不正は、継続単位`skip-document`とし、本文のH1や規範文の検査へ進まず、スキーマの診断1件だけにする。
+エイリアスにはアンカーを同居させず、エイリアスのトークンそのものの禁止を検査する。未定義のエイリアスの解決を試みる前に拒否するため、
+参照解決に関する別の診断は出さない。マージキーには空のマッピングを使い、アンカーやエイリアスを同居させない。
+重複するキーには同じ値を使い、後の値を採用する実装や、同じ値なら許容する実装も不適合とする。
 
-全件で有効設定からworkspace rootが確定する。BOM診断sourceは対象fileだけ、Frontmatter診断は該当keyを付ける。
-line/column、証跡、suggestedActionはこの期待値では付加しない。診断summaryは期待JSONの文字列を固定する。
-Schema不正時は文書を完全検査できないため件数0、warning時は完全検査できるため件数1である。
+全件で、有効な設定からワークスペースのルートが確定する。BOMの診断の発生元は対象のファイルだけとし、フロントマターの診断には該当するキーを付ける。
+行と列、証跡、推奨対処（`suggestedAction`）は、この期待値では付加しない。診断の`summary`は、期待するJSONの文字列に固定する。
+スキーマに適合しない場合は文書を完全検査できないため件数は0、警告の場合は完全検査できるため件数は1である。
 
-入力byte列・manifest・完全結果・副作用Schemaを検証し、隔離Git repositoryを2回setupして固定snapshotへ照合する。
-baselineへ入力をcommitし、変更保護やunbornの縮退を混ぜない。report・cache等への書込みは許可しない。
-回帰試験は警告の削除、件数・診断code・statusの改変、二重診断、副作用の許容と、各不正入力の修復を拒否する。
-検証用YAML parserやCoreは実装しない。禁止構文の拒否、BOM後の継続、実副作用はGate Bで受け入れる。
+入力のバイト列、マニフェスト、完全な結果、副作用のスキーマを検証し、隔離したGitリポジトリで準備手順を2回実行して、固定したスナップショットと照合する。
+入力を基準版のコミットへ含め、変更の保護やコミットのないリポジトリでの縮退を混ぜない。レポートやキャッシュなどへの書込みは許可しない。
+回帰試験は、警告の削除、件数・診断コード・結果の状態の改変、診断の二重化、副作用の許容と、各不正な入力の修復を拒否する。
+検証用のYAMLの構文解析器やCoreは実装しない。禁止された構文の拒否、BOMの後の継続、実際の副作用は、Gate Bで受け入れる。
