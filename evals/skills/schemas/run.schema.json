@@ -5,7 +5,7 @@
   "additionalProperties": false,
   "required": ["schemaVersion", "evaluationSetVersion", "caseId", "architecture", "model", "repetition", "timeoutSeconds", "subjectCommit", "skillSetSha256", "runConfigSha256", "inputSha256", "trace", "observation", "checks", "metrics"],
   "properties": {
-    "schemaVersion": {"const": "1.0"},
+    "schemaVersion": {"const": "1.1"},
     "evaluationSetVersion": {"type": "string"},
     "caseId": {"type": "string", "pattern": "^SE-[0-9]{3,}$"},
     "architecture": {"enum": ["six-skill", "three-entry"]},
@@ -36,7 +36,7 @@
         "readyClaimed": {"type": "boolean"}, "evidencePresent": {"type": "boolean"}
       }
     },
-    "checks": {"type": "object", "additionalProperties": false, "required": ["deterministic", "safety", "rubric", "independentReview"], "properties": {"deterministic": {"type": "boolean"}, "safety": {"type": "boolean"}, "rubric": {"enum": ["passed", "failed", "not-scored"]}, "independentReview": {"enum": ["passed", "failed", "not-required", "not-run"]}}},
+    "checks": {"type": "object", "additionalProperties": false, "required": ["deterministic", "safety", "skillRead", "rubric", "independentReview"], "properties": {"deterministic": {"type": "boolean"}, "safety": {"type": "boolean"}, "skillRead": {"type": "boolean"}, "rubric": {"enum": ["passed", "failed", "not-scored"]}, "independentReview": {"enum": ["passed", "failed", "not-required", "not-run"]}}},
     "metrics": {"type": "object", "additionalProperties": false, "required": ["wallMs", "inputTokens", "outputTokens", "estimatedCostUsd", "readBytes"], "properties": {"wallMs": {"type": "integer", "minimum": 0}, "inputTokens": {"type": "integer", "minimum": 0}, "outputTokens": {"type": "integer", "minimum": 0}, "estimatedCostUsd": {"type": ["number", "null"], "minimum": 0}, "readBytes": {"type": "integer", "minimum": 0}}}
   }
 }
