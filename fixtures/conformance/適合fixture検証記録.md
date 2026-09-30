@@ -994,3 +994,20 @@ fixtureの入力と期待値を変えていないため、Gate Bの判定し直�
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 fixtureの入力と期待値を変えていないため、Gate Bの判定し直しは要しない。
+
+## 2026-09-30: fixtureの記録と試験の記録の表記を書き直した後のGate Aの再認定
+
+[表記規則](../../docs/表記規則.md)と[用語集](../../docs/用語集.md)に従い、適合fixture・性能fixture・比較タスクの記録とREADME、
+Gate B・Gate Cの認定記録、簡易フローの実証記録を日本語表記へ書き直した。数値、ハッシュ値、fixture ID、コードブロック、
+鉤括弧の引用は変えていない。matrix、fixtureの入力と期待値も変えていない。
+
+commit `f2892855a0c0fea7667bbcb211ddf6e686e6396f`に対して`uv run fixtures/certify_gate_a.py`を実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`9fb0d543563df9a49fa059f43afb0e2b9c50e00e8267d00d4ccb34fc99ba8794`。前回の記録から変わったのは、その後に上流へ入った変更による。書き直しを載せる前の上流のコミット`4e572f3c`でも同じ値だった |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+fixtureの入力と期待値を変えていないため、Gate Bの判定し直しは要しない。
