@@ -8,6 +8,14 @@
     "schemaVersion": {"const": "1.0"}, "evaluationSetVersion": {"type": "string"},
     "stage": {"enum": ["prototype", "release"]}, "result": {"enum": ["Passed", "Failed"]},
     "errors": {"type": "array", "items": {"type": "string"}},
-    "groups": {"type": "array", "items": {"type": "object"}}
+    "groups": {"type": "array", "items": {"type": "object"}},
+    "heldOut": {"type": "object", "additionalProperties": false,
+      "required": ["setVersion", "caseCount", "sha256"],
+      "properties": {
+        "setVersion": {"type": "string", "minLength": 1},
+        "caseCount": {"type": "integer", "minimum": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
   }
 }

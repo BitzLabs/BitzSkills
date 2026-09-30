@@ -56,6 +56,54 @@ def load_cases():
     return values
 
 
+def load_held_out_cases(path: Path):
+    """非公開のケース集合を実行時だけ読み、公開ケースとの衝突を拒否する。"""
+    resolved = path.resolve(strict=True)
+    if resolved.is_relative_to(ROOT.parent.parent):
+        raise ValueError("保持ケースは公開リポジトリ内へ置けません")
+    raw = resolved.read_bytes()
+    source = json.loads(raw)
+    if not isinstance(source, dict) or set(source) != {"setVersion", "cases"}:
+        raise ValueError("保持ケースはsetVersionとcasesだけを持つJSON objectが必要です")
+    if not isinstance(source["setVersion"], str) or not source["setVersion"].strip():
+        raise ValueError("保持ケースのsetVersionがありません")
+    cases = source["cases"]
+    if not isinstance(cases, list) or not cases:
+        raise ValueError("保持ケースが0件です")
+    case_validator = validators()["case"]
+    for index, case in enumerate(cases, 1):
+        errors = list(case_validator.iter_errors(case))
+        if errors:
+            raise ValueError(f"保持ケース {index}: {errors[0].message}")
+    ids = [case["caseId"] for case in cases]
+    public_cases = load_cases()
+    public_ids = {case["caseId"] for case in public_cases}
+    if len(ids) != len(set(ids)) or public_ids.intersection(ids):
+        raise ValueError("保持ケースのcaseIdが重複、または公開ケースと衝突しています")
+    public_inputs = {(case["prompt"], tuple(case["context"])) for case in public_cases}
+    private_inputs = [(case["prompt"], tuple(case["context"])) for case in cases]
+    if len(private_inputs) != len(set(private_inputs)) or public_inputs.intersection(private_inputs):
+        raise ValueError("保持ケースの入力が重複、または公開ケースと衝突しています")
+    for case in cases:
+        capability = case["capability"]
+        expected = case["expected"]
+        if case["mode"] == "do-not-use":
+            if expected["sixSkill"] is not None or expected["threeEntry"] is not None:
+                raise ValueError("保持ケースのdo-not-useは入口を選択できません")
+        elif capability in CAPABILITIES:
+            entry, route = CAPABILITIES[capability]
+            if expected["sixSkill"] != capability or expected["threeEntry"] != {"entry": entry, "path": route}:
+                raise ValueError("保持ケースの期待経路がcapabilityと一致しません")
+        else:
+            raise ValueError("保持ケースのcapabilityとmodeが一致しません")
+    metadata = {
+        "setVersion": source["setVersion"],
+        "caseCount": len(cases),
+        "sha256": hashlib.sha256(raw).hexdigest(),
+    }
+    return cases, metadata
+
+
 def audit():
     errors = []
     checked_schemas = validators()
@@ -174,11 +222,26 @@ def wilson(successes, total, z=1.96):
     return [round(max(0.0, center - margin), 6), round(min(1.0, center + margin), 6)]
 
 
-def score(paths, stage: str):
+def score(paths, stage: str, held_out_cases_path: Path | None = None):
     audit_report = audit()
     errors = list(audit_report["errors"])
     protocol = load_json(ROOT / "protocol.json")
-    cases = {case["caseId"]: case for case in load_cases()}
+    case_list = load_cases()
+    held_out = None
+    private_ids = set()
+    if held_out_cases_path is not None:
+        private_cases, held_out = load_held_out_cases(held_out_cases_path)
+        private_ids = {case["caseId"] for case in private_cases}
+        case_list.extend(private_cases)
+    elif stage == "release":
+        errors.append("release認定には--held-out-casesが必要です")
+    cases = {case["caseId"]: case for case in case_list}
+    if stage == "release" and held_out is not None:
+        for capability in CAPABILITIES:
+            counts = Counter(case["category"] for case in case_list if case["capability"] == capability)
+            for category, minimum in protocol["minimumDistinctCases"]["release"].items():
+                if counts[category] < minimum:
+                    errors.append(f"{capability}/{category}: 異なるcaseが{minimum}件未満です（{counts[category]}件）")
     run_validator = validators()["run"]
     if isinstance(paths, Path):
         paths = [paths]
@@ -196,6 +259,8 @@ def score(paths, stage: str):
             errors.append(f"run {index}: evaluationSetVersionが一致しません")
         if run["caseId"] not in cases:
             errors.append(f"run {index}: 未知のcaseIdです: {run['caseId']}")
+        elif run.get("heldOutSet") != (held_out if run["caseId"] in private_ids else None):
+            errors.append(f"run {index}: 保持ケース集合の版・件数・hashが一致しません")
         key = (run["architecture"], run["model"]["family"], run["model"]["name"], run["model"]["version"], run["repetition"], run["caseId"])
         if key in seen:
             errors.append(f"run {index}: 実行結果が重複しています")
@@ -331,7 +396,7 @@ def score(paths, stage: str):
             "safetyInvariant": {
                 "success": sum(safety_invariants),
                 "total": len(safety_invariants),
-                "rate": round(sum(safety_invariants) / len(safety_invariants), 6),
+                "rate": round(sum(safety_invariants) / len(safety_invariants), 6) if safety_invariants else 0.0,
             },
             "repeatability": {
                 "success": repeatable,
@@ -360,6 +425,8 @@ def score(paths, stage: str):
         "errors": errors,
         "groups": group_reports,
     }
+    if held_out is not None:
+        report["heldOut"] = held_out
     validators()["report"].validate(report)
     return report
 
@@ -371,11 +438,12 @@ def main(argv=None):
     scorer = subparsers.add_parser("score")
     scorer.add_argument("--stage", choices=("prototype", "release"), required=True)
     scorer.add_argument("--input", type=Path, action="append", required=True)
+    scorer.add_argument("--held-out-cases", type=Path)
     scorer.add_argument("--output", type=Path)
     args = parser.parse_args(argv)
 
     try:
-        report = audit() if args.command == "audit" else score(args.input, args.stage)
+        report = audit() if args.command == "audit" else score(args.input, args.stage, args.held_out_cases)
     except (OSError, ValueError) as error:
         report = {"status": "Failed", "errors": [str(error)]}
     serialized = json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n"

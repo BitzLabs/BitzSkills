@@ -7,12 +7,20 @@
   "properties": {
     "schemaVersion": {"const": "1.0"},
     "evaluationSetVersion": {"type": "string"},
-    "caseId": {"type": "string", "pattern": "^SE-[0-9]{3}$"},
+    "caseId": {"type": "string", "pattern": "^SE-[0-9]{3,}$"},
     "architecture": {"enum": ["six-skill", "three-entry"]},
     "model": {"type": "object", "additionalProperties": false, "required": ["family", "name", "version"], "properties": {"family": {"type": "string", "minLength": 1}, "name": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1}}},
     "repetition": {"type": "integer", "minimum": 1},
     "subjectCommit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
     "skillSetSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "heldOutSet": {"type": "object", "additionalProperties": false,
+      "required": ["setVersion", "caseCount", "sha256"],
+      "properties": {
+        "setVersion": {"type": "string", "minLength": 1},
+        "caseCount": {"type": "integer", "minimum": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
     "trace": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}},
     "observation": {
       "type": "object", "additionalProperties": false,
