@@ -1,4 +1,5 @@
 import importlib.util
+import copy
 import hashlib
 import io
 import json
@@ -84,7 +85,7 @@ class SkillEvalTests(unittest.TestCase):
             run = {
                 "schemaVersion": "1.0", "evaluationSetVersion": skill_eval.load_json(skill_eval.ROOT / "protocol.json")["evaluationSetVersion"], "caseId": public_case["caseId"],
                 "architecture": "six-skill", "model": {"family": "test", "name": "test", "version": "1"},
-                "repetition": 1, "subjectCommit": "0" * 40, "skillSetSha256": "0" * 64,
+                "repetition": 1, "timeoutSeconds": 120, "subjectCommit": "0" * 40, "skillSetSha256": "0" * 64,
                 "runConfigSha256": "0" * 64,
                 "inputSha256": "0" * 64,
                 "trace": {"path": "trace.jsonl", "sha256": "0" * 64},
@@ -138,21 +139,26 @@ class SkillEvalTests(unittest.TestCase):
 
     def test_complete_perfect_prototype_scores_passed(self):
         lines = []
+        protocol_version = skill_eval.load_json(skill_eval.ROOT / "protocol.json")["evaluationSetVersion"]
+        catalog = skill_eval.load_event_catalog()["events"]
         for architecture in ("six-skill", "three-entry"):
             for repetition in (1, 2):
                 for case in skill_eval.load_cases():
                     entry, path = skill_eval.expected_route(case, architecture)
+                    args = SimpleNamespace(architecture=architecture, model_family="test-family", model="test-model",
+                                           model_version="1", repetition=repetition, timeout=120)
                     lines.append(json.dumps({
                         "schemaVersion": "1.0",
-                        "evaluationSetVersion": skill_eval.load_json(skill_eval.ROOT / "protocol.json")["evaluationSetVersion"],
+                        "evaluationSetVersion": protocol_version,
                         "caseId": case["caseId"],
                         "architecture": architecture,
                         "model": {"family": "test-family", "name": "test-model", "version": "1"},
                         "repetition": repetition,
+                        "timeoutSeconds": 120,
                         "subjectCommit": "0" * 40,
                         "skillSetSha256": "0" * 64,
-                        "runConfigSha256": "0" * 64,
-                        "inputSha256": "0" * 64,
+                        "runConfigSha256": skill_eval_runner.run_config_sha256(args, protocol_version, "0" * 40, "0" * 64, None),
+                        "inputSha256": skill_eval_runner.input_sha256(args, case, catalog, protocol_version, "0" * 40, "0" * 64, None),
                         "trace": {"path": f"{architecture}/{repetition}/{case['caseId']}.jsonl", "sha256": "0" * 64},
                         "observation": {
                             "selectedEntry": entry,
@@ -170,14 +176,63 @@ class SkillEvalTests(unittest.TestCase):
             path = Path(directory) / "runs.jsonl"
             path.write_text("\n".join(lines) + "\n", encoding="utf-8")
             report = skill_eval.score(path, "prototype")
+            base_records = [json.loads(line) for line in lines]
             changed = json.loads(lines[0])
             changed["runConfigSha256"] = "1" * 64
             lines[0] = json.dumps(changed, ensure_ascii=False)
             path.write_text("\n".join(lines) + "\n", encoding="utf-8")
             mixed_report = skill_eval.score(path, "prototype")
+
+            def score_records(records):
+                path.write_text("\n".join(json.dumps(item, ensure_ascii=False) for item in records) + "\n", encoding="utf-8")
+                return skill_eval.score(path, "prototype")
+
+            cases_by_id = {case["caseId"]: case for case in skill_eval.load_cases()}
+
+            changed_input = copy.deepcopy(base_records)
+            selected = changed_input[0]
+            changed_case = dict(cases_by_id[selected["caseId"]], prompt="別の要求")
+            args = SimpleNamespace(architecture=selected["architecture"], model_family=selected["model"]["family"],
+                                   model=selected["model"]["name"], model_version=selected["model"]["version"],
+                                   repetition=selected["repetition"], timeout=selected["timeoutSeconds"])
+            selected["inputSha256"] = skill_eval_runner.input_sha256(
+                args, changed_case, catalog, protocol_version, selected["subjectCommit"], selected["skillSetSha256"], None)
+            changed_input_report = score_records(changed_input)
+
+            changed_commit = copy.deepcopy(base_records)
+            for selected in changed_commit:
+                if selected["architecture"] != "three-entry":
+                    continue
+                selected["subjectCommit"] = "1" * 40
+                args = SimpleNamespace(architecture=selected["architecture"], model_family=selected["model"]["family"],
+                                       model=selected["model"]["name"], model_version=selected["model"]["version"],
+                                       repetition=selected["repetition"], timeout=selected["timeoutSeconds"])
+                selected["runConfigSha256"] = skill_eval_runner.run_config_sha256(
+                    args, protocol_version, selected["subjectCommit"], selected["skillSetSha256"], None)
+                selected["inputSha256"] = skill_eval_runner.input_sha256(
+                    args, cases_by_id[selected["caseId"]], catalog, protocol_version,
+                    selected["subjectCommit"], selected["skillSetSha256"], None)
+            changed_commit_report = score_records(changed_commit)
+
+            other_model = copy.deepcopy([run for run in base_records if run["architecture"] == "six-skill"])
+            for selected in other_model:
+                selected["model"] = {"family": "other", "name": "other-model", "version": "2"}
+                selected["skillSetSha256"] = "1" * 64
+                args = SimpleNamespace(architecture=selected["architecture"], model_family="other",
+                                       model="other-model", model_version="2",
+                                       repetition=selected["repetition"], timeout=selected["timeoutSeconds"])
+                selected["runConfigSha256"] = skill_eval_runner.run_config_sha256(
+                    args, protocol_version, selected["subjectCommit"], selected["skillSetSha256"], None)
+                selected["inputSha256"] = skill_eval_runner.input_sha256(
+                    args, cases_by_id[selected["caseId"]], catalog, protocol_version,
+                    selected["subjectCommit"], selected["skillSetSha256"], None)
+            changed_skill_report = score_records(base_records + other_model)
         self.assertEqual("Passed", report["result"], report["errors"])
         self.assertEqual("Failed", mixed_report["result"])
         self.assertTrue(any("runConfigSha256が実行間で一致しません" in error for error in mixed_report["errors"]))
+        self.assertTrue(any("ケース入力のhashが一致しません" in error for error in changed_input_report["errors"]))
+        self.assertTrue(any("対象コミットが評価全体で一致しません" in error for error in changed_commit_report["errors"]))
+        self.assertTrue(any("候補スキルのhashがモデル間で一致しません" in error for error in changed_skill_report["errors"]))
 
     def test_multiple_jsonl_files_are_combined(self):
         with tempfile.TemporaryDirectory() as directory:

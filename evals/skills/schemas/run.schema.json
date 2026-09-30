@@ -3,7 +3,7 @@
   "$id": "run.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "evaluationSetVersion", "caseId", "architecture", "model", "repetition", "subjectCommit", "skillSetSha256", "runConfigSha256", "inputSha256", "trace", "observation", "checks", "metrics"],
+  "required": ["schemaVersion", "evaluationSetVersion", "caseId", "architecture", "model", "repetition", "timeoutSeconds", "subjectCommit", "skillSetSha256", "runConfigSha256", "inputSha256", "trace", "observation", "checks", "metrics"],
   "properties": {
     "schemaVersion": {"const": "1.0"},
     "evaluationSetVersion": {"type": "string"},
@@ -11,6 +11,7 @@
     "architecture": {"enum": ["six-skill", "three-entry"]},
     "model": {"type": "object", "additionalProperties": false, "required": ["family", "name", "version"], "properties": {"family": {"type": "string", "minLength": 1}, "name": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1}}},
     "repetition": {"type": "integer", "minimum": 1},
+    "timeoutSeconds": {"type": "integer", "minimum": 1},
     "subjectCommit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
     "skillSetSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "runConfigSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},

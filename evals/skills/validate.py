@@ -10,11 +10,13 @@ from __future__ import annotations
 import argparse
 from collections import Counter, defaultdict
 import hashlib
+import importlib.util
 import json
 import math
 from pathlib import Path
 import statistics
 import sys
+from types import SimpleNamespace
 
 from jsonschema import Draft202012Validator
 
@@ -45,6 +47,13 @@ def validators():
         Draft202012Validator.check_schema(schema)
         result[path.name.removesuffix(".schema.json")] = Draft202012Validator(schema)
     return result
+
+
+def load_runner_module():
+    specification = importlib.util.spec_from_file_location("skill_eval_runner_for_score", ROOT / "run_model.py")
+    module = importlib.util.module_from_spec(specification)
+    specification.loader.exec_module(module)
+    return module
 
 
 def load_cases():
@@ -260,6 +269,8 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None):
     elif stage == "release":
         errors.append("release認定には--held-out-casesが必要です")
     cases = {case["caseId"]: case for case in case_list}
+    runner = load_runner_module()
+    event_catalog = load_event_catalog()["events"]
     if stage == "release" and held_out is not None:
         for capability in CAPABILITIES:
             counts = Counter(case["category"] for case in case_list if case["capability"] == capability)
@@ -285,12 +296,31 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None):
             errors.append(f"run {index}: 未知のcaseIdです: {run['caseId']}")
         elif run.get("heldOutSet") != held_out:
             errors.append(f"run {index}: 保持ケース集合の版・件数・hashが一致しません")
+        if run["caseId"] in cases:
+            model = run["model"]
+            args = SimpleNamespace(architecture=run["architecture"], model_family=model["family"],
+                                   model=model["name"], model_version=model["version"],
+                                   repetition=run["repetition"], timeout=run["timeoutSeconds"])
+            expected_config = runner.run_config_sha256(args, protocol["evaluationSetVersion"],
+                                                       run["subjectCommit"], run["skillSetSha256"], held_out)
+            expected_input = runner.input_sha256(args, cases[run["caseId"]], event_catalog,
+                                                 protocol["evaluationSetVersion"], run["subjectCommit"],
+                                                 run["skillSetSha256"], held_out)
+            if run["runConfigSha256"] != expected_config:
+                errors.append(f"run {index}: 実行構成のhashが一致しません")
+            if run["inputSha256"] != expected_input:
+                errors.append(f"run {index}: ケース入力のhashが一致しません")
         key = (run["architecture"], run["model"]["family"], run["model"]["name"], run["model"]["version"], run["repetition"], run["caseId"])
         if key in seen:
             errors.append(f"run {index}: 実行結果が重複しています")
         seen.add(key)
 
     valid_runs = [run for run in runs if run.get("caseId") in cases and not list(run_validator.iter_errors(run))]
+    if len({run["subjectCommit"] for run in valid_runs}) > 1:
+        errors.append("対象コミットが評価全体で一致しません")
+    for architecture in {run["architecture"] for run in valid_runs}:
+        if len({run["skillSetSha256"] for run in valid_runs if run["architecture"] == architecture}) > 1:
+            errors.append(f"{architecture}: 候補スキルのhashがモデル間で一致しません")
     families = {run["model"]["family"] for run in valid_runs}
     if len(families) < protocol["minimumModelFamilies"][stage]:
         errors.append(f"model familyが{protocol['minimumModelFamilies'][stage]}系統未満です")
