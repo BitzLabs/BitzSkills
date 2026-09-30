@@ -60,18 +60,23 @@ def trace_usage(events):
     return 0, 0
 
 
-ALLOWED_SKILL_READ = re.compile(
-    r"^cat \.codex/skills/([a-z0-9-]+)/SKILL\.md$"
-)
+ALLOWED_SKILL_PATH = re.compile(r"^\.codex/skills/([a-z0-9-]+)/SKILL\.md$")
 
 
 def candidate_skill_names_read(command):
     prefix = "/bin/bash -lc '"
     if not isinstance(command, str) or not command.startswith(prefix) or not command.endswith("'"):
         return []
-    parts = command[len(prefix):-1].split(" && ")
-    matches = [ALLOWED_SKILL_READ.fullmatch(part) for part in parts]
-    return [match.group(1) for match in matches] if all(matches) else []
+    names = []
+    for part in re.split(r"[ \t]*&&[ \t]*", command[len(prefix):-1]):
+        words = re.split(r"[ \t]+", part.strip(" \t"))
+        if words[0] != "cat" or len(words) < 2:
+            return []
+        matches = [ALLOWED_SKILL_PATH.fullmatch(word) for word in words[1:]]
+        if not all(matches):
+            return []
+        names.extend(match.group(1) for match in matches)
+    return names
 
 
 def is_candidate_skill_read(command):

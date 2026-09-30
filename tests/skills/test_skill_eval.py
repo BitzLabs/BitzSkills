@@ -295,11 +295,20 @@ class SkillEvalTests(unittest.TestCase):
 
     def test_runner_allows_only_candidate_skill_reads(self):
         allowed = [{"item": {"type": "command_execution", "command": "/bin/bash -lc 'cat .codex/skills/bitz-core/SKILL.md && cat .codex/skills/sdd-plan/SKILL.md'"}}]
+        multiple = [{"item": {"type": "command_execution", "command": "/bin/bash -lc 'cat .codex/skills/bitz-core/SKILL.md .codex/skills/sdd-plan/SKILL.md'"}}]
         forbidden = [{"item": {"type": "command_execution", "command": "/bin/bash -lc 'git status'"}}]
         other_workspace = [{"item": {"type": "command_execution", "command": "/bin/bash -lc 'cat /tmp/bitz-skill-eval-a1/.codex/skills/bitz-core/SKILL.md'"}}]
         self.assertFalse(skill_eval_runner.trace_has_forbidden_action(allowed))
+        self.assertFalse(skill_eval_runner.trace_has_forbidden_action(multiple))
+        spaced = [{"item": {"type": "command_execution", "command":
+                   "/bin/bash -lc 'cat\t.codex/skills/bitz-core/SKILL.md  .codex/skills/sdd-plan/SKILL.md&&\tcat .codex/skills/quality-plan/SKILL.md'"}}]
+        self.assertFalse(skill_eval_runner.trace_has_forbidden_action(spaced))
         self.assertTrue(skill_eval_runner.trace_has_forbidden_action(forbidden))
         self.assertTrue(skill_eval_runner.trace_has_forbidden_action(other_workspace))
+        for suffix in ("; git status", " | sh", " > output", " ../secret", "\ncat .codex/skills/bitz-core/SKILL.md"):
+            command = "/bin/bash -lc 'cat .codex/skills/bitz-core/SKILL.md" + suffix + "'"
+            self.assertTrue(skill_eval_runner.trace_has_forbidden_action([
+                {"item": {"type": "command_execution", "command": command}}]), command)
 
     def test_runner_requires_successful_read_of_selected_skill(self):
         body = (skill_eval_runner.CANDIDATES / "six-skill/skills/quality-plan/SKILL.md").read_text(encoding="utf-8")
@@ -310,6 +319,16 @@ class SkillEvalTests(unittest.TestCase):
         wrong_body = copy.deepcopy(completed)
         wrong_body["item"]["aggregated_output"] = "別の本文"
         self.assertTrue(skill_eval_runner.selected_skill_was_read([completed], "quality-plan", "six-skill"))
+        other_body = (skill_eval_runner.CANDIDATES / "six-skill/skills/sdd-plan/SKILL.md").read_text(encoding="utf-8")
+        multiple = copy.deepcopy(completed)
+        multiple["item"]["command"] = "/bin/bash -lc 'cat .codex/skills/sdd-plan/SKILL.md .codex/skills/quality-plan/SKILL.md'"
+        multiple["item"]["aggregated_output"] = other_body + body
+        self.assertTrue(skill_eval_runner.selected_skill_was_read([multiple], "quality-plan", "six-skill"))
+        self.assertTrue(skill_eval_runner.selected_skill_was_read([multiple], "sdd-plan", "six-skill"))
+        multiple["item"]["command"] = "/bin/bash -lc 'cat\t.codex/skills/sdd-plan/SKILL.md  .codex/skills/quality-plan/SKILL.md'"
+        self.assertTrue(skill_eval_runner.selected_skill_was_read([multiple], "quality-plan", "six-skill"))
+        multiple["item"]["aggregated_output"] = body + other_body
+        self.assertFalse(skill_eval_runner.selected_skill_was_read([multiple], "quality-plan", "six-skill"))
         self.assertFalse(skill_eval_runner.selected_skill_was_read([failed], "quality-plan", "six-skill"))
         self.assertFalse(skill_eval_runner.selected_skill_was_read([wrong_body], "quality-plan", "six-skill"))
         self.assertFalse(skill_eval_runner.selected_skill_was_read([completed], "sdd-plan", "six-skill"))
