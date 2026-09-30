@@ -1,32 +1,33 @@
-# CLI引数境界fixture review
+# CLIの引数の境界のfixtureのレビュー記録
 
-2026-09-14。SINGLE-127の引数解析error 9件を追加する。CoreのCLI解析は実装・実行しない。
+2026-09-14。SINGLE-127の引数の解析エラー9件を追加する。CoreのCLIの解析は実装も実行もしない。
 
-| ID | 唯一の不正条件 | 期待 |
+| ID | 唯一の不正な条件 | 期待 |
 |---|---|---|
-| SINGLE-127-01 | `--format json`を2回指定 | 同値でも重複を拒否 |
-| SINGLE-127-02 | `--full`を2回指定 | 重複flagを拒否 |
-| SINGLE-127-05 | checkのtargetに空文字列を1件指定 | 引数なしcheckへ置換せず拒否 |
-| SINGLE-127-06 | contextの起点を指定しない | 必須起点の不足を拒否 |
-| SINGLE-127-07 | doctorの`--workspace`値が空文字列 | workspace探索前に拒否 |
-| SINGLE-127-08 | verifyの`--timeout 0` | 下限外を拒否 |
-| SINGLE-127-09 | verifyの`--timeout 3601` | 上限外を拒否 |
-| SINGLE-127-10 | verifyの`--timeout +1` | 数値範囲内でも非canonical表記を拒否 |
-| SINGLE-127-11 | checkの`--report=out.json` | 未知option形式を拒否し、任意pathへ書かない |
+| SINGLE-127-01 | `--format json`を2回指定 | 同じ値でも重複を拒否 |
+| SINGLE-127-02 | `--full`を2回指定 | 重複したフラグを拒否 |
+| SINGLE-127-05 | `check`の対象に空文字列を1件指定 | 引数なしの`check`へ置き換えず拒否 |
+| SINGLE-127-06 | `context`の起点を指定しない | 必須の起点の不足を拒否 |
+| SINGLE-127-07 | `doctor`の`--workspace`の値が空文字列 | ワークスペースの探索の前に拒否 |
+| SINGLE-127-08 | `verify`の`--timeout 0` | 下限を下回る値を拒否 |
+| SINGLE-127-09 | `verify`の`--timeout 3601` | 上限を上回る値を拒否 |
+| SINGLE-127-10 | `verify`の`--timeout +1` | 数値の範囲内でも正規でない表記を拒否 |
+| SINGLE-127-11 | `check`の`--report=out.json` | 未知のオプションの形式を拒否し、任意のパスへ書かない |
 
 根拠は[CLI基盤契約 §5・§7](../../../docs/03.詳細設計/00_共通契約/06_Core実行環境・CLI基盤契約.md#5-cliの引数列の共通の解析)と
-[適合fixture仕様](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md)の該当ID。
-全件で終了コード4、標準出力なし、共通結果・statusなし、report生成0件とする。
-標準エラーは`bitz: <operation>: <reason>`の1行で、理由を必須とし端末制御文字を許さない。
-理由の自然言語文字列そのものは契約が固定していないため一致対象にしない。
-既存の`cli-output.json`とoperation別の出力検査を共用する。
+[適合fixture仕様](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md)の該当するIDである。
+全件で、終了コードは4、標準出力なし、結果と`status`なし、レポートの生成0件とする。
+標準エラー出力は`bitz: <operation>: <reason>`の1行で、理由を必須とし、端末の制御文字を許さない。
+理由の自然言語の文字列そのものは契約が固定していないため、一致を確かめる対象にしない。
+既存の`cli-output.json`と、操作ごとの出力の検査を共用する。
 
-入力は既存SINGLE-042の有効な単一workspace corpusを物理copyし、引数以外の不正を混ぜない。
-REQ-001は存在し、timeout caseへ未知targetを混ぜない。空文字列はmanifestのargv配列で保持し、
-shellを介して消失させない。checkのbase指定は不要で、argv拒否後にGit基準版を解決してはならない。
-副作用期待値はrepository、Git status/index、隔離HOME/cache/TMPDIRのbefore/after完全一致とする。
+入力は、既存のSINGLE-042の有効な単一ワークスペースのcorpusを物理的にコピーし、引数以外の不正を混ぜない。
+REQ-001は存在し、タイムアウトのケースへ未知の対象を混ぜない。空文字列はマニフェストの`argv`配列で保持し、
+シェルを介して消失させない。`check`の基準版の指定は不要で、引数列を拒否した後に基準版を解決してはならない。
+副作用の期待値は、リポジトリ、`git status`とGitのインデックス、隔離した`HOME`・キャッシュ・`TMPDIR`について、
+前後（`before`と`after`）の完全一致とする。
 
-準備検証はmanifest・出力契約・入力byte列・副作用Schemaを照合し、各fixtureを2回隔離setupして
-固定snapshotと一致させる。回帰試験は重複や空引数の除去、有効timeoutへの置換、出力file追加などを拒否する。
-これは期待値の破損検出であり、Coreが実際にargvを拒否した証拠ではない。
-Coreの終了コード、stream、副作用と操作開始前の拒否は対応するGate Bで検証する。
+準備検証は、マニフェスト、出力の契約、入力のバイト列、副作用のスキーマを照合し、各fixtureを隔離環境で2回準備して
+固定したスナップショットと一致させる。回帰試験は、重複や空の引数の除去、有効なタイムアウトへの置換え、出力ファイルの追加などを拒否する。
+これは期待値の破損の検出であり、Coreが実際に引数列を拒否した証拠ではない。
+Coreの終了コード、ストリーム、副作用と、操作の開始前の拒否は、対応するGate Bで検証する。

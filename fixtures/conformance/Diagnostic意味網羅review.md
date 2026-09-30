@@ -1,251 +1,254 @@
-# Diagnostic意味網羅review
+# 診断の意味の網羅のレビュー
 
-実施日: 2026-09-07。更新日: 2026-09-08。状態: **review完了（実装受入は別工程）**。
+実施日: 2026-09-07。更新日: 2026-09-08。状態: **レビュー完了（実装の受入は別の工程）**。
 
-`diagnostic-coverage.json`はregistryの各conditionIdを規範の根拠文書と判断理由へ対応付けるreview台帳である。
-codeの文字列一致を意味網羅の証明とはしない。validatorは対応の欠落・重複・未知ID、根拠文書とregistryの変更を
-検出する。文書が変わった場合は意味を再確認してから台帳のhashを更新する。自動実行でhashを更新しない。
-registryから派生する対応表はreview記録であり、独立した動作oracleではない。
+`diagnostic-coverage.json`は、診断レジストリの各条件IDを、規範の根拠文書と判断理由へ対応付ける、レビュー済みの診断の網羅表である。
+診断コードの文字列が一致することを、意味の網羅の証明とはしない。検証プログラムは、対応の欠落、重複、未知ID、
+根拠文書と診断レジストリの変更を検出する。文書が変わった場合は、意味を再確認してから網羅表のハッシュ値を更新する。
+自動実行でハッシュ値を更新しない。診断レジストリから派生する対応表はレビューの記録であり、独立した動作のオラクルではない。
 
 ## 修正した不整合
 
 | 論点 | 根拠 | 修正 |
 |---|---|---|
-| implementの未tested MUST | 関係・トレースモデル §8、context §9 | warning行を追加 |
-| context purpose=verifyの未tested MUST | 関係・トレースモデル §8、context §9 | blocked行のoperationへcontextを追加、purposeを限定 |
-| 未tested SHOULD | 関係・トレースモデル §8 | purposeをimplement/verifyへ限定し、verify索引にもwarningを明記 |
-| 複合workspace依存遮断の継続単位 | 複合workspace仕様 §8、verify §10、doctor §3 | skip-workspaceからtarget/check別へ分割。checkは具体的relation診断を使用 |
-| YAML禁止構文の列挙 | workspace設定 §8、CLI基盤 §3 | 複雑key・複数documentをregistryへ補完 |
-| statement ID重複 | 言語仕様、registry §4 | 関係モデル索引をEAI-CORE-ID-002へ訂正 |
+| 目的`implement`で`MUST`が未テストの場合 | 関係・トレースモデル §8、`context` §9 | `warning`の行を追加 |
+| 目的`verify`の`context`で`MUST`が未テストの場合 | 関係・トレースモデル §8、`context` §9 | `blocked`の行の`operation`へ`context`を追加し、目的を限定 |
+| `SHOULD`が未テストの場合 | 関係・トレースモデル §8 | 目的を`implement`と`verify`へ限定し、`verify`の検索用の索引にも`warning`を明記 |
+| 複合ワークスペースの依存遮断の継続単位 | 複合ワークスペース仕様 §8、`verify` §10、`doctor` §3 | `skip-workspace`から、対象ごとと検査項目ごとの継続単位へ分割。`check`操作は具体的な関係の診断を使用 |
+| 禁止するYAML構文の列挙 | ワークスペース・設定仕様 §8、CLI基盤 §3 | 複雑なキーと複数のYAMLドキュメントを診断レジストリへ補完 |
+| 規範文IDの重複 | 言語仕様、診断レジストリ §4 | 関係・トレースモデルの検索用の索引を`EAI-CORE-ID-002`へ訂正 |
 
 ## 非成功条件の裁定
 
-### DG-OPEN-001: command設定のGit管理要件
+### `DG-OPEN-001`: コマンドの設定のGit管理の要件
 
-安全な入出力 §3はcommandをGit管理されたbitz.yamlからだけ取得すると規定する一方、§8はGit不在でも
-test実行を継続すると規定する。Git不在時の信頼確認方法、未追跡設定を検出したときのcode・status・source・継続単位は
-registryにない。Git不在の扱いと、Gitが使える場合の未追跡設定拒否を分けて裁定する必要がある。
-裁定: Git利用可能時はindexでの追跡を要求し、未追跡設定は`VERIFY-CONFIG-UNTRACKED`へ対応付けた。
-codeは既存の`SPEC-VERIFY-BLOCKED-001`、error／blocked、file、skip-bindingとする。追跡済み設定のworking tree変更は
-許可する。Git不在の単一workspaceは既存のverify継続契約を優先し、現在設定を使うが追跡保証をしない。
-複合workspaceはGit不在事前検査で遮断する。新しいCLI flagや暗黙command取得元は追加しない。
+安全な入出力 §3は、コマンドをGitで管理された`bitz.yaml`からだけ取得すると規定する一方、§8は、Git不在でもテストの実行を継続すると規定する。
+Git不在の場合に信頼を確認する方法と、未追跡の設定を検出したときの診断コード、結果への効果、発生元、継続単位は、診断レジストリにない。
+Git不在の扱いと、Gitが使える場合に未追跡の設定を拒否することを分けて裁定する必要がある。
+裁定: Gitを利用できる場合はインデックスでの追跡を要求し、未追跡の設定は`VERIFY-CONFIG-UNTRACKED`へ対応付けた。
+診断コードは既存の`SPEC-VERIFY-BLOCKED-001`とし、重大度は`error`、結果への効果は`blocked`、発生元は`file`、継続単位は`skip-binding`とする。
+追跡済みの設定の作業ツリーでの変更は許可する。Git不在の単一ワークスペースは、既存の`verify`の継続の契約を優先し、
+現在の設定を使うが追跡は保証しない。複合ワークスペースは、全体事前検査のGit不在の検査で遮断する。
+新しいCLIのフラグや、暗黙のコマンドの取得元は追加しない。
 
-### DG-OPEN-002: test pathがcommand cwd配下にない場合
+### `DG-OPEN-002`: テストのパスがコマンドの作業ディレクトリの配下にない場合
 
-workspace設定 §6はtest pathをcwd配下に限定するが、双方が存在し同一workspace内にある場合の
-違反について、設定Schema不正、trace path不正、verify binding遮断のどれを返すかが未確定である。
-VERIFY-CWD-UNAVAILABLEはcwd不在、MULTI-OWNERSHIPは所有境界越えであり、そのまま同じ原因に当てはめられない。
-裁定: 所有境界・存在検査後にverifyだけが包含検査を行い、`VERIFY-TEST-OUTSIDE-CWD`へ対応付ける。
-codeは`SPEC-VERIFY-BLOCKED-001`、error／blocked、file、skip-bindingとする。sourceはtest対応の宣言SPEC。
-check/doctorの責務をtarget別binding解決へ拡張しない。`{tests}`なしでも同じ条件を適用する。
+ワークスペース・設定仕様 §6は、テストのパスを作業ディレクトリの配下に限定するが、双方が存在し、同じワークスペースの中にある場合の
+違反について、設定のスキーマの不正、トレースのパスの不正、`verify`のテスト割当ての遮断のどれを返すかが未確定である。
+`VERIFY-CWD-UNAVAILABLE`は作業ディレクトリの不在、`MULTI-OWNERSHIP`は所有境界を越えることであり、そのまま同じ原因に当てはめられない。
+裁定: 所有境界と存在の検査をした後に、`verify`だけが包含の検査を行い、`VERIFY-TEST-OUTSIDE-CWD`へ対応付ける。
+診断コードは`SPEC-VERIFY-BLOCKED-001`とし、重大度は`error`、結果への効果は`blocked`、発生元は`file`、継続単位は`skip-binding`とする。
+発生元は、テスト対応を宣言した仕様文書とする。
+`check`と`doctor`の責務を、検証対象ごとのテスト割当ての解決へ拡張しない。`{tests}`がなくても同じ条件を適用する。
 
-### DG-OPEN-003: 別repository/worktreeへのmember path
+### `DG-OPEN-003`: 別のリポジトリまたはワークツリーへのメンバーのパス
 
-複合workspace仕様 §5.1・§11は既知の別repository/worktreeへのmember pathをSPEC-MULTI-PATH-001／failedとするが、
-§10は同じ解決結果をSPEC-MULTI-GIT-001／blockedにも含めている。既知の不適合と境界確定不能を
-区別する方針を採用した。既知の別repository/worktreeはPATH／failed、境界を確定できない場合はGIT／blockedとし、
-§10を§5.1と整合させた。同じ原因へ両codeを返さない。
+複合ワークスペース仕様 §5.1と§11は、既知の別のリポジトリまたはワークツリーへのメンバーのパスを、診断`SPEC-MULTI-PATH-001`（`failed`）とするが、
+§10は、同じ解決結果を診断`SPEC-MULTI-GIT-001`（`blocked`）にも含めている。既知の不適合と、境界を確定できないことを
+区別する方針を採用した。既知の別のリポジトリまたはワークツリーは診断`SPEC-MULTI-PATH-001`（`failed`）、
+境界を確定できない場合は診断`SPEC-MULTI-GIT-001`（`blocked`）とし、§10を§5.1と整合させた。同じ原因へ両方の診断コードを返さない。
 
-## Diagnosticを生成しない条件
+## 診断を生成しない条件
 
-- CLI構文、option、対象種別、未知workspace、明示base解決不能: 終了コード4。操作結果・reportなし。
-- 起動済みtestの通常非0終了: command結果からfailedを集約。Diagnosticなし。
-- 単一workspaceのcontext/verifyでGit差分保証を要求しない呼出し: Git不在だけではDiagnosticなし。
-- process出力の不正UTF-8・制御文字・秘密値・保持上限: 置換、redaction、truncated表示で処理。自然言語で合否判定しない。
-- cacheの内容、IDの全履歴再利用、自然言語判定、style推奨、Profile: Core 1.0の検査対象外。未知entry等の別規則は維持。
-- adapterの書込み可否、配布物の構築要件、consumerの互換性拒否: Core操作Diagnosticを新設する条件ではない。
+- CLIの構文、オプション、対象の種別、未知のワークスペース、明示した基準版を解決できない場合: 終了コード4。操作の結果もレポートもない。
+- 起動したテストの通常の非0の終了: コマンドの結果から`failed`を集約する。診断はない。
+- 単一ワークスペースの`context`と`verify`で、Gitの差分の保証を要求しない呼出し: Git不在だけでは診断はない。
+- プロセスの出力の不正なUTF-8、制御文字、秘密情報、保持の上限: 置換、伏せ字化、切り詰めた表示で処理する。自然言語で合否を判定しない。
+- キャッシュの内容、IDの全履歴での再利用、自然言語の判定、スタイルの推奨、プロファイル: Core 1.0の検査の対象外。未知のエントリなどの別の規則は維持する。
+- アダプターの書込みの可否、配布物のビルドの要件、利用側の互換性の拒否: Coreの操作の診断を新設する条件ではない。
 
 ## 検証と完了条件
 
-`uv run fixtures/validate_conformance.py`は台帳の整合性と変更検出を実行する。回帰検査は対応欠落、未知ID、
-根拠改変、未裁定条件が残る場合の非完了を確認する。修正した条件に対する期待operation/status/continuationも固定する。
-上記3件の裁定を規範・registry・台帳へ反映した。119条件を14論点群・17根拠文書へ対応付け、未裁定事項は0件とする。
-判定は人手で確認した規範対応のreview結果であり、自然言語の意味をvalidatorが自動証明するものではない。
-適合fixtureによるCore実装の実証は別工程であり、本reviewでは代替しない。
+`uv run fixtures/validate_conformance.py`は、網羅表の整合性と変更の検出を実行する。回帰検査は、対応の欠落、未知ID、
+根拠文書の改変、未裁定の条件の残りがある場合に、完了としないことを確認する。
+修正した条件について、期待する操作、結果への効果、継続単位も固定する。
+上記3件の裁定を、規範、診断レジストリ、網羅表へ反映した。119条件を14の論点群と17の根拠文書へ対応付け、未裁定事項は0件とする。
+判定は、人が確認した規範との対応のレビュー結果であり、自然言語の意味を検証プログラムが自動で証明するものではない。
+適合fixtureによるCoreの実装の実証は別の工程であり、本レビューでは代替しない。
 
-## 2026-09-14の再review（関係・トレースモデル §6.3）
+## 2026-09-14の再レビュー（関係・トレースモデル §6.3）
 
-`verify`の起点TASKについて、`addresses`先と当該先を所有する文書を`contextDocuments`へ含めることを明文化した。
-既存の裁定を変更せず、verify仕様 §3が要求する「TASKは自身の`addresses`先を対象にする」を実行可能にするだけの
-記述整合であるため、新規ADRは起こさない。
+`verify`の起点TASKについて、`addresses`の参照先と、その参照先を所有する文書を`contextDocuments`へ含めることを明文化した。
+既存の裁定を変更せず、`verify`仕様 §3が要求する「TASKは自身の`addresses`先を対象にする」を実行可能にするだけの記述の整合であるため、
+新しいADRは起こさない。
 
-- 新規のDiagnostic条件は生じない。`addresses`はstrong relationであり、解決不能な先は既存の
-  `SPEC-RELATION-MISSING-001`（strong target不在）が担う。119条件・14論点群の対応に変更はない。
-- target展開の期待集合25 caseは、参照計算が以前からこの読みを実装しており、期待値の変更は0件である。
-  変更は文書側の欠落を埋めるものであり、reviewされた期待に文書を合わせた。
-- 上記を確認したうえで、台帳と`targets/cases.json`が固定する根拠文書hashを更新した。
+- 新しい診断の条件は生じない。`addresses`は強い関係であり、解決できない参照先は既存の`SPEC-RELATION-MISSING-001`（強い関係の参照先の不在）が担う。
+  119条件と14の論点群の対応に変更はない。
+- 対象展開の期待集合25ケースは、参照計算が以前からこの読みを実装しており、期待値の変更は0件である。
+  変更は文書側の欠落を埋めるものであり、レビューされた期待に文書を合わせた。
+- 上記を確認したうえで、網羅表と`targets/cases.json`が固定する根拠文書のハッシュ値を更新した。
 
-## 2026-09-17の再review（report directoryのsymlink）
+## 2026-09-17の再レビュー（レポートのディレクトリのシンボリックリンク）
 
-SINGLE-125-06の発生条件を確定するため、結果・Diagnostic・終了コード §8に「`.spec`または`.spec/reports`が
-symlinkなら解決せず保存失敗とする」ことを、workspace・設定仕様 §3に「`.spec/reports`はentry種別にかかわらず
-既知entryとし探索しない」ことを追記した。registryの`REPORT-WRITE`行には、directory以外またはsymlinkの場合を
+`SINGLE-125-06`の発生条件を確定するため、結果・診断・終了コード §8に「`.spec`または`.spec/reports`が
+symlinkなら解決せず保存失敗とする」ことを、ワークスペース・設定仕様 §3に「`.spec/reports`はentry種別にかかわらず
+既知entryとし探索しない」ことを追記した。診断レジストリの`REPORT-WRITE`の行には、ディレクトリ以外またはシンボリックリンクの場合を
 含むことを注記した。
 
-- 新規のDiagnostic条件は生じない。既存の`REPORT-WRITE`（`SPEC-REPORT-WRITE-001`、error／error、file、
-  `stop-operation`）が担い、119条件・14論点群の対応に変更はない。
-- `.spec/reports`が通常fileの場合（SINGLE-072）と同じ扱いに揃えるもので、未知entry warningを追加しない。
-- 上記を確認したうえで、台帳が固定する3文書のhashを更新した。
+- 新しい診断の条件は生じない。既存の`REPORT-WRITE`（診断`SPEC-REPORT-WRITE-001`。重大度`error`、結果への効果`error`、発生元`file`、
+  継続単位`stop-operation`）が担い、119条件と14の論点群の対応に変更はない。
+- `.spec/reports`が通常のファイルの場合（`SINGLE-072`）と同じ扱いに揃えるもので、未知のエントリの警告を追加しない。
+- 上記を確認したうえで、網羅表が固定する3文書のハッシュ値を更新した。
 
-## 2026-09-17の再review（argv template全体の上限）
+## 2026-09-17の再レビュー（引数列テンプレート全体の上限）
 
-workspace・設定仕様 §6へ、単一設定fileの64 KiB上限によりtemplate全体1 MiB上限を超える設定は先に
-`SPEC-INPUT-LIMIT-001`となること、template全体の上限は防御上の上限として保持し適合matrixでは個別に検査しないことを
-追記した。これに伴いmatrixからSINGLE-126-06を削除した。
+ワークスペース・設定仕様 §6へ、単一の設定ファイルの64 KiB上限により、引数列テンプレート全体の1 MiB上限を超える設定は先に
+診断`SPEC-INPUT-LIMIT-001`となること、引数列テンプレート全体の上限は防御上の上限として保持し、
+適合matrixでは個別に検査しないことを追記した。これに伴い、matrixから`SINGLE-126-06`を削除した。
 
-- 新規のDiagnostic条件は生じず、既存条件の意味も変わらない。119条件・14論点群の対応に変更はない。
-- 上記を確認したうえで、台帳が固定するworkspace・設定仕様のhashを更新した。
+- 新しい診断の条件は生じず、既存の条件の意味も変わらない。119条件と14の論点群の対応に変更はない。
+- 上記を確認したうえで、網羅表が固定するワークスペース・設定仕様のハッシュ値を更新した。
 
-## 2026-09-17の再review（role割当、draft refinement、verifyの起点TASK）
+## 2026-09-17の再レビュー（役割の割当て、`draft`の具体化、`verify`の起点TASK）
 
 残りの適合fixtureを作成する過程で、期待値を一意に決められない規範の欠落3件と矛盾1件を確認し、次のとおり裁定した。
-いずれも既存の決定を変えず規範の欠落を埋めるもので、新規ADRは起こさない。
+いずれも既存の決定を変えず規範の欠落を埋めるもので、新しいADRは起こさない。
 
-- 関係・トレースモデル §7へrole割当表を追加した。`requires`または`addresses`で到達したREQは`requirement`、
-  TECHとaccepted ADRは`constraint`、起点以外のTASKは`work`とする。複数に該当する文書は表の上から最初のroleとする。
-- 関係・トレースモデル §6.1へ、interpretでは閉包内の文書を`refines`する`draft`文書をadvisoryとして含め、
-  その先を辿らないことを追記した。文書・Frontmatter・状態仕様 §7の「`draft`は`interpret`でadvisory」を
-  閉包規則へ接続するもので、implementとverifyの閉包は変わらない。
-- context仕様 §4・§5へ、`statementRefs[]`は所有する全規範文、Constraint Ledgerとcoverageの各modalityは
-  対象statementだけ、`coverage.adjacent`は`adjacentStatements`と同じ内容・順序であることを追記した。
-- verifyの起点TASKについて、§6.3本文（`requires`閉包を含めない）とmatrix `SINGLE-110`行・target vector
-  `TASK-REQUIRES-NOT-TARGET`（先行TASKをContextへ含める）が矛盾していた。§6.3を正とし、matrix行、vectorの
-  期待値、参照計算を修正した。2026-09-14の再reviewで「期待値の変更は0件」としたのは誤りで、参照計算は
-  起点TASKの`requires`もverifyで辿っていた。今回の修正で変わった期待集合はこの1 caseだけである。
+- 関係・トレースモデル §7へ役割の割当ての表を追加した。`requires`または`addresses`で到達したREQは役割`requirement`、
+  TECHと`accepted`のADRは役割`constraint`、起点以外のTASKは役割`work`とする。複数に該当する文書は、表の上から最初の役割とする。
+- 関係・トレースモデル §6.1へ、目的`interpret`では、閉包の中の文書を`refines`する`draft`の文書を`advisory`として含め、
+  その先をたどらないことを追記した。文書・フロントマター・状態仕様 §7の「`draft`は`interpret`でadvisory」を
+  閉包の規則へ接続するもので、目的`implement`と目的`verify`の閉包は変わらない。
+- `context`仕様 §4と§5へ、`statementRefs[]`は所有するすべての規範文とすること、制約台帳とカバレッジの各規範強度は
+  対象規範文だけを含むこと、`coverage.adjacent`は`adjacentStatements`と同じ内容と順序であることを追記した。
+- `verify`の起点TASKについて、§6.3の本文（`requires`の閉包を含めない）と、matrixの`SINGLE-110`の行およびtarget vectorの
+  `TASK-REQUIRES-NOT-TARGET`（先行するTASKをコンテキストへ含める）が矛盾していた。§6.3を正とし、matrixの行、target vectorの期待値、
+  参照計算を修正した。2026-09-14の再レビューで「期待値の変更は0件」としたのは誤りで、参照計算は
+  起点TASKの`requires`も`verify`でたどっていた。今回の修正で変わった期待集合はこの1ケースだけである。
 
-新規のDiagnostic条件は生じない。119条件・14論点群の対応に変更はない。
-上記を確認したうえで、台帳と`targets/cases.json`が固定する根拠文書hashを更新した。
+新しい診断の条件は生じない。119条件と14の論点群の対応に変更はない。
+上記を確認したうえで、網羅表と`targets/cases.json`が固定する根拠文書のハッシュ値を更新した。
 
-## 2026-09-17の再review（Git版の取得方法）
+## 2026-09-17の再レビュー（Gitのバージョンの取得方法）
 
-ADR-046に従い、Core実行環境・CLI基盤契約 §4へ、Gitの版を`git --version`の出力1行目から解析し、非0終了や
-解析できない出力を実行不能として扱うことを追記した。下限未満・PATH解決不能・実行不能をGit不在とする既存の
-縮退契約へ入力を1つ明示しただけで、単一workspaceの`SPEC-DOCTOR-GIT-001`／warning、複合workspaceの
-`SPEC-MULTI-GIT-001`／blockedの条件と継続単位は変わらない。
+ADR-046に従い、Core実行環境・CLI基盤契約 §4へ、Gitのバージョンを`git --version`の出力の1行目から解析し、非0の終了や
+解析できない出力を実行できないものとして扱うことを追記した。下限未満、`PATH`で解決できないこと、実行できないことをGit不在とする
+既存の縮退の契約へ、入力を1つ明示しただけで、単一ワークスペースの診断`SPEC-DOCTOR-GIT-001`（重大度`warning`）と、
+複合ワークスペースの診断`SPEC-MULTI-GIT-001`（`blocked`）の条件と継続単位は変わらない。
 
-- 新規のDiagnostic条件は生じない。119条件・14論点群の対応に変更はない。
-- 上記を確認したうえで、台帳が固定するCore実行環境・CLI基盤契約のhashを更新した。
+- 新しい診断の条件は生じない。119条件と14の論点群の対応に変更はない。
+- 上記を確認したうえで、網羅表が固定するCore実行環境・CLI基盤契約のハッシュ値を更新した。
 
-## 2026-09-17の再review（複合workspaceの識別子の改名）
+## 2026-09-17の再レビュー（複合ワークスペースの識別子の改名）
 
-ADR-047に従い、設定key `monorepo`を`multiWorkspace`、Capability `monorepo.v1`を`multiWorkspace.v1`、
-結果field `federation`を`multiWorkspace`、Diagnostic code `SPEC-MONOREPO-*`を`SPEC-MULTI-*`、condition ID
+ADR-047に従い、設定キー`monorepo`を`multiWorkspace`、対応機能`monorepo.v1`を`multiWorkspace.v1`、
+結果のフィールド`federation`を`multiWorkspace`、診断コード`SPEC-MONOREPO-*`を`SPEC-MULTI-*`、条件ID
 `MONO-*`を`MULTI-*`、継続単位`stop-federation`を`stop-multi-workspace`へ改名した。
 
-- 条件の意味、severity、status、source、継続単位、優先順位は変えていない。14件のcondition IDは同じ条件のまま
-  名前だけを改めた。119条件・14論点群の対応に変更はない。論点群ID `federation`は`multiWorkspace`へ改めた。
-- 改名はCore 1.0の公開前に限る一回だけの例外であり、旧ID `MONO-*`を別の条件へ再利用しない。
-- 上記を確認したうえで、台帳が固定する根拠文書のhashを更新した。
+- 条件の意味、重大度、結果への効果、発生元、継続単位、優先順位は変えていない。14件の条件IDは同じ条件のまま
+  名前だけを改めた。119条件と14の論点群の対応に変更はない。論点群ID`federation`は`multiWorkspace`へ改めた。
+- 改名はCore 1.0の公開前に限る一回だけの例外であり、旧ID`MONO-*`を別の条件へ再利用しない。
+- 上記を確認したうえで、網羅表が固定する根拠文書のハッシュ値を更新した。
 
-## 2026-09-17の再review（file名の改名）
+## 2026-09-17の再レビュー（ファイル名の改名）
 
-用語集 §7に従い78件のfile名を改名し、根拠文書に含まれるlink pathを新しいfile名へ直した。
+用語集 §7に従い78件のファイル名を改名し、根拠文書に含まれるリンクのパスを新しいファイル名へ直した。
 根拠文書`05_モノレポSPEC連合仕様.md`は`05_複合workspace仕様.md`、`03_文書種別・本文テンプレート.md`は
-`03_文書種別・本文template.md`へ改名し、台帳の根拠文書keyも直した。
+`03_文書種別・本文template.md`へ改名し、網羅表の根拠文書のキーも直した。
 
-- 文言統一のみで、規範の変更はない。119条件・14論点群の対応に変更はない。
-- 上記を確認したうえで、台帳とtarget vectorが固定する根拠文書のhashを更新した。
+- 文言の統一のみで、規範の変更はない。119条件と14の論点群の対応に変更はない。
+- 上記を確認したうえで、網羅表とtarget vectorが固定する根拠文書のハッシュ値を更新した。
 
-## 2026-09-17の再review（詳細設計の文言統一）
+## 2026-09-17の再レビュー（詳細設計の文言統一）
 
-用語集に従い、詳細設計の本文のカタカナ語、英語の一般語、複合workspaceの呼び方、送り仮名を統一した。
-Schema表の型名、code block、inline code、Diagnostic code、condition IDは変えていない。
+用語集に従い、詳細設計の本文のカタカナ語、英語の一般語、複合ワークスペースの呼び方、送り仮名を統一した。
+スキーマの表の型名、コードブロック、バッククォートで囲んだ部分、診断コード、条件IDは変えていない。
 
-- 文言統一のみで、規範の変更はない。119条件・14論点群の対応に変更はない。
-- 上記を確認したうえで、台帳とtarget vectorが固定する根拠文書のhashを更新した。
+- 文言の統一のみで、規範の変更はない。119条件と14の論点群の対応に変更はない。
+- 上記を確認したうえで、網羅表とtarget vectorが固定する根拠文書のハッシュ値を更新した。
 
-## 2026-09-18の再review（federationの残りの言換え）
+## 2026-09-18の再レビュー（federationの残りの言換え）
 
 用語集 §4.7に従い、結果契約の表の種別名（`workspace-local`、`workspace-federated`、`workspace`、`federation`）を
-単一workspace、複合workspace内、workspace単独、複合workspace全体へ改め、複合workspace仕様の構成図の注記と、
-`multiWorkspace.id`の説明に残っていた「federation ID」をroot workspace IDへ直した。
+単一ワークスペース、複合ワークスペース内、ワークスペース単独、複合ワークスペース全体へ改め、複合ワークスペース仕様の構成図の注記と、
+`multiWorkspace.id`の説明に残っていた「federation ID」をルートワークスペースIDへ直した。
 
-- 文言統一のみで、規範の変更はない。119条件・14論点群の対応に変更はない。
-- 上記を確認したうえで、台帳が固定する根拠文書のhashを更新した。
+- 文言の統一のみで、規範の変更はない。119条件と14の論点群の対応に変更はない。
+- 上記を確認したうえで、網羅表が固定する根拠文書のハッシュ値を更新した。
 
-## 2026-09-18の再review（上限の同時超過）
+## 2026-09-18の再レビュー（上限の同時超過）
 
-`verifyBindingCount`はbindingが必ずcommand定義の部分集合になるため、`commandDefinitionCount`と同時にしか
-超過できない。複合workspace仕様 §10へ、複数のdimensionが同時に超過する場合はverify実行計画のdimensionを
+`verifyBindingCount`はテスト割当てが必ずコマンド定義の部分集合になるため、`commandDefinitionCount`と同時にしか
+超過できない。複合ワークスペース仕様 §10へ、複数の次元が同時に超過する場合は`verify`の実行計画の次元を
 優先して報告する規則を1文加えた。
 
-- `SPEC-MULTI-LIMIT-001`の条件、severity、status、source、継続単位は変えていない。119条件・14論点群の対応に変更はない。
-- 適合fixture `MULTI-021-08`はこの規則に従い、`evidence.dimension`を`verifyBindingCount`とする。
-- 上記を確認したうえで、台帳が固定する根拠文書のhashを更新した。
+- 診断`SPEC-MULTI-LIMIT-001`の条件、重大度、結果への効果、発生元、継続単位は変えていない。119条件と14の論点群の対応に変更はない。
+- 適合fixture`MULTI-021-08`は、この規則に従い、`evidence.dimension`を`verifyBindingCount`とする。
+- 上記を確認したうえで、網羅表が固定する根拠文書のハッシュ値を更新した。
 
-## 2026-09-24の再review（契約Schemaの正本の移動）
+## 2026-09-24の再レビュー（契約のスキーマの正本の移動）
 
-[ADR-050](../../docs/02.設計書/10_決定記録/ADR-050_契約Schemaの正本を詳細設計へ置く.md)に従い、公開結果とFrontmatterの
-Schemaの正本を`docs/03.詳細設計/schemas/`へ移した。結果契約 §1とFrontmatter仕様 §2のlinkを移転先へ直し、
-Frontmatter仕様 §2の「定義を選んで検証する」を、定義と同じ判定で検証し、Schema fileを実行時に読むことは
+[ADR-050](../../docs/02.設計書/10_決定記録/ADR-050_契約Schemaの正本を詳細設計へ置く.md)に従い、公開する結果とフロントマターの
+スキーマの正本を`docs/03.詳細設計/schemas/`へ移した。結果契約 §1とフロントマター仕様 §2のリンクを移転先へ直し、
+フロントマター仕様 §2の「定義を選んで検証する」を、定義と同じ判定で検証し、スキーマのファイルを実行時に読むことは
 要求しない、という意味に明確化した。
 
-- Schemaの内容と、拒否する構造は変えていない。Frontmatterの判定の対象と結果は同じであり、実装方法だけを明確にした。
-- 119条件・14論点群の対応に変更はない。
-- 上記を確認したうえで、台帳が固定する根拠文書のhashを更新した。
+- スキーマの内容と、拒否する構造は変えていない。フロントマターの判定の対象と結果は同じであり、実装の方法だけを明確にした。
+- 119条件と14の論点群の対応に変更はない。
+- 上記を確認したうえで、網羅表が固定する根拠文書のハッシュ値を更新した。
 
-## 2026-09-24の再review（CPythonの下限の引上げ）
+## 2026-09-24の再レビュー（CPythonの下限の引上げ）
 
 [ADR-053](../../docs/02.設計書/10_決定記録/ADR-053_CPythonの下限を3.12へ引き上げる.md)に従い、
-Core実行環境・CLI基盤契約 §2とdoctor仕様 §3.1のCPythonの下限を3.11から3.12へ改め、実行環境契約の判断理由に
+Core実行環境・CLI基盤契約 §2と`doctor`仕様 §3.1のCPythonの下限を3.11から3.12へ改め、実行環境の契約の判断の理由に
 ADR-053を加えた。
 
-- `DOCTOR-RUNTIME-VERSION`（`SPEC-DOCTOR-CORE-001`）は下限の値だけが変わり、条件、severity、status、source、
-  継続単位は変えていない。下限未満を入力にするfixtureは従来どおりmatrixに持たない。
-- 119条件・14論点群の対応に変更はない。
-- 上記を確認したうえで、台帳が固定する根拠文書のhashを更新した。
+- `DOCTOR-RUNTIME-VERSION`（診断`SPEC-DOCTOR-CORE-001`）は下限の値だけが変わり、条件、重大度、結果への効果、発生元、
+  継続単位は変えていない。下限未満を入力にするfixtureは、従来どおりmatrixに持たない。
+- 119条件と14の論点群の対応に変更はない。
+- 上記を確認したうえで、網羅表が固定する根拠文書のハッシュ値を更新した。
 
-## 2026-09-26の再review（規範文IDの文書部分の不一致とcoveredのevidence明文化）
+## 2026-09-26の再レビュー（規範文IDの文書部分の不一致と、関係のエッジまたは`covers`の要素を単位とする`evidence`の明文化）
 
-2026-09-25に管理者が承認した方針を反映したcommitで、Diagnostic registryへ条件行
-`EAI-ID-DOCUMENT-MISMATCH`（`EAI-CORE-ID-001`、error／failed、file、`skip-document`、draftでもerror）を
-追加した。規範文IDの文書部分がFrontmatter `id`と一致しない場合を、既存の`EAI-ID-FORMAT`（規範文ID形式不正）と
-区別する新条件である。同じcommitで、共通結果契約 §4とregistry §2へ、relation edgeまたは`covers`要素を単位とする
-Diagnostic（`SPEC-RELATION-MISSING-001`、`SPEC-RELATION-ADVISORY-MISSING-001`、`CTX-RELATION-TYPE-001`、
-`SPEC-MULTI-REF-001`、`SPEC-TEST-COVERAGE-001`）の`evidence`規則も明文化されたが、これは既存条件の
-`evidence`fieldの記法を定めるものであり、新規condition IDではない。
+2026-09-25に管理者が承認した方針を反映したコミットで、診断レジストリへ条件の行
+`EAI-ID-DOCUMENT-MISMATCH`（診断`EAI-CORE-ID-001`。重大度`error`、結果への効果`failed`、発生元`file`、
+継続単位`skip-document`。`draft`の文書でも重大度`error`）を追加した。規範文IDの文書部分がフロントマターの`id`と一致しない場合を、
+既存の`EAI-ID-FORMAT`（規範文IDの形式の不正）と区別する新しい条件である。同じコミットで、共通の結果契約 §4と診断レジストリ §2へ、
+関係のエッジまたは`covers`の要素を単位とする診断（`SPEC-RELATION-MISSING-001`、`SPEC-RELATION-ADVISORY-MISSING-001`、
+`CTX-RELATION-TYPE-001`、`SPEC-MULTI-REF-001`、`SPEC-TEST-COVERAGE-001`）の`evidence`の規則も明文化されたが、
+これは既存の条件の`evidence`フィールドの記法を定めるものであり、新しい条件IDではない。
 
 - `EAI-ID-DOCUMENT-MISMATCH`を論点群`language`（`docs/03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md`、
-  `docs/03.詳細設計/02_SPECモデル/03_文書種別・本文template.md`）へ対応付けた。rationaleへ、draftでもerrorとする旨を追記した。
-- 120条件・14論点群の対応となった（119条件から1件増）。未裁定事項は0件のまま。
-- 上記を確認したうえで、台帳が固定する次の根拠文書のhashを更新した: `05_Diagnostic-registry.md`、
+  `docs/03.詳細設計/02_SPECモデル/03_文書種別・本文template.md`）へ対応付けた。`rationale`へ、`draft`の文書でも重大度`error`とする旨を追記した。
+- 120条件と14の論点群の対応となった（119条件から1件増）。未裁定事項は0件のまま。
+- 上記を確認したうえで、網羅表が固定する次の根拠文書のハッシュ値を更新した: `05_Diagnostic-registry.md`、
   `01_結果・Diagnostic・終了コード.md`、`01_workspace・設定仕様.md`、`02_文書・Frontmatter・状態仕様.md`、
   `04_関係・トレースモデル.md`、`05_複合workspace仕様.md`、`01_context.md`、`02_check.md`、`03_verify.md`、
   `01_言語・Semantic-IR仕様.md`。
-- 同日、結果契約 §7のDiagnostic sort規則へ、sort keyがすべて同じDiagnosticを生成元の宣言の出現順とする1文を足した
-  （`SINGLE-133`の同じkeyの参照切れ2件の順序を規範文で決めるため）。条件の対応は変えず、同文書のhashを再度更新した。
+- 同日、結果契約 §7の診断の並べ替えの規則へ、並べ替えのキーがすべて同じ診断を、生成元の宣言の出現順とする1文を足した
+  （`SINGLE-133`の同じキーの参照切れ2件の順序を規範文で決めるため）。条件の対応は変えず、同じ文書のハッシュ値を再度更新した。
 
 ## 2026-09-26: 対象OSの明記に伴う根拠文書の更新
 
 [ADR-055](../../docs/02.設計書/10_決定記録/ADR-055_Core-1.0の対象OSをPOSIXに限定する.md)に従い、
 Core実行環境・CLI基盤契約 §2へ対象OS（LinuxとmacOS）と、必要なOSの機能がない環境で保証を弱めない規則を足した。
-既存の`SPEC-REPORT-WRITE-001`の条件（`REPORT-WRITE`）の範囲に収まり、条件の追加、code、severity、statusの変更はない。
-条件の対応は変えず、同文書のhashだけを更新した。
-- 同日、ADR-055の改訂（Gate CでmacOSを確認しない）に伴い、実行環境契約 §2へ1文を足した。条件の対応は変えず、同文書のhashだけを再度更新した。
+既存の`SPEC-REPORT-WRITE-001`の条件（`REPORT-WRITE`）の範囲に収まり、条件の追加、診断コード、重大度、結果への効果の変更はない。
+条件の対応は変えず、同じ文書のハッシュ値だけを更新した。
+- 同日、ADR-055の改訂（Gate CでmacOSを確認しない）に伴い、実行環境の契約 §2へ1文を足した。条件の対応は変えず、同じ文書のハッシュ値だけを再度更新した。
 
-## 2026-09-28の再review（共通契約とEARS-AIの日本語表記の書き直し）
+## 2026-09-28の再レビュー（共通契約とEARS-AIの日本語表記の書き直し）
 
 [表記規則](../../docs/表記規則.md)と[用語集](../../docs/用語集.md)に従い、詳細設計の共通契約の6文書とEARS-AIの3文書の説明文を
 日本語へ書き直した（日本語表記の立て直し計画のPR 2）。
 
-- 表記の変更のみ、規範の変更なし。120条件・14論点群の対応に変更はない。
+- 表記の変更のみ、規範の変更なし。120条件と14の論点群の対応に変更はない。
 - コードブロック、診断レジストリの条件の行の第1〜第8列、matrixの行の第1・第3・第4列、検証プログラムが本文から照合する文字列は変えていない。
 - 書き直しは作業者と別のレビュー担当が独立に検分した。意味を変えていた箇所（同じ優先順位の主診断を1件だけ返す規則、
   `TRACE-PATH-APPROVED`の条件の範囲、`MULTI-025`の説明、網羅表の再レビューの対象など）を是正し、解消を独立に確かめた。
 - 原文の読みを1つに確定した箇所はない。複数に読める箇所は、原文の範囲を保つ書き方にした。
 - 見出しの変更に合わせ、`02_文書・Frontmatter・状態仕様.md`、`01_context.md`、`02_check.md`、`03_verify.md`、`04_doctor.md`は
   リンクのアンカーだけを直した。`01_context.md`は、安全な入出力 §4の表の行名の引用も新しい行名に合わせた。
-- 上記を確認したうえで、網羅表が固定する次の根拠文書のhashを更新した: `05_Diagnostic-registry.md`、
+- 上記を確認したうえで、網羅表が固定する次の根拠文書のハッシュ値を更新した: `05_Diagnostic-registry.md`、
   `01_結果・Diagnostic・終了コード.md`、`02_安全な入出力・互換性.md`、`06_Core実行環境・CLI基盤契約.md`、
   `01_言語・Semantic-IR仕様.md`、`02_適合性・移行仕様.md`、`03_例・アンチパターン.md`、`02_文書・Frontmatter・状態仕様.md`、
   `01_context.md`、`02_check.md`、`03_verify.md`、`04_doctor.md`。
 
-## 2026-09-29の再review（仕様文書モデルと操作仕様の日本語表記の書き直し）
+## 2026-09-29の再レビュー（仕様文書モデルと操作仕様の日本語表記の書き直し）
 
 [表記規則](../../docs/表記規則.md)と[用語集](../../docs/用語集.md)に従い、詳細設計の仕様文書モデルの5文書、操作仕様の4文書と
 README、詳細設計のREADMEの説明文を日本語へ書き直した（日本語表記の立て直し計画のPR 3）。
 
-- 表記の変更のみ、規範の変更なし。120条件・14論点群の対応に変更はない。
+- 表記の変更のみ、規範の変更なし。120条件と14の論点群の対応に変更はない。
 - コードブロックと、`04_関係・トレースモデル.md`の見出し`### 6.4 TargetExpansion(root, purpose)`は変えていない。
 - 書き直しは作業者と別のレビュー担当が独立に検分した。意味を変えていた箇所（型制約の参照元と参照先の型の組、
   目的`implement`または`verify`で起点にした場合の適用可能性、対象を所有する文書の向き、`--all-workspaces`の排他の主語、
@@ -257,7 +260,7 @@ README、詳細設計のREADMEの説明文を日本語へ書き直した（日�
   前の文の適用可能な文書と対になる適用可能性`advisory`と読んだ。どちらもこの読みを確かめるfixtureはなく、
   後者はどちらに読んでも成功したコンテキスト一式で観測できる違いはない。
 - 見出しの変更に合わせ、`01_結果・Diagnostic・終了コード.md`、`02_安全な入出力・互換性.md`はリンクのアンカーだけを直した。
-- 上記を確認したうえで、網羅表が固定する次の根拠文書のhashを更新した: `01_結果・Diagnostic・終了コード.md`、
+- 上記を確認したうえで、網羅表が固定する次の根拠文書のハッシュ値を更新した: `01_結果・Diagnostic・終了コード.md`、
   `02_安全な入出力・互換性.md`、`01_workspace・設定仕様.md`、`02_文書・Frontmatter・状態仕様.md`、`03_文書種別・本文template.md`、
   `04_関係・トレースモデル.md`、`05_複合workspace仕様.md`、`01_context.md`、`02_check.md`、`03_verify.md`、`04_doctor.md`、
   操作仕様の`README.md`。

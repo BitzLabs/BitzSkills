@@ -1,46 +1,46 @@
-# 既定表示・revision fixture review
+# 既定の表示と`revision`のfixtureのレビュー記録
 
 2026-09-14。matrix §6.11のうち7件（SINGLE-104-02/03/04、105-01/02、106-04/05）を追加する。
-Markdown byte一致を要する104-01と、新しいContext corpusとgolden Digestを要する106-01/02/03は同節の残件とする。
-根拠は[結果・Diagnostic・終了コード](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md)§7、
-[doctor仕様](../../../docs/03.詳細設計/03_操作仕様/04_doctor.md)、
-[verify仕様](../../../docs/03.詳細設計/03_操作仕様/03_verify.md)、
-[適合fixture仕様](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md)の各matrix IDである。
+Markdownのバイト一致を要する104-01と、新しいコンテキストのcorpusとgoldenのハッシュ値を要する106-01/02/03は同節の残件とする。
+根拠は[結果・診断・終了コード](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md)§7、
+[`doctor`仕様](../../../docs/03.詳細設計/03_操作仕様/04_doctor.md)、
+[`verify`仕様](../../../docs/03.詳細設計/03_操作仕様/03_verify.md)、
+[適合fixture仕様](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md)の各matrixのIDである。
 
-| ID | 操作 | 唯一の条件 | status／終了コード | 既存fixtureとの差分 |
+| ID | 操作 | 唯一の条件 | 結果の状態／終了コード | 既存fixtureとの差分 |
 |---|---|---|---|---|
-| SINGLE-104-02 | check | `--format`省略 | passed／0 | SINGLE-075-01からoption指定を外す |
-| SINGLE-104-03 | verify | `--format`省略 | passed／0 | SINGLE-055の入力でtext出力 |
-| SINGLE-104-04 | doctor | `--format`省略 | passed／0 | SINGLE-001の入力でtext出力 |
-| SINGLE-105-01 | context | commitのあるrepository | passed／0 | SINGLE-042へbase commitを足す |
-| SINGLE-105-02 | verify | Git不在 | passed／0 | SINGLE-055からGitを外す |
-| SINGLE-106-04 | verify | 出力のないcommand | passed／0 | SINGLE-069-01のscriptを無出力へ替える |
-| SINGLE-106-05 | verify | 2 targetに同じ条件 | failed／1 | 不在の明示起点2件 |
+| SINGLE-104-02 | `check` | `--format`を省略 | `passed`／0 | SINGLE-075-01からオプションの指定を外す |
+| SINGLE-104-03 | `verify` | `--format`を省略 | `passed`／0 | SINGLE-055の入力でテキスト出力 |
+| SINGLE-104-04 | `doctor` | `--format`を省略 | `passed`／0 | SINGLE-001の入力でテキスト出力 |
+| SINGLE-105-01 | `context` | コミットのあるリポジトリ | `passed`／0 | SINGLE-042へ基準版コミットを足す |
+| SINGLE-105-02 | `verify` | Git不在 | `passed`／0 | SINGLE-055からGitを外す |
+| SINGLE-106-04 | `verify` | 出力のないコマンド | `passed`／0 | SINGLE-069-01のスクリプトを無出力へ替える |
+| SINGLE-106-05 | `verify` | 2つの検証対象に同じ条件 | `failed`／1 | 不在の明示起点2件 |
 
-各fixtureは査読済みcorpusと期待結果を再利用し、表示または環境の性質を1つだけ変える。
-104-02/03/04は`--format`を渡さず、既定値がcheck・verify・doctorでtextであることを固定する。
-要約行は固定文字列で持つが、監査はJSON対応物から導出式どおりに再計算して照合する。
-targetsはcheckが`checkedDocumentCount`、verifyが`targetResults`の件数、doctorが`checks`の件数であり、
-diagnosticsは最上位とtarget上のDiagnosticの総数である。doctorだけが`scope=`を出さないことも検査する。
+各fixtureは、査読済みのcorpusと期待結果を再利用し、表示または環境の性質を1つだけ変える。
+104-02/03/04は`--format`を渡さず、既定値が`check`、`verify`、`doctor`でテキストであることを固定する。
+要約行は固定の文字列で持つが、監査は、JSONの対応する値から導出式どおりに再計算して照合する。
+`targets`は、`check`では`checkedDocumentCount`、`verify`では`targetResults`の件数、`doctor`では`checks`の件数であり、
+`diagnostics`は、最上位と各検証対象に置いた診断の総数である。`doctor`だけが`scope=`を出さないことも検査する。
 
-105-01はSINGLE-042との差分をbase commitだけにし、`revision`を現在版の`commit`と`dirty`に固定する。
-期待JSONのcommitは他fixtureと同じ0埋めのplaceholderとし、監査は隔離setupの実HEADが40桁小文字16進であること、
-worktreeが清潔であること、operationごとのrevision形（checkは`base`を含む）を実際に観測して確かめる。
-105-02はGitを初期化せず、`PATH=/dev/null`で呼び出す。Git不在だけを理由とするDiagnosticは返さず、
-`revision`はnullのままである。副作用snapshotの`git`もnullとし、成功した空のGit statusで代用しない。
+105-01は、SINGLE-042との差分を基準版コミットだけにし、`revision`を現在版の`commit`と`dirty`に固定する。
+期待JSONの`commit`は、ほかのfixtureと同じ0埋めのプレースホルダーとし、監査は、隔離した準備手順の実際の`HEAD`が40桁の小文字16進であること、
+作業ツリーがクリーンであること、操作ごとの`revision`の形（`check`は`base`を含む）を実際に観測して確かめる。
+105-02はGitを初期化せず、`PATH=/dev/null`で呼び出す。Git不在だけを理由とする診断は返さず、
+`revision`は`null`のままである。副作用のスナップショットの`git`も`null`とし、成功した空の`git status`で代用しない。
 
-106-04はSINGLE-069-01と同じcorpus・同じcommand pathで、scriptだけを無出力へ替える。
-scriptの本文はDigest材料ではないため、target Digestは同じ値になる。監査はfixture自身のscriptを実行し、
-終了コード0と両stream空を観測してから、抜粋が空でtruncatedがfalseであることを固定する。
-106-05は構文上妥当で不在の明示起点2件を渡し、同じ`CTX-ROOT-MISSING-001`を両targetへ独立に生じさせる。
-targetのDigestはnull、`bindingRefs`と`commands`は空で、textの`diagnostics`は2である。
-`source.kind`が`file`以外のtext行は先頭fieldに`invocation`を置き、path・line・columnを空fieldのまま残す。
-この空field規則は結果契約§7へ追記し、review台帳のsource hashを更新した。
-あわせて、base commitへ明示`--base`を要求する監査規則を`check`だけに限定した。`context`と`verify`は
-`--base`を持たないため、従来の規則ではcommit済みcontext fixtureを表現できなかった。
+106-04は、SINGLE-069-01と同じcorpus・同じコマンドのパスで、スクリプトだけを無出力へ替える。
+スクリプトの本文はハッシュ値の材料ではないため、検証対象のハッシュ値は同じ値になる。監査は、fixture自身のスクリプトを実行し、
+終了コード0と両方のストリームが空であることを観測してから、抜粋が空で、切り詰めのフラグが`false`であることを固定する。
+106-05は、構文上妥当で不在の明示起点2件を渡し、同じ`CTX-ROOT-MISSING-001`を両方の検証対象へ独立に生じさせる。
+検証対象のハッシュ値は`null`、`bindingRefs`と`commands`は空で、テキストの`diagnostics`は2である。
+`source.kind`が`file`以外のテキストの行は、先頭のフィールドに`invocation`を置き、`path`、`line`、`column`を空のフィールドのまま残す。
+この空のフィールドの規則は結果契約§7へ追記し、診断の網羅表の根拠文書のハッシュ値を更新した。
+あわせて、基準版コミットへ明示の`--base`を要求する監査の規則を`check`だけに限定した。`context`と`verify`は
+`--base`を持たないため、従来の規則ではコミット済みの`context`のfixtureを表現できなかった。
 
-入力byte列・実行bit・manifest・完全結果・text・副作用Schemaを検証し、隔離Git repositoryを2回setupして
-固定snapshotへ照合する。Digestを持つ結果は入力treeからの独立計算と一致することも確かめる。
-回帰試験は要約行の件数・scope有無・Diagnostic行数の改変、revisionの有無と形、truncated flag、target件数、
-副作用の許容、無出力scriptへの出力追加を拒否する。
-renderer、Git reader、Coreは実装も実行もしない。実際の既定出力と観測revisionはGate Bで受け入れる。
+入力のバイト列、実行ビット、マニフェスト、完全な結果、テキスト、副作用のスキーマを検証し、隔離したGitリポジトリに準備手順を2回適用して
+固定したスナップショットへ照合する。ハッシュ値を持つ結果は、入力の木構造からの独立した計算と一致することも確かめる。
+回帰試験は、要約行の件数・`scope`の有無・診断の行数の改変、`revision`の有無と形、切り詰めのフラグ、検証対象の件数、
+副作用の許容、無出力のスクリプトへの出力の追加を拒否する。
+テキストの整形処理、Gitの読取り処理、Coreは実装も実行もしない。実際の既定の出力と観測した`revision`はGate Bで受け入れる。

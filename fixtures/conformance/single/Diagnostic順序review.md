@@ -1,18 +1,18 @@
-# Diagnostic順序fixture review
+# 診断の順序のfixtureのレビュー記録
 
-SINGLE-077はTECH-001、TECH-002、TECH-010の3文書それぞれに同じstrong requires先TECH-999の不在を置く。
-各文書のrefinesとtestsは有効で、同一workspace内のtest参照共有は許可される。入力は既存SINGLE-070-02を拡張し、
-REQ 1件、ADR 1件、TECH 3件の計5文書、規範文2句を完全検査する。失敗後も独立文書を検査するため
-SPEC-RELATION-MISSING-001を3件返し、statusはfailed／1とする。
+SINGLE-077は、TECH-001、TECH-002、TECH-010の3文書それぞれに、同じ強い関係`requires`の参照先TECH-999の不在を置く。
+各文書の`refines`と`tests`は有効で、同じワークスペース内で、複数の文書が同じテストを参照することは許可される。入力は既存のSINGLE-070-02を拡張し、
+REQ 1件、ADR 1件、TECH 3件の計5文書と、規範文2件を完全検査する。失敗の後も、独立した文書を検査するため、
+`SPEC-RELATION-MISSING-001`を3件返し、結果の状態は`failed`、終了コードは1とする。
 
 根拠は[結果契約 §7](../../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#7-テキストとjson)と
 [適合fixture仕様](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md)のSINGLE-077。
-workspace、line/columnの有無、codeは共通で、sort keyの最初の差はpathである。
-期待順はTECH-001.md、TECH-002.md、TECH-010.md。追加文書の生成順はTECH-010、TECH-002と逆にし、
-期待値を生成順へ依存させない。line/columnは未付与の空field、specRefsも未付与とする。
-この実入力はpathが異なる場合を検証し、同一pathでline/columnだけが異なるcaseや複合workspaceのworkspace差は対象外。
+ワークスペース、行と列の有無、診断コードは共通で、並べ替えのキーの最初の差はパスである。
+期待する順序は、`TECH-001.md`、`TECH-002.md`、`TECH-010.md`である。追加する文書の生成の順序は、TECH-010、TECH-002と逆にし、
+期待値を生成の順序へ依存させない。行と列は未付与（空のフィールド）、`specRefs`も未付与とする。
+この実際の入力は、パスが異なる場合を検証し、同じパスで行と列だけが異なるケースや、複合ワークスペースでのワークスペースの差は、対象外である。
 
-JSONの配列順とtextの行順を完全固定し、要約はtargets=5、diagnostics=3。
-既存reportを保持し、新規書込みを許可しない。各2回の隔離setupと固定snapshotを比較し、
-回帰試験では配列逆転、Diagnostic欠落、文書件数の不足を拒否する。
-Coreは実行せず、実際の検査継続と列挙順不変性はGate Bで受け入れる。
+JSONの配列の順序とテキストの行の順序を完全に固定し、要約行は`targets=5`、`diagnostics=3`とする。
+既存のレポートを保持し、新しい書込みを許可しない。各fixtureを隔離環境で2回準備し、固定したスナップショットと比較し、
+回帰試験では、配列の逆転、診断の欠落、文書件数の不足を拒否する。
+Coreは実行せず、実際の検査の継続と、列挙の順序が変わらないことは、Gate Bで受け入れる。
