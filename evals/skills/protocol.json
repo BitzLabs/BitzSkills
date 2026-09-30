@@ -1,7 +1,8 @@
 {
   "$schema": "./schemas/protocol.schema.json",
   "schemaVersion": "1.0",
-  "evaluationSetVersion": "0.3.0",
+  "evaluationSetVersion": "0.4.0",
+  "eventCatalogVersion": "1.0.0",
   "status": "draft",
   "architectures": {
     "six-skill": {

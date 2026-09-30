@@ -133,6 +133,48 @@ def prompt_for(case, event_catalog):
 期待値やケースIDは推測せず、利用者要求と読み込んだスキルだけから判断してください。"""
 
 
+def execution_identity(args, case, evaluation_set_version, subject_commit, skill_sha, held_out_set):
+    return {
+        "evaluationSetVersion": evaluation_set_version,
+        "caseId": case["caseId"],
+        "architecture": args.architecture,
+        "model": {"family": args.model_family, "name": args.model, "version": args.model_version},
+        "repetition": args.repetition,
+        "subjectCommit": subject_commit,
+        "skillSetSha256": skill_sha,
+        "heldOutSet": held_out_set,
+    }
+
+
+def hash_json(value):
+    encoded = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def run_config_sha256(args, evaluation_set_version, subject_commit, skill_sha, held_out_set):
+    return hash_json({
+        "evaluationSetVersion": evaluation_set_version,
+        "architecture": args.architecture,
+        "model": {"family": args.model_family, "name": args.model, "version": args.model_version},
+        "subjectCommit": subject_commit,
+        "skillSetSha256": skill_sha,
+        "heldOutSet": held_out_set,
+        "decisionSchema": decision_schema_for(args.architecture),
+        "eventCatalogSha256": sha256_file(ROOT / "event-catalog.json"),
+        "runnerSha256": sha256_file(Path(__file__)),
+        "timeoutSeconds": args.timeout,
+    })
+
+
+def input_sha256(args, case, event_catalog, evaluation_set_version, subject_commit, skill_sha, held_out_set):
+    return hash_json({
+        "runConfigSha256": run_config_sha256(args, evaluation_set_version, subject_commit, skill_sha, held_out_set),
+        "case": case,
+        "prompt": prompt_for(case, event_catalog),
+        "repetition": args.repetition,
+    })
+
+
 def parse_trace(path: Path):
     events = []
     for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
@@ -151,10 +193,19 @@ def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, s
     decision_path = run_dir / "decision.json"
     stderr_path = run_dir / "stderr.log"
     record_path = run_dir / "run.json"
+    identity = execution_identity(args, case, evaluation_set_version, subject_commit, skill_sha, held_out_set)
+    expected_config_sha = run_config_sha256(args, evaluation_set_version, subject_commit, skill_sha, held_out_set)
+    expected_input_sha = input_sha256(args, case, event_catalog, evaluation_set_version, subject_commit, skill_sha, held_out_set)
     if args.resume and record_path.is_file():
         record = json.loads(record_path.read_text(encoding="utf-8"))
-        if record.get("heldOutSet") != held_out_set:
-            raise RuntimeError(f"{case['caseId']}: 保持ケース集合が前回の実行から変わっています")
+        if any(record.get(key) != value for key, value in identity.items() if key != "heldOutSet") or record.get("heldOutSet") != held_out_set:
+            raise RuntimeError(f"{case['caseId']}: 実行条件が前回の記録と一致しません")
+        if record.get("runConfigSha256") != expected_config_sha or record.get("inputSha256") != expected_input_sha:
+            raise RuntimeError(f"{case['caseId']}: 入力条件のhashが前回の記録と一致しません")
+        if (not trace_path.is_file()
+                or record.get("trace", {}).get("path") != trace_path.relative_to(args.output).as_posix()
+                or record.get("trace", {}).get("sha256") != sha256_file(trace_path)):
+            raise RuntimeError(f"{case['caseId']}: 保存されたtraceのhashが一致しません")
         if not args.rescore_existing:
             return record, "skipped"
         trace_events = parse_trace(trace_path)
@@ -218,10 +269,12 @@ def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, s
         "evaluationSetVersion": evaluation_set_version,
         "caseId": case["caseId"],
         "architecture": args.architecture,
-        "model": {"family": args.model_family, "name": args.model, "version": args.model_version},
+        "model": identity["model"],
         "repetition": args.repetition,
         "subjectCommit": subject_commit,
         "skillSetSha256": skill_sha,
+        "runConfigSha256": expected_config_sha,
+        "inputSha256": expected_input_sha,
         "trace": {"path": trace_path.relative_to(args.output).as_posix(), "sha256": sha256_file(trace_path)},
         "observation": observation,
         "checks": {"deterministic": deterministic, "safety": not forbidden_action_observed, "rubric": "not-scored", "independentReview": "not-required"},
@@ -263,7 +316,6 @@ def main(argv=None):
     if args.held_out_cases is not None:
         private_cases, held_out = validator.load_held_out_cases(args.held_out_cases)
         cases.extend(private_cases)
-    private_ids = {case["caseId"] for case in private_cases} if held_out is not None else set()
     evaluation_set_version = audit["evaluationSetVersion"]
     if args.case_ids:
         unknown = sorted(set(args.case_ids) - {case["caseId"] for case in cases})
@@ -271,7 +323,7 @@ def main(argv=None):
             raise SystemExit(f"未知のcaseIdです: {', '.join(unknown)}")
         cases = [case for case in cases if case["caseId"] in set(args.case_ids)]
 
-    event_catalog = sorted({event for case in cases for key in ("requiredEvents", "forbiddenEvents") for event in case["expected"][key]})
+    event_catalog = validator.load_event_catalog()["events"]
     skills = CANDIDATES / args.architecture / "skills"
     skill_sha = sha256_tree(skills)
     read_bytes = sum(path.stat().st_size for path in skills.rglob("*") if path.is_file())
@@ -283,7 +335,7 @@ def main(argv=None):
         future_cases = {
             executor.submit(
                 run_one, args, case, event_catalog, evaluation_set_version, subject_commit, skill_sha, read_bytes,
-                held_out if case["caseId"] in private_ids else None
+                held_out
             ): case
             for case in cases
         }

@@ -1,9 +1,13 @@
 import importlib.util
 import hashlib
+import io
 import json
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -60,20 +64,32 @@ class SkillEvalTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "入力.*衝突"):
                 skill_eval.load_held_out_cases(path)
 
-    def test_release_rejects_unbound_held_out_run(self):
+    def test_held_out_case_rejects_unknown_event(self):
         private_case = dict(skill_eval.load_cases()[0], caseId="SE-1000", prompt="保持した独立の要求")
+        private_case["expected"] = dict(private_case["expected"], requiredEvents=["private-only-event"])
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "held-out.json"
+            path.write_text(json.dumps({"setVersion": "secret-1", "cases": [private_case]}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "未登録のイベント"):
+                skill_eval.load_held_out_cases(path)
+
+    def test_release_rejects_unbound_public_run(self):
+        private_case = dict(skill_eval.load_cases()[0], caseId="SE-1000", prompt="保持した独立の要求")
+        public_case = skill_eval.load_cases()[0]
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             case_path = root / "held-out.json"
             case_path.write_text(json.dumps({"setVersion": "secret-1", "cases": [private_case]}), encoding="utf-8")
-            entry, route = skill_eval.expected_route(private_case, "six-skill")
+            entry, route = skill_eval.expected_route(public_case, "six-skill")
             run = {
-                "schemaVersion": "1.0", "evaluationSetVersion": "0.3.0", "caseId": "SE-1000",
+                "schemaVersion": "1.0", "evaluationSetVersion": skill_eval.load_json(skill_eval.ROOT / "protocol.json")["evaluationSetVersion"], "caseId": public_case["caseId"],
                 "architecture": "six-skill", "model": {"family": "test", "name": "test", "version": "1"},
                 "repetition": 1, "subjectCommit": "0" * 40, "skillSetSha256": "0" * 64,
+                "runConfigSha256": "0" * 64,
+                "inputSha256": "0" * 64,
                 "trace": {"path": "trace.jsonl", "sha256": "0" * 64},
-                "observation": {"selectedEntry": entry, "selectedPath": route, "outcome": private_case["expected"]["outcome"],
-                    "events": private_case["expected"]["requiredEvents"], "rejectedEvents": [],
+                "observation": {"selectedEntry": entry, "selectedPath": route, "outcome": public_case["expected"]["outcome"],
+                    "events": public_case["expected"]["requiredEvents"], "rejectedEvents": [],
                     "readyClaimed": False, "evidencePresent": False},
                 "checks": {"deterministic": True, "safety": True, "rubric": "not-scored", "independentReview": "not-run"},
                 "metrics": {"wallMs": 1, "inputTokens": 1, "outputTokens": 1, "estimatedCostUsd": None, "readBytes": 1},
@@ -135,6 +151,8 @@ class SkillEvalTests(unittest.TestCase):
                         "repetition": repetition,
                         "subjectCommit": "0" * 40,
                         "skillSetSha256": "0" * 64,
+                        "runConfigSha256": "0" * 64,
+                        "inputSha256": "0" * 64,
                         "trace": {"path": f"{architecture}/{repetition}/{case['caseId']}.jsonl", "sha256": "0" * 64},
                         "observation": {
                             "selectedEntry": entry,
@@ -152,7 +170,14 @@ class SkillEvalTests(unittest.TestCase):
             path = Path(directory) / "runs.jsonl"
             path.write_text("\n".join(lines) + "\n", encoding="utf-8")
             report = skill_eval.score(path, "prototype")
+            changed = json.loads(lines[0])
+            changed["runConfigSha256"] = "1" * 64
+            lines[0] = json.dumps(changed, ensure_ascii=False)
+            path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            mixed_report = skill_eval.score(path, "prototype")
         self.assertEqual("Passed", report["result"], report["errors"])
+        self.assertEqual("Failed", mixed_report["result"])
+        self.assertTrue(any("runConfigSha256が実行間で一致しません" in error for error in mixed_report["errors"]))
 
     def test_multiple_jsonl_files_are_combined(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -171,6 +196,51 @@ class SkillEvalTests(unittest.TestCase):
     def test_runner_schema_constrains_six_skill_path(self):
         schema = skill_eval_runner.decision_schema_for("six-skill")
         self.assertEqual({"type": "null"}, schema["properties"]["selectedPath"])
+
+    def test_runner_uses_same_catalog_for_full_and_selected_runs(self):
+        catalogs = []
+
+        def fake_run_one(args, case, event_catalog, *remaining):
+            catalogs.append(tuple(event_catalog))
+            return {"caseId": case["caseId"]}, "ran"
+
+        common = ["--architecture", "six-skill", "--repetition", "1", "--model", "test-model",
+                  "--model-family", "test-family", "--model-version", "1"]
+        with (tempfile.TemporaryDirectory() as directory,
+              mock.patch.object(skill_eval_runner, "run_one", fake_run_one),
+              redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO())):
+            self.assertEqual(0, skill_eval_runner.main(common + ["--output", str(Path(directory) / "full")]))
+            full_catalog = catalogs[0]
+            catalogs.clear()
+            self.assertEqual(0, skill_eval_runner.main(common + ["--output", str(Path(directory) / "single"), "--case", "SE-031"]))
+            self.assertEqual([full_catalog], catalogs)
+        self.assertEqual(71, len(full_catalog))
+
+    def test_runner_rejects_changed_resume_input(self):
+        case = skill_eval.load_cases()[0]
+        catalog = skill_eval.load_event_catalog()["events"]
+        version = skill_eval.load_json(skill_eval.ROOT / "protocol.json")["evaluationSetVersion"]
+        subject_commit, skill_sha = "0" * 40, "0" * 64
+        first_set = {"setVersion": "private-1", "caseCount": 1, "sha256": "1" * 64}
+        second_set = {"setVersion": "private-2", "caseCount": 1, "sha256": "2" * 64}
+        with tempfile.TemporaryDirectory() as directory:
+            args = SimpleNamespace(output=Path(directory), architecture="six-skill", repetition=1,
+                                   model="test-model", model_family="test-family", model_version="1",
+                                   timeout=120, resume=True, rescore_existing=False)
+            record_path = args.output / "six-skill" / "repetition-1" / case["caseId"] / "run.json"
+            record_path.parent.mkdir(parents=True)
+            record = skill_eval_runner.execution_identity(args, case, version, subject_commit, skill_sha, first_set)
+            record["runConfigSha256"] = skill_eval_runner.run_config_sha256(args, version, subject_commit, skill_sha, first_set)
+            record["inputSha256"] = skill_eval_runner.input_sha256(args, case, catalog, version, subject_commit, skill_sha, first_set)
+            record_path.write_text(json.dumps(record), encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "実行条件"):
+                skill_eval_runner.run_one(args, case, catalog, version, subject_commit, skill_sha, 1, second_set)
+            record = skill_eval_runner.execution_identity(args, case, version, subject_commit, skill_sha, second_set)
+            record["runConfigSha256"] = skill_eval_runner.run_config_sha256(args, version, subject_commit, skill_sha, second_set)
+            record["inputSha256"] = "0" * 64
+            record_path.write_text(json.dumps(record), encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "入力条件のhash"):
+                skill_eval_runner.run_one(args, case, catalog, version, subject_commit, skill_sha, 1, second_set)
 
 
 if __name__ == "__main__":
