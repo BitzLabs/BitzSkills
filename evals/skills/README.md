@@ -63,7 +63,7 @@ uv run evals/skills/validate.py score --stage release --input /path/to/runs.json
 `release`採点は保持ケースの入力を必須とし、各機能経路・区分の異なるケース数を確認する。
 `score`は保存済みのJSONLと各記録のtraceを再検算するだけで、モデルを新規実行しない。
 traceの相対パスとSHA-256、現在のrefの候補スキルhashを確認し、
-選択した本文の読取りと実行軌跡の安全を再計算する。
+選択した本文の読取りと実行軌跡の安全を再計算する。採点する判断はtraceの最終応答と一致させる。
 `--trace-root`はtraceの相対パスの基点である。入力が実行器の標準配置
 `<root>/<構成>/repetition-<番号>/runs.jsonl`なら省略できる。
 モデルの新規実行は非決定的な

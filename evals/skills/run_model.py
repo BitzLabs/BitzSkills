@@ -67,7 +67,7 @@ ALLOWED_SKILL_READ = re.compile(
 
 def candidate_skill_names_read(command):
     prefix = "/bin/bash -lc '"
-    if not command.startswith(prefix) or not command.endswith("'"):
+    if not isinstance(command, str) or not command.startswith(prefix) or not command.endswith("'"):
         return []
     parts = command[len(prefix):-1].split(" && ")
     matches = [ALLOWED_SKILL_READ.fullmatch(part) for part in parts]
@@ -216,10 +216,69 @@ def parse_trace(path: Path):
         if not line.strip():
             continue
         try:
-            events.append(json.loads(line))
+            event = json.loads(line)
         except ValueError as error:
             raise ValueError(f"{path}:{line_number}: JSONLを読めません: {error}") from error
+        if not isinstance(event, dict):
+            raise ValueError(f"{path}:{line_number}: traceイベントはJSON objectが必要です")
+        events.append(event)
     return events
+
+
+OBSERVATION_FIELDS = (
+    "selectedEntry", "selectedPath", "outcome", "events", "rejectedEvents", "readyClaimed", "evidencePresent"
+)
+
+
+def observation_from_trace(events):
+    starts = [index for index, event in enumerate(events) if event.get("type") == "turn.started"]
+    completions = [index for index, event in enumerate(events) if event.get("type") == "turn.completed"]
+    if (len(starts) != 1 or len(completions) != 1 or not events
+            or completions[0] != len(events) - 1 or starts[0] >= completions[0]
+            or any(event.get("type") != "thread.started" for event in events[:starts[0]])
+            or any(event.get("type") == "turn.failed" for event in events)):
+        raise ValueError("traceは単一の成功したturn.completedが必要です")
+    pending = {}
+    completed_ids = set()
+    for event in events[starts[0] + 1:completions[0]]:
+        event_type = event.get("type")
+        if event_type not in {"item.started", "item.updated", "item.completed"}:
+            raise ValueError("traceのturn内に予期しないイベントがあります")
+        item = event.get("item")
+        item_id = item.get("id") if isinstance(item, dict) else None
+        if not isinstance(item_id, str):
+            raise ValueError("traceのitem識別子が不正です")
+        item_type = item.get("type")
+        if not isinstance(item_type, str):
+            raise ValueError("traceのitem種別が不正です")
+        if event_type == "item.started":
+            if item_id in pending or item_id in completed_ids:
+                raise ValueError("traceのitem開始が不正です")
+            pending[item_id] = item_type
+        elif event_type == "item.updated":
+            if pending.get(item_id) != item_type:
+                raise ValueError("traceのitem更新が開始済みitemと一致しません")
+        else:
+            if item_id in completed_ids:
+                raise ValueError("traceのitem完了が重複しています")
+            if item_id in pending and pending[item_id] != item_type:
+                raise ValueError("traceのitem種別が開始時と一致しません")
+            completed_ids.add(item_id)
+            pending.pop(item_id, None)
+    if pending:
+        raise ValueError("traceに未完了のitemがあります")
+    item_events = [event for event in events[starts[0] + 1:completions[0]]
+                   if isinstance(event.get("type"), str) and event["type"].startswith("item.")]
+    final_event = item_events[-1] if item_events else None
+    final_item = final_event.get("item") if final_event else None
+    if (not final_event or final_event.get("type") != "item.completed"
+            or not isinstance(final_item, dict) or final_item.get("type") != "agent_message"):
+        raise ValueError("traceの最終itemが判断ではありません")
+    try:
+        decision = json.loads(final_item["text"])
+        return {key: decision[key] for key in OBSERVATION_FIELDS}
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError(f"traceの最終応答を判断として読めません: {error}") from error
 
 
 def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, skill_sha, read_bytes, held_out_set):
@@ -244,6 +303,8 @@ def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, s
         if not args.rescore_existing:
             return record, "skipped"
         trace_events = parse_trace(trace_path)
+        if record["observation"] != observation_from_trace(trace_events):
+            raise RuntimeError(f"{case['caseId']}: 記録した判断がtraceの最終応答と一致しません")
         record["checks"]["safety"] = not trace_has_forbidden_action(trace_events)
         record["checks"]["skillRead"] = selected_skill_was_read(
             trace_events, record["observation"]["selectedEntry"], args.architecture)
@@ -293,12 +354,9 @@ def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, s
     events = parse_trace(trace_path)
     input_tokens, output_tokens = trace_usage(events)
     forbidden_action_observed = trace_has_forbidden_action(events)
-    observation = {
-        key: decision[key]
-        for key in (
-            "selectedEntry", "selectedPath", "outcome", "events", "rejectedEvents", "readyClaimed", "evidencePresent"
-        )
-    }
+    observation = {key: decision[key] for key in OBSERVATION_FIELDS}
+    if observation != observation_from_trace(events):
+        raise RuntimeError(f"{case['caseId']}: 保存した判断がtraceの最終応答と一致しません")
     validator = load_validator_module()
     deterministic = validator.observed_pass(case, {"architecture": args.architecture, "observation": observation})
     record = {
