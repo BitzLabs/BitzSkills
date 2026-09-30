@@ -318,9 +318,12 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None, trace_root
             errors.append(f"run {index}: 候補スキルのhashが現在のrefと一致しません")
         try:
             trace_events = verified_trace(run, source_path, trace_root, runner)
+            trace_observation = runner.observation_from_trace(trace_events)
         except (OSError, ValueError) as error:
             errors.append(f"run {index}: {error}")
         else:
+            if run["observation"] != trace_observation:
+                errors.append(f"run {index}: 採点対象の判断がtraceの最終応答と一致しません")
             if run["checks"]["skillRead"] != runner.selected_skill_was_read(
                     trace_events, run["observation"]["selectedEntry"], run["architecture"]):
                 errors.append(f"run {index}: 選択したSKILL.mdの読取り記録がtraceと一致しません")

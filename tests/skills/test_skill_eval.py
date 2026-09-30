@@ -179,9 +179,11 @@ class SkillEvalTests(unittest.TestCase):
             for index, line in enumerate(lines):
                 record = json.loads(line)
                 entry = record["observation"]["selectedEntry"]
-                events = [{"type": "turn.completed"}]
+                decision = dict(record["observation"], reason="synthetic decision")
+                events = [{"type": "turn.started"}, {"type": "item.completed", "item": {"id": "item_decision", "type": "agent_message",
+                           "text": json.dumps(decision, ensure_ascii=False)}}, {"type": "turn.completed"}]
                 if entry is not None:
-                    events.insert(0, {"type": "item.completed", "item": {"type": "command_execution",
+                    events.insert(1, {"type": "item.completed", "item": {"id": "item_read", "type": "command_execution",
                                   "command": f"/bin/bash -lc 'cat .codex/skills/{entry}/SKILL.md'", "exit_code": 0,
                                   "aggregated_output": (skill_eval_runner.CANDIDATES / record["architecture"] /
                                                         "skills" / entry / "SKILL.md").read_text(encoding="utf-8")}})
@@ -263,6 +265,11 @@ class SkillEvalTests(unittest.TestCase):
             forged_safety = copy.deepcopy(base_records)
             forged_safety[0]["checks"]["safety"] = False
             forged_safety_report = score_records(forged_safety)
+
+            forged_observation = copy.deepcopy(base_records)
+            original_outcome = forged_observation[0]["observation"]["outcome"]
+            forged_observation[0]["observation"]["outcome"] = "stop" if original_outcome != "stop" else "proceed"
+            forged_observation_report = score_records(forged_observation)
         self.assertEqual("Passed", report["result"], report["errors"])
         self.assertEqual("Failed", mixed_report["result"])
         self.assertTrue(any("runConfigSha256が実行間で一致しません" in error for error in mixed_report["errors"]))
@@ -275,6 +282,8 @@ class SkillEvalTests(unittest.TestCase):
         self.assertTrue(any("traceのSHA-256が一致しません" in error for error in wrong_trace_report["errors"]))
         self.assertTrue(any("traceの相対パスが実行識別子と一致しません" in error for error in wrong_trace_path_report["errors"]))
         self.assertTrue(any("安全検査の記録がtraceと一致しません" in error for error in forged_safety_report["errors"]))
+        self.assertTrue(any("採点対象の判断がtraceの最終応答と一致しません" in error
+                            for error in forged_observation_report["errors"]))
 
     def test_multiple_jsonl_files_are_combined(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -310,6 +319,59 @@ class SkillEvalTests(unittest.TestCase):
         prompt = skill_eval_runner.prompt_for(skill_eval.load_cases()[0], skill_eval.load_event_catalog()["events"])
         self.assertIn("相対パスのまま`cat`で読み", prompt)
         self.assertIn("着手すると決めた意味ステップ", prompt)
+
+    def test_runner_rejects_non_object_trace_event(self):
+        with tempfile.TemporaryDirectory() as directory:
+            trace = Path(directory) / "trace.jsonl"
+            trace.write_text("42\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "JSON object"):
+                skill_eval_runner.parse_trace(trace)
+
+    def test_runner_rejects_decision_from_failed_turn(self):
+        decision = {key: None for key in skill_eval_runner.OBSERVATION_FIELDS}
+        events = [{"type": "turn.started"}, {"type": "item.completed", "item": {
+            "type": "agent_message", "text": json.dumps(decision)}}, {"type": "turn.failed"}]
+        with self.assertRaisesRegex(ValueError, "turn.completed"):
+            skill_eval_runner.observation_from_trace(events)
+        with self.assertRaisesRegex(ValueError, "単一の成功"):
+            skill_eval_runner.observation_from_trace(events + [{"type": "turn.completed"}])
+
+    def test_runner_rejects_out_of_turn_read_and_pending_item(self):
+        decision = {key: None for key in skill_eval_runner.OBSERVATION_FIELDS}
+        message = {"type": "item.completed", "item": {"id": "item_0", "type": "agent_message",
+                   "text": json.dumps(decision)}}
+        with self.assertRaisesRegex(ValueError, "単一の成功"):
+            skill_eval_runner.observation_from_trace([
+                {"type": "item.completed", "item": {"type": "command_execution"}},
+                {"type": "turn.started"}, message, {"type": "turn.completed"}])
+        with self.assertRaisesRegex(ValueError, "未完了"):
+            skill_eval_runner.observation_from_trace([
+                {"type": "turn.started"}, message,
+                {"type": "item.started", "item": {"id": "item_1", "type": "command_execution"}},
+                {"type": "turn.completed"}])
+        late_read = {"type": "item.completed", "item": {"id": "item_1", "type": "command_execution",
+                     "command": "/bin/bash -lc 'cat .codex/skills/quality-plan/SKILL.md'", "exit_code": 0,
+                     "aggregated_output": (skill_eval_runner.CANDIDATES / "six-skill/skills/quality-plan/SKILL.md").read_text(encoding="utf-8")}}
+        with self.assertRaisesRegex(ValueError, "最終item"):
+            skill_eval_runner.observation_from_trace([
+                {"type": "turn.started"}, message, late_read, {"type": "turn.completed"}])
+        with self.assertRaisesRegex(ValueError, "重複"):
+            skill_eval_runner.observation_from_trace([
+                {"type": "turn.started"}, late_read, late_read, message, {"type": "turn.completed"}])
+        with self.assertRaisesRegex(ValueError, "種別"):
+            skill_eval_runner.observation_from_trace([
+                {"type": "turn.started"},
+                {"type": "item.started", "item": {"id": "item_1", "type": "agent_message"}},
+                late_read, message, {"type": "turn.completed"}])
+        with self.assertRaisesRegex(ValueError, "予期しない"):
+            skill_eval_runner.observation_from_trace([
+                {"type": "turn.started"}, {"type": "turn.interrupted"}, message,
+                {"type": "turn.completed"}])
+
+    def test_runner_treats_malformed_command_as_forbidden(self):
+        events = [{"type": "item.completed", "item": {"type": "command_execution", "command": None}}]
+        self.assertTrue(skill_eval_runner.trace_has_forbidden_action(events))
+        self.assertFalse(skill_eval_runner.selected_skill_was_read(events, "quality-plan", "six-skill"))
 
     def test_runner_schema_constrains_six_skill_path(self):
         schema = skill_eval_runner.decision_schema_for("six-skill")
