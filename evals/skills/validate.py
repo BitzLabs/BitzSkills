@@ -23,6 +23,7 @@ sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parent
 SCHEMAS = ROOT / "schemas"
 CASES = ROOT / "cases"
+EVENT_CATALOG = ROOT / "event-catalog.json"
 CAPABILITIES = {
     "bitz-core": ("bitz-core", "operate"),
     "sdd-plan": ("bitz-sdd", "plan"),
@@ -54,6 +55,19 @@ def load_cases():
             raise ValueError(f"{path.relative_to(ROOT)}: 配列ではありません")
         values.extend(source)
     return values
+
+
+def load_event_catalog():
+    source = load_json(EVENT_CATALOG)
+    if not isinstance(source, dict) or set(source) != {"schemaVersion", "catalogVersion", "events"}:
+        raise ValueError("event-catalog.jsonの形式が不正です")
+    events = source["events"]
+    if (source["schemaVersion"] != "1.0" or not isinstance(source["catalogVersion"], str)
+            or not isinstance(events, list) or not events
+            or any(not isinstance(event, str) or not event for event in events)
+            or events != sorted(set(events))):
+        raise ValueError("event-catalog.jsonの版またはイベント一覧が不正です")
+    return source
 
 
 def load_held_out_cases(path: Path):
@@ -96,6 +110,11 @@ def load_held_out_cases(path: Path):
                 raise ValueError("保持ケースの期待経路がcapabilityと一致しません")
         else:
             raise ValueError("保持ケースのcapabilityとmodeが一致しません")
+    allowed_events = set(load_event_catalog()["events"])
+    for case in cases:
+        used_events = set(case["expected"]["requiredEvents"] + case["expected"]["forbiddenEvents"])
+        if not used_events <= allowed_events:
+            raise ValueError("保持ケースに未登録のイベントがあります")
     metadata = {
         "setVersion": source["setVersion"],
         "caseCount": len(cases),
@@ -108,14 +127,21 @@ def audit():
     errors = []
     checked_schemas = validators()
     protocol = load_json(ROOT / "protocol.json")
+    catalog = load_event_catalog()
     core = load_json(ROOT / "core-compatibility.json")
     for error in checked_schemas["protocol"].iter_errors(protocol):
         errors.append(f"protocol.json: {error.message}")
+    if protocol.get("eventCatalogVersion") != catalog["catalogVersion"]:
+        errors.append("protocol.jsonとevent-catalog.jsonの版が一致しません")
 
     cases = load_cases()
     for case in cases:
         for error in checked_schemas["case"].iter_errors(case):
             errors.append(f"{case.get('caseId', '?')}: {error.message}")
+    public_events = {event for case in cases for key in ("requiredEvents", "forbiddenEvents")
+                     for event in case.get("expected", {}).get(key, [])}
+    if not public_events <= set(catalog["events"]):
+        errors.append("公開ケースに未登録のイベントがあります")
 
     ids = [case.get("caseId") for case in cases]
     if len(ids) != len(set(ids)):
@@ -228,10 +254,8 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None):
     protocol = load_json(ROOT / "protocol.json")
     case_list = load_cases()
     held_out = None
-    private_ids = set()
     if held_out_cases_path is not None:
         private_cases, held_out = load_held_out_cases(held_out_cases_path)
-        private_ids = {case["caseId"] for case in private_cases}
         case_list.extend(private_cases)
     elif stage == "release":
         errors.append("release認定には--held-out-casesが必要です")
@@ -259,7 +283,7 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None):
             errors.append(f"run {index}: evaluationSetVersionが一致しません")
         if run["caseId"] not in cases:
             errors.append(f"run {index}: 未知のcaseIdです: {run['caseId']}")
-        elif run.get("heldOutSet") != (held_out if run["caseId"] in private_ids else None):
+        elif run.get("heldOutSet") != held_out:
             errors.append(f"run {index}: 保持ケース集合の版・件数・hashが一致しません")
         key = (run["architecture"], run["model"]["family"], run["model"]["name"], run["model"]["version"], run["repetition"], run["caseId"])
         if key in seen:
@@ -279,6 +303,9 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None):
     group_reports = []
     all_case_ids = set(cases)
     for (architecture, model_key), group_runs in sorted(groups.items()):
+        for field in ("subjectCommit", "skillSetSha256", "runConfigSha256"):
+            if len({run[field] for run in group_runs}) != 1:
+                errors.append(f"{architecture}/{model_key[1]}: {field}が実行間で一致しません")
         repetitions = sorted({run["repetition"] for run in group_runs})
         if len(repetitions) < protocol["minimumRepetitions"][stage]:
             errors.append(f"{architecture}/{model_key[1]}: 反復が不足しています")

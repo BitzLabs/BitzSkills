@@ -3,7 +3,7 @@
   "$id": "run.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "evaluationSetVersion", "caseId", "architecture", "model", "repetition", "subjectCommit", "skillSetSha256", "trace", "observation", "checks", "metrics"],
+  "required": ["schemaVersion", "evaluationSetVersion", "caseId", "architecture", "model", "repetition", "subjectCommit", "skillSetSha256", "runConfigSha256", "inputSha256", "trace", "observation", "checks", "metrics"],
   "properties": {
     "schemaVersion": {"const": "1.0"},
     "evaluationSetVersion": {"type": "string"},
@@ -13,6 +13,8 @@
     "repetition": {"type": "integer", "minimum": 1},
     "subjectCommit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
     "skillSetSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "runConfigSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "inputSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "heldOutSet": {"type": "object", "additionalProperties": false,
       "required": ["setVersion", "caseCount", "sha256"],
       "properties": {
