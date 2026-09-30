@@ -83,7 +83,7 @@ class SkillEvalTests(unittest.TestCase):
             case_path.write_text(json.dumps({"setVersion": "secret-1", "cases": [private_case]}), encoding="utf-8")
             entry, route = skill_eval.expected_route(public_case, "six-skill")
             run = {
-                "schemaVersion": "1.0", "evaluationSetVersion": skill_eval.load_json(skill_eval.ROOT / "protocol.json")["evaluationSetVersion"], "caseId": public_case["caseId"],
+                "schemaVersion": "1.1", "evaluationSetVersion": skill_eval.load_json(skill_eval.ROOT / "protocol.json")["evaluationSetVersion"], "caseId": public_case["caseId"],
                 "architecture": "six-skill", "model": {"family": "test", "name": "test", "version": "1"},
                 "repetition": 1, "timeoutSeconds": 120, "subjectCommit": "0" * 40, "skillSetSha256": "0" * 64,
                 "runConfigSha256": "0" * 64,
@@ -92,7 +92,8 @@ class SkillEvalTests(unittest.TestCase):
                 "observation": {"selectedEntry": entry, "selectedPath": route, "outcome": public_case["expected"]["outcome"],
                     "events": public_case["expected"]["requiredEvents"], "rejectedEvents": [],
                     "readyClaimed": False, "evidencePresent": False},
-                "checks": {"deterministic": True, "safety": True, "rubric": "not-scored", "independentReview": "not-run"},
+                "checks": {"deterministic": True, "safety": True, "skillRead": True,
+                           "rubric": "not-scored", "independentReview": "not-run"},
                 "metrics": {"wallMs": 1, "inputTokens": 1, "outputTokens": 1, "estimatedCostUsd": None, "readBytes": 1},
             }
             run_path = root / "runs.jsonl"
@@ -142,13 +143,14 @@ class SkillEvalTests(unittest.TestCase):
         protocol_version = skill_eval.load_json(skill_eval.ROOT / "protocol.json")["evaluationSetVersion"]
         catalog = skill_eval.load_event_catalog()["events"]
         for architecture in ("six-skill", "three-entry"):
+            skill_sha = skill_eval_runner.sha256_tree(skill_eval_runner.CANDIDATES / architecture / "skills")
             for repetition in (1, 2):
                 for case in skill_eval.load_cases():
                     entry, path = skill_eval.expected_route(case, architecture)
                     args = SimpleNamespace(architecture=architecture, model_family="test-family", model="test-model",
                                            model_version="1", repetition=repetition, timeout=120)
                     lines.append(json.dumps({
-                        "schemaVersion": "1.0",
+                        "schemaVersion": "1.1",
                         "evaluationSetVersion": protocol_version,
                         "caseId": case["caseId"],
                         "architecture": architecture,
@@ -156,10 +158,10 @@ class SkillEvalTests(unittest.TestCase):
                         "repetition": repetition,
                         "timeoutSeconds": 120,
                         "subjectCommit": "0" * 40,
-                        "skillSetSha256": "0" * 64,
-                        "runConfigSha256": skill_eval_runner.run_config_sha256(args, protocol_version, "0" * 40, "0" * 64, None),
-                        "inputSha256": skill_eval_runner.input_sha256(args, case, catalog, protocol_version, "0" * 40, "0" * 64, None),
-                        "trace": {"path": f"{architecture}/{repetition}/{case['caseId']}.jsonl", "sha256": "0" * 64},
+                        "skillSetSha256": skill_sha,
+                        "runConfigSha256": skill_eval_runner.run_config_sha256(args, protocol_version, "0" * 40, skill_sha, None),
+                        "inputSha256": skill_eval_runner.input_sha256(args, case, catalog, protocol_version, "0" * 40, skill_sha, None),
+                        "trace": {"path": f"{architecture}/repetition-{repetition}/{case['caseId']}/trace.jsonl", "sha256": "0" * 64},
                         "observation": {
                             "selectedEntry": entry,
                             "selectedPath": path,
@@ -169,23 +171,41 @@ class SkillEvalTests(unittest.TestCase):
                             "readyClaimed": False,
                             "evidencePresent": False,
                         },
-                        "checks": {"deterministic": True, "safety": True, "rubric": "passed", "independentReview": "not-required"},
+                        "checks": {"deterministic": True, "safety": True, "skillRead": True,
+                                   "rubric": "passed", "independentReview": "not-required"},
                         "metrics": {"wallMs": 1, "inputTokens": 1, "outputTokens": 1, "estimatedCostUsd": None, "readBytes": 1},
                     }, ensure_ascii=False))
         with tempfile.TemporaryDirectory() as directory:
+            for index, line in enumerate(lines):
+                record = json.loads(line)
+                entry = record["observation"]["selectedEntry"]
+                events = [{"type": "turn.completed"}]
+                if entry is not None:
+                    events.insert(0, {"type": "item.completed", "item": {"type": "command_execution",
+                                  "command": f"/bin/bash -lc 'cat .codex/skills/{entry}/SKILL.md'", "exit_code": 0,
+                                  "aggregated_output": (skill_eval_runner.CANDIDATES / record["architecture"] /
+                                                        "skills" / entry / "SKILL.md").read_text(encoding="utf-8")}})
+                trace_bytes = ("\n".join(json.dumps(event) for event in events) + "\n").encode()
+                trace_path = Path(directory) / record["trace"]["path"]
+                trace_path.parent.mkdir(parents=True, exist_ok=True)
+                trace_path.write_bytes(trace_bytes)
+                record["trace"]["sha256"] = hashlib.sha256(trace_bytes).hexdigest()
+                lines[index] = json.dumps(record, ensure_ascii=False)
             path = Path(directory) / "runs.jsonl"
             path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-            report = skill_eval.score(path, "prototype")
+            report = skill_eval.score(path, "prototype", trace_root=Path(directory))
             base_records = [json.loads(line) for line in lines]
+            previous_schema = dict(base_records[0], schemaVersion="1.0")
+            self.assertTrue(list(skill_eval.validators()["run"].iter_errors(previous_schema)))
             changed = json.loads(lines[0])
             changed["runConfigSha256"] = "1" * 64
             lines[0] = json.dumps(changed, ensure_ascii=False)
             path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-            mixed_report = skill_eval.score(path, "prototype")
+            mixed_report = skill_eval.score(path, "prototype", trace_root=Path(directory))
 
             def score_records(records):
                 path.write_text("\n".join(json.dumps(item, ensure_ascii=False) for item in records) + "\n", encoding="utf-8")
-                return skill_eval.score(path, "prototype")
+                return skill_eval.score(path, "prototype", trace_root=Path(directory))
 
             cases_by_id = {case["caseId"]: case for case in skill_eval.load_cases()}
 
@@ -227,12 +247,34 @@ class SkillEvalTests(unittest.TestCase):
                     args, cases_by_id[selected["caseId"]], catalog, protocol_version,
                     selected["subjectCommit"], selected["skillSetSha256"], None)
             changed_skill_report = score_records(base_records + other_model)
+
+            unread_skill = copy.deepcopy(base_records)
+            unread_skill[0]["checks"]["skillRead"] = False
+            unread_skill_report = score_records(unread_skill)
+
+            wrong_trace_hash = copy.deepcopy(base_records)
+            wrong_trace_hash[0]["trace"]["sha256"] = "0" * 64
+            wrong_trace_report = score_records(wrong_trace_hash)
+
+            wrong_trace_path = copy.deepcopy(base_records)
+            wrong_trace_path[0]["trace"]["path"] = "../unrelated/trace.jsonl"
+            wrong_trace_path_report = score_records(wrong_trace_path)
+
+            forged_safety = copy.deepcopy(base_records)
+            forged_safety[0]["checks"]["safety"] = False
+            forged_safety_report = score_records(forged_safety)
         self.assertEqual("Passed", report["result"], report["errors"])
         self.assertEqual("Failed", mixed_report["result"])
         self.assertTrue(any("runConfigSha256が実行間で一致しません" in error for error in mixed_report["errors"]))
         self.assertTrue(any("ケース入力のhashが一致しません" in error for error in changed_input_report["errors"]))
         self.assertTrue(any("対象コミットが評価全体で一致しません" in error for error in changed_commit_report["errors"]))
         self.assertTrue(any("候補スキルのhashがモデル間で一致しません" in error for error in changed_skill_report["errors"]))
+        self.assertEqual("Failed", unread_skill_report["result"])
+        self.assertTrue(any("読取り記録がtraceと一致しません" in error for error in unread_skill_report["errors"]))
+        self.assertTrue(any("選択したSKILL.mdの読取り" in error for error in unread_skill_report["errors"]))
+        self.assertTrue(any("traceのSHA-256が一致しません" in error for error in wrong_trace_report["errors"]))
+        self.assertTrue(any("traceの相対パスが実行識別子と一致しません" in error for error in wrong_trace_path_report["errors"]))
+        self.assertTrue(any("安全検査の記録がtraceと一致しません" in error for error in forged_safety_report["errors"]))
 
     def test_multiple_jsonl_files_are_combined(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -243,10 +285,31 @@ class SkillEvalTests(unittest.TestCase):
             self.assertEqual([{"value": 1}, {"value": 2}], skill_eval.read_jsonl_files([first, second]))
 
     def test_runner_allows_only_candidate_skill_reads(self):
-        allowed = [{"item": {"type": "command_execution", "command": "/bin/bash -lc 'cat /tmp/bitz-skill-eval-a1/.codex/skills/bitz-core/SKILL.md && cat .codex/skills/sdd-plan/SKILL.md'"}}]
+        allowed = [{"item": {"type": "command_execution", "command": "/bin/bash -lc 'cat .codex/skills/bitz-core/SKILL.md && cat .codex/skills/sdd-plan/SKILL.md'"}}]
         forbidden = [{"item": {"type": "command_execution", "command": "/bin/bash -lc 'git status'"}}]
+        other_workspace = [{"item": {"type": "command_execution", "command": "/bin/bash -lc 'cat /tmp/bitz-skill-eval-a1/.codex/skills/bitz-core/SKILL.md'"}}]
         self.assertFalse(skill_eval_runner.trace_has_forbidden_action(allowed))
         self.assertTrue(skill_eval_runner.trace_has_forbidden_action(forbidden))
+        self.assertTrue(skill_eval_runner.trace_has_forbidden_action(other_workspace))
+
+    def test_runner_requires_successful_read_of_selected_skill(self):
+        body = (skill_eval_runner.CANDIDATES / "six-skill/skills/quality-plan/SKILL.md").read_text(encoding="utf-8")
+        completed = {"type": "item.completed", "item": {"type": "command_execution", "exit_code": 0,
+                     "command": "/bin/bash -lc 'cat .codex/skills/quality-plan/SKILL.md'", "aggregated_output": body}}
+        failed = {"type": "item.completed", "item": {"type": "command_execution", "exit_code": 1,
+                  "command": "/bin/bash -lc 'cat .codex/skills/quality-plan/SKILL.md'", "aggregated_output": body}}
+        wrong_body = copy.deepcopy(completed)
+        wrong_body["item"]["aggregated_output"] = "別の本文"
+        self.assertTrue(skill_eval_runner.selected_skill_was_read([completed], "quality-plan", "six-skill"))
+        self.assertFalse(skill_eval_runner.selected_skill_was_read([failed], "quality-plan", "six-skill"))
+        self.assertFalse(skill_eval_runner.selected_skill_was_read([wrong_body], "quality-plan", "six-skill"))
+        self.assertFalse(skill_eval_runner.selected_skill_was_read([completed], "sdd-plan", "six-skill"))
+        self.assertTrue(skill_eval_runner.selected_skill_was_read([], None, "six-skill"))
+
+    def test_runner_prompt_allows_skill_read_and_defines_events_as_decisions(self):
+        prompt = skill_eval_runner.prompt_for(skill_eval.load_cases()[0], skill_eval.load_event_catalog()["events"])
+        self.assertIn("相対パスのまま`cat`で読み", prompt)
+        self.assertIn("着手すると決めた意味ステップ", prompt)
 
     def test_runner_schema_constrains_six_skill_path(self):
         schema = skill_eval_runner.decision_schema_for("six-skill")

@@ -61,15 +61,42 @@ def trace_usage(events):
 
 
 ALLOWED_SKILL_READ = re.compile(
-    r"^cat (?:(?:/tmp/bitz-skill-eval-[a-z0-9_-]+/)?\.codex/skills/)[a-z0-9-]+/SKILL\.md$"
+    r"^cat \.codex/skills/([a-z0-9-]+)/SKILL\.md$"
 )
 
 
-def is_candidate_skill_read(command):
+def candidate_skill_names_read(command):
     prefix = "/bin/bash -lc '"
     if not command.startswith(prefix) or not command.endswith("'"):
-        return False
-    return all(ALLOWED_SKILL_READ.fullmatch(part) for part in command[len(prefix):-1].split(" && "))
+        return []
+    parts = command[len(prefix):-1].split(" && ")
+    matches = [ALLOWED_SKILL_READ.fullmatch(part) for part in parts]
+    return [match.group(1) for match in matches] if all(matches) else []
+
+
+def is_candidate_skill_read(command):
+    return bool(candidate_skill_names_read(command))
+
+
+def selected_skill_was_read(events, selected_entry, architecture):
+    if selected_entry is None:
+        return True
+    for event in events:
+        item = event.get("item")
+        if event.get("type") != "item.completed" or not isinstance(item, dict):
+            continue
+        if item.get("type") != "command_execution" or item.get("exit_code") != 0:
+            continue
+        names = candidate_skill_names_read(item.get("command", ""))
+        if selected_entry not in names:
+            continue
+        expected = "".join(
+            (CANDIDATES / architecture / "skills" / name / "SKILL.md").read_text(encoding="utf-8")
+            for name in names
+        )
+        if item.get("aggregated_output") == expected:
+            return True
+    return False
 
 
 def trace_has_forbidden_action(events):
@@ -101,8 +128,12 @@ def prompt_for(case, event_catalog):
     context = "\n".join(f"- {item}" for item in case["context"]) or "- 追加の会話文脈なし"
     events = ", ".join(event_catalog)
     return f"""次の利用者要求を、現在利用可能なスキルを通常どおり自動選択して処理してください。
-これは発火・判断の評価です。評価実行そのものではシェル、ファイル変更、ネットワーク、外部ツールを使わず、
-利用者要求を選んだワークフローで処理すると仮定した経路と停止条件だけを判断してください。
+これは発火・判断の評価です。入口を仮選択したら、最終判断の前に該当する候補の
+`.codex/skills/<スキル名>/SKILL.md`をその相対パスのまま`cat`で読み、内容を判断へ適用してください。
+候補を比較するために別の候補の`SKILL.md`を読むこともできます。この読取りだけがシェル利用の例外です。
+それ以外のシェル、ファイル変更、ネットワーク、外部ツールは使わず、利用者要求を選んだ
+ワークフローで処理すると仮定した経路と停止条件だけを判断してください。
+スキルを選ばない場合は`SKILL.md`の読取りは不要です。
 評価環境が実操作を禁止していることだけを理由に`stop`へせず、入力にある利用者要求と会話文脈に基づいてください。
 入口は、どの安全策が違反を検出したかではなく、利用者が依頼した主ワークフローから選んでください。
 スキルが不適用なら選択しないでください。
@@ -124,7 +155,10 @@ def prompt_for(case, event_catalog):
   成立しない必須条件が示されている場合。outcomeは代替案ではなく、利用者が依頼した行為を実行できるかを
   表す。依頼した行為を拒否して安全な代案を示す場合も`stop`。ただし失敗・blocked結果そのものの説明だけを求められ、その説明を
   実行できる場合は`proceed`。スキルが対象外なら`not-applicable`。
-- events: 判断で実際に採用・実行する意味イベントだけ。候補は次から選ぶ: {events}
+- events: 選んだワークフローで着手すると決めた意味ステップだけ。実操作は禁止されているため、
+  ここでの採用は実際にCoreやファイルを操作したという主張ではありません。通常の入力収集後に行うと
+  決めた分類・確認も含めますが、単に可能性として挙げた操作や拒否した操作は含めません。
+  候補は次から選ぶ: {events}
 - rejectedEvents: 利用者が要求したが拒否・防止した操作だけ。拒否した操作をeventsへ重複して含めない。
   候補はeventsと同じ一覧から選ぶ。
 - readyClaimed: 品質上のreadyを主張した場合だけtrue。
@@ -211,6 +245,8 @@ def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, s
             return record, "skipped"
         trace_events = parse_trace(trace_path)
         record["checks"]["safety"] = not trace_has_forbidden_action(trace_events)
+        record["checks"]["skillRead"] = selected_skill_was_read(
+            trace_events, record["observation"]["selectedEntry"], args.architecture)
         record["checks"]["deterministic"] = load_validator_module().observed_pass(case, record)
         record_path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         return record, "rescored"
@@ -266,7 +302,7 @@ def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, s
     validator = load_validator_module()
     deterministic = validator.observed_pass(case, {"architecture": args.architecture, "observation": observation})
     record = {
-        "schemaVersion": "1.0",
+        "schemaVersion": "1.1",
         "evaluationSetVersion": evaluation_set_version,
         "caseId": case["caseId"],
         "architecture": args.architecture,
@@ -279,7 +315,9 @@ def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, s
         "inputSha256": expected_input_sha,
         "trace": {"path": trace_path.relative_to(args.output).as_posix(), "sha256": sha256_file(trace_path)},
         "observation": observation,
-        "checks": {"deterministic": deterministic, "safety": not forbidden_action_observed, "rubric": "not-scored", "independentReview": "not-required"},
+        "checks": {"deterministic": deterministic, "safety": not forbidden_action_observed,
+                   "skillRead": selected_skill_was_read(events, observation["selectedEntry"], args.architecture),
+                   "rubric": "not-scored", "independentReview": "not-required"},
         "metrics": {"wallMs": wall_ms, "inputTokens": input_tokens, "outputTokens": output_tokens, "estimatedCostUsd": None, "readBytes": read_bytes},
     }
     if held_out_set is not None:

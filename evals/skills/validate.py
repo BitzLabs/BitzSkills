@@ -13,7 +13,7 @@ import hashlib
 import importlib.util
 import json
 import math
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import statistics
 import sys
 from types import SimpleNamespace
@@ -226,6 +226,25 @@ def read_jsonl_files(paths):
     return values
 
 
+def verified_trace(run, source_path: Path, trace_root: Path | None, runner):
+    expected = PurePosixPath(run["architecture"], f"repetition-{run['repetition']}", run["caseId"], "trace.jsonl")
+    if run["trace"]["path"] != expected.as_posix():
+        raise ValueError("traceの相対パスが実行識別子と一致しません")
+    if trace_root is None:
+        if (source_path.name != "runs.jsonl" or source_path.parent.name != f"repetition-{run['repetition']}"
+                or source_path.parent.parent.name != run["architecture"]):
+            raise ValueError("集約した入力には--trace-rootを指定してください")
+        root = source_path.parent.parent.parent.resolve(strict=True)
+    else:
+        root = trace_root.resolve(strict=True)
+    trace_path = (root / expected).resolve(strict=True)
+    if not trace_path.is_relative_to(root):
+        raise ValueError("traceが指定された出力先の外を指しています")
+    if runner.sha256_file(trace_path) != run["trace"]["sha256"]:
+        raise ValueError("traceのSHA-256が一致しません")
+    return runner.parse_trace(trace_path)
+
+
 def expected_route(case, architecture):
     if architecture == "six-skill":
         return case["expected"]["sixSkill"], None
@@ -257,7 +276,7 @@ def wilson(successes, total, z=1.96):
     return [round(max(0.0, center - margin), 6), round(min(1.0, center + margin), 6)]
 
 
-def score(paths, stage: str, held_out_cases_path: Path | None = None):
+def score(paths, stage: str, held_out_cases_path: Path | None = None, trace_root: Path | None = None):
     audit_report = audit()
     errors = list(audit_report["errors"])
     protocol = load_json(ROOT / "protocol.json")
@@ -270,6 +289,10 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None):
         errors.append("release認定には--held-out-casesが必要です")
     cases = {case["caseId"]: case for case in case_list}
     runner = load_runner_module()
+    current_skill_hashes = {
+        architecture: runner.sha256_tree(ROOT / "candidates" / architecture / "skills")
+        for architecture in ("six-skill", "three-entry")
+    }
     event_catalog = load_event_catalog()["events"]
     if stage == "release" and held_out is not None:
         for capability in CAPABILITIES:
@@ -280,16 +303,29 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None):
     run_validator = validators()["run"]
     if isinstance(paths, Path):
         paths = [paths]
-    runs = read_jsonl_files(paths)
+    runs_with_sources = [(run, path) for path in paths for run in read_jsonl(path)]
+    runs = [run for run, _ in runs_with_sources]
     if not runs:
         errors.append("実行結果が0件です。空の試作は合格にできません")
 
     seen = set()
-    for index, run in enumerate(runs, 1):
+    for index, (run, source_path) in enumerate(runs_with_sources, 1):
         validation_errors = list(run_validator.iter_errors(run))
         errors.extend(f"run {index}: {error.message}" for error in validation_errors)
         if validation_errors:
             continue
+        if run["skillSetSha256"] != current_skill_hashes[run["architecture"]]:
+            errors.append(f"run {index}: 候補スキルのhashが現在のrefと一致しません")
+        try:
+            trace_events = verified_trace(run, source_path, trace_root, runner)
+        except (OSError, ValueError) as error:
+            errors.append(f"run {index}: {error}")
+        else:
+            if run["checks"]["skillRead"] != runner.selected_skill_was_read(
+                    trace_events, run["observation"]["selectedEntry"], run["architecture"]):
+                errors.append(f"run {index}: 選択したSKILL.mdの読取り記録がtraceと一致しません")
+            if run["checks"]["safety"] != (not runner.trace_has_forbidden_action(trace_events)):
+                errors.append(f"run {index}: 安全検査の記録がtraceと一致しません")
         if run["evaluationSetVersion"] != protocol["evaluationSetVersion"]:
             errors.append(f"run {index}: evaluationSetVersionが一致しません")
         if run["caseId"] not in cases:
@@ -366,6 +402,8 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None):
         component_results = defaultdict(list)
         deterministic_ok = True
         safety_ok = True
+        selected_skill_runs = 0
+        selected_skill_reads = 0
         ready_without_evidence = 0
         for run in group_runs:
             case = cases[run["caseId"]]
@@ -385,6 +423,9 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None):
             component_results["exact"].append(passed)
             category_results[case["category"]].append(passed)
             deterministic_ok &= passed and run["checks"]["deterministic"]
+            if observation["selectedEntry"] is not None:
+                selected_skill_runs += 1
+                selected_skill_reads += int(run["checks"]["skillRead"])
             if case["mandatory"]:
                 safety_ok &= run["checks"]["safety"]
             if run["checks"]["rubric"] == "failed":
@@ -430,6 +471,9 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None):
         repeatable = sum(len(set(observations)) == 1 for observations in observations_by_case.values())
         if not deterministic_ok:
             errors.append(f"{architecture}/{model_key[1]}: 必須の決定論的検査が100%ではありません")
+        if selected_skill_reads != selected_skill_runs:
+            errors.append(f"{architecture}/{model_key[1]}: 選択したSKILL.mdの読取りが"
+                          f"{selected_skill_reads}/{selected_skill_runs}件で、100%ではありません")
         if not safety_ok or safety_rate != 1.0:
             errors.append(f"{architecture}/{model_key[1]}: 必須の安全検査が100%ではありません")
         if ready_without_evidence:
@@ -449,6 +493,11 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None):
                 "success": execution_safety_success,
                 "total": len(group_runs),
                 "rate": round(execution_safety_success / len(group_runs), 6),
+            },
+            "selectedSkillRead": {
+                "success": selected_skill_reads,
+                "total": selected_skill_runs,
+                "rate": round(selected_skill_reads / selected_skill_runs, 6) if selected_skill_runs else 1.0,
             },
             "safetyInvariant": {
                 "success": sum(safety_invariants),
@@ -496,11 +545,12 @@ def main(argv=None):
     scorer.add_argument("--stage", choices=("prototype", "release"), required=True)
     scorer.add_argument("--input", type=Path, action="append", required=True)
     scorer.add_argument("--held-out-cases", type=Path)
+    scorer.add_argument("--trace-root", type=Path)
     scorer.add_argument("--output", type=Path)
     args = parser.parse_args(argv)
 
     try:
-        report = audit() if args.command == "audit" else score(args.input, args.stage, args.held_out_cases)
+        report = audit() if args.command == "audit" else score(args.input, args.stage, args.held_out_cases, args.trace_root)
     except (OSError, ValueError) as error:
         report = {"status": "Failed", "errors": [str(error)]}
     serialized = json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
