@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""候補スキルを隔離したCodex実行で公開ケースへ適用し、再採点用JSONLを作る。"""
+"""候補スキルを隔離したCodex実行でケースへ適用し、再採点用JSONLを作る。"""
 
 from __future__ import annotations
 
@@ -145,7 +145,7 @@ def parse_trace(path: Path):
     return events
 
 
-def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, skill_sha, read_bytes):
+def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, skill_sha, read_bytes, held_out_set):
     run_dir = args.output / args.architecture / f"repetition-{args.repetition}" / case["caseId"]
     trace_path = run_dir / "trace.jsonl"
     decision_path = run_dir / "decision.json"
@@ -153,6 +153,8 @@ def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, s
     record_path = run_dir / "run.json"
     if args.resume and record_path.is_file():
         record = json.loads(record_path.read_text(encoding="utf-8"))
+        if record.get("heldOutSet") != held_out_set:
+            raise RuntimeError(f"{case['caseId']}: 保持ケース集合が前回の実行から変わっています")
         if not args.rescore_existing:
             return record, "skipped"
         trace_events = parse_trace(trace_path)
@@ -225,6 +227,8 @@ def run_one(args, case, event_catalog, evaluation_set_version, subject_commit, s
         "checks": {"deterministic": deterministic, "safety": not forbidden_action_observed, "rubric": "not-scored", "independentReview": "not-required"},
         "metrics": {"wallMs": wall_ms, "inputTokens": input_tokens, "outputTokens": output_tokens, "estimatedCostUsd": None, "readBytes": read_bytes},
     }
+    if held_out_set is not None:
+        record["heldOutSet"] = held_out_set
     record_path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return record, "ran"
 
@@ -237,6 +241,7 @@ def main(argv=None):
     parser.add_argument("--model-family", required=True)
     parser.add_argument("--model-version", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--held-out-cases", type=Path)
     parser.add_argument("--case", action="append", dest="case_ids")
     parser.add_argument("--jobs", type=int, default=1)
     parser.add_argument("--timeout", type=int, default=120)
@@ -246,12 +251,19 @@ def main(argv=None):
     if args.rescore_existing and not args.resume:
         parser.error("--rescore-existingには--resumeが必要です")
     args.output = args.output.resolve()
+    if args.held_out_cases is not None and args.output.is_relative_to(ROOT.parent.parent):
+        parser.error("保持ケースの実行結果は公開リポジトリ外へ保存してください")
 
     validator = load_validator_module()
     audit = validator.audit()
     if audit["status"] != "Passed":
         raise SystemExit(json.dumps(audit, ensure_ascii=False, indent=2))
     cases = validator.load_cases()
+    held_out = None
+    if args.held_out_cases is not None:
+        private_cases, held_out = validator.load_held_out_cases(args.held_out_cases)
+        cases.extend(private_cases)
+    private_ids = {case["caseId"] for case in private_cases} if held_out is not None else set()
     evaluation_set_version = audit["evaluationSetVersion"]
     if args.case_ids:
         unknown = sorted(set(args.case_ids) - {case["caseId"] for case in cases})
@@ -259,7 +271,7 @@ def main(argv=None):
             raise SystemExit(f"未知のcaseIdです: {', '.join(unknown)}")
         cases = [case for case in cases if case["caseId"] in set(args.case_ids)]
 
-    event_catalog = sorted({event for case in validator.load_cases() for key in ("requiredEvents", "forbiddenEvents") for event in case["expected"][key]})
+    event_catalog = sorted({event for case in cases for key in ("requiredEvents", "forbiddenEvents") for event in case["expected"][key]})
     skills = CANDIDATES / args.architecture / "skills"
     skill_sha = sha256_tree(skills)
     read_bytes = sum(path.stat().st_size for path in skills.rglob("*") if path.is_file())
@@ -270,7 +282,8 @@ def main(argv=None):
     with ThreadPoolExecutor(max_workers=args.jobs) as executor:
         future_cases = {
             executor.submit(
-                run_one, args, case, event_catalog, evaluation_set_version, subject_commit, skill_sha, read_bytes
+                run_one, args, case, event_catalog, evaluation_set_version, subject_commit, skill_sha, read_bytes,
+                held_out if case["caseId"] in private_ids else None
             ): case
             for case in cases
         }
@@ -288,7 +301,7 @@ def main(argv=None):
     summary_path = args.output / args.architecture / f"repetition-{args.repetition}" / "runs.jsonl"
     summary_path.parent.mkdir(parents=True, exist_ok=True)
     summary_path.write_text("".join(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n" for record in records), encoding="utf-8")
-    print(json.dumps({"architecture": args.architecture, "repetition": args.repetition, "runs": len(records), "failures": failures, "output": str(summary_path)}, ensure_ascii=False, indent=2))
+    print(json.dumps({"architecture": args.architecture, "repetition": args.repetition, "runs": len(records), "heldOut": held_out, "failures": failures, "output": str(summary_path)}, ensure_ascii=False, indent=2))
     return 0 if not failures and len(records) == len(cases) else 1
 
 

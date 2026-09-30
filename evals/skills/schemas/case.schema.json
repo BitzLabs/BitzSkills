@@ -6,7 +6,7 @@
   "required": ["schemaVersion", "caseId", "category", "capability", "mode", "prompt", "context", "expected", "mandatory"],
   "properties": {
     "schemaVersion": {"const": "1.0"},
-    "caseId": {"type": "string", "pattern": "^SE-[0-9]{3}$"},
+    "caseId": {"type": "string", "pattern": "^SE-[0-9]{3,}$"},
     "category": {"enum": ["explicit", "implicit", "contextual", "negative", "conflict", "behavior", "safety"]},
     "capability": {"enum": ["none", "bitz-core", "sdd-plan", "sdd-implement", "sdd-converge", "quality-plan", "quality-review"]},
     "mode": {"enum": ["use", "do-not-use", "stop"]},

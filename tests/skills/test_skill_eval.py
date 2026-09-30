@@ -1,4 +1,5 @@
 import importlib.util
+import hashlib
 import json
 from pathlib import Path
 import tempfile
@@ -29,6 +30,59 @@ class SkillEvalTests(unittest.TestCase):
             report = skill_eval.score(path, "prototype")
         self.assertEqual("Failed", report["result"])
         self.assertTrue(any("0件" in error for error in report["errors"]))
+
+    def test_release_requires_held_out_cases(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "empty.jsonl"
+            path.write_text("", encoding="utf-8")
+            report = skill_eval.score(path, "release")
+        self.assertEqual("Failed", report["result"])
+        self.assertTrue(any("--held-out-cases" in error for error in report["errors"]))
+
+    def test_held_out_case_metadata_and_collision(self):
+        private_case = dict(skill_eval.load_cases()[0], caseId="SE-1000", prompt="保持した独立の要求")
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "held-out.json"
+            path.write_text(json.dumps({"setVersion": "secret-1", "cases": [private_case]}), encoding="utf-8")
+            cases, metadata = skill_eval.load_held_out_cases(path)
+            self.assertEqual("SE-1000", cases[0]["caseId"])
+            self.assertEqual({"setVersion": "secret-1", "caseCount": 1, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}, metadata)
+            private_case["caseId"] = skill_eval.load_cases()[0]["caseId"]
+            path.write_text(json.dumps({"setVersion": "secret-1", "cases": [private_case]}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "衝突"):
+                skill_eval.load_held_out_cases(path)
+
+    def test_held_out_case_rejects_public_input_with_new_id(self):
+        private_case = dict(skill_eval.load_cases()[0], caseId="SE-1000")
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "held-out.json"
+            path.write_text(json.dumps({"setVersion": "secret-1", "cases": [private_case]}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "入力.*衝突"):
+                skill_eval.load_held_out_cases(path)
+
+    def test_release_rejects_unbound_held_out_run(self):
+        private_case = dict(skill_eval.load_cases()[0], caseId="SE-1000", prompt="保持した独立の要求")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            case_path = root / "held-out.json"
+            case_path.write_text(json.dumps({"setVersion": "secret-1", "cases": [private_case]}), encoding="utf-8")
+            entry, route = skill_eval.expected_route(private_case, "six-skill")
+            run = {
+                "schemaVersion": "1.0", "evaluationSetVersion": "0.3.0", "caseId": "SE-1000",
+                "architecture": "six-skill", "model": {"family": "test", "name": "test", "version": "1"},
+                "repetition": 1, "subjectCommit": "0" * 40, "skillSetSha256": "0" * 64,
+                "trace": {"path": "trace.jsonl", "sha256": "0" * 64},
+                "observation": {"selectedEntry": entry, "selectedPath": route, "outcome": private_case["expected"]["outcome"],
+                    "events": private_case["expected"]["requiredEvents"], "rejectedEvents": [],
+                    "readyClaimed": False, "evidencePresent": False},
+                "checks": {"deterministic": True, "safety": True, "rubric": "not-scored", "independentReview": "not-run"},
+                "metrics": {"wallMs": 1, "inputTokens": 1, "outputTokens": 1, "estimatedCostUsd": None, "readBytes": 1},
+            }
+            run_path = root / "runs.jsonl"
+            run_path.write_text(json.dumps(run) + "\n", encoding="utf-8")
+            report = skill_eval.score(run_path, "release", case_path)
+        self.assertEqual("Failed", report["result"])
+        self.assertTrue(any("保持ケース集合の版・件数・hash" in error for error in report["errors"]))
 
     def test_independence_schema_rejects_missing_evidence(self):
         validator = skill_eval.validators()["independent-review"]
