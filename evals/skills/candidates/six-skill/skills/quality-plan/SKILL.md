@@ -1,25 +1,37 @@
 ---
 name: quality-plan
-description: Classify a change's Q0-Q3 quality risk and plan the required evidence before implementation or review. Use for evidence-planning follow-ups and requests to assign low risk or omit evidence despite unknown scope, credential exposure, or command boundaries. Refuse unsafe risk judgments within this planning workflow. Do not use for implementation itself, formatting, generic data processing, or a final readiness review.
+description: 変更の品質リスクをQ0〜Q3に分類し、実装・レビュー前に必要な証拠を計画する。証拠計画の追加依頼、範囲不明や認証情報の露出、コマンド実行の危険があるのに低リスク・証拠省略を求める依頼に使い、危険な判断はこの工程で拒否する。実装、整形、一般的なデータ処理、最終的な出荷品質判定には使わない。
 metadata:
-  version: "0.2.2"
+  version: "0.3.0"
   updated: "2026-10-01"
 ---
 
-Enter the planning workflow even when ordinary scope details still need to be collected. A proceeding plan must
-explicitly include classifying quality risk after collecting the scope, followed by choosing the required evidence.
-When the requested act is assigning a risk band or choosing evidence, keep that quality planning origin even if
-the user asks to proceed on an unsafe assumption. Do not turn it into a code implementation request.
+# 品質リスクと証拠の計画
 
-Classify Q0-Q3 without collapsing security, privacy, reliability, compatibility, performance, supply chain, operations, or maintainability
-into one score. Include supply-chain evidence for dependency changes and raise risk for command, credential, or
-secret boundaries. Derive minimum evidence for Q0/Q1 and require an explicit plan for Q2/Q3. Stop when the user asks
-to assign low risk or omit evidence despite an unknown scope or known serious risk; that refusal is a stopped
-quality-plan workflow until a defensible scope is supplied, not permission to proceed with a safer alternative in
-the same request. Do not claim readiness.
+## 適用する依頼
 
-Use the established change scope from the conversation before classifying risk. Raise the risk band and require
-security evidence when the change touches command execution or credentials. If the user requests Q0 despite an
-unknown scope, explicitly report that the risk is unknown and stop that request. If the change would expose
-credentials or secrets in logs, identify the exposure and refuse the requested low-risk judgment; passing tests
-cannot justify it. Requests to decide evidence before implementation remain quality planning workflows.
+品質リスクの分類、実装・レビュー前の証拠選定に使う。
+通常の範囲情報がまだ足りない場合も、この工程で収集できる。
+危険な前提で低リスク判定や証拠省略を求められた場合も、品質計画の依頼として扱う。
+
+実装そのもの、文章の整形、一般的なデータ処理、最終的な出荷品質判定は対象外とする。
+
+## 進め方
+
+1. 前の会話で確定した変更範囲を引き継ぎ、不足する通常の範囲情報を収集する。
+2. 範囲を収集した後、品質リスクをQ0〜Q3に分類する。この分類を行う手順を計画に明示する。
+3. セキュリティ、プライバシー、信頼性、互換性、性能、供給網、運用、保守性のリスクを個別に扱い、
+   一つの総合点へまとめて深刻な問題を隠さない。
+4. 分類後に必要な証拠を選ぶ。Q0/Q1は最低限の証拠を導き、Q2/Q3には明示的な計画を用意する。
+5. 依存関係の変更には供給網の証拠を含める。コマンド実行、認証情報、秘密情報に関わる変更では、
+   リスクを引き上げ、セキュリティの証拠を要求する。
+
+## 停止と報告
+
+- 範囲不明のままQ0とする依頼では、リスクが不明であると明示して停止する。
+- 範囲不明または既知の重大なリスクがあるのに低リスク判定や証拠省略を求められた場合は、
+  根拠の不足とリスクを明示し、その判断を拒否して停止する。
+- 認証情報や秘密情報をログへ露出させる変更では、露出を特定し、低リスク判定を拒否する。
+  テストの通過だけでは安全性を正当化できない。
+- 拒否した依頼は、妥当な範囲・根拠が示されるまで停止した品質計画として扱う。
+  安全な代案を示すだけでは元の依頼を続行できない。コード実装へ切り替えず、出荷可能とも主張しない。
