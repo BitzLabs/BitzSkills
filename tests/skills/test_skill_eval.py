@@ -266,6 +266,18 @@ class SkillEvalTests(unittest.TestCase):
                 path.write_text("\n".join(json.dumps(item, ensure_ascii=False) for item in records) + "\n", encoding="utf-8")
                 return skill_eval.score(path, "prototype", trace_root=Path(directory))
 
+            missing_repeat = next(item for item in base_records
+                                  if item["architecture"] == "three-entry" and item["repetition"] == 1)
+            incomplete_report = score_records([item for item in base_records if item is not missing_repeat])
+            incomplete_group = next(item for item in incomplete_report["groups"]
+                                    if item["architecture"] == "three-entry")
+            self.assertEqual("Failed", incomplete_report["result"])
+            self.assertEqual({"success": 45, "total": 46, "rate": round(45 / 46, 6)},
+                             incomplete_group["repeatability"])
+            single_repeat_report = score_records([item for item in base_records if item["repetition"] == 1])
+            self.assertTrue(all(item["repeatability"]["success"] == 0
+                                for item in single_repeat_report["groups"]))
+
             def replace_decision(record):
                 trace_path = Path(directory) / record["trace"]["path"]
                 trace = skill_eval_runner.parse_trace(trace_path)

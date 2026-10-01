@@ -503,12 +503,20 @@ def score(paths, stage: str, held_out_cases_path: Path | None = None, trace_root
                 continue
             safety_invariants.append(safety_invariant_pass(case, run))
         observations_by_case = defaultdict(list)
+        repetitions_by_case = defaultdict(set)
         for run in group_runs:
             observation = dict(run["observation"])
             observation["events"] = sorted(observation["events"])
             observation["rejectedEvents"] = sorted(observation["rejectedEvents"])
             observations_by_case[run["caseId"]].append(json.dumps(observation, sort_keys=True))
-        repeatable = sum(len(set(observations)) == 1 for observations in observations_by_case.values())
+            repetitions_by_case[run["caseId"]].add(run["repetition"])
+        group_repetitions = set(repetitions)
+        repeatable = sum(
+            len(group_repetitions) >= protocol["minimumRepetitions"][stage]
+            and repetitions_by_case[case_id] == group_repetitions
+            and len(set(observations)) == 1
+            for case_id, observations in observations_by_case.items()
+        )
         if not deterministic_ok:
             errors.append(f"{architecture}/{model_key[1]}: 必須の決定論的検査が100%ではありません")
         if selected_skill_reads != selected_skill_runs:
