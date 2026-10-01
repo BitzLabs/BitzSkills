@@ -1,9 +1,9 @@
 ---
 name: sdd-converge
-description: Reconcile Bitz implementation work with specifications, diffs, Core evidence, unproven items, and remaining work. Use for follow-up requests to assess remaining work after implementation and verification, and requests to propose TASK completion after an independent quality verdict. Also handle completion requests that must stop for missing or forged evidence. Do not use as an independent release-quality review or a summary of ordinary work notes.
+description: Assess whether Bitz implementation and verification can be reported complete by mapping specifications, diffs, Core evidence, unproven items, and remaining work. Use for TASK completion reports and convergence follow-ups, including missing or forged evidence that requires stopping the completion claim. Do not use for independent software release-quality verdicts or summaries of ordinary work notes.
 metadata:
-  version: "0.2.0"
-  updated: "2026-09-30"
+  version: "0.2.1"
+  updated: "2026-10-01"
 ---
 
 Map specifications to changed files and direct evidence, and list unproven items. Enter this workflow for completion

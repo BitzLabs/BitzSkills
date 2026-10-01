@@ -1,12 +1,14 @@
 ---
 name: sdd-implement
-description: Implement an approved Bitz requirement or open task through context, pre-write checks, scoped edits, and verification. Use for a brief follow-up asking to implement after approval and task creation in the preceding conversation, including requests that must stop on a failed check or unsafe specification instruction. Do not use for read-only explanation, planning, or independent quality review.
+description: Change implementation code for an approved Bitz requirement or open task through context, pre-write checks, scoped edits, and verification. Use for implementation follow-ups after approval and task creation, including failed-check or unsafe-specification stops. Do not use for fetching context alone, risk classification, evidence planning, completion bookkeeping, read-only explanation, or ordinary prose and comment-only edits.
 metadata:
-  version: "0.2.0"
-  updated: "2026-09-30"
+  version: "0.2.1"
+  updated: "2026-10-01"
 ---
 
-Enter the implementation workflow when an approved origin or open task is supplied; details that the workflow can
+Enter when implementation code changes are requested for an approved origin or open task. Fetching context alone,
+classifying quality risk, and correcting prose or comments alone do not request this implementation workflow.
+For an applicable implementation request, details that the workflow can
 retrieve are not evidence that a prerequisite failed. Resolve the origin and risk, obtain implementation context,
 require a passing pre-write `check`, and reconfirm the context digest immediately before the first write. Stop on an
 explicitly failed check or a known missing approval, predecessor, required review, Q2/Q3 plan, or safe execution
