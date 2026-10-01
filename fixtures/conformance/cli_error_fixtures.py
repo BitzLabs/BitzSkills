@@ -1,9 +1,9 @@
-"""引数不正を固定するreview済みvector（Core操作は実行しない）。
+"""引数不正を固定するレビュー済みの入力と期待値（Coreの公開操作は実行しない）。
 
-`SINGLE-073-01/02`は、reportを書かない操作に渡した`--report`を拒否する。
-`SINGLE-074-01/02/03`は、排他optionの組、code pathのtarget、字句上不正なIDを拒否する。
-SINGLE-127は、重複、空値、timeout、reportの構文の境界を加える。いずれも共通結果を返さず、
-終了コード4、JSON本文なし、標準エラー出力1行、reportなしとなる。
+`SINGLE-073-01/02`は、レポートを書かない操作に渡した`--report`を拒否する。
+`SINGLE-074-01/02/03`は、排他的なオプションの組、検証対象へのコードのパスの指定、字句上不正なIDを拒否する。
+SINGLE-127は、重複、空の値、タイムアウト、レポートの構文の境界を加える。いずれも結果を返さず、
+終了コード4、JSON本文なし、標準エラー出力1行、レポートなしとなる。
 
 SINGLE-112-02/04は、字句上妥当でcorpusに存在するADR-001を`interpret`以外の
 起点に指定した場合を拒否する。
@@ -22,7 +22,7 @@ from .harness import setup
 from .initial_fixtures import observe, compare_state
 
 HERE = Path(__file__).resolve().parent
-# id: (操作, argvの残り, 説明)
+# id: (操作, 引数列の残り, 説明)
 CASES = {
     "SINGLE-073-01": ("context", ["REQ-001", "--report"],
                       "contextは--reportを未知optionとして拒否する"),
@@ -78,7 +78,7 @@ def reviewed_manifest(identifier):
         "description": description,
         "setup": {"git": True, "operations": []},
         "invocation": {"runner": "bitz", "cwd": ".", "argv": [operation, *tail], "env": {}},
-        # statusを持たない: 共通結果ができる前にargvを拒否する。
+        # 結果の状態を持たない: 結果ができる前に引数列を拒否する。
         "expect": {"exitCode": 4, "stdout": "none", "reportFileCount": 0},
     }
 
@@ -95,12 +95,12 @@ def check_contract(identifier, manifest):
         raise ValueError("report flagのcaseは--reportを渡す必要があります")
     if identifier.startswith("SINGLE-112"):
         argv = manifest["invocation"]["argv"]
-        # ADR-001は存在するため、起点を不正にする原因はpurposeまたは操作だけである。
+        # ADR-001は存在するため、起点を不正にする原因は目的または操作だけである。
         if argv[1] != "ADR-001" or digest_reference.ADR_PATH not in reviewed_inputs(identifier):
             raise ValueError("ADR起点caseは存在するADR-001を指定する必要があります")
         if argv[0] == "context" and argv[argv.index("--purpose") + 1] == "interpret":
             raise ValueError("ADR起点はinterpretでは妥当です")
-    # 標準エラー出力の契約は共通helperが持つ。この操作で動かし、接頭辞や理由が一致しなくなった
+    # 標準エラー出力の契約は共通のヘルパーが持つ。この操作で動かし、接頭辞や理由が一致しなくなった
     # ことを見逃さないようにする。
     check_cli_error_output(4, b"", f"bitz: {operation}: reason\n".encode(), operation)
     for bad in (f"bitz: {operation}: \n", f"bitz: other: reason\n",

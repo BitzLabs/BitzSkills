@@ -3,12 +3,12 @@
 # requires-python = ">=3.11"
 # dependencies = ["jsonschema==4.23.0", "attrs==26.1.0", "jsonschema-specifications==2025.9.1", "referencing==0.37.0", "rpds-py==2026.6.3", "typing-extensions==4.13.2"]
 # ///
-"""上限境界fixtureを実寸で生成して照合する（Core操作は実行しない）。uv runで実行する。
+"""上限境界のfixtureを実寸で生成して照合する（Coreの公開操作は実行しない）。`uv run`で実行する。
 
-既定の統合検証（validate_conformance.py）は縮小profileだけを生成する。本commandは
+既定の監査（`validate_conformance.py`）は縮小した生成計画だけを生成する。本コマンドは
 [ADR-048](../docs/02.設計書/10_決定記録/ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md)の
-段階的な検証の実寸側であり、dataset manifestから入力treeを作り、tree digest、期待結果のdigest、
-副作用のstate digestを照合する。Gate Aの認定にはこの記録が必要である。
+段階的な検証の実寸側であり、データセットのマニフェストから入力の木構造を作り、木構造のハッシュ値、期待結果のハッシュ値、
+副作用の状態のハッシュ値を照合する。Gate Aの認定にはこの記録が必要である。
 """
 import json
 from pathlib import Path
@@ -36,7 +36,7 @@ def observed_state(fixture, manifest, entries, sandbox):
 
 
 def binding_digests(entries, sandbox):
-    """binding境界のtargetごとのContext Digestを、入力treeからの導出で求める。"""
+    """テスト割当ての境界の、検証対象ごとのコンテキストのハッシュ値を、入力の木構造からの導出で求める。"""
     repository = sandbox / "context"
     repository.mkdir()
     write_generated(entries, repository)

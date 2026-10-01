@@ -1,11 +1,11 @@
-"""複合workspaceのresource上限の境界を固定するreview済みvector（Core操作は実行しない）。
+"""複合ワークスペースのリソースの上限の境界を固定するレビュー済みの入力と期待値（Coreの公開操作は実行しない）。
 
-8つのdimensionについて、`limit - 1`と`limit`は誤って遮断しないこと、`limit + 1`は
-`SPEC-MULTI-LIMIT-001`／`blocked`で早期に停止することを固定する。入力はversion管理できない大きさになるため、
+8つの次元について、`limit - 1`と`limit`は誤って遮断しないこと、`limit + 1`は
+診断`SPEC-MULTI-LIMIT-001`（`blocked`）で早期に停止することを固定する。入力はバージョン管理できない大きさになるため、
 [ADR-048](../../docs/02.設計書/10_決定記録/ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md)に従い
-dataset manifestから生成する（`multi_generator`）。
+データセットのマニフェストから生成する（`multi_generator`）。
 
-既定の監査は縮小profileで生成器の決定論とdimensionの計数を照合する。実寸の生成とtree digestの照合は
+既定の監査は縮小した生成計画で生成器の決定論と次元の計数を照合する。実寸の生成と木構造のハッシュ値の照合は
 `uv run fixtures/validate_scale.py`が行う。
 """
 import json
@@ -21,12 +21,12 @@ from .harness import tree_digest_bytes
 HERE = Path(__file__).resolve().parent
 COMMIT = "0" * 40
 LIMITS = multi_generator.LIMITS
-# matrix §7の並び。dimensionごとにlimit - 1、limit、limit + 1を1件ずつ持つ。
+# matrix §7の並び。次元ごとに`limit - 1`、`limit`、`limit + 1`を1件ずつ持つ。
 ORDER = ("memberCount", "specFileCount", "inputBytes", "statementCount",
          "relationEdgeCount", "traceEntryCount", "commandDefinitionCount", "verifyBindingCount")
 VERIFY_DIMENSION = "verifyBindingCount"
-# bindingは必ずcommand定義の部分集合なので、binding上限の超過はcommand定義の超過を伴う。
-# 複合workspace仕様 §10に従い、報告するdimensionはverify実行計画側とする。
+# テスト割当ては必ずコマンド定義の部分集合なので、テスト割当ての上限の超過はコマンド定義の超過を伴う。
+# 複合ワークスペース仕様 §10に従い、報告する次元は`verify`の実行計画側とする。
 COMPANIONS = {"MULTI-021-08": ["commandDefinitionCount"]}
 LABELS = {
     "memberCount": "member数", "specFileCount": "SPEC file数", "inputBytes": "入力byte数",
@@ -37,7 +37,7 @@ LABELS = {
 
 
 def cases():
-    """fixture ID -> (dimension, 値, 越えるか)。"""
+    """fixture ID -> (次元, 値, 越えるか)。"""
     entries = {}
     for index, dimension in enumerate(ORDER):
         limit = LIMITS[dimension]
@@ -67,7 +67,7 @@ def reviewed_dataset(identifier):
 
 
 def canonical_digest(value):
-    """期待結果と観測値を、Digestと同じRFC 8785 Canonical JSONのSHA-256で固定する。"""
+    """期待結果と観測値を、コンテキストのハッシュ値と同じRFC 8785の正規JSONのSHA-256で固定する。"""
     return digest_reference.digest(digest_reference.canonical_bytes(value))
 
 
@@ -111,7 +111,7 @@ def blocked_result(identifier):
     return {
         "schemaVersion": "1.0", "operation": name, "scope": "all-workspaces", "status": "blocked",
         "multiWorkspace": {"id": "platform", "path": "."},
-        # 事前検査で停止するので、member処理もcommand実行も始めない。
+        # 事前検査で停止するので、メンバーの処理もコマンドの実行も始めない。
         "workspaces": [],
         "revision": revision,
         "durationMs": 0,
@@ -151,11 +151,11 @@ def reviewed_result(identifier, counts=None):
 
 
 def binding_documents(entries):
-    """生成したtreeから、workspaceごとのbinding文書（ID、規範文、test対応）の列を読み取る。
+    """生成した木構造から、ワークスペースごとのテスト割当ての文書（ID、規範文、テスト対応）の列を読み取る。
 
-    Frontmatter 32 KiB上限（文書・Frontmatter・状態仕様 §11）を守るため、1 workspaceのtest対応は
-    複数のbinding文書へ分けて生成することがある（multi_generator.BINDINGS_PER_DOCUMENT）。
-    そのため1 workspaceにつき複数件のbinding文書を保持できるよう、値はlistで返す。
+    フロントマター32 KiB上限（文書・フロントマター・状態仕様 §11）を守るため、1ワークスペースのテスト対応は
+    複数のテスト割当ての文書へ分けて生成することがある（multi_generator.BINDINGS_PER_DOCUMENT）。
+    そのため1ワークスペースにつき複数件のテスト割当ての文書を保持できるよう、値はリストで返す。
     """
     documents = {}
     for path, content in entries:
@@ -183,7 +183,7 @@ def binding_documents(entries):
 
 
 def passed_binding_result(entries, digests):
-    """binding境界のverify結果。生成treeのbinding文書とtest対応から組み立てる。"""
+    """テスト割当ての境界の`verify`の結果。生成した木構造のテスト割当ての文書とテスト対応から組み立てる。"""
     documents = binding_documents(entries)
     workspaces = []
     for workspace in sorted(documents, key=lambda path: ("" if path == "." else path)):
@@ -223,7 +223,7 @@ def passed_binding_result(entries, digests):
 
 
 def check_passed_result(result, dataset):
-    """期待結果の件数を、dataset manifestの宣言値と突き合わせる。実寸の生成は要求しない。"""
+    """期待結果の件数を、データセットのマニフェストの宣言値と突き合わせる。実寸の生成は要求しない。"""
     dimensions = dataset["dimensions"]
     if result["scope"] != "all-workspaces" or result["status"] != "passed" or result["diagnostics"]:
         raise ValueError("境界内のcaseは遮断も警告も持ちません")
@@ -238,7 +238,7 @@ def check_passed_result(result, dataset):
 
 
 def check_binding_result(result, dataset):
-    """verifyの境界内caseは、計画したbindingをすべて実行して成功する。"""
+    """`verify`の境界内のケースは、計画したテスト割当てをすべて実行して成功する。"""
     dimensions = dataset["dimensions"]
     if result["scope"] != "all-workspaces" or result["status"] != "passed" or result["diagnostics"]:
         raise ValueError("境界内のcaseは遮断も警告も持ちません")
@@ -261,7 +261,7 @@ def check_binding_result(result, dataset):
 
 
 def reduced_dimensions(manifest):
-    """縮小profileの宣言値。生成器の計数と照合する。"""
+    """縮小した生成計画の宣言値。生成器の計数と照合する。"""
     reduced = multi_generator.reduced(manifest)
     return reduced, multi_generator.count(
         multi_generator.emit(multi_generator.plan(reduced["dimension"], reduced["value"])))
@@ -288,7 +288,7 @@ def validate(root=HERE, identifiers=None):
                 raise ValueError("生成fixtureの期待結果はdigestで固定します")
             if "stateDigest" not in effects or effects["policy"] != "read-only":
                 raise ValueError("生成fixtureの副作用期待値はstate digestで固定します")
-            # 実寸の生成はscale検証が行う。ここではdataset manifestの宣言だけを照合する。
+            # 実寸の生成は規模の検証が行う。ここではデータセットのマニフェストの宣言だけを照合する。
             if [dataset["schemaVersion"], dataset["fixtureId"], dataset["dimension"],
                     dataset["value"], dataset["limit"], dataset["crosses"]] != [
                     "1.0", identifier, dimension, value, LIMITS[dimension], crosses]:
@@ -309,7 +309,7 @@ def validate(root=HERE, identifiers=None):
             if crosses and manifest["expect"]["resultDigest"] != canonical_digest(blocked_result(identifier)):
                 # 上限超過の期待結果は小さく、生成物に依存しないのでここで完全に照合できる。
                 raise ValueError("完全結果が審査済み期待値と異なります")
-            # 既定の監査では縮小profileだけを生成し、生成器の決定論と計数を照合する。
+            # 既定の監査では縮小した生成計画だけを生成し、生成器の決定論と計数を照合する。
             reduced, counted = reduced_dimensions(dataset)
             profile = multi_generator.plan(reduced["dimension"], reduced["value"])
             first = multi_generator.emit(profile)

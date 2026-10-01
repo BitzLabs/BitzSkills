@@ -1,4 +1,4 @@
-"""review済みのID重複・自己循環の証拠（Coreのgraph実装ではない）。"""
+"""レビュー済みのID重複・自己循環の証拠（Coreのグラフの実装ではない）。"""
 import json
 from pathlib import Path
 import subprocess
@@ -70,7 +70,7 @@ def validate(root=HERE, identifiers=None):
             files = {p.relative_to(fixture / "repo").as_posix(): p for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name] for name, p in files.items()):
                 raise ValueError("入力が審査済みの単一原因と異なります")
-            # YAMLと値の組だけを固定する。graphの制約は意図してJSON Schemaの外に置く。
+            # YAMLと値の組だけを固定する。グラフの制約は意図してJSON Schemaの外に置く。
             fm = {"id": "TECH-001", "title": "前提技術", "status": "approved"}
             if relation:
                 fm["relations"] = {relation: ["TECH-001"]}

@@ -1,4 +1,4 @@
-"""Context非成功を固定するreview済みvector（本番のresolverやDigestの処理はない）。"""
+"""`context`が非成功になる場合を固定するレビュー済みの入力と期待値（本番のコンテキスト解決器やハッシュ値の計算はない）。"""
 import json
 from pathlib import Path
 import subprocess
@@ -25,7 +25,7 @@ TASK = "---\nid: TASK-001\ntitle: 先行作業の確認\nstatus: open\n---\n\n# 
 
 
 def reviewed_documents(identifier):
-    # YAMLと値の組を固定する。relationの意味はreview済みで、ここでは推測しない。
+    # YAMLと値の組を固定する。関係の意味はレビュー済みで、ここでは推測しない。
     if identifier == "SINGLE-051":
         root = TASK.replace("status: open\n---", "status: open\nrelations:\n  requires: [TASK-002]\n---", 1)
         return {TASK_PATH: (root, {"id": "TASK-001", "title": "先行作業の確認", "status": "open", "relations": {"requires": ["TASK-002"]}}),

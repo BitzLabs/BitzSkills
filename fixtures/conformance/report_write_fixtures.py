@@ -1,8 +1,8 @@
-"""明示reportを固定するreview済みvector（Core操作は実行しない）。
+"""明示したレポートを固定するレビュー済みの入力と期待値（Coreの公開操作は実行しない）。
 
 `SINGLE-071-01..04`は、`check`と`verify`で、成功・失敗のどちらでも`--report`が
-`.spec/reports/`にちょうど1件のfileを作ることを固定する。`SINGLE-072`は、使えないreportの保存先が
-errorになり、それでも元の結果を端末へ返すことを固定する。
+`.spec/reports/`にちょうど1件のファイルを作ることを固定する。`SINGLE-072`は、使えないレポートの保存先が
+`error`になり、それでも元の結果を端末へ返すことを固定する。
 """
 import json
 from pathlib import Path
@@ -20,18 +20,18 @@ from .initial_fixtures import observe, compare_state
 HERE = Path(__file__).resolve().parent
 REPORT_DIRECTORY = ".spec/reports"
 EXISTING_REPORT = report_absent_fixtures.EXISTING_REPORT
-# 結果・Diagnostic・終了コード §8: <YYYYMMDDTHHMMSSZ>-<operation>[-<sequence>].json
+# 結果・診断・終了コード §8: `<YYYYMMDDTHHMMSSZ>-<operation>[-<sequence>].json`
 NAME_PATTERN = r"^[0-9]{8}T[0-9]{6}Z-(?:check|verify)(?:-[1-9][0-9]*)?\.json$"
-# report directoryの位置に置く通常file。directoryの権限と異なりversion管理できる。
-# Gitはdirectoryの権限を記録せず、fresh checkoutでは復元されない。
+# レポートのディレクトリの位置に置く通常ファイル。ディレクトリの権限と異なりバージョン管理できる。
+# Gitはディレクトリの権限を記録せず、新しいチェックアウトでは復元されない。
 BLOCKING_FILE = b"this path occupies the report directory\n"
-# id: (操作, status, 終了コード, review済みの結果の元fixture)
+# id: (操作, 状態, 終了コード, レビュー済みの結果の元fixture)
 CASES = {
     "SINGLE-071-01": ("check", "passed", 0, "SINGLE-070-01"),
     "SINGLE-071-02": ("check", "failed", 1, "SINGLE-070-02"),
     "SINGLE-071-03": ("verify", "passed", 0, "SINGLE-070-03"),
     "SINGLE-071-04": ("verify", "failed", 1, "SINGLE-070-04"),
-    # 「元の結果が残る」が空疎にならないよう、失敗するcheckに基づく。
+    # 「元の結果が残る」が空疎にならないよう、失敗する`check`に基づく。
     "SINGLE-072": ("check", "error", 3, "SINGLE-070-02"),
     "SINGLE-127-12": ("check", "passed", 0, "SINGLE-070-01"),
 }
@@ -48,7 +48,7 @@ DESCRIPTIONS = {
 def reviewed_inputs(identifier):
     inputs = dict(report_absent_fixtures.reviewed_inputs(CASES[identifier][3]))
     if identifier == "SINGLE-072":
-        # 通常fileがpathを占めるので、report directoryは存在できない。
+        # 通常ファイルがパスを占めるので、レポートのディレクトリは存在できない。
         del inputs[EXISTING_REPORT]
         inputs[REPORT_DIRECTORY] = BLOCKING_FILE
     return inputs
@@ -73,9 +73,9 @@ def reviewed_result(identifier):
     operation, status, _, source = CASES[identifier]
     result = json.loads(json.dumps(report_absent_fixtures.reviewed_result(source)))
     if identifier != "SINGLE-072":
-        # reportを保存しても、計算済みの結果は変わらない。
+        # レポートを保存しても、計算済みの結果は変わらない。
         return result
-    # 元の結果とそのDiagnosticは端末に残り、statusと
+    # 元の結果とその診断は端末に残り、状態と
     # 保存の失敗だけが加わる。
     result["status"] = "error"
     result["diagnostics"] = result["diagnostics"] + [{

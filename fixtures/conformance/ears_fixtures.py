@@ -1,4 +1,4 @@
-"""固定したEARS fixtureの証拠の監査（CoreのScanner／Lexer／Parserではない）。"""
+"""固定したEARS fixtureの証拠の監査（Coreの走査器、字句解析器、構文解析器ではない）。"""
 import json
 from pathlib import Path
 import subprocess
@@ -115,8 +115,8 @@ CASES.extend(json.loads(r'''
   ]
 ]
 '''))
-# EAI-ID-DOCUMENT-MISMATCH（規範文IDの文書部分がFrontmatter idと不一致、draftでもerror）とADR-054の
-# local-id文法（EARS-AI仕様 §2.1）を固定する追加case。
+# EAI-ID-DOCUMENT-MISMATCH（規範文IDの文書部分がフロントマターの`id`と不一致、`draft`でも重大度`error`）とADR-054の
+# `local-id`の文法（EARS-AI言語・意味中間表現仕様 §2.1）を固定する追加のケース。
 CASES.extend(json.loads(r'''
 [
   [
@@ -170,12 +170,12 @@ SUMMARIES = {
     "EAI-CORE-SYNTAX-006": "規範文末の句点がありません",
     "EAI-EXT-UNKNOWN-001": "未知namespaceのextensionを保持します",
 }
-# codeだけでは決まらない、識別子固有のsummary上書き（EAI-CORE-ID-001は2条件を共有するため）。
+# 診断コードだけでは決まらない、識別子固有の要約の上書き（EAI-CORE-ID-001は2条件を共有するため）。
 SUMMARY_OVERRIDES = {
     "SINGLE-128": "規範文IDの文書部分が文書IDと一致しません",
     "SINGLE-129": "規範文IDの文書部分が文書IDと一致しません",
 }
-# 2つ目の規範行が実在の統語的statementであるfixture（checkedStatementCountが2件になる）。
+# 2つ目の規範行が実在の構文上の規範文であるfixture（checkedStatementCountが2件になる）。
 TWO_STATEMENT_FIXTURES = {"SINGLE-013", "SINGLE-132"}
 GOOD = "- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。"
 SPEC_PATH = ".spec/requirements/REQ-001.md"
@@ -232,7 +232,7 @@ def validate(root=HERE, identifiers=None):
             document = (fixture / "repo" / SPEC_PATH).read_bytes()
             if document != reviewed_document(doc_status, line).encode():
                 raise ValueError("REQの入力が審査済みの単一原因と異なります")
-            # 上の固定した3つの平文fieldだけを読む。汎用のYAML readerではない。
+            # 上の固定した3つの平文のフィールドだけを読む。汎用のYAMLの読取り処理ではない。
             fm_lines = document.decode().splitlines()[1:4]
             fm_validator.validate(dict(value.split(": ", 1) for value in fm_lines))
             if code:

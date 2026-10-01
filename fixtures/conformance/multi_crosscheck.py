@@ -1,9 +1,9 @@
-"""複合workspaceのContext Digestの参照計算B: 入力treeから導出する。
+"""複合ワークスペースのコンテキストのハッシュ値の参照計算B: 入力の木構造から導出する。
 
-参照計算A（multi_reference）は、review済みのDigest材料をliteralで記述する。本moduleはそのliteralを
-読み込まない。fixture自身のrepo/ treeからroot設定のcatalogを読み、workspaceごとに文書を読み、
-修飾ID、横断edge、到達workspaceだけの設定射影を自分で組み立てる。文書1件を読む処理と
-RFC 8785 serializerは単一workspaceの参照計算Bと同じものを使い、複合workspace固有の解決だけを別に書く。
+参照計算A（multi_reference）は、レビュー済みのハッシュ値の材料をリテラルで記述する。このモジュールはそのリテラルを
+読み込まない。fixture自身のrepo/の木構造からルートの設定のカタログを読み、ワークスペースごとに文書を読み、
+修飾ID、横断するエッジ、到達ワークスペースだけの設定の抽出を自分で組み立てる。文書1件を読む処理と
+RFC 8785の直列化処理は単一ワークスペースの参照計算Bと同じものを使い、複合ワークスペース固有の解決だけを別に書く。
 """
 from .digest_crosscheck import (KIND_BY_DIRECTORY, RELATION_KEYS, STRONG, APPLICABLE_STATUS,
                                 canonical_bytes, digest, normalize_body, normalize_strings,
@@ -13,7 +13,7 @@ APPLICABLE = APPLICABLE_STATUS
 
 
 def catalog(repository):
-    """root設定のcatalogを(root workspace ID, [(member ID, path)])として読む。"""
+    """ルートの設定のカタログを(ルートワークスペースのID, [(メンバーのID, パス)])として読む。"""
     config = read_yaml((repository / ".spec/bitz.yaml").read_text(encoding="utf-8"))
     if "multiWorkspace" not in config:
         raise ValueError("root設定が複合workspaceのcatalogを持っていません")
@@ -31,7 +31,7 @@ def owner(reference):
 
 
 def load_workspaces(repository):
-    """catalogの各workspaceの設定と文書を、修飾IDで1つの索引へまとめる。"""
+    """カタログの各ワークスペースの設定と文書を、修飾IDで1つの索引へまとめる。"""
     root_id, members = catalog(repository)
     workspaces, documents = {}, {}
     for workspace_id, path in [(root_id, ".")] + members:
@@ -59,7 +59,7 @@ def load_workspaces(repository):
 
 
 def relations(document):
-    """宣言したrelationを、所有workspaceを基準に修飾形式へ展開する。"""
+    """宣言した関係を、所有ワークスペースを基準に修飾IDへ展開する。"""
     declared = document["frontmatter"].get("relations", {})
     return {key: sorted({qualify(document["workspaceId"], target) for target in declared.get(key, [])})
             for key in RELATION_KEYS}
@@ -82,10 +82,10 @@ def paths(values):
 
 
 def closure(documents, root):
-    """`purpose=verify`のreview済み閉包。起点の文書と、それを具体化する適用対象の文書をたどる。
+    """`purpose=verify`のレビュー済みの閉包。起点の文書と、それを具体化する適用対象の文書をたどる。
 
-    このcorpusはTASK起点とdraftを持たない。単一workspaceの参照計算Bと同じく、規則で説明できない
-    強いedgeが閉包に触れていれば、黙って取り込まずに拒否する。
+    このcorpusはTASK起点とdraftを持たない。単一ワークスペースの参照計算Bと同じく、規則で説明できない
+    強いエッジが閉包に触れていれば、黙って取り込まずに拒否する。
     """
     owned = {identifier: [f"{document['workspaceId']}::{statement['id']}"
                           for statement in read_statements(document["body"])]
@@ -133,7 +133,7 @@ def build(repository, root="platform::REQ-001", purpose="verify"):
         raise ValueError("起点のworkspaceがcatalogにありません")
     selected, owned = closure(documents, root)
     reached_workspaces = {documents[identifier]["workspaceId"] for identifier in selected}
-    # request workspaceを先頭、以降はID辞書順。到達しなかったworkspaceは材料へ入れない。
+    # 起点ワークスペースを先頭、以降はID辞書順。到達しなかったワークスペースは材料へ入れない。
     ordered_workspaces = [request] + sorted(reached_workspaces - {request})
 
     commands, timeouts = [], []
@@ -223,7 +223,7 @@ def build(repository, root="platform::REQ-001", purpose="verify"):
 
 
 def references(repository, root="platform::REQ-001"):
-    """同じDigest材料を、独立に書いた2系統で計算する。"""
+    """同じハッシュ値の材料を、独立に書いた2系統で計算する。"""
     from . import multi_reference
 
     literal = multi_reference.canonical_bytes(multi_reference.reviewed_digest_input())

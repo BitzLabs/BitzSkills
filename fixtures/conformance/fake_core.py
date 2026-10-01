@@ -1,15 +1,15 @@
-"""参照harness自身の自己試験用の偽Core生成器(ADR-052 Decision 5)。
+"""参照harness自身の自己試験用の偽Coreの生成器(ADR-052 `Decision` 5)。
 
-期待どおりの出力をそのまま返す偽の`bitz` source treeを、呼び出し側が指定した一時directoryへ
-生成する。生成物(source tree、uv.lock、build成果物)はrepositoryへ置かず、この生成器だけを
-commit対象にする。生成はfixtures/conformanceの内容だけから決定論的に行い、`bitz`をimportしない
-(ADR-049 Decision 6)。`runner: package`は対象外とする(packageはCore実行体を起動せず
-`package_check.py`が直接source tree・wheel・venvを検査するため、pyproject.toml・uv.lockの
+期待どおりの出力をそのまま返す偽の`bitz`のソースの木構造を、呼び出し側が指定した一時ディレクトリへ
+生成する。生成物(ソースの木構造、uv.lock、ビルドの成果物)はリポジトリへ置かず、この生成器だけを
+コミットの対象にする。生成は`fixtures/conformance`の内容だけから決定論的に行い、`bitz`をインポートしない
+(ADR-049 `Decision` 6)。`runner: package`は対象外とする(パッケージはCoreの実行体を起動せず
+`package_check.py`が直接ソースの木構造・wheel・仮想環境を検査するため、pyproject.toml・uv.lockの
 内容そのものが検査対象になる)。
 
-`setup.generate`を持つ生成fixture(適合fixture仕様3.4・3.5)は期待JSONをfileとして持たないため、
-`multi_generator`でdataset manifestから入力treeを再現し、`multi_limit_fixtures`(fixture harness側の
-審査済み参照計算。Coreの実装ではない)で期待結果そのものを組み立てて応答にする。
+`setup.generate`を持つ生成fixture(適合fixture仕様 §3.4・§3.5)は期待JSONをファイルとして持たないため、
+`multi_generator`でデータセットのマニフェストから入力の木構造を再現し、`multi_limit_fixtures`(fixtureのharness側の
+レビュー済みの参照計算。Coreの実装ではない)で期待結果そのものを組み立てて応答にする。
 """
 import base64
 import copy
@@ -54,10 +54,10 @@ def _locate_fixture_root(identifier):
 
 
 def _tree_digest(root):
-    """cwd配下tree(.git除く)のpath・種別・byte列・実行bitから決まる digest。
+    """作業ディレクトリ配下の木構造(.gitを除く)のパス・種別・バイト列・実行ビットから決まるハッシュ値。
 
-    `bitz/_engine.py`(生成物)の`_tree_digest`と同じ算法(snapshotの正規化JSONのSHA-256)を使う。
-    アルゴリズムが分岐すると生成時keyと実行時keyが一致しなくなるため、変更する場合は両方を直す。
+    `bitz/_engine.py`(生成物)の`_tree_digest`と同じ算法(スナップショットをキーで並べ替えて直列化したJSON(`json.dumps(sort_keys=True, ensure_ascii=True)`。RFC 8785の正規JSONではない)のSHA-256)を使う。
+    アルゴリズムが分岐すると生成時のキーと実行時のキーが一致しなくなるため、変更する場合は両方を直す。
     """
     data = snapshot(root)
     canonical = json.dumps(data, sort_keys=True, ensure_ascii=True).encode("utf-8")
@@ -85,9 +85,9 @@ def _git_version_key(invocation, host_path):
 
 
 def _vcs_state_key(setup_plan, git_version):
-    """cwd配下treeのdigestだけでは、同じ内容のtreeでGit初期化・commit有無だけが違う
-    fixture(例: SINGLE-042とSINGLE-105-01は同じrepo/だが一方はunborn、他方はcommit済み)を
-    区別できない。そのため`git rev-parse`相当の観測結果を独立したkey要素として加える。
+    """作業ディレクトリ配下の木構造のハッシュ値だけでは、同じ内容の木構造でGitの初期化・コミットの有無だけが違う
+    fixture(例: SINGLE-042とSINGLE-105-01は同じrepo/だが一方はコミットのないリポジトリ、他方はコミット済み)を
+    区別できない。そのため`git rev-parse`相当の観測結果を独立したキーの要素として加える。
     Git自体が解決できない(gitVersionがNone)場合は、setup.gitの値によらず"no-repo"として扱う
     (`bitz/_engine.py`の`_detect_vcs_state`と同じ規則)。
     """
@@ -97,10 +97,10 @@ def _vcs_state_key(setup_plan, git_version):
 
 
 def _mutation_candidates(payload):
-    """statusを変えずSchema適合を保てそうな改変の候補を、operationの形に応じて列挙する。
+    """結果の状態を変えずスキーマ適合を保てそうな改変の候補を、操作の形に応じて列挙する。
 
     候補ごとに実際に適用してresult.schema.jsonで検証し、最初に適合したものを採用する
-    (どのfieldが存在するかはoperationごとに違うため、決め打ちにせず候補を並べて安全側を選ぶ)。
+    (どのフィールドが存在するかは操作ごとに違うため、決め打ちにせず候補を並べて安全側を選ぶ)。
     """
     candidates = []
     if payload.get("diagnostics"):
@@ -155,7 +155,7 @@ def _mutate_text_bytes(text_bytes, identifier):
 
 
 def _binding_digests(entries, repository):
-    """binding境界のtargetごとのContext Digestを、生成済みrepositoryからの導出で求める
+    """テスト割当ての境界の、検証対象ごとのコンテキストのハッシュ値を、生成済みのリポジトリからの導出で求める
 
     (`validate_scale.py`の`binding_digests`と同じ手順。二重実装を避けるため同じ`multi_crosscheck`を使う)。
     """
@@ -170,9 +170,9 @@ def _binding_digests(entries, repository):
 
 
 def _expected_generate_result(identifier, entries, repository):
-    """生成fixtureの期待結果を、`multi_limit_fixtures`の審査済み参照計算から組み立てる
+    """生成fixtureの期待結果を、`multi_limit_fixtures`のレビュー済みの参照計算から組み立てる
 
-    (fixture harness側の参照実装。Coreの実装ではない。`validate_scale.py`の`expected_result`と同じ規則)。
+    (fixtureのharness側の参照実装。Coreの実装ではない。`validate_scale.py`の`expected_result`と同じ規則)。
     """
     dimension, _value, crosses = multi_limit_fixtures.CASES[identifier]
     if crosses:
@@ -183,11 +183,11 @@ def _expected_generate_result(identifier, entries, repository):
 
 
 def _mutate_generate_body(payload, identifier):
-    """生成fixtureの期待結果(複合workspace形状)を1箇所だけ、Schema適合を保って改変する。
+    """生成fixtureの期待結果(複合ワークスペースの形)を1箇所だけ、スキーマ適合を保って改変する。
 
-    `_mutation_candidates`は単一workspaceの平らな結果形状(`checkedDocumentCount`等が最上位に
-    出現する形)を前提にしており、複合workspaceの`workspaces[]`配下の入れ子には届かない。
-    生成fixtureが返す3形状(blocked、check済み、verify済み)それぞれに閉じた改変を1つずつ用意する。
+    `_mutation_candidates`は単一ワークスペースの平らな結果の形(`checkedDocumentCount`等が最上位に
+    出現する形)を前提にしており、複合ワークスペースの`workspaces[]`配下の入れ子には届かない。
+    生成fixtureが返す3つの形(`blocked`、`check`の結果、`verify`の結果)それぞれに閉じた改変を1つずつ用意する。
     """
     candidate = copy.deepcopy(payload)
     if candidate.get("diagnostics"):
@@ -218,8 +218,8 @@ def _entry_for_fixture(identifier, host_path, mutate, mutate_report, mutate_side
     invocation = manifest["invocation"]
     runner = invocation["runner"]
     if runner == "package":
-        # package runnerはCore実行体を起動しない。package_check.pyが検査対象のsource tree、
-        # wheel、venvを直接検査するため、応答表に載せる出力そのものが存在しない。
+        # ランナー`package`はCoreの実行体を起動しない。package_check.pyが検査対象のソースの木構造、
+        # wheel、仮想環境を直接検査するため、応答表に載せる出力そのものが存在しない。
         return None
     expect = manifest["expect"]
     generate_spec = manifest["setup"].get("generate")
@@ -259,9 +259,9 @@ def _entry_for_fixture(identifier, host_path, mutate, mutate_report, mutate_side
         else:
             original_bytes = (fixture_root / expect["resultFile"]).read_bytes()
             stdout_bytes = _mutate_json_bytes(original_bytes, identifier) if identifier == mutate else original_bytes
-        # reportはCoreが標準出力とは別に保存する結果JSON(結果契約8)。標準出力とは独立に改変できる
-        # ようにする(mutate_reportは標準出力を変えず、report file内容だけを改変する自己試験用)。
-        # 生成fixtureはreportFileCountが常に0のため、report内容の改変は効果を持たない。
+        # レポートはCoreが標準出力とは別に保存する結果JSON(結果・診断・終了コード §8)。標準出力とは独立に改変できる
+        # ようにする(mutate_reportは標準出力を変えず、レポートのファイルの内容だけを改変する自己試験用)。
+        # 生成fixtureはreportFileCountが常に0のため、レポートの内容の改変は効果を持たない。
         if generate_spec:
             report_bytes = original_bytes
         else:
@@ -291,8 +291,8 @@ def _entry_for_fixture(identifier, host_path, mutate, mutate_report, mutate_side
         "stderrBase64": base64.b64encode(stderr_bytes).decode("ascii"),
         "reportBase64": base64.b64encode(report_bytes).decode("ascii"),
         "reportFileCount": expect["reportFileCount"], "reportOperation": report_operation,
-        # 副作用を1件足す自己試験用(mutate_side_effect)。read-onlyのはずの実行が予期しないfileを
-        # 作り、harnessのstateDigest比較がfailedを返すことを確かめる(仕様5)。既定はNone。
+        # 副作用を1件足す自己試験用(mutate_side_effect)。読取り専用のはずの実行が予期しないファイルを
+        # 作り、harnessのstateDigestの比較がfailedを返すことを確かめる(適合fixture仕様 §5)。既定はNone。
         "extraSideEffectPath": EXTRA_SIDE_EFFECT_PATH if identifier == mutate_side_effect else None,
     }
 
@@ -502,15 +502,15 @@ def _write_source_tree(destination, responses):
 
 
 def build_fake_core(destination, fixture_ids, mutate=None, mutate_report=None, mutate_side_effect=None):
-    """偽Coreのsource treeを`destination`(空にできるdir)へ生成し、`destination`をPathで返す。
+    """偽Coreのソースの木構造を`destination`(空にできるディレクトリ)へ生成し、`destination`を`Path`で返す。
 
     `fixture_ids`はsingle/またはmulti/のfixture ID列。`mutate`を指定すると、そのfixtureの
     標準出力(json/text/none)だけを1箇所改変する(仕様に適合したまま値を変え、`error`ではなく
     `failed`になることを確かめる自己試験に使う)。`mutate_report`を指定すると、そのfixtureの
-    標準出力は正しいまま、`.spec/reports/`へ保存するreport fileの内容だけを改変する
-    (report内容の検証(適合fixture仕様2、結果契約8)を自己試験するためのもの。`reportFileCount`が
+    標準出力は正しいまま、`.spec/reports/`へ保存するレポートのファイルの内容だけを改変する
+    (レポートの内容の検証(適合fixture仕様 §2、結果・診断・終了コード §8)を自己試験するためのもの。`reportFileCount`が
     0のfixtureを指定しても効果がない)。`mutate_side_effect`を指定すると、そのfixtureの実行が
-    標準出力は正しいまま、read-onlyのはずのcwdへ予期しないfileを1件書く(副作用の検証(仕様5)を
+    標準出力は正しいまま、読取り専用のはずの作業ディレクトリへ予期しないファイルを1件書く(副作用の検証(適合fixture仕様 §5)を
     自己試験するためのもの)。
     """
     host_path = os.environ.get("PATH", "")

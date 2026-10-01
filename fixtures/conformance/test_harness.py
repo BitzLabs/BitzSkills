@@ -52,7 +52,7 @@ class HarnessTests(unittest.TestCase):
                     safe_path(root, path)
 
     def build_structure_fixture(self, root, operation):
-        """submodule／worktree opを試すための最小のfixture directoryを作る。"""
+        """サブモジュール／ワークツリーの準備の処理を試すための最小のfixtureのディレクトリを作る。"""
         fixture = root / "fixture"
         (fixture / "repo/.spec").mkdir(parents=True)
         (fixture / "repo/.spec/bitz.yaml").write_text('schemaVersion: "1.0"\n', encoding="utf-8")
@@ -64,7 +64,7 @@ class HarnessTests(unittest.TestCase):
         return fixture, manifest
 
     def test_git_structure_operations(self):
-        """ADR-048のsubmodule／worktreeが、2回のsetupで同じGit構造を作る。"""
+        """ADR-048のサブモジュール／ワークツリーが、2回の準備手順で同じGitの構造を作る。"""
         for operation in ("submodule", "worktree"):
             with self.subTest(operation=operation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
@@ -74,7 +74,7 @@ class HarnessTests(unittest.TestCase):
                     repository = setup(fixture, manifest, root / f"run{run}")
                     marker = repository / "apps/web/.git"
                     self.assertTrue((repository / "apps/web/.spec/bitz.yaml").is_file())
-                    # 入れ子のGitのmetadataはsnapshotへ現れない。
+                    # 入れ子のGitのメタデータはスナップショットへ現れない。
                     self.assertNotIn("apps/web/.git", snapshot(repository))
                     if operation == "submodule":
                         self.assertTrue(marker.is_dir())
@@ -91,7 +91,7 @@ class HarnessTests(unittest.TestCase):
                 self.assertEqual(states[0], states[1])
 
     def test_generated_input_setup(self):
-        """生成入力のsetupは、渡した(path, 内容)の列だけをtreeへ書き出す。"""
+        """生成入力の準備手順は、渡した(パス, 内容)の列だけを木構造へ書き出す。"""
         entries = [(".spec/bitz.yaml", b'schemaVersion: "1.0"\n'),
                    ("apps/web/.spec/bitz.yaml", b"workspace:\n  id: web\n")]
         with tempfile.TemporaryDirectory() as temporary:

@@ -1,7 +1,7 @@
-"""Context非成功を固定するreview済みvector: staleなDigest、集合外のexpand、閉包の上限。
+"""`context`が非成功になる場合を固定するレビュー済みの入力と期待値: `--expect-digest`が現在のハッシュ値と一致しない場合（取得後の仕様変更の検出）、集合外の`--expand`、閉包の上限。
 
-Core操作を実装も模倣もしない。これらのfixtureはDigestの入力を共有し、Digestを返す場合は
-別に作った定数ではなく、commitしたgoldenの値を返す。
+Coreの公開操作を実装も模倣もしない。これらのfixtureはハッシュ値の材料を共有し、ハッシュ値を返す場合は
+別に作った定数ではなく、コミットしたgoldenの値を返す。
 """
 import json
 from pathlib import Path
@@ -30,8 +30,8 @@ EMPTY_COVERAGE = {
 PADDING_LINE = "この段落は標準提示のbyte数を上限検査のために増やす固定文である。\n"
 PADDING = PADDING_LINE * 40
 
-# id: (optionの残り, 追加の設定, REQの本文, status, 終了コード, complete, documentCount,
-#      digest, Diagnostic code, source, summary)
+# id: (オプションの残り, 追加の設定, REQの本文, 状態, 終了コード, complete, documentCount,
+#      ハッシュ値, 診断コード, 発生元, 要約)
 CASES = {
     "SINGLE-046": (
         ["--expect-digest", WRONG_DIGEST], "", digest_reference.REQ_BODY,
@@ -107,7 +107,7 @@ def reviewed_result(identifier):
 
 def check_presentation_size(identifier, inputs):
     """設定した上限は、fixture自身の入力で実際に越えなければならない。
-    そうすれば、期待値がbyteの数え方の寛容さに依存しない。"""
+    そうすれば、期待値がバイトの数え方の寛容さに依存しない。"""
     _, extra_config, *_ = CASES[identifier]
     if identifier == "SINGLE-048-01":
         documents = [name for name in inputs if name.startswith(".spec/") and name.endswith(".md")]

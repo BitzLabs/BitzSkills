@@ -1,4 +1,4 @@
-"""解決済みで適用可能なtest graphに対する参照計算（CoreのParser／CLIではない）。"""
+"""解決済みで適用可能な、target vectorのケースのグラフに対する参照計算（Coreの構文解析器／CLIではない）。"""
 import copy
 import hashlib
 import json
@@ -94,14 +94,14 @@ def reference(case):
         changed = selected != previous
     targets = set() if purpose == "interpret" else selected & statements.keys()
 
-    # purposeごとのContextの探索graphにおける最短距離。
+    # 目的ごとの、コンテキストの探索のグラフにおける最短距離。
     distances = {r: 0 for r in root_docs}
     queue = list(root_docs)
     while queue:
         current = queue.pop(0)
         n = nodes[current]
         task_root = current in root_docs and n["kind"] == "TASK" and purpose != "interpret"
-        # 関係・トレースモデル §6.3: verifyの起点TASKはrequires閉包を含めない。
+        # 関係・トレースモデル §6.3: `verify`の起点TASKは`requires`閉包を含めない。
         followed = [] if task_root and purpose == "verify" else n["requires"]
         neighbors = {owner(t) for t in followed + n["refines"]}
         if task_root:

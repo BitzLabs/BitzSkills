@@ -1,4 +1,4 @@
-"""textとJSONの一致を固定するreview済みfixture（本番の描画処理もCoreの実行もない）。"""
+"""テキストとJSONの一致を固定するレビュー済みのfixture（本番の描画処理もCoreの実行もない）。"""
 import json
 from pathlib import Path
 import re
@@ -44,7 +44,7 @@ def reviewed_inputs(identifier):
 
 
 def escape_field(value):
-    """ユーザーが承認したtext fieldのescape規則について、範囲を限定したfixtureの参照計算。"""
+    """ユーザーが承認したテキストのフィールドのエスケープ規則について、範囲を限定したfixtureの参照計算。"""
     return "".join(f"\\u{ord(c):04x}" if ord(c) < 32 or 127 <= ord(c) <= 159 else c for c in value)
 
 
@@ -77,7 +77,7 @@ def reviewed_manifest(identifier):
 
 
 def normalize_text(value):
-    """変わってよいのは、byte単位の所要時間tokenだけである（fixture契約 §4）。"""
+    """変わってよいのは、バイト単位の所要時間のトークンだけである（fixture契約 §4）。"""
     return re.sub(rb"\([0-9]+ms\)", b"(<duration>ms)", value)
 
 
@@ -97,7 +97,7 @@ def validate(root=HERE, identifiers=None):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
                 raise ValueError("manifestまたは対応するJSONが審査済みのcaseと異なります")
-            # commitしたtextは固定の所要時間を使う。Gate Bで変わってよいのは実際の出力だけである。
+            # コミットしたテキストは固定の所要時間を使う。Gate Bで変わってよいのは実際の出力だけである。
             if (fixture / "expected/check.txt").read_bytes() != TEXT[identifier].encode():
                 raise ValueError("textがreview済みの完全な出力と異なります")
             inputs = reviewed_inputs(identifier)

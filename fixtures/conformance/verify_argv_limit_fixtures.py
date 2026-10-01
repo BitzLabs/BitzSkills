@@ -1,9 +1,9 @@
-"""`{tests}`展開後argvの上限超過fixture（SINGLE-126-08）の審査済み証跡。Coreは実行しない。
+"""`{tests}`を展開した後の引数列の上限超過fixture（SINGLE-126-08）のレビュー済みの証跡。Coreは実行しない。
 
-要素32 KiBはpath長上限のため超過できず、10,000要素は約1万fileを要するため、byte総和1 MiBの超過を使う。
-約3,770 byteのtest pathを280件、Frontmatter 32 KiB上限に収まるよう規範文なしTECH 35文書へ8件ずつ置く。
-引数なし`verify`は35文書をtargetにし、同じ`default` bindingへ全pathを集めるため、展開後argvだけが1 MiBを超える。
-bindingは起動せず、top-levelの`SPEC-VERIFY-BLOCKED-001`1件と、全targetの`bindingRefs: []`で表す。
+要素32 KiBはパス長の上限のため超過できず、10,000要素は約1万ファイルを要するため、バイト総和1 MiBの超過を使う。
+約3,770バイトのテストのパスを280件、フロントマター32 KiBの上限に収まるよう規範文なしのTECH 35文書へ8件ずつ置く。
+引数なしの`verify`は35文書を検証対象にし、同じ`default`のテスト割当てへ全パスを集めるため、展開後の引数列だけが1 MiBを超える。
+テスト割当ては起動せず、最上位の`SPEC-VERIFY-BLOCKED-001`1件と、全検証対象の`bindingRefs: []`で表す。
 """
 import copy
 import json
@@ -77,7 +77,7 @@ def executables(identifier=IDENTIFIER):
 
 
 def reviewed_digest_input(index):
-    """規範文なしTECH 1文書だけのverify Context。Digest入力は参照Aとして手で組み立てる。"""
+    """規範文なしのTECH 1文書だけの`verify`のコンテキスト。ハッシュ値の材料は参照Aとして手で組み立てる。"""
     payload = copy.deepcopy(digest_reference.reviewed_digest_input("SINGLE-042"))
     payload["roots"] = [document_id(index)]
     payload["documents"] = [{
@@ -114,7 +114,7 @@ def reviewed_result(identifier=IDENTIFIER):
                            "bindingRefs": [], "diagnostics": []}
                           for index in range(1, DOCUMENT_COUNT + 1)],
         "revision": None, "commands": [], "durationMs": 0,
-        # spawn前のblockedは単一workspaceではtop-levelへ1件だけ置き、targetへ複製しない。
+        # プロセスの生成前の`blocked`は単一ワークスペースでは最上位へ1件だけ置き、検証対象へ複製しない。
         "diagnostics": [{"code": "SPEC-VERIFY-BLOCKED-001", "severity": "error", "resultStatus": "blocked",
                          "summary": SUMMARY,
                          "source": {"kind": "file", "workspaceId": "root",
@@ -123,7 +123,7 @@ def reviewed_result(identifier=IDENTIFIER):
 
 
 def check_single_limit(inputs):
-    """入力上限はすべて内側に保ち、展開後argvのbyte総和だけが超過することを独立に確認する。"""
+    """入力の上限はすべて内側に保ち、展開後の引数列のバイト総和だけが超過することを独立に確認する。"""
     if len(inputs[digest_reference.CONFIG_PATH]) > 64 * 1024:
         raise ValueError("設定fileが自身の入力上限を超えています")
     paths = set()
@@ -140,7 +140,7 @@ def check_single_limit(inputs):
     total = sum(len(value.encode()) for value in argv)
     if total <= ARGV_LIMIT:
         raise ValueError("展開後argvがbyte上限を超えていません")
-    # 1文書分を除けば上限内に戻り、超過が全target分の和集合で初めて生じることを示す。
+    # 1文書分を除けば上限内に戻り、超過が全検証対象分の和集合で初めて生じることを示す。
     if total - sum(len(test["path"].encode()) for test in document_tests(1)) > ARGV_LIMIT:
         raise ValueError("全targetの和集合でなくてもbyte上限を超えています")
     if any(len(path.encode()) >= 4000 for path in paths):
@@ -168,7 +168,7 @@ def validate(root=HERE, identifiers=None):
             check_inputs(fixture, inputs, executables(identifier))
 
             def cross_check(_, repository):
-                # 各targetのDigestを参照Bでも計算し、参照Aの期待値と一致させる。
+                # 各検証対象のハッシュ値も参照Bで計算し、参照Aの期待値と一致させる。
                 for index in range(1, DOCUMENT_COUNT + 1):
                     derived = digest_crosscheck.canonical_bytes(
                         digest_crosscheck.build(repository, root=document_id(index)))

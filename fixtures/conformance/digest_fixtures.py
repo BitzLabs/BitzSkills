@@ -1,8 +1,8 @@
-"""単一workspaceのContext Digest fixtureを監査する（Core操作は実行しない）。
+"""単一ワークスペースのコンテキストのハッシュ値のfixtureを監査する（Coreの公開操作は実行しない）。
 
-各fixtureを審査済み期待値と照合し、commitしたCanonical JSONを、独立に書いた2系統の
-参照計算（review済みliteralによるdigest_reference A、入力treeによるdigest_crosscheck B）と
-照合する。群の中でのDigestの一致・不一致は、hash文字列だけでなくbyte列で比べる。
+各fixtureをレビュー済みの期待値と照合し、コミットした正規JSONを、独立に書いた2系統の
+参照計算（レビュー済みのリテラルによるdigest_reference A、入力の木構造によるdigest_crosscheck B）と
+照合する。群の中でのハッシュ値の一致・不一致は、ハッシュ値の文字列だけでなくバイト列で比べる。
 """
 import json
 from pathlib import Path
@@ -118,7 +118,7 @@ def reviewed_result(identifier, context_digest):
 
 
 def references(identifier, repository):
-    """同じDigest材料を、独立に書いた2系統で計算する。"""
+    """同じハッシュ値の材料を、独立に書いた2系統で計算する。"""
     literal = digest_reference.canonical_bytes(digest_reference.reviewed_digest_input(identifier))
     derived = digest_crosscheck.canonical_bytes(digest_crosscheck.build(repository))
     if literal != derived:

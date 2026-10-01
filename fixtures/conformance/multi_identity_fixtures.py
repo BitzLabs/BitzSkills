@@ -1,8 +1,8 @@
-"""複合workspaceの識別子解決を固定するreview済みvector（Core操作は実行しない）。
+"""複合ワークスペースの識別子の解決を固定するレビュー済みの入力と期待値（Coreの公開操作は実行しない）。
 
-同じcorpusの3変種で、修飾IDの4つの結末を1件ずつ切り分ける。`MULTI-001`は別workspaceの同じlocal IDが
-衝突しないこと、`MULTI-003`は別workspaceにだけあるtargetの非修飾参照、`MULTI-004-01/02`は存在workspaceの
-不在target、`MULTI-025-01/02`は存在workspaceの不在起点である。後者2つは、未知`--workspace`の終了コード4と
+同じcorpusの3つの種類で、修飾IDの4つの結末を1件ずつ切り分ける。`MULTI-001`は別のワークスペースの同じローカルIDが
+衝突しないこと、`MULTI-003`は別のワークスペースにだけある参照先の非修飾参照、`MULTI-004-01/02`は存在するワークスペースの
+不在の参照先、`MULTI-025-01/02`は存在するワークスペースの不在起点である。後者2つは、未知の`--workspace`の終了コード4と
 異なり、操作結果を返すことを示す。
 """
 import json
@@ -37,7 +37,7 @@ ROOT_MISSING = {
     "summary": "起点api::REQ-009が存在しません",
     "source": {"kind": "invocation", "argument": "api::REQ-009"},
 }
-# id: (変種, argvの残り, status, 終了コード, 説明)
+# id: (種類, 引数列の残り, 状態, 終了コード, 説明)
 CASES = {
     "MULTI-001": ("golden", ["check", "--all-workspaces", "--base", "HEAD", "--format", "json"],
                   "passed", 0, "別workspaceの同じlocal IDを修飾IDで衝突させない"),
@@ -85,7 +85,7 @@ def workspace_entry(workspace_id, path, status, documents, statements, diagnosti
 
 
 def all_workspaces_result(identifier):
-    """`check --all-workspaces`はcatalogの全SPECを完全検査する。件数はworkspaceごとの実数である。"""
+    """`check --all-workspaces`はカタログの全仕様文書を完全検査する。件数はワークスペースごとの実数である。"""
     failing = identifier == "MULTI-003"
     return {
         "schemaVersion": "1.0", "operation": "check", "scope": "all-workspaces",
@@ -104,10 +104,10 @@ def all_workspaces_result(identifier):
 
 
 def selected_check_result(identifier):
-    """workspace単独checkは、複合workspace内でも実際のworkspace IDとroot相対pathを返す。"""
+    """1つのワークスペースを対象にした`check`（`scope: selected`）は、複合ワークスペース内でも実際のワークスペースIDと、リポジトリのルートからの相対パスを返す。"""
     if identifier == "MULTI-004-02":
         workspace = {"id": "web", "path": "apps/web"}
-        # 横断閉包のplatform::REQ-001も完全検査するため、2文書2句を数える。
+        # 横断する閉包のplatform::REQ-001も完全検査するため、2文書2規範文を数える。
         documents, statements, diagnostics = 2, 2, [dict(RELATION_MISSING)]
     else:
         workspace = {"id": "api", "path": "services/api"}
@@ -124,7 +124,7 @@ def selected_check_result(identifier):
 
 
 def failed_context_result():
-    """完全解決が成立しないので、Digestを計算せず空のBundleを返す。到達workspaceはrequestの1件。"""
+    """完全解決が成立しないので、ハッシュ値を計算せず空のコンテキスト一式を返す。到達ワークスペースは起点ワークスペースの1件。"""
     return {
         "schemaVersion": "1.0", "operation": "context", "status": "failed", "purpose": "verify",
         "workspace": {"id": "web", "path": "apps/web"},
@@ -144,7 +144,7 @@ def failed_context_result():
 
 
 def failed_verify_result():
-    """不在起点はtargetのDiagnosticとして返し、commandを実行しない。"""
+    """不在の起点は検証対象の診断（`targetResults[].diagnostics`）として返し、コマンドを実行しない。"""
     return {
         "schemaVersion": "1.0", "operation": "verify", "status": "failed", "scope": "selected",
         "workspace": {"id": "api", "path": "services/api"},
@@ -168,7 +168,7 @@ def reviewed_result(identifier):
 
 
 def check_single_cause(identifier, repository):
-    """変種が加える原因がちょうど1つであることを、散文ではなく入力から確かめる。"""
+    """種類が加える原因がちょうど1つであることを、散文ではなく入力から確かめる。"""
     _, workspaces, documents = multi_crosscheck.load_workspaces(repository)
     known = set(documents)
     variant = CASES[identifier][0]

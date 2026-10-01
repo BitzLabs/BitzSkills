@@ -1,9 +1,9 @@
-"""複合workspaceの所有境界とTASK境界を固定するreview済みvector（Core操作は実行しない）。
+"""複合ワークスペースの所有境界とTASK境界を固定するレビュー済みの入力と期待値（Coreの公開操作は実行しない）。
 
-memberが所有できるのは自身のroot配下だけであり、symlinkは同じ所有領域内へ解決する場合だけ許される
-（[複合workspace仕様 §5.1](../../docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md)）。
-`MULTI-008`はsymlinkで別memberを所有する宣言、`MULTI-009`は字句のsegment境界、`MULTI-010`は
-基準版と現在版の双方で行うsymlinkの所有判定を扱う。
+メンバーが所有できるのは自身のルート配下だけであり、シンボリックリンクは同じ所有領域内へ解決する場合だけ許される
+（[複合ワークスペース仕様 §5.1](../../docs/03.詳細設計/02_SPECモデル/05_複合workspace仕様.md)）。
+`MULTI-008`はシンボリックリンクで別のメンバーを所有する宣言、`MULTI-009`は字句のセグメントの境界、`MULTI-010`は
+基準版と現在版の双方で行うシンボリックリンクの所有の判定を扱う。
 """
 import json
 import os
@@ -27,7 +27,7 @@ SHARED_LINK = "apps/web/src/shared.py"
 CHANGED_LINK = "apps/web/src/link"
 OUTSIDE_PATH = "apps/web/src2/outside.py"
 INSIDE_PATH = "apps/web/src/inside.py"
-# member rootから別memberのcodeへ出るlink文字列。segment境界ではなく実pathの解決で判定する。
+# メンバーのルートから別のメンバーのコードへ出るリンク文字列。セグメントの境界ではなく実際のパスの解決で判定する。
 ESCAPING_TARGET = "../../../services/api/src/session.py"
 LOCAL_TARGET = "inside.py"
 WEB_TECH = (
@@ -76,7 +76,7 @@ OWNERSHIP_BASE_LINK = {
     "summary": "src/linkの基準版のsymlinkがwebの所有範囲外を指します",
     "source": {"kind": "file", "workspaceId": "web", "path": "src/link"},
 }
-# id: (argvの残り, status, 検査文書数, 検査句数, Diagnostic, 説明)
+# id: (引数列の残り, 状態, 検査文書数, 検査規範文数, 診断, 説明)
 CASES = {
     "MULTI-008": (["check", "--all-workspaces"], "failed", None, None, OWNERSHIP_IMPLEMENTS,
                   "symlinkで別memberのcodeを所有する宣言を拒否する"),
@@ -88,7 +88,7 @@ CASES = {
 
 
 def reviewed_inputs(identifier):
-    """repo/とchanges/の全入力。symlinkはlink文字列で返し、dereferenceしない。"""
+    """repo/とchanges/の全入力。シンボリックリンクはリンク文字列で返し、リンク先を解決しない。"""
     files = {
         multi_reference.ROOT_CONFIG_PATH: multi_reference.root_config(
             [("web", "apps/web"), ("api", "services/api")]).encode(),
@@ -108,7 +108,7 @@ def reviewed_inputs(identifier):
         files[OUTSIDE_PATH] = b"# before\n"
         changes["outside.py"] = b"# after\n"
     if identifier == "MULTI-010":
-        # 基準版では別memberを指し、現在版ではweb内へ向け直す。現在版だけを見ると不適合を見落とす。
+        # 基準版では別のメンバーを指し、現在版ではweb内へ向け直す。現在版だけを見ると不適合を見落とす。
         links[CHANGED_LINK] = ESCAPING_TARGET
         change_links["link"] = LOCAL_TARGET
     return {"files": files, "links": links, "changes": changes, "changeLinks": change_links}
@@ -163,7 +163,7 @@ def reviewed_result(identifier):
 
 
 def check_boundary_inputs(identifier, repository):
-    """境界の条件を、散文ではなくsetup後のtreeとGitのblobから確かめる。"""
+    """境界の条件を、散文ではなく準備手順の後の木構造とGitのブロブから確かめる。"""
     reviewed = reviewed_inputs(identifier)
     if identifier == "MULTI-008":
         link = repository / SHARED_LINK
@@ -175,7 +175,7 @@ def check_boundary_inputs(identifier, repository):
         if (repository / "apps/web/.spec/tasks").exists():
             raise ValueError("所有境界のcaseはTASKを持たず、TASK境界のcodeを起こさない")
     if identifier == "MULTI-009":
-        # 字句のsegment境界。src/はsrc2/fileを許可しない。
+        # 字句のセグメントの境界。src/はsrc2/のファイルを許可しない。
         if not (repository / OUTSIDE_PATH).is_file() or not (repository / INSIDE_PATH).is_file():
             raise ValueError("segment境界のcaseは、src/とsrc2/の両方のfileが必要です")
         if git(repository, "show", f"HEAD:{OUTSIDE_PATH}") == (repository / OUTSIDE_PATH).read_bytes():

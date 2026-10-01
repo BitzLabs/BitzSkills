@@ -1,10 +1,10 @@
-"""processの挙動を必要としないreview済みのverify vector（Core操作は実行しない）。
+"""プロセスの挙動を必要としないレビュー済みの`verify`の入力と期待値（Coreの公開操作は実行しない）。
 
-commandを実行する成功・失敗の形と、commandのspawn前に停止する4つの条件を扱う。
-process単位のvector（spawn error、signal、timeout、出力の切り詰め）は別の群が持つ。
+コマンドを実行する成功・失敗の形と、コマンドのプロセス生成前に停止する4つの条件を扱う。
+プロセス単位の入力と期待値（プロセス生成のエラー、シグナル、タイムアウト、出力の切り詰め）は別の群が持つ。
 
-すべてのfixtureは入力をstageする。workspaceの設定がindexで未追跡だとverifyは起動を
-遮断する（VERIFY-CONFIG-UNTRACKED）ため、何もstageしないunbornのrepositoryではcommandに到達できない。
+すべてのfixtureは入力をステージする。ワークスペースの設定がインデックスで未追跡だと`verify`は起動を
+遮断する（`VERIFY-CONFIG-UNTRACKED`）ため、何もステージしないコミットのないリポジトリではコマンドに到達できない。
 """
 import copy
 import json
@@ -81,7 +81,7 @@ def reviewed_inputs(identifier):
 
 
 def reviewed_digest_input(identifier):
-    """Digestが必要なのは、Contextが解決する2件のfixtureだけである。"""
+    """ハッシュ値が必要なのは、コンテキストが解決する2件のfixtureだけである。"""
     payload = copy.deepcopy(digest_reference.reviewed_digest_input("SINGLE-042"))
     if identifier == "SINGLE-056":
         payload["settings"]["commands"][0]["argv"] = ["/bin/false", "{tests}"]
@@ -90,8 +90,8 @@ def reviewed_digest_input(identifier):
         technical["frontmatter"]["tests"] = [
             {"path": "tests/test_session.py", "covers": ["REQ-001:AC-02"], "command": "default"}]
     elif identifier == "SINGLE-061":
-        # verify §8: Contextは構成できるが、どちらのtestも未定義command名(missing)のためbindingを
-        # 構成しない。未定義command名を参照するbindingはDigest材料へ収録しない。
+        # `verify`仕様 §8: コンテキストは構成できるが、どちらのテストも未定義のコマンド名(`missing`)のためテスト割当てを
+        # 構成しない。未定義のコマンド名を参照するテスト割当ては、ハッシュ値の材料へ収録しない。
         technical = next(d for d in payload["documents"] if d["id"] == "TECH-001")
         for test in technical["frontmatter"]["tests"]:
             test["command"] = "missing"
@@ -144,9 +144,9 @@ def target_diagnostic(identifier):
                  "source": {"kind": "file", "workspaceId": "root",
                             "path": digest_reference.REQ_PATH}}]
     if identifier == "SINGLE-061":
-        # test_auth.py(tests[0])とtest_session.py(tests[1])は、どちらも独立したbinding不足の
-        # 原因であり、それぞれprimaryとして返す（registry §2。同じcommand名を参照していても、
-        # array index単位で別raw原因とする）。
+        # `test_auth.py`(`tests[0]`)と`test_session.py`(`tests[1]`)は、どちらも独立したテスト割当て不足の
+        # 原因であり、それぞれ主診断として返す（診断レジストリ §2。同じコマンド名を参照していても、
+        # 配列の添字ごとに別の元の原因とする）。
         return [{"code": "SPEC-VERIFY-BLOCKED-001", "severity": "error", "resultStatus": "blocked",
                  "summary": "command名missingが設定に定義されていません",
                  "source": {"kind": "file", "workspaceId": "root",
@@ -172,7 +172,7 @@ def reviewed_result(identifier):
             "target": targets[0],
             "status": status,
             "contextDigest": context_digest(identifier),
-            # cancelledのTASK起点は、addressesする規範文に到達しない。
+            # `cancelled`のTASKの起点は、`addresses`する規範文に到達しない。
             "statements": [] if identifier == "SINGLE-067" else list(STATEMENTS),
             "bindingRefs": ["root::default"] if executed else [],
             "diagnostics": target_diagnostic(identifier),
@@ -191,8 +191,8 @@ def reviewed_result(identifier):
 
 
 def check_evidence(identifier, result):
-    """実行に至らなかったtargetはbindingを持たず、Digestは
-    Contextが解決した場合にだけ存在する。"""
+    """実行に至らなかった検証対象はテスト割当てを持たず、ハッシュ値は
+    コンテキストが解決した場合にだけ存在する。"""
     for target in result["targetResults"]:
         if target["bindingRefs"] and not result["commands"]:
             raise ValueError("bindingが参照されているのにcommandが実行されていません")

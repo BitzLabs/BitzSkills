@@ -5,9 +5,9 @@
 # ///
 """参照適合harnessの入口(ADR-052 Decision 1)。
 
-`--core`が指す検査対象Core(source directoryまたはwheel)へ、`--step`または`--fixture`で選んだ
-manifestを実行し、合否と差分をJSONで報告する。選んだfixtureがすべて`passed`の場合だけ終了コード0とする。
-このscriptと`conformance/`はCoreに依存せず、`bitz`をimportしない(ADR-049 Decision 6)。
+`--core`が指す検査対象Core(ソースのディレクトリまたはwheel)へ、`--step`または`--fixture`で選んだ
+マニフェストを実行し、合否と差分をJSONで報告する。選んだfixtureがすべて`passed`の場合だけ終了コード0とする。
+このスクリプトと`conformance/`はCoreに依存せず、`bitz`をインポートしない(ADR-049 Decision 6)。
 """
 import argparse
 import json

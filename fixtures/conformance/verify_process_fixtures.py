@@ -1,8 +1,8 @@
-"""processの終了を固定するreview済みのverify vector（Core操作は実行しない）。
+"""プロセスの終了を固定するレビュー済みの`verify`の入力と期待値（Coreの公開操作は実行しない）。
 
 `SINGLE-057`、`SINGLE-058`、`SINGLE-059`はいずれも事前検査の通過後に失敗するので、
-spawn前の停止ではなく`commands[]`の要素を記録する。監査は各fixture自身のcommand fileを、
-Coreを介さず直接実行し、入力が実際にreview済みの終了を起こすことを確認する。期待値は
+プロセス生成前の停止ではなく`commands[]`の要素を記録する。監査は各fixture自身のコマンドのファイルを、
+Coreを介さず直接実行し、入力が実際にレビュー済みの終了を起こすことを確認する。期待値は
 主張するだけのものではない。
 """
 import copy
@@ -25,24 +25,24 @@ from .initial_fixtures import observe, compare_state
 HERE = Path(__file__).resolve().parent
 TEST_PATHS = ["tests/test_auth.py", "tests/test_session.py"]
 STATEMENTS = ["REQ-001:AC-01", "REQ-001:AC-02"]
-# 実行bitを持つが、kernelが形式を拒否する通常file。
-# ELFのmagicもshebangもないので、事前検査の通過後にexecveがENOEXECで失敗する。
+# 実行ビットを持つが、カーネルが形式を拒否する通常ファイル。
+# ELFのマジックナンバーもシバンもないので、事前検査の通過後に`execve`が`ENOEXEC`で失敗する。
 BAD_FORMAT = "this file is executable but is not a program\n"
 SIGNAL_SCRIPT = "#!/bin/sh\nkill -TERM $$\n"
-# SIGTERMを無視し、継承した標準出力・標準エラー出力のpipeを保持する子processを残す。
-# そのためgraceful terminationでもEOFでもbindingを終えられない。準備完了の
-# 行はtrapの設定後にだけ出力し、生き残った子processがその後もpipeを開いたままにするので、
+# `SIGTERM`を無視し、継承した標準出力・標準エラー出力のパイプを保持する子プロセスを残す。
+# そのため終了の要求でもEOFでもテスト割当てを終えられない。準備完了の
+# 行はトラップの設定の後にだけ出力し、生き残った子プロセスがその後もパイプを開いたままにするので、
 # EOFを待つ読取り側は終わらない。
 READY = "hang-ready"
 HANG_SCRIPT = (
     "#!/bin/sh\n"
     "trap '' TERM\n"
-    # 子processもTERMを無視するので、process group全体へのgraceful terminationの後も
-    # 継承したpipeを開いたままにする。
+    # 子プロセスも`TERM`を無視するので、プロセスグループ全体への終了の要求の後も
+    # 継承したパイプを開いたままにする。
     "sh -c \"trap '' TERM; sleep 60\" &\n"
     "echo " + READY + "\n"
-    # 前景のsleepが終了されてもscriptを終えてはいけない。そうしないとprocess groupへの
-    # TERMで足りてしまい、fixtureが強制終了を必要としなくなる。
+    # 前景の`sleep`が終了されてもスクリプトを終えてはいけない。そうしないとプロセスグループへの
+    # `TERM`で足りてしまい、fixtureが強制終了を必要としなくなる。
     "i=0\n"
     "while [ \"$i\" -lt 60 ]; do\n"
     "    sleep 1\n"
@@ -101,7 +101,7 @@ def context_digest(identifier):
 
 
 def expected_stdout(identifier):
-    """書き込むのはtimeoutのfixtureだけで、子孫がpipeを開いたまま保持する前に、
+    """書き込むのはタイムアウトのfixtureだけで、子孫がパイプを開いたまま保持する前に、
     準備完了の行をちょうど1行書く。"""
     return READY + "\n" if identifier == "SINGLE-059" else ""
 
@@ -145,8 +145,8 @@ def reviewed_result(identifier):
 
 
 def observe_termination(identifier, repository):
-    """fixture自身のcommand fileを直接実行し、review済みの原因を確認する。
-    入力のfixture側の観測であり、Coreのverifyの実行ではない。"""
+    """fixture自身のコマンドのファイルを直接実行し、レビュー済みの原因を確認する。
+    入力のfixture側の観測であり、Coreの`verify`の実行ではない。"""
     path, _, termination, _, _ = COMMANDS[identifier]
     executable = repository / path
     if not (executable.is_file() and os.access(executable, os.X_OK)):
@@ -162,12 +162,12 @@ def observe_termination(identifier, repository):
         if completed.returncode != -signal.SIGTERM:
             raise ValueError("commandがsignalで終了しませんでした")
         return
-    # timeout: graceful terminationでは足りず、強制終了で終わらなければならない。
+    # タイムアウト: 終了の要求では足りず、強制終了で終わらなければならない。
     process = subprocess.Popen([str(executable)], cwd=repository, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, start_new_session=True, text=True)
     try:
         deadline = time.monotonic() + 5
-        # trapが設定済みになるよう、準備完了の行を待つ。それより前にsignalを送っても、
+        # トラップが設定済みになるよう、準備完了の行を待つ。それより前にシグナルを送っても、
         # 保護されていない起動直後を終了できることしか示せない。
         if not select.select([process.stdout], [], [], 5)[0]:
             raise ValueError("commandが準備完了の行を出力しませんでした")

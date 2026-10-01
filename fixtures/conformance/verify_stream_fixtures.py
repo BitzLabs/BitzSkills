@@ -1,9 +1,9 @@
-"""verifyのprocess終了・出力変換fixture（SINGLE-126-12〜16）の審査済み証跡。Coreは実行しない。
+"""`verify`のプロセス終了・出力変換のfixture（SINGLE-126-12〜16）のレビュー済みの証跡。Coreは実行しない。
 
-126-12はtimeout後に直接processが終了しても、別sessionへ逃げた子孫がstdout／stderrを保持し続けるcase、
-126-13はtimeoutしたbindingの後に独立bindingを実行するcaseである。
-126-14〜16は安全な入出力 §9の出力変換とredactionを固定する。auditはfixture自身のscriptを直接起動して
-raw出力を観測し、独立に実装した変換で期待抜粋を再計算する。
+126-12はタイムアウトの後に直接のプロセスが終了しても、別のセッションへ逃げた子孫が標準出力／標準エラー出力を保持し続けるケース、
+126-13はタイムアウトしたテスト割当ての後に独立したテスト割当てを実行するケースである。
+126-14〜16は安全な入出力 §9の出力変換と伏せ字化を固定する。監査はfixture自身のスクリプトを直接起動して
+元の出力を観測し、独立に実装した変換で期待する抜粋を再計算する。
 """
 import copy
 import json
@@ -31,11 +31,11 @@ REDACTED = "[REDACTED]"
 TIMEOUT_SUMMARY = "commandが実効timeout 1秒で終了しませんでした"
 
 ORPHAN_READY = "orphan-ready"
-# 直接processはTERMで終了するが、setsidで別sessionへ移った子孫がTERMを無視し、
-# 継承したstdout／stderrを8秒保持する。EOFを待つ実装は5秒以内に結果を確定できない。
+# 直接のプロセスは`TERM`で終了するが、`setsid`で別のセッションへ移った子孫が`TERM`を無視し、
+# 継承した標準出力／標準エラー出力を8秒保持する。EOFを待つ実装は5秒以内に結果を確定できない。
 ORPHAN_SCRIPT = (
     "#!/bin/sh\n"
-    # 子孫が別sessionへ移りtrapを設定した後にだけreadiness行を出し、TERMとの競合を避ける。
+    # 子孫が別のセッションへ移りトラップを設定した後にだけ準備完了の行を出し、`TERM`との競合状態を避ける。
     f"setsid sh -c 'trap \"\" TERM; echo {ORPHAN_READY}; exec sleep 8' &\n"
     "i=0\n"
     'while [ "$i" -lt 60 ]; do\n'
@@ -55,7 +55,7 @@ CONTROL_STDOUT = ("bad:\ufffd\nlone\ntab:\tend\n"
                   "c0:\\u0001 del:\\u007f c1:\\u0085\n")
 CONTROL_STDERR = "err\n"
 SECRET_ENV = {"BITZ_FIXTURE_TOKEN": "s3cr3t-env-value-0123456789"}
-# 各一致の途中でsleepを挟み、別々のreadへ分かれるようにする。
+# 各一致の途中で`sleep`を挟み、別々の読取りへ分かれるようにする。
 SECRET_SCRIPT = (
     "#!/bin/sh\n"
     "printf 'probe s3cr3t-env-'\n"
@@ -80,8 +80,8 @@ SECRET_STDOUT = (f"probe {REDACTED} end\n"
                  "after\n")
 EXPAND_ENV = {"BITZ_FIXTURE_SECRET": "qz"}
 EXPAND_COUNT = 6553
-# 「あ」(3 byte)の後に2 byteの値を6553回、最後に"end\n"。redaction後は65,537 byteとなり、
-# 末尾65,536 byteの切れ目が「あ」の途中へ落ちるため、code point境界で65,534 byteを保持する。
+# 「あ」(3バイト)の後に2バイトの値を6553回、最後に"end\n"。伏せ字化の後は65,537バイトとなり、
+# 末尾65,536バイトの切れ目が「あ」の途中へ落ちるため、コードポイントの境界で65,534バイトを保持する。
 EXPAND_SCRIPT = (
     "#!/bin/sh\n"
     "printf '\\343\\201\\202'\n"
@@ -94,7 +94,7 @@ EXPAND_SCRIPT = (
 )
 EXPAND_STDOUT = REDACTED * EXPAND_COUNT + "end\n"
 
-# id: (説明, 期待status, script path, script, 追加環境, timeout)
+# id: (説明, 期待する状態, スクリプトのパス, スクリプト, 追加の環境, タイムアウト)
 CASES = {
     "SINGLE-126-12": ("子孫processがstdout／stderrを保持してもtimeoutから5秒以内に確定する",
                       "error", "bin/orphan.sh", ORPHAN_SCRIPT, {}, 1),
@@ -114,7 +114,7 @@ EXPECTED_OUTPUT = {
     "SINGLE-126-15": (SECRET_STDOUT, ""),
     "SINGLE-126-16": (EXPAND_STDOUT, ""),
 }
-# 126-13のbinding。alphaがtimeoutし、辞書順で後のbetaが続けて実行される。
+# 126-13のテスト割当て。`alpha`がタイムアウトし、辞書順で後の`beta`が続けて実行される。
 TWO_COMMANDS = ("verify:\n  timeoutSeconds: 1\n  commands:\n"
                 "    alpha:\n      argv: [\"bin/hang.sh\", \"{tests}\"]\n      cwd: .\n"
                 "    beta:\n      argv: [\"/bin/true\", \"{tests}\"]\n      cwd: .\n")
@@ -230,9 +230,9 @@ PEM = re.compile(r"-----BEGIN [^\n]*PRIVATE KEY-----.*?-----END [^\n]*PRIVATE KE
 
 
 def redact(text, env):
-    """全文を一括で処理する参照実装。chunk分割に依存しない期待値を与える。
+    """全文を一括で処理する参照実装。チャンクの分割に依存しない期待値を与える。
 
-    値は区切り記号の直後から行末までとし、区切り記号自体とBearer語は残す。PEMは開始行から終了行までを1つに置換する。
+    値は区切り記号の直後から行末までとし、区切り記号自体と`Bearer`の語は残す。PEMは開始行から終了行までを1つに置換する。
     """
     secrets = sorted(((name, value) for name, value in env.items()
                       if value and any(word.upper() in name.upper() for word in REDACTION_WORDS)),
@@ -246,7 +246,7 @@ def redact(text, env):
 
 
 def excerpt(text):
-    """UTF-8末尾65,536 byteをcode point境界で保持する。"""
+    """UTF-8の末尾65,536バイトをコードポイントの境界で保持する。"""
     data = text.encode()[-LIMIT:]
     while data and (data[0] & 0xC0) == 0x80:
         data = data[1:]
@@ -254,10 +254,10 @@ def excerpt(text):
 
 
 def observation_env(env):
-    """観測に使う環境。PATHとfixtureのenvだけにし、実行環境へ依存させない。
+    """観測に使う環境。`PATH`とfixtureの環境変数だけにし、実行環境へ依存させない。
 
-    runnerがCoreへ渡す環境はこれにHOME・XDG_CACHE_HOME・TMPDIRを加えたもので、どれもredaction対象名ではないため、
-    redactionする値の集合はCoreと一致する。実行環境を継承すると、redaction対象名の変数（値`1`など）が
+    ランナーがCoreへ渡す環境はこれに`HOME`・`XDG_CACHE_HOME`・`TMPDIR`を加えたもので、どれも伏せ字化の対象となる名前ではないため、
+    伏せ字化する値の集合はCoreと一致する。実行環境を継承すると、伏せ字化の対象となる名前の変数（値`1`など）が
     観測側の抜粋だけを変えてしまう。
     """
     return {"PATH": os.environ.get("PATH", ""), **env}
@@ -272,7 +272,7 @@ def run_script(repository, identifier, env):
 
 
 def observe_orphan(repository):
-    """直接processはTERMで終わるが、別sessionの子孫がpipeを保持しEOFが来ないことを観測する。"""
+    """直接のプロセスは`TERM`で終わるが、別のセッションの子孫がパイプを保持しEOFが来ないことを観測する。"""
     if shutil.which("setsid") is None:
         raise ValueError("このfixtureにはsetsidが必要です")
     process = subprocess.Popen([str(repository / CASES["SINGLE-126-12"][2])], cwd=repository,
@@ -286,7 +286,7 @@ def observe_orphan(repository):
         process.wait(timeout=2)
         if process.returncode != -signal.SIGTERM:
             raise ValueError("直接processはgraceful terminationで終了する必要があります")
-        # 直接processの終了後も、子孫が保持するpipeは5秒以上EOFにならない。
+        # 直接のプロセスの終了後も、子孫が保持するパイプは5秒以上EOFにならない。
         started = time.monotonic()
         while time.monotonic() - started < 5.5:
             if select.select([process.stdout], [], [], 0.5)[0] and not process.stdout.read1(1):
@@ -305,7 +305,7 @@ def observe_orphan(repository):
 
 
 def observe_command(identifier, repository):
-    """fixture自身のcommandを直接起動し、raw出力から期待抜粋を独立に再計算する。Core verifyの実行ではない。"""
+    """fixture自身のコマンドを直接起動し、元の出力から期待する抜粋を独立に再計算する。Coreの`verify`の実行ではない。"""
     if identifier == "SINGLE-126-12":
         observe_orphan(repository)
         return

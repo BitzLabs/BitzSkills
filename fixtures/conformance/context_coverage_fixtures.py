@@ -1,7 +1,7 @@
-"""implementのpurposeのcoverageを固定するreview済みvector（Core操作は実行しない）。
+"""目的`implement`のカバレッジを固定するレビュー済みの入力と期待値（Coreの公開操作は実行しない）。
 
-`SINGLE-054`はこの群で唯一成功statusのContext fixtureであり、完全なBundleと計算した
-Digestを返す唯一のfixtureである。Digestは、golden群と同じ独立した2系統の参照計算で照合する。
+`SINGLE-054`はこの群で唯一、成功の状態を持つ`context`のfixtureであり、完全なコンテキスト一式と計算したコンテキストのハッシュ値を返す
+唯一のfixtureである。コンテキストのハッシュ値は、golden群と同じ独立した2系統の参照計算で照合する。
 """
 import json
 from pathlib import Path
@@ -54,7 +54,7 @@ def reviewed_inputs():
 
 def reviewed_digest_input():
     """`implement`は`addresses`するTASKを閉包に加えるが、`verify`と異なり
-    commandを挙げないので、settingsはbindingを記録しない。"""
+    コマンドを挙げないので、材料の`settings`はテスト割当てを記録しない。"""
     payload = digest_reference.reviewed_digest_input("SINGLE-042")
     payload["purpose"] = "implement"
     payload["settings"]["verifyTimeouts"] = []
@@ -79,7 +79,7 @@ def reviewed_digest_input():
         "statements": [],
         "strongRelations": [{"relation": "addresses", "target": "REQ-001:AC-02"}],
     }
-    # documents[]はコードポイント順: REQ-001 < TASK-001 < TECH-001。
+    # documents[]はコードポイント辞書順: REQ-001 < TASK-001 < TECH-001。
     payload["documents"].insert(1, task)
     return payload
 

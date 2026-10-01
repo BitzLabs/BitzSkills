@@ -1,4 +1,4 @@
-"""review台帳の整合を検査する。散文から意味を推測しない。"""
+"""レビュー済みの診断の網羅表の整合を検査する。散文から意味を推測しない。"""
 import hashlib
 import json
 from pathlib import Path
@@ -27,7 +27,7 @@ def validate(ledger=None, root=ROOT):
     for group in ledger["groups"]:
         if not group["rationale"] or not group["sources"] or any(p not in ledger["sources"] for p in group["sources"]):
             errors.append(f"根拠文書または理由がありません: {group['id']}")
-    # このreviewで解消した不整合について、独立に固定した期待値。
+    # このレビューで解消した不整合について、独立に固定した期待値。
     expected_rows = {
         "CTX-COVERAGE-TEST-MUST": ("context, verify", "error", "blocked", "skip-target"),
         "CTX-COVERAGE-TEST-MUST-IMPLEMENT": ("context", "warning", "passed_with_warnings", "continue"),

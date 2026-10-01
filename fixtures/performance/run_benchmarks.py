@@ -3,7 +3,7 @@
 # requires-python = ">=3.12"
 # dependencies = ["jsonschema==4.23.0", "attrs==26.1.0", "jsonschema-specifications==2025.9.1", "referencing==0.37.0", "rpds-py==2026.6.3", "typing-extensions==4.13.2"]
 # ///
-"""Core 1.0の性能caseを基準環境の隔離cgroupで逐次測定する。"""
+"""Core 1.0の性能ケースを基準環境の隔離したcgroupで逐次測定する。"""
 
 from __future__ import annotations
 
@@ -483,7 +483,7 @@ def validate_accepted_baseline(
     environment_manifest: dict,
     dataset_manifests: dict[str, dict],
 ) -> dict:
-    """受入済みbaselineが測定値から独立に再計算できることを検査する。"""
+    """受入済みのベースラインが測定値から独立に再計算できることを検査する。"""
     if result.get("environmentId") != environment_manifest.get("environmentId"):
         raise BenchmarkError("baselineのenvironmentIdが基準環境manifestと一致しません")
     mismatches = comparison_mismatches(

@@ -1,8 +1,8 @@
-"""`--report`を指定しない場合を固定するreview済みvector（Core操作は実行しない）。
+"""`--report`を指定しない場合を固定するレビュー済みの入力と期待値（Coreの公開操作は実行しない）。
 
 `SINGLE-070-01/02/03/04`は、`--report`がなければ、成功でも失敗でも`check`と`verify`が
-何も書かないことを固定する。各corpusは既にreport fileを持つので、「既存report不変」は
-snapshotで実際に不合格になり得る性質である。
+何も書かないことを固定する。各corpusは既にレポートファイルを持つので、「既存レポート不変」は
+スナップショットで実際に不適合になり得る性質である。
 """
 import json
 from pathlib import Path
@@ -22,7 +22,7 @@ EXISTING_REPORT_BODY = b'{"schemaVersion": "1.0", "note": "pre-existing report"}
 MISSING_REQUIRE = "relations:\n  requires: [TECH-999]\n  refines: [REQ-001]\n  related: [ADR-001]\n"
 CHECK_DOCUMENTS = 3
 CHECK_STATEMENTS = 2
-# id: (操作, status, 終了コード)
+# id: (操作, 状態, 終了コード)
 CASES = {
     "SINGLE-070-01": ("check", "passed", 0),
     "SINGLE-070-02": ("check", "failed", 1),
@@ -56,7 +56,7 @@ def reviewed_manifest(identifier):
         plan = {"git": True, "baseCommit": {"message": "base", "paths": ["."]}, "operations": []}
         argv = ["check", "--full", "--base", "HEAD", "--format", "json"]
     else:
-        # verifyは未追跡の設定で停止し、--baseを取らない。
+        # `verify`は未追跡の設定で停止し、`--base`を取らない。
         plan = {"git": True, "operations": [{"op": "stage", "paths": ["."]}]}
         argv = ["verify", "REQ-001", "--format", "json"]
     return {
@@ -72,7 +72,7 @@ def reviewed_manifest(identifier):
 def reviewed_result(identifier):
     operation, status, _ = CASES[identifier]
     if operation == "verify":
-        # 追加のreport fileはSPECの材料ではないので、Contextは変わらない。
+        # 追加のレポートファイルは仕様文書の材料ではないので、コンテキストは変わらない。
         return verify_fixtures.reviewed_result(
             "SINGLE-055" if identifier == "SINGLE-070-03" else "SINGLE-056")
     diagnostics = [] if status == "passed" else [{

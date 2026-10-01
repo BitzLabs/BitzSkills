@@ -1,10 +1,10 @@
-"""複合workspace全体のverifyを固定するreview済みvector（Core操作は実行しない）。
+"""複合ワークスペース全体の`verify`を固定するレビュー済みの入力と期待値（Coreの公開操作は実行しない）。
 
-`verify --all-workspaces`はroot workspaceを先頭、以降をworkspace ID辞書順に処理し、通過targetのbindingを
-和集合として1回ずつ実行する。この群は、派生遮断（`MULTI-012`）、共有binding（`MULTI-013`）、
-失敗後の継続（`MULTI-014`）、member単位の対象0件（`MULTI-015`）、全体の対象0件（`MULTI-016`）を扱う。
+`verify --all-workspaces`はルートワークスペースを先頭、以降をワークスペースID辞書順に処理し、通過した検証対象のテスト割当てを
+和集合として1回ずつ実行する。この群は、依存遮断（`MULTI-012`）、共有するテスト割当て（`MULTI-013`）、
+失敗後の継続（`MULTI-014`）、メンバー単位の対象0件（`MULTI-015`）、全体の対象0件（`MULTI-016`）を扱う。
 
-Digestが必要なfixtureでは、review済みliteral（参照計算A）で期待値を作り、監査で入力treeからの導出
+ハッシュ値が必要なfixtureでは、レビュー済みのリテラル（参照計算A）で期待値を作り、監査で入力の木構造からの導出
 （参照計算B、multi_crosscheck）と照合する。
 """
 import copy
@@ -38,8 +38,8 @@ NO_TARGET = {
 }
 DUPLICATE_ID = {
     "code": "EAI-CORE-ID-002", "severity": "error", "resultStatus": "failed",
-    # SINGLE-011（規範文ID重複の単一workspace版）と同じ規約に合わせる：2回目の出現行を指し、
-    # summaryは「規範文IDが重複しています」（Diagnostic registry・EARS-AI仕様）。
+    # SINGLE-011（規範文ID重複の単一ワークスペース版）と同じ規約に合わせる：2回目の出現行を指し、
+    # 要約は「規範文IDが重複しています」（診断レジストリ・EARS-AI言語・意味中間表現仕様）。
     "summary": "規範文IDが重複しています",
     "source": {"kind": "file", "workspaceId": "api", "path": ".spec/technical/TECH-020.md",
                "line": 20, "column": 3},
@@ -78,7 +78,7 @@ def technical(identifier, title, body, refines=None, requires=None, tests=(), st
     return text
 
 
-# 同じIDの規範文を2件持つ文書。Coreはこれをskip-documentとして扱う。
+# 同じIDの規範文を2件持つ文書。Coreはこれを`skip-document`として扱う。
 DUPLICATE_STATEMENTS = (
     "- [TECH-020:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 監査logを残す。\n",
     "- [TECH-020:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 監査logを保持する。\n",
@@ -86,7 +86,7 @@ DUPLICATE_STATEMENTS = (
 
 
 def reviewed_inputs(identifier):
-    """fixtureごとのrepo/入力。MULTI-013だけがmember 1件で、ほかはweb・apiの2件を持つ。"""
+    """fixtureごとのrepo/入力。MULTI-013だけがメンバー1件で、ほかはweb・apiの2件を持つ。"""
     members = [("web", "apps/web")] if identifier == "MULTI-013" else [("web", "apps/web"),
                                                                        ("api", "services/api")]
     files = {
@@ -96,7 +96,7 @@ def reviewed_inputs(identifier):
     if identifier != "MULTI-013":
         files[multi_reference.API_CONFIG_PATH] = multi_reference.member_config("api", "backend").encode()
     if identifier == "MULTI-016":
-        # どのworkspaceもverifyの対象を持たない。設定だけの複合workspaceである。
+        # どのワークスペースも`verify`の対象を持たない。設定だけの複合ワークスペースである。
         return files
     if identifier == "MULTI-015":
         files[multi_reference.ROOT_REQ_PATH] = requirement(
@@ -128,7 +128,7 @@ def reviewed_inputs(identifier):
         files["services/api/tests/test_audit.py"] = b"def test_audit():\n    assert True\n"
         files["services/api/tests/test_report.py"] = b"def test_report():\n    assert True\n"
         return files
-    # MULTI-013とMULTI-014は、2つのtargetが同じcommand名のbindingを共有する。
+    # MULTI-013とMULTI-014は、2つの検証対象が同じコマンド名のテスト割当てを共有する。
     failing = identifier == "MULTI-014"
     files[multi_reference.ROOT_REQ_PATH] = requirement(
         "REQ-001", "認証の基準", "REQ-001:AC-01").encode()
@@ -138,7 +138,7 @@ def reviewed_inputs(identifier):
         tests=[("tests/auth/test_login.py", "platform::REQ-001:AC-01", "frontend")]).encode()
     files["apps/web/tests/auth/test_login.py"] = b"def test_login():\n    assert True\n"
     if failing:
-        # webのcommandだけを失敗させ、apiの独立bindingが後続で実行されることを見る。
+        # webのコマンドだけを失敗させ、apiの独立したテスト割当てが後続で実行されることを見る。
         files[multi_reference.WEB_CONFIG_PATH] = multi_reference.member_config(
             "web", "frontend").replace('"/bin/true"', '"/bin/false"').encode()
         files[".spec/requirements/REQ-002.md"] = requirement(
@@ -156,7 +156,7 @@ def reviewed_manifest(identifier):
     return {
         "fixtureId": identifier,
         "description": DESCRIPTIONS[identifier],
-        # verifyはbinding所有workspaceの設定がindexで未追跡だと起動を遮断するため、入力をstageする。
+        # `verify`はテスト割当てを所有するワークスペースの設定がインデックスで未追跡だと起動を遮断するため、入力をステージする。
         "setup": {"git": True, "baseCommit": {"message": "base", "paths": ["."]}, "operations": []},
         "invocation": {"runner": "bitz", "cwd": ".",
                        "argv": ["verify", "--all-workspaces", "--format", "json"], "env": {}},
@@ -165,7 +165,7 @@ def reviewed_manifest(identifier):
     }
 
 
-# --- 参照計算A: このcorpus群のreview済みDigest材料 ---------------------------------
+# --- 参照計算A: このcorpus群のレビュー済みのハッシュ値の材料 ---------------------------------
 
 def document_material(identifier, document_id, workspace_id, kind, title, body, relations=None,
                       tests=(), statements=()):
@@ -211,7 +211,7 @@ def technical_body(identifier, title, body):
 
 
 def reviewed_digest_input(identifier, root):
-    """通過targetのDigest材料。Contextが完成するtargetだけが持つ。"""
+    """通過した検証対象のハッシュ値の材料。コンテキストが完成する検証対象だけが持つ。"""
     workspaces = {"platform": ".", "web": "apps/web", "api": "services/api"}
     web_tech = document_material(
         identifier, "web::TECH-010", "web", "technical", "Web側の実装方針",
@@ -272,7 +272,7 @@ def digest(identifier, root):
         multi_reference.canonical_bytes(reviewed_digest_input(identifier, root)))
 
 
-# --- review済みの期待結果 ---------------------------------------------------------
+# --- レビュー済みの期待結果 ---------------------------------------------------------
 
 def target(name, status, context_digest=None, statements=(), bindings=(), diagnostics=()):
     return {"target": name, "status": status, "contextDigest": context_digest,
@@ -330,8 +330,8 @@ def reviewed_result(identifier):
             ]),
         ]
     elif identifier == "MULTI-013":
-        # 2つのtargetは別のContextを持ち、同じbindingを1回だけ実行する。
-        # どのworkspaceも対象を持つので、0件のwarningは現れない。
+        # 2つの検証対象は別のコンテキストを持ち、同じテスト割当てを1回だけ実行する。
+        # どのワークスペースも対象を持つので、0件の警告は現れない。
         workspaces = [
             workspace_result("platform", ".", "passed", targets=[
                 target("platform::REQ-001", "passed", digest(identifier, "platform::REQ-001"),
@@ -379,7 +379,7 @@ def reviewed_result(identifier):
                                         ["tests/auth/test_login.py"], ["platform::REQ-001:AC-01"])]),
         ]
     else:
-        # 全体で対象0件。workspace単位は警告、複合workspace全体だけをerror／blockedとする。
+        # 全体で対象0件。ワークスペース単位は警告、複合ワークスペース全体だけを重大度`error`・結果への効果`blocked`とする。
         workspaces = [
             workspace_result(workspace_id, path, "passed_with_warnings",
                              diagnostics=[{**NO_TARGET, "source": {
@@ -403,7 +403,7 @@ def reviewed_result(identifier):
 
 
 def check_digests(identifier, repository, result):
-    """通過targetのDigestを、入力treeからの導出（参照計算B）と照合する。"""
+    """通過した検証対象のハッシュ値を、入力の木構造からの導出（参照計算B）と照合する。"""
     checked = 0
     for workspace in result["workspaces"]:
         for entry in workspace["targetResults"]:
@@ -424,7 +424,7 @@ def check_digests(identifier, repository, result):
 
 
 def check_corpus(identifier, repository, result):
-    """fixtureが名乗る条件を、散文ではなくsetup後の入力から確かめる。"""
+    """fixtureが名乗る条件を、散文ではなく準備手順の後の入力から確かめる。"""
     _, _, documents = multi_crosscheck.load_workspaces(repository)
     if identifier == "MULTI-012":
         duplicates = [statement["id"] for statement
@@ -448,7 +448,7 @@ def check_corpus(identifier, repository, result):
         configs = (repository / multi_reference.WEB_CONFIG_PATH).read_text(encoding="utf-8")
         if "/bin/false" not in configs:
             raise ValueError("失敗継続のcaseは、失敗するcommandが必要です")
-    # bindingを実行するcommandは、実行結果を持つworkspaceが所有する。
+    # テスト割当てを実行するコマンドは、実行結果を持つワークスペースが所有する。
     for workspace in result["workspaces"]:
         for command in workspace["commands"]:
             if command["workspaceId"] != workspace["id"]:

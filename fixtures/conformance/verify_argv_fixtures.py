@@ -1,9 +1,9 @@
-"""verifyのargv検査・実行環境fixture（SINGLE-126-01〜05、07、09〜11）の審査済み証跡。Coreは実行しない。
+"""`verify`の引数列の検査・実行環境のfixture（SINGLE-126-01〜05、07、09〜11）のレビュー済みの証跡。Coreは実行しない。
 
-全caseはSINGLE-042のcorpusを基にcommand定義だけを替え、indexへstageしてから`verify REQ-001`を実行する。
-126-01〜05はargv templateの型・値域違反で操作全体を停止し、Contextもcommandも作らない。
-126-07、10、11はcommandを実行し、auditがfixture自身のscriptを直接起動して、期待した入力でだけ
-成功することを観測する。126-09はPATHから実行fileを解決できずspawn前にblockedとなる。
+全ケースはSINGLE-042のcorpusを基にコマンドの定義だけを替え、インデックスへステージしてから`verify REQ-001`を実行する。
+126-01〜05は引数列テンプレートの型・値域の違反で操作全体を停止し、コンテキストもコマンドも作らない。
+126-07、10、11はコマンドを実行し、監査がfixture自身のスクリプトを直接起動して、期待した入力でだけ
+成功することを観測する。126-09は`PATH`から実行ファイルを解決できずプロセスの生成前に`blocked`となる。
 """
 import copy
 import json
@@ -26,7 +26,7 @@ STATEMENTS = ["REQ-001:AC-01", "REQ-001:AC-02"]
 BASE_ARGV = '"/bin/true", "{tests}"'
 ARGV_KEY = "verify.commands.default.argv"
 ELEMENT_LIMIT = 32 * 1024
-# 名前にredaction keywordを含まない環境変数だけを使い、公開抜粋へ影響させない。
+# 名前に伏せ字化の対象となるキーワードを含まない環境変数だけを使い、公開抜粋へ影響させない。
 PROBE_ENV = {"BITZ_FIXTURE_PROBE": "inherited-value", "LANG": "C.UTF-8", "LC_COLLATE": "C",
              "PWD": "/bitz-fixture-stale-pwd"}
 ABSENT_COMMAND = "bitz-fixture-absent-command"
@@ -65,7 +65,7 @@ PROBE_SCRIPT = (
     "}\n"
 )
 
-# id: (説明, argv template text, 期待status)
+# id: (説明, 引数列テンプレートのテキスト, 期待する状態)
 CASES = {
     "SINGLE-126-01": ("argv要素が非stringならcommandを起動しない", '"/bin/true", 42, "{tests}"', "error"),
     "SINGLE-126-02": ("argv[0]が空stringならcommandを起動しない", '"", "{tests}"', "error"),
@@ -80,7 +80,7 @@ CASES = {
     "SINGLE-126-10": ("stdinをnull deviceへ接続し即時EOFとする", '"bin/stdin.sh", "{tests}"', "passed"),
     "SINGLE-126-11": ("起動環境を継承しPWDだけを実効cwdへ合わせる", '"./probe.awk", "{tests}"', "passed"),
 }
-# 設定違反caseの(key, summary)。
+# 設定違反のケースの(キー, 要約)。
 CONFIG_ERRORS = {
     "SINGLE-126-01": (ARGV_KEY + "[1]", "argvの要素はstringで指定してください"),
     "SINGLE-126-02": (ARGV_KEY + "[0]", "argv[0]は空stringにできません"),
@@ -109,12 +109,12 @@ def config(identifier):
 
 
 def template(identifier):
-    """設定のflow配列を独立にdecodeする。YAMLの`\\0`だけをJSONの`\\u0000`へ読み替える。"""
+    """設定のフローシーケンスを独立にデコードする。YAMLの`\\0`だけをJSONの`\\u0000`へ読み替える。"""
     return json.loads("[" + CASES[identifier][1].replace("\\0", "\\u0000") + "]")
 
 
 def template_violations(argv):
-    """workspace・設定仕様 §6のargv template規則を独立に適用し、(key)の一覧を返す。"""
+    """ワークスペース・設定仕様 §6の引数列テンプレートの規則を独立に適用し、(キー)の一覧を返す。"""
     violations = []
     if not 1 <= len(argv) <= 256:
         violations.append(ARGV_KEY)
@@ -168,7 +168,7 @@ def reviewed_manifest(identifier):
 
 def expanded_argv(identifier):
     argv = template(identifier)
-    # cwd指定時はtest pathをcwd相対で展開する。
+    # `cwd`の指定時はテストのパスを`cwd`からの相対で展開する。
     paths = [path.removeprefix("tests/") for path in TEST_PATHS] if cwd(identifier) == "tests" else TEST_PATHS
     index = argv.index("{tests}")
     return argv[:index] + paths + argv[index + 1:]
@@ -180,7 +180,7 @@ def reviewed_result(identifier):
               "workspace": {"id": "root", "path": "."}, "targetResults": [], "revision": None,
               "commands": [], "durationMs": 0, "diagnostics": []}
     if identifier in CONFIG_ERRORS:
-        # workspace identityを構成する前に停止するため、idはnull、派生配列は空とする。
+        # ワークスペースの同一性を構成する前に停止するため、`id`は`null`、派生した配列は空とする。
         key, summary = CONFIG_ERRORS[identifier]
         result["workspace"]["id"] = None
         result["diagnostics"] = [{"code": "SPEC-CONFIG-SCHEMA-001", "severity": "error", "resultStatus": "error",
@@ -199,7 +199,7 @@ def reviewed_result(identifier):
             "stdoutExcerpt": "", "stderrExcerpt": "", "stdoutTruncated": False, "stderrTruncated": False,
             "durationMs": 0}]
     else:
-        # spawn前のblockedは単一workspaceではtop-levelへ1件だけ置き、targetへ複製しない。
+        # プロセスの生成前の`blocked`は単一ワークスペースでは最上位へ1件だけ置き、検証対象へ複製しない。
         result["diagnostics"] = [{"code": "SPEC-VERIFY-BLOCKED-001", "severity": "error", "resultStatus": "blocked",
                                   "summary": BLOCKED_SUMMARY,
                                   "source": {"kind": "environment", "component": "command",
@@ -216,7 +216,7 @@ def run_script(repository, identifier, argv, env=None, stdin=subprocess.DEVNULL,
 
 
 def observe_command(identifier, repository):
-    """fixture自身のcommand入力を直接観測する。Core verifyの実行ではない。"""
+    """fixture自身のコマンドの入力を直接観測する。Coreの`verify`の実行ではない。"""
     if identifier == "SINGLE-126-09":
         if shutil.which(ABSENT_COMMAND) is not None or (repository / ABSENT_COMMAND).exists():
             raise ValueError("不在のはずのcommandがPATHから解決できてしまいます")
@@ -263,7 +263,7 @@ def check_inputs(fixture, inputs, expected_executables):
 
 
 def check_setups(fixture, manifest, effects, identifier, digest, observe_once, prefix):
-    """隔離setupを2回行い、snapshot、2系統Digest、直接観測後の不変を確認する。"""
+    """隔離した準備手順を2回行い、スナップショット、2系統のハッシュ値、直接観測の後の不変を確認する。"""
     if effects["policy"] != "read-only" or effects["before"] != effects["after"]:
         raise ValueError("read-only期待が書込みを許しています")
     previous = None

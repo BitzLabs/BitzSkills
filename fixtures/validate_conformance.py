@@ -135,7 +135,7 @@ def grammar():
     path = DETAIL / "01_EARS-AI/01_言語・Semantic-IR仕様.md"
     source = "\n".join(blocks(path, "ebnf"))
     definitions = re.findall(r"^([A-Za-z][A-Za-z0-9-]*)\s*=", source, re.M)
-    # EBNFのquoted terminalはC言語風のbackslash escapeを使わない。
+    # EBNFの引用符付き終端記号はC言語風のバックスラッシュのエスケープを使わない。
     unquoted = re.sub(r'"[^"]*"|\x27[^\x27]*\x27', "", source)
     references = set(re.findall(r"[A-Za-z][A-Za-z0-9-]*", unquoted))
     lexical = {"plain-char", "qchar", "code-char"}
@@ -174,7 +174,7 @@ def matrix():
             manifest = json.loads(path.read_text())
             validator.validate(manifest)
             argv = manifest["invocation"]["argv"]
-            # --baseを受け付けるのはcheckだけで、context、verify、doctorは基準版のoptionを持たない。
+            # `--base`を受け付けるのは`check`だけで、`context`、`verify`、`doctor`は基準版のオプションを持たない。
             if argv[0] == "check" and "baseCommit" in manifest["setup"] and "--base" not in argv:
                 errors.append(f"{path}: commit済みfixtureには明示の--baseが必要です")
             if not manifest["setup"]["git"] and "--base" in argv:
@@ -183,7 +183,7 @@ def matrix():
                 errors.append(f"{path}: fixtureIdがdirectory名と異なります")
             generated = "generate" in manifest["setup"]
             if generated:
-                # 生成fixtureはrepo/を持たず、dataset manifestから入力を作る（ADR-048）。
+                # 生成fixtureは`repo/`を持たず、データセットのマニフェストから入力を作る（ADR-048）。
                 dataset = path.parent / manifest["setup"]["generate"]["dataset"]
                 if (path.parent / "repo").exists() or not dataset.is_file():
                     errors.append(f"{path}: 生成fixtureにdataset manifestがありません")
@@ -209,7 +209,7 @@ def matrix():
                             or status_exit[result["status"]] != manifest["expect"]["exitCode"]):
                         errors.append(f"{path}: manifestと結果の操作、status、終了コードが一致しません")
                 elif key == "resultFile":
-                    # bitz以外のrunnerの標準出力はoutcomeだけを持つobjectである（ADR-046）。
+                    # `bitz`以外のランナーの標準出力は`outcome`だけを持つオブジェクトである（ADR-046）。
                     outcome = manifest["expect"]["outcome"]
                     if (json.loads(expected.read_text()) != {"outcome": outcome}
                             or manifest["expect"]["exitCode"] != (1 if outcome == "rejected" else 0)):
@@ -220,7 +220,7 @@ def matrix():
                     errors.append(f"{path}: Parserの期待値は完全なIRの配列である必要があります")
                 referenced.add(expected_ir.resolve())
             unreferenced = {p.resolve() for p in (path.parent / "expected").glob("*") if p.is_file()} - referenced
-            # Canonical JSONのbyte列は、golden Digestの検査で別に比べる。
+            # 正規JSONのバイト列は、goldenのハッシュ値の検査で別に比べる。
             unreferenced = {p for p in unreferenced if p.name != "context.canonical.json"}
             if unreferenced:
                 errors.append(f"{path}: 参照されていない期待値があります")
@@ -233,9 +233,9 @@ def matrix():
 def fixture_coverage(checks):
     """matrixの全IDについて、入力と期待値の検証に成功したfixture群の検査があることを確かめる。
 
-    fixture群の検査は、入力・期待値・隔離setupの検証に成功したIDだけを`prepared`へ入れる。
-    fixtureのdirectoryが存在するだけでは、どの検査も入力と期待値を見ていない可能性が残る。
-    Core実行結果との照合はGate Bで行い、ここでは扱わない。
+    fixture群の検査は、入力・期待値・隔離した準備手順の検証に成功したIDだけを`prepared`へ入れる。
+    fixtureのディレクトリが存在するだけでは、どの検査も入力と期待値を見ていない可能性が残る。
+    Coreの実行結果との照合はGate Bで行い、ここでは扱わない。
     """
     ids = {identifier for identifier, _ in matrix_rows()}
     verified = {identifier for result in checks.values() for identifier in result.get("prepared", [])}
@@ -246,10 +246,10 @@ def fixture_coverage(checks):
 
 
 def executable_bits():
-    """fixture入力の実行bitが、Gitのindexと副作用期待値で一致することを確かめる。
+    """fixtureの入力の実行ビットが、Gitのインデックスと副作用の期待値で一致することを確かめる。
 
-    core.fileMode=falseのrepositoryでは、作業treeの実行bitがindexへ入らないことがある。その場合、
-    fresh checkoutで入力が変わり、監査だけが通ってしまう。
+    `core.fileMode=false`のリポジトリでは、作業ツリーの実行ビットがインデックスへ入らないことがある。その場合、
+    新しいチェックアウトで入力が変わり、監査だけが通ってしまう。
     """
     expected, errors = {}, []
     for path in sorted(FIXTURES.glob("*/*/side-effects.json")):
@@ -257,7 +257,7 @@ def executable_bits():
         if "before" not in effects:
             continue
         for relative, entry in effects["before"]["repository"].items():
-            # beforeはsetup後の状態なので、operationsが作ったfileも含む。repo/にある入力だけを見る。
+            # `before`は準備手順の後の状態なので、`operations`が作ったファイルも含む。`repo/`にある入力だけを見る。
             source = path.parent / "repo" / relative
             if entry.get("kind") == "file" and source.is_file():
                 expected[str(source.relative_to(ROOT))] = entry["executable"]
@@ -347,10 +347,10 @@ def main():
     checks["audit_self_tests"] = {"status": "Passed" if audit_tests.returncode == 0 else "Failed", "errors": [] if audit_tests.returncode == 0 else [audit_tests.stderr]}
     checks["fixture_coverage"] = fixture_coverage(checks)
     checks["step_assignment"] = validate_step_assignment()
-    # これらの検査は、構造の検査やhelperの試験では意図して保証しない。
-    # 各項目は、実際のreview済みの証拠の検査でだけ置き換える。
-    # このcommandは自分がfresh checkoutで動いているかを判定できない。
-    # この項目はcertify_gate_a.pyが、独立したcheckoutでの再実行によって判定する。
+    # これらの検査は、構造の検査やヘルパーの試験では意図して保証しない。
+    # 各項目は、実際のレビュー済みの証拠の検査でだけ置き換える。
+    # このコマンドは自分が新しいチェックアウトで動いているかを判定できない。
+    # この項目は`certify_gate_a.py`が、独立したチェックアウトでの再実行によって判定する。
     pending = ["full Gate A fresh-checkout repeatability"]
     if checks["fixture_coverage"]["status"] != "Passed":
         pending.insert(0, "conformance inputs and expectations")

@@ -1,15 +1,15 @@
-"""複合workspaceのresource上限fixtureの入力を決定論的に生成する（Core操作は実装しない）。
+"""複合ワークスペースのリソースの上限のfixtureの入力を決定論的に生成する（Coreの公開操作は実装しない）。
 
 [ADR-048](../../docs/02.設計書/10_決定記録/ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md)に従い、
-上限境界のfixtureは`repo/`の代わりにdataset manifestを持つ。本moduleはfixture harness側の参照実装であり、
-dataset manifestから入力treeを(path, 内容)の列として流す。同じmanifestからは常に同じ列を返す。
+上限の境界のfixtureは`repo/`の代わりにデータセットのマニフェストを持つ。このモジュールはfixtureのharness側の参照実装であり、
+データセットのマニフェストから入力の木構造を(パス, 内容)の列として流す。同じマニフェストからは常に同じ列を返す。
 
-計数（`count`）は生成計画を読まず、生成したbyte列だけからdimensionを数え直す。dataset manifestの宣言値と
-この計数の一致が、fixtureがちょうど1つのdimensionだけを狙った規模にしていることの証拠になる。
+計数（`count`）は生成計画を読まず、生成したバイト列だけから次元を数え直す。データセットのマニフェストの宣言値と
+この計数の一致が、fixtureがちょうど1つの次元だけを狙った規模にしていることの証拠になる。
 """
 import re
 
-# 複合workspace仕様 §10のhard limit。
+# 複合ワークスペース仕様 §10の絶対上限。
 LIMITS = {
     "memberCount": 100,
     "specFileCount": 10000,
@@ -21,13 +21,13 @@ LIMITS = {
     "verifyBindingCount": 10000,
 }
 DIMENSIONS = tuple(LIMITS)
-# 安全な入出力・互換性 §4の入力上限。1文書の配列項目と規範文は1,000、設定は64 KiB、SPECは1 MiB。
+# 安全な入出力・互換性 §4の入力の上限。1文書の配列の項目と規範文は1,000、設定は64 KiB、仕様文書は1 MiB。
 ITEMS_PER_DOCUMENT = 1000
 COMMANDS_PER_WORKSPACE = 800
 PADDING_PER_DOCUMENT = 900000
 BASE_MEMBERS = 2
-# 文書・Frontmatter・状態仕様 §11のFrontmatter 32 KiB上限を守るため、1つのbinding文書へ置く
-# test対応（binding）の件数はこれ以下にする（389件で32,759 byteが実測上の上限。安全側に300とする）。
+# 文書・フロントマター・状態仕様 §11のフロントマター32 KiB上限を守るため、1つのテスト割当ての文書へ置く
+# テスト対応（テスト割当て）の件数はこれ以下にする（389件で32,759バイトが実測上の上限。安全側に300とする）。
 BINDINGS_PER_DOCUMENT = 300
 PADDING_LINE = "この段落は入力byte数を上限の境界へ合わせるための固定文である。\n"
 FILLER_BODY = "## Context\n\n上限境界の入力を満たすための固定文書である。\n"
@@ -42,7 +42,7 @@ def workspace_path(workspace_id):
 
 
 def split(total, buckets):
-    """totalをbuckets個へできるだけ均等に分け、余りを前から配る。"""
+    """`total`を`buckets`個へできるだけ均等に分け、余りを前から配る。"""
     if buckets <= 0:
         return []
     base, extra = divmod(total, buckets)
@@ -50,7 +50,7 @@ def split(total, buckets):
 
 
 def chunks(total, cap):
-    """totalをcap以下の塊へ分ける。"""
+    """`total`を`cap`以下の塊へ分ける。"""
     if total <= 0:
         return []
     count, remainder = divmod(total, cap)
@@ -58,7 +58,7 @@ def chunks(total, cap):
 
 
 def plan(dimension, value):
-    """1つのdimensionだけを指定の値にし、ほかを通常規模へ保つ生成計画を返す。"""
+    """1つの次元だけを指定の値にし、ほかを通常の規模へ保つ生成計画を返す。"""
     if dimension not in LIMITS:
         raise ValueError(f"未知のdimensionです: {dimension}")
     members = BASE_MEMBERS
@@ -67,7 +67,7 @@ def plan(dimension, value):
     if dimension == "memberCount":
         members = value
     if dimension in {"commandDefinitionCount", "verifyBindingCount"}:
-        # 設定fileの64 KiB上限があるため、commandはworkspaceへ分けて置く。
+        # 設定ファイルの64 KiB上限があるため、コマンドはワークスペースへ分けて置く。
         needed = -(-value // COMMANDS_PER_WORKSPACE)
         members = max(BASE_MEMBERS, needed - 1)
     workspaces = workspace_ids(members)
@@ -96,7 +96,7 @@ def plan(dimension, value):
     if dimension == "relationEdgeCount":
         profile["edgeDocuments"] = chunks(value, ITEMS_PER_DOCUMENT)
     if dimension == "traceEntryCount":
-        # bindingのtest対応も2件ずつ数えるので、TASKのchangesで残りを満たす。
+        # テスト割当てのテスト対応も2件ずつ数えるので、TASKのchangesで残りを満たす。
         profile["traceDocuments"] = chunks(value - 2 * sum(bindings), ITEMS_PER_DOCUMENT)
     if dimension == "specFileCount":
         documents = len(workspaces)
@@ -114,8 +114,8 @@ def render_config(profile, index):
     if index == 0 and len(workspaces) > 1:
         lines.append("multiWorkspace:\n")
         if profile["dimension"] == "memberCount":
-            # member数の境界はCore hard limit（複合workspace仕様 §2・§10）を明示して検査する。
-            # maxMembersを省略すると既定値20が効き、99・100 memberのfixtureが既定上限で
+            # メンバー数の境界はCoreの絶対上限（複合ワークスペース仕様 §2・§10）を明示して検査する。
+            # maxMembersを省略すると既定値20が効き、99・100メンバーのfixtureが既定の上限で
             # 遮断されてしまう（境界内passedの期待と矛盾する）。
             lines.append(f"  maxMembers: {LIMITS['memberCount']}\n")
         lines.append("  members:\n")
@@ -137,7 +137,7 @@ def statement_line(document_id, number, text="秘密情報を出力しない"):
 
 
 def render_binding_document(document_id, statements, first_command, first_test):
-    """1文書に、statements件の規範文と同数のtest対応を置く。1対応が1 bindingになる。"""
+    """1文書に、`statements`件の規範文と同数のテスト対応を置く。1対応が1テスト割当てになる。"""
     head = [f"---\nid: {document_id}\ntitle: 上限境界の実装方針\nstatus: approved\ntests:\n"]
     for offset in range(statements):
         head.append(f"  - path: tests/test_{first_test + offset:05d}.py\n")
@@ -159,8 +159,8 @@ def render_statement_document(document_id, statements):
 
 
 def render_edge_document(document_id, targets):
-    """1文書に、targetsが指す実在文書へのrequires edgeを置く。targetsは重複しない（文書・
-    Frontmatter・状態仕様 §11。scalar配列の重複は`SPEC-FM-SCHEMA-001`となるため）。"""
+    """1文書に、`targets`が指す実在の文書へのrequiresのエッジを置く。`targets`は重複しない（文書・
+    フロントマター・状態仕様 §11。スカラーの配列の重複は`SPEC-FM-SCHEMA-001`となるため）。"""
     head = [f"---\nid: {document_id}\ntitle: 上限境界の関係\nstatus: approved\nrelations:\n  requires: ["]
     head.append(", ".join(targets))
     head.append("]\n---\n")
@@ -187,12 +187,12 @@ def render_padding_document(document_id, size):
         raise ValueError("補充文書の大きさが小さすぎます")
     body = line * ((size - len(head)) // len(line))
     remainder = size - len(head) - len(body)
-    # 端数は空白で埋め、最後の1 byteを改行にする。
+    # 端数は空白で埋め、最後の1バイトを改行にする。
     return head + body + (b" " * (remainder - 1) + b"\n" if remainder else b"")
 
 
 def emit(profile):
-    """(repository root相対path, 内容)をpath昇順に依存しない決定論的な順序で流す。"""
+    """(リポジトリのルートからの相対パス, 内容)を、パスの昇順に依存しない決定論的な順序で流す。"""
     workspaces = profile["workspaces"]
     entries = []
     test_cursor, document_number = 1, 1
@@ -203,8 +203,8 @@ def emit(profile):
         for offset in range(statements):
             entries.append((f"{prefix}tests/test_{test_cursor + offset:05d}.py",
                             b"def test_generated():\n    assert True\n"))
-        # Frontmatter 32 KiB上限（文書・Frontmatter・状態仕様 §11）を守るため、1 workspace分の
-        # test対応をBINDINGS_PER_DOCUMENTごとの複数文書へ分ける（通常はbindings数が小さく1文書のまま）。
+        # フロントマター32 KiB上限（文書・フロントマター・状態仕様 §11）を守るため、1ワークスペース分の
+        # テスト対応をBINDINGS_PER_DOCUMENTごとの複数文書へ分ける（通常はテスト割当て数が小さく1文書のまま）。
         chunk_test_cursor = test_cursor
         command_offset = 0
         for size in chunks(statements, BINDINGS_PER_DOCUMENT) or [0]:
@@ -222,8 +222,8 @@ def emit(profile):
         entries.append((f".spec/technical/{document_id}.md",
                         render_statement_document(document_id, statements)))
     if profile["edgeDocuments"]:
-        # 配列内のtargetを重複させないため、relationのtarget専用の実在文書を別途置く
-        # （文書・Frontmatter・状態仕様 §11。1文書の配列上限ITEMS_PER_DOCUMENT件を用意すれば足りる）。
+        # 配列内の参照先を重複させないため、関係の参照先専用の実在文書を別途置く
+        # （文書・フロントマター・状態仕様 §11。1文書の配列の上限ITEMS_PER_DOCUMENT件を用意すれば足りる）。
         target_count = min(ITEMS_PER_DOCUMENT, max(profile["edgeDocuments"]))
         targets = []
         for _ in range(target_count):
@@ -263,7 +263,7 @@ def emit(profile):
 
 
 def is_input(path):
-    """inputBytesが数えるのは、設定とSPEC Markdownだけである。"""
+    """`inputBytes`が数えるのは、設定と仕様文書のMarkdownだけである。"""
     return path.endswith("/bitz.yaml") or path == ".spec/bitz.yaml" or path.endswith(".md")
 
 
@@ -272,7 +272,7 @@ COMMAND = re.compile(r"^    ([a-z][a-z0-9]*):$")
 
 
 def count(entries):
-    """生成したbyte列だけから8つのdimensionを数え直す。生成計画は読まない。"""
+    """生成したバイト列だけから8つの次元を数え直す。生成計画は読まない。"""
     totals = {name: 0 for name in DIMENSIONS}
     bindings = set()
     for path, content in entries:
@@ -316,7 +316,7 @@ def count(entries):
 
 
 def workspace_counts(entries):
-    """workspaceごとの(完全検査する文書数, 規範文数)を、生成したbyte列から数える。"""
+    """ワークスペースごとの(完全検査する文書数, 規範文数)を、生成したバイト列から数える。"""
     counts = {}
     for path, content in entries:
         if path.endswith("bitz.yaml"):
@@ -333,7 +333,7 @@ def workspace_counts(entries):
 
 
 def dataset(fixture_id, dimension, value):
-    """fixtureへcommitするdataset manifest。宣言値は生成物の計数と一致する。"""
+    """fixtureへコミットするデータセットのマニフェスト。宣言値は生成物の計数と一致する。"""
     profile = plan(dimension, value)
     totals = count(emit(profile))
     if totals[dimension] != value:
@@ -350,7 +350,7 @@ def dataset(fixture_id, dimension, value):
 
 
 def reduced(manifest, factor=100):
-    """縮小profile。上限も同じ比率で縮め、越える／越えないの関係をそのまま保つ。"""
+    """縮小した生成計画。上限も同じ比率で縮め、越える／越えないの関係をそのまま保つ。"""
     dimension, value = manifest["dimension"], manifest["value"]
     limit = LIMITS[dimension]
     if dimension == "memberCount":
@@ -365,7 +365,7 @@ def reduced(manifest, factor=100):
 
 
 def generate(manifest):
-    """dataset manifestから入力treeを流し、宣言した全dimensionと一致することを確かめる。"""
+    """データセットのマニフェストから入力の木構造を流し、宣言した全次元と一致することを確かめる。"""
     entries = emit(plan(manifest["dimension"], manifest["value"]))
     totals = count(entries)
     if totals != manifest["dimensions"]:
