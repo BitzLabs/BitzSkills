@@ -1,7 +1,7 @@
-"""`bitz context`の既定Markdown提示（`03_操作仕様/01_context.md` §9）。
+"""`bitz context`の既定のMarkdownでの提示（`03_操作仕様/01_context.md` §9）。
 
-結果JSONだけを入力とする決定的な変換。呼び出し側（`cli.py`）は`--format markdown`
-（既定）のときにこのmoduleを使う。
+結果のJSONだけを入力とする決定的な変換。呼び出し側（`cli.py`）は`--format markdown`
+（既定）のときに、このモジュールを使う。
 """
 
 from __future__ import annotations

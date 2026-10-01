@@ -1,7 +1,7 @@
-"""SPEC MarkdownのFrontmatter検証（`02_SPECモデル/02_文書・Frontmatter・状態仕様.md`）。
+"""仕様文書のMarkdownのフロントマターの検証（`02_SPECモデル/02_文書・Frontmatter・状態仕様.md`）。
 
-YAML構文層は`yamlsafe.parse_yaml_subset`を再利用し、本moduleはSchema（型・必須・値域・
-未知key・利用不能field）だけを扱う。文面は`messages.py`に委譲する。呼び出し側
+YAMLの構文の層は`yamlsafe.parse_yaml_subset`を再利用し、本モジュールはスキーマ（型・必須・値域・
+未知のキー・利用できないフィールド）だけを扱う。文面は`messages.py`に委譲する。呼び出し側
 （`document.py`）が`source.path`／`workspaceId`を組み立てるため、ここでは`key`だけを
 返す軽量な :class:`FieldIssue` を使う。
 """
@@ -28,8 +28,8 @@ STATUS_ENUM = {
     "TASK": {"open", "done", "cancelled"},
 }
 KIND_LABEL = {"REQ": "REQ", "TECH": "TECH", "ADR": "ADR", "TASK": "TASK"}
-#: `frontmatter.schema.json`のproperties記述順（relations, implements, tests, verify, changes）に
-#: 固定する。setの反復順（PYTHONHASHSEED依存）でDiagnosticの生成順が揺れないようにするため。
+#: `frontmatter.schema.json`の`properties`の記述順（`relations`, `implements`, `tests`, `verify`, `changes`）に
+#: 固定する。`set`の反復順（`PYTHONHASHSEED`に依存）で診断の生成順が揺れないようにするため。
 ALL_OPTIONAL_FIELDS = ("relations", "implements", "tests", "verify", "changes")
 AVAILABLE_OPTIONAL_FIELDS = {
     "REQ": {"relations", "implements", "tests", "verify"},
@@ -40,7 +40,7 @@ AVAILABLE_OPTIONAL_FIELDS = {
 COMMON_REQUIRED = ("id", "title", "status")
 RELATION_KEYS = ("requires", "refines", "addresses", "supersedes", "related")
 
-#: Schema `idString`と同じpattern（複合workspace修飾子・statement suffixを含む）。
+#: スキーマの`idString`と同じパターン（複合ワークスペースの修飾子・規範文の接尾辞を含む）。
 _ID_REF_RE = re.compile(
     r"^(?:(?:[a-z][a-z0-9-]{0,31})::)?(?:REQ|TECH|ADR|TASK)-[0-9]{3,}"
     r"(?::[A-Z][A-Z0-9-]*-[0-9]{2,})?$"
@@ -48,7 +48,7 @@ _ID_REF_RE = re.compile(
 _COMMAND_NAME_RE = re.compile(r"^[a-z][a-z0-9-]{0,31}$")
 _TEST_KEYS = ("path", "covers", "command")
 #: `id`・`title`・`status`・`relations`・`implements`・`tests`・`verify`・`changes`・`refs`は
-#: Schemaの名前付きproperty。これ以外がextensionValue検査対象の未知／`x-`fieldになる。
+#: スキーマの名前付きの`properties`。これ以外が`extensionValue`の検査対象の未知／`x-`のフィールドになる。
 _NAMED_FIELDS = set(COMMON_REQUIRED) | set(ALL_OPTIONAL_FIELDS) | {"refs"}
 
 
@@ -102,10 +102,10 @@ def _is_bad_path(p: object) -> bool:
 
 
 def _is_valid_extension_value(v: object, depth: int = 0) -> bool:
-    """Schema `extensionValue`（scalar｜scalarArray｜extensionMap、再帰的）を判定する。
+    """スキーマの`extensionValue`（スカラー｜`scalarArray`｜`extensionMap`、再帰的）を判定する。
 
-    `scalarArray`は重複を許さない。`extensionMap`は文字列keyのmapで、値は同じ規則を
-    再帰的に満たす。object配列（listの要素がscalarでないもの）は許可しない（文書仕様 §3.2）。
+    `scalarArray`は重複を許さない。`extensionMap`は文字列のキーのマッピングで、値は同じ規則を
+    再帰的に満たす。オブジェクトの配列（リストの要素がスカラーでないもの）は許可しない（文書・フロントマター・状態仕様 §3.2）。
     """
 
     if depth > 32:
@@ -166,7 +166,7 @@ def _unknown_warning(key: str) -> FieldIssue:
 
 
 def _check_path_array(value: object, key: str, limits: list[FieldIssue], hard: list[FieldIssue], label: str) -> bool:
-    """``key``がpath配列として妥当か検査する。型不正ならTrueを返し呼び出し側で打ち切る。"""
+    """``key``がパスの配列として妥当か検査する。型が不正なら``True``を返し、呼び出し側で打ち切る。"""
 
     if not isinstance(value, list) or any(_is_bad_path(p) for p in value):
         hard.append(_schema_error(key, messages.fm_type_error(key, "stringの配列")))
@@ -181,7 +181,7 @@ def _check_path_array(value: object, key: str, limits: list[FieldIssue], hard: l
 
 
 def validate(value: object, kind: str) -> FrontmatterOutcome:
-    """1文書のFrontmatter（YAML部分集合としてdecode済み）を検証する。"""
+    """1文書のフロントマター（YAMLの部分集合としてデコード済み）を検証する。"""
 
     outcome = FrontmatterOutcome()
     if not isinstance(value, dict):
@@ -191,7 +191,7 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
     limits: list[FieldIssue] = []
     hard: list[FieldIssue] = []
 
-    # --- 必須field ---------------------------------------------------
+    # --- 必須フィールド ---------------------------------------------------
     for key in COMMON_REQUIRED:
         if key not in value:
             hard.append(_required_error(key))
@@ -343,7 +343,7 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
         else:
             _check_path_array(v, "changes", limits, hard, "changes")
 
-    # --- refs（旧field。型だけ検証し、legacy検出（SPEC-RELATION-LEGACY-001）はPhase Cが行う） ---
+    # --- refs（旧フィールド。型だけ検証し、旧形式の検出（SPEC-RELATION-LEGACY-001）はフェーズCが行う） ---
     if "refs" in value:
         v = value["refs"]
         if v is None:
@@ -355,7 +355,7 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
         elif _has_duplicates(v):
             hard.append(_schema_error("refs", messages.fm_array_duplicate("refs")))
 
-    # --- 拡張field・未知field（文書仕様 §3.2、Schema additionalProperties=extensionValue） -----
+    # --- 拡張フィールド・未知のフィールド（文書・フロントマター・状態仕様 §3.2、スキーマの`additionalProperties=extensionValue`） -----
     pending_unknown: list[FieldIssue] = []
     for key, v in value.items():
         if key in _NAMED_FIELDS:
@@ -373,8 +373,8 @@ def validate(value: object, kind: str) -> FrontmatterOutcome:
         outcome.hard = hard
         return outcome
 
-    # --- soft warnings（hardが皆無のときだけ評価する。fieldは固定順で反復し、
-    # setの反復順（PYTHONHASHSEED依存）でDiagnostic生成順が揺れないようにする） -----------
+    # --- 警告（`soft`。`hard`が皆無のときだけ評価する。フィールドは固定の順で反復し、
+    # `set`の反復順（`PYTHONHASHSEED`に依存）で診断の生成順が揺れないようにする） -----------
     soft: list[FieldIssue] = []
     available = AVAILABLE_OPTIONAL_FIELDS[kind]
     for key in ALL_OPTIONAL_FIELDS:

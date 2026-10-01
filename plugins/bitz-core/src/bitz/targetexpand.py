@@ -1,13 +1,13 @@
-"""`TargetExpansion(root, purpose)`（`02_SPECモデル/04_関係・トレースモデル.md` §6.1〜§6.4）。
+"""`TargetExpansion(root, purpose)`（関係・トレースモデル §6.1〜§6.4）。
 
-起点から対象を展開する唯一の契約。`context`、明示対象`check`、`verify`はこの関数を再利用する
-（同 §6.4）。`purpose=interpret`は`check`の明示対象検査が使う閉包規則と完全に同じコードを使う
-（Step 2 Phase Cで実装済み。挙動を変えないため:func:`_interpret_closure`は変更しない）。
+起点から対象を展開する唯一の契約。`context`、明示対象の`check`、`verify`はこの関数を再利用する
+（同 §6.4）。`purpose=interpret`は`check`の明示対象の検査が使う閉包の規則と完全に同じコードを使う
+（Step 2 フェーズCで実装済み。挙動を変えないため:func:`_interpret_closure`は変更しない）。
 
-`implement`／`verify`はStep 3で追加した。`context`だけがこれらのpurposeを使う。返り値
-:class:`TargetExpansionResult` は、`context`が必要とする追加情報（到達edge、距離、draft
-advisory集合、状態Diagnostic）を任意fieldとして保持する。`errors`が非空の場合、`context`は
-完全解決を成立させず、`errors`の内容をそのままDiagnosticへ変換して閉包全体を止める
+`implement`／`verify`はStep 3で追加した。`context`だけがこれらの目的（`purpose`）を使う。返り値
+:class:`TargetExpansionResult` は、`context`が必要とする追加の情報（到達したエッジ、距離、役割`advisory`として含めた、閉包内の文書を`refines`する
+状態`draft`の文書の集合、状態の診断）を任意のフィールドとして保持する。`errors`が空でない場合、`context`は
+完全解決を成立させず、`errors`の内容をそのまま診断へ変換して閉包全体を止める
 （関係・トレースモデル §10「状態と閉包」）。
 """
 
@@ -33,17 +33,18 @@ class TargetExpansionResult:
     context_documents: list[str] = field(default_factory=list)
     target_statements: list[str] = field(default_factory=list)
     adjacent_statements: list[str] = field(default_factory=list)
-    #: ``doc_id -> [(relation, source_doc_id), ...]``。`context`のreachedBy計算に使う
-    #: （重複排除・sortは呼び出し側）。
+    #: ``doc_id -> [(relation, source_doc_id), ...]``。`context`の`reachedBy`の計算に使う
+    #: （重複排除・並べ替えは呼び出し側）。
     document_edges: dict[str, list[tuple[str, str]]] = field(default_factory=dict)
-    #: ``doc_id -> 起点からの最短到達段数``（0＝起点自身）。`context`のprojection/role計算に使う。
+    #: ``doc_id -> 起点からの最短の到達段数``（0＝起点自身）。`context`の提示形式（`projection`）と役割（`role`）の
+    #: 計算に使う。
     document_distance: dict[str, int] = field(default_factory=dict)
-    #: §6.1「6.」で advisory として含めた draft refinement の doc_id 集合。
+    #: §6.1「6.」で役割`advisory`として含めた、閉包内の文書を`refines`する、状態`draft`の文書の``doc_id``の集合。
     draft_advisory: set[str] = field(default_factory=set)
-    #: purpose=implement/verifyの状態違反（§10「状態と閉包」）。非空なら閉包を完全解決不成立とする。
+    #: 目的が`implement`または`verify`のときの状態違反（§10「状態と閉包」）。空でなければ閉包を完全解決の不成立とする。
     errors: list[dict] = field(default_factory=list)
-    #: §6.1「5.」: interpretで起点が置換済み（有効な後継が単一）のときの``(origin_id, successor_id)``。
-    #: `context`はoriginをadvisory、successorをreplacementとして示す（暗黙差替えはしない）。
+    #: §6.1「5.」: `interpret`で起点が置換済み（有効な後継が単一）のときの``(origin_id, successor_id)``。
+    #: `context`は``origin``を参考（`advisory`）、``successor``を後継（`replacement`）として示す（暗黙に差し替えはしない）。
     superseded_origin: tuple[str, str] | None = None
 
 
@@ -69,14 +70,14 @@ def _refines_targets(entry: DocEntry, id_index: dict[str, DocEntry], statement_i
 def _refines_target_statements(
     entry: DocEntry, id_index: dict[str, DocEntry], statement_index: dict[str, dict]
 ) -> list[str]:
-    """``entry``の`relations.refines`のうち、statement ID形式の参照の解決済み正準statement IDを返す。
+    """``entry``の`relations.refines`のうち、規範文ID形式の参照の、解決済みの正規の規範文IDを返す。
 
-    複合workspaceでは``ref``の綴り（宣言側の修飾形式）ではなく、``statement_index``で実際に
-    解決したstatement dictの``id``を正準表現として返す（Step 5C）。同じ統合索引の中では、active
-    workspace自身のstatementは常にbare表現、他workspaceのstatementは常に`ws::local`表現で
-    一意に定まるため、これにより呼び出し側（`_applicable_refinement_statements`）のfrontier比較
-    （bare/修飾のいずれか一方に統一された表現同士の比較）が常に成立する。単一workspaceでは
-    ``ref``自体が唯一の表現なので、この変更は挙動を変えない（statement_index[ref]["id"] == ref）。
+    複合ワークスペースでは``ref``の綴り（宣言側の修飾形式）ではなく、``statement_index``で実際に
+    解決した規範文の``dict``の``id``を正規の表現として返す（Step 5C）。同じ統合索引の中では、作業
+    ワークスペース自身の規範文は常に修飾のない表現、他のワークスペースの規範文は常に`ws::local`の表現で
+    一意に定まるため、これにより呼び出し側（`_applicable_refinement_statements`）の`frontier`の比較
+    （修飾のない表現または修飾した表現のいずれか一方に統一された表現どうしの比較）が常に成立する。単一ワークスペースでは
+    ``ref``自体が唯一の表現なので、この変更は挙動を変えない（`statement_index[ref]["id"] == ref`）。
     """
 
     if entry.kind not in ("REQ", "TECH"):
@@ -110,7 +111,7 @@ def _requires_targets(entry: DocEntry, id_index: dict[str, DocEntry], statement_
 
 
 def _addresses_targets(entry: DocEntry, id_index: dict[str, DocEntry], statement_index: dict[str, dict]) -> list[str]:
-    """TASKの`relations.addresses`の参照（statement IDまたは規範文なしTECHの文書ID）を返す。"""
+    """TASKの`relations.addresses`の参照（規範文ID、または規範文のないTECHの文書ID）を返す。"""
 
     if entry.kind != "TASK":
         return []
@@ -129,10 +130,10 @@ def _addresses_targets(entry: DocEntry, id_index: dict[str, DocEntry], statement
 def _requires_closure(
     start_ids: list[str], id_index: dict[str, DocEntry], statement_index: dict[str, dict]
 ) -> list[tuple[str, str]]:
-    """``start_ids``からの`requires`推移閉包を``(target_doc_id, source_doc_id)``のlistで返す。
+    """``start_ids``からの`requires`の推移閉包を``(target_doc_id, source_doc_id)``の``list``で返す。
 
-    ``source_doc_id``はその edge を宣言した文書（`requires`を持つ文書自身）。同じtargetへ複数経路で
-    到達しても、到達したsourceごとに1要素を返す（呼び出し側が重複排除・distance計算を行う）。
+    ``source_doc_id``はそのエッジを宣言した文書（`requires`を持つ文書自身）。同じ参照先へ複数の経路で
+    到達しても、到達した参照元ごとに1要素を返す（呼び出し側が重複排除・距離の計算を行う）。
     """
 
     edges: list[tuple[str, str]] = []
@@ -154,9 +155,9 @@ def _requires_closure(
 def _draft_refinements(
     context_ids: set[str], id_index: dict[str, DocEntry], statement_index: dict[str, dict]
 ) -> list[str]:
-    """§6.1「6.」: 閉包内のapplicable文書またはそのstatementをrefinesするdraft文書をadvisoryで含める。
+    """§6.1「6.」: 閉包内の適用可能な文書またはその規範文を`refines`する、状態`draft`の文書を、役割`advisory`として含める。
 
-    draft refinementの`requires`とそれをrefinesする文書は辿らない（advisoryは規範として
+    状態`draft`の文書の`requires`と、それを`refines`する文書は辿らない（`advisory`の文書は規範として
     適用しない）。
     """
 
@@ -181,7 +182,7 @@ def _owning_document_id(root: str, id_index: dict[str, DocEntry], statement_inde
 def _interpret_closure(
     owning_id: str, id_index: dict[str, DocEntry], statement_index: dict[str, dict]
 ) -> tuple[list[str], dict[str, list[tuple[str, str]]], dict[str, int], set[str]]:
-    """`interpret`の完全閉包を計算する（§6.1、Step 2 Phase Cから移設。挙動は変更しない）。
+    """`interpret`の完全閉包を計算する（§6.1、Step 2 フェーズCから移設。挙動は変更しない）。
 
     戻り値は``(context_order, document_edges, document_distance, draft_advisory)``。
     """
@@ -202,18 +203,18 @@ def _interpret_closure(
         if pair not in edges[doc_id]:
             edges[doc_id].append(pair)
 
-    # 2. requiresを終端まで辿る。
+    # 2. `requires`を終端まで辿る。
     for target_id, source_id in _requires_closure([owning_id], id_index, statement_index):
         _add(target_id, "requires", source_id, distance.get(source_id, 0))
 
-    # 3. refines targetを含める（起点自身のrefines）。
+    # 3. `refines`の参照先を含める（起点自身の`refines`）。
     root_entry = id_index[owning_id]
     for target_id in _refines_targets(root_entry, id_index, statement_index):
         _add(target_id, "refines", owning_id, distance[owning_id])
 
-    # 4. targetをrefineするapplicable文書を逆参照で含め、そのrequiresを辿る（推移的）。
-    # 距離はtarget自身の距離+1とする（refiner-of-refinerが正しい間接距離を持つように、
-    # targetをBFS frontierとして順に処理する）。
+    # 4. 対象を`refines`する適用可能な文書を逆参照で含め、その`requires`を辿る（推移的）。
+    # 距離は参照先自身の距離+1とする（`refines`する文書をさらに`refines`する文書が正しい間接距離を持つように、
+    # 参照先を幅優先探索の`frontier`として順に処理する）。
     refiner_seen: set[str] = set()
     frontier4 = [owning_id]
     refiners: list[str] = []
@@ -230,11 +231,11 @@ def _interpret_closure(
                 _add(cand_id, "refines", cand_id, target_dist)
                 refiners.append(cand_id)
                 frontier4.append(cand_id)
-    # refinerのrequires閉包（推移的）。
+    # `refines`する文書の`requires`の閉包（推移的）。
     for target_id, source_id in _requires_closure(refiners, id_index, statement_index):
         _add(target_id, "requires", source_id, distance.get(source_id, 0))
 
-    # 6. draft refinementをadvisoryとして含める（requires・逆refinesは辿らない）。
+    # 6. 閉包内の文書を`refines`する、状態`draft`の文書を役割`advisory`として含める（`requires`・逆方向の`refines`は辿らない）。
     draft_advisory: set[str] = set()
     for doc_id in _draft_refinements(context_set, id_index, statement_index):
         entry = id_index[doc_id]
@@ -253,7 +254,7 @@ def target_expansion(
     id_index: dict[str, DocEntry],
     statement_index: dict[str, dict],
 ) -> TargetExpansionResult | None:
-    """単一起点への`TargetExpansion(root, purpose)`。起点を解決できなければ``None``を返す。"""
+    """単一の起点への`TargetExpansion(root, purpose)`。起点を解決できなければ``None``を返す。"""
 
     owning_id = _owning_document_id(root, id_index, statement_index)
     if owning_id is None:
@@ -273,8 +274,8 @@ def target_expansion(
     )
 
     if purpose == "interpret":
-        # §6.1「5.」: 置換済み起点は旧文書をadvisory、後継をreplacementとして示す
-        # （後継へ暗黙に起点を差し替えない）。有効な後継が複数ならCTX-STATE-SUPERSEDED-002。
+        # §6.1「5.」: 置換済みの起点は旧文書を役割`advisory`、後継を役割`replacement`として示す
+        # （後継へ暗黙に起点を差し替えない）。有効な後継が複数なら`CTX-STATE-SUPERSEDED-002`。
         if root_entry.kind in ("REQ", "TECH"):
             successors = _successors(owning_id, id_index, statement_index)
             if len(successors) > 1:
@@ -303,7 +304,7 @@ def target_expansion(
                 result.document_distance = distance
         return result
 
-    # --- implement／verify: 対象statementの決定と、TASK起点／状態検査の追加規則。 -------
+    # --- implement／verify: 対象規範文の決定と、TASKを起点にした場合／状態検査の追加の規則。 -------
 
     errors: list[dict] = []
 
@@ -373,7 +374,7 @@ def target_expansion(
                     }
                 )
         elif entry.kind == "ADR":
-            # accepted ADRだけを規範的な強い依存先にできる（文書仕様 §7）。
+            # 状態`accepted`のADRだけを規範的な強い依存先にできる（文書・フロントマター・状態仕様 §7）。
             if entry.status != "accepted":
                 errors.append(
                     {
@@ -392,9 +393,9 @@ def target_expansion(
                 continue
             _check_state(doc_id, is_root=False)
     elif root_entry.kind == "TASK":
-        # 関係モデル §6.2・§6.3・§10、文書仕様 §7: TASK起点の依存先も状態を検査する。
-        # implementはaddresses先の所有文書とrequires閉包（既にcontext_orderにある）、
-        # verifyはaddresses先の所有文書とそこからのinterpret閉包上の強い依存先を対象とする。
+        # 関係・トレースモデル §6.2・§6.3・§10、文書・フロントマター・状態仕様 §7: TASKを起点にした場合の依存先も状態を検査する。
+        # `implement`は`addresses`の参照先の所有文書と`requires`の閉包（すでに`context_order`にある）、
+        # `verify`は`addresses`の参照先の所有文書とそこからの`interpret`の閉包上の強い依存先を対象とする。
         dep_ids: set[str] = set()
         addressed_owning: set[str] = set()
         for ref in _addresses_targets(root_entry, id_index, statement_index):
@@ -434,10 +435,10 @@ def target_expansion(
         return result
 
     if purpose == "verify" and root_entry.kind == "TASK":
-        # §6.3: 起点TASKのaddresses先と当該先を所有する文書をcontextDocumentsへ含め、
-        # それらからinterpretの閉包規則を適用する（起点自身のrequires閉包は含めない）。
-        # 対象statement決定（`_applicable_refinement_statements`）より前に、closureを
-        # addressed文書起点で組み直す必要がある。
+        # §6.3: 起点のTASKの`addresses`の参照先と、当該の参照先を所有する文書を`contextDocuments`へ含め、
+        # それらから`interpret`の閉包の規則を適用する（起点自身の`requires`の閉包は含めない）。
+        # 対象規範文の決定（`_applicable_refinement_statements`）より前に、閉包を
+        # `addresses`の参照先の文書を起点に組み直す必要がある。
         addressed_owning_ids: list[str] = []
         for ref in _addresses_targets(root_entry, id_index, statement_index):
             target_entry, target_doc_id = _resolve_ref(ref, id_index, statement_index)
@@ -464,7 +465,7 @@ def target_expansion(
                         merged_edges[doc_id].append(pair)
                 if doc_id in sub_draft:
                     merged_draft_advisory.add(doc_id)
-            # 起点TASKからaddressed文書への到達edgeを追加する。
+            # 起点のTASKから`addresses`の参照先の文書への、到達したエッジを追加する。
             if ("addresses", owning_id) not in merged_edges[target_doc_id]:
                 merged_edges[target_doc_id].append(("addresses", owning_id))
 
@@ -473,10 +474,10 @@ def target_expansion(
         distance = merged_distance
         draft_advisory = merged_draft_advisory
 
-    # --- 対象statementの決定（§6.4）。 -----------------------------------------
+    # --- 対象規範文の決定（§6.4）。 -----------------------------------------
 
     def _ensure_in_context(doc_id: str, relation: str, source_id: str) -> None:
-        """``doc_id``がまだcontextに無ければ、edge付きで追加する（refiner文書の遅延追加）。"""
+        """``doc_id``がまだコンテキストになければ、エッジ付きで追加する（`refines`する文書の遅延追加）。"""
 
         if doc_id not in edges:
             edges[doc_id] = []
@@ -487,11 +488,11 @@ def target_expansion(
             edges[doc_id].append(pair)
 
     def _applicable_refinement_statements(stmt_id: str) -> list[str]:
-        """``stmt_id``を(推移的に)`refines`するapplicable文書のstatementを、ID順・発見順で返す。
+        """``stmt_id``を（推移的に）`refines`する適用可能な文書の規範文を、ID順・発見順で返す。
 
-        refiner文書はcatalog全体（``id_index``）から探す（TASK起点の場合、refiner文書は
-        起点自身のinterpret閉包に含まれていないことがあるため）。見つけた refiner文書は
-        :func:`_ensure_in_context` でcontextへ追加する。
+        `refines`する文書はカタログ全体（``id_index``）から探す（TASKを起点にした場合、`refines`する文書は
+        起点自身の`interpret`の閉包に含まれていないことがあるため）。見つけた`refines`する文書は
+        :func:`_ensure_in_context` でコンテキストへ追加する。
         """
 
         out: list[str] = []
@@ -505,9 +506,9 @@ def target_expansion(
                     continue
                 if target in _refines_target_statements(cand_entry, id_index, statement_index):
                     candidates.append((cand_id, cand_entry))
-            # ``cand_id``はid_indexの索引key（複合workspaceでは他workspaceの候補が`ws::local`修飾
-            # 形式）であり、``cand_entry.doc_id``（常にbare）ではなくこちらをcontext追跡keyに使う
-            # （単一workspaceでは両者が一致するため挙動を変えない）。
+            # ``cand_id``は``id_index``の索引のキー（複合ワークスペースでは他のワークスペースの候補が`ws::local`の
+            # 修飾形式）であり、``cand_entry.doc_id``（常に修飾なし）ではなくこちらをコンテキストの追跡のキーに使う
+            # （単一ワークスペースでは両者が一致するため挙動を変えない）。
             for cand_id, cand_entry in sorted(candidates, key=lambda pair: pair[0]):
                 _ensure_in_context(cand_id, "refines", cand_id)
                 ws_prefix = cand_id.partition("::")[0] if "::" in cand_id else None
@@ -529,7 +530,7 @@ def target_expansion(
             target_statements.append(stmt_id)
 
     if root_entry.kind == "TASK":
-        # 3. TASK起点: addressesするstatementと、そのapplicable refinement。
+        # 3. TASKを起点にした場合: `addresses`する規範文と、その具体化文書の規範文。
         addressed_refs = _addresses_targets(root_entry, id_index, statement_index)
         for ref in addressed_refs:
             if ":" in ref:
@@ -538,7 +539,7 @@ def target_expansion(
                     _add_target(s)
     elif root_entry.statements:
         if ":" in root:
-            # 2. statement起点: 指定句とそのapplicable refinement。他statementはadjacent。
+            # 2. 規範文を起点にした場合: 指定した規範文とその具体化文書の規範文。ほかの規範文は隣接規範文（`adjacentStatements`）。
             _add_target(root)
             for s in _applicable_refinement_statements(root):
                 _add_target(s)
@@ -546,18 +547,18 @@ def target_expansion(
                 if stmt["id"] != root:
                     adjacent_statements.append(stmt["id"])
         else:
-            # 1. 文書起点（規範文あり）: 所有する全statementとそのapplicable refinement。
+            # 1. 文書を起点にした場合（規範文あり）: 所有するすべての規範文とその具体化文書の規範文。
             for stmt in root_entry.statements:
                 _add_target(stmt["id"])
             for stmt in root_entry.statements:
                 for s in _applicable_refinement_statements(stmt["id"]):
                     _add_target(s)
-    # 5. 規範文なしTECH起点はtargetStatementsを空のままとする。
+    # 5. 規範文のないTECHを起点にした場合は`targetStatements`を空のままとする。
 
     result.target_statements = target_statements
     result.adjacent_statements = adjacent_statements
 
-    # --- implement: 対象句をaddressesするopen TASKを追加する。TASK起点自身のaddresses／requires閉包も含める。
+    # --- implement: 対象規範文を`addresses`する、状態`open`のTASKを追加する。TASKを起点にした場合は、その起点自身の`addresses`／`requires`の閉包も含める。
     if purpose == "implement":
         if root_entry.kind == "TASK":
             for ref in _addresses_targets(root_entry, id_index, statement_index):
@@ -596,7 +597,7 @@ def target_expansion(
 
 
 def _successors(doc_id: str, id_index: dict[str, DocEntry], statement_index: dict[str, dict]) -> list[str]:
-    """``doc_id``を`supersedes`する有効な（applicable）後継のID一覧を辞書順で返す。"""
+    """``doc_id``を`supersedes`する有効な（適用可能な）後継のID一覧を辞書順で返す。"""
 
     entry = id_index[doc_id]
     kind = entry.kind

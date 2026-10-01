@@ -1,7 +1,7 @@
-"""Context Digest正規化（`00_共通契約/03_Context-Digest正規化仕様.md`）。
+"""コンテキストのハッシュ値の正規化（`00_共通契約/03_Context-Digest正規化仕様.md`）。
 
-Canonical JSON化とSHA-256計算、および`frontmatter`・`bodyText`の正規化を提供する。
-`bodyText`正規化（§3.1.2）はContext Bundleの`documents[].bodyText`とDigest材料の両方が
+正規JSONへの変換とSHA-256の計算、および`frontmatter`・`bodyText`の正規化を提供する。
+`bodyText`の正規化（§3.1.2）は、コンテキスト一式の`documents[].bodyText`とハッシュ値の材料の両方が
 共有する同一の値である（`03_操作仕様/01_context.md §4`の例と本書の適合fixtureが同じ文字列を
 要求する）。
 """
@@ -15,10 +15,10 @@ import unicodedata
 DIGEST_VERSION = "1.0"
 RESOLVER_VERSION = "1.0"
 
-#: §3.1.1「relations」の固定5key（code point辞書順）。
+#: §3.1.1「relations」の固定の5つのキー（コードポイント辞書順）。
 RELATION_KEY_ORDER = ("addresses", "refines", "related", "requires", "supersedes")
 
-#: §4「path区切り文字変換の対象」。
+#: §4「パスの区切り文字の変換の対象」。
 _PATH_LIKE_KEYS = {
     "workspaces[].path",
     "documents[].frontmatter.implements[]",
@@ -33,13 +33,13 @@ def nfc(s: str) -> str:
 
 
 def to_slash(s: str) -> str:
-    """§4「3.」: path型fieldだけでU+005C REVERSE SOLIDUSをU+002F SOLIDUSへ変換する。"""
+    """§4「3.」: パス型のフィールドだけで、U+005C REVERSE SOLIDUSをU+002F SOLIDUSへ変換する。"""
 
     return s.replace("\\", "/")
 
 
 def normalize_body_text(raw: str) -> str:
-    """§3.1.2 `bodyText`正規化。BOM除去、CRLF/CR→LF、行末空白除去、先頭・末尾空行除去、末尾LF付与。"""
+    """§3.1.2 `bodyText`の正規化。BOMを除き、CRLFとCRをLFへ変換し、行末の空白を除き、先頭と末尾の空行を除き、末尾にLFを付ける。"""
 
     if raw.startswith("﻿"):
         raw = raw[1:]
@@ -59,11 +59,11 @@ def normalize_body_text(raw: str) -> str:
 
 
 def _normalize_value(value):
-    """dict/list/strを再帰的にNFC正規化する（§4「1.」）。path区切り変換は呼び出し側が個別に行う。
+    """`dict`・`list`・`str`を再帰的にNFC正規化する（§4「1.」）。パスの区切り文字の変換は呼び出し側が個別に行う。
 
-    呼び出し側（`context.py`）は重複排除・sortの前に既にNFC・path変換を適用しているべきである
-    （§2「3.正規化を適用する→4.重複排除とsortを正規化後の値へ適用する」の順序）。ここでの再適用は
-    その規律を守れなかった値を最終防衛するための冪等な処理であり、要素の重複排除やsort順序を
+    呼び出し側（`context.py`）は、重複排除と並べ替えの前に、NFCへの正規化とパスの区切り文字の変換を適用済みであるべきである
+    （§2「3.正規化を適用する→4.重複排除と並べ替えを正規化後の値へ適用する」の順序）。ここでの再適用は
+    その規律を守れなかった値に対する最後の防御のための冪等な処理であり、要素の重複排除や並べ替えの順序を
     やり直すものではない。
     """
 
@@ -77,13 +77,13 @@ def _normalize_value(value):
 
 
 def _utf16_key(k: str) -> bytes:
-    """§5「object keyはUTF-16 code unitの昇順に並べる」の比較key。
+    """§5「オブジェクトのキーはUTF-16のコード単位の昇順に並べる」の比較キー。
 
-    UTF-16BEでencodeしたbyte列は、code unit列を数値として比較した順序と一致する（各code unitが
-    2 byte big-endianで、byte単位の辞書式比較がそのまま16bit値の大小比較になるため）。附属面文字
-    （code point > U+FFFF）はsurrogate pairへ分解されるため、Python文字列の既定（code point）比較
-    とは順序が変わりうる（例: U+E000 < U+10000 はcode point順だが、U+10000はU+D800前後のsurrogateへ
-    分解されるためUTF-16 code unit順では逆転する）。
+    UTF-16BEでエンコードしたバイト列は、コード単位の列を数値として比較した順序と一致する（各コード単位が
+    2バイトのビッグエンディアンで、バイト単位の辞書式比較がそのまま16ビット値の大小比較になるため）。附属面文字
+    （コードポイント > U+FFFF）はサロゲートペアへ分解されるため、Pythonの文字列の既定（コードポイント）比較
+    とは順序が変わりうる（例: U+E000 < U+10000 はコードポイント順だが、U+10000はU+D800前後のサロゲートへ
+    分解されるためUTF-16のコード単位順では逆転する）。
     """
 
     return k.encode("utf-16-be")
@@ -110,10 +110,10 @@ def _serialize(value) -> str:
 
 
 def canonical_bytes(materials: dict) -> bytes:
-    """digest inputをRFC 8785準拠のCanonical JSONへserializeしUTF-8 byte列を返す（§5）。
+    """ハッシュ値の材料をRFC 8785準拠の正規JSONへ直列化し、UTF-8のバイト列を返す（§5）。
 
-    object keyの順序は`sorted(..., key=str)`（Python code point順）ではなく、UTF-16 code unit順
-    （:func:`_utf16_key`）で決める。附属面文字を含むkeyではcode point順と結果が異なる。
+    オブジェクトのキーの順序は`sorted(..., key=str)`（Pythonのコードポイント順）ではなく、UTF-16のコード単位順
+    （:func:`_utf16_key`）で決める。附属面文字を含むキーではコードポイント順と結果が異なる。
     """
 
     normalized = _normalize_value(materials)

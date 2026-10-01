@@ -1,4 +1,4 @@
-"""`--format text` の出力（`結果・Diagnostic・終了コード仕様 §7`）。"""
+"""`--format text` の出力（結果・診断・終了コード §7）。"""
 
 from __future__ import annotations
 

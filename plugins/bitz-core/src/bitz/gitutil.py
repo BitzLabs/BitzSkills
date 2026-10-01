@@ -1,6 +1,6 @@
-"""Git検出とrevision解決。
+"""Gitの検出とリビジョンの解決。
 
-`Core実行環境・CLI基盤契約 §4` に従い、Git CLIをargvで直接起動する。shellを使わない。
+`Core実行環境・CLI基盤契約 §4` に従い、Git CLIを引数列で直接起動する。シェルを使わない。
 """
 
 from __future__ import annotations
@@ -110,10 +110,10 @@ def is_dirty(executable: str, cwd: str, env: dict[str, str]) -> bool:
 
 @dataclass
 class ChangedPath:
-    """Git変更集合の1件（`03_操作仕様/02_check.md` §5）。
+    """Gitの変更集合の1件（`03_操作仕様/02_check.md` §5）。
 
-    ``status``は``A``（追加。未追跡を含む）、``M``（変更）、``D``（削除）、``R``（rename）のいずれか。
-    ``path``は現在版のpath（削除は基準版のpath）、``old_path``はrenameの旧pathだけに設定する。
+    ``status``は``A``（追加。未追跡を含む）、``M``（変更）、``D``（削除）、``R``（リネーム）のいずれか。
+    ``path``は現在版のパス（削除は基準版のパス）、``old_path``はリネームの旧パスだけに設定する。
     """
 
     status: str
@@ -122,7 +122,7 @@ class ChangedPath:
 
 
 def _parse_name_status_z(output: str) -> list[ChangedPath]:
-    """``git diff -z --name-status``の出力を解析する（NUL区切り。quotePathでpathが化けない）。"""
+    """``git diff -z --name-status``の出力を解析する（NUL区切り。`quotePath`でパスが化けない）。"""
 
     tokens = output.split("\0")
     if tokens and tokens[-1] == "":
@@ -192,11 +192,11 @@ def _ls_files_others_z(executable: str, cwd: str, env: dict[str, str]) -> list[C
 
 
 def _repo_root_relative_offset(executable: str, cwd: str, env: dict[str, str], workspace_root: str) -> str | None:
-    """repository rootから見た``workspace_root``の相対path（``.``＝一致）を返す。
+    """リポジトリのルートから見た``workspace_root``の相対パス（``.``＝一致）を返す。
 
-    repository rootを解決できなければ``None``を返し、呼び出し側はrepository root相対の
-    pathをそのままworkspace root相対として扱う（fallback。単一workspace検査対象repositoryの
-    大半はworkspace root＝repository rootであるため、この場合は実害がない）。
+    リポジトリのルートを解決できなければ``None``を返し、呼び出し側はリポジトリのルートからの相対の
+    パスをそのままワークスペースのルートからの相対として扱う（フォールバック。単一ワークスペースの検査対象のリポジトリの
+    大半はワークスペースのルート＝リポジトリのルートであるため、この場合は実害がない）。
     """
 
     toplevel = show_toplevel(executable, cwd, env)
@@ -209,7 +209,7 @@ def _repo_root_relative_offset(executable: str, cwd: str, env: dict[str, str], w
 
 
 def _to_workspace_relative(path: str, offset: str | None) -> str | None:
-    """repository root相対``path``をworkspace root相対へ変換する。workspace root外なら``None``。"""
+    """リポジトリのルートからの相対``path``をワークスペースのルートからの相対へ変換する。ワークスペースのルートの外なら``None``。"""
 
     if offset is None or offset in (".", ""):
         return path
@@ -222,26 +222,26 @@ def _to_workspace_relative(path: str, offset: str | None) -> str | None:
 def collect_changed_paths(
     executable: str, cwd: str, env: dict[str, str], base_rev: str, workspace_root: str
 ) -> list[ChangedPath]:
-    """基準版から現在（working tree）までの変更集合をworkspace root相対pathで返す（`check.md §5`）。
+    """基準版から現在（作業ツリー）までの変更集合を、ワークスペースのルートからの相対パスで返す（`check.md §5`）。
 
-    変更集合は次3つの和集合である（安全な入出力仕様 §6、check.md §5）。
+    変更集合は次の3つの和集合である（安全な入出力 §6、check.md §5）。
 
-    - 基準版からindex（`git diff --cached <base>`）
-    - indexからworking tree（`git diff`、引数なし）
-    - 未追跡かつ非ignore path（`git ls-files --others --exclude-standard`）
+    - 基準版からインデックス（`git diff --cached <base>`）
+    - インデックスから作業ツリー（`git diff`、引数なし）
+    - 未追跡で、Gitが無視しないパス（`git ls-files --others --exclude-standard`）
 
-    `git diff <base>`（working treeと基準版の直接比較）1回では、stageした後にworking treeを
-    基準版の内容へ戻したpath（index差分はあるがbase→working tree差分がない）が消えるため、
-    2回のdiffを別々に取って和集合にする（上の1つ目・2つ目）。
+    `git diff <base>`（作業ツリーと基準版の直接の比較）1回では、ステージした後に作業ツリーを
+    基準版の内容へ戻したパス（インデックスの差分はあるが基準版→作業ツリーの差分がない）が消えるため、
+    2回の`git diff`を別々に取って和集合にする（上の1つ目・2つ目）。
 
-    出力はNUL区切り（``-z``）で読む。`--no-optional-locks`と組み合わせても、通常のtab区切り
-    出力はfile名にtab・改行・非ASCIIを含む場合にquotePathで` "..."`へ変換され読み違える
-    （安全な入出力仕様 §6の正規化がpath全体を対象にする以上、原文のbyte列で受け取る必要がある）。
+    出力はNUL区切り（``-z``）で読む。`--no-optional-locks`と組み合わせても、通常のタブ区切りの
+    出力はファイル名にタブ・改行・非ASCIIを含む場合に`quotePath`で` "..."`へ変換され、読み違える
+    （安全な入出力 §6の正規化がパス全体を対象にする以上、原文のバイト列で受け取る必要がある）。
 
-    `git diff`はrepository root相対pathを返すが、`git ls-files`は既定でcurrent directory相対に
-    なるため`--full-name`でrepository root相対へ揃える。そのうえでworkspace rootとの相対offsetを
-    引いてworkspace root相対へ変換し、workspace root外のpathは変更集合から除外する（TASK
-    `changes`はworkspace内pathしか宣言できず、境界外のtracked path表記を持たないため）。
+    `git diff`はリポジトリのルートからの相対パスを返すが、`git ls-files`は既定で現在のディレクトリからの相対に
+    なるため`--full-name`でリポジトリのルートからの相対へ揃える。そのうえでワークスペースのルートとの相対オフセットを
+    引いてワークスペースのルートからの相対へ変換し、ワークスペースのルートの外のパスは変更集合から除外する（TASK
+    の`changes`はワークスペース内のパスしか宣言できず、境界外の追跡対象のパスの表記を持たないため）。
     """
 
     offset = _repo_root_relative_offset(executable, cwd, env, workspace_root)
@@ -261,10 +261,10 @@ def collect_changed_paths(
             if new_path is not None and old_path is not None:
                 entry = ChangedPath(status="R", path=new_path, old_path=old_path)
             elif old_path is not None:
-                # destinationがworkspace外: workspace側からはdeletion相当。
+                # 移動先がワークスペースの外: ワークスペース側からは削除に相当。
                 entry = ChangedPath(status="D", path=old_path)
             elif new_path is not None:
-                # sourceがworkspace外: workspace側からはaddition相当。
+                # 移動元がワークスペースの外: ワークスペース側からは追加に相当。
                 entry = ChangedPath(status="A", path=new_path)
             else:
                 entry = None
@@ -285,11 +285,11 @@ def collect_changed_paths(
 def list_base_spec_paths(
     executable: str, cwd: str, env: dict[str, str], base_rev: str, workspace_root: str
 ) -> list[str]:
-    """``base_rev``時点の``.spec/``配下file一覧をworkspace root相対pathで返す（`check.md §5・§9`）。
+    """``base_rev``の時点の``.spec/``配下のファイルの一覧を、ワークスペースのルートからの相対パスで返す（`check.md §5・§9`）。
 
-    `git ls-tree -r`はtree構造をたどるだけでcwdに依存しない。返るpathは常にrepository root相対で
-    あるため、:func:`collect_changed_paths`と同じくworkspace rootとの相対offsetを引いて変換する。
-    symlink（mode ``120000``）はSPEC文書として扱わない（workspace・設定仕様 §1-5と同じ規則）。
+    `git ls-tree -r`はツリーオブジェクトの構造をたどるだけで`cwd`に依存しない。返るパスは常にリポジトリのルートからの相対で
+    あるため、:func:`collect_changed_paths`と同じくワークスペースのルートとの相対オフセットを引いて変換する。
+    シンボリックリンク（モード ``120000``）は仕様文書として扱わない（ワークスペース・設定仕様 §1-5と同じ規則）。
     """
 
     offset = _repo_root_relative_offset(executable, cwd, env, workspace_root)
@@ -335,10 +335,10 @@ def show_base_file(
     workspace_root: str,
     workspace_rel_path: str,
 ) -> bytes | None:
-    """``base_rev``時点の``workspace_rel_path``の内容をbyte列で返す（存在しなければ``None``）。
+    """``base_rev``の時点の``workspace_rel_path``の内容をバイト列で返す（存在しなければ``None``）。
 
-    ``git show``の出力をbyte列のまま受け取り、encodingの復号は呼び出し側（`document.py`）へ委ねる
-    （`SPEC-INPUT-READ-001`のUTF-8検査と同じpathを再利用するため）。
+    ``git show``の出力をバイト列のまま受け取り、エンコーディングの復号は呼び出し側（`document.py`）へ委ねる
+    （`SPEC-INPUT-READ-001`のUTF-8検査と同じ経路を再利用するため）。
     """
 
     offset = _repo_root_relative_offset(executable, cwd, env, workspace_root)
@@ -364,9 +364,9 @@ def show_base_file(
 def base_tree_entry_mode(
     executable: str, cwd: str, env: dict[str, str], rev: str, workspace_root: str, workspace_rel_path: str
 ) -> str | None:
-    """``rev``時点の``workspace_rel_path``のGit modeを返す（`120000`＝symlink）。不在なら``None``。
+    """``rev``の時点の``workspace_rel_path``のGitのモードを返す（`120000`＝シンボリックリンク）。不在なら``None``。
 
-    複合workspace仕様 §5.2「base treeのsymlinkはGit treeのmodeとlink targetから解決する」を実装する。
+    複合ワークスペース仕様 §5.2「基準版のシンボリックリンクはGitのツリーオブジェクトのモードとリンク先から解決する」を実装する。
     """
 
     offset = _repo_root_relative_offset(executable, cwd, env, workspace_root)
@@ -389,9 +389,9 @@ def base_tree_entry_mode(
 
 
 def list_tree_config_paths(executable: str, cwd: str, env: dict[str, str], rev: str) -> list[str]:
-    """``rev``時点でGitが認識する``.spec/bitz.yaml``のrepository root相対pathを返す（`複合workspace仕様 §8`）。
+    """``rev``の時点でGitが認識する``.spec/bitz.yaml``の、リポジトリのルートからの相対パスを返す（`複合ワークスペース仕様 §8`）。
 
-    symlink（mode ``120000``）とGit submoduleのgitlink（mode ``160000``）は対象にしない。
+    シンボリックリンク（モード ``120000``）とGitのサブモジュールの`gitlink`（モード ``160000``）は対象にしない。
     """
 
     try:
@@ -422,13 +422,13 @@ def list_tree_config_paths(executable: str, cwd: str, env: dict[str, str], rev: 
 
 
 def list_working_config_paths(executable: str, cwd: str, env: dict[str, str]) -> list[str]:
-    """現在snapshot（working tree）でGitが認識する``.spec/bitz.yaml``のrepository root相対pathを返す。
+    """現在のスナップショット（作業ツリー）でGitが認識する``.spec/bitz.yaml``の、リポジトリのルートからの相対パスを返す。
 
-    tracked／staged path（``git ls-files``）と未追跡かつ非ignore path（``ls-files --others``）の
-    和集合を対象にする（`複合workspace仕様 §8`）。``git ls-files``はindex上のtracked pathを
-    working treeでの実在有無に関わらず返すため、`.spec/bitz.yaml`へ実際にworking treeで
-    到達できるpathだけへ絞る（複合workspace仕様 §8「working treeに存在するtracked／staged path」。
-    file移動後の旧pathがindex上に残っていても、working tree上は既に存在しないため対象にしない）。
+    追跡対象／ステージ済みのパス（``git ls-files``）と、未追跡で、Gitが無視しないパス（``ls-files --others``）の
+    和集合を対象にする（`複合ワークスペース仕様 §8`）。``git ls-files``はインデックス上の追跡対象のパスを
+    作業ツリーでの実在の有無に関わらず返すため、`.spec/bitz.yaml`へ実際に作業ツリーで
+    到達できるパスだけへ絞る（複合ワークスペース仕様 §8「作業ツリーに存在する追跡対象またはステージ済みのパス」。
+    ファイル移動後の旧パスがインデックス上に残っていても、作業ツリー上は既に存在しないため対象にしない）。
     """
 
     toplevel = show_toplevel(executable, cwd, env)
@@ -458,7 +458,7 @@ def list_working_config_paths(executable: str, cwd: str, env: dict[str, str]) ->
 
 
 def list_submodule_paths(executable: str, cwd: str, env: dict[str, str]) -> set[str]:
-    """working tree indexにgitlink（mode ``160000``）として記録されたrepository root相対pathを返す。"""
+    """作業ツリーのインデックスに`gitlink`（モード ``160000``）として記録された、リポジトリのルートからの相対パスを返す。"""
 
     try:
         proc = _run(
@@ -481,7 +481,7 @@ def list_submodule_paths(executable: str, cwd: str, env: dict[str, str]) -> set[
 
 
 def list_worktree_paths(executable: str, cwd: str, env: dict[str, str]) -> set[str]:
-    """``git worktree list``が返す全worktreeの実path（絶対path）の集合を返す（自身を含む）。"""
+    """``git worktree list``が返すすべてのワークツリーの実パス（絶対パス）の集合を返す（自身を含む）。"""
 
     try:
         proc = _run(

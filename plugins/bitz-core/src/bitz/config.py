@@ -1,6 +1,6 @@
-"""``.spec/bitz.yaml`` の読込みとSchema検査。
+"""``.spec/bitz.yaml`` の読込みとスキーマの検査。
 
-`workspace・設定仕様` §4〜§8 と `Diagnostic registry` §3 を実装する。1回読み込んだbyte列を
+`ワークスペース・設定仕様` §4〜§8 と `診断レジストリ` §3 を実装する。1回読み込んだバイト列を
 呼び出し側の同じ操作内で再利用できるよう、読み込み結果を :class:`ConfigOutcome` へまとめて返す。
 """
 
@@ -94,15 +94,15 @@ def _file_source(workspace_id: str | None, key: str | None = None) -> dict:
 
 @dataclass
 class ConfigOutcome:
-    """設定読込みの結果。
+    """設定の読込みの結果。
 
-    ``stop`` が真のとき、呼び出し側は当該Diagnosticをそのまま返して操作を停止する
-    （`stop-operation` 継続単位）。``warnings``（BOM、未知key、`profiles`）は`continue`継続単位の
-    Diagnosticであり、stop有無にかかわらず結果へ含める。``workspace_id`` は結果とDiagnosticの
-    sourceへ使う実効ID。``stop_stage`` はdoctorが検査項目（config／schema／ears）を割り当てるための
-    停止段階で、``"config"``（YAML構文・禁止構文・型・必須field不正、I/O、上限超過）、
-    ``"schema-major"``（`schemaVersion` major非互換）、``"ears-major"``（`earsAi` major非互換）、
-    またはNone（停止なし）のいずれかを取る。
+    ``stop`` が真のとき、呼び出し側は当該の診断をそのまま返して操作を停止する
+    （`stop-operation` 継続単位）。``warnings``（BOM、未知のキー、`profiles`）は`continue`継続単位の
+    診断であり、停止の有無にかかわらず結果へ含める。``workspace_id`` は結果と診断の
+    `source`へ使う実効ID。``stop_stage`` は`doctor`が検査項目（`config`／`schema`／`ears`）を割り当てるための
+    停止段階で、``"config"``（YAMLの構文・禁止された構文・型・必須フィールドの不正、I/O、上限超過）、
+    ``"schema-major"``（`schemaVersion`のメジャーバージョンの非互換）、``"ears-major"``（`earsAi`のメジャーバージョンの非互換）、
+    または``None``（停止なし）のいずれかを取る。
     """
 
     diagnostics: list[Diagnostic] = field(default_factory=list)
@@ -126,7 +126,7 @@ def _add_type_error(diags: list[Diagnostic], key: str, expected_type: str) -> No
 
 
 def _dedupe_diagnostics(diags: list[Diagnostic]) -> list[Diagnostic]:
-    """同一fieldに対する重複Diagnosticを除く（`code`と`source.key`の組で判定）。"""
+    """同一のフィールドに対する重複した診断を除く（`code`と`source.key`の組で判定）。"""
     seen: set[tuple[str, str | None]] = set()
     result: list[Diagnostic] = []
     for d in diags:
@@ -161,10 +161,10 @@ def _argv_diag(key: str, summary: str) -> Diagnostic:
 
 
 def _validate_command(name: str, raw: object, diags: list[Diagnostic]) -> dict | None:
-    """command定義を検査する（`workspace・設定仕様 §6`）。
+    """コマンドの定義を検査する（`ワークスペース・設定仕様 §6`）。
 
-    argv要素ごとの違反はfixture（`SINGLE-126-01`〜`05`）が要求する文言・
-    ``argv[<index>]``形式のsource keyで個別に返す。
+    引数列の要素ごとの違反は、fixture（`SINGLE-126-01`〜`05`）が要求する文言・
+    ``argv[<index>]``形式の`source.key`で個別に返す。
     """
 
     prefix = f"verify.commands.{name}"
@@ -205,8 +205,8 @@ def _validate_command(name: str, raw: object, diags: list[Diagnostic]) -> dict |
 def _validate_schema_version(config: dict, diags: list[Diagnostic]) -> None:
     """`schemaVersion` 自身の型・必須だけを検査する。
 
-    major検査（`Diagnostic registry` priority 144）は他fieldの型・必須検査（142/143）より
-    後に位置するが、`schemaVersion`自身の型・必須はmajor判定の前提であるため独立して先に検査する。
+    メジャーバージョンの検査（診断レジストリの`priority` 144）は、他のフィールドの型・必須の検査（142/143）より
+    後に位置するが、`schemaVersion`自身の型・必須はメジャーバージョンの判定の前提であるため、独立して先に検査する。
     """
     if "schemaVersion" not in config:
         _add_required_error(diags, "schemaVersion")
@@ -215,10 +215,10 @@ def _validate_schema_version(config: dict, diags: list[Diagnostic]) -> None:
 
 
 def _peek_workspace_id(config: dict) -> str:
-    """`workspace.id`の型・値域が妥当な場合だけそれを使う。それ以外は既定`root`。
+    """`workspace.id`の型・値域が妥当な場合だけ、それを使う。それ以外は既定の`root`。
 
-    Schema major不適合時点ではworkspaceの型検査をまだ実施していないため、
-    `SPEC-CONFIG-SCHEMA-001`／blockedのsource.workspaceIdをこのbest-effort値で補う。
+    スキーマのメジャーバージョンが不適合の時点では、`workspace`の型検査をまだ実施していないため、
+    `SPEC-CONFIG-SCHEMA-001`（`blocked`）の`source.workspaceId`を、（保証はしないが）可能な範囲で求めたこの値で補う。
     """
     workspace_cfg = config.get("workspace")
     if isinstance(workspace_cfg, dict):
@@ -229,7 +229,7 @@ def _peek_workspace_id(config: dict) -> str:
 
 
 def _validate_other_fields(config: dict, diags: list[Diagnostic]) -> None:
-    """`schemaVersion`以外の全fieldの型・必須・未知keyを検査する。"""
+    """`schemaVersion`以外のすべてのフィールドの型・必須・未知のキーを検査する。"""
     for key in config:
         if key == "profiles":
             diags.append(
@@ -314,18 +314,18 @@ def _validate_other_fields(config: dict, diags: list[Diagnostic]) -> None:
             if not isinstance(wid, str) or not lex.WORKSPACE_ID_RE.match(wid):
                 _add_type_error(diags, "workspace.id", "[a-z][a-z0-9-]{0,31}")
 
-    # multiWorkspace.membersの詳細検証はStep 1の範囲外（複合workspace仕様側で扱う）。
-    # TODO(Step5以降): multiWorkspace.membersのcatalog検証を実装する。
+    # `multiWorkspace.members`の詳細な検証はStep 1の範囲外（複合ワークスペース仕様の側で扱う）。
+    # TODO(Step5以降): `multiWorkspace.members`のカタログの検証を実装する。
 
     config["_resolvedCommands"] = commands
 
 
 def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001") -> ConfigOutcome:
-    """`.spec/bitz.yaml` を読み込みSchema検査する。
+    """`.spec/bitz.yaml` を読み込み、スキーマを検査する。
 
-    ``read_bytes`` は呼び出し側が用意した生byte列（1回読み込んだものを渡す）。
-    ``ears_version_code`` はEARS-AI major非互換時に使うcodeで、doctorだけ
-    ``SPEC-DOCTOR-EARS-001`` を渡す（`Diagnostic registry` §6）。
+    ``read_bytes`` は呼び出し側が用意した、元のバイト列（1回読み込んだものを渡す）。
+    ``ears_version_code`` はEARS-AIのメジャーバージョンが非互換のときに使う診断コードで、`doctor`だけ
+    ``SPEC-DOCTOR-EARS-001`` を渡す（`診断レジストリ` §6）。
     """
 
     outcome = ConfigOutcome()
@@ -345,9 +345,9 @@ def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001")
         outcome.workspace_id = DEFAULT_WORKSPACE_ID
         return outcome
 
-    # BOMのwarningは`continue`継続単位のため即座にoutcome.diagnosticsへ入れず、最終的な
-    # workspace同一性が確定してからsource.workspaceIdを補い、stop有無にかかわらず
-    # outcome.warningsへ入れる（結果契約 §5、Diagnostic registry priority 120）。
+    # BOMの警告は`continue`継続単位のため、即座に`outcome.diagnostics`へ入れず、最終的な
+    # ワークスペースの同一性が確定してから`source.workspaceId`を補い、停止の有無にかかわらず
+    # `outcome.warnings`へ入れる（結果・診断・終了コード §5、診断レジストリ `priority` 120）。
     bom_warning: Diagnostic | None = None
     data = read_bytes
     if data.startswith(b"\xef\xbb\xbf"):
@@ -452,9 +452,9 @@ def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001")
             None,
         )
 
-    # `schemaVersion`自身の型・必須をmajor判定より先に検査する。他fieldより優先することで、
-    # 未対応majorの設定を旧Schemaの型規則で誤ってerror判定しない（Diagnostic registry priority
-    # 142/143 対 144。同major内での型・必須検査を優先しつつ、schemaVersion自体は例外的に先読みする）。
+    # `schemaVersion`自身の型・必須をメジャーバージョンの判定より先に検査する。他のフィールドより優先することで、
+    # 未対応のメジャーバージョンの設定を、旧スキーマの型規則で誤って`error`と判定しない（診断レジストリ `priority`
+    # 142/143 対 144。同じメジャーバージョン内での型・必須の検査を優先しつつ、`schemaVersion`自体は例外的に先読みする）。
     schema_version_errors: list[Diagnostic] = []
     _validate_schema_version(value, schema_version_errors)
     if schema_version_errors:
@@ -477,7 +477,7 @@ def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001")
             tentative_workspace_id,
         )
 
-    # ここまででmajorは対応済み。他の全fieldの型・必須・未知keyを検査する。
+    # ここまででメジャーバージョンは対応済み。他のすべてのフィールドの型・必須・未知のキーを検査する。
     field_errors: list[Diagnostic] = []
     _validate_other_fields(value, field_errors)
 
@@ -485,11 +485,11 @@ def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001")
     soft_warnings = [d for d in field_errors if d.resultStatus == "passed_with_warnings"]
 
     if hard_errors:
-        # 独立した型・必須errorは全件返す（結果契約 §6.1「独立原因は別々に返す」）。
-        # ここで識別できないworkspace同一性はDiagnostic・warning双方でnullにする。
+        # 独立した型・必須の`error`は全件返す（結果・診断・終了コード §6.1「独立した原因はそれぞれ別に返す」）。
+        # ここで識別できないワークスペースの同一性は、診断・警告の双方で`null`にする。
         return _finish_stop("config", hard_errors, None, extra_warnings=soft_warnings)
 
-    # 型・必須検査を全field通過。workspace同一性を確定し、earsAiのmajor互換性を検査する。
+    # 型・必須の検査をすべてのフィールドが通過した。ワークスペースの同一性を確定し、`earsAi`のメジャーバージョンの互換性を検査する。
     workspace_id = _peek_workspace_id(value)
 
     ears_ai = value.get("earsAi", "1.0")
@@ -514,10 +514,10 @@ def load_config(read_bytes, *, ears_version_code: str = "SPEC-EARS-VERSION-001")
 
 
 def read_config(path, *, ears_version_code: str = "SPEC-EARS-VERSION-001") -> ConfigOutcome:
-    """設定fileを上限+1 byteまでだけ読み、`load_config`へ渡す。
+    """設定ファイルを上限+1バイトまでだけ読み、`load_config`へ渡す。
 
     上限を超えた時点で読取りを続けない（`INPUT-LIMIT-CONFIG`）。権限、I/O、読取り中の消失は
-    `INPUT-IO-CONFIG`（`SPEC-INPUT-READ-001`／error）として操作を止める。
+    `INPUT-IO-CONFIG`（`SPEC-INPUT-READ-001`、重大度`error`）として操作を止める。
     """
     try:
         with open(path, "rb") as f:

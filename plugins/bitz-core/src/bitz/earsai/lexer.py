@@ -1,9 +1,9 @@
-"""行内字句規則（EARS-AI仕様 §3・§4）の低水準primitive。
+"""行内の字句規則（EARS-AI言語・意味中間表現仕様 §3・§4）の低水準の基本部品。
 
-1候補行を左から右へ1回走査し、tag bracket・code span・escapeを読み取る。位置は
-すべてUnicode code point単位0始まりのoffsetとし、呼び出し側（parser.py）が
-Diagnostic向けに1始まりcolumnへ変換する。TAB・結合文字・全角文字もPython `str`の
-code point index がそのまま1 columnとして扱えるため、特別な補正を要しない。
+1つの候補行を左から右へ1回走査し、タグの角括弧・コードスパン・エスケープを読み取る。位置は
+すべてUnicodeのコードポイント単位で0始まりのオフセットとし、呼び出し側（parser.py）が
+診断向けに1始まりの列へ変換する。TAB・結合文字・全角文字もPythonの`str`の
+コードポイントのインデックスがそのまま1列として扱えるため、特別な補正を要しない。
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ import re
 
 from . import ir as ir_mod
 
-#: text-atomのescapeが許す5文字（§3 escaped）。
+#: `text-atom`のエスケープが許す5文字（§3 `escaped`）。
 ESCAPABLE = "[]\\`\""
 
 ACTIVATION_TEXT_KEYWORDS = ("WHEN", "WHILE", "WHERE", "IF_ERROR")
@@ -21,7 +21,7 @@ MODALITY_KEYWORDS = ("MUST", "SHOULD", "MAY")
 OPERATION_KEYWORDS = ("THEN", "GENERATE", "CONSTRAINT")
 CORE_TAG_KEYWORDS = ("ACTOR",) + ACTIVATION_KEYWORDS + MODALITY_KEYWORDS + ("REASON",) + OPERATION_KEYWORDS
 
-#: local-id = upper, { upper | digit | "-" }, "-", digit, digit, { digit } （ADR-054、EARS-AI仕様 §2.1）。
+#: local-id = upper, { upper | digit | "-" }, "-", digit, digit, { digit } （ADR-054、EARS-AI言語・意味中間表現仕様 §2.1）。
 STATEMENT_ID_RE = re.compile(r"^(REQ|TECH|ADR|TASK)-[0-9]{3,}:[A-Z][A-Z0-9-]*-[0-9]{2,}$")
 ACTOR_ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]*$")
 EXTENSION_RE = re.compile(r"^(?P<ns>[a-z][a-z0-9]*):(?P<term>[A-Z][A-Z0-9_]*)(?:=(?P<value>.*))?$")
@@ -32,11 +32,11 @@ _SP_TAB_RUN_RE = re.compile(r"[ \t]+")
 
 
 class LexError(Exception):
-    """字句規則違反。`condition` はir.pyの`CONDITION_*`、`offset`は0始まりcode point offset。
+    """字句規則の違反。`condition` は`ir.py`の`CONDITION_*`、`offset`は0始まりのコードポイントのオフセット。
 
-    `detail`は`CONDITION_TAG_UNCLOSED`の原因種別（"escape"／"quote"／"unclosed"）を
-    呼び出し側（parser.py）がDiagnostic文面選択に使うためのbest-effort補助情報。
-    他のconditionでは常にNone。
+    `detail`は`CONDITION_TAG_UNCLOSED`の原因の種類（"escape"／"quote"／"unclosed"）を
+    呼び出し側（parser.py）が診断の文面の選択に使うための、保証せず可能な範囲で与える補助情報。
+    他の条件では常に`None`。
     """
 
     def __init__(self, condition: str, offset: int, detail: str | None = None) -> None:
@@ -47,14 +47,14 @@ class LexError(Exception):
 
 
 def normalize_text(value: str) -> str:
-    """§4.6 SP／TAB正規化。前後を除去し内部の連続SP／TABを1個のSPへ畳む。"""
+    """§4.6 SP／TABの正規化。前後を除去し、内部の連続するSP／TABを1個のSPへ畳む。"""
 
     stripped = value.strip(" \t")
     return _SP_TAB_RUN_RE.sub(" ", stripped)
 
 
 def decode_escapes(value: str) -> str:
-    """既知escapeだけを解除する（`read_bracket`が既に妥当性を検証済みの文字列に使う）。"""
+    """既知のエスケープだけを解除する（`read_bracket`が既に妥当性を検証済みの文字列に使う）。"""
 
     out: list[str] = []
     i = 0
@@ -70,16 +70,16 @@ def decode_escapes(value: str) -> str:
 
 
 def read_bracket(line: str, pos: int) -> tuple[str, int]:
-    """`pos`の`[`から対応する`]`まで読み取り、(内容, `]`直後のoffset)を返す。
+    """`pos`の`[`から対応する`]`まで読み取り、(内容, `]`の直後のオフセット)を返す。
 
-    DQUOTE区間は`]`をqcharとして無視し（extensionのquoted value）、5種類の既知escapeは
-    2文字をまとめて消費する。§4.3「code span外の未escape`[`で直前textを終了する」はtag
-    bracket内容にも及ぶため、quote外で未escapeの`[`に出会った時点でも即座に破綻とする
-    （その内側を次のtagの開始とみなし、これ以上`pos`のbracketを探索しない）。
-    閉じられない場合、不正escapeの場合、quoted valueが閉じない場合、内側に未escapeの`[`が
-    現れた場合は、いずれも`EAI-CORE-SYNTAX-004`相当として、最初に開いた`[`（`pos`）の位置で
-    `CONDITION_TAG_UNCLOSED`のLexErrorを送出する（Diagnostic registry §4: 不正escape・
-    未閉鎖quoted value・不正／未閉鎖tagは同一conditionId）。
+    DQUOTE区間は`]`を`qchar`として無視し（拡張タグの`quoted-value`）、5種類の既知のエスケープは
+    2文字をまとめて消費する。§4.3「コードスパンの外にある未エスケープの`[`で、直前の`text`を終了する」はタグの
+    角括弧の内容にも及ぶため、引用符の外で未エスケープの`[`に出会った時点でも即座に破綻とする
+    （その内側を次のタグの開始とみなし、これ以上`pos`の角括弧を探索しない）。
+    閉じられない場合、不正なエスケープの場合、`quoted-value`が閉じない場合、内側に未エスケープの`[`が
+    現れた場合は、いずれも`EAI-CORE-SYNTAX-004`に当たるものとして、最初に開いた`[`（`pos`）の位置で
+    `CONDITION_TAG_UNCLOSED`の`LexError`を送出する（診断レジストリ §4: 不正なエスケープ・
+    未閉鎖の`quoted-value`・不正または未閉鎖のタグは同一の`conditionId`）。
     """
 
     assert line[pos] == "["
@@ -113,9 +113,9 @@ def read_bracket(line: str, pos: int) -> tuple[str, int]:
 
 
 def _read_code_span(line: str, start: int) -> tuple[str, int]:
-    """`start`のbacktick runから、同じrun長で閉じる最初のrunまでを読む(§3 code-span)。
+    """`start`のバッククォートの連続列から、同じ長さで閉じる最初の連続列までを読む(§3 `code-span`)。
 
-    (span内容, 終了runの直後offset)を返す。閉じられなければ`CONDITION_CODE_UNCLOSED`を送出する。
+    (コードスパンの内容, 終了の連続列の直後のオフセット)を返す。閉じられなければ`CONDITION_CODE_UNCLOSED`を送出する。
     """
 
     n = len(line)
@@ -137,10 +137,10 @@ def _read_code_span(line: str, start: int) -> tuple[str, int]:
 
 
 def scan_text_until_bracket(line: str, pos: int) -> tuple[str, int]:
-    """activation／reasonのtext。次の未escape・非code-span`[`まで読み、(生text, `[`のoffset)を返す。
+    """`activation`／`reason`の`text`。次の未エスケープでコードスパンの外の`[`まで読み、(元のテキスト, `[`のオフセット)を返す。
 
-    §4.6の正規化は呼び出し側がconcat後に適用する。行末まで`[`が現れない場合は、期待した
-    次tagが存在しないことを表す`CONDITION_TAG_REQUIRED`を送出する。
+    §4.6の正規化は呼び出し側が連結した後に適用する。行末まで`[`が現れない場合は、期待した
+    次のタグが存在しないことを表す`CONDITION_TAG_REQUIRED`を送出する。
     """
 
     out: list[str] = []
@@ -167,17 +167,17 @@ def scan_text_until_bracket(line: str, pos: int) -> tuple[str, int]:
 
 
 def scan_operation_text(line: str, pos: int) -> tuple[str | None, str | None, int | None]:
-    """operationのtext＋period（§3特例）。
+    """`operation`の`text`と`period`（§3の特例）。
 
-    §4.3「code span外の未escape`[`で直前textを終了する」はoperationのtextにも適用する。
-    未escapeかつcode span外の`[`に出会ったら、そこでtext走査を終了し`(None, None, その`[`のoffset)`
-    を返す。呼び出し側は、operationの後には次tagが存在しないことを踏まえてそのbracketを
-    分類する（閉じなければ不正tag、閉じてCore tag keywordならtag順序不正、それ以外は不正tag。
+    §4.3「コードスパンの外にある未エスケープの`[`で、直前の`text`を終了する」は`operation`の`text`にも適用する。
+    未エスケープかつコードスパンの外の`[`に出会ったら、そこで`text`の走査を終了し`(None, None, その`[`のオフセット)`
+    を返す。呼び出し側は、`operation`の後には次のタグが存在しないことを踏まえてその角括弧を
+    分類する（閉じなければ不正なタグ、閉じてCoreのタグのキーワードならタグの順序の不正、それ以外は不正なタグ。
     2026-09作業依頼#1）。
 
-    `[`に出会わずにEOLへ達した場合は、code span外にある行末直前の最後の`.`または`。`だけを
-    periodとみなし、それ以前をtext（正規化後）とする。該当する終端periodがなければ
-    `(None, None, None)`を返し、呼び出し側が句点欠落として扱う。
+    `[`に出会わずに行末へ達した場合は、コードスパンの外にある行末直前の最後の`.`または`。`だけを
+    `period`とみなし、それ以前を`text`（正規化後）とする。該当する終端の`period`がなければ
+    `(None, None, None)`を返し、呼び出し側が句点の欠落として扱う。
     """
 
     n = len(line)

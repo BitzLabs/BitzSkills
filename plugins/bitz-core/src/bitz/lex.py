@@ -1,7 +1,7 @@
-"""targetの字句規則。
+"""対象の字句規則。
 
-文書ID、statement ID、複合workspace修飾ID、SPEC pathの構文検査だけを行う。
-catalogへの存在確認（`CTX-ROOT-MISSING-001`）はCore操作開始後の責務であり、ここでは扱わない。
+文書ID、規範文ID、複合ワークスペースの修飾ID、仕様文書のパスの構文検査だけを行う。
+カタログへの存在確認（`CTX-ROOT-MISSING-001`）は公開操作の開始後の責務であり、ここでは扱わない。
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ def _statement_kind(s: str) -> str | None:
 
 
 def _strip_qualifier(s: str) -> str:
-    """複合workspace修飾子``<workspace-id>::``を構文チェックのうえ剥がす。
+    """複合ワークスペースの修飾子``<workspace-id>::``を、構文を検査したうえで取り除く。
 
     修飾子がなければそのまま返す。修飾子の構文が不正なら空文字列を返し、
     呼び出し側で「一致なし」として扱わせる。

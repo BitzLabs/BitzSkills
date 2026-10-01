@@ -1,6 +1,6 @@
-"""`bitz doctor` 操作（`03_操作仕様/04_doctor.md`）。
+"""`bitz doctor`操作（`03_操作仕様/04_doctor.md`）。
 
-単一workspaceと複合workspaceで設定・版・commandの診断処理を共有する。
+単一ワークスペースと複合ワークスペースで、設定・バージョン・コマンドの診断の処理を共有する。
 """
 
 from __future__ import annotations
@@ -45,12 +45,12 @@ def _workspace_missing_diagnostic() -> dict:
 
 
 def _config_check_status(outcome: config_mod.ConfigOutcome) -> str:
-    """config check（`doctor.md` §3検査5）のstatus。
+    """設定の検査項目`config`（`doctor.md` §3検査5）の状態。
 
-    停止Diagnosticのresult status（`error`または`failed`）で決まり、停止なしでwarning
-    （BOM、未知key、`profiles`）だけがあれば`warning`、どちらもなければ`passed`とする。
-    `checks[].status`のvocabularyは`passed_with_warnings`を持たないため、ここでは
-    warningだけの場合をdoctor checkの語彙`warning`へ写像する。
+    停止する診断の結果への効果（`error`または`failed`）で決まり、停止なしで警告
+    （BOM、未知のキー、`profiles`）だけがあれば`warning`、どちらもなければ`passed`とする。
+    `checks[].status`の語彙は`passed_with_warnings`を持たないため、ここでは
+    警告だけの場合を、`doctor`の検査項目の語彙`warning`へ写像する。
     """
     if outcome.stop_stage == "config":
         return worst_status([d.resultStatus for d in outcome.diagnostics])
@@ -60,7 +60,7 @@ def _config_check_status(outcome: config_mod.ConfigOutcome) -> str:
 
 
 def _append_git_check(git: gitutil.GitInfo | None, checks: list[dict], diagnostics: list[dict]) -> None:
-    # 全体操作ではGit診断を最上位に1回だけ置く。
+    # 全体操作ではGitの診断を最上位に1回だけ置く。
     if git is None:
         return
     if git.available:
@@ -83,7 +83,7 @@ def _resolve_command_file(argv0: str, cwd: str, env: dict[str, str]) -> bool:
 
 
 def _run_all_workspaces(cwd: str, env: dict[str, str]) -> tuple[dict, int]:
-    """全体事前検査を通過したrootと全memberを診断する（複合workspace仕様 §8）。"""
+    """全体事前検査を通過したルートワークスペースとすべてのメンバーを診断する（複合ワークスペース仕様 §8）。"""
 
     started = _now_ms()
     git = gitutil.detect_git(cwd, env)
@@ -121,11 +121,11 @@ def _run_all_workspaces(cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             local, _ = _diagnose_workspace(
                 WorkspaceLocation(root, config_path), outcome, None, env, [], [], member_started
             )
-            # 設定読取失敗時の既定IDではなく、catalogで確定済みの所有者を使う。
+            # 設定の読取りに失敗したときの既定のIDではなく、カタログで確定済みの所有者を使う。
             for diagnostic in local["diagnostics"]:
                 if diagnostic["source"]["kind"] == "file":
                     diagnostic["source"]["workspaceId"] = wid
-            # 事前検査後に設定を読めなくなった場合も、別checkの依存失敗を明示する。
+            # 事前検査の後に設定を読めなくなった場合も、別の検査項目の依存の失敗を明示する。
             if outcome.stop:
                 completed = {check["name"] for check in local["checks"]}
                 for name in ("schema", "ears", "command", "impact"):
@@ -217,7 +217,7 @@ def _diagnose_workspace(
     loc: WorkspaceLocation, outcome: config_mod.ConfigOutcome | None, git: gitutil.GitInfo | None,
     env: dict[str, str], checks: list[dict], diagnostics: list[dict], started: int,
 ) -> tuple[dict, int]:
-    """workspace固有の検査。全体操作ではGitの独立検査を呼出し側へ任せる。"""
+    """ワークスペース固有の検査。全体操作ではGitの独立した検査を呼出し側へ任せる。"""
     # 2. workspace
     workspace_found = loc.config_path is not None
     checks.append({"name": "workspace", "status": "passed" if workspace_found else "blocked"})
@@ -229,19 +229,19 @@ def _diagnose_workspace(
 
     assert outcome is not None
 
-    # 3. config（YAML構文・禁止構文・型・必須field、I/O、上限。`doctor.md` §3検査5）
+    # 3. config（YAMLの構文・禁止された構文・型・必須フィールド、I/O、上限。`doctor.md` §3検査5）
     config_status = _config_check_status(outcome)
     checks.append({"name": "config", "status": config_status})
 
     if outcome.stop_stage == "config":
-        # configの時点で停止。schema／ears／command／impactは依存出力がないため出さない。
+        # `config`の時点で停止。`schema`／`ears`／`command`／`impact`は依存する出力がないため出さない。
         diagnostics.extend(d.to_dict() for d in outcome.diagnostics)
         diagnostics.extend(d.to_dict() for d in outcome.warnings)
         _append_git_check(git, checks, diagnostics)
         result = _build_result(outcome.workspace_id, checks, diagnostics, started)
         return result, _exit_code(result["status"])
 
-    # 4. schema（`schemaVersion` major。`doctor.md` §3検査7）
+    # 4. schema（`schemaVersion`のメジャーバージョン。`doctor.md` §3検査7）
     if outcome.stop_stage == "schema-major":
         checks.append({"name": "schema", "status": "blocked"})
         diagnostics.extend(d.to_dict() for d in outcome.diagnostics)
@@ -251,7 +251,7 @@ def _diagnose_workspace(
         return result, _exit_code(result["status"])
     checks.append({"name": "schema", "status": "passed"})
 
-    # 5. ears（`earsAi` major。`doctor.md` §3検査8）
+    # 5. ears（`earsAi`のメジャーバージョン。`doctor.md` §3検査8）
     if outcome.stop_stage == "ears-major":
         checks.append({"name": "ears", "status": "blocked"})
         diagnostics.extend(d.to_dict() for d in outcome.diagnostics)
@@ -263,7 +263,7 @@ def _diagnose_workspace(
 
     assert outcome.stop_stage is None
 
-    # 6. git（独立検査）
+    # 6. git（独立した検査）
     _append_git_check(git, checks, diagnostics)
 
     # 7. command
@@ -309,8 +309,8 @@ def _diagnose_workspace(
             )
     checks.append({"name": "command", "status": command_status})
 
-    # 8. impact（Step 1では影響候補の実処理は未実装。常にinfoで骨格だけ返す）
-    # TODO(Step2以降): changed strong依存を持つapproved文書の実件数を数える。
+    # 8. impact（Step 1では影響候補の実処理は未実装。常に検査項目の状態`info`で骨格だけ返す）
+    # TODO(Step2以降): 変更された文書へ強く依存する`approved`の文書の実際の件数を数える。
     checks.append({"name": "impact", "status": "info"})
 
     for d in outcome.warnings:
