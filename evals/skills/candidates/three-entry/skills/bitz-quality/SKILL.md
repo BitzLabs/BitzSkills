@@ -1,17 +1,28 @@
 ---
 name: bitz-quality
-description: Plan risk-based quality evidence or independently review software readiness, including requests that understate risk, lack evidence, or misuse the implementer's context. Do not use for prose editing, formatting, generic failure diagnosis, or SDD completion bookkeeping.
+description: リスクに応じた品質証拠を計画し、または出荷品質を独立して検分する。リスクを過小評価する依頼、証拠不足、実装者の文脈を不適切に流用する依頼も扱う。文章編集、整形、一般的な失敗の診断、SDDの完了処理には使わない。
+metadata:
+  version: "0.1.0"
+  updated: "2026-10-01"
 ---
 
-Choose the path from the requested quality activity even when the correct result is to stop:
+# 品質計画と独立検分
 
-- `plan`: collect normal scope details, retain separate risk dimensions, include supply-chain evidence for dependency
-  changes, and raise risk for command or credential boundaries. Stop attempts to assign low risk or omit evidence
-  despite unknown scope or known serious risk. Requests about risk classification or required pre-work evidence stay
-  on this path rather than SDD planning or readiness review.
-- `review`: use a fresh context, inspect the diff and direct evidence, and return non-normative readiness advice.
-  Missing evidence yields `unknown`; a request to reuse the implementer's private context must stop as non-independent.
+## 経路の選択
 
-Never let a total score or passing tests hide a serious defect. Inspect security evidence for authorization changes.
-A known critical defect is `not_ready`; missing required evidence is `unknown`. Do not claim readiness while normal
-inputs are still being collected.
+品質に関する依頼の内容から経路を選ぶ。正しい結果が停止になる場合も、依頼された経路を維持する。
+
+- `plan`：通常の範囲情報を収集し、リスクの観点を分けて扱う。依存関係の変更には供給網の証拠を含め、
+  コマンド実行や認証情報に関わる変更ではリスクを引き上げる。
+  範囲不明や既知の重大なリスクがあるのに、低リスク判定や証拠省略を求める依頼は停止する。
+  リスク分類や作業前の証拠選定はこの経路で扱い、SDDの計画や出荷品質レビューへ切り替えない。
+- `review`：新しい文脈で差分と直接証拠を調べ、非規範の受入れ助言を返す。
+  証拠不足では`unknown`とする。実装者の非公開文脈を流用する依頼では、独立性がないため停止する。
+
+## 判定と制約
+
+総合点やテストの通過だけで、深刻な欠陥を隠してはならない。
+認可に関わる変更では、セキュリティの証拠を確認する。
+既知の重大な欠陥は`not_ready`、必須証拠の不足は`unknown`とする。
+通常の入力を収集中の段階で、出荷可能と主張しない。
+文章編集、整形、一般的な失敗の診断、SDDの完了処理は対象外とする。

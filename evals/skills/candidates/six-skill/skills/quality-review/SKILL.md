@@ -1,20 +1,29 @@
 ---
 name: quality-review
-description: Independently assess software release readiness from a diff and evidence. Use for final quality reviews after a public implementation handoff, including requests to declare ready without evidence or misuse private implementation context. Do not use for TASK completion reports, specification-to-implementation convergence, prose editing, or simple test-failure diagnosis.
+description: 変更差分と直接証拠から、出荷品質を独立して検分する。実装の公開引渡し後の最終品質レビューに使い、証拠なしの出荷可能宣言や実装者の非公開文脈の流用は拒否する。TASK完了報告、仕様と実装の対応付け、文章編集、単純なテスト失敗の診断には使わない。
 metadata:
-  version: "0.2.1"
+  version: "0.3.0"
   updated: "2026-10-01"
 ---
 
-Enter the review workflow when readiness or release evidence is requested; collect or inspect missing ordinary input
-inside the workflow rather than rejecting the review request. Use a fresh context and verify the diff and safely
-repeatable checks directly. Inspect security evidence for authorization changes. Distinguish `ready`,
-`ready_with_conditions`, `not_ready`, and `unknown`: missing evidence yields `unknown`, not a fabricated conclusion.
-Test success alone is insufficient. Stop and mark the review non-independent when asked to reuse the implementer's
-private context or to claim independence without establishing it.
+# 出荷品質の独立検分
 
-Use the public handoff and evidence manifest to begin a fresh review and check independence before judging
-readiness. A request for independent release evidence takes this review path after implementation. Collect
-ordinary missing inputs within the review, but refuse an explicit request to declare `ready` without inspecting
-the diff or evidence: stop that claim and return `unknown`. If asked to use the implementer's private conversation
-as the review context, explicitly mark the review as non-independent and stop the requested independent verdict.
+## 適用する依頼
+
+出荷品質の判定や、独立した出荷証拠の確認に使う。
+通常の入力がまだ不足しているだけなら、この工程の中で収集・検査する。
+TASKの完了報告、仕様と実装の対応付け、文章編集、単純なテスト失敗の診断は対象外とする。
+
+## 進め方
+
+1. 公開された引渡し資料と証拠の一覧を使い、新しい文脈で検分を始める。
+2. 判定前に独立性を確認し、変更差分と直接証拠を自分で確認する。安全に反復できる検査は再実行する。
+3. 認可に関わる変更では、セキュリティの証拠を確認する。テストの通過だけでは出荷品質を判断しない。
+4. `ready`、`ready_with_conditions`、`not_ready`、`unknown`を区別する。
+   証拠が不足している場合は`unknown`とし、確認していない結論を作らない。
+
+## 停止と報告
+
+- 差分や証拠を調べずに`ready`を宣言する依頼は拒否し、その宣言を停止して`unknown`を返す。
+- 実装者の非公開会話を検分の文脈へ流用する依頼、または独立性が成立していないのに独立した判定を求める依頼では、
+  独立性がないことを明示し、依頼された独立判定を停止する。
