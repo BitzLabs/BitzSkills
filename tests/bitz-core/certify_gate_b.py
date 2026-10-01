@@ -3,16 +3,16 @@
 # requires-python = ">=3.12"
 # dependencies = []
 # ///
-"""Gate Bの認定command(ADR-052 Decision 4)。commit済みのHEADから独立したcloneを2つ作り、
-それぞれで参照適合harnessを`--step N`で実行して結果を照合する（Step 2以降はParser adapterも
-実行する）。作業treeにcommitされていない変更があれば実行しない。
+"""Gate Bの認定コマンド（ADR-052の`Decision`の4番目の項目）。コミット済みのHEADから独立したクローンを2つ作り、
+それぞれで参照適合harnessを`--step N`で実行して結果を照合する（Step 2以降は構文解析器のアダプターも
+実行する）。作業ツリーにコミットされていない変更があれば実行しない。
 
 `fixtures/certify_gate_a.py`と同じ作風・構成にする。`tests/`から`fixtures/`とCoreの導入先
-`plugins/bitz-core`を参照する(ADR-049 Decision 6が許す向き)。uv runで実行する。
+`plugins/bitz-core`を参照する（ADR-049の`Decision`の6番目の項目が許す向き）。`uv run`で実行する。
 
-Core本体が未完成の間、fixtures/conformance/test_fake_core.pyの偽Coreによる自己試験が
-参照harnessの正しさを検査する。このcommand自体はGate Bの認定手順(clean tree判定、独立clone、
-`--step`実行、Step 2以降のParser adapter必須化、clone間一致の判定)を提供する。
+Core本体が未完成の間、`fixtures/conformance/test_fake_core.py`の偽のCoreによる自己試験が
+参照harnessの正しさを検査する。このコマンド自体はGate Bの認定手順（クリーンな作業ツリーの判定、独立したクローン、
+`--step`の実行、Step 2以降の構文解析器のアダプターの必須化、クローン間の一致の判定）を提供する。
 """
 import hashlib
 import json
@@ -34,7 +34,7 @@ def git(*args, cwd=None):
 
 
 def worktree_errors():
-    """作業treeがHEADと同じであることを確かめる。未追跡のfileも変更として数える。"""
+    """作業ツリーがHEADと同じであることを確かめる。未追跡のファイルも変更として数える。"""
     status = git("status", "--porcelain", "--untracked-files=all")
     if status.returncode != 0:
         return [status.stderr.strip() or "git statusが失敗しました"]
@@ -56,7 +56,7 @@ def run_conformance(uv, directory, step, timeout):
 
 
 def run_parser_adapter(uv, directory, timeout):
-    """Step 2以降だけが要求するParser adapter(適合fixture仕様 4.1)。存在しなければerrorとする。"""
+    """Step 2以降だけが要求する構文解析器のアダプター（適合fixture仕様 4.1）。存在しなければエラーとする。"""
     adapter = directory / PARSER_ADAPTER
     if not adapter.is_file():
         return {"exitCode": None, "stdout": b"", "stderr": b"", "error": "Parser adapterがありません"}
@@ -65,9 +65,9 @@ def run_parser_adapter(uv, directory, timeout):
 
 
 def _normalized_conformance_body(stdout_bytes):
-    """cloneごとに変わる検査対象pathと所要時間を除いた、比較可能な結果本体。"""
+    """クローンごとに変わる検査対象のパスと所要時間を除いた、比較可能な結果本体。"""
     report = json.loads(stdout_bytes.decode("utf-8"))
-    report["core"] = "<core>"  # cloneごとの一時directory pathは実行ごとに変わるため比較対象にしない
+    report["core"] = "<core>"  # クローンごとの一時ディレクトリのパスは実行ごとに変わるため比較対象にしない
     for entry in report.get("fixtures", []):
         entry.pop("durationMs", None)
     return report
@@ -86,7 +86,7 @@ def _conformance_digest(stdout_bytes):
 
 
 def judge(step, conformance, parser_adapter):
-    """checkoutごとの実行結果から、認定を妨げる理由を列挙する。空なら認定できる。"""
+    """チェックアウトごとの実行結果から、認定を妨げる理由を列挙する。空なら認定できる。"""
     errors = []
     if len(conformance) != CHECKOUTS:
         return [f"checkoutは{CHECKOUTS}つ必要です"]

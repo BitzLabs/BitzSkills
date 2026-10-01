@@ -1,7 +1,7 @@
-"""CLIを実際に起動し、結果statusと終了コードの対応を確かめる試験（REQ-002:AC-02、AC-04）。
+"""CLIを実際に起動し、結果の状態と終了コードの対応を確かめる試験（REQ-002:AC-02、AC-04）。
 
-`resultmodel.EXIT_CODE_BY_STATUS`の対応表だけでなく、console script `bitz`の終了コードが
-結果JSONのstatusと一致することを、一時directoryに作った最小のworkspaceで確かめる。
+`resultmodel.EXIT_CODE_BY_STATUS`の対応表だけでなく、コンソールスクリプト`bitz`の終了コードが
+結果JSONの状態と一致することを、一時ディレクトリに作った最小のワークスペースで確かめる。
 """
 
 import json
@@ -30,8 +30,8 @@ class CliExitCodeTests(unittest.TestCase):
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
         self.root = Path(self._tmp.name)
-        # Git探索のceilingだけではworkspaceの親探索は止まらない。
-        # TMPDIRが既存workspace配下でも、空のrepository境界で確実に隔離する。
+        # Gitの探索の上限だけでは、ワークスペースの親の探索は止まらない。
+        # `TMPDIR`が既存のワークスペース配下でも、空のリポジトリの境界で確実に隔離する。
         self.env = dict(os.environ, GIT_CEILING_DIRECTORIES=str(self.root.parent))
         subprocess.run(["git", "init", "-q", str(self.root)], env=self.env, check=True,
                        capture_output=True)
@@ -70,11 +70,11 @@ class CliExitCodeTests(unittest.TestCase):
         self.assert_status_and_exit("failed", 1)
 
     def test_blocked_exits_2(self):
-        # `.spec/bitz.yaml`がないworkspaceはSPEC-WORKSPACE-MISSING-001／blockedになる。
+        # `.spec/bitz.yaml`がないワークスペースは`SPEC-WORKSPACE-MISSING-001`／`blocked`になる。
         self.assert_status_and_exit("blocked", 2)
 
     def test_error_exits_3(self):
-        # 設定YAMLの構文不正はSPEC-CONFIG-SCHEMA-001／errorになる。
+        # 設定YAMLの構文不正は`SPEC-CONFIG-SCHEMA-001`／`error`になる。
         self.write_workspace(config='schemaVersion: "1.0"\nearsAi: [\n', document=requirement())
         self.assert_status_and_exit("error", 3)
 

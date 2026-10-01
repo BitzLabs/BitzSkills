@@ -3,7 +3,7 @@
 # requires-python = ">=3.12"
 # dependencies = []
 # ///
-"""CIの独立checkout・分割実行・厳密な集約（ADR-056）。Coreの合否は参照harnessが判定する。"""
+"""CIの独立したチェックアウト・分割実行・厳密な集約（ADR-056）。Coreの合否は参照harnessが判定する。"""
 import argparse
 import json
 import os
@@ -35,7 +35,7 @@ def head():
 
 
 def execute(args):
-    """workerは同じcommitを新しいcloneへ展開し、自分の分割だけをbuild・実行する。"""
+    """ワーカーは同じコミットを新しいクローンへ展開し、自分の分割だけをビルドして実行する。"""
     errors = certification.worktree_errors()
     if errors:
         raise ValueError("; ".join(errors))
@@ -67,7 +67,7 @@ def execute(args):
             argv = [uv, "run", "fixtures/run_conformance.py", "--core", "plugins/bitz-core",
                     "--step", str(args.step), "--shard", str(args.shard), "--shards", str(args.shards),
                     "--output", str(report_path), "--timings", str(output / f"{stem}-timings.json"), "--progress"]
-            # stderrは逐次表示する。終了まで進捗を隠さず、timeout時もCIログへ残す。
+            # 標準エラー出力は逐次表示する。終了まで進捗を隠さず、タイムアウト時もCIのログへ残す。
             result = subprocess.run(argv, cwd=clone, timeout=1800)
             evidence["conformance"] = {"exitCode": result.returncode,
                                        "report": json.loads(report_path.read_text())}
@@ -89,7 +89,7 @@ def execute(args):
 
 
 def collect(evidences, *, step, shards, replicas, commit, run_id):
-    """worker不足、別commit、別run、失敗、重複を拒否して全件結果を照合する。"""
+    """ワーカーの不足、別のコミット、別の実行、失敗、重複を拒否して全件の結果を照合する。"""
     if replicas not in (1, 2):
         raise ValueError("独立実行数は1または2です")
     identifiers = step_ids(step)

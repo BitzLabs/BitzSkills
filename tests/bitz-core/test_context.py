@@ -1,8 +1,8 @@
 """`bitz context`（`context.py`／`contextrender.py`）の単体試験。
 
-`03_操作仕様/01_context.md`の主要規則（purpose別閉包、role、coverage 5区分、projectionの
-必須・禁止field、Markdown §9の規則、上限、stale検出）を、fixtureが直接検査しない範囲も含めて
-広く確認する。golden Digest値そのものの一致は`fixtures/conformance/single/SINGLE-042`等の
+`03_操作仕様/01_context.md`の主要規則（目的別の閉包、役割、カバレッジの5区分、提示形式の
+必須・禁止フィールド、Markdown §9の規則、上限、取得後の仕様変更の検出）を、fixtureが直接検査しない範囲も含めて
+広く確認する。goldenのハッシュ値そのものの一致は`fixtures/conformance/single/SINGLE-042`などの
 適合fixtureが検査するため、ここでは形式・規則面だけを検査する。
 """
 
@@ -100,7 +100,7 @@ class BasicBundleTests(unittest.TestCase):
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
             _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
             result, exit_code = _run_context(root, ["REQ-001"], purpose="verify")
-            self.assertEqual(exit_code, 2)  # MUSTがuntested（testなし）のためblocked。
+            self.assertEqual(exit_code, 2)  # `MUST`が`untested`（テストなし）のため`blocked`。
             self.assertEqual(result["status"], "blocked")
             self.assertEqual(result["roots"], ["REQ-001"])
             self.assertRegex(result["contextDigest"], r"^sha256:[0-9a-f]{64}$")
@@ -161,7 +161,7 @@ class ProjectionFieldTests(unittest.TestCase):
             self.assertNotIn("expandable", doc)
 
     def test_reference_projection_has_expandable_and_no_body(self):
-        # REQ-002（draft）がREQ-001（起点・承認済み）をrefinesする＝§6.1「6.」のdraft refinement。
+        # REQ-002（`draft`）がREQ-001（起点・承認済み）を`refines`する＝§6.1「6.」の、`draft`の文書が`refines`する場合。
         with tempfile.TemporaryDirectory() as root:
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
             _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
@@ -180,9 +180,9 @@ class ProjectionFieldTests(unittest.TestCase):
                 self.assertNotIn(key, advisory_doc)
 
     def test_distance2_requirement_and_constraint_stay_full_not_normative(self):
-        # context仕様 §5: full projectionにするのは起点・TASK・replacement・requirement・
-        # constraintと距離1の文書。距離2以上のrequirement/constraintも、距離だけを理由に
-        # normativeへ落とさない（ADR-014 Decision 4。SINGLE-106-06と同型）。
+        # `context`仕様 §5: 提示形式`full`にするのは起点・TASK・`replacement`・`requirement`・
+        # `constraint`と距離1の文書。距離2以上の`requirement`/`constraint`も、距離だけを理由に
+        # `normative`へ落とさない（ADR-014の`Decision`の4番目の項目。SINGLE-106-06と同型）。
         with tempfile.TemporaryDirectory() as root:
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
             _write(
@@ -204,8 +204,8 @@ class ProjectionFieldTests(unittest.TestCase):
             self.assertEqual(by_id["REQ-020"]["projection"], "full")
 
     def test_distance2_refinement_is_normative(self):
-        # 距離2以上のrefinementはnormative projectionにする（起点・TASK・replacement・
-        # requirement・constraintではないため。context仕様 §5）。
+        # 距離2以上の具体化文書（役割`refinement`）は提示形式`normative`にする（起点・TASK・`replacement`・
+        # `requirement`・`constraint`ではないため。`context`仕様 §5）。
         with tempfile.TemporaryDirectory() as root:
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
             _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
@@ -346,15 +346,15 @@ class MarkdownRenderTests(unittest.TestCase):
 
 
 class NormalizeBeforeDedupTests(unittest.TestCase):
-    """Digest正規化仕様 §2「3.正規化 → 4.重複排除とsort」の順序（司令塔の是正1）。"""
+    """コンテキストのハッシュ値の正規化仕様 §2「3.正規化 → 4.重複排除と並べ替え」の順序（司令塔の是正1）。"""
 
     def test_relations_dedup_after_nfc_not_before(self):
         from bitz import context as ctx_mod
         from bitz import document as doc_mod
 
-        composed = "é"  # 'é'（単一code point、NFC）
-        decomposed = "é"  # 'e' + 結合アクセント（NFD）。NFC後は`composed`と同一になる。
-        # `relations.related`はID構文検査を経ないtarget文字列を保持するため、任意文字列を使える。
+        composed = "é"  # 'é'（単一コードポイント、NFC）
+        decomposed = "é"  # 'e' + 結合アクセント（NFD）。NFCにした後は`composed`と同一になる。
+        # `relations.related`はID構文検査を経ない参照先の文字列を保持するため、任意の文字列を使える。
         entry = doc_mod.DocEntry(
             path=".spec/requirements/REQ-001.md",
             kind="REQ",
@@ -370,7 +370,7 @@ class NormalizeBeforeDedupTests(unittest.TestCase):
             body="# REQ-001 t\n",
         )
         norm = ctx_mod._normalize_frontmatter(entry)
-        # NFC後は同一文字列になるため、重複排除で1件だけ残る。
+        # NFCにした後は同一の文字列になるため、重複排除で1件だけ残る。
         self.assertEqual(norm["relations"]["related"], [f"REQ-{composed}"])
 
     def test_implements_paths_dedup_after_nfc(self):
@@ -441,7 +441,7 @@ class MultiRootTests(unittest.TestCase):
 
 
 class SupersededOriginInterpretTests(unittest.TestCase):
-    """関係・トレースモデル §6.1「5.」、§7 role表（司令塔の是正4）。"""
+    """関係・トレースモデル §6.1「5.」、§7の役割の表（司令塔の是正4）。"""
 
     def test_single_successor_shows_advisory_and_replacement(self):
         with tempfile.TemporaryDirectory() as root:
@@ -458,7 +458,7 @@ class SupersededOriginInterpretTests(unittest.TestCase):
             by_id = {d["id"]: d for d in result["documents"]}
             self.assertEqual(by_id["TECH-001"]["role"], "advisory")
             self.assertEqual(by_id["TECH-002"]["role"], "replacement")
-            # Coreは後継へ暗黙に起点を差し替えない: rootsはTECH-001のまま。
+            # Coreは後継へ暗黙に起点を差し替えない: `roots`は`TECH-001`のまま。
             self.assertEqual(result["roots"], ["TECH-001"])
 
     def test_multiple_successors_fail_even_for_interpret(self):
@@ -481,7 +481,7 @@ class SupersededOriginInterpretTests(unittest.TestCase):
             self.assertEqual(result["diagnostics"][0]["code"], "CTX-STATE-SUPERSEDED-002")
 
     def test_implement_on_superseded_origin_is_still_blocked(self):
-        # interpretのadvisory/replacement表示は、implement/verifyの既存の遮断を変えない。
+        # `interpret`の`advisory`/`replacement`の提示は、`implement`/`verify`の既存の遮断を変えない。
         with tempfile.TemporaryDirectory() as root:
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
             _write(root, ".spec/technical/TECH-001.md", _tech("TECH-001", with_statement=False))
@@ -540,14 +540,14 @@ class TaskDependencyStateTests(unittest.TestCase):
                 _task("TASK-001", extra_frontmatter="relations:\n  addresses: [REQ-001:AC-01]\n"),
             )
             result, exit_code = _run_context(root, ["TASK-001"], purpose="verify")
-            # 依存状態は健全。MUSTがuntestedのためblockedになるが、状態系codeではない。
+            # 依存の状態は健全。`MUST`が`untested`のため`blocked`になるが、状態に関する診断コードではない。
             codes = [d["code"] for d in result["diagnostics"]]
             self.assertNotIn("CTX-STATE-001", codes)
             self.assertNotIn("CTX-STATE-SUPERSEDED-001", codes)
 
 
 class TaskAddressedRefinementTests(unittest.TestCase):
-    """関係・トレースモデル §6.4「規則3」: TASK起点のaddresses先のapplicable refinement（司令塔の是正7）。"""
+    """関係・トレースモデル §6.4「規則3」: TASKを起点にした場合の`addresses`先の具体化文書（司令塔の是正7）。"""
 
     def test_implement_task_includes_refinement_of_addressed_statement(self):
         with tempfile.TemporaryDirectory() as root:
@@ -592,7 +592,7 @@ class TaskAddressedRefinementTests(unittest.TestCase):
 
 
 class UnresolvedStrongRelationsTests(unittest.TestCase):
-    """context.md §4「unresolvedStrongRelations」（司令塔の是正6）。"""
+    """`context.md §4`「`unresolvedStrongRelations`」（司令塔の是正6）。"""
 
     def test_missing_requires_target_fails_with_unresolved_count(self):
         with tempfile.TemporaryDirectory() as root:

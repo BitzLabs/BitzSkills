@@ -1,8 +1,8 @@
 """`basecompare.state_transition_diagnostics`の単体試験。
 
 `02_SPECモデル/02_文書・Frontmatter・状態仕様.md §6・§9`の遷移表を、REQ/TECH/ADR/TASKそれぞれの
-全許可・禁止遷移で検査する。新規文書（基準版に不在）、rename（path差だけ）、削除、
-ID重複でcheckの索引から除かれた文書を削除と誤検出しないことも確認する。
+全許可・禁止遷移で検査する。新規文書（基準版に不在）、リネーム（パスの差だけ）、削除、
+ID重複で`check`の索引から除かれた文書を削除と誤検出しないことも確認する。
 """
 
 import unittest
@@ -16,7 +16,7 @@ def _entry(doc_id: str, kind: str, status: str, path: str | None = None) -> DocE
     return DocEntry(path=path, kind=kind, doc_id=doc_id, title="t", status=status, frontmatter={"id": doc_id, "title": "t", "status": status})
 
 
-# 文書・Frontmatter・状態仕様 §6の許可遷移表（自己ループ含む）。
+# 文書・フロントマター・状態仕様 §6の許可遷移表（自己ループを含む）。
 _REQ_TECH_ALLOWED = {
     ("draft", "draft"), ("draft", "approved"), ("draft", "rejected"),
     ("approved", "approved"), ("approved", "draft"), ("approved", "outdated"),
@@ -74,7 +74,7 @@ class TransitionMatrixTests(unittest.TestCase):
         self.assertEqual(diags[0].summary, "done TASKをopenへ戻すことはできません")
 
     def test_new_document_not_in_base_is_not_diagnosed(self):
-        # 基準版に存在しない新規文書は比較対象外（過去状態を推測しない）。
+        # 基準版に存在しない新規文書は比較対象外（過去の状態を推測しない）。
         base_by_id: dict = {}
         current_by_id = {"REQ-001": _entry("REQ-001", "REQ", "draft")}
         diags = basecompare.state_transition_diagnostics(base_by_id, current_by_id, "root")
@@ -97,10 +97,10 @@ class TransitionMatrixTests(unittest.TestCase):
         self.assertEqual(diags[0].source["path"], ".spec/tech/TECH-001.md")
 
     def test_id_collision_removed_from_index_is_not_treated_as_deleted(self):
-        # ID重複で現在版のcheck索引（id_index）から除かれた文書は、削除ではなく重複として
-        # 別のDiagnostic（SPEC-ID-DUPLICATE-001）が既に扱う。ここで二重にDiagnosticを作らない。
+        # ID重複で現在版の`check`の索引（`id_index`）から除かれた文書は、削除ではなく重複として
+        # 別の診断（`SPEC-ID-DUPLICATE-001`）が既に扱う。ここで二重に診断を作らない。
         base_by_id = {"TECH-001": _entry("TECH-001", "TECH", "approved")}
-        current_by_id: dict = {}  # 重複によりid_indexから除外された想定
+        current_by_id: dict = {}  # 重複により`id_index`から除外された想定
         diags = basecompare.state_transition_diagnostics(
             base_by_id, current_by_id, "root", current_ids_present={"TECH-001"}
         )

@@ -1,6 +1,6 @@
-"""`bitz.multirelate`（修飾IDの横断解決とrelation Diagnostic）の単体試験。
+"""`bitz.multirelate`（修飾IDの横断解決と関係の診断）の単体試験。
 
-`02_SPECモデル/04_関係・トレースモデル.md` §5.1（relation Diagnosticの優先順位）、
+`02_SPECモデル/04_関係・トレースモデル.md` §5.1（関係の診断の優先順位）、
 `02_SPECモデル/05_複合workspace仕様.md` §4・§5.1・§9 を対象にする（Step 5B）。
 """
 
@@ -29,11 +29,11 @@ def _entry(doc_id, kind, status, *, path=None, frontmatter=None, statements=None
 
 
 class ResolveEdgeTests(unittest.TestCase):
-    """関係・トレースモデル §5.1「1つのrelation edgeは次の順に検査し…」の優先順位を確認する。"""
+    """関係・トレースモデル §5.1「1つの関係のエッジは次の順に検査し…」の優先順位を確認する。"""
 
     def setUp(self):
         self.web_tech = _entry("TECH-010", "TECH", "approved")
-        self.api_tech = _entry("TECH-010", "TECH", "approved")  # 別workspaceの同一local ID
+        self.api_tech = _entry("TECH-010", "TECH", "approved")  # 別のワークスペースの同一のローカルID
         self.root_req = _entry(
             "REQ-001", "REQ", "approved",
             statements=[{"id": "REQ-001:AC-01", "documentId": "REQ-001"}],
@@ -67,7 +67,7 @@ class ResolveEdgeTests(unittest.TestCase):
         self.assertEqual(qid, "web::TECH-010")
 
     def test_unqualified_target_only_in_other_workspace(self):
-        # sourceがplatformの場合、TECH-010はweb/apiにしかない（横断意図を推測せずMULTI-REF）。
+        # 参照元が`platform`の場合、`TECH-010`は`web/api`にしかない（横断の意図を推測せず`MULTI-REF`）。
         status, reason, _qid = multirelate.resolve_edge(
             "TECH-010", "platform", self.local_id_indices, self.local_stmt_indices, self.known_ws_ids
         )
@@ -99,7 +99,7 @@ class ResolveEdgeTests(unittest.TestCase):
 
 
 class FieldDiagnosticsPriorityTests(unittest.TestCase):
-    """resolve_edgeの理由coを実際のDiagnostic codeへ正しく変換することを確認する。"""
+    """`resolve_edge`の理由コードを実際の診断コードへ正しく変換することを確認する。"""
 
     def setUp(self):
         self.root_req = _entry(
@@ -125,7 +125,7 @@ class FieldDiagnosticsPriorityTests(unittest.TestCase):
         return diags[0]
 
     def test_unqualified_elsewhere_is_multi_ref(self):
-        # "REQ-001"はweb自身には無く、platformにだけある非修飾参照。
+        # "REQ-001"は`web`自身には無く、`platform`にだけある非修飾参照。
         d = self._diag_for({"refines": ["REQ-001"]})
         self.assertEqual(d.code, "SPEC-MULTI-REF-001")
 
@@ -138,7 +138,7 @@ class FieldDiagnosticsPriorityTests(unittest.TestCase):
         self.assertEqual(d.code, "SPEC-RELATION-MISSING-001")
 
     def test_qualified_kind_mismatch_is_relation_type(self):
-        # TECHのrefinesはREQ／TECHしか許可しない。ADRをrefines先に指定するとkind不適合になる。
+        # TECHの`refines`はREQ／TECHしか許可しない。ADRを`refines`の参照先に指定すると文書種別の不適合になる。
         adr = _entry("ADR-001", "ADR", "accepted")
         self.local_id_indices["platform"]["ADR-001"] = adr
         d = self._diag_for({"refines": ["platform::ADR-001"]})
@@ -156,7 +156,7 @@ class FieldDiagnosticsPriorityTests(unittest.TestCase):
 
 
 class PathOwnershipTests(unittest.TestCase):
-    """`_resolve_owned_path`（複合workspace仕様 §5.1）の所有境界判定を確認する。"""
+    """`_resolve_owned_path`（複合ワークスペース仕様 §5.1）の所有境界の判定を確認する。"""
 
     def test_symlink_outside_ownership_is_violation(self):
         import os
@@ -201,7 +201,7 @@ class PathOwnershipTests(unittest.TestCase):
 
 
 class CoversAllowedRefsTests(unittest.TestCase):
-    """関係・トレースモデル §9「direct refines」の横断covers許可を確認する。"""
+    """関係・トレースモデル §9の、直接`refines`する場合の横断`covers`の許可を確認する。"""
 
     def test_cross_workspace_direct_refines_statement_allowed(self):
         root_req = _entry(
@@ -247,9 +247,9 @@ class CoversAllowedRefsTests(unittest.TestCase):
 
 
 class GlobalCycleDiagnosticsTests(unittest.TestCase):
-    """関係・トレースモデル §4「requiresとrefinesを合わせた意味依存graph…の循環を禁止する」。
+    """関係・トレースモデル §4「`requires`と`refines`を合わせた意味上の依存グラフ…の循環を禁止する」。
 
-    複合workspaceでは横断edge（修飾IDで解決したedge）も含めたgraphで循環を検出することを確認する。
+    複合ワークスペースでは横断エッジ（修飾IDで解決したエッジ）も含めたグラフで循環を検出することを確認する。
     """
 
     def test_cross_workspace_requires_cycle_is_detected(self):
@@ -285,7 +285,7 @@ class GlobalCycleDiagnosticsTests(unittest.TestCase):
         self.assertIn(("CTX-CYCLE-001", "web"), codes)
 
     def test_cross_workspace_related_cycle_is_not_detected(self):
-        # relatedは循環検査の対象外（関係・トレースモデル §4「related循環は許可し探索しない」）。
+        # `related`は循環検査の対象外（関係・トレースモデル §4「`related`の循環は許可し探索しない」）。
         web_a = _entry(
             "TECH-A", "TECH", "approved",
             frontmatter={"relations": {"related": ["api::TECH-B"]}},

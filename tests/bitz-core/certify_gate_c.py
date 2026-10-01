@@ -3,11 +3,11 @@
 # requires-python = ">=3.12"
 # dependencies = []
 # ///
-"""Gate Cの実行・集約command。
+"""Gate Cの実行・集約コマンド。
 
-runはcommit済みHEADからfresh checkoutを作り、指定した環境roleで全適合fixtureとCore単体試験を実行する。
-collectはminimum/referenceの2証拠をfail-closedで照合し、対象commitのfresh checkoutで
-受入済み性能baselineと固定SLO、および提案25のP0/P1 11件の個別証拠を再監査する。
+`run`はコミット済みHEADから新しいチェックアウトを作り、指定した環境のロールで全適合fixtureとCore単体試験を実行する。
+`collect`は`minimum`と`reference`の2つの証跡を、失敗時に通さない扱いで照合し、対象コミットの新しいチェックアウトで
+受入済みの性能ベースラインと固定SLO、および提案25のP0/P1 11件の個別の証跡を再監査する。
 すべてが通過した場合だけGate Cを`Passed`とする。
 """
 from __future__ import annotations
@@ -262,7 +262,7 @@ def run_evidence(role: str, environment_id: str, python_spec: str) -> tuple[dict
 
 
 def run_performance_evidence(commit: str) -> tuple[dict, list[str]]:
-    """対象commitのfresh checkoutで受入済み性能baselineを再監査する。"""
+    """対象コミットの新しいチェックアウトで受入済みの性能ベースラインを再監査する。"""
     errors: list[str] = []
     uv = shutil.which("uv")
     evidence = {
@@ -305,7 +305,7 @@ def run_performance_evidence(commit: str) -> tuple[dict, list[str]]:
 
 
 def run_priority_closure_evidence(commit: str) -> tuple[dict, list[str]]:
-    """対象commitのfresh checkoutでP0/P1 11件の対応証拠を再監査する。"""
+    """対象コミットの新しいチェックアウトでP0/P1 11件の対応の証跡を再監査する。"""
     errors: list[str] = []
     uv = shutil.which("uv")
     evidence = {

@@ -1,7 +1,7 @@
-"""relation・path・coverage検査（`relations.py`）の単体試験（Step 2 Phase C）。
+"""関係・パス・カバレッジの検査（`relations.py`）の単体試験（Step 2 フェーズC）。
 
 `04_関係・トレースモデル.md` §3〜§5・§9、`02_文書・Frontmatter・状態仕様.md` §5・§6・§7、
-`Diagnostic registry` §4 の規則を検査する。
+診断レジストリ §4 の規則を検査する。
 """
 
 import os
@@ -247,7 +247,7 @@ class RelationTypeTableTests(unittest.TestCase):
         )
 
     def test_task_addresses_normed_req_by_bare_doc_id_is_type_error(self):
-        # 規範文を持つREQを文書IDだけで指定してはならない（本文template §5）。
+        # 規範文を持つREQを文書IDだけで指定してはならない（本文テンプレート §5）。
         self._assert_allowed(
             {
                 ".spec/tasks/TASK-001.md": _task(
@@ -339,12 +339,12 @@ class MissingTargetTests(unittest.TestCase):
             catalog = _build(root)
             diags = rel_mod.check_relations(catalog.entries, WORKSPACE_ID)
             self.assertEqual([d.code for d in diags], ["SPEC-RELATION-LEGACY-001"])
-            # skip-edge: 文書自体は完全検査済み（skip-documentではない）。
+            # `skip-edge`: 文書自体は完全検査済み（`skip-document`ではない）。
             self.assertEqual(catalog.checked_document_count, 2)
 
 
 class PerEdgePrimaryTests(unittest.TestCase):
-    """関係・トレースモデル §5.1: 独立したraw原因（＝別edge）はそれぞれprimaryを持つ。"""
+    """関係・トレースモデル §5.1: 独立した元の原因（＝別のエッジ）はそれぞれ主診断を持つ。"""
 
     def test_multiple_missing_targets_in_one_field_each_get_a_diagnostic(self):
         with tempfile.TemporaryDirectory() as root:
@@ -360,8 +360,8 @@ class PerEdgePrimaryTests(unittest.TestCase):
             for d in diags:
                 self.assertEqual(d.code, "SPEC-RELATION-MISSING-001")
                 self.assertEqual(d.source["key"], "relations.requires")
-            # 同じkey（relations.requires）に複数の参照切れがあっても、evidenceで区別できる
-            # （結果契約 §4。SINGLE-133）。
+            # 同じキー（`relations.requires`）に複数の参照切れがあっても、`evidence`で区別できる
+            # （結果・診断・終了コード §4。SINGLE-133）。
             self.assertEqual([d.evidence for d in diags], ["REQ-998", "REQ-999"])
 
     def test_missing_and_type_mismatch_both_reported_independently(self):
@@ -384,7 +384,7 @@ class PerEdgePrimaryTests(unittest.TestCase):
 
 class CoverageRefinesTests(unittest.TestCase):
     def test_covers_via_refined_document_statement_form(self):
-        # refines先をstatement ID形式で直接指定した場合、そのstatementだけがcover可能。
+        # `refines`の参照先を規範文ID形式で直接指定した場合、その規範文だけを`covers`できる。
         with tempfile.TemporaryDirectory() as root:
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
             fm = "tests:\n  - path: tests/test_x.py\n    covers: [REQ-001:AC-01]\nrelations:\n  refines: [REQ-001:AC-01]\n"
@@ -395,7 +395,7 @@ class CoverageRefinesTests(unittest.TestCase):
             self.assertEqual(diags, [])
 
     def test_covers_not_directly_refined_document_is_invalid(self):
-        # REQ-002はTECH-001がrefinesしていないため、そのstatementをcoverしてはならない。
+        # REQ-002はTECH-001が`refines`していないため、その規範文を`covers`してはならない。
         with tempfile.TemporaryDirectory() as root:
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
             fm = "tests:\n  - path: tests/test_x.py\n    covers: [REQ-002:AC-01]\n"
@@ -421,7 +421,7 @@ class CycleTests(unittest.TestCase):
 
     def test_long_cycle_across_requires_and_refines(self):
         # TECH-001 --requires--> TECH-002 --refines--> REQ-001 --requires--> TECH-001 という
-        # 3文書混在の長い循環（requiresとrefinesを合わせた意味依存graph全体で検出する）。
+        # 3文書が混在する長い循環（`requires`と`refines`を合わせた意味上の依存グラフ全体で検出する）。
         with tempfile.TemporaryDirectory() as root:
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
             _write(
@@ -570,8 +570,8 @@ class CoverageTests(unittest.TestCase):
             self.assertEqual(diags[0].source["key"], "tests[0].covers")
 
     def test_covers_multiple_invalid_refs_each_get_a_diagnostic(self):
-        # 結果契約 §4「covers要素を単位とするDiagnostic」: 1つのcovers配列に不正な参照が
-        # 複数あれば、要素ごとに1件ずつevidenceで区別されたDiagnosticを返す（最初の1件で
+        # 結果・診断・終了コード §4「`covers`の要素を単位とする診断」: 1つの`covers`の配列に不正な参照が
+        # 複数あれば、要素ごとに1件ずつ`evidence`で区別された診断を返す（最初の1件で
         # 打ち切らない）。妥当な参照は無視する。
         with tempfile.TemporaryDirectory() as root:
             _write(root, ".spec/bitz.yaml", _bitz_yaml())

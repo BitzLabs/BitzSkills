@@ -1,9 +1,9 @@
-"""`check`の`scope: selected`検査範囲限定（`check.md §3`）の単体試験。
+"""`check`の`scope: selected`による検査範囲の限定（`check.md §3`）の単体試験。
 
-完全検査のDiagnosticと`checkedDocumentCount`/`checkedStatementCount`は
+完全検査の診断と`checkedDocumentCount`/`checkedStatementCount`は
 `TargetExpansion(root, interpret).contextDocuments`と、それらを直接逆参照する文書の和集合だけに
-限り、集合外の文書のFrontmatter/EARS/relation/path/coverage Diagnosticを出さないことを検査する。
-workspace単位のDiagnostic（未知entry等）とID重複は集合に関わらず残ることも確認する。
+限り、集合外の文書のフロントマター/EARS-AI/関係/パス/カバレッジの診断を出さないことを検査する。
+ワークスペース単位の診断（未知のエントリなど）とID重複は集合に関わらず残ることも確認する。
 """
 
 import os
@@ -13,7 +13,7 @@ import unittest
 from bitz import check as check_mod
 from bitz.cliargs import ParsedArgs
 
-# Git不在を強制するenv（`SPEC-TASK-BOUNDARY-002`等のfixtureと同じ手法）。
+# Git不在を強制する環境変数（`SPEC-TASK-BOUNDARY-002`などのfixtureと同じ手法）。
 _NO_GIT_ENV = {"PATH": "/dev/null"}
 
 
@@ -49,7 +49,7 @@ status: approved
 未証明。
 """
 
-# REQ-001とは無関係な文書。関係先が存在せずSPEC-RELATION-MISSING-001を持つ。
+# REQ-001とは無関係な文書。関係先が存在せず`SPEC-RELATION-MISSING-001`を持つ。
 REQ_UNRELATED_BROKEN = """---
 id: REQ-002
 title: 無関係な文書
@@ -73,7 +73,7 @@ relations:
 未証明。
 """
 
-# REQ-001をrequiresする文書（直接逆参照で完全検査対象へ含まれるべき）。
+# REQ-001を`requires`する文書（直接逆参照で完全検査の対象へ含まれるべき）。
 REQ_REVERSE_REF = """---
 id: REQ-003
 title: REQ-001を参照する文書
@@ -135,8 +135,8 @@ class ScopeSelectedFilterTests(unittest.TestCase):
             _write(root, ".spec/requirements/REQ-003.md", REQ_REVERSE_REF)
 
             result, _exit_code = _run(root, ["REQ-001"])
-            # REQ-003はREQ-001を直接requiresするため、checkedDocumentCountへ含まれる
-            # （REQ-001自身の1件 + REQ-003の1件 = 2件、statementはそれぞれ1件ずつ）。
+            # REQ-003はREQ-001を直接`requires`するため、`checkedDocumentCount`へ含まれる
+            # （REQ-001自身の1件 + REQ-003の1件 = 2件、規範文はそれぞれ1件ずつ）。
             self.assertEqual(result["checkedDocumentCount"], 2)
             self.assertEqual(result["checkedStatementCount"], 2)
             self.assertEqual(result["diagnostics"], [])
@@ -146,7 +146,7 @@ class ScopeSelectedFilterTests(unittest.TestCase):
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
             _write(root, ".spec/requirements/REQ-001.md", REQ_TARGET)
             _write(root, ".spec/requirements/REQ-002.md", REQ_UNRELATED_BROKEN)
-            # `.spec/`内の未知entry（workspace単位のDiagnostic）はscope=selectedでも残る。
+            # `.spec/`内の未知のエントリ（ワークスペース単位の診断）は`scope=selected`でも残る。
             _write(root, ".spec/unknown-entry.txt", "x\n")
 
             result, _exit_code = _run(root, ["REQ-001"])

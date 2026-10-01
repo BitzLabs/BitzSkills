@@ -1,8 +1,8 @@
-"""`check --all-workspaces`のmember処理（Step 5B）の単体試験。
+"""`check --all-workspaces`のメンバーの処理（Step 5B）の単体試験。
 
 `02_SPECモデル/05_複合workspace仕様.md` §6・§8・§9、`03_操作仕様/02_check.md`を対象にする。
-`tests/bitz-core/test_multiws.py`は全体事前検査（Step 5A）だけを対象にするため、本fileは事前検査を
-通過した後のmember単位check（横断relation解決、所有境界、集約status、workspace identity）を扱う。
+`tests/bitz-core/test_multiws.py`は全体事前検査（Step 5A）だけを対象にするため、本ファイルは事前検査を
+通過した後のメンバー単位の`check`（横断する関係の解決、所有境界、集約した状態、ワークスペースの同一性）を扱う。
 """
 
 from __future__ import annotations
@@ -91,19 +91,19 @@ class AllWorkspacesAggregationTests(unittest.TestCase):
             self.assertEqual(result["scope"], "all-workspaces")
             self.assertEqual(result["multiWorkspace"], {"id": "platform", "path": "."})
             ids = [w["id"] for w in result["workspaces"]]
-            # root先頭、以降workspace ID辞書順（複合workspace仕様 §8）。
+            # ルートワークスペースが先頭、以降はワークスペースIDの辞書順（複合ワークスペース仕様 §8）。
             self.assertEqual(ids, ["platform", "api", "web"])
             for w in result["workspaces"]:
                 self.assertEqual(w["status"], "passed")
                 self.assertEqual(w["diagnostics"], [])
 
     def test_one_member_failure_does_not_stop_others(self):
-        # 複合workspace仕様 §8「事前検査通過後はworkspace全体ではなく…」: 1memberの非成功でも
-        # 後続memberのcheckedDocumentCount等は正常に計算される。
+        # 複合ワークスペース仕様 §8「事前検査通過後はワークスペース全体ではなく…」: 1メンバーが非成功でも
+        # 後続メンバーの`checkedDocumentCount`などは正常に計算される。
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self._basic_repo(root)
-            # webのTECH文書のfile名IDをわざと不一致にする（hard fail）。
+            # `web`のTECH文書のファイル名のIDをわざと不一致にする（状態`failed`になる失敗）。
             _write(root, "apps/web/.spec/technical/TECH-999.md", _tech("TECH-010"))
 
             result, exit_code = _run_all(root)
@@ -127,7 +127,7 @@ class AllWorkspacesAggregationTests(unittest.TestCase):
             self.assertTrue(reports_dir.is_dir())
             written = list(reports_dir.glob("*-check.json"))
             self.assertEqual(len(written), 1)
-            # memberのworkspace内には作らない。
+            # メンバーのワークスペース内には作らない。
             self.assertFalse((root / "apps" / "web" / ".spec" / "reports").exists())
 
     def test_default_all_workspaces_does_not_write_report(self):
@@ -157,7 +157,7 @@ class CrossWorkspaceRelationTests(unittest.TestCase):
             _write(root, "services/api/.spec/bitz.yaml", MEMBER_YAML.format(wid="api"))
             _write(
                 root, "services/api/.spec/technical/TECH-020.md",
-                # 非修飾"REQ-001"はapi自身には無く、platformにだけある。
+                # 非修飾"REQ-001"は`api`自身には無く、`platform`にだけある。
                 _tech("TECH-020", relations="relations:\n  refines: [REQ-001]\n"),
             )
             _git(root, "add", "-A")
@@ -172,7 +172,7 @@ class CrossWorkspaceRelationTests(unittest.TestCase):
             self.assertIn("SPEC-MULTI-REF-001", codes)
 
     def test_qualified_target_selects_owning_workspace(self):
-        # 複合workspace仕様 §3「修飾IDを起点にする場合は、その所有workspaceを選択する」。
+        # 複合ワークスペース仕様 §3「修飾IDを起点にする場合は、その所有ワークスペースを選択する」。
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             _init_repo(root)
@@ -192,7 +192,7 @@ class CrossWorkspaceRelationTests(unittest.TestCase):
 
 
 class SingleToMultiIdentityMappingTests(unittest.TestCase):
-    """複合workspace仕様 §4.1後段（単一→複合workspace化するGit比較のID写像）の単体試験。"""
+    """複合ワークスペース仕様 §4.1後段（単一ワークスペースを複合ワークスペース化するGit比較のID写像）の単体試験。"""
 
     _BASE_SINGLE_YAML = 'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "1.0"\n'
 
@@ -241,8 +241,8 @@ class SingleToMultiIdentityMappingTests(unittest.TestCase):
             self.assertIn("SPEC-STATE-TRANSITION-001", codes)
 
     def test_mapping_not_applied_when_base_has_explicit_id(self):
-        # baseに明示IDがあれば写像しない。base id "solo" はcurrentのroot id "platform"と一致しない
-        # ため、rootは「新規workspace」として扱われ、削除検出は働かない。
+        # 基準版に明示IDがあれば写像しない。基準版のID "solo" は現在版のルートワークスペースのID "platform" と一致しない
+        # ため、ルートワークスペースは「新規ワークスペース」として扱われ、削除検出は働かない。
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             _init_repo(root)

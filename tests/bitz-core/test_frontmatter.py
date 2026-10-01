@@ -1,7 +1,7 @@
-"""Frontmatter Schema検証（`02_SPECモデル/02_文書・Frontmatter・状態仕様.md`）の単体試験。
+"""フロントマターのスキーマ検証（`02_SPECモデル/02_文書・Frontmatter・状態仕様.md`）の単体試験。
 
-型・null・空文字・title文字数・scalar配列とtests要素の重複・未知key・`x-`拡張・
-`SPEC-FM-UNAVAILABLE-001`・必須fieldをFrontmatter Schema検証だけ（YAML構文層を介さず）で検査する。
+型・`null`・空文字列・`title`の文字数・スカラーの配列と`tests`の要素の重複・未知のキー・`x-`拡張・
+`SPEC-FM-UNAVAILABLE-001`・必須フィールドを、フロントマターのスキーマ検証だけ（YAMLの構文の層を介さず）で検査する。
 """
 
 import unittest
@@ -127,7 +127,7 @@ class UnavailableFieldTests(unittest.TestCase):
         self.assertEqual(outcome.soft[0].summary, "REQではchangesを使用できません")
 
     def test_type_error_precedes_unavailable_warning(self):
-        # 型不正のfieldはSCHEMA-001だけを返し、UNAVAILABLE warningを重ねない。
+        # 型が不正なフィールドは`SCHEMA-001`だけを返し、`UNAVAILABLE`の警告を重ねない。
         outcome = fm.validate(_base(changes=42), "REQ")
         self.assertEqual(len(outcome.hard), 1)
         self.assertEqual(outcome.hard[0].code, "SPEC-FM-SCHEMA-001")
@@ -168,7 +168,7 @@ class NonMapRootTests(unittest.TestCase):
 
 class DeterministicOrderTests(unittest.TestCase):
     def test_unavailable_warnings_follow_schema_property_order(self):
-        # relations/implements/tests/verify/changesのSchema properties順で複数warningを出す。
+        # `relations`/`implements`/`tests`/`verify`/`changes`のスキーマの`properties`の順で複数の警告を出す。
         value = {
             "id": "ADR-001",
             "title": "件名",

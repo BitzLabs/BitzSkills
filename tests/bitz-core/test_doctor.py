@@ -1,8 +1,8 @@
-"""`bitz doctor`のconfig／schema／ears check分離に対する単体試験。
+"""`bitz doctor`の検査項目`config`／`schema`／`ears`の分離に対する単体試験。
 
-レビュー是正: Schema major非互換ならchecksは`core, workspace, config(passed), schema(blocked), git`
-とし、EARS-AI major非互換なら`ears`もその後に続けてblockedとする。いずれもcommand／impactは
-依存出力がないため出さない。
+レビュー是正: スキーマの`major`が非互換なら`checks`は`core, workspace, config(passed), schema(blocked), git`
+とし、EARS-AIの`major`が非互換なら`ears`もその後に続けて`blocked`とする。いずれも`command`／`impact`
+は依存する出力がないため出さない。
 """
 
 import os

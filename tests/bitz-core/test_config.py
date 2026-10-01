@@ -1,8 +1,8 @@
-"""`.spec/bitz.yaml`読込みのレビュー是正点に対する単体試験。
+"""`.spec/bitz.yaml`の読込みのレビュー是正点に対する単体試験。
 
-- BOM warningがstop有無にかかわらず残ること（source.workspaceIdの同一性反映を含む）
-- schemaVersion majorの判定が他fieldの型・必須検査より先に行われること
-- 独立した型・必須errorが全件返ること
+- BOMの警告が、停止の有無にかかわらず残ること（`source.workspaceId`の同一性の反映を含む）
+- `schemaVersion`の`major`の判定が、他のフィールドの型・必須の検査より先に行われること
+- 独立した型・必須のエラーが全件返ること
 """
 
 import unittest
@@ -22,7 +22,7 @@ class BomWarningTests(unittest.TestCase):
         codes = [d.code for d in outcome.warnings]
         self.assertIn("SPEC-INPUT-BOM-001", codes)
         bom = next(d for d in outcome.warnings if d.code == "SPEC-INPUT-BOM-001")
-        # 同一性が確定した場合は実効workspace idを使う。
+        # 同一性が確定した場合は実効ワークスペースIDを使う。
         self.assertEqual(bom.source["workspaceId"], "root")
 
     def test_bom_warning_present_when_stopped_with_null_identity(self):
@@ -33,7 +33,7 @@ class BomWarningTests(unittest.TestCase):
         codes = [d.code for d in outcome.warnings]
         self.assertIn("SPEC-INPUT-BOM-001", codes)
         bom = next(d for d in outcome.warnings if d.code == "SPEC-INPUT-BOM-001")
-        # 同一性不成立で停止した場合はnull。
+        # 同一性が成立せずに停止した場合は`null`。
         self.assertIsNone(bom.source["workspaceId"])
 
     def test_bom_warning_present_when_stopped_at_schema_major(self):
@@ -58,7 +58,7 @@ class SchemaMajorOrderingTests(unittest.TestCase):
         self.assertEqual(outcome.diagnostics[0].summary, "未対応のSchema majorです")
 
     def test_schema_version_type_error_wins_over_major_check(self):
-        # schemaVersion自体が型不正なら、majorの検討に進まずschemaVersionの型errorを返す。
+        # `schemaVersion`自体の型が不正なら、`major`の検討に進まず`schemaVersion`の型のエラーを返す。
         raw = _bytes("schemaVersion: 2\nlanguage: ja\nearsAi: \"1.0\"\n")
         outcome = load_config(raw)
         self.assertTrue(outcome.stop)

@@ -1,7 +1,7 @@
 """`bitz.compat`（Step 5D: 外形判定と移行）の単体試験。
 
 `00_共通契約/04_適合fixture仕様.md` §3の``runner: consumer``・``runner: migration``が対象にする
-経路を、conformance fixture（MULTI-023/024）とは独立の単体規模で検証する。
+経路を、適合fixture（MULTI-023/024）とは独立の単体規模で検証する。
 """
 
 from __future__ import annotations
@@ -148,7 +148,7 @@ class MigrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self._to_multi_repo(root)
-            # rollback: apps/web/.spec配下を廃止し、rootへ単一workspaceとして統合する。
+            # ロールバック: `apps/web/.spec`配下を廃止し、ルートへ単一ワークスペースとして統合する。
             _write(root, ".spec/bitz.yaml", 'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "1.0"\n')
             _write(root, ".spec/technical/TECH-010.md", _tech("TECH-010", refines="REQ-001:AC-01"))
             _write(root, "tests/test_login.py", "def test_login():\n    assert True\n")
@@ -163,7 +163,7 @@ class MigrationTests(unittest.TestCase):
             root = Path(tmp)
             self._to_multi_repo(root)
             _write(root, ".spec/bitz.yaml", 'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "1.0"\n')
-            # 修飾参照を残したまま部分rollbackする（単一workspace化後もplatform::を保持）。
+            # 修飾参照を残したまま部分的にロールバックする（単一ワークスペースにした後も`platform::`を保持）。
             _write(root, ".spec/technical/TECH-010.md", _tech("TECH-010", refines="platform::REQ-001:AC-01"))
             _write(root, "tests/test_login.py", "def test_login():\n    assert True\n")
             _git(root, "rm", "-r", "-q", "apps/web/.spec")

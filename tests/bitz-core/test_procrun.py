@@ -1,6 +1,6 @@
 """`bitz.procrun`の単体試験（`03_操作仕様/03_verify.md` §5・§5.2）。
 
-時間のかかる試験はtimeout値を小さくし、数秒で終わるようにする。
+時間のかかる試験はタイムアウトの値を小さくし、数秒で終わるようにする。
 """
 
 import os
@@ -51,8 +51,8 @@ class SignalTests(unittest.TestCase):
 
 class TimeoutTests(unittest.TestCase):
     def test_timeout_confirms_within_five_seconds_even_with_pipe_holding_descendant(self):
-        """graceful terminationを無視し、TERMを無視する子孫がpipeを保持し続けても、
-        timeout到達から5秒以内にbinding結果を確定する（§5.2）。"""
+        """終了の要求を無視し、`TERM`を無視する子孫がパイプを保持し続けても、
+        タイムアウトへの到達から5秒以内にテスト割当ての結果を確定する（§5.2）。"""
 
         with tempfile.TemporaryDirectory() as tmp:
             script = Path(tmp) / "hang.sh"
@@ -75,20 +75,20 @@ class TimeoutTests(unittest.TestCase):
         self.assertEqual(result["termination"], "timeout")
         self.assertIsNone(result["exit_code"])
         self.assertEqual(result["stdout_excerpt"], "hang-ready\n")
-        # timeoutSeconds=1 + 状態機械の上限5秒 + 若干の余裕。
+        # `timeoutSeconds=1` + 状態機械の上限5秒 + 若干の余裕。
         self.assertLess(elapsed, 8.0)
 
     def test_group_sigkill_even_when_direct_process_already_exited_from_sigterm(self):
-        """検収是正6: 直接processがSIGTERMで終了しても、process groupへSIGKILLを送り、
-        TERMを無視する子孫（同じgroupに残る）を確実に止める。"""
+        """検収是正6: 直接のプロセスが`SIGTERM`で終了しても、プロセスグループへ`SIGKILL`を送り、
+        `TERM`を無視する子孫（同じプロセスグループに残る）を確実に止める。"""
 
         with tempfile.TemporaryDirectory() as tmp:
             script = Path(tmp) / "leave_orphan.sh"
             _write_script(
                 script,
                 "#!/bin/sh\n"
-                # 子孫はTERMを無視してsleepし続ける。親はTERMを普通に受けて即終了する
-                # （trapを設定しないので、SIGTERMで直接processは速やかに死ぬ）。
+                # 子孫は`TERM`を無視して`sleep`し続ける。親は`TERM`を普通に受けて即終了する
+                # （`trap`を設定しないので、`SIGTERM`で直接のプロセスは速やかに死ぬ）。
                 "sh -c \"trap '' TERM; sleep 60\" &\n"
                 "echo ready\n"
                 "sleep 60\n",
@@ -111,7 +111,7 @@ class TimeoutTests(unittest.TestCase):
             )
             result = procrun.run([str(script)], tmp, dict(os.environ), 1)
         self.assertEqual(result["termination"], "timeout")
-        # process groupへのSIGKILLで直接processは確実に停止しているはず。
+        # プロセスグループへの`SIGKILL`で直接のプロセスは確実に停止しているはず。
         time.sleep(0.2)
         check = subprocess.run(["pgrep", "-f", str(script)], capture_output=True, text=True)
         self.assertEqual(check.stdout.strip(), "", "timeout後にprocessが残っています")
@@ -119,7 +119,7 @@ class TimeoutTests(unittest.TestCase):
 
 class StreamTests(unittest.TestCase):
     def test_stdout_and_stderr_drain_concurrently_without_deadlock(self):
-        # 片方のstreamだけへ大量出力しても、もう片方が詰まって全体がdeadlockしないことを確認する。
+        # 片方のストリームだけへ大量出力しても、もう片方が詰まって全体がデッドロックしないことを確認する。
         code = (
             "import sys\n"
             "for _ in range(20000):\n"

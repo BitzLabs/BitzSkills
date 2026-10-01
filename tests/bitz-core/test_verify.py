@@ -1,6 +1,6 @@
 """`bitz verify`（`verify.py`）の単体試験（`03_操作仕様/03_verify.md`）。
 
-時間のかかる試験（timeout系）はtimeoutSecondsを小さくし、数秒で終わるようにする。
+時間のかかる試験（タイムアウトに関する試験）は`timeoutSeconds`を小さくし、数秒で終わるようにする。
 """
 
 import os
@@ -107,7 +107,7 @@ class BindingPlanTests(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(len(result["commands"]), 1)
         self.assertEqual(result["commands"][0]["bindingId"], "root::default")
-        # 両targetが同じbindingを参照する。
+        # 両方の検証対象が同じテスト割当てを参照する。
         refs = {ref for t in result["targetResults"] for ref in t["bindingRefs"]}
         self.assertEqual(refs, {"root::default"})
 
@@ -182,10 +182,10 @@ class TargetStatusAggregationTests(unittest.TestCase):
 
 class BindingMissingTests(unittest.TestCase):
     def test_undefined_command_keeps_context_digest_and_reports_each_binding(self):
-        # C6（SINGLE-061訂正）: testまたはcommand定義そのものが不足しbindingを構成できない
-        # 場合（skip-target）でも、Contextを構成できる限りcontextDigestは非nullで返し、
-        # 独立した原因（testエントリ単位）はそれぞれDiagnosticを返す（verify仕様 §8、
-        # registry §2）。
+        # C6（SINGLE-061訂正）: テスト対応（`tests[]`）またはコマンドの定義そのものが不足してテスト割当てを構成できない
+        # 場合（`skip-target`）でも、コンテキストを構成できる限り`contextDigest`は`null`でない値で返し、
+        # 独立した原因（`tests`のエントリ単位）はそれぞれ診断を返す（`verify`仕様 §8、
+        # 診断レジストリ §2）。
         with tempfile.TemporaryDirectory() as tmp:
             _write(tmp, ".spec/bitz.yaml", _bitz_yaml('    default:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n'))
             _write(
@@ -261,7 +261,7 @@ class SpawnBeforeBlockedTests(unittest.TestCase):
             _write(tmp, ".spec/requirements/REQ-001.md", _req("REQ-001"))
             _write(tmp, "tests/test_auth.py", "def test_x():\n    assert True\n")
             _init_repo(tmp)
-            # commitの後にbitz.yamlを未追跡で追加する。
+            # コミットの後に`bitz.yaml`を未追跡で追加する。
             _write(
                 tmp,
                 ".spec/bitz.yaml",
@@ -424,7 +424,7 @@ class EnvironmentTests(unittest.TestCase):
             result, _ = _run_verify(
                 tmp, ["REQ-001"], env_extra={"BITZ_TEST_SECRET_TOKEN": "super-secret-value-12345"}
             )
-        # 出力自体はredactionで置換され、シリアライズ結果に元の値が残らない。
+        # 出力自体は伏せ字化で置換され、シリアライズ結果に元の値が残らない。
         dumped = json.dumps(result, ensure_ascii=False)
         self.assertNotIn("super-secret-value-12345", dumped)
         self.assertIn("[REDACTED]", result["commands"][0]["stdoutExcerpt"])

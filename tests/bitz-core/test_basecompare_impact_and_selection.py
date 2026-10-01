@@ -1,4 +1,4 @@
-"""`check.md §6`（changed対象選択）・§8（影響候補）の単体試験。"""
+"""`check.md §6`（変更範囲の検査の対象選択）・§8（影響候補）の単体試験。"""
 
 import unittest
 
@@ -56,8 +56,8 @@ class ImpactCandidateTests(unittest.TestCase):
         self.assertEqual(basecompare.impact_candidate_diagnostics({"TECH-001"}, current, "root"), [])
 
     def test_changed_spec_document_ids_ignores_code_and_test_paths(self):
-        # §8「related、code、testを起点にしない」。code/test pathが変更されても
-        # 影響候補の起点（`changed_spec_document_ids`）には入らない。
+        # §8は`related`、コード、テストの変更を出発点にしない。コードやテストのパスが変更されても
+        # 影響候補の出発点（`changed_spec_document_ids`）には入らない。
         current_by_path = {
             ".spec/technical/TECH-001.md": _entry(
                 "TECH-001", "TECH", "approved", ".spec/technical/TECH-001.md", implements=["src/a.py"]

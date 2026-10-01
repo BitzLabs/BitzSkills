@@ -1,4 +1,4 @@
-"""doctorの全体事前検査後のmember診断と公開CLIの回帰試験。"""
+"""`doctor`の全体事前検査の後のメンバーの診断と公開CLIの回帰試験。"""
 
 import json
 import os
