@@ -1,4 +1,4 @@
-"""status集約とDiagnostic sortの単体試験。"""
+"""結果の状態の集約と診断の並べ替えの単体試験。"""
 
 import unittest
 
@@ -46,7 +46,7 @@ class ExitCodeTests(unittest.TestCase):
         )
 
     def test_argument_error_code_is_not_a_result_status(self):
-        # 終了コード4はCLI引数不正専用で、結果statusから導かない（結果契約 §2）。
+        # 終了コード4はCLI引数不正専用で、結果の状態から導かない（結果・診断・終了コード §2）。
         self.assertNotIn(4, EXIT_CODE_BY_STATUS.values())
 
 

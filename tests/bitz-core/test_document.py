@@ -1,8 +1,8 @@
-"""文書catalog構築（`document.py`）の単体試験。
+"""文書の一覧の構築（`document.py`）の単体試験。
 
-file名規則、H1／REQ必須section／規範文配置、draftのseverity写像（EARS-AI hard条件の
-継続units）、`checkedDocumentCount`／`checkedStatementCount`の列挙を検査する。
-relation解決・path存在・covers解決はPhase C（次段）のため対象外。
+ファイル名の規則、H1／REQの必須の節／規範文の配置、`draft`の重大度の写像（EARS-AIの区分`hard-draft`・`hard-always`の条件の
+継続単位）、`checkedDocumentCount`／`checkedStatementCount`の列挙を検査する。
+関係の解決・パスの存在・`covers`の解決はフェーズC（次段）のため対象外。
 """
 
 import os
@@ -71,7 +71,7 @@ class H1Tests(unittest.TestCase):
             catalog = doc_mod.build_catalog(root, WORKSPACE_ID)
             codes = [d.code for d in catalog.diagnostics]
             self.assertIn("SPEC-STYLE-H1-001", codes)
-            # continueなのでdocumentは引き続き数えられる。
+            # `continue`なので文書は引き続き数えられる。
             self.assertEqual(catalog.checked_document_count, 1)
 
 
@@ -100,7 +100,7 @@ class PlacementTests(unittest.TestCase):
             catalog = doc_mod.build_catalog(root, WORKSPACE_ID)
             placement = [d for d in catalog.diagnostics if d.code == "SPEC-STYLE-PLACEMENT-001"]
             self.assertEqual(len(placement), 1)
-            # 誤配置statementを除いた1件だけが数えられる（doc自体はcontinueで数える）。
+            # 誤配置した規範文を除いた1件だけが数えられる（文書自体は`continue`で数える）。
             self.assertEqual(catalog.checked_document_count, 1)
             self.assertEqual(catalog.checked_statement_count, 1)
 
@@ -233,7 +233,7 @@ class LimitTests(unittest.TestCase):
 
 class DuplicateIdWarningPreservationTests(unittest.TestCase):
     def test_warnings_before_duplicate_are_not_lost(self):
-        # BOM警告（continue継続単位）は、文書ID重複によるskip-documentでも消えない。
+        # BOMの警告（`continue`の継続単位）は、文書ID重複による`skip-document`でも消えない。
         tech_text = (
             "---\nid: TECH-001\ntitle: 前提技術\nstatus: approved\n---\n\n"
             "# TECH-001 前提技術\n\n## Context\n\n規範文なし。\n"
@@ -245,7 +245,7 @@ class DuplicateIdWarningPreservationTests(unittest.TestCase):
             with open(os.path.join(root, ".spec/technical/TECH-001-a.md"), "wb") as f:
                 f.write(tech_with_bom)
             with open(os.path.join(root, ".spec/technical/TECH-001-b.md"), "w", encoding="utf-8") as f:
-                f.write(tech_text)  # BOMなし。重複IDのDiagnosticは1件だけ。
+                f.write(tech_text)  # BOMなし。重複IDの診断は1件だけ。
             catalog = doc_mod.build_catalog(root, WORKSPACE_ID)
             codes = [d.code for d in catalog.diagnostics]
             self.assertIn("SPEC-ID-DUPLICATE-001", codes)

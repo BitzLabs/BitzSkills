@@ -1,6 +1,6 @@
-"""`basecompare.approved_protection_diagnostics`の単体試験（文書・Frontmatter・状態仕様 §8）。
+"""`basecompare.approved_protection_diagnostics`の単体試験（文書・フロントマター・状態仕様 §8）。
 
-`title`、EARS-AI規範文の意味field、強い関係の変更は保護対象、`implements`・`tests`・`verify`・
+`title`、EARS-AI規範文の意味フィールド、強い関係の変更は保護対象、`implements`・`tests`・`verify`・
 `related`・`x-`拡張・説明文だけの変更は対象外であることを検査する。
 """
 
@@ -88,7 +88,7 @@ class ApprovedProtectionTests(unittest.TestCase):
         self.assertEqual(diags, [])
 
     def test_non_req_kind_is_not_protected(self):
-        # 文書・Frontmatter・状態仕様 §8は「approved REQ」だけを保護する（TECHは対象外）。
+        # 文書・フロントマター・状態仕様 §8は、状態`approved`のREQだけを保護する（TECHは対象外）。
         base_entry = DocEntry(
             path=".spec/technical/TECH-001.md", kind="TECH", doc_id="TECH-001", title="旧",
             status="approved", frontmatter={"id": "TECH-001", "title": "旧", "status": "approved"},

@@ -1,4 +1,4 @@
-"""argv解析の単体試験（Step 1の終了コード4 fixtureと正常受理を対象）。"""
+"""引数列の解析の単体試験（Step 1の終了コード4のfixtureと正常な受理を対象）。"""
 
 import unittest
 
@@ -7,7 +7,7 @@ from bitz.errors import CliArgError
 
 
 class ParseArgvRejectionTests(unittest.TestCase):
-    """`fixtures/conformance/single/SINGLE-*` の終了コード4 argvを再現する。"""
+    """`fixtures/conformance/single/SINGLE-*` の終了コード4の引数列を再現する。"""
 
     def assert_rejected(self, argv, expected_context=None):
         with self.assertRaises(CliArgError) as cm:
@@ -125,7 +125,7 @@ class ParseArgvAcceptanceTests(unittest.TestCase):
             ["context", "REQ-001", "TECH-001", "--expand", "REQ-001", "--expand", "REQ-001"]
         )
         self.assertEqual(parsed.positionals, ["REQ-001", "TECH-001"])
-        # 同じ値の--expandは1件へ重複排除する。
+        # 同じ値の`--expand`は1件へ重複排除する。
         self.assertEqual(parsed.repeat["--expand"], ["REQ-001"])
 
     def test_doctor_repeat_capability_dedup(self):

@@ -1,9 +1,9 @@
-"""`verify`の複合workspace対応（Step 5C）の単体試験。
+"""`verify`の複合ワークスペース対応（Step 5C）の単体試験。
 
 `02_SPECモデル/05_複合workspace仕様.md` §8・§9・§10、`03_操作仕様/03_verify.md` §10を対象にする。
-`tests/bitz-core/test_verify.py`は単一workspaceだけを対象にするため、本fileは
-`--all-workspaces`のmember集約・横断bindingの1回実行・verifyBindingCount上限の優先判定、
-および修飾target（単独呼び出しの横断Context）を扱う。
+`tests/bitz-core/test_verify.py`は単一ワークスペースだけを対象にするため、本ファイルは
+`--all-workspaces`のメンバーの集約・横断するテスト割当ての1回の実行・`verifyBindingCount`の上限の優先判定、
+および修飾した検証対象（単独の呼び出しでの横断するコンテキスト）を扱う。
 """
 
 from __future__ import annotations
@@ -73,8 +73,8 @@ def _run_all(root, *, report=False, timeout=None) -> tuple[dict, int]:
 
 
 class SharedBindingExecutesOnceTests(unittest.TestCase):
-    """MULTI-013と同じ形: 2つの独立したtargetが同じ(workspace, command) bindingを共有する場合、
-    binding実行は1回だけであり、実体は所有workspaceの``commands[]``へ1回だけ置かれる（verify.md §4）。
+    """MULTI-013と同じ形: 2つの独立した検証対象が同じ（ワークスペース, コマンド）の組のテスト割当てを共有する場合、
+    テスト割当ての実行は1回だけであり、実体は所有ワークスペースの``commands[]``へ1回だけ置かれる（verify.md §4）。
     """
 
     def test_shared_binding_runs_once_and_is_owned_by_one_member(self):
@@ -110,20 +110,20 @@ class SharedBindingExecutesOnceTests(unittest.TestCase):
             platform_ws = next(w for w in result["workspaces"] if w["id"] == "platform")
             web_ws = next(w for w in result["workspaces"] if w["id"] == "web")
 
-            # REQ-001（platform）とTECH-010（web）の両方が同じbinding "web::frontend" を要求する。
+            # REQ-001（`platform`）とTECH-010（`web`）の両方が同じテスト割当て "web::frontend" を要求する。
             self.assertEqual(platform_ws["targetResults"][0]["bindingRefs"], ["web::frontend"])
             self.assertEqual(web_ws["targetResults"][0]["bindingRefs"], ["web::frontend"])
 
-            # command実体は所有workspace（web）の commands[] に 1 回だけ置かれ、platform側は空。
+            # コマンドの実体は所有ワークスペース（`web`）の `commands[]` に 1 回だけ置かれ、`platform`側は空。
             self.assertEqual(platform_ws["commands"], [])
             self.assertEqual(len(web_ws["commands"]), 1)
             self.assertEqual(web_ws["commands"][0]["bindingId"], "web::frontend")
 
 
 class MemberZeroTargetTests(unittest.TestCase):
-    """verify.md §10「workspace単位の引数なし対象が0件の場合、SPEC-VERIFY-BLOCKED-002を
-    warningとしてmember結果をpassed_with_warningsにする。複合workspace全体の対象が0件の場合だけ
-    error／blockedとする」。
+    """verify.md §10「ワークスペース単位の引数なしの対象が0件の場合、`SPEC-VERIFY-BLOCKED-002`を
+    重大度`warning`としてメンバーの結果を`passed_with_warnings`にする。複合ワークスペース全体の対象が0件の場合だけ
+    重大度`error`、結果への効果`blocked`とする」。
     """
 
     def _repo_with_empty_member(self, root: Path) -> None:
@@ -148,7 +148,7 @@ class MemberZeroTargetTests(unittest.TestCase):
         )
         (root / "apps/web/tests").mkdir(parents=True, exist_ok=True)
         (root / "apps/web/tests/test_login.py").write_text("x\n", encoding="utf-8")
-        # apiは文書を持たない（既定対象0件）。
+        # `api`は文書を持たない（既定の対象0件）。
         _write(root, "services/api/.spec/bitz.yaml", MEMBER_YAML.format(wid="api"))
         _git(root, "add", "-A")
         _git(root, "commit", "-q", "-m", "base")
@@ -168,7 +168,7 @@ class MemberZeroTargetTests(unittest.TestCase):
             self.assertEqual(len(api_ws["diagnostics"]), 1)
             self.assertEqual(api_ws["diagnostics"][0]["code"], "SPEC-VERIFY-BLOCKED-002")
             self.assertEqual(api_ws["diagnostics"][0]["severity"], "warning")
-            # 全体はapi単独のwarningでは blockedにならない（全体0件のときだけ blocked）。
+            # 全体は`api`単独の警告では`blocked`にならない（全体が0件のときだけ`blocked`）。
             self.assertNotEqual(result["status"], "blocked")
 
     def test_all_members_zero_targets_is_blocked_overall(self):
@@ -194,8 +194,8 @@ class MemberZeroTargetTests(unittest.TestCase):
 
 
 class VerifyBindingCountPriorityTests(unittest.TestCase):
-    """複合workspace仕様 §10「verifyBindingCountはcommandDefinitionCountの部分集合...複数の
-    dimensionが同時に超過する場合は、verify実行計画のdimensionを優先して報告する」。
+    """複合ワークスペース仕様 §10「`verifyBindingCount`は`commandDefinitionCount`の部分集合...複数の
+    次元が同時に超過する場合は、`verify`の実行計画の次元を優先して報告する」。
     """
 
     def test_verify_binding_limit_reports_verify_binding_count_not_command_definition_count(self):
@@ -224,10 +224,10 @@ class VerifyBindingCountPriorityTests(unittest.TestCase):
             _git(root, "add", "-A")
             _git(root, "commit", "-q", "-m", "base")
 
-            # このfixtureのverifyBindingCountは1（"web::frontend"のみ）。上限を1未満（0）へ
-            # 一時的に下げ、verifyBindingCount優先の判定path（SPEC-MULTI-LIMIT-001、
-            # dimension: verifyBindingCount）が正しく選ばれることを確認する
-            # （commandDefinitionCountの一般事前検査は`skip_limit_dimensions`で迂回している）。
+            # このfixtureの`verifyBindingCount`は1（"web::frontend"のみ）。上限を1未満（0）へ
+            # 一時的に下げ、`verifyBindingCount`を優先する判定の経路（`SPEC-MULTI-LIMIT-001`、
+            # `dimension: verifyBindingCount`）が正しく選ばれることを確認する
+            # （`commandDefinitionCount`の一般の事前検査は`skip_limit_dimensions`で迂回している）。
             with mock.patch.object(verify_mod, "_VERIFY_BINDING_LIMIT", 0):
                 result, exit_code = _run_all(root)
 
@@ -243,12 +243,12 @@ class VerifyBindingCountPriorityTests(unittest.TestCase):
 
 
 class CommandDefinitionCountDeferredTests(unittest.TestCase):
-    """複合workspace仕様 §10「verifyBindingCountはcommandDefinitionCountの部分集合…複数の
-    dimensionが同時に超過する場合は、verify実行計画のdimensionを優先して報告する」の是正確認。
+    """複合ワークスペース仕様 §10「`verifyBindingCount`は`commandDefinitionCount`の部分集合…複数の
+    次元が同時に超過する場合は、`verify`の実行計画の次元を優先して報告する」の是正の確認。
 
-    `commandDefinitionCount`だけが超過する場合はverifyもそれを`SPEC-MULTI-LIMIT-001`で遮断し、
-    両方が同時に超過する場合だけ`verifyBindingCount`を優先する。判定はbinding実行計画の確定後、
-    commandを1件も起動する前に行う（`_run_all_workspaces_members`が`_plan_and_run_bindings`より
+    `commandDefinitionCount`だけが超過する場合は`verify`もそれを`SPEC-MULTI-LIMIT-001`で遮断し、
+    両方が同時に超過する場合だけ`verifyBindingCount`を優先する。判定はテスト割当ての実行計画の確定後、
+    コマンドを1件も起動する前に行う（`_run_all_workspaces_members`が`_plan_and_run_bindings`より
     前に判定する）。
     """
 
@@ -280,9 +280,9 @@ class CommandDefinitionCountDeferredTests(unittest.TestCase):
         _git(root, "commit", "-q", "-m", "base")
 
     def test_command_definition_count_alone_blocks_verify(self):
-        # commandDefinitionCount=3（frontend/extra1/extra2）。実際に必要なbindingは"web::frontend"の
-        # 1件だけなのでverifyBindingCountは上限内のまま。commandDefinitionCountの上限だけを2へ
-        # 下げ、その超過だけでverifyが遮断されることを確認する（commandは1件も起動しない）。
+        # `commandDefinitionCount`=3（`frontend`/`extra1`/`extra2`）。実際に必要なテスト割当ては"web::frontend"の
+        # 1件だけなので`verifyBindingCount`は上限内のまま。`commandDefinitionCount`の上限だけを2へ
+        # 下げ、その超過だけで`verify`が遮断されることを確認する（コマンドは1件も起動しない）。
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self._repo_with_extra_unused_commands(root)
@@ -301,8 +301,8 @@ class CommandDefinitionCountDeferredTests(unittest.TestCase):
             self.assertEqual(diag["evidence"]["observedAtLeast"], 3)
 
     def test_both_exceeded_reports_verify_binding_count_not_command_definition_count(self):
-        # commandDefinitionCount（3>2）とverifyBindingCount（1>0）を同時に超過させ、
-        # 報告されるdimensionがverifyBindingCount優先であることを確認する。
+        # `commandDefinitionCount`（3>2）と`verifyBindingCount`（1>0）を同時に超過させ、
+        # 報告される次元が`verifyBindingCount`の優先であることを確認する。
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self._repo_with_extra_unused_commands(root)
@@ -317,8 +317,8 @@ class CommandDefinitionCountDeferredTests(unittest.TestCase):
             self.assertEqual(diag["evidence"]["dimension"], "verifyBindingCount")
 
     def test_check_general_precheck_still_enforces_command_definition_count(self):
-        # verifyだけがcommandDefinitionCountの一般事前検査を迂回する（`skip_limit_dimensions`）。
-        # checkが使う既定呼び出し（skip指定なし）は従来どおりcommandDefinitionCountを検査する。
+        # `verify`だけが`commandDefinitionCount`の一般の事前検査を迂回する（`skip_limit_dimensions`）。
+        # `check`が使う既定の呼び出し（`skip`の指定なし）は従来どおり`commandDefinitionCount`を検査する。
         from bitz import gitutil
 
         with tempfile.TemporaryDirectory() as tmp:
@@ -337,7 +337,7 @@ class CommandDefinitionCountDeferredTests(unittest.TestCase):
 
 
 class SkipLimitDimensionsTests(unittest.TestCase):
-    """`multiws._first_exceeded`の``skip_dimensions``（verify専用の迂回、Step 5C追加分）。"""
+    """`multiws._first_exceeded`の``skip_dimensions``（`verify`専用の迂回、Step 5C追加分）。"""
 
     def test_skipped_dimension_is_not_reported_but_others_still_are(self):
         totals = {

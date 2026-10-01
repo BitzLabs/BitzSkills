@@ -1,4 +1,4 @@
-"""`bitz.execfile`の単体試験（doctorとverifyが共有する実行file解決）。"""
+"""`bitz.execfile`の単体試験（`doctor`と`verify`が共有する実行ファイルの解決）。"""
 
 import os
 import stat

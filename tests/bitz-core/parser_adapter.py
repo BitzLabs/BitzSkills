@@ -3,19 +3,19 @@
 # requires-python = ">=3.12"
 # dependencies = []
 # ///
-"""内部Parser受入のtest adapter（適合fixture仕様 §4.1、ADR-052 Decision 4）。
+"""内部の構文解析器の受入に使うテスト用のアダプター（適合fixture仕様 §4.1、ADR-052の`Decision`の4番目の項目）。
 
 `fixtures/conformance/steps.json` の全Stepが参照するfixtureのうち`parserChecks`を持つものへ、
-Core本体の実Scanner／Parser（`bitz.earsai.parser.parse_document`）を適用し、得られた全
-Semantic IRを`expected/parser-ir.json`と完全比較する。fixture harnessの参照実装
-（`parser_expectations.py`・`markdown_reference.py`等）は呼び出さない — 期待値の読込みと
-setup・副作用観測だけ`fixtures/conformance`の既存部品（`harness.setup`／`harness.snapshot`）を
-再利用する。`tests/`から`fixtures/`とCore導入先`plugins/bitz-core`を参照する向きはADR-049
-Decision 6が許す。
+Core本体の実際の走査器／構文解析器（`bitz.earsai.parser.parse_document`）を適用し、得られた全
+意味中間表現を`expected/parser-ir.json`と完全に比較する。fixtureのharnessの参照実装
+（`parser_expectations.py`・`markdown_reference.py`など）は呼び出さない — 期待値の読込みと
+準備手順・副作用の観測だけ`fixtures/conformance`の既存の部品（`harness.setup`／`harness.snapshot`）を
+再利用する。`tests/`から`fixtures/`とCoreの導入先`plugins/bitz-core`を参照する向きはADR-049の
+`Decision`の6番目の項目が許す。
 
-`tests/bitz-core/certify_gate_b.py`の`run_parser_adapter`が、commit済みcloneのrepository rootで
-本scriptを引数なしで`uv run`し、終了コード0と2 clone間のstdout byte一致を要求する（Step 2以降）。
-標準出力は一時pathや所要時間を含まない決定的なJSON 1行とし、全fixtureがpassedの場合だけ
+`tests/bitz-core/certify_gate_b.py`の`run_parser_adapter`が、コミット済みクローンのリポジトリのルートで
+このスクリプトを引数なしで`uv run`し、終了コード0と2つのクローン間の標準出力のバイト一致を要求する（Step 2以降）。
+標準出力は一時パスや所要時間を含まない決定的なJSON 1行とし、全fixtureが`passed`の場合だけ
 終了コード0とする。
 """
 
@@ -38,12 +38,12 @@ from conformance.harness import git, setup, snapshot  # noqa: E402  (fixtures側
 
 from bitz.earsai.parser import parse_document  # noqa: E402  (検査対象の実Scanner／Parser)
 
-# IRを伴う警告条件（構文破綻ではない）。これら以外の条件が出れば読取り対象fixtureとして未対応とする。
+# 意味中間表現を伴う警告条件（構文破綻ではない）。これら以外の条件が出れば読取り対象のfixtureとして未対応とする。
 _SOFT_CONDITION_KINDS = {"should-reason-missing", "extension-unknown"}
 
 
 def _observe(repository: Path) -> dict:
-    """§5の読取り専用副作用条件の観測（`initial_fixtures.observe`と同じ形）。"""
+    """§5の読取り専用の副作用条件の観測（`initial_fixtures.observe`と同じ形）。"""
 
     return {
         "repository": snapshot(repository),
@@ -59,7 +59,7 @@ def _diff_state(before: dict, after: dict) -> list[str]:
 
 
 def _fixture_ids() -> list[str]:
-    """steps.jsonの全Stepが参照するfixture IDを、初出順の重複なしで集める。"""
+    """`steps.json`の全Stepが参照するfixture IDを、初出順の重複なしで集める。"""
 
     steps = json.loads((CONFORMANCE_ROOT / "steps.json").read_text(encoding="utf-8"))["steps"]
     ordered: list[str] = []
@@ -79,7 +79,7 @@ def _locate(identifier: str) -> Path | None:
 
 
 def _check_fixture(fixture_root: Path, manifest: dict, base_tmp: str) -> list[str]:
-    """1 fixtureのparserChecksを検査し、差分の一覧を返す（空なら合格）。"""
+    """1つのfixtureの`parserChecks`を検査し、差分の一覧を返す（空なら合格）。"""
 
     differences: list[str] = []
     with tempfile.TemporaryDirectory(prefix="bitz-parser-", dir=base_tmp) as sandbox_text:

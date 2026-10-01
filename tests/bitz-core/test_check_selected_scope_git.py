@@ -1,8 +1,8 @@
-"""`scope: selected`（明示対象check）でのGit基準版比較（状態遷移・承認済みREQ保護）の単体試験。
+"""`scope: selected`（明示対象の`check`）でのGit基準版との比較（状態遷移・承認済み要求の保護）の単体試験。
 
-検収指摘への対応: `check.md §5`「同じ基準版を対象選択、状態遷移、削除検出、REQ保護、TASK境界へ
-使用」はscopeを限定しないため、明示対象checkでも完全検査対象（`full_check_ids`）に属する文書へは
-状態遷移・承認済みREQ保護を適用し、対象外の文書には適用しないことを確認する。
+検収指摘への対応: `check.md §5`「同じ基準版を対象選択、状態遷移、削除の検出、承認済み要求の保護、TASK境界へ
+使用」は範囲を限定しないため、明示対象の`check`でも完全検査の対象（`full_check_ids`）に属する文書へは
+状態遷移・承認済み要求の保護を適用し、対象外の文書には適用しないことを確認する。
 """
 
 import os
@@ -55,7 +55,7 @@ def _run(root, positionals):
 
 class ExplicitTargetStateTransitionTests(unittest.TestCase):
     def test_target_documents_forbidden_transition_is_reported(self):
-        # (a) 対象文書自身の禁止遷移（done -> open）は明示checkで報告される。
+        # (a) 対象文書自身の禁止遷移（`done -> open`）は明示した`check`で報告される。
         with tempfile.TemporaryDirectory() as root:
             _init_repo(root)
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
@@ -71,8 +71,8 @@ class ExplicitTargetStateTransitionTests(unittest.TestCase):
             self.assertIn("SPEC-STATE-TRANSITION-001", codes)
 
     def test_unrelated_document_forbidden_transition_is_not_reported(self):
-        # (b) 対象外（無関係）文書の禁止遷移は明示checkの対象へ含まれず報告されない。
-        # TASKだと明示対象のTASK境界検査（無関係pathの変更）が別のDiagnosticを出してしまうため、
+        # (b) 対象外（無関係）の文書の禁止遷移は明示した`check`の対象へ含まれず報告されない。
+        # TASKだと明示対象のTASK境界検査（無関係なパスの変更）が別の診断を出してしまうため、
         # 互いに無関係なTECH 2件で検査する。
         with tempfile.TemporaryDirectory() as root:
             _init_repo(root)
@@ -82,7 +82,7 @@ class ExplicitTargetStateTransitionTests(unittest.TestCase):
             _git(root, "add", "-A")
             _git(root, "commit", "-q", "-m", "base")
 
-            # TECH-001（対象外）はapproved->rejectedの禁止遷移。TECH-002（対象）は無変更。
+            # TECH-001（対象外）は`approved`から`rejected`への禁止遷移。TECH-002（対象）は無変更。
             _write(root, ".spec/technical/TECH-001.md", _task("TECH-001", "無関係", "rejected"))
 
             result, _exit_code = _run(root, ["TECH-002"])
@@ -90,7 +90,7 @@ class ExplicitTargetStateTransitionTests(unittest.TestCase):
             self.assertEqual(result["diagnostics"], [])
 
     def test_target_approved_req_meaning_change_is_reported(self):
-        # (c) 対象approved REQのtitle変更（statusを戻していない）は明示checkで保護される。
+        # (c) 対象の状態`approved`のREQの`title`変更（状態を戻していない）は明示した`check`で保護される。
         with tempfile.TemporaryDirectory() as root:
             _init_repo(root)
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
@@ -106,10 +106,10 @@ class ExplicitTargetStateTransitionTests(unittest.TestCase):
             self.assertIn("SPEC-SAFETY-APPROVED-001", codes)
 
     def test_deleted_unrelated_document_is_not_reported_as_deletion(self):
-        # 明示check対象外のSPEC削除は、削除された文書IDがfull_check_idsへ入り得ないため
-        # 報告されない（検収指摘: 明示対象checkではCTX-ROOT-MISSING-001の管轄で、削除
-        # Diagnosticそのものを生成しない）。TASKだとTASK境界検査の無関係pathが別の
-        # Diagnosticを出すため、互いに無関係なTECHで検査する。
+        # 明示した`check`の対象外の仕様文書の削除は、削除された文書IDが`full_check_ids`へ入り得ないため
+        # 報告されない（検収指摘: 明示対象の`check`では`CTX-ROOT-MISSING-001`の管轄で、削除
+        # の診断そのものを生成しない）。TASKだとTASK境界検査の無関係なパスが別の
+        # 診断を出すため、互いに無関係なTECHで検査する。
         with tempfile.TemporaryDirectory() as root:
             _init_repo(root)
             _write(root, ".spec/bitz.yaml", _bitz_yaml())

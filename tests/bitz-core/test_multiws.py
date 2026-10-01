@@ -1,7 +1,7 @@
-"""`bitz.multiws`（複合workspaceの全体事前検査）の単体試験。
+"""`bitz.multiws`（複合ワークスペースの全体事前検査）の単体試験。
 
-`02_SPECモデル/05_複合workspace仕様.md` §2・§3・§5.1・§8・§10 を対象にする。member単位の
-本体処理（横断relation解決、member単位のcheck/verify/context）はStep 5B以降のため対象外。
+`02_SPECモデル/05_複合workspace仕様.md` §2・§3・§5.1・§8・§10 を対象にする。メンバー単位の
+本体処理（横断する関係の解決、メンバー単位の`check`/`verify`/`context`）はStep 5B以降のため対象外。
 """
 
 from __future__ import annotations
@@ -74,8 +74,8 @@ class CatalogValidationTests(unittest.TestCase):
     def test_invalid_workspace_id_is_multi_id(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            # catalogのmember id記述だけを不正にする（member自身の.spec/bitz.yamlは妥当なidのまま
-            # にして、member自身のSPEC-CONFIG-SCHEMA-001と競合させない）。
+            # カタログのメンバーのID記述だけを不正にする（メンバー自身の`.spec/bitz.yaml`は妥当なIDのまま
+            # にして、メンバー自身の`SPEC-CONFIG-SCHEMA-001`と競合させない）。
             root_yaml = ROOT_YAML + "multiWorkspace:\n  members:\n    - id: Web\n      path: apps/web\n"
             _write(root, ".spec/bitz.yaml", root_yaml)
             _write_member(root, "apps/web", "web")
@@ -86,7 +86,7 @@ class CatalogValidationTests(unittest.TestCase):
             self.assertEqual(pre.diagnostics[0].code, "SPEC-MULTI-ID-001")
 
     def test_duplicate_member_path_with_matching_ids_is_multi_path(self):
-        """完全に同一のmember宣言（id・pathとも重複）はpairwise比較で1件のPATH重複として検出する。"""
+        """完全に同一のメンバー宣言（IDもパスも重複）は組ごとの比較で1件の`PATH`の重複として検出する。"""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             root_yaml = (
@@ -102,13 +102,13 @@ class CatalogValidationTests(unittest.TestCase):
             pre = self._precheck(root)
             self.assertFalse(pre.ok)
             self.assertEqual(len(pre.diagnostics), 1)
-            # id・pathとも重複するため、pairwise比較はID重複（priority 920）をPATH重複（930）より
+            # IDもパスも重複するため、組ごとの比較は`ID`の重複（優先順位920）を`PATH`の重複（930）より
             # 先に検出する。
             self.assertEqual(pre.diagnostics[0].code, "SPEC-MULTI-ID-001")
 
     def test_duplicate_member_path_different_ids_is_multi_member(self):
-        """同一pathへ異なるidを宣言した場合、2件目はmember自身の設定id不一致として検出する
-        （`Diagnostic registry` priorityどおりMEMBER(910)がPATH(930)より優先される）。
+        """同一のパスへ異なるIDを宣言した場合、2件目はメンバー自身の設定IDの不一致として検出する
+        （診断レジストリの優先順位のとおり`MEMBER`(910)が`PATH`(930)より優先される）。
         """
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -146,7 +146,7 @@ class CatalogValidationTests(unittest.TestCase):
             self.assertIn("配下", pre.diagnostics[0].summary)
 
     def test_segment_boundary_false_positive_is_not_flagged(self):
-        """`apps/web`と`apps/web2`はsegment境界が異なるため入れ子/重複ではない。"""
+        """`apps/web`と`apps/web2`はセグメントの境界が異なるため入れ子／重複ではない。"""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             root_yaml = (
@@ -251,21 +251,21 @@ class CatalogValidationTests(unittest.TestCase):
 
 
 class IndependentRawCauseTests(unittest.TestCase):
-    """`Diagnostic registry` §2「独立したraw原因はそれぞれprimaryを持つ」の複合workspace版。"""
+    """診断レジストリ §2「独立した元の原因はそれぞれ主診断を持つ」の複合ワークスペース版。"""
 
     def _precheck(self, root: Path):
         git = gitutil.detect_git(str(root), dict(os.environ))
         return multiws.precheck(str(root), git, dict(os.environ), extra_config_revs=[])
 
     def test_two_members_with_independent_problems_yield_two_diagnostics(self):
-        """member1はID重複、member3・member4はpath入れ子。異なるmember対の独立raw原因は2件返す。"""
+        """メンバー1はID重複、メンバー3・メンバー4はパスの入れ子。異なるメンバーの組の独立した元の原因は2件返す。"""
 
         root_yaml = (
             ROOT_YAML
             + "multiWorkspace:\n  members:\n"
-            + "    - id: platform\n      path: apps/dup-id\n"  # rootと同じid（重複）
+            + "    - id: platform\n      path: apps/dup-id\n"  # ルートと同じID（重複）
             + "    - id: outer\n      path: apps/outer\n"
-            + "    - id: inner\n      path: apps/outer/inner\n"  # outerの配下（入れ子）
+            + "    - id: inner\n      path: apps/outer/inner\n"  # `outer`の配下（入れ子）
         )
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -282,14 +282,14 @@ class IndependentRawCauseTests(unittest.TestCase):
             self.assertEqual(len(pre.diagnostics), 2)
 
     def test_same_member_two_conditions_yield_one_diagnostic(self):
-        """1つのmemberがID不正とpath不正を同時に持つ場合、そのmemberからは1件だけ返す
-        （`Diagnostic registry` priorityどおりMEMBER(910) > ID(920) > PATH(930)の順で選ぶ）。
+        """1つのメンバーがIDの不正とパスの不正を同時に持つ場合、そのメンバーからは1件だけ返す
+        （診断レジストリの優先順位のとおり`MEMBER`(910) > `ID`(920) > `PATH`(930)の順で選ぶ）。
         """
 
         root_yaml = (
             ROOT_YAML
             + "multiWorkspace:\n  members:\n"
-            + "    - id: Bad-ID\n      path: ..\n"  # ID不正 かつ path lexically不正
+            + "    - id: Bad-ID\n      path: ..\n"  # ID不正 かつ パスの字句上の不正
         )
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -309,7 +309,7 @@ class GitBoundaryTests(unittest.TestCase):
             root_yaml = ROOT_YAML + "multiWorkspace:\n  members:\n    - id: web\n      path: apps/web\n"
             _write(root, ".spec/bitz.yaml", root_yaml)
             _write_member(root, "apps/web", "web")
-            # Git repositoryを作らない（gitバイナリ自体は使えても境界を確定できない状況を模す）。
+            # Gitリポジトリを作らない（`git`バイナリ自体は使えても境界を確定できない状況を模す）。
             git = gitutil.GitInfo(available=False)
             pre = multiws.precheck(str(root), git, dict(os.environ), extra_config_revs=[])
             self.assertFalse(pre.ok)
@@ -348,7 +348,7 @@ class ResourceLimitTests(unittest.TestCase):
             return multiws.precheck(str(root), git, dict(os.environ), extra_config_revs=[])
 
     def test_member_count_uses_default_max_members_20(self):
-        """maxMembers省略時は既定20が実効上限になる（複合workspace仕様 §2）。"""
+        """`maxMembers`の省略時は既定20が実効上限になる（複合ワークスペース仕様 §2）。"""
         self.assertTrue(self._precheck_with_members(20).ok)
         pre = self._precheck_with_members(21)
         self.assertFalse(pre.ok)
@@ -356,16 +356,16 @@ class ResourceLimitTests(unittest.TestCase):
         self.assertEqual(pre.diagnostics[0].evidence, {"dimension": "memberCount", "limit": 20, "observedAtLeast": 21})
 
     def test_member_count_uses_explicit_max_members(self):
-        """明示したmaxMembersがhard limitより狭ければ、それを実効上限にする。"""
+        """明示した`maxMembers`が絶対上限より狭ければ、それを実効上限にする。"""
         self.assertTrue(self._precheck_with_members(3, "  maxMembers: 3\n").ok)
         pre = self._precheck_with_members(4, "  maxMembers: 3\n")
         self.assertFalse(pre.ok)
         self.assertEqual(pre.diagnostics[0].evidence["limit"], 3)
 
     def test_member_count_over_hard_limit_stops_early(self):
-        """memberCount dimensionはCore hard limit（既定100）に対して判定する（`複合workspace仕様 §10`）。
+        """`memberCount`の次元はCoreの絶対上限（既定100）に対して判定する（`複合ワークスペース仕様 §10`）。
 
-        101 member分のfixtureを毎回作ると重いため、`HARD_LIMITS["memberCount"]`を一時的に3へ
+        101メンバー分のfixtureを毎回作ると重いため、`HARD_LIMITS["memberCount"]`を一時的に3へ
         下げて早期停止を検証する。
         """
 
@@ -393,7 +393,7 @@ class ResourceLimitTests(unittest.TestCase):
             self.assertEqual(pre.diagnostics[0].evidence["observedAtLeast"], 5)
 
     def test_dimension_priority_and_early_stop(self):
-        """複数dimensionが並存する合成totalsから、table順で最初のdimensionが選ばれる。"""
+        """複数の次元が並存する合成した`totals`から、表の順で最初の次元が選ばれる。"""
 
         totals = {
             "specFileCount": 1,
@@ -435,8 +435,8 @@ class ResourceLimitTests(unittest.TestCase):
         )
         stmt_count, rel_count, trace_count = multiws._scan_document_counts(text)
         self.assertEqual(stmt_count, 1)
-        self.assertEqual(rel_count, 3)  # requires(2) + refines(1)
-        self.assertEqual(trace_count, 5)  # implements(2) + tests(1) + covers(2)
+        self.assertEqual(rel_count, 3)  # `requires`(2) + `refines`(1)
+        self.assertEqual(trace_count, 5)  # `implements`(2) + `tests`(1) + `covers`(2)
 
 
 if __name__ == "__main__":

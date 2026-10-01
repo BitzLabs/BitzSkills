@@ -1,7 +1,7 @@
-"""候補Scanner（EARS-AI仕様 §5）の単体試験。
+"""候補の走査器（EARS-AI仕様 §5）の単体試験。
 
-候補抽出とtag妥当性検証を分離しているため、ここでは"候補になるかどうか"だけを検査する
-（statement IDや発動条件の妥当性はparserの試験で扱う）。
+候補抽出とタグの妥当性検証を分離しているため、ここでは"候補になるかどうか"だけを検査する
+（規範文IDや発動条件の妥当性は構文解析器の試験で扱う）。
 """
 
 import unittest
@@ -36,7 +36,7 @@ class IsCandidateTokenRuleTests(unittest.TestCase):
         self.assertEqual(len(scan_candidates("- [TASK-9:AC-01] tail\n")), 1)
 
     def test_rule2_uppercase_with_hyphen_or_colon(self):
-        # 未知接頭辞・桁不足でも"大文字始まりで-または:を含む"なら候補になる。
+        # 未知の接頭辞・桁不足でも"大文字始まりで-または:を含む"なら候補になる。
         self.assertEqual(len(scan_candidates("- [XYZ-1:AC-01] tail\n")), 1)
         self.assertEqual(len(scan_candidates("- [ACME:thing] tail\n")), 1)
 
@@ -75,14 +75,14 @@ class FenceStateMachineTests(unittest.TestCase):
         self.assertEqual(scan_candidates(text), [])
 
     def test_closing_fence_requires_run_at_least_as_long(self):
-        # 開始より短いrunは閉じない。
+        # 開始より短い連続列は閉じない。
         text = "````\n- [REQ-001:AC-01] tail\n```\nstill inside\n````\n"
-        # 短い```では閉じないため、"still inside"より後のfence外候補は生まれない。
+        # 短い```では閉じないため、"still inside"より後のフェンス外の候補は生まれない。
         self.assertEqual(scan_candidates(text), [])
 
     def test_closing_fence_with_trailing_info_string_does_not_close(self):
         text = "```\nnot a candidate line\n``` extra\n- [REQ-001:AC-01] [ACTOR:X] [ALWAYS] [MUST] [THEN] a。\n"
-        # closing fenceにinfo文字列は許可しないため、閉じずにfence内が続く。
+        # 閉じるフェンスに情報文字列は許可しないため、閉じずにフェンス内が続く。
         self.assertEqual(scan_candidates(text), [])
 
     def test_after_fence_closes_candidates_resume(self):
@@ -94,7 +94,7 @@ class FenceStateMachineTests(unittest.TestCase):
         self.assertEqual(scan_candidates(text), [])
 
     def test_fence_indent_four_does_not_open(self):
-        # indent>=4は独立にindented code blockとして扱われ、fenceにはならない。
+        # 字下げ>=4は独立して字下げされたコードブロックとして扱われ、フェンスにはならない。
         text = "    ```\n- [REQ-001:AC-01] [ACTOR:X] [ALWAYS] [MUST] [THEN] a。\n    ```\n"
         self.assertEqual(len(scan_candidates(text)), 1)
 

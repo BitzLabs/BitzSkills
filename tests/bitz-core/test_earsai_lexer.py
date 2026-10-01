@@ -1,4 +1,4 @@
-"""行内字句primitive（lexer.py）の単体試験。parser経由では検査しにくい境界だけを直接叩く。"""
+"""行内の字句解析の基本部品（`lexer.py`）の単体試験。構文解析器を経由すると検査しにくい境界だけを直接叩く。"""
 
 import unittest
 
@@ -20,7 +20,7 @@ class ReadBracketTests(unittest.TestCase):
         self.assertEqual(end, 6)
 
     def test_quoted_value_ignores_unescaped_close_bracket_char(self):
-        # DQUOTE内の生の']'はqcharとして許可され、bracketを閉じない。
+        # `DQUOTE`内の生の']'は`qchar`として許可され、角括弧を閉じない。
         content, end = read_bracket('[q:T="a]b"] tail', 0)
         self.assertEqual(content, 'q:T="a]b"')
         self.assertEqual(end, 11)
@@ -99,7 +99,7 @@ class OperationTextTests(unittest.TestCase):
         self.assertIsNone(bracket_pos)
 
     def test_unescaped_bracket_stops_text_and_reports_its_position(self):
-        # operationのtextにも§4.3の「未escape'['で直前textを終了する」が適用される。
+        # 処理種別のテキストにも§4.3の「未エスケープ'['で直前のテキストを終了する」が適用される。
         text, period, bracket_pos = scan_operation_text("keep [literal] bracket.", 0)
         self.assertIsNone(text)
         self.assertIsNone(period)

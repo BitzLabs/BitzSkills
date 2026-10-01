@@ -1,4 +1,4 @@
-"""Gate Cの証拠集約を偽の成功報告で通せないことを検査する。"""
+"""Gate Cの証跡の集約を偽の成功報告で通せないことを検査する。"""
 from __future__ import annotations
 
 import copy

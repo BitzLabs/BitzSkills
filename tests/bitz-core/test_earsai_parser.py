@@ -1,8 +1,8 @@
-"""EARS-AI Parser（EARS-AI仕様 §3・§4・§6・§7）の単体試験。
+"""EARS-AIの構文解析器（EARS-AI仕様 §3・§4・§6・§7）の単体試験。
 
-正例のSemantic IR、各EAI条件の反例、同一raw原因のprimary 1件規則、code spanのrun長、
-escape、quoted value、全角句点、TAB／全角文字のcolumn、決定性を検査する。
-draft差分によるseverity決定はPhase Bの責務のため、ここでは`ir.CONDITION_*` kindを検査する。
+正例の意味中間表現、各`EAI`条件の反例、同一の元の原因に対する主診断1件の規則、コードスパンの連続列の長さ、
+エスケープ、引用符付きの値、全角句点、TAB／全角文字の列、決定性を検査する。
+`draft`かどうかによる重大度の決定はフェーズBの責務のため、ここでは`ir.CONDITION_*`の種類を検査する。
 """
 
 import unittest
@@ -224,18 +224,18 @@ class SyntaxErrorConditionTests(unittest.TestCase):
 
 
 class PrimarySelectionTests(unittest.TestCase):
-    """同一raw原因から複数の構文候補が生じる場合、primaryを1件だけ返す（§4末尾）。"""
+    """同一の元の原因から複数の構文候補が生じる場合、主診断を1件だけ返す（§4末尾）。"""
 
     def test_unclosed_code_span_wins_over_unclosed_tag(self):
-        # 未閉鎖code spanが行末までの残りをすべて飲み込むため、後続の[が閉じないtagにもなり得るが、
-        # primaryはcode-unclosedだけを返す。
+        # 未閉鎖のコードスパンが行末までの残りをすべて飲み込むため、後続の[が閉じないタグにもなり得るが、
+        # 主診断は`code-unclosed`だけを返す。
         text = "- [REQ-001:AC-01] [ACTOR:X] [ALWAYS] [MUST] [THEN] ``a [MUST\n"
         result = _one(text)
         self.assertEqual(len(result.conditions), 1)
         self.assertEqual(result.conditions[0]["kind"], ir_mod.CONDITION_CODE_UNCLOSED)
 
     def test_unclosed_tag_wins_over_id_format(self):
-        # IDのbracketそのものが閉じないため、内容がstatement-id形式かどうかは判定しない。
+        # IDの角括弧そのものが閉じないため、内容が`statement-id`形式かどうかは判定しない。
         text = "- [REQ-001 no closing bracket for id\n"
         result = _one(text)
         self.assertEqual(len(result.conditions), 1)
@@ -244,7 +244,7 @@ class PrimarySelectionTests(unittest.TestCase):
 
 class MultibyteAndTabColumnTests(unittest.TestCase):
     def test_column_counts_full_width_and_tab_as_one_each(self):
-        # 全角文字とTABを含むtext部分があっても、後続tagのcolumnはUnicode code point単位で数える。
+        # 全角文字とTABを含むテキスト部分があっても、後続のタグの列はUnicodeのコードポイント単位で数える。
         text = "- [REQ-001:AC-01] [ACTOR:X] [WHEN] 全角\tTAB [MUST] [THEN a。\n"
         result = _one(text)
         self.assertEqual(result.statements, [])
@@ -268,7 +268,7 @@ class DeterminismTests(unittest.TestCase):
 
 
 class OperationTrailingBracketTests(unittest.TestCase):
-    """作業依頼2026-09 #1: operation textの未escape`[`は§4.3どおりtextを終端する。"""
+    """作業依頼2026-09 #1: 処理種別のテキストの未エスケープ`[`は§4.3どおりテキストを終端する。"""
 
     def test_unclosed_trailing_bracket_is_tag_unclosed(self):
         text = "- [REQ-001:AC-01] [ACTOR:X] [ALWAYS] [MUST] [CONSTRAINT] keep [literal open。\n"
@@ -294,7 +294,7 @@ class OperationTrailingBracketTests(unittest.TestCase):
         )
 
     def test_full_width_and_tab_before_unknown_bracket_reported_in_single_120(self):
-        # SINGLE-102相当: 全角文字とTABの後に未知tagを置いても、[の位置をcode point単位で報告する。
+        # SINGLE-102相当: 全角文字とTABの後に未知のタグを置いても、[の位置をコードポイント単位で報告する。
         text = (
             "- [REQ-001:AC-01] [ACTOR:X] [ALWAYS] [MUST] [CONSTRAINT] "
             "全角文字と\tタブの後に[未知tagを置かない。\n"
@@ -307,10 +307,10 @@ class OperationTrailingBracketTests(unittest.TestCase):
 
 
 class BracketInteriorBracketTests(unittest.TestCase):
-    """作業依頼2026-09 #2: `read_bracket`はquote外・未escapeの`[`を開始`[`の位置で破綻させる。"""
+    """作業依頼2026-09 #2: `read_bracket`は引用符の外・未エスケープの`[`を開始`[`の位置で破綻させる。"""
 
     def test_unescaped_bracket_inside_id_bracket_reports_opening_position(self):
-        # SINGLE-103-02相当: IDのbracketが閉じる前に別の[が現れる。
+        # SINGLE-103-02相当: IDの角括弧が閉じる前に別の[が現れる。
         text = "- [REQ-01:AC-02 [ACTOR:TargetSystem] [ALWAYS] [MUST] [THEN] a。\n"
         result = _one(text)
         self.assertEqual(result.statements, [])
@@ -328,7 +328,7 @@ class BracketInteriorBracketTests(unittest.TestCase):
 
 
 class ExtensionValueGrammarTests(unittest.TestCase):
-    """作業依頼2026-09 #3: extension値はbare-valueまたはquoted-valueだけを妥当とする。"""
+    """作業依頼2026-09 #3: 拡張タグの値は`bare-value`または`quoted-value`だけを妥当とする。"""
 
     def test_bare_value_with_dot_hyphen_underscore_is_valid(self):
         text = "- [REQ-001:AC-01] [q:T=a-b_c.d] [ACTOR:X] [ALWAYS] [MUST] [THEN] a。\n"
@@ -351,7 +351,7 @@ class ExtensionValueGrammarTests(unittest.TestCase):
         )
 
     def test_value_with_two_quoted_segments_is_tag_unclosed(self):
-        # "a"b"c" のような複数quoted segmentは単一のquoted-valueとして妥当ではない。
+        # "a"b"c" のような複数の引用符付きセグメントは単一の`quoted-value`として妥当ではない。
         text = '- [REQ-001:AC-01] [q:T="a"b"c"] [ACTOR:X] [ALWAYS] [MUST] [THEN] a。\n'
         result = _one(text)
         self.assertEqual(result.statements, [])
@@ -371,26 +371,26 @@ class ExtensionValueGrammarTests(unittest.TestCase):
 
 
 class WrongSlotClassificationTests(unittest.TestCase):
-    """作業依頼2026-09 #4: 期待slotと違う既知tagは、後方に期待tagが実在すればtag順序不正、
-    実在しなければ必須tag不足へ分類する（ヒューリスティックではなく実在探索）。"""
+    """作業依頼2026-09 #4: 期待する位置と違う既知のタグは、後方に期待するタグが実在すればタグ順序不正、
+    実在しなければ必須タグ不足へ分類する（ヒューリスティックではなく実在の探索）。"""
 
     def test_all_tags_present_but_out_of_order_is_tag_order(self):
-        # modalityとactivationが入れ替わっている。ACTORの次に来るのはactivation slotのはずが
-        # [MUST]が現れ、後方に本来のactivation tag[ALWAYS]が実在するためtag順序不正。
+        # 規範強度と発動条件が入れ替わっている。`ACTOR`の次に来るのは発動条件の位置のはずが
+        # `[MUST]`が現れ、後方に本来の発動条件のタグ`[ALWAYS]`が実在するためタグ順序不正。
         text = "- [REQ-001:AC-01] [ACTOR:X] [MUST] [ALWAYS] [THEN] a。\n"
         result = _one(text)
         self.assertEqual(result.statements, [])
         self.assertEqual(result.conditions, [{"kind": ir_mod.CONDITION_TAG_ORDER, "line": 1, "column": 29}])
 
     def test_actor_missing_entirely_is_tag_required(self):
-        # ACTORがどこにも存在しない場合は必須tag不足。
+        # `ACTOR`がどこにも存在しない場合は必須タグ不足。
         text = "- [REQ-001:AC-01] [ALWAYS] [MUST] [THEN] a。\n"
         result = _one(text)
         self.assertEqual(result.statements, [])
         self.assertEqual(result.conditions, [{"kind": ir_mod.CONDITION_TAG_REQUIRED, "line": 1, "column": 19}])
 
     def test_actor_present_later_out_of_order_is_tag_order(self):
-        # ACTORが本来の位置になく、activationの後に現れる（後方に実在する）。
+        # `ACTOR`が本来の位置になく、発動条件の後に現れる（後方に実在する）。
         text = "- [REQ-001:AC-01] [ALWAYS] [ACTOR:X] [MUST] [THEN] a。\n"
         result = _one(text)
         self.assertEqual(result.statements, [])
@@ -401,8 +401,8 @@ class WrongSlotClassificationTests(unittest.TestCase):
         result = _one(text)
         self.assertEqual(result.statements, [])
         self.assertEqual(result.conditions[0]["kind"], ir_mod.CONDITION_TAG_UNCLOSED)
-        # 閉じているが妥当なCore tagでもextensionでもないbracketは"invalid" detailを持つ
-        # （2026-09作業依頼#7: document.pyが「tagが不正です」文面を選ぶために使う）。
+        # 閉じているが妥当なCoreのタグでも拡張タグでもない角括弧は"invalid"の`detail`を持つ
+        # （2026-09作業依頼#7: `document.py`が「タグが不正です」の文面を選ぶために使う）。
         self.assertEqual(result.conditions[0]["detail"], "invalid")
 
     def test_invalid_actor_identifier_has_invalid_detail(self):

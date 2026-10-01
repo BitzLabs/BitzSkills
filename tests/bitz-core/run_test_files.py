@@ -1,7 +1,7 @@
-"""指定したtest fileだけをunittestで実行する（bitz-core自身の`.spec/`の`verify` command）。
+"""指定したテストファイルだけをunittestで実行する（bitz-core自身の`.spec/`の`verify`コマンド）。
 
-`bitz verify`は`{tests}`をworkspace相対のtest file pathへ展開して渡す。`python -m unittest`は
-`tests/bitz-core/`のようにmodule名へ変換できないpathを受け付けないため、fileから直接loadする。
+`bitz verify`は`{tests}`をワークスペースからの相対パスのテストファイルへ展開して渡す。`python -m unittest`は
+`tests/bitz-core/`のようにモジュール名へ変換できないパスを受け付けないため、ファイルから直接読み込む。
 `uv run --project plugins/bitz-core python tests/bitz-core/run_test_files.py <path>...`で実行する。
 """
 

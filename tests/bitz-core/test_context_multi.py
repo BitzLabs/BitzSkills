@@ -1,8 +1,8 @@
-"""`context`の複合workspace対応（Step 5C、および是正）の単体試験。
+"""`context`の複合ワークスペース対応（Step 5C、および是正）の単体試験。
 
-`02_SPECモデル/05_複合workspace仕様.md` §4・§6を対象にする。特に、他workspaceの文書が
-**自分のworkspace内**を非修飾で参照するrelation（§4「同じworkspaceを参照するとき非修飾形式を
-許可」）が、request workspace視点だけの索引ではなく宣言元workspaceで解決されることを確認する
+`02_SPECモデル/05_複合workspace仕様.md` §4・§6を対象にする。特に、他のワークスペースの文書が
+**自分のワークスペース内**を非修飾で参照する関係（§4「同じワークスペースを参照するとき非修飾形式を
+許可」）が、起点ワークスペースの視点だけの索引ではなく、参照元のワークスペースで解決されることを確認する
 （是正: `multirelate._qualified_relations_view`）。
 """
 
@@ -58,8 +58,8 @@ def _run_context(root, target, *, purpose="interpret") -> tuple[dict, int]:
 
 
 class SameWorkspaceUnqualifiedRefResolvedByDeclarerTests(unittest.TestCase):
-    """webのTECHが同じwebのREQ-002を非修飾で`requires`し、platform起点のcontextから
-    webのTECH経由で到達する場合、REQ-002が閉包へ入り、workspace内edgeは
+    """`web`のTECHが同じ`web`のREQ-002を非修飾で`requires`し、`platform`起点のコンテキストから
+    `web`のTECH経由で到達する場合、REQ-002が閉包へ入り、ワークスペース内のエッジは
     ``resolution.crossWorkspaceEdges``へ含まれないことを確認する。
     """
 
@@ -93,23 +93,23 @@ class SameWorkspaceUnqualifiedRefResolvedByDeclarerTests(unittest.TestCase):
             doc_ids = {d["id"] for d in result["documents"]}
             self.assertIn("platform::REQ-001", doc_ids)
             self.assertIn("web::TECH-010", doc_ids)
-            # web::TECH-010が非修飾requiresしたweb自身のREQ-002が閉包に入っている。
+            # `web::TECH-010`が非修飾`requires`した`web`自身のREQ-002が閉包に入っている。
             self.assertIn("web::REQ-002", doc_ids)
 
-            # workspace内（web -> web）のrequires edgeはcrossWorkspaceEdgesに含めない。
+            # ワークスペース内（`web` -> `web`）の`requires`エッジは`crossWorkspaceEdges`に含めない。
             cross_edges = result["resolution"]["crossWorkspaceEdges"]
             for edge in cross_edges:
                 self.assertFalse(
                     edge["source"].startswith("web::") and edge["target"].startswith("web::"),
                     f"workspace内edgeが横断edgeに混入している: {edge}",
                 )
-            # platform(refines元)からweb(refines先)への横断edgeは1件だけ含まれる。
+            # `web`（`refines`の参照元）から`platform`（`refines`の参照先）への横断エッジは1件だけ含まれる。
             self.assertEqual(
                 [e for e in cross_edges if e["source"] == "web::TECH-010" and e["relation"] == "refines"],
                 [{"relation": "refines", "source": "web::TECH-010", "target": "platform::REQ-001:AC-01"}],
             )
 
-            # Digestが計算できている（contextDigest算出時にresolveできなければ設定不適合等でNoneになる）。
+            # ハッシュ値が計算できている（`contextDigest`の算出時に解決できなければ設定不適合などで`None`になる）。
             self.assertIsNotNone(result["contextDigest"])
             self.assertTrue(result["contextDigest"].startswith("sha256:"))
 

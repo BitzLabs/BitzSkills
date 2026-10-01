@@ -1,4 +1,4 @@
-"""Context Digest正規化（`digest.py`）の単体試験（`00_共通契約/03_Context-Digest正規化仕様.md`）。"""
+"""コンテキストのハッシュ値の正規化（`digest.py`）の単体試験（`00_共通契約/03_Context-Digest正規化仕様.md`）。"""
 
 import unittest
 
@@ -17,7 +17,7 @@ class CanonicalJsonTests(unittest.TestCase):
         self.assertFalse(out.startswith(b"\xef\xbb\xbf"))
 
     def test_nfc_normalization_applied_to_strings(self):
-        # "が" として濁点結合文字（NFD）を分解形で与えても、Canonical化後は合成済み(NFC)になる。
+        # "が" として濁点結合文字（NFD）を分解形で与えても、`canonical_bytes`で正規JSONにした後は合成済み(NFC)になる。
         decomposed = "が"
         out = digest_mod.canonical_bytes({"v": decomposed}).decode("utf-8")
         self.assertIn("が", out)
@@ -36,18 +36,18 @@ class CanonicalJsonTests(unittest.TestCase):
         self.assertNotEqual(d1, d2)
 
     def test_object_keys_sort_by_utf16_code_unit_not_code_point(self):
-        # U+E000 (BMP、code unit 0xE000) と U+10000 (附属面、surrogate pair 0xD800,0xDC00)。
-        # code point順では U+E000 < U+10000 だが、UTF-16 code unit順では最初のcode unitが
-        # 0xD800 < 0xE000 のため逆転する（RFC 8785 §5「UTF-16 code unitの昇順」）。
+        # U+E000 (BMP、コード単位0xE000) と U+10000 (附属面、サロゲートペア0xD800,0xDC00)。
+        # コードポイント順では U+E000 < U+10000 だが、UTF-16のコード単位順では最初のコード単位が
+        # 0xD800 < 0xE000 のため逆転する（RFC 8785 §5「UTF-16コード単位の昇順」）。
         key_bmp = ""
         key_supplementary = "\U00010000"
-        self.assertLess(key_bmp, key_supplementary)  # Pythonのcode point比較では bmp が先。
+        self.assertLess(key_bmp, key_supplementary)  # Pythonのコードポイントの比較では bmp が先。
 
         data = {key_supplementary: "sup", key_bmp: "bmp"}
         out = digest_mod.canonical_bytes(data).decode("utf-8")
         pos_supplementary = out.index(json_dumps_key(key_supplementary))
         pos_bmp = out.index(json_dumps_key(key_bmp))
-        self.assertLess(pos_supplementary, pos_bmp)  # UTF-16 code unit順では附属面文字が先。
+        self.assertLess(pos_supplementary, pos_bmp)  # UTF-16のコード単位順では附属面文字が先。
 
 
 def json_dumps_key(k: str) -> str:

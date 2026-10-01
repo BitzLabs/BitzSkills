@@ -79,7 +79,7 @@ class SecretRedactionTests(unittest.TestCase):
         self.assertEqual(excerpt, "value=[REDACTED]")
 
     def test_secret_spanning_synthetic_chunk_join_is_still_redacted(self):
-        # chunk境界をまたいでも、最終合成後のbufferに対してredactionが適用されることを確認する。
+        # チャンクの境界をまたいでも、最終的に合成したバッファーに対して伏せ字化が適用されることを確認する。
         chunk_a = b"probe s3cr3t-env-"
         chunk_b = b"value-0123456789 end"
         excerpt, _ = redact.redact_output(chunk_a + chunk_b, {"BITZ_FIXTURE_TOKEN": "s3cr3t-env-value-0123456789"})
@@ -100,25 +100,25 @@ class TruncationTests(unittest.TestCase):
         self.assertTrue(excerpt.endswith("x"))
 
     def test_raw_within_limit_but_redaction_grows_text_keeps_truncated_false(self):
-        # 制御文字1つが"\\uNNNN"(6文字)へ展開されるため、大量の制御文字はraw byte数以内でも
-        # redaction後のbufferが64 KiBを超え得る。この場合もtruncatedはfalseのままとする。
+        # 制御文字1つが"\\uNNNN"(6文字)へ展開されるため、大量の制御文字は元のバイト数以内でも
+        # 伏せ字化したバッファーが64 KiBを超え得る。この場合も`truncated`は`false`のままとする。
         raw = (b"\x01" * 20000)
         excerpt, truncated = redact.redact_output(raw, {})
         self.assertFalse(truncated)
         self.assertLessEqual(len(excerpt.encode("utf-8")), 65536)
 
     def test_tail_kept_at_codepoint_boundary(self):
-        # マルチバイト文字が境界に来ても不正byte列を残さない。
+        # マルチバイト文字が境界に来ても不正なバイト列を残さない。
         raw = ("あ" * 40000).encode("utf-8") + b"end"
         excerpt, truncated = redact.redact_output(raw, {})
         self.assertTrue(truncated) if len(raw) > 65536 else None
-        # 有効なUTF-8として再decodeできることを確認する(境界破損なし)。
+        # 有効なUTF-8として再デコードできることを確認する(境界の破損なし)。
         excerpt.encode("utf-8")
         self.assertTrue(excerpt.endswith("end"))
 
 
 class KvBoundaryFixTests(unittest.TestCase):
-    """検収是正1: keyword直後の`:`/`=`はword boundaryを要求しない（接頭辞付きでも一致）。"""
+    """検収是正1: キーワード直後の`:`/`=`は単語の境界を要求しない（接頭辞付きでも一致）。"""
 
     def test_my_token_equals_is_redacted(self):
         excerpt, _ = redact.redact_output(b"MY_TOKEN=abc123", {})
@@ -138,7 +138,7 @@ class KvBoundaryFixTests(unittest.TestCase):
 
 
 class EnvValueControlNormalizationTests(unittest.TestCase):
-    """検収是正2: 環境変数値も制御文字処理後の値で照合する。"""
+    """検収是正2: 環境変数の値も制御文字を処理した後の値で照合する。"""
 
     def test_env_value_with_crlf_matches_normalized_output(self):
         env = {"BITZ_TEST_SECRET": "line1\r\nline2"}
@@ -154,26 +154,26 @@ class EnvValueControlNormalizationTests(unittest.TestCase):
 
 
 class OrderingTests(unittest.TestCase):
-    """検収是正3: 環境変数値→Authorization/Bearer→kv→PEMの順で適用する。"""
+    """検収是正3: 環境変数の値→`Authorization`/`Bearer`→`kv`→PEMの順で適用する。"""
 
     def test_env_value_replaced_before_line_rules_can_break_it(self):
-        # 環境変数値の中にkv風の文字列が含まれていても、先に環境変数値として丸ごと置換される。
+        # 環境変数値の中に`kv`風の文字列が含まれていても、先に環境変数値として丸ごと置換される。
         env = {"BITZ_TEST_TOKEN": "password=inner"}
         raw = b"prefix password=inner suffix"
         excerpt, _ = redact.redact_output(raw, env)
         self.assertEqual(excerpt, "prefix [REDACTED] suffix")
 
     def test_same_length_values_tie_broken_by_variable_name_order(self):
-        # 同じUTF-8 byte長の値は変数名のcode point辞書順で照合する。
-        # ここではどちらのnameでも最終出力は同一（値が異なるため両方redactされる）ことを確認しつつ、
-        # 実装内部のsort keyがname順であることを別途ホワイトボックスに検査する。
+        # 同じUTF-8のバイト長の値は変数名のコードポイント辞書順で照合する。
+        # ここではどちらの名前でも最終出力は同一（値が異なるため両方伏せ字化される）ことを確認しつつ、
+        # 実装内部の並べ替えのキーが名前順であることを別途ホワイトボックスに検査する。
         env = {"Z_TOKEN": "bbbb", "A_TOKEN": "aaaa"}
         filt = redact._EnvValueFilter(env)
         self.assertEqual(filt._values, ["aaaa", "bbbb"])
 
 
 class ChunkBoundaryTests(unittest.TestCase):
-    """検収是正5: chunk境界をまたぐkv・環境変数値・PEM BEGIN/ENDでも正しくredactされる。"""
+    """検収是正5: チャンクの境界をまたぐ`kv`・環境変数の値・PEMの`BEGIN`/`END`でも正しく伏せ字化される。"""
 
     def test_kv_keyword_split_across_chunks(self):
         redactor = redact.StreamRedactor({})
@@ -209,7 +209,7 @@ class ChunkBoundaryTests(unittest.TestCase):
 
 
 class UnterminatedPemTests(unittest.TestCase):
-    """検収是正4: ENDが来ないままstreamが終わっても末尾までredactする。"""
+    """検収是正4: `END`が来ないままストリームが終わっても末尾まで伏せ字化する。"""
 
     def test_pem_without_end_marker_is_redacted_to_stream_end(self):
         raw = b"before\n-----BEGIN RSA PRIVATE KEY-----\nAAAABBBBCCCC\nmore-data-with-no-end\n"
@@ -223,11 +223,11 @@ class UnterminatedPemTests(unittest.TestCase):
 
 
 class AllSplitPositionsTests(unittest.TestCase):
-    """検収是正（2回目）: 全byte位置で2分割した結果が一括投入と一致することを網羅する。
+    """検収是正（2回目）: 全バイト位置で2分割した結果が一括投入と一致することを網羅する。
 
-    CR・CRLF・マルチバイト文字・PEM・kv・環境変数値を含む入力を対象に、1バイトずつ位置を
-    ずらして2 chunkへ分割してもStreamRedactorの出力が一括投入と一致することを確認する。
-    分割位置を総当たりするため、他のfilterのchunk境界バグもここで拾う。
+    CR・CRLF・マルチバイト文字・PEM・`kv`・環境変数の値を含む入力を対象に、1バイトずつ位置を
+    ずらして2つのチャンクへ分割しても`StreamRedactor`の出力が一括投入と一致することを確認する。
+    分割位置を総当たりするため、他のフィルターのチャンクの境界のバグもここで拾う。
     """
 
     ENV = {
@@ -284,12 +284,12 @@ class AllSplitPositionsTests(unittest.TestCase):
 
 
 class MemoryBoundTests(unittest.TestCase):
-    """検収是正5: 巨大な出力でもmemoryが有界であること。"""
+    """検収是正5: 巨大な出力でもメモリが有界であること。"""
 
     def test_ten_mib_output_keeps_bounded_peak_memory(self):
         chunk = ("x" * 8192).encode("ascii")
         redactor = redact.StreamRedactor({"BITZ_TEST_TOKEN": "irrelevant-secret-value"})
-        # warm up（importや初回allocationのオーバーヘッドを測定対象から外す）。
+        # ウォームアップ（インポートや初回のアロケーションのオーバーヘッドを測定対象から外す）。
         for _ in range(4):
             redactor.feed(chunk)
 
@@ -307,7 +307,7 @@ class MemoryBoundTests(unittest.TestCase):
 
         self.assertTrue(truncated)
         self.assertLessEqual(len(excerpt.encode("utf-8")), 65536)
-        # 10 MiB相当を流し込んでも、追跡peakは数MB程度に収まるはず（出力全体を保持していない証跡）。
+        # 10 MiB相当を流し込んでも、追跡したピークは数MB程度に収まるはず（出力全体を保持していない証跡）。
         self.assertLess(peak, 5 * 1024 * 1024, f"peak={peak} bytes: 出力総量へ依存して増加しています")
 
 

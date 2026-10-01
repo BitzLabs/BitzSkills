@@ -1,7 +1,7 @@
 """`TargetExpansion(root, purpose)`（`targetexpand.py`）の単体試験。
 
-`04_関係・トレースモデル.md` §6.1・§6.4の`interpret`閉包規則（requires終端、refines forward/
-backward、draft refinementのadvisory包含、ADRとstatement起点の解決）を検査する。
+`04_関係・トレースモデル.md` §6.1・§6.4の`interpret`閉包規則（`requires`を終端まで辿ること、`refines`の順方向／
+逆方向、`refines`する`draft`の文書を役割`advisory`として含めること、ADRと規範文を起点にした解決）を検査する。
 """
 
 import os
@@ -129,8 +129,8 @@ class RefinesTests(unittest.TestCase):
             self.assertIn("REQ-001", result.context_documents)
 
     def test_backward_applicable_refinement_and_its_requires_included(self):
-        # TECH-001 refines REQ-001（applicable）。TECH-001はTECH-002をrequiresする。
-        # REQ-001を起点にすると、逆参照でTECH-001を含め、さらにTECH-001のrequires閉包
+        # TECH-001 `refines` REQ-001（`applicable`）。TECH-001はTECH-002を`requires`する。
+        # REQ-001を起点にすると、逆参照でTECH-001を含め、さらにTECH-001の`requires`の閉包
         # （TECH-002）も含める（§6.1「4.」）。
         with tempfile.TemporaryDirectory() as root:
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
@@ -164,7 +164,7 @@ class RefinesTests(unittest.TestCase):
             _write(root, ".spec/technical/TECH-002.md", _tech("TECH-002"))
             id_index, stmt_index = _indexes(root)
             result = te_mod.target_expansion("REQ-001", "interpret", id_index, stmt_index)
-            # draft文書自体はadvisoryとして含めるが、そのrequires（TECH-002）は辿らない。
+            # `draft`の文書自体は`advisory`として含めるが、その`requires`（TECH-002）は辿らない。
             self.assertIn("TECH-001", result.context_documents)
             self.assertNotIn("TECH-002", result.context_documents)
 
@@ -211,7 +211,7 @@ class RootFormTests(unittest.TestCase):
 
 
 class ImplementVerifyPurposeTests(unittest.TestCase):
-    """`implement`/`verify`はStep 3で実装済み。素のREQ起点（依存なし）で基本形を確認する。"""
+    """`implement`/`verify`はStep 3で実装済み。素のREQを起点（依存なし）にして基本形を確認する。"""
 
     def test_implement_purpose_returns_target_statements(self):
         with tempfile.TemporaryDirectory() as root:

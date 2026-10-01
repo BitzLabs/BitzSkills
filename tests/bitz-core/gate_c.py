@@ -1,4 +1,4 @@
-"""Gate Cのfresh-checkout証拠をfail-closedで集約する。"""
+"""Gate Cの新しいチェックアウトの証跡を、失敗時に通さない扱いで集約する。"""
 from __future__ import annotations
 
 import copy
@@ -102,7 +102,7 @@ def _version_at_least(actual: tuple[int, ...], minimum: tuple[int, ...]) -> bool
 
 def validate_performance_evidence(row: dict, *, commit: str,
                                   reference_manifest: dict) -> dict:
-    """fresh checkoutで実行した性能fixture監査の証拠を検査する。"""
+    """新しいチェックアウトで実行した性能fixtureの監査の証跡を検査する。"""
     _error(isinstance(row, dict), "性能baseline監査証拠がありません")
     _error(row.get("schemaVersion") == 1, "性能baseline監査証拠のschemaVersionが不正です")
     _error(row.get("commit") == commit, "性能baseline監査証拠のcommitが対象commitと一致しません")
@@ -181,7 +181,7 @@ def _closure_fixture_ids(fixture_ids: list[str], rule: dict) -> list[str]:
 
 def validate_priority_closure_evidence(row: dict, *, commit: str,
                                        fixture_ids: list[str]) -> dict:
-    """対象commitで再計算した提案25のP0/P1閉包証拠を検査する。"""
+    """対象コミットで再計算した提案25のP0/P1の閉包の証跡を検査する。"""
     _error(isinstance(row, dict), "P0/P1閉包証拠がありません")
     _error(row.get("schemaVersion") == 1, "P0/P1閉包証拠のschemaVersionが不正です")
     _error(row.get("commit") == commit, "P0/P1閉包証拠のcommitが対象commitと一致しません")
