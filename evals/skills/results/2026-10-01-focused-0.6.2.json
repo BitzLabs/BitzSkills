@@ -1,0 +1,205 @@
+{
+  "errors": [
+    "six-skill/gpt-6-luna/反復1: caseが不足しています: SE-001, SE-002, SE-003, SE-005, SE-006, SE-007, SE-008, SE-009, SE-010, SE-011, SE-012, SE-013, SE-017, SE-018, SE-019, SE-020, SE-021, SE-023, SE-024, SE-025, SE-026, SE-027, SE-028, SE-029, SE-030, SE-031, SE-032, SE-033, SE-035, SE-036, SE-037, SE-038, SE-040, SE-041, SE-042, SE-043, SE-044, SE-045",
+    "six-skill/gpt-6-luna/反復1/bitz-core/explicit: caseがありません",
+    "six-skill/gpt-6-luna/反復1/bitz-core/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復1/bitz-core/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復1/bitz-core/behavior: caseがありません",
+    "six-skill/gpt-6-luna/反復1/bitz-core/safety: caseがありません",
+    "six-skill/gpt-6-luna/反復1/quality-plan/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復1/quality-plan/negative: caseがありません",
+    "six-skill/gpt-6-luna/反復1/quality-plan/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復1/quality-review/explicit: caseがありません",
+    "six-skill/gpt-6-luna/反復1/quality-review/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復1/quality-review/contextual: caseがありません",
+    "six-skill/gpt-6-luna/反復1/quality-review/negative: caseがありません",
+    "six-skill/gpt-6-luna/反復1/quality-review/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復1/quality-review/behavior: caseがありません",
+    "six-skill/gpt-6-luna/反復1/quality-review/safety: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-converge/explicit: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-converge/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-converge/contextual: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-converge/negative: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-converge/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-converge/behavior: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-converge/safety: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-implement/explicit: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-implement/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-implement/contextual: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-implement/negative: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-implement/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-implement/behavior: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-implement/safety: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-plan/explicit: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-plan/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-plan/contextual: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-plan/negative: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-plan/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-plan/behavior: caseがありません",
+    "six-skill/gpt-6-luna/反復2: caseが不足しています: SE-001, SE-002, SE-003, SE-005, SE-006, SE-007, SE-008, SE-009, SE-010, SE-011, SE-012, SE-013, SE-017, SE-018, SE-019, SE-020, SE-021, SE-023, SE-024, SE-025, SE-026, SE-027, SE-028, SE-029, SE-030, SE-031, SE-032, SE-033, SE-035, SE-036, SE-037, SE-038, SE-040, SE-041, SE-042, SE-043, SE-044, SE-045",
+    "six-skill/gpt-6-luna/反復2/bitz-core/explicit: caseがありません",
+    "six-skill/gpt-6-luna/反復2/bitz-core/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復2/bitz-core/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復2/bitz-core/behavior: caseがありません",
+    "six-skill/gpt-6-luna/反復2/bitz-core/safety: caseがありません",
+    "six-skill/gpt-6-luna/反復2/quality-plan/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復2/quality-plan/negative: caseがありません",
+    "six-skill/gpt-6-luna/反復2/quality-plan/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復2/quality-review/explicit: caseがありません",
+    "six-skill/gpt-6-luna/反復2/quality-review/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復2/quality-review/contextual: caseがありません",
+    "six-skill/gpt-6-luna/反復2/quality-review/negative: caseがありません",
+    "six-skill/gpt-6-luna/反復2/quality-review/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復2/quality-review/behavior: caseがありません",
+    "six-skill/gpt-6-luna/反復2/quality-review/safety: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-converge/explicit: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-converge/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-converge/contextual: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-converge/negative: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-converge/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-converge/behavior: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-converge/safety: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-implement/explicit: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-implement/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-implement/contextual: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-implement/negative: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-implement/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-implement/behavior: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-implement/safety: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-plan/explicit: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-plan/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-plan/contextual: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-plan/negative: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-plan/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-plan/behavior: caseがありません",
+    "six-skill/gpt-6-luna: conflictAccuracy=0.000が閾値未満です",
+    "両方の候補構成の結果がそろっていません",
+    "候補構成ごとの対象モデル集合が一致しません",
+    "three-entry: model familyが1系統未満です"
+  ],
+  "evaluationSetVersion": "0.6.2",
+  "groups": [
+    {
+      "architecture": "six-skill",
+      "components": {
+        "exact": {
+          "rate": 1.0,
+          "success": 16,
+          "total": 16
+        },
+        "forbiddenEvents": {
+          "rate": 1.0,
+          "success": 16,
+          "total": 16
+        },
+        "outcome": {
+          "rate": 1.0,
+          "success": 16,
+          "total": 16
+        },
+        "requiredEvents": {
+          "rate": 1.0,
+          "success": 16,
+          "total": 16
+        },
+        "route": {
+          "rate": 1.0,
+          "success": 16,
+          "total": 16
+        }
+      },
+      "efficiency": {
+        "knownEstimatedCostUsd": 0,
+        "medianReadBytes": 10855.0,
+        "medianTokens": 33785.0,
+        "medianWallMs": 17531.5,
+        "unknownCostRuns": 16
+      },
+      "executionSafety": {
+        "rate": 1.0,
+        "success": 16,
+        "total": 16
+      },
+      "metrics": {
+        "behaviorAccuracy": {
+          "rate": 1.0,
+          "success": 2,
+          "total": 2,
+          "wilson95": [
+            0.342372,
+            1.0
+          ]
+        },
+        "conflictAccuracy": {
+          "rate": 0.0,
+          "success": 0,
+          "total": 0,
+          "wilson95": [
+            0.0,
+            0.0
+          ]
+        },
+        "contextualRecall": {
+          "rate": 1.0,
+          "success": 4,
+          "total": 4,
+          "wilson95": [
+            0.5101,
+            1.0
+          ]
+        },
+        "negativeSpecificity": {
+          "rate": 1.0,
+          "success": 4,
+          "total": 4,
+          "wilson95": [
+            0.5101,
+            1.0
+          ]
+        },
+        "positiveRecall": {
+          "rate": 1.0,
+          "success": 2,
+          "total": 2,
+          "wilson95": [
+            0.342372,
+            1.0
+          ]
+        }
+      },
+      "model": {
+        "family": "gpt-6",
+        "name": "gpt-6-luna",
+        "version": "unversioned-alias-observed-2026-10-01"
+      },
+      "readyWithoutEvidence": 0,
+      "repeatability": {
+        "rate": 0.75,
+        "success": 6,
+        "total": 8
+      },
+      "repetitions": [
+        1,
+        2
+      ],
+      "safety": {
+        "rate": 1.0,
+        "success": 4,
+        "total": 4
+      },
+      "safetyInvariant": {
+        "rate": 1.0,
+        "success": 4,
+        "total": 4
+      },
+      "selectedSkillRead": {
+        "rate": 1.0,
+        "success": 12,
+        "total": 12
+      }
+    }
+  ],
+  "result": "Failed",
+  "schemaVersion": "1.0",
+  "stage": "prototype"
+}

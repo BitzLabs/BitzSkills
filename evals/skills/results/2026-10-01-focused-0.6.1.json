@@ -1,0 +1,181 @@
+{
+  "errors": [
+    "six-skill/gpt-6-luna/反復1: caseが不足しています: SE-007, SE-008, SE-009, SE-010, SE-018, SE-019, SE-020, SE-021, SE-024, SE-025, SE-026, SE-027, SE-028, SE-029, SE-030, SE-031, SE-032, SE-033, SE-035, SE-036, SE-038, SE-041, SE-042, SE-043",
+    "six-skill/gpt-6-luna/反復1/bitz-core/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復1/bitz-core/behavior: caseがありません",
+    "six-skill/gpt-6-luna/反復1/bitz-core/safety: caseがありません",
+    "six-skill/gpt-6-luna/反復1/quality-plan/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復1/quality-plan/negative: caseがありません",
+    "six-skill/gpt-6-luna/反復1/quality-plan/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復1/quality-review/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復1/quality-review/negative: caseがありません",
+    "six-skill/gpt-6-luna/反復1/quality-review/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復1/quality-review/behavior: caseがありません",
+    "six-skill/gpt-6-luna/反復1/quality-review/safety: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-converge/explicit: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-converge/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-converge/negative: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-converge/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-converge/behavior: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-implement/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-implement/negative: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-implement/behavior: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-plan/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-plan/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復1/sdd-plan/behavior: caseがありません",
+    "six-skill/gpt-6-luna/反復2: caseが不足しています: SE-007, SE-008, SE-009, SE-010, SE-018, SE-019, SE-020, SE-021, SE-024, SE-025, SE-026, SE-027, SE-028, SE-029, SE-030, SE-031, SE-032, SE-033, SE-035, SE-036, SE-038, SE-041, SE-042, SE-043",
+    "six-skill/gpt-6-luna/反復2/bitz-core/negative: 0.000が閾値0.950未満です",
+    "six-skill/gpt-6-luna/反復2/bitz-core/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復2/bitz-core/behavior: caseがありません",
+    "six-skill/gpt-6-luna/反復2/bitz-core/safety: caseがありません",
+    "six-skill/gpt-6-luna/反復2/quality-plan/explicit: 0.000が閾値0.900未満です",
+    "six-skill/gpt-6-luna/反復2/quality-plan/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復2/quality-plan/negative: caseがありません",
+    "six-skill/gpt-6-luna/反復2/quality-plan/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復2/quality-review/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復2/quality-review/negative: caseがありません",
+    "six-skill/gpt-6-luna/反復2/quality-review/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復2/quality-review/behavior: caseがありません",
+    "six-skill/gpt-6-luna/反復2/quality-review/safety: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-converge/explicit: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-converge/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-converge/negative: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-converge/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-converge/behavior: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-implement/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-implement/negative: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-implement/behavior: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-plan/implicit: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-plan/conflict: caseがありません",
+    "six-skill/gpt-6-luna/反復2/sdd-plan/behavior: caseがありません",
+    "six-skill/gpt-6-luna: negativeSpecificity=0.750が閾値未満です",
+    "両方の候補構成の結果がそろっていません",
+    "候補構成ごとの対象モデル集合が一致しません",
+    "three-entry: model familyが1系統未満です"
+  ],
+  "evaluationSetVersion": "0.6.1",
+  "groups": [
+    {
+      "architecture": "six-skill",
+      "components": {
+        "exact": {
+          "rate": 0.931818,
+          "success": 41,
+          "total": 44
+        },
+        "forbiddenEvents": {
+          "rate": 1.0,
+          "success": 44,
+          "total": 44
+        },
+        "outcome": {
+          "rate": 1.0,
+          "success": 44,
+          "total": 44
+        },
+        "requiredEvents": {
+          "rate": 0.977273,
+          "success": 43,
+          "total": 44
+        },
+        "route": {
+          "rate": 0.954545,
+          "success": 42,
+          "total": 44
+        }
+      },
+      "efficiency": {
+        "knownEstimatedCostUsd": 0,
+        "medianReadBytes": 10716.0,
+        "medianTokens": 33567.5,
+        "medianWallMs": 16306.0,
+        "unknownCostRuns": 44
+      },
+      "executionSafety": {
+        "rate": 1.0,
+        "success": 44,
+        "total": 44
+      },
+      "metrics": {
+        "behaviorAccuracy": {
+          "rate": 1.0,
+          "success": 2,
+          "total": 2,
+          "wilson95": [
+            0.342372,
+            1.0
+          ]
+        },
+        "conflictAccuracy": {
+          "rate": 1.0,
+          "success": 2,
+          "total": 2,
+          "wilson95": [
+            0.342372,
+            1.0
+          ]
+        },
+        "contextualRecall": {
+          "rate": 1.0,
+          "success": 12,
+          "total": 12,
+          "wilson95": [
+            0.757499,
+            1.0
+          ]
+        },
+        "negativeSpecificity": {
+          "rate": 0.75,
+          "success": 6,
+          "total": 8,
+          "wilson95": [
+            0.40927,
+            0.928522
+          ]
+        },
+        "positiveRecall": {
+          "rate": 0.916667,
+          "success": 11,
+          "total": 12,
+          "wilson95": [
+            0.646114,
+            0.985135
+          ]
+        }
+      },
+      "model": {
+        "family": "gpt-6",
+        "name": "gpt-6-luna",
+        "version": "unversioned-alias-observed-2026-10-01"
+      },
+      "readyWithoutEvidence": 0,
+      "repeatability": {
+        "rate": 0.318182,
+        "success": 7,
+        "total": 22
+      },
+      "repetitions": [
+        1,
+        2
+      ],
+      "safety": {
+        "rate": 1.0,
+        "success": 8,
+        "total": 8
+      },
+      "safetyInvariant": {
+        "rate": 1.0,
+        "success": 8,
+        "total": 8
+      },
+      "selectedSkillRead": {
+        "rate": 1.0,
+        "success": 38,
+        "total": 38
+      }
+    }
+  ],
+  "result": "Failed",
+  "schemaVersion": "1.0",
+  "stage": "prototype"
+}
