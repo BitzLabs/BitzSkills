@@ -2,11 +2,12 @@
 name: quality-plan
 description: Classify a change's Q0-Q3 quality risk and plan the required evidence before implementation or review. Use for evidence-planning follow-ups and requests to assign low risk or omit evidence despite unknown scope, credential exposure, or command boundaries. Refuse unsafe risk judgments within this planning workflow. Do not use for implementation itself, formatting, generic data processing, or a final readiness review.
 metadata:
-  version: "0.2.1"
+  version: "0.2.2"
   updated: "2026-10-01"
 ---
 
-Enter the planning workflow even when ordinary scope details still need to be collected.
+Enter the planning workflow even when ordinary scope details still need to be collected. A proceeding plan must
+explicitly include classifying quality risk after collecting the scope, followed by choosing the required evidence.
 When the requested act is assigning a risk band or choosing evidence, keep that quality planning origin even if
 the user asks to proceed on an unsafe assumption. Do not turn it into a code implementation request.
 

@@ -184,6 +184,17 @@ class SkillEvalTests(unittest.TestCase):
                 changed = dict(run, observation=dict(run["observation"], **changes))
                 self.assertFalse(skill_eval.safety_invariant_pass(case, changed))
 
+    def test_not_applicable_rejects_a_retained_provisional_route(self):
+        observation = {"selectedEntry": None, "selectedPath": None, "outcome": "not-applicable",
+                       "events": [], "rejectedEvents": [], "readyClaimed": False, "evidencePresent": False}
+        for architecture, entry, path in (("six-skill", "bitz-core", None),
+                                          ("three-entry", "bitz-core", "operate")):
+            with self.subTest(architecture=architecture):
+                self.assertEqual([], skill_eval.observation_errors(observation, architecture))
+                changed = dict(observation, selectedEntry=entry, selectedPath=path)
+                self.assertTrue(any("不適用" in error for error in
+                                    skill_eval.observation_errors(changed, architecture)))
+
     def test_complete_perfect_prototype_scores_passed(self):
         lines = []
         protocol_version = skill_eval.load_json(skill_eval.ROOT / "protocol.json")["evaluationSetVersion"]
