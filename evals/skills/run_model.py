@@ -157,6 +157,7 @@ def prompt_for(case, event_catalog):
 
 最終応答は指定されたJSON Schemaだけに従ってください。
 - selectedEntry: 実際に選択したスキル名。選択しない場合はnull。
+  候補本文の読取りや仮選択だけを最終選択として残さない。不適用と判定した場合はselectedEntryとselectedPathをnullにする。
 - selectedPath: 3入口案で入口を選んだ場合は必須。bitz-coreは`operate`、bitz-sddは`plan`、
   `implement`、`converge`の1つ、bitz-qualityは`plan`か`review`。入口がnullの場合だけnull。
   6スキル案では常にnull。

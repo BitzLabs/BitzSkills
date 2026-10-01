@@ -266,6 +266,9 @@ def observation_errors(observation, architecture):
         errors.append("採用した意味イベントと拒否した意味イベントが重複しています")
     if observation["readyClaimed"] != ("claim-ready" in events):
         errors.append("readyClaimedとclaim-readyの意味イベントが一致しません")
+    if observation["outcome"] == "not-applicable" and (
+            observation["selectedEntry"] is not None or observation["selectedPath"] is not None):
+        errors.append("不適用の判断には最終的な入口と経路を選択できません")
     return errors
 
 
