@@ -362,7 +362,7 @@ def run_one(args, case):
                "mcp_servers.core_eval.args": [str(HERE / "server.py"), "--workspace", str(workspace),
                                               "--control", str(directory / "control.json"), "--log", str(directory / "host.jsonl")],
                "mcp_servers.core_eval.required": True,
-               "mcp_servers.core_eval.default_tools_approval_mode": "auto"}
+               "mcp_servers.core_eval.default_tools_approval_mode": "approve"}
     for key, value in configs.items():
         command.extend(["-c", key + "=" + json.dumps(value, ensure_ascii=False)])
     command.append("-")
