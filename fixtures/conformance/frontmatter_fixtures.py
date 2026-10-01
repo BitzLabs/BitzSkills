@@ -1,4 +1,4 @@
-"""固定したBOM・Frontmatterの証拠（YAML loaderもCoreも実装しない）。"""
+"""固定したBOM・フロントマターの証拠（YAMLのローダーもCoreも実装しない）。"""
 import json
 from pathlib import Path
 import subprocess
@@ -13,7 +13,7 @@ from .initial_fixtures import CONFIGS, observe, compare_state
 
 HERE = Path(__file__).resolve().parent
 CONFIG_PATH = ".spec/bitz.yaml"
-# ID: titleの行の置換え, 条件code, source key, 人向けの理由
+# ID: タイトルの行の置換え, 診断コード, 発生元のキー, 人向けの理由
 CASES = {
     "SINGLE-081": (None, "SPEC-INPUT-BOM-001", None, "設定file先頭のBOMを除いて解析を続行します"),
     "SINGLE-082": (None, "SPEC-INPUT-BOM-001", None, "SPEC file先頭のBOMを除いて解析を続行します"),

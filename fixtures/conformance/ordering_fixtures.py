@@ -1,12 +1,12 @@
-"""Digest材料の完全順序とreverse solidus保持を固定するfixture（Core操作は実行しない）。
+"""ハッシュ値の材料の完全な順序とバックスラッシュの保持を固定するfixture（Coreの公開操作は実行しない）。
 
-`SINGLE-122`は同一pathのtest対応を`(path, commandSortKey, covers)`、`SINGLE-123`は同一namespace／termの
-extensionを`(namespace, term, valueSortKey)`で並べる。`SINGLE-124`はpath型以外のstring
-（title、statement text、argv template）のreverse solidusを変換しない。
+`SINGLE-122`は同一パスのテスト対応を`(path, commandSortKey, covers)`、`SINGLE-123`は同一の`namespace`と`term`の組の
+拡張タグを`(namespace, term, valueSortKey)`で並べる。`SINGLE-124`はパスの型以外の文字列
+（タイトル、規範文のテキスト、引数列テンプレート）のバックスラッシュを変換しない。
 
-goldenの`SINGLE-042` corpusを1点だけ変え、Canonical JSONを`expected/context.canonical.json`へ置く。
-reference A（本moduleのliteral）とreference B（digest_crosscheckが入力treeから導出）のbyte一致を要求する。
-根拠は[Context Digest正規化仕様 §3・§4]と[context仕様 §4・§5]である。
+goldenの`SINGLE-042` corpusを1点だけ変え、正規JSONを`expected/context.canonical.json`へ置く。
+参照計算A（このモジュールのリテラル）と参照計算B（digest_crosscheckが入力の木構造から導出）のバイト列の一致を要求する。
+根拠は[コンテキストのハッシュ値の正規化仕様 §3・§4]と[`bitz context`仕様 §4・§5]である。
 """
 import copy
 import json
@@ -34,8 +34,8 @@ def replaced(text, old, new):
     return text.replace(old, new, 1)
 
 
-# --- 122: 同一pathのtest対応 -------------------------------------------------------
-# 宣言順は正規順と異なる。command省略は文書のverifyで解決し、Digestではnullとして先頭に並ぶ。
+# --- 122: 同一パスのテスト対応 -------------------------------------------------------
+# 宣言順は正規の順序と異なる。コマンドの省略は文書の`verify`で解決し、ハッシュ値の材料ではnullとして先頭に並ぶ。
 DECLARED_TESTS = (
     "tests:\n"
     "  - path: tests/test_auth.py\n    covers: [REQ-001:AC-02]\n    command: other\n"
@@ -57,7 +57,7 @@ TECH_122_FIELDS = (
     "implements: [src/auth.py]\n" + DECLARED_TESTS
 )
 
-# --- 123: 同一namespace／termのextension -----------------------------------------
+# --- 123: 同一の`namespace`と`term`の組の拡張タグ -----------------------------------------
 EXTENSIONS_RAW = '[quality:LEVEL="b"] [quality:LEVEL] [perf:LEVEL="x"] [quality:LEVEL="a"] [quality:AREA="z"] '
 ORDERED_EXTENSIONS = [
     {"namespace": "perf", "term": "LEVEL", "value": "x"},
@@ -68,7 +68,7 @@ ORDERED_EXTENSIONS = [
 ]
 REQ_123_BODY = replaced(digest_reference.REQ_BODY, "[REQ-001:AC-01] [ACTOR:", "[REQ-001:AC-01] " + EXTENSIONS_RAW + "[ACTOR:")
 
-# --- 124: path型以外のreverse solidus -------------------------------------------
+# --- 124: パスの型以外のバックスラッシュ -------------------------------------------
 CONFIG_124 = replaced(digest_reference.CONFIG, '["/bin/true", "{tests}"]', '["/bin/true", --pattern=src\\auth, "{tests}"]')
 ARGV_124 = ["/bin/true", "--pattern=src\\auth", "{tests}"]
 TITLE_124 = "認証の実装方針\\補足"
@@ -158,7 +158,7 @@ def reviewed_result(identifier):
     result = golden_result("SINGLE-042", digest_reference.digest(canonical(identifier)))
     req, tech = result["documents"]
     if identifier == "SINGLE-122":
-        # Bundleのfrontmatterはnullと空配列を省略する（SINGLE-042のverify・空relationと同じ規則）。
+        # コンテキスト一式のフロントマターはnullと空配列を省略する（SINGLE-042の`verify`・空の関係と同じ規則）。
         tech["frontmatter"] = {
             "id": "TECH-001", "title": "認証の実装方針", "status": "approved",
             "relations": {"refines": ["REQ-001"], "related": ["ADR-001"]}, "verify": "default", "implements": ["src/auth.py"],
@@ -171,7 +171,7 @@ def reviewed_result(identifier):
         req["bodyText"] = REQ_124_BODY
         tech["frontmatter"]["title"] = TITLE_124
         tech["bodyText"] = TECH_BODY_124
-        # LEDGERの入れ子objectは共有されているため、置き換えて共有値を変更しない。
+        # LEDGERの入れ子のオブジェクトは共有されているため、置き換えて共有値を変更しない。
         result["constraintLedger"]["statements"][0]["operation"] = {"kind": "CONSTRAINT", "text": TEXT_124}
     return result
 

@@ -1,15 +1,15 @@
-"""review済みの複合workspace corpusと参照計算A。
+"""レビュー済みの複合ワークスペースのcorpusと参照計算A。
 
-Step 0Bのfixture側の参照材料であり、Coreの実装ではない。root workspace 1件とmember 2件からなる
-固定corpus、fixtureごとに独立にreviewしたDigest材料、単一workspaceと同じRFC 8785 serializerを持つ。
-参照計算Bはmulti_crosscheckにあり、同じbyte列を入力treeから導出する。
+Step 0Bのfixture側の参照材料であり、Coreの実装ではない。ルートワークスペース1件とメンバー2件からなる
+固定したcorpus、fixtureごとに独立にレビューしたハッシュ値の材料、単一ワークスペースと同じRFC 8785の直列化処理を持つ。
+参照計算Bはmulti_crosscheckにあり、同じバイト列を入力の木構造から導出する。
 
-corpusは、横断`refines`と横断coverageを持ち、2つのmemberが同じlocal ID `TECH-010`を使う。
-そのため、修飾IDの解決、workspace境界を越えるedge、到達workspaceだけの設定射影を1つの入力で固定できる。
+corpusは、横断する`refines`と横断するカバレッジを持ち、2つのメンバーが同じローカルID `TECH-010`を使う。
+そのため、修飾IDの解決、ワークスペースの境界を越えるエッジ、到達ワークスペースだけの設定の抽出を1つの入力で固定できる。
 """
 from . import digest_reference
 
-# --- 固定した複合workspaceのcorpus -------------------------------------------------
+# --- 固定した複合ワークスペースのcorpus -------------------------------------------------
 
 ROOT_ID = "platform"
 MEMBERS = (("api", "services/api"), ("web", "apps/web"))
@@ -20,7 +20,7 @@ WEB_TECH_PATH = "apps/web/.spec/technical/TECH-010.md"
 API_CONFIG_PATH = "services/api/.spec/bitz.yaml"
 API_TECH_PATH = "services/api/.spec/technical/TECH-010.md"
 
-# catalogの列挙順はweb、apiとし、結果と材料のworkspace順がID辞書順であることを固定する。
+# カタログの列挙順はweb、apiとし、結果と材料のワークスペースの順がID辞書順であることを固定する。
 ROOT_CONFIG = (
     'schemaVersion: "1.0"\n'
     "language: ja\n"
@@ -52,7 +52,7 @@ def member_config(workspace_id, command):
 
 
 def plain_config(workspace_id):
-    """commandを持たないworkspace設定。catalogの検査だけを見るfixtureが使う。"""
+    """コマンドを持たないワークスペースの設定。カタログの検査だけを見るfixtureが使う。"""
     return ('schemaVersion: "1.0"\n'
             "language: ja\n"
             'earsAi: "1.0"\n'
@@ -61,7 +61,7 @@ def plain_config(workspace_id):
 
 
 def root_config(members, root_id="platform"):
-    """catalogのrootの設定。membersは列挙順の(ID, path)である。"""
+    """カタログのルートの設定。membersは列挙順の(ID, パス)である。"""
     lines = ['schemaVersion: "1.0"\n', "language: ja\n", 'earsAi: "1.0"\n',
              "workspace:\n", f"  id: {root_id}\n", "multiWorkspace:\n", "  members:\n"]
     for workspace_id, path in members:
@@ -141,7 +141,7 @@ CODE_FILES = {
 }
 
 
-# 変種ごとに、webのTECH-010のFrontmatterだけを差し替える。1つのfixtureは1つの原因だけを持つ。
+# 種類ごとに、webのTECH-010のフロントマターだけを差し替える。1つのfixtureは1つの原因だけを持つ。
 WEB_TECH_UNQUALIFIED = (
     "---\n"
     "id: TECH-010\n"
@@ -155,7 +155,7 @@ WEB_TECH_MISSING_TARGET = WEB_TECH_HEAD.replace(
     "relations:\n  refines: [platform::REQ-001:AC-01]\n",
     "relations:\n  requires: [api::TECH-999]\n  refines: [platform::REQ-001:AC-01]\n", 1)
 VARIANTS = {
-    # 変種名: (webのTECH-010のFrontmatter, webのcode／testを置くか)
+    # 種類名: (webのTECH-010のフロントマター, webのコード／テストを置くか)
     "golden": (WEB_TECH_HEAD, True),
     "unqualified": (WEB_TECH_UNQUALIFIED, False),
     "missing-target": (WEB_TECH_MISSING_TARGET, True),
@@ -163,7 +163,7 @@ VARIANTS = {
 
 
 def reviewed_inputs(variant="golden"):
-    """corpusの全入力file。fixtureごとにdirectoryを分けて同じbyte列を置く。"""
+    """corpusの全入力ファイル。fixtureごとにディレクトリを分けて同じバイト列を置く。"""
     head, web_code = VARIANTS[variant]
     files = {
         ROOT_CONFIG_PATH: ROOT_CONFIG.encode(),
@@ -180,7 +180,7 @@ def reviewed_inputs(variant="golden"):
     return files
 
 
-# --- review済みのDigest材料（参照計算A） -------------------------------------------
+# --- レビュー済みのハッシュ値の材料（参照計算A） -------------------------------------------
 
 EMPTY_RELATIONS = digest_reference.EMPTY_RELATIONS
 STATEMENTS = [
@@ -229,7 +229,7 @@ def _member_document(workspace_id, title, target, implements, test_path, command
 
 
 def reviewed_digest_input():
-    """`context platform::REQ-001 --purpose verify`のreview済みDigest材料。"""
+    """`context platform::REQ-001 --purpose verify`のレビュー済みのハッシュ値の材料。"""
     return {
         "digestVersion": "1.0",
         "specSchemaVersion": "1.0",
@@ -238,7 +238,7 @@ def reviewed_digest_input():
         "purpose": "verify",
         "requestWorkspaceId": "platform",
         "roots": ["platform::REQ-001"],
-        # request workspaceが先頭、以降はID辞書順。catalogの列挙順（web、api）には従わない。
+        # 起点ワークスペースが先頭、以降はID辞書順。カタログの列挙順（web、api）には従わない。
         "workspaces": [
             {"id": "platform", "path": "."},
             {"id": "api", "path": "services/api"},

@@ -1,7 +1,7 @@
-"""context仕様 §9が定めるMarkdown提示の参照描画。
+"""`bitz context`仕様 §9が定めるMarkdownの提示の参照描画。
 
-Coreの描画処理ではなく、fixture側の参照計算である。review済みの結果JSONを読み、§9が定める
-byte列を出力する。そのため、commitした期待値を、独立に書いた導出と比べられる。
+Coreの描画処理ではなく、fixture側の参照計算である。レビュー済みの結果JSONを読み、§9が定める
+バイト列を出力する。そのため、コミットした期待値を、独立に書いた導出と比べられる。
 """
 import re
 
@@ -20,7 +20,7 @@ def joined(values):
 
 
 def fence(body):
-    """本文中のどのbacktick runよりも長く、3未満にはならない。"""
+    """本文中のどのバッククォートの連続列よりも長く、3未満にはならない。"""
     longest = max((len(run) for run in re.findall(r"`+", body)), default=0)
     return "`" * max(3, longest + 1)
 
@@ -44,7 +44,7 @@ def manifest_lines(result):
 
 
 def diagnostic_lines(result):
-    """Diagnostic rows reuse the common text line shape; see 共通結果契約 §7."""
+    """診断の行は共通のテキストの行の形を再利用する。結果・診断・終了コード §7を参照。"""
     lines = []
     for diagnostic in result["diagnostics"]:
         source = diagnostic["source"]
@@ -116,7 +116,7 @@ def bindings_lines(result):
 
 
 def render(result):
-    """review済みのcontext結果1件に対する、完全なMarkdownのbyte列。"""
+    """レビュー済みの`context`の結果1件に対する、完全なMarkdownのバイト列。"""
     detail = result["projection"]["detail"]
     parts = ["# Context Bundle\n"]
     for section in SECTIONS:

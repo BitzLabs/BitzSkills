@@ -18,7 +18,7 @@ HERE = Path(__file__).resolve().parent
 CASES = ("SINGLE-036", "SINGLE-037", "SINGLE-038")
 MISSING_BASE = "fixture-missing-base"
 TASK = "---\nid: TASK-001\ntitle: Git不在の境界検査\nstatus: open\n---\n\n# TASK-001 Git不在の境界検査\n\n## Objective\n\nGit基準版を必要とする境界検査を確認する。\n"
-# 人向けの文言は機械の契約ではない。規範が定めるstreamの形だけを固定する。
+# 人向けの文言は機械の契約ではない。規範が定めるストリームの形だけを固定する。
 CLI_OUTPUT = {"exitCode": 4, "stdout": "", "stderrPrefix": "bitz: check: ",
               "stderrLineCount": 1, "stderrReasonRequired": True, "stderrTerminalControls": False}
 
@@ -90,13 +90,13 @@ def check_environment(repository, identifier, manifest):
                 if git(repository, "show", revision + path) != content:
                     raise ValueError("不正な基準版のHEADまたはindexのbyte列が変わっています")
     else:
-        # directoryでない絶対pathをPATHにして、current directoryとhostのPATHへの退避を防ぐ。
+        # ディレクトリでない絶対パスをPATHにして、現在のディレクトリとホストのPATHへの退避を防ぐ。
         if manifest["invocation"]["env"] != {"PATH": "/dev/null"} or not Path("/dev/null").is_char_device():
             raise ValueError("Git不在fixtureにはLinuxの/dev/nullをPATHにする必要があります")
         if shutil.which("git", path=manifest["invocation"]["env"]["PATH"]) is not None:
             raise ValueError("fixtureの起動環境でGitが解決されています")
-        # hostが一時directoryより上にGitのmetadataを置いている場合がある。起動環境では
-        # Gitの実行fileを使えないので、hostのGitで調べない。
+        # ホストが一時ディレクトリより上にGitのメタデータを置いている場合がある。起動環境では
+        # Gitの実行ファイルを使えないので、ホストのGitで調べない。
         if (repository / ".git").exists() or (repository / ".git").is_symlink():
             raise ValueError("Git不在fixtureはGitのmetadataを含んではいけません")
     actual = {p.relative_to(repository).as_posix(): p.read_bytes() for p in repository.rglob("*")
@@ -108,7 +108,7 @@ def check_environment(repository, identifier, manifest):
 def observe_environment(repository, external, identifier):
     if identifier == "SINGLE-036":
         return observe(repository, external)
-    # 明示的な不在として扱う。空の成功したGit statusや、握りつぶしたGitのerrorにはしない。
+    # 明示的な不在として扱う。空の成功した`git status`の結果や、握りつぶしたGitのエラーにはしない。
     return {"repository": snapshot(repository), "git": None,
             **{name: snapshot(path) for name, path in external.items()}}
 

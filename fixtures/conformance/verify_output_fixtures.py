@@ -1,7 +1,7 @@
-"""出力の切り詰めを固定するreview済みのverify vector（Core操作は実行しない）。
+"""出力の切り詰めを固定するレビュー済みの`verify`の入力と期待値（Coreの公開操作は実行しない）。
 
-`SINGLE-069-01/02`は、標準出力と標準エラー出力の両方が64 KiBの抜粋上限を超えるcommandを固定する。
-期待する抜粋はstreamの末尾なので、corpusは最初と最後の行に異なる目印を置く。末尾ではなく
+`SINGLE-069-01/02`は、標準出力と標準エラー出力の両方が64 KiBの抜粋上限を超えるコマンドを固定する。
+期待する抜粋はストリームの末尾なので、corpusは最初と最後の行に異なる目印を置く。末尾ではなく
 先頭を残す抜粋や、すべてを残す抜粋では、期待値を満たせない。
 """
 import copy
@@ -23,7 +23,7 @@ COMMAND_PATH = "bin/output.sh"
 TEST_PATHS = ["tests/test_auth.py", "tests/test_session.py"]
 STATEMENTS = ["REQ-001:AC-01", "REQ-001:AC-02"]
 LIMIT = 65536
-# 各行を64 byteに固定し、64 KiBの末尾がちょうど行の境界に来るようにして、
+# 各行を64バイトに固定し、64 KiBの末尾がちょうど行の境界に来るようにして、
 # 期待する抜粋が行の途中を仮定しないようにする。
 LINE_BYTES = 64
 HEAD = "verify-output-head" + "-" * 45
@@ -77,7 +77,7 @@ def executables(identifier):
 
 
 def reviewed_digest_input(identifier):
-    """scriptの本文はDigest材料ではないので、両fixtureは1つのContextを共有する。"""
+    """スクリプトの本文はハッシュ値の材料ではないので、両方のfixtureは1つのコンテキストを共有する。"""
     payload = copy.deepcopy(digest_reference.reviewed_digest_input("SINGLE-042"))
     payload["settings"]["commands"][0]["argv"] = [COMMAND_PATH, "{tests}"]
     return payload
@@ -126,7 +126,7 @@ def reviewed_result(identifier):
 
 
 def check_excerpt_shape():
-    """review済みの抜粋は、上限を超えるstreamの行の境界上の末尾であり、
+    """レビュー済みの抜粋は、上限を超えるストリームの行の境界上の末尾であり、
     末尾の目印を含み、先頭の目印を含まない必要がある。"""
     if len(HEAD) + 1 != LINE_BYTES or len(FILLER) + 1 != LINE_BYTES or len(TAIL) + 1 != LINE_BYTES:
         raise ValueError("各行はちょうど固定の幅である必要があります")
@@ -143,8 +143,8 @@ def check_excerpt_shape():
 
 
 def observe_output(identifier, repository):
-    """fixture自身のcommand fileを実行し、review済みの抜粋が実際に生成されるものであることを
-    確認する。fixture側の観測であり、Coreのverifyの実行ではない。"""
+    """fixture自身のコマンドのファイルを実行し、レビュー済みの抜粋が実際に生成されるものであることを
+    確認する。fixture側の観測であり、Coreの`verify`の実行ではない。"""
     executable = repository / COMMAND_PATH
     if not (executable.is_file() and os.access(executable, os.X_OK)):
         raise ValueError("command fileは通常の実行可能fileである必要があります")

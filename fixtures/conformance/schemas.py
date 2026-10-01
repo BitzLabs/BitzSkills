@@ -1,7 +1,7 @@
-"""Schema fileの場所を解決する。
+"""スキーマファイルの場所を解決する。
 
-公開結果とFrontmatterのSchemaは契約の正本であり、docs/03.詳細設計/schemas/に置く（ADR-050）。
-fixture自身の形式を定めるmanifestと副作用のSchemaは、fixtureのroot directoryに置く。
+公開結果とフロントマターのスキーマは契約の正本であり、docs/03.詳細設計/schemas/に置く（ADR-050）。
+fixture自身の形式を定めるマニフェストと副作用のスキーマは、fixtureのルートのディレクトリに置く。
 """
 from pathlib import Path
 

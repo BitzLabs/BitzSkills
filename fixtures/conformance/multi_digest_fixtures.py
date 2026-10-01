@@ -1,9 +1,9 @@
-"""複合workspaceのgolden Context Digest fixtureを監査する（Core操作は実行しない）。
+"""複合ワークスペースのgoldenのコンテキストのハッシュ値のfixtureを監査する（Coreの公開操作は実行しない）。
 
-`MULTI-002-01`は複合workspaceのgoldenを所有する。commitしたCanonical JSONを、独立に書いた2系統の
-参照計算（review済みliteralによるmulti_reference A、入力treeによるmulti_crosscheck B）と照合し、
-2回の隔離setupで同じbyte列になることを確かめる。`MULTI-002-02`は同じ入力をverifyの起点にし、
-targetの`contextDigest`がgoldenと同じ値であることを固定する。
+`MULTI-002-01`は複合ワークスペースのgoldenを所有する。コミットした正規JSONを、独立に書いた2系統の
+参照計算（レビュー済みのリテラルによるmulti_reference A、入力の木構造によるmulti_crosscheck B）と照合し、
+2回の隔離した準備手順で同じバイト列になることを確かめる。`MULTI-002-02`は同じ入力を`verify`の起点にし、
+検証対象の`contextDigest`がgoldenと同じ値であることを固定する。
 """
 import json
 from pathlib import Path
@@ -51,7 +51,7 @@ COVERAGE = {
     "may": {"total": [], "addressed": [], "tested": [], "unaddressed": [], "untested": []},
     "adjacent": [],
 }
-# workspace ID -> (member path, 文書title, refineする規範文, 実装path, test path, command名)
+# ワークスペースID -> (メンバーのパス, 文書のタイトル, 具体化する規範文, 実装のパス, テストのパス, コマンド名)
 MEMBERS = {
     "api": ("services/api", "API側のsession実装方針", "platform::REQ-001:AC-02",
             "src/session.py", "tests/test_session.py", "backend"),
@@ -242,7 +242,7 @@ def validate(root=HERE, identifiers=None):
     if GOLDEN in canonical_by_fixture:
         golden = canonical_by_fixture[GOLDEN]
         for identifier, canonical in canonical_by_fixture.items():
-            # 同じ入力から同じ材料を得るので、verify側のDigestもgoldenとbyte一致する。
+            # 同じ入力から同じ材料を得るので、`verify`側のハッシュ値もgoldenとバイト列として一致する。
             if canonical != golden:
                 errors.append(f"{identifier}: Digest材料はgoldenとbyte一致する必要があります")
     elif identifiers is None:

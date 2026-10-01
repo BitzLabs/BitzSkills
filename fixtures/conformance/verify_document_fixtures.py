@@ -1,7 +1,7 @@
-"""文書単位のbindingを固定するreview済みvector（Core操作は実行しない）。
+"""文書単位のテスト割当てを固定するレビュー済みの入力と期待値（Coreの公開操作は実行しない）。
 
-`SINGLE-066`は、規範文を持たず文書単位のtestを宣言するTECHをtargetにする。そのため
-targetは`statements: []`を返しつつ、`bindingRefs`の要素を持つ。
+`SINGLE-066`は、規範文を持たず文書単位のテストを宣言するTECHを検証対象にする。そのため
+検証対象は`statements: []`を返しつつ、`bindingRefs`の要素を持つ。
 """
 import json
 from pathlib import Path
@@ -20,8 +20,8 @@ IDENTIFIER = "SINGLE-066"
 TECH_PATH = ".spec/technical/TECH-001.md"
 TEST_PATH = "tests/test_auth.py"
 TITLE = "文書単位testの実装方針"
-# 文書・Frontmatter仕様 §: only a TECH without normative statements may put a
-# coversに文書IDを置く。これがこのfixtureの固定する文書単位のbindingである。
+# 文書・フロントマター・状態仕様 §: 規範文を持たないTECHだけが
+# `covers`に文書IDを置いてよい。これがこのfixtureの固定する文書単位のテスト割当てである。
 TECH_FRONTMATTER = (
     f"id: TECH-001\ntitle: {TITLE}\nstatus: approved\n"
     "implements: [src/auth.py]\n"
@@ -90,7 +90,7 @@ def reviewed_result():
         "workspace": {"id": "root", "path": "."},
         "targetResults": [{
             "target": "TECH-001", "status": "passed", "contextDigest": context_digest(),
-            # 規範文は所有しないが、文書単位のbindingは成立する。
+            # 規範文は所有しないが、文書単位のテスト割当ては成立する。
             "statements": [], "bindingRefs": ["root::default"], "diagnostics": []}],
         "revision": None,
         "commands": [{

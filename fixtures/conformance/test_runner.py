@@ -1,8 +1,8 @@
-"""参照適合harness(`runner.py`、`package_check.py`)のCoreに依存しない単体試験。
+"""参照適合harness(`runner.py`、`package_check.py`)のCoreに依存しない単体テスト。
 
 `uv run --with jsonschema==4.23.0 python -m unittest fixtures.conformance.test_runner`
-(repository rootから)、または`uv run -m unittest fixtures/conformance/test_runner.py`で実行できる。
-Coreを起動せず、normalizer、text置換、終了コード4の出力判定、Git shim、package_checkだけを検査する。
+(リポジトリのルートから)、または`uv run -m unittest fixtures/conformance/test_runner.py`で実行できる。
+Coreを起動せず、正規化器、テキストの置換、終了コード4の出力判定、Gitのシム、`package_check`だけを検査する。
 """
 import json
 from pathlib import Path
@@ -228,8 +228,8 @@ class PackageCheckMetadataTests(unittest.TestCase):
         self.assertTrue(any("bin/bitz" in reason for reason in reasons))
 
     def test_wheel_only_input_is_incomparable_not_rejected(self):
-        # source treeが無いと「検査できたが要件未達」(rejected)と「検査できない」(error)を
-        # 区別できないため、harness側のPackageCheckError(比較不能)にする。
+        # ソースの木構造が無いと「検査できたが要件未達」(`rejected`)と「検査できない」(`error`)を
+        # 区別できないため、harness側の`PackageCheckError`(比較不能)にする。
         with tempfile.TemporaryDirectory() as tmp:
             wheel = Path(tmp) / "bitz-1.0.0-py3-none-any.whl"
             _write_wheel(wheel)

@@ -3,16 +3,16 @@
 # requires-python = ">=3.11"
 # dependencies = []
 # ///
-"""Gate Aの認定command。commit済みのHEADをfresh checkoutし、Step 0Bの検証を照合する（Core操作は実行しない）。
+"""Gate Aの認定コマンド。コミット済みの`HEAD`から新しいチェックアウトを作り、Step 0Bの検証を照合する（Coreの公開操作は実行しない）。
 
-実装計画 §3.1のGate A条件のうち「Core実行体へ依存しない単一commandでfresh checkoutから再実行でき、
-2回の結果が一致する」を判定する。validate_conformance.pyは自分がfresh checkoutで動いているかを判定できないため、
-その`pending`に残る1項目だけをこのcommandで置き換える。
+実装計画 §3.1のGate A条件のうち「Coreの実行体へ依存しない1つのコマンドで、新しいチェックアウトから再実行でき、
+2回の結果が一致する」を判定する。validate_conformance.pyは自分が新しいチェックアウトで動いているかを判定できないため、
+その`pending`に残る1項目だけをこのコマンドで置き換える。
 [ADR-048](../docs/02.設計書/10_決定記録/ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md)が
-Gate Aの認定に求めるscale検証も、同じcheckoutで実行する。uv runで実行する。
+Gate Aの認定に求める規模の検証も、同じチェックアウトで実行する。`uv run`で実行する。
 
-HEADから独立したcloneを2つ作り、それぞれで統合検証とscale検証を1回ずつ実行する。同じcheckoutで2回実行すると、
-1回目が残したfileが2回目の入力になり得るためである。作業treeにcommitされていない変更があれば実行しない。
+`HEAD`から独立したクローンを2つ作り、それぞれで統合検証と規模の検証を1回ずつ実行する。同じチェックアウトで2回実行すると、
+1回目が残したファイルが2回目の入力になり得るためである。作業ツリーにコミットされていない変更があれば実行しない。
 """
 import hashlib
 import json
@@ -35,7 +35,7 @@ def git(*args, cwd=None):
 
 
 def worktree_errors():
-    """作業treeがHEADと同じであることを確かめる。未追跡のfileも変更として数える。"""
+    """作業ツリーが`HEAD`と同じであることを確かめる。未追跡のファイルも変更として数える。"""
     status = git("status", "--porcelain", "--untracked-files=all")
     if status.returncode != 0:
         return [status.stderr.strip() or "git statusが失敗しました"]
@@ -56,17 +56,17 @@ def run(uv, script, cwd, timeout):
 
 
 def scale_body(stdout):
-    """scale検証の結果から、実行ごとに変わる所要時間を除く。"""
+    """規模の検証の結果から、実行ごとに変わる所要時間を除く。"""
     report = json.loads(stdout)
     report.pop("durationSeconds", None)
     return report
 
 
 def judge(conformance, scale):
-    """checkoutごとの実行結果から、認定を妨げる理由を列挙する。空なら認定できる。
+    """チェックアウトごとの実行結果から、認定を妨げる理由を列挙する。空なら認定できる。
 
-    統合検証は、errorのある検査がなく、未完了の証拠がこのcommandの認定する1項目だけで、
-    全checkoutのreportがbyte一致することを求める。scale検証は全checkoutで成功し、所要時間を除いて一致することを求める。
+    統合検証は、エラーのある検査がなく、未完了の証拠がこのコマンドの認定する1項目だけで、
+    全チェックアウトのレポートがバイト列として一致することを求める。規模の検証は全チェックアウトで成功し、所要時間を除いて一致することを求める。
     """
     errors = []
     if len(conformance) != CHECKOUTS or len(scale) != CHECKOUTS:

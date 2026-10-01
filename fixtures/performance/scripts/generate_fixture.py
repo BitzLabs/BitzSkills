@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""決定論的なCore 1.0の性能fixture treeを生成する。"""
+"""決定論的なCore 1.0の性能fixtureの木構造を生成する。"""
 
 from __future__ import annotations
 

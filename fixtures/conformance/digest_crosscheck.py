@@ -1,9 +1,9 @@
-"""Context Digestの参照計算B: 入力treeから導出する。
+"""コンテキストのハッシュ値の参照計算B: 入力の木構造から導出する。
 
-参照計算A（digest_reference）は、review済みのDigest材料をliteralで記述する。
-本moduleはそのliteralを読み込まない。fixture自身のrepo/ treeを読み、入力の形に限定した
-読取り処理でFrontmatter、本文、規範文を取り出し、並び順の規則を自分で適用し、別に書いた
-2つ目のRFC 8785 serializerでCanonical JSONのbyte列を出力する。両者の一致がGate Aの
+参照計算A（digest_reference）は、レビュー済みのハッシュ値の材料をリテラルで記述する。
+このモジュールはそのリテラルを読み込まない。fixture自身のrepo/の木構造を読み、入力の形に限定した
+読取り処理でフロントマター、本文、規範文を取り出し、並び順の規則を自分で適用し、別に書いた
+2つ目のRFC 8785の直列化処理で正規JSONのバイト列を出力する。両者の一致がGate Aの
 照合であり、どちらもCoreの実装ではない。
 """
 import hashlib
@@ -45,7 +45,7 @@ def _value(text):
 
 
 def read_block(lines, index, indent):
-    """要素が`indent`の位置にあるblock sequenceまたはblock mapを1つ読む。"""
+    """要素が`indent`の位置にあるブロックシーケンスまたはブロックマップを1つ読む。"""
     if index < len(lines) and lines[index].startswith(" " * indent + "- "):
         items = []
         while index < len(lines) and lines[index].startswith(" " * indent + "- "):
@@ -108,7 +108,7 @@ STATEMENT = re.compile(
 
 
 def unescape_text(text):
-    """fixture側の限定したtext decoder。本番のParserとしては使わない。"""
+    """fixture側の限定したテキストのデコーダー。本番の構文解析器としては使わない。"""
     out, index = [], 0
     while index < len(text):
         char = text[index]
@@ -150,7 +150,7 @@ def read_extensions(raw):
         if match.start() != cursor:
             raise ValueError("参照corpusに未対応のextensionがあります")
         value = match.group("value")
-        # quoted値はescapeだけを解除する。textと異なり、その中の空白は不透明に扱う。
+        # 引用符付きの値はエスケープだけを解除する。テキストと異なり、その中の空白は不透明に扱う。
         if value is not None:
             value = re.sub(r'\\([\[\]\\`"])', r'\1', value)
         entries.append({"namespace": match.group("namespace"), "term": match.group("term"), "value": value})
@@ -189,7 +189,7 @@ def read_statements(body):
     return statements
 
 
-# --- Digest材料の組立て ---------------------------------------------------------
+# --- ハッシュ値の材料の組立て ---------------------------------------------------------
 
 def _relations(frontmatter):
     declared = frontmatter.get("relations", {})
@@ -230,14 +230,14 @@ def load_documents(repository):
 
 
 def closure(documents, root, purpose):
-    """これらのcorpusに対するreview済みの閉包（関係・トレースモデル §6.1〜§6.4）。
+    """これらのcorpusに対するレビュー済みの閉包（関係・トレースモデル §6.1〜§6.4）。
 
     起点の文書と、interpret以外のTASK起点ではそのTASKがaddressesする対象を所有する文書を含める。
     到達した適用対象の文書それぞれから、`requires`の対象（verifyでの起点TASKのものを除く。§6.3）、
-    `refines`の対象、その文書またはその規範文をrefineする適用対象の文書をたどる。interpretでは、
-    draftのrefine元をadvisoryとして保持し、展開しない（§6.1 6.）。implementでは、対象の規範文を
-    addressesするopenのTASKをすべて加える。規則で説明できない強いedgeが閉包に接していれば、
-    黙って取り込まずに拒否する。そのため、これはcorpusの読取り処理にとどまり、汎用のtarget展開の
+    `refines`の対象、その文書またはその規範文を`refines`する適用対象の文書をたどる。目的`interpret`では、
+    `refines`の参照元である`draft`の文書を役割`advisory`として保持し、展開しない（§6.1 6.）。目的`implement`では、対象の規範文を
+    `addresses`する`open`のTASKをすべて加える。規則で説明できない強いエッジが閉包に接していれば、
+    黙って取り込まずに拒否する。そのため、これはcorpusの読取り処理にとどまり、汎用の対象展開の
     実装にはならない。
 
     戻り値は（並べた文書ID、advisoryの文書ID）である。
@@ -306,8 +306,8 @@ def closure(documents, root, purpose):
                     accounted.add((identifier, "addresses", target))
                     if identifier not in reached:
                         reached[identifier] = reached[owner(target)] + 1
-    # 1つのworkspaceは独立した起点を複数持ち得る。説明が必要なのは、この閉包に触れる
-    # edgeだけである。閉包の完全に外にあるedgeは別のContextに属し、
+    # 1つのワークスペースは独立した起点を複数持ち得る。説明が必要なのは、この閉包に触れる
+    # エッジだけである。閉包の完全に外にあるエッジは別のコンテキストに属し、
     # この計算の対象ではない。
     for identifier, document in documents.items():
         for key in STRONG:
@@ -323,7 +323,7 @@ def closure(documents, root, purpose):
 
 
 def target_statements(documents, owned, root, reached, advisory):
-    """§6.4: 文書起点は所有句、statement起点は指定句。applicable refinementの句を推移的に加える。"""
+    """§6.4: 起点が文書ならその文書が所有する規範文、規範文なら指定した規範文。具体化文書の規範文を推移的に加える。"""
     if root in owned:
         selected = {root, *owned[root]} if documents[root]["kind"] != "task" else set(
             _relations(documents[root]["frontmatter"])["addresses"])
@@ -349,20 +349,20 @@ def build(repository, root="REQ-001", purpose="verify", workspace_id="root"):
     selected, advisory = closure(documents, root, purpose)
     commands, entries = config.get("verify", {}).get("commands", {}), []
     used = set()
-    # 閉包でcommandを挙げるのは`verify`だけなので、Bundleがcommandを参照し得るのも
-    # `verify`だけである。`interpret`と`implement`はbindingを記録しない。
+    # 閉包でコマンドを挙げるのは`verify`だけなので、コンテキスト一式がコマンドを参照し得るのも
+    # `verify`だけである。`interpret`と`implement`はテスト割当てを記録しない。
     for identifier in selected if purpose == "verify" else []:
         if identifier in advisory:
             continue
         frontmatter = documents[identifier]["frontmatter"]
         for test in _tests(frontmatter):
-            # command名はtests[].command、文書のverifyの順で解決する。
+            # コマンド名は`tests[].command`、文書の`verify`の順で解決する。
             name = test["command"] if test["command"] is not None else frontmatter.get("verify")
             if name is not None:
                 used.add(name)
     for name in sorted(used):
-        # 設定に定義のないcommand名はbindingを構成できない（verify §8）。Digest材料は
-        # 実際に収録できたbindingだけを持ち、未定義名を欠落として無視も例外にもしない。
+        # 設定に定義のないコマンド名はテスト割当てを構成できない（`bitz verify`仕様 §8）。ハッシュ値の材料は
+        # 実際に収録できたテスト割当てだけを持ち、未定義名を欠落として無視も例外にもしない。
         if name not in commands:
             continue
         command = commands[name]
@@ -421,7 +421,7 @@ def build(repository, root="REQ-001", purpose="verify", workspace_id="root"):
 
 
 def _sorted_extensions(statement):
-    """Digest正規化 §3.1.3: extensionを(namespace, term, valueSortKey)で並べる。nullはstringより前。"""
+    """コンテキストのハッシュ値の正規化仕様 §3.1.3: 拡張タグを(namespace, term, valueSortKey)で並べる。nullは文字列より前。"""
     ordered = sorted(statement["extensions"], key=lambda item: (
         item["namespace"], item["term"], item["value"] is not None, item["value"] or ""))
     return {**statement, "extensions": ordered}
@@ -437,7 +437,7 @@ def normalize_strings(value):
     return value
 
 
-# --- RFC 8785 serializer（参照計算B） ------------------------------------------------
+# --- RFC 8785の直列化処理（参照計算B） ------------------------------------------------
 
 def _code_units(text):
     return [int.from_bytes(text.encode("utf-16-be")[position:position + 2], "big")

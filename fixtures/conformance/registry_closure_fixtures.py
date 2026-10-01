@@ -1,8 +1,8 @@
-"""matrix §6.9のregistry閉包を固定した証拠。規範文、relation、設定、doctor、workspaceの条件を、
+"""matrix §6.9の診断レジストリ閉包を固定した証拠。規範文、関係、設定、`doctor`、ワークスペースの条件を、
 それぞれ単独で返さなければならない。
 
-Core操作、YAML loader、Gitの調査は実装しない。同等の原因に固定したbyte列がある場合は
-review済みの入力を再利用し、fixtureは同じ入力の2つ目の読み方ではなく、新しい操作や結果の形を加える。
+Coreの公開操作、YAMLローダー、Gitの調査は実装しない。同等の原因に固定したバイト列がある場合は
+レビュー済みの入力を再利用し、fixtureは同じ入力の2つ目の読み方ではなく、新しい操作や結果の形を加える。
 """
 import json
 from pathlib import Path
@@ -27,13 +27,13 @@ EARS_MAJOR_CONFIG = 'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "2.0"\n'
 SHOULD_STATEMENT = "- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [SHOULD] [CONSTRAINT] 秘密情報を出力しない。"
 RELATED = "relations:\n  related: [TECH-999]\n"
 MISSING_TARGET = "TECH-999"
-# 固定した文書での、[SHOULD]のreview済みの1始まりのUnicodeコードポイント位置。
+# 固定した文書での、`[SHOULD]`のレビュー済みの1始まりのUnicodeコードポイント位置。
 SHOULD_LINE, SHOULD_COLUMN = 15, 49
 EXIT = {"passed": 0, "passed_with_warnings": 0, "failed": 1, "blocked": 2, "error": 3}
 CORE = {"version": "1.0.0", "apiVersion": "1.0",
         "capabilities": ["context.v1", "check.v1", "verify.v1", "doctor.v1", "multiWorkspace.v1"]}
 LOST_GUARANTEES = ["approved-diff-protection", "deletion-detection", "status-transition", "task-boundary"]
-# docs/03.詳細設計/03_操作仕様/04_doctor.md §3: the reviewed check order.
+# `docs/03.詳細設計/03_操作仕様/04_doctor.md` §3: レビュー済みの検査の順序。
 DOCTOR_ORDER = ("core", "workspace", "config", "schema", "ears", "git", "command", "impact")
 
 
@@ -151,7 +151,7 @@ def reviewed_result(identifier):
 
 
 def check_conditions(identifier, inputs):
-    """各単一原因を、散文からではなく固定したbyte列から導き直す。"""
+    """各単一原因を、散文からではなく固定したバイト列から導き直す。"""
     if identifier == "SINGLE-089":
         document = inputs[REQ_PATH].decode()
         if "[REASON]" in document or document.count("[SHOULD]") != 1:
@@ -183,7 +183,7 @@ def check_conditions(identifier, inputs):
 
 
 def check_environment(identifier, repository, manifest):
-    """Git不在は断定ではなく、隔離setupで観測する性質である。"""
+    """Git不在は断定ではなく、隔離した準備手順で観測する性質である。"""
     if CASES[identifier]["git"]:
         return observe
     if manifest["invocation"]["env"] != {"PATH": "/dev/null"} or not Path("/dev/null").is_char_device():
@@ -192,7 +192,7 @@ def check_environment(identifier, repository, manifest):
         raise ValueError("fixtureの起動環境でGitが解決されています")
     if (repository / ".git").exists() or (repository / ".git").is_symlink():
         raise ValueError("Git不在fixtureはGitのmetadataを含んではいけません")
-    # 明示的な不在として扱い、空の成功したGit statusにはしない。
+    # 明示的な不在として扱い、空の成功した`git status`にはしない。
     return lambda root, external: {"repository": snapshot(root), "git": None,
                                    **{name: snapshot(path) for name, path in external.items()}}
 

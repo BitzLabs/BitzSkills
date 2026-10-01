@@ -1,4 +1,4 @@
-"""fixtureのsetupとsnapshotだけを扱う。Core操作は実装しない。"""
+"""fixtureの準備手順とスナップショットだけを扱う。Coreの公開操作は実装しない。"""
 import hashlib
 import os
 from pathlib import Path
@@ -10,7 +10,7 @@ def snapshot(root):
     result = {}
     for path in sorted(root.rglob("*")):
         relative = path.relative_to(root).as_posix()
-        # 入れ子のGitのmetadataと、別worktreeの.git fileは比較の対象にしない（ADR-048）。
+        # 入れ子のGitのメタデータと、別のワークツリーの.gitファイルは比較の対象にしない（ADR-048）。
         if ".git" in relative.split("/"):
             continue
         if path.is_symlink():
@@ -52,7 +52,7 @@ def git(root, *args, environment=None):
 
 
 def tree_digest_bytes(entries):
-    """生成treeのdigest材料。path昇順で<path>\0<8 byteの長さ><内容>を連結する（ADR-048）。"""
+    """生成した木構造のハッシュ値の材料。パスの昇順で<path>\0<8バイトの長さ><内容>を連結する（ADR-048）。"""
     digest = hashlib.sha256()
     for relative, content in sorted(entries):
         digest.update(relative.encode("utf-8"))
@@ -63,7 +63,7 @@ def tree_digest_bytes(entries):
 
 
 def write_generated(entries, destination):
-    """生成した(path, 内容)の列をdestinationへ書き出す。"""
+    """生成した(パス, 内容)の列を`destination`へ書き出す。"""
     for relative, content in entries:
         path = safe_path(destination, relative)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -117,8 +117,8 @@ def setup(fixture, manifest, destination, generated=None):
             if source.is_symlink():
                 path.symlink_to(os.readlink(source))
             else:
-                # mtimeを引き継がない。同じsizeの置換で、base commitより古いmtimeと再利用されたinodeが
-                # index上のstat情報と一致すると、Gitが内容を比べずに未変更と判定するためである。
+                # `mtime`を引き継がない。同じバイト数の置換で、基準版のコミットより古い`mtime`と再利用された`inode`が
+                # インデックス上の`stat`の情報と一致すると、Gitが内容を比べずに未変更と判定するためである。
                 shutil.copyfile(source, path)
                 shutil.copymode(source, path)
         elif kind == "delete":
@@ -162,7 +162,7 @@ def copy_source_tree(source, destination):
 
 
 def add_submodule(destination, path, source):
-    """member pathを、内容がsourceと同じ別repositoryにし、親へgitlinkと.gitmodulesを記録する。"""
+    """メンバーのパスを、`source`と同じ内容の別のリポジトリにし、親へ`gitlink`と`.gitmodules`を記録する。"""
     relative = path.relative_to(destination).as_posix()
     copy_source_tree(source, path)
     git(path, "init", "--initial-branch=fixture")
@@ -172,12 +172,12 @@ def add_submodule(destination, path, source):
     modules.write_text(f'[submodule "{relative}"]\n\tpath = {relative}\n\turl = ./{relative}\n',
                        encoding="utf-8")
     git(destination, "add", "--", ".gitmodules")
-    # gitlinkとして記録する。埋め込みrepositoryの警告は想定どおりである。
+    # `gitlink`として記録する。埋め込まれたリポジトリの警告は想定どおりである。
     git(destination, "add", "--", relative)
 
 
 def add_worktree(destination, path, source):
-    """member pathを、内容がsourceと同じcommitを持つ同じrepositoryの別worktreeにする。"""
+    """メンバーのパスを、`source`と同じ内容のコミットを持つ同じリポジトリの別のワークツリーにする。"""
     relative = path.relative_to(destination).as_posix()
     staging = destination / ".git" / "fixture-worktree-source"
     copy_source_tree(source, staging)

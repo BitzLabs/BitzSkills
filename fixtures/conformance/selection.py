@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 
-# GitHub Actions run 36248419060（commit 9ade7d0f、CPython 3.12、ubuntu-24.04）の
+# GitHub Actionsの実行36248419060（コミット9ade7d0f、CPython 3.12、ubuntu-24.04）の
 # 独立2組の中央値。分割と所要時間の予測だけに使い、合否条件には使わない。
 MODEL_SOURCE = {
     "runUrl": "https://github.com/BitzLabs/BitzSkills/actions/runs/36248419060",
@@ -91,7 +91,7 @@ def partition(identifiers, shards):
 
 
 def partition_plan(identifiers, shards):
-    """分割内容と、jobの固定時間を含む予測秒数を返す。"""
+    """分割内容と、ジョブの固定時間を含む予測秒数を返す。"""
     return [{"shard": index, "fixtureCount": len(group),
              "predictedSeconds": round(predicted_seconds(group, worker_overhead=True), 1),
              "fixtures": group}

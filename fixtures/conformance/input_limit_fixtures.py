@@ -1,7 +1,7 @@
-"""入力の次元（大きさ、件数、未知のworkspace entry）を固定した証拠。
+"""入力の次元（大きさ、件数、未知のワークスペースのエントリ）を固定した証拠。
 
-Coreの読取り処理、YAML loader、上限の検査は実装しない。入力はreview済みの定数から作り、
-生成したbyte列を文書の上限と照らして測り直す。そのため各fixtureは、ちょうど1つの次元だけを越える。
+Coreの読取り処理、YAMLのローダー、上限の検査は実装しない。入力はレビュー済みの定数から作り、
+生成したバイト列を文書の上限と照らして測り直す。そのため各fixtureは、ちょうど1つの次元だけを越える。
 """
 import json
 from pathlib import Path
@@ -21,7 +21,7 @@ REQ2_PATH = ".spec/requirements/REQ-002.md"
 TEST_PATH = "tests/test_req_001.py"
 UNKNOWN_PATH = ".spec/notes.txt"
 CONFIG = CONFIGS["SINGLE-001"]
-# docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md §4 resource上限.
+# docs/03.詳細設計/00_共通契約/02_安全な入出力・互換性.md §4 リソースの上限。
 CONFIG_LIMIT = 64 * 1024
 SPEC_LIMIT = 1024 * 1024
 FRONTMATTER_LIMIT = 32 * 1024
@@ -37,7 +37,7 @@ REQUIREMENT_2 = (
     "## Intent\n\n配列上限の対象となる規範文を1件だけ提供する。\n\n## Acceptance Criteria\n\n"
     "- [REQ-002:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 秘密情報を出力しない。\n\n"
     "## Verification\n\nCore実装後に確認する。現時点では未証明。\n")
-# ID: (code, source path, source key, summary, status, 検査文書数, 検査句数, description)
+# ID: (診断コード, 発生元のパス, 発生元のキー, 要約, 状態, 検査文書数, 検査規範文数, description)
 CASES = {
     "SINGLE-078": (LIMIT_CODE, CONFIG_PATH, None, "設定fileが64 KiB上限を超過しました",
                    "failed", 0, 0, "設定fileの上限超過で読取りを続けない"),
@@ -55,14 +55,14 @@ CASES = {
     "SINGLE-083": ("SPEC-WORKSPACE-UNKNOWN-001", UNKNOWN_PATH, None, ".spec/内の未知fileをSPECとして読みません",
                    "passed_with_warnings", 1, 1, ".spec/内の未知fileを警告しSPECとして読まない"),
 }
-# 各fixtureが越えてよいreview済みの次元。それ以外はすべて上限内に収める。
+# 各fixtureが越えてよいレビュー済みの次元。それ以外はすべて上限内に収める。
 CROSSED = {"SINGLE-078": {"config"}, "SINGLE-079-01": {"spec"}, "SINGLE-079-02": {"frontmatter"},
            "SINGLE-080-01": set(), "SINGLE-080-02": {"statements"}, "SINGLE-080-03": {"covers"},
            "SINGLE-083": set()}
 
 
 def repeat(text, limit):
-    """それだけでreview済みの上限を越える、固定したtextの最小の繰返し。"""
+    """それだけでレビュー済みの上限を越える、固定したテキストの最小の繰返し。"""
     return text * (limit // len(text.encode()) + 2)
 
 
@@ -137,7 +137,7 @@ def covers_count(document):
 
 
 def check_limits(identifier, inputs):
-    """fixtureが越える上限は、散文ではなく固定したbyte列で決まらなければならない。"""
+    """fixtureが越える上限は、散文ではなく固定したバイト列で決まらなければならない。"""
     config, document = inputs[CONFIG_PATH], inputs[REQ_PATH]
     measured = {"config": len(config) > CONFIG_LIMIT, "spec": len(document) > SPEC_LIMIT,
                 "frontmatter": frontmatter_size(document) > FRONTMATTER_LIMIT,

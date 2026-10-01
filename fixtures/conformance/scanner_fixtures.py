@@ -1,7 +1,7 @@
-"""matrix §6.10のcheckのcaseについて、文法・Scanner・位置を固定した証拠。
+"""matrix §6.10の`check`のケースについて、文法・走査器・位置を固定した証拠。
 
-Scanner、Lexer、Parser、Coreは実装しない。各fixtureはreview済みのEARS文書を再利用し、
-ちょうど1行だけを変える。そのため監査は、固定したbyte列から、review済みの
+走査器、字句解析器、構文解析器、Coreは実装しない。各fixtureはレビュー済みのEARS文書を再利用し、
+ちょうど1行だけを変える。そのため監査は、固定したバイト列から、レビュー済みの
 1始まりのコードポイントの列を導き直せる。
 """
 import json
@@ -20,7 +20,7 @@ HERE = Path(__file__).resolve().parent
 CONFIG_PATH = ".spec/bitz.yaml"
 STATEMENT_LINE = 16
 BASE = "- [REQ-001:AC-02] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] "
-# 規範文風のtextは1つに固定し、抑止のcaseごとに周りの構文だけを変える。
+# 規範文風のテキストは1つに固定し、抑止のケースごとに周りの構文だけを変える。
 CANDIDATE = "- [REQ-001:AC-99] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 候補にしない。"
 SUPPRESSION = {
     "SINGLE-099-01": "```text\n" + CANDIDATE + "\n```",
@@ -28,7 +28,7 @@ SUPPRESSION = {
     "SINGLE-099-03": "> " + CANDIDATE,
     "SINGLE-099-04": "    " + CANDIDATE,
 }
-# ID: (16行目の内容, Diagnostic code, summary, anchor token, review済みの列)
+# ID: (16行目の内容, 診断コード, 要約, アンカーのトークン, レビュー済みの列)
 CASES = {
     "SINGLE-096-02": (BASE + "ログに ``secret` を出力しない。", "EAI-CORE-SYNTAX-005",
                       "code spanが閉じられていません", "``", 73),
@@ -116,7 +116,7 @@ def reviewed_result(identifier):
 
 
 def check_positions(identifier, document):
-    """review済みの列を、固定した文書からコードポイント単位で導き直す。"""
+    """レビュー済みの列を、固定した文書からコードポイント単位で導き直す。"""
     line_text, code, _, anchor, column = CASES[identifier]
     lines = document.decode().splitlines()
     if lines[STATEMENT_LINE - 1] != line_text.splitlines()[0]:
@@ -131,7 +131,7 @@ def check_positions(identifier, document):
 
 
 def check_suppression(identifier, document):
-    """抑止のcaseの間で異なってよいのは、周りの構文だけである。"""
+    """抑止のケースの間で異なってよいのは、周りの構文だけである。"""
     if identifier not in SUPPRESSION:
         return
     block = SUPPRESSION[identifier].split("\n")

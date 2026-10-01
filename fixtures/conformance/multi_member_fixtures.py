@@ -1,8 +1,8 @@
-"""memberの独立性とcatalogの変更を固定するreview済みvector（Core操作は実行しない）。
+"""メンバーの独立性とカタログの変更を固定するレビュー済みの入力と期待値（Coreの公開操作は実行しない）。
 
-全体checkは、1つのmemberが非成功でも後続memberの検査を続ける。`MULTI-011`はその独立性、
-`MULTI-017`はIDを保ったmember pathの移動、`MULTI-018-01/02`はworkspace IDの変更とmemberの削除を扱う。
-後者2つは、base側の管理済みSPECが現在版から消えたことを削除検査で捉えることを固定する。
+全体操作の`check`は、1つのメンバーが非成功でも後続のメンバーの検査を続ける。`MULTI-011`はその独立性、
+`MULTI-017`はIDを保ったメンバーのパスの移動、`MULTI-018-01/02`はワークスペースIDの変更とメンバーの削除を扱う。
+後者2つは、基準版の管理済みの仕様文書が現在版から消えたことを削除検査で捉えることを固定する。
 """
 import json
 from pathlib import Path
@@ -41,7 +41,7 @@ FILE_NAME = {
 DELETED = {
     "code": "SPEC-STATE-TRANSITION-001", "severity": "error", "resultStatus": "failed",
     "summary": "管理済みSPECが削除されています",
-    # 基準版のworkspace IDとそのworkspace root相対pathで指す。現在版にこのworkspaceはない。
+    # 基準版のワークスペースIDと、そのワークスペースのルートからの相対パスで指す。現在版にこのワークスペースはない。
     "source": {"kind": "file", "workspaceId": "web", "path": ".spec/technical/TECH-010.md"},
 }
 CASES = {
@@ -53,11 +53,11 @@ CASES = {
 
 
 def reviewed_inputs(identifier):
-    """repo/の入力とchanges/の差替えfileを返す。基準版はrepo/、現在版はoperationsで作る。"""
+    """repo/の入力とchanges/の差替えファイルを返す。基準版はrepo/、現在版は`operations`で作る。"""
     files = dict(multi_reference.reviewed_inputs())
     changes = {}
     if identifier == "MULTI-011":
-        # apiの文書を、file名IDとFrontmatter IDが一致しない1件だけに置き換える。
+        # apiの文書を、ファイル名のIDとフロントマターのIDが一致しない1件だけに置き換える。
         del files[multi_reference.API_TECH_PATH]
         del files["services/api/src/session.py"]
         del files["services/api/tests/test_session.py"]
@@ -111,8 +111,8 @@ def reviewed_result(identifier):
     if identifier == "MULTI-011":
         workspaces = [
             workspace_entry("platform", ".", documents=1, statements=2),
-            # file名IDと一致しない文書はskip-documentとなり、完全検査した文書数へ数えない
-            # （check仕様 §9・Diagnostic registry。SINGLE-014と同じ扱い）。後続のwebは影響を受けない。
+            # ファイル名のIDと一致しない文書は`skip-document`となり、完全検査した文書数へ数えない
+            # （`bitz check`仕様 §9・診断レジストリ。SINGLE-014と同じ扱い）。後続のwebは影響を受けない。
             workspace_entry("api", "services/api", status="failed", documents=0, diagnostics=[FILE_NAME]),
             workspace_entry("web", "apps/web"),
         ]
@@ -150,7 +150,7 @@ def reviewed_result(identifier):
 
 
 def check_catalog_change(identifier, repository):
-    """基準版と現在版のcatalogを、散文ではなくGitのblobと作業treeから確かめる。"""
+    """基準版と現在版のカタログを、散文ではなくGitのブロブと作業ツリーから確かめる。"""
     base_config = git(repository, "show", f"HEAD:{multi_reference.ROOT_CONFIG_PATH}").decode()
     base = multi_crosscheck.read_yaml(base_config)["multiWorkspace"]["members"]
     base_members = {entry["id"]: entry["path"] for entry in base}
@@ -179,7 +179,7 @@ def check_catalog_change(identifier, repository):
         if (repository / "apps/web").exists():
             raise ValueError("member削除のcaseは、memberのtreeも削除する必要があります")
     if identifier in {"MULTI-018-01", "MULTI-018-02"}:
-        # 基準版には削除検査の対象になる管理済みSPECがある。
+        # 基準版には削除検査の対象になる管理済みの仕様文書がある。
         if git(repository, "cat-file", "-t", f"HEAD:{multi_reference.WEB_TECH_PATH}").decode().strip() != "blob":
             raise ValueError("基準版にwebの管理済みSPECがありません")
 

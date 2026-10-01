@@ -1,4 +1,4 @@
-"""導入・設定fixtureを監査する。Coreを起動も模倣もしない。"""
+"""導入・設定のfixtureを監査する。Coreを起動も模倣もしない。"""
 import json
 import os
 from pathlib import Path
@@ -22,8 +22,8 @@ CASES = {
     "SINGLE-006-01": ("doctor", "blocked", 2),
     "SINGLE-006-02": ("doctor", "blocked", 2),
 }
-# 各入力の単一原因を、意図して限定した範囲で独立にreviewする。
-# YAML parserでも、本番の設定validatorでもない。
+# 各入力の単一の原因を、意図して限定した範囲で独立にレビューする。
+# YAMLの構文解析器でも、本番の設定の検証プログラムでもない。
 CONFIGS = {
     "SINGLE-001": 'schemaVersion: "1.0"\nlanguage: ja\nearsAi: "1.0"\n',
     "SINGLE-003": 'schemaVersion: "2.0"\nlanguage: ja\nearsAi: "1.0"\n',
@@ -63,7 +63,7 @@ def observe(repository, external):
 
 
 def compare_state(expected, observed):
-    """新しいfile、変わったGit index、外部のcacheを正規化で消さない。"""
+    """新しいファイル、変わったGitのインデックス、外部のキャッシュを正規化で消さない。"""
     return [name for name in sorted(expected.keys() | observed.keys()) if expected.get(name) != observed.get(name)]
 
 

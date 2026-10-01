@@ -1,7 +1,7 @@
-"""decode後のFrontmatterの境界を固定するreview済みvector（YAML loaderもCoreもない）。
+"""デコードした後のフロントマターの境界を固定するレビュー済みの入力と期待値（YAMLのローダーもCoreもない）。
 
-各fieldは、JSONの構文をYAMLのflow valueとして使って書く。個々の値をjson.loadsで読むことで、
-corpusと値の組を独立に確認する。実際のYAML loaderと検査の挙動はStep 2の受入で扱う。
+各フィールドは、JSONの構文をYAMLのフロー形式の値として使って書く。個々の値をjson.loadsで読むことで、
+corpusと値の組を独立に確認する。実際のYAMLのローダーと検査の挙動はStep 2の受入で扱う。
 """
 import copy
 import json
@@ -19,13 +19,13 @@ HERE = Path(__file__).resolve().parent
 TITLE = 'Frontmatter境界'
 TEST_PATH = 'tests/test_contract.py'
 TEST = {'path': TEST_PATH, 'covers': ['REQ-001:AC-01'], 'command': 'default'}
-# 118系だけが使う2件目の規範文。covers集合の比較に2要素が必要なため置く。
+# 118系だけが使う2件目の規範文。coversの集合の比較に2要素が必要なため置く。
 SECOND = GOOD.replace('AC-01', 'AC-02').replace('秘密情報を出力しない。', '認証情報を記録しない。')
 TWO_STATEMENTS = ('REQ-001:AC-01', 'REQ-001:AC-02')
-# 明示TASK checkで変更差分を与えるcode path。
+# TASKを明示した`check`で変更の差分を与えるコードのパス。
 CHANGED_PATH = 'src/app.py'
 BASE = {'id': 'REQ-001', 'title': TITLE, 'status': 'approved'}
-# ID -> decode後のfield, primaryのcode（None = 成功）, Diagnostic key, 説明
+# ID -> デコードした後のフィールド, 主診断のコード（None = 成功）, 診断のキー, 説明
 CASES = {}
 
 def add(identifier, updates, code=None, key=None, description='', remove=()):
@@ -61,7 +61,7 @@ add('SINGLE-120-02', {'id': 'TASK-001', 'status': 'open'}, 'SPEC-TASK-BOUNDARY-0
     'changes省略のTASKは変更差分を許可pathなしとして拒否する')
 add('SINGLE-120-03', {'changes': ['src/ignored.py']}, 'SPEC-FM-UNAVAILABLE-001', 'changes', '正しい型のREQ changesは利用不能warningにする')
 add('SINGLE-120-04', {'changes': 42}, 'SPEC-FM-SCHEMA-001', 'changes', 'changes型不正は利用不能warningより先に拒否する')
-# 利用者へ示すDiagnosticのsummary。manifestのdescription（検査の論点）とは別に持つ。
+# 利用者へ示す診断の`summary`。マニフェストの`description`（検査の論点）とは別に持つ。
 # 同じ条件の既存fixtureと文面をそろえる（119-03はSINGLE-085、120-03はSINGLE-084）。
 SUMMARIES = {
     **{'SINGLE-116-' + suffix: 'Frontmatter titleは改行を含まない1〜120文字で指定してください'
@@ -78,9 +78,9 @@ SUMMARIES = {
     'SINGLE-120-04': 'Frontmatter changesはstringの配列が必要です',
 }
 WARNINGS = {'SPEC-FM-UNKNOWN-001', 'SPEC-FM-UNAVAILABLE-001'}
-# 文書をskipするFrontmatter診断。TASK境界違反は文書自体を受理したうえでのfailedである。
+# 文書をスキップするフロントマターの診断。TASK境界違反は文書自体を受理したうえでのfailedである。
 REJECTIONS = {'SPEC-FM-SCHEMA-001', 'SPEC-FM-REQUIRED-001'}
-# 明示TASK checkを行うcase。120-02だけが作業treeに変更差分を持つ。
+# TASKを明示した`check`を行うケース。120-02だけが作業ツリーに変更の差分を持つ。
 TASK_CHECKS = {'SINGLE-120-01': False, 'SINGLE-120-02': True}
 KINDS = {'REQ': ('requirements', 'reqFrontmatter'), 'TECH': ('technical', 'techFrontmatter'),
          'ADR': ('decisions', 'adrFrontmatter'), 'TASK': ('tasks', 'taskFrontmatter')}
@@ -107,10 +107,10 @@ def statement_ids(identifier):
 
 
 def reviewed_inputs(identifier):
-    """base commitへ入れるrepository入力。変更差分はchanges_inputsが別に持つ。"""
+    """基準版のコミットへ入れるリポジトリの入力。変更の差分はchanges_inputsが別に持つ。"""
     fields, _, _, _ = CASES[identifier]
     prefix = fields['id'].split('-')[0]
-    # 有効なtitleはH1と一致させ、title長以外の独立原因を混ぜない。
+    # 有効なタイトルはH1と一致させ、タイトルの長さ以外の独立した原因を混ぜない。
     heading = TITLE if rejected(identifier) else fields.get('title')
     criteria = AC.replace(GOOD, GOOD + '\n' + SECOND) if len(statement_ids(identifier)) == 2 else AC
     body = f'# {fields["id"]} {heading}\n\n'
@@ -132,7 +132,7 @@ def reviewed_inputs(identifier):
 
 
 def changes_inputs(identifier):
-    """setup operationで作業treeへ適用するfile。stageもcommitもしない。"""
+    """準備の処理で作業ツリーへ適用するファイル。ステージもコミットもしない。"""
     return {'changes/app.py': CODE_AFTER} if TASK_CHECKS.get(identifier) else {}
 
 
@@ -160,7 +160,7 @@ def reviewed_result(identifier):
     accepted = not rejected(identifier)
     diagnostics = []
     if code == 'SPEC-TASK-BOUNDARY-001':
-        # SINGLE-034と同じ文面・sourceの形。変更pathだけを指し、keyを付けない。
+        # SINGLE-034と同じ文面・発生元の形。変更のパスだけを指し、キーを付けない。
         diagnostics.append({'code': code, 'severity': 'error', 'resultStatus': current,
                             'summary': f'{CHANGED_PATH}はTASK-001の許可変更path外です',
                             'source': {'kind': 'file', 'workspaceId': 'root', 'path': CHANGED_PATH}})
@@ -178,7 +178,7 @@ def reviewed_result(identifier):
 
 
 def duplicate_tests(fields):
-    """tests要素を(path, commandの有無と値, covers集合)で独立に比較する。
+    """testsの要素を(パス, コマンドの有無と値, coversの集合)で独立に比較する。
 
     JSON Schemaの uniqueItems は配列順を区別するため、covers順だけが異なる重複を検出できない。
     """
@@ -188,7 +188,7 @@ def duplicate_tests(fields):
 
 
 def check_git_states(identifier, repository):
-    """HEADとindexはbase入力、作業treeは変更適用後と一致することをbyteで確認する。"""
+    """HEADとインデックスは基準版の入力、作業ツリーは変更を適用した後の入力と一致することをバイト列で確認する。"""
     base = reviewed_inputs(identifier)
     if set(git(repository, 'ls-files', '-z').decode().split('\0')[:-1]) != set(base):
         raise ValueError('indexのpathが審査済みbaseと異なります')

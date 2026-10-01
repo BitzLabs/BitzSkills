@@ -1,8 +1,8 @@
-"""複合workspaceのcatalogと環境の事前検査を固定するreview済みvector（Core操作は実行しない）。
+"""複合ワークスペースのカタログと環境の事前検査を固定するレビュー済みの入力と期待値（Coreの公開操作は実行しない）。
 
-全体事前検査が非成功なら、member処理もContext解決もcommandも始めずに`workspaces: []`で結果を返す。
-この群は、その停止条件を1件ずつ切り分ける。`MULTI-005`は未知`--workspace`が操作結果を作らないこと、
-`MULTI-006`はGitが知っているcatalog未登録の設定、`MULTI-007-01/02/03`はmember pathの入れ子・submodule・別worktree、
+全体事前検査が非成功なら、メンバーの処理もコンテキストの解決もコマンドも始めずに`workspaces: []`で結果を返す。
+この群は、その停止条件を1件ずつ切り分ける。`MULTI-005`は未知の`--workspace`が操作結果を作らないこと、
+`MULTI-006`はGitが知っているカタログ未登録の設定、`MULTI-007-01/02/03`はメンバーのパスの入れ子・サブモジュール・別のワークツリー、
 `MULTI-019`はGit不在である。
 """
 import json
@@ -27,7 +27,7 @@ CORE = {"version": "1.0.0", "apiVersion": "1.0", "capabilities": list(CAPABILITI
 UNREGISTERED = {
     "code": "SPEC-MULTI-UNREGISTERED-001", "severity": "error", "resultStatus": "blocked",
     "summary": "Gitが認識する設定fileがcatalogに登録されていません",
-    # 未登録の設定はworkspaceではないので、所有workspaceを持たない。
+    # 未登録の設定はワークスペースではないので、所有ワークスペースを持たない。
     "source": {"kind": "file", "workspaceId": None, "path": UNREGISTERED_PATH},
 }
 def path_diagnostic(summary):
@@ -47,7 +47,7 @@ NO_GIT = {
     "summary": "Git repositoryの境界を確定できません",
     "source": {"kind": "environment", "component": "git"},
 }
-# id: (corpus, argvの残り, Git有無, status, 終了コード, 説明)
+# id: (corpus, 引数列の残り, Gitの有無, 状態, 終了コード, 説明)
 CASES = {
     "MULTI-005": ("golden", ["check", "--workspace", "missing", "--format", "json"], True,
                   None, 4, "catalogにない--workspaceを操作結果なしで拒否する"),
@@ -73,7 +73,7 @@ def reviewed_inputs(corpus):
     if corpus == "golden":
         return multi_reference.reviewed_inputs()
     if corpus == "unregistered":
-        # catalogはweb、apiだけを登録し、libs/nativeの設定はGitが知るだけの未登録workspaceとする。
+        # カタログはweb、apiだけを登録し、libs/nativeの設定はGitが知るだけの未登録ワークスペースとする。
         return {**multi_reference.reviewed_inputs(),
                 UNREGISTERED_PATH: multi_reference.plain_config("native").encode()}
     if corpus == "nested":
@@ -84,7 +84,7 @@ def reviewed_inputs(corpus):
             multi_reference.WEB_CONFIG_PATH: multi_reference.plain_config("web").encode(),
             INNER_CONFIG_PATH: multi_reference.plain_config("inner").encode(),
         }
-    # submoduleと別worktreeは、member pathをGitの構造として作るので、member設定をchanges/へ置く。
+    # サブモジュールと別のワークツリーは、メンバーのパスをGitの構造として作るので、メンバーの設定をchanges/へ置く。
     return {
         multi_reference.ROOT_CONFIG_PATH: multi_reference.root_config([("web", "apps/web")]).encode(),
         multi_reference.ROOT_REQ_PATH: (multi_reference.REQ_HEAD + "\n" + multi_reference.REQ_BODY).encode(),
@@ -108,7 +108,7 @@ def reviewed_manifest(identifier):
         "fixtureId": identifier,
         "description": description,
         "setup": setup_plan,
-        # Git不在は起動環境からGitを外して表す。単一workspaceのGit不在fixtureと同じ方法である。
+        # Git不在は起動環境からGitを外して表す。単一ワークスペースのGit不在fixtureと同じ方法である。
         "invocation": {"runner": "bitz", "cwd": ".", "argv": list(argv),
                        "env": {} if git else {"PATH": "/dev/null"}},
         "expect": expect,
@@ -116,7 +116,7 @@ def reviewed_manifest(identifier):
 
 
 def cli_output():
-    """workspace selectorのinvocation errorは、終了コード4と標準エラー出力1行だけを返す。"""
+    """`--workspace`によるワークスペースの指定が引数不正の場合は、終了コード4と標準エラー出力1行だけを返す。"""
     return {"exitCode": 4, "stdout": "", "stderrPrefix": "bitz: check: ",
             "stderrLineCount": 1, "stderrReasonRequired": True, "stderrTerminalControls": False}
 
@@ -124,7 +124,7 @@ def cli_output():
 def observe_state(manifest, repository, external):
     if manifest["setup"]["git"]:
         return observe(repository, external)
-    # 明示的な不在として扱う。空の成功したGit statusにはしない。
+    # 明示的な不在として扱う。空の成功した`git status`の結果にはしない。
     return {"repository": snapshot(repository), "git": None,
             **{name: snapshot(path) for name, path in external.items()}}
 
@@ -133,7 +133,7 @@ def blocked_check_result():
     return {
         "schemaVersion": "1.0", "operation": "check", "scope": "all-workspaces", "status": "blocked",
         "multiWorkspace": {"id": "platform", "path": "."},
-        # 事前検査が非成功なので、member処理を開始せず空配列を返す。
+        # 事前検査が非成功なので、メンバーの処理を開始せず空配列を返す。
         "workspaces": [],
         "revision": {"base": COMMIT, "commit": COMMIT, "dirty": False},
         "durationMs": 0,
@@ -143,7 +143,7 @@ def blocked_check_result():
 
 def doctor_result(identifier):
     if identifier == "MULTI-019":
-        # Git境界を確定できないので、catalogの検査へ進まない。
+        # Gitの境界を確定できないので、カタログの検査へ進まない。
         checks = [{"name": "core", "status": "passed"}, {"name": "git", "status": "blocked"}]
         status, diagnostic = "blocked", NO_GIT
     else:
@@ -170,7 +170,7 @@ def reviewed_result(identifier):
 
 
 def check_precondition(identifier, repository):
-    """停止の原因を、散文ではなくsetup後の入力から確かめる。"""
+    """停止の原因を、散文ではなく準備手順を適用した後の入力から確かめる。"""
     corpus = CASES[identifier][0]
     if corpus == "unregistered":
         _, members = multi_crosscheck.catalog(repository)

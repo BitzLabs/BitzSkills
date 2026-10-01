@@ -1,4 +1,4 @@
-"""複合workspace全体のdoctor診断とmember継続を固定するreview済みvector。"""
+"""複合ワークスペース全体の`doctor`の診断とメンバーの継続を固定するレビュー済みの入力と期待値。"""
 import json
 from pathlib import Path
 import subprocess

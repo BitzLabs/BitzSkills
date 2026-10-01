@@ -1,4 +1,4 @@
-"""review済みのGit対象選択・影響候補の証拠（Coreの対象選択は実装しない）。"""
+"""レビュー済みのGit対象選択・影響候補の証拠（Coreの対象選択は実装しない）。"""
 import json
 from pathlib import Path
 import subprocess
@@ -100,7 +100,7 @@ def reviewed_result(identifier):
 def check_git_states(repository, identifier):
     base = base_files(identifier)
     if identifier == "SINGLE-039":
-        # HEADの解決失敗だけでunbornのrepositoryと認めてはいけない。
+        # `HEAD`の解決失敗だけで、コミットのないリポジトリと認めてはいけない。
         git(repository, "rev-parse", "--git-dir")
         if git(repository, "symbolic-ref", "HEAD").decode().strip() != "refs/heads/fixture":
             raise ValueError("unbornのHEADはfixtureのbranchを指す必要があります")
@@ -152,7 +152,7 @@ def validate(root=HERE, identifiers=None):
             expected = reviewed_inputs(identifier)
             if set(files) != set(expected) or any(p.is_symlink() or p.read_bytes() != expected[name] for name, p in files.items()):
                 raise ValueError("入力が審査済みのGit対象選択caseと異なります")
-            # YAMLと値の固定した組だけをreviewする。汎用のYAML parserではない。
+            # YAMLと値の固定した組だけをレビューする。汎用のYAMLの構文解析器ではない。
             for path in base_files(identifier):
                 if path in FRONTMATTER:
                     frontmatter.validate(FRONTMATTER[path])

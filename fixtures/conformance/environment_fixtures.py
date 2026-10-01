@@ -1,9 +1,9 @@
-"""実行環境・配布物のfixture（Core操作とharness実行部は動かさない）。
+"""実行環境・配布物のfixture（Coreの公開操作とharnessの実行部は動かさない）。
 
-SINGLE-127-15／16はGit shimの版を下限未満と下限にしたdoctor、127-19はCPython下限でのdoctor、
-127-17／18は`runner: package`によるpackage metadataとlock fileの検査である。
+SINGLE-127-15／16はGitのシムのバージョンを下限未満と下限にした`doctor`、127-19はCPythonの下限での`doctor`、
+127-17／18は`runner: package`によるパッケージのメタデータとロックファイルの検査である。
 下限値はテストへ直書きせず、[Core実行環境・CLI基盤契約 §2・§4]の本文から読み取る。
-shim生成、`uv`環境構築、package検査の実行はADR-046に従うharness実装の責務で、Gate Bで確認する。
+Gitのシムの生成、`uv`による環境の構築、パッケージ検査の実行はADR-046に従うharnessの実装の責務で、Gate Bで確認する。
 """
 import json
 from pathlib import Path
@@ -32,7 +32,7 @@ PACKAGE_CASES = {"SINGLE-127-17": "metadata", "SINGLE-127-18": "dependencies"}
 
 
 def minimums():
-    """規範本文の下限値を返す。表記が変われば検証をerrorにする。"""
+    """規範の本文の下限値を返す。表記が変われば検証をエラーにする。"""
     text = CONTRACT.read_text()
     python = re.findall(r"Core 1\.0はCPython (\d+)\.(\d+)以上を対象とする", text)
     git_floor = re.findall(r"Gitは(\d+)\.(\d+)以上を対象とし", text)

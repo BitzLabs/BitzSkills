@@ -1,8 +1,8 @@
-"""matrix §6.11の既定表示とrevisionを固定した証拠。
+"""matrix §6.11の既定の表示と`revision`を固定した証拠。
 
-描画処理、Gitの読取り、Core操作は実装しない。各fixtureはreview済みのcorpusと結果を再利用し、
-提示または環境の性質をちょうど1つだけ変える。`--format`の省略、commitの有無、空のcommand出力、
-2つのtargetでの同一条件である。
+描画処理、Gitの読取り、Coreの公開操作は実装しない。各fixtureはレビュー済みのcorpusと結果を再利用し、
+提示または環境の性質をちょうど1つだけ変える。`--format`の省略、コミットの有無、空のコマンド出力、
+2つの検証対象での同一条件である。
 """
 import copy
 import json
@@ -36,7 +36,7 @@ TEXT = {
     "SINGLE-106-05": "verify failed scope=selected targets=2 diagnostics=2 (0ms)\n" + "".join(
         f"invocation:::: error: CTX-ROOT-MISSING-001: 起点{root}が存在しません\n" for root in MISSING_ROOTS),
 }
-# ID: (操作, status, 終了コード, 説明)
+# ID: (操作, 状態, 終了コード, 説明)
 CASES = {
     "SINGLE-104-01": ("context", "passed", 0, "format省略のcontextが既定のMarkdown提示を返す"),
     "SINGLE-104-02": ("check", "passed", 0, "format省略のcheckがtext要約行を出す"),
@@ -148,7 +148,7 @@ def reviewed_result(identifier):
 
 
 def check_summary_line(identifier, result, text):
-    """review済みのtextは、別に数えた表示ではなく、公開した導出手順を通して
+    """レビュー済みのテキストは、別に数えた表示ではなく、公開した導出手順を通して
     対応するJSONと一致しなければならない。"""
     lines = text.decode().splitlines()
     match = SUMMARY_PATTERN.match(lines[0])
@@ -171,7 +171,7 @@ def check_summary_line(identifier, result, text):
 
 
 def check_revision(identifier, result, repository):
-    """置き場所の値を信頼せず、隔離したrepositoryを観測する。"""
+    """置き場所の値を信頼せず、隔離したリポジトリを観測する。"""
     operation = CASES[identifier][0]
     if operation == "doctor":
         if "revision" in result:
@@ -187,7 +187,7 @@ def check_revision(identifier, result, repository):
         raise ValueError("隔離setupが40桁の小文字のcommitを作りませんでした")
     if git(repository, "status", "--porcelain=v1").decode() != "":
         raise ValueError("cleanなrevisionの期待値にはcleanな作業treeが必要です")
-    # checkは基準版のrevisionも持つ。contextとverifyは現在のrevisionだけを持つ。
+    # `check`は基準版の`revision`も持つ。`context`と`verify`は現在の`revision`だけを持つ。
     expected = {"base", "commit", "dirty"} if operation == "check" else {"commit", "dirty"}
     if set(revision) != expected or revision["dirty"]:
         raise ValueError("revisionはこの操作のreview済みのcleanな形である必要があります")
@@ -203,8 +203,8 @@ def observe_silence(repository):
 
 
 def check_markdown(path, result):
-    """commitしたMarkdownは§9の参照描画と一致し、sectionの順序、
-    変更しない本文、所要時間tokenがないことを保たなければならない。"""
+    """コミットしたMarkdownは§9の参照描画と一致し、節の順序、
+    変更しない本文、所要時間のトークンがないことを保たなければならない。"""
     text = path.read_bytes()
     if text != markdown_reference.render(result).encode():
         raise ValueError("Markdownがreview済みの結果の参照描画と異なります")
@@ -213,7 +213,7 @@ def check_markdown(path, result):
         raise ValueError("MarkdownはLFを使い、改行1個で終わる必要があります")
     if "\n\n\n" in value:
         raise ValueError("Markdownは連続した空行を持ってはいけません")
-    # 提示した本文の中の見出しはSPECに属し、Bundleには属さない。
+    # 提示した本文の中の見出しは仕様文書に属し、コンテキスト一式には属さない。
     outside = value
     for document in result["documents"]:
         body = document.get("bodyText")
@@ -234,7 +234,7 @@ def check_markdown(path, result):
 
 
 def observe_state(repository, external, identifier):
-    """Git不在は空のstatusではなく、明示的なnullとして記録する。"""
+    """Git不在は空の`git status`の結果ではなく、明示的なnullとして記録する。"""
     if identifier not in GIT_ABSENT:
         return observe(repository, external)
     return {"repository": snapshot(repository), "git": None,

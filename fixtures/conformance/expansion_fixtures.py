@@ -1,13 +1,13 @@
-"""共通target展開とadvisory提示を固定するfixture（Core操作は実行しない）。
+"""共通の対象展開と`advisory`の提示を固定するfixture（Coreの公開操作は実行しない）。
 
 matrix §6.11の`SINGLE-106-03`、`SINGLE-106-06`〜`07`と§6.12の`SINGLE-107`〜`110`、`113`を扱う。
-contextの期待値は4集合（rootDocuments、contextDocuments、targetStatements、adjacentStatements）を
-`roots`、`documents[]`、Constraint Ledger、`coverage.adjacent`として完全比較し、同じ起点のverifyは
-contextと同じtarget statement集合を返すことを確認する。
+`context`の期待値は4つの集合（rootDocuments、contextDocuments、targetStatements、adjacentStatements）を
+`roots`、`documents[]`、制約台帳、`coverage.adjacent`として完全比較し、同じ起点の`verify`は
+`context`と同じ対象規範文の集合を返すことを確認する。
 
-Digest材料はreference A（本moduleのliteral）とreference B（digest_crosscheckが入力treeから導出）の
-2系統で計算し、byte一致を要求する。根拠は[関係・トレースモデル §6・§7]、[context仕様 §4・§5]、
-[verify仕様 §3・§4]である。
+ハッシュ値の材料は参照計算A（このモジュールのリテラル）と参照計算B（digest_crosscheckが入力の木構造から導出）の
+2系統で計算し、バイト列の一致を要求する。根拠は[関係・トレースモデル §6・§7]、[`bitz context`仕様 §4・§5]、
+[`bitz verify`仕様 §3・§4]である。
 """
 import json
 from pathlib import Path
@@ -27,8 +27,8 @@ EMPTY = digest_reference.EMPTY_RELATIONS
 TEST_BODY = "def test_fixture():\n    assert True\n"
 
 # --- 入力corpus -----------------------------------------------------------------------
-# 文書ごとに (path, Frontmatter YAML, Frontmatter値, 本文, 規範文[(ID, text)]) を固定する。
-# Frontmatter値はYAMLの審査済み解釈であり、YAML parserから導出しない。
+# 文書ごとに (パス, フロントマターのYAML, フロントマターの値, 本文, 規範文[(ID, テキスト)]) を固定する。
+# フロントマターの値はYAMLのレビュー済みの解釈であり、YAMLの構文解析器から導出しない。
 
 
 def statement_line(identifier, text):
@@ -106,7 +106,7 @@ def corpus_refinement():
 
 
 def corpus_technical():
-    """108: 規範文ありTECH-001がTECH-009をrequiresし、TECH-004が1句を具体化する。"""
+    """108: 規範文ありTECH-001がTECH-009をrequiresし、TECH-004が規範文1件を具体化する。"""
     root = [("TECH-001:AC-01", "応答形式を固定する"), ("TECH-001:AC-02", "応答時間を記録する")]
     return [
         document(".spec/technical/TECH-001.md", technical(
@@ -130,7 +130,7 @@ def corpus_technical():
 
 
 def corpus_statement():
-    """109: AC-01だけを具体化するTECH-002と、target 2句をaddressesするopen TASK-001。"""
+    """109: AC-01だけを具体化するTECH-002と、対象規範文2件をaddressesするopenのTASK-001。"""
     return [
         document(".spec/requirements/REQ-001.md", requirement(
             "REQ-001", "兄弟句を持つ要求", ROOT_STATEMENTS, ROOT_TESTS_YAML),
@@ -151,7 +151,7 @@ def corpus_statement():
 
 
 def corpus_task():
-    """110: open TASK-001がdone TASK-002をrequiresし、各TASKが別REQの句をaddressesする。"""
+    """110: open TASK-001がdone TASK-002をrequiresし、各TASKが別REQの規範文をaddressesする。"""
     only = [("REQ-001:AC-01", "入力を検証する")]
     tests_yaml = "tests:\n  - path: tests/test_root.py\n    covers: [REQ-001:AC-01]\n    command: default\n"
     return [
@@ -173,7 +173,7 @@ def corpus_task():
 
 
 def corpus_advisory():
-    """106-03: approved REQ-001の句を、draftのTECH-005が具体化する。"""
+    """106-03: approved REQ-001の規範文を、draftのTECH-005が具体化する。"""
     only = [("REQ-001:AC-01", "入力を検証する")]
     return [
         document(".spec/requirements/REQ-001.md", requirement("REQ-001", "advisory提示の起点", only),
@@ -188,11 +188,11 @@ def corpus_advisory():
 
 def corpus_distance():
     """106-06: REQ-001がTECH-010をrequiresし、TECH-010がREQ-020をrequires。距離2以上の
-    requirementとconstraintは、距離だけを理由にrefinementのようにnormativeへ落とさず、roleに基づき
-    fullで提示する（context仕様 §5、ADR-014 Decision 4・5）。"""
+    役割`requirement`と`constraint`は、距離だけを理由に具体化文書のように`normative`へ落とさず、役割に基づき
+    `full`で提示する（`bitz context`仕様 §5、ADR-014 `Decision` 4・5）。"""
     deep_statements = [("REQ-020:AC-01", "秘密鍵を保持しない")]
     tech_head, tech_body = technical("TECH-010", "距離1の前提契約", [], "relations:\n  requires: [REQ-020]\n")
-    # 規範文0件のTECHは末尾に空sectionだけの空行を残さない（Digest材料の末尾正規化と一致させる）。
+    # 規範文0件のTECHは末尾に空の節だけの空行を残さない（ハッシュ値の材料の末尾の正規化と一致させる）。
     tech_body = tech_body.rstrip("\n") + "\n"
     return [
         document(".spec/requirements/REQ-001.md", requirement(
@@ -208,7 +208,7 @@ def corpus_distance():
     ]
 
 
-# ID: (corpus, argv, 期待status, 説明)
+# ID: (corpus, 引数列, 期待する状態, 説明)
 CASES = {
     "SINGLE-106-03": (corpus_advisory, ["context", "REQ-001", "--purpose", "interpret", "--format", "json"],
                       "interpretでdraft refinementをadvisoryのreference projectionで提示する"),
@@ -232,7 +232,7 @@ CASES = {
                                           "--detail", "compact", "--format", "json"],
                       "compact detailは全文書をreference提示にしContext Digestを変えない"),
 }
-# contextの期待展開（審査済み）。verifyは同じ起点のcontext fixtureの集合を参照する。
+# `context`の期待展開（レビュー済み）。`verify`は同じ起点の`context`のfixtureの集合を参照する。
 EXPANSIONS = {
     "SINGLE-106-03": {"purpose": "interpret", "root": "REQ-001",
                       "documents": [("REQ-001", "root", "full", ["root"]),
@@ -266,7 +266,7 @@ EXPANSIONS = {
                                  ("REQ-001", "requirement", "full", ["addresses:TASK-001"])],
                    "ledger": ["REQ-001:AC-01"], "tested": ["REQ-001:AC-01"],
                    "addressed": ["REQ-001:AC-01"], "adjacent": [], "advisory": []},
-    # 113の文書起点targetは107-01、statement起点targetは次の展開を使う。
+    # 113の文書を起点にする検証対象は107-01、規範文を起点にする検証対象は次の展開を使う。
     "REQ-001:AC-01": {"purpose": "verify", "root": "REQ-001:AC-01",
                       "ledger": ["REQ-001:AC-01", "TECH-002:AC-01", "TECH-003:AC-01"], "advisory": []},
     "SINGLE-106-06": {"purpose": "verify", "root": "REQ-001",
@@ -276,8 +276,8 @@ EXPANSIONS = {
                       "ledger": ["REQ-001:AC-01", "REQ-001:AC-02"],
                       "tested": ["REQ-001:AC-01", "REQ-001:AC-02"],
                       "addressed": [], "adjacent": [], "advisory": []},
-    # compact detailはprojectionをreferenceへ統一するだけで、107-01と同じcorpus・purpose・
-    # 閉包を使うのでContext Digestは変わらない（context仕様 §5・§6）。
+    # 詳細度`compact`は提示形式を`reference`へ統一するだけで、107-01と同じcorpus・目的・
+    # 閉包を使うのでコンテキストのハッシュ値は変わらない（`bitz context`仕様 §5・§6）。
     "SINGLE-106-07": {"purpose": "verify", "root": "REQ-001", "detail": "compact",
                       "documents": [("REQ-001", "root", "reference", ["root"]),
                                     ("REQ-009", "requirement", "reference", ["requires:REQ-001"]),
@@ -310,7 +310,7 @@ def reviewed_inputs(identifier):
 def reviewed_manifest(identifier):
     _, argv, description = CASES[identifier]
     operation = argv[0]
-    # verifyは設定がindexに無いと起動前に停止するため、commitせずstageする。
+    # `verify`は設定がインデックスに無いと起動前に停止するため、コミットせずステージする。
     operations = [{"op": "stage", "paths": ["."]}] if operation == "verify" else []
     return {"fixtureId": identifier, "description": description,
             "setup": {"git": True, "operations": operations},
@@ -319,7 +319,7 @@ def reviewed_manifest(identifier):
                        "resultFile": f"expected/{operation}.json", "reportFileCount": 0}}
 
 
-# --- reference A: Digest材料のliteral ----------------------------------------------
+# --- 参照計算A: ハッシュ値の材料のリテラル ----------------------------------------------
 
 
 def semantic(statement_id, text):
@@ -347,7 +347,7 @@ def digest_document(entry, advisory):
 
 
 def expansion(identifier, target=None):
-    """verifyは同じ起点のcontext展開を使う。113だけはtargetごとに展開を選ぶ。"""
+    """`verify`は同じ起点の`context`の展開を使う。113だけは検証対象ごとに展開を選ぶ。"""
     if identifier == "SINGLE-113":
         return EXPANSIONS["SINGLE-107-01" if target == "REQ-001" else target]
     if identifier in {"SINGLE-107-02", "SINGLE-108-02"}:
@@ -359,7 +359,7 @@ def context_documents(identifier, target=None):
     plan = expansion(identifier, target)
     if "documents" in plan:
         return [name for name, _, _, _ in plan["documents"]]
-    # statement起点は所有文書・到達文書が文書起点と同じである。
+    # 規範文が起点の場合は、所有文書と到達した文書が、文書が起点の場合と同じである。
     return context_documents("SINGLE-107-01")
 
 
@@ -392,7 +392,7 @@ def context_digest(identifier, target=None):
 
 
 def bundle_frontmatter(value):
-    """context仕様 §5: 許可fieldを正規化し、空のrelation keyと空配列を省略する。"""
+    """`bitz context`仕様 §5: 許可するフィールドを正規化し、空の関係のキーと空配列を省略する。"""
     result = {"id": value["id"], "title": value["title"], "status": value["status"]}
     relations = {key: targets for key, targets in value.get("relations", {}).items() if targets}
     if relations:
@@ -476,7 +476,7 @@ def reviewed_result(identifier):
 # --- 検証 ---------------------------------------------------------------------------
 
 LITERAL_SETS = {
-    # 4集合をcontext結果から独立に読み戻す。targets/cases.jsonの対応vectorと同じ内容である。
+    # 4つの集合を`context`の結果から独立に読み戻す。targets/cases.jsonの対応するtarget vectorと同じ内容である。
     "SINGLE-107-01": (["REQ-001"], ["REQ-001", "REQ-009", "TECH-002", "TECH-003"],
                       ["REQ-001:AC-01", "REQ-001:AC-02", "TECH-002:AC-01", "TECH-003:AC-01"], []),
     "SINGLE-108-01": (["TECH-001"], ["TECH-001", "TECH-004", "TECH-009"],

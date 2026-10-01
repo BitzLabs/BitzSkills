@@ -1,9 +1,9 @@
-"""結果外形の識別と複合workspace化の移行を固定するreview済みvector（Core操作は実行しない）。
+"""結果の外形の識別と複合ワークスペース化の移行を固定するレビュー済みの入力と期待値（Coreの公開操作は実行しない）。
 
-`runner: consumer`と`runner: migration`は、Core配布物のmodule `bitz.compat`を
+`runner: consumer`と`runner: migration`は、Core配布物のモジュール`bitz.compat`を
 `python -m bitz.compat <runner> <argv...>`として起動し、`{"outcome": ...}`だけを返す（ADR-046）。
-`MULTI-023-01/02/03`はdual-read consumerの排他的外形、`MULTI-024-01/02/03`は複合workspace化、
-完全rollback、部分rollbackの扱いを固定する。migrationのcase名と引数は本fixtureで確定する。
+`MULTI-023-01/02/03`は二重読取りの利用側に対する排他的な外形、`MULTI-024-01/02/03`は複合ワークスペース化、
+完全なロールバック、部分的なロールバックの扱いを固定する。移行のケース名と引数は本fixtureで確定する。
 """
 import json
 from pathlib import Path
@@ -26,7 +26,7 @@ SINGLE_TECH_PATH = ".spec/technical/TECH-010.md"
 MEMBER_TECH_PATH = "apps/web/.spec/technical/TECH-010.md"
 TEST_PATH = "tests/test_login.py"
 MEMBER_TEST_PATH = "apps/web/tests/test_login.py"
-# id: (runner, argv, outcome, 終了コード, 説明)
+# id: (runner, 引数列, outcome, 終了コード, 説明)
 CASES = {
     "MULTI-023-01": ("consumer", ["result-shape", RESULT_PATH], "accepted", 0,
                      "単一workspaceの結果を単独外形として受理する"),
@@ -44,7 +44,7 @@ CASES = {
 
 
 def single_result():
-    """単一workspaceの結果。`workspace`を持ち、複合workspace固有fieldを持たない。"""
+    """単一ワークスペースの結果。`workspace`を持ち、複合ワークスペース固有のフィールドを持たない。"""
     return {
         "schemaVersion": "1.0", "operation": "check", "scope": "full", "status": "passed",
         "workspace": {"id": "root", "path": "."},
@@ -55,7 +55,7 @@ def single_result():
 
 
 def multi_result():
-    """複合workspaceの全体結果。`multiWorkspace`と`workspaces`を持ち、`workspace`を持たない。"""
+    """複合ワークスペースの全体結果。`multiWorkspace`と`workspaces`を持ち、`workspace`を持たない。"""
     return {
         "schemaVersion": "1.0", "operation": "check", "scope": "all-workspaces", "status": "passed",
         "multiWorkspace": {"id": "platform", "path": "."},
@@ -71,7 +71,7 @@ def multi_result():
 
 
 def mixed_result():
-    """両方の外形を混ぜた結果。consumerはこれをSchema errorとして拒否する。"""
+    """両方の外形を混ぜた結果。利用側はこれをスキーマのエラーとして拒否する。"""
     return {**multi_result(), "workspace": {"id": "platform", "path": "."}}
 
 
@@ -97,7 +97,7 @@ def technical(refines, covers, test_path):
 
 
 def single_tree():
-    """複合workspace化する前の単一workspace。IDを明示せず、参照はすべて非修飾である。"""
+    """複合ワークスペース化する前の単一ワークスペース。IDを明示せず、参照はすべて非修飾である。"""
     return {
         ".spec/bitz.yaml": (SINGLE_CONFIG + 'verify:\n  commands:\n    default:\n'
                             '      argv: ["/bin/true", "{tests}"]\n      cwd: .\n').encode(),
@@ -108,7 +108,7 @@ def single_tree():
 
 
 def multi_tree():
-    """複合workspace化した後のtree。catalog、member設定、修飾参照を同時に持つ。"""
+    """複合ワークスペース化した後の木構造。カタログ、メンバーの設定、修飾参照を同時に持つ。"""
     return {
         multi_reference.ROOT_CONFIG_PATH: multi_reference.root_config([("web", "apps/web")]).encode(),
         REQ_PATH: requirement().encode(),
@@ -120,7 +120,7 @@ def multi_tree():
 
 
 def reviewed_inputs(identifier):
-    """repo/（基準版のtree）とchanges/（現在版へ差し替えるfile）を返す。"""
+    """repo/（基準版の木構造）とchanges/（現在版へ差し替えるファイル）を返す。"""
     if identifier.startswith("MULTI-023"):
         payload = {"MULTI-023-01": single_result(), "MULTI-023-02": multi_result(),
                    "MULTI-023-03": mixed_result()}[identifier]
@@ -132,11 +132,11 @@ def reviewed_inputs(identifier):
                 "changes": {"root.yaml": multi_tree()[multi_reference.ROOT_CONFIG_PATH],
                             "member.yaml": multi_tree()[multi_reference.WEB_CONFIG_PATH],
                             "tech.md": multi_tree()[MEMBER_TECH_PATH]}}
-    # rollbackの2件は、複合workspaceを基準版にして単一workspaceへ戻す。
+    # ロールバックの2件は、複合ワークスペースを基準版にして単一ワークスペースへ戻す。
     changes = {"root.yaml": single_tree()[".spec/bitz.yaml"],
                "tech.md": single_tree()[SINGLE_TECH_PATH]}
     if identifier == "MULTI-024-03":
-        # 部分rollback: catalogは戻すが、文書の修飾参照が残る。
+        # 部分的なロールバック: カタログは戻すが、文書の修飾参照が残る。
         changes["tech.md"] = technical("platform::REQ-001:AC-01", "platform::REQ-001:AC-01",
                                        TEST_PATH).encode()
     return {"files": multi_tree(), "changes": changes}
@@ -146,7 +146,7 @@ def operations(identifier):
     if identifier.startswith("MULTI-023"):
         return []
     if identifier == "MULTI-024-01":
-        # catalog、member設定、SPECの移動、修飾参照を1つの変更集合として適用する。
+        # カタログ、メンバーの設定、仕様文書の移動、修飾参照を1つの変更集合として適用する。
         return [
             {"op": "update", "path": multi_reference.ROOT_CONFIG_PATH, "source": "changes/root.yaml"},
             {"op": "create", "path": multi_reference.WEB_CONFIG_PATH, "source": "changes/member.yaml"},
@@ -183,7 +183,7 @@ def reviewed_result(identifier):
 
 
 def check_shape(identifier, repository, result_validator):
-    """外形と移行の条件を、散文ではなくsetup後のtreeとGitのblobから確かめる。"""
+    """外形と移行の条件を、散文ではなく準備手順の後の木構造とGitのブロブから確かめる。"""
     if identifier.startswith("MULTI-023"):
         payload = json.loads((repository / RESULT_PATH).read_text(encoding="utf-8"))
         single = "workspace" in payload

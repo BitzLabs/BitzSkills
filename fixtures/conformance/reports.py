@@ -1,4 +1,4 @@
-"""分割した適合reportを、全件の厳密な網羅を確認して統合する。"""
+"""分割した適合レポートを、全件の厳密な網羅を確認して統合する。"""
 
 
 def merge_reports(reports, groups, identifiers):

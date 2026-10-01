@@ -1,7 +1,7 @@
-"""done TASKを起点とするreview済みvector（Core操作は実行しない）。
+"""状態が`done`のTASKを起点とするレビュー済みの入力と期待値（Coreの公開操作は実行しない）。
 
-`SINGLE-068`は、statusが`done`のTASKをverifyする。cancelledの起点を遮断する`SINGLE-067`に
-対応する成功側のfixtureである。Contextは[関係・トレースモデル §6.3]に従い、TASKの起点は
+`SINGLE-068`は、状態が`done`のTASKを`verify`する。`cancelled`の起点を遮断する`SINGLE-067`に
+対応する成功側のfixtureである。コンテキストは[関係・トレースモデル §6.3]に従い、TASKの起点は
 `addresses`の対象を所有する文書を`contextDocuments`に加える。
 """
 import copy
@@ -31,7 +31,7 @@ TASK_DOCUMENT = (
     "\n## Objective\n\nAC-01を実装した。done TASKは再検証できる。\n"
 )
 TASK_BODY = TASK_DOCUMENT[TASK_DOCUMENT.index("\n---\n") + 5:].lstrip("\n")
-# AC-01だけをaddressesするので、AC-02はtargetではなく、そのtestも解決しない。
+# AC-01だけを`addresses`するので、AC-02は検証対象ではなく、そのテストも解決しない。
 TARGET_STATEMENTS = ["REQ-001:AC-01"]
 TEST_PATHS = ["tests/test_auth.py"]
 
@@ -53,7 +53,7 @@ def reviewed_digest_input():
         "bodyText": TASK_BODY, "statements": [],
         "strongRelations": [{"relation": "addresses", "target": "REQ-001:AC-01"}],
     }
-    # documents[]はコードポイント順: REQ-001 < TASK-001 < TECH-001。
+    # `documents[]`はコードポイント辞書順: REQ-001 < TASK-001 < TECH-001。
     payload["documents"].insert(1, task)
     return payload
 

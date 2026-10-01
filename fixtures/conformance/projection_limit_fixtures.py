@@ -1,7 +1,7 @@
-"""提示のhard limitを固定するreview済みvector（Core操作は実行しない）。
+"""提示の絶対上限を固定するレビュー済みの入力と期待値（Coreの公開操作は実行しない）。
 
 `SINGLE-049`は設定した閉包の上限内で完全に解決し、`--detail full`では固定した1 MiBの
-提示hard limitを超えるという理由だけで失敗する。標準の提示は小さく保ち、fullの提示だけが
+提示の絶対上限を超えるという理由だけで失敗する。標準の提示は小さく保ち、`full`の提示だけが
 上限を越えるようにcorpusを作る。
 """
 import json
@@ -21,7 +21,7 @@ HERE = Path(__file__).resolve().parent
 IDENTIFIER = "SINGLE-049"
 HARD_LIMIT_BYTES = 1048576
 # 閉包の2つの次元を最大値に設定して閉包を通過させ、
-# 固定した提示のhard limitだけを越え得るようにする。
+# 固定した提示の絶対上限だけを越え得るようにする。
 CONFIG = digest_reference.CONFIG + "context:\n  maxDocuments: 100\n  maxBytes: 1048576\n"
 REQ_HEAD = "---\nid: REQ-001\ntitle: 提示量の基準\nstatus: approved\n---\n"
 REQ_BODY = (
@@ -40,8 +40,8 @@ REQ_BODY = (
     "提示量の上限で確認する。\n"
 )
 PAD_LINE = "この段落は提示hard limitを超えるための固定本文であり、意味を持たない。\n"
-# 間接の2件のrefinementの本文が合わせて1 MiBを超え、
-# 各fileは1文書あたり1 MiBの入力上限を下回るように選んだ。
+# 間接の2件の具体化文書の本文が合わせて1 MiBを超え、
+# 各ファイルは1文書あたり1 MiBの入力上限を下回るように選んだ。
 PAD_REPEAT = 5300
 SMALL_TECH_BODY = "# TECH-001 直接の具体化\n\n## Context\n\n距離1の具体化。\n"
 
@@ -129,7 +129,7 @@ def reviewed_result(context_digest):
         "contextDigest": context_digest,
         "revision": None,
         "resolution": {"complete": True, "documentCount": 4, "unresolvedStrongRelations": 0},
-        # `detail`は要求したmodeを示し、`expanded`は実際に適用したものを並べる。
+        # `detail`は要求した詳細度を示し、`expanded`は実際に適用したものを並べる。
         "projection": {"detail": "full", "expanded": []},
         "documents": [],
         "constraintLedger": {"statements": []},
@@ -144,7 +144,7 @@ def reviewed_result(context_digest):
 
 
 def check_limits(inputs):
-    """corpusは`--detail full`のときだけ提示のhard limitを越えなければならない。
+    """corpusは`--detail full`のときだけ提示の絶対上限を越えなければならない。
     大きな本文は、`standard`では`normative`、`full`では`full`で提示する。"""
     bodies = {"REQ-001": REQ_BODY, **{DOCUMENTS[path][0]: DOCUMENTS[path][3] for path in DOCUMENTS}}
     full = sum(len(body.encode()) for body in bodies.values())

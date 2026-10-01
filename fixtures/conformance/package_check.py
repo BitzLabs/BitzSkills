@@ -1,7 +1,7 @@
-"""`runner: package`の参照実装(ADR-046 Decision 5)。
+"""`runner: package`の参照実装(ADR-046 `Decision` 5)。
 
-Core実行体を起動せず、候補のsource tree、build成果物(wheel)、隔離環境への導入metadataだけを検査する。
-harnessの参照実装であり、Coreの実装ではない(適合fixture仕様 3.5、ADR-049 Decision 5)。
+Coreの実行体を起動せず、候補のソースの木構造、ビルドの成果物(wheel)、隔離した環境への導入のメタデータだけを検査する。
+harnessの参照実装であり、Coreの実装ではない(適合fixture仕様 §3.5、ADR-049 `Decision` 5)。
 """
 import re
 from pathlib import Path
@@ -14,11 +14,11 @@ REQUIRES_PYTHON_CLAUSE = re.compile(
 
 
 class PackageCheckError(Exception):
-    """caseそのものを判定できないharness側のerror。fixture errorへ変換する。"""
+    """ケースそのものを判定できないharness側のエラー。fixtureのエラーへ変換する。"""
 
 
 def normalize_name(name):
-    """PEP 503のpackage名正規化。"""
+    """PEP 503のパッケージ名の正規化。"""
     return PEP503_NORMALIZE.sub("-", name).strip("-").lower()
 
 
@@ -59,7 +59,7 @@ def requires_python_allows(specifier, major, minor):
             ok = candidate <= bound
         elif op == "<":
             ok = candidate < bound
-        else:  # == と ~= は同じmajor.minorへの一致として扱う(単純な比較の範囲)。
+        else:  # ==と~=は同じmajor.minorへの一致として扱う(単純な比較の範囲)。
             ok = candidate == bound
         if not ok:
             return False
@@ -81,8 +81,8 @@ def _venv_site_packages(venv_dir):
 def check_metadata(source_dir, wheel_path, venv_dir):
     reasons = []
     if source_dir is None:
-        # source treeが無いと判定材料(pyproject.toml)自体が無く、要件を満たさない
-        # (rejected)と検査できない(error)を区別できない。harness側のerrorとする。
+        # ソースの木構造が無いと判定の材料(pyproject.toml)自体が無く、要件を満たさない
+        # (rejected)と検査できない(error)を区別できない。harness側のエラーとする。
         raise PackageCheckError("wheelのみが与えられており、source treeのpyproject.tomlを検査できません")
     pyproject_path = Path(source_dir) / "pyproject.toml"
     if not pyproject_path.is_file():
@@ -160,7 +160,7 @@ def check_dependencies(source_dir, wheel_path, venv_dir):
 
 
 def check(case, source_dir, wheel_path, venv_dir):
-    """argv[0](case)を判定する。戻り値は(outcome, reasons)。"""
+    """argv[0](ケース)を判定する。戻り値は(outcome, reasons)。"""
     if case == "metadata":
         return check_metadata(source_dir, wheel_path, venv_dir)
     if case == "dependencies":

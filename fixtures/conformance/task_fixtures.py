@@ -1,4 +1,4 @@
-"""review済みのTASK境界fixture（本番の対象選択や境界の処理はない）。"""
+"""レビュー済みのTASK境界のfixture（本番の対象選択や境界の処理はない）。"""
 import json
 from pathlib import Path
 import subprocess
@@ -17,7 +17,7 @@ CURRENT_TASK = TASK.replace("変更境界を確認する。", "変更境界を�
 BASE = {".spec/bitz.yaml": CONFIGS["SINGLE-001"].encode(), TASK_PATH: TASK.encode(),
         "src/inside.py": b"# unchanged allowed path\n", "src2/outside.py": b"# before\n"}
 CURRENT = {**BASE, TASK_PATH: CURRENT_TASK.encode(), "src2/outside.py": b"# after\n"}
-# 同じ未stageの2 pathで、起動の3つのscopeをすべて検査する。
+# 同じ未ステージの2つのパスで、起動の3つのスコープをすべて検査する。
 CASES = {"SINGLE-034": ("selected", ["TASK-001"], "failed"),
          "SINGLE-035-01": ("changed", [], "passed"),
          "SINGLE-035-02": ("full", ["--full"], "passed")}
@@ -57,7 +57,7 @@ def reviewed_inputs():
 
 
 def check_git_states(repository):
-    """推論したTASK境界の判定ではなく、Gitのblobそのものを比べる。"""
+    """推論したTASK境界の判定ではなく、Gitのブロブそのものを比べる。"""
     for revision, path_args in (("HEAD:", ("ls-tree", "-r", "--name-only", "-z", "HEAD")),
                                 (":", ("ls-files", "-z"))):
         if set(git(repository, *path_args).decode().split("\0")[:-1]) != set(BASE):
@@ -94,7 +94,7 @@ def validate(root=HERE, identifiers=None):
             expected = reviewed_inputs()
             if set(files) != set(expected) or any(p.is_symlink() or p.read_bytes() != expected[name] for name, p in files.items()):
                 raise ValueError("入力が審査済みのTASK・segment境界のcaseと異なります")
-            # YAMLと値の固定した組だけをreviewする。汎用のYAML parserではない。
+            # YAMLと値の固定した組だけをレビューする。汎用のYAMLの構文解析器ではない。
             frontmatter.validate({"id": "TASK-001", "title": "変更境界の検査", "status": "open", "changes": ["src/"]})
             if effects["before"] != effects["after"]:
                 raise ValueError("read-only期待値が書込みを許しています")

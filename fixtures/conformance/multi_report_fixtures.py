@@ -1,7 +1,7 @@
-"""複合workspaceの全体操作とreportを固定するreview済みvector（Core操作は実行しない）。
+"""複合ワークスペースの全体操作とレポートを固定するレビュー済みの入力と期待値（Coreの公開操作は実行しない）。
 
-`--report`がなければ全体操作はstatusにかかわらずfileを作らず、指定した場合だけroot workspaceの
-`.spec/reports/`へ1件を排他的に作成する（[結果・Diagnostic・終了コード §8](../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md)）。
+`--report`がなければ全体操作は状態にかかわらずファイルを作らず、指定した場合だけルートワークスペースの
+`.spec/reports/`へ1件を排他的に作成する（[結果・診断・終了コード §8](../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md)）。
 `MULTI-022-01..04`は、checkとverifyのそれぞれで既定と明示指定を対にし、結果本体が変わらないことも固定する。
 """
 import json
@@ -33,7 +33,7 @@ CASES = {
 
 
 def reviewed_inputs():
-    """全workspaceが対象を持つcorpusへ、既存のreport fileを1件加える。"""
+    """全ワークスペースが対象を持つcorpusへ、既存のレポートファイルを1件加える。"""
     return {**multi_verify_fixtures.reviewed_inputs(CORPUS), EXISTING_REPORT: b"{}\n"}
 
 
@@ -59,7 +59,7 @@ def reviewed_manifest(identifier):
 def reviewed_result(identifier):
     operation = CASES[identifier][0]
     if operation == "verify":
-        # reportを保存しても、計算済みの結果は変わらない。同じcorpusの結果をそのまま使う。
+        # レポートを保存しても、計算済みの結果は変わらない。同じcorpusの結果をそのまま使う。
         return json.loads(json.dumps(multi_verify_fixtures.reviewed_result(CORPUS)))
     return {
         "schemaVersion": "1.0", "operation": "check", "scope": "all-workspaces", "status": "passed",
@@ -110,7 +110,7 @@ def check_report_contract(identifier, manifest, effects, result):
             raise ValueError("review済みの名前のpatternが不正なreport名を受理しています")
     if EXISTING_REPORT not in effects["before"]["repository"]:
         raise ValueError("既存のreportがないと排他的な作成を検査できません")
-    # 既定の対と結果本体が一致することを確かめる。reportの有無は結果を変えない。
+    # 既定の対と結果本体が一致することを確かめる。レポートの有無は結果を変えない。
     default = "MULTI-022-01" if operation == "check" else "MULTI-022-03"
     if result != reviewed_result(default):
         raise ValueError("reportの有無で結果本体が変わっています")

@@ -1,12 +1,12 @@
-"""review済みのContext Digest vectorと参照計算A。
+"""レビュー済みのハッシュ値の材料と参照計算A。
 
-Step 0Bのfixture側の参照材料であり、Coreの実装ではない。固定した入力corpus、fixtureごとに
-独立にreviewしたDigest材料、RFC 8785 serializer 1つを持つ。参照計算Bはdigest_crosscheckにあり、
-同じbyte列を入力treeから導出するので、両者の一致は1つの構成の言い換えではなく証拠になる。
+Step 0Bのfixture側の参照材料であり、Coreの実装ではない。固定した入力のcorpus、fixtureごとに
+独立にレビューしたハッシュ値の材料、RFC 8785の直列化処理1つを持つ。参照計算Bはdigest_crosscheckにあり、
+同じバイト列を入力の木構造から導出するので、両者の一致は1つの構成の言い換えではなく証拠になる。
 """
 import hashlib
 
-# --- 固定した単一workspaceのcorpus -------------------------------------------------
+# --- 固定した単一ワークスペースのcorpus -------------------------------------------------
 
 CONFIG_PATH = ".spec/bitz.yaml"
 REQ_PATH = ".spec/requirements/REQ-001.md"
@@ -41,7 +41,7 @@ REQ_BODY = (
     "\n"
     "tests/test_auth.pyとtests/test_session.pyで確認する。\n"
 )
-# 空行の数だけが異なり、本文のその他のbyteはすべて同じ。
+# 空行の数だけが異なり、本文のその他のバイトはすべて同じ。
 REQ_BODY_BLANK_LINES = REQ_BODY.replace(
     "\n\n## Acceptance Criteria\n", "\n\n\n## Acceptance Criteria\n", 1)
 
@@ -72,7 +72,7 @@ TECH_BODY = (
     "|---|---|\n"
     "| 方式 | token |\n"
 )
-# 表の桁揃えだけが異なり、セルのtextと行の順序は同じ。
+# 表の桁揃えだけが異なり、セルのテキストと行の順序は同じ。
 TECH_BODY_TABLE_PADDING = TECH_BODY.replace(
     "| 項目 | 値 |\n|---|---|\n| 方式 | token |\n",
     "| 項目 | 値    |\n| ---- | ----- |\n| 方式 | token |\n", 1)
@@ -91,7 +91,7 @@ CODE_FILES = {
     "tests/test_session.py": "def test_open_session():\n    assert True\n",
 }
 
-# fixture id -> (起点の後のargv, REQの本文, TECHの本文, x-ownersの値)
+# fixture ID -> (起点の後の引数列, REQの本文, TECHの本文, x-ownersの値)
 CASES = {
     "SINGLE-042": ([], REQ_BODY, TECH_BODY, "team-auth"),
     "SINGLE-043-01": (["--detail", "full"], REQ_BODY, TECH_BODY, "team-auth"),
@@ -112,7 +112,7 @@ DESCRIPTIONS = {
     "SINGLE-127-03": "異なるexpand値を反復し、入力順に依存せず正規ID辞書順で返す",
     "SINGLE-127-04": "同じexpand値を反復し、1件へ重複排除する",
 }
-# escapeしたtextは、literalの入力と、literalの意味値として別々にreviewする。
+# エスケープしたテキストは、リテラルの入力と、リテラルの意味値として別々にレビューする。
 ESCAPED_TEXT = r'記号 \[ \] \\ \` \" を保持する'
 DECODED_TEXT = '記号 [ ] \\ ` " を保持する'
 ESCAPED_BODY = REQ_BODY.replace("秘密情報を出力しない", ESCAPED_TEXT)
@@ -131,9 +131,9 @@ CODE_BODY = REQ_BODY.replace("秘密情報を出力しない", CODE_TEXT)
 CASES["SINGLE-096-01"] = ([], CODE_BODY, TECH_BODY, "team-auth")
 DESCRIPTIONS["SINGLE-096-01"] = "異なる長さのcode spanを同長runで閉じ外側の区切りだけを除く"
 
-# これらのmatrixの項目は意図してgoldenのcorpusを再利用する。2つ目の規範文は
-# nullでないSHOULDのreasonを持ち、完全な文書は意味の解決を変えずに
-# projectionのSchemaを検査する。
+# これらのmatrixの項目は意図してgoldenのcorpusを再利用する。
+# 2つ目の規範文は規範強度`SHOULD`で、`reason`がnullでない。完全な文書は意味の解決を変えずに
+# 提示形式のスキーマを検査する。
 for identifier, tail, description in (
     ("SINGLE-101-01", [], "理由付きSHOULDのreasonと完全Digest材料を比較する"),
     ("SINGLE-106-01", ["--detail", "full"], "full projectionの必須fieldと禁止fieldを検証する"),
@@ -142,15 +142,15 @@ for identifier, tail, description in (
     CASES[identifier] = (tail, REQ_BODY, TECH_BODY, "team-auth")
     DESCRIPTIONS[identifier] = description
 
-# 距離2のrefinementで、規範文、path、command、別の独立した条件を加えずに
-# normativeの提示を検査する。
+# 距離2の具体化文書で、規範文、パス、コマンド、別の独立した条件を加えずに
+# 提示形式`normative`を検査する。
 NORMATIVE_PATH = ".spec/technical/TECH-002.md"
 NORMATIVE_BODY = "# TECH-002 間接の具体化\n\n## Context\n\n直接の実装方針をさらに具体化する。\n"
 NORMATIVE_HEAD = "---\nid: TECH-002\ntitle: 間接の具体化\nstatus: approved\nrelations:\n  refines: [TECH-001]\n---\n\n"
 CASES["SINGLE-106-02"] = ([], REQ_BODY, TECH_BODY, "team-auth")
 DESCRIPTIONS["SINGLE-106-02"] = "距離2のrefinementをnormativeで提示し禁止fieldを省略する"
 
-# Digest材料がgoldenとbyte一致するfixture。
+# ハッシュ値の材料がgoldenとバイト列として一致するfixture。
 SAME_AS_GOLDEN = ("SINGLE-042", "SINGLE-043-01", "SINGLE-043-02", "SINGLE-045", "SINGLE-127-03", "SINGLE-127-04", "SINGLE-101-01", "SINGLE-106-01", "SINGLE-121")
 
 
@@ -168,7 +168,7 @@ def reviewed_inputs(identifier):
     }
 
 
-# --- review済みのDigest材料（参照計算A） -------------------------------------------
+# --- レビュー済みのハッシュ値の材料（参照計算A） -------------------------------------------
 
 STATEMENTS = [
     {
@@ -281,7 +281,7 @@ def reviewed_digest_input(identifier):
     return result
 
 
-# --- RFC 8785 serializer（参照計算A） ---------------------------------------------
+# --- RFC 8785の直列化処理（参照計算A） ---------------------------------------------
 
 ESCAPES = {0x08: "\\b", 0x09: "\\t", 0x0A: "\\n", 0x0C: "\\f", 0x0D: "\\r",
            0x22: '\\"', 0x5C: "\\\\"}
@@ -313,8 +313,8 @@ def _serialize(value):
     if isinstance(value, list):
         return "[" + ",".join(_serialize(item) for item in value) + "]"
     if isinstance(value, dict):
-        # RFC 8785はmemberをUTF-16のcode unit列の順に並べる。UTF-16BEのbyte列の比較は、
-        # 正しい形式のkeyすべてについて同じ順序になる。
+        # RFC 8785はオブジェクトのキーと値の組を、キーのUTF-16のコード単位列の順に並べる。UTF-16BEのバイト列の比較は、
+        # 正しい形式のキーすべてについて同じ順序になる。
         keys = sorted(value, key=lambda key: key.encode("utf-16-be"))
         return "{" + ",".join(_string(key) + ":" + _serialize(value[key]) for key in keys) + "}"
     raise TypeError(f"Digest材料に未対応の値があります: {type(value).__name__}")

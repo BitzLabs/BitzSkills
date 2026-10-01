@@ -1,8 +1,8 @@
-"""複数bindingのverifyを固定するreview済みvector（Core操作は実行しない）。
+"""複数のテスト割当てを持つ`verify`を固定するレビュー済みの入力と期待値（Coreの公開操作は実行しない）。
 
-`SINGLE-063`と`SINGLE-064`は、2つのtargetが同じcommand名を要求できるよう、起点を2つ持つ
-workspaceを使う。`SINGLE-065`はcommand templateから`{tests}`の置換位置を除く。各targetは
-固有のContextを解決するので固有のDigestを持ち、commandは1回だけ実行する。
+`SINGLE-063`と`SINGLE-064`は、2つの検証対象が同じコマンド名を要求できるよう、起点を2つ持つ
+ワークスペースを使う。`SINGLE-065`はコマンドのテンプレートから`{tests}`の置換位置を除く。各検証対象は
+固有のコンテキストを解決するので固有のハッシュ値を持ち、コマンドは1回だけ実行する。
 """
 import copy
 import json
@@ -47,7 +47,7 @@ def technical(number, with_tests=True):
             f"\n# TECH-00{number} {title}\n\n## Context\n\n規範文を持たない実装方針。\n")
 
 
-# id: (targets, status, 終了コード, TECH-001がtestsを宣言するか)
+# id: (検証対象, 状態, 終了コード, TECH-001が`tests`を宣言するか)
 CASES = {
     "SINGLE-063": (["REQ-001", "REQ-002"], "passed", 0, True),
     "SINGLE-064": (["REQ-001", "REQ-002"], "blocked", 2, False),
@@ -157,7 +157,7 @@ def reviewed_result(identifier):
         command = {
             "bindingId": "root::default", "workspaceId": "root", "name": "default",
             "status": "passed", "termination": "exit", "cwd": ".",
-            # {tests}の置換位置がないので、pathを追加せず、argvを1回実行する。
+            # `{tests}`の置換位置がないので、パスを追加せず、引数列を1回実行する。
             "argv": ["/bin/true"],
             "tests": ["tests/test_auth.py", "tests/test_session.py"],
             "covers": ["REQ-001:AC-01", "REQ-001:AC-02"],
@@ -184,7 +184,7 @@ def reviewed_result(identifier):
         command = {
             "bindingId": "root::default", "workspaceId": "root", "name": "default",
             "status": "passed", "termination": "exit", "cwd": ".",
-            # 共有pathは展開前に重複排除するので、1回だけ現れる。
+            # 共有するパスは展開前に重複排除するので、1回だけ現れる。
             "argv": ["/bin/true", SHARED_TEST], "tests": [SHARED_TEST], "covers": covers,
             "exitCode": 0, "timeoutSeconds": 300, "stdoutExcerpt": "", "stderrExcerpt": "",
             "stdoutTruncated": False, "stderrTruncated": False, "durationMs": 0}
@@ -200,8 +200,8 @@ def reviewed_result(identifier):
 
 
 def check_sharing(identifier, result):
-    """要求したtargetすべてに対してcommand実体を1つにし、1回だけ実行し、
-    参照するtest pathを重複排除する。"""
+    """要求した検証対象すべてに対してコマンドの実体を1つにし、1回だけ実行し、
+    参照するテストのパスを重複排除する。"""
     commands = result["commands"]
     if len(commands) != 1:
         raise ValueError("共有bindingは単一のcommand実体である必要があります")

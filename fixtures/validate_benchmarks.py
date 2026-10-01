@@ -3,7 +3,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["jsonschema==4.23.0", "attrs==26.1.0", "jsonschema-specifications==2025.9.1", "referencing==0.37.0", "rpds-py==2026.6.3", "typing-extensions==4.13.2"]
 # ///
-"""Core実行体なしで、性能基準と比較taskの入力（Step 0-Pで固定）を検証する。uv runで実行する。"""
+"""Core実行体なしで、性能基準と比較タスクの入力（Step 0-Pで固定）を検証する。`uv run`で実行する。"""
 import copy
 import hashlib
 import importlib.util
@@ -94,7 +94,7 @@ def main():
                 runs.append(subprocess.check_output(command, text=True))
             assert runs[0] == runs[1], identifier
             results.append(json.loads(runs[0]))
-            # 元のdigestを残したままでも、壊した形状は拒否しなければならない。
+            # 元のハッシュ値を残したままでも、壊した形状は拒否しなければならない。
             mutated = copy.deepcopy(read(manifest))
             mutated["shape"]["specBytes"] += 1
             bad_manifest = Path(temporary) / f"{identifier}-bad.json"

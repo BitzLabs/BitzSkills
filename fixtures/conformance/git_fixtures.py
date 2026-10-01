@@ -1,4 +1,4 @@
-"""基準版・現在版を固定したGit fixtureの証拠（Coreの状態・検査の処理はない）。"""
+"""基準版・現在版を固定したGitのfixtureの証拠（Coreの状態・検査の処理はない）。"""
 import json
 import os
 from pathlib import Path
@@ -18,7 +18,7 @@ TASK_PATH = ".spec/tasks/TASK-001.md"
 RENAMED_PATH = ".spec/technical/TECH-001-renamed.md"
 TASK = "---\nid: TASK-001\ntitle: 完了した作業\nstatus: done\n---\n\n# TASK-001 完了した作業\n\n## Objective\n\n状態遷移を確認する。\n"
 CHANGE = "changes/document.md"
-# id: (基準版の文書path, 基準版のbyte列, 操作, 現在のbyte列, status, code, key, summary)
+# id: (基準版の文書のパス, 基準版のバイト列, 操作, 現在のバイト列, 状態, 診断コード, キー, 要約)
 CASES = {
     "SINGLE-027": (TASK_PATH, TASK, "update", TASK.replace("status: done", "status: open"), "failed",
         "SPEC-STATE-TRANSITION-001", "status", "done TASKをopenへ戻すことはできません"),
@@ -95,7 +95,7 @@ def reviewed_result(identifier):
 
 
 def check_git_states(repository, identifier):
-    """実際のHEAD／index／作業treeの内容を、審査済みの遷移と照合する。"""
+    """実際のHEAD／インデックス／作業ツリーの内容を、レビュー済みの遷移と照合する。"""
     path, base, operation, current, *_ = CASES[identifier]
     base_files = support_files(identifier)
     if base is not None:
@@ -149,7 +149,7 @@ def validate(root=HERE, identifiers=None):
             validator = Draft202012Validator({"$ref": f"#/$defs/{kind}", "$defs": schema["$defs"]})
             for document in (base, current):
                 if document is not None:
-                    # YAMLと値の組だけを固定する。汎用のYAML parserではない。
+                    # YAMLと値の組だけを固定する。汎用のYAMLの構文解析器ではない。
                     fm = dict(line.split(": ", 1) for line in document.splitlines()[1:4])
                     if identifier in EXEMPT_FIELDS and document == current:
                         fm.update(EXEMPT_FIELDS[identifier][1])

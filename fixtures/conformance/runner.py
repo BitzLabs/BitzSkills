@@ -1,8 +1,8 @@
 """参照適合harnessの実行部(ADR-046, ADR-052)。
 
-検査対象CoreをCLI引数で受け取り、fixtureごとにsetup、起動、比較、副作用検査を行う。
-`bitz`をimportしない(ADR-049 Decision 6)。Coreに固有の手順(build、Parser adapter)は持たず、
-参照実装が要る箇所(package runner)だけをここに置く。
+検査対象CoreをCLI引数で受け取り、fixtureごとに準備手順、起動、比較、副作用検査を行う。
+`bitz`をインポートしない(ADR-049 Decision 6)。Coreに固有の手順(ビルド、構文解析器のアダプター)は持たず、
+参照実装が要る箇所(パッケージのランナー)だけをここに置く。
 """
 import json
 import os
@@ -30,15 +30,15 @@ DURATION_TOKEN = re.compile(r"\([0-9]+ms\)")
 
 
 class FixtureError(Exception):
-    """fixture/harness側で比較を成立させられないことを表す。passedへ数えない。"""
+    """fixtureやharnessの側で比較を成立させられないことを表す。`passed`へ数えない。"""
 
 
 class CoreEnvironmentError(FixtureError):
-    """検査対象の導入に失敗したことを表す。該当fixtureをerrorにする。"""
+    """検査対象の導入に失敗したことを表す。該当するfixtureを`error`にする。"""
 
 
 def default_python_minor():
-    """基準環境のCPython minorを、性能基準環境定義から読み取る(適合fixture仕様 3.5)。"""
+    """基準環境のCPythonのマイナーバージョンを、性能基準環境定義から読み取る(適合fixture仕様 3.5)。"""
     reference = FIXTURES_ROOT / "performance/environments/core-1-reference.json"
     data = json.loads(reference.read_text(encoding="utf-8"))
     major, minor = data["requiredTools"]["pythonVersion"].split(".")[:2]
@@ -64,7 +64,7 @@ def _run(argv, **kwargs):
 
 
 class CoreEnvironment:
-    """`--core`が指すsource directoryまたはwheelを、CPython minorごとの隔離venvへ導入する。"""
+    """`--core`が指すソースのディレクトリまたはwheelを、CPythonのマイナーバージョンごとの隔離した仮想環境へ導入する。"""
 
     def __init__(self, core_argument, work_root):
         self.core_path = Path(core_argument).resolve()
@@ -80,7 +80,7 @@ class CoreEnvironment:
         return None if self.is_wheel else self.core_path
 
     def _prepare(self):
-        """wheelとlock済み依存(requirements.txt)を一度だけ用意する。"""
+        """wheelとロック済みの依存(requirements.txt)を一度だけ用意する。"""
         if self._prepared is not None:
             return self._prepared
         if self.is_wheel:
@@ -144,7 +144,7 @@ class CoreEnvironment:
 
 
 def host_tool_versions():
-    """報告用の実行環境情報(harness自身が動くhostのpython/uv/git版)。"""
+    """報告用の実行環境情報(harness自身が動くホストの`python`/`uv`/`git`のバージョン)。"""
     python_version = sys.version.split()[0]
     uv_version = None
     git_version = None
@@ -191,7 +191,7 @@ def _load_manifest(fixture_root, validators):
 
 
 def _referenced_files(fixture_root, manifest):
-    """3.3の実成果物対応: manifestが参照する全fileの存在を確認する。"""
+    """3.3の実成果物との対応: マニフェストが参照する全ファイルの存在を確認する。"""
     expect = manifest["expect"]
     paths = []
     if "resultFile" in expect:
@@ -227,16 +227,16 @@ def _validate_expected_result(fixture_root, manifest, validators):
 def _normalize(node, warnings, top, zero_duration=False):
     if isinstance(node, dict):
         if zero_duration:
-            # 生成fixtureのresultDigestは、durationMsをliteral 0で固定したCanonical JSONの
-            # SHA-256として審査済み(multi_limit_fixtures.canonical_digest)である。実結果側も
-            # 除外(pop)ではなく0へ置換し、同じCanonical JSONを再現する(比較範囲は広げない)。
+            # 生成fixtureの`resultDigest`は、`durationMs`をリテラル0で固定した正規JSONの
+            # SHA-256としてレビュー済み(`multi_limit_fixtures.canonical_digest`)である。実結果側も
+            # 除外(`pop`)ではなく0へ置換し、同じ正規JSONを再現する(比較範囲は広げない)。
             if "durationMs" in node:
                 node["durationMs"] = 0
         else:
             node.pop("durationMs", None)
-        # revisionとcoreは公開結果Schema上、文書root(最上位)にしか出現しない
-        # (result.schema.jsonの各operation定義。fixture corpus全件で実測済み)。
-        # ネストした位置に同名keyが現れても対象にしない。
+        # `revision`と`core`は公開結果スキーマ上、文書のルート(最上位)にしか出現しない
+        # (`result.schema.json`の各操作の定義。fixtureのcorpus全件で実測済み)。
+        # 入れ子の位置に同名のキーが現れても対象にしない。
         if top:
             revision = node.get("revision")
             if isinstance(revision, dict):
@@ -261,15 +261,15 @@ def _normalize(node, warnings, top, zero_duration=False):
 
 
 def normalize_result(value, zero_duration=False):
-    """共通normalizer(適合fixture仕様 4)。durationMs除外、commit形式検査、core.versionのpatch除外。
+    """共通の正規化器(適合fixture仕様 4)。`durationMs`の除外、コミット形式の検査、`core.version`のパッチバージョンの除外。
 
-    durationMsは名前一致であれば任意の深さで除外する(仕様が明示する最上位・workspaces[]・
-    commands[]の3位置に加え、fixture corpus実測で他の位置に出現しないことを確認済みの超集合)。
-    revisionとcoreは文書rootだけに出現するため、rootでだけ処理する。
-    実行環境に依存するprocess出力の抜粋の正規化はTODO: 未実装(仕様4の最後の除外項目)。
-    report file名の生成時刻と連番の正規化は、公開結果JSONに現れないため未使用(report本文比較を行わないため)。
+    `durationMs`は名前が一致すれば任意の深さで除外する(仕様が明示する最上位・`workspaces[]`・
+    `commands[]`の3位置に加え、fixtureのcorpusの実測で他の位置に出現しないことを確認済みの超集合)。
+    `revision`と`core`は文書のルートだけに出現するため、ルートでだけ処理する。
+    実行環境に依存するプロセス出力の抜粋の正規化はTODO: 未実装(仕様4の最後の除外項目)。
+    レポートのファイル名の生成時刻と連番の正規化は、公開結果のJSONに現れないため未使用(レポートの本文の比較を行わないため)。
 
-    `zero_duration`は生成fixtureのresultDigest比較だけに使う(既定はFalseで従来どおりpopする)。
+    `zero_duration`は生成fixtureの`resultDigest`の比較だけに使う(既定は`False`で従来どおり`pop`する)。
     """
     import copy
     warnings = []
@@ -282,7 +282,7 @@ def normalize_text(text):
 
 
 def diff_json(expected, actual, path="$"):
-    """短い差分列(JSON pointer風のpath、期待値、実値)を返す。"""
+    """短い差分列(JSON pointer風のパス、期待値、実際の値)を返す。"""
     diffs = []
     if isinstance(expected, dict) and isinstance(actual, dict):
         for key in sorted(set(expected) | set(actual)):
@@ -320,7 +320,7 @@ CLI_CONTROL_FORBIDDEN = re.compile(
 
 
 def _check_cli_output(fixture_root, manifest, exit_code, stdout_bytes, stderr_bytes):
-    """終了コード4の出力規則(01_結果・Diagnostic・終了コード.md 3)を検査する。"""
+    """終了コード4の出力規則(結果・診断・終了コード §3)を検査する。"""
     differences = []
     cli_output = json.loads((fixture_root / "cli-output.json").read_text(encoding="utf-8"))
     expect_exit = manifest["expect"]["exitCode"]
@@ -380,12 +380,12 @@ def _new_report_files(before_state, after_state):
 
 
 def _filter_git_status_for_new_reports(status_text, allowed_new):
-    """porcelain statusから、新規に許可したreport fileの`??`行だけを取り除く。
+    """`git status --porcelain`の出力から、新規に許可したレポートファイルの`??`行だけを取り除く。
 
-    report file名は生成時刻と連番を含み、fixtureの`after`は執筆時点で存在しなかった
-    fileの行を書けない(そもそも名前が決まらない)。そのため`--report`ありのfixtureの
-    期待git statusは、新規report fileを除いた状態を表す(適合fixture仕様5の
-    explicit-reportの記述と整合させるための、report file名だけを対象にした限定的な除外)。
+    レポートのファイル名は生成時刻と連番を含み、fixtureの`after`は執筆時点で存在しなかった
+    ファイルの行を書けない(そもそも名前が決まらない)。そのため`--report`ありのfixtureの
+    期待する`git status`は、新規のレポートファイルを除いた状態を表す(適合fixture仕様5の
+    明示したレポートの記述と整合させるための、レポートのファイル名だけを対象にした限定的な除外)。
     """
     if not status_text:
         return status_text
@@ -420,10 +420,10 @@ def _state_diff_allowing_new_reports(expected_state, actual_state, allowed_new):
 
 
 def _generate_and_verify(fixture_root, generate_spec):
-    """生成fixtureの入力treeをdataset manifestから決定論的に作り、treeDigestを照合する(仕様3.4・3.5)。
+    """生成fixtureの入力の木構造をデータセットのマニフェストから決定論的に作り、`treeDigest`を照合する(仕様3.4・3.5)。
 
-    生成器(`multi_generator`)はfixture harness側の参照実装であり(仕様3.4)、ここでの再利用は
-    二重実装を避けるためのものであってCore実装ではない。digestが一致しなければfixture errorとする。
+    生成器(`multi_generator`)はfixtureのharness側の参照実装であり(仕様3.4)、ここでの再利用は
+    二重実装を避けるためのものであってCoreの実装ではない。ハッシュ値が一致しなければ、そのfixtureを`error`とする。
     """
     dataset_path = fixture_root / generate_spec["dataset"]
     if not dataset_path.is_file():
@@ -441,7 +441,7 @@ def _generate_and_verify(fixture_root, generate_spec):
 
 
 def _state_digest(state):
-    """副作用のstateDigest(仕様5)。観測状態のRFC 8785 Canonical JSONのSHA-256。"""
+    """副作用の`stateDigest`(仕様5)。観測した状態のRFC 8785の正規JSONのSHA-256。"""
     return digest_reference.digest(digest_reference.canonical_bytes(state))
 
 
@@ -459,7 +459,7 @@ def _compare_side_effects_digest(side_effects, expect, after_state, new_reports)
 
 
 def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp, *, timings=None):
-    """1 fixtureを実行して{"id", "result", "differences"}を返す。例外を送出しない。"""
+    """1つのfixtureを実行して{"id", "result", "differences"}を返す。例外を送出しない。"""
     differences = []
     try:
         manifest = _load_manifest(fixture_root, validators)
@@ -474,9 +474,9 @@ def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp
         if "generate" in manifest["setup"]:
             generated_entries = timed_call(timings, "generate", _generate_and_verify, fixture_root, manifest["setup"]["generate"])
         if "stateDigest" in side_effects and side_effects["policy"] != "read-only":
-            # stateDigestは実行前後の観測値が同じ1つのdigestになることを要求する(仕様3.4・5)。
-            # explicit-reportはreport file名に生成時刻・連番を含み、after状態を単一digestで
-            # 事前に固定できないため、この組合せは未対応とする(read-onlyのstateDigestだけ対応)。
+            # `stateDigest`は実行の前後の観測値が同じ1つのハッシュ値になることを要求する(仕様3.4・5)。
+            # 方針`explicit-report`と`stateDigest`の組合せは、レポートのファイル名に生成時刻・連番を含み、実行後の状態を単一のハッシュ値で
+            # 事前に固定できないため未対応とする(方針が`read-only`の`stateDigest`だけに対応する)。
             raise FixtureError("read-only以外のpolicyを持つstateDigest形式の副作用期待値は未対応です")
 
         with tempfile.TemporaryDirectory(prefix=f"bitz-run-{fixture_id}-", dir=base_tmp) as sandbox_text:
@@ -573,9 +573,9 @@ def _compare_json(manifest, expect, expected_result, exit_code, stdout_bytes, va
         if expect.get("status") is not None and actual_result.get("status") != expect["status"]:
             differences.append(f"status: 期待={expect['status']} 実際={actual_result.get('status')}")
         if "resultDigest" in expect:
-            # 生成fixture(仕様3.4・3.5)。期待JSONを持たないため、実結果側をdurationMs=0固定の
-            # 同じnormalizerでCanonical JSON化し、審査済みdigestと文字列比較する(緩和ではなく、
-            # multi_limit_fixtures.canonical_digestが計算した期待digestの再現)。
+            # 生成fixture(仕様3.4・3.5)。期待結果のファイルを持たないため、実結果側を`durationMs`=0固定の
+            # 同じ正規化器で正規JSON化し、レビュー済みのハッシュ値と文字列で比較する(緩和ではなく、
+            # `multi_limit_fixtures.canonical_digest`が計算した期待のハッシュ値の再現)。
             normalized_actual, warnings_a = normalize_result(actual_result, zero_duration=True)
             differences.extend(f"normalizer: {message}" for message in warnings_a)
             actual_digest = digest_reference.digest(digest_reference.canonical_bytes(normalized_actual))
@@ -617,10 +617,10 @@ def _compare_text(fixture_root, expect, exit_code, stdout_bytes):
 
 
 def _validate_report_contents(repository, new_reports, expected_result, validators):
-    """新規reportの内容を検査する(適合fixture仕様2、結果契約8)。
+    """新規レポートの内容を検査する(適合fixture仕様2、結果・診断・終了コード 8)。
 
-    reportは結果JSONそのものであるため、期待JSONと同じschemaを実行前検証・normalizer適用後の
-    完全構造比較の対象にする。Schema不適合はfixture比較自体をerrorにする(仕様2)。差分はfailedとして報告する。
+    レポートは結果JSONそのものであるため、期待結果と同じスキーマで、正規化器を適用する前に検証し、適用した後に
+    完全な構造として比較する。スキーマに不適合ならfixtureの比較自体を`error`にする(仕様2)。差分は`failed`として報告する。
     """
     differences = []
     for relative_path in new_reports:

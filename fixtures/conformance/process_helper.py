@@ -1,4 +1,4 @@
-"""将来のverify fixture用の、扱いにくい子processの挙動（Coreのrunnerではない）。"""
+"""将来の`verify`のfixture用の、扱いにくい子プロセスの挙動（Coreのランナーではない）。"""
 import os
 import signal
 import subprocess

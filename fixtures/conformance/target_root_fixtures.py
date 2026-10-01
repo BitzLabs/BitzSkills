@@ -1,12 +1,12 @@
-"""明示起点の不在とADR起点を固定するfixture（Core操作は実行しない）。
+"""明示起点の不在とADR起点を固定するfixture（Coreの公開操作は実行しない）。
 
-SINGLE-111-01〜04は構文上妥当だがcatalogに存在しない起点を扱う。いずれも終了コード4ではなく
-`CTX-ROOT-MISSING-001`／failedとし、statement不在を所有文書のcheckへ置き換えない。
-SINGLE-112-01/03はADR起点のinterpret contextと明示checkを扱う。ADRはtest義務へ展開されないため、
-target statementは空で、checkは文書検査だけを行う。ADR起点を引数不正とする112-02/04は
-cli_error_fixturesが所有する。
+SINGLE-111-01〜04は構文上妥当だがカタログに存在しない起点を扱う。いずれも終了コード4ではなく
+`CTX-ROOT-MISSING-001`／`failed`とし、規範文の不在を、その規範文を所有する文書の`check`へ置き換えない。
+SINGLE-112-01/03はADR起点の`interpret`のコンテキストと、ADRを明示対象とする`check`を扱う。ADRはテスト義務へ展開されないため、
+対象規範文は空で、`check`は文書検査だけを行う。ADR起点を引数不正とする112-02/04は
+`cli_error_fixtures`が所有する。
 
-根拠は[CLI基盤契約 §6]、[check仕様 §2・§9]、[関係・トレースモデル §6.4]である。
+根拠は[Core実行環境・CLI基盤契約 §6]、[`check`仕様 §2・§9]、[関係・トレースモデル §6.4]である。
 """
 import json
 from pathlib import Path
@@ -25,7 +25,7 @@ MISSING_DOCUMENT = "REQ-009"
 MISSING_STATEMENT = "REQ-001:AC-09"
 MISSING_PATH = ".spec/requirements/REQ-009.md"
 ADR_TITLE = "認証方式の選定"
-# ID: (argv, status, 説明)
+# ID: (引数列, 状態, 説明)
 CASES = {
     "SINGLE-111-01": (["check", MISSING_DOCUMENT, "--base", "HEAD", "--format", "json"], "failed",
                       "catalogにない明示文書IDをCTX-ROOT-MISSING-001で返す"),
@@ -57,7 +57,7 @@ def reviewed_inputs(identifier):
 def reviewed_manifest(identifier):
     argv, status, description = CASES[identifier]
     if argv[0] == "verify":
-        # verifyは設定がindexに無いと起動前に停止するため、commitせずstageする。
+        # `verify`は設定がインデックスに無いと起動前に停止するため、コミットせずステージする。
         plan = {"git": True, "operations": [{"op": "stage", "paths": ["."]}]}
     elif argv[0] == "check":
         plan = {"git": True, "baseCommit": {"message": "base", "paths": ["."]}, "operations": []}
@@ -96,7 +96,7 @@ def reviewed_digest_input():
         "settings": {
             "workspaces": [{"id": "root", "schemaVersion": "1.0", "earsAi": "1.0", "language": "ja"}],
             "context": {"maxDocuments": 20, "maxBytes": 131072},
-            # interpretはbindingを収録しないため、timeoutとcommandは空である。
+            # `interpret`はテスト割当てを収録しないため、タイムアウトとコマンドは空である。
             "verifyTimeouts": [], "commands": [],
         },
     }
