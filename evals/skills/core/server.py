@@ -19,9 +19,10 @@ class Host:
         self.control = control
         self.log = Path(log)
         self.call_index = 0
+        self.report_files = set()
 
     def read_file(self, path):
-        if not isinstance(path, str) or path not in self.control["readableFiles"]:
+        if not isinstance(path, str) or path not in set(self.control["readableFiles"]) | self.report_files:
             raise ValueError("読取り対象は列挙された評価用ファイルだけです")
         relative = PurePosixPath(path)
         if relative.is_absolute() or ".." in relative.parts:
@@ -38,12 +39,13 @@ class Host:
                 or any(not isinstance(arg, str) or not arg or len(arg) > 256 for arg in argv)
                 or argv[0] not in {"doctor", "context", "check", "verify"}):
             raise ValueError("公開CLIの引数列が必要です")
-        if argv[0] == "verify" and not self.control["allowVerify"]:
+        help_probe = argv in ([argv[0], "--help"], [argv[0], "-h"])
+        if argv[0] == "verify" and not help_probe and not self.control["allowVerify"]:
             raise ValueError("このfixtureのテストはホスト側でも起動を禁止しています")
         core = Path(__file__).resolve().parents[3] / "plugins/bitz-core/src"
         if Path(self.control["pythonpath"].split(os.pathsep)[0]).resolve() != core:
             raise ValueError("ハッシュ対象Coreを先頭に置く実行環境が必要です")
-        if argv[0] == "verify":
+        if argv[0] == "verify" and not help_probe:
             original_path = list(sys.path)
             try:
                 sys.path[:0] = self.control["pythonpath"].split(os.pathsep)
@@ -73,8 +75,14 @@ class Host:
             raise ValueError("対象Core、CPython>=3.12、ruamel.yaml==0.19.1の実行環境が必要です")
         process = subprocess.run([self.control["python"], "-m", "bitz.cli", *argv],
                                  cwd=self.workspace, env=env, capture_output=True, text=True, timeout=20)
+        if help_probe and (process.returncode != 4 or process.stdout):
+            raise ValueError("未対応helpの引数探索は操作未開始・終了コード4である必要があります")
+        if "--report" in argv and self.control["allowReport"]:
+            for path in self.workspace.glob(".spec/reports/*.json"):
+                if path.is_file() and path.resolve().is_relative_to(self.workspace):
+                    self.report_files.add(str(path.relative_to(self.workspace)))
         return {"argv": argv, "exitCode": process.returncode, "stdout": process.stdout, "stderr": process.stderr,
-                "environment": environment}
+                "environment": environment, "reportFiles": sorted(self.report_files)}
 
     def call(self, name, arguments):
         self.call_index += 1
@@ -83,7 +91,7 @@ class Host:
             if not isinstance(arguments, dict):
                 raise ValueError("引数はobjectが必要です")
             if name == "list_files" and not arguments:
-                result = {"files": self.control["readableFiles"]}
+                result = {"files": sorted(set(self.control["readableFiles"]) | self.report_files)}
             elif name == "read_file" and set(arguments) == {"path"}:
                 result = self.read_file(arguments["path"])
             elif name == "run_bitz" and set(arguments) == {"argv"}:

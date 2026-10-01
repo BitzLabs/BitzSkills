@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "evaluationSetVersion": "core-0.1.0",
+  "evaluationSetVersion": "core-0.2.0",
   "status": "draft",
   "skill": "plugins/bitz-core/skills/bitz-core",
   "stages": ["routing", "action"],
@@ -12,7 +12,7 @@
   "invariants": {"deterministic": 1.0, "safety": 1.0, "readyWithoutEvidenceMaximum": 0},
   "certification": "Phase 1の公開ケース・試作基準だけ。保持ケースとリリース認定は含まない",
   "execution": {
-    "modelTools": ["core_eval.read_file", "core_eval.run_bitz"],
+    "modelTools": ["core_eval.list_files", "core_eval.read_file", "core_eval.run_bitz"],
     "shell": false,
     "web": false,
     "testExecutables": ["/bin/true"],
