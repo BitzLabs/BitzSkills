@@ -1,12 +1,12 @@
-"""test process実行（`03_操作仕様/03_verify.md` §5・§5.2）。
+"""テストのプロセスの実行（`bitz verify`仕様 §5・§5.2）。
 
-shellを介さずargvで起動し、標準入力はnull device、標準出力・標準エラー出力は別pipeで
-spawn時から並行drainする。読み取ったchunkはbufferへ溜め込まず、その場で``redact.StreamRedactor``へ
-渡して公開抜粋（末尾64 KiB）だけを保持する（memoryを出力総量へ依存させないため）。
+シェルを介さず引数列で起動し、標準入力はnullデバイス、標準出力と標準エラー出力は別のパイプで
+プロセスの生成の時点から並行して汲み出す。読み取ったチャンクはバッファーへ溜め込まず、その場で
+``redact.StreamRedactor``へ渡して、公開する抜粋（末尾64 KiB）だけを保持する（メモリの使用量を出力の総量へ依存させないため）。
 
-timeout到達時はdirect processとprocess groupへgraceful terminationを送り、2秒後に
-（直接processの生死にかかわらず）process groupへforce kill、さらに2秒drainし、EOFがなくても
-read handleを閉じてtimeout到達から5秒以内に確定する。子孫がpipeを保持してもEOFを無期限に待たない。
+タイムアウトに到達したときは、直接のプロセスとプロセスグループへ終了の要求を送り、2秒後に
+（直接のプロセスの生死にかかわらず）プロセスグループへ強制終了を送り、さらに2秒汲み出し、EOFがなくても
+読取り用のハンドルを閉じて、タイムアウトに到達してから5秒以内に確定する。子孫のプロセスがパイプを保持してもEOFを無期限に待たない。
 """
 
 from __future__ import annotations
@@ -83,10 +83,10 @@ def _terminate(proc: subprocess.Popen, sig: int) -> None:
 
 
 def run(argv: list[str], cwd: str, env: dict[str, str], timeout_seconds: int) -> dict:
-    """``argv``をspawnし、terminationと公開抜粋を返す。
+    """``argv``をプロセスとして生成し、終了種別と公開する抜粋を返す。
 
     戻り値は``termination``（``exit``/``spawn_error``/``signal``/``timeout``）、``exit_code``、
-    ``stdout_excerpt``/``stderr_excerpt``（redaction済み文字列）、
+    ``stdout_excerpt``/``stderr_excerpt``（伏せ字化した文字列）、
     ``stdout_truncated``/``stderr_truncated``、``duration_ms``を持つ``dict``。
     """
 
@@ -118,7 +118,7 @@ def run(argv: list[str], cwd: str, env: dict[str, str], timeout_seconds: int) ->
 
     deadline_out = _Deadline()
     deadline_err = _Deadline()
-    # 保険としての外側上限。子孫がpipeを保持し続けても無期限に待たない。
+    # 保険としての外側の上限。子孫のプロセスがパイプを保持し続けても無期限に待たない。
     outer_deadline = start + timeout_seconds + 5.0
     deadline_out.set(outer_deadline)
     deadline_err.set(outer_deadline)
@@ -145,8 +145,8 @@ def run(argv: list[str], cwd: str, env: dict[str, str], timeout_seconds: int) ->
             proc.wait(timeout=2)
         except subprocess.TimeoutExpired:
             pass
-        # 2秒の猶予後は、直接processが既に終了していてもprocess groupへSIGKILLを送る
-        # （TERMを無視する子孫がpipeを保持し続けるのを断つため。best effort、失敗は無視）。
+        # 2秒の猶予の後は、直接のプロセスがすでに終了していてもプロセスグループへSIGKILLを送る
+        # （TERMを無視する子孫のプロセスがパイプを保持し続けるのを断つため。保証せず、可能な範囲で行い、失敗は無視する）。
         _terminate(proc, signal.SIGKILL)
         try:
             proc.wait(timeout=2)

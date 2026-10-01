@@ -1,12 +1,12 @@
-"""SPEC文書catalogの構築と`check --full`の文書検査（Step 2 Phase B）。
+"""仕様文書の一覧の構築と、`check --full`の文書の検査（Step 2のフェーズB）。
 
 `02_SPECモデル/02_文書・Frontmatter・状態仕様.md`、`03_文書種別・本文template.md`、
 `03_操作仕様/02_check.md` §3・§4 と `00_共通契約/05_Diagnostic-registry.md` §3・§4 を実装する。
-relation解決（参照先の存在・型・循環・legacy refs）、`implements`/`tests`のpath存在、
-`covers`解決、明示TASK checkの境界検査はPhase C（次段）で実装するため、本moduleは行わない。
+関係の解決（参照先の存在・型・循環・旧フィールド`refs`）、`implements`/`tests`のパスの存在、
+`covers`の解決、TASKを明示した`check`の境界の検査はフェーズC（次段）で実装するため、本モジュールは行わない。
 
-Phase C が使う索引として、:func:`build_catalog` は文書ごとの検証済みFrontmatter
-（``DocEntry.frontmatter``）と本文statement一覧（``DocEntry.statements``）を保持したまま返す。
+フェーズCが使う索引として、:func:`build_catalog` は文書ごとの検証済みのフロントマター
+（``DocEntry.frontmatter``）と本文の規範文の一覧（``DocEntry.statements``）を保持したまま返す。
 """
 
 from __future__ import annotations
@@ -44,8 +44,8 @@ _FILE_ID_RE = re.compile(r"^((?:REQ|TECH|ADR|TASK)-[0-9]{3,})(?:-.+)?$")
 _H1_RE = re.compile(r"^# (.*)$")
 _H2_RE = re.compile(r"^## (.*)$")
 
-#: kind -> (code, category) 。categoryは"hard-draft"（draftなら継続warning、それ以外はskip-document
-#: のerror）、"hard-always"（draft非依存で常にskip-documentのerror）、"soft"（常にcontinueのwarning）。
+#: `kind` -> (`code`, `category`) 。`category`は"hard-draft"（`draft`なら`continue`の警告、それ以外は`skip-document`
+#: の`error`）、"hard-always"（`draft`に依存せず常に`skip-document`の`error`）、"soft"（常に`continue`の警告）。
 _EARS_TABLE = {
     ir_mod.CONDITION_CODE_UNCLOSED: ("EAI-CORE-SYNTAX-005", "hard-draft"),
     ir_mod.CONDITION_TAG_UNCLOSED: ("EAI-CORE-SYNTAX-004", "hard-draft"),
@@ -106,13 +106,13 @@ class DocEntry:
     title: str | None = None
     status: str | None = None
     frontmatter: dict | None = None
-    body: str | None = None  # frontmatter終端直後から文書末尾までの生本文（正規化前、newline統一のみ済）。
+    body: str | None = None  # フロントマターの終端の直後から文書の末尾までの元の本文（正規化前、改行の統一だけ済み）。
     statements: list[dict] = field(default_factory=list)
     counted: bool = False
     statement_count: int = 0
     warnings: list[Diagnostic] = field(default_factory=list)
-    hard: list[Diagnostic] | None = None  # 非None＝この文書はskip-document
-    duplicate: bool = False  # True＝ID重複によりskip-document（Phase Cのrelation/path解決索引から除く）
+    hard: list[Diagnostic] | None = None  # `None`でない＝この文書は`skip-document`
+    duplicate: bool = False  # `True`＝IDの重複により`skip-document`（フェーズCの関係・パスの解決の索引から除く）
 
 
 @dataclass
@@ -124,11 +124,11 @@ class CatalogResult:
 
 
 def _discover_top_level(spec_dir: str) -> list[str]:
-    """`.spec/`直下の未知entry名を返す（`reports`は種別を問わず既知、探索しない）。
+    """`.spec/`直下の未知のエントリ名を返す（`reports`は種別を問わず既知、探索しない）。
 
-    symlink（file・directory とも）は`reports`以外なら名前が既知kindと一致していても
-    常に未知entryとする（workspace・設定仕様 §1-5「symlinkを辿ってworkspace外のSPECを
-    読み込まない」）。辿らない・読まない。
+    シンボリックリンク（ファイル・ディレクトリとも）は`reports`以外なら、名前が既知の種別と一致していても
+    常に未知のエントリとする（ワークスペース・設定仕様 §1-5「シンボリックリンクをたどって、ワークスペースの外の
+    仕様文書を読み込まない」）。たどらない・読まない。
     """
 
     unknown: list[str] = []
@@ -149,12 +149,12 @@ def _discover_top_level(spec_dir: str) -> list[str]:
 
 
 def _discover_files(spec_dir: str, kind: str) -> tuple[list[str], list[str]]:
-    """種別directory配下を自前で辿り、``(md_paths, unknown_paths)``を返す。
+    """種別ディレクトリの配下を自前でたどり、``(md_paths, unknown_paths)``を返す。
 
-    `os.walk`の既定classification（`entry.is_dir()`はsymlinkを追跡する）に頼らず、
-    entryごとに`os.path.islink`を判定してsymlinkを辿らない（workspace・設定仕様 §1-5）。
-    `.md`以外のfile（hidden・一時fileを含む）とsymlinkはすべて未知entryとして返す
-    （workspace・設定仕様 §3）。
+    `os.walk`の既定の分類（`entry.is_dir()`はシンボリックリンクを追跡する）に頼らず、
+    エントリごとに`os.path.islink`を判定してシンボリックリンクをたどらない（ワークスペース・設定仕様 §1-5）。
+    `.md`以外のファイル（隠しファイル・一時ファイルを含む）とシンボリックリンクはすべて未知のエントリとして返す
+    （ワークスペース・設定仕様 §3）。
     """
 
     sub_name = DOC_KIND_DIR[kind]
@@ -198,7 +198,7 @@ def _read_bytes(abs_path: str) -> tuple[bytes | None, bool]:
 
 
 def _extract_frontmatter(text: str) -> tuple[str | None, str | None, int | None]:
-    """(frontmatter_raw, body, closing_line_index0) を返す。frontmatterが見つからなければ全てNone。"""
+    """``(frontmatter_raw, body, closing_line_index0)``を返す。フロントマターが見つからなければすべて``None``。"""
 
     if not text.startswith("---\n"):
         return None, None, None
@@ -219,7 +219,7 @@ _TOP_KEY_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_-]*):")
 
 
 def _enclosing_key(fm_raw: str, line0: int | None) -> str | None:
-    """構文破綻位置（0始まり行番号）から、直前の直下keyをbest-effortで推定する。"""
+    """構文が壊れた位置（0始まりの行番号）から、直前の直下のキーを、保証せず可能な範囲で推定する。"""
 
     if line0 is None:
         return None
@@ -237,10 +237,10 @@ def _issue_to_diag(issue: fm_mod.FieldIssue, path: str, workspace_id: str) -> Di
 
 
 def _build_h2_index(lines: list[str], body_start: int, normal_lines: set[int]) -> list[tuple[int, str]]:
-    """(1始まり行番号, section名)のlistを行番号昇順で返す。
+    """(1始まりの行番号, 節の名前)のリストを行番号の昇順で返す。
 
-    fence内・4 SP indent内・blockquote直後の``## ``様の行はscanner（§5）と同じ規則で
-    除外し、見出しとして数えない（Candidate Scannerと同じcontext除外規則を共有する）。
+    フェンス内・4つのSPの字下げの内側・引用ブロックの直後にある``## ``様の行は、走査器（§5）と同じ規則で
+    除外し、見出しとして数えない（走査器と同じ文脈の除外規則を共有する）。
     """
 
     result = []
@@ -329,10 +329,10 @@ def _process_document(spec_dir: str, path: str, kind: str, workspace_id: str) ->
 
 
 def _process_document_content(raw: bytes, path: str, kind: str, workspace_id: str) -> DocEntry:
-    """byte列から:class:`DocEntry`を組み立てる（`_process_document`のfile読取り以降を共有する）。
+    """バイト列から:class:`DocEntry`を組み立てる（`_process_document`のファイルの読取り以降を共有する）。
 
-    Git基準版の文書解析（:func:`build_base_catalog`）でも同じ関数を使う（`02_check.md`の
-    「基準版の文書の解析は現在版と同じFrontmatter/Parserを使う」）。ファイル読取り自体のI/O error
+    Gitの基準版の文書の解析（:func:`build_base_catalog`）でも同じ関数を使う（`02_check.md`の
+    「基準版の文書の解析は現在版と同じフロントマター／構文解析器を使う」）。ファイルの読取り自体のI/Oエラー
     （`SPEC-INPUT-READ-001`）だけは呼び出し側（`_process_document`）の責務であり、ここには含めない。
     """
 
@@ -398,7 +398,7 @@ def _process_document_content(raw: bytes, path: str, kind: str, workspace_id: st
     entry.title = fm["title"]
     entry.status = fm["status"]
 
-    # --- file名とFrontmatter IDの一致 -----------------------------------
+    # --- ファイル名とフロントマターのIDの一致 -----------------------------------
     basename = os.path.basename(path)
     stem = basename[:-3] if basename.endswith(".md") else basename
     m = _FILE_ID_RE.match(stem)
@@ -438,9 +438,9 @@ def _process_document_content(raw: bytes, path: str, kind: str, workspace_id: st
                 _mk(code, "error", "failed", summary, path, workspace_id, line=cond["line"], column=cond["column"])
             )
 
-    # --- 規範文IDの文書ID整合（check.md §4「3」、registry条件行EAI-ID-DOCUMENT-MISMATCH）。
-    # codeはID形式不正と同じEAI-CORE-ID-001だが、summaryは専用文言とする（draftでもerror、
-    # skip-document）。
+    # --- 規範文IDの文書ID整合（check.md §4「3」、レジストリの条件行`EAI-ID-DOCUMENT-MISMATCH`）。
+    # 診断コードはID形式の不正と同じ`EAI-CORE-ID-001`だが、`summary`は専用の文言とする（`draft`でも`error`、
+    # `skip-document`）。
     for stmt in parse_result.statements:
         if stmt["documentId"] != entry.doc_id:
             hard_ears.append(
@@ -460,7 +460,7 @@ def _process_document_content(raw: bytes, path: str, kind: str, workspace_id: st
         entry.hard = hard_ears
         return entry
 
-    # --- 配置検査（continue、skip-documentしない） -------------------------
+    # --- 配置の検査（`continue`、`skip-document`にしない） -------------------------
     body_start = closing_idx + 1
     h2_index = _build_h2_index(lines, body_start, normal_lines)
     allowed = ALLOWED_STATEMENT_SECTIONS[kind]
@@ -522,8 +522,8 @@ def build_catalog(
         kind_files[kind] = md_paths
         unknown_in_kinds.extend(unknown_paths)
 
-    # --- SPEC file数上限（安全な入出力 §4、INPUT-LIMIT-SPEC-COUNT）。stop-operationのため
-    # 文書を1件も読まず、他のDiagnostic（未知entryを含む）も返さず操作を止める。
+    # --- 仕様文書のファイル数の上限（安全な入出力 §4、`INPUT-LIMIT-SPEC-COUNT`）。`stop-operation`のため
+    # 文書を1件も読まず、他の診断（未知のエントリを含む）も返さず操作を止める。
     total_md = sum(len(paths) for paths in kind_files.values())
     if total_md > spec_file_count_limit:
         result.diagnostics = [
@@ -566,7 +566,7 @@ def build_catalog(
         for path in kind_files[kind]:
             entries.append(_process_document(spec_dir, path, kind, workspace_id))
 
-    # --- ID一意性（file名／Frontmatter段を通過した文書だけを対象にする） --------
+    # --- IDの一意性（ファイル名／フロントマターの段階を通過した文書だけを対象にする） --------
     by_id: dict[str, list[DocEntry]] = {}
     for e in entries:
         if e.hard is None and e.doc_id is not None:
@@ -586,8 +586,8 @@ def build_catalog(
 
     for e in entries:
         if id(e) in duplicate_entries:
-            # 重複文書は件数に数えない（skip-document）が、それ以前に確定したwarning
-            # （BOM／FM-UNKNOWN／UNAVAILABLE／EXT-UNKNOWN等、continue継続単位）は残す。
+            # 重複した文書は件数に数えない（`skip-document`）が、それ以前に確定した警告
+            # （BOM／`FM-UNKNOWN`／`UNAVAILABLE`／`EXT-UNKNOWN`など、`continue`継続単位）は残す。
             result.diagnostics.extend(e.warnings)
             continue
         if e.hard is not None:
@@ -604,7 +604,7 @@ def build_catalog(
 
 
 def _kind_for_base_path(path: str) -> str | None:
-    """workspace root相対path（``.spec/<dir>/...``）からSPEC種別を推定する。"""
+    """ワークスペースのルートからの相対パス（``.spec/<dir>/...``）から仕様文書の種別を推定する。"""
 
     parts = path.split("/")
     if len(parts) < 2 or parts[0] != ".spec":
@@ -620,16 +620,16 @@ def build_base_catalog(
     workspace_root: str,
     workspace_id: str,
 ) -> dict[str, DocEntry]:
-    """Git基準版``base_rev``時点の文書catalogを``doc_id -> DocEntry``で返す（`02_check.md §5・§9`）。
+    """Gitの基準版``base_rev``の時点の文書の一覧を``doc_id -> DocEntry``で返す（`02_check.md §5・§9`）。
 
     現在版と同じ:func:`_process_document_content`を使う（`基準版の文書の解析は現在版と同じ
-    Frontmatter/Parserを使う`）。Frontmatterが壊れている、file名IDと不一致、EARS-AI構文が壊れている
-    などskip-document相当（``entry.hard is not None``）のbase文書は、推測でDiagnosticを作らず
-    比較対象から静かに除く（状態遷移・承認済みREQ保護のいずれも、既に壊れていた基準版文書との
-    差分を機械的に断定できないため）。ID重複時は最初に見つかった（path昇順の）文書だけを使う。
+    フロントマター／構文解析器を使う`）。フロントマターが壊れている、ファイル名のIDと不一致、EARS-AI構文が壊れている
+    など`skip-document`相当（``entry.hard is not None``）の基準版の文書は、推測で診断を作らず
+    比較対象から静かに除く（状態遷移・承認済み要求の保護のいずれも、既に壊れていた基準版の文書との
+    差分を機械的に断定できないため）。IDが重複しているときは、最初に見つかった（パス昇順の）文書だけを使う。
     """
 
-    from . import gitutil  # 遅延import（循環importを避ける）。
+    from . import gitutil  # 遅延インポート（循環インポートを避ける）。
 
     paths = sorted(gitutil.list_base_spec_paths(git_executable, cwd, env, base_rev, workspace_root))
     result: dict[str, DocEntry] = {}

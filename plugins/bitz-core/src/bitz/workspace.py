@@ -1,7 +1,7 @@
-"""workspace探索。
+"""ワークスペースの探索。
 
-`workspace・設定仕様 §1` に従い、current directoryから親方向へ ``.spec/bitz.yaml`` を探す。
-Git利用時はrepository境界を越えない。
+ワークスペース・設定仕様 §1に従い、現在のディレクトリから親の方向へ ``.spec/bitz.yaml`` を探す。
+Gitを利用できるときは、リポジトリの境界を越えない。
 """
 
 from __future__ import annotations
@@ -14,8 +14,8 @@ from .gitutil import GitInfo, show_toplevel
 
 @dataclass
 class WorkspaceLocation:
-    root: str | None  # workspace root（絶対path）。見つからなければNone。
-    config_path: str | None  # 見つかった`.spec/bitz.yaml`の絶対path。
+    root: str | None  # ワークスペースのルート（絶対パス）。見つからなければNone。
+    config_path: str | None  # 見つかった`.spec/bitz.yaml`の絶対パス。
 
 
 def locate_workspace(start_dir: str, git: GitInfo, env: dict[str, str]) -> WorkspaceLocation:

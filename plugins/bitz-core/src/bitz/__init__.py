@@ -1,4 +1,4 @@
-"""Bitz Core 1.0 の import package。"""
+"""Bitz Core 1.0 のインポート用パッケージ。"""
 
 __all__ = ["__version__"]
 

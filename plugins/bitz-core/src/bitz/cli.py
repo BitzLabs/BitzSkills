@@ -1,6 +1,6 @@
-"""`bitz` CLIのentrypoint。
+"""`bitz` CLIのエントリポイント。
 
-argv解析（終了コード4）、operationの実行、`--format`に応じた出力を仲介する。
+引数の解析（終了コード4）、操作の実行、`--format`に応じた出力を仲介する。
 """
 
 from __future__ import annotations

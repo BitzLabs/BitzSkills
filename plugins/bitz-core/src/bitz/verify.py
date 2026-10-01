@@ -1,17 +1,17 @@
-"""`bitz verify` 操作（`03_操作仕様/03_verify.md`）。
+"""`bitz verify`操作（`bitz verify`仕様）。
 
-Step 4で単一workspaceを実装した。Step 5Cで複合workspace（修飾target、`--all-workspaces`、
-`02_SPECモデル/05_複合workspace仕様.md` §10）を追加する。`TargetExpansion(root, verify)`
-（`targetexpand.py`）を唯一の展開契約として再利用し、targetごとにContextを解決してtest対応を
-確認し、`bitz.yaml`のcommandをshellを介さず実行する。
+Step 4で単一ワークスペースを実装した。Step 5Cで複合ワークスペース（修飾した検証対象、`--all-workspaces`、
+複合ワークスペース仕様 §10）を追加する。`TargetExpansion(root, verify)`
+（`targetexpand.py`）を唯一の展開の契約として再利用し、検証対象ごとにコンテキストを解決してテスト対応を
+確認し、`bitz.yaml`のコマンドをシェルを介さず実行する。
 
-複合workspaceのbinding計画は``(workspace_id, commandName)``を単位に集約する（同じcommand名でも
-workspaceが異なれば別binding。verify.md §4「異なるcommand名はargv/cwdが同じでも別bindingとして
-実行する…workspaceが異なればcommand名と内容が同じでも別bindingとする」）。coverage・binding判定の
-target/statement/covers参照は、request（またはmember自身の）workspaceを基準にした内部表現
-（active workspace自身はbare、他workspaceは`ws::local`修飾）のまま比較し、出力を組み立てる最終段で
-だけ複合workspace正規形式へqualifyする（`context.py`と同じ設計。`context_mod._canon`/`_owner_of`を
-再利用する）。
+複合ワークスペースのテスト割当ての計画は``(workspace_id, commandName)``を単位に集約する（同じコマンド名でも
+ワークスペースが異なれば別のテスト割当て。`bitz verify`仕様 §4「コマンド名が異なれば、引数列と作業ディレクトリが
+同じでも別のテスト割当てとして実行する。…ワークスペースが異なれば、コマンド名と内容が同じでも別のテスト割当てとする」）。
+カバレッジとテスト割当ての判定における検証対象・規範文・`covers`の参照は、起点ワークスペース（またはメンバー自身の
+ワークスペース）を基準にした内部の表現（作業ワークスペース自身は修飾なし、他のワークスペースは`ws::local`の修飾）の
+まま比較し、出力を組み立てる最終の段にだけ複合ワークスペースの正規形式へ修飾する（`context.py`と同じ設計。
+`context_mod._canon`／`_owner_of`を再利用する）。
 """
 
 from __future__ import annotations
@@ -75,10 +75,10 @@ def _resolve_target(
     *,
     active_ws_id: str | None = None,
 ) -> str | None:
-    """明示targetを正規IDへ解決する。statement IDはstatement IDのまま返す（statement粒度を保つ）。
+    """明示した検証対象を正規IDへ解決する。規範文IDは規範文IDのまま返す（規範文の粒度を保つ）。
 
-    ``active_ws_id``を渡すと、``target``がactive workspace自身を指す修飾ID（``"<active_ws_id>::local"``）
-    の場合だけ修飾子を外し、active workspace自身の索引で解決する（複合workspace仕様 §3。`check.py`の
+    ``active_ws_id``を渡すと、``target``が作業ワークスペース自身を指す修飾ID（``"<active_ws_id>::local"``）
+    の場合だけ修飾子を外し、作業ワークスペース自身の索引で解決する（複合ワークスペース仕様 §3。`check.py`の
     `_resolve_target`と同じ規則）。
     """
 
@@ -106,13 +106,13 @@ def _default_roots(id_index: dict[str, DocEntry]) -> list[str]:
 
 
 def _default_roots_all(catalog_entries: list[DocEntry], valid_id_index: dict[str, DocEntry]) -> list[str]:
-    """`--all-workspaces`のmember単位既定対象（verify.md §7）。catalog検証で除外された（`hard`）
-    文書も、frontmatterだけで同じ既定対象基準を満たせば候補へ含める。
+    """`--all-workspaces`のメンバー単位の既定の対象（`bitz verify`仕様 §7）。カタログの検証で除外された（`hard`）
+    文書も、フロントマターだけで同じ既定の対象の基準を満たせば候補へ含める。
 
-    `--all-workspaces`は暗黙にmemberを除外しない。frontmatterのid/status/tests自体はEARS-AI本文の
-    構文検査（`entry.hard`）より前に読めているため、当該文書自身のcatalog Diagnostic（例:
-    `EAI-CORE-ID-002`）をそのtargetの結果として返せる（MULTI-012「invalid文書へ強く依存するtargetを
-    遮断し独立targetを実行する」）。
+    `--all-workspaces`は暗黙にメンバーを除外しない。フロントマターの`id`／`status`／`tests`自体はEARS-AI本文の
+    構文検査（`entry.hard`）より前に読めているため、当該の文書自身のカタログの診断（例:
+    `EAI-CORE-ID-002`）をその検証対象の結果として返せる（MULTI-012: 不正な文書へ強く依存する検証対象を
+    遮断し、独立した検証対象を実行する）。
     """
 
     roots: set[str] = set()
@@ -135,10 +135,10 @@ def _default_roots_all(catalog_entries: list[DocEntry], valid_id_index: dict[str
 
 
 def _total_command_definition_count(config_by_ws: dict[str, dict], workspaces) -> int:
-    """全workspaceの`verify.commands`定義数の単純和（複合workspace仕様 §10「commandDefinitionCount」）。
+    """全ワークスペースの`verify.commands`の定義数の単純和（複合ワークスペース仕様 §10「`commandDefinitionCount`」）。
 
-    `multiws._check_resource_limits`と同じ数え方（bitz.yamlの設定だけを見る。SPEC Markdown本文の
-    厳密parseを要しないため、`--all-workspaces`の全体事前検査で`commandDefinitionCount`を
+    `multiws._check_resource_limits`と同じ数え方（`bitz.yaml`の設定だけを見る。仕様文書のMarkdownの本文の
+    厳密な構文解析を要しないため、`--all-workspaces`の全体事前検査で`commandDefinitionCount`を
     `skip_limit_dimensions`により後回しにしても、ここで安価に再計算できる）。
     """
 
@@ -153,7 +153,7 @@ def _total_command_definition_count(config_by_ws: dict[str, dict], workspaces) -
 
 
 def _hard_entry_target_result(entry: DocEntry, key: str) -> dict:
-    """catalog検証で除外された（`entry.hard`）文書を、そのまま自身のDiagnosticを持つtarget結果にする。"""
+    """カタログの検証で除外された（`entry.hard`）文書を、そのまま自身の診断を持つ検証対象の結果にする。"""
 
     diags = sort_diagnostics([d.to_dict() for d in (entry.hard or [])])
     status = worst_status([d["resultStatus"] for d in diags]) if diags else "failed"
@@ -163,12 +163,12 @@ def _hard_entry_target_result(entry: DocEntry, key: str) -> dict:
 def _dependency_scan(
     context_documents, id_index: dict[str, DocEntry], invalid_by_ws: dict[str, set[str]]
 ) -> dict | None:
-    """closure内のいずれかの文書が、他workspaceの無効（`hard`）文書を修飾refで参照していないか調べる。
+    """閉包内のいずれかの文書が、他のワークスペースの無効（`hard`）な文書を修飾した参照で参照していないか調べる。
 
-    見つかれば``{"dependencyWorkspaces": [...], "dependencySpecRefs": [...]}``（重複なし辞書順）を返す
-    （複合workspace仕様 §8。既に具体的Diagnosticがあるunit自身への派生遮断は呼び出し側が避ける。ここは
-    closureに引き込まれた**他**workspaceの無効文書だけを検出し、rootまたはrefiner自身の構文・型不正は
-    別途`relations`側のDiagnosticが担う）。
+    見つかれば``{"dependencyWorkspaces": [...], "dependencySpecRefs": [...]}``（重複なし、辞書順）を返す
+    （複合ワークスペース仕様 §8。すでに具体的な診断がある単位自身への依存遮断は呼び出し側が避ける。ここは
+    閉包に引き込まれた**他**のワークスペースの無効な文書だけを検出し、起点または`refines`する文書自身の構文・型の不正は
+    別途`relations`側の診断が担う）。
     """
 
     dep_ws: set[str] = set()
@@ -196,11 +196,11 @@ def _dependency_scan(
 
 
 def _make_covering_tests(context_documents, id_index: dict[str, DocEntry], workspace_id: str, multi_active: bool):
-    """``cover_id``（target自身のworkspaceを基準にした内部表現）を対象句にするtestを検索する関数を返す。
+    """``cover_id``（検証対象自身のワークスペースを基準にした内部の表現）を対象の規範文にするテストを検索する関数を返す。
 
-    複合workspaceでは、``cover_id``と各testの``covers``宣言をどちらも複合workspace正規形式へ
-    qualifyしてから比較する（宣言側は自workspaceを基準に非修飾／修飾のどちらでも書けるため、
-    素の文字列比較では同じ対象を指す異表記を取りこぼす）。
+    複合ワークスペースでは、``cover_id``と各テストの``covers``の宣言をどちらも複合ワークスペースの正規形式へ
+    修飾してから比較する（宣言する側は自ワークスペースを基準に非修飾／修飾のどちらでも書けるため、
+    素の文字列の比較では同じ対象を指す異なる表記を取りこぼす）。
     """
 
     def _covering_tests(cover_id: str) -> list[tuple[DocEntry, int, dict, str]]:
@@ -229,7 +229,7 @@ def _relation_check_diagnostics(
     known_ws_ids: set[str],
     multi_active: bool,
 ):
-    """targetの完全解決対象（request workspace自身が所有する閉包内文書）のrelation Diagnosticを返す。"""
+    """検証対象の完全解決の対象（起点ワークスペース自身が所有する閉包内の文書）の関係の診断を返す。"""
 
     if multi_active:
         scoped_entries = [e for e in relations_mod.valid_entries(catalog_entries) if e.doc_id in context_documents]
@@ -286,8 +286,8 @@ def _compute_verify_digest(
                 name = t.get("command")
                 if name:
                     referenced_commands_multi.add((owner, name))
-        # `purpose=verify`のBundleがbindingとして実際に収録した場合だけcommand/timeoutを含める
-        # （context仕様 §6）。command名が定義未解決（bindingを構成できない）なら含めない。
+        # `purpose=verify`のコンテキスト一式がテスト割当てとして実際に収録した場合だけ、コマンドとタイムアウトを含める
+        # （`bitz context`仕様 §6）。コマンド名の定義が未解決（テスト割当てを構成できない）なら含めない。
         commands_settings = []
         binding_ws_ids: set[str] = set()
         for wid, name in sorted(referenced_commands_multi):
@@ -328,8 +328,8 @@ def _compute_verify_digest(
                 name = t.get("command")
                 if name:
                     referenced_commands.add(name)
-        # `purpose=verify`のBundleがbindingとして実際に収録した場合だけcommand/timeoutを含める
-        # （context仕様 §6）。command名が定義未解決（bindingを構成できない）なら含めない。
+        # `purpose=verify`のコンテキスト一式がテスト割当てとして実際に収録した場合だけ、コマンドとタイムアウトを含める
+        # （`bitz context`仕様 §6）。コマンド名の定義が未解決（テスト割当てを構成できない）なら含めない。
         commands_settings = []
         for name in sorted(referenced_commands):
             resolved = resolved_commands.get(name)
@@ -460,13 +460,13 @@ def _process_single_target(
     digest_fn,
     resolved_commands_for,
 ) -> tuple[dict, list[tuple[str, str, str, str]]]:
-    """1 targetを解決する。``(entry_out, needed_pairs)``を返す。
+    """1つの検証対象を解決する。``(entry_out, needed_pairs)``を返す。
 
-    ``needed_pairs``は``(command所有workspace ID, command名, workspace相対test path,
-    複合workspace正規形式のcover tag)``。呼び出し側がこれを``needs``（binding計画）へ集約する。
-    ``entry_out``はbinding実行前の中間形で、``bindingRefs``に必要なbindingを列挙し、
-    ``_needed``（``(ws, name)``の集合）を一時fieldとして持つ（呼び出し側がbinding blocked／実行結果を
-    反映した後に取り除く）。
+    ``needed_pairs``は``(コマンドを所有するワークスペースのID, コマンド名, ワークスペースからの相対パスで示したテストのパス,
+    複合ワークスペースの正規形式の`covers`のタグ)``。呼び出し側がこれを``needs``（テスト割当ての計画）へ集約する。
+    ``entry_out``はテスト割当ての実行前の中間の形で、``bindingRefs``に必要なテスト割当てを列挙し、
+    ``_needed``（``(ws, name)``の集合）を一時的なフィールドとして持つ（呼び出し側がテスト割当ての停止（`blocked`）や
+    実行結果を反映した後に取り除く）。
     """
 
     entry_out: dict = {
@@ -574,19 +574,19 @@ def _process_single_target(
         entry_out["status"] = "blocked"
         return entry_out, needed_pairs
 
-    # --- binding候補の決定（関係・トレースモデル §6.4「規範文なしTECHは文書単位bindingを保持」） ---
-    # ``root_id``はstatement ID（例: "REQ-001:AC-01"）の場合があり、その場合``id_index``に
-    # keyが無い。statement起点はtarget_statementsが非空になるため、doc-unit判定（TECH文書ID
-    # keyが必要）に入る前に短絡させる（元の単一workspace実装と同じ`elif`規則を保つ）。
+    # --- テスト割当て候補の決定（関係・トレースモデル §6.4「規範文のないTECHを起点にした場合は`targetStatements`を空とし、文書単位のテスト割当てを保持する」） ---
+    # ``root_id``は規範文ID（例: "REQ-001:AC-01"）の場合があり、その場合``id_index``には
+    # キーがない。規範文を起点にした場合は`target_statements`が空でなくなるため、文書単位の判定（TECHの文書IDの
+    # キーが必要）に入る前に短絡させる（元の単一ワークスペースの実装と同じ`elif`の規則を保つ）。
     doc_unit = False
     root_entry: DocEntry | None = None
     if not target_statements:
         root_entry = id_index[root_id]
         doc_unit = root_entry.kind == "TECH" and not root_entry.statements
 
-    # skip-target（VERIFY-BINDING-MISSING）: testまたはcommand定義そのものが不足しbindingを
-    # 構成できない条件。独立した原因（testエントリ単位）はそれぞれDiagnosticを返す（同一エントリを
-    # 複数statementが指しても、同じraw原因（同じpath/key）へは1件に畳む）。
+    # 継続単位`skip-target`（`VERIFY-BINDING-MISSING`）: テストまたはコマンドの定義そのものが不足し、テスト割当てを
+    # 構成できない条件。独立した原因（テストのエントリ単位）はそれぞれ診断を返す（同一のエントリを
+    # 複数の規範文が指しても、同じ元の原因（同じ`path`／`key`）へは1件に畳む）。
     binding_missing_diags: list[dict] = []
     seen_missing_keys: set[tuple[str, str]] = set()
 
@@ -647,8 +647,8 @@ def _plan_and_run_bindings(
     env: dict[str, str],
     effective_timeout_for,
 ):
-    """``needs``（``(workspace_id, command名) -> {"tests": set, "covers": set}``）からbinding実行計画を
-    作り、workspace処理順（``ws_root_by_id``の挿入順）、command名辞書順で逐次実行する。
+    """``needs``（``(workspace_id, コマンド名) -> {"tests": set, "covers": set}``）からテスト割当ての実行計画を
+    作り、ワークスペースの処理順（``ws_root_by_id``の挿入順）、コマンド名の辞書順で逐次実行する。
 
     戻り値は``(commands_by_key, status_by_key, blocked_keys, top_diagnostics)``。
     """
@@ -819,7 +819,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     loc = locate_workspace(cwd, git, env)
     requested_workspace = parsed.single.get("--workspace")
 
-    # --- workspace決定（複合workspace仕様 §3）。修飾targetの所有workspaceをactiveにする。 ---
+    # --- ワークスペースの決定（複合ワークスペース仕様 §3）。修飾した検証対象の所有ワークスペースを作業ワークスペースにする。 ---
     multi_pre: multiws.PrecheckResult | None = None
     workspace_path = "."
     qualified_prefixes = {
@@ -963,7 +963,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         ws_default = cfg.get("timeoutSeconds", 300)
         return min(int(cli_timeout), ws_default) if cli_timeout is not None else ws_default
 
-    # --- 対象解決（verify.md §3） ------------------------------------------
+    # --- 検証対象の解決（`bitz verify`仕様 §3） ------------------------------------------
     if parsed.positionals:
         pending: list[tuple[str, str | None, str]] = []
         seen_keys: set[str] = set()
@@ -1049,7 +1049,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
 
 
 def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
-    """`verify --all-workspaces`（`複合workspace仕様 §8`、`03_操作仕様/03_verify.md §10`）。"""
+    """`verify --all-workspaces`（複合ワークスペース仕様 §8、`bitz verify`仕様 §10）。"""
 
     started = time.monotonic_ns() // 1_000_000
     git = gitutil.detect_git(cwd, env)
@@ -1060,8 +1060,8 @@ def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tu
         if head_commit is not None:
             revision = {"commit": head_commit, "dirty": gitutil.is_dirty(git.executable, cwd, env)}
 
-    # `commandDefinitionCount`は全体事前検査から除外し、`verifyBindingCount`優先の判定を
-    # `_run_all_workspaces_members`自身のbinding計画集計に委ねる（複合workspace仕様 §10）。
+    # `commandDefinitionCount`は全体事前検査から除外し、`verifyBindingCount`を優先する判定を
+    # `_run_all_workspaces_members`自身のテスト割当ての計画の集計に委ねる（複合ワークスペース仕様 §10）。
     pre = multiws.precheck(cwd, git, env, skip_limit_dimensions=frozenset({"commandDefinitionCount"}))
     if pre.discovery_failed:
         raise CliArgError("verify", "複合workspaceのroot設定を発見できません")
@@ -1192,10 +1192,10 @@ def _run_all_workspaces_members(
         limit_diag["evidence"] = {"dimension": "verifyBindingCount", "limit": _VERIFY_BINDING_LIMIT, "observedAtLeast": binding_count}
     else:
         # `commandDefinitionCount`は全体事前検査から除外している（`skip_limit_dimensions`）ため、
-        # ここで実行計画確定後に自分で判定する。verifyBindingCountが超過していなければ、
-        # commandDefinitionCount単独の超過をここで遮断する（複合workspace仕様 §10「両方が同時に
-        # 超過する場合は…verifyBindingCountを優先」の裏を返せば、verifyBindingCountが超過しない
-        # 限りcommandDefinitionCountの超過はそのまま報告する）。command を1件も起動する前
+        # ここで実行計画を確定した後に自分で判定する。`verifyBindingCount`が超過していなければ、
+        # `commandDefinitionCount`だけの超過をここで遮断する（複合ワークスペース仕様 §10「複数の次元が同時に
+        # 超過する場合は、`verify`実行計画の次元を優先して報告する」の裏を返せば、`verifyBindingCount`が超過しない
+        # 限り`commandDefinitionCount`の超過はそのまま報告する）。コマンドを1件も起動する前
         # （`_plan_and_run_bindings`より前）に判定する。
         command_definition_count = _total_command_definition_count(config_by_ws, workspaces)
         limit = multiws.HARD_LIMITS["commandDefinitionCount"]

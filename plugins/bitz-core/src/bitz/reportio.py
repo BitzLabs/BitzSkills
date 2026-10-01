@@ -1,31 +1,31 @@
-"""明示`--report`のreport書出し（`00_共通契約/02_安全な入出力・互換性.md` §8、`01_結果・…` §8）。
+"""明示された`--report`のレポートの書出し（安全な入出力・互換性 §8、結果・診断・終了コード §8）。
 
-`.spec/reports/`（workspace root相対）へ排他的に作成する。`.spec`と`.spec/reports`は
-symlinkを辿らないdirectory fd（`os.open`に`O_DIRECTORY | O_NOFOLLOW`）として開き、以後の
-一時fileの作成（`O_CREAT | O_EXCL | O_NOFOLLOW`）、最終report名への確定（`os.link`の
-`src_dir_fd`/`dst_dir_fd`）、一時fileの除去（`os.unlink`の`dir_fd`）はすべてそのfd基準で行う。
-`.spec/reports`が存在しない場合は`.spec`のfdを`dir_fd`にして`os.mkdir`した後、同じ規則で開き直す。
-workspace root自体は（規範の対象外のため）symlinkを辿ってよく、`O_NOFOLLOW`なしのdirectory fd
-として開く。
+`.spec/reports/`（ワークスペースのルートからの相対パス）へ排他的に作成する。`.spec`と`.spec/reports`は
+シンボリックリンクを辿らないディレクトリのFD（`os.open`に`O_DIRECTORY | O_NOFOLLOW`）として開き、以後の
+一時ファイルの作成（`O_CREAT | O_EXCL | O_NOFOLLOW`）、最終的なレポート名への確定（`os.link`の
+`src_dir_fd`/`dst_dir_fd`）、一時ファイルの除去（`os.unlink`の`dir_fd`）はすべてそのFDを基準に行う。
+`.spec/reports`が存在しない場合は`.spec`のFDを`dir_fd`にして`os.mkdir`した後、同じ規則で開き直す。
+ワークスペースのルート自体は（規範の対象外のため）シンボリックリンクを辿ってよく、`O_NOFOLLOW`なしの
+ディレクトリのFDとして開く。
 
-`.spec`または`.spec/reports`のfdを取得する**前**に名前が別directoryへのsymlinkへ差し替えられて
-いれば、`O_NOFOLLOW`付きの`open`が`ELOOP`で失敗するため（検査と開封を1回の`open`呼出しへ統合して
-いるため、検査と開封の間に差し替えの隙が生じない）、symlink先には何も作成されない。
+`.spec`または`.spec/reports`のFDを取得する**前**に、名前が別のディレクトリへのシンボリックリンクへ
+差し替えられていれば、`O_NOFOLLOW`付きの`open`が`ELOOP`で失敗するため（検査と開封を1回の`open`の呼出しへ統合して
+いるため、検査と開封の間に差し替えの隙が生じない）、リンク先には何も作成されない。
 
-一方、fdを取得した**後**に名前が差し替えられても、`dir_fd`基準の以後の操作（一時fileの作成・
-`os.link`による確定・`os.unlink`による除去）はすでに取得済みのfd（＝差し替え前の実directory）を
-参照し続けるため、symlink先ではなく元のdirectoryへ書き込まれてしまう。この場合は書込み自体は
-「成功」してしまうが、現在の`.spec`または`.spec/reports`という名前の下にreportが存在しない
-（＝symlink先はもちろん、名前が指す場所のどこにも到達できない）ため、`os.link`による確定の直後に
-`os.stat(..., follow_symlinks=False)`で現在その名前が指す先の`(st_dev, st_ino)`と、取得済みfdの
-`os.fstat`の`(st_dev, st_ino)`を照合し、一致しない（＝directoryそのものが差し替えられた）場合は
-確定済みのreportと一時fileをfd基準で除去したうえで書き込まず`SPEC-REPORT-WRITE-001`を返す。この
-照合を可能にするため、workspace root自体もdirectory fdとして開き、`.spec`の照合の基準にする。
+一方、FDを取得した**後**に名前が差し替えられても、`dir_fd`を基準とする以後の操作（一時ファイルの作成・
+`os.link`による確定・`os.unlink`による除去）はすでに取得済みのFD（＝差し替え前の実際のディレクトリ）を
+参照し続けるため、リンク先ではなく元のディレクトリへ書き込まれてしまう。この場合は書込み自体は
+「成功」してしまうが、現在の`.spec`または`.spec/reports`という名前の下にレポートが存在しない
+（＝リンク先はもちろん、名前が指す場所のどこにも到達できない）ため、`os.link`による確定の直後に
+`os.stat(..., follow_symlinks=False)`で現在その名前が指す先の`(st_dev, st_ino)`と、取得済みのFDの
+`os.fstat`の`(st_dev, st_ino)`を照合し、一致しない（＝ディレクトリそのものが差し替えられた）場合は
+確定済みのレポートと一時ファイルをFDを基準に除去したうえで、書き込まず`SPEC-REPORT-WRITE-001`を返す。この
+照合を可能にするため、ワークスペースのルート自体もディレクトリのFDとして開き、`.spec`の照合の基準にする。
 
-`os.open`の`dir_fd`・`O_DIRECTORY`・`O_NOFOLLOW`、`os.mkdir`/`os.link`/`os.unlink`の`dir_fd`系引数、
-および`os.stat`の`dir_fd`・`follow_symlinks=False`はPOSIX platformでのみ利用できる。Core 1.0の
-対象OSはLinuxとmacOSであり（ADR-055、`00_共通契約/06_Core実行環境・CLI基盤契約.md` §2）、これらが
-利用できない環境では保証を弱めた代替動作へ切り替えず、reportを書き込まず`SPEC-REPORT-WRITE-001`を返す。
+`os.open`の`dir_fd`・`O_DIRECTORY`・`O_NOFOLLOW`、`os.mkdir`/`os.link`/`os.unlink`の`dir_fd`系の引数、
+および`os.stat`の`dir_fd`・`follow_symlinks=False`はPOSIXのプラットフォームでのみ利用できる。Core 1.0の
+対象OSはLinuxとmacOSであり（ADR-055、Core実行環境・CLI基盤契約 §2）、これらが
+利用できない環境では保証を弱めた代替の動作へ切り替えず、レポートを書き込まず`SPEC-REPORT-WRITE-001`を返す。
 """
 
 from __future__ import annotations
@@ -61,9 +61,9 @@ def _report_write_failed(workspace_id: str | None) -> Diagnostic:
 
 
 def _open_dir_no_follow(name: str, dir_fd: int) -> int:
-    """``dir_fd``基準で``name``をsymlinkを辿らずdirectoryとして開きfdを返す。
+    """``dir_fd``を基準に、``name``をシンボリックリンクを辿らずディレクトリとして開き、FDを返す。
 
-    ``name``がsymlink・directory以外・存在しない場合は``OSError``を送出する。
+    ``name``がシンボリックリンク、ディレクトリ以外、または存在しない場合は``OSError``を送出する。
     """
 
     flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
@@ -71,9 +71,9 @@ def _open_dir_no_follow(name: str, dir_fd: int) -> int:
 
 
 def _open_reports_dir(spec_fd: int) -> int | None:
-    """``.spec``のfd基準で``reports``をsymlinkを辿らずdirectoryとして開く。
+    """``.spec``のFDを基準に、``reports``をシンボリックリンクを辿らずディレクトリとして開く。
 
-    存在しなければ``.spec``のfdを``dir_fd``にして``mkdir``してから開き直す。失敗時は``None``。
+    存在しなければ``.spec``のFDを``dir_fd``にして``mkdir``してから開き直す。失敗時は``None``。
     """
 
     try:
@@ -104,10 +104,10 @@ def _silent_remove(name: str, dir_fd: int) -> None:
 
 
 def _same_directory(dir_fd: int, name: str, opened_fd: int) -> bool:
-    """``dir_fd``基準で現在``name``が指す先が、``opened_fd``が参照するdirectoryと同一か。
+    """``dir_fd``を基準に、現在``name``が指す先が、``opened_fd``が参照するディレクトリと同一か。
 
-    symlinkへ差し替えられていた場合や、別のdirectoryへ差し替えられていた場合は
-    ``False``を返す（``name``の照会自体はsymlinkを辿らない）。
+    シンボリックリンクへ差し替えられていた場合や、別のディレクトリへ差し替えられていた場合は
+    ``False``を返す（``name``の照会自体はシンボリックリンクを辿らない）。
     """
 
     try:
@@ -122,7 +122,7 @@ def _same_directory(dir_fd: int, name: str, opened_fd: int) -> bool:
 
 def _reports_path_unchanged(root_fd: int, spec_fd: int, reports_fd: int) -> bool:
     """取得済みの``spec_fd``・``reports_fd``が、現在の``.spec``・``.spec/reports``という
-    名前が指す先と依然として同一directoryを参照しているか。"""
+    名前が指す先と依然として同一のディレクトリを参照しているか。"""
 
     return _same_directory(root_fd, _SPEC_DIRNAME, spec_fd) and _same_directory(
         spec_fd, _REPORTS_DIRNAME, reports_fd
@@ -171,11 +171,11 @@ def _write_into_reports_dir(
             return _report_write_failed(workspace_id)
         else:
             if not _reports_path_unchanged(root_fd, spec_fd, reports_fd):
-                # `.spec`または`.spec/reports`という名前が、fd取得後に別directory・symlinkへ
-                # 差し替えられていた。確定操作自体はfd基準のため取得済みfdが参照する
-                # （＝差し替え前の）directoryへは成功しているが、現在の`.spec/reports`という
-                # 名前の下にはreportが存在しないため、成功として扱わずreportと一時fileを
-                # （差し替え前のdirectoryを参照し続けるfd基準で）除去し、失敗を返す。
+                # `.spec`または`.spec/reports`という名前が、FDの取得後に別のディレクトリ・シンボリックリンクへ
+                # 差し替えられていた。確定の操作自体はFDを基準とするため、取得済みのFDが参照する
+                # （＝差し替え前の）ディレクトリへは成功しているが、現在の`.spec/reports`という
+                # 名前の下にはレポートが存在しないため、成功として扱わず、レポートと一時ファイルを
+                # （差し替え前のディレクトリを参照し続けるFDを基準に）除去し、失敗を返す。
                 _silent_remove(name, reports_fd)
                 _silent_remove(tmp_name, reports_fd)
                 return _report_write_failed(workspace_id)
@@ -184,7 +184,7 @@ def _write_into_reports_dir(
 
 
 def write_report(workspace_root: str, workspace_id: str | None, operation: str, result: dict) -> Diagnostic | None:
-    """``result``をJSONのままreportへ書き出す。成功なら``None``、失敗ならDiagnosticを返す。"""
+    """``result``をJSONのままレポートへ書き出す。成功なら``None``、失敗なら診断を返す。"""
 
     if not _HAS_DIR_FD_SUPPORT:
         return _report_write_failed(workspace_id)

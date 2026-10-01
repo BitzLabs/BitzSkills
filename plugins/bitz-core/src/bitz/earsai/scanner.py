@@ -1,8 +1,8 @@
-"""規範文候補Scanner（EARS-AI仕様 §5）。
+"""規範文の候補の走査器（EARS-AI言語・意味中間表現仕様 §5）。
 
-候補抽出と完全構文検証を分離する。ScannerはLFへ改行を正規化した後、文書先頭から
-行単位で状態機械を実行し、角括弧の閉鎖・statement ID・tagの妥当性を判定せずに
-候補行だけをbyte変更せず返す。判定はASCIIかつcase-sensitiveで、tokenの妥当性を
+候補抽出と完全な構文検証を分離する。走査器はLFへ改行を正規化した後、文書の先頭から
+行単位で状態機械を実行し、角括弧の閉鎖・規範文ID・タグの妥当性を判定せずに
+候補行だけを、バイト列を変えずに返す。判定はASCIIかつ大文字と小文字を区別して行い、トークンの妥当性を
 要求しない（`IsCandidateToken`）。
 """
 
@@ -33,10 +33,10 @@ _RULE4_RE = re.compile(r"^[a-z][a-z0-9]*:")
 
 @dataclass(frozen=True)
 class Candidate:
-    """1件の規範文候補行。
+    """1件の規範文の候補行。
 
     ``line`` は1始まりの行番号、``column`` は候補行内で最初に現れる ``[`` の
-    1始まりcolumn（Unicode code point単位）、``raw`` は改行を含まない候補行全体。
+    1始まりの列（Unicodeのコードポイント単位）、``raw`` は改行を含まない候補行全体。
     """
 
     line: int
@@ -51,7 +51,7 @@ def normalize_newlines(text: str) -> str:
 
 
 def _is_candidate_token(token: str) -> bool:
-    """§5 `IsCandidateToken`。ASCII・case-sensitiveで、tokenの妥当性は問わない。"""
+    """§5 `IsCandidateToken`。ASCIIで、大文字と小文字を区別し、トークンの妥当性は問わない。"""
 
     if any(token.startswith(prefix) for prefix in _KNOWN_PREFIXES):
         return True
@@ -74,7 +74,7 @@ def _leading_sp_count(line: str) -> int:
 
 
 def _fence_run(line: str, start: int) -> tuple[str, int] | None:
-    """`start`位置から始まる3個以上の連続backtickまたはtildeのrunを返す。"""
+    """`start`の位置から始まる、3個以上の連続するバッククォートまたはチルダの連続列を返す。"""
 
     if start >= len(line):
         return None
@@ -91,14 +91,14 @@ def _fence_run(line: str, start: int) -> tuple[str, int] | None:
 
 
 def _iter_line_contexts(lines: list[str]):
-    """行ごとに``(1始まり行番号, line, indent, excluded)``をyieldする（§5 fence状態機械）。
+    """行ごとに``(1始まりの行番号, line, indent, excluded)``を`yield`する（§5 フェンスの状態機械）。
 
-    ``excluded``がTrueの行はfence内・4 SP indent内・blockquote直後のいずれかであり、
-    候補行判定（`scan_candidates`）と見出し判定（`document.py`のH1／H2検出）が
-    同じcontext除外規則を共有するための唯一の実装箇所。
+    ``excluded``が``True``の行は、フェンス内・4つのSPの字下げの内側・引用ブロックの直後のいずれかであり、
+    候補行の判定（`scan_candidates`）と見出しの判定（`document.py`のH1／H2の検出）が
+    同じ文脈の除外規則を共有するための唯一の実装箇所。
     """
 
-    state_fence: tuple[str, int] | None = None  # (opening文字, run長) またはNormal時None
+    state_fence: tuple[str, int] | None = None  # (開始の文字, 連続列の長さ) または通常の状態のときは`None`
 
     for index, line in enumerate(lines):
         line_number = index + 1
@@ -135,9 +135,9 @@ def _iter_line_contexts(lines: list[str]):
 
 
 def normal_line_numbers(text: str) -> set[int]:
-    """fence・4 SP indent・blockquote直後を除いた行番号（1始まり）を返す。
+    """フェンス・4つのSPの字下げ・引用ブロックの直後を除いた行番号（1始まり）を返す。
 
-    見出し（H1／H2）検出が候補行検出と同じcontext除外規則を共有するために使う
+    見出し（H1／H2）の検出が候補行の検出と同じ文脈の除外規則を共有するために使う
     （`document.py`）。
     """
 
@@ -147,10 +147,10 @@ def normal_line_numbers(text: str) -> set[int]:
 
 
 def scan_candidates(text: str) -> list[Candidate]:
-    """文書全体（Frontmatterを含む）から規範文候補を抽出する。
+    """文書全体（フロントマターを含む）から規範文の候補を抽出する。
 
-    行番号は元file基準の1始まりとする。fence・blockquote・4 SP indentの内側、
-    GFM checkboxは候補にしない（SINGLE-099-*、SINGLE-010-01）。
+    行番号は元のファイルを基準にした1始まりとする。フェンス・引用ブロック・4つのSPの字下げの内側、
+    GFMのチェックボックスは候補にしない（SINGLE-099-*、SINGLE-010-01）。
     """
 
     normalized = normalize_newlines(text)

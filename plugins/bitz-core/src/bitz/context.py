@@ -1,21 +1,21 @@
 """`bitz context`操作（`03_操作仕様/01_context.md`）。
 
-Step 3 Phase 3Bで単一workspaceを実装した。Step 5Cで複合workspace（`02_SPECモデル/05_複合workspace仕様.md`
+Step 3のフェーズ3Bで単一ワークスペースを実装した。Step 5Cで複合ワークスペース（`02_SPECモデル/05_複合workspace仕様.md`
 §3・§4・§6、`00_共通契約/03_Context-Digest正規化仕様.md`）を追加する。`TargetExpansion(root, purpose)`
-（`targetexpand.py`）を唯一の閉包契約として再利用し、Context Bundle（Manifest、Constraint Ledger、
-coverage、Context Digest、projection）を組み立てる。
+（`targetexpand.py`）を唯一の閉包契約として再利用し、コンテキスト一式（マニフェスト、制約台帳、
+カバレッジ、コンテキストのハッシュ値、提示形式）を組み立てる。
 
-複合workspaceでは、起点の修飾子（`ws::local`）でrequest workspaceを決定し（§3）、
-`multirelate.build_multi_context`が返す統合索引（request workspace自身は非修飾、他workspaceは
-`ws::local`修飾alias）でTargetExpansionをそのまま再利用する。内部計算（`context_documents`、
-`roles`、`projection`割当て、上限検査）はrequest workspace非修飾＋他workspace修飾の内部表現の
-まま単一workspaceと同じ経路で行い、出力を組み立てる最終段でだけ複合workspace正規形式（`ws::local`）へ
-qualifyする（`_canon`）。これにより単一workspace経路（`multi_active is False`）を変更しない。
+複合ワークスペースでは、起点の修飾子（`ws::local`）で起点ワークスペースを決定し（§3）、
+`multirelate.build_multi_context`が返す統合索引（起点ワークスペース自身は非修飾、他のワークスペースは
+`ws::local`の修飾エイリアス）で`TargetExpansion`をそのまま再利用する。内部計算（`context_documents`、
+`roles`、`projection`の割当て、上限検査）は、起点ワークスペースが非修飾、他のワークスペースが修飾の内部表現の
+まま単一ワークスペースと同じ経路で行い、出力を組み立てる最終段でだけ複合ワークスペースの正規形式（`ws::local`）へ
+修飾する（`_canon`）。これにより単一ワークスペースの経路（`multi_active is False`）を変更しない。
 
-既知の未対応: 他workspace自身が宣言する**非修飾**の同workspace内relationは、request workspace視点の
-統合索引（自workspaceだけ非修飾key、他workspaceは修飾keyだけ）では解決できない（Step 5Bの
-`multirelate.py`と同じ制約。逆参照走査とTargetExpansionが単一の flat 索引を前提とするため）。
-Fixtureが要求する範囲（宣言側が複合workspace正規形式で参照する横断relation）では問題にならない。
+既知の未対応: 他のワークスペース自身が宣言する**非修飾**の、同じワークスペース内の関係は、起点ワークスペースから見た
+統合索引（自ワークスペースだけ非修飾のキー、他のワークスペースは修飾のキーだけ）では解決できない（Step 5Bの
+`multirelate.py`と同じ制約。逆参照の走査と`TargetExpansion`が単一のフラットな索引を前提とするため）。
+fixtureが要求する範囲（宣言する側が複合ワークスペースの正規形式で参照する、横断する関係）では問題にならない。
 """
 
 from __future__ import annotations
@@ -54,29 +54,29 @@ def _null_first(value):
 
 
 def _owner_of(doc_id: str, active_ws_id: str) -> str:
-    """``doc_id``（統合索引の内部表現。非修飾＝active workspace自身、修飾＝他workspace）の所有workspace ID。"""
+    """``doc_id``（統合索引の内部表現。非修飾＝作業ワークスペース自身、修飾＝他のワークスペース）の所有ワークスペースのID。"""
 
     q = multirelate.parse_qualified(doc_id)
     return q[0] if q is not None else active_ws_id
 
 
 def _canon(ref: str, owner_ws_id: str) -> str:
-    """``ref``を複合workspace正規形式（`ws::local`）へ qualify する。既に修飾済みならそのまま返す。"""
+    """``ref``を複合ワークスペースの正規形式（`ws::local`）へ修飾する。既に修飾済みならそのまま返す。"""
 
     q = multirelate.parse_qualified(ref)
     return ref if q is not None else f"{owner_ws_id}::{ref}"
 
 
 def _normalize_frontmatter(entry: DocEntry, *, owner_ws_id: str | None = None) -> dict:
-    """§3.1.1: `frontmatter`の完全正規化（全8key既定値付き）。
+    """§3.1.1: `frontmatter`の完全な正規化（既定値を付けた全8キー）。
 
-    Digest正規化仕様 §2「3.文字正規化を適用する → 4.重複排除とsortを正規化後の値へ適用する」の
-    順序を守る。NFC・path区切り変換より前にsorted(set(...))を行うと、正規化により初めて同一に
-    なる値（例: NFC合成前後で異なるbyte列の同じ文字）が別要素のまま残ってしまう。
+    ハッシュ値の正規化仕様 §2「3.文字正規化を適用する → 4.重複排除と並べ替えを正規化後の値へ適用する」の
+    順序を守る。NFC・パスの区切り文字の変換より前に`sorted(set(...))`を行うと、正規化により初めて同一に
+    なる値（例: NFCで合成する前後で異なるバイト列の同じ文字）が別の要素のまま残ってしまう。
 
-    ``owner_ws_id``（複合workspaceのentry所有workspace ID）を渡すと、`relations`と`tests[].covers`の
-    各targetを複合workspace正規形式へ展開する（Digest正規化仕様 §3.1.1「targetは複合workspaceの
-    正規形式へ展開」）。単一workspace（``owner_ws_id is None``）は従来どおり展開しない。
+    ``owner_ws_id``（複合ワークスペースのエントリを所有するワークスペースのID）を渡すと、`relations`と`tests[].covers`の
+    各参照先を複合ワークスペースの正規形式へ展開する（ハッシュ値の正規化仕様 §3.1.1「参照先は複合ワークスペースの
+    正規形式へ展開」）。単一ワークスペース（``owner_ws_id is None``）は従来どおり展開しない。
     """
 
     nfc = digest_mod.nfc
@@ -127,7 +127,7 @@ def _normalize_frontmatter(entry: DocEntry, *, owner_ws_id: str | None = None) -
 
 
 def _bundle_frontmatter(norm: dict) -> dict:
-    """§5: Bundle `documents[].frontmatter`。既定値（空配列・null）は省略する。"""
+    """§5: コンテキスト一式の`documents[].frontmatter`。既定値（空配列・`null`）は省略する。"""
 
     out: dict = {"id": norm["id"], "title": norm["title"], "status": norm["status"]}
     rel_pruned = {k: v for k, v in norm["relations"].items() if v}
@@ -258,12 +258,12 @@ def _empty_bundle(purpose: str, detail: str, workspace_id, workspace_path: str, 
 
 
 def _multi_augment(bundle: dict, workspace_id: str, workspace_path: str, revision: dict | None = None) -> dict:
-    """複合workspace（`multi_active`）の早期return bundleへ、必須の複合workspace固有fieldを足す。
+    """複合ワークスペース（`multi_active`）の、早期に`return`するコンテキスト一式へ、必須の複合ワークスペース固有のフィールドを足す。
 
-    到達workspaceがrequest workspace自身だけであることが確定している早期return段（起点未解決、
-    上限超過、`--expect-digest`不一致など）向け。横断edgeがまだ確定していない段では空配列にする。
-    複合workspaceは全体事前検査でGit境界を確定済みのため、`revision`をnullへ縮退しない
-    （`00_共通契約/01_結果・…§2`の複合workspace check/verifyと同じ扱いをcontextにも適用する）。
+    到達ワークスペースが起点ワークスペース自身だけであることが確定している、早期に`return`する段（起点の未解決、
+    上限超過、`--expect-digest`の不一致など）向け。横断エッジがまだ確定していない段では空配列にする。
+    複合ワークスペースは全体事前検査でGitの境界を確定済みのため、`revision`を`null`へ縮退しない
+    （`00_共通契約/01_結果・…§2`の複合ワークスペースの`check`と`verify`と同じ扱いを`context`にも適用する）。
     """
 
     bundle["resolution"]["workspaces"] = [{"id": workspace_id, "path": workspace_path}]
@@ -283,11 +283,11 @@ def _resolve_command(name: str | None, config_raw: dict) -> dict | None:
 def _merge_expansions(
     expansions: list, id_index: dict[str, DocEntry], statement_index: dict[str, dict]
 ):
-    """複数起点の`TargetExpansionResult`を和集合へ統合する（関係・トレースモデル §6.4末尾）。
+    """複数の起点の`TargetExpansionResult`を和集合へ統合する（関係・トレースモデル §6.4末尾）。
 
-    重複排除後の各結果を統合し、`targetStatements`／`adjacentStatements`は
-    `contextDocuments`順（距離・種別順REQ/TECH/ADR/TASK・ID辞書順）、source line、ID順で
-    同じ順序規則を再適用する。1起点だけの呼び出しでも同じ経路を通る。
+    重複排除した後の各結果を統合し、`targetStatements`／`adjacentStatements`は
+    `contextDocuments`の順（距離・種別の順REQ/TECH/ADR/TASK・ID辞書順）、行番号、IDの順で
+    同じ順序規則を再適用する。1つの起点だけの呼び出しでも同じ経路を通る。
     """
 
     root_documents: set[str] = set()
@@ -363,10 +363,10 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     loc = locate_workspace(cwd, git, env)
     requested_workspace = parsed.single.get("--workspace")
 
-    # --- workspace決定（複合workspace仕様 §3）。 ---------------------------------
-    # 複合workspaceではactive workspaceの非修飾IDも受け付けるため、修飾起点がある
-    # 場合だけでなく、repository rootがcatalogを宣言している場合は事前検査を行う。
-    # 単一workspaceは従来の軽量経路のままとする。
+    # --- ワークスペースの決定（複合ワークスペース仕様 §3）。 ---------------------------------
+    # 複合ワークスペースでは作業ワークスペースの非修飾IDも受け付けるため、修飾IDの起点がある
+    # 場合だけでなく、リポジトリのルートがカタログを宣言している場合は事前検査を行う。
+    # 単一ワークスペースは従来の軽量な経路のままとする。
     multi_pre: multiws.PrecheckResult | None = (
         multiws.precheck(cwd, git, env) if multiws.is_declared(cwd, git, env) else None
     )
@@ -486,7 +486,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         sorted({_canon(_lookup_key(r), workspace_id) for r in roots_raw}) if multi_active else roots_raw
     )
 
-    # --- 起点解決 ---------------------------------------------------------
+    # --- 起点の解決 ---------------------------------------------------------
     missing = [r for r in roots_raw if _lookup_key(r) not in id_index and _lookup_key(r) not in statement_index]
     if missing:
         bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
@@ -502,17 +502,17 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         bundle["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
         return bundle, EXIT_CODE_BY_STATUS["failed"]
 
-    # 複数起点: 各起点でTargetExpansionを実行し、正規ID重複排除後の和集合を同じ順序規則で
-    # 再構成する（context.md §2「複数起点は重複排除して正規ID辞書順に正規化」、
-    # 関係・トレースモデル §6.4末尾「起点を正規ID化して重複排除した後に各結果の和集合を取り、
-    # 同じ順序規則を再適用する」）。
+    # 複数の起点: 各起点で`TargetExpansion`を実行し、正規IDの重複排除をした後の和集合を同じ順序規則で
+    # 再構成する（context.md §2「複数の起点は重複排除し、正規IDの辞書順に正規化する」、
+    # 関係・トレースモデル §6.4末尾「起点を正規ID化して重複を排除した後に各結果の和集合を取り、
+    # 同じ順序の規則を再適用する」）。
     expansions: list[targetexpand.TargetExpansionResult] = []
     all_errors: list[dict] = []
     for r in roots_raw:
         key = _lookup_key(r)
         exp = targetexpand.target_expansion(key, purpose, id_index, statement_index)
         if exp is None:
-            # `missing`で存在確認済みのため通常到達しないが、念のため同じcodeで扱う。
+            # `missing`で存在確認済みのため通常到達しないが、念のため同じ診断コードで扱う。
             all_errors.append(
                 {
                     "code": "CTX-ROOT-MISSING-001",
@@ -559,10 +559,10 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     context_documents = expansion.context_documents
 
     # --- 強い関係の解決検査（context.md §3「ID、型、状態、強い関係、循環を検査する」）。
-    # 閉包内文書が宣言する強い関係のうち解決できないものが1件でもあれば、部分Bundleを
-    # 成功結果として返さない（同 §3末尾）。複合workspaceでは修飾ID解決の優先順位（関係・
-    # トレースモデル §5.1）に従う`multirelate.field_diagnostics`を使い、request workspace自身が
-    # 所有する完全解決対象文書だけへDiagnosticを生成する（複合workspace仕様 §7「無関係memberを
+    # 閉包内の文書が宣言する強い関係のうち、解決できないものが1件でもあれば、一部が欠けたコンテキスト一式を
+    # 成功の結果として返さない（同 §3末尾）。複合ワークスペースでは修飾IDの解決の優先順位（関係・
+    # トレースモデル §5.1）に従う`multirelate.field_diagnostics`を使い、起点ワークスペース自身が
+    # 所有する完全解決の対象文書だけへ診断を生成する（複合ワークスペース仕様 §7「無関係なメンバーを
     # 完全検査しない」）。
     if multi_active:
         scoped_entries = [e for e in relations_mod.valid_entries(catalog.entries) if e.doc_id in context_documents]
@@ -601,7 +601,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         doc_id: digest_mod.normalize_body_text(id_index[doc_id].body or "") for doc_id in context_documents
     }
 
-    # --- role割当て（§7） ----------------------------------------------------
+    # --- 役割の割当て（§7） ----------------------------------------------------
     root_id_set = set(expansion.root_documents)
     superseded_origin_id, superseded_successor_id = (
         expansion.superseded_origin if expansion.superseded_origin is not None else (None, None)
@@ -610,7 +610,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     for doc_id in context_documents:
         entry = id_index[doc_id]
         if doc_id == superseded_origin_id:
-            # §6.1「5.」: 置換済み起点はroleをrootからadvisoryへ差し替える。
+            # §6.1「5.」: 置換済みの起点は、役割を`root`から`advisory`へ差し替える。
             roles[doc_id] = "advisory"
         elif doc_id == superseded_successor_id:
             roles[doc_id] = "replacement"
@@ -637,10 +637,10 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         role = roles[doc_id]
         if role == "advisory":
             return "reference"
-        # full projectionにするのは起点・TASK（work）・replacement・requirement・constraintと、
-        # それら以外の距離1の文書（context仕様 §5）。requirement/constraintを距離で
-        # normativeへ落とさないのは、requires/addressesで到達したそれらのstatementが
-        # targetStatementsへ昇格せずConstraint Ledgerへ収録されないため（ADR-014 Decision 4）。
+        # 提示形式`full`にするのは、起点・TASK（役割`work`）・役割`replacement`・役割`requirement`・役割`constraint`の文書と、
+        # それら以外の距離1の文書（`bitz context`仕様 §5）。役割`requirement`・`constraint`の文書を距離で
+        # 提示形式`normative`へ落とさないのは、`requires`・`addresses`で到達したそれらの規範文が
+        # `targetStatements`へ昇格せず制約台帳へ収録されないため（ADR-014の`Decision` 4）。
         if role in ("root", "work", "replacement", "requirement", "constraint"):
             return "full"
         if expansion.document_distance.get(doc_id, 0) <= 1:
@@ -649,7 +649,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             return "normative"
         return "full"
 
-    # --- 上限検査（§8）。閉包規模はdetail=standardでの提示量（既定・設定に依存しない基準）で測る。 ---
+    # --- 上限検査（§8）。閉包の規模は、詳細度`standard`での提示量（既定・設定に依存しない基準）で測る。 ---
     ctx_cfg = config_raw.get("context") or {}
     max_documents = min(ctx_cfg.get("maxDocuments", DEFAULT_MAX_DOCUMENTS), HARD_MAX_DOCUMENTS)
     max_bytes = min(ctx_cfg.get("maxBytes", DEFAULT_MAX_BYTES), HARD_MAX_BYTES)
@@ -672,8 +672,8 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         bundle["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
         return bundle, EXIT_CODE_BY_STATUS["blocked"]
 
-    # --- Constraint Ledger、coverage（§6.4、関係・トレースモデル §8）。内部計算はrequest
-    # workspace非修飾＋他workspace修飾の内部表現のまま行い、出力へ組み立てる直前でだけqualifyする。 ---
+    # --- 制約台帳、カバレッジ（§6.4、関係・トレースモデル §8）。内部計算は起点ワークスペースが
+    # 非修飾、他のワークスペースが修飾の内部表現のまま行い、出力へ組み立てる直前でだけ修飾する。 ---
     ledger_statements = []
     for stmt_id in expansion.target_statements:
         stmt = statement_index[stmt_id]
@@ -693,10 +693,10 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         )
 
     def _decanon(s: str) -> str:
-        # `total`はrequest workspace内部表現（active自身はbare、他workspaceは修飾）のまま
-        # 保つ（statement_index参照のため）。宣言側のrefは必ず複合workspace正規形式（cref、
-        # activeを指す場合も`"<active>::local"`）になるため、比較の直前にだけactive
-        # workspace自身のqualifierを剥がして内部表現へ揃える。
+        # `total`は起点ワークスペースの内部表現（作業ワークスペース自身は修飾なし、他のワークスペースは修飾）のまま
+        # 保つ（`statement_index`を参照するため）。宣言する側の`ref`は必ず複合ワークスペースの正規形式（`cref`、
+        # 作業ワークスペースを指す場合も`"<active>::local"`）になるため、比較の直前にだけ作業
+        # ワークスペース自身の修飾を外して内部表現へ揃える。
         prefix = f"{workspace_id}::"
         return s[len(prefix):] if multi_active and s.startswith(prefix) else s
 
@@ -794,7 +794,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 }
             )
 
-    # --- catalog Diagnostic（EARS-AI等）: context文書のものだけを含める -----------------
+    # --- 文書の一覧の診断（EARS-AIなど）: コンテキスト文書のものだけを含める -----------------
     catalog_diags: list[dict] = []
     for doc_id in context_documents:
         entry = id_index[doc_id]
@@ -804,7 +804,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     all_diags = sort_diagnostics(catalog_diags + coverage_diags)
     status = status_from_diagnostics(all_diags)
 
-    # --- 複合workspace: 到達workspaceとcrossWorkspaceEdges（複合workspace仕様 §6）。 -----------
+    # --- 複合ワークスペース: 到達ワークスペースと`crossWorkspaceEdges`（複合ワークスペース仕様 §6）。 -----------
     reached_other: list[str] = []
     ws_path_by_id: dict[str, str] = {}
     cross_edges: list[dict] = []
@@ -830,7 +830,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 cross_edges.append({"relation": rel, "source": source_qid, "target": target_ref})
         cross_edges.sort(key=lambda e: (e["source"], e["relation"], e["target"]))
 
-    # --- Digest materials（§3） -----------------------------------------------
+    # --- ハッシュ値の材料（§3） -----------------------------------------------
     norm_frontmatters = {
         doc_id: _normalize_frontmatter(
             id_index[doc_id], owner_ws_id=(_owner_of(doc_id, workspace_id) if multi_active else None)
@@ -838,8 +838,8 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         for doc_id in context_documents
     }
 
-    # commands／verifyTimeoutsは`verify`のBundleだけが参照する（実行に使う実効設定であり、
-    # interpret／implementはtestを実行しないため含めない）。
+    # `commands`／`verifyTimeouts`は目的`verify`のコンテキスト一式だけが参照する（実行に使う実効設定であり、
+    # 目的`interpret`・`implement`ではテストを実行しないため含めない）。
     verify_cfg = config_raw.get("verify") or {}
     timeout_seconds = verify_cfg.get("timeoutSeconds", DEFAULT_VERIFY_TIMEOUT)
 
@@ -975,7 +975,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         key=lambda d: (expansion.document_distance.get(d, 0), _KIND_RANK[id_index[d].kind], d),
     )
 
-    # --- projection割当て（§5） ------------------------------------------------
+    # --- 提示形式（`projection`）の割当て（§5） ------------------------------------------------
     projections = {doc_id: _projection_for(doc_id, detail) for doc_id in context_documents}
 
     expand_lookup = {_lookup_key(e): e for e in expand_ids} if multi_active else {e: e for e in expand_ids}
@@ -1044,7 +1044,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         bundle["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
         return bundle, EXIT_CODE_BY_STATUS["blocked"]
 
-    # --- documents[]組み立て -----------------------------------------------
+    # --- `documents[]`の組み立て -----------------------------------------------
     documents_out = []
     for doc_id in documents_sorted:
         entry = id_index[doc_id]

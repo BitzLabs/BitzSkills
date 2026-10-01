@@ -1,13 +1,13 @@
-"""複合workspaceの全体事前検査（`02_SPECモデル/05_複合workspace仕様.md`）。
+"""複合ワークスペースの全体事前検査（複合ワークスペース仕様）。
 
-Step 5A範囲: §2（catalog）、§3（workspace決定・`--workspace`終了コード4）、§5.1（member path
-canonical判定のうちsegment境界・symlink・submodule・別worktree／repository）、§8（全体操作の発見と
-Git既知設定の事前検査）、§10（snapshot全体のresource上限と早期停止）を実装する。
+Step 5Aの範囲: §2（カタログ）、§3（ワークスペースの決定・`--workspace`の終了コード4）、§5.1（メンバーのパスの
+正規の判定のうち、セグメントの境界・シンボリックリンク・サブモジュール・別のワークツリー／リポジトリ）、§8（全体操作の発見と
+Gitの既知の設定の事前検査）、§10（スナップショット全体のリソースの上限と早期停止）を実装する。
 
 事前検査が非成功なら :func:`precheck` は ``ok=False`` を返し、呼び出し側（`check.py`／`doctor.py`）は
-member処理（横断relation解決、member単位のcheck/verify/context）を一切開始せず、`workspaces: []`の
-全体結果を返す（複合workspace仕様 §8「非成功ならmember処理、Context解決、verify commandを開始せず、
-workspaces: []で結果を返す」）。member処理そのものはStep 5B・5Cで実装するため、事前検査を通過した
+メンバーの処理（横断する関係の解決、メンバー単位の`check`/`verify`/`context`）を一切開始せず、`workspaces: []`の
+全体結果を返す（複合ワークスペース仕様 §8「非成功ならメンバーの処理、コンテキストの解決、テストコマンドの実行を開始せず、
+`workspaces: []`で結果を返す」）。メンバーの処理そのものはStep 5B・5Cで実装するため、事前検査を通過した
 場合は呼び出し側が既存の:class:`~bitz.notimpl.NotImplementedOperation`の作法で明示的に停止する。
 """
 
@@ -25,9 +25,9 @@ from .earsai.scanner import scan_candidates
 from .resultmodel import worst_status
 from .yamlsafe import YamlForbiddenError, YamlSyntaxError, parse_yaml_subset
 
-# 優先順位（`Diagnostic registry` §7・複合workspace仕様 §11）。同じmember／同じraw原因に複数の
-# 候補codeが成立する場合、最小priorityの1件だけを残す（`_PRIORITY.get`未知codeは0＝最優先として
-# 扱う。member配下から返る一般的なSPEC-CONFIG-*系はmulti系codeより常に優先する）。
+# 優先順位（診断レジストリ §7・複合ワークスペース仕様 §11）。同じメンバー／同じ元の原因に複数の
+# 候補のコードが成立する場合、最小の`priority`の1件だけを残す（`_PRIORITY.get`の未知のコードは0＝最優先として
+# 扱う。メンバー配下から返る一般的な`SPEC-CONFIG-*`系は`SPEC-MULTI-*`系のコードより常に優先する）。
 _PRIORITY = {
     "SPEC-MULTI-CONFIG-001": 900,
     "SPEC-MULTI-MEMBER-001": 910,
@@ -51,13 +51,13 @@ HARD_LIMITS: dict[str, int] = {
     "relationEdgeCount": 1_000_000,
     "traceEntryCount": 1_000_000,
     "commandDefinitionCount": 10_000,
-    # `verifyBindingCount`は事前検査（catalog全体のsnapshot走査）では計数しない。1回のverify
-    # 実行計画のbinding数だけに適用するため`verify.py`が自分で数える（複合workspace仕様 §10）。
+    # `verifyBindingCount`は事前検査（カタログ全体のスナップショットの走査）では計数しない。1回の`verify`
+    # の実行計画のテスト割当ての数だけに適用するため、`verify.py`が自分で数える（複合ワークスペース仕様 §10）。
     "verifyBindingCount": 10_000,
 }
 
-# 早期停止時にどのdimensionを優先して報告するか（§10「複数のdimensionが同時に超過する場合は…」の
-# 一般化。Step 5Aの範囲ではverifyBindingCountを計算しないため対象外とする）。
+# 早期停止のときにどの次元を優先して報告するか（§10「複数の次元が同時に超過する場合は…」の
+# 一般化。Step 5Aの範囲では`verifyBindingCount`を計算しないため対象外とする）。
 _LIMIT_DIMENSION_ORDER = (
     "specFileCount",
     "inputBytes",
@@ -71,8 +71,8 @@ _LIMIT_DIMENSION_ORDER = (
 @dataclass
 class MemberRecord:
     id: str
-    path: str  # repository root相対（"/"区切り、正規化済み）
-    root: str  # 絶対path
+    path: str  # リポジトリのルートからの相対パス（"/"区切り、正規化済み）
+    root: str  # 絶対パス
     config: dict
 
 
@@ -82,8 +82,8 @@ class PrecheckResult:
     ok: bool = False
     root_id: str | None = None
     diagnostics: list[Diagnostic] = field(default_factory=list)
-    git_status: str = "blocked"  # doctorのchecks[]用（"passed"／"blocked"）
-    catalog_status: str | None = None  # doctorのchecks[]用（Noneならcatalog checkを出力しない）
+    git_status: str = "blocked"  # `doctor`の`checks[]`用（"passed"／"blocked"）
+    catalog_status: str | None = None  # `doctor`の`checks[]`用（Noneならカタログの検査項目を出力しない）
     members: list[MemberRecord] = field(default_factory=list)
     repo_root: str | None = None
 
@@ -100,10 +100,10 @@ def _root_source(root_id: str | None, key: str | None = None) -> dict:
 
 
 def _locate_root(cwd: str, git: gitutil.GitInfo, env: dict[str, str]) -> tuple[str | None, str | None, bool]:
-    """複合workspace全体操作の候補root(絶対path)と`.spec/bitz.yaml`を発見する（`複合workspace仕様 §8`）。
+    """複合ワークスペースの全体操作の候補のルート（絶対パス）と`.spec/bitz.yaml`を発見する（複合ワークスペース仕様 §8）。
 
     戻り値は``(repo_root, config_path, git_boundary_confirmed)``。候補を発見できなければ
-    ``(None, None, False)``（呼び出し側はinvocation error・終了コード4）。
+    ``(None, None, False)``（呼び出し側は引数不正・終了コード4）。
     """
 
     if git.available and git.executable:
@@ -115,9 +115,9 @@ def _locate_root(cwd: str, git: gitutil.GitInfo, env: dict[str, str]) -> tuple[s
                 return root, cfg, True
             return None, None, False
 
-    # Git不在、またはGit toplevelを解決できない場合のfallback: current directory自身を候補にする
-    # （member配下からの広域探索はGitに依存するため提供できないが、cwd自身に候補があれば
-    # `SPEC-MULTI-GIT-001`／blockedとして境界確定不能を報告できる。`複合workspace仕様 §10`）。
+    # Gitがない、またはGitの最上位のディレクトリを解決できない場合のフォールバック: 現在のディレクトリ自身を候補にする
+    # （メンバー配下からの広域の探索はGitに依存するため提供できないが、現在のディレクトリ自身に候補があれば
+    # `SPEC-MULTI-GIT-001`／`blocked`として境界を確定できないことを報告できる。複合ワークスペース仕様 §10）。
     root = os.path.abspath(cwd)
     cfg = os.path.join(root, ".spec", "bitz.yaml")
     if os.path.isfile(cfg) and not os.path.islink(os.path.join(root, ".spec")):
@@ -192,11 +192,11 @@ def _validate_multiworkspace_shape(root_config: dict, root_id: str | None) -> tu
 def _member_config_check(
     root_id: str, root: str, mid: str, mpath: str, *, check_id_match: bool = True
 ) -> tuple[Diagnostic | None, dict | None]:
-    """member自身の`.spec/bitz.yaml`を検証する（MEMBER stage、910）。``mpath``はlexically有効な前提。
+    """メンバー自身の`.spec/bitz.yaml`を検証する（MEMBER段階、910）。``mpath``は字句として有効な前提。
 
-    ``check_id_match``は呼び出し側が``mid``自体の構文を既に不正と判定済みのとき``False``にする
-    （catalogのid形式不正はID stage、920が単独のprimaryになれるよう、無意味なmismatch比較を
-    しない。priorityどおりMEMBER(910)をID(920)より優先するのは、両者が独立に成立する場合だけに限る）。
+    ``check_id_match``は呼び出し側が``mid``自体の構文をすでに不正と判定済みのとき``False``にする
+    （カタログのid形式の不正はID段階、920が単独の主診断になれるよう、無意味な不一致の比較を
+    しない。`priority`どおりMEMBER(910)をID(920)より優先するのは、両者が独立に成立する場合だけに限る）。
     """
 
     member_root = os.path.join(root, *mpath.split("/"))
@@ -217,7 +217,7 @@ def _member_config_check(
                 else messages.MULTI_VERSION_EARS_MAJOR
             )
             return _diag(code, "blocked", msg, _root_source(root_id, "multiWorkspace.members")), None
-        # 一般的な設定不適合（YAML構文・型・必須field・I/O）はmember自身のDiagnosticをそのまま返す。
+        # 一般的な設定の不適合（YAML構文・型・必須のフィールド・I/O）はメンバー自身の診断をそのまま返す。
         all_diags = m_outcome.diagnostics + m_outcome.warnings
         return (all_diags[0] if all_diags else _diag(
             "SPEC-CONFIG-SCHEMA-001", "error", "member設定が不正です", _root_source(root_id, "multiWorkspace.members")
@@ -248,11 +248,11 @@ class _LocalMember:
 def _evaluate_member_local(
     root: str, root_id: str, mid: str, mpath: str
 ) -> tuple[Diagnostic | None, _LocalMember | None]:
-    """1つのmemberについて、他memberとの比較を伴わないcandidateを集め、最小priorityの1件を選ぶ。
+    """1つのメンバーについて、他のメンバーとの比較を伴わない候補を集め、最小の`priority`の1件を選ぶ。
 
-    同じmemberに複数条件が成立しても、返すDiagnosticは1件だけにする
-    （`Diagnostic registry` §2「1つのraw原因から同義Diagnosticを複数生成しない」の運用として、
-    "1つのmember"を単位に適用する）。
+    同じメンバーに複数の条件が成立しても、返す診断は1件だけにする
+    （診断レジストリ §2「1つの元の原因から、同義の診断を複数生成しない」の運用として、
+    「1つのメンバー」を単位に適用する）。
     """
 
     candidates: list[Diagnostic] = []
@@ -298,7 +298,7 @@ def _deep_path_check(
     submodule_paths: set[str],
     worktree_paths: set[str],
 ) -> Diagnostic | None:
-    """symlink祖先・submodule・別worktree・別repositoryを検証する（PATH stage、930・Git依存）。"""
+    """上位のディレクトリにあるシンボリックリンク・サブモジュール・別のワークツリー・別のリポジトリを検証する（PATH段階、930・Git依存）。"""
 
     if rec.path in submodule_paths:
         return _diag(
@@ -338,12 +338,12 @@ def _validate_catalog(
     *,
     skip_limit_dimensions: frozenset[str] = frozenset(),
 ) -> tuple[list[Diagnostic], list[MemberRecord] | None]:
-    """catalog・ID・path・version・未登録設定を検証する（優先順位900〜960。GITは呼び出し側で解決済み）。
+    """カタログ・ID・パス・バージョン・未登録の設定を検証する（優先順位900〜960。`GIT`は呼び出し側で解決済み）。
 
-    独立したraw原因はそれぞれ1件のDiagnosticを持つ（`Diagnostic registry` §2）。同じmemberに
-    複数条件が成立する場合や、2 member間の同一raw原因（重複ID・重複／入れ子path）は1件に絞る。
-    catalog自体が構成できない場合（`multiWorkspace`の形状不正）だけ、単独のhard stopとして
-    1件のDiagnosticを返す。問題がなければ ``([], member_records)`` を返す。
+    独立した元の原因はそれぞれ1件の診断を持つ（診断レジストリ §2）。同じメンバーに
+    複数の条件が成立する場合や、2つのメンバーの間の同一の元の原因（重複ID・重複／入れ子のパス）は1件に絞る。
+    カタログ自体が構成できない場合（`multiWorkspace`の形状不正）だけ、単独の打ち切りとして
+    1件の診断を返す。問題がなければ ``([], member_records)`` を返す。
     """
 
     shape_diag, members_raw = _validate_multiworkspace_shape(root_config, root_id)
@@ -351,7 +351,7 @@ def _validate_catalog(
         return [shape_diag], None
     assert members_raw is not None
 
-    # --- PASS A: memberごとの独立検証（ID構文・path lexical・member設定） -----------------
+    # --- PASS A: メンバーごとの独立検証（IDの構文・パスの字句・メンバーの設定） -----------------
     local_diags: list[Diagnostic] = []
     locals_: list[_LocalMember | None] = []
     for mid, mpath in members_raw:
@@ -362,7 +362,7 @@ def _validate_catalog(
 
     clean_indices = [i for i, rec in enumerate(locals_) if rec is not None]
 
-    # --- PASS B: 2 member間のpairwise raw原因（重複ID・重複／入れ子path）を1件ずつに絞る -------
+    # --- PASS B: 2つのメンバーの間の組ごとの元の原因（重複ID・重複／入れ子のパス）を1件ずつに絞る -------
     consumed: set[int] = set()
     pairwise_diags: list[Diagnostic] = []
     for pos_i in range(len(clean_indices)):
@@ -402,7 +402,7 @@ def _validate_catalog(
                 consumed.add(j)
                 break
 
-    # --- PASS C: 残ったmemberだけGit依存の深い判定（symlink／submodule／worktree／別repository） ---
+    # --- PASS C: 残ったメンバーだけGit依存の深い判定（シンボリックリンク／サブモジュール／ワークツリー／別のリポジトリ） ---
     deep_diags: list[Diagnostic] = []
     members: list[MemberRecord] = []
     remaining = [i for i in clean_indices if i not in consumed]
@@ -431,20 +431,20 @@ def _validate_catalog(
     if all_diags:
         return all_diags, None
 
-    # --- UNREGISTERED stage（960） --------------------------------------------------
-    # 各snapshotは自身のcatalogとだけ比較する（複合workspace仕様 §8「各snapshot自身のroot設定が
-    # multiWorkspaceを宣言する場合だけ、そのsnapshot自身のcatalogとの差分を検査する」）。base
-    # snapshotがcurrentと異なるmember構成（例: member pathのrename）を持つ場合、base snapshotの
-    # 既知設定はbase snapshot自身のcatalogへ照合し、current側の既知設定はcurrent catalogへ照合する
-    # （どちらか一方の集合だけで比較すると、IDを保ったmember移動を誤ってunregisteredにする）。
+    # --- UNREGISTERED段階（960） --------------------------------------------------
+    # 各スナップショットは自身のカタログとだけ比較する（複合ワークスペース仕様 §8「各スナップショット自身のルートの
+    # 設定が`multiWorkspace`を宣言する場合だけ、そのスナップショット自身のカタログとの差分を検査する」）。基準版の
+    # スナップショットが現在版と異なるメンバー構成（例: メンバーのパスのリネーム）を持つ場合、基準版の
+    # スナップショットの既知の設定は基準版自身のカタログへ照合し、現在版側の既知の設定は現在版のカタログへ照合する
+    # （どちらか一方の集合だけで比較すると、IDを保ったメンバーの移動を誤って未登録にする）。
     if git.available and git.executable:
         catalog_paths = {".spec/bitz.yaml"} | {f"{rec.path}/.spec/bitz.yaml" for rec in members}
         extra_set: set[str] = set()
         for rev in extra_config_revs:
             rev_map = base_workspace_map(git, cwd, env, rev, root)
             if not rev_map:
-                # このrevはmultiWorkspaceを宣言していない（単一workspaceから複合workspace化する前の
-                # snapshot）。repository全体の不存在保証を遡及適用しない（複合workspace仕様 §8）。
+                # このリビジョンは`multiWorkspace`を宣言していない（単一ワークスペースから複合ワークスペース化する前の
+                # スナップショット）。リポジトリ全体の不存在保証をさかのぼって適用しない（複合ワークスペース仕様 §8）。
                 continue
             rev_catalog_paths = {
                 ".spec/bitz.yaml" if p == "." else f"{p}/.spec/bitz.yaml" for p in rev_map.values()
@@ -463,9 +463,9 @@ def _validate_catalog(
                 for p in extra
             ], None
 
-    # --- LIMIT stage（970） -------------------------------------------------------
-    # 上限超過は複合workspace全体を停止する単一のraw原因であり、`複合workspace仕様 §10`のとおり
-    # 最初に検出したdimensionで早期停止する（複数member個別の独立raw原因とは扱いが異なる）。
+    # --- LIMIT段階（970） -------------------------------------------------------
+    # 上限の超過は複合ワークスペース全体を停止する単一の元の原因であり、複合ワークスペース仕様 §10のとおり
+    # 最初に検出した次元で早期停止する（複数のメンバーに個別の独立した元の原因とは扱いが異なる）。
     limit_diag = _check_resource_limits(root, root_id, root_config, members, skip_dimensions=skip_limit_dimensions)
     if limit_diag is not None:
         return [limit_diag], None
@@ -507,8 +507,8 @@ def _extract_frontmatter_dict(text: str) -> dict:
 def _scan_document_counts(text: str) -> tuple[int, int, int]:
     """``(statementCount, relationEdgeCount, traceEntryCount)``をこの1文書分だけ返す。
 
-    本文全体を保持せず、この関数の呼び出しが終われば``text``は解放できる（複合workspace仕様
-    §10.1「全file本文を索引として同時保持しない」）。
+    本文全体を保持せず、この関数の呼出しが終われば``text``は解放できる（複合ワークスペース仕様
+    §10.1「全ファイルの本文を索引として同時に保持しない」）。
     """
 
     candidates = scan_candidates(text)
@@ -563,8 +563,8 @@ def _check_resource_limits(
     *,
     skip_dimensions: frozenset[str] = frozenset(),
 ) -> Diagnostic | None:
-    # memberCountは`multiWorkspace.maxMembers`（既定20、範囲1〜100）の実効上限で判定し、Core hard limit
-    # 100を超えない（複合workspace仕様 §2・§10）。値域は_validate_catalogで検査済み。
+    # `memberCount`は`multiWorkspace.maxMembers`（既定20、範囲1〜100）の実効上限で判定し、Coreの絶対上限
+    # 100を超えない（複合ワークスペース仕様 §2・§10）。値域は_validate_catalogで検査済み。
     member_count = len(members)
     max_members = (root_config.get("multiWorkspace") or {}).get("maxMembers", 20)
     member_limit = min(max_members, HARD_LIMITS["memberCount"])
@@ -625,7 +625,7 @@ def _check_resource_limits(
 
 
 def ordered_workspaces(pre: "PrecheckResult") -> list[tuple[str, str, str]]:
-    """``(workspace_id, root_abs, repository_root相対path)``をroot先頭、以降ID辞書順で返す(§8)。"""
+    """``(workspace_id, root_abs, リポジトリのルートからの相対パス)``をルートを先頭に、以降はIDの辞書順で返す(§8)。"""
 
     out: list[tuple[str, str, str]] = [(pre.root_id, pre.repo_root, ".")]
     for m in sorted(pre.members, key=lambda r: r.id):
@@ -634,11 +634,11 @@ def ordered_workspaces(pre: "PrecheckResult") -> list[tuple[str, str, str]]:
 
 
 def is_declared(cwd: str, git: gitutil.GitInfo, env: dict[str, str]) -> bool:
-    """repository rootの有効な設定が複合workspaceを宣言しているかを返す。
+    """リポジトリのルートの有効な設定が複合ワークスペースを宣言しているかを返す。
 
-    workspace単独操作が非修飾targetを受けた場合でも、memberを含むcatalogを使う必要がある。
-    一方、単一workspaceで :func:`precheck` を実行すると``multiWorkspace``不在を設定不適合として
-    扱うため、呼び出し側はこの軽量判定を先に使う。
+    単独操作が非修飾の対象を受けた場合でも、メンバーを含むカタログを使う必要がある。
+    一方、単一ワークスペースで :func:`precheck` を実行すると``multiWorkspace``の不在を設定不適合として
+    扱うため、呼び出し側はこの軽量な判定を先に使う。
     """
 
     _root, config_path, _git_confirmed = _locate_root(cwd, git, env)
@@ -657,16 +657,16 @@ def base_workspace_map(
     *,
     current_root_id: str | None = None,
 ) -> dict[str, str]:
-    """``base_rev``時点のroot／member catalogを``{workspace_id: repository_root相対path}``で返す。
+    """``base_rev``の時点のルート／メンバーのカタログを``{workspace_id: リポジトリのルートからの相対パス}``で返す。
 
-    root workspaceのIDは基準版のFrontmatter``workspace.id``をそのまま使う。基準版のroot設定が
+    ルートワークスペースのIDは基準版のフロントマターの``workspace.id``をそのまま使う。基準版のルートの設定が
     ``multiWorkspace``を宣言していない場合は、``current_root_id``が与えられ、かつ基準版が
-    ``workspace.id``を省略しているときに限り、単一workspaceから初めて複合workspace化するGit比較の
-    写像（複合workspace仕様 §4.1後段）として基準版の実効ID`root`を``current_root_id``へ
-    一方向写像した``{current_root_id: "."}``を返す（状態遷移・削除検出・承認済みREQ保護の
-    base/current対応にだけ使う）。``current_root_id``を渡さない呼び出し（全体事前検査のGit既知設定
-    比較。複合workspace仕様 §8「初回複合workspace化前の単一workspace snapshotへrepository全体の
-    不存在保証を遡及適用しない」）では、この写像を行わず引き続き空dictを返す。
+    ``workspace.id``を省略しているときに限り、単一ワークスペースから初めて複合ワークスペース化するGitの比較の
+    写像（複合ワークスペース仕様 §4.1後段）として、基準版の実効ID`root`を``current_root_id``へ
+    一方向に写像した``{current_root_id: "."}``を返す（状態遷移・削除の検出・承認済み要求の保護の
+    基準版／現在版の対応にだけ使う）。``current_root_id``を渡さない呼出し（全体事前検査のGitの既知の設定の
+    比較。複合ワークスペース仕様 §8「初めて複合ワークスペース化する前の単一ワークスペースのスナップショットへ、
+    リポジトリ全体の不存在保証をさかのぼって適用しない」）では、この写像を行わず、引き続き空の``dict``を返す。
     """
 
     if base_rev is None or not git.available or git.executable is None:
@@ -716,19 +716,19 @@ def precheck(
     extra_config_revs: list[str] | None = None,
     skip_limit_dimensions: frozenset[str] = frozenset(),
 ) -> PrecheckResult:
-    """`--all-workspaces`の全体事前検査（`複合workspace仕様 §8`）。
+    """`--all-workspaces`の全体事前検査（複合ワークスペース仕様 §8）。
 
-    ``extra_config_revs``は現在snapshotに加えてGit既知設定を比較するrevisionの一覧
-    （checkの`--base`、doctorのHEADなど。§8「checkは指定base snapshot、doctorはHEAD snapshotも
-    対象にする」）。
+    ``extra_config_revs``は、現在のスナップショットに加えてGitの既知の設定を比較するリビジョンの一覧
+    （`check`の`--base`、`doctor`の`HEAD`など。§8「`check`は指定した基準版のスナップショット、`doctor`は`HEAD`の
+    スナップショットも対象にする」）。
 
-    ``skip_limit_dimensions``は全体事前検査のresource上限判定から除外するdimension名の集合
-    （空集合が既定＝従来どおり全dimensionを判定する）。`verifyBindingCount`は
-    `commandDefinitionCount`の部分集合であり両方が同時に超過し得るが、複数dimensionが同時に
-    超過する場合はverify実行計画のdimensionを優先して報告する（複合workspace仕様 §10）。
-    `verify --all-workspaces`は自分のbinding計画からverifyBindingCountを直接数えるため、
-    ここでは`commandDefinitionCount`を渡して一般事前検査の早期停止を避け、verify側の判定を
-    優先させる。check／doctorは空集合のまま呼び出し、この判定順を変えない。
+    ``skip_limit_dimensions``は全体事前検査のリソースの上限の判定から除外する次元の名前の集合
+    （空集合が既定＝従来どおり全次元を判定する）。`verifyBindingCount`は
+    `commandDefinitionCount`の部分集合であり、両方が同時に超過し得るが、複数の次元が同時に
+    超過する場合は`verify`の実行計画の次元を優先して報告する（複合ワークスペース仕様 §10）。
+    `verify --all-workspaces`は自分のテスト割当ての計画から`verifyBindingCount`を直接数えるため、
+    ここでは`commandDefinitionCount`を渡して一般の事前検査の早期停止を避け、`verify`側の判定を
+    優先させる。`check`と`doctor`は空集合のまま呼び出し、この判定順を変えない。
     """
 
     root, cfg_path, git_confirmed = _locate_root(cwd, git, env)

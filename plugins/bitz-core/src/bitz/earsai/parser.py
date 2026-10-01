@@ -1,16 +1,16 @@
-"""EARS-AI Parser（EARS-AI仕様 §3・§4・§7）。
+"""EARS-AI構文解析器（EARS-AI言語・意味中間表現仕様 §3・§4・§7）。
 
-候補Scanner（scanner.py）が返した各候補行へ、字句primitive（lexer.py）を適用して
-statement文法（§3 EBNF）を検証し、Semantic IR（ir.py）または構文条件を返す。
+走査器（scanner.py）が返した各候補行へ、字句解析器の基本部品（lexer.py）を適用して
+規範文の文法（§3 EBNF）を検証し、意味中間表現（ir.py）または構文の条件を返す。
 
-- 同一raw原因からは1件のconditionだけを返す。各statementの構文検証は最初に破綻した
-  条件で即座にreturnするため（早期return方式）、複数の破綻候補が同じ位置に重なる場合
-  （例: 未閉鎖code spanの結果として未閉鎖tagにもなる）でも、自然に先に検出した方だけを
-  返す。検出順は§4末尾のpriority順（未閉鎖code span→未閉鎖／不正tag→ID形式→tag順序→
-  必須tag不足→発動条件複数→句点欠落→operand不足）と一致させてある。
-- `SHOULD`理由なしと未知namespace extensionはIRを返したうえで条件も返す（統語的には
+- 同一の元の原因からは1件の条件だけを返す。各規範文の構文検証は最初に破綻した
+  条件で即座に`return`するため（早期に`return`する方式）、複数の破綻の候補が同じ位置に重なる場合
+  （例: 未閉鎖のコードスパンの結果として未閉鎖のタグにもなる）でも、自然に先に検出した方だけを
+  返す。検出順は§4末尾の`priority`の順（未閉鎖のコードスパン→未閉鎖／不正なタグ→ID形式→タグの順序→
+  必須のタグの不足→発動条件が複数→句点の欠落→オペランドの不足）と一致させてある。
+- `SHOULD`の理由がない場合と、未知の名前空間の拡張タグは、意味中間表現を返したうえで条件も返す（統語的には
   妥当なため）。
-- draft差分によるseverity決定はPhase Bへ委ねる。本moduleは`ir.CONDITION_*` kindだけを返す。
+- `draft`の差分による重大度の決定はフェーズBへ委ねる。本モジュールは`ir.CONDITION_*`の種類（`kind`）だけを返す。
 """
 
 from __future__ import annotations
@@ -25,14 +25,14 @@ from .scanner import scan_candidates
 
 @dataclass
 class ParseResult:
-    """1文書の解析結果。`statements`は§6のSemantic IR辞書の配列、文書順（line, column, ID順）。"""
+    """1文書の解析結果。`statements`は§6の意味中間表現の辞書の配列、文書順（行、列、ID順）。"""
 
     statements: list[dict] = field(default_factory=list)
     conditions: list[dict] = field(default_factory=list)
 
 
 def _looks_like_core_tag(content: str) -> bool:
-    """bracket内容がCore tag keyword（ACTORの`ACTOR:`prefix形も含む）に見えるか。"""
+    """角括弧の内容がCoreのタグのキーワード（ACTORの`ACTOR:`の接頭辞の形も含む）に見えるか。"""
 
     if content in lexer.CORE_TAG_KEYWORDS:
         return True
@@ -41,7 +41,7 @@ def _looks_like_core_tag(content: str) -> bool:
 
 
 def _is_valid_quoted_value(value: str) -> bool:
-    """`"`で始まり`"`で終わり、内部がqcharまたは既知escapeだけのquoted-valueか。"""
+    """`"`で始まり`"`で終わり、内部が`qchar`または既知のエスケープだけの`quoted-value`か。"""
 
     if len(value) < 2 or value[0] != '"' or value[-1] != '"':
         return False
@@ -56,14 +56,14 @@ def _is_valid_quoted_value(value: str) -> bool:
                 continue
             return False
         if ch == '"':
-            # 未escapeのDQUOTEはvalueの終端を意味するため、innerに現れてはならない。
+            # 未エスケープのDQUOTEは値の終端を意味するため、`inner`に現れてはならない。
             return False
         i += 1
     return True
 
 
 def _is_valid_extension_value(value: str) -> bool:
-    """extension値がbare-valueまたはquoted-valueとして妥当か（§3）。"""
+    """拡張タグの値が`bare-value`または`quoted-value`として妥当か（§3）。"""
 
     if value.startswith('"'):
         return _is_valid_quoted_value(value)
@@ -79,10 +79,10 @@ def _is_valid_extension(content: str) -> bool:
 
 
 def _scan_top_level_brackets(line: str, start: int) -> list[tuple[str, int]]:
-    """`start`から行末まで、code span外の妥当なtag bracketを出現順に列挙する（best-effort）。
+    """`start`から行末まで、コードスパンの外の妥当なタグの角括弧を出現順に列挙する（保証せず、可能な範囲で行う）。
 
-    不正escapeや未閉鎖code span／tagに出会った時点で、それ以降は判定できないため打ち切る
-    （後方に期待tagが「存在する」ことの検出だけが目的であり、網羅的な妥当性検証ではない）。
+    不正なエスケープや未閉鎖のコードスパン／タグに出会った時点で、それ以降は判定できないため打ち切る
+    （後方に期待するタグが「存在する」ことの検出だけが目的であり、網羅的な妥当性検証ではない）。
     """
 
     results: list[tuple[str, int]] = []
@@ -119,11 +119,11 @@ def _search_later(line: str, start: int, predicate) -> bool:
 
 
 def _classify_wrong_slot(content: str, line: str, search_from: int, predicate) -> str:
-    """期待slotに現れなかったbracketを分類する（作業依頼2026-09 #4）。
+    """期待する位置に現れなかった角括弧を分類する（作業依頼2026-09 #4）。
 
-    - Core tagでも妥当なextensionでもない → 不正tag（EAI-CORE-SYNTAX-004）。
-    - Core tagまたはextensionだが期待slotと違う → 同じ行の後方（code span外）に期待slotの
-      tagが実在すれば順序違い（tag順序不正）、実在しなければ必須tag不足。
+    - Coreのタグでも妥当な拡張タグでもない → 不正なタグ（EAI-CORE-SYNTAX-004）。
+    - Coreのタグまたは拡張タグだが期待する位置と違う → 同じ行の後方（コードスパンの外）に期待する位置の
+      タグが実在すれば順序違い（タグの順序の不正）、実在しなければ必須のタグの不足。
     """
 
     if not _looks_like_core_tag(content) and not _is_valid_extension(content):
@@ -150,10 +150,10 @@ def _operation_predicate(content: str) -> bool:
 
 
 class _StatementBreak(Exception):
-    """1候補行の構文解析を打ち切り、単一conditionを返すための内部例外。
+    """1つの候補行の構文解析を打ち切り、単一の条件を返すための内部例外。
 
-    `detail`は`CONDITION_TAG_UNCLOSED`の原因種別（"escape"／"quote"／"unclosed"／"invalid"）を
-    呼び出し側（document.py）が文面選択に使うためのbest-effort補助情報。他のkindでは常にNone。
+    `detail`は`CONDITION_TAG_UNCLOSED`の原因の種類（"escape"／"quote"／"unclosed"／"invalid"）を
+    呼び出し側（document.py）が文面の選択に使うための、保証せず可能な範囲で与える補助情報。他の種類（`kind`）では常に`None`。
     """
 
     def __init__(self, kind: str, column: int, *, detail: str | None = None) -> None:
@@ -171,7 +171,7 @@ def _bracket(line: str, pos: int) -> tuple[str, int]:
 
 
 def _wrong_slot_break(content: str, line: str, search_from: int, predicate, column: int) -> "_StatementBreak":
-    """`_classify_wrong_slot`の結果をkindへ応じたdetail付き`_StatementBreak`へ包む。"""
+    """`_classify_wrong_slot`の結果を、種類（`kind`）に応じた`detail`付きの`_StatementBreak`へ包む。"""
 
     kind = _classify_wrong_slot(content, line, search_from, predicate)
     detail = "invalid" if kind == ir_mod.CONDITION_TAG_UNCLOSED else None
@@ -179,11 +179,11 @@ def _wrong_slot_break(content: str, line: str, search_from: int, predicate, colu
 
 
 def _require_tag(line: str, pos: int, predicate) -> tuple[str, int]:
-    """`pos`位置に期待slotのtagがあることを要求する。
+    """`pos`の位置に、期待する位置のタグがあることを要求する。
 
-    `pos`にbracketがあってもpredicateを満たさない場合、または`pos`にbracketが無い場合、
-    行の後方search結果に応じてtag順序不正／必須tag不足を送出する。位置は常に`pos`
-    （期待slotのまま）とする。
+    `pos`に角括弧があっても`predicate`を満たさない場合、または`pos`に角括弧が無い場合は、
+    行の後方の探索の結果に応じて、タグの順序の不正／必須のタグの不足を送出する。位置は常に`pos`
+    （期待する位置のまま）とする。
     """
 
     if pos < len(line) and line[pos] == "[":
@@ -197,10 +197,10 @@ def _require_tag(line: str, pos: int, predicate) -> tuple[str, int]:
 
 
 def _parse_statement_pieces(line: str, id_column: int) -> tuple[dict, list[dict], list[int]]:
-    """1候補行を解析する。破綻時は`_StatementBreak`を送出する。
+    """1つの候補行を解析する。破綻時は`_StatementBreak`を送出する。
 
-    戻り値は(IR構成要素の辞書, ソフト条件の(kind, column)リスト用の生データ, 未使用)。
-    実際にはsoft conditionのkind/column対をタプルで返すため、下で組み立て直す。
+    戻り値は(意味中間表現の構成要素の辞書, 警告を伴う条件の(`kind`, `column`)のリスト用の元のデータ, 未使用)。
+    実際には警告を伴う条件の`kind`と`column`の組をタプルで返すため、下で組み立て直す。
     """
 
     pos0 = id_column - 1
@@ -286,7 +286,7 @@ def _parse_statement_pieces(line: str, id_column: int) -> tuple[dict, list[dict]
         peek_content, peek_next = _bracket(line, peek_pos)
         if peek_content == "REASON":
             if modality != "SHOULD":
-                # §7: MUSTまたはMAYの直後の[REASON]はtag順序不正とする。
+                # §7: `MUST`または`MAY`の直後の`[REASON]`はタグの順序の不正とする。
                 raise _StatementBreak(ir_mod.CONDITION_TAG_ORDER, peek_pos + 1)
             if peek_next >= len(line) or line[peek_next] != " ":
                 raise _StatementBreak(ir_mod.CONDITION_OPERAND_MISSING, peek_pos + 1)
@@ -312,8 +312,8 @@ def _parse_statement_pieces(line: str, id_column: int) -> tuple[dict, list[dict]
     except LexError as error:
         raise _StatementBreak(error.condition, error.offset + 1, detail=error.detail) from error
     if trailing_bracket_pos is not None:
-        # operationの後にtagは許されない（§3特例、§4.3の未escape'['終端規則）。
-        # 閉じなければ不正tag、閉じてCore tag keywordなら順序不正、それ以外は不正tag。
+        # `operation`の後にタグは許されない（§3の特例、§4.3の未エスケープの`[`による終端の規則）。
+        # 閉じなければ不正なタグ、閉じてCoreのタグのキーワードなら順序の不正、それ以外は不正なタグ。
         try:
             trailing_content, _end = lexer.read_bracket(line, trailing_bracket_pos)
         except LexError as error:
@@ -348,10 +348,10 @@ def _parse_statement_pieces(line: str, id_column: int) -> tuple[dict, list[dict]
 
 
 def parse_statement(line: str, line_number: int, id_column: int) -> tuple[dict | None, list[dict]]:
-    """1候補行を解析する。
+    """1つの候補行を解析する。
 
-    成功時は`(IR構成要素dict, soft conditionのリスト)`。`IR構成要素dict`は
-    `ir.build_semantic_ir`が要求するkeyのうち`path`・`line`・`column`・`raw`を除いたものを持つ。
+    成功時は`(意味中間表現の構成要素の辞書, 警告を伴う条件のリスト)`。この辞書は
+    `ir.build_semantic_ir`が要求するキーのうち`path`・`line`・`column`・`raw`を除いたものを持つ。
     構文が破綻した場合は`(None, [condition])`（条件は1件だけ）を返す。
     """
 
@@ -365,11 +365,11 @@ def parse_statement(line: str, line_number: int, id_column: int) -> tuple[dict |
 
 
 def parse_document(text: str, path: str) -> ParseResult:
-    """1文書のtext（Frontmatterを含む元file全体）を解析する。
+    """1文書のテキスト（フロントマターを含む元のファイル全体）を解析する。
 
-    行番号・列は元file基準のUnicode code point単位1始まりとする。改行はLFへ正規化する。
-    statement IDの文書内重複は`ir.CONDITION_ID_DUPLICATE`として、2回目以降の出現ごとに返す
-    （workspace横断のID一意性検査はPhase Bの責務）。
+    行番号・列は、元のファイルを基準にした、Unicodeのコードポイント単位で1始まりとする。改行はLFへ正規化する。
+    規範文IDの文書内の重複は`ir.CONDITION_ID_DUPLICATE`として、2回目以降の出現ごとに返す
+    （ワークスペースをまたぐIDの一意性検査はフェーズBの責務）。
     """
 
     normalized = text.replace("\r\n", "\n").replace("\r", "\n")

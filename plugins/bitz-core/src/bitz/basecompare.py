@@ -1,8 +1,8 @@
-"""Git基準版比較（`03_操作仕様/02_check.md` §5〜§9）。
+"""Gitの基準版との比較（`03_操作仕様/02_check.md` §5〜§9）。
 
-状態遷移・管理済みSPEC削除（§9文書仕様 §6・§9）、承認済みREQ保護（同 §8）、changed対象選択
-（check.md §6）、影響候補（check.md §8）をここへ集約する。いずれもGit基準版が解決できた場合
-（``revision``が非``None``）だけ呼び出し側（`check.py`）から呼ばれる。
+状態遷移・管理済み文書の削除（§9文書・フロントマター・状態仕様 §6・§9）、承認済み要求の保護（同 §8）、変更範囲の検査の対象選択
+（check.md §6）、影響候補（check.md §8）をここへ集約する。いずれもGitの基準版を解決できた場合
+（``revision``が``None``でない）だけ、呼び出し側（`check.py`）から呼ばれる。
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ from . import messages
 from .config import Diagnostic
 from .document import DocEntry, build_base_catalog
 
-#: 文書・Frontmatter・状態仕様 §6。
+#: 文書・フロントマター・状態仕様 §6。
 _REQ_TECH_TRANSITIONS: dict[str, set[str]] = {
     "draft": {"draft", "approved", "rejected"},
     "approved": {"approved", "draft", "outdated"},
@@ -31,7 +31,7 @@ _TASK_TRANSITIONS: dict[str, set[str]] = {
     "cancelled": {"cancelled"},
 }
 
-#: 関係・トレースモデル §3「強さ」。`related`はweakのため含めない。
+#: 関係・トレースモデル §3「強さ」。`related`は弱い関係のため含めない。
 STRONG_RELATIONS = ("requires", "refines", "addresses", "supersedes")
 
 
@@ -60,7 +60,7 @@ def load_base_catalog(
     workspace_root: str,
     workspace_id: str,
 ) -> dict[str, DocEntry]:
-    """Git基準版のcatalogを``doc_id -> DocEntry``で返す。解決不能なら空dict。"""
+    """Gitの基準版の文書の一覧を``doc_id -> DocEntry``で返す。解決できなければ空の``dict``。"""
 
     if not git.available or git.executable is None or base_commit is None:
         return {}
@@ -75,20 +75,20 @@ def state_transition_diagnostics(
     current_ids_present: set[str] | None = None,
     source_ids: set[str] | None = None,
 ) -> list[Diagnostic]:
-    """禁止状態遷移と管理済みSPEC削除を検査する（文書・Frontmatter・状態仕様 §6・§9）。
+    """禁止された状態遷移と、管理済み文書の削除を検査する（文書・フロントマター・状態仕様 §6・§9）。
 
-    基準版と現在版は``documentId``で対応付ける。path差だけの変更は
+    基準版と現在版は``documentId``で対応付ける。パスの差だけの変更は
     （``current_by_id``が現在版のIDだけで索引化されているため）同一文書として扱われ、
-    rename扱いになる。``current_ids_present``（省略時は``current_by_id``のkeyと同じ）は、
-    ID重複やFrontmatter破損でcheckの索引（``current_by_id``）から除かれた文書も含む、
-    現在版に実在するdocument ID全体である。これを使わずに``current_by_id``の有無だけで
-    削除を判定すると、重複IDで両方skip-documentになった文書を「削除された」と誤検出する
-    （ID重複はそれ自体`SPEC-ID-DUPLICATE-001`が既に報告するため、二重にDiagnosticを作らない）。
+    リネームとして扱われる。``current_ids_present``（省略時は``current_by_id``のキーと同じ）は、
+    IDの重複やフロントマターの破損で`check`の索引（``current_by_id``）から除かれた文書も含む、
+    現在版に実在する文書ID全体である。これを使わずに``current_by_id``にあるかどうかだけで
+    削除を判定すると、重複したIDで両方が`skip-document`になった文書を「削除された」と誤検出する
+    （IDの重複はそれ自体`SPEC-ID-DUPLICATE-001`が既に報告するため、二重に診断を作らない）。
 
     ``source_ids``を渡すと（`scope: selected`の`full_check_ids`）、対象を``doc_id``がその集合に
-    含まれる文書だけへ絞る（`check.md §5`「同じ基準版を対象選択、状態遷移、削除検出、REQ保護、
+    含まれる文書だけへ絞る（`check.md §5`「同じ基準版を対象選択、状態遷移、削除の検出、承認済み要求の保護、
     TASK境界へ使用」）。削除された文書のIDは現在版の索引（`source_ids`の元）に存在し得ないため、
-    この絞り込みだけで自然に「明示対象checkでは削除Diagnosticを生成しない」を満たす。
+    この絞り込みだけで自然に「明示対象の`check`では削除の診断を生成しない」を満たす。
     """
 
     if current_ids_present is None:
@@ -102,7 +102,7 @@ def state_transition_diagnostics(
         current_entry = current_by_id.get(doc_id)
         if current_entry is None:
             if doc_id in current_ids_present:
-                # ID重複などで索引から除かれただけで、実際には削除されていない。
+                # IDの重複などで索引から除かれただけで、実際には削除されていない。
                 continue
             diags.append(
                 _mk(
@@ -136,7 +136,7 @@ def state_transition_diagnostics(
 
 
 def _statement_semantics(entry: DocEntry) -> dict[str, tuple]:
-    """statement IDごとの意味field（source・rawを除く）を返す（承認済みREQ保護の比較対象）。"""
+    """規範文IDごとの意味フィールド（`source`・`raw`を除く）を返す（承認済み要求の保護の比較対象）。"""
 
     out: dict[str, tuple] = {}
     for stmt in entry.statements:
@@ -152,10 +152,10 @@ def _statement_semantics(entry: DocEntry) -> dict[str, tuple]:
 
 
 def _meaning_change_key(base_entry: DocEntry, current_entry: DocEntry) -> str | None:
-    """`title`、EARS-AI規範文の意味field、強い関係のいずれかが変わっていればそのkeyを返す。
+    """`title`、EARS-AI規範文の意味フィールド、強い関係のいずれかが変わっていれば、そのキーを返す。
 
-    `implements`、`tests`、`verify`、`related`、`x-`拡張、説明文だけの変更は対象外
-    （文書・Frontmatter・状態仕様 §8）。
+    `implements`、`tests`、`verify`、`related`、`x-`の拡張フィールド、説明文だけの変更は対象外
+    （文書・フロントマター・状態仕様 §8）。
     """
 
     if base_entry.title != current_entry.title:
@@ -177,7 +177,7 @@ def approved_protection_diagnostics(
     *,
     source_ids: set[str] | None = None,
 ) -> list[Diagnostic]:
-    """approved REQの意味変更時にstatusを戻していない場合を検査する（文書仕様 §8）。
+    """`approved`のREQの意味が変わったときに、状態を戻していない場合を検査する（文書・フロントマター・状態仕様 §8）。
 
     ``source_ids``（`scope: selected`の`full_check_ids`）を渡すと、対象をその集合内の文書だけへ
     絞る（`check.md §5`）。
@@ -192,7 +192,7 @@ def approved_protection_diagnostics(
             continue
         current_entry = current_by_id.get(doc_id)
         if current_entry is None or current_entry.status != "approved":
-            # 削除はSTATE-TRANSITIONが扱う。statusを戻していれば保護は働かない。
+            # 削除は`STATE-TRANSITION`が扱う。状態を戻していれば保護は働かない。
             continue
         key = _meaning_change_key(base_entry, current_entry)
         if key is not None:
@@ -218,9 +218,9 @@ def _owning_doc_id(path: str, current_by_path: dict[str, DocEntry], base_by_path
 
 
 def build_reverse_index(current_by_id: dict[str, DocEntry], field: str) -> dict[str, set[str]]:
-    """``implements``または``tests[].path``のpath逆索引を返す（`check.md §6`）。
+    """``implements``または``tests[].path``のパスの逆索引を返す（`check.md §6`）。
 
-    rejected REQ/TECHは所有逆索引へ含めない。
+    `rejected`のREQとTECHは所有の逆索引へ含めない。
     """
 
     index: dict[str, set[str]] = {}
@@ -247,12 +247,12 @@ def changed_selection(
     implements_index: dict[str, set[str]],
     tests_index: dict[str, set[str]],
 ) -> tuple[set[str], int, int]:
-    """引数なしcheckの対象文書選択（`check.md §6`）。
+    """引数なしの`check`の対象文書の選択（`check.md §6`）。
 
-    戻り値は``(owning_doc_ids, changedPathCount, excludedCodeTestPathCount)``。SPEC pathは
-    Frontmatter IDへ（現在版になければ削除検出用に基準版へ）正規化し、code／test pathは
-    `implements`／`tests[].path`の逆索引で正規化する。どの逆索引にも該当しないcode/test pathは
-    件数だけを残す（Diagnosticを出さない）。
+    戻り値は``(owning_doc_ids, changedPathCount, excludedCodeTestPathCount)``。仕様文書のパスは
+    フロントマターのIDへ（現在版になければ削除の検出用に基準版へ）正規化し、コードとテストのパスは
+    `implements`／`tests[].path`の逆索引で正規化する。どの逆索引にも該当しないコードとテストのパスは
+    件数だけを残す（診断を出さない）。
     """
 
     owning: set[str] = set()
@@ -284,9 +284,9 @@ def changed_spec_document_ids(
     base_by_path: dict[str, DocEntry],
     kinds: tuple[str, ...] = ("REQ", "TECH"),
 ) -> set[str]:
-    """SPEC pathが直接変更されたkinds文書のID集合を返す（影響候補 `check.md §8`の起点）。
+    """仕様文書のパスが直接変更された、``kinds``の文書のIDの集合を返す（影響候補 `check.md §8`の出発点）。
 
-    `related`、code、test変更を起点にしない（§8）ため、SPEC path直接変更だけを見る。
+    `related`、コード、テストの変更を出発点にしない（§8）ため、仕様文書のパスの直接の変更だけを見る。
     """
 
     result: set[str] = set()
@@ -307,7 +307,7 @@ def impact_candidate_diagnostics(
     *,
     source_ids: set[str] | None = None,
 ) -> list[Diagnostic]:
-    """changed REQ/TECHへ強く依存するapproved文書を警告する（`check.md §8`）。
+    """変更されたREQまたはTECHへ強く依存する`approved`の文書を警告する（`check.md §8`）。
 
     ``source_ids``（`scope: selected`の`full_check_ids`）を渡すと、警告を出す側（依存元）の文書を
     その集合内だけへ絞る（`check.md §5`）。

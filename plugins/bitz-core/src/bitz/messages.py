@@ -1,9 +1,9 @@
-"""Diagnostic summary文面を1箇所に集約する。
+"""診断の`summary`の文面を1箇所に集約する。
 
-`Diagnostic registry`（`docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md`）の各条件に
-対応する利用者向け日本語文面をここへ集める。可変部分（field名、doc種別名など）は引数で埋める。
-fixtureのexpected/*.jsonが`summary`を完全一致で比較するため、文言はここだけで管理し、
-呼び出し側（frontmatter.py／document.py／earsai_bridge.py／check.py）はこのmoduleの関数だけを使う。
+診断レジストリ（`docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md`）の各条件に
+対応する、利用者向けの日本語の文面をここへ集める。可変の部分（フィールド名、文書種別名など）は引数で埋める。
+fixtureの`expected/*.json`が`summary`を完全一致で比較するため、文言はここだけで管理し、
+呼び出し側（`frontmatter.py`／`document.py`／`earsai_bridge.py`／`check.py`）はこのモジュールの関数だけを使う。
 """
 
 from __future__ import annotations
@@ -30,12 +30,12 @@ def array_count_limit(key: str) -> str:
 SPEC_BOM = "SPEC file先頭のBOMを除いて解析を続行します"
 
 
-# --- workspace探索 --------------------------------------------------------
+# --- ワークスペースの探索 --------------------------------------------------------
 
 WORKSPACE_UNKNOWN_ENTRY = ".spec/内の未知fileをSPECとして読みません"
 
 
-# --- Frontmatter YAML構文層 -------------------------------------------------
+# --- フロントマターのYAML構文の層 -------------------------------------------------
 
 FRONTMATTER_LABEL = "Frontmatter"
 FRONTMATTER_YAML_LABEL = "Frontmatter YAML"
@@ -45,7 +45,7 @@ def frontmatter_yaml_syntax_invalid() -> str:
     return f"{FRONTMATTER_YAML_LABEL}の構文が不正です"
 
 
-# --- Frontmatter field --------------------------------------------------
+# --- フロントマターのフィールド --------------------------------------------------
 
 def fm_type_error(key: str, expected: str) -> str:
     return f"Frontmatter {key}は{expected}が必要です"
@@ -106,7 +106,7 @@ def fm_tests_unknown_key(index: int, key: str) -> str:
     return f"testsの要素に未知のkey {key}があります"
 
 
-# --- ID一意性・file名 ------------------------------------------------------
+# --- IDの一意性・ファイル名 ------------------------------------------------------
 
 FILE_NAME_MISMATCH = "file名IDとFrontmatter IDが一致しません"
 
@@ -155,11 +155,11 @@ EAI_SHOULD_REASON_MISSING = "SHOULDに[REASON]がありません"
 EAI_EXTENSION_UNKNOWN = "未知namespaceのextensionを保持します"
 
 
-# --- 関係・trace（`RELATION-*`、`TRACE-*`） -------------------------------------
+# --- 関係・トレース（`RELATION-*`、`TRACE-*`） -------------------------------------
 
-#: text出力の制御文字無害化（`結果・Diagnostic・終了コード仕様 §7`）と同じ判定を、
-#: summaryへ埋め込むpath自体にも使う（制御文字を含むpathを埋め込む場合だけ経路情報を
-#: summaryへ足す。通常pathは埋め込まない固定文言を使う）。
+#: テキスト出力の制御文字の無害化（結果・診断・終了コード §7）と同じ判定を、
+#: `summary`へ埋め込むパス自体にも使う（制御文字を含むパスを埋め込む場合だけ経路情報を
+#: `summary`へ足す。通常のパスは埋め込まない固定の文言を使う）。
 _CONTROL_CHAR_RE = re.compile(r"[\x00-\x1f\x7f\x80-\x9f]")
 
 RELATION_MISSING_STRONG = "strong relationの参照先が存在しません"
@@ -206,7 +206,7 @@ def root_missing_explicit(target: str) -> str:
     return f"起点{target}が存在しません"
 
 
-# --- 状態遷移・管理済みSPEC削除（`CHECK-STATE-*`） ------------------------------
+# --- 状態遷移・管理済みの仕様文書の削除（`CHECK-STATE-*`） ------------------------------
 
 DOCUMENT_DELETED = "管理済みSPECが削除されています"
 
@@ -215,7 +215,7 @@ def state_transition_forbidden(kind: str, from_status: str, to_status: str) -> s
     return f"{from_status} {kind}を{to_status}へ戻すことはできません"
 
 
-# --- 承認済みREQ保護（`CHECK-APPROVED-MEANING`） --------------------------------
+# --- 承認済み要求の保護（`CHECK-APPROVED-MEANING`） --------------------------------
 
 APPROVED_MEANING_CHANGED = "approved REQの意味変更時にstatusが戻されていません"
 
@@ -234,12 +234,12 @@ GIT_DEGRADED_FULL_FALLBACK = (
 )
 
 
-# --- report保存（`REPORT-WRITE`） ----------------------------------------------
+# --- レポートの保存（`REPORT-WRITE`） ----------------------------------------------
 
 REPORT_WRITE_FAILED = "report保存先へ排他的に作成できません"
 
 
-# --- context（`CTX-*`） -----------------------------------------------------
+# --- `context`操作（`CTX-*`） -----------------------------------------------------
 
 
 def task_dependency_incomplete(prereq_task_id: str) -> str:
@@ -285,7 +285,7 @@ def projection_limit_exceeded(detail: str) -> str:
 CTX_STALE_MISMATCH = "期待Digestが現在のContext Digestと一致しません"
 
 
-# --- verify command argv（設定`SPEC-CONFIG-SCHEMA-001`） --------------------------
+# --- `verify`のテストコマンドの引数列（設定`SPEC-CONFIG-SCHEMA-001`） --------------------------
 
 CONFIG_ARGV_LENGTH_INVALID = "argv templateは256要素以下で指定してください"
 CONFIG_ARGV_ELEMENT_NOT_STRING = "argvの要素はstringで指定してください"
@@ -294,7 +294,7 @@ CONFIG_ARGV_ELEMENT_NUL = "argvの要素にNULは使用できません"
 CONFIG_ARGV_ELEMENT_TOO_LONG = "argvの各要素はUTF-8で32 KiB以下で指定してください"
 
 
-# --- verify（`SPEC-VERIFY-*`、`CTX-STATE-*`） ------------------------------------
+# --- `verify`操作（`SPEC-VERIFY-*`、`CTX-STATE-*`） ------------------------------------
 
 VERIFY_TARGETS_EMPTY = "verify対象が0件です"
 VERIFY_SPAWN_ERROR = "commandの実行形式をOSが拒否しprocessを生成できません"
@@ -333,7 +333,7 @@ def state_task_cancelled(doc_id: str) -> str:
     return f"起点{doc_id}はcancelledでありverifyに適用できません"
 
 
-# --- 複合workspace（`SPEC-MULTI-*`） ---------------------------------------------
+# --- 複合ワークスペース（`SPEC-MULTI-*`） ---------------------------------------------
 
 MULTI_CONFIG_NOT_MAP = "multiWorkspaceはmapで指定してください"
 MULTI_CONFIG_MEMBERS_REQUIRED = "multiWorkspace.membersは1件以上指定してください"
@@ -384,7 +384,7 @@ def multi_limit_exceeded(dimension: str, limit: int) -> str:
     return f"{label}が上限{limit:,}を超過しました"
 
 
-# --- 複合workspace修飾ID解決・所有境界（Step 5B、`SPEC-MULTI-REF-001`／`SPEC-MULTI-OWNERSHIP-001`） ---
+# --- 複合ワークスペースの修飾ID解決・所有境界（Step 5B、`SPEC-MULTI-REF-001`／`SPEC-MULTI-OWNERSHIP-001`） ---
 
 MULTI_REF_QUALIFIER_INVALID = "修飾IDの形式が不正です"
 MULTI_REF_UNQUALIFIED = "非修飾の参照先が別workspaceにだけ存在します"

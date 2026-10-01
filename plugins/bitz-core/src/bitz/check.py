@@ -1,17 +1,17 @@
 """`bitz check` 操作（`03_操作仕様/02_check.md`）。
 
-Step 2 Phase Bで`scope: full`（catalog全体の軽量Frontmatter索引・EARS-AI・style検査）、
-Step 2 Phase Cでrelation・path・coverage検査と明示対象（`scope: selected`）・明示TASK境界検査を
-実装した。Step 3 Phase 3Aは残りを実装する。
+Step 2のフェーズBで`scope: full`（文書の一覧全体の、軽量なフロントマターの索引・EARS-AIの検査・スタイルの検査）、
+Step 2のフェーズCで関係・パス・カバレッジの検査と、明示対象（`scope: selected`）、およびTASKを明示した場合のTASK境界の検査を
+実装した。Step 3のフェーズ3Aは残りを実装する。
 
-- `scope: changed`（引数なしのGit変更起点、`check.md §6`）
-- 状態遷移と管理済みSPEC削除検出（`02_文書・Frontmatter・状態仕様.md §6・§9`）
-- 承認済みREQ保護（同 §8）
+- `scope: changed`（引数なしの、Gitの変更を出発点とする検査、`check.md §6`）
+- 状態遷移と管理済み文書の削除の検出（`02_文書・Frontmatter・状態仕様.md §6・§9`）
+- 承認済み要求の保護（同 §8）
 - 影響候補（`check.md §8`）
-- Git不在時の全体check縮退（`SPEC-GIT-DEGRADED-001`）
-- 明示`--report`の保存（`00_共通契約/02_安全な入出力・互換性.md §8`）
+- Git不在のときの全体検査の縮退（`SPEC-GIT-DEGRADED-001`）
+- `--report`を明示したときのレポートの保存（`00_共通契約/02_安全な入出力・互換性.md §8`）
 
-状態遷移・管理済みSPEC削除・承認済みREQ保護・影響候補は`basecompare.py`、report保存は
+状態遷移・管理済み文書の削除・承認済み要求の保護・影響候補は`basecompare.py`、レポートの保存は
 `reportio.py`に切り出す。
 """
 
@@ -46,17 +46,17 @@ def _resolve_target(
     *,
     active_ws_id: str | None = None,
 ) -> str | None:
-    """構文検査済みの明示対象文字列を所有文書IDへ正規化する（`check.md §2`）。
+    """構文を検査済みの明示対象の文字列を、所有する文書のIDへ正規化する（`check.md §2`）。
 
-    文書ID、statement ID、SPEC Markdown pathのいずれかで解決を試みる。catalogに存在しなければ
+    文書ID、規範文ID、仕様文書のMarkdownのパスのいずれかで解決を試みる。文書の一覧に存在しなければ
     ``None``を返す（呼び出し側が`CTX-ROOT-MISSING-001`を返す）。
 
-    ``active_ws_id``を渡すと、``target``がactive workspace自身を指す修飾ID
-    （``"<active_ws_id>::localId"``）の場合だけ修飾子を外し、active workspace自身の非修飾索引
-    （``id_index``）で解決する（複合workspace仕様 §3「修飾IDを起点にする場合は、その所有workspaceを
-    選択する」。選択後はactive workspace自身の文書IDとして通常どおり解決する）。別workspaceだけに
-    ある修飾ID（例: ``api::REQ-009``でactiveがapiでも該当IDが無い場合）は、修飾子を外した後の
-    ローカルIDで``id_index``を引いても見つからず、解決失敗として扱う（`CTX-ROOT-MISSING-001`）。
+    ``active_ws_id``を渡すと、``target``が作業ワークスペース自身を指す修飾ID
+    （``"<active_ws_id>::localId"``）の場合だけ修飾子を外し、作業ワークスペース自身の非修飾の索引
+    （``id_index``）で解決する（複合ワークスペース仕様 §3「修飾IDを起点にする場合は、その所有ワークスペースを
+    選択する」。選択後は作業ワークスペース自身の文書IDとして通常どおり解決する）。別のワークスペースだけに
+    ある修飾ID（例: ``api::REQ-009``で作業ワークスペースがapiでも該当IDが無い場合）は、修飾子を外した後の
+    ローカルIDで``id_index``を引いても見つからず、解決の失敗として扱う（`CTX-ROOT-MISSING-001`）。
     """
 
     lookup = target
@@ -97,11 +97,11 @@ def _task_change_ownership_diag(
     path: str,
     status: str,
 ) -> Diagnostic | None:
-    """TASK変更pathの所有境界をbase／current双方のsymlinkで判定する（複合workspace仕様 §5.2）。
+    """TASKの変更パスの所有境界を、基準版と現在版の双方のシンボリックリンクで判定する（複合ワークスペース仕様 §5.2）。
 
-    ``status``が``"A"``（追加）ならcurrentだけ、``"D"``（削除）ならbaseだけを検査する。それ以外
-    （変更・rename）はbase／current双方を検査する。symlinkでなければ所有境界違反は成立しない
-    （宣言済みpathは既にworkspace root相対で構成されているため）。
+    ``status``が``"A"``（追加）なら現在版だけ、``"D"``（削除）なら基準版だけを検査する。それ以外
+    （変更・リネーム）は基準版と現在版の双方を検査する。シンボリックリンクでなければ所有境界違反は成立しない
+    （宣言済みのパスは既にワークスペースのルートからの相対で構成されているため）。
     """
 
     own_real = real_roots.get(workspace_id)
@@ -161,12 +161,12 @@ def _task_boundary_diagnostics(
     *,
     real_roots: dict[str, str] | None = None,
 ) -> list[Diagnostic]:
-    """明示TASK境界検査（`check.md §7`）。TASK ID/pathを明示した場合だけ呼び出す。
+    """TASKを明示した場合のTASK境界の検査（`check.md §7`）。TASKのIDまたはパスを明示した場合だけ呼び出す。
 
-    ``real_roots``（複合workspace内での明示TASK check）を渡すと、所有境界不適合
-    （`SPEC-MULTI-OWNERSHIP-001`）をTASK境界外変更より先に判定し、同じpathへ両方のDiagnosticを
-    重複させない（複合workspace仕様 §5.2）。複合workspace内では、summaryに埋め込むTASK IDを
-    複合workspace正規形式（`ws::local`）にする（複合workspace仕様 §4）。
+    ``real_roots``（複合ワークスペース内での、TASKを明示した`check`）を渡すと、所有境界の不適合
+    （`SPEC-MULTI-OWNERSHIP-001`）をTASK境界外の変更より先に判定し、同じパスへ両方の診断を
+    重複させない（複合ワークスペース仕様 §5.2）。複合ワークスペース内では、`summary`に埋め込むTASKのIDを
+    複合ワークスペースの正規形式（`ws::local`）にする（複合ワークスペース仕様 §4）。
     """
 
     display_doc_id = f"{workspace_id}::{entry.doc_id}" if real_roots is not None else entry.doc_id
@@ -188,7 +188,7 @@ def _task_boundary_diagnostics(
     diags: list[Diagnostic] = []
     reported: set[str] = set()
     for c in changed:
-        # renameはsourceとdestinationの2 pathを検査する（安全な入出力 §6、check.md §7）。
+        # リネームは移動元と移動先の2つのパスを検査する（安全な入出力・互換性 §6、check.md §7）。
         candidates = [c.old_path, c.path] if c.status == "R" else [c.path]
         for p in candidates:
             if p is None or p == entry.path or p.startswith(".spec/reports/") or p in reported:
@@ -222,16 +222,16 @@ def _direct_reverse_references(
     *,
     source_index: dict[str, DocEntry] | None = None,
 ) -> set[str]:
-    """``context_ids``内のいずれかを直接参照する文書ID集合を返す（`check.md §3`「直接逆参照」）。
+    """``context_ids``内のいずれかを直接参照する文書IDの集合を返す（`check.md §3`「直接逆参照」）。
 
-    参照は`relations`の全relation（`requires`/`refines`/`addresses`/`supersedes`/`related`）を
-    対象とする。target解決は関係の型が妥当かを問わない（存在するIDへの直接参照であれば、明示対象の
-    完全検査対象へ含める。型不適合そのものは`relations.check_relations`が別途Diagnosticにする）。
+    参照は`relations`のすべての関係（`requires`/`refines`/`addresses`/`supersedes`/`related`）を
+    対象とする。参照先の解決は関係型が妥当かを問わない（存在するIDへの直接参照であれば、明示対象の
+    完全検査の対象へ含める。型の不適合そのものは`relations.check_relations`が別途診断にする）。
 
-    ``source_index``を渡すと、逆参照の走査元（＝完全検査対象へ加える候補）をその索引だけへ絞る
-    （複合workspace内のworkspace単独check。`複合workspace仕様 §7`「無関係memberを完全検査しない」。
-    target解決自体は``id_index``全体（修飾aliasを含む）から行い、他workspaceの文書が偶然同じ
-    targetを参照していても、active workspace以外の文書を完全検査対象へ引き込まない）。
+    ``source_index``を渡すと、逆参照の走査元（＝完全検査の対象へ加える候補）をその索引だけへ絞る
+    （複合ワークスペース内の単独操作の`check`。`複合ワークスペース仕様 §7`「無関係なメンバーを完全検査しない」。
+    参照先の解決自体は``id_index``全体（修飾エイリアスを含む）から行い、他のワークスペースの文書が偶然同じ
+    参照先を参照していても、作業ワークスペース以外の文書を完全検査の対象へ引き込まない）。
     """
 
     result: set[str] = set()
@@ -262,10 +262,10 @@ def _resolve_selected_roots(
 ) -> tuple[list[Diagnostic], set[str], list[DocEntry]]:
     """明示対象を解決し、`TargetExpansion(root, interpret)`の和集合を求める。
 
-    戻り値は``(root解決Diagnostic, contextDocuments和集合, TASK root一覧)``。``local_entries``を
-    渡すと、明示path対象の解決をactive workspace自身の文書だけへ限定する（複合workspace仕様 §7
-    「明示pathは選択workspace root相対で解決する」。省略時は``id_index``全体から作る＝単一workspace
-    時の既存挙動）。
+    戻り値は``(起点の解決の診断, contextDocumentsの和集合, 起点のTASKの一覧)``。``local_entries``を
+    渡すと、明示パスの対象の解決を作業ワークスペース自身の文書だけへ限定する（複合ワークスペース仕様 §7
+    「明示のパスは、作業ワークスペースのルート相対で解決する」。省略時は``id_index``全体から作る＝単一ワークスペース
+    のときの既存の挙動）。
     """
 
     path_source = local_entries if local_entries is not None else list(id_index.values())
@@ -304,15 +304,15 @@ _ALWAYS_KEEP_CATALOG_CODES = {"SPEC-WORKSPACE-UNKNOWN-001", "SPEC-ID-DUPLICATE-0
 def _filter_catalog_diagnostics_for_scope(
     diags: list[Diagnostic], entries: list[DocEntry], checked_paths: set[str]
 ) -> list[Diagnostic]:
-    """`scope: selected`向けに、catalog全体のDiagnosticを完全検査対象文書だけへ絞る（`check.md §3`）。
+    """`scope: selected`向けに、文書の一覧全体の診断を完全検査の対象文書だけへ絞る（`check.md §3`）。
 
-    workspace単位のDiagnostic（設定・`.spec/`内未知entry・SPEC file数上限）と、ID重複のように
-    軽量索引の構築自体に関わるDiagnosticは、対象文書に関わらず常に残す（
-    :data:`_ALWAYS_KEEP_CATALOG_CODES`）。それ以外の`source.kind == "file"`かつpathがcatalog内の
-    いずれかの文書に一致するDiagnostic（Frontmatter・EARS-AI・style等、文書ごとの完全検査結果）は、
-    そのpathが``checked_paths``（完全検査対象文書のpath集合）に含まれる場合だけ残す。
-    catalog内のどの文書pathにも一致しないfile Diagnostic（`.spec`のSPEC数上限、
-    `.spec/<kind>/`直下の未知entryなど、文書として解析されなかったもの）は常に残す。
+    ワークスペース単位の診断（設定・`.spec/`内の未知のエントリ・仕様文書のファイル数の上限）と、ID重複のように
+    軽量な索引の構築自体に関わる診断は、対象文書に関わらず常に残す（
+    :data:`_ALWAYS_KEEP_CATALOG_CODES`）。それ以外の`source.kind == "file"`かつパスが文書の一覧内の
+    いずれかの文書に一致する診断（フロントマター・EARS-AI・スタイルなど、文書ごとの完全検査の結果）は、
+    そのパスが``checked_paths``（完全検査の対象文書のパスの集合）に含まれる場合だけ残す。
+    文書の一覧内のどの文書のパスにも一致しないファイルの診断（`.spec`の仕様文書の数の上限、
+    `.spec/<kind>/`直下の未知のエントリなど、文書として解析されなかったもの）は常に残す。
     """
 
     doc_paths_all = {e.path for e in entries}
@@ -335,10 +335,10 @@ def _filter_catalog_diagnostics_for_scope(
 
 
 def _base_root_for_git(repo_root: str, base_path: str) -> str:
-    """base workspace mapの``path``（repository root相対、``.``を含む）から絶対pathを組み立てる。
+    """基準版のワークスペースの対応表の``path``（リポジトリのルートからの相対、``.``を含む）から絶対パスを組み立てる。
 
-    ``base_path``のdirectoryが現在の作業treeに存在しなくてもよい（rename／削除後でもGit tree
-    参照は経路の文字列演算だけで完結する。`gitutil._repo_root_relative_offset`参照）。
+    ``base_path``のディレクトリが現在の作業ツリーに存在しなくてもよい（リネームや削除の後でもGitの
+    ツリーオブジェクトの参照は、経路の文字列演算だけで完結する。`gitutil._repo_root_relative_offset`参照）。
     """
 
     if base_path == ".":
@@ -409,7 +409,7 @@ def _run_all_workspaces_members(
     resolved_base: str | None,
     started: int,
 ) -> tuple[dict, int]:
-    """事前検査を通過した`--all-workspaces`のmember処理（`複合workspace仕様 §6・§8・§9`）。"""
+    """事前検査を通過した`--all-workspaces`のメンバーの処理（`複合ワークスペース仕様 §6・§8・§9`）。"""
 
     workspaces = multiws.ordered_workspaces(pre)
     known_ws_ids = {wid for wid, _, _ in workspaces}
@@ -426,10 +426,10 @@ def _run_all_workspaces_members(
         for e in catalog.entries:
             e.body = None
         per_ws_entries[wid] = catalog.entries
-        # `SPEC-FILE-NAME-001`は`--all-workspaces`member結果ではsourceに`key`を持たない
-        # （fixture MULTI-011。file名不一致はFrontmatterの特定fieldではなくfile全体の性質のため、
-        # 複合workspace全体結果ではkeyを省く。単一workspace`scope: full`（SINGLE-014）は既存どおり
-        # `key: "id"`を保つ。document.pyの生成規則は変えず、ここで複合workspace結果だけ調整する）。
+        # `SPEC-FILE-NAME-001`は`--all-workspaces`のメンバーの結果では`source`に`key`を持たない
+        # （fixture MULTI-011。ファイル名の不一致はフロントマターの特定のフィールドではなくファイル全体の性質のため、
+        # 複合ワークスペースの全体結果ではキーを省く。単一ワークスペースの`scope: full`（SINGLE-014）は既存どおり
+        # `key: "id"`を保つ。`document.py`の生成規則は変えず、ここで複合ワークスペースの結果だけ調整する）。
         for d in catalog.diagnostics:
             if d.code == "SPEC-FILE-NAME-001" and "key" in d.source:
                 d.source = {k: v for k, v in d.source.items() if k != "key"}
@@ -438,8 +438,8 @@ def _run_all_workspaces_members(
         local_id_indices[wid] = relations_mod.build_id_index(catalog.entries)
         local_stmt_indices[wid] = relations_mod.build_statement_index(catalog.entries)
 
-    # 横断edge（修飾IDで解決したedge）を含めた循環検査は複合workspace全体を1つのgraphとして
-    # 1回だけ計算し、循環に参加するedgeの宣言元workspaceへ結果を配る（関係・トレースモデル §4）。
+    # 横断エッジ（修飾IDで解決したエッジ）を含めた循環検査は、複合ワークスペース全体を1つのグラフとして
+    # 1回だけ計算し、循環に参加するエッジの宣言元のワークスペースへ結果を配る（関係・トレースモデル §4）。
     cycle_diags_by_ws: dict[str, list[Diagnostic]] = {wid: [] for wid, _root, _rel in workspaces}
     for d in multirelate.global_cycle_diagnostics(per_ws_entries):
         cycle_diags_by_ws.setdefault(d.source.get("workspaceId"), []).append(d)
@@ -484,8 +484,8 @@ def _run_all_workspaces_members(
                 "id": wid,
                 "path": relpath,
                 "status": ws_status,
-                # 単一workspaceと同じく、skip-document（Frontmatter・file名・EARS構文のhard、ID重複）の
-                # 文書は数えない（check仕様 §9「全SPECを完全検査した文書数」、SINGLE-014・MULTI-011）。
+                # 単一ワークスペースと同じく、`skip-document`（フロントマター・ファイル名・EARS構文の`hard`、ID重複）の
+                # 文書は数えない（`check`仕様 §9「すべての仕様文書を完全検査した文書数」、SINGLE-014・MULTI-011）。
                 "checkedDocumentCount": sum(
                     1 for e in entries if e.counted and e.hard is None and not e.duplicate
                 ),
@@ -523,7 +523,7 @@ def _run_all_workspaces_members(
 
 
 def _run_all_workspaces(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
-    """`check --all-workspaces`（`複合workspace仕様 §8`）。"""
+    """`check --all-workspaces`（`複合ワークスペース仕様 §8`）。"""
 
     started = time.monotonic_ns() // 1_000_000
     git = gitutil.detect_git(cwd, env)
@@ -588,8 +588,8 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
 
     revision: dict | None = None
     if git.available and git.executable:
-        # 終了コード4になるのは明示した--baseを解決できない場合だけである（結果契約 §2）。
-        # --base省略時のHEADが解決できないunborn repositoryはrevision: nullへ縮退する。
+        # 終了コード4になるのは、明示した`--base`を解決できない場合だけである（結果・診断・終了コード §2）。
+        # `--base`を省略したときの`HEAD`が解決できない、コミットのないリポジトリは`revision: null`へ縮退する。
         head_commit = gitutil.resolve_commit(git.executable, cwd, env, "HEAD")
         base_commit = head_commit
         if "--base" in parsed.single:
@@ -597,7 +597,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             if base_commit is None:
                 raise CliArgError("check", f"--baseを解決できません: {base_arg}")
         if head_commit is None:
-            # unborn repository: revisionをnullへ縮退する（安全な入出力仕様 §8）。
+            # コミットのないリポジトリ: `revision`を`null`へ縮退する（安全な入出力・互換性 §8）。
             revision = None
         else:
             dirty = gitutil.is_dirty(git.executable, cwd, env)
@@ -607,9 +607,9 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             raise CliArgError("check", f"--baseを解決できません: {base_arg}")
         revision = None
 
-    # `scope: changed`（引数なし）はGit基準版が解決できない場合`scope: full`へ縮退する
-    # （check.md §10、安全な入出力仕様 §8）。Git不在の縮退だけ`SPEC-GIT-DEGRADED-001`／warningで
-    # 示す。unborn repository（Git利用可能だがHEAD不在）は黙って全体checkへ縮退する。
+    # `scope: changed`（引数なし）はGitの基準版を解決できない場合、`scope: full`へ縮退する
+    # （check.md §10、安全な入出力・互換性 §8）。Git不在の縮退だけ`SPEC-GIT-DEGRADED-001`（重大度`warning`）で
+    # 示す。コミットのないリポジトリ（Gitは利用できるがHEADがない）は、黙って全体検査へ縮退する。
     scope = scope_requested
     git_degraded = False
     if scope_requested == "changed" and revision is None:
@@ -621,11 +621,11 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
 
     loc = locate_workspace(cwd, git, env)
 
-    # --- 修飾IDを起点にする場合のworkspace決定（複合workspace仕様 §3）。--------------------
-    # 明示対象のいずれかが修飾ID（`ws::local`）なら、その所有workspaceをactiveへ切り替える。
-    # 複数の修飾起点が異なるworkspaceを持てば引数不正（終了コード4）。`--all-workspaces`は別経路
-    # （`_run_all_workspaces`）が処理するためここには来ない。qualifierを持たない通常のcheckは
-    # ここを一切通らず、既存の単一workspace経路（cwd起点の`locate_workspace`）をそのまま使う。
+    # --- 修飾IDを起点にする場合の作業ワークスペースの決定（複合ワークスペース仕様 §3）。--------------------
+    # 明示対象のいずれかが修飾ID（`ws::local`）なら、その所有ワークスペースを作業ワークスペースへ切り替える。
+    # 複数の修飾IDの起点が異なるワークスペースを持てば引数不正（終了コード4）。`--all-workspaces`は別の経路
+    # （`_run_all_workspaces`）が処理するためここには来ない。修飾を持たない通常の`check`は
+    # ここを一切通らず、既存の単一ワークスペースの経路（`cwd`を探索の開始位置とする`locate_workspace`）をそのまま使う。
     multi_pre: multiws.PrecheckResult | None = None
     workspace_rel_path = "."
     qualified_prefixes = {
@@ -695,10 +695,10 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     else:
         assert outcome is not None
         workspace_id = outcome.workspace_id
-        # 停止有無にかかわらずBOM／未知key／profilesのwarning（`continue`継続単位）を残す。
+        # 停止の有無にかかわらず、BOM／未知のキー／`profiles`の警告（`continue`継続単位）を残す。
         diagnostics.extend(d.to_dict() for d in outcome.diagnostics)
         diagnostics.extend(d.to_dict() for d in outcome.warnings)
-        # 全体事前検査（設定）が非成功なら文書検査を開始しない（check.md §4「1」）。
+        # 全体事前検査（設定）が非成功なら文書の検査を開始しない（check.md §4「1」）。
         if not outcome.stop:
             assert loc.root is not None
             catalog = document_mod.build_catalog(loc.root, workspace_id)
@@ -726,10 +726,10 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 real_roots = {}
             current_by_path = {e.path: e for e in relations_mod.valid_entries(catalog.entries)}
 
-            # --- Git基準版が解決できた場合だけの横断検査（`check.md §5・§6・§8`）の下ごしらえ。
-            # 実際のDiagnostic生成はscope別の完全検査対象（`full_check_ids`）確定後に行う
-            # （`scope: selected`は完全検査対象だけへ絞る。`check.md §5`「同じ基準版を対象選択、
-            # 状態遷移、削除検出、REQ保護、TASK境界へ使用」）。
+            # --- Gitの基準版を解決できた場合だけの横断検査（`check.md §5・§6・§8`）の下ごしらえ。
+            # 実際の診断の生成は、`scope`ごとの完全検査の対象（`full_check_ids`）を確定した後に行う
+            # （`scope: selected`は完全検査の対象だけへ絞る。`check.md §5`「同じ基準版を対象選択、
+            # 状態遷移、削除の検出、承認済み要求の保護、TASK境界へ使用」）。
             base_by_id: dict[str, DocEntry] = {}
             changed_paths: list[gitutil.ChangedPath] = []
             if base_commit is not None:
@@ -745,13 +745,13 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             current_ids_present = {e.doc_id for e in catalog.entries if e.doc_id is not None}
 
             if scope == "full":
-                # `--full`はcatalog全体が完全検査対象（check.md §3）。sourceを絞らない。
+                # `--full`は文書の一覧全体が完全検査の対象（check.md §3）。`source_ids`で絞らない（`None`）。
                 source_ids: set[str] | None = None
                 checked_document_count = catalog.checked_document_count
                 checked_statement_count = catalog.checked_statement_count
                 extra_diags: list[Diagnostic] = []
             elif scope == "selected":
-                # `scope: selected`の完全検査対象は`TargetExpansion(root, interpret).contextDocuments`と
+                # `scope: selected`の完全検査の対象は`TargetExpansion(root, interpret).contextDocuments`と
                 # それらへの直接逆参照の和集合だけに限る（check.md §3）。
                 root_diags, context_ids, task_roots = _resolve_selected_roots(
                     parsed,
@@ -786,8 +786,8 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 extra_diags = root_diags + task_diags
                 catalog_diags = _filter_catalog_diagnostics_for_scope(catalog_diags, catalog.entries, checked_paths)
             else:
-                # `scope: changed`: Git変更集合から選んだ所有文書、強い依存閉包、直接逆参照が
-                # 完全検査対象（check.md §3・§6）。
+                # `scope: changed`: Gitの変更集合から選んだ所有文書、強い関係の閉包、直接逆参照が
+                # 完全検査の対象（check.md §3・§6）。
                 implements_index = basecompare.build_reverse_index(id_index, "implements")
                 tests_index = basecompare.build_reverse_index(id_index, "tests")
                 owning_ids, changed_path_count, excluded_count = basecompare.changed_selection(
@@ -807,10 +807,10 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 }
 
             if multi_active:
-                # 複合workspace内のworkspace単独check（明示修飾対象）: 修飾ID解決の優先順位
-                # （関係・トレースモデル §5.1）と所有境界（複合workspace仕様 §5.1）を適用する。
-                # Diagnosticはactive workspace自身の完全検査対象文書（source_ids）だけへ生成する
-                # （`relations.py`の``_source_entries``と同じ絞り込みをentries側で行う）。
+                # 複合ワークスペース内の単独操作の`check`（明示した修飾ID）: 修飾IDの解決の優先順位
+                # （関係・トレースモデル §5.1）と所有境界（複合ワークスペース仕様 §5.1）を適用する。
+                # 診断は作業ワークスペース自身の完全検査の対象文書（source_ids）だけへ生成する
+                # （`relations.py`の``_source_entries``と同じ絞り込みを`entries`側で行う）。
                 scoped_entries = (
                     catalog.entries if source_ids is None
                     else [e for e in catalog.entries if e.doc_id in source_ids]
@@ -820,10 +820,10 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                     relation_diags.extend(
                         multirelate.field_diagnostics(e, workspace_id, local_id_indices, local_stmt_indices, known_ws_ids)
                     )
-                # 横断edgeを含めたgraphで循環を検査する（関係・トレースモデル §4）。ロード済みの
-                # 全workspace（active＋修飾参照で読み込んだ他workspace）を1つのgraphとして計算し、
-                # activeへ帰属するedgeだけをこの結果へ残す（このworkspace単独checkが返すのは
-                # active workspace自身のDiagnosticだけ）。
+                # 横断エッジを含めたグラフで循環を検査する（関係・トレースモデル §4）。読み込み済みの
+                # すべてのワークスペース（作業ワークスペースと、修飾参照で読み込んだ他のワークスペース）を1つのグラフとして計算し、
+                # 作業ワークスペースへ帰属するエッジだけをこの結果へ残す（この単独操作の`check`が返すのは
+                # 作業ワークスペース自身の診断だけ）。
                 cycle_entries_by_ws = {wid: list(idx.values()) for wid, idx in local_id_indices.items()}
                 relation_diags.extend(
                     d
@@ -839,10 +839,10 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 path_diags = relations_mod.check_paths(catalog.entries, loc.root, workspace_id, source_ids=source_ids)
                 coverage_diags = relations_mod.check_coverage(catalog.entries, workspace_id, source_ids=source_ids)
 
-            # `scope: selected`は完全検査対象（`full_check_ids`＝`source_ids`）だけへ状態遷移・
-            # 承認済みREQ保護・影響候補を絞る（検収指摘: `check.md §5`はscopeを限定しない）。
-            # `scope: full`・`changed`は従来どおり絞らない（未変更文書は基準版と現在版が同一内容の
-            # ため、これらの検査は自然にno-opになり安全）。
+            # `scope: selected`は完全検査の対象（`full_check_ids`＝`source_ids`）だけへ、状態遷移・
+            # 承認済み要求の保護・影響候補を絞る（検収指摘: `check.md §5`は`scope`を限定しない）。
+            # `scope: full`・`changed`は従来どおり絞らない（未変更の文書は基準版と現在版が同一の内容の
+            # ため、これらの検査は自然に何もせず安全）。
             base_source_ids = full_check_ids if scope == "selected" else None
             base_diags: list[Diagnostic] = []
             if base_commit is not None:

@@ -1,9 +1,9 @@
-"""`workspace・設定仕様 §8` が定めるYAML 1.2部分集合の安全な読取り。
+"""ワークスペース・設定仕様 §8が定めるYAML 1.2部分集合の、安全な読取り。
 
-ruamel.yamlのevent列（``YAML(typ="safe").parse()``）を使い、Core自身が値を組み立てる。
-anchor、alias、custom tag、merge key、複雑key、複数document、重複mapping keyは
-値の解釈前に拒否する。scalarの解決（null／文字列／真偽値／10進整数／有限10進number）も
-libraryの既定挙動に頼らずCoreが行う。
+ruamel.yamlのイベント列（``YAML(typ="safe").parse()``）を使い、Core自身が値を組み立てる。
+アンカー、エイリアス、カスタムタグ、マージキー、複雑なキー、複数のドキュメント、マッピングの重複したキーは
+値の解釈の前に拒否する。スカラーの解決（null／文字列／真偽値／10進整数／有限の10進の数値）も
+ライブラリの既定の挙動に頼らずCoreが行う。
 """
 
 from __future__ import annotations
@@ -32,8 +32,8 @@ from ruamel.yaml.error import YAMLError
 class YamlSyntaxError(Exception):
     """設定YAMLの構文自体が不正（`CONFIG-YAML-SYNTAX`相当）。
 
-    ``line``は構文破綻の発端になったevent位置（0始まり行番号）のbest-effort値。
-    呼び出し側（Frontmatter）はこれを使って直前の直下keyを推定できる。判定できない場合はNone。
+    ``line``は構文破綻の発端になったイベントの位置（0始まりの行番号）で、保証せず、可能な範囲で求めた値。
+    呼び出し側（フロントマター）はこれを使って直前の直下のキーを推定できる。判定できない場合はNone。
     """
 
     def __init__(self, message: str, line: int | None = None) -> None:
@@ -52,8 +52,8 @@ class YamlForbiddenError(Exception):
         return self.summary
 
 
-# YAML.parse()は呼出しごとにparser contextを作り直す。YAML facade自体は逐次呼出しで再利用し、
-# 多数のSPECを読む際のplugin探索と初期化を文書ごとに繰り返さない。
+# YAML.parse()は呼出しごとにパーサーのコンテキストを作り直す。YAMLのファサード自体は逐次の呼出しで再利用し、
+# 多数の仕様文書を読む際のプラグインの探索と初期化を文書ごとに繰り返さない。
 _YAML = YAML(typ="safe")
 _PARSE_CACHE_MAX_BYTES = 4 * 1024 * 1024
 _PARSE_CACHE_MAX_ENTRIES = 2048
@@ -79,7 +79,7 @@ def _resolve_scalar(ev: ScalarEvent, path: list[str], label: str) -> object:
     if ev.tag is not None:
         raise YamlForbiddenError(f"{label}のcustom tagは禁止です", _join_key(path))
     value = ev.value
-    # style: None/'' はplain、"'"/'"'/'|'/'>' は明示引用・block scalar。
+    # style: None/'' はプレーンなスカラー、"'"/'"'/'|'/'>' は明示的に引用符で囲んだスカラーとブロックスカラー。
     style = getattr(ev, "style", None)
     if style not in (None, ""):
         return value
@@ -154,8 +154,8 @@ def _parse_yaml_subset_uncached(text: str, label: str) -> object:
     """YAML 1.2部分集合として解析し、Pythonの値（str/int/float/bool/None/list/dict）を返す。
 
     構文不正は :class:`YamlSyntaxError`、禁止構文は :class:`YamlForbiddenError` を送出する。
-    空document（内容が空）はNoneを返す。``label``は禁止構文Diagnosticの文面に使う対象名
-    （既定は設定fileの「設定YAML」、Frontmatterは呼び出し側が別labelを渡す）。
+    空のドキュメント（内容が空）はNoneを返す。``label``は禁止構文の診断の文面に使う対象名
+    （既定は設定ファイルの「設定YAML」、フロントマターは呼び出し側が別のラベルを渡す）。
     """
 
     try:
@@ -189,8 +189,8 @@ def _parse_yaml_subset_uncached(text: str, label: str) -> object:
 def parse_yaml_subset(text: str, *, label: str = "設定YAML") -> object:
     """YAML部分集合を解析し、呼出し側が独立して変更できる値を返す。
 
-    同一process内で同じFrontmatterを上限計数と文書解析が順に読むため、成功した解析結果だけを
-    byte上限付きで保持する。cacheの値は必ず複製して渡し、設定解決やFrontmatter検証による変更を
+    同一プロセス内で同じフロントマターを上限の計数と文書の解析が順に読むため、成功した解析結果だけを
+    バイト上限付きで保持する。キャッシュの値は必ず複製して渡し、設定の解決やフロントマターの検証による変更を
     後続の読取りへ漏らさない。
     """
 

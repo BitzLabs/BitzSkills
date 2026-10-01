@@ -1,9 +1,9 @@
-"""process出力の公開抜粋（`00_共通契約/02_安全な入出力・互換性.md` §9）。
+"""プロセスの出力の、公開する抜粋（安全な入出力・互換性 §9）。
 
-§9のstream処理要件（spawn時からのincremental UTF-8 decode、redaction状態をchunk境界をまたいで
-維持、公開bufferは末尾64 KiBだけを保持）を満たすため、``StreamRedactor``は全出力を溜め込まず、
-必要な最小限のholdbackだけを保持して逐次処理する。適用順は§9の列挙順（1 環境変数値 → 2
-Authorization/Bearer → 3 kv → 4 PEM）に従う。
+§9のストリームの処理の要件（プロセスの生成の時点からの逐次的なUTF-8のデコード、伏せ字化の状態をチャンクの境界を
+またいで維持、公開するバッファーは末尾64 KiBだけを保持）を満たすため、``StreamRedactor``は全出力を溜め込まず、
+必要な最小限の保留分だけを保持して逐次処理する。適用順は§9の列挙順（1 環境変数の値 → 2
+Authorization/Bearer → 3 キーと値の行 → 4 PEM）に従う。
 """
 
 from __future__ import annotations
@@ -33,8 +33,8 @@ _KV_KEYWORDS = (
 )
 
 _TAIL_LIMIT_BYTES = 65536
-# 末尾bufferの間引き閾値。code point 1個は最大4 byteなので、64 KiBの数倍を確保しておけば
-# 間引き前後で境界を見失わない。stream全体の長さに関わらずこの定数だけで頭打ちにする。
+# 末尾バッファーの間引きの閾値。コードポイント1個は最大4バイトなので、64 KiBの数倍を確保しておけば
+# 間引きの前後で境界を見失わない。ストリーム全体の長さに関わらず、この定数だけで頭打ちにする。
 _TAIL_TRIM_THRESHOLD_CHARS = _TAIL_LIMIT_BYTES * 4
 
 _AUTH_LITERAL = "authorization:"
@@ -44,7 +44,7 @@ _TRIGGER_MAX_LEN = len(_AUTH_LITERAL)
 _PEM_BEGIN = "-----begin"
 _PEM_MARKER = "private key-----"
 _PEM_END = "-----end"
-# BEGIN/END直後からPRIVATE KEY-----までの走査上限。無制限にholdbackしないための防御的上限。
+# BEGIN/END直後からPRIVATE KEY-----までの走査の上限。無制限に保留しないための防御的な上限。
 _PEM_HEADER_SCAN_LIMIT = 256
 
 
@@ -66,9 +66,9 @@ def _convert_controls(text: str) -> str:
 
 
 class _ControlNormalizer:
-    """incremental UTF-8 decode + CRLF/CR→LF + C0/DEL/C1→``\\uNNNN``。
+    """逐次的なUTF-8のデコード、CRLF/CR→LF、C0/DEL/C1→``\\uNNNN``。
 
-    chunk末尾の単独CRは次chunkの先頭がLFかどうかで判定が変わるため、確定するまで保留する。
+    チャンクの末尾の単独のCRは、次のチャンクの先頭がLFかどうかで判定が変わるため、確定するまで保留する。
     """
 
     def __init__(self) -> None:
@@ -89,11 +89,11 @@ class _ControlNormalizer:
         if self._pending_cr:
             self._pending_cr = False
             if not text.startswith("\n"):
-                # 前chunk末尾のCRは単独だった: 先頭へ戻し、後段のCR→LF変換に委ねる。
+                # 前のチャンクの末尾のCRは単独だった: 先頭へ戻し、後段のCR→LFの変換に委ねる。
                 text = "\r" + text
             # text.startswith("\n")の場合はCRLFがLFへ収束するので、先頭の"\n"をそのまま残す
-            # （以前は`text[1:]`で捨てており、CRLFがまるごと消えてredaction照合対象の改行が
-            # 失われるchunk分割依存の漏えいを起こしていた）。
+            # （以前は`text[1:]`で捨てており、CRLFがまるごと消えて、伏せ字化の照合の対象の改行が
+            # 失われるという、チャンクの分割に依存した漏えいを起こしていた）。
         if text.endswith("\r"):
             self._pending_cr = True
             text = text[:-1]
@@ -102,9 +102,9 @@ class _ControlNormalizer:
 
 
 class _EnvValueFilter:
-    """§9-1: redaction対象名の環境変数の非空値を置換する（stream・chunk境界安全）。
+    """§9-1: 伏せ字化の対象の名前を持つ環境変数の、空でない値を置換する（ストリーム・チャンクの境界に対して安全）。
 
-    holdbackは「候補値の最大長-1」文字だけ保持すればよく、streamの長さに依存しない。
+    保留は「候補値の最大長-1」文字だけ保持すればよく、ストリームの長さに依存しない。
     """
 
     def __init__(self, env: dict[str, str]) -> None:
@@ -114,11 +114,11 @@ class _EnvValueFilter:
                 continue
             upper = name.upper()
             if any(word in upper for word in _ENV_NAME_WORDS):
-                # §9「環境変数値は制御文字処理後の値に揃え」: 照合はredaction後と同じ正規化を適用する。
+                # §9「環境変数の値は、制御文字を処理した後の値に揃え」: 照合は伏せ字化の後と同じ正規化を適用する。
                 normalized = _convert_controls(value.replace("\r\n", "\n").replace("\r", "\n"))
                 if normalized:
                     candidates.append((name, normalized))
-        # byte長降順、同長は変数名のcode point辞書順（§9-1末尾）。
+        # バイト長の降順、同じ長さは変数名のコードポイント辞書順（§9-1の末尾）。
         candidates.sort(key=lambda item: (-len(item[1].encode("utf-8")), item[0]))
         seen: set[str] = set()
         values: list[str] = []
@@ -170,11 +170,11 @@ class _EnvValueFilter:
 
 
 class _AuthBearerKvFilter:
-    """§9-2・§9-3: Authorization/Bearer/kv行値を置換する（stream・chunk境界安全）。
+    """§9-2・§9-3: Authorization/Bearer/キーと値の行の値を置換する（ストリーム・チャンクの境界に対して安全）。
 
-    トリガ検出に必要なholdbackは直近``_TRIGGER_MAX_LEN``文字だけで、streamの長さに依存しない。
-    keyword直後の``:``/``=``はASCII case-insensitiveで判定し、単語境界を要求しない
-    （`MY_TOKEN=`・`GITHUB_TOKEN=`のような接頭辞付きでも一致させる。過剰なmaskは安全側）。
+    トリガーの検出に必要な保留は直近``_TRIGGER_MAX_LEN``文字だけで、ストリームの長さに依存しない。
+    キーワードの直後の``:``/``=``はASCIIの大文字と小文字を区別せずに判定し、単語境界を要求しない
+    （`MY_TOKEN=`・`GITHUB_TOKEN=`のような接頭辞付きでも一致させる。過剰なマスクは安全側）。
     """
 
     def __init__(self) -> None:
@@ -233,7 +233,7 @@ class _AuthBearerKvFilter:
 
 
 class _PemFilter:
-    """§9-4: PEM private key blockを置換する（stream・chunk境界安全、未終端も末尾まで維持）。"""
+    """§9-4: PEMの`PRIVATE KEY`のブロックを置換する（ストリーム・チャンクの境界に対して安全、未終端も末尾まで維持）。"""
 
     def __init__(self) -> None:
         self._buffer = ""
@@ -263,17 +263,17 @@ class _PemFilter:
         idx = low.find(_PEM_END)
         if idx == -1:
             if final:
-                # §9「開始を検出した時点から終端までredaction状態を維持」。未終端PEMも末尾までmaskする。
+                # §9「開始を検出した時点から終端まで伏せ字化の状態を保ち」。未終端のPEMも末尾までマスクする。
                 self._buffer = ""
                 return False
-            # ENDが来る可能性が残る間はbodyを溜め続けない。走査上限分だけ保持すれば十分。
+            # ENDが来る可能性が残る間は本体を溜め続けない。走査の上限の分だけ保持すれば十分。
             self._buffer = self._buffer[-_PEM_HEADER_SCAN_LIMIT:]
             return False
         after = self._buffer[idx : idx + _PEM_HEADER_SCAN_LIMIT]
         marker_idx = after.lower().find(_PEM_MARKER)
         if marker_idx == -1:
             if len(after) >= _PEM_HEADER_SCAN_LIMIT or final:
-                # 確定できないEND候補は通常文字列として読み飛ばし、次のENDを探す。
+                # 確定できないEND候補は通常の文字列として読み飛ばし、次のENDを探す。
                 self._buffer = self._buffer[idx + len(_PEM_END) :]
                 return True
             return False
@@ -293,8 +293,8 @@ class _PemFilter:
                 out.append(self._buffer[:safe_len])
                 self._buffer = self._buffer[safe_len:]
             return False
-        # 確定前にbegin_idxより前を確定済みとして吐き出し、bufferをbegin位置基準へ詰める。
-        # そうしないと未確定のまま複数回drainされたとき同じ接頭辞を重複して出力してしまう。
+        # 確定の前に、begin_idxより前を確定済みとして吐き出し、バッファーをbeginの位置を基準に詰める。
+        # そうしないと、未確定のまま複数回汲み出されたとき、同じ接頭辞を重複して出力してしまう。
         out.append(self._buffer[:begin_idx])
         self._buffer = self._buffer[begin_idx:]
         candidate = self._buffer[:_PEM_HEADER_SCAN_LIMIT]
@@ -315,7 +315,7 @@ class _PemFilter:
             self._buffer = self._buffer[len(_PEM_BEGIN) :]
             return True
         if final:
-            # streamが終わるまでPRIVATE KEY-----が確定しなかった: 安全側でBEGIN以降を末尾までmaskする。
+            # ストリームが終わるまでPRIVATE KEY-----が確定しなかった: 安全側でBEGIN以降を末尾までマスクする。
             out.append(REDACTED)
             self._buffer = ""
             return False
@@ -323,10 +323,10 @@ class _PemFilter:
 
 
 class StreamRedactor:
-    """process出力を§9のstream処理でredactし、末尾64 KiBの公開抜粋を保持する。
+    """プロセスの出力を§9のストリームの処理で伏せ字にし、末尾64 KiBの公開する抜粋を保持する。
 
-    ``feed()``をchunkごとに呼び、最後に``close()``で``(excerpt, truncated)``を得る。
-    保持するmemoryは64 KiB＋各filterの有界holdbackに収まり、元streamの総量へ依存しない。
+    ``feed()``をチャンクごとに呼び、最後に``close()``で``(excerpt, truncated)``を得る。
+    保持するメモリは64 KiB＋各フィルターの有界の保留分に収まり、元のストリームの総量へ依存しない。
     """
 
     def __init__(self, env: dict[str, str]) -> None:
@@ -384,7 +384,7 @@ class StreamRedactor:
 
 
 def redact_output(raw: bytes, env: dict[str, str]) -> tuple[str, bool]:
-    """一括byte列を1回で処理する互換関数（小さな入力・試験向け）。"""
+    """一括のバイト列を1回で処理する互換用の関数（小さな入力・試験向け）。"""
 
     redactor = StreamRedactor(env)
     redactor.feed(raw)
