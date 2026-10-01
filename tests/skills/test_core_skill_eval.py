@@ -3,6 +3,7 @@ import importlib.util
 import io
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -27,6 +28,21 @@ PYTHONPATH = str(evaluation.CORE) + os.pathsep + os.environ.get("PYTHONPATH", ""
 
 
 class CoreEvaluationTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which("codex"), "Codex CLIがない環境では接続設定のnative検査を省略")
+    def test_native_codex_disables_extra_tool_surfaces(self):
+        configs = evaluation.model_configs(ROOT / ".venv/config-probe", ROOT)
+        command = ["codex", "features", "list"]
+        for key, value in configs.items():
+            command.extend(["-c", key + "=" + json.dumps(value)])
+        process = subprocess.run(command, capture_output=True, text=True, timeout=20)
+        self.assertEqual(0, process.returncode, process.stderr)
+        states = {parts[0]: parts[-1] for line in process.stdout.splitlines() if len(parts := line.split()) >= 3}
+        for key, value in configs.items():
+            # installed CLIではunified_execはfalse指定でもtrueが返る。
+            # ツールの禁止はshell_tool=falseで検査し、可視性は別のnative接続試験でも確認する。
+            if key.startswith("features.") and key != "features.unified_exec":
+                self.assertEqual(str(value).lower(), states.get(key.removeprefix("features.")), key)
+
     def test_contract_has_fixed_denominators(self):
         report = evaluation.audit()
         self.assertEqual("Passed", report["status"], report)
@@ -177,13 +193,15 @@ class CoreEvaluationTests(unittest.TestCase):
                                "environment": {"coreFile": str(evaluation.CORE / "bitz/__init__.py"), "python": [3, 12, 3], "yaml": "0.19.1"}}}
             decision = dict(case["expected"], readyClaimed=False, reason="apiの選択範囲を確認した。全体は未検証。")
 
-            def inspect(calls, forge=False):
+            def inspect(calls, forge=False, extra_item=None):
                 events = [{"type": "turn.started"}]
                 for index, call in enumerate(calls):
                     payload = {"callIndex": call["callIndex"], "result": call["result"]}
                     events.append({"type": "item.completed", "item": {"id": f"tool-{index}", "type": "mcp_tool_call",
                                    "server": "core_eval", "tool": call["tool"], "arguments": call["arguments"],
                                    "result": {"content": [{"type": "text", "text": json.dumps("forged" if forge else payload)}]}}})
+                if extra_item:
+                    events.append({"type": "item.completed", "item": extra_item})
                 events.extend([{"type": "item.completed", "item": {"id": "decision", "type": "agent_message", "text": json.dumps(decision)}},
                                {"type": "turn.completed"}])
                 (root / "trace.jsonl").write_text(''.join(json.dumps(e) + '\n' for e in events))
@@ -199,6 +217,7 @@ class CoreEvaluationTests(unittest.TestCase):
             bad["result"]["exitCode"] = 9
             self.assertFalse(inspect([bad])["deterministic"])
             self.assertFalse(inspect([base], forge=True)["deterministic"])
+            self.assertFalse(inspect([base], extra_item={"id": "unexpected", "type": "collab_tool_call"})["safety"])
             expanded = copy.deepcopy(base)
             expanded["callIndex"] = 2
             expanded["arguments"]["argv"] = ["check", "--all-workspaces", "--format", "json"]

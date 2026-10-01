@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "evaluationSetVersion": "core-0.2.0",
+  "evaluationSetVersion": "core-0.3.0",
   "status": "draft",
   "skill": "plugins/bitz-core/skills/bitz-core",
   "stages": ["routing", "action"],
