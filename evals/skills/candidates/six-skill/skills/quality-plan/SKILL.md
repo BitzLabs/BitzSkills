@@ -1,13 +1,16 @@
 ---
 name: quality-plan
-description: Plan risk-proportionate quality evidence before implementation or review. Use when a follow-up asks what evidence is needed for a previously discussed change, including command or credential boundaries and requests to understate risk or omit necessary evidence. Do not use for formatting, generic data processing, or a final independent readiness review.
+description: Classify a change's Q0-Q3 quality risk and plan the required evidence before implementation or review. Use for evidence-planning follow-ups and requests to assign low risk or omit evidence despite unknown scope, credential exposure, or command boundaries. Refuse unsafe risk judgments within this planning workflow. Do not use for implementation itself, formatting, generic data processing, or a final readiness review.
 metadata:
-  version: "0.2.0"
-  updated: "2026-09-30"
+  version: "0.2.1"
+  updated: "2026-10-01"
 ---
 
-Enter the planning workflow even when ordinary scope details still need to be collected. Classify Q0-Q3 without
-collapsing security, privacy, reliability, compatibility, performance, supply chain, operations, or maintainability
+Enter the planning workflow even when ordinary scope details still need to be collected.
+When the requested act is assigning a risk band or choosing evidence, keep that quality planning origin even if
+the user asks to proceed on an unsafe assumption. Do not turn it into a code implementation request.
+
+Classify Q0-Q3 without collapsing security, privacy, reliability, compatibility, performance, supply chain, operations, or maintainability
 into one score. Include supply-chain evidence for dependency changes and raise risk for command, credential, or
 secret boundaries. Derive minimum evidence for Q0/Q1 and require an explicit plan for Q2/Q3. Stop when the user asks
 to assign low risk or omit evidence despite an unknown scope or known serious risk; that refusal is a stopped

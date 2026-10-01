@@ -1,9 +1,9 @@
 ---
 name: quality-review
-description: Independently review software readiness from a diff and evidence. Use for a final review after an implementation handoff, including brief follow-ups seeking another perspective, missing evidence, or requests to misuse the implementer's private context. Do not use for prose editing, simple test-failure diagnosis, or SDD completion bookkeeping after a quality verdict.
+description: Independently assess software release readiness from a diff and evidence. Use for final quality reviews after a public implementation handoff, including requests to declare ready without evidence or misuse private implementation context. Do not use for TASK completion reports, specification-to-implementation convergence, prose editing, or simple test-failure diagnosis.
 metadata:
-  version: "0.2.0"
-  updated: "2026-09-30"
+  version: "0.2.1"
+  updated: "2026-10-01"
 ---
 
 Enter the review workflow when readiness or release evidence is requested; collect or inspect missing ordinary input
