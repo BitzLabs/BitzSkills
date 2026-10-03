@@ -1,0 +1,58 @@
+# SDDの公開・隔離接続評価
+
+対象は配布 `plugins/bitz-sdd/skills/sdd-plan` と `sdd-implement`。
+評価集合sdd-0.1.0の17件を、スキルあり／なし、各2反復、solだけで最大68回実行する。
+Phase 2の計画・実装の接続を調べ、発火の区分別分母、保持ケース、複数モデル、実地パイロットを満たすSkill Gateとは区別する。
+公開の試作評価であり、scoreがPassedでもgateDecisionはnot-certifiedである。
+
+17件は計画の機能・バグ・保守・スパイク、草案保存と計画のみ、無許可の要求変更・本文の偽装、
+局所的な実装、context成功とprecheck失敗、草案要求、先行TASK、完全フローの不足承認・設計レビュー、
+危険なverify、並行した仕様変更、人手レビュー待ち、実テスト障害を含む。
+高リスクは開始前の停止を測り、本番のセキュリティ・複合workspace変更は実行しない。
+
+## 操作と採点の境界
+
+評価専用stdio MCPはlist_files、read_file、read_diff、write_file、run_bitzだけを提供する。
+Core製品のAPIを追加せず、run_bitzは確定refの公開CLIへ引数を渡す。
+モデルのshell・直接編集・web・apps/plugins・別エージェントを無効化する。
+読取りは列挙した合成workspaceと配布スキルだけ。書込みはケースの許可された草案またはsrc/input.pyだけ。
+秘密、範囲外パス、symlink、未登録コマンドは許可しない。ホストが拒否した操作も失敗として採点する。
+
+実テストは固定した標準Pythonのassertであり、常に成功するstubではない。
+コードの実行は副作用のないvalidate関数の比較・分岐・文字列リストのreturnにASTで限定する。
+この制限は狭い合成課題を安全に実行するためで、任意のPythonプログラムを安全化するsandboxではない。
+テスト本文・設定・Core環境を固定し、Core subprocessへ資格情報を継承しない。
+初期approvedや仕様の並行変更は合成例だけ。利用者の要求承認・TASK完了・Git公開を模擬許可に置き換えない。
+
+モデルの自己申告は、MCPのtrace、ホストの実呼出し・Core結果、前後hash、変更パスへ照合する。
+実装前check、保存digestの再照合、書込み、後check、実verifyと安全な事前読取りの順序を検査する。
+理由の意味と不足証拠は、別の文脈の独立検分で確認する。機械採点だけで工程完了を認定しない。
+非成功、欠測、無効応答を固定分母に残し、baselineの失敗をskillの失敗へ混ぜない。
+ケース・対象ref・スキルとCore source・評価器・モデル表示版をhashで結び付ける。
+異なる条件の既存runは再利用しない。未完走のtraceを保持し、自動再試行しない。
+
+## 実行
+
+モデルを使わない準備検査:
+
+```text
+python3 evals/skills/sdd/evaluate.py audit
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=plugins/bitz-core/src:<ruamel.yaml-0.19.1のパス> \
+  python3 tests/skills/test_sdd_skill_eval.py -v
+```
+
+モデル測定はcleanな確定refで、契約・配布物と分離したリポジトリ内の専用出力先へ保存する。
+Codex CLIの通常認証を利用し、認証値は読まない。モデル版はaliasの観測ラベルで、provider固定版と同一とは保証しない。
+
+```text
+python3 evals/skills/sdd/evaluate.py run --variant skill --repetition 1 \
+  --model gpt-6.1-sol --model-version unversioned-alias-observed-2026-10-03 \
+  --pythonpath <Core-sourceとruamel.yaml-0.19.1を含む絶対Python-path> \
+  --output .venv/sdd-evaluation-01 --jobs 2
+python3 evals/skills/sdd/evaluate.py score --input .venv/sdd-evaluation-01 \
+  --output .venv/sdd-evaluation-01/report.json
+```
+
+baselineと反復2を同条件で実行する。--caseで重点ケースだけを先行実行できるが、全件成功と呼ばない。
+--resumeは一致する完了記録だけを再利用し、既存の未完走ディレクトリは上書きしない。
+外部保持ケースとライブ環境をこの実行器へ渡さない。
