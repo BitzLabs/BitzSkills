@@ -98,12 +98,12 @@ def reviewed_result():
 def check_done_root(result):
     target = result["targetResults"][0]
     if target["status"] != "passed" or target["diagnostics"]:
-        raise ValueError("done TASKの起点はDiagnosticなしで再検証できる必要があります")
+        raise ValueError("`done`のTASKの起点は診断なしで再検証できる必要があります")
     if target["statements"] != TARGET_STATEMENTS:
-        raise ValueError("target規範文はTASKのaddressesだけから来る必要があります")
+        raise ValueError("対象規範文はTASKの`addresses`だけから来る必要があります")
     command = result["commands"][0]
     if "tests/test_session.py" in command["tests"] or "REQ-001:AC-02" in command["covers"]:
-        raise ValueError("addressesしていない規範文のtestをbindingへ入れてはいけません")
+        raise ValueError("`addresses`していない規範文のテストをテスト割当てへ入れてはいけません")
 
 
 def validate(root=HERE, identifiers=None):
@@ -122,21 +122,21 @@ def validate(root=HERE, identifiers=None):
         for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
             validators[name].validate(value)
         if manifest != reviewed_manifest() or result != reviewed_result():
-            raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
+            raise ValueError("起動条件または完全結果がレビュー済みの期待値と異なります")
         check_done_root(result)
         inputs = reviewed_inputs()
         frontmatter, _ = digest_crosscheck.split_document(inputs[TASK_PATH].decode())
         Draft202012Validator({"$ref": "#/$defs/taskFrontmatter",
                               "$defs": schema["$defs"]}).validate(frontmatter)
         if frontmatter["status"] != "done":
-            raise ValueError("審査済みの原因にはdone TASKの起点が必要です")
+            raise ValueError("レビュー済みの原因には`done`のTASKの起点が必要です")
         files = {p.relative_to(fixture / "repo").as_posix(): p
                  for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
         if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                             for name, p in files.items()):
-            raise ValueError("入力が審査済みcorpusと異なります")
+            raise ValueError("入力がレビュー済みのcorpusと異なります")
         if effects["before"] != effects["after"]:
-            raise ValueError("read-only期待値が書込みを許しています")
+            raise ValueError("読取り専用の期待値が書込みを許しています")
         previous = None
         with tempfile.TemporaryDirectory(prefix="bitz-verify-task-root-") as temporary:
             for run in range(2):
@@ -148,12 +148,12 @@ def validate(root=HERE, identifiers=None):
                     path.mkdir()
                 actual = observe(repository, external)
                 if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                    raise ValueError("隔離setupが固定snapshotと異なります")
+                    raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                 previous = actual
                 derived = digest_crosscheck.canonical_bytes(
                     digest_crosscheck.build(repository, root="TASK-001"))
                 if derived != digest_reference.canonical_bytes(reviewed_digest_input()):
-                    raise ValueError("reference AとBのCanonical JSONが一致しません")
+                    raise ValueError("参照計算AとBの正規JSONが一致しません")
         prepared.append(IDENTIFIER)
     except (OSError, ValueError, KeyError, TypeError, ValidationError,
             subprocess.SubprocessError) as error:

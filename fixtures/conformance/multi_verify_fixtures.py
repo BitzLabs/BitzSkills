@@ -412,14 +412,14 @@ def check_digests(identifier, repository, result):
             derived = multi_crosscheck.canonical_bytes(
                 multi_crosscheck.build(repository, entry["target"]))
             if multi_crosscheck.digest(derived) != entry["contextDigest"]:
-                raise ValueError(f"{entry['target']}のDigestが参照計算Bと一致しません")
+                raise ValueError(f"{entry['target']}のハッシュ値が参照計算Bと一致しません")
             literal = multi_reference.canonical_bytes(
                 reviewed_digest_input(identifier, entry["target"]))
             if literal != derived:
-                raise ValueError(f"{entry['target']}のreference AとBが一致しません")
+                raise ValueError(f"{entry['target']}の参照計算AとBが一致しません")
             checked += 1
     if identifier == "MULTI-016" and checked:
-        raise ValueError("対象0件のfixtureはDigestを持ちません")
+        raise ValueError("対象0件のfixtureはハッシュ値を持ちません")
     return checked
 
 
@@ -430,35 +430,35 @@ def check_corpus(identifier, repository, result):
         duplicates = [statement["id"] for statement
                       in multi_crosscheck.read_statements(documents["api::TECH-020"]["body"])]
         if len(duplicates) == len(set(duplicates)):
-            raise ValueError("派生遮断のcaseは、規範文IDが重複するinvalid文書が必要です")
+            raise ValueError("依存遮断のケースは、規範文IDが重複する不適合な文書が必要です")
         if "api::TECH-020" not in multi_crosscheck.relations(documents["web::TECH-010"])["requires"]:
-            raise ValueError("遮断されるtargetはinvalid文書へ強く依存する必要があります")
+            raise ValueError("遮断される検証対象は不適合な文書へ強く依存する必要があります")
         if "api::TECH-020" in multi_crosscheck.relations(documents["api::TECH-030"])["requires"]:
-            raise ValueError("独立targetはinvalid文書へ依存しない必要があります")
+            raise ValueError("独立した検証対象は不適合な文書へ依存しない必要があります")
     if identifier == "MULTI-013":
         if {document["workspaceId"] for document in documents.values()} != {"platform", "web"}:
-            raise ValueError("共有bindingのcaseは、すべてのworkspaceが対象を持つ必要があります")
+            raise ValueError("共有のテスト割当てのケースは、すべてのワークスペースが対象を持つ必要があります")
     if identifier == "MULTI-015":
         if any(document["workspaceId"] == "api" for document in documents.values()):
-            raise ValueError("対象0件のmemberはSPECを持ちません")
+            raise ValueError("対象0件のメンバーは仕様文書を持ちません")
     if identifier == "MULTI-016":
         if documents:
-            raise ValueError("全体0件のcaseはSPECを持ちません")
+            raise ValueError("全体0件のケースは仕様文書を持ちません")
     if identifier == "MULTI-014":
         configs = (repository / multi_reference.WEB_CONFIG_PATH).read_text(encoding="utf-8")
         if "/bin/false" not in configs:
-            raise ValueError("失敗継続のcaseは、失敗するcommandが必要です")
+            raise ValueError("失敗継続のケースは、失敗するコマンドが必要です")
     # テスト割当てを実行するコマンドは、実行結果を持つワークスペースが所有する。
     for workspace in result["workspaces"]:
         for command in workspace["commands"]:
             if command["workspaceId"] != workspace["id"]:
-                raise ValueError("command実体は所有workspaceへ置く必要があります")
+                raise ValueError("コマンド実体は所有ワークスペースへ置く必要があります")
     executed = {command["bindingId"] for workspace in result["workspaces"]
                 for command in workspace["commands"]}
     referenced = {binding for workspace in result["workspaces"]
                   for entry in workspace["targetResults"] for binding in entry["bindingRefs"]}
     if referenced != executed:
-        raise ValueError("参照されたbindingと実行したbindingが一致しません")
+        raise ValueError("参照されたテスト割当てと実行したテスト割当てが一致しません")
 
 
 def validate(root=HERE, identifiers=None):
@@ -476,17 +476,17 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier):
-                raise ValueError("起動条件が審査済み期待値と異なります")
+                raise ValueError("起動条件がレビュー済みの期待値と異なります")
             if result != reviewed_result(identifier):
-                raise ValueError("完全結果が審査済み期待値と異なります")
+                raise ValueError("完全結果がレビュー済みの期待値と異なります")
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[key]
                                                 for key, p in files.items()):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-multi-verify-") as temporary:
                 for run in range(2):
@@ -498,7 +498,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
                     check_corpus(identifier, repository, result)
                     check_digests(identifier, repository, result)

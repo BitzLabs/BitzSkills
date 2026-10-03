@@ -122,9 +122,9 @@ def references(identifier, repository):
     literal = digest_reference.canonical_bytes(digest_reference.reviewed_digest_input(identifier))
     derived = digest_crosscheck.canonical_bytes(digest_crosscheck.build(repository))
     if literal != derived:
-        raise ValueError("reference AとBのCanonical JSONが一致しません")
+        raise ValueError("参照計算AとBの正規JSONが一致しません")
     if digest_reference.digest(literal) != digest_crosscheck.digest(derived):
-        raise ValueError("reference AとBのDigestが一致しません")
+        raise ValueError("参照計算AとBのハッシュ値が一致しません")
     return literal
 
 
@@ -145,26 +145,26 @@ def validate(root=HERE, identifiers=None):
                 validators[name].validate(value)
             canonical = (fixture / "expected/context.canonical.json").read_bytes()
             if canonical != canonical.decode("utf-8").encode("utf-8") or canonical.endswith(b"\n"):
-                raise ValueError("Canonical JSONは末尾改行のないUTF-8である必要があります")
+                raise ValueError("正規JSONは末尾改行のないUTF-8である必要があります")
             if canonical.startswith(b"\xef\xbb\xbf"):
-                raise ValueError("Canonical JSONはBOMを持ってはいけません")
+                raise ValueError("正規JSONはBOMを持ってはいけません")
             if manifest != reviewed_manifest(identifier):
-                raise ValueError("起動条件が審査済み期待値と異なります")
+                raise ValueError("起動条件がレビュー済みの期待値と異なります")
             if result != reviewed_result(identifier, digest_reference.digest(canonical)):
-                raise ValueError("完全結果が審査済み期待値と異なります")
+                raise ValueError("完全結果がレビュー済みの期待値と異なります")
             inputs = digest_reference.reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             for path, kind in ((".spec/requirements/REQ-001.md", "reqFrontmatter"),
                                (".spec/technical/TECH-001.md", "techFrontmatter"),
                                (".spec/decisions/ADR-001.md", "adrFrontmatter")):
                 frontmatter, _ = digest_crosscheck.split_document(inputs[path].decode())
                 Draft202012Validator({"$ref": "#/$defs/" + kind, "$defs": schema["$defs"]}).validate(frontmatter)
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-digest-") as temporary:
                 for run in range(2):
@@ -176,12 +176,12 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
                     parser_expectations.validate_checks(fixture, manifest, repository)
                     computed = references(identifier, repository)
                     if computed != canonical:
-                        raise ValueError("commitしたCanonical JSONが参照計算と異なります")
+                        raise ValueError("コミットした正規JSONが参照計算と異なります")
             canonical_by_fixture[identifier] = canonical
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, IndexError, ValidationError,
@@ -193,9 +193,9 @@ def validate(root=HERE, identifiers=None):
         for identifier, canonical in canonical_by_fixture.items():
             same = identifier in SAME_AS_GOLDEN
             if same and canonical != golden:
-                errors.append(f"{identifier}: Digest材料はgoldenとbyte一致する必要があります")
+                errors.append(f"{identifier}: ハッシュ値の材料はgoldenとバイト一致する必要があります")
             if not same and canonical == golden:
-                errors.append(f"{identifier}: Digest材料はgoldenと異なる必要があります")
+                errors.append(f"{identifier}: ハッシュ値の材料はgoldenと異なる必要があります")
     elif identifiers is None:
         errors.append(f"{GOLDEN}: 群を比べるにはgolden fixtureが必要です")
     return {"prepared": prepared, "setups_per_fixture": 2, "core_execution": "Not run",

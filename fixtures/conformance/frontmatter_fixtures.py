@@ -81,13 +81,13 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("manifestまたは結果が審査済みの単一条件と異なります")
+                raise ValueError("マニフェストまたは結果がレビュー済みの単一条件と異なります")
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name] for name, p in files.items()):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             if effects["policy"] != "read-only" or effects["before"] != effects["after"]:
-                raise ValueError("BOMとFrontmatterの処理はfileを書いてはいけません")
+                raise ValueError("BOMとフロントマターの処理はファイルを書いてはいけません")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-frontmatter-") as temporary:
                 for run in range(2):
@@ -99,7 +99,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

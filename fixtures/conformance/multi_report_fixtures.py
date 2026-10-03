@@ -88,32 +88,32 @@ def reviewed_effects(identifier, state):
 def check_report_contract(identifier, manifest, effects, result):
     operation, report, _ = CASES[identifier]
     if ("--report" in manifest["invocation"]["argv"]) != report:
-        raise ValueError("manifestの--reportが審査済みcaseと異なります")
+        raise ValueError("マニフェストの`--report`がレビュー済みのケースと異なります")
     if manifest["expect"]["reportFileCount"] != (1 if report else 0):
-        raise ValueError("report件数がmanifestと異なります")
+        raise ValueError("レポートの件数がマニフェストと異なります")
     if not report:
         if effects["policy"] != "read-only" or "report" in effects:
-            raise ValueError("既定の全体操作はfileを作ってはいけません")
+            raise ValueError("既定の全体操作はファイルを作ってはいけません")
         return
     if effects["policy"] != "explicit-report" or effects["report"]["createdCount"] != 1:
-        raise ValueError("明示reportはちょうど1件を作る必要があります")
+        raise ValueError("明示したレポートはちょうど1件を作る必要があります")
     if effects["report"]["directory"] != REPORT_DIRECTORY:
-        raise ValueError("全体reportはroot workspaceの規定先へ保存する必要があります")
+        raise ValueError("全体のレポートはルートワークスペースの規定先へ保存する必要があります")
     if effects["report"]["temporaryFilesRemaining"] != 0:
-        raise ValueError("原子的な作成は一時fileを残してはいけません")
+        raise ValueError("原子的な作成は一時ファイルを残してはいけません")
     pattern = effects["report"]["namePattern"]
     if not re.fullmatch(pattern, f"20000101T000000Z-{operation}.json"):
-        raise ValueError("review済みの名前のpatternが妥当なreport名を拒否しています")
+        raise ValueError("レビュー済みの名前のパターンが妥当なレポート名を拒否しています")
     for bad in (f"{operation}.json", f"20000101T000000Z-{operation}-0.json",
                 "20000101T000000Z-doctor.json", f"20000101T000000Z-{operation}.json.tmp"):
         if re.fullmatch(pattern, bad):
-            raise ValueError("review済みの名前のpatternが不正なreport名を受理しています")
+            raise ValueError("レビュー済みの名前のパターンが不正なレポート名を受理しています")
     if EXISTING_REPORT not in effects["before"]["repository"]:
-        raise ValueError("既存のreportがないと排他的な作成を検査できません")
+        raise ValueError("既存のレポートがないと排他的な作成を検査できません")
     # 既定の対と結果本体が一致することを確かめる。レポートの有無は結果を変えない。
     default = "MULTI-022-01" if operation == "check" else "MULTI-022-03"
     if result != reviewed_result(default):
-        raise ValueError("reportの有無で結果本体が変わっています")
+        raise ValueError("レポートの有無で結果本体が変わっています")
 
 
 def validate(root=HERE, identifiers=None):
@@ -133,16 +133,16 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier):
-                raise ValueError("起動条件が審査済み期待値と異なります")
+                raise ValueError("起動条件がレビュー済みの期待値と異なります")
             if result != reviewed_result(identifier):
-                raise ValueError("完全結果が審査済み期待値と異なります")
+                raise ValueError("完全結果がレビュー済みの期待値と異なります")
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[key]
                                                 for key, p in files.items()):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("実行前後で既存のpathは不変でなければなりません")
+                raise ValueError("実行前後で既存のパスは不変でなければなりません")
             check_report_contract(identifier, manifest, effects, result)
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-multi-report-") as temporary:
@@ -155,10 +155,10 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
                     if not (repository / REPORT_DIRECTORY).is_dir():
-                        raise ValueError("report directoryは実在するdirectoryである必要があります")
+                        raise ValueError("レポートのディレクトリは実在するディレクトリである必要があります")
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, IndexError, ValidationError,
                 subprocess.SubprocessError) as error:

@@ -85,21 +85,21 @@ def reviewed_manifest(identifier):
 
 def check_contract(identifier, manifest):
     if "status" in manifest["expect"] or "resultFile" in manifest["expect"]:
-        raise ValueError("引数不正は共通結果を作りません")
+        raise ValueError("引数不正は結果を作りません")
     if manifest["expect"]["reportFileCount"] != 0:
-        raise ValueError("引数不正はreportを書いてはいけません")
+        raise ValueError("引数不正はレポートを書いてはいけません")
     operation = CASES[identifier][0]
     if manifest["invocation"]["argv"][0] != operation:
-        raise ValueError("manifestの操作が審査済みcaseと異なります")
+        raise ValueError("マニフェストの操作がレビュー済みのケースと異なります")
     if identifier.startswith("SINGLE-073") and "--report" not in manifest["invocation"]["argv"]:
-        raise ValueError("report flagのcaseは--reportを渡す必要があります")
+        raise ValueError("レポートのフラグのケースは`--report`を渡す必要があります")
     if identifier.startswith("SINGLE-112"):
         argv = manifest["invocation"]["argv"]
         # ADR-001は存在するため、起点を不正にする原因は目的または操作だけである。
         if argv[1] != "ADR-001" or digest_reference.ADR_PATH not in reviewed_inputs(identifier):
-            raise ValueError("ADR起点caseは存在するADR-001を指定する必要があります")
+            raise ValueError("ADRを起点とするケースは存在する`ADR-001`を指定する必要があります")
         if argv[0] == "context" and argv[argv.index("--purpose") + 1] == "interpret":
-            raise ValueError("ADR起点はinterpretでは妥当です")
+            raise ValueError("ADRを起点とすることは目的`interpret`では妥当です")
     # 標準エラー出力の契約は共通のヘルパーが持つ。この操作で動かし、接頭辞や理由が一致しなくなった
     # ことを見逃さないようにする。
     check_cli_error_output(4, b"", f"bitz: {operation}: reason\n".encode(), operation)
@@ -126,20 +126,20 @@ def validate(root=HERE, identifiers=None):
             validators["manifest"].validate(manifest)
             validators["side-effects"].validate(effects)
             if manifest != reviewed_manifest(identifier):
-                raise ValueError("起動条件が審査済み期待値と異なります")
+                raise ValueError("起動条件がレビュー済みの期待値と異なります")
             if json.loads((fixture / "cli-output.json").read_text()) != cli_output(identifier):
-                raise ValueError("CLI出力の期待値が審査済みの契約と異なります")
+                raise ValueError("CLI出力の期待値がレビュー済みの契約と異なります")
             check_contract(identifier, manifest)
             if (fixture / "expected").exists():
-                raise ValueError("引数不正fixtureは期待結果fileを持ちません")
+                raise ValueError("引数不正のfixtureは期待結果のファイルを持ちません")
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-cli-error-") as temporary:
                 for run in range(2):
@@ -151,7 +151,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError,

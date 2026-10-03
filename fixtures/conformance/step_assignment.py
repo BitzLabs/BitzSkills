@@ -87,26 +87,26 @@ def validate(root=HERE, plan_text=None):
     except (OSError, ValueError, KeyError, TypeError) as error:
         return {"status": "Failed", "errors": [f"steps.json: {str(error).splitlines()[0]}"]}
     if sorted(declared) != sorted(planned):
-        errors.append("steps.jsonのStepが実装計画と異なります")
+        errors.append("`steps.json`のStepが実装計画と異なります")
     parser_ids = set()
     for step, entry in sorted(declared.items()):
         fixtures, parser_checks = set(entry["fixtures"]), set(entry.get("parserChecks", []))
         if entry["fixtures"] != sorted(fixtures, key=ids.index) or entry.get("parserChecks", []) != sorted(parser_checks, key=ids.index):
             errors.append(f"Step {step}: IDがmatrixの順序で重複なく並んでいません")
         if fixtures & parser_checks:
-            errors.append(f"Step {step}: 公開結果とParser受入の両方に同じIDがあります")
+            errors.append(f"Step {step}: 公開結果と構文解析器の受入の両方に同じIDがあります")
         if fixtures | parser_checks != planned.get(step, set()):
             errors.append(f"Step {step}: 実装計画の完了条件と一致しません")
         for identifier in sorted(parser_checks):
             manifest = json.loads((root / "single" / identifier / "manifest.json").read_text())
             if "parserChecks" not in manifest:
-                errors.append(f"{identifier}: parserChecksを持たないfixtureをParser受入に置いています")
+                errors.append(f"{identifier}: `parserChecks`を持たないfixtureを構文解析器の受入に置いています")
         parser_ids |= parser_checks
     public = {identifier for entry in declared.values() for identifier in entry["fixtures"]}
     for identifier in sorted(set(ids) - public):
         errors.append(f"{identifier}: 公開結果を比較するStepがありません")
     for path in sorted((root / "single").glob("*/manifest.json")):
         if "parserChecks" in json.loads(path.read_text()) and path.parent.name not in parser_ids:
-            errors.append(f"{path.parent.name}: Parser受入を行うStepがありません")
+            errors.append(f"{path.parent.name}: 構文解析器の受入を行うStepがありません")
     return {"steps": {str(step): len(entry["fixtures"]) for step, entry in sorted(declared.items())},
             "status": "Passed" if not errors else "Failed", "errors": errors}

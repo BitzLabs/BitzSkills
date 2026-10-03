@@ -97,11 +97,11 @@ def links():
             destination = (path.parent / target).resolve() if target else path
             checked += 1
             if not destination.exists():
-                errors.append(f"{path.relative_to(ROOT)}: link先がありません {link}")
+                errors.append(f"{path.relative_to(ROOT)}: リンク先がありません {link}")
             elif anchor and destination.suffix == ".md":
                 headings = re.findall(r"^#{1,6}\s+(.+)$", destination.read_text(), re.M)
                 if anchor not in {slug(h) for h in headings}:
-                    errors.append(f"{path.relative_to(ROOT)}: anchorがありません {link}")
+                    errors.append(f"{path.relative_to(ROOT)}: アンカーがありません {link}")
     return {"checked": checked, "errors": errors}
 
 
@@ -155,10 +155,10 @@ def matrix():
     ids = [identifier for identifier, _ in rows]
     errors = []
     if len(ids) != len(set(ids)):
-        errors.append("matrix IDが重複しています")
+        errors.append("matrixのIDが重複しています")
     for identifier, row in rows:
         if identifier.rsplit("-", 1)[0] in ids:
-            errors.append(f"{identifier}: familyのIDと接尾辞付きIDが併存しています")
+            errors.append(f"{identifier}: ファミリーのIDと接尾辞付きのIDが併存しています")
         if re.search(r"元status|passed/0、failed/1", row):
             errors.append(f"{identifier}: 期待結果が曖昧です")
     found = {p.parent.name for p in FIXTURES.glob("*/*/manifest.json")}
@@ -176,21 +176,21 @@ def matrix():
             argv = manifest["invocation"]["argv"]
             # `--base`を受け付けるのは`check`だけで、`context`、`verify`、`doctor`は基準版のオプションを持たない。
             if argv[0] == "check" and "baseCommit" in manifest["setup"] and "--base" not in argv:
-                errors.append(f"{path}: commit済みfixtureには明示の--baseが必要です")
+                errors.append(f"{path}: コミット済みのfixtureには明示の`--base`が必要です")
             if not manifest["setup"]["git"] and "--base" in argv:
-                errors.append(f"{path}: Git不在fixtureでは--baseを使えません")
+                errors.append(f"{path}: Git不在のfixtureでは`--base`を使えません")
             if manifest["fixtureId"] != path.parent.name:
-                errors.append(f"{path}: fixtureIdがdirectory名と異なります")
+                errors.append(f"{path}: `fixtureId`がディレクトリ名と異なります")
             generated = "generate" in manifest["setup"]
             if generated:
                 # 生成fixtureは`repo/`を持たず、データセットのマニフェストから入力を作る（ADR-048）。
                 dataset = path.parent / manifest["setup"]["generate"]["dataset"]
                 if (path.parent / "repo").exists() or not dataset.is_file():
-                    errors.append(f"{path}: 生成fixtureにdataset manifestがありません")
+                    errors.append(f"{path}: 生成fixtureにデータセットのマニフェストがありません")
                 if "resultFile" in manifest["expect"]:
-                    errors.append(f"{path}: 生成fixtureの期待結果はdigestで固定します")
+                    errors.append(f"{path}: 生成fixtureの期待結果はハッシュ値で固定します")
             elif not (path.parent / "repo").is_dir():
-                errors.append(f"{path}: repo directoryがありません")
+                errors.append(f"{path}: `repo`ディレクトリがありません")
             referenced = set()
             for key in ("resultFile", "textFile"):
                 if key not in manifest["expect"]:
@@ -207,17 +207,17 @@ def matrix():
                     if (result["operation"] != manifest["invocation"]["argv"][0]
                             or result["status"] != manifest["expect"].get("status")
                             or status_exit[result["status"]] != manifest["expect"]["exitCode"]):
-                        errors.append(f"{path}: manifestと結果の操作、status、終了コードが一致しません")
+                        errors.append(f"{path}: マニフェストと結果の操作、`status`、終了コードが一致しません")
                 elif key == "resultFile":
                     # `bitz`以外のランナーの標準出力は`outcome`だけを持つオブジェクトである（ADR-046）。
                     outcome = manifest["expect"]["outcome"]
                     if (json.loads(expected.read_text()) != {"outcome": outcome}
                             or manifest["expect"]["exitCode"] != (1 if outcome == "rejected" else 0)):
-                        errors.append(f"{path}: outcomeの出力または終了コードが規定と異なります")
+                        errors.append(f"{path}: `outcome`の出力または終了コードが規定と異なります")
             for _, expected_ir in parser_expectations.files(path.parent, manifest):
                 value = json.loads(expected_ir.read_text())
                 if not isinstance(value, list):
-                    errors.append(f"{path}: Parserの期待値は完全なIRの配列である必要があります")
+                    errors.append(f"{path}: 構文解析器の期待値は完全な意味中間表現の配列である必要があります")
                 referenced.add(expected_ir.resolve())
             unreferenced = {p.resolve() for p in (path.parent / "expected").glob("*") if p.is_file()} - referenced
             # 正規JSONのバイト列は、goldenのハッシュ値の検査で別に比べる。
@@ -264,16 +264,16 @@ def executable_bits():
     listing = subprocess.run(["git", "ls-files", "-s", "--", str(FIXTURES.relative_to(ROOT))],
                              cwd=ROOT, capture_output=True, text=True, timeout=60)
     if listing.returncode != 0:
-        return {"checked": 0, "errors": [listing.stderr.strip() or "git ls-filesが失敗しました"]}
+        return {"checked": 0, "errors": [listing.stderr.strip() or "`git ls-files`が失敗しました"]}
     modes = {}
     for line in listing.stdout.splitlines():
         mode, _, _, name = line.replace("\t", " ").split(None, 3)
         modes[name] = mode
     for name, executable in sorted(expected.items()):
         if name not in modes:
-            errors.append(f"{name}: fixtureの入力がversion管理されていません")
+            errors.append(f"{name}: fixtureの入力がバージョン管理されていません")
         elif (modes[name] == "100755") != executable:
-            errors.append(f"{name}: Gitのindexの実行bitが副作用期待値と異なります")
+            errors.append(f"{name}: Gitのインデックスの実行ビットが副作用の期待値と異なります")
     return {"checked": len(expected), "errors": errors}
 
 
@@ -283,7 +283,7 @@ def registry():
     ids = [r[0] for r in rows]
     errors = []
     if not rows or len(ids) != len(set(ids)):
-        errors.append("registryが空か、conditionIdが重複しています")
+        errors.append("診断レジストリが空か、`conditionId`が重複しています")
     for row in rows:
         if row[3].strip() not in {"info", "warning", "error"} or row[4].strip() not in {"passed", "passed_with_warnings", "failed", "blocked", "error"}:
             errors.append(f"{row[0]}: 語彙が不正です")

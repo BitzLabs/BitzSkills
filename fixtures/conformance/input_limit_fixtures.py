@@ -124,7 +124,7 @@ def reviewed_inputs(identifier):
 def frontmatter_size(document):
     parts = document.split(b"---\n", 2)
     if len(parts) != 3 or parts[0]:
-        raise ValueError("文書に区切られたFrontmatterがありません")
+        raise ValueError("文書に区切られたフロントマターがありません")
     return len(parts[1])
 
 
@@ -148,11 +148,11 @@ def check_limits(identifier, inputs):
         raise ValueError(f"入力が越える次元が{sorted(CROSSED[identifier])}ではなく{sorted(crossed)}です")
     if identifier.startswith("SINGLE-080") and (statement_count(document) < ITEM_LIMIT
                                                 or covers_count(document) < ITEM_LIMIT):
-        raise ValueError("境界のcaseはreview済みの上限を両方とも満たす必要があります")
+        raise ValueError("境界のケースはレビュー済みの上限を両方とも満たす必要があります")
     if identifier == "SINGLE-083":
         entry = Path(UNKNOWN_PATH)
         if UNKNOWN_PATH not in inputs or entry.parent.as_posix() != ".spec" or entry.suffix == ".md":
-            raise ValueError("未知entryのcaseには、.spec/直下にSPECでないfileが必要です")
+            raise ValueError("未知のエントリのケースには、`.spec/`直下に仕様文書でないファイルが必要です")
 
 
 def reviewed_manifest(identifier):
@@ -196,16 +196,16 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("manifestまたは結果が審査済みの単一条件と異なります")
+                raise ValueError("マニフェストまたは結果がレビュー済みの単一条件と異なります")
             inputs = reviewed_inputs(identifier)
             check_limits(identifier, inputs)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             if effects["policy"] != "read-only" or effects["before"] != effects["after"]:
-                raise ValueError("上限の検出はfileを書いてはいけません")
+                raise ValueError("上限の検出はファイルを書いてはいけません")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-input-limit-") as temporary:
                 for run in range(2):
@@ -217,7 +217,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

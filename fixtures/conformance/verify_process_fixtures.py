@@ -150,17 +150,17 @@ def observe_termination(identifier, repository):
     path, _, termination, _, _ = COMMANDS[identifier]
     executable = repository / path
     if not (executable.is_file() and os.access(executable, os.X_OK)):
-        raise ValueError("command fileはspawn前に通常の実行可能fileである必要があります")
+        raise ValueError("コマンドのファイルはプロセスの生成の前に通常の実行可能なファイルである必要があります")
     if termination == "spawn_error":
         try:
             subprocess.run([str(executable)], cwd=repository, capture_output=True, timeout=10)
         except OSError:
             return
-        raise ValueError("command fileをOSが受理したので、spawn errorが起きません")
+        raise ValueError("コマンドのファイルをOSが受理したので、プロセスの生成のエラーが起きません")
     if termination == "signal":
         completed = subprocess.run([str(executable)], cwd=repository, capture_output=True, timeout=10)
         if completed.returncode != -signal.SIGTERM:
-            raise ValueError("commandがsignalで終了しませんでした")
+            raise ValueError("コマンドがシグナルで終了しませんでした")
         return
     # タイムアウト: 終了の要求では足りず、強制終了で終わらなければならない。
     process = subprocess.Popen([str(executable)], cwd=repository, stdout=subprocess.PIPE,
@@ -170,13 +170,13 @@ def observe_termination(identifier, repository):
         # トラップが設定済みになるよう、準備完了の行を待つ。それより前にシグナルを送っても、
         # 保護されていない起動直後を終了できることしか示せない。
         if not select.select([process.stdout], [], [], 5)[0]:
-            raise ValueError("commandが準備完了の行を出力しませんでした")
+            raise ValueError("コマンドが準備完了の行を出力しませんでした")
         if process.stdout.readline().strip() != READY:
-            raise ValueError("commandが準備完了を知らせませんでした")
+            raise ValueError("コマンドが準備完了を知らせませんでした")
         os.killpg(process.pid, signal.SIGTERM)
         time.sleep(0.5)
         if process.poll() is not None:
-            raise ValueError("commandがgraceful terminationで停止したので、強制終了が必要ありません")
+            raise ValueError("コマンドが終了の要求で停止したので、強制終了が必要ありません")
         os.killpg(process.pid, signal.SIGKILL)
         process.wait(timeout=max(0.1, deadline - time.monotonic()))
     finally:
@@ -203,25 +203,25 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
+                raise ValueError("起動条件または完全結果がレビュー済みの期待値と異なります")
             command = result["commands"][0]
             if command["exitCode"] is not None or command["status"] != "error":
-                raise ValueError("exit以外の終了は、終了コードなしとerror statusを返す必要があります")
+                raise ValueError("`exit`以外の終了は、終了コードなしと状態`error`を返す必要があります")
             if command["stdoutExcerpt"] != expected_stdout(identifier) or command["stderrExcerpt"]:
-                raise ValueError("commandの抜粋がreview済みの出力と異なります")
+                raise ValueError("コマンドの抜粋がレビュー済みの出力と異なります")
             inputs = reviewed_inputs(identifier)
             expected_executables = executables(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             for name, path in files.items():
                 if path.is_symlink() or path.read_bytes() != inputs[name]:
-                    raise ValueError("入力が審査済みcorpusと異なります")
+                    raise ValueError("入力がレビュー済みのcorpusと異なります")
                 if bool(path.stat().st_mode & 0o111) != (name in expected_executables):
-                    raise ValueError(f"{name}の実行bitが審査済み入力と異なります")
+                    raise ValueError(f"{name}の実行ビットがレビュー済みの入力と異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-verify-process-") as temporary:
                 for run in range(2):
@@ -233,15 +233,15 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
                     derived = digest_crosscheck.canonical_bytes(digest_crosscheck.build(repository))
                     if digest_crosscheck.digest(derived) != context_digest(identifier):
-                        raise ValueError("参照計算どうしでtargetのDigestが一致しません")
+                        raise ValueError("参照計算どうしで検証対象のハッシュ値が一致しません")
                     if run == 0:
                         observe_termination(identifier, repository)
                     if compare_state(effects["after"], observe(repository, external)):
-                        raise ValueError("commandの観測でfixtureの状態が変わりました")
+                        raise ValueError("コマンドの観測でfixtureの状態が変わりました")
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError,
                 subprocess.SubprocessError) as error:

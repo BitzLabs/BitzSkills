@@ -71,12 +71,12 @@ def main():
             ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
             cwd=ROOT.parent, capture_output=True,
         )
-        assert exists.returncode == 0, f"baselineのcommitが存在しません: {commit}"
+        assert exists.returncode == 0, f"ベースラインのコミットが存在しません: {commit}"
         ancestor = subprocess.run(
             ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
             cwd=ROOT.parent, capture_output=True,
         )
-        assert ancestor.returncode == 0, f"baselineのcommitがHEADの祖先ではありません: {commit}"
+        assert ancestor.returncode == 0, f"ベースラインのコミットが`HEAD`の祖先ではありません: {commit}"
         summary = PERFORMANCE_RUNNER.validate_accepted_baseline(
             result, plan, environment,
             {identifier: read(path) for identifier, path in datasets.items()})

@@ -30,15 +30,15 @@ def safe_path(root, relative, allow_dot=False):
     if allow_dot and relative == ".":
         return root
     if not relative or "\0" in relative or "\\" in relative or Path(relative).is_absolute() or any(part in {"", ".", ".."} for part in relative.split("/")):
-        raise ValueError(f"安全でないfixture pathです: {relative!r}")
+        raise ValueError(f"安全でないfixtureのパスです: {relative!r}")
     if relative.split("/")[0] == ".git":
-        raise ValueError("fixtureの操作はGitのmetadataを変更できません")
+        raise ValueError("fixtureの操作はGitのメタデータを変更できません")
     target = root / relative
     for parent in target.parents:
         if parent == root:
             break
         if parent.is_symlink():
-            raise ValueError("fixture pathがsymlinkを経由しています")
+            raise ValueError("fixtureのパスがシンボリックリンクを経由しています")
     return target
 
 
@@ -72,24 +72,24 @@ def write_generated(entries, destination):
 
 def setup(fixture, manifest, destination, generated=None):
     if destination.exists():
-        raise ValueError("setup先は存在してはいけません")
+        raise ValueError("準備手順で作るディレクトリは存在してはいけません")
     plan = manifest["setup"]
     if "generate" in plan:
         if (fixture / "repo").exists():
-            raise ValueError("生成fixtureはrepo directoryを持ってはいけません")
+            raise ValueError("生成fixtureは`repo`ディレクトリを持ってはいけません")
         if generated is None:
-            raise ValueError("生成fixtureのsetupには生成した入力が必要です")
+            raise ValueError("生成fixtureの準備手順には生成した入力が必要です")
         destination.mkdir(parents=True)
         write_generated(generated, destination)
     else:
         if (fixture / "repo/.git").exists():
-            raise ValueError("fixtureの元directoryはGitのmetadataを含んではいけません")
+            raise ValueError("fixtureの元のディレクトリはGitのメタデータを含んではいけません")
         shutil.copytree(fixture / "repo", destination, symlinks=True)
     if plan["git"]:
         git(destination, "init", "--initial-branch=fixture")
     elif "baseCommit" in plan or any(op["op"] in {"stage", "submodule", "worktree"}
                                      for op in plan["operations"]):
-        raise ValueError("Gitの操作にはsetup.gitが必要です")
+        raise ValueError("Gitの操作には`setup.git`が必要です")
     if "baseCommit" in plan:
         paths = plan["baseCommit"]["paths"]
         for path in paths:
@@ -107,10 +107,10 @@ def setup(fixture, manifest, destination, generated=None):
         exists = path.exists() or path.is_symlink()
         if kind in {"create", "update"}:
             if (kind == "create" and exists) or (kind == "update" and (not exists or (path.is_dir() and not path.is_symlink()))):
-                raise ValueError("create／updateの前提条件を満たしていません")
+                raise ValueError("`create`／`update`の前提条件を満たしていません")
             source = safe_path(fixture, operation["source"])
             if not operation["source"].startswith("changes/") or not (source.is_file() or source.is_symlink()):
-                raise ValueError("sourceはchangesのfileまたはsymlinkである必要があります")
+                raise ValueError("`source`は`changes`のファイルまたはシンボリックリンクである必要があります")
             if exists:
                 path.unlink()
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -130,10 +130,10 @@ def setup(fixture, manifest, destination, generated=None):
                 shutil.rmtree(path)
         elif kind in {"submodule", "worktree"}:
             if exists:
-                raise ValueError("Git構造を作るpathは存在していてはいけません")
+                raise ValueError("Git構造を作るパスは存在していてはいけません")
             source = safe_path(fixture, operation["source"])
             if not operation["source"].startswith("changes/") or not source.is_dir():
-                raise ValueError("Git構造のsourceはchangesのdirectoryである必要があります")
+                raise ValueError("Git構造の`source`は`changes`のディレクトリである必要があります")
             if kind == "submodule":
                 add_submodule(destination, path, source)
             else:
@@ -141,11 +141,11 @@ def setup(fixture, manifest, destination, generated=None):
         elif kind == "rename":
             target = safe_path(destination, operation["to"])
             if not exists or target.exists() or target.is_symlink():
-                raise ValueError("renameの前提条件を満たしていません")
+                raise ValueError("`rename`の前提条件を満たしていません")
             target.parent.mkdir(parents=True, exist_ok=True)
             path.rename(target)
         else:
-            raise ValueError(f"未知のsetup操作です: {kind}")
+            raise ValueError(f"準備手順の未知の操作です: {kind}")
     return destination
 
 

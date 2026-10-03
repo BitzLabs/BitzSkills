@@ -126,7 +126,7 @@ class FakeCoreMutationTests(unittest.TestCase):
             report = _run_harness(core_dir, subset)
         self._assert_only_one_failed(report, "SINGLE-071-01")
         mutated = next(entry for entry in report["fixtures"] if entry["id"] == "SINGLE-071-01")
-        self.assertTrue(any("report(" in difference for difference in mutated["differences"]), mutated)
+        self.assertTrue(any("レポート（" in difference for difference in mutated["differences"]), mutated)
 
 
 # 生成fixture(適合fixture仕様3.4・3.5)の代表: `check`(`memberCount`の境界、`passed`)、

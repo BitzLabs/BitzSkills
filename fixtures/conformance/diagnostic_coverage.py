@@ -23,7 +23,7 @@ def validate(ledger=None, root=ROOT):
     for path, expected in ledger["sources"].items():
         source = root / path
         if not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest() != expected:
-            errors.append(f"reviewが古くなっています: {path}")
+            errors.append(f"レビューが古くなっています: {path}")
     for group in ledger["groups"]:
         if not group["rationale"] or not group["sources"] or any(p not in ledger["sources"] for p in group["sources"]):
             errors.append(f"根拠文書または理由がありません: {group['id']}")
@@ -44,7 +44,7 @@ def validate(ledger=None, root=ROOT):
             errors.append(f"意味の回帰があります: {identifier}")
     issues = ledger["openIssues"]
     if ledger["reviewStatus"] not in {"Pending", "Passed"}:
-        errors.append("reviewStatusが不正です")
+        errors.append("`reviewStatus`が不正です")
     if issues and ledger["reviewStatus"] != "Pending":
         errors.append("未解決の論点が残る場合は完了にできません")
     return {"conditions": len(actual), "mappedConditions": len(set(mapped)), "sourceDocuments": len(ledger["sources"]),

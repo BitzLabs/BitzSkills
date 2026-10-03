@@ -204,21 +204,21 @@ def check_sharing(identifier, result):
     参照するテストのパスを重複排除する。"""
     commands = result["commands"]
     if len(commands) != 1:
-        raise ValueError("共有bindingは単一のcommand実体である必要があります")
+        raise ValueError("共有のテスト割当ては単一のコマンド実体である必要があります")
     command = commands[0]
     if len(command["tests"]) != len(set(command["tests"])):
-        raise ValueError("test pathが重複排除されていません")
+        raise ValueError("テストのパスが重複排除されていません")
     if command["argv"].count(SHARED_TEST) > 1:
-        raise ValueError("重複排除したpathが複数回展開されています")
+        raise ValueError("重複排除したパスが複数回展開されています")
     requesting = [target for target in result["targetResults"] if target["bindingRefs"]]
     if {ref for target in requesting for ref in target["bindingRefs"]} != {command["bindingId"]}:
-        raise ValueError("要求したtargetがすべて単一のbindingを参照していません")
+        raise ValueError("要求した検証対象がすべて単一のテスト割当てを参照していません")
     digests = [target["contextDigest"] for target in result["targetResults"]]
     if len(set(digests)) != len(digests) or None in digests:
-        raise ValueError("各targetは固有のnullでないContext Digestを解決する必要があります")
+        raise ValueError("各検証対象は固有の`null`でないコンテキストのハッシュ値を解決する必要があります")
     for target in result["targetResults"]:
         if target["status"] != "passed" and target["bindingRefs"]:
-            raise ValueError("非成功のtargetはbindingを要求してはいけません")
+            raise ValueError("非成功の検証対象はテスト割当てを要求してはいけません")
 
 
 def validate(root=HERE, identifiers=None):
@@ -236,7 +236,7 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
+                raise ValueError("起動条件または完全結果がレビュー済みの期待値と異なります")
             if identifier != "SINGLE-065":
                 check_sharing(identifier, result)
             inputs = reviewed_inputs(identifier)
@@ -244,9 +244,9 @@ def validate(root=HERE, identifiers=None):
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-verify-binding-") as temporary:
                 for run in range(2):
@@ -258,13 +258,13 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
                     for target in result["targetResults"]:
                         derived = digest_crosscheck.canonical_bytes(
                             digest_crosscheck.build(repository, root=target["target"]))
                         if digest_crosscheck.digest(derived) != target["contextDigest"]:
-                            raise ValueError(f"参照計算どうしで{target['target']}のDigestが一致しません")
+                            raise ValueError(f"参照計算どうしで{target['target']}のハッシュ値が一致しません")
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError,
                 subprocess.SubprocessError) as error:

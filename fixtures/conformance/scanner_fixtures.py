@@ -120,14 +120,14 @@ def check_positions(identifier, document):
     line_text, code, _, anchor, column = CASES[identifier]
     lines = document.decode().splitlines()
     if lines[STATEMENT_LINE - 1] != line_text.splitlines()[0]:
-        raise ValueError("review済みの16行目が固定した文書と異なります")
+        raise ValueError("レビュー済みの16行目が固定した文書と異なります")
     if code is None:
         if anchor is not None or column is not None:
-            raise ValueError("成功するcaseはDiagnosticの位置を固定してはいけません")
+            raise ValueError("成功するケースは診断の位置を固定してはいけません")
         return
     position = lines[STATEMENT_LINE - 1].index(anchor) + 1
     if position != column:
-        raise ValueError("Diagnosticの列がreview済みのtokenを指していません")
+        raise ValueError("診断の列がレビュー済みのトークンを指していません")
 
 
 def check_suppression(identifier, document):
@@ -138,15 +138,15 @@ def check_suppression(identifier, document):
     if identifier in {"SINGLE-099-01", "SINGLE-099-02"}:
         fence = "```" if identifier.endswith("01") else "~~~"
         if block[0] != fence + "text" or block[-1] != fence or block[1] != CANDIDATE or len(block) != 3:
-            raise ValueError("fenceのcaseは固定した候補textだけを囲む必要があります")
+            raise ValueError("フェンスのケースは固定した候補のテキストだけを囲む必要があります")
     elif identifier == "SINGLE-099-03":
         if len(block) != 1 or block[0] != "> " + CANDIDATE:
-            raise ValueError("引用のcaseは固定した候補textだけに接頭辞を付ける必要があります")
+            raise ValueError("引用のケースは固定した候補のテキストだけに接頭辞を付ける必要があります")
     elif len(block) != 1 or block[0] != "    " + CANDIDATE or "\t" in block[0]:
-        raise ValueError("indentのcaseには、先頭にちょうど4つの空白とTABのないことが必要です")
+        raise ValueError("字下げのケースには、先頭にちょうど4つの空白とTABのないことが必要です")
     text = document.decode()
     if text.count(CANDIDATE) != 1 or SUPPRESSION[identifier] not in text:
-        raise ValueError("抑止するtextは、その構文の中にちょうど1回現れる必要があります")
+        raise ValueError("抑止するテキストは、その構文の中にちょうど1回現れる必要があります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -164,17 +164,17 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("manifestまたは結果が審査済みの単一条件と異なります")
+                raise ValueError("マニフェストまたは結果がレビュー済みの単一条件と異なります")
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             check_positions(identifier, inputs[SPEC_PATH])
             check_suppression(identifier, inputs[SPEC_PATH])
             if effects["policy"] != "read-only" or effects["before"] != effects["after"]:
-                raise ValueError("候補の走査はfileを書いてはいけません")
+                raise ValueError("候補の走査はファイルを書いてはいけません")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-scanner-") as temporary:
                 for run in range(2):
@@ -186,7 +186,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

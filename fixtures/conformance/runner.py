@@ -71,7 +71,7 @@ class CoreEnvironment:
         self.work_root = Path(work_root)
         self.is_wheel = self.core_path.is_file() and self.core_path.suffix == ".whl"
         if not self.is_wheel and not self.core_path.is_dir():
-            raise CoreEnvironmentError(f"--coreはsource directoryまたは.whl fileである必要があります: {self.core_path}")
+            raise CoreEnvironmentError(f"`--core`はソースのディレクトリまたは`.whl`ファイルである必要があります: {self.core_path}")
         self._prepared = None
         self._venvs = {}
 
@@ -91,15 +91,15 @@ class CoreEnvironment:
         build_dir.mkdir(parents=True, exist_ok=True)
         result = _run(["uv", "build", "--wheel", "--out-dir", str(build_dir), str(self.core_path)], timeout=600)
         if result.returncode != 0:
-            raise CoreEnvironmentError(f"Coreのwheel buildに失敗しました: {result.stderr.strip()[:2000]}")
+            raise CoreEnvironmentError(f"Coreのwheelのビルドに失敗しました: {result.stderr.strip()[:2000]}")
         wheels = sorted(build_dir.glob("*.whl"))
         if len(wheels) != 1:
-            raise CoreEnvironmentError(f"build成果物のwheelを1件に特定できません: {[w.name for w in wheels]}")
+            raise CoreEnvironmentError(f"ビルドの成果物のwheelを1件に特定できません: {[w.name for w in wheels]}")
         requirements = self.work_root / "requirements.txt"
         result = _run(["uv", "export", "--project", str(self.core_path), "--frozen", "--no-dev",
                        "--no-emit-project", "--no-hashes", "-o", str(requirements)], timeout=300)
         if result.returncode != 0:
-            raise CoreEnvironmentError(f"lock済み依存の書き出しに失敗しました: {result.stderr.strip()[:2000]}")
+            raise CoreEnvironmentError(f"ロック済みの依存の書き出しに失敗しました: {result.stderr.strip()[:2000]}")
         self._prepared = (wheels[0], requirements)
         return self._prepared
 
@@ -110,12 +110,12 @@ class CoreEnvironment:
         with zipfile.ZipFile(wheel_path) as archive:
             names = [name for name in archive.namelist() if name.endswith(".dist-info/METADATA")]
             if len(names) != 1:
-                raise CoreEnvironmentError("wheelのMETADATAを1件に特定できません")
+                raise CoreEnvironmentError("wheelの`METADATA`を1件に特定できません")
             metadata = email.message_from_string(archive.read(names[0]).decode("utf-8"))
         for requirement in metadata.get_all("Requires-Dist", []):
             clause = requirement.split(";", 1)[0].strip()
             if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*\s*(?:\[[^\]]*\])?\s*==\s*[^\s,]+", clause):
-                raise CoreEnvironmentError(f"wheelのみの入力ではexact pinでない依存を導入できません: {requirement!r}")
+                raise CoreEnvironmentError(f"wheelのみの入力では厳密なバージョン固定でない依存を導入できません: {requirement!r}")
 
     def wheel_path(self):
         wheel, _requirements = self._prepare()
@@ -131,7 +131,7 @@ class CoreEnvironment:
         venv_dir = self.work_root / f"env-{minor}"
         result = _run(["uv", "venv", "--python", minor, "--no-python-downloads", str(venv_dir)], timeout=120)
         if result.returncode != 0:
-            raise CoreEnvironmentError(f"CPython {minor}のvenvを作成できません: {result.stderr.strip()[:2000]}")
+            raise CoreEnvironmentError(f"CPython {minor}の仮想環境を作成できません: {result.stderr.strip()[:2000]}")
         python = venv_python(venv_dir)
         if requirements is None:
             install = ["uv", "pip", "install", "--python", str(python), str(wheel)]
@@ -162,7 +162,7 @@ def host_tool_versions():
 def build_git_shim(shim_dir, git_version):
     real_git = shutil.which("git")
     if real_git is None:
-        raise FixtureError("実Gitが見つからないためgitVersion shimを作成できません")
+        raise FixtureError("実Gitが見つからないため`gitVersion`のシムを作成できません")
     shim_dir.mkdir(parents=True, exist_ok=True)
     shim = shim_dir / "git"
     shim.write_text(
@@ -181,12 +181,12 @@ def build_git_shim(shim_dir, git_version):
 def _load_manifest(fixture_root, validators):
     manifest_path = fixture_root / "manifest.json"
     if not manifest_path.is_file():
-        raise FixtureError("manifest.jsonがありません")
+        raise FixtureError("`manifest.json`がありません")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     try:
         validators["manifest"].validate(manifest)
     except ValidationError as error:
-        raise FixtureError(f"manifestがSchemaに適合しません: {error.message}") from error
+        raise FixtureError(f"マニフェストがスキーマに適合しません: {error.message}") from error
     return manifest
 
 
@@ -202,10 +202,10 @@ def _referenced_files(fixture_root, manifest):
         paths.append("cli-output.json")
     for name in paths:
         if not (fixture_root / name).is_file():
-            raise FixtureError(f"manifestが参照するfileがありません: {name}")
+            raise FixtureError(f"マニフェストが参照するファイルがありません: {name}")
     side_effects_path = fixture_root / "side-effects.json"
     if not side_effects_path.is_file():
-        raise FixtureError("side-effects.jsonがありません")
+        raise FixtureError("`side-effects.json`がありません")
 
 
 def _validate_expected_result(fixture_root, manifest, validators):
@@ -217,10 +217,10 @@ def _validate_expected_result(fixture_root, manifest, validators):
         try:
             validators["result"].validate(payload)
         except ValidationError as error:
-            raise FixtureError(f"期待JSONがresult.schema.jsonに適合しません: {error.message}") from error
+            raise FixtureError(f"期待結果が`result.schema.json`に適合しません: {error.message}") from error
     else:
         if set(payload) != {"outcome"} or payload["outcome"] not in {"accepted", "rejected", "passed"}:
-            raise FixtureError("期待JSONがoutcome外形と一致しません")
+            raise FixtureError("期待結果が`outcome`の外形と一致しません")
     return payload
 
 
@@ -246,7 +246,7 @@ def _normalize(node, warnings, top, zero_duration=False):
                         if COMMIT_PATTERN.fullmatch(value):
                             revision[key] = "0" * 40
                         else:
-                            warnings.append(f"revision.{key}が40桁の小文字16進ではありません: {value!r}")
+                            warnings.append(f"`revision.{key}`が40桁の小文字16進ではありません: {value!r}")
             core = node.get("core")
             if isinstance(core, dict) and isinstance(core.get("version"), str):
                 parts = core["version"].split(".")
@@ -325,32 +325,32 @@ def _check_cli_output(fixture_root, manifest, exit_code, stdout_bytes, stderr_by
     cli_output = json.loads((fixture_root / "cli-output.json").read_text(encoding="utf-8"))
     expect_exit = manifest["expect"]["exitCode"]
     if exit_code != expect_exit or exit_code != cli_output["exitCode"]:
-        differences.append(f"exitCode: 期待={expect_exit} 実際={exit_code}")
+        differences.append(f"`exitCode`: 期待={expect_exit} 実際={exit_code}")
     if stdout_bytes != cli_output["stdout"].encode("utf-8"):
-        differences.append("stdout: 空でなければならないが出力がありました")
+        differences.append("標準出力: 空でなければならないが出力がありました")
     try:
         text = stderr_bytes.decode("utf-8")
     except UnicodeDecodeError:
-        differences.append("stderr: UTF-8として解読できません")
+        differences.append("標準エラー出力: UTF-8として解読できません")
         return differences
     if not text.endswith("\n"):
-        differences.append("stderr: 末尾がLFで終わっていません")
+        differences.append("標準エラー出力: 末尾がLFで終わっていません")
         return differences
     body = text[:-1]
     lines = body.split("\n") if body else []
     if len(lines) != cli_output["stderrLineCount"]:
-        differences.append(f"stderrLineCount: 期待={cli_output['stderrLineCount']} 実際={len(lines)}")
+        differences.append(f"`stderrLineCount`: 期待={cli_output['stderrLineCount']} 実際={len(lines)}")
     prefix = cli_output["stderrPrefix"]
     for index, line in enumerate(lines):
         if not line.startswith(prefix):
-            differences.append(f"stderr行{index}がstderrPrefixで始まりません: {line!r}")
+            differences.append(f"標準エラー出力の行{index}が`stderrPrefix`で始まりません: {line!r}")
         elif cli_output["stderrReasonRequired"] and not line[len(prefix):].strip():
-            differences.append(f"stderr行{index}に空でない理由がありません")
+            differences.append(f"標準エラー出力の行{index}に空でない理由がありません")
     if not cli_output["stderrTerminalControls"]:
         # 各行末のLFは行区切りとして許可し、それ以外のC0・DEL・C1制御文字だけを禁止する。
         without_separators = body.replace("\n", "")
         if CLI_CONTROL_FORBIDDEN.search(without_separators):
-            differences.append("stderrに端末制御文字が含まれています")
+            differences.append("標準エラー出力に端末の制御文字が含まれています")
     return differences
 
 
@@ -361,7 +361,7 @@ def _build_argv(manifest, venv_dir):
         return [str(venv_bin(venv_dir, "bitz")), *invocation["argv"]]
     if runner in ("consumer", "migration"):
         return [str(venv_python(venv_dir)), "-m", "bitz.compat", runner, *invocation["argv"]]
-    raise FixtureError(f"未知のrunnerです: {runner}")
+    raise FixtureError(f"未知のランナーです: {runner}")
 
 
 def _observe_state(repository, external, git_enabled):
@@ -427,16 +427,16 @@ def _generate_and_verify(fixture_root, generate_spec):
     """
     dataset_path = fixture_root / generate_spec["dataset"]
     if not dataset_path.is_file():
-        raise FixtureError(f"dataset manifestがありません: {generate_spec['dataset']}")
+        raise FixtureError(f"データセットのマニフェストがありません: {generate_spec['dataset']}")
     dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
     try:
         entries = multi_generator.generate(dataset)
     except ValueError as error:
-        raise FixtureError(f"生成入力がdataset manifestと一致しません: {error}") from error
+        raise FixtureError(f"生成入力がデータセットのマニフェストと一致しません: {error}") from error
     computed = tree_digest_bytes(entries)
     if computed != generate_spec["treeDigest"]:
         raise FixtureError(
-            f"tree digestがmanifestと一致しません: 期待={generate_spec['treeDigest']} 実際={computed}")
+            f"`treeDigest`がマニフェストと一致しません: 期待={generate_spec['treeDigest']} 実際={computed}")
     return entries
 
 
@@ -449,11 +449,11 @@ def _compare_side_effects_digest(side_effects, expect, after_state, new_reports)
     differences = []
     if len(new_reports) != expect["reportFileCount"]:
         differences.append(
-            f"reportFileCount: 期待={expect['reportFileCount']} 実際={len(new_reports)} ({new_reports})")
+            f"`reportFileCount`: 期待={expect['reportFileCount']} 実際={len(new_reports)}（{new_reports}）")
     after_digest = _state_digest(after_state)
     if after_digest != side_effects["stateDigest"]:
         differences.append(
-            f"副作用: 実行後の状態(stateDigest)が期待と一致しません: "
+            f"副作用: 実行後の状態（`stateDigest`）が期待と一致しません: "
             f"期待={side_effects['stateDigest']} 実際={after_digest}")
     return differences
 
@@ -469,7 +469,7 @@ def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp
         try:
             validators["side-effects"].validate(side_effects)
         except ValidationError as error:
-            raise FixtureError(f"side-effects.jsonがSchemaに適合しません: {error.message}") from error
+            raise FixtureError(f"`side-effects.json`がスキーマに適合しません: {error.message}") from error
         generated_entries = None
         if "generate" in manifest["setup"]:
             generated_entries = timed_call(timings, "generate", _generate_and_verify, fixture_root, manifest["setup"]["generate"])
@@ -477,7 +477,7 @@ def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp
             # `stateDigest`は実行の前後の観測値が同じ1つのハッシュ値になることを要求する(仕様3.4・5)。
             # 方針`explicit-report`と`stateDigest`の組合せは、レポートのファイル名に生成時刻・連番を含み、実行後の状態を単一のハッシュ値で
             # 事前に固定できないため未対応とする(方針が`read-only`の`stateDigest`だけに対応する)。
-            raise FixtureError("read-only以外のpolicyを持つstateDigest形式の副作用期待値は未対応です")
+            raise FixtureError("`read-only`以外の`policy`を持つ`stateDigest`形式の副作用の期待値は未対応です")
 
         with tempfile.TemporaryDirectory(prefix=f"bitz-run-{fixture_id}-", dir=base_tmp) as sandbox_text:
             sandbox = Path(sandbox_text)
@@ -491,12 +491,12 @@ def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp
                 before_digest = timed_call(timings, "stateDigestBefore", _state_digest, before_state)
                 if before_digest != side_effects["stateDigest"]:
                     raise FixtureError(
-                        f"setup後の状態(stateDigest)が期待前提と一致しません: "
+                        f"準備手順の後の状態（`stateDigest`）が期待前提と一致しません: "
                         f"期待={side_effects['stateDigest']} 実際={before_digest}")
             else:
                 setup_diff = compare_state(side_effects["before"], before_state)
                 if setup_diff:
-                    raise FixtureError(f"setup後の状態が期待前提と一致しません: {setup_diff}")
+                    raise FixtureError(f"準備手順の後の状態が期待前提と一致しません: {setup_diff}")
 
             invocation = manifest["invocation"]
             minor = invocation.get("python") or default_python_minor()
@@ -515,11 +515,11 @@ def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp
                     outcome, reasons = timed_call(timings, "package", package_check.check,
                         invocation["argv"][0], core_environment.source_dir, core_environment.wheel_path(), venv_dir)
                 except package_check.PackageCheckError as error:
-                    raise FixtureError(f"package検査を実行できません: {error}") from error
+                    raise FixtureError(f"`package`の検査を実行できません: {error}") from error
                 exit_code = 0 if outcome in ("accepted", "passed") else 1
                 stdout_bytes = (json.dumps({"outcome": outcome}) + "\n").encode("utf-8")
                 stderr_bytes = b""
-                differences.extend(f"package: {reason}" for reason in reasons)
+                differences.extend(f"`package`: {reason}" for reason in reasons)
             else:
                 argv = _build_argv(manifest, venv_dir)
                 try:
@@ -527,9 +527,9 @@ def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp
                                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                                 timeout=DEFAULT_TIMEOUT)
                 except subprocess.TimeoutExpired as error:
-                    raise FixtureError(f"invocationがtimeout上限({DEFAULT_TIMEOUT}秒)を超過しました") from error
+                    raise FixtureError(f"`invocation`がタイムアウトの上限（{DEFAULT_TIMEOUT}秒）を超過しました") from error
                 except OSError as error:
-                    raise FixtureError(f"invocationを起動できません: {error}") from error
+                    raise FixtureError(f"`invocation`を起動できません: {error}") from error
                 exit_code, stdout_bytes, stderr_bytes = completed.returncode, completed.stdout, completed.stderr
 
             expect = manifest["expect"]
@@ -554,13 +554,13 @@ def run_fixture(fixture_root, fixture_id, core_environment, validators, base_tmp
     except FixtureError as error:
         return {"id": fixture_id, "result": "error", "differences": [str(error)]}
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
-        return {"id": fixture_id, "result": "error", "differences": [f"harness例外: {error}"]}
+        return {"id": fixture_id, "result": "error", "differences": [f"harnessの例外: {error}"]}
 
 
 def _compare_json(manifest, expect, expected_result, exit_code, stdout_bytes, validators):
     differences = []
     if exit_code != expect["exitCode"]:
-        differences.append(f"exitCode: 期待={expect['exitCode']} 実際={exit_code}")
+        differences.append(f"`exitCode`: 期待={expect['exitCode']} 実際={exit_code}")
     try:
         actual_result = json.loads(stdout_bytes.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as error:
@@ -569,50 +569,50 @@ def _compare_json(manifest, expect, expected_result, exit_code, stdout_bytes, va
         try:
             validators["result"].validate(actual_result)
         except ValidationError as error:
-            raise FixtureError(f"実結果がresult.schema.jsonに適合しません: {error.message}") from error
+            raise FixtureError(f"実結果が`result.schema.json`に適合しません: {error.message}") from error
         if expect.get("status") is not None and actual_result.get("status") != expect["status"]:
-            differences.append(f"status: 期待={expect['status']} 実際={actual_result.get('status')}")
+            differences.append(f"`status`: 期待={expect['status']} 実際={actual_result.get('status')}")
         if "resultDigest" in expect:
             # 生成fixture(仕様3.4・3.5)。期待結果のファイルを持たないため、実結果側を`durationMs`=0固定の
             # 同じ正規化器で正規JSON化し、レビュー済みのハッシュ値と文字列で比較する(緩和ではなく、
             # `multi_limit_fixtures.canonical_digest`が計算した期待のハッシュ値の再現)。
             normalized_actual, warnings_a = normalize_result(actual_result, zero_duration=True)
-            differences.extend(f"normalizer: {message}" for message in warnings_a)
+            differences.extend(f"正規化器: {message}" for message in warnings_a)
             actual_digest = digest_reference.digest(digest_reference.canonical_bytes(normalized_actual))
             if actual_digest != expect["resultDigest"]:
-                differences.append(f"resultDigest: 期待={expect['resultDigest']} 実際={actual_digest}")
+                differences.append(f"`resultDigest`: 期待={expect['resultDigest']} 実際={actual_digest}")
         else:
             normalized_actual, warnings_a = normalize_result(actual_result)
             normalized_expected, warnings_e = normalize_result(expected_result)
-            differences.extend(f"normalizer: {message}" for message in (*warnings_a, *warnings_e))
+            differences.extend(f"正規化器: {message}" for message in (*warnings_a, *warnings_e))
             differences.extend(_format_diffs(diff_json(normalized_expected, normalized_actual)))
     else:
         if set(actual_result) != {"outcome"}:
-            raise FixtureError(f"consumer/migration/packageの標準出力はoutcomeだけを持つ必要があります: {actual_result!r}")
+            raise FixtureError(f"`consumer`／`migration`／`package`の標準出力は`outcome`だけを持つ必要があります: {actual_result!r}")
         outcome = actual_result["outcome"]
         if outcome not in {"accepted", "rejected", "passed"}:
-            raise FixtureError(f"未知のoutcomeです: {outcome!r}")
+            raise FixtureError(f"未知の`outcome`です: {outcome!r}")
         expected_exit = 0 if outcome in ("accepted", "passed") else 1
         if exit_code != expected_exit:
-            raise FixtureError(f"終了コードがoutcomeと整合しません: outcome={outcome} exitCode={exit_code}")
+            raise FixtureError(f"終了コードが`outcome`と整合しません: outcome={outcome} exitCode={exit_code}")
         if outcome != expect["outcome"]:
-            differences.append(f"outcome: 期待={expect['outcome']} 実際={outcome}")
+            differences.append(f"`outcome`: 期待={expect['outcome']} 実際={outcome}")
         if expected_result is not None and actual_result != expected_result:
-            differences.append(f"resultFileと標準出力が一致しません: {expected_result!r} != {actual_result!r}")
+            differences.append(f"`resultFile`と標準出力が一致しません: {expected_result!r} != {actual_result!r}")
     return differences
 
 
 def _compare_text(fixture_root, expect, exit_code, stdout_bytes):
     differences = []
     if exit_code != expect["exitCode"]:
-        differences.append(f"exitCode: 期待={expect['exitCode']} 実際={exit_code}")
+        differences.append(f"`exitCode`: 期待={expect['exitCode']} 実際={exit_code}")
     try:
         actual_text = stdout_bytes.decode("utf-8")
     except UnicodeDecodeError as error:
         raise FixtureError(f"標準出力をUTF-8として解読できません: {error}") from error
     expected_text = (fixture_root / expect["textFile"]).read_bytes().decode("utf-8")
     if normalize_text(actual_text) != normalize_text(expected_text):
-        differences.append("textFileと標準出力(durationトークン正規化後)が一致しません")
+        differences.append("`textFile`と標準出力（所要時間のトークンを正規化した後）が一致しません")
     return differences
 
 
@@ -628,20 +628,20 @@ def _validate_report_contents(repository, new_reports, expected_result, validato
         try:
             text = report_path.read_text(encoding="utf-8")
         except OSError as error:
-            raise FixtureError(f"report({relative_path})を読み取れません: {error}") from error
+            raise FixtureError(f"レポート（{relative_path}）を読み取れません: {error}") from error
         try:
             payload = json.loads(text)
         except json.JSONDecodeError as error:
-            raise FixtureError(f"report({relative_path})をJSONとして解析できません: {error}") from error
+            raise FixtureError(f"レポート（{relative_path}）をJSONとして解析できません: {error}") from error
         try:
             validators["result"].validate(payload)
         except ValidationError as error:
-            raise FixtureError(f"report({relative_path})がresult.schema.jsonに適合しません: {error.message}") from error
+            raise FixtureError(f"レポート（{relative_path}）が`result.schema.json`に適合しません: {error.message}") from error
         normalized_report, warnings_report = normalize_result(payload)
         normalized_expected, warnings_expected = normalize_result(expected_result)
-        differences.extend(f"report({relative_path}) normalizer: {message}"
+        differences.extend(f"レポート（{relative_path}）の正規化器: {message}"
                             for message in (*warnings_report, *warnings_expected))
-        differences.extend(f"report({relative_path}) " + message
+        differences.extend(f"レポート（{relative_path}）: " + message
                             for message in _format_diffs(diff_json(normalized_expected, normalized_report)))
     return differences
 
@@ -650,12 +650,12 @@ def _compare_side_effects(side_effects, expect, before_state, after_state, new_r
     differences = []
     if len(new_reports) != expect["reportFileCount"]:
         differences.append(
-            f"reportFileCount: 期待={expect['reportFileCount']} 実際={len(new_reports)} ({new_reports})")
+            f"`reportFileCount`: 期待={expect['reportFileCount']} 実際={len(new_reports)}（{new_reports}）")
     pattern = side_effects.get("report", {}).get("namePattern")
     if pattern:
         unmatched = [p for p in new_reports if not re.search(pattern, Path(p).name)]
         if unmatched:
-            differences.append(f"report file名がnamePatternに一致しません: {unmatched}")
+            differences.append(f"レポートのファイル名が`namePattern`に一致しません: {unmatched}")
     allowed_new = set(new_reports)
     state_diff = _state_diff_allowing_new_reports(side_effects["after"], after_state, allowed_new)
     if state_diff:

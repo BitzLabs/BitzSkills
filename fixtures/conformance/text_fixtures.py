@@ -96,10 +96,10 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("manifestまたは対応するJSONが審査済みのcaseと異なります")
+                raise ValueError("マニフェストまたは対応するJSONがレビュー済みのケースと異なります")
             # コミットしたテキストは固定の所要時間を使う。Gate Bで変わってよいのは実際の出力だけである。
             if (fixture / "expected/check.txt").read_bytes() != TEXT[identifier].encode():
-                raise ValueError("textがreview済みの完全な出力と異なります")
+                raise ValueError("テキストがレビュー済みの完全な出力と異なります")
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
@@ -108,7 +108,7 @@ def validate(root=HERE, identifiers=None):
                 raise ValueError("入力が対応するJSONと異なります")
             source.check_report_expectation(manifest, effects)
             if effects["policy"] != "read-only" or effects["before"] != effects["after"]:
-                raise ValueError("textの整形は書込みを許してはいけません")
+                raise ValueError("テキストの整形は書込みを許してはいけません")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-text-") as temporary:
                 for run in range(2):
@@ -120,7 +120,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

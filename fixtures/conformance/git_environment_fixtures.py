@@ -85,24 +85,24 @@ def check_environment(repository, identifier, manifest):
         expected = reviewed_inputs(identifier)
         for revision, args in (("HEAD:", ("ls-tree", "-r", "--name-only", "-z", "HEAD")), (":", ("ls-files", "-z"))):
             if set(git(repository, *args).decode().split("\0")[:-1]) != set(expected):
-                raise ValueError("不正な基準版のHEADまたはindexのpathが変わっています")
+                raise ValueError("不正な基準版の`HEAD`またはインデックスのパスが変わっています")
             for path, content in expected.items():
                 if git(repository, "show", revision + path) != content:
-                    raise ValueError("不正な基準版のHEADまたはindexのbyte列が変わっています")
+                    raise ValueError("不正な基準版の`HEAD`またはインデックスのバイト列が変わっています")
     else:
         # ディレクトリでない絶対パスをPATHにして、現在のディレクトリとホストのPATHへの退避を防ぐ。
         if manifest["invocation"]["env"] != {"PATH": "/dev/null"} or not Path("/dev/null").is_char_device():
-            raise ValueError("Git不在fixtureにはLinuxの/dev/nullをPATHにする必要があります")
+            raise ValueError("Git不在fixtureにはLinuxの`/dev/null`を`PATH`にする必要があります")
         if shutil.which("git", path=manifest["invocation"]["env"]["PATH"]) is not None:
             raise ValueError("fixtureの起動環境でGitが解決されています")
         # ホストが一時ディレクトリより上にGitのメタデータを置いている場合がある。起動環境では
         # Gitの実行ファイルを使えないので、ホストのGitで調べない。
         if (repository / ".git").exists() or (repository / ".git").is_symlink():
-            raise ValueError("Git不在fixtureはGitのmetadataを含んではいけません")
+            raise ValueError("Git不在fixtureはGitのメタデータを含んではいけません")
     actual = {p.relative_to(repository).as_posix(): p.read_bytes() for p in repository.rglob("*")
               if p.is_file() and ".git" not in p.relative_to(repository).parts}
     if actual != reviewed_inputs(identifier):
-        raise ValueError("作業treeが審査済みの環境入力と異なります")
+        raise ValueError("作業ツリーがレビュー済みの環境入力と異なります")
 
 
 def observe_environment(repository, external, identifier):
@@ -128,26 +128,26 @@ def validate(root=HERE, identifiers=None):
             validators["manifest"].validate(manifest)
             validators["side-effects"].validate(effects)
             if manifest != reviewed_manifest(identifier):
-                raise ValueError("manifestが審査済みの環境caseと異なります")
+                raise ValueError("マニフェストがレビュー済みの環境のケースと異なります")
             if identifier == "SINGLE-036":
                 if json.loads((fixture / "cli-output.json").read_text()) != CLI_OUTPUT:
-                    raise ValueError("CLI出力の契約が審査済みのstreamの形と異なります")
+                    raise ValueError("CLI出力の契約がレビュー済みのストリームの形と異なります")
                 if (fixture / "expected").exists():
                     raise ValueError("終了コード4は操作結果を持ってはいけません")
             else:
                 result = json.loads((fixture / "expected/check.json").read_text())
                 validators["result"].validate(result)
                 if result != reviewed_result(identifier):
-                    raise ValueError("完全結果が審査済みのGit不在と異なります")
+                    raise ValueError("完全結果がレビュー済みのGit不在と異なります")
             files = {p.relative_to(fixture / "repo").as_posix(): p for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             expected = reviewed_inputs(identifier)
             if set(files) != set(expected) or any(p.is_symlink() or p.read_bytes() != expected[name] for name, p in files.items()):
-                raise ValueError("入力が審査済みの単一の環境原因と異なります")
+                raise ValueError("入力がレビュー済みの単一の環境原因と異なります")
             task = identifier == "SINGLE-038"
             Draft202012Validator({"$ref": "#/$defs/" + ("taskFrontmatter" if task else "techFrontmatter"), "$defs": schema["$defs"]}).validate(
                 {"id": "TASK-001" if task else "TECH-001", "title": "Git不在の境界検査" if task else "前提技術", "status": "open" if task else "approved"})
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-git-environment-") as temporary:
                 for run in range(2):
@@ -160,7 +160,7 @@ def validate(root=HERE, identifiers=None):
                         directory.mkdir()
                     actual = observe_environment(repository, external, identifier)
                     if compare_state(effects["before"], actual) or (previous is not None and actual != previous):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

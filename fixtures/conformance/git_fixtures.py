@@ -102,24 +102,24 @@ def check_git_states(repository, identifier):
         base_files[path] = base.encode()
     head_paths = git(repository, "ls-tree", "-r", "--name-only", "-z", "HEAD").decode().split("\0")[:-1]
     if set(head_paths) != set(base_files):
-        raise ValueError("HEADのpathが審査済みの基準版と異なります")
+        raise ValueError("`HEAD`のパスがレビュー済みの基準版と異なります")
     for name, content in base_files.items():
         if git(repository, "show", "HEAD:" + name) != content:
-            raise ValueError("HEADのbyte列が審査済みの基準版と異なります")
+            raise ValueError("`HEAD`のバイト列がレビュー済みの基準版と異なります")
     current_files = support_files(identifier)
     if current is not None:
         current_files[RENAMED_PATH if operation == "rename" else path] = current.encode()
     index_files = current_files if operation == "rename" else base_files
     index_paths = git(repository, "ls-files", "-z").decode().split("\0")[:-1]
     if set(index_paths) != set(index_files):
-        raise ValueError("indexのpathが審査済みのstage状態と異なります")
+        raise ValueError("インデックスのパスがレビュー済みのステージの状態と異なります")
     for name, content in index_files.items():
         if git(repository, "show", ":" + name) != content:
-            raise ValueError("indexのbyte列が審査済みのstage状態と異なります")
+            raise ValueError("インデックスのバイト列がレビュー済みのステージの状態と異なります")
     actual_files = {p.relative_to(repository).as_posix(): p.read_bytes() for p in repository.rglob("*")
                     if p.is_file() and ".git" not in p.relative_to(repository).parts}
     if actual_files != current_files:
-        raise ValueError("作業treeが審査済みの現在の状態と異なります")
+        raise ValueError("作業ツリーがレビュー済みの現在の状態と異なります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -138,12 +138,12 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("manifestまたは完全結果が審査済み期待値と異なります")
+                raise ValueError("マニフェストまたは完全結果がレビュー済みの期待値と異なります")
             files = {p.relative_to(fixture).as_posix(): p for directory in ("repo", "changes")
                      for p in (fixture / directory).rglob("*") if p.is_file() or p.is_symlink()}
             expected_files = reviewed_inputs(identifier)
             if set(files) != set(expected_files) or any(p.is_symlink() or p.read_bytes() != expected_files[name] for name, p in files.items()):
-                raise ValueError("基準版または変更のbyte列が審査済みの単一原因と異なります")
+                raise ValueError("基準版または変更のバイト列がレビュー済みの単一原因と異なります")
             path, base, _, current, *_ = CASES[identifier]
             kind = "taskFrontmatter" if path == TASK_PATH else "reqFrontmatter" if path == REQ_PATH else "techFrontmatter"
             validator = Draft202012Validator({"$ref": f"#/$defs/{kind}", "$defs": schema["$defs"]})
@@ -158,9 +158,9 @@ def validate(root=HERE, identifiers=None):
                 Draft202012Validator({"$ref": "#/$defs/techFrontmatter", "$defs": schema["$defs"]}).validate(
                     {"id": "TECH-001", "title": "前提技術", "status": "approved"})
             if identifier == "SINGLE-032-02" and (not Path("/bin/true").is_file() or not os.access("/bin/true", os.X_OK)):
-                raise ValueError("test宣言のcaseには、Linuxのfixture hostに実行可能な/bin/trueが必要です")
+                raise ValueError("テスト宣言のケースには、Linuxのfixtureのホストに実行可能な`/bin/true`が必要です")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-git-fixtures-") as temporary:
                 for run in range(2):
@@ -173,7 +173,7 @@ def validate(root=HERE, identifiers=None):
                         directory.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and actual != previous):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, IndexError, TypeError, ValidationError, subprocess.SubprocessError) as error:

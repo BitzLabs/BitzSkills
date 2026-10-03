@@ -1216,7 +1216,7 @@ class AuditTests(unittest.TestCase):
         inputs = limit.reviewed_inputs()
         limit.check_single_limit(inputs)
         inputs[".spec/technical/TECH-001.md"] = b"---\nid: TECH-001\n---\n"
-        with self.assertRaisesRegex(ValueError, "byte上限を超えていません"):
+        with self.assertRaisesRegex(ValueError, "バイト上限を超えていません"):
             limit.check_single_limit(inputs)
 
     def test_frontmatter_fixtures(self):
@@ -2478,7 +2478,7 @@ class AuditTests(unittest.TestCase):
                 path.write_text(json.dumps(value))
                 with patch.object(audit, "FIXTURES", root):
                     errors = audit.matrix()["errors"]
-                self.assertTrue(any("明示の--baseが必要です" in e or "--baseを使えません" in e for e in errors), errors)
+                self.assertTrue(any("明示の`--base`が必要です" in e or "`--base`を使えません" in e for e in errors), errors)
 
     def test_git_selection_fixtures(self):
         result = validate_selection()

@@ -209,7 +209,7 @@ def validate(root=HERE, identifiers=None):
                         "argv": ["check", "--full", "--base", "HEAD", "--format", "json"], "env": {}}
                     or manifest["expect"] != {"status": status, "exitCode": 1 if status == "failed" else 0,
                         "stdout": "json", "resultFile": "expected/check.json", "reportFileCount": 0}):
-                raise ValueError("manifestが審査済みの起動と異なります")
+                raise ValueError("マニフェストがレビュー済みの起動と異なります")
             result = json.loads((fixture / "expected/check.json").read_text())
             validators["result"].validate(result)
             diagnostics = [] if code is None else [{
@@ -228,10 +228,10 @@ def validate(root=HERE, identifiers=None):
                 "diagnostics": diagnostics,
             }
             if result != expected:
-                raise ValueError("結果が審査済みの完全な期待値と異なります")
+                raise ValueError("結果がレビュー済みの完全な期待値と異なります")
             document = (fixture / "repo" / SPEC_PATH).read_bytes()
             if document != reviewed_document(doc_status, line).encode():
-                raise ValueError("REQの入力が審査済みの単一原因と異なります")
+                raise ValueError("REQの入力がレビュー済みの単一原因と異なります")
             # 上の固定した3つの平文のフィールドだけを読む。汎用のYAMLの読取り処理ではない。
             fm_lines = document.decode().splitlines()[1:4]
             fm_validator.validate(dict(value.split(": ", 1) for value in fm_lines))
@@ -241,11 +241,11 @@ def validate(root=HERE, identifiers=None):
                           "EAI-CORE-SYNTAX-005": "`", "EAI-EXT-UNKNOWN-001": "[quality:"}
                 position = len(source_line) + 1 if code == "EAI-CORE-SYNTAX-006" else source_line.index(tokens.get(code, "[")) + 1
                 if position != column:
-                    raise ValueError("Diagnosticの列が審査済みのtokenを指していません")
+                    raise ValueError("診断の列がレビュー済みのトークンを指していません")
             effects = json.loads((fixture / "side-effects.json").read_text())
             validators["side-effects"].validate(effects)
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-ears-fixtures-") as temporary:
                 for run in range(2):
@@ -259,7 +259,7 @@ def validate(root=HERE, identifiers=None):
                         raise ValueError("最小でない設定が別の原因を加えています")
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and actual != previous):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

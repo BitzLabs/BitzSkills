@@ -210,7 +210,7 @@ def reviewed_result(identifier):
 def run_script(repository, identifier, argv, env=None, stdin=subprocess.DEVNULL, directory=None):
     path = repository / SCRIPTS[identifier][0]
     if not (path.is_file() and os.access(path, os.X_OK)):
-        raise ValueError("command fileは実行可能な通常fileである必要があります")
+        raise ValueError("コマンドのファイルは通常の実行可能なファイルである必要があります")
     return subprocess.run([str(path), *argv], cwd=directory or repository, env=env, stdin=stdin,
                           capture_output=True, timeout=10)
 
@@ -219,53 +219,53 @@ def observe_command(identifier, repository):
     """fixture自身のコマンドの入力を直接観測する。Coreの`verify`の実行ではない。"""
     if identifier == "SINGLE-126-09":
         if shutil.which(ABSENT_COMMAND) is not None or (repository / ABSENT_COMMAND).exists():
-            raise ValueError("不在のはずのcommandがPATHから解決できてしまいます")
+            raise ValueError("不在のはずのコマンドが`PATH`から解決できてしまいます")
         return
     if identifier == "SINGLE-126-07":
         if run_script(repository, identifier, ["", *TEST_PATHS]).returncode != 0:
-            raise ValueError("審査済みargvをscriptが拒否しています")
+            raise ValueError("レビュー済みの引数列をスクリプトが拒否しています")
         if run_script(repository, identifier, TEST_PATHS).returncode == 0:
-            raise ValueError("空引数のないargvをscriptが受理しています")
+            raise ValueError("空の引数のない引数列をスクリプトが受理しています")
     elif identifier == "SINGLE-126-10":
         if run_script(repository, identifier, TEST_PATHS).returncode != 0:
-            raise ValueError("即時EOFでscriptが成功しません")
+            raise ValueError("即時EOFでスクリプトが成功しません")
         if run_script(repository, identifier, TEST_PATHS, stdin=subprocess.PIPE).returncode != 0:
-            raise ValueError("空で閉じたpipeもEOFとして読める必要があります")
+            raise ValueError("空で閉じたパイプもEOFとして読める必要があります")
         with subprocess.Popen([str(repository / SCRIPTS[identifier][0])], cwd=repository, stdin=subprocess.PIPE,
                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) as process:
             process.communicate(b"typed\n", timeout=10)
             if process.returncode == 0:
-                raise ValueError("読めるstdinをscriptが無視しています")
+                raise ValueError("読める標準入力をスクリプトが無視しています")
     elif identifier == "SINGLE-126-11":
         if not os.access("/usr/bin/awk", os.X_OK):
-            raise ValueError("probeには/usr/bin/awkが必要です")
+            raise ValueError("プローブには`/usr/bin/awk`が必要です")
         directory = repository / "tests"
         arguments = ["test_auth.py", "test_session.py"]
         good = {**os.environ, **PROBE_ENV, "PWD": str(directory.resolve())}
         if run_script(repository, identifier, arguments, env=good, directory=directory).returncode != 0:
-            raise ValueError("実効PWDを持つ継承環境をscriptが拒否しています")
+            raise ValueError("実効`PWD`を持つ継承環境をスクリプトが拒否しています")
         for broken in ({**good, "PWD": PROBE_ENV["PWD"]}, {k: v for k, v in good.items() if k != "BITZ_FIXTURE_PROBE"},
                        {**good, "LANG": "C"}):
             if run_script(repository, identifier, arguments, env=broken, directory=directory).returncode == 0:
-                raise ValueError("Coreが作ってはならない環境をscriptが受理しています")
+                raise ValueError("Coreが作ってはならない環境をスクリプトが受理しています")
 
 
 def check_inputs(fixture, inputs, expected_executables):
     files = {p.relative_to(fixture / "repo").as_posix(): p
              for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
     if set(files) != set(inputs):
-        raise ValueError("入力が審査済みcorpusと異なります")
+        raise ValueError("入力がレビュー済みのcorpusと異なります")
     for name, path in files.items():
         if path.is_symlink() or path.read_bytes() != inputs[name]:
-            raise ValueError("入力が審査済みcorpusと異なります")
+            raise ValueError("入力がレビュー済みのcorpusと異なります")
         if bool(path.stat().st_mode & 0o111) != (name in expected_executables):
-            raise ValueError(f"{name}の実行bitが審査済み入力と異なります")
+            raise ValueError(f"{name}の実行ビットがレビュー済みの入力と異なります")
 
 
 def check_setups(fixture, manifest, effects, identifier, digest, observe_once, prefix):
     """隔離した準備手順を2回行い、スナップショット、2系統のハッシュ値、直接観測の後の不変を確認する。"""
     if effects["policy"] != "read-only" or effects["before"] != effects["after"]:
-        raise ValueError("read-only期待が書込みを許しています")
+        raise ValueError("読取り専用の期待値が書込みを許しています")
     previous = None
     with tempfile.TemporaryDirectory(prefix=prefix) as temporary:
         for run in range(2):
@@ -277,16 +277,16 @@ def check_setups(fixture, manifest, effects, identifier, digest, observe_once, p
                 path.mkdir()
             actual = observe(repository, external)
             if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                raise ValueError("隔離setupが固定snapshotと異なります")
+                raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
             previous = actual
             if digest is not None:
                 derived = digest_crosscheck.canonical_bytes(digest_crosscheck.build(repository))
                 if digest_crosscheck.digest(derived) != digest:
-                    raise ValueError("target Digestが2系統のreferenceで一致しません")
+                    raise ValueError("検証対象のハッシュ値が2系統の参照計算で一致しません")
             if run == 0:
                 observe_once(identifier, repository)
             if compare_state(effects["after"], observe(repository, external)):
-                raise ValueError("commandの観測がfixtureの状態を変えました")
+                raise ValueError("コマンドの観測がfixtureの状態を変えました")
 
 
 def validate(root=HERE, identifiers=None):
@@ -304,15 +304,15 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("起動または完全な結果が審査済み期待と異なります")
+                raise ValueError("起動または完全な結果がレビュー済みの期待値と異なります")
             violations = template_violations(template(identifier))
             expected_violations = [CONFIG_ERRORS[identifier][0]] if identifier in CONFIG_ERRORS else []
             if violations != expected_violations:
-                raise ValueError(f"argv templateの違反が審査済みの単一原因と異なります: {violations}")
+                raise ValueError(f"引数列テンプレートの違反がレビュー済みの単一原因と異なります: {violations}")
             if len(config(identifier).encode()) > 64 * 1024:
-                raise ValueError("設定fileは64 KiBの入力上限内である必要があります")
+                raise ValueError("設定ファイルは64 KiBの入力上限内である必要があります")
             if any(command["argv"] != expanded_argv(identifier) for command in result["commands"]):
-                raise ValueError("公開argvはtemplateを保持し{tests}だけを展開する必要があります")
+                raise ValueError("公開引数列はテンプレートを保持し`{tests}`だけを展開する必要があります")
             check_inputs(fixture, reviewed_inputs(identifier), executables(identifier))
             digest = None if identifier in CONFIG_ERRORS else context_digest(identifier)
             check_setups(fixture, manifest, effects, identifier, digest,

@@ -191,14 +191,14 @@ def check_git_states(identifier, repository):
     """HEADとインデックスは基準版の入力、作業ツリーは変更を適用した後の入力と一致することをバイト列で確認する。"""
     base = reviewed_inputs(identifier)
     if set(git(repository, 'ls-files', '-z').decode().split('\0')[:-1]) != set(base):
-        raise ValueError('indexのpathが審査済みbaseと異なります')
+        raise ValueError('インデックスのパスがレビュー済みの基準版と異なります')
     for path, content in base.items():
         if git(repository, 'show', 'HEAD:' + path) != content or git(repository, 'show', ':' + path) != content:
-            raise ValueError('HEADまたはindexのbyte列が審査済みbaseと異なります')
+            raise ValueError('`HEAD`またはインデックスのバイト列がレビュー済みの基準版と異なります')
     actual = {p.relative_to(repository).as_posix(): p.read_bytes() for p in repository.rglob('*')
               if p.is_file() and '.git' not in p.relative_to(repository).parts}
     if actual != current_tree(identifier):
-        raise ValueError('作業treeが審査済みの変更と異なります')
+        raise ValueError('作業ツリーがレビュー済みの変更と異なります')
 
 
 def validate(root=HERE, identifiers=None):
@@ -217,25 +217,25 @@ def validate(root=HERE, identifiers=None):
             for name, value in (('manifest', manifest), ('result', result), ('side-effects', effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError('manifestまたは結果が審査済みの単一条件と異なります')
+                raise ValueError('マニフェストまたは結果がレビュー済みの単一条件と異なります')
             inputs = reviewed_inputs(identifier)
             expected = {**{'repo/' + name: content for name, content in inputs.items()}, **changes_inputs(identifier)}
             files = {p.relative_to(fixture).as_posix(): p for directory in ('repo', 'changes')
                      for p in (fixture / directory).rglob('*') if p.is_file() or p.is_symlink()}
             if set(files) != set(expected) or any(p.is_symlink() or p.read_bytes() != expected[name] or p.stat().st_mode & 0o111 for name, p in files.items()):
-                raise ValueError('入力のbyte列またはfile modeが審査済みcorpusと異なります')
+                raise ValueError('入力のバイト列またはファイルモードがレビュー済みのcorpusと異なります')
             fields = CASES[identifier][0]
             header = inputs[spec_path(identifier)].decode().split('---\n')[1]
             decoded = {key: json.loads(value) for key, value in (line.split(': ', 1) for line in header.splitlines())}
             if fields != decoded:
-                raise ValueError('固定したYAMLのflow valueが独立にdecodeしたfieldと異なります')
+                raise ValueError('固定したYAMLのフロー値が独立にデコードしたフィールドと異なります')
             definition = KINDS[fields['id'].split('-')[0]][1]
             validator = Draft202012Validator({'$ref': '#/$defs/' + definition, '$defs': schema['$defs']})
             failures = list(validator.iter_errors(decoded))
             if (bool(failures) or duplicate_tests(decoded)) != rejected(identifier):
-                raise ValueError('Frontmatter Schemaの判定が審査済みの受理と一致しません')
+                raise ValueError('フロントマターのスキーマの判定がレビュー済みの受理と一致しません')
             if effects['policy'] != 'read-only' or effects['before'] != effects['after']:
-                raise ValueError('Frontmatterの検査はfileを書いてはいけません')
+                raise ValueError('フロントマターの検査はファイルを書いてはいけません')
             previous = None
             with tempfile.TemporaryDirectory(prefix='bitz-fm-boundary-') as temporary:
                 for run in range(2):
@@ -248,7 +248,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects['before'], actual) or (previous is not None and previous != actual):
-                        raise ValueError('隔離setupが固定snapshotと異なります')
+                        raise ValueError('隔離した準備手順が固定したスナップショットと異なります')
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

@@ -144,18 +144,18 @@ def check_contract(identifier, result):
         diagnostics = (result["targetResults"][0]["diagnostics"] + result["diagnostics"]
                        if result["operation"] == "verify" else result["diagnostics"])
         if [d["code"] for d in diagnostics] != ["CTX-ROOT-MISSING-001"] or result["status"] != "failed":
-            raise ValueError("不在起点はCTX-ROOT-MISSING-001／failedの1件だけで返す必要があります")
+            raise ValueError("不在の起点は`CTX-ROOT-MISSING-001`／`failed`の1件だけで返す必要があります")
         if diagnostics[0]["source"] != {"kind": "invocation", "argument": MISSING_ARGUMENT[identifier]}:
-            raise ValueError("不在起点のsourceは指定した引数そのものである必要があります")
+            raise ValueError("不在の起点の`source`は指定した引数そのものである必要があります")
         if result["operation"] == "check" and result["checkedDocumentCount"] != 0:
-            raise ValueError("不在起点を所有文書や既知文書のcheckへ置換してはいけません")
+            raise ValueError("不在の起点を所有文書または既知文書の`check`へ置換してはいけません")
         if result["operation"] == "verify" and (result["commands"] or result["targetResults"][0]["bindingRefs"]):
-            raise ValueError("不在起点のtargetはbindingを実行してはいけません")
+            raise ValueError("不在の起点の検証対象はテスト割当てを実行してはいけません")
     elif result["operation"] == "context":
         if result["constraintLedger"]["statements"] or result["coverage"] != EMPTY_COVERAGE:
-            raise ValueError("ADR起点のinterpretはtarget statementを持ってはいけません")
+            raise ValueError("ADR起点の`interpret`は対象規範文を持ってはいけません")
     elif result["checkedStatementCount"] != 0 or result["diagnostics"]:
-        raise ValueError("ADR起点のcheckは規範文を持たない文書検査だけで通過する必要があります")
+        raise ValueError("ADR起点の`check`は規範文を持たない文書検査だけで通過する必要があります")
 
 
 def check_inputs(identifier):
@@ -165,9 +165,9 @@ def check_inputs(identifier):
             raise ValueError("不在とする起点が入力に存在します")
         requirement = inputs[digest_reference.REQ_PATH].decode()
         if "[REQ-001:AC-01]" not in requirement or f"[{MISSING_STATEMENT}]" in requirement:
-            raise ValueError("111-02は所有文書が存在しstatementだけが不在である必要があります")
+            raise ValueError("`111-02`は所有文書が存在し規範文だけが不在である必要があります")
     elif any(b"ADR-001" in data for path, data in inputs.items() if path != digest_reference.ADR_PATH):
-        raise ValueError("ADR起点caseにADRを参照する文書を置いてはいけません")
+        raise ValueError("ADR起点のケースにADRを参照する文書を置いてはいけません")
 
 
 def check_git_state(identifier, repository):
@@ -176,18 +176,18 @@ def check_git_state(identifier, repository):
     listed = set(git(repository, "ls-files", "-z").decode().split("\0")[:-1])
     if argv[0] == "context":
         if listed:
-            raise ValueError("context fixtureのindexは空である必要があります")
+            raise ValueError("`context`のfixtureのインデックスは空である必要があります")
     elif listed != set(inputs):
-        raise ValueError("indexのpathが審査済み入力と異なります")
+        raise ValueError("インデックスのパスがレビュー済みの入力と異なります")
     try:
         git(repository, "rev-parse", "--verify", "HEAD")
         committed = True
     except subprocess.CalledProcessError:
         committed = False
     if committed != (argv[0] == "check"):
-        raise ValueError("commitの有無が操作の前提と異なります")
+        raise ValueError("コミットの有無が操作の前提と異なります")
     if committed and git(repository, "status", "--porcelain=v1", "--untracked-files=all"):
-        raise ValueError("明示check fixtureはclean状態である必要があります")
+        raise ValueError("明示`check`のfixtureはクリーンな状態である必要があります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -206,7 +206,7 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
+                raise ValueError("起動条件または完全結果がレビュー済みの期待値と異なります")
             check_contract(identifier, result)
             check_inputs(identifier)
             inputs = reviewed_inputs(identifier)
@@ -214,7 +214,7 @@ def validate(root=HERE, identifiers=None):
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             for path, kind in ((digest_reference.REQ_PATH, "reqFrontmatter"),
                                (digest_reference.TECH_PATH, "techFrontmatter"),
                                (digest_reference.ADR_PATH, "adrFrontmatter")):
@@ -222,7 +222,7 @@ def validate(root=HERE, identifiers=None):
                     frontmatter, _ = digest_crosscheck.split_document(inputs[path].decode())
                     Draft202012Validator({"$ref": "#/$defs/" + kind, "$defs": schema["$defs"]}).validate(frontmatter)
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-target-root-") as temporary:
                 for run in range(2):
@@ -235,13 +235,13 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
                     if identifier == "SINGLE-112-01":
                         derived = digest_crosscheck.canonical_bytes(
                             digest_crosscheck.build(repository, root="ADR-001", purpose="interpret"))
                         if derived != digest_reference.canonical_bytes(reviewed_digest_input()):
-                            raise ValueError("reference AとBのCanonical JSONが一致しません")
+                            raise ValueError("参照計算AとBの正規JSONが一致しません")
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError,
                 subprocess.SubprocessError) as error:

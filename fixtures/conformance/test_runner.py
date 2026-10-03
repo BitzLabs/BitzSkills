@@ -146,7 +146,7 @@ class CliOutputTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             fixture_root, manifest = self._fixture(tmp, cli_output, 4)
             differences = _check_cli_output(fixture_root, manifest, 4, b"{}", b"bitz: check: reason\n")
-        self.assertTrue(any("stdout" in d for d in differences))
+        self.assertTrue(any("標準出力" in d for d in differences))
 
 
 class GitShimTests(unittest.TestCase):
@@ -283,7 +283,7 @@ class PackageCheckDependenciesTests(unittest.TestCase):
             venv = self._venv_with_dist_infos(root, ["bitz-1.0.0.dist-info", "ruamel_yaml-0.18.6.dist-info"])
             outcome, reasons = package_check.check("dependencies", root, root / "unused.whl", venv)
         self.assertEqual(outcome, "rejected")
-        self.assertTrue(any("exact pin" in reason for reason in reasons))
+        self.assertTrue(any("厳密なバージョン固定" in reason for reason in reasons))
 
     def test_rejected_when_extra_runtime_dependency_present(self):
         with tempfile.TemporaryDirectory() as tmp:

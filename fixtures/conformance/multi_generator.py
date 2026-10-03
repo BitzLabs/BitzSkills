@@ -60,7 +60,7 @@ def chunks(total, cap):
 def plan(dimension, value):
     """1つの次元だけを指定の値にし、ほかを通常の規模へ保つ生成計画を返す。"""
     if dimension not in LIMITS:
-        raise ValueError(f"未知のdimensionです: {dimension}")
+        raise ValueError(f"未知の次元です: {dimension}")
     members = BASE_MEMBERS
     bindings = None
     commands = None
@@ -251,7 +251,7 @@ def emit(profile):
         current = sum(len(content) for path, content in entries if is_input(path))
         remaining = profile["paddingBytes"] - current
         if remaining < 0:
-            raise ValueError("既定の入力が指定byte数を超えています")
+            raise ValueError("既定の入力が指定バイト数を超えています")
         while remaining > 0:
             document_id = f"TECH-{document_number:06d}"
             document_number += 1
@@ -369,5 +369,5 @@ def generate(manifest):
     entries = emit(plan(manifest["dimension"], manifest["value"]))
     totals = count(entries)
     if totals != manifest["dimensions"]:
-        raise ValueError("生成物のdimensionがdataset manifestと一致しません")
+        raise ValueError("生成物の次元がデータセットのマニフェストと一致しません")
     return entries

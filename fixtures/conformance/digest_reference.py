@@ -317,7 +317,7 @@ def _serialize(value):
         # 正しい形式のキーすべてについて同じ順序になる。
         keys = sorted(value, key=lambda key: key.encode("utf-16-be"))
         return "{" + ",".join(_string(key) + ":" + _serialize(value[key]) for key in keys) + "}"
-    raise TypeError(f"Digest材料に未対応の値があります: {type(value).__name__}")
+    raise TypeError(f"ハッシュ値の材料に未対応の値があります: {type(value).__name__}")
 
 
 def canonical_bytes(value):
