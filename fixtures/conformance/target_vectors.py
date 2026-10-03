@@ -134,7 +134,7 @@ def validate(data=None):
         errors.append(error.message)
     if errors:
         return {"status": "Failed", "errors": errors}
-    contract = HERE.parents[1] / "docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md"
+    contract = HERE.parents[1] / "docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md"
     if hashlib.sha256(contract.read_bytes()).hexdigest() != data["contractSha256"]:
         errors.append("対象展開の契約が変わりました。ハッシュ値を更新する前に固定した期待値をレビューしてください")
     ids = [case["id"] for case in data["cases"]]
