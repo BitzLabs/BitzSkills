@@ -1,6 +1,6 @@
 """診断の`summary`の文面を1箇所に集約する。
 
-診断レジストリ（`docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md`）の各条件に
+診断レジストリ（`docs/03.詳細設計/00_共通契約/05_診断レジストリ.md`）の各条件に
 対応する、利用者向けの日本語の文面をここへ集める。可変の部分（フィールド名、文書種別名など）は引数で埋める。
 fixtureの`expected/*.json`が`summary`を完全一致で比較するため、文言はここだけで管理し、
 呼び出し側（`frontmatter.py`／`document.py`／`earsai_bridge.py`／`check.py`）はこのモジュールの関数だけを使う。

@@ -1,7 +1,7 @@
 """`bitz context`操作（`03_操作仕様/01_context.md`）。
 
-Step 3のフェーズ3Bで単一ワークスペースを実装した。Step 5Cで複合ワークスペース（`02_SPECモデル/05_複合workspace仕様.md`
-§3・§4・§6、`00_共通契約/03_Context-Digest正規化仕様.md`）を追加する。`TargetExpansion(root, purpose)`
+Step 3のフェーズ3Bで単一ワークスペースを実装した。Step 5Cで複合ワークスペース（`02_仕様文書モデル/05_複合ワークスペース仕様.md`
+§3・§4・§6、`00_共通契約/03_コンテキストのハッシュ値の正規化仕様.md`）を追加する。`TargetExpansion(root, purpose)`
 （`targetexpand.py`）を唯一の閉包契約として再利用し、コンテキスト一式（マニフェスト、制約台帳、
 カバレッジ、コンテキストのハッシュ値、提示形式）を組み立てる。
 
