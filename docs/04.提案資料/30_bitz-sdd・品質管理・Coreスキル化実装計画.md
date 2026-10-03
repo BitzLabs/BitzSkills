@@ -612,6 +612,13 @@ SDDと品質管理も、担当工程で分岐、引渡し、成果物、例外�
 
 ### Phase 2: SDDの計画と実装
 
+状態は`In progress`である。2026-10-03にorigin/mainから分けた`codex/sdd-plan-japanese`で、
+日本語`sdd-plan`の4入口、権限・草案・停止・引渡し、REQ/TASKの配布例を具体化した。
+[本文と公開CLI検査の記録](../../evals/skills/results/2026-10-03-sdd-plan-implementation.md)では、
+配布例の構文、draftからの実装遮断、TASK境界の2試験と独立した静的・公開CLI検分が通過した。
+追加の評価用モデル呼出しは行っておらず、モデル行動・Skill Gateは未認定である。
+`sdd-implement`と接続の実動作評価を次に行う。Coreの規範・判定器・承認済み要求は変更していない。
+
 目的:
 
 - 機能、バグ修正、保守、スパイクから、実装後のCore検証までを成立させる。
