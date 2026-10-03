@@ -4,11 +4,11 @@
   "title": "検証の証拠の引継ぎ",
   "objective": "変更が人の承認に進めるかを判断し、簡潔な証拠の引継ぎを用意する。",
   "baselineMode": "legacy-ears",
-  "brief": ["REQ-Aの現在のContext Digestはsha256:aaaaであり、AC-02に対応するtestがない。", "REQ-Bの現在のDigestはsha256:bbbbであり、そのcommandはtimeoutで終わる。", "REQ-Cの現在のDigestはsha256:ccccであり、そのcommandは0で終了する。", "REQ-Aの以前のreportは、Digest sha256:ddddとpassedを記録している。", "以前のreportを現在の証拠として扱わずに、進めるかを判断する。"],
+  "brief": ["`REQ-A`の現在のコンテキストのハッシュ値は`sha256:aaaa`であり、`AC-02`に対応するテストがない。", "`REQ-B`の現在のハッシュ値は`sha256:bbbb`であり、そのコマンドはタイムアウトで終わる。", "`REQ-C`の現在のハッシュ値は`sha256:cccc`であり、そのコマンドは0で終了する。", "`REQ-A`の以前のレポートは、ハッシュ値`sha256:dddd`と状態`passed`を記録している。", "以前のレポートを現在の証拠として扱わずに、進めるかを判断する。"],
   "conditions": {
-    "baseline": ["課題文を従来のEARS文書、testのlog、以前のreview報告で表す。"],
-    "bitz": ["同じ課題文を、現在のContext Digest、targetの結果、bindingの参照、commandの結果で表す。"]
+    "baseline": ["課題文を従来のEARS文書、テストのログ、以前のレビュー報告で表す。"],
+    "bitz": ["同じ課題文を、現在のコンテキストのハッシュ値、検証対象の結果、テスト割当ての参照、コマンドの結果で表す。"]
   },
-  "completionCriteria": ["testされていないMUSTとtimeoutは、どちらもreleaseを止める欠陥である。", "成功したtargetを区別できるまま残す。", "staleな証拠を除外し、次の行動を明示する。"],
+  "completionCriteria": ["テストされていない`MUST`とタイムアウトは、どちらもリリースを止める欠陥である。", "成功した検証対象を区別できるまま残す。", "古くなった証拠を除外し、次の行動を明示する。"],
   "metricTags": ["completionMs", "authoringMs", "reviewMs", "detectedDefects"]
 }

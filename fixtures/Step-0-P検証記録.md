@@ -45,3 +45,11 @@ ADR-047に従い、データセット`core-federation-v1`を`core-multi-workspac
 `protocol.schema.json`と`result.schema.json`の定数も合わせた。参加者の観測値はまだないので、旧バージョンの結果は存在しない。
 性能のスキーマの`title`も日本語にした。生成器の失敗の文言を日本語にしたので、形状の不一致の検査はその文言を照合する。
 期待する木構造のハッシュ値は変わらず、`uv run fixtures/validate_step0p.py`は成功した。
+
+## 2026-10-03: 表記規則に従った書き直し
+
+[表記規則](../docs/表記規則.md)と[用語集](../docs/用語集.md)に従い、比較タスクの題名、目的、課題文、条件、完了条件、正解表の要約、
+プロトコルの代替の成功条件に残っていた英語の一般語を日本語にした。比較タスクと性能のスキーマの`title`も直した。課題の条件、欠陥のIDと`critical`、基準条件とBitzによる条件の対等さは
+変えない。`fixtures/comparison/README.md`の規則に従い、プロトコルのバージョンを1.1から1.2へ上げ、`protocol.schema.json`と
+`result.schema.json`の定数も合わせた。参加者の観測値はまだないので、旧バージョンの結果は存在しない。
+`uv run fixtures/validate_benchmarks.py`は成功した。

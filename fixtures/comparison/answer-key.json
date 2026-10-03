@@ -3,31 +3,31 @@
   "defects": {
     "CMP-001": [
       {"id": "CMP-001:D-01", "critical": true, "summary": "有効期限の長さが規定されていない。"},
-      {"id": "CMP-001:D-02", "critical": true, "summary": "tokenを1回だけ使えることが規定されていない。"},
-      {"id": "CMP-001:D-03", "critical": true, "summary": "accountの列挙に対する振る舞いが規定されていない。"},
+      {"id": "CMP-001:D-02", "critical": true, "summary": "トークンを1回だけ使えることが規定されていない。"},
+      {"id": "CMP-001:D-03", "critical": true, "summary": "アカウントの列挙に対する振る舞いが規定されていない。"},
       {"id": "CMP-001:D-04", "critical": false, "summary": "監査できる拒否の証拠が規定されていない。"}
     ],
     "CMP-002": [
-      {"id": "CMP-002:D-01", "critical": true, "summary": "mobileでcacheした有効期限の表示が影響を受ける。"},
-      {"id": "CMP-002:D-02", "critical": false, "summary": "API tokenのpolicyは影響を受けない。"},
-      {"id": "CMP-002:D-03", "critical": false, "summary": "password再設定の有効期限は影響を受けない。"}
+      {"id": "CMP-002:D-01", "critical": true, "summary": "モバイルでキャッシュした有効期限の表示が影響を受ける。"},
+      {"id": "CMP-002:D-02", "critical": false, "summary": "APIトークンのポリシーは影響を受けない。"},
+      {"id": "CMP-002:D-03", "critical": false, "summary": "パスワード再設定の有効期限は影響を受けない。"}
     ],
     "CMP-003": [
-      {"id": "CMP-003:D-01", "critical": true, "summary": "暗号化の決定は強い依存である。"},
-      {"id": "CMP-003:D-02", "critical": true, "summary": "共有する保持policyが必要である。"},
+      {"id": "CMP-003:D-01", "critical": true, "summary": "暗号化の決定は強い関係の参照先である。"},
+      {"id": "CMP-003:D-02", "critical": true, "summary": "共有する保持ポリシーが必要である。"},
       {"id": "CMP-003:D-03", "critical": false, "summary": "隣接するUIの設定を規範にしてはならない。"}
     ],
     "CMP-004": [
-      {"id": "CMP-004:D-01", "critical": true, "summary": "必須の規範文にtestの網羅がない。"},
-      {"id": "CMP-004:D-02", "critical": true, "summary": "強いrelationの対象が存在しない。"},
-      {"id": "CMP-004:D-03", "critical": true, "summary": "approvedの要求が、許可された遷移の証拠なしに変わった。"},
-      {"id": "CMP-004:D-04", "critical": false, "summary": "EARS-AIのextensionが1つ不正である。"}
+      {"id": "CMP-004:D-01", "critical": true, "summary": "必須の規範文にテストの網羅がない。"},
+      {"id": "CMP-004:D-02", "critical": true, "summary": "強い関係の参照先が存在しない。"},
+      {"id": "CMP-004:D-03", "critical": true, "summary": "`approved`の要求が、許可された遷移の証拠なしに変わった。"},
+      {"id": "CMP-004:D-04", "critical": false, "summary": "EARS-AIの拡張タグが1つ不正である。"}
     ],
     "CMP-005": [
-      {"id": "CMP-005:D-01", "critical": true, "summary": "MUSTが1つtestされていない。"},
-      {"id": "CMP-005:D-02", "critical": true, "summary": "現在のcommandが1つtimeoutした。"},
-      {"id": "CMP-005:D-03", "critical": true, "summary": "以前のreportのContext Digestがstaleである。"},
-      {"id": "CMP-005:D-04", "critical": false, "summary": "独立して成功したtargetは残すべきである。"}
+      {"id": "CMP-005:D-01", "critical": true, "summary": "`MUST`が1つテストされていない。"},
+      {"id": "CMP-005:D-02", "critical": true, "summary": "現在のコマンドが1つタイムアウトした。"},
+      {"id": "CMP-005:D-03", "critical": true, "summary": "以前のレポートのコンテキストのハッシュ値が古くなっている。"},
+      {"id": "CMP-005:D-04", "critical": false, "summary": "独立して成功した検証対象は残すべきである。"}
     ]
   }
 }
