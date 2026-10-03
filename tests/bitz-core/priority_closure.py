@@ -66,7 +66,7 @@ def audit(root: Path = ROOT) -> dict:
     ledger = json.loads((root / "fixtures/conformance/diagnostic-coverage.json").read_text())
     diagnostic = diagnostic_coverage.validate(ledger=ledger, root=root)
     if diagnostic["semantic_coverage"] != "Passed" or diagnostic["openIssues"]:
-        errors.append("Diagnostic意味網羅reviewに未解決項目があります")
+        errors.append("診断の意味の網羅のレビューに未解決項目があります")
 
     rows = []
     for priority, findings in FINDINGS.items():
