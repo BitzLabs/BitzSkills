@@ -1,10 +1,13 @@
 """SDD評価ホストと採点の試験。ここで作るモデルtraceは合成の単体試験用。"""
 
+import argparse
+import copy
 import importlib.util
 import json
 import os
 from pathlib import Path
 import tempfile
+import shutil
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -111,6 +114,15 @@ class SddEvaluationTests(unittest.TestCase):
         checks = self.inspect(self.record())
         self.assertFalse(checks["workflow"]["passed"])
 
+    def test_previous_verify_does_not_cover_a_later_source_write(self):
+        self.prepare()
+        self.assertEqual("passed", self.flow()["status"])
+        self.assertTrue(self.call("write_file", path="src/input.py", content="def validate(value):\n    return ['wrong']\n")["accepted"])
+        self.bitz("check", "TASK-001", "--base", "HEAD")
+        checks = self.inspect(self.record())
+        self.assertFalse(checks["workflow"]["passed"])
+        self.assertEqual("failed", self.bitz("verify", "TASK-001")["status"])
+
     def test_forbidden_operation_counts_as_failure_even_if_host_prevents_it(self):
         self.prepare("SI-007")
         self.read_sources()
@@ -182,6 +194,69 @@ class SddEvaluationTests(unittest.TestCase):
         for name in ("trace.jsonl", "decision.json"):
             record["artifacts"][name] = evaluation.digest((self.directory / name).read_bytes())
         self.assertIn("reported Core results mismatch", self.inspect(record)["observation"]["errors"])
+
+    def test_reordered_mcp_trace_is_detected(self):
+        self.prepare()
+        self.flow()
+        record = self.record()
+        events = evaluation.read_events(self.directory / "trace.jsonl")
+        evaluation.write(self.directory, "trace.jsonl", "\n".join(json.dumps(e) for e in list(reversed(events[:-1])) + events[-1:]))
+        record["artifacts"]["trace.jsonl"] = evaluation.digest((self.directory / "trace.jsonl").read_bytes())
+        self.assertFalse(self.inspect(record)["deterministic"]["passed"])
+
+    def saved_study(self, record, models=("gpt-6.1-sol",), versions=("observed-version",)):
+        root = self.directory / "study"
+        for index, (model, version) in enumerate(zip(models, versions), 1):
+            destination = root / "skill" / f"repetition-{index}" / self.case["id"]
+            destination.mkdir(parents=True)
+            for name in record["artifacts"]:
+                shutil.copyfile(self.directory / name, destination / name)
+            shutil.copytree(self.workspace, destination / "workspace")
+            saved = copy.deepcopy(record)
+            args = argparse.Namespace(variant="skill", repetition=index, model=model, model_version=version,
+                                      pythonpath=self.control["pythonpath"])
+            saved["identity"] = evaluation.identity(args, self.case)
+            saved["checks"] = evaluation.inspect(saved, self.case, destination)
+            evaluation.write(destination, "run.json", json.dumps(saved))
+        return root
+
+    def test_mixed_model_conditions_are_rejected_without_changing_denominators(self):
+        self.prepare()
+        self.flow()
+        root = self.saved_study(self.record(), models=("gpt-6.1-sol", "gpt-6-luna"), versions=("observed-version",) * 2)
+        report = evaluation.score(root)
+        self.assertTrue(report["conditionErrors"])
+        self.assertEqual([17] * 4, [r["total"] for r in report["results"]])
+        for group in report["results"]:
+            case = next(c for c in group["cases"] if c["caseId"] == "SI-001")
+            self.assertFalse(case["passed"])
+
+    def test_mixed_model_versions_are_not_one_comparison(self):
+        self.prepare()
+        self.flow()
+        root = self.saved_study(self.record(), models=("gpt-6.1-sol",) * 2, versions=("version-a", "version-b"))
+        self.assertIn("mixed model/version/source/environment conditions", evaluation.score(root)["conditionErrors"])
+
+    def test_invalid_final_response_is_a_case_failure_and_score_still_returns(self):
+        self.prepare()
+        self.flow()
+        record = self.record()
+        events = evaluation.read_events(self.directory / "trace.jsonl")
+        events[-1]["item"]["text"] = "{ broken JSON"
+        evaluation.write(self.directory, "trace.jsonl", "\n".join(json.dumps(e) for e in events))
+        record["artifacts"]["trace.jsonl"] = evaluation.digest((self.directory / "trace.jsonl").read_bytes())
+        self.assertTrue(all(not c["passed"] for c in self.inspect(record).values()))
+        root = self.saved_study(record)
+        report = evaluation.score(root)
+        self.assertEqual("Failed", report["status"])
+        self.assertEqual([17] * 4, [r["total"] for r in report["results"]])
+
+    def test_test_failure_repairs_are_bounded(self):
+        self.prepare("SI-010")
+        self.assertEqual("failed", self.flow()["status"])
+        for _ in range(3):
+            self.assertEqual("failed", self.bitz("verify", "TASK-001")["status"])
+        self.assertIn("test repair retry limit exceeded", self.inspect(self.record())["workflow"]["errors"])
 
 
 if __name__ == "__main__":
