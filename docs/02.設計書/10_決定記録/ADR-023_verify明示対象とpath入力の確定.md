@@ -1,6 +1,6 @@
 ---
 id: ADR-023
-title: verify明示対象とpath入力の確定
+title: "`verify`の明示対象とパスによる入力の確定"
 status: accepted
 relations:
   related:
@@ -8,7 +8,7 @@ relations:
     - ADR-019
 ---
 
-# ADR-023 verify明示対象とpath入力の確定
+# ADR-023 `verify`の明示対象とパスによる入力の確定
 
 ## Context
 

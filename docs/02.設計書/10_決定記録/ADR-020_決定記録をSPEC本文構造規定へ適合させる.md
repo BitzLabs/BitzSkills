@@ -1,13 +1,13 @@
 ---
 id: ADR-020
-title: 決定記録をSPEC本文構造規定へ適合させる
+title: 決定記録を仕様文書の本文構造の規定へ適合させる
 status: accepted
 relations:
   related:
     - ADR-015
 ---
 
-# ADR-020 決定記録をSPEC本文構造規定へ適合させる
+# ADR-020 決定記録を仕様文書の本文構造の規定へ適合させる
 
 ## Context
 

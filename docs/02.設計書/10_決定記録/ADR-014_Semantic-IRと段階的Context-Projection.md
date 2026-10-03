@@ -1,6 +1,6 @@
 ---
 id: ADR-014
-title: Semantic IRと段階的Context Projection
+title: 意味中間表現とコンテキストの段階的な提示
 status: accepted
 relations:
   related:
@@ -8,7 +8,7 @@ relations:
     - ADR-015
 ---
 
-# ADR-014 Semantic IRと段階的Context Projection
+# ADR-014 意味中間表現とコンテキストの段階的な提示
 
 ## Context
 

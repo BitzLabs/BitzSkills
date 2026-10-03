@@ -1,6 +1,6 @@
 ---
 id: ADR-044
-title: MCP面をCore 1.0のscope外とする
+title: MCPの面をCore 1.0のスコープ外とする
 status: accepted
 relations:
   requires:
@@ -10,7 +10,7 @@ relations:
     - ADR-039
 ---
 
-# ADR-044 MCP面をCore 1.0のscope外とする
+# ADR-044 MCPの面をCore 1.0のスコープ外とする
 
 ## Context
 

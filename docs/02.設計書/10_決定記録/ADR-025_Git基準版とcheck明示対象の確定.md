@@ -1,6 +1,6 @@
 ---
 id: ADR-025
-title: Git基準版とcheck明示対象の確定
+title: Gitの基準版と`check`の明示対象の確定
 status: accepted
 relations:
   related:
@@ -9,7 +9,7 @@ relations:
     - ADR-024
 ---
 
-# ADR-025 Git基準版とcheck明示対象の確定
+# ADR-025 Gitの基準版と`check`の明示対象の確定
 
 ## Context
 

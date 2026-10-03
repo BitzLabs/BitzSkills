@@ -1,6 +1,6 @@
 ---
 id: ADR-031
-title: 変更code・testからの検査対象選択
+title: 変更したコードとテストからの検査対象の選択
 status: accepted
 relations:
   requires:
@@ -9,7 +9,7 @@ relations:
     - ADR-010
 ---
 
-# ADR-031 変更code・testからの検査対象選択
+# ADR-031 変更したコードとテストからの検査対象の選択
 
 ## Context
 

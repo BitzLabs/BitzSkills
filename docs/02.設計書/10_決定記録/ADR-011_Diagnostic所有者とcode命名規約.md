@@ -1,6 +1,6 @@
 ---
 id: ADR-011
-title: Diagnostic所有者とcode命名規約
+title: 診断の所有者と診断コードの命名規約
 status: accepted
 relations:
   related:
@@ -8,7 +8,7 @@ relations:
     - ADR-009
 ---
 
-# ADR-011 Diagnostic所有者とcode命名規約
+# ADR-011 診断の所有者と診断コードの命名規約
 
 ## Context
 

@@ -1,6 +1,6 @@
 ---
 id: ADR-047
-title: 複合workspaceの識別子をmultiWorkspaceへ改名する
+title: 複合ワークスペースの識別子を`multiWorkspace`へ改名する
 status: accepted
 relations:
   requires:
@@ -11,7 +11,7 @@ relations:
     - ADR-046
 ---
 
-# ADR-047 複合workspaceの識別子をmultiWorkspaceへ改名する
+# ADR-047 複合ワークスペースの識別子を`multiWorkspace`へ改名する
 
 ## Context
 

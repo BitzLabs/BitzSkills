@@ -1,6 +1,6 @@
 ---
 id: ADR-021
-title: Diagnostic severity・操作status・source Schemaの分離
+title: 診断の重大度・操作の結果の状態・発生元のスキーマの分離
 status: accepted
 relations:
   related:
@@ -9,7 +9,7 @@ relations:
     - ADR-019
 ---
 
-# ADR-021 Diagnostic severity・操作status・source Schemaの分離
+# ADR-021 診断の重大度・操作の結果の状態・発生元のスキーマの分離
 
 ## Context
 

@@ -1,6 +1,6 @@
 ---
 id: ADR-040
-title: 複合workspaceをCore 1.0へ再導入する
+title: 複合ワークスペースをCore 1.0へ再導入する
 status: accepted
 relations:
   requires:
@@ -13,7 +13,7 @@ relations:
     - ADR-039
 ---
 
-# ADR-040 複合workspaceをCore 1.0へ再導入する
+# ADR-040 複合ワークスペースをCore 1.0へ再導入する
 
 ## Context
 

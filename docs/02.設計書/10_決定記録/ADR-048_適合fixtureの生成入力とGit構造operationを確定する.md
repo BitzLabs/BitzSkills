@@ -1,6 +1,6 @@
 ---
 id: ADR-048
-title: 適合fixtureの生成入力とGit構造operationを確定する
+title: 適合fixtureの生成入力とGit構造の準備の処理を確定する
 status: accepted
 relations:
   requires:
@@ -10,7 +10,7 @@ relations:
     - ADR-047
 ---
 
-# ADR-048 適合fixtureの生成入力とGit構造operationを確定する
+# ADR-048 適合fixtureの生成入力とGit構造の準備の処理を確定する
 
 ## Context
 

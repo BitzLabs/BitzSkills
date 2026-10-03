@@ -1,6 +1,6 @@
 ---
 id: ADR-029
-title: TASK先行依存の状態ガード
+title: TASKの先行依存の状態ガード
 status: accepted
 relations:
   requires:
@@ -9,7 +9,7 @@ relations:
     - ADR-010
 ---
 
-# ADR-029 TASK先行依存の状態ガード
+# ADR-029 TASKの先行依存の状態ガード
 
 ## Context
 

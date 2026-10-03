@@ -1,6 +1,6 @@
 ---
 id: ADR-046
-title: 適合harnessの検査対象・実行環境・runnerを確定する
+title: 適合harnessの検査対象・実行環境・ランナーを確定する
 status: accepted
 relations:
   requires:
@@ -8,7 +8,7 @@ relations:
     - ADR-045
 ---
 
-# ADR-046 適合harnessの検査対象・実行環境・runnerを確定する
+# ADR-046 適合harnessの検査対象・実行環境・ランナーを確定する
 
 ## Context
 

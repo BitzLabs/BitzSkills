@@ -1,6 +1,6 @@
 ---
 id: ADR-010
-title: 型付き依存とContext Resolutionの中核化
+title: 型付き依存とコンテキストの解決の中核化
 status: accepted
 relations:
   related:
@@ -10,7 +10,7 @@ relations:
     - ADR-015
 ---
 
-# ADR-010 型付き依存とContext Resolutionの中核化
+# ADR-010 型付き依存とコンテキストの解決の中核化
 
 ## Context
 

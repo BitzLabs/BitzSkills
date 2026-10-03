@@ -1,13 +1,13 @@
 ---
 id: ADR-013
-title: 文書IDとローカルIDの字句規則訂正
+title: 文書IDとローカルIDの字句規則の訂正
 status: accepted
 relations:
   related:
     - ADR-005
 ---
 
-# ADR-013 文書IDとローカルIDの字句規則訂正
+# ADR-013 文書IDとローカルIDの字句規則の訂正
 
 ## Context
 

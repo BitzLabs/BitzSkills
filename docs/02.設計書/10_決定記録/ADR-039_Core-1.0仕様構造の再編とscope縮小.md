@@ -1,6 +1,6 @@
 ---
 id: ADR-039
-title: Core 1.0仕様構造の再編とscope縮小
+title: Core 1.0の仕様構造の再編とスコープの縮小
 status: accepted
 relations:
   requires:
@@ -21,7 +21,7 @@ relations:
     - ADR-027
 ---
 
-# ADR-039 Core 1.0仕様構造の再編とscope縮小
+# ADR-039 Core 1.0の仕様構造の再編とスコープの縮小
 
 ## Context
 

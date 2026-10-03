@@ -1,6 +1,6 @@
 ---
 id: ADR-027
-title: Diagnostic結果効果・集約・workspace sourceの確定
+title: 診断の結果への効果・集約・発生元のワークスペースの確定
 status: accepted
 relations:
   related:
@@ -8,7 +8,7 @@ relations:
     - ADR-021
 ---
 
-# ADR-027 Diagnostic結果効果・集約・workspace sourceの確定
+# ADR-027 診断の結果への効果・集約・発生元のワークスペースの確定
 
 ## Context
 
