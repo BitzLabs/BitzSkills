@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "evaluationSetVersion": "sdd-0.1.1",
+  "evaluationSetVersion": "sdd-0.1.2",
   "purpose": "Phase 2の公開・隔離接続評価。発火Gateとリリース認定は別工程",
   "minimumRepetitions": 2,
   "variants": ["skill", "baseline"],

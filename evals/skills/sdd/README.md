@@ -1,7 +1,7 @@
 # SDDの公開・隔離接続評価
 
 対象は配布 `plugins/bitz-sdd/skills/sdd-plan` と `sdd-implement`。
-評価集合sdd-0.1.1の17件を、スキルあり／なし、各2反復、solだけで最大68回実行する。
+評価集合sdd-0.1.2の17件を、スキルあり／なし、各2反復、solだけで最大68回実行する。
 Phase 2の計画・実装の接続を調べ、発火の区分別分母、保持ケース、複数モデル、実地パイロットを満たすSkill Gateとは区別する。
 公開の試作評価であり、scoreがPassedでもgateDecisionはnot-certifiedである。
 
@@ -34,6 +34,14 @@ Core製品のAPIを追加せず、run_bitzは確定refの公開CLIへ引数を�
 SI-010は既知の固定テスト障害を実装前に読み取って停止する経路も認める。未実行をテスト失敗・成功として報告しない。
 0.1.0はモデル実行前の準備refとして残す。0.1.1は独立検分の採点是正と、この開始前停止のケース明確化を含み、旧測定を再利用しない。
 
+0.1.1の初回モデル測定は2件で必須検査が失敗して停止した。元測定の失敗と未実行66件は保存し、遡って成功へ変えない。
+0.1.2では公開contextが返す合成workspaceの初期commitをcheckの--base値として許可する。
+HEADが動いた場合の別commitや任意のhexを許可せず、保存した比較元を前後のcheckで維持する。
+SP-001は同時保存したdraft REQが狭い実装TASKの境界外になるため、境界診断による停止を明示したケースにする。
+REQ検査の通過、最後の保存後のTASK検査のfailedとSPEC-TASK-BOUNDARY-001、実差分の保持を必要とする。
+境界を広げて検査を通すことは認めない。計画保存の成功は既存REQからTASKだけを作るSP-004で測る。
+変更の根拠は公開CLIの直接再現と独立検分であり、新しい版・ref・出力先で測る。モデルの再実行は別途承認してから行う。
+
 ## 実行
 
 モデルを使わない準備検査:
@@ -49,11 +57,11 @@ Codex CLIの通常認証を利用し、認証値は読まない。モデル版�
 
 ```text
 python3 evals/skills/sdd/evaluate.py run --variant skill --repetition 1 \
-  --model gpt-6.1-sol --model-version unversioned-alias-observed-2026-10-03 \
+  --model gpt-6.1-sol --model-version unversioned-alias-observed-2026-10-04 \
   --pythonpath <Core-sourceとruamel.yaml-0.19.1を含む絶対Python-path> \
-  --output .venv/sdd-evaluation-01 --jobs 2
-python3 evals/skills/sdd/evaluate.py score --input .venv/sdd-evaluation-01 \
-  --output .venv/sdd-evaluation-01/report.json
+  --output .venv/sdd-evaluation-02 --jobs 2
+python3 evals/skills/sdd/evaluate.py score --input .venv/sdd-evaluation-02 \
+  --output .venv/sdd-evaluation-02/report.json
 ```
 
 baselineと反復2を同条件で実行する。--caseで重点ケースだけを先行実行できるが、全件成功と呼ばない。

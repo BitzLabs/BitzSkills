@@ -129,6 +129,7 @@ def setup(workspace, case, variant, pythonpath):
     elif fixture == "no-task":
         writable = [".spec/tasks/TASK-001.md"]
     return {"fixture": fixture, "entry": case["entry"], "readable": sorted(snapshot(workspace)), "writable": writable,
+            "baseCommit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=workspace, text=True).strip(),
             "pythonpath": pythonpath, "python": sys.executable,
             "testHash": digest((FAIL_TEST if fixture == "test-fails" else TEST).encode())}
 
@@ -152,12 +153,21 @@ class Host:
         return target
 
     def run_bitz(self, argv):
+        fixed_base = self.control["baseCommit"]
         allowed = {"context", "check", "verify", "REQ-001", "TASK-001", "--purpose", "implement", "interpret", "verify",
                    "--format", "json", "--base", "HEAD", "--expect-digest", "--detail", "full", "standard", "compact"}
         if (not isinstance(argv, list) or not argv or argv[0] not in {"context", "check", "verify"}
                 or len(argv) > 20 or any(not isinstance(a, str) or (a not in allowed and
-                   not (a.startswith("sha256:") and len(a) == 71 and all(c in "0123456789abcdef" for c in a[7:]))) for a in argv)):
+                   not (i > 0 and argv[i - 1] == "--base" and a == fixed_base) and
+                   not (a.startswith("sha256:") and len(a) == 71 and all(c in "0123456789abcdef" for c in a[7:]))) for i, a in enumerate(argv))):
             raise ValueError("対象を固定した公開CLI引数だけを許可します")
+        if "--base" in argv:
+            if (argv[0] != "check" or argv.count("--base") != 1 or
+                    argv[argv.index("--base") + 1:][:1] not in (["HEAD"], [fixed_base])):
+                raise ValueError("checkのbaseは合成workspaceのHEADまたは同じ確定commitだけを許可します")
+            if (argv[argv.index("--base") + 1] == "HEAD" and
+                    subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=self.workspace, text=True).strip() != fixed_base):
+                raise ValueError("HEADが初期commitから移動しました。保存したbaseCommitを指定してください")
         if "--format" not in argv or argv[argv.index("--format") + 1:][:1] != ["json"]:
             raise ValueError("結果はJSONで取得してください")
         core = ROOT / "plugins/bitz-core/src"
@@ -357,6 +367,12 @@ def inspect_valid_artifacts(record, case, directory):
     for target in expected.get("checked", []):
         if not any(target in c["arguments"]["argv"] and r["status"] in PASS for c, r in checks):
             errors["workflow"].append("missing check: " + target)
+    for failure in expected.get("failedChecks", []):
+        if not any(failure["target"] in c["arguments"]["argv"] and r["status"] == "failed" and
+                   c["callIndex"] > max((w["callIndex"] for w in writes), default=0) and
+                   any(d.get("code") == failure["diagnostic"] for d in r.get("diagnostics", []))
+                   for c, r in checks):
+            errors["workflow"].append("missing final failed check: " + failure["target"] + ": " + failure["diagnostic"])
     if expected.get("precheckFailed") and not any(r["status"] == "failed" for _, r in checks):
         errors["workflow"].append("failed precheck was not observed")
     if expected.get("stale") and not any("--expect-digest" in c["arguments"]["argv"] and r["status"] not in PASS for c, r in contexts):

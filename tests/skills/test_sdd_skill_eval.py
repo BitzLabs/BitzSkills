@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import tempfile
 import shutil
+import subprocess
 import unittest
 from unittest.mock import patch
 from contextlib import redirect_stdout
@@ -103,6 +104,74 @@ class SddEvaluationTests(unittest.TestCase):
         checks = self.inspect(self.record())
         self.assertFalse(checks["workflow"]["passed"])
         self.assertTrue(any("replay" in e for e in checks["workflow"]["errors"]))
+
+    def test_context_commit_is_an_allowed_fixed_check_base(self):
+        self.prepare()
+        context = self.bitz("context", "TASK-001", "--purpose", "implement")
+        fixed_base = context["revision"]["commit"]
+        checked = self.bitz("check", "TASK-001", "--base", fixed_base)
+        self.assertEqual("passed", checked["status"])
+        self.assertEqual(fixed_base, checked["revision"]["base"])
+        self.assertTrue(self.call("write_file", path="src/input.py", content=evaluation.FIXED)["accepted"])
+        after = self.bitz("check", "TASK-001", "--base", fixed_base)
+        self.assertEqual("passed", after["status"])
+        self.assertEqual(fixed_base, after["revision"]["base"])
+
+    def test_other_fixed_check_base_is_not_allowed(self):
+        self.prepare()
+        for base in ("0" * 40, "HEAD~1", "sha256:" + "0" * 64):
+            with self.subTest(base=base):
+                event = self.call("run_bitz", argv=["check", "TASK-001", "--base", base, "--format", "json"])
+                self.assertFalse(event["accepted"])
+        for argv in (["check", "TASK-001", "--base", "--format", "json"],
+                     ["check", "TASK-001", "--base", "HEAD", "--base", "HEAD", "--format", "json"],
+                     ["context", "TASK-001", "--base", "HEAD", "--format", "json"]):
+            with self.subTest(argv=argv):
+                self.assertFalse(self.call("run_bitz", argv=argv)["accepted"])
+
+        fixed_base = self.control["baseCommit"]
+        self.assertFalse(self.call("run_bitz", argv=["context", "TASK-001", "--detail", fixed_base, "--format", "json"])["accepted"])
+
+    def test_saved_fixed_base_survives_head_movement(self):
+        self.prepare()
+        fixed_base = self.bitz("context", "TASK-001", "--purpose", "implement")["revision"]["commit"]
+        self.assertEqual("passed", self.bitz("check", "TASK-001", "--base", fixed_base)["status"])
+        self.assertTrue(self.call("write_file", path="src/input.py", content=evaluation.FIXED)["accepted"])
+        subprocess.run(["git", "add", "--", "src/input.py"], cwd=self.workspace, check=True, capture_output=True)
+        subprocess.run(["git", "-c", "user.name=Synthetic unit test", "-c", "user.email=test@invalid", "commit", "-m", "synthetic test movement"],
+                       cwd=self.workspace, check=True, capture_output=True)
+        after = self.bitz("check", "TASK-001", "--base", fixed_base)
+        self.assertEqual("passed", after["status"])
+        self.assertEqual(fixed_base, after["revision"]["base"])
+        self.assertNotEqual(fixed_base, after["revision"]["commit"])
+        self.assertFalse(self.call("run_bitz", argv=["check", "TASK-001", "--base", "HEAD", "--format", "json"])["accepted"])
+
+    def test_draft_requirement_with_narrow_task_stops_on_real_boundary_diagnostic(self):
+        self.prepare("SP-001")
+        self.call("read_file", path=".codex/skills/sdd-plan/SKILL.md")
+        examples = ROOT / "plugins/bitz-sdd/skills/sdd-plan/examples"
+        for name, folder in (("REQ-001", "requirements"), ("TASK-001", "tasks")):
+            self.assertTrue(self.call("write_file", path=f".spec/{folder}/{name}.md", content=(examples / f"{name}.md").read_text())["accepted"])
+        self.assertEqual("passed", self.bitz("check", "REQ-001")["status"])
+        failed = self.bitz("check", "TASK-001")
+        self.assertEqual("failed", failed["status"])
+        self.assertIn("SPEC-TASK-BOUNDARY-001", [d["code"] for d in failed["diagnostics"]])
+        checks = self.inspect(self.record())
+        self.assertTrue(all(c["passed"] for c in checks.values()), checks)
+
+    def test_broadened_task_boundary_is_not_the_expected_plan_stop(self):
+        self.prepare("SP-001")
+        self.call("read_file", path=".codex/skills/sdd-plan/SKILL.md")
+        examples = ROOT / "plugins/bitz-sdd/skills/sdd-plan/examples"
+        requirement = (examples / "REQ-001.md").read_text()
+        task = (examples / "TASK-001.md").read_text().replace("changes:\n", "changes:\n  - .spec/requirements/REQ-001.md\n")
+        self.call("write_file", path=".spec/requirements/REQ-001.md", content=requirement)
+        self.call("write_file", path=".spec/tasks/TASK-001.md", content=task)
+        self.bitz("check", "REQ-001")
+        self.assertEqual("passed", self.bitz("check", "TASK-001")["status"])
+        checks = self.inspect(self.record())
+        self.assertFalse(checks["workflow"]["passed"])
+        self.assertTrue(any("final failed check" in e for e in checks["workflow"]["errors"]))
 
     def test_missing_existing_diff_review_is_rejected(self):
         self.prepare()
