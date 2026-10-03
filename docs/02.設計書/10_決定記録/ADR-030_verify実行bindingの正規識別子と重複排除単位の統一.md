@@ -16,7 +16,7 @@ relations:
 
 `bitz verify`の実行単位について、3つの正本が異なる識別子を使っていた。
 
-- [ADR-018](ADR-018_正本Schemaの欠落補完とDiagnostic-severityの明示.md)はtest pathの重複排除を
+- [ADR-018](ADR-018_正本スキーマの欠落補完と診断の重大度の明示.md)はtest pathの重複排除を
   `argv`と`cwd`の組で行うと定めた。
 - `bitz.yaml`仕様は`{tests}`を持たないcommandを設定argvのまま1回実行すると定めた。
 - [複合workspace仕様](../../03.詳細設計/02_SPECファイル規定/12_モノレポSPEC連合仕様.md)は実行済み判定を
@@ -36,7 +36,7 @@ relations:
    pathごとにprocessを分けない。
 4. `{tests}`を持たないbindingは、対応するtest pathの件数にかかわらずbindingを1回実行する。
 5. CLIの実効timeoutは実行結果へ記録するが、bindingの同一性へ含めない。設定timeoutの変更は
-   [ADR-026](ADR-026_verify実行binding・timeout・結果Schemaの確定.md) Decision 2のContext Digestが
+   [ADR-026](ADR-026_verifyのテスト割当て・タイムアウト・結果スキーマの確定.md) Decision 2のContext Digestが
    保護する。
 6. 明示対象verify、引数なしverify、`verify --all-workspaces`は同じ規則を使用する。複合workspaceの実行済み集合は
    本識別子で複合workspace全体に1つ保持し、横断refinementが参照する同一bindingを二重に実行しない。

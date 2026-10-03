@@ -40,7 +40,7 @@ relations:
 9. PyPI + `uv`だけを初期配布とし、単一バイナリは需要確認後に検討する。
 10. EARS-AIのプロファイル、DDD、多言語の抽象構文木、独立AuditAgent、自動逆同期は1.0後の任意拡張とする。
 
-決定9の初期配布形態は、[ADR-016](ADR-016_Agent-Plugins準拠の複数plugin配布.md)により、
+決定9の初期配布形態は、[ADR-016](ADR-016_Agent-Plugins準拠の複数プラグインの配布.md)により、
 GitHubマーケットプレイス上のAgent Plugins 1.0.0のパッケージをAI利用者向けの主要経路とし、
 PyPI + `uv`をスタンドアロン実行体の代替経路として維持する形へ改訂された。
 
@@ -76,9 +76,9 @@ PyPI + `uv`をスタンドアロン実行体の代替経路として維持する
 
 | 対象 | 後継ADR | 内容 |
 |---|---|---|
-| `Decision`の4番目の項目 | [ADR-010](ADR-010_型付き依存とContext-Resolutionの中核化.md) | 公開操作へ`context`を追加し、3つから4つへ改訂 |
-| `Decision`の9番目の項目 | [ADR-016](ADR-016_Agent-Plugins準拠の複数plugin配布.md) | 初期配布をAgent Plugins 1.0.0のパッケージ主体へ改訂 |
-| ADR-003から引き継いだ診断の所有者の扱い | [ADR-011](ADR-011_Diagnostic所有者とcode命名規約.md) | 診断の所有者と診断コードの命名規約を改訂。番号付きの`Decision`には対応する項目がない |
+| `Decision`の4番目の項目 | [ADR-010](ADR-010_型付き依存とコンテキストの解決の中核化.md) | 公開操作へ`context`を追加し、3つから4つへ改訂 |
+| `Decision`の9番目の項目 | [ADR-016](ADR-016_Agent-Plugins準拠の複数プラグインの配布.md) | 初期配布をAgent Plugins 1.0.0のパッケージ主体へ改訂 |
+| ADR-003から引き継いだ診断の所有者の扱い | [ADR-011](ADR-011_診断の所有者と診断コードの命名規約.md) | 診断の所有者と診断コードの命名規約を改訂。番号付きの`Decision`には対応する項目がない |
 | 「性能判断」の3項目目 | [ADR-058](ADR-058_Gate-Cから比較タスクの実測を外す.md) | 定量的な改善証明をCore 1.0の既定経路とGate Cの条件から外す |
 
 ## Revision History

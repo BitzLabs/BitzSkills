@@ -84,6 +84,6 @@ Contextを構成できない場合だけDigestをnullとし、その条件を列
 ## 9. 判定
 
 review時点ではFED-VER-001を解消するまでverify結果Schemaを実装開始不可と判定した。
-2026-09-02に[ADR-041](../02.設計書/10_決定記録/ADR-041_verify対象別証跡とreport明示保存の分離.md)で、
+2026-09-02に[ADR-041](../02.設計書/10_決定記録/ADR-041_検証対象ごとの証跡とレポートの明示保存の分離.md)で、
 target単位Context、`targetResults[]`、全workspace共通binding ID、非成功targetのbinding除外、target／全体statusの分離を
 採用し、正本へ反映した。これによりFED-VER-001〜005をClosedとする。

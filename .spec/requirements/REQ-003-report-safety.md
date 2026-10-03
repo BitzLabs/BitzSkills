@@ -15,7 +15,7 @@ verify: default
 
 `--report`の保存で、report directoryの検査から書込みまでの間に`.spec`または`.spec/reports`がsymlinkへ
 差し替えられても、symlink先へ一時fileもreportも作らないようにする。正本は
-[結果・Diagnostic・終了コード §8](../../docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md)であり、
+[結果・Diagnostic・終了コード §8](../../docs/03.詳細設計/00_共通契約/01_結果・診断・終了コード.md)であり、
 本REQは「symlink先のdirectoryへ一時fileもreportも作らない」を、検査と書込みの競合がある場合にも守ることを句にする。
 
 ## Acceptance Criteria

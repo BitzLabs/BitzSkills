@@ -7,7 +7,7 @@
 **裁定日**: 2026-08-31
 
 > 後続改訂: 本reviewで採用した非成功時report自動保存は、2026-09-02の
-> [ADR-041](../02.設計書/10_決定記録/ADR-041_verify対象別証跡とreport明示保存の分離.md)で、
+> [ADR-041](../02.設計書/10_決定記録/ADR-041_検証対象ごとの証跡とレポートの明示保存の分離.md)で、
 > statusを問わず明示`--report`時だけの保存へ変更した。
 
 ## 1. 目的
@@ -57,12 +57,12 @@ Diagnosticインスタンスに操作効果がなく、条件付きstatusを持�
 
 | 項目 | 裁定 | 対応 |
 |---|---|---|
-| 状態遷移 | 採用・反映済み | [ADR-024](../02.設計書/10_決定記録/ADR-024_SPEC文書の状態遷移契約.md)。REQ／TECH、ADR、TASKの作成時状態、許可遷移、終端を定義 |
-| Git基準版 | 採用・反映済み | [ADR-025](../02.設計書/10_決定記録/ADR-025_Git基準版とcheck明示対象の確定.md)。`--base`、変更集合、CI利用を定義 |
+| 状態遷移 | 採用・反映済み | [ADR-024](../02.設計書/10_決定記録/ADR-024_仕様文書の状態遷移契約.md)。REQ／TECH、ADR、TASKの作成時状態、許可遷移、終端を定義 |
+| Git基準版 | 採用・反映済み | [ADR-025](../02.設計書/10_決定記録/ADR-025_Gitの基準版とcheckの明示対象の確定.md)。`--base`、変更集合、CI利用を定義 |
 | `check`明示対象 | 採用・反映済み | ADR-025。SPEC ID／規範文ID／SPEC pathへ限定し、検査範囲と排他を定義 |
-| verify実行契約 | 採用・反映済み | [ADR-026](../02.設計書/10_決定記録/ADR-026_verify実行binding・timeout・結果Schemaの確定.md)。timeout cap、command結果、Digest入力を定義 |
+| verify実行契約 | 採用・反映済み | [ADR-026](../02.設計書/10_決定記録/ADR-026_verifyのテスト割当て・タイムアウト・結果スキーマの確定.md)。timeout cap、command結果、Digest入力を定義 |
 | TASK接続 | 修正採用・反映済み | 規範文なしTECHの文書単位testsと、規範文ID起点の`adjacent`を正本へ接続 |
-| Diagnostic集約 | 採用・反映済み | [ADR-027](../02.設計書/10_決定記録/ADR-027_Diagnostic結果効果・集約・workspace-sourceの確定.md)。`resultStatus`、`workspaceId`、共通集約順を定義 |
+| Diagnostic集約 | 採用・反映済み | [ADR-027](../02.設計書/10_決定記録/ADR-027_診断の結果への効果・集約・発生元のワークスペースの確定.md)。`resultStatus`、`workspaceId`、共通集約順を定義 |
 | report生成 | 修正採用・反映済み | 既存の失敗時保存を正とし、`failed`／`blocked`／`error`だけ自動保存。引数不正とcontextは保存しない |
 
 ## 4. 主な反映先

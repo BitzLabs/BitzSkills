@@ -14,10 +14,10 @@ relations:
 
 ## Context
 
-[ADR-046](ADR-046_適合harnessの検査対象・実行環境・runnerを確定する.md)と
+[ADR-046](ADR-046_適合harnessの検査対象・実行環境・ランナーを確定する.md)と
 [適合fixture仕様 §3.5・§4・§5](../../03.詳細設計/00_共通契約/04_適合fixture仕様.md#35-検査対象と実行環境)は、
 harnessが検査対象Coreをどう受け取り、どの環境で起動し、何を比較するかを定めた。
-[ADR-049](ADR-049_Coreのsource配置と試験の構成を確定する.md)の`Decision`の5番目の項目は、マニフェストを実行する参照harnessを
+[ADR-049](ADR-049_Coreのソースの配置と試験の構成を確定する.md)の`Decision`の5番目の項目は、マニフェストを実行する参照harnessを
 `fixtures/`に置き、Coreを引数で受け取って`bitz`をインポートしないとした。しかし、Gate Bを実際に判定するには次が
 決まっていない。
 

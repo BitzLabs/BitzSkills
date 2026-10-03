@@ -5,7 +5,7 @@
 - 基準branch: `bitz_next`
 - 基準commit: `5abe97a`
 - 対象: [context仕様](../03.詳細設計/03_操作仕様/01_context.md)§9、
-  [結果・Diagnostic・終了コード](../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md)§7
+  [結果・Diagnostic・終了コード](../03.詳細設計/00_共通契約/01_結果・診断・終了コード.md)§7
 - 目的: 適合fixture `SINGLE-104-01`（`--format`省略のcontextが標準出力と期待Markdownでbyte一致）を
   作成できる状態にするため、Markdown提示の規範を確定する
 

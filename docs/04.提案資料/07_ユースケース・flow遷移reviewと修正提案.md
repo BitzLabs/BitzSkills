@@ -270,7 +270,7 @@ P1の3件は機械契約または既存ADRの意味へ影響するため、正�
 
 ### 7.1 UC-FLOW-001
 
-§4.1の提案を採用し、[ADR-028](../02.設計書/10_決定記録/ADR-028_開発flowの実装後検査とTASK境界の接続.md)
+§4.1の提案を採用し、[ADR-028](../02.設計書/10_決定記録/ADR-028_SDDフローの実装後検査とTASK境界の接続.md)
 として裁定した。Small Flowを`Intent -> Context -> Pre-check -> Implement -> Post-check -> Verify ->
 Human Review -> Done`へ改訂し、TASK起点では`Post-check`で`bitz check <TASK-ID>`を必須とした。
 Full Flowも同じPre-check／Post-check配置を共有する。Full Flowのreview否決edgeはUC-FLOW-006として
@@ -283,7 +283,7 @@ Full Flowも同じPre-check／Post-check配置を共有する。Full Flowのrevi
 
 ### 7.2 UC-FLOW-002
 
-§4.2の提案を採用し、[ADR-029](../02.設計書/10_決定記録/ADR-029_TASK先行依存の状態ガード.md)として
+§4.2の提案を採用し、[ADR-029](../02.設計書/10_決定記録/ADR-029_TASKの先行依存の状態ガード.md)として
 裁定した。TASK起点の`implement`／`verify`では`requires`先TASKがすべて`done`であることを要求し、
 `open`が残る場合は`CTX-TASK-DEPENDENCY-001`／error／`blocked`とする。`interpret`は停止せず、
 未完了の先行TASKをWork区分として表示する。TASK間循環は従来どおり`CTX-CYCLE-001`で識別する。
@@ -318,7 +318,7 @@ P1裁定時点で、P2 4件（UC-FLOW-004〜007）とP3 1件（UC-FLOW-008）が
 
 ### 8.1 UC-FLOW-004
 
-§4.4の提案を採用し、[ADR-031](../02.設計書/10_決定記録/ADR-031_変更code・testからの検査対象選択.md)
+§4.4の提案を採用し、[ADR-031](../02.設計書/10_決定記録/ADR-031_変更したコードとテストからの検査対象の選択.md)
 として裁定した。引数なし`check`は、変更SPEC pathを所有文書、変更code pathを`implements`の逆索引、
 変更test pathを`tests[].path`の逆索引から所有REQ/TECHへ正規化する。
 

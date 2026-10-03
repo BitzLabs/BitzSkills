@@ -129,8 +129,8 @@ Step 1以降の完了条件を客観的に判定できない。
 ### 4.2 `FIN-DIAG-001`: Diagnostic表の閉包が成立していない
 
 - 状態: 修正採用・契約／matrix反映済み、実fixture反映待ち
-- 反映先: [Diagnostic registry](../03.詳細設計/00_共通契約/05_Diagnostic-registry.md)、
-  [共通結果契約](../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md)、各所有仕様、適合fixture仕様
+- 反映先: [Diagnostic registry](../03.詳細設計/00_共通契約/05_診断レジストリ.md)、
+  [共通結果契約](../03.詳細設計/00_共通契約/01_結果・診断・終了コード.md)、各所有仕様、適合fixture仕様
 
 Diagnostic条件の唯一の所有者をregistryへ集約し、各条件へ`conditionId`、operation、code、severity、
 `resultStatus`、source kind、継続単位、primary priorityを固定した。未定義だったBOM、未知設定key、
@@ -143,7 +143,7 @@ doctorの設定不正は`SPEC-CONFIG-SCHEMA-001`だけを返し、config check i
 
 #### 問題
 
-[共通契約 §6.1](../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#61-診断の表の閉じた集合)は
+[共通契約 §6.1](../03.詳細設計/00_共通契約/01_結果・診断・終了コード.md#61-診断の表の閉じた集合)は
 各操作の固有codeを閉じた集合とする。しかし、次の規範条件はDiagnosticを発生させるにもかかわらず、
 対応codeまたは優先順位が明示されていない。
 
@@ -179,7 +179,7 @@ doctorの設定不正は`SPEC-CONFIG-SCHEMA-001`だけを返し、config check i
 
 **状態: 修正採用・契約／matrix反映済み、実fixture反映待ち。**
 
-[言語・Semantic IR仕様](../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md)をISO/IEC 14977相当の
+[言語・Semantic IR仕様](../03.詳細設計/01_EARS-AI/01_EARS-AI言語・意味中間表現仕様.md)をISO/IEC 14977相当の
 EBNFへ統一し、全nonterminal、Unicode code point、escape、quoted value、同長runで閉じるcode spanを定義した。
 候補Scannerをfence、blockquote、indent、IDらしいtokenを含む状態機械として固定し、Lexerの最長一致、位置計算、
 primary構文順も明記した。`SHOULD`理由は`[REASON]` fieldとしてSemantic IRとContext Digestへ保持する。
@@ -188,11 +188,11 @@ primary構文順も明記した。`SHOULD`理由は`[REASON]` fieldとしてSema
 
 #### 問題
 
-[言語・Semantic IR仕様 §3](../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md#3-正規構文)は
+[言語・Semantic IR仕様 §3](../03.詳細設計/01_EARS-AI/01_EARS-AI言語・意味中間表現仕様.md#3-正規構文)は
 `text`、`DQUOTE`、`qchar`、`escaped`を参照するが定義していない。記法もEBNFとABNFの
 `%x`、`/`、`*`が混在する。
 
-[同仕様 §5](../03.詳細設計/01_EARS-AI/01_言語・Semantic-IR仕様.md#5-規範文の候補)の
+[同仕様 §5](../03.詳細設計/01_EARS-AI/01_EARS-AI言語・意味中間表現仕様.md#5-規範文の候補)の
 「文書IDらしいtoken」は字句規則になっておらず、短いID、未知接頭辞、3階層、ID欠落を
 どこまで候補に含めるかが実装依存になる。複数backtick code span、quoted value、escape解除、
 `SHOULD`理由、`EAI-CORE-LANG-001`の言語判定も決定手順が不足する。
@@ -223,7 +223,7 @@ Draft 2020-12の`fixtures/conformance/result.schema.json`を追加し、context�
 
 #### 問題
 
-[共通結果](../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#2-結果の形)では
+[共通結果](../03.詳細設計/00_共通契約/01_結果・診断・終了コード.md#2-結果の形)では
 `scope`と`revision`の必須性が「操作依存」のままであり、4操作と単一／複合workspaceの完全なvariantが
 機械可読Schemaになっていない。
 
@@ -263,7 +263,7 @@ applicable refinement、TASK、重複排除時点を固定した。`requires`先
 
 #### 問題
 
-[関係・トレースモデル §8](../03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md#8-カバレッジ)は
+[関係・トレースモデル §8](../03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md#8-カバレッジ)は
 REQ／規範文ありTECHのtarget statementを「所有statementとapplicable refinement」とする。
 一方、[verify仕様 §3](../03.詳細設計/03_操作仕様/03_verify.md#3-検証対象)は
 「所有statementとapplicable依存/refinement」とし、依存が所有するstatementを
@@ -301,8 +301,8 @@ Unicode code point単位のtitle長、内部未知key、配列とtest tupleの�
 
 #### 問題
 
-[文書・Frontmatter・状態仕様 §3](../03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md#3-共通フィールド)は
-`tests`を`object[]`とする。一方、[同仕様 §11](../03.詳細設計/02_SPECモデル/02_文書・Frontmatter・状態仕様.md#11-yaml制約)は
+[文書・Frontmatter・状態仕様 §3](../03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md#3-共通フィールド)は
+`tests`を`object[]`とする。一方、[同仕様 §11](../03.詳細設計/02_仕様文書モデル/02_文書・フロントマター・状態仕様.md#11-yaml制約)は
 scalar、scalar配列、通常mapだけを許可し、object配列を明示的に許可していない。
 設定仕様ではobject配列を`monorepo.members`だけに限定しており、文書Frontmatterとの規則も揃っていない。
 
@@ -338,7 +338,7 @@ tuple順序、path型5 fieldだけの区切り文字変換を正本へ反映し�
 - path区切り文字変換は全文字列ではなくpath型fieldだけへ適用する。
 - golden Canonical JSONとdigestを最低1件、単一と複合workspaceで固定する。
 
-対象: [Context Digest正規化仕様](../03.詳細設計/00_共通契約/03_Context-Digest正規化仕様.md)
+対象: [Context Digest正規化仕様](../03.詳細設計/00_共通契約/03_コンテキストのハッシュ値の正規化仕様.md)
 
 ### 5.2 `FIN-IO-001`: 読取り専用とcache writeの境界
 
@@ -424,8 +424,8 @@ ADR-001の2件を現行EARS-AI適合性・移行仕様へ、ADR-016の5件を再
 
 修正対象:
 
-- [ADR-001](../02.設計書/10_決定記録/ADR-001_EARS-AI旧検討版の位置づけ.md)
-- [ADR-016](../02.設計書/10_決定記録/ADR-016_Agent-Plugins準拠の複数plugin配布.md)
+- [ADR-001](../02.設計書/10_決定記録/ADR-001_EARS-AI旧検討版（v2-v3-v5）の位置づけ.md)
+- [ADR-016](../02.設計書/10_決定記録/ADR-016_Agent-Plugins準拠の複数プラグインの配布.md)
 
 旧構造を記録するsuperseded ADRとClosed提案は時点snapshotとして維持し、accepted ADRだけを修正する。
 
@@ -522,28 +522,28 @@ Step 6まで遅らせず、文法、Schema、checkが安定した時点で自身
 Git 7状態の2回再現とprocess helper自己試験を検証した。Semantic IRとDigest材料の5例はJSON構文確認だけであり、
 公開結果Schemaの対象ではない。2026-09-08にDiagnostic意味網羅reviewを実施し、119条件を17根拠文書へ対応付け、
 発見した3件の未裁定条件を解消した。対応台帳の欠落・未知ID・根拠改変・未裁定条件残存を検証する。
-判断根拠とDiagnosticを生成しない条件は[Diagnostic意味網羅review](../../fixtures/conformance/Diagnostic意味網羅review.md)に記録した。
+判断根拠とDiagnosticを生成しない条件は[Diagnostic意味網羅review](../../fixtures/conformance/診断の意味の網羅のレビュー.md)に記録した。
 matrix 311件中、導入・設定9件、EARS-AI構文・候補抽出・拡張12件、文書構造・UTF-8 9件、関係・path・coverage 6件、ID重複・循環4件、Git基準版・保護対象外変更10件、TASK境界3件、Git対象選択・影響候補4件、Git基準版error・Git不在3件、Context非成功5件は入力・manifest・完全期待JSON・読取り専用副作用期待値を作成し、
 各2回の隔離setupを固定snapshotと照合した。実fixture残件は246件であり、Coreは未実行である。
 2026-09-11に文書構造・UTF-8の9件を追加し、完全期待JSONと副作用期待値、各2回の隔離setupを検証した。
-期待値の選択は[文書fixture review](../../fixtures/conformance/single/文書構造・UTF-8-review.md)を参照する。
+期待値の選択は[文書fixture review](../../fixtures/conformance/single/文書構造とUTF-8のレビュー記録.md)を参照する。
 同日に関係・path・coverageの6件を追加し、同じ準備検証と回帰試験を通過した。
-期待値の選択は[trace fixture review](../../fixtures/conformance/single/関係・path・coverage-review.md)を参照する。
+期待値の選択は[trace fixture review](../../fixtures/conformance/single/関係・パス・カバレッジのレビュー記録.md)を参照する。
 さらにID重複・循環の4件を追加し、各2回の隔離setupと回帰試験を通過した。
-期待値の選択は[graph fixture review](../../fixtures/conformance/single/文書ID重複・循環review.md)を参照する。
+期待値の選択は[graph fixture review](../../fixtures/conformance/single/文書IDの重複と循環のレビュー記録.md)を参照する。
 Git基準版の5件も追加し、HEAD・index・worktreeの直接照合、各2回の隔離setupと回帰試験を通過した。
-期待値の選択は[Git fixture review](../../fixtures/conformance/single/Git基準版・状態遷移review.md)を参照する。
+期待値の選択は[Git fixture review](../../fixtures/conformance/single/基準版・状態遷移のレビュー記録.md)を参照する。
 approved REQの保護対象外変更5件も追加し、同じGit状態照合と回帰試験を通過した。
-期待値の選択は[保護対象外fixture review](../../fixtures/conformance/single/approved-REQの保護対象外変更review.md)を参照する。
+期待値の選択は[保護対象外fixture review](../../fixtures/conformance/single/approvedのREQの保護対象外の変更のレビュー記録.md)を参照する。
 2026-09-14にTASK境界の3件（SINGLE-034、035-01〜02）を追加した。
-期待値の選択は[TASK fixture review](../../fixtures/conformance/single/TASK境界・対象選択review.md)を参照する。
+期待値の選択は[TASK fixture review](../../fixtures/conformance/single/TASK境界・対象選択のレビュー記録.md)を参照する。
 同日にGit対象選択・影響候補の4件（SINGLE-033、039〜041）を追加した。
-期待値の選択は[Git対象選択fixture review](../../fixtures/conformance/single/Git対象選択・影響候補review.md)を参照する。
+期待値の選択は[Git対象選択fixture review](../../fixtures/conformance/single/Gitの対象選択・影響候補のレビュー記録.md)を参照する。
 さらにGit基準版error・Git不在の3件（SINGLE-036〜038）を追加し、040・041の明示base指定を補正した。
-期待値と検証範囲は[Git環境fixture review](../../fixtures/conformance/single/Git基準版error・Git不在review.md)を参照する。
+期待値と検証範囲は[Git環境fixture review](../../fixtures/conformance/single/基準版のエラー・Git不在のレビュー記録.md)を参照する。
 Context非成功の5件（SINGLE-050、051、052-01〜02、053）も追加した。
-期待値と検証範囲は[Context非成功fixture review](../../fixtures/conformance/single/Context非成功review.md)を参照する。
-EARS-AIの期待値選択と検証範囲は[EARS fixture review](../../fixtures/conformance/single/EARS-AI構文・候補抽出review.md)に記録した。
+期待値と検証範囲は[Context非成功fixture review](../../fixtures/conformance/single/コンテキストの非成功のレビュー記録.md)を参照する。
+EARS-AIの期待値選択と検証範囲は[EARS fixture review](../../fixtures/conformance/single/EARS-AI構文・候補抽出のレビュー記録.md)に記録した。
 設計上の期待値選択は[初回fixture review](../../fixtures/conformance/single/README.md)、
 検証結果は[適合fixture検証記録](../../fixtures/conformance/適合fixture検証記録.md)を参照する。
 2026-09-08にtarget種別×purposeの18基本caseと7追加caseを固定し、4集合の順序と入力順序不変性を検証した。
