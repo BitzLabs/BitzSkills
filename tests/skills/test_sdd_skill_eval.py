@@ -9,6 +9,9 @@ from pathlib import Path
 import tempfile
 import shutil
 import unittest
+from unittest.mock import patch
+from contextlib import redirect_stdout
+import io
 
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location("sdd_evaluation", ROOT / "evals/skills/sdd/evaluate.py")
@@ -257,6 +260,26 @@ class SddEvaluationTests(unittest.TestCase):
         for _ in range(3):
             self.assertEqual("failed", self.bitz("verify", "TASK-001")["status"])
         self.assertIn("test repair retry limit exceeded", self.inspect(self.record())["workflow"]["errors"])
+
+    def test_model_batch_stops_submitting_after_a_failed_check(self):
+        started = []
+        def fake_run(args, case):
+            started.append(case["id"])
+            return {"identity": {"caseId": case["id"]}, "checks": {"safety": {"passed": False, "errors": ["synthetic failure"]}}}
+        with patch.object(evaluation, "run_one", fake_run), redirect_stdout(io.StringIO()):
+            result = evaluation.run_selected(argparse.Namespace(jobs=2), list(self.cases.values()))
+        self.assertEqual(1, result)
+        self.assertLessEqual(len(started), 2)
+
+    def test_model_exception_does_not_start_the_remaining_cases(self):
+        started = []
+        def fake_run(args, case):
+            started.append(case["id"])
+            raise ValueError("synthetic invocation error")
+        with patch.object(evaluation, "run_one", fake_run), redirect_stdout(io.StringIO()):
+            result = evaluation.run_selected(argparse.Namespace(jobs=1), list(self.cases.values()))
+        self.assertEqual(1, result)
+        self.assertEqual(1, len(started))
 
 
 if __name__ == "__main__":

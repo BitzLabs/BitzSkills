@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import argparse
 import ast
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 import hashlib
 import json
 import os
@@ -495,6 +495,36 @@ def audit():
     return bool(errors)
 
 
+def run_selected(args, chosen):
+    """失敗を観測した後に新しいモデル呼出しを追加しない。実行中は最大jobs件。"""
+    remaining = iter(chosen)
+    stopped = False
+    with ThreadPoolExecutor(max_workers=args.jobs) as pool:
+        pending = {}
+        for _ in range(args.jobs):
+            case = next(remaining, None)
+            if case is not None:
+                pending[pool.submit(run_one, args, case)] = case
+        while pending:
+            completed, _ = wait(pending, return_when=FIRST_COMPLETED)
+            for future in completed:
+                case = pending.pop(future)
+                try:
+                    record = future.result()
+                    print(json.dumps({"caseId": record["identity"]["caseId"], "checks": record["checks"]}, ensure_ascii=False), flush=True)
+                    stopped |= any(not c["passed"] for c in record["checks"].values())
+                except (OSError, ValueError, subprocess.SubprocessError) as error:
+                    print(json.dumps({"caseId": case["id"], "error": str(error), "automaticRetry": False}, ensure_ascii=False), flush=True)
+                    stopped = True
+            if not stopped:
+                while len(pending) < args.jobs:
+                    case = next(remaining, None)
+                    if case is None:
+                        break
+                    pending[pool.submit(run_one, args, case)] = case
+    return int(stopped)
+
+
 def score(root):
     cases = load(HERE / "cases.json")
     configurations = set()
@@ -579,9 +609,7 @@ def main():
         chosen = [c for c in load(HERE / "cases.json") if not args.case or c["id"] in args.case]
         if not chosen or (args.case and set(args.case) != {c["id"] for c in chosen}):
             raise ValueError("未登録のcaseです")
-        with ThreadPoolExecutor(max_workers=args.jobs) as pool:
-            for record in pool.map(lambda c: run_one(args, c), chosen):
-                print(json.dumps({"caseId": record["identity"]["caseId"], "checks": record["checks"]}, ensure_ascii=False), flush=True)
+        return run_selected(args, chosen)
     return 0
 
 
