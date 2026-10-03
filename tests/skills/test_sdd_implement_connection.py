@@ -112,6 +112,26 @@ class SddImplementConnectionTests(unittest.TestCase):
         self.assertEqual("blocked", result["status"])
         self.assertIn("CTX-TASK-DEPENDENCY-001", [d["code"] for d in result["diagnostics"]])
 
+    def test_command_configuration_is_protected_only_by_verify_digest(self):
+        self.prepare()
+        implementation = self.context()
+        verification = self.cli("context", "TASK-001", "--purpose", "verify")
+        self.assertIn(verification["status"], PASS_STATUSES)
+        self.assertTrue(verification["resolution"]["complete"])
+        config_path = self.workspace / ".spec/bitz.yaml"
+        config = json.loads(config_path.read_text())
+        config["verify"]["commands"]["default"]["argv"].append("-v")
+        config_path.write_text(json.dumps(config))
+        current = self.cli("context", "TASK-001", "--purpose", "implement",
+                           "--expect-digest", implementation["contextDigest"])
+        self.assertIn(current["status"], PASS_STATUSES)
+        self.assertEqual(implementation["contextDigest"], current["contextDigest"])
+        stale = self.cli("context", "TASK-001", "--purpose", "verify",
+                         "--expect-digest", verification["contextDigest"])
+        self.assertEqual("blocked", stale["status"])
+        self.assertIn("CTX-STALE-001", [d["code"] for d in stale["diagnostics"]])
+        self.assertEqual(BROKEN_SOURCE, (self.workspace / "src/input.py").read_text())
+
     def test_verify_without_must_test_binding_is_blocked_without_commands(self):
         self.prepare(registered=False)
         self.context()
@@ -126,8 +146,11 @@ class SddImplementConnectionTests(unittest.TestCase):
         initial = self.context()
         precheck = self.cli("check", "TASK-001", "--base", "HEAD")
         self.assertIn(precheck["status"], PASS_STATUSES)
-        self.cli("context", "TASK-001", "--purpose", "implement",
-                 "--expect-digest", initial["contextDigest"])
+        confirmed = self.cli("context", "TASK-001", "--purpose", "implement",
+                             "--expect-digest", initial["contextDigest"])
+        self.assertIn(confirmed["status"], PASS_STATUSES)
+        self.assertTrue(confirmed["resolution"]["complete"])
+        self.assertEqual(initial["contextDigest"], confirmed["contextDigest"])
         # この固定テストは標準Pythonで指定srcを読みassertするだけ。通信・秘密・書込みなし。
         failed = self.cli("verify", "TASK-001")
         self.assertEqual("failed", failed["status"])
