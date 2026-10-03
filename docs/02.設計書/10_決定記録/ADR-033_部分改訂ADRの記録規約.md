@@ -15,7 +15,7 @@ relations:
 `relations.supersedes`に旧IDを書き、旧ADRの`status`を`superseded`にする」と定めている。この規則は
 ADR全体が置き換わる場合を想定しており、`Decision`の項目の一部だけが置き換わる場合を区別していない。
 
-一方、[ADR-020](ADR-020_決定記録をSPEC本文構造規定へ適合させる.md)の`Decision`の4番目の項目は、`Amends`に相当する型付きの語彙が
+一方、[ADR-020](ADR-020_決定記録を仕様文書の本文構造の規定へ適合させる.md)の`Decision`の4番目の項目は、`Amends`に相当する型付きの語彙が
 Coreにないため`related`で表すとし、改訂の関係を機械で追跡する必要が実測で生じた時点で裁定するとした。
 `related`は閲覧のための弱い関係であり、どの`Decision`の項目が後続のADRで変更されたかを示さない。
 
@@ -85,7 +85,7 @@ ADR-026はADR-030から参照されるが、`Decision`の項目は置き換わ�
 - 本ADRは、`docs/02.設計書/10_決定記録/`を人間が読むためのローカルなガバナンス規約である。Coreが利用者の
   `.spec/decisions/`へ保証するのは、文書全体の`supersedes`と`superseded`だけであり、部分改訂の3点の記録、
   適用順序、コンテキストへの包含は保証しない。部分改訂の`related`をCoreが強い改訂関係として解釈することもない。
-- 関連文書: [決定記録README](README.md), [ADR-020](ADR-020_決定記録をSPEC本文構造規定へ適合させる.md)
+- 関連文書: [決定記録README](README.md), [ADR-020](ADR-020_決定記録を仕様文書の本文構造の規定へ適合させる.md)
 
 ## Revision History
 

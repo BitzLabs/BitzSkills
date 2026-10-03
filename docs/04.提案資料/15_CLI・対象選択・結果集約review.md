@@ -26,7 +26,7 @@ workspace別Diagnostic、root workspace reportという基本形も成立して�
 
 ## 3. FED-CLI-001 全体操作の起動位置
 
-[複合workspace仕様 §8](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#8-全体操作の共通規則)と各操作仕様は、
+[複合workspace仕様 §8](../03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md#8-全体操作の共通規則)と各操作仕様は、
 `--all-workspaces`をroot workspaceでだけ許可する。これは次の2通りに読める。
 
 1. current directoryがrepository rootでなければ引数不正
@@ -47,7 +47,7 @@ workspace別Diagnostic、root workspace reportという基本形も成立して�
 
 ## 5. FED-CLI-003 操作別member結果
 
-[共通結果](../03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md#2-結果の形)は`workspaces[]`の共通fieldを
+[共通結果](../03.詳細設計/00_共通契約/01_結果・診断・終了コード.md#2-結果の形)は`workspaces[]`の共通fieldを
 定めるが、操作固有fieldは各操作仕様へ委ねている。現状では次が完全には確定していない。
 
 - check: full scopeでmemberごとに返す対象件数
@@ -84,14 +84,14 @@ CLIの基本構文は成立している。FED-CLI-001〜003をAPI freeze前に�
 
 ## 10. P1裁定（2026-09-03）
 
-`FED-CLI-001`〜`003`は[ADR-042](../02.設計書/10_決定記録/ADR-042_複合workspaceの同一性・所有境界・公開契約を確定する.md)
+`FED-CLI-001`〜`003`は[ADR-042](../02.設計書/10_決定記録/ADR-042_複合ワークスペースの同一性・所有境界・公開契約を確定する.md)
 で採用した。`--all-workspaces`をGit／複合workspaceの探索基準、未知`--workspace`を終了コード4・結果なしとし、
 3操作のmember固有fieldと完全JSON例を固定した。全体checkの`revision`も最上位1件に固定したため
 `FED-CLI-005`は随伴してClosedとする。P1はClosedとし、継続判定`FED-CLI-004`のP2だけを残す。
 
 ## 11. P2裁定（2026-09-03）
 
-`FED-CLI-004`は[ADR-043](../02.設計書/10_決定記録/ADR-043_複合workspaceの継続・TASK境界・適合契約を確定する.md)で
+`FED-CLI-004`は[ADR-043](../02.設計書/10_決定記録/ADR-043_複合ワークスペースの継続・TASK境界・適合契約を確定する.md)で
 採用した。全体事前検査だけを全停止境界とし、その後はcheckの文書・source edge、context／verifyのtarget閉包、
 verify binding、doctor checkを継続単位にする。依存出力不足だけで実行不能な別unitは
 `SPEC-MONOREPO-DEPENDENCY-001`／blockedとする。これにより本reviewをClosedとする。

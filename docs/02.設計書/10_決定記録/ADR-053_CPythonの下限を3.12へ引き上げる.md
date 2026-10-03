@@ -34,11 +34,11 @@ Coreは標準ライブラリとYAMLライブラリ1つだけを使うため、3.
    本項は[ADR-045](ADR-045_実行環境と配布物の確定.md)の`Decision`の1番目の項目を置き換える。
 2. **適合harnessの下限版**: `SINGLE-127-19`は`python: "3.12"`で`doctor`を起動する。Gate Cでは、全matrixを
    下限CPython 3.12と基準環境の2環境で通すことを要求する。`python`を指定したfixtureは、指定したバージョンだけで判定する。
-   本項は[ADR-046](ADR-046_適合harnessの検査対象・実行環境・runnerを確定する.md)の`Decision`の2番目の項目のうち下限版の値だけを
+   本項は[ADR-046](ADR-046_適合harnessの検査対象・実行環境・ランナーを確定する.md)の`Decision`の2番目の項目のうち下限版の値だけを
    置き換え、`invocation.python`の意味、環境の作り方、スキップしない規則は変えない。
    `runner: package`の`metadata`のケースが検査する`requires-python`も3.12以上を許すことへ改める。
 3. **ソースの木構造の宣言**: `plugins/bitz-core/pyproject.toml`は`requires-python`として`>=3.12`を宣言する。
-   本項は[ADR-049](ADR-049_Coreのsource配置と試験の構成を確定する.md)の`Decision`の1番目の項目の図にある
+   本項は[ADR-049](ADR-049_Coreのソースの配置と試験の構成を確定する.md)の`Decision`の1番目の項目の図にある
    `requires-python`の値だけを置き換え、配置は変えない。
 4. ADR-045の`Decision`の2〜6番目の項目、ADR-046の`Decision`の1番目と3〜5番目の項目、ADR-049の`Decision`の2〜6番目の項目は変更しない。
 

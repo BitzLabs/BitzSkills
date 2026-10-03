@@ -23,8 +23,8 @@
 
 ## 3. FED-INV-001 未登録workspace検出
 
-[複合workspace仕様 §2](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#2-配置とカタログ)は、catalogにない
-`.spec/`をrepository全体から再帰探索しない。[同仕様 §3](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#3-ワークスペースの決定)
+[複合workspace仕様 §2](../03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md#2-配置とカタログ)は、catalogにない
+`.spec/`をrepository全体から再帰探索しない。[同仕様 §3](../03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md#3-ワークスペースの決定)
 の`SPEC-MONOREPO-UNREGISTERED-001`は、通常操作で実際に選択された設定だけを検出できる。
 
 一方、[ユースケース UC-11](../02.設計書/05_ユースケース.md#13-uc-11-複合ワークスペースの横断要求)は未登録memberがないことを
@@ -64,7 +64,7 @@ P0はない。FED-INV-001を裁定してfixture化すれば、複合workspaceモ
 
 ## 7. P1裁定（2026-09-03）
 
-`FED-INV-001`は[ADR-042](../02.設計書/10_決定記録/ADR-042_複合workspaceの同一性・所有境界・公開契約を確定する.md)
+`FED-INV-001`は[ADR-042](../02.設計書/10_決定記録/ADR-042_複合ワークスペースの同一性・所有境界・公開契約を確定する.md)
 で採用した。全体操作はGit既知の`.spec/bitz.yaml`とcatalogを比較し、集合差を
 `SPEC-MONOREPO-UNREGISTERED-001`／blockedにする。filesystem全体の任意探索は追加しない。
 同ADRでworkspace IDを永続同一性、ID維持のpath変更を移動、ID変更を削除＋追加としたため、`FED-INV-002`も

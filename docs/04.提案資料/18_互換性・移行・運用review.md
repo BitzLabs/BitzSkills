@@ -27,7 +27,7 @@ ADR-040がADR-039の複合workspace延期部分だけを改訂し、Profile、�
 
 ## 3. FED-MIG-001 旧Coreとの互換条件
 
-[ADR-040 Decision 7](../02.設計書/10_決定記録/ADR-040_複合workspaceをCore-1.0へ再導入する.md#decision)は
+[ADR-040 Decision 7](../02.設計書/10_決定記録/ADR-040_複合ワークスペースをCore-1.0へ再導入する.md#decision)は
 `monorepo.v1` Capabilityを公開する。しかしCapabilityは実行後の識別情報であり、旧Coreがroot設定の未知`workspace`、
 `monorepo`をwarningとして読み飛ばし、root配下全体を単一workspaceとして検査・verifyすることを防げない。
 
@@ -99,13 +99,13 @@ silent ignoreを許容できない。FED-MIG-001〜003を裁定し、移行fixtu
 ## 10. P1裁定（2026-09-03）
 
 Core 1.0が未releaseであることを確認し、`FED-MIG-001`は追加version gateなしで解消した。`FED-MIG-002`と003は
-[ADR-042](../02.設計書/10_決定記録/ADR-042_複合workspaceの同一性・所有境界・公開契約を確定する.md)で採用し、
+[ADR-042](../02.設計書/10_決定記録/ADR-042_複合ワークスペースの同一性・所有境界・公開契約を確定する.md)で採用し、
 永続workspace ID、初回`root`写像、原子的複合workspace化を正本へ反映した。rename／移動／削除の同一性も固定したため
 `FED-MIG-004`は随伴してClosedとする。P1はClosedとし、consumer rollback詳細`FED-MIG-005`のP2だけを残す。
 
 ## 11. P2裁定（2026-09-03）
 
-`FED-MIG-005`は[ADR-043](../02.設計書/10_決定記録/ADR-043_複合workspaceの継続・TASK境界・適合契約を確定する.md)で
+`FED-MIG-005`は[ADR-043](../02.設計書/10_決定記録/ADR-043_複合ワークスペースの継続・TASK境界・適合契約を確定する.md)で
 採用した。consumerを複合workspaceのproducerより先にdual-read化し、単独／全体結果を排他的fieldで判別する。rollbackはcatalog、
 設定、修飾参照、CI、Capability gate、consumerを同じrelease単位とし、安全に一式を戻せなければforward fixする。
 これにより本reviewをClosedとする。

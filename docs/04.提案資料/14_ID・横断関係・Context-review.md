@@ -24,7 +24,7 @@
 
 ## 3. FED-CTX-001 複合workspaceのContext Schema
 
-[複合workspace仕様 §6](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#6-横断索引とコンテキスト)は、
+[複合workspace仕様 §6](../03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md#6-横断索引とコンテキスト)は、
 `documents[].workspaceId`、`resolution.workspaces[]`、`resolution.crossWorkspaceEdges[]`を追加している。
 しかし、各配列要素の型、必須性、空配列、未知field、単一workspaceでの省略可否を表として確定していない。
 [context仕様 §4](../03.詳細設計/03_操作仕様/01_context.md#4-コンテキスト一式)のJSON例も単一workspaceだけである。
@@ -73,13 +73,13 @@ IDとgraph規則にP0はない。FED-CTX-001と002を実装前にSchema化する
 
 ## 8. P1裁定（2026-09-03）
 
-`FED-CTX-001`と`FED-CTX-002`は[ADR-042](../02.設計書/10_決定記録/ADR-042_複合workspaceの同一性・所有境界・公開契約を確定する.md)
+`FED-CTX-001`と`FED-CTX-002`は[ADR-042](../02.設計書/10_決定記録/ADR-042_複合ワークスペースの同一性・所有境界・公開契約を確定する.md)
 で採用した。複合workspaceのContextの必須field、空配列、順序と、Digestへ収録する実効設定許可リストをcontext仕様へ反映した。
 P1はClosedとし、Diagnostic優先順位`FED-CTX-003`のP2だけを残す。
 
 ## 9. P2裁定（2026-09-03）
 
-`FED-CTX-003`は[ADR-043](../02.設計書/10_決定記録/ADR-043_複合workspaceの継続・TASK境界・適合契約を確定する.md)で
+`FED-CTX-003`は[ADR-043](../02.設計書/10_決定記録/ADR-043_複合ワークスペースの継続・TASK境界・適合契約を確定する.md)で
 採用した。relation edgeを構文、修飾ID、workspace、target、型の順に1 primary Diagnosticだけへ対応付け、
 存在workspace内のstrong target不在を`SPEC-RELATION-MISSING-001`へ統一した。
 `CTX-RELATION-MISSING-001`は公開結果で使わず予約する。これにより本reviewをClosedとする。

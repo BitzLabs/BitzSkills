@@ -66,7 +66,7 @@ fixtures/conformance/manifest.schema.json
 `dataset.json`は`setup.generate`を持つ生成fixtureだけが持ち、そのfixtureは`repo/`を持たない（§3.5）。
 `manifest.schema.json`は全マニフェストが従う機械可読なスキーマであり、harnessは実行前にマニフェストを検証する。
 契約の正本である公開結果とフロントマターのスキーマは[`docs/03.詳細設計/schemas/`](../schemas/)に置き、
-fixtureは参照するだけで写しを持たない（[ADR-050](../../02.設計書/10_決定記録/ADR-050_契約Schemaの正本を詳細設計へ置く.md)）。
+fixtureは参照するだけで写しを持たない（[ADR-050](../../02.設計書/10_決定記録/ADR-050_契約スキーマの正本を詳細設計へ置く.md)）。
 `result.schema.json`は、Core 1.0の全公開JSON結果が従うJSON Schema（Draft 2020-12）である。harnessは期待結果を実行前に、
 実際の結果とレポートを正規化器の適用前に検証し、いずれかが不適合ならfixtureの比較自体をエラーにする。
 `frontmatter.schema.json`は、YAML解析後のフロントマター構造が従うJSON Schema（Draft 2020-12）である。harnessは配置ディレクトリから
@@ -149,7 +149,7 @@ fixture harnessの参照実装が、検査対象のソースの木構造、ビ�
 
 | `runner` | ケース（`argv[0]`） | 内容 |
 |---|---|---|
-| `consumer` | `result-shape <path>` | 指定したJSONを[結果・診断・終了コードの仕様 §2](01_結果・Diagnostic・終了コード.md#2-結果の形)の排他的な外形で判定する |
+| `consumer` | `result-shape <path>` | 指定したJSONを[結果・診断・終了コードの仕様 §2](01_結果・診断・終了コード.md#2-結果の形)の排他的な外形で判定する |
 | `migration` | `MULTI-024`で固定 | 複合ワークスペース化と完全なロールバックの適用、部分的なロールバックの拒否 |
 | `package` | `metadata` | 配布物名、`import`パッケージ名、コンソールスクリプト名が`bitz`であり、`requires-python`が3.12以上を許容する |
 | `package` | `dependencies` | ランタイム依存が標準ライブラリと、ロックファイルで厳密なバージョンへ固定したYAMLライブラリ1つだけである |
@@ -210,7 +210,7 @@ harnessは各fixtureを新しい一時ディレクトリへコピーし、次の
 未知のフィールドは禁止する。`paths`は1件以上で重複を禁止し、`.`はリポジトリ全体を明示するときだけ許可する。
 `submodule`と`worktree`の`source`だけは`changes/`配下のディレクトリを指し、その中の通常ファイルとシンボリックリンクを再現する。
 両方の準備の処理は、harnessが固定した同一性、時刻、ブランチ名を使い、2回の`setup`で同じGit構造とコミットIDを与える
-（[ADR-048](../../02.設計書/10_決定記録/ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md)）。
+（[ADR-048](../../02.設計書/10_決定記録/ADR-048_適合fixtureの生成入力とGit構造の準備の処理を確定する.md)）。
 `create`、`update`、`rename`で親ディレクトリがなければharnessが作成する。`delete`後に空になった親ディレクトリは残す。
 `rename`と`delete`のGit上の判定はGit自身に委ねるが、期待するインデックス／作業ツリーの状態は、後続の`stage`の有無で一意に決まる。
 
@@ -294,7 +294,7 @@ LFを標準出力へ書いて終了0とし、それ以外の`argv`はシムの�
 - `resultFile`: `expected/`配下の、完全な意味中間表現の期待するJSON。各項目は異なる入力パスと期待ファイルを持つ。
 
 期待するJSONは、文書が所有する全規範文の意味中間表現のオブジェクト配列とし、`source`の行、列、ID順で保持する。
-フィールドは[EARS-AI仕様 §6](../01_EARS-AI/01_言語・Semantic-IR仕様.md#6-意味中間表現)に従う。
+フィールドは[EARS-AI仕様 §6](../01_EARS-AI/01_EARS-AI言語・意味中間表現仕様.md#6-意味中間表現)に従う。
 `source.path`は入力パス、位置はフロントマターを含む元ファイルのUnicodeコードポイント単位の1始まりとする。
 `source.column`は規範文IDの開始角括弧を指す。`raw`はリストマーカーを含む候補行全体で、改行を含めない。
 `source`、`raw`、`unknownExtensions`を含む全フィールド、値、配列順、`null`と省略を比較し、正規化器で除外しない。

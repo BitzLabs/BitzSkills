@@ -41,7 +41,7 @@ warm run中央値、process全体elapsedという測定法を固定すれば、�
 
 ## 4. FED-IMP-002 resource上限
 
-[複合workspace仕様 §10](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#10-上限とgitの前提)はSPEC file 10,000件、
+[複合workspace仕様 §10](../03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md#10-上限とgitの前提)はSPEC file 10,000件、
 関係索引、入力byteの上限を複合workspace全体へ適用するとするが、後二者の数値と数え方がない。共通hard limitを参照するなら
 参照先と複合workspace時の集約式が必要である。
 
@@ -108,14 +108,14 @@ FED-IMP-001・002をbenchmark／limit fixtureへ落としてから実装受入ga
 
 ## 10. P1裁定（2026-09-03）
 
-`FED-IMP-001`〜`003`は[ADR-042](../02.設計書/10_決定記録/ADR-042_複合workspaceの同一性・所有境界・公開契約を確定する.md)
+`FED-IMP-001`〜`003`は[ADR-042](../02.設計書/10_決定記録/ADR-042_複合ワークスペースの同一性・所有境界・公開契約を確定する.md)
 で採用した。通常規模の性能fixtureと10,000 SPECのhard-limit fixtureを分離し、複合workspaceのresource数値、5回中央値、
 Context／全体結果Schemaを正本と実装計画へ反映した。P1はClosedとし、計算量目標と期待JSON適合matrixのP2を残す。
 
 ## 11. P2裁定（2026-09-03）
 
 `FED-IMP-004`と`FED-IMP-005`は
-[ADR-043](../02.設計書/10_決定記録/ADR-043_複合workspaceの継続・TASK境界・適合契約を確定する.md)で採用した。
+[ADR-043](../02.設計書/10_決定記録/ADR-043_複合ワークスペースの継続・TASK境界・適合契約を確定する.md)で採用した。
 索引memoryを入力graph、target一時memoryを最大Context閉包へ線形とし、全target Bundleの同時保持を禁止した。
 resource dimension別の境界fixture、hard-limit時の1 GiB RSS受入、単独／複合workspaceのconsumerとrollbackを含む期待JSON matrixを
 固定した。これにより本reviewをClosedとする。

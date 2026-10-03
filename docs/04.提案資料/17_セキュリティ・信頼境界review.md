@@ -26,7 +26,7 @@
 
 ## 3. FED-SEC-001 symlinkによる所有境界の迂回
 
-[複合workspace仕様 §5](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#5-所有境界)はroot workspaceによる
+[複合workspace仕様 §5](../03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md#5-所有境界)はroot workspaceによる
 member配下の`implements`、test、TASK、cwd所有を禁止する。しかしroot直下の`shared -> apps/web/src`という
 symlinkを`shared/auth.ts`として参照した場合の判定順がない。一般の安全規則が「workspace外へ解決されるpath」を
 禁止するだけなら、このpathはrepository root内なので通過し得る。
@@ -44,7 +44,7 @@ symlinkそのものを全面禁止するか、同一所有領域内だけ許可�
 
 ## 4. FED-SEC-002 catalog外SPEC
 
-[複合workspace仕様 §2](../03.詳細設計/02_SPECモデル/05_複合workspace仕様.md#2-配置とカタログ)は再帰探索しないとし、
+[複合workspace仕様 §2](../03.詳細設計/02_仕様文書モデル/05_複合ワークスペース仕様.md#2-配置とカタログ)は再帰探索しないとし、
 §3はcatalog外`.spec/`を「選択した場合」にだけblockedとする。したがって`--all-workspaces`や`doctor`が成功しても、
 Git管理された`tools/legacy/.spec/bitz.yaml`が未登録のまま残り得る。
 
@@ -89,12 +89,12 @@ fail-closedの方向は妥当である。FED-SEC-001〜003を解消し、canonic
 
 ## 9. P1裁定（2026-09-03）
 
-`FED-SEC-001`〜`003`は[ADR-042](../02.設計書/10_決定記録/ADR-042_複合workspaceの同一性・所有境界・公開契約を確定する.md)
+`FED-SEC-001`〜`003`は[ADR-042](../02.設計書/10_決定記録/ADR-042_複合ワークスペースの同一性・所有境界・公開契約を確定する.md)
 で採用した。全所有pathへ共通canonicalizerを適用し、symlink解決後の実pathとGit metadataで所有領域を照合する。
 Git既知の未登録設定も全体事前検査で拒否する。P1はClosedとし、TASK directory境界のP2だけを残す。
 
 ## 10. P2裁定（2026-09-03）
 
-`FED-SEC-004`は[ADR-043](../02.設計書/10_決定記録/ADR-043_複合workspaceの継続・TASK境界・適合契約を確定する.md)で
+`FED-SEC-004`は[ADR-043](../02.設計書/10_決定記録/ADR-043_複合ワークスペースの継続・TASK境界・適合契約を確定する.md)で
 採用した。TASK `changes`の許可集合を字句Git path、所有集合をcanonical pathとして分離し、追加はcurrent、削除はbase、
 変更は双方を検査する。symlink解決先へdirectory接頭辞の許可を拡張しない。これにより本reviewをClosedとする。

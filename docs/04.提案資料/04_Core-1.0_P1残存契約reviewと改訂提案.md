@@ -35,9 +35,9 @@ test pathから句単位coverageを迂回できる余地があった。
 
 | 項目 | 裁定 | 対応 |
 |---|---|---|
-| Diagnostic共通契約 | 採用・反映済み | [ADR-021](../02.設計書/10_決定記録/ADR-021_Diagnostic-severity・操作status・source-Schemaの分離.md)。severityとstatusを分離し、`source.kind`を3形式で定義 |
-| 規範行候補Scanner | 採用・反映済み | [ADR-022](../02.設計書/10_決定記録/ADR-022_規範行候補抽出とID構文検証の分離.md)。候補抽出と完全な構文検証を分離 |
-| `verify`明示対象 | 採用・反映済み | [ADR-023](../02.設計書/10_決定記録/ADR-023_verify明示対象とpath入力の確定.md)。REQ/TECH/規範文/TASK/SPEC pathへ限定 |
+| Diagnostic共通契約 | 採用・反映済み | [ADR-021](../02.設計書/10_決定記録/ADR-021_診断の重大度・操作の結果の状態・発生元のスキーマの分離.md)。severityとstatusを分離し、`source.kind`を3形式で定義 |
+| 規範行候補Scanner | 採用・反映済み | [ADR-022](../02.設計書/10_決定記録/ADR-022_規範文の候補抽出とIDの構文検証の分離.md)。候補抽出と完全な構文検証を分離 |
+| `verify`明示対象 | 採用・反映済み | [ADR-023](../02.設計書/10_決定記録/ADR-023_verifyの明示対象とパスによる入力の確定.md)。REQ/TECH/規範文/TASK/SPEC pathへ限定 |
 
 ## 4. 反映先
 
