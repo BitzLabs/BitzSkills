@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "frontmatter.schema.json",
-  "title": "Bitz Core 1.0 SPEC Frontmatter",
-  "description": "YAMLをdecodeしたFrontmatterの値のSchema。Coreは、文書を置いたdirectoryから文書種別の定義を選ぶ。",
+  "title": "Bitz Core 1.0 仕様文書のフロントマター",
+  "description": "YAMLをデコードしたフロントマターの値のスキーマ。Coreは、文書を置いたディレクトリから文書種別の定義を選ぶ。",
   "oneOf": [
     { "$ref": "#/$defs/reqFrontmatter" },
     { "$ref": "#/$defs/techFrontmatter" },
