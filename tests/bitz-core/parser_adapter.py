@@ -93,7 +93,7 @@ def _check_fixture(fixture_root: Path, manifest: dict, base_tmp: str) -> list[st
             try:
                 text = source.read_text(encoding="utf-8")
             except OSError as error:
-                differences.append(f"{relative}: 読み取れません({error})")
+                differences.append(f"{relative}: 読み取れません（{error}）")
                 continue
 
             result = parse_document(text, relative)
@@ -103,7 +103,7 @@ def _check_fixture(fixture_root: Path, manifest: dict, base_tmp: str) -> list[st
 
             expected = json.loads((fixture_root / expected_name).read_text(encoding="utf-8"))
             if result.statements != expected:
-                differences.append(f"{relative}: 完全なSemantic IRがresultFileと一致しません")
+                differences.append(f"{relative}: 完全な意味中間表現が`resultFile`と一致しません")
 
         after = _observe(repository)
         state_diff = _diff_state(before, after)
@@ -128,7 +128,7 @@ def main() -> int:
             try:
                 differences = _check_fixture(fixture_root, manifest, base_tmp)
             except (OSError, ValueError, KeyError) as error:
-                differences = [f"adapter例外: {error}"]
+                differences = [f"構文解析器のアダプターの例外: {error}"]
             checks.append({"id": identifier, "result": "passed" if not differences else "failed",
                             "differences": differences})
 

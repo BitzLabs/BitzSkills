@@ -17,15 +17,15 @@ import unittest
 def load_tests_from_file(loader: unittest.TestLoader, path: Path) -> unittest.TestSuite:
     spec = importlib.util.spec_from_file_location(f"_bitz_core_test_{path.stem}", path)
     if spec is None or spec.loader is None:
-        raise ImportError(f"test fileを読み込めません: {path}")
+        raise ImportError(f"テストファイルを読み込めません: {path}")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return loader.loadTestsFromModule(module)
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="指定したtest fileだけをunittestで実行する。")
-    parser.add_argument("paths", nargs="+", type=Path, help="test fileのpath")
+    parser = argparse.ArgumentParser(description="指定したテストファイルだけを`unittest`で実行する。")
+    parser.add_argument("paths", nargs="+", type=Path, help="テストファイルのパス")
     args = parser.parse_args(argv)
     loader = unittest.TestLoader()
     suite = unittest.TestSuite(load_tests_from_file(loader, path) for path in args.paths)

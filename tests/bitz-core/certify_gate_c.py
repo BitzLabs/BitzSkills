@@ -53,7 +53,7 @@ def checkout(commit: str, directory: Path) -> None:
                       (("checkout", "--quiet", "--detach", commit), directory)):
         result = git(*args, cwd=cwd)
         if result.returncode != 0:
-            raise RuntimeError(result.stderr.strip() or f"git {args[0]}が失敗しました")
+            raise RuntimeError(result.stderr.strip() or f"`git {args[0]}`が失敗しました")
 
 
 def sha256(value: bytes) -> str:
@@ -67,7 +67,7 @@ def load_reference_manifest(cwd: Path) -> dict:
 def load_reference_manifest_at(commit: str) -> dict:
     result = git("show", f"{commit}:{REFERENCE_MANIFEST.as_posix()}")
     if result.returncode != 0:
-        raise RuntimeError(result.stderr.strip() or "対象commitの基準環境manifestを読めません")
+        raise RuntimeError(result.stderr.strip() or "対象コミットの基準環境のマニフェストを読めません")
     return json.loads(result.stdout)
 
 
@@ -168,11 +168,11 @@ def run_evidence(role: str, environment_id: str, python_spec: str) -> tuple[dict
     head = git("rev-parse", "--verify", "HEAD")
     commit = head.stdout.strip() if head.returncode == 0 else None
     if not clean(ROOT):
-        errors.append("作業treeにcommitされていない変更があります")
+        errors.append("作業ツリーにコミットされていない変更があります")
     if uv is None:
-        errors.append("uvが見つかりません")
+        errors.append("`uv`が見つかりません")
     if commit is None:
-        errors.append("HEADのcommitがありません")
+        errors.append("`HEAD`のコミットがありません")
 
     evidence = {
         "schemaVersion": 1,
@@ -206,7 +206,7 @@ def run_evidence(role: str, environment_id: str, python_spec: str) -> tuple[dict
                 manifest = load_reference_manifest(directory)
                 evidence["referenceManifestSha256"] = gate_c.manifest_digest(manifest)
                 if environment_id != manifest.get("environmentId"):
-                    errors.append("environmentIdが基準環境manifestと一致しません")
+                    errors.append("`environmentId`が基準環境のマニフェストと一致しません")
                 try:
                     gate_c.validate_reference_environment(evidence["environment"], manifest)
                 except ValueError as error:
@@ -214,7 +214,7 @@ def run_evidence(role: str, environment_id: str, python_spec: str) -> tuple[dict
                 if errors:
                     evidence["cleanAfter"] = clean(directory)
                     if not evidence["cleanBefore"] or not evidence["cleanAfter"]:
-                        errors.append("fresh checkoutが実行前後でcleanではありません")
+                        errors.append("新しいチェックアウトが実行前後でクリーンではありません")
                     evidence["errors"] = errors
                     return evidence, errors
 
@@ -254,7 +254,7 @@ def run_evidence(role: str, environment_id: str, python_spec: str) -> tuple[dict
                 errors.append("Core単体試験が成功しませんでした")
             evidence["cleanAfter"] = clean(directory)
             if not evidence["cleanBefore"] or not evidence["cleanAfter"]:
-                errors.append("fresh checkoutが実行前後でcleanではありません")
+                errors.append("新しいチェックアウトが実行前後でクリーンではありません")
     except (OSError, RuntimeError, subprocess.SubprocessError) as error:
         errors.append(str(error).split("\n")[0])
     evidence["errors"] = errors
@@ -278,7 +278,7 @@ def run_performance_evidence(commit: str) -> tuple[dict, list[str]]:
         "errors": errors,
     }
     if uv is None:
-        errors.append("uvが見つかりません")
+        errors.append("`uv`が見つかりません")
         return evidence, errors
     try:
         with tempfile.TemporaryDirectory(prefix="bitz-gate-c-performance-") as temporary:
@@ -292,12 +292,12 @@ def run_performance_evidence(commit: str) -> tuple[dict, list[str]]:
             try:
                 evidence["report"] = json.loads(audit["stdout"])
             except (ValueError, UnicodeDecodeError):
-                errors.append("性能baseline監査の標準出力がJSONではありません")
+                errors.append("性能ベースラインの監査の標準出力がJSONではありません")
             if audit["exitCode"] != 0:
-                errors.append("性能baseline監査が成功しませんでした")
+                errors.append("性能ベースラインの監査が成功しませんでした")
             evidence["cleanAfter"] = clean(directory)
             if not evidence["cleanBefore"] or not evidence["cleanAfter"]:
-                errors.append("性能baseline監査のfresh checkoutが実行前後でcleanではありません")
+                errors.append("性能ベースラインの監査の新しいチェックアウトが実行前後でクリーンではありません")
     except (OSError, RuntimeError, subprocess.SubprocessError) as error:
         errors.append(str(error).split("\n")[0])
     evidence["errors"] = errors
@@ -321,7 +321,7 @@ def run_priority_closure_evidence(commit: str) -> tuple[dict, list[str]]:
         "errors": errors,
     }
     if uv is None:
-        errors.append("uvが見つかりません")
+        errors.append("`uv`が見つかりません")
         return evidence, errors
     try:
         with tempfile.TemporaryDirectory(prefix="bitz-gate-c-priority-") as temporary:
@@ -340,7 +340,7 @@ def run_priority_closure_evidence(commit: str) -> tuple[dict, list[str]]:
                 errors.append("P0/P1閉包監査が成功しませんでした")
             evidence["cleanAfter"] = clean(directory)
             if not evidence["cleanBefore"] or not evidence["cleanAfter"]:
-                errors.append("P0/P1閉包監査のfresh checkoutが実行前後でcleanではありません")
+                errors.append("P0/P1閉包監査の新しいチェックアウトが実行前後でクリーンではありません")
     except (OSError, RuntimeError, subprocess.SubprocessError) as error:
         errors.append(str(error).split("\n")[0])
     evidence["errors"] = errors
@@ -356,15 +356,15 @@ def write_json(value: dict, output: str | None) -> None:
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Gate Cの実行・集約command。")
+    parser = argparse.ArgumentParser(description="Gate Cの実行・集約コマンド。")
     commands = parser.add_subparsers(dest="command", required=True)
-    run = commands.add_parser("run", help="1環境のfresh-checkout証拠を作る")
+    run = commands.add_parser("run", help="1環境の新しいチェックアウトの証跡を作る")
     run.add_argument("--role", required=True, choices=gate_c.ROLES)
     run.add_argument("--environment-id", required=True)
     run.add_argument("--python", required=True, dest="python_spec")
     run.add_argument("--output")
     collect = commands.add_parser(
-        "collect", help="minimum/referenceと受入済み性能baselineの証拠を集約する")
+        "collect", help="`minimum`・`reference`と受入済みの性能ベースラインの証跡を集約する")
     collect.add_argument("--input", required=True, action="append")
     collect.add_argument("--commit")
     collect.add_argument("--output")

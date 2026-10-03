@@ -30,7 +30,7 @@ def write_json(path, value):
 def head():
     result = certification.git("rev-parse", "HEAD")
     if result.returncode:
-        raise ValueError("HEADを取得できません")
+        raise ValueError("`HEAD`を取得できません")
     return result.stdout.strip()
 
 
@@ -44,7 +44,7 @@ def execute(args):
         raise ValueError("分割番号または独立実行番号が不正です")
     uv = shutil.which("uv")
     if not uv:
-        raise ValueError("uvが見つかりません")
+        raise ValueError("`uv`が見つかりません")
     commit = head()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -62,7 +62,7 @@ def execute(args):
             evidence["cleanBefore"] = before.returncode == 0 and not before.stdout
             actual_head = certification.git("rev-parse", "HEAD", cwd=clone)
             if not evidence["cleanBefore"] or actual_head.returncode or actual_head.stdout.strip() != commit:
-                raise ValueError("独立checkoutが指定commitのclean状態ではありません")
+                raise ValueError("独立したチェックアウトが指定コミットのクリーンな状態ではありません")
             report_path = output / f"{stem}-conformance.json"
             argv = [uv, "run", "fixtures/run_conformance.py", "--core", "plugins/bitz-core",
                     "--step", str(args.step), "--shard", str(args.shard), "--shards", str(args.shards),
@@ -99,38 +99,38 @@ def collect(evidences, *, step, shards, replicas, commit, run_id):
     for evidence in evidences:
         key = (evidence["replica"], evidence["shard"])
         if key not in expected or key in indexed:
-            raise ValueError("workerが余分または重複しています")
+            raise ValueError("ワーカーが余分または重複しています")
         if (evidence["schemaVersion"] != 1 or evidence["step"] != step or evidence["shards"] != shards
                 or evidence["commit"] != commit or evidence["runId"] != run_id):
-            raise ValueError("workerのcommit・run・実行条件が一致しません")
+            raise ValueError("ワーカーのコミット・`runId`・実行条件が一致しません")
         checkout_id = evidence["checkoutId"]
         if not isinstance(checkout_id, str) or not checkout_id or checkout_id in checkout_ids:
-            raise ValueError("独立checkoutの識別子が不正または重複しています")
+            raise ValueError("独立したチェックアウトの識別子が不正または重複しています")
         checkout_ids.add(checkout_id)
         if evidence["cleanBefore"] is not True or evidence["cleanAfter"] is not True or evidence["errors"]:
-            raise ValueError("workerがclean状態で正常完了していません")
+            raise ValueError("ワーカーがクリーンな状態で正常完了していません")
         conformance = evidence["conformance"]
         if not conformance or type(conformance["exitCode"]) is not int or conformance["exitCode"] != 0:
             raise ValueError("適合harnessが正常終了していません")
         indexed[key] = evidence
     if set(indexed) != expected:
-        raise ValueError("workerの結果が不足しています")
+        raise ValueError("ワーカーの結果が不足しています")
     reports, parsers = [], []
     for replica in range(1, replicas + 1):
         workers = [indexed[(replica, shard)] for shard in range(1, shards + 1)]
         report = merge_reports([w["conformance"]["report"] for w in workers], groups, identifiers)
         if report["allPassed"] is not True:
-            raise ValueError("全fixtureがpassedではありません")
+            raise ValueError("全fixtureが`passed`ではありません")
         reports.append(report)
         for worker in workers:
             parser = worker["parserAdapter"]
             if step >= 2 and worker["shard"] == 1:
                 if (not parser or type(parser["exitCode"]) is not int or parser["exitCode"] != 0
                         or parser["error"] or not isinstance(parser["stdout"], str) or not parser["stdout"]):
-                    raise ValueError("Parser adapterが正常完了していません")
+                    raise ValueError("構文解析器のアダプターが正常完了していません")
                 parsers.append({"exitCode": 0, "stdout": parser["stdout"].encode(), "error": None})
             elif parser is not None:
-                raise ValueError("Parser adapterの実行位置が不正です")
+                raise ValueError("構文解析器のアダプターの実行位置が不正です")
     result = {"commit": commit, "step": step, "replicas": replicas, "shards": shards,
               "fixtureCount": len(identifiers), "result": "Passed", "errors": [],
               "reports": [certification._conformance_digest(json.dumps(r).encode()) for r in reports]}
@@ -155,7 +155,7 @@ def main(argv=None):
     for command in (run, merge):
         command.add_argument("--step", type=int, required=True)
         command.add_argument("--shards", type=int, default=4)
-        command.add_argument("--run-id", required=True, help="CI run IDとattemptを合わせた識別子")
+        command.add_argument("--run-id", required=True, help="CIの実行IDと試行を合わせた識別子")
         command.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     try:

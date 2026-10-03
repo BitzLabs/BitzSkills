@@ -37,8 +37,8 @@ def worktree_errors():
     """作業ツリーがHEADと同じであることを確かめる。未追跡のファイルも変更として数える。"""
     status = git("status", "--porcelain", "--untracked-files=all")
     if status.returncode != 0:
-        return [status.stderr.strip() or "git statusが失敗しました"]
-    return ["作業treeにcommitされていない変更があります"] if status.stdout else []
+        return [status.stderr.strip() or "`git status`が失敗しました"]
+    return ["作業ツリーにコミットされていない変更があります"] if status.stdout else []
 
 
 def checkout(commit, directory):
@@ -46,7 +46,7 @@ def checkout(commit, directory):
                       (("checkout", "--quiet", "--detach", commit), directory)):
         completed = git(*args, cwd=cwd)
         if completed.returncode != 0:
-            raise RuntimeError(completed.stderr.strip() or f"git {args[0]}が失敗しました")
+            raise RuntimeError(completed.stderr.strip() or f"`git {args[0]}`が失敗しました")
 
 
 def run_conformance(uv, directory, step, timeout):
@@ -59,7 +59,7 @@ def run_parser_adapter(uv, directory, timeout):
     """Step 2以降だけが要求する構文解析器のアダプター（適合fixture仕様 4.1）。存在しなければエラーとする。"""
     adapter = directory / PARSER_ADAPTER
     if not adapter.is_file():
-        return {"exitCode": None, "stdout": b"", "stderr": b"", "error": "Parser adapterがありません"}
+        return {"exitCode": None, "stdout": b"", "stderr": b"", "error": "構文解析器のアダプターがありません"}
     completed = subprocess.run([uv, "run", str(adapter)], cwd=directory, capture_output=True, timeout=timeout)
     return {"exitCode": completed.returncode, "stdout": completed.stdout, "stderr": completed.stderr, "error": None}
 
@@ -89,7 +89,7 @@ def judge(step, conformance, parser_adapter):
     """チェックアウトごとの実行結果から、認定を妨げる理由を列挙する。空なら認定できる。"""
     errors = []
     if len(conformance) != CHECKOUTS:
-        return [f"checkoutは{CHECKOUTS}つ必要です"]
+        return [f"チェックアウトは{CHECKOUTS}つ必要です"]
     for index, result in enumerate(conformance, 1):
         try:
             body = _normalized_conformance_body(result["stdout"])
@@ -97,25 +97,25 @@ def judge(step, conformance, parser_adapter):
             errors.append(f"参照適合harness{index}: 結果JSONの形式が不正です")
             continue
         if not body.get("allPassed", False):
-            errors.append(f"参照適合harness{index}: 選んだfixtureがすべてpassedではありません")
+            errors.append(f"参照適合harness{index}: 選んだfixtureがすべて`passed`ではありません")
         expected_exit = 0 if body.get("allPassed") else 1
         if result["exitCode"] != expected_exit:
-            errors.append(f"参照適合harness{index}: 終了コードがallPassedと整合しません")
+            errors.append(f"参照適合harness{index}: 終了コードが`allPassed`と整合しません")
     digests = [_conformance_digest(result["stdout"]) for result in conformance]
     if len(set(digest for digest in digests if digest is not None)) not in (0, 1) or None in digests:
-        errors.append("参照適合harnessの結果がcheckout間で一致しません")
+        errors.append("参照適合harnessの結果がチェックアウト間で一致しません")
     if step >= 2:
         if len(parser_adapter) != CHECKOUTS:
-            errors.append(f"checkoutは{CHECKOUTS}つ必要です(Parser adapter)")
+            errors.append(f"チェックアウトは{CHECKOUTS}つ必要です（構文解析器のアダプター）")
         else:
             for index, result in enumerate(parser_adapter, 1):
                 if result.get("error"):
-                    errors.append(f"Parser adapter{index}: {result['error']}")
+                    errors.append(f"構文解析器のアダプター{index}: {result['error']}")
                 elif result["exitCode"] != 0:
-                    errors.append(f"Parser adapter{index}: 終了コードが0ではありません")
+                    errors.append(f"構文解析器のアダプター{index}: 終了コードが0ではありません")
             adapter_stdouts = {result["stdout"] for result in parser_adapter if not result.get("error")}
             if not any(result.get("error") for result in parser_adapter) and len(adapter_stdouts) != 1:
-                errors.append("Parser adapterの結果がcheckout間で一致しません")
+                errors.append("構文解析器のアダプターの結果がチェックアウト間で一致しません")
     return errors
 
 
@@ -126,8 +126,8 @@ def version(argv):
 
 def parse_args(argv):
     import argparse
-    parser = argparse.ArgumentParser(description="Gate Bの認定command(ADR-052 Decision 4)。")
-    parser.add_argument("--step", type=int, required=True, help="判定するStep番号(steps.jsonのstep)")
+    parser = argparse.ArgumentParser(description="Gate Bの認定コマンド（ADR-052の`Decision`の4番目の項目）。")
+    parser.add_argument("--step", type=int, required=True, help="判定するStep番号（`steps.json`の`step`）")
     return parser.parse_args(argv)
 
 
@@ -137,10 +137,10 @@ def main(argv=None):
     uv = shutil.which("uv")
     errors = worktree_errors()
     if uv is None:
-        errors.append("uvが見つかりません")
+        errors.append("`uv`が見つかりません")
     head = git("rev-parse", "--verify", "HEAD")
     if head.returncode != 0:
-        errors.append("HEADのcommitがありません")
+        errors.append("`HEAD`のコミットがありません")
     commit = head.stdout.strip() or None
     conformance, parser_adapter = [], []
     if not errors:
