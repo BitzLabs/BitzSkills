@@ -165,9 +165,9 @@ class Host:
             if (argv[0] != "check" or argv.count("--base") != 1 or
                     argv[argv.index("--base") + 1:][:1] not in (["HEAD"], [fixed_base])):
                 raise ValueError("checkのbaseは合成workspaceのHEADまたは同じ確定commitだけを許可します")
-            if (argv[argv.index("--base") + 1] == "HEAD" and
-                    subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=self.workspace, text=True).strip() != fixed_base):
-                raise ValueError("HEADが初期commitから移動しました。保存したbaseCommitを指定してください")
+        if (argv[0] == "check" and ("--base" not in argv or argv[argv.index("--base") + 1] == "HEAD") and
+                subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=self.workspace, text=True).strip() != fixed_base):
+            raise ValueError("HEADが初期commitから移動しました。保存したbaseCommitを指定してください")
         if "--format" not in argv or argv[argv.index("--format") + 1:][:1] != ["json"]:
             raise ValueError("結果はJSONで取得してください")
         core = ROOT / "plugins/bitz-core/src"
@@ -283,9 +283,25 @@ def core_results(calls):
 def inspect(record, case, directory):
     try:
         return inspect_valid_artifacts(record, case, directory)
-    except (OSError, ValueError, KeyError, TypeError, IndexError) as error:
+    except (OSError, ValueError, KeyError, TypeError, IndexError, subprocess.SubprocessError) as error:
         return {name: {"passed": False, "errors": ["invalid evidence: " + type(error).__name__ + ": " + str(error)]}
                 for name in load(HERE / "protocol.json")["requiredChecks"]}
+
+
+def final_task_boundaries(directory):
+    """採点者が公開contextを読取り再実行する。モデルの呼出し・結果報告には加えない。"""
+    control = load(directory / "control.json")
+    if Path(control["pythonpath"].split(os.pathsep)[0]).resolve() != (ROOT / "plugins/bitz-core/src").resolve():
+        raise ValueError("境界の再検査には確定refの公開Core sourceが必要です")
+    process = subprocess.run([sys.executable, "-m", "bitz.cli", "context", "TASK-001", "--purpose", "interpret", "--format", "json"],
+                             cwd=directory / "workspace", capture_output=True, text=True, timeout=20,
+                             env={"PATH": "/usr/bin:/bin", "PYTHONPATH": control["pythonpath"], "PYTHONDONTWRITEBYTECODE": "1", "LC_ALL": "C.UTF-8"})
+    if process.returncode:
+        raise ValueError("最終TASK境界の公開contextを取得できません")
+    result = json.loads(process.stdout)
+    if result.get("schemaVersion") != "1.0" or result.get("operation") != "context" or result.get("status") not in PASS or not result.get("resolution", {}).get("complete"):
+        raise ValueError("最終TASK境界の公開contextが不完全です")
+    return {d["id"]: d["frontmatter"].get("changes", []) for d in result["documents"] if d["kind"] == "task"}
 
 
 def inspect_valid_artifacts(record, case, directory):
@@ -373,6 +389,11 @@ def inspect_valid_artifacts(record, case, directory):
                    any(d.get("code") == failure["diagnostic"] for d in r.get("diagnostics", []))
                    for c, r in checks):
             errors["workflow"].append("missing final failed check: " + failure["target"] + ": " + failure["diagnostic"])
+    if expected.get("taskBoundaries"):
+        final_boundaries = final_task_boundaries(directory)
+        for target, paths in expected["taskBoundaries"].items():
+            if sorted(final_boundaries.get(target, [])) != sorted(paths):
+                errors["workflow"].append("final TASK boundary mismatch: " + target)
     if expected.get("precheckFailed") and not any(r["status"] == "failed" for _, r in checks):
         errors["workflow"].append("failed precheck was not observed")
     if expected.get("stale") and not any("--expect-digest" in c["arguments"]["argv"] and r["status"] not in PASS for c, r in contexts):

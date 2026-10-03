@@ -145,6 +145,7 @@ class SddEvaluationTests(unittest.TestCase):
         self.assertEqual(fixed_base, after["revision"]["base"])
         self.assertNotEqual(fixed_base, after["revision"]["commit"])
         self.assertFalse(self.call("run_bitz", argv=["check", "TASK-001", "--base", "HEAD", "--format", "json"])["accepted"])
+        self.assertFalse(self.call("run_bitz", argv=["check", "TASK-001", "--format", "json"])["accepted"])
 
     def test_draft_requirement_with_narrow_task_stops_on_real_boundary_diagnostic(self):
         self.prepare("SP-001")
@@ -172,6 +173,46 @@ class SddEvaluationTests(unittest.TestCase):
         checks = self.inspect(self.record())
         self.assertFalse(checks["workflow"]["passed"])
         self.assertTrue(any("final failed check" in e for e in checks["workflow"]["errors"]))
+
+    def test_partial_boundary_extension_is_rejected_even_with_expected_diagnostic(self):
+        self.prepare("SP-001")
+        self.call("read_file", path=".codex/skills/sdd-plan/SKILL.md")
+        examples = ROOT / "plugins/bitz-sdd/skills/sdd-plan/examples"
+        task = (examples / "TASK-001.md").read_text().replace("changes:\n", "changes:\n  - outside.py\n")
+        self.call("write_file", path=".spec/requirements/REQ-001.md", content=(examples / "REQ-001.md").read_text())
+        self.call("write_file", path=".spec/tasks/TASK-001.md", content=task)
+        self.bitz("check", "REQ-001")
+        failed = self.bitz("check", "TASK-001")
+        self.assertIn("SPEC-TASK-BOUNDARY-001", [d["code"] for d in failed["diagnostics"]])
+        checks = self.inspect(self.record())
+        self.assertFalse(checks["workflow"]["passed"])
+        self.assertIn("final TASK boundary mismatch: TASK-001", checks["workflow"]["errors"])
+
+    def test_plan_boundary_uses_public_context_not_yaml_spelling(self):
+        self.prepare("SP-001")
+        self.call("read_file", path=".codex/skills/sdd-plan/SKILL.md")
+        examples = ROOT / "plugins/bitz-sdd/skills/sdd-plan/examples"
+        task = (examples / "TASK-001.md").read_text().replace("changes:\n  - src/input.py\n  - tests/test_input.py", "changes: ['tests/test_input.py', 'src/input.py']")
+        self.call("write_file", path=".spec/requirements/REQ-001.md", content=(examples / "REQ-001.md").read_text())
+        self.call("write_file", path=".spec/tasks/TASK-001.md", content=task)
+        self.bitz("check", "REQ-001")
+        self.assertEqual("failed", self.bitz("check", "TASK-001")["status"])
+        checks = self.inspect(self.record())
+        self.assertTrue(all(c["passed"] for c in checks.values()), checks)
+
+    def test_boundary_context_timeout_is_a_case_failure(self):
+        self.prepare("SP-001")
+        self.call("read_file", path=".codex/skills/sdd-plan/SKILL.md")
+        examples = ROOT / "plugins/bitz-sdd/skills/sdd-plan/examples"
+        self.call("write_file", path=".spec/requirements/REQ-001.md", content=(examples / "REQ-001.md").read_text())
+        self.call("write_file", path=".spec/tasks/TASK-001.md", content=(examples / "TASK-001.md").read_text())
+        self.bitz("check", "REQ-001")
+        self.bitz("check", "TASK-001")
+        record = self.record()
+        with patch.object(evaluation.subprocess, "run", side_effect=subprocess.TimeoutExpired("synthetic unit test", 20)):
+            checks = self.inspect(record)
+        self.assertTrue(all(not c["passed"] for c in checks.values()))
+        self.assertTrue(all("TimeoutExpired" in c["errors"][0] for c in checks.values()))
 
     def test_missing_existing_diff_review_is_rejected(self):
         self.prepare()
