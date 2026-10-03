@@ -6,7 +6,7 @@ import re
 
 ROOT = Path(__file__).resolve().parents[2]
 LEDGER = ROOT / "fixtures/conformance/diagnostic-coverage.json"
-REGISTRY = "docs/03.詳細設計/00_共通契約/05_Diagnostic-registry.md"
+REGISTRY = "docs/03.詳細設計/00_共通契約/05_診断レジストリ.md"
 
 
 def validate(ledger=None, root=ROOT):

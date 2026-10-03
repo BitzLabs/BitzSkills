@@ -132,7 +132,7 @@ def public_json():
 
 
 def grammar():
-    path = DETAIL / "01_EARS-AI/01_言語・Semantic-IR仕様.md"
+    path = DETAIL / "01_EARS-AI/01_EARS-AI言語・意味中間表現仕様.md"
     source = "\n".join(blocks(path, "ebnf"))
     definitions = re.findall(r"^([A-Za-z][A-Za-z0-9-]*)\s*=", source, re.M)
     # EBNFの引用符付き終端記号はC言語風のバックスラッシュのエスケープを使わない。
@@ -278,7 +278,7 @@ def executable_bits():
 
 
 def registry():
-    path = COMMON / "05_Diagnostic-registry.md"
+    path = COMMON / "05_診断レジストリ.md"
     rows = re.findall(r"^\| `([^`]+)` \| ([^|]+) \| `([^`]+)` \| ([^|]+) \| ([^|]+) \| ([^|]+) \| `([^`]+)` \| (\d+) \| (.*)\|$", path.read_text(), re.M)
     ids = [r[0] for r in rows]
     errors = []

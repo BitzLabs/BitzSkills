@@ -1,7 +1,7 @@
 # 対象展開の期待集合
 
 設計・検証日: 2026-09-08。
-正本は[関係・トレースモデル §6.4](../../../docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)。
+正本は[関係・トレースモデル §6.4](../../../docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)。
 
 ## 入力と期待値
 
@@ -45,7 +45,7 @@ CoreのJSON出力、状態の判定、テスト割当て、コンテキストの
 2026-09-17: ADR-047に従い、`FEDERATED-SAME-LOCAL-ID`を`MULTI-WORKSPACE-SAME-LOCAL-ID`、matrixのファミリーの`MONO-*`を`MULTI-*`へ改名した。
 関係・トレースモデルの変更は診断コードの改名だけで、25ケースの期待集合は変わらない。
 
-2026-09-26: 2026-09-25に管理者が承認した仕様変更（`docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md`のコミット）で
+2026-09-26: 2026-09-25に管理者が承認した仕様変更（`docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md`のコミット）で
 `contractSha256`が失効した。差分を確認したところ、追加された記述は§4「関係の型制約」への1段落（`requires`の参照先のADRが
 `accepted`以外の状態なら診断`CTX-RELATION-TYPE-001`とすること、状態の適用可能性は`CTX-STATE-*`の側の責務であることの明確化）
 だけであり、本節が正とする§6.4 `TargetExpansion(root, purpose)`の記述と、`rootDocuments`、`contextDocuments`、`targetStatements`、
