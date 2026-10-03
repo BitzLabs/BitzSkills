@@ -1,6 +1,6 @@
 ---
 id: ADR-054
-title: 規範文のlocal-idをFrontmatterの参照形式へそろえる
+title: 規範文の`local-id`をフロントマターの参照形式へそろえる
 status: accepted
 relations:
   requires:
@@ -10,7 +10,7 @@ relations:
     - ADR-051
 ---
 
-# ADR-054 規範文のlocal-idをFrontmatterの参照形式へそろえる
+# ADR-054 規範文の`local-id`をフロントマターの参照形式へそろえる
 
 ## Context
 

@@ -1,6 +1,6 @@
 ---
 id: ADR-035
-title: check空対象とflow通過statusの確定
+title: "`check`の対象が0件の場合とSDDフローの通過状態の確定"
 status: accepted
 relations:
   related:
@@ -11,7 +11,7 @@ relations:
     - ADR-034
 ---
 
-# ADR-035 check空対象とflow通過statusの確定
+# ADR-035 `check`の対象が0件の場合とSDDフローの通過状態の確定
 
 ## Context
 

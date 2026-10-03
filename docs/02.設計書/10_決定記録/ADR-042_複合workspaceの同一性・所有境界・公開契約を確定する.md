@@ -1,6 +1,6 @@
 ---
 id: ADR-042
-title: 複合workspaceの同一性・所有境界・公開契約を確定する
+title: 複合ワークスペースの同一性・所有境界・公開契約を確定する
 status: accepted
 relations:
   requires:
@@ -11,7 +11,7 @@ relations:
     - ADR-040
 ---
 
-# ADR-042 複合workspaceの同一性・所有境界・公開契約を確定する
+# ADR-042 複合ワークスペースの同一性・所有境界・公開契約を確定する
 
 ## Context
 

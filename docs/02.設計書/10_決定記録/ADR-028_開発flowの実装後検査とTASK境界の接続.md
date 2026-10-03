@@ -1,6 +1,6 @@
 ---
 id: ADR-028
-title: 開発flowの実装後検査とTASK境界の接続
+title: SDDフローの実装後検査とTASK境界の接続
 status: accepted
 relations:
   requires:
@@ -9,7 +9,7 @@ relations:
     - ADR-009
 ---
 
-# ADR-028 開発flowの実装後検査とTASK境界の接続
+# ADR-028 SDDフローの実装後検査とTASK境界の接続
 
 ## Context
 

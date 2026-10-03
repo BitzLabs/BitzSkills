@@ -1,6 +1,6 @@
 ---
 id: ADR-037
-title: Git基準版間のSPEC同一性と削除規則
+title: Gitの基準版と現在版の間の仕様文書の同一性と削除規則
 status: accepted
 relations:
   requires:
@@ -12,7 +12,7 @@ relations:
     - ADR-036
 ---
 
-# ADR-037 Git基準版間のSPEC同一性と削除規則
+# ADR-037 Gitの基準版と現在版の間の仕様文書の同一性と削除規則
 
 ## Context
 

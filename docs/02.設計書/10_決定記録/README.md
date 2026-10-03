@@ -51,54 +51,54 @@
 | [ADR-007](ADR-007_Core実行体の配布形態.md) | Core実行体の実装言語と配布形態 | superseded | ADR-009 |
 | [ADR-008](ADR-008_plugin配布とCore実行体の入手経路.md) | plugin配布とCore実行体の入手経路 | superseded | ADR-009 |
 | [ADR-009](ADR-009_小規模チーム向け軽量CoreとEARS-AI中核化.md) | 小規模チーム向け軽量CoreとEARS-AI中核化 | accepted | 01〜08, EARS-AI規格, ADR-010・011・016 |
-| [ADR-010](ADR-010_型付き依存とContext-Resolutionの中核化.md) | 型付き依存とContext Resolutionの中核化 | accepted | 01〜05, SPEC file規定/10 |
-| [ADR-011](ADR-011_Diagnostic所有者とcode命名規約.md) | Diagnostic所有者とcode命名規約 | accepted | 01, EARS-AI規格/02・06, SPEC file規定/06 |
+| [ADR-010](ADR-010_型付き依存とContext-Resolutionの中核化.md) | 型付き依存とコンテキストの解決の中核化 | accepted | 01〜05, SPEC file規定/10 |
+| [ADR-011](ADR-011_Diagnostic所有者とcode命名規約.md) | 診断の所有者と診断コードの命名規約 | accepted | 01, EARS-AI規格/02・06, SPEC file規定/06 |
 | [ADR-012](ADR-012_置換済みREQ・TECHの適用禁止.md) | 置換済みREQ・TECHの適用禁止 | accepted | SPEC file規定/03・04・10 |
-| [ADR-013](ADR-013_文書IDとローカルIDの字句規則訂正.md) | 文書IDとローカルIDの字句規則訂正 | accepted | ADR-005, EARS-AI規格/01・08 |
-| [ADR-014](ADR-014_Semantic-IRと段階的Context-Projection.md) | Semantic IRと段階的Context Projection | accepted | ADR-010, EARS-AI規格/06, SPEC file規定/10 |
+| [ADR-013](ADR-013_文書IDとローカルIDの字句規則訂正.md) | 文書IDとローカルIDの字句規則の訂正 | accepted | ADR-005, EARS-AI規格/01・08 |
+| [ADR-014](ADR-014_Semantic-IRと段階的Context-Projection.md) | 意味中間表現とコンテキストの段階的な提示 | accepted | ADR-010, EARS-AI規格/06, SPEC file規定/10 |
 | [ADR-015](ADR-015_SPEC改訂履歴の必須化.md) | SPEC改訂履歴の必須化 | superseded | ADR-039 |
-| [ADR-016](ADR-016_Agent-Plugins準拠の複数plugin配布.md) | Agent Plugins準拠の複数plugin配布 | accepted | 01, 03, 06〜08, SPEC file規定/11 |
+| [ADR-016](ADR-016_Agent-Plugins準拠の複数plugin配布.md) | Agent Plugins準拠の複数プラグインの配布 | accepted | 01, 03, 06〜08, SPEC file規定/11 |
 | [ADR-017](ADR-017_複合workspaceをCore-1.0へ含める.md) | 複合workspaceをCore 1.0へ含める | superseded | ADR-039 |
-| [ADR-018](ADR-018_正本Schemaの欠落補完とDiagnostic-severityの明示.md) | 正本Schemaの欠落補完とDiagnostic severityの明示 | accepted | EARS-AI規格/01・02・06, SPEC file規定/02〜04・06・11・12 |
+| [ADR-018](ADR-018_正本Schemaの欠落補完とDiagnostic-severityの明示.md) | 正本スキーマの欠落補完と診断の重大度の明示 | accepted | EARS-AI規格/01・02・06, SPEC file規定/02〜04・06・11・12 |
 | [ADR-019](ADR-019_検証対象と縮退判定の明確化.md) | 検証対象と縮退判定の明確化 | accepted | 03, EARS-AI規格/02, SPEC file規定/02・06・11・12 |
-| [ADR-020](ADR-020_決定記録をSPEC本文構造規定へ適合させる.md) | 決定記録をSPEC本文構造規定へ適合させる | accepted | ADR-015, SPEC file規定/05・08 |
-| [ADR-021](ADR-021_Diagnostic-severity・操作status・source-Schemaの分離.md) | Diagnostic severity・操作status・source Schemaの分離 | accepted | 01, EARS-AI規格/06, SPEC file規定/06・10〜12 |
-| [ADR-022](ADR-022_規範行候補抽出とID構文検証の分離.md) | 規範行候補抽出とID構文検証の分離 | accepted | EARS-AI規格/01・06, SPEC file規定/04・06 |
-| [ADR-023](ADR-023_verify明示対象とpath入力の確定.md) | verify明示対象とpath入力の確定 | accepted | 03, SPEC file規定/06・10・12 |
-| [ADR-024](ADR-024_SPEC文書の状態遷移契約.md) | SPEC文書の状態遷移契約 | accepted | 02, SPEC file規定/03〜05 |
-| [ADR-025](ADR-025_Git基準版とcheck明示対象の確定.md) | Git基準版とcheck明示対象の確定 | accepted | 01・03, SPEC file規定/04・06・07 |
-| [ADR-026](ADR-026_verify実行binding・timeout・結果Schemaの確定.md) | verify実行binding・timeout・結果Schemaの確定 | accepted | 01・03, SPEC file規定/02・06・10・12 |
-| [ADR-027](ADR-027_Diagnostic結果効果・集約・workspace-sourceの確定.md) | Diagnostic結果効果・集約・workspace sourceの確定 | accepted | 01, SPEC file規定/06・10〜12 |
-| [ADR-028](ADR-028_開発flowの実装後検査とTASK境界の接続.md) | 開発flowの実装後検査とTASK境界の接続 | accepted | 04・06・08・09, SPEC file規定/05・06 |
-| [ADR-029](ADR-029_TASK先行依存の状態ガード.md) | TASK先行依存の状態ガード | accepted | 09, SPEC file規定/05・06・10 |
+| [ADR-020](ADR-020_決定記録をSPEC本文構造規定へ適合させる.md) | 決定記録を仕様文書の本文構造の規定へ適合させる | accepted | ADR-015, SPEC file規定/05・08 |
+| [ADR-021](ADR-021_Diagnostic-severity・操作status・source-Schemaの分離.md) | 診断の重大度・操作の結果の状態・発生元のスキーマの分離 | accepted | 01, EARS-AI規格/06, SPEC file規定/06・10〜12 |
+| [ADR-022](ADR-022_規範行候補抽出とID構文検証の分離.md) | 規範文の候補抽出とIDの構文検証の分離 | accepted | EARS-AI規格/01・06, SPEC file規定/04・06 |
+| [ADR-023](ADR-023_verify明示対象とpath入力の確定.md) | `verify`の明示対象とパスによる入力の確定 | accepted | 03, SPEC file規定/06・10・12 |
+| [ADR-024](ADR-024_SPEC文書の状態遷移契約.md) | 仕様文書の状態遷移契約 | accepted | 02, SPEC file規定/03〜05 |
+| [ADR-025](ADR-025_Git基準版とcheck明示対象の確定.md) | Gitの基準版と`check`の明示対象の確定 | accepted | 01・03, SPEC file規定/04・06・07 |
+| [ADR-026](ADR-026_verify実行binding・timeout・結果Schemaの確定.md) | `verify`のテスト割当て・タイムアウト・結果スキーマの確定 | accepted | 01・03, SPEC file規定/02・06・10・12 |
+| [ADR-027](ADR-027_Diagnostic結果効果・集約・workspace-sourceの確定.md) | 診断の結果への効果・集約・発生元のワークスペースの確定 | accepted | 01, SPEC file規定/06・10〜12 |
+| [ADR-028](ADR-028_開発flowの実装後検査とTASK境界の接続.md) | SDDフローの実装後検査とTASK境界の接続 | accepted | 04・06・08・09, SPEC file規定/05・06 |
+| [ADR-029](ADR-029_TASK先行依存の状態ガード.md) | TASKの先行依存の状態ガード | accepted | 09, SPEC file規定/05・06・10 |
 | [ADR-030](ADR-030_verify実行bindingの正規識別子と重複排除単位の統一.md) | verify実行bindingの正規識別子と重複排除単位の統一 | superseded | ADR-039 |
-| [ADR-031](ADR-031_変更code・testからの検査対象選択.md) | 変更code・testからの検査対象選択 | accepted | 01・02・05, SPEC file規定/06 |
+| [ADR-031](ADR-031_変更code・testからの検査対象選択.md) | 変更したコードとテストからの検査対象の選択 | accepted | 01・02・05, SPEC file規定/06 |
 | [ADR-032](ADR-032_ID再利用検出のCore保証範囲.md) | ID再利用検出のCore保証範囲 | superseded | ADR-037 |
 | [ADR-033](ADR-033_部分改訂ADRの記録規約.md) | 部分改訂ADRの記録規約 | accepted | ADR-020, 決定記録README |
-| [ADR-034](ADR-034_TASK完了終端とdone起点操作の確定.md) | TASK完了終端とdone起点操作の確定 | accepted | ADR-024・028・029, 04・06・08・09, SPEC file規定/05・06・10 |
-| [ADR-035](ADR-035_check空対象とflow通過statusの確定.md) | check空対象とflow通過statusの確定 | accepted | ADR-019・027・028・031・034, 01・04・05・08・09, SPEC file規定/06 |
-| [ADR-036](ADR-036_flow取止めと不採用履歴の保持.md) | flow取止めと不採用履歴の保持 | accepted | ADR-024・029・034, 04〜06・08・09, SPEC file規定/03〜06・08・10 |
-| [ADR-037](ADR-037_Git基準版間のSPEC同一性と削除規則.md) | Git基準版間のSPEC同一性と削除規則 | accepted | ADR-025・032・036, EARS-AI規格/01・06, SPEC file規定/01・06・07・12 |
+| [ADR-034](ADR-034_TASK完了終端とdone起点操作の確定.md) | TASKの完了終端と`done`のTASKを起点とする操作の確定 | accepted | ADR-024・028・029, 04・06・08・09, SPEC file規定/05・06・10 |
+| [ADR-035](ADR-035_check空対象とflow通過statusの確定.md) | `check`の対象が0件の場合とSDDフローの通過状態の確定 | accepted | ADR-019・027・028・031・034, 01・04・05・08・09, SPEC file規定/06 |
+| [ADR-036](ADR-036_flow取止めと不採用履歴の保持.md) | SDDフローの取止めと不採用履歴の保持 | accepted | ADR-024・029・034, 04〜06・08・09, SPEC file規定/03〜06・08・10 |
+| [ADR-037](ADR-037_Git基準版間のSPEC同一性と削除規則.md) | Gitの基準版と現在版の間の仕様文書の同一性と削除規則 | accepted | ADR-025・032・036, EARS-AI規格/01・06, SPEC file規定/01・06・07・12 |
 | [ADR-038](ADR-038_並行開発のID衝突解決と統合段階.md) | 並行開発のID衝突解決と統合段階 | superseded | ADR-039 |
-| [ADR-039](ADR-039_Core-1.0仕様構造の再編とscope縮小.md) | Core 1.0仕様構造の再編とscope縮小 | accepted | 01〜09, 詳細設計全体, 提案11 |
-| [ADR-040](ADR-040_複合workspaceをCore-1.0へ再導入する.md) | 複合workspaceをCore 1.0へ再導入する | accepted | ADR-017・039, SPECモデル/05 |
-| [ADR-041](ADR-041_verify対象別証跡とreport明示保存の分離.md) | verify対象別証跡とreport明示保存の分離 | accepted | ADR-019・026・039・040, 共通結果, verify仕様 |
-| [ADR-042](ADR-042_複合workspaceの同一性・所有境界・公開契約を確定する.md) | 複合workspaceの同一性・所有境界・公開契約を確定する | accepted | ADR-037・040・041, SPECモデル/05, 共通結果 |
-| [ADR-043](ADR-043_複合workspaceの継続・TASK境界・適合契約を確定する.md) | 複合workspaceの継続・TASK境界・適合契約を確定する | accepted | ADR-028・041・042, SPECモデル/04・05, 操作仕様 |
-| [ADR-044](ADR-044_MCP面をCore-1.0のscope外とする.md) | MCP面をCore 1.0のscope外とする | accepted | ADR-009・016, 詳細設計README, 操作仕様, 共通結果 |
+| [ADR-039](ADR-039_Core-1.0仕様構造の再編とscope縮小.md) | Core 1.0の仕様構造の再編とスコープの縮小 | accepted | 01〜09, 詳細設計全体, 提案11 |
+| [ADR-040](ADR-040_複合workspaceをCore-1.0へ再導入する.md) | 複合ワークスペースをCore 1.0へ再導入する | accepted | ADR-017・039, SPECモデル/05 |
+| [ADR-041](ADR-041_verify対象別証跡とreport明示保存の分離.md) | 検証対象ごとの証跡とレポートの明示保存の分離 | accepted | ADR-019・026・039・040, 共通結果, verify仕様 |
+| [ADR-042](ADR-042_複合workspaceの同一性・所有境界・公開契約を確定する.md) | 複合ワークスペースの同一性・所有境界・公開契約を確定する | accepted | ADR-037・040・041, SPECモデル/05, 共通結果 |
+| [ADR-043](ADR-043_複合workspaceの継続・TASK境界・適合契約を確定する.md) | 複合ワークスペースの継続・TASK境界・適合契約を確定する | accepted | ADR-028・041・042, SPECモデル/04・05, 操作仕様 |
+| [ADR-044](ADR-044_MCP面をCore-1.0のscope外とする.md) | MCPの面をCore 1.0のスコープ外とする | accepted | ADR-009・016, 詳細設計README, 操作仕様, 共通結果 |
 | [ADR-045](ADR-045_実行環境と配布物の確定.md) | 実行環境と配布物の確定 | accepted | ADR-009・016, doctor仕様, workspace・設定仕様, 運用手順 |
-| [ADR-046](ADR-046_適合harnessの検査対象・実行環境・runnerを確定する.md) | 適合harnessの検査対象・実行環境・runnerを確定する | accepted | ADR-043・045, 適合fixture仕様, CLI基盤契約, 実装計画 |
-| [ADR-047](ADR-047_複合workspaceの識別子をmultiWorkspaceへ改名する.md) | 複合workspaceの識別子をmultiWorkspaceへ改名する | accepted | ADR-040・042・043, 用語集, 設定仕様, 結果契約, Diagnostic registry, 適合fixture仕様 |
-| [ADR-048](ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md) | 適合fixtureの生成入力とGit構造operationを確定する | accepted | ADR-046, 適合fixture仕様, manifest Schema, fixture harness |
-| [ADR-049](ADR-049_Coreのsource配置と試験の構成を確定する.md) | Coreのsource配置と試験の構成を確定する | accepted | ADR-016・045・046, システム構成, 実装計画 |
-| [ADR-050](ADR-050_契約Schemaの正本を詳細設計へ置く.md) | 契約Schemaの正本を詳細設計へ置く | accepted | ADR-045・046・049, 結果契約, Frontmatter仕様, 適合fixture仕様, 詳細設計README |
+| [ADR-046](ADR-046_適合harnessの検査対象・実行環境・runnerを確定する.md) | 適合harnessの検査対象・実行環境・ランナーを確定する | accepted | ADR-043・045, 適合fixture仕様, CLI基盤契約, 実装計画 |
+| [ADR-047](ADR-047_複合workspaceの識別子をmultiWorkspaceへ改名する.md) | 複合ワークスペースの識別子を`multiWorkspace`へ改名する | accepted | ADR-040・042・043, 用語集, 設定仕様, 結果契約, Diagnostic registry, 適合fixture仕様 |
+| [ADR-048](ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md) | 適合fixtureの生成入力とGit構造の準備の処理を確定する | accepted | ADR-046, 適合fixture仕様, manifest Schema, fixture harness |
+| [ADR-049](ADR-049_Coreのsource配置と試験の構成を確定する.md) | Coreのソースの配置と試験の構成を確定する | accepted | ADR-016・045・046, システム構成, 実装計画 |
+| [ADR-050](ADR-050_契約Schemaの正本を詳細設計へ置く.md) | 契約スキーマの正本を詳細設計へ置く | accepted | ADR-045・046・049, 結果契約, Frontmatter仕様, 適合fixture仕様, 詳細設計README |
 | [ADR-051](ADR-051_適合fixtureの変更手続きを確定する.md) | 適合fixtureの変更手続きを確定する | accepted | ADR-046・049・050, 適合fixture仕様, 実装計画 |
 | [ADR-052](ADR-052_Gate-Bの実行と認定の構成を確定する.md) | Gate Bの実行と認定の構成を確定する | accepted | ADR-046・049・051, 実装計画, steps.json |
 | [ADR-053](ADR-053_CPythonの下限を3.12へ引き上げる.md) | CPythonの下限を3.12へ引き上げる | accepted | ADR-045・046・049・051, 実行環境・CLI基盤契約, doctor仕様, 適合fixture仕様, 実装計画 |
-| [ADR-054](ADR-054_規範文のlocal-idをFrontmatterの参照形式へそろえる.md) | 規範文のlocal-idをFrontmatterの参照形式へそろえる | accepted | ADR-005・013・051, EARS-AI言語・Semantic IR仕様 |
+| [ADR-054](ADR-054_規範文のlocal-idをFrontmatterの参照形式へそろえる.md) | 規範文の`local-id`をフロントマターの参照形式へそろえる | accepted | ADR-005・013・051, EARS-AI言語・Semantic IR仕様 |
 | [ADR-055](ADR-055_Core-1.0の対象OSをPOSIXに限定する.md) | Core 1.0の対象OSをPOSIXに限定する | accepted | ADR-007・045・053, 実行環境・CLI基盤契約, 実装計画 |
 | [ADR-056](ADR-056_適合試験の分割実行とCIのGate-B集約を確定する.md) | 適合試験の分割実行とCIのGate B集約を確定する | accepted | ADR-048・049・051・052, CI, 適合harness |
 | [ADR-057](ADR-057_性能基準環境を継続利用可能なWSL2ホストへ更新する.md) | 性能基準環境を継続利用可能なWSL2ホストへ更新する | accepted | ADR-051・053・055, 性能fixture, Gate C |
 | [ADR-058](ADR-058_Gate-Cから比較タスクの実測を外す.md) | Gate Cから比較タスクの実測を外す | accepted | ADR-009, 実装計画, Gate C |
 | [ADR-059](ADR-059_Gate-CのP0-P1閉包を既存受入証拠で判定する.md) | Gate CのP0/P1閉包を既存受入証拠で判定する | accepted | ADR-049・052・057・058, 実装計画, Gate C |
-| [ADR-060](ADR-060_スキル評価契約と独立検分の境界を固定する.md) | スキル評価契約と独立検分の境界を固定する | accepted | ADR-016・028・045・049, 提案30, スキル評価 |
+| [ADR-060](ADR-060_スキル評価契約と独立検分の境界を固定する.md) | スキルの評価契約と独立検分の境界を固定する | accepted | ADR-016・028・045・049, 提案30, スキル評価 |

@@ -1,13 +1,13 @@
 ---
 id: ADR-016
-title: Agent Plugins準拠の複数plugin配布
+title: Agent Plugins準拠の複数プラグインの配布
 status: accepted
 relations:
   related:
     - ADR-009
 ---
 
-# ADR-016 Agent Plugins準拠の複数plugin配布
+# ADR-016 Agent Plugins準拠の複数プラグインの配布
 
 ## Context
 

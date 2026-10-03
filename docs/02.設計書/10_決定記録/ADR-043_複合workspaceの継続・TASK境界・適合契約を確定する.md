@@ -1,6 +1,6 @@
 ---
 id: ADR-043
-title: 複合workspaceの継続・TASK境界・適合契約を確定する
+title: 複合ワークスペースの継続・TASK境界・適合契約を確定する
 status: accepted
 relations:
   requires:
@@ -10,7 +10,7 @@ relations:
     - ADR-028
 ---
 
-# ADR-043 複合workspaceの継続・TASK境界・適合契約を確定する
+# ADR-043 複合ワークスペースの継続・TASK境界・適合契約を確定する
 
 ## Context
 

@@ -1,6 +1,6 @@
 ---
 id: ADR-049
-title: Coreのsource配置と試験の構成を確定する
+title: Coreのソースの配置と試験の構成を確定する
 status: accepted
 relations:
   requires:
@@ -9,7 +9,7 @@ relations:
     - ADR-046
 ---
 
-# ADR-049 Coreのsource配置と試験の構成を確定する
+# ADR-049 Coreのソースの配置と試験の構成を確定する
 
 ## Context
 

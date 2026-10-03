@@ -1,6 +1,6 @@
 ---
 id: ADR-022
-title: 規範行候補抽出とID構文検証の分離
+title: 規範文の候補抽出とIDの構文検証の分離
 status: accepted
 relations:
   related:
@@ -8,7 +8,7 @@ relations:
     - ADR-013
 ---
 
-# ADR-022 規範行候補抽出とID構文検証の分離
+# ADR-022 規範文の候補抽出とIDの構文検証の分離
 
 ## Context
 

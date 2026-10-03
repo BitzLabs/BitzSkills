@@ -1,6 +1,6 @@
 ---
 id: ADR-036
-title: flow取止めと不採用履歴の保持
+title: SDDフローの取止めと不採用履歴の保持
 status: accepted
 relations:
   related:
@@ -9,7 +9,7 @@ relations:
     - ADR-034
 ---
 
-# ADR-036 flow取止めと不採用履歴の保持
+# ADR-036 SDDフローの取止めと不採用履歴の保持
 
 ## Context
 

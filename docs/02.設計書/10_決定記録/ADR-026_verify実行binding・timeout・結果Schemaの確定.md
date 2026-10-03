@@ -1,6 +1,6 @@
 ---
 id: ADR-026
-title: verify実行binding・timeout・結果Schemaの確定
+title: "`verify`のテスト割当て・タイムアウト・結果スキーマの確定"
 status: accepted
 relations:
   related:
@@ -8,7 +8,7 @@ relations:
     - ADR-023
 ---
 
-# ADR-026 verify実行binding・timeout・結果Schemaの確定
+# ADR-026 `verify`のテスト割当て・タイムアウト・結果スキーマの確定
 
 ## Context
 

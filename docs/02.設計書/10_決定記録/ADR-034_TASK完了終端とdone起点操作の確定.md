@@ -1,6 +1,6 @@
 ---
 id: ADR-034
-title: TASK完了終端とdone起点操作の確定
+title: TASKの完了終端と`done`のTASKを起点とする操作の確定
 status: accepted
 relations:
   related:
@@ -9,7 +9,7 @@ relations:
     - ADR-029
 ---
 
-# ADR-034 TASK完了終端とdone起点操作の確定
+# ADR-034 TASKの完了終端と`done`のTASKを起点とする操作の確定
 
 ## Context
 

@@ -1,6 +1,6 @@
 ---
 id: ADR-024
-title: SPEC文書の状態遷移契約
+title: 仕様文書の状態遷移契約
 status: accepted
 relations:
   related:
@@ -8,7 +8,7 @@ relations:
     - ADR-015
 ---
 
-# ADR-024 SPEC文書の状態遷移契約
+# ADR-024 仕様文書の状態遷移契約
 
 ## Context
 

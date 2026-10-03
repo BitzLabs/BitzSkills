@@ -1,6 +1,6 @@
 ---
 id: ADR-050
-title: 契約Schemaの正本を詳細設計へ置く
+title: 契約スキーマの正本を詳細設計へ置く
 status: accepted
 relations:
   requires:
@@ -10,7 +10,7 @@ relations:
     - ADR-046
 ---
 
-# ADR-050 契約Schemaの正本を詳細設計へ置く
+# ADR-050 契約スキーマの正本を詳細設計へ置く
 
 ## Context
 

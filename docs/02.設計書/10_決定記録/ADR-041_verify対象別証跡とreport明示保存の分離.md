@@ -1,6 +1,6 @@
 ---
 id: ADR-041
-title: verify対象別証跡とreport明示保存の分離
+title: 検証対象ごとの証跡とレポートの明示保存の分離
 status: accepted
 relations:
   related:
@@ -10,7 +10,7 @@ relations:
     - ADR-040
 ---
 
-# ADR-041 verify対象別証跡とreport明示保存の分離
+# ADR-041 検証対象ごとの証跡とレポートの明示保存の分離
 
 ## Context
 

@@ -1,6 +1,6 @@
 ---
 id: ADR-018
-title: 正本Schemaの欠落補完とDiagnostic severityの明示
+title: 正本スキーマの欠落補完と診断の重大度の明示
 status: accepted
 relations:
   related:
@@ -10,7 +10,7 @@ relations:
     - ADR-016
 ---
 
-# ADR-018 正本Schemaの欠落補完とDiagnostic severityの明示
+# ADR-018 正本スキーマの欠落補完と診断の重大度の明示
 
 ## Context
 
