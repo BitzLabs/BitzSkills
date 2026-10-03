@@ -617,7 +617,13 @@ SDDと品質管理も、担当工程で分岐、引渡し、成果物、例外�
 [本文と公開CLI検査の記録](../../evals/skills/results/2026-10-03-sdd-plan-implementation.md)では、
 配布例の構文、draftからの実装遮断、TASK境界の2試験と独立した静的・公開CLI検分が通過した。
 追加の評価用モデル呼出しは行っておらず、モデル行動・Skill Gateは未認定である。
-`sdd-implement`と接続の実動作評価を次に行う。Coreの規範・判定器・承認済み要求は変更していない。
+続いて日本語`sdd-implement`と合成workspaceの接続試験を実装した。
+[実装と接続の記録](../../evals/skills/results/2026-10-03-sdd-implement-connection.md)では、
+context通過と実装前check失敗、仕様digest不一致、コード・コマンド変更のdigest保証範囲、先行TASK、
+必須テスト対応、実テスト失敗と修正、人手レビュー待ちの引渡しを検査した。
+ローカル試験は既存2件と接続7件。Coreの規範・判定器・承認済み要求は変更していない。
+モデルによる発火・実装行動とQ0／Q1の接続評価、完全フローの承認／設計レビュー欠落の実応答は次工程であり、
+Phase 2完了やSkill Gate通過とは扱わない。
 
 目的:
 
