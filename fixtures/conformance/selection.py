@@ -49,7 +49,7 @@ STANDARD_SECONDS = {
 def step_ids(step):
     steps = json.loads((ROOT / "steps.json").read_text())["steps"]
     if type(step) is not int or step not in {entry["step"] for entry in steps}:
-        raise ValueError("steps.jsonに存在するStepを指定してください")
+        raise ValueError("`steps.json`に存在するStepを指定してください")
     return list(dict.fromkeys(identifier for entry in steps if entry["step"] <= step
                               for identifier in entry["fixtures"]))
 
@@ -100,9 +100,9 @@ def partition_plan(identifiers, shards):
 
 def selected_ids(identifiers, suite="full", shard=1, shards=1):
     if suite not in ("full", "standard", "scale"):
-        raise ValueError("suiteが不正です")
+        raise ValueError("`suite`が不正です")
     chosen = [identifier for identifier in identifiers
               if suite == "full" or is_scale(identifier) == (suite == "scale")]
     if type(shard) is not int or not 1 <= shard <= shards:
-        raise ValueError("shardは1以上、shards以下にしてください")
+        raise ValueError("`shard`は1以上、`shards`以下にしてください")
     return partition(chosen, shards)[shard - 1]

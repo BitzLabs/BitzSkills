@@ -112,13 +112,13 @@ def check_presentation_size(identifier, inputs):
     if identifier == "SINGLE-048-01":
         documents = [name for name in inputs if name.startswith(".spec/") and name.endswith(".md")]
         if len(documents) <= 1:
-            raise ValueError("文書数のcaseには設定上限より多くの文書が必要です")
+            raise ValueError("文書数のケースには設定上限より多くの文書が必要です")
     if identifier == "SINGLE-048-02":
         presented = len(inputs[digest_reference.REQ_PATH]) + len(inputs[digest_reference.TECH_PATH])
         if presented <= 4096:
-            raise ValueError("byte上限のcaseが設定したmaxBytesを超えていません")
+            raise ValueError("バイト上限のケースが設定した`maxBytes`を超えていません")
     if identifier in {"SINGLE-046", "SINGLE-047"} and extra_config:
-        raise ValueError("staleとprojectionのcaseはgoldenの設定を保つ必要があります")
+        raise ValueError("取得後の仕様変更の検出と提示形式のケースはgoldenの設定を保つ必要があります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -136,20 +136,20 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
+                raise ValueError("起動条件または完全結果がレビュー済みの期待値と異なります")
             if result["documents"] or result["constraintLedger"]["statements"]:
-                raise ValueError("非成功のContextはBundleの材料を返してはいけません")
+                raise ValueError("非成功のコンテキストはコンテキスト一式の材料を返してはいけません")
             if (result["contextDigest"] is None) is result["resolution"]["complete"]:
-                raise ValueError("Digestの有無は完全解決に従う必要があります")
+                raise ValueError("ハッシュ値の有無は完全解決に従う必要があります")
             inputs = reviewed_inputs(identifier)
             check_presentation_size(identifier, inputs)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-context-limit-") as temporary:
                 for run in range(2):
@@ -161,7 +161,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError,

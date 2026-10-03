@@ -175,43 +175,43 @@ def check_precondition(identifier, repository):
     if corpus == "unregistered":
         _, members = multi_crosscheck.catalog(repository)
         if UNREGISTERED_PATH in {f"{path}/.spec/bitz.yaml" for _, path in members}:
-            raise ValueError("未登録の設定がcatalogへ入っています")
+            raise ValueError("未登録の設定がカタログへ入っています")
         if not (repository / UNREGISTERED_PATH).is_file():
-            raise ValueError("未登録の設定fileが入力にありません")
+            raise ValueError("未登録の設定ファイルが入力にありません")
     elif corpus == "nested":
         _, members = multi_crosscheck.catalog(repository)
         paths = [path for _, path in members]
         if not any(other != path and other.startswith(path + "/") for path in paths for other in paths):
-            raise ValueError("入れ子のcaseは、別memberの配下にあるmember pathが必要です")
+            raise ValueError("入れ子のケースは、別のメンバーの配下にあるメンバーのパスが必要です")
         for _, path in members:
             if not (repository / path / ".spec/bitz.yaml").is_file():
-                raise ValueError("入れ子のcaseでも、各memberは自身の設定を持つ必要があります")
+                raise ValueError("入れ子のケースでも、各メンバーは自身の設定を持つ必要があります")
     if corpus == "submodule":
         entry = git(repository, "ls-files", "--stage", "--", "apps/web").decode().split()
         if not entry or entry[0] != "160000":
-            raise ValueError("submoduleのcaseは、gitlinkとして記録されている必要があります")
+            raise ValueError("サブモジュールのケースは、`gitlink`として記録されている必要があります")
         if "apps/web" not in (repository / ".gitmodules").read_text(encoding="utf-8"):
-            raise ValueError("submoduleのcaseは、.gitmodulesの登録が必要です")
+            raise ValueError("サブモジュールのケースは、`.gitmodules`の登録が必要です")
         if not (repository / "apps/web/.git").is_dir():
-            raise ValueError("submoduleのcaseは、別repositoryの実体が必要です")
+            raise ValueError("サブモジュールのケースは、別のリポジトリの実体が必要です")
     if corpus == "worktree":
         marker = repository / "apps/web/.git"
         if not marker.is_file() or not marker.read_text(encoding="utf-8").startswith("gitdir:"):
-            raise ValueError("別worktreeのcaseは、gitdirを指す.git fileが必要です")
+            raise ValueError("別のワークツリーのケースは、`gitdir`を指す`.git`ファイルが必要です")
         if "apps/web" not in git(repository, "worktree", "list").decode():
-            raise ValueError("別worktreeのcaseは、同じrepositoryのworktreeである必要があります")
+            raise ValueError("別のワークツリーのケースは、同じリポジトリのワークツリーである必要があります")
         if git(repository, "ls-files", "--stage", "--", "apps/web").decode().strip():
-            raise ValueError("別worktreeのmember pathは親のindexへ記録しません")
+            raise ValueError("別のワークツリーのメンバーのパスは親のインデックスへ記録しません")
     if corpus in {"submodule", "worktree"}:
         if not (repository / "apps/web/.spec/bitz.yaml").is_file():
-            raise ValueError("member設定がなければ、原因がmember pathではなくmember設定になります")
+            raise ValueError("メンバーの設定がなければ、原因がメンバーのパスではなくメンバーの設定になります")
     if identifier == "MULTI-019" and (repository / ".git").exists():
-        raise ValueError("Git不在のcaseにGitのmetadataがあります")
+        raise ValueError("Git不在のケースにGitのメタデータがあります")
     if identifier == "MULTI-005":
         argv = CASES[identifier][1]
         _, members = multi_crosscheck.catalog(repository)
         if argv[argv.index("--workspace") + 1] in {workspace_id for workspace_id, _ in members}:
-            raise ValueError("未知--workspaceのcaseは、catalogにないIDを渡す必要があります")
+            raise ValueError("未知の`--workspace`のケースは、カタログにないIDを渡す必要があります")
         check_cli_error_output(4, b"", b"bitz: check: reason\n", "check")
 
 
@@ -229,19 +229,19 @@ def validate(root=HERE, identifiers=None):
             validators["manifest"].validate(manifest)
             validators["side-effects"].validate(effects)
             if manifest != reviewed_manifest(identifier):
-                raise ValueError("起動条件が審査済み期待値と異なります")
+                raise ValueError("起動条件がレビュー済みの期待値と異なります")
             if identifier == "MULTI-005":
                 if (fixture / "expected").exists():
-                    raise ValueError("引数不正fixtureは期待結果fileを持ちません")
+                    raise ValueError("引数不正のfixtureは期待結果のファイルを持ちません")
                 if json.loads((fixture / "cli-output.json").read_text()) != cli_output():
-                    raise ValueError("CLI出力の期待値が審査済みの契約と異なります")
+                    raise ValueError("CLI出力の期待値がレビュー済みの契約と異なります")
             else:
                 result = json.loads((fixture / RESULT_FILES[identifier]).read_text())
                 validators["result"].validate(result)
                 if result != reviewed_result(identifier):
-                    raise ValueError("完全結果が審査済み期待値と異なります")
+                    raise ValueError("完全結果がレビュー済みの期待値と異なります")
                 if result["workspaces"]:
-                    raise ValueError("事前検査の非成功はmember結果を持ちません")
+                    raise ValueError("事前検査の非成功はメンバーの結果を持ちません")
             inputs = reviewed_inputs(CASES[identifier][0])
             files = {}
             for directory in ("repo", "changes"):
@@ -251,9 +251,9 @@ def validate(root=HERE, identifiers=None):
                         files[prefix + path.relative_to(fixture / directory).as_posix()] = path
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[key]
                                                 for key, p in files.items()):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-multi-catalog-") as temporary:
                 for run in range(2):
@@ -265,7 +265,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe_state(manifest, repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
                     check_precondition(identifier, repository)
             prepared.append(identifier)

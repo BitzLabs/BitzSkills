@@ -37,7 +37,7 @@ def minimums():
     python = re.findall(r"Core 1\.0はCPython (\d+)\.(\d+)以上を対象とする", text)
     git_floor = re.findall(r"Gitは(\d+)\.(\d+)以上を対象とし", text)
     if len(python) != 1 or len(git_floor) != 1:
-        raise ValueError("実行環境契約から下限versionを一意に読み取れません")
+        raise ValueError("実行環境契約から下限のバージョンを一意に読み取れません")
     if "`git --version`" not in text:
         raise ValueError("実行環境契約にGit版の取得方法がありません")
     return tuple(map(int, python[0])), tuple(map(int, git_floor[0]))
@@ -96,17 +96,17 @@ def check_contract(identifier, manifest):
         major, minor, _ = map(int, invocation["gitVersion"].split("."))
         below = (major, minor) < (git_major, git_minor)
         if below != (identifier == "SINGLE-127-15") or (major, minor) < (git_major, git_minor - 1):
-            raise ValueError("Git shimの版は下限の直前と下限でなければなりません")
+            raise ValueError("Gitのシムの版は下限の直前と下限でなければなりません")
         if "PATH" in invocation["env"] or "python" in invocation:
-            raise ValueError("Git版fixtureはPATHやPythonを同時に変えてはいけません")
+            raise ValueError("Git版fixtureは`PATH`またはPythonを同時に変えてはいけません")
     if identifier == "SINGLE-127-19" and ("gitVersion" in invocation or invocation["env"]):
-        raise ValueError("CPython下限fixtureはGitや環境を同時に変えてはいけません")
+        raise ValueError("CPython下限fixtureはGitまたは環境を同時に変えてはいけません")
     if identifier in PACKAGE_CASES:
         spec = FIXTURE_SPEC.read_text()
         if f"| `package` | `{PACKAGE_CASES[identifier]}` |" not in spec:
-            raise ValueError("package caseが適合fixture仕様のrunner表にありません")
+            raise ValueError("`package`のケースが適合fixture仕様のランナーの表にありません")
         if not re.search(rf"^\| `{identifier}` \| [^|]+ \| package test \| accepted／0 \|", spec, re.M):
-            raise ValueError("matrix行がpackage testではありません")
+            raise ValueError("matrixの行が`package test`ではありません")
 
 
 def validate(root=HERE, identifiers=None):
@@ -126,15 +126,15 @@ def validate(root=HERE, identifiers=None):
             if identifier not in PACKAGE_CASES:
                 validators["result"].validate(result)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
+                raise ValueError("起動条件または完全結果がレビュー済みの期待値と異なります")
             check_contract(identifier, manifest)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(reviewed_inputs()) or any(
                     p.is_symlink() or p.read_bytes() != reviewed_inputs()[name] for name, p in files.items()):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-environment-") as temporary:
                 for run in range(2):
@@ -142,13 +142,13 @@ def validate(root=HERE, identifiers=None):
                     sandbox.mkdir()
                     repository = setup(fixture, manifest, sandbox / "repo")
                     if git(repository, "ls-files", "-z") or git(repository, "for-each-ref"):
-                        raise ValueError("fixtureはunbornで空のindexである必要があります")
+                        raise ValueError("fixtureはコミットのないリポジトリで、インデックスが空である必要があります")
                     external = {name: sandbox / name for name in ("home", "cache", "temporary")}
                     for path in external.values():
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError,

@@ -158,30 +158,30 @@ def check_catalog_change(identifier, repository):
     current_members = dict(current)
     if identifier == "MULTI-011":
         if base_members != current_members:
-            raise ValueError("member独立のcaseはcatalogを変えない")
+            raise ValueError("メンバー独立のケースはカタログを変えない")
         frontmatter, _ = multi_crosscheck.split_document(
             (repository / API_MISMATCH_PATH).read_text(encoding="utf-8"))
         if frontmatter["id"] == Path(API_MISMATCH_PATH).stem:
-            raise ValueError("file名IDとFrontmatter IDが一致しています")
+            raise ValueError("ファイル名のIDとフロントマターのIDが一致しています")
     if identifier == "MULTI-017":
         if set(base_members) != set(current_members):
-            raise ValueError("path移動のcaseはworkspace IDを変えない")
+            raise ValueError("パスの移動のケースはワークスペースIDを変えない")
         if base_members["web"] == current_members["web"]:
-            raise ValueError("path移動のcaseはmember pathを変える必要があります")
+            raise ValueError("パスの移動のケースはメンバーのパスを変える必要があります")
         if not (repository / MOVED_WEB_PATH / ".spec/bitz.yaml").is_file():
-            raise ValueError("移動先にmemberの設定がありません")
+            raise ValueError("移動先にメンバーの設定がありません")
     if identifier == "MULTI-018-01":
         if set(base_members) == set(current_members) or set(base_members.values()) != set(current_members.values()):
-            raise ValueError("ID変更のcaseは、pathを保ったままIDだけを変える必要があります")
+            raise ValueError("ID変更のケースは、パスを保ったままIDだけを変える必要があります")
     if identifier == "MULTI-018-02":
         if set(current_members) >= set(base_members):
-            raise ValueError("member削除のcaseは、catalogからmemberを外す必要があります")
+            raise ValueError("メンバー削除のケースは、カタログからメンバーを外す必要があります")
         if (repository / "apps/web").exists():
-            raise ValueError("member削除のcaseは、memberのtreeも削除する必要があります")
+            raise ValueError("メンバー削除のケースは、メンバーの木構造も削除する必要があります")
     if identifier in {"MULTI-018-01", "MULTI-018-02"}:
         # 基準版には削除検査の対象になる管理済みの仕様文書がある。
         if git(repository, "cat-file", "-t", f"HEAD:{multi_reference.WEB_TECH_PATH}").decode().strip() != "blob":
-            raise ValueError("基準版にwebの管理済みSPECがありません")
+            raise ValueError("基準版に`web`の管理済みの仕様文書がありません")
 
 
 def validate(root=HERE, identifiers=None):
@@ -199,23 +199,23 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier):
-                raise ValueError("起動条件が審査済み期待値と異なります")
+                raise ValueError("起動条件がレビュー済みの期待値と異なります")
             if result != reviewed_result(identifier):
-                raise ValueError("完全結果が審査済み期待値と異なります")
+                raise ValueError("完全結果がレビュー済みの期待値と異なります")
             reviewed = reviewed_inputs(identifier)
             entries = {}
             for directory in ("repo", "changes"):
                 for path in (fixture / directory).rglob("*"):
                     if path.is_symlink():
-                        raise ValueError("この群はsymlinkを入力に持ちません")
+                        raise ValueError("この群はシンボリックリンクを入力に持ちません")
                     if path.is_file():
                         entries[(directory, path.relative_to(fixture / directory).as_posix())] = path.read_bytes()
             expected = {**{("repo", name): data for name, data in reviewed["files"].items()},
                         **{("changes", name): data for name, data in reviewed["changes"].items()}}
             if entries != expected:
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-multi-member-") as temporary:
                 for run in range(2):
@@ -227,7 +227,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
                     check_catalog_change(identifier, repository)
             prepared.append(identifier)

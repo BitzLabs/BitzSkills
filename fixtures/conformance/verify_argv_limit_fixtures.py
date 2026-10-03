@@ -125,13 +125,13 @@ def reviewed_result(identifier=IDENTIFIER):
 def check_single_limit(inputs):
     """入力の上限はすべて内側に保ち、展開後の引数列のバイト総和だけが超過することを独立に確認する。"""
     if len(inputs[digest_reference.CONFIG_PATH]) > 64 * 1024:
-        raise ValueError("設定fileが自身の入力上限を超えています")
+        raise ValueError("設定ファイルが自身の入力上限を超えています")
     paths = set()
     for index in range(1, DOCUMENT_COUNT + 1):
         document = inputs[f".spec/technical/{document_id(index)}.md"].decode()
         frontmatter = document.split("---\n")[1]
         if len(frontmatter.encode()) > FRONTMATTER_LIMIT or len(document.encode()) > ARGV_LIMIT:
-            raise ValueError("文書がFrontmatterまたはfileの入力上限を超えています")
+            raise ValueError("文書がフロントマターまたはファイルの入力上限を超えています")
         paths.update(line.removeprefix("  - path: ") for line in frontmatter.splitlines()
                      if line.startswith("  - path: "))
     argv = ["/bin/true", *sorted(paths)]
@@ -139,12 +139,12 @@ def check_single_limit(inputs):
         raise ValueError("要素長または要素数の上限も超えています")
     total = sum(len(value.encode()) for value in argv)
     if total <= ARGV_LIMIT:
-        raise ValueError("展開後argvがbyte上限を超えていません")
+        raise ValueError("展開後の引数列がバイト上限を超えていません")
     # 1文書分を除けば上限内に戻り、超過が全検証対象分の和集合で初めて生じることを示す。
     if total - sum(len(test["path"].encode()) for test in document_tests(1)) > ARGV_LIMIT:
-        raise ValueError("全targetの和集合でなくてもbyte上限を超えています")
+        raise ValueError("全検証対象の和集合でなくてもバイト上限を超えています")
     if any(len(path.encode()) >= 4000 for path in paths):
-        raise ValueError("test pathはplatformのpath長上限未満である必要があります")
+        raise ValueError("テストのパスはプラットフォームのパスの長さの上限未満である必要があります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -162,7 +162,7 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("起動または完全な結果が審査済み期待と異なります")
+                raise ValueError("起動または完全な結果がレビュー済みの期待値と異なります")
             inputs = reviewed_inputs(identifier)
             check_single_limit(inputs)
             check_inputs(fixture, inputs, executables(identifier))
@@ -173,10 +173,10 @@ def validate(root=HERE, identifiers=None):
                     derived = digest_crosscheck.canonical_bytes(
                         digest_crosscheck.build(repository, root=document_id(index)))
                     if digest_crosscheck.digest(derived) != context_digest(index):
-                        raise ValueError(f"{document_id(index)}のDigestが2系統のreferenceで一致しません")
+                        raise ValueError(f"{document_id(index)}のハッシュ値が2系統の参照計算で一致しません")
                 for path in inputs:
                     if not (repository / path).is_file():
-                        raise ValueError("setup後に宣言済みtest pathが存在しません")
+                        raise ValueError("準備手順の後に宣言済みのテストのパスが存在しません")
 
             check_setups(fixture, manifest, effects, identifier, None, cross_check, "bitz-verify-argv-limit-")
             prepared.append(identifier)

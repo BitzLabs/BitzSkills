@@ -42,7 +42,7 @@ def single_model(manifest: dict) -> tuple[list[str], dict[tuple[str, int], int],
         if remaining == 0:
             break
     if remaining:
-        raise ValueError(f"単一workspaceの関係{remaining}件を割り当てられません")
+        raise ValueError(f"単一ワークスペースの関係{remaining}件を割り当てられません")
     return workspace_ids, statement_counts, relations
 
 
@@ -79,7 +79,7 @@ def multi_workspace_model(manifest: dict) -> tuple[list[str], dict[tuple[str, in
         if remaining == 0:
             break
     if remaining:
-        raise ValueError(f"複合workspaceの関係{remaining}件を割り当てられません")
+        raise ValueError(f"複合ワークスペースの関係{remaining}件を割り当てられません")
     return workspace_ids, statement_counts, relations
 
 
@@ -254,14 +254,14 @@ def validate_model(manifest: dict, stats: dict, relations: dict[tuple[str, int],
     expected_docs = manifest["benchmark"]["contextDocuments"]
     expected_workspaces = manifest["benchmark"]["contextWorkspaces"]
     if len(reached) != expected_docs or len({node[0] for node in reached}) != expected_workspaces:
-        raise ValueError(f"Contextの形状が一致しません: 文書={len(reached)}、workspace={len({node[0] for node in reached})}")
+        raise ValueError(f"コンテキストの形状が一致しません: 文書={len(reached)}、ワークスペース={len({node[0] for node in reached})}")
 
     context_input_bytes = 0
     for workspace_id, number in reached:
         path = workspace_path(root, workspace_id) / ".spec" / "requirements" / f"{req_id(number)}.md"
         context_input_bytes += path.stat().st_size
     if context_input_bytes > manifest["benchmark"]["maxPresentationBytes"]:
-        raise ValueError(f"Contextの入力が提示の予算を超えています: {context_input_bytes}")
+        raise ValueError(f"コンテキストの入力が提示の予算を超えています: {context_input_bytes}")
 
 
 def measure_shape(root: Path, stats: dict) -> dict:
@@ -292,7 +292,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("manifest", type=Path)
     parser.add_argument("output", type=Path)
-    parser.add_argument("--print-digest", action="store_true", help="print a new digest without enforcing expectedTreeDigest")
+    parser.add_argument("--print-digest", action="store_true", help="`expectedTreeDigest`と照合せずに、新しいハッシュ値を表示する")
     return parser.parse_args()
 
 
@@ -300,7 +300,7 @@ def main() -> int:
     args = parse_args()
     manifest = json.loads(args.manifest.read_text())
     if manifest.get("generatorVersion") != GENERATOR_VERSION:
-        raise ValueError("generatorVersionが一致しません")
+        raise ValueError("`generatorVersion`が一致しません")
     if args.output.exists() and any(args.output.iterdir()):
         raise ValueError(f"出力先は存在しないか空である必要があります: {args.output}")
     args.output.mkdir(parents=True, exist_ok=True)
@@ -308,7 +308,7 @@ def main() -> int:
     validate_model(manifest, stats, relations, args.output)
     digest = tree_digest(args.output)
     if not args.print_digest and digest != manifest["expectedTreeDigest"]:
-        raise ValueError(f"tree digestが一致しません: 期待値 {manifest['expectedTreeDigest']}、実際 {digest}")
+        raise ValueError(f"木構造のハッシュ値が一致しません: 期待値 {manifest['expectedTreeDigest']}、実際 {digest}")
     result = {"datasetId": manifest["datasetId"], "treeDigest": digest, "counts": stats, "shape": measure_shape(args.output, stats)}
     json.dump(result, sys.stdout, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     sys.stdout.write("\n")

@@ -89,7 +89,7 @@ def req_line(body):
     for number, line in enumerate((head + body).split("\n"), 1):
         if line.startswith("- [REQ-001:AC-01]"):
             return number, line
-    raise ValueError("AC-01行が見つかりません")
+    raise ValueError("`AC-01`行が見つかりません")
 
 
 def reviewed_inputs(identifier):
@@ -182,28 +182,28 @@ def check_contract(identifier, result, canonical_bytes):
         tests = value["documents"][1]["frontmatter"]["tests"]
         keys = [(t["path"], t["command"] is not None, t["command"] or "", t["covers"]) for t in tests]
         if keys != sorted(keys) or len(tests) != 4 or tests[0]["command"] is not None:
-            raise ValueError("test対応が(path, commandSortKey, covers)の完全順序ではありません")
+            raise ValueError("テスト対応が`(path, commandSortKey, covers)`の完全順序ではありません")
         if [c["name"] for c in value["settings"]["commands"]] != ["default", "other"]:
-            raise ValueError("参照される2 commandだけを名前順に収録する必要があります")
+            raise ValueError("参照される2つのコマンドだけを名前順に収録する必要があります")
         if [t.get("command") for t in result["documents"][1]["frontmatter"]["tests"]] != [None, "default", "default", "other"]:
-            raise ValueError("Bundleのtest対応もDigestと同じ順序である必要があります")
+            raise ValueError("コンテキスト一式のテスト対応もハッシュ値の材料と同じ順序である必要があります")
     elif identifier == "SINGLE-123":
         extensions = value["documents"][0]["statements"][0]["extensions"]
         keys = [(e["namespace"], e["term"], e["value"] is not None, e["value"] or "") for e in extensions]
         if keys != sorted(keys) or len(extensions) != 5:
-            raise ValueError("extensionが(namespace, term, valueSortKey)の完全順序ではありません")
+            raise ValueError("拡張タグが`(namespace, term, valueSortKey)`の完全順序ではありません")
         columns = [d["source"]["column"] for d in result["diagnostics"]]
         if columns != sorted(columns) or len(set(columns)) != 5:
-            raise ValueError("未知extensionのwarningは出現位置ごとに1件ずつ位置順で返す必要があります")
+            raise ValueError("未知の拡張タグの警告は出現位置ごとに1件ずつ位置順で返す必要があります")
     else:
         if value["settings"]["commands"][0]["argv"][1] != "--pattern=src\\auth":
-            raise ValueError("argv templateのreverse solidusを保持する必要があります")
+            raise ValueError("引数列テンプレートのバックスラッシュを保持する必要があります")
         if value["documents"][1]["frontmatter"]["title"] != TITLE_124:
-            raise ValueError("titleのreverse solidusを保持する必要があります")
+            raise ValueError("`title`のバックスラッシュを保持する必要があります")
         if value["documents"][0]["statements"][0]["operation"]["text"] != TEXT_124:
-            raise ValueError("statement textはescape解除後のreverse solidusを保持する必要があります")
+            raise ValueError("規範文のテキストはエスケープ解除後のバックスラッシュを保持する必要があります")
         if "\\" in "".join(value["documents"][1]["frontmatter"]["implements"]):
-            raise ValueError("path型fieldにreverse solidusを残してはいけません")
+            raise ValueError("パス型のフィールドにバックスラッシュを残してはいけません")
 
 
 def validate(root=HERE, identifiers=None):
@@ -223,24 +223,24 @@ def validate(root=HERE, identifiers=None):
                 validators[name].validate(value)
             committed = (fixture / "expected/context.canonical.json").read_bytes()
             if committed != canonical(identifier) or committed.endswith(b"\n") or committed.startswith(b"\xef\xbb\xbf"):
-                raise ValueError("Canonical JSONが審査済みのDigest材料と異なります")
+                raise ValueError("正規JSONがレビュー済みのハッシュ値の材料と異なります")
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
+                raise ValueError("起動条件または完全結果がレビュー済みの期待値と異なります")
             check_contract(identifier, result, committed)
             golden = (root / "single/SINGLE-042/expected/context.canonical.json")
             if golden.exists() and golden.read_bytes() == committed:
-                raise ValueError("Digest材料がgoldenと同じです")
+                raise ValueError("ハッシュ値の材料がgoldenと同じです")
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             for path, kind in ((REQ_PATH, "reqFrontmatter"), (TECH_PATH, "techFrontmatter")):
                 parsed, _ = digest_crosscheck.split_document(inputs[path].decode())
                 Draft202012Validator({"$ref": "#/$defs/" + kind, "$defs": schema["$defs"]}).validate(parsed)
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-ordering-") as temporary:
                 for run in range(2):
@@ -248,17 +248,17 @@ def validate(root=HERE, identifiers=None):
                     sandbox.mkdir()
                     repository = setup(fixture, manifest, sandbox / "repo")
                     if git(repository, "ls-files", "-z"):
-                        raise ValueError("context fixtureのindexは空である必要があります")
+                        raise ValueError("`context`のfixtureのインデックスは空である必要があります")
                     external = {name: sandbox / name for name in ("home", "cache", "temporary")}
                     for path in external.values():
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
                     derived = digest_crosscheck.canonical_bytes(digest_crosscheck.build(repository))
                     if derived != committed:
-                        raise ValueError("reference AとBのCanonical JSONが一致しません")
+                        raise ValueError("参照計算AとBの正規JSONが一致しません")
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, IndexError, ValidationError,
                 subprocess.SubprocessError) as error:

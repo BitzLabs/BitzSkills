@@ -168,27 +168,27 @@ def check_boundary_inputs(identifier, repository):
     if identifier == "MULTI-008":
         link = repository / SHARED_LINK
         if not link.is_symlink() or os.readlink(link) != ESCAPING_TARGET:
-            raise ValueError("所有境界のcaseは、別memberへ出るsymlinkが必要です")
+            raise ValueError("所有境界のケースは、別メンバーへ出るシンボリックリンクが必要です")
         resolved = link.resolve()
         if not resolved.is_relative_to(repository / "services/api"):
-            raise ValueError("symlinkの解決先が別memberの中にありません")
+            raise ValueError("シンボリックリンクの解決先が別メンバーの中にありません")
         if (repository / "apps/web/.spec/tasks").exists():
-            raise ValueError("所有境界のcaseはTASKを持たず、TASK境界のcodeを起こさない")
+            raise ValueError("所有境界のケースはTASKを持たず、TASK境界の診断コードを起こさない")
     if identifier == "MULTI-009":
         # 字句のセグメントの境界。src/はsrc2/のファイルを許可しない。
         if not (repository / OUTSIDE_PATH).is_file() or not (repository / INSIDE_PATH).is_file():
-            raise ValueError("segment境界のcaseは、src/とsrc2/の両方のfileが必要です")
+            raise ValueError("セグメント境界のケースは、`src/`と`src2/`の両方のファイルが必要です")
         if git(repository, "show", f"HEAD:{OUTSIDE_PATH}") == (repository / OUTSIDE_PATH).read_bytes():
-            raise ValueError("segment境界のcaseは、src2/のfileが基準版から変わっている必要があります")
+            raise ValueError("セグメント境界のケースは、`src2/`のファイルが基準版から変わっている必要があります")
     if identifier == "MULTI-010":
         link = repository / CHANGED_LINK
         if not link.is_symlink() or os.readlink(link) != LOCAL_TARGET:
-            raise ValueError("現在版のsymlinkはweb内を指す必要があります")
+            raise ValueError("現在版のシンボリックリンクは`web`内を指す必要があります")
         base = git(repository, "cat-file", "-p", f"HEAD:{CHANGED_LINK}").decode()
         if base != ESCAPING_TARGET:
-            raise ValueError("基準版のsymlinkは別memberを指す必要があります")
+            raise ValueError("基準版のシンボリックリンクは別メンバーを指す必要があります")
         if git(repository, "ls-tree", "HEAD", CHANGED_LINK).decode().split()[0] != "120000":
-            raise ValueError("基準版のentryはsymlinkとして記録されている必要があります")
+            raise ValueError("基準版のエントリはシンボリックリンクとして記録されている必要があります")
     actual_files = {p.relative_to(repository).as_posix(): p.read_bytes()
                     for p in repository.rglob("*")
                     if p.is_file() and not p.is_symlink() and ".git" not in p.relative_to(repository).parts}
@@ -196,7 +196,7 @@ def check_boundary_inputs(identifier, repository):
     if identifier == "MULTI-009":
         expected_files[OUTSIDE_PATH] = reviewed["changes"]["outside.py"]
     if actual_files != expected_files:
-        raise ValueError("作業treeが審査済みの入力と異なります")
+        raise ValueError("作業ツリーがレビュー済みの入力と異なります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -214,9 +214,9 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier):
-                raise ValueError("起動条件が審査済み期待値と異なります")
+                raise ValueError("起動条件がレビュー済みの期待値と異なります")
             if result != reviewed_result(identifier):
-                raise ValueError("完全結果が審査済み期待値と異なります")
+                raise ValueError("完全結果がレビュー済みの期待値と異なります")
             reviewed = reviewed_inputs(identifier)
             entries = {}
             for directory in ("repo", "changes"):
@@ -232,9 +232,9 @@ def validate(root=HERE, identifiers=None):
                         **{name: ("changes", "file", data) for name, data in reviewed["changes"].items()},
                         **{name: ("changes", "link", target) for name, target in reviewed["changeLinks"].items()}}
             if entries != expected:
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-multi-ownership-") as temporary:
                 for run in range(2):
@@ -246,7 +246,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
                     check_boundary_inputs(identifier, repository)
             prepared.append(identifier)

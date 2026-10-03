@@ -61,14 +61,14 @@ def check_git_states(repository):
     for revision, path_args in (("HEAD:", ("ls-tree", "-r", "--name-only", "-z", "HEAD")),
                                 (":", ("ls-files", "-z"))):
         if set(git(repository, *path_args).decode().split("\0")[:-1]) != set(BASE):
-            raise ValueError("HEADまたはindexのpathが審査済みの基準版と異なります")
+            raise ValueError("`HEAD`またはインデックスのパスがレビュー済みの基準版と異なります")
         for path, content in BASE.items():
             if git(repository, "show", revision + path) != content:
-                raise ValueError("HEADまたはindexのbyte列が審査済みの基準版と異なります")
+                raise ValueError("`HEAD`またはインデックスのバイト列がレビュー済みの基準版と異なります")
     actual = {p.relative_to(repository).as_posix(): p.read_bytes() for p in repository.rglob("*")
               if p.is_file() and ".git" not in p.relative_to(repository).parts}
     if actual != CURRENT:
-        raise ValueError("作業treeが審査済みの2 pathの変更と異なります")
+        raise ValueError("作業ツリーがレビュー済みの2つのパスの変更と異なります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -88,16 +88,16 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("manifestまたは完全結果が審査済みのscopeの期待値と異なります")
+                raise ValueError("マニフェストまたは完全結果がレビュー済みの`scope`の期待値と異なります")
             files = {p.relative_to(fixture).as_posix(): p for directory in ("repo", "changes")
                      for p in (fixture / directory).rglob("*") if p.is_file() or p.is_symlink()}
             expected = reviewed_inputs()
             if set(files) != set(expected) or any(p.is_symlink() or p.read_bytes() != expected[name] for name, p in files.items()):
-                raise ValueError("入力が審査済みのTASK・segment境界のcaseと異なります")
+                raise ValueError("入力がレビュー済みのTASK・セグメント境界のケースと異なります")
             # YAMLと値の固定した組だけをレビューする。汎用のYAMLの構文解析器ではない。
             frontmatter.validate({"id": "TASK-001", "title": "変更境界の検査", "status": "open", "changes": ["src/"]})
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-task-fixtures-") as temporary:
                 for run in range(2):
@@ -110,7 +110,7 @@ def validate(root=HERE, identifiers=None):
                         directory.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and actual != previous):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

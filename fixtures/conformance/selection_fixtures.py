@@ -103,15 +103,15 @@ def check_git_states(repository, identifier):
         # `HEAD`の解決失敗だけで、コミットのないリポジトリと認めてはいけない。
         git(repository, "rev-parse", "--git-dir")
         if git(repository, "symbolic-ref", "HEAD").decode().strip() != "refs/heads/fixture":
-            raise ValueError("unbornのHEADはfixtureのbranchを指す必要があります")
+            raise ValueError("コミットのないリポジトリの`HEAD`はfixtureのブランチを指す必要があります")
         try:
             git(repository, "rev-parse", "--verify", "HEAD")
         except subprocess.CalledProcessError:
             pass
         else:
-            raise ValueError("unbornのfixtureにcommitがあります")
+            raise ValueError("コミットのないリポジトリのfixtureにコミットがあります")
         if git(repository, "for-each-ref") or git(repository, "ls-files", "-z"):
-            raise ValueError("unbornのfixtureはrefもstage済みpathも持ってはいけません")
+            raise ValueError("コミットのないリポジトリのfixtureはGitの参照もステージ済みのパスも持ってはいけません")
     else:
         index = dict(base)
         if identifier == "SINGLE-041":
@@ -119,14 +119,14 @@ def check_git_states(repository, identifier):
         for revision, args, expected in (("HEAD:", ("ls-tree", "-r", "--name-only", "-z", "HEAD"), base),
                                         (":", ("ls-files", "-z"), index)):
             if set(git(repository, *args).decode().split("\0")[:-1]) != set(expected):
-                raise ValueError("HEADまたはindexのpathが審査済みの選択caseと異なります")
+                raise ValueError("`HEAD`またはインデックスのパスがレビュー済みの選択ケースと異なります")
             for path, content in expected.items():
                 if git(repository, "show", revision + path) != content:
-                    raise ValueError("HEADまたはindexのbyte列が審査済みの選択caseと異なります")
+                    raise ValueError("`HEAD`またはインデックスのバイト列がレビュー済みの選択ケースと異なります")
     actual = {p.relative_to(repository).as_posix(): p.read_bytes() for p in repository.rglob("*")
               if p.is_file() and ".git" not in p.relative_to(repository).parts}
     if actual != current_files(identifier):
-        raise ValueError("作業treeが審査済みの選択caseと異なります")
+        raise ValueError("作業ツリーがレビュー済みの選択ケースと異なります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -146,12 +146,12 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("manifestまたは完全結果が審査済みのscopeの期待値と異なります")
+                raise ValueError("マニフェストまたは完全結果がレビュー済みの`scope`の期待値と異なります")
             files = {p.relative_to(fixture).as_posix(): p for directory in ("repo", "changes")
                      for p in (fixture / directory).rglob("*") if p.is_file() or p.is_symlink()}
             expected = reviewed_inputs(identifier)
             if set(files) != set(expected) or any(p.is_symlink() or p.read_bytes() != expected[name] for name, p in files.items()):
-                raise ValueError("入力が審査済みのGit対象選択caseと異なります")
+                raise ValueError("入力がレビュー済みのGitの対象選択ケースと異なります")
             # YAMLと値の固定した組だけをレビューする。汎用のYAMLの構文解析器ではない。
             for path in base_files(identifier):
                 if path in FRONTMATTER:
@@ -159,7 +159,7 @@ def validate(root=HERE, identifiers=None):
             if identifier == "SINGLE-033":
                 frontmatter.validate({"id": "TECH-001", "title": "改訂した前提技術", "status": "approved"})
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-selection-fixtures-") as temporary:
                 for run in range(2):
@@ -172,7 +172,7 @@ def validate(root=HERE, identifiers=None):
                         directory.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and actual != previous):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

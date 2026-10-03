@@ -266,7 +266,7 @@ def observation_env(env):
 def run_script(repository, identifier, env):
     path = repository / CASES[identifier][2]
     if not (path.is_file() and os.access(path, os.X_OK)):
-        raise ValueError("command fileは実行可能な通常fileである必要があります")
+        raise ValueError("コマンドのファイルは通常の実行可能なファイルである必要があります")
     return subprocess.run([str(path), *TEST_PATHS], cwd=repository, env=observation_env(env),
                           stdin=subprocess.DEVNULL, capture_output=True, timeout=30)
 
@@ -274,28 +274,28 @@ def run_script(repository, identifier, env):
 def observe_orphan(repository):
     """直接のプロセスは`TERM`で終わるが、別のセッションの子孫がパイプを保持しEOFが来ないことを観測する。"""
     if shutil.which("setsid") is None:
-        raise ValueError("このfixtureにはsetsidが必要です")
+        raise ValueError("このfixtureには`setsid`が必要です")
     process = subprocess.Popen([str(repository / CASES["SINGLE-126-12"][2])], cwd=repository,
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
     try:
         if not select.select([process.stdout], [], [], 5)[0]:
-            raise ValueError("commandからreadiness行が届きません")
+            raise ValueError("コマンドから準備完了の行が届きません")
         if process.stdout.readline().decode().strip() != ORPHAN_READY:
-            raise ValueError("commandがreadiness行を出しませんでした")
+            raise ValueError("コマンドが準備完了の行を出しませんでした")
         os.killpg(process.pid, signal.SIGTERM)
         process.wait(timeout=2)
         if process.returncode != -signal.SIGTERM:
-            raise ValueError("直接processはgraceful terminationで終了する必要があります")
+            raise ValueError("直接のプロセスは終了の要求で終了する必要があります")
         # 直接のプロセスの終了後も、子孫が保持するパイプは5秒以上EOFにならない。
         started = time.monotonic()
         while time.monotonic() - started < 5.5:
             if select.select([process.stdout], [], [], 0.5)[0] and not process.stdout.read1(1):
-                raise ValueError("pipeがEOFになり、子孫processが保持していません")
+                raise ValueError("パイプがEOFになり、子孫プロセスが保持していません")
         deadline = time.monotonic() + 10
         while time.monotonic() < deadline:
             if select.select([process.stdout], [], [], 0.5)[0] and not process.stdout.read1(1):
                 return
-        raise ValueError("子孫processが有限時間内にpipeを解放しませんでした")
+        raise ValueError("子孫プロセスが有限時間内にパイプを解放しませんでした")
     finally:
         if process.poll() is None:
             os.killpg(process.pid, signal.SIGKILL)
@@ -312,26 +312,26 @@ def observe_command(identifier, repository):
     if identifier == "SINGLE-126-13":
         verify_process_fixtures.observe_termination("SINGLE-059", repository)
         if subprocess.run(["/bin/true", TEST_PATHS[1]], cwd=repository, timeout=10).returncode != 0:
-            raise ValueError("独立bindingは成功する必要があります")
+            raise ValueError("独立したテスト割当ては成功する必要があります")
         return
     env = CASES[identifier][4]
     completed = run_script(repository, identifier, env)
     if completed.returncode != 0:
-        raise ValueError("commandは終了コード0で終わる必要があります")
+        raise ValueError("コマンドは終了コード0で終わる必要があります")
     raw_limit_ok = all(len(stream) <= LIMIT for stream in (completed.stdout, completed.stderr))
     if not raw_limit_ok:
-        raise ValueError("truncatedをfalseに保つため、raw streamは上限内である必要があります")
+        raise ValueError("`truncated`を`false`に保つため、元のストリームは上限内である必要があります")
     actual = tuple(excerpt(redact(convert_controls(stream), observation_env(env)))
                    for stream in (completed.stdout, completed.stderr))
     if actual != EXPECTED_OUTPUT[identifier]:
-        raise ValueError("独立に変換した出力が審査済み抜粋と異なります")
+        raise ValueError("独立に変換した出力がレビュー済みの抜粋と異なります")
     if identifier == "SINGLE-126-16":
         redacted = redact(convert_controls(completed.stdout), env).encode()
         if not len(redacted) > LIMIT >= len(completed.stdout) or len(actual[0].encode()) != LIMIT - 2:
-            raise ValueError("redaction後のstreamは上限を超え、切れ目がcode pointの途中に落ちる必要があります")
+            raise ValueError("伏せ字化した後のストリームは上限を超え、切れ目がコードポイントの途中に落ちる必要があります")
     for value in env.values():
         if value in "".join(actual):
-            raise ValueError("抜粋にsecretの生値が残っています")
+            raise ValueError("抜粋に秘密情報の生値が残っています")
 
 
 def validate(root=HERE, identifiers=None):
@@ -349,7 +349,7 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("起動または完全な結果が審査済み期待と異なります")
+                raise ValueError("起動または完全な結果がレビュー済みの期待値と異なります")
             check_inputs(fixture, reviewed_inputs(identifier), executables(identifier))
             check_setups(fixture, manifest, effects, identifier, context_digest(identifier),
                          observe_command, "bitz-verify-stream-")

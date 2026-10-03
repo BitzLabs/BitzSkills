@@ -140,7 +140,7 @@ def references(repository):
     derived = digest_crosscheck.canonical_bytes(
         digest_crosscheck.build(repository, purpose="implement"))
     if literal != derived:
-        raise ValueError("reference AとBのCanonical JSONが一致しません")
+        raise ValueError("参照計算AとBの正規JSONが一致しません")
     return literal
 
 
@@ -149,13 +149,13 @@ def check_coverage(result):
     for modality in ("must", "should", "may"):
         bucket = buckets[modality]
         if set(bucket["addressed"]) - set(bucket["total"]) or set(bucket["tested"]) - set(bucket["total"]):
-            raise ValueError("coverageが自身のtotal外の規範文を報告しています")
+            raise ValueError("カバレッジが自身の`total`外の規範文を報告しています")
         if sorted(bucket["addressed"] + bucket["unaddressed"]) != sorted(bucket["total"]):
-            raise ValueError("addressedとunaddressedはtotalを分割する必要があります")
+            raise ValueError("`addressed`と`unaddressed`は`total`を分割する必要があります")
         if sorted(bucket["tested"] + bucket["untested"]) != sorted(bucket["total"]):
-            raise ValueError("testedとuntestedはtotalを分割する必要があります")
+            raise ValueError("`tested`と`untested`は`total`を分割する必要があります")
     if not buckets["must"]["unaddressed"]:
-        raise ValueError("審査済みの原因にはunaddressedのMUSTが必要です")
+        raise ValueError("レビュー済みの原因には`unaddressed`の`MUST`が必要です")
 
 
 def validate(root=HERE, identifiers=None):
@@ -175,25 +175,25 @@ def validate(root=HERE, identifiers=None):
             validators[name].validate(value)
         canonical = (fixture / "expected/context.canonical.json").read_bytes()
         if canonical.endswith(b"\n") or canonical.startswith(b"\xef\xbb\xbf"):
-            raise ValueError("Canonical JSONはBOMと末尾改行のないUTF-8である必要があります")
+            raise ValueError("正規JSONはBOMと末尾改行のないUTF-8である必要があります")
         if manifest != reviewed_manifest():
-            raise ValueError("起動条件が審査済み期待値と異なります")
+            raise ValueError("起動条件がレビュー済みの期待値と異なります")
         if result != reviewed_result(digest_reference.digest(canonical)):
-            raise ValueError("完全結果が審査済み期待値と異なります")
+            raise ValueError("完全結果がレビュー済みの期待値と異なります")
         check_coverage(result)
         golden = (root / "single/SINGLE-042/expected/context.canonical.json").read_bytes()
         if canonical == golden:
-            raise ValueError("implementはverifyのgolden Digest材料を再利用してはいけません")
+            raise ValueError("目的`implement`は目的`verify`のgoldenのハッシュ値の材料を再利用してはいけません")
         inputs = reviewed_inputs()
         files = {p.relative_to(fixture / "repo").as_posix(): p
                  for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
         if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                             for name, p in files.items()):
-            raise ValueError("入力が審査済みcorpusと異なります")
+            raise ValueError("入力がレビュー済みのcorpusと異なります")
         frontmatter, _ = digest_crosscheck.split_document(inputs[TASK_PATH].decode())
         Draft202012Validator({"$ref": "#/$defs/taskFrontmatter", "$defs": schema["$defs"]}).validate(frontmatter)
         if effects["before"] != effects["after"]:
-            raise ValueError("read-only期待値が書込みを許しています")
+            raise ValueError("読取り専用の期待値が書込みを許しています")
         previous = None
         with tempfile.TemporaryDirectory(prefix="bitz-context-coverage-") as temporary:
             for run in range(2):
@@ -205,10 +205,10 @@ def validate(root=HERE, identifiers=None):
                     path.mkdir()
                 actual = observe(repository, external)
                 if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                    raise ValueError("隔離setupが固定snapshotと異なります")
+                    raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                 previous = actual
                 if references(repository) != canonical:
-                    raise ValueError("commitしたCanonical JSONが参照計算と異なります")
+                    raise ValueError("コミットした正規JSONが参照計算と異なります")
         prepared.append(IDENTIFIER)
     except (OSError, ValueError, KeyError, TypeError, ValidationError,
             subprocess.SubprocessError) as error:

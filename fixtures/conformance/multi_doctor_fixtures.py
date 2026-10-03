@@ -124,7 +124,7 @@ def reviewed_result(identifier):
 
 def reviewed_text(identifier):
     if identifier != "MULTI-026-02":
-        raise ValueError("text期待値を持たないfixtureです")
+        raise ValueError("テキストの期待値を持たないfixtureです")
     return (
         "doctor blocked targets=21 diagnostics=1 (0ms)\n"
         "api:.spec/bitz.yaml::: error: SPEC-DOCTOR-COMMAND-001: "
@@ -137,13 +137,13 @@ def check_precondition(identifier, repository):
     catalog_order = [("web", "apps/web"), ("api", "services/api")]
     result_order = [("api", "services/api"), ("web", "apps/web")]
     if root_id != "platform" or members != catalog_order or sorted(members) != result_order:
-        raise ValueError("doctor全体診断のworkspace集合または順序が不正です")
+        raise ValueError("全体操作の`doctor`のワークスペースの集合または順序が不正です")
     if identifier == "MULTI-026-02":
         config = multi_crosscheck.read_yaml(
             (repository / multi_reference.API_CONFIG_PATH).read_text(encoding="utf-8"))
         argv = config["verify"]["commands"]["backend"]["argv"]
         if argv != ["./missing-command"] or (repository / "services/api/missing-command").exists():
-            raise ValueError("memberのcommand不在条件が成立していません")
+            raise ValueError("メンバーのコマンド不在条件が成立していません")
 
 
 def validate(root=HERE, identifiers=None):
@@ -161,18 +161,18 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier):
-                raise ValueError("起動条件が審査済み期待値と異なります")
+                raise ValueError("起動条件がレビュー済みの期待値と異なります")
             if result != reviewed_result(identifier):
-                raise ValueError("完全結果が審査済み期待値と異なります")
+                raise ValueError("完全結果がレビュー済みの期待値と異なります")
             if identifier == "MULTI-026-02" and (
                     fixture / "expected/doctor.txt").read_text() != reviewed_text(identifier):
-                raise ValueError("text期待値が審査済み期待値と異なります")
+                raise ValueError("テキストの期待値がレビュー済みの期待値と異なります")
             entries = {path.relative_to(fixture / "repo").as_posix(): path.read_bytes()
                        for path in (fixture / "repo").rglob("*") if path.is_file()}
             if entries != reviewed_inputs(identifier):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-multi-doctor-") as temporary:
                 for run in range(2):
@@ -184,7 +184,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
                     check_precondition(identifier, repository)
             prepared.append(identifier)

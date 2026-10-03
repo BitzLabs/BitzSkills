@@ -83,26 +83,26 @@ def check_metadata(source_dir, wheel_path, venv_dir):
     if source_dir is None:
         # ソースの木構造が無いと判定の材料(pyproject.toml)自体が無く、要件を満たさない
         # (rejected)と検査できない(error)を区別できない。harness側のエラーとする。
-        raise PackageCheckError("wheelのみが与えられており、source treeのpyproject.tomlを検査できません")
+        raise PackageCheckError("wheelのみが与えられており、ソースの木構造の`pyproject.toml`を検査できません")
     pyproject_path = Path(source_dir) / "pyproject.toml"
     if not pyproject_path.is_file():
-        raise PackageCheckError("source treeにpyproject.tomlがなく検査できません")
+        raise PackageCheckError("ソースの木構造に`pyproject.toml`がなく検査できません")
     project = tomllib.loads(pyproject_path.read_text(encoding="utf-8")).get("project", {})
     if project.get("name") != "bitz":
-        reasons.append("project.nameがbitzではありません")
+        reasons.append("`project.name`が`bitz`ではありません")
     if "bitz" not in project.get("scripts", {}):
-        reasons.append("project.scriptsにbitzがありません")
+        reasons.append("`project.scripts`に`bitz`がありません")
     if not requires_python_allows(project.get("requires-python", ""), 3, 12):
-        reasons.append("requires-pythonがCPython 3.12を許可しません")
+        reasons.append("`requires-python`がCPython 3.12を許可しません")
     try:
         top_level = wheel_top_level_packages(wheel_path)
     except PackageCheckError as error:
         reasons.append(str(error))
         top_level = set()
     if "bitz" not in top_level or not wheel_contains(wheel_path, "bitz/__init__.py"):
-        reasons.append("wheelにtop-level import package bitz(bitz/__init__.py)がありません")
+        reasons.append("wheelに最上位のインポートパッケージ`bitz`（`bitz/__init__.py`）がありません")
     if not _venv_bin(venv_dir, "bitz").exists():
-        reasons.append("導入済み環境にconsole script bin/bitzがありません")
+        reasons.append("導入済み環境にコンソールスクリプト`bin/bitz`がありません")
     return ("accepted" if not reasons else "rejected"), reasons
 
 
@@ -110,7 +110,7 @@ def _lock_dependency_closure(lock_data, root_name):
     packages = {pkg["name"]: pkg for pkg in lock_data.get("package", [])}
     root = packages.get(root_name)
     if root is None:
-        raise PackageCheckError(f"uv.lockに{root_name}パッケージがありません")
+        raise PackageCheckError(f"`uv.lock`に{root_name}パッケージがありません")
     seen = set()
     stack = [dep["name"] for dep in root.get("dependencies", [])]
     while stack:
@@ -127,20 +127,20 @@ def _lock_dependency_closure(lock_data, root_name):
 def check_dependencies(source_dir, wheel_path, venv_dir):
     reasons = []
     if source_dir is None:
-        raise PackageCheckError("wheelのみが与えられており、source treeのuv.lockを検査できません")
+        raise PackageCheckError("wheelのみが与えられており、ソースの木構造の`uv.lock`を検査できません")
     pyproject_path = Path(source_dir) / "pyproject.toml"
     lock_path = Path(source_dir) / "uv.lock"
     if not pyproject_path.is_file() or not lock_path.is_file():
-        raise PackageCheckError("source treeにpyproject.tomlまたはuv.lockがなく検査できません")
+        raise PackageCheckError("ソースの木構造に`pyproject.toml`または`uv.lock`がなく検査できません")
     dependencies = tomllib.loads(pyproject_path.read_text(encoding="utf-8")).get("project", {}).get("dependencies", [])
     if len(dependencies) != 1:
-        return "rejected", [f"project.dependenciesがちょうど1件ではありません({len(dependencies)}件)"]
+        return "rejected", [f"`project.dependencies`がちょうど1件ではありません（{len(dependencies)}件）"]
     match = re.fullmatch(r"([A-Za-z0-9][A-Za-z0-9._-]*)\s*==\s*([^\s,;]+)", dependencies[0].strip())
     if not match:
-        return "rejected", [f"依存がexact pinではありません: {dependencies[0]!r}"]
+        return "rejected", [f"依存が厳密なバージョン固定ではありません: {dependencies[0]!r}"]
     dep_name, dep_version = match.group(1), match.group(2)
     if normalize_name(dep_name) not in {"pyyaml", "ruamel-yaml"}:
-        return "rejected", [f"YAML libraryへのexact pinではありません: {dep_name!r}"]
+        return "rejected", [f"YAMLライブラリへの厳密なバージョン固定ではありません: {dep_name!r}"]
     lock_data = tomllib.loads(lock_path.read_text(encoding="utf-8"))
     try:
         closure, packages = _lock_dependency_closure(lock_data, "bitz")
@@ -148,14 +148,14 @@ def check_dependencies(source_dir, wheel_path, venv_dir):
         return "rejected", [str(error)]
     normalized_closure = {normalize_name(name) for name in closure}
     if normalized_closure != {normalize_name(dep_name)}:
-        reasons.append(f"runtime依存の推移閉包がYAML library 1件だけではありません: {sorted(closure)}")
+        reasons.append(f"ランタイム依存の推移閉包がYAMLライブラリ1件だけではありません: {sorted(closure)}")
     resolved = next((packages[name] for name in packages if normalize_name(name) == normalize_name(dep_name)), None)
     if resolved is None or str(resolved.get("version")) != dep_version:
-        reasons.append("uv.lockのversionがexact pinと一致しません")
+        reasons.append("`uv.lock`のバージョンが、厳密なバージョン固定で指定したバージョンと一致しません")
     site_packages = _venv_site_packages(venv_dir)
     dist_info = sorted(p.name for p in site_packages.glob("*.dist-info")) if site_packages else []
     if len(dist_info) != 2:
-        reasons.append(f"導入済み環境のdist-infoが2件ではありません: {dist_info}")
+        reasons.append(f"導入済み環境の`dist-info`が2件ではありません: {dist_info}")
     return ("accepted" if not reasons else "rejected"), reasons
 
 
@@ -165,4 +165,4 @@ def check(case, source_dir, wheel_path, venv_dir):
         return check_metadata(source_dir, wheel_path, venv_dir)
     if case == "dependencies":
         return check_dependencies(source_dir, wheel_path, venv_dir)
-    raise PackageCheckError(f"未知のpackage caseです: {case!r}")
+    raise PackageCheckError(f"未知の`package`のケースです: {case!r}")

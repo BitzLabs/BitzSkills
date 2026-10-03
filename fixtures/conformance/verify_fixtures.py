@@ -55,7 +55,7 @@ CASES = {
 def technical_document(tests_block):
     head = digest_reference.TECH_HEAD_FIELDS.replace(BOTH_TESTS, tests_block, 1)
     if tests_block != BOTH_TESTS and head == digest_reference.TECH_HEAD_FIELDS:
-        raise ValueError("review済みのtests blockが共有corpusにもうありません")
+        raise ValueError("レビュー済みの`tests`ブロックが共有corpusにもうありません")
     return "---\n" + head + "x-owners: [team-auth]\n---\n\n" + digest_reference.TECH_BODY
 
 
@@ -195,17 +195,17 @@ def check_evidence(identifier, result):
     コンテキストが解決した場合にだけ存在する。"""
     for target in result["targetResults"]:
         if target["bindingRefs"] and not result["commands"]:
-            raise ValueError("bindingが参照されているのにcommandが実行されていません")
+            raise ValueError("テスト割当てが参照されているのにコマンドが実行されていません")
         if not target["bindingRefs"] and result["commands"]:
-            raise ValueError("bindingを要求しないtargetのためにcommandが実行されています")
+            raise ValueError("テスト割当てを要求しない検証対象のためにコマンドが実行されています")
         if target["contextDigest"] != context_digest(identifier):
-            raise ValueError("targetのDigestが審査済みのContextと異なります")
+            raise ValueError("検証対象のハッシュ値がレビュー済みのコンテキストと異なります")
     referenced = {ref for target in result["targetResults"] for ref in target["bindingRefs"]}
     if referenced != {command["bindingId"] for command in result["commands"]}:
-        raise ValueError("bindingRefsとcommandsが同じ実行を表していません")
+        raise ValueError("`bindingRefs`と`commands`が同じ実行を表していません")
     for command in result["commands"]:
         if command["bindingId"] != f"{command['workspaceId']}::{command['name']}":
-            raise ValueError("bindingIdは<workspace-id>::<command-name>である必要があります")
+            raise ValueError("`bindingId`は`<workspace-id>::<command-name>`である必要があります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -223,16 +223,16 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
+                raise ValueError("起動条件または完全結果がレビュー済みの期待値と異なります")
             check_evidence(identifier, result)
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-verify-") as temporary:
                 for run in range(2):
@@ -241,24 +241,24 @@ def validate(root=HERE, identifiers=None):
                     repository = setup(fixture, manifest, sandbox / "repo")
                     if not digest_crosscheck.read_yaml(
                             (repository / ".spec/bitz.yaml").read_text(encoding="utf-8")):
-                        raise ValueError("workspaceの設定を読めません")
+                        raise ValueError("ワークスペースの設定を読めません")
                     tracked = subprocess.run(
                         ["git", "ls-files", "--", ".spec/bitz.yaml"], cwd=repository,
                         capture_output=True, text=True, timeout=10).stdout.strip()
                     if tracked != ".spec/bitz.yaml":
-                        raise ValueError("verifyにはindexで追跡されている設定が必要です")
+                        raise ValueError("`verify`にはインデックスで追跡されている設定が必要です")
                     external = {name: sandbox / name for name in ("home", "cache", "temporary")}
                     for path in external.values():
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
                     expected_digest = context_digest(identifier)
                     if expected_digest is not None:
                         derived = digest_crosscheck.canonical_bytes(digest_crosscheck.build(repository))
                         if digest_crosscheck.digest(derived) != expected_digest:
-                            raise ValueError("reference AとBのtargetのDigestが一致しません")
+                            raise ValueError("参照計算AとBの検証対象のハッシュ値が一致しません")
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError,
                 subprocess.SubprocessError) as error:

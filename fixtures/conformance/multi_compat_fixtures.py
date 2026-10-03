@@ -190,14 +190,14 @@ def check_shape(identifier, repository, result_validator):
         federated = "multiWorkspace" in payload and "workspaces" in payload
         expected = CASES[identifier][2]
         if expected == "accepted" and single == federated:
-            raise ValueError("受理するcaseは、単独と全体のどちらか一方の外形でなければなりません")
+            raise ValueError("受理するケースは、単独と全体のどちらか一方の外形でなければなりません")
         if expected == "rejected" and not (single and federated):
-            raise ValueError("拒否するcaseは、両方の外形を混ぜた結果でなければなりません")
+            raise ValueError("拒否するケースは、両方の外形を混ぜた結果でなければなりません")
         errors = list(result_validator.iter_errors(payload))
         if expected == "accepted" and errors:
-            raise ValueError("受理するcaseの結果は公開Schemaへ適合しなければなりません")
+            raise ValueError("受理するケースの結果は公開スキーマへ適合しなければなりません")
         if expected == "rejected" and not errors:
-            raise ValueError("拒否するcaseの結果は公開Schemaへ適合してはいけません")
+            raise ValueError("拒否するケースの結果は公開スキーマへ適合してはいけません")
         return
     base = {path.decode() for path in git(repository, "ls-tree", "-r", "--name-only", "-z", "HEAD").split(b"\0") if path}
     current = {p.relative_to(repository).as_posix() for p in repository.rglob("*")
@@ -208,23 +208,23 @@ def check_shape(identifier, repository, result_validator):
     if identifier == "MULTI-024-01":
         if multi_reference.ROOT_CONFIG_PATH not in base or "multiWorkspace" in git(
                 repository, "show", f"HEAD:{multi_reference.ROOT_CONFIG_PATH}").decode():
-            raise ValueError("複合workspace化のcaseは、単一workspaceの基準版が必要です")
+            raise ValueError("複合ワークスペース化のケースは、単一ワークスペースの基準版が必要です")
         if "multiWorkspace" not in root_config or "platform::" not in technical_text:
-            raise ValueError("複合workspace化は、catalogと修飾参照を同時に持つ必要があります")
+            raise ValueError("複合ワークスペース化は、カタログと修飾参照を同時に持つ必要があります")
         if MEMBER_TECH_PATH not in current or SINGLE_TECH_PATH in current:
-            raise ValueError("複合workspace化は、SPECをmember配下へ移す必要があります")
+            raise ValueError("複合ワークスペース化は、仕様文書をメンバー配下へ移す必要があります")
         return
     if "multiWorkspace" not in git(repository, "show", f"HEAD:{multi_reference.ROOT_CONFIG_PATH}").decode():
-        raise ValueError("rollbackのcaseは、複合workspaceの基準版が必要です")
+        raise ValueError("ロールバックのケースは、複合ワークスペースの基準版が必要です")
     if "multiWorkspace" in root_config:
-        raise ValueError("rollbackはcatalogを単一workspaceへ戻す必要があります")
+        raise ValueError("ロールバックはカタログを単一ワークスペースへ戻す必要があります")
     if any(path.startswith("apps/web/.spec") for path in current):
-        raise ValueError("rollbackはmemberの設定を残してはいけません")
+        raise ValueError("ロールバックはメンバーの設定を残してはいけません")
     qualified = "platform::" in technical_text
     if identifier == "MULTI-024-02" and qualified:
-        raise ValueError("完全rollbackは修飾参照を残しません")
+        raise ValueError("完全ロールバックは修飾参照を残しません")
     if identifier == "MULTI-024-03" and not qualified:
-        raise ValueError("部分rollbackのcaseは、修飾参照が残っている必要があります")
+        raise ValueError("部分ロールバックのケースは、修飾参照が残っている必要があります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -243,11 +243,11 @@ def validate(root=HERE, identifiers=None):
             validators["manifest"].validate(manifest)
             validators["side-effects"].validate(effects)
             if manifest != reviewed_manifest(identifier):
-                raise ValueError("起動条件が審査済み期待値と異なります")
+                raise ValueError("起動条件がレビュー済みの期待値と異なります")
             if outcome != reviewed_result(identifier):
-                raise ValueError("outcomeの期待値が審査済みcaseと異なります")
+                raise ValueError("`outcome`の期待値がレビュー済みのケースと異なります")
             if "status" in manifest["expect"]:
-                raise ValueError("bitz以外のrunnerはCore共通結果のstatusを返しません")
+                raise ValueError("`bitz`以外のランナーはCoreの結果の`status`を返しません")
             reviewed = reviewed_inputs(identifier)
             entries = {}
             for directory in ("repo", "changes"):
@@ -257,9 +257,9 @@ def validate(root=HERE, identifiers=None):
             expected = {**{("repo", name): data for name, data in reviewed["files"].items()},
                         **{("changes", name): data for name, data in reviewed["changes"].items()}}
             if entries != expected:
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-multi-compat-") as temporary:
                 for run in range(2):
@@ -271,7 +271,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
                     check_shape(identifier, repository, validators["result"])
             prepared.append(identifier)

@@ -21,4 +21,4 @@ elif mode == "timeout":
     print("waiting", flush=True)
     time.sleep(60)
 else:
-    raise SystemExit("未知のhelper modeです")
+    raise SystemExit("未知のヘルパーのモードです")

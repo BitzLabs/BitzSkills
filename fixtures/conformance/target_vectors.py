@@ -16,7 +16,7 @@ def reference(case):
     nodes = {n["id"]: n for n in case["graph"]}
     statements = {s["id"]: (n["id"], s["line"]) for n in nodes.values() for s in n["statements"]}
     if len(nodes) != len(case["graph"]) or len(statements) != sum(len(n["statements"]) for n in nodes.values()):
-        raise ValueError("graphの同一性が重複しています")
+        raise ValueError("グラフの同一性が重複しています")
 
     def owner(identifier):
         if identifier in nodes:
@@ -28,7 +28,7 @@ def reference(case):
     for n in nodes.values():
         allowed = {"REQ": {"approved"}, "TECH": {"approved"}, "ADR": {"accepted"}, "TASK": {"open", "done"}}
         if n["status"] not in allowed[n["kind"]]:
-            raise ValueError("状態が適用可能な参照graphの範囲外です")
+            raise ValueError("状態が適用可能な参照グラフの範囲外です")
         if not re.fullmatch(r"(?:[a-z][a-z0-9-]{0,31}::)?" + n["kind"] + r"-[0-9]{3,}", n["id"]):
             raise ValueError("文書IDと種別が一致しません")
         if n["kind"] in {"ADR", "TASK"} and n["statements"]:
@@ -40,16 +40,16 @@ def reference(case):
             for target in n[relation]:
                 target_owner = owner(target)
                 if relation == "requires" and target not in nodes:
-                    raise ValueError("requiresの参照先は文書である必要があります")
+                    raise ValueError("`requires`の参照先は文書である必要があります")
                 if relation == "addresses" and (n["kind"] != "TASK" or (target not in statements and not (nodes[target_owner]["kind"] == "TECH" and not nodes[target_owner]["statements"]))):
-                    raise ValueError("addressesの型が不正です")
+                    raise ValueError("`addresses`の型が不正です")
                 if relation == "refines" and (n["kind"] not in {"REQ", "TECH"} or nodes[target_owner]["kind"] not in ({"REQ"} if n["kind"] == "REQ" else {"REQ", "TECH"})):
-                    raise ValueError("refinesの型が不正です")
+                    raise ValueError("`refines`の型が不正です")
     active, visited = set(), set()
 
     def acyclic(identifier):
         if identifier in active:
-            raise ValueError("強い依存が循環しています")
+            raise ValueError("`requires`と`refines`が循環しています")
         if identifier in visited:
             return
         active.add(identifier)
@@ -64,13 +64,13 @@ def reference(case):
     root_docs = sorted({owner(r) for r in roots})
     purpose = case["purpose"]
     if purpose == "implement" and any(nodes[r]["kind"] == "TASK" and nodes[r]["status"] != "open" for r in root_docs):
-        raise ValueError("適用できないTASK起点が参照graphの範囲外です")
+        raise ValueError("適用できないTASK起点が参照グラフの範囲外です")
     if case["id"].startswith("BASIC-"):
         r = roots[0]
         n = nodes[owner(r)]
         kind = "STATEMENT" if r in statements else "TECH_EMPTY" if n["kind"] == "TECH" and not n["statements"] else n["kind"]
         if len(roots) != 1 or case["rootKind"] != kind:
-            raise ValueError("基本caseの起点の種別が一致しません")
+            raise ValueError("基本ケースの起点の種別が一致しません")
     if purpose != "interpret" and any(nodes[r]["kind"] == "ADR" for r in root_docs):
         return {"outcome": "invocation_error", "exitCode": 4}
 
@@ -136,19 +136,19 @@ def validate(data=None):
         return {"status": "Failed", "errors": errors}
     contract = HERE.parents[1] / "docs/03.詳細設計/02_SPECモデル/04_関係・トレースモデル.md"
     if hashlib.sha256(contract.read_bytes()).hexdigest() != data["contractSha256"]:
-        errors.append("target契約が変わりました。hashを更新する前に固定した期待値をreviewしてください")
+        errors.append("対象展開の契約が変わりました。ハッシュ値を更新する前に固定した期待値をレビューしてください")
     ids = [case["id"] for case in data["cases"]]
     if len(ids) != len(set(ids)):
         errors.append("ケースIDが重複しています")
     pairs = {(case["rootKind"], case["purpose"]) for case in data["cases"] if case["id"].startswith("BASIC-")}
     if pairs != {(k, p) for k in KINDS for p in PURPOSES}:
-        errors.append("基本の種別とpurposeの組合せが欠けています")
+        errors.append("基本の種別と目的の組合せが欠けています")
     matrix = (HERE.parents[1] / "docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md").read_text()
     families = set(re.findall(r"\| `((?:SINGLE|MULTI)-\d{3})(?:-\d{2})?`", matrix))
     for case in data["cases"]:
         try:
             if not set(case["matrixFamilies"]) <= families:
-                raise ValueError("未知のmatrix familyです")
+                raise ValueError("未知のmatrixのファミリーです")
             actual = reference(case)
             if actual != case["expected"]:
                 errors.append(f"{case['id']}: 期待値 {case['expected']}、実際 {actual}")

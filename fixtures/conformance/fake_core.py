@@ -50,7 +50,7 @@ def _locate_fixture_root(identifier):
         candidate = CONFORMANCE_ROOT / kind / identifier
         if candidate.is_dir():
             return candidate
-    raise FakeCoreBuildError(f"fixture directoryが見つかりません: {identifier}")
+    raise FakeCoreBuildError(f"fixtureのディレクトリが見つかりません: {identifier}")
 
 
 def _tree_digest(root):
@@ -142,7 +142,7 @@ def _mutate_json_bytes(payload_bytes, identifier):
         apply(candidate)
         if candidate != payload and validator.is_valid(candidate):
             return (json.dumps(candidate, ensure_ascii=False) + "\n").encode("utf-8")
-    raise FakeCoreBuildError(f"mutate対象のJSONを安全に改変できる既知の候補がありません: {identifier}")
+    raise FakeCoreBuildError(f"`mutate`の対象のJSONを安全に改変できる既知の候補がありません: {identifier}")
 
 
 def _mutate_text_bytes(text_bytes, identifier):
@@ -151,7 +151,7 @@ def _mutate_text_bytes(text_bytes, identifier):
         if character.isalnum():
             mutated_character = "X" if character != "X" else "Y"
             return (text[:index] + mutated_character + text[index + 1:]).encode("utf-8")
-    raise FakeCoreBuildError(f"mutate対象のtextに変更できる文字がありません: {identifier}")
+    raise FakeCoreBuildError(f"`mutate`の対象のテキストに変更できる文字がありません: {identifier}")
 
 
 def _binding_digests(entries, repository):
@@ -201,11 +201,11 @@ def _mutate_generate_body(payload, identifier):
             statements = first["targetResults"][0]["statements"]
             first["targetResults"][0]["statements"] = statements + [statements[-1]]
         else:
-            raise FakeCoreBuildError(f"mutate対象を安全に改変できる既知の候補がありません: {identifier}")
+            raise FakeCoreBuildError(f"`mutate`の対象を安全に改変できる既知の候補がありません: {identifier}")
     else:
-        raise FakeCoreBuildError(f"mutate対象を安全に改変できる既知の候補がありません: {identifier}")
+        raise FakeCoreBuildError(f"`mutate`の対象を安全に改変できる既知の候補がありません: {identifier}")
     if not _result_validator().is_valid(candidate):
-        raise FakeCoreBuildError(f"mutate結果がresult.schema.jsonに適合しません: {identifier}")
+        raise FakeCoreBuildError(f"`mutate`の結果が`result.schema.json`に適合しません: {identifier}")
     return candidate
 
 
@@ -486,7 +486,7 @@ if __name__ == "__main__":
 def _write_source_tree(destination, responses):
     destination.mkdir(parents=True, exist_ok=True)
     if any(destination.iterdir()):
-        raise FakeCoreBuildError(f"destinationが空ではありません: {destination}")
+        raise FakeCoreBuildError(f"`destination`が空ではありません: {destination}")
     (destination / "pyproject.toml").write_text(PYPROJECT_TOML, encoding="utf-8")
     src = destination / "src" / "bitz"
     src.mkdir(parents=True)
@@ -498,7 +498,7 @@ def _write_source_tree(destination, responses):
         json.dumps(responses, ensure_ascii=False, sort_keys=True), encoding="utf-8")
     result = subprocess.run(["uv", "lock"], cwd=destination, capture_output=True, text=True, timeout=180)
     if result.returncode != 0:
-        raise FakeCoreBuildError(f"偽Coreのuv lockに失敗しました: {result.stderr.strip()[:2000]}")
+        raise FakeCoreBuildError(f"偽Coreの`uv lock`に失敗しました: {result.stderr.strip()[:2000]}")
 
 
 def build_fake_core(destination, fixture_ids, mutate=None, mutate_report=None, mutate_side_effect=None):

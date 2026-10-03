@@ -53,22 +53,22 @@ def locate_fixture_root(identifier):
 
 def parse_args(argv):
     parser = argparse.ArgumentParser(
-        description="Bitz Core 1.0の参照適合harness。--coreに対して選んだfixtureを実行し、合否をJSONで報告する。")
-    parser.add_argument("--core", required=True, help="検査対象Coreのsource directoryまたは.whl file")
+        description="Bitz Core 1.0の参照適合harness。`--core`に対して選んだfixtureを実行し、合否をJSONで報告する。")
+    parser.add_argument("--core", required=True, help="検査対象Coreのソースのディレクトリまたは`.whl`ファイル")
     selector = parser.add_mutually_exclusive_group(required=True)
-    selector.add_argument("--step", type=int, help="steps.jsonのstep 1..Nのfixturesを累積で選ぶ")
+    selector.add_argument("--step", type=int, help="`steps.json`のStep 1..Nのfixtureを累積で選ぶ")
     selector.add_argument("--fixture", action="append", dest="fixtures", metavar="ID",
-                           help="single/またはmulti/のfixture IDを選ぶ。反復可能")
+                           help="`single/`または`multi/`のfixture IDを選ぶ。反復可能")
     parser.add_argument("--output", help="結果JSONの書き出し先。省略時は標準出力")
     parser.add_argument("--suite", choices=("full", "standard", "scale"), default="full",
-                        help="開発時の部分検査。Gate認定はfullだけを使用する")
+                        help="開発時の部分検査。Gate認定は`full`だけを使用する")
     parser.add_argument("--shard", type=int, default=1, help="1から始まる分割番号")
     parser.add_argument("--shards", type=int, default=1, help="分割数")
     parser.add_argument("--timings", help="工程別の所要時間を保存する別JSON")
-    parser.add_argument("--progress", action="store_true", help="完了したfixtureを標準エラーへ表示する")
+    parser.add_argument("--progress", action="store_true", help="完了したfixtureを標準エラー出力へ表示する")
     args = parser.parse_args(argv)
     if args.output and args.timings and Path(args.output).resolve() == Path(args.timings).resolve():
-        parser.error("--outputと--timingsには異なるpathを指定してください")
+        parser.error("`--output`と`--timings`には異なるパスを指定してください")
     return args
 
 
@@ -100,7 +100,7 @@ def main(argv=None):
                 fixture_root = locate_fixture_root(identifier)
                 if fixture_root is None:
                     report["fixtures"].append({"id": identifier, "result": "error",
-                                                "differences": [f"fixture directoryが見つかりません: {identifier}"]})
+                                                "differences": [f"fixtureのディレクトリが見つかりません: {identifier}"]})
                     continue
                 phases = {} if args.timings else None
                 start = time.perf_counter()

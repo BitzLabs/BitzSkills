@@ -75,19 +75,19 @@ def reviewed_result(identifier):
 def check_unborn(repository, identifier):
     git(repository, "rev-parse", "--git-dir")
     if git(repository, "symbolic-ref", "HEAD").decode().strip() != "refs/heads/fixture":
-        raise ValueError("unbornのbranchが想定と異なります")
+        raise ValueError("コミットのないリポジトリのブランチが想定と異なります")
     try:
         git(repository, "rev-parse", "--verify", "HEAD")
     except subprocess.CalledProcessError:
         pass
     else:
-        raise ValueError("Context fixtureに想定外のcommitがあります")
+        raise ValueError("`context`操作のfixtureに想定外のコミットがあります")
     if git(repository, "for-each-ref") or git(repository, "ls-files", "-z"):
-        raise ValueError("Context fixtureはrefもstage済みpathも持ってはいけません")
+        raise ValueError("`context`操作のfixtureはGitの参照もステージ済みのパスも持ってはいけません")
     actual = {p.relative_to(repository).as_posix(): p.read_bytes() for p in repository.rglob("*")
               if p.is_file() and ".git" not in p.relative_to(repository).parts}
     if actual != reviewed_inputs(identifier):
-        raise ValueError("Context fixtureの作業treeが審査済み入力と異なります")
+        raise ValueError("`context`操作のfixtureの作業ツリーがレビュー済みの入力と異なります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -106,16 +106,16 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
+                raise ValueError("起動条件または完全結果がレビュー済みの期待値と異なります")
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name] for name, p in files.items()):
-                raise ValueError("入力が審査済みの単一原因と異なります")
+                raise ValueError("入力がレビュー済みの単一原因と異なります")
             for path, (_, fm) in reviewed_documents(identifier).items():
                 kind = "taskFrontmatter" if path.startswith(".spec/tasks/") else "techFrontmatter"
                 Draft202012Validator({"$ref": "#/$defs/" + kind, "$defs": schema["$defs"]}).validate(fm)
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-context-failure-") as temporary:
                 for run in range(2):
@@ -128,7 +128,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

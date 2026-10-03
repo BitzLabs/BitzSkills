@@ -16,7 +16,7 @@ def catalog(repository):
     """ルートの設定のカタログを(ルートワークスペースのID, [(メンバーのID, パス)])として読む。"""
     config = read_yaml((repository / ".spec/bitz.yaml").read_text(encoding="utf-8"))
     if "multiWorkspace" not in config:
-        raise ValueError("root設定が複合workspaceのcatalogを持っていません")
+        raise ValueError("ルートワークスペースの設定が複合ワークスペースのカタログを持っていません")
     members = [(entry["id"], entry["path"]) for entry in config["multiWorkspace"]["members"]]
     return config["workspace"]["id"], members
 
@@ -38,7 +38,7 @@ def load_workspaces(repository):
         root = repository if path == "." else repository / path
         config = read_yaml((root / ".spec/bitz.yaml").read_text(encoding="utf-8"))
         if config["workspace"]["id"] != workspace_id:
-            raise ValueError("catalogのIDとworkspace設定のIDが一致しません")
+            raise ValueError("カタログのIDとワークスペースの設定のIDが一致しません")
         workspaces[workspace_id] = {"path": path, "config": config}
         for directory, kind in KIND_BY_DIRECTORY.items():
             folder = root / ".spec" / directory
@@ -122,7 +122,7 @@ def closure(documents, root):
                     continue
                 touches = identifier in reached or owner(target) in reached
                 if touches and (identifier, key, target) not in accounted:
-                    raise ValueError("corpusに審査済み閉包の外の強いedgeがあります")
+                    raise ValueError("corpusにレビュー済みの閉包の外の強いエッジがあります")
     return sorted(reached), owned
 
 
@@ -130,7 +130,7 @@ def build(repository, root="platform::REQ-001", purpose="verify"):
     root_id, workspaces, documents = load_workspaces(repository)
     request = root.partition("::")[0]
     if request not in workspaces:
-        raise ValueError("起点のworkspaceがcatalogにありません")
+        raise ValueError("起点ワークスペースがカタログにありません")
     selected, owned = closure(documents, root)
     reached_workspaces = {documents[identifier]["workspaceId"] for identifier in selected}
     # 起点ワークスペースを先頭、以降はID辞書順。到達しなかったワークスペースは材料へ入れない。
@@ -229,7 +229,7 @@ def references(repository, root="platform::REQ-001"):
     literal = multi_reference.canonical_bytes(multi_reference.reviewed_digest_input())
     derived = canonical_bytes(build(repository, root))
     if literal != derived:
-        raise ValueError("reference AとBのCanonical JSONが一致しません")
+        raise ValueError("参照計算AとBの正規JSONが一致しません")
     if multi_reference.digest(literal) != digest(derived):
-        raise ValueError("reference AとBのDigestが一致しません")
+        raise ValueError("参照計算AとBのハッシュ値が一致しません")
     return literal

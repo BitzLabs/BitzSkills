@@ -496,35 +496,35 @@ def four_sets(result):
 def check_contract(identifier, result, root):
     """完全比較とは別に、裁定済みの展開規則を結果から直接確かめる。"""
     if identifier in LITERAL_SETS and four_sets(result) != LITERAL_SETS[identifier]:
-        raise ValueError("4集合が審査済みの展開と異なります")
+        raise ValueError("4集合がレビュー済みの展開と異なります")
     if result["operation"] == "context":
         for entry in result["documents"]:
             if entry["role"] == "advisory" and entry["projection"] != "reference":
-                raise ValueError("advisory文書はreferenceで提示する必要があります")
+                raise ValueError("役割`advisory`の文書は提示形式`reference`で提示する必要があります")
         if identifier == "SINGLE-106-03":
             if [d["projection"] for d in result["documents"]] != ["full", "reference"]:
-                raise ValueError("106-03はreference projectionを1件含む必要があります")
+                raise ValueError("`106-03`は提示形式`reference`を1件含む必要があります")
             if result["constraintLedger"]["statements"]:
-                raise ValueError("advisory文書の規範文をLedgerへ入れてはいけません")
+                raise ValueError("役割`advisory`の文書の規範文を制約台帳へ入れてはいけません")
         if identifier == "SINGLE-110" and any(d["id"] in {"TASK-002", "REQ-009"} for d in result["documents"]):
-            raise ValueError("verifyの起点TASKのrequires先とそのaddresses先をContextへ含めてはいけません")
+            raise ValueError("目的`verify`の起点TASKの`requires`の参照先とその`addresses`の参照先をコンテキストへ含めてはいけません")
         if identifier == "SINGLE-107-01" and "REQ-099" in [d["id"] for d in result["documents"]]:
-            raise ValueError("related先をContextへ追加してはいけません")
+            raise ValueError("`related`の参照先をコンテキストへ追加してはいけません")
         if identifier == "SINGLE-106-06":
             lookup = {d["id"]: d for d in result["documents"]}
             for name, role in (("TECH-010", "constraint"), ("REQ-020", "requirement")):
                 if lookup[name]["role"] != role or lookup[name]["projection"] != "full":
-                    raise ValueError("距離2以上のrequirement/constraintはfull projectionである必要があります")
+                    raise ValueError("距離2以上の役割`requirement`または`constraint`の文書は提示形式`full`である必要があります")
             if "秘密鍵を保持しない" not in lookup["REQ-020"]["bodyText"]:
-                raise ValueError("距離2の規範文のMUST本文がBundleへ現れる必要があります")
+                raise ValueError("距離2の規範文の`MUST`の本文がコンテキスト一式へ現れる必要があります")
         if identifier == "SINGLE-106-07":
             if result["projection"]["detail"] != "compact":
-                raise ValueError("106-07はdetail=compactを返す必要があります")
+                raise ValueError("`106-07`は詳細度`compact`を返す必要があります")
             if any(d["projection"] != "reference" for d in result["documents"]):
-                raise ValueError("compact detailは全文書をreference提示にする必要があります")
+                raise ValueError("詳細度`compact`は全文書を提示形式`reference`にする必要があります")
             expected = json.loads((root / "single/SINGLE-107-01/expected/context.json").read_text())
             if result["contextDigest"] != expected["contextDigest"]:
-                raise ValueError("compact detailはContext Digestを変えてはいけません")
+                raise ValueError("詳細度`compact`はコンテキストのハッシュ値を変えてはいけません")
         return
     for target in result["targetResults"]:
         source = "SINGLE-113" if identifier == "SINGLE-113" else identifier.replace("-02", "-01")
@@ -534,26 +534,26 @@ def check_contract(identifier, result, root):
                     if identifier != "SINGLE-113" else None)
         if expected is not None:
             if target["statements"] != [s["id"] for s in expected["constraintLedger"]["statements"]]:
-                raise ValueError("verifyのtarget statementが同じ起点のcontextと異なります")
+                raise ValueError("`verify`の対象規範文が同じ起点の`context`と異なります")
             if target["contextDigest"] != expected["contextDigest"]:
-                raise ValueError("verifyのContext Digestが同じ起点のcontextと異なります")
+                raise ValueError("`verify`のコンテキストのハッシュ値が同じ起点の`context`と異なります")
     if identifier == "SINGLE-113":
         if [t["target"] for t in result["targetResults"]] != ["REQ-001", "REQ-001:AC-01"]:
-            raise ValueError("113は重複排除した2 targetを辞書順で返す必要があります")
+            raise ValueError("`113`は重複排除した2つの検証対象を辞書順で返す必要があります")
         if len(result["commands"]) != 1 or len(set(result["commands"][0]["tests"])) != len(result["commands"][0]["tests"]):
-            raise ValueError("113は共有bindingを1回だけ、test pathを重複なしで実行する必要があります")
+            raise ValueError("`113`は共有のテスト割当てを1回だけ、テストのパスを重複なしで実行する必要があります")
 
 
 def check_git_state(identifier, repository):
     listed = set(git(repository, "ls-files", "-z").decode().split("\0")[:-1])
     expected = set(reviewed_inputs(identifier)) if CASES[identifier][1][0] == "verify" else set()
     if listed != expected:
-        raise ValueError("indexのpathが審査済みsetupと異なります")
+        raise ValueError("インデックスのパスがレビュー済みの準備手順と異なります")
     try:
         git(repository, "rev-parse", "--verify", "HEAD")
     except subprocess.CalledProcessError:
         return
-    raise ValueError("target展開fixtureはcommitを持ってはいけません")
+    raise ValueError("対象展開のfixtureはコミットを持ってはいけません")
 
 
 def validate(root=HERE, identifiers=None):
@@ -573,22 +573,22 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
+                raise ValueError("起動条件または完全結果がレビュー済みの期待値と異なります")
             check_contract(identifier, result, root)
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             for path, entry in documents(identifier).items():
                 parsed, _ = digest_crosscheck.split_document(inputs[path].decode())
                 if parsed != json.loads(json.dumps(entry["frontmatter"])):
-                    raise ValueError(f"{path}のFrontmatter値が審査済み解釈と異なります")
+                    raise ValueError(f"{path}のフロントマターの値がレビュー済みの解釈と異なります")
                 kind = kinds[entry["frontmatter"]["id"].split("-")[0]]
                 Draft202012Validator({"$ref": "#/$defs/" + kind, "$defs": schema["$defs"]}).validate(parsed)
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             argv = manifest["invocation"]["argv"]
             targets = ([argv[1]] if argv[0] == "context"
                        else sorted({v for v in argv[1:] if not v.startswith("--") and v != "json"}))
@@ -604,14 +604,14 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
                     for target in targets:
                         purpose = expansion(identifier, target)["purpose"]
                         derived = digest_crosscheck.canonical_bytes(
                             digest_crosscheck.build(repository, root=target, purpose=purpose))
                         if derived != digest_reference.canonical_bytes(reviewed_digest_input(identifier, target)):
-                            raise ValueError(f"{target}: reference AとBのCanonical JSONが一致しません")
+                            raise ValueError(f"{target}: 参照計算AとBの正規JSONが一致しません")
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError,
                 subprocess.SubprocessError) as error:

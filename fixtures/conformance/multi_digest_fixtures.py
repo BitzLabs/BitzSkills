@@ -197,26 +197,26 @@ def validate(root=HERE, identifiers=None):
                 validators[key].validate(value)
             canonical = (fixture / "expected/context.canonical.json").read_bytes()
             if canonical != canonical.decode("utf-8").encode("utf-8") or canonical.endswith(b"\n"):
-                raise ValueError("Canonical JSONは末尾改行のないUTF-8である必要があります")
+                raise ValueError("正規JSONは末尾改行のないUTF-8である必要があります")
             if canonical.startswith(b"\xef\xbb\xbf"):
-                raise ValueError("Canonical JSONはBOMを持ってはいけません")
+                raise ValueError("正規JSONはBOMを持ってはいけません")
             if manifest != reviewed_manifest(identifier):
-                raise ValueError("起動条件が審査済み期待値と異なります")
+                raise ValueError("起動条件がレビュー済みの期待値と異なります")
             if result != reviewed_result(identifier, multi_reference.digest(canonical)):
-                raise ValueError("完全結果が審査済み期待値と異なります")
+                raise ValueError("完全結果がレビュー済みの期待値と異なります")
             inputs = multi_reference.reviewed_inputs()
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[key]
                                                 for key, p in files.items()):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             for path, kind in ((multi_reference.ROOT_REQ_PATH, "reqFrontmatter"),
                                (multi_reference.WEB_TECH_PATH, "techFrontmatter"),
                                (multi_reference.API_TECH_PATH, "techFrontmatter")):
                 frontmatter, _ = multi_crosscheck.split_document(inputs[path].decode())
                 Draft202012Validator({"$ref": "#/$defs/" + kind, "$defs": schema["$defs"]}).validate(frontmatter)
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-multi-digest-") as temporary:
                 for run in range(2):
@@ -228,11 +228,11 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
                     computed = multi_crosscheck.references(repository, ROOT_TARGET)
                     if computed != canonical:
-                        raise ValueError("commitしたCanonical JSONが参照計算と異なります")
+                        raise ValueError("コミットした正規JSONが参照計算と異なります")
             canonical_by_fixture[identifier] = canonical
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, IndexError, ValidationError,
@@ -244,7 +244,7 @@ def validate(root=HERE, identifiers=None):
         for identifier, canonical in canonical_by_fixture.items():
             # 同じ入力から同じ材料を得るので、`verify`側のハッシュ値もgoldenとバイト列として一致する。
             if canonical != golden:
-                errors.append(f"{identifier}: Digest材料はgoldenとbyte一致する必要があります")
+                errors.append(f"{identifier}: ハッシュ値の材料はgoldenとバイト一致する必要があります")
     elif identifiers is None:
         errors.append(f"{GOLDEN}: 群を比べるにはgolden fixtureが必要です")
     return {"prepared": prepared, "setups_per_fixture": 2, "core_execution": "Not run",

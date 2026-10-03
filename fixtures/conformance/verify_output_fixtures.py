@@ -131,7 +131,7 @@ def check_excerpt_shape():
     if len(HEAD) + 1 != LINE_BYTES or len(FILLER) + 1 != LINE_BYTES or len(TAIL) + 1 != LINE_BYTES:
         raise ValueError("各行はちょうど固定の幅である必要があります")
     if TOTAL_LINES * LINE_BYTES <= LIMIT:
-        raise ValueError("streamは抜粋の上限を超える必要があります")
+        raise ValueError("ストリームは抜粋の上限を超える必要があります")
     if len(EXCERPT.encode()) != LIMIT:
         raise ValueError("抜粋はちょうど64 KiBの末尾である必要があります")
     if HEAD in EXCERPT or TAIL not in EXCERPT:
@@ -139,7 +139,7 @@ def check_excerpt_shape():
     for keyword in ("token", "secret", "password", "passwd", "api_key", "private_key",
                     "credential", "auth"):
         if keyword in EXCERPT.lower():
-            raise ValueError("固定した出力はredactionのpatternと衝突してはいけません")
+            raise ValueError("固定した出力は伏せ字化のパターンと衝突してはいけません")
 
 
 def observe_output(identifier, repository):
@@ -147,16 +147,16 @@ def observe_output(identifier, repository):
     確認する。fixture側の観測であり、Coreの`verify`の実行ではない。"""
     executable = repository / COMMAND_PATH
     if not (executable.is_file() and os.access(executable, os.X_OK)):
-        raise ValueError("command fileは通常の実行可能fileである必要があります")
+        raise ValueError("コマンドのファイルは通常の実行可能なファイルである必要があります")
     completed = subprocess.run([str(executable)], cwd=repository, capture_output=True, timeout=60)
     command_exit = CASES[identifier][0]
     if completed.returncode != command_exit:
-        raise ValueError("commandの終了コードが審査済み期待値と異なります")
+        raise ValueError("コマンドの終了コードがレビュー済みの期待値と異なります")
     for stream in (completed.stdout, completed.stderr):
         if len(stream) <= LIMIT:
-            raise ValueError("commandが抜粋の上限を超えませんでした")
+            raise ValueError("コマンドが抜粋の上限を超えませんでした")
         if stream[-LIMIT:].decode("utf-8") != EXCERPT:
-            raise ValueError("生成した末尾がreview済みの抜粋と異なります")
+            raise ValueError("生成した末尾がレビュー済みの抜粋と異なります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -175,22 +175,22 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
+                raise ValueError("起動条件または完全結果がレビュー済みの期待値と異なります")
             command = result["commands"][0]
             if not (command["stdoutTruncated"] and command["stderrTruncated"]):
-                raise ValueError("上限を超えるstreamは切り詰めflagを立てる必要があります")
+                raise ValueError("上限を超えるストリームは切り詰めのフラグを立てる必要があります")
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             for name, path in files.items():
                 if path.is_symlink() or path.read_bytes() != inputs[name]:
-                    raise ValueError("入力が審査済みcorpusと異なります")
+                    raise ValueError("入力がレビュー済みのcorpusと異なります")
                 if bool(path.stat().st_mode & 0o111) != (name in executables(identifier)):
-                    raise ValueError(f"{name}の実行bitが審査済み入力と異なります")
+                    raise ValueError(f"{name}の実行ビットがレビュー済みの入力と異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-verify-output-") as temporary:
                 for run in range(2):
@@ -202,15 +202,15 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
                     derived = digest_crosscheck.canonical_bytes(digest_crosscheck.build(repository))
                     if digest_crosscheck.digest(derived) != context_digest(identifier):
-                        raise ValueError("参照計算どうしでtargetのDigestが一致しません")
+                        raise ValueError("参照計算どうしで検証対象のハッシュ値が一致しません")
                     if run == 0:
                         observe_output(identifier, repository)
                     if compare_state(effects["after"], observe(repository, external)):
-                        raise ValueError("commandの観測でfixtureの状態が変わりました")
+                        raise ValueError("コマンドの観測でfixtureの状態が変わりました")
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError,
                 subprocess.SubprocessError) as error:

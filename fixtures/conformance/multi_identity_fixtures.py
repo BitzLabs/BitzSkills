@@ -176,17 +176,17 @@ def check_single_cause(identifier, repository):
     declared = web["frontmatter"].get("relations", {})
     if variant == "golden":
         if "api::REQ-009" in known or set(declared) != {"refines"}:
-            raise ValueError("goldenの変種は解決できるrelationだけを持つ必要があります")
+            raise ValueError("goldenの種類は解決できる関係だけを持つ必要があります")
     elif variant == "unqualified":
         if declared != {"refines": ["REQ-001"]} or "web::REQ-001" in known:
-            raise ValueError("非修飾の変種はweb内に解決先を持ってはいけません")
+            raise ValueError("非修飾の種類は`web`内に解決先を持ってはいけません")
         if web["frontmatter"].get("tests") or web["frontmatter"].get("implements"):
-            raise ValueError("非修飾の変種は2つ目の原因を持ってはいけません")
+            raise ValueError("非修飾の種類は2つ目の原因を持ってはいけません")
     else:
         if declared.get("requires") != ["api::TECH-999"] or "api::TECH-999" in known:
-            raise ValueError("不在targetの変種は、存在workspaceの不在文書を指す必要があります")
+            raise ValueError("不在の参照先の種類は、存在するワークスペースの不在の文書を指す必要があります")
         if "api" not in workspaces:
-            raise ValueError("不在targetの変種は、存在するworkspaceを修飾に使う必要があります")
+            raise ValueError("不在の参照先の種類は、存在するワークスペースを修飾に使う必要があります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -204,17 +204,17 @@ def validate(root=HERE, identifiers=None):
             for key, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[key].validate(value)
             if manifest != reviewed_manifest(identifier):
-                raise ValueError("起動条件が審査済み期待値と異なります")
+                raise ValueError("起動条件がレビュー済みの期待値と異なります")
             if result != reviewed_result(identifier):
-                raise ValueError("完全結果が審査済み期待値と異なります")
+                raise ValueError("完全結果がレビュー済みの期待値と異なります")
             inputs = multi_reference.reviewed_inputs(CASES[identifier][0])
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[key]
                                                 for key, p in files.items()):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-multi-identity-") as temporary:
                 for run in range(2):
@@ -226,7 +226,7 @@ def validate(root=HERE, identifiers=None):
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
                     check_single_cause(identifier, repository)
             prepared.append(identifier)

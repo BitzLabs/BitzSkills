@@ -11,7 +11,7 @@
 [ADR-048](../docs/02.設計書/10_決定記録/ADR-048_適合fixtureの生成入力とGit構造operationを確定する.md)が
 Gate Aの認定に求める規模の検証も、同じチェックアウトで実行する。`uv run`で実行する。
 
-`HEAD`から独立したクローンを2つ作り、それぞれで統合検証と規模の検証を1回ずつ実行する。同じチェックアウトで2回実行すると、
+`HEAD`から独立したクローンを2つ作り、それぞれで監査と規模の検証を1回ずつ実行する。同じチェックアウトで2回実行すると、
 1回目が残したファイルが2回目の入力になり得るためである。作業ツリーにコミットされていない変更があれば実行しない。
 """
 import hashlib
@@ -38,8 +38,8 @@ def worktree_errors():
     """作業ツリーが`HEAD`と同じであることを確かめる。未追跡のファイルも変更として数える。"""
     status = git("status", "--porcelain", "--untracked-files=all")
     if status.returncode != 0:
-        return [status.stderr.strip() or "git statusが失敗しました"]
-    return ["作業treeにcommitされていない変更があります"] if status.stdout else []
+        return [status.stderr.strip() or "`git status`が失敗しました"]
+    return ["作業ツリーにコミットされていない変更があります"] if status.stdout else []
 
 
 def checkout(commit, directory):
@@ -47,7 +47,7 @@ def checkout(commit, directory):
                       (("checkout", "--quiet", "--detach", commit), directory)):
         completed = git(*args, cwd=cwd)
         if completed.returncode != 0:
-            raise RuntimeError(completed.stderr.strip() or f"git {args[0]}が失敗しました")
+            raise RuntimeError(completed.stderr.strip() or f"`git {args[0]}`が失敗しました")
 
 
 def run(uv, script, cwd, timeout):
@@ -65,40 +65,40 @@ def scale_body(stdout):
 def judge(conformance, scale):
     """チェックアウトごとの実行結果から、認定を妨げる理由を列挙する。空なら認定できる。
 
-    統合検証は、エラーのある検査がなく、未完了の証拠がこのコマンドの認定する1項目だけで、
+    監査は、エラーのある検査がなく、未完了の証拠がこのコマンドの認定する1項目だけで、
     全チェックアウトのレポートがバイト列として一致することを求める。規模の検証は全チェックアウトで成功し、所要時間を除いて一致することを求める。
     """
     errors = []
     if len(conformance) != CHECKOUTS or len(scale) != CHECKOUTS:
-        return [f"checkoutは{CHECKOUTS}つ必要です"]
+        return [f"チェックアウトは{CHECKOUTS}つ必要です"]
     for index, result in enumerate(conformance, 1):
         try:
             report = json.loads(result["stdout"])
             failed = sorted(name for name, check in report["checks"].items() if check.get("errors"))
             pending = report["pending"]
         except (ValueError, KeyError, TypeError, AttributeError):
-            errors.append(f"統合検証{index}: reportの形式が不正です")
+            errors.append(f"監査{index}: レポートの形式が不正です")
             continue
         if failed:
-            errors.append(f"統合検証{index}: errorのある検査があります（{', '.join(failed)}）")
+            errors.append(f"監査{index}: エラーのある検査があります（{', '.join(failed)}）")
         if pending != [CERTIFIED]:
-            errors.append(f"統合検証{index}: このcommandで認定できない未完了の証拠があります")
+            errors.append(f"監査{index}: このコマンドで認定できない未完了の証拠があります")
         if result["exitCode"] != 1:
-            errors.append(f"統合検証{index}: 終了コードが1ではありません")
+            errors.append(f"監査{index}: 終了コードが1ではありません")
     if len({result["stdout"] for result in conformance}) != 1:
-        errors.append("統合検証のreportがcheckout間でbyte一致しません")
+        errors.append("監査のレポートがチェックアウト間でバイト一致しません")
     bodies = []
     for index, result in enumerate(scale, 1):
         try:
             body = scale_body(result["stdout"])
         except (ValueError, AttributeError):
-            errors.append(f"scale検証{index}: reportの形式が不正です")
+            errors.append(f"規模の検証{index}: レポートの形式が不正です")
             continue
         bodies.append(body)
         if result["exitCode"] != 0 or body.get("status") != "Passed" or body.get("errors"):
-            errors.append(f"scale検証{index}: 成功していません")
+            errors.append(f"規模の検証{index}: 成功していません")
     if len(bodies) == CHECKOUTS and bodies[0] != bodies[1]:
-        errors.append("scale検証の結果がcheckout間で一致しません")
+        errors.append("規模の検証の結果がチェックアウト間で一致しません")
     return errors
 
 
@@ -122,10 +122,10 @@ def main():
     uv = shutil.which("uv")
     errors = worktree_errors()
     if uv is None:
-        errors.append("uvが見つかりません")
+        errors.append("`uv`が見つかりません")
     head = git("rev-parse", "--verify", "HEAD")
     if head.returncode != 0:
-        errors.append("HEADのcommitがありません")
+        errors.append("`HEAD`のコミットがありません")
     commit = head.stdout.strip() or None
     conformance, scale = [], []
     if not errors:

@@ -150,12 +150,12 @@ def check_limits(inputs):
     full = sum(len(body.encode()) for body in bodies.values())
     standard = sum(len(bodies[identifier].encode()) for identifier in ("REQ-001", "TECH-001"))
     if full <= HARD_LIMIT_BYTES:
-        raise ValueError("fullの提示が1 MiBのhard limitを超えていません")
+        raise ValueError("詳細度`full`の提示が1 MiBの絶対上限を超えていません")
     if standard >= HARD_LIMIT_BYTES:
-        raise ValueError("標準の提示はhard limit内に収まる必要があります")
+        raise ValueError("詳細度`standard`の提示は絶対上限内に収まる必要があります")
     for path, payload in inputs.items():
         if path.endswith(".md") and len(payload) >= HARD_LIMIT_BYTES:
-            raise ValueError("SPEC file 1件は1 MiBの入力上限を下回る必要があります")
+            raise ValueError("仕様文書のファイル1件は1 MiBの入力上限を下回る必要があります")
     if len(bodies) > 100:
         raise ValueError("文書数は設定した閉包の上限内に収まる必要があります")
 
@@ -176,22 +176,22 @@ def validate(root=HERE, identifiers=None):
             validators[name].validate(value)
         canonical = (fixture / "expected/context.canonical.json").read_bytes()
         if canonical.endswith(b"\n") or canonical.startswith(b"\xef\xbb\xbf"):
-            raise ValueError("Canonical JSONはBOMと末尾改行のないUTF-8である必要があります")
+            raise ValueError("正規JSONはBOMと末尾改行のないUTF-8である必要があります")
         if manifest != reviewed_manifest():
-            raise ValueError("起動条件が審査済み期待値と異なります")
+            raise ValueError("起動条件がレビュー済みの期待値と異なります")
         if result != reviewed_result(digest_reference.digest(canonical)):
-            raise ValueError("完全結果が審査済み期待値と異なります")
+            raise ValueError("完全結果がレビュー済みの期待値と異なります")
         if result["documents"] or result["constraintLedger"]["statements"]:
-            raise ValueError("非成功のContextはBundleの材料を返してはいけません")
+            raise ValueError("非成功のコンテキストはコンテキスト一式の材料を返してはいけません")
         inputs = reviewed_inputs()
         check_limits(inputs)
         files = {p.relative_to(fixture / "repo").as_posix(): p
                  for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
         if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                             for name, p in files.items()):
-            raise ValueError("入力が審査済みcorpusと異なります")
+            raise ValueError("入力がレビュー済みのcorpusと異なります")
         if effects["before"] != effects["after"]:
-            raise ValueError("read-only期待値が書込みを許しています")
+            raise ValueError("読取り専用の期待値が書込みを許しています")
         previous = None
         with tempfile.TemporaryDirectory(prefix="bitz-projection-limit-") as temporary:
             for run in range(2):
@@ -203,17 +203,17 @@ def validate(root=HERE, identifiers=None):
                     path.mkdir()
                 actual = observe(repository, external)
                 if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                    raise ValueError("隔離setupが固定snapshotと異なります")
+                    raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                 previous = actual
                 literal = digest_reference.canonical_bytes(reviewed_digest_input())
                 derived = digest_crosscheck.canonical_bytes(digest_crosscheck.build(repository))
                 if literal != derived:
-                    raise ValueError("reference AとBのCanonical JSONが一致しません")
+                    raise ValueError("参照計算AとBの正規JSONが一致しません")
                 if literal != canonical:
-                    raise ValueError("commitしたCanonical JSONが参照計算と異なります")
+                    raise ValueError("コミットした正規JSONが参照計算と異なります")
                 order = [document["id"] for document in json.loads(derived.decode())["documents"]]
                 if order != ORDER:
-                    raise ValueError("Digestの文書がreview済みの順序ではありません")
+                    raise ValueError("ハッシュ値の材料の文書がレビュー済みの順序ではありません")
         prepared.append(IDENTIFIER)
     except (OSError, ValueError, KeyError, TypeError, ValidationError,
             subprocess.SubprocessError) as error:

@@ -65,7 +65,7 @@ def read_block(lines, index, indent):
         if current < indent:
             break
         if current > indent:
-            raise ValueError("fixture YAMLのindentが想定と異なります")
+            raise ValueError("fixtureのYAMLの字下げが想定と異なります")
         key, _, rest = line.strip().partition(":")
         if rest.strip():
             mapping[key] = _value(rest)
@@ -83,7 +83,7 @@ def read_yaml(text):
 
 def split_document(text):
     if not text.startswith("---\n"):
-        raise ValueError("fixture文書はFrontmatter blockで始まる必要があります")
+        raise ValueError("fixtureの文書はフロントマターのブロックで始まる必要があります")
     end = text.index("\n---\n", 3)
     return read_yaml(text[4:end + 1]), text[end + 5:]
 
@@ -115,7 +115,7 @@ def unescape_text(text):
         if char == "\\":
             index += 1
             if index == len(text) or text[index] not in '[]\\`"':
-                raise ValueError("参照corpusに未知または末尾のescapeがあります")
+                raise ValueError("参照corpusに未知または末尾のエスケープがあります")
             out.append(text[index])
         elif char == "`":
             start = index
@@ -133,7 +133,7 @@ def unescape_text(text):
                     out.append(text[content_start:run_start])
                     break
             else:
-                raise ValueError("参照corpusに閉じていないcode spanがあります")
+                raise ValueError("参照corpusに閉じていないコードスパンがあります")
             continue
         else:
             out.append(char)
@@ -148,7 +148,7 @@ def read_extensions(raw):
     entries, cursor = [], 0
     for match in EXTENSION.finditer(raw):
         if match.start() != cursor:
-            raise ValueError("参照corpusに未対応のextensionがあります")
+            raise ValueError("参照corpusに未対応の拡張タグがあります")
         value = match.group("value")
         # 引用符付きの値はエスケープだけを解除する。テキストと異なり、その中の空白は不透明に扱う。
         if value is not None:
@@ -156,7 +156,7 @@ def read_extensions(raw):
         entries.append({"namespace": match.group("namespace"), "term": match.group("term"), "value": value})
         cursor = match.end()
     if cursor != len(raw):
-        raise ValueError("参照corpusに未対応のextensionがあります")
+        raise ValueError("参照corpusに未対応の拡張タグがあります")
     return entries
 
 
@@ -176,7 +176,7 @@ def read_statements(body):
         reason = match.group("reason")
         # should-modality = "[SHOULD]", [ SP, reason ]。MUSTとMAYはreasonを取らない。
         if reason and match.group("modality") != "SHOULD":
-            raise ValueError(f"[REASON]は[SHOULD]にだけ使えます: {line}")
+            raise ValueError(f"`[REASON]`は`[SHOULD]`にだけ使えます: {line}")
         statements.append({
             "id": match.group("id"),
             "actor": match.group("actor"),
@@ -257,7 +257,7 @@ def closure(documents, root, purpose):
 
     def reach(identifier, distance):
         if identifier not in documents:
-            raise ValueError("強いedgeがこのcorpusの外を指しています")
+            raise ValueError("強いエッジがこのcorpusの外を指しています")
         if identifier not in reached:
             reached[identifier] = distance
             frontier.append(identifier)
@@ -316,7 +316,7 @@ def closure(documents, root, purpose):
                     continue
                 touches = identifier in reached or target in reached or owner(target) in reached
                 if touches and (identifier, key, target) not in accounted:
-                    raise ValueError("corpusに審査済み閉包の外の強いedgeがあります")
+                    raise ValueError("corpusにレビュー済みの閉包の外の強いエッジがあります")
     ordered = sorted(reached, key=lambda identifier: (reached[identifier],
                                                       KIND_RANK[documents[identifier]["kind"]], identifier))
     return ordered, advisory
@@ -488,7 +488,7 @@ def _emit(value, out):
             _emit(value[key], out)
         out += b"}"
     else:
-        raise TypeError("Digest材料に未対応の値があります")
+        raise TypeError("ハッシュ値の材料に未対応の値があります")
 
 
 def canonical_bytes(value):

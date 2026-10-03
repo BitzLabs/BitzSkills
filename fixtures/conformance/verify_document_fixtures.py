@@ -109,9 +109,9 @@ def check_document_binding(result):
     if target["statements"]:
         raise ValueError("規範文のないTECHは規範文を返してはいけません")
     if not target["bindingRefs"]:
-        raise ValueError("文書単位のtestでもbindingを作る必要があります")
+        raise ValueError("文書単位のテストでもテスト割当てを作る必要があります")
     if result["commands"][0]["covers"] != ["TECH-001"]:
-        raise ValueError("文書単位のbindingは文書自身を対象にする必要があります")
+        raise ValueError("文書単位のテスト割当ては文書自身を対象にする必要があります")
 
 
 def validate(root=HERE, identifiers=None):
@@ -130,21 +130,21 @@ def validate(root=HERE, identifiers=None):
         for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
             validators[name].validate(value)
         if manifest != reviewed_manifest() or result != reviewed_result():
-            raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
+            raise ValueError("起動条件または完全結果がレビュー済みの期待値と異なります")
         check_document_binding(result)
         inputs = reviewed_inputs()
         frontmatter, body = digest_crosscheck.split_document(inputs[TECH_PATH].decode())
         Draft202012Validator({"$ref": "#/$defs/techFrontmatter",
                               "$defs": schema["$defs"]}).validate(frontmatter)
         if digest_crosscheck.read_statements(digest_crosscheck.normalize_body(body)):
-            raise ValueError("審査済みの原因には規範文のないTECHが必要です")
+            raise ValueError("レビュー済みの原因には規範文のないTECHが必要です")
         files = {p.relative_to(fixture / "repo").as_posix(): p
                  for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
         if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                             for name, p in files.items()):
-            raise ValueError("入力が審査済みcorpusと異なります")
+            raise ValueError("入力がレビュー済みのcorpusと異なります")
         if effects["before"] != effects["after"]:
-            raise ValueError("read-only期待値が書込みを許しています")
+            raise ValueError("読取り専用の期待値が書込みを許しています")
         previous = None
         with tempfile.TemporaryDirectory(prefix="bitz-verify-document-") as temporary:
             for run in range(2):
@@ -156,12 +156,12 @@ def validate(root=HERE, identifiers=None):
                     path.mkdir()
                 actual = observe(repository, external)
                 if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                    raise ValueError("隔離setupが固定snapshotと異なります")
+                    raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                 previous = actual
                 derived = digest_crosscheck.canonical_bytes(
                     digest_crosscheck.build(repository, root="TECH-001"))
                 if derived != digest_reference.canonical_bytes(reviewed_digest_input()):
-                    raise ValueError("reference AとBのCanonical JSONが一致しません")
+                    raise ValueError("参照計算AとBの正規JSONが一致しません")
         prepared.append(IDENTIFIER)
     except (OSError, ValueError, KeyError, TypeError, ValidationError,
             subprocess.SubprocessError) as error:

@@ -3,14 +3,14 @@
 
 def merge_reports(reports, groups, identifiers):
     if len(reports) != len(groups):
-        raise ValueError("分割reportの件数が一致しません")
+        raise ValueError("分割したレポートの件数が一致しません")
     rows = {}
     environment = None
     for report, group in zip(reports, groups):
         if not isinstance(report, dict) or set(report) != {"core", "environment", "fixtures", "counts", "allPassed"}:
-            raise ValueError("適合reportの外形が不正です")
+            raise ValueError("適合レポートの外形が不正です")
         if not isinstance(report["core"], str) or not isinstance(report["environment"], dict):
-            raise ValueError("適合reportの実行環境が不正です")
+            raise ValueError("適合レポートの実行環境が不正です")
         if environment is None:
             environment = report["environment"]
         elif environment != report["environment"]:
@@ -25,7 +25,7 @@ def merge_reports(reports, groups, identifiers):
             if not isinstance(row["differences"], list) or not all(isinstance(x, str) for x in row["differences"]):
                 raise ValueError("fixtureの差分が不正です")
             if row["result"] == "passed" and row["differences"]:
-                raise ValueError("差分のあるfixtureをpassedにできません")
+                raise ValueError("差分のあるfixtureを`passed`にできません")
             if row["id"] in rows:
                 raise ValueError("fixture IDが重複しています")
             rows[row["id"]] = row
@@ -33,7 +33,7 @@ def merge_reports(reports, groups, identifiers):
         passed = bool(entries) and counts["passed"] == len(entries)
         if (report["counts"] != counts or any(type(report["counts"][k]) is not int for k in counts)
                 or type(report["allPassed"]) is not bool or report["allPassed"] != passed):
-            raise ValueError("適合reportの集計が実結果と一致しません")
+            raise ValueError("適合レポートの集計が実結果と一致しません")
     if set(rows) != set(identifiers) or len(identifiers) != len(rows):
         raise ValueError("全fixtureの欠落、余分または重複があります")
     counts = {status: sum(row["result"] == status for row in rows.values())

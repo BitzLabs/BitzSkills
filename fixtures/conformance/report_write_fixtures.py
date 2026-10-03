@@ -96,11 +96,11 @@ def reviewed_effects(identifier, state):
 
 def check_report_contract(identifier, manifest, effects, result):
     if "--report" not in manifest["invocation"]["argv"]:
-        raise ValueError("この群は--reportを渡す必要があります")
+        raise ValueError("この群は`--report`を渡す必要があります")
     expected = manifest["expect"]["reportFileCount"]
     if identifier == "SINGLE-072":
         if effects["policy"] != "read-only" or "report" in effects or expected != 0:
-            raise ValueError("保存に失敗した場合はtreeを変えてはいけません")
+            raise ValueError("保存に失敗した場合は木構造を変えてはいけません")
         source = report_absent_fixtures.reviewed_result(CASES[identifier][3])
         keys = ("status", "diagnostics")
         if {k: v for k, v in result.items() if k not in keys} != {
@@ -108,24 +108,24 @@ def check_report_contract(identifier, manifest, effects, result):
             raise ValueError("元の結果は端末に残る必要があります")
         if ([d["code"] for d in result["diagnostics"]]
                 != [d["code"] for d in source["diagnostics"]] + ["SPEC-REPORT-WRITE-001"]):
-            raise ValueError("保存の失敗は元のDiagnosticに追加する必要があります")
+            raise ValueError("保存の失敗は元の診断に追加する必要があります")
         if not source["diagnostics"]:
-            raise ValueError("このcaseは既にDiagnosticを持つ結果から始める必要があります")
+            raise ValueError("このケースは既に診断を持つ結果から始める必要があります")
         return
     if effects["policy"] != "explicit-report" or effects["report"]["createdCount"] != expected:
-        raise ValueError("作成したreportの件数がmanifestと異なります")
+        raise ValueError("作成したレポートの件数がマニフェストと異なります")
     if effects["report"]["temporaryFilesRemaining"] != 0:
-        raise ValueError("原子的な作成は一時fileを残してはいけません")
+        raise ValueError("原子的な作成は一時ファイルを残してはいけません")
     operation = manifest["invocation"]["argv"][0]
     sample = f"20000101T000000Z-{operation}.json"
     if not re.fullmatch(effects["report"]["namePattern"], sample):
-        raise ValueError("review済みの名前のpatternが妥当なreport名を拒否しています")
+        raise ValueError("レビュー済みの名前のパターンが妥当なレポート名を拒否しています")
     for bad in (f"{operation}.json", f"20000101T000000Z-{operation}-0.json",
                 f"20000101T000000Z-context.json", f"20000101T000000Z-{operation}.json.tmp"):
         if re.fullmatch(effects["report"]["namePattern"], bad):
-            raise ValueError("review済みの名前のpatternが不正なreport名を受理しています")
+            raise ValueError("レビュー済みの名前のパターンが不正なレポート名を受理しています")
     if EXISTING_REPORT not in effects["before"]["repository"]:
-        raise ValueError("既存のreportがないと排他的な作成を検査できません")
+        raise ValueError("既存のレポートがないと排他的な作成を検査できません")
 
 
 def validate(root=HERE, identifiers=None):
@@ -144,18 +144,18 @@ def validate(root=HERE, identifiers=None):
             for name, value in (("manifest", manifest), ("result", result), ("side-effects", effects)):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
-                raise ValueError("起動条件または完全結果が審査済み期待値と異なります")
+                raise ValueError("起動条件または完全結果がレビュー済みの期待値と異なります")
             if effects != reviewed_effects(identifier, effects["before"]):
-                raise ValueError("副作用の期待値が審査済みのpolicyと異なります")
+                raise ValueError("副作用の期待値がレビュー済みのポリシーと異なります")
             check_report_contract(identifier, manifest, effects, result)
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p
                      for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                 for name, p in files.items()):
-                raise ValueError("入力が審査済みcorpusと異なります")
+                raise ValueError("入力がレビュー済みのcorpusと異なります")
             if effects["before"] != effects["after"]:
-                raise ValueError("既に存在したpathはすべて不変である必要があります")
+                raise ValueError("既に存在したパスはすべて不変である必要があります")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-report-write-") as temporary:
                 for run in range(2):
@@ -165,15 +165,15 @@ def validate(root=HERE, identifiers=None):
                     reports = repository / REPORT_DIRECTORY
                     if identifier == "SINGLE-072":
                         if not reports.is_file():
-                            raise ValueError("blockedのcaseにはreport pathにfileが必要です")
+                            raise ValueError("`blocked`のケースにはレポートのパスにファイルが必要です")
                     elif not reports.is_dir():
-                        raise ValueError("report directoryは実行前に存在する必要があります")
+                        raise ValueError("レポートのディレクトリは実行前に存在する必要があります")
                     external = {name: sandbox / name for name in ("home", "cache", "temporary")}
                     for path in external.values():
                         path.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError,

@@ -58,7 +58,7 @@ class Series:
 def load_json(path: Path) -> dict:
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
-        raise BenchmarkError(f"JSONのrootがobjectではありません: {path}")
+        raise BenchmarkError(f"JSONの最上位がオブジェクトではありません: {path}")
     return value
 
 
@@ -178,11 +178,11 @@ def comparison_mismatches(environment: dict, manifest: dict) -> list[str]:
 
 def resolve_cgroup_path(control_group: str, root: Path = CGROUP_ROOT) -> Path:
     if not control_group.startswith("/"):
-        raise BenchmarkError("ControlGroupが絶対pathではありません")
+        raise BenchmarkError("`ControlGroup`が絶対パスではありません")
     resolved_root = root.resolve()
     resolved = (resolved_root / control_group.lstrip("/")).resolve()
     if resolved != resolved_root and resolved_root not in resolved.parents:
-        raise BenchmarkError("ControlGroupがcgroup rootの外を指しています")
+        raise BenchmarkError("`ControlGroup`がcgroupのルートの外を指しています")
     return resolved
 
 
@@ -216,7 +216,7 @@ def _signal_fifo(path: Path, deadline: float) -> None:
         finally:
             os.close(descriptor)
         return
-    raise BenchmarkError(f"cgroup wrapperのFIFOが待機状態になりません: {path.name}")
+    raise BenchmarkError(f"cgroupのラッパーのFIFOが待機状態になりません: {path.name}")
 
 
 class CgroupExecutor:
@@ -226,7 +226,7 @@ class CgroupExecutor:
 
     def _requirements(self) -> None:
         if platform.system() != "Linux":
-            raise BenchmarkError("性能runnerはLinux専用です")
+            raise BenchmarkError("性能ランナーはLinux専用です")
         if not Path("/sys/fs/cgroup/cgroup.controllers").is_file():
             raise BenchmarkError("cgroup v2がありません")
         for command in ("systemd-run", "systemctl"):
@@ -234,9 +234,9 @@ class CgroupExecutor:
                 raise BenchmarkError(f"{command}がありません")
         state = command_output(["systemctl", "--user", "is-system-running"])
         if state not in ("running", "degraded"):
-            raise BenchmarkError("user systemd managerが実行中ではありません")
+            raise BenchmarkError("ユーザーのsystemdのマネージャーが実行中ではありません")
         if not self.wrapper.is_file():
-            raise BenchmarkError("cgroup wrapperがありません")
+            raise BenchmarkError("cgroupのラッパーがありません")
 
     def measure(self, argv: list[str], cwd: Path, environment: dict[str, str]) -> Measurement:
         self._requirements()
@@ -259,7 +259,7 @@ class CgroupExecutor:
             systemd.extend(["/bin/sh", str(self.wrapper), str(control), *argv])
             started = subprocess.run(systemd, capture_output=True, text=True, timeout=30)
             if started.returncode != 0:
-                raise BenchmarkError(started.stderr.strip() or "transient unitを開始できません")
+                raise BenchmarkError(started.stderr.strip() or "一時ユニットを開始できません")
 
             deadline = time.monotonic() + self.timeout_seconds
             cgroup = None
@@ -274,9 +274,9 @@ class CgroupExecutor:
                             break
                     time.sleep(0.01)
                 if cgroup is None:
-                    raise BenchmarkError("memory controller付きの専用cgroupを作成できません")
+                    raise BenchmarkError("メモリコントローラー付きの専用cgroupを作成できません")
                 if properties.get("PrivateNetwork") != "yes":
-                    raise BenchmarkError("transient unitのnetworkが隔離されていません")
+                    raise BenchmarkError("一時ユニットのネットワークが隔離されていません")
 
                 baseline_peak = int((cgroup / "memory.peak").read_text().strip())
                 start_ns = time.monotonic_ns()
@@ -284,13 +284,13 @@ class CgroupExecutor:
                 status_path = control / "status"
                 while not status_path.is_file():
                     if time.monotonic() >= deadline:
-                        raise BenchmarkError("性能caseがtimeoutしました")
+                        raise BenchmarkError("性能ケースがタイムアウトしました")
                     time.sleep(0.005)
                 elapsed_ms = (time.monotonic_ns() - start_ns) / 1_000_000
                 final_peak = int((cgroup / "memory.peak").read_text().strip())
                 processes = [line for line in (cgroup / "cgroup.procs").read_text().splitlines() if line]
                 if len(processes) != 1:
-                    raise BenchmarkError("性能case終了後に子processが残っています")
+                    raise BenchmarkError("性能ケースの終了後に子プロセスが残っています")
                 return Measurement(
                     wall_ms=elapsed_ms,
                     peak_rss_bytes=max(0, final_peak - baseline_peak),
@@ -416,7 +416,7 @@ def generate_datasets(checkout: Path, destination: Path, plan: dict) -> tuple[di
         )
         report = json.loads(generated.stdout)
         if report["datasetId"] != identifier or report["treeDigest"] != manifest["expectedTreeDigest"]:
-            raise BenchmarkError(f"{identifier}の生成結果がmanifestと一致しません")
+            raise BenchmarkError(f"{identifier}の生成結果がマニフェストと一致しません")
         roots[identifier] = output
         manifests[identifier] = manifest
         digests[identifier] = report["treeDigest"]
@@ -460,7 +460,7 @@ def prepare_checkout(commit: str, destination: Path) -> Path:
              str(destination / CORE_PROJECT)], cwd=destination, timeout=300)
     bitz = destination / CORE_PROJECT / ".venv/bin/bitz"
     if not bitz.is_file():
-        raise BenchmarkError("fresh checkoutにbitz実行体を構築できません")
+        raise BenchmarkError("新しいチェックアウトに`bitz`の実行体を構築できません")
     return bitz
 
 
@@ -474,7 +474,7 @@ def validate_result_schema(result: dict, schema_path: Path = RESULT_SCHEMA_PATH)
     validator = Draft202012Validator(load_json(schema_path), format_checker=FormatChecker())
     errors = sorted(validator.iter_errors(result), key=lambda error: list(error.path))
     if errors:
-        raise BenchmarkError(f"測定結果がschemaに適合しません: {errors[0].message}")
+        raise BenchmarkError(f"測定結果がスキーマに適合しません: {errors[0].message}")
 
 
 def validate_accepted_baseline(
@@ -485,57 +485,57 @@ def validate_accepted_baseline(
 ) -> dict:
     """受入済みのベースラインが測定値から独立に再計算できることを検査する。"""
     if result.get("environmentId") != environment_manifest.get("environmentId"):
-        raise BenchmarkError("baselineのenvironmentIdが基準環境manifestと一致しません")
+        raise BenchmarkError("ベースラインの`environmentId`が基準環境のマニフェストと一致しません")
     mismatches = comparison_mismatches(
         result.get("observedEnvironment", {}), environment_manifest)
     if result.get("comparability") != "comparable" or result.get("comparisonMismatches") != []:
-        raise BenchmarkError("baselineが比較可能な測定結果ではありません")
+        raise BenchmarkError("ベースラインが比較可能な測定結果ではありません")
     if mismatches:
         raise BenchmarkError(
-            f"baselineの観測環境が基準環境manifestと一致しません: {', '.join(mismatches)}")
+            f"ベースラインの観測環境が基準環境のマニフェストと一致しません: {', '.join(mismatches)}")
 
     expected_digests = {
         identifier: manifest["expectedTreeDigest"]
         for identifier, manifest in sorted(dataset_manifests.items())
     }
     if result.get("datasetDigests") != expected_digests:
-        raise BenchmarkError("baselineのdataset digestが現在のmanifestと一致しません")
+        raise BenchmarkError("ベースラインのデータセットのハッシュ値が現在のマニフェストと一致しません")
 
     cases = result.get("cases", [])
     expected_ids = [case["id"] for case in plan["cases"]]
     if [case.get("id") for case in cases] != expected_ids:
-        raise BenchmarkError("baselineのcase集合または順序がbenchmark planと一致しません")
+        raise BenchmarkError("ベースラインのケースの集合または順序がベンチマークの計画と一致しません")
 
     for definition, measured in zip(plan["cases"], cases, strict=True):
         identifier = definition["id"]
         wall = measured.get("wallMs", [])
         peak = measured.get("peakRssBytes", [])
         if measured.get("status") != "passed":
-            raise BenchmarkError(f"baselineの{identifier}がpassedではありません")
+            raise BenchmarkError(f"ベースラインの{identifier}が`passed`ではありません")
         if any(code != 0 for code in measured.get("exitCodes", [])):
-            raise BenchmarkError(f"baselineの{identifier}に非0の終了コードがあります")
+            raise BenchmarkError(f"ベースラインの{identifier}に非0の終了コードがあります")
         if measured.get("medianWallMs") != statistics.median(wall):
-            raise BenchmarkError(f"baselineの{identifier}の中央値を再計算できません")
+            raise BenchmarkError(f"ベースラインの{identifier}の中央値を再計算できません")
         if measured.get("maximumPeakRssBytes") != max(peak):
-            raise BenchmarkError(f"baselineの{identifier}のpeak RSS最大値を再計算できません")
+            raise BenchmarkError(f"ベースラインの{identifier}のピークRSSの最大値を再計算できません")
         if measured["maximumPeakRssBytes"] > definition["maxPeakRssBytes"]:
-            raise BenchmarkError(f"baselineの{identifier}がmemory SLOを超過しています")
+            raise BenchmarkError(f"ベースラインの{identifier}がメモリのSLOを超過しています")
 
         if "baseline" not in definition:
             if measured["medianWallMs"] > definition["maxMedianWallMs"]:
-                raise BenchmarkError(f"baselineの{identifier}がelapsed time SLOを超過しています")
+                raise BenchmarkError(f"ベースラインの{identifier}が経過時間のSLOを超過しています")
             continue
 
         baseline_wall = measured.get("baselineWallMs", [])
         if any(code != 0 for code in measured.get("baselineExitCodes", [])):
-            raise BenchmarkError(f"baselineの{identifier}の比較commandが失敗しています")
+            raise BenchmarkError(f"ベースラインの{identifier}の比較コマンドが失敗しています")
         if measured.get("baselineMedianWallMs") != statistics.median(baseline_wall):
-            raise BenchmarkError(f"baselineの{identifier}の比較中央値を再計算できません")
+            raise BenchmarkError(f"ベースラインの{identifier}の比較の中央値を再計算できません")
         overhead = max(0.0, measured["medianWallMs"] - measured["baselineMedianWallMs"])
         if measured.get("derivedOverheadMs") != overhead:
-            raise BenchmarkError(f"baselineの{identifier}のoverheadを再計算できません")
+            raise BenchmarkError(f"ベースラインの{identifier}のオーバーヘッドを再計算できません")
         if overhead > definition["maxDerivedOverheadMs"]:
-            raise BenchmarkError(f"baselineの{identifier}がoverhead SLOを超過しています")
+            raise BenchmarkError(f"ベースラインの{identifier}がオーバーヘッドのSLOを超過しています")
 
     return {
         "coreCommit": result["coreCommit"],
@@ -556,7 +556,7 @@ def isolation_probe(executor: CgroupExecutor) -> dict:
         )
         measurement = executor.measure([sys.executable, "-c", script], root, environment)
     if measurement.exit_code != 0:
-        raise BenchmarkError("PrivateNetwork内にloopback以外のinterfaceがあります")
+        raise BenchmarkError("`PrivateNetwork`内にループバック以外のインターフェースがあります")
     return {
         "networkDisabled": True,
         "memoryAccounting": "cgroup-v2-process-tree",
@@ -584,10 +584,10 @@ def probe() -> dict:
 
 def run(output: Path) -> tuple[dict, int]:
     if not clean(ROOT):
-        raise BenchmarkError("性能測定はcleanなcommit済みtreeから実行してください")
+        raise BenchmarkError("性能測定はクリーンなコミット済みの作業ツリーから実行してください")
     head = git("rev-parse", "--verify", "HEAD")
     if head.returncode != 0:
-        raise BenchmarkError("HEAD commitを取得できません")
+        raise BenchmarkError("`HEAD`のコミットを取得できません")
     commit = head.stdout.strip()
     plan = load_json(PLAN_PATH)
     manifest = load_json(PERFORMANCE / plan["environment"])
@@ -608,7 +608,7 @@ def run(output: Path) -> tuple[dict, int]:
             comparable=not mismatches,
         )
         if not clean(checkout):
-            raise BenchmarkError("fresh checkoutが測定後にdirtyです")
+            raise BenchmarkError("新しいチェックアウトが測定後にクリーンではありません")
         result = {
             "schemaVersion": "1.0",
             "startedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
@@ -633,10 +633,10 @@ def run(output: Path) -> tuple[dict, int]:
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Core 1.0性能runner")
+    parser = argparse.ArgumentParser(description="Core 1.0性能ランナー")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("probe", help="基準環境と隔離機能だけを検査する")
-    execute = commands.add_parser("run", help="全性能caseを逐次測定する")
+    execute = commands.add_parser("run", help="全性能ケースを逐次測定する")
     execute.add_argument("--output", required=True, type=Path)
     return parser.parse_args(argv)
 
@@ -656,7 +656,7 @@ def main(argv: list[str] | None = None) -> int:
         }, ensure_ascii=False, sort_keys=True, indent=2))
         return code
     except (BenchmarkError, OSError, ValueError, subprocess.SubprocessError) as error:
-        print(f"performance runner: {str(error).splitlines()[0]}", file=sys.stderr)
+        print(f"性能ランナー: {str(error).splitlines()[0]}", file=sys.stderr)
         return 1
 
 

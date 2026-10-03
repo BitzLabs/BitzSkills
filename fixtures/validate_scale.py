@@ -69,19 +69,19 @@ def validate_fixture(identifier):
     entries = multi_generator.emit(multi_generator.plan(dimension, value))
     totals = multi_generator.count(entries)
     if totals != dataset["dimensions"]:
-        errors.append("生成物のdimensionがdataset manifestと一致しません")
+        errors.append("生成物の次元がデータセットのマニフェストと一致しません")
     if totals[dimension] != value:
-        errors.append("狙ったdimensionの値が一致しません")
+        errors.append("狙った次元の値が一致しません")
     digest = tree_digest_bytes(entries)
     if digest != manifest["setup"]["generate"]["treeDigest"]:
-        errors.append("tree digestがmanifestと一致しません")
+        errors.append("`treeDigest`がマニフェストと一致しません")
     if tree_digest_bytes(multi_generator.emit(multi_generator.plan(dimension, value))) != digest:
         errors.append("2回の生成が一致しません")
     with tempfile.TemporaryDirectory(prefix="bitz-scale-") as temporary:
         sandbox = Path(temporary)
         result = expected_result(identifier, entries, sandbox)
         if multi_limit_fixtures.canonical_digest(result) != manifest["expect"]["resultDigest"]:
-            errors.append("期待結果のdigestがmanifestと一致しません")
+            errors.append("期待結果のハッシュ値がマニフェストと一致しません")
         if crosses:
             if result["status"] != "blocked" or result["workspaces"]:
                 errors.append("上限超過は部分結果を返しません")
@@ -95,10 +95,10 @@ def validate_fixture(identifier):
             run_sandbox.mkdir()
             states.append(observed_state(fixture, manifest, entries, run_sandbox))
         if states[0] != states[1]:
-            errors.append("隔離setupが2回で一致しません")
+            errors.append("隔離した準備手順の結果が2回で一致しません")
         state_digest = multi_limit_fixtures.canonical_digest(states[0])
         if state_digest != effects["stateDigest"]:
-            errors.append("副作用のstate digestが期待値と一致しません")
+            errors.append("副作用の`stateDigest`が期待値と一致しません")
     return {"fixtureId": identifier, "dimension": dimension, "value": value,
             "files": len(entries), "inputBytes": totals["inputBytes"],
             "treeDigest": digest, "errors": errors}

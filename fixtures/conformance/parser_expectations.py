@@ -14,17 +14,17 @@ def files(fixture, manifest):
     for check in manifest.get("parserChecks", []):
         relative, expected = check["path"], check["resultFile"]
         if relative in seen_paths or expected in seen_results:
-            raise ValueError("Parserの入力または期待値が重複しています")
+            raise ValueError("構文解析器の入力または期待値が重複しています")
         seen_paths.add(relative)
         seen_results.add(expected)
         for value in (relative, expected):
             parts = value.split("/")
             if value.startswith("/") or any(part in ("", ".", "..") for part in parts) or "\x00" in value:
-                raise ValueError("安全でないParserの参照です")
+                raise ValueError("安全でない構文解析器の参照です")
         path = fixture / expected
         if (not expected.startswith("expected/") or path.is_symlink() or not path.is_file()
                 or not path.resolve().is_relative_to((fixture / "expected").resolve())):
-            raise ValueError("Parserの期待値が存在しないか安全ではありません")
+            raise ValueError("構文解析器の期待値が存在しないか安全ではありません")
         yield relative, path
 
 
@@ -33,7 +33,7 @@ def validate_checks(fixture, manifest, repository):
         source = repository / relative
         if (source.is_symlink() or not source.is_file()
                 or not source.resolve().is_relative_to(repository.resolve())):
-            raise ValueError("Parserの入力が存在しないか安全ではありません")
+            raise ValueError("構文解析器の入力が存在しないか安全ではありません")
         text = source.read_bytes().decode("utf-8")
         fm, _ = digest_crosscheck.split_document(text)
         actual = []
@@ -43,7 +43,7 @@ def validate_checks(fixture, manifest, repository):
                 continue
             parsed = digest_crosscheck.read_statements(raw)
             if len(parsed) != 1:
-                raise ValueError("sourceの1行にはreview済みの規範文がちょうど1件必要です")
+                raise ValueError("ソースの1行にはレビュー済みの規範文がちょうど1件必要です")
             semantic = parsed[0]
             if semantic["activation"]["text"] is None:
                 del semantic["activation"]["text"]
@@ -53,4 +53,4 @@ def validate_checks(fixture, manifest, repository):
                            "unknownExtensions": [dict(entry) for entry in semantic["extensions"]], "untrustedText": True, "raw": raw})
         expected = json.loads(path.read_text())
         if expected != actual:
-            raise ValueError("完全なParser IRがreview済みのsource・意味の証拠と異なります")
+            raise ValueError("構文解析器の完全な意味中間表現がレビュー済みのソース・意味の証拠と異なります")

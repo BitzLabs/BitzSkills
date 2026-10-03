@@ -102,17 +102,17 @@ def validate(root=HERE, identifiers=None):
             manifest = json.loads((fixture / "manifest.json").read_text())
             validators["manifest"].validate(manifest)
             if manifest != reviewed_manifest(identifier):
-                raise ValueError("manifestが審査済みの起動と異なります")
+                raise ValueError("マニフェストがレビュー済みの起動と異なります")
             result = json.loads((fixture / "expected/check.json").read_text())
             validators["result"].validate(result)
             if result != reviewed_result(identifier):
-                raise ValueError("結果が審査済みの完全な期待値と異なります")
+                raise ValueError("結果がレビュー済みの完全な期待値と異なります")
             inputs = reviewed_inputs(identifier)
             actual_files = {p.relative_to(fixture / "repo").as_posix(): p for p in (fixture / "repo").rglob("*")
                             if p.is_file() or p.is_symlink()}
             if set(actual_files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name]
                                                       for name, p in actual_files.items()):
-                raise ValueError("入力が審査済みの単一原因と異なります")
+                raise ValueError("入力がレビュー済みの単一原因と異なります")
             fm = {"id": "REQ-001", "title": "文書の検査", "status": "draft" if identifier == "SINGLE-025" else "approved",
                   **CASES[identifier][1]}
             Draft202012Validator({"$ref": "#/$defs/reqFrontmatter", "$defs": fm_schema["$defs"]}).validate(fm)
@@ -120,11 +120,11 @@ def validate(root=HERE, identifiers=None):
                 Draft202012Validator({"$ref": "#/$defs/techFrontmatter", "$defs": fm_schema["$defs"]}).validate(
                     {"id": "TECH-001", "title": "前提技術", "status": "approved"})
             if identifier == "SINGLE-026" and (not Path("/bin/true").is_file() or not os.access("/bin/true", os.X_OK)):
-                raise ValueError("coverageのcaseには、Linuxのfixture hostに実行可能な/bin/trueが必要です")
+                raise ValueError("カバレッジのケースには、Linuxのfixtureのホストに実行可能な`/bin/true`が必要です")
             effects = json.loads((fixture / "side-effects.json").read_text())
             validators["side-effects"].validate(effects)
             if effects["before"] != effects["after"]:
-                raise ValueError("read-only期待値が書込みを許しています")
+                raise ValueError("読取り専用の期待値が書込みを許しています")
             previous = None
             with tempfile.TemporaryDirectory(prefix="bitz-trace-fixtures-") as temporary:
                 for run in range(2):
@@ -136,7 +136,7 @@ def validate(root=HERE, identifiers=None):
                         directory.mkdir()
                     actual = observe(repository, external)
                     if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
-                        raise ValueError("隔離setupが固定snapshotと異なります")
+                        raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
                     previous = actual
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError, subprocess.SubprocessError) as error:

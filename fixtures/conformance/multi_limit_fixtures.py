@@ -146,7 +146,7 @@ def reviewed_result(identifier, counts=None):
     if crosses:
         return blocked_result(identifier)
     if dimension == VERIFY_DIMENSION:
-        raise ValueError("binding境界の期待結果は別に扱う")
+        raise ValueError("テスト割当ての境界の期待結果は別に扱う")
     return passed_check_result(counts)
 
 
@@ -226,38 +226,38 @@ def check_passed_result(result, dataset):
     """期待結果の件数を、データセットのマニフェストの宣言値と突き合わせる。実寸の生成は要求しない。"""
     dimensions = dataset["dimensions"]
     if result["scope"] != "all-workspaces" or result["status"] != "passed" or result["diagnostics"]:
-        raise ValueError("境界内のcaseは遮断も警告も持ちません")
+        raise ValueError("境界内のケースは遮断も警告も持ちません")
     if len(result["workspaces"]) != dimensions["memberCount"] + 1:
-        raise ValueError("member結果の件数がcatalogと一致しません")
+        raise ValueError("メンバーの結果の件数がカタログと一致しません")
     if sum(entry["checkedDocumentCount"] for entry in result["workspaces"]) != dimensions["specFileCount"]:
-        raise ValueError("検査した文書数の合計がSPEC file数と一致しません")
+        raise ValueError("検査した文書数の合計が仕様文書のファイル数と一致しません")
     if sum(entry["checkedStatementCount"] for entry in result["workspaces"]) != dimensions["statementCount"]:
         raise ValueError("検査した規範文数の合計が規範文数と一致しません")
     if any(entry["status"] != "passed" or entry["diagnostics"] for entry in result["workspaces"]):
-        raise ValueError("境界内のcaseは全workspaceが成功します")
+        raise ValueError("境界内のケースは全ワークスペースが成功します")
 
 
 def check_binding_result(result, dataset):
     """`verify`の境界内のケースは、計画したテスト割当てをすべて実行して成功する。"""
     dimensions = dataset["dimensions"]
     if result["scope"] != "all-workspaces" or result["status"] != "passed" or result["diagnostics"]:
-        raise ValueError("境界内のcaseは遮断も警告も持ちません")
+        raise ValueError("境界内のケースは遮断も警告も持ちません")
     if len(result["workspaces"]) != dimensions["memberCount"] + 1:
-        raise ValueError("member結果の件数がcatalogと一致しません")
+        raise ValueError("メンバーの結果の件数がカタログと一致しません")
     executed = {command["bindingId"] for entry in result["workspaces"] for command in entry["commands"]}
     if len(executed) != dimensions["verifyBindingCount"]:
-        raise ValueError("実行したbindingの件数がdatasetと一致しません")
+        raise ValueError("実行したテスト割当ての件数がデータセットと一致しません")
     referenced = {binding for entry in result["workspaces"]
                   for target in entry["targetResults"] for binding in target["bindingRefs"]}
     if referenced != executed:
-        raise ValueError("参照したbindingと実行したbindingが一致しません")
+        raise ValueError("参照したテスト割当てと実行したテスト割当てが一致しません")
     for entry in result["workspaces"]:
         for command in entry["commands"]:
             if command["workspaceId"] != entry["id"] or command["status"] != "passed":
-                raise ValueError("command実体は所有workspaceへ置き、成功する必要があります")
+                raise ValueError("コマンド実体は所有ワークスペースへ置き、成功する必要があります")
         for target in entry["targetResults"]:
             if target["status"] != "passed" or target["contextDigest"] is None:
-                raise ValueError("境界内のcaseは全targetが成功しDigestを持ちます")
+                raise ValueError("境界内のケースは全検証対象が成功しハッシュ値を持ちます")
 
 
 def reduced_dimensions(manifest):
@@ -283,48 +283,48 @@ def validate(root=HERE, identifiers=None):
             validators["manifest"].validate(manifest)
             validators["side-effects"].validate(effects)
             if (fixture / "repo").exists() or (fixture / "expected").exists():
-                raise ValueError("生成fixtureはrepoと期待fileを持ちません")
+                raise ValueError("生成fixtureは`repo`と期待結果のファイルを持ちません")
             if "resultFile" in manifest["expect"] or "resultDigest" not in manifest["expect"]:
-                raise ValueError("生成fixtureの期待結果はdigestで固定します")
+                raise ValueError("生成fixtureの期待結果はハッシュ値で固定します")
             if "stateDigest" not in effects or effects["policy"] != "read-only":
-                raise ValueError("生成fixtureの副作用期待値はstate digestで固定します")
+                raise ValueError("生成fixtureの副作用の期待値は状態のハッシュ値で固定します")
             # 実寸の生成は規模の検証が行う。ここではデータセットのマニフェストの宣言だけを照合する。
             if [dataset["schemaVersion"], dataset["fixtureId"], dataset["dimension"],
                     dataset["value"], dataset["limit"], dataset["crosses"]] != [
                     "1.0", identifier, dimension, value, LIMITS[dimension], crosses]:
-                raise ValueError("dataset manifestの宣言が審査済みcaseと異なります")
+                raise ValueError("データセットのマニフェストの宣言がレビュー済みのケースと異なります")
             if set(dataset["dimensions"]) != set(multi_generator.DIMENSIONS):
-                raise ValueError("dataset manifestのdimensionが8つそろっていません")
+                raise ValueError("データセットのマニフェストの次元が8つそろっていません")
             if manifest != reviewed_manifest(identifier, manifest["setup"]["generate"]["treeDigest"],
                                              manifest["expect"]["resultDigest"]):
-                raise ValueError("起動条件が審査済み期待値と異なります")
+                raise ValueError("起動条件がレビュー済みの期待値と異なります")
             if dataset["crosses"] != crosses or dataset["dimensions"][dimension] != value:
-                raise ValueError("datasetが狙ったdimensionと異なります")
+                raise ValueError("データセットが狙った次元と異なります")
             companions = COMPANIONS.get(identifier, [])
             if dataset.get("companionDimensions", []) != companions:
-                raise ValueError("同時に超過するdimensionの宣言が審査済みcaseと異なります")
+                raise ValueError("同時に超過する次元の宣言がレビュー済みのケースと異なります")
             for name, observed in dataset["dimensions"].items():
                 if name != dimension and observed > LIMITS[name] and name not in companions:
                     raise ValueError(f"{name}も上限を超えています")
             if crosses and manifest["expect"]["resultDigest"] != canonical_digest(blocked_result(identifier)):
                 # 上限超過の期待結果は小さく、生成物に依存しないのでここで完全に照合できる。
-                raise ValueError("完全結果が審査済み期待値と異なります")
+                raise ValueError("完全結果がレビュー済みの期待値と異なります")
             # 既定の監査では縮小した生成計画だけを生成し、生成器の決定論と計数を照合する。
             reduced, counted = reduced_dimensions(dataset)
             profile = multi_generator.plan(reduced["dimension"], reduced["value"])
             first = multi_generator.emit(profile)
             second = multi_generator.emit(multi_generator.plan(reduced["dimension"], reduced["value"]))
             if first != second:
-                raise ValueError("縮小profileの生成が2回で一致しません")
+                raise ValueError("縮小した生成計画の生成が2回で一致しません")
             if counted[dimension] != reduced["value"]:
-                raise ValueError("縮小profileの計数が生成計画と異なります")
+                raise ValueError("縮小した生成計画の計数が計画の値と異なります")
             if (counted[dimension] > reduced["limit"]) != crosses:
-                raise ValueError("縮小profileが越える側と越えない側を保っていません")
+                raise ValueError("縮小した生成計画が越える側と越えない側を保っていません")
             if tree_digest_bytes(first) != tree_digest_bytes(second):
-                raise ValueError("縮小profileのtree digestが2回で一致しません")
+                raise ValueError("縮小した生成計画の木構造のハッシュ値が2回で一致しません")
             counts = multi_generator.workspace_counts(first)
             if len(counts) != counted["memberCount"] + 1:
-                raise ValueError("生成したworkspace数がcatalogと一致しません")
+                raise ValueError("生成したワークスペース数がカタログと一致しません")
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, IndexError, ValidationError,
                 subprocess.SubprocessError) as error:
