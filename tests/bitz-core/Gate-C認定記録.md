@@ -111,7 +111,7 @@ Gate Cでは、提案25が識別した次の11件を、既存の受入の証拠�
 | 優先度 | ID | Gate Cで再監査する証拠 |
 |---|---|---|
 | P0 | `FIN-FIX-001` | Step 1〜5のすべての適合fixtureの集合、順序、完全一致 |
-| P0 | `FIN-DIAG-001` | `SINGLE-089`〜`095`、Diagnostic意味網羅review |
+| P0 | `FIN-DIAG-001` | `SINGLE-089`〜`095`、診断の意味の網羅のレビュー |
 | P0 | `FIN-EAI-001` | `SINGLE-096`〜`103` |
 | P0 | `FIN-OUT-001` | `SINGLE-104`〜`106` |
 | P0 | `FIN-TARGET-001` | `SINGLE-107`〜`113` |
@@ -123,7 +123,7 @@ Gate Cでは、提案25が識別した次の11件を、既存の受入の証拠�
 | P1 | `FIN-PERF-001` | 受入済みの性能ベースラインと固定のSLOの監査 |
 
 `priority_closure.py`は、提案25のP0／P1の見出しが上記11件と一致すること、各fixture群がmatrix全体に存在すること、
-Diagnostic意味網羅reviewが`Passed`かつ未解決0件であることを検査する。`certify_gate_c.py collect`は、
+診断の意味の網羅のレビューが`Passed`かつ未解決0件であることを検査する。`certify_gate_c.py collect`は、
 対象コミットの新しいチェックアウトでこの監査を再実行し、コミット、クリーンな状態、終了コード、レポートのハッシュ値、fixtureの件数、
 11件の個別の証拠を`gate_c.py`で独立に照合する。欠落、未知のID、偽の件数、未解決のレビュー、改変した個別の証拠は拒否する。
 
