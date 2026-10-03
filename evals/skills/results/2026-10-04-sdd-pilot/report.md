@@ -10,7 +10,7 @@
 - sourceSha256: `5f2f1b0140c6c3ff35b369be1b3369971d2b01a2c78cb9734d35027693d2551c`。
 - model: `gpt-6.1-sol`。表示版は`unversioned-alias-observed-2026-10-04`で、provider固定版ではない。
 - 実行済み: skill/反復1のSP-001とSI-001。SI-002とSI-007は投入前に停止。自動再試行0。
-- `--jobs 2`、`--timeout 240`、出力先`.venv/sdd-evaluation-01`。モデル呼出しはこの2回だけ。
+- `--jobs 2`、`--timeout 240`、出力先`.venv/sdd-evaluation-01`。この評価runでのモデル測定は2回だけ。solによる独立検分のモデル利用とは区別する。
 
 ```text
 python3 evals/skills/sdd/evaluate.py audit
