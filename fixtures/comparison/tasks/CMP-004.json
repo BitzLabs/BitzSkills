@@ -1,14 +1,14 @@
 {
   "schemaVersion": "1.0",
   "taskId": "CMP-004",
-  "title": "traceと仕様の欠陥review",
-  "objective": "変更の組をreviewし、仕様、relation、状態、網羅の欠陥を報告する。",
+  "title": "トレースと仕様の欠陥レビュー",
+  "objective": "変更の組をレビューし、仕様、関係、状態、網羅の欠陥を報告する。",
   "baselineMode": "markdown",
-  "brief": ["REQ-BULK-DELETEは新しいMUSTの規範文を持つが、そのtest計画は古い単一削除の規範文だけを網羅する。", "TECH-BULK-APIは、存在しないREQ-999999への強いrequires relationを宣言する。", "Gitの基準版と現在版はどちらもstatusがapprovedだが、approvedのREQ-BULK-DELETEの規範の応答が変わった。", "候補行の1つが、ACTORの前に不正なextension [risk:LEVEL=high]で始まる。", "独立した欠陥をそれぞれ1回だけ報告し、releaseを止める欠陥を特定する。"],
+  "brief": ["`REQ-BULK-DELETE`は新しい`MUST`の規範文を持つが、そのテスト計画は古い単一削除の規範文だけを網羅する。", "`TECH-BULK-API`は、存在しない`REQ-999999`への強い関係`requires`を宣言する。", "Gitの基準版と現在版はどちらも文書の状態が`approved`だが、`approved`の`REQ-BULK-DELETE`の規範の応答が変わった。", "候補行の1つが、`ACTOR`の前に不正な拡張タグ`[risk:LEVEL=high]`で始まる。", "独立した欠陥をそれぞれ1回だけ報告し、リリースを止める欠陥を特定する。"],
   "conditions": {
-    "baseline": ["課題文を通常のMarkdown、link、散文のtest計画で表してreviewする。"],
-    "bitz": ["同じ課題文を.specで表し、contextとcheckの証拠を使ってreviewする。"]
+    "baseline": ["課題文を通常のMarkdown、リンク、散文のテスト計画で表してレビューする。"],
+    "bitz": ["同じ課題文を`.spec`で表し、`context`と`check`の証拠を使ってレビューする。"]
   },
-  "completionCriteria": ["仕込んだ重大な欠陥をすべて報告する。", "同じ原因による重複した症状を二重に数えない。", "advisoryの問題を、releaseを止める欠陥と分ける。"],
+  "completionCriteria": ["仕込んだ重大な欠陥をすべて報告する。", "同じ原因による重複した症状を二重に数えない。", "参考にとどまる問題を、リリースを止める欠陥と分ける。"],
   "metricTags": ["completionMs", "authoringMs", "reviewMs", "detectedDefects"]
 }

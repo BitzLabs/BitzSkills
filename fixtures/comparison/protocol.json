@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "protocolVersion": "1.1",
+  "protocolVersion": "1.2",
   "taskIds": ["CMP-001", "CMP-002", "CMP-003", "CMP-004", "CMP-005"],
   "minimumParticipantsPerCondition": 3,
   "assignment": "balanced-ab-ba",
@@ -17,6 +17,6 @@
     "criticalDefectRecallPercent": 100,
     "maximumMedianRegressionPercentPerTimeMetric": 10,
     "minimumImprovedTimeMetricPercent": 10,
-    "alternativeImprovement": "時間の悪化の上限を越えずに、bitzが基準条件より多くの仕込んだ欠陥を検出する"
+    "alternativeImprovement": "時間の悪化の上限を越えずに、`bitz`が基準条件より多くの仕込んだ欠陥を検出する"
   }
 }
