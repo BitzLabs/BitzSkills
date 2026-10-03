@@ -1,6 +1,6 @@
 """`basecompare.state_transition_diagnostics`の単体試験。
 
-`02_SPECモデル/02_文書・Frontmatter・状態仕様.md §6・§9`の遷移表を、REQ/TECH/ADR/TASKそれぞれの
+`02_仕様文書モデル/02_文書・フロントマター・状態仕様.md §6・§9`の遷移表を、REQ/TECH/ADR/TASKそれぞれの
 全許可・禁止遷移で検査する。新規文書（基準版に不在）、リネーム（パスの差だけ）、削除、
 ID重複で`check`の索引から除かれた文書を削除と誤検出しないことも確認する。
 """
