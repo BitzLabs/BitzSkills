@@ -31,6 +31,7 @@ class SddBatchTests(unittest.TestCase):
         self.cases = [{"id": "SI-001"}, {"id": "SI-007"}]
         self.checks = {key: {"passed": True, "errors": []} for key in ("deterministic", "safety", "workflow", "observation")}
         self.evaluation = SimpleNamespace(ROOT=self.root, HERE=self.root / "evals/skills/sdd",
+            PASS={"passed", "passed_with_warnings"},
             load=lambda p: json.loads(Path(p).read_text()), digest=lambda b: hashlib.sha256(b).hexdigest(),
             json_digest=lambda v: hashlib.sha256(json.dumps(v, sort_keys=True).encode()).hexdigest(),
             identity=lambda args, case: {"model": args.model, "modelVersion": args.model_version,
@@ -174,6 +175,9 @@ class SddBatchTests(unittest.TestCase):
 
     def prepare_plan(self):
         here = self.evaluation.HERE
+        core = self.root / "plugins/bitz-core/src"
+        core.mkdir(parents=True)
+        self.args.pythonpath = str(core)
         for relative in ("protocol.json", "cases.json"):
             source = ROOT / "evals/skills/sdd" / relative
             destination = here / relative
@@ -184,7 +188,7 @@ class SddBatchTests(unittest.TestCase):
         self.write(self.root / "plugins/bitz-sdd/plugin.json", {"version": "0.3.0"})
         self.check_output = patch.object(batch.subprocess, "check_output", side_effect=lambda cmd, **kw:
             self.args.batch.read_bytes() if cmd[0] == "git" else "codex test\n")
-        self.check_ignore = patch.object(batch.subprocess, "run", return_value=SimpleNamespace(returncode=0))
+        self.check_ignore = patch.object(batch.subprocess, "run", return_value=SimpleNamespace(returncode=0, stdout='{"status":"passed"}'))
         self.check_output.start()
         self.check_ignore.start()
         self.addCleanup(self.check_output.stop)
@@ -199,7 +203,7 @@ class SddBatchTests(unittest.TestCase):
 
     def test_invalid_model_authorization_or_protocol_rejected_before_writes(self):
         self.prepare_plan()
-        for alteration in ("model", "authorization", "protocol", "budget", "timeout", "resume", "output"):
+        for alteration in ("model", "authorization", "protocol", "budget", "timeout", "resume", "output", "core-path"):
             with self.subTest(alteration=alteration):
                 args = copy.deepcopy(self.args)
                 approval = self.evaluation.load(self.evaluation.HERE.parent / "sol-authorization.json")
@@ -211,12 +215,31 @@ class SddBatchTests(unittest.TestCase):
                 if alteration == "timeout": args.timeout = 241
                 if alteration == "resume": args.resume = True
                 if alteration == "output": args.output = self.root / "tracked-output"
+                if alteration == "core-path": args.pythonpath = str(self.root)
                 self.write(args.batch, fixed)
                 self.write(self.evaluation.HERE.parent / "sol-authorization.json", approval)
                 with self.assertRaises(ValueError):
                     batch.plan(self.evaluation, args, self.cases)
                 self.assertFalse((self.root / ".venv").exists())
                 self.write(self.evaluation.HERE.parent / "sol-authorization.json", json.loads((ROOT / "evals/skills/sol-authorization.json").read_text()))
+
+    def test_broken_core_environment_stops_before_ledger_or_model(self):
+        self.prepare_plan()
+        for result in (SimpleNamespace(returncode=1, stdout=""), SimpleNamespace(returncode=2, stdout='{"status":"failed"}')):
+            with self.subTest(exit=result.returncode), patch.object(batch.subprocess, "run", side_effect=[SimpleNamespace(returncode=0), result]):
+                with self.assertRaisesRegex(ValueError, "doctor"):
+                    batch.plan(self.evaluation, self.args, self.cases)
+                self.assertFalse((self.root / ".venv").exists())
+                self.assertEqual([], self.calls)
+
+    def test_doctor_elapsed_time_does_not_change_fixed_conditions(self):
+        self.prepare_plan()
+        results = []
+        for duration in (1, 99):
+            doctor = SimpleNamespace(returncode=0, stdout=json.dumps({"status": "passed", "durationMs": duration}))
+            with patch.object(batch.subprocess, "run", side_effect=[SimpleNamespace(returncode=0), doctor]):
+                results.append(batch.plan(self.evaluation, self.args, self.cases)[1])
+        self.assertEqual(results[0], results[1])
 
 
 if __name__ == "__main__":

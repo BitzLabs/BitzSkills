@@ -2,9 +2,11 @@
 from contextlib import contextmanager
 import fcntl
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 from types import SimpleNamespace
 import uuid
 
@@ -49,7 +51,8 @@ def plan(evaluation, args, cases):
     if (args.jobs != 1 or args.resume or type(args.timeout) is not int
             or not 1 <= args.timeout <= 600 or args.timeout != batch.get("timeoutSeconds")
             or not args.model_version.strip() or not args.pythonpath
-            or any(not Path(p).is_absolute() or not Path(p).is_dir() for p in args.pythonpath.split(":"))):
+            or any(not Path(p).is_absolute() or not Path(p).is_dir() for p in args.pythonpath.split(os.pathsep))
+            or Path(args.pythonpath.split(os.pathsep)[0]).resolve() != (root / "plugins/bitz-core/src").resolve()):
         raise ValueError("逐次実行・再試行なし・固定timeout・絶対Python pathが必要です")
     args.output = args.output.resolve()
     storage = root / ".venv"
@@ -59,10 +62,23 @@ def plan(evaluation, args, cases):
         raise ValueError("出力は台帳と分離したリポジトリ内.venvへ置いてください")
     if subprocess.run(["git", "check-ignore", "-q", str(args.output)], cwd=root).returncode != 0:
         raise ValueError("評価出力はGitの管理対象から除外してください")
+    # モデル起動・台帳作成前に、ホストと同じ環境で公開Core CLIを実行する。
+    doctor = subprocess.run([sys.executable, "-B", "-m", "bitz.cli", "doctor", "--format", "json"],
+        cwd=root, env={"PATH": "/usr/bin:/bin", "PYTHONPATH": args.pythonpath,
+                       "PYTHONDONTWRITEBYTECODE": "1", "LC_ALL": "C.UTF-8"},
+        capture_output=True, text=True, timeout=20)
+    if doctor.returncode != 0:
+        raise ValueError("公開Core doctorが起動前検査で非成功でした")
+    doctor_result = json.loads(doctor.stdout)
+    if doctor_result.get("status") not in evaluation.PASS:
+        raise ValueError("公開Core doctorが起動前検査で非成功でした")
+    doctor_result.pop("durationMs", None)  # 実時間は同条件で変動するため入力同一性へ含めない。
     return batch, {"output": str(args.output), "batchSha256": evaluation.digest(committed),
                    "authorizationSha256": evaluation.digest((here.parent / "sol-authorization.json").read_bytes()),
                    "codexVersion": subprocess.check_output(["codex", "--version"], text=True).strip(),
                    "timeoutSeconds": args.timeout,
+                   "pythonExecutable": sys.executable, "pythonVersion": sys.version,
+                   "coreDoctorSha256": evaluation.json_digest(doctor_result),
                    "identities": [evaluation.identity(SimpleNamespace(**(vars(args) | {
                        "variant": s["variant"], "repetition": s["repetition"]})), next(c for c in cases if c["id"] == s["caseId"]))
                        for s in slots]}
