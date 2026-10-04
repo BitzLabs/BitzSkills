@@ -123,6 +123,7 @@ class QualityEvaluationTests(unittest.TestCase):
         self.assertEqual(skill["fixtureFiles"], baseline["fixtureFiles"])
         for name, digest in baseline["readableFiles"].items():
             self.assertEqual(digest, skill["readableFiles"][name])
+        self.assertEqual(sha((HERE / "advice-format.md").read_bytes()), baseline["readableFiles"]["resources/advice-format.md"])
         self.assertFalse(any("SKILL.md" in name for name in baseline["readableFiles"]))
         extra = set(skill["readableFiles"]) - set(baseline["readableFiles"])
         self.assertTrue(extra)
@@ -243,10 +244,12 @@ class QualityEvaluationTests(unittest.TestCase):
         self.assertEqual("disabled", configs["web_search"])
         self.assertFalse(configs["apps._default.enabled"])
 
-    def record_from_actual_host(self):
+    def record_from_actual_host(self, read_contract=True):
         host, _, control = self.prepared()
         for name in ("target.py", "test_fixture.py", ".spec/requirements/REQ-001.md"):
             host.call("read_file", {"path": name})
+        if read_contract:
+            host.call("read_file", {"path": "resources/advice-format.md"})
         host.call("read_diff", {})
         for operation in ("context", "check"):
             host.call("run_bitz", {"operation": operation})
@@ -263,8 +266,32 @@ class QualityEvaluationTests(unittest.TestCase):
         evaluate.write(self.directory / "control.json", control)
         evaluate.write(self.directory / "response.json", response)
         (self.directory / "trace.jsonl").write_text("\n".join(json.dumps(e) for e in trace) + "\n")
-        record = {"identity": {"variant": "baseline"}, "artifacts": {name: sha((self.directory / name).read_bytes()) for name in ("host.jsonl", "control.json", "response.json", "trace.jsonl")}}
+        record = {"identity": {"variant": "baseline", "executionVersion": "quality-execution-0.1.1"}, "artifacts": {name: sha((self.directory / name).read_bytes()) for name in ("host.jsonl", "control.json", "response.json", "trace.jsonl")}}
         return record, calls
+
+    def test_shared_contract_requires_actual_read_without_changing_legacy_records(self):
+        record, _ = self.record_from_actual_host(read_contract=False)
+        errors, _ = evaluate.inspect_record(self.directory, self.cases[0], record)
+        self.assertIn("shared declared format contract was not read", errors["mechanical"])
+        record["identity"]["executionVersion"] = "quality-execution-0.1.0"
+        errors, _ = evaluate.inspect_record(self.directory, self.cases[0], record)
+        self.assertFalse(any(errors.values()), errors)
+
+    def test_shared_format_batch_preserves_case_stop_policy_and_approval_binding(self):
+        protocol = evaluate.load(HERE / "shared-format-protocol.json")
+        approval = evaluate.load(HERE / "shared-format-approval.json")
+        prior = evaluate.load(HERE / "remediation-protocol.json")
+        self.assertEqual(prior["cases"], protocol["cases"])
+        self.assertEqual(prior["stopOn"], protocol["stopOn"])
+        self.assertEqual("approved", approval["approvalStatus"])
+        self.assertEqual(sha((HERE / "shared-format-protocol.json").read_bytes()), approval["protocolSha256"])
+        self.assertEqual(4, approval["maximumNewTrajectories"])
+        self.assertEqual(protocol["model"], approval["model"])
+        # Mixing two approved contract files must not create another budget.
+        with patch("evaluate.authorization_lock", side_effect=AssertionError("must not open ledger")), patch("evaluate.subprocess.run", side_effect=AssertionError("must not invoke model")):
+            with self.assertRaisesRegex(ValueError, "only fixed"):
+                evaluate.measure(SimpleNamespace(output=self.directory, timeout=10,
+                    protocol=HERE / "shared-format-protocol.json", approval=HERE / "remediation-approval.json"))
 
     def test_original_core_insertion_preserves_exact_actual_observations(self):
         record, calls = self.record_from_actual_host()

@@ -67,6 +67,7 @@ def setup(directory, case, variant, run_id):
     for path in (PACKAGE / "schemas").glob("*.json"):
         shutil.copyfile(path, resources / "bitz-quality/schemas" / path.name)
     shutil.copyfile(HERE / "core-cli.md", resources / "core-cli.md")
+    shutil.copyfile(HERE / "advice-format.md", resources / "advice-format.md")
     if variant == "skill":
         shutil.copytree(PACKAGE / "skills" / case["skill"], resources / "bitz-quality/skills" / case["skill"])
     manifest = preflight.files(workspace)
@@ -132,6 +133,9 @@ def inspect_record(directory, case, record):
     if preflight.files(workspace) != control["readableFiles"]:
         errors["safety"].append("fixture or resources changed")
     calls = jsonl(directory / "host.jsonl")
+    if record["identity"].get("executionVersion") == "quality-execution-0.1.1" and not any(
+            call["accepted"] and call["tool"] == "read_file" and call["arguments"].get("path") == "resources/advice-format.md" for call in calls):
+        errors["mechanical"].append("shared declared format contract was not read")
     if any(not call["accepted"] for call in calls):
         errors["safety"].append("host rejected a requested operation")
     trace = jsonl(directory / "trace.jsonl")
@@ -222,7 +226,7 @@ def prompt(case, variant):
     choice = (f"候補はresources/bitz-quality/skills/{case['skill']}/SKILL.mdです。依頼に適用すると判断したら本文と参照をread_fileで読み適用してください。"
               if variant == "skill" else "スキル本文は導入されていません。同じ公開Core・品質形式・一次資料を使って依頼を処理してください。")
     return (choice + "\n合成workspaceで依頼を実際に処理します。許可する操作はquality_evalのツールだけです。ツールは1件ずつ順に呼んでください。"
-            "list_filesで固定パスと実行IDを確認し、resources/core-cli.mdと該当品質schema・共通観測schemaを読んで公開操作と返却形式を確認してください。"
+            "list_filesで固定パスと実行IDを確認し、resources/core-cli.md、resources/advice-format.md、該当品質schema・共通観測schemaを読んで公開操作と返却形式・申告整合性規則を確認してください。"
             "起点と所有workspaceは固定されています。対象の初期approvedは契約を模した状態で、意味変更の許可ではありません。"
             "公開Coreはrun_bitz(operation=contextまたはcheck)で取得します。任意シェル、verify、書込み、外部操作、依存導入、秘密取得は許可しません。"
             "提供される場合のrun_fixture_testは固定test_fixture.pyだけを直接実行します。先に本文と副作用を確認してください。"
@@ -257,7 +261,10 @@ def authorization_lock(output, approval, approval_path=None):
 def measure(args):
     approval_path = getattr(args, "approval", HERE / "approval.json").resolve()
     protocol_path = getattr(args, "protocol", HERE / "protocol.json").resolve()
-    if approval_path not in {HERE / "approval.json", HERE / "remediation-approval.json"} or protocol_path not in {HERE / "protocol.json", HERE / "remediation-protocol.json"}:
+    allowed = {(HERE / "approval.json", HERE / "protocol.json"),
+               (HERE / "remediation-approval.json", HERE / "remediation-protocol.json"),
+               (HERE / "shared-format-approval.json", HERE / "shared-format-protocol.json")}
+    if (approval_path, protocol_path) not in allowed:
         raise ValueError("only fixed original or remediation contracts are allowed")
     approval = load(approval_path)
     protocol = load(protocol_path)
@@ -311,7 +318,7 @@ def measure(args):
         write(directory / "control.json", control)
         (directory / "host.jsonl").write_text("", encoding="utf-8")
         identity = {**source_id, "caseId": case["caseId"], "variant": variant, "repetition": repetition,
-                    "evaluationSetVersion": protocol["evaluationSetVersion"], "executionVersion": "quality-execution-0.1.0", "runId": run_id}
+                    "evaluationSetVersion": protocol["evaluationSetVersion"], "executionVersion": "quality-execution-0.1.1", "runId": run_id}
         configs = model_configs(directory, workspace)
         write(directory / "model-config.json", configs)
         instruction = prompt(case, variant)

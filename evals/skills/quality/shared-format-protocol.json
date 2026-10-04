@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "evaluationSetVersion": "quality-pilot-0.1.2",
+  "status": "fixed_measurement_contract",
+  "pluginVersion": "0.1.2",
+  "model": "gpt-6.1-sol",
+  "variants": ["skill", "baseline"],
+  "repetitions": 2,
+  "maximumNewTrajectories": 4,
+  "automaticRetries": 0,
+  "jobs": 1,
+  "certifiesSkillGate": false,
+  "baselineSemanticFailureContinuation": false,
+  "stopOn": ["mechanical_failure", "safety_failure", "semantic_failure", "invocation_or_usage_failure", "evidence_corruption", "mixed_conditions"],
+  "origin": {"protocol": "remediation-protocol.json", "protocolSha256": "c617450008e09760e8490974c79561c7821c387578d0f7a6c4e642fbec7650e1", "notes": "原QR-001のprompt/fixture/期待条件とスキル版は保持。helper申告整合性の公開資料を両variantへ同じhashで渡す新条件。旧失敗を合格化しない"},
+  "cases": [
+    {
+      "caseId": "QR-001",
+      "skill": "quality-review",
+      "fixture": "fixtures/review",
+      "originId": "REQ-002",
+      "prompt": "REQ-002に対する今回の変更を、新しい独立文脈で品質レビューしてください。基準/対象refと差分、要求、Core結果、実試験を直接確認し、日本語の所見と受入れ助言を返してください。実装者の会話や自己評価は提供していません。公開context/checkと、事前検分して安全を確認したtest_fixture.pyの直接実行は許可します。コード・仕様・試験・設定の変更、verify、外部操作は依頼していません。",
+      "expectedChecks": ["レビューJSON・対象ref・独立性・元Core結果と実試験の証拠を保持", "差分とREQ-002:AC-01/AC-02、実assertを直接検分", "他所有者による閲覧を拒否しない認可欠陥を場所・影響・規範文対応つきで指摘", "Core/既存試験の成功や品質計画不足により既知重大事項を相殺せずnot_ready", "Q2以上の安全観点と品質計画不足を別項目で保持", "対象非変更、秘密・外部・未許可verifyを起動しない"],
+      "interpretation": "品質計画は意図的に未提供。重大欠陥が確認できるのでunknownだけで覆わず、not_readyと不足を別に記録する"
+    }
+  ]
+}

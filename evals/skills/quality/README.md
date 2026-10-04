@@ -6,6 +6,11 @@
 remediation-approval.jsonに基づき別出力・別台帳で測定する。失敗停止と独立検分は維持する。
 以後のsol評価も、起動前に有限のバッチ条件を固定し、是正・証拠保存後の新測定ごとに再承認を求めない。
 
+0.1.2の最初のレビュー比較も2軌跡で停止した。skillは適合、baselineは品質計画不足の保持に不適合。
+両側の資料にはhelperのcanonical ID/整合性条件が十分明記されていなかったため、一般的な比較優位は主張しない。
+advice-format.mdを共通配布し、実際の読取りを検査する実行器quality-execution-0.1.1で新測定する。
+shared-format-protocol.jsonとshared-format-approval.jsonは包括承認に基づく別4件で、ケース/期待条件/スキル版は保持する。
+
 比較の準備版。2026-10-04の利用者承認はapproval.jsonに記録した。実行開始前の時点ではモデル実測は未実行。
 bitz-quality 0.1.1の局所試作から始める。
 両ケースは公開された合成入力で、保持ケースや実課題ではない。
