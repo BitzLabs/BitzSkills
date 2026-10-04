@@ -63,7 +63,7 @@ fixtures/conformance/manifest.schema.json
 固定入力であり、実行リポジトリへは自動でコピーしない。通常ファイルのバイト列と実行ビット、シンボリックリンクの
 リンク文字列をバージョン管理する。Gitの履歴と基準版コミット後の状態は、マニフェストだけから構築する。
 `expected/<operation>.txt`は、テキスト出力を比較するfixtureだけが持つ。
-`dataset.json`は`setup.generate`を持つ生成fixtureだけが持ち、そのfixtureは`repo/`を持たない（§3.5）。
+`dataset.json`は`setup.generate`を持つ生成fixtureだけが持ち、そのfixtureは`repo/`を持たない（§3.4）。
 `manifest.schema.json`は全マニフェストが従う機械可読なスキーマであり、harnessは実行前にマニフェストを検証する。
 契約の正本である公開結果とフロントマターのスキーマは[`docs/03.詳細設計/schemas/`](../schemas/)に置き、
 fixtureは参照するだけで写しを持たない（[ADR-050](../../02.設計書/10_決定記録/ADR-050_契約スキーマの正本を詳細設計へ置く.md)）。
@@ -120,7 +120,7 @@ fixture IDは`SINGLE-NNN`または`MULTI-NNN`をケースファミリーとし�
 | `fixtureId` | ○ | 本matrixのID |
 | `description` | ○ | 検査する論点の1行要約 |
 | `setup.git` | ○ | Gitのリポジトリを作るかどうか。`false`はGit不在のfixture |
-| `setup.generate` | — | 生成する入力。`repo/`と排他。§3.5 |
+| `setup.generate` | — | 生成する入力。`repo/`と排他。§3.4 |
 | `setup.baseCommit` | — | 基準版コミットの作り方。省略時はコミットを作らない |
 | `setup.operations` | ○ | 基準版コミットの後に順番に適用する準備の処理。0件でも配列を置く |
 | `invocation.runner` | ○ | `bitz`、`consumer`、`migration`、`package`のいずれか |
@@ -714,7 +714,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `MULTI-024-03` | 部分的なロールバック | migration test | rejected／1 | 部分的なロールバックを拒否 |
 | `MULTI-025-01` | 存在するワークスペースの、不在の修飾起点 | check | failed／1 | `CTX-ROOT-MISSING-001`、未知`--workspace`と区別 |
 | `MULTI-025-02` | 存在するワークスペースの、不在の修飾起点 | verify | failed／1 | 検証対象の診断に`CTX-ROOT-MISSING-001` |
-| `MULTI-026-01` | カタログの事前検査を通過するルートワークスペースと2つのメンバー | doctor all | passed／0 | ルートワークスペースが先頭・メンバーID順、グローバルとメンバーの検査項目を分離 |
+| `MULTI-026-01` | カタログの事前検査を通過するルートワークスペースと2つのメンバー | doctor all | passed／0 | ルートワークスペースが先頭・メンバーID順、ワークスペースに依存しない検査項目とメンバーの検査項目を分離 |
 | `MULTI-026-02` | 1つのメンバーのコマンドが不在 | doctor all | blocked／2 | 後続メンバーを継続、メンバーの診断と全体の状態を集約、テキストの件数 |
 
 `MULTI-012`では、不正な文書を所有するメンバーを`failed`、それを必要とする検証対象を
