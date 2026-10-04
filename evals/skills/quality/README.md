@@ -1,6 +1,7 @@
 # 品質スキルの先行2ケース
 
-比較の準備版。モデル実測は未承認・未実行。bitz-quality 0.1.1の局所試作から始める。
+比較の準備版。2026-10-04の利用者承認はapproval.jsonに記録した。実行開始前の時点ではモデル実測は未実行。
+bitz-quality 0.1.1の局所試作から始める。
 両ケースは公開された合成入力で、保持ケースや実課題ではない。
 評価の期待値はこのディレクトリのprotocol.jsonに置き、実測時のモデルworkspaceへ渡さない。
 
@@ -32,4 +33,19 @@ SDDで認められたbaseline意味不適合の続行例外は、この品質実
 
 approvalはこの8軌跡の費用・新しい評価範囲に限る。既存のSDD残予算へ流用しない。
 この事前検査はモデル実行器を持たず、既存の発火用run_model.pyも実操作比較の代わりに起動しない。
-モデル実測時は上記契約を満たす操作記録付きの隔離実行を使用し、利用できなければ未実行で停止する。
+実操作用evaluate.pyと読取り専用host.pyは、固定の公開Core/テスト操作と操作ログを提供する。
+ネイティブシェル・書込み・他MCP・アプリ・プラグイン・検索を無効化し、自己完結したfixtureと公開形式を両variantへ渡す。
+各軌跡の後はindependent-receipt.json（status=passed、independent=true、確定run.jsonのhash一致）が必要。
+意味・安全・一次成果物を別文脈で検分し、証拠を再検査した後だけ次の1軌跡を起動できる。起動前に予算へ算入し、中断を自動再試行しない。
+返却はresponse.schema.jsonの転記用包みに品質JSONを文字列で載せる。Core元JSONは実呼出しの全観測IDから変更せず挿入する。
+モデルの元応答と挿入後advice.jsonを分けて保存し、全ID・生stdout/hash・trace/hostログ一致を検査する。
+この転記アダプタは両条件で同じで、Core成功や品質判断・未取得証拠を生成しない。大きな元結果の転記精度を本測定で保証したとも主張しない。
+実行はclean treeで、同じ確定source ref・protocol・plugin・モデル・実行環境を固定する。
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<worktree絶対パス>/plugins/bitz-core/src:<ruamel.yaml-0.19.1のパス> \
+  python3 -B evals/skills/quality/evaluate.py --output <worktree絶対パス>/.venv/quality-model-pilot
+```
+
+1回のコマンドで1軌跡だけ起動する。順序は反復1→2、各反復のskill→baseline、各variantのQP→QR。
+最大8件という承認を上限とし、最初の失敗・中断・独立検分待ちで止める。記録済みの条件を変えて同じ出力へ再開しない。
