@@ -744,6 +744,14 @@ Phase 2完了やSkill Gate通過とは扱わない。
 これは合成入力の公開CLI・形式検査であり、モデルの工程実行や独立レビューの実施を証明しない。
 `sdd-converge`、5種類の実地パイロット、Skill Gate 4、mainへの統合・リリース判断は残件である。
 
+2026-10-05に`sdd-converge` 0.1.0を具体化し、bitz-sddを0.3.0へ更新した。
+規範文・確定差分・実assert・Core一次結果・品質計画・独立検分・人間確認を照合する手順と、
+不足の戻り先、完了提案とTASK状態変更の区別を実装した。前工程のdigest照合を後付けしない。
+`tests/skills/test_sdd_converge_connection.py`は、合成例で人間確認後のdone／最終check／Git記録、
+verify失敗・未テストMUSTでのopen維持、同梱参照の閉包を公開CLIで検査する。
+人間確認そのものやスキルのモデル行動はこの試験では証明しない。
+5種類の実地パイロット、モデル行動、Skill Gate 4、main統合・リリースは未認定である。
+
 目的:
 
 - `sdd-converge`を追加し、3製品を1つの変更で接続する。

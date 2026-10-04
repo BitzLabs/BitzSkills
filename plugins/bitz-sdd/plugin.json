@@ -1,6 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "bitz-sdd",
-  "version": "0.2.1",
-  "description": "BitzSkills 2系の日本語仕様計画・実装スキル。既存契約から計画と境界内の実装・Core検証・人手レビューへの引渡しを支援する試作版"
+  "version": "0.3.0",
+  "description": "BitzSkills 2系の日本語仕様計画・実装・収束スキル。既存契約から計画と境界内の実装・Core検証・完了証拠の対応付けを支援する試作版"
 }

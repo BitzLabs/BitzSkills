@@ -1,8 +1,8 @@
-# bitz-sdd 0.2.1
+# bitz-sdd 0.3.0
 
 BitzSkills 2系の仕様計画と実装を支援する日本語スキルの試作版。1系とは別の実装である。
-計画の入口は `skills/sdd-plan/SKILL.md`、実装の入口は `skills/sdd-implement/SKILL.md`。
-収束のスキルは未実装で、モデル行動とSkill Gateは未認定。
+計画の入口は `skills/sdd-plan/SKILL.md`、実装の入口は `skills/sdd-implement/SKILL.md`、
+収束の入口は `skills/sdd-converge/SKILL.md`。3工程全体のモデル行動とSkill Gateは未認定。
 
 機能、バグ修正、保守、スパイクの相談を既存仕様に結び付く計画へ整理する。
 計画だけの依頼は会話への提案、文書作成も依頼された場合は必要な草案の保存までを担当する。
@@ -11,6 +11,11 @@ BitzSkills 2系の仕様計画と実装を支援する日本語スキルの試�
 実装は承認済みの起点から、完全なcontext、実装前check、書込み直前のdigest再照合を経て進める。
 変更後のcheckと安全なverifyの実結果を人手レビューへ渡す。人手レビュー未実施は不足として残し、
 Core通過をTASK完了や出荷許可に置き換えない。
+
+収束は規範文と確定差分・実assert・Core一次結果・品質計画の必須証拠・レビューを照合する。
+過去の前checkや書込み直前のdigest照合を、現在の成功から後付けせず、未実施の人手確認を残す。
+Q2／Q3の独立品質検分と、SDDの人手レビュー・TASK状態変更・Git記録は個別に確認する。
+収束担当は独立品質レビューを自己認定しない。
 
 bitz-core 1.0.0の公開CLI、Linux / macOS、CPython 3.12以上が必要である。
 Core実行体は別途導入する。このプラグインはCLI、独自の診断器、状態管理を同梱せず、Core内部APIへ依存しない。
