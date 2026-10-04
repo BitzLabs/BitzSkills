@@ -94,6 +94,24 @@ class QualityEvaluationTests(unittest.TestCase):
         self.assertEqual(control["subjectCommit"], public["observation"]["rawResult"]["revision"]["commit"])
         self.assertFalse(public["observation"]["rawResult"]["revision"]["dirty"])
 
+    def test_native_stdio_host_initializes_and_serves_exact_fixed_file(self):
+        _, workspace, control = self.prepared()
+        evaluate.write(self.directory / "control.json", control)
+        requests = [{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2024-11-05"}},
+                    {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
+                    {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "read_file", "arguments": {"path": "target.py"}}}]
+        result = subprocess.run([sys.executable, "-B", str(HERE / "host.py"), "--workspace", str(workspace),
+                                 "--control", str(self.directory / "control.json"), "--log", str(self.directory / "rpc.jsonl")],
+                                input="\n".join(json.dumps(r) for r in requests) + "\n", env=preflight.environment(),
+                                capture_output=True, text=True, timeout=20)
+        self.assertEqual(0, result.returncode, result.stderr)
+        responses = [json.loads(line) for line in result.stdout.splitlines()]
+        self.assertEqual([1, 2, 3], [r["id"] for r in responses])
+        self.assertEqual("2024-11-05", responses[0]["result"]["protocolVersion"])
+        self.assertNotIn("run_fixture_test", {t["name"] for t in responses[1]["result"]["tools"]})
+        returned = json.loads(responses[2]["result"]["content"][0]["text"])
+        self.assertEqual(sha((workspace / "target.py").read_bytes()), returned["sha256"])
+
     def test_shared_inputs_match_and_expected_values_stay_outside_workspace(self):
         left = self.directory / "skill"
         right = self.directory / "baseline"
@@ -185,7 +203,9 @@ class QualityEvaluationTests(unittest.TestCase):
         response = {"documentJson": json.dumps(document, ensure_ascii=False),
                     "coreObservationIds": [c["result"]["observationId"] for c in calls if c["tool"] == "run_bitz"],
                     "reason": "合成試験。モデル測定の成功ではない"}
-        trace = [{"type": "item.completed", "item": {"type": "mcp_tool_call", "server": "quality_eval", "tool": c["tool"], "arguments": c["arguments"]}} for c in calls]
+        trace = [{"type": "item.completed", "item": {"type": "mcp_tool_call", "server": "quality_eval", "tool": c["tool"], "arguments": c["arguments"],
+                  "status": "completed", "error": None,
+                  "result": {"content": [{"type": "text", "text": json.dumps({k: v for k, v in c["result"].items() if k != "execution"}, ensure_ascii=False)}], "structured_content": None}}} for c in calls]
         trace.append({"type": "item.completed", "item": {"type": "agent_message", "text": json.dumps(response)}})
         evaluate.write(self.directory / "control.json", control)
         evaluate.write(self.directory / "response.json", response)
@@ -218,6 +238,26 @@ class QualityEvaluationTests(unittest.TestCase):
         (self.directory / "trace.jsonl").write_text("\n".join(json.dumps(e) for e in trace) + "\n")
         errors, _ = evaluate.inspect_record(self.directory, self.cases[0], record)
         self.assertIn("native tool use outside fixed host", errors["safety"])
+
+    def test_missing_or_substituted_tool_return_is_rejected_even_with_new_artifact_hash(self):
+        record, _ = self.record_from_actual_host()
+        original_trace = evaluate.jsonl(self.directory / "trace.jsonl")
+        for mutation in ("missing", "replacement", "structured", "status"):
+            with self.subTest(mutation=mutation):
+                trace = copy.deepcopy(original_trace)
+                item = trace[0]["item"]
+                if mutation == "missing":
+                    del item["result"]
+                elif mutation == "replacement":
+                    item["result"]["content"][0]["text"] = json.dumps({"substituted": True})
+                elif mutation == "structured":
+                    item["result"]["structured_content"] = {"substituted": True}
+                else:
+                    item["status"] = "failed"
+                (self.directory / "trace.jsonl").write_text("\n".join(json.dumps(e) for e in trace) + "\n")
+                record["artifacts"]["trace.jsonl"] = sha((self.directory / "trace.jsonl").read_bytes())
+                errors, _ = evaluate.inspect_record(self.directory, self.cases[0], record)
+                self.assertIn("trace MCP return differs from original host public result", errors["evidence"])
 
 
 if __name__ == "__main__":

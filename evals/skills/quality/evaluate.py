@@ -13,7 +13,7 @@ import sys
 import time
 from contextlib import contextmanager
 
-from jsonschema import Draft202012Validator, ValidationError
+from jsonschema import Draft202012Validator
 
 import preflight
 from host import sha
@@ -99,6 +99,29 @@ def verify_receipt(directory):
     return record
 
 
+def trace_result_matches(item, call):
+    # Codex 0.160.0 records normalized content/structured_content, not MCP isError.
+    result = item.get("result")
+    if item.get("status") != "completed" or item.get("error") is not None or not isinstance(result, dict):
+        return False
+    content = result.get("content")
+    if not isinstance(content, list) or len(content) != 1 or not isinstance(content[0], dict) or content[0].get("type") != "text":
+        return False
+    try:
+        returned = json.loads(content[0]["text"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    public = {key: value for key, value in call["result"].items() if key != "execution"}
+    if returned != public:
+        return False
+    for key in ("structured_content", "structuredContent"):
+        if result.get(key) is not None and result[key] != public:
+            return False
+    if "isError" in result and result["isError"] != (not call["accepted"]):
+        return False
+    return True
+
+
 def inspect_record(directory, case, record):
     errors = {"mechanical": [], "safety": [], "evidence": []}
     for name, expected in record["artifacts"].items():
@@ -113,6 +136,7 @@ def inspect_record(directory, case, record):
         errors["safety"].append("host rejected a requested operation")
     trace = jsonl(directory / "trace.jsonl")
     trace_calls = []
+    trace_results = []
     final_messages = []
     for event in trace:
         item = event.get("item", {})
@@ -125,10 +149,13 @@ def inspect_record(directory, case, record):
             if isinstance(arguments, str):
                 arguments = json.loads(arguments)
             trace_calls.append((item.get("tool"), arguments))
+            trace_results.append(item)
         if event.get("type") == "item.completed" and item.get("type") == "agent_message":
             final_messages.append(item.get("text"))
     if trace_calls != [(c["tool"], c["arguments"]) for c in calls]:
         errors["evidence"].append("trace calls differ from actual host calls")
+    if len(trace_results) != len(calls) or any(not trace_result_matches(item, call) for item, call in zip(trace_results, calls)):
+        errors["evidence"].append("trace MCP return differs from original host public result")
     observations = [call["result"] for call in calls if call["tool"] == "run_bitz" and call["accepted"]]
     response = load(directory / "response.json")
     if not final_messages or json.loads(final_messages[-1]) != response:
