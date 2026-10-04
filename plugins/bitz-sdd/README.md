@@ -1,4 +1,4 @@
-# bitz-sdd 0.2.0
+# bitz-sdd 0.2.1
 
 BitzSkills 2系の仕様計画と実装を支援する日本語スキルの試作版。1系とは別の実装である。
 計画の入口は `skills/sdd-plan/SKILL.md`、実装の入口は `skills/sdd-implement/SKILL.md`。
