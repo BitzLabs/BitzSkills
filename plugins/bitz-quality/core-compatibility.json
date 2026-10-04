@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "plugin": "bitz-core",
+  "pluginVersion": "1.0.0",
+  "python": ">=3.12",
+  "platforms": ["linux", "macos"],
+  "operations": {
+    "context": {"required": true, "formats": ["json"]},
+    "check": {"required": true, "formats": ["json"]},
+    "verify": {"required": false, "formats": ["json"], "preExecutionArgvPreview": false},
+    "doctor": {"required": false, "formats": ["json"]}
+  },
+  "compatibilityRule": "公開CLIの操作と一次結果だけに依存する。計画ではverifyを実行せず、レビューの再実行は安全と許可を別に確認する"
+}

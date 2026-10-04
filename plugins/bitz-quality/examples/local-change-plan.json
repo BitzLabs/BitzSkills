@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "kind": "quality-plan",
+  "advisory": true,
+  "planningStatus": "needs_information",
+  "subjectCommit": null,
+  "originIds": ["REQ-001:AC-01"],
+  "goal": "合成例の局所修正で、空入力のエラー件数と既存入力の動作を維持する証拠を計画する",
+  "risk": {
+    "band": "Q1",
+    "rationale": "既存契約内の局所・可逆な修正を想定した案。対象refと実環境は未確定",
+    "areas": {
+      "function": {"minimumBand": "Q1", "rationale": "空入力の件数と通常入力の回帰を確認する", "openQuestions": []},
+      "data": {"minimumBand": "Q0", "rationale": "合成例の案では永続化・移行・個人情報を扱わない", "openQuestions": []},
+      "security": {"minimumBand": "Q0", "rationale": "合成例は副作用のない関数。実環境の実行制約は別途確認", "openQuestions": ["登録コマンドと隔離の確認"]},
+      "compatibility": {"minimumBand": "Q1", "rationale": "既存契約と通常入力の動作を維持する", "openQuestions": []},
+      "reliability": {"minimumBand": "Q0", "rationale": "合成例に並行・再試行・外部サービスはない", "openQuestions": []},
+      "performance": {"minimumBand": "Q0", "rationale": "合成例で性能契約は変更しない", "openQuestions": []},
+      "supply-chain": {"minimumBand": "Q0", "rationale": "合成例で依存・配布・CI権限は変更しない", "openQuestions": []},
+      "operations": {"minimumBand": "Q0", "rationale": "合成例を本番へ取り込む計画ではない", "openQuestions": []}
+    },
+    "downgradeApproval": null
+  },
+  "flow": "simple",
+  "independentReviewPlanned": true,
+  "evidencePlan": [
+    {"evidenceId": "requirements", "priority": "required", "reason": "承認済みの契約を維持する", "checksCondition": "起点・状態・非目標と修正範囲", "method": "要求本文と解釈用contextの直接確認", "command": null, "cwd": null, "safetyPrerequisites": ["所有workspaceと起点を確認"], "owner": "計画担当"},
+    {"evidenceId": "regression", "priority": "required", "reason": "狭いassertと未実証を区別する", "checksCondition": "空入力の件数と通常入力の既存結果。型・内容はassertがなければ未検査", "method": "実assertの対応付けと安全な対象試験", "command": null, "cwd": null, "safetyPrerequisites": ["実テスト本文・登録コマンド・cwd・副作用・隔離と許可を確認"], "owner": "実装担当"},
+    {"evidenceId": "diff-review", "priority": "required", "reason": "依頼外の変更を確認する", "checksCondition": "確定した差分と境界、証拠不足", "method": "別文脈で直接差分を検分", "command": null, "cwd": null, "safetyPrerequisites": ["確定refと一次証拠を渡し非公開履歴を継承しない"], "owner": "独立レビュー担当"}
+  ],
+  "openQuestions": ["対象ref・既存assert・実行制約を確定する。これは未実証の合成例である"],
+  "stopConditions": ["起点や許可が不明", "要求の意味変更が必要", "安全な実行条件が未確認"],
+  "humanDecisionPending": true
+}

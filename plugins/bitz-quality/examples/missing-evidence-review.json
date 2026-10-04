@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "kind": "quality-review",
+  "advisory": true,
+  "decision": "unknown",
+  "subjectCommit": null,
+  "riskBand": "Q1",
+  "qualityPlanPresent": false,
+  "independence": {
+    "independent": false,
+    "implementationRunId": "example-implementation",
+    "reviewRunId": "example-review",
+    "freshContext": false,
+    "implementationPrivateHistoryInherited": false,
+    "leadingConclusionProvided": false,
+    "directChecks": []
+  },
+  "requiredEvidenceIds": ["regression", "diff-review"],
+  "collectedEvidence": [],
+  "missingEvidenceIds": ["regression", "diff-review"],
+  "coreResults": [],
+  "findings": [],
+  "conditions": [],
+  "notRerun": [{"check": "対象試験と差分", "reason": "未実証の合成例。対象ref・実コマンド・一次結果・独立文脈が未取得"}],
+  "humanDecisionPending": true
+}
