@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["selectedEntry", "outcome", "humanReviewPending", "readyClaimed", "changedPaths", "coreResults", "reason"],
+  "properties": {
+    "selectedEntry": {"enum": ["sdd-plan", "sdd-implement", null]},
+    "outcome": {"enum": ["plan", "handoff", "stop", "question", "not-applicable"]},
+    "humanReviewPending": {"type": "boolean"},
+    "readyClaimed": {"type": "boolean"},
+    "changedPaths": {"type": "array", "items": {"type": "string"}},
+    "coreResults": {"type": "array", "items": {"type": "object", "additionalProperties": false,
+      "required": ["operation", "target", "status", "exitCode"], "properties": {
+        "operation": {"enum": ["context", "check", "verify"]}, "target": {"type": "string"},
+        "status": {"enum": ["passed", "passed_with_warnings", "failed", "blocked", "error"]}, "exitCode": {"type": "integer"}}}},
+    "reason": {"type": "string", "minLength": 1, "maxLength": 1000}
+  }
+}

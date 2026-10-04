@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "implementationRunId": "/root",
+  "reviewRunId": "/root/sol_sdd_evaluation_host_review",
+  "subjectCommit": "0e536d18fceac45ea7bceafa00aaf5448786afe3",
+  "freshContext": true,
+  "implementationPrivateHistoryInherited": false,
+  "leadingConclusionProvided": false,
+  "inputs": [
+    "evals/skills/sdd/",
+    "tests/skills/test_sdd_skill_eval.py",
+    "plugins/bitz-sdd/",
+    "docs/02.設計書/03_SDD-flow.md",
+    "docs/04.提案資料/30_bitz-sdd・品質管理・Coreスキル化実装計画.md",
+    "docs/02.設計書/10_決定記録/ADR-060_スキル評価契約と独立検分の境界を固定する.md",
+    "evals/skills/contracts/",
+    "docs/03.詳細設計/03_操作仕様/",
+    "docs/03.詳細設計/00_共通契約/01_結果・Diagnostic・終了コード.md"
+  ],
+  "directChecks": [
+    "新しいfork_turns=none、gpt-6.1-solの独立文脈で開始。主作業者の非公開履歴・意図した結論を渡していない。成立条件は親のspawn記録に基づく",
+    "初版ref d36684fcba995bcb1dd373d4be96a2d8c072dcaaで評価器・ケース・試験を直接読んだ。11試験OKとaudit Passed 17/68を自分で再実行",
+    "初版の実verify成功後の再変更が4分類passedになることを独自の/tmp合成例と実Coreで再現。最終状態の実verifyはfailedだった",
+    "初版でsol/luna混在が通過、逆順traceが通過、不正JSONでinspectが中断することを直接再現",
+    "初版開始時はclean。主作業者が回帰試験を保存したため終了直前にはtests/skills/test_sdd_skill_eval.pyの変更を観測。11試験と再現は変更の観測前に実施。検分者はソース・Gitを変更していない",
+    "同じ独立検分文脈を継続し、新しいref a441855babb5b52b075268ea93504deac5bc4aecを再検分。開始・終了HEADは指定ref、git status --porcelainは空",
+    "是正refで17 tests / 13.114s / OK / exit 0、audit Passed / cases 17 / plannedCalls 68 / errors [] / exit 0",
+    "独自合成再現で最終変更後の検証不足はworkflow false、条件混在はconditionErrorsで拒否して分母17×4を保持、逆順traceはdeterministic false、不正JSONは全分類falseで例外中断なしを確認",
+    "完走記録の一致するresumeは再利用し、モデル版変更・decision欠測はモデル呼出し前に拒否することを直接確認",
+    "SI-010の既知の固定テスト障害を開始前に読んで停止する経路を再現。Core呼出し0、実テストの成功/失敗の偽装なし。ケース変更は正本の安全確認と停止に整合",
+    "baselineのselectedEntryを処理した工程名として記録する説明は、スキル未導入と工程選択の区別として整合。本文読取りはskillだけで必要",
+    "追加の固定ref 0e536d18fceac45ea7bceafa00aaf5448786afe3で停止処理を直接検分。19 tests / 13.344s / OK、audit Passed。開始・終了ともHEADは対象refでclean",
+    "独自のモデルなし並列検査でA/Bだけが開始し、A例外とB完了を回収して1を返し、C/Dの追加呼出しは発生しなかった。停止後の未着手ケースは固定分母のmissingとして残る",
+    "評価source6ファイルをrepo相対pathsort、path+NUL+content+NULで測定: 4f362326c337a7df7fac1652874484b457b49238e12816427aa67ca1092c5c42。主作業者の同ref測定と一致",
+    "主作業者も最終refのclean状態で19 tests / 13.332s / OKとaudit Passedを再実行。codex exec --helpはexit 0で使用する9オプションの掲載を確認。モデル起動の実証ではない"
+  ],
+  "notRerun": [
+    {
+      "check": "実モデルの動作、Codex機能無効化・ホスト隔離の実効性、理由の意味評価",
+      "reason": "モデルCLI・外部サービスは起動していない。合成単体試験と静的/公開CLI検分だけで、実モデルの68測定は未実施"
+    },
+    {
+      "check": "発火Gateの区分別分母、保持ケース、複数モデル、実地パイロット、品質スキル接続、配布・リリース受入れ",
+      "reason": "今回の17公開ケースはPhase 2の隔離接続用。Skill Gateや出荷を認定しない"
+    },
+    {
+      "check": "Core全件単体・適合試験、Gate A/B/C、macOS、高リスク・複合workspaceの全工程",
+      "reason": "Coreと適合fixtureは変更していない。高リスクは開始前停止を測り、Linuxの狭い合成コードだけを実行した"
+    }
+  ],
+  "independent": true
+}

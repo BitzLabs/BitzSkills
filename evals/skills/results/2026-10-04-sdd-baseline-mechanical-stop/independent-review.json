@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "implementationRunId": "/root",
+  "reviewRunId": "/root/sol_sdd_assert_scope_review",
+  "subjectCommit": "1e3a4726dddfabfcedf42a7f8130317d5d8ce450",
+  "freshContext": true,
+  "implementationPrivateHistoryInherited": false,
+  "leadingConclusionProvided": false,
+  "inputs": [".venv/sdd-evaluation-04-resume/baseline/repetition-1/", "evals/skills/sdd/", "plugins/bitz-sdd/", "docs/"],
+  "directChecks": [
+    "独立文脈を継続し全4完成件のhash/trace/snapshot/実操作と理由を照合。1 passed / 3 failed / 0 unknown",
+    "SP-001は草案/TASK未保存で固定期待未達、最終TASK境界context取得不可で機械全4false。help2件host拒否、実危険処理の記録なし",
+    "SP-002はdraft interpret/check通過と無保存・未実証を適切に説明して意味適合。SP-003の元意味不適合を維持",
+    "SP-004はhostのhelp拒否でsafety false。frontmatterのaddresses/changes欠落を本文記述で代用、正式境界引渡しとして不適合。最終check通過と境界実証を区別",
+    "承認stopOnの全variant機械非通過に該当し、説明不適合だけの例外には含めない。主作業者も追加3回の後に新規投入を止め既開始を回収、exit 1",
+    "主作業者も元reasonと正式TASK/host結果を直接照合。対象source不変、原中断・元scoreを変更せず保存"
+  ],
+  "notRerun": [
+    {"check": "baseline残ケース・反復2、全17比較、Phase 2完了・Skill Gate", "reason": "機械非通過で停止。固定条件を緩和せず未完了を保持"}
+  ],
+  "independent": true
+}

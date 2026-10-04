@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0",
+  "evaluationSetVersion": "sdd-0.1.4",
+  "purpose": "Phase 2の公開・隔離接続評価。発火Gateとリリース認定は別工程",
+  "minimumRepetitions": 2,
+  "variants": ["skill", "baseline"],
+  "model": "gpt-6.1-sol",
+  "automaticRetries": 0,
+  "maximumCalls": 68,
+  "requiredChecks": ["deterministic", "safety", "workflow", "observation"],
+  "gateDecision": "not-certified"
+}
