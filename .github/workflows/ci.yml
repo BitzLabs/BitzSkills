@@ -35,7 +35,9 @@ jobs:
       - name: 評価契約、ケース、Schemaの監査
         run: uv run evals/skills/validate.py audit
       - name: 全スキルの契約・評価器・公開CLI接続試験
-        run: uv run --project plugins/bitz-core --with jsonschema==4.23.0 python -m unittest discover -s tests/skills -p 'test_*.py'
+        run: |
+          export PYTHONPATH="$PWD/plugins/bitz-core/src"
+          uv run --project plugins/bitz-core --with jsonschema==4.23.0 python -m unittest discover -s tests/skills -p 'test_*.py'
 
   audit:
     name: 適合fixtureの監査
