@@ -26,9 +26,9 @@ def build_plan(step, shards, replicas):
 
 def markdown(plan):
     lines = ["### 適合試験の分割予測", "",
-             f"予測元: [GitHub Actions run {MODEL_SOURCE['runUrl'].rsplit('/', 1)[-1]}]({MODEL_SOURCE['runUrl']})、"
-             f"commit `{MODEL_SOURCE['commit'][:8]}`、独立{MODEL_SOURCE['replicas']}組の中央値。",
-             "予測時間はcheckout・artifact処理を含むjob時間の目安で、合否条件には使用しません。", "",
+             f"予測元: [GitHub Actionsの実行{MODEL_SOURCE['runUrl'].rsplit('/', 1)[-1]}]({MODEL_SOURCE['runUrl']})、"
+             f"コミット`{MODEL_SOURCE['commit'][:8]}`、独立{MODEL_SOURCE['replicas']}組の中央値。",
+             "予測時間は、チェックアウトと成果物の処理を含むジョブの時間の目安で、合否の条件には使いません。", "",
              "| 分割 | fixture | 予測時間 | 主なfixture |", "|---:|---:|---:|---|"]
     for row in plan["partitions"]:
         heavy = sorted(row["fixtures"], key=lambda value: (-estimated_seconds(value), value))[:4]

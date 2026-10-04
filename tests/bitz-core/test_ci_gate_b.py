@@ -68,7 +68,7 @@ class ShardingTests(unittest.TestCase):
                          [(replica, shard) for replica in (1, 2) for shard in range(1, 5)])
         self.assertEqual({row["predicted"] for row in workers}, {"3分35秒"})
         summary = planning.markdown(plan)
-        self.assertIn("GitHub Actions run 36248419060", summary)
+        self.assertIn("GitHub Actionsの実行36248419060", summary)
         self.assertEqual(summary.count("| 3分35秒 |"), 4)
         pull_request = planning.build_plan(step=5, shards=4, replicas=1)
         self.assertEqual([(row["replica"], row["shard"])
