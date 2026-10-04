@@ -1,6 +1,7 @@
 {
   "schemaVersion": "1.0",
-  "approvalStatus": "pending",
+  "approvalStatus": "approved",
+  "approvalBasis": "利用者が停止条件変更と残13回以内の具体案の説明を受け、OK、進めましょうと明示承認した",
   "subjectCommit": "1e3a4726dddfabfcedf42a7f8130317d5d8ce450",
   "evaluationSetVersion": "sdd-0.1.4",
   "model": "gpt-6.1-sol",
