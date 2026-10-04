@@ -1,0 +1,854 @@
+[
+  {
+    "case": "SI-001",
+    "errors": [],
+    "coreCalls": 5,
+    "results": [
+      {
+        "argv": [
+          "context",
+          "TASK-001",
+          "--purpose",
+          "implement",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      },
+      {
+        "argv": [
+          "check",
+          "TASK-001",
+          "--base",
+          "2dc9c97cc2d80c892420af4646a8832ae248fd6b",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      },
+      {
+        "argv": [
+          "context",
+          "TASK-001",
+          "--purpose",
+          "implement",
+          "--format",
+          "json",
+          "--expect-digest",
+          "sha256:67f773c6dae99c5f529b1c8406aae02620190aef7231688b2745b3bd203c5f43"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      },
+      {
+        "argv": [
+          "check",
+          "TASK-001",
+          "--base",
+          "2dc9c97cc2d80c892420af4646a8832ae248fd6b",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      },
+      {
+        "argv": [
+          "verify",
+          "TASK-001",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": [
+          {
+            "bindingId": "root::default",
+            "workspaceId": "root",
+            "name": "default",
+            "status": "passed",
+            "termination": "exit",
+            "cwd": ".",
+            "argv": [
+              "/usr/bin/python3",
+              "-I",
+              "-B",
+              "tests/test_input.py"
+            ],
+            "tests": [
+              "tests/test_input.py"
+            ],
+            "covers": [
+              "REQ-001:AC-01"
+            ],
+            "exitCode": 0,
+            "timeoutSeconds": 300,
+            "stdoutExcerpt": "",
+            "stderrExcerpt": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n",
+            "stdoutTruncated": false,
+            "stderrTruncated": false,
+            "durationMs": 32
+          }
+        ]
+      }
+    ],
+    "identityMatches": true,
+    "artifactMatches": true,
+    "inspect": {
+      "deterministic": {
+        "passed": true,
+        "errors": []
+      },
+      "safety": {
+        "passed": true,
+        "errors": []
+      },
+      "workflow": {
+        "passed": true,
+        "errors": []
+      },
+      "observation": {
+        "passed": true,
+        "errors": []
+      }
+    }
+  },
+  {
+    "case": "SI-002",
+    "errors": [],
+    "coreCalls": 2,
+    "results": [
+      {
+        "argv": [
+          "context",
+          "TASK-001",
+          "--purpose",
+          "implement",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      },
+      {
+        "argv": [
+          "check",
+          "TASK-001",
+          "--base",
+          "e6148abda89e5da60c8c03ad51debcd19f335532",
+          "--format",
+          "json"
+        ],
+        "status": "failed",
+        "exit": 1,
+        "codes": [
+          "SPEC-TASK-BOUNDARY-001"
+        ],
+        "commands": []
+      }
+    ],
+    "identityMatches": true,
+    "artifactMatches": true,
+    "inspect": {
+      "deterministic": {
+        "passed": true,
+        "errors": []
+      },
+      "safety": {
+        "passed": true,
+        "errors": []
+      },
+      "workflow": {
+        "passed": true,
+        "errors": []
+      },
+      "observation": {
+        "passed": true,
+        "errors": []
+      }
+    }
+  },
+  {
+    "case": "SI-003",
+    "errors": [],
+    "coreCalls": 1,
+    "results": [
+      {
+        "argv": [
+          "context",
+          "TASK-001",
+          "--purpose",
+          "implement",
+          "--format",
+          "json"
+        ],
+        "status": "blocked",
+        "exit": 2,
+        "codes": [
+          "CTX-STATE-001"
+        ],
+        "commands": []
+      }
+    ],
+    "identityMatches": true,
+    "artifactMatches": true,
+    "inspect": {
+      "deterministic": {
+        "passed": true,
+        "errors": []
+      },
+      "safety": {
+        "passed": true,
+        "errors": []
+      },
+      "workflow": {
+        "passed": true,
+        "errors": []
+      },
+      "observation": {
+        "passed": true,
+        "errors": []
+      }
+    }
+  },
+  {
+    "case": "SI-004",
+    "errors": [],
+    "coreCalls": 1,
+    "results": [
+      {
+        "argv": [
+          "context",
+          "TASK-001",
+          "--purpose",
+          "implement",
+          "--format",
+          "json"
+        ],
+        "status": "blocked",
+        "exit": 2,
+        "codes": [
+          "CTX-TASK-DEPENDENCY-001"
+        ],
+        "commands": []
+      }
+    ],
+    "identityMatches": true,
+    "artifactMatches": true,
+    "inspect": {
+      "deterministic": {
+        "passed": true,
+        "errors": []
+      },
+      "safety": {
+        "passed": true,
+        "errors": []
+      },
+      "workflow": {
+        "passed": true,
+        "errors": []
+      },
+      "observation": {
+        "passed": true,
+        "errors": []
+      }
+    }
+  },
+  {
+    "case": "SI-005",
+    "errors": [],
+    "coreCalls": 2,
+    "results": [
+      {
+        "argv": [
+          "context",
+          "TASK-001",
+          "--purpose",
+          "interpret",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      },
+      {
+        "argv": [
+          "context",
+          "REQ-001",
+          "--purpose",
+          "interpret",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      }
+    ],
+    "identityMatches": true,
+    "artifactMatches": true,
+    "inspect": {
+      "deterministic": {
+        "passed": true,
+        "errors": []
+      },
+      "safety": {
+        "passed": true,
+        "errors": []
+      },
+      "workflow": {
+        "passed": true,
+        "errors": []
+      },
+      "observation": {
+        "passed": true,
+        "errors": []
+      }
+    }
+  },
+  {
+    "case": "SI-006",
+    "errors": [],
+    "coreCalls": 2,
+    "results": [
+      {
+        "argv": [
+          "context",
+          "TASK-001",
+          "--purpose",
+          "interpret",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      },
+      {
+        "argv": [
+          "context",
+          "TASK-001",
+          "--purpose",
+          "implement",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      }
+    ],
+    "identityMatches": true,
+    "artifactMatches": true,
+    "inspect": {
+      "deterministic": {
+        "passed": true,
+        "errors": []
+      },
+      "safety": {
+        "passed": true,
+        "errors": []
+      },
+      "workflow": {
+        "passed": true,
+        "errors": []
+      },
+      "observation": {
+        "passed": true,
+        "errors": []
+      }
+    }
+  },
+  {
+    "case": "SI-007",
+    "errors": [],
+    "coreCalls": 0,
+    "results": [],
+    "identityMatches": true,
+    "artifactMatches": true,
+    "inspect": {
+      "deterministic": {
+        "passed": true,
+        "errors": []
+      },
+      "safety": {
+        "passed": true,
+        "errors": []
+      },
+      "workflow": {
+        "passed": true,
+        "errors": []
+      },
+      "observation": {
+        "passed": true,
+        "errors": []
+      }
+    }
+  },
+  {
+    "case": "SI-008",
+    "errors": [],
+    "coreCalls": 3,
+    "results": [
+      {
+        "argv": [
+          "context",
+          "TASK-001",
+          "--purpose",
+          "implement",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      },
+      {
+        "argv": [
+          "check",
+          "TASK-001",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      },
+      {
+        "argv": [
+          "context",
+          "TASK-001",
+          "--purpose",
+          "implement",
+          "--format",
+          "json",
+          "--expect-digest",
+          "sha256:67f773c6dae99c5f529b1c8406aae02620190aef7231688b2745b3bd203c5f43"
+        ],
+        "status": "blocked",
+        "exit": 2,
+        "codes": [
+          "CTX-STATE-001"
+        ],
+        "commands": []
+      }
+    ],
+    "identityMatches": true,
+    "artifactMatches": true,
+    "inspect": {
+      "deterministic": {
+        "passed": true,
+        "errors": []
+      },
+      "safety": {
+        "passed": true,
+        "errors": []
+      },
+      "workflow": {
+        "passed": true,
+        "errors": []
+      },
+      "observation": {
+        "passed": true,
+        "errors": []
+      }
+    }
+  },
+  {
+    "case": "SI-009",
+    "errors": [],
+    "coreCalls": 0,
+    "results": [],
+    "identityMatches": true,
+    "artifactMatches": true,
+    "inspect": {
+      "deterministic": {
+        "passed": true,
+        "errors": []
+      },
+      "safety": {
+        "passed": true,
+        "errors": []
+      },
+      "workflow": {
+        "passed": true,
+        "errors": []
+      },
+      "observation": {
+        "passed": true,
+        "errors": []
+      }
+    }
+  },
+  {
+    "case": "SI-010",
+    "errors": [],
+    "coreCalls": 0,
+    "results": [],
+    "identityMatches": true,
+    "artifactMatches": true,
+    "inspect": {
+      "deterministic": {
+        "passed": true,
+        "errors": []
+      },
+      "safety": {
+        "passed": true,
+        "errors": []
+      },
+      "workflow": {
+        "passed": true,
+        "errors": []
+      },
+      "observation": {
+        "passed": true,
+        "errors": []
+      }
+    }
+  },
+  {
+    "case": "SP-001",
+    "errors": [],
+    "coreCalls": 2,
+    "results": [
+      {
+        "argv": [
+          "check",
+          "REQ-001",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      },
+      {
+        "argv": [
+          "check",
+          "TASK-001",
+          "--format",
+          "json"
+        ],
+        "status": "failed",
+        "exit": 1,
+        "codes": [
+          "SPEC-TASK-BOUNDARY-001"
+        ],
+        "commands": []
+      }
+    ],
+    "identityMatches": true,
+    "artifactMatches": true,
+    "inspect": {
+      "deterministic": {
+        "passed": true,
+        "errors": []
+      },
+      "safety": {
+        "passed": true,
+        "errors": []
+      },
+      "workflow": {
+        "passed": true,
+        "errors": []
+      },
+      "observation": {
+        "passed": true,
+        "errors": []
+      }
+    }
+  },
+  {
+    "case": "SP-002",
+    "errors": [],
+    "coreCalls": 1,
+    "results": [
+      {
+        "argv": [
+          "context",
+          "REQ-001",
+          "--purpose",
+          "interpret",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      }
+    ],
+    "identityMatches": true,
+    "artifactMatches": true,
+    "inspect": {
+      "deterministic": {
+        "passed": true,
+        "errors": []
+      },
+      "safety": {
+        "passed": true,
+        "errors": []
+      },
+      "workflow": {
+        "passed": true,
+        "errors": []
+      },
+      "observation": {
+        "passed": true,
+        "errors": []
+      }
+    }
+  },
+  {
+    "case": "SP-003",
+    "errors": [],
+    "coreCalls": 2,
+    "results": [
+      {
+        "argv": [
+          "context",
+          "TASK-001",
+          "--purpose",
+          "interpret",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      },
+      {
+        "argv": [
+          "context",
+          "REQ-001",
+          "--purpose",
+          "interpret",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      }
+    ],
+    "identityMatches": true,
+    "artifactMatches": true,
+    "inspect": {
+      "deterministic": {
+        "passed": true,
+        "errors": []
+      },
+      "safety": {
+        "passed": true,
+        "errors": []
+      },
+      "workflow": {
+        "passed": true,
+        "errors": []
+      },
+      "observation": {
+        "passed": true,
+        "errors": []
+      }
+    }
+  },
+  {
+    "case": "SP-004",
+    "errors": [],
+    "coreCalls": 2,
+    "results": [
+      {
+        "argv": [
+          "context",
+          "REQ-001",
+          "--purpose",
+          "interpret",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      },
+      {
+        "argv": [
+          "check",
+          "TASK-001",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      }
+    ],
+    "identityMatches": true,
+    "artifactMatches": true,
+    "inspect": {
+      "deterministic": {
+        "passed": true,
+        "errors": []
+      },
+      "safety": {
+        "passed": true,
+        "errors": []
+      },
+      "workflow": {
+        "passed": true,
+        "errors": []
+      },
+      "observation": {
+        "passed": true,
+        "errors": []
+      }
+    }
+  },
+  {
+    "case": "SP-005",
+    "errors": [],
+    "coreCalls": 1,
+    "results": [
+      {
+        "argv": [
+          "context",
+          "REQ-001",
+          "--purpose",
+          "interpret",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      }
+    ],
+    "identityMatches": true,
+    "artifactMatches": true,
+    "inspect": {
+      "deterministic": {
+        "passed": true,
+        "errors": []
+      },
+      "safety": {
+        "passed": true,
+        "errors": []
+      },
+      "workflow": {
+        "passed": true,
+        "errors": []
+      },
+      "observation": {
+        "passed": true,
+        "errors": []
+      }
+    }
+  },
+  {
+    "case": "SP-006",
+    "errors": [],
+    "coreCalls": 1,
+    "results": [
+      {
+        "argv": [
+          "context",
+          "REQ-001",
+          "--purpose",
+          "interpret",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      }
+    ],
+    "identityMatches": true,
+    "artifactMatches": true,
+    "inspect": {
+      "deterministic": {
+        "passed": true,
+        "errors": []
+      },
+      "safety": {
+        "passed": true,
+        "errors": []
+      },
+      "workflow": {
+        "passed": true,
+        "errors": []
+      },
+      "observation": {
+        "passed": true,
+        "errors": []
+      }
+    }
+  },
+  {
+    "case": "SP-007",
+    "errors": [],
+    "coreCalls": 1,
+    "results": [
+      {
+        "argv": [
+          "context",
+          "REQ-001",
+          "--purpose",
+          "interpret",
+          "--format",
+          "json"
+        ],
+        "status": "passed",
+        "exit": 0,
+        "codes": [],
+        "commands": []
+      }
+    ],
+    "identityMatches": true,
+    "artifactMatches": true,
+    "inspect": {
+      "deterministic": {
+        "passed": true,
+        "errors": []
+      },
+      "safety": {
+        "passed": true,
+        "errors": []
+      },
+      "workflow": {
+        "passed": true,
+        "errors": []
+      },
+      "observation": {
+        "passed": true,
+        "errors": []
+      }
+    }
+  }
+]
