@@ -10,6 +10,8 @@ remediation-approval.jsonに基づき別出力・別台帳で測定する。失�
 両側の資料にはhelperのcanonical ID/整合性条件が十分明記されていなかったため、一般的な比較優位は主張しない。
 advice-format.mdを共通配布し、実際の読取りを検査する実行器quality-execution-0.1.1で新測定する。
 shared-format-protocol.jsonとshared-format-approval.jsonは包括承認に基づく別4件で、ケース/期待条件/スキル版は保持する。
+この新条件は471d360から4件完走し、各runの独立判定は全項目passed。
+詳細と未認定の範囲は[限定適合の記録](../results/2026-10-04-quality-shared-format/report.md)を参照する。
 
 比較の準備版。2026-10-04の利用者承認はapproval.jsonに記録した。実行開始前の時点ではモデル実測は未実行。
 bitz-quality 0.1.1の局所試作から始める。
