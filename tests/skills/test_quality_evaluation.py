@@ -293,6 +293,26 @@ class QualityEvaluationTests(unittest.TestCase):
                 evaluate.measure(SimpleNamespace(output=self.directory, timeout=10,
                     protocol=HERE / "shared-format-protocol.json", approval=HERE / "remediation-approval.json"))
 
+    def test_model_version_and_sol_scope_mismatch_stop_before_any_output_or_ledger(self):
+        approval_path = HERE / "shared-format-approval.json"
+        protocol_path = HERE / "shared-format-protocol.json"
+        scope_path = HERE.parent / "sol-authorization.json"
+        original_load = evaluate.load
+        for name, replacement_path, field, value in [
+            ("non-sol", approval_path, "model", "gpt-6-astra"),
+            ("protocol model", protocol_path, "model", "gpt-6-sol"),
+            ("evaluation version", approval_path, "evaluationSetVersion", "wrong-version"),
+            ("scope pending", scope_path, "approvalStatus", "pending"),
+            ("scope absent model", scope_path, "models", []),
+            ("other authorization", approval_path, "authorization", "replacement.json")
+        ]:
+            replacement = {**original_load(replacement_path), field: value}
+            with self.subTest(name=name), patch("evaluate.load", side_effect=lambda path: replacement if path == replacement_path else original_load(path)), patch("evaluate.authorization_lock", side_effect=AssertionError("must not open ledger")), patch("preflight.git", side_effect=AssertionError("must stop before workspace access")), patch("evaluate.subprocess.run", side_effect=AssertionError("must not invoke model")):
+                with self.assertRaisesRegex(ValueError, "sol authorization"):
+                    evaluate.measure(SimpleNamespace(output=self.directory / "must-not-exist", timeout=10,
+                        protocol=protocol_path, approval=approval_path))
+                self.assertFalse((self.directory / "must-not-exist").exists())
+
     def test_original_core_insertion_preserves_exact_actual_observations(self):
         record, calls = self.record_from_actual_host()
         errors, document = evaluate.inspect_record(self.directory, self.cases[0], record)

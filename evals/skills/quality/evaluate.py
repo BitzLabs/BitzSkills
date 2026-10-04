@@ -270,6 +270,12 @@ def measure(args):
     protocol = load(protocol_path)
     if approval["approvalStatus"] != "approved" or approval["protocolSha256"] != sha(protocol_path.read_bytes()):
         raise ValueError("measurement authorization or fixed protocol mismatch")
+    scope = load(HERE.parent / "sol-authorization.json")
+    if (approval["model"] != protocol["model"] or approval["model"] != "gpt-6.1-sol"
+            or approval["evaluationSetVersion"] != protocol["evaluationSetVersion"]
+            or approval.get("authorization", "../sol-authorization.json") != "../sol-authorization.json"
+            or scope["approvalStatus"] != "approved" or approval["model"] not in scope["models"]):
+        raise ValueError("sol authorization or fixed model/evaluation identity mismatch")
     if not 1 <= args.timeout <= 600:
         raise ValueError("trajectory timeout must remain within 600 seconds")
     if preflight.git(["status", "--porcelain"], ROOT, preflight.environment()):
