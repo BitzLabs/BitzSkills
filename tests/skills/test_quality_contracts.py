@@ -39,8 +39,19 @@ def complete_review():
     ]
     value["missingEvidenceIds"] = []
     value["notRerun"] = []
+    value["coreResults"] = [core_observation(operation=operation) for operation in ("context", "check")]
     value["decision"] = "ready"
     return value
+
+
+def core_observation(status="passed", operation="check", role="current_gate"):
+    raw = {"operation": operation, "status": status, "revision": {"commit": "a" * 40, "dirty": False}, "diagnostics": []}
+    if operation == "context":
+        raw.update(resolution={"complete": True}, contextDigest="b" * 64)
+    return {"operation": operation, "status": status, "exitCode": quality.EXIT_CODES[status],
+            "source": "synthetic test input, not a real Core result", "sha256": hashlib.sha256(json.dumps(raw).encode()).hexdigest(),
+            "subjectCommit": "a" * 40, "role": role, "roleReason": "合成入力の判定整合性試験", "argv": ["bitz", operation],
+            "cwd": "synthetic", "rawResult": raw, "stderr": ""}
 
 
 class QualityContractTests(unittest.TestCase):
@@ -51,8 +62,8 @@ class QualityContractTests(unittest.TestCase):
             self.assertTrue(any(text in e for e in errors), errors)
 
     def test_schemas_and_unproven_examples(self):
-        for kind in ("plan", "review"):
-            Draft202012Validator.check_schema(json.loads((PACKAGE / "schemas" / f"quality-{kind}.schema.json").read_text()))
+        for path in (PACKAGE / "schemas").glob("*.schema.json"):
+            Draft202012Validator.check_schema(json.loads(path.read_text()))
         self.assertEqual([], quality.validate("plan", example("local-change-plan.json")))
         self.assertEqual([], quality.validate("review", example("missing-evidence-review.json")))
 
@@ -172,6 +183,88 @@ class QualityContractTests(unittest.TestCase):
         self.assertFalse(data["certifiesQuality"])
         self.assertEqual("format-and-declared-consistency", data["scope"])
 
+    def test_current_core_failure_overrides_missing_evidence(self):
+        value = example("missing-evidence-review.json")
+        value["subjectCommit"] = "a" * 40
+        value["coreResults"] = [core_observation("failed")]
+        self.assert_invalid("review", value, "expected not_ready")
+        value["decision"] = "not_ready"
+        self.assertEqual([], quality.validate("review", value))
+
+    def test_current_core_blocked_error_and_invalid_invocation_are_unknown(self):
+        for status in ("blocked", "error", None):
+            with self.subTest(status=status):
+                value = complete_review()
+                item = core_observation(status)
+                if status is None:
+                    item.update(rawResult=None, stderr="bitz: check: invalid argument")
+                value["coreResults"][1] = item
+                self.assert_invalid("review", value, "expected unknown")
+                value["decision"] = "unknown"
+                self.assertEqual([], quality.validate("review", value))
+
+    def test_historical_and_expected_negative_do_not_replace_current_gates(self):
+        for role in ("historical", "expected_negative"):
+            value = complete_review()
+            value["coreResults"].append(core_observation("failed", role=role))
+            self.assertEqual([], quality.validate("review", value))
+            value["coreResults"] = value["coreResults"][-1:]
+            self.assert_invalid("review", value, "expected unknown")
+
+    def test_core_original_status_exit_and_revision_cannot_be_rewritten(self):
+        for field, replacement in (("exitCode", 1), ("status", "failed"), ("subjectCommit", "b" * 40)):
+            value = complete_review()
+            value["coreResults"][0][field] = replacement
+            self.assert_invalid("review", value)
+
+    def test_dirty_or_incomplete_context_cannot_support_ready(self):
+        for mutation in ("dirty", "resolution", "digest"):
+            value = complete_review()
+            raw = value["coreResults"][0]["rawResult"]
+            if mutation == "dirty":
+                raw["revision"]["dirty"] = True
+            elif mutation == "resolution":
+                raw["resolution"]["complete"] = False
+            else:
+                raw["contextDigest"] = None
+            self.assert_invalid("review", value, "expected unknown")
+
+    def test_invalid_invocation_cannot_invent_a_core_result(self):
+        value = complete_review()
+        value["coreResults"][1]["status"] = None
+        value["coreResults"][1]["exitCode"] = 4
+        self.assert_invalid("review", value, "no Core result")
+
+    def test_malformed_retained_metadata_is_rejected_without_crashing(self):
+        for field in ("revision", "resolution"):
+            value = complete_review()
+            value["coreResults"][0]["rawResult"][field] = []
+            self.assert_invalid("review", value, "schema:")
+
+    def test_missing_reexecution_is_linked_to_evidence_availability(self):
+        value = complete_review()
+        value["notRerun"] = [{"check": "回帰試験", "reason": "独立に一次結果を直接検分した合成宣言", "evidenceIds": ["regression"], "evidenceAvailable": True}]
+        self.assertEqual([], quality.validate("review", value))
+        value["notRerun"][0]["evidenceAvailable"] = False
+        self.assert_invalid("review", value, "unavailable evidence")
+        value["collectedEvidence"] = [e for e in value["collectedEvidence"] if e["evidenceId"] != "regression"]
+        value["missingEvidenceIds"] = ["regression"]
+        value["decision"] = "unknown"
+        self.assertEqual([], quality.validate("review", value))
+
+    def test_plan_preserves_original_core_warnings_and_unexecuted_checks(self):
+        value = example("local-change-plan.json")
+        value["subjectCommit"] = "a" * 40
+        item = core_observation("passed_with_warnings", operation="context")
+        item["rawResult"]["diagnostics"] = [{"severity": "warning", "message": "合成警告"}]
+        value["coreResults"] = [item]
+        self.assertEqual([], quality.validate("plan", value))
+        self.assertEqual("合成警告", value["coreResults"][0]["rawResult"]["diagnostics"][0]["message"])
+        self.assertFalse(value["notRun"][0]["evidenceAvailable"])
+        value["coreResults"] = [core_observation("blocked")]
+        value["planningStatus"] = "proposed"
+        self.assert_invalid("plan", value, "non-success")
+
     def test_real_core_pass_does_not_supply_missing_test_evidence(self):
         scratch = ROOT / ".venv"
         scratch.mkdir(exist_ok=True)
@@ -193,7 +286,10 @@ class QualityContractTests(unittest.TestCase):
                 core = json.loads(result.stdout)
                 self.assertIn(core["status"], {"passed", "passed_with_warnings"})
                 self.assertEqual(operation, core["operation"])
-                value["coreResults"].append({"operation": operation, "status": core["status"], "exitCode": result.returncode, "source": "actual synthetic public CLI stdout", "sha256": hashlib.sha256(result.stdout).hexdigest()})
+                value["coreResults"].append({"operation": operation, "status": core["status"], "exitCode": result.returncode,
+                    "source": "actual synthetic public CLI stdout", "sha256": hashlib.sha256(result.stdout).hexdigest(),
+                    "subjectCommit": ref, "role": "current_gate", "roleReason": "同一合成workspaceの読取り検査",
+                    "argv": [sys.executable, "-B", "-m", "bitz.cli", *args], "cwd": str(workspace), "rawResult": core, "stderr": result.stderr.decode()})
             self.assertEqual([], quality.validate("review", value))
             self.assertEqual("unknown", value["decision"])
             self.assertEqual([], value["collectedEvidence"])

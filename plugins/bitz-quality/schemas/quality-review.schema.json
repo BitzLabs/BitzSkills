@@ -28,12 +28,7 @@
       }
     },
     "missingEvidenceIds": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
-    "coreResults": {
-      "type": "array", "items": {
-        "type": "object", "additionalProperties": false, "required": ["operation", "status", "exitCode", "source", "sha256"],
-        "properties": {"operation": {"enum": ["doctor", "context", "check", "verify"]}, "status": {"enum": ["passed", "passed_with_warnings", "failed", "blocked", "error"]}, "exitCode": {"type": "integer", "minimum": 0}, "source": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
-      }
-    },
+    "coreResults": {"type": "array", "items": {"$ref": "core-observation.schema.json"}},
     "findings": {
       "type": "array", "items": {
         "type": "object", "additionalProperties": false, "required": ["severity", "location", "impact", "evidence", "resolved"],
@@ -47,7 +42,7 @@
       }
     },
     "notRerun": {
-      "type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["check", "reason"], "properties": {"check": {"type": "string", "minLength": 1}, "reason": {"type": "string", "minLength": 1}}}
+      "type": "array", "items": {"$ref": "core-observation.schema.json#/$defs/notRun"}
     },
     "humanDecisionPending": {"const": true}
   }

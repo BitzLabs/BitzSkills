@@ -1,6 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "bitz-quality",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "BitzSkills 2系の品質計画と独立レビューを支援する日本語スキルの試作版"
 }

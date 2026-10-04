@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "core-observation.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["operation", "status", "exitCode", "source", "sha256", "subjectCommit", "role", "roleReason", "argv", "cwd", "rawResult", "stderr"],
+  "properties": {
+    "operation": {"enum": ["doctor", "context", "check", "verify"]},
+    "status": {"enum": ["passed", "passed_with_warnings", "failed", "blocked", "error", null]},
+    "exitCode": {"type": "integer", "minimum": 0, "maximum": 4},
+    "source": {"type": "string", "minLength": 1},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "subjectCommit": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+    "role": {"enum": ["current_gate", "historical", "expected_negative"]},
+    "roleReason": {"type": "string", "minLength": 1},
+    "argv": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "cwd": {"type": "string", "minLength": 1},
+    "rawResult": {
+      "type": ["object", "null"],
+      "properties": {
+        "revision": {"type": ["object", "null"], "properties": {"commit": {"type": "string"}, "dirty": {"type": "boolean"}}},
+        "resolution": {"type": "object", "properties": {"complete": {"type": "boolean"}}},
+        "contextDigest": {"type": ["string", "null"]}
+      }
+    },
+    "stderr": {"type": "string"}
+  },
+  "$defs": {
+    "notRun": {
+      "type": "object", "additionalProperties": false,
+      "required": ["check", "reason", "evidenceIds", "evidenceAvailable"],
+      "properties": {
+        "check": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 1},
+        "evidenceIds": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "evidenceAvailable": {"type": "boolean"}
+      }
+    }
+  }
+}

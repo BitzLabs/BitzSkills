@@ -2,7 +2,7 @@
 name: quality-plan
 description: Bitzの変更について、実装前の品質目標、Q0〜Q3のリスク、必須証拠、試験と独立レビューの方針を計画する。品質計画、リスク別の検証方針、必要な証拠の相談で使う。仕様草案の作成、コード実装、Core検査だけ、実装後の独立判定や出荷判断には使わない。計画だけではファイルを書かず、試験やverifyを実行しない。
 metadata:
-  version: 0.1.0
+  version: 0.1.1
   updated: 2026-10-04
 ---
 
@@ -57,6 +57,11 @@ REQ/TECHの意味・approved状態、TASK、コード、テスト、設定は計
 返すものは起点と対象、品質目標、各観点とQ帯の理由、必須/推奨/適用外の証拠、試験予定、独立検分の深さ、
 未決事項、停止と完了の条件、Coreの元結果・警告・未実行である。
 品質計画の形式は[quality-plan.schema.json](../../schemas/quality-plan.schema.json)、例は[計画例](../../examples/local-change-plan.json)。
+coreResultsは[共通観測形式](../../schemas/core-observation.schema.json)で元JSON全体とstderr・argv・cwd・対象ref・取得先/hashを保持する。
+rawResult内の対象・完全解決・digest・警告を削らない。結果のない終了4はstatus/rawResultともnullとし、errorを作らない。
+現在の判定用current_gateと理由付きhistorical/expected_negativeを分け、過去・意図した不適合を現在の通過証拠にしない。
+現在の非成功があればplanningStatusをneeds_informationまたはblockedとし、元の不適合や不足を提案で上書きしない。
+notRunは未実行理由を予定のevidenceIdと取得可否へ結び付ける。試験予定を実行済み証拠にしない。
 JSONは計画の表現で、形式適合をリスクの妥当性や要件実証へ読み替えない。
 確定変更のhandoffと計画を後続quality-reviewへ渡し、計画完了をready・要求承認・出荷許可へ変えない。
 

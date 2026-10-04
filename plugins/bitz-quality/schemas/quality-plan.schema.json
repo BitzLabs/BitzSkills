@@ -3,7 +3,7 @@
   "$id": "quality-plan.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "kind", "advisory", "planningStatus", "subjectCommit", "originIds", "goal", "risk", "flow", "independentReviewPlanned", "evidencePlan", "openQuestions", "stopConditions", "humanDecisionPending"],
+  "required": ["schemaVersion", "kind", "advisory", "planningStatus", "subjectCommit", "originIds", "goal", "risk", "flow", "independentReviewPlanned", "evidencePlan", "coreResults", "notRun", "openQuestions", "stopConditions", "humanDecisionPending"],
   "properties": {
     "schemaVersion": {"const": "1.0"},
     "kind": {"const": "quality-plan"},
@@ -37,6 +37,8 @@
     },
     "flow": {"enum": ["simple", "full", "spike", null]},
     "independentReviewPlanned": {"type": "boolean"},
+    "coreResults": {"type": "array", "items": {"$ref": "core-observation.schema.json"}},
+    "notRun": {"type": "array", "items": {"$ref": "core-observation.schema.json#/$defs/notRun"}},
     "evidencePlan": {
       "type": "array", "minItems": 1,
       "items": {

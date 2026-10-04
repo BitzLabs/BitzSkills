@@ -21,6 +21,6 @@
   "coreResults": [],
   "findings": [],
   "conditions": [],
-  "notRerun": [{"check": "対象試験と差分", "reason": "未実証の合成例。対象ref・実コマンド・一次結果・独立文脈が未取得"}],
+  "notRerun": [{"check": "対象試験と差分", "reason": "未実証の合成例。対象ref・実コマンド・一次結果・独立文脈が未取得", "evidenceIds": ["regression", "diff-review"], "evidenceAvailable": false}],
   "humanDecisionPending": true
 }

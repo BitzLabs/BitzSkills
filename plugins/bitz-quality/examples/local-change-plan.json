@@ -23,6 +23,8 @@
   },
   "flow": "simple",
   "independentReviewPlanned": true,
+  "coreResults": [],
+  "notRun": [{"check": "Core取得と実試験", "reason": "未実証の合成例。所有workspaceと対象refが未確定", "evidenceIds": ["requirements", "regression"], "evidenceAvailable": false}],
   "evidencePlan": [
     {"evidenceId": "requirements", "priority": "required", "reason": "承認済みの契約を維持する", "checksCondition": "起点・状態・非目標と修正範囲", "method": "要求本文と解釈用contextの直接確認", "command": null, "cwd": null, "safetyPrerequisites": ["所有workspaceと起点を確認"], "owner": "計画担当"},
     {"evidenceId": "regression", "priority": "required", "reason": "狭いassertと未実証を区別する", "checksCondition": "空入力の件数と通常入力の既存結果。型・内容はassertがなければ未検査", "method": "実assertの対応付けと安全な対象試験", "command": null, "cwd": null, "safetyPrerequisites": ["実テスト本文・登録コマンド・cwd・副作用・隔離と許可を確認"], "owner": "実装担当"},
