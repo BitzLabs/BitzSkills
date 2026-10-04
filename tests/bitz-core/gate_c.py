@@ -102,7 +102,7 @@ def _version_at_least(actual: tuple[int, ...], minimum: tuple[int, ...]) -> bool
 
 def validate_performance_evidence(row: dict, *, commit: str,
                                   reference_manifest: dict) -> dict:
-    """新しいチェックアウトで実行した性能fixtureの監査の証跡を検査する。"""
+    """新しいチェックアウトで実行した性能ベースラインの監査の証跡を検査する。"""
     _error(isinstance(row, dict), "性能ベースラインの監査の証跡がありません")
     _error(row.get("schemaVersion") == 1, "性能ベースラインの監査の証跡の`schemaVersion`が不正です")
     _error(row.get("commit") == commit, "性能ベースラインの監査の証跡の`commit`が対象コミットと一致しません")
