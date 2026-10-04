@@ -706,6 +706,14 @@ Phase 2完了やSkill Gate通過とは扱わない。
 
 ### Phase 3: 品質計画と独立レビュー
 
+日本語`quality-plan` 0.1.1と`quality-review` 0.1.2、公開助言Schema、申告整合性検査を実装した。
+[共通形式でのsol先行比較](../../evals/skills/results/2026-10-04-quality-shared-format/report.md)は
+レビュー1ケースをスキルあり／なし各2反復で測り、4件とも固定基準と独立検分に適合した。
+判断は全件`not_ready`であり、品質の合格ではない。スキルありはQ3／critical、なしはQ2／majorだった。
+元の停止2条件は別記録として保持し、改善効果や全リスク帯・Phase 3・Skill Gateの認定とは扱わない。
+新しいsol評価と独立検分は[包括承認](../../evals/skills/sol-authorization.json)の範囲で実行できるが、
+各バッチの対象ref・条件・上限・停止規則は実行前に固定する。
+
 目的:
 
 - 品質を実装の自己評価から分離し、リスクと証拠に基づく検分を成立させる。
@@ -727,6 +735,14 @@ Phase 2完了やSkill Gate通過とは扱わない。
   `not_ready`、なければ`unknown`を返す。
 
 ### Phase 4: 収束と統合
+
+2026-10-04に`origin/main`の`316ee11a10ef0ccf7bcd61521b5f4400114650be`から
+`codex/core-sdd-quality-integration`を作り、Core・SDD・品質の3ブランチを取り込んだ。
+`tests/skills/test_sdd_quality_integration.py`で、実装前の品質計画、実テスト失敗と修正、
+公開Coreの原結果と実hashを持つ引渡し、Q2の計画不足、過去refの証拠の拒否を接続する。
+人手レビューと独立品質検分の未実施は`unknown`、実verify失敗は`not_ready`として残す。
+これは合成入力の公開CLI・形式検査であり、モデルの工程実行や独立レビューの実施を証明しない。
+`sdd-converge`、5種類の実地パイロット、Skill Gate 4、mainへの統合・リリース判断は残件である。
 
 目的:
 
