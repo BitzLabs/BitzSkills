@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0",
+  "subjectCommit": "f0ada9c76a701c242c729d8eb412dbf61d32d48c",
+  "archive": "evidence.tar.gz",
+  "sha256": "0e5e5cab15d111103a23acc6611fa86fc33a0c9808eb1c928226c33e7d3cb5e1",
+  "members": 245,
+  "files": 142,
+  "uncompressedFileBytes": 330272,
+  "errors": [],
+  "checks": [
+    "2件のrun.artifacts全5件と実アーカイブのSHA-256一致",
+    "2件のchanges.after全14ファイルと実アーカイブのSHA-256一致",
+    "2件の独立receipt.runSha256と実run.jsonのSHA-256一致",
+    "台帳attemptCount=2、2件ともcompleted",
+    "logs/stateを含まず、workspaceのGit記録を含む"
+  ],
+  "primaryWallMsTotal": 108992,
+  "primaryUsageTotals": {
+    "input_tokens": 284932,
+    "cached_input_tokens": 226304,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 1841,
+    "reasoning_output_tokens": 50
+  },
+  "usageRecords": 2,
+  "providerCost": null,
+  "reviewUsage": null,
+  "missingUsageReason": "provider請求額と独立サブエージェントのusageは取得できず欠測。0円・0 tokenではない"
+}

@@ -1,0 +1,70 @@
+{
+  "subjectCommit": "f0ada9c76a701c242c729d8eb412dbf61d32d48c",
+  "normalPlans": 2,
+  "conditionsIdentical": true,
+  "conditions": {
+    "output": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/independent-sdd-batch-dry-review",
+    "batchSha256": "3c445a3fc03231969742925180c4e55e939174ee9e570e437c891d7a69d4efc0",
+    "authorizationSha256": "972062f2e3dbd153ed24558d105edbb60a376f037a4ba9b9ca11b1ca7412cb2e",
+    "codexVersion": "codex-cli 0.160.0",
+    "timeoutSeconds": 240,
+    "pythonExecutable": "/home/hide/.cache/uv/environments-v2/run-conformance-3a9acb64608185bd/bin/python",
+    "pythonVersion": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+    "coreDoctorSha256": "82e37456cea372bb7fe62bda62fab286ae482521b7ecf4cbb98c0295296312d0",
+    "identities": [
+      {
+        "setVersion": "sdd-0.1.4",
+        "subjectCommit": "f0ada9c76a701c242c729d8eb412dbf61d32d48c",
+        "sourceSha256": "f41759d13cd0f875f8044bdd633d85edfba0f0b091cffb0c788e53214e5374b4",
+        "caseSha256": "9e5654ac2b108f5572125ff78382a09ed66c66b9df00beb98518e45e9403d3bf",
+        "caseId": "SI-001",
+        "variant": "skill",
+        "repetition": 1,
+        "model": "gpt-6.1-sol",
+        "modelVersion": "unversioned-alias-observed-2026-10-05",
+        "pythonpath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/plugins/bitz-core/src:/home/hide/.cache/uv/archive-v0/Ug0C44_7vEo9wg_i"
+      },
+      {
+        "setVersion": "sdd-0.1.4",
+        "subjectCommit": "f0ada9c76a701c242c729d8eb412dbf61d32d48c",
+        "sourceSha256": "f41759d13cd0f875f8044bdd633d85edfba0f0b091cffb0c788e53214e5374b4",
+        "caseSha256": "9c2645c5a7c3b309fbc625b94f274d8eaf36c0abfe2d6a3865d8dd6a14e00cc6",
+        "caseId": "SI-007",
+        "variant": "skill",
+        "repetition": 1,
+        "model": "gpt-6.1-sol",
+        "modelVersion": "unversioned-alias-observed-2026-10-05",
+        "pythonpath": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/plugins/bitz-core/src:/home/hide/.cache/uv/archive-v0/Ug0C44_7vEo9wg_i"
+      }
+    ]
+  },
+  "invalidCorePath": {
+    "status": "rejected",
+    "reason": "逐次実行・再試行なし・固定timeout・絶対Python pathが必要です"
+  },
+  "modelCalls": 0,
+  "ledgerUnchanged": true,
+  "outputExists": false,
+  "temporaryDirectoriesCleaned": true,
+  "independentContext": {
+    "implementationPrivateHistoryInherited": false,
+    "modelEvaluationsStarted": false
+  },
+  "priorFindings": [
+    {
+      "ref": "77fff80e9cf4531efe2d1ef0bba7a418cd764c39",
+      "finding": "P2: Core source先頭を起動前検査せず",
+      "statusAtRef": "failed"
+    },
+    {
+      "ref": "ccf15da83cbbb44f8e341b9e352e6a65e81d9dd4",
+      "finding": "P2: root doctorのuv解決失敗により正常plan拒否",
+      "statusAtRef": "failed"
+    }
+  ],
+  "unitTests": {
+    "command": "python3 -B tests/skills/test_sdd_batch.py",
+    "output": "Ran 13 tests in 0.071s\nOK",
+    "exitCode": 0
+  }
+}
