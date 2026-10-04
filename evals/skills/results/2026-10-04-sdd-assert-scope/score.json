@@ -1,0 +1,495 @@
+{
+  "status": "Failed",
+  "gateDecision": "not-certified",
+  "conditionErrors": [],
+  "results": [
+    {
+      "variant": "skill",
+      "repetition": 1,
+      "passed": 7,
+      "total": 17,
+      "cases": [
+        {
+          "caseId": "SP-001",
+          "passed": true,
+          "errors": []
+        },
+        {
+          "caseId": "SP-002",
+          "passed": true,
+          "errors": []
+        },
+        {
+          "caseId": "SP-003",
+          "passed": true,
+          "errors": []
+        },
+        {
+          "caseId": "SP-004",
+          "passed": true,
+          "errors": []
+        },
+        {
+          "caseId": "SP-005",
+          "passed": true,
+          "errors": []
+        },
+        {
+          "caseId": "SP-006",
+          "passed": true,
+          "errors": []
+        },
+        {
+          "caseId": "SP-007",
+          "passed": true,
+          "errors": []
+        },
+        {
+          "caseId": "SI-001",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-002",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-003",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-004",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-005",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-006",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-007",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-008",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-009",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-010",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        }
+      ]
+    },
+    {
+      "variant": "skill",
+      "repetition": 2,
+      "passed": 3,
+      "total": 17,
+      "cases": [
+        {
+          "caseId": "SP-001",
+          "passed": true,
+          "errors": []
+        },
+        {
+          "caseId": "SP-002",
+          "passed": true,
+          "errors": []
+        },
+        {
+          "caseId": "SP-003",
+          "passed": true,
+          "errors": []
+        },
+        {
+          "caseId": "SP-004",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SP-005",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SP-006",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SP-007",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-001",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-002",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-003",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-004",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-005",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-006",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-007",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-008",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-009",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-010",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        }
+      ]
+    },
+    {
+      "variant": "baseline",
+      "repetition": 1,
+      "passed": 0,
+      "total": 17,
+      "cases": [
+        {
+          "caseId": "SP-001",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SP-002",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SP-003",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SP-004",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SP-005",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SP-006",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SP-007",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-001",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-002",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-003",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-004",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-005",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-006",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-007",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-008",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-009",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-010",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        }
+      ]
+    },
+    {
+      "variant": "baseline",
+      "repetition": 2,
+      "passed": 0,
+      "total": 17,
+      "cases": [
+        {
+          "caseId": "SP-001",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SP-002",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SP-003",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SP-004",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SP-005",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SP-006",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SP-007",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-001",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-002",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-003",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-004",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-005",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-006",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-007",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-008",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-009",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        },
+        {
+          "caseId": "SI-010",
+          "passed": false,
+          "errors": [
+            "missing run"
+          ]
+        }
+      ]
+    }
+  ]
+}
