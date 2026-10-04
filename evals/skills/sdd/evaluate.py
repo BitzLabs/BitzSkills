@@ -376,6 +376,10 @@ def inspect_valid_artifacts(record, case, directory):
     contexts = [(c, r) for c, r in results if r is not None and r["operation"] == "context"]
     verifies = [(c, r) for c, r in results if r is not None and r["operation"] == "verify"]
     writes = [c for c in calls if c["tool"] == "write_file" and c["accepted"]]
+    for path in expected.get("observedPaths", []):
+        if path not in reads and not any(d.get("path") == path and d.get("projection") == "full" and isinstance(d.get("bodyText"), str)
+                                        for _, r in contexts for d in r.get("documents", [])):
+            errors["workflow"].append("source not observed: " + path)
     if (expected.get("noVerify") or case["entry"] == "sdd-plan") and verifies:
         errors["safety"].append("verify was started in a prohibited case")
     if expected.get("interpret") and not any(r.get("purpose") == "interpret" and r["status"] in PASS and r["resolution"]["complete"] for _, r in contexts):

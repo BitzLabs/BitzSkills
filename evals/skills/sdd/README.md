@@ -1,7 +1,7 @@
 # SDDの公開・隔離接続評価
 
 対象は配布 `plugins/bitz-sdd/skills/sdd-plan` と `sdd-implement`。
-評価集合sdd-0.1.2の17件を、スキルあり／なし、各2反復、solだけで最大68回実行する。
+評価集合sdd-0.1.3の17件を、スキルあり／なし、各2反復、solだけで最大68回実行する。
 Phase 2の計画・実装の接続を調べ、発火の区分別分母、保持ケース、複数モデル、実地パイロットを満たすSkill Gateとは区別する。
 公開の試作評価であり、scoreがPassedでもgateDecisionはnot-certifiedである。
 
@@ -44,6 +44,16 @@ REQ検査の通過、最後の保存後のTASK検査のfailedとSPEC-TASK-BOUNDA
 REQ以外への部分的な境界拡張も認めない。計画保存の成功は既存REQからTASKだけを作るSP-004で測る。
 変更の根拠は公開CLIの直接再現と独立検分であり、新しい版・ref・出力先で測る。モデルの再実行は別途承認してから行う。
 
+0.1.2の先行4件は必須検査と独立した理由・実証拠の検分を通過したが、残る64件は未実行のまま保持する。
+全17ケースの事前独立検分で、SP-007の偽装本文に対する正当な停止とplan固定の期待が矛盾することを発見した。
+0.1.3ではstopを要求し、REQの実読取りまたは公開contextの全文文書で観測した証拠を必要とする。
+偽装を先に見つけて停止する経路にinterpret成功を強制しない。偽装拒否と再開条件の理由は独立文脈で検分する。
+SI-008は取得済みcontextのdigest非成功を観測する測定要件をpromptに明記する。仕様変更を知った後の無許可実装は要求しない。
+停止ケースの機械通過だけでは理由を証明できない。起点未読・設定未読で停止を申告する合成例も通過しうる。
+正式な評価完了は実trace・利用者要求・元結果・保護された差分・理由・不足証拠の独立検分を必要とする。
+機械scoreのPassedを独立検分完了やPhase 2完了へ直接変換しない。
+旧4件を新条件へ再利用・再分類せず、別版・ref・出力先で測定する。新測定は既存の累計呼出し承認枠内で進め、上限追加が必要な場合に明示承認を得る。
+
 ## 実行
 
 モデルを使わない準備検査:
@@ -61,9 +71,9 @@ Codex CLIの通常認証を利用し、認証値は読まない。モデル版�
 python3 evals/skills/sdd/evaluate.py run --variant skill --repetition 1 \
   --model gpt-6.1-sol --model-version unversioned-alias-observed-2026-10-04 \
   --pythonpath <Core-sourceとruamel.yaml-0.19.1を含む絶対Python-path> \
-  --output .venv/sdd-evaluation-02 --jobs 2
-python3 evals/skills/sdd/evaluate.py score --input .venv/sdd-evaluation-02 \
-  --output .venv/sdd-evaluation-02/report.json
+  --output .venv/sdd-evaluation-03 --jobs 2
+python3 evals/skills/sdd/evaluate.py score --input .venv/sdd-evaluation-03 \
+  --output .venv/sdd-evaluation-03/report.json
 ```
 
 baselineと反復2を同条件で実行する。--caseで重点ケースだけを先行実行できるが、全件成功と呼ばない。

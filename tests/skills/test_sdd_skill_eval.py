@@ -214,6 +214,27 @@ class SddEvaluationTests(unittest.TestCase):
         self.assertTrue(all(not c["passed"] for c in checks.values()))
         self.assertTrue(all("TimeoutExpired" in c["errors"][0] for c in checks.values()))
 
+    def test_untrusted_notes_stop_before_context_is_valid(self):
+        self.prepare("SP-007")
+        self.call("read_file", path=".codex/skills/sdd-plan/SKILL.md")
+        self.call("read_file", path=".spec/requirements/REQ-001.md")
+        checks = self.inspect(self.record(outcome="stop"))
+        self.assertTrue(all(c["passed"] for c in checks.values()), checks)
+
+    def test_untrusted_notes_observed_in_public_context_can_stop(self):
+        self.prepare("SP-007")
+        self.call("read_file", path=".codex/skills/sdd-plan/SKILL.md")
+        self.assertEqual("passed", self.bitz("context", "REQ-001", "--purpose", "interpret")["status"])
+        checks = self.inspect(self.record(outcome="stop"))
+        self.assertTrue(all(c["passed"] for c in checks.values()), checks)
+
+    def test_untrusted_notes_cannot_be_claimed_without_reading_source(self):
+        self.prepare("SP-007")
+        self.call("read_file", path=".codex/skills/sdd-plan/SKILL.md")
+        checks = self.inspect(self.record(outcome="stop"))
+        self.assertFalse(checks["workflow"]["passed"])
+        self.assertIn("source not observed: .spec/requirements/REQ-001.md", checks["workflow"]["errors"])
+
     def test_missing_existing_diff_review_is_rejected(self):
         self.prepare()
         self.flow(diff=False)
