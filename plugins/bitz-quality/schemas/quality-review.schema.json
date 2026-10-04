@@ -2,12 +2,16 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "quality-review.schema.json",
   "type": "object", "additionalProperties": false,
-  "required": ["schemaVersion", "kind", "advisory", "decision", "subjectCommit", "riskBand", "qualityPlanPresent", "independence", "requiredEvidenceIds", "collectedEvidence", "missingEvidenceIds", "coreResults", "findings", "conditions", "notRerun", "humanDecisionPending"],
+  "required": ["schemaVersion", "kind", "advisory", "decision", "subjectCommit", "riskBand", "riskAssessment", "qualityPlanPresent", "independence", "requiredEvidenceIds", "collectedEvidence", "missingEvidenceIds", "coreResults", "findings", "conditions", "notRerun", "humanDecisionPending"],
   "properties": {
     "schemaVersion": {"const": "1.0"}, "kind": {"const": "quality-review"}, "advisory": {"const": true},
     "decision": {"enum": ["ready", "ready_with_conditions", "not_ready", "unknown"]},
     "subjectCommit": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
     "riskBand": {"enum": ["Q0", "Q1", "Q2", "Q3", null]},
+    "riskAssessment": {
+      "type": "object", "additionalProperties": false, "required": ["minimumBand", "rationale"],
+      "properties": {"minimumBand": {"enum": ["Q0", "Q1", "Q2", "Q3", null]}, "rationale": {"type": "string", "minLength": 1}}
+    },
     "qualityPlanPresent": {"type": "boolean"},
     "independence": {
       "type": "object", "additionalProperties": false,

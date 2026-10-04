@@ -2,7 +2,7 @@
 name: quality-review
 description: Bitzの実装後の変更を独立した文脈で検分し、要求・差分・実試験・安全・証拠の不足からready、条件付き、not_ready、unknownの受入れ助言を返す。独立品質レビュー、品質証拠の確認、受入れ判断の相談で使う。品質計画の作成、仕様草案、コード修正、Core検査だけ、出荷承認には使わない。重大事項と証拠不足を相殺せず、独立性が成立しなければその不足を明記する。
 metadata:
-  version: 0.1.1
+  version: 0.1.2
   updated: 2026-10-04
 ---
 
@@ -23,7 +23,16 @@ metadata:
 SDDのhandoffは既存handoff.schema.jsonの形式で確認し、確定ref、起点、変更path、risk、必須/取得済み/不足証拠、checksを照合する。
 実差分が対象refと違う、起点不明、証拠破損、条件混在は不足/所見として残す。架空のrefやhashで補完しない。
 品質計画がないQ0/Q1でも、要求・変更・リスク・関連試験・差分・安全から最低証拠を独立に導く。
-Q2/Q3で品質計画がない場合は必須不足。既知の重大事項がなくてもunknownとする。
+計画やhandoffにrisk帯の指定がなくても、要求・差分・実装から8観点の重大性と最低帯を自分で導く。
+Q0は動作を変えない文言等、Q1は局所的・可逆な既存契約内。公開契約・永続データ・複数モジュール・性能等はQ2、
+セキュリティ・不可逆・法令・大きな影響等はQ3が目安。平均や総合点で重大観点を下げない。
+アクセス制御・秘密保護・不可逆なデータ操作等、一次資料で確認できた重大観点を、計画未提供だけを理由にriskBand=nullへ戻さない。
+riskAssessmentへ確認したminimumBandとrationaleを記録し、riskBandはその帯以上の暫定分類にする。
+追加観点が不明なら所見・未検査事項として分ける。根拠から最低帯も導けない場合だけminimumBand=nullと理由を残す。
+これは人間の承認ではない。計画がある場合も重大な新規観点を保持し、既存帯を無断降格しない。
+Q2/Q3で品質計画がない場合は、quality-planをrequiredEvidenceIdsとmissingEvidenceIdsへ入れ、未取得理由をnotRerunへ残す。
+known major/criticalのnot_readyでも品質計画の必須不足を省略しない。既知の重大事項がなければunknownとする。
+計画がある場合はquality-planの同じIDへ実際の取得先・hash・対象refを付け、qualityPlanPresentと証拠取得を一致させる。
 
 ## 一次資料を検分する
 

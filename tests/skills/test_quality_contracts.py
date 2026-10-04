@@ -159,10 +159,46 @@ class QualityContractTests(unittest.TestCase):
         value["riskBand"] = "Q2"
         self.assert_invalid("review", value, "expected unknown")
         value["decision"] = "unknown"
+        value["requiredEvidenceIds"].append("quality-plan")
+        value["missingEvidenceIds"].append("quality-plan")
+        value["notRerun"].append({"check": "品質計画の取得", "reason": "未提供の合成例", "evidenceIds": ["quality-plan"], "evidenceAvailable": False})
         self.assertEqual([], quality.validate("review", value))
 
     def test_explicit_noncritical_condition_and_ready_are_separate(self):
         value = complete_review()
+        self.assertEqual([], quality.validate("review", value))
+
+    def test_known_security_minimum_cannot_be_returned_to_unknown(self):
+        value = example("missing-evidence-review.json")
+        value["riskAssessment"] = {"minimumBand": "Q3", "rationale": "合成試験で宣言した認可境界の重大リスク"}
+        for band in (None, "Q1", "Q2"):
+            value["riskBand"] = band
+            self.assert_invalid("review", value, "known minimum risk")
+
+    def test_not_ready_still_requires_missing_quality_plan_evidence(self):
+        value = example("missing-evidence-review.json")
+        value["riskBand"] = "Q3"
+        value["riskAssessment"] = {"minimumBand": "Q3", "rationale": "合成試験で宣言した認可境界の重大リスク"}
+        value["decision"] = "not_ready"
+        value["findings"] = [{"severity": "critical", "location": "synthetic authorization", "impact": "閲覧制限の欠落", "evidence": "合成検査の宣言", "resolved": False}]
+        self.assert_invalid("review", value, "quality-plan in required")
+        value["requiredEvidenceIds"].append("quality-plan")
+        value["missingEvidenceIds"].append("quality-plan")
+        self.assert_invalid("review", value, "unexecuted reason")
+        value["notRerun"].append({"check": "品質計画の取得", "reason": "未提供の合成例", "evidenceIds": ["quality-plan"], "evidenceAvailable": False})
+        self.assertEqual([], quality.validate("review", value))
+        self.assertEqual("not_ready", value["decision"])
+        self.assertIn("quality-plan", value["missingEvidenceIds"])
+
+    def test_quality_plan_presence_is_backed_by_collected_evidence(self):
+        value = complete_review()
+        value["riskBand"] = "Q2"
+        value["qualityPlanPresent"] = True
+        value["requiredEvidenceIds"].append("quality-plan")
+        value["missingEvidenceIds"].append("quality-plan")
+        self.assert_invalid("review", value, "qualityPlanPresent")
+        value["collectedEvidence"].append({"evidenceId": "quality-plan", "source": "synthetic plan input", "sha256": hashlib.sha256(b"synthetic plan").hexdigest(), "subjectCommit": value["subjectCommit"]})
+        value["missingEvidenceIds"].remove("quality-plan")
         self.assertEqual([], quality.validate("review", value))
         value["conditions"] = [{"action": "運用窓口を確定", "owner": "利用者", "dueOrDecisionPoint": "受入れ判断前"}]
         self.assert_invalid("review", value, "ready_with_conditions")

@@ -7,6 +7,11 @@
 公開の要求・差分・Core結果・試験・計画だけを渡し、担当者が根拠を直接読む。
 スキルだけで新しい文脈を自動保証できないので、用意できなければ別セッションの手動経路へ戻す。
 
+計画の不在は、観測した変更のリスク分類を省略する理由ではない。
+要求・差分・実装の重大観点からriskAssessment.minimumBandと根拠を導き、riskBandはその帯以上とする。
+アクセス制御・秘密保護・不可逆なデータ操作への影響など、重大観点の根拠を要求と変更に対応付ける。
+全影響が未確認でも、既知の最低リスクを不明へ戻さず、未確認事項を別に残す。
+
 証拠は対象refまたは実内容へ結び付け、取得先とSHA-256を直接測る。仮のhashを作らない。
 予定の検査、過去refでの成功、未再実行、失敗、破損を区別する。
 Core結果の状態と終了コードは原本から転記し、非規範のreadyへ変換しない。
@@ -14,6 +19,8 @@ Core結果の状態と終了コードは原本から転記し、非規範のread
 
 評価形式の必須証拠はrequiredEvidenceIdで列挙し、取得済みはcollectedEvidenceの同じIDとhashで示す。
 未取得はmissingEvidenceIdへ残す。criticalFindingが1件でもあればnot_ready。
+Q2/Q3の品質計画はquality-planという必須証拠IDで、取得先/hashまたはmissingEvidenceIds/notRerunの不足を保持する。
+qualityPlanPresent=falseだけでは必須不足の列挙を代替しない。既知重大事項があっても計画の不足を残す。
 既知の重大事項がなくても、missing、独立不成立、品質計画必須の欠落、対象ref未確定はunknown。
 ready_with_conditionsの条件には必須証拠の欠落を入れない。人間の受入れ判断は後続である。
 

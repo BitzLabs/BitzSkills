@@ -1,4 +1,4 @@
-# bitz-quality 0.1.1
+# bitz-quality 0.1.2
 
 BitzSkills 2系の品質計画と独立レビューの試作版。
 `skills/quality-plan/SKILL.md`は変更リスクと必要な証拠を計画し、
@@ -25,6 +25,10 @@ current_gateは今回の判定用、historicalは過去参照、expected_negativ
 再実行しなくても取得済み一次結果を直接検分できる場合は、根拠を記録して必須証拠の十分性を判断する。
 SDDの確定変更の入力は既存のevals/skills/schemas/handoff.schema.jsonを使い、そのフィールドを拡張しない。
 品質計画は別文書で、独立レビュー結果や取得済み証拠として渡さない。
+レビューは計画のrisk指定がなくても一次資料から観点と最低リスクを導出する。
+riskAssessmentは確認した最低帯と根拠、riskBandは全体の暫定分類を保持する。既知の最低帯をnullや低い帯へ戻さない。
+Q2/Q3の品質計画は必須証拠ID quality-planで取得/不足を明示する。not_readyでもこの不足を省略しない。
+0.1.1の先行実測は計画1件適合、レビュー1件の意味不適合で停止した。0.1.2のモデル行動は未再測定である。
 
 正本はADR-060、品質属性と安全境界、SDDフロー、提案30の品質管理と公開引渡し契約。
 

@@ -5,6 +5,7 @@
   "decision": "unknown",
   "subjectCommit": null,
   "riskBand": "Q1",
+  "riskAssessment": {"minimumBand": null, "rationale": "Q1の合成例を想定した未実証入力。対象の一次資料がなく、最低帯を観測から確定していない"},
   "qualityPlanPresent": false,
   "independence": {
     "independent": false,

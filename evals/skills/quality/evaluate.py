@@ -236,13 +236,16 @@ def authorization_directory():
 
 
 @contextmanager
-def authorization_lock(output, approval):
+def authorization_lock(output, approval, approval_path=None):
     directory = authorization_directory()
     directory.mkdir(exist_ok=True)
     with (directory / "quality-pilot-authorization.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        ledger_path = directory / "quality-pilot-authorization.json"
-        wanted = {"output": str(output), "approvalSha256": sha((HERE / "approval.json").read_bytes())}
+        approval_path = approval_path or HERE / "approval.json"
+        approval_hash = sha(approval_path.read_bytes())
+        ledger_name = "quality-pilot-authorization.json" if approval_path == HERE / "approval.json" else f"quality-pilot-{approval_hash}-authorization.json"
+        ledger_path = directory / ledger_name
+        wanted = {"output": str(output), "approvalSha256": approval_hash}
         ledger = load(ledger_path) if ledger_path.exists() else {**wanted, "attemptCount": 0}
         if any(ledger.get(key) != value for key, value in wanted.items()):
             raise ValueError("authorization already bound to another output or approval")
@@ -252,9 +255,13 @@ def authorization_lock(output, approval):
 
 
 def measure(args):
-    approval = load(HERE / "approval.json")
-    protocol = load(HERE / "protocol.json")
-    if approval["approvalStatus"] != "approved" or approval["protocolSha256"] != sha((HERE / "protocol.json").read_bytes()):
+    approval_path = getattr(args, "approval", HERE / "approval.json").resolve()
+    protocol_path = getattr(args, "protocol", HERE / "protocol.json").resolve()
+    if approval_path not in {HERE / "approval.json", HERE / "remediation-approval.json"} or protocol_path not in {HERE / "protocol.json", HERE / "remediation-protocol.json"}:
+        raise ValueError("only fixed original or remediation contracts are allowed")
+    approval = load(approval_path)
+    protocol = load(protocol_path)
+    if approval["approvalStatus"] != "approved" or approval["protocolSha256"] != sha(protocol_path.read_bytes()):
         raise ValueError("measurement authorization or fixed protocol mismatch")
     if not 1 <= args.timeout <= 600:
         raise ValueError("trajectory timeout must remain within 600 seconds")
@@ -264,7 +271,7 @@ def measure(args):
     if not output.is_relative_to(ROOT / ".venv"):
         raise ValueError("output must stay under this repository's ignored .venv")
     output.mkdir(parents=True, exist_ok=True)
-    with authorization_lock(output, approval) as (ledger_path, ledger), (output / "evaluation.lock").open("a") as lock:
+    with authorization_lock(output, approval, approval_path) as (ledger_path, ledger), (output / "evaluation.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         slots = [(c, v, r) for r in range(1, 3) for v in protocol["variants"] for c in protocol["cases"]]
         attempts_path = output / "attempts.json"
@@ -281,6 +288,10 @@ def measure(args):
             if any(errors.values()):
                 raise ValueError("previous actual evidence failed reinspection; no new call")
         case, variant, repetition = slots[len(attempts)]
+        if approval["pluginVersion"] != protocol["pluginVersion"] or approval["pluginVersion"] != load(PACKAGE / "plugin.json")["version"]:
+            raise ValueError("authorized candidate version does not match actual plugin")
+        if approval["maximumNewTrajectories"] != len(slots) or protocol["maximumNewTrajectories"] != len(slots) or protocol["variants"] != ["skill", "baseline"] or protocol["repetitions"] != 2:
+            raise ValueError("fixed comparison denominator or trajectory cap mismatch")
         source_commit = preflight.git(["rev-parse", "HEAD"], ROOT, preflight.environment()).decode().strip()
         version = subprocess.run(["codex", "--version"], capture_output=True, text=True, timeout=20)
         if version.returncode:
@@ -343,6 +354,8 @@ def measure(args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--protocol", type=Path, default=HERE / "protocol.json")
+    parser.add_argument("--approval", type=Path, default=HERE / "approval.json")
     parser.add_argument("--timeout", type=int, default=600)
     args = parser.parse_args()
     try:

@@ -86,6 +86,16 @@ def validate_review(document: dict) -> list[str]:
     if len(ids) != len(set(ids)):
         errors.append("duplicate collected evidence id")
     missing = required - set(ids)
+    minimum_band = document["riskAssessment"]["minimumBand"]
+    if minimum_band is not None and (document["riskBand"] is None or BANDS[document["riskBand"]] < BANDS[minimum_band]):
+        errors.append("known minimum risk cannot be unknown or lowered")
+    if document["riskBand"] in {"Q2", "Q3"}:
+        if "quality-plan" not in required:
+            errors.append("Q2/Q3 require quality-plan in required evidence ids")
+        if document["qualityPlanPresent"] != ("quality-plan" in ids):
+            errors.append("qualityPlanPresent must match collected quality-plan evidence")
+        if not document["qualityPlanPresent"] and not any("quality-plan" in e["evidenceIds"] and not e["evidenceAvailable"] for e in document["notRerun"]):
+            errors.append("missing quality-plan needs an explicit unexecuted reason")
     if set(document["missingEvidenceIds"]) != missing:
         errors.append("missing evidence ids must match uncollected required ids")
     if any(e["subjectCommit"] != document["subjectCommit"] for e in collected):

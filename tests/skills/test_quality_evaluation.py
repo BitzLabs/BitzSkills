@@ -159,6 +159,56 @@ class QualityEvaluationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "review failed"):
                 evaluate.measure(SimpleNamespace(output=self.directory, timeout=10))
 
+    def test_remediation_keeps_exact_case_and_needs_new_four_call_approval(self):
+        protocol = evaluate.load(HERE / "remediation-protocol.json")
+        approval = evaluate.load(HERE / "remediation-approval.json")
+        self.assertEqual([self.cases[1]], protocol["cases"])
+        self.assertEqual(sha((HERE / "protocol.json").read_bytes()), protocol["origin"]["protocolSha256"])
+        self.assertEqual(sha((HERE / "remediation-protocol.json").read_bytes()), approval["protocolSha256"])
+        self.assertEqual("pending", approval["approvalStatus"])
+        self.assertEqual("0.1.2", protocol["pluginVersion"])
+        self.assertEqual(4, len(protocol["cases"]) * len(protocol["variants"]) * protocol["repetitions"])
+        self.assertEqual(4, approval["maximumNewTrajectories"])
+        self.assertFalse(approval["reuseOriginalBudget"])
+        self.assertFalse(approval["reuseSddBudget"])
+        self.assertEqual(evaluate.load(HERE / "protocol.json")["stopOn"], protocol["stopOn"])
+        with patch("evaluate.authorization_lock", side_effect=AssertionError("must not open ledger")), patch("evaluate.subprocess.run", side_effect=AssertionError("must not invoke model")):
+            with self.assertRaisesRegex(ValueError, "authorization"):
+                evaluate.measure(SimpleNamespace(output=self.directory, timeout=10,
+                    protocol=HERE / "remediation-protocol.json", approval=HERE / "remediation-approval.json"))
+
+    def test_arbitrary_contract_paths_are_rejected_before_execution(self):
+        with patch("evaluate.subprocess.run", side_effect=AssertionError("must not invoke model")):
+            for field in ("approval", "protocol"):
+                args = dict(output=self.directory, timeout=10)
+                args[field] = self.directory / "replacement.json"
+                with self.assertRaisesRegex(ValueError, "only fixed"):
+                    evaluate.measure(SimpleNamespace(**args))
+
+    def test_old_approval_cannot_measure_a_changed_candidate(self):
+        with patch("evaluate.authorization_directory", return_value=self.directory), patch("preflight.git", return_value=b""), patch("evaluate.subprocess.run", side_effect=AssertionError("must not invoke model")):
+            with self.assertRaisesRegex(ValueError, "candidate version"):
+                evaluate.measure(SimpleNamespace(output=self.directory, timeout=10))
+        self.assertFalse((self.directory / "attempts.json").exists())
+
+    def test_separate_proposed_ledger_preserves_original_budget_and_output_binding(self):
+        original = self.directory / "quality-pilot-authorization.json"
+        evaluate.write(original, {"output": "original-output", "attemptCount": 2, "approvalSha256": sha((HERE / "approval.json").read_bytes())})
+        before = original.read_bytes()
+        approval_path = HERE / "remediation-approval.json"
+        approval = evaluate.load(approval_path)
+        with patch("evaluate.authorization_directory", return_value=self.directory):
+            # Exercise bookkeeping only; measure() rejects the real pending approval.
+            with evaluate.authorization_lock(self.directory / "new", approval, approval_path) as (path, ledger):
+                self.assertNotEqual(original, path)
+                self.assertEqual(0, ledger["attemptCount"])
+                ledger["attemptCount"] = 1
+                evaluate.write(path, ledger)
+            with self.assertRaisesRegex(ValueError, "another output"):
+                with evaluate.authorization_lock(self.directory / "replacement", approval, approval_path):
+                    self.fail("must not create another allowance")
+        self.assertEqual(before, original.read_bytes())
+
     def test_exhausted_budget_cannot_spawn_model(self):
         evaluate.write(self.directory / "attempts.json", [{"directory": f"prior-{i}"} for i in range(8)])
         evaluate.write(self.directory / "quality-pilot-authorization.json", {"output": str(self.directory), "approvalSha256": sha((HERE / "approval.json").read_bytes()), "attemptCount": 8})

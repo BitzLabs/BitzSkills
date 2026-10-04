@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "approvalStatus": "pending",
+  "approvedBy": null,
+  "approvedAt": null,
+  "pluginVersion": "0.1.2",
+  "evaluationSetVersion": "quality-pilot-0.1.1",
+  "model": "gpt-6.1-sol",
+  "maximumNewTrajectories": 4,
+  "protocolSha256": "c617450008e09760e8490974c79561c7821c387578d0f7a6c4e642fbec7650e1",
+  "automaticRetries": 0,
+  "stopOnAnyFailure": true,
+  "baselineSemanticFailureContinuation": false,
+  "reuseOriginalBudget": false,
+  "reuseSddBudget": false,
+  "notes": "停止した原評価を再開せず、是正候補のQR-001をskill/baseline各2反復する別承認・別条件・別出力の提案。追加モデル実測は利用者承認まで0件。金額未確定。成功してもQ0〜Q3全帯・Phase3・Skill Gateを認定しない"
+}
