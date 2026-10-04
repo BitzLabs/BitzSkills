@@ -620,6 +620,7 @@ def main():
     scoring.add_argument("--input", type=Path, required=True)
     scoring.add_argument("--output", type=Path)
     running = sub.add_parser("run")
+    running.add_argument("--batch", type=Path, required=True)
     running.add_argument("--variant", choices=["skill", "baseline"], required=True)
     running.add_argument("--repetition", type=int, choices=[1, 2], required=True)
     running.add_argument("--model", choices=["gpt-6.1-sol"], default="gpt-6.1-sol")
@@ -644,13 +645,8 @@ def main():
     elif args.command == "run":
         if subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT):
             raise ValueError("確定refのcleanなツリーが必要です")
-        args.output = args.output.resolve()
-        if not args.output.is_relative_to(ROOT) or args.output.is_relative_to(HERE) or args.output.is_relative_to(ROOT / "plugins"):
-            raise ValueError("出力はリポジトリ内の専用ディレクトリへ置いてください")
-        chosen = [c for c in load(HERE / "cases.json") if not args.case or c["id"] in args.case]
-        if not chosen or (args.case and set(args.case) != {c["id"] for c in chosen}):
-            raise ValueError("未登録のcaseです")
-        return run_selected(args, chosen)
+        import batch
+        return batch.run(sys.modules[__name__], args, load(HERE / "cases.json"))
     return 0
 
 

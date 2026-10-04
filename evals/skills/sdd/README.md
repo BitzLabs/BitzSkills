@@ -1,7 +1,8 @@
 # SDDの公開・隔離接続評価
 
 対象は配布 `plugins/bitz-sdd/skills/sdd-plan` と `sdd-implement`。
-評価集合sdd-0.1.3の17件を、スキルあり／なし、各2反復、solだけで最大68回実行する。
+評価集合sdd-0.1.4の17件を、スキルあり／なし、各2反復で比較する計画の分母は68件である。
+現在の追加測定は、確定refのバッチ条件で固定した小さな部分集合をsolだけで実行する。
 Phase 2の計画・実装の接続を調べ、発火の区分別分母、保持ケース、複数モデル、実地パイロットを満たすSkill Gateとは区別する。
 公開の試作評価であり、scoreがPassedでもgateDecisionはnot-certifiedである。
 
@@ -60,23 +61,49 @@ SI-008は取得済みcontextのdigest非成功を観測する測定要件をprom
 
 ```text
 python3 evals/skills/sdd/evaluate.py audit
-PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=plugins/bitz-core/src:<ruamel.yaml-0.19.1のパス> \
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<Core-sourceの絶対パス>:<ruamel.yaml-0.19.1の絶対パス> \
   python3 tests/skills/test_sdd_skill_eval.py -v
+python3 -B tests/skills/test_sdd_batch.py -v
 ```
 
-モデル測定はcleanな確定refで、契約・配布物と分離したリポジトリ内の専用出力先へ保存する。
+モデル測定はcleanな確定refで、契約・配布物と分離したリポジトリ内の`.venv/`へ保存する。
 Codex CLIの通常認証を利用し、認証値は読まない。モデル版はaliasの観測ラベルで、provider固定版と同一とは保証しない。
+`../sol-authorization.json`の包括承認を照合するため、範囲内の新測定に再承認は求めない。
+過去の承認枠・失敗済みバッチ・unused回数は新測定へ流用しない。
 
 ```text
-python3 evals/skills/sdd/evaluate.py run --variant skill --repetition 1 \
-  --model gpt-6.1-sol --model-version unversioned-alias-observed-2026-10-04 \
+python3 evals/skills/sdd/evaluate.py run \
+  --batch evals/skills/sdd/batches/implement-safety-01.json \
+  --variant skill --repetition 1 --case SI-001 \
+  --model gpt-6.1-sol --model-version unversioned-alias-observed-2026-10-05 \
   --pythonpath <Core-sourceとruamel.yaml-0.19.1を含む絶対Python-path> \
-  --output .venv/sdd-evaluation-03 --jobs 2
-python3 evals/skills/sdd/evaluate.py score --input .venv/sdd-evaluation-03 \
-  --output .venv/sdd-evaluation-03/report.json
+  --output .venv/sdd-implement-safety-01 --jobs 1 --timeout 240
 ```
 
-baselineと反復2を同条件で実行する。--caseで重点ケースだけを先行実行できるが、全件成功と呼ばない。
-必須検査またはモデル呼出しが失敗したら、新しいケースの投入を停止する。すでに実行中の最大2件は証拠を回収し、終了コード1で返す。
---resumeは一致する完了記録だけを再利用し、既存の未完走ディレクトリは上書きしない。
-外部保持ケースとライブ環境をこの実行器へ渡さない。
+このバッチの一次評価はSI-001、SI-007のskill・反復1各1件、上限2回。独立SOL検分は別枠で各1回、計2回までとする。
+固定順序で1件ずつ実行し、`.venv/sdd-batch-ledgers/<id>.json`へ起動前に消費数・実行IDを記録する。
+台帳は別出力・別ref・別モデル版・別Python環境への付替えを拒否する。同じバッチの同時起動も拒否する。
+timeout・非0終了・中断・必須検査不適合は保存して停止し、後の別プロセスも自動再開しない。
+`--resume`と並列実行を新測定には認めない。古い`run_selected`は旧試験用で、公開runからは使わない。
+
+次件には前件の`independent-review.json`が必要で、元run・全必須検査・意味適合を照合する。
+実行IDは台帳または標準出力から取得し、実装者の私的履歴を継承しない別文脈で検分する。
+以下の形は形式例であり、実検分なしに作成して適合を申告してはならない。
+
+```json
+{
+  "schemaVersion": "1.0", "status": "passed", "independent": true,
+  "implementationPrivateHistoryInherited": false,
+  "evaluationRunId": "台帳の一次評価実行ID", "reviewRunId": "別の検分実行ID",
+  "subjectCommit": "run.identity.subjectCommit", "runSha256": "run.jsonのSHA-256",
+  "checks": {"deterministic": "passed", "safety": "passed", "workflow": "passed", "observation": "passed", "semantic": "passed"},
+  "directChecks": ["実行したコマンドと実出力、確認した元証拠"],
+  "reason": "実結果と説明を照合した根拠、残る制約"
+}
+```
+
+記録の形と元証拠の整合を機械検査するが、独立性の申告の真偽は実際の別セッション運用で担保する。
+失敗・unknown・証拠不足をpassedへ置換しない。独立検分の呼出し数も報告へ別に記録する。
+traceのusageとwallMsを保存し、取得できないprovider費用は欠測として報告する。
+部分集合は全17件成功・baseline比較完了・反復完了と呼ばない。旧測定のscoreは測定当時のrefで再現する。
+外部保持ケースとライブ環境はこの実行器へ渡さない。
