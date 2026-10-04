@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0",
+  "approvalStatus": "pending",
+  "subjectCommit": "1e3a4726dddfabfcedf42a7f8130317d5d8ce450",
+  "evaluationSetVersion": "sdd-0.1.4",
+  "model": "gpt-6.1-sol",
+  "currentCumulativeCalls": 56,
+  "authorizedCumulativeMaximum": 70,
+  "maximumAdditionalCalls": 13,
+  "proposedCumulativeMaximum": 69,
+  "automaticRetries": 0,
+  "changeRequested": "baselineの理由説明の意味不適合に限り、failedの証拠と判定を保持して、別の未投入ケース・予定反復の比較を続ける",
+  "stopOn": ["skillの不適合", "全variantの機械4検査の非通過", "安全性違反", "証拠破損・条件混在", "実行障害・利用上限"],
+  "unchanged": ["固定ケース・期待条件・試験assert", "対象ref・source・モデル・環境", "原中断・原不適合・元score", "Skill Gate not-certified"],
+  "noRetry": ["baseline/repetition-1/SP-003", "元skill/repetition-2/SP-004中断"],
+  "planned": [
+    {"variant": "baseline", "repetition": 1, "cases": ["SP-001", "SP-002", "SP-004", "SP-005", "SP-006", "SP-007"]},
+    {"variant": "baseline", "repetition": 2, "cases": ["SP-001", "SP-002", "SP-003", "SP-004", "SP-005", "SP-006", "SP-007"]}
+  ],
+  "scope": "計画7ケース×2反復の限定比較。全17ケース、Phase 2完了、Skill Gateを認定しない"
+}

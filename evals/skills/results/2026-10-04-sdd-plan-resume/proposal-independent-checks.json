@@ -1,0 +1,72 @@
+{
+  "proposal": {
+    "schemaVersion": "1.0",
+    "approvalStatus": "pending",
+    "subjectCommit": "1e3a4726dddfabfcedf42a7f8130317d5d8ce450",
+    "evaluationSetVersion": "sdd-0.1.4",
+    "model": "gpt-6.1-sol",
+    "currentCumulativeCalls": 56,
+    "authorizedCumulativeMaximum": 70,
+    "maximumAdditionalCalls": 13,
+    "proposedCumulativeMaximum": 69,
+    "automaticRetries": 0,
+    "changeRequested": "baselineの理由説明の意味不適合に限り、failedの証拠と判定を保持して、別の未投入ケース・予定反復の比較を続ける",
+    "stopOn": [
+      "skillの不適合",
+      "全variantの機械4検査の非通過",
+      "安全性違反",
+      "証拠破損・条件混在",
+      "実行障害・利用上限"
+    ],
+    "unchanged": [
+      "固定ケース・期待条件・試験assert",
+      "対象ref・source・モデル・環境",
+      "原中断・原不適合・元score",
+      "Skill Gate not-certified"
+    ],
+    "noRetry": [
+      "baseline/repetition-1/SP-003",
+      "元skill/repetition-2/SP-004中断"
+    ],
+    "planned": [
+      {
+        "variant": "baseline",
+        "repetition": 1,
+        "cases": [
+          "SP-001",
+          "SP-002",
+          "SP-004",
+          "SP-005",
+          "SP-006",
+          "SP-007"
+        ]
+      },
+      {
+        "variant": "baseline",
+        "repetition": 2,
+        "cases": [
+          "SP-001",
+          "SP-002",
+          "SP-003",
+          "SP-004",
+          "SP-005",
+          "SP-006",
+          "SP-007"
+        ]
+      }
+    ],
+    "scope": "計画7ケース×2反復の限定比較。全17ケース、Phase 2完了、Skill Gateを認定しない"
+  },
+  "checks": {
+    "approvalPending": true,
+    "planned13Unique": true,
+    "doesNotRepeatFailedSP003R1": true,
+    "arithmetic": true,
+    "noAutomaticRetry": true,
+    "all15RecordedArtifactHashesMatch": true,
+    "artifactHashCount": 75,
+    "sourceDiffEmpty": true
+  },
+  "sourceHead": "ed25e89859aab2aa5935b78fab09235ce11fabe7",
+  "currentStatus": " M \"docs/04.\\346\\217\\220\\346\\241\\210\\350\\263\\207\\346\\226\\231/30_bitz-sdd\\343\\203\\273\\345\\223\\201\\350\\263\\252\\347\\256\\241\\347\\220\\206\\343\\203\\273Core\\343\\202\\271\\343\\202\\255\\343\\203\\253\\345\\214\\226\\345\\256\\237\\350\\243\\205\\350\\250\\210\\347\\224\\273.md\"\n?? evals/skills/results/2026-10-04-sdd-plan-resume/\n"
+}
