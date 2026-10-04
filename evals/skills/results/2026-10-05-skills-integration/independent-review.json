@@ -1,0 +1,10 @@
+{
+  "scope": "local-integration-and-convergence-contracts",
+  "reviews": [
+    {"sourceCommit": "a904babae6956133a08a706d222e819fe75ea67c", "reviewRunId": "/root/sol_integration_review", "model": "gpt-6.1-sol", "freshContext": true, "implementationPrivateHistoryInherited": false, "directChecks": ["integration test source and public contracts", "4 tests in 3.724s, OK"], "issues": [], "limitation": "CI構成は静的検分のみ。親の後続実行でPYTHONPATH未定義の29 errorsが見つかった"},
+    {"sourceCommit": "9b7c0a4fe41a7240d88d1cbbcfa41ad56f510724", "reviewRunId": "/root/sol_integration_review", "model": "gpt-6.1-sol", "freshContext": false, "implementationPrivateHistoryInherited": false, "directChecks": ["CI是正差分の検分", "Python 3.12.3, jsonschema 4.23.0, ruamel.yaml 0.19.1", "141 tests in 42.702s, OK"], "issues": [], "preservedFailures": ["最初に指定されたproject .venvはjsonschema未導入: 40 tests / errors 31", "UV_OFFLINEでのuv起動は読取り専用cache lock作成に失敗: exit 2"], "limitation": "既存uv環境による直接試験。uvセットアップを含むCI完全再現ではない"},
+    {"sourceCommit": "9b7c0a4fe41a7240d88d1cbbcfa41ad56f510724", "reviewRunId": "/root/sol_converge_review", "model": "gpt-6.1-sol", "freshContext": true, "implementationPrivateHistoryInherited": false, "directChecks": ["SDDフロー正本・公開CLI・handoff・品質契約と収束本文の照合", "4 tests in 1.774s, OK", "同梱参照の閉包"], "issues": [], "suggestions": ["READMEへ収束接続試験の実行例を追加"], "limitation": "合成接続と契約の検分。スキルの行動、Phase、Gate、リリース全体は未認定"}
+  ],
+  "gateDecision": "not-certified",
+  "evidenceSource": "本セッションの各独立agentの直接報告。完全なツール軌跡や費用は採取していない"
+}
