@@ -94,3 +94,5 @@ Git内部状態、Codex logs/state、stderr、認証情報を含めない。禁�
 stderr以外の原artifact、全readableFiles、receipt/runのhashがすべて一致した。
 原runのstderr hashは残したが、archiveにstderrが含まれるという主張はしない。
 準備是正の独立記録は[preparation-independent-review.json](preparation-independent-review.json)を参照する。
+保存後のb5948e7も独立監査し、archive・hash・使用量・4件結果・未認定範囲に要修正なしを確認した。
+開始終了refは同じでclean。[保存要約の独立記録](summary-independent-review.json)へ実出力を残す。
