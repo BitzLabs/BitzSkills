@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "implementationRunId": "/root:quality-pilot-preparation-2026-10-04",
+  "reviewRunId": "/root/sol_quality_prototype_review:pilot-preparation",
+  "subjectCommit": "2faa9fb687e381d3ba883dff7b87a46c91884f45",
+  "freshContext": true,
+  "implementationPrivateHistoryInherited": false,
+  "leadingConclusionProvided": false,
+  "inputs": ["品質先行比較のREADME・protocol・preflight・固定fixture・基準実装", "検査対象refと実行環境・検分範囲"],
+  "directChecks": ["開始/終了refとclean確認", "preflight自分で再実行: exit 0 / passed / モデル0件", "両caseの公開context/check: passed / exit 0", "両caseのローカル各1test: OK / exit 0 / unchanged=true", "Core stdout4hash・元JSON・ref・dirty=falseの追加照合: OK", "件数だけのassert・認可の反例・期待値の非コピー・停止/予算条件の検分"],
+  "notRerun": [{"check": "モデル実測と将来の実行器・期待値隔離・公平な配布・操作ログ・停止制御", "reason": "モデル実測未承認。現preflightは実行器ではなく、実測前に別途検証する"}],
+  "independent": true
+}

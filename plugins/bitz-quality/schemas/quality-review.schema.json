@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "quality-review.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "advisory", "decision", "subjectCommit", "riskBand", "riskAssessment", "qualityPlanPresent", "independence", "requiredEvidenceIds", "collectedEvidence", "missingEvidenceIds", "coreResults", "findings", "conditions", "notRerun", "humanDecisionPending"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"}, "kind": {"const": "quality-review"}, "advisory": {"const": true},
+    "decision": {"enum": ["ready", "ready_with_conditions", "not_ready", "unknown"]},
+    "subjectCommit": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+    "riskBand": {"enum": ["Q0", "Q1", "Q2", "Q3", null]},
+    "riskAssessment": {
+      "type": "object", "additionalProperties": false, "required": ["minimumBand", "rationale"],
+      "properties": {"minimumBand": {"enum": ["Q0", "Q1", "Q2", "Q3", null]}, "rationale": {"type": "string", "minLength": 1}}
+    },
+    "qualityPlanPresent": {"type": "boolean"},
+    "independence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["independent", "implementationRunId", "reviewRunId", "freshContext", "implementationPrivateHistoryInherited", "leadingConclusionProvided", "directChecks"],
+      "properties": {
+        "independent": {"type": "boolean"},
+        "implementationRunId": {"type": "string", "minLength": 1}, "reviewRunId": {"type": "string", "minLength": 1},
+        "freshContext": {"type": "boolean"}, "implementationPrivateHistoryInherited": {"type": "boolean"}, "leadingConclusionProvided": {"type": "boolean"},
+        "directChecks": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      },
+      "allOf": [{"if": {"properties": {"independent": {"const": true}}}, "then": {"properties": {"freshContext": {"const": true}, "implementationPrivateHistoryInherited": {"const": false}, "leadingConclusionProvided": {"const": false}, "directChecks": {"minItems": 1}}}}]
+    },
+    "requiredEvidenceIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "collectedEvidence": {
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false, "required": ["evidenceId", "source", "sha256", "subjectCommit"],
+        "properties": {"evidenceId": {"type": "string", "minLength": 1}, "source": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "subjectCommit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}}
+      }
+    },
+    "missingEvidenceIds": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "coreResults": {"type": "array", "items": {"$ref": "core-observation.schema.json"}},
+    "findings": {
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false, "required": ["severity", "location", "impact", "evidence", "resolved"],
+        "properties": {"severity": {"enum": ["critical", "major", "minor", "info"]}, "location": {"type": "string", "minLength": 1}, "impact": {"type": "string", "minLength": 1}, "evidence": {"type": "string", "minLength": 1}, "resolved": {"type": "boolean"}}
+      }
+    },
+    "conditions": {
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false, "required": ["action", "owner", "dueOrDecisionPoint"],
+        "properties": {"action": {"type": "string", "minLength": 1}, "owner": {"type": "string", "minLength": 1}, "dueOrDecisionPoint": {"type": "string", "minLength": 1}}
+      }
+    },
+    "notRerun": {
+      "type": "array", "items": {"$ref": "core-observation.schema.json#/$defs/notRun"}
+    },
+    "humanDecisionPending": {"const": true}
+  }
+}
