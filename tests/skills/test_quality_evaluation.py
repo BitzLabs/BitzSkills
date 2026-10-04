@@ -159,20 +159,23 @@ class QualityEvaluationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "review failed"):
                 evaluate.measure(SimpleNamespace(output=self.directory, timeout=10))
 
-    def test_remediation_keeps_exact_case_and_needs_new_four_call_approval(self):
+    def test_remediation_keeps_exact_case_and_pending_approval_cannot_execute(self):
         protocol = evaluate.load(HERE / "remediation-protocol.json")
         approval = evaluate.load(HERE / "remediation-approval.json")
         self.assertEqual([self.cases[1]], protocol["cases"])
         self.assertEqual(sha((HERE / "protocol.json").read_bytes()), protocol["origin"]["protocolSha256"])
         self.assertEqual(sha((HERE / "remediation-protocol.json").read_bytes()), approval["protocolSha256"])
-        self.assertEqual("pending", approval["approvalStatus"])
+        self.assertEqual("approved", approval["approvalStatus"])
+        self.assertEqual("SOLでの評価は、すべて許可します。", approval["userInstruction"])
         self.assertEqual("0.1.2", protocol["pluginVersion"])
         self.assertEqual(4, len(protocol["cases"]) * len(protocol["variants"]) * protocol["repetitions"])
         self.assertEqual(4, approval["maximumNewTrajectories"])
         self.assertFalse(approval["reuseOriginalBudget"])
         self.assertFalse(approval["reuseSddBudget"])
         self.assertEqual(evaluate.load(HERE / "protocol.json")["stopOn"], protocol["stopOn"])
-        with patch("evaluate.authorization_lock", side_effect=AssertionError("must not open ledger")), patch("evaluate.subprocess.run", side_effect=AssertionError("must not invoke model")):
+        original_load = evaluate.load
+        pending = {**approval, "approvalStatus": "pending"}
+        with patch("evaluate.load", side_effect=lambda path: pending if path == HERE / "remediation-approval.json" else original_load(path)), patch("evaluate.authorization_lock", side_effect=AssertionError("must not open ledger")), patch("evaluate.subprocess.run", side_effect=AssertionError("must not invoke model")):
             with self.assertRaisesRegex(ValueError, "authorization"):
                 evaluate.measure(SimpleNamespace(output=self.directory, timeout=10,
                     protocol=HERE / "remediation-protocol.json", approval=HERE / "remediation-approval.json"))
@@ -198,7 +201,7 @@ class QualityEvaluationTests(unittest.TestCase):
         approval_path = HERE / "remediation-approval.json"
         approval = evaluate.load(approval_path)
         with patch("evaluate.authorization_directory", return_value=self.directory):
-            # Exercise bookkeeping only; measure() rejects the real pending approval.
+            # Exercise bookkeeping only; no model invocation is part of this test.
             with evaluate.authorization_lock(self.directory / "new", approval, approval_path) as (path, ledger):
                 self.assertNotEqual(original, path)
                 self.assertEqual(0, ledger["attemptCount"])

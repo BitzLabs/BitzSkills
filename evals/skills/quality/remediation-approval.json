@@ -1,8 +1,10 @@
 {
   "schemaVersion": "1.0",
-  "approvalStatus": "pending",
-  "approvedBy": null,
-  "approvedAt": null,
+  "approvalStatus": "approved",
+  "approvedBy": "user",
+  "approvedAt": "2026-10-04",
+  "authorization": "../sol-authorization.json",
+  "userInstruction": "SOLでの評価は、すべて許可します。",
   "pluginVersion": "0.1.2",
   "evaluationSetVersion": "quality-pilot-0.1.1",
   "model": "gpt-6.1-sol",
@@ -13,5 +15,5 @@
   "baselineSemanticFailureContinuation": false,
   "reuseOriginalBudget": false,
   "reuseSddBudget": false,
-  "notes": "停止した原評価を再開せず、是正候補のQR-001をskill/baseline各2反復する別承認・別条件・別出力の提案。追加モデル実測は利用者承認まで0件。金額未確定。成功してもQ0〜Q3全帯・Phase3・Skill Gateを認定しない"
+  "notes": "sol評価の包括承認に基づく固定4軌跡。停止した原評価を再開せず、是正候補のQR-001をskill/baseline各2反復する別台帳・別条件・別出力の測定。金額未確定。成功してもQ0〜Q3全帯・Phase3・Skill Gateを認定しない"
 }
