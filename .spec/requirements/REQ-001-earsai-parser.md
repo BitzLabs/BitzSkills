@@ -19,7 +19,7 @@ verify: default
 ## Intent
 
 SPEC文書の規範文を、全操作が同じ構造として扱えるSemantic IRへ決定論的に変換する。
-正本は[EARS-AI言語・Semantic IR仕様](../../docs/03.詳細設計/01_EARS-AI/01_EARS-AI言語・意味中間表現仕様.md)であり、
+正本は[EARS-AI言語・意味中間表現仕様](../../docs/03.詳細設計/01_EARS-AI/01_EARS-AI言語・意味中間表現仕様.md)であり、
 本REQはbitz-core自身の実装が守る観測可能な結果だけを句にする。
 
 ## Acceptance Criteria
