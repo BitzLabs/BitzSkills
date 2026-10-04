@@ -28,6 +28,8 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=plugins/bitz-core/src:<ruamel.yaml-0.19.1�
   python3 tests/skills/test_sdd_plan_examples.py
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=plugins/bitz-core/src:<ruamel.yaml-0.19.1のパス> \
   python3 tests/skills/test_sdd_implement_connection.py
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=plugins/bitz-core/src:<ruamel.yaml-0.19.1のパス> \
+  python3 tests/skills/test_sdd_converge_connection.py
 ```
 
 計画の検査は公開CLIで構文・状態・境界を確認する。接続の検査は合成workspace内のPythonテストも実行し、
