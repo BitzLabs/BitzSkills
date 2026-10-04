@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "implementationRunId": "2026-10-01-core-skill-implementation",
+  "reviewRunId": "/root/phase0_review",
+  "subjectCommit": "e7d1e5d5d3e7f3d539d089fd555dce54a180fd89",
+  "freshContext": true,
+  "implementationPrivateHistoryInherited": false,
+  "leadingConclusionProvided": false,
+  "inputs": ["AGENTS.md", "提案30のPhase 0既存完了条件", "ADR-060", "evals/skills/", "tests/skills/test_skill_eval.py", "是正したファイルと対象範囲"],
+  "directChecks": ["公開規範と成果物の照合", "python3 evals/skills/validate.py audit", "python3 tests/skills/test_skill_eval.py", "空本文と説明内区切りの直接負対照", "同一実行IDの拒否と異なるIDの受理"],
+  "notRerun": [{"check": "モデル新規評価・保持ケース・費用採取", "reason": "契約固定の完了確認に限定し、後続工程の評価として残す"}],
+  "independent": true
+}

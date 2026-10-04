@@ -72,10 +72,17 @@ description・本文を日本語で再設計した。適用する依頼、手順
 184試行の判断・軌跡を保存し、有効記録は183件だった。6スキル案は88/92完全一致、
 比較3入口案は重複応答1件を拒否して79/91完全一致であり、両構成とも試作閾値未達だった。
 
-現行の評価集合は`0.7.1`である。反復比較の集計は必要な反復数と各ケースの全反復の存在を確認し、
+評価集合`0.7.1`では、反復比較の集計は必要な反復数と各ケースの全反復の存在を確認し、
 単独観測を反復一致へ数えない。候補本文と意味評価の閾値は変更していない。
 0.7.0の原JSONとarchiveは当時の確定refの記録として保持し、実際に比較できる反復対の指標を報告へ併記する。
 0.7.1で実モデルの新規評価は行っていない。
+
+現行の評価集合は`0.7.2`である。Phase 0の完了条件の独立検分を受け、
+本文が空・空白・先頭情報だけの試作スキルを本文読取り検査で拒否する負対照を追加した。
+独立検分記録の`review`検査は、Schemaとともに実装・レビューの同一実行IDを拒否する。
+候補本文、公開ケース、意味イベント、閾値は変更していない。旧評価は旧refの記録として保持し、
+新しい契約へ再採点しない。本実装スキルは`plugins/bitz-core/skills/bitz-core/`にあり、
+`candidates/`の最小試作とは別の評価対象である。
 
 保持したケースは公開リポジトリへ置かない。実行時に別の入力として供給し、報告には集合の版、件数、
 入力ファイル全体のSHA-256を記録する。公開ケースだけの評価をリリース認定と呼ばない。
@@ -96,6 +103,7 @@ description・本文を日本語で再設計した。適用する依頼、手順
 
 ```text
 uv run evals/skills/validate.py audit
+uv run evals/skills/validate.py review --input /path/to/independent-review.json
 uv run evals/skills/validate.py score --stage prototype \
   --input /path/to/six-skill-r1.jsonl --input /path/to/six-skill-r2.jsonl \
   --input /path/to/three-entry-r1.jsonl --input /path/to/three-entry-r2.jsonl \

@@ -124,6 +124,46 @@ class SkillEvalTests(unittest.TestCase):
         }
         self.assertTrue(list(validator.iter_errors(record)))
 
+    def test_independence_rejects_same_run_id_via_cli(self):
+        record = {
+            "schemaVersion": "1.0", "implementationRunId": "same-run", "reviewRunId": "same-run",
+            "subjectCommit": "0" * 40, "freshContext": True,
+            "implementationPrivateHistoryInherited": False, "leadingConclusionProvided": False,
+            "inputs": ["diff"], "directChecks": ["inspect diff"], "notRerun": [], "independent": True,
+        }
+        self.assertTrue(skill_eval.independent_review_errors(record))
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "review.json"
+            path.write_text(json.dumps(record), encoding="utf-8")
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = skill_eval.main(["review", "--input", str(path)])
+            self.assertEqual(1, code)
+            self.assertEqual("Failed", json.loads(output.getvalue())["status"])
+            record["reviewRunId"] = "new-run"
+            self.assertEqual([], skill_eval.independent_review_errors(record))
+            path.write_text(json.dumps(record), encoding="utf-8")
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(0, skill_eval.main(["review", "--input", str(path)]))
+
+    def test_empty_trial_skill_fails_read_check(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            skill = root / "six-skill/skills/bitz-core/SKILL.md"
+            skill.parent.mkdir(parents=True)
+            event = {"type": "item.completed", "item": {"type": "command_execution", "exit_code": 0,
+                     "command": "/bin/bash -lc 'cat .codex/skills/bitz-core/SKILL.md'", "aggregated_output": ""}}
+            with mock.patch.object(skill_eval_runner, "CANDIDATES", root):
+                for body in ("", " \n", "---\nname: bitz-core\n---\n",
+                             '---\nname: bitz-core\ndescription: "---"\n---\n',
+                             "---\nname: bitz-core\n"):
+                    skill.write_text(body, encoding="utf-8")
+                    event["item"]["aggregated_output"] = body
+                    self.assertFalse(skill_eval_runner.selected_skill_was_read([event], "bitz-core", "six-skill"))
+                skill.write_text("操作の手順", encoding="utf-8")
+                event["item"]["aggregated_output"] = "操作の手順"
+                self.assertTrue(skill_eval_runner.selected_skill_was_read([event], "bitz-core", "six-skill"))
+
     def test_do_not_use_case_cannot_select_a_route(self):
         cases = skill_eval.load_cases()
         case = next(case for case in cases if case["mode"] == "do-not-use")
