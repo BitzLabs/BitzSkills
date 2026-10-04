@@ -1082,3 +1082,20 @@ commit `b1ae3c1c0e80d360f033b5ac907e66c01c3ea73a`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 fixtureの入力と期待値を変えていないため、Gate Bの判定し直しは要しない。
+
+## 2026-10-04: CIの分割予測の要約の書き直し後のGate Aの再認定
+
+`fixtures/plan_conformance.py`がCIのジョブの要約へ出す予測元と予測時間の説明を日本語表記へ書き直した。ジョブ名と分割の計画は
+変えていない。あわせて表記規則 §1・§10、ADR-033の表示文、`tests/bitz-core/gate_c.py`のdocstringを直した。matrix、
+fixtureの入力と期待値は変えていない。
+
+commit `5bb34989077d2493c6ec3c8dac031d7a307d87a8`に対して`uv run fixtures/certify_gate_a.py`を実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`c16d26675139d68992a0e6f48c35e3e7029fe5910a866ff3292f62c275733f28`（前回と同じ） |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+fixtureの入力と期待値を変えていないため、Gate Bの判定し直しは要しない。
