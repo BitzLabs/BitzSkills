@@ -84,6 +84,8 @@ python3 evals/skills/sdd/evaluate.py run \
 固定順序で1件ずつ実行し、`.venv/sdd-batch-ledgers/<id>.json`へ起動前に消費数・実行IDを記録する。
 台帳は別出力・別ref・別モデル版・別Python環境への付替えを拒否する。同じバッチの同時起動も拒否する。
 Python pathの先頭を確定refのCore srcに限定し、台帳作成とモデル起動より前に公開`doctor`を実行する。
+この検査にはリポジトリ内`.venv/`の一時的な固定正常fixtureを使い、実評価と同じPythonの登録コマンドを診断する。
+開発rootのuv設定を評価対象の設定として扱わない。一時fixtureにはモデルを接続せず検査後に片付ける。
 依存欠落やCore非成功を有料モデル呼出し後の検査へ延期しない。
 timeout・非0終了・中断・必須検査不適合は保存して停止し、後の別プロセスも自動再開しない。
 `--resume`と並列実行を新測定には認めない。古い`run_selected`は旧試験用で、公開runからは使わない。

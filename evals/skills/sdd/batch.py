@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import tempfile
 from types import SimpleNamespace
 import uuid
 
@@ -62,11 +63,16 @@ def plan(evaluation, args, cases):
         raise ValueError("出力は台帳と分離したリポジトリ内.venvへ置いてください")
     if subprocess.run(["git", "check-ignore", "-q", str(args.output)], cwd=root).returncode != 0:
         raise ValueError("評価出力はGitの管理対象から除外してください")
-    # モデル起動・台帳作成前に、ホストと同じ環境で公開Core CLIを実行する。
-    doctor = subprocess.run([sys.executable, "-B", "-m", "bitz.cli", "doctor", "--format", "json"],
-        cwd=root, env={"PATH": "/usr/bin:/bin", "PYTHONPATH": args.pythonpath,
-                       "PYTHONDONTWRITEBYTECODE": "1", "LC_ALL": "C.UTF-8"},
-        capture_output=True, text=True, timeout=20)
+    # 開発rootのuv設定ではなく、実評価と同じ固定Pythonコマンドを診断する。
+    storage.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="sdd-runtime-preflight-", dir=storage) as temporary:
+        workspace = Path(temporary) / "workspace"
+        normal = next(c for c in evaluation.load(here / "cases.json") if c["id"] == "SI-001")
+        evaluation.setup(workspace, normal, "skill", args.pythonpath)
+        doctor = subprocess.run([sys.executable, "-B", "-m", "bitz.cli", "doctor", "--format", "json"],
+            cwd=workspace, env={"PATH": "/usr/bin:/bin", "PYTHONPATH": args.pythonpath,
+                               "PYTHONDONTWRITEBYTECODE": "1", "LC_ALL": "C.UTF-8"},
+            capture_output=True, text=True, timeout=20)
     if doctor.returncode != 0:
         raise ValueError("公開Core doctorが起動前検査で非成功でした")
     doctor_result = json.loads(doctor.stdout)

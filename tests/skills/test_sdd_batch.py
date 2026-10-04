@@ -32,6 +32,7 @@ class SddBatchTests(unittest.TestCase):
         self.checks = {key: {"passed": True, "errors": []} for key in ("deterministic", "safety", "workflow", "observation")}
         self.evaluation = SimpleNamespace(ROOT=self.root, HERE=self.root / "evals/skills/sdd",
             PASS={"passed", "passed_with_warnings"},
+            setup=lambda workspace, *unused: workspace.mkdir(),
             load=lambda p: json.loads(Path(p).read_text()), digest=lambda b: hashlib.sha256(b).hexdigest(),
             json_digest=lambda v: hashlib.sha256(json.dumps(v, sort_keys=True).encode()).hexdigest(),
             identity=lambda args, case: {"model": args.model, "modelVersion": args.model_version,
@@ -229,7 +230,8 @@ class SddBatchTests(unittest.TestCase):
             with self.subTest(exit=result.returncode), patch.object(batch.subprocess, "run", side_effect=[SimpleNamespace(returncode=0), result]):
                 with self.assertRaisesRegex(ValueError, "doctor"):
                     batch.plan(self.evaluation, self.args, self.cases)
-                self.assertFalse((self.root / ".venv").exists())
+                self.assertFalse(self.ledger_path.exists())
+                self.assertFalse(self.args.output.exists())
                 self.assertEqual([], self.calls)
 
     def test_doctor_elapsed_time_does_not_change_fixed_conditions(self):
