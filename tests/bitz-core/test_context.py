@@ -241,9 +241,11 @@ class ProjectionFieldTests(unittest.TestCase):
             self.assertIn("TECH-003:AC-01", ledger)
             self.assertEqual(by_id["TECH-003"]["projection"], "normative")
 
-    def test_distance2_refinement_with_statements_outside_ledger_is_full(self):
+    def test_distance2_refinement_never_drops_must_text(self):
         # 所有する規範文が制約台帳にない具体化文書を`normative`にすると、その`MUST`の文面が提示からも制約台帳からも
-        # 失われる（ADR-014の`Decision`の4番目の項目）。文書単位で具体化した文書の規範文は対象規範文にならないので`full`にする。
+        # 失われる（ADR-014の`Decision`の4番目の項目、`context`仕様 §5）。規範文が制約台帳になければ`full`で本文を返す。
+        # 文書単位で具体化した文書の規範文を対象規範文に含めるか（関係・トレースモデル §6.4の規則1）は未決のため、
+        # 目的`implement`と`verify`では制約台帳への収録の有無を固定せず、どちらでも文面が残ることだけを確かめる。
         for purpose in ("interpret", "implement", "verify"):
             with self.subTest(purpose=purpose), tempfile.TemporaryDirectory() as root:
                 _write(root, ".spec/bitz.yaml", _bitz_yaml())
@@ -255,13 +257,18 @@ class ProjectionFieldTests(unittest.TestCase):
                 result, _ = _run_context(root, ["REQ-001"], purpose=purpose)
                 by_id = {d["id"]: d for d in result["documents"]}
                 ledger = {s["id"] for s in result["constraintLedger"]["statements"]}
-                self.assertNotIn("TECH-003:AC-01", ledger)
                 self.assertEqual(by_id["TECH-003"]["role"], "refinement")
-                self.assertEqual(by_id["TECH-003"]["projection"], "full")
-                self.assertIn("bodyText", by_id["TECH-003"])
+                if purpose == "interpret":
+                    # 目的`interpret`では対象規範文が空なので、制約台帳も空になる（関係・トレースモデル §6.4）。
+                    self.assertEqual(ledger, set())
+                if "TECH-003:AC-01" not in ledger:
+                    self.assertEqual(by_id["TECH-003"]["projection"], "full")
+                    self.assertIn("具体化された制約", by_id["TECH-003"]["bodyText"])
 
     def test_refines_target_reached_first_by_requires_is_full(self):
-        # 起点の`refines`の参照先に、`requires`の鎖で先に距離2で到達した場合も、その規範文は対象規範文にならないため`full`にする。
+        # 起点の`refines`の参照先に、`requires`の鎖で先に到達した場合も、その規範文は対象規範文にならないため`full`にする。
+        # 現行のCoreはこの文書の距離を2とする（`requires`で先に到達した値。仕様の最短距離は1で、既知の確認事項C2）。
+        # 距離が2である限り、この試験は制約台帳の条件（`context`仕様 §5）を区別して確かめる。
         with tempfile.TemporaryDirectory() as root:
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
             _write(root, ".spec/requirements/REQ-001.md",
@@ -275,6 +282,21 @@ class ProjectionFieldTests(unittest.TestCase):
             self.assertNotIn("REQ-003:AC-01", ledger)
             self.assertEqual(by_id["REQ-003"]["projection"], "full")
             self.assertIn("bodyText", by_id["REQ-003"])
+
+    def test_full_refinement_counts_toward_byte_limit(self):
+        # バイト数の上限は詳細度`standard`の提示量で測る（`context`仕様 §8）。規範文が制約台帳にない距離2の具体化文書は
+        # `full`になるため、その本文も上限の計数に入る。
+        long_text = "長い本文。" * 400
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml("context:\n  maxBytes: 4096\n"))
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            _write(root, ".spec/technical/TECH-002.md",
+                   _tech("TECH-002", extra_frontmatter="relations:\n  refines: [REQ-001]\n"))
+            _write(root, ".spec/technical/TECH-003.md",
+                   _tech("TECH-003", extra_frontmatter="relations:\n  refines: [TECH-002]\n") + "\n## Notes\n\n" + long_text + "\n")
+            result, _ = _run_context(root, ["REQ-001"], purpose="interpret")
+            self.assertEqual(result["status"], "blocked")
+            self.assertIn("CTX-LIMIT-001", [d["code"] for d in result["diagnostics"]])
 
     def test_expand_upgrades_reference_to_full(self):
         with tempfile.TemporaryDirectory() as root:
