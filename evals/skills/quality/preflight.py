@@ -158,7 +158,7 @@ def check_case(case: dict, parent: Path, env: dict) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--protocol", choices=["protocol.json", "remediation-protocol.json", "shared-format-protocol.json", "expansion-cases.json"], default="protocol.json")
+    parser.add_argument("--protocol", choices=["protocol.json", "remediation-protocol.json", "shared-format-protocol.json", "expansion-cases.json", "normal-cases.json"], default="protocol.json")
     args = parser.parse_args()
     env = environment()
     ref = git(["rev-parse", "HEAD"], ROOT, env).decode().strip()

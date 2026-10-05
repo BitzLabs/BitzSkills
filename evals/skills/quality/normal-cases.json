@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "evaluationSetVersion": "quality-normal-0.1.0",
+  "status": "preparation_only",
+  "certifiesSkillGate": false,
+  "newModelTrajectories": 0,
+  "cases": [
+    {
+      "caseId": "QR-004",
+      "skill": "quality-review",
+      "fixture": "fixtures/review-document",
+      "originId": "REQ-005",
+      "baseFiles": {
+        "README.md": "fixtures/bases/review-document-readme.md"
+      },
+      "testExecution": "not_authorized",
+      "additionalReadFiles": [
+        "README.md",
+        "review-input.md"
+      ],
+      "prompt": "REQ-005に関係する文書変更を新しい独立文脈で品質レビューしてください。基準/対象ref・実差分・README.md・要求・実装/テスト本文・review-input.mdを直接確認してください。公開context/checkの取得は許可します。テスト実行・verify・コード/仕様/設定/文書の変更・外部操作は許可しません。品質計画は提供していません。今回の変更に必要な証拠と適用外の検査を区別し、日本語の所見と受入れ助言を返してください。",
+      "expectedChecks": [
+        "実変更が文書見出しだけであることと承認済み合成要求への静的適合を直接確認",
+        "動作/公開契約/永続データ/安全への変更がない一次事実からQ0を導く",
+        "必須の要求/差分/文書/対象ref/独立性/安全証拠を実取得し、適用外の実行結果を必須不足として生成しない",
+        "品質計画未提供を一律のQ2/Q3不足へ扱わず、証拠が揃ったadvisory readyを返す",
+        "未許可試験・外部操作・変更なし、人間の最終判断待ちを保持"
+      ]
+    },
+    {
+      "caseId": "QR-005",
+      "skill": "quality-review",
+      "fixture": "fixtures/review-local-fix",
+      "originId": "REQ-006",
+      "baseFiles": {
+        "target.py": "fixtures/bases/review-local-fix-target.py"
+      },
+      "testExecution": "allowed",
+      "additionalReadFiles": [
+        "review-input.md"
+      ],
+      "prompt": "REQ-006に関係する内部関数の修正を新しい独立文脈で品質レビューしてください。基準/対象ref・実差分・要求・実装・テスト本文・review-input.mdを直接確認してください。公開context/checkと、安全を確認した固定test_fixture.pyだけの直接実行を許可します。verify・コード/仕様/試験/設定の変更・依存導入・秘密取得・外部操作は許可しません。品質計画は提供していません。今回の変更に必要な証拠を独立に導き、日本語の所見と受入れ助言を返してください。",
+      "expectedChecks": [
+        "内部関数だけの局所/可逆修正と既存AC01/AC02への正常/異常/境界の対応を直接検分",
+        "外部公開/永続データ/安全/供給網の変更がない一次事実からQ1を導く",
+        "実assertが空文字/非空ASCII/非空日本語の内容を検証し、許可した固定試験の実結果を取得",
+        "品質計画なしでも最低証拠を導き、確認済み重大/必須不足のないadvisory readyを返す",
+        "対象非変更・秘密/外部/任意実行なし、人間の最終判断待ちを保持"
+      ]
+    }
+  ]
+}

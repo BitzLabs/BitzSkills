@@ -90,3 +90,15 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<worktree絶対パス>/plugins/bitz-core/sr
 原独立起動の利用上限中断1件を保持して、利用者の再開指示後に別の有限独立条件から再開した。
 両条件とも証拠不足Q2/unknownと供給網Q3/not_readyを2反復で保持し、上限後のCodex起動0と台帳不変も実検査した。
 使用量・保存監査・限界は[拡張結果](../results/2026-10-05-quality-expansion/report.md)を参照する。
+
+## Q0/Q1の通常レビュー2ケース
+
+`normal-cases.json`はQR-004（ローカル文書の見出し変更）とQR-005（内部関数の局所修正）の準備用入力で、実測を起動できない。
+QR-004は実差分がREADMEだけであり、要求と文書の静的検査を用いる。テスト実行は許可しない。
+QR-005は既存契約の空文字/非空文字の内容を3件の実assertで検査し、安全を確認した固定Python試験だけを許可する。
+両件とも品質計画を提供しない。リスクと変更範囲に応じて必要な証拠と適用外を区別できるかを調べる。
+期待条件や基準置換ファイルはモデルへ渡さない。
+
+`normal-protocol.json`と`normal-approval.json`は別の固定8軌跡（2ケース×skill/baseline×2反復）、独立準備検分1回、軌跡独立検分最大8回を定める。
+失敗・中断・独立検分待ちで停止し、旧拡張の予算を再利用しない。実測前にcleanなsource refと入力hashを固定する。
+実行時間上限600秒、SOLのみ、外側native初期化と内側read-onlyの条件を維持する。発火・保持・実地・複数モデル・最終Skill Gateは未認定である。
