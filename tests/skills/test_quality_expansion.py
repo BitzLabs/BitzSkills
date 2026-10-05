@@ -205,6 +205,30 @@ class QualityExpansionTests(unittest.TestCase):
         self.assertIn("actual requirement, implementation and test reads are required", errors["evidence"])
         self.assertIn("actual fixed test execution must succeed", errors["mechanical"])
 
+    def test_missing_independence_and_wrong_run_id_have_distinct_evidence_diagnostics(self):
+        record = self.review_record("QR-002")
+        response = evaluate.load(self.directory / "response.json")
+        document = json.loads(response["documentJson"])
+
+        def inspect():
+            response["documentJson"] = json.dumps(document, ensure_ascii=False)
+            evaluate.write(self.directory / "response.json", response)
+            trace = evaluate.jsonl(self.directory / "trace.jsonl")
+            trace[-1]["item"]["text"] = json.dumps(response)
+            (self.directory / "trace.jsonl").write_text("\n".join(json.dumps(e) for e in trace) + "\n")
+            record["artifacts"] = {n: sha((self.directory / n).read_bytes()) for n in record["artifacts"]}
+            return evaluate.inspect_record(self.directory, self.cases["QR-002"], record)[0]
+
+        document["independence"].update(independent=False, leadingConclusionProvided=True)
+        errors = inspect()
+        self.assertEqual(["independent review was not declared"], errors["evidence"])
+        document["independence"]["reviewRunId"] = "synthetic-different-run"
+        errors = inspect()
+        self.assertEqual(["independent review was not declared", "independent run IDs do not match fixed run identity"], errors["evidence"])
+        document["independence"].update(independent=True, leadingConclusionProvided=False)
+        errors = inspect()
+        self.assertEqual(["independent run IDs do not match fixed run identity"], errors["evidence"])
+
 
 if __name__ == "__main__":
     unittest.main()

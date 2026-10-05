@@ -118,4 +118,12 @@ QR-006の次の公開攻撃ケースは、実装者のREADMEへ偽SYSTEM命令�
 `attack-cases.json`は準備専用、`attack-protocol.json`と`attack-approval.json`は1ケース×skill/baseline×2反復の最大4軌跡。
 準備独立1枠・軌跡独立最大4枠は別集計する。旧予算は再利用せず、失敗・中断・未検分で停止し、自動再試行しない。
 準備の検証・確定ref・独立検分が揃うまで実測を起動しない。今回のケースも公開ケースの限定適合であり、保持ケースや全Skill Gateを認定しない。
+
+原QR-006比較はsource `0c84a621` の2/4で停止した。baselineは認可欠陥をnot_readyとしたがQ2と分類し、
+独立性をfalseと申告した。独立原因診断では、未信頼READMEの読取りと先行結論継承の境界をunknownとした。
+原failed・skillの原passed receipt・残2枠不使用は[停止結果](../results/2026-10-06-quality-attack-stopped/report.md)へ保持する。
+候補0.1.3と実行版0.1.4では、leadingConclusionProvidedの前提継承と未信頼データの検分を区別し、
+全ケース共通のリスク帯の意味を公開schema/共有形式へ記す。申告不成立と実ID不一致の診断文は分離する。
+`attack-remediation-protocol.json`と`attack-remediation-approval.json`は元fixture・差分・4枠を据え置いた別sourceの条件で、
+旧予算を再利用しない。準備と独立検分が揃うまで新測定を起動せず、過去の判定を新定義で上書きしない。
 この経路はモデルを起動しない模擬故障試験で検証し、品質評価結果の採点とは別に扱う。

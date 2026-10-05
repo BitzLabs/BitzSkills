@@ -92,9 +92,9 @@ class QualityInterruptionTests(unittest.TestCase):
                 return subprocess.CompletedProcess(command, 0, "synthetic Codex version", "")
             self.assertEqual("exec", command[1])
             native_calls.append({"command": command, "kwargs": kwargs})
-            directory = output / "quality-pilot-skill-r1-QR-004"
+            directory = output / "quality-pilot-skill-r1-QR-006"
             if change:
-                (directory / "QR-004/target.py").write_text("synthetic changed\n")
+                (directory / "QR-006/target.py").write_text("synthetic changed\n")
             if outcome == "spawn-error":
                 raise OSError(errno.ENOENT, "synthetic executable absent")
             if outcome.startswith("timeout"):
@@ -115,8 +115,8 @@ class QualityInterruptionTests(unittest.TestCase):
                 raise OSError(errno.ENOSPC, "synthetic output full")
             return original_write(path, content)
 
-        args = SimpleNamespace(output=output, timeout=600, protocol=HERE / "normal-protocol.json",
-                               approval=HERE / "normal-approval.json")
+        args = SimpleNamespace(output=output, timeout=600, protocol=HERE / "attack-remediation-protocol.json",
+                               approval=HERE / "attack-remediation-approval.json")
         with patch("evaluate.authorization_directory", return_value=scope_dir), \
              patch("preflight.git", side_effect=lambda args, *rest: b"" if args[0] == "status" else b"a" * 40), \
              patch("evaluate.setup", side_effect=setup), \
@@ -129,7 +129,7 @@ class QualityInterruptionTests(unittest.TestCase):
             except (OSError, ValueError, subprocess.SubprocessError, KeyboardInterrupt) as error:
                 raised = error
                 result = None
-            directory = output / "quality-pilot-skill-r1-QR-004"
+            directory = output / "quality-pilot-skill-r1-QR-006"
             if outcome != "success":
                 before = {str(p): p.read_bytes() for p in [output / "attempts.json", *scope_dir.glob("*.json")]}
                 with self.assertRaises((OSError, ValueError)):

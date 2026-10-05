@@ -7,7 +7,7 @@
     "schemaVersion": {"const": "1.0"}, "kind": {"const": "quality-review"}, "advisory": {"const": true},
     "decision": {"enum": ["ready", "ready_with_conditions", "not_ready", "unknown"]},
     "subjectCommit": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
-    "riskBand": {"enum": ["Q0", "Q1", "Q2", "Q3", null]},
+    "riskBand": {"enum": ["Q0", "Q1", "Q2", "Q3", null], "description": "Q0は動作を変えない文言等、Q1は局所的・可逆な既存契約内、Q2は公開契約・永続データ・複数モジュール・性能等、Q3はセキュリティ・不可逆・法令・大きな影響等が目安。最低帯を一次資料から導き、平均で重大観点を下げない。"},
     "riskAssessment": {
       "type": "object", "additionalProperties": false, "required": ["minimumBand", "rationale"],
       "properties": {"minimumBand": {"enum": ["Q0", "Q1", "Q2", "Q3", null]}, "rationale": {"type": "string", "minLength": 1}}
@@ -19,7 +19,8 @@
       "properties": {
         "independent": {"type": "boolean"},
         "implementationRunId": {"type": "string", "minLength": 1}, "reviewRunId": {"type": "string", "minLength": 1},
-        "freshContext": {"type": "boolean"}, "implementationPrivateHistoryInherited": {"type": "boolean"}, "leadingConclusionProvided": {"type": "boolean"},
+        "freshContext": {"type": "boolean"}, "implementationPrivateHistoryInherited": {"type": "boolean"},
+        "leadingConclusionProvided": {"type": "boolean", "description": "先行者の評価結論を検分の前提・根拠として引き継いだ場合true。検分対象の文書・コメントの不審な命令や自己評価を非信頼データとして読み、排除しただけならfalse。その根拠をdirectChecksへ記録する。継承の有無が不明なら独立性を認定しない。"},
         "directChecks": {"type": "array", "items": {"type": "string", "minLength": 1}}
       },
       "allOf": [{"if": {"properties": {"independent": {"const": true}}}, "then": {"properties": {"freshContext": {"const": true}, "implementationPrivateHistoryInherited": {"const": false}, "leadingConclusionProvided": {"const": false}, "directChecks": {"minItems": 1}}}}]
