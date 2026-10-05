@@ -93,6 +93,12 @@ Python pathの先頭を確定refのCore srcに限定し、台帳作成とモデ�
 開発rootのuv設定を評価対象の設定として扱わない。一時fixtureにはモデルを接続せず検査後に片付ける。
 依存欠落やCore非成功を有料モデル呼出し後の検査へ延期しない。
 timeout・非0終了・中断・必須検査不適合は保存して停止し、後の別プロセスも自動再開しない。
+評価実行版sdd-execution-0.1.1ではnative stdout/stderrをbytesで捕捉し、解釈より先に保存する。
+起動例外とKeyboardInterruptで両出力を取得できなかった場合はnativeOutputsObtained=falseと記す。
+timeoutはnativeOutputAvailabilityで各streamの取得有無も残し、空の保存ファイルを
+取得済みの空出力と扱わない。例外文面はprovider stderrへ合成しない。
+後処理中断は保存済み出力と実終了コードを保持する。subprocess.runが手動中断時のpartial bytesを
+返さない場合や失敗記録自体を書けない場合の完全保存は保証しない。旧失敗と旧予算は変更しない。
 `--resume`と並列実行を新測定には認めない。古い`run_selected`は旧試験用で、公開runからは使わない。
 
 次件には前件の`independent-review.json`が必要で、元run・全必須検査・意味適合を照合する。

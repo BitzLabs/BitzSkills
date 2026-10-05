@@ -20,6 +20,7 @@ sys.dont_write_bytecode = True
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
 PASS = {"passed", "passed_with_warnings"}
+EXECUTION_VERSION = "sdd-execution-0.1.1"
 SOURCE = "def validate(value):\n    return []\n"
 FIXED = 'def validate(value):\n    return ["入力エラー"] if value == "" else []\n'
 TEST = '''import importlib.util
@@ -445,7 +446,7 @@ def identity(args, case):
     ref = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     tracked = subprocess.check_output(["git", "ls-tree", "-r", "--name-only", ref, "plugins/bitz-sdd", "plugins/bitz-core", "evals/skills/sdd"], cwd=ROOT, text=True).splitlines()
     material = b"".join(p.encode() + b"\0" + subprocess.check_output(["git", "show", ref + ":" + p], cwd=ROOT) + b"\0" for p in tracked)
-    return {"setVersion": load(HERE / "protocol.json")["evaluationSetVersion"], "subjectCommit": ref,
+    return {"setVersion": load(HERE / "protocol.json")["evaluationSetVersion"], "executionVersion": EXECUTION_VERSION, "subjectCommit": ref,
             "sourceSha256": digest(material), "caseSha256": json_digest(case), "caseId": case["id"],
             "variant": args.variant, "repetition": args.repetition, "model": args.model,
             "modelVersion": args.model_version, "pythonpath": args.pythonpath}
@@ -483,7 +484,8 @@ def save_native_outputs(directory, stdout, stderr):
 
 
 def preserve_invocation_failure(directory, wanted, workspace, before, command, timeout, started,
-                                *, error_type, exit_code=None, errno=None, output_save_errors=None, unsaved_outputs=None):
+                                *, error_type, exit_code=None, errno=None, output_save_errors=None, unsaved_outputs=None,
+                                native_outputs_obtained=True, native_output_availability=None):
     """失敗を採点結果に変換せず、実条件・時間・差分と残った原証拠を保存する。"""
     after = snapshot(workspace)
     artifacts = {name: digest((directory / name).read_bytes())
@@ -497,6 +499,9 @@ def preserve_invocation_failure(directory, wanted, workspace, before, command, t
               "changes": {"before": before, "after": after,
                           "changedPaths": sorted(p for p in before.keys() | after.keys() if before.get(p) != after.get(p))},
               "artifacts": artifacts, "providerUsage": None, "providerCost": None,
+              "nativeOutputsObtained": native_outputs_obtained,
+              "nativeOutputAvailability": native_output_availability if native_output_availability is not None else
+                  {"stdout": native_outputs_obtained, "stderr": native_outputs_obtained},
               "outputSaveErrors": output_save_errors or [], "unsavedOutputs": unsaved_outputs or {},
               "semantic": "not-measured", "gateDecision": "not-certified"}
     write(directory, "failure.json", json.dumps(record, ensure_ascii=False, indent=2) + "\n")
@@ -538,17 +543,19 @@ def run_one(args, case):
     command.append("-")
     started = time.monotonic()
     try:
-        process = subprocess.run(command, input=prompt, text=True, capture_output=True, timeout=args.timeout)
+        process = subprocess.run(command, input=prompt.encode("utf-8"), capture_output=True, timeout=args.timeout)
     except subprocess.TimeoutExpired as error:
         _, errors, unsaved = save_native_outputs(directory, error.stdout, error.stderr)
         preserve_invocation_failure(directory, wanted, workspace, before, command, args.timeout, started,
-                                    error_type="TimeoutExpired", output_save_errors=errors, unsaved_outputs=unsaved)
+                                    error_type="TimeoutExpired", output_save_errors=errors, unsaved_outputs=unsaved,
+                                    native_outputs_obtained=error.stdout is not None or error.stderr is not None,
+                                    native_output_availability={"stdout": error.stdout is not None, "stderr": error.stderr is not None})
         raise
-    except OSError as error:
-        _, errors, unsaved = save_native_outputs(directory, "", str(error) + "\n")
+    except (OSError, KeyboardInterrupt) as error:
+        _, errors, unsaved = save_native_outputs(directory, None, None)
         preserve_invocation_failure(directory, wanted, workspace, before, command, args.timeout, started,
-                                    error_type=type(error).__name__, errno=error.errno,
-                                    output_save_errors=errors, unsaved_outputs=unsaved)
+                                    error_type=type(error).__name__, errno=getattr(error, "errno", None),
+                                    output_save_errors=errors, unsaved_outputs=unsaved, native_outputs_obtained=False)
         raise
     output_error, errors, unsaved = save_native_outputs(directory, process.stdout, process.stderr)
     if output_error:
@@ -570,7 +577,7 @@ def run_one(args, case):
                   "artifacts": {name: digest((directory / name).read_bytes()) for name in ("trace.jsonl", "host.jsonl", "changes.json", "decision.json", "control.json")}}
         record["checks"] = inspect(record, case, directory)
         write(directory, "run.json", json.dumps(record, ensure_ascii=False, indent=2) + "\n")
-    except (OSError, ValueError, KeyError, TypeError) as error:
+    except (OSError, ValueError, KeyError, TypeError, KeyboardInterrupt) as error:
         preserve_invocation_failure(directory, wanted, workspace, before, command, args.timeout, started,
                                     error_type=type(error).__name__, exit_code=process.returncode,
                                     errno=getattr(error, "errno", None))

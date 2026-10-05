@@ -458,6 +458,7 @@ class SddEvaluationTests(unittest.TestCase):
                 self.assertEqual(10, record["invocation"]["timeoutSeconds"])
                 self.assertEqual(native_calls[0].args[0], record["invocation"]["argv"])
                 self.assertIsNone(record["providerUsage"])
+                self.assertEqual(kind != "oserror", record["nativeOutputsObtained"])
                 self.assertIsNone(record["providerCost"])
                 self.assertGreaterEqual(record["wallMs"], 0)
                 self.assertEqual(1 if kind in ("nonzero", "log-write") else 0 if kind == "missing-response" else None, record["exitCode"])
@@ -468,7 +469,7 @@ class SddEvaluationTests(unittest.TestCase):
                 for name, value in record["artifacts"].items():
                     self.assertEqual(evaluation.digest((target / name).read_bytes()), value)
                 self.assertEqual("partial stderr\n" if kind == "timeout" else
-                    "[Errno 30] Read-only file system\n" if kind == "oserror" else "native initialization failed\n",
+                    "" if kind == "oserror" else "native initialization failed\n",
                     (target / "stderr.log").read_text())
                 self.assertFalse((target / "run.json").exists())
 
