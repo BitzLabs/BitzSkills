@@ -1758,6 +1758,45 @@ class AuditTests(unittest.TestCase):
                 path.write_text(path.read_text().replace("relations:\n  addresses: [REQ-001:AC-02]\n", replacement))
                 self.assertTrue(validate_verify_task_root(root, ["SINGLE-138"])["errors"])
 
+    def test_closure_accepts_only_the_verify_task_root_prerequisite_addresses(self):
+        """参照計算Bの`closure`は、閉包の外のTASKの`addresses`を一律には受理しない。受理するのは、目的`verify`で
+        TASKを起点にしたときの、起点が`requires`する先行TASKの`addresses`だけである（関係・トレースモデル §6.3、§6.4の4.）。"""
+        requirement = (audit.FIXTURES / "single/SINGLE-138/repo/.spec/requirements/REQ-001.md").read_text()
+        body = digest_crosscheck.normalize_body(requirement.split("---\n", 2)[2])
+
+        def corpus(*tasks):
+            documents = {"REQ-001": {"kind": "requirement", "path": "r",
+                                     "frontmatter": {"id": "REQ-001", "title": "t", "status": "approved"}, "body": body}}
+            for identifier, status, relations in tasks:
+                documents[identifier] = {"kind": "task", "path": "t", "body": "",
+                                         "frontmatter": {"id": identifier, "title": "t", "status": status,
+                                                         "relations": relations}}
+            return documents
+
+        root = ("TASK-001", "open", {"requires": ["TASK-002"], "addresses": ["REQ-001:AC-01"]})
+        done = ("TASK-002", "done", {"addresses": ["REQ-001:AC-02"]})
+        outside = lambda status: ("TASK-009", status, {"addresses": ["REQ-001:AC-01"]})
+        # 受理: verifyでTASKを起点にし、先行TASKが閉包の規範文を`addresses`する。先行TASKは閉包へ入らない。
+        ordered, _ = digest_crosscheck.closure(corpus(root, done), "TASK-001", "verify")
+        self.assertEqual(ordered, ["TASK-001", "REQ-001"])
+        # 受理（従来どおり）: implementで、閉包の規範文を`addresses`する`open`のTASKは閉包へ加える。
+        ordered, _ = digest_crosscheck.closure(corpus(outside("open")), "REQ-001", "implement")
+        self.assertEqual(ordered, ["REQ-001", "TASK-009"])
+        rejected = {
+            "implementでTASKを起点にし、先行TASKが`addresses`する": (corpus(root, done), "TASK-001", "implement"),
+            "interpretでTASKを起点にし、先行TASKが`addresses`する": (corpus(root, done), "TASK-001", "interpret"),
+            "verifyでREQを起点にし、閉包の外のTASKが`addresses`する": (corpus(outside("open")), "REQ-001", "verify"),
+            "interpretでREQを起点にし、閉包の外のTASKが`addresses`する": (corpus(outside("open")), "REQ-001", "interpret"),
+            "implementでREQを起点にし、`done`のTASKが`addresses`する": (corpus(outside("done")), "REQ-001", "implement"),
+            "閉包の外のTASKが`requires`で閉包の文書を指す": (
+                corpus(("TASK-009", "open", {"requires": ["REQ-001"]})), "REQ-001", "verify"),
+            "後続のTASKが起点を`requires`する": (
+                corpus(root, done, ("TASK-003", "open", {"requires": ["TASK-001"]})), "TASK-001", "verify"),
+        }
+        for name, (documents, start, purpose) in rejected.items():
+            with self.subTest(name), self.assertRaises(ValueError):
+                digest_crosscheck.closure(documents, start, purpose)
+
     def test_prerequisite_audit_rejects_a_changed_prerequisite_state(self):
         # 先行TASKの状態を入力側で変えると、期待値との組が成り立たなくなる。
         for identifier, status in (("SINGLE-137", "done"), ("SINGLE-137", "cancelled"),

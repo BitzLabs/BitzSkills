@@ -236,7 +236,8 @@ def closure(documents, root, purpose):
     到達した適用対象の文書それぞれから、`requires`の対象（verifyでの起点TASKのものを除く。§6.3）、
     `refines`の対象、その文書またはその規範文を`refines`する適用対象の文書をたどる。目的`interpret`では、
     `refines`の参照元である`draft`の文書を役割`advisory`として保持し、展開しない（§6.1 6.）。目的`implement`では、対象の規範文を
-    `addresses`する`open`のTASKをすべて加える。規則で説明できない強いエッジが閉包に接していれば、
+    `addresses`する`open`のTASKをすべて加える。目的`verify`でTASKを起点にしたときは、起点が`requires`する先行TASKを
+    閉包へ含めず、その`addresses`のエッジも辿らない辺として記録する（§6.3、§6.4の4.）。規則で説明できない強いエッジが閉包に接していれば、
     黙って取り込まずに拒否する。そのため、これはcorpusの読取り処理にとどまり、汎用の対象展開の
     実装にはならない。
 
@@ -270,6 +271,11 @@ def closure(documents, root, purpose):
             # §6.3: verifyの起点TASKはrequires閉包を含めない。辿らない辺として記録する。
             for target in _relations(documents[root_document]["frontmatter"])["requires"]:
                 accounted.add((root_document, "requires", target))
+                # §6.4の4.: 起点が`requires`する先行TASKの`addresses`の参照先も、起点の義務へ加えず辿らない。
+                # 先行TASKは閉包へ入らないので、その`addresses`のエッジも辿らない辺として記録する。
+                if target in documents and documents[target]["kind"] == "task":
+                    for reference in _relations(documents[target]["frontmatter"])["addresses"]:
+                        accounted.add((target, "addresses", reference))
     while frontier:
         current = frontier.pop(0)
         if current in advisory:
@@ -315,11 +321,6 @@ def closure(documents, root, purpose):
                 if not (target in documents or target in known_statements):
                     continue
                 touches = identifier in reached or target in reached or owner(target) in reached
-                # §6.3・§6.4: 閉包の外のTASKが`addresses`する先は、閉包の文書の規範文でも辿らない。TASKを閉包へ加えるのは
-                # 目的`implement`の`open`のTASKだけで、`verify`の起点のTASKの`requires`の参照先のTASKも含めない。
-                if (key == "addresses" and identifier not in reached and purpose != "implement"
-                        and documents[identifier]["kind"] == "task"):
-                    continue
                 if touches and (identifier, key, target) not in accounted:
                     raise ValueError("corpusにレビュー済みの閉包の外の強いエッジがあります")
     ordered = sorted(reached, key=lambda identifier: (reached[identifier],
