@@ -44,7 +44,12 @@ Gateの条件の正本は本書、fixtureの構造と比較方法の正本は
 [適合fixture仕様](../03.詳細設計/00_共通契約/04_適合fixture仕様.md)とする。提案資料は判断の理由と移行の履歴、
 提案資料のREADMEは現在の状態の要約だけを持つ。
 
-Gate Aの認定（certification）の後にmatrixまたはfixtureを変更した場合は、
+認定（certification）は、固定した認定コマンド（`fixtures/certify_gate_a.py`、`tests/bitz-core/certify_gate_b.py`、
+`tests/bitz-core/certify_gate_c.py`、ADR-056の独立2組の集約）で、コミット済みの`HEAD`のクリーンな作業ツリーと
+独立した新しいチェックアウトで全件を実行して合否を決め、結果と実行環境を記録することである。部分実行や1組だけの成功は認定ではない。
+判定は、合否を決めること一般を指す。
+
+Gate Aの認定の後にmatrixまたはfixtureを変更した場合は、
 [適合fixture仕様 §1.1](../03.詳細設計/00_共通契約/04_適合fixture仕様.md#11-matrixとfixtureの変更)に従ってGate Aを再認定する。
 再認定が通過するまで、Gate Aは`Blocked`とする。Gate Bが`Passed`のStepに属するfixtureを変更した場合は、
 そのStepのGate Bを判定し直す。

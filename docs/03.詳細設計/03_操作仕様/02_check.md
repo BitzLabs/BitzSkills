@@ -27,7 +27,7 @@ bitz check --all-workspaces
 受け付け、1回の単独操作の作業ワークスペースを1つに限定する。コードのパス、テストのパス、ディレクトリ、不正なIDまたはパス、
 異なるワークスペースが所有する対象の混在は引数不正とし、終了コード4とする。
 
-構文上は妥当な明示IDまたは仕様文書のパスがカタログに存在しない場合は操作を開始し、診断`CTX-ROOT-MISSING-001`（`failed`）を返す。
+構文上は妥当な明示IDまたは仕様文書のパスがワークスペースの仕様文書に存在しない場合は操作を開始し、診断`CTX-ROOT-MISSING-001`（`failed`）を返す。
 構文自体が不正なIDまたはパスの終了コード4と区別する。ADRは文書の検査対象にできるが、テストの義務へ展開しない。
 
 `--full`と明示対象は排他的である。引数なしは、Gitの変更集合（change set）を出発点にする。
@@ -42,10 +42,19 @@ bitz check --all-workspaces
 どのスコープでも、単一ワークスペースまたは複合ワークスペースのカタログ全体の軽量なフロントマターの索引を構築する。EARS-AIの抽象構文木と本文の
 完全検査（full inspection）の対象は次とする。
 
-- 明示対象: `TargetExpansion(root, interpret)`の`contextDocuments`と直接の逆参照
-- 引数なし: Gitの変更から選んだ所有文書、強い関係の閉包、直接の逆参照
+- 明示対象: `TargetExpansion(root, interpret)`の`contextDocuments`と直接の逆参照（direct reverse reference）
+- 引数なし: Gitの変更から選んだ所有文書、強い関係の閉包（strong relation closure）、直接の逆参照
 - `--full`: すべての仕様文書
 - `--all-workspaces`: カタログ内のすべての仕様文書
+
+強い関係の閉包は、文書の集合から、4つの強い関係（`requires`、`refines`、`addresses`、`supersedes`）を前方へ推移的にたどった
+文書の集合であり、目的、適用可能性、`refines`の逆参照を扱わない。目的ごとの閉包
+（[関係・トレースモデル §6](../02_仕様文書モデル/04_関係・トレースモデル.md#6-目的ごとの閉包)）とは別の語である。
+
+直接の逆参照は、文書の集合の外にある仕様文書のうち、自身の`relations`（5種のどれでもよい）で、集合内の文書またはその規範文を
+1段で参照しているものである。推移的にはたどらず、規範文への参照は所有する文書への参照として扱う。明示対象では`contextDocuments`の
+全体、引数なしでは所有する文書と強い関係の閉包の和を集合とする。影響候補（§8）の「強い関係の直接の逆参照」
+（強い関係だけ、状態`approved`だけ）とは別の範囲である。
 
 軽量な索引の構築と、対象文書の完全な解析を混同しない。
 展開の規則は[関係・トレースモデル §6.4](../02_仕様文書モデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)を正とする。
@@ -188,7 +197,7 @@ Coreは意味的な影響を断定せず、状態を自動で変更しない。`
 | `SPEC-FM-REQUIRED-001` | `failed` | フロントマターの必須フィールドの不足 |
 | `SPEC-REQ-STATEMENT-001` | `failed` | 状態`approved`のREQに妥当な規範文がない |
 | `SPEC-ID-DUPLICATE-001` | `failed` | IDの重複 |
-| `CTX-ROOT-MISSING-001` | `failed` | 構文上は妥当な明示IDまたは仕様文書のパスがカタログに不在 |
+| `CTX-ROOT-MISSING-001` | `failed` | 構文上は妥当な明示IDまたは仕様文書のパスがワークスペースの仕様文書に不在 |
 | `SPEC-RELATION-LEGACY-001` | `failed` | 旧`refs`の使用 |
 | `SPEC-RELATION-MISSING-001` | `failed` | 強い関係の参照先が不在 |
 | `CTX-RELATION-TYPE-001` | `failed` | 存在する参照元と参照先の型の組が不適合 |

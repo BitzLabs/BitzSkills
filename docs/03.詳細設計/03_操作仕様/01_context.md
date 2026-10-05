@@ -6,6 +6,8 @@
 型付きの関係でたどって完全解決（complete resolution）し、目的に応じたコンテキスト一式（Context Bundle）を返す。
 依存の完全解決と、LLMへ提示する量とは分けて扱う。
 
+コンテキスト（Context）は、起点と目的から完全解決した解釈材料であり、閉包の文書、対象規範文と隣接規範文、目的に応じたテスト対応・コマンド・パス、影響する実効設定から成る。提示（詳細度、展開指定、提示形式、出力形式）を含まない。そのハッシュ値がコンテキストのハッシュ値である。`context`の結果として返すものをコンテキスト一式と呼んで区別する。SDDフローの工程「コンテキスト取得」は別の語である。
+
 ## 2. 公開操作
 
 ```text
@@ -28,8 +30,8 @@ bitz context <spec-or-statement-id>...
 
 `--format`の既定値は`markdown`である。
 
-起点を1件も指定しない場合と、空文字列を起点に指定した場合は、終了コード4とする。起点が構文上は正しいもののカタログに
-存在しない場合は、操作を開始したうえで診断`CTX-ROOT-MISSING-001`（`failed`）を返す。既知の別の起点へ置き換えない。
+起点を1件も指定しない場合と、空文字列を起点に指定した場合は、終了コード4とする。起点が構文上は正しいもののワークスペースの
+仕様文書に存在しない場合は、操作を開始したうえで診断`CTX-ROOT-MISSING-001`（`failed`）を返す。既知の別の起点へ置き換えない。
 
 `--expand`は、完全解決した集合にある文書だけを提示形式（projection）`full`へ昇格する。集合の外のIDは診断
 `CTX-PROJECTION-001`（`failed`）とし、暗黙に依存へ加えない。複合ワークスペースでは、非修飾IDの`--expand`を
@@ -42,7 +44,7 @@ bitz context <spec-or-statement-id>...
 3. ID、型、状態、強い関係、循環を検査する。
 4. 対象展開（[`TargetExpansion`](../02_仕様文書モデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)）で、起点、
    目的ごとの閉包、対象規範文、隣接規範文を完全解決する。
-5. コンテキスト（Context）の上限を検査する。
+5. コンテキストの上限を検査する。
 6. 文書を役割に分類し、制約台帳（Constraint Ledger）とカバレッジを作る。
 7. コンテキストのハッシュ値（Context Digest）を計算する。
 8. 詳細度（detail）と展開指定（expand）に応じて提示を作る。
@@ -198,9 +200,9 @@ TASK（`work`）、後継（`replacement`）、要求（`requirement`）、制�
 
 - 到達ワークスペースごとの`schemaVersion`、`earsAi`、`language`
 - 起点ワークスペースだけの`context.maxDocuments`と`context.maxBytes`（既定値を適用した後の値）
-- 目的が`verify`のコンテキスト一式では、テスト割当てを1件以上収録したワークスペースの`verify.timeoutSeconds`
+- 目的が`verify`のコンテキスト一式では、テスト対応を1件以上収録したワークスペースの`verify.timeoutSeconds`
   （既定値を適用した後の値）。目的が`implement`または`interpret`のときは空配列とする
-- 目的が`verify`のコンテキスト一式では、収録したテスト割当てが参照するコマンドだけの名前、引数列テンプレート、
+- 目的が`verify`のコンテキスト一式では、収録したテスト対応が参照するコマンドだけの名前、引数列テンプレート、
   作業ディレクトリ（既定値を適用した後の値）。コマンド名の辞書順とする。目的が`implement`または`interpret`のときは空配列とする
 
 次は含めない。
@@ -223,6 +225,8 @@ TASK（`work`）、後継（`replacement`）、要求（`requirement`）、制�
 アダプターは、最初の書込みの直前と、仕様または設定の変更を認識して作業を再開するときに、同じリクエストを
 `--expect-digest`付きで再実行し、取得後の仕様変更を検出する（stale detection）。ハッシュ値が一致しなければ診断`CTX-STALE-001`（`blocked`）とし、
 新しい仕様を暗黙に受け入れない。
+
+同じリクエスト（起点、目的、起点ワークスペース）を現在の入力で解決し直したときのコンテキストのハッシュ値が、取得したときの値と一致しなくなったコンテキスト一式を、古くなったコンテキスト一式（stale Context Bundle）という。原因はハッシュ値の材料（§6）の変化のすべてである。Coreはこの状態を保持せず、`--expect-digest`を指定したときだけ不一致を検出して`CTX-STALE-001`を返し、結果の`contextDigest`には現在の値を入れる。
 
 ## 8. 上限
 
@@ -261,6 +265,8 @@ Markdownでの提示は結果のJSONだけを入力とする表示であり、�
 | 8 | `Work Boundary` | 役割が`work`の文書 |
 | 9 | `Verification Bindings` | 本文を提示した文書の`frontmatter.tests[]` |
 | 10 | `Advisory Documents` | 役割が`advisory`の文書 |
+
+作業境界（work boundary）は、コンテキスト一式で役割`work`に分類した文書（起点以外のTASK）の集合であり、Markdownでは節`Work Boundary`に出す。起点のTASKの`changes`による変更範囲（TASK境界、[`check` §7](02_check.md#7-task境界)）とは別の語である。
 
 文書は`documents[]`の順のまま該当する節へ振り分け、節の中で並べ替えない。
 
@@ -344,6 +350,6 @@ YAMLへ直列化し直さない。`bodyText`は、`- bodyText:`の行と空行1�
 
 アダプターは、実装の前に目的`implement`のコンテキスト一式を取得し、結果の状態が`passed`または`passed_with_warnings`で、
 かつ`resolution.complete: true`である場合にだけ書込みを始める。状態が`failed`、`blocked`、`error`の場合と、
-引数不正の場合は停止する。すべての`MUST`、制約、作業境界（work boundary）、カバレッジの不足を計画に反映し、提示形式が`reference`の
+引数不正の場合は停止する。すべての`MUST`、制約、作業境界、カバレッジの不足を計画に反映し、提示形式が`reference`の
 文書の内容を推測しない。実装の後は`check`を実行し、完了の前に目的`verify`のコンテキスト一式を解決し直して`verify`を呼ぶ。
 `check`と`verify`も、通過状態である`passed`または`passed_with_warnings`の場合にだけ次の段階へ進める。
