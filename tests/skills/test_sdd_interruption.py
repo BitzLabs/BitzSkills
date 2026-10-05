@@ -1,5 +1,6 @@
 """実モデルを起動せずSDD native出力捕捉の退行を再現する。"""
 import argparse
+import base64
 import importlib.util
 import json
 import os
@@ -27,6 +28,13 @@ class SddInterruptionRegression(unittest.TestCase):
         case = next(c for c in evaluation.load(evaluation.HERE / "cases.json") if c["id"] == "SI-010")
         original_run = evaluation.subprocess.run
         original_snapshot = evaluation.snapshot
+        original_write_bytes = Path.write_bytes
+        def write_bytes(path, content):
+            if kind in ("capture-interrupt", "capture-both-fail") and path == target / "trace.jsonl":
+                raise KeyboardInterrupt()
+            if kind == "capture-both-fail" and path == target / "stderr.log":
+                raise OSError(28, "synthetic stderr-only save failure")
+            return original_write_bytes(path, content)
         native_started, post_interrupted = False, False
         def snapshot(workspace):
             nonlocal post_interrupted
@@ -50,13 +58,14 @@ class SddInterruptionRegression(unittest.TestCase):
                 raise subprocess.TimeoutExpired(command, 10, output=None, stderr=b"native stderr\n")
             child = [sys.executable, "-B", "-c",
                 "import sys; sys.stdout.buffer.write(b'partial\\xff trace\\n'); sys.stderr.buffer.write(b'partial\\xfe stderr\\n')"]
-            if kind == "post-interrupt":
+            if kind in ("post-interrupt", "capture-interrupt", "capture-both-fail"):
                 child[-1] = "import sys; sys.stdout.buffer.write(b'native trace\\n'); sys.stderr.buffer.write(b'native stderr\\n')"
             return original_run(child, **kwargs)
         with patch.object(evaluation, "identity", return_value={"sourceCommit": "synthetic-fixed-ref"}), \
                 patch.object(evaluation.subprocess, "run", side_effect=dispatch), \
-                patch.object(evaluation, "snapshot", side_effect=snapshot):
-            expected = KeyboardInterrupt if kind in ("interrupt", "post-interrupt") else PermissionError if kind == "spawn-error" else subprocess.TimeoutExpired if kind == "timeout-partial" else FileNotFoundError
+                patch.object(evaluation, "snapshot", side_effect=snapshot), \
+                patch.object(Path, "write_bytes", write_bytes):
+            expected = KeyboardInterrupt if kind in ("interrupt", "post-interrupt", "capture-interrupt", "capture-both-fail") else PermissionError if kind == "spawn-error" else subprocess.TimeoutExpired if kind == "timeout-partial" else FileNotFoundError
             with self.assertRaises(expected):
                 evaluation.run_one(args, case)
             self.assertEqual(1, self.native_calls)
@@ -105,6 +114,25 @@ class SddInterruptionRegression(unittest.TestCase):
         self.assertEqual(b"", (target / "trace.jsonl").read_bytes())
         self.assertEqual(b"native stderr\n", (target / "stderr.log").read_bytes())
         self.assertIsNone(record["exitCode"])
+
+    def test_output_save_interrupt_keeps_other_stream_and_unsaved_original_bytes(self):
+        target, record = self.exercise("capture-interrupt")
+        self.assertEqual("KeyboardInterrupt", record["errorType"])
+        self.assertEqual(0, record["exitCode"])
+        self.assertTrue(record["nativeOutputsObtained"])
+        self.assertEqual({"stdout": True, "stderr": True}, record["nativeOutputAvailability"])
+        self.assertEqual(b"native trace\n", base64.b64decode(record["unsavedOutputs"]["trace.jsonl"]["data"]))
+        self.assertEqual(b"native stderr\n", (target / "stderr.log").read_bytes())
+        self.assertEqual([{"path": "trace.jsonl", "errorType": "KeyboardInterrupt", "errno": None}], record["outputSaveErrors"])
+
+    def test_interrupt_and_stderr_save_failure_keep_both_streams_and_first_error(self):
+        target, record = self.exercise("capture-both-fail")
+        self.assertEqual("KeyboardInterrupt", record["errorType"])
+        self.assertIsNone(record["errno"])
+        self.assertEqual(0, record["exitCode"])
+        self.assertEqual(2, len(record["outputSaveErrors"]))
+        self.assertEqual(b"native trace\n", base64.b64decode(record["unsavedOutputs"]["trace.jsonl"]["data"]))
+        self.assertEqual(b"native stderr\n", base64.b64decode(record["unsavedOutputs"]["stderr.log"]["data"]))
 
 
 if __name__ == "__main__":

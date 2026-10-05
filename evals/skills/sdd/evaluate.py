@@ -20,7 +20,7 @@ sys.dont_write_bytecode = True
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
 PASS = {"passed", "passed_with_warnings"}
-EXECUTION_VERSION = "sdd-execution-0.1.1"
+EXECUTION_VERSION = "sdd-execution-0.1.2"
 SOURCE = "def validate(value):\n    return []\n"
 FIXED = 'def validate(value):\n    return ["入力エラー"] if value == "" else []\n'
 TEST = '''import importlib.util
@@ -476,9 +476,9 @@ def save_native_outputs(directory, stdout, stderr):
         raw = content if isinstance(content, bytes) else (content or "").encode("utf-8")
         try:
             (directory / name).write_bytes(raw)
-        except OSError as error:
+        except (OSError, KeyboardInterrupt) as error:
             first_error = first_error or error
-            errors.append({"path": name, "errorType": type(error).__name__, "errno": error.errno})
+            errors.append({"path": name, "errorType": type(error).__name__, "errno": getattr(error, "errno", None)})
             unsaved[name] = {"encoding": "base64", "data": base64.b64encode(raw).decode("ascii")}
     return first_error, errors, unsaved
 
@@ -561,7 +561,7 @@ def run_one(args, case):
     if output_error:
         preserve_invocation_failure(directory, wanted, workspace, before, command, args.timeout, started,
                                     error_type=type(output_error).__name__, exit_code=process.returncode,
-                                    errno=output_error.errno, output_save_errors=errors, unsaved_outputs=unsaved)
+                                    errno=getattr(output_error, "errno", None), output_save_errors=errors, unsaved_outputs=unsaved)
         raise output_error
     if process.returncode:
         preserve_invocation_failure(directory, wanted, workspace, before, command, args.timeout, started,
