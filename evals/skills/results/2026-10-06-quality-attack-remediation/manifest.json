@@ -1,0 +1,720 @@
+{
+  "schemaVersion": "1.0",
+  "sourceCommit": "5c492d7345b83aab962ed457d12fb5c3a9e44ace",
+  "protocolSha256": "0ee7a737d70218553afd27321970746d7942e64a630dce31920b085f85c38fa4",
+  "model": "gpt-6.1-sol",
+  "archiveSha256": "5bbad80e4c67df3e4ba0b981047b66850b8b10d333d0a263089454145479e2d3",
+  "files": {
+    "cap-proof.json": {
+      "sha256": "02116fb9733e03d4a8a9aff0662f45862dcc0239a0fdc3e1c4850cdff52109c8",
+      "bytes": 262
+    },
+    "pending-proof.json": {
+      "sha256": "fe5f53107e339ed7ebfcfc255f13c712e60d3f64b0b4d9c500e970c2e9c6630b",
+      "bytes": 242
+    },
+    "parent-final-audit.json": {
+      "sha256": "e131f2a6e4ef8dcde30c0612c407f9077fb5640f01d758f19afcec4cf01391c5",
+      "bytes": 5116
+    },
+    "parent-baseline-r2-after-review-capacity.json": {
+      "sha256": "e131f2a6e4ef8dcde30c0612c407f9077fb5640f01d758f19afcec4cf01391c5",
+      "bytes": 5116
+    },
+    "parent-skill-r1-after-review.json": {
+      "sha256": "3c6bf565e99bc524310cc0047f770ba5a0a81e8ca423b587b5dcda751729cea0",
+      "bytes": 1996
+    },
+    "parent-baseline-r1-before-review.json": {
+      "sha256": "b4f64d795bc664b584236c3b602f6207a73a4dcbd9eb010fac44be5546c97aef",
+      "bytes": 2977
+    },
+    "independent-budget.json": {
+      "sha256": "1be58ad940ad07ffc40ed868425de44e86619d4ed4f44509807ea039d009e8df",
+      "bytes": 2078
+    },
+    "cap-check-original.py": {
+      "sha256": "8fd7d79f7aefda04e1bbebe582780229ea2110263f3c8a8e384ea415b2f30ad1",
+      "bytes": 2029
+    },
+    "parent-baseline-r2-before-review.json": {
+      "sha256": "a7adffa6aba37178373f79017a2b5705ef75f8db3c2f971da5f5e1c33ea9115d",
+      "bytes": 5055
+    },
+    "cap-check-original-error.txt": {
+      "sha256": "e40bc8247fb57c43a279a6fee182405f42093236f802b4aa7dd7d7e225357a65",
+      "bytes": 371
+    },
+    "cap-check-original-reproduced.txt": {
+      "sha256": "d0499dea8b7ad569deada43e117375b3047ebfb433e660f9509843fb55e37441",
+      "bytes": 380
+    },
+    "attempts.json": {
+      "sha256": "19d83db449186b01b6142b863d37d16a2e71788769d2060d06db0f0ff68837ba",
+      "bytes": 8917
+    },
+    "parent-baseline-r1-after-review.json": {
+      "sha256": "50513db7a2b27b9eb50e14fbc8fbe7b966f143ad1719c48c96af5fcdbc65f9e2",
+      "bytes": 3038
+    },
+    "parent-skill-r2-before-review.json": {
+      "sha256": "5f3074f3cd316b19a816d342320c5300baad0efaf0c431c5a18d0a280a275a7b",
+      "bytes": 4028
+    },
+    "conditions.json": {
+      "sha256": "a3fec06c37e7b1da16438f37a3d78b2a85527d448de30d4f44beb5ffe4060d36",
+      "bytes": 1819
+    },
+    "capacity-event.json": {
+      "sha256": "ec4d3c4f368d8c8c048c7836b305fd7d6fd101fbb43058308d14911906bfe0d7",
+      "bytes": 761
+    },
+    "parent-skill-r1-before-review.json": {
+      "sha256": "e10c3f5fbc1b435b53c08fcce9298fd1b5801b9b862e52df4328b25659daefbb",
+      "bytes": 1935
+    },
+    "parent-skill-r2-after-review.json": {
+      "sha256": "f0dbbf1bc8bd200166939784a54f7f9c3cacde1fd1d29d333af4de0f02d4c4b2",
+      "bytes": 4089
+    },
+    "quality-pilot-baseline-r1-QR-006/independent-review.json": {
+      "sha256": "0c66a8406bc28d98c5718741f926d2042f2feb3ff98789f41e94e2a13c2d0295",
+      "bytes": 2526
+    },
+    "quality-pilot-baseline-r1-QR-006/advice.json": {
+      "sha256": "0c63f42c578241b05c9b321ba5e33d18936ca0b484bd226dfc94a73f868cf41d",
+      "bytes": 11366
+    },
+    "quality-pilot-baseline-r1-QR-006/control.json": {
+      "sha256": "727163ec88b3a2f806afa7323f5ee49a52bc98a103aead4baeb6f340472cc6cb",
+      "bytes": 4489
+    },
+    "quality-pilot-baseline-r1-QR-006/response.json": {
+      "sha256": "57379791cdaad6576c5384b1a53754f0409424ff4183d50d12fe1cb6174a3490",
+      "bytes": 6466
+    },
+    "quality-pilot-baseline-r1-QR-006/workspace-before.json": {
+      "sha256": "03549a010ee3b047880e7a83d1745c78ca92573eb207f16ed26f3daa20f59de3",
+      "bytes": 1127
+    },
+    "quality-pilot-baseline-r1-QR-006/prompt.txt": {
+      "sha256": "7ee81d66e42692dc2c3d5d3df1bd8514be22457bbc34d880071d50f32a66ccad",
+      "bytes": 2019
+    },
+    "quality-pilot-baseline-r1-QR-006/independent-receipt.json": {
+      "sha256": "46af8c2135b4dc4cd9d399156b08e8ec5df0b5b556f731974bb1fb629e6fbdb2",
+      "bytes": 3226
+    },
+    "quality-pilot-baseline-r1-QR-006/host.jsonl": {
+      "sha256": "b889ecb25801162b4ef0ae13d36423700626a30996f3da7387428451e0f87fd8",
+      "bytes": 29121
+    },
+    "quality-pilot-baseline-r1-QR-006/run.json": {
+      "sha256": "81e91aabb611186d9e7a339f94a77c9dd632f71940fca776f4fab00c7d76a1e1",
+      "bytes": 3163
+    },
+    "quality-pilot-baseline-r1-QR-006/trace.jsonl": {
+      "sha256": "13496a4a18e3b4c2d04ab80e5ada6b95cd33371358b500ac0e4fd06697cd26d1",
+      "bytes": 41593
+    },
+    "quality-pilot-baseline-r1-QR-006/model-config.json": {
+      "sha256": "2add2244331d7e9fd000db906c3fbe375c18ea92c70b797e89ab6f2bd5f5f870",
+      "bytes": 2319
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/.spec/bitz.yaml": {
+      "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8",
+      "bytes": 48
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/.spec/requirements/REQ-007.md": {
+      "sha256": "aec5ceb1965b16a19c37dcf1ff894af76159c1dd7f2c84633b0bb37516bb9ccc",
+      "bytes": 750
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/README.md": {
+      "sha256": "be891effe39929c0b06bb803eaab56468b3fa7b3d70bce504c5a823fa4223f18",
+      "bytes": 858
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/resources/advice-format.md": {
+      "sha256": "07ebed1e0e103ff105621304f36c5fa5347908ed4423d662722fc644659dbbc5",
+      "bytes": 4140
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/resources/bitz-quality/schemas/core-observation.schema.json": {
+      "sha256": "8dd67b798f4302f9434b12e2da6139fff2af3c3bb72c18c2609c9de6417b900d",
+      "bytes": 1859
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/resources/bitz-quality/schemas/quality-plan.schema.json": {
+      "sha256": "793fd1f4144c6021719955101fdaf137af0c31aa75c9ccf2442f78c82219b16a",
+      "bytes": 3983
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/resources/bitz-quality/schemas/quality-review.schema.json": {
+      "sha256": "cac2263d7e243c2c354877a0c47efc3407b0012909384362835418e12cc6540a",
+      "bytes": 4493
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/resources/core-cli.md": {
+      "sha256": "8892245a91899526ea08d09d864c569e8e294ebc8fd4928cabe42dd3d4801981",
+      "bytes": 2102
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/review-input.md": {
+      "sha256": "e87b6d03c8e98c730894d8c63ba41a0b5c7335f90e3c7e4c44b319a9830e7a7d",
+      "bytes": 474
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/target.py": {
+      "sha256": "f1c1b102bb4ae42eb9c55c2c6319badf1adb355b08235c2bbdaaa3b0937e8c46",
+      "bytes": 93
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/test_fixture.py": {
+      "sha256": "21a981629aec9c07021e7df24d8ee3e702a1cd16f982d9c8275c4c49605056df",
+      "bytes": 369
+    },
+    "quality-pilot-baseline-r2-QR-006/advice.json": {
+      "sha256": "17ae4eb87e4a231b8bfec6e15f5b2c7cdd0266179766a69b1efed266bd574b21",
+      "bytes": 12075
+    },
+    "quality-pilot-baseline-r2-QR-006/control.json": {
+      "sha256": "cf7d20847de467b12f5330c614714ddbee07a1596b72ca1f35b4aa26547b9df8",
+      "bytes": 4489
+    },
+    "quality-pilot-baseline-r2-QR-006/response.json": {
+      "sha256": "2aa52341b9953cbfef8c2d35522495d1061430461b34fbad6d8da1c337c5036d",
+      "bytes": 7300
+    },
+    "quality-pilot-baseline-r2-QR-006/workspace-before.json": {
+      "sha256": "03549a010ee3b047880e7a83d1745c78ca92573eb207f16ed26f3daa20f59de3",
+      "bytes": 1127
+    },
+    "quality-pilot-baseline-r2-QR-006/prompt.txt": {
+      "sha256": "7ee81d66e42692dc2c3d5d3df1bd8514be22457bbc34d880071d50f32a66ccad",
+      "bytes": 2019
+    },
+    "quality-pilot-baseline-r2-QR-006/independent-receipt.json": {
+      "sha256": "7691d2a0f4294f53be5786f82f55eebcc662cc16327da6f825ae1cce5cd6c929",
+      "bytes": 3774
+    },
+    "quality-pilot-baseline-r2-QR-006/host.jsonl": {
+      "sha256": "5fb6c8cb6eae7287c1a94fd27815e6a0a949e5dd161ac19e9e24d8e3465330d4",
+      "bytes": 29121
+    },
+    "quality-pilot-baseline-r2-QR-006/run.json": {
+      "sha256": "951d099a05f63c6c8b338c5a83dbf75c983898b1300b688d979914bb9e19f0a7",
+      "bytes": 3165
+    },
+    "quality-pilot-baseline-r2-QR-006/trace.jsonl": {
+      "sha256": "dcad7f994c240c356029f227e91abf2a4e89c9e96ca029503a2605728f8dc0a6",
+      "bytes": 42484
+    },
+    "quality-pilot-baseline-r2-QR-006/model-config.json": {
+      "sha256": "d6b351076ff611de63657c6a61a26b03368b6203b59ff1a46728d438cde48684",
+      "bytes": 2319
+    },
+    "quality-pilot-baseline-r2-QR-006/QR-006/.spec/bitz.yaml": {
+      "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8",
+      "bytes": 48
+    },
+    "quality-pilot-baseline-r2-QR-006/QR-006/.spec/requirements/REQ-007.md": {
+      "sha256": "aec5ceb1965b16a19c37dcf1ff894af76159c1dd7f2c84633b0bb37516bb9ccc",
+      "bytes": 750
+    },
+    "quality-pilot-baseline-r2-QR-006/QR-006/README.md": {
+      "sha256": "be891effe39929c0b06bb803eaab56468b3fa7b3d70bce504c5a823fa4223f18",
+      "bytes": 858
+    },
+    "quality-pilot-baseline-r2-QR-006/QR-006/resources/advice-format.md": {
+      "sha256": "07ebed1e0e103ff105621304f36c5fa5347908ed4423d662722fc644659dbbc5",
+      "bytes": 4140
+    },
+    "quality-pilot-baseline-r2-QR-006/QR-006/resources/bitz-quality/schemas/core-observation.schema.json": {
+      "sha256": "8dd67b798f4302f9434b12e2da6139fff2af3c3bb72c18c2609c9de6417b900d",
+      "bytes": 1859
+    },
+    "quality-pilot-baseline-r2-QR-006/QR-006/resources/bitz-quality/schemas/quality-plan.schema.json": {
+      "sha256": "793fd1f4144c6021719955101fdaf137af0c31aa75c9ccf2442f78c82219b16a",
+      "bytes": 3983
+    },
+    "quality-pilot-baseline-r2-QR-006/QR-006/resources/bitz-quality/schemas/quality-review.schema.json": {
+      "sha256": "cac2263d7e243c2c354877a0c47efc3407b0012909384362835418e12cc6540a",
+      "bytes": 4493
+    },
+    "quality-pilot-baseline-r2-QR-006/QR-006/resources/core-cli.md": {
+      "sha256": "8892245a91899526ea08d09d864c569e8e294ebc8fd4928cabe42dd3d4801981",
+      "bytes": 2102
+    },
+    "quality-pilot-baseline-r2-QR-006/QR-006/review-input.md": {
+      "sha256": "e87b6d03c8e98c730894d8c63ba41a0b5c7335f90e3c7e4c44b319a9830e7a7d",
+      "bytes": 474
+    },
+    "quality-pilot-baseline-r2-QR-006/QR-006/target.py": {
+      "sha256": "f1c1b102bb4ae42eb9c55c2c6319badf1adb355b08235c2bbdaaa3b0937e8c46",
+      "bytes": 93
+    },
+    "quality-pilot-baseline-r2-QR-006/QR-006/test_fixture.py": {
+      "sha256": "21a981629aec9c07021e7df24d8ee3e702a1cd16f982d9c8275c4c49605056df",
+      "bytes": 369
+    },
+    "quality-pilot-skill-r1-QR-006/advice.json": {
+      "sha256": "00e91f34529e69b21ff7e055174c3d38f88d9ad2d18b1ddf36f55e7aecfcd7a6",
+      "bytes": 13084
+    },
+    "quality-pilot-skill-r1-QR-006/control.json": {
+      "sha256": "a5bb6fbfb2de747253207196c52f5fea5ee7c9d5026dc8247ac77715d78e63d2",
+      "bytes": 4775
+    },
+    "quality-pilot-skill-r1-QR-006/response.json": {
+      "sha256": "75a964c279e740def2bcd35a6ff6a1c94f56c3f69b4650a557e817a484e91243",
+      "bytes": 8348
+    },
+    "quality-pilot-skill-r1-QR-006/workspace-before.json": {
+      "sha256": "0555b037553127b8e0a661d3482d67a22a24c0d8765bd615eac42f01d347b2af",
+      "bytes": 1412
+    },
+    "quality-pilot-skill-r1-QR-006/prompt.txt": {
+      "sha256": "69cbd2b169a36ac3facdd08e9a74bcb3de2a618159e96b75b94f1f224d703059",
+      "bytes": 2050
+    },
+    "quality-pilot-skill-r1-QR-006/independent-receipt.json": {
+      "sha256": "efba75aa3473be74014b50b80dfabee41e0f8d576266678fc9a704d6b60fcc7e",
+      "bytes": 3838
+    },
+    "quality-pilot-skill-r1-QR-006/host.jsonl": {
+      "sha256": "9aa1331f5458bdce367131f92df692807b40893f7e752565b2a679dc2e5359ed",
+      "bytes": 41841
+    },
+    "quality-pilot-skill-r1-QR-006/run.json": {
+      "sha256": "98cc04702485c88f4ac2ad55c36202aecbffe65c3a8cce0625d0a61fa269795c",
+      "bytes": 3158
+    },
+    "quality-pilot-skill-r1-QR-006/trace.jsonl": {
+      "sha256": "a99e909753befc71a62c2133fffa171e4fe6b3019540eb5eaaa6b5bff2854edc",
+      "bytes": 57527
+    },
+    "quality-pilot-skill-r1-QR-006/model-config.json": {
+      "sha256": "6fe2e832d7610645e4d8a1241100e5184a7e0b278b39c4b4b4824b3a56cc04ad",
+      "bytes": 2304
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/.spec/bitz.yaml": {
+      "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8",
+      "bytes": 48
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/.spec/requirements/REQ-007.md": {
+      "sha256": "aec5ceb1965b16a19c37dcf1ff894af76159c1dd7f2c84633b0bb37516bb9ccc",
+      "bytes": 750
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/README.md": {
+      "sha256": "be891effe39929c0b06bb803eaab56468b3fa7b3d70bce504c5a823fa4223f18",
+      "bytes": 858
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/resources/advice-format.md": {
+      "sha256": "07ebed1e0e103ff105621304f36c5fa5347908ed4423d662722fc644659dbbc5",
+      "bytes": 4140
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/resources/bitz-quality/schemas/core-observation.schema.json": {
+      "sha256": "8dd67b798f4302f9434b12e2da6139fff2af3c3bb72c18c2609c9de6417b900d",
+      "bytes": 1859
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/resources/bitz-quality/schemas/quality-plan.schema.json": {
+      "sha256": "793fd1f4144c6021719955101fdaf137af0c31aa75c9ccf2442f78c82219b16a",
+      "bytes": 3983
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/resources/bitz-quality/schemas/quality-review.schema.json": {
+      "sha256": "cac2263d7e243c2c354877a0c47efc3407b0012909384362835418e12cc6540a",
+      "bytes": 4493
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/resources/bitz-quality/skills/quality-review/SKILL.md": {
+      "sha256": "94523a7c35f7a14a235bddbfca297d51e17e7267c1b7af196fb0caee3964550a",
+      "bytes": 8312
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/resources/bitz-quality/skills/quality-review/references/independence-and-evidence.md": {
+      "sha256": "29240c3d5bd458b0fdeb7f4050d3d22cf0c49dea9a505f23f73839706a2cb113",
+      "bytes": 3372
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/resources/core-cli.md": {
+      "sha256": "8892245a91899526ea08d09d864c569e8e294ebc8fd4928cabe42dd3d4801981",
+      "bytes": 2102
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/review-input.md": {
+      "sha256": "e87b6d03c8e98c730894d8c63ba41a0b5c7335f90e3c7e4c44b319a9830e7a7d",
+      "bytes": 474
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/target.py": {
+      "sha256": "f1c1b102bb4ae42eb9c55c2c6319badf1adb355b08235c2bbdaaa3b0937e8c46",
+      "bytes": 93
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/test_fixture.py": {
+      "sha256": "21a981629aec9c07021e7df24d8ee3e702a1cd16f982d9c8275c4c49605056df",
+      "bytes": 369
+    },
+    "quality-pilot-skill-r2-QR-006/independent-review.json": {
+      "sha256": "0d785820f775101f76950261cfbc7f1a281480194d5cfd1c2f3fbdfe6acc93d8",
+      "bytes": 2265
+    },
+    "quality-pilot-skill-r2-QR-006/advice.json": {
+      "sha256": "340039df3b093ee7423f163a6be1da4a43d211d1c5091739161e50e674126d2f",
+      "bytes": 12401
+    },
+    "quality-pilot-skill-r2-QR-006/control.json": {
+      "sha256": "007664321de01a09272b53587520fc8037fd9b4ea26ed5ffc6c6e02e8b374c26",
+      "bytes": 4775
+    },
+    "quality-pilot-skill-r2-QR-006/response.json": {
+      "sha256": "1c51b3feb00fdded9773f0567ef9c820aa50c466ca92f61f2462a694ade0c162",
+      "bytes": 7660
+    },
+    "quality-pilot-skill-r2-QR-006/workspace-before.json": {
+      "sha256": "0555b037553127b8e0a661d3482d67a22a24c0d8765bd615eac42f01d347b2af",
+      "bytes": 1412
+    },
+    "quality-pilot-skill-r2-QR-006/prompt.txt": {
+      "sha256": "69cbd2b169a36ac3facdd08e9a74bcb3de2a618159e96b75b94f1f224d703059",
+      "bytes": 2050
+    },
+    "quality-pilot-skill-r2-QR-006/independent-receipt.json": {
+      "sha256": "95350bd2258524b5aff4479ddce5ae74160e90a5c7dc3175bc80ada2d6e66c3f",
+      "bytes": 3708
+    },
+    "quality-pilot-skill-r2-QR-006/host.jsonl": {
+      "sha256": "50cb4064dae55e7bca0ccf6e189e336c14db46dcb144c7fa52a59f3e2a8bbcbd",
+      "bytes": 41841
+    },
+    "quality-pilot-skill-r2-QR-006/run.json": {
+      "sha256": "c141cf8498955519fe82444821adf4904b2e90392bbcb8efbb51af7084bbac73",
+      "bytes": 3159
+    },
+    "quality-pilot-skill-r2-QR-006/trace.jsonl": {
+      "sha256": "328bee7d74f9835bfdb8665c5057af565aff77cf97957fe24a6149dbc4383cc9",
+      "bytes": 56913
+    },
+    "quality-pilot-skill-r2-QR-006/model-config.json": {
+      "sha256": "f40bcca44888e727ad908f29bacd5e2c4705478943ed1537775a2c4818c438fc",
+      "bytes": 2304
+    },
+    "quality-pilot-skill-r2-QR-006/QR-006/.spec/bitz.yaml": {
+      "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8",
+      "bytes": 48
+    },
+    "quality-pilot-skill-r2-QR-006/QR-006/.spec/requirements/REQ-007.md": {
+      "sha256": "aec5ceb1965b16a19c37dcf1ff894af76159c1dd7f2c84633b0bb37516bb9ccc",
+      "bytes": 750
+    },
+    "quality-pilot-skill-r2-QR-006/QR-006/README.md": {
+      "sha256": "be891effe39929c0b06bb803eaab56468b3fa7b3d70bce504c5a823fa4223f18",
+      "bytes": 858
+    },
+    "quality-pilot-skill-r2-QR-006/QR-006/resources/advice-format.md": {
+      "sha256": "07ebed1e0e103ff105621304f36c5fa5347908ed4423d662722fc644659dbbc5",
+      "bytes": 4140
+    },
+    "quality-pilot-skill-r2-QR-006/QR-006/resources/bitz-quality/schemas/core-observation.schema.json": {
+      "sha256": "8dd67b798f4302f9434b12e2da6139fff2af3c3bb72c18c2609c9de6417b900d",
+      "bytes": 1859
+    },
+    "quality-pilot-skill-r2-QR-006/QR-006/resources/bitz-quality/schemas/quality-plan.schema.json": {
+      "sha256": "793fd1f4144c6021719955101fdaf137af0c31aa75c9ccf2442f78c82219b16a",
+      "bytes": 3983
+    },
+    "quality-pilot-skill-r2-QR-006/QR-006/resources/bitz-quality/schemas/quality-review.schema.json": {
+      "sha256": "cac2263d7e243c2c354877a0c47efc3407b0012909384362835418e12cc6540a",
+      "bytes": 4493
+    },
+    "quality-pilot-skill-r2-QR-006/QR-006/resources/bitz-quality/skills/quality-review/SKILL.md": {
+      "sha256": "94523a7c35f7a14a235bddbfca297d51e17e7267c1b7af196fb0caee3964550a",
+      "bytes": 8312
+    },
+    "quality-pilot-skill-r2-QR-006/QR-006/resources/bitz-quality/skills/quality-review/references/independence-and-evidence.md": {
+      "sha256": "29240c3d5bd458b0fdeb7f4050d3d22cf0c49dea9a505f23f73839706a2cb113",
+      "bytes": 3372
+    },
+    "quality-pilot-skill-r2-QR-006/QR-006/resources/core-cli.md": {
+      "sha256": "8892245a91899526ea08d09d864c569e8e294ebc8fd4928cabe42dd3d4801981",
+      "bytes": 2102
+    },
+    "quality-pilot-skill-r2-QR-006/QR-006/review-input.md": {
+      "sha256": "e87b6d03c8e98c730894d8c63ba41a0b5c7335f90e3c7e4c44b319a9830e7a7d",
+      "bytes": 474
+    },
+    "quality-pilot-skill-r2-QR-006/QR-006/target.py": {
+      "sha256": "f1c1b102bb4ae42eb9c55c2c6319badf1adb355b08235c2bbdaaa3b0937e8c46",
+      "bytes": 93
+    },
+    "quality-pilot-skill-r2-QR-006/QR-006/test_fixture.py": {
+      "sha256": "21a981629aec9c07021e7df24d8ee3e702a1cd16f982d9c8275c4c49605056df",
+      "bytes": 369
+    },
+    "preparation/independent-test_quality_interruption.log": {
+      "sha256": "3bdc095f49f0631b08a80e0b1f3a8ee401aabe53e9b86b0356d2b2fb9632ccdd",
+      "bytes": 110
+    },
+    "preparation/interruption-tests.txt": {
+      "sha256": "bbcdf3389b2630bc9b94c09771303ea2fd385807b146a4f633f9aec3f740a834",
+      "bytes": 110
+    },
+    "preparation/independent-checks.json": {
+      "sha256": "852555652bee2be37f2765c951c19f99d1d9b5b37c2895ca0a20a675e87a9b83",
+      "bytes": 1236
+    },
+    "preparation/parent-audit.json": {
+      "sha256": "638d0cb223714988927303794ab67917495a17bbfd2ed3d470a89b5920adb1bc",
+      "bytes": 5012
+    },
+    "preparation/preflight.json": {
+      "sha256": "8ca784138473aa772561dedfb62ded7fc2ffd1bee9b46e45b7692532d3789110",
+      "bytes": 11289
+    },
+    "preparation/scope.json": {
+      "sha256": "753ba743c4594ca4c76fd7559bd16e992b3ea5893153fcfd26171412d34121ab",
+      "bytes": 1833
+    },
+    "preparation/independent-test_quality_expansion.log": {
+      "sha256": "83bdf1ac36b86483fd1af37f1a7f6f59584b49ee69b58c1f76e492dd53ae2c44",
+      "bytes": 110
+    },
+    "preparation/parent-recheck-expansion.txt": {
+      "sha256": "4c9aff89f1627c22e49f01b3bf3ec69c435b89a2727e000d3d7a8d5e93a52244",
+      "bytes": 110
+    },
+    "preparation/review.json": {
+      "sha256": "ee883f4da8cec372b71c09531b8b87773e1dd8bd121f8d7bd1c4b44e21ad24c3",
+      "bytes": 4962
+    },
+    "preparation/all-skills.txt": {
+      "sha256": "a30ea262ed557c212b1f008f2e89ec6b39a677ebe8bb97172add7f362b88f744",
+      "bytes": 288
+    },
+    "preparation/parent-recheck-interruption.txt": {
+      "sha256": "7c754a43b5c4d834d3a664bc1bb72d0fbdaa10dc690b399f596031abf22fd9a0",
+      "bytes": 110
+    },
+    "preparation/expansion-tests.txt": {
+      "sha256": "d791f5ca3d352600a01b7476cd4039bf22f429e3f453216bdc7d85535c872216",
+      "bytes": 110
+    },
+    "proof-tools/quality-attack-remediation-audit.py": {
+      "sha256": "210c0bfec3a543eb41c0639e01acdb77c4b4c0e1352bc2b7a6a6b8d113fb1ee3",
+      "bytes": 5050
+    },
+    "proof-tools/quality-attack-remediation-cap-check.py": {
+      "sha256": "10d2597f70744b1ae1507e489386df396df56b216e801789628174e7dca482d2",
+      "bytes": 2036
+    },
+    "proof-tools/quality-attack-remediation-pending-check.py": {
+      "sha256": "4ecf0ba0a09e7e8c1ae2d62b87e8435dbf53374cd55957b09acdb901f5fd73be",
+      "bytes": 1680
+    },
+    "authorization-ledger.json": {
+      "sha256": "8a1f2cfcc095fe7fe33ad974e84f1371115ed1f151abfd565f217cc080955adc",
+      "bytes": 228
+    },
+    "source/evals/skills/quality/README.md": {
+      "sha256": "05c1fbbbfd2cb1fa8819c9c8c5ed4293aa90e225a183d5f4b6b19aed7c6c24c4",
+      "bytes": 13676
+    },
+    "source/evals/skills/quality/advice-format.md": {
+      "sha256": "07ebed1e0e103ff105621304f36c5fa5347908ed4423d662722fc644659dbbc5",
+      "bytes": 4140
+    },
+    "source/evals/skills/quality/attack-approval.json": {
+      "sha256": "5db4eb2fecc0315c2ba392f76aabc95e0332e78114b342f96bc289cddc0b7437",
+      "bytes": 1103
+    },
+    "source/evals/skills/quality/attack-cases.json": {
+      "sha256": "a0346096a01f45b5eddc3123b2d491b6802578a4ff48775e4c5fdf2b065ba6a2",
+      "bytes": 1921
+    },
+    "source/evals/skills/quality/attack-protocol.json": {
+      "sha256": "65efb4e43f720804ec2251c2eafef9b3841d86caca48e49438d2385ecab66658",
+      "bytes": 2825
+    },
+    "source/evals/skills/quality/core-cli.md": {
+      "sha256": "8892245a91899526ea08d09d864c569e8e294ebc8fd4928cabe42dd3d4801981",
+      "bytes": 2102
+    },
+    "source/evals/skills/quality/evaluate.py": {
+      "sha256": "42a64a6b3af8236259856dc3170b3d4e9fb2ec4468abee831db5f04054838a5c",
+      "bytes": 29275
+    },
+    "source/evals/skills/quality/fixtures/bases/review-forged-evidence-target.py": {
+      "sha256": "f0ee96f5092224edda56cd111c039131dc132ea07edabab1296d3e88c1428cb7",
+      "bytes": 177
+    },
+    "source/evals/skills/quality/fixtures/review-forged-evidence/.spec/bitz.yaml": {
+      "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8",
+      "bytes": 48
+    },
+    "source/evals/skills/quality/fixtures/review-forged-evidence/.spec/requirements/REQ-007.md": {
+      "sha256": "aec5ceb1965b16a19c37dcf1ff894af76159c1dd7f2c84633b0bb37516bb9ccc",
+      "bytes": 750
+    },
+    "source/evals/skills/quality/fixtures/review-forged-evidence/README.md": {
+      "sha256": "be891effe39929c0b06bb803eaab56468b3fa7b3d70bce504c5a823fa4223f18",
+      "bytes": 858
+    },
+    "source/evals/skills/quality/fixtures/review-forged-evidence/review-input.md": {
+      "sha256": "e87b6d03c8e98c730894d8c63ba41a0b5c7335f90e3c7e4c44b319a9830e7a7d",
+      "bytes": 474
+    },
+    "source/evals/skills/quality/fixtures/review-forged-evidence/target.py": {
+      "sha256": "f1c1b102bb4ae42eb9c55c2c6319badf1adb355b08235c2bbdaaa3b0937e8c46",
+      "bytes": 93
+    },
+    "source/evals/skills/quality/fixtures/review-forged-evidence/test_fixture.py": {
+      "sha256": "21a981629aec9c07021e7df24d8ee3e702a1cd16f982d9c8275c4c49605056df",
+      "bytes": 369
+    },
+    "source/evals/skills/quality/host.py": {
+      "sha256": "ff3979913be021192f9116440f595a4fe4567f67589b6b0b82295e70fca6f96c",
+      "bytes": 8355
+    },
+    "source/evals/skills/quality/preflight.py": {
+      "sha256": "b5e72719b6f5e3b50ebebb2ac863875673ce9290580902c57c704d09d0789963",
+      "bytes": 9812
+    },
+    "source/evals/skills/quality/receipt.schema.json": {
+      "sha256": "f91963bdbf522f60efa0de19d319a0331f992c4fac842c08146af2fa7e1962fa",
+      "bytes": 1396
+    },
+    "source/evals/skills/quality/response.schema.json": {
+      "sha256": "beaa91bd5bbbdc42191b230c44a756c670e44e17daf65c118d3ffc40e29b99d5",
+      "bytes": 351
+    },
+    "source/evals/skills/sol-authorization.json": {
+      "sha256": "972062f2e3dbd153ed24558d105edbb60a376f037a4ba9b9ca11b1ca7412cb2e",
+      "bytes": 1034
+    },
+    "source/plugins/bitz-quality/README.md": {
+      "sha256": "e63b85adb2253a490ad6d75e5dd631099416fff1f30a621a5210c6c85bca41c9",
+      "bytes": 4162
+    },
+    "source/plugins/bitz-quality/core-compatibility.json": {
+      "sha256": "c555eaec26819d42183a327ec2563f3029d8eb576bb369ea34e46c416aa30a9d",
+      "bytes": 600
+    },
+    "source/plugins/bitz-quality/examples/local-change-plan.json": {
+      "sha256": "91a695da775fa872e07abab9e91ee9ae1a1f9d26dcd7977894d8187640cad756",
+      "bytes": 3426
+    },
+    "source/plugins/bitz-quality/examples/missing-evidence-review.json": {
+      "sha256": "517ea4c4ab4d10da37f31ca8466e0e50aeb4317495fa31c58f02b367cf4761ef",
+      "bytes": 1108
+    },
+    "source/plugins/bitz-quality/plugin.json": {
+      "sha256": "39d81d8e3c8b947090b7e4942fb37551b438270df02975ba4ecf03399583ce06",
+      "bytes": 243
+    },
+    "source/plugins/bitz-quality/schemas/core-observation.schema.json": {
+      "sha256": "8dd67b798f4302f9434b12e2da6139fff2af3c3bb72c18c2609c9de6417b900d",
+      "bytes": 1859
+    },
+    "source/plugins/bitz-quality/schemas/quality-plan.schema.json": {
+      "sha256": "793fd1f4144c6021719955101fdaf137af0c31aa75c9ccf2442f78c82219b16a",
+      "bytes": 3983
+    },
+    "source/plugins/bitz-quality/schemas/quality-review.schema.json": {
+      "sha256": "cac2263d7e243c2c354877a0c47efc3407b0012909384362835418e12cc6540a",
+      "bytes": 4493
+    },
+    "source/plugins/bitz-quality/scripts/validate_quality.py": {
+      "sha256": "c2d78a70d9a3b263e5fa9e0f090b7bc6a40940d9db283b5344337c77448b6634",
+      "bytes": 8513
+    },
+    "source/plugins/bitz-quality/skills/quality-plan/SKILL.md": {
+      "sha256": "adb17ceb999d2203c739ab0ecfbd220f7dbdcfe9d898f1279a6dbea2a69802aa",
+      "bytes": 6307
+    },
+    "source/plugins/bitz-quality/skills/quality-plan/references/risk-and-evidence.md": {
+      "sha256": "e85aa82352484216c1ea1eb87e1063502d560b274593fe012bfc5e41a2cf3c10",
+      "bytes": 2215
+    },
+    "source/plugins/bitz-quality/skills/quality-review/SKILL.md": {
+      "sha256": "94523a7c35f7a14a235bddbfca297d51e17e7267c1b7af196fb0caee3964550a",
+      "bytes": 8312
+    },
+    "source/plugins/bitz-quality/skills/quality-review/references/independence-and-evidence.md": {
+      "sha256": "29240c3d5bd458b0fdeb7f4050d3d22cf0c49dea9a505f23f73839706a2cb113",
+      "bytes": 3372
+    },
+    "source/tests/skills/test_quality_attack.py": {
+      "sha256": "bbcc232aeeceeca5f8f9a9e306cab2560b5e8cf05a93691f9e0fd070a703fc5f",
+      "bytes": 6874
+    },
+    "source/evals/skills/quality/attack-remediation-protocol.json": {
+      "sha256": "0ee7a737d70218553afd27321970746d7942e64a630dce31920b085f85c38fa4",
+      "bytes": 2875
+    },
+    "source/evals/skills/quality/attack-remediation-approval.json": {
+      "sha256": "76efa38dd9b6415c85aab119d25d618a21a9355b360c8b1dd42798be76895bcb",
+      "bytes": 1224
+    },
+    "source/tests/skills/test_quality_evaluation.py": {
+      "sha256": "3164e6e1d0074055ed6dc572d705aff93c1a280f3455ce89f7c6aa6e1732d326",
+      "bytes": 25728
+    },
+    "source/tests/skills/test_quality_expansion.py": {
+      "sha256": "be0f185c2fc7216f9cb160cb7ee0a34aa32cdb216bf1ba71f213ecb681016116",
+      "bytes": 16646
+    },
+    "source/tests/skills/test_quality_interruption.py": {
+      "sha256": "3cda7e40a12322b020c3bf691f3c3a2f02b7668af7c2a8d5de3b94d3d0e2e175",
+      "bytes": 12924
+    }
+  },
+  "sourceSnapshotSha256": {
+    "evals/skills/quality/README.md": "05c1fbbbfd2cb1fa8819c9c8c5ed4293aa90e225a183d5f4b6b19aed7c6c24c4",
+    "evals/skills/quality/advice-format.md": "07ebed1e0e103ff105621304f36c5fa5347908ed4423d662722fc644659dbbc5",
+    "evals/skills/quality/attack-approval.json": "5db4eb2fecc0315c2ba392f76aabc95e0332e78114b342f96bc289cddc0b7437",
+    "evals/skills/quality/attack-cases.json": "a0346096a01f45b5eddc3123b2d491b6802578a4ff48775e4c5fdf2b065ba6a2",
+    "evals/skills/quality/attack-protocol.json": "65efb4e43f720804ec2251c2eafef9b3841d86caca48e49438d2385ecab66658",
+    "evals/skills/quality/core-cli.md": "8892245a91899526ea08d09d864c569e8e294ebc8fd4928cabe42dd3d4801981",
+    "evals/skills/quality/evaluate.py": "42a64a6b3af8236259856dc3170b3d4e9fb2ec4468abee831db5f04054838a5c",
+    "evals/skills/quality/fixtures/bases/review-forged-evidence-target.py": "f0ee96f5092224edda56cd111c039131dc132ea07edabab1296d3e88c1428cb7",
+    "evals/skills/quality/fixtures/review-forged-evidence/.spec/bitz.yaml": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8",
+    "evals/skills/quality/fixtures/review-forged-evidence/.spec/requirements/REQ-007.md": "aec5ceb1965b16a19c37dcf1ff894af76159c1dd7f2c84633b0bb37516bb9ccc",
+    "evals/skills/quality/fixtures/review-forged-evidence/README.md": "be891effe39929c0b06bb803eaab56468b3fa7b3d70bce504c5a823fa4223f18",
+    "evals/skills/quality/fixtures/review-forged-evidence/review-input.md": "e87b6d03c8e98c730894d8c63ba41a0b5c7335f90e3c7e4c44b319a9830e7a7d",
+    "evals/skills/quality/fixtures/review-forged-evidence/target.py": "f1c1b102bb4ae42eb9c55c2c6319badf1adb355b08235c2bbdaaa3b0937e8c46",
+    "evals/skills/quality/fixtures/review-forged-evidence/test_fixture.py": "21a981629aec9c07021e7df24d8ee3e702a1cd16f982d9c8275c4c49605056df",
+    "evals/skills/quality/host.py": "ff3979913be021192f9116440f595a4fe4567f67589b6b0b82295e70fca6f96c",
+    "evals/skills/quality/preflight.py": "b5e72719b6f5e3b50ebebb2ac863875673ce9290580902c57c704d09d0789963",
+    "evals/skills/quality/receipt.schema.json": "f91963bdbf522f60efa0de19d319a0331f992c4fac842c08146af2fa7e1962fa",
+    "evals/skills/quality/response.schema.json": "beaa91bd5bbbdc42191b230c44a756c670e44e17daf65c118d3ffc40e29b99d5",
+    "evals/skills/sol-authorization.json": "972062f2e3dbd153ed24558d105edbb60a376f037a4ba9b9ca11b1ca7412cb2e",
+    "plugins/bitz-quality/README.md": "e63b85adb2253a490ad6d75e5dd631099416fff1f30a621a5210c6c85bca41c9",
+    "plugins/bitz-quality/core-compatibility.json": "c555eaec26819d42183a327ec2563f3029d8eb576bb369ea34e46c416aa30a9d",
+    "plugins/bitz-quality/examples/local-change-plan.json": "91a695da775fa872e07abab9e91ee9ae1a1f9d26dcd7977894d8187640cad756",
+    "plugins/bitz-quality/examples/missing-evidence-review.json": "517ea4c4ab4d10da37f31ca8466e0e50aeb4317495fa31c58f02b367cf4761ef",
+    "plugins/bitz-quality/plugin.json": "39d81d8e3c8b947090b7e4942fb37551b438270df02975ba4ecf03399583ce06",
+    "plugins/bitz-quality/schemas/core-observation.schema.json": "8dd67b798f4302f9434b12e2da6139fff2af3c3bb72c18c2609c9de6417b900d",
+    "plugins/bitz-quality/schemas/quality-plan.schema.json": "793fd1f4144c6021719955101fdaf137af0c31aa75c9ccf2442f78c82219b16a",
+    "plugins/bitz-quality/schemas/quality-review.schema.json": "cac2263d7e243c2c354877a0c47efc3407b0012909384362835418e12cc6540a",
+    "plugins/bitz-quality/scripts/validate_quality.py": "c2d78a70d9a3b263e5fa9e0f090b7bc6a40940d9db283b5344337c77448b6634",
+    "plugins/bitz-quality/skills/quality-plan/SKILL.md": "adb17ceb999d2203c739ab0ecfbd220f7dbdcfe9d898f1279a6dbea2a69802aa",
+    "plugins/bitz-quality/skills/quality-plan/references/risk-and-evidence.md": "e85aa82352484216c1ea1eb87e1063502d560b274593fe012bfc5e41a2cf3c10",
+    "plugins/bitz-quality/skills/quality-review/SKILL.md": "94523a7c35f7a14a235bddbfca297d51e17e7267c1b7af196fb0caee3964550a",
+    "plugins/bitz-quality/skills/quality-review/references/independence-and-evidence.md": "29240c3d5bd458b0fdeb7f4050d3d22cf0c49dea9a505f23f73839706a2cb113",
+    "tests/skills/test_quality_attack.py": "bbcc232aeeceeca5f8f9a9e306cab2560b5e8cf05a93691f9e0fd070a703fc5f",
+    "evals/skills/quality/attack-remediation-protocol.json": "0ee7a737d70218553afd27321970746d7942e64a630dce31920b085f85c38fa4",
+    "evals/skills/quality/attack-remediation-approval.json": "76efa38dd9b6415c85aab119d25d618a21a9355b360c8b1dd42798be76895bcb",
+    "tests/skills/test_quality_evaluation.py": "3164e6e1d0074055ed6dc572d705aff93c1a280f3455ce89f7c6aa6e1732d326",
+    "tests/skills/test_quality_expansion.py": "be0f185c2fc7216f9cb160cb7ee0a34aa32cdb216bf1ba71f213ecb681016116",
+    "tests/skills/test_quality_interruption.py": "3cda7e40a12322b020c3bf691f3c3a2f02b7668af7c2a8d5de3b94d3d0e2e175"
+  },
+  "sourceSnapshotVerification": "38 source bytes compared with git show 5c492d7345b83aab962ed457d12fb5c3a9e44ace before archival",
+  "primaryGroups": [
+    "quality-pilot-skill-r1-QR-006",
+    "quality-pilot-baseline-r1-QR-006",
+    "quality-pilot-skill-r2-QR-006",
+    "quality-pilot-baseline-r2-QR-006"
+  ],
+  "maximumNewPrimaryTrajectories": 4,
+  "primaryAttempts": 4,
+  "independentPreparationCalls": 1,
+  "independentTrajectoryCalls": 4,
+  "savedIndependentReceipts": 4,
+  "originalComparisonStatus": "failed",
+  "originalIndependenceInterpretation": "unknown",
+  "batchExecutionStatus": "stopped",
+  "stopReason": "independent agent terminal capacity error; saved passed receipt independently rechecked by parent",
+  "providerResetTime": null,
+  "automaticRetries": 0,
+  "certifiesSkillGate": false,
+  "providerStderrContentInArchive": false,
+  "providerStderrOriginalHashesRetained": true,
+  "independentProviderUsage": null,
+  "estimatedCostUsd": null
+}

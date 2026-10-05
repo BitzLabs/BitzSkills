@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0",
+  "status": "passed",
+  "archiveSha256": "5bbad80e4c67df3e4ba0b981047b66850b8b10d333d0a263089454145479e2d3",
+  "files": 162,
+  "bytes": 870263,
+  "primaryRuns": 4,
+  "uniqueNativeThreads": 4,
+  "errors": [],
+  "auditScope": "archive integrity and declared limited outcomes; semantic grading not rerun",
+  "limits": "保存同一性と是正後の限定4軌跡のみ。元比較failed/境界unknownは保持。実地・保持ケース・全Skill Gateは未認定。"
+}

@@ -1034,3 +1034,12 @@ independenceInterpretationをunknownとした。元skill receiptは保持し、�
 100ファイルの保存監査と33ソースの確定ref一致を確認した。残2枠は使わず、原failed・unknownを保持する。
 証拠は `evals/skills/results/2026-10-06-quality-attack-stopped/report.md` を参照する。
 次は境界の公開定義と誤読を招くgeneric診断文を補強し、新測定は別ref・別有限条件で固定する。
+
+是正後source `5c492d73` / bitz-quality 0.1.3では非信頼対象の読取りと先行結論継承を区別し、
+同じ公開QR-006をskill/baseline×2反復、別有限一次4枠で測定した。全4軌跡と保存済み独立receipt4件、
+作業者の各再監査は限定適合を通過した。最終独立agentはcapacityエラーで終端したため、
+原通知とstopped予算を保持する。通知後に保存済みreceiptの実hash・4検査を再確認し、正常終端は主張しない。
+準備187試験・検分後22試験、追加backend0の上限実証、旧証拠19点不変、162ファイルの保存監査と
+38ソースの確定ref一致を確認した。旧比較failed/境界unknownを変更せず、優位性・全Gateへ一般化しない。
+証拠は `evals/skills/results/2026-10-06-quality-attack-remediation/report.md` を参照する。
+次はSDD評価器の非UTF-8出力・KeyboardInterrupt・起動例外の原stderr保存を実モデルなしで是正する。
