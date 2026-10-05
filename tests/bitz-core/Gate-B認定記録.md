@@ -259,3 +259,22 @@ fixtureを追加した後、修正前のCoreでは`SINGLE-134`が`blocked`／終
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は578件がすべて成功した。
+
+## 2026-10-05: 具体化文書の提示形式を直した後のStep 1〜5の再判定
+
+距離2以上の具体化文書を、所有する規範文が制約台帳になくても提示形式`normative`にしていた欠陥を直し（`context.py`。
+`normative`にするのは所有する規範文がすべて制約台帳に収録される具体化文書だけ）、これを固定する`SINGLE-135`と`SINGLE-136`（Step 3）を追加した。
+fixtureを追加した後、修正前のCoreでは2件が`normative`を返して失敗し、修正後のCoreでは2件とも`passed`となることを確かめた。
+
+コミット`d7b91a57c096a4a393aeae750dac9197418087e4`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 323件（`SINGLE-135`と`SINGLE-136`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`247d53070dadd839e831f084f9485fa2d52fcf6120a7d617b3cf7004a76354c6` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は583件がすべて成功した。
