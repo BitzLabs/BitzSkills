@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "independent": true,
+  "implementationPrivateHistoryInherited": false,
+  "subjectCommit": "644603a569f65d9fad89a9504731890beaac9b1c",
+  "reviewRunId": "daa03b9f-837f-4a8a-9162-a2347048c556",
+  "status": "passed",
+  "directChecks": [
+    {"check": "保存処理と試験の独立直接検分", "result": "passed", "files": ["evals/skills/sdd/evaluate.py:471-578", "tests/skills/test_sdd_skill_eval.py:416-508"]},
+    {"check": "test_sdd_skill_eval.py", "exitCode": 0, "output": "Ran 32 tests in 19.050s\nOK"},
+    {"check": "test_sdd_batch.py", "exitCode": 0, "output": "Ran 13 tests in 0.074s\nOK"},
+    {"check": "独立実反例再実行", "result": "passed", "cases": ["nonzero", "timeout", "oserror", "missing-response", "trace-only", "both-log", "timeout-trace", "timeout-both"], "output": "全8条件 PASS actual identity, changed workspace, raw bytes, failure status, retry refusal, no overwrite", "observed": "実identity subjectCommit=644603a、実argv/cwd/timeout、src/input.pyの実差分、非UTF8原bytes保存またはbase64 fallback、interrupted/not-measured/not-certified、run.json不在を確認。resume=False/Trueとも再試行拒否、codex mock呼出し1回、failure.json bytes不変。traceだけ/両log保存失敗はOSError28。追加モデル・Codexを起動せずcodex subprocessのみmock。"},
+    {"check": "並行HEAD変更後の対象固定ref比較", "exitCode": 0, "output": "git diff --exit-code 644603a HEAD -- evals/skills/sdd/evaluate.py tests/skills/test_sdd_skill_eval.py tests/skills/test_sdd_batch.py: 差分なし", "blobPairs": {"evals/skills/sdd/evaluate.py": ["7e48c914862304e2c116449420fe505c03a2678f", "7e48c914862304e2c116449420fe505c03a2678f"], "tests/skills/test_sdd_skill_eval.py": ["8ed00bdb81105fcc9a14a4bfe01a89a343311749", "8ed00bdb81105fcc9a14a4bfe01a89a343311749"], "tests/skills/test_sdd_batch.py": ["6bfcd470affb3530bed912c6235e2bbbd19e436a", "6bfcd470affb3530bed912c6235e2bbbd19e436a"]}}
+  ],
+  "findings": [],
+  "reason": "原P2（traceだけOSError28でfailure.jsonが残らない）の実反例を修正refで再実行し、failure.jsonとunsavedOutputsの原bytes保存を確認。指定範囲でP0/P1/P2を発見しなかった。元P2記録は変更せず別の再検分結果として保存。",
+  "limitations": [
+    "failure.json自体またはsnapshot/artifact読取が不能なfilesystem全体の故障を保証しない。",
+    "native app-server readonly原因の解消は検証も主張もしていない。",
+    "モデル品質・意味評価・Gate認定ではない。",
+    "開始HEADは644603a、独立試験でも同ref identityをassert。保存後に共有HEADが2f774b47d9a9e952f10861da71369c941e45417bへ並行変更されたが対象3ファイルのblobは一致。Git操作・tracked編集はしていない。",
+    "最初の保存先は外側repoの.venvだった。今回指定されたworktree内.venvへnative apply_patchで記録を保存した。"
+  ]
+}
