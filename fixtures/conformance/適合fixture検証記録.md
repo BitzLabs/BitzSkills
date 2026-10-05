@@ -1117,3 +1117,20 @@ commit `d78f35dcf9f2b565eec75f65a2511fbef95d654c`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 fixtureの入力と期待値を変えていないため、Gate Bの判定し直しは要しない。
+
+## 2026-10-05: 定義文がない語を定義した後のGate Aの再認定
+
+[用語集](../../docs/用語集.md) §14.1に記録していた、仕様に定義文がない19語の定義文を仕様へ足した（ユーザーが承認した読みの確定）。
+適合fixture仕様では、matrixの第2列の文言（`SINGLE-106-01`、`106-02`、`111-01`、`111-03`、`111-04`、`127-13`）だけを定義に合わせた。
+網羅表の12件のハッシュ値とtarget vectorの`contractSha256`を再レビューのうえ更新した。matrixの行の構成、fixtureの入力と期待値は変えていない。
+
+commit `4cc0db96eddb44e2ef9120e0348907e8286a028e`に対して`uv run fixtures/certify_gate_a.py`を実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`8deec8ae00ee4420135b357fb488cd54fb34e66c48dbe916ccde4cc1561fcd85`。前回から変わったのは、リンク検査が数えたリンクの件数（`links.checked`）が319件から324件になったためだけである（定義文に関係・トレースモデル §6などへのリンクを足した） |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+fixtureの入力と期待値を変えていないため、Gate Bの判定し直しは要しない。
