@@ -1043,3 +1043,11 @@ independenceInterpretationをunknownとした。元skill receiptは保持し、�
 38ソースの確定ref一致を確認した。旧比較failed/境界unknownを変更せず、優位性・全Gateへ一般化しない。
 証拠は `evals/skills/results/2026-10-06-quality-attack-remediation/report.md` を参照する。
 次はSDD評価器の非UTF-8出力・KeyboardInterrupt・起動例外の原stderr保存を実モデルなしで是正する。
+
+SDD評価器は原source `997299b3` の3/4回帰の失敗を保持し、初回 `d659d1af` の独立P2（原出力保存中断）を
+親7件の2errorsで再現した。別source `9c576c50` / sdd-execution-0.1.2で各streamの保存中断も捕捉し、
+原bytes退避・実exit・可用性・最初の例外を保持した。親・独立・検分後は各52件のOK/exit0、
+4ソースとログhash、旧品質証拠19点とcapacity archive不変、35ファイル/11source snapshotの保存監査を確認した。
+新規一次0、独立SOLは別source各1枠で計2枠、自動再試行0。原failedとP2を上書きしない。
+全194件は、保持ケース用の合成一時データをrepo外へ置く明示承認待ち。初回192件の4境界拒否は保持し、
+境界を緩めず全件/実モデル/Gateを未認定とする。証拠は `evals/skills/results/2026-10-06-sdd-interruption/report.md`。
