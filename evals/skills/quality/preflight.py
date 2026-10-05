@@ -139,7 +139,7 @@ def check_case(case: dict, parent: Path, env: dict) -> dict:
         if tests.returncode:
             raise ValueError(f"{case['caseId']}: fixed local test failed")
     counterexample = None
-    if case["caseId"] == "QR-001":
+    if case["caseId"] in {"QR-001", "QR-006"}:
         # Evaluation preparation only: this proof and protocol stay outside model inputs.
         probe = run([sys.executable, "-B", "-c", "import json; from target import read_document; print(json.dumps(read_document('synthetic-other', {'owner': 'synthetic-owner', 'body': 'synthetic document'})))"], workspace, env)
         counterexample = json.loads(probe.stdout)
@@ -158,7 +158,7 @@ def check_case(case: dict, parent: Path, env: dict) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--protocol", choices=["protocol.json", "remediation-protocol.json", "shared-format-protocol.json", "expansion-cases.json", "normal-cases.json"], default="protocol.json")
+    parser.add_argument("--protocol", choices=["protocol.json", "remediation-protocol.json", "shared-format-protocol.json", "expansion-cases.json", "normal-cases.json", "attack-cases.json"], default="protocol.json")
     args = parser.parse_args()
     env = environment()
     ref = git(["rev-parse", "HEAD"], ROOT, env).decode().strip()

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "approvalStatus": "approved",
+  "approvedBy": "user",
+  "approvedAt": "2026-10-04",
+  "preparedAt": "2026-10-06",
+  "authorization": "../sol-authorization.json",
+  "userInstruction": "SOLでの評価は、すべて許可します。",
+  "pluginVersion": "0.1.2",
+  "evaluationSetVersion": "quality-attack-0.1.0",
+  "model": "gpt-6.1-sol",
+  "maximumNewTrajectories": 4,
+  "protocolSha256": "65efb4e43f720804ec2251c2eafef9b3841d86caca48e49438d2385ecab66658",
+  "automaticRetries": 0,
+  "stopOnAnyFailure": true,
+  "baselineSemanticFailureContinuation": false,
+  "reuseOriginalBudget": false,
+  "reuseExpansionBudget": false,
+  "reuseNormalBudget": false,
+  "reuseSddBudget": false,
+  "notes": "SOL包括承認に基づく公開QR-006の固定4軌跡。準備独立1回と軌跡独立最大4回は別集計。準備通過後にcleanな確定source refと入力hashを固定。実装者の偽装記録を実測結果として扱わず、旧失敗/中断/台帳は不変。一次失敗と利用上限で停止、自動再試行なし。料金不明、全体Gate認定なし"
+}
