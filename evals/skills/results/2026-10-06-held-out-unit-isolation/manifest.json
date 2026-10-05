@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "1.0",
+  "archiveSha256": "66d7d904dc6ac9cf839fc9125e415528da94b09efc9f04844827d0a505890f06",
+  "files": {
+    "logs/after-tests.txt": {
+      "bytes": 128,
+      "sha256": "5561b59da0f3127d1aeacd93ec8d83b75dab9b4baeb909a980c8898933040aae"
+    },
+    "logs/all-skills.txt": {
+      "bytes": 297,
+      "sha256": "ad89cccc0134d0fe62954ceddd457758c9be93171ebea692b5d444dbe06899ab"
+    },
+    "logs/before-fixed-ref-tests.txt": {
+      "bytes": 3621,
+      "sha256": "667de0693601641d698b31199afad267830372fc3d7b565779fcaddbfe7d314f"
+    },
+    "logs/before-from-ref.py": {
+      "bytes": 632,
+      "sha256": "20810600f34bd77850365cf148bf29bf19a25b8feb5836454235ec26ab6a8282"
+    },
+    "logs/budget-final.json": {
+      "bytes": 1124,
+      "sha256": "6c8d551d77bde6f7cea5da7ca04df4028331f85805ebd2e27fcadc7c6737caa5"
+    },
+    "logs/build-archive.py": {
+      "bytes": 2413,
+      "sha256": "5fbf5111a0a170a5aaf89b497467a41abd2a6752d824e859ab507f506f557c00"
+    },
+    "logs/independent-tests.txt": {
+      "bytes": 319,
+      "sha256": "903e3f707ef10a693a8cd53bef26cfd25b205825ae399fc49d155ff2feb84c79"
+    },
+    "logs/parent-audit.json": {
+      "bytes": 244,
+      "sha256": "734418fd439be38eb8c62f58b67b62879771025865342e2f95dbdcedbf7d9cff"
+    },
+    "logs/parent-recheck-tests.txt": {
+      "bytes": 128,
+      "sha256": "d82d836a33f22a914e05250e4c0f0e350c36a2a5fa60c0d92168693334499695"
+    },
+    "logs/review.json": {
+      "bytes": 2608,
+      "sha256": "9e26f9a2524058ecb5b433a68ea358ab1af09a2c3ece3559886308103cec6b8e"
+    },
+    "logs/scope.json": {
+      "bytes": 1009,
+      "sha256": "5197c545c37ce0acf7e329d8bf99ad4a059b555b1d3a8c3a2c4b5f66956b73fa"
+    },
+    "source/after/evals/skills/run_model.py": {
+      "bytes": 25377,
+      "sha256": "f45495a30cf22546c6ab6a8a2af5852b0debab8e45a9a42fa94820646994f239"
+    },
+    "source/after/evals/skills/validate.py": {
+      "bytes": 33310,
+      "sha256": "a8071b94f050318638816863ed61ec7c9e40997845f0dd048dec4c384be05c8c"
+    },
+    "source/after/tests/skills/test_skill_eval.py": {
+      "bytes": 45189,
+      "sha256": "1d9836852d6e5bdcb954b6d0d9b85958b6745f283fef705539ea5788b41fbc26"
+    },
+    "source/before/evals/skills/run_model.py": {
+      "bytes": 25377,
+      "sha256": "f45495a30cf22546c6ab6a8a2af5852b0debab8e45a9a42fa94820646994f239"
+    },
+    "source/before/evals/skills/validate.py": {
+      "bytes": 33310,
+      "sha256": "a8071b94f050318638816863ed61ec7c9e40997845f0dd048dec4c384be05c8c"
+    },
+    "source/before/tests/skills/test_skill_eval.py": {
+      "bytes": 43027,
+      "sha256": "aa302ed4e7eb0a9f6785f5b08334a032664266082ccdf3b38abc9eeb0612093e"
+    }
+  },
+  "fixedSources": [
+    {
+      "ref": "d31900c6",
+      "path": "tests/skills/test_skill_eval.py",
+      "archivePath": "source/before/tests/skills/test_skill_eval.py"
+    },
+    {
+      "ref": "d31900c6",
+      "path": "evals/skills/validate.py",
+      "archivePath": "source/before/evals/skills/validate.py"
+    },
+    {
+      "ref": "d31900c6",
+      "path": "evals/skills/run_model.py",
+      "archivePath": "source/before/evals/skills/run_model.py"
+    },
+    {
+      "ref": "edaf5a0660d5952d65d6f20c08fb47030af291f0",
+      "path": "tests/skills/test_skill_eval.py",
+      "archivePath": "source/after/tests/skills/test_skill_eval.py"
+    },
+    {
+      "ref": "edaf5a0660d5952d65d6f20c08fb47030af291f0",
+      "path": "evals/skills/validate.py",
+      "archivePath": "source/after/evals/skills/validate.py"
+    },
+    {
+      "ref": "edaf5a0660d5952d65d6f20c08fb47030af291f0",
+      "path": "evals/skills/run_model.py",
+      "archivePath": "source/after/evals/skills/run_model.py"
+    }
+  ]
+}

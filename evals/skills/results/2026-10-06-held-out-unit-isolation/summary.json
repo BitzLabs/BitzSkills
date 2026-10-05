@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0",
+  "status": "unit_checks_passed",
+  "sourceCommit": "edaf5a0660d5952d65d6f20c08fb47030af291f0",
+  "originalSourceCommit": "d31900c6",
+  "model": "gpt-6.1-sol",
+  "primaryTrajectories": 0,
+  "independentCalls": 1,
+  "automaticRetries": 0,
+  "targetedTests": 29,
+  "allSkillUnitTests": 196,
+  "parentPostReviewTests": 29,
+  "productionGuardChanged": false,
+  "certifiesRealHeldOutEvaluation": false,
+  "certifiesSkillGate": false,
+  "externalTestDirectoryRequired": false,
+  "historicalFailureRecordsPreserved": true
+}

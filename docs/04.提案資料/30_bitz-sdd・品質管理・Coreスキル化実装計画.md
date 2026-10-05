@@ -1051,3 +1051,12 @@ SDD評価器は原source `997299b3` の3/4回帰の失敗を保持し、初回 `
 新規一次0、独立SOLは別source各1枠で計2枠、自動再試行0。原failedとP2を上書きしない。
 全194件は、保持ケース用の合成一時データをrepo外へ置く明示承認待ち。初回192件の4境界拒否は保持し、
 境界を緩めず全件/実モデル/Gateを未認定とする。証拠は `evals/skills/results/2026-10-06-sdd-interruption/report.md`。
+
+後続source `edaf5a06` では保持ケースの4単体試験を合成public/private兄弟fixtureへ隔離した。
+製品validator/runnerを変更せず、実repoと公開側symlinkの拒否2試験を追加した。
+基準refの27件は2failures/2errors、是正後29件・全スキル196件はOK/exit0。
+独立SOL1枠と検分後の作業者再実行も29件OK、原失敗・旧停止予算は保持した。
+一時データをrepo内へ収めたため単体全件の外部一時領域承認待ちは解消したが、
+実保持ケース評価と全Gateは未認定。17ファイル/6固定sourceの保存監査を通過した。
+証拠は `evals/skills/results/2026-10-06-held-out-unit-isolation/report.md` を参照する。
+次は未測定のquality-plan公開比較を別ref・有限条件へ固定する。
