@@ -1067,3 +1067,13 @@ SDD評価器は原source `997299b3` の3/4回帰の失敗を保持し、初回 `
 4source/独立ログhashと21ファイル/8固定sourceの保存監査を確認した。
 新規一次0、独立SOL1枠、自動再試行0。原停止・failed/unknown・capacity通知を保持する。
 証拠は `evals/skills/results/2026-10-06-quality-save-interruption/report.md` を参照する。
+
+quality-plan公開比較はsource `cbd6700f` / plugin0.1.3 / plan0.1.1で、QP-001を別一次4枠に固定した。
+全4軌跡と各独立4検査・親再監査が通過した。試験0、両側needs_information/advisory/人手判断待ち。
+skillはQ2×2、baselineはQ2/Q1。具体的な互換性の根拠を伴う保守的上位を固定interpretation内で許容し、
+Q帯だけで優位性を主張しない。親/準備独立89件と検分後13件・preflight各exit0、
+共通入力/権限/ref一致、新規thread4、未検分と上限後の追加backend0・台帳不変を確認した。
+準備独立1・軌跡独立4枠、retry0、旧pilot/停止/capacity記録を保持する。
+152ファイル/31固定sourceの保存監査を通過した。
+証拠は `evals/skills/results/2026-10-06-quality-plan/report.md` を参照する。
+旧発火候補6本文は製品plugins本文と異なるため、次は製品本文による別発火契約を準備する。
