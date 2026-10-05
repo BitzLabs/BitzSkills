@@ -1,6 +1,6 @@
 """共通の対象展開と`advisory`の提示を固定するfixture（Coreの公開操作は実行しない）。
 
-matrix §6.11の`SINGLE-106-03`、`SINGLE-106-06`〜`07`と§6.12の`SINGLE-107`〜`110`、`113`、`134`を扱う。
+matrix §6.11の`SINGLE-106-03`、`SINGLE-106-06`〜`07`と§6.12の`SINGLE-107`〜`110`、`113`、`134`〜`136`を扱う。
 `context`の期待値は4つの集合（rootDocuments、contextDocuments、targetStatements、adjacentStatements）を
 `roots`、`documents[]`、制約台帳、`coverage.adjacent`として完全比較し、同じ起点の`verify`は
 `context`と同じ対象規範文の集合を返すことを確認する。
@@ -189,6 +189,47 @@ def corpus_done_prerequisite():
     ]
 
 
+def corpus_refines_target_by_requires():
+    """135: REQ-001がREQ-002をrequiresし、REQ-003をrefinesする。REQ-002もREQ-003をrequiresする。
+    REQ-003は、起点の`refines`の参照先であり、`requires`の鎖でも到達する。表の上から最初に該当する役割は`refinement`であり、
+    その規範文`REQ-003:AC-01`は対象規範文にならない（関係・トレースモデル §6.4の4.）ので、制約台帳に収録されない。"""
+    root = [("REQ-001:AC-01", "入力を検証する")]
+    tests_yaml = "tests:\n  - path: tests/test_root.py\n    covers: [REQ-001:AC-01]\n    command: default\n"
+    return [
+        document(".spec/requirements/REQ-001.md", requirement(
+            "REQ-001", "起点要求", root,
+            "relations:\n  requires: [REQ-002]\n  refines: [REQ-003]\n" + tests_yaml),
+            fm("REQ-001", "起点要求", relations={"requires": ["REQ-002"], "refines": ["REQ-003"]},
+               tests=[{"path": "tests/test_root.py", "covers": ["REQ-001:AC-01"], "command": "default"}]), root),
+        document(".spec/requirements/REQ-002.md", requirement(
+            "REQ-002", "前提要求", [("REQ-002:AC-01", "前提を満たす")], "relations:\n  requires: [REQ-003]\n"),
+            fm("REQ-002", "前提要求", relations={"requires": ["REQ-003"]}), [("REQ-002:AC-01", "前提を満たす")]),
+        document(".spec/requirements/REQ-003.md", requirement(
+            "REQ-003", "起点が具体化する要求", [("REQ-003:AC-01", "秘密鍵を保持しない")]),
+            fm("REQ-003", "起点が具体化する要求"), [("REQ-003:AC-01", "秘密鍵を保持しない")]),
+    ]
+
+
+def corpus_document_refinement_chain():
+    """136: TECH-002が文書単位でREQ-001を具体化し、TECH-003が文書単位でTECH-002を具体化する。
+    目的`interpret`は対象規範文が空で制約台帳も空なので、距離2のTECH-003の`MUST`は制約台帳に収録されない。"""
+    root = [("REQ-001:AC-01", "入力を検証する")]
+    return [
+        document(".spec/requirements/REQ-001.md", requirement("REQ-001", "起点要求", root),
+                 fm("REQ-001", "起点要求"), root),
+        document(".spec/technical/TECH-002.md", technical(
+            "TECH-002", "直接の具体化", [("TECH-002:AC-01", "入力形式を固定する")],
+            "relations:\n  refines: [REQ-001]\n"),
+            fm("TECH-002", "直接の具体化", relations={"refines": ["REQ-001"]}),
+            [("TECH-002:AC-01", "入力形式を固定する")]),
+        document(".spec/technical/TECH-003.md", technical(
+            "TECH-003", "間接の具体化", [("TECH-003:AC-01", "形式違反を拒否する")],
+            "relations:\n  refines: [TECH-002]\n"),
+            fm("TECH-003", "間接の具体化", relations={"refines": ["TECH-002"]}),
+            [("TECH-003:AC-01", "形式違反を拒否する")]),
+    ]
+
+
 def corpus_advisory():
     """106-03: approved REQ-001の規範文を、draftのTECH-005が具体化する。"""
     only = [("REQ-001:AC-01", "入力を検証する")]
@@ -243,6 +284,10 @@ CASES = {
                    "verifyの起点TASKはaddresses先だけをtargetとし、requires先TASKを含めない"),
     "SINGLE-134": (corpus_done_prerequisite, ["context", "TASK-001", "--purpose", "implement", "--format", "json"],
                    "implementの起点TASKは、先行TASKがdoneなら止まらず、未テストのMUSTだけを警告にする"),
+    "SINGLE-135": (corpus_refines_target_by_requires, ["context", "REQ-001", "--purpose", "implement", "--format", "json"],
+                   "起点のrefinesの参照先にrequiresの鎖でも到達しても、役割refinementのMUSTの本文を提示から落とさない"),
+    "SINGLE-136": (corpus_document_refinement_chain, ["context", "REQ-001", "--purpose", "interpret", "--format", "json"],
+                   "文書単位で具体化した距離2の文書は、対象規範文が空のinterpretでMUSTの本文を提示から落とさない"),
     "SINGLE-113": (corpus_refinement, ["verify", "REQ-001:AC-01", "REQ-001", "REQ-001:AC-01", "--format", "json"],
                    "文書IDと同文書のstatement IDを重複指定してもtargetとbindingを重複排除する"),
     "SINGLE-106-06": (corpus_distance, ["context", "REQ-001", "--purpose", "verify", "--format", "json"],
@@ -299,6 +344,31 @@ EXPANSIONS = {
                                     "summary": "MUST REQ-001:AC-01がtestされていません",
                                     "source": {"kind": "file", "workspaceId": "root",
                                                "path": ".spec/requirements/REQ-001.md"}}]},
+    # 135は、起点REQ-001の`refines`の参照先REQ-003が`requires`の鎖（REQ-001、REQ-002、REQ-003）でも到達する。役割の表は
+    # 上から最初に該当する行なので、REQ-003は`requirement`ではなく`refinement`である。目的`implement`の対象規範文は
+    # 起点の規範文だけ（§6.4の1.）で、`requires`の参照先と起点が`refines`する先の規範文は昇格しない（§6.4の4.）。
+    # REQ-003:AC-01は制約台帳にないので、提示形式`normative`にすると`MUST`の文面が出力から失われる。
+    # 距離は、起点が`refines`する先なので最短で1であり（関係・トレースモデル §7の6.）、REQ-002と同じ距離1で、種別とIDの順に並ぶ。
+    # 対象規範文は対応するTASKがないので未対応であり、`CTX-COVERAGE-TASK-001`が警告になる（`SINGLE-054`と同じ条件）。
+    "SINGLE-135": {"purpose": "implement", "root": "REQ-001", "status": "passed_with_warnings",
+                   "documents": [("REQ-001", "root", "full", ["root"]),
+                                 ("REQ-002", "requirement", "full", ["requires:REQ-001"]),
+                                 ("REQ-003", "refinement", "full", ["refines:REQ-001", "requires:REQ-002"])],
+                   "ledger": ["REQ-001:AC-01"], "tested": ["REQ-001:AC-01"], "addressed": [],
+                   "adjacent": [], "advisory": [],
+                   "diagnostics": [{"code": "CTX-COVERAGE-TASK-001", "severity": "warning",
+                                    "resultStatus": "passed_with_warnings",
+                                    "summary": "implement対象のMUST REQ-001:AC-01を実装するTASKがありません",
+                                    "source": {"kind": "file", "workspaceId": "root",
+                                               "path": ".spec/requirements/REQ-001.md"}}]},
+    # 136は、TECH-002（距離1）とTECH-003（距離2）が文書単位で具体化の鎖を作る。目的`interpret`の対象規範文は空
+    # （§6.4）なので制約台帳も空であり、どの具体化文書の規範文も制約台帳に収録されない。TECH-003を`normative`にすると
+    # その`MUST`の文面が出力から失われるので、距離2でも`full`で提示する。
+    "SINGLE-136": {"purpose": "interpret", "root": "REQ-001",
+                   "documents": [("REQ-001", "root", "full", ["root"]),
+                                 ("TECH-002", "refinement", "full", ["refines:TECH-002"]),
+                                 ("TECH-003", "refinement", "full", ["refines:TECH-003"])],
+                   "ledger": [], "tested": [], "addressed": [], "adjacent": [], "advisory": []},
     # 113の文書を起点にする検証対象は107-01、規範文を起点にする検証対象は次の展開を使う。
     "REQ-001:AC-01": {"purpose": "verify", "root": "REQ-001:AC-01",
                       "ledger": ["REQ-001:AC-01", "TECH-002:AC-01", "TECH-003:AC-01"], "advisory": []},
@@ -519,6 +589,8 @@ LITERAL_SETS = {
                    ["REQ-001:AC-01", "TECH-002:AC-01"], ["REQ-001:AC-02"]),
     "SINGLE-110": (["TASK-001"], ["TASK-001", "REQ-001"], ["REQ-001:AC-01"], []),
     "SINGLE-134": (["TASK-001"], ["TASK-001", "REQ-001", "TASK-002"], ["REQ-001:AC-01"], []),
+    "SINGLE-135": (["REQ-001"], ["REQ-001", "REQ-002", "REQ-003"], ["REQ-001:AC-01"], []),
+    "SINGLE-136": (["REQ-001"], ["REQ-001", "TECH-002", "TECH-003"], [], []),
 }
 
 
@@ -549,6 +621,23 @@ def check_contract(identifier, result, root):
                 raise ValueError("先行TASKがすべて`done`のとき、診断は未テストの`MUST`の警告1件だけである必要があります")
             if {d["id"]: d["role"] for d in result["documents"]}.get("TASK-002") != "work":
                 raise ValueError("目的`implement`の起点TASKの`requires`の先行TASKは役割`work`でコンテキストへ含める必要があります")
+        # 提示形式`normative`は本文を省くので、所有する規範文がすべて制約台帳にある文書だけに許す
+        # （`bitz context`仕様 §5、ADR-014の`Decision`の4番目の項目）。
+        ledger_ids = {s["id"] for s in result["constraintLedger"]["statements"]}
+        for entry in result["documents"]:
+            if entry["projection"] == "normative" and not set(entry["statementRefs"]) <= ledger_ids:
+                raise ValueError("制約台帳にない規範文を持つ文書を提示形式`normative`にして`MUST`の本文を落としてはいけません")
+        if identifier in {"SINGLE-135", "SINGLE-136"}:
+            lookup = {d["id"]: d for d in result["documents"]}
+            name, text = (("REQ-003", "秘密鍵を保持しない") if identifier == "SINGLE-135"
+                          else ("TECH-003", "形式違反を拒否する"))
+            target = lookup[name]
+            if target["role"] != "refinement":
+                raise ValueError(f"{name}は役割`refinement`である必要があります")
+            if target["projection"] != "full" or text not in target.get("bodyText", ""):
+                raise ValueError(f"{name}は提示形式`full`で、その`MUST`の本文が提示に現れる必要があります")
+            if f"{name}:AC-01" in ledger_ids:
+                raise ValueError(f"{name}:AC-01は対象規範文ではないので制約台帳へ収録してはいけません")
         if identifier == "SINGLE-107-01" and "REQ-099" in [d["id"] for d in result["documents"]]:
             raise ValueError("`related`の参照先をコンテキストへ追加してはいけません")
         if identifier == "SINGLE-106-06":

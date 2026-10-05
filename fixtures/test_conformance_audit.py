@@ -117,6 +117,10 @@ class AuditTests(unittest.TestCase):
     def test_expansion_audit_rejects_changed_sets_and_roles(self):
         def document(index, **changes):
             return lambda v: v["documents"][index].update(changes)
+
+        def as_normative(entry):
+            entry["projection"] = "normative"
+            del entry["frontmatter"], entry["bodyText"]
         mutations = [
             # `requires`先の役割は種別で決まり、REQは役割`requirement`、TECHは役割`constraint`である。
             ("SINGLE-107-01", "expected/context.json", document(1, role="constraint")),
@@ -145,6 +149,19 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-134", "manifest.json", lambda v: v["expect"].update(status="passed")),
             ("SINGLE-134", "expected/context.json",
              lambda v: v["coverage"]["must"].update(tested=["REQ-001:AC-01"], untested=[])),
+            # 制約台帳にない規範文を持つ具体化文書は、距離によらず提示形式`full`で提示し、`MUST`の本文を落とさない
+            # （`bitz context`仕様 §5、ADR-014の`Decision`の4番目の項目）。`normative`への変更、役割の取り違え、
+            # 対象規範文でない規範文の制約台帳への昇格を拒否する。
+            ("SINGLE-135", "expected/context.json", lambda v: as_normative(v["documents"][2])),
+            ("SINGLE-135", "expected/context.json", document(2, role="requirement")),
+            ("SINGLE-135", "expected/context.json", document(2, reachedBy=["requires:REQ-002"])),
+            ("SINGLE-135", "expected/context.json",
+             lambda v: v["constraintLedger"]["statements"].append({"id": "REQ-003:AC-01"})),
+            ("SINGLE-135", "manifest.json", lambda v: v["expect"].update(status="passed")),
+            ("SINGLE-136", "expected/context.json", lambda v: as_normative(v["documents"][2])),
+            ("SINGLE-136", "expected/context.json", document(2, role="constraint")),
+            ("SINGLE-136", "expected/context.json",
+             lambda v: v["constraintLedger"]["statements"].append({"id": "TECH-003:AC-01"})),
             # `verify`は`context`と同じ対象の集合とハッシュ値を使う。
             ("SINGLE-107-02", "expected/verify.json",
              lambda v: v["targetResults"][0]["statements"].pop()),
@@ -168,6 +185,19 @@ class AuditTests(unittest.TestCase):
                 path.write_text(json.dumps(value))
                 result = expansion_fixtures.validate(root, {identifier})
                 self.assertEqual(result["status"], "Failed")
+
+    def test_expansion_contract_rejects_normative_without_ledger(self):
+        """完全比較とは別に、`check_contract`だけが、制約台帳にない規範文を持つ文書の`normative`を拒否する。"""
+        for identifier, index in (("SINGLE-135", 2), ("SINGLE-136", 2)):
+            path = audit.FIXTURES / "single" / identifier / "expected/context.json"
+            with self.subTest(identifier=identifier):
+                value = json.loads(path.read_text())
+                expansion_fixtures.check_contract(identifier, value, audit.FIXTURES)
+                entry = value["documents"][index]
+                entry["projection"] = "normative"
+                del entry["frontmatter"], entry["bodyText"]
+                with self.assertRaises(ValueError):
+                    expansion_fixtures.check_contract(identifier, value, audit.FIXTURES)
 
     def test_ordering_fixtures(self):
         result = ordering_fixtures.validate()

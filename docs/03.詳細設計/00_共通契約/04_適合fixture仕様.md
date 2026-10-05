@@ -563,6 +563,8 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-109` | 規範文起点と同じ文書のほかの規範文 | context --purpose implement | passed／0 | 起点に指定した規範文と具体化文書は対象規範文、同じ文書のほかの規範文は隣接規範文 |
 | `SINGLE-110` | TASKの`addresses`先と`requires`先のTASK | context --purpose verify | passed／0 | 自身の`addresses`先だけが対象規範文、`requires`先のTASKとその`addresses`先をコンテキスト文書へ含めない |
 | `SINGLE-134` | 先行TASKがすべて`done`のTASKが、テスト対応のない`MUST`を`addresses`する | context --purpose implement | passed_with_warnings／0 | `CTX-STATE-001`と`CTX-TASK-DEPENDENCY-001`を返さない。先行TASKは役割`work`でコンテキストへ含め、対象規範文は対応済み・未テストで、`CTX-COVERAGE-TEST-001`が警告1件 |
+| `SINGLE-135` | 起点の`refines`の参照先に、`requires`の鎖でも到達する（REQ-001が`requires`でREQ-002、`refines`でREQ-003、REQ-002が`requires`でREQ-003） | context --purpose implement | passed_with_warnings／0 | REQ-003は役割`refinement`（役割の表の上から最初に該当する行）で、その規範文は制約台帳にない。提示形式`normative`にせず`full`で提示し、`MUST`の本文がコンテキスト一式に現れる。`CTX-COVERAGE-TASK-001`が警告1件 |
+| `SINGLE-136` | 文書単位で具体化した距離2の文書（REQ-001をTECH-002が、TECH-002をTECH-003が文書単位で`refines`する） | context --purpose interpret | passed／0 | 対象規範文と制約台帳が空なので、距離2のTECH-003は役割`refinement`でも`normative`にせず`full`で提示し、`MUST`の本文がコンテキスト一式に現れる |
 | `SINGLE-111-01` | ワークスペースの仕様文書にない明示の文書ID | check | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
 | `SINGLE-111-02` | 所有文書はあるが規範文IDが不在 | check | failed／1 | `CTX-ROOT-MISSING-001`、所有文書の`check`へ置換しない |
 | `SINGLE-111-03` | ワークスペースに存在しない、構文上妥当な仕様文書のパス | check | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
