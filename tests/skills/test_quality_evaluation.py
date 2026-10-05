@@ -276,6 +276,9 @@ class QualityEvaluationTests(unittest.TestCase):
         record["identity"]["executionVersion"] = "quality-execution-0.1.2"
         errors, _ = evaluate.inspect_record(self.directory, self.cases[0], record)
         self.assertIn("shared declared format contract was not read", errors["mechanical"])
+        record["identity"]["executionVersion"] = "quality-execution-0.1.3"
+        errors, _ = evaluate.inspect_record(self.directory, self.cases[0], record)
+        self.assertIn("shared declared format contract was not read", errors["mechanical"])
         record["identity"]["executionVersion"] = "quality-execution-0.1.0"
         errors, _ = evaluate.inspect_record(self.directory, self.cases[0], record)
         self.assertFalse(any(errors.values()), errors)

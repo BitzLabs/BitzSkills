@@ -49,7 +49,8 @@ def save_native_outputs(directory, stdout, stderr):
 
 def preserve_invocation_failure(directory, identity, workspace, command, timeout, started,
                                 *, error_type, reason, exit_code=None, errno=None,
-                                output_save_errors=None, unsaved_outputs=None):
+                                output_save_errors=None, unsaved_outputs=None,
+                                native_output_available=False):
     """起動失敗を成功へ変換せず、条件・差分・残った原証拠を保存する。"""
     before = load(directory / "workspace-before.json") if (directory / "workspace-before.json").is_file() else {}
     after = preflight.files(workspace)
@@ -63,7 +64,8 @@ def preserve_invocation_failure(directory, identity, workspace, command, timeout
         "changes": {"before": before, "after": after,
                      "changedPaths": sorted(p for p in before.keys() | after.keys() if before.get(p) != after.get(p))},
         "artifacts": artifacts, "outputSaveErrors": output_save_errors or [],
-        "unsavedOutputs": unsaved_outputs or {}, "automaticRetry": False})
+        "unsavedOutputs": unsaved_outputs or {}, "nativeOutputAvailable": native_output_available,
+        "providerUsage": None, "automaticRetry": False})
 
 
 def validator_module():
@@ -118,6 +120,8 @@ def jsonl(path):
 
 
 def verify_receipt(directory):
+    if (directory / "interruption.json").exists():
+        raise ValueError("previous trajectory was interrupted; no new call")
     receipt = directory / "independent-receipt.json"
     if not receipt.exists():
         raise ValueError("previous trajectory needs independent review; no new call")
@@ -169,7 +173,7 @@ def inspect_record(directory, case, record):
     if preflight.files(workspace) != control["readableFiles"]:
         errors["safety"].append("fixture or resources changed")
     calls = jsonl(directory / "host.jsonl")
-    if record["identity"].get("executionVersion") in {"quality-execution-0.1.1", "quality-execution-0.1.2"} and not any(
+    if record["identity"].get("executionVersion") in {"quality-execution-0.1.1", "quality-execution-0.1.2", "quality-execution-0.1.3"} and not any(
             call["accepted"] and call["tool"] == "read_file" and call["arguments"].get("path") == "resources/advice-format.md" for call in calls):
         errors["mechanical"].append("shared declared format contract was not read")
     if any(not call["accepted"] for call in calls):
@@ -368,7 +372,7 @@ def measure(args):
         write(directory / "workspace-before.json", preflight.files(workspace))
         (directory / "host.jsonl").write_text("", encoding="utf-8")
         identity = {**source_id, "caseId": case["caseId"], "variant": variant, "repetition": repetition,
-                    "evaluationSetVersion": protocol["evaluationSetVersion"], "executionVersion": "quality-execution-0.1.2", "runId": run_id}
+                    "evaluationSetVersion": protocol["evaluationSetVersion"], "executionVersion": "quality-execution-0.1.3", "runId": run_id}
         configs = model_configs(directory, workspace)
         write(directory / "model-config.json", configs)
         instruction = prompt(case, variant)
@@ -384,16 +388,32 @@ def measure(args):
         write(attempts_path, attempts)  # Count invocation before spawn, including interrupted attempts.
         started = time.monotonic()
         try:
-            result = subprocess.run(command, input=instruction, text=True, capture_output=True, timeout=args.timeout)
+            # 復号は原bytes保存後に行う。後処理例外を起動例外と混同しない。
+            result = subprocess.run(command, input=instruction.encode("utf-8"), capture_output=True, timeout=args.timeout)
+        except subprocess.TimeoutExpired as error:
+            _, output_errors, unsaved_outputs = save_native_outputs(directory, error.stdout, error.stderr)
+            preserve_invocation_failure(directory, identity, workspace, command, args.timeout, started,
+                error_type="TimeoutExpired", reason=str(error), output_save_errors=output_errors,
+                unsaved_outputs=unsaved_outputs,
+                native_output_available=error.stdout is not None or error.stderr is not None)
+            raise
+        except (OSError, ValueError, subprocess.SubprocessError, KeyboardInterrupt) as error:
+            # subprocess.runは手動中断のpartial outputを返さない。推定で埋めない。
+            preserve_invocation_failure(directory, identity, workspace, command, args.timeout, started,
+                error_type=type(error).__name__, reason=str(error), errno=getattr(error, "errno", None))
+            raise
+        try:
             output_error, output_errors, unsaved_outputs = save_native_outputs(directory, result.stdout, result.stderr)
             if output_error:
                 preserve_invocation_failure(directory, identity, workspace, command, args.timeout, started,
                     error_type=type(output_error).__name__, reason=str(output_error), exit_code=result.returncode,
-                    errno=output_error.errno, output_save_errors=output_errors, unsaved_outputs=unsaved_outputs)
-                raise ValueError("native output persistence failed") from output_error
+                    errno=output_error.errno, output_save_errors=output_errors, unsaved_outputs=unsaved_outputs,
+                    native_output_available=True)
+                raise output_error
             if result.returncode:
                 preserve_invocation_failure(directory, identity, workspace, command, args.timeout, started,
-                    error_type="NonzeroExit", reason=f"codex exec exit {result.returncode}", exit_code=result.returncode)
+                    error_type="NonzeroExit", reason=f"codex exec exit {result.returncode}", exit_code=result.returncode,
+                    native_output_available=True)
                 raise ValueError(f"codex exec exit {result.returncode}")
             record = {"identity": identity, "wallMs": round((time.monotonic() - started) * 1000), "estimatedCostUsd": None,
                       "artifacts": {name: sha((directory / name).read_bytes()) for name in ("control.json", "model-config.json", "prompt.txt", "host.jsonl", "trace.jsonl", "stderr.log", "response.json")}}
@@ -406,23 +426,12 @@ def measure(args):
             write(directory / "run.json", record)
             print(json.dumps({"run": str(directory), "checks": errors, "newTrajectories": len(attempts), "independentReviewPending": True}, ensure_ascii=False))
             return int(any(errors.values()))
-        except subprocess.TimeoutExpired as error:
-            output_error, output_errors, unsaved_outputs = save_native_outputs(directory, error.stdout, error.stderr)
-            preserve_invocation_failure(directory, identity, workspace, command, args.timeout, started,
-                error_type="TimeoutExpired", reason=str(error), output_save_errors=output_errors,
-                unsaved_outputs=unsaved_outputs)
-            raise
-        except OSError as error:
-            output_error, output_errors, unsaved_outputs = save_native_outputs(directory, "", str(error) + "\n")
-            preserve_invocation_failure(directory, identity, workspace, command, args.timeout, started,
-                error_type=type(error).__name__, reason=str(error), errno=error.errno,
-                output_save_errors=output_errors, unsaved_outputs=unsaved_outputs)
-            raise
-        except (ValueError, subprocess.SubprocessError) as error:
+        except (OSError, ValueError, subprocess.SubprocessError, KeyboardInterrupt) as error:
             if not (directory / "interruption.json").exists():
                 preserve_invocation_failure(directory, identity, workspace, command, args.timeout, started,
                     error_type=type(error).__name__, reason=str(error),
-                    exit_code=getattr(error, "returncode", None))
+                    exit_code=result.returncode, errno=getattr(error, "errno", None),
+                    native_output_available=True)
             raise
 
 

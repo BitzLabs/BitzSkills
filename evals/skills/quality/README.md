@@ -109,4 +109,5 @@ source `c04da223` に固定した一次8件は全件完走し、各件の独立4
 公開2ケースから比較優位を一般化しない。使用量と保存監査は[通常レビュー結果](../results/2026-10-05-quality-normal/report.md)を参照する。
 
 評価器は起動中断・非0終了・原出力の保存失敗を成功へ変換しない。trace/stderrの原bytes、保存失敗、未保存bytesのbase64、argv/cwd/timeout、workspace前後差分、errno、自動再試行禁止を `interruption.json` へ保存する。
+`quality-execution-0.1.3`は出力をbytesで取得してから復号し、後処理の例外で原ログを上書きしない。手動中断では `subprocess.run` が返さないpartial outputを捏造せず、未取得と使用量不明を記録する。中断記録がある軌跡はreceiptがあっても追加起動を止める。過去の測定版・失敗記録は書き換えない。
 この経路はモデルを起動しない模擬故障試験で検証し、品質評価結果の採点とは別に扱う。
