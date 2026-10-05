@@ -96,7 +96,9 @@ def judge(conformance, scale):
             continue
         bodies.append(body)
         if result["exitCode"] != 0 or body.get("status") != "Passed" or body.get("errors"):
-            errors.append(f"規模の検証{index}: 成功していません")
+            reasons = body.get("errors") if isinstance(body.get("errors"), list) else []
+            detail = f"（{reasons[0]}）" if reasons else ""
+            errors.append(f"規模の検証{index}: 成功していません{detail}")
     if len(bodies) == CHECKOUTS and bodies[0] != bodies[1]:
         errors.append("規模の検証の結果がチェックアウト間で一致しません")
     return errors

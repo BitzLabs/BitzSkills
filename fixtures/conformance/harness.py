@@ -42,13 +42,18 @@ def safe_path(root, relative, allow_dot=False):
     return target
 
 
+# 準備手順のGit操作1回の上限。規模の検証は1万ファイル規模の`git add`を行い、通常は1秒未満だが、
+# 他の検証と負荷が重なると10秒を超えたことがある（2026-10-05）。認定の`git`の上限（`certify_gate_a.py`）と同じ値にする。
+GIT_TIMEOUT_SECONDS = 120
+
+
 def git(root, *args, environment=None):
     env = {"PATH": os.environ["PATH"], "LANG": "C", "LC_ALL": "C", "GIT_CONFIG_NOSYSTEM": "1",
            "GIT_CONFIG_GLOBAL": os.devnull, "GIT_AUTHOR_DATE": "2000-01-01T00:00:00Z", "GIT_COMMITTER_DATE": "2000-01-01T00:00:00Z"}
     return subprocess.check_output(["git", "-c", "user.name=Bitz Fixture", "-c", "user.email=fixture@bitz.invalid",
                                    "-c", "commit.gpgSign=false", "-c", "core.autocrlf=false", "-c", "core.fileMode=true",
                                    "-c", f"core.hooksPath={os.devnull}", "-c", "init.templateDir=", *args],
-                                   cwd=root, env={**env, **(environment or {})}, stderr=subprocess.PIPE, timeout=10)
+                                   cwd=root, env={**env, **(environment or {})}, stderr=subprocess.PIPE, timeout=GIT_TIMEOUT_SECONDS)
 
 
 def tree_digest_bytes(entries):

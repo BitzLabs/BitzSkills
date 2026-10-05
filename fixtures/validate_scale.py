@@ -12,6 +12,7 @@
 """
 import json
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 import time
@@ -104,9 +105,20 @@ def validate_fixture(identifier):
             "treeDigest": digest, "errors": errors}
 
 
+def checked_fixture(identifier):
+    """1件を照合する。準備手順の失敗も失敗の理由として結果に残し、JSONのレポートを出さずに終わらない。"""
+    try:
+        return validate_fixture(identifier)
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        dimension, value, _crosses = multi_limit_fixtures.CASES[identifier]
+        message = str(error).split("\n")[0]
+        return {"fixtureId": identifier, "dimension": dimension, "value": value,
+                "errors": [f"照合を完了できません（{type(error).__name__}: {message}）"]}
+
+
 def main():
     start = time.monotonic()
-    results = [validate_fixture(identifier) for identifier in multi_limit_fixtures.CASES]
+    results = [checked_fixture(identifier) for identifier in multi_limit_fixtures.CASES]
     errors = [f"{entry['fixtureId']}: {message}" for entry in results for message in entry["errors"]]
     report = {
         "status": "Passed" if not errors else "Failed",
