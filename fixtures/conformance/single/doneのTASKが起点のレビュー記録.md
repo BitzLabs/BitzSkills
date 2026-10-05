@@ -119,3 +119,96 @@ Coreの`context`操作の文言「MUST REQ-001:AC-01がtestされていません
 - 修正前のCore（`targetexpand.py`の1つ前のコミット）では、このfixtureは`blocked`／2、`CTX-STATE-001`（`TASK-002`が現在のpurposeに
   適用できない）となり、失敗することを確認した（陰性対照）。
 - 先行TASKが`done`であるときの別の経路（先行TASKが`requires`をさらに持つ、先行TASKが`addresses`を持つ）は固定しない。
+
+## 2026-10-05追記: 先行TASKが未完了または`done`のTASKを起点にした目的`verify`（`SINGLE-137`、`SINGLE-138`）
+
+### 追加の理由（C11）
+
+目的`verify`でTASKを起点にしたとき、`requires`で参照する先行TASKが状態`open`のままでも、Coreは`CTX-TASK-DEPENDENCY-001`を返さず、
+`passed`にしていた。先行TASKの状態の検査は目的`implement`でしか行っていなかった。上の`SINGLE-068`（`done`の起点）、`SINGLE-067`
+（`cancelled`の起点）は起点自身の状態を、`SINGLE-051`は目的`implement`で先行TASKが未`done`の場合を固定するが、
+目的`verify`で先行TASKの状態が結果を変える場合はどのfixtureも固定していなかった（`SINGLE-068`の起点は`requires`を持たない）。
+そのため、fixtureが通ったまま欠陥が残った。次の規範文が根拠である。
+
+- [ADR-029](../../../docs/02.設計書/10_決定記録/ADR-029_TASKの先行依存の状態ガード.md)の`Decision`の1番目と2番目の項目:
+  `requires`で参照する先行TASKがすべて`done`でなければ、`context`と`verify`で`CTX-TASK-DEPENDENCY-001`の`blocked`とする。
+- [`verify`仕様 §4](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#4-処理)の手順2と§9: 検証対象ごとに目的`verify`のコンテキストを完全解決し、
+  `CTX-TASK-DEPENDENCY-001`を検証対象の`diagnostics`へ返し得る。その検証対象は`bindingRefs: []`、コンテキストを構成できなければ`contextDigest: null`とする。
+- [本文テンプレート](../../../docs/03.詳細設計/02_仕様文書モデル/03_文書種別・本文テンプレート.md)のTASKの節: `requires`の参照先のTASKは、
+  `implement`または`verify`のときにすべて`done`であること。未完了または`cancelled`なら`CTX-TASK-DEPENDENCY-001`。
+- [診断レジストリ](../../../docs/03.詳細設計/00_共通契約/05_診断レジストリ.md)の`CTX-TASK-DEPENDENCY`の行: `CTX-TASK-DEPENDENCY-001`、`error`、`blocked`、
+  発生元`file`、継続単位`skip-target`、発生元の操作は`context, verify`。
+- [関係・トレースモデル §6.3](../../../docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md#63-verify)（2026-10-05に明記）:
+  起点のTASKの`requires`の閉包は含めないが、`requires`の参照先のTASKがすべて`done`でなければ`implement`と同じく`blocked`とする。
+  §6.4の4.: `requires`の参照先のTASKの`addresses`の参照先は、現在の起点の義務へ追加しない。
+
+### 入力と起動
+
+どちらも`verify TASK-001 --format json`。corpusは`SINGLE-068`と同じREQ-001、TECH-001、ADR-001、設定、ソース、テストに、次の2つのTASKを置く。
+`SINGLE-068`との違いは、起点のTASK-001が`done`ではなく`open`で、`requires: [TASK-002]`を持つことと、先行のTASK-002を置くことである。
+TASK-001は`REQ-001:AC-01`だけを`addresses`する（`AC-02`は意図して`addresses`しない。理由は上の`SINGLE-068`と同じ）。
+`SINGLE-137`のTASK-002は関係を持たない。`SINGLE-138`のTASK-002は、起点のTASK-001が`addresses`しない`REQ-001:AC-02`を`addresses`する。
+これにより「先行TASKの`addresses`の参照先を起点の義務へ加えない」確認（[`verify`仕様 §3](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#3-検証対象)の
+「`requires`先はコンテキストの材料であり、その規範文またはTASKの`addresses`先をテストの義務へ追加しない」、関係・トレースモデル §6.4の4.）が空にならない。
+`AC-02`は閉包の文書（REQ-001）が所有する規範文なので、誤って`requires`先の`addresses`をたどる実装は`AC-02`を対象規範文へ加え、
+`tests/test_session.py`（`AC-02`を`covers`する）をテスト割当てへ入れる。
+
+| fixture | TASK-001 | TASK-002 | 期待 |
+|---|---|---|---|
+| `SINGLE-137` | `open`、`requires: [TASK-002]` | `open`、関係なし | `blocked`／2、`CTX-TASK-DEPENDENCY-001` |
+| `SINGLE-138` | `open`、`requires: [TASK-002]` | `done`、`addresses: [REQ-001:AC-02]` | `passed`／0、診断なし |
+
+### 期待値の導き方
+
+Coreの出力は根拠にせず、上の規範文と、`SINGLE-067`、`SINGLE-068`、`SINGLE-051`の既存の期待値の形から決めた。
+
+`SINGLE-137`（`blocked`）:
+
+| 項目 | 期待値 | 根拠 |
+|---|---|---|
+| 結果の状態／終了コード | `blocked`／2 | 診断の結果への効果が`blocked`の1件だけ（診断レジストリ） |
+| `targetResults[0].diagnostics` | `CTX-TASK-DEPENDENCY-001`／`error`／`blocked`の1件だけ | ADR-029、診断レジストリ。`CTX-STATE-001`は出さない（TASK-002は`open`で適用可能） |
+| 発生元 | `kind: file`、`workspaceId: root`、`path: .spec/tasks/TASK-001.md`、`key: relations.requires` | 診断レジストリの発生元`file`。起点のTASKが宣言した`requires`が原因なので、`SINGLE-051`の`context`と同じキーにする |
+| 診断の置き場所 | 検証対象の`diagnostics`。最上位の`diagnostics`は空 | 継続単位が`skip-target`（`SINGLE-067`と同じ） |
+| `contextDigest` | `null` | `verify` §9: コンテキストを構成できない場合は`null` |
+| `statements` | `[]` | 先行TASKの検査はコンテキストの構成より前で止めるため、`addresses`の参照先を展開しない。展開していない規範文を並べると、行っていない作業を主張することになる（`SINGLE-067`と同じ理由。下の「迷った点」を参照） |
+| `bindingRefs`、`commands` | どちらも空。テストのコマンドを実行しない | `verify` §9、結果のフィールドの説明（実行計画の作成前に非成功となった検証対象は`bindingRefs: []`） |
+| `summary` | `先行TASK-002が完了していません` | 規範文を持たない文言のため、同じ診断コードの`context`操作の`SINGLE-051`にそろえた（`SINGLE-134`で決めた方針と同じ） |
+
+`SINGLE-138`（`passed`）:
+
+| 項目 | 期待値 | 根拠 |
+|---|---|---|
+| 結果の状態／終了コード | `passed`／0 | 先行TASKがすべて`done`なので`blocked`にしない（ADR-029、関係・トレースモデル §6.3）。テストは通る（`/bin/true`） |
+| 診断 | 検証対象と最上位の両方で空。`CTX-TASK-DEPENDENCY-001`と`CTX-STATE-001`を返さない | 同上。起点のTASK-001は`open`で適用可能 |
+| `statements` | `REQ-001:AC-01`だけ。TASK-002の`addresses`先の`AC-02`を含めない | 関係・トレースモデル §6.4の3.（TASKを起点にしたときは、`addresses`する規範文）。`requires`先のTASK-002の`addresses`先は義務へ加えない（同4.、`verify` §3） |
+| `bindingRefs`、`commands` | `root::default`の1件。`tests`は`tests/test_auth.py`、`covers`は`REQ-001:AC-01`だけ | `SINGLE-068`と同じ。`AC-02`を`covers`する`tests/test_session.py`は入れない（`statements`にないので解決しない） |
+| コンテキストの文書 | REQ-001、TASK-001、TECH-001の3件。TASK-002を含めない | §6.3: 起点のTASKの`requires`の閉包は含めない。`documents[]`はコードポイント辞書順 |
+| TASK-001の`strongRelations` | `addresses`→`REQ-001:AC-01`、`requires`→`TASK-002`の2件 | 正規化仕様 §3.1の`strongRelations`: `relation`、`target`の順で辞書順（`addresses` < `requires`）。宣言した強い関係なので、閉包に含めなくても材料に残る |
+| `contextDigest` | `sha256:61dfad7b7a0641f6485665066ad32f5e95e21ff7006164406fc159150d9fefd4` | 参照計算A（`verify_task_root_fixtures.py`のリテラル）と参照計算B（`digest_crosscheck`が入力の木構造から導出）の正規JSONが一致することを監査で確認した。TASK-002は文書の材料に入らず、TASK-001のフロントマターと`strongRelations`はTASK-002の`addresses`に依存しないので、TASK-002へ`addresses`を足してもハッシュ値は変わらない（足す前後で同じ値を確認した） |
+
+先行TASKの状態だけが両者の違いなので、`SINGLE-137`は先行TASKが未完了であることの、`SINGLE-138`は先行TASKが`done`であることの単一の原因を固定する。
+`SINGLE-138`は、Coreを誤って「先行TASKを持つ起点を無条件に`blocked`にする」実装にしても、「先行TASKの`addresses`の参照先を対象規範文へ加える」実装にしても通らない。
+
+参照計算Bの`digest_crosscheck.closure`は、閉包の外のTASKが閉包の文書の規範文を`addresses`するエッジを、従来は「閉包の外の強いエッジ」として拒否していた。
+`SINGLE-138`のTASK-002の`addresses`（`REQ-001:AC-02`）がこれに当たるため、`verify`と`interpret`では、閉包に含めないTASKの`addresses`を辿らない
+エッジとして受理するように直した（TASKを閉包へ加えるのは目的`implement`の`open`のTASKだけ。関係・トレースモデル §6.1〜§6.3）。
+既存のfixtureの期待値は変わらない。
+
+### 監査の回帰試験
+
+`test_conformance_audit.py`に、次の改変を監査が拒否することを加えた。`SINGLE-137`は診断の消去、診断コードの置換、状態の`passed`化、
+`contextDigest`・`statements`・`bindingRefs`・`commands`の非空化、マニフェストの期待の`passed`化。`SINGLE-138`は状態の`blocked`化、
+`CTX-TASK-DEPENDENCY-001`または`CTX-STATE-001`の追加、`statements`の削除と追加、`contextDigest`と`bindingRefs`の削除、
+`AC-02`のテストの混入（`tests`、`covers`、`argv`）、マニフェストの期待の`blocked`化。先行TASK-002の`addresses`を入力側で消す、
+または起点と同じ`REQ-001:AC-01`へ変えた場合も拒否する。さらに、先行TASKの状態を入力側で変えた場合（`SINGLE-137`を`done`・`cancelled`、
+`SINGLE-138`を`open`・`cancelled`）も拒否する。
+
+### 限界
+
+- 修正前のCore（`targetexpand.py`の`HEAD~2`の版）では、`SINGLE-137`は`passed`／0（`contextDigest`と`bindingRefs`、`commands`が非空、診断なし）となり、
+  失敗することを確認した（陰性対照）。`SINGLE-138`は修正の前後とも通る。
+- 目的`verify`のTASK起点で、`requires`の先行TASKの`addresses`の参照先を対象規範文へ加える変異体のCore（作業ツリー外のコピー）では、
+  `SINGLE-138`が失敗する（`AC-02`が`statements`と`covers`に入り、`tests/test_session.py`が割当てへ入る）。`SINGLE-137`は変異の前に止まるので通る。
+- 先行TASKが`cancelled`の場合、先行TASKが複数ある場合、先行TASKがさらに`requires`を持つ場合は固定しない。
+- 複合ワークスペースでの先行TASKの参照（修飾ID）は固定しない。

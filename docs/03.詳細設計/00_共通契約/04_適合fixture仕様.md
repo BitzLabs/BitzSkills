@@ -448,6 +448,8 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-066` | 規範文なしTECHの文書単位のテスト対応 | verify | passed／0 | `statements: []`でも`bindingRefs`を持つ |
 | `SINGLE-067` | `cancelled`のTASK起点 | verify | blocked／2 | `CTX-STATE-001` |
 | `SINGLE-068` | `done`のTASK起点 | verify | passed／0 | 再検証を許可 |
+| `SINGLE-137` | 先行TASKが未完了（`open`）のTASK起点 | verify | blocked／2 | `CTX-TASK-DEPENDENCY-001`、`contextDigest: null`、`bindingRefs: []`、テストを開始しない |
+| `SINGLE-138` | 先行TASKがすべて`done`のTASK起点 | verify | passed／0 | `CTX-TASK-DEPENDENCY-001`と`CTX-STATE-001`を返さない、先行TASKとその`addresses`の参照先を対象に加えない |
 | `SINGLE-069-01` | 成功コマンドの標準出力／標準エラー出力が64 KiBを超える | verify | passed／0 | パイプを止めず、伏せ字化したUTF-8末尾65,536バイトと切り詰めフラグを保持 |
 | `SINGLE-069-02` | 非0終了コマンドの標準出力／標準エラー出力が64 KiBを超える | verify | failed／1 | パイプを止めず、伏せ字化したUTF-8末尾65,536バイトと切り詰めフラグを保持 |
 
