@@ -544,8 +544,8 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-104-04` | `--format`省略の`doctor` | doctor | passed／0 | 標準出力はテキスト、`scope=`なし |
 | `SINGLE-105-01` | Gitありの`context`の`revision` | context | passed／0 | コミットは40桁の小文字16進 |
 | `SINGLE-105-02` | Gitなしの`verify`の`revision` | verify | passed／0 | `revision: null` |
-| `SINGLE-106-01` | コンテキストの`full`提示 | context | passed／0 | `full`だけの必須フィールドと禁止フィールドをスキーマで検証 |
-| `SINGLE-106-02` | コンテキストの`normative`提示 | context | passed／0 | `normative`だけの必須フィールドと禁止フィールドをスキーマで検証 |
+| `SINGLE-106-01` | コンテキスト一式の`full`提示 | context | passed／0 | `full`だけの必須フィールドと禁止フィールドをスキーマで検証 |
+| `SINGLE-106-02` | コンテキスト一式の`normative`提示 | context | passed／0 | `normative`だけの必須フィールドと禁止フィールドをスキーマで検証 |
 | `SINGLE-106-03` | `interpret`で起点を具体化する`draft`文書 | context | passed／0 | `advisory`を`reference`で提示し、必須フィールドと禁止フィールドをスキーマで検証 |
 | `SINGLE-106-04` | 標準出力、標準エラー出力とも空の`verify`コマンド | verify | passed／0 | 空の抜粋、両方とも切り詰めフラグは`false` |
 | `SINGLE-106-05` | 2つの検証対象に同じ診断の条件 | verify | failed／1 | テキストの`diagnostics`は両方の検証対象上の診断の総数 |
@@ -562,10 +562,10 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-108-02` | `SINGLE-108-01`と同じ起点 | verify | passed／0 | `context`と同じ対象規範文の集合 |
 | `SINGLE-109` | 規範文起点と同じ文書のほかの規範文 | context --purpose implement | passed／0 | 起点に指定した規範文と具体化文書は対象規範文、同じ文書のほかの規範文は隣接規範文 |
 | `SINGLE-110` | TASKの`addresses`先と`requires`先のTASK | context --purpose verify | passed／0 | 自身の`addresses`先だけが対象規範文、`requires`先のTASKとその`addresses`先をコンテキスト文書へ含めない |
-| `SINGLE-111-01` | カタログにない明示の文書ID | check | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
+| `SINGLE-111-01` | ワークスペースの仕様文書にない明示の文書ID | check | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
 | `SINGLE-111-02` | 所有文書はあるが規範文IDが不在 | check | failed／1 | `CTX-ROOT-MISSING-001`、所有文書の`check`へ置換しない |
-| `SINGLE-111-03` | カタログにない構文上妥当なSPECのパス | check | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
-| `SINGLE-111-04` | カタログにない明示の文書ID | verify | failed／1 | 検証対象の診断に`CTX-ROOT-MISSING-001` |
+| `SINGLE-111-03` | ワークスペースに存在しない、構文上妥当な仕様文書のパス | check | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
+| `SINGLE-111-04` | ワークスペースの仕様文書にない明示の文書ID | verify | failed／1 | 検証対象の診断に`CTX-ROOT-MISSING-001` |
 | `SINGLE-112-01` | ADR起点 | context --purpose interpret | passed／0 | 対象規範文は空 |
 | `SINGLE-112-02` | ADR起点 | context --purpose implement | 結果なし／4 | 標準出力結果なし、レポートなし |
 | `SINGLE-112-03` | ADR起点 | check | passed／0 | 文書検査だけを行う |
@@ -632,7 +632,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-127-10` | `--timeout +1` | verify | 結果なし／4 | 非正規の十進表記 |
 | `SINGLE-127-11` | `--report=out.json` | check | 結果なし／4 | 未知オプション形式、任意のパスへ書かない |
 | `SINGLE-127-12` | `--format json --report` | check | passed／0 | 両オプションを受理し、標準出力JSONと規定のレポートを生成 |
-| `SINGLE-127-13` | カタログにない構文上妥当な起点 | context | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
+| `SINGLE-127-13` | ワークスペースの仕様文書にない構文上妥当な起点 | context | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
 | `SINGLE-127-14` | カタログにない`--workspace` | doctor | 結果なし／4 | ワークスペース探索後、公開操作結果なし |
 | `SINGLE-127-15` | Git 2.29を解決 | doctor | passed_with_warnings／0 | Git不在へ縮退し、下限値は詳細設計から取得 |
 | `SINGLE-127-16` | Git 2.30を解決 | doctor | passed／0 | 下限境界を利用可能として扱う |
