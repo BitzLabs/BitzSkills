@@ -1,0 +1,132 @@
+{
+  "schemaVersion": "1.0",
+  "archiveSha256": "b177fdacc6b906f06ca39a0cb6919ebe5cb0a5a5c1c3fcc38d675258e8745f13",
+  "files": {
+    "logs/all-skills.txt": {
+      "bytes": 299,
+      "sha256": "1c0582f70f5be0781c9de1d7a0f2f4b8d4975cdeda64ef0183ca89fe1ae22822"
+    },
+    "logs/before-from-ref.py": {
+      "bytes": 1072,
+      "sha256": "37e352dae85304ecf4f892d69e6cfa6f98bbc98ef7554b1e3aa378c2a116e799"
+    },
+    "logs/budget-final.json": {
+      "bytes": 1195,
+      "sha256": "e634af5969adf00f914380e80afc4f45c1888c344a9d86572ebe213472f5e4b8"
+    },
+    "logs/build-archive.py": {
+      "bytes": 2288,
+      "sha256": "cfb5136814d046df1b4b140cc4102c712b8f1f38b52d3f044cd9e853c2793db0"
+    },
+    "logs/corrected-tests.txt": {
+      "bytes": 112,
+      "sha256": "703b78d121b0614331d56ddd1818949639763c02e120eb02779f32d7a902d656"
+    },
+    "logs/independent-tests.txt": {
+      "bytes": 189,
+      "sha256": "bbd321ae16c325b938f284133fb547264169706dfb1bbec70b36852dd9a0b344"
+    },
+    "logs/original-fixed-ref-tests.txt": {
+      "bytes": 1663,
+      "sha256": "6d61572d6fd82e6e49b424263e981e0906c727e25ddb440e9c7154612746a797"
+    },
+    "logs/original-tests.txt": {
+      "bytes": 1683,
+      "sha256": "abf5cac6296b524d335abbcbc8403ac4ffb7b63b7a06196c2648684f2549fbe6"
+    },
+    "logs/parent-audit.json": {
+      "bytes": 208,
+      "sha256": "ebe0b56fb505e67d5d45b4c22de73373b07822dbc5c71e29c5b2ca3154c0504f"
+    },
+    "logs/parent-recheck-tests.txt": {
+      "bytes": 189,
+      "sha256": "e3abd30c67a43e3b808662fe39bafcc2d17517db1fa73052b01f0be5be8dc11d"
+    },
+    "logs/quality-tests.txt": {
+      "bytes": 189,
+      "sha256": "aaf8b6524db76d6cf774b8db46e135198bc7a6d85b7915a5dcb1813b11e218be"
+    },
+    "logs/review.json": {
+      "bytes": 3102,
+      "sha256": "9c45edd6e177a9c2d22fa6898cdd64c395df6f375a1802c999eb38dd820ff310"
+    },
+    "logs/scope.json": {
+      "bytes": 1064,
+      "sha256": "c61528b32b52725afb33f0139748457d17752aaf3b9a304661b3289e77cd7d94"
+    },
+    "source/after/evals/skills/quality/README.md": {
+      "bytes": 14270,
+      "sha256": "4db14cc1efae0d965b756a210cd9b1f25019df96a0293517f02e976f5b39faa7"
+    },
+    "source/after/evals/skills/quality/evaluate.py": {
+      "bytes": 29359,
+      "sha256": "b651cf1bb45e571b8b7058fd77f071841e8d583ed5d284e1ba3ba29d4df65af9"
+    },
+    "source/after/tests/skills/test_quality_evaluation.py": {
+      "bytes": 25978,
+      "sha256": "72d334d7f081b0f00c39640f724342afb5d7272eacb4f0d65f7e15ceb918df29"
+    },
+    "source/after/tests/skills/test_quality_interruption.py": {
+      "bytes": 14865,
+      "sha256": "3b582d945f3e727d16bdcc49f80f10e79ab6da60a144d5cac03b764cc74fe117"
+    },
+    "source/before/evals/skills/quality/README.md": {
+      "bytes": 13676,
+      "sha256": "05c1fbbbfd2cb1fa8819c9c8c5ed4293aa90e225a183d5f4b6b19aed7c6c24c4"
+    },
+    "source/before/evals/skills/quality/evaluate.py": {
+      "bytes": 29275,
+      "sha256": "42a64a6b3af8236259856dc3170b3d4e9fb2ec4468abee831db5f04054838a5c"
+    },
+    "source/before/tests/skills/test_quality_evaluation.py": {
+      "bytes": 25728,
+      "sha256": "3164e6e1d0074055ed6dc572d705aff93c1a280f3455ce89f7c6aa6e1732d326"
+    },
+    "source/before/tests/skills/test_quality_interruption.py": {
+      "bytes": 12924,
+      "sha256": "3cda7e40a12322b020c3bf691f3c3a2f02b7668af7c2a8d5de3b94d3d0e2e175"
+    }
+  },
+  "fixedSources": [
+    {
+      "ref": "3e181af4",
+      "path": "evals/skills/quality/evaluate.py",
+      "archivePath": "source/before/evals/skills/quality/evaluate.py"
+    },
+    {
+      "ref": "3e181af4",
+      "path": "evals/skills/quality/README.md",
+      "archivePath": "source/before/evals/skills/quality/README.md"
+    },
+    {
+      "ref": "3e181af4",
+      "path": "tests/skills/test_quality_interruption.py",
+      "archivePath": "source/before/tests/skills/test_quality_interruption.py"
+    },
+    {
+      "ref": "3e181af4",
+      "path": "tests/skills/test_quality_evaluation.py",
+      "archivePath": "source/before/tests/skills/test_quality_evaluation.py"
+    },
+    {
+      "ref": "07db2a7f9aef68c09456df29fc5922699260ebe5",
+      "path": "evals/skills/quality/evaluate.py",
+      "archivePath": "source/after/evals/skills/quality/evaluate.py"
+    },
+    {
+      "ref": "07db2a7f9aef68c09456df29fc5922699260ebe5",
+      "path": "evals/skills/quality/README.md",
+      "archivePath": "source/after/evals/skills/quality/README.md"
+    },
+    {
+      "ref": "07db2a7f9aef68c09456df29fc5922699260ebe5",
+      "path": "tests/skills/test_quality_interruption.py",
+      "archivePath": "source/after/tests/skills/test_quality_interruption.py"
+    },
+    {
+      "ref": "07db2a7f9aef68c09456df29fc5922699260ebe5",
+      "path": "tests/skills/test_quality_evaluation.py",
+      "archivePath": "source/after/tests/skills/test_quality_evaluation.py"
+    }
+  ]
+}

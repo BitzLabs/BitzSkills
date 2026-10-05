@@ -1060,3 +1060,10 @@ SDD評価器は原source `997299b3` の3/4回帰の失敗を保持し、初回 `
 実保持ケース評価と全Gateは未認定。17ファイル/6固定sourceの保存監査を通過した。
 証拠は `evals/skills/results/2026-10-06-held-out-unit-isolation/report.md` を参照する。
 次は未測定のquality-plan公開比較を別ref・有限条件へ固定する。
+
+比較準備中に品質評価器にも保存中のKeyboardInterruptで原bytesが抜ける経路を発見した。
+原ref `3e181af4` で新13回帰の2failを再現し、`07db2a7f` / quality-execution-0.1.5で是正した。
+親13件/品質89件/全198件、独立89件、検分後の親89件はOK/exit0。
+4source/独立ログhashと21ファイル/8固定sourceの保存監査を確認した。
+新規一次0、独立SOL1枠、自動再試行0。原停止・failed/unknown・capacity通知を保持する。
+証拠は `evals/skills/results/2026-10-06-quality-save-interruption/report.md` を参照する。
