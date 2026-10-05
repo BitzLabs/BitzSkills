@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "1.0",
+  "sourceCommit": "6bfaa73245a731c3eeccc9abb3faccc502cd4af7",
+  "originalSourceCommit": "e515544660dcf115a5d8e523ec5228fa1705f780",
+  "archiveSha256": "4af6bc663085c8481dd5b41cac0b4d67f4043846f13cf07d6900e28363fc9a20",
+  "files": {
+    "all-skills.txt": {
+      "sha256": "84d03e5f7528f17ef47ea1518fe6456a0aee435d05fad82bf854e8d18db66597",
+      "bytes": 283
+    },
+    "corrected-regression.txt": {
+      "sha256": "4edfca02e999ef76ea55f4e4c72e4542227513ebe57eb669bbd30666521e4ab7",
+      "bytes": 110
+    },
+    "helper-test-result.json": {
+      "sha256": "c62e0349fe43e3414e54e2fe05d8efd7b2636ef8333c6be9cc10d1b2e7ad089b",
+      "bytes": 244
+    },
+    "independent-evaluation.stderr.log": {
+      "sha256": "7e51a52faaf1b2239c4d1730b7d2dc59751276ddc4c9f5efc58b75178aed6e09",
+      "bytes": 123
+    },
+    "independent-evaluation.stdout.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "independent-tests.stderr.log": {
+      "sha256": "a1997bca199d13e3e903ceb20a1553adeacc855514ae424c9195f78f6a0df6d4",
+      "bytes": 110
+    },
+    "independent-tests.stdout.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "original-current-regression.txt": {
+      "sha256": "71ae1fe0bb72c30b121572adb16bc918d099d048d93054f547c08e8cb3e10185",
+      "bytes": 6783
+    },
+    "original-evaluate.py": {
+      "sha256": "fcd34e4686072ca1fb7eaf05e949f5067d9fa5732131653afeaa5c51f6543059",
+      "bytes": 28349
+    },
+    "original-regression.txt": {
+      "sha256": "e09791ca592876c5cfb9be517e52923599f13d9b146ee34ef0471fcb59057c22",
+      "bytes": 3700
+    },
+    "original-review.json": {
+      "sha256": "fa101e50ff6d7f4b474de21e26e78972fcbf6706dfdb1e7ff91323b00bd3dece",
+      "bytes": 25304
+    },
+    "original-test.py": {
+      "sha256": "26f68384afd3d1d176b95a2b67c02341fc5a3596f56edbb56bae1f97db758ca4",
+      "bytes": 3441
+    },
+    "parent-audit.json": {
+      "sha256": "b2df8b2fa28d54c316043f8a8e87040e46a2cef924249f3019d6426b7bacd1e4",
+      "bytes": 1091
+    },
+    "parent-recheck-evaluation.txt": {
+      "sha256": "959dc9e422bedbfcec31687c7c39c0aca6a37a13e3db203b7d4f09a84f076d08",
+      "bytes": 123
+    },
+    "parent-recheck-interruption.txt": {
+      "sha256": "5fe5b10d32264d5822bbc6bea3021e5131c5029547cc4aa9bf98bf64c1740957",
+      "bytes": 110
+    },
+    "probe-results.json": {
+      "sha256": "d9f09f29cb8527fc3208dcd7893e08646511a47d9576f8255ab0e7ba82cf2da5",
+      "bytes": 18992
+    },
+    "probe.py": {
+      "sha256": "f47197dc598f2efdc8f48a4b17ff8ca40ed2047961559fb01dcc16c3694723af",
+      "bytes": 4836
+    },
+    "remediation-review.json": {
+      "sha256": "d76ccc2f514b80fd987e3dd5f2d19ff7c749f4f01822e3de59d72032340d2f05",
+      "bytes": 4857
+    },
+    "remediation-scope.json": {
+      "sha256": "b85274f8430bff9f09c80650faf520edc579118e9f0f6f576b922a2165f00d75",
+      "bytes": 983
+    },
+    "replay-original.py": {
+      "sha256": "ca17724ac89b2732ecced0e5065a807d111e524f7eca81f2bd47f65995a751e8",
+      "bytes": 891
+    },
+    "scope.json": {
+      "sha256": "835c5397b227b92783d5b4aac881bef10cb47c98eb41244b2e1f5f54a838f123",
+      "bytes": 1408
+    },
+    "source/README.md": {
+      "sha256": "b5892429d938be3a2539d89c3c52a49f7f0c6bf2c16b081186337d67ffce6c90",
+      "bytes": 11613
+    },
+    "source/evaluate.py": {
+      "sha256": "3fb3807711d2781394174d6f5c80886811811668ff47266481284d7c44ccd458",
+      "bytes": 28985
+    },
+    "source/test_quality_evaluation.py": {
+      "sha256": "f30087d2b5899ff8e22498bdc8554f03334697e81fd74b7d5c9851d7fac95ea2",
+      "bytes": 25478
+    },
+    "source/test_quality_interruption.py": {
+      "sha256": "2a31e77e8ca692eb78d263855764b709f3ceac5d5bfe70d851a7591198c606e5",
+      "bytes": 12900
+    }
+  },
+  "originalSourceSha256": {
+    "original-evaluate.py": "fcd34e4686072ca1fb7eaf05e949f5067d9fa5732131653afeaa5c51f6543059",
+    "original-test.py": "26f68384afd3d1d176b95a2b67c02341fc5a3596f56edbb56bae1f97db758ca4"
+  },
+  "maximumNewPrimaryTrajectories": 0,
+  "newIndependentCalls": 2,
+  "previousInterruptedIndependentCalls": 1,
+  "automaticRetries": 0,
+  "providerUsage": null,
+  "estimatedCostUsd": null,
+  "certifiesSkillGate": false,
+  "executionVersion": "quality-execution-0.1.3"
+}

@@ -1,0 +1,8 @@
+{
+  "status": "passed",
+  "archiveSha256": "4af6bc663085c8481dd5b41cac0b4d67f4043846f13cf07d6900e28363fc9a20",
+  "files": 25,
+  "bytes": 180714,
+  "errors": [],
+  "limits": "保存同一性と判定の分離のみ。実モデル測定・Skill Gate認定ではない。"
+}
