@@ -81,6 +81,9 @@ python3 evals/skills/sdd/evaluate.py run \
 ```
 
 このバッチの一次評価はSI-001、SI-007のskill・反復1各1件、上限2回。独立SOL検分は別枠で各1回、計2回までとする。
+次の`batches/implement-safety-02.json`はSI-002、SI-008のskill・反復1各1件、一次上限2回、独立検分各1回の別測定。
+実行時は`--batch`、`--case`、`--output .venv/sdd-implement-safety-02`を変更する。
+既存バッチの台帳や出力は再開・上書きせず、確定refと条件を新台帳へ結び付ける。
 固定順序で1件ずつ実行し、`.venv/sdd-batch-ledgers/<id>.json`へ起動前に消費数・実行IDを記録する。
 台帳は別出力・別ref・別モデル版・別Python環境への付替えを拒否する。同じバッチの同時起動も拒否する。
 Python pathの先頭を確定refのCore srcに限定し、台帳作成とモデル起動より前に公開`doctor`を実行する。
