@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "subjectCommit": "fb295c9bf87c2df2ebb2bfabd25eef28f48449de",
+  "archive": "evidence.tar.gz",
+  "sha256": "64df2cfbf0f0f3a6539aa7613ad3ac0bcc0b168f95442ed0325bd37e9dcf8e68",
+  "members": 732,
+  "files": 421,
+  "uncompressedFileBytes": 800391,
+  "errors": [],
+  "requiredChecksAndIndependentSemantic": {"SI-003": "passed", "SI-004": "passed", "SI-005": "passed", "SI-006": "passed", "SI-009": "passed"},
+  "rootRecheckedReceipts": 5,
+  "completedSnapshotsUnchanged": true,
+  "interruptedCase": {"caseId": "SI-010", "evaluationRunId": "2c41deaa-f23c-4973-b927-64e9c39c3e0d", "status": "interrupted", "exitCode": 1, "errorType": "ValueError", "traceBytes": 0, "hostBytes": 0, "stderrBytes": 197, "workspaceGitStatusEmpty": true, "semantic": "not-measured", "failurePath": null, "reviewSha256": "06b1e7a7ecfa783ffb03f15376ccbb09b3a11866edd0b9717d5bf1d5ab7444a4", "rootCheckedEvidenceHashes": 10},
+  "budgetRecheck": {"attemptCount": 6, "output": "失敗・中断済み測定を自動再開しません", "additionalBackendCalls": 0, "ledgerUnchanged": true},
+  "completedPrimaryWallMsTotal": 256087,
+  "completedPrimaryUsageTotals": {"input_tokens": 477806, "cached_input_tokens": 372480, "cache_write_input_tokens": 0, "output_tokens": 3281, "reasoning_output_tokens": 120},
+  "interruptedUsage": null,
+  "interruptedWallMs": null,
+  "providerCost": null,
+  "reviewUsage": null,
+  "gateDecision": "not-certified"
+}
