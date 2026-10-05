@@ -629,6 +629,20 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             else:
                 roles[doc_id] = "constraint"
 
+    # 提示形式`normative`は本文を省き、規範文を制約台帳だけに残す。所有する規範文が1件でも対象規範文（制約台帳）にない
+    # 文書を`normative`にすると、その`MUST`の文面が提示からも制約台帳からも失われる（ADR-014の`Decision`の4番目の項目）。
+    # そのため、`normative`にできるのは、所有する規範文がすべて対象規範文に含まれる具体化文書だけとする（`bitz context`仕様 §5）。
+    # 他のワークスペースの文書の規範文は、対象規範文と同じ`ws::local`の表現にそろえて比べる。
+    target_statement_set = set(expansion.target_statements)
+
+    def _statements_in_ledger(doc_id: str) -> bool:
+        entry = id_index[doc_id]
+        prefix = doc_id.partition("::")[0] if "::" in doc_id else None
+        return all(
+            (f"{prefix}::{stmt['id']}" if prefix is not None else stmt["id"]) in target_statement_set
+            for stmt in entry.statements
+        )
+
     def _projection_for(doc_id: str, use_detail: str) -> str:
         if use_detail == "full":
             return "full"
@@ -645,7 +659,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             return "full"
         if expansion.document_distance.get(doc_id, 0) <= 1:
             return "full"
-        if role == "refinement":
+        if role == "refinement" and _statements_in_ledger(doc_id):
             return "normative"
         return "full"
 
