@@ -1,0 +1,279 @@
+{
+  "schemaVersion": "1.0",
+  "status": "passed",
+  "sourceCommit": "c04da2239c6308414d2938242d79a76cd4e83013",
+  "primaryAttempts": 8,
+  "completedPrimaryRuns": 8,
+  "independentPassed": 8,
+  "sameSourceAndConditions": true,
+  "identicalCommonInputsAndPermissions": true,
+  "uniqueNativeThreads": 8,
+  "model": "gpt-6.1-sol",
+  "protocolSha256": "4449a313c64c5b4c6185b5fd277e259cf33d11881cac20d356d7b1a3d680ec5c",
+  "certifiesSkillGate": false,
+  "publicSyntheticCases": true,
+  "rows": [
+    {
+      "runId": "quality-pilot-skill-r1-QR-004",
+      "caseId": "QR-004",
+      "variant": "skill",
+      "repetition": 1,
+      "sourceCommit": "c04da2239c6308414d2938242d79a76cd4e83013",
+      "subjectCommit": "a749a15a4a546dc784e6c7dae38419e7769c8da9",
+      "riskBand": "Q0",
+      "decision": "ready",
+      "missingEvidenceIds": [],
+      "findingCount": 2,
+      "humanDecisionPending": true,
+      "independentReceipt": "passed",
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 0,
+      "hostCalls": 16,
+      "threadId": "01a10bfd-fa1c-7210-81e2-d1c276754805",
+      "wallMs": 144903,
+      "usage": {
+        "input_tokens": 313513,
+        "cached_input_tokens": 267264,
+        "output_tokens": 2585
+      },
+      "runSha256": "8bb76003f5ef01a716c0a79255c801e5729c4fc1a58af3b7d53e55137883ece2",
+      "receiptSha256": "a1988e5b5ad779936cf33b8aeb138342a48bdee0b59a83d298ec1ed11d74019b"
+    },
+    {
+      "runId": "quality-pilot-skill-r1-QR-005",
+      "caseId": "QR-005",
+      "variant": "skill",
+      "repetition": 1,
+      "sourceCommit": "c04da2239c6308414d2938242d79a76cd4e83013",
+      "subjectCommit": "80fd2617017bdc5567d695fce90e891c2a890345",
+      "riskBand": "Q1",
+      "decision": "ready",
+      "missingEvidenceIds": [],
+      "findingCount": 2,
+      "humanDecisionPending": true,
+      "independentReceipt": "passed",
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 1,
+      "hostCalls": 16,
+      "threadId": "01a10c03-58d3-7552-9e48-775d49ca766d",
+      "wallMs": 130755,
+      "usage": {
+        "input_tokens": 318250,
+        "cached_input_tokens": 292096,
+        "output_tokens": 2388
+      },
+      "runSha256": "f74b5fc2d398dfb84b9b144d64c76f534a73c69c121837eb022486d12b3d9f36",
+      "receiptSha256": "9b586b29823b93f972761ff0c5926809f4f30abd1adddc793274e2bc0739ba0b"
+    },
+    {
+      "runId": "quality-pilot-baseline-r1-QR-004",
+      "caseId": "QR-004",
+      "variant": "baseline",
+      "repetition": 1,
+      "sourceCommit": "c04da2239c6308414d2938242d79a76cd4e83013",
+      "subjectCommit": "a749a15a4a546dc784e6c7dae38419e7769c8da9",
+      "riskBand": "Q0",
+      "decision": "ready",
+      "missingEvidenceIds": [],
+      "findingCount": 2,
+      "humanDecisionPending": true,
+      "independentReceipt": "passed",
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 0,
+      "hostCalls": 14,
+      "threadId": "01a10c08-e5cc-7b71-9b6d-bdaaa3e8cf94",
+      "wallMs": 132407,
+      "usage": {
+        "input_tokens": 240107,
+        "cached_input_tokens": 208640,
+        "output_tokens": 2368
+      },
+      "runSha256": "56763b92ee49ccb179a98e2e531d3f081d313ede3edfc3627fc06eadc76aaa1e",
+      "receiptSha256": "eee44033b9dbe81af35981f3ad9c9321e440441ac6588b7ab0ef0128d22d7d56"
+    },
+    {
+      "runId": "quality-pilot-baseline-r1-QR-005",
+      "caseId": "QR-005",
+      "variant": "baseline",
+      "repetition": 1,
+      "sourceCommit": "c04da2239c6308414d2938242d79a76cd4e83013",
+      "subjectCommit": "80fd2617017bdc5567d695fce90e891c2a890345",
+      "riskBand": "Q1",
+      "decision": "ready",
+      "missingEvidenceIds": [],
+      "findingCount": 1,
+      "humanDecisionPending": true,
+      "independentReceipt": "passed",
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 1,
+      "hostCalls": 14,
+      "threadId": "01a10c0e-9838-7343-8c44-3bbe35cdb400",
+      "wallMs": 132121,
+      "usage": {
+        "input_tokens": 244571,
+        "cached_input_tokens": 205056,
+        "output_tokens": 2166
+      },
+      "runSha256": "de7bb97f13f60ebf371a21467f5cc04d905eb389338236f7312285a0a6767e5a",
+      "receiptSha256": "312433ea095c11195fcc449738b9f116905dc8a138b2578e0534dad534725a74"
+    },
+    {
+      "runId": "quality-pilot-skill-r2-QR-004",
+      "caseId": "QR-004",
+      "variant": "skill",
+      "repetition": 2,
+      "sourceCommit": "c04da2239c6308414d2938242d79a76cd4e83013",
+      "subjectCommit": "a749a15a4a546dc784e6c7dae38419e7769c8da9",
+      "riskBand": "Q0",
+      "decision": "ready",
+      "missingEvidenceIds": [],
+      "findingCount": 2,
+      "humanDecisionPending": true,
+      "independentReceipt": "passed",
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 0,
+      "hostCalls": 16,
+      "threadId": "01a10c13-f425-7dd0-8c70-7b4a597da366",
+      "wallMs": 136506,
+      "usage": {
+        "input_tokens": 313642,
+        "cached_input_tokens": 267392,
+        "output_tokens": 2591
+      },
+      "runSha256": "20b16cce20466e67bbbf1be2725c795ad4bd9563d95313dc6d17f948b108a4ac",
+      "receiptSha256": "7709cd68ea5dd6cdad4a9c283a3de0e4729cbc8b4bcc1b7d0514a4055255c933"
+    },
+    {
+      "runId": "quality-pilot-skill-r2-QR-005",
+      "caseId": "QR-005",
+      "variant": "skill",
+      "repetition": 2,
+      "sourceCommit": "c04da2239c6308414d2938242d79a76cd4e83013",
+      "subjectCommit": "80fd2617017bdc5567d695fce90e891c2a890345",
+      "riskBand": "Q1",
+      "decision": "ready",
+      "missingEvidenceIds": [],
+      "findingCount": 2,
+      "humanDecisionPending": true,
+      "independentReceipt": "passed",
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 1,
+      "hostCalls": 16,
+      "threadId": "01a10c19-9f85-7ba2-829f-2f76f5db50e7",
+      "wallMs": 140781,
+      "usage": {
+        "input_tokens": 317994,
+        "cached_input_tokens": 281600,
+        "output_tokens": 2371
+      },
+      "runSha256": "98b11e7679a41c527eaf9e260b834e95d064671df341f765bab0ab60f74f0be0",
+      "receiptSha256": "e282de395868d35700b954556b0da68ffc8886403ea63a4b9bac5dd341858e89"
+    },
+    {
+      "runId": "quality-pilot-baseline-r2-QR-004",
+      "caseId": "QR-004",
+      "variant": "baseline",
+      "repetition": 2,
+      "sourceCommit": "c04da2239c6308414d2938242d79a76cd4e83013",
+      "subjectCommit": "a749a15a4a546dc784e6c7dae38419e7769c8da9",
+      "riskBand": "Q0",
+      "decision": "ready",
+      "missingEvidenceIds": [],
+      "findingCount": 2,
+      "humanDecisionPending": true,
+      "independentReceipt": "passed",
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 0,
+      "hostCalls": 14,
+      "threadId": "01a10c1f-4316-74b0-994b-85ef75343cab",
+      "wallMs": 140795,
+      "usage": {
+        "input_tokens": 239994,
+        "cached_input_tokens": 199936,
+        "output_tokens": 2315
+      },
+      "runSha256": "4c0b26ebe18134966901f24d519c11a15b71525ab4664babe3c3203543880c0c",
+      "receiptSha256": "8d71c4a28fb9f66f1f4b1249080723f440cebd74e46503a39933311306f42583"
+    },
+    {
+      "runId": "quality-pilot-baseline-r2-QR-005",
+      "caseId": "QR-005",
+      "variant": "baseline",
+      "repetition": 2,
+      "sourceCommit": "c04da2239c6308414d2938242d79a76cd4e83013",
+      "subjectCommit": "80fd2617017bdc5567d695fce90e891c2a890345",
+      "riskBand": "Q1",
+      "decision": "ready",
+      "missingEvidenceIds": [],
+      "findingCount": 2,
+      "humanDecisionPending": true,
+      "independentReceipt": "passed",
+      "parentErrors": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "testCalls": 1,
+      "hostCalls": 14,
+      "threadId": "01a10c24-e26f-7091-aef3-9a4f266bc3cd",
+      "wallMs": 136977,
+      "usage": {
+        "input_tokens": 244356,
+        "cached_input_tokens": 222208,
+        "output_tokens": 2313
+      },
+      "runSha256": "cd8c548a5c8830ffa1ea7afd4ef3c6bb2957d5e5976217dbc2d1726379a42e83",
+      "receiptSha256": "0799e65f67d2395a14cc5f4cc64fea660c248b89e0059b24edd8e14fcd7310ff"
+    }
+  ],
+  "totals": {
+    "skill": {
+      "runs": 4,
+      "wallMs": 552945,
+      "usage": {
+        "input_tokens": 1263399,
+        "cached_input_tokens": 1108352,
+        "output_tokens": 9935
+      },
+      "estimatedCostUsd": null
+    },
+    "baseline": {
+      "runs": 4,
+      "wallMs": 542300,
+      "usage": {
+        "input_tokens": 969028,
+        "cached_input_tokens": 835840,
+        "output_tokens": 9162
+      },
+      "estimatedCostUsd": null
+    }
+  }
+}
