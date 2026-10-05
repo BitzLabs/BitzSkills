@@ -165,7 +165,8 @@ ADRを起点にできるのは、目的が`interpret`のときだけである。
 
 詳細度`standard`では、文書の役割で既定の提示形式を決める。提示形式を`full`にするのは、起点（`root`）、
 TASK（`work`）、後継（`replacement`）、要求（`requirement`）、制約（`constraint`）と、距離1の文書である。
-`normative`にするのは、それ以外の距離2以上の具体化文書である（その規範文は制約台帳に収録される）。
+`normative`にするのは、それ以外の距離2以上の具体化文書のうち、所有する規範文がすべて制約台帳に収録されるものである。
+所有する規範文が1件でも制約台帳にない具体化文書は、距離によらず`full`にする。
 `reference`にするのは役割`advisory`の文書である。詳細度`compact`では原文を省略し、`Bundle Manifest`、診断、
 制約台帳、カバレッジ、境界、参照を返し、すべての文書を提示形式`reference`にする。詳細度`full`では、
 解決したすべての文書を提示形式`full`にする。
@@ -177,6 +178,8 @@ TASK（`work`）、後継（`replacement`）、要求（`requirement`）、制�
 反する。役割を先に適用し（`root`、`work`、`replacement`、`requirement`、`constraint`は`full`、`advisory`は`reference`）、
 依存の距離は具体化文書を
 `full`と`normative`に分けるときだけ使うという本節の規則は、ADR-014の`Decision`の5番目の項目と整合する。
+具体化文書を`normative`にする条件に、所有する規範文がすべて制約台帳にあることを加えるのも同じ理由である。条件を満たさない具体化文書を
+`normative`にすると、その`MUST`の文面が提示からも制約台帳からも失われ、ADR-014の`Decision`の4番目の項目に反する。
 
 どの詳細度でも、完全解決、`MUST`の対象規範文すべて、制約台帳を省略しない。提示の方法を変えても、コンテキストのハッシュ値は
 変わらない。Core 1.0は提示内容のハッシュ値（Projection Digest）を返さない。
