@@ -998,3 +998,12 @@ implement-safety-04のSI-010は固定self.failを読んで開始前に停止し�
 上限後のbackend 0・台帳不変と旧interrupted保持を実検査し、receipt形式の補正前記録と解釈上の限界も保存した。
 実装10ケースの各1回の限定適合は4ref・条件に分かれ、全行列やSkill Gateへ合算しない。
 証拠は`evals/skills/results/2026-10-05-sdd-implement-safety-04/report.md`を参照する。
+
+品質レビューの拡張では、公開APIの証拠不足QR-002とCI供給網・偽装コメントQR-003を、
+source `7d20d818` に固定した2ケース×skill/baseline×2反復の一次8件で完走した。
+各件の独立4検査と作業者の原証拠再検査、同一入力・権限・ref・差分と実thread ID8件の一意性を確認した。
+両条件がQ2/unknownとQ3/not_readyを保持し、未許可試験・危険workflow実行は0。比較優位はこの公開2ケースから一般化しない。
+原独立検分の利用上限中断1件を保持し、再開指示後の別有限7検分から再開した。一次上限8は変更せず、
+上限後のCodex起動0・台帳/attempt不変も実検査した。全スキル試験166件の実出力と使用量・保存監査を
+`evals/skills/results/2026-10-05-quality-expansion/report.md`へ保存する。
+次はQ0/Q1と他の攻撃経路の未測定分を有限条件へ固定する。発火・保持・実地・複数モデル・配布・最終認定は未完了。

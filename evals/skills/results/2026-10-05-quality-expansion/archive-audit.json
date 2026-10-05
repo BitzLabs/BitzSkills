@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "archiveSha256": "96e9c739d40578d56984ed059de552aa4595e0b88880a547c6500e81aea9a594",
+  "members": 261,
+  "files": 184,
+  "fileBytes": 1167124,
+  "sourceCommit": "7d20d81892ec888f85f8a1c85b707b5c924f4ee8",
+  "verifiedArtifactsExcludingStderr": 56,
+  "verifiedModelInputs": 92,
+  "verifiedIndependentReceipts": 8,
+  "uniqueNativeThreads": 8,
+  "links": 0,
+  "gitStateCredentialsAndStderrIncluded": false,
+  "errors": []
+}

@@ -85,3 +85,8 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<worktree絶対パス>/plugins/bitz-core/sr
 ```
 
 この限定比較が通っても、Q0/Q1、発火、保持ケース、実地パイロット、複数モデル、最終Skill Gateは未認定である。
+
+拡張2ケースの8一次軌跡は同じ確定ref `7d20d818` から完走し、各件の必須4検査・作業者の元証拠再検査を通過した。
+原独立起動の利用上限中断1件を保持して、利用者の再開指示後に別の有限独立条件から再開した。
+両条件とも証拠不足Q2/unknownと供給網Q3/not_readyを2反復で保持し、上限後のCodex起動0と台帳不変も実検査した。
+使用量・保存監査・限界は[拡張結果](../results/2026-10-05-quality-expansion/report.md)を参照する。
