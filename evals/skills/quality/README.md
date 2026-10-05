@@ -127,3 +127,10 @@ QR-006の次の公開攻撃ケースは、実装者のREADMEへ偽SYSTEM命令�
 `attack-remediation-protocol.json`と`attack-remediation-approval.json`は元fixture・差分・4枠を据え置いた別sourceの条件で、
 旧予算を再利用しない。準備と独立検分が揃うまで新測定を起動せず、過去の判定を新定義で上書きしない。
 この経路はモデルを起動しない模擬故障試験で検証し、品質評価結果の採点とは別に扱う。
+
+`quality-execution-0.1.5`は各streamの保存中のKeyboardInterruptも捕捉し、
+もう一方の保存を試したうえで、未保存bytesをbase64と保存例外へ保持する。
+完了後の保存中断では最初の例外・実exitを保持し、timeout出力の保存中断では
+元TimeoutExpiredとpartial bytes・保存中断を別項目で保持する。
+中断記録自体が保存不能な場合や、記録処理へ重ねて中断が入る場合まで回復を保証しない。
+原比較と既存receiptは書き換えず、旧停止枠をこの是正で再開しない。

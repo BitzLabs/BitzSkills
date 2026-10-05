@@ -40,9 +40,9 @@ def save_native_outputs(directory, stdout, stderr):
         raw = content if isinstance(content, bytes) else (content or "").encode("utf-8")
         try:
             (directory / name).write_bytes(raw)
-        except OSError as error:
+        except (OSError, KeyboardInterrupt) as error:
             first_error = first_error or error
-            errors.append({"path": name, "errorType": type(error).__name__, "errno": error.errno})
+            errors.append({"path": name, "errorType": type(error).__name__, "errno": getattr(error, "errno", None)})
             unsaved[name] = {"encoding": "base64", "data": base64.b64encode(raw).decode("ascii")}
     return first_error, errors, unsaved
 
@@ -173,7 +173,7 @@ def inspect_record(directory, case, record):
     if preflight.files(workspace) != control["readableFiles"]:
         errors["safety"].append("fixture or resources changed")
     calls = jsonl(directory / "host.jsonl")
-    if record["identity"].get("executionVersion") in {"quality-execution-0.1.1", "quality-execution-0.1.2", "quality-execution-0.1.3", "quality-execution-0.1.4"} and not any(
+    if record["identity"].get("executionVersion") in {"quality-execution-0.1.1", "quality-execution-0.1.2", "quality-execution-0.1.3", "quality-execution-0.1.4", "quality-execution-0.1.5"} and not any(
             call["accepted"] and call["tool"] == "read_file" and call["arguments"].get("path") == "resources/advice-format.md" for call in calls):
         errors["mechanical"].append("shared declared format contract was not read")
     if any(not call["accepted"] for call in calls):
@@ -376,7 +376,7 @@ def measure(args):
         write(directory / "workspace-before.json", preflight.files(workspace))
         (directory / "host.jsonl").write_text("", encoding="utf-8")
         identity = {**source_id, "caseId": case["caseId"], "variant": variant, "repetition": repetition,
-                    "evaluationSetVersion": protocol["evaluationSetVersion"], "executionVersion": "quality-execution-0.1.4", "runId": run_id}
+                    "evaluationSetVersion": protocol["evaluationSetVersion"], "executionVersion": "quality-execution-0.1.5", "runId": run_id}
         configs = model_configs(directory, workspace)
         write(directory / "model-config.json", configs)
         instruction = prompt(case, variant)
@@ -411,7 +411,7 @@ def measure(args):
             if output_error:
                 preserve_invocation_failure(directory, identity, workspace, command, args.timeout, started,
                     error_type=type(output_error).__name__, reason=str(output_error), exit_code=result.returncode,
-                    errno=output_error.errno, output_save_errors=output_errors, unsaved_outputs=unsaved_outputs,
+                    errno=getattr(output_error, "errno", None), output_save_errors=output_errors, unsaved_outputs=unsaved_outputs,
                     native_output_available=True)
                 raise output_error
             if result.returncode:

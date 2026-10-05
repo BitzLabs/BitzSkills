@@ -70,7 +70,7 @@ class QualityInterruptionTests(unittest.TestCase):
         self.assertEqual(b"\xff", base64.b64decode(record["unsavedOutputs"]["trace.jsonl"]["data"]))
         self.assertFalse(record["automaticRetry"])
 
-    def replay(self, outcome, *, failing_outputs=(), change=False):
+    def replay(self, outcome, *, failing_outputs=(), keyboard_outputs=(), change=False):
         """実measure/台帳/保存を接続し、CodexだけをSpyへ置換する。"""
         replay_dir = Path(tempfile.mkdtemp(prefix="replay-", dir=self.directory))
         output = replay_dir / "synthetic-measurement"
@@ -111,6 +111,8 @@ class QualityInterruptionTests(unittest.TestCase):
         original_write = Path.write_bytes
 
         def write_bytes(path, content):
+            if path.name in keyboard_outputs:
+                raise KeyboardInterrupt()
             if path.name in failing_outputs:
                 raise OSError(errno.ENOSPC, "synthetic output full")
             return original_write(path, content)
@@ -211,6 +213,35 @@ class QualityInterruptionTests(unittest.TestCase):
         self.assertIsNone(record["providerUsage"])
         self.assertFalse((directory / "trace.jsonl").exists())
         self.assertFalse((directory / "stderr.log").exists())
+
+    def test_save_keyboard_keeps_completed_bytes_and_other_stream_failure(self):
+        directory, _, error, _, trace, stderr = self.replay(
+            "nonzero", keyboard_outputs=("trace.jsonl",), failing_outputs=("stderr.log",))
+        self.assertIsInstance(error, KeyboardInterrupt)
+        record = evaluate.load(directory / "interruption.json")
+        self.assertEqual("KeyboardInterrupt", record["errorType"])
+        self.assertIsNone(record["errno"])
+        self.assertEqual(2, record["exitCode"])
+        self.assertTrue(record["nativeOutputAvailable"])
+        self.assertEqual(["KeyboardInterrupt", "OSError"],
+                         [entry["errorType"] for entry in record["outputSaveErrors"]])
+        for name, raw in (("trace.jsonl", trace), ("stderr.log", stderr)):
+            self.assertEqual(raw, base64.b64decode(record["unsavedOutputs"][name]["data"]))
+        self.assertFalse((directory / "run.json").exists())
+
+    def test_timeout_save_keyboard_preserves_partial_bytes_and_original_timeout(self):
+        directory, _, error, _, _, _ = self.replay(
+            "timeout-bytes", keyboard_outputs=("trace.jsonl",))
+        self.assertIsInstance(error, subprocess.TimeoutExpired)
+        record = evaluate.load(directory / "interruption.json")
+        self.assertEqual("TimeoutExpired", record["errorType"])
+        self.assertIsNone(record["exitCode"])
+        self.assertEqual("KeyboardInterrupt", record["outputSaveErrors"][0]["errorType"])
+        self.assertIsNone(record["outputSaveErrors"][0]["errno"])
+        self.assertEqual(b"\xffpartial trace\n",
+                         base64.b64decode(record["unsavedOutputs"]["trace.jsonl"]["data"]))
+        self.assertEqual(b"\xfepartial stderr\n", (directory / "stderr.log").read_bytes())
+        self.assertFalse((directory / "run.json").exists())
 
     def test_interrupted_attempt_cannot_be_reopened_with_a_receipt(self):
         directory, _, _, _, _, _ = self.replay("nonzero")
