@@ -1077,3 +1077,12 @@ Q帯だけで優位性を主張しない。親/準備独立89件と検分後13�
 152ファイル/31固定sourceの保存監査を通過した。
 証拠は `evals/skills/results/2026-10-06-quality-plan/report.md` を参照する。
 旧発火候補6本文は製品plugins本文と異なるため、次は製品本文による別発火契約を準備する。
+
+製品本文の準備はsource `3252a296` で固定ref blobから6本文/71資源を取得する処理を追加した。
+親・独立・検分後の親の各8単体はOK/exit0、3snapshotの全bytes/hashとmanifest hash一致、
+4source/独立2ログhash、89ファイル/75固定sourceの保存監査を確認した。
+準備独立SOL1、新規一次0、retry0。発火実測・保持ケース・全Gateは未認定。
+証拠は `evals/skills/results/2026-10-06-production-routing-preparation/report.md` を参照する。
+次は固定製品本文に対する保持ケースの初期収集。初期最大12ケース、生成/独立検分各SOL1、
+一次測定0で準備するが、公開repo外への新規保存はユーザー明示承認後だけ行う。
+具体的保存計画は `evals/skills/routing/held-out-storage-plan.md`。現時点の外部書込みとケース生成は0。

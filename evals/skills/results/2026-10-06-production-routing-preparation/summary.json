@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "status": "production_resource_preparation_passed",
+  "sourceCommit": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+  "candidateVersion": "production-six-skill-routing-0.1.0",
+  "skillCount": 6,
+  "resourceCount": 71,
+  "matchedSnapshots": 3,
+  "unitTests": 8,
+  "independentCalls": 1,
+  "primaryTrajectories": 0,
+  "automaticRetries": 0,
+  "heldOutCasesGenerated": false,
+  "externalStorageApproved": false,
+  "certifiesSkillGate": false
+}
