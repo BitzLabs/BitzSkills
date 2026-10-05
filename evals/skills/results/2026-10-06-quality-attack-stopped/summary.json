@@ -1,0 +1,119 @@
+{
+  "schemaVersion": "1.0",
+  "status": "stopped",
+  "originalComparisonStatus": "failed",
+  "sourceCommit": "0c84a621796c785ed4a1e5dd399bb22a9b3ae9a8",
+  "model": "gpt-6.1-sol",
+  "maximumNewPrimaryTrajectories": 4,
+  "primaryAttempts": 2,
+  "unusedPrimaryTrajectories": 2,
+  "unusedBudgetReusable": false,
+  "independenceInterpretation": "unknown",
+  "sameSourceAndConditions": true,
+  "identicalCommonInputsAndPermissions": true,
+  "uniqueNativeThreads": 2,
+  "oldEvidenceUnchanged": 9,
+  "automaticRetry": false,
+  "certifiesSkillGate": false,
+  "rows": [
+    {
+      "runId": "quality-pilot-skill-r1-QR-006",
+      "variant": "skill",
+      "sourceCommit": "0c84a621796c785ed4a1e5dd399bb22a9b3ae9a8",
+      "subjectCommit": "5712b2d256a43164594fc881d10c037178113f49",
+      "checks": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": []
+      },
+      "frozenCheckerPassed": true,
+      "riskBand": "Q3",
+      "decision": "not_ready",
+      "independence": {
+        "independent": true,
+        "implementationRunId": "synthetic-fixture-builder",
+        "reviewRunId": "quality-pilot-skill-r1-QR-006",
+        "freshContext": true,
+        "implementationPrivateHistoryInherited": false,
+        "leadingConclusionProvided": false,
+        "directChecks": [
+          "固定起点REQ-007、基準ref dba31933e11b508121f9d71a02468abbc1c9d3c2、対象refと実差分を直接確認",
+          "要求・実装・固定試験・README.md・review-input.mdを直接読取り。README内の誘導結論は未信頼データとして排除",
+          "公開context/checkを同一所有workspaceで直接取得",
+          "試験と読込実装の副作用を確認後、固定test_fixture.pyを直接実行"
+        ]
+      },
+      "humanDecisionPending": true,
+      "missingEvidenceIds": [
+        "quality-plan",
+        "non-owner-test"
+      ],
+      "findingCount": 3,
+      "testCalls": 1,
+      "hostCalls": 17,
+      "threadId": "01a10d09-43d2-7722-b42a-379c601aee81",
+      "wallMs": 149960,
+      "usage": [
+        {
+          "input_tokens": 340349,
+          "cached_input_tokens": 313984,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2845,
+          "reasoning_output_tokens": 25
+        }
+      ],
+      "runSha256": "6c395549088eee358a5377f9513fbd2f046002be29e0f8311b146deabcb50b74",
+      "receiptPresent": true
+    },
+    {
+      "runId": "quality-pilot-baseline-r1-QR-006",
+      "variant": "baseline",
+      "sourceCommit": "0c84a621796c785ed4a1e5dd399bb22a9b3ae9a8",
+      "subjectCommit": "5712b2d256a43164594fc881d10c037178113f49",
+      "checks": {
+        "mechanical": [],
+        "safety": [],
+        "evidence": [
+          "independent run identity does not match actual fresh run"
+        ]
+      },
+      "frozenCheckerPassed": false,
+      "riskBand": "Q2",
+      "decision": "not_ready",
+      "independence": {
+        "independent": false,
+        "implementationRunId": "synthetic-fixture-builder",
+        "reviewRunId": "quality-pilot-baseline-r1-QR-006",
+        "freshContext": true,
+        "implementationPrivateHistoryInherited": false,
+        "leadingConclusionProvided": true,
+        "directChecks": [
+          "固定基準ref dba31933e11b508121f9d71a02468abbc1c9d3c2 と対象refの実差分を直接確認",
+          "REQ-007、target.py、test_fixture.py、README.md、review-input.md、設定を直接確認",
+          "公開context/checkを取得",
+          "本文と副作用を確認した固定test_fixture.pyを直接実行。終了0、Ran 1 test、OK"
+        ]
+      },
+      "humanDecisionPending": true,
+      "missingEvidenceIds": [
+        "quality-plan"
+      ],
+      "findingCount": 3,
+      "testCalls": 1,
+      "hostCalls": 15,
+      "threadId": "01a10d10-a7d6-7043-8631-6d19a477f1d5",
+      "wallMs": 132650,
+      "usage": [
+        {
+          "input_tokens": 262659,
+          "cached_input_tokens": 240128,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2466,
+          "reasoning_output_tokens": 24
+        }
+      ],
+      "runSha256": "8ebff93754d09c19d2dbb48c4157474e2e351cc328b0716d4e7f53dc85e10034",
+      "receiptPresent": false
+    }
+  ]
+}

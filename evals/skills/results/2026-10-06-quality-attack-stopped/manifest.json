@@ -1,0 +1,468 @@
+{
+  "schemaVersion": "1.0",
+  "sourceCommit": "0c84a621796c785ed4a1e5dd399bb22a9b3ae9a8",
+  "archiveSha256": "4a3b09a3c1122e01ab11ee4cb3a97962db8e0b402d2215f322738bb3a05c6657",
+  "files": {
+    "attempts.json": {
+      "sha256": "a074a4e7c424c014d764c69bcd6167dfd846f32530f8b579cc16a70a5c04eb5d",
+      "bytes": 4436
+    },
+    "conditions.json": {
+      "sha256": "a41334df897284991a74dd6dfc8280e91a5f9e09edf1780e9c6f86fef4d2214e",
+      "bytes": 1819
+    },
+    "diagnosis-scope.json": {
+      "sha256": "94a0e0ce423bc10ee11b881797a91064dddc583a66fbaf9782b9835977aa69af",
+      "bytes": 790
+    },
+    "failure-diagnosis.json": {
+      "sha256": "15c935360f44f288dadfe021b08bef263e1348c518ea27319f9d78439824e930",
+      "bytes": 7150
+    },
+    "independent-budget.json": {
+      "sha256": "2b38c3993f3a0a22e47e14726b9ef14966c6ec6dc40e9bcffd2d8b36321c73df",
+      "bytes": 980
+    },
+    "parent-audit-r1-skill-reviewed.json": {
+      "sha256": "5c9e0b3ca527c1ae2610d73348455987093251f06834a568a8c12d566d650ef9",
+      "bytes": 1986
+    },
+    "parent-audit-r1-skill.json": {
+      "sha256": "dbe26f8b34dac5124a1e841063639e60d4864049a40018f8178214a03222cad1",
+      "bytes": 1925
+    },
+    "pending-proof.json": {
+      "sha256": "fe5f53107e339ed7ebfcfc255f13c712e60d3f64b0b4d9c500e970c2e9c6630b",
+      "bytes": 242
+    },
+    "preparation/all-skills.txt": {
+      "sha256": "68a27a6dc7ccee9535acb86d7923d9bca4d186314513c3f8de66de7d95524b15",
+      "bytes": 287
+    },
+    "preparation/independent-preparation-sol-01.log": {
+      "sha256": "94684a7342a8ebd4eb82d89585fa5fa2e416ce95e44f152fc2be3231b9f6649b",
+      "bytes": 103
+    },
+    "preparation/parent-audit.json": {
+      "sha256": "391a827c8e93af8b81036298768463113a9a27e21ce6340dd3fabc5e6e34e7c4",
+      "bytes": 1318
+    },
+    "preparation/parent-recheck.txt": {
+      "sha256": "f5c92208f0c22ceaebc83288dffe5bc0eb18376105c2d661fb48caccf99d56a4",
+      "bytes": 102
+    },
+    "preparation/preflight.json": {
+      "sha256": "84e054630ebce4959698f54262998e757db00d9640d6d51750e5fd3c8c62a9ba",
+      "bytes": 11289
+    },
+    "preparation/review.json": {
+      "sha256": "5e5c4681a8eac0f8447b2a9cb6fb1cb2dc34bba6b7393d9cbec0f7dbfadabd83",
+      "bytes": 5068
+    },
+    "preparation/scope.json": {
+      "sha256": "a27c7252401dace724bea1cf15ae586becf5be2dccb4653d961063c3ad26da04",
+      "bytes": 1825
+    },
+    "preparation/targeted-tests.txt": {
+      "sha256": "a2133795ce83444942de2b6f125bffc4e88a2a30a9d2943c75d7bb42c586d352",
+      "bytes": 102
+    },
+    "quality-attack-pending-check.py": {
+      "sha256": "597f0edba2135ff81bd022db185fe94ee107fb81595ca0af709c5833186e50ec",
+      "bytes": 1644
+    },
+    "quality-attack-stop-check.py": {
+      "sha256": "0ccea039a56faf9f6d2cf6c5dc3abac7306df1d0184a83d08e3eae1e1cb0dc7e",
+      "bytes": 2242
+    },
+    "quality-attack-stopped-audit.py": {
+      "sha256": "d44b6229ac6b41c1e694340913f90c5d1753b8a1c130fc654928311d2d3b98f7",
+      "bytes": 3372
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/.spec/bitz.yaml": {
+      "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8",
+      "bytes": 48
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/.spec/requirements/REQ-007.md": {
+      "sha256": "aec5ceb1965b16a19c37dcf1ff894af76159c1dd7f2c84633b0bb37516bb9ccc",
+      "bytes": 750
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/README.md": {
+      "sha256": "be891effe39929c0b06bb803eaab56468b3fa7b3d70bce504c5a823fa4223f18",
+      "bytes": 858
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/resources/advice-format.md": {
+      "sha256": "51e40c434fa3a697531955550efb6ad6ddf45157fe8e1d2efa05c2fa457aff36",
+      "bytes": 3205
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/resources/bitz-quality/schemas/core-observation.schema.json": {
+      "sha256": "8dd67b798f4302f9434b12e2da6139fff2af3c3bb72c18c2609c9de6417b900d",
+      "bytes": 1859
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/resources/bitz-quality/schemas/quality-plan.schema.json": {
+      "sha256": "793fd1f4144c6021719955101fdaf137af0c31aa75c9ccf2442f78c82219b16a",
+      "bytes": 3983
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/resources/bitz-quality/schemas/quality-review.schema.json": {
+      "sha256": "ae25285949239a2e315c24b387aa774db18115d07d66a77f29d72629270e576a",
+      "bytes": 3803
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/resources/core-cli.md": {
+      "sha256": "8892245a91899526ea08d09d864c569e8e294ebc8fd4928cabe42dd3d4801981",
+      "bytes": 2102
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/review-input.md": {
+      "sha256": "e87b6d03c8e98c730894d8c63ba41a0b5c7335f90e3c7e4c44b319a9830e7a7d",
+      "bytes": 474
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/target.py": {
+      "sha256": "f1c1b102bb4ae42eb9c55c2c6319badf1adb355b08235c2bbdaaa3b0937e8c46",
+      "bytes": 93
+    },
+    "quality-pilot-baseline-r1-QR-006/QR-006/test_fixture.py": {
+      "sha256": "21a981629aec9c07021e7df24d8ee3e702a1cd16f982d9c8275c4c49605056df",
+      "bytes": 369
+    },
+    "quality-pilot-baseline-r1-QR-006/advice.json": {
+      "sha256": "a604aa8075cd946390265306bcb125740d24369874ae5c669b234e0b76cfe113",
+      "bytes": 10977
+    },
+    "quality-pilot-baseline-r1-QR-006/control.json": {
+      "sha256": "052d90ab4dcd346c4c22ea036a843528eaa57df8d1307c651abf6d99ea28ef0d",
+      "bytes": 4489
+    },
+    "quality-pilot-baseline-r1-QR-006/host.jsonl": {
+      "sha256": "85c64f71ab538c8a835692f6a9524a9a039075b5348692388f4954476b6b7468",
+      "bytes": 27420
+    },
+    "quality-pilot-baseline-r1-QR-006/model-config.json": {
+      "sha256": "34db5215da7bc8fd65cad642f9fa3f290346d8d78ebb7790413d5c9bc2ba32b4",
+      "bytes": 2259
+    },
+    "quality-pilot-baseline-r1-QR-006/prompt.txt": {
+      "sha256": "7ee81d66e42692dc2c3d5d3df1bd8514be22457bbc34d880071d50f32a66ccad",
+      "bytes": 2019
+    },
+    "quality-pilot-baseline-r1-QR-006/response.json": {
+      "sha256": "6525fb2c6ce815b544bcfe799a293bce214e1567173f99b68fff2cdf54372148",
+      "bytes": 6000
+    },
+    "quality-pilot-baseline-r1-QR-006/run.json": {
+      "sha256": "8ebff93754d09c19d2dbb48c4157474e2e351cc328b0716d4e7f53dc85e10034",
+      "bytes": 3223
+    },
+    "quality-pilot-baseline-r1-QR-006/trace.jsonl": {
+      "sha256": "a70528bee96dbed8f7c3f8c71e1a8a42959e7b33882658eb7aca02338a561b76",
+      "bytes": 39475
+    },
+    "quality-pilot-baseline-r1-QR-006/workspace-before.json": {
+      "sha256": "58fead8a4586596a734dd445e92ecf5621b5d9ac788432dc6dad806ce03752ae",
+      "bytes": 1127
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/.spec/bitz.yaml": {
+      "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8",
+      "bytes": 48
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/.spec/requirements/REQ-007.md": {
+      "sha256": "aec5ceb1965b16a19c37dcf1ff894af76159c1dd7f2c84633b0bb37516bb9ccc",
+      "bytes": 750
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/README.md": {
+      "sha256": "be891effe39929c0b06bb803eaab56468b3fa7b3d70bce504c5a823fa4223f18",
+      "bytes": 858
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/resources/advice-format.md": {
+      "sha256": "51e40c434fa3a697531955550efb6ad6ddf45157fe8e1d2efa05c2fa457aff36",
+      "bytes": 3205
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/resources/bitz-quality/schemas/core-observation.schema.json": {
+      "sha256": "8dd67b798f4302f9434b12e2da6139fff2af3c3bb72c18c2609c9de6417b900d",
+      "bytes": 1859
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/resources/bitz-quality/schemas/quality-plan.schema.json": {
+      "sha256": "793fd1f4144c6021719955101fdaf137af0c31aa75c9ccf2442f78c82219b16a",
+      "bytes": 3983
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/resources/bitz-quality/schemas/quality-review.schema.json": {
+      "sha256": "ae25285949239a2e315c24b387aa774db18115d07d66a77f29d72629270e576a",
+      "bytes": 3803
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/resources/bitz-quality/skills/quality-review/SKILL.md": {
+      "sha256": "e39b134f5463bf6d056d7103ca39229d29986c42f2ad5796f3d171dc0a80dcbd",
+      "bytes": 7880
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/resources/bitz-quality/skills/quality-review/references/independence-and-evidence.md": {
+      "sha256": "a122575bc227abd9867bacde78946e97b2a857b267f4640571735e28f4e24640",
+      "bytes": 2756
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/resources/core-cli.md": {
+      "sha256": "8892245a91899526ea08d09d864c569e8e294ebc8fd4928cabe42dd3d4801981",
+      "bytes": 2102
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/review-input.md": {
+      "sha256": "e87b6d03c8e98c730894d8c63ba41a0b5c7335f90e3c7e4c44b319a9830e7a7d",
+      "bytes": 474
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/target.py": {
+      "sha256": "f1c1b102bb4ae42eb9c55c2c6319badf1adb355b08235c2bbdaaa3b0937e8c46",
+      "bytes": 93
+    },
+    "quality-pilot-skill-r1-QR-006/QR-006/test_fixture.py": {
+      "sha256": "21a981629aec9c07021e7df24d8ee3e702a1cd16f982d9c8275c4c49605056df",
+      "bytes": 369
+    },
+    "quality-pilot-skill-r1-QR-006/advice.json": {
+      "sha256": "c126c0a534932d07475d8738de2bea35d7f293d273c4fbb5e0fa128542669116",
+      "bytes": 11365
+    },
+    "quality-pilot-skill-r1-QR-006/control.json": {
+      "sha256": "1c7658ff022aac897185e4044774c8a1c015186f6e70e376d98cf9182cf74907",
+      "bytes": 4775
+    },
+    "quality-pilot-skill-r1-QR-006/host.jsonl": {
+      "sha256": "0b654a370ca0ddd756b46aed0ec9faf52f46c4a7e01dd3f50bdadf67409a8d6c",
+      "bytes": 39085
+    },
+    "quality-pilot-skill-r1-QR-006/independent-receipt.json": {
+      "sha256": "31b3c776a88a53a1de1c757d8154c39c26e4a5d2226194f55c41685793c18ffe",
+      "bytes": 3937
+    },
+    "quality-pilot-skill-r1-QR-006/model-config.json": {
+      "sha256": "38b573c6be892bb90685d0e7878831dbc73b36447377b7cc03cf848823901a21",
+      "bytes": 2244
+    },
+    "quality-pilot-skill-r1-QR-006/prompt.txt": {
+      "sha256": "69cbd2b169a36ac3facdd08e9a74bcb3de2a618159e96b75b94f1f224d703059",
+      "bytes": 2050
+    },
+    "quality-pilot-skill-r1-QR-006/response.json": {
+      "sha256": "489f660b53e08dce0e4c8734ab212bb4fc837b6860048ee2e8100d5890618221",
+      "bytes": 6747
+    },
+    "quality-pilot-skill-r1-QR-006/run.json": {
+      "sha256": "6c395549088eee358a5377f9513fbd2f046002be29e0f8311b146deabcb50b74",
+      "bytes": 3147
+    },
+    "quality-pilot-skill-r1-QR-006/trace.jsonl": {
+      "sha256": "e625cfd9a285f0ba0e50b6a2ea888f60feec73297246262427348e994a51d2ac",
+      "bytes": 53205
+    },
+    "quality-pilot-skill-r1-QR-006/workspace-before.json": {
+      "sha256": "9debe2722f21367039db651a432f2c49f94d8a7f1906e2272dcec05984ac47f6",
+      "bytes": 1412
+    },
+    "source/evals/skills/quality/README.md": {
+      "sha256": "4720ed81590528c7ebdefb6b3bbe0c3a182da45f326f2d1016d680c332cc1cec",
+      "bytes": 12701
+    },
+    "source/evals/skills/quality/advice-format.md": {
+      "sha256": "51e40c434fa3a697531955550efb6ad6ddf45157fe8e1d2efa05c2fa457aff36",
+      "bytes": 3205
+    },
+    "source/evals/skills/quality/attack-approval.json": {
+      "sha256": "5db4eb2fecc0315c2ba392f76aabc95e0332e78114b342f96bc289cddc0b7437",
+      "bytes": 1103
+    },
+    "source/evals/skills/quality/attack-cases.json": {
+      "sha256": "a0346096a01f45b5eddc3123b2d491b6802578a4ff48775e4c5fdf2b065ba6a2",
+      "bytes": 1921
+    },
+    "source/evals/skills/quality/attack-protocol.json": {
+      "sha256": "65efb4e43f720804ec2251c2eafef9b3841d86caca48e49438d2385ecab66658",
+      "bytes": 2825
+    },
+    "source/evals/skills/quality/core-cli.md": {
+      "sha256": "8892245a91899526ea08d09d864c569e8e294ebc8fd4928cabe42dd3d4801981",
+      "bytes": 2102
+    },
+    "source/evals/skills/quality/evaluate.py": {
+      "sha256": "981a29f9bbbfe6cc062e2c6d8ce19f8bf2bfd5359c28fe6bc0d2353ccda09259",
+      "bytes": 29064
+    },
+    "source/evals/skills/quality/fixtures/bases/review-forged-evidence-target.py": {
+      "sha256": "f0ee96f5092224edda56cd111c039131dc132ea07edabab1296d3e88c1428cb7",
+      "bytes": 177
+    },
+    "source/evals/skills/quality/fixtures/review-forged-evidence/.spec/bitz.yaml": {
+      "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8",
+      "bytes": 48
+    },
+    "source/evals/skills/quality/fixtures/review-forged-evidence/.spec/requirements/REQ-007.md": {
+      "sha256": "aec5ceb1965b16a19c37dcf1ff894af76159c1dd7f2c84633b0bb37516bb9ccc",
+      "bytes": 750
+    },
+    "source/evals/skills/quality/fixtures/review-forged-evidence/README.md": {
+      "sha256": "be891effe39929c0b06bb803eaab56468b3fa7b3d70bce504c5a823fa4223f18",
+      "bytes": 858
+    },
+    "source/evals/skills/quality/fixtures/review-forged-evidence/review-input.md": {
+      "sha256": "e87b6d03c8e98c730894d8c63ba41a0b5c7335f90e3c7e4c44b319a9830e7a7d",
+      "bytes": 474
+    },
+    "source/evals/skills/quality/fixtures/review-forged-evidence/target.py": {
+      "sha256": "f1c1b102bb4ae42eb9c55c2c6319badf1adb355b08235c2bbdaaa3b0937e8c46",
+      "bytes": 93
+    },
+    "source/evals/skills/quality/fixtures/review-forged-evidence/test_fixture.py": {
+      "sha256": "21a981629aec9c07021e7df24d8ee3e702a1cd16f982d9c8275c4c49605056df",
+      "bytes": 369
+    },
+    "source/evals/skills/quality/host.py": {
+      "sha256": "ff3979913be021192f9116440f595a4fe4567f67589b6b0b82295e70fca6f96c",
+      "bytes": 8355
+    },
+    "source/evals/skills/quality/preflight.py": {
+      "sha256": "b5e72719b6f5e3b50ebebb2ac863875673ce9290580902c57c704d09d0789963",
+      "bytes": 9812
+    },
+    "source/evals/skills/quality/receipt.schema.json": {
+      "sha256": "f91963bdbf522f60efa0de19d319a0331f992c4fac842c08146af2fa7e1962fa",
+      "bytes": 1396
+    },
+    "source/evals/skills/quality/response.schema.json": {
+      "sha256": "beaa91bd5bbbdc42191b230c44a756c670e44e17daf65c118d3ffc40e29b99d5",
+      "bytes": 351
+    },
+    "source/evals/skills/sol-authorization.json": {
+      "sha256": "972062f2e3dbd153ed24558d105edbb60a376f037a4ba9b9ca11b1ca7412cb2e",
+      "bytes": 1034
+    },
+    "source/plugins/bitz-quality/README.md": {
+      "sha256": "e63b85adb2253a490ad6d75e5dd631099416fff1f30a621a5210c6c85bca41c9",
+      "bytes": 4162
+    },
+    "source/plugins/bitz-quality/core-compatibility.json": {
+      "sha256": "c555eaec26819d42183a327ec2563f3029d8eb576bb369ea34e46c416aa30a9d",
+      "bytes": 600
+    },
+    "source/plugins/bitz-quality/examples/local-change-plan.json": {
+      "sha256": "91a695da775fa872e07abab9e91ee9ae1a1f9d26dcd7977894d8187640cad756",
+      "bytes": 3426
+    },
+    "source/plugins/bitz-quality/examples/missing-evidence-review.json": {
+      "sha256": "517ea4c4ab4d10da37f31ca8466e0e50aeb4317495fa31c58f02b367cf4761ef",
+      "bytes": 1108
+    },
+    "source/plugins/bitz-quality/plugin.json": {
+      "sha256": "d6de551b5faaa30b05c5e494c900003210d94e1b109ee8dcdb216b4c11e3b9e8",
+      "bytes": 243
+    },
+    "source/plugins/bitz-quality/schemas/core-observation.schema.json": {
+      "sha256": "8dd67b798f4302f9434b12e2da6139fff2af3c3bb72c18c2609c9de6417b900d",
+      "bytes": 1859
+    },
+    "source/plugins/bitz-quality/schemas/quality-plan.schema.json": {
+      "sha256": "793fd1f4144c6021719955101fdaf137af0c31aa75c9ccf2442f78c82219b16a",
+      "bytes": 3983
+    },
+    "source/plugins/bitz-quality/schemas/quality-review.schema.json": {
+      "sha256": "ae25285949239a2e315c24b387aa774db18115d07d66a77f29d72629270e576a",
+      "bytes": 3803
+    },
+    "source/plugins/bitz-quality/scripts/validate_quality.py": {
+      "sha256": "c2d78a70d9a3b263e5fa9e0f090b7bc6a40940d9db283b5344337c77448b6634",
+      "bytes": 8513
+    },
+    "source/plugins/bitz-quality/skills/quality-plan/SKILL.md": {
+      "sha256": "adb17ceb999d2203c739ab0ecfbd220f7dbdcfe9d898f1279a6dbea2a69802aa",
+      "bytes": 6307
+    },
+    "source/plugins/bitz-quality/skills/quality-plan/references/risk-and-evidence.md": {
+      "sha256": "e85aa82352484216c1ea1eb87e1063502d560b274593fe012bfc5e41a2cf3c10",
+      "bytes": 2215
+    },
+    "source/plugins/bitz-quality/skills/quality-review/SKILL.md": {
+      "sha256": "e39b134f5463bf6d056d7103ca39229d29986c42f2ad5796f3d171dc0a80dcbd",
+      "bytes": 7880
+    },
+    "source/plugins/bitz-quality/skills/quality-review/references/independence-and-evidence.md": {
+      "sha256": "a122575bc227abd9867bacde78946e97b2a857b267f4640571735e28f4e24640",
+      "bytes": 2756
+    },
+    "source/tests/skills/test_quality_attack.py": {
+      "sha256": "bbcc232aeeceeca5f8f9a9e306cab2560b5e8cf05a93691f9e0fd070a703fc5f",
+      "bytes": 6874
+    },
+    "stop-proof-after-diagnosis.json": {
+      "sha256": "d82f080d7ec72b19dd95da551373655393b773b5d17e3a811e2047b0324d3788",
+      "bytes": 338
+    },
+    "stop-proof.json": {
+      "sha256": "d82f080d7ec72b19dd95da551373655393b773b5d17e3a811e2047b0324d3788",
+      "bytes": 338
+    },
+    "stop.json": {
+      "sha256": "d617fb1fa8dbdea5e7ada0ee482828d975aa14de288ad84b8fa3f246f903db76",
+      "bytes": 979
+    },
+    "stopped-parent-audit-after-diagnosis.json": {
+      "sha256": "d4b95c510f3a7307b09138340b2d2dda749f0cd2efbff27694a2103a1500ab42",
+      "bytes": 4202
+    },
+    "stopped-parent-audit.json": {
+      "sha256": "d4b95c510f3a7307b09138340b2d2dda749f0cd2efbff27694a2103a1500ab42",
+      "bytes": 4202
+    }
+  },
+  "sourceSnapshotSha256": {
+    "evals/skills/quality/README.md": "4720ed81590528c7ebdefb6b3bbe0c3a182da45f326f2d1016d680c332cc1cec",
+    "evals/skills/quality/advice-format.md": "51e40c434fa3a697531955550efb6ad6ddf45157fe8e1d2efa05c2fa457aff36",
+    "evals/skills/quality/attack-approval.json": "5db4eb2fecc0315c2ba392f76aabc95e0332e78114b342f96bc289cddc0b7437",
+    "evals/skills/quality/attack-cases.json": "a0346096a01f45b5eddc3123b2d491b6802578a4ff48775e4c5fdf2b065ba6a2",
+    "evals/skills/quality/attack-protocol.json": "65efb4e43f720804ec2251c2eafef9b3841d86caca48e49438d2385ecab66658",
+    "evals/skills/quality/core-cli.md": "8892245a91899526ea08d09d864c569e8e294ebc8fd4928cabe42dd3d4801981",
+    "evals/skills/quality/evaluate.py": "981a29f9bbbfe6cc062e2c6d8ce19f8bf2bfd5359c28fe6bc0d2353ccda09259",
+    "evals/skills/quality/fixtures/bases/review-forged-evidence-target.py": "f0ee96f5092224edda56cd111c039131dc132ea07edabab1296d3e88c1428cb7",
+    "evals/skills/quality/fixtures/review-forged-evidence/.spec/bitz.yaml": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8",
+    "evals/skills/quality/fixtures/review-forged-evidence/.spec/requirements/REQ-007.md": "aec5ceb1965b16a19c37dcf1ff894af76159c1dd7f2c84633b0bb37516bb9ccc",
+    "evals/skills/quality/fixtures/review-forged-evidence/README.md": "be891effe39929c0b06bb803eaab56468b3fa7b3d70bce504c5a823fa4223f18",
+    "evals/skills/quality/fixtures/review-forged-evidence/review-input.md": "e87b6d03c8e98c730894d8c63ba41a0b5c7335f90e3c7e4c44b319a9830e7a7d",
+    "evals/skills/quality/fixtures/review-forged-evidence/target.py": "f1c1b102bb4ae42eb9c55c2c6319badf1adb355b08235c2bbdaaa3b0937e8c46",
+    "evals/skills/quality/fixtures/review-forged-evidence/test_fixture.py": "21a981629aec9c07021e7df24d8ee3e702a1cd16f982d9c8275c4c49605056df",
+    "evals/skills/quality/host.py": "ff3979913be021192f9116440f595a4fe4567f67589b6b0b82295e70fca6f96c",
+    "evals/skills/quality/preflight.py": "b5e72719b6f5e3b50ebebb2ac863875673ce9290580902c57c704d09d0789963",
+    "evals/skills/quality/receipt.schema.json": "f91963bdbf522f60efa0de19d319a0331f992c4fac842c08146af2fa7e1962fa",
+    "evals/skills/quality/response.schema.json": "beaa91bd5bbbdc42191b230c44a756c670e44e17daf65c118d3ffc40e29b99d5",
+    "evals/skills/sol-authorization.json": "972062f2e3dbd153ed24558d105edbb60a376f037a4ba9b9ca11b1ca7412cb2e",
+    "plugins/bitz-quality/README.md": "e63b85adb2253a490ad6d75e5dd631099416fff1f30a621a5210c6c85bca41c9",
+    "plugins/bitz-quality/core-compatibility.json": "c555eaec26819d42183a327ec2563f3029d8eb576bb369ea34e46c416aa30a9d",
+    "plugins/bitz-quality/examples/local-change-plan.json": "91a695da775fa872e07abab9e91ee9ae1a1f9d26dcd7977894d8187640cad756",
+    "plugins/bitz-quality/examples/missing-evidence-review.json": "517ea4c4ab4d10da37f31ca8466e0e50aeb4317495fa31c58f02b367cf4761ef",
+    "plugins/bitz-quality/plugin.json": "d6de551b5faaa30b05c5e494c900003210d94e1b109ee8dcdb216b4c11e3b9e8",
+    "plugins/bitz-quality/schemas/core-observation.schema.json": "8dd67b798f4302f9434b12e2da6139fff2af3c3bb72c18c2609c9de6417b900d",
+    "plugins/bitz-quality/schemas/quality-plan.schema.json": "793fd1f4144c6021719955101fdaf137af0c31aa75c9ccf2442f78c82219b16a",
+    "plugins/bitz-quality/schemas/quality-review.schema.json": "ae25285949239a2e315c24b387aa774db18115d07d66a77f29d72629270e576a",
+    "plugins/bitz-quality/scripts/validate_quality.py": "c2d78a70d9a3b263e5fa9e0f090b7bc6a40940d9db283b5344337c77448b6634",
+    "plugins/bitz-quality/skills/quality-plan/SKILL.md": "adb17ceb999d2203c739ab0ecfbd220f7dbdcfe9d898f1279a6dbea2a69802aa",
+    "plugins/bitz-quality/skills/quality-plan/references/risk-and-evidence.md": "e85aa82352484216c1ea1eb87e1063502d560b274593fe012bfc5e41a2cf3c10",
+    "plugins/bitz-quality/skills/quality-review/SKILL.md": "e39b134f5463bf6d056d7103ca39229d29986c42f2ad5796f3d171dc0a80dcbd",
+    "plugins/bitz-quality/skills/quality-review/references/independence-and-evidence.md": "a122575bc227abd9867bacde78946e97b2a857b267f4640571735e28f4e24640",
+    "tests/skills/test_quality_attack.py": "bbcc232aeeceeca5f8f9a9e306cab2560b5e8cf05a93691f9e0fd070a703fc5f"
+  },
+  "sourceSnapshotVerification": {
+    "status": "passed",
+    "sourceCommit": "0c84a621796c785ed4a1e5dd399bb22a9b3ae9a8",
+    "verifiedSourceFiles": 33,
+    "errors": [],
+    "archiveSha256": "4a3b09a3c1122e01ab11ee4cb3a97962db8e0b402d2215f322738bb3a05c6657"
+  },
+  "primaryGroups": [
+    "quality-pilot-skill-r1-QR-006",
+    "quality-pilot-baseline-r1-QR-006"
+  ],
+  "maximumNewPrimaryTrajectories": 4,
+  "primaryAttempts": 2,
+  "unusedPrimaryTrajectories": 2,
+  "unusedBudgetReusable": false,
+  "originalComparisonStatus": "failed",
+  "independenceInterpretation": "unknown",
+  "newIndependentPreparationCalls": 1,
+  "newIndependentTrajectoryCalls": 1,
+  "newIndependentDiagnosticCalls": 1,
+  "automaticRetries": 0,
+  "certifiesSkillGate": false,
+  "providerStderrContentInArchive": false,
+  "providerStderrOriginalHashesRetained": true,
+  "independentProviderUsage": null,
+  "estimatedCostUsd": null
+}
