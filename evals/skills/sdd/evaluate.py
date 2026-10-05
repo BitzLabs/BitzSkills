@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import base64
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 import hashlib
 import json
@@ -467,8 +468,22 @@ def model_configs(directory, workspace):
     return configs
 
 
+def save_native_outputs(directory, stdout, stderr):
+    """片方の保存失敗でももう片方を試し、失った原bytesを失敗記録へ引き渡す。"""
+    first_error, errors, unsaved = None, [], {}
+    for name, content in (("trace.jsonl", stdout), ("stderr.log", stderr)):
+        raw = content if isinstance(content, bytes) else (content or "").encode("utf-8")
+        try:
+            (directory / name).write_bytes(raw)
+        except OSError as error:
+            first_error = first_error or error
+            errors.append({"path": name, "errorType": type(error).__name__, "errno": error.errno})
+            unsaved[name] = {"encoding": "base64", "data": base64.b64encode(raw).decode("ascii")}
+    return first_error, errors, unsaved
+
+
 def preserve_invocation_failure(directory, wanted, workspace, before, command, timeout, started,
-                                *, error_type, exit_code=None, errno=None):
+                                *, error_type, exit_code=None, errno=None, output_save_errors=None, unsaved_outputs=None):
     """失敗を採点結果に変換せず、実条件・時間・差分と残った原証拠を保存する。"""
     after = snapshot(workspace)
     artifacts = {name: digest((directory / name).read_bytes())
@@ -482,6 +497,7 @@ def preserve_invocation_failure(directory, wanted, workspace, before, command, t
               "changes": {"before": before, "after": after,
                           "changedPaths": sorted(p for p in before.keys() | after.keys() if before.get(p) != after.get(p))},
               "artifacts": artifacts, "providerUsage": None, "providerCost": None,
+              "outputSaveErrors": output_save_errors or [], "unsavedOutputs": unsaved_outputs or {},
               "semantic": "not-measured", "gateDecision": "not-certified"}
     write(directory, "failure.json", json.dumps(record, ensure_ascii=False, indent=2) + "\n")
 
@@ -524,19 +540,22 @@ def run_one(args, case):
     try:
         process = subprocess.run(command, input=prompt, text=True, capture_output=True, timeout=args.timeout)
     except subprocess.TimeoutExpired as error:
-        write(directory, "trace.jsonl", (error.stdout or b"").decode() if isinstance(error.stdout, bytes) else error.stdout or "")
-        write(directory, "stderr.log", (error.stderr or b"").decode() if isinstance(error.stderr, bytes) else error.stderr or "")
+        _, errors, unsaved = save_native_outputs(directory, error.stdout, error.stderr)
         preserve_invocation_failure(directory, wanted, workspace, before, command, args.timeout, started,
-                                    error_type="TimeoutExpired")
+                                    error_type="TimeoutExpired", output_save_errors=errors, unsaved_outputs=unsaved)
         raise
     except OSError as error:
-        write(directory, "trace.jsonl", "")
-        write(directory, "stderr.log", str(error) + "\n")
+        _, errors, unsaved = save_native_outputs(directory, "", str(error) + "\n")
         preserve_invocation_failure(directory, wanted, workspace, before, command, args.timeout, started,
-                                    error_type=type(error).__name__, errno=error.errno)
+                                    error_type=type(error).__name__, errno=error.errno,
+                                    output_save_errors=errors, unsaved_outputs=unsaved)
         raise
-    write(directory, "trace.jsonl", process.stdout)
-    write(directory, "stderr.log", process.stderr)
+    output_error, errors, unsaved = save_native_outputs(directory, process.stdout, process.stderr)
+    if output_error:
+        preserve_invocation_failure(directory, wanted, workspace, before, command, args.timeout, started,
+                                    error_type=type(output_error).__name__, exit_code=process.returncode,
+                                    errno=output_error.errno, output_save_errors=errors, unsaved_outputs=unsaved)
+        raise output_error
     if process.returncode:
         preserve_invocation_failure(directory, wanted, workspace, before, command, args.timeout, started,
                                     error_type="NonzeroExit", exit_code=process.returncode)
