@@ -190,9 +190,13 @@ Coreの出力は根拠にせず、上の規範文と、`SINGLE-067`、`SINGLE-06
 先行TASKの状態だけが両者の違いなので、`SINGLE-137`は先行TASKが未完了であることの、`SINGLE-138`は先行TASKが`done`であることの単一の原因を固定する。
 `SINGLE-138`は、Coreを誤って「先行TASKを持つ起点を無条件に`blocked`にする」実装にしても、「先行TASKの`addresses`の参照先を対象規範文へ加える」実装にしても通らない。
 
-参照計算Bの`digest_crosscheck.closure`は、閉包の外のTASKが閉包の文書の規範文を`addresses`するエッジを、従来は「閉包の外の強いエッジ」として拒否していた。
-`SINGLE-138`のTASK-002の`addresses`（`REQ-001:AC-02`）がこれに当たるため、`verify`と`interpret`では、閉包に含めないTASKの`addresses`を辿らない
-エッジとして受理するように直した（TASKを閉包へ加えるのは目的`implement`の`open`のTASKだけ。関係・トレースモデル §6.1〜§6.3）。
+参照計算Bの`digest_crosscheck.closure`は、閉包の外のTASKが閉包の文書の規範文を`addresses`するエッジを、「閉包の外の強いエッジ」として拒否する。
+`SINGLE-138`のTASK-002の`addresses`（`REQ-001:AC-02`）はこれに当たるため、目的`verify`でTASKを起点にしたときだけ、
+起点が`requires`する先行TASKの`addresses`のエッジを、辿らない辺として記録する（既存の、起点の`requires`の記録と同じ書き方。
+関係・トレースモデル §6.3、§6.4の4.）。適用範囲は、この組合せの先行TASKの`addresses`に限る。目的`implement`の先行TASK
+（起点の`requires`の閉包として閉包へ入る）、`REQ`などを起点にした`verify`／`interpret`で閉包の外のTASKが`addresses`するエッジ、
+閉包の外のTASKが`requires`で閉包の文書を指すエッジ、後続のTASKが起点を`requires`するエッジは、従来どおり拒否する
+（`test_conformance_audit.py`の`test_closure_accepts_only_the_verify_task_root_prerequisite_addresses`が確かめる）。
 既存のfixtureの期待値は変わらない。
 
 ### 監査の回帰試験
@@ -206,7 +210,7 @@ Coreの出力は根拠にせず、上の規範文と、`SINGLE-067`、`SINGLE-06
 
 ### 限界
 
-- 修正前のCore（`targetexpand.py`の`HEAD~2`の版）では、`SINGLE-137`は`passed`／0（`contextDigest`と`bindingRefs`、`commands`が非空、診断なし）となり、
+- 修正前のCore（`targetexpand.py`をコミット`a869bbc7`の版〔修正のコミット`751169c1`の1つ前〕へ戻したもの）では、`SINGLE-137`は`passed`／0（`contextDigest`と`bindingRefs`、`commands`が非空、診断なし）となり、
   失敗することを確認した（陰性対照）。`SINGLE-138`は修正の前後とも通る。
 - 目的`verify`のTASK起点で、`requires`の先行TASKの`addresses`の参照先を対象規範文へ加える変異体のCore（作業ツリー外のコピー）では、
   `SINGLE-138`が失敗する（`AC-02`が`statements`と`covers`に入り、`tests/test_session.py`が割当てへ入る）。`SINGLE-137`は変異の前に止まるので通る。
