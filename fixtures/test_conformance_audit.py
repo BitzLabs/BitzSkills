@@ -136,6 +136,15 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-110", "expected/context.json",
              lambda v: v["documents"].append(dict(v["documents"][0], id="TASK-002", role="work",
                                                   reachedBy=["requires:TASK-001"]))),
+            # 目的`implement`の起点TASKは、先行TASKがすべて`done`なら止まらない。先行TASKを閉包から落とさず、
+            # `CTX-STATE-001`や`CTX-TASK-DEPENDENCY-001`で`blocked`にしない。
+            ("SINGLE-134", "expected/context.json", lambda v: v["documents"].pop()),
+            ("SINGLE-134", "expected/context.json",
+             lambda v: v["diagnostics"][0].update(code="CTX-STATE-001", resultStatus="blocked", severity="error")),
+            ("SINGLE-134", "expected/context.json", lambda v: v.update(status="blocked")),
+            ("SINGLE-134", "manifest.json", lambda v: v["expect"].update(status="passed")),
+            ("SINGLE-134", "expected/context.json",
+             lambda v: v["coverage"]["must"].update(tested=["REQ-001:AC-01"], untested=[])),
             # `verify`は`context`と同じ対象の集合とハッシュ値を使う。
             ("SINGLE-107-02", "expected/verify.json",
              lambda v: v["targetResults"][0]["statements"].pop()),

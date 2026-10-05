@@ -1,6 +1,6 @@
 """共通の対象展開と`advisory`の提示を固定するfixture（Coreの公開操作は実行しない）。
 
-matrix §6.11の`SINGLE-106-03`、`SINGLE-106-06`〜`07`と§6.12の`SINGLE-107`〜`110`、`113`を扱う。
+matrix §6.11の`SINGLE-106-03`、`SINGLE-106-06`〜`07`と§6.12の`SINGLE-107`〜`110`、`113`、`134`を扱う。
 `context`の期待値は4つの集合（rootDocuments、contextDocuments、targetStatements、adjacentStatements）を
 `roots`、`documents[]`、制約台帳、`coverage.adjacent`として完全比較し、同じ起点の`verify`は
 `context`と同じ対象規範文の集合を返すことを確認する。
@@ -35,11 +35,11 @@ def statement_line(identifier, text):
     return f"- [{identifier}] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] {text}。\n"
 
 
-def requirement(identifier, title, statements, fields=""):
+def requirement(identifier, title, statements, fields="", verification="宣言したtestで確認する。"):
     head = f"---\nid: {identifier}\ntitle: {title}\nstatus: approved\n{fields}---\n"
     body = (f"# {identifier} {title}\n\n## Intent\n\ntarget展開の検査に使う固定要求。\n\n"
             "## Acceptance Criteria\n\n" + "".join(statement_line(*s) for s in statements)
-            + "\n## Verification\n\n宣言したtestで確認する。\n")
+            + f"\n## Verification\n\n{verification}\n")
     return head, body
 
 
@@ -172,6 +172,23 @@ def corpus_task():
     ]
 
 
+def corpus_done_prerequisite():
+    """134: open TASK-001が、done TASK-002をrequiresし、テスト対応のないREQ-001:AC-01をaddressesする。
+    先行TASKがすべて`done`なので、起点にした目的`implement`は止まらず、テスト対応が無いことだけが警告になる。"""
+    only = [("REQ-001:AC-01", "入力を検証する")]
+    return [
+        document(".spec/requirements/REQ-001.md", requirement("REQ-001", "テスト対応のない対象要求", only, verification="テスト対応は宣言しない。"),
+                 fm("REQ-001", "テスト対応のない対象要求"), only),
+        document(".spec/tasks/TASK-001.md", task(
+            "TASK-001", "対象句の実装", "open",
+            "relations:\n  requires: [TASK-002]\n  addresses: [REQ-001:AC-01]\n"),
+            fm("TASK-001", "対象句の実装", "open",
+               relations={"requires": ["TASK-002"], "addresses": ["REQ-001:AC-01"]}), []),
+        document(".spec/tasks/TASK-002.md", task("TASK-002", "完了済みの先行作業", "done", ""),
+                 fm("TASK-002", "完了済みの先行作業", "done"), []),
+    ]
+
+
 def corpus_advisory():
     """106-03: approved REQ-001の規範文を、draftのTECH-005が具体化する。"""
     only = [("REQ-001:AC-01", "入力を検証する")]
@@ -224,6 +241,8 @@ CASES = {
                    "statement起点の指定句とrefinementをtarget、兄弟句をadjacentにする"),
     "SINGLE-110": (corpus_task, ["context", "TASK-001", "--purpose", "verify", "--format", "json"],
                    "verifyの起点TASKはaddresses先だけをtargetとし、requires先TASKを含めない"),
+    "SINGLE-134": (corpus_done_prerequisite, ["context", "TASK-001", "--purpose", "implement", "--format", "json"],
+                   "implementの起点TASKは、先行TASKがdoneなら止まらず、未テストのMUSTだけを警告にする"),
     "SINGLE-113": (corpus_refinement, ["verify", "REQ-001:AC-01", "REQ-001", "REQ-001:AC-01", "--format", "json"],
                    "文書IDと同文書のstatement IDを重複指定してもtargetとbindingを重複排除する"),
     "SINGLE-106-06": (corpus_distance, ["context", "REQ-001", "--purpose", "verify", "--format", "json"],
@@ -266,6 +285,20 @@ EXPANSIONS = {
                                  ("REQ-001", "requirement", "full", ["addresses:TASK-001"])],
                    "ledger": ["REQ-001:AC-01"], "tested": ["REQ-001:AC-01"],
                    "addressed": ["REQ-001:AC-01"], "adjacent": [], "advisory": []},
+    # 134は、起点のTASKが`requires`する先行TASKがすべて`done`である。対象規範文REQ-001:AC-01は起点のTASK-001が
+    # `addresses`するので対応済み、閉包にテスト対応がないので未テストであり、目的`implement`の`MUST`の
+    # 未テストは警告になる（関係・トレースモデル §8、診断レジストリの`CTX-COVERAGE-TEST-MUST-IMPLEMENT`）。
+    "SINGLE-134": {"purpose": "implement", "root": "TASK-001", "status": "passed_with_warnings",
+                   "documents": [("TASK-001", "root", "full", ["root"]),
+                                 ("REQ-001", "requirement", "full", ["addresses:TASK-001"]),
+                                 ("TASK-002", "work", "full", ["requires:TASK-001"])],
+                   "ledger": ["REQ-001:AC-01"], "tested": [], "addressed": ["REQ-001:AC-01"],
+                   "adjacent": [], "advisory": [],
+                   "diagnostics": [{"code": "CTX-COVERAGE-TEST-001", "severity": "warning",
+                                    "resultStatus": "passed_with_warnings",
+                                    "summary": "MUST REQ-001:AC-01がtestされていません",
+                                    "source": {"kind": "file", "workspaceId": "root",
+                                               "path": ".spec/requirements/REQ-001.md"}}]},
     # 113の文書を起点にする検証対象は107-01、規範文を起点にする検証対象は次の展開を使う。
     "REQ-001:AC-01": {"purpose": "verify", "root": "REQ-001:AC-01",
                       "ledger": ["REQ-001:AC-01", "TECH-002:AC-01", "TECH-003:AC-01"], "advisory": []},
@@ -315,8 +348,8 @@ def reviewed_manifest(identifier):
     return {"fixtureId": identifier, "description": description,
             "setup": {"git": True, "operations": operations},
             "invocation": {"runner": "bitz", "cwd": ".", "argv": list(argv), "env": {}},
-            "expect": {"status": "passed", "exitCode": 0, "stdout": "json",
-                       "resultFile": f"expected/{operation}.json", "reportFileCount": 0}}
+            "expect": {"status": EXPANSIONS.get(identifier, {}).get("status", "passed"), "exitCode": 0,
+                       "stdout": "json", "resultFile": f"expected/{operation}.json", "reportFileCount": 0}}
 
 
 # --- 参照計算A: ハッシュ値の材料のリテラル ----------------------------------------------
@@ -431,7 +464,8 @@ def reviewed_context(identifier):
             "untested": [s for s in plan["ledger"] if s not in plan["tested"]]}
     empty = {key: [] for key in ("total", "addressed", "tested", "unaddressed", "untested")}
     return {
-        "schemaVersion": "1.0", "operation": "context", "status": "passed", "purpose": plan["purpose"],
+        "schemaVersion": "1.0", "operation": "context", "status": plan.get("status", "passed"),
+        "purpose": plan["purpose"],
         "workspace": {"id": "root", "path": "."}, "roots": [plan["root"]],
         "contextDigest": context_digest(identifier), "revision": None,
         "resolution": {"complete": True, "documentCount": len(plan["documents"]), "unresolvedStrongRelations": 0},
@@ -439,7 +473,7 @@ def reviewed_context(identifier):
         "documents": [bundle_document(identifier, *row) for row in plan["documents"]],
         "constraintLedger": {"statements": ledger},
         "coverage": {"must": must, "should": dict(empty), "may": dict(empty), "adjacent": list(plan["adjacent"])},
-        "durationMs": 0, "diagnostics": [],
+        "durationMs": 0, "diagnostics": list(plan.get("diagnostics", [])),
     }
 
 
@@ -484,6 +518,7 @@ LITERAL_SETS = {
     "SINGLE-109": (["REQ-001"], ["REQ-001", "TECH-002", "TASK-001"],
                    ["REQ-001:AC-01", "TECH-002:AC-01"], ["REQ-001:AC-02"]),
     "SINGLE-110": (["TASK-001"], ["TASK-001", "REQ-001"], ["REQ-001:AC-01"], []),
+    "SINGLE-134": (["TASK-001"], ["TASK-001", "REQ-001", "TASK-002"], ["REQ-001:AC-01"], []),
 }
 
 
@@ -508,6 +543,12 @@ def check_contract(identifier, result, root):
                 raise ValueError("役割`advisory`の文書の規範文を制約台帳へ入れてはいけません")
         if identifier == "SINGLE-110" and any(d["id"] in {"TASK-002", "REQ-009"} for d in result["documents"]):
             raise ValueError("目的`verify`の起点TASKの`requires`の参照先とその`addresses`の参照先をコンテキストへ含めてはいけません")
+        if identifier == "SINGLE-134":
+            codes = [d["code"] for d in result["diagnostics"]]
+            if codes != ["CTX-COVERAGE-TEST-001"] or result["status"] != "passed_with_warnings":
+                raise ValueError("先行TASKがすべて`done`のとき、診断は未テストの`MUST`の警告1件だけである必要があります")
+            if {d["id"]: d["role"] for d in result["documents"]}.get("TASK-002") != "work":
+                raise ValueError("目的`implement`の起点TASKの`requires`の先行TASKは役割`work`でコンテキストへ含める必要があります")
         if identifier == "SINGLE-107-01" and "REQ-099" in [d["id"] for d in result["documents"]]:
             raise ValueError("`related`の参照先をコンテキストへ追加してはいけません")
         if identifier == "SINGLE-106-06":
