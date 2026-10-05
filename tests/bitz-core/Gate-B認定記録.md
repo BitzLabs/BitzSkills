@@ -240,3 +240,22 @@ fixtureを追加した後、Coreを追従させる前に、新規の2件が0件`
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は549件がすべて成功した。
+
+## 2026-10-05: 先行TASKが完了済みのTASKの`implement`を直した後のStep 1〜5の再判定
+
+目的`implement`でTASKを起点にしたとき、`requires`する先行TASKが`done`でも`CTX-STATE-001`で止めていた欠陥を直し
+（`targetexpand.py`。`done`のTASKを止めるのは起点にした場合だけ）、これを固定する`SINGLE-134`（Step 3）を追加した。
+fixtureを追加した後、修正前のCoreでは`SINGLE-134`が`blocked`／終了コード2（`CTX-STATE-001`）で失敗し、修正後のCoreでは`passed`となることを確かめた。
+
+コミット`283bf33b4634f227d74316b5b3ebbd04f398583a`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 321件（`SINGLE-134`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`2f2806785f93c39cb3bbbe60a4c4f8cd3e2aed5efdbcbc8256f39496d5522e84` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は578件がすべて成功した。

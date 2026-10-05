@@ -1134,3 +1134,20 @@ commit `4cc0db96eddb44e2ef9120e0348907e8286a028e`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 fixtureの入力と期待値を変えていないため、Gate Bの判定し直しは要しない。
+
+## 2026-10-05: `SINGLE-134`を追加した後のGate Aの再認定
+
+先行TASKが`done`のTASKを起点にした目的`implement`を、Coreが`CTX-STATE-001`で止めていた欠陥（`targetexpand.py`）を直し、
+これを固定する`SINGLE-134`を追加した（ADR-051の追加。根拠は文書・フロントマター・状態仕様 §7、関係・トレースモデル §6.2、ADR-029）。
+matrix、Step 3の割当て、実装計画のStep 3の完了条件を合わせた。既存のfixtureの入力と期待値は変えていない。
+
+commit `283bf33b4634f227d74316b5b3ebbd04f398583a`に対して`uv run fixtures/certify_gate_a.py`を実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`b356e558b8c45909cdb07cbe6d88b585decdc433b235f7f63c3025c8b315ef68`。前回から変わったのは`SINGLE-134`の追加による次の値だけである: matrixと網羅の件数（320件→321件）、Step 3の件数（73件→74件）、生成器の準備件数、実行ビットを確かめたファイル数（1762件→1766件） |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 3に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
