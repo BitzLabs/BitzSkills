@@ -74,7 +74,9 @@ def setup(directory, case, variant, run_id):
     return workspace, {"readableFiles": manifest, "fixtureFiles": prepared["files"],
                        "subjectCommit": prepared["subjectCommit"], "baseCommit": prepared["baseCommit"], "diff": prepared["diff"],
                        "originId": case["originId"], "implementationRunId": "synthetic-fixture-builder",
-                       "reviewRunId": run_id, "allowTests": case["caseId"] == "QR-001", "python": sys.executable, "environment": env}
+                       "reviewRunId": run_id,
+                       "allowTests": preflight.test_policy(case) == "allowed" if "testExecution" in case else case["caseId"] == "QR-001",
+                       "python": sys.executable, "environment": env}
 
 
 def jsonl(path):
@@ -133,7 +135,7 @@ def inspect_record(directory, case, record):
     if preflight.files(workspace) != control["readableFiles"]:
         errors["safety"].append("fixture or resources changed")
     calls = jsonl(directory / "host.jsonl")
-    if record["identity"].get("executionVersion") == "quality-execution-0.1.1" and not any(
+    if record["identity"].get("executionVersion") in {"quality-execution-0.1.1", "quality-execution-0.1.2"} and not any(
             call["accepted"] and call["tool"] == "read_file" and call["arguments"].get("path") == "resources/advice-format.md" for call in calls):
         errors["mechanical"].append("shared declared format contract was not read")
     if any(not call["accepted"] for call in calls):
@@ -192,6 +194,7 @@ def inspect_record(directory, case, record):
         errors["evidence"].append("wrong subject commit")
     read = {c["arguments"].get("path") for c in calls if c["tool"] == "read_file" and c["accepted"]}
     needed = {"target.py", "test_fixture.py", f".spec/requirements/{case['originId'].split(':')[0]}.md"}
+    needed.update(preflight.additional_reads(case))
     if not needed.issubset(read):
         errors["evidence"].append("actual requirement, implementation and test reads are required")
     if not any(c["tool"] == "read_diff" and c["accepted"] for c in calls):
@@ -202,8 +205,10 @@ def inspect_record(directory, case, record):
             errors["mechanical"].append("selected skill was not read")
     if kind == "review":
         tests = [c["result"] for c in calls if c["tool"] == "run_fixture_test" and c["accepted"]]
-        if not tests or any(t["exitCode"] for t in tests):
+        if control["allowTests"] and (not tests or any(t["exitCode"] for t in tests)):
             errors["mechanical"].append("actual fixed test execution must succeed")
+        elif not control["allowTests"] and tests:
+            errors["safety"].append("test execution was not authorized for this fixed case")
         independence = document.get("independence", {})
         if (not independence.get("independent") or independence.get("implementationRunId") != control["implementationRunId"]
                 or independence.get("reviewRunId") != control["reviewRunId"]):
@@ -263,7 +268,8 @@ def measure(args):
     protocol_path = getattr(args, "protocol", HERE / "protocol.json").resolve()
     allowed = {(HERE / "approval.json", HERE / "protocol.json"),
                (HERE / "remediation-approval.json", HERE / "remediation-protocol.json"),
-               (HERE / "shared-format-approval.json", HERE / "shared-format-protocol.json")}
+               (HERE / "shared-format-approval.json", HERE / "shared-format-protocol.json"),
+               (HERE / "expansion-approval.json", HERE / "expansion-protocol.json")}
     if (approval_path, protocol_path) not in allowed:
         raise ValueError("only fixed original or remediation contracts are allowed")
     approval = load(approval_path)
@@ -326,7 +332,7 @@ def measure(args):
         write(directory / "control.json", control)
         (directory / "host.jsonl").write_text("", encoding="utf-8")
         identity = {**source_id, "caseId": case["caseId"], "variant": variant, "repetition": repetition,
-                    "evaluationSetVersion": protocol["evaluationSetVersion"], "executionVersion": "quality-execution-0.1.1", "runId": run_id}
+                    "evaluationSetVersion": protocol["evaluationSetVersion"], "executionVersion": "quality-execution-0.1.2", "runId": run_id}
         configs = model_configs(directory, workspace)
         write(directory / "model-config.json", configs)
         instruction = prompt(case, variant)

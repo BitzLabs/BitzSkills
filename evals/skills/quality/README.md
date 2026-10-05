@@ -28,7 +28,7 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<worktree絶対パス>/plugins/bitz-core/sr
 ```
 
 preflightはリポジトリ内の.venvに一時workspaceを作り、fixtureをコピーする。
-指定2ファイル等だけをGitへ追加し、合成の基準/対象refを作る。remoteは設定せず、フックは無効化する。
+固定fixture内のファイルだけをGitへ追加し、合成の基準/対象refと全対象ファイルの差分を作る。remoteは設定せず、フックは無効化する。
 公開CLI context/checkと、本文を固定したローカルtest_fixture.pyだけを実行する。verifyは起動しない。
 元結果、終了コード、sha256、実assertの範囲、対象の非変更を取得し、既存試験が認可境界を落としていることを別の事前検査で確認する。
 この検査は品質やモデル行動の認定ではなく、実測入力の整合性確認である。
@@ -62,3 +62,26 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<worktree絶対パス>/plugins/bitz-core/sr
 
 1回のコマンドで1軌跡だけ起動する。順序は反復1→2、各反復のskill→baseline、各variantのQP→QR。
 最大8件という承認を上限とし、最初の失敗・中断・独立検分待ちで止める。記録済みの条件を変えて同じ出力へ再開しない。
+
+## 品質レビューの拡張2ケース
+
+`expansion-cases.json`はQR-002（公開APIの変更・必須証拠不足）とQR-003（CIの供給網・偽装コメント）を公開した準備用カタログで、直接の実測起動には使えない。
+根拠と安全条件は[入力設計](expansion-sources.md)に記録する。期待条件と基準側の置換ファイルはモデルへ渡さない。
+QR-002はテスト実行を許可せず、Hostも実行ツールを提供しない。Core成功と未取得の試験・互換性の証拠を区別する。
+QR-003では事前確認した固定Pythonテストだけを許可する。危険なworkflowは静的検分用のデータであり、CI・ネットワーク・PRコード取得・秘密取得を実行しない。
+
+`expansion-protocol.json`と`expansion-approval.json`は包括承認に基づく別の有限条件で、2ケース×skill/baseline×2反復、最大8軌跡である。
+独立準備検分1回と各軌跡の独立検分最大8回は別集計し、失敗・中断・未検分で新規起動を止める。
+実測は準備検分後のcleanな確定refから、600秒、別出力・別台帳へ直列に行う。旧3契約の結果や予算を再利用しない。
+外側のnative実行は初期化状態を保存できる環境で行い、内側のモデルはread-onlyと固定MCPのまま維持する。
+`quality-execution-0.1.2`でも両側へ同一の公開返却形式を渡し、実読取りを必須にする。旧記録の実行版・判定は書き換えない。
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<worktree絶対パス>/plugins/bitz-core/src:<ruamel.yaml-0.19.1のパス> \
+  python3 -B evals/skills/quality/preflight.py --protocol expansion-cases.json
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<worktree絶対パス>/plugins/bitz-core/src:<ruamel.yaml-0.19.1のパス> \
+  python3 -B evals/skills/quality/evaluate.py --protocol evals/skills/quality/expansion-protocol.json \
+  --approval evals/skills/quality/expansion-approval.json --timeout 600 --output <worktree絶対パス>/.venv/quality-expansion-01
+```
+
+この限定比較が通っても、Q0/Q1、発火、保持ケース、実地パイロット、複数モデル、最終Skill Gateは未認定である。
