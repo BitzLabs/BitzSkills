@@ -278,3 +278,23 @@ fixtureを追加した後、修正前のCoreでは2件が`normative`を返して
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は583件がすべて成功した。
+
+## 2026-10-05: 目的verifyでの先行TASKの検査を直した後のStep 1〜5の再判定
+
+目的`verify`でTASKを起点にしたとき、先行TASKが`done`でなくても検査せずに通していた欠陥を直し（`targetexpand.py`。
+`CTX-TASK-DEPENDENCY-001`を目的`implement`と`verify`の両方で返す）、これを固定する`SINGLE-137`と`SINGLE-138`（Step 4）を追加した。
+fixtureを追加した後、修正前のCore（コミット`a869bbc7`の版）では`SINGLE-137`が`passed`／終了コード0で失敗し、`SINGLE-138`は修正の前後とも
+`passed`となることと、修正後のCoreでは2件とも`passed`となることを確かめた。
+
+コミット`588e3b1e4d54af0925d913e8262b93f2bc95bbc6`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 325件（`SINGLE-137`と`SINGLE-138`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`d3c827d01412b450df4c205eb2f1daa4594527afdc3ece9a09b2c50c861671c5` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は587件がすべて成功した。

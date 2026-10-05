@@ -1175,3 +1175,22 @@ commit `d7b91a57c096a4a393aeae750dac9197418087e4`に対して`uv run fixtures/ce
 10秒の上限を置いていること（`harness.py`）による一時的な失敗とみて、上の認定は他の負荷をかけずに実行した。
 
 Gate Bが`Passed`のStep 3に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-05: `SINGLE-137`と`SINGLE-138`を追加した後のGate Aの再認定
+
+目的`verify`でTASKを起点にしたとき、先行TASK（起点の`requires`が指すTASK）の状態を検査していなかった欠陥（`targetexpand.py`）を直した
+（ADR-029の`Decision`の1番目の項目、`verify` §4の手順2。関係・トレースモデル §6.3にも明記した）。これを固定する`SINGLE-137`
+（先行TASKが`open`で`blocked`）と`SINGLE-138`（先行TASKが`done`で`passed`。先行TASKの`addresses`の参照先を対象に加えない）を追加した
+（ADR-051の追加）。参照計算Bは、目的`verify`の起点のTASKの先行TASKの`addresses`のエッジだけを辿らない辺として受理するようにした。
+matrix、Step 4の割当て、実装計画のStep 4の完了条件、網羅表とtarget vectorが固定する根拠文書のハッシュ値を合わせた。既存のfixtureの入力と期待値は変えていない。
+
+commit `588e3b1e4d54af0925d913e8262b93f2bc95bbc6`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`ebf6b3175624436819e4874cef3ff3996c3a2033b4bf4015d834fa0fa64f7376`。前回から変わったのは次の値だけである: `SINGLE-137`と`SINGLE-138`の追加によるmatrixと網羅の件数（323件→325件）、Step 4の件数（54件→56件）、実行ビットを確かめたファイル数（1775件→1795件）、網羅表とtarget vectorが固定する根拠文書のハッシュ値 |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 4に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
