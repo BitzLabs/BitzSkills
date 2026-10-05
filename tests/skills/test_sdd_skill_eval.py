@@ -412,6 +412,58 @@ class SddEvaluationTests(unittest.TestCase):
         self.assertEqual(1, result)
         self.assertEqual(1, len(started))
 
+    def test_native_invocation_failures_preserve_conditions_partial_changes_and_raw_output(self):
+        for kind in ("nonzero", "timeout", "oserror", "missing-response"):
+            with self.subTest(kind=kind):
+                output = self.directory / kind
+                target = output / "skill/repetition-1/SI-010"
+                args = argparse.Namespace(output=output, variant="skill", repetition=1, resume=False,
+                    model="gpt-6.1-sol", model_version="synthetic-test", timeout=10,
+                    pythonpath=os.environ["PYTHONPATH"])
+                wanted = {"caseId": "SI-010", "subjectCommit": "synthetic-fixed-ref"}
+                def failed(command, **kwargs):
+                    evaluation.write(target / "workspace", "src/input.py", evaluation.FIXED)
+                    if kind == "timeout":
+                        raise subprocess.TimeoutExpired(command, 10, output=b"partial trace\n", stderr=b"partial stderr\n")
+                    if kind == "oserror":
+                        raise PermissionError(30, "Read-only file system")
+                    return subprocess.CompletedProcess(command, 0 if kind == "missing-response" else 1,
+                        "partial trace\n", "native initialization failed\n")
+                exception = {"nonzero": ValueError, "timeout": subprocess.TimeoutExpired,
+                    "oserror": PermissionError, "missing-response": FileNotFoundError}[kind]
+                native_run = evaluation.subprocess.run
+                def dispatch(command, **kwargs):
+                    return failed(command, **kwargs) if command[0] == "codex" else native_run(command, **kwargs)
+                with patch.object(evaluation, "identity", return_value=wanted), patch.object(evaluation.subprocess, "run", side_effect=dispatch) as invoked:
+                    with self.assertRaises(exception):
+                        evaluation.run_one(args, self.cases["SI-010"])
+                    native_calls = [c for c in invoked.call_args_list if c.args[0][0] == "codex"]
+                    self.assertEqual(1, len(native_calls))
+                    with self.assertRaisesRegex(ValueError, "既存出力"):
+                        evaluation.run_one(args, self.cases["SI-010"])
+                    self.assertEqual(1, len([c for c in invoked.call_args_list if c.args[0][0] == "codex"]))
+                record = evaluation.load(target / "failure.json")
+                self.assertEqual(wanted, record["identity"])
+                self.assertEqual("interrupted", record["status"])
+                self.assertEqual("not-measured", record["semantic"])
+                self.assertEqual("not-certified", record["gateDecision"])
+                self.assertEqual(["src/input.py"], record["changes"]["changedPaths"])
+                self.assertNotEqual(record["changes"]["before"], record["changes"]["after"])
+                self.assertEqual(str(target / "workspace"), record["invocation"]["cwd"])
+                self.assertEqual(10, record["invocation"]["timeoutSeconds"])
+                self.assertEqual(native_calls[0].args[0], record["invocation"]["argv"])
+                self.assertIsNone(record["providerUsage"])
+                self.assertIsNone(record["providerCost"])
+                self.assertGreaterEqual(record["wallMs"], 0)
+                self.assertEqual(1 if kind == "nonzero" else 0 if kind == "missing-response" else None, record["exitCode"])
+                self.assertEqual(30 if kind == "oserror" else 2 if kind == "missing-response" else None, record["errno"])
+                for name, value in record["artifacts"].items():
+                    self.assertEqual(evaluation.digest((target / name).read_bytes()), value)
+                self.assertEqual("partial stderr\n" if kind == "timeout" else
+                    "[Errno 30] Read-only file system\n" if kind == "oserror" else "native initialization failed\n",
+                    (target / "stderr.log").read_text())
+                self.assertFalse((target / "run.json").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

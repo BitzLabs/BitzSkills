@@ -467,6 +467,25 @@ def model_configs(directory, workspace):
     return configs
 
 
+def preserve_invocation_failure(directory, wanted, workspace, before, command, timeout, started,
+                                *, error_type, exit_code=None, errno=None):
+    """失敗を採点結果に変換せず、実条件・時間・差分と残った原証拠を保存する。"""
+    after = snapshot(workspace)
+    artifacts = {name: digest((directory / name).read_bytes())
+                 for name in ("trace.jsonl", "host.jsonl", "stderr.log", "decision.json", "changes.json", "control.json")
+                 if (directory / name).is_file()}
+    record = {"schemaVersion": "1.0", "status": "interrupted", "identity": wanted,
+              "errorType": error_type, "exitCode": exit_code, "errno": errno,
+              "wallMs": round((time.monotonic() - started) * 1000),
+              "invocation": {"argv": command, "cwd": str(workspace), "timeoutSeconds": timeout,
+                             "stateDirectory": str(directory / "state"), "logDirectory": str(directory / "logs")},
+              "changes": {"before": before, "after": after,
+                          "changedPaths": sorted(p for p in before.keys() | after.keys() if before.get(p) != after.get(p))},
+              "artifacts": artifacts, "providerUsage": None, "providerCost": None,
+              "semantic": "not-measured", "gateDecision": "not-certified"}
+    write(directory, "failure.json", json.dumps(record, ensure_ascii=False, indent=2) + "\n")
+
+
 def run_one(args, case):
     directory = args.output / args.variant / f"repetition-{args.repetition}" / case["id"]
     wanted = identity(args, case)
@@ -506,21 +525,37 @@ def run_one(args, case):
         process = subprocess.run(command, input=prompt, text=True, capture_output=True, timeout=args.timeout)
     except subprocess.TimeoutExpired as error:
         write(directory, "trace.jsonl", (error.stdout or b"").decode() if isinstance(error.stdout, bytes) else error.stdout or "")
-        write(directory, "stderr.log", "evaluation timeout; automatic retry disabled\n")
+        write(directory, "stderr.log", (error.stderr or b"").decode() if isinstance(error.stderr, bytes) else error.stderr or "")
+        preserve_invocation_failure(directory, wanted, workspace, before, command, args.timeout, started,
+                                    error_type="TimeoutExpired")
+        raise
+    except OSError as error:
+        write(directory, "trace.jsonl", "")
+        write(directory, "stderr.log", str(error) + "\n")
+        preserve_invocation_failure(directory, wanted, workspace, before, command, args.timeout, started,
+                                    error_type=type(error).__name__, errno=error.errno)
         raise
     write(directory, "trace.jsonl", process.stdout)
     write(directory, "stderr.log", process.stderr)
     if process.returncode:
+        preserve_invocation_failure(directory, wanted, workspace, before, command, args.timeout, started,
+                                    error_type="NonzeroExit", exit_code=process.returncode)
         raise ValueError(f"codex exec exit {process.returncode}; stderr.logを保持")
-    after = snapshot(workspace)
-    calls = read_events(directory / "host.jsonl")
-    model_changed = sorted({c["arguments"]["path"] for c in calls if c["tool"] == "write_file" and c["accepted"]
-                            and before.get(c["arguments"]["path"]) != after.get(c["arguments"]["path"])})
-    write(directory, "changes.json", json.dumps({"before": before, "after": after, "modelChanged": model_changed}, ensure_ascii=False))
-    record = {"identity": wanted, "decision": load(directory / "decision.json"), "wallMs": round((time.monotonic() - started) * 1000),
-              "artifacts": {name: digest((directory / name).read_bytes()) for name in ("trace.jsonl", "host.jsonl", "changes.json", "decision.json", "control.json")}}
-    record["checks"] = inspect(record, case, directory)
-    write(directory, "run.json", json.dumps(record, ensure_ascii=False, indent=2) + "\n")
+    try:
+        after = snapshot(workspace)
+        calls = read_events(directory / "host.jsonl")
+        model_changed = sorted({c["arguments"]["path"] for c in calls if c["tool"] == "write_file" and c["accepted"]
+                                and before.get(c["arguments"]["path"]) != after.get(c["arguments"]["path"])})
+        write(directory, "changes.json", json.dumps({"before": before, "after": after, "modelChanged": model_changed}, ensure_ascii=False))
+        record = {"identity": wanted, "decision": load(directory / "decision.json"), "wallMs": round((time.monotonic() - started) * 1000),
+                  "artifacts": {name: digest((directory / name).read_bytes()) for name in ("trace.jsonl", "host.jsonl", "changes.json", "decision.json", "control.json")}}
+        record["checks"] = inspect(record, case, directory)
+        write(directory, "run.json", json.dumps(record, ensure_ascii=False, indent=2) + "\n")
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        preserve_invocation_failure(directory, wanted, workspace, before, command, args.timeout, started,
+                                    error_type=type(error).__name__, exit_code=process.returncode,
+                                    errno=getattr(error, "errno", None))
+        raise
     return record
 
 
