@@ -3316,6 +3316,49 @@ class AuditTests(unittest.TestCase):
             with self.subTest(name):
                 self.assertTrue(certify.judge(runs, scales))
 
+    def test_gate_a_certification_names_the_scale_failure(self):
+        # 規模の検証が理由を返したときは、認定の理由にその先頭を示す（原因を「形式が不正」に埋もれさせない）。
+        conformance, scale = self.certification_runs()
+        failed = {"exitCode": 1, "stdout": json.dumps({"status": "Failed", "durationSeconds": 1.0, "results": [],
+                                                      "errors": ["MULTI-020-01: 照合を完了できません（TimeoutExpired: git）"]}).encode()}
+        reasons = certify.judge(conformance, [failed, dict(failed)])
+        self.assertIn("規模の検証1: 成功していません（MULTI-020-01: 照合を完了できません（TimeoutExpired: git））", reasons)
+
+    def test_scale_validation_reports_setup_failures_as_json(self):
+        # 準備手順のGit操作がタイムアウトしても、規模の検証はJSONのレポートを出し、失敗として数える（C14）。
+        import contextlib
+        import io
+        import subprocess
+        import validate_scale
+        first = next(iter(validate_scale.multi_limit_fixtures.CASES))
+
+        def fake(identifier):
+            if identifier == first:
+                raise subprocess.TimeoutExpired(["git", "add"], 120)
+            return {"fixtureId": identifier, "errors": []}
+
+        output = io.StringIO()
+        with patch.object(validate_scale, "validate_fixture", fake), contextlib.redirect_stdout(output):
+            exit_code = validate_scale.main()
+        report = json.loads(output.getvalue())
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(report["status"], "Failed")
+        self.assertEqual(report["fixtures"], len(validate_scale.multi_limit_fixtures.CASES))
+        self.assertEqual(len(report["errors"]), 1)
+        self.assertTrue(report["errors"][0].startswith(f"{first}: 照合を完了できません（TimeoutExpired: "))
+        conformance, _scale = self.certification_runs()
+        reasons = certify.judge(conformance, [{"exitCode": exit_code, "stdout": output.getvalue().encode()}] * 2)
+        self.assertEqual([reason for reason in reasons if reason.startswith("規模の検証1")],
+                         [f"規模の検証1: 成功していません（{report['errors'][0]}）"])
+        self.assertFalse(any("形式が不正" in reason for reason in reasons), reasons)
+
+    def test_fixture_git_uses_the_shared_timeout(self):
+        from conformance import harness
+        self.assertEqual(harness.GIT_TIMEOUT_SECONDS, 120)
+        with patch.object(harness.subprocess, "check_output", return_value=b"") as check_output:
+            harness.git(Path("."), "status")
+        self.assertEqual(check_output.call_args.kwargs["timeout"], harness.GIT_TIMEOUT_SECONDS)
+
     def test_gate_a_certification_requires_a_committed_worktree(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
