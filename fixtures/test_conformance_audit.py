@@ -1579,7 +1579,7 @@ class AuditTests(unittest.TestCase):
     def test_verify_task_root_fixture(self):
         result = validate_verify_task_root()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], ["SINGLE-068"])
+        self.assertEqual(result["prepared"], ["SINGLE-068", "SINGLE-137", "SINGLE-138"])
         self.assertEqual(result["core_execution"], "Not run")
 
     def test_done_task_root_is_reverifiable_and_cancelled_is_not(self):
@@ -1639,6 +1639,141 @@ class AuditTests(unittest.TestCase):
                 path = fixture / "repo" / verify_task_root_fixtures.TASK_PATH
                 path.write_text(path.read_text().replace("status: done", "status: " + status))
                 self.assertTrue(validate_verify_task_root(root, ["SINGLE-068"])["errors"])
+
+    def test_prerequisite_state_decides_verify_of_a_task_root(self):
+        """関係・トレースモデル §6.3、ADR-029: 目的`verify`でも、起点のTASKの`requires`の参照先のTASKが
+        すべて`done`でなければ`CTX-TASK-DEPENDENCY-001`の`blocked`とする（実装の確認事項C11）。"""
+        blocked = json.loads((audit.FIXTURES / "single/SINGLE-137/expected/verify.json").read_text())
+        passed = json.loads((audit.FIXTURES / "single/SINGLE-138/expected/verify.json").read_text())
+        verify_task_root_fixtures.check_prerequisite("SINGLE-137", blocked)
+        verify_task_root_fixtures.check_prerequisite("SINGLE-138", passed)
+        target = blocked["targetResults"][0]
+        self.assertEqual((blocked["status"], target["contextDigest"], target["statements"], target["bindingRefs"],
+                          blocked["commands"]), ("blocked", None, [], [], []))
+        self.assertEqual([d["code"] for d in target["diagnostics"]], ["CTX-TASK-DEPENDENCY-001"])
+        self.assertEqual(target["diagnostics"][0]["source"]["key"], "relations.requires")
+        self.assertEqual(passed["status"], "passed")
+        self.assertEqual(passed["targetResults"][0]["diagnostics"], [])
+        self.assertEqual(passed["targetResults"][0]["statements"], ["REQ-001:AC-01"])
+        # 起点のTASKの`requires`の閉包は含めないので、先行TASK-002はコンテキストへ入らない。
+        payload = json.loads(digest_reference.canonical_bytes(
+            verify_task_root_fixtures.reviewed_digest_input("SINGLE-138")).decode())
+        self.assertEqual([d["id"] for d in payload["documents"]], ["REQ-001", "TASK-001", "TECH-001"])
+        task = payload["documents"][1]
+        self.assertEqual(task["strongRelations"], [{"relation": "addresses", "target": "REQ-001:AC-01"},
+                                                   {"relation": "requires", "target": "TASK-002"}])
+
+    def test_prerequisite_audit_rejects_tampered_expectations(self):
+        # 先行TASKが未完了の起点（SINGLE-137）を`passed`や診断なしにすること、先行TASKが`done`の起点
+        # （SINGLE-138）を`blocked`にしたり診断を足したりすることを、監査は拒否する。
+        def blocked_target(**changes):
+            return lambda v: v["targetResults"][0].update(**changes)
+
+        def drop_diagnostic(v):
+            v["targetResults"][0]["diagnostics"] = []
+
+        def wrong_code(v):
+            v["targetResults"][0]["diagnostics"][0].update(code="CTX-STATE-001")
+
+        def add_diagnostic(code):
+            def mutate(v):
+                diagnostic = json.loads((audit.FIXTURES / "single/SINGLE-137/expected/verify.json").read_text()
+                                        )["targetResults"][0]["diagnostics"][0]
+                v["targetResults"][0]["diagnostics"].append(dict(diagnostic, code=code))
+            return mutate
+
+        mutations = [
+            ("SINGLE-137", "expected/verify.json", drop_diagnostic),
+            ("SINGLE-137", "expected/verify.json", wrong_code),
+            ("SINGLE-137", "expected/verify.json", lambda v: v.update(status="passed")),
+            ("SINGLE-137", "expected/verify.json", blocked_target(status="passed")),
+            ("SINGLE-137", "expected/verify.json",
+             blocked_target(contextDigest="sha256:" + "0" * 64)),
+            ("SINGLE-137", "expected/verify.json", blocked_target(statements=["REQ-001:AC-01"])),
+            ("SINGLE-137", "expected/verify.json", blocked_target(bindingRefs=["root::default"])),
+            ("SINGLE-137", "expected/verify.json",
+             lambda v: v["commands"].append(json.loads(
+                 (audit.FIXTURES / "single/SINGLE-138/expected/verify.json").read_text())["commands"][0])),
+            ("SINGLE-137", "manifest.json", lambda v: v["expect"].update(status="passed", exitCode=0)),
+            ("SINGLE-138", "expected/verify.json", lambda v: v.update(status="blocked")),
+            ("SINGLE-138", "expected/verify.json", add_diagnostic("CTX-TASK-DEPENDENCY-001")),
+            ("SINGLE-138", "expected/verify.json", add_diagnostic("CTX-STATE-001")),
+            ("SINGLE-138", "expected/verify.json", blocked_target(statements=[])),
+            ("SINGLE-138", "expected/verify.json",
+             blocked_target(statements=["REQ-001:AC-01", "REQ-001:AC-02"])),
+            ("SINGLE-138", "expected/verify.json", blocked_target(contextDigest=None)),
+            ("SINGLE-138", "expected/verify.json", blocked_target(bindingRefs=[])),
+            ("SINGLE-138", "expected/verify.json",
+             lambda v: v["commands"][0].update(tests=["tests/test_auth.py", "tests/test_session.py"])),
+            ("SINGLE-138", "expected/verify.json",
+             lambda v: v["commands"][0].update(covers=["REQ-001:AC-01", "REQ-001:AC-02"])),
+            ("SINGLE-138", "expected/verify.json",
+             lambda v: v["commands"][0].update(argv=["/bin/true", "tests/test_auth.py", "tests/test_session.py"])),
+            ("SINGLE-138", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_verify_task_root(root, [identifier])["errors"])
+
+    def test_prerequisite_addresses_stays_out_of_the_obligation(self):
+        """`verify` §3、関係・トレースモデル §6.4の4.: `requires`先のTASKの`addresses`の参照先は、起点の義務へ加えない。
+        SINGLE-138の先行TASK-002は、起点が`addresses`しないREQ-001:AC-02を`addresses`する。"""
+        inputs = verify_task_root_fixtures.reviewed_inputs("SINGLE-138")
+        prerequisite, _ = digest_crosscheck.split_document(
+            inputs[verify_task_root_fixtures.PREREQUISITE_PATH].decode())
+        self.assertEqual((prerequisite["status"], prerequisite["relations"]["addresses"]),
+                         ("done", ["REQ-001:AC-02"]))
+        result = json.loads((audit.FIXTURES / "single/SINGLE-138/expected/verify.json").read_text())
+        self.assertEqual(result["targetResults"][0]["statements"], ["REQ-001:AC-01"])
+        self.assertEqual(result["commands"][0]["covers"], ["REQ-001:AC-01"])
+        self.assertEqual(result["commands"][0]["tests"], ["tests/test_auth.py"])
+        # 参照計算Bは、閉包の外のTASK-002が閉包の文書REQ-001を`addresses`しても、材料へ入れない。
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary)
+            for name, data in inputs.items():
+                (repository / name).parent.mkdir(parents=True, exist_ok=True)
+                (repository / name).write_bytes(data)
+            built = digest_crosscheck.build(repository, root="TASK-001")
+            self.assertEqual([d["id"] for d in built["documents"]], ["REQ-001", "TASK-001", "TECH-001"])
+            self.assertEqual(digest_crosscheck.canonical_bytes(built), digest_reference.canonical_bytes(
+                verify_task_root_fixtures.reviewed_digest_input("SINGLE-138")))
+        # 入力側で先行TASKの`addresses`を消す、または起点と同じ規範文へ変えると、監査は拒否する。
+        for replacement in ("", "relations:\n  addresses: [REQ-001:AC-01]\n"):
+            with self.subTest(replacement=replacement), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single/SINGLE-138"
+                shutil.copytree(audit.FIXTURES / "single/SINGLE-138", fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                path = fixture / "repo" / verify_task_root_fixtures.PREREQUISITE_PATH
+                path.write_text(path.read_text().replace("relations:\n  addresses: [REQ-001:AC-02]\n", replacement))
+                self.assertTrue(validate_verify_task_root(root, ["SINGLE-138"])["errors"])
+
+    def test_prerequisite_audit_rejects_a_changed_prerequisite_state(self):
+        # 先行TASKの状態を入力側で変えると、期待値との組が成り立たなくなる。
+        for identifier, status in (("SINGLE-137", "done"), ("SINGLE-137", "cancelled"),
+                                   ("SINGLE-138", "open"), ("SINGLE-138", "cancelled")):
+            with self.subTest(identifier=identifier, status=status), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single" / identifier
+                shutil.copytree(audit.FIXTURES / "single" / identifier, fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                path = fixture / "repo" / verify_task_root_fixtures.PREREQUISITE_PATH
+                text = path.read_text()
+                self.assertIn("status: " + verify_task_root_fixtures.PREREQUISITE_STATUS[identifier], text)
+                path.write_text(text.replace("status: " + verify_task_root_fixtures.PREREQUISITE_STATUS[identifier],
+                                             "status: " + status))
+                self.assertTrue(validate_verify_task_root(root, [identifier])["errors"])
 
     def test_verify_document_fixture(self):
         result = validate_verify_document()

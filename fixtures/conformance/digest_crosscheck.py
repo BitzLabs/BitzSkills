@@ -315,6 +315,11 @@ def closure(documents, root, purpose):
                 if not (target in documents or target in known_statements):
                     continue
                 touches = identifier in reached or target in reached or owner(target) in reached
+                # §6.3・§6.4: 閉包の外のTASKが`addresses`する先は、閉包の文書の規範文でも辿らない。TASKを閉包へ加えるのは
+                # 目的`implement`の`open`のTASKだけで、`verify`の起点のTASKの`requires`の参照先のTASKも含めない。
+                if (key == "addresses" and identifier not in reached and purpose != "implement"
+                        and documents[identifier]["kind"] == "task"):
+                    continue
                 if touches and (identifier, key, target) not in accounted:
                     raise ValueError("corpusにレビュー済みの閉包の外の強いエッジがあります")
     ordered = sorted(reached, key=lambda identifier: (reached[identifier],

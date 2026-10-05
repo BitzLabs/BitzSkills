@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "blocked",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "TASK-001",
+      "status": "blocked",
+      "contextDigest": null,
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": [
+        {
+          "code": "CTX-TASK-DEPENDENCY-001",
+          "severity": "error",
+          "resultStatus": "blocked",
+          "summary": "先行TASK-002が完了していません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "root",
+            "path": ".spec/tasks/TASK-001.md",
+            "key": "relations.requires"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": null,
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": []
+}
