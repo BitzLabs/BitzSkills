@@ -363,7 +363,10 @@ def target_expansion(
                         "doc_id": doc_id,
                     }
                 )
-            elif purpose == "implement" and entry.status == "done":
+            elif purpose == "implement" and entry.status == "done" and is_root:
+                # 文書・フロントマター・状態仕様 §7: `done`のTASKを`blocked`にするのは、目的`implement`で起点にした場合だけ。
+                # 起点のTASKが`requires`する先行TASKは`done`であることが前提（関係・トレースモデル §6.2）で、未完了は
+                # 下の`CTX-TASK-DEPENDENCY-001`が扱う。
                 errors.append(
                     {
                         "code": "CTX-STATE-001",

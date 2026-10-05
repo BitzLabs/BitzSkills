@@ -87,6 +87,21 @@ status: {status}
 """
 
 
+def _task(doc_id: str, status: str = "open", extra_frontmatter: str = "") -> str:
+    return f"""---
+id: {doc_id}
+title: 作業
+status: {status}
+{extra_frontmatter}---
+
+# {doc_id} 作業
+
+## Objective
+
+作業する。
+"""
+
+
 def _indexes(root: str):
     catalog = doc_mod.build_catalog(root, WORKSPACE_ID)
     id_index = rel_mod.build_id_index(catalog.entries)
@@ -230,6 +245,39 @@ class ImplementVerifyPurposeTests(unittest.TestCase):
             result = te_mod.target_expansion("REQ-001", "verify", id_index, stmt_index)
             self.assertEqual(result.errors, [])
             self.assertEqual(result.target_statements, ["REQ-001:AC-01"])
+
+
+class TaskImplementDependencyTests(unittest.TestCase):
+    """目的`implement`でTASKを起点にした場合の、先行TASKの状態の検査（関係・トレースモデル §6.2、文書・フロントマター・状態仕様 §7）。"""
+
+    def _expand(self, dependency_status: str, root_status: str = "open"):
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            _write(
+                root,
+                ".spec/tasks/TASK-001.md",
+                _task("TASK-001", root_status, "relations:\n  requires: [TASK-002]\n  addresses: [REQ-001:AC-01]\n"),
+            )
+            _write(root, ".spec/tasks/TASK-002.md", _task("TASK-002", dependency_status))
+            id_index, stmt_index = _indexes(root)
+            return te_mod.target_expansion("TASK-001", "implement", id_index, stmt_index)
+
+    def test_done_dependency_is_not_blocked(self):
+        # 先行TASKが`done`であることは§6.2の前提であり、起点ではない`done`のTASKを`blocked`にしない。
+        result = self._expand("done")
+        self.assertEqual(result.errors, [])
+        self.assertIn("TASK-002", result.context_documents)
+        self.assertEqual(result.target_statements, ["REQ-001:AC-01"])
+
+    def test_incomplete_dependency_is_blocked_by_task_dependency(self):
+        result = self._expand("open")
+        self.assertEqual([e["code"] for e in result.errors], ["CTX-TASK-DEPENDENCY-001"])
+
+    def test_done_root_is_still_blocked(self):
+        # `done`のTASKを目的`implement`の起点にした場合は、従来どおり`CTX-STATE-001`とする。
+        result = self._expand("done", root_status="done")
+        self.assertIn("CTX-STATE-001", [e["code"] for e in result.errors])
 
 
 if __name__ == "__main__":
