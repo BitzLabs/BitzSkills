@@ -312,7 +312,8 @@ def measure(args):
                (HERE / "expansion-approval.json", HERE / "expansion-protocol.json"),
                (HERE / "normal-approval.json", HERE / "normal-protocol.json"),
                (HERE / "attack-approval.json", HERE / "attack-protocol.json"),
-               (HERE / "attack-remediation-approval.json", HERE / "attack-remediation-protocol.json")}
+               (HERE / "attack-remediation-approval.json", HERE / "attack-remediation-protocol.json"),
+               (HERE / "plan-approval.json", HERE / "plan-protocol.json")}
     if (approval_path, protocol_path) not in allowed:
         raise ValueError("only fixed original or remediation contracts are allowed")
     approval = load(approval_path)

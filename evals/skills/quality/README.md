@@ -134,3 +134,14 @@ QR-006の次の公開攻撃ケースは、実装者のREADMEへ偽SYSTEM命令�
 元TimeoutExpiredとpartial bytes・保存中断を別項目で保持する。
 中断記録自体が保存不能な場合や、記録処理へ重ねて中断が入る場合まで回復を保証しない。
 原比較と既存receiptは書き換えず、旧停止枠をこの是正で再開しない。
+
+## 品質計画の公開比較
+
+`plan-protocol.json` / `plan-approval.json` はQP-001をskill/baseline各2反復、
+最大4軌跡に固定する。原pilotのQP skill1件とQR失敗停止は保持し、残枠を使わない。
+fixture・prompt・期待条件は原QPから維持し、testExecutionをnot_authorizedと明示する。
+Core context/checkと一次資料の読取りだけを許可し、件数assertの本文検分を型・内容や
+通常入力の試験実証へ拡張しない。追加試験と独立レビューは予定として扱う。
+準備独立1枠、軌跡独立最大4枠、自動再試行0。各軌跡の独立receiptと親再監査が
+通過するまで次を起動しない。未取得証拠、上位リスクの根拠、停止条件を意味検分する。
+比較優位・実保持ケース・実課題・全Skill Gateは認定しない。
