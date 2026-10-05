@@ -3,8 +3,9 @@ import copy
 import hashlib
 import io
 import json
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from pathlib import Path
+import shutil
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -20,6 +21,27 @@ RUNNER_PATH = ROOT / "evals/skills/run_model.py"
 RUNNER_SPEC = importlib.util.spec_from_file_location("skill_eval_runner", RUNNER_PATH)
 skill_eval_runner = importlib.util.module_from_spec(RUNNER_SPEC)
 RUNNER_SPEC.loader.exec_module(skill_eval_runner)
+
+
+@contextmanager
+def synthetic_held_out_workspace():
+    """単体試験用の公開repoと保持領域を、実repo内の兄弟ディレクトリで模擬する。"""
+    with tempfile.TemporaryDirectory(prefix="synthetic-held-out-", dir=ROOT / ".venv") as directory:
+        public = Path(directory) / "public" / "evals" / "skills"
+        private = Path(directory) / "private"
+        public.mkdir(parents=True)
+        private.mkdir()
+        for name in ("protocol.json", "core-compatibility.json", "event-catalog.json", "run_model.py", "validate.py"):
+            shutil.copy2(skill_eval.ROOT / name, public / name)
+        for name in ("schemas", "cases", "candidates"):
+            shutil.copytree(skill_eval.ROOT / name, public / name)
+        skill_eval.load_runner_module.cache_clear()
+        try:
+            with mock.patch.multiple(skill_eval, ROOT=public, SCHEMAS=public / "schemas",
+                                     CASES=public / "cases", EVENT_CATALOG=public / "event-catalog.json"):
+                yield private
+        finally:
+            skill_eval.load_runner_module.cache_clear()
 
 
 class SkillEvalTests(unittest.TestCase):
@@ -46,7 +68,7 @@ class SkillEvalTests(unittest.TestCase):
 
     def test_held_out_case_metadata_and_collision(self):
         private_case = dict(skill_eval.load_cases()[0], caseId="SE-1000", prompt="保持した独立の要求")
-        with tempfile.TemporaryDirectory() as directory:
+        with synthetic_held_out_workspace() as directory:
             path = Path(directory) / "held-out.json"
             path.write_text(json.dumps({"setVersion": "secret-1", "cases": [private_case]}), encoding="utf-8")
             cases, metadata = skill_eval.load_held_out_cases(path)
@@ -59,7 +81,7 @@ class SkillEvalTests(unittest.TestCase):
 
     def test_held_out_case_rejects_public_input_with_new_id(self):
         private_case = dict(skill_eval.load_cases()[0], caseId="SE-1000")
-        with tempfile.TemporaryDirectory() as directory:
+        with synthetic_held_out_workspace() as directory:
             path = Path(directory) / "held-out.json"
             path.write_text(json.dumps({"setVersion": "secret-1", "cases": [private_case]}), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "入力.*衝突"):
@@ -68,7 +90,7 @@ class SkillEvalTests(unittest.TestCase):
     def test_held_out_case_rejects_unknown_event(self):
         private_case = dict(skill_eval.load_cases()[0], caseId="SE-1000", prompt="保持した独立の要求")
         private_case["expected"] = dict(private_case["expected"], requiredEvents=["private-only-event"])
-        with tempfile.TemporaryDirectory() as directory:
+        with synthetic_held_out_workspace() as directory:
             path = Path(directory) / "held-out.json"
             path.write_text(json.dumps({"setVersion": "secret-1", "cases": [private_case]}), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "未登録のイベント"):
@@ -77,7 +99,7 @@ class SkillEvalTests(unittest.TestCase):
     def test_release_rejects_unbound_public_run(self):
         private_case = dict(skill_eval.load_cases()[0], caseId="SE-1000", prompt="保持した独立の要求")
         public_case = skill_eval.load_cases()[0]
-        with tempfile.TemporaryDirectory() as directory:
+        with synthetic_held_out_workspace() as directory:
             root = Path(directory)
             case_path = root / "held-out.json"
             case_path.write_text(json.dumps({"setVersion": "secret-1", "cases": [private_case]}), encoding="utf-8")
@@ -101,6 +123,22 @@ class SkillEvalTests(unittest.TestCase):
             report = skill_eval.score(run_path, "release", case_path)
         self.assertEqual("Failed", report["result"])
         self.assertTrue(any("保持ケース集合の版・件数・hash" in error for error in report["errors"]))
+
+    def test_held_out_case_rejects_public_fixture_and_symlink_to_it(self):
+        private_case = dict(skill_eval.load_cases()[0], caseId="SE-1000", prompt="単体試験用の合成要求")
+        with synthetic_held_out_workspace() as directory:
+            path = skill_eval.ROOT / "held-out.json"
+            path.write_text(json.dumps({"setVersion": "synthetic-1", "cases": [private_case]}), encoding="utf-8")
+            link = directory / "linked-held-out.json"
+            link.symlink_to(path)
+            for candidate in (path, link):
+                with self.subTest(path=candidate), self.assertRaisesRegex(ValueError, "公開リポジトリ内"):
+                    skill_eval.load_held_out_cases(candidate)
+
+    def test_held_out_case_rejects_actual_public_repository_path(self):
+        self.assertEqual(ROOT / "evals/skills", skill_eval.ROOT)
+        with self.assertRaisesRegex(ValueError, "公開リポジトリ内"):
+            skill_eval.load_held_out_cases(skill_eval.ROOT / "protocol.json")
 
     def test_independence_schema_rejects_missing_evidence(self):
         validator = skill_eval.validators()["independent-review"]
