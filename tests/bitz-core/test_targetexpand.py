@@ -280,5 +280,46 @@ class TaskImplementDependencyTests(unittest.TestCase):
         self.assertIn("CTX-STATE-001", [e["code"] for e in result.errors])
 
 
+
+class TaskVerifyDependencyTests(unittest.TestCase):
+    """目的`verify`でTASKを起点にした場合の、先行TASKの状態の検査（ADR-029 Decision 1、`verify` §4の手順2）。"""
+
+    def _expand(self, dependency_status: str, root_status: str = "open"):
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            _write(
+                root,
+                ".spec/tasks/TASK-001.md",
+                _task("TASK-001", root_status, "relations:\n  requires: [TASK-002]\n  addresses: [REQ-001:AC-01]\n"),
+            )
+            _write(root, ".spec/tasks/TASK-002.md", _task("TASK-002", dependency_status))
+            id_index, stmt_index = _indexes(root)
+            return te_mod.target_expansion("TASK-001", "verify", id_index, stmt_index)
+
+    def test_done_dependency_passes_without_including_requires_closure(self):
+        # §6.3: `verify`では起点のTASKの`requires`の閉包をコンテキストへ含めない。
+        result = self._expand("done")
+        self.assertEqual(result.errors, [])
+        self.assertNotIn("TASK-002", result.context_documents)
+        self.assertEqual(result.target_statements, ["REQ-001:AC-01"])
+
+    def test_incomplete_dependency_is_blocked_by_task_dependency(self):
+        for status in ("open", "cancelled"):
+            with self.subTest(status=status):
+                result = self._expand(status)
+                self.assertEqual([e["code"] for e in result.errors], ["CTX-TASK-DEPENDENCY-001"])
+                self.assertEqual(result.errors[0]["resultStatus"], "blocked")
+
+    def test_done_root_with_incomplete_dependency_is_blocked(self):
+        # 状態`done`のTASKは再検証できる（§6.3）が、先行TASKの検査は起点の状態によらない。
+        result = self._expand("open", root_status="done")
+        self.assertEqual([e["code"] for e in result.errors], ["CTX-TASK-DEPENDENCY-001"])
+
+    def test_done_root_with_done_dependency_passes(self):
+        result = self._expand("done", root_status="done")
+        self.assertEqual(result.errors, [])
+
+
 if __name__ == "__main__":
     unittest.main()

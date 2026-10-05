@@ -418,7 +418,9 @@ def target_expansion(
                 continue
             _check_state(dep_id, is_root=False)
 
-    if root_entry.kind == "TASK" and purpose == "implement":
+    if root_entry.kind == "TASK" and purpose in ("implement", "verify"):
+        # ADR-029 Decision 1、`verify` §4の手順2: 目的`implement`と`verify`では、起点のTASKの`requires`が指すTASKがすべて`done`であることを
+        # 要求する。`verify`では`requires`の閉包をコンテキストへ含めない（関係・トレースモデル §6.3）が、この検査は行う。
         for target_id in _requires_targets(root_entry, id_index, statement_index):
             target_entry = id_index.get(target_id)
             if target_entry is not None and target_entry.kind == "TASK" and target_entry.status != "done":
