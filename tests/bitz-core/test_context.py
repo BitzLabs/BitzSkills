@@ -204,8 +204,8 @@ class ProjectionFieldTests(unittest.TestCase):
             self.assertEqual(by_id["REQ-020"]["projection"], "full")
 
     def test_distance2_refinement_is_normative(self):
-        # 距離2以上の具体化文書（役割`refinement`）は提示形式`normative`にする（起点・TASK・`replacement`・
-        # `requirement`・`constraint`ではないため。`context`仕様 §5）。
+        # 距離2以上の具体化文書（役割`refinement`）は、所有する規範文がすべて制約台帳（対象規範文）にあれば
+        # 提示形式`normative`にする（`context`仕様 §5）。規範文を持たない具体化文書は条件を満たす。
         with tempfile.TemporaryDirectory() as root:
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
             _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
@@ -217,7 +217,7 @@ class ProjectionFieldTests(unittest.TestCase):
             _write(
                 root,
                 ".spec/technical/TECH-003.md",
-                _tech("TECH-003", extra_frontmatter="relations:\n  refines: [TECH-002]\n"),
+                _tech("TECH-003", extra_frontmatter="relations:\n  refines: [TECH-002]\n", with_statement=False),
             )
             result, _ = _run_context(root, ["REQ-001"], purpose="verify")
             by_id = {d["id"]: d for d in result["documents"]}
@@ -225,6 +225,56 @@ class ProjectionFieldTests(unittest.TestCase):
             self.assertEqual(by_id["TECH-002"]["projection"], "full")
             self.assertEqual(by_id["TECH-003"]["role"], "refinement")
             self.assertEqual(by_id["TECH-003"]["projection"], "normative")
+
+    def test_distance2_refinement_with_statements_in_ledger_is_normative(self):
+        # 規範文単位で具体化した文書の規範文は対象規範文になる（関係・トレースモデル §6.4）。制約台帳にあるので`normative`にできる。
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            _write(root, ".spec/technical/TECH-002.md",
+                   _tech("TECH-002", extra_frontmatter="relations:\n  refines: [REQ-001:AC-01]\n"))
+            _write(root, ".spec/technical/TECH-003.md",
+                   _tech("TECH-003", extra_frontmatter="relations:\n  refines: [TECH-002:AC-01]\n"))
+            result, _ = _run_context(root, ["REQ-001"], purpose="verify")
+            by_id = {d["id"]: d for d in result["documents"]}
+            ledger = {s["id"] for s in result["constraintLedger"]["statements"]}
+            self.assertIn("TECH-003:AC-01", ledger)
+            self.assertEqual(by_id["TECH-003"]["projection"], "normative")
+
+    def test_distance2_refinement_with_statements_outside_ledger_is_full(self):
+        # 所有する規範文が制約台帳にない具体化文書を`normative`にすると、その`MUST`の文面が提示からも制約台帳からも
+        # 失われる（ADR-014の`Decision`の4番目の項目）。文書単位で具体化した文書の規範文は対象規範文にならないので`full`にする。
+        for purpose in ("interpret", "implement", "verify"):
+            with self.subTest(purpose=purpose), tempfile.TemporaryDirectory() as root:
+                _write(root, ".spec/bitz.yaml", _bitz_yaml())
+                _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+                _write(root, ".spec/technical/TECH-002.md",
+                       _tech("TECH-002", extra_frontmatter="relations:\n  refines: [REQ-001]\n"))
+                _write(root, ".spec/technical/TECH-003.md",
+                       _tech("TECH-003", extra_frontmatter="relations:\n  refines: [TECH-002]\n"))
+                result, _ = _run_context(root, ["REQ-001"], purpose=purpose)
+                by_id = {d["id"]: d for d in result["documents"]}
+                ledger = {s["id"] for s in result["constraintLedger"]["statements"]}
+                self.assertNotIn("TECH-003:AC-01", ledger)
+                self.assertEqual(by_id["TECH-003"]["role"], "refinement")
+                self.assertEqual(by_id["TECH-003"]["projection"], "full")
+                self.assertIn("bodyText", by_id["TECH-003"])
+
+    def test_refines_target_reached_first_by_requires_is_full(self):
+        # 起点の`refines`の参照先に、`requires`の鎖で先に距離2で到達した場合も、その規範文は対象規範文にならないため`full`にする。
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/requirements/REQ-001.md",
+                   _req("REQ-001", extra_frontmatter="relations:\n  requires: [REQ-002]\n  refines: [REQ-003]\n"))
+            _write(root, ".spec/requirements/REQ-002.md",
+                   _req("REQ-002", extra_frontmatter="relations:\n  requires: [REQ-003]\n"))
+            _write(root, ".spec/requirements/REQ-003.md", _req("REQ-003"))
+            result, _ = _run_context(root, ["REQ-001"], purpose="implement")
+            by_id = {d["id"]: d for d in result["documents"]}
+            ledger = {s["id"] for s in result["constraintLedger"]["statements"]}
+            self.assertNotIn("REQ-003:AC-01", ledger)
+            self.assertEqual(by_id["REQ-003"]["projection"], "full")
+            self.assertIn("bodyText", by_id["REQ-003"])
 
     def test_expand_upgrades_reference_to_full(self):
         with tempfile.TemporaryDirectory() as root:
