@@ -304,6 +304,10 @@ class QualityEvaluationTests(unittest.TestCase):
             ("evaluation version", approval_path, "evaluationSetVersion", "wrong-version"),
             ("scope pending", scope_path, "approvalStatus", "pending"),
             ("scope absent model", scope_path, "models", []),
+            ("scope non-user", scope_path, "approvedBy", "not-user"),
+            ("scope other project", scope_path, "scope", "別プロジェクトの評価"),
+            ("scope models mapping", scope_path, "models", {"gpt-6.1-sol": True}),
+            ("scope extra model", scope_path, "models", ["gpt-6.1-sol", "gpt-6-astra"]),
             ("other authorization", approval_path, "authorization", "replacement.json")
         ]:
             replacement = {**original_load(replacement_path), field: value}

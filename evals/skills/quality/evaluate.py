@@ -274,7 +274,9 @@ def measure(args):
     if (approval["model"] != protocol["model"] or approval["model"] != "gpt-6.1-sol"
             or approval["evaluationSetVersion"] != protocol["evaluationSetVersion"]
             or approval.get("authorization", "../sol-authorization.json") != "../sol-authorization.json"
-            or scope["approvalStatus"] != "approved" or approval["model"] not in scope["models"]):
+            or scope.get("approvalStatus") != "approved" or scope.get("approvedBy") != "user"
+            or scope.get("models") != ["gpt-6.1-sol"]
+            or scope.get("scope") != "BitzSkillsの開発に必要なsol評価、独立検分と是正後の新測定"):
         raise ValueError("sol authorization or fixed model/evaluation identity mismatch")
     if not 1 <= args.timeout <= 600:
         raise ValueError("trajectory timeout must remain within 600 seconds")
