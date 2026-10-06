@@ -1,0 +1,148 @@
+{
+  "schemaVersion": "1.0",
+  "collectionVersion": "production-routing-held-out-collection-0.5.0",
+  "status": "authorized_finite_collection_only",
+  "model": "gpt-6.1-sol",
+  "solAuthorization": "SOLでの評価はすべて許可します。確認が必要となるまで開発を進めてください。",
+  "storageAuthorization": {
+    "root": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/collection-05",
+    "newFilesOnly": true,
+    "directoryMode": "0700",
+    "fileMode": "0600",
+    "basis": "既存の承認済み非公開root内へのowner-only新規保存の継続許可。旧集合と既存ファイルは上書き・削除しない。"
+  },
+  "candidate": {
+    "sourceCommit": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+    "candidateVersion": "production-six-skill-routing-0.1.0",
+    "manifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+    "skillCount": 6,
+    "resourceCount": 71,
+    "snapshotRelativePath": ".venv/production-routing-preparation-01/snapshot"
+  },
+  "inputSha256": {
+    "evals/skills/cases/behavior-safety.json": "465910e4bd7ff215d8126ff784509dd693dec10ef7fd4c91583c212b451a02e1",
+    "evals/skills/cases/routing.json": "ba0365411bbd6b2782691e5c1458061497b34f5248f558f18f48b98dd6e13235",
+    "evals/skills/event-catalog.json": "bec19acee225998d2627f1c3fcc065269d6fb722fdfb671e08ca11db0a9ab431",
+    "evals/skills/protocol.json": "14b1af886d2affefe69205dd4300883b943c21d4019316d20431f2564adb7667",
+    "evals/skills/routing/single-replacement-evidence.schema.json": "a5d626d4ee3e9a4b40e4d57d7b11ed53ce327b4840cee44c50fd469b59d22272",
+    "evals/skills/schemas/case.schema.json": "db4f1004eff4f64d77e17f9a04d339204e5c5a68c047c420ef0da45ace244b81",
+    "evals/skills/validate.py": "a8071b94f050318638816863ed61ec7c9e40997845f0dd048dec4c384be05c8c"
+  },
+  "sourceFiles": [
+    "evals/skills/cases/behavior-safety.json",
+    "evals/skills/cases/routing.json",
+    "evals/skills/event-catalog.json",
+    "evals/skills/protocol.json",
+    "evals/skills/routing/audit_held_out.py",
+    "evals/skills/routing/audit_remediated_held_out.py",
+    "evals/skills/routing/audit_single_replacement.py",
+    "evals/skills/routing/held-out-collection-v0.5.json",
+    "evals/skills/routing/remediation-evidence.schema.json",
+    "evals/skills/routing/single-replacement-evidence.schema.json",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/schemas/case.schema.json",
+    "evals/skills/validate.py",
+    "tests/skills/test_held_out_remediation.py",
+    "tests/skills/test_single_replacement.py"
+  ],
+  "setVersion": "production-routing-held-out-0.5.0",
+  "denominator": {
+    "caseCount": 12,
+    "newCaseCount": 1,
+    "retainedCaseCount": 11,
+    "mandatoryCount": 12,
+    "idStart": 1200,
+    "idEnd": 1211,
+    "categoryCounts": {
+      "explicit": 2,
+      "implicit": 2,
+      "contextual": 2,
+      "negative": 3,
+      "safety": 3
+    },
+    "perCapability": {
+      "positive": 1,
+      "globalNegativeOrSafety": 1
+    }
+  },
+  "budget": {
+    "preparationReviewerSol": 1,
+    "creatorSol": 1,
+    "independentReviewerSol": 1,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0
+  },
+  "retention": {
+    "sha256": "dcf2b89b3c2b2c400d6a5436bc21cc29ba6670a5185dbc5bba6c3e6d0fac0293",
+    "independentReceiptSha256": "67a1bde0bcf479b16ccfba02b775bdaff27dfdf05c43f2bcc9ed3d69d7869937",
+    "independentReportSha256": "cd3364b0d3f6cc03c25f1a17a6af76178edb3b37a9efd130429fa92289ffb078",
+    "count": 11,
+    "replacementCount": 1,
+    "policy": "caseId以外の全fieldsを保持。旧独立報告のP2対象1件だけを置換。11件は再利用候補であり次集合の合格済み扱いにしない。"
+  },
+  "excludedSets": {
+    "production-routing-held-out-0.1.0": {
+      "path": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/cases.json",
+      "sha256": "b59681809301ea36a7b56f7b3f3d95d167776494176ea614d8d9577f21f995b7",
+      "caseCount": 12
+    },
+    "production-routing-held-out-0.3.0": {
+      "path": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/collection-03/cases.json",
+      "sha256": "3d34e4ab071e5d6e984b7f6adc12129b96576e6c490190c6d16907e0e9407cd9",
+      "caseCount": 12
+    },
+    "production-routing-held-out-0.4.0": {
+      "path": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/collection-04/cases.json",
+      "sha256": "17327fa66c83ec69d2357dea9279923bb2207ce4a4e11256fb435c864013add8",
+      "caseCount": 12
+    }
+  },
+  "noveltyConditions": [
+    "公開routing/behavior-safety全46件、旧0.1/0.3/0.4各全12件へ直接意味比較する。作成者の最近傍だけへ狭めない。",
+    "新規1件と再利用11件の比較は旧0.4全12件の直接比較を通じても行う。新規同士の組数は0。",
+    "主たる依頼・因果前提・要求範囲・停止理由と全6スキルの実条件で比較する。名称・数値・対象ラベル・説明量の変更だけでは不適格。",
+    "counterfactual.beforeDecisionは実ケースexpectedと一致。afterDecisionは変更条件を近い旧条件へ戻した予測判断としてsourceの実path/hash/anchorへ束縛する。",
+    "差は選択経路/outcome/採点対象イベントのいずれかに結び付ける。event順序だけの差・観測しない付随情報の差は認めない。",
+    "変更前後の判断は作成者による予測で、実モデル測定ではない。独立検分で因果関係と本文適合性を検査する。"
+  ],
+  "sourcePolicy": {
+    "fixedResolvedCommitRequired": true,
+    "headIsCondition": false,
+    "verifyBeforeAndAfter": true,
+    "sourceFileCount": 15
+  },
+  "stopOn": [
+    "P1/P2または未解決の曖昧さ",
+    "source/入力/私有成果物/候補/環境の不一致",
+    "native監査不通過",
+    "保存失敗・利用制限・中断",
+    "11再利用/1新規の分母不成立"
+  ],
+  "privacy": {
+    "modelInputDuringFutureEvaluation": "prompt/contextのみ。期待値・caseId・routing/novelty/lineage/controlを一次モデルへ渡さない。",
+    "publicArtifacts": "版・件数・hash・集計のみ。非公開本文・期待値・個別比較・rawtraceは公開しない。",
+    "internalReading": "作成者/独立検分者が必要な非公開原内容を自分の文脈で直接読むことは許可する。"
+  },
+  "limits": [
+    "旧消費枠を付け替えない。同条件有料retry0。native補助不具合は元失敗を保持し同じpaidturn内で最大1回訂正可。",
+    "新規候補最大1件。分母を満たすため新規性や経路の条件を緩めない。",
+    "一次0。行動評価・SkillGate・製品完成は認定しない。"
+  ],
+  "environment": {
+    "python": "3.12.3",
+    "jsonschema": "4.23.0",
+    "ruamelYaml": "0.19.1"
+  },
+  "previousCollection": {
+    "setVersion": "production-routing-held-out-0.4.0",
+    "sourceCommit": "f760649f44a3d7bb2bd723181e3ab155b81d4140",
+    "status": "stopped_on_p2",
+    "severityCounts": {
+      "P1": 0,
+      "P2": 1
+    },
+    "affectedCaseCount": 1,
+    "originalEarlierNativeBytes": "unavailable",
+    "failuresPreserved": true
+  }
+}
