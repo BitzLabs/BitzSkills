@@ -1141,3 +1141,9 @@ schema・ID/input衝突・event catalog・経路・件数・権限の作業者�
 結果は `evals/skills/results/2026-10-06-held-out-fixed-ref-collection-stopped/report.md`。
 次は同ディレクトリの `storage-approval-request.md` に具体化した保存操作の承認を確認し、
 永続証拠を親が再監査する。新ケース作成・有料再試行・一次発火測定は起動しない。
+
+P1/P2への是正案は `evals/skills/routing/held-out-routing-remediation-plan.md` に記録した。
+個別スキルの不適用と6スキル全体の不適用を分け、全体の期待経路を先に導いてから
+決定条件の意味比較を行う。費用を抑えるため既存9件を再利用候補へ固定し、3件だけ差し替える案を推薦する。
+9件の合格や12件すべての新規性は主張せず、来歴・新規性の対象を区別して最終12件を独立検分する。
+詳細記録の保存/親再監査を前提とする検討案であり、この文書で実装・新収集・有料評価は開始しない。
