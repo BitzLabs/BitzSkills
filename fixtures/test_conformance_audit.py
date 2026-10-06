@@ -285,11 +285,17 @@ class AuditTests(unittest.TestCase):
         documents["TECH-001"]["frontmatter"]["id"] = "TECH-001"
         selected, advisory, replacement = digest_crosscheck._closure(documents, "TECH-005", "interpret")
         self.assertEqual((selected, replacement), (["TECH-005", "TECH-001", "TECH-007"], {"TECH-001"}))
-        # 後継が複数ある起点、または`supersedes`を持たない起点は、置換済みとして扱わない。
+        # `supersedes`されていない起点は、置換済みとして扱わない。
         documents = load("SINGLE-141")
         documents["TECH-009"]["frontmatter"]["relations"].pop("supersedes")
         selected, advisory, replacement = digest_crosscheck._closure(documents, "TECH-005", "interpret")
         self.assertEqual((selected, advisory, replacement), (["TECH-005", "TECH-007"], set(), set()))
+        # 後継が複数ある起点は、参照計算Bの対象外として拒否する（`CTX-STATE-SUPERSEDED-002`の場面）。
+        documents = load("SINGLE-141")
+        documents["TECH-010"] = copy.deepcopy(documents["TECH-009"])
+        documents["TECH-010"]["frontmatter"]["id"] = "TECH-010"
+        with self.assertRaises(ValueError):
+            digest_crosscheck._closure(documents, "TECH-005", "interpret")
 
     def test_ordering_fixtures(self):
         result = ordering_fixtures.validate()
