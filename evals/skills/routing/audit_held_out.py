@@ -117,7 +117,8 @@ def audit_novelty(contract: dict, case_path: Path, cases: list) -> dict:
 def audit(contract_path: Path, case_path: Path) -> dict:
     contract = json.loads(contract_path.read_bytes())
     versions = {"production-routing-held-out-collection-0.1.0": 800,
-                "production-routing-held-out-collection-0.2.0": 900}
+                "production-routing-held-out-collection-0.2.0": 900,
+                "production-routing-held-out-collection-0.3.0": 1000}
     if contract["collectionVersion"] not in versions:
         raise ValueError("unsupported collection")
     private_root = Path(contract["storageAuthorization"]["root"])
@@ -125,7 +126,7 @@ def audit(contract_path: Path, case_path: Path) -> dict:
     if case_path != private_root / "cases.json":
         raise ValueError("unexpected case path")
     private_file(case_path)
-    if versions[contract["collectionVersion"]] == 900:
+    if versions[contract["collectionVersion"]] >= 900:
         declared = {name for name in contract["inputSha256"] if name.startswith("evals/skills/cases/")}
         observed = {str(path.relative_to(ROOT)) for path in (ROOT / "evals/skills/cases").glob("*.json")}
         if not declared or observed != declared:
@@ -182,7 +183,7 @@ def audit(contract_path: Path, case_path: Path) -> dict:
         "primaryModelTrajectories": 0,
         "certifiesSkillGate": False,
     }
-    if first_id == 900:
+    if first_id >= 900:
         result["novelty"] = audit_novelty(contract, case_path, cases)
     return result
 
@@ -190,10 +191,11 @@ def audit(contract_path: Path, case_path: Path) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--cases", type=Path, required=True)
-    parser.add_argument("--collection", choices=["initial", "novelty"], default="initial")
+    parser.add_argument("--collection", choices=["initial", "novelty", "fixed-ref"], default="initial")
     args = parser.parse_args()
     try:
-        filename = "held-out-collection.json" if args.collection == "initial" else "held-out-collection-v0.2.json"
+        filename = {"initial": "held-out-collection.json", "novelty": "held-out-collection-v0.2.json",
+                    "fixed-ref": "held-out-collection-v0.3.json"}[args.collection]
         result = audit(Path(__file__).with_name(filename), args.cases)
     except Exception as error:
         # schema診断などには非公開本文が混ざる。例外文字列・tracebackを公開しない。

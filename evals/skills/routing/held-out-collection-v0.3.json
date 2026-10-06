@@ -1,0 +1,118 @@
+{
+  "schemaVersion": "1.0",
+  "collectionVersion": "production-routing-held-out-collection-0.3.0",
+  "status": "authorized-before-collection",
+  "model": "gpt-6.1-sol",
+  "solAuthorization": "evals/skills/sol-authorization.json",
+  "storageAuthorization": {
+    "approvedBy": "user",
+    "approvedAt": "2026-10-06",
+    "userInstruction": "OK、以後も許可します",
+    "root": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/collection-03",
+    "scope": "保存計画に沿う領域の作成、所有者限定権限、非公開合成ケース・manifest・検分ログ・後続評価証拠の新規保存",
+    "ongoing": true,
+    "excluded": [
+      "既存ファイルの上書き",
+      "削除",
+      "外部送信",
+      "非公開内容の公開",
+      "他の外部領域への書込み"
+    ]
+  },
+  "candidate": {
+    "sourceCommit": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+    "candidateVersion": "production-six-skill-routing-0.1.0",
+    "manifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+    "skillCount": 6,
+    "resourceCount": 71,
+    "snapshotRelativePath": ".venv/production-routing-preparation-01/snapshot"
+  },
+  "inputSha256": {
+    "evals/skills/schemas/case.schema.json": "db4f1004eff4f64d77e17f9a04d339204e5c5a68c047c420ef0da45ace244b81",
+    "evals/skills/validate.py": "a8071b94f050318638816863ed61ec7c9e40997845f0dd048dec4c384be05c8c",
+    "evals/skills/protocol.json": "14b1af886d2affefe69205dd4300883b943c21d4019316d20431f2564adb7667",
+    "evals/skills/event-catalog.json": "bec19acee225998d2627f1c3fcc065269d6fb722fdfb671e08ca11db0a9ab431",
+    "evals/skills/cases/behavior-safety.json": "465910e4bd7ff215d8126ff784509dd693dec10ef7fd4c91583c212b451a02e1",
+    "evals/skills/cases/routing.json": "ba0365411bbd6b2782691e5c1458061497b34f5248f558f18f48b98dd6e13235",
+    "evals/skills/routing/novelty.schema.json": "6f438ca7e4b9b8680d9db333c91a28888bff2fb3483993eee44d4106565dbf77"
+  },
+  "setVersion": "production-routing-held-out-0.3.0",
+  "denominator": {
+    "maxCases": 12,
+    "caseIds": "SE-1000 through SE-1011",
+    "positiveCases": 6,
+    "negativeOrStopCases": 6,
+    "perCapability": "1正例と1負例または停止境界。6つの製品経路を同じ候補版で対象にする",
+    "categories": "正例はexplicit・implicit・contextualを各2件。残りはnegative・safetyを各3件",
+    "repetitions": 0
+  },
+  "budget": {
+    "preparationReviewerSol": 1,
+    "creatorSol": 1,
+    "independentReviewerSol": 1,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0
+  },
+  "stopOn": [
+    "生成・検分の失敗または中断",
+    "schema違反",
+    "公開・非公開内のIDまたは入力重複",
+    "未知イベント",
+    "条件不一致",
+    "公開または旧集合との意味重複",
+    "比較根拠の不足・曖昧な期待判断",
+    "準備独立検分のP1/P2"
+  ],
+  "privacy": "公開側へは版・件数・hash・集計結果だけを保存する。保持prompt/context/期待値と生ログは公開しない。保持ケースを候補の最適化へ戻さない",
+  "limits": [
+    "一次評価・全分母・release・Skill Gateを認定しない",
+    "失敗記録を残し、同条件の自動再試行を行わない",
+    "後続一次評価は起動前に別の有限contractへ固定する"
+  ],
+  "excludedSet": {
+    "path": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/cases.json",
+    "setVersion": "production-routing-held-out-0.1.0",
+    "caseCount": 12,
+    "sha256": "b59681809301ea36a7b56f7b3f3d95d167776494176ea614d8d9577f21f995b7",
+    "status": "stopped_on_semantic_public_overlap"
+  },
+  "noveltyConditions": {
+    "publicCases": 46,
+    "previousCases": 12,
+    "privateComparisonFile": "novelty.json",
+    "coverage": "全46公開ケースと旧12ケースを除外照合し、各新ケースの主判断・因果前提・要求動作・停止理由と最も近い公開/旧ケースとの差を記述",
+    "reject": "主判断と決定を導く状況・因果前提が同じなら単語・数値・対象名が違っても拒否。文字列正規化の非重複を意味新規性と同一視しない",
+    "allow": "決定に関係する状況・前提・範囲が異なり、固定製品本文から一意の判断が導けるケースだけを採用",
+    "evidence": "ケースbytes hashへ比較証拠を束縛し、独立検分者が全件を公開/旧集合と固定本文へ直接照合",
+    "candidatePolicy": "保持内容を製品候補の最適化へ戻さない",
+    "failurePolicy": "12件の十分な新規性を示せない場合は不足で停止し、低品質ケースで分母を埋めない"
+  },
+  "sourcePolicy": "確定refのblobと対象sourceFilesのbytes/hashで同一性を判定する。source_guard.pyを開始時と保存直前に実行する。HEADは観測値だけとし、対象source・入力・候補hashが変わらない結果記録commitで停止しない。対象source/入力/候補/除外集合の変更は拒否する",
+  "previousCollection": {
+    "sourceCommit": "88e7d12a25ec973954d5f857260a939ebffdb714",
+    "status": "stopped_before_candidate_save_on_head_guard",
+    "creatorSolConsumed": 1,
+    "unusedCaseReviewerSol": 1,
+    "privateArtifactSha256": {
+      "creation-failure.json": "c58e8f4a55de4c41b85801be1f4df2026bdb987e494b4288ce1870a4030a1c63",
+      "creation-notes.md": "5cfc96b8a7ef62144c6c3ec64903a52d33f61f7d8bed9c4b80f5555883b052e7",
+      "creation-receipt.json": "c58e8f4a55de4c41b85801be1f4df2026bdb987e494b4288ce1870a4030a1c63"
+    },
+    "caseCount": 0
+  },
+  "sourceFiles": [
+    "evals/skills/cases/behavior-safety.json",
+    "evals/skills/cases/routing.json",
+    "evals/skills/event-catalog.json",
+    "evals/skills/protocol.json",
+    "evals/skills/routing/README.md",
+    "evals/skills/routing/audit_held_out.py",
+    "evals/skills/routing/held-out-collection-v0.3.json",
+    "evals/skills/routing/novelty.schema.json",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/schemas/case.schema.json",
+    "evals/skills/validate.py",
+    "tests/skills/test_held_out_novelty.py",
+    "tests/skills/test_routing_source_guard.py"
+  ]
+}

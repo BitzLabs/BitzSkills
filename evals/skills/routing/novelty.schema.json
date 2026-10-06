@@ -5,7 +5,7 @@
   "required": ["schemaVersion", "setVersion", "casesSha256", "publicCasesConsidered", "excludedCasesConsidered", "comparisons"],
   "properties": {
     "schemaVersion": {"const": "1.0"},
-    "setVersion": {"const": "production-routing-held-out-0.2.0"},
+    "setVersion": {"enum": ["production-routing-held-out-0.2.0", "production-routing-held-out-0.3.0"]},
     "casesSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "publicCasesConsidered": {"type": "array", "uniqueItems": true, "minItems": 1, "items": {"type": "string", "pattern": "^SE-[0-9]{3,}$"}},
     "excludedCasesConsidered": {"type": "array", "uniqueItems": true, "minItems": 1, "items": {"type": "string", "pattern": "^SE-[0-9]{3,}$"}},
@@ -15,7 +15,7 @@
         "type": "object", "additionalProperties": false,
         "required": ["caseId", "primaryDecision", "causalPreconditions", "requestedAction", "stoppingReason", "nearestPublicCaseIds", "nearestExcludedCaseIds", "decisionRelevantDifferences", "sameDecisionUnderSamePremises", "differenceChangesDecisionOrScope"],
         "properties": {
-          "caseId": {"type": "string", "pattern": "^SE-9[0-9]{2}$"},
+          "caseId": {"type": "string", "pattern": "^SE-(9[0-9]{2}|10[0-9]{2})$"},
           "primaryDecision": {"type": "string", "minLength": 1},
           "causalPreconditions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
           "requestedAction": {"type": "string", "minLength": 1},

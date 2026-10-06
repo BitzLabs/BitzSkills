@@ -65,3 +65,15 @@ python -B evals/skills/routing/audit_held_out.py --collection novelty --cases /h
 是正コードの別確定refを `held-out-novelty-preparation-v0.2.1.json` の新準備独立1枠で検分する。
 公開入力のファイル一覧をケース読取り前に固定し、件数も照合する。生成1・ケース独立1の
 未消費枠は準備通過後だけ起動し、一次0・retry0で元の停止記録を保持する。
+
+0.2の作成は保存前のHEAD一致ガードで停止した。結果記録commitによるHEADの移動を、
+確定source内容の変化と取り違えた停止であり、ケースは保存されなかった。原枠と失敗を保持する。
+後続0.3は別版・別IDs・collection-03への別新規保存とし、生成1/ケース検分1を新予算へ固定する。
+`source_guard.py --source <確定40桁commit>` はcontractのsourceFilesをref blobと照合する。
+HEADは観測値だけで、対象内容を変えない結果記録のcommitで停止しない。
+候補・入力・除外hashと比較の検査は引き続き必須で、内容変更は拒否する。
+
+```text
+python -B evals/skills/routing/source_guard.py --source <確定commit>
+python -B evals/skills/routing/audit_held_out.py --collection fixed-ref --cases /home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/collection-03/cases.json
+```
