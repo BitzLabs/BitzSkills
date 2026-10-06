@@ -214,6 +214,20 @@ class HeldOutNoveltyTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "public case denominator"):
             self.run_audit()
 
+    def test_fixed_ref_collection_uses_new_version_and_four_digit_ids(self):
+        self.contract.update(collectionVersion="production-routing-held-out-collection-0.3.0",
+                             setVersion="production-routing-held-out-0.3.0")
+        for index, case in enumerate(self.cases):
+            case["caseId"] = f"SE-{1000+index}"
+            self.novelty["comparisons"][index]["caseId"] = case["caseId"]
+        self.novelty["setVersion"] = self.contract["setVersion"]
+        save(self.contract_path, self.contract)
+        self.persist()
+        result = self.run_audit()
+        self.assertEqual(result["heldOut"]["setVersion"], self.contract["setVersion"])
+        self.assertEqual(result["heldOut"]["caseCount"], 12)
+        self.assertEqual(result["novelty"]["semanticNovelty"], "requires_independent_review")
+
 
 if __name__ == "__main__":
     unittest.main()
