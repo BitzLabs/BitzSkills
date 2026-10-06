@@ -469,7 +469,6 @@ class ShortestDistanceTests(unittest.TestCase):
             self.assertEqual(result.document_distance, {"TASK-001": 0, "REQ-001": 1, "REQ-002": 1})
 
 
-
 class DraftRefinementPurposeTests(unittest.TestCase):
     """`refines`する状態`draft`の文書は目的`interpret`だけで役割`advisory`として含め、`implement`と`verify`では閉包へ含めない
     （関係・トレースモデル §6.1の6.と末尾）。"""
