@@ -168,7 +168,7 @@ class CollectionTests(unittest.TestCase):
         self.assertEqual(result["gateCPerformance"], "Passed")
         self.assertEqual(result["gateCPriorityClosure"], "Passed")
         self.assertEqual(result["gateC"], "Passed")
-        self.assertEqual(result["fixtureCount"], 325)
+        self.assertEqual(result["fixtureCount"], 328)
         self.assertEqual(result["referenceManifestSha256"],
                          gate_c.manifest_digest(REFERENCE_MANIFEST))
         self.assertEqual(result["pending"], [])
