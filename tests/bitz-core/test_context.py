@@ -266,9 +266,9 @@ class ProjectionFieldTests(unittest.TestCase):
                     self.assertIn("具体化された制約", by_id["TECH-003"]["bodyText"])
 
     def test_refines_target_reached_first_by_requires_is_full(self):
-        # 起点の`refines`の参照先に、`requires`の鎖で先に到達した場合も、その規範文は対象規範文にならないため`full`にする。
-        # 現行のCoreはこの文書の距離を2とする（`requires`で先に到達した値。仕様の最短距離は1。差は「共通の対象展開と参考（advisory）の提示のレビュー記録」に記録がある）。
-        # 距離が2である限り、この試験は制約台帳の条件（`context`仕様 §5）を区別して確かめる。
+        # 起点の`refines`の参照先に、`requires`の鎖で先に到達した場合も`full`にする。この文書の距離は最短の1で
+        # （関係・トレースモデル §7の6.）、距離1の文書として`full`になる。その規範文は対象規範文にならない（§6.4の規則4）。
+        # 制約台帳の条件（`context`仕様 §5）は、距離2以上の具体化文書の試験（上の`never_drops_must_text`など）が確かめる。
         with tempfile.TemporaryDirectory() as root:
             _write(root, ".spec/bitz.yaml", _bitz_yaml())
             _write(root, ".spec/requirements/REQ-001.md",

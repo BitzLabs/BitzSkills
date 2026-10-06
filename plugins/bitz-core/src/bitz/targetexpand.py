@@ -179,20 +179,48 @@ def _owning_document_id(root: str, id_index: dict[str, DocEntry], statement_inde
     return root if root in id_index else None
 
 
+def _shortest_distances(owning_id: str, preds: dict[str, set[str]], fallback: dict[str, int]) -> dict[str, int]:
+    """到達元の記録から、起点からの最短の段数を幅優先探索で求める（関係・トレースモデル §7の6.）。
+
+    ``preds``は``doc_id -> {到達元のdoc_id, ...}``。閉包を作るときに辿ったエッジ1本を1段とする。到達元の記録が
+    ない文書（起こらない想定）は``fallback``の値を残す。
+    """
+
+    succs: dict[str, list[str]] = {}
+    for doc_id, sources in preds.items():
+        for source in sources:
+            succs.setdefault(source, []).append(doc_id)
+    distance = {owning_id: 0}
+    frontier = [owning_id]
+    while frontier:
+        current = frontier.pop(0)
+        for doc_id in sorted(succs.get(current, [])):
+            if doc_id not in distance:
+                distance[doc_id] = distance[current] + 1
+                frontier.append(doc_id)
+    for doc_id, value in fallback.items():
+        distance.setdefault(doc_id, value)
+    return distance
+
+
 def _interpret_closure(
     owning_id: str, id_index: dict[str, DocEntry], statement_index: dict[str, dict]
-) -> tuple[list[str], dict[str, list[tuple[str, str]]], dict[str, int], set[str]]:
-    """`interpret`の完全閉包を計算する（§6.1、Step 2 フェーズCから移設。挙動は変更しない）。
+) -> tuple[list[str], dict[str, list[tuple[str, str]]], dict[str, int], set[str], dict[str, set[str]]]:
+    """`interpret`の完全閉包を計算する（§6.1、Step 2 フェーズCから移設。閉包と到達したエッジの挙動は変更しない）。
 
-    戻り値は``(context_order, document_edges, document_distance, draft_advisory)``。
+    戻り値は``(context_order, document_edges, document_distance, draft_advisory, preds)``。``preds``は
+    ``doc_id -> {到達元のdoc_id, ...}``で、距離は閉包を作った後に``preds``から最短の段数として求める（§7の6.）。
     """
 
     context_set: set[str] = {owning_id}
     context_order: list[str] = [owning_id]
     edges: dict[str, list[tuple[str, str]]] = {owning_id: []}
     distance: dict[str, int] = {owning_id: 0}
+    preds: dict[str, set[str]] = {}
 
-    def _add(doc_id: str, relation: str, source_id: str, dist_from: int) -> None:
+    def _add(doc_id: str, relation: str, source_id: str, dist_from: int, pred: str | None = None) -> None:
+        if doc_id != owning_id:
+            preds.setdefault(doc_id, set()).add(source_id if pred is None else pred)
         is_new = doc_id not in context_set
         if is_new:
             context_set.add(doc_id)
@@ -222,13 +250,17 @@ def _interpret_closure(
         target = frontier4.pop(0)
         target_dist = distance.get(target, 0)
         for cand_id, cand_entry in id_index.items():
-            if cand_id == owning_id or cand_id in refiner_seen:
+            if cand_id == owning_id:
                 continue
             if cand_entry.kind not in ("REQ", "TECH") or not _is_applicable(cand_entry):
                 continue
             if target in _refines_targets(cand_entry, id_index, statement_index):
+                if cand_id in refiner_seen:
+                    # 2つ目以降の参照先からの到達も、最短の段数の計算のために記録する。
+                    preds.setdefault(cand_id, set()).add(target)
+                    continue
                 refiner_seen.add(cand_id)
-                _add(cand_id, "refines", cand_id, target_dist)
+                _add(cand_id, "refines", cand_id, target_dist, pred=target)
                 refiners.append(cand_id)
                 frontier4.append(cand_id)
     # `refines`する文書の`requires`の閉包（推移的）。
@@ -241,11 +273,12 @@ def _interpret_closure(
         entry = id_index[doc_id]
         for target_id in _refines_targets(entry, id_index, statement_index):
             if target_id in context_set:
-                _add(doc_id, "refines", doc_id, distance.get(target_id, 0))
+                _add(doc_id, "refines", doc_id, distance.get(target_id, 0), pred=target_id)
                 break
         draft_advisory.add(doc_id)
 
-    return context_order, edges, distance, draft_advisory
+    distance = _shortest_distances(owning_id, preds, distance)
+    return context_order, edges, distance, draft_advisory, preds
 
 
 def target_expansion(
@@ -261,7 +294,10 @@ def target_expansion(
         return None
     root_entry = id_index[owning_id]
 
-    context_order, edges, distance, draft_advisory = _interpret_closure(owning_id, id_index, statement_index)
+    context_order, edges, distance, draft_advisory, preds = _interpret_closure(owning_id, id_index, statement_index)
+
+    def _owner(ref: str) -> str | None:
+        return _resolve_ref(ref, id_index, statement_index)[1]
 
     result = TargetExpansionResult(
         root_documents=[owning_id],
@@ -295,7 +331,9 @@ def target_expansion(
                 if successor_id not in edges:
                     edges[successor_id] = []
                     context_order.append(successor_id)
-                    distance[successor_id] = distance.get(owning_id, 0)
+                # 後継は起点から`supersedes`のエッジを1本辿って到達する（距離1）。
+                preds.setdefault(successor_id, set()).add(owning_id)
+                distance = _shortest_distances(owning_id, preds, distance)
                 pair = ("supersedes", successor_id)
                 if pair not in edges[successor_id]:
                     edges[successor_id].append(pair)
@@ -411,7 +449,7 @@ def target_expansion(
         elif purpose == "verify":
             dep_ids |= addressed_owning
             for target_doc_id in addressed_owning:
-                sub_order, _e, _d, _da = _interpret_closure(target_doc_id, id_index, statement_index)
+                sub_order, _e, _d, _da, _p = _interpret_closure(target_doc_id, id_index, statement_index)
                 dep_ids |= set(sub_order)
         for dep_id in sorted(dep_ids):
             if dep_id == owning_id:
@@ -454,11 +492,15 @@ def target_expansion(
         merged_edges: dict[str, list[tuple[str, str]]] = {owning_id: []}
         merged_distance: dict[str, int] = {owning_id: 0}
         merged_draft_advisory: set[str] = set()
+        merged_preds: dict[str, set[str]] = {}
 
         for target_doc_id in addressed_owning_ids:
-            sub_order, sub_edges, sub_distance, sub_draft = _interpret_closure(
+            sub_order, sub_edges, sub_distance, sub_draft, sub_preds = _interpret_closure(
                 target_doc_id, id_index, statement_index
             )
+            for doc_id, sources in sub_preds.items():
+                merged_preds.setdefault(doc_id, set()).update(sources)
+            merged_preds.setdefault(target_doc_id, set()).add(owning_id)
             for doc_id in sub_order:
                 is_new = doc_id not in merged_edges
                 if is_new:
@@ -478,12 +520,18 @@ def target_expansion(
         edges = merged_edges
         distance = merged_distance
         draft_advisory = merged_draft_advisory
+        preds = merged_preds
 
     # --- 対象規範文の決定（§6.4）。 -----------------------------------------
 
-    def _ensure_in_context(doc_id: str, relation: str, source_id: str) -> None:
-        """``doc_id``がまだコンテキストになければ、エッジ付きで追加する（`refines`する文書の遅延追加）。"""
+    def _ensure_in_context(doc_id: str, relation: str, source_id: str, pred: str | None = None) -> None:
+        """``doc_id``がまだコンテキストになければ、エッジ付きで追加する（`refines`する文書の遅延追加）。
 
+        ``pred``は到達元の文書（具体化された規範文を所有する文書）で、最短の段数の計算に使う。
+        """
+
+        if pred is not None and doc_id != owning_id:
+            preds.setdefault(doc_id, set()).add(pred)
         if doc_id not in edges:
             edges[doc_id] = []
             context_order.append(doc_id)
@@ -515,7 +563,7 @@ def target_expansion(
             # 修飾形式）であり、``cand_entry.doc_id``（常に修飾なし）ではなくこちらをコンテキストの追跡のキーに使う
             # （単一ワークスペースでは両者が一致するため挙動を変えない）。
             for cand_id, cand_entry in sorted(candidates, key=lambda pair: pair[0]):
-                _ensure_in_context(cand_id, "refines", cand_id)
+                _ensure_in_context(cand_id, "refines", cand_id, pred=_owner(target))
                 ws_prefix = cand_id.partition("::")[0] if "::" in cand_id else None
                 for stmt in cand_entry.statements:
                     sid = f"{ws_prefix}::{stmt['id']}" if ws_prefix is not None else stmt["id"]
@@ -573,6 +621,8 @@ def target_expansion(
                     context_order.append(target_doc_id)
                     distance[target_doc_id] = distance.get(owning_id, 0) + 1
                 if target_doc_id is not None:
+                    if target_doc_id != owning_id:
+                        preds.setdefault(target_doc_id, set()).add(owning_id)
                     pair = ("addresses", owning_id)
                     if pair not in edges[target_doc_id]:
                         edges[target_doc_id].append(pair)
@@ -589,6 +639,11 @@ def target_expansion(
                     edges[task_id] = []
                     context_order.append(task_id)
                     distance[task_id] = 1
+                # TASKは、`addresses`する対象規範文を所有する文書から1段で到達する。
+                for ref in _addresses_targets(id_index[task_id], id_index, statement_index):
+                    owner = _owner(ref) if ref in target_set else None
+                    if owner is not None and task_id != owning_id:
+                        preds.setdefault(task_id, set()).add(owner)
                 pair = ("addresses", task_id)
                 if pair not in edges[task_id]:
                     edges[task_id].append(pair)
@@ -596,7 +651,7 @@ def target_expansion(
     result.root_documents = [owning_id]
     result.context_documents = sorted(set(context_order))
     result.document_edges = edges
-    result.document_distance = distance
+    result.document_distance = _shortest_distances(owning_id, preds, distance)
     result.draft_advisory = draft_advisory
     return result
 
