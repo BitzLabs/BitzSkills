@@ -1,0 +1,221 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed_with_warnings",
+  "purpose": "implement",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "TASK-001"
+  ],
+  "contextDigest": "sha256:05a685d1484fb6e0ab47cc9a0c553a0c47fda56dde11ad68207344842ef79639",
+  "revision": null,
+  "resolution": {
+    "complete": true,
+    "documentCount": 4,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "TASK-001",
+      "kind": "task",
+      "status": "open",
+      "role": "root",
+      "path": ".spec/tasks/TASK-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "root"
+      ],
+      "statementRefs": [],
+      "frontmatter": {
+        "id": "TASK-001",
+        "title": "対象句の実装",
+        "status": "open",
+        "relations": {
+          "addresses": [
+            "REQ-001:AC-01"
+          ]
+        }
+      },
+      "bodyText": "# TASK-001 対象句の実装\n\n## Objective\n\n対象句を実装する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "requirement",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "addresses:TASK-001"
+      ],
+      "statementRefs": [
+        "REQ-001:AC-01"
+      ],
+      "frontmatter": {
+        "id": "REQ-001",
+        "title": "TASKの対象要求",
+        "status": "approved",
+        "tests": [
+          {
+            "path": "tests/test_root.py",
+            "covers": [
+              "REQ-001:AC-01"
+            ],
+            "command": "default"
+          }
+        ]
+      },
+      "bodyText": "# REQ-001 TASKの対象要求\n\n## Intent\n\ntarget展開の検査に使う固定要求。\n\n## Acceptance Criteria\n\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 入力を検証する。\n\n## Verification\n\n宣言したtestで確認する。\n",
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-002",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-002.md",
+      "projection": "normative",
+      "reachedBy": [
+        "refines:TECH-002"
+      ],
+      "statementRefs": [
+        "TECH-002:AC-01"
+      ],
+      "untrustedText": true
+    },
+    {
+      "id": "TECH-003",
+      "kind": "technical",
+      "status": "approved",
+      "role": "refinement",
+      "path": ".spec/technical/TECH-003.md",
+      "projection": "normative",
+      "reachedBy": [
+        "refines:TECH-003"
+      ],
+      "statementRefs": [
+        "TECH-003:AC-01"
+      ],
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": [
+      {
+        "id": "REQ-001:AC-01",
+        "documentId": "REQ-001",
+        "documentRole": "requirement",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "入力を検証する"
+        }
+      },
+      {
+        "id": "TECH-002:AC-01",
+        "documentId": "TECH-002",
+        "documentRole": "refinement",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "入力形式を固定する"
+        }
+      },
+      {
+        "id": "TECH-003:AC-01",
+        "documentId": "TECH-003",
+        "documentRole": "refinement",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "形式違反を拒否する"
+        }
+      }
+    ]
+  },
+  "coverage": {
+    "must": {
+      "total": [
+        "REQ-001:AC-01",
+        "TECH-002:AC-01",
+        "TECH-003:AC-01"
+      ],
+      "addressed": [
+        "REQ-001:AC-01"
+      ],
+      "tested": [
+        "REQ-001:AC-01",
+        "TECH-002:AC-01",
+        "TECH-003:AC-01"
+      ],
+      "unaddressed": [
+        "TECH-002:AC-01",
+        "TECH-003:AC-01"
+      ],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "CTX-COVERAGE-TASK-001",
+      "severity": "warning",
+      "resultStatus": "passed_with_warnings",
+      "summary": "implement対象のMUST TECH-002:AC-01を実装するTASKがありません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/technical/TECH-002.md"
+      }
+    },
+    {
+      "code": "CTX-COVERAGE-TASK-001",
+      "severity": "warning",
+      "resultStatus": "passed_with_warnings",
+      "summary": "implement対象のMUST TECH-003:AC-01を実装するTASKがありません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/technical/TECH-003.md"
+      }
+    }
+  ]
+}
