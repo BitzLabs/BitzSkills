@@ -373,6 +373,25 @@ class ShortestDistanceTests(unittest.TestCase):
                 self.assertIn("REQ-009", result.draft_advisory)
                 self.assertEqual(result.document_distance["REQ-009"], 1)
 
+    def test_draft_refining_another_draft_is_not_counted_through_it(self):
+        # REQ-008（draft）はREQ-007（draft、距離1）とREQ-003（距離2）を`refines`する。`advisory`の文書を`refines`するエッジは
+        # 辿らない（§6.1の6.）ので、REQ-007を経由せず、REQ-003から数えて距離3。
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/requirements/REQ-001.md",
+                   _req("REQ-001", extra_frontmatter="relations:\n  requires: [REQ-002]\n"))
+            _write(root, ".spec/requirements/REQ-002.md",
+                   _req("REQ-002", extra_frontmatter="relations:\n  requires: [REQ-003]\n"))
+            _write(root, ".spec/requirements/REQ-003.md", _req("REQ-003"))
+            _write(root, ".spec/requirements/REQ-007.md",
+                   _req("REQ-007", status="draft", extra_frontmatter="relations:\n  refines: [REQ-001]\n"))
+            _write(root, ".spec/requirements/REQ-008.md",
+                   _req("REQ-008", status="draft", extra_frontmatter="relations:\n  refines: [REQ-007, REQ-003]\n"))
+            id_index, stmt_index = _indexes(root)
+            result = te_mod.target_expansion("REQ-001", "interpret", id_index, stmt_index)
+            self.assertEqual(result.document_distance["REQ-007"], 1)
+            self.assertEqual(result.document_distance["REQ-008"], 3)
+
     def test_refining_document_reached_from_two_refined_documents_takes_the_minimum(self):
         # TECH-030はTECH-010（距離2）とTECH-020（`requires`で距離1）を`refines`する。後から見つかった参照先からの到達も数え、距離2。
         with tempfile.TemporaryDirectory() as root:
