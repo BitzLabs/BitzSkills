@@ -191,6 +191,28 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-141", "expected/context.json", document(2, role="constraint")),
             ("SINGLE-141", "expected/context.json", document(0, role="root")),
             ("SINGLE-141", "expected/context.json", document(2, reachedBy=["supersedes:TECH-005"])),
+            # 目的`implement`と`verify`は、`refines`する状態`draft`の文書を閉包へ含めない（関係・トレースモデル §6.1の末尾）。
+            # `draft`の文書の追加、そのテスト対応のテスト済みへの計上、状態の`blocked`への改変、診断の欠落を拒否する。
+            ("SINGLE-142", "expected/context.json",
+             lambda v: v["documents"].append(expansion_fixtures.bundle_document(
+                 "SINGLE-142", "TECH-005", "advisory", "reference", ["refines:TECH-005"]))),
+            ("SINGLE-142", "expected/context.json",
+             lambda v: v["coverage"]["must"].update(tested=["REQ-001:AC-01"], untested=[])),
+            ("SINGLE-142", "expected/context.json", lambda v: v["diagnostics"].pop()),
+            ("SINGLE-142", "expected/context.json", lambda v: v["diagnostics"].reverse()),
+            ("SINGLE-142", "expected/context.json",
+             lambda v: v["constraintLedger"]["statements"].append({"id": "TECH-005:AC-01"})),
+            ("SINGLE-142", "manifest.json", lambda v: v["expect"].update(status="passed")),
+            ("SINGLE-142", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(3, "interpret")),
+            ("SINGLE-143", "expected/verify.json",
+             lambda v: v["commands"][0]["tests"].append("tests/test_candidate.py")),
+            ("SINGLE-143", "expected/verify.json",
+             lambda v: v["targetResults"][0].update(status="blocked", contextDigest=None)),
+            ("SINGLE-143", "expected/verify.json",
+             lambda v: v["targetResults"][0].update(contextDigest="sha256:" + "0" * 64)),
+            ("SINGLE-143", "expected/verify.json",
+             lambda v: v["targetResults"][0]["statements"].append("TECH-005:AC-01")),
+            ("SINGLE-143", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
             # `verify`は`context`と同じ対象の集合とハッシュ値を使う。
             ("SINGLE-107-02", "expected/verify.json",
              lambda v: v["targetResults"][0]["statements"].pop()),
@@ -257,6 +279,53 @@ class AuditTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     expansion_fixtures.check_contract(identifier, value, audit.FIXTURES)
 
+    def test_expansion_contract_rejects_draft_documents_in_implement_and_verify(self):
+        """完全比較とは別に、`check_contract`だけが、目的`implement`と`verify`の結果に現れる、`refines`する
+        状態`draft`の文書、そのテスト対応の計上、状態を理由とした`blocked`を拒否する。"""
+        blocked = {"code": "CTX-STATE-001", "severity": "error", "resultStatus": "blocked",
+                   "summary": "TECH-005が適用できません",
+                   "source": {"kind": "file", "workspaceId": "root", "path": ".spec/technical/TECH-005.md"}}
+
+        def advisory(value):
+            value["documents"].append(expansion_fixtures.bundle_document(
+                "SINGLE-142", "TECH-005", "advisory", "reference", ["refines:TECH-005"]))
+            value["resolution"]["documentCount"] = 2
+
+        def counted(value):
+            value["coverage"]["must"].update(tested=["REQ-001:AC-01"], untested=[])
+
+        def one_diagnostic(value):
+            value["diagnostics"].pop()
+
+        def candidate_test(value):
+            value["commands"][0]["tests"].append("tests/test_candidate.py")
+            value["commands"][0]["argv"].append("tests/test_candidate.py")
+
+        def blocked_target(value):
+            value["status"] = "blocked"
+            value["targetResults"][0].update(status="blocked", contextDigest=None, statements=[], bindingRefs=[],
+                                             diagnostics=[blocked])
+            value["commands"] = []
+
+        def state_only(value):
+            value["targetResults"][0]["diagnostics"] = [blocked]
+        changes = [
+            ("SINGLE-142", "context", advisory),
+            ("SINGLE-142", "context", counted),
+            ("SINGLE-142", "context", one_diagnostic),
+            ("SINGLE-143", "verify", candidate_test),
+            ("SINGLE-143", "verify", blocked_target),
+            ("SINGLE-143", "verify", state_only),
+        ]
+        for identifier, operation, mutate in changes:
+            path = audit.FIXTURES / "single" / identifier / f"expected/{operation}.json"
+            with self.subTest(identifier=identifier, mutation=mutate.__qualname__):
+                value = json.loads(path.read_text())
+                expansion_fixtures.check_contract(identifier, value, audit.FIXTURES)
+                mutate(value)
+                with self.assertRaises(ValueError):
+                    expansion_fixtures.check_contract(identifier, value, audit.FIXTURES)
+
     def test_distance_reference_orders_by_the_shortest_path(self):
         """参照計算Bの閉包は、辿ったエッジによる最短の段数、種別、IDの順に文書を並べる。
         陽性対照（3件のfixture）と、経路や関係を変えて並びが変わる陰性対照を置く。"""
@@ -296,6 +365,28 @@ class AuditTests(unittest.TestCase):
         documents["TECH-010"]["frontmatter"]["id"] = "TECH-010"
         with self.assertRaisesRegex(ValueError, "有効な後継が複数"):
             digest_crosscheck._closure(documents, "TECH-005", "interpret")
+
+    def test_reference_closure_excludes_draft_refinements_unless_interpret(self):
+        """参照計算Bは、`refines`する状態`draft`の文書を、目的`interpret`だけで役割`advisory`として含め、
+        `implement`と`verify`では閉包へ含めない（関係・トレースモデル §6.1の末尾）。陽性対照と陰性対照を置く。"""
+        def load(identifier):
+            return copy.deepcopy(digest_crosscheck.load_documents(audit.FIXTURES / "single" / identifier / "repo"))
+        documents = load("SINGLE-142")
+        self.assertEqual(digest_crosscheck.closure(documents, "REQ-001", "interpret"),
+                         (["REQ-001", "TECH-005"], {"TECH-005"}))
+        self.assertEqual(digest_crosscheck.closure(documents, "REQ-001", "implement"), (["REQ-001"], set()))
+        self.assertEqual(digest_crosscheck.closure(documents, "REQ-001", "verify"), (["REQ-001"], set()))
+        documents = load("SINGLE-143")
+        self.assertEqual(digest_crosscheck.closure(documents, "TASK-001", "verify"),
+                         (["TASK-001", "REQ-001"], set()))
+        # 状態を`approved`にすると、具体化する適用可能な文書として、目的を問わず閉包へ含める。
+        documents["TECH-005"]["frontmatter"]["status"] = "approved"
+        self.assertEqual(digest_crosscheck.closure(documents, "TASK-001", "verify")[0],
+                         ["TASK-001", "REQ-001", "TECH-005"])
+        # 状態`draft`以外の適用可能でない文書（`rejected`）は、黙って捨てず、閉包の外の強いエッジとして拒否する。
+        documents["TECH-005"]["frontmatter"]["status"] = "rejected"
+        with self.assertRaisesRegex(ValueError, "閉包の外の強いエッジ"):
+            digest_crosscheck.closure(documents, "TASK-001", "verify")
 
     def test_ordering_fixtures(self):
         result = ordering_fixtures.validate()

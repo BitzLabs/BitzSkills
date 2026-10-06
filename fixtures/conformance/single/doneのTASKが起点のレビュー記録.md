@@ -216,3 +216,54 @@ Coreの出力は根拠にせず、上の規範文と、`SINGLE-067`、`SINGLE-06
   `SINGLE-138`が失敗する（`AC-02`が`statements`と`covers`に入り、`tests/test_session.py`が割当てへ入る）。`SINGLE-137`は変異の前に止まるので通る。
 - 先行TASKが`cancelled`の場合、先行TASKが複数ある場合、先行TASKがさらに`requires`を持つ場合は固定しない。
 - 複合ワークスペースでの先行TASKの参照（修飾ID）は固定しない。
+
+## 2026-10-06追記: TASKを起点にした目的`verify`で`refines`する状態`draft`の文書を閉包へ含めない（`SINGLE-143`）
+
+### 追加の理由（実装の確認事項C16）
+
+[関係・トレースモデル §6.1](../../../docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md#61-interpret)の末尾は、
+「`implement`と`verify`は、`refines`する状態`draft`の文書を閉包へ含めない」と定める。Coreは、`interpret`だけの規則（6.の`advisory`）を
+`verify`にも適用し、TASKを起点にした`verify`で、`draft`の文書の状態を適用可否として検査して`CTX-STATE-001`（`blocked`／2）にしていた。
+また、`draft`の文書のテスト対応をテスト済みに数え、`verify`の材料の`applicability`は常に`applicable`なので、`context --purpose verify`と
+ハッシュ値が食い違い得た。既存のTASK起点の`verify`のfixture（`SINGLE-068`、`137`、`138`、`110`）には、`refines`する`draft`の文書を持つものがなかった。
+`SINGLE-143`は、`SINGLE-142`（目的`implement`、`context`）と対になる`verify`のfixtureである。
+
+### 入力と起動
+
+`verify TASK-001 --format json`（設定をステージする。`SINGLE-138`と同じ）。corpusは`corpus_draft_excluded_task()`である。
+
+| 文書 | 状態 | 内容 |
+|---|---|---|
+| TASK-001 | `open` | `addresses: [REQ-001:AC-01]`。`requires`はない |
+| REQ-001 | `approved` | `REQ-001:AC-01`（`MUST`）を1件持つ。`tests/test_root.py`が`REQ-001:AC-01`を`covers`する |
+| TECH-005 | `draft` | `TECH-005:AC-01`（`MUST`）を1件持つ。`refines: [REQ-001]`（文書単位。`SINGLE-142`は規範文単位）。`tests/test_candidate.py`が`REQ-001:AC-01`と`TECH-005:AC-01`を`covers`する |
+
+TECH-005のテスト対応が`REQ-001:AC-01`を`covers`するのは、`draft`の文書のテストを実行しないことを、コマンドの`argv`で判別できるようにするためである。
+
+### 期待値の導き方（Coreの出力を根拠にしない）
+
+| 項目 | 期待値 | 根拠 |
+|---|---|---|
+| 結果の状態／終了コード | `passed`／0 | `TECH-005`は閉包の外なので状態を検査しない（§6.1の末尾、§10）。TASK-001は`open`で先行TASKがない。テストは通る（`/bin/true`） |
+| 診断 | 検証対象と最上位の両方で空。`CTX-STATE-001`を返さない | 同上 |
+| `statements` | `REQ-001:AC-01`だけ | §6.4の3.（TASKを起点にしたときは、`addresses`する規範文と、その具体化文書の規範文）。`draft`のTECH-005は具体化文書に加えない |
+| `bindingRefs`、`commands` | `root::default`の1件。`tests`は`tests/test_root.py`だけ、`argv`は`["/bin/true", "tests/test_root.py"]`、`covers`は`REQ-001:AC-01` | `verify` §3〜§9（対象規範文のテスト対応から、閉包の文書の`tests[]`だけを集める）。`tests/test_candidate.py`は閉包の外の文書のテスト対応で、実行しない |
+| コンテキストの文書 | TASK-001、REQ-001の2件 | §6.3（起点のTASKの`addresses`の参照先を所有する文書を含める）。TECH-005は含めない |
+| `contextDigest` | `sha256:4a6404ef2cc326225d2110810d3bb7fa1e1a285590692b09280ec7bc242f49c6` | 材料は目的`verify`、`documents[]`はREQ-001、TASK-001（コードポイント辞書順）、コマンドは`default`の1件。参照計算Aと、入力の木構造から導く参照計算Bの正規JSONの一致を監査で確認した。TECH-005の材料への混入は、`applicability`を何にしても材料の文書の集合が変わるのでハッシュ値が変わる |
+
+参照計算Bの修正は`SINGLE-142`の節（上の`共通の対象展開と参考（advisory）の提示のレビュー記録.md`）と同じで、`implement`と`verify`で閉包へ含めない`draft`の文書の
+`refines`のエッジを、辿らない辺として記録する。
+
+### 監査の検査と限界（C16）
+
+`check_contract`の`check_draft_excluded`が、結果のどこにもTECH-005と`test_candidate`が現れないこと、`CTX-STATE-001`がないこと、
+対象規範文とコマンドが上の値であることを確かめる。回帰試験は、`tests/test_candidate.py`の混入、`blocked`化、ハッシュ値の改変、
+`TECH-005:AC-01`の混入、マニフェストの期待の`blocked`化を拒否することを確かめる。
+
+- 修正前のCore（コミット`90ba92a3`の`targetexpand.py`）では失敗する。TECH-005の状態検査で`blocked`／2（`CTX-STATE-001`）となり、`contextDigest`は`null`、
+  `statements`と`bindingRefs`と`commands`は空になる（陰性対照）。
+- 修正前のCoreのハッシュ値の食い違い（`verify`の材料の`applicability`が常に`applicable`）は、この`SINGLE-143`では現れない。
+  `blocked`が先に起きるためである。起点がREQで`draft`の文書を`refines`される`verify`は、修正前のCoreでは状態を検査せず、`draft`のテストを実行して
+  `context --purpose verify`とハッシュ値が食い違う（作業ツリー外で確認した）が、このfixtureでは固定しない。
+- 起点がREQ、TECH、規範文の`verify`、`draft`の文書が複数ある場合、`draft`の文書を`addresses`するTASKがある場合は固定しない。
+- 期待値はCoreを実行せずに決めた。Coreとの一致の確認は、期待値を決めた後に行い、Gate Bで判定する。

@@ -1,6 +1,6 @@
 """共通の対象展開と`advisory`の提示を固定するfixture（Coreの公開操作は実行しない）。
 
-matrix §6.11の`SINGLE-106-03`、`SINGLE-106-06`〜`07`と§6.12の`SINGLE-107`〜`110`、`113`、`134`〜`136`、`139`〜`141`を扱う。
+matrix §6.11の`SINGLE-106-03`、`SINGLE-106-06`〜`07`と§6.12の`SINGLE-107`〜`110`、`113`、`134`〜`136`、`139`〜`143`を扱う。
 `context`の期待値は4つの集合（rootDocuments、contextDocuments、targetStatements、adjacentStatements）を
 `roots`、`documents[]`、制約台帳、`coverage.adjacent`として完全比較し、同じ起点の`verify`は
 `context`と同じ対象規範文の集合を返すことを確認する。
@@ -317,6 +317,52 @@ def corpus_advisory():
     ]
 
 
+def corpus_draft_excluded():
+    """142: approved REQ-001の規範文を、draftのTECH-005が`refines`し、そのテスト対応がREQ-001:AC-01を`covers`する。
+    REQ-001自身はテスト対応を持たない。目的`implement`はdraftの文書を閉包へ含めないので（関係・トレースモデル §6.1の末尾）、
+    REQ-001:AC-01は未テストのままである。"""
+    only = [("REQ-001:AC-01", "入力を検証する")]
+    candidate = [("TECH-005:AC-01", "候補形式を示す")]
+    tests = [{"path": "tests/test_candidate.py", "covers": ["REQ-001:AC-01", "TECH-005:AC-01"], "command": "default"}]
+    tests_yaml = ("tests:\n  - path: tests/test_candidate.py\n"
+                  "    covers: [REQ-001:AC-01, TECH-005:AC-01]\n    command: default\n")
+    return [
+        document(".spec/requirements/REQ-001.md", requirement("REQ-001", "draftの具体化を含めない起点", only),
+                 fm("REQ-001", "draftの具体化を含めない起点"), only),
+        document(".spec/technical/TECH-005.md", technical(
+            "TECH-005", "検討中の具体化", candidate,
+            "relations:\n  refines: [REQ-001:AC-01]\n" + tests_yaml, status="draft"),
+            fm("TECH-005", "検討中の具体化", "draft", relations={"refines": ["REQ-001:AC-01"]}, tests=tests),
+            candidate),
+    ]
+
+
+def corpus_draft_excluded_task():
+    """143: open TASK-001がapproved REQ-001:AC-01を`addresses`する。REQ-001はテスト対応を持ち、draftのTECH-005が
+    REQ-001を文書単位で`refines`する。TECH-005のテスト対応もREQ-001:AC-01を`covers`するが、目的`verify`はdraftの文書を
+    閉包へ含めないので（関係・トレースモデル §6.1の末尾）、その状態を検査せず、テストも実行しない。"""
+    only = [("REQ-001:AC-01", "入力を検証する")]
+    candidate = [("TECH-005:AC-01", "候補形式を示す")]
+    root_tests = [{"path": "tests/test_root.py", "covers": ["REQ-001:AC-01"], "command": "default"}]
+    draft_tests = [{"path": "tests/test_candidate.py", "covers": ["REQ-001:AC-01", "TECH-005:AC-01"],
+                    "command": "default"}]
+    draft_tests_yaml = ("tests:\n  - path: tests/test_candidate.py\n"
+                        "    covers: [REQ-001:AC-01, TECH-005:AC-01]\n    command: default\n")
+    return [
+        document(".spec/requirements/REQ-001.md", requirement(
+            "REQ-001", "draftの具体化を含めない対象要求", only, ROOT_ONE_TEST_YAML),
+            fm("REQ-001", "draftの具体化を含めない対象要求", tests=root_tests), only),
+        document(".spec/technical/TECH-005.md", technical(
+            "TECH-005", "検討中の具体化", candidate,
+            "relations:\n  refines: [REQ-001]\n" + draft_tests_yaml, status="draft"),
+            fm("TECH-005", "検討中の具体化", "draft", relations={"refines": ["REQ-001"]}, tests=draft_tests),
+            candidate),
+        document(".spec/tasks/TASK-001.md", task(
+            "TASK-001", "対象句の検証", "open", "relations:\n  addresses: [REQ-001:AC-01]\n"),
+            fm("TASK-001", "対象句の検証", "open", relations={"addresses": ["REQ-001:AC-01"]}), []),
+    ]
+
+
 def corpus_distance():
     """106-06: REQ-001がTECH-010をrequiresし、TECH-010がREQ-020をrequires。距離2以上の
     役割`requirement`と`constraint`は、距離だけを理由に具体化文書のように`normative`へ落とさず、役割に基づき
@@ -367,6 +413,10 @@ CASES = {
                    "TASK起点の具体化の鎖は、起点からの最短の距離で並べ、距離2以上の文書をnormativeで提示する"),
     "SINGLE-141": (corpus_superseded_origin, ["context", "TECH-005", "--purpose", "interpret", "--format", "json"],
                    "置換済みの起点の後継は距離1で、起点のrequires先とIDの順に並べる"),
+    "SINGLE-142": (corpus_draft_excluded, ["context", "REQ-001", "--purpose", "implement", "--format", "json"],
+                   "implementでは、refinesする状態draftの文書をadvisoryとしても閉包へ含めず、そのテスト対応を数えない"),
+    "SINGLE-143": (corpus_draft_excluded_task, ["verify", "TASK-001", "--format", "json"],
+                   "TASK起点のverifyは、refinesする状態draftの文書を閉包へ含めず、状態を検査しない"),
     "SINGLE-113": (corpus_refinement, ["verify", "REQ-001:AC-01", "REQ-001", "REQ-001:AC-01", "--format", "json"],
                    "文書IDと同文書のstatement IDを重複指定してもtargetとbindingを重複排除する"),
     "SINGLE-106-06": (corpus_distance, ["context", "REQ-001", "--purpose", "verify", "--format", "json"],
@@ -492,6 +542,34 @@ EXPANSIONS = {
                                  ("TECH-009", "replacement", "full", ["supersedes:TECH-009"])],
                    "ledger": [], "tested": [], "addressed": [], "adjacent": [],
                    "advisory": ["TECH-005"], "replacement": ["TECH-009"]},
+    # 142は、目的`implement`で、approvedのREQ-001:AC-01を`refines`する状態`draft`のTECH-005がある。`implement`は`refines`する
+    # 状態`draft`の文書を閉包へ含めないので（関係・トレースモデル §6.1の末尾）、閉包はREQ-001だけで、役割`advisory`の文書はない。
+    # 対象規範文は起点REQ-001の規範文REQ-001:AC-01だけ（§6.4の1.）で、TECH-005は具体化文書として加えない（`draft`は適用可能でない）。
+    # TECH-005のテスト対応はREQ-001:AC-01を`covers`するが、閉包の文書ではないのでテスト済みに数えない（§8）。REQ-001自身は
+    # テスト対応を持たないので、REQ-001:AC-01は未対応（対応するTASKがない）かつ未テストで、目的`implement`の`MUST`の
+    # 未対応と未テストはどちらも警告になる（§8、診断レジストリの`CTX-COVERAGE-TASK-MUST`、`CTX-COVERAGE-TEST-MUST-IMPLEMENT`）。
+    # 診断の順は、発生元（同じREQ-001.md）が同じなので、`code`の辞書順（`CTX-COVERAGE-TASK-001`、`CTX-COVERAGE-TEST-001`）。
+    "SINGLE-142": {"purpose": "implement", "root": "REQ-001", "status": "passed_with_warnings",
+                   "documents": [("REQ-001", "root", "full", ["root"])],
+                   "ledger": ["REQ-001:AC-01"], "tested": [], "addressed": [], "adjacent": [], "advisory": [],
+                   "diagnostics": [{"code": code, "severity": "warning", "resultStatus": "passed_with_warnings",
+                                    "summary": summary,
+                                    "source": {"kind": "file", "workspaceId": "root",
+                                               "path": ".spec/requirements/REQ-001.md"}}
+                                   for code, summary in (
+                                       ("CTX-COVERAGE-TASK-001",
+                                        "implement対象のMUST REQ-001:AC-01を実装するTASKがありません"),
+                                       ("CTX-COVERAGE-TEST-001", "MUST REQ-001:AC-01がtestされていません"))]},
+    # 143は、起点がTASKの目的`verify`。TASK-001（距離0）が`addresses`するREQ-001を所有する文書として含め（距離1、役割
+    # `requirement`）、REQ-001を文書単位で`refines`する状態`draft`のTECH-005は閉包へ含めない（§6.1の末尾）。含めると
+    # 適用可能でない文書を強い関係が要求することになり`CTX-STATE-001`の`blocked`になるが、`draft`の文書は閉包の外なので
+    # 状態を検査しない（§10）。対象規範文はTASK-001が`addresses`するREQ-001:AC-01だけで、REQ-001のテスト対応が
+    # テスト済みにする。TECH-005のテスト対応（tests/test_candidate.py）は閉包の外なのでコマンドへ入れない。
+    "SINGLE-143": {"purpose": "verify", "root": "TASK-001",
+                   "documents": [("TASK-001", "root", "full", ["root"]),
+                                 ("REQ-001", "requirement", "full", ["addresses:TASK-001"])],
+                   "ledger": ["REQ-001:AC-01"], "tested": ["REQ-001:AC-01"], "addressed": ["REQ-001:AC-01"],
+                   "adjacent": [], "advisory": []},
     # 113の文書を起点にする検証対象は107-01、規範文を起点にする検証対象は次の展開を使う。
     "REQ-001:AC-01": {"purpose": "verify", "root": "REQ-001:AC-01",
                       "ledger": ["REQ-001:AC-01", "TECH-002:AC-01", "TECH-003:AC-01"], "advisory": []},
@@ -681,7 +759,10 @@ def reviewed_verify(identifier):
         statements = expansion(identifier, target)["ledger"]
         results.append({"target": target, "status": "passed", "contextDigest": context_digest(identifier, target),
                         "statements": list(statements), "bindingRefs": ["root::default"], "diagnostics": []})
+        closure = set(context_documents(identifier, target))
         for entry in corpus.values():
+            if entry["frontmatter"]["id"] not in closure:
+                continue
             for test in entry["frontmatter"].get("tests", []):
                 if set(test["covers"]) & set(statements):
                     tests.add(test["path"])
@@ -722,8 +803,13 @@ LITERAL_SETS = {
     "SINGLE-140": (["TASK-001"], ["TASK-001", "REQ-001", "TECH-002", "TECH-003"],
                    ["REQ-001:AC-01", "TECH-002:AC-01", "TECH-003:AC-01"], []),
     "SINGLE-141": (["TECH-005"], ["TECH-005", "TECH-007", "TECH-009"], [], []),
+    # 142は、`refines`する状態`draft`のTECH-005を含めないので、閉包は起点REQ-001だけである。
+    "SINGLE-142": (["REQ-001"], ["REQ-001"], ["REQ-001:AC-01"], []),
 }
 
+
+# 目的`implement`と`verify`で、`refines`する状態`draft`の文書を閉包へ含めないfixture。
+DRAFT_EXCLUDED = ("SINGLE-142", "SINGLE-143")
 
 # 距離に基づく並びと提示形式、役割の要点（名前: (役割, 提示形式, reachedBy)）。
 DISTANCE_CHECKS = {
@@ -741,6 +827,35 @@ DISTANCE_CHECKS = {
 }
 
 
+def check_draft_excluded(identifier, result):
+    """目的`implement`と`verify`は、`refines`する状態`draft`の文書を閉包へ含めない（関係・トレースモデル §6.1の末尾）。
+    結果のどこにも`draft`の文書（TECH-005）とそのテストが現れず、状態を理由に`blocked`にしない。"""
+    text = json.dumps(result, ensure_ascii=False)
+    if "TECH-005" in text or "test_candidate" in text:
+        raise ValueError("目的`implement`と`verify`の結果へ、`refines`する状態`draft`の文書とそのテストを含めてはいけません")
+    if "CTX-STATE-001" in text:
+        raise ValueError("閉包へ含めない状態`draft`の文書の状態を検査して`CTX-STATE-001`にしてはいけません")
+    if identifier == "SINGLE-142":
+        if [d["id"] for d in result["documents"]] != ["REQ-001"] or any(
+                d["role"] == "advisory" for d in result["documents"]):
+            raise ValueError("`142`の閉包は役割`advisory`の文書を持たず、REQ-001だけである必要があります")
+        if result["status"] != "passed_with_warnings" or [d["code"] for d in result["diagnostics"]] != [
+                "CTX-COVERAGE-TASK-001", "CTX-COVERAGE-TEST-001"]:
+            raise ValueError("`142`の診断は未対応と未テストの警告の2件だけである必要があります")
+        must = result["coverage"]["must"]
+        if must["tested"] != [] or must["untested"] != ["REQ-001:AC-01"]:
+            raise ValueError("状態`draft`の文書のテスト対応をテスト済みに数えてはいけません")
+        return
+    target = result["targetResults"][0]
+    if result["status"] != "passed" or target["status"] != "passed" or target["diagnostics"] or result["diagnostics"]:
+        raise ValueError("`143`は診断なしで`passed`になる必要があります")
+    if target["statements"] != ["REQ-001:AC-01"] or target["bindingRefs"] != ["root::default"]:
+        raise ValueError("`143`の対象規範文は起点のTASKが`addresses`する規範文だけで、テスト割当ては1件である必要があります")
+    command = result["commands"][0]
+    if command["tests"] != ["tests/test_root.py"] or command["argv"] != ["/bin/true", "tests/test_root.py"]:
+        raise ValueError("`143`のコマンドはREQ-001のテスト対応だけを実行する必要があります")
+
+
 def four_sets(result):
     roots = sorted({root.split(":")[0] for root in result["roots"]})
     return (roots, [d["id"] for d in result["documents"]],
@@ -751,6 +866,8 @@ def check_contract(identifier, result, root):
     """完全比較とは別に、裁定済みの展開規則を結果から直接確かめる。"""
     if identifier in LITERAL_SETS and four_sets(result) != LITERAL_SETS[identifier]:
         raise ValueError("4集合がレビュー済みの展開と異なります")
+    if identifier in DRAFT_EXCLUDED:
+        check_draft_excluded(identifier, result)
     if result["operation"] == "context":
         for entry in result["documents"]:
             if entry["role"] == "advisory" and entry["projection"] != "reference":
@@ -808,6 +925,8 @@ def check_contract(identifier, result, root):
             expected = json.loads((root / "single/SINGLE-107-01/expected/context.json").read_text())
             if result["contextDigest"] != expected["contextDigest"]:
                 raise ValueError("詳細度`compact`はコンテキストのハッシュ値を変えてはいけません")
+        return
+    if identifier in DRAFT_EXCLUDED:
         return
     for target in result["targetResults"]:
         source = "SINGLE-113" if identifier == "SINGLE-113" else identifier.replace("-02", "-01")

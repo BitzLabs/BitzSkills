@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "e98209b9cb40bdd51ab238d6fb29e4dd171dee9ce39238a9a3c50aa9305e5b22"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "cacb3decd22bd3e3d31bff693f0887e211badf73f13a52966b2bc9116d736add"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-005.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "4d2f56389fa4ab5a1608c48cddb5bb2282826f3148a003469db59c4ac84484a9"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_candidate.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "422ddd49cee4e2ce70f4a3332e412461439a46bbc939f9d62ff2f000ae7620e0"
+      },
+      "tests/test_root.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "422ddd49cee4e2ce70f4a3332e412461439a46bbc939f9d62ff2f000ae7620e0"
+      }
+    },
+    "git": {
+      "status": "A  .spec/bitz.yaml\nA  .spec/requirements/REQ-001.md\nA  .spec/tasks/TASK-001.md\nA  .spec/technical/TECH-005.md\nA  tests/test_candidate.py\nA  tests/test_root.py\n",
+      "index": "100644 cf2e1fa96cd3cf541643dbf6e8a690a148085c43 0\t.spec/bitz.yaml\n100644 9d144b9ff6f1c97383a5011ff7317b35bbab07dd 0\t.spec/requirements/REQ-001.md\n100644 1f47867772f31b4d4409be35cd278a300d6a11ef 0\t.spec/tasks/TASK-001.md\n100644 4820c77b4e17f481c8aaff6e862c52669378d285 0\t.spec/technical/TECH-005.md\n100644 fdc4f2b908e8b0577846aa0b49a80a45729f2039 0\ttests/test_candidate.py\n100644 fdc4f2b908e8b0577846aa0b49a80a45729f2039 0\ttests/test_root.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "e98209b9cb40bdd51ab238d6fb29e4dd171dee9ce39238a9a3c50aa9305e5b22"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "cacb3decd22bd3e3d31bff693f0887e211badf73f13a52966b2bc9116d736add"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-005.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "4d2f56389fa4ab5a1608c48cddb5bb2282826f3148a003469db59c4ac84484a9"
+      },
+      "tests": {
+        "kind": "directory"
+      },
+      "tests/test_candidate.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "422ddd49cee4e2ce70f4a3332e412461439a46bbc939f9d62ff2f000ae7620e0"
+      },
+      "tests/test_root.py": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "422ddd49cee4e2ce70f4a3332e412461439a46bbc939f9d62ff2f000ae7620e0"
+      }
+    },
+    "git": {
+      "status": "A  .spec/bitz.yaml\nA  .spec/requirements/REQ-001.md\nA  .spec/tasks/TASK-001.md\nA  .spec/technical/TECH-005.md\nA  tests/test_candidate.py\nA  tests/test_root.py\n",
+      "index": "100644 cf2e1fa96cd3cf541643dbf6e8a690a148085c43 0\t.spec/bitz.yaml\n100644 9d144b9ff6f1c97383a5011ff7317b35bbab07dd 0\t.spec/requirements/REQ-001.md\n100644 1f47867772f31b4d4409be35cd278a300d6a11ef 0\t.spec/tasks/TASK-001.md\n100644 4820c77b4e17f481c8aaff6e862c52669378d285 0\t.spec/technical/TECH-005.md\n100644 fdc4f2b908e8b0577846aa0b49a80a45729f2039 0\ttests/test_candidate.py\n100644 fdc4f2b908e8b0577846aa0b49a80a45729f2039 0\ttests/test_root.py\n"
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}
