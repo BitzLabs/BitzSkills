@@ -1,0 +1,20 @@
+{
+  "status": "fixed_source_matches",
+  "sourceCommit": "f760649f44a3d7bb2bd723181e3ab155b81d4140",
+  "observedHead": "7ad72e52fe52ec8aafffe4a0ac2a0676b62c567f",
+  "headIsCondition": false,
+  "sourceSha256": {
+    "evals/skills/cases/behavior-safety.json": "465910e4bd7ff215d8126ff784509dd693dec10ef7fd4c91583c212b451a02e1",
+    "evals/skills/cases/routing.json": "ba0365411bbd6b2782691e5c1458061497b34f5248f558f18f48b98dd6e13235",
+    "evals/skills/event-catalog.json": "bec19acee225998d2627f1c3fcc065269d6fb722fdfb671e08ca11db0a9ab431",
+    "evals/skills/protocol.json": "14b1af886d2affefe69205dd4300883b943c21d4019316d20431f2564adb7667",
+    "evals/skills/routing/audit_held_out.py": "84a881f82cf02cc6c6c658c3f3160bce526b4d097f063e84cdd154fc8c6c0aa6",
+    "evals/skills/routing/audit_remediated_held_out.py": "442cc4111b7b538d9b3e7ac4ab1e61b54c0f27695f941c84e93ef36dc9cb8d8f",
+    "evals/skills/routing/held-out-collection-v0.4.json": "240b26eea12bff2a37518edc9698260eeb7765ff987bdfdbf4a150dd29f09f20",
+    "evals/skills/routing/remediation-evidence.schema.json": "9bf7675e7c2a301a93dd530315209cded0183686d4bda5241711a7af4197d795",
+    "evals/skills/routing/source_guard.py": "553bfe5c3c2a1aa33b44551da910a4f80c1ba86ea69b13dcedcedf22d1444489",
+    "evals/skills/schemas/case.schema.json": "db4f1004eff4f64d77e17f9a04d339204e5c5a68c047c420ef0da45ace244b81",
+    "evals/skills/validate.py": "a8071b94f050318638816863ed61ec7c9e40997845f0dd048dec4c384be05c8c",
+    "tests/skills/test_held_out_remediation.py": "b2810ef802e39def50c51e1a729fa5195a7f7c96dba6d4613359835d685fdc3f"
+  }
+}

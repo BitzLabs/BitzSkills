@@ -1170,3 +1170,13 @@ collection0.4の準備独立検分はP1/P2各0。独立16件と検分後の親16
 結果は `evals/skills/results/2026-10-06-held-out-remediation-preparation/report.md`。
 次は同じ固定sourceの作成SOL1で新規3件と再利用9件の集合を保存し、別SOL1で全12件を検分する。
 今回の一次モデル枠は0。9件の合格や保持集合の意味新規性、全Gateはまだ認定しない。
+
+collection0.4の新規3件・再利用9件と証拠を非公開領域へ排他新規保存した。
+全12件の独立意味検分はP1=0/P2=1、影響1件。全体経路12件と再利用9件の全フィールド一致は整合し、
+新規性は3件中2件が適格だった。集合は `stopped_on_p2` とし、一次発火測定へは進めない。
+親のnative機械監査/source guard/出力照合は各exit0で、保存14件・旧0.3の13件不変、
+source12/candidate71資源の実Git blob一致と報告12件の対応を確認した。
+今回の準備独立/作成/集合独立SOL各1を消費、一次/retry/委譲0。旧失敗・元native bytes欠落を保持する。
+実結果は `evals/skills/results/2026-10-06-held-out-remediation-collection-stopped/report.md`。
+残る1件の差替えと11件の再利用候補を扱う次工程では、除外集合へ0.4全件を追加し、
+採点対象に効く条件差・来歴・別source/有限契約を先に固定する。後続契約は未起動で、全Gateも未認定。

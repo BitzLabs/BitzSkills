@@ -1,0 +1,27 @@
+{
+  "status": "mechanical_checks_passed",
+  "heldOut": {
+    "setVersion": "production-routing-held-out-0.4.0",
+    "caseCount": 12,
+    "sha256": "17327fa66c83ec69d2357dea9279923bb2207ce4a4e11256fb435c864013add8"
+  },
+  "newCaseCount": 3,
+  "retainedCaseCount": 9,
+  "routingAssessmentCount": 12,
+  "noveltyComparisonCount": 3,
+  "publicExclusionCount": 46,
+  "privateExclusionCounts": [
+    12,
+    12
+  ],
+  "evidenceSha256": "f2acdf3aae1bcedb3a8d7bc978104979051e1a34e64170d5ebfee408c58448c2",
+  "retentionSha256": "3a9007b4c1925cefe4b213426895a7ef79ffd520eceb5f5a799f22bebffc18fa",
+  "semanticNovelty": "requires_independent_review",
+  "routingSemantics": "requires_independent_review",
+  "primaryModelTrajectories": 0,
+  "certifiesSkillGate": false,
+  "sourceCommit": "f760649f44a3d7bb2bd723181e3ab155b81d4140",
+  "sourceFileCount": 12,
+  "headIsCondition": false,
+  "contractSha256": "240b26eea12bff2a37518edc9698260eeb7765ff987bdfdbf4a150dd29f09f20"
+}

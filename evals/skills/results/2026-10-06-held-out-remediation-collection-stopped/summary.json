@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "1.0",
+  "status": "stopped_on_p2",
+  "scope": "held-out-collection-routing-lineage-and-new-case-novelty",
+  "setVersion": "production-routing-held-out-0.4.0",
+  "sourceCommit": "f760649f44a3d7bb2bd723181e3ab155b81d4140",
+  "sourceFileCount": 12,
+  "headIsCondition": false,
+  "candidate": {
+    "sourceCommit": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+    "candidateVersion": "production-six-skill-routing-0.1.0",
+    "manifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+    "skillCount": 6,
+    "resourceCount": 71
+  },
+  "caseCount": 12,
+  "retainedCaseCount": 9,
+  "newCaseCount": 3,
+  "routingSemanticsPassedCount": 12,
+  "retentionFullFieldsMatched": true,
+  "novelNewCaseCount": 2,
+  "noveltyFailureCount": 1,
+  "severityCounts": {
+    "P1": 0,
+    "P2": 1
+  },
+  "affectedCaseCount": 1,
+  "mechanicalStatus": "passed",
+  "semanticStatus": "stopped",
+  "casesSaved": true,
+  "evidenceSaved": true,
+  "privateArtifactSha256": {
+    "cases.json": "17327fa66c83ec69d2357dea9279923bb2207ce4a4e11256fb435c864013add8",
+    "creation-audit.json": "508bd1f86b82dbafd35f14a94e970bf28e7b2d540bdaba959f595951bc0840a8",
+    "creation-notes.md": "9285488431e6d1ec29319935ef87aeb7837671012f932152418115735bd194a7",
+    "creation-receipt.json": "45a1f209c5467c7a9c108a09f5fe33b2dd3174b11a91555013a817066aaa0ed4",
+    "evidence.json": "f2acdf3aae1bcedb3a8d7bc978104979051e1a34e64170d5ebfee408c58448c2",
+    "retention.json": "3a9007b4c1925cefe4b213426895a7ef79ffd520eceb5f5a799f22bebffc18fa",
+    "source-guard-presave.json": "80d511bd25d80d7cfa63a3e0f863d9b200e39cde1c6849ca984d93524b895118",
+    "source-guard-start.json": "80d511bd25d80d7cfa63a3e0f863d9b200e39cde1c6849ca984d93524b895118",
+    "independent-review.md": "cd3364b0d3f6cc03c25f1a17a6af76178edb3b37a9efd130429fa92289ffb078",
+    "independent-receipt.json": "67a1bde0bcf479b16ccfba02b775bdaff27dfdf05c43f2bcc9ed3d69d7869937",
+    "independent-audit.json": "887f78254107b8a73ec076e83b926b7e6041c6c44e6e63d6ef1d149ba295664b",
+    "independent-audit.log": "dc1fcb3131fd7bf333b5b0327b1507881c99c9b2cf9a6ed44bdabe0218dd561a",
+    "independent-source-guard.json": "bed9e01b1c4f18ecf75cc802ab0a5893827fa135678d47d7aee8b6343b0d3ee0",
+    "independent-invocation-error.json": "a35b284bc47c862766429f3852234cc2c32e26832d66768448253a8e58726d49"
+  },
+  "parentVerification": {
+    "nativeAuditExitCode": 0,
+    "sourceGuardExitCode": 0,
+    "artifactVerificationExitCode": 0,
+    "privateArtifactsVerified": 14,
+    "creatorFilesUnchanged": 8,
+    "oldCollectionArtifactsVerified": 13,
+    "sourceFileCount": 12,
+    "candidateResourcesGitBlobMatched": 71,
+    "reportCaseCoverage": 12,
+    "semanticDecisionAdoptedFromIndependentReceipt": true
+  },
+  "preparationTests": {
+    "parentTargeted": 16,
+    "parentAll": 246,
+    "independentTargeted": 16,
+    "parentAfterReviewTargeted": 16,
+    "allExitCodes": 0,
+    "unchangedRuntimeSource": true
+  },
+  "budgetConsumed": {
+    "preparationReviewerSol": 1,
+    "creatorSol": 1,
+    "independentReviewerSol": 1,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0,
+    "delegations": 0
+  },
+  "nativeReadHelperCorrections": {
+    "creator": 1,
+    "independentReviewer": 1,
+    "independentOriginalExitCode": 127,
+    "paidRetries": 0,
+    "errorsPreserved": true
+  },
+  "parentHelperHistory": {
+    "analysisHelpersCorrected": 2,
+    "artifactVerifierProjectionPathCorrected": 1,
+    "failedArtifactVerificationPreservedLocally": true,
+    "paidCalls": 0
+  },
+  "environment": {
+    "python": "3.12.3",
+    "jsonschema": "4.23.0",
+    "ruamelYaml": "0.19.1"
+  },
+  "previousCollectionFailuresPreserved": true,
+  "previousOriginalNativeBytes": "unavailable",
+  "usage": "unknown",
+  "costUsd": null,
+  "primaryEvaluationStarted": false,
+  "certifiesCollection": false,
+  "certifiesBehavior": false,
+  "certifiesSkillGate": false,
+  "certifiesProductCompletion": false,
+  "nextAction": "define_separate_finite_contract_for_one_replacement_and_eleven_retention_candidates"
+}
