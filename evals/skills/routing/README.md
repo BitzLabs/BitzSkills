@@ -47,3 +47,18 @@ python -B evals/skills/routing/host.py --snapshot <固定snapshot> --manifest-sh
 これは資源ホストの準備で、発火実測ではない。`host-preparation.json` の別有限予算で独立検分する。
 非公開入力を含む測定のログは承認済み非公開領域へ保存し、公開しない。
 後続runnerは出力領域・有限台帳・停止条件を検査し、モデルのshell等を無効化した状態で接続する。
+
+後続保持集合0.2.0の条件は `held-out-collection-v0.2.json` に固定する。
+製品候補は変えず、旧停止集合を除外照合へ束縛し、新規子領域・IDs SE-900〜911へ保存する。
+`novelty.json` は全46公開ケース・旧12件の照合範囲、各新ケースの因果前提、
+近い公開/旧ケース、決定に関係する差を `novelty.schema.json` に沿って非公開で記録する。
+監査は固定製品資源・旧集合hash・文字列正規化衝突・比較証拠のケースhash束縛と全件対応を検査する。
+診断に非公開本文が含まれても公開出力はerrorTypeだけとする。
+
+```text
+python -B evals/skills/routing/audit_held_out.py --collection novelty --cases /home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/collection-02/cases.json
+```
+
+機械検査の通過は比較証拠の構造・束縛の確認で、`semanticNovelty=requires_independent_review`を返す。
+比較欄を埋めただけでは新規性を認定しない。生成前の準備独立1、生成1、ケース独立1の有限SOL枠を
+確定sourceに対して消費し、失敗なら停止する。一次0・retry0で、元の停止記録を保持する。
