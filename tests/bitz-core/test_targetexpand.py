@@ -356,6 +356,40 @@ class ShortestDistanceTests(unittest.TestCase):
                     result = te_mod.target_expansion("REQ-001", purpose, id_index, stmt_index)
                     self.assertEqual(result.document_distance, {"REQ-001": 0, "REQ-002": 1, "REQ-003": 1})
 
+    def test_draft_refinement_takes_the_nearest_refined_document(self):
+        # 状態`draft`のREQ-009は閉包のREQ-003（距離2）とREQ-001（距離0）を`refines`する。宣言の順によらず距離1。
+        for refines in ("[REQ-003, REQ-001]", "[REQ-001, REQ-003]"):
+            with self.subTest(refines=refines), tempfile.TemporaryDirectory() as root:
+                _write(root, ".spec/bitz.yaml", _bitz_yaml())
+                _write(root, ".spec/requirements/REQ-001.md",
+                       _req("REQ-001", extra_frontmatter="relations:\n  requires: [REQ-002]\n"))
+                _write(root, ".spec/requirements/REQ-002.md",
+                       _req("REQ-002", extra_frontmatter="relations:\n  requires: [REQ-003]\n"))
+                _write(root, ".spec/requirements/REQ-003.md", _req("REQ-003"))
+                _write(root, ".spec/requirements/REQ-009.md",
+                       _req("REQ-009", status="draft", extra_frontmatter=f"relations:\n  refines: {refines}\n"))
+                id_index, stmt_index = _indexes(root)
+                result = te_mod.target_expansion("REQ-001", "interpret", id_index, stmt_index)
+                self.assertIn("REQ-009", result.draft_advisory)
+                self.assertEqual(result.document_distance["REQ-009"], 1)
+
+    def test_refining_document_reached_from_two_refined_documents_takes_the_minimum(self):
+        # TECH-030はTECH-010（距離2）とTECH-020（`requires`で距離1）を`refines`する。後から見つかった参照先からの到達も数え、距離2。
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/requirements/REQ-001.md",
+                   _req("REQ-001", extra_frontmatter="relations:\n  requires: [TECH-020]\n"))
+            _write(root, ".spec/technical/TECH-001.md", _tech("TECH-001", extra_frontmatter="relations:\n  refines: [REQ-001]\n"))
+            _write(root, ".spec/technical/TECH-010.md", _tech("TECH-010", extra_frontmatter="relations:\n  refines: [TECH-001]\n"))
+            _write(root, ".spec/technical/TECH-011.md", _tech("TECH-011", extra_frontmatter="relations:\n  refines: [TECH-001]\n"))
+            _write(root, ".spec/technical/TECH-020.md", _tech("TECH-020", extra_frontmatter="relations:\n  refines: [TECH-011]\n"))
+            _write(root, ".spec/technical/TECH-030.md",
+                   _tech("TECH-030", extra_frontmatter="relations:\n  refines: [TECH-010, TECH-020]\n"))
+            id_index, stmt_index = _indexes(root)
+            result = te_mod.target_expansion("REQ-001", "interpret", id_index, stmt_index)
+            self.assertEqual(result.document_distance["TECH-020"], 1)
+            self.assertEqual(result.document_distance["TECH-030"], 2)
+
     def test_successor_of_superseded_root_has_distance_one(self):
         with tempfile.TemporaryDirectory() as root:
             _write(root, ".spec/bitz.yaml", _bitz_yaml())

@@ -2,7 +2,8 @@
 
 起点から対象を展開する唯一の契約。`context`、明示対象の`check`、`verify`はこの関数を再利用する
 （同 §6.4）。`purpose=interpret`は`check`の明示対象の検査が使う閉包の規則と完全に同じコードを使う
-（Step 2 フェーズCで実装済み。挙動を変えないため:func:`_interpret_closure`は変更しない）。
+（Step 2 フェーズCで実装済み）。:func:`_interpret_closure`は閉包の集合と到達したエッジを変えずに保ち、
+距離は到達元の記録から最短の段数として求める（関係・トレースモデル §7の6.。2026-10-06）。
 
 `implement`／`verify`はStep 3で追加した。`context`だけがこれらの目的（`purpose`）を使う。返り値
 :class:`TargetExpansionResult` は、`context`が必要とする追加の情報（到達したエッジ、距離、役割`advisory`として含めた、閉包内の文書を`refines`する
@@ -218,8 +219,11 @@ def _interpret_closure(
     distance: dict[str, int] = {owning_id: 0}
     preds: dict[str, set[str]] = {}
 
-    def _add(doc_id: str, relation: str, source_id: str, dist_from: int, pred: str | None = None) -> None:
-        if doc_id != owning_id:
+    def _add(
+        doc_id: str, relation: str, source_id: str, dist_from: int, pred: str | None = None, *, record_pred: bool = True
+    ) -> None:
+        # ``pred``は到達元の文書（省略時は``source_id``）。``record_pred=False``は、到達元を呼び出し側で記録する場合。
+        if record_pred and doc_id != owning_id:
             preds.setdefault(doc_id, set()).add(source_id if pred is None else pred)
         is_new = doc_id not in context_set
         if is_new:
@@ -269,12 +273,19 @@ def _interpret_closure(
 
     # 6. 閉包内の文書を`refines`する、状態`draft`の文書を役割`advisory`として含める（`requires`・逆方向の`refines`は辿らない）。
     draft_advisory: set[str] = set()
+    closure_docs = set(context_set)
     for doc_id in _draft_refinements(context_set, id_index, statement_index):
         entry = id_index[doc_id]
-        for target_id in _refines_targets(entry, id_index, statement_index):
+        targets = _refines_targets(entry, id_index, statement_index)
+        for target_id in targets:
             if target_id in context_set:
-                _add(doc_id, "refines", doc_id, distance.get(target_id, 0), pred=target_id)
+                _add(doc_id, "refines", doc_id, distance.get(target_id, 0), record_pred=False)
                 break
+        # 到達元は、閉包（`draft`の文書を加える前）にある参照先のすべてとする（エッジは上の1件のまま）。`advisory`の文書を
+        # `refines`する文書は辿らないので（§6.1の6.）、先に加えた`draft`の文書は到達元にしない。
+        for target_id in targets:
+            if target_id in closure_docs and doc_id != owning_id:
+                preds.setdefault(doc_id, set()).add(target_id)
         draft_advisory.add(doc_id)
 
     distance = _shortest_distances(owning_id, preds, distance)
