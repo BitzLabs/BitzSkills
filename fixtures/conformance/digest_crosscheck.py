@@ -241,7 +241,8 @@ def _closure(documents, root, purpose):
     起点の文書と、interpret以外のTASK起点ではそのTASKがaddressesする対象を所有する文書を含める。
     到達した適用対象の文書それぞれから、`requires`の対象（verifyでの起点TASKのものを除く。§6.3）、
     `refines`の対象、その文書またはその規範文を`refines`する適用対象の文書をたどる。目的`interpret`では、
-    `refines`の参照元である`draft`の文書を役割`advisory`として保持し、展開しない（§6.1 6.）。目的`implement`では、対象の規範文を
+    `refines`の参照元である`draft`の文書を役割`advisory`として保持し、展開しない（§6.1 6.）。目的`implement`と`verify`では、
+    その`draft`の文書を閉包へ含めない（§6.1の末尾）。目的`implement`では、対象の規範文を
     `addresses`する`open`のTASKをすべて加える。目的`verify`でTASKを起点にしたときは、起点が`requires`する先行TASKを
     閉包へ含めず、その`addresses`のエッジも辿らない辺として記録する（§6.3、§6.4の4.）。規則で説明できない強いエッジが閉包に接していれば、
     黙って取り込まずに拒否する。そのため、これはcorpusの読取り処理にとどまり、汎用の対象展開の
@@ -311,6 +312,13 @@ def _closure(documents, root, purpose):
             elif status == "draft" and purpose == "interpret":
                 advisory.add(identifier)
                 draft_advisory.add(identifier)
+            elif status == "draft":
+                # §6.1の末尾: `implement`と`verify`は、`refines`する状態`draft`の文書を閉包へ含めない。含めない文書の
+                # `refines`のエッジは、閉包の外の辺として記録し、展開しない（状態`draft`の文書は適用可能でないので、
+                # 強い関係が要求しているわけではなく、状態の検査にも入れない。§10）。
+                for target in refined:
+                    accounted.add((identifier, "refines", target))
+                continue
             else:
                 continue
             for target in refined:

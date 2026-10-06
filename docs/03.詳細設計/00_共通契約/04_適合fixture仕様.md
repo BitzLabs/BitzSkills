@@ -450,6 +450,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-068` | `done`のTASK起点 | verify | passed／0 | 再検証を許可 |
 | `SINGLE-137` | 先行TASKが未完了（`open`）のTASK起点 | verify | blocked／2 | `CTX-TASK-DEPENDENCY-001`、`contextDigest: null`、`bindingRefs: []`、テストを開始しない |
 | `SINGLE-138` | 先行TASKがすべて`done`のTASK起点 | verify | passed／0 | `CTX-TASK-DEPENDENCY-001`と`CTX-STATE-001`を返さない、先行TASKとその`addresses`の参照先を対象に加えない |
+| `SINGLE-143` | `open`のTASK起点を、TASKが`addresses`するREQ-001を文書単位で`refines`する状態`draft`のTECH-005がある（REQ-001とTECH-005のテスト対応はどちらもREQ-001:AC-01を`covers`する） | verify | passed／0 | TECH-005を閉包へ含めず、その状態を検査しないので`CTX-STATE-001`を返さない。テストのコマンドはREQ-001のテスト対応だけで、TECH-005のテストを実行しない |
 | `SINGLE-069-01` | 成功コマンドの標準出力／標準エラー出力が64 KiBを超える | verify | passed／0 | パイプを止めず、伏せ字化したUTF-8末尾65,536バイトと切り詰めフラグを保持 |
 | `SINGLE-069-02` | 非0終了コマンドの標準出力／標準エラー出力が64 KiBを超える | verify | failed／1 | パイプを止めず、伏せ字化したUTF-8末尾65,536バイトと切り詰めフラグを保持 |
 
@@ -570,6 +571,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-139` | 起点の`refines`の参照先に、`requires`の鎖より短い経路で到達する（REQ-001が`requires`でREQ-003、`refines`でREQ-002、REQ-003が`requires`でREQ-002） | context --purpose interpret | passed／0 | REQ-002とREQ-003はどちらも距離1（最短の段数）で、文書の並びはREQ-001、REQ-002、REQ-003。REQ-002は役割`refinement`、REQ-003は役割`requirement`で、どちらも`full` |
 | `SINGLE-140` | TASKを起点にした具体化の鎖（TASK-001が`addresses`でREQ-001:AC-01、TECH-002が規範文REQ-001:AC-01を、TECH-003が規範文TECH-002:AC-01を`refines`する） | context --purpose implement | passed_with_warnings／0 | 距離はTASK-001が0、REQ-001が1、TECH-002が2、TECH-003が3。TECH-002とTECH-003の規範文は制約台帳にあるので提示形式`normative`、REQ-001は役割`requirement`で`full`。未対応のTECH-002:AC-01とTECH-003:AC-01の`CTX-COVERAGE-TASK-001`が警告2件 |
 | `SINGLE-141` | 置換済みの起点の後継（TECH-005が`requires`でTECH-007、TECH-009が`supersedes`でTECH-005） | context --purpose interpret | passed／0 | TECH-005は役割`advisory`で`reference`、TECH-009は役割`replacement`で距離1、TECH-007も距離1で、並びはTECH-005、TECH-007、TECH-009。ハッシュ値の材料の適用可能性はTECH-009が`replacement` |
+| `SINGLE-142` | 目的`implement`で、REQ-001:AC-01を`refines`する状態`draft`のTECH-005がある（TECH-005のテスト対応がREQ-001:AC-01を`covers`し、REQ-001自身のテスト対応はない） | context --purpose implement | passed_with_warnings／0 | `refines`する状態`draft`の文書を閉包へ含めないので、文書はREQ-001だけで役割`advisory`の文書はない。TECH-005のテスト対応をテスト済みに数えず、REQ-001:AC-01は未対応・未テストで、`CTX-COVERAGE-TASK-001`と`CTX-COVERAGE-TEST-001`が警告各1件 |
 | `SINGLE-111-01` | ワークスペースの仕様文書にない明示の文書ID | check | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |
 | `SINGLE-111-02` | 所有文書はあるが規範文IDが不在 | check | failed／1 | `CTX-ROOT-MISSING-001`、所有文書の`check`へ置換しない |
 | `SINGLE-111-03` | ワークスペースに存在しない、構文上妥当な仕様文書のパス | check | failed／1 | `CTX-ROOT-MISSING-001`、終了コード4ではない |

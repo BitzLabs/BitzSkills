@@ -1,0 +1,121 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "passed_with_warnings",
+  "purpose": "implement",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "roots": [
+    "REQ-001"
+  ],
+  "contextDigest": "sha256:4ab733a53cdad37a6a2c36f0324fe687a971f0ff38e100486c62cc3b4f0b1b5e",
+  "revision": null,
+  "resolution": {
+    "complete": true,
+    "documentCount": 1,
+    "unresolvedStrongRelations": 0
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [
+    {
+      "id": "REQ-001",
+      "kind": "requirement",
+      "status": "approved",
+      "role": "root",
+      "path": ".spec/requirements/REQ-001.md",
+      "projection": "full",
+      "reachedBy": [
+        "root"
+      ],
+      "statementRefs": [
+        "REQ-001:AC-01"
+      ],
+      "frontmatter": {
+        "id": "REQ-001",
+        "title": "draftの具体化を含めない起点",
+        "status": "approved"
+      },
+      "bodyText": "# REQ-001 draftの具体化を含めない起点\n\n## Intent\n\ntarget展開の検査に使う固定要求。\n\n## Acceptance Criteria\n\n- [REQ-001:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 入力を検証する。\n\n## Verification\n\n宣言したtestで確認する。\n",
+      "untrustedText": true
+    }
+  ],
+  "constraintLedger": {
+    "statements": [
+      {
+        "id": "REQ-001:AC-01",
+        "documentId": "REQ-001",
+        "documentRole": "root",
+        "modality": "MUST",
+        "reason": null,
+        "actor": "TargetSystem",
+        "activation": {
+          "kind": "ALWAYS"
+        },
+        "operation": {
+          "kind": "CONSTRAINT",
+          "text": "入力を検証する"
+        }
+      }
+    ]
+  },
+  "coverage": {
+    "must": {
+      "total": [
+        "REQ-001:AC-01"
+      ],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [
+        "REQ-001:AC-01"
+      ],
+      "untested": [
+        "REQ-001:AC-01"
+      ]
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "CTX-COVERAGE-TASK-001",
+      "severity": "warning",
+      "resultStatus": "passed_with_warnings",
+      "summary": "implement対象のMUST REQ-001:AC-01を実装するTASKがありません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/requirements/REQ-001.md"
+      }
+    },
+    {
+      "code": "CTX-COVERAGE-TEST-001",
+      "severity": "warning",
+      "resultStatus": "passed_with_warnings",
+      "summary": "MUST REQ-001:AC-01がtestされていません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "root",
+        "path": ".spec/requirements/REQ-001.md"
+      }
+    }
+  ]
+}

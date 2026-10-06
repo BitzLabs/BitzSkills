@@ -305,3 +305,62 @@ TECH-005は、`approved`の有効な後継TECH-009から`supersedes`されてい
   （閉包内の参照先のうち最も近いものの距離+1）は、このfixtureでは固定せず、Coreの単体試験（`tests/bitz-core/test_targetexpand.py`の
   `ShortestDistanceTests`）だけで確かめる。
 - 期待値はCoreを実行せずに決めた。Coreとの一致の確認は、期待値を決めた後に行い、Gate Bで判定する。
+
+## 2026-10-06追記: 目的`implement`で`refines`する状態`draft`の文書を閉包へ含めない（`SINGLE-142`）
+
+### 追加の理由（実装の確認事項C16）
+
+[関係・トレースモデル §6.1](../../../docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md#61-interpret)の末尾は、
+「`implement`と`verify`は、`refines`する状態`draft`の文書を閉包へ含めない」と定める。`advisory`として提示するのは目的`interpret`だけである
+（6.の`advisory`は§6.1の`interpret`の規則であり、状態仕様 §7と用語集の「参考（advisory）」も同じ）。
+Coreは6.を目的によらず適用し、`implement`でも`draft`の文書を役割`advisory`として含めていた。このため、`draft`の文書の
+`tests[].covers`をテスト済みに数え、`documents`に不要な文書が入り、コンテキストのハッシュ値の材料も変わった。
+既存の`implement`と`verify`のfixtureには、`refines`する`draft`の文書を持つものがなく、欠陥があっても通っていた。
+`SINGLE-106-03`は目的`interpret`で、`draft`の文書を`advisory`として含める陽性対照であり、`SINGLE-142`はその`implement`版である。
+
+### 入力と起動
+
+`context REQ-001 --purpose implement --format json`。corpusは`corpus_draft_excluded()`である。`SINGLE-106-03`と同じ関係
+（`draft`のTECH-005が`approved`のREQ-001:AC-01を`refines`する）に、TECH-005のテスト対応を足した。
+
+| 文書 | 状態 | 内容 |
+|---|---|---|
+| REQ-001 | `approved` | `REQ-001:AC-01`（`MUST`）を1件持つ。テスト対応を持たない |
+| TECH-005 | `draft` | `TECH-005:AC-01`（`MUST`）を1件持つ。`refines: [REQ-001:AC-01]`（規範文単位）。`tests`は`tests/test_candidate.py`が`REQ-001:AC-01`と`TECH-005:AC-01`を`covers`する |
+
+TECH-005のテスト対応が`REQ-001:AC-01`を`covers`するのは、`draft`の文書のテスト対応をテスト済みに数える欠陥を、
+REQ-001が自分のテスト対応で隠さないようにするためである。
+
+### 期待値の導き方（Coreの出力を根拠にしない）
+
+| 項目 | 期待値 | 根拠 |
+|---|---|---|
+| 状態／終了コード | `passed_with_warnings`／0 | 診断は警告2件（下記） |
+| `contextDocuments` | REQ-001だけ。役割`advisory`の文書はない | §6.1の末尾（`draft`の文書を含めない）。`draft`は適用可能でないので、§6.2の具体化文書にも加えない |
+| 役割、提示形式、`reachedBy` | REQ-001は`root`、`full`、`root` | §7の役割の表 |
+| 対象規範文（制約台帳） | `REQ-001:AC-01`だけ（`documentRole`は`root`） | §6.4の1.（起点の所有する規範文と、具体化文書の規範文）。`draft`のTECH-005は具体化文書として加えない |
+| カバレッジ | `must`の`total`は`REQ-001:AC-01`、`addressed`と`tested`は空、`unaddressed`と`untested`が`REQ-001:AC-01` | §8。対応済みは閉包に含まれる状態`open`のTASKが`addresses`する規範文だけで、TASKがない。テスト済みは**閉包の文書**の`tests[].covers`が含む規範文で、TECH-005は閉包の外なので数えない |
+| 診断 | `CTX-COVERAGE-TASK-001`、`CTX-COVERAGE-TEST-001`の順に、どちらも`warning`／`passed_with_warnings`。`source`は`REQ-001.md`。`summary`は`SINGLE-134`、`SINGLE-135`と同じ文言 | §8の表（`implement`の`MUST`の未対応・未テストは警告）、診断レジストリの`CTX-COVERAGE-TASK-MUST`、`CTX-COVERAGE-TEST-MUST-IMPLEMENT`。順は`01_結果・診断・終了コード.md`の診断の順序で、ワークスペースID、`path`が同じなので`code`の辞書順（`TA` < `TE`） |
+| コンテキストのハッシュ値 | `sha256:4ab733a53cdad37a6a2c36f0324fe687a971f0ff38e100486c62cc3b4f0b1b5e` | 材料の`documents[]`はREQ-001だけ（`purpose`は`implement`）。参照計算AとBの正規JSONの一致を監査で確認した。`SINGLE-106-03`（`sha256:3bf944a0…`）とは、目的、文書の集合ともに異なる |
+
+### 参照計算Bの修正
+
+参照計算B（`digest_crosscheck.py`の`_closure`）は、`draft`の文書を目的`interpret`のときだけ`advisory`にしていたが、`implement`と`verify`では
+その文書の`refines`のエッジを説明せず、「閉包の外の強いエッジ」として入力を拒否していた。`implement`と`verify`では、閉包へ含めない`draft`の文書の
+`refines`のエッジを、辿らない辺として記録する（既存の、`verify`の起点のTASKの`requires`の記録と同じ書き方。§6.1の末尾）。
+適用範囲は状態`draft`だけで、状態`rejected`などの適用可能でない文書の`refines`のエッジは、従来どおり拒否する
+（`test_conformance_audit.py`の`test_reference_closure_excludes_draft_refinements_unless_interpret`が確かめる）。
+既存のfixtureの期待値は変わらない。
+
+### 監査の検査と限界（C16）
+
+`check_contract`の`check_draft_excluded`が、結果のどこにもTECH-005とそのテストが現れないこと、`CTX-STATE-001`がないこと、閉包がREQ-001だけで
+役割`advisory`の文書がないこと、診断が上の2件の順であること、`tested`が空であることを、完全比較とは別に確かめる。回帰試験は、`draft`の文書の追加、
+テスト済みへの計上、診断の欠落・順序の入替え、制約台帳への規範文の追加、マニフェストの状態の`passed`化と目的の`interpret`化を拒否することと、
+`check_contract`だけが拒否することを確かめる。
+
+- 修正前のCore（コミット`90ba92a3`の`targetexpand.py`）では失敗する。差異は、`documents`が2件（TECH-005が役割`advisory`、提示形式`reference`）、
+  `tested`が`REQ-001:AC-01`、`untested`が空、診断が`CTX-COVERAGE-TASK-001`だけの1件、`contextDigest`が異なる値（陰性対照）。
+- `draft`の文書が複数ある場合、`draft`の文書をさらに`refines`する`draft`の文書、文書単位で`refines`する場合は固定しない（文書単位は`SINGLE-143`が`verify`で固定する）。
+- 起点が規範文の場合、TECH起点の場合は固定しない。
+- 期待値はCoreを実行せずに決めた。Coreとの一致の確認は、期待値を決めた後に行い、Gate Bで判定する。
