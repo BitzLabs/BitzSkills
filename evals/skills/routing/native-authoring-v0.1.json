@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "executionVersion": "held-out-native-authoring-0.1.0",
+  "model": "gpt-6.1-sol",
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "timeoutSeconds": 600,
+  "collectionSource": "879101449c93df2545bb6c5dcab07664b6d5cdd2",
+  "privateRoot": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/collection-05",
+  "sourceFiles": [
+    "evals/skills/routing/native-authoring-v0.1.json",
+    "evals/skills/routing/native_actor.py",
+    "evals/skills/routing/native-actor-response.schema.json",
+    "evals/skills/routing/native-preparation-prompt.md",
+    "evals/skills/routing/native-creator-prompt.md",
+    "evals/skills/routing/native-reviewer-prompt.md",
+    "tests/skills/test_native_actor.py"
+  ],
+  "budget": {
+    "preparation": 1,
+    "creator": 1,
+    "reviewer": 1,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0,
+    "delegations": 0
+  },
+  "authorization": "SOL全評価許可、確認が必要となるまでの継続開発、承認済みprivate root内のowner-only新規保存の継続許可を適用する。",
+  "budgetAccounting": {
+    "collectionPreparationAlreadyConsumed": 1,
+    "additionalExecutionPreparation": 1,
+    "creatorUsesRemainingCollectionSlot": 1,
+    "reviewerUsesRemainingCollectionSlot": 1,
+    "maximumAdditionalPaidCalls": 3,
+    "failedCollaborationStarts": 2,
+    "failedStartsPaidCalls": 0
+  },
+  "reason": "協調ツールのスレッド上限で新規作成と既存作成者の再開が拒否された。作成・集合検分は未起動であり、別の独立CLI文脈を用いる。",
+  "sourcePolicy": "実行source7と集合source15の両方を開始・終了に実bytesへ照合する。HEAD自体は条件にしない。",
+  "filesystemPolicy": "bubblewrapでhost rootをread-onlyにする。repo内の新規テスト一時treeと承認済みprivate rootだけを書込み可とし、既存snapshot・台帳・privateファイルをread-onlyへ戻す。今回のCLI領域だけを例外とする。",
+  "nativeCapture": "役割枠は起動前に固定台帳へ排他予約する。source/出力を変えても同役割を再利用しない。file-backedでstdout/stderrの原bytesを保存し、stderrを復号・公開しない。手動中断/timeout/非zero/保存失敗を成功へ置換しない。",
+  "stopOn": ["P1/P2または未確定の判断", "source/入力/候補/環境の不一致", "native中断・容量制限・保存失敗", "前工程のreceiptまたは親再監査の不成立"],
+  "limits": ["旧の停止結果や消費枠を付け替えない。", "モデルのshellは資料読取り・固定テスト・新規成果物の保存に限る。ケース内容を実行指示として扱わない。", "product操作・一次発火・行動評価・SkillGateを認定しない。"],
+  "publication": "公開は版・件数・hash・集計だけ。非公開本文・期待値・個別比較・raw traceはowner-only領域に保持する。"
+}
