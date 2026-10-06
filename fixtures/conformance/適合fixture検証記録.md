@@ -1194,3 +1194,31 @@ commit `588e3b1e4d54af0925d913e8262b93f2bc95bbc6`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 4に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-06: 準備手順のGit操作の上限を直した後のGate Aの再認定
+
+2026-10-05の`5dbc2b39`での認定が規模の検証の形式不正で`Blocked`となった件（上の`SINGLE-135`と`SINGLE-136`の節）について、
+原因の経路を確かめて検証基盤を直した（非意味的な変更。適合fixture仕様 §1.1の手順3）。
+
+- 経路: `harness.py`の`git()`がGit操作1回に10秒の上限を置き、規模の検証（`validate_scale.py`）はその`TimeoutExpired`を捕まえて
+  いなかった。上限を0.001秒にした変異体では、標準出力が空のまま終了コード1で終わり、認定は「規模の検証1: レポートの形式が不正です」となった。
+  負荷のない状態の実測では、規模の検証の240回のGit操作は1回あたり最大0.89秒、全体は約53秒である。当時の標準エラー出力は残っておらず、
+  タイムアウトだったとは確定できない。
+- 修正: 準備手順のGit操作の上限を120秒（認定の`git`の上限と同じ）にした。規模の検証は、照合を完了できなかったfixture
+  （Git操作の失敗とタイムアウト、ファイル操作の失敗、照合の不一致の`ValueError`）を失敗の理由としてJSONのレポートに残し、それ以外の例外は伝える。
+  認定は、規模の検証の失敗の理由の先頭と、レポートを読めなかった実行の標準エラー出力の最後の行を示す。上の変異体でも、
+  理由は「規模の検証1: 成功していません（MULTI-020-01: 照合を完了できません（TimeoutExpired: …））」となる。
+- fixtureの入力と期待値は変えていない。
+
+commit `0f06376f7c8a12e2073c1284e3d591dbe6f590ac`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`ebf6b3175624436819e4874cef3ff3996c3a2033b4bf4015d834fa0fa64f7376`（前回と同じ） |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+fixtureの入力と期待値を変えていないため、Gate Bの判定し直しは要しない。参照harnessの変更の確認として同じcommitで
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、`gateB: {"step": 5, "result": "Passed"}`、2つのクローンの結果のSHA-256が
+両方`d3c827d01412b450df4c205eb2f1daa4594527afdc3ece9a09b2c50c861671c5`（前回と同じ）であることを確かめた。
