@@ -52,7 +52,13 @@ def checkout(commit, directory):
 
 def run(uv, script, cwd, timeout):
     completed = subprocess.run([uv, "run", *script], cwd=cwd, capture_output=True, timeout=timeout)
-    return {"exitCode": completed.returncode, "stdout": completed.stdout}
+    return {"exitCode": completed.returncode, "stdout": completed.stdout, "stderr": completed.stderr}
+
+
+def stderr_tail(result):
+    """レポートを読めなかった実行の原因を示すため、標準エラー出力の最後の空でない行を返す。"""
+    lines = [line.strip() for line in (result.get("stderr") or b"").decode("utf-8", "replace").splitlines() if line.strip()]
+    return f"（{lines[-1]}）" if lines else ""
 
 
 def scale_body(stdout):
@@ -77,7 +83,7 @@ def judge(conformance, scale):
             failed = sorted(name for name, check in report["checks"].items() if check.get("errors"))
             pending = report["pending"]
         except (ValueError, KeyError, TypeError, AttributeError):
-            errors.append(f"監査{index}: レポートの形式が不正です")
+            errors.append(f"監査{index}: レポートの形式が不正です{stderr_tail(result)}")
             continue
         if failed:
             errors.append(f"監査{index}: エラーのある検査があります（{', '.join(failed)}）")
@@ -92,7 +98,7 @@ def judge(conformance, scale):
         try:
             body = scale_body(result["stdout"])
         except (ValueError, AttributeError):
-            errors.append(f"規模の検証{index}: レポートの形式が不正です")
+            errors.append(f"規模の検証{index}: レポートの形式が不正です{stderr_tail(result)}")
             continue
         bodies.append(body)
         if result["exitCode"] != 0 or body.get("status") != "Passed" or body.get("errors"):
