@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0",
+  "status": "preparation_checks_passed",
+  "sourceCommit": "fe794c6620651b850c03f3720069035f01c83ddd",
+  "candidateSourceCommit": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+  "manifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+  "skillCount": 6,
+  "resourceCount": 71,
+  "tests": {
+    "parentAll": {
+      "count": 215,
+      "exitCode": 0
+    },
+    "independentTargeted": {
+      "count": 9,
+      "exitCode": 0
+    },
+    "parentPostReview": {
+      "count": 9,
+      "exitCode": 0
+    }
+  },
+  "parentNativeSmoke": {
+    "exitCode": 0,
+    "acceptedCalls": 4,
+    "rejectedCalls": 2,
+    "resourceHashesUnchanged": 71
+  },
+  "independentNativeSmoke": {
+    "exitCode": 0,
+    "acceptedCalls": 2,
+    "rejectedCalls": 1
+  },
+  "independentAgent": "sol_production_routing_host_review_01",
+  "severityCounts": {
+    "P1": 0,
+    "P2": 0
+  },
+  "budget": {
+    "independentReviewerSol": 1,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0,
+    "unusedSlots": 0
+  },
+  "usage": "unknown",
+  "costUsd": null,
+  "certifiesSkillGate": false,
+  "sourceFileSha256": {
+    "evals/skills/routing/host.py": "09a2cea9d81d6de13b3d86d5c68193200507f8476d662251fc200c79b7b92370",
+    "evals/skills/routing/host-preparation.json": "9594a9f348384ce53248b51c48c5b7d1d15dc3bbfc3a1ddf9ce6d2c201f23859",
+    "evals/skills/routing/README.md": "a513c55f6faca305e61c9b8e9ce12df8fa8e24cef01025114e3ae7e1cca41385",
+    "tests/skills/test_routing_host.py": "05d6e6b089b0ef0b53b5bbcb471f3cc8d31c86f0029f2f3c88060374f755eea4"
+  },
+  "artifactSha256": {
+    "parent-unit.log": "0a54c7d7ea17e2cf37c8777633013f249331884e869375b855042babd3a3e232",
+    "parent-post-review-unit.log": "c6d4a1ad85b23a9f763b37962e04a75d310b95682983715803e2c48bbb246884",
+    "independent-unit.log": "fd4113198c04e498de9992654283eccbb992d34ce2fa734690fe44f2d07a832b",
+    "independent-review.json": "fb04744e3f385da54eaa1d1cbf90bf732a92e06401a462d5882614bab3efb426",
+    "independent-host.jsonl": "633a3a1ac87ad8b59cb1186c53464f7938e4220d0d208dc9150530341b7616b1",
+    "independent-smoke.json": "5cd30d157b2b28d93d246b78eed3405fda6dd8ed85041237034c3d0c004b7620",
+    "parent-host.jsonl": "cec3f427a5e29f1dbef81927c27df0331d4f82961d4c5f10f042e9a6f66da029",
+    "parent-smoke.json": "fd23ef6724c7ed60616afce5a48eeea3f0c99145e6983531a8c6214a70c8dbb8",
+    "parent-smoke.py": "f1cbc6de22e89ce25c838d97b8977744bce55f1ef75c8d6ac12ef9a6316893e2"
+  },
+  "limits": [
+    "native stdio接続は一次モデル発火評価ではない",
+    "モデル機能の無効化と非公開出力保存は後続runnerで固定する",
+    "並行した悪意あるファイル置換への原子的防御と不正JSONへの耐障害性は保証しない",
+    "原保持集合の独立P2停止は別結果として保持する"
+  ]
+}

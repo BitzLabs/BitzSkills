@@ -1096,3 +1096,13 @@ schema・ID/input衝突・event catalog・経路・件数・権限の作業者�
 作成SOL1・独立SOL1・一次0・retry0。全Gateと動作実証を認定しない。
 証拠は `evals/skills/results/2026-10-06-held-out-collection-stopped/report.md`。
 次の収集は意味重複の排除条件を具体化し、別有限契約・別集合・別出力を先に固定する。
+
+製品用の読取り資源ホストはsource `fe794c66` で追加した。2つの読取りtoolに限定し、
+固定manifest/全71資源hash、相対package境界、symlink・改変・非公開case/操作toolの拒否を検査する。
+独立SOL1・一次0・retry0、独立P1/P2は0件。親全215件、独立9件、検分後の親9件はOK/exit0。
+親native stdioの承認4/拒否2、独立の承認2/拒否1は各exit0、全71資源と4source/独立実ログhashを確認した。
+85ファイル/75固定sourceの保存監査を通過した。
+証拠は `evals/skills/results/2026-10-06-production-routing-host/report.md`。
+これは資源提供の準備であり、モデル接続・発火実測・Core操作・Skill Gateは未認定。
+次の優先事項は意味重複排除を生成前に固定する契約と監査コードの是正。
+具体策は `evals/skills/routing/held-out-novelty-plan.md` に記録した。
