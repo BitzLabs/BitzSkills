@@ -266,4 +266,6 @@ TECH-005のテスト対応が`REQ-001:AC-01`を`covers`するのは、`draft`の
   `blocked`が先に起きるためである。起点がREQで`draft`の文書を`refines`される`verify`は、修正前のCoreでは状態を検査せず、`draft`のテストを実行して
   `context --purpose verify`とハッシュ値が食い違う（作業ツリー外で確認した）が、このfixtureでは固定しない。
 - 起点がREQ、TECH、規範文の`verify`、`draft`の文書が複数ある場合、`draft`の文書を`addresses`するTASKがある場合は固定しない。
+- TASKを起点にした`implement`で、`draft`の文書が閉包の文書を`refines`する場合は固定せず、Coreの単体試験
+  （`tests/bitz-core/test_targetexpand.py`の`DraftRefinementPurposeTests`）だけで確かめる。
 - 期待値はCoreを実行せずに決めた。Coreとの一致の確認は、期待値を決めた後に行い、Gate Bで判定する。

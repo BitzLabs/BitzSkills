@@ -363,4 +363,6 @@ REQ-001が自分のテスト対応で隠さないようにするためである�
   `tested`が`REQ-001:AC-01`、`untested`が空、診断が`CTX-COVERAGE-TASK-001`だけの1件、`contextDigest`が異なる値（陰性対照）。
 - `draft`の文書が複数ある場合、`draft`の文書をさらに`refines`する`draft`の文書、文書単位で`refines`する場合は固定しない（文書単位は`SINGLE-143`が`verify`で固定する）。
 - 起点が規範文の場合、TECH起点の場合は固定しない。
+- TASKを起点にした`implement`で、`draft`の文書が閉包の文書を`refines`する場合（修正前は`CTX-STATE-001`で止めていた経路）は固定せず、
+  Coreの単体試験（`tests/bitz-core/test_targetexpand.py`の`DraftRefinementPurposeTests`）だけで確かめる。
 - 期待値はCoreを実行せずに決めた。Coreとの一致の確認は、期待値を決めた後に行い、Gate Bで判定する。
