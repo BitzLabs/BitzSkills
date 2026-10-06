@@ -121,6 +121,12 @@ class AuditTests(unittest.TestCase):
         def as_normative(entry):
             entry["projection"] = "normative"
             del entry["frontmatter"], entry["bodyText"]
+
+        def swap_documents(first, second):
+            def mutate(value):
+                documents = value["documents"]
+                documents[first], documents[second] = documents[second], documents[first]
+            return mutate
         mutations = [
             # `requires`先の役割は種別で決まり、REQは役割`requirement`、TECHは役割`constraint`である。
             ("SINGLE-107-01", "expected/context.json", document(1, role="constraint")),
@@ -162,6 +168,29 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-136", "expected/context.json", document(2, role="constraint")),
             ("SINGLE-136", "expected/context.json",
              lambda v: v["constraintLedger"]["statements"].append({"id": "TECH-003:AC-01"})),
+            # 文書の距離は、閉包を作るときに辿ったエッジによる最短の段数である（関係・トレースモデル §7の6.）。
+            # 並び順の入替え、提示形式`normative`の`full`への改変、役割の取り違え、後継の`reachedBy`の取り違えを拒否する。
+            ("SINGLE-139", "expected/context.json", swap_documents(1, 2)),
+            ("SINGLE-139", "expected/context.json", document(1, role="requirement")),
+            ("SINGLE-139", "expected/context.json", document(2, role="refinement")),
+            ("SINGLE-139", "expected/context.json", document(1, reachedBy=["refines:REQ-001"])),
+            ("SINGLE-140", "expected/context.json",
+             lambda v: v["documents"].__setitem__(2, expansion_fixtures.bundle_document(
+                 "SINGLE-140", "TECH-002", "refinement", "full", ["refines:TECH-002"]))),
+            ("SINGLE-140", "expected/context.json",
+             lambda v: v["documents"].__setitem__(3, expansion_fixtures.bundle_document(
+                 "SINGLE-140", "TECH-003", "refinement", "full", ["refines:TECH-003"]))),
+            ("SINGLE-140", "expected/context.json", swap_documents(1, 2)),
+            ("SINGLE-140", "expected/context.json", swap_documents(2, 3)),
+            ("SINGLE-140", "expected/context.json", document(1, role="work")),
+            ("SINGLE-140", "expected/context.json", lambda v: v["constraintLedger"]["statements"].pop()),
+            ("SINGLE-140", "expected/context.json", lambda v: v["diagnostics"].pop()),
+            ("SINGLE-140", "manifest.json", lambda v: v["expect"].update(status="passed")),
+            ("SINGLE-141", "expected/context.json", swap_documents(1, 2)),
+            ("SINGLE-141", "expected/context.json", swap_documents(0, 1)),
+            ("SINGLE-141", "expected/context.json", document(2, role="constraint")),
+            ("SINGLE-141", "expected/context.json", document(0, role="root")),
+            ("SINGLE-141", "expected/context.json", document(2, reachedBy=["supersedes:TECH-005"])),
             # `verify`は`context`と同じ対象の集合とハッシュ値を使う。
             ("SINGLE-107-02", "expected/verify.json",
              lambda v: v["targetResults"][0]["statements"].pop()),
@@ -198,6 +227,69 @@ class AuditTests(unittest.TestCase):
                 del entry["frontmatter"], entry["bodyText"]
                 with self.assertRaises(ValueError):
                     expansion_fixtures.check_contract(identifier, value, audit.FIXTURES)
+
+    def test_expansion_contract_rejects_changed_distance_order_and_roles(self):
+        """完全比較とは別に、`check_contract`だけが、距離に基づく並び、提示形式、役割の改変を拒否する。"""
+        def swap(first, second):
+            def mutate(value):
+                documents = value["documents"]
+                documents[first], documents[second] = documents[second], documents[first]
+            return mutate
+
+        def projection(index, name, role, reached):
+            return lambda v: v["documents"].__setitem__(index, expansion_fixtures.bundle_document(
+                "SINGLE-140", name, role, "full", reached))
+        changes = [
+            ("SINGLE-139", swap(1, 2)),
+            ("SINGLE-139", lambda v: v["documents"][1].update(role="requirement")),
+            ("SINGLE-140", swap(2, 3)),
+            ("SINGLE-140", projection(2, "TECH-002", "refinement", ["refines:TECH-002"])),
+            ("SINGLE-140", projection(3, "TECH-003", "refinement", ["refines:TECH-003"])),
+            ("SINGLE-141", swap(1, 2)),
+            ("SINGLE-141", lambda v: v["documents"][2].update(role="constraint")),
+        ]
+        for identifier, mutate in changes:
+            path = audit.FIXTURES / "single" / identifier / "expected/context.json"
+            with self.subTest(identifier=identifier, mutation=mutate.__qualname__):
+                value = json.loads(path.read_text())
+                expansion_fixtures.check_contract(identifier, value, audit.FIXTURES)
+                mutate(value)
+                with self.assertRaises(ValueError):
+                    expansion_fixtures.check_contract(identifier, value, audit.FIXTURES)
+
+    def test_distance_reference_orders_by_the_shortest_path(self):
+        """参照計算Bの閉包は、辿ったエッジによる最短の段数、種別、IDの順に文書を並べる。
+        陽性対照（3件のfixture）と、経路や関係を変えて並びが変わる陰性対照を置く。"""
+        def load(identifier):
+            documents = digest_crosscheck.load_documents(audit.FIXTURES / "single" / identifier / "repo")
+            return copy.deepcopy(documents)
+
+        def ordered(documents, root, purpose):
+            return digest_crosscheck.closure(documents, root, purpose)[0]
+        # 139: REQ-002は`refines`の1段と`requires`の2段で到達し、距離は最短の1。
+        documents = load("SINGLE-139")
+        self.assertEqual(ordered(documents, "REQ-001", "interpret"), ["REQ-001", "REQ-002", "REQ-003"])
+        # `refines`を外すと、REQ-002は`requires`の2段だけになり、距離が2になって並びが変わる。
+        documents["REQ-001"]["frontmatter"]["relations"].pop("refines")
+        self.assertEqual(ordered(documents, "REQ-001", "interpret"), ["REQ-001", "REQ-003", "REQ-002"])
+        # 140: 具体化の鎖は距離が1段ずつ増える。
+        documents = load("SINGLE-140")
+        self.assertEqual(ordered(documents, "TASK-001", "implement"), ["TASK-001", "REQ-001", "TECH-002", "TECH-003"])
+        # 141: 後継は距離1で、起点の`requires`の参照先とIDの順に並び、役割`replacement`になる。
+        documents = load("SINGLE-141")
+        selected, advisory, replacement = digest_crosscheck._closure(documents, "TECH-005", "interpret")
+        self.assertEqual((selected, advisory, replacement),
+                         (["TECH-005", "TECH-007", "TECH-009"], {"TECH-005"}, {"TECH-009"}))
+        # 後継のIDを起点の前提より前にしても、距離1の2件はIDの順に並ぶ。
+        documents["TECH-001"] = copy.deepcopy(documents.pop("TECH-009"))
+        documents["TECH-001"]["frontmatter"]["id"] = "TECH-001"
+        selected, advisory, replacement = digest_crosscheck._closure(documents, "TECH-005", "interpret")
+        self.assertEqual((selected, replacement), (["TECH-005", "TECH-001", "TECH-007"], {"TECH-001"}))
+        # 後継が複数ある起点、または`supersedes`を持たない起点は、置換済みとして扱わない。
+        documents = load("SINGLE-141")
+        documents["TECH-009"]["frontmatter"]["relations"].pop("supersedes")
+        selected, advisory, replacement = digest_crosscheck._closure(documents, "TECH-005", "interpret")
+        self.assertEqual((selected, advisory, replacement), (["TECH-005", "TECH-007"], set(), set()))
 
     def test_ordering_fixtures(self):
         result = ordering_fixtures.validate()

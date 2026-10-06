@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-005.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "dcf48a3e11ff1c5b72108f834f3fdb039ef1a2c4041c90abab3bef1b31d2e849"
+      },
+      ".spec/technical/TECH-007.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "1181dac198bc6b64b88e281440a2a15a430c6d4b1f69af80d4773d8c0fe2e117"
+      },
+      ".spec/technical/TECH-009.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "06b6e61e10767ea655232c9778b78245a79577e5f83cd541e524efc4962f765b"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/technical/TECH-005.md\n?? .spec/technical/TECH-007.md\n?? .spec/technical/TECH-009.md\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "bde7962c3d55867151d3ac8e4b037f99a99a3c1de4b7a611a3ad8dd95dc0e25c"
+      },
+      ".spec/technical": {
+        "kind": "directory"
+      },
+      ".spec/technical/TECH-005.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "dcf48a3e11ff1c5b72108f834f3fdb039ef1a2c4041c90abab3bef1b31d2e849"
+      },
+      ".spec/technical/TECH-007.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "1181dac198bc6b64b88e281440a2a15a430c6d4b1f69af80d4773d8c0fe2e117"
+      },
+      ".spec/technical/TECH-009.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "06b6e61e10767ea655232c9778b78245a79577e5f83cd541e524efc4962f765b"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/technical/TECH-005.md\n?? .spec/technical/TECH-007.md\n?? .spec/technical/TECH-009.md\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

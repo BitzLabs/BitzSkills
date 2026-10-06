@@ -1,6 +1,6 @@
 """共通の対象展開と`advisory`の提示を固定するfixture（Coreの公開操作は実行しない）。
 
-matrix §6.11の`SINGLE-106-03`、`SINGLE-106-06`〜`07`と§6.12の`SINGLE-107`〜`110`、`113`、`134`〜`136`を扱う。
+matrix §6.11の`SINGLE-106-03`、`SINGLE-106-06`〜`07`と§6.12の`SINGLE-107`〜`110`、`113`、`134`〜`136`、`139`〜`141`を扱う。
 `context`の期待値は4つの集合（rootDocuments、contextDocuments、targetStatements、adjacentStatements）を
 `roots`、`documents[]`、制約台帳、`coverage.adjacent`として完全比較し、同じ起点の`verify`は
 `context`と同じ対象規範文の集合を返すことを確認する。
@@ -64,6 +64,7 @@ def document(path, parts, frontmatter, statements):
 
 ROOT_STATEMENTS = [("REQ-001:AC-01", "入力を検証する"), ("REQ-001:AC-02", "結果を記録する")]
 ROOT_TESTS = [{"path": "tests/test_root.py", "covers": ["REQ-001:AC-01", "REQ-001:AC-02"], "command": "default"}]
+ROOT_ONE_TEST_YAML = "tests:\n  - path: tests/test_root.py\n    covers: [REQ-001:AC-01]\n    command: default\n"
 ROOT_TESTS_YAML = ("tests:\n  - path: tests/test_root.py\n"
                    "    covers: [REQ-001:AC-01, REQ-001:AC-02]\n    command: default\n")
 
@@ -230,6 +231,78 @@ def corpus_document_refinement_chain():
     ]
 
 
+def corpus_shorter_refines_path():
+    """139: REQ-001がREQ-003をrequiresし、REQ-002をrefinesする。REQ-003もREQ-002をrequiresする。
+    REQ-002は、起点の`refines`の参照先（距離1）であり、`requires`の鎖（REQ-001、REQ-003、REQ-002）でも距離2で到達する。
+    距離は閉包を作るときに辿ったエッジによる最短の段数なので、REQ-002は距離1で、REQ-003と同じ距離になり、IDの順に並ぶ
+    （関係・トレースモデル §7の6.）。表の上から最初に該当する役割は、REQ-002が`refinement`、REQ-003が`requirement`である。"""
+    root = [("REQ-001:AC-01", "入力を検証する")]
+    return [
+        document(".spec/requirements/REQ-001.md", requirement(
+            "REQ-001", "起点要求", root, "relations:\n  requires: [REQ-003]\n  refines: [REQ-002]\n"),
+            fm("REQ-001", "起点要求", relations={"requires": ["REQ-003"], "refines": ["REQ-002"]}), root),
+        document(".spec/requirements/REQ-002.md", requirement(
+            "REQ-002", "起点が具体化する要求", [("REQ-002:AC-01", "秘密鍵を保持しない")]),
+            fm("REQ-002", "起点が具体化する要求"), [("REQ-002:AC-01", "秘密鍵を保持しない")]),
+        document(".spec/requirements/REQ-003.md", requirement(
+            "REQ-003", "前提要求", [("REQ-003:AC-01", "前提を満たす")], "relations:\n  requires: [REQ-002]\n"),
+            fm("REQ-003", "前提要求", relations={"requires": ["REQ-002"]}), [("REQ-003:AC-01", "前提を満たす")]),
+    ]
+
+
+def corpus_task_refinement_chain():
+    """140: open TASK-001がREQ-001:AC-01をaddressesし、TECH-002が規範文REQ-001:AC-01を、TECH-003が規範文TECH-002:AC-01を
+    具体化する。距離は、TASK-001が0、REQ-001が1（`addresses`の1段）、TECH-002が2、TECH-003が3である（§7の6.）。
+    TECH-002とTECH-003は距離2以上の具体化文書で、所有する規範文は目的`implement`の対象規範文（§6.4の3.）として
+    制約台帳に収録されるので、提示形式は`normative`になる（`context` §5）。"""
+    root = [("REQ-001:AC-01", "入力を検証する")]
+    return [
+        document(".spec/requirements/REQ-001.md", requirement(
+            "REQ-001", "TASKの対象要求", root, ROOT_ONE_TEST_YAML),
+            fm("REQ-001", "TASKの対象要求", tests=[{"path": "tests/test_root.py", "covers": ["REQ-001:AC-01"],
+                                                "command": "default"}]), root),
+        document(".spec/technical/TECH-002.md", technical(
+            "TECH-002", "直接の具体化", [("TECH-002:AC-01", "入力形式を固定する")],
+            "relations:\n  refines: [REQ-001:AC-01]\ntests:\n  - path: tests/test_direct.py\n"
+            "    covers: [TECH-002:AC-01]\n    command: default\n"),
+            fm("TECH-002", "直接の具体化", relations={"refines": ["REQ-001:AC-01"]},
+               tests=[{"path": "tests/test_direct.py", "covers": ["TECH-002:AC-01"], "command": "default"}]),
+            [("TECH-002:AC-01", "入力形式を固定する")]),
+        document(".spec/technical/TECH-003.md", technical(
+            "TECH-003", "間接の具体化", [("TECH-003:AC-01", "形式違反を拒否する")],
+            "relations:\n  refines: [TECH-002:AC-01]\ntests:\n  - path: tests/test_indirect.py\n"
+            "    covers: [TECH-003:AC-01]\n    command: default\n"),
+            fm("TECH-003", "間接の具体化", relations={"refines": ["TECH-002:AC-01"]},
+               tests=[{"path": "tests/test_indirect.py", "covers": ["TECH-003:AC-01"], "command": "default"}]),
+            [("TECH-003:AC-01", "形式違反を拒否する")]),
+        document(".spec/tasks/TASK-001.md", task(
+            "TASK-001", "対象句の実装", "open", "relations:\n  addresses: [REQ-001:AC-01]\n"),
+            fm("TASK-001", "対象句の実装", "open", relations={"addresses": ["REQ-001:AC-01"]}), []),
+    ]
+
+
+def corpus_superseded_origin():
+    """141: TECH-005がTECH-007をrequiresし、TECH-009がTECH-005をsupersedesする（TECH-005は置換済みの起点）。
+    目的`interpret`は、起点を役割`advisory`、後継のTECH-009を役割`replacement`として示す（§6.1の5.）。
+    後継は起点から`supersedes`のエッジを1本辿った距離1（§7の6.）で、起点の`requires`の参照先TECH-007も距離1なので、
+    距離1の2件はIDの順（TECH-007、TECH-009）に並ぶ。"""
+    return [
+        document(".spec/technical/TECH-005.md", technical(
+            "TECH-005", "置換される技術契約", [("TECH-005:AC-01", "旧形式を使う")],
+            "relations:\n  requires: [TECH-007]\n"),
+            fm("TECH-005", "置換される技術契約", relations={"requires": ["TECH-007"]}),
+            [("TECH-005:AC-01", "旧形式を使う")]),
+        document(".spec/technical/TECH-007.md", technical(
+            "TECH-007", "前提技術契約", [("TECH-007:AC-01", "前提形式を定義する")]),
+            fm("TECH-007", "前提技術契約"), [("TECH-007:AC-01", "前提形式を定義する")]),
+        document(".spec/technical/TECH-009.md", technical(
+            "TECH-009", "後継の技術契約", [("TECH-009:AC-01", "新形式を使う")],
+            "relations:\n  supersedes: [TECH-005]\n"),
+            fm("TECH-009", "後継の技術契約", relations={"supersedes": ["TECH-005"]}),
+            [("TECH-009:AC-01", "新形式を使う")]),
+    ]
+
+
 def corpus_advisory():
     """106-03: approved REQ-001の規範文を、draftのTECH-005が具体化する。"""
     only = [("REQ-001:AC-01", "入力を検証する")]
@@ -288,6 +361,12 @@ CASES = {
                    "起点のrefinesの参照先にrequiresの鎖でも到達しても、役割refinementのMUSTの本文を提示から落とさない"),
     "SINGLE-136": (corpus_document_refinement_chain, ["context", "REQ-001", "--purpose", "interpret", "--format", "json"],
                    "文書単位で具体化した距離2の文書は、対象規範文が空のinterpretでMUSTの本文を提示から落とさない"),
+    "SINGLE-139": (corpus_shorter_refines_path, ["context", "REQ-001", "--purpose", "interpret", "--format", "json"],
+                   "起点のrefinesの参照先にrequiresの鎖より短い経路で到達したら、距離を最短にして並べる"),
+    "SINGLE-140": (corpus_task_refinement_chain, ["context", "TASK-001", "--purpose", "implement", "--format", "json"],
+                   "TASK起点の具体化の鎖は、起点からの最短の距離で並べ、距離2以上の文書をnormativeで提示する"),
+    "SINGLE-141": (corpus_superseded_origin, ["context", "TECH-005", "--purpose", "interpret", "--format", "json"],
+                   "置換済みの起点の後継は距離1で、起点のrequires先とIDの順に並べる"),
     "SINGLE-113": (corpus_refinement, ["verify", "REQ-001:AC-01", "REQ-001", "REQ-001:AC-01", "--format", "json"],
                    "文書IDと同文書のstatement IDを重複指定してもtargetとbindingを重複排除する"),
     "SINGLE-106-06": (corpus_distance, ["context", "REQ-001", "--purpose", "verify", "--format", "json"],
@@ -369,6 +448,50 @@ EXPANSIONS = {
                                  ("TECH-002", "refinement", "full", ["refines:TECH-002"]),
                                  ("TECH-003", "refinement", "full", ["refines:TECH-003"])],
                    "ledger": [], "tested": [], "addressed": [], "adjacent": [], "advisory": []},
+    # 139は、起点REQ-001が`requires`でREQ-003、`refines`でREQ-002を参照し、REQ-003も`requires`でREQ-002を参照する。
+    # REQ-002には、`refines`の1段（距離1）と、`requires`の2段（REQ-001、REQ-003、REQ-002。距離2）の経路があり、
+    # 距離は最短の1である（関係・トレースモデル §7の6.）。REQ-003も`requires`の1段で距離1なので、距離1の2件は種別（ともにREQ）
+    # の次にIDの辞書順（REQ-002、REQ-003）に並ぶ。役割は表の上から最初に該当する行で、REQ-002は`refinement`、REQ-003は
+    # `requirement`。どちらも距離1なので提示形式は`full`。目的`interpret`の対象規範文は空（§6.4）なので制約台帳は空である。
+    "SINGLE-139": {"purpose": "interpret", "root": "REQ-001",
+                   "documents": [("REQ-001", "root", "full", ["root"]),
+                                 ("REQ-002", "refinement", "full", ["refines:REQ-001", "requires:REQ-003"]),
+                                 ("REQ-003", "requirement", "full", ["requires:REQ-001"])],
+                   "ledger": [], "tested": [], "addressed": [], "adjacent": [], "advisory": []},
+    # 140は、起点がTASKの目的`implement`。TASK-001（距離0）が`addresses`するREQ-001を所有する文書として含め（距離1、
+    # `addresses`で到達したREQなので役割`requirement`）、REQ-001:AC-01を具体化するTECH-002（距離2）と、TECH-002:AC-01を
+    # 具体化するTECH-003（距離3）を、逆参照で推移的に加える（§6.1の4.、§6.3）。距離は閉包を作るときに辿ったエッジの段数
+    # （§7の6.）で、具体化文書の距離は、具体化される規範文を所有する文書の距離+1になる。対象規範文は、TASKが`addresses`する
+    # REQ-001:AC-01と、その具体化文書の規範文（§6.4の3.）で、制約台帳はこの3件を文書の順に収録する。TECH-002とTECH-003は
+    # 距離2以上の具体化文書で、所有する規範文がすべて制約台帳にあるので、提示形式は`normative`（`context` §5）。
+    # REQ-001は役割`requirement`なので`full`。カバレッジは、TASK-001がREQ-001:AC-01だけを`addresses`するので対応済みは1件、
+    # 3件とも文書が`tests[].covers`で宣言するのでテスト済み。未対応のTECH-002:AC-01とTECH-003:AC-01が、
+    # `CTX-COVERAGE-TASK-001`の警告になる。診断は、発生元の`path`の辞書順（TECH-002、TECH-003）に並ぶ。
+    "SINGLE-140": {"purpose": "implement", "root": "TASK-001", "status": "passed_with_warnings",
+                   "documents": [("TASK-001", "root", "full", ["root"]),
+                                 ("REQ-001", "requirement", "full", ["addresses:TASK-001"]),
+                                 ("TECH-002", "refinement", "normative", ["refines:TECH-002"]),
+                                 ("TECH-003", "refinement", "normative", ["refines:TECH-003"])],
+                   "ledger": ["REQ-001:AC-01", "TECH-002:AC-01", "TECH-003:AC-01"],
+                   "tested": ["REQ-001:AC-01", "TECH-002:AC-01", "TECH-003:AC-01"], "addressed": ["REQ-001:AC-01"],
+                   "adjacent": [], "advisory": [],
+                   "diagnostics": [{"code": "CTX-COVERAGE-TASK-001", "severity": "warning",
+                                    "resultStatus": "passed_with_warnings",
+                                    "summary": f"implement対象のMUST {statement}を実装するTASKがありません",
+                                    "source": {"kind": "file", "workspaceId": "root", "path": path}}
+                                   for statement, path in (("TECH-002:AC-01", ".spec/technical/TECH-002.md"),
+                                                           ("TECH-003:AC-01", ".spec/technical/TECH-003.md"))]},
+    # 141は、置換済みの起点TECH-005（距離0）の目的`interpret`。TECH-005は役割`advisory`（表の`root`は置換済みの起点を除く）で
+    # 提示形式`reference`、後継TECH-009は役割`replacement`で提示形式`full`である。TECH-009は起点から`supersedes`のエッジを
+    # 1本辿った距離1（§7の6.）で、TECH-005が`requires`するTECH-007（役割`constraint`）も距離1なので、距離1の2件は
+    # IDの辞書順（TECH-007、TECH-009）に並ぶ。ハッシュ値の材料の適用可能性は、TECH-005が`advisory`、TECH-009が
+    # `replacement`、TECH-007が`applicable`（正規化仕様 §3.1）。目的`interpret`の制約台帳は空である。
+    "SINGLE-141": {"purpose": "interpret", "root": "TECH-005",
+                   "documents": [("TECH-005", "advisory", "reference", ["root"]),
+                                 ("TECH-007", "constraint", "full", ["requires:TECH-005"]),
+                                 ("TECH-009", "replacement", "full", ["supersedes:TECH-009"])],
+                   "ledger": [], "tested": [], "addressed": [], "adjacent": [],
+                   "advisory": ["TECH-005"], "replacement": ["TECH-009"]},
     # 113の文書を起点にする検証対象は107-01、規範文を起点にする検証対象は次の展開を使う。
     "REQ-001:AC-01": {"purpose": "verify", "root": "REQ-001:AC-01",
                       "ledger": ["REQ-001:AC-01", "TECH-002:AC-01", "TECH-003:AC-01"], "advisory": []},
@@ -431,7 +554,7 @@ def semantic(statement_id, text):
             "extensions": []}
 
 
-def digest_document(entry, advisory):
+def digest_document(entry, advisory, replacement=()):
     value = entry["frontmatter"]
     identifier = value["id"]
     relations = {**EMPTY, **value.get("relations", {})}
@@ -439,7 +562,9 @@ def digest_document(entry, advisory):
                     for target in relations[key])
     return {
         "id": identifier, "workspaceId": "root", "kind": KIND[identifier.split("-")[0]],
-        "status": value["status"], "applicability": "advisory" if identifier in advisory else "applicable",
+        "status": value["status"],
+        "applicability": ("advisory" if identifier in advisory
+                          else "replacement" if identifier in replacement else "applicable"),
         "frontmatter": {"id": identifier, "title": value["title"], "status": value["status"],
                         "relations": relations, "implements": [], "tests": value.get("tests", []),
                         "verify": None, "changes": value.get("changes", [])},
@@ -475,7 +600,7 @@ def reviewed_digest_input(identifier, target=None):
         "digestVersion": "1.0", "specSchemaVersion": "1.0", "earsAiVersion": "1.0", "resolverVersion": "1.0",
         "purpose": plan["purpose"], "requestWorkspaceId": "root", "roots": [plan["root"]],
         "workspaces": [{"id": "root", "path": "."}],
-        "documents": [digest_document(corpus[name], plan["advisory"])
+        "documents": [digest_document(corpus[name], plan["advisory"], plan.get("replacement", []))
                       for name in sorted(context_documents(identifier, target))],
         "crossWorkspaceEdges": [],
         "settings": {
@@ -591,6 +716,28 @@ LITERAL_SETS = {
     "SINGLE-134": (["TASK-001"], ["TASK-001", "REQ-001", "TASK-002"], ["REQ-001:AC-01"], []),
     "SINGLE-135": (["REQ-001"], ["REQ-001", "REQ-002", "REQ-003"], ["REQ-001:AC-01"], []),
     "SINGLE-136": (["REQ-001"], ["REQ-001", "TECH-002", "TECH-003"], [], []),
+    # 並びは距離（最短の段数）、種別、IDの順であり、139はREQ-002とREQ-003が距離1、141はTECH-007とTECH-009が距離1で、
+    # 140は距離がTASK-001、REQ-001、TECH-002、TECH-003の順に0、1、2、3になる。
+    "SINGLE-139": (["REQ-001"], ["REQ-001", "REQ-002", "REQ-003"], [], []),
+    "SINGLE-140": (["TASK-001"], ["TASK-001", "REQ-001", "TECH-002", "TECH-003"],
+                   ["REQ-001:AC-01", "TECH-002:AC-01", "TECH-003:AC-01"], []),
+    "SINGLE-141": (["TECH-005"], ["TECH-005", "TECH-007", "TECH-009"], [], []),
+}
+
+
+# 距離に基づく並びと提示形式、役割の要点（名前: (役割, 提示形式, reachedBy)）。
+DISTANCE_CHECKS = {
+    # 起点の`refines`の参照先は`requires`の鎖でも到達するが、距離は最短の1で、REQ-003と同じ距離1のまま`full`で提示する。
+    "SINGLE-139": {"REQ-002": ("refinement", "full", ["refines:REQ-001", "requires:REQ-003"]),
+                   "REQ-003": ("requirement", "full", ["requires:REQ-001"])},
+    # 距離2以上で、所有する規範文がすべて制約台帳にある具体化文書だけが`normative`になる。
+    "SINGLE-140": {"REQ-001": ("requirement", "full", ["addresses:TASK-001"]),
+                   "TECH-002": ("refinement", "normative", ["refines:TECH-002"]),
+                   "TECH-003": ("refinement", "normative", ["refines:TECH-003"])},
+    # 置換済みの起点は`advisory`、後継は`replacement`で距離1。
+    "SINGLE-141": {"TECH-005": ("advisory", "reference", ["root"]),
+                   "TECH-007": ("constraint", "full", ["requires:TECH-005"]),
+                   "TECH-009": ("replacement", "full", ["supersedes:TECH-009"])},
 }
 
 
@@ -638,6 +785,12 @@ def check_contract(identifier, result, root):
                 raise ValueError(f"{name}は提示形式`full`で、その`MUST`の本文が提示に現れる必要があります")
             if f"{name}:AC-01" in ledger_ids:
                 raise ValueError(f"{name}:AC-01は対象規範文ではないので制約台帳へ収録してはいけません")
+        if identifier in DISTANCE_CHECKS:
+            lookup = {d["id"]: d for d in result["documents"]}
+            for name, (role, projection, reached) in DISTANCE_CHECKS[identifier].items():
+                entry = lookup[name]
+                if (entry["role"], entry["projection"], entry["reachedBy"]) != (role, projection, reached):
+                    raise ValueError(f"{name}の役割、提示形式、到達したエッジがレビュー済みの距離に基づく値と異なります")
         if identifier == "SINGLE-107-01" and "REQ-099" in [d["id"] for d in result["documents"]]:
             raise ValueError("`related`の参照先をコンテキストへ追加してはいけません")
         if identifier == "SINGLE-106-06":
@@ -742,6 +895,11 @@ def validate(root=HERE, identifiers=None):
                             digest_crosscheck.build(repository, root=target, purpose=purpose))
                         if derived != digest_reference.canonical_bytes(reviewed_digest_input(identifier, target)):
                             raise ValueError(f"{target}: 参照計算AとBの正規JSONが一致しません")
+                        # 参照計算Bの閉包が、辿ったエッジによる最短の距離、種別、IDの順に並べた文書の並びも一致させる。
+                        ordered, _ = digest_crosscheck.closure(
+                            digest_crosscheck.load_documents(repository), target, purpose)
+                        if ordered != context_documents(identifier, target):
+                            raise ValueError(f"{target}: 参照計算Bが距離で並べた文書の並びがレビュー済みの並びと異なります")
             prepared.append(identifier)
         except (OSError, ValueError, KeyError, TypeError, ValidationError,
                 subprocess.SubprocessError) as error:

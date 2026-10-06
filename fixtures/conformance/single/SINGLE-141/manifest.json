@@ -1,0 +1,28 @@
+{
+  "fixtureId": "SINGLE-141",
+  "description": "置換済みの起点の後継は距離1で、起点のrequires先とIDの順に並べる",
+  "setup": {
+    "git": true,
+    "operations": []
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "context",
+      "TECH-005",
+      "--purpose",
+      "interpret",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/context.json",
+    "reportFileCount": 0
+  }
+}

@@ -230,6 +230,12 @@ def load_documents(repository):
 
 
 def closure(documents, root, purpose):
+    """`_closure`の（並べた文書ID、役割`advisory`の文書ID）。役割`replacement`は`_closure`が返す。"""
+    ordered, advisory, _ = _closure(documents, root, purpose)
+    return ordered, advisory
+
+
+def _closure(documents, root, purpose):
     """これらのcorpusに対するレビュー済みの閉包（関係・トレースモデル §6.1〜§6.4）。
 
     起点の文書と、interpret以外のTASK起点ではそのTASKがaddressesする対象を所有する文書を含める。
@@ -241,7 +247,12 @@ def closure(documents, root, purpose):
     黙って取り込まずに拒否する。そのため、これはcorpusの読取り処理にとどまり、汎用の対象展開の
     実装にはならない。
 
-    戻り値は（並べた文書ID、advisoryの文書ID）である。
+    目的`interpret`で、起点を所有するREQまたはTECHを`supersedes`する文書がちょうど1件あるとき（置換済みの起点。§6.1 5.）、
+    起点を役割`advisory`、その後継を役割`replacement`として示す。起点の`requires`と起点を具体化する文書は通常の起点と同じに辿り、
+    後継は`supersedes`のエッジ1本を辿った距離1で、展開しない（§7の6.）。
+
+    戻り値は（並べた文書ID、advisoryの文書ID、replacementの文書ID）である。距離は、ここで並べるためだけに使い、
+    ハッシュ値の材料には含めない。
     """
     def owner(reference):
         return reference.split(":")[0]
@@ -254,6 +265,8 @@ def closure(documents, root, purpose):
         raise ValueError("起点がこのcorpusに存在しません")
     root_kind = documents[root_document]["kind"]
     reached, advisory, accounted = {root_document: 0}, set(), set()
+    # 起点が置換済みのときの`advisory`は、`refines`する`draft`の文書の`advisory`と異なり、起点の`requires`を辿る。
+    draft_advisory, replacement = set(), set()
     frontier = [root_document]
 
     def reach(identifier, distance):
@@ -278,7 +291,7 @@ def closure(documents, root, purpose):
                         accounted.add((target, "addresses", reference))
     while frontier:
         current = frontier.pop(0)
-        if current in advisory:
+        if current in draft_advisory:
             continue
         relations = _relations(documents[current]["frontmatter"])
         for key in ("requires", "refines"):
@@ -297,11 +310,23 @@ def closure(documents, root, purpose):
                 pass
             elif status == "draft" and purpose == "interpret":
                 advisory.add(identifier)
+                draft_advisory.add(identifier)
             else:
                 continue
             for target in refined:
                 accounted.add((identifier, "refines", target))
             reach(identifier, reached[current] + 1)
+    if purpose == "interpret" and root_kind in ("requirement", "technical"):
+        successors = [identifier for identifier, document in sorted(documents.items())
+                      if root_document in _relations(document["frontmatter"])["supersedes"]
+                      and document["frontmatter"]["status"] in APPLICABLE_STATUS]
+        if len(successors) > 1:
+            raise ValueError("有効な後継が複数あるcorpusはこの閉包の対象外です")
+        if successors:
+            accounted.add((successors[0], "supersedes", root_document))
+            advisory.add(root_document)
+            replacement.add(successors[0])
+            reached[successors[0]] = min(reached.get(successors[0], 1), 1)
     if purpose == "implement":
         targets = target_statements(documents, owned, root, reached, advisory)
         for identifier, document in sorted(documents.items()):
@@ -325,7 +350,7 @@ def closure(documents, root, purpose):
                     raise ValueError("corpusにレビュー済みの閉包の外の強いエッジがあります")
     ordered = sorted(reached, key=lambda identifier: (reached[identifier],
                                                       KIND_RANK[documents[identifier]["kind"]], identifier))
-    return ordered, advisory
+    return ordered, advisory, replacement
 
 
 def target_statements(documents, owned, root, reached, advisory):
@@ -352,7 +377,7 @@ def target_statements(documents, owned, root, reached, advisory):
 def build(repository, root="REQ-001", purpose="verify", workspace_id="root"):
     config = read_yaml((repository / ".spec/bitz.yaml").read_text(encoding="utf-8"))
     documents = load_documents(repository)
-    selected, advisory = closure(documents, root, purpose)
+    selected, advisory, replacement = _closure(documents, root, purpose)
     commands, entries = config.get("verify", {}).get("commands", {}), []
     used = set()
     # 閉包でコマンドを挙げるのは`verify`だけなので、コンテキスト一式がコマンドを参照し得るのも
@@ -407,7 +432,8 @@ def build(repository, root="REQ-001", purpose="verify", workspace_id="root"):
             "workspaceId": workspace_id,
             "kind": document["kind"],
             "status": frontmatter["status"],
-            "applicability": "advisory" if identifier in advisory else "applicable",
+            "applicability": ("advisory" if identifier in advisory
+                              else "replacement" if identifier in replacement else "applicable"),
             "frontmatter": {
                 "id": frontmatter["id"],
                 "title": frontmatter["title"],
