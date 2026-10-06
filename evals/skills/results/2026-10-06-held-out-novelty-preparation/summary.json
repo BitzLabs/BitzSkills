@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0",
+  "status": "preparation_checks_passed",
+  "sourceCommit": "88e7d12a25ec973954d5f857260a939ebffdb714",
+  "candidateSourceCommit": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+  "manifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+  "resourceCount": 71,
+  "skillCount": 6,
+  "previousPreparation": {
+    "sourceCommit": "3d98bf728498d6fa511cf53a454a587fc75be00a",
+    "status": "stopped_on_independent_p2",
+    "beforeWithFinalTests": {
+      "count": 10,
+      "failures": 2,
+      "exitCode": 1
+    }
+  },
+  "tests": {
+    "parentTargeted": 10,
+    "parentAll": 225,
+    "independentTargeted": 10,
+    "parentPostReview": 10,
+    "exitCodes": 0
+  },
+  "severityCounts": {
+    "P1": 0,
+    "P2": 0
+  },
+  "budgetConsumed": {
+    "previousPreparationReviewerSol": 1,
+    "correctedPreparationReviewerSol": 1,
+    "creatorSol": 0,
+    "caseReviewerSol": 0,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0
+  },
+  "certifiesSkillGate": false,
+  "certifiesSemanticNovelty": false,
+  "usage": "unknown",
+  "costUsd": null,
+  "sourceSha256": {
+    "evals/skills/routing/audit_held_out.py": "ab4dec879b1fdc9ae97c4e203698fbff8d6ee12b14b93011b8c2bba04f1d6791",
+    "evals/skills/routing/novelty.schema.json": "24bb25a6c522035193d52a7897bf0768ccfc3f07878e2c41254a8d9263244eae",
+    "evals/skills/routing/held-out-collection-v0.2.json": "5220613f1b4f15dc339ffc8aae89fc974c94dbabbbc67476ab40327efcddd517",
+    "evals/skills/routing/held-out-novelty-preparation-v0.2.1.json": "04b0a9e494be6b3dd00b44f8ab3e1a0f5e380a288b644c7a9cd7eb58e0ccfee1",
+    "evals/skills/routing/README.md": "3a1985e88073f50b24597f3143e40060d0c7e81770a1b49d18594b25dcb2f15d",
+    "tests/skills/test_held_out_novelty.py": "8a859691da3e1b9599dddaca40f9143989df8d85e411eba65097ba919deb839e"
+  },
+  "artifactSha256": {
+    "preparation-021-independent-review.json": "e7087e9a3026f7c14f6095a2b80ead6d1599dbfcbc5bb26bfb755d3034f4e88b",
+    "preparation-021-independent-unit.log": "06a9f67169550bfb2bda28d469ca3e0895f6703f497a91362b3c191ddf4ba174",
+    "preparation-021-independent-legacy-audit.json": "b6d633d78bbcab7f1378aeadcb8c39b827fdeb86b90f229da6cca7287250fe7e",
+    "parent-corrected-unit.log": "0b8727469a83d264dd9b61cced662409183eaf470e1b478143fecb2e82fff97b",
+    "parent-corrected-all-unit.log": "ea8b7d700ebb0443dec0a7675889786ec19dfffb8c78672409b1321a9bc57e6c",
+    "parent-post-review-unit.log": "016c6cc29ba1eb87f532a9f5dce79c1e68b86c07dd93456b23018d0394f41962",
+    "parent-corrected-legacy-audit.json": "b6d633d78bbcab7f1378aeadcb8c39b827fdeb86b90f229da6cca7287250fe7e",
+    "before-from-ref-10.log": "152253d15e4961d1ec51cf9aaac7d3f85d2f863e7b64e47571bd2a6488d9cae7",
+    "before-from-ref.py": "de5e93cc577df49d8f4105bab85c2b2bae07a61ad17c423f150d5a4253981f04"
+  }
+}

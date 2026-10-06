@@ -1106,3 +1106,13 @@ schema・ID/input衝突・event catalog・経路・件数・権限の作業者�
 これは資源提供の準備であり、モデル接続・発火実測・Core操作・Skill Gateは未認定。
 次の優先事項は意味重複排除を生成前に固定する契約と監査コードの是正。
 具体策は `evals/skills/routing/held-out-novelty-plan.md` に記録した。
+
+保持集合0.2の準備source `3d98bf72` は、公開JSON追加と46件の変化を拒否せず独立P2で停止した。
+原8単体/全223件のOKと独立失敗を保存し、最終10回帰では原sourceの2failを再現した。
+別source `88e7d12a` で公開ファイル一覧をケース読取り前に固定し、件数・symlinkも拒否した。
+親10件/全225件、別文脈の独立10件、検分後の親10件はOK/exit0、独立P1/P2は0件。
+固定候補71資源・旧集合hash・比較schema・新ケースhash束縛と、公開46/旧12全件の比較を要求する。
+機械通過を意味新規性とせず、生成後のケース独立検分を必須にする。
+準備SOLは旧source1/是正source1の別有限枠、一次0・retry0。旧停止8成果物も不変を検査した。
+結果は `evals/skills/results/2026-10-06-held-out-novelty-preparation/report.md`。
+次は未消費の生成SOL1・ケース独立SOL1で別領域/別版/別IDsの保持集合を作成・検分する。
