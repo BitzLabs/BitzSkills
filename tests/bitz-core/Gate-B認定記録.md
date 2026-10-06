@@ -318,3 +318,22 @@ fixtureを追加した後、修正前のCore（コミット`5d4ab90c`の1つ前�
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は595件がすべて成功した。
+
+## 2026-10-06: 目的implementとverifyで状態draftの文書を含めないようにした後のStep 1〜5の再判定
+
+目的`implement`と`verify`では、閉包の文書を`refines`する状態`draft`の文書を閉包へ含めないようにし（`targetexpand.py`）、これを固定する
+`SINGLE-142`（Step 3）と`SINGLE-143`（Step 4）を追加した。修正の前後で、既存の328件の期待値はすべて変わらないことを確かめた。
+fixtureを追加した後、修正前のCore（コミット`90ba92a3`の版）では2件とも失敗し、修正後のCoreでは2件とも`passed`となることを確かめた。
+
+コミット`b3b14b113312089505eaea845bf5d9c438370509`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 330件（`SINGLE-142`と`SINGLE-143`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`bbdedfa655f1f4d9717c9d1088a146d76ef248dc7d973f3ca22a385d9a187fe5` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は597件がすべて成功した。
