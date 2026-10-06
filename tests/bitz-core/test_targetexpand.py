@@ -321,5 +321,100 @@ class TaskVerifyDependencyTests(unittest.TestCase):
         self.assertEqual(result.errors, [])
 
 
+
+def _tech_ac(doc_id: str, extra_frontmatter: str = "") -> str:
+    """規範文`<doc_id>:AC-01`を1件持つ、状態`approved`のTECH。"""
+    return f"""---
+id: {doc_id}
+title: 技術契約
+status: approved
+{extra_frontmatter}---
+
+# {doc_id} 技術契約
+
+## Contract
+
+- [{doc_id}:AC-01] [ACTOR:TargetSystem] [ALWAYS] [MUST] [CONSTRAINT] 具体化された制約。
+"""
+
+
+class ShortestDistanceTests(unittest.TestCase):
+    """距離は、閉包を作るときに辿ったエッジ1本を1段とした、起点からの最短の段数（関係・トレースモデル §7の6.）。"""
+
+    def test_refines_target_reached_first_by_requires_has_distance_one(self):
+        # 起点が直接`refines`する文書は、`requires`の鎖で先に到達しても距離1。
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/requirements/REQ-001.md",
+                   _req("REQ-001", extra_frontmatter="relations:\n  requires: [REQ-002]\n  refines: [REQ-003]\n"))
+            _write(root, ".spec/requirements/REQ-002.md",
+                   _req("REQ-002", extra_frontmatter="relations:\n  requires: [REQ-003]\n"))
+            _write(root, ".spec/requirements/REQ-003.md", _req("REQ-003"))
+            id_index, stmt_index = _indexes(root)
+            for purpose in ("interpret", "implement", "verify"):
+                with self.subTest(purpose=purpose):
+                    result = te_mod.target_expansion("REQ-001", purpose, id_index, stmt_index)
+                    self.assertEqual(result.document_distance, {"REQ-001": 0, "REQ-002": 1, "REQ-003": 1})
+
+    def test_successor_of_superseded_root_has_distance_one(self):
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/technical/TECH-001.md", _tech("TECH-001"))
+            _write(root, ".spec/technical/TECH-002.md",
+                   _tech("TECH-002", extra_frontmatter="relations:\n  supersedes: [TECH-001]\n"))
+            id_index, stmt_index = _indexes(root)
+            result = te_mod.target_expansion("TECH-001", "interpret", id_index, stmt_index)
+            self.assertEqual(result.superseded_origin, ("TECH-001", "TECH-002"))
+            self.assertEqual(result.document_distance["TECH-002"], 1)
+
+    def _refinement_chain(self, root: str) -> None:
+        # REQ-001:AC-01 <- TECH-002（規範文単位で具体化）<- TECH-003（TECH-002:AC-01を具体化）。TASK-009はTECH-003:AC-01に対応する。
+        _write(root, ".spec/bitz.yaml", _bitz_yaml())
+        _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+        _write(root, ".spec/technical/TECH-002.md",
+               _tech_ac("TECH-002", "relations:\n  refines: [REQ-001:AC-01]\n"))
+        _write(root, ".spec/technical/TECH-003.md",
+               _tech_ac("TECH-003", "relations:\n  refines: [TECH-002:AC-01]\n"))
+        _write(root, ".spec/tasks/TASK-009.md", _task("TASK-009", "open", "relations:\n  addresses: [TECH-003:AC-01]\n"))
+
+    def test_transitive_refinement_and_addressing_task_count_each_edge(self):
+        with tempfile.TemporaryDirectory() as root:
+            self._refinement_chain(root)
+            id_index, stmt_index = _indexes(root)
+            result = te_mod.target_expansion("REQ-001", "implement", id_index, stmt_index)
+            self.assertEqual(result.errors, [])
+            self.assertIn("TECH-003:AC-01", result.target_statements)
+            # TASK-009は、`addresses`する対象規範文を所有するTECH-003（距離2）から1段。
+            self.assertEqual(result.document_distance,
+                             {"REQ-001": 0, "TECH-002": 1, "TECH-003": 2, "TASK-009": 3})
+
+    def test_task_root_refinements_are_counted_from_the_addressed_document(self):
+        with tempfile.TemporaryDirectory() as root:
+            self._refinement_chain(root)
+            _write(root, ".spec/tasks/TASK-001.md",
+                   _task("TASK-001", "open", "relations:\n  addresses: [REQ-001:AC-01]\n"))
+            id_index, stmt_index = _indexes(root)
+            for purpose in ("implement", "verify"):
+                with self.subTest(purpose=purpose):
+                    result = te_mod.target_expansion("TASK-001", purpose, id_index, stmt_index)
+                    self.assertEqual(result.errors, [])
+                    distance = result.document_distance
+                    self.assertEqual((distance["REQ-001"], distance["TECH-002"], distance["TECH-003"]), (1, 2, 3))
+
+    def test_verify_task_root_takes_the_minimum_over_addressed_documents(self):
+        # TASK-001はREQ-001とREQ-002の規範文に対応し、REQ-001はREQ-002を`requires`する。REQ-002は起点から1段。
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/requirements/REQ-001.md",
+                   _req("REQ-001", extra_frontmatter="relations:\n  requires: [REQ-002]\n"))
+            _write(root, ".spec/requirements/REQ-002.md", _req("REQ-002"))
+            _write(root, ".spec/tasks/TASK-001.md",
+                   _task("TASK-001", "open", "relations:\n  addresses: [REQ-001:AC-01, REQ-002:AC-01]\n"))
+            id_index, stmt_index = _indexes(root)
+            result = te_mod.target_expansion("TASK-001", "verify", id_index, stmt_index)
+            self.assertEqual(result.errors, [])
+            self.assertEqual(result.document_distance, {"TASK-001": 0, "REQ-001": 1, "REQ-002": 1})
+
+
 if __name__ == "__main__":
     unittest.main()
