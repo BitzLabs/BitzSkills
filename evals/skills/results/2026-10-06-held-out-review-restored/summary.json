@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "status": "stopped_on_p1_p2_private_receipt_restored",
+  "collectionVersion": "production-routing-held-out-0.3.0",
+  "sourceCommit": "5ff330a73de281be8708cba4083e1235c2ad8fca",
+  "caseCount": 12,
+  "casesSha256": "3d34e4ab071e5d6e984b7f6adc12129b96576e6c490190c6d16907e0e9407cd9",
+  "noveltySha256": "2c9facb05d501130253eabf9c7e4c0ecfd7f97c4e88da634075cd364128f6860",
+  "severityCounts": {
+    "P1": 3,
+    "P2": 3
+  },
+  "affectedCaseCount": 3,
+  "privateArtifactSha256": {
+    "independent-review.md": "11e826ce3cd1c614d1c315291c02161968b68ba3db72bc7ba5d588155ff0c276",
+    "independent-receipt.json": "a8602a8afcd4f85d235cd1e199b3ae767771e916d3d76c4c74ebea9dbbaa06d7",
+    "independent-audit.json": "6d062f2b613877836f4a70cb93810b3363ca5a2b2903042e8af30ca072d57946",
+    "independent-audit.log": "970a1725b130e4b1609f5185c0e743386bbd9267208d979fca0fa4806e260847",
+    "independent-invocation-error.json": "bbc8394f4c171244359400646c51a84c9af76cba70e4411f11660db426a8eefe",
+    "independent-source-guard.json": "83606e75588bb301bd92ae2da1a60158f2e06f58f523a5b83e53a4b1c3feda77"
+  },
+  "privateArtifactsVerified": 6,
+  "existingPrivateArtifactsUnchanged": 7,
+  "fileMode": "0600",
+  "directoryMode": "0700",
+  "parentReaudit": {
+    "auditExitCode": 0,
+    "sourceGuardExitCode": 0,
+    "sourceFileCount": 13,
+    "reportCaseCoverage": 12,
+    "affectedMatchesNegativeCaseCount": 3,
+    "artifactAndSourceBindingsVerified": true,
+    "independentSemanticDecisionAdoptedFromStoredReport": true,
+    "originalNativeBytesVerified": false
+  },
+  "nativeEvidenceAvailability": {
+    "originalNativeBytes": "unavailable",
+    "previousToolOutputText": "transcribed_from_conversation",
+    "newSaveSourceGuard": "native"
+  },
+  "retentionCandidates": {
+    "count": 9,
+    "replacementCount": 3,
+    "manifestSha256": "3a9007b4c1925cefe4b213426895a7ef79ffd520eceb5f5a799f22bebffc18fa",
+    "certifiesRetainedCases": false
+  },
+  "budget": {
+    "previousIndependentReviewSolConsumed": 1,
+    "storageContinuationSolConsumed": 1,
+    "additionalCaseReviews": 0,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0
+  },
+  "usage": "unknown",
+  "costUsd": null,
+  "previousFailuresPreserved": true,
+  "certifiesSemanticNovelty": false,
+  "certifiesSkillGate": false
+}
