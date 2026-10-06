@@ -1222,3 +1222,23 @@ commit `0f06376f7c8a12e2073c1284e3d591dbe6f590ac`に対して`uv run fixtures/ce
 fixtureの入力と期待値を変えていないため、Gate Bの判定し直しは要しない。参照harnessの変更の確認として同じcommitで
 `uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、`gateB: {"step": 5, "result": "Passed"}`、2つのクローンの結果のSHA-256が
 両方`d3c827d01412b450df4c205eb2f1daa4594527afdc3ece9a09b2c50c861671c5`（前回と同じ）であることを確かめた。
+
+## 2026-10-06: `SINGLE-139`〜`141`を追加した後のGate Aの再認定
+
+文書の距離が、探索の段階ごとに最初に到達した値で確定し、仕様の最短距離（関係・トレースモデル §7の6.）と異なっていた欠陥（`targetexpand.py`）を直した。
+到達元を記録し、閉包を作った後に最短の段数を求める。置換済みの起点の後継は距離1とした（ユーザー決定。§7の6.に明記）。
+これを固定する`SINGLE-139`（`requires`の鎖より短い`refines`の経路の並び順）、`SINGLE-140`（TASKを起点にした具体化の鎖の提示形式）、
+`SINGLE-141`（置換済みの起点の後継の並び順）を追加した（ADR-051の追加）。参照計算Bは置換済みの起点を扱えるようにし、距離による並びの照合を
+既存のfixtureにも加えた。matrix、Step 3の割当て、実装計画のStep 3の完了条件、網羅表とtarget vectorが固定する根拠文書のハッシュ値を合わせた。
+既存のfixtureの入力と期待値は変えていない。
+
+commit `e734456fc6bea6661619bb85d0d3f7d3323fa580`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`3be6c2e708384136b5dee1e43dc306c03caf78cfe50c4c0c15edab30859a0225`。前回から変わったのは次の値だけである: `SINGLE-139`〜`141`の追加によるmatrixと網羅の件数（325件→328件）、Step 3の件数（76件→79件）、生成器の準備件数、実行ビットを確かめたファイル数（1795件→1811件）、網羅表とtarget vectorが固定する根拠文書のハッシュ値 |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 3に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
