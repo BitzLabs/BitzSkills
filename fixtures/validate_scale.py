@@ -106,7 +106,11 @@ def validate_fixture(identifier):
 
 
 def checked_fixture(identifier):
-    """1件を照合する。準備手順の失敗も失敗の理由として結果に残し、JSONのレポートを出さずに終わらない。"""
+    """1件を照合する。照合を完了できなかった場合も、失敗の理由として結果に残し、JSONのレポートを出さずに終わらない。
+
+    捕まえるのは、準備手順のGit操作の失敗とタイムアウト（`subprocess.SubprocessError`）、ファイル操作の失敗（`OSError`）、
+    照合の不一致として投げられる`ValueError`である。それ以外の例外は捕まえずに伝える。
+    """
     try:
         return validate_fixture(identifier)
     except (OSError, ValueError, subprocess.SubprocessError) as error:

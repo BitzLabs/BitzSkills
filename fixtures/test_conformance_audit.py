@@ -3352,6 +3352,24 @@ class AuditTests(unittest.TestCase):
                          [f"規模の検証1: 成功していません（{report['errors'][0]}）"])
         self.assertFalse(any("形式が不正" in reason for reason in reasons), reasons)
 
+    def test_scale_validation_does_not_swallow_other_exceptions(self):
+        # 捕まえる範囲は準備手順・ファイル操作・照合の不一致に限り、それ以外の例外（実装の欠陥など）は伝える。
+        import validate_scale
+
+        def broken(identifier):
+            raise KeyError(identifier)
+
+        with patch.object(validate_scale, "validate_fixture", broken):
+            with self.assertRaises(KeyError):
+                validate_scale.main()
+
+    def test_gate_a_certification_shows_the_stderr_of_an_unreadable_report(self):
+        conformance, _scale = self.certification_runs()
+        crashed = {"exitCode": 1, "stdout": b"", "stderr": b"Traceback (most recent call last):\n  ...\nKeyError: 'x'\n"}
+        reasons = certify.judge(conformance, [crashed, dict(crashed)])
+        self.assertIn("規模の検証1: レポートの形式が不正です（KeyError: 'x'）", reasons)
+        self.assertIn("規模の検証2: レポートの形式が不正です（KeyError: 'x'）", reasons)
+
     def test_fixture_git_uses_the_shared_timeout(self):
         from conformance import harness
         self.assertEqual(harness.GIT_TIMEOUT_SECONDS, 120)
