@@ -1,0 +1,9 @@
+{
+  "status": "passed",
+  "fileCount": 94,
+  "fixedSourceCount": 84,
+  "totalUncompressedBytes": 777812,
+  "archiveBytes": 207352,
+  "archiveSha256": "10344e2e5e25cea7f89a423477ab1742434e11289a0d1784cb39940dd9a03c99",
+  "privateCaseDataIncluded": false
+}
