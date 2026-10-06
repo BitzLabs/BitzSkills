@@ -281,6 +281,76 @@ class TaskImplementDependencyTests(unittest.TestCase):
 
 
 
+class TaskDependencyTransitiveStateTests(unittest.TestCase):
+    """先行TASKの状態は起点の`requires`が直接指すTASKだけを`CTX-TASK-DEPENDENCY-001`で検査し、同じ原因で`CTX-STATE-001`を重ねず、
+    推移的に到達したTASKの状態は検査しない（ADR-029、ADR-036の`Decision`の8番目の項目、診断レジストリの主診断の規則）。"""
+
+    def test_cancelled_direct_prerequisite_returns_only_task_dependency(self):
+        for purpose in ("implement", "verify"):
+            with self.subTest(purpose=purpose), tempfile.TemporaryDirectory() as root:
+                _write(root, ".spec/bitz.yaml", _bitz_yaml())
+                _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+                _write(root, ".spec/tasks/TASK-001.md",
+                       _task("TASK-001", "open", "relations:\n  requires: [TASK-002]\n  addresses: [REQ-001:AC-01]\n"))
+                _write(root, ".spec/tasks/TASK-002.md", _task("TASK-002", "cancelled"))
+                id_index, stmt_index = _indexes(root)
+                result = te_mod.target_expansion("TASK-001", purpose, id_index, stmt_index)
+                self.assertEqual([e["code"] for e in result.errors], ["CTX-TASK-DEPENDENCY-001"])
+
+    def test_transitive_task_state_is_not_checked(self):
+        # TASK-001 -> TASK-002（done）-> TASK-003（cancelled）。TASK-003はTASK-001の先行TASKではない。
+        for purpose in ("implement", "verify"):
+            with self.subTest(purpose=purpose), tempfile.TemporaryDirectory() as root:
+                _write(root, ".spec/bitz.yaml", _bitz_yaml())
+                _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+                _write(root, ".spec/tasks/TASK-001.md",
+                       _task("TASK-001", "open", "relations:\n  requires: [TASK-002]\n  addresses: [REQ-001:AC-01]\n"))
+                _write(root, ".spec/tasks/TASK-002.md", _task("TASK-002", "done", "relations:\n  requires: [TASK-003]\n"))
+                _write(root, ".spec/tasks/TASK-003.md", _task("TASK-003", "cancelled"))
+                id_index, stmt_index = _indexes(root)
+                result = te_mod.target_expansion("TASK-001", purpose, id_index, stmt_index)
+                self.assertEqual(result.errors, [])
+
+
+class TaskVerifyRequiresApplicabilityTests(unittest.TestCase):
+    """目的`verify`でTASKを起点にしたとき、コンテキストへ含めない起点の`requires`の閉包の文書（TASKを除く）にも、通常の適用可能性の
+    検査を行う（ADR-034の`Decision`の5番目の項目、ADR-029の`Decision`の4番目の項目、関係・トレースモデル §6.3）。"""
+
+    def _expand(self, files: dict[str, str], requires: str, root_status: str = "done"):
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            _write(root, ".spec/tasks/TASK-001.md",
+                   _task("TASK-001", root_status, f"relations:\n  requires: {requires}\n  addresses: [REQ-001:AC-01]\n"))
+            for path, content in files.items():
+                _write(root, path, content)
+            id_index, stmt_index = _indexes(root)
+            return te_mod.target_expansion("TASK-001", "verify", id_index, stmt_index)
+
+    def test_inapplicable_requires_target_blocks_verify(self):
+        cases = {
+            "draft": ({".spec/requirements/REQ-002.md": _req("REQ-002", status="draft")}, "[REQ-002]", "CTX-STATE-001"),
+            "outdated": ({".spec/technical/TECH-002.md": _tech("TECH-002", status="outdated")}, "[TECH-002]", "CTX-STATE-001"),
+            "superseded": ({".spec/requirements/REQ-002.md": _req("REQ-002"),
+                            ".spec/requirements/REQ-003.md": _req("REQ-003", extra_frontmatter="relations:\n  supersedes: [REQ-002]\n")},
+                           "[REQ-002]", "CTX-STATE-SUPERSEDED-001"),
+            "transitive": ({".spec/requirements/REQ-002.md": _req("REQ-002", extra_frontmatter="relations:\n  requires: [REQ-003]\n"),
+                            ".spec/requirements/REQ-003.md": _req("REQ-003", status="draft")}, "[REQ-002]", "CTX-STATE-001"),
+            "through-done-task": ({".spec/tasks/TASK-002.md": _task("TASK-002", "done", "relations:\n  requires: [REQ-005]\n"),
+                                   ".spec/requirements/REQ-005.md": _req("REQ-005", status="draft")}, "[TASK-002]", "CTX-STATE-001"),
+        }
+        for name, (files, requires, code) in cases.items():
+            with self.subTest(name):
+                result = self._expand(files, requires)
+                self.assertEqual([e["code"] for e in result.errors], [code])
+                self.assertEqual(result.errors[0]["resultStatus"], "blocked")
+
+    def test_applicable_requires_closure_passes_without_entering_the_context(self):
+        result = self._expand({".spec/requirements/REQ-002.md": _req("REQ-002")}, "[REQ-002]")
+        self.assertEqual(result.errors, [])
+        self.assertNotIn("REQ-002", result.context_documents)
+
+
 class TaskVerifyDependencyTests(unittest.TestCase):
     """目的`verify`でTASKを起点にした場合の、先行TASKの状態の検査（ADR-029 Decision 1、`verify` §4の手順2）。"""
 
