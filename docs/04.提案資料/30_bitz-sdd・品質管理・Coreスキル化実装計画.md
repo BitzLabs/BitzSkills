@@ -1147,3 +1147,19 @@ P1/P2への是正案は `evals/skills/routing/held-out-routing-remediation-plan.
 決定条件の意味比較を行う。費用を抑えるため既存9件を再利用候補へ固定し、3件だけ差し替える案を推薦する。
 9件の合格や12件すべての新規性は主張せず、来歴・新規性の対象を区別して最終12件を独立検分する。
 詳細記録の保存/親再監査を前提とする検討案であり、この文書で実装・新収集・有料評価は開始しない。
+
+ユーザーの是正案承認後、独立記録6件の新規保存を再開した。親の全hash/権限と既存7件不変、
+報告12件と原集合12件の対応、指摘3件と原負例3件の対応を確認した。
+原native bytes欠落は保持し、会話中のtool出力の転記と保存時のnative source guardを区別する。
+機械監査/旧確定source13の親再実行は各exit0。元の意味的指摘は保存済み独立報告を採用し、
+元native bytesの再監査完了は主張しない。保存継続SOL1、追加ケース検分/生成/一次/retryは0。
+9件の再利用候補と3件の差替対象の来歴を非公開のcollection-04/retention.jsonへ新規保存してhashを固定した。
+証拠は `evals/skills/results/2026-10-06-held-out-review-restored/report.md`。
+
+新監査source `ba78c67a` は6スキル全体の適用判定/期待経路/停止、固定本文path/hash/実在anchor、
+再利用9件のcaseId以外全fields同一、旧receipt/来歴束縛、新規3件の全除外集合と全3組比較を検査する。
+公開側は集計/hashだけとし、JSON重複key・根拠の空欄・読取り途中のcase/candidate改変も拒否する。
+旧監査/旧集合と製品本文は変更しない。親の新16回帰・全246件はOK/exit0。
+collection0.4の契約source `f760649f` は新規3/再利用9とSOL準備独立/作成/集合独立各1、一次0/retry0を固定した。
+親nativeでsource12ファイル/input7/candidate71資源/retention hashを照合し、source guardはexit0。
+準備独立検分を進めており、新ケース/evidenceの保存はまだ0。原不通過と全Gate未認定を保持する。
