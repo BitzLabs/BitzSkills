@@ -301,4 +301,7 @@ TECH-005は、`approved`の有効な後継TECH-009から`supersedes`されてい
   141のTECH-007とTECH-009の並びだけである。コンテキストのハッシュ値と診断は一致する（陰性対照）。
 - 距離そのものはJSONの出力に現れず、並び順と提示形式を通じてだけ固定する。バイト数の上限（`context` §8）への影響は固定しない。
 - 置換済みの起点の後継の`requires`や、後継が複数ある場合（`CTX-STATE-SUPERSEDED-002`）は、このfixtureの対象外とする。
+- 目的`implement`で加える状態`open`のTASKの距離（`addresses`する対象規範文を所有する文書の距離+1）と、状態`draft`の文書（役割`advisory`）の距離
+  （閉包内の参照先のうち最も近いものの距離+1）は、このfixtureでは固定せず、Coreの単体試験（`tests/bitz-core/test_targetexpand.py`の
+  `ShortestDistanceTests`）だけで確かめる。
 - 期待値はCoreを実行せずに決めた。Coreとの一致の確認は、期待値を決めた後に行い、Gate Bで判定する。
