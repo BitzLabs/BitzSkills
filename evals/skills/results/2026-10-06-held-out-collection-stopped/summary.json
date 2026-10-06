@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "status": "stopped_on_independent_findings",
+  "collectionSource": "93463e2e739f43522e9266ccbcd0fbe9f9fde1ff",
+  "auditSource": "4d88a356726fc98d3f39ec55f48bc8a0abb1e87e",
+  "candidateSource": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+  "setVersion": "production-routing-held-out-0.1.0",
+  "caseCount": 12,
+  "sha256": "b59681809301ea36a7b56f7b3f3d95d167776494176ea614d8d9577f21f995b7",
+  "mechanicalChecks": "passed",
+  "independentReview": "failed",
+  "severityCounts": {
+    "P1": 0,
+    "P2": 2
+  },
+  "findingTypes": [
+    "semantic-public-overlap"
+  ],
+  "budget": {
+    "creatorSol": 1,
+    "independentReviewerSol": 1,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0,
+    "unusedSlots": 0
+  },
+  "usage": "unknown",
+  "costUsd": null,
+  "certifiesSkillGate": false,
+  "privateArtifacts": {
+    "cases.json": "b59681809301ea36a7b56f7b3f3d95d167776494176ea614d8d9577f21f995b7",
+    "creation-notes.md": "d27e9631e77d38edfd03ce733892551f9a2c37a0aa794a4fc0309daaf43d6044",
+    "creation-receipt.json": "e8221dd2c615c86a1df2df1173e3a5185000daa0c912ddd2cab0037775b09d09",
+    "independent-audit.json": "b6d633d78bbcab7f1378aeadcb8c39b827fdeb86b90f229da6cca7287250fe7e",
+    "independent-audit.log": "ca086ef466314916fe018f8dae092521d7cc3236bcc0b5ba5750045186bcd3e5",
+    "independent-receipt.json": "42613bce666a1861a7d2ad98a8c5df832f829b60caf158bf0ac4c411d3e0ac29",
+    "independent-review.md": "31c1a61564df482c10f8e76925a981f87a05ec85cef11718521b2c5dde76b4c1"
+  },
+  "publicLogs": {
+    "parent-audit.json": "b6d633d78bbcab7f1378aeadcb8c39b827fdeb86b90f229da6cca7287250fe7e",
+    "parent-unit.log": "d036124f91dd91e2240070b308136f6eabbde2ce30ea07b5776f73c9ae3117ee"
+  },
+  "limits": [
+    "公開ケースとの意味重複で停止した集合は一次評価に使用しない",
+    "ケース本文・期待値・生ログは非公開領域に保存し公開しない",
+    "ケースを製品候補の最適化へ戻さない",
+    "原失敗を成功へ置換しない"
+  ]
+}

@@ -20,3 +20,16 @@ python -B evals/skills/routing/prepare.py --ref <確定commit> --output <repo>/.
 
 [保持ケースの保存計画](held-out-storage-plan.md)の外部保存領域は明示承認後だけ作成する。
 公開資源snapshotの所在と、非公開ケース/軌跡の所在は区別する。
+
+2026-10-06に保存計画の外部領域への継続的な新規保存が明示承認された。
+承認範囲と初期有限条件は `held-out-collection.json` に固定した。
+`audit_held_out.py` は指定領域の集合を読み、件数・hash・集計だけを出力する。
+スキーマ診断に非公開本文が含まれる場合も、例外の文字列やtracebackを出さない。
+
+```text
+python -B evals/skills/routing/audit_held_out.py --cases /home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/cases.json
+```
+
+初期集合12件は機械検査を通過したが、独立検分で公開ケースとの意味重複P2が2件あり停止した。
+当該集合で一次評価を行わず、原ケース・失敗記録を非公開で保持する。
+[停止結果](../results/2026-10-06-held-out-collection-stopped/report.md)を後続成功へ置換しない。
