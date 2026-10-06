@@ -41,6 +41,7 @@ class TargetExpansionResult:
     #: 計算に使う。
     document_distance: dict[str, int] = field(default_factory=dict)
     #: §6.1「6.」で役割`advisory`として含めた、閉包内の文書を`refines`する、状態`draft`の文書の``doc_id``の集合。
+    #: 目的`interpret`のときだけ空でない（§6.1の末尾）。
     draft_advisory: set[str] = field(default_factory=set)
     #: 目的が`implement`または`verify`のときの状態違反（§10「状態と閉包」）。空でなければ閉包を完全解決の不成立とする。
     errors: list[dict] = field(default_factory=list)
@@ -205,9 +206,16 @@ def _shortest_distances(owning_id: str, preds: dict[str, set[str]], fallback: di
 
 
 def _interpret_closure(
-    owning_id: str, id_index: dict[str, DocEntry], statement_index: dict[str, dict]
+    owning_id: str,
+    id_index: dict[str, DocEntry],
+    statement_index: dict[str, dict],
+    *,
+    include_draft: bool = True,
 ) -> tuple[list[str], dict[str, list[tuple[str, str]]], dict[str, int], set[str], dict[str, set[str]]]:
     """`interpret`の完全閉包を計算する（§6.1、Step 2 フェーズCから移設。閉包と到達したエッジの挙動は変更しない）。
+
+    ``include_draft``が偽のときは§6.1の6.（`refines`する状態`draft`の文書）を適用しない。目的`implement`と`verify`は
+    `draft`の文書を閉包へ含めない（§6.1の末尾）。
 
     戻り値は``(context_order, document_edges, document_distance, draft_advisory, preds)``。``preds``は
     ``doc_id -> {到達元のdoc_id, ...}``で、距離は閉包を作った後に``preds``から最短の段数として求める（§7の6.）。
@@ -274,7 +282,7 @@ def _interpret_closure(
     # 6. 閉包内の文書を`refines`する、状態`draft`の文書を役割`advisory`として含める（`requires`・逆方向の`refines`は辿らない）。
     draft_advisory: set[str] = set()
     closure_docs = set(context_set)
-    for doc_id in _draft_refinements(context_set, id_index, statement_index):
+    for doc_id in (_draft_refinements(context_set, id_index, statement_index) if include_draft else []):
         entry = id_index[doc_id]
         targets = _refines_targets(entry, id_index, statement_index)
         for target_id in targets:
@@ -305,7 +313,9 @@ def target_expansion(
         return None
     root_entry = id_index[owning_id]
 
-    context_order, edges, distance, draft_advisory, preds = _interpret_closure(owning_id, id_index, statement_index)
+    context_order, edges, distance, draft_advisory, preds = _interpret_closure(
+        owning_id, id_index, statement_index, include_draft=purpose == "interpret"
+    )
 
     def _owner(ref: str) -> str | None:
         return _resolve_ref(ref, id_index, statement_index)[1]
@@ -460,7 +470,9 @@ def target_expansion(
         elif purpose == "verify":
             dep_ids |= addressed_owning
             for target_doc_id in addressed_owning:
-                sub_order, _e, _d, _da, _p = _interpret_closure(target_doc_id, id_index, statement_index)
+                sub_order, _e, _d, _da, _p = _interpret_closure(
+                    target_doc_id, id_index, statement_index, include_draft=False
+                )
                 dep_ids |= set(sub_order)
         for dep_id in sorted(dep_ids):
             if dep_id == owning_id:
@@ -507,7 +519,7 @@ def target_expansion(
 
         for target_doc_id in addressed_owning_ids:
             sub_order, sub_edges, sub_distance, sub_draft, sub_preds = _interpret_closure(
-                target_doc_id, id_index, statement_index
+                target_doc_id, id_index, statement_index, include_draft=False
             )
             for doc_id, sources in sub_preds.items():
                 merged_preds.setdefault(doc_id, set()).update(sources)
