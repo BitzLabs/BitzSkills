@@ -425,6 +425,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-049` | 提示の絶対上限超過 | context | failed／1 | `CTX-PROJECTION-LIMIT-001` |
 | `SINGLE-050` | 起点ID不在 | context | failed／1 | `CTX-ROOT-MISSING-001` |
 | `SINGLE-051` | 先行TASKが未`done` | context --purpose implement | blocked／2 | `CTX-TASK-DEPENDENCY-001` |
+| `SINGLE-144` | 先行TASKが`cancelled` | context --purpose implement | blocked／2 | `CTX-TASK-DEPENDENCY-001`だけを返し、同じ原因の`CTX-STATE-001`を重ねない |
 | `SINGLE-052-01` | 起点が置換済み | context | blocked／2 | `CTX-STATE-SUPERSEDED-001`、後継へ差替えない |
 | `SINGLE-052-02` | 依存先が置換済み | context | blocked／2 | `CTX-STATE-SUPERSEDED-001`、後継へ差替えない |
 | `SINGLE-053` | 有効な後継が複数 | context | failed／1 | `CTX-STATE-SUPERSEDED-002` |
@@ -451,6 +452,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-137` | 先行TASKが未完了（`open`）のTASK起点 | verify | blocked／2 | `CTX-TASK-DEPENDENCY-001`、`contextDigest: null`、`bindingRefs: []`、テストを開始しない |
 | `SINGLE-138` | 先行TASKがすべて`done`のTASK起点 | verify | passed／0 | `CTX-TASK-DEPENDENCY-001`と`CTX-STATE-001`を返さない、先行TASKとその`addresses`の参照先を対象に加えない |
 | `SINGLE-143` | `open`のTASK起点で、TASKが`addresses`するREQ-001を状態`draft`のTECH-005が文書単位で`refines`する（REQ-001とTECH-005のテスト対応はどちらもREQ-001:AC-01を`covers`する） | verify | passed／0 | TECH-005を閉包へ含めず、その状態を検査しないので`CTX-STATE-001`を返さない。テストのコマンドはREQ-001のテスト対応だけで、TECH-005のテストを実行しない |
+| `SINGLE-146` | `done`のTASK起点が、状態`draft`のREQ-002を`requires`する（TASKが`addresses`するREQ-001は`approved`でテスト対応を持つ） | verify | blocked／2 | REQ-002の`CTX-STATE-001`が検証対象の`diagnostics`に1件、`contextDigest: null`、`bindingRefs: []`、テストを開始しない。`requires`の閉包はコンテキストへ含めないが、適用可能性は検査する |
 | `SINGLE-069-01` | 成功コマンドの標準出力／標準エラー出力が64 KiBを超える | verify | passed／0 | パイプを止めず、伏せ字化したUTF-8末尾65,536バイトと切り詰めフラグを保持 |
 | `SINGLE-069-02` | 非0終了コマンドの標準出力／標準エラー出力が64 KiBを超える | verify | failed／1 | パイプを止めず、伏せ字化したUTF-8末尾65,536バイトと切り詰めフラグを保持 |
 
@@ -566,6 +568,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-109` | 規範文起点と同じ文書のほかの規範文 | context --purpose implement | passed／0 | 起点に指定した規範文と具体化文書は対象規範文、同じ文書のほかの規範文は隣接規範文 |
 | `SINGLE-110` | TASKの`addresses`先と`requires`先のTASK | context --purpose verify | passed／0 | 自身の`addresses`先だけが対象規範文、`requires`先のTASKとその`addresses`先をコンテキスト文書へ含めない |
 | `SINGLE-134` | 先行TASKがすべて`done`のTASKが、テスト対応のない`MUST`を`addresses`する | context --purpose implement | passed_with_warnings／0 | `CTX-STATE-001`と`CTX-TASK-DEPENDENCY-001`を返さない。先行TASKは役割`work`でコンテキストへ含め、対象規範文は対応済み・未テストで、`CTX-COVERAGE-TEST-001`が警告1件 |
+| `SINGLE-145` | 直接の先行TASKは`done`で、そのTASKが`requires`するTASKが`cancelled`（TASK-001が`requires`でTASK-002、TASK-002が`requires`でTASK-003。TASK-001はテスト対応のない`MUST`を`addresses`する） | context --purpose implement | passed_with_warnings／0 | `CTX-STATE-001`と`CTX-TASK-DEPENDENCY-001`を返さない（推移的に到達したTASKの状態は検査しない）。TASK-002とTASK-003は`requires`の閉包として役割`work`で含め、並びはTASK-001、REQ-001、TASK-002、TASK-003。`CTX-COVERAGE-TEST-001`が警告1件 |
 | `SINGLE-135` | 起点の`refines`の参照先に、`requires`の鎖でも到達する（REQ-001が`requires`でREQ-002、`refines`でREQ-003、REQ-002が`requires`でREQ-003） | context --purpose implement | passed_with_warnings／0 | REQ-003は役割`refinement`（役割の表の上から最初に該当する行）で、その規範文は制約台帳にない。提示形式`normative`にせず`full`で提示し、`MUST`の本文がコンテキスト一式に現れる。`CTX-COVERAGE-TASK-001`が警告1件 |
 | `SINGLE-136` | 文書単位で具体化した距離2の文書（REQ-001をTECH-002が、TECH-002をTECH-003が文書単位で`refines`する） | context --purpose interpret | passed／0 | 対象規範文と制約台帳が空なので、距離2のTECH-003は役割`refinement`でも`normative`にせず`full`で提示し、`MUST`の本文がコンテキスト一式に現れる |
 | `SINGLE-139` | 起点の`refines`の参照先に、`requires`の鎖より短い経路で到達する（REQ-001が`requires`でREQ-003、`refines`でREQ-002、REQ-003が`requires`でREQ-002） | context --purpose interpret | passed／0 | REQ-002とREQ-003はどちらも距離1（最短の段数）で、文書の並びはREQ-001、REQ-002、REQ-003。REQ-002は役割`refinement`、REQ-003は役割`requirement`で、どちらも`full` |

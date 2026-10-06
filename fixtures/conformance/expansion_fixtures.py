@@ -1,6 +1,6 @@
 """共通の対象展開と`advisory`の提示を固定するfixture（Coreの公開操作は実行しない）。
 
-matrix §6.11の`SINGLE-106-03`、`SINGLE-106-06`〜`07`と§6.12の`SINGLE-107`〜`110`、`113`、`134`〜`136`、`139`〜`143`を扱う。
+matrix §6.11の`SINGLE-106-03`、`SINGLE-106-06`〜`07`と§6.12の`SINGLE-107`〜`110`、`113`、`134`〜`136`、`139`〜`143`、`145`を扱う。
 `context`の期待値は4つの集合（rootDocuments、contextDocuments、targetStatements、adjacentStatements）を
 `roots`、`documents[]`、制約台帳、`coverage.adjacent`として完全比較し、同じ起点の`verify`は
 `context`と同じ対象規範文の集合を返すことを確認する。
@@ -187,6 +187,28 @@ def corpus_done_prerequisite():
                relations={"requires": ["TASK-002"], "addresses": ["REQ-001:AC-01"]}), []),
         document(".spec/tasks/TASK-002.md", task("TASK-002", "完了済みの先行作業", "done", ""),
                  fm("TASK-002", "完了済みの先行作業", "done"), []),
+    ]
+
+
+def corpus_cancelled_transitive_prerequisite():
+    """145: open TASK-001が、done TASK-002をrequiresし、TASK-002がcancelled TASK-003をrequiresする。
+    TASK-001は、テスト対応のないREQ-001:AC-01をaddressesする。起点のTASKが直接requiresする先行TASK（TASK-002）はdoneなので、
+    目的`implement`の起点は止まらない。TASK-003は`requires`の閉包で推移的に到達するだけで、その状態は検査しない
+    （関係・トレースモデル §6.2、ADR-029、ADR-036）。"""
+    only = [("REQ-001:AC-01", "入力を検証する")]
+    return [
+        document(".spec/requirements/REQ-001.md", requirement("REQ-001", "テスト対応のない対象要求", only, verification="テスト対応は宣言しない。"),
+                 fm("REQ-001", "テスト対応のない対象要求"), only),
+        document(".spec/tasks/TASK-001.md", task(
+            "TASK-001", "対象句の実装", "open",
+            "relations:\n  requires: [TASK-002]\n  addresses: [REQ-001:AC-01]\n"),
+            fm("TASK-001", "対象句の実装", "open",
+               relations={"requires": ["TASK-002"], "addresses": ["REQ-001:AC-01"]}), []),
+        document(".spec/tasks/TASK-002.md", task(
+            "TASK-002", "完了済みの先行作業", "done", "relations:\n  requires: [TASK-003]\n"),
+            fm("TASK-002", "完了済みの先行作業", "done", relations={"requires": ["TASK-003"]}), []),
+        document(".spec/tasks/TASK-003.md", task("TASK-003", "取消済みの先行作業", "cancelled", ""),
+                 fm("TASK-003", "取消済みの先行作業", "cancelled"), []),
     ]
 
 
@@ -417,6 +439,8 @@ CASES = {
                    "implementでは、refinesする状態draftの文書をadvisoryとしても閉包へ含めず、そのテスト対応を数えない"),
     "SINGLE-143": (corpus_draft_excluded_task, ["verify", "TASK-001", "--format", "json"],
                    "TASK起点のverifyは、refinesする状態draftの文書を閉包へ含めず、状態を検査しない"),
+    "SINGLE-145": (corpus_cancelled_transitive_prerequisite, ["context", "TASK-001", "--purpose", "implement", "--format", "json"],
+                   "implementの起点TASKは、推移的に到達した先行TASKがcancelledでも、直接の先行TASKがdoneなら状態を検査せず止まらない"),
     "SINGLE-113": (corpus_refinement, ["verify", "REQ-001:AC-01", "REQ-001", "REQ-001:AC-01", "--format", "json"],
                    "文書IDと同文書のstatement IDを重複指定してもtargetとbindingを重複排除する"),
     "SINGLE-106-06": (corpus_distance, ["context", "REQ-001", "--purpose", "verify", "--format", "json"],
@@ -466,6 +490,27 @@ EXPANSIONS = {
                    "documents": [("TASK-001", "root", "full", ["root"]),
                                  ("REQ-001", "requirement", "full", ["addresses:TASK-001"]),
                                  ("TASK-002", "work", "full", ["requires:TASK-001"])],
+                   "ledger": ["REQ-001:AC-01"], "tested": [], "addressed": ["REQ-001:AC-01"],
+                   "adjacent": [], "advisory": [],
+                   "diagnostics": [{"code": "CTX-COVERAGE-TEST-001", "severity": "warning",
+                                    "resultStatus": "passed_with_warnings",
+                                    "summary": "MUST REQ-001:AC-01がtestされていません",
+                                    "source": {"kind": "file", "workspaceId": "root",
+                                               "path": ".spec/requirements/REQ-001.md"}}]},
+    # 145は、起点TASK-001（距離0）が`requires`でdoneのTASK-002、TASK-002が`requires`でcancelledのTASK-003を参照する。
+    # 検査する先行TASKは起点が直接`requires`するTASK-002だけで、`requires`の閉包で推移的に到達したTASK-003の状態は
+    # 検査しない（関係・トレースモデル §6.2、ADR-029、ADR-036）ので、`CTX-STATE-001`も`CTX-TASK-DEPENDENCY-001`も返さない。
+    # 閉包は起点の`addresses`と`requires`の閉包なので（§6.2）、REQ-001（`addresses`、距離1）、TASK-002（`requires`、距離1）、
+    # TASK-003（TASK-002の`requires`、距離2）が入る。距離、種別（REQ、TASK）、IDの順に、TASK-001、REQ-001、TASK-002、TASK-003。
+    # 起点以外のTASKは役割`work`（§7）で`full`（`context` §5）、`reachedBy`は宣言した文書のIDを使う（`context` §5）。
+    # 対象規範文は起点が`addresses`するREQ-001:AC-01だけ（§6.4の3.、4.）で、対応済み、閉包にテスト対応がないので未テストであり、
+    # 目的`implement`の`MUST`の未テストは警告になる（§8）。ハッシュ値の材料の`applicability`はTASK-003も`applicable`である
+    # （`advisory`は置換済みの起点と`refines`する状態`draft`の文書、`replacement`は置換済みの起点の後継に限る。正規化仕様 §3.1）。
+    "SINGLE-145": {"purpose": "implement", "root": "TASK-001", "status": "passed_with_warnings",
+                   "documents": [("TASK-001", "root", "full", ["root"]),
+                                 ("REQ-001", "requirement", "full", ["addresses:TASK-001"]),
+                                 ("TASK-002", "work", "full", ["requires:TASK-001"]),
+                                 ("TASK-003", "work", "full", ["requires:TASK-002"])],
                    "ledger": ["REQ-001:AC-01"], "tested": [], "addressed": ["REQ-001:AC-01"],
                    "adjacent": [], "advisory": [],
                    "diagnostics": [{"code": "CTX-COVERAGE-TEST-001", "severity": "warning",
@@ -795,6 +840,7 @@ LITERAL_SETS = {
                    ["REQ-001:AC-01", "TECH-002:AC-01"], ["REQ-001:AC-02"]),
     "SINGLE-110": (["TASK-001"], ["TASK-001", "REQ-001"], ["REQ-001:AC-01"], []),
     "SINGLE-134": (["TASK-001"], ["TASK-001", "REQ-001", "TASK-002"], ["REQ-001:AC-01"], []),
+    "SINGLE-145": (["TASK-001"], ["TASK-001", "REQ-001", "TASK-002", "TASK-003"], ["REQ-001:AC-01"], []),
     "SINGLE-135": (["REQ-001"], ["REQ-001", "REQ-002", "REQ-003"], ["REQ-001:AC-01"], []),
     "SINGLE-136": (["REQ-001"], ["REQ-001", "TECH-002", "TECH-003"], [], []),
     # 並びは距離（最短の段数）、種別、IDの順であり、139はREQ-002とREQ-003が距離1、141はTECH-007とTECH-009が距離1で、
@@ -885,6 +931,13 @@ def check_contract(identifier, result, root):
                 raise ValueError("先行TASKがすべて`done`のとき、診断は未テストの`MUST`の警告1件だけである必要があります")
             if {d["id"]: d["role"] for d in result["documents"]}.get("TASK-002") != "work":
                 raise ValueError("目的`implement`の起点TASKの`requires`の先行TASKは役割`work`でコンテキストへ含める必要があります")
+        if identifier == "SINGLE-145":
+            codes = [d["code"] for d in result["diagnostics"]]
+            if codes != ["CTX-COVERAGE-TEST-001"] or result["status"] != "passed_with_warnings":
+                raise ValueError("直接の先行TASKが`done`のとき、推移的に到達した`cancelled`のTASKは診断にせず、診断は未テストの`MUST`の警告1件だけである必要があります")
+            roles = {d["id"]: (d["role"], d["status"], d["projection"]) for d in result["documents"]}
+            if roles.get("TASK-002") != ("work", "done", "full") or roles.get("TASK-003") != ("work", "cancelled", "full"):
+                raise ValueError("`requires`の閉包のTASKは、役割`work`、提示形式`full`でコンテキストへ含める必要があります")
         # 提示形式`normative`は本文を省くので、所有する規範文がすべて制約台帳にある文書だけに許す
         # （`bitz context`仕様 §5、ADR-014の`Decision`の4番目の項目）。
         ledger_ids = {s["id"] for s in result["constraintLedger"]["statements"]}

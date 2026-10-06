@@ -11,11 +11,13 @@ from .harness import git, setup
 from .initial_fixtures import CONFIGS, observe, compare_state
 from .trace_fixtures import TECH, TECH_PATH
 from .git_fixtures import TASK_PATH
+from .expansion_fixtures import requirement
 
 HERE = Path(__file__).resolve().parent
 CASES = {
     "SINGLE-050": ("TECH-999", "interpret", "failed", "CTX-ROOT-MISSING-001", "起点TECH-999が存在しません"),
     "SINGLE-051": ("TASK-001", "implement", "blocked", "CTX-TASK-DEPENDENCY-001", "先行TASK-002が完了していません"),
+    "SINGLE-144": ("TASK-001", "implement", "blocked", "CTX-TASK-DEPENDENCY-001", "先行TASK-002が完了していません"),
     "SINGLE-052-01": ("TECH-001", "implement", "blocked", "CTX-STATE-SUPERSEDED-001", "起点TECH-001はTECH-002に置換されています"),
     "SINGLE-052-02": ("TECH-003", "implement", "blocked", "CTX-STATE-SUPERSEDED-001", "依存先TECH-001はTECH-002に置換されています"),
     "SINGLE-053": ("TECH-001", "implement", "failed", "CTX-STATE-SUPERSEDED-002", "TECH-001の有効な後継が複数存在します"),
@@ -24,7 +26,27 @@ CASES = {
 TASK = "---\nid: TASK-001\ntitle: 先行作業の確認\nstatus: open\n---\n\n# TASK-001 先行作業の確認\n\n## Objective\n\n先行作業の完了を確認する。\n"
 
 
+# `SINGLE-144`: 起点のTASK-001の先行TASK-002が`cancelled`。起点が`addresses`するREQ-001（`approved`、`MUST`が1件）を置く。
+# `SINGLE-051`と同じ単一の原因で、TASK-002の状態が`open`ではなく`cancelled`であることだけが異なる。
+CANCELLED_PREREQUISITE_REQ = requirement(
+    "REQ-001", "先行TASKが取消済みの起点の対象要求", [("REQ-001:AC-01", "入力を検証する")],
+    verification="テスト対応は宣言しない。")
+CANCELLED_PREREQUISITE_REQ_PATH = ".spec/requirements/REQ-001.md"
+
+
 def reviewed_documents(identifier):
+    if identifier == "SINGLE-144":
+        head, body = CANCELLED_PREREQUISITE_REQ
+        root = TASK.replace("先行作業の確認", "取消済みの先行作業を持つ作業").replace(
+            "status: open\n---", "status: open\nrelations:\n  requires: [TASK-002]\n  addresses: [REQ-001:AC-01]\n---", 1)
+        prerequisite = TASK.replace("TASK-001", "TASK-002").replace("status: open", "status: cancelled")
+        return {
+            TASK_PATH: (root, {"id": "TASK-001", "title": "取消済みの先行作業を持つ作業", "status": "open",
+                               "relations": {"requires": ["TASK-002"], "addresses": ["REQ-001:AC-01"]}}),
+            ".spec/tasks/TASK-002.md": (prerequisite, {"id": "TASK-002", "title": "先行作業の確認", "status": "cancelled"}),
+            CANCELLED_PREREQUISITE_REQ_PATH: (head + "\n" + body, {"id": "REQ-001", "title": "先行TASKが取消済みの起点の対象要求",
+                                                                  "status": "approved"}),
+        }
     # YAMLと値の組を固定する。関係の意味はレビュー済みで、ここでは推測しない。
     if identifier == "SINGLE-051":
         root = TASK.replace("status: open\n---", "status: open\nrelations:\n  requires: [TASK-002]\n---", 1)
@@ -59,7 +81,7 @@ def reviewed_result(identifier):
     root, purpose, status, code, summary = CASES[identifier]
     if identifier in {"SINGLE-050", "SINGLE-127-13"}:
         source = {"kind": "invocation", "argument": "TECH-999"}
-    elif identifier == "SINGLE-051":
+    elif identifier in {"SINGLE-051", "SINGLE-144"}:
         source = {"kind": "file", "workspaceId": "root", "path": TASK_PATH, "key": "relations.requires"}
     else:
         source = {"kind": "file", "workspaceId": "root", "path": TECH_PATH}
@@ -70,6 +92,17 @@ def reviewed_result(identifier):
         "coverage": {**{modality: {key: [] for key in ("total", "addressed", "tested", "unaddressed", "untested")}
                        for modality in ("must", "should", "may")}, "adjacent": []},
         "durationMs": 0, "diagnostics": [{"code": code, "severity": "error", "resultStatus": status, "summary": summary, "source": source}]}
+
+
+def check_cancelled_prerequisite(result):
+    """`SINGLE-144`: 先行TASKの`cancelled`は、同じ原因の`CTX-STATE-001`を重ねず、`CTX-TASK-DEPENDENCY-001`だけで示す
+    （診断レジストリの主診断の規則、ADR-029、ADR-036、関係・トレースモデル §6.2）。"""
+    codes = [item["code"] for item in result["diagnostics"]]
+    if codes != ["CTX-TASK-DEPENDENCY-001"]:
+        raise ValueError("先行TASKが`cancelled`の起点は、`CTX-TASK-DEPENDENCY-001`だけを返す必要があります")
+    source = result["diagnostics"][0]["source"]
+    if source.get("path") != TASK_PATH or source.get("key") != "relations.requires":
+        raise ValueError("診断の発生元は起点のTASKの`relations.requires`である必要があります")
 
 
 def check_unborn(repository, identifier):
@@ -107,12 +140,15 @@ def validate(root=HERE, identifiers=None):
                 validators[name].validate(value)
             if manifest != reviewed_manifest(identifier) or result != reviewed_result(identifier):
                 raise ValueError("起動条件または完全結果がレビュー済みの期待値と異なります")
+            if identifier == "SINGLE-144":
+                check_cancelled_prerequisite(result)
             inputs = reviewed_inputs(identifier)
             files = {p.relative_to(fixture / "repo").as_posix(): p for p in (fixture / "repo").rglob("*") if p.is_file() or p.is_symlink()}
             if set(files) != set(inputs) or any(p.is_symlink() or p.read_bytes() != inputs[name] for name, p in files.items()):
                 raise ValueError("入力がレビュー済みの単一原因と異なります")
             for path, (_, fm) in reviewed_documents(identifier).items():
-                kind = "taskFrontmatter" if path.startswith(".spec/tasks/") else "techFrontmatter"
+                kind = ("taskFrontmatter" if path.startswith(".spec/tasks/")
+                        else "reqFrontmatter" if path.startswith(".spec/requirements/") else "techFrontmatter")
                 Draft202012Validator({"$ref": "#/$defs/" + kind, "$defs": schema["$defs"]}).validate(fm)
             if effects["before"] != effects["after"]:
                 raise ValueError("読取り専用の期待値が書込みを許しています")

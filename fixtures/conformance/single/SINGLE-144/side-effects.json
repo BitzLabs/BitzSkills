@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a689a1d633b3b353f3e367c3e05d4fd72f43f52cb21f5dea339623b6a831e31d"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "f8c3545d72ea19abfde419db1bcae57a1ea2ac0c6bed04c5cdf9de99155eb463"
+      },
+      ".spec/tasks/TASK-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8781e8e1a093ebe0cc9c2bd6f4dc426362137d7ab464197e95ebc11622dc8cf9"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/requirements/REQ-001.md\n?? .spec/tasks/TASK-001.md\n?? .spec/tasks/TASK-002.md\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "a689a1d633b3b353f3e367c3e05d4fd72f43f52cb21f5dea339623b6a831e31d"
+      },
+      ".spec/tasks": {
+        "kind": "directory"
+      },
+      ".spec/tasks/TASK-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "f8c3545d72ea19abfde419db1bcae57a1ea2ac0c6bed04c5cdf9de99155eb463"
+      },
+      ".spec/tasks/TASK-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "8781e8e1a093ebe0cc9c2bd6f4dc426362137d7ab464197e95ebc11622dc8cf9"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/requirements/REQ-001.md\n?? .spec/tasks/TASK-001.md\n?? .spec/tasks/TASK-002.md\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}

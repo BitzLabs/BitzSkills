@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "blocked",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "TASK-001",
+      "status": "blocked",
+      "contextDigest": null,
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": [
+        {
+          "code": "CTX-STATE-001",
+          "severity": "error",
+          "resultStatus": "blocked",
+          "summary": "REQ-002は現在のpurposeに適用できません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "root",
+            "path": ".spec/requirements/REQ-002.md"
+          }
+        }
+      ]
+    }
+  ],
+  "revision": null,
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": []
+}

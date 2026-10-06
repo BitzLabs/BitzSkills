@@ -155,6 +155,24 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-134", "manifest.json", lambda v: v["expect"].update(status="passed")),
             ("SINGLE-134", "expected/context.json",
              lambda v: v["coverage"]["must"].update(tested=["REQ-001:AC-01"], untested=[])),
+            # 目的`implement`の起点TASKは、直接の先行TASKが`done`なら、`requires`の閉包で推移的に到達した`cancelled`のTASKの
+            # 状態を検査しない（関係・トレースモデル §6.2）。推移的なTASKを閉包から落とさず、`CTX-STATE-001`で`blocked`にしない。
+            ("SINGLE-145", "expected/context.json", lambda v: v["documents"].pop()),
+            ("SINGLE-145", "expected/context.json", lambda v: v["documents"].pop(2)),
+            ("SINGLE-145", "expected/context.json", document(3, role="advisory")),
+            ("SINGLE-145", "expected/context.json", document(3, status="done")),
+            ("SINGLE-145", "expected/context.json", document(3, reachedBy=["requires:TASK-001"])),
+            ("SINGLE-145", "expected/context.json", swap_documents(2, 3)),
+            ("SINGLE-145", "expected/context.json",
+             lambda v: v["diagnostics"].append(dict(v["diagnostics"][0], code="CTX-STATE-001", severity="error",
+                                                    resultStatus="blocked"))),
+            ("SINGLE-145", "expected/context.json",
+             lambda v: v["diagnostics"].__setitem__(0, dict(v["diagnostics"][0], code="CTX-TASK-DEPENDENCY-001",
+                                                            severity="error", resultStatus="blocked"))),
+            ("SINGLE-145", "expected/context.json", lambda v: v.update(status="blocked")),
+            ("SINGLE-145", "expected/context.json", lambda v: v.update(status="passed")),
+            ("SINGLE-145", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+            ("SINGLE-145", "manifest.json", lambda v: v["expect"].update(status="passed")),
             # 制約台帳にない規範文を持つ具体化文書は、距離によらず提示形式`full`で提示し、`MUST`の本文を落とさない
             # （`bitz context`仕様 §5、ADR-014の`Decision`の4番目の項目）。`normative`への変更、役割の取り違え、
             # 対象規範文でない規範文の制約台帳への昇格を拒否する。
@@ -278,6 +296,38 @@ class AuditTests(unittest.TestCase):
                 mutate(value)
                 with self.assertRaises(ValueError):
                     expansion_fixtures.check_contract(identifier, value, audit.FIXTURES)
+
+    def test_expansion_contract_rejects_state_checks_of_transitive_tasks(self):
+        """完全比較とは別に、`check_contract`だけが、推移的に到達した`cancelled`のTASKの状態の診断と、その`blocked`、
+        閉包からの除外を拒否する（`SINGLE-145`、関係・トレースモデル §6.2）。"""
+        state = {"code": "CTX-STATE-001", "severity": "error", "resultStatus": "blocked",
+                 "summary": "TASK-003は現在のpurposeに適用できません",
+                 "source": {"kind": "file", "workspaceId": "root", "path": ".spec/tasks/TASK-003.md"}}
+        dependency = {"code": "CTX-TASK-DEPENDENCY-001", "severity": "error", "resultStatus": "blocked",
+                      "summary": "先行TASK-003が完了していません",
+                      "source": {"kind": "file", "workspaceId": "root", "path": ".spec/tasks/TASK-002.md",
+                                 "key": "relations.requires"}}
+
+        def replaced(diagnostic):
+            return lambda v: v.update(status="blocked", diagnostics=[diagnostic])
+
+        changes = [
+            lambda v: v["diagnostics"].append(state),
+            lambda v: v["diagnostics"].append(dependency),
+            replaced(state),
+            replaced(dependency),
+            lambda v: v.update(diagnostics=[]),
+            lambda v: v["documents"].pop(),
+            lambda v: v["documents"][3].update(role="advisory"),
+        ]
+        path = audit.FIXTURES / "single/SINGLE-145/expected/context.json"
+        for index, mutate in enumerate(changes):
+            with self.subTest(index=index):
+                value = json.loads(path.read_text())
+                expansion_fixtures.check_contract("SINGLE-145", value, audit.FIXTURES)
+                mutate(value)
+                with self.assertRaises(ValueError):
+                    expansion_fixtures.check_contract("SINGLE-145", value, audit.FIXTURES)
 
     def test_expansion_contract_rejects_draft_documents_in_implement_and_verify(self):
         """完全比較とは別に、`check_contract`だけが、目的`implement`と`verify`の結果に現れる、`refines`する
@@ -1768,7 +1818,7 @@ class AuditTests(unittest.TestCase):
     def test_verify_task_root_fixture(self):
         result = validate_verify_task_root()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], ["SINGLE-068", "SINGLE-137", "SINGLE-138"])
+        self.assertEqual(result["prepared"], ["SINGLE-068", "SINGLE-137", "SINGLE-138", "SINGLE-146"])
         self.assertEqual(result["core_execution"], "Not run")
 
     def test_done_task_root_is_reverifiable_and_cancelled_is_not(self):
@@ -1912,6 +1962,96 @@ class AuditTests(unittest.TestCase):
                 mutate(value)
                 path.write_text(json.dumps(value))
                 self.assertTrue(validate_verify_task_root(root, [identifier])["errors"])
+
+    def test_inapplicable_requires_closure_blocks_verify_of_a_task_root(self):
+        """関係・トレースモデル §6.3、ADR-034の`Decision`の5番目の項目: 目的`verify`でも、コンテキストへ含めない
+        起点の`requires`の閉包の文書（TASKを除く）の適用可能性を検査する。状態`draft`のREQ-002を`requires`する
+        状態`done`のTASKは、`CTX-STATE-001`の`blocked`になる（実装の確認事項C15）。"""
+        blocked = json.loads((audit.FIXTURES / "single/SINGLE-146/expected/verify.json").read_text())
+        verify_task_root_fixtures.check_inapplicable_closure(blocked)
+        target = blocked["targetResults"][0]
+        self.assertEqual((blocked["status"], target["contextDigest"], target["statements"], target["bindingRefs"],
+                          blocked["commands"], blocked["diagnostics"]), ("blocked", None, [], [], [], []))
+        self.assertEqual([(d["code"], d["source"]["path"]) for d in target["diagnostics"]],
+                         [("CTX-STATE-001", ".spec/requirements/REQ-002.md")])
+        inputs = verify_task_root_fixtures.reviewed_inputs("SINGLE-146")
+        task, _ = digest_crosscheck.split_document(inputs[verify_task_root_fixtures.TASK_PATH].decode())
+        inapplicable, _ = digest_crosscheck.split_document(inputs[verify_task_root_fixtures.INAPPLICABLE_PATH].decode())
+        self.assertEqual((task["status"], task["relations"]["requires"], inapplicable["status"]),
+                         ("done", ["REQ-002"], "draft"))
+        # `addresses`の参照先（REQ-001）は`approved`でテスト対応を持つので、`blocked`の原因はREQ-002だけである。
+        self.assertEqual(task["relations"]["addresses"], ["REQ-001:AC-01"])
+
+    def test_inapplicable_closure_audit_rejects_tampered_expectations(self):
+        # 起点の`requires`の閉包の文書が適用できない起点を、`passed`にする、診断を消す、診断を重ねる、別の診断へ置換する、
+        # テストを開始したことにする改変を、監査は拒否する。
+        def target(**changes):
+            return lambda v: v["targetResults"][0].update(**changes)
+
+        def add_diagnostic(**changes):
+            def mutate(v):
+                diagnostic = v["targetResults"][0]["diagnostics"][0]
+                v["targetResults"][0]["diagnostics"].append(dict(diagnostic, **changes))
+            return mutate
+
+        passed = json.loads((audit.FIXTURES / "single/SINGLE-138/expected/verify.json").read_text())
+        mutations = [
+            ("expected/verify.json", lambda v: v.update(status="passed")),
+            ("expected/verify.json", lambda v: v.update(status="failed")),
+            ("expected/verify.json", target(status="passed")),
+            ("expected/verify.json", target(diagnostics=[])),
+            ("expected/verify.json", lambda v: v["targetResults"][0]["diagnostics"][0].update(code="CTX-TASK-DEPENDENCY-001")),
+            ("expected/verify.json", lambda v: v["targetResults"][0]["diagnostics"][0].update(code="CTX-STATE-SUPERSEDED-001")),
+            ("expected/verify.json", add_diagnostic(code="CTX-STATE-001")),
+            ("expected/verify.json", add_diagnostic(code="CTX-TASK-DEPENDENCY-001")),
+            ("expected/verify.json", lambda v: v["targetResults"][0]["diagnostics"][0]["source"].update(
+                path=".spec/tasks/TASK-001.md")),
+            ("expected/verify.json", lambda v: v["targetResults"][0]["diagnostics"][0]["source"].update(
+                key="relations.requires")),
+            ("expected/verify.json", lambda v: v.update(diagnostics=[v["targetResults"][0]["diagnostics"][0]])),
+            ("expected/verify.json", target(contextDigest="sha256:" + "0" * 64)),
+            ("expected/verify.json", target(statements=["REQ-001:AC-01"])),
+            ("expected/verify.json", target(bindingRefs=["root::default"])),
+            ("expected/verify.json", lambda v: v["commands"].append(passed["commands"][0])),
+            ("manifest.json", lambda v: v["expect"].update(status="passed", exitCode=0)),
+            ("manifest.json", lambda v: v["expect"].update(exitCode=0)),
+        ]
+        for relative, mutate in mutations:
+            with self.subTest(relative=relative, mutation=mutations.index((relative, mutate))), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single/SINGLE-146"
+                shutil.copytree(audit.FIXTURES / "single/SINGLE-146", fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_verify_task_root(root, ["SINGLE-146"])["errors"])
+
+    def test_inapplicable_closure_audit_rejects_repaired_causes(self):
+        # 原因を入力側で直す（REQ-002を`approved`へ、`requires`を消す、TASKを`open`へ、`addresses`の参照先を`draft`へ）と、
+        # 期待値との組が成り立たなくなる。
+        mutations = [
+            (verify_task_root_fixtures.INAPPLICABLE_PATH, "status: draft", "status: approved"),
+            (verify_task_root_fixtures.INAPPLICABLE_PATH, "status: draft", "status: outdated"),
+            (verify_task_root_fixtures.TASK_PATH, "requires: [REQ-002]", "related: [REQ-002]"),
+            (verify_task_root_fixtures.TASK_PATH, "status: done", "status: open"),
+            (verify_task_root_fixtures.TASK_PATH, "status: done", "status: cancelled"),
+            (verify_task_root_fixtures.ADDRESSED_PATH, "status: approved", "status: draft"),
+        ]
+        for relative, before, after in mutations:
+            with self.subTest(relative=relative, after=after), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single/SINGLE-146"
+                shutil.copytree(audit.FIXTURES / "single/SINGLE-146", fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                path = fixture / "repo" / relative
+                self.assertIn(before, path.read_text())
+                path.write_text(path.read_text().replace(before, after))
+                self.assertTrue(validate_verify_task_root(root, ["SINGLE-146"])["errors"])
 
     def test_prerequisite_addresses_stays_out_of_the_obligation(self):
         """`verify` §3、関係・トレースモデル §6.4の4.: `requires`先のTASKの`addresses`の参照先は、起点の義務へ加えない。
@@ -2729,7 +2869,7 @@ class AuditTests(unittest.TestCase):
     def test_context_failure_fixtures(self):
         result = validate_context_failures()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], ["SINGLE-050", "SINGLE-051", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053", "SINGLE-127-13"])
+        self.assertEqual(result["prepared"], ["SINGLE-050", "SINGLE-051", "SINGLE-144", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053", "SINGLE-127-13"])
         self.assertEqual(result["core_execution"], "Not run")
 
     def test_context_failures_reject_partial_success_or_replacement(self):
@@ -2738,6 +2878,22 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-050", "expected/context.json", lambda v: v.update(roots=["TECH-001"])),
             ("SINGLE-051", "expected/context.json", lambda v: v.update(status="passed")),
             ("SINGLE-051", "expected/context.json", lambda v: v["diagnostics"][0].update(code="CTX-STATE-001")),
+            # 先行TASKが`cancelled`の起点は、`CTX-TASK-DEPENDENCY-001`だけを返す。同じ原因の`CTX-STATE-001`を重ねない
+            # （診断レジストリの主診断の規則）。診断の置換、追加、状態の改変、`blocked`の取消しを拒否する。
+            ("SINGLE-144", "expected/context.json", lambda v: v["diagnostics"][0].update(code="CTX-STATE-001")),
+            ("SINGLE-144", "expected/context.json", lambda v: v["diagnostics"].append(dict(
+                v["diagnostics"][0], code="CTX-STATE-001", summary="TASK-002は現在のpurposeに適用できません",
+                source={"kind": "file", "workspaceId": "root", "path": ".spec/tasks/TASK-002.md"}))),
+            ("SINGLE-144", "expected/context.json", lambda v: v["diagnostics"].insert(0, dict(
+                v["diagnostics"][0], code="CTX-STATE-001", summary="TASK-002は現在のpurposeに適用できません",
+                source={"kind": "file", "workspaceId": "root", "path": ".spec/tasks/TASK-002.md"}))),
+            ("SINGLE-144", "expected/context.json", lambda v: v.update(status="passed_with_warnings")),
+            ("SINGLE-144", "expected/context.json", lambda v: v.update(status="failed")),
+            ("SINGLE-144", "expected/context.json", lambda v: v.update(diagnostics=[])),
+            ("SINGLE-144", "expected/context.json", lambda v: v["diagnostics"][0]["source"].pop("key")),
+            ("SINGLE-144", "expected/context.json", lambda v: v["resolution"].update(complete=True)),
+            ("SINGLE-144", "manifest.json", lambda v: v["expect"].update(status="passed", exitCode=0)),
+            ("SINGLE-144", "manifest.json", lambda v: v["expect"].update(exitCode=1)),
             ("SINGLE-052-01", "expected/context.json", lambda v: v.update(roots=["TECH-002"])),
             ("SINGLE-052-01", "expected/context.json", lambda v: v.update(contextDigest="sha256:" + "0" * 64)),
             ("SINGLE-052-02", "expected/context.json", lambda v: v["resolution"].update(complete=True)),
@@ -2768,6 +2924,11 @@ class AuditTests(unittest.TestCase):
         mutations = [
             ("SINGLE-050", ".spec/technical/TECH-001.md", "TECH-001", "TECH-999"),
             ("SINGLE-051", ".spec/tasks/TASK-002.md", "status: open", "status: done"),
+            # 先行TASKの状態を`done`や`open`へ直す、先行TASKへの`requires`を消す、起点の`addresses`を消す入力は、期待値と組にならない。
+            ("SINGLE-144", ".spec/tasks/TASK-002.md", "status: cancelled", "status: done"),
+            ("SINGLE-144", ".spec/tasks/TASK-002.md", "status: cancelled", "status: open"),
+            ("SINGLE-144", ".spec/tasks/TASK-001.md", "requires: [TASK-002]", "related: [TASK-002]"),
+            ("SINGLE-144", ".spec/tasks/TASK-001.md", "  addresses: [REQ-001:AC-01]\n", ""),
             ("SINGLE-052-01", ".spec/technical/TECH-002.md", "supersedes:", "related:"),
             ("SINGLE-052-02", ".spec/technical/TECH-003.md", "requires:", "related:"),
             ("SINGLE-053", ".spec/technical/TECH-003.md", "status: approved", "status: draft"),
@@ -2784,7 +2945,7 @@ class AuditTests(unittest.TestCase):
                 self.assertTrue(validate_context_failures(root, [identifier])["errors"])
 
     def test_context_failure_git_state_rejects_staging_or_commit(self):
-        for identifier in ("SINGLE-050", "SINGLE-051", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053"):
+        for identifier in ("SINGLE-050", "SINGLE-051", "SINGLE-144", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053"):
             with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
                 repo = fixture_setup(audit.FIXTURES / "single" / identifier, context_failure_manifest(identifier), Path(temporary) / "repo")
                 check_context_unborn(repo, identifier)
