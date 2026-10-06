@@ -294,7 +294,7 @@ class AuditTests(unittest.TestCase):
         documents = load("SINGLE-141")
         documents["TECH-010"] = copy.deepcopy(documents["TECH-009"])
         documents["TECH-010"]["frontmatter"]["id"] = "TECH-010"
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "有効な後継が複数"):
             digest_crosscheck._closure(documents, "TECH-005", "interpret")
 
     def test_ordering_fixtures(self):
