@@ -60,5 +60,8 @@ python -B evals/skills/routing/audit_held_out.py --collection novelty --cases /h
 ```
 
 機械検査の通過は比較証拠の構造・束縛の確認で、`semanticNovelty=requires_independent_review`を返す。
-比較欄を埋めただけでは新規性を認定しない。生成前の準備独立1、生成1、ケース独立1の有限SOL枠を
-確定sourceに対して消費し、失敗なら停止する。一次0・retry0で、元の停止記録を保持する。
+比較欄を埋めただけでは新規性を認定しない。初回準備source `3d98bf72` は公開JSONの追加と
+公開46件の変化を拒否できず独立P2で停止した。旧準備枠1を消費済みとして保持し、
+是正コードの別確定refを `held-out-novelty-preparation-v0.2.1.json` の新準備独立1枠で検分する。
+公開入力のファイル一覧をケース読取り前に固定し、件数も照合する。生成1・ケース独立1の
+未消費枠は準備通過後だけ起動し、一次0・retry0で元の停止記録を保持する。

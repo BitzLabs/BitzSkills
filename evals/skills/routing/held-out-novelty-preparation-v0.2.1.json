@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "preparationVersion": "held-out-novelty-preparation-0.2.1",
+  "model": "gpt-6.1-sol",
+  "authorization": "evals/skills/sol-authorization.json",
+  "scope": "公開入力のファイル一覧と46件を固定した監査の独立再検分",
+  "previous": {
+    "sourceCommit": "3d98bf728498d6fa511cf53a454a587fc75be00a",
+    "status": "stopped_on_independent_p2",
+    "reviewSha256": "123875e060520635369c025e31020a339fdb21100109d733caed8754c684202f",
+    "consumedPreparationReviewerSol": 1
+  },
+  "sourcePolicy": "このcontract・collection-v0.2・監査CLI・schema・単体試験・READMEを含む別確定commitを起動前に固定する",
+  "budget": {
+    "independentReviewerSol": 1,
+    "creatorSol": 0,
+    "caseReviewerSol": 0,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0
+  },
+  "checks": [
+    "追加・欠落の公開JSONをケース読取り前に拒否する",
+    "固定公開入力のsymlinkとhash改変を拒否する",
+    "実公開件数をcontractの46と照合する",
+    "旧集合・候補・比較証拠のhash束縛とprivacyを維持する",
+    "旧9件1failureを再現し、是正後10件を実行する"
+  ],
+  "stopOn": [
+    "P1/P2",
+    "失敗",
+    "中断",
+    "条件不一致"
+  ],
+  "limits": [
+    "同条件の自動再試行ではなく、是正コードを別refで検分する",
+    "旧停止は保存し成功へ置換しない",
+    "生成とケース検分の未消費枠は準備通過後だけ使用できる",
+    "意味新規性・一次評価・Skill Gateを認定しない"
+  ]
+}

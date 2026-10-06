@@ -83,6 +83,8 @@ def audit_novelty(contract: dict, case_path: Path, cases: list) -> dict:
     if metadata["setVersion"] != excluded["setVersion"] or metadata["caseCount"] != excluded["caseCount"]:
         raise ValueError("excluded set identity")
     public = validate.load_cases()
+    if len(public) != contract["noveltyConditions"]["publicCases"]:
+        raise ValueError("public case denominator")
     if {c["caseId"] for c in cases} & {c["caseId"] for c in previous}:
         raise ValueError("excluded case identity collision")
     normalized = [normalized_input(c) for c in cases]
@@ -123,10 +125,17 @@ def audit(contract_path: Path, case_path: Path) -> dict:
     if case_path != private_root / "cases.json":
         raise ValueError("unexpected case path")
     private_file(case_path)
+    if versions[contract["collectionVersion"]] == 900:
+        declared = {name for name in contract["inputSha256"] if name.startswith("evals/skills/cases/")}
+        observed = {str(path.relative_to(ROOT)) for path in (ROOT / "evals/skills/cases").glob("*.json")}
+        if not declared or observed != declared:
+            raise ValueError("public input files drift")
     for relative, expected in contract["inputSha256"].items():
         path = Path(relative)
         if path.is_absolute() or ".." in path.parts:
             raise ValueError("invalid input path")
+        if any(p.is_symlink() for p in [ROOT / path, *(ROOT / path).parents] if p.is_relative_to(ROOT)):
+            raise ValueError("input symlink")
         if hashlib.sha256((ROOT / path).read_bytes()).hexdigest() != expected:
             raise ValueError("input drift")
     cases, metadata = validate.load_held_out_cases(case_path)

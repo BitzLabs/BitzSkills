@@ -47,7 +47,7 @@
     "repetitions": 0
   },
   "budget": {
-    "preparationReviewerSol": 1,
+    "preparationReviewerSol": 2,
     "creatorSol": 1,
     "independentReviewerSol": 1,
     "primaryModelTrajectories": 0,
@@ -69,6 +69,8 @@
     "失敗記録を残し、同条件の自動再試行を行わない",
     "後続一次評価は起動前に別の有限contractへ固定する"
   ],
+  "preparationAuthorization": "evals/skills/routing/held-out-novelty-preparation-v0.2.1.json",
+  "priorPreparationConsumed": {"sourceCommit": "3d98bf728498d6fa511cf53a454a587fc75be00a", "preparationReviewerSol": 1, "status": "stopped_on_independent_p2"},
   "excludedSet": {
     "path": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/cases.json",
     "setVersion": "production-routing-held-out-0.1.0",

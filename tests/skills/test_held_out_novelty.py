@@ -77,7 +77,9 @@ class HeldOutNoveltyTests(unittest.TestCase):
         manifest_sha = save(snapshot / "manifest.json", manifest)
         self.contract = {"collectionVersion": "production-routing-held-out-collection-0.2.0",
             "storageAuthorization": {"root": str(new_root)}, "setVersion": "production-routing-held-out-0.2.0",
-            "denominator": {"maxCases": 12}, "inputSha256": {},
+            "denominator": {"maxCases": 12},
+            "inputSha256": {str(p.relative_to(self.public)): hashlib.sha256(p.read_bytes()).hexdigest() for p in (skills / "cases").glob("*.json")},
+            "noveltyConditions": {"publicCases": 46},
             "candidate": {"snapshotRelativePath": ".venv/snapshot", "sourceCommit": "a"*40, "candidateVersion": "synthetic",
                           "manifestSha256": manifest_sha, "skillCount": 6, "resourceCount": 1},
             "excludedSet": {"path": str(self.previous_path), "sha256": self.previous_sha, "setVersion": "synthetic-previous", "caseCount": 12}}
@@ -194,6 +196,23 @@ class HeldOutNoveltyTests(unittest.TestCase):
         result = audit.audit(legacy_path, self.previous_path)
         self.assertNotIn("novelty", result)
         self.assertEqual(result["heldOut"]["sha256"], self.previous_sha)
+
+    def test_additional_public_json_is_rejected_before_case_loading(self):
+        extra = copy.deepcopy(audit.validate.load_cases()[0])
+        extra.update(caseId="SE-9999", prompt="合成追加の公開入力")
+        save(self.public / "evals/skills/cases/extra.json", [extra])
+        self.novelty["publicCasesConsidered"].append(extra["caseId"])
+        save(self.novelty_path, self.novelty)
+        # 固定2ファイルのhashが同じでも、第3のJSONをケース読取り前に拒否する。
+        with patch.object(audit.validate, "load_held_out_cases", side_effect=AssertionError("unfixed input read")):
+            with self.assertRaisesRegex(ValueError, "public input files drift"):
+                self.run_audit()
+
+    def test_declared_public_denominator_is_enforced(self):
+        self.contract["noveltyConditions"]["publicCases"] = 47
+        save(self.contract_path, self.contract)
+        with self.assertRaisesRegex(ValueError, "public case denominator"):
+            self.run_audit()
 
 
 if __name__ == "__main__":
