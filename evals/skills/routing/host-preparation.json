@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "preparationVersion": "production-routing-host-preparation-0.1.0",
+  "model": "gpt-6.1-sol",
+  "authorization": "evals/skills/sol-authorization.json",
+  "scope": "製品発火測定用の読取り専用MCP資源ホストの実装と独立検分",
+  "candidateSourceCommit": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+  "candidateManifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+  "candidateSkillCount": 6,
+  "candidateResourceCount": 71,
+  "hostVersion": "production-routing-host-0.1.0",
+  "sourcePolicy": "このファイル・host.py・hostの単体試験・READMEを含む確定commitを起動前に固定する",
+  "budget": {"independentReviewerSol": 1, "primaryModelTrajectories": 0, "automaticRetries": 0},
+  "checks": ["固定manifestと全resource hash", "相対パスとpackage whitelist", "symlink・改変・保護対象の拒否", "ケース・正解・controlをモデルへ渡さない", "操作実行toolを持たない", "実読取りのhashとログ", "既存ログを上書きしない", "stdio MCP往復"],
+  "stopOn": ["独立P1/P2", "失敗", "中断", "条件不一致"],
+  "limits": ["一次モデル発火評価を行わない", "MCPのunit往復をnativeモデル接続確認と同一視しない", "後続runnerでモデル機能と出力保存先を固定する必要がある", "行動・Core操作・全分母・Skill Gateを認定しない"]
+}

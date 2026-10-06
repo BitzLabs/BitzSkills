@@ -33,3 +33,17 @@ python -B evals/skills/routing/audit_held_out.py --cases /home/hide/BitzLabs/Bit
 初期集合12件は機械検査を通過したが、独立検分で公開ケースとの意味重複P2が2件あり停止した。
 当該集合で一次評価を行わず、原ケース・失敗記録を非公開で保持する。
 [停止結果](../results/2026-10-06-held-out-collection-stopped/report.md)を後続成功へ置換しない。
+
+`host.py` は固定manifestのhashと全package資源を照合してから、stdio MCPで
+`list_resources` と `read_resource` だけを提供する。モデルに渡す情報は6スキルの
+名前・説明・版・相対パスとpackage資源本文に限定する。case/正解/集合controlは渡さない。
+読取りごとにhashと実結果をログへ記録する。未登録パス・絶対パス・symlink・改変を拒否し、
+CLI・shell・試験・ファイル変更のtoolは提供しない。既存ログを再利用せず新規0600で作成する。
+
+```text
+python -B evals/skills/routing/host.py --snapshot <固定snapshot> --manifest-sha256 <固定hash> --log <新規host.jsonl>
+```
+
+これは資源ホストの準備で、発火実測ではない。`host-preparation.json` の別有限予算で独立検分する。
+非公開入力を含む測定のログは承認済み非公開領域へ保存し、公開しない。
+後続runnerは出力領域・有限台帳・停止条件を検査し、モデルのshell等を無効化した状態で接続する。
