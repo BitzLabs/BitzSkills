@@ -1116,3 +1116,28 @@ schema・ID/input衝突・event catalog・経路・件数・権限の作業者�
 準備SOLは旧source1/是正source1の別有限枠、一次0・retry0。旧停止8成果物も不変を検査した。
 結果は `evals/skills/results/2026-10-06-held-out-novelty-preparation/report.md`。
 次は未消費の生成SOL1・ケース独立SOL1で別領域/別版/別IDsの保持集合を作成・検分する。
+
+保持集合0.2の作成は、固定source以外の結果コミットでHEADが動いたことを作成側が条件変更と解釈し、
+ケース保存前に停止した。対象source6ファイルの確定ref blobは同一だったが、生成SOL1を消費し、
+ケース/比較根拠の保存は0件。原停止3成果物を非公開で保持し、未使用のケース独立枠を流用しない。
+証拠は `evals/skills/results/2026-10-06-held-out-creation-head-stop/report.md`。
+
+別有限の保持集合0.3はsource `5ff330a7` で13ファイルを固定し、HEADを観測値として扱う。
+開始時/保存直前に実bytesを確定refと照合するsource guardを追加した。
+親全230件、独立のsource guard4件/保持監査11件、検分後の親4件/11件はOK/exit0、独立P1/P2は0件。
+実際の結果コミットでHEADが動いた後も固定13ファイルの照合はexit0で、hashが不変であることを確認した。
+94ファイル/84固定sourceの保存監査も通過した。準備独立SOL1・一次0・retry0。
+証拠は `evals/skills/results/2026-10-06-held-out-fixed-ref-preparation/report.md`。
+これは収集準備の検証であり、保持集合の意味新規性・発火実測・Core操作・Skill Gateを認定しない。
+製品用一次発火の接続案は `evals/skills/routing/production-evaluation-plan.md` に記録し、
+一次測定の新しい有限契約と独立準備検分を完了してからモデルを起動する。
+
+保持集合0.3は新規12件を保存し、親の機械監査・確定source13ファイル照合がexit0で通過した。
+作成receiptの6成果物hashと2回のsource guardを親も再検査し、非公開7ファイルの0600/領域0700を確認した。
+ケース独立SOL1は影響3件、P1=3/P2=3を報告したため集合を停止した。
+詳細記録6ファイルの新規保存は自動承認審査で2回拒否され、永続receiptと親の原証拠再監査は未完了。
+重大度は独立agent申告の暫定集計とし、意味新規性・通過・全Gateを認定しない。
+集合0.3の準備独立/作成/ケース独立は各SOL1、一次0・retry0。既存集合・旧停止を保持する。
+結果は `evals/skills/results/2026-10-06-held-out-fixed-ref-collection-stopped/report.md`。
+次は同ディレクトリの `storage-approval-request.md` に具体化した保存操作の承認を確認し、
+永続証拠を親が再監査する。新ケース作成・有料再試行・一次発火測定は起動しない。
