@@ -1163,3 +1163,10 @@ P1/P2への是正案は `evals/skills/routing/held-out-routing-remediation-plan.
 collection0.4の契約source `f760649f` は新規3/再利用9とSOL準備独立/作成/集合独立各1、一次0/retry0を固定した。
 親nativeでsource12ファイル/input7/candidate71資源/retention hashを照合し、source guardはexit0。
 準備独立検分を進めており、新ケース/evidenceの保存はまだ0。原不通過と全Gate未認定を保持する。
+
+collection0.4の準備独立検分はP1/P2各0。独立16件と検分後の親16件もOK/exit0だった。
+親はsource12/独立3成果物のhash、候補全71資源のGit blob一致を再確認した。
+93 payload/84固定sourceの公開保存監査を通過した。準備SOL1消費、作成/集合独立は未消費各1。
+結果は `evals/skills/results/2026-10-06-held-out-remediation-preparation/report.md`。
+次は同じ固定sourceの作成SOL1で新規3件と再利用9件の集合を保存し、別SOL1で全12件を検分する。
+今回の一次モデル枠は0。9件の合格や保持集合の意味新規性、全Gateはまだ認定しない。
