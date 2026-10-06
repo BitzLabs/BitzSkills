@@ -1191,3 +1191,14 @@ source12/candidate71資源の実Git blob一致と報告12件の対応を確認�
 CLI起動は非公開資料のSOL提供先への送信承認不足として自動承認レビューに拒否されたため、
 具体的な送信対象と最大追加3呼出しを確認待ちにした。旧停止・未認定のGateを保持する。
 結果と承認確認の正本は `evals/skills/results/2026-10-06-held-out-single-replacement-preparation/`。
+
+2026-10-07のOKで非公開評価資料のSOL提供先への送信を承認された。
+独立CLI準備は旧source `e4930431` で起動したが、内部app-server初期化のEROFSで5280ms/exit1となった。
+原stdout0 bytes/stderr197 bytesと予約済み準備1枠を保持した。正常終了・準備通過・費用0は認定しない。
+ネットワーク遮断下の6条件診断で、初期化用config/installation/tmpの新scratch仮想隔離により開始記録を得た。
+修正版の固定source `4736737b25b8e0b190e3863b508e56589e952f1e` は旧7を含む13ファイルで、
+旧失敗束縛・実home保護・追加準備承認前の起動拒否を含む。親の9回帰/全285件はOK/exit0。
+namespace全体のオフライン起動でも開始を確認したがtimeout/exit-15であり、モデル終了や独立通過の証拠にはしない。
+親の保存/source/hash/候補71資源のGit blob再照合はexit0。作成/集合独立/一次は0、ケース/evidenceは未作成。
+旧準備1枠に追加する修正版準備1回の確認待ち。修正版の独立検分は未実施で、全Gateを未認定のまま保持する。
+結果は `evals/skills/results/2026-10-07-native-bootstrap-stopped/`。
