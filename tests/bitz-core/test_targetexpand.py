@@ -469,5 +469,48 @@ class ShortestDistanceTests(unittest.TestCase):
             self.assertEqual(result.document_distance, {"TASK-001": 0, "REQ-001": 1, "REQ-002": 1})
 
 
+
+class DraftRefinementPurposeTests(unittest.TestCase):
+    """`refines`する状態`draft`の文書は目的`interpret`だけで役割`advisory`として含め、`implement`と`verify`では閉包へ含めない
+    （関係・トレースモデル §6.1の6.と末尾）。"""
+
+    def _write_base(self, root: str) -> None:
+        _write(root, ".spec/bitz.yaml", _bitz_yaml())
+        _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+        _write(root, ".spec/technical/TECH-005.md",
+               _tech("TECH-005", status="draft", extra_frontmatter="relations:\n  refines: [REQ-001]\n"))
+
+    def test_only_interpret_includes_draft_refinement(self):
+        with tempfile.TemporaryDirectory() as root:
+            self._write_base(root)
+            id_index, stmt_index = _indexes(root)
+            interpret = te_mod.target_expansion("REQ-001", "interpret", id_index, stmt_index)
+            self.assertEqual(interpret.draft_advisory, {"TECH-005"})
+            self.assertIn("TECH-005", interpret.context_documents)
+            for purpose in ("implement", "verify"):
+                with self.subTest(purpose=purpose):
+                    result = te_mod.target_expansion("REQ-001", purpose, id_index, stmt_index)
+                    self.assertEqual(result.errors, [])
+                    self.assertEqual(result.draft_advisory, set())
+                    self.assertEqual(result.context_documents, ["REQ-001"])
+
+    def test_task_root_is_not_blocked_by_draft_refinement(self):
+        # 修正前は、`draft`の文書を閉包へ含めたうえで状態を検査し、`CTX-STATE-001`で止めていた。
+        with tempfile.TemporaryDirectory() as root:
+            self._write_base(root)
+            _write(root, ".spec/requirements/REQ-002.md",
+                   _req("REQ-002", extra_frontmatter="relations:\n  requires: [REQ-001]\n"))
+            _write(root, ".spec/tasks/TASK-001.md",
+                   _task("TASK-001", "open", "relations:\n  requires: [REQ-001]\n  addresses: [REQ-002:AC-01]\n"))
+            _write(root, ".spec/tasks/TASK-002.md",
+                   _task("TASK-002", "open", "relations:\n  addresses: [REQ-001:AC-01]\n"))
+            id_index, stmt_index = _indexes(root)
+            for root_id, purpose in (("TASK-001", "implement"), ("TASK-002", "verify")):
+                with self.subTest(root=root_id, purpose=purpose):
+                    result = te_mod.target_expansion(root_id, purpose, id_index, stmt_index)
+                    self.assertEqual(result.errors, [])
+                    self.assertNotIn("TECH-005", result.context_documents)
+
+
 if __name__ == "__main__":
     unittest.main()
