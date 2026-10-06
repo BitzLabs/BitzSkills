@@ -3369,6 +3369,14 @@ class AuditTests(unittest.TestCase):
         reasons = certify.judge(conformance, [crashed, dict(crashed)])
         self.assertIn("規模の検証1: レポートの形式が不正です（KeyError: 'x'）", reasons)
         self.assertIn("規模の検証2: レポートの形式が不正です（KeyError: 'x'）", reasons)
+        _conformance, scale = self.certification_runs()
+        reasons = certify.judge([crashed, dict(crashed)], scale)
+        self.assertIn("監査1: レポートの形式が不正です（KeyError: 'x'）", reasons)
+        # 実行の結果は標準エラー出力を保持する（`judge`へ渡す材料）。
+        completed = certify.subprocess.CompletedProcess(["uv"], 1, stdout=b"", stderr=b"KeyError: 'y'\n")
+        with patch.object(certify.subprocess, "run", return_value=completed):
+            result = certify.run("uv", ["fixtures/validate_scale.py"], Path("."), 900)
+        self.assertEqual(result, {"exitCode": 1, "stdout": b"", "stderr": b"KeyError: 'y'\n"})
 
     def test_fixture_git_uses_the_shared_timeout(self):
         from conformance import harness
