@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["phase", "sourceCommit", "status", "severityCounts", "actualTestCounts", "actualTestExitCodes", "sourceGuards", "reportSha256", "independentReviewerSolConsumed", "primaryModelTrajectories", "automaticRetries", "delegations", "nativeProviderBytesAvailable", "certifiesNativeConnection", "certifiesBehavior", "certifiesSkillGate", "certifiesProductCompletion"],
+  "properties": {
+    "phase": {"const": 4},
+    "sourceCommit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "status": {"enum": ["passed", "stopped_on_p1_p2"]},
+    "severityCounts": {
+      "type": "object", "required": ["P1", "P2"], "additionalProperties": false,
+      "properties": {"P1": {"type": "integer", "minimum": 0}, "P2": {"type": "integer", "minimum": 0}}
+    },
+    "actualTestCounts": {
+      "type": "object", "required": ["component", "allSkills"], "additionalProperties": false,
+      "properties": {"component": {"const": 26}, "allSkills": {"const": 320}}
+    },
+    "actualTestExitCodes": {
+      "type": "object", "required": ["component", "allSkills"],
+      "properties": {"component": {"type": "integer"}, "allSkills": {"type": "integer"}}
+    },
+    "sourceGuards": {
+      "type": "object", "required": ["before", "after"], "additionalProperties": false,
+      "properties": {"before": {"type": "object"}, "after": {"type": "object"}}
+    },
+    "reportSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "independentReviewerSolConsumed": {"const": 1},
+    "primaryModelTrajectories": {"const": 0},
+    "automaticRetries": {"const": 0},
+    "delegations": {"const": 0},
+    "nativeProviderBytesAvailable": {"const": false},
+    "certifiesNativeConnection": {"const": false},
+    "certifiesBehavior": {"const": false},
+    "certifiesSkillGate": {"const": false},
+    "certifiesProductCompletion": {"const": false}
+  },
+  "allOf": [{"if": {"properties": {"status": {"const": "passed"}}}, "then": {
+    "properties": {
+      "severityCounts": {"properties": {"P1": {"const": 0}, "P2": {"const": 0}}},
+      "actualTestExitCodes": {"properties": {"component": {"const": 0}, "allSkills": {"const": 0}}}
+    }
+  }}]
+}

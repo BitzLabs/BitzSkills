@@ -56,3 +56,18 @@ native接続の動作確認はまだ行っていない。合成trace+実hostの�
 
 このコンポーネントは入力/catalog/manifestの実行契約束縛、native接続の閉tool検証、一次永続台帳を代替しない。
 それらは次の実装・検証対象であり、一次contractと有料canaryをまだ起動しない。
+
+## Phase 4：独立P2指摘の保持と是正
+
+初版source8 `7c556166d7552dc2faed8502b5dddfdc6de94b53` を確定し、clean treeの全315件はOK/exit0だった。
+独立SOL1回はP1=0/P2=3で停止した。commentary/最終応答の混同、応答開始後の本文読取り、
+実hostと異なるscope/schemaVersionの受入れを、回帰入力で再現した。
+原報告/receipt/予約と旧消費1を保持する。公開記録は `../results/2026-10-07-production-trace-review-stopped/`。
+
+修正版は明示的なfinal_answerの一意性とphaseの前後一致、全tool完了後の最終応答開始、以後のtool拒否、
+実hostと同じmanifest scope/schemaを要求する。phase欠如/null/未知値は互換推定せず停止する。
+局所26件は通過したが、これだけで解消済みとは判定しない。
+`production-trace-preparation-v0.2.json` は別source9/公開独立SOL1回/一次0/有料自動retry0に固定する。
+新receiptはschemaでキーと値を明示する。旧誤記receiptを修正せず、そのhashを新契約のpreviousFailureへ束縛する。
+確定ref/clean treeで全320件を確認し、別文脈で是正と全体を検分してから親が再照合する。
+native接続・tool構成・一次台帳と一次モデル測定は、引き続き後続の未実装/未実施範囲である。

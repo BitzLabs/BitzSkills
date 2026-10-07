@@ -1,6 +1,6 @@
 # Phase 4：製品入力投影・証拠監査器の独立SOL検分
 
-呼出しメッセージで指定した40桁sourceと `production-trace-preparation-v0.1.json` の8ファイルを固定して検分する。
+呼出しメッセージで指定した40桁sourceと準備契約のsourceFilesを固定して検分する。
 実装者と別の文脈で公開コードだけを読む。私的ケース/期待値/報告/raw traceと認証情報は読まない。
 追加のモデル・agent・外部サービス・一次測定を起動しない。ソースは編集しない。
 全コマンドの作業ディレクトリは呼出しで指定した統合worktreeへ明示する。mainで作業しない。
@@ -20,12 +20,17 @@
 - 他のhostモジュールをimportで汚染しないこと。合成入力と実操作の認定を区別すること。
 
 実際にsource_guard.verify(worktree, source, contract.sourceFiles)を検分前後に実行する。
-呼出しで指定したPython3.12/jsonschema環境で、対象21件と全skills315件を実行し、実exitと要約を記録する。
-P1/P2を検分し、`.venv/production-trace-review-01/review.md` と `receipt.json` に新規保存する。
+呼出しで指定したPython3.12/jsonschema環境で、契約の対象件数と全skills件数を実行し、実exitと要約を記録する。
+P1/P2を検分し、契約outputsのrootRelativePath内の `review.md` と `receipt.json` に新規保存する。
 既存ファイルと予約を上書き/削除しない。
-receiptはsourceCommit、status passed/stopped_on_p1_p2、severityCounts {P1,P2}、
-actualTestCounts/actualTestExitCodes、sourceGuards、reportSha256、independentReviewerSolConsumed1、
-primaryModelTrajectories0/automaticRetries0/delegations0、nativeProviderBytesAvailable false、
-certifiesNativeConnection/Behavior/SkillGate/ProductCompletion falseを含む。
+receiptはoutputs.receiptSchemaを読み、自分でもJSON Schemaへ照合する。
+例えば数値はキー末尾へ付けず、`"independentReviewerSolConsumed": 1`、
+`"primaryModelTrajectories": 0`、`"automaticRetries": 0`、`"delegations": 0` と記録する。
+phase4/sourceCommit/status/severityCounts/actualTestCounts/actualTestExitCodes/sourceGuards/reportSha256と、
+nativeProviderBytesAvailable/certifiesNativeConnection/Behavior/SkillGate/ProductCompletionのfalseを必須とする。
+保存はO_EXCLによる新規、0700のroot内に0600で行う。既存の原報告と予約を上書きしない。
+previousFailureがあれば、その報告/receipt/予約hashと原P2指摘を確認し、旧消費枠を返却しない。
+最終応答phaseはfinal_answerの明示を必須とし、欠如/null/未知値は停止するという互換方針に従う。
+最終応答開始時に全toolが完了し、以後toolが発生しないことと、実host同等のmanifest scope/schemaを特に検分する。
 指摘は公開ファイルの実行/データ条件とfile/lineに結び付ける。修正案まで示し、修正は実装者へ戻す。
 最終応答は件数とstatusの集計だけを返す。親が試験とhash/sourceを再実行するまでは作業完了を認定しない。

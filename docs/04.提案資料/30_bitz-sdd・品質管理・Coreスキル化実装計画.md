@@ -1237,3 +1237,18 @@ reviewerは予約も消費も0、既承認の未消費1枠を維持する。迂�
 旧停止と古い原bytes欠落は保持し、独立通過を過去停止の取消とは扱わない。
 次は製品6本文の実読取りを測る一次実行器の実装・検証と、公開小canaryの別有限contract固定。
 製品一次、スキルなし比較、行動/実地、異なるモデル系統、配布・最終承認が残る。全Skill Gate/リリースは未認定。
+
+#### Phase 4：製品一次実行器の入力・証拠監査と独立是正
+
+新規作業の開始前にPhase番号・作業名・目的を表示する運用で進める（2026-10-07のユーザー指示）。
+入力投影/証拠監査を実装し、初版source8 `7c556166d7552dc2faed8502b5dddfdc6de94b53` のclean全315件はOK/exit0。
+独立SOLの公開コンポーネント検分1回はP1=0/P2=3で停止した。
+途中説明を最終応答にする、応答開始後の読取りを証拠にする、実hostと異なるmanifest scope/schemaを通す問題を保持した。
+旧報告/receipt/予約と消費枠はそのまま残し、結果は `evals/skills/results/2026-10-07-production-trace-review-stopped/`。
+
+明示的なfinal_answer/phase一致、最終応答開始前のtool完了と以後のtool拒否、実host同等のscope/schemaを修正した。
+対象26件はOK/exit0だが、独立再検分前に解消済みとは認定しない。
+修正版の別source9と独立公開SOL1回を `production-trace-preparation-v0.2.json` に固定する。
+private評価資料は使わず、一次0/有料自動retry0。確定ref/clean全320件と別文脈の再検分、親の再照合を次に行う。
+原provider bytesが得られないcollaboration検分をnative一次軌跡やSkill Gateへ拡張しない。
+実CLI接続/tool制限/一次台帳/公開canary契約と、本測定・比較・行動・異系統・実地・配布/最終承認が残る。

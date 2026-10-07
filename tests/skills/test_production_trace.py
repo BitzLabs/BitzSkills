@@ -1,6 +1,7 @@
 """合成traceと実hostで、入力漏洩と証拠偽装の拒否を確認する。モデルを呼ばない。"""
 import copy
 import importlib.util
+import hashlib
 import json
 from pathlib import Path
 import sys
@@ -55,7 +56,7 @@ class ProductionTraceTests(unittest.TestCase):
             start['status'] = 'inProgress'
             start['result'] = None
             frames += [notification('item/started', item=start), notification('item/completed', item=item)]
-        message = {'type': 'agentMessage', 'id': 'final', 'text': json.dumps(decision)}
+        message = {'type': 'agentMessage', 'id': 'final', 'phase': 'final_answer', 'text': json.dumps(decision)}
         frames += [notification('item/started', item={**message, 'text': ''}),
                    notification('item/completed', item=message),
                    notification('turn/completed', turn={'id': 'u', 'status': 'completed', 'error': None})]
@@ -103,6 +104,54 @@ class ProductionTraceTests(unittest.TestCase):
         self.assertFalse(result['certifiesExpectedDecision'])
         self.assertFalse(result['certifiesBehavior'])
         self.assertFalse(result['certifiesSkillGate'])
+
+    def test_commentary_missing_or_unknown_phase_cannot_replace_final(self):
+        for phase in ['commentary', 'unknown', None]:
+            frames = copy.deepcopy(self.frames)
+            for frame in frames:
+                item = frame.get('params', {}).get('item', {})
+                if item.get('type') == 'agentMessage':
+                    if phase is None:
+                        item.pop('phase', None)
+                    else:
+                        item['phase'] = phase
+            with self.subTest(phase=phase), self.assertRaises(ValueError):
+                self.run_audit(frames=frames)
+
+    def test_final_phase_is_bound_between_start_and_completion(self):
+        frames = copy.deepcopy(self.frames)
+        frames[9]['params']['item']['phase'] = 'commentary'
+        with self.assertRaises(ValueError):
+            self.run_audit(frames=frames)
+
+    def test_selected_body_must_complete_before_final_starts(self):
+        for frames in [self.frames[:7] + self.frames[9:11] + self.frames[7:9] + self.frames[11:],
+                       self.frames[:8] + [self.frames[9], self.frames[8], self.frames[10], self.frames[11]]]:
+            with self.assertRaises(ValueError):
+                self.run_audit(frames=frames)
+
+    def test_invalid_or_missing_manifest_scope_and_schema_are_rejected(self):
+        for key, value in [('scope', 'not-production'), ('schemaVersion', 'invalid'),
+                           ('scope', None), ('schemaVersion', None)]:
+            manifest = copy.deepcopy(self.manifest)
+            if value is None:
+                manifest.pop(key)
+            else:
+                manifest[key] = value
+            raw = json.dumps(manifest).encode()
+            log = copy.deepcopy(self.log)
+            log[0]['result']['manifestSha256'] = hashlib.sha256(raw).hexdigest()
+            with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                self.run_audit(manifest_raw=raw, host_events=log, frames=self.make_frames(log, self.decision))
+
+    def test_commentary_before_read_and_final_is_supported(self):
+        start = {'method': 'item/started', 'params': {'threadId': 't', 'turnId': 'u',
+                 'item': {'type': 'agentMessage', 'id': 'progress', 'phase': 'commentary', 'text': ''}}}
+        completed = copy.deepcopy(start)
+        completed['method'] = 'item/completed'
+        completed['params']['item']['text'] = '調査します。'
+        result = self.run_audit(frames=self.frames[:5] + [start, completed] + self.frames[5:])
+        self.assertEqual(result['status'], 'measurement_integrity_passed')
 
     def test_none_selection_can_complete_without_skill_read(self):
         decision = {**self.decision, 'selectedEntry': None, 'selectedPath': None, 'outcome': 'not-applicable'}

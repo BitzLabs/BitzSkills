@@ -56,6 +56,7 @@ def project_case(case: dict) -> dict:
 def manifest_view(raw: bytes) -> tuple[dict, str, dict]:
     manifest = strict_json(raw)
     require(isinstance(manifest, dict), 'manifest object required')
+    require(manifest.get('schemaVersion') == '1.0' and manifest.get('scope') == 'production-resource-snapshot-only', 'manifest schema or scope')
     require(re.fullmatch(r'[0-9a-f]{40}', manifest.get('sourceCommit', '')) is not None, 'candidate ref required')
     skills, resources = manifest.get('skills'), manifest.get('resources')
     require(isinstance(skills, list) and len(skills) == 6, 'six skills required')
@@ -107,6 +108,8 @@ def completed_items(frames: list) -> list:
     require(isinstance(frames, list), 'native frames required')
     thread = turn = None
     finished = False
+    final_started = False
+    final_completed = False
     responses = {}
     started = {}
     completed = set()
@@ -147,17 +150,30 @@ def completed_items(frames: list) -> list:
         require(isinstance(item, dict) and item.get('type') in {'mcpToolCall', 'agentMessage', 'reasoning'}, 'forbidden native item')
         ident = item.get('id')
         require(isinstance(ident, str) and bool(ident), 'item id required')
+        if item['type'] == 'mcpToolCall':
+            require(not final_started, 'tool after final response started')
+        if item['type'] == 'agentMessage':
+            require(item.get('phase') in {'commentary', 'final_answer'}, 'explicit message phase required')
+            if item['phase'] == 'commentary':
+                require(not final_started, 'commentary after final response started')
         if method == 'item/started':
             require(ident not in started and ident not in completed, 'item start repeated')
+            if item['type'] == 'agentMessage' and item['phase'] == 'final_answer':
+                require(not final_started, 'multiple final responses')
+                require(all(i in completed for i, binding in started.items() if binding[0] == 'mcpToolCall'), 'tool incomplete before final response')
+                final_started = True
             if item['type'] == 'mcpToolCall':
                 require(item.get('status') == 'inProgress' and item.get('result') is None and item.get('error') is None, 'native tool start state')
-            started[ident] = (item['type'], item.get('server'), item.get('tool'), item.get('arguments'))
+            started[ident] = (item['type'], item.get('server'), item.get('tool'), item.get('arguments'), item.get('phase'))
         else:
             require(ident in started and ident not in completed, 'item completion without unique start')
-            require(started[ident] == (item['type'], item.get('server'), item.get('tool'), item.get('arguments')), 'item binding drift')
+            require(started[ident] == (item['type'], item.get('server'), item.get('tool'), item.get('arguments'), item.get('phase')), 'item binding drift')
+            if item['type'] == 'agentMessage' and item['phase'] == 'final_answer':
+                require(final_started and not final_completed, 'multiple final response completions')
+                final_completed = True
             completed.add(ident)
             items.append(item)
-    require(finished and set(started) == completed and set(responses) == {1, 2, 3}, 'native terminal missing')
+    require(finished and final_completed and set(started) == completed and set(responses) == {1, 2, 3}, 'native terminal missing')
     require(responses[2].get('thread', {}).get('id') == thread and responses[3].get('turn', {}).get('id') == turn, 'native response binding')
     return items
 
@@ -181,8 +197,8 @@ def audit(manifest_raw: bytes, host_events: list, frames: list, decision: dict,
         require(isinstance(content[0]['text'], str), 'native tool text required')
         require(strict_json(content[0]['text']) == event['result'], 'host/native result mismatch')
         require(result.get('structuredContent') in (None, event['result']) and result.get('_meta') in (None, {}), 'native extra result')
-    messages = [item for item in items if item['type'] == 'agentMessage']
-    require(messages and strict_json(messages[-1]['text']) == decision, 'final response mismatch')
+    messages = [item for item in items if item['type'] == 'agentMessage' and item['phase'] == 'final_answer']
+    require(len(messages) == 1 and strict_json(messages[0]['text']) == decision, 'final response mismatch')
     schema = copy.deepcopy(strict_json((ROOT / 'evals/skills/schemas/decision.schema.json').read_bytes()))
     schema['properties']['selectedEntry']['enum'] = [None, *sorted(SKILLS)]
     jsonschema.Draft202012Validator(schema).validate(decision)
