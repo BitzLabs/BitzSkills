@@ -458,7 +458,7 @@ def target_expansion(
         # 関係・トレースモデル §6.2・§6.3・§10、文書・フロントマター・状態仕様 §7: TASKを起点にした場合の依存先も状態を検査する。
         # `implement`は`addresses`の参照先の所有文書と`requires`の閉包（すでに`context_order`にある）、
         # `verify`は`addresses`の参照先の所有文書とそこからの`interpret`の閉包上の強い依存先に加え、コンテキストへ含めない
-        # 起点の`requires`の閉包を対象とする（ADR-034の`Decision`の5番目の項目）。
+        # 起点の`requires`の閉包（ADRを除く）を対象とする（ADR-034の`Decision`の5番目の項目）。
         # 起点以外のTASKの状態は検査しない。先行TASKは下の`CTX-TASK-DEPENDENCY-001`が直接の参照先だけを扱い（ADR-029、ADR-036の
         # `Decision`の8番目の項目）、推移的に到達したTASKは対象にしない。
         dep_ids: set[str] = set()
@@ -477,7 +477,12 @@ def target_expansion(
                     target_doc_id, id_index, statement_index, include_draft=False
                 )
                 dep_ids |= set(sub_order)
-            dep_ids |= {target_id for target_id, _source in _requires_closure([owning_id], id_index, statement_index)}
+            # ADRは除く。状態が`accepted`でないADRへの強い関係は§4の型制約（`CTX-RELATION-TYPE-001`）で扱う（関係の検査）。
+            dep_ids |= {
+                target_id
+                for target_id, _source in _requires_closure([owning_id], id_index, statement_index)
+                if target_id in id_index and id_index[target_id].kind != "ADR"
+            }
         for dep_id in sorted(dep_ids):
             if dep_id == owning_id:
                 continue
