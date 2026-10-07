@@ -82,3 +82,16 @@ native接続・tool構成・一次台帳と一次モデル測定は、引き続�
 旧P2=3/原証拠/消費枠を保持する。新枠も消費1/残0、一次0/retry0。
 ここでは修正確認を記録するだけで、Phase完了・native接続・行動・Skill Gateを認定しない。
 次は実CLI接続/tool実効検証、入力/catalog/manifestの固定契約束縛、一次永続台帳と公開canaryの有限契約。
+
+### Phase 4：CLI通信プローブの隔離条件
+
+`production_cli_probe.py` と `production-cli-probe-v0.1.json` で、CLI0.160.1がResponsesへ提示するtool宣言を捕捉する。
+network namespaceを分離し、home全体をtmpfsで隠して、認証/既存設定/私的評価資料をbindもreadもしない。
+repoとnode runtimeはread-only、今回新規outputだけを書込み可にする。
+実provider認証を要求しない127.0.0.1の模擬Responsesへ最大1要求、公開固定文だけを送る。
+模擬最終応答はLOCAL_SIMULATION_ONLY。実CLIの接続・tool宣言の診断に限定し、実モデル測定やnative provider認定に使わない。
+一次/有料モデル0。stderrは原bytes保存とhashだけで、復号・出力しない。
+shell/multi_agent等をfalseに指定しても、実要求のtool一覧がlist_resources/read_resourceの2件だけでなければ停止する。
+停止した設定を一次に流用しない。source5の前後照合と原通信/設定/結果を保存する。
+公式根拠は [設定リファレンス](https://learn.chatgpt.com/docs/config-file/config-reference) と
+[App Server仕様](https://learn.chatgpt.com/docs/app-server)。設定指定と実効結果を区別する。
