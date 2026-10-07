@@ -152,3 +152,16 @@ source19 `33c89531d29d87b6d470a1e61b76d8d2a9a722c5` は、残る作成1回の冒
 同結果内 `private-transmission-approval-request.md` の条件についてユーザー確認を求める。
 別経路起動・同条件有料再試行・一次測定は0。P1/P2ゼロの独立意味検分が成立するまで集合を採用しない。
 承認後の優先順は、別SOL全12件検分→親の原bytes/意味判定receipt/coverage/機械監査再照合→製品一次runner開発である。
+
+## 2026-10-07 続報：collection 0.5採用、製品一次実行器へ
+
+具体的な私的ペイロードとOpenAI Codex CLI gpt-6.1-sol宛先/owner-only保存/未消費独立1回を確認し、承認後に実行した。
+別SOLはP1=0/P2=0、全12件の経路と新1件の意味新規性を通過と記録し、CLIもexit0/正常終端だった。
+親の39試験再実行、全12件の報告網羅、receipt/原bytes/source/保存前後hash/権限/機械監査/候補71資源Git照合はexit0。
+native補助誤り1件の原記録と同じ検分内の訂正1回を保持した。自動有料retry0/追加準備モデル0/一次0/現契約残枠0。
+採用集合は0.5、保持11件+新1件。結果は `../results/2026-10-07-single-replacement-reviewed/`。
+旧停止・欠落原bytesは保持する。集合の測定準備採用を実操作/全Skill Gate/製品完了の認定へ拡張しない。
+
+次は `production-evaluation-plan.md` の製品実行器を実装・検証する。公開小canaryを別有限contractに固定し、
+読取りhost/native/finalの証拠対応と起動前予約/独立receiptゲートを成立させてから一次を起動する。
+集合0.5を含む本測定への拡張とスキルなし比較/行動評価/異なる系統/実地/配布・最終承認は後続工程である。
