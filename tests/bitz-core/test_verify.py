@@ -457,5 +457,19 @@ class StateAndTypeConstraintTogetherTests(unittest.TestCase):
             self.assertEqual(result["commands"], [])
 
 
+
+class ConfigWarningTests(unittest.TestCase):
+    def test_config_warning_is_added_to_a_successful_verify(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            _write(tmp, ".spec/bitz.yaml", _bitz_yaml('    default:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n') + "futureKey: 1\n")
+            _write(tmp, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            _write(tmp, "tests/test_auth.py", "def test_x():\n    assert True\n")
+            _init_repo(tmp)
+            result, exit_code = _run_verify(tmp, ["REQ-001"])
+            self.assertEqual((result["status"], exit_code), ("passed_with_warnings", 0), result)
+            self.assertEqual([(d["code"], d["source"].get("key")) for d in result["diagnostics"]],
+                             [("SPEC-CONFIG-UNKNOWN-001", "futureKey")])
+
+
 if __name__ == "__main__":
     unittest.main()

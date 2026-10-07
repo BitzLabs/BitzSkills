@@ -766,5 +766,41 @@ class AdrTypeConstraintTests(unittest.TestCase):
             self.assertEqual(self._codes(result), [("CTX-RELATION-TYPE-001", ".spec/requirements/REQ-002.md")])
 
 
+
+class ConfigDiagnosticsTests(unittest.TestCase):
+    """設定の不在は`SPEC-WORKSPACE-MISSING-001`（発生元`environment`）、不適合は設定の検査の診断（`SPEC-CONFIG-SCHEMA-001`など）を
+    そのまま返し、設定の警告はどの結果にも加える（ワークスペース・設定仕様、診断レジストリ、`context` §6）。"""
+
+    def test_invalid_config_returns_config_schema_diagnostic(self):
+        for name, extra, key in (("language", None, "language"), ("maxBytes", "context:\n  maxBytes: 100\n", "context.maxBytes")):
+            with self.subTest(name), tempfile.TemporaryDirectory() as root:
+                yaml = _bitz_yaml() if extra is not None else _bitz_yaml().replace("language: ja", "language: 42")
+                _write(root, ".spec/bitz.yaml", yaml + (extra or ""))
+                _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+                result, exit_code = _run_context(root, ["REQ-001"])
+                self.assertEqual((result["status"], exit_code), ("error", 3))
+                self.assertEqual([(d["code"], d["source"]["path"], d["source"].get("key")) for d in result["diagnostics"]],
+                                 [("SPEC-CONFIG-SCHEMA-001", ".spec/bitz.yaml", key)])
+                self.assertIsNone(result["contextDigest"])
+
+    def test_missing_config_is_an_environment_diagnostic(self):
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            result, exit_code = _run_context(root, ["REQ-001"])
+            self.assertEqual((result["status"], exit_code), ("blocked", 2))
+            self.assertEqual(result["diagnostics"][0]["code"], "SPEC-WORKSPACE-MISSING-001")
+            self.assertEqual(result["diagnostics"][0]["source"], {"kind": "environment", "component": "workspace", "identifier": "."})
+
+    def test_config_warning_is_added_to_a_successful_result(self):
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml() + "futureKey: 1\n")
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            result, exit_code = _run_context(root, ["REQ-001"])
+            self.assertEqual((result["status"], exit_code), ("passed_with_warnings", 0))
+            self.assertEqual([(d["code"], d["source"].get("key")) for d in result["diagnostics"]],
+                             [("SPEC-CONFIG-UNKNOWN-001", "futureKey")])
+            self.assertIsNotNone(result["contextDigest"])
+
+
 if __name__ == "__main__":
     unittest.main()
