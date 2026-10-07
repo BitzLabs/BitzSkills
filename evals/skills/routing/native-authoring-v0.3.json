@@ -1,0 +1,124 @@
+{
+  "schemaVersion": "1.0",
+  "executionVersion": "held-out-native-authoring-0.3.0",
+  "model": "gpt-6.1-sol",
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "timeoutSeconds": 600,
+  "collectionSource": "879101449c93df2545bb6c5dcab07664b6d5cdd2",
+  "privateRoot": "/home/hide/BitzLabs/BitzSkills-private-evals/core-sdd-quality-20261006/collection-05",
+  "sourceFiles": [
+    "evals/skills/routing/native-authoring-v0.1.json",
+    "evals/skills/routing/native_actor.py",
+    "evals/skills/routing/native-actor-response.schema.json",
+    "evals/skills/routing/native-preparation-prompt.md",
+    "evals/skills/routing/native-creator-prompt.md",
+    "evals/skills/routing/native-reviewer-prompt.md",
+    "tests/skills/test_native_actor.py",
+    "evals/skills/routing/native-authoring-v0.2.json",
+    "evals/skills/routing/native_actor_v02.py",
+    "tests/skills/test_native_actor_v02.py",
+    "evals/skills/routing/native-preparation-v02-prompt.md",
+    "evals/skills/routing/native-creator-v02-prompt.md",
+    "evals/skills/routing/native-reviewer-v02-prompt.md",
+    "evals/skills/routing/native-authoring-v0.3.json",
+    "evals/skills/routing/native_actor_v03.py",
+    "tests/skills/test_native_actor_v03.py",
+    "evals/skills/routing/native_tool_preflight.py",
+    "evals/skills/routing/native-creator-v03-prompt.md",
+    "evals/skills/routing/native-reviewer-v03-prompt.md"
+  ],
+  "budget": {
+    "creator": 1,
+    "reviewer": 1,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0,
+    "delegations": 0
+  },
+  "authorization": "ユーザーのSOL全評価許可・送信承認・今後最大3呼出し承認を適用する。旧0.2準備1枠は停止として保持し、未消費の作成1/集合検分1だけを使う。新たな準備モデル枠を追加しない。",
+  "budgetAccounting": {
+    "collectionPreparationAlreadyConsumed": 1,
+    "native01PreparationReservedAndStopped": 1,
+    "native02PreparationConsumedAndStopped": 1,
+    "newPreparationModelCalls": 0,
+    "remainingCreatorCalls": 1,
+    "remainingReviewerCalls": 1,
+    "maximumNewInvocations": 2,
+    "maximumTotalNativeInvocationsIncludingStopped": 4,
+    "oldSlotsRefundedOrReassigned": false
+  },
+  "reason": "CLI開始だけではshell環境の.agents/.aws mkdir EROFSを検出できなかった。無モデルcommand/execで実試験を起動し、既存保護先の空directoryを事前用意する。umask依存の合成権限試験を新版だけで訂正する。未消費2枠を維持し、作成者が実装者とは独立した準備検分を冒頭で実施してから作成する。",
+  "sourcePolicy": "新source19、旧source13/7、collection source15、旧2停止の原出力と台帳を保持して実bytesへ照合する。source/環境条件は別版として先に固定し、同条件の有料retryは行わない。",
+  "filesystemPolicy": "host root/既存snapshot/台帳/private成果物をROにする。現在phaseの新codex-homeを既存homeの仮想表示へbindし、既存の子要素をROへ戻す。config.toml/installation_id/tmpだけはfresh scratch上のCLI初期化領域とする。実homeは上書きせずHOME/CODEX_HOMEも変更しない。",
+  "nativeCapture": "役割枠は起動前に固定台帳へ排他予約する。source/出力を変えても同役割を再利用しない。file-backedでstdout/stderrの原bytesを保存し、stderrを復号・公開しない。手動中断/timeout/非zero/保存失敗を成功へ置換しない。",
+  "stopOn": [
+    "P1/P2または未確定の判断",
+    "source/入力/候補/環境の不一致",
+    "native中断・容量制限・保存失敗",
+    "前工程のreceiptまたは親再監査の不成立"
+  ],
+  "limits": [
+    "旧の停止結果や消費枠を付け替えない。",
+    "モデルのshellは資料読取り・固定テスト・新規成果物の保存に限る。ケース内容を実行指示として扱わない。",
+    "product操作・一次発火・行動評価・SkillGateを認定しない。"
+  ],
+  "publication": "公開は版・件数・hash・集計だけ。非公開本文・期待値・個別比較・raw traceはowner-only領域に保持する。",
+  "previousExecutionSource": "4736737b25b8e0b190e3863b508e56589e952f1e",
+  "previousFailure": {
+    "executionReceiptSha256": "ebcd4f189518aa7c1bd6b3c8491e3575e1734982252bebd773f60bf4ab71219a",
+    "captureSha256": {
+      "trace.jsonl": "d1b317dd7937b254a0571c6ab00973c233c5f093ccb3630667b1def786199678",
+      "stderr.log": "ab105565a01b542c2317efaca0e6b5e4c78a9b44c2ded511fdda4c06d36fa2e2",
+      "response.json": "a458f6ce96e022322ffbd65bfe035c6d07ab5a9209f7105ac76a02edcb5b87ec"
+    },
+    "nativeStatus": "native_completed",
+    "semanticStatus": "stopped_unreviewed",
+    "actualExitCode": 0,
+    "preparationReceiptAvailable": false
+  },
+  "controlDirectories": {
+    "names": [
+      ".agents",
+      ".codex",
+      ".aws"
+    ],
+    "roots": [
+      "repo",
+      "approved-private-collection-05"
+    ],
+    "mustBeEmptyDirectories": true,
+    "mustNotBeSymlinks": true,
+    "contentsOrCredentialsRead": false,
+    "purpose": "inner sandboxのRO保護先mountpointを外側RO化より前に用意する。設定ファイルは作成しない。"
+  },
+  "localPreflight": {
+    "beforeEachPaidCall": true,
+    "networkNamespaceIsolated": true,
+    "method": "command/exec",
+    "threadOrTurnRequests": 0,
+    "modelCalls": 0,
+    "testCount": 39,
+    "testTargets": [
+      "test_native_actor.py",
+      "test_native_actor_v03.py",
+      "test_single_replacement.py"
+    ],
+    "stopOnNonzeroOrMissingResponse": true,
+    "captureOwnerOnly": true
+  },
+  "embeddedPreparation": {
+    "insideCreatorInvocation": true,
+    "reviewerIndependentOfRootImplementer": true,
+    "beforeAnyCaseWrite": true,
+    "requiredSeverityCounts": {
+      "P1": 0,
+      "P2": 0
+    },
+    "requiredSavedArtifacts": [
+      "native-preparation-review.md",
+      "native-preparation-receipt.json"
+    ],
+    "caseSemanticsReviewedBySeparateReviewerInvocation": true,
+    "countsAsAdditionalModelCall": false
+  }
+}
