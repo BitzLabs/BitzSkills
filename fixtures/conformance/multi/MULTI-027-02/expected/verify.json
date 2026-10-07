@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "failed",
+  "scope": "selected",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "targetResults": [
+    {
+      "target": "web::REQ-001",
+      "status": "failed",
+      "contextDigest": null,
+      "statements": [],
+      "bindingRefs": [],
+      "diagnostics": [
+        {
+          "code": "CTX-RELATION-TYPE-001",
+          "severity": "error",
+          "resultStatus": "failed",
+          "summary": "TECHからADRへのrequiresは許可されません",
+          "source": {
+            "kind": "file",
+            "workspaceId": "api",
+            "path": ".spec/technical/TECH-020.md",
+            "key": "relations.requires"
+          },
+          "evidence": "ADR-001"
+        }
+      ]
+    }
+  ],
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "commands": [],
+  "durationMs": 0,
+  "diagnostics": []
+}

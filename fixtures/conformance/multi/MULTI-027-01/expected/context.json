@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "context",
+  "status": "failed",
+  "purpose": "implement",
+  "workspace": {
+    "id": "web",
+    "path": "apps/web"
+  },
+  "roots": [
+    "web::REQ-001"
+  ],
+  "contextDigest": null,
+  "revision": {
+    "commit": "0000000000000000000000000000000000000000",
+    "dirty": false
+  },
+  "resolution": {
+    "complete": false,
+    "documentCount": 0,
+    "unresolvedStrongRelations": 1,
+    "workspaces": [
+      {
+        "id": "web",
+        "path": "apps/web"
+      }
+    ],
+    "crossWorkspaceEdges": []
+  },
+  "projection": {
+    "detail": "standard",
+    "expanded": []
+  },
+  "documents": [],
+  "constraintLedger": {
+    "statements": []
+  },
+  "coverage": {
+    "must": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "should": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "may": {
+      "total": [],
+      "addressed": [],
+      "tested": [],
+      "unaddressed": [],
+      "untested": []
+    },
+    "adjacent": []
+  },
+  "durationMs": 0,
+  "diagnostics": [
+    {
+      "code": "CTX-RELATION-TYPE-001",
+      "severity": "error",
+      "resultStatus": "failed",
+      "summary": "TECHからADRへのrequiresは許可されません",
+      "source": {
+        "kind": "file",
+        "workspaceId": "api",
+        "path": ".spec/technical/TECH-020.md",
+        "key": "relations.requires"
+      },
+      "evidence": "ADR-001"
+    }
+  ]
+}
