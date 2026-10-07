@@ -357,3 +357,23 @@ TASKを起点にしたときの依存先の状態検査を直し（`targetexpand
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は602件がすべて成功した。
+
+## 2026-10-07: 状態acceptedでないADRへのrequiresを型制約で返すようにした後のStep 1〜5の再判定
+
+状態が`accepted`でないADRへの`requires`を型制約の`CTX-RELATION-TYPE-001`で返し、状態の診断と併記するようにし（`targetexpand.py`、`context.py`、`verify.py`）、
+これを固定する`SINGLE-147`〜`149`（Step 3とStep 4）と`MULTI-027-01`／`02`（Step 5）を追加した。修正の前後で、既存の333件の期待値はすべて変わらないことを確かめた。
+fixtureを追加した後、修正前のCore（コミット`60c3d849`の版）では5件とも失敗し、修正後のCoreでは5件とも`passed`となることを確かめた。
+`MULTI-027-01`／`02`は、独立レビューで見つかった修正途中の回帰（他のメンバーの文書を経由した`proposed`のADRが診断なしで成功する）でも失敗する。
+
+コミット`cf98a189af4b48f4279d1457538b0dbd2632b067`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 338件（`SINGLE-147`〜`149`と`MULTI-027-01`／`02`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`84a69ec27a8402273d1cc26d93269b3c4981e2e634209cf5f43655ed97804b0e` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は609件がすべて成功した。
