@@ -35,7 +35,7 @@ from . import targetexpand
 from .cliargs import ParsedArgs
 from .document import DocEntry
 from .errors import CliArgError
-from .resultmodel import EXIT_CODE_BY_STATUS, sort_diagnostics, status_from_diagnostics
+from .resultmodel import EXIT_CODE_BY_STATUS, sort_diagnostics, status_from_diagnostics, worst_status
 from .workspace import WorkspaceLocation, locate_workspace
 
 _KIND_RANK = {"REQ": 0, "TECH": 1, "ADR": 2, "TASK": 3}
@@ -352,6 +352,19 @@ def _merge_expansions(
 
 
 def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
+    """`bitz context`を実行する。設定の警告（`SPEC-CONFIG-UNKNOWN-001`、`SPEC-INPUT-BOM-001`。診断レジストリで全操作の
+    `continue`）は、どの結果にも加える（設定を解釈できず停止した結果は、停止の経路で警告も返す）。"""
+
+    sink: dict = {}
+    result, _exit_code = _run(parsed, cwd, env, sink)
+    warnings = [w.to_dict() for w in sink.get("config_warnings", [])]
+    if warnings:
+        result["diagnostics"] = sort_diagnostics(list(result.get("diagnostics") or []) + warnings)
+        result["status"] = worst_status([result["status"]] + [w["resultStatus"] for w in warnings])
+    return result, EXIT_CODE_BY_STATUS[result["status"]]
+
+
+def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple[dict, int]:
     started = time.monotonic_ns() // 1_000_000
     purpose = parsed.single.get("--purpose", "interpret")
     detail = parsed.single.get("--detail", "standard")
@@ -420,23 +433,36 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         if head_commit is not None:
             revision = {"commit": head_commit, "dirty": gitutil.is_dirty(git.executable, cwd, env)}
 
-    if loc.config_path is None or outcome is None or outcome.stop or outcome.config is None:
+    if loc.config_path is None or outcome is None:
+        # 設定ファイルがない（診断レジストリ`WORKSPACE-CONFIG-MISSING`。発生元は`environment`）。
         bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_raw)
         bundle["status"] = "blocked"
         bundle["diagnostics"] = [
-            _file_diag(
-                "SPEC-WORKSPACE-MISSING-001",
-                "error",
-                "blocked",
-                ".spec/bitz.yamlがありません",
-                workspace_id,
-                ".spec/bitz.yaml",
-            )
+            {
+                "code": "SPEC-WORKSPACE-MISSING-001",
+                "severity": "error",
+                "resultStatus": "blocked",
+                "summary": ".spec/bitz.yamlがありません",
+                "source": {"kind": "environment", "component": "workspace", "identifier": "."},
+            }
         ]
         if multi_active:
             bundle = _multi_augment(bundle, workspace_id, workspace_path, revision)
         bundle["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
         return bundle, EXIT_CODE_BY_STATUS["blocked"]
+    if outcome.stop or outcome.config is None:
+        # 設定の構文、型、値の範囲、必須キー、メジャーバージョンなどの不適合（ワークスペース・設定仕様、`context` §6）。
+        # ハッシュ値を計算する前に停止し、設定の検査の診断と警告をそのまま返す。
+        diags = [d.to_dict() for d in outcome.diagnostics] + [d.to_dict() for d in outcome.warnings]
+        worst = status_from_diagnostics(diags) if diags else "error"
+        bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_raw)
+        bundle["status"] = worst
+        bundle["diagnostics"] = sort_diagnostics(diags)
+        if multi_active:
+            bundle = _multi_augment(bundle, workspace_id, workspace_path, revision)
+        bundle["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
+        return bundle, EXIT_CODE_BY_STATUS[worst]
+    sink["config_warnings"] = list(outcome.warnings)
 
     config_raw = outcome.config
     assert loc.root is not None

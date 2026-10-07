@@ -898,6 +898,8 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         diags = [d.to_dict() for d in outcome.diagnostics] + [d.to_dict() for d in outcome.warnings]
         status = worst_status([d["resultStatus"] for d in diags]) if diags else "error"
         return _empty(workspace_id, status, diags)
+    # 設定の警告（診断レジストリで全操作の`continue`）は、どの結果にも最上位の診断として加える。
+    config_warning_diags = [w.to_dict() for w in outcome.warnings]
 
     config_raw = outcome.config
     assert loc.root is not None
@@ -993,9 +995,9 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
 
     if not pending:
         diag = _invocation_diag("SPEC-VERIFY-BLOCKED-002", "error", "blocked", messages.VERIFY_TARGETS_EMPTY)
-        return _empty(workspace_id, "blocked", [diag])
+        return _empty(workspace_id, "blocked", [diag] + config_warning_diags)
 
-    top_diagnostics: list[dict] = []
+    top_diagnostics: list[dict] = list(config_warning_diags)
     target_entries: list[dict] = []
     needs: dict[tuple[str, str], dict] = {}
 
