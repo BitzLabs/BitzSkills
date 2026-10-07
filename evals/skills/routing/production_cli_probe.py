@@ -32,17 +32,36 @@ def encoded(value):
     return json.dumps(value, ensure_ascii=False, indent=2).encode()
 
 
-def tool_names(tools):
+def tool_names(tools, prefix=''):
     if not isinstance(tools, list):
         raise ValueError('tool inventory required')
     names = []
     for tool in tools:
-        if not isinstance(tool, dict) or tool.get('type') != 'function' or not isinstance(tool.get('name'), str):
+        if not isinstance(tool, dict) or not isinstance(tool.get('name'), str):
             raise ValueError('unexpected tool declaration')
-        names.append(tool['name'])
+        name = prefix + tool['name']
+        if tool.get('type') == 'namespace':
+            names.extend(tool_names(tool.get('tools'), name + '.'))
+        elif tool.get('type') in {'function', 'custom'}:
+            names.append(name)
+        else:
+            raise ValueError('unexpected tool declaration')
     if len(names) != len(set(names)):
         raise ValueError('duplicate tools')
     return sorted(names)
+
+
+def declared_tools(request):
+    # CLI0.160.1はtop-level toolsのほかinput.additional_toolsも使用する。
+    # 一方だけを見ると、Code Modeや追加agentの宣言を見落とす。
+    declarations = list(request.get('tools', []))
+    for item in request.get('input', []):
+        if item.get('type') == 'additional_tools':
+            tools = item.get('tools')
+            if not isinstance(tools, list):
+                raise ValueError('additional tools inventory required')
+            declarations.extend(tools)
+    return tool_names(declarations)
 
 
 def policy(config_root: Path, port: int, contract: dict):
@@ -208,7 +227,7 @@ def isolated(base: Path, contract: dict):
     try:
         if len(requests) != 1:
             raise ValueError('local request missing')
-        names = tool_names(requests[0].get('tools'))
+        names = declared_tools(requests[0])
     except ValueError as error:
         inventory_error = str(error)
     passed = terminal and not errors and inventory_error is None and names == sorted(contract['allowedTools'])

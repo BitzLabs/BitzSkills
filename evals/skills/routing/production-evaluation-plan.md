@@ -95,3 +95,21 @@ shell/multi_agent等をfalseに指定しても、実要求のtool一覧がlist_r
 停止した設定を一次に流用しない。source5の前後照合と原通信/設定/結果を保存する。
 公式根拠は [設定リファレンス](https://learn.chatgpt.com/docs/config-file/config-reference) と
 [App Server仕様](https://learn.chatgpt.com/docs/app-server)。設定指定と実効結果を区別する。
+
+### Phase 4：tool宣言の停止と一次台帳コンポーネント
+
+無課金の実CLIプローブ2条件は停止した。模擬turn完了/server exit0でも、2toolだけの宣言を確認できていない。
+初版parserはtop-level toolsだけを見たため、input.additional_toolsのnamespace宣言を見落とした。
+原要求を残して両方を検査するparserに修正し、Code Mode/agent操作の宣言が残ることを確認した。
+feature指定のfalseをtool除外の成功と扱わず、この2条件を有料一次へ接続しない。
+この実結果はCLI0.160.1の検証した2条件に限定する。すべての版/設定で不可能とは推定しない。
+
+`production_ledger.py` はケース/catalog/manifest/共通指示/環境の原bytes hashを契約に束縛する。
+モデルpayloadは共通指示/catalogとprompt/contextだけ。初期公開canaryの最大2ケース×2反復に限定する。
+台帳はgit-common-dirで全worktreeに共通の場所へ固定し、排他lockとO_EXCL予約を起動前に使う。
+契約/入力/出力/campaign変更を上限のリセットに使わず、未検分・停止後は次の予約を拒否する。
+合成証拠の台帳試験13件とparser/隔離試験8件が局所通過。確定sourceで全341件と独立SOLの別有限1回を検分する。
+条件は `production-infrastructure-review-v0.1.json`。公開コードのみ、一次0/自動retry0/追加委譲0。
+台帳はproviderを呼ばず、レシートhashの書式だけで実行・独立性・原bytesの意味を認定しない。
+製品接続側はsource/runtime/tool構成と原証拠を別に監査し、確認済みの親レシートだけを台帳へ渡す必要がある。
+storage引数は隔離試験用で、製品接続は出力先/台帳先を指定できないopen_ledgerだけを使用する。

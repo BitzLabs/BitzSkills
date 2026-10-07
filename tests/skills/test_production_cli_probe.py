@@ -29,6 +29,24 @@ class ProductionCliProbeTests(unittest.TestCase):
         self.assertEqual(argv.count('--bind'), 1)
         self.assertEqual(argv[argv.index('--tmpfs') + 1], '/home/hide')
 
+    def test_additional_tools_exposes_code_mode_and_agents(self):
+        request = {'input': [{'type': 'additional_tools', 'tools': [
+            {'type': 'namespace', 'name': 'functions', 'tools': [{'type': 'custom', 'name': 'exec'}]},
+            {'type': 'namespace', 'name': 'collaboration', 'tools': [{'type': 'function', 'name': 'spawn_agent'}]}]}]}
+        self.assertEqual(probe.declared_tools(request), ['collaboration.spawn_agent', 'functions.exec'])
+
+    def test_both_declaration_locations_and_duplicates_are_checked(self):
+        request = {'tools': [{'type': 'function', 'name': 'read'}],
+                   'input': [{'type': 'additional_tools', 'tools': [{'type': 'function', 'name': 'exec'}]}]}
+        self.assertEqual(probe.declared_tools(request), ['exec', 'read'])
+        request['input'][0]['tools'][0]['name'] = 'read'
+        with self.assertRaises(ValueError):
+            probe.declared_tools(request)
+
+    def test_empty_declarations_cannot_match_required_two_tools(self):
+        self.assertEqual(probe.declared_tools({'input': []}), [])
+        self.assertNotEqual(probe.declared_tools({'input': []}), ['list_resources', 'read_resource'])
+
     def test_policy_no_auth_no_paid_provider_and_shell_disabled(self):
         contract = json.loads((ROOT / probe.CONTRACT).read_bytes())
         values = probe.policy(ROOT / '.venv' / 'probe-test', 1234, contract)

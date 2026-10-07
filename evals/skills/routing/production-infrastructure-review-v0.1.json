@@ -1,0 +1,38 @@
+{
+  "version": "production-infrastructure-review-0.1.0",
+  "phase": 4,
+  "scope": "public-infrastructure-component-review-only",
+  "model": "gpt-6.1-sol",
+  "sourceFiles": [
+    "evals/skills/routing/production_ledger.py",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/host.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/schemas/decision.schema.json",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/production-cli-probe-v0.2.json",
+    "tests/skills/test_production_ledger.py",
+    "tests/skills/test_production_cli_probe.py",
+    "evals/skills/routing/production-infrastructure-review-v0.1.json"
+  ],
+  "budget": {"independentReviewerSol": 1, "primaryModelTrajectories": 0, "automaticRetries": 0, "delegations": 0},
+  "testCounts": {"ledger": 13, "probe": 8, "allSkills": 341},
+  "outputRelativeRoot": ".venv/production-infrastructure-review-01",
+  "sourceGuardBeforeInitialCodeReadsRequired": true,
+  "localProbeEvidence": [
+    {"sourceCommit": "72400aa66338c9a66d23de6d08120ec0aa446ff9", "root": ".venv/production-cli-local-probe-01", "requestSha256": "11c94959f754af00e05a70d96998608f9098a73665248a6d0adcb3ed50326f93", "receiptSha256": "fbfd3bc77d3ccac33a2e7f27f110eb82d8e0fc358e6e3a4a4c63a373ff4d2a8d"},
+    {"sourceCommit": "277e4789b880d2563ce00c7cc4dd402888d05a20", "root": ".venv/production-cli-local-probe-02", "requestSha256": "e03148f0c3ff9e8e23e0ae58e3b9ae76ff2d8638a17717b696f44110045d2a77", "receiptSha256": "c2a4acb54e1f4e4426d08c48e706493f1573f14838bf2dbd9fac8a669841a998"}
+  ],
+  "constraints": [
+    "実行器を変更せず、公開コード・公開ローカル模擬要求だけを検分する。私的入力・認証・provider stderrを読まない。",
+    "最初のコード読取り前にsource10を照合し、前後guardを別記する。追加モデル・agent・実CLIプローブ・一次測定は起動しない。",
+    "ledgerはprovider実行器ではない。受入れレシートの意味・原bytes・独立性・source実行時一致は接続側の親監査前提で、hashの書式だけで認定しない。",
+    "実CLI要求はtop-level toolsとinput.additional_toolsの両方を検分する。原2記録を訂正上書きせず、初版parser欠落と再解析の違いを保持する。",
+    "storage引数を製品へ公開せずopen_ledgerでgit-common-dir共通台帳に固定すること、並行予約・再起動・未検分/停止後の後続拒否・有限上限を検分する。",
+    "review.md、receipt.json、実試験ログをroot内へO_EXCL/0600で新規保存する。P1/P2があれば具体的条件・file/line・修正案を報告するだけでソースを編集しない。"
+  ],
+  "nativeProviderBytesAvailable": false,
+  "certifiesNativeProvider": false,
+  "certifiesSkillGate": false,
+  "certifiesProductCompletion": false
+}
