@@ -381,4 +381,5 @@ C12とC15は、既存のfixtureの期待値を変えない欠陥の修正であ�
 - `SINGLE-146`は、適用できない文書が`draft`のREQである場合だけを固定する。`outdated`、`rejected`、置換済みのREQまたはTECH、`accepted`でないADR、
   `requires`の閉包の深い位置にある適用できない文書（起点の`requires`の参照先ではなく、その先）は固定しない。
 - 目的`implement`で起点のTASKの`requires`の閉包の文書が適用できない場合は、既存の`CTX-STATE-001`の経路で、このfixtureでは固定しない。
-- 期待値はCoreを実行せずに決めた。Coreとの一致の確認は、期待値を決めた後に行い、Gate Bで判定する。
+- `SINGLE-146`の`summary`を除き、期待値はCoreを実行せずに決めた。`summary`は規範文を持たないため、Coreの既存の文言を採った（上の「`summary`と発生元の扱い」）。Coreとの一致の確認は、期待値を決めた後に行い、Gate Bで判定する。
+- 状態が`accepted`でないADRを起点のTASKの`requires`の閉包に持つ`verify`は、§4の型制約（`CTX-RELATION-TYPE-001`）で扱い、このfixtureでは固定しない。推移的に到達したADRの扱いは、実装の確認事項として別に扱う。
