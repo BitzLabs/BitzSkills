@@ -493,8 +493,21 @@ def _process_single_target(
         entry_out["status"] = "failed"
         return entry_out, needed_pairs
 
+    # 強い関係（型制約）は展開が返した範囲（``relation_scope``）で、状態の診断の有無によらず検査し、独立した元の原因として
+    # 両方を返す（診断レジストリ、関係・トレースモデル §4・§6.3）。
+    relation_scope = expansion.relation_scope or expansion.context_documents
+
+    def _relation_errors() -> list[dict]:
+        return [
+            d.to_dict()
+            for d in _relation_check_diagnostics(
+                relation_scope, workspace_id, catalog_entries, local_id_indices, local_stmt_indices, known_ws_ids, multi_active
+            )
+            if d.severity == "error"
+        ]
+
     if expansion.errors:
-        diags = []
+        diags = _relation_errors()
         for err in expansion.errors:
             if err.get("doc_id") is None:
                 diags.append(
@@ -525,13 +538,7 @@ def _process_single_target(
             entry_out["status"] = "blocked"
             return entry_out, needed_pairs
 
-    relation_error_diags = [
-        d.to_dict()
-        for d in _relation_check_diagnostics(
-            context_documents, workspace_id, catalog_entries, local_id_indices, local_stmt_indices, known_ws_ids, multi_active
-        )
-        if d.severity == "error"
-    ]
+    relation_error_diags = _relation_errors()
     if relation_error_diags:
         entry_out["diagnostics"] = sort_diagnostics(relation_error_diags)
         entry_out["status"] = worst_status([d["resultStatus"] for d in relation_error_diags])

@@ -527,8 +527,41 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         expansions.append(exp)
         all_errors.extend(exp.errors)
 
+    # --- 強い関係の解決検査（context.md §3「ID、型、状態、強い関係、循環を検査する」）。
+    # 閉包内の文書が宣言する強い関係のうち、解決できないものが1件でもあれば、一部が欠けたコンテキスト一式を
+    # 成功の結果として返さない（同 §3末尾）。複合ワークスペースでは修飾IDの解決の優先順位（関係・
+    # トレースモデル §5.1）に従う`multirelate.field_diagnostics`を使い、起点ワークスペース自身が
+    # 所有する完全解決の対象文書だけへ診断を生成する（複合ワークスペース仕様 §7「無関係なメンバーを
+    # 完全検査しない」）。検査する文書は展開が返した範囲（``relation_scope``）で、状態の診断の有無によらず検査し、
+    # 独立した元の原因として両方を返す（診断レジストリ）。
+    relation_scope_ids: set[str] = set()
+    for exp in expansions:
+        relation_scope_ids |= set(exp.relation_scope or exp.context_documents)
+
+    def _relation_errors(scope_ids: set[str]) -> list:
+        if multi_active:
+            scoped_entries = [e for e in relations_mod.valid_entries(catalog.entries) if e.doc_id in scope_ids]
+            raw: list = []
+            for e in scoped_entries:
+                raw.extend(
+                    multirelate.field_diagnostics(e, workspace_id, local_id_indices, local_stmt_indices, known_ws_ids)
+                )
+            cycle_entries_by_ws = {wid: list(idx.values()) for wid, idx in local_id_indices.items()}
+            raw.extend(
+                d
+                for d in multirelate.global_cycle_diagnostics(cycle_entries_by_ws)
+                if d.source.get("workspaceId") == workspace_id
+            )
+        else:
+            raw = relations_mod.check_relations(catalog.entries, workspace_id, source_ids=scope_ids)
+        return [d for d in raw if d.severity == "error"]
+
+    def _unresolved_count(relation_diags: list) -> int:
+        return len([d for d in relation_diags if d.code in ("SPEC-RELATION-MISSING-001", "CTX-RELATION-TYPE-001")])
+
     if all_errors:
-        diags = []
+        relation_error_diags = _relation_errors(relation_scope_ids)
+        diags = [d.to_dict() for d in relation_error_diags]
         for err in all_errors:
             if err.get("doc_id") is None:
                 diags.append(
@@ -550,6 +583,8 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
         bundle["status"] = worst
         bundle["diagnostics"] = sort_diagnostics(diags)
+        if relation_error_diags:
+            bundle["resolution"]["unresolvedStrongRelations"] = _unresolved_count(relation_error_diags)
         if multi_active:
             bundle = _multi_augment(bundle, workspace_id, workspace_path, revision)
         bundle["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
@@ -558,40 +593,14 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
     expansion = _merge_expansions(expansions, id_index, statement_index)
     context_documents = expansion.context_documents
 
-    # --- 強い関係の解決検査（context.md §3「ID、型、状態、強い関係、循環を検査する」）。
-    # 閉包内の文書が宣言する強い関係のうち、解決できないものが1件でもあれば、一部が欠けたコンテキスト一式を
-    # 成功の結果として返さない（同 §3末尾）。複合ワークスペースでは修飾IDの解決の優先順位（関係・
-    # トレースモデル §5.1）に従う`multirelate.field_diagnostics`を使い、起点ワークスペース自身が
-    # 所有する完全解決の対象文書だけへ診断を生成する（複合ワークスペース仕様 §7「無関係なメンバーを
-    # 完全検査しない」）。
-    if multi_active:
-        scoped_entries = [e for e in relations_mod.valid_entries(catalog.entries) if e.doc_id in context_documents]
-        relation_diags_raw: list = []
-        for e in scoped_entries:
-            relation_diags_raw.extend(
-                multirelate.field_diagnostics(e, workspace_id, local_id_indices, local_stmt_indices, known_ws_ids)
-            )
-        cycle_entries_by_ws = {wid: list(idx.values()) for wid, idx in local_id_indices.items()}
-        relation_diags_raw.extend(
-            d
-            for d in multirelate.global_cycle_diagnostics(cycle_entries_by_ws)
-            if d.source.get("workspaceId") == workspace_id
-        )
-    else:
-        relation_diags_raw = relations_mod.check_relations(
-            catalog.entries, workspace_id, source_ids=set(context_documents)
-        )
-    relation_error_diags = [d for d in relation_diags_raw if d.severity == "error"]
+    relation_error_diags = _relation_errors(relation_scope_ids | set(context_documents))
     if relation_error_diags:
         diags = [d.to_dict() for d in relation_error_diags]
         worst = status_from_diagnostics(diags)
         bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
         bundle["status"] = worst
         bundle["diagnostics"] = sort_diagnostics(diags)
-        unresolved_count = len(
-            [d for d in relation_error_diags if d.code in ("SPEC-RELATION-MISSING-001", "CTX-RELATION-TYPE-001")]
-        )
-        bundle["resolution"]["unresolvedStrongRelations"] = unresolved_count
+        bundle["resolution"]["unresolvedStrongRelations"] = _unresolved_count(relation_error_diags)
         if multi_active:
             bundle = _multi_augment(bundle, workspace_id, workspace_path, revision)
         bundle["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)

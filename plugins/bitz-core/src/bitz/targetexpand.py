@@ -45,6 +45,9 @@ class TargetExpansionResult:
     draft_advisory: set[str] = field(default_factory=set)
     #: 目的が`implement`または`verify`のときの状態違反（§10「状態と閉包」）。空でなければ閉包を完全解決の不成立とする。
     errors: list[dict] = field(default_factory=list)
+    #: 強い関係（型制約）を検査する文書の``doc_id``。目的が`implement`または`verify`のときに設定する（`contextDocuments`に加え、
+    #: `verify`のTASK起点では起点の`requires`の閉包）。
+    relation_scope: list[str] = field(default_factory=list)
     #: §6.1「5.」: `interpret`で起点が置換済み（有効な後継が単一）のときの``(origin_id, successor_id)``。
     #: `context`は``origin``を参考（`advisory`）、``successor``を後継（`replacement`）として示す（暗黙に差し替えはしない）。
     superseded_origin: tuple[str, str] | None = None
@@ -435,18 +438,8 @@ def target_expansion(
                         "doc_id": doc_id,
                     }
                 )
-        elif entry.kind == "ADR":
-            # 状態`accepted`のADRだけを規範的な強い依存先にできる（文書・フロントマター・状態仕様 §7）。
-            if entry.status != "accepted":
-                errors.append(
-                    {
-                        "code": "CTX-STATE-001",
-                        "severity": "error",
-                        "resultStatus": "blocked",
-                        "summary": messages.state_inapplicable(doc_id),
-                        "doc_id": doc_id,
-                    }
-                )
+        # ADRは状態の診断を出さない。状態`accepted`でないADRへの`requires`は、関係・トレースモデル §4の状態を含む型制約であり、
+        # 関係の検査が`CTX-RELATION-TYPE-001`として返す（呼び出し側は``relation_scope``の文書の強い関係を検査する）。
 
     _check_state(owning_id, is_root=True)
     if root_entry.kind in ("REQ", "TECH"):
@@ -508,10 +501,8 @@ def target_expansion(
                     }
                 )
 
-    if errors:
-        result.errors = errors
-        return result
-
+    # 状態の診断があっても閉包の構成を続け、型制約の検査の範囲（``relation_scope``）を確定してから返す。独立した元の原因は
+    # それぞれ主診断を持つため、呼び出し側は状態の診断と型制約の診断の両方を返す（診断レジストリ）。
     if purpose == "verify" and root_entry.kind == "TASK":
         # §6.3: 起点のTASKの`addresses`の参照先と、当該の参照先を所有する文書を`contextDocuments`へ含め、
         # それらから`interpret`の閉包の規則を適用する（起点自身の`requires`の閉包は含めない）。
@@ -688,6 +679,13 @@ def target_expansion(
     result.document_edges = edges
     result.document_distance = _shortest_distances(owning_id, preds, distance)
     result.draft_advisory = draft_advisory
+    # 強い関係（型制約）を検査する文書。目的`verify`でTASKを起点にした場合は、コンテキストへ含めない起点の`requires`の閉包も
+    # 対象にする（関係・トレースモデル §6.3）。
+    scope = set(context_order)
+    if purpose == "verify" and root_entry.kind == "TASK":
+        scope |= {target_id for target_id, _source in _requires_closure([owning_id], id_index, statement_index) if target_id in id_index}
+    result.relation_scope = sorted(scope)
+    result.errors = errors
     return result
 
 

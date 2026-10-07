@@ -696,5 +696,75 @@ class UnresolvedStrongRelationsTests(unittest.TestCase):
             self.assertEqual(result["resolution"]["complete"], True)
 
 
+
+def _adr_doc(doc_id: str, status: str) -> str:
+    return f"""---
+id: {doc_id}
+title: 判断
+status: {status}
+---
+
+# {doc_id} 判断
+
+## Context
+
+背景。
+
+## Decision
+
+決定。
+
+## Consequences
+
+帰結。
+"""
+
+
+class AdrTypeConstraintTests(unittest.TestCase):
+    """状態`accepted`でないADRへの`requires`は、状態の診断ではなく型制約の`CTX-RELATION-TYPE-001`とする（関係・トレースモデル §4）。
+    状態の診断と型制約の診断は、独立した元の原因としてそれぞれ返す（診断レジストリ）。"""
+
+    def _codes(self, result: dict) -> list[tuple[str, str]]:
+        return sorted((d["code"], d["source"]["path"]) for d in result["diagnostics"])
+
+    def test_implement_reports_relation_type_for_non_accepted_adr(self):
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            _write(root, ".spec/decisions/ADR-001.md", _adr_doc("ADR-001", "proposed"))
+            _write(root, ".spec/tasks/TASK-001.md",
+                   _task("TASK-001", extra_frontmatter="relations:\n  requires: [ADR-001]\n  addresses: [REQ-001:AC-01]\n"))
+            result, exit_code = _run_context(root, ["TASK-001"], purpose="implement")
+            self.assertEqual((result["status"], exit_code), ("failed", 1))
+            self.assertEqual(self._codes(result), [("CTX-RELATION-TYPE-001", ".spec/tasks/TASK-001.md")])
+
+    def test_state_and_relation_type_are_both_reported(self):
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/requirements/REQ-001.md",
+                   _req("REQ-001", extra_frontmatter="relations:\n  requires: [REQ-002, ADR-001]\n"))
+            _write(root, ".spec/requirements/REQ-002.md", _req("REQ-002", status="draft"))
+            _write(root, ".spec/decisions/ADR-001.md", _adr_doc("ADR-001", "proposed"))
+            result, exit_code = _run_context(root, ["REQ-001"], purpose="implement")
+            self.assertEqual(self._codes(result), [
+                ("CTX-RELATION-TYPE-001", ".spec/requirements/REQ-001.md"),
+                ("CTX-STATE-001", ".spec/requirements/REQ-002.md"),
+            ])
+            self.assertEqual(result["resolution"]["unresolvedStrongRelations"], 1)
+
+    def test_verify_task_root_checks_relations_of_the_requires_closure(self):
+        # TASK-001 -> REQ-002（approved）-> ADR-001（proposed）。REQ-002はコンテキストへ含めないが、その強い関係の型制約を検査する。
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml())
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            _write(root, ".spec/requirements/REQ-002.md",
+                   _req("REQ-002", extra_frontmatter="relations:\n  requires: [ADR-001]\n"))
+            _write(root, ".spec/decisions/ADR-001.md", _adr_doc("ADR-001", "proposed"))
+            _write(root, ".spec/tasks/TASK-001.md",
+                   _task("TASK-001", status="done", extra_frontmatter="relations:\n  requires: [REQ-002]\n  addresses: [REQ-001:AC-01]\n"))
+            result, exit_code = _run_context(root, ["TASK-001"], purpose="verify")
+            self.assertEqual(self._codes(result), [("CTX-RELATION-TYPE-001", ".spec/requirements/REQ-002.md")])
+
+
 if __name__ == "__main__":
     unittest.main()
