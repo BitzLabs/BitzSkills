@@ -430,5 +430,32 @@ class EnvironmentTests(unittest.TestCase):
         self.assertIn("[REDACTED]", result["commands"][0]["stdoutExcerpt"])
 
 
+
+class StateAndTypeConstraintTogetherTests(unittest.TestCase):
+    """状態の診断と型制約の診断は、独立した元の原因として両方を返す（`context` §3、診断レジストリ）。TASKを起点にした`verify`で、
+    先行の`requires`が`draft`のREQ-003を指し、`addresses`の参照先のREQ-001が`proposed`のADRを`requires`する場合。"""
+
+    def test_verify_reports_both_state_and_relation_type(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            _write(tmp, ".spec/bitz.yaml", _bitz_yaml('    default:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n'))
+            _write(tmp, ".spec/requirements/REQ-001.md",
+                   _req("REQ-001").replace("status: approved\n", "status: approved\nrelations:\n  requires: [ADR-001]\n"))
+            _write(tmp, ".spec/requirements/REQ-003.md", _req("REQ-003", status="draft"))
+            _write(tmp, ".spec/decisions/ADR-001.md",
+                   "---\nid: ADR-001\ntitle: 判断\nstatus: proposed\n---\n\n# ADR-001 判断\n\n## Context\n\n背景。\n\n## Decision\n\n決定。\n\n## Consequences\n\n帰結。\n")
+            _write(tmp, ".spec/tasks/TASK-001.md",
+                   "---\nid: TASK-001\ntitle: 作業\nstatus: done\nrelations:\n  requires: [REQ-003]\n  addresses: [REQ-001:AC-01]\n---\n\n# TASK-001 作業\n\n## Objective\n\n作業する。\n")
+            _write(tmp, "tests/test_auth.py", "def test_x():\n    assert True\n")
+            _init_repo(tmp)
+            result, exit_code = _run_verify(tmp, ["TASK-001"])
+            self.assertEqual((result["status"], exit_code), ("failed", 1), result)
+            diags = result["targetResults"][0]["diagnostics"]
+            self.assertEqual(
+                sorted((d["code"], d["source"]["path"]) for d in diags),
+                [("CTX-RELATION-TYPE-001", ".spec/requirements/REQ-001.md"), ("CTX-STATE-001", ".spec/requirements/REQ-003.md")],
+            )
+            self.assertEqual(result["commands"], [])
+
+
 if __name__ == "__main__":
     unittest.main()

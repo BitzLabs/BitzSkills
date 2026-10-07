@@ -556,8 +556,8 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
             raw = relations_mod.check_relations(catalog.entries, workspace_id, source_ids=scope_ids)
         return [d for d in raw if d.severity == "error"]
 
-    def _unresolved_count(relation_diags: list) -> int:
-        return len([d for d in relation_diags if d.code in ("SPEC-RELATION-MISSING-001", "CTX-RELATION-TYPE-001")])
+    def _unresolved_count(diag_dicts: list[dict]) -> int:
+        return len([d for d in diag_dicts if d["code"] in ("SPEC-RELATION-MISSING-001", "CTX-RELATION-TYPE-001")])
 
     if all_errors:
         relation_error_diags = _relation_errors(relation_scope_ids)
@@ -573,18 +573,18 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
                 doc_id = err["doc_id"]
                 owner = _owner_of(doc_id, workspace_id) if multi_active else workspace_id
                 doc_path = id_index[doc_id].path
-                diags.append(
-                    _file_diag(
-                        err["code"], err["severity"], err["resultStatus"], err["summary"], owner, doc_path,
-                        key=err.get("key"),
-                    )
+                diag = _file_diag(
+                    err["code"], err["severity"], err["resultStatus"], err["summary"], owner, doc_path,
+                    key=err.get("key"),
                 )
+                if err.get("evidence") is not None:
+                    diag["evidence"] = err["evidence"]
+                diags.append(diag)
         worst = status_from_diagnostics(diags)
         bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
         bundle["status"] = worst
         bundle["diagnostics"] = sort_diagnostics(diags)
-        if relation_error_diags:
-            bundle["resolution"]["unresolvedStrongRelations"] = _unresolved_count(relation_error_diags)
+        bundle["resolution"]["unresolvedStrongRelations"] = _unresolved_count(diags)
         if multi_active:
             bundle = _multi_augment(bundle, workspace_id, workspace_path, revision)
         bundle["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)
@@ -600,7 +600,7 @@ def run(parsed: ParsedArgs, cwd: str, env: dict[str, str]) -> tuple[dict, int]:
         bundle = _empty_bundle(purpose, detail, workspace_id, workspace_path, roots_out)
         bundle["status"] = worst
         bundle["diagnostics"] = sort_diagnostics(diags)
-        bundle["resolution"]["unresolvedStrongRelations"] = _unresolved_count(relation_error_diags)
+        bundle["resolution"]["unresolvedStrongRelations"] = _unresolved_count(diags)
         if multi_active:
             bundle = _multi_augment(bundle, workspace_id, workspace_path, revision)
         bundle["durationMs"] = max(0, time.monotonic_ns() // 1_000_000 - started)

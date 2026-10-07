@@ -178,5 +178,34 @@ class RefinementProjectionAcrossWorkspacesTests(unittest.TestCase):
                 self.assertIn("TECH-012の制約", by_id["web::TECH-012"]["bodyText"])
 
 
+
+class NonAcceptedAdrAcrossWorkspacesTests(unittest.TestCase):
+    """他のメンバーの文書が状態`accepted`でないADRを`requires`する場合も、閉包を構成する`requires`の辺の型制約として
+    `CTX-RELATION-TYPE-001`を返す（関係・トレースモデル §4・§6.3、複合ワークスペース仕様 §6）。発生元は関係を宣言した文書。"""
+
+    def test_other_member_requires_to_proposed_adr_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _init_repo(root)
+            _write(root, ".spec/bitz.yaml", ROOT_YAML + "multiWorkspace:\n  members:\n    - id: web\n      path: apps/web\n    - id: api\n      path: services/api\n")
+            _write(root, "apps/web/.spec/bitz.yaml", MEMBER_YAML.format(wid="web"))
+            _write(root, "services/api/.spec/bitz.yaml", MEMBER_YAML.format(wid="api"))
+            _write(root, "apps/web/.spec/requirements/REQ-001.md",
+                   _req("REQ-001").replace("status: approved\n", "status: approved\nrelations:\n  requires: [api::TECH-020]\n"))
+            _write(root, "services/api/.spec/technical/TECH-020.md",
+                   "---\nid: TECH-020\ntitle: TECH\nstatus: approved\nrelations:\n  requires: [ADR-001]\n---\n\n# TECH-020 TECH\n\n## Context\n\n本文。\n")
+            _write(root, "services/api/.spec/decisions/ADR-001.md",
+                   "---\nid: ADR-001\ntitle: 判断\nstatus: proposed\n---\n\n# ADR-001 判断\n\n## Context\n\n背景。\n\n## Decision\n\n決定。\n\n## Consequences\n\n帰結。\n")
+            _git(root, "add", "-A")
+            _git(root, "commit", "-q", "-m", "base")
+            result, exit_code = _run_context(root / "apps/web", "REQ-001", purpose="implement")
+            self.assertEqual((result["status"], exit_code), ("failed", 1), result)
+            self.assertEqual(
+                [(d["code"], d["source"]["workspaceId"], d["source"]["path"], d["source"].get("key"), d.get("evidence"))
+                 for d in result["diagnostics"]],
+                [("CTX-RELATION-TYPE-001", "api", ".spec/technical/TECH-020.md", "relations.requires", "ADR-001")],
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
