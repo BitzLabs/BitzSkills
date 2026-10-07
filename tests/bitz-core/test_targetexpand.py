@@ -329,21 +329,32 @@ class TaskVerifyRequiresApplicabilityTests(unittest.TestCase):
 
     def test_inapplicable_requires_target_blocks_verify(self):
         cases = {
-            "draft": ({".spec/requirements/REQ-002.md": _req("REQ-002", status="draft")}, "[REQ-002]", "CTX-STATE-001"),
-            "outdated": ({".spec/technical/TECH-002.md": _tech("TECH-002", status="outdated")}, "[TECH-002]", "CTX-STATE-001"),
+            "draft": ({".spec/requirements/REQ-002.md": _req("REQ-002", status="draft")}, "[REQ-002]", ("CTX-STATE-001", "REQ-002")),
+            "outdated": ({".spec/technical/TECH-002.md": _tech("TECH-002", status="outdated")}, "[TECH-002]", ("CTX-STATE-001", "TECH-002")),
             "superseded": ({".spec/requirements/REQ-002.md": _req("REQ-002"),
                             ".spec/requirements/REQ-003.md": _req("REQ-003", extra_frontmatter="relations:\n  supersedes: [REQ-002]\n")},
-                           "[REQ-002]", "CTX-STATE-SUPERSEDED-001"),
+                           "[REQ-002]", ("CTX-STATE-SUPERSEDED-001", "REQ-002")),
             "transitive": ({".spec/requirements/REQ-002.md": _req("REQ-002", extra_frontmatter="relations:\n  requires: [REQ-003]\n"),
-                            ".spec/requirements/REQ-003.md": _req("REQ-003", status="draft")}, "[REQ-002]", "CTX-STATE-001"),
+                            ".spec/requirements/REQ-003.md": _req("REQ-003", status="draft")}, "[REQ-002]", ("CTX-STATE-001", "REQ-003")),
             "through-done-task": ({".spec/tasks/TASK-002.md": _task("TASK-002", "done", "relations:\n  requires: [REQ-005]\n"),
-                                   ".spec/requirements/REQ-005.md": _req("REQ-005", status="draft")}, "[TASK-002]", "CTX-STATE-001"),
+                                   ".spec/requirements/REQ-005.md": _req("REQ-005", status="draft")}, "[TASK-002]", ("CTX-STATE-001", "REQ-005")),
         }
-        for name, (files, requires, code) in cases.items():
+        for name, (files, requires, (code, doc_id)) in cases.items():
             with self.subTest(name):
                 result = self._expand(files, requires)
-                self.assertEqual([e["code"] for e in result.errors], [code])
+                self.assertEqual([(e["code"], e["doc_id"]) for e in result.errors], [(code, doc_id)])
                 self.assertEqual(result.errors[0]["resultStatus"], "blocked")
+
+    def test_non_accepted_adr_is_left_to_the_relation_type_check(self):
+        # 状態が`accepted`でないADRへの強い関係は§4の型制約（`CTX-RELATION-TYPE-001`）であり、ここでは状態の診断を出さない。
+        for requires, files in (
+            ("[ADR-001]", {".spec/decisions/ADR-001.md": _adr("ADR-001", status="proposed")}),
+            ("[REQ-002]", {".spec/requirements/REQ-002.md": _req("REQ-002", extra_frontmatter="relations:\n  requires: [ADR-001]\n"),
+                           ".spec/decisions/ADR-001.md": _adr("ADR-001", status="proposed")}),
+        ):
+            with self.subTest(requires=requires):
+                result = self._expand(files, requires)
+                self.assertEqual(result.errors, [])
 
     def test_applicable_requires_closure_passes_without_entering_the_context(self):
         result = self._expand({".spec/requirements/REQ-002.md": _req("REQ-002")}, "[REQ-002]")
