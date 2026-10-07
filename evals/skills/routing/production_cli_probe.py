@@ -17,7 +17,7 @@ import time
 import source_guard
 
 ROOT = Path(__file__).resolve().parents[3]
-CONTRACT = 'evals/skills/routing/production-cli-probe-v0.1.json'
+CONTRACT = 'evals/skills/routing/production-cli-probe-v0.2.json'
 
 
 def exclusive(path: Path, raw: bytes):
@@ -70,6 +70,7 @@ def policy(config_root: Path, port: int, contract: dict):
                  'computer_use', 'image_generation', 'view_image', 'code_mode', 'code_mode_host',
                  'multi_agent', 'goals', 'sleep_tool', 'tool_call_mcp_elicitation', 'memories', 'hooks'):
         values['features.' + name] = False
+    values['features.code_mode_host'] = contract.get('codeModeHostEnabled', False)
     return values
 
 
@@ -213,6 +214,7 @@ def isolated(base: Path, contract: dict):
     passed = terminal and not errors and inventory_error is None and names == sorted(contract['allowedTools'])
     value = dict(status='local_tool_declaration_passed' if passed else 'local_tool_declaration_stopped',
                  offeredToolNames=names, toolInventoryError=inventory_error, localHttpRequestCount=len(requests),
+                 rawToolTypes=[t.get('type') for t in requests[0].get('tools', [])] if requests else [],
                  localErrors=errors, mockTurnCompleted=terminal, serverExitCode=process.returncode if process else None,
                  intentionalServerShutdown=intentional_shutdown, networkNamespaceIsolated=True,
                  homeCredentialsHidden=True, paidModelCalls=0, primaryModelTrajectories=0,

@@ -1,0 +1,26 @@
+{
+  "version": "production-cli-probe-0.2.0",
+  "phase": 4,
+  "scope": "isolated-local-responses-simulator-only",
+  "codexVersion": "codex-cli 0.160.1",
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "candidateSource": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+  "manifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+  "snapshotRelativePath": ".venv/production-routing-preparation-01/snapshot",
+  "sourceFiles": [
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/production-cli-probe-v0.2.json",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/host.py",
+    "tests/skills/test_production_cli_probe.py"
+  ],
+  "allowedTools": ["mcp__production_routing__list_resources", "mcp__production_routing__read_resource"],
+  "codeModeHostEnabled": true,
+  "previousProbe": {"sourceCommit": "72400aa66338c9a66d23de6d08120ec0aa446ff9", "outputRelativePath": ".venv/production-cli-local-probe-01", "status": "local_tool_declaration_stopped", "reason": "Code Mode host disabled; outgoing tools absent", "paidModelCalls": 0},
+  "maximumLocalHttpRequests": 1,
+  "paidModelCalls": 0,
+  "primaryModelTrajectories": 0,
+  "automaticPaidRetries": 0,
+  "certifiesNativeProvider": false,
+  "certifiesSkillGate": false
+}
