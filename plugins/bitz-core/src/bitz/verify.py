@@ -229,7 +229,10 @@ def _relation_check_diagnostics(
     known_ws_ids: set[str],
     multi_active: bool,
 ):
-    """検証対象の完全解決の対象（起点ワークスペース自身が所有する閉包内の文書）の関係の診断を返す。"""
+    """``context_documents``のうち、起点ワークスペース自身が所有する文書の関係の診断を返す。
+
+    コンテキストへ含めない閉包の文書と他のメンバーの文書の`requires`の型制約は、展開（`targetexpand`）が返す。
+    """
 
     if multi_active:
         scoped_entries = [e for e in relations_mod.valid_entries(catalog_entries) if e.doc_id in context_documents]
@@ -517,9 +520,10 @@ def _process_single_target(
                 doc_id = err["doc_id"]
                 owner = context_mod._owner_of(doc_id, workspace_id) if multi_active else workspace_id
                 doc_path = id_index[doc_id].path
-                diags.append(
-                    _file_diag(err["code"], err["severity"], err["resultStatus"], err["summary"], owner, doc_path, key=err.get("key"))
-                )
+                diag = _file_diag(err["code"], err["severity"], err["resultStatus"], err["summary"], owner, doc_path, key=err.get("key"))
+                if err.get("evidence") is not None:
+                    diag["evidence"] = err["evidence"]
+                diags.append(diag)
         entry_out["diagnostics"] = sort_diagnostics(diags)
         entry_out["status"] = worst_status([d["resultStatus"] for d in diags])
         return entry_out, needed_pairs

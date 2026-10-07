@@ -679,14 +679,52 @@ def target_expansion(
     result.document_edges = edges
     result.document_distance = _shortest_distances(owning_id, preds, distance)
     result.draft_advisory = draft_advisory
-    # 強い関係（型制約）を検査する文書。目的`verify`でTASKを起点にした場合は、コンテキストへ含めない起点の`requires`の閉包も
-    # 対象にする（関係・トレースモデル §6.3）。
-    scope = set(context_order)
+    # 呼び出し側の関係の検査は、コンテキストの文書のうち起点ワークスペースが所有するもの（修飾のないID）が宣言する関係を対象にする。
+    result.relation_scope = sorted(set(context_order))
+    # その検査が見ない文書（複合ワークスペースの他のメンバーの文書と、目的`verify`でTASKを起点にした場合のコンテキストへ含めない
+    # 起点の`requires`の閉包）については、閉包を構成する`requires`の辺の型制約だけをここで検査する。状態が`accepted`でないADRへの
+    # `requires`は、関係・トレースモデル §4の状態を含む型制約である（同 §6.3、ユーザー決定）。
+    extra = set(context_order)
     if purpose == "verify" and root_entry.kind == "TASK":
-        scope |= {target_id for target_id, _source in _requires_closure([owning_id], id_index, statement_index) if target_id in id_index}
-    result.relation_scope = sorted(scope)
+        extra |= {target_id for target_id, _source in _requires_closure([owning_id], id_index, statement_index)}
+    covered = {d for d in context_order if "::" not in d}
+    for doc_id in sorted(extra - covered):
+        errors.extend(_adr_requires_type_errors(doc_id, id_index, statement_index))
     result.errors = errors
     return result
+
+
+def _adr_requires_type_errors(doc_id: str, id_index: dict[str, DocEntry], statement_index: dict[str, dict]) -> list[dict]:
+    """``doc_id``の`requires`のうち、状態が`accepted`でないADRを指すものを`CTX-RELATION-TYPE-001`の候補として返す。
+
+    診断の形は関係の検査（`relations.check_relations`）と同じにする。発生元は関係を宣言した文書の`relations.requires`、
+    ``evidence``は宣言した参照先（複合ワークスペースの他のメンバーの文書では、そのメンバーの中で書いた修飾のない形）。
+    """
+
+    entry = id_index.get(doc_id)
+    if entry is None:
+        return []
+    owner = doc_id.partition("::")[0] if "::" in doc_id else None
+    out: list[dict] = []
+    for ref in (entry.frontmatter.get("relations") or {}).get("requires") or []:
+        if not isinstance(ref, str):
+            continue
+        target_entry, _target_doc_id = _resolve_ref(ref, id_index, statement_index)
+        if target_entry is None or target_entry.kind != "ADR" or target_entry.status == "accepted":
+            continue
+        evidence = ref[len(owner) + 2 :] if owner is not None and ref.startswith(f"{owner}::") else ref
+        out.append(
+            {
+                "code": "CTX-RELATION-TYPE-001",
+                "severity": "error",
+                "resultStatus": "failed",
+                "summary": messages.relation_type_mismatch(entry.kind, target_entry.kind, "requires"),
+                "doc_id": doc_id,
+                "key": "relations.requires",
+                "evidence": evidence,
+            }
+        )
+    return out
 
 
 def _successors(doc_id: str, id_index: dict[str, DocEntry], statement_index: dict[str, dict]) -> list[str]:

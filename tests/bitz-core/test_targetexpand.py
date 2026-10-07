@@ -347,16 +347,30 @@ class TaskVerifyRequiresApplicabilityTests(unittest.TestCase):
                 self.assertEqual([(e["code"], e["doc_id"]) for e in result.errors], [(code, doc_id)])
                 self.assertEqual(result.errors[0]["resultStatus"], "blocked")
 
-    def test_non_accepted_adr_is_left_to_the_relation_type_check(self):
-        # 状態が`accepted`でないADRへの強い関係は§4の型制約（`CTX-RELATION-TYPE-001`）であり、ここでは状態の診断を出さない。
-        for requires, files in (
-            ("[ADR-001]", {".spec/decisions/ADR-001.md": _adr("ADR-001", status="proposed")}),
-            ("[REQ-002]", {".spec/requirements/REQ-002.md": _req("REQ-002", extra_frontmatter="relations:\n  requires: [ADR-001]\n"),
-                           ".spec/decisions/ADR-001.md": _adr("ADR-001", status="proposed")}),
-        ):
-            with self.subTest(requires=requires):
-                result = self._expand(files, requires)
-                self.assertEqual(result.errors, [])
+    def test_non_accepted_adr_is_a_type_constraint_not_a_state_check(self):
+        # 状態が`accepted`でないADRへの強い関係は§4の型制約（`CTX-RELATION-TYPE-001`）であり、状態の診断を出さない。
+        # 起点のTASKが直接`requires`する場合は、コンテキストの文書の関係の検査（呼び出し側）が扱うので、展開は何も返さない。
+        result = self._expand({".spec/decisions/ADR-001.md": _adr("ADR-001", status="proposed")}, "[ADR-001]")
+        self.assertEqual(result.errors, [])
+        # コンテキストへ含めない`requires`の閉包の文書（REQ-002）の`requires`は、展開が型制約の候補として返す。
+        result = self._expand(
+            {".spec/requirements/REQ-002.md": _req("REQ-002", extra_frontmatter="relations:\n  requires: [ADR-001]\n"),
+             ".spec/decisions/ADR-001.md": _adr("ADR-001", status="proposed")},
+            "[REQ-002]",
+        )
+        self.assertEqual(
+            [(e["code"], e["doc_id"], e["key"], e["evidence"], e["resultStatus"]) for e in result.errors],
+            [("CTX-RELATION-TYPE-001", "REQ-002", "relations.requires", "ADR-001", "failed")],
+        )
+
+    def test_requires_closure_is_checked_only_for_requires_type_constraints(self):
+        # 先行TASKが存在しない規範文を`addresses`していても、コンテキストへ含めない閉包の文書の関係は`requires`の型制約しか検査しない
+        # （ユーザー決定）。
+        result = self._expand(
+            {".spec/tasks/TASK-002.md": _task("TASK-002", "done", "relations:\n  addresses: [REQ-001:AC-09]\n")},
+            "[TASK-002]",
+        )
+        self.assertEqual(result.errors, [])
 
     def test_applicable_requires_closure_passes_without_entering_the_context(self):
         result = self._expand({".spec/requirements/REQ-002.md": _req("REQ-002")}, "[REQ-002]")
