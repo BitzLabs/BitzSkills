@@ -1252,3 +1252,14 @@ reviewerは予約も消費も0、既承認の未消費1枠を維持する。迂�
 private評価資料は使わず、一次0/有料自動retry0。確定ref/clean全320件と別文脈の再検分、親の再照合を次に行う。
 原provider bytesが得られないcollaboration検分をnative一次軌跡やSkill Gateへ拡張しない。
 実CLI接続/tool制限/一次台帳/公開canary契約と、本測定・比較・行動・異系統・実地・配布/最終承認が残る。
+
+#### Phase 4：入力・証拠監査器の修正検証結果
+
+修正版source9 `7fa403a1ade5e1dc6d57f1749bda78fdd397da2c` のclean全320件は実OK/exit0。
+独立SOL1回はP1=0/P2=0、対象26/全320/敵対8件はexit0。親も対象26件を実再実行しexit0、source/hash/原証拠を再照合した。
+記録は `evals/skills/results/2026-10-07-production-trace-remediation-reviewed/`。
+検分者の読取り前guard欠如は原receiptに保持し、親の予約前照合で置き換えない。
+この制限つきの修正検証を完全な検分手順通過やPhase/Gate完了とは扱わない。
+旧指摘3件/原証拠/消費枠は保持、新有限枠は消費1/残0、一次0/追加委譲0/自動retry0。
+次作業もPhase 4：実CLI接続とtool構成の実効検証、入力/catalog/manifestの契約束縛、一次永続台帳。
+公開canaryの別有限契約、本測定・比較・行動・異系統・実地・配布/最終承認は引き続き残る。

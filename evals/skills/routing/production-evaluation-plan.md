@@ -71,3 +71,14 @@ native接続の動作確認はまだ行っていない。合成trace+実hostの�
 新receiptはschemaでキーと値を明示する。旧誤記receiptを修正せず、そのhashを新契約のpreviousFailureへ束縛する。
 確定ref/clean treeで全320件を確認し、別文脈で是正と全体を検分してから親が再照合する。
 native接続・tool構成・一次台帳と一次モデル測定は、引き続き後続の未実装/未実施範囲である。
+
+### Phase 4：修正版コンポーネントの検証記録
+
+修正版source9 `7fa403a1ade5e1dc6d57f1749bda78fdd397da2c` のclean全320件はOK/exit0。
+独立SOL1回はP1=0/P2=0、対象26/全320/敵対8件exit0。親も対象26件を再実行しexit0、原証拠とsource9を照合した。
+結果は `../results/2026-10-07-production-trace-remediation-reviewed/`。
+検分者自身の最初のguardは初期読取り後だった制限を原receiptと公開記録へ保持する。
+親の呼出し前guardと前後のsource一致を確認したが、読取り前要件の代替や完全な検分手順通過とは扱わない。
+旧P2=3/原証拠/消費枠を保持する。新枠も消費1/残0、一次0/retry0。
+ここでは修正確認を記録するだけで、Phase完了・native接続・行動・Skill Gateを認定しない。
+次は実CLI接続/tool実効検証、入力/catalog/manifestの固定契約束縛、一次永続台帳と公開canaryの有限契約。
