@@ -676,6 +676,8 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `MULTI-003` | 非修飾で別ワークスペースだけにある参照先 | check all | failed／1 | `SPEC-MULTI-REF-001`だけ |
 | `MULTI-004-01` | `context`時に存在するワークスペース内の参照先が不在 | context | failed／1 | `SPEC-RELATION-MISSING-001`だけ |
 | `MULTI-004-02` | `check`時に存在するワークスペース内の参照先が不在 | check | failed／1 | `SPEC-RELATION-MISSING-001`だけ |
+| `MULTI-027-01` | メンバー`web`のREQ-001が、メンバー`api`のTECH-020を`requires`し、TECH-020が状態`proposed`のADR-001を`requires`する（`web`の作業ディレクトリから起点`REQ-001`） | context --purpose implement | failed／1 | 他のメンバーの文書でも、状態の検査の`CTX-STATE-001`ではなく、型制約の`CTX-RELATION-TYPE-001`の1件（発生元は`workspaceId: api`の`.spec/technical/TECH-020.md`の`relations.requires`、`evidence`は`ADR-001`）。`unresolvedStrongRelations`は1、`contextDigest`は`null` |
+| `MULTI-027-02` | `MULTI-027-01`と同じ入力（REQ-001は通るテスト対応を持つ） | verify `web::REQ-001` | failed／1 | 同じ`CTX-RELATION-TYPE-001`が検証対象の`diagnostics`に1件、`contextDigest: null`、`bindingRefs: []`、テストを開始しない |
 | `MULTI-005` | 未知`--workspace` | check | 結果なし／4 | 標準出力結果なし、レポートなし |
 | `MULTI-006` | Git既知の未登録設定 | check all | blocked／2 | `workspaces: []`、コマンドなし |
 | `MULTI-007-01` | メンバーの入れ子 | doctor all | failed／1 | `SPEC-MULTI-PATH-001` |

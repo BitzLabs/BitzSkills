@@ -68,7 +68,7 @@ from conformance import target_vectors
 from conformance import multi_catalog_fixtures, multi_digest_fixtures, multi_doctor_fixtures, multi_identity_fixtures
 from conformance import multi_member_fixtures, multi_ownership_fixtures, multi_reference
 from conformance import multi_verify_fixtures, multi_report_fixtures, multi_compat_fixtures
-from conformance import multi_generator, multi_limit_fixtures
+from conformance import multi_generator, multi_limit_fixtures, multi_relation_type_fixtures
 
 
 class AuditTests(unittest.TestCase):
@@ -874,6 +874,92 @@ class AuditTests(unittest.TestCase):
                 mutate(value)
                 path.write_text(json.dumps(value))
                 self.assertEqual(multi_identity_fixtures.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_relation_type_fixtures(self):
+        result = multi_relation_type_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], list(multi_relation_type_fixtures.CASES))
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def test_multi_relation_type_audit_rejects_state_diagnostic_and_erased_diagnostic(self):
+        """他のメンバーの文書の型制約を、状態の診断への置換、診断の消去（成功への改変）、発生元の改変で崩した写しを拒否する。"""
+        def to_state(diagnostic):
+            diagnostic.update(code="CTX-STATE-001", resultStatus="blocked", summary="ADR-001は現在のpurposeに適用できません")
+            diagnostic["source"] = {"kind": "file", "workspaceId": "api", "path": ".spec/decisions/ADR-001.md"}
+            diagnostic.pop("evidence")
+
+        def erase_context(value):
+            value.update(status="passed")
+            value["diagnostics"] = []
+            value["resolution"].update(complete=True, unresolvedStrongRelations=0)
+
+        def erase_verify(value):
+            value.update(status="passed")
+            value["targetResults"][0].update(status="passed", diagnostics=[])
+
+        mutations = [
+            ("MULTI-027-01", "expected/context.json", lambda v: to_state(v["diagnostics"][0])),
+            ("MULTI-027-02", "expected/verify.json", lambda v: to_state(v["targetResults"][0]["diagnostics"][0])),
+            ("MULTI-027-01", "expected/context.json", erase_context),
+            ("MULTI-027-02", "expected/verify.json", erase_verify),
+            ("MULTI-027-01", "expected/context.json", lambda v: v.update(diagnostics=[])),
+            ("MULTI-027-01", "expected/context.json",
+             lambda v: v["diagnostics"][0]["source"].update(workspaceId="web")),
+            ("MULTI-027-02", "expected/verify.json",
+             lambda v: v["targetResults"][0]["diagnostics"][0]["source"].update(workspaceId="web")),
+            ("MULTI-027-01", "expected/context.json",
+             lambda v: v["diagnostics"][0]["source"].update(path=".spec/requirements/REQ-001.md")),
+            ("MULTI-027-01", "expected/context.json",
+             lambda v: v["diagnostics"][0].update(evidence="api::ADR-001")),
+            ("MULTI-027-02", "expected/verify.json",
+             lambda v: v["targetResults"][0]["diagnostics"][0]["source"].pop("key")),
+            ("MULTI-027-01", "expected/context.json",
+             lambda v: v["resolution"].update(unresolvedStrongRelations=0)),
+            ("MULTI-027-01", "expected/context.json", lambda v: v.update(status="blocked")),
+            ("MULTI-027-02", "expected/verify.json",
+             lambda v: v.update(diagnostics=v["targetResults"][0]["diagnostics"])),
+            ("MULTI-027-02", "expected/verify.json",
+             lambda v: v["targetResults"][0].update(bindingRefs=["web::frontend"])),
+            ("MULTI-027-01", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+            ("MULTI-027-02", "manifest.json", lambda v: v["expect"].update(exitCode=4)),
+            ("MULTI-027-01", "manifest.json", lambda v: v["invocation"].update(cwd=".")),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, relative=relative), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, identifier)
+                path = root / "multi" / identifier / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertEqual(multi_relation_type_fixtures.validate(root, {identifier})["status"], "Failed")
+
+    def test_multi_relation_type_audit_rejects_changed_corpus(self):
+        """原因はTECH-020から状態`proposed`のADR-001への`requires`の1つだけである。入力を変えた写しは、期待値が同じでも拒否する。"""
+        edits = [
+            ("services/api/.spec/decisions/ADR-001.md", b"status: proposed", b"status: accepted"),
+            ("apps/web/.spec/requirements/REQ-001.md", b"requires: [api::TECH-020]",
+             b"requires: [api::TECH-020]\n  refines: [api::TECH-020]"),
+            ("services/api/.spec/technical/TECH-020.md", b"requires: [ADR-001]", b"requires: [api::ADR-001]"),
+        ]
+        for relative, old, new in edits:
+            with self.subTest(relative=relative, new=new), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_multi_fixture(temporary, "MULTI-027-01")
+                path = root / "multi/MULTI-027-01/repo" / relative
+                self.assertIn(old, path.read_bytes())
+                path.write_bytes(path.read_bytes().replace(old, new))
+                self.assertEqual(multi_relation_type_fixtures.validate(root, {"MULTI-027-01"})["status"], "Failed")
+        # 入力の一致の検査と別に、原因の単一性の検査が、入力の木構造と参照計算から拒否する。
+        for relative, old, new in edits[:2]:
+            with self.subTest(single_cause=relative), tempfile.TemporaryDirectory() as temporary:
+                fixture = audit.FIXTURES / "multi/MULTI-027-01"
+                repository = Path(temporary) / "repo"
+                shutil.copytree(fixture / "repo", repository)
+                path = repository / relative
+                path.write_bytes(path.read_bytes().replace(old, new))
+                result = json.loads((fixture / "expected/context.json").read_text())
+                with self.assertRaises(ValueError):
+                    multi_relation_type_fixtures.check_single_cause("MULTI-027-01", repository, result)
 
     def test_multi_identity_audit_rejects_second_cause_in_the_corpus(self):
         """各種類は原因を1つだけ持つ。入力へ2つ目の原因を足した写しは受理しない。"""
