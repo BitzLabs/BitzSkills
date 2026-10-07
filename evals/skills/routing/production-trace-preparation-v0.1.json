@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "version": "production-trace-preparation-0.1.0",
+  "phase": 4,
+  "task": "製品一次発火評価の入力投影・証拠監査器の独立検分",
+  "status": "frozen_for_component_review",
+  "scope": "public-code-component-review-only",
+  "model": "gpt-6.1-sol",
+  "sourceFiles": [
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/host.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/production-trace-preparation-v0.1.json",
+    "evals/skills/routing/production-trace-preparation-instructions.md",
+    "evals/skills/schemas/decision.schema.json",
+    "tests/skills/test_production_trace.py",
+    "tests/skills/test_routing_host.py"
+  ],
+  "budget": {
+    "independentReviewerSol": 1,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0,
+    "delegations": 0
+  },
+  "reservation": {
+    "rootRelativePath": ".venv/production-trace-review-01",
+    "file": "reservation.json",
+    "exclusiveCreateBeforeCall": true,
+    "failedAttemptsPreserved": true
+  },
+  "outputs": {
+    "rootRelativePath": ".venv/production-trace-review-01",
+    "report": "review.md",
+    "receipt": "receipt.json",
+    "nativeProviderBytesAvailable": false,
+    "evidenceType": "collaboration-tool-transcript-and-local-command-output"
+  },
+  "componentTestCount": 21,
+  "allSkillTestCount": 315,
+  "forbidden": [
+    "private-evaluation-inputs",
+    "credentials-and-tokens",
+    "source-file-edits",
+    "additional-model-calls",
+    "production-primary-measurement",
+    "behavior-or-skill-gate-certification"
+  ],
+  "certifiesCaseSet": false,
+  "certifiesBehavior": false,
+  "certifiesSkillGate": false,
+  "certifiesProductCompletion": false
+}

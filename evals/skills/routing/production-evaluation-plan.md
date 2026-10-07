@@ -39,3 +39,20 @@ host一次ログ/native tool結果/finalの厳密な対応を検査する監査�
 異なるtool、禁止行為、未読本文、結果/順序/hashの食い違い、正常終端欠落、最終応答不一致は採点せず停止させる。
 その後に実CLI接続を閉じたtool構成で検証し、固定source/環境/finite予算/独立検分枠を別contractに記録する。
 現時点では一次実行器とその新契約を未実装/未確定として保持し、本計画だけで有料処理は起動しない。
+
+## Phase 4：入力投影・証拠監査コンポーネント
+
+`production_trace.py` は要求と文字列contextだけを投影し、case ID/期待値/区分/controlを転送しない。
+CLI0.160.1のexportしたapp-serverスキーマを参照し、原フレームのthread/turn/start/completion/finalと、
+実hostのlist/read一次ログを対応させる構造監査を実装した。選択本文のcontent/hash/候補refを照合し、
+禁止tool、未知通知、別thread/turn、重複/欠落、未終端、原最終応答不一致を拒否する。
+native接続の動作確認はまだ行っていない。合成trace+実hostの対象21試験はこの構造検査だけを証明する。
+
+汎用名hostのimport衝突は初回の全314件で26エラーとなり、専用名の読込みに修正した。
+修正後の全314件はOK/exit0。import非汚染の回帰を追加し、対象21件がOK/exit0。
+全315件の実結果は後続記録へ保存する。未測定の結果を成功と推定しない。
+独立コンポーネント検分は `production-trace-preparation-v0.1.json` の別有限SOL1回に固定する。
+公開コードだけを送り、私的評価資料を読まず、一次0/追加委譲0/自動retry0。確定source8と起動前予約を必須にする。
+
+このコンポーネントは入力/catalog/manifestの実行契約束縛、native接続の閉tool検証、一次永続台帳を代替しない。
+それらは次の実装・検証対象であり、一次contractと有料canaryをまだ起動しない。
