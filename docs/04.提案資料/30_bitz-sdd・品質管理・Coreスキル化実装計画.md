@@ -1202,3 +1202,24 @@ namespace全体のオフライン起動でも開始を確認したがtimeout/exi
 親の保存/source/hash/候補71資源のGit blob再照合はexit0。作成/集合独立/一次は0、ケース/evidenceは未作成。
 旧準備1枠に追加する修正版準備1回の確認待ち。修正版の独立検分は未実施で、全Gateを未認定のまま保持する。
 結果は `evals/skills/results/2026-10-07-native-bootstrap-stopped/`。
+
+#### 2026-10-07 続報：実shellの準備検分とcollection 0.5作成
+
+前項の追加準備1回はユーザー承認後に実行した。旧source13のCLIはexit0・正常turn終端だったが、
+内側shellのROエラーでモデル最終結果はstopped、実tool/試験は0、準備報告/receiptなしだった。
+P1/P2=0は未検分であり通過扱いにしない。旧0.1/0.2の停止原bytesと消費枠を保持した。
+
+実shellの無モデル事前検証と修正版の独立検分をsource19
+`33c89531d29d87b6d470a1e61b76d8d2a9a722c5` に固定した。集合source15は変更していない。
+network遮断下のcommand/execで39試験/exit0を確認し、残る作成1回の冒頭で実装者と独立した準備検分を行った。
+独立39試験は全exit0、準備P1/P2=0。追加準備モデル呼出し0、同条件有料再試行0、一次0。
+作成CLIはexit0/正常終端/19実command全exit0、12件中保持11件・新1件を保存し、親の機械監査もexit0。
+親の全294件と準備結果39件再実行はOK/exit0。固定source/原bytes/hash/owner権限/候補71資源のGit照合もexit0。
+結果は `evals/skills/results/2026-10-07-single-replacement-created/` に記録した。
+
+別SOLによる全12件の意味検分は、起動前の自動承認レビューで拒否され未実施。
+理由は、非公開ケース・証拠・raw traceの具体的な送信内容とCodex提供先への承認をユーザー発言から確認できないため。
+reviewerは予約も消費も0、既承認の未消費1枠を維持する。迂回起動や追加課金枠は設けない。
+同結果内 `private-transmission-approval-request.md` の送信対象/宛先/保存先を明記して確認する。
+集合は機械監査通過・意味検分待ち。確認後の独立検分と親の再照合を優先し、通過後に製品一次runnerへ進む。
+製品一次測定、Skill Gate、実操作、リリース認定は引き続き未実施/未認定である。

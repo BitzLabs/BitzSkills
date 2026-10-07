@@ -1,0 +1,127 @@
+{
+  "status": "created_mechanical_pass_awaiting_private_transmission_approval",
+  "executionSource": "33c89531d29d87b6d470a1e61b76d8d2a9a722c5",
+  "executionSourceFileCount": 19,
+  "collectionSource": "879101449c93df2545bb6c5dcab07664b6d5cdd2",
+  "collectionSourceFileCount": 15,
+  "model": "gpt-6.1-sol",
+  "codexVersion": "0.160.1",
+  "previousPreparation": {
+    "sourceCommit": "4736737b25b8e0b190e3863b508e56589e952f1e",
+    "status": "native_completed_but_preparation_stopped_unreviewed",
+    "actualExitCode": 0,
+    "nativeTurnCompleted": true,
+    "actualToolCalls": 0,
+    "actualTests": 0,
+    "severityZeroMeansPassed": false,
+    "executionReceiptSha256": "ebcd4f189518aa7c1bd6b3c8491e3575e1734982252bebd773f60bf4ab71219a",
+    "artifactSha256": {
+      "trace.jsonl": "d1b317dd7937b254a0571c6ab00973c233c5f093ccb3630667b1def786199678",
+      "stderr.log": "ab105565a01b542c2317efaca0e6b5e4c78a9b44c2ded511fdda4c06d36fa2e2",
+      "response.json": "a458f6ce96e022322ffbd65bfe035c6d07ab5a9209f7105ac76a02edcb5b87ec"
+    },
+    "usage": {"input_tokens": 38685, "cached_input_tokens": 25344, "output_tokens": 385}
+  },
+  "localPreflight": {
+    "status": "local_preflight_passed",
+    "networkNamespaceIsolated": true,
+    "modelCalls": 0,
+    "threadOrTurnRequests": 0,
+    "actualTestCount": 39,
+    "commandExitCode": 0,
+    "intentionalServerShutdown": true,
+    "serverExitCode": -15,
+    "operatorReceiptSha256": "405af0945d25bd602627720796a4cc76894358458e8f88f97f349cad856db923",
+    "creatorReceiptSha256": "8fb9c34f58e4f764e9ee5627fd7cd0e499fd7ce6860d35f2e20240c24b89aa63"
+  },
+  "embeddedPreparation": {
+    "status": "passed",
+    "severityCounts": {"P1": 0, "P2": 0},
+    "nativeTests": 16,
+    "shadowTests": 9,
+    "collectionTests": 14,
+    "actualExitCodes": [0, 0, 0],
+    "receiptSha256": "ea9ba9d813ea20e95a2bb876e39bf0fa4fe423d6d2078f622b96fda46ceaf87c",
+    "reportSha256": "0fdad98b640c33c1601c5a35f917b4a949a41a9c62df0b0e2b191474a6780c8f",
+    "boundFileCount": 14,
+    "embeddedInCreatorInvocation": true,
+    "additionalPreparationModelCalls": 0,
+    "certifiesCollection": false,
+    "certifiesSkillGate": false
+  },
+  "creator": {
+    "status": "native_completed",
+    "actualExitCode": 0,
+    "nativeTurnCompleted": true,
+    "nativeFinalResponseMatched": true,
+    "postSourceMatched": true,
+    "phaseConditionsMatched": true,
+    "completedCommands": 19,
+    "failedCommands": 0,
+    "wallMs": 422607,
+    "executionReceiptSha256": "bc22d0e6d4d9751cf450abcfa8171ccbd3734a093ad634b652348c16b2a0e610",
+    "artifactSha256": {
+      "trace.jsonl": "56790b7a6b3865ac3b2f5a16719c6fbad69b58b96471e2b9c9efd69b11aaba61",
+      "stderr.log": "49dd8ae3a5383949710e944b4678d49eaa56d5b76c5e2e81d38ecee789938061",
+      "response.json": "4883e4547ec7b584646b1d6a9d78f6e806185198d62b198eaa6391f4e45bf80c"
+    },
+    "usage": {"input_tokens": 1502605, "cached_input_tokens": 1366656, "output_tokens": 13137}
+  },
+  "collection": {
+    "status": "created-mechanical-pass-awaiting-independent-review",
+    "setVersion": "production-routing-held-out-0.5.0",
+    "caseCount": 12,
+    "newCaseCount": 1,
+    "retainedCaseCount": 11,
+    "routingAssessmentCount": 12,
+    "nativeAuditExitCode": 0,
+    "parentAuditStatus": "mechanical_checks_passed",
+    "receiptSha256": "4f889117e22baa958d43dc4ecc5804b73996630e27cfede598a195ee9f98d7e1",
+    "filesSha256": {
+      "retention.json": "dcf2b89b3c2b2c400d6a5436bc21cc29ba6670a5185dbc5bba6c3e6d0fac0293",
+      "cases.json": "3380c2935bac4b0ed9438ebbfffb3a786d7e7d0acc0ffacefea840a7a79edf25",
+      "evidence.json": "a278a808a43391c11f3c96cabff8a13ce35cec0b2d0e352292ad8692950ed3f7",
+      "creation-notes.md": "682b73a93380dcdd9e938b5e9389d28e3bc8a5f832b8addfbcc7dc16b841e105",
+      "source-guard-start.json": "9c505f566c861f511810732a5033a33ac9ff7bb6fbb510e661ad35fb3a70d1a4",
+      "source-guard-presave.json": "9c505f566c861f511810732a5033a33ac9ff7bb6fbb510e661ad35fb3a70d1a4",
+      "creation-audit.json": "08575390ffc7926854d25e966869f592e47bbd3c4985d54f2ca0d9e31d557c54"
+    },
+    "semanticNovelty": "requires_independent_review",
+    "routingSemantics": "requires_independent_review",
+    "certifiesSkillGate": false
+  },
+  "parentChecks": {
+    "allUnitCount": 294,
+    "allUnitExitCode": 0,
+    "allUnitLogSha256": "22867ecd9a798d9eab70b3bf08aec4a20b0854c774e5ea09800e3b6514a39ff9",
+    "independentResultsRerunCount": 39,
+    "independentResultsRerunExitCode": 0,
+    "rerunLogSha256": "ab4528e7c0c7cd0f90cd00982983ea484c8b3cc921d29f2076b77cbf6cbd4e53",
+    "candidateResourcesGitMatched": 71,
+    "sourceMatched": true,
+    "artifactHashesMatched": true,
+    "ownerOnlyFiles": true
+  },
+  "remainingReviewer": {
+    "status": "not_started_auto_review_rejected",
+    "maximumInvocations": 1,
+    "reserved": false,
+    "consumed": false,
+    "requiresExplicitPrivatePayloadAndDestinationApproval": true
+  },
+  "budget": {
+    "nativePreparationAttemptsConsumed": 2,
+    "creatorSolConsumed": 1,
+    "independentReviewerSolConsumed": 0,
+    "maximumRemainingPaidInvocations": 1,
+    "additionalPreparationModelCalls": 0,
+    "automaticRetries": 0,
+    "primaryModelTrajectories": 0,
+    "actualCostUsd": null
+  },
+  "privateContentsPublished": false,
+  "providerStderrDecoded": false,
+  "certifiesCaseSet": false,
+  "certifiesSkillGate": false,
+  "certifiesRelease": false
+}
