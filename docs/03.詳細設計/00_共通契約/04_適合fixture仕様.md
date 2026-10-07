@@ -426,6 +426,8 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-050` | 起点ID不在 | context | failed／1 | `CTX-ROOT-MISSING-001` |
 | `SINGLE-051` | 先行TASKが未`done` | context --purpose implement | blocked／2 | `CTX-TASK-DEPENDENCY-001` |
 | `SINGLE-144` | 先行TASKが`cancelled` | context --purpose implement | blocked／2 | `CTX-TASK-DEPENDENCY-001`だけを返し、同じ原因の`CTX-STATE-001`を重ねない |
+| `SINGLE-147` | 状態`open`のTASK起点が、状態`proposed`のADR-001を`requires`する（TASKが`addresses`するREQ-001は`approved`） | context --purpose implement | failed／1 | 状態の検査の`CTX-STATE-001`ではなく、型制約の`CTX-RELATION-TYPE-001`の1件（発生元は起点のTASK-001の`relations.requires`、`evidence`はADR-001）。`unresolvedStrongRelations`は1 |
+| `SINGLE-148` | `approved`のREQ-001が、状態`draft`のREQ-002と状態`proposed`のADR-001を`requires`する | context --purpose implement | failed／1 | 独立した2つの原因を両方返す。REQ-001の`relations.requires`の`CTX-RELATION-TYPE-001`（`evidence`はADR-001）とREQ-002の`CTX-STATE-001`の順で、状態は最悪値の`failed`、`unresolvedStrongRelations`は型制約の1件だけ |
 | `SINGLE-052-01` | 起点が置換済み | context | blocked／2 | `CTX-STATE-SUPERSEDED-001`、後継へ差替えない |
 | `SINGLE-052-02` | 依存先が置換済み | context | blocked／2 | `CTX-STATE-SUPERSEDED-001`、後継へ差替えない |
 | `SINGLE-053` | 有効な後継が複数 | context | failed／1 | `CTX-STATE-SUPERSEDED-002` |
@@ -453,6 +455,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-138` | 先行TASKがすべて`done`のTASK起点 | verify | passed／0 | `CTX-TASK-DEPENDENCY-001`と`CTX-STATE-001`を返さない、先行TASKとその`addresses`の参照先を対象に加えない |
 | `SINGLE-143` | `open`のTASK起点で、TASKが`addresses`するREQ-001を状態`draft`のTECH-005が文書単位で`refines`する（REQ-001とTECH-005のテスト対応はどちらもREQ-001:AC-01を`covers`する） | verify | passed／0 | TECH-005を閉包へ含めず、その状態を検査しないので`CTX-STATE-001`を返さない。テストのコマンドはREQ-001のテスト対応だけで、TECH-005のテストを実行しない |
 | `SINGLE-146` | `done`のTASK起点が、状態`draft`のREQ-002を`requires`する（TASKが`addresses`するREQ-001は`approved`でテスト対応を持つ） | verify | blocked／2 | REQ-002の`CTX-STATE-001`が検証対象の`diagnostics`に1件、`contextDigest: null`、`bindingRefs: []`、テストを開始しない。`requires`の閉包はコンテキストへ含めないが、適用可能性は検査する |
+| `SINGLE-149` | `done`のTASK起点が、状態`approved`のREQ-002を`requires`し、REQ-002が状態`proposed`のADR-001を`requires`する（TASKが`addresses`するREQ-001は`approved`でテスト対応を持つ） | verify | failed／1 | REQ-002の`relations.requires`の`CTX-RELATION-TYPE-001`（`evidence`はADR-001）が検証対象の`diagnostics`に1件、`contextDigest: null`、`bindingRefs: []`、テストを開始しない。`requires`の閉包はコンテキストへ含めないが、強い関係の型制約は検査する |
 | `SINGLE-069-01` | 成功コマンドの標準出力／標準エラー出力が64 KiBを超える | verify | passed／0 | パイプを止めず、伏せ字化したUTF-8末尾65,536バイトと切り詰めフラグを保持 |
 | `SINGLE-069-02` | 非0終了コマンドの標準出力／標準エラー出力が64 KiBを超える | verify | failed／1 | パイプを止めず、伏せ字化したUTF-8末尾65,536バイトと切り詰めフラグを保持 |
 

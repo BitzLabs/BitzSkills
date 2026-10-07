@@ -13,6 +13,12 @@
 `SINGLE-146`は、状態が`done`の起点のTASK-001が、状態が`draft`のREQ-002を`requires`する。起点の`requires`の閉包の文書
 （TASKを除く）はコンテキストへ含めないが、通常の適用可能性を検査するので（関係・トレースモデル §6.3、ADR-034）、
 適用できないREQ-002の`CTX-STATE-001`で`blocked`とする。
+
+`SINGLE-149`は、状態が`done`の起点のTASK-001が、状態が`approved`のREQ-002を`requires`し、REQ-002が状態`proposed`のADR-001を
+`requires`する。起点の`requires`の閉包（TASK-001からREQ-002、REQ-002からADR-001へ推移的に到達する文書）の強い関係も、
+コンテキストへ含めなくても型制約を検査する（関係・トレースモデル §4・§6.3）。`requires`の参照先は`accepted`のADRだけを許すので、
+REQ-002から`proposed`のADR-001への`requires`は`CTX-RELATION-TYPE-001`（`failed`）である。診断の発生元は、関係を宣言した
+REQ-002のファイルの`relations.requires`とする。
 """
 import copy
 import json
@@ -27,11 +33,15 @@ from . import digest_crosscheck, digest_reference
 from .harness import setup
 from .initial_fixtures import observe, compare_state
 from .expansion_fixtures import CONFIG, ROOT_ONE_TEST_YAML, TEST_BODY, requirement, task as task_document_parts
+from .context_failure_fixtures import PROPOSED_ADR, PROPOSED_ADR_PATH
 
 HERE = Path(__file__).resolve().parent
 IDENTIFIER = "SINGLE-068"
 STATE_IDENTIFIER = "SINGLE-146"
-IDENTIFIERS = ("SINGLE-068", "SINGLE-137", "SINGLE-138", STATE_IDENTIFIER)
+TYPE_IDENTIFIER = "SINGLE-149"
+IDENTIFIERS = ("SINGLE-068", "SINGLE-137", "SINGLE-138", STATE_IDENTIFIER, TYPE_IDENTIFIER)
+# `SINGLE-146`と`SINGLE-149`は、いずれも`requires`の閉包に原因があり、コンテキストを構成する前に止まる。
+CLOSURE_IDENTIFIERS = {STATE_IDENTIFIER, TYPE_IDENTIFIER}
 INAPPLICABLE_PATH = ".spec/requirements/REQ-002.md"
 ADDRESSED_PATH = ".spec/requirements/REQ-001.md"
 TASK_PATH = ".spec/tasks/TASK-001.md"
@@ -102,10 +112,28 @@ def state_documents():
     return {ADDRESSED_PATH: req001, INAPPLICABLE_PATH: req002, TASK_PATH: head + "\n" + body}
 
 
+def type_documents():
+    """`SINGLE-149`の入力。TASK-001（`done`）は、REQ-002（`approved`）を`requires`し、REQ-001:AC-01を`addresses`する。
+    REQ-002は、状態`proposed`のADR-001を`requires`する。REQ-001（`approved`）はテスト対応を持つので、
+    REQ-002からADR-001への`requires`の型制約だけが結果を決める。"""
+    head, body = requirement("REQ-001", "対象要求", [("REQ-001:AC-01", "入力を検証する")], ROOT_ONE_TEST_YAML)
+    req001 = head + "\n" + body
+    head, body = requirement(
+        "REQ-002", "未承認の判断を前提にする要求", [("REQ-002:AC-01", "前提を満たす")],
+        "relations:\n  requires: [ADR-001]\n", verification="テスト対応は宣言しない。")
+    req002 = head + "\n" + body
+    head, body = task_document_parts(
+        "TASK-001", "推移的な前提を持つ完了済みの作業", "done",
+        "relations:\n  requires: [REQ-002]\n  addresses: [REQ-001:AC-01]\n")
+    return {ADDRESSED_PATH: req001, INAPPLICABLE_PATH: req002, TASK_PATH: head + "\n" + body,
+            PROPOSED_ADR_PATH: PROPOSED_ADR}
+
+
 def reviewed_inputs(identifier=IDENTIFIER):
-    if identifier == STATE_IDENTIFIER:
+    if identifier in CLOSURE_IDENTIFIERS:
+        documents = state_documents() if identifier == STATE_IDENTIFIER else type_documents()
         return {digest_reference.CONFIG_PATH: CONFIG.encode(), "tests/test_root.py": TEST_BODY.encode(),
-                **{path: text.encode() for path, text in state_documents().items()}}
+                **{path: text.encode() for path, text in documents.items()}}
     base = digest_reference.reviewed_inputs("SINGLE-042")
     if identifier == IDENTIFIER:
         return {**base, TASK_PATH: TASK_DOCUMENT.encode()}
@@ -157,18 +185,21 @@ DESCRIPTIONS = {
     "SINGLE-137": "先行TASKが未完了のTASK起点のverifyをblockedにする",
     "SINGLE-138": "先行TASKがdoneのTASK起点のverifyを許可する",
     "SINGLE-146": "requiresの閉包に適用できない文書があるTASK起点のverifyをblockedにする",
+    "SINGLE-149": "requiresの閉包の文書がproposedのADRをrequiresするTASK起点のverifyをfailedにする",
 }
 
 
 def reviewed_manifest(identifier=IDENTIFIER):
     blocked = identifier in {"SINGLE-137", STATE_IDENTIFIER}
+    failed = identifier == TYPE_IDENTIFIER
     return {
         "fixtureId": identifier,
         "description": DESCRIPTIONS[identifier],
         "setup": {"git": True, "operations": [{"op": "stage", "paths": ["."]}]},
         "invocation": {"runner": "bitz", "cwd": ".",
                        "argv": ["verify", "TASK-001", "--format", "json"], "env": {}},
-        "expect": {"status": "blocked" if blocked else "passed", "exitCode": 2 if blocked else 0,
+        "expect": {"status": "failed" if failed else "blocked" if blocked else "passed",
+                   "exitCode": 1 if failed else 2 if blocked else 0,
                    "stdout": "json", "resultFile": "expected/verify.json", "reportFileCount": 0},
     }
 
@@ -195,18 +226,33 @@ def inapplicable_diagnostic():
     }
 
 
+def type_diagnostic():
+    """診断レジストリの`RELATION-TYPE`: `CTX-RELATION-TYPE-001`、`error`、`failed`、発生元`file`、継続単位`skip-edge`
+    （検証対象の`diagnostics`）。発生元は関係を宣言した文書（REQ-002）の`relations.requires`、`evidence`は宣言どおりの参照先
+    （結果・診断・終了コード §4）。`summary`は規範文を持たず、`SINGLE-021`と同じ形（`<参照元の型>から<参照先の型>への<関係型>は
+    許可されません`）にそろえた。"""
+    return {
+        "code": "CTX-RELATION-TYPE-001", "severity": "error", "resultStatus": "failed",
+        "summary": "REQからADRへのrequiresは許可されません",
+        "source": {"kind": "file", "workspaceId": "root", "path": INAPPLICABLE_PATH, "key": "relations.requires"},
+        "evidence": "ADR-001",
+    }
+
+
 def reviewed_result(identifier=IDENTIFIER):
-    if identifier in {"SINGLE-137", STATE_IDENTIFIER}:
+    if identifier in {"SINGLE-137", STATE_IDENTIFIER, TYPE_IDENTIFIER}:
         # コンテキストを構成する前に止まるので、`contextDigest`、`statements`、`bindingRefs`、`commands`は空である
         # （`verify` §9、`SINGLE-067`と同じ理由）。
+        status = "failed" if identifier == TYPE_IDENTIFIER else "blocked"
+        diagnostic = (type_diagnostic() if identifier == TYPE_IDENTIFIER
+                      else inapplicable_diagnostic() if identifier == STATE_IDENTIFIER else blocked_diagnostic())
         return {
-            "schemaVersion": "1.0", "operation": "verify", "status": "blocked", "scope": "selected",
+            "schemaVersion": "1.0", "operation": "verify", "status": status, "scope": "selected",
             "workspace": {"id": "root", "path": "."},
             "targetResults": [{
-                "target": "TASK-001", "status": "blocked", "contextDigest": None,
+                "target": "TASK-001", "status": status, "contextDigest": None,
                 "statements": [], "bindingRefs": [],
-                "diagnostics": [inapplicable_diagnostic() if identifier == STATE_IDENTIFIER
-                                else blocked_diagnostic()]}],
+                "diagnostics": [diagnostic]}],
             "revision": None,
             "commands": [],
             "durationMs": 0,
@@ -255,6 +301,41 @@ def check_inapplicable_closure(result):
     source = target["diagnostics"][0]["source"]
     if source["path"] != INAPPLICABLE_PATH or "key" in source or result["diagnostics"]:
         raise ValueError("診断の発生元は適用できない文書のファイルで、検証対象の`diagnostics`に置く必要があります")
+
+
+def check_type_closure(result):
+    """起点の`requires`の閉包の文書（REQ-002）が`proposed`のADRを`requires`するとき、`verify`は`CTX-RELATION-TYPE-001`だけで
+    `failed`にする（関係・トレースモデル §4・§6.3、診断レジストリ`RELATION-TYPE`）。状態の診断（`CTX-STATE-001`）にしない。"""
+    target = result["targetResults"][0]
+    codes = [item["code"] for item in target["diagnostics"]]
+    if (result["status"], target["status"]) != ("failed", "failed") or codes != ["CTX-RELATION-TYPE-001"]:
+        raise ValueError("`requires`の閉包の文書が`proposed`のADRを`requires`する起点は`CTX-RELATION-TYPE-001`だけで`failed`になる必要があります")
+    if (target["contextDigest"] is not None or target["statements"] or target["bindingRefs"] or result["commands"]):
+        raise ValueError("`failed`の検証対象は、ハッシュ値、規範文、テスト割当てを持たず、テストを実行してはいけません")
+    diagnostic = target["diagnostics"][0]
+    source = diagnostic["source"]
+    if (source["path"] != INAPPLICABLE_PATH or source.get("key") != "relations.requires"
+            or diagnostic.get("evidence") != "ADR-001" or result["diagnostics"]):
+        raise ValueError("診断の発生元は関係を宣言したREQ-002の`relations.requires`で、`evidence`はADR-001、検証対象の`diagnostics`に置く必要があります")
+
+
+def check_type_inputs(inputs, schema):
+    """原因は、`done`の起点の`requires`の閉包の文書（REQ-002、`approved`）が`requires`する、状態`proposed`のADR-001だけである。"""
+    documents = {}
+    for path, kind in ((TASK_PATH, "taskFrontmatter"), (ADDRESSED_PATH, "reqFrontmatter"),
+                       (INAPPLICABLE_PATH, "reqFrontmatter"), (PROPOSED_ADR_PATH, "adrFrontmatter")):
+        documents[path], _ = digest_crosscheck.split_document(inputs[path].decode())
+        Draft202012Validator({"$ref": "#/$defs/" + kind, "$defs": schema["$defs"]}).validate(documents[path])
+    task, addressed = documents[TASK_PATH], documents[ADDRESSED_PATH]
+    closure, adr = documents[INAPPLICABLE_PATH], documents[PROPOSED_ADR_PATH]
+    if task["status"] != "done" or task["relations"]["requires"] != ["REQ-002"]:
+        raise ValueError("起点のTASK-001は、状態が`done`で、REQ-002だけを`requires`する必要があります")
+    if task["relations"]["addresses"] != ["REQ-001:AC-01"] or addressed["status"] != "approved" or not addressed.get("tests"):
+        raise ValueError("`addresses`の参照先は、状態`approved`でテスト対応を持つREQ-001:AC-01だけである必要があります")
+    if closure["status"] != "approved" or closure["relations"]["requires"] != ["ADR-001"]:
+        raise ValueError("閉包の文書REQ-002は、状態が`approved`で、ADR-001だけを`requires`する必要があります")
+    if adr["status"] != "proposed" or adr["id"] != "ADR-001":
+        raise ValueError("型制約を満たさない原因は、状態`proposed`のADR-001である必要があります")
 
 
 def check_state_inputs(inputs, schema):
@@ -330,16 +411,20 @@ def validate_fixture(root, identifier, validators, schema):
         check_done_root(result)
     elif identifier == STATE_IDENTIFIER:
         check_inapplicable_closure(result)
+    elif identifier == TYPE_IDENTIFIER:
+        check_type_closure(result)
     else:
         check_prerequisite(identifier, result)
     inputs = reviewed_inputs(identifier)
     frontmatter, _ = digest_crosscheck.split_document(inputs[TASK_PATH].decode())
     Draft202012Validator({"$ref": "#/$defs/taskFrontmatter",
                           "$defs": schema["$defs"]}).validate(frontmatter)
-    if frontmatter["status"] != ("done" if identifier in {IDENTIFIER, STATE_IDENTIFIER} else "open"):
+    if frontmatter["status"] != ("done" if identifier in {IDENTIFIER, *CLOSURE_IDENTIFIERS} else "open"):
         raise ValueError("レビュー済みの原因と起点のTASKの状態が異なります")
     if identifier == STATE_IDENTIFIER:
         check_state_inputs(inputs, schema)
+    elif identifier == TYPE_IDENTIFIER:
+        check_type_inputs(inputs, schema)
     elif identifier != IDENTIFIER:
         prerequisite, _ = digest_crosscheck.split_document(inputs[PREREQUISITE_PATH].decode())
         Draft202012Validator({"$ref": "#/$defs/taskFrontmatter",
@@ -370,7 +455,7 @@ def validate_fixture(root, identifier, validators, schema):
             if compare_state(effects["before"], actual) or (previous is not None and previous != actual):
                 raise ValueError("隔離した準備手順が固定したスナップショットと異なります")
             previous = actual
-            if identifier in {"SINGLE-137", STATE_IDENTIFIER}:
+            if identifier in {"SINGLE-137", *CLOSURE_IDENTIFIERS}:
                 # コンテキストを構成しないので、ハッシュ値の材料は作らない。
                 continue
             derived = digest_crosscheck.canonical_bytes(

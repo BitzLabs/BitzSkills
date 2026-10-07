@@ -383,3 +383,108 @@ C12とC15は、既存のfixtureの期待値を変えない欠陥の修正であ�
 - 目的`implement`で起点のTASKの`requires`の閉包の文書が適用できない場合は、既存の`CTX-STATE-001`の経路で、このfixtureでは固定しない。
 - `SINGLE-146`の`summary`を除き、期待値はCoreを実行せずに決めた。`summary`は規範文を持たないため、Coreの既存の文言を採った（上の「`summary`と発生元の扱い」）。Coreとの一致の確認は、期待値を決めた後に行い、Gate Bで判定する。
 - 状態が`accepted`でないADRを起点のTASKの`requires`の閉包に持つ`verify`は、§4の型制約（`CTX-RELATION-TYPE-001`）で扱い、このfixtureでは固定しない。推移的に到達したADRの扱いは、実装の確認事項として別に扱う。
+
+## 2026-10-07追記: 状態が`accepted`でないADRへの`requires`を型制約で返す（`SINGLE-147`〜`149`）
+
+### 追加の理由（C17）
+
+C17は、既存のfixtureの期待値を変えない欠陥の修正であり、fixtureは追加だけである（ADR-051の「追加」）。次の3点は、どのfixtureも固定していなかった。
+
+- 状態が`accepted`でないADR（`proposed`など）への`requires`を、Coreは状態の検査の`CTX-STATE-001`（`blocked`）で返していた。
+  [関係・トレースモデル §4](../../../docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md#4-型制約)は、`accepted`のADRを状態を含む型制約と定め、
+  `accepted`以外の状態のADRへの`requires`を`CTX-RELATION-TYPE-001`（`failed`）とする。
+- 状態の診断があると、Coreは型制約の検査を打ち切っていた。独立した別の原因の診断を併記していなかった。
+- 目的`verify`でTASKを起点にしたとき、コンテキストへ含めない起点の`requires`の閉包の文書の強い関係は、型制約を検査していなかった
+  （推移的に到達した`proposed`のADRで`passed`になった）。
+
+既存の`SINGLE-021`は、`check`の型制約（REQから`TECH`への`refines`）だけを固定する。`context`と`verify`のADRの状態を含む型制約は、固定するfixtureがなかった。
+
+根拠にした規範文は次のとおりである。
+
+- 関係・トレースモデル §4: 表の`accepted`のADRは状態を含む型制約であり、`requires`の参照先が`accepted`以外の状態のADRであれば`CTX-RELATION-TYPE-001`とする。
+  `accepted`以外の状態にある文書の適用可能性は、本節の型制約では扱わず、`context`の`CTX-STATE-*`で扱う。
+- 関係・トレースモデル §5.1: 1つの関係のエッジは、最初に成立した主診断を1件だけ返す。参照先が存在して型の組が不適合なら`CTX-RELATION-TYPE-001`（6.）。
+  関係・トレースモデル §6.3: 状態が`accepted`でないADRへの強い関係は、§4の型制約で扱う。
+- [`context`仕様 §3](../../../docs/03.詳細設計/03_操作仕様/01_context.md#3-処理): 状態の検査（`CTX-STATE-*`）と型制約の検査（`CTX-RELATION-TYPE-001`など）は、一方が非成功でも他方を行い、
+  独立した元の原因として両方の診断を返す。状態が`accepted`でないADRへの`requires`は、状態の検査ではなく型制約で扱う。
+- [診断レジストリ](../../../docs/03.詳細設計/00_共通契約/05_診断レジストリ.md)の`RELATION-TYPE`: `CTX-RELATION-TYPE-001`、`error`、`failed`、発生元`file`、継続単位`skip-edge`、優先順位320。
+  `CTX-STATE-INAPPLICABLE`: `CTX-STATE-001`、`error`、`blocked`、発生元`file`、継続単位`skip-target`、優先順位411。
+- [結果・診断・終了コード](../../../docs/03.詳細設計/00_共通契約/01_結果・診断・終了コード.md) §3: 複数の結果は最悪値（`error > failed > blocked > ...`）にまとめる。
+  §4: 関係のエッジを単位とする診断（`CTX-RELATION-TYPE-001`を含む）は`evidence`に参照先を宣言どおりの文字列で持つ。§7: 診断の順序は`path`、`line`、`column`、`code`の辞書順。
+  §6.1: 独立した原因はそれぞれ別に返す。`verify`でコンテキストが非成功のときは、検証対象の`diagnostics`へ置き、`bindingRefs`を空にする。
+
+### 入力と起動
+
+| fixture | 起動 | 文書 | 期待 |
+|---|---|---|---|
+| `SINGLE-147` | `context TASK-001 --purpose implement --format json` | TASK-001（`open`、`requires: [ADR-001]`、`addresses: [REQ-001:AC-01]`）、REQ-001（`approved`、テスト対応なし）、ADR-001（`proposed`） | `failed`／1、`CTX-RELATION-TYPE-001`の1件だけ |
+| `SINGLE-148` | `context REQ-001 --purpose implement --format json` | REQ-001（`approved`、`requires: [REQ-002, ADR-001]`）、REQ-002（`draft`）、ADR-001（`proposed`） | `failed`／1、`CTX-RELATION-TYPE-001`と`CTX-STATE-001`の2件 |
+| `SINGLE-149` | `verify TASK-001 --format json`（設定をステージする） | TASK-001（`done`、`requires: [REQ-002]`、`addresses: [REQ-001:AC-01]`）、REQ-001（`approved`、`tests/test_root.py`が`REQ-001:AC-01`を`covers`する）、REQ-002（`approved`、`requires: [ADR-001]`）、ADR-001（`proposed`）、`tests/test_root.py` | `failed`／1、`CTX-RELATION-TYPE-001`の1件だけ、テストを開始しない |
+
+`SINGLE-147`のREQ-001にテスト対応を置かないのは、`SINGLE-144`と同じ形にそろえるためである（目的`implement`では未テストは警告であり、コンテキストを構成する前に止まるので結果に現れない）。
+`SINGLE-148`のREQ-002は`draft`で、TASKを経由しない。起点がREQなので先行TASKの論点が入らず、状態の診断の原因がREQ-002の適用可能性だけになる。
+`SINGLE-149`のREQ-001にテスト対応を置くのは、`SINGLE-146`と同じく、非成功の原因がREQ-002からADR-001への`requires`だけであることを示すためである
+（未テストの`MUST`は目的`verify`で`blocked`になり、原因が重なる）。`SINGLE-149`のTASK-001はADR-001を直接`requires`せず、`approved`のREQ-002を経由して推移的に到達する。
+REQ-002は`approved`なので、REQ-002自体の適用可能性（状態の診断）は成り立ち、型制約の1件だけが原因になる。
+
+### 期待値の導き方（Coreの出力を根拠にしない）
+
+`SINGLE-147`（`failed`）。`SINGLE-144`の期待値の形（コンテキストを構成する前に止まる非成功）に、診断だけが異なる。
+
+| 項目 | 期待値 | 根拠 |
+|---|---|---|
+| 結果の状態／終了コード | `failed`／1 | 診断の結果への効果が`failed`の1件だけ（結果・診断・終了コード §3） |
+| `diagnostics` | `CTX-RELATION-TYPE-001`／`error`／`failed`の1件だけ。`CTX-STATE-001`を返さない | 関係・トレースモデル §4・§5.1。`proposed`のADRへの`requires`は、同じ原因（参照先ADRが`accepted`でない）を型制約の主診断1件で返す。`context` §3 |
+| 発生元 | `kind: file`、`workspaceId: root`、`path: .spec/tasks/TASK-001.md`、`key: relations.requires` | 診断レジストリ`RELATION-TYPE`の発生元`file`。原因は関係を宣言したTASK-001の`requires`。`SINGLE-021`（関係を宣言したREQ-001の`relations.refines`）と同じ形 |
+| `evidence` | `ADR-001` | 結果・診断・終了コード §4（関係のエッジを単位とする診断は、`evidence`に参照先を宣言どおりに持つ） |
+| `summary` | `TASKからADRへのrequiresは許可されません` | 規範文を持たない文言。`SINGLE-021`の形（`<参照元の型>から<参照先の型>への<関係型>は許可されません`）にそろえた。下の「`summary`の扱い」を参照 |
+| `resolution` | `complete: false`、`documentCount: 0`、`unresolvedStrongRelations: 1` | コンテキストを構成する前に止まるので`complete`は偽、`documents`は空。型制約を満たさない強い関係のエッジ1件を未解決として数える（ユーザー決定。結果の`resolution.unresolvedStrongRelations`は、型制約と関係の不在の件数） |
+| 本体 | `contextDigest: null`、`documents: []`、制約台帳とカバレッジは空 | `SINGLE-144`と同じ |
+
+`SINGLE-148`（`failed`）。2件の診断が独立した原因であることを固定する。
+
+| 項目 | 期待値 | 根拠 |
+|---|---|---|
+| 結果の状態／終了コード | `failed`／1 | 診断の効果は`failed`と`blocked`。最悪値は`failed`（結果・診断・終了コード §3の`failed > blocked`） |
+| `diagnostics` | `CTX-RELATION-TYPE-001`（REQ-001、`relations.requires`、`evidence: ADR-001`）、`CTX-STATE-001`（REQ-002のファイル）の順で2件 | `context` §3（状態の検査と型制約の検査は一方が非成功でも他方を行い、独立した元の原因として両方の診断を返す）。原因は別のエッジ（REQ-001から`REQ-002`と`ADR-001`）で、同義の診断の重複ではない。順序は`path`の辞書順（`.spec/requirements/REQ-001.md` < `.spec/requirements/REQ-002.md`）で決まる（結果・診断・終了コード §7） |
+| `CTX-STATE-001`の発生元 | `kind: file`、`path: .spec/requirements/REQ-002.md`。`key`と`evidence`は置かない | 適用できない文書のファイルを発生元にする。`SINGLE-146`、`SINGLE-052-02`と同じ形。エッジ単位の診断の一覧に`CTX-STATE-001`はなく、`evidence`は要らない |
+| `ADR-001`の`CTX-STATE-001`を返さない | 診断は2件だけ | 関係・トレースモデル §4、`context` §3（状態が`accepted`でないADRへの`requires`は、状態の検査ではなく型制約で扱う）。ADR-001について状態の診断を重ねない |
+| `resolution` | `complete: false`、`documentCount: 0`、`unresolvedStrongRelations: 1` | 未解決の強い関係は型制約のエッジ1件（REQ-001からADR-001）だけ。REQ-002は参照先として解決でき、適用できないだけで未解決ではない |
+
+`SINGLE-149`（`failed`）。`SINGLE-146`の期待値の形で、診断と結果の状態が異なる。
+
+| 項目 | 期待値 | 根拠 |
+|---|---|---|
+| 結果の状態／終了コード | `failed`／1。`targetResults[0].status`も`failed` | 診断の結果への効果が`failed`の1件だけ |
+| `targetResults[0].diagnostics` | `CTX-RELATION-TYPE-001`／`error`／`failed`の1件だけ。最上位の`diagnostics`は空 | 関係・トレースモデル §4・§6.3（コンテキストへ含めない起点の`requires`の閉包の文書も、強い関係の型制約を検査する）。結果・診断・終了コード §6.1（検証対象の`diagnostics`へ置く） |
+| 発生元 | `kind: file`、`workspaceId: root`、`path: .spec/requirements/REQ-002.md`、`key: relations.requires` | 関係を宣言した文書は、`requires`でADR-001を指すREQ-002である。TASK-001は宣言していない |
+| `evidence` | `ADR-001` | 結果・診断・終了コード §4 |
+| `summary` | `REQからADRへのrequiresは許可されません` | 参照元の型はREQ（REQ-002）。`SINGLE-021`の形 |
+| `contextDigest`、`statements`、`bindingRefs`、`commands` | `null`、`[]`、`[]`、`[]`。テストを開始しない | `verify` §9、`SINGLE-146`と同じ理由（検査はコンテキストの構成より前で止まる） |
+
+### `summary`の扱い
+
+`CTX-RELATION-TYPE-001`の`summary`は規範文を持たない。比較には含まれるので、既存の`SINGLE-021`の形（型の名前を使う）にそろえた。ただし、`SINGLE-021`は型の組そのものが不許可
+（REQからTECHへの`refines`）であるのに対し、`SINGLE-147`〜`149`は、型の組（TASK、REQから`ADR`への`requires`）は許可されており、参照先ADRの状態が`accepted`でないことが原因である。
+この文言（`TASKからADRへのrequiresは許可されません`）は、原因が状態であることを表さない。規範文で状態を含む型制約の`summary`を定めるときは、3件を改める。
+
+### 監査の検査と回帰試験
+
+- `context_failure_fixtures.py`の`check_type_constraint`と`check_type_inputs`（`SINGLE-147`、`SINGLE-148`）: 診断のコードの並び（型制約だけ、型制約と状態）、`failed`、`evidence`、
+  発生元の文書と`relations.requires`、`unresolvedStrongRelations`が1であること。入力は、起点が`proposed`のADR-001を`requires`し、`SINGLE-148`はREQ-002が`draft`であること。
+- `verify_task_root_fixtures.py`の`check_type_closure`と`check_type_inputs`（`SINGLE-149`）: `CTX-RELATION-TYPE-001`だけで`failed`、`contextDigest`・`statements`・`bindingRefs`・`commands`が空、
+  発生元がREQ-002の`relations.requires`であること。入力は、起点が`done`でREQ-002だけを`requires`し、REQ-002が`approved`でADR-001だけを`requires`し、ADR-001が`proposed`であること。
+- `test_conformance_audit.py`の回帰試験は、`CTX-STATE-001`への置換、診断の消去と併記の片方の消去、順序の入れ替え、`blocked`化、`evidence`と`key`の消去、`unresolvedStrongRelations`の改変、
+  `passed`化、`contextDigest`・`statements`・`bindingRefs`・`commands`の非空化、入力の修復（ADR-001を`accepted`へ、`requires`を消す、状態を変える）を拒否することを確かめる。
+
+### 限界
+
+- 修正前のCore（`targetexpand.py`、`context.py`、`verify.py`をコミット`60c3d849`の版へ戻したもの。作業ツリーの外のコピーで確認した）では、3件とも失敗する（陰性対照）。
+  `SINGLE-147`は`CTX-STATE-001`（ADR-001）の`blocked`／2、`SINGLE-148`はADR-001とREQ-002の`CTX-STATE-001`の2件の`blocked`／2、`SINGLE-149`は`passed`／0になる。修正後のCoreは3件とも通る。
+- `proposed`のADRだけを固定する。`rejected`、`superseded`のADR、ADRが置換済みの場合は固定しない。`accepted`のADRへの`requires`が型制約を満たすことは、既存のfixture（`SINGLE-042`など）が通過している。
+- `SINGLE-147`は目的`implement`のTASK起点、`SINGLE-148`は目的`implement`のREQ起点、`SINGLE-149`は目的`verify`のTASK起点の、推移的に到達した1段（TASK-001からREQ-002、REQ-002からADR-001）だけを固定する。
+  目的`interpret`、TASK起点の`requires`が直接ADRを指す場合の`verify`、深い閉包は固定しない。
+- 型制約の診断が複数の起点の文書から出る場合の並び、同じ`source.key`に複数の`evidence`が並ぶ場合は固定しない（既存の並べ替えの規則を変えない）。
+- `SINGLE-148`は、状態の診断と型制約の診断がどちらも1件の場合だけを固定する。状態の診断が複数の場合は固定しない。
+- 先の追記の「限界」の最後の項目（状態が`accepted`でないADRを起点のTASKの`requires`の閉包に持つ`verify`は固定しない）は、`SINGLE-149`で固定した。
+- `summary`は規範文を持たない。期待値はCoreを実行せずに決めた。Coreとの一致の確認は、期待値を決めた後に行い、Gate Bで判定する。

@@ -30,6 +30,7 @@ from conformance.git_environment_fixtures import (validate as validate_git_envir
 from conformance.context_failure_fixtures import (validate as validate_context_failures,
     check_unborn as check_context_unborn, reviewed_manifest as context_failure_manifest)
 from conformance import digest_crosscheck, digest_reference
+from conformance import context_failure_fixtures
 from conformance.digest_fixtures import validate as validate_digest
 from conformance import context_limit_fixtures
 from conformance.context_limit_fixtures import validate as validate_context_limits
@@ -1818,7 +1819,7 @@ class AuditTests(unittest.TestCase):
     def test_verify_task_root_fixture(self):
         result = validate_verify_task_root()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], ["SINGLE-068", "SINGLE-137", "SINGLE-138", "SINGLE-146"])
+        self.assertEqual(result["prepared"], ["SINGLE-068", "SINGLE-137", "SINGLE-138", "SINGLE-146", "SINGLE-149"])
         self.assertEqual(result["core_execution"], "Not run")
 
     def test_done_task_root_is_reverifiable_and_cancelled_is_not(self):
@@ -2052,6 +2053,129 @@ class AuditTests(unittest.TestCase):
                 self.assertIn(before, path.read_text())
                 path.write_text(path.read_text().replace(before, after))
                 self.assertTrue(validate_verify_task_root(root, ["SINGLE-146"])["errors"])
+
+    def test_proposed_adr_in_requires_closure_fails_verify_of_a_task_root(self):
+        """関係・トレースモデル §4・§6.3、診断レジストリ`RELATION-TYPE`: 目的`verify`でも、コンテキストへ含めない起点の
+        `requires`の閉包の文書（REQ-002）の強い関係が`proposed`のADRを指せば、型制約の`CTX-RELATION-TYPE-001`（`failed`）にする
+        （実装の確認事項C17）。状態の診断（`CTX-STATE-001`、`blocked`）にしない。"""
+        failed = json.loads((audit.FIXTURES / "single/SINGLE-149/expected/verify.json").read_text())
+        verify_task_root_fixtures.check_type_closure(failed)
+        target = failed["targetResults"][0]
+        self.assertEqual((failed["status"], target["status"], target["contextDigest"], target["statements"],
+                          target["bindingRefs"], failed["commands"], failed["diagnostics"]),
+                         ("failed", "failed", None, [], [], [], []))
+        self.assertEqual([(d["code"], d["source"]["path"], d["source"]["key"], d["evidence"]) for d in target["diagnostics"]],
+                         [("CTX-RELATION-TYPE-001", ".spec/requirements/REQ-002.md", "relations.requires", "ADR-001")])
+        inputs = verify_task_root_fixtures.reviewed_inputs("SINGLE-149")
+        task, _ = digest_crosscheck.split_document(inputs[verify_task_root_fixtures.TASK_PATH].decode())
+        closure, _ = digest_crosscheck.split_document(inputs[verify_task_root_fixtures.INAPPLICABLE_PATH].decode())
+        adr, _ = digest_crosscheck.split_document(inputs[".spec/decisions/ADR-001.md"].decode())
+        # TASK-001はADR-001を直接`requires`しない。REQ-002（`approved`）を経由して推移的に到達する。
+        self.assertEqual((task["status"], task["relations"]["requires"], closure["status"], closure["relations"]["requires"],
+                          adr["status"]), ("done", ["REQ-002"], "approved", ["ADR-001"], "proposed"))
+        self.assertEqual(task["relations"]["addresses"], ["REQ-001:AC-01"])
+
+    def test_type_closure_audit_rejects_tampered_expectations(self):
+        # `proposed`のADRへの`requires`を、`passed`にする、診断を消す、状態の診断へ置換する、診断を重ねる、
+        # テストを開始したことにする改変を、監査は拒否する。
+        def target(**changes):
+            return lambda v: v["targetResults"][0].update(**changes)
+
+        def first(**changes):
+            return lambda v: v["targetResults"][0]["diagnostics"][0].update(**changes)
+
+        def add_diagnostic(**changes):
+            def mutate(v):
+                diagnostic = v["targetResults"][0]["diagnostics"][0]
+                v["targetResults"][0]["diagnostics"].append(dict(diagnostic, **changes))
+            return mutate
+
+        passed = json.loads((audit.FIXTURES / "single/SINGLE-138/expected/verify.json").read_text())
+        mutations = [
+            ("expected/verify.json", lambda v: v.update(status="passed")),
+            ("expected/verify.json", lambda v: v.update(status="blocked")),
+            ("expected/verify.json", target(status="passed")),
+            ("expected/verify.json", target(status="blocked")),
+            ("expected/verify.json", target(diagnostics=[])),
+            ("expected/verify.json", first(code="CTX-STATE-001", resultStatus="blocked")),
+            ("expected/verify.json", lambda v: (v.update(status="blocked"), v["targetResults"][0].update(status="blocked"),
+                                                v["targetResults"][0]["diagnostics"][0].update(
+                                                    code="CTX-STATE-001", resultStatus="blocked"))),
+            ("expected/verify.json", first(code="CTX-TASK-DEPENDENCY-001")),
+            ("expected/verify.json", add_diagnostic(code="CTX-STATE-001", resultStatus="blocked")),
+            ("expected/verify.json", add_diagnostic()),
+            ("expected/verify.json", lambda v: v["targetResults"][0]["diagnostics"][0].pop("evidence")),
+            ("expected/verify.json", first(evidence="REQ-002")),
+            ("expected/verify.json", lambda v: v["targetResults"][0]["diagnostics"][0]["source"].pop("key")),
+            ("expected/verify.json", lambda v: v["targetResults"][0]["diagnostics"][0]["source"].update(
+                path=".spec/tasks/TASK-001.md")),
+            ("expected/verify.json", lambda v: v["targetResults"][0]["diagnostics"][0]["source"].update(
+                path=".spec/decisions/ADR-001.md")),
+            ("expected/verify.json", lambda v: v.update(diagnostics=[v["targetResults"][0]["diagnostics"][0]])),
+            ("expected/verify.json", target(contextDigest="sha256:" + "0" * 64)),
+            ("expected/verify.json", target(statements=["REQ-001:AC-01"])),
+            ("expected/verify.json", target(bindingRefs=["root::default"])),
+            ("expected/verify.json", lambda v: v["commands"].append(passed["commands"][0])),
+            ("manifest.json", lambda v: v["expect"].update(status="passed", exitCode=0)),
+            ("manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+            ("manifest.json", lambda v: v["expect"].update(exitCode=2)),
+        ]
+        for index, (relative, mutate) in enumerate(mutations):
+            with self.subTest(relative=relative, mutation=index), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single/SINGLE-149"
+                shutil.copytree(audit.FIXTURES / "single/SINGLE-149", fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                path = fixture / relative
+                value = json.loads(path.read_text())
+                mutate(value)
+                path.write_text(json.dumps(value))
+                self.assertTrue(validate_verify_task_root(root, ["SINGLE-149"])["errors"])
+
+    def test_type_closure_contract_rejects_state_replacement(self):
+        """完全比較とは別に、`check_type_closure`だけが、型制約の診断の状態の診断への置換や、`blocked`への変更を拒否する。"""
+        value = json.loads((audit.FIXTURES / "single/SINGLE-149/expected/verify.json").read_text())
+        verify_task_root_fixtures.check_type_closure(value)
+        state = verify_task_root_fixtures.inapplicable_diagnostic()
+        for index, mutate in enumerate([
+            lambda v: v["targetResults"][0].update(diagnostics=[state]),
+            lambda v: v["targetResults"][0]["diagnostics"].append(state),
+            lambda v: v["targetResults"][0].update(diagnostics=[]),
+            lambda v: (v.update(status="blocked"), v["targetResults"][0].update(status="blocked")),
+            lambda v: v["targetResults"][0]["diagnostics"][0]["source"].update(path=".spec/tasks/TASK-001.md"),
+            lambda v: v["targetResults"][0]["diagnostics"][0].update(evidence="REQ-002"),
+        ]):
+            with self.subTest(index=index):
+                changed = copy.deepcopy(value)
+                mutate(changed)
+                with self.assertRaises(ValueError):
+                    verify_task_root_fixtures.check_type_closure(changed)
+
+    def test_type_closure_audit_rejects_repaired_causes(self):
+        # 原因を入力側で直す（ADR-001を`accepted`へ、REQ-002の`requires`を消す、TASKからREQ-002への`requires`を消す、
+        # ADR-001への`requires`をTASK-001へ移す、TASKを`open`へ、`addresses`の参照先を`draft`へ）と、期待値との組が成り立たなくなる。
+        mutations = [
+            (".spec/decisions/ADR-001.md", "status: proposed", "status: accepted"),
+            (".spec/decisions/ADR-001.md", "status: proposed", "status: rejected"),
+            (verify_task_root_fixtures.INAPPLICABLE_PATH, "requires: [ADR-001]", "related: [ADR-001]"),
+            (verify_task_root_fixtures.INAPPLICABLE_PATH, "status: approved", "status: draft"),
+            (verify_task_root_fixtures.TASK_PATH, "requires: [REQ-002]", "requires: [ADR-001]"),
+            (verify_task_root_fixtures.TASK_PATH, "requires: [REQ-002]", "related: [REQ-002]"),
+            (verify_task_root_fixtures.TASK_PATH, "status: done", "status: open"),
+            (verify_task_root_fixtures.ADDRESSED_PATH, "status: approved", "status: draft"),
+        ]
+        for relative, before, after in mutations:
+            with self.subTest(relative=relative, after=after), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                fixture = root / "single/SINGLE-149"
+                shutil.copytree(audit.FIXTURES / "single/SINGLE-149", fixture)
+                for name in ("manifest", "result", "side-effects", "frontmatter"):
+                    shutil.copy2(schema_path(audit.FIXTURES, name), root)
+                path = fixture / "repo" / relative
+                self.assertIn(before, path.read_text())
+                path.write_text(path.read_text().replace(before, after))
+                self.assertTrue(validate_verify_task_root(root, ["SINGLE-149"])["errors"])
 
     def test_prerequisite_addresses_stays_out_of_the_obligation(self):
         """`verify` §3、関係・トレースモデル §6.4の4.: `requires`先のTASKの`addresses`の参照先は、起点の義務へ加えない。
@@ -2869,8 +2993,75 @@ class AuditTests(unittest.TestCase):
     def test_context_failure_fixtures(self):
         result = validate_context_failures()
         self.assertEqual(result["errors"], [])
-        self.assertEqual(result["prepared"], ["SINGLE-050", "SINGLE-051", "SINGLE-144", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053", "SINGLE-127-13"])
+        self.assertEqual(result["prepared"], ["SINGLE-050", "SINGLE-051", "SINGLE-144", "SINGLE-147", "SINGLE-148", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053", "SINGLE-127-13"])
         self.assertEqual(result["core_execution"], "Not run")
+
+    def test_proposed_adr_requires_is_a_type_constraint_not_a_state_check(self):
+        """関係・トレースモデル §4・§5.1、`context` §3、診断レジストリ: 状態が`accepted`でないADRへの`requires`は、状態の診断
+        （`CTX-STATE-001`、`blocked`）ではなく型制約の`CTX-RELATION-TYPE-001`（`failed`）で返す（実装の確認事項C17）。
+        `SINGLE-148`は、独立した別の原因の状態の診断も併記し、状態は最悪値の`failed`とする。"""
+        for identifier, codes in (("SINGLE-147", ["CTX-RELATION-TYPE-001"]),
+                                  ("SINGLE-148", ["CTX-RELATION-TYPE-001", "CTX-STATE-001"])):
+            with self.subTest(identifier=identifier):
+                result = json.loads((audit.FIXTURES / f"single/{identifier}/expected/context.json").read_text())
+                context_failure_fixtures.check_type_constraint(identifier, result)
+                self.assertEqual([d["code"] for d in result["diagnostics"]], codes)
+                self.assertEqual((result["status"], result["resolution"]["unresolvedStrongRelations"]), ("failed", 1))
+                self.assertEqual(result["diagnostics"][0]["evidence"], "ADR-001")
+        inputs = context_failure_fixtures.reviewed_documents("SINGLE-148")
+        self.assertEqual([inputs[path][1]["status"] for path in (
+            ".spec/requirements/REQ-002.md", ".spec/decisions/ADR-001.md")], ["draft", "proposed"])
+
+    def test_type_constraint_contract_rejects_state_replacement_and_lost_diagnostics(self):
+        """完全比較とは別に、`check_type_constraint`だけが、型制約の診断の状態の診断への置換、片方の診断の消去、重複、
+        状態や未解決の件数の改変を拒否する（`SINGLE-147`、`SINGLE-148`）。"""
+        def state(path=".spec/requirements/REQ-002.md"):
+            return {"code": "CTX-STATE-001", "severity": "error", "resultStatus": "blocked",
+                    "summary": "ADR-001は現在のpurposeに適用できません",
+                    "source": {"kind": "file", "workspaceId": "root", "path": path}}
+
+        def replace_first(v):
+            v.update(status="blocked")
+            v["diagnostics"][0] = state(".spec/decisions/ADR-001.md")
+
+        changes = {
+            "SINGLE-147": [
+                replace_first,
+                lambda v: v["diagnostics"].append(state(".spec/decisions/ADR-001.md")),
+                lambda v: v["diagnostics"].insert(0, state(".spec/decisions/ADR-001.md")),
+                lambda v: v.update(diagnostics=[]),
+                lambda v: v.update(status="blocked"),
+                lambda v: v["diagnostics"][0].update(resultStatus="blocked"),
+                lambda v: v["diagnostics"][0].pop("evidence"),
+                lambda v: v["diagnostics"][0].update(evidence="REQ-001"),
+                lambda v: v["diagnostics"][0]["source"].pop("key"),
+                lambda v: v["diagnostics"][0]["source"].update(path=".spec/decisions/ADR-001.md"),
+                lambda v: v["resolution"].update(unresolvedStrongRelations=0),
+                lambda v: v["resolution"].update(unresolvedStrongRelations=2),
+                lambda v: v["resolution"].update(complete=True),
+            ],
+            "SINGLE-148": [
+                replace_first,
+                lambda v: v["diagnostics"].pop(),
+                lambda v: v["diagnostics"].pop(0),
+                lambda v: v["diagnostics"].reverse(),
+                lambda v: v["diagnostics"].append(state(".spec/decisions/ADR-001.md")),
+                lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0])),
+                lambda v: v["diagnostics"][1].update(resultStatus="failed"),
+                lambda v: v["diagnostics"][1]["source"].update(path=".spec/decisions/ADR-001.md"),
+                lambda v: v.update(status="blocked"),
+                lambda v: v["resolution"].update(unresolvedStrongRelations=2),
+                lambda v: v["resolution"].update(unresolvedStrongRelations=0),
+            ],
+        }
+        for identifier, mutations in changes.items():
+            for index, mutate in enumerate(mutations):
+                with self.subTest(identifier=identifier, index=index):
+                    value = json.loads((audit.FIXTURES / f"single/{identifier}/expected/context.json").read_text())
+                    context_failure_fixtures.check_type_constraint(identifier, value)
+                    mutate(value)
+                    with self.assertRaises(ValueError):
+                        context_failure_fixtures.check_type_constraint(identifier, value)
 
     def test_context_failures_reject_partial_success_or_replacement(self):
         mutations = [
@@ -2894,6 +3085,31 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-144", "expected/context.json", lambda v: v["resolution"].update(complete=True)),
             ("SINGLE-144", "manifest.json", lambda v: v["expect"].update(status="passed", exitCode=0)),
             ("SINGLE-144", "manifest.json", lambda v: v["expect"].update(exitCode=1)),
+            # 状態が`accepted`でないADRへの`requires`は、型制約の`CTX-RELATION-TYPE-001`（`failed`）で返す。状態の診断
+            # （`CTX-STATE-001`、`blocked`）への置換、診断の消去、独立した原因の診断の消去、状態の改変を拒否する。
+            ("SINGLE-147", "expected/context.json", lambda v: v["diagnostics"][0].update(
+                code="CTX-STATE-001", resultStatus="blocked", summary="ADR-001は現在のpurposeに適用できません")),
+            ("SINGLE-147", "expected/context.json", lambda v: v["diagnostics"][0].update(
+                code="CTX-STATE-001", resultStatus="blocked", summary="ADR-001は現在のpurposeに適用できません",
+                source={"kind": "file", "workspaceId": "root", "path": ".spec/decisions/ADR-001.md"})),
+            ("SINGLE-147", "expected/context.json", lambda v: v.update(status="blocked")),
+            ("SINGLE-147", "expected/context.json", lambda v: v.update(status="passed")),
+            ("SINGLE-147", "expected/context.json", lambda v: v.update(diagnostics=[])),
+            ("SINGLE-147", "expected/context.json", lambda v: v["diagnostics"][0].pop("evidence")),
+            ("SINGLE-147", "expected/context.json", lambda v: v["diagnostics"][0]["source"].pop("key")),
+            ("SINGLE-147", "expected/context.json", lambda v: v["resolution"].update(unresolvedStrongRelations=0)),
+            ("SINGLE-147", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+            ("SINGLE-147", "manifest.json", lambda v: v["expect"].update(exitCode=2)),
+            ("SINGLE-148", "expected/context.json", lambda v: v["diagnostics"].pop()),
+            ("SINGLE-148", "expected/context.json", lambda v: v["diagnostics"].pop(0)),
+            ("SINGLE-148", "expected/context.json", lambda v: v["diagnostics"].reverse()),
+            ("SINGLE-148", "expected/context.json", lambda v: v["diagnostics"].append(dict(
+                v["diagnostics"][1], summary="ADR-001は現在のpurposeに適用できません",
+                source={"kind": "file", "workspaceId": "root", "path": ".spec/decisions/ADR-001.md"}))),
+            ("SINGLE-148", "expected/context.json", lambda v: v.update(status="blocked")),
+            ("SINGLE-148", "expected/context.json", lambda v: v["resolution"].update(unresolvedStrongRelations=2)),
+            ("SINGLE-148", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+            ("SINGLE-148", "manifest.json", lambda v: v["expect"].update(exitCode=2)),
             ("SINGLE-052-01", "expected/context.json", lambda v: v.update(roots=["TECH-002"])),
             ("SINGLE-052-01", "expected/context.json", lambda v: v.update(contextDigest="sha256:" + "0" * 64)),
             ("SINGLE-052-02", "expected/context.json", lambda v: v["resolution"].update(complete=True)),
@@ -2929,6 +3145,16 @@ class AuditTests(unittest.TestCase):
             ("SINGLE-144", ".spec/tasks/TASK-002.md", "status: cancelled", "status: open"),
             ("SINGLE-144", ".spec/tasks/TASK-001.md", "requires: [TASK-002]", "related: [TASK-002]"),
             ("SINGLE-144", ".spec/tasks/TASK-001.md", "  addresses: [REQ-001:AC-01]\n", ""),
+            # ADR-001を`accepted`へ直す、`requires`を消す、起点やREQ-002の状態を変える入力は、期待値と組にならない。
+            ("SINGLE-147", ".spec/decisions/ADR-001.md", "status: proposed", "status: accepted"),
+            ("SINGLE-147", ".spec/decisions/ADR-001.md", "status: proposed", "status: rejected"),
+            ("SINGLE-147", ".spec/tasks/TASK-001.md", "requires: [ADR-001]", "related: [ADR-001]"),
+            ("SINGLE-147", ".spec/tasks/TASK-001.md", "status: open", "status: done"),
+            ("SINGLE-147", ".spec/requirements/REQ-001.md", "status: approved", "status: draft"),
+            ("SINGLE-148", ".spec/decisions/ADR-001.md", "status: proposed", "status: accepted"),
+            ("SINGLE-148", ".spec/requirements/REQ-002.md", "status: draft", "status: approved"),
+            ("SINGLE-148", ".spec/requirements/REQ-001.md", "requires: [REQ-002, ADR-001]", "requires: [ADR-001]"),
+            ("SINGLE-148", ".spec/requirements/REQ-001.md", "requires: [REQ-002, ADR-001]", "requires: [REQ-002]"),
             ("SINGLE-052-01", ".spec/technical/TECH-002.md", "supersedes:", "related:"),
             ("SINGLE-052-02", ".spec/technical/TECH-003.md", "requires:", "related:"),
             ("SINGLE-053", ".spec/technical/TECH-003.md", "status: approved", "status: draft"),
@@ -2945,7 +3171,7 @@ class AuditTests(unittest.TestCase):
                 self.assertTrue(validate_context_failures(root, [identifier])["errors"])
 
     def test_context_failure_git_state_rejects_staging_or_commit(self):
-        for identifier in ("SINGLE-050", "SINGLE-051", "SINGLE-144", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053"):
+        for identifier in ("SINGLE-050", "SINGLE-051", "SINGLE-144", "SINGLE-147", "SINGLE-148", "SINGLE-052-01", "SINGLE-052-02", "SINGLE-053"):
             with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
                 repo = fixture_setup(audit.FIXTURES / "single" / identifier, context_failure_manifest(identifier), Path(temporary) / "repo")
                 check_context_unborn(repo, identifier)

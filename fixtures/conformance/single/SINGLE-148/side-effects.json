@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "read-only",
+  "before": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/decisions": {
+        "kind": "directory"
+      },
+      ".spec/decisions/ADR-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3bacf90da28e8c1dbac99ba7fd8c88ea7310549a30f1bad91dbdedcd0a59ac26"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "fbf8f82ac5be0ac47b41b9ea5941a59fc97b3886fa2a0044baeb41f615060306"
+      },
+      ".spec/requirements/REQ-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "4a5b69036b07aefb7280a3bee32e68e0e061e0e1ac6f1707d001ed2458617470"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/decisions/ADR-001.md\n?? .spec/requirements/REQ-001.md\n?? .spec/requirements/REQ-002.md\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  },
+  "after": {
+    "repository": {
+      ".spec": {
+        "kind": "directory"
+      },
+      ".spec/bitz.yaml": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "837bba23fb6873ae6b82ab682a885fbfeef29ebc80e331bf172f4376067333f8"
+      },
+      ".spec/decisions": {
+        "kind": "directory"
+      },
+      ".spec/decisions/ADR-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "3bacf90da28e8c1dbac99ba7fd8c88ea7310549a30f1bad91dbdedcd0a59ac26"
+      },
+      ".spec/requirements": {
+        "kind": "directory"
+      },
+      ".spec/requirements/REQ-001.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "fbf8f82ac5be0ac47b41b9ea5941a59fc97b3886fa2a0044baeb41f615060306"
+      },
+      ".spec/requirements/REQ-002.md": {
+        "kind": "file",
+        "executable": false,
+        "sha256": "4a5b69036b07aefb7280a3bee32e68e0e061e0e1ac6f1707d001ed2458617470"
+      }
+    },
+    "git": {
+      "status": "?? .spec/bitz.yaml\n?? .spec/decisions/ADR-001.md\n?? .spec/requirements/REQ-001.md\n?? .spec/requirements/REQ-002.md\n",
+      "index": ""
+    },
+    "home": {},
+    "cache": {},
+    "temporary": {}
+  }
+}
