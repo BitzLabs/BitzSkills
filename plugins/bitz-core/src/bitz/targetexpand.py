@@ -687,8 +687,14 @@ def target_expansion(
     extra = set(context_order)
     if purpose == "verify" and root_entry.kind == "TASK":
         extra |= {target_id for target_id, _source in _requires_closure([owning_id], id_index, statement_index)}
-    covered = {d for d in context_order if "::" not in d}
-    for doc_id in sorted(extra - covered):
+    # 複合ワークスペースの統合索引は、起点ワークスペースの文書にも修飾形の別名（`<起点>::<ID>`）を登録するため、同じ文書が
+    # 2つのIDで閉包へ入り得る。同じ辺の診断を2件返さないよう、文書の実体で判定する（診断レジストリ: 同じ原因から同義の診断を複数生成しない）。
+    covered = {id(id_index[d]) for d in context_order if "::" not in d and d in id_index}
+    for doc_id in sorted(extra):
+        entry = id_index.get(doc_id)
+        if entry is None or id(entry) in covered:
+            continue
+        covered.add(id(entry))
         errors.extend(_adr_requires_type_errors(doc_id, id_index, statement_index))
     result.errors = errors
     return result
