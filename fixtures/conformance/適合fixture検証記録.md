@@ -1261,3 +1261,22 @@ commit `b3b14b113312089505eaea845bf5d9c438370509`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 3とStep 4に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-07: `SINGLE-144`〜`146`を追加した後のGate Aの再認定
+
+TASKを起点にしたときの依存先の状態検査を直した（`targetexpand.py`）。目的`implement`で先行TASKが`cancelled`のとき同じ原因の`CTX-STATE-001`を重ねて返し、
+推移的に到達したTASKの状態も検査していた欠陥（C12）と、目的`verify`でコンテキストへ含めない起点の`requires`の閉包の適用可能性を検査していなかった欠陥（C15）である
+（ADR-029、ADR-034、ADR-036の当てはめ。ユーザー決定。関係・トレースモデル §6.2・§6.3に明記）。これを固定する`SINGLE-144`（先行TASKが`cancelled`）、
+`SINGLE-145`（推移的に`cancelled`のTASK）、`SINGLE-146`（`draft`のREQを`requires`する`done`のTASKの`verify`）を追加した（ADR-051の追加）。
+matrix、Step 3とStep 4の割当て、実装計画の完了条件、網羅表とtarget vectorが固定する根拠文書のハッシュ値を合わせた。既存のfixtureの入力と期待値は変えていない。
+
+commit `eea1c2cf00c48cf15416b2ad4cd376cd0a0afb6b`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`cffd1be0314f9fb9a7feb094266438f51ff47ce8e0bebba2b637b3af3b8e949f`。前回から変わったのは次の値だけである: `SINGLE-144`〜`146`の追加によるmatrixと網羅の件数（330件→333件）、Step 3の件数（80件→82件）、Step 4の件数（57件→58件）、生成器の準備件数、実行ビットを確かめたファイル数（1821件→1835件）、網羅表とtarget vectorが固定する根拠文書のハッシュ値 |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 3とStep 4に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。

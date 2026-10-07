@@ -337,3 +337,23 @@ fixtureを追加した後、修正前のCore（コミット`90ba92a3`の版）�
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は597件がすべて成功した。
+
+## 2026-10-07: TASKを起点にしたときの依存先の状態検査を直した後のStep 1〜5の再判定
+
+TASKを起点にしたときの依存先の状態検査を直し（`targetexpand.py`。先行TASKは直接の参照先だけを`CTX-TASK-DEPENDENCY-001`で扱い、目的`verify`では
+起点の`requires`の閉包（TASKとADRを除く）の適用可能性も検査する）、これを固定する`SINGLE-144`〜`146`（Step 3とStep 4）を追加した。修正の前後で、
+既存の330件の期待値はすべて変わらないことを確かめた。fixtureを追加した後、修正前のCore（コミット`863b5b33`の版）では3件とも失敗し、修正後のCoreでは
+3件とも`passed`となることを確かめた。
+
+コミット`eea1c2cf00c48cf15416b2ad4cd376cd0a0afb6b`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 333件（`SINGLE-144`〜`146`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`701e7ddfd4f84526ca95a3c2ed53c6b74521a87086073fe6239fd9f39facb195` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は602件がすべて成功した。
