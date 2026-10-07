@@ -336,6 +336,8 @@ class TaskVerifyRequiresApplicabilityTests(unittest.TestCase):
                            "[REQ-002]", ("CTX-STATE-SUPERSEDED-001", "REQ-002")),
             "transitive": ({".spec/requirements/REQ-002.md": _req("REQ-002", extra_frontmatter="relations:\n  requires: [REQ-003]\n"),
                             ".spec/requirements/REQ-003.md": _req("REQ-003", status="draft")}, "[REQ-002]", ("CTX-STATE-001", "REQ-003")),
+            "through-accepted-adr": ({".spec/decisions/ADR-001.md": _adr("ADR-001").replace("status: accepted\n", "status: accepted\nrelations:\n  requires: [REQ-002]\n"),
+                                      ".spec/requirements/REQ-002.md": _req("REQ-002", status="draft")}, "[ADR-001]", ("CTX-STATE-001", "REQ-002")),
             "through-done-task": ({".spec/tasks/TASK-002.md": _task("TASK-002", "done", "relations:\n  requires: [REQ-005]\n"),
                                    ".spec/requirements/REQ-005.md": _req("REQ-005", status="draft")}, "[TASK-002]", ("CTX-STATE-001", "REQ-005")),
         }
