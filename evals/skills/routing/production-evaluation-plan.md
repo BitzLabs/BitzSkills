@@ -113,3 +113,9 @@ feature指定のfalseをtool除外の成功と扱わず、この2条件を有料
 台帳はproviderを呼ばず、レシートhashの書式だけで実行・独立性・原bytesの意味を認定しない。
 製品接続側はsource/runtime/tool構成と原証拠を別に監査し、確認済みの親レシートだけを台帳へ渡す必要がある。
 storage引数は隔離試験用で、製品接続は出力先/台帳先を指定できないopen_ledgerだけを使用する。
+
+固定source10 `abfdb8f4aba25a3f4e6b56ec259c29896983a196` でclean全341件OK/exit0、独立SOLはP1=0/P2=0。
+読取り前/保存前guard一致、独立13/8/341試験exit0、親21件再実行と原証拠の照合もexit0。
+結果は `../results/2026-10-07-production-infrastructure-reviewed/`。この有限枠は消費1/残0、一次0。
+公式tag rust-v0.160.1のsource d27764b82f7118f674371e6d6e76271d9d606edbにtool登録前のToolPolicy.allowed_toolsを確認した。
+専用adapterまたはmodel情報の別設定は未ビルド/未検証で、一次の起動根拠にはしない。

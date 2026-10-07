@@ -1263,3 +1263,21 @@ private評価資料は使わず、一次0/有料自動retry0。確定ref/clean�
 旧指摘3件/原証拠/消費枠は保持、新有限枠は消費1/残0、一次0/追加委譲0/自動retry0。
 次作業もPhase 4：実CLI接続とtool構成の実効検証、入力/catalog/manifestの契約束縛、一次永続台帳。
 公開canaryの別有限契約、本測定・比較・行動・異系統・実地・配布/最終承認は引き続き残る。
+
+#### Phase 4：固定入力・共通台帳の検証とCLI接続の停止
+
+ケース/catalog/manifest/共通指示/環境を原hashへ束縛し、モデルには共通資料とprompt/contextだけを投影した。
+git-common-dirで全worktreeに共通の一次台帳を使い、起動前排他予約・原記録保持・未検分/停止後の後続拒否を実装した。
+固定source10 `abfdb8f4aba25a3f4e6b56ec259c29896983a196` のclean全341件はOK/exit0。
+独立SOL1回は読取り前/保存前guard一致、P1=0/P2=0、台帳13/プローブ8/全341件exit0。
+親の対象21件再実行とsource/原ログ/hash/予約の照合もexit0。
+記録は `evals/skills/results/2026-10-07-production-infrastructure-reviewed/`。
+新枠は消費1/残0、一次0/retry0/追加委譲0。台帳単体を実providerや行動の認定に使わない。
+
+実CLI0.160.1の通信隔離・ローカル模擬Responses2条件は停止した。
+初版parserのtop-level欄だけの検査を修正し、原requestのadditional_toolsへCode Mode/agent操作10宣言が残ることを別解析で保持した。
+元receipt/原bytesを訂正上書きせず、指定featureのfalseをtool除外成功とは扱わない。
+これら2設定は有料一次へ接続しない。全版/全設定での不可能性へ拡張しない。
+公式tag rust-v0.160.1/source d27764b82f7118f674371e6d6e76271d9d606edbにtool登録前のToolPolicy制限APIがあることを確認した。
+次は読取り2toolだけの接続方式を実装・無課金検証し、起動前検分と別有限canary契約へ進む。
+Phase 4完了、native provider、Skill Gate、製品完了・リリースは未認定。
