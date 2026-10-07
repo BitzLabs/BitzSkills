@@ -206,6 +206,32 @@ class NonAcceptedAdrAcrossWorkspacesTests(unittest.TestCase):
                 [("CTX-RELATION-TYPE-001", "api", ".spec/technical/TECH-020.md", "relations.requires", "ADR-001")],
             )
 
+    def test_document_reached_by_two_ids_reports_the_edge_once(self):
+        # web の REQ-002 は、REQ-001 から非修飾で、api の TECH-020 から`web::REQ-002`で到達する。同じ辺 REQ-002 -> ADR-002 の
+        # 型制約の診断は1件だけ返す（同じ原因から同義の診断を複数生成しない）。
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _init_repo(root)
+            _write(root, ".spec/bitz.yaml", ROOT_YAML + "multiWorkspace:\n  members:\n    - id: web\n      path: apps/web\n    - id: api\n      path: services/api\n")
+            _write(root, "apps/web/.spec/bitz.yaml", MEMBER_YAML.format(wid="web"))
+            _write(root, "services/api/.spec/bitz.yaml", MEMBER_YAML.format(wid="api"))
+            _write(root, "apps/web/.spec/requirements/REQ-001.md",
+                   _req("REQ-001").replace("status: approved\n", "status: approved\nrelations:\n  requires: [api::TECH-020, REQ-002]\n"))
+            _write(root, "apps/web/.spec/requirements/REQ-002.md",
+                   _req("REQ-002").replace("status: approved\n", "status: approved\nrelations:\n  requires: [ADR-002]\n"))
+            _write(root, "apps/web/.spec/decisions/ADR-002.md",
+                   "---\nid: ADR-002\ntitle: 判断\nstatus: proposed\n---\n\n# ADR-002 判断\n\n## Context\n\n背景。\n\n## Decision\n\n決定。\n\n## Consequences\n\n帰結。\n")
+            _write(root, "services/api/.spec/technical/TECH-020.md",
+                   "---\nid: TECH-020\ntitle: TECH\nstatus: approved\nrelations:\n  requires: [web::REQ-002]\n---\n\n# TECH-020 TECH\n\n## Context\n\n本文。\n")
+            _git(root, "add", "-A")
+            _git(root, "commit", "-q", "-m", "base")
+            result, exit_code = _run_context(root / "apps/web", "REQ-001", purpose="implement")
+            self.assertEqual(
+                [(d["code"], d["source"]["workspaceId"], d["source"]["path"]) for d in result["diagnostics"]],
+                [("CTX-RELATION-TYPE-001", "web", ".spec/requirements/REQ-002.md")],
+            )
+            self.assertEqual(result["resolution"]["unresolvedStrongRelations"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()
