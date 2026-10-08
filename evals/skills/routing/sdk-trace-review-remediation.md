@@ -46,3 +46,17 @@ turn/startにapprovalPolicy/sandboxPolicyを追加した条件と、initialize�
 親が同sourceで再現した。修正候補はSDK要求フィールドの明示と応答順序の検査。
 thread/startの応答をturn開始通知に先行させ、turn/startedがturn/start応答に先行する正常形は許容する。
 元記録と消費1/残0を保持し、別の有限SOL1回で静的検分する。
+
+## 5回目の静的検分からの是正候補
+
+送信対象5ファイル/OpenAI Codex CLI gpt-6.1-sol/有限1回のユーザー明示承認後、
+source `f62a87a6181831f87cd24de72c843588869dd736` を別SOLで静的検分した。
+P2=1/P3=1、原receiptはreview_findings。旧拒否記録を取消・訂正しない。
+親が同sourceで、candidateVersionの数値1→trueをnative結果へ混入した条件、
+experimentalApiのtrue→1、networkAccessのfalse→0を実行して診断通過を再現した。
+
+是正候補は型を保つJSON照合の共通化。objectのキー順序だけを正規化し、
+bool/int/floatを区別してhost/native/provider/structuredContent/最終応答へ適用する。
+SDK能力・sandbox・user/summary/prefix/設定・SSEアイテム照合にも同じ条件を使う。
+SSEの出力/content indexと原telemetryのattempt/status codeは整数型を要求する。
+元記録、消費1/残0を保持し、局所試験通過を独立解消判定の代替にしない。

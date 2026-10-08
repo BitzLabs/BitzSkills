@@ -77,6 +77,53 @@ class ProductionTraceTests(unittest.TestCase):
         projected['context'].append('change')
         self.assertEqual(case['context'], ['公開の文脈'])
 
+    def test_native_result_cannot_replace_json_number_with_boolean(self):
+        for number, boolean in ((1, True), (0, False)):
+            manifest = {**self.manifest, 'candidateVersion': number}
+            raw = json.dumps(manifest).encode()
+            log = copy.deepcopy(self.log)
+            log[0]['result'] = audit.manifest_view(raw)[2]
+            frames = self.make_frames(log, self.decision)
+            self.assertEqual(self.run_audit(manifest_raw=raw, host_events=log, frames=frames)['status'],
+                             'measurement_integrity_passed')
+            for item in audit.completed_items(frames):
+                if item.get('tool') == 'list_resources':
+                    item['result']['content'][0]['text'] = json.dumps({**log[0]['result'], 'candidateVersion': boolean})
+            with self.subTest(number=number), self.assertRaisesRegex(ValueError, 'host/native result mismatch'):
+                self.run_audit(manifest_raw=raw, host_events=log, frames=frames)
+
+    def test_structured_result_cannot_replace_json_number_with_boolean(self):
+        manifest = {**self.manifest, 'candidateVersion': 1}
+        raw = json.dumps(manifest).encode()
+        log = copy.deepcopy(self.log)
+        log[0]['result'] = audit.manifest_view(raw)[2]
+        frames = self.make_frames(log, self.decision)
+        frames[6]['params']['item']['result']['structuredContent'] = {**log[0]['result'], 'candidateVersion': True}
+        with self.assertRaisesRegex(ValueError, 'native extra result'):
+            self.run_audit(manifest_raw=raw, host_events=log, frames=frames)
+
+    def test_host_result_cannot_replace_json_number_with_boolean(self):
+        manifest = {**self.manifest, 'candidateVersion': 1}
+        raw = json.dumps(manifest).encode()
+        log = copy.deepcopy(self.log)
+        log[0]['result'] = {**audit.manifest_view(raw)[2], 'candidateVersion': True}
+        with self.assertRaisesRegex(ValueError, 'host discovery mismatch'):
+            self.run_audit(manifest_raw=raw, host_events=log)
+
+    def test_final_decision_boolean_cannot_be_replaced_with_integer(self):
+        frames = copy.deepcopy(self.frames)
+        frames[-2]['params']['item']['text'] = json.dumps({**self.decision, 'readyClaimed': 0})
+        with self.assertRaisesRegex(ValueError, 'final response mismatch'):
+            self.run_audit(frames=frames)
+
+    def test_json_object_key_order_is_not_an_evidence_difference(self):
+        for frame in self.frames:
+            item = frame.get('params', {}).get('item', {})
+            if item.get('result'):
+                value = json.loads(item['result']['content'][0]['text'])
+                item['result']['content'][0]['text'] = json.dumps(dict(reversed(list(value.items()))))
+        self.assertEqual(self.run_audit()['status'], 'measurement_integrity_passed')
+
     def test_generic_host_module_is_not_imported_or_replaced(self):
         sentinel = types.ModuleType('host')
         with patch.dict(sys.modules, {'host': sentinel}):

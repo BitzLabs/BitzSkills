@@ -44,6 +44,13 @@ def strict_json(raw: bytes | str):
                       object_pairs_hook=pairs, parse_constant=bad_constant)
 
 
+def json_equal(left, right) -> bool:
+    """JSONの型と配列順序を保って照合する。objectのキー順序は証拠差としない。"""
+    def encoded(value):
+        return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
+    return encoded(left) == encoded(right)
+
+
 def project_case(case: dict) -> dict:
     """caseId/expected/category/control等を列挙せず、要求と文字列contextだけを投影する。"""
     require(isinstance(case, dict), 'case object required')
@@ -86,7 +93,7 @@ def audit_host(manifest: dict, view: dict, events: list) -> set[str]:
         require(event['accepted'] is True, 'host rejected call')
         tool, args, result = event['tool'], event['arguments'], event['result']
         if tool == 'list_resources':
-            require(args == {} and isinstance(args, dict) and result == view, 'host discovery mismatch')
+            require(args == {} and isinstance(args, dict) and json_equal(result, view), 'host discovery mismatch')
             listed = True
         elif tool == 'read_resource':
             require(listed and isinstance(args, dict) and set(args) == {'path'}, 'host read arguments')
@@ -167,7 +174,7 @@ def completed_items(frames: list) -> list:
             started[ident] = (item['type'], item.get('server'), item.get('tool'), item.get('arguments'), item.get('phase'))
         else:
             require(ident in started and ident not in completed, 'item completion without unique start')
-            require(started[ident] == (item['type'], item.get('server'), item.get('tool'), item.get('arguments'), item.get('phase')), 'item binding drift')
+            require(json_equal(started[ident], (item['type'], item.get('server'), item.get('tool'), item.get('arguments'), item.get('phase'))), 'item binding drift')
             if item['type'] == 'agentMessage' and item['phase'] == 'final_answer':
                 require(final_started and not final_completed, 'multiple final response completions')
                 final_completed = True
@@ -185,14 +192,15 @@ def audit_calls(host_events: list, items: list) -> None:
     for item, event in zip(calls, host_events):
         require(item.get('server') == SERVER and item.get('tool') == event['tool'], 'native tool mismatch')
         require(item.get('status') == 'completed' and item.get('error') is None, 'native tool failed')
-        require(item.get('arguments') == event['arguments'], 'native arguments mismatch')
+        require(json_equal(item.get('arguments'), event['arguments']), 'native arguments mismatch')
         result = item.get('result')
         require(isinstance(result, dict) and set(result) <= {'content', 'structuredContent', '_meta'}, 'native tool result fields')
         content = result.get('content')
         require(isinstance(content, list) and len(content) == 1 and isinstance(content[0], dict) and set(content[0]) == {'type', 'text'} and content[0]['type'] == 'text', 'native tool content')
         require(isinstance(content[0]['text'], str), 'native tool text required')
-        require(strict_json(content[0]['text']) == event['result'], 'host/native result mismatch')
-        require(result.get('structuredContent') in (None, event['result']) and result.get('_meta') in (None, {}), 'native extra result')
+        require(json_equal(strict_json(content[0]['text']), event['result']), 'host/native result mismatch')
+        require((result.get('structuredContent') is None or json_equal(result['structuredContent'], event['result'])) and
+                result.get('_meta') in (None, {}), 'native extra result')
 
 
 def audit(manifest_raw: bytes, host_events: list, frames: list, decision: dict,
@@ -203,7 +211,7 @@ def audit(manifest_raw: bytes, host_events: list, frames: list, decision: dict,
     items = completed_items(frames)
     audit_calls(host_events, items)
     messages = [item for item in items if item['type'] == 'agentMessage' and item['phase'] == 'final_answer']
-    require(len(messages) == 1 and strict_json(messages[0]['text']) == decision, 'final response mismatch')
+    require(len(messages) == 1 and json_equal(strict_json(messages[0]['text']), decision), 'final response mismatch')
     schema = copy.deepcopy(strict_json((ROOT / 'evals/skills/schemas/decision.schema.json').read_bytes()))
     schema['properties']['selectedEntry']['enum'] = [None, *sorted(SKILLS)]
     jsonschema.Draft202012Validator(schema).validate(decision)

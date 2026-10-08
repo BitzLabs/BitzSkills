@@ -91,6 +91,18 @@ class ProductionSdkTraceTests(unittest.TestCase):
         frames[1]['result']['sandbox']['networkAccess'] = True
         with self.assertRaises(ValueError): self.run_diagnostic(received=frames)
 
+    def test_rpc_booleans_cannot_be_replaced_with_integers_or_floats(self):
+        for value in (1, 1.0):
+            sent = copy.deepcopy(self.sent)
+            sent[0]['params']['capabilities']['experimentalApi'] = value
+            with self.subTest(capability=value), self.assertRaisesRegex(ValueError, 'fixed SDK initialize params'):
+                self.run_diagnostic(sent=sent)
+        for value in (0, 0.0):
+            frames = copy.deepcopy(self.frames)
+            frames[1]['result']['sandbox']['networkAccess'] = value
+            with self.subTest(network=value), self.assertRaisesRegex(ValueError, 'SDK effective policy mismatch'):
+                self.run_diagnostic(received=frames)
+
     def test_turn_overrides_and_unknown_request_fields_are_rejected(self):
         for index, key, value in [(3, 'approvalPolicy', 'on-request'), (3, 'sandboxPolicy', {'type': 'dangerFullAccess'}),
                                   (2, 'permissionProfile', 'full-access'), (0, 'unknown', True)]:
@@ -252,6 +264,39 @@ class ProductionSdkTraceTests(unittest.TestCase):
         payload['read']['content'][0]['text'] = '{}'
         chunk['text'] = json.dumps(payload)
         with self.assertRaises(ValueError): sdk.diagnose_exchange(**args)
+
+    def test_native_and_provider_json_results_preserve_number_and_boolean_types(self):
+        for changed in ('native', 'provider'):
+            args = self.exchange()
+            manifest = {**json.loads(args['manifest_raw']), 'candidateVersion': 1}
+            args['manifest_raw'] = json.dumps(manifest).encode()
+            args['host_events'] = copy.deepcopy(args['host_events'])
+            args['host_events'][0]['result'] = sdk.trace.manifest_view(args['manifest_raw'])[2]
+            for frame in args['received']:
+                item = frame.get('params', {}).get('item', {})
+                if frame.get('method') == 'item/completed' and item.get('tool') == 'list_resources':
+                    item['result']['content'][0]['text'] = json.dumps({**args['host_events'][0]['result'],
+                                                                   'candidateVersion': True if changed == 'native' else 1})
+            chunk = args['provider_requests'][1]['input'][-1]['output'][1]
+            payload = json.loads(chunk['text'])
+            payload['listed']['content'][0]['text'] = json.dumps({**args['host_events'][0]['result'],
+                                                               'candidateVersion': True if changed == 'provider' else 1})
+            chunk['text'] = json.dumps(payload)
+            with self.subTest(changed=changed), self.assertRaisesRegex(ValueError, f'host/{changed} result mismatch'):
+                sdk.diagnose_exchange(**args)
+
+    def test_sse_indices_cannot_be_booleans_or_floats(self):
+        for field in ('output_index', 'content_index'):
+            for value in (False, 0.0):
+                lines = sdk.cli.simulation_reply().decode().splitlines()
+                for index, line in enumerate(lines):
+                    if line.startswith('data: '):
+                        event = json.loads(line[6:])
+                        if field in event:
+                            event[field] = value
+                            lines[index] = 'data: ' + json.dumps(event)
+                with self.subTest(field=field, value=value), self.assertRaises(ValueError):
+                    sdk.scripted_response(('\n'.join(lines) + '\n\n').encode())
 
     def test_matching_wire_prefix_cannot_replace_sdk_user_input(self):
         for replacement in ([{'type': 'input_text', 'text': 'UNRELATED_REQUEST'}], [],

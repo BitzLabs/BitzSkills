@@ -39,7 +39,7 @@ def requests(sent: list) -> tuple[dict, dict]:
         bindings[frame['id']] = index
     initialize, thread, turn = [f['params'] for f in selected]
     require(set(initialize) == {'clientInfo', 'capabilities'} and
-            initialize['capabilities'] == {'experimentalApi': True} and
+            trace.json_equal(initialize['capabilities'], {'experimentalApi': True}) and
             isinstance(initialize['clientInfo'], dict) and
             set(initialize['clientInfo']) == {'name', 'title', 'version'} and
             initialize['clientInfo']['title'] == 'Codex Python SDK', 'fixed SDK initialize params')
@@ -84,7 +84,7 @@ def normalized(sent: list, received: list, *, allowed_warnings: tuple[str, ...] 
     require(thread_result.get('model') == expected['thread']['model'] and
             thread_result.get('modelProvider') == expected['thread'].get('modelProvider') and
             thread_result.get('approvalPolicy') == 'never' and
-            thread_result.get('sandbox') == {'type': 'readOnly', 'networkAccess': False} and
+            trace.json_equal(thread_result.get('sandbox'), {'type': 'readOnly', 'networkAccess': False}) and
             thread_result['thread'].get('ephemeral') is True and
             thread_result.get('instructionSources') == [], 'SDK effective policy mismatch')
     frames, retained, active, completed, deltas = [], [], {}, {}, {}
@@ -147,14 +147,14 @@ def normalized(sent: list, received: list, *, allowed_warnings: tuple[str, ...] 
             if item.get('type') == 'userMessage':
                 require(turn_started, 'SDK input before turn started')
                 content = [{'type': 'text', 'text': expected['turn']['input'][0]['text'], 'text_elements': []}]
-                require(set(item) == {'type', 'id', 'clientId', 'content'} and item['content'] == content and
+                require(set(item) == {'type', 'id', 'clientId', 'content'} and trace.json_equal(item['content'], content) and
                         item['clientId'] is None, 'SDK input message mismatch')
                 if method == 'item/started':
                     require(user_id is None and not active, 'SDK duplicate or late user input')
                     user_id = ident
                     active[ident] = item
                 else:
-                    require(ident == user_id and ident in active and active[ident] == item and not user_done,
+                    require(ident == user_id and ident in active and trace.json_equal(active[ident], item) and not user_done,
                             'SDK input lifecycle mismatch')
                     active.pop(ident)
                     user_done = True
@@ -184,8 +184,8 @@ def normalized(sent: list, received: list, *, allowed_warnings: tuple[str, ...] 
         elif method == 'turn/completed':
             terminal = params.get('turn', {})
             require(terminal.get('itemsView') == 'summary' and isinstance(terminal.get('items'), list) and
-                    terminal['items'] == [v for v in completed.values() if v.get('type') == 'agentMessage' and
-                                          v.get('phase') == 'final_answer'], 'SDK turn summary mismatch')
+                     trace.json_equal(terminal['items'], [v for v in completed.values() if v.get('type') == 'agentMessage' and
+                                           v.get('phase') == 'final_answer']), 'SDK turn summary mismatch')
         frames.append(frame)
     require(user_done, 'SDK input lifecycle missing')
     # 既存監査器で開始/完了・tool順序・thread/turn・明示finalを検査する。
@@ -238,7 +238,8 @@ def scripted_response(raw: bytes) -> dict:
             first['id'] == last.get('id') and last.get('status') == 'completed', 'SSE response lifecycle')
     done = events[-2]
     item = done.get('item')
-    require(isinstance(item, dict) and done.get('output_index') == 0 and last.get('output') == [item],
+    require(isinstance(item, dict) and type(done.get('output_index')) is int and done['output_index'] == 0 and
+            trace.json_equal(last.get('output'), [item]),
             'SSE response output mismatch')
     if types == final_types:
         content = item.get('content')
@@ -249,10 +250,12 @@ def scripted_response(raw: bytes) -> dict:
                 set(content[0]) == {'type', 'text', 'annotations'} and content[0]['type'] == 'output_text' and
                 isinstance(content[0]['text'], str) and content[0]['annotations'] == [], 'SSE final message')
         added, delta = events[1], events[2]
-        require(added.get('output_index') == 0 and added.get('item') == {**item, 'status': 'in_progress', 'content': []},
+        require(type(added.get('output_index')) is int and added['output_index'] == 0 and
+                trace.json_equal(added.get('item'), {**item, 'status': 'in_progress', 'content': []}),
                 'SSE final start mismatch')
-        require(delta.get('item_id') == item.get('id') and delta.get('output_index') == 0 and
-                delta.get('content_index') == 0 and delta.get('delta') == content[0]['text'], 'SSE final delta mismatch')
+        require(delta.get('item_id') == item.get('id') and type(delta.get('output_index')) is int and
+                delta['output_index'] == 0 and type(delta.get('content_index')) is int and
+                delta['content_index'] == 0 and delta.get('delta') == content[0]['text'], 'SSE final delta mismatch')
     return item
 
 
@@ -286,20 +289,20 @@ def audit_provider_input(sent: list, before: list) -> str:
                 'provider message fields')
         messages.append({k: v for k, v in value.items() if k != 'id'})
     if 'cwd' not in params:
-        require(messages == [expected_input] and len(before) == 1, 'synthetic provider context mismatch')
+        require(trace.json_equal(messages, [expected_input]) and len(before) == 1, 'synthetic provider context mismatch')
         return 'synthetic-one-input-only'
     require(params.get('modelProvider') == 'bitz_local_probe' and len(before) == 5 and len(messages) == 4,
             'fixed local SDK diagnostic context required')
     supplement = messages[1].get('content')
     require(isinstance(supplement, list) and len(supplement) == 4 and
-            supplement[0] == {'type': 'input_text', 'text': params.get('developerInstructions')} and
+            trace.json_equal(supplement[0], {'type': 'input_text', 'text': params.get('developerInstructions')}) and
             digest(supplement[1:]) == DIAGNOSTIC_CONTEXT_SHA, 'SDK generated context drift')
     expected = [
         {'type': 'message', 'role': 'developer', 'content': [{'type': 'input_text', 'text': params.get('baseInstructions')}]},
         {'type': 'message', 'role': 'developer', 'content': supplement},
         {'type': 'message', 'role': 'user', 'content': [{'type': 'input_text', 'text': diagnostic_environment(params['cwd'])}]},
         expected_input]
-    require(messages == expected, 'provider/SDK complete input context mismatch')
+    require(trace.json_equal(messages, expected), 'provider/SDK complete input context mismatch')
     return 'sdk-0.160.1-local-diagnostic-2026-10-08'
 
 
@@ -320,8 +323,8 @@ def diagnose_exchange(manifest_raw: bytes, host_events: list, sent: list, receiv
             'model', 'input', 'tool_choice', 'parallel_tool_calls', 'reasoning', 'store', 'stream',
             'include', 'prompt_cache_key', 'text', 'client_metadata'}
         require(set(request) == allowed, 'unknown or missing provider request fields')
-    require({k: v for k, v in provider_requests[0].items() if k != 'input'} ==
-            {k: v for k, v in provider_requests[1].items() if k != 'input'}, 'provider request settings drift')
+    require(trace.json_equal({k: v for k, v in provider_requests[0].items() if k != 'input'},
+            {k: v for k, v in provider_requests[1].items() if k != 'input'}), 'provider request settings drift')
     call = scripted_response(provider_responses[0])
     require(set(call) == {'type', 'call_id', 'name', 'namespace', 'input'} and
             call['type'] == 'custom_tool_call' and call['namespace'] == 'functions' and call['name'] == 'exec' and
@@ -329,13 +332,13 @@ def diagnose_exchange(manifest_raw: bytes, host_events: list, sent: list, receiv
             isinstance(expected_program, str) and call['input'] == expected_program, 'scripted exec binding mismatch')
     before, after = [request.get('input') for request in provider_requests]
     require(isinstance(before, list) and isinstance(after, list) and len(after) == len(before) + 2 and
-            after[:len(before)] == before, 'provider request prefix drift')
+            trace.json_equal(after[:len(before)], before), 'provider request prefix drift')
     profile = audit_provider_input(sent, before)
     require(not any(isinstance(i, dict) and i.get('type') in {'custom_tool_call', 'function_call',
                     'custom_tool_call_output', 'function_call_output'} for i in before), 'unexpected earlier provider calls')
     echoed, output = after[-2:]
     require(isinstance(echoed, dict) and set(echoed) == {*call, 'id'} and
-            {k: v for k, v in echoed.items() if k != 'id'} == call and
+            trace.json_equal({k: v for k, v in echoed.items() if k != 'id'}, call) and
             isinstance(echoed['id'], str) and bool(echoed['id']), 'provider echoed call drift')
     require(isinstance(output, dict) and set(output) == {'type', 'call_id', 'id', 'output'} and
             output['type'] == 'custom_tool_call_output' and output['call_id'] == call['call_id'] and
@@ -357,7 +360,7 @@ def diagnose_exchange(manifest_raw: bytes, host_events: list, sent: list, receiv
                 'scripted MCP wrapper mismatch')
         content = wrapper['content'][0]
         require(isinstance(content, dict) and set(content) == {'type', 'text'} and content['type'] == 'text' and
-                trace.strict_json(content['text']) == event['result'], 'host/provider result mismatch')
+                trace.json_equal(trace.strict_json(content['text']), event['result']), 'host/provider result mismatch')
     final = scripted_response(provider_responses[1])
     require(final.get('type') == 'message' and final['content'][0]['text'] == expected_final_text,
             'provider/native final mismatch')
@@ -406,8 +409,9 @@ def audit_parent_links(events: list, received: list, provider_call_id: str) -> d
             require(event['target'] == 'codex_otel.trace_safe' and fields.get('conversation.id') == thread,
                     'telemetry context drift')
             if name == 'codex.api_request':
-                require(fields.get('auth.header_attached') is False and fields.get('attempt') == 0 and
-                        fields.get('http.response.status_code') == 200, 'diagnostic API request drift')
+                require(fields.get('auth.header_attached') is False and type(fields.get('attempt')) is int and
+                        fields['attempt'] == 0 and type(fields.get('http.response.status_code')) is int and
+                        fields['http.response.status_code'] == 200, 'diagnostic API request drift')
             continue
         if name == 'codex.code_mode.host_timing':
             require(event['target'] == 'codex_code_mode::timing' and timing is None and
