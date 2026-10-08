@@ -262,6 +262,81 @@ class ProductionSdkTraceTests(unittest.TestCase):
             args['provider_requests'][1]['input'][-1]['output'][0]['text'] = text
             with self.assertRaises(ValueError): sdk.diagnose_exchange(**args)
 
+    def parent_events(self):
+        def event(name, **fields):
+            return {'level': 'INFO', 'target': 'codex_otel.trace_safe',
+                    'fields': {'event.name': name, 'conversation.id': 't', **fields}}
+        events = [event('codex.tool_call_received', turn_id='u', call_id='probe-call', tool_name='exec',
+                        tool_namespace='functions', tool_source='direct')]
+        for number, tool in enumerate(('list_resources', 'read_resource')):
+            fields = {'call_id': f'call-{number}', 'tool_name': tool,
+                      'tool_namespace': 'mcp__production_routing', 'tool_source': 'code_mode'}
+            events += [event('codex.tool_call_received', **fields, **{'cell.id': '1', 'runtime_tool_call_id': f'tool-{number}'}),
+                       event('codex.code_mode.nested_tool_dispatched', call_id=f'call-{number}', turn_id='u',
+                             **{'cell.id': '1', 'runtime_tool_call_id': f'tool-{number}'}),
+                       event('codex.tool_result', **fields, success='true'),
+                       event('codex.tool_result_ready', **fields, turn_id='u')]
+        events.append({'level': 'INFO', 'target': 'codex_code_mode::timing', 'fields': {
+            'event.name': 'codex.code_mode.host_timing', 'conversation_id': 't', 'turn_id': 'u',
+            'call_id': 'probe-call', 'cell_id': '1', 'tool_name': 'exec', 'code_mode_host_duration_ns': 1}})
+        events += [event('codex.tool_result', call_id='probe-call', tool_name='exec', tool_namespace='functions', success='true'),
+                   event('codex.tool_result_ready', turn_id='u', call_id='probe-call', tool_name='exec',
+                         tool_namespace='functions', tool_source='direct')]
+        return events
+
+    def test_parent_cell_and_native_children_are_matched_by_actual_ids(self):
+        result = sdk.audit_parent_links(self.parent_events(), self.frames, 'probe-call')
+        self.assertEqual(result['nativeChildIds'], ['call-0', 'call-1'])
+        self.assertEqual(result['cellId'], '1')
+        self.assertFalse(result['eligibleForMeasurement'])
+        self.assertFalse(result['certifiesMultipleOrYieldedCells'])
+
+    def test_parent_timing_missing_or_wrong_call_and_cell_are_rejected(self):
+        for change in ('missing', 'cell', 'call', 'duplicate'):
+            events = self.parent_events()
+            if change == 'missing': events.pop(9)
+            if change == 'cell': events[9]['fields']['cell_id'] = 'other'
+            if change == 'call': events[9]['fields']['call_id'] = 'other'
+            if change == 'duplicate': events.insert(10, copy.deepcopy(events[9]))
+            with self.subTest(change=change), self.assertRaises(ValueError): sdk.audit_parent_links(events, self.frames, 'probe-call')
+
+    def test_nested_runtime_cell_thread_and_turn_drift_are_rejected(self):
+        for key, value in [('cell.id', 'other'), ('runtime_tool_call_id', 'other'), ('turn_id', 'other'), ('conversation.id', 'other')]:
+            events = self.parent_events()
+            events[2]['fields'][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError): sdk.audit_parent_links(events, self.frames, 'probe-call')
+
+    def test_unlogged_missing_and_repeated_child_milestones_are_rejected(self):
+        for events in (self.parent_events()[:-1], self.parent_events()[:4] + self.parent_events()[5:],
+                       self.parent_events()[:5] + self.parent_events()[1:5] + self.parent_events()[5:]):
+            with self.assertRaises(ValueError): sdk.audit_parent_links(events, self.frames, 'probe-call')
+
+    def test_extra_tool_receipt_and_unknown_target_or_event_are_rejected(self):
+        for change in ('call', 'target', 'event'):
+            events = self.parent_events()
+            if change == 'call': events[1]['fields']['call_id'] = 'extra-tool'
+            if change == 'target': events[1]['target'] = 'arbitrary-output'
+            if change == 'event': events[1]['fields']['event.name'] = 'unknown'
+            with self.subTest(change=change), self.assertRaises(ValueError): sdk.audit_parent_links(events, self.frames, 'probe-call')
+
+    def test_duplicate_runtime_ids_cannot_merge_two_child_calls(self):
+        events = self.parent_events()
+        events[5]['fields']['runtime_tool_call_id'] = events[1]['fields']['runtime_tool_call_id']
+        with self.assertRaises(ValueError): sdk.audit_parent_links(events, self.frames, 'probe-call')
+
+    def test_parent_cannot_finish_before_child_results(self):
+        events = self.parent_events()
+        events = events[:4] + events[9:10] + events[4:9] + events[10:]
+        with self.assertRaises(ValueError): sdk.audit_parent_links(events, self.frames, 'probe-call')
+
+    def test_failed_results_or_different_native_child_ids_are_rejected(self):
+        events = self.parent_events()
+        events[3]['fields']['success'] = 'false'
+        with self.assertRaises(ValueError): sdk.audit_parent_links(events, self.frames, 'probe-call')
+        frames = copy.deepcopy(self.frames)
+        frames[8]['params']['item']['id'] = 'other'
+        with self.assertRaises(ValueError): sdk.audit_parent_links(self.parent_events(), frames, 'probe-call')
+
 
 if __name__ == '__main__':
     unittest.main()

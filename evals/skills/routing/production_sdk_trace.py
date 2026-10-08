@@ -292,3 +292,95 @@ def diagnose_exchange(manifest_raw: bytes, host_events: list, sent: list, receiv
                   providerResponseSha256=[hashlib.sha256(r).hexdigest() for r in provider_responses],
                   providerRequestValueSha256=[digest(r) for r in provider_requests])
     return result
+
+
+def audit_parent_links(events: list, received: list, provider_call_id: str) -> dict:
+    """固定1execの原telemetryの親→cell→native子IDを検査する。複数/待機へ一般化しない。"""
+    require(isinstance(events, list) and bool(events), 'original parent telemetry required')
+    children = [f['params']['item'] for f in received if f.get('method') == 'item/completed' and
+                f.get('params', {}).get('item', {}).get('type') == 'mcpToolCall']
+    require(len(children) == 2 and [c['tool'] for c in children] == ['list_resources', 'read_resource'],
+            'two native children required')
+    context = next(f['params'] for f in received if f.get('method') == 'turn/started')
+    thread, turn = context['threadId'], context['turn']['id']
+    expected = {provider_call_id: ('exec', 'functions', 'direct')}
+    for item in children:
+        require(item['id'] not in expected, 'parent/child id collision')
+        expected[item['id']] = (item['tool'], 'mcp__production_routing', 'code_mode')
+    received_calls, dispatched, ready, results = {}, {}, {}, {}
+    timing = None
+    cell = None
+    runtime_ids = set()
+    neutral = {'codex.conversation_starts', 'codex.startup_phase', 'codex.user_prompt',
+               'codex.api_request', 'codex.turn_ttft'}
+    for index, event in enumerate(events):
+        require(isinstance(event, dict) and event.get('target') in {'codex_otel.trace_safe', 'codex_code_mode::timing'}
+                and event.get('level') == 'INFO' and isinstance(event.get('fields'), dict), 'parent telemetry format')
+        fields = event['fields']
+        name = fields.get('event.name')
+        if name in neutral:
+            require(event['target'] == 'codex_otel.trace_safe' and fields.get('conversation.id') == thread,
+                    'telemetry context drift')
+            if name == 'codex.api_request':
+                require(fields.get('auth.header_attached') is False and fields.get('attempt') == 0 and
+                        fields.get('http.response.status_code') == 200, 'diagnostic API request drift')
+            continue
+        if name == 'codex.code_mode.host_timing':
+            require(event['target'] == 'codex_code_mode::timing' and timing is None and
+                    fields.get('conversation_id') == thread and fields.get('turn_id') == turn and
+                    fields.get('call_id') == provider_call_id and fields.get('tool_name') == 'exec' and
+                    isinstance(fields.get('cell_id'), str) and bool(fields['cell_id']) and
+                    type(fields.get('code_mode_host_duration_ns')) is int and fields['code_mode_host_duration_ns'] >= 0,
+                    'parent timing binding drift')
+            timing = (index, fields)
+            continue
+        require(event['target'] == 'codex_otel.trace_safe' and fields.get('conversation.id') == thread,
+                'tool telemetry thread mismatch')
+        ident = fields.get('call_id')
+        require(ident in expected, 'unexpected telemetry call')
+        if name == 'codex.code_mode.nested_tool_dispatched':
+            require(ident != provider_call_id and ident not in dispatched and fields.get('turn_id') == turn,
+                    'nested dispatch duplicate or context drift')
+            dispatched[ident] = (index, fields)
+            continue
+        require(name in {'codex.tool_call_received', 'codex.tool_result_ready', 'codex.tool_result'},
+                'unknown parent telemetry event')
+        tool, namespace, source = expected[ident]
+        require(fields.get('tool_name') == tool and fields.get('tool_namespace') == namespace,
+                'telemetry tool binding drift')
+        if name == 'codex.tool_call_received':
+            require(ident not in received_calls and fields.get('tool_source') == source, 'telemetry receipt duplicate/source')
+            if source == 'direct':
+                require(fields.get('turn_id') == turn and 'cell.id' not in fields, 'direct receipt context')
+            else:
+                value = fields.get('cell.id')
+                runtime = fields.get('runtime_tool_call_id')
+                require(isinstance(value, str) and bool(value) and isinstance(runtime, str) and bool(runtime) and
+                        runtime not in runtime_ids and fields.get('turn_id') is None, 'child receipt identity')
+                require(cell is None or cell == value, 'multiple diagnostic cells')
+                cell = value
+                runtime_ids.add(runtime)
+            received_calls[ident] = (index, fields)
+        elif name == 'codex.tool_result_ready':
+            require(ident not in ready and fields.get('tool_source') == source and fields.get('turn_id') == turn,
+                    'result ready duplicate/context')
+            ready[ident] = index
+        else:
+            require(ident not in results and fields.get('success') == 'true', 'tool result failed or duplicate')
+            results[ident] = index
+    require(set(received_calls) == set(ready) == set(results) == set(expected) and
+            set(dispatched) == {c['id'] for c in children} and timing is not None, 'parent milestones missing')
+    require(timing[1]['cell_id'] == cell, 'parent cell mismatch')
+    parent_start = received_calls[provider_call_id][0]
+    for child in children:
+        ident = child['id']
+        start, fields = received_calls[ident]
+        dispatch, dispatch_fields = dispatched[ident]
+        require(dispatch_fields.get('cell.id') == cell and
+                dispatch_fields.get('runtime_tool_call_id') == fields['runtime_tool_call_id'], 'dispatch cell/runtime drift')
+        require(parent_start < start < dispatch < results[ident] < ready[ident] < timing[0] <
+                results[provider_call_id] < ready[provider_call_id], 'parent milestone order drift')
+    return {'status': 'scripted_parent_cell_child_ids_matched', 'scope': 'one-scripted-exec-two-mcp-calls',
+            'parentCallId': provider_call_id, 'cellId': cell, 'nativeChildIds': [c['id'] for c in children],
+            'traceEventCount': len(events), 'traceValueSha256': digest(events),
+            'certifiesMultipleOrYieldedCells': False, 'eligibleForMeasurement': False}
