@@ -1323,3 +1323,19 @@ source `f62a87a6181831f87cd24de72c843588869dd736` のclean全416件は61.353s/OK
 次のSDK rawResponseItem無課金捕捉は未着手。
 任意複数cell/待機・実provider・一次台帳との統合・公開canary/本測定が残る。
 eligibleForMeasurement=false、Phase/Step/Gate完了・native provider・期待行動・全Skill Gateは未認定。
+
+#### Phase 4：JSON型照合の是正と独立再検分の送信確認（2026-10-08）
+
+5ファイルの具体的送信承認後、review-05を独立SOLで有限1回実施し、P2=1/P3=1/CLI exit0を得た。
+親が原hash/歴史source/guard/終端/schema/usageを再照合し、数値と真偽値の置換が診断通過する条件を再現した。
+型を保つ共通JSON照合をhost/native/provider/structuredContent/最終応答とSDK設定・入力・SSEへ適用した。
+questionsとSSE IDの型・非空条件、SSE回帰の拒否理由も確認する。
+source `dad596b2034bbcd0abb4cd25c19aea78143aa5a3` のclean全426件は61.879s/OK/exit0。
+原hash/71資源Git/全対象原行/固定1exec親子ID照合も通過。新mock/HTTP0、今回独立1・累計5、一次0/retry0。
+
+修正版の別有限1回は、新sourceと追加の共通監査回帰テストを含む送信payloadへの明示承認不足として
+自動審査で拒否され、送信/起動/予約0。最終sourceの6ファイル/hash/宛先/1回上限を確認する。
+記録は `evals/skills/results/2026-10-08-sdk-json-type-remediation/`。
+過去の停止/承認待ち/原指摘/消費枠を保持し、独立再検分と親の原応答再照合を次に行う。
+SDK rawResponseItem捕捉、任意複数cell/待機・実provider・台帳統合・公開canary/本測定は未実施。
+eligibleForMeasurement=false、Phase/Step/Gate完了・native provider・期待行動・全Skill Gateは未認定。

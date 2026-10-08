@@ -164,3 +164,21 @@ review-05は未起動/送信0/予約0。独立通過や解消済みとは認定�
 次の無課金候補はexperimentalRawEventsによるSDK rawResponseItem捕捉で、未着手。
 固定1exec以外の複数/yield/wait、実provider、一次台帳との統合、公開canary・本測定が残る。
 eligibleForMeasurement=false。Phase/Step/Gate完了・native provider・期待行動・全Skill Gateは未認定。
+
+### Phase 4：JSON型照合の是正と独立再検分待ち（2026-10-08）
+
+ユーザーが具体的な5ファイル/OpenAI gpt-6.1-solへの送信を承認し、review-05を有限1回実施した。
+原結果はreview_findings/P2=1/P3=1/CLI exit0。親が原hash/歴史source/終端/schema/usageを再照合した。
+数値と真偽値のPython等値比較によるnative本文の偽装、experimentalApiのtrue→1、networkAccessのfalse→0を
+同sourceで再現し、型を保つJSON照合へ修正した。host/native/provider/structuredContent/最終応答と
+SDK設定/入力/summary/SSEへ適用し、questionsとSSE IDの型・非空条件も検査する。
+初期SSE回帰入力の余分な改行を修正し、拒否理由まで確認する対象87件はOK/exit0。
+source `dad596b2034bbcd0abb4cd25c19aea78143aa5a3` のclean全426件は61.879s/OK/exit0。
+原hash/71資源Git/対象原行/固定1exec親子IDの再照合も通過した。新mock/HTTP0、今回独立SOL1、累計5、一次0/retry0。
+
+修正版の別有限1回v0.6は、新sourceと追加回帰テストを含むpayloadへの明示承認不足として自動審査で拒否された。
+送信/起動/予約0。最終sourceの具体的な6ファイル/hash/宛先/有限1回を
+`../results/2026-10-08-sdk-json-type-remediation/` に記録し、確認後に独立再検分と親の原結果照合へ進む。
+以前の承認待ち・停止・原指摘と消費枠は履歴として保持する。局所通過を解消済み・独立通過とは認定しない。
+SDK rawResponseItem捕捉、任意複数cell/待機、実provider、一次台帳統合、公開canary/本測定は残る。
+eligibleForMeasurement=false、Phase/Step/Gate完了・native provider・期待行動・全Skill Gateは未認定。
