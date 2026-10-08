@@ -20,7 +20,8 @@ class ProductionSdkTraceTests(unittest.TestCase):
         ids = [f'00000000-0000-4000-8000-00000000000{i}' for i in (1, 2, 3)]
         self.sent = [
             {'id': ids[0], 'method': 'initialize', 'params': {
-                'clientInfo': {'name': 'codex_python_sdk', 'version': '0.160.1'}}},
+                'clientInfo': {'name': 'codex_python_sdk', 'version': '0.160.1', 'title': 'Codex Python SDK'},
+                'capabilities': {'experimentalApi': True}}},
             {'method': 'initialized'},
             {'id': ids[1], 'method': 'thread/start', 'params': {
                 'model': 'gpt-6.1-sol', 'modelProvider': 'local', 'sandbox': 'read-only',
@@ -89,6 +90,23 @@ class ProductionSdkTraceTests(unittest.TestCase):
         frames = copy.deepcopy(self.frames)
         frames[1]['result']['sandbox']['networkAccess'] = True
         with self.assertRaises(ValueError): self.run_diagnostic(received=frames)
+
+    def test_turn_overrides_and_unknown_request_fields_are_rejected(self):
+        for index, key, value in [(3, 'approvalPolicy', 'on-request'), (3, 'sandboxPolicy', {'type': 'dangerFullAccess'}),
+                                  (2, 'permissionProfile', 'full-access'), (0, 'unknown', True)]:
+            sent = copy.deepcopy(self.sent)
+            sent[index]['params'][key] = value
+            with self.subTest(index=index, key=key), self.assertRaises(ValueError): self.run_diagnostic(sent=sent)
+
+    def test_initialize_and_thread_responses_must_precede_dependent_events(self):
+        reordered = [f for f in self.frames if 'id' not in f] + [f for f in self.frames if 'id' in f]
+        with self.assertRaises(ValueError): self.run_diagnostic(received=reordered)
+        reordered = [self.frames[1], self.frames[0]] + self.frames[2:]
+        with self.assertRaises(ValueError): self.run_diagnostic(received=reordered)
+
+    def test_turn_started_can_precede_turn_response(self):
+        frames = self.frames[:3] + self.frames[4:5] + self.frames[3:4] + self.frames[5:]
+        self.assertEqual(self.run_diagnostic(received=frames)['status'], 'sdk_child_trace_diagnostic_passed')
 
     def test_wrong_thread_user_input_and_extra_attachments_are_rejected(self):
         for key in ('thread', 'content', 'attachment'):

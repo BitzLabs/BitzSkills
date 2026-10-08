@@ -38,6 +38,15 @@ def requests(sent: list) -> tuple[dict, dict]:
         require(frame['id'] not in bindings and isinstance(frame['params'], dict), 'SDK duplicate request')
         bindings[frame['id']] = index
     initialize, thread, turn = [f['params'] for f in selected]
+    require(set(initialize) == {'clientInfo', 'capabilities'} and
+            initialize['capabilities'] == {'experimentalApi': True} and
+            isinstance(initialize['clientInfo'], dict) and
+            set(initialize['clientInfo']) == {'name', 'title', 'version'} and
+            initialize['clientInfo']['title'] == 'Codex Python SDK', 'fixed SDK initialize params')
+    require(set(thread) <= {'model', 'modelProvider', 'allowProviderModelFallback', 'cwd', 'sandbox',
+                           'approvalPolicy', 'ephemeral', 'baseInstructions', 'developerInstructions'},
+            'unknown SDK thread params')
+    require(set(turn) == {'threadId', 'input'}, 'SDK turn policy override or unknown params')
     require(initialize.get('clientInfo', {}).get('name') == 'codex_python_sdk' and
             initialize['clientInfo'].get('version') == '0.160.1', 'SDK version required')
     require(thread.get('sandbox') == 'read-only' and thread.get('approvalPolicy') == 'never' and
@@ -82,8 +91,12 @@ def normalized(sent: list, received: list, *, allowed_warnings: tuple[str, ...] 
     user_id = None
     user_done = False
     turn_started = False
+    response_order = []
     for index, original in enumerate(received):
         if 'id' in original:
+            number = bindings[original['id']]
+            require(number == len(response_order) + 1, 'SDK response sequence mismatch')
+            response_order.append(number)
             frames.append({'id': bindings[original['id']], 'result': copy.deepcopy(original['result'])})
             continue
         require(set(original) <= {'method', 'params', 'emittedAtMs'} and
@@ -94,6 +107,10 @@ def normalized(sent: list, received: list, *, allowed_warnings: tuple[str, ...] 
         frame.pop('emittedAtMs', None)
         method, params = frame['method'], frame['params']
         require(isinstance(params, dict), 'SDK notification params')
+        if method == 'thread/started' or 'threadId' in params:
+            require(1 in response_order, 'SDK thread event before initialize response')
+        if method == 'turn/started' or 'turnId' in params or method == 'turn/completed':
+            require(2 in response_order, 'SDK turn event before thread response')
         if method == 'turn/started':
             require(not turn_started and params.get('threadId') == thread and
                     params.get('turn', {}).get('id') == turn, 'SDK turn start mismatch')

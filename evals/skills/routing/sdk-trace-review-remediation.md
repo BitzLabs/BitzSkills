@@ -38,3 +38,11 @@ source `f530be22340d7e9bd26dc524dce993ef31a1ac7e` の別SOLはP2=1。
 修正候補はdirect受領を固定7フィールドへ限定し、cell/runtime/未知フィールドを拒否すること。
 結果のtool_origin/mcp_tool/counterも、存在する場合は既知の呼出し識別と一致させる。
 旧記録、消費1/残0を保持し、別有限SOL1回で修正版を静的検分する。
+
+## 4回目の静的検分からの是正候補
+
+source `09875b5cd948ab1d9e6253ae15cc8a247aaed727` の別SOLはP2=2。
+turn/startにapprovalPolicy/sandboxPolicyを追加した条件と、initialize応答を通知より後ろへ移す条件を
+親が同sourceで再現した。修正候補はSDK要求フィールドの明示と応答順序の検査。
+thread/startの応答をturn開始通知に先行させ、turn/startedがturn/start応答に先行する正常形は許容する。
+元記録と消費1/残0を保持し、別の有限SOL1回で静的検分する。
