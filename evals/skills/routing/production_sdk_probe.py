@@ -75,7 +75,7 @@ def evaluate(requests: list[dict], frames: list[dict], contract: dict, exit_code
     finals = [f for f in frames if f.get('method') == 'item/completed'
               and f.get('params', {}).get('item', {}).get('type') == 'agentMessage']
     no_actions = not any(f.get('method') == 'item/started' and
-                        f.get('params', {}).get('item', {}).get('type') != 'agentMessage'
+                        f.get('params', {}).get('item', {}).get('type') not in {'userMessage', 'agentMessage', 'reasoning'}
                         for f in frames)
     final_matches = len(finals) == 1 and finals[0]['params'].get('threadId') == thread and \
         finals[0]['params'].get('turnId') == turn and \

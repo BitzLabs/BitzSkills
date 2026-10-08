@@ -75,6 +75,11 @@ class ProductionSdkProbeTests(unittest.TestCase):
                       {'id': 'unexpected', 'error': {'code': -1}}, {'method': 'error', 'params': {}}]:
             self.assertFalse(self.assess(frames=self.frames + [frame])['sdkProtocolPassed'])
 
+    def test_native_user_message_and_reasoning_are_not_tool_actions(self):
+        for kind in ['userMessage', 'reasoning']:
+            frames = self.frames[:4] + [{'method': 'item/started', 'params': {'item': {'type': kind}}}] + self.frames[4:]
+            self.assertTrue(self.assess(frames=frames)['noToolActionsObserved'])
+
     def test_nonzero_runtime_exit_and_mcp_failure_stop(self):
         self.assertFalse(self.assess(exit_code=-15)['sdkProtocolPassed'])
         frames = copy.deepcopy(self.frames)
