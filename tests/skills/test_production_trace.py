@@ -116,6 +116,20 @@ class ProductionTraceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'final response mismatch'):
             self.run_audit(frames=frames)
 
+    def test_outer_turn_id_cannot_contradict_start_or_completion(self):
+        for method in ('turn/started', 'turn/completed'):
+            frames = copy.deepcopy(self.frames)
+            next(f for f in frames if f.get('method') == method)['params']['turnId'] = 'other'
+            with self.subTest(method=method), self.assertRaisesRegex(ValueError, 'native (turn start outer context|outer turn) mismatch'):
+                self.run_audit(frames=frames)
+
+    def test_thread_start_cannot_claim_a_different_thread_or_future_turn(self):
+        for name, value in [('threadId', 'other'), ('turnId', 'u')]:
+            frames = copy.deepcopy(self.frames)
+            next(f for f in frames if f.get('method') == 'thread/started')['params'][name] = value
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'native thread start outer context mismatch'):
+                self.run_audit(frames=frames)
+
     def test_json_object_key_order_is_not_an_evidence_difference(self):
         for frame in self.frames:
             item = frame.get('params', {}).get('item', {})

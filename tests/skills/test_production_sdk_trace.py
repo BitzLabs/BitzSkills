@@ -323,6 +323,28 @@ class ProductionSdkTraceTests(unittest.TestCase):
             for request in args['provider_requests']: request['input'][0]['content'] = replacement
             with self.subTest(replacement=replacement), self.assertRaises(ValueError): sdk.diagnose_exchange(**args)
 
+    def test_synthetic_profile_cannot_omit_sdk_instructions_from_provider_input(self):
+        for name in ('baseInstructions', 'developerInstructions'):
+            for value in ('EXTRA_INSTRUCTIONS', '', None):
+                args = self.exchange()
+                args['sent'] = copy.deepcopy(args['sent'])
+                args['sent'][2]['params'][name] = value
+                with self.subTest(name=name, value=value), self.assertRaisesRegex(ValueError, 'synthetic provider profile forbids extra instructions'):
+                    sdk.diagnose_exchange(**args)
+
+    def test_outer_turn_ids_cannot_contradict_start_or_completion(self):
+        for method in ('turn/started', 'turn/completed'):
+            args = self.exchange()
+            next(f for f in args['received'] if f.get('method') == method)['params']['turnId'] = 'other'
+            with self.subTest(method=method), self.assertRaisesRegex(ValueError, 'SDK outer turn mismatch'):
+                sdk.diagnose_exchange(**args)
+
+    def test_outer_thread_id_cannot_contradict_thread_start(self):
+        frames = copy.deepcopy(self.frames)
+        next(f for f in frames if f.get('method') == 'thread/started')['params']['threadId'] = 'other'
+        with self.assertRaisesRegex(ValueError, 'SDK outer thread mismatch'):
+            self.run_diagnostic(received=frames)
+
     def test_matching_prefix_cannot_add_user_developer_or_unknown_context(self):
         for role in ('user', 'developer', 'system'):
             args = self.exchange()

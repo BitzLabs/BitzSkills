@@ -63,3 +63,15 @@ SSEの出力/content indexと原telemetryのattempt/status codeは整数型を�
 
 同じ型の検査漏れを防ぐため、questionsの未指定/null/空配列と0/false/空文字/空objectを区別する。
 模擬SSEのresponse IDにも非空文字列を要求する。型・識別子の回帰試験を追加する。
+
+## 6回目の静的検分からの是正候補
+
+6ファイル/確定source/OpenAI Codex CLI gpt-6.1-sol/有限1回の送信承認後、
+source `dad596b2034bbcd0abb4cd25c19aea78143aa5a3` を別SOLで検分し、P2=2を得た。
+親が同sourceで、cwdなしprofileへのbaseInstructions追加と、turn/completed外側turnIdの矛盾を
+diagnose_exchangeが通す条件を実行して再現した。原review_findings、消費1/残0を保持する。
+
+合成の単一user profileではbaseInstructions/developerInstructionsの指定を拒否する。
+SDK通知全体で存在する外側threadId/turnIdを確定IDへ照合し、共通native監査でも
+thread開始・turn開始・完了の外側ID矛盾を拒否する。空/nullの追加指示、開始時の矛盾も回帰へ追加する。
+局所通過を独立解消判定・Phase完了・一次評価・任意provider認定の代替にしない。

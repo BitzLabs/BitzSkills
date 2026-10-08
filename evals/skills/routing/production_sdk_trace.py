@@ -107,6 +107,10 @@ def normalized(sent: list, received: list, *, allowed_warnings: tuple[str, ...] 
         frame.pop('emittedAtMs', None)
         method, params = frame['method'], frame['params']
         require(isinstance(params, dict), 'SDK notification params')
+        if 'threadId' in params:
+            require(params['threadId'] == thread, 'SDK outer thread mismatch')
+        if 'turnId' in params:
+            require(params['turnId'] == turn, 'SDK outer turn mismatch')
         if method == 'thread/started' or 'threadId' in params:
             require(1 in response_order, 'SDK thread event before initialize response')
         if method == 'turn/started' or 'turnId' in params or method == 'turn/completed':
@@ -289,6 +293,8 @@ def audit_provider_input(sent: list, before: list) -> str:
                 'provider message fields')
         messages.append({k: v for k, v in value.items() if k != 'id'})
     if 'cwd' not in params:
+        require(not (set(params) & {'baseInstructions', 'developerInstructions'}),
+                'synthetic provider profile forbids extra instructions')
         require(trace.json_equal(messages, [expected_input]) and len(before) == 1, 'synthetic provider context mismatch')
         return 'synthetic-one-input-only'
     require(params.get('modelProvider') == 'bitz_local_probe' and len(before) == 5 and len(messages) == 4,

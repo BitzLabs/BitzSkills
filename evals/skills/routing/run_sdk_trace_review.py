@@ -14,7 +14,7 @@ import production_trace as trace
 import source_guard
 
 ROOT = Path(__file__).resolve().parents[3]
-CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.6.json'
+CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.7.json'
 require = trace.require
 
 
@@ -57,7 +57,7 @@ def run(source: str):
         old_name = previous.get('outputRelativeRoot', '.venv/sdk-trace-independent-review-01')
         require(old_name in {'.venv/sdk-trace-independent-review-01', '.venv/sdk-trace-independent-review-02',
                              '.venv/sdk-trace-independent-review-03', '.venv/sdk-trace-independent-review-04',
-                             '.venv/sdk-trace-independent-review-05'},
+                             '.venv/sdk-trace-independent-review-05', '.venv/sdk-trace-independent-review-06'},
                 'unknown previous review')
         old = ROOT / old_name
         require(not any(p.is_symlink() for p in (old, *old.parents)), 'old review symlink')

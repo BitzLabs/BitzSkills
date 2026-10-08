@@ -135,13 +135,18 @@ def completed_items(frames: list) -> list:
             require(thread is None and turn is None, 'multiple native threads')
             thread = params['thread']['id']
             require(isinstance(thread, str) and bool(thread), 'thread id required')
+            require(('threadId' not in params or params['threadId'] == thread) and 'turnId' not in params,
+                    'native thread start outer context mismatch')
             continue
         require(thread is not None and params.get('threadId') == thread, 'native thread mismatch')
         if method == 'turn/started':
             require(turn is None and not finished, 'multiple native turns')
             turn = params['turn']['id']
             require(isinstance(turn, str) and bool(turn), 'turn id required')
+            require('turnId' not in params or params['turnId'] == turn, 'native turn start outer context mismatch')
             continue
+        if 'turnId' in params:
+            require(turn is not None and params['turnId'] == turn, 'native outer turn mismatch')
         if method in NEUTRAL:
             if 'turnId' in params:
                 require(turn is not None and params['turnId'] == turn, 'neutral turn mismatch')
