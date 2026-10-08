@@ -216,9 +216,8 @@ def isolated(base: Path, mode: str):
             'approvalPolicy': 'never', 'ephemeral': True,
             'baseInstructions': 'Local protocol simulation. Do not call tools.',
             'developerInstructions': 'No actual model provider or real measurement is used.'})
-        client.turn_start({'threadId': thread.thread.id,
-                           'input': [{'type': 'text', 'text': 'Return LOCAL_SIMULATION_ONLY.'}]})
-        while client.next_notification().method != 'turn/completed':
+        turn = client.turn_start(thread.thread.id, [{'type': 'text', 'text': 'Return LOCAL_SIMULATION_ONLY.'}])
+        while client.next_turn_notification(turn.turn.id).method != 'turn/completed':
             pass
     except Exception as exc:
         # SDK例外文字列にはstderrが入る場合がある。公開しない。
