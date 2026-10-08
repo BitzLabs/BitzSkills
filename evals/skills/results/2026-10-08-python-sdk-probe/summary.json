@@ -1,0 +1,97 @@
+{
+  "status": "sdk_probe_artifacts_rechecked",
+  "phase": 4,
+  "probeSourceCommit": "4fe057a52c455853673a8a4e9467147dd6885474",
+  "verificationSourceCommit": "8caf4da41813975edaeb6439642a43992ee3eade",
+  "verificationScriptSha256": "75da7979103112b83838a18b3ed333985c0dd7aac240badefb1c117a989ae79c",
+  "records": [
+    {
+      "outputLabel": "production-sdk-native-probe-01",
+      "sourceCommit": "c50713dec40bf1f5b49ca4152fb8c614e1075788",
+      "receiptSha256": "b03ae348d417f4d1b6d13a8655400684a404c7a049cff37134b9af3da78d1b25",
+      "originalStatus": "local_probe_unavailable",
+      "paidModelCalls": 0,
+      "localHttpRequestCount": 0
+    },
+    {
+      "outputLabel": "production-sdk-minimal-probe-01",
+      "sourceCommit": "c50713dec40bf1f5b49ca4152fb8c614e1075788",
+      "receiptSha256": "29b48a8bb0dd3411c6d17513f40e3b7cbf9a1c33d5831d1dccc1ca1a675723b0",
+      "originalStatus": "local_tool_declaration_stopped",
+      "paidModelCalls": 0,
+      "localHttpRequestCount": 0
+    },
+    {
+      "outputLabel": "production-sdk-native-probe-02",
+      "sourceCommit": "6c9f9f56b81b9eeda667ae90f3550157ca77c68e",
+      "receiptSha256": "b2d026e2170ff0d051cbb18560a43659a56e0c0780c9575d837ffdada61f0065",
+      "originalStatus": "local_tool_declaration_stopped",
+      "paidModelCalls": 0,
+      "requestSha256": "0a960e1f959f789d958afa4583ee8068ddaca117d92416a6a6ad906e236d25d2",
+      "traceSha256": "8bb3391161f3aed700bc80f28c99d632816c3c48c3567764b149b80e757aa10f",
+      "sdkProtocolRechecked": true,
+      "offeredToolNames": [
+        "collaboration.followup_task",
+        "collaboration.interrupt_agent",
+        "collaboration.list_agents",
+        "collaboration.send_message",
+        "collaboration.spawn_agent",
+        "collaboration.wait_agent",
+        "functions.exec",
+        "functions.request_user_input",
+        "functions.request_user_input_async",
+        "functions.wait"
+      ]
+    },
+    {
+      "outputLabel": "production-sdk-minimal-probe-02",
+      "sourceCommit": "4fe057a52c455853673a8a4e9467147dd6885474",
+      "receiptSha256": "c8db73608326543140087d12bf3e1d2471846b54a302faae910312e1589c60d3",
+      "originalStatus": "local_tool_declaration_stopped",
+      "paidModelCalls": 0,
+      "requestSha256": "aea36c8498183dad82da0757b078e729d4ff873e8747631f07091d678f7056e4",
+      "traceSha256": "ddc2ecf2051f0d530a16acbb8d868a0e2f8ec6d76a9ef45dfe8362541b05c00e",
+      "sdkProtocolRechecked": true,
+      "offeredToolNames": [
+        "functions.exec",
+        "functions.request_user_input_async",
+        "functions.wait"
+      ]
+    }
+  ],
+  "tests": {
+    "count": 354,
+    "seconds": "61.360",
+    "exitCode": 0,
+    "command": [
+      "uv",
+      "--cache-dir",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+      "run",
+      "--offline",
+      "--project",
+      "plugins/bitz-core",
+      "--with",
+      "jsonschema==4.23.0",
+      "python",
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests/skills",
+      "-p",
+      "test_*.py"
+    ],
+    "PYTHONPATH": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/plugins/bitz-core/src",
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "f43dc08f69d0c4b64147955f93c357ae68a2ae15584687f5529af3f3317efd69"
+  },
+  "paidModelCalls": 0,
+  "closedTwoToolPolicyVerified": false,
+  "phaseComplete": false,
+  "certifiesNativeProvider": false,
+  "certifiesBehavior": false,
+  "certifiesSkillGate": false,
+  "independentReviewPerformed": false
+}

@@ -119,3 +119,15 @@ storage引数は隔離試験用で、製品接続は出力先/台帳先を指定
 結果は `../results/2026-10-07-production-infrastructure-reviewed/`。この有限枠は消費1/残0、一次0。
 公式tag rust-v0.160.1のsource d27764b82f7118f674371e6d6e76271d9d606edbにtool登録前のToolPolicy.allowed_toolsを確認した。
 専用adapterまたはmodel情報の別設定は未ビルド/未検証で、一次の起動根拠にはしない。
+
+### Phase 4：公式Python SDKの無課金接続診断（2026-10-08）
+
+公式 `openai-codex==0.160.1` と既存CLI0.160.1を使い、外部通信/認証を遮断した模擬Responsesで2設定を診断した。
+正常通信・模擬最終応答は確認できたが、宣言は前回相当10件、agents/対話の明示無効化後も3件で停止した。
+3名はfunctions.exec/functions.wait/functions.request_user_input_async。Code Mode内部の全操作を表す件数ではない。
+初期SDK引数誤りとuserMessageの誤分類は原記録を保持して修正・別再照合した。
+確定source/clean treeの全354試験はOK/exit0、有料0/一次0/独立SOL0。
+診断結果と具体的な緩和案は `../results/2026-10-08-python-sdk-probe/report.md`。
+候補は2toolだけの宣言条件を緩め、制御用宣言と固定資源の読取り・計算・待機を許容する方式。
+内部tool一覧、実list/read、禁止操作、データ可視範囲、Code Mode親子traceを次の無課金契約で検証する。
+現在の停止契約/監査器は緩和しておらず、今回の通信通過を実provider/操作制限/Skill Gate/Phase完了に拡張しない。

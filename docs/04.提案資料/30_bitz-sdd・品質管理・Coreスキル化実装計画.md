@@ -1281,3 +1281,14 @@ git-common-dirで全worktreeに共通の一次台帳を使い、起動前排他�
 公式tag rust-v0.160.1/source d27764b82f7118f674371e6d6e76271d9d606edbにtool登録前のToolPolicy制限APIがあることを確認した。
 次は読取り2toolだけの接続方式を実装・無課金検証し、起動前検分と別有限canary契約へ進む。
 Phase 4完了、native provider、Skill Gate、製品完了・リリースは未認定。
+
+#### Phase 4：Python SDK接続診断と制限緩和候補（2026-10-08）
+
+公式Python SDK0.160.1で、前回相当とagents/対話明示無効化の2設定を無課金検証した。
+模擬Responsesの往復/正常終端/最終応答を確認したが、宣言10件→3件で2tool条件は未達・停止。
+SDK引数誤り・通知分類誤りと旧原receiptを保持し、別sourceで修正・原通信を再照合した。
+確定ref/clean全354件は実OK/exit0。モデル一次0、有料0、独立SOL検分0。
+記録と緩和候補は `evals/skills/results/2026-10-08-python-sdk-probe/report.md`。
+次の候補は宣言2件だけの条件を緩め、Code Modeの制御宣言を許容し、固定資源の読取り・計算・待機へ操作を絞る方式。
+内部操作一覧/本文実読取り/禁止操作の実拒否/データ可視範囲/親子traceを次の無課金検証で確認する。
+既存監査器と有料一次条件はまだ変更せず、Phase/Gate完了・native provider・行動・製品完了は未認定。
