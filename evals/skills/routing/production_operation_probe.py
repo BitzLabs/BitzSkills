@@ -18,7 +18,7 @@ import production_sdk_probe as sdk
 import source_guard
 
 ROOT = Path(__file__).resolve().parents[3]
-CONTRACT = 'evals/skills/routing/production-operation-probe-v0.4.json'
+CONTRACT = 'evals/skills/routing/production-operation-probe-v0.5.json'
 CODE_FILES = ['production_operation_probe.py', 'production_sdk_probe.py', 'production_cli_probe.py', 'host.py', 'source_guard.py']
 SCENARIOS = ('inventory', 'read', 'path-denied', 'shell-denied', 'patch-denied', 'web-denied', 'agent-denied', 'user-input-stop')
 
@@ -133,6 +133,8 @@ def isolated(base: Path):
                 self.send_error(409)
                 return
             reply = tool_reply(scenario, base) if len(requests) == 1 else cli.simulation_reply()
+            # 生成し直した応答を証拠として扱わず、送信直前の原bytesを保存する。
+            cli.exclusive(base / f'response-{len(requests)}.sse', reply)
             self.send_response(200)
             self.send_header('Content-Type', 'text/event-stream')
             self.send_header('Content-Length', str(len(reply)))
@@ -199,7 +201,7 @@ def isolated(base: Path):
 def run(source: str, scenario: str):
     contract = json.loads(source_guard.git(ROOT, 'show', source + ':' + CONTRACT))
     before = source_guard.verify(ROOT, source, contract['sourceFiles'])
-    if scenario not in SCENARIOS:
+    if scenario not in SCENARIOS or scenario not in contract['outputLabels']:
         raise ValueError('unknown scenario')
     base = ROOT / '.venv' / contract['outputLabels'][scenario]
     if any(p.is_symlink() for p in [base, *base.parents]):

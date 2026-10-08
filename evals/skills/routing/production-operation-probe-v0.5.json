@@ -1,0 +1,60 @@
+{
+  "version": "production-operation-probe-0.5.0",
+  "phase": 4,
+  "scope": "isolated-scripted-code-mode-operation-diagnostic-only",
+  "model": "gpt-6.1-sol",
+  "codexVersion": "codex-cli 0.160.1",
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "sdkVersion": "0.160.1",
+  "sdkRelativePath": ".venv/codex-python-sdk-deps",
+  "sdkTreeSha256": "e495ab6fb9b8c661b6c43d1c7d83e4d8e68e5e81d98580727a74c2453fa8c916",
+  "sdkWheelSha256": "930e46e2153c00d76ff4e88e14eb7f694949244fb4be47d84394d736709e022e",
+  "pythonDependencies": {
+    "openai-codex": "0.160.1",
+    "pydantic": "2.13.5",
+    "pydantic_core": "2.46.5",
+    "packaging": "26.3",
+    "typing_extensions": "4.16.0",
+    "typing-inspection": "0.4.4",
+    "annotated-types": "0.8.0"
+  },
+  "candidateSource": "3252a29642323a403a51d9bd10acc6f4a7f3d236",
+  "manifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+  "snapshotRelativePath": ".venv/production-routing-preparation-01/snapshot",
+  "sourceFiles": [
+    "evals/skills/routing/production_sdk_probe.py",
+    "evals/skills/routing/production-sdk-probe-v0.1.json",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/host.py",
+    "tests/skills/test_production_sdk_probe.py",
+    "evals/skills/routing/production_operation_probe.py",
+    "tests/skills/test_production_operation_probe.py",
+    "evals/skills/routing/production-operation-probe-v0.5.json",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/production_sdk_trace.py",
+    "tests/skills/test_production_trace.py",
+    "tests/skills/test_production_sdk_trace.py",
+    "evals/skills/results/2026-10-08-sdk-trace-connection/verify-artifacts.py"
+  ],
+  "allowedTools": ["mcp__production_routing__list_resources", "mcp__production_routing__read_resource"],
+  "allowedSurfaceTools": ["functions.exec", "functions.wait", "functions.request_user_input_async"],
+  "codeModeHostEnabled": true,
+  "outputLabels": {
+    "read": "production-operation-read-05",
+    "user-input-stop": "production-operation-user-input-stop-05"
+  },
+  "maximumScenarios": 2,
+  "maximumLocalHttpRequestsPerScenario": 2,
+  "paidModelCalls": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 0,
+  "automaticPaidRetries": 0,
+  "certifiesNativeProvider": false,
+  "certifiesSkillGate": false,
+  "limitations": [
+    "固定模擬プログラムだけを送る。実モデル・一次採点・親子因果を認定しない。",
+    "Responses原応答を送信前に保存する。旧試行の欠けた応答を再生成しない。",
+    "原証拠・source照合と独立検分が必要。Code Modeの親call IDは未出力。"
+  ]
+}

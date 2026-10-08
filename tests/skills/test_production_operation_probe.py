@@ -69,8 +69,10 @@ class ProductionOperationProbeTests(unittest.TestCase):
         self.assertEqual(probe.output_objects({'input': [item]}), [])
 
     def test_scenarios_outputs_and_budget_are_finite(self):
-        self.assertEqual(set(self.contract['outputLabels']), set(probe.SCENARIOS))
-        self.assertEqual(len(set(self.contract['outputLabels'].values())), 8)
+        self.assertEqual(set(self.contract['outputLabels']), {'read', 'user-input-stop'})
+        self.assertTrue(set(self.contract['outputLabels']) <= set(probe.SCENARIOS))
+        self.assertEqual(len(set(self.contract['outputLabels'].values())), self.contract['maximumScenarios'])
+        self.assertEqual(self.contract['maximumScenarios'], 2)
         self.assertEqual(self.contract['maximumLocalHttpRequestsPerScenario'], 2)
         self.assertEqual(self.contract['paidModelCalls'], 0)
         self.assertFalse(self.contract['certifiesNativeProvider'])

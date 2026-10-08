@@ -178,12 +178,8 @@ def completed_items(frames: list) -> list:
     return items
 
 
-def audit(manifest_raw: bytes, host_events: list, frames: list, decision: dict,
-          event_catalog: dict, *, actual_exit_code: int) -> dict:
-    require(type(actual_exit_code) is int and actual_exit_code == 0, 'native process failed')
-    manifest, manifest_digest, view = manifest_view(manifest_raw)
-    read = audit_host(manifest, view, host_events)
-    items = completed_items(frames)
+def audit_calls(host_events: list, items: list) -> None:
+    """host一次結果と完了済みnative MCP結果を照合する共通処理。"""
     calls = [item for item in items if item['type'] == 'mcpToolCall']
     require(len(calls) == len(host_events), 'host/native count mismatch')
     for item, event in zip(calls, host_events):
@@ -197,6 +193,15 @@ def audit(manifest_raw: bytes, host_events: list, frames: list, decision: dict,
         require(isinstance(content[0]['text'], str), 'native tool text required')
         require(strict_json(content[0]['text']) == event['result'], 'host/native result mismatch')
         require(result.get('structuredContent') in (None, event['result']) and result.get('_meta') in (None, {}), 'native extra result')
+
+
+def audit(manifest_raw: bytes, host_events: list, frames: list, decision: dict,
+          event_catalog: dict, *, actual_exit_code: int) -> dict:
+    require(type(actual_exit_code) is int and actual_exit_code == 0, 'native process failed')
+    manifest, manifest_digest, view = manifest_view(manifest_raw)
+    read = audit_host(manifest, view, host_events)
+    items = completed_items(frames)
+    audit_calls(host_events, items)
     messages = [item for item in items if item['type'] == 'agentMessage' and item['phase'] == 'final_answer']
     require(len(messages) == 1 and strict_json(messages[0]['text']) == decision, 'final response mismatch')
     schema = copy.deepcopy(strict_json((ROOT / 'evals/skills/schemas/decision.schema.json').read_bytes()))
