@@ -198,8 +198,10 @@ def isolated(base: Path):
     cli.exclusive(base / 'isolated-result.json', cli.encoded(value))
 
 
-def run(source: str, scenario: str):
-    contract = json.loads(source_guard.git(ROOT, 'show', source + ':' + CONTRACT))
+def run(source: str, scenario: str, contract_name: str = CONTRACT):
+    if contract_name not in {CONTRACT, 'evals/skills/routing/production-operation-probe-v0.6.json'}:
+        raise ValueError('unknown operation contract')
+    contract = json.loads(source_guard.git(ROOT, 'show', source + ':' + contract_name))
     before = source_guard.verify(ROOT, source, contract['sourceFiles'])
     if scenario not in SCENARIOS or scenario not in contract['outputLabels']:
         raise ValueError('unknown scenario')
@@ -218,6 +220,11 @@ def run(source: str, scenario: str):
     cli.exclusive(base / 'scenario.txt', scenario.encode())
     env = {'PATH': '/home/hide/.nvm/versions/node/v26.5.0/bin:/usr/bin:/bin', 'LANG': 'C.UTF-8',
            'PYTHONDONTWRITEBYTECODE': '1', 'TMPDIR': str(base / 'tmp')}
+    if 'diagnosticTracing' in contract:
+        tracing = contract['diagnosticTracing']
+        if tracing != {'format': 'json', 'rustLog': 'codex_otel.trace_safe=info,codex_code_mode::timing=info'}:
+            raise ValueError('unknown diagnostic tracing policy')
+        env.update(LOG_FORMAT=tracing['format'], RUST_LOG=tracing['rustLog'])
     try:
         process = subprocess.run(namespace(base, contract), env=env, capture_output=True, timeout=45)
         code, stdout, stderr = process.returncode, process.stdout, process.stderr
@@ -240,6 +247,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--source')
     parser.add_argument('--scenario', choices=SCENARIOS)
+    parser.add_argument('--trace-parent', action='store_true')
     parser.add_argument('--isolated', type=Path)
     parser.add_argument('--proxy', type=Path)
     args = parser.parse_args()
@@ -250,7 +258,8 @@ def main():
         return 0
     if not args.source or not args.scenario:
         parser.error('--source and --scenario required')
-    return run(args.source, args.scenario)
+    return run(args.source, args.scenario, 'evals/skills/routing/production-operation-probe-v0.6.json'
+               if args.trace_parent else CONTRACT)
 
 
 if __name__ == '__main__':

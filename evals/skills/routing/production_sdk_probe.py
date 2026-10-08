@@ -118,12 +118,29 @@ def proxy(base: Path, reject_questions: bool = False):
     signal.signal(signal.SIGTERM, lambda *_: stop.set())
     handles = [os.fdopen(os.open(base / name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600), 'wb')
                for name in ('rpc-in.jsonl', 'rpc-out.jsonl', 'runtime-stderr.bin')]
+    trace_config = contract.get('diagnosticTracing')
+    trace_handle = None
+    if trace_config is not None:
+        if trace_config != {'format': 'json', 'rustLog': 'codex_otel.trace_safe=info,codex_code_mode::timing=info'}:
+            raise ValueError('unknown diagnostic tracing policy')
+        trace_handle = os.fdopen(os.open(base / 'trace-safe.jsonl',
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600), 'wb')
+        handles.append(trace_handle)
 
     def copy(src, dst, saved, lines=False):
         try:
             while raw := (src.readline() if lines else src.read1(65536)):
                 saved.write(raw)
                 saved.flush()
+                if saved == handles[2] and trace_handle is not None:
+                    # 認証なし・模擬providerの局所CLIログだけ。指定targetの原行を別保存する。
+                    try:
+                        event = json.loads(raw)
+                    except ValueError:
+                        event = {}
+                    if isinstance(event, dict) and event.get('target') in {'codex_otel.trace_safe', 'codex_code_mode::timing'}:
+                        trace_handle.write(raw)
+                        trace_handle.flush()
                 if dst == sys.stdout.buffer and reject_questions:
                     frame = json.loads(raw)
                     if question_frame(frame):
@@ -148,7 +165,7 @@ def proxy(base: Path, reject_questions: bool = False):
     threads = [threading.Thread(target=copy, args=args, daemon=True) for args in
                [(sys.stdin.buffer, process.stdin, handles[0], True),
                 (process.stdout, sys.stdout.buffer, handles[1], True),
-                (process.stderr, sys.stderr.buffer, handles[2])]]
+                (process.stderr, sys.stderr.buffer, handles[2], trace_handle is not None)]]
     for thread in threads:
         thread.start()
     intentional = False
