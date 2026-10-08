@@ -60,3 +60,6 @@ bool/int/floatを区別してhost/native/provider/structuredContent/最終応答
 SDK能力・sandbox・user/summary/prefix/設定・SSEアイテム照合にも同じ条件を使う。
 SSEの出力/content indexと原telemetryのattempt/status codeは整数型を要求する。
 元記録、消費1/残0を保持し、局所試験通過を独立解消判定の代替にしない。
+
+同じ型の検査漏れを防ぐため、questionsの未指定/null/空配列と0/false/空文字/空objectを区別する。
+模擬SSEのresponse IDにも非空文字列を要求する。型・識別子の回帰試験を追加する。

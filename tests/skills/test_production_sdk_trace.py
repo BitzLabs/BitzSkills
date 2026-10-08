@@ -141,6 +141,13 @@ class ProductionSdkTraceTests(unittest.TestCase):
                 frames[offset]['params']['item'][key] = value
                 with self.subTest(key=key, offset=offset), self.assertRaises(ValueError): self.run_diagnostic(received=frames)
 
+    def test_empty_questions_cannot_be_represented_by_other_json_types(self):
+        for value in (0, False, '', {}):
+            frames = copy.deepcopy(self.frames)
+            frames[-2]['params']['item']['questions'] = value
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'SDK dialogue or extra message evidence'):
+                self.run_diagnostic(received=frames)
+
     def test_known_environment_notifications_are_retained_and_hashed(self):
         metadata = [
             {'method': 'remoteControl/status/changed', 'params': {'status': 'disabled', 'serverName': 'local',
@@ -295,8 +302,19 @@ class ProductionSdkTraceTests(unittest.TestCase):
                         if field in event:
                             event[field] = value
                             lines[index] = 'data: ' + json.dumps(event)
-                with self.subTest(field=field, value=value), self.assertRaises(ValueError):
-                    sdk.scripted_response(('\n'.join(lines) + '\n\n').encode())
+                with self.subTest(field=field, value=value), self.assertRaisesRegex(ValueError, 'SSE (response output|final start|final delta) mismatch'):
+                    sdk.scripted_response(('\n'.join(lines) + '\n').encode())
+
+    def test_sse_response_ids_cannot_be_empty(self):
+        lines = sdk.cli.simulation_reply().decode().splitlines()
+        for index, line in enumerate(lines):
+            if line.startswith('data: '):
+                event = json.loads(line[6:])
+                if 'response' in event:
+                    event['response']['id'] = ''
+                    lines[index] = 'data: ' + json.dumps(event)
+        with self.assertRaisesRegex(ValueError, 'SSE response lifecycle'):
+            sdk.scripted_response(('\n'.join(lines) + '\n').encode())
 
     def test_matching_wire_prefix_cannot_replace_sdk_user_input(self):
         for replacement in ([{'type': 'input_text', 'text': 'UNRELATED_REQUEST'}], [],

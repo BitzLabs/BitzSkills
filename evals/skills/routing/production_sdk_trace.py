@@ -162,7 +162,7 @@ def normalized(sent: list, received: list, *, allowed_warnings: tuple[str, ...] 
                 continue
             require(user_done and ident != user_id, 'SDK action before input completed or reused input id')
             if item.get('type') == 'agentMessage':
-                require(not item.get('questions') and item.get('delivery') is None and
+                require((item.get('questions') is None or trace.json_equal(item['questions'], [])) and item.get('delivery') is None and
                         item.get('memoryCitation') is None, 'SDK dialogue or extra message evidence')
             if method == 'item/started':
                 require(ident not in active and ident not in completed, 'SDK duplicate start')
@@ -234,7 +234,7 @@ def scripted_response(raw: bytes) -> dict:
     require(types in (call_types, final_types), 'unsupported diagnostic response events')
     first, last = events[0].get('response'), events[-1].get('response')
     require(isinstance(first, dict) and isinstance(last, dict) and first.get('status') == 'in_progress' and
-            first.get('output') == [] and isinstance(first.get('id'), str) and
+            first.get('output') == [] and isinstance(first.get('id'), str) and bool(first['id']) and
             first['id'] == last.get('id') and last.get('status') == 'completed', 'SSE response lifecycle')
     done = events[-2]
     item = done.get('item')
