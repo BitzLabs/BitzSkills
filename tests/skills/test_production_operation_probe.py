@@ -73,6 +73,19 @@ class ProductionOperationProbeTests(unittest.TestCase):
         self.assertEqual(self.contract['paidModelCalls'], 0)
         self.assertFalse(self.contract['certifiesNativeProvider'])
 
+    def test_host_descriptions_truthfully_declare_read_only_operations(self):
+        # 宣言の真偽は実host試験で検証済み。ここでは本当に配布するMCP情報を確認する。
+        import test_routing_host as fixture
+        instance = fixture.RoutingHostTests(methodName='runTest')
+        instance.setUp()
+        self.addCleanup(instance.doCleanups)
+        host = fixture.host.Host(instance.snapshot, fixture.host.sha((instance.snapshot / 'manifest.json').read_bytes()), instance.log)
+        self.addCleanup(host.close)
+        self.assertEqual({t['name'] for t in host.tools}, {'list_resources', 'read_resource'})
+        for tool in host.tools:
+            self.assertEqual(tool['annotations'], {'readOnlyHint': True, 'destructiveHint': False,
+                                                  'idempotentHint': True, 'openWorldHint': False})
+
 
 if __name__ == '__main__':
     unittest.main()

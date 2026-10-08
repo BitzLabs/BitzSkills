@@ -10,7 +10,7 @@ from pathlib import Path, PurePosixPath
 import re
 import sys
 
-VERSION = "production-routing-host-0.1.0"
+VERSION = "production-routing-host-0.1.1"
 SKILLS = {"bitz-core", "sdd-plan", "sdd-implement", "sdd-converge", "quality-plan", "quality-review"}
 
 
@@ -85,6 +85,9 @@ class Host:
             {"name": "list_resources", "description": "固定した製品6スキルの説明と読取り可能な資源の相対パスを一覧する。", "inputSchema": schema()},
             {"name": "read_resource", "description": "一覧にある資源1件だけを固定hashに照合して読む。", "inputSchema": schema({"path": {"type": "string"}})},
         ]
+        for tool in self.tools:
+            tool['annotations'] = {'readOnlyHint': True, 'destructiveHint': False,
+                                   'idempotentHint': True, 'openWorldHint': False}
 
     def read(self, name: str) -> bytes:
         relative = resource_path(name)

@@ -18,7 +18,7 @@ import production_sdk_probe as sdk
 import source_guard
 
 ROOT = Path(__file__).resolve().parents[3]
-CONTRACT = 'evals/skills/routing/production-operation-probe-v0.1.json'
+CONTRACT = 'evals/skills/routing/production-operation-probe-v0.2.json'
 CODE_FILES = ['production_operation_probe.py', 'production_sdk_probe.py', 'production_cli_probe.py', 'host.py', 'source_guard.py']
 SCENARIOS = ('inventory', 'read', 'path-denied', 'shell-denied', 'patch-denied', 'web-denied', 'agent-denied', 'user-input-stop')
 
@@ -141,6 +141,9 @@ def isolated(base: Path):
     server = HTTPServer(('127.0.0.1', 0), Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     config = sdk.config_for(base, server.server_port, contract, 'sdk-minimal')
+    config['mcp_servers.production-routing.default_tools_approval_mode'] = 'prompt'
+    for tool in ('list_resources', 'read_resource'):
+        config['mcp_servers.production-routing.tools.' + tool + '.approval_mode'] = 'approve'
     cli.exclusive(base / 'config.json', cli.encoded(config))
     client = CodexClient(CodexConfig(launch_args_override=(sys.executable, '-B', str(Path(__file__)), '--proxy', str(base)),
                                    cwd=str(base / 'work')), approval_handler=deny)
