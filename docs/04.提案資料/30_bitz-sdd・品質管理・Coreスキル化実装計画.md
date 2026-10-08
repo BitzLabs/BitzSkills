@@ -1292,3 +1292,15 @@ SDK引数誤り・通知分類誤りと旧原receiptを保持し、別sourceで�
 次の候補は宣言2件だけの条件を緩め、Code Modeの制御宣言を許容し、固定資源の読取り・計算・待機へ操作を絞る方式。
 内部操作一覧/本文実読取り/禁止操作の実拒否/データ可視範囲/親子traceを次の無課金検証で確認する。
 既存監査器と有料一次条件はまだ変更せず、Phase/Gate完了・native provider・行動・製品完了は未認定。
+
+#### Phase 4：固定資源読取りと負例の実診断（2026-10-08）
+
+承認された緩和案で表面3宣言を許容し、Python SDK/模擬providerから内部7操作を捕捉した。
+読取り2名だけの事前承認とhost属性を修正し、list/readのhost/native/Code Mode結果・本文hashを照合した。
+対象外パスのhost拒否とpatchのsandbox拒否を実確認。shell/web/agentは指定entryの非存在として区別した。
+非同期質問は承認callbackを通らず送出されたため、原失敗を保持して中継停止を追加し、SDK転送前/HTTP1で停止した。
+評価treeをhomeから隠し、必要コード/runtime/snapshotのみ再接続。最終試行では隔離範囲を実検査した。
+全365件OK/exit0（確定ref/clean）、親の原hash/source/71資源Git照合も通過。15試行/29ローカル要求、有料0/一次0/独立SOL0。
+結果は `evals/skills/results/2026-10-08-operation-probe/report.md`。
+次は製品証拠監査器へUUIDのSDKとCode Mode raw通信を接続し、未知操作/質問の停止と有限canary台帳を統合する。
+nativeに親call IDが明示されない制限を保持し、任意の親子監査・独立検分・Phase/Gate完了・実provider/一次成績は未認定。

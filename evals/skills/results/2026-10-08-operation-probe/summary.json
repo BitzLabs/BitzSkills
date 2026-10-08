@@ -1,0 +1,201 @@
+{
+  "status": "operation_diagnostic_artifacts_rechecked",
+  "phase": 4,
+  "verificationSourceCommit": "7e706db18f77353e52925354d9e303c31e9bc13c",
+  "operationSourceCommit": "8637cebc10166c7626137015bef80f69653879b9",
+  "records": [
+    {
+      "outputLabel": "production-operation-inventory-01",
+      "sourceCommit": "5afc06616a5d23ea3854a28496e029ec66df1562",
+      "receiptSha256": "a491bd9b32250f21514ba0804ad1a8239b0d09e365a99e06ebfab01227a7603b",
+      "localHttpRequests": 2,
+      "paidModelCalls": 0
+    },
+    {
+      "outputLabel": "production-operation-read-01",
+      "sourceCommit": "5afc06616a5d23ea3854a28496e029ec66df1562",
+      "receiptSha256": "dfc8f9618ec061f5bf1a5b2340b526aacbef50a33535af10372836934b090fa8",
+      "localHttpRequests": 2,
+      "paidModelCalls": 0
+    },
+    {
+      "outputLabel": "production-operation-patch-denied-01",
+      "sourceCommit": "5afc06616a5d23ea3854a28496e029ec66df1562",
+      "receiptSha256": "bce571d6e04ec33738b56e9fd4dc8c1fb9f19023d9a4ad1c6e7b50dffbd9a032",
+      "localHttpRequests": 2,
+      "paidModelCalls": 0
+    },
+    {
+      "outputLabel": "production-operation-path-denied-01",
+      "sourceCommit": "5afc06616a5d23ea3854a28496e029ec66df1562",
+      "receiptSha256": "a85081294738566fe7cc7f26b3364866b67d415d882749ccce57d31a7665c4cf",
+      "localHttpRequests": 2,
+      "paidModelCalls": 0
+    },
+    {
+      "outputLabel": "production-operation-shell-denied-01",
+      "sourceCommit": "5afc06616a5d23ea3854a28496e029ec66df1562",
+      "receiptSha256": "ca13a1f4d7bd8fd9f227c00d06a806b6eda559cb7112acf1a66764271e390572",
+      "localHttpRequests": 2,
+      "paidModelCalls": 0
+    },
+    {
+      "outputLabel": "production-operation-inventory-02",
+      "sourceCommit": "ad90594fce3ad5151cef46eda91cd486ef75c239",
+      "receiptSha256": "4a4dcb8b5fea9d91c90fbe3a2367e5143adc35456c9b1c206756e3626a06a560",
+      "localHttpRequests": 2,
+      "paidModelCalls": 0
+    },
+    {
+      "outputLabel": "production-operation-read-02",
+      "sourceCommit": "ad90594fce3ad5151cef46eda91cd486ef75c239",
+      "receiptSha256": "68e8d89c97c8f10c4a2c208c67575ee1b1deb903c8bc1e3acd2f959a72f7a15a",
+      "localHttpRequests": 2,
+      "paidModelCalls": 0
+    },
+    {
+      "outputLabel": "production-operation-path-denied-02",
+      "sourceCommit": "ad90594fce3ad5151cef46eda91cd486ef75c239",
+      "receiptSha256": "33995bc6a232f2ebac4bd17507c134ced477aa45bd142089a5e875ba19f4a2b3",
+      "localHttpRequests": 2,
+      "paidModelCalls": 0
+    },
+    {
+      "outputLabel": "production-operation-shell-denied-02",
+      "sourceCommit": "ad90594fce3ad5151cef46eda91cd486ef75c239",
+      "receiptSha256": "bcfa7005dc176501c00b9f4f1725ef0a63af45bedfe054c849089bd1b25ba095",
+      "localHttpRequests": 2,
+      "paidModelCalls": 0
+    },
+    {
+      "outputLabel": "production-operation-patch-denied-02",
+      "sourceCommit": "ad90594fce3ad5151cef46eda91cd486ef75c239",
+      "receiptSha256": "5bc23b4bd89c50dd2c2b801cbf9f9067b8557e00dca4ea93c35a907c1c11f808",
+      "localHttpRequests": 2,
+      "paidModelCalls": 0
+    },
+    {
+      "outputLabel": "production-operation-web-denied-02",
+      "sourceCommit": "ad90594fce3ad5151cef46eda91cd486ef75c239",
+      "receiptSha256": "4def4f4381f8235f4e540cb17e0ba5699e9d51ff6ec40dc8e9c8f3b649e37686",
+      "localHttpRequests": 2,
+      "paidModelCalls": 0
+    },
+    {
+      "outputLabel": "production-operation-agent-denied-02",
+      "sourceCommit": "ad90594fce3ad5151cef46eda91cd486ef75c239",
+      "receiptSha256": "dbf828e56596b29f2293da2c913ccc11328bfeebf02bb5e7a3e59561a9897304",
+      "localHttpRequests": 2,
+      "paidModelCalls": 0
+    },
+    {
+      "outputLabel": "production-operation-user-input-stop-02",
+      "sourceCommit": "ad90594fce3ad5151cef46eda91cd486ef75c239",
+      "receiptSha256": "68d996150434548e8a0b0b80237a6a02206f5b15d4325308f739a5036cc9a8d9",
+      "localHttpRequests": 2,
+      "paidModelCalls": 0
+    },
+    {
+      "outputLabel": "production-operation-user-input-stop-03",
+      "sourceCommit": "d565540530a6007c8f47f4c1cf80e8a0ff2e0957",
+      "receiptSha256": "bf233df3a78e3826bafed55ffddcb4c3affed30d14c96795275005067721cba5",
+      "localHttpRequests": 2,
+      "paidModelCalls": 0
+    },
+    {
+      "outputLabel": "production-operation-user-input-stop-04",
+      "sourceCommit": "8637cebc10166c7626137015bef80f69653879b9",
+      "receiptSha256": "d7a7155fcfec5b29b20f6d61687422f955a980f153b7c35e64579b81a2c941ac",
+      "localHttpRequests": 1,
+      "paidModelCalls": 0
+    }
+  ],
+  "internalOperations": [
+    "apply_patch",
+    "clock__curr_time",
+    "list_mcp_resource_templates",
+    "list_mcp_resources",
+    "mcp__production_routing__list_resources",
+    "mcp__production_routing__read_resource",
+    "read_mcp_resource"
+  ],
+  "outcomes": [
+    {
+      "scenario": "inventory",
+      "outcome": "seven_internal_operations_captured",
+      "productionMustStop": false
+    },
+    {
+      "scenario": "read",
+      "outcome": "fixed_body_host_native_provider_correspondence",
+      "productionMustStop": false
+    },
+    {
+      "scenario": "path-denied",
+      "outcome": "host_path_refused",
+      "productionMustStop": true
+    },
+    {
+      "scenario": "shell-denied",
+      "outcome": "named_entry_unavailable_not_os_refusal",
+      "productionMustStop": true
+    },
+    {
+      "scenario": "patch-denied",
+      "outcome": "read_only_sandbox_patch_refused",
+      "productionMustStop": true
+    },
+    {
+      "scenario": "web-denied",
+      "outcome": "named_entry_unavailable_not_os_refusal",
+      "productionMustStop": true
+    },
+    {
+      "scenario": "agent-denied",
+      "outcome": "named_entry_unavailable_not_os_refusal",
+      "productionMustStop": true
+    },
+    {
+      "scenario": "user-input-stop",
+      "outcome": "async_question_stopped_before_sdk",
+      "productionMustStop": true
+    }
+  ],
+  "tests": {
+    "count": 365,
+    "seconds": "61.190",
+    "exitCode": 0,
+    "command": [
+      "uv",
+      "--cache-dir",
+      "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+      "run",
+      "--offline",
+      "--project",
+      "plugins/bitz-core",
+      "--with",
+      "jsonschema==4.23.0",
+      "python",
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests/skills",
+      "-p",
+      "test_*.py"
+    ],
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a06e4fe630071bc1802ecb449df2edb4114404c27e33fd462bf4dab6ef629a1a",
+    "PYTHONPATH": "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/plugins/bitz-core/src"
+  },
+  "allHistoricalArtifactHashesChecked": true,
+  "totalLocalHttpRequests": 29,
+  "paidModelCalls": 0,
+  "independentReviewPerformed": false,
+  "codeModeParentIdExported": false,
+  "certifiesProductionRunner": false,
+  "certifiesNativeProvider": false,
+  "certifiesSkillGate": false,
+  "phaseComplete": false
+}

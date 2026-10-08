@@ -131,3 +131,15 @@ storage引数は隔離試験用で、製品接続は出力先/台帳先を指定
 候補は2toolだけの宣言条件を緩め、制御用宣言と固定資源の読取り・計算・待機を許容する方式。
 内部tool一覧、実list/read、禁止操作、データ可視範囲、Code Mode親子traceを次の無課金契約で検証する。
 現在の停止契約/監査器は緩和しておらず、今回の通信通過を実provider/操作制限/Skill Gate/Phase完了に拡張しない。
+
+### Phase 4：緩和案に基づく操作診断（2026-10-08）
+
+ユーザー承認後、表面3宣言を許容し、内部一覧7操作・実hostのlist/read・固定負例を模擬providerで診断した。
+hostの読取り属性とMCP2名だけの事前承認を追加。list/readのhost/native/Code Mode結果と本文hashが一致した。
+対象外パスはhostで拒否、patchはread-only sandboxで拒否、shell/web/agentの指定entryは存在しなかった。
+非同期質問は通常の承認callbackを通らないことを原記録へ保持し、中継でSDK転送前に遮断した。
+最終質問試行はHTTP1で停止、namespace内で評価treeの不在を実確認した。
+計15試行/29ローカルHTTP要求、有料0/一次0。確定ref/clean全365件OK/exit0、親の全原hash/source/71資源Git照合も通過。
+記録は `../results/2026-10-08-operation-probe/report.md`。独立検分と製品実行器は未完。
+次はUUIDのSDK/raw Code Mode証拠を製品監査へ接続する。nativeの親call ID欠如を固定1execの対応だけで代替認定しない。
+Phase/Step/Gate完了、任意の操作制限、実provider・一次発火成績は今回認定しない。
