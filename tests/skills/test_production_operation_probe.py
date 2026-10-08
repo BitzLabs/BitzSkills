@@ -52,6 +52,8 @@ class ProductionOperationProbeTests(unittest.TestCase):
         events = [json.loads(line[6:]) for line in probe.tool_reply('user-input-stop', self.base).decode().splitlines() if line.startswith('data: ')]
         self.assertEqual(events[1]['item']['type'], 'function_call')
         self.assertEqual(events[1]['item']['name'], 'request_user_input_async')
+        arguments = json.loads(events[1]['item']['arguments'])
+        self.assertEqual(arguments, {'questions': [{'title': 'LOCAL_SIMULATION_ONLY', 'options': ['Local A', 'Local B']}]})
 
     def test_outputs_must_belong_to_the_scripted_call(self):
         obj = {'kind': 'inventory', 'names': ['read']}

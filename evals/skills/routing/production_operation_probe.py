@@ -18,7 +18,7 @@ import production_sdk_probe as sdk
 import source_guard
 
 ROOT = Path(__file__).resolve().parents[3]
-CONTRACT = 'evals/skills/routing/production-operation-probe-v0.2.json'
+CONTRACT = 'evals/skills/routing/production-operation-probe-v0.3.json'
 CODE_FILES = ['production_operation_probe.py', 'production_sdk_probe.py', 'production_cli_probe.py', 'host.py', 'source_guard.py']
 SCENARIOS = ('inventory', 'read', 'path-denied', 'shell-denied', 'patch-denied', 'web-denied', 'agent-denied', 'user-input-stop')
 
@@ -66,8 +66,7 @@ def tool_reply(scenario: str, base: Path) -> bytes:
     if scenario == 'user-input-stop':
         item = {'type': 'function_call', 'call_id': 'probe-call', 'name': 'request_user_input_async',
                 'namespace': 'functions', 'arguments': json.dumps({'questions': [
-                    {'id': 'local-question', 'header': 'Local', 'question': 'LOCAL_SIMULATION_ONLY',
-                     'options': [{'label': 'Local A', 'description': 'Simulation'}, {'label': 'Local B', 'description': 'Simulation'}]}]})}
+                    {'title': 'LOCAL_SIMULATION_ONLY', 'options': ['Local A', 'Local B']}]})}
     else:
         item = {'type': 'custom_tool_call', 'call_id': 'probe-call', 'name': 'exec', 'namespace': 'functions',
                 'input': program(scenario, base)}
@@ -98,6 +97,9 @@ def output_objects(request: dict) -> list[dict]:
 def isolated(base: Path):
     contract = json.loads((base / 'contract.json').read_bytes())
     scenario = (base / 'scenario.txt').read_text()
+    isolation_checks = {name: not (ROOT / name).exists() for name in ('.git', '.spec', 'tests', 'docs', 'evals/skills/results')}
+    if not all(isolation_checks.values()):
+        raise ValueError('evaluation tree visible in namespace')
     sys.path.insert(0, str(ROOT / contract['sdkRelativePath']))
     from openai_codex import CodexConfig, __version__
     from openai_codex.client import CodexClient
@@ -182,6 +184,7 @@ def isolated(base: Path):
              'mockTurnCompleted': terminal, 'mockFinalMatched': matched, 'sdkErrorType': error_type,
              'localErrors': errors, 'prohibitedFileExists': (base / 'work/prohibited.txt').exists(),
              'runtime': json.loads((base / 'runtime-result.json').read_bytes()) if (base / 'runtime-result.json').exists() else None,
+             'isolationChecks': isolation_checks,
              'paidModelCalls': 0, 'certifiesNativeProvider': False, 'certifiesSkillGate': False}
     # 捕捉と適合判定は分離する。内部一覧やtraceの未知形式を成功と推定しない。
     if errors or (scenario != 'user-input-stop' and (not terminal or not matched or error_type)):
