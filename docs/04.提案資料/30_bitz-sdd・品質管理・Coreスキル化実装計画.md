@@ -1324,6 +1324,21 @@ source `f62a87a6181831f87cd24de72c843588869dd736` のclean全416件は61.353s/OK
 任意複数cell/待機・実provider・一次台帳との統合・公開canary/本測定が残る。
 eligibleForMeasurement=false、Phase/Step/Gate完了・native provider・期待行動・全Skill Gateは未認定。
 
+#### Phase 4：SDK追加指示・通知ID是正と継続送信の確認（2026-10-09）
+
+具体的な6ファイル/sourceへの送信承認後、review-06を独立SOLで有限1回実施し、P2=2/CLI exit0を得た。
+親が原hash/歴史Git/guard/終端/schema/usageを再照合し、合成profileの追加指示欠落と完了通知外側IDの矛盾を再現した。
+追加指示のキー指定を合成profileで拒否し、SDK通知全体と共通nativeの開始/完了で外側IDを照合するよう修正した。
+対象92件はOK/exit0、source `220df0dde378cae10ffc7dc917d84cf1bc5f8f1b` のclean全431件は62.113s/OK/exit0。
+原hash/71資源Git/全対象19行/固定1exec親子IDの再照合も通過。新mock/HTTP0、今回独立1・累計6、一次0/retry0。
+
+修正版の同じ6ファイルの新sourceへの送信は、自動審査が具体的payloadの明示承認不足として拒否し、送信/起動/予約0。
+記録は `evals/skills/results/2026-10-09-sdk-context-remediation/`。
+今回の6パス/hash/宛先/1回と、以後の同じ公開6パスの修正後送信を同条件で行う継続確認範囲を示した。まだ未承認。
+確認後は独立再検分と親の原応答照合を優先し、過去の停止・指摘・消費枠を保持する。
+SDK rawResponseItem捕捉、任意複数cell/待機、実provider、台帳統合、公開canary/本測定は残る。
+eligibleForMeasurement=false、指摘解消済み・Phase/Step/Gate完了・期待行動・全Skill Gateは未認定。
+
 #### Phase 4：JSON型照合の是正と独立再検分の送信確認（2026-10-08）
 
 5ファイルの具体的送信承認後、review-05を独立SOLで有限1回実施し、P2=1/P3=1/CLI exit0を得た。

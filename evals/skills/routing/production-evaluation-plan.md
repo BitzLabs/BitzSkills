@@ -182,3 +182,19 @@ source `dad596b2034bbcd0abb4cd25c19aea78143aa5a3` のclean全426件は61.879s/OK
 以前の承認待ち・停止・原指摘と消費枠は履歴として保持する。局所通過を解消済み・独立通過とは認定しない。
 SDK rawResponseItem捕捉、任意複数cell/待機、実provider、一次台帳統合、公開canary/本測定は残る。
 eligibleForMeasurement=false、Phase/Step/Gate完了・native provider・期待行動・全Skill Gateは未認定。
+
+### Phase 4：追加指示と通知外側IDの是正（2026-10-09）
+
+具体的な6ファイル/source/OpenAI gpt-6.1-solへの送信承認後、review-06を有限1回実施した。
+原結果はreview_findings/P2=2/CLI exit0。親が原hash/歴史source/guard/終端/schema/usageを再照合した。
+合成profileでSDK追加指示を見落とす条件と、turn完了の外側ID矛盾を通す条件を同sourceで再現した。
+合成profileでは追加指示のキー指定を拒否し、SDK通知全体と共通nativeの開始/完了で外側IDを照合する。
+対象92件はOK/exit0、source `220df0dde378cae10ffc7dc917d84cf1bc5f8f1b` のclean全431件は62.113s/OK/exit0。
+原hash/71資源Git/対象原19行/固定1exec親子IDの再照合も通過。新mock/HTTP0、今回独立1・累計6、一次0/retry0。
+
+修正版の別有限1回v0.7は、同じ6ファイルでも新sourceへの送信承認が不足するとして自動審査で拒否された。
+送信/起動/予約0。`../results/2026-10-09-sdk-context-remediation/` に今回の6パス/hash/宛先/有限1回と、
+以後同じ公開コンポーネント6パスの修正後送信を同じ条件で行う継続確認範囲を記録した。継続範囲は未承認。
+確認後は独立再検分と親の原応答照合を優先する。旧停止・指摘・消費枠は保持する。
+SDK rawResponseItem捕捉、任意複数cell/待機、実provider、一次台帳統合、公開canary/本測定が残る。
+eligibleForMeasurement=false、局所通過を指摘解消済み・Phase/Step/Gate完了・期待行動・全Skill Gateとは判定しない。
