@@ -143,3 +143,24 @@ hostの読取り属性とMCP2名だけの事前承認を追加。list/readのhos
 記録は `../results/2026-10-08-operation-probe/report.md`。独立検分と製品実行器は未完。
 次はUUIDのSDK/raw Code Mode証拠を製品監査へ接続する。nativeの親call ID欠如を固定1execの対応だけで代替認定しない。
 Phase/Step/Gate完了、任意の操作制限、実provider・一次発火成績は今回認定しない。
+
+### Phase 4：SDK原証拠接続と親子ID診断の続報（2026-10-08）
+
+SDKのUUID要求/native通知と模擬Responses原SSEを監査器へ接続した。
+CLIの原JSON telemetry19件から固定1execの親call/cell/2子IDを照合した。
+指定2targetの対象行を漏れなく原stderrと照合し、前置入力・設定・識別子・順序の偽装を拒否する。
+追加mockは3試行/5ローカルHTTP要求、有料0。以前の15試行/29要求とは別計数。
+source `f62a87a6181831f87cd24de72c843588869dd736` のclean全416件は61.353s/OK/exit0。
+親の原hash/source/全71資源Git/原対象行/親子IDの再照合も通過した。
+
+独立SOL静的検分は4回、各有限1回/一次0/委譲0/retry0。
+旧停止と原指摘を保持し、親が再現した条件を順に修正・回帰試験へ追加した。
+最新2件のP2はSDK turnのポリシー上書きとRPC応答順序違反で、局所修正まで確認した。
+修正版の独立再検分v0.5は、送信対象コードと外部宛先への明示承認不足として自動審査で拒否された。
+review-05は未起動/送信0/予約0。独立通過や解消済みとは認定しない。
+記録・送信対象5ファイル/hash/宛先/有限1回の条件は `../results/2026-10-08-sdk-trace-connection/`。
+
+確認後は独立再検分と親の原結果照合を優先する。
+次の無課金候補はexperimentalRawEventsによるSDK rawResponseItem捕捉で、未着手。
+固定1exec以外の複数/yield/wait、実provider、一次台帳との統合、公開canary・本測定が残る。
+eligibleForMeasurement=false。Phase/Step/Gate完了・native provider・期待行動・全Skill Gateは未認定。

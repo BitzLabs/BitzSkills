@@ -1304,3 +1304,22 @@ SDK引数誤り・通知分類誤りと旧原receiptを保持し、別sourceで�
 結果は `evals/skills/results/2026-10-08-operation-probe/report.md`。
 次は製品証拠監査器へUUIDのSDKとCode Mode raw通信を接続し、未知操作/質問の停止と有限canary台帳を統合する。
 nativeに親call IDが明示されない制限を保持し、任意の親子監査・独立検分・Phase/Gate完了・実provider/一次成績は未認定。
+
+#### Phase 4：SDK原証拠接続・親子telemetryの局所検証と再検分待ち（2026-10-08）
+
+SDK UUID/native通信・模擬Responses原SSE・実hostを監査器へ接続した。
+CLIの原telemetry19件により固定1execの親call/cell/2つのnative子IDを照合した。
+対象行の完全保存、前置入力/ポリシー/最終応答/識別子/開始完了順序を検査する。
+追加mockは3試行/5ローカル要求、有料0。独立SOL4呼出しは別計数し、一次0/委譲0/自動retry0。
+旧停止・原指摘・予約を保持し、再現した問題を順に修正した。
+source `f62a87a6181831f87cd24de72c843588869dd736` のclean全416件は61.353s/OK/exit0。
+親の原hash/source/71資源Git/全対象行/親子ID再照合も通過した。
+
+最新P2=2はSDK turnのポリシー上書きとRPC応答順序違反で、局所修正の回帰試験は通過した。
+独立SOL再検分v0.5はコード送信の明示承認不足として自動審査で拒否され、未起動/送信0。
+解消済み・独立通過とは認定せず、具体的な5ファイル/hash/宛先/有限1回を確認する。
+記録は `evals/skills/results/2026-10-08-sdk-trace-connection/`。
+確認後は独立再検分と親の原結果照合を優先する。
+次のSDK rawResponseItem無課金捕捉は未着手。
+任意複数cell/待機・実provider・一次台帳との統合・公開canary/本測定が残る。
+eligibleForMeasurement=false、Phase/Step/Gate完了・native provider・期待行動・全Skill Gateは未認定。
