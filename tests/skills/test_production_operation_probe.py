@@ -88,6 +88,19 @@ class ProductionOperationProbeTests(unittest.TestCase):
             self.assertEqual(tool['annotations'], {'readOnlyHint': True, 'destructiveHint': False,
                                                   'idempotentHint': True, 'openWorldHint': False})
 
+    def test_async_question_events_are_rejected_even_if_they_claim_final_answer(self):
+        for method in ['item/started', 'item/completed']:
+            frame = {'method': method, 'params': {'item': {'type': 'agentMessage', 'phase': 'final_answer',
+                'delivery': 'async', 'questions': [{'title': 'question'}]}}}
+            self.assertTrue(probe.sdk.question_frame(frame))
+            frame['params']['item']['questions'] = None
+            self.assertTrue(probe.sdk.question_frame(frame))
+
+    def test_ordinary_messages_and_rpc_responses_are_not_dialogue_events(self):
+        for frame in [{'id': 'rpc', 'result': {}}, {'method': 'item/completed', 'params': {'item': {
+            'type': 'agentMessage', 'delivery': None, 'questions': None, 'text': '質問という文字だけ'}}}]:
+            self.assertFalse(probe.sdk.question_frame(frame))
+
 
 if __name__ == '__main__':
     unittest.main()

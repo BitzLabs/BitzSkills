@@ -100,7 +100,13 @@ def evaluate(requests: list[dict], frames: list[dict], contract: dict, exit_code
             'certifiesBehavior': False, 'certifiesNativeProvider': False, 'certifiesSkillGate': False}
 
 
-def proxy(base: Path):
+def question_frame(frame: dict) -> bool:
+    item = frame.get('params', {}).get('item', {})
+    return frame.get('method') in {'item/started', 'item/completed'} and \
+        item.get('type') == 'agentMessage' and (bool(item.get('questions')) or item.get('delivery') == 'async')
+
+
+def proxy(base: Path, reject_questions: bool = False):
     """SDKと既存CLIの間を原bytesのまま中継・保存する。内容を書き換えない。"""
     config = json.loads((base / 'config.json').read_bytes())
     contract = json.loads((base / 'contract.json').read_bytes())
@@ -118,6 +124,16 @@ def proxy(base: Path):
             while raw := (src.readline() if lines else src.read1(65536)):
                 saved.write(raw)
                 saved.flush()
+                if dst == sys.stdout.buffer and reject_questions:
+                    frame = json.loads(raw)
+                    if question_frame(frame):
+                        cli.exclusive(base / 'dialogue-stop.json', cli.encoded(
+                            {'reason': 'async-user-input', 'method': frame['method'],
+                             'itemId': frame['params']['item']['id'], 'forwardedToSdk': False}))
+                        stop.set()
+                        return
+                    if stop.is_set():
+                        return
                 dst.write(raw)
                 dst.flush()
         except (BrokenPipeError, OSError, ValueError):

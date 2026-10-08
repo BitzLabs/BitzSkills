@@ -18,7 +18,7 @@ import production_sdk_probe as sdk
 import source_guard
 
 ROOT = Path(__file__).resolve().parents[3]
-CONTRACT = 'evals/skills/routing/production-operation-probe-v0.3.json'
+CONTRACT = 'evals/skills/routing/production-operation-probe-v0.4.json'
 CODE_FILES = ['production_operation_probe.py', 'production_sdk_probe.py', 'production_cli_probe.py', 'host.py', 'source_guard.py']
 SCENARIOS = ('inventory', 'read', 'path-denied', 'shell-denied', 'patch-denied', 'web-denied', 'agent-denied', 'user-input-stop')
 
@@ -125,6 +125,9 @@ def isolated(base: Path):
             cli.exclusive(base / f'request-{len(requests) + 1}.json', raw)
             request = json.loads(raw)
             requests.append(request)
+            if (base / 'dialogue-stop.json').exists():
+                self.send_error(409)
+                return
             if request.get('model') != contract['model'] or cli.declared_tools(request) != sorted(contract['allowedSurfaceTools']):
                 errors.append('model or surface inventory drift')
                 self.send_error(409)
@@ -185,6 +188,7 @@ def isolated(base: Path):
              'localErrors': errors, 'prohibitedFileExists': (base / 'work/prohibited.txt').exists(),
              'runtime': json.loads((base / 'runtime-result.json').read_bytes()) if (base / 'runtime-result.json').exists() else None,
              'isolationChecks': isolation_checks,
+             'dialogueStoppedBeforeSdk': (base / 'dialogue-stop.json').exists(),
              'paidModelCalls': 0, 'certifiesNativeProvider': False, 'certifiesSkillGate': False}
     # 捕捉と適合判定は分離する。内部一覧やtraceの未知形式を成功と推定しない。
     if errors or (scenario != 'user-input-stop' and (not terminal or not matched or error_type)):
@@ -238,7 +242,7 @@ def main():
     parser.add_argument('--proxy', type=Path)
     args = parser.parse_args()
     if args.proxy:
-        return sdk.proxy(args.proxy)
+        return sdk.proxy(args.proxy, reject_questions=True)
     if args.isolated:
         isolated(args.isolated)
         return 0
