@@ -11,6 +11,8 @@ import production_cli_probe as cli
 
 require = trace.require
 METHODS = ('initialize', 'thread/start', 'turn/start')
+DIAGNOSTIC_TOOLS_SHA = 'd3ba928b8cb4b51fa55b403a74ec96eac5b967d9d9b257485d2eb203ec404316'
+DIAGNOSTIC_CONTEXT_SHA = 'fa08ee2683ed7e3c31bc034e3a686566da5e3302c3c2cdd0ee9fbf976567b69d'
 
 
 def digest(value) -> str:
@@ -237,6 +239,53 @@ def scripted_response(raw: bytes) -> dict:
     return item
 
 
+def diagnostic_environment(cwd: str) -> str:
+    """2026-10-08に捕捉した局所診断だけの固定SDK環境文。実provider向けではない。"""
+    require(isinstance(cwd, str) and bool(cwd), 'diagnostic cwd required')
+    return ('<environment_context>\n  <cwd>' + cwd + '</cwd>\n  <shell>bash</shell>\n'
+            '  <current_date>2026-10-08</current_date>\n  <timezone>Asia/Tokyo</timezone>\n'
+            '  <filesystem><workspace_roots><root>' + cwd + '</root></workspace_roots>'
+            '<permission_profile type="managed"><file_system type="restricted">'
+            '<entry access="read"><special>:root</special></entry></file_system></permission_profile>'
+            '</filesystem>\n</environment_context>')
+
+
+def audit_provider_input(sent: list, before: list) -> str:
+    """前置文脈も固定形へ照合し、同じprefixへの余分なメッセージ混入を拒否する。"""
+    params = sent[2]['params']
+    expected_input = {'type': 'message', 'role': 'user', 'content': [
+        {'type': 'input_text', 'text': sent[3]['params']['input'][0]['text']}]}
+    require(isinstance(before, list) and bool(before), 'provider input required')
+    messages = []
+    for value in before:
+        require(isinstance(value, dict), 'provider input item required')
+        if value.get('type') == 'additional_tools':
+            require(len(before) == 5 and value is before[0] and set(value) == {'type', 'id', 'role', 'tools'} and
+                    value['role'] == 'developer' and isinstance(value['id'], str) and bool(value['id']) and
+                    digest(value['tools']) == DIAGNOSTIC_TOOLS_SHA, 'diagnostic tool context drift')
+            continue
+        require(set(value) <= {'type', 'id', 'role', 'content'} and set(value) >= {'type', 'role', 'content'} and
+                value['type'] == 'message' and ('id' not in value or isinstance(value['id'], str) and bool(value['id'])),
+                'provider message fields')
+        messages.append({k: v for k, v in value.items() if k != 'id'})
+    if 'cwd' not in params:
+        require(messages == [expected_input] and len(before) == 1, 'synthetic provider context mismatch')
+        return 'synthetic-one-input-only'
+    require(params.get('modelProvider') == 'bitz_local_probe' and len(before) == 5 and len(messages) == 4,
+            'fixed local SDK diagnostic context required')
+    supplement = messages[1].get('content')
+    require(isinstance(supplement, list) and len(supplement) == 4 and
+            supplement[0] == {'type': 'input_text', 'text': params.get('developerInstructions')} and
+            digest(supplement[1:]) == DIAGNOSTIC_CONTEXT_SHA, 'SDK generated context drift')
+    expected = [
+        {'type': 'message', 'role': 'developer', 'content': [{'type': 'input_text', 'text': params.get('baseInstructions')}]},
+        {'type': 'message', 'role': 'developer', 'content': supplement},
+        {'type': 'message', 'role': 'user', 'content': [{'type': 'input_text', 'text': diagnostic_environment(params['cwd'])}]},
+        expected_input]
+    require(messages == expected, 'provider/SDK complete input context mismatch')
+    return 'sdk-0.160.1-local-diagnostic-2026-10-08'
+
+
 def diagnose_exchange(manifest_raw: bytes, host_events: list, sent: list, received: list,
                       provider_requests: list, provider_responses: list[bytes], *,
                       expected_program: str, expected_final_text: str, actual_exit_code: int,
@@ -250,6 +299,12 @@ def diagnose_exchange(manifest_raw: bytes, host_events: list, sent: list, receiv
         require(isinstance(request, dict) and request.get('model') == sent[2]['params']['model'] and
                 cli.declared_tools(request) == ['functions.exec', 'functions.request_user_input_async', 'functions.wait'],
                 'provider model or surface mismatch')
+        allowed = {'model', 'input', 'tools'} if 'cwd' not in sent[2]['params'] else {
+            'model', 'input', 'tool_choice', 'parallel_tool_calls', 'reasoning', 'store', 'stream',
+            'include', 'prompt_cache_key', 'text', 'client_metadata'}
+        require(set(request) == allowed, 'unknown or missing provider request fields')
+    require({k: v for k, v in provider_requests[0].items() if k != 'input'} ==
+            {k: v for k, v in provider_requests[1].items() if k != 'input'}, 'provider request settings drift')
     call = scripted_response(provider_responses[0])
     require(set(call) == {'type', 'call_id', 'name', 'namespace', 'input'} and
             call['type'] == 'custom_tool_call' and call['namespace'] == 'functions' and call['name'] == 'exec' and
@@ -258,10 +313,7 @@ def diagnose_exchange(manifest_raw: bytes, host_events: list, sent: list, receiv
     before, after = [request.get('input') for request in provider_requests]
     require(isinstance(before, list) and isinstance(after, list) and len(after) == len(before) + 2 and
             after[:len(before)] == before, 'provider request prefix drift')
-    require(bool(before) and isinstance(before[-1], dict) and before[-1].get('type') == 'message' and
-            before[-1].get('role') == 'user' and before[-1].get('content') == [
-                {'type': 'input_text', 'text': sent[3]['params']['input'][0]['text']}],
-            'provider/SDK input mismatch')
+    profile = audit_provider_input(sent, before)
     require(not any(isinstance(i, dict) and i.get('type') in {'custom_tool_call', 'function_call',
                     'custom_tool_call_output', 'function_call_output'} for i in before), 'unexpected earlier provider calls')
     echoed, output = after[-2:]
@@ -298,6 +350,7 @@ def diagnose_exchange(manifest_raw: bytes, host_events: list, sent: list, receiv
     require(len(native_finals) == 1 and native_finals[0]['id'] == final['id'], 'provider/native final id mismatch')
     result.update(status='sdk_scripted_exchange_diagnostic_passed', providerCallId=call['call_id'],
                   providerCallOutputBindingVerified=True,
+                  providerContextProfile=profile,
                   providerResponseSha256=[hashlib.sha256(r).hexdigest() for r in provider_responses],
                   providerRequestValueSha256=[digest(r) for r in provider_requests])
     return result
@@ -322,6 +375,11 @@ def audit_parent_links(events: list, received: list, provider_call_id: str) -> d
     runtime_ids = set()
     neutral = {'codex.conversation_starts', 'codex.startup_phase', 'codex.user_prompt',
                'codex.api_request', 'codex.turn_ttft'}
+    base_fields = {'event.name', 'conversation.id', 'call_id'}
+    identity_fields = {'turn_id', 'tool_name', 'tool_namespace', 'tool_source', 'cell.id', 'cell_id', 'runtime_tool_call_id'}
+    result_fields = {'tool_result_seq', 'duration_ms', 'success', 'output_truncated', 'arguments_length',
+                     'output_length', 'output_line_count', 'tool_origin', 'mcp_tool', 'event.timestamp',
+                     'app.version', 'originator', 'terminal.type', 'model', 'slug'}
     for index, event in enumerate(events):
         require(isinstance(event, dict) and event.get('target') in {'codex_otel.trace_safe', 'codex_code_mode::timing'}
                 and event.get('level') == 'INFO' and isinstance(event.get('fields'), dict), 'parent telemetry format')
@@ -336,6 +394,8 @@ def audit_parent_links(events: list, received: list, provider_call_id: str) -> d
             continue
         if name == 'codex.code_mode.host_timing':
             require(event['target'] == 'codex_code_mode::timing' and timing is None and
+                    set(fields) <= {'event.name', 'message', 'conversation_id', 'turn_id', 'call_id',
+                                    'cell_id', 'tool_name', 'code_mode_host_duration_ns'} and
                     fields.get('conversation_id') == thread and fields.get('turn_id') == turn and
                     fields.get('call_id') == provider_call_id and fields.get('tool_name') == 'exec' and
                     isinstance(fields.get('cell_id'), str) and bool(fields['cell_id']) and
@@ -345,11 +405,16 @@ def audit_parent_links(events: list, received: list, provider_call_id: str) -> d
             continue
         require(event['target'] == 'codex_otel.trace_safe' and fields.get('conversation.id') == thread,
                 'tool telemetry thread mismatch')
+        require(set(fields) <= base_fields | identity_fields |
+                (result_fields if name == 'codex.tool_result' else set()), 'unknown tool telemetry fields')
         ident = fields.get('call_id')
         require(ident in expected, 'unexpected telemetry call')
         if name == 'codex.code_mode.nested_tool_dispatched':
             require(ident != provider_call_id and ident not in dispatched and fields.get('turn_id') == turn,
                     'nested dispatch duplicate or context drift')
+            for key, value in zip(('tool_name', 'tool_namespace', 'tool_source'), expected[ident]):
+                require(key not in fields or fields[key] == value, 'dispatch tool identity contradiction')
+            require('cell_id' not in fields or fields['cell_id'] == fields.get('cell.id'), 'dispatch cell alias drift')
             dispatched[ident] = (index, fields)
             continue
         require(name in {'codex.tool_call_received', 'codex.tool_result_ready', 'codex.tool_result'},
@@ -375,6 +440,7 @@ def audit_parent_links(events: list, received: list, provider_call_id: str) -> d
                 require(isinstance(value, str) and bool(value) and isinstance(runtime, str) and bool(runtime) and
                         runtime not in runtime_ids and fields.get('turn_id') is None, 'child receipt identity')
                 require(cell is None or cell == value, 'multiple diagnostic cells')
+                require('cell_id' not in fields or fields['cell_id'] == value, 'receipt cell alias drift')
                 cell = value
                 runtime_ids.add(runtime)
             received_calls[ident] = (index, fields)
@@ -397,7 +463,27 @@ def audit_parent_links(events: list, received: list, provider_call_id: str) -> d
                 dispatch_fields.get('runtime_tool_call_id') == fields['runtime_tool_call_id'], 'dispatch cell/runtime drift')
         require(parent_start < start < dispatch < results[ident] < ready[ident] < timing[0] <
                 results[provider_call_id] < ready[provider_call_id], 'parent milestone order drift')
+    require(ready[children[0]['id']] < received_calls[children[1]['id']][0], 'sequential discovery/read telemetry order')
+    native_order = [(f['method'], f['params']['item']['id']) for f in received if
+                    f.get('method') in {'item/started', 'item/completed'} and
+                    f.get('params', {}).get('item', {}).get('type') == 'mcpToolCall']
+    require(native_order == [(method, child['id']) for child in children
+                            for method in ('item/started', 'item/completed')], 'sequential native child order')
     return {'status': 'scripted_parent_cell_child_ids_matched', 'scope': 'one-scripted-exec-two-mcp-calls',
             'parentCallId': provider_call_id, 'cellId': cell, 'nativeChildIds': [c['id'] for c in children],
             'traceEventCount': len(events), 'traceValueSha256': digest(events),
             'certifiesMultipleOrYieldedCells': False, 'eligibleForMeasurement': False}
+
+
+def complete_trace_projection(raw_stderr: bytes, selected_log: bytes) -> list:
+    """局所JSON loggerの全対象行と選択ログを原bytesで完全一致させる。欠落を許さない。"""
+    require(isinstance(raw_stderr, bytes) and isinstance(selected_log, bytes), 'original log bytes required')
+    selected, events = [], []
+    for line in raw_stderr.splitlines(keepends=True):
+        event = trace.strict_json(line)
+        require(isinstance(event, dict) and isinstance(event.get('target'), str), 'unparseable local JSON telemetry')
+        if event['target'] in {'codex_otel.trace_safe', 'codex_code_mode::timing'}:
+            selected.append(line)
+            events.append(event)
+    require(b''.join(selected) == selected_log and bool(events), 'selected telemetry incomplete or modified')
+    return events

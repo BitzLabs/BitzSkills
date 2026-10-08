@@ -14,7 +14,7 @@ import production_trace as trace
 import source_guard
 
 ROOT = Path(__file__).resolve().parents[3]
-CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.2.json'
+CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.3.json'
 require = trace.require
 
 
@@ -53,9 +53,12 @@ def run(source: str):
     contract = trace.strict_json(source_guard.git(ROOT, 'show', source + ':' + CONTRACT))
     before = source_guard.verify(ROOT, source, contract['sourceFiles'])
     if 'previousFailure' in contract:
-        old = ROOT / '.venv/sdk-trace-independent-review-01'
-        require(not any(p.is_symlink() for p in (old, *old.parents)), 'old review symlink')
         previous = contract['previousFailure']
+        old_name = previous.get('outputRelativeRoot', '.venv/sdk-trace-independent-review-01')
+        require(old_name in {'.venv/sdk-trace-independent-review-01', '.venv/sdk-trace-independent-review-02'},
+                'unknown previous review')
+        old = ROOT / old_name
+        require(not any(p.is_symlink() for p in (old, *old.parents)), 'old review symlink')
         for name, key in (('receipt.json', 'receiptSha256'), ('response.json', 'responseSha256')):
             require(hashlib.sha256((old / name).read_bytes()).hexdigest() == previous[key], 'old review artifact drift')
         require(trace.strict_json((old / 'receipt.json').read_bytes())['sourceCommit'] == previous['sourceCommit'],

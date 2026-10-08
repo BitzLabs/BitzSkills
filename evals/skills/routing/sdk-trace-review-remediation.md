@@ -17,3 +17,16 @@ CLIの2つの起動エラー通知（廃止featureとCode Modeの意図的無効
 Code Mode無効化の既知エラーはturn開始前の完全一致1通知だけを原hash付きで保持する。
 未知エラー・turn開始後のエラー・tool実行・複数turnは引き続き停止させる。
 これは任意の実行、実provider、一次採点、全Skill Gate、Phase完了の認定ではない。
+
+## 2回目の静的検分からの是正候補
+
+source `55bd64eb55baaf00d0ba8b366b5fbc7fd7cec0e7` の別SOLはP2=4。
+旧3指摘の修正後にも、同じprefixへの追加user message、dispatchの操作識別矛盾、
+子操作同士の逆順、選択ログが原stderrの部分列でしかない条件を親が実行して再現した。
+原receiptのreview_findings、応答、消費1/残0を保持する。
+
+是正候補は、SDK原入力だけでなく前置メッセージも固定すること、dispatchの操作識別を照合すること、
+逐次list→readをnative/telemetry両方で要求すること、全対象ログを原stderrから完全抽出して照合すること。
+検証済みのSDK0.160.1/局所mock provider/2026-10-08の自動文脈は、明示形と資源hashに束縛する。
+試験用の合成入力は単一user messageだけの別profileとし、文脈を補完・推定して受理しない。
+一般のprovider/別日/複数cellへの互換性を今回認定しない。

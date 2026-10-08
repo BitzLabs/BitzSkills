@@ -242,6 +242,19 @@ class ProductionSdkTraceTests(unittest.TestCase):
             for request in args['provider_requests']: request['input'][0]['content'] = replacement
             with self.subTest(replacement=replacement), self.assertRaises(ValueError): sdk.diagnose_exchange(**args)
 
+    def test_matching_prefix_cannot_add_user_developer_or_unknown_context(self):
+        for role in ('user', 'developer', 'system'):
+            args = self.exchange()
+            for request in args['provider_requests']:
+                request['input'].insert(0, {'type': 'message', 'role': role,
+                                          'content': [{'type': 'input_text', 'text': 'EXTRA_MESSAGE'}]})
+            with self.subTest(role=role), self.assertRaises(ValueError): sdk.diagnose_exchange(**args)
+
+    def test_top_level_provider_instructions_cannot_bypass_input_context_checks(self):
+        args = self.exchange()
+        for request in args['provider_requests']: request['instructions'] = 'EXTRA_INSTRUCTIONS'
+        with self.assertRaises(ValueError): sdk.diagnose_exchange(**args)
+
     def test_wire_final_id_requires_native_final_correspondence(self):
         args = self.exchange()
         for frame in args['received']:
@@ -374,6 +387,40 @@ class ProductionSdkTraceTests(unittest.TestCase):
                 events[index]['fields'][key] = value
                 with self.subTest(index=index, key=key), self.assertRaises(ValueError):
                     sdk.audit_parent_links(events, self.frames, 'probe-call')
+
+    def test_dispatch_cannot_contradict_tool_name_namespace_or_source(self):
+        for key, value in [('tool_name', 'shell'), ('tool_namespace', 'functions'), ('tool_source', 'direct')]:
+            events = self.parent_events()
+            events[2]['fields'][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError): sdk.audit_parent_links(events, self.frames, 'probe-call')
+
+    def test_reversed_or_overlapping_child_telemetry_is_rejected(self):
+        events = self.parent_events()
+        for changed in (events[:1] + events[5:9] + events[1:5] + events[9:],
+                        events[:4] + events[5:6] + events[4:5] + events[6:]):
+            with self.assertRaises(ValueError): sdk.audit_parent_links(changed, self.frames, 'probe-call')
+
+    def test_parallel_native_children_cannot_replace_sequential_program_evidence(self):
+        frames = self.frames[:8] + self.frames[9:10] + self.frames[8:9] + self.frames[10:]
+        with self.assertRaises(ValueError): sdk.audit_parent_links(self.parent_events(), frames, 'probe-call')
+
+    def test_complete_projection_preserves_every_target_row(self):
+        selected = b''.join((json.dumps(e) + '\n').encode() for e in self.parent_events())
+        other = b'{"target":"unrelated","fields":{}}\n'
+        self.assertEqual(sdk.complete_trace_projection(other + selected, selected), self.parent_events())
+
+    def test_projection_cannot_drop_extra_operations_or_unknown_events(self):
+        selected = b''.join((json.dumps(e) + '\n').encode() for e in self.parent_events())
+        for fields in ({'event.name': 'codex.tool_call_received', 'call_id': 'extra-tool'},
+                       {'event.name': 'unknown'}):
+            extra = (json.dumps({'target': 'codex_otel.trace_safe', 'level': 'INFO', 'fields': fields}) + '\n').encode()
+            with self.subTest(fields=fields), self.assertRaises(ValueError):
+                sdk.complete_trace_projection(selected + extra, selected)
+
+    def test_unparseable_original_trace_is_not_silently_removed(self):
+        selected = b''.join((json.dumps(e) + '\n').encode() for e in self.parent_events())
+        for extra in (b'not-json\n', b'[]\n', b'{}\n'):
+            with self.assertRaises(ValueError): sdk.complete_trace_projection(selected + extra, selected)
 
 
 if __name__ == '__main__':

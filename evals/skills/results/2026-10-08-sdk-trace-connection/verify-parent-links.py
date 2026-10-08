@@ -14,7 +14,7 @@ ROOT, sdk, guard, cli = helper.ROOT, helper.sdk, helper.source_guard, helper.cli
 SOURCE = '558104ec2557f735658f17ef3a8d097167f3c0d3'
 RECEIPT_SHA = '4c60bf95023730815eba9a66aef7e2121d212a3b40ad60dda3a3aac54f5bb311'
 CONTRACT = 'evals/skills/routing/production-operation-probe-v0.6.json'
-OUTPUT = ROOT / '.venv/production-sdk-parent-links-verification-02'
+OUTPUT = ROOT / '.venv/production-sdk-parent-links-verification-03'
 require = sdk.require
 
 
@@ -37,13 +37,9 @@ def run(source):
         [(base / f'response-{i}.sse').read_bytes() for i in (1, 2)],
         expected_program=helper.operation.program('read', base), expected_final_text='LOCAL_SIMULATION_ONLY',
         actual_exit_code=value['runtime']['exitCode'], allowed_warnings=(helper.WARNING,))
-    # 選択ログの全行が原stderr内に同順序で存在することを原bytesだけで照合する。
-    raw_lines = (base / 'runtime-stderr.bin').read_bytes().splitlines()
-    safe_lines = (base / 'trace-safe.jsonl').read_bytes().splitlines()
-    position = 0
-    for line in safe_lines:
-        position = raw_lines.index(line, position) + 1
-    events = [sdk.trace.strict_json(line) for line in safe_lines]
+    # 部分列ではなく、指定targetの全原行と選択ログを完全照合する。
+    events = sdk.complete_trace_projection((base / 'runtime-stderr.bin').read_bytes(),
+                                           (base / 'trace-safe.jsonl').read_bytes())
     links = sdk.audit_parent_links(events, outgoing, diagnostic['providerCallId'])
     env = dict(os.environ, PYTHONPATH=str(ROOT / 'plugins/bitz-core/src'), PYTHONDONTWRITEBYTECODE='1')
     command = ['uv', '--cache-dir', str(ROOT / '.venv/uv-cache'), 'run', '--offline', '--project',
@@ -58,7 +54,8 @@ def run(source):
     require(before == after and guard.git(ROOT, 'status', '--porcelain') == b'', 'verification source drift')
     result = {'status': 'sdk_parent_links_artifacts_rechecked', 'phase': 4, 'sourceCommit': source,
               'probeSourceCommit': SOURCE, 'receiptSha256': receipt_hash, 'snapshotResourceCount': resource_count,
-              'originalHashesChecked': True, 'traceRowsMatchedOriginalBytes': True, 'diagnostic': diagnostic,
+              'originalHashesChecked': True, 'traceRowsMatchedOriginalBytes': True,
+              'allTargetTraceRowsPreserved': True, 'diagnostic': diagnostic,
               'parentLinks': links, 'paidModelCalls': 0, 'newMockTrials': 1, 'newLocalHttpRequests': 2,
               'independentReviewPerformed': False, 'eligibleForMeasurement': False, 'phaseComplete': False,
               'sourceGuards': {'before': before, 'after': after}, 'tests': {
