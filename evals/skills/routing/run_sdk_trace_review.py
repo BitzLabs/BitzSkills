@@ -14,16 +14,29 @@ import production_trace as trace
 import source_guard
 
 ROOT = Path(__file__).resolve().parents[3]
-CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.1.json'
+CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.2.json'
 require = trace.require
 
 
 def review_response(base: Path, stdout: bytes, source: str, schema: bytes, contract: dict):
     events = [trace.strict_json(line) for line in stdout.splitlines()]
+    startup_warnings = []
+    started = False
+    allowed_startup_warning = ('Code Mode is unavailable because code-mode host is disabled. '
+                              'Code mode will fail closed; enable `features.code_mode_host` and install `codex-code-mode-host`.')
+    for event in events:
+        if event.get('type') == 'turn.started':
+            require(not started, 'multiple review turns')
+            started = True
+        if event.get('item', {}).get('type') == 'error':
+            require(event.get('type') == 'item.completed' and not started and
+                    event['item'].get('message') == allowed_startup_warning and not startup_warnings,
+                    'unknown or late review error')
+            startup_warnings.append(hashlib.sha256(cli.encoded(event)).hexdigest())
     ends = [e for e in events if e.get('type') == 'turn.completed']
     messages = [e['item'] for e in events if e.get('type') == 'item.completed' and e.get('item', {}).get('type') == 'agent_message']
     actions = [e for e in events if e.get('type') in {'item.started', 'item.completed'} and
-               e.get('item', {}).get('type') not in {'reasoning', 'agent_message'}]
+               e.get('item', {}).get('type') not in {'reasoning', 'agent_message', 'error'}]
     require(len(ends) == 1 and len(messages) == 1 and not actions and
             not any(e.get('type') in {'error', 'turn.failed'} for e in events), 'review terminal or forbidden tool action')
     response = trace.strict_json((base / 'response.json').read_bytes())
@@ -32,13 +45,21 @@ def review_response(base: Path, stdout: bytes, source: str, schema: bytes, contr
     require(response['sourceCommit'] == source and response['scope'] == contract['scope'] and
             all(f['path'] in contract['payloadFiles'] for f in response['findings']) and
             response['verdict'] == ('findings' if response['findings'] else 'pass'), 'review response binding')
-    return response, ends[0].get('usage')
+    return response, ends[0].get('usage'), startup_warnings
 
 
 def run(source: str):
     require(source_guard.git(ROOT, 'status', '--porcelain') == b'', 'clean tree required')
     contract = trace.strict_json(source_guard.git(ROOT, 'show', source + ':' + CONTRACT))
     before = source_guard.verify(ROOT, source, contract['sourceFiles'])
+    if 'previousFailure' in contract:
+        old = ROOT / '.venv/sdk-trace-independent-review-01'
+        require(not any(p.is_symlink() for p in (old, *old.parents)), 'old review symlink')
+        previous = contract['previousFailure']
+        for name, key in (('receipt.json', 'receiptSha256'), ('response.json', 'responseSha256')):
+            require(hashlib.sha256((old / name).read_bytes()).hexdigest() == previous[key], 'old review artifact drift')
+        require(trace.strict_json((old / 'receipt.json').read_bytes())['sourceCommit'] == previous['sourceCommit'],
+                'old review source mismatch')
     require(contract['maximumInvocations'] == 1 and contract['automaticRetries'] == 0 and
             contract['primaryModelTrajectories'] == 0, 'finite review required')
     base = ROOT / contract['outputRelativeRoot']
@@ -76,7 +97,7 @@ def run(source: str):
               'tools.experimental_request_user_input.enabled': False, 'tools.update_plan.enabled': False,
               'model_reasoning_effort': 'medium'}
     for feature in ('shell_tool', 'unified_exec', 'shell_snapshot', 'apply_patch_freeform', 'apps',
-                    'enable_mcp_apps', 'plugins', 'remote_plugin', 'web_search', 'code_mode', 'code_mode_host',
+                    'enable_mcp_apps', 'plugins', 'remote_plugin', 'code_mode', 'code_mode_host',
                     'multi_agent', 'multi_agent_v2', 'memories', 'hooks', 'browser_use', 'computer_use', 'goals'):
         config['features.' + feature] = False
     argv = [contract['codexPath'], 'exec', '--json', '--ephemeral', '--ignore-user-config', '--ignore-rules', '--skip-git-repo-check',
@@ -120,10 +141,10 @@ def run(source: str):
              'certifiesRuntimeEvidence': False, 'certifiesPhaseCompletion': False}
     if process.returncode == 0 and not timed_out and before == after:
         try:
-            response, usage = review_response(base, stdout, source, schema, contract)
+            response, usage, warnings = review_response(base, stdout, source, schema, contract)
             value.update(status='review_findings' if response['findings'] else 'static_review_passed',
                          findings=response['findings'], responseSha256=hashlib.sha256((base / 'response.json').read_bytes()).hexdigest(),
-                         usage=usage)
+                         usage=usage, acceptedStartupWarningHashes=warnings)
         except Exception as error:
             value['terminalErrorType'] = type(error).__name__
     cli.exclusive(base / 'receipt.json', cli.encoded(value))

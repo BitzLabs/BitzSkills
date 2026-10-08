@@ -225,6 +225,7 @@ def scripted_response(raw: bytes) -> dict:
         content = item.get('content')
         require(item.get('type') == 'message' and item.get('role') == 'assistant' and
                 item.get('phase') == 'final_answer' and item.get('status') == 'completed' and
+                isinstance(item.get('id'), str) and bool(item['id']) and
                 isinstance(content, list) and len(content) == 1 and
                 set(content[0]) == {'type', 'text', 'annotations'} and content[0]['type'] == 'output_text' and
                 isinstance(content[0]['text'], str) and content[0]['annotations'] == [], 'SSE final message')
@@ -257,6 +258,10 @@ def diagnose_exchange(manifest_raw: bytes, host_events: list, sent: list, receiv
     before, after = [request.get('input') for request in provider_requests]
     require(isinstance(before, list) and isinstance(after, list) and len(after) == len(before) + 2 and
             after[:len(before)] == before, 'provider request prefix drift')
+    require(bool(before) and isinstance(before[-1], dict) and before[-1].get('type') == 'message' and
+            before[-1].get('role') == 'user' and before[-1].get('content') == [
+                {'type': 'input_text', 'text': sent[3]['params']['input'][0]['text']}],
+            'provider/SDK input mismatch')
     require(not any(isinstance(i, dict) and i.get('type') in {'custom_tool_call', 'function_call',
                     'custom_tool_call_output', 'function_call_output'} for i in before), 'unexpected earlier provider calls')
     echoed, output = after[-2:]
@@ -287,6 +292,10 @@ def diagnose_exchange(manifest_raw: bytes, host_events: list, sent: list, receiv
     final = scripted_response(provider_responses[1])
     require(final.get('type') == 'message' and final['content'][0]['text'] == expected_final_text,
             'provider/native final mismatch')
+    native_finals = [f['params']['item'] for f in received if f.get('method') == 'item/completed' and
+                     f.get('params', {}).get('item', {}).get('type') == 'agentMessage' and
+                     f['params']['item'].get('phase') == 'final_answer']
+    require(len(native_finals) == 1 and native_finals[0]['id'] == final['id'], 'provider/native final id mismatch')
     result.update(status='sdk_scripted_exchange_diagnostic_passed', providerCallId=call['call_id'],
                   providerCallOutputBindingVerified=True,
                   providerResponseSha256=[hashlib.sha256(r).hexdigest() for r in provider_responses],
@@ -348,6 +357,14 @@ def audit_parent_links(events: list, received: list, provider_call_id: str) -> d
         tool, namespace, source = expected[ident]
         require(fields.get('tool_name') == tool and fields.get('tool_namespace') == namespace,
                 'telemetry tool binding drift')
+        if name in {'codex.tool_result', 'codex.tool_result_ready'}:
+            require(ident in received_calls, 'result before receipt')
+            identity = received_calls[ident][1]
+            expected_ids = {'turn_id': turn, 'tool_source': source,
+                            'cell.id': identity.get('cell.id', cell), 'cell_id': identity.get('cell.id', cell),
+                            'runtime_tool_call_id': identity.get('runtime_tool_call_id')}
+            require(all(fields[k] == value for k, value in expected_ids.items() if k in fields),
+                    'result cell/runtime/turn/source contradiction')
         if name == 'codex.tool_call_received':
             require(ident not in received_calls and fields.get('tool_source') == source, 'telemetry receipt duplicate/source')
             if source == 'direct':

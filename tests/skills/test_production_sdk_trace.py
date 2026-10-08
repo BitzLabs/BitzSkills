@@ -187,10 +187,15 @@ class ProductionSdkTraceTests(unittest.TestCase):
         frames = copy.deepcopy(self.frames)
         frames[-2]['params']['item']['text'] = 'LOCAL_SIMULATION_ONLY'
         frames[-1]['params']['turn']['items'][0]['text'] = 'LOCAL_SIMULATION_ONLY'
+        for frame in frames:
+            item = frame.get('params', {}).get('item', {})
+            if item.get('type') == 'agentMessage': item['id'] = 'probe-message'
+        frames[-1]['params']['turn']['items'][0]['id'] = 'probe-message'
         tools = [{'type': 'namespace', 'name': 'functions', 'tools': [
             {'type': 'custom' if name == 'exec' else 'function', 'name': name}
             for name in ('exec', 'wait', 'request_user_input_async')]}]
-        first = {'model': 'gpt-6.1-sol', 'input': [{'type': 'message', 'role': 'user', 'content': []}], 'tools': tools}
+        first = {'model': 'gpt-6.1-sol', 'input': [{'type': 'message', 'role': 'user', 'content': [
+            {'type': 'input_text', 'text': '公開の要求'}]}], 'tools': tools}
         response = operation.tool_reply('read', ROOT / '.venv/operation-test')
         call = sdk.scripted_response(response)
         payload = {'kind': 'read'}
@@ -230,6 +235,21 @@ class ProductionSdkTraceTests(unittest.TestCase):
         chunk['text'] = json.dumps(payload)
         with self.assertRaises(ValueError): sdk.diagnose_exchange(**args)
 
+    def test_matching_wire_prefix_cannot_replace_sdk_user_input(self):
+        for replacement in ([{'type': 'input_text', 'text': 'UNRELATED_REQUEST'}], [],
+                            [{'type': 'input_text', 'text': '公開の要求'}, {'type': 'input_text', 'text': '余分'}]):
+            args = self.exchange()
+            for request in args['provider_requests']: request['input'][0]['content'] = replacement
+            with self.subTest(replacement=replacement), self.assertRaises(ValueError): sdk.diagnose_exchange(**args)
+
+    def test_wire_final_id_requires_native_final_correspondence(self):
+        args = self.exchange()
+        for frame in args['received']:
+            item = frame.get('params', {}).get('item', {})
+            if item.get('type') == 'agentMessage': item['id'] = 'different-final'
+        args['received'][-1]['params']['turn']['items'][0]['id'] = 'different-final'
+        with self.assertRaises(ValueError): sdk.diagnose_exchange(**args)
+
     def test_missing_or_extra_wire_responses_are_rejected(self):
         for length in (0, 1, 3):
             args = self.exchange()
@@ -255,6 +275,15 @@ class ProductionSdkTraceTests(unittest.TestCase):
         args = self.exchange()
         args['provider_responses'][0] = operation.tool_reply('user-input-stop', ROOT / '.venv/operation-test')
         with self.assertRaises(ValueError): sdk.diagnose_exchange(**args)
+
+    def test_sse_missing_final_and_delta_ids_are_rejected(self):
+        events = [json.loads(line[6:]) for line in sdk.cli.simulation_reply().decode().splitlines() if line.startswith('data: ')]
+        for event in events:
+            if 'item' in event: event['item'].pop('id', None)
+            if event['type'] == 'response.completed': event['response']['output'][0].pop('id', None)
+            if event['type'] == 'response.output_text.delta': event.pop('item_id', None)
+        raw = ''.join('event: ' + e['type'] + '\ndata: ' + json.dumps(e) + '\n\n' for e in events).encode()
+        with self.assertRaises(ValueError): sdk.scripted_response(raw)
 
     def test_scripted_failure_or_yield_cannot_be_reported_as_completed_read(self):
         for text in ('Script running with cell ID pending', 'Script failed\nOutput:\n'):
@@ -336,6 +365,15 @@ class ProductionSdkTraceTests(unittest.TestCase):
         frames = copy.deepcopy(self.frames)
         frames[8]['params']['item']['id'] = 'other'
         with self.assertRaises(ValueError): sdk.audit_parent_links(self.parent_events(), frames, 'probe-call')
+
+    def test_result_events_cannot_contradict_bound_cell_runtime_turn_or_source(self):
+        for index in (3, 4):
+            for key, value in [('cell.id', 'other'), ('cell_id', 'other'), ('runtime_tool_call_id', 'other'),
+                               ('turn_id', 'other'), ('tool_source', 'direct')]:
+                events = self.parent_events()
+                events[index]['fields'][key] = value
+                with self.subTest(index=index, key=key), self.assertRaises(ValueError):
+                    sdk.audit_parent_links(events, self.frames, 'probe-call')
 
 
 if __name__ == '__main__':
