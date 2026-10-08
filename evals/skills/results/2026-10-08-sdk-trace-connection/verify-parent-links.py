@@ -14,7 +14,7 @@ ROOT, sdk, guard, cli = helper.ROOT, helper.sdk, helper.source_guard, helper.cli
 SOURCE = '558104ec2557f735658f17ef3a8d097167f3c0d3'
 RECEIPT_SHA = '4c60bf95023730815eba9a66aef7e2121d212a3b40ad60dda3a3aac54f5bb311'
 CONTRACT = 'evals/skills/routing/production-operation-probe-v0.6.json'
-OUTPUT = ROOT / '.venv/production-sdk-parent-verification-01'
+OUTPUT = ROOT / '.venv/production-sdk-parent-links-verification-01'
 require = sdk.require
 
 
