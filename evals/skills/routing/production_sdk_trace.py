@@ -433,7 +433,8 @@ def audit_parent_links(events: list, received: list, provider_call_id: str) -> d
         if name == 'codex.tool_call_received':
             require(ident not in received_calls and fields.get('tool_source') == source, 'telemetry receipt duplicate/source')
             if source == 'direct':
-                require(fields.get('turn_id') == turn and 'cell.id' not in fields, 'direct receipt context')
+                require(fields.get('turn_id') == turn and set(fields) == base_fields |
+                        {'turn_id', 'tool_name', 'tool_namespace', 'tool_source'}, 'direct receipt context')
             else:
                 value = fields.get('cell.id')
                 runtime = fields.get('runtime_tool_call_id')
@@ -450,6 +451,10 @@ def audit_parent_links(events: list, received: list, provider_call_id: str) -> d
             ready[ident] = index
         else:
             require(ident not in results and fields.get('success') == 'true', 'tool result failed or duplicate')
+            for key, value in (('tool_origin', 'builtin' if source == 'direct' else 'mcp'),
+                               ('mcp_tool', source == 'code_mode'), ('tool_result_seq', len(results) + 1)):
+                require(key not in fields or type(fields[key]) is type(value) and fields[key] == value,
+                        'result origin or sequence contradiction')
             results[ident] = index
     require(set(received_calls) == set(ready) == set(results) == set(expected) and
             set(dispatched) == {c['id'] for c in children} and timing is not None, 'parent milestones missing')

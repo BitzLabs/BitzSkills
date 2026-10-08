@@ -394,6 +394,18 @@ class ProductionSdkTraceTests(unittest.TestCase):
             events[2]['fields'][key] = value
             with self.subTest(key=key), self.assertRaises(ValueError): sdk.audit_parent_links(events, self.frames, 'probe-call')
 
+    def test_direct_receipt_cannot_introduce_cell_or_runtime_child_ids(self):
+        for key in ('cell.id', 'cell_id', 'runtime_tool_call_id', 'parent_call_id'):
+            events = self.parent_events()
+            events[0]['fields'][key] = 'other'
+            with self.subTest(key=key), self.assertRaises(ValueError): sdk.audit_parent_links(events, self.frames, 'probe-call')
+
+    def test_result_origin_and_counter_cannot_contradict_call_identity(self):
+        for key, value in [('tool_origin', 'builtin'), ('mcp_tool', False), ('tool_result_seq', 2)]:
+            events = self.parent_events()
+            events[3]['fields'][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError): sdk.audit_parent_links(events, self.frames, 'probe-call')
+
     def test_reversed_or_overlapping_child_telemetry_is_rejected(self):
         events = self.parent_events()
         for changed in (events[:1] + events[5:9] + events[1:5] + events[9:],

@@ -1,0 +1,55 @@
+{
+  "version": "sdk-trace-review-0.4.0",
+  "phase": 4,
+  "scope": "public-sdk-trace-component-static-review-only",
+  "model": "gpt-6.1-sol",
+  "timeoutSeconds": 300,
+  "maximumInvocations": 1,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 1,
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "outputRelativeRoot": ".venv/sdk-trace-independent-review-04",
+  "payloadFiles": [
+    "evals/skills/routing/production_sdk_trace.py",
+    "evals/skills/routing/production_trace.py",
+    "tests/skills/test_production_sdk_trace.py",
+    "evals/skills/results/2026-10-08-sdk-trace-connection/verify-parent-links.py",
+    "evals/skills/routing/sdk-trace-review-remediation.md"
+  ],
+  "sourceFiles": [
+    "evals/skills/routing/production_sdk_trace.py",
+    "evals/skills/routing/production_trace.py",
+    "tests/skills/test_production_sdk_trace.py",
+    "evals/skills/results/2026-10-08-sdk-trace-connection/verify-parent-links.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/sdk-trace-review-v0.1.json",
+    "evals/skills/routing/sdk-trace-review.schema.json",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "evals/skills/routing/sdk-trace-review-v0.2.json",
+    "evals/skills/routing/sdk-trace-review-remediation.md",
+    "evals/skills/routing/sdk-trace-review-v0.3.json",
+    "evals/skills/routing/sdk-trace-review-v0.4.json"
+  ],
+  "constraints": [
+    "親が最初の入力読取り前と呼出し前後に確定sourceを照合して送信する。検分者が自らGitを読んだ検分とは扱わない。",
+    "モデルへ渡すのは列挙した公開コードの確定bytesだけ。保持入力・期待値・過去の作業者判断を渡さない。",
+    "単一の独立CLI文脈で静的検分する。追加モデル・委譲・tool実行・私的領域読取り・自動retryは禁止。",
+    "親子IDの固定1exec診断を任意複数/待機/実provider/一次採点の認定へ拡張していないか確認する。",
+    "独立静的検分だけ。試験実行・全証拠検分・Phase完了を認定しない。原stdio・source・入力hash・実exitを保持する。"
+  ],
+  "previousFailure": {
+    "sourceCommit": "f530be22340d7e9bd26dc524dce993ef31a1ac7e",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-03",
+    "receiptSha256": "b21fc8f7be4c92e5d22f8288836e2e668988f0af6e6abb39a844b6f2099bb49e",
+    "responseSha256": "7e1a7ea9f8729914ca658542447f02b0592c5dde1716ab0d2bfc2016f19b5613",
+    "oldInvocationsConsumed": 1,
+    "oldRemaining": 0,
+    "findings": {
+      "P2": 1,
+      "P3": 0
+    },
+    "reason": "contradictory direct receipt cell_id reproduced by parent"
+  }
+}

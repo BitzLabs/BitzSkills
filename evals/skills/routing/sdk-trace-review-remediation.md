@@ -30,3 +30,11 @@ source `55bd64eb55baaf00d0ba8b366b5fbc7fd7cec0e7` の別SOLはP2=4。
 検証済みのSDK0.160.1/局所mock provider/2026-10-08の自動文脈は、明示形と資源hashに束縛する。
 試験用の合成入力は単一user messageだけの別profileとし、文脈を補完・推定して受理しない。
 一般のprovider/別日/複数cellへの互換性を今回認定しない。
+
+## 3回目の静的検分からの是正候補
+
+source `f530be22340d7e9bd26dc524dce993ef31a1ac7e` の別SOLはP2=1。
+親execの受領へ矛盾したcell_idを追加してもID診断が通ることを親が同sourceで再現した。
+修正候補はdirect受領を固定7フィールドへ限定し、cell/runtime/未知フィールドを拒否すること。
+結果のtool_origin/mcp_tool/counterも、存在する場合は既知の呼出し識別と一致させる。
+旧記録、消費1/残0を保持し、別有限SOL1回で修正版を静的検分する。
