@@ -1,6 +1,7 @@
 """操作診断の原通信・隔離mount・有限条件を検査する。実モデルは使わない。"""
 import json
 import copy
+import importlib.util
 from pathlib import Path
 import sys
 import unittest
@@ -54,6 +55,50 @@ class ProductionOperationProbeTests(unittest.TestCase):
         self.assertEqual(params['item']['input'], 'raw program')
         with self.assertRaises(ValueError):
             probe.sdk_notification_record(SimpleNamespace(method='', payload=SimpleNamespace(params=params)))
+
+    @staticmethod
+    def raw_verifier():
+        path = ROOT / 'evals/skills/results/2026-10-09-sdk-raw-response-capture/verify-artifacts.py'
+        spec = importlib.util.spec_from_file_location('raw_fixture_verifier', path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def test_raw_rpc_and_sdk_payload_mismatches_are_rejected_without_mutation(self):
+        verifier = self.raw_verifier()
+        methods = [verifier.METHODS[0]] * 4 + [verifier.METHODS[1]] + [verifier.METHODS[0]] * 2 + [verifier.METHODS[1]]
+        original = [{'method': method, 'params': {'value': i, 'text': '通知'}, 'emittedAtMs': 1}
+                    for i, method in enumerate(methods)]
+        side = [{'method': f['method'], 'params': copy.deepcopy(f['params'])} for f in original]
+        before = copy.deepcopy(original)
+        self.assertEqual(verifier.raw_values(original, side), original)
+        self.assertEqual(original, before)
+        for mode in ('missing', 'type-drift', 'reversed'):
+            bad = copy.deepcopy(side)
+            if mode == 'missing':
+                bad.pop()
+            elif mode == 'type-drift':
+                bad[1]['params']['value'] = True
+            else:
+                bad.reverse()
+            with self.subTest(mode=mode), self.assertRaisesRegex(ValueError, 'RPC/SDK raw notification payload mismatch'):
+                verifier.raw_values(original, bad)
+        bad = copy.deepcopy(original)
+        bad[0]['emittedAtMs'] = True
+        with self.assertRaisesRegex(ValueError, 'raw event timestamp'):
+            verifier.raw_values(bad, side)
+
+    def test_legacy_pretty_stream_is_read_without_claiming_jsonl_or_rewriting(self):
+        verifier = self.raw_verifier()
+        values = [{'method': 'rawResponseItem/completed', 'params': {'text': '日本語\n行'}},
+                  {'method': 'turn/completed', 'params': {}}]
+        raw = b'\n'.join(json.dumps(v, ensure_ascii=False, indent=2).encode() for v in values)
+        before = bytes(raw)
+        self.assertEqual(verifier.legacy_sdk_records(raw), values)
+        self.assertEqual(raw, before)
+        for malformed in (b'{"x":1,"x":2}', b'{"x":NaN}', raw + b'garbage'):
+            with self.subTest(malformed=malformed), self.assertRaises(ValueError):
+                verifier.legacy_sdk_records(malformed)
 
     def test_only_required_files_and_snapshot_are_bound_back(self):
         args = probe.namespace(self.base, self.contract)

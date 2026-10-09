@@ -48,9 +48,10 @@ def review_response(base: Path, stdout: bytes, source: str, schema: bytes, contr
     return response, ends[0].get('usage'), startup_warnings
 
 
-def run(source: str):
+def run(source: str, contract_name: str = CONTRACT):
+    require(contract_name in {CONTRACT, 'evals/skills/routing/sdk-raw-response-review-v0.1.json'}, 'unknown static review contract')
     require(source_guard.git(ROOT, 'status', '--porcelain') == b'', 'clean tree required')
-    contract = trace.strict_json(source_guard.git(ROOT, 'show', source + ':' + CONTRACT))
+    contract = trace.strict_json(source_guard.git(ROOT, 'show', source + ':' + contract_name))
     before = source_guard.verify(ROOT, source, contract['sourceFiles'])
     previous = contract.get('previousReview', contract.get('previousFailure'))
     if previous is not None:
@@ -90,6 +91,8 @@ def run(source: str):
               'あなたが実行していない試験や原証拠の検分を成功と書かないでください。'
               '指定schemaのJSONだけを回答してください。\n'
               f'sourceCommit={source}\nscope={contract["scope"]}\n')
+    if contract_name == 'evals/skills/routing/sdk-raw-response-review-v0.1.json':
+        prompt += '\nこの検分の固定制約:\n' + '\n'.join(contract['constraints']) + '\n'
     for name in contract['payloadFiles']:
         raw = source_guard.git(ROOT, 'show', source + ':' + name)
         lines = raw.decode('utf-8').splitlines()
@@ -165,4 +168,6 @@ def run(source: str):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--source', required=True)
-    run(parser.parse_args().source)
+    parser.add_argument('--raw-capture', action='store_true')
+    args = parser.parse_args()
+    run(args.source, 'evals/skills/routing/sdk-raw-response-review-v0.1.json' if args.raw_capture else CONTRACT)
