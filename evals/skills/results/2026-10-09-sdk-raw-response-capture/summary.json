@@ -189,7 +189,9 @@
     }
   },
   "pendingReview": {
-    "status": "prepared_not_invoked",
+    "status": "auto_approval_rejected_before_invocation",
+    "outputDirectoryExists": false,
+    "reason": "公開8ファイルのOpenAI gpt-6.1-solへの送信は、既存の明示承認された6ファイルの範囲を超えており、8ファイル全体の宛先・payloadに対するユーザー承認が確認できない、と自動承認審査が拒否した。",
     "sourceCommit": "4be29c094adb27fe897e72b3d841dcd73b5d0995",
     "contractPath": "evals/skills/routing/sdk-raw-response-review-v0.1.json",
     "outputRelativeRoot": ".venv/sdk-raw-response-independent-review-01",

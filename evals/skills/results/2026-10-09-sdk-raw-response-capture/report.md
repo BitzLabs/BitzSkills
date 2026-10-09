@@ -81,6 +81,11 @@ raw入力通知はproviderの全前置文脈を網羅するとは認定しない
 宛先はOpenAI Codex CLI/gpt-6.1-sol、1回上限・一次0・追加委譲0・自動retry0。
 原ログ・実際の通知本文・snapshot・認証情報を送らない。
 
+SOL評価すべてへの継続許可を根拠に、この公開8パスの有限1回を起動する処理を申請したが、
+自動承認審査が「明示承認済みの6パスを超え、8ファイル全体の宛先・payloadへの承認が確認できない」と拒否した。
+送信/起動/予約0。専用出力ディレクトリが存在しないことを実際に確認した。
+回避経路や間接実行を使わず、[具体的8パス/source/hash/宛先/有限1回](public-code-transmission-approval-request.md)への確認を待つ。
+
 確認後は独立静的検分と親の原応答再照合を優先する。その後、raw監査への接続、任意複数cell/待機、
 実provider、一次台帳統合、公開canary/本測定へ進む。
 eligibleForMeasurement=false。Phase/Step/Gate完了・期待行動・native provider・全Skill Gateは未認定。

@@ -1389,6 +1389,8 @@ raw ResponseItemはCLI生成id/内部metadataと固定finalの型変換を含み
 既存SDK交換診断が新実験paramsを未知として停止することを実行して確認した。
 新規捕捉の独立静的検分1回は未実施。前の具体的継続送信承認の6パスと異なる公開8パス/hash/84547 bytes/宛先を、
 `evals/skills/results/2026-10-09-sdk-raw-response-capture/` に有限1回/一次0/委譲0/retry0で準備した。
+SOL評価への継続許可を根拠に申請したが、自動承認審査は6パスを超える8パス全体の宛先・payloadへの明示承認不足として拒否した。
+送信/起動/予約0、専用出力未作成を実確認した。具体的公開8パスの有限1回への確認が残る。
 原ログと実通知本文は送らない。確認後は独立SOLと親の原応答照合を優先する。
 raw監査接続、任意複数cell/待機、実provider、一次台帳統合、公開canary/本測定は残る。
 eligibleForMeasurement=false、Phase/Step/Gate完了・期待行動・native provider・全Skill Gateは未認定。
