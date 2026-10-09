@@ -27,7 +27,8 @@ SCENARIOS = ('inventory', 'read', 'path-denied', 'shell-denied', 'patch-denied',
 def raw_events_enabled(contract: dict) -> bool:
     if 'experimentalRawEvents' not in contract:
         return False
-    if (contract['experimentalRawEvents'] is not True or contract['version'] != 'production-operation-probe-0.7.0' or
+    if (contract['experimentalRawEvents'] is not True or contract['version'] not in {
+            'production-operation-probe-0.7.0', 'production-operation-probe-0.8.0'} or
             set(contract['outputLabels']) != {'read'} or type(contract['maximumScenarios']) is not int or
             contract['maximumScenarios'] != 1 or type(contract['maximumLocalHttpRequestsPerScenario']) is not int or
             contract['maximumLocalHttpRequestsPerScenario'] != 2 or type(contract['paidModelCalls']) is not int or
@@ -54,6 +55,10 @@ def sdk_notification_record(notification) -> dict:
     if not isinstance(notification.method, str) or not notification.method or not isinstance(params, dict):
         raise ValueError('SDK notification record shape')
     return {'method': notification.method, 'params': copy.deepcopy(params)}
+
+
+def notification_line(value: dict) -> bytes:
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(',', ':'), allow_nan=False).encode() + b'\n'
 
 
 def namespace(base: Path, contract: dict):
@@ -207,7 +212,7 @@ def isolated(base: Path):
         server.shutdown()
         server.server_close()
     if raw_events_enabled(contract):
-        cli.exclusive(base / 'sdk-turn-notifications.jsonl', b''.join(cli.encoded(n) + b'\n' for n in notifications))
+        cli.exclusive(base / 'sdk-turn-notifications.jsonl', b''.join(notification_line(n) for n in notifications))
     for _ in range(30):
         if (base / 'runtime-result.json').exists():
             break
@@ -242,7 +247,8 @@ def isolated(base: Path):
 
 def run(source: str, scenario: str, contract_name: str = CONTRACT):
     if contract_name not in {CONTRACT, 'evals/skills/routing/production-operation-probe-v0.6.json',
-                             'evals/skills/routing/production-operation-probe-v0.7.json'}:
+                             'evals/skills/routing/production-operation-probe-v0.7.json',
+                             'evals/skills/routing/production-operation-probe-v0.8.json'}:
         raise ValueError('unknown operation contract')
     contract = json.loads(source_guard.git(ROOT, 'show', source + ':' + contract_name))
     raw_events_enabled(contract)
@@ -304,7 +310,7 @@ def main():
         return 0
     if not args.source or not args.scenario:
         parser.error('--source and --scenario required')
-    contract_name = ('evals/skills/routing/production-operation-probe-v0.7.json' if args.raw_events else
+    contract_name = ('evals/skills/routing/production-operation-probe-v0.8.json' if args.raw_events else
                      'evals/skills/routing/production-operation-probe-v0.6.json' if args.trace_parent else CONTRACT)
     return run(args.source, args.scenario, contract_name)
 

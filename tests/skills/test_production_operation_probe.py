@@ -17,7 +17,7 @@ class ProductionOperationProbeTests(unittest.TestCase):
         self.base = ROOT / '.venv' / 'operation-test'
 
     def test_raw_event_policy_preserves_read_only_finite_thread_settings(self):
-        contract = json.loads((ROOT / 'evals/skills/routing/production-operation-probe-v0.7.json').read_bytes())
+        contract = json.loads((ROOT / 'evals/skills/routing/production-operation-probe-v0.8.json').read_bytes())
         original = copy.deepcopy(contract)
         params = probe.thread_params(self.base, contract)
         self.assertIs(params['experimentalRawEvents'], True)
@@ -35,6 +35,15 @@ class ProductionOperationProbeTests(unittest.TestCase):
             bad[field] = value
             with self.subTest(field=field, value=value), self.assertRaisesRegex(ValueError, 'unknown raw event policy'):
                 probe.thread_params(self.base, bad)
+
+    def test_sdk_notification_stream_is_one_complete_json_object_per_line(self):
+        records = [{'method': 'rawResponseItem/completed', 'params': {'item': {'text': '日本語\n複数行'}}},
+                   {'method': 'turn/completed', 'params': {'turn': {'status': 'completed'}}}]
+        raw = b''.join(probe.notification_line(n) for n in records)
+        self.assertEqual(len(raw.splitlines()), len(records))
+        self.assertEqual([json.loads(line) for line in raw.splitlines()], records)
+        with self.assertRaises(ValueError):
+            probe.notification_line({'value': float('nan')})
 
     def test_sdk_unknown_raw_notifications_are_copied_without_mutating_payload(self):
         params = {'threadId': 'thread', 'turnId': 'turn', 'item': {'type': 'custom_tool_call', 'input': 'raw program'}}
