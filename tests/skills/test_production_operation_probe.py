@@ -1,8 +1,10 @@
 """操作診断の原通信・隔離mount・有限条件を検査する。実モデルは使わない。"""
 import json
+import copy
 from pathlib import Path
 import sys
 import unittest
+from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'evals/skills/routing'))
@@ -13,6 +15,36 @@ class ProductionOperationProbeTests(unittest.TestCase):
     def setUp(self):
         self.contract = json.loads((ROOT / probe.CONTRACT).read_bytes())
         self.base = ROOT / '.venv' / 'operation-test'
+
+    def test_raw_event_policy_preserves_read_only_finite_thread_settings(self):
+        contract = json.loads((ROOT / 'evals/skills/routing/production-operation-probe-v0.7.json').read_bytes())
+        original = copy.deepcopy(contract)
+        params = probe.thread_params(self.base, contract)
+        self.assertIs(params['experimentalRawEvents'], True)
+        self.assertIs(params['allowProviderModelFallback'], False)
+        self.assertEqual(params['sandbox'], 'read-only')
+        self.assertEqual(params['approvalPolicy'], 'never')
+        self.assertIs(params['ephemeral'], True)
+        self.assertEqual(contract, original)
+        self.assertNotIn('experimentalRawEvents', probe.thread_params(self.base, self.contract))
+        for field, value in (('experimentalRawEvents', False), ('experimentalRawEvents', 1),
+                             ('maximumScenarios', 2), ('maximumScenarios', True),
+                             ('maximumLocalHttpRequestsPerScenario', 3), ('maximumLocalHttpRequestsPerScenario', 2.0),
+                             ('paidModelCalls', 1), ('paidModelCalls', False), ('outputLabels', {'read': 'x', 'inventory': 'y'})):
+            bad = copy.deepcopy(contract)
+            bad[field] = value
+            with self.subTest(field=field, value=value), self.assertRaisesRegex(ValueError, 'unknown raw event policy'):
+                probe.thread_params(self.base, bad)
+
+    def test_sdk_unknown_raw_notifications_are_copied_without_mutating_payload(self):
+        params = {'threadId': 'thread', 'turnId': 'turn', 'item': {'type': 'custom_tool_call', 'input': 'raw program'}}
+        notification = SimpleNamespace(method='rawResponseItem/completed', payload=SimpleNamespace(params=params))
+        result = probe.sdk_notification_record(notification)
+        self.assertEqual(result, {'method': notification.method, 'params': params})
+        result['params']['item']['input'] = 'changed'
+        self.assertEqual(params['item']['input'], 'raw program')
+        with self.assertRaises(ValueError):
+            probe.sdk_notification_record(SimpleNamespace(method='', payload=SimpleNamespace(params=params)))
 
     def test_only_required_files_and_snapshot_are_bound_back(self):
         args = probe.namespace(self.base, self.contract)

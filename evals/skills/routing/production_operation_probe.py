@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
@@ -21,6 +22,38 @@ ROOT = Path(__file__).resolve().parents[3]
 CONTRACT = 'evals/skills/routing/production-operation-probe-v0.5.json'
 CODE_FILES = ['production_operation_probe.py', 'production_sdk_probe.py', 'production_cli_probe.py', 'host.py', 'source_guard.py']
 SCENARIOS = ('inventory', 'read', 'path-denied', 'shell-denied', 'patch-denied', 'web-denied', 'agent-denied', 'user-input-stop')
+
+
+def raw_events_enabled(contract: dict) -> bool:
+    if 'experimentalRawEvents' not in contract:
+        return False
+    if (contract['experimentalRawEvents'] is not True or contract['version'] != 'production-operation-probe-0.7.0' or
+            set(contract['outputLabels']) != {'read'} or type(contract['maximumScenarios']) is not int or
+            contract['maximumScenarios'] != 1 or type(contract['maximumLocalHttpRequestsPerScenario']) is not int or
+            contract['maximumLocalHttpRequestsPerScenario'] != 2 or type(contract['paidModelCalls']) is not int or
+            contract['paidModelCalls'] != 0):
+        raise ValueError('unknown raw event policy')
+    return True
+
+
+def thread_params(base: Path, contract: dict) -> dict:
+    params = {'model': contract['model'], 'modelProvider': 'bitz_local_probe',
+              'allowProviderModelFallback': False, 'cwd': str(base / 'work'), 'sandbox': 'read-only',
+              'approvalPolicy': 'never', 'ephemeral': True, 'baseInstructions': 'Local operation diagnostic simulation.',
+              'developerInstructions': 'LOCAL_SIMULATION_ONLY. No paid model or decision measurement.'}
+    if raw_events_enabled(contract):
+        # SDK生成型から除外されたexperimental字段は、SDKの公開dict入口でそのまま送る。
+        params['experimentalRawEvents'] = True
+    return params
+
+
+def sdk_notification_record(notification) -> dict:
+    """SDKが配送した値の側記録。原RPC bytesはproxyが別に保持する。"""
+    payload = notification.payload
+    params = payload.params if hasattr(payload, 'params') else payload.model_dump(mode='json', by_alias=True)
+    if not isinstance(notification.method, str) or not notification.method or not isinstance(params, dict):
+        raise ValueError('SDK notification record shape')
+    return {'method': notification.method, 'params': copy.deepcopy(params)}
 
 
 def namespace(base: Path, contract: dict):
@@ -155,22 +188,26 @@ def isolated(base: Path):
     client = CodexClient(CodexConfig(launch_args_override=(sys.executable, '-B', str(Path(__file__)), '--proxy', str(base)),
                                    cwd=str(base / 'work')), approval_handler=deny)
     error_type = None
+    notifications = []
     try:
         client.start()
         client.initialize()
-        thread = client.thread_start({'model': contract['model'], 'modelProvider': 'bitz_local_probe',
-            'allowProviderModelFallback': False, 'cwd': str(base / 'work'), 'sandbox': 'read-only',
-            'approvalPolicy': 'never', 'ephemeral': True, 'baseInstructions': 'Local operation diagnostic simulation.',
-            'developerInstructions': 'LOCAL_SIMULATION_ONLY. No paid model or decision measurement.'})
+        thread = client.thread_start(thread_params(base, contract))
         turn = client.turn_start(thread.thread.id, 'LOCAL_SIMULATION_ONLY')
-        while client.next_turn_notification(turn.turn.id).method != 'turn/completed':
-            pass
+        while True:
+            notification = client.next_turn_notification(turn.turn.id)
+            if raw_events_enabled(contract):
+                notifications.append(sdk_notification_record(notification))
+            if notification.method == 'turn/completed':
+                break
     except Exception as exc:
         error_type = type(exc).__name__
     finally:
         client.close()
         server.shutdown()
         server.server_close()
+    if raw_events_enabled(contract):
+        cli.exclusive(base / 'sdk-turn-notifications.jsonl', b''.join(cli.encoded(n) + b'\n' for n in notifications))
     for _ in range(30):
         if (base / 'runtime-result.json').exists():
             break
@@ -192,6 +229,11 @@ def isolated(base: Path):
              'isolationChecks': isolation_checks,
              'dialogueStoppedBeforeSdk': (base / 'dialogue-stop.json').exists(),
              'paidModelCalls': 0, 'certifiesNativeProvider': False, 'certifiesSkillGate': False}
+    if raw_events_enabled(contract):
+        value.update(experimentalRawEventsRequested=True,
+                     rawResponseItemNotificationCount=sum(f.get('method') == 'rawResponseItem/completed' for f in frames),
+                     sdkRawResponseItemNotificationCount=sum(f['method'] == 'rawResponseItem/completed' for f in notifications),
+                     eligibleForMeasurement=False)
     # 捕捉と適合判定は分離する。内部一覧やtraceの未知形式を成功と推定しない。
     if errors or (scenario != 'user-input-stop' and (not terminal or not matched or error_type)):
         value['status'] = 'operation_diagnostic_stopped'
@@ -199,9 +241,11 @@ def isolated(base: Path):
 
 
 def run(source: str, scenario: str, contract_name: str = CONTRACT):
-    if contract_name not in {CONTRACT, 'evals/skills/routing/production-operation-probe-v0.6.json'}:
+    if contract_name not in {CONTRACT, 'evals/skills/routing/production-operation-probe-v0.6.json',
+                             'evals/skills/routing/production-operation-probe-v0.7.json'}:
         raise ValueError('unknown operation contract')
     contract = json.loads(source_guard.git(ROOT, 'show', source + ':' + contract_name))
+    raw_events_enabled(contract)
     before = source_guard.verify(ROOT, source, contract['sourceFiles'])
     if scenario not in SCENARIOS or scenario not in contract['outputLabels']:
         raise ValueError('unknown scenario')
@@ -247,7 +291,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--source')
     parser.add_argument('--scenario', choices=SCENARIOS)
-    parser.add_argument('--trace-parent', action='store_true')
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--trace-parent', action='store_true')
+    mode.add_argument('--raw-events', action='store_true')
     parser.add_argument('--isolated', type=Path)
     parser.add_argument('--proxy', type=Path)
     args = parser.parse_args()
@@ -258,8 +304,9 @@ def main():
         return 0
     if not args.source or not args.scenario:
         parser.error('--source and --scenario required')
-    return run(args.source, args.scenario, 'evals/skills/routing/production-operation-probe-v0.6.json'
-               if args.trace_parent else CONTRACT)
+    contract_name = ('evals/skills/routing/production-operation-probe-v0.7.json' if args.raw_events else
+                     'evals/skills/routing/production-operation-probe-v0.6.json' if args.trace_parent else CONTRACT)
+    return run(args.source, args.scenario, contract_name)
 
 
 if __name__ == '__main__':
