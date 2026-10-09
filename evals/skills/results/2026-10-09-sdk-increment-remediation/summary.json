@@ -1,0 +1,2145 @@
+{
+  "version": "sdk-increment-remediation-0.1.0",
+  "phase": 4,
+  "status": "component_static_review_and_local_verification_passed",
+  "sourceCommit": "a8d0ef2f1398c96affdd54bbdb7bb748efd0c97e",
+  "previousHistoricalReportCommit": "560ab5851737c060b7056f8338a2f87cd73f8f7d",
+  "continuingTransmissionApproval": {
+    "status": "explicit_user_OK_received",
+    "requestPath": "evals/skills/results/2026-10-09-sdk-context-remediation/public-code-transmission-approval-request.md",
+    "model": "gpt-6.1-sol",
+    "payloadPaths": [
+      "evals/skills/routing/production_sdk_trace.py",
+      "evals/skills/routing/production_trace.py",
+      "tests/skills/test_production_sdk_trace.py",
+      "evals/skills/results/2026-10-08-sdk-trace-connection/verify-parent-links.py",
+      "evals/skills/routing/sdk-trace-review-remediation.md",
+      "tests/skills/test_production_trace.py"
+    ],
+    "maximumInvocationsPerContract": 1,
+    "additionalDelegation": 0,
+    "primaryModelTrajectories": 0,
+    "automaticRetries": 0
+  },
+  "independentReviews": [
+    {
+      "outputRelativeRoot": ".venv/sdk-trace-independent-review-07",
+      "receiptSha256": "0484e9a7510f1cc458582e3bc4dfdfb978de619a44b8e3d47fcd0c462880550d",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.7.json",
+      "receipt": {
+        "status": "review_findings",
+        "sourceCommit": "220df0dde378cae10ffc7dc917d84cf1bc5f8f1b",
+        "model": "gpt-6.1-sol",
+        "scope": "public-sdk-trace-component-static-review-only",
+        "exitCode": 0,
+        "timedOut": false,
+        "independentReviewerSolInvocations": 1,
+        "primaryModelTrajectories": 0,
+        "automaticRetries": 0,
+        "promptSha256": "2bf0a7d6c706b639f1bba7c5f521a3fee3d482627f72cb5f7ab323a4ebd7159f",
+        "stdoutSha256": "bb472ba0deb3214854aa8ab5da053eeedd5207774d6bb2fa76e7eb216956bcc7",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "certifiesRuntimeEvidence": false,
+        "certifiesPhaseCompletion": false,
+        "findings": [
+          {
+            "priority": "P2",
+            "path": "evals/skills/routing/production_trace.py",
+            "line": 150,
+            "message": "reasoningの増分通知を、対象アイテムの存在・開始・完了やturnの完了状態を検査せず除外しています。このため、存在しない子IDへの増分やturn完了後の増分を含む不整合な原RPCでもSDK構造診断が通過します。eligibleForMeasurement=falseは維持されますが、構造診断自体の偽通過です。",
+            "reproduction": "提示されたProductionSdkTraceTestsの正常入力を基に、receivedの末尾へ {'method':'item/reasoning/textDelta','params':{'threadId':'t','turnId':'u','itemId':'phantom','delta':'未開始アイテムの増分'}} を追加してdiagnoseへ渡す条件。normalizedはこの通知をframesへ残し、completed_itemsはNEUTRALとしてfinishedと対象IDを検査する前にcontinueします。その後の終端条件も変化しません。これは提示コードから導いた再現条件で、試験は実行していません。",
+            "suggestion": "reasoningのtextDelta・summaryTextDelta・summaryPartAddedについて、固定SDK形式の必須フィールドと対象IDを検証し、同じturnで開始済みかつ未完了のreasoningアイテムだけに許可してください。turn完了後の通知、未知ID、開始前・完了後の増分を拒否する回帰条件を追加してください。"
+          }
+        ],
+        "responseSha256": "dbf7c9320d8c8f24b4efc8e38d89ccaae06cb18b11b7876f1412c9d8ceb3c5ba",
+        "usage": {
+          "input_tokens": 38474,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1409,
+          "reasoning_output_tokens": 971
+        },
+        "acceptedStartupWarningHashes": [
+          "20cac478d4cc638745426002130cfd760ee468e82238af3b07c4173322053784"
+        ]
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/sdk-trace-independent-review-08",
+      "receiptSha256": "f5da12958d527cdf24584ba05164d0208ebdb6d484397873074bceef0c9584d3",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.8.json",
+      "receipt": {
+        "status": "review_findings",
+        "sourceCommit": "8b409f5c9e549da732f36cb7e6e41ce80a5ff20c",
+        "model": "gpt-6.1-sol",
+        "scope": "public-sdk-trace-component-static-review-only",
+        "exitCode": 0,
+        "timedOut": false,
+        "independentReviewerSolInvocations": 1,
+        "primaryModelTrajectories": 0,
+        "automaticRetries": 0,
+        "promptSha256": "d1d4c3d88f3d67f25808f50fd5ac7fa75f697d0a6054b2f2b6c9ec3ce9523205",
+        "stdoutSha256": "1ddb2c351ed6c9adeb5956e597d5a5627f451bf48fdf28915d664fd6b7acf072",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "certifiesRuntimeEvidence": false,
+        "certifiesPhaseCompletion": false,
+        "findings": [
+          {
+            "priority": "P2",
+            "path": "evals/skills/routing/production_trace.py",
+            "line": 155,
+            "message": "reasoning増分は所属・型・開始完了順序だけを検査し、完了アイテムのcontent/summaryと照合しないため、本文証拠が矛盾してもSDK構造診断を通す。eligibleForMeasurement=falseは維持されるが、増分と完了証拠の整合性に検査漏れがある。",
+            "reproduction": "静的な再現条件（未実行）：test_production_sdk_trace.pyのtest_active_reasoning_increments_do_not_certify_measurementと同じ入力を作り、reasoning_events()のitem/reasoning/textDeltaのdeltaだけを「改変した本文」に変更する。完了アイテムのcontentは['公開の合成内容']のままにする。増分は開始済みreasoning ID・同一turn・整数indexという条件を満たし、完了時のbinding比較にもcontentは含まれないため、diagnoseの拒否条件に到達しない。summaryTextDeltaと完了summaryの矛盾も同様。",
+            "suggestion": "reasoningのcontentIndex/summaryIndexごとに開始時本文と増分を記録し、完了content/summaryと型を保って照合する。本文の意味を採点せず、増分と完了本文の不一致を拒否する回帰条件を追加する。"
+          }
+        ],
+        "responseSha256": "a464135daa010b1b673e0fd198a2611346521198168f993e284a2bb15a504821",
+        "usage": {
+          "input_tokens": 40727,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1110,
+          "reasoning_output_tokens": 680
+        },
+        "acceptedStartupWarningHashes": [
+          "20cac478d4cc638745426002130cfd760ee468e82238af3b07c4173322053784"
+        ]
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/sdk-trace-independent-review-09",
+      "receiptSha256": "018074f99b11bfa01e89ab4b866f992af62d4db8f7b28dc44b61aa031c1a51d7",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.9.json",
+      "receipt": {
+        "status": "review_findings",
+        "sourceCommit": "7ce4113a7f4a2170d1222d79e436ccc829fdee15",
+        "model": "gpt-6.1-sol",
+        "scope": "public-sdk-trace-component-static-review-only",
+        "exitCode": 0,
+        "timedOut": false,
+        "independentReviewerSolInvocations": 1,
+        "primaryModelTrajectories": 0,
+        "automaticRetries": 0,
+        "promptSha256": "8702d9c24fe93dac4a3b62f1848a234392c64497503432e3cb1cd57efbcbda4f",
+        "stdoutSha256": "24d621c729fcc55f583700994792d5efa89ec24119284878033a45d7c0868431",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "certifiesRuntimeEvidence": false,
+        "certifiesPhaseCompletion": false,
+        "findings": [
+          {
+            "priority": "P3",
+            "path": "evals/skills/routing/production_sdk_trace.py",
+            "line": 148,
+            "message": "userMessageのIDは文字列型だけを検査するため、空文字列へ改変した入力証拠も診断を通過します。userMessageは共通監査へ渡す前に除去されるので、他のnativeアイテムに適用される非空ID検査では補足されません。eligibleForMeasurement=falseは維持されますが、入力ライフサイクルの構造診断に検査漏れがあります。",
+            "reproduction": "提示されたProductionSdkTraceTests.setUpの構成で、self.frames[5]とself.frames[6]のparams.item.idを両方とも空文字列に変更し、他の入力は維持してdiagnoseへ渡す条件。開始時にactive['']が登録され、完了時も一致し、両通知はretainedNotificationsへ分離されるため、提示コード上はsdk_child_trace_diagnostic_passedに到達します。これは静的追跡による指摘で、試験は実行していません。",
+            "suggestion": "148行のアイテムID検査にbool(item['id'])を追加し、userMessageを含む全アイテムで非空文字列を要求してください。開始・完了のIDをともに空文字列へ変更した場合の拒否を回帰条件に追加してください。"
+          }
+        ],
+        "responseSha256": "f63172603bf78ee3350d9f5f7ead3110f932110502f66a4d93085a3316e5afde",
+        "usage": {
+          "input_tokens": 42864,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1836,
+          "reasoning_output_tokens": 1418
+        },
+        "acceptedStartupWarningHashes": [
+          "20cac478d4cc638745426002130cfd760ee468e82238af3b07c4173322053784"
+        ]
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/sdk-trace-independent-review-10",
+      "receiptSha256": "1e67bd564b40183513c8ce104fd77398ab9929ae263a5f6bff474350284bb475",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.10.json",
+      "receipt": {
+        "status": "review_findings",
+        "sourceCommit": "28c32c4afb206fcc227dce58448a59e43d72f526",
+        "model": "gpt-6.1-sol",
+        "scope": "public-sdk-trace-component-static-review-only",
+        "exitCode": 0,
+        "timedOut": false,
+        "independentReviewerSolInvocations": 1,
+        "primaryModelTrajectories": 0,
+        "automaticRetries": 0,
+        "promptSha256": "b70eb372de15a5e9ef2a9f91e67c2fd4139210ed05140c89f6ac4e29578e484b",
+        "stdoutSha256": "55258a44d8889569aa92973c015e168464bead659c434dd5a8d51a44a6e7ac69",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "certifiesRuntimeEvidence": false,
+        "certifiesPhaseCompletion": false,
+        "findings": [
+          {
+            "priority": "P2",
+            "path": "evals/skills/routing/production_sdk_trace.py",
+            "line": 240,
+            "message": "固定SSEのresponse内のerrorを検査していないため、非nullのエラー証拠を含む応答でも交換診断が通過する。eligibleForMeasurement=falseは維持されるが、エラーを含む原応答への診断通過となる。",
+            "reproduction": "静的推論のみ（試験・原証拠検分は未実施）。test_production_sdk_trace.pyのexchange()相当の入力で、provider_responses[0]のresponse.completedイベントのresponseへerror={\"code\":\"server_error\",\"message\":\"失敗\"}を追加し、status、id、outputと他の入力を維持する。scripted_response()はerrorを参照せず同じcallを返すため、diagnose_exchange()の後続照合も変わらず通過する。最終応答のresponse.completedに同じ変更を施しても同様。",
+            "suggestion": "固定SSEの開始・完了responseでerrorが未指定またはnullであることを要求し、非nullなら停止する。call応答とfinal応答の両方に、この矛盾を拒否する回帰条件を追加する。"
+          }
+        ],
+        "responseSha256": "e338c87d050c7f7dc7cc9df2e619e52c768af00a3cc1143ec1c000ca3be44301",
+        "usage": {
+          "input_tokens": 43128,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1099,
+          "reasoning_output_tokens": 748
+        },
+        "acceptedStartupWarningHashes": [
+          "20cac478d4cc638745426002130cfd760ee468e82238af3b07c4173322053784"
+        ]
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/sdk-trace-independent-review-11",
+      "receiptSha256": "fc99bbdaaec77cae055bb78b1448ffc53f699dc9879ff88571fc73b10f955024",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.11.json",
+      "receipt": {
+        "status": "review_findings",
+        "sourceCommit": "e2241395027e514cca1a64e6cb1a554006781e8f",
+        "model": "gpt-6.1-sol",
+        "scope": "public-sdk-trace-component-static-review-only",
+        "exitCode": 0,
+        "timedOut": false,
+        "independentReviewerSolInvocations": 1,
+        "primaryModelTrajectories": 0,
+        "automaticRetries": 0,
+        "promptSha256": "fe854a421e4748c0cccb987d56ad296c64e3bb76cdf9525c826d04fe2815361b",
+        "stdoutSha256": "64de6758814829318819c1c4f0f2198ed069a16e23d9f9dd2b3a414401e8bce3",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "certifiesRuntimeEvidence": false,
+        "certifiesPhaseCompletion": false,
+        "findings": [
+          {
+            "priority": "P2",
+            "path": "evals/skills/routing/production_sdk_trace.py",
+            "line": 81,
+            "message": "turn/start応答のturnはIDしか検査されず、失敗状態と非nullのerrorが無視されます。同じturnの正常な完了通知を残せば、矛盾する失敗証拠を含む診断が通過します。eligibleForMeasurement=falseは維持されますが、構造診断の偽通過です。",
+            "reproduction": "提示されたProductionSdkTraceTests.setUpのself.frames[3]['result']['turn']へstatus='failed'、error={'message':'synthetic failure','codexErrorInfo':null,'additionalDetails':null}を追加し、他の入力と通知を維持してrun_diagnosticへ渡す条件です。normalizedとcompleted_itemsはいずれも応答内turnのIDだけを照合するため、静的な制御経路上は診断成功のreturnへ到達します。試験は実行していません。",
+            "suggestion": "turn/start応答内のstatusとerrorも固定診断の許容形に照合し、失敗・中断状態や非nullのerrorを拒否してください。この応答だけを失敗へ変更する回帰条件を追加してください。"
+          }
+        ],
+        "responseSha256": "90fe48c4b6ba85cbfe45aee29776793a0f75b3737be0a99b12a0267c8678c7f8",
+        "usage": {
+          "input_tokens": 44276,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2273,
+          "reasoning_output_tokens": 1927
+        },
+        "acceptedStartupWarningHashes": [
+          "20cac478d4cc638745426002130cfd760ee468e82238af3b07c4173322053784"
+        ]
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/sdk-trace-independent-review-12",
+      "receiptSha256": "800074a4c4d3ae235c73f7c8e60d9065d83cb36e1c0216abd4dad4c267cea253",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.12.json",
+      "receipt": {
+        "status": "review_findings",
+        "sourceCommit": "5d12e6590fa5f91c1dd3f777abb750329e70e883",
+        "model": "gpt-6.1-sol",
+        "scope": "public-sdk-trace-component-static-review-only",
+        "exitCode": 0,
+        "timedOut": false,
+        "independentReviewerSolInvocations": 1,
+        "primaryModelTrajectories": 0,
+        "automaticRetries": 0,
+        "promptSha256": "b2b775e5ad56071476be6bcd55ea154b474a2765627b9f5d95a86910391d0266",
+        "stdoutSha256": "d5d6a1a53d96fa7bbec47634e55d8f3801505e96d82af8902589478ea05865d7",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "certifiesRuntimeEvidence": false,
+        "certifiesPhaseCompletion": false,
+        "findings": [
+          {
+            "priority": "P2",
+            "path": "evals/skills/routing/production_sdk_trace.py",
+            "line": 498,
+            "message": "tool_resultのoutput_truncatedを許可しながら値を検査しないため、出力証拠の切詰めが明示されても親子診断が通過する。eligibleForMeasurement=falseは維持されるが、固定診断内の証拠欠落を拒否できない。",
+            "reproduction": "静的推論のみで、試験は未実行。提示されたparent_events()のevents[3]['fields']へoutput_truncated=Trueを追加し、その他の入力を変更せずaudit_parent_links(events, self.frames, 'probe-call')を呼ぶ条件。output_truncatedは許可字段に含まれ、success='true'と既存のID・順序検査を満たすため、scripted_parent_cell_child_ids_matchedが返る。親のevents[10]へ同じ字段を追加しても同様。",
+            "suggestion": "tool_resultにoutput_truncatedが存在する場合は、型がboolで値がFalseであることを要求する。親・各子についてTrueおよび非bool値を拒否する回帰条件を追加する。"
+          }
+        ],
+        "responseSha256": "44827eea54e08a60e099a953d08ded42d1fa0da3ba0f7e7f752fa07a865f00e7",
+        "usage": {
+          "input_tokens": 45251,
+          "cached_input_tokens": 6528,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 815,
+          "reasoning_output_tokens": 446
+        },
+        "acceptedStartupWarningHashes": [
+          "20cac478d4cc638745426002130cfd760ee468e82238af3b07c4173322053784"
+        ]
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/sdk-trace-independent-review-13",
+      "receiptSha256": "a2d183ce80e9a117488f474e55aae39f966771b3b66cec4a0e88b282839d750d",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.13.json",
+      "receipt": {
+        "status": "review_findings",
+        "sourceCommit": "143c27ecc41d6cc73bef14cb96c2b25471cc1a40",
+        "model": "gpt-6.1-sol",
+        "scope": "public-sdk-trace-component-static-review-only",
+        "exitCode": 0,
+        "timedOut": false,
+        "independentReviewerSolInvocations": 1,
+        "primaryModelTrajectories": 0,
+        "automaticRetries": 0,
+        "promptSha256": "83e42a2cb947301559ac48d4d042a67292a95d58d5607492c21e8bab24428e6e",
+        "stdoutSha256": "13da1e55215daf840e08695d6f08c647e0c2e21f1801c7c9b5446fbd69eadd26",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "certifiesRuntimeEvidence": false,
+        "certifiesPhaseCompletion": false,
+        "findings": [
+          {
+            "priority": "P2",
+            "path": "evals/skills/routing/production_sdk_trace.py",
+            "line": 133,
+            "message": "許可済みwarningは本文とthreadIdだけで受理され、開始前限定・件数制限がありません。是正記録17–18行の「turn開始前の完全一致1通知だけ」という限定を実装できておらず、turn終了後や重複した既知警告も診断通過になります。eligibleForMeasurement=falseは維持されますが、限定した環境通知の構造診断として偽の通過です。",
+            "reproduction": "提示されたProductionSdkTraceTestsのself.framesを基に、末尾のturn/completedより後へ {'method':'warning','params':{'threadId':'t','message':'固定した警告'}} を2件追加し、allowed_warnings=('固定した警告',)を指定してrun_diagnosticを呼ぶ条件。静的には両通知がretainedへ分離されてcontinueするため、completed_itemsには渡らず、sdk_child_trace_diagnostic_passedへ到達します。試験は実行していません。",
+            "suggestion": "開始前限定の既知警告には、本文の許可に加えてturn_startedがfalseであることと受理件数が1以下であることを要求してください。開始後・終了後・重複の回帰条件を追加し、汎用警告を別に許可する必要がある場合は警告ごとの時期・件数ポリシーを明示してください。"
+          }
+        ],
+        "responseSha256": "351bc9589e458bc0ff41e4da8c2a263cc79435c477ec30f218af9059d72b03dc",
+        "usage": {
+          "input_tokens": 46040,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1147,
+          "reasoning_output_tokens": 742
+        },
+        "acceptedStartupWarningHashes": [
+          "20cac478d4cc638745426002130cfd760ee468e82238af3b07c4173322053784"
+        ]
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/sdk-trace-independent-review-14",
+      "receiptSha256": "5e7c0bec09d84c036011cbe46aef4947b9586db5ce1f6b4a3c7dd5115854c352",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.14.json",
+      "receipt": {
+        "status": "review_findings",
+        "sourceCommit": "57f47199bd81a799ad1401c06b232872fe988cf1",
+        "model": "gpt-6.1-sol",
+        "scope": "public-sdk-trace-component-static-review-only",
+        "exitCode": 0,
+        "timedOut": false,
+        "independentReviewerSolInvocations": 1,
+        "primaryModelTrajectories": 0,
+        "automaticRetries": 0,
+        "promptSha256": "3bcaede02b6ef1673b0acfdfdd9fedbd4ae54dfb82d75678bac186f4212692b7",
+        "stdoutSha256": "27dcf3a4a59723682c1207ded267bf090f7714e2db3f7214e378fc5ea3400b34",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "certifiesRuntimeEvidence": false,
+        "certifiesPhaseCompletion": false,
+        "findings": [
+          {
+            "priority": "P2",
+            "path": "evals/skills/routing/production_trace.py",
+            "line": 209,
+            "message": "thread/status/changedを状態に関係なく中立通知として受理するため、systemErrorを含む証拠もSDK診断通過になる。eligibleForMeasurement=falseという限定は維持されるが、明示されたエラー状態の検出漏れは残る。",
+            "reproduction": "提示されたProductionSdkTraceTests.setUpの正常入力を基準に、receivedの末尾へ {'method':'thread/status/changed','params':{'threadId':'t','status':{'type':'systemError'}}} を追加してrun_diagnosticへ渡す条件。normalizedはこの通知をframesへ残すが、completed_itemsはNEUTRAL分岐でstatusを検査せずcontinueするため、静的な制御フロー上sdk_child_trace_diagnostic_passedへ到達する。試験は実行していない。",
+            "suggestion": "thread/status/changedの固定診断用フィールドと状態を検査し、systemErrorおよび未知の状態を拒否する。正常なidle等の通知と、turn完了後を含むsystemError通知の回帰条件を追加する。"
+          }
+        ],
+        "responseSha256": "9c938a01bf299e04f5ca9531521a2f39505bd7714f0ca31702fd7651c596356f",
+        "usage": {
+          "input_tokens": 46584,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1363,
+          "reasoning_output_tokens": 1034
+        },
+        "acceptedStartupWarningHashes": [
+          "20cac478d4cc638745426002130cfd760ee468e82238af3b07c4173322053784"
+        ]
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/sdk-trace-independent-review-15",
+      "receiptSha256": "dd399b79285bd867b40838f4f97f76e28b69ac9e8e03d3b1aa5493e2221f86cb",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.15.json",
+      "receipt": {
+        "status": "review_findings",
+        "sourceCommit": "6150f7686b0dfb060b76d2c4d9275fa3283f2fab",
+        "model": "gpt-6.1-sol",
+        "scope": "public-sdk-trace-component-static-review-only",
+        "exitCode": 0,
+        "timedOut": false,
+        "independentReviewerSolInvocations": 1,
+        "primaryModelTrajectories": 0,
+        "automaticRetries": 0,
+        "promptSha256": "ba89e645e6b67d8f9535929714c2918d05013df0ce64079ae25c26efd3aeea6a",
+        "stdoutSha256": "8f894a5de8397d9a15b30cb4d54190172e0a5e22e81bb826704d6e1efe96e468",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "certifiesRuntimeEvidence": false,
+        "certifiesPhaseCompletion": false,
+        "findings": [
+          {
+            "priority": "P2",
+            "path": "evals/skills/routing/production_trace.py",
+            "line": 166,
+            "message": "thread/started内のthread.statusを検査せず、systemErrorを含む開始証拠でもSDK診断が通過する。thread/start応答内のthread.statusも同様に未検査である。thread/status/changedのsystemErrorは拒否する一方、同じ既知の失敗状態を開始時のThreadオブジェクトに載せると見逃す。eligibleForMeasurement=falseという限定は維持されるが、構造診断自体の偽通過となる。",
+            "reproduction": "静的に導出した条件（試験未実行）：ProductionSdkTraceTests.setUp()のself.framesを複製し、frames[1]['result']['thread']['status']とframes[2]['params']['thread']['status']の両方を{'type':'systemError'}に設定してrun_diagnostic(received=frames)へ渡す。他の入力・開始完了順序・結果・最終応答は維持する。normalizedは応答Threadのid/ephemeralだけを確認し、completed_itemsのthread/started分岐もidだけを確認するため、この追加失敗証拠を拒否する条件がない。",
+            "suggestion": "thread/start応答とthread/started通知のThread.statusにも共通の状態検査を適用し、存在するsystemError・未知状態・待機flagを拒否する。両経路へsystemErrorを設定した回帰条件を追加する。"
+          }
+        ],
+        "responseSha256": "14815018895a167919822e09c630502c21e731cf5001c295e48a13293420b0fa",
+        "usage": {
+          "input_tokens": 47453,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1375,
+          "reasoning_output_tokens": 929
+        },
+        "acceptedStartupWarningHashes": [
+          "20cac478d4cc638745426002130cfd760ee468e82238af3b07c4173322053784"
+        ]
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/sdk-trace-independent-review-16",
+      "receiptSha256": "dfa3100d71f71746d20c83df35ede4c007b803af3e6f5d8ee566ce4b5bb2b1c1",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.16.json",
+      "receipt": {
+        "status": "review_findings",
+        "sourceCommit": "7d0bf572fac6a77bfa094de8c1d3a644a6dade0a",
+        "model": "gpt-6.1-sol",
+        "scope": "public-sdk-trace-component-static-review-only",
+        "exitCode": 0,
+        "timedOut": false,
+        "independentReviewerSolInvocations": 1,
+        "primaryModelTrajectories": 0,
+        "automaticRetries": 0,
+        "promptSha256": "ec38d240c6112b1eb3ff758f4e83fff74e1277ef3ee45aa31c9f11c67f527e21",
+        "stdoutSha256": "c8c60d3695b949bb6d24986d0eb4702d2ca37a62131b29997ff72ba96dda15bd",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "certifiesRuntimeEvidence": false,
+        "certifiesPhaseCompletion": false,
+        "findings": [
+          {
+            "priority": "P2",
+            "path": "evals/skills/routing/production_sdk_trace.py",
+            "line": 81,
+            "message": "Threadオブジェクト内のturnsが未検査のため、追加turnや禁止操作の証拠が含まれていても固定診断が通過します。共通監査もthread/start応答とthread/started通知ではstatusとIDだけを検査します。eligibleForMeasurement=falseは維持されますが、固定単一turnの構造診断として偽の通過になります。",
+            "reproduction": "静的に導出した条件（未実行）：正常なexchange入力を複製し、thread/start応答のresult.threadとthread/started通知のparams.threadの両方へ、turns=[{\"id\":\"extra-turn\",\"status\":\"failed\",\"error\":{\"message\":\"failure\"},\"items\":[{\"type\":\"commandExecution\",\"id\":\"hidden-command\"}]}]を追加します。他の証拠は変更しません。normalizedおよびcompleted_itemsはこの配列を走査せず、diagnose_exchangeの後続照合にも影響しないため、追加turn・失敗・禁止操作を含んだまま通過する経路になります。",
+            "suggestion": "新規ephemeral threadを使う固定診断では、開始応答と開始通知のThread.turnsが存在する場合は型を保って空配列との一致を要求してください。合成形式の省略を許容する場合も、非空配列は拒否し、両経路について追加turnと禁止操作を含む回帰条件を追加してください。"
+          }
+        ],
+        "responseSha256": "d1813127d64cf828c3ab0c274804886bafe30ffd53fa8f8b417d041830072704",
+        "usage": {
+          "input_tokens": 48168,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1960,
+          "reasoning_output_tokens": 1509
+        },
+        "acceptedStartupWarningHashes": [
+          "20cac478d4cc638745426002130cfd760ee468e82238af3b07c4173322053784"
+        ]
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/sdk-trace-independent-review-17",
+      "receiptSha256": "8aa3ad9d5989ca4390616de364f1cff9084d8c92b3bc120872e933a0b6f3479b",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.17.json",
+      "receipt": {
+        "status": "static_review_passed",
+        "sourceCommit": "af7689fa6e37fb951e42ff3ebaae18a4fa4eb10a",
+        "model": "gpt-6.1-sol",
+        "scope": "public-sdk-trace-component-static-review-only",
+        "exitCode": 0,
+        "timedOut": false,
+        "independentReviewerSolInvocations": 1,
+        "primaryModelTrajectories": 0,
+        "automaticRetries": 0,
+        "promptSha256": "04911b55cb9193ecdd03104d38c7994c294fe13a69f12e494908d919f35db1f4",
+        "stdoutSha256": "aa20487952cc0259c57232b5a5fb36d155993811a88125eeef15025a546abe55",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "certifiesRuntimeEvidence": false,
+        "certifiesPhaseCompletion": false,
+        "findings": [],
+        "responseSha256": "9f6e6731b6bb7c9e151ee253e8dacade2f6d30780f80344cc43ddd8d6b3465ea",
+        "usage": {
+          "input_tokens": 48857,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1003,
+          "reasoning_output_tokens": 943
+        },
+        "acceptedStartupWarningHashes": [
+          "20cac478d4cc638745426002130cfd760ee468e82238af3b07c4173322053784"
+        ]
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/sdk-trace-independent-review-18",
+      "receiptSha256": "3926b09b500866f264f24873bff7c3aedb70df8093253b48a8cf14f4d0620631",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.18.json",
+      "receipt": {
+        "status": "static_review_passed",
+        "sourceCommit": "a8d0ef2f1398c96affdd54bbdb7bb748efd0c97e",
+        "model": "gpt-6.1-sol",
+        "scope": "public-sdk-trace-component-static-review-only",
+        "exitCode": 0,
+        "timedOut": false,
+        "independentReviewerSolInvocations": 1,
+        "primaryModelTrajectories": 0,
+        "automaticRetries": 0,
+        "promptSha256": "3492628b887bd54e8f88a61a3372b9bc7583891fb83a89ceea5e669b9a1cf114",
+        "stdoutSha256": "1ccb3b357934ce3a427df0e5a369ba6294dc94e19984c7106a824e1f44a537fc",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "certifiesRuntimeEvidence": false,
+        "certifiesPhaseCompletion": false,
+        "findings": [],
+        "responseSha256": "fc33ed5187edea3013c758259db8c89d2ae14d21072bf196f114b5bb030d7d92",
+        "usage": {
+          "input_tokens": 49718,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1320,
+          "reasoning_output_tokens": 1259
+        },
+        "acceptedStartupWarningHashes": [
+          "20cac478d4cc638745426002130cfd760ee468e82238af3b07c4173322053784"
+        ]
+      }
+    }
+  ],
+  "remediationVerifications": [
+    {
+      "outputRelativeRoot": ".venv/production-sdk-parent-links-verification-09",
+      "summarySha256": "8db7fdc2f1387abe659b7f0b24232c81da3a552c011f61d72ece20749c0f0e14",
+      "result": {
+        "status": "sdk_parent_links_artifacts_rechecked",
+        "phase": 4,
+        "sourceCommit": "8b409f5c9e549da732f36cb7e6e41ce80a5ff20c",
+        "probeSourceCommit": "558104ec2557f735658f17ef3a8d097167f3c0d3",
+        "receiptSha256": "4c60bf95023730815eba9a66aef7e2121d212a3b40ad60dda3a3aac54f5bb311",
+        "snapshotResourceCount": 71,
+        "originalHashesChecked": true,
+        "traceRowsMatchedOriginalBytes": true,
+        "allTargetTraceRowsPreserved": true,
+        "diagnostic": {
+          "status": "sdk_scripted_exchange_diagnostic_passed",
+          "hostCalls": 2,
+          "readResources": [
+            "resources/bitz-sdd/skills/sdd-plan/SKILL.md"
+          ],
+          "candidateManifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+          "nativeEvidence": {
+            "retainedNotifications": [
+              {
+                "rawIndex": 1,
+                "kind": "remoteControl/status/changed",
+                "sha256": "78fcc82ec67a0135d097ddd21ba77e8ecf3b3daff9f1e2f7f4311d2c352b21f3"
+              },
+              {
+                "rawIndex": 4,
+                "kind": "warning",
+                "sha256": "bceab6cd91f09aa466da4f5f0e2579bde690a53851f874713b038991adab1fb7"
+              },
+              {
+                "rawIndex": 5,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "82729a01069f6b5c069872b0e36d4b2b35cd64ffae39633c682da0902892deb0"
+              },
+              {
+                "rawIndex": 9,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "e4eb4ffffd817ff27c25e50d35d0fc6d88aba3ac0e1bb13716b49af8d226278b"
+              },
+              {
+                "rawIndex": 10,
+                "kind": "item/started/userMessage",
+                "sha256": "5bd1d489c3de1a90f04d2a5cdbf05b25b6678ade21c88fed54763853169d1b5a"
+              },
+              {
+                "rawIndex": 11,
+                "kind": "item/completed/userMessage",
+                "sha256": "d28095513f3e4219619d6e350f91292845c53c39eab963914d91b2e5a12446f3"
+              },
+              {
+                "rawIndex": 16,
+                "kind": "account/rateLimits/updated",
+                "sha256": "0341402d22151ef544f039206e484072f1e31dbd03195a638c3508963e2d1057"
+              },
+              {
+                "rawIndex": 20,
+                "kind": "account/rateLimits/updated",
+                "sha256": "a6ed24d22200d0cb2fefd2f0247e1e2b871ea311d6005395f7db62ceb325f71d"
+              }
+            ],
+            "requestIds": {
+              "b5f7d911-f961-4420-bbc9-bf7390746f77": 1,
+              "1e38bdfd-0d0f-46b0-b5f8-e2707b1de026": 2,
+              "2fdc6166-b0fb-45d4-8184-10d9fcf5cc30": 3
+            },
+            "sentValueSha256": "8e36dedb30305bd481ba1854f3cddafd7f895aea7480c0973e96f9d08e10ffc1",
+            "receivedValueSha256": "acfa87acb19edf99af5fae84fb7a69ccf753bb875e475d786b0868762de599f7"
+          },
+          "providerParentBindingVerified": false,
+          "eligibleForMeasurement": false,
+          "certifiesExpectedDecision": false,
+          "certifiesBehavior": false,
+          "certifiesSkillGate": false,
+          "providerCallId": "probe-call",
+          "providerCallOutputBindingVerified": true,
+          "providerContextProfile": "sdk-0.160.1-local-diagnostic-2026-10-08",
+          "providerResponseSha256": [
+            "af52ba7f0a116986243878b209bbf64b66f9938c13fa469b1559f4a88b1dc690",
+            "2a2c4e8b8a51d34fcf4bd1c7ea6adf605ac212861b76a683ae3943cf3c378cd9"
+          ],
+          "providerRequestValueSha256": [
+            "58f1cc4249ee26414b900cc0b6059da561472263c281b208b277cb189dda2517",
+            "bd87cbf969bd70b8574c0e2caad8f7ee146f1d7ccd1ee0418723df99dd8900e2"
+          ]
+        },
+        "parentLinks": {
+          "status": "scripted_parent_cell_child_ids_matched",
+          "scope": "one-scripted-exec-two-mcp-calls",
+          "parentCallId": "probe-call",
+          "cellId": "1",
+          "nativeChildIds": [
+            "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+            "exec-36439273-97f9-4060-9031-434414328c02"
+          ],
+          "traceEventCount": 19,
+          "traceValueSha256": "3eb0c5e8dcd2b1c7eb756677738b6280ffbee7b5af7daba4117bdbae7ef4666b",
+          "certifiesMultipleOrYieldedCells": false,
+          "eligibleForMeasurement": false
+        },
+        "paidModelCalls": 0,
+        "newMockTrials": 1,
+        "newLocalHttpRequests": 2,
+        "independentReviewPerformed": false,
+        "eligibleForMeasurement": false,
+        "phaseComplete": false,
+        "tests": {
+          "count": 439,
+          "seconds": 66.649,
+          "exitCode": 0,
+          "command": [
+            "uv",
+            "--cache-dir",
+            "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+            "run",
+            "--offline",
+            "--project",
+            "plugins/bitz-core",
+            "--with",
+            "jsonschema==4.23.0",
+            "python",
+            "-B",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/skills",
+            "-p",
+            "test_*.py"
+          ],
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "f07b6de91fc8baa8eefaa986eb31717be38decfe247c5e390eb4152b1bf52c73"
+        }
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/production-sdk-parent-links-verification-10",
+      "summarySha256": "254442741f5365ba84476b531361ae4d857aacd7c50c84b5592e787133c4e615",
+      "result": {
+        "status": "sdk_parent_links_artifacts_rechecked",
+        "phase": 4,
+        "sourceCommit": "7ce4113a7f4a2170d1222d79e436ccc829fdee15",
+        "probeSourceCommit": "558104ec2557f735658f17ef3a8d097167f3c0d3",
+        "receiptSha256": "4c60bf95023730815eba9a66aef7e2121d212a3b40ad60dda3a3aac54f5bb311",
+        "snapshotResourceCount": 71,
+        "originalHashesChecked": true,
+        "traceRowsMatchedOriginalBytes": true,
+        "allTargetTraceRowsPreserved": true,
+        "diagnostic": {
+          "status": "sdk_scripted_exchange_diagnostic_passed",
+          "hostCalls": 2,
+          "readResources": [
+            "resources/bitz-sdd/skills/sdd-plan/SKILL.md"
+          ],
+          "candidateManifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+          "nativeEvidence": {
+            "retainedNotifications": [
+              {
+                "rawIndex": 1,
+                "kind": "remoteControl/status/changed",
+                "sha256": "78fcc82ec67a0135d097ddd21ba77e8ecf3b3daff9f1e2f7f4311d2c352b21f3"
+              },
+              {
+                "rawIndex": 4,
+                "kind": "warning",
+                "sha256": "bceab6cd91f09aa466da4f5f0e2579bde690a53851f874713b038991adab1fb7"
+              },
+              {
+                "rawIndex": 5,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "82729a01069f6b5c069872b0e36d4b2b35cd64ffae39633c682da0902892deb0"
+              },
+              {
+                "rawIndex": 9,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "e4eb4ffffd817ff27c25e50d35d0fc6d88aba3ac0e1bb13716b49af8d226278b"
+              },
+              {
+                "rawIndex": 10,
+                "kind": "item/started/userMessage",
+                "sha256": "5bd1d489c3de1a90f04d2a5cdbf05b25b6678ade21c88fed54763853169d1b5a"
+              },
+              {
+                "rawIndex": 11,
+                "kind": "item/completed/userMessage",
+                "sha256": "d28095513f3e4219619d6e350f91292845c53c39eab963914d91b2e5a12446f3"
+              },
+              {
+                "rawIndex": 16,
+                "kind": "account/rateLimits/updated",
+                "sha256": "0341402d22151ef544f039206e484072f1e31dbd03195a638c3508963e2d1057"
+              },
+              {
+                "rawIndex": 20,
+                "kind": "account/rateLimits/updated",
+                "sha256": "a6ed24d22200d0cb2fefd2f0247e1e2b871ea311d6005395f7db62ceb325f71d"
+              }
+            ],
+            "requestIds": {
+              "b5f7d911-f961-4420-bbc9-bf7390746f77": 1,
+              "1e38bdfd-0d0f-46b0-b5f8-e2707b1de026": 2,
+              "2fdc6166-b0fb-45d4-8184-10d9fcf5cc30": 3
+            },
+            "sentValueSha256": "8e36dedb30305bd481ba1854f3cddafd7f895aea7480c0973e96f9d08e10ffc1",
+            "receivedValueSha256": "acfa87acb19edf99af5fae84fb7a69ccf753bb875e475d786b0868762de599f7"
+          },
+          "providerParentBindingVerified": false,
+          "eligibleForMeasurement": false,
+          "certifiesExpectedDecision": false,
+          "certifiesBehavior": false,
+          "certifiesSkillGate": false,
+          "providerCallId": "probe-call",
+          "providerCallOutputBindingVerified": true,
+          "providerContextProfile": "sdk-0.160.1-local-diagnostic-2026-10-08",
+          "providerResponseSha256": [
+            "af52ba7f0a116986243878b209bbf64b66f9938c13fa469b1559f4a88b1dc690",
+            "2a2c4e8b8a51d34fcf4bd1c7ea6adf605ac212861b76a683ae3943cf3c378cd9"
+          ],
+          "providerRequestValueSha256": [
+            "58f1cc4249ee26414b900cc0b6059da561472263c281b208b277cb189dda2517",
+            "bd87cbf969bd70b8574c0e2caad8f7ee146f1d7ccd1ee0418723df99dd8900e2"
+          ]
+        },
+        "parentLinks": {
+          "status": "scripted_parent_cell_child_ids_matched",
+          "scope": "one-scripted-exec-two-mcp-calls",
+          "parentCallId": "probe-call",
+          "cellId": "1",
+          "nativeChildIds": [
+            "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+            "exec-36439273-97f9-4060-9031-434414328c02"
+          ],
+          "traceEventCount": 19,
+          "traceValueSha256": "3eb0c5e8dcd2b1c7eb756677738b6280ffbee7b5af7daba4117bdbae7ef4666b",
+          "certifiesMultipleOrYieldedCells": false,
+          "eligibleForMeasurement": false
+        },
+        "paidModelCalls": 0,
+        "newMockTrials": 1,
+        "newLocalHttpRequests": 2,
+        "independentReviewPerformed": false,
+        "eligibleForMeasurement": false,
+        "phaseComplete": false,
+        "tests": {
+          "count": 446,
+          "seconds": 64.56,
+          "exitCode": 0,
+          "command": [
+            "uv",
+            "--cache-dir",
+            "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+            "run",
+            "--offline",
+            "--project",
+            "plugins/bitz-core",
+            "--with",
+            "jsonschema==4.23.0",
+            "python",
+            "-B",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/skills",
+            "-p",
+            "test_*.py"
+          ],
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "02029268a06d509721310ef956f9b9a891c2e241535100ced5e2a6a0023cb237"
+        }
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/production-sdk-parent-links-verification-11",
+      "summarySha256": "f5f6d03183533d4ad747b7812bdc61a87da6d9aca85ec3eae097ce6d164f8b27",
+      "result": {
+        "status": "sdk_parent_links_artifacts_rechecked",
+        "phase": 4,
+        "sourceCommit": "28c32c4afb206fcc227dce58448a59e43d72f526",
+        "probeSourceCommit": "558104ec2557f735658f17ef3a8d097167f3c0d3",
+        "receiptSha256": "4c60bf95023730815eba9a66aef7e2121d212a3b40ad60dda3a3aac54f5bb311",
+        "snapshotResourceCount": 71,
+        "originalHashesChecked": true,
+        "traceRowsMatchedOriginalBytes": true,
+        "allTargetTraceRowsPreserved": true,
+        "diagnostic": {
+          "status": "sdk_scripted_exchange_diagnostic_passed",
+          "hostCalls": 2,
+          "readResources": [
+            "resources/bitz-sdd/skills/sdd-plan/SKILL.md"
+          ],
+          "candidateManifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+          "nativeEvidence": {
+            "retainedNotifications": [
+              {
+                "rawIndex": 1,
+                "kind": "remoteControl/status/changed",
+                "sha256": "78fcc82ec67a0135d097ddd21ba77e8ecf3b3daff9f1e2f7f4311d2c352b21f3"
+              },
+              {
+                "rawIndex": 4,
+                "kind": "warning",
+                "sha256": "bceab6cd91f09aa466da4f5f0e2579bde690a53851f874713b038991adab1fb7"
+              },
+              {
+                "rawIndex": 5,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "82729a01069f6b5c069872b0e36d4b2b35cd64ffae39633c682da0902892deb0"
+              },
+              {
+                "rawIndex": 9,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "e4eb4ffffd817ff27c25e50d35d0fc6d88aba3ac0e1bb13716b49af8d226278b"
+              },
+              {
+                "rawIndex": 10,
+                "kind": "item/started/userMessage",
+                "sha256": "5bd1d489c3de1a90f04d2a5cdbf05b25b6678ade21c88fed54763853169d1b5a"
+              },
+              {
+                "rawIndex": 11,
+                "kind": "item/completed/userMessage",
+                "sha256": "d28095513f3e4219619d6e350f91292845c53c39eab963914d91b2e5a12446f3"
+              },
+              {
+                "rawIndex": 16,
+                "kind": "account/rateLimits/updated",
+                "sha256": "0341402d22151ef544f039206e484072f1e31dbd03195a638c3508963e2d1057"
+              },
+              {
+                "rawIndex": 20,
+                "kind": "account/rateLimits/updated",
+                "sha256": "a6ed24d22200d0cb2fefd2f0247e1e2b871ea311d6005395f7db62ceb325f71d"
+              }
+            ],
+            "requestIds": {
+              "b5f7d911-f961-4420-bbc9-bf7390746f77": 1,
+              "1e38bdfd-0d0f-46b0-b5f8-e2707b1de026": 2,
+              "2fdc6166-b0fb-45d4-8184-10d9fcf5cc30": 3
+            },
+            "sentValueSha256": "8e36dedb30305bd481ba1854f3cddafd7f895aea7480c0973e96f9d08e10ffc1",
+            "receivedValueSha256": "acfa87acb19edf99af5fae84fb7a69ccf753bb875e475d786b0868762de599f7"
+          },
+          "providerParentBindingVerified": false,
+          "eligibleForMeasurement": false,
+          "certifiesExpectedDecision": false,
+          "certifiesBehavior": false,
+          "certifiesSkillGate": false,
+          "providerCallId": "probe-call",
+          "providerCallOutputBindingVerified": true,
+          "providerContextProfile": "sdk-0.160.1-local-diagnostic-2026-10-08",
+          "providerResponseSha256": [
+            "af52ba7f0a116986243878b209bbf64b66f9938c13fa469b1559f4a88b1dc690",
+            "2a2c4e8b8a51d34fcf4bd1c7ea6adf605ac212861b76a683ae3943cf3c378cd9"
+          ],
+          "providerRequestValueSha256": [
+            "58f1cc4249ee26414b900cc0b6059da561472263c281b208b277cb189dda2517",
+            "bd87cbf969bd70b8574c0e2caad8f7ee146f1d7ccd1ee0418723df99dd8900e2"
+          ]
+        },
+        "parentLinks": {
+          "status": "scripted_parent_cell_child_ids_matched",
+          "scope": "one-scripted-exec-two-mcp-calls",
+          "parentCallId": "probe-call",
+          "cellId": "1",
+          "nativeChildIds": [
+            "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+            "exec-36439273-97f9-4060-9031-434414328c02"
+          ],
+          "traceEventCount": 19,
+          "traceValueSha256": "3eb0c5e8dcd2b1c7eb756677738b6280ffbee7b5af7daba4117bdbae7ef4666b",
+          "certifiesMultipleOrYieldedCells": false,
+          "eligibleForMeasurement": false
+        },
+        "paidModelCalls": 0,
+        "newMockTrials": 1,
+        "newLocalHttpRequests": 2,
+        "independentReviewPerformed": false,
+        "eligibleForMeasurement": false,
+        "phaseComplete": false,
+        "tests": {
+          "count": 447,
+          "seconds": 63.547,
+          "exitCode": 0,
+          "command": [
+            "uv",
+            "--cache-dir",
+            "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+            "run",
+            "--offline",
+            "--project",
+            "plugins/bitz-core",
+            "--with",
+            "jsonschema==4.23.0",
+            "python",
+            "-B",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/skills",
+            "-p",
+            "test_*.py"
+          ],
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "a485c3797e1cc1d22ed79a98102526601dac375f4f277588fda1bae028032897"
+        }
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/production-sdk-parent-links-verification-12",
+      "summarySha256": "68f47a13223fc7ac0ba837bf60cd96d1e65985447bc5b9ffd74d76ac2d716c4d",
+      "result": {
+        "status": "sdk_parent_links_artifacts_rechecked",
+        "phase": 4,
+        "sourceCommit": "e2241395027e514cca1a64e6cb1a554006781e8f",
+        "probeSourceCommit": "558104ec2557f735658f17ef3a8d097167f3c0d3",
+        "receiptSha256": "4c60bf95023730815eba9a66aef7e2121d212a3b40ad60dda3a3aac54f5bb311",
+        "snapshotResourceCount": 71,
+        "originalHashesChecked": true,
+        "traceRowsMatchedOriginalBytes": true,
+        "allTargetTraceRowsPreserved": true,
+        "diagnostic": {
+          "status": "sdk_scripted_exchange_diagnostic_passed",
+          "hostCalls": 2,
+          "readResources": [
+            "resources/bitz-sdd/skills/sdd-plan/SKILL.md"
+          ],
+          "candidateManifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+          "nativeEvidence": {
+            "retainedNotifications": [
+              {
+                "rawIndex": 1,
+                "kind": "remoteControl/status/changed",
+                "sha256": "78fcc82ec67a0135d097ddd21ba77e8ecf3b3daff9f1e2f7f4311d2c352b21f3"
+              },
+              {
+                "rawIndex": 4,
+                "kind": "warning",
+                "sha256": "bceab6cd91f09aa466da4f5f0e2579bde690a53851f874713b038991adab1fb7"
+              },
+              {
+                "rawIndex": 5,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "82729a01069f6b5c069872b0e36d4b2b35cd64ffae39633c682da0902892deb0"
+              },
+              {
+                "rawIndex": 9,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "e4eb4ffffd817ff27c25e50d35d0fc6d88aba3ac0e1bb13716b49af8d226278b"
+              },
+              {
+                "rawIndex": 10,
+                "kind": "item/started/userMessage",
+                "sha256": "5bd1d489c3de1a90f04d2a5cdbf05b25b6678ade21c88fed54763853169d1b5a"
+              },
+              {
+                "rawIndex": 11,
+                "kind": "item/completed/userMessage",
+                "sha256": "d28095513f3e4219619d6e350f91292845c53c39eab963914d91b2e5a12446f3"
+              },
+              {
+                "rawIndex": 16,
+                "kind": "account/rateLimits/updated",
+                "sha256": "0341402d22151ef544f039206e484072f1e31dbd03195a638c3508963e2d1057"
+              },
+              {
+                "rawIndex": 20,
+                "kind": "account/rateLimits/updated",
+                "sha256": "a6ed24d22200d0cb2fefd2f0247e1e2b871ea311d6005395f7db62ceb325f71d"
+              }
+            ],
+            "requestIds": {
+              "b5f7d911-f961-4420-bbc9-bf7390746f77": 1,
+              "1e38bdfd-0d0f-46b0-b5f8-e2707b1de026": 2,
+              "2fdc6166-b0fb-45d4-8184-10d9fcf5cc30": 3
+            },
+            "sentValueSha256": "8e36dedb30305bd481ba1854f3cddafd7f895aea7480c0973e96f9d08e10ffc1",
+            "receivedValueSha256": "acfa87acb19edf99af5fae84fb7a69ccf753bb875e475d786b0868762de599f7"
+          },
+          "providerParentBindingVerified": false,
+          "eligibleForMeasurement": false,
+          "certifiesExpectedDecision": false,
+          "certifiesBehavior": false,
+          "certifiesSkillGate": false,
+          "providerCallId": "probe-call",
+          "providerCallOutputBindingVerified": true,
+          "providerContextProfile": "sdk-0.160.1-local-diagnostic-2026-10-08",
+          "providerResponseSha256": [
+            "af52ba7f0a116986243878b209bbf64b66f9938c13fa469b1559f4a88b1dc690",
+            "2a2c4e8b8a51d34fcf4bd1c7ea6adf605ac212861b76a683ae3943cf3c378cd9"
+          ],
+          "providerRequestValueSha256": [
+            "58f1cc4249ee26414b900cc0b6059da561472263c281b208b277cb189dda2517",
+            "bd87cbf969bd70b8574c0e2caad8f7ee146f1d7ccd1ee0418723df99dd8900e2"
+          ]
+        },
+        "parentLinks": {
+          "status": "scripted_parent_cell_child_ids_matched",
+          "scope": "one-scripted-exec-two-mcp-calls",
+          "parentCallId": "probe-call",
+          "cellId": "1",
+          "nativeChildIds": [
+            "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+            "exec-36439273-97f9-4060-9031-434414328c02"
+          ],
+          "traceEventCount": 19,
+          "traceValueSha256": "3eb0c5e8dcd2b1c7eb756677738b6280ffbee7b5af7daba4117bdbae7ef4666b",
+          "certifiesMultipleOrYieldedCells": false,
+          "eligibleForMeasurement": false
+        },
+        "paidModelCalls": 0,
+        "newMockTrials": 1,
+        "newLocalHttpRequests": 2,
+        "independentReviewPerformed": false,
+        "eligibleForMeasurement": false,
+        "phaseComplete": false,
+        "tests": {
+          "count": 449,
+          "seconds": 62.932,
+          "exitCode": 0,
+          "command": [
+            "uv",
+            "--cache-dir",
+            "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+            "run",
+            "--offline",
+            "--project",
+            "plugins/bitz-core",
+            "--with",
+            "jsonschema==4.23.0",
+            "python",
+            "-B",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/skills",
+            "-p",
+            "test_*.py"
+          ],
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "77e37fef87ce95a4c799748d71f23c861fec7285143344b1738f367b268122aa"
+        }
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/production-sdk-parent-links-verification-13",
+      "summarySha256": "693a9d8e766d5ec61a4456cfa0728987fddf1d591e43a22c4dd125fed871f946",
+      "result": {
+        "status": "sdk_parent_links_artifacts_rechecked",
+        "phase": 4,
+        "sourceCommit": "5d12e6590fa5f91c1dd3f777abb750329e70e883",
+        "probeSourceCommit": "558104ec2557f735658f17ef3a8d097167f3c0d3",
+        "receiptSha256": "4c60bf95023730815eba9a66aef7e2121d212a3b40ad60dda3a3aac54f5bb311",
+        "snapshotResourceCount": 71,
+        "originalHashesChecked": true,
+        "traceRowsMatchedOriginalBytes": true,
+        "allTargetTraceRowsPreserved": true,
+        "diagnostic": {
+          "status": "sdk_scripted_exchange_diagnostic_passed",
+          "hostCalls": 2,
+          "readResources": [
+            "resources/bitz-sdd/skills/sdd-plan/SKILL.md"
+          ],
+          "candidateManifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+          "nativeEvidence": {
+            "retainedNotifications": [
+              {
+                "rawIndex": 1,
+                "kind": "remoteControl/status/changed",
+                "sha256": "78fcc82ec67a0135d097ddd21ba77e8ecf3b3daff9f1e2f7f4311d2c352b21f3"
+              },
+              {
+                "rawIndex": 4,
+                "kind": "warning",
+                "sha256": "bceab6cd91f09aa466da4f5f0e2579bde690a53851f874713b038991adab1fb7"
+              },
+              {
+                "rawIndex": 5,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "82729a01069f6b5c069872b0e36d4b2b35cd64ffae39633c682da0902892deb0"
+              },
+              {
+                "rawIndex": 9,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "e4eb4ffffd817ff27c25e50d35d0fc6d88aba3ac0e1bb13716b49af8d226278b"
+              },
+              {
+                "rawIndex": 10,
+                "kind": "item/started/userMessage",
+                "sha256": "5bd1d489c3de1a90f04d2a5cdbf05b25b6678ade21c88fed54763853169d1b5a"
+              },
+              {
+                "rawIndex": 11,
+                "kind": "item/completed/userMessage",
+                "sha256": "d28095513f3e4219619d6e350f91292845c53c39eab963914d91b2e5a12446f3"
+              },
+              {
+                "rawIndex": 16,
+                "kind": "account/rateLimits/updated",
+                "sha256": "0341402d22151ef544f039206e484072f1e31dbd03195a638c3508963e2d1057"
+              },
+              {
+                "rawIndex": 20,
+                "kind": "account/rateLimits/updated",
+                "sha256": "a6ed24d22200d0cb2fefd2f0247e1e2b871ea311d6005395f7db62ceb325f71d"
+              }
+            ],
+            "requestIds": {
+              "b5f7d911-f961-4420-bbc9-bf7390746f77": 1,
+              "1e38bdfd-0d0f-46b0-b5f8-e2707b1de026": 2,
+              "2fdc6166-b0fb-45d4-8184-10d9fcf5cc30": 3
+            },
+            "sentValueSha256": "8e36dedb30305bd481ba1854f3cddafd7f895aea7480c0973e96f9d08e10ffc1",
+            "receivedValueSha256": "acfa87acb19edf99af5fae84fb7a69ccf753bb875e475d786b0868762de599f7"
+          },
+          "providerParentBindingVerified": false,
+          "eligibleForMeasurement": false,
+          "certifiesExpectedDecision": false,
+          "certifiesBehavior": false,
+          "certifiesSkillGate": false,
+          "providerCallId": "probe-call",
+          "providerCallOutputBindingVerified": true,
+          "providerContextProfile": "sdk-0.160.1-local-diagnostic-2026-10-08",
+          "providerResponseSha256": [
+            "af52ba7f0a116986243878b209bbf64b66f9938c13fa469b1559f4a88b1dc690",
+            "2a2c4e8b8a51d34fcf4bd1c7ea6adf605ac212861b76a683ae3943cf3c378cd9"
+          ],
+          "providerRequestValueSha256": [
+            "58f1cc4249ee26414b900cc0b6059da561472263c281b208b277cb189dda2517",
+            "bd87cbf969bd70b8574c0e2caad8f7ee146f1d7ccd1ee0418723df99dd8900e2"
+          ]
+        },
+        "parentLinks": {
+          "status": "scripted_parent_cell_child_ids_matched",
+          "scope": "one-scripted-exec-two-mcp-calls",
+          "parentCallId": "probe-call",
+          "cellId": "1",
+          "nativeChildIds": [
+            "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+            "exec-36439273-97f9-4060-9031-434414328c02"
+          ],
+          "traceEventCount": 19,
+          "traceValueSha256": "3eb0c5e8dcd2b1c7eb756677738b6280ffbee7b5af7daba4117bdbae7ef4666b",
+          "certifiesMultipleOrYieldedCells": false,
+          "eligibleForMeasurement": false
+        },
+        "paidModelCalls": 0,
+        "newMockTrials": 1,
+        "newLocalHttpRequests": 2,
+        "independentReviewPerformed": false,
+        "eligibleForMeasurement": false,
+        "phaseComplete": false,
+        "tests": {
+          "count": 451,
+          "seconds": 64.205,
+          "exitCode": 0,
+          "command": [
+            "uv",
+            "--cache-dir",
+            "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+            "run",
+            "--offline",
+            "--project",
+            "plugins/bitz-core",
+            "--with",
+            "jsonschema==4.23.0",
+            "python",
+            "-B",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/skills",
+            "-p",
+            "test_*.py"
+          ],
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "ed599c0e799bb5c43d51b535776cce11ff6ed63a509cc492c9eb9f19836da35b"
+        }
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/production-sdk-parent-links-verification-14",
+      "summarySha256": "aabcce54ce30faa8be37fb325f1653f1eca5a4dc75bb4ebfd7e4f726c83fa9a1",
+      "result": {
+        "status": "sdk_parent_links_artifacts_rechecked",
+        "phase": 4,
+        "sourceCommit": "143c27ecc41d6cc73bef14cb96c2b25471cc1a40",
+        "probeSourceCommit": "558104ec2557f735658f17ef3a8d097167f3c0d3",
+        "receiptSha256": "4c60bf95023730815eba9a66aef7e2121d212a3b40ad60dda3a3aac54f5bb311",
+        "snapshotResourceCount": 71,
+        "originalHashesChecked": true,
+        "traceRowsMatchedOriginalBytes": true,
+        "allTargetTraceRowsPreserved": true,
+        "diagnostic": {
+          "status": "sdk_scripted_exchange_diagnostic_passed",
+          "hostCalls": 2,
+          "readResources": [
+            "resources/bitz-sdd/skills/sdd-plan/SKILL.md"
+          ],
+          "candidateManifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+          "nativeEvidence": {
+            "retainedNotifications": [
+              {
+                "rawIndex": 1,
+                "kind": "remoteControl/status/changed",
+                "sha256": "78fcc82ec67a0135d097ddd21ba77e8ecf3b3daff9f1e2f7f4311d2c352b21f3"
+              },
+              {
+                "rawIndex": 4,
+                "kind": "warning",
+                "sha256": "bceab6cd91f09aa466da4f5f0e2579bde690a53851f874713b038991adab1fb7"
+              },
+              {
+                "rawIndex": 5,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "82729a01069f6b5c069872b0e36d4b2b35cd64ffae39633c682da0902892deb0"
+              },
+              {
+                "rawIndex": 9,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "e4eb4ffffd817ff27c25e50d35d0fc6d88aba3ac0e1bb13716b49af8d226278b"
+              },
+              {
+                "rawIndex": 10,
+                "kind": "item/started/userMessage",
+                "sha256": "5bd1d489c3de1a90f04d2a5cdbf05b25b6678ade21c88fed54763853169d1b5a"
+              },
+              {
+                "rawIndex": 11,
+                "kind": "item/completed/userMessage",
+                "sha256": "d28095513f3e4219619d6e350f91292845c53c39eab963914d91b2e5a12446f3"
+              },
+              {
+                "rawIndex": 16,
+                "kind": "account/rateLimits/updated",
+                "sha256": "0341402d22151ef544f039206e484072f1e31dbd03195a638c3508963e2d1057"
+              },
+              {
+                "rawIndex": 20,
+                "kind": "account/rateLimits/updated",
+                "sha256": "a6ed24d22200d0cb2fefd2f0247e1e2b871ea311d6005395f7db62ceb325f71d"
+              }
+            ],
+            "requestIds": {
+              "b5f7d911-f961-4420-bbc9-bf7390746f77": 1,
+              "1e38bdfd-0d0f-46b0-b5f8-e2707b1de026": 2,
+              "2fdc6166-b0fb-45d4-8184-10d9fcf5cc30": 3
+            },
+            "sentValueSha256": "8e36dedb30305bd481ba1854f3cddafd7f895aea7480c0973e96f9d08e10ffc1",
+            "receivedValueSha256": "acfa87acb19edf99af5fae84fb7a69ccf753bb875e475d786b0868762de599f7"
+          },
+          "providerParentBindingVerified": false,
+          "eligibleForMeasurement": false,
+          "certifiesExpectedDecision": false,
+          "certifiesBehavior": false,
+          "certifiesSkillGate": false,
+          "providerCallId": "probe-call",
+          "providerCallOutputBindingVerified": true,
+          "providerContextProfile": "sdk-0.160.1-local-diagnostic-2026-10-08",
+          "providerResponseSha256": [
+            "af52ba7f0a116986243878b209bbf64b66f9938c13fa469b1559f4a88b1dc690",
+            "2a2c4e8b8a51d34fcf4bd1c7ea6adf605ac212861b76a683ae3943cf3c378cd9"
+          ],
+          "providerRequestValueSha256": [
+            "58f1cc4249ee26414b900cc0b6059da561472263c281b208b277cb189dda2517",
+            "bd87cbf969bd70b8574c0e2caad8f7ee146f1d7ccd1ee0418723df99dd8900e2"
+          ]
+        },
+        "parentLinks": {
+          "status": "scripted_parent_cell_child_ids_matched",
+          "scope": "one-scripted-exec-two-mcp-calls",
+          "parentCallId": "probe-call",
+          "cellId": "1",
+          "nativeChildIds": [
+            "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+            "exec-36439273-97f9-4060-9031-434414328c02"
+          ],
+          "traceEventCount": 19,
+          "traceValueSha256": "3eb0c5e8dcd2b1c7eb756677738b6280ffbee7b5af7daba4117bdbae7ef4666b",
+          "telemetryTruncatedPreviewCallIds": [
+            "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+            "exec-36439273-97f9-4060-9031-434414328c02",
+            "probe-call"
+          ],
+          "certifiesTelemetryOutputBodies": false,
+          "certifiesMultipleOrYieldedCells": false,
+          "eligibleForMeasurement": false
+        },
+        "paidModelCalls": 0,
+        "newMockTrials": 1,
+        "newLocalHttpRequests": 2,
+        "independentReviewPerformed": false,
+        "eligibleForMeasurement": false,
+        "phaseComplete": false,
+        "tests": {
+          "count": 452,
+          "seconds": 63.436,
+          "exitCode": 0,
+          "command": [
+            "uv",
+            "--cache-dir",
+            "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+            "run",
+            "--offline",
+            "--project",
+            "plugins/bitz-core",
+            "--with",
+            "jsonschema==4.23.0",
+            "python",
+            "-B",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/skills",
+            "-p",
+            "test_*.py"
+          ],
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "81ad52447150e8047ff58826d28a8b53a83204fe215cc2551bd33a29cfa45d4d"
+        }
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/production-sdk-parent-links-verification-15",
+      "summarySha256": "abf2212b9e9922f0f7775495b09acf76d78d9dfb093866f05539fb557bff43e9",
+      "result": {
+        "status": "sdk_parent_links_artifacts_rechecked",
+        "phase": 4,
+        "sourceCommit": "57f47199bd81a799ad1401c06b232872fe988cf1",
+        "probeSourceCommit": "558104ec2557f735658f17ef3a8d097167f3c0d3",
+        "receiptSha256": "4c60bf95023730815eba9a66aef7e2121d212a3b40ad60dda3a3aac54f5bb311",
+        "snapshotResourceCount": 71,
+        "originalHashesChecked": true,
+        "traceRowsMatchedOriginalBytes": true,
+        "allTargetTraceRowsPreserved": true,
+        "diagnostic": {
+          "status": "sdk_scripted_exchange_diagnostic_passed",
+          "hostCalls": 2,
+          "readResources": [
+            "resources/bitz-sdd/skills/sdd-plan/SKILL.md"
+          ],
+          "candidateManifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+          "nativeEvidence": {
+            "retainedNotifications": [
+              {
+                "rawIndex": 1,
+                "kind": "remoteControl/status/changed",
+                "sha256": "78fcc82ec67a0135d097ddd21ba77e8ecf3b3daff9f1e2f7f4311d2c352b21f3"
+              },
+              {
+                "rawIndex": 4,
+                "kind": "warning",
+                "sha256": "bceab6cd91f09aa466da4f5f0e2579bde690a53851f874713b038991adab1fb7"
+              },
+              {
+                "rawIndex": 5,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "82729a01069f6b5c069872b0e36d4b2b35cd64ffae39633c682da0902892deb0"
+              },
+              {
+                "rawIndex": 9,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "e4eb4ffffd817ff27c25e50d35d0fc6d88aba3ac0e1bb13716b49af8d226278b"
+              },
+              {
+                "rawIndex": 10,
+                "kind": "item/started/userMessage",
+                "sha256": "5bd1d489c3de1a90f04d2a5cdbf05b25b6678ade21c88fed54763853169d1b5a"
+              },
+              {
+                "rawIndex": 11,
+                "kind": "item/completed/userMessage",
+                "sha256": "d28095513f3e4219619d6e350f91292845c53c39eab963914d91b2e5a12446f3"
+              },
+              {
+                "rawIndex": 16,
+                "kind": "account/rateLimits/updated",
+                "sha256": "0341402d22151ef544f039206e484072f1e31dbd03195a638c3508963e2d1057"
+              },
+              {
+                "rawIndex": 20,
+                "kind": "account/rateLimits/updated",
+                "sha256": "a6ed24d22200d0cb2fefd2f0247e1e2b871ea311d6005395f7db62ceb325f71d"
+              }
+            ],
+            "requestIds": {
+              "b5f7d911-f961-4420-bbc9-bf7390746f77": 1,
+              "1e38bdfd-0d0f-46b0-b5f8-e2707b1de026": 2,
+              "2fdc6166-b0fb-45d4-8184-10d9fcf5cc30": 3
+            },
+            "sentValueSha256": "8e36dedb30305bd481ba1854f3cddafd7f895aea7480c0973e96f9d08e10ffc1",
+            "receivedValueSha256": "acfa87acb19edf99af5fae84fb7a69ccf753bb875e475d786b0868762de599f7"
+          },
+          "providerParentBindingVerified": false,
+          "eligibleForMeasurement": false,
+          "certifiesExpectedDecision": false,
+          "certifiesBehavior": false,
+          "certifiesSkillGate": false,
+          "providerCallId": "probe-call",
+          "providerCallOutputBindingVerified": true,
+          "providerContextProfile": "sdk-0.160.1-local-diagnostic-2026-10-08",
+          "providerResponseSha256": [
+            "af52ba7f0a116986243878b209bbf64b66f9938c13fa469b1559f4a88b1dc690",
+            "2a2c4e8b8a51d34fcf4bd1c7ea6adf605ac212861b76a683ae3943cf3c378cd9"
+          ],
+          "providerRequestValueSha256": [
+            "58f1cc4249ee26414b900cc0b6059da561472263c281b208b277cb189dda2517",
+            "bd87cbf969bd70b8574c0e2caad8f7ee146f1d7ccd1ee0418723df99dd8900e2"
+          ]
+        },
+        "parentLinks": {
+          "status": "scripted_parent_cell_child_ids_matched",
+          "scope": "one-scripted-exec-two-mcp-calls",
+          "parentCallId": "probe-call",
+          "cellId": "1",
+          "nativeChildIds": [
+            "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+            "exec-36439273-97f9-4060-9031-434414328c02"
+          ],
+          "traceEventCount": 19,
+          "traceValueSha256": "3eb0c5e8dcd2b1c7eb756677738b6280ffbee7b5af7daba4117bdbae7ef4666b",
+          "telemetryTruncatedPreviewCallIds": [
+            "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+            "exec-36439273-97f9-4060-9031-434414328c02",
+            "probe-call"
+          ],
+          "certifiesTelemetryOutputBodies": false,
+          "certifiesMultipleOrYieldedCells": false,
+          "eligibleForMeasurement": false
+        },
+        "paidModelCalls": 0,
+        "newMockTrials": 1,
+        "newLocalHttpRequests": 2,
+        "independentReviewPerformed": false,
+        "eligibleForMeasurement": false,
+        "phaseComplete": false,
+        "tests": {
+          "count": 453,
+          "seconds": 63.116,
+          "exitCode": 0,
+          "command": [
+            "uv",
+            "--cache-dir",
+            "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+            "run",
+            "--offline",
+            "--project",
+            "plugins/bitz-core",
+            "--with",
+            "jsonschema==4.23.0",
+            "python",
+            "-B",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/skills",
+            "-p",
+            "test_*.py"
+          ],
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "2acf65fdf067e535269cd6337678ab2b6cc75024a675a5aa78a73cbf242a22d1"
+        }
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/production-sdk-parent-links-verification-16",
+      "summarySha256": "0ac54225bb3aeded4ee17912cc3e1748441983e57b1fbc11b2fc8bad793a5ff9",
+      "result": {
+        "status": "sdk_parent_links_artifacts_rechecked",
+        "phase": 4,
+        "sourceCommit": "6150f7686b0dfb060b76d2c4d9275fa3283f2fab",
+        "probeSourceCommit": "558104ec2557f735658f17ef3a8d097167f3c0d3",
+        "receiptSha256": "4c60bf95023730815eba9a66aef7e2121d212a3b40ad60dda3a3aac54f5bb311",
+        "snapshotResourceCount": 71,
+        "originalHashesChecked": true,
+        "traceRowsMatchedOriginalBytes": true,
+        "allTargetTraceRowsPreserved": true,
+        "diagnostic": {
+          "status": "sdk_scripted_exchange_diagnostic_passed",
+          "hostCalls": 2,
+          "readResources": [
+            "resources/bitz-sdd/skills/sdd-plan/SKILL.md"
+          ],
+          "candidateManifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+          "nativeEvidence": {
+            "retainedNotifications": [
+              {
+                "rawIndex": 1,
+                "kind": "remoteControl/status/changed",
+                "sha256": "78fcc82ec67a0135d097ddd21ba77e8ecf3b3daff9f1e2f7f4311d2c352b21f3"
+              },
+              {
+                "rawIndex": 4,
+                "kind": "warning",
+                "sha256": "bceab6cd91f09aa466da4f5f0e2579bde690a53851f874713b038991adab1fb7"
+              },
+              {
+                "rawIndex": 5,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "82729a01069f6b5c069872b0e36d4b2b35cd64ffae39633c682da0902892deb0"
+              },
+              {
+                "rawIndex": 9,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "e4eb4ffffd817ff27c25e50d35d0fc6d88aba3ac0e1bb13716b49af8d226278b"
+              },
+              {
+                "rawIndex": 10,
+                "kind": "item/started/userMessage",
+                "sha256": "5bd1d489c3de1a90f04d2a5cdbf05b25b6678ade21c88fed54763853169d1b5a"
+              },
+              {
+                "rawIndex": 11,
+                "kind": "item/completed/userMessage",
+                "sha256": "d28095513f3e4219619d6e350f91292845c53c39eab963914d91b2e5a12446f3"
+              },
+              {
+                "rawIndex": 16,
+                "kind": "account/rateLimits/updated",
+                "sha256": "0341402d22151ef544f039206e484072f1e31dbd03195a638c3508963e2d1057"
+              },
+              {
+                "rawIndex": 20,
+                "kind": "account/rateLimits/updated",
+                "sha256": "a6ed24d22200d0cb2fefd2f0247e1e2b871ea311d6005395f7db62ceb325f71d"
+              }
+            ],
+            "requestIds": {
+              "b5f7d911-f961-4420-bbc9-bf7390746f77": 1,
+              "1e38bdfd-0d0f-46b0-b5f8-e2707b1de026": 2,
+              "2fdc6166-b0fb-45d4-8184-10d9fcf5cc30": 3
+            },
+            "sentValueSha256": "8e36dedb30305bd481ba1854f3cddafd7f895aea7480c0973e96f9d08e10ffc1",
+            "receivedValueSha256": "acfa87acb19edf99af5fae84fb7a69ccf753bb875e475d786b0868762de599f7"
+          },
+          "providerParentBindingVerified": false,
+          "eligibleForMeasurement": false,
+          "certifiesExpectedDecision": false,
+          "certifiesBehavior": false,
+          "certifiesSkillGate": false,
+          "providerCallId": "probe-call",
+          "providerCallOutputBindingVerified": true,
+          "providerContextProfile": "sdk-0.160.1-local-diagnostic-2026-10-08",
+          "providerResponseSha256": [
+            "af52ba7f0a116986243878b209bbf64b66f9938c13fa469b1559f4a88b1dc690",
+            "2a2c4e8b8a51d34fcf4bd1c7ea6adf605ac212861b76a683ae3943cf3c378cd9"
+          ],
+          "providerRequestValueSha256": [
+            "58f1cc4249ee26414b900cc0b6059da561472263c281b208b277cb189dda2517",
+            "bd87cbf969bd70b8574c0e2caad8f7ee146f1d7ccd1ee0418723df99dd8900e2"
+          ]
+        },
+        "parentLinks": {
+          "status": "scripted_parent_cell_child_ids_matched",
+          "scope": "one-scripted-exec-two-mcp-calls",
+          "parentCallId": "probe-call",
+          "cellId": "1",
+          "nativeChildIds": [
+            "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+            "exec-36439273-97f9-4060-9031-434414328c02"
+          ],
+          "traceEventCount": 19,
+          "traceValueSha256": "3eb0c5e8dcd2b1c7eb756677738b6280ffbee7b5af7daba4117bdbae7ef4666b",
+          "telemetryTruncatedPreviewCallIds": [
+            "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+            "exec-36439273-97f9-4060-9031-434414328c02",
+            "probe-call"
+          ],
+          "certifiesTelemetryOutputBodies": false,
+          "certifiesMultipleOrYieldedCells": false,
+          "eligibleForMeasurement": false
+        },
+        "paidModelCalls": 0,
+        "newMockTrials": 1,
+        "newLocalHttpRequests": 2,
+        "independentReviewPerformed": false,
+        "eligibleForMeasurement": false,
+        "phaseComplete": false,
+        "tests": {
+          "count": 455,
+          "seconds": 63.791,
+          "exitCode": 0,
+          "command": [
+            "uv",
+            "--cache-dir",
+            "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+            "run",
+            "--offline",
+            "--project",
+            "plugins/bitz-core",
+            "--with",
+            "jsonschema==4.23.0",
+            "python",
+            "-B",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/skills",
+            "-p",
+            "test_*.py"
+          ],
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "485e0164d75921c76d0f31c012c0da20f8d1417c5ce902667c9d097c9ddccf8b"
+        }
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/production-sdk-parent-links-verification-17",
+      "summarySha256": "7212918a12e308aa27f872d15f9bdb2f25b19404e0e2a68c99022fd892845308",
+      "result": {
+        "status": "sdk_parent_links_artifacts_rechecked",
+        "phase": 4,
+        "sourceCommit": "7d0bf572fac6a77bfa094de8c1d3a644a6dade0a",
+        "probeSourceCommit": "558104ec2557f735658f17ef3a8d097167f3c0d3",
+        "receiptSha256": "4c60bf95023730815eba9a66aef7e2121d212a3b40ad60dda3a3aac54f5bb311",
+        "snapshotResourceCount": 71,
+        "originalHashesChecked": true,
+        "traceRowsMatchedOriginalBytes": true,
+        "allTargetTraceRowsPreserved": true,
+        "diagnostic": {
+          "status": "sdk_scripted_exchange_diagnostic_passed",
+          "hostCalls": 2,
+          "readResources": [
+            "resources/bitz-sdd/skills/sdd-plan/SKILL.md"
+          ],
+          "candidateManifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+          "nativeEvidence": {
+            "retainedNotifications": [
+              {
+                "rawIndex": 1,
+                "kind": "remoteControl/status/changed",
+                "sha256": "78fcc82ec67a0135d097ddd21ba77e8ecf3b3daff9f1e2f7f4311d2c352b21f3"
+              },
+              {
+                "rawIndex": 4,
+                "kind": "warning",
+                "sha256": "bceab6cd91f09aa466da4f5f0e2579bde690a53851f874713b038991adab1fb7"
+              },
+              {
+                "rawIndex": 5,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "82729a01069f6b5c069872b0e36d4b2b35cd64ffae39633c682da0902892deb0"
+              },
+              {
+                "rawIndex": 9,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "e4eb4ffffd817ff27c25e50d35d0fc6d88aba3ac0e1bb13716b49af8d226278b"
+              },
+              {
+                "rawIndex": 10,
+                "kind": "item/started/userMessage",
+                "sha256": "5bd1d489c3de1a90f04d2a5cdbf05b25b6678ade21c88fed54763853169d1b5a"
+              },
+              {
+                "rawIndex": 11,
+                "kind": "item/completed/userMessage",
+                "sha256": "d28095513f3e4219619d6e350f91292845c53c39eab963914d91b2e5a12446f3"
+              },
+              {
+                "rawIndex": 16,
+                "kind": "account/rateLimits/updated",
+                "sha256": "0341402d22151ef544f039206e484072f1e31dbd03195a638c3508963e2d1057"
+              },
+              {
+                "rawIndex": 20,
+                "kind": "account/rateLimits/updated",
+                "sha256": "a6ed24d22200d0cb2fefd2f0247e1e2b871ea311d6005395f7db62ceb325f71d"
+              }
+            ],
+            "requestIds": {
+              "b5f7d911-f961-4420-bbc9-bf7390746f77": 1,
+              "1e38bdfd-0d0f-46b0-b5f8-e2707b1de026": 2,
+              "2fdc6166-b0fb-45d4-8184-10d9fcf5cc30": 3
+            },
+            "sentValueSha256": "8e36dedb30305bd481ba1854f3cddafd7f895aea7480c0973e96f9d08e10ffc1",
+            "receivedValueSha256": "acfa87acb19edf99af5fae84fb7a69ccf753bb875e475d786b0868762de599f7"
+          },
+          "providerParentBindingVerified": false,
+          "eligibleForMeasurement": false,
+          "certifiesExpectedDecision": false,
+          "certifiesBehavior": false,
+          "certifiesSkillGate": false,
+          "providerCallId": "probe-call",
+          "providerCallOutputBindingVerified": true,
+          "providerContextProfile": "sdk-0.160.1-local-diagnostic-2026-10-08",
+          "providerResponseSha256": [
+            "af52ba7f0a116986243878b209bbf64b66f9938c13fa469b1559f4a88b1dc690",
+            "2a2c4e8b8a51d34fcf4bd1c7ea6adf605ac212861b76a683ae3943cf3c378cd9"
+          ],
+          "providerRequestValueSha256": [
+            "58f1cc4249ee26414b900cc0b6059da561472263c281b208b277cb189dda2517",
+            "bd87cbf969bd70b8574c0e2caad8f7ee146f1d7ccd1ee0418723df99dd8900e2"
+          ]
+        },
+        "parentLinks": {
+          "status": "scripted_parent_cell_child_ids_matched",
+          "scope": "one-scripted-exec-two-mcp-calls",
+          "parentCallId": "probe-call",
+          "cellId": "1",
+          "nativeChildIds": [
+            "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+            "exec-36439273-97f9-4060-9031-434414328c02"
+          ],
+          "traceEventCount": 19,
+          "traceValueSha256": "3eb0c5e8dcd2b1c7eb756677738b6280ffbee7b5af7daba4117bdbae7ef4666b",
+          "telemetryTruncatedPreviewCallIds": [
+            "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+            "exec-36439273-97f9-4060-9031-434414328c02",
+            "probe-call"
+          ],
+          "certifiesTelemetryOutputBodies": false,
+          "certifiesMultipleOrYieldedCells": false,
+          "eligibleForMeasurement": false
+        },
+        "paidModelCalls": 0,
+        "newMockTrials": 1,
+        "newLocalHttpRequests": 2,
+        "independentReviewPerformed": false,
+        "eligibleForMeasurement": false,
+        "phaseComplete": false,
+        "tests": {
+          "count": 457,
+          "seconds": 62.776,
+          "exitCode": 0,
+          "command": [
+            "uv",
+            "--cache-dir",
+            "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+            "run",
+            "--offline",
+            "--project",
+            "plugins/bitz-core",
+            "--with",
+            "jsonschema==4.23.0",
+            "python",
+            "-B",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/skills",
+            "-p",
+            "test_*.py"
+          ],
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "71c528f94605874d37bb448c9e868857514e32a2e411b56498e10a1763e67d6f"
+        }
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/production-sdk-parent-links-verification-18",
+      "summarySha256": "120fd77619fa2c1adf7f366ad694f2d0bc8346d74cdbb0840cea4a2cf7ea4b9c",
+      "result": {
+        "status": "sdk_parent_links_artifacts_rechecked",
+        "phase": 4,
+        "sourceCommit": "af7689fa6e37fb951e42ff3ebaae18a4fa4eb10a",
+        "probeSourceCommit": "558104ec2557f735658f17ef3a8d097167f3c0d3",
+        "receiptSha256": "4c60bf95023730815eba9a66aef7e2121d212a3b40ad60dda3a3aac54f5bb311",
+        "snapshotResourceCount": 71,
+        "originalHashesChecked": true,
+        "traceRowsMatchedOriginalBytes": true,
+        "allTargetTraceRowsPreserved": true,
+        "diagnostic": {
+          "status": "sdk_scripted_exchange_diagnostic_passed",
+          "hostCalls": 2,
+          "readResources": [
+            "resources/bitz-sdd/skills/sdd-plan/SKILL.md"
+          ],
+          "candidateManifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+          "nativeEvidence": {
+            "retainedNotifications": [
+              {
+                "rawIndex": 1,
+                "kind": "remoteControl/status/changed",
+                "sha256": "78fcc82ec67a0135d097ddd21ba77e8ecf3b3daff9f1e2f7f4311d2c352b21f3"
+              },
+              {
+                "rawIndex": 4,
+                "kind": "warning",
+                "sha256": "bceab6cd91f09aa466da4f5f0e2579bde690a53851f874713b038991adab1fb7"
+              },
+              {
+                "rawIndex": 5,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "82729a01069f6b5c069872b0e36d4b2b35cd64ffae39633c682da0902892deb0"
+              },
+              {
+                "rawIndex": 9,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "e4eb4ffffd817ff27c25e50d35d0fc6d88aba3ac0e1bb13716b49af8d226278b"
+              },
+              {
+                "rawIndex": 10,
+                "kind": "item/started/userMessage",
+                "sha256": "5bd1d489c3de1a90f04d2a5cdbf05b25b6678ade21c88fed54763853169d1b5a"
+              },
+              {
+                "rawIndex": 11,
+                "kind": "item/completed/userMessage",
+                "sha256": "d28095513f3e4219619d6e350f91292845c53c39eab963914d91b2e5a12446f3"
+              },
+              {
+                "rawIndex": 16,
+                "kind": "account/rateLimits/updated",
+                "sha256": "0341402d22151ef544f039206e484072f1e31dbd03195a638c3508963e2d1057"
+              },
+              {
+                "rawIndex": 20,
+                "kind": "account/rateLimits/updated",
+                "sha256": "a6ed24d22200d0cb2fefd2f0247e1e2b871ea311d6005395f7db62ceb325f71d"
+              }
+            ],
+            "requestIds": {
+              "b5f7d911-f961-4420-bbc9-bf7390746f77": 1,
+              "1e38bdfd-0d0f-46b0-b5f8-e2707b1de026": 2,
+              "2fdc6166-b0fb-45d4-8184-10d9fcf5cc30": 3
+            },
+            "sentValueSha256": "8e36dedb30305bd481ba1854f3cddafd7f895aea7480c0973e96f9d08e10ffc1",
+            "receivedValueSha256": "acfa87acb19edf99af5fae84fb7a69ccf753bb875e475d786b0868762de599f7"
+          },
+          "providerParentBindingVerified": false,
+          "eligibleForMeasurement": false,
+          "certifiesExpectedDecision": false,
+          "certifiesBehavior": false,
+          "certifiesSkillGate": false,
+          "providerCallId": "probe-call",
+          "providerCallOutputBindingVerified": true,
+          "providerContextProfile": "sdk-0.160.1-local-diagnostic-2026-10-08",
+          "providerResponseSha256": [
+            "af52ba7f0a116986243878b209bbf64b66f9938c13fa469b1559f4a88b1dc690",
+            "2a2c4e8b8a51d34fcf4bd1c7ea6adf605ac212861b76a683ae3943cf3c378cd9"
+          ],
+          "providerRequestValueSha256": [
+            "58f1cc4249ee26414b900cc0b6059da561472263c281b208b277cb189dda2517",
+            "bd87cbf969bd70b8574c0e2caad8f7ee146f1d7ccd1ee0418723df99dd8900e2"
+          ]
+        },
+        "parentLinks": {
+          "status": "scripted_parent_cell_child_ids_matched",
+          "scope": "one-scripted-exec-two-mcp-calls",
+          "parentCallId": "probe-call",
+          "cellId": "1",
+          "nativeChildIds": [
+            "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+            "exec-36439273-97f9-4060-9031-434414328c02"
+          ],
+          "traceEventCount": 19,
+          "traceValueSha256": "3eb0c5e8dcd2b1c7eb756677738b6280ffbee7b5af7daba4117bdbae7ef4666b",
+          "telemetryTruncatedPreviewCallIds": [
+            "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+            "exec-36439273-97f9-4060-9031-434414328c02",
+            "probe-call"
+          ],
+          "certifiesTelemetryOutputBodies": false,
+          "certifiesMultipleOrYieldedCells": false,
+          "eligibleForMeasurement": false
+        },
+        "paidModelCalls": 0,
+        "newMockTrials": 1,
+        "newLocalHttpRequests": 2,
+        "independentReviewPerformed": false,
+        "eligibleForMeasurement": false,
+        "phaseComplete": false,
+        "tests": {
+          "count": 459,
+          "seconds": 62.571,
+          "exitCode": 0,
+          "command": [
+            "uv",
+            "--cache-dir",
+            "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+            "run",
+            "--offline",
+            "--project",
+            "plugins/bitz-core",
+            "--with",
+            "jsonschema==4.23.0",
+            "python",
+            "-B",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/skills",
+            "-p",
+            "test_*.py"
+          ],
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "6e6805b67c68d9cf2f011119796565df343968eddce3145ecf3dc48c01a6c79a"
+        }
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/production-sdk-parent-links-verification-19",
+      "summarySha256": "f74e44cf0cfc42ac2437211b4b9232acf9fba3963d43c31675982503e820047c",
+      "result": {
+        "status": "sdk_parent_links_artifacts_rechecked",
+        "phase": 4,
+        "sourceCommit": "a8d0ef2f1398c96affdd54bbdb7bb748efd0c97e",
+        "probeSourceCommit": "558104ec2557f735658f17ef3a8d097167f3c0d3",
+        "receiptSha256": "4c60bf95023730815eba9a66aef7e2121d212a3b40ad60dda3a3aac54f5bb311",
+        "snapshotResourceCount": 71,
+        "originalHashesChecked": true,
+        "traceRowsMatchedOriginalBytes": true,
+        "allTargetTraceRowsPreserved": true,
+        "diagnostic": {
+          "status": "sdk_scripted_exchange_diagnostic_passed",
+          "hostCalls": 2,
+          "readResources": [
+            "resources/bitz-sdd/skills/sdd-plan/SKILL.md"
+          ],
+          "candidateManifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+          "nativeEvidence": {
+            "retainedNotifications": [
+              {
+                "rawIndex": 1,
+                "kind": "remoteControl/status/changed",
+                "sha256": "78fcc82ec67a0135d097ddd21ba77e8ecf3b3daff9f1e2f7f4311d2c352b21f3"
+              },
+              {
+                "rawIndex": 4,
+                "kind": "warning",
+                "sha256": "bceab6cd91f09aa466da4f5f0e2579bde690a53851f874713b038991adab1fb7"
+              },
+              {
+                "rawIndex": 5,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "82729a01069f6b5c069872b0e36d4b2b35cd64ffae39633c682da0902892deb0"
+              },
+              {
+                "rawIndex": 9,
+                "kind": "mcpServer/startupStatus/updated",
+                "sha256": "e4eb4ffffd817ff27c25e50d35d0fc6d88aba3ac0e1bb13716b49af8d226278b"
+              },
+              {
+                "rawIndex": 10,
+                "kind": "item/started/userMessage",
+                "sha256": "5bd1d489c3de1a90f04d2a5cdbf05b25b6678ade21c88fed54763853169d1b5a"
+              },
+              {
+                "rawIndex": 11,
+                "kind": "item/completed/userMessage",
+                "sha256": "d28095513f3e4219619d6e350f91292845c53c39eab963914d91b2e5a12446f3"
+              },
+              {
+                "rawIndex": 16,
+                "kind": "account/rateLimits/updated",
+                "sha256": "0341402d22151ef544f039206e484072f1e31dbd03195a638c3508963e2d1057"
+              },
+              {
+                "rawIndex": 20,
+                "kind": "account/rateLimits/updated",
+                "sha256": "a6ed24d22200d0cb2fefd2f0247e1e2b871ea311d6005395f7db62ceb325f71d"
+              }
+            ],
+            "requestIds": {
+              "b5f7d911-f961-4420-bbc9-bf7390746f77": 1,
+              "1e38bdfd-0d0f-46b0-b5f8-e2707b1de026": 2,
+              "2fdc6166-b0fb-45d4-8184-10d9fcf5cc30": 3
+            },
+            "sentValueSha256": "8e36dedb30305bd481ba1854f3cddafd7f895aea7480c0973e96f9d08e10ffc1",
+            "receivedValueSha256": "acfa87acb19edf99af5fae84fb7a69ccf753bb875e475d786b0868762de599f7"
+          },
+          "providerParentBindingVerified": false,
+          "eligibleForMeasurement": false,
+          "certifiesExpectedDecision": false,
+          "certifiesBehavior": false,
+          "certifiesSkillGate": false,
+          "providerCallId": "probe-call",
+          "providerCallOutputBindingVerified": true,
+          "providerContextProfile": "sdk-0.160.1-local-diagnostic-2026-10-08",
+          "providerResponseSha256": [
+            "af52ba7f0a116986243878b209bbf64b66f9938c13fa469b1559f4a88b1dc690",
+            "2a2c4e8b8a51d34fcf4bd1c7ea6adf605ac212861b76a683ae3943cf3c378cd9"
+          ],
+          "providerRequestValueSha256": [
+            "58f1cc4249ee26414b900cc0b6059da561472263c281b208b277cb189dda2517",
+            "bd87cbf969bd70b8574c0e2caad8f7ee146f1d7ccd1ee0418723df99dd8900e2"
+          ]
+        },
+        "parentLinks": {
+          "status": "scripted_parent_cell_child_ids_matched",
+          "scope": "one-scripted-exec-two-mcp-calls",
+          "parentCallId": "probe-call",
+          "cellId": "1",
+          "nativeChildIds": [
+            "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+            "exec-36439273-97f9-4060-9031-434414328c02"
+          ],
+          "traceEventCount": 19,
+          "traceValueSha256": "3eb0c5e8dcd2b1c7eb756677738b6280ffbee7b5af7daba4117bdbae7ef4666b",
+          "telemetryTruncatedPreviewCallIds": [
+            "exec-cee3b329-a3b6-44d7-8e70-5e836fcfa629",
+            "exec-36439273-97f9-4060-9031-434414328c02",
+            "probe-call"
+          ],
+          "certifiesTelemetryOutputBodies": false,
+          "certifiesMultipleOrYieldedCells": false,
+          "eligibleForMeasurement": false
+        },
+        "paidModelCalls": 0,
+        "newMockTrials": 1,
+        "newLocalHttpRequests": 2,
+        "independentReviewPerformed": false,
+        "eligibleForMeasurement": false,
+        "phaseComplete": false,
+        "tests": {
+          "count": 460,
+          "seconds": 62.608,
+          "exitCode": 0,
+          "command": [
+            "uv",
+            "--cache-dir",
+            "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+            "run",
+            "--offline",
+            "--project",
+            "plugins/bitz-core",
+            "--with",
+            "jsonschema==4.23.0",
+            "python",
+            "-B",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests/skills",
+            "-p",
+            "test_*.py"
+          ],
+          "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrSha256": "f2bcb6dae4e44c47a355b519c6493e53a72cdade73a6ff46ab1f024aafcc7e89"
+        }
+      }
+    }
+  ],
+  "reproductionAndDisposition": [
+    {
+      "review": 7,
+      "reproduced": "post-turn unstarted reasoning delta accepted",
+      "disposition": "lifecycle and shape checks"
+    },
+    {
+      "review": 8,
+      "reproduced": "reasoning delta and completed body mismatch accepted",
+      "disposition": "index-based body accumulation and final comparison"
+    },
+    {
+      "review": 9,
+      "reproduced": "empty userMessage ID accepted",
+      "disposition": "nonempty ID check"
+    },
+    {
+      "review": 10,
+      "reproduced": "non-null SSE response error accepted",
+      "disposition": "SSE error/incomplete and fixed fields checks; initial object field omission corrected"
+    },
+    {
+      "review": 11,
+      "reproduced": "failed turn/start response accepted",
+      "disposition": "shared start state check"
+    },
+    {
+      "review": 12,
+      "reproduced": "non-bool output_truncated accepted",
+      "disposition": "bool check and side-record of true preview flags; blanket true rejection declined after same-version official-source check"
+    },
+    {
+      "review": 13,
+      "reproduced": "duplicate post-turn warnings accepted",
+      "disposition": "one pre-turn warning only; existing synthetic warning moved before turn"
+    },
+    {
+      "review": 14,
+      "reproduced": "post-turn thread systemError accepted",
+      "disposition": "fixed state enum/flags and scope checks"
+    },
+    {
+      "review": 15,
+      "reproduced": "systemError in start Thread objects accepted",
+      "disposition": "shared status check across response and notification"
+    },
+    {
+      "review": 16,
+      "reproduced": "hidden failed turn and commandExecution in Thread.turns accepted",
+      "disposition": "empty history and strict ephemeral check"
+    },
+    {
+      "review": 17,
+      "reviewOutcome": "static_review_passed",
+      "parentAdditionalReproduction": "hidden commandExecution in common completed-turn summary accepted",
+      "disposition": "common completion summary/fields/timestamps check"
+    },
+    {
+      "review": 18,
+      "reviewOutcome": "static_review_passed",
+      "findings": 0
+    }
+  ],
+  "telemetryPreviewSemanticsReference": {
+    "upstreamCommit": "d27764b82f7118f674371e6d6e76271d9d606edb",
+    "url": "https://github.com/openai/codex/blob/d27764b82f7118f674371e6d6e76271d9d606edb/codex-rs/otel/src/tool_result.rs",
+    "output_truncated": "log-preview truncation; result body checked through separate original host/native/provider exchange"
+  },
+  "newMockTrials": 0,
+  "newLocalHttpRequests": 0,
+  "privateVerificationCounterMeaning": "newMockTrials=1/newLocalHttpRequests=2 in historical verification outputs describes the previously captured read-06; these runs only rechecked original bytes, and added no mock trial or HTTP request.",
+  "newIndependentReviewerSolInvocations": 12,
+  "cumulativeSdkTraceIndependentReviewerSolInvocations": 18,
+  "newReviewUsage": {
+    "input_tokens": 541540,
+    "cached_input_tokens": 6528,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 16710,
+    "reasoning_output_tokens": 12606
+  },
+  "primaryModelTrajectories": 0,
+  "automaticRetries": 0,
+  "independentRemediationReviewPassed": true,
+  "eligibleForMeasurement": false,
+  "certifiesExpectedBehavior": false,
+  "certifiesNativeProvider": false,
+  "certifiesSkillGate": false,
+  "phaseComplete": false
+}

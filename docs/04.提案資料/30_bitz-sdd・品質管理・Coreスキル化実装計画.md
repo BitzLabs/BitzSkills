@@ -1354,3 +1354,22 @@ source `dad596b2034bbcd0abb4cd25c19aea78143aa5a3` のclean全426件は61.879s/OK
 過去の停止/承認待ち/原指摘/消費枠を保持し、独立再検分と親の原応答再照合を次に行う。
 SDK rawResponseItem捕捉、任意複数cell/待機・実provider・台帳統合・公開canary/本測定は未実施。
 eligibleForMeasurement=false、Phase/Step/Gate完了・native provider・期待行動・全Skill Gateは未認定。
+
+#### Phase 4：SDK増分・状態・履歴の是正と静的検分通過（2026-10-09）
+
+ユーザーOKで同じ公開6パス/OpenAI gpt-6.1-sol/各有限1回の継続送信が承認された。
+review-07〜18の原結果を保持し、親が再現した増分の開始/完了条件と本文矛盾、空入力ID、SSE失敗、
+turn開始状態、警告の時期/件数、Thread状態/履歴、共通完了要約を是正した。
+telemetryのoutput_truncatedは同版公式実装でログプレビューの値と確認した。
+原trueを保持し、型と切詰めcall IDを検査/記録する。本文は別のhost/native/provider原通信で照合する。
+review-17の静的通過後にも親が共通完了要約の条件を追加で再現・修正した。
+最新source `a8d0ef2f1398c96affdd54bbdb7bb748efd0c97e` のreview-18はstatic_review_passed/指摘0/CLI exit0。
+clean全460件は62.608s/OK/exit0、原hash/71資源Git/全対象19行/固定1exec親子IDの照合も通過。
+記録は `evals/skills/results/2026-10-09-sdk-increment-remediation/`。
+今回独立SOL12・SDK静的系列累計18、新mock/局所HTTP0・一次0・自動retry0。
+原usage合計はinput541540/cached6528/output16710/reasoning12606。金額は推定しない。
+以前の承認待ち・拒否・停止・指摘・消費枠と局所失敗は歴史ref時点の記録として保持する。
+
+次はSDK experimentalRawEventsの無課金捕捉候補。
+任意複数cell/待機、実provider、一次台帳統合、公開canary/本測定は残る。
+eligibleForMeasurement=false、Phase/Step/Gate完了・期待行動・native provider・telemetry本文完全性・全Skill Gateは未認定。
