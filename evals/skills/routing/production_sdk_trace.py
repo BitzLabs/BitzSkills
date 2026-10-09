@@ -77,6 +77,8 @@ def normalized(sent: list, received: list, *, allowed_warnings: tuple[str, ...] 
     require(set(responses) == set(bindings), 'SDK response missing')
     by_number = {bindings[k]: v for k, v in responses.items()}
     thread_result = by_number[2]
+    require(set(by_number[3]) == {'turn'}, 'SDK turn response fields')
+    trace.check_turn_start(by_number[3]['turn'])
     thread = thread_result.get('thread', {}).get('id')
     turn = by_number[3].get('turn', {}).get('id')
     require(isinstance(thread, str) and thread == expected['turn']['threadId'] and

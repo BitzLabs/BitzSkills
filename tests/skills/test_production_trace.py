@@ -46,8 +46,8 @@ class ProductionTraceTests(unittest.TestCase):
         frames = [{'id': 1, 'result': {'userAgent': 'synthetic'}},
                   {'id': 2, 'result': {'thread': {'id': 't'}}},
                   {'method': 'thread/started', 'params': {'thread': {'id': 't'}}},
-                  {'id': 3, 'result': {'turn': {'id': 'u'}}},
-                  notification('turn/started', turn={'id': 'u'})]
+                  {'id': 3, 'result': {'turn': {'id': 'u', 'status': 'inProgress', 'items': [], 'error': None}}},
+                  notification('turn/started', turn={'id': 'u', 'status': 'inProgress', 'items': [], 'error': None})]
         for i, event in enumerate(log):
             item = {'type': 'mcpToolCall', 'id': f'call-{i}', 'server': audit.SERVER,
                     'tool': event['tool'], 'arguments': event['arguments'], 'status': 'completed',
@@ -96,6 +96,21 @@ class ProductionTraceTests(unittest.TestCase):
                 frame('item/reasoning/textDelta', itemId='reason', contentIndex=1, delta='新規本文'),
                 frame('item/completed', item={**item, 'summary': ['既存要約追記', '新規要約'],
                                              'content': ['既存本文追記', '新規本文']})]
+
+    def test_turn_start_response_and_notification_reject_failed_or_incomplete_state(self):
+        for index in (3, 4):
+            for field, value in (('status', 'failed'), ('status', 'interrupted'), ('status', 'completed'),
+                                 ('error', {'message': 'failure'}), ('error', False), ('items', [{}]),
+                                 ('completedAt', 0), ('durationMs', 0), ('startedAt', False), ('unknown', None)):
+                frames = copy.deepcopy(self.frames)
+                turn = frames[index]['result' if index == 3 else 'params']['turn']
+                turn[field] = value
+                with self.subTest(index=index, field=field, value=value), self.assertRaisesRegex(ValueError, 'native turn start'):
+                    self.run_audit(frames=frames)
+            frames = copy.deepcopy(self.frames)
+            frames[index]['result' if index == 3 else 'params']['turn'].pop('status')
+            with self.subTest(index=index), self.assertRaisesRegex(ValueError, 'native turn start fields'):
+                self.run_audit(frames=frames)
 
     def test_reasoning_initial_text_and_multiple_indices_are_preserved(self):
         before = copy.deepcopy(self.prefixed_reasoning_events())

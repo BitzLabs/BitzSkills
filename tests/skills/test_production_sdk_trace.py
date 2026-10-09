@@ -66,6 +66,14 @@ class ProductionSdkTraceTests(unittest.TestCase):
         self.assertEqual(result['status'], 'sdk_child_trace_diagnostic_passed')
         self.assertIs(result['eligibleForMeasurement'], False)
 
+    def test_failed_turn_start_rpc_is_rejected_even_with_normal_completion(self):
+        for status, error in (('failed', {'message': 'failure'}), ('interrupted', None),
+                              ('completed', None), ('inProgress', {'message': 'failure'})):
+            frames = copy.deepcopy(self.frames)
+            frames[3]['result']['turn'].update(status=status, error=error)
+            with self.subTest(status=status, error=error), self.assertRaisesRegex(ValueError, 'native turn start state'):
+                self.run_diagnostic(received=frames)
+
     def test_empty_user_message_id_is_rejected_before_input_projection(self):
         frames = copy.deepcopy(self.frames)
         for frame in frames:

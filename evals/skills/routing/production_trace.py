@@ -64,6 +64,19 @@ def reasoning_bodies(item: dict) -> dict:
     return {name: list(value) if value is not None else None for name, value in values.items()}
 
 
+def check_turn_start(value: dict):
+    """固定診断の開始turnだけを検査し、状態がない合成値で失敗証拠を補完しない。"""
+    require(isinstance(value, dict) and {'id', 'status', 'items'} <= set(value) <= {
+        'id', 'status', 'items', 'itemsView', 'error', 'startedAt', 'completedAt', 'durationMs'},
+        'native turn start fields')
+    require(isinstance(value['id'], str) and bool(value['id']) and value['status'] == 'inProgress' and
+            value['items'] == [] and value.get('itemsView', 'notLoaded') == 'notLoaded' and
+            value.get('error') is None and value.get('completedAt') is None and value.get('durationMs') is None,
+            'native turn start state')
+    require(value.get('startedAt') is None or type(value['startedAt']) is int and value['startedAt'] >= 0,
+            'native turn start timestamp')
+
+
 def project_case(case: dict) -> dict:
     """caseId/expected/category/control等を列挙せず、要求と文字列contextだけを投影する。"""
     require(isinstance(case, dict), 'case object required')
@@ -141,6 +154,9 @@ def completed_items(frames: list) -> list:
             require(set(frame) == {'id', 'result'} and type(frame['id']) is int and frame['id'] in {1, 2, 3}, 'native response fields')
             require(frame['id'] not in responses and isinstance(frame['result'], dict), 'native response repeated')
             responses[frame['id']] = frame['result']
+            if frame['id'] == 3:
+                require(set(frame['result']) == {'turn'}, 'native turn response fields')
+                check_turn_start(frame['result']['turn'])
             continue
         method, params = frame['method'], frame.get('params')
         require(set(frame) == {'method', 'params'}, 'native notification fields')
@@ -155,6 +171,7 @@ def completed_items(frames: list) -> list:
         require(thread is not None and params.get('threadId') == thread, 'native thread mismatch')
         if method == 'turn/started':
             require(turn is None and not finished, 'multiple native turns')
+            check_turn_start(params.get('turn'))
             turn = params['turn']['id']
             require(isinstance(turn, str) and bool(turn), 'turn id required')
             require('turnId' not in params or params['turnId'] == turn, 'native turn start outer context mismatch')

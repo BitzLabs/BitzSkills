@@ -116,3 +116,11 @@ source `28c32c4afb206fcc227dce58448a59e43d72f526` の同6ファイルの別SOL�
 固定SSEとして列挙したevent・response・最終item字段以外も拒否し、未知の失敗証拠を捨てない。
 non-nullの真偽値・空文字・空配列も拒否し、null正常系と未知字段の回帰を含める。
 実provider一般形式へ拡張せず、原review_findings・消費1/残0を保持する。
+
+## 11回目の静的検分からの是正候補
+
+source `e2241395027e514cca1a64e6cb1a554006781e8f` の同6ファイルの別SOLはP2=1。
+親が同sourceでturn/start応答だけをstatus=failed・error非nullへ変えて診断通過する条件を再現した。
+共通検査をSDK開始応答とnative開始応答/通知へ適用し、inProgress・空items・errorなしを要求する。
+開始turnの未知字段、完了時刻/所要時間、非整数開始時刻、欠落statusも拒否する。
+合成fixtureの開始状態を明示し、原SDK応答を作り直さず照合する。原指摘と有限消費枠は保持する。
