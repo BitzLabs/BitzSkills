@@ -171,3 +171,13 @@ source `7d0bf572fac6a77bfa094de8c1d3a644a6dade0a` の同6ファイルの別SOL�
 履歴の省略という合成形式は保持し、null・別型・非空履歴を拒否する。
 存在するephemeralも厳密なtrueへ検査する。正常空履歴/各経路/両経路の回帰を追加する。
 原指摘と消費枠を保持する。
+
+## 17回目の静的検分通過後の共通監査追加是正
+
+source `af7689fa6e37fb951e42ff3ebaae18a4fa4eb10a` の同6ファイルの別SOLはstatic_review_passed/指摘0。
+親は同sourceで、共通監査のturn/completedにsummaryのcommandExecutionを入れて
+measurement_integrity_passedとなる条件を追加で再現した。SDK入口の要約照合では拒否できていた。
+共通監査も完了要約がある場合は、完了済みfinalメッセージ列との型を保った完全一致を要求する。
+開始/完了turnの未知params、完了turn未知字段、非整数/負時刻も拒否する。
+要約省略の従来合成形式は保持し、隠れた操作・欠落要約・正常要約の回帰を追加する。
+原SOL通過は当該sourceの静的検分だけとして保持し、親の追加再現を否定する材料にはしない。

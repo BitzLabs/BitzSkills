@@ -14,7 +14,7 @@ import production_trace as trace
 import source_guard
 
 ROOT = Path(__file__).resolve().parents[3]
-CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.17.json'
+CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.18.json'
 require = trace.require
 
 
@@ -52,8 +52,8 @@ def run(source: str):
     require(source_guard.git(ROOT, 'status', '--porcelain') == b'', 'clean tree required')
     contract = trace.strict_json(source_guard.git(ROOT, 'show', source + ':' + CONTRACT))
     before = source_guard.verify(ROOT, source, contract['sourceFiles'])
-    if 'previousFailure' in contract:
-        previous = contract['previousFailure']
+    previous = contract.get('previousReview', contract.get('previousFailure'))
+    if previous is not None:
         old_name = previous.get('outputRelativeRoot', '.venv/sdk-trace-independent-review-01')
         require(old_name in {'.venv/sdk-trace-independent-review-01', '.venv/sdk-trace-independent-review-02',
                              '.venv/sdk-trace-independent-review-03', '.venv/sdk-trace-independent-review-04',
@@ -62,7 +62,8 @@ def run(source: str):
                              '.venv/sdk-trace-independent-review-09', '.venv/sdk-trace-independent-review-10',
                              '.venv/sdk-trace-independent-review-11', '.venv/sdk-trace-independent-review-12',
                              '.venv/sdk-trace-independent-review-13', '.venv/sdk-trace-independent-review-14',
-                             '.venv/sdk-trace-independent-review-15', '.venv/sdk-trace-independent-review-16'},
+                             '.venv/sdk-trace-independent-review-15', '.venv/sdk-trace-independent-review-16',
+                             '.venv/sdk-trace-independent-review-17'},
                 'unknown previous review')
         old = ROOT / old_name
         require(not any(p.is_symlink() for p in (old, *old.parents)), 'old review symlink')

@@ -191,6 +191,8 @@ def completed_items(frames: list) -> list:
             continue
         require(thread is not None and params.get('threadId') == thread, 'native thread mismatch')
         if method == 'turn/started':
+            require(set(params) <= {'threadId', 'turnId', 'turn'} and
+                    {'threadId', 'turn'} <= set(params), 'native turn start params')
             require(turn is None and not finished, 'multiple native turns')
             check_turn_start(params.get('turn'))
             turn = params['turn']['id']
@@ -237,8 +239,20 @@ def completed_items(frames: list) -> list:
             continue
         require(turn is not None and not finished, 'native event outside turn')
         if method == 'turn/completed':
+            require(set(params) <= {'threadId', 'turnId', 'turn'} and
+                    {'threadId', 'turn'} <= set(params), 'native turn completion params')
             terminal = params['turn']
+            require(isinstance(terminal, dict) and {'id', 'status'} <= set(terminal) <= {
+                'id', 'status', 'error', 'items', 'itemsView', 'startedAt', 'completedAt', 'durationMs'},
+                'native turn completion fields')
             require(terminal['id'] == turn and terminal['status'] == 'completed' and terminal.get('error') is None, 'native turn failed')
+            for key in ('startedAt', 'completedAt', 'durationMs'):
+                require(terminal.get(key) is None or type(terminal[key]) is int and terminal[key] >= 0,
+                        'native turn completion timestamp')
+            if 'items' in terminal or 'itemsView' in terminal:
+                finals = [i for i in items if i['type'] == 'agentMessage' and i.get('phase') == 'final_answer']
+                require(terminal.get('itemsView') == 'summary' and json_equal(terminal.get('items'), finals),
+                        'native turn completion summary mismatch')
             finished = True
             continue
         require(method in {'item/started', 'item/completed'} and params.get('turnId') == turn, 'native action not allowed')

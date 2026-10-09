@@ -97,6 +97,24 @@ class ProductionTraceTests(unittest.TestCase):
                 frame('item/completed', item={**item, 'summary': ['既存要約追記', '新規要約'],
                                              'content': ['既存本文追記', '新規本文']})]
 
+    def test_turn_completion_summary_cannot_hide_operations_or_invalid_fields(self):
+        hidden = [{'type': 'commandExecution', 'id': 'hidden-command'}]
+        for changes in ({'itemsView': 'summary', 'items': hidden}, {'items': []},
+                        {'itemsView': 'summary'}, {'itemsView': 'full', 'items': []},
+                        {'unknown': None}, {'durationMs': False}, {'completedAt': -1}):
+            frames = copy.deepcopy(self.frames)
+            frames[-1]['params']['turn'].update(changes)
+            with self.subTest(changes=changes), self.assertRaisesRegex(ValueError, 'native turn completion'):
+                self.run_audit(frames=frames)
+        frames = copy.deepcopy(self.frames)
+        frames[-1]['params']['turn'].update(itemsView='summary', items=[copy.deepcopy(frames[-2]['params']['item'])])
+        self.assertEqual(self.run_audit(frames=frames)['status'], 'measurement_integrity_passed')
+        for index in (4, -1):
+            frames = copy.deepcopy(self.frames)
+            frames[index]['params']['hidden'] = hidden
+            with self.subTest(index=index), self.assertRaisesRegex(ValueError, 'native turn (start|completion) params'):
+                self.run_audit(frames=frames)
+
     def test_new_thread_start_history_and_ephemeral_state_are_checked(self):
         hidden = [{'id': 'extra-turn', 'status': 'failed', 'error': {'message': 'failure'},
                    'items': [{'type': 'commandExecution', 'id': 'hidden-command'}]}]
