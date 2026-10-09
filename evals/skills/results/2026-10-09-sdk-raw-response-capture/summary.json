@@ -1,0 +1,259 @@
+{
+  "version": "sdk-raw-response-capture-0.1.0",
+  "phase": 4,
+  "status": "local_verified_independent_raw_review_pending",
+  "sourceCommit": "4be29c094adb27fe897e72b3d841dcd73b5d0995",
+  "priorSdkTraceStaticReviewPassedSource": "a8d0ef2f1398c96affdd54bbdb7bb748efd0c97e",
+  "captureTrials": [
+    {
+      "outputRelativeRoot": ".venv/production-operation-read-07",
+      "receiptSha256": "6436ca1ec70adc74a9a3da6b4a54d0a04aaf57ab09f8f1e7ec5b24ce99ac72e3",
+      "receipt": {
+        "status": "operation_diagnostic_captured",
+        "sourceCommit": "c026dabede3e40bc010f895a431050ccdae47a9c",
+        "namespaceExitCode": 0,
+        "scenario": "read",
+        "localHttpRequestCount": 2,
+        "hostEventCount": 2,
+        "mockTurnCompleted": true,
+        "mockFinalMatched": true,
+        "sdkErrorType": null,
+        "localErrors": [],
+        "serverRequestStops": [],
+        "prohibitedFileExists": false,
+        "runtime": {
+          "exitCode": 0,
+          "forcedShutdown": false
+        },
+        "isolationChecks": {
+          ".git": true,
+          ".spec": true,
+          "tests": true,
+          "docs": true,
+          "evals/skills/results": true
+        },
+        "paidModelCalls": 0,
+        "experimentalRawEventsRequested": true,
+        "rawResponseItemNotificationCount": 6,
+        "sdkRawResponseItemNotificationCount": 6,
+        "eligibleForMeasurement": false
+      }
+    },
+    {
+      "outputRelativeRoot": ".venv/production-operation-read-08",
+      "receiptSha256": "985a5bdecffb4cd4408ea9b8a06ffe5173971a334328b68ee82d009e33fa0822",
+      "receipt": {
+        "status": "operation_diagnostic_captured",
+        "sourceCommit": "e23222215a79238a082e15e0751b331955f42aa0",
+        "namespaceExitCode": 0,
+        "scenario": "read",
+        "localHttpRequestCount": 2,
+        "hostEventCount": 2,
+        "mockTurnCompleted": true,
+        "mockFinalMatched": true,
+        "sdkErrorType": null,
+        "localErrors": [],
+        "serverRequestStops": [],
+        "prohibitedFileExists": false,
+        "runtime": {
+          "exitCode": 0,
+          "forcedShutdown": false
+        },
+        "isolationChecks": {
+          ".git": true,
+          ".spec": true,
+          "tests": true,
+          "docs": true,
+          "evals/skills/results": true
+        },
+        "paidModelCalls": 0,
+        "experimentalRawEventsRequested": true,
+        "rawResponseItemNotificationCount": 6,
+        "sdkRawResponseItemNotificationCount": 6,
+        "eligibleForMeasurement": false
+      }
+    }
+  ],
+  "verification": {
+    "outputRelativeRoot": ".venv/production-sdk-raw-response-verification-01",
+    "summarySha256": "49d4834042bc6b2b703d661856bf36d04dda771ebd77869b84ba55ca08f24cf5",
+    "result": {
+      "status": "raw_capture_artifacts_rechecked",
+      "phase": 4,
+      "sourceCommit": "4be29c094adb27fe897e72b3d841dcd73b5d0995",
+      "capture": {
+        "sourceCommit": "e23222215a79238a082e15e0751b331955f42aa0",
+        "receiptSha256": "985a5bdecffb4cd4408ea9b8a06ffe5173971a334328b68ee82d009e33fa0822",
+        "snapshotResourceCount": 71,
+        "rawItemCount": 6,
+        "rawCompletedCount": 2,
+        "sdkRawPayloadsMatchOriginalRpc": true,
+        "sdkSideFormat": "JSONL",
+        "sdkDoesNotDeliverOuterTimestamp": true,
+        "rawNotificationsValueSha256": "733efd072a24de7a753183a9ccbcfbef6421df3e34458c907e790cc32a93afd2",
+        "parentLinks": {
+          "status": "scripted_parent_cell_child_ids_matched",
+          "scope": "one-scripted-exec-two-mcp-calls",
+          "parentCallId": "probe-call",
+          "cellId": "1",
+          "nativeChildIds": [
+            "exec-3c2683c7-db58-4906-839e-a6cb6bdc69fe",
+            "exec-e162f9cd-a4e1-4d31-b4b1-0b790ece17a4"
+          ],
+          "traceEventCount": 19,
+          "traceValueSha256": "97a35665cd8393239056acd209433ac63909518a17d7843767f3a4713ddff073",
+          "telemetryTruncatedPreviewCallIds": [
+            "exec-3c2683c7-db58-4906-839e-a6cb6bdc69fe",
+            "exec-e162f9cd-a4e1-4d31-b4b1-0b790ece17a4",
+            "probe-call"
+          ],
+          "certifiesTelemetryOutputBodies": false,
+          "certifiesMultipleOrYieldedCells": false,
+          "eligibleForMeasurement": false
+        },
+        "existingSdkDiagnosticStatus": "stopped_unknown_SDK_thread_params",
+        "certifiesAllNativeLifecycle": false,
+        "rawItemsAreOriginalSseBytes": false,
+        "eligibleForMeasurement": false,
+        "certifiesNativeProvider": false,
+        "certifiesSkillGate": false
+      },
+      "previousCapture": {
+        "sourceCommit": "c026dabede3e40bc010f895a431050ccdae47a9c",
+        "receiptSha256": "6436ca1ec70adc74a9a3da6b4a54d0a04aaf57ab09f8f1e7ec5b24ce99ac72e3",
+        "snapshotResourceCount": 71,
+        "rawItemCount": 6,
+        "rawCompletedCount": 2,
+        "sdkRawPayloadsMatchOriginalRpc": true,
+        "sdkSideFormat": "pretty-multiple-JSON-documents",
+        "sdkDoesNotDeliverOuterTimestamp": true,
+        "rawNotificationsValueSha256": "a600230d948023d07ac4e59926dbb8084ba08bae186aa10af513f86845d441f9",
+        "parentLinks": {
+          "status": "scripted_parent_cell_child_ids_matched",
+          "scope": "one-scripted-exec-two-mcp-calls",
+          "parentCallId": "probe-call",
+          "cellId": "1",
+          "nativeChildIds": [
+            "exec-6dfb7d08-3153-4a51-93f8-9b4dd15aa7e8",
+            "exec-65083e2a-7de0-4e08-9693-bd0415de5dbc"
+          ],
+          "traceEventCount": 19,
+          "traceValueSha256": "107668f5b873b34d15f405d628d90d90ddc8bae0542848de349b087685c2208b",
+          "telemetryTruncatedPreviewCallIds": [
+            "exec-6dfb7d08-3153-4a51-93f8-9b4dd15aa7e8",
+            "exec-65083e2a-7de0-4e08-9693-bd0415de5dbc",
+            "probe-call"
+          ],
+          "certifiesTelemetryOutputBodies": false,
+          "certifiesMultipleOrYieldedCells": false,
+          "eligibleForMeasurement": false
+        },
+        "existingSdkDiagnosticStatus": "stopped_unknown_SDK_thread_params",
+        "certifiesAllNativeLifecycle": false,
+        "rawItemsAreOriginalSseBytes": false,
+        "eligibleForMeasurement": false,
+        "certifiesNativeProvider": false,
+        "certifiesSkillGate": false
+      },
+      "newMockTrialsDuringVerification": 0,
+      "paidModelCalls": 0,
+      "eligibleForMeasurement": false,
+      "phaseComplete": false,
+      "tests": {
+        "count": 465,
+        "seconds": 61.858,
+        "exitCode": 0,
+        "command": [
+          "uv",
+          "--cache-dir",
+          "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+          "run",
+          "--offline",
+          "--project",
+          "plugins/bitz-core",
+          "--with",
+          "jsonschema==4.23.0",
+          "python",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests/skills",
+          "-p",
+          "test_*.py"
+        ],
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "4294f872220db7635774cdb6483e9b2e24940caab9886dbb1a4abdff88d742dd"
+      }
+    }
+  },
+  "pendingReview": {
+    "status": "prepared_not_invoked",
+    "sourceCommit": "4be29c094adb27fe897e72b3d841dcd73b5d0995",
+    "contractPath": "evals/skills/routing/sdk-raw-response-review-v0.1.json",
+    "outputRelativeRoot": ".venv/sdk-raw-response-independent-review-01",
+    "destination": "OpenAI Codex CLI / gpt-6.1-sol",
+    "maximumInvocations": 1,
+    "actualInvocations": 0,
+    "automaticRetries": 0,
+    "additionalDelegation": 0,
+    "primaryModelTrajectories": 0,
+    "payloadFiles": [
+      {
+        "path": "evals/skills/routing/production_operation_probe.py",
+        "bytes": 18409,
+        "sha256": "2efeed657e25562761ed738fec639410066325cfb85eab6a631b97f659c0f4b4"
+      },
+      {
+        "path": "tests/skills/test_production_operation_probe.py",
+        "bytes": 11523,
+        "sha256": "be89916c342e02e7ea8516ed21c6e3534a4904971243ebb03eed603bf4be1029"
+      },
+      {
+        "path": "evals/skills/routing/production-operation-probe-v0.7.json",
+        "bytes": 3415,
+        "sha256": "a4591b0315ca2474fa3ca92f17ffd0bb951280bf649fd68b4520a3484e52722f"
+      },
+      {
+        "path": "evals/skills/routing/production-operation-probe-v0.8.json",
+        "bytes": 4004,
+        "sha256": "5cb8d0848cc001bfa3c0297dd24feba33584b0aa44c2a754ff55f8c69b073f1f"
+      },
+      {
+        "path": "evals/skills/routing/production_sdk_probe.py",
+        "bytes": 16846,
+        "sha256": "29b0d201bdca9796c9fcbcc6c2b5de282dd9bfc2a579ea7d430d0efa15fb11ae"
+      },
+      {
+        "path": "evals/skills/routing/production_cli_probe.py",
+        "bytes": 14738,
+        "sha256": "cc64e4fdff0612e0e72072b88b78993e6128a63d0df7aa890b55e939e6757fe7"
+      },
+      {
+        "path": "evals/skills/routing/source_guard.py",
+        "bytes": 3044,
+        "sha256": "553bfe5c3c2a1aa33b44551da910a4f80c1ba86ea69b13dcedcedf22d1444489"
+      },
+      {
+        "path": "evals/skills/results/2026-10-09-sdk-raw-response-capture/verify-artifacts.py",
+        "bytes": 12568,
+        "sha256": "618c30974a7605c5f2192076f953ef7f57c9af71437e3e66d8f63ae69547db06"
+      }
+    ],
+    "payloadBytes": 84547,
+    "additionalPayload": "固定の静的検分指示・限定条件・確定source ID・行番号/hash・公開JSON応答schema（922 bytes）",
+    "sendsRawLogsOrActualNotifications": false
+  },
+  "newRawMockTrials": 2,
+  "newLocalMockHttpRequests": 4,
+  "rawMockPaidModelCalls": 0,
+  "newRawCaptureIndependentReviewerSolInvocations": 0,
+  "priorSdkTraceIndependentReviewerSolInvocations": 18,
+  "independentRawCaptureReviewPassed": false,
+  "eligibleForMeasurement": false,
+  "certifiesExpectedBehavior": false,
+  "certifiesNativeProvider": false,
+  "certifiesSkillGate": false,
+  "phaseComplete": false
+}

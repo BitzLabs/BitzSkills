@@ -1373,3 +1373,22 @@ clean全460件は62.608s/OK/exit0、原hash/71資源Git/全対象19行/固定1ex
 次はSDK experimentalRawEventsの無課金捕捉候補。
 任意複数cell/待機、実provider、一次台帳統合、公開canary/本測定は残る。
 eligibleForMeasurement=false、Phase/Step/Gate完了・期待行動・native provider・telemetry本文完全性・全Skill Gateは未認定。
+
+#### Phase 4：SDK raw通知の無課金捕捉と独立検分準備（2026-10-09）
+
+Python SDK 0.160.1の公開dict入口でexperimentalRawEvents=trueを送り、固定readの局所模擬捕捉を2契約で実行した。
+各1試行/HTTP2/有料モデル0で、rawResponseItem6件とrawResponse completed2件がSDKへ配送された。
+最初のSDKログの複数JSON文書という制約を保持し、1行1JSONの修正版で別試行した。旧原bytesを改変しない。
+原RPC外側timestampを保持し、SDK method/paramsを完全照合する。raw call/outputとprovider、MCP本文とhost/native、
+71資源Git・原19対象行・固定親cellと2子IDも照合した。
+source `4be29c094adb27fe897e72b3d841dcd73b5d0995` のclean全465件は61.858s/OK/exit0。
+原記録の再照合も通過。新raw模擬2・局所HTTP計4・有料モデル0・新raw独立検分0。
+
+raw ResponseItemはCLI生成id/内部metadataと固定finalの型変換を含み、上流SSE bytesとは別に保存・検査する。
+全前置文脈・全native lifecycle・実provider・一次測定を認定しない。
+既存SDK交換診断が新実験paramsを未知として停止することを実行して確認した。
+新規捕捉の独立静的検分1回は未実施。前の具体的継続送信承認の6パスと異なる公開8パス/hash/84547 bytes/宛先を、
+`evals/skills/results/2026-10-09-sdk-raw-response-capture/` に有限1回/一次0/委譲0/retry0で準備した。
+原ログと実通知本文は送らない。確認後は独立SOLと親の原応答照合を優先する。
+raw監査接続、任意複数cell/待機、実provider、一次台帳統合、公開canary/本測定は残る。
+eligibleForMeasurement=false、Phase/Step/Gate完了・期待行動・native provider・全Skill Gateは未認定。
