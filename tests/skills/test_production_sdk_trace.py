@@ -60,6 +60,46 @@ class ProductionSdkTraceTests(unittest.TestCase):
                     'certifiesBehavior', 'certifiesSkillGate'):
             self.assertIs(result[key], False)
 
+    def test_active_reasoning_increments_do_not_certify_measurement(self):
+        frames = self.frames[:-3] + self.original.reasoning_events() + self.frames[-3:]
+        result = self.run_diagnostic(received=frames)
+        self.assertEqual(result['status'], 'sdk_child_trace_diagnostic_passed')
+        self.assertIs(result['eligibleForMeasurement'], False)
+
+    def test_reasoning_increments_before_start_after_completion_or_after_turn_are_rejected(self):
+        reason = self.original.reasoning_events()
+        for delta in reason[1:4]:
+            for frames in (self.frames[:-3] + [delta] + reason + self.frames[-3:],
+                           self.frames[:-3] + reason + [delta] + self.frames[-3:],
+                           self.frames[:-3] + reason + self.frames[-3:] + [delta]):
+                with self.subTest(method=delta['method']), self.assertRaisesRegex(ValueError, 'native increment outside'):
+                    self.run_diagnostic(received=frames)
+
+    def test_reasoning_increments_cannot_target_a_phantom_or_agent_item(self):
+        reason = self.original.reasoning_events()
+        for ident in ('phantom', 'final'):
+            for delta in reason[1:4]:
+                changed = copy.deepcopy(delta)
+                changed['params']['itemId'] = ident
+                frames = self.frames[:-3] + reason[:1] + [changed] + reason[1:] + self.frames[-3:]
+                with self.subTest(ident=ident, method=delta['method']), self.assertRaisesRegex(ValueError, 'native increment outside active item'):
+                    self.run_diagnostic(received=frames)
+
+    def test_reasoning_increment_missing_indices_boolean_indices_and_nontext_are_rejected(self):
+        reason = self.original.reasoning_events()
+        for delta in reason[1:4]:
+            changed = copy.deepcopy(delta)
+            index = 'contentIndex' if 'contentIndex' in changed['params'] else 'summaryIndex'
+            changes = [(index, False), (index, -1), (index, 0.0), ('extra', True), ('missing', None)]
+            if 'delta' in delta['params']: changes.append(('delta', None))
+            for key, value in changes:
+                changed = copy.deepcopy(delta)
+                if key == 'missing': changed['params'].pop(index)
+                else: changed['params'][key] = value
+                frames = self.frames[:-3] + reason[:1] + [changed] + reason[1:] + self.frames[-3:]
+                with self.subTest(method=delta['method'], key=key), self.assertRaisesRegex(ValueError, 'native increment'):
+                    self.run_diagnostic(received=frames)
+
     def test_inputs_and_raw_evidence_are_not_mutated(self):
         before = copy.deepcopy((self.sent, self.frames))
         normalized = sdk.normalized(self.sent, self.frames)

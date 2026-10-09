@@ -75,3 +75,16 @@ diagnose_exchangeが通す条件を実行して再現した。原review_findings
 SDK通知全体で存在する外側threadId/turnIdを確定IDへ照合し、共通native監査でも
 thread開始・turn開始・完了の外側ID矛盾を拒否する。空/nullの追加指示、開始時の矛盾も回帰へ追加する。
 局所通過を独立解消判定・Phase完了・一次評価・任意provider認定の代替にしない。
+
+## 7回目の静的検分からの是正候補
+
+同じ6ファイルの公開修正版/OpenAI gpt-6.1-sol/各有限1回の送信と再検分を、ユーザーが今回と以後について承認した。
+source `220df0dde378cae10ffc7dc917d84cf1bc5f8f1b` の別SOLはP2=1。
+親が同sourceで、turn終了後の未知reasoning IDへのtextDeltaを診断が通す条件を実行して再現した。
+原review_findings、旧消費1/残0、以前の送信拒否記録を保持する。
+
+固定SDK0.160.1の公式generated/v2_all.pyで3種類のreasoning増分とagent増分の必須フィールドを確認した。
+共通native監査で、同じturnの開始済み・未完了の適切な型のアイテムにだけ増分を許可する。
+未知ID・開始前・完了後・turn終了後・別型ID・欠落/未知字段・非文字列delta・非整数/負indexを拒否する。
+正しいreasoning開始→増分→完了も回帰に含める。reasoning本文の意味や一次測定を認定しない。
+同じ6ファイル・同じ宛先の別有限1回で修正版を検分し、親が原結果を再照合する。

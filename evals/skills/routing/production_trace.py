@@ -20,8 +20,13 @@ ROOT = Path(__file__).resolve().parents[3]
 SERVER = 'production-routing'
 PATHS = {'bitz-core': 'operate', 'sdd-plan': 'plan', 'sdd-implement': 'implement',
          'sdd-converge': 'converge', 'quality-plan': 'plan', 'quality-review': 'review'}
-NEUTRAL = {'thread/tokenUsage/updated', 'thread/status/changed', 'item/agentMessage/delta',
-           'item/reasoning/textDelta', 'item/reasoning/summaryTextDelta', 'item/reasoning/summaryPartAdded'}
+NEUTRAL = {'thread/tokenUsage/updated', 'thread/status/changed'}
+INCREMENTS = {
+    'item/agentMessage/delta': ('agentMessage', None, True),
+    'item/reasoning/textDelta': ('reasoning', 'contentIndex', True),
+    'item/reasoning/summaryTextDelta': ('reasoning', 'summaryIndex', True),
+    'item/reasoning/summaryPartAdded': ('reasoning', 'summaryIndex', False),
+}
 
 
 def require(condition: bool, message: str) -> None:
@@ -147,6 +152,18 @@ def completed_items(frames: list) -> list:
             continue
         if 'turnId' in params:
             require(turn is not None and params['turnId'] == turn, 'native outer turn mismatch')
+        if method in INCREMENTS:
+            require(turn is not None and not finished, 'native increment outside turn')
+            kind, index_key, has_delta = INCREMENTS[method]
+            fields = {'threadId', 'turnId', 'itemId'} | ({index_key} if index_key else set()) | ({'delta'} if has_delta else set())
+            require(set(params) == fields, 'native increment fields')
+            ident = params['itemId']
+            require(isinstance(ident, str) and bool(ident) and ident in started and ident not in completed and
+                    started[ident][0] == kind, 'native increment outside active item')
+            require(not has_delta or isinstance(params['delta'], str), 'native increment text')
+            if index_key:
+                require(type(params[index_key]) is int and params[index_key] >= 0, 'native increment index')
+            continue
         if method in NEUTRAL:
             if 'turnId' in params:
                 require(turn is not None and params['turnId'] == turn, 'neutral turn mismatch')

@@ -68,6 +68,61 @@ class ProductionTraceTests(unittest.TestCase):
         args.update(changes)
         return audit.audit(**args)
 
+    @staticmethod
+    def reasoning_events():
+        def frame(method, **params):
+            return {'method': method, 'params': {'threadId': 't', 'turnId': 'u', **params}}
+        item = {'type': 'reasoning', 'id': 'reason', 'summary': [], 'content': []}
+        return [frame('item/started', item=item),
+                frame('item/reasoning/summaryPartAdded', itemId='reason', summaryIndex=0),
+                frame('item/reasoning/summaryTextDelta', itemId='reason', summaryIndex=0, delta='公開の要約'),
+                frame('item/reasoning/textDelta', itemId='reason', contentIndex=0, delta='公開の合成内容'),
+                frame('item/completed', item={**item, 'summary': ['公開の要約'], 'content': ['公開の合成内容']})]
+
+    def test_active_reasoning_increments_are_accepted(self):
+        frames = self.frames[:-3] + self.reasoning_events() + self.frames[-3:]
+        self.assertEqual(self.run_audit(frames=frames)['status'], 'measurement_integrity_passed')
+
+    def test_reasoning_increments_require_an_active_item_and_unfinished_turn(self):
+        reason = self.reasoning_events()
+        for delta in reason[1:4]:
+            for placement in ('before', 'after', 'after-turn', 'unknown'):
+                if placement == 'before': frames = self.frames[:-3] + [delta] + reason + self.frames[-3:]
+                if placement == 'after': frames = self.frames[:-3] + reason + [delta] + self.frames[-3:]
+                if placement == 'after-turn': frames = self.frames[:-3] + reason + self.frames[-3:] + [delta]
+                if placement == 'unknown':
+                    changed = copy.deepcopy(delta)
+                    changed['params']['itemId'] = 'phantom'
+                    frames = self.frames[:-3] + reason[:1] + [changed] + reason[1:] + self.frames[-3:]
+                with self.subTest(method=delta['method'], placement=placement), self.assertRaisesRegex(ValueError, 'native increment outside'):
+                    self.run_audit(frames=frames)
+
+    def test_reasoning_increment_fields_types_and_indices_are_checked(self):
+        reason = self.reasoning_events()
+        for delta in reason[1:4]:
+            index = 'contentIndex' if 'contentIndex' in delta['params'] else 'summaryIndex'
+            changes = [('missing', None), ('extra', True), (index, False), (index, -1), (index, 0.0)]
+            if 'delta' in delta['params']: changes.append(('delta', None))
+            for key, value in changes:
+                changed = copy.deepcopy(delta)
+                if key == 'missing': changed['params'].pop(index)
+                else: changed['params'][key] = value
+                frames = self.frames[:-3] + reason[:1] + [changed] + reason[1:] + self.frames[-3:]
+                with self.subTest(method=delta['method'], key=key, value=value), self.assertRaisesRegex(ValueError, 'native increment'):
+                    self.run_audit(frames=frames)
+
+    def test_agent_deltas_cannot_target_unknown_completed_or_reasoning_items(self):
+        delta = {'method': 'item/agentMessage/delta', 'params': {
+            'threadId': 't', 'turnId': 'u', 'itemId': 'final', 'delta': '合成増分'}}
+        reason = self.reasoning_events()
+        wrong_kind = copy.deepcopy(delta)
+        wrong_kind['params']['itemId'] = 'reason'
+        for frames in (self.frames[:-3] + [delta] + self.frames[-3:],
+                       self.frames[:-1] + [delta] + self.frames[-1:], self.frames + [delta],
+                       self.frames[:-3] + reason[:1] + [wrong_kind] + reason[1:] + self.frames[-3:]):
+            with self.assertRaisesRegex(ValueError, 'native increment outside'):
+                self.run_audit(frames=frames)
+
     def test_only_request_and_context_are_projected(self):
         case = {'prompt': '公開の合成要求', 'context': ['公開の文脈'], 'caseId': 'hidden',
                 'expected': {'reason': 'SECRET_EXPECTED'}, 'category': 'SECRET_CATEGORY', 'control': 'SECRET_CONTROL'}
