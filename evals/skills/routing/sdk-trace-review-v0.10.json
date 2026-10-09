@@ -1,0 +1,63 @@
+{
+  "version": "sdk-trace-review-0.10.0",
+  "phase": 4,
+  "scope": "public-sdk-trace-component-static-review-only",
+  "model": "gpt-6.1-sol",
+  "timeoutSeconds": 300,
+  "maximumInvocations": 1,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 1,
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "outputRelativeRoot": ".venv/sdk-trace-independent-review-10",
+  "payloadFiles": [
+    "evals/skills/routing/production_sdk_trace.py",
+    "evals/skills/routing/production_trace.py",
+    "tests/skills/test_production_sdk_trace.py",
+    "evals/skills/results/2026-10-08-sdk-trace-connection/verify-parent-links.py",
+    "evals/skills/routing/sdk-trace-review-remediation.md",
+    "tests/skills/test_production_trace.py"
+  ],
+  "sourceFiles": [
+    "evals/skills/routing/production_sdk_trace.py",
+    "evals/skills/routing/production_trace.py",
+    "tests/skills/test_production_sdk_trace.py",
+    "evals/skills/results/2026-10-08-sdk-trace-connection/verify-parent-links.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/sdk-trace-review-v0.1.json",
+    "evals/skills/routing/sdk-trace-review.schema.json",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "evals/skills/routing/sdk-trace-review-v0.2.json",
+    "evals/skills/routing/sdk-trace-review-remediation.md",
+    "evals/skills/routing/sdk-trace-review-v0.3.json",
+    "evals/skills/routing/sdk-trace-review-v0.4.json",
+    "evals/skills/routing/sdk-trace-review-v0.5.json",
+    "tests/skills/test_production_trace.py",
+    "evals/skills/routing/sdk-trace-review-v0.6.json",
+    "evals/skills/routing/sdk-trace-review-v0.7.json",
+    "evals/skills/routing/sdk-trace-review-v0.8.json",
+    "evals/skills/routing/sdk-trace-review-v0.9.json",
+    "evals/skills/routing/sdk-trace-review-v0.10.json"
+  ],
+  "constraints": [
+    "親が最初の入力読取り前と呼出し前後に確定sourceを照合して送信する。検分者が自らGitを読んだ検分とは扱わない。",
+    "モデルへ渡すのは列挙した公開コードの確定bytesだけ。保持入力・期待値・過去の作業者判断を渡さない。",
+    "単一の独立CLI文脈で静的検分する。追加モデル・委譲・tool実行・私的領域読取り・自動retryは禁止。",
+    "親子IDの固定1exec診断を任意複数/待機/実provider/一次採点の認定へ拡張していないか確認する。",
+    "独立静的検分だけ。試験実行・全証拠検分・Phase完了を認定しない。原stdio・source・入力hash・実exitを保持する。"
+  ],
+  "previousFailure": {
+    "sourceCommit": "7ce4113a7f4a2170d1222d79e436ccc829fdee15",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-09",
+    "receiptSha256": "018074f99b11bfa01e89ab4b866f992af62d4db8f7b28dc44b61aa031c1a51d7",
+    "responseSha256": "f63172603bf78ee3350d9f5f7ead3110f932110502f66a4d93085a3316e5afde",
+    "oldInvocationsConsumed": 1,
+    "oldRemaining": 0,
+    "findings": {
+      "P2": 0,
+      "P3": 1
+    },
+    "reason": "Empty SDK userMessage ID reproduced by parent before retained projection"
+  }
+}

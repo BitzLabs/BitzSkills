@@ -66,6 +66,15 @@ class ProductionSdkTraceTests(unittest.TestCase):
         self.assertEqual(result['status'], 'sdk_child_trace_diagnostic_passed')
         self.assertIs(result['eligibleForMeasurement'], False)
 
+    def test_empty_user_message_id_is_rejected_before_input_projection(self):
+        frames = copy.deepcopy(self.frames)
+        for frame in frames:
+            item = frame.get('params', {}).get('item', {})
+            if item.get('type') == 'userMessage':
+                item['id'] = ''
+        with self.assertRaisesRegex(ValueError, 'SDK item required'):
+            self.run_diagnostic(received=frames)
+
     def test_reasoning_increment_and_completed_body_drift_is_rejected(self):
         for index in (2, 3):
             reason = self.original.reasoning_events()

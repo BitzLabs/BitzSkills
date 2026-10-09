@@ -145,7 +145,7 @@ def normalized(sent: list, received: list, *, allowed_warnings: tuple[str, ...] 
                     require(type(params[key]) is int and params[key] >= 0, 'SDK item timestamp')
                     params.pop(key)
             item = params['item']
-            require(isinstance(item, dict) and isinstance(item.get('id'), str), 'SDK item required')
+            require(isinstance(item, dict) and isinstance(item.get('id'), str) and bool(item['id']), 'SDK item required')
             require(params['threadId'] == thread and params['turnId'] == turn, 'SDK item context mismatch')
             ident = item['id']
             if item.get('type') == 'userMessage':
