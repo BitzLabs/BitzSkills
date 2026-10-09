@@ -252,3 +252,17 @@ CLI exit0、P2が1件。親が原stdio/schema/最終本文/hash/歴史Gitと前/
 `../results/2026-10-09-sdk-raw-response-capture/public-remediation-code-transmission-approval-request.md` で確認待ち。
 追加送信/起動/予約0。局所修正を独立指摘解消済み・Phase/Gate完了と判定しない。
 後続のraw監査接続、任意複数cell/待機、実provider、一次台帳統合、公開canary/本測定は残る。
+
+### Phase 4：原証拠照合器の終端検査の是正（2026-10-10）
+
+承認された同8公開パスの追加1回をv0.2/source1775038で実行し、CLI exit0/P2が1件となった。
+親が原stdio/schema/応答/hash/usage/歴史Git/前・起動・後guardと予約を再照合した。
+P2はcheck_capture自身に成功フラグと原RPC終端の再計算がない点。
+固定hashを突破する実ログ改変とは区別し、receipt検証後の合成境界入力で旧関数がfalseフラグを受理することを再現した。
+check_terminalを接続し、strict trueフラグ、開始RPC要求ID→応答、thread/turn、turn/started、
+final→完了順とnull errorを原RPCから検査する。旧捕捉にも同じ判定を適用し、原ファイルを保持する。
+確定ref f8e27f2のclean全469件/62.154s/OK/exit0、原捕捉2件と記録の再照合も通過した。
+今回追加SOL1/input33566/output976/reasoning496、raw系列累計2。新mock/局所HTTP0・一次0・retry0。
+v0.3の同8公開パス/95935 bytesの追加1回と以後同パス修正版の同条件送信を
+`../results/2026-10-09-sdk-raw-response-capture/public-verifier-remediation-code-transmission-approval-request.md` で確認待ち。
+追加送信/起動/予約0。指摘解消済み・Phase/Gate完了とは判定しない。

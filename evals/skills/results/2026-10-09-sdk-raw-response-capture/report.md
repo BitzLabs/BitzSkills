@@ -145,3 +145,15 @@ check_terminalをcheck_captureへ接続し、成功フラグstrict true、開始
 raw通知のcontextもこの開始RPCから得たIDへ相関する。新旧捕捉へ同じ検査を適用し、原ファイルは保持する。
 偽フラグ、他context、失敗開始、非null error、逆順、欠落/重複応答、bool/重複要求IDの回帰を追加した。
 20件/0.104s/OK/exit0。是正後の新しい独立再検分は未実施であり、Phase/Gate完了には代用しない。
+
+最終確定ref `f8e27f2ddf7d003df7f27236b1059557368534d2` のclean全469件は62.154s/OK/exit0。
+新旧捕捉への修正判定・原bytesと歴史Git・前後同一guard・clean treeも通過した。
+原summary SHA256 `e04d33bbd2a7acd41a1d7e8388030381514bb2c861540af13a78ebf9b7b6a649`。
+新mock/局所HTTP/有料モデル0。raw系列の旧模擬2/HTTP4と独立SOL2を保持する。
+記録照合器で旧465試験、直前466試験、新469試験の原終端とhashを区別して検査する。
+
+[同8パスの修正版と継続送信範囲](public-verifier-remediation-code-transmission-approval-request.md)へ、
+今回v0.3/sourcef8e27f2/95935 bytes/OpenAI gpt-6.1-sol/独立1回/一次0/委譲0/retry0を固定した。
+同じ8公開パスの今後の修正版も同条件で送信する継続範囲を提示したが、まだ承認されていない。
+今回のv0.3は未送信・未起動・未予約、専用出力03は未作成。v0.2枠は消費済みで流用しない。
+raw監査接続・任意複数cell/待機・実provider・一次台帳・公開canary/本測定とPhase全体の認定は残る。

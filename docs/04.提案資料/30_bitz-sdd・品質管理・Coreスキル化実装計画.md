@@ -1409,3 +1409,17 @@ ID・completed状態・null error・固定final本文/phase・final→完了順�
 `evals/skills/results/2026-10-09-sdk-raw-response-capture/public-remediation-code-transmission-approval-request.md` で確認待ち。
 追加送信/起動/予約0。独立指摘解消済み・Phase/Step/Gate完了とは判定しない。
 raw監査接続、任意複数cell/待機、実provider、一次台帳統合、公開canary/本測定は残る。
+
+### Phase 4：原証拠照合器の終端検査の是正（2026-10-10）
+
+同8公開パスの追加1回が承認され、v0.2/source1775038のSOL静的検分はCLI exit0/P2が1件。
+親が原応答・stdio/schema/hash/usage/歴史Git、前/起動/後guardと有限予約を再照合した。
+check_captureへ成功フラグと原RPC終端の再計算が接続されていない点を、receipt検証後の合成境界入力で再現した。
+固定receipt/artifact hashを突破する実ログ改変とは主張しない。
+strict trueフラグ、開始RPC要求ID→応答、開始thread/turn、turn/started、final→完了順とnull errorを
+check_capture自身で検査し、原保存物を保持したまま旧捕捉にも適用した。
+確定ref `f8e27f2ddf7d003df7f27236b1059557368534d2` のclean全469件/62.154s/OK/exit0と原捕捉・記録照合も通過した。
+今回追加SOL1/input33566/output976/reasoning496、raw系列累計2。新mock/局所HTTP0・一次0・retry0。
+v0.3の同8公開パス/95935 bytesの追加1回と以後同パス修正版の同条件送信を
+`evals/skills/results/2026-10-09-sdk-raw-response-capture/public-verifier-remediation-code-transmission-approval-request.md` で確認待ち。
+追加送信/起動/予約0。独立指摘解消済み・Phase/Step/Gate完了とは判定しない。

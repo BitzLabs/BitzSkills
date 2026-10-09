@@ -295,6 +295,19 @@
     "reproductionScope": "固定原ログを改変せず、receipt検証後の関数境界へ成功フラグfalseの合成値を渡し、旧check_captureが受理することを再現した。固定hashを突破した実ログ改変とは主張しない。",
     "correctedChecks": "成功フラグstrict trueと、開始RPC要求ID→応答ID、開始thread/turn、turn/started、final→完了順、null errorを原RPCから再計算する。旧捕捉にも適用する。",
     "focusedTests": {"count": 20, "seconds": 0.104, "exitCode": 0},
+    "verification": {
+      "outputRelativeRoot": ".venv/production-sdk-raw-response-verification-04",
+      "summarySha256": "e04d33bbd2a7acd41a1d7e8388030381514bb2c861540af13a78ebf9b7b6a649",
+      "sourceCommit": "f8e27f2ddf7d003df7f27236b1059557368534d2",
+      "tests": {
+        "count": 469,
+        "seconds": 62.154,
+        "exitCode": 0,
+        "command": ["uv", "--cache-dir", "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache", "run", "--offline", "--project", "plugins/bitz-core", "--with", "jsonschema==4.23.0", "python", "-B", "-m", "unittest", "discover", "-s", "tests/skills", "-p", "test_*.py"],
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "bba6a61162b42c73c834ad773360c5a77998b31e8fedddf5977509800a61ee8d"
+      }
+    },
     "independentRecheckPassed": false,
     "newMockTrials": 0,
     "newLocalHttpRequests": 0,
@@ -317,6 +330,21 @@
     "automaticRetries": 0,
     "primaryModelTrajectories": 0,
     "additionalDelegation": 0
+  },
+  "nextReview": {
+    "status": "awaiting_explicit_additional_transmission_and_same_eight_paths_continuation_approval",
+    "sourceCommit": "f8e27f2ddf7d003df7f27236b1059557368534d2",
+    "contractPath": "evals/skills/routing/sdk-raw-response-review-v0.3.json",
+    "outputRelativeRoot": ".venv/sdk-raw-response-independent-review-03",
+    "approvalRequest": "public-verifier-remediation-code-transmission-approval-request.md",
+    "payloadFilesCount": 8,
+    "payloadBytes": 95935,
+    "maximumInvocations": 1,
+    "actualInvocations": 0,
+    "automaticRetries": 0,
+    "primaryModelTrajectories": 0,
+    "additionalDelegation": 0,
+    "sameEightPathsContinuationAuthorized": false
   },
   "newRawMockTrials": 2,
   "newLocalMockHttpRequests": 4,
