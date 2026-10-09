@@ -88,3 +88,15 @@ source `220df0dde378cae10ffc7dc917d84cf1bc5f8f1b` の別SOLはP2=1。
 未知ID・開始前・完了後・turn終了後・別型ID・欠落/未知字段・非文字列delta・非整数/負indexを拒否する。
 正しいreasoning開始→増分→完了も回帰に含める。reasoning本文の意味や一次測定を認定しない。
 同じ6ファイル・同じ宛先の別有限1回で修正版を検分し、親が原結果を再照合する。
+
+## 8回目の静的検分からの是正候補
+
+source `8b409f5c9e549da732f36cb7e6e41ce80a5ff20c` の同6ファイルの別SOLはP2=1。
+親が同sourceで、reasoning textDeltaだけを改変し、完了contentを変えない矛盾が診断通過する条件を再現した。
+原review_findings、消費1/残0を保持する。
+
+開始時のcontent/summaryを原アイテムと共有せずコピーし、indexごとの増分を累積して完了本文へ型を保って照合する。
+summaryの新規partは末尾追加だけ、textDeltaの新規contentは次のindexだけを許容し、穴・重複partを拒否する。
+SDK0.160.1のnullable/省略本文を勝手に空配列へ補完せず、開始本文が不明なchannelの増分は停止する。
+既存本文または増分があるchannelを照合し、増分を送らない空の開始→全文完了という既存の合成形式は保持する。
+共通agent増分にも本文照合を適用する。意味の採点・期待行動・一次測定・Phase完了を認定しない。

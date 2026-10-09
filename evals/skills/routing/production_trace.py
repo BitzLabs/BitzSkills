@@ -56,6 +56,14 @@ def json_equal(left, right) -> bool:
     return encoded(left) == encoded(right)
 
 
+def reasoning_bodies(item: dict) -> dict:
+    """SDK0.160.1の省略/nullまたは文字列配列を保ち、原アイテムと状態を共有しない。"""
+    values = {name: item.get(name) for name in ('content', 'summary')}
+    require(all(v is None or isinstance(v, list) and all(isinstance(s, str) for s in v)
+                for v in values.values()), 'native reasoning body fields')
+    return {name: list(value) if value is not None else None for name, value in values.items()}
+
+
 def project_case(case: dict) -> dict:
     """caseId/expected/category/control等を列挙せず、要求と文字列contextだけを投影する。"""
     require(isinstance(case, dict), 'case object required')
@@ -125,6 +133,7 @@ def completed_items(frames: list) -> list:
     responses = {}
     started = {}
     completed = set()
+    bodies, streamed = {}, {}
     items = []
     for frame in frames:
         require(isinstance(frame, dict) and 'error' not in frame, 'native error frame')
@@ -163,6 +172,22 @@ def completed_items(frames: list) -> list:
             require(not has_delta or isinstance(params['delta'], str), 'native increment text')
             if index_key:
                 require(type(params[index_key]) is int and params[index_key] >= 0, 'native increment index')
+            if kind == 'agentMessage':
+                bodies[ident]['text'] += params['delta']
+                streamed[ident].add('text')
+            else:
+                field = 'content' if index_key == 'contentIndex' else 'summary'
+                values, index = bodies[ident][field], params[index_key]
+                require(isinstance(values, list), 'native reasoning start body unavailable')
+                if not has_delta:
+                    require(index == len(values), 'native reasoning index lifecycle')
+                    values.append('')
+                else:
+                    if field == 'content' and index == len(values):
+                        values.append('')
+                    require(index < len(values), 'native reasoning index lifecycle')
+                    values[index] += params['delta']
+                streamed[ident].add(field)
             continue
         if method in NEUTRAL:
             if 'turnId' in params:
@@ -182,9 +207,12 @@ def completed_items(frames: list) -> list:
         if item['type'] == 'mcpToolCall':
             require(not final_started, 'tool after final response started')
         if item['type'] == 'agentMessage':
+            require(isinstance(item.get('text'), str), 'native message text required')
             require(item.get('phase') in {'commentary', 'final_answer'}, 'explicit message phase required')
             if item['phase'] == 'commentary':
                 require(not final_started, 'commentary after final response started')
+        if item['type'] == 'reasoning':
+            reasoning = reasoning_bodies(item)
         if method == 'item/started':
             require(ident not in started and ident not in completed, 'item start repeated')
             if item['type'] == 'agentMessage' and item['phase'] == 'final_answer':
@@ -193,10 +221,17 @@ def completed_items(frames: list) -> list:
                 final_started = True
             if item['type'] == 'mcpToolCall':
                 require(item.get('status') == 'inProgress' and item.get('result') is None and item.get('error') is None, 'native tool start state')
+            elif item['type'] in {'reasoning', 'agentMessage'}:
+                bodies[ident] = reasoning if item['type'] == 'reasoning' else {'text': item['text']}
+                streamed[ident] = {name for name, value in bodies[ident].items() if value}
             started[ident] = (item['type'], item.get('server'), item.get('tool'), item.get('arguments'), item.get('phase'))
         else:
             require(ident in started and ident not in completed, 'item completion without unique start')
             require(json_equal(started[ident], (item['type'], item.get('server'), item.get('tool'), item.get('arguments'), item.get('phase'))), 'item binding drift')
+            if item['type'] in {'reasoning', 'agentMessage'}:
+                final_body = reasoning if item['type'] == 'reasoning' else {'text': item['text']}
+                require(all(json_equal(final_body[name], bodies[ident][name]) for name in streamed[ident]),
+                        'native streamed body mismatch')
             if item['type'] == 'agentMessage' and item['phase'] == 'final_answer':
                 require(final_started and not final_completed, 'multiple final response completions')
                 final_completed = True

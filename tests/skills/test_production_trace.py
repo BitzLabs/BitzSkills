@@ -83,6 +83,67 @@ class ProductionTraceTests(unittest.TestCase):
         frames = self.frames[:-3] + self.reasoning_events() + self.frames[-3:]
         self.assertEqual(self.run_audit(frames=frames)['status'], 'measurement_integrity_passed')
 
+    @staticmethod
+    def prefixed_reasoning_events():
+        def frame(method, **params):
+            return {'method': method, 'params': {'threadId': 't', 'turnId': 'u', **params}}
+        item = {'type': 'reasoning', 'id': 'reason', 'summary': ['既存要約'], 'content': ['既存本文']}
+        return [frame('item/started', item=item),
+                frame('item/reasoning/summaryTextDelta', itemId='reason', summaryIndex=0, delta='追記'),
+                frame('item/reasoning/textDelta', itemId='reason', contentIndex=0, delta='追記'),
+                frame('item/reasoning/summaryPartAdded', itemId='reason', summaryIndex=1),
+                frame('item/reasoning/summaryTextDelta', itemId='reason', summaryIndex=1, delta='新規要約'),
+                frame('item/reasoning/textDelta', itemId='reason', contentIndex=1, delta='新規本文'),
+                frame('item/completed', item={**item, 'summary': ['既存要約追記', '新規要約'],
+                                             'content': ['既存本文追記', '新規本文']})]
+
+    def test_reasoning_initial_text_and_multiple_indices_are_preserved(self):
+        before = copy.deepcopy(self.prefixed_reasoning_events())
+        frames = self.frames[:-3] + before + self.frames[-3:]
+        self.assertEqual(self.run_audit(frames=frames)['status'], 'measurement_integrity_passed')
+        self.assertEqual(before, self.prefixed_reasoning_events())
+
+    def test_reasoning_deltas_must_match_completed_content_and_summary(self):
+        for index in (2, 3):
+            reason = self.reasoning_events()
+            reason[index]['params']['delta'] = '改変した本文'
+            with self.subTest(index=index), self.assertRaisesRegex(ValueError, 'native streamed body mismatch'):
+                self.run_audit(frames=self.frames[:-3] + reason + self.frames[-3:])
+
+    def test_reasoning_indices_cannot_skip_or_recreate_parts(self):
+        for index in (1, 2, 3):
+            reason = self.reasoning_events()
+            key = 'contentIndex' if index == 3 else 'summaryIndex'
+            reason[index]['params'][key] = 2
+            with self.subTest(index=index), self.assertRaisesRegex(ValueError, 'native reasoning index lifecycle'):
+                self.run_audit(frames=self.frames[:-3] + reason + self.frames[-3:])
+        reason = self.reasoning_events()
+        with self.assertRaisesRegex(ValueError, 'native reasoning index lifecycle'):
+            self.run_audit(frames=self.frames[:-3] + reason[:2] + reason[1:] + self.frames[-3:])
+
+    def test_reasoning_body_types_missing_completed_body_and_hidden_start_are_checked(self):
+        for key in ('content', 'summary'):
+            for value in (None, [1], '本文'):
+                reason = self.reasoning_events()
+                reason[-1]['params']['item'][key] = value
+                with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                    self.run_audit(frames=self.frames[:-3] + reason + self.frames[-3:])
+            reason = self.reasoning_events()
+            reason[0]['params']['item'][key] = None
+            with self.subTest(key=key), self.assertRaisesRegex(ValueError, 'native reasoning start body unavailable'):
+                self.run_audit(frames=self.frames[:-3] + reason + self.frames[-3:])
+
+    def test_common_agent_delta_matches_final_body_and_rejects_drift(self):
+        for text, valid in ((self.frames[-2]['params']['item']['text'], True), ('改変した応答', False)):
+            delta = {'method': 'item/agentMessage/delta', 'params': {
+                'threadId': 't', 'turnId': 'u', 'itemId': 'final', 'delta': text}}
+            frames = self.frames[:-2] + [delta] + self.frames[-2:]
+            if valid:
+                self.assertEqual(self.run_audit(frames=frames)['status'], 'measurement_integrity_passed')
+            else:
+                with self.assertRaisesRegex(ValueError, 'native streamed body mismatch'):
+                    self.run_audit(frames=frames)
+
     def test_reasoning_increments_require_an_active_item_and_unfinished_turn(self):
         reason = self.reasoning_events()
         for delta in reason[1:4]:

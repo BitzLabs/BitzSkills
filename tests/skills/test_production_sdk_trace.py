@@ -66,6 +66,21 @@ class ProductionSdkTraceTests(unittest.TestCase):
         self.assertEqual(result['status'], 'sdk_child_trace_diagnostic_passed')
         self.assertIs(result['eligibleForMeasurement'], False)
 
+    def test_reasoning_increment_and_completed_body_drift_is_rejected(self):
+        for index in (2, 3):
+            reason = self.original.reasoning_events()
+            reason[index]['params']['delta'] = '改変した本文'
+            with self.subTest(index=index), self.assertRaisesRegex(ValueError, 'native streamed body mismatch'):
+                self.run_diagnostic(received=self.frames[:-3] + reason + self.frames[-3:])
+
+    def test_reasoning_prefixes_multiple_indices_and_original_frames_are_preserved(self):
+        reason = self.original.prefixed_reasoning_events()
+        before = copy.deepcopy(reason)
+        result = self.run_diagnostic(received=self.frames[:-3] + reason + self.frames[-3:])
+        self.assertEqual(result['status'], 'sdk_child_trace_diagnostic_passed')
+        self.assertIs(result['eligibleForMeasurement'], False)
+        self.assertEqual(reason, before)
+
     def test_reasoning_increments_before_start_after_completion_or_after_turn_are_rejected(self):
         reason = self.original.reasoning_events()
         for delta in reason[1:4]:
