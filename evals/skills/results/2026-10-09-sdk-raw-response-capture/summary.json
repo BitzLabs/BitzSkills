@@ -270,9 +270,37 @@
     "firstFullSuiteAttempt": {"count": 466, "seconds": 44.187, "exitCode": 1, "errors": 44, "cause": "検証コマンドでPYTHONPATHを指定し忘れた。標準環境で再実行する。"},
     "correctedEnvironmentFullSuite": {"count": 466, "seconds": 62.463, "exitCode": 0},
     "independentRecheckPassed": false,
+    "failedCleanTreeVerification": {"outputRelativeRoot": ".venv/production-sdk-raw-response-verification-02", "sourceCommit": "1775038798653da9a6801ea0402c22febae2273a", "testCount": 466, "seconds": 62.137, "testTerminal": "OK", "exitCode": 1, "cause": "最終検証中に記録照合ファイルを更新したためclean tree検査で停止した。", "stderrSha256": "c200f3e3b80da58aac56b0b89888dba2b9bacec2492bdc4e6c80c008178ca297"},
+    "verification": {
+      "outputRelativeRoot": ".venv/production-sdk-raw-response-verification-03",
+      "summarySha256": "5deb0b24ab50525eb1e71778e0dc2d5da1a92dd904d8b1e55d6de10780736014",
+      "sourceCommit": "1775038798653da9a6801ea0402c22febae2273a",
+      "tests": {
+        "count": 466,
+        "seconds": 62.363,
+        "exitCode": 0,
+        "command": ["uv", "--cache-dir", "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache", "run", "--offline", "--project", "plugins/bitz-core", "--with", "jsonschema==4.23.0", "python", "-B", "-m", "unittest", "discover", "-s", "tests/skills", "-p", "test_*.py"],
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSha256": "59d1577747d4a7acd0e2781d21ee6f47eaa9869f073c2d3df41daa4d93d226d4"
+      }
+    },
     "newMockTrials": 0,
     "newLocalHttpRequests": 0,
     "paidModelCalls": 0
+  },
+  "nextReview": {
+    "status": "awaiting_explicit_additional_one_transmission_approval",
+    "sourceCommit": "1775038798653da9a6801ea0402c22febae2273a",
+    "contractPath": "evals/skills/routing/sdk-raw-response-review-v0.2.json",
+    "outputRelativeRoot": ".venv/sdk-raw-response-independent-review-02",
+    "approvalRequest": "public-remediation-code-transmission-approval-request.md",
+    "payloadFilesCount": 8,
+    "payloadBytes": 87851,
+    "maximumInvocations": 1,
+    "actualInvocations": 0,
+    "automaticRetries": 0,
+    "primaryModelTrajectories": 0,
+    "additionalDelegation": 0
   },
   "newRawMockTrials": 2,
   "newLocalMockHttpRequests": 4,

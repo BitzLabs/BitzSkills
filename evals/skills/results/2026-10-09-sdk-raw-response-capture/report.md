@@ -113,3 +113,15 @@ final→完了順をすべて満たす場合だけ両フラグをtrueにする�
 初回失敗を成功と扱わない。
 是正後の同8パスは別有限契約v0.2で静的再検分1回を準備する。初回v0.1の1回は消費済み。
 現時点で是正の独立再検分・SDK raw監査接続・Phase全体の完了は認定していない。
+
+確定ref `1775038798653da9a6801ea0402c22febae2273a` の最終検証1回目は、試験466件/62.137s/OKだったが、
+実行中に親が記録照合ファイルを更新してclean tree条件を満たさず、verification source drift/exit1で停止した。
+原stdout/stderrを `.venv/production-sdk-raw-response-verification-02` に保持した。
+変更を戻して同確定refのclean状態で新保存先03へ再実行し、全466件/62.363s/OK/exit0、
+原捕捉2件・前後同一source guard・clean treeをすべて確認した。
+最終summary SHA256は `5deb0b24ab50525eb1e71778e0dc2d5da1a92dd904d8b1e55d6de10780736014`。
+記録照合器はこの原bytes・実試験終端・歴史Git、元P2の拒否、旧原捕捉への修正判定の適用も再検査する。
+
+追加1回の[具体的な送信範囲](public-remediation-code-transmission-approval-request.md)は、
+同8公開パス/確定ref1775038/87851 bytes/OpenAI gpt-6.1-sol/一次0/委譲0/retry0。
+新保存先02は未作成であり、追加の送信・起動・予約0。今回は明示承認された初回1回だけを実施した。

@@ -11,6 +11,7 @@ sys.path.insert(0, str(ROOT / 'evals/skills/routing'))
 import production_trace as trace
 import source_guard as guard
 import run_sdk_trace_review as review
+import production_operation_probe as operation
 spec = importlib.util.spec_from_file_location('raw_capture_verifier', Path(__file__).with_name('verify-artifacts.py'))
 verify = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(verify)
@@ -48,6 +49,15 @@ def run():
         require(all(trace.json_equal(original[k], v) for k, v in trial['receipt'].items()), 'capture receipt fields')
         result = verify.check_capture(base, digest, legacy=(i == 0))
         require(trace.json_equal(result, value['previousCapture' if i == 0 else 'capture']), 'capture correlations')
+        incoming = [trace.strict_json(line) for line in (base / 'rpc-in.jsonl').read_bytes().splitlines()]
+        outgoing = [trace.strict_json(line) for line in (base / 'rpc-out.jsonl').read_bytes().splitlines()]
+        ids = {}
+        for method, key in [('thread/start', 'thread'), ('turn/start', 'turn')]:
+            request = next(f for f in incoming if f.get('method') == method)
+            reply = next(f for f in outgoing if f.get('id') == request['id'])
+            ids[key] = reply['result'][key]['id']
+        require(operation.terminal_matches(outgoing, ids['thread'], ids['turn']) == (True, True),
+                'original capture corrected terminal predicate')
     pending = summary['independentReview']
     contract = trace.strict_json(guard.git(ROOT, 'show', pending['sourceCommit'] + ':' + pending['contractPath']))
     require(pending['actualInvocations'] == 1 and
@@ -96,10 +106,59 @@ def run():
     require(summary['newRawMockTrials'] == 2 and summary['newLocalMockHttpRequests'] == 4 and
             summary['rawMockPaidModelCalls'] == 0 and summary['newRawCaptureIndependentReviewerSolInvocations'] == 1,
             'capture counters')
+    counterexample = [{'method': 'turn/completed', 'params': {'threadId': 'other',
+                      'turn': {'id': 'other-turn', 'status': 'completed', 'error': {'message': 'failed'}}}},
+                      {'method': 'item/completed', 'params': {'threadId': 'other', 'turnId': 'other-turn',
+                      'item': {'type': 'agentMessage', 'phase': 'final_answer', 'text': 'LOCAL_SIMULATION_ONLY'}}}]
+    require(operation.terminal_matches(counterexample, 'thread', 'turn') == (False, False), 'P2 regression')
+    local = summary['localRemediation'].get('verification')
+    if local is not None:
+        local_base = ROOT / local['outputRelativeRoot']
+        local_raw = (local_base / 'summary.json').read_bytes()
+        require(sha(local_raw) == local['summarySha256'], 'local verification original summary')
+        local_value = trace.strict_json(local_raw)
+        require(local_value['sourceCommit'] == local['sourceCommit'] and
+                trace.json_equal(local_value['tests'], local['tests']) and
+                trace.json_equal(local_value['capture'], value['capture']) and
+                trace.json_equal(local_value['previousCapture'], value['previousCapture']) and
+                local_value['newMockTrialsDuringVerification'] == local_value['paidModelCalls'] == 0 and
+                local_value['eligibleForMeasurement'] is False, 'local verification source and scope')
+        local_guards = list(local_value['sourceGuards'].values())
+        require(len(local_guards) == 2 and trace.json_equal(*local_guards) and
+                local_guards[0]['observedHead'] == local['sourceCommit'], 'local fixed clean ref')
+        for name, expected in local_guards[0]['sourceSha256'].items():
+            require(sha(guard.git(ROOT, 'show', local['sourceCommit'] + ':' + name)) == expected,
+                    'local historical source')
+        for name, key in [('tests.stdout', 'stdoutSha256'), ('tests.stderr', 'stderrSha256')]:
+            require(sha((local_base / name).read_bytes()) == local['tests'][key], 'local original test bytes')
+        matched = re.search(rb'Ran (\d+) tests in ([0-9.]+)s\s+OK\s*$', (local_base / 'tests.stderr').read_bytes())
+        require(matched and int(matched[1]) == local['tests']['count'] == 466 and
+                float(matched[2]) == local['tests']['seconds'] and local['tests']['exitCode'] == 0,
+                'local actual test terminal')
+    failed = summary['localRemediation']['failedCleanTreeVerification']
+    failed_base = ROOT / failed['outputRelativeRoot']
+    require(sha((failed_base / 'tests.stderr').read_bytes()) == failed['stderrSha256'] and
+            not (failed_base / 'summary.json').exists() and failed['exitCode'] == 1,
+            'failed clean-tree verification retained')
+    next_review = summary['nextReview']
+    next_contract = trace.strict_json(guard.git(ROOT, 'show', next_review['sourceCommit'] + ':' + next_review['contractPath']))
+    require(next_review['actualInvocations'] == 0 and not (ROOT / next_review['outputRelativeRoot']).exists() and
+            next_review['maximumInvocations'] == next_contract['maximumInvocations'] == 1 and
+            next_review['automaticRetries'] == next_contract['automaticRetries'] == 0 and
+            next_review['primaryModelTrajectories'] == next_review['additionalDelegation'] == 0 and
+            next_contract['payloadFiles'] == contract['payloadFiles'], 'next finite review')
+    total = 0
+    for name in next_contract['payloadFiles']:
+        raw = guard.git(ROOT, 'show', next_review['sourceCommit'] + ':' + name)
+        require(raw == (ROOT / name).read_bytes(), 'next committed payload bytes')
+        total += len(raw)
+    require(total == next_review['payloadBytes'] == 87851 and
+            len(next_contract['payloadFiles']) == next_review['payloadFilesCount'] == 8, 'next payload count')
     print(json.dumps({'status': 'recorded_raw_capture_results_match_original_bytes',
                       'tests': tests['count'], 'rawItemsPerCapture': 6, 'rawCompletedPerCapture': 2,
                       'mockTrials': 2, 'localMockHttpRequests': 4, 'rawMockPaidModelCalls': 0,
                       'independentReviewInvocations': 1, 'reviewFindings': len(response['findings']),
+                      'correctedSourceTests': local['tests']['count'] if local is not None else None,
                       'eligibleForMeasurement': False}, ensure_ascii=False))
 
 

@@ -238,3 +238,17 @@ SOL評価すべてへの継続許可で実行を申請したが、自動承認�
 確認後に独立静的検分と親の原応答照合へ進む。原ログ・実通知本文は送らない。
 raw監査接続、任意複数cell/待機、実provider、一次台帳統合、公開canary/本測定は残る。
 eligibleForMeasurement=false、Phase/Step/Gate完了・期待行動・native provider・全Skill Gateは未認定。
+
+### Phase 4：raw捕捉の独立検分と局所是正（2026-10-10）
+
+ユーザーが公開8パスの有限1回を承認し、source4be29cのgpt-6.1-sol静的検分を1回実施した。
+CLI exit0、P2が1件。親が原stdio/schema/最終本文/hash/歴史Gitと前/起動/後guard、予約1回を再照合した。
+局所完了・final判定がSDK開始thread/turnへ相関していない偽陽性を親が再現し、
+同ID、completed状態、null error、固定final本文/phaseとfinal→完了順を検査するよう修正した。
+回帰17件/0.095s/OK/exit0。最終確定ref1775038のclean全466件/62.363s/OK/exit0と原捕捉2件の照合も通過した。
+途中のPYTHONPATH指定漏れと検証中の記録更新によるclean条件停止は原出力とともに履歴へ保持した。
+原結果再照合器もexit0。今回追加SOL1、input32604/output1385/reasoning1034、新mock/局所HTTP0・一次0・retry0。
+初回枠は消費済み。是正後の同8公開パス/87851 bytesの追加静的検分1回は
+`../results/2026-10-09-sdk-raw-response-capture/public-remediation-code-transmission-approval-request.md` で確認待ち。
+追加送信/起動/予約0。局所修正を独立指摘解消済み・Phase/Gate完了と判定しない。
+後続のraw監査接続、任意複数cell/待機、実provider、一次台帳統合、公開canary/本測定は残る。
