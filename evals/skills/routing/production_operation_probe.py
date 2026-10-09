@@ -132,6 +132,29 @@ def output_objects(request: dict) -> list[dict]:
     return objects
 
 
+def terminal_matches(frames: list[dict], thread_id: str | None, turn_id: str | None) -> tuple[bool, bool]:
+    """固定模擬応答の最終回答と完了を、SDK開始結果と配送順に照合する。"""
+    if not isinstance(thread_id, str) or not thread_id or not isinstance(turn_id, str) or not turn_id:
+        return False, False
+    finals = [(i, f.get('params')) for i, f in enumerate(frames)
+              if f.get('method') == 'item/completed' and isinstance(f.get('params'), dict) and
+              isinstance(f['params'].get('item'), dict) and f['params']['item'].get('type') == 'agentMessage']
+    completed = [(i, f.get('params')) for i, f in enumerate(frames) if f.get('method') == 'turn/completed']
+    if len(finals) != 1 or len(completed) != 1:
+        return False, False
+    final_index, final = finals[0]
+    completed_index, end = completed[0]
+    if not isinstance(end, dict) or not isinstance(end.get('turn'), dict):
+        return False, False
+    turn = end['turn']
+    matched = (final_index < completed_index and final.get('threadId') == thread_id and
+               final.get('turnId') == turn_id and end.get('threadId') == thread_id and
+               turn.get('id') == turn_id and turn.get('status') == 'completed' and
+               turn.get('error') is None and final['item'].get('phase') == 'final_answer' and
+               final['item'].get('text') == 'LOCAL_SIMULATION_ONLY')
+    return matched, matched
+
+
 def isolated(base: Path):
     contract = json.loads((base / 'contract.json').read_bytes())
     scenario = (base / 'scenario.txt').read_text()
@@ -193,12 +216,15 @@ def isolated(base: Path):
     client = CodexClient(CodexConfig(launch_args_override=(sys.executable, '-B', str(Path(__file__)), '--proxy', str(base)),
                                    cwd=str(base / 'work')), approval_handler=deny)
     error_type = None
+    thread_id = turn_id = None
     notifications = []
     try:
         client.start()
         client.initialize()
         thread = client.thread_start(thread_params(base, contract))
-        turn = client.turn_start(thread.thread.id, 'LOCAL_SIMULATION_ONLY')
+        thread_id = thread.thread.id
+        turn = client.turn_start(thread_id, 'LOCAL_SIMULATION_ONLY')
+        turn_id = turn.turn.id
         while True:
             notification = client.next_turn_notification(turn.turn.id)
             if raw_events_enabled(contract):
@@ -221,11 +247,7 @@ def isolated(base: Path):
     host_path = base / 'host.jsonl'
     host_events = [json.loads(line) for line in host_path.read_bytes().splitlines()] if host_path.exists() else []
     objects = output_objects(requests[-1]) if len(requests) == 2 else []
-    finals = [f for f in frames if f.get('method') == 'item/completed' and f.get('params', {}).get('item', {}).get('type') == 'agentMessage']
-    completed = [f for f in frames if f.get('method') == 'turn/completed']
-    terminal = len(completed) == 1 and completed[0]['params']['turn']['status'] == 'completed'
-    matched = len(finals) == 1 and finals[0]['params']['item'].get('phase') == 'final_answer' and \
-        finals[0]['params']['item'].get('text') == 'LOCAL_SIMULATION_ONLY'
+    terminal, matched = terminal_matches(frames, thread_id, turn_id)
     value = {'status': 'operation_diagnostic_captured', 'scenario': scenario, 'localHttpRequestCount': len(requests),
              'outputObjects': objects, 'hostEventCount': len(host_events), 'serverRequestStops': denials,
              'mockTurnCompleted': terminal, 'mockFinalMatched': matched, 'sdkErrorType': error_type,

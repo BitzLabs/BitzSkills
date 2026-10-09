@@ -37,6 +37,40 @@ class ProductionOperationProbeTests(unittest.TestCase):
             with self.subTest(field=field, value=value), self.assertRaisesRegex(ValueError, 'unknown raw event policy'):
                 probe.thread_params(self.base, bad)
 
+    def test_terminal_matches_requires_started_scope_success_and_final_before_completion(self):
+        frames = [{'method': 'item/completed', 'params': {'threadId': 'thread', 'turnId': 'turn',
+                   'item': {'type': 'agentMessage', 'phase': 'final_answer', 'text': 'LOCAL_SIMULATION_ONLY'}}},
+                  {'method': 'turn/completed', 'params': {'threadId': 'thread',
+                   'turn': {'id': 'turn', 'status': 'completed', 'error': None}}}]
+        before = copy.deepcopy(frames)
+        self.assertEqual(probe.terminal_matches(frames, 'thread', 'turn'), (True, True))
+        for field, value in [('final-thread', 'other'), ('final-turn', 'other'), ('end-thread', 'other'),
+                             ('end-turn', 'other'), ('error', {'message': 'failed'}), ('error', False),
+                             ('status', 'failed'), ('reverse', None), ('missing-final', None),
+                             ('duplicate-end', None), ('malformed-end', None), ('text', 'wrong')]:
+            bad = copy.deepcopy(frames)
+            if field == 'reverse':
+                bad.reverse()
+            elif field == 'missing-final':
+                bad.pop(0)
+            elif field == 'duplicate-end':
+                bad.append(copy.deepcopy(bad[-1]))
+            elif field == 'malformed-end':
+                bad[-1]['params'] = None
+            elif field.startswith('final-'):
+                bad[0]['params']['threadId' if field == 'final-thread' else 'turnId'] = value
+            elif field == 'end-thread':
+                bad[-1]['params']['threadId'] = value
+            elif field == 'text':
+                bad[0]['params']['item']['text'] = value
+            else:
+                bad[-1]['params']['turn']['id' if field == 'end-turn' else field] = value
+            with self.subTest(field=field, value=value):
+                self.assertEqual(probe.terminal_matches(bad, 'thread', 'turn'), (False, False))
+        for thread_id, turn_id in [(None, 'turn'), ('thread', None), ('', 'turn'), ('thread', True)]:
+            self.assertEqual(probe.terminal_matches(frames, thread_id, turn_id), (False, False))
+        self.assertEqual(frames, before)
+
     def test_sdk_notification_stream_is_one_complete_json_object_per_line(self):
         records = [{'method': 'rawResponseItem/completed', 'params': {'item': {'text': '日本語\n複数行'}}},
                    {'method': 'turn/completed', 'params': {'turn': {'status': 'completed'}}}]

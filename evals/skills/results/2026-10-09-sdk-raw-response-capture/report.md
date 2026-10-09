@@ -1,7 +1,8 @@
 # Phase 4：Python SDK raw応答通知の無課金捕捉
 
 確定source `4be29c094adb27fe897e72b3d841dcd73b5d0995` の全465件は61.858s/OK/exit0。
-新旧捕捉の原証拠と公開要約の照合も通過した。新規捕捉コードの独立SOL静的検分は未実施。
+新旧捕捉の原証拠と公開要約の照合も通過した。2026-10-10の独立SOL静的検分でP2が1件出た。
+親が偽陽性を再現して局所判定を修正した。是正後の独立再検分は未実施。
 
 ## 捕捉結果
 
@@ -67,7 +68,7 @@ exit: 0
 直前のSDK診断是正系列の独立SOLは累計18回であり、raw捕捉の新規独立検分は0回。
 これらを同じ「モデル0」とまとめない。
 
-## 残る検査と送信対象
+## 残る検査と初回送信承認の履歴
 
 raw ResponseItemは上流SSE bytesそのものではなく、CLIが生成id・内部metadataを加え、
 固定finalのstatus/annotationsを変換した別の型である。原SSEは別に保持し、明示した限定投影へ照合する。
@@ -86,6 +87,29 @@ SOL評価すべてへの継続許可を根拠に、この公開8パスの有限1
 送信/起動/予約0。専用出力ディレクトリが存在しないことを実際に確認した。
 回避経路や間接実行を使わず、[具体的8パス/source/hash/宛先/有限1回](public-code-transmission-approval-request.md)への確認を待つ。
 
-確認後は独立静的検分と親の原応答再照合を優先する。その後、raw監査への接続、任意複数cell/待機、
+この拒否と未送信状態は2026-10-09時点の履歴である。2026-10-10にユーザーが8パスの有限1回へOKと回答した。
+その後、独立静的検分と親の原応答再照合を実施した。後続のraw監査への接続、任意複数cell/待機、
 実provider、一次台帳統合、公開canary/本測定へ進む。
 eligibleForMeasurement=false。Phase/Step/Gate完了・期待行動・native provider・全Skill Gateは未認定。
+
+## 独立検分と局所是正（2026-10-10）
+
+source `4be29c094adb27fe897e72b3d841dcd73b5d0995` の8公開ファイルをgpt-6.1-solへ1回送信した。
+CLI exit0/timeoutなし、verdict=findings、P2が1件。一次0・委譲0・自動retry0。
+input32604/cached0/output1385/reasoning1034。金額は推定しない。
+原receipt SHA256は `803eeef684dc44c30898894a8eb3f58b6a5e93139a395210da5522d8ffd067b4`、
+原response SHA256は `f9be6b602926781506bdc031bc7f7ce1d36d9e1598adcf721982b0e7458b3855`。
+親が原stdio/hash、応答schemaと最終本文、前/起動/後の同一source guard、歴史Git、予約1回を再照合した。
+
+P2はoperation probeの完了・final判定がSDKで開始したthread/turnへ相関していないこと。
+親が別thread/turn・非null turn.error・完了→final順の合成入力で旧2フラグがtrueになることを再現した。
+SDK開始結果のIDを保持し、固定最終回答の本文・phase、同thread/turn、completed状態、null error、
+final→完了順をすべて満たす場合だけ両フラグをtrueにするよう修正した。
+回帰17件/0.095s/OK/exit0。旧read-07/read-08の原RPCも修正後の判定に適合した。
+この再照合は新mock/局所HTTP/有料モデルを増やさず、原捕捉結果を再分類・上書きしていない。
+
+全件試験の初回は検証コマンドで必要なPYTHONPATHを指定し忘れ、466件/44.187s/44errors/exit1になった。
+標準のPYTHONPATHとPYTHONDONTWRITEBYTECODEを指定した再実行は466件/62.463s/OK/exit0。
+初回失敗を成功と扱わない。
+是正後の同8パスは別有限契約v0.2で静的再検分1回を準備する。初回v0.1の1回は消費済み。
+現時点で是正の独立再検分・SDK raw監査接続・Phase全体の完了は認定していない。

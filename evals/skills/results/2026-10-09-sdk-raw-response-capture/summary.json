@@ -1,7 +1,7 @@
 {
-  "version": "sdk-raw-response-capture-0.1.0",
+  "version": "sdk-raw-response-capture-0.2.0",
   "phase": 4,
-  "status": "local_verified_independent_raw_review_pending",
+  "status": "independent_raw_review_findings_local_fix_pending_recheck",
   "sourceCommit": "4be29c094adb27fe897e72b3d841dcd73b5d0995",
   "priorSdkTraceStaticReviewPassedSource": "a8d0ef2f1398c96affdd54bbdb7bb748efd0c97e",
   "captureTrials": [
@@ -188,16 +188,19 @@
       }
     }
   },
-  "pendingReview": {
-    "status": "auto_approval_rejected_before_invocation",
-    "outputDirectoryExists": false,
-    "reason": "公開8ファイルのOpenAI gpt-6.1-solへの送信は、既存の明示承認された6ファイルの範囲を超えており、8ファイル全体の宛先・payloadに対するユーザー承認が確認できない、と自動承認審査が拒否した。",
+  "independentReview": {
+    "status": "review_findings",
+    "outputDirectoryExists": true,
+    "priorReason": "公開8ファイルのOpenAI gpt-6.1-solへの送信は、既存の明示承認された6ファイルの範囲を超えており、8ファイル全体の宛先・payloadに対するユーザー承認が確認できない、と自動承認審査が拒否した。",
+    "authorization": "公開8ファイルをOpenAI gpt-6.1-solへ1回送信する前回答の質問に、ユーザーが2026-10-10にOKと回答した。",
+    "receiptSha256": "803eeef684dc44c30898894a8eb3f58b6a5e93139a395210da5522d8ffd067b4",
+    "responseSha256": "f9be6b602926781506bdc031bc7f7ce1d36d9e1598adcf721982b0e7458b3855",
     "sourceCommit": "4be29c094adb27fe897e72b3d841dcd73b5d0995",
     "contractPath": "evals/skills/routing/sdk-raw-response-review-v0.1.json",
     "outputRelativeRoot": ".venv/sdk-raw-response-independent-review-01",
     "destination": "OpenAI Codex CLI / gpt-6.1-sol",
     "maximumInvocations": 1,
-    "actualInvocations": 0,
+    "actualInvocations": 1,
     "automaticRetries": 0,
     "additionalDelegation": 0,
     "primaryModelTrajectories": 0,
@@ -247,10 +250,34 @@
     "additionalPayload": "固定の静的検分指示・限定条件・確定source ID・行番号/hash・公開JSON応答schema（922 bytes）",
     "sendsRawLogsOrActualNotifications": false
   },
+  "reviewUsage": {
+    "input_tokens": 32604,
+    "cached_input_tokens": 0,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 1385,
+    "reasoning_output_tokens": 1034
+  },
+  "localRemediation": {
+    "findingPriority": "P2",
+    "findingPath": "evals/skills/routing/production_operation_probe.py",
+    "findingLineAtReviewedSource": 226,
+    "reproducedOldPredicate": {"mockTurnCompleted": true, "mockFinalMatched": true},
+    "expectedForForeignContextErrorAndReversedOrder": false,
+    "correctedPredicate": "SDK開始thread/turn ID、completed状態、null error、final本文とfinal→完了順をすべて照合する。",
+    "focusedTests": {"count": 17, "seconds": 0.095, "exitCode": 0},
+    "originalCapturesRechecked": ["production-operation-read-07", "production-operation-read-08"],
+    "originalCapturesMatchCorrectedPredicate": true,
+    "firstFullSuiteAttempt": {"count": 466, "seconds": 44.187, "exitCode": 1, "errors": 44, "cause": "検証コマンドでPYTHONPATHを指定し忘れた。標準環境で再実行する。"},
+    "correctedEnvironmentFullSuite": {"count": 466, "seconds": 62.463, "exitCode": 0},
+    "independentRecheckPassed": false,
+    "newMockTrials": 0,
+    "newLocalHttpRequests": 0,
+    "paidModelCalls": 0
+  },
   "newRawMockTrials": 2,
   "newLocalMockHttpRequests": 4,
   "rawMockPaidModelCalls": 0,
-  "newRawCaptureIndependentReviewerSolInvocations": 0,
+  "newRawCaptureIndependentReviewerSolInvocations": 1,
   "priorSdkTraceIndependentReviewerSolInvocations": 18,
   "independentRawCaptureReviewPassed": false,
   "eligibleForMeasurement": false,
