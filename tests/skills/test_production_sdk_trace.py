@@ -66,6 +66,14 @@ class ProductionSdkTraceTests(unittest.TestCase):
         self.assertEqual(result['status'], 'sdk_child_trace_diagnostic_passed')
         self.assertIs(result['eligibleForMeasurement'], False)
 
+    def test_sdk_thread_start_error_status_in_response_and_notification_is_rejected(self):
+        for indices in ((1,), (2,), (1, 2)):
+            frames = copy.deepcopy(self.frames)
+            for index in indices:
+                frames[index]['result' if index == 1 else 'params']['thread']['status'] = {'type': 'systemError'}
+            with self.subTest(indices=indices), self.assertRaisesRegex(ValueError, 'native thread error or unsupported status'):
+                self.run_diagnostic(received=frames)
+
     def test_sdk_thread_system_error_is_rejected_even_after_turn_completion(self):
         error = {'method': 'thread/status/changed', 'params': {'threadId': 't', 'status': {'type': 'systemError'}}}
         with self.assertRaisesRegex(ValueError, 'native thread error or unsupported status'):

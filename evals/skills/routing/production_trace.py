@@ -64,6 +64,14 @@ def reasoning_bodies(item: dict) -> dict:
     return {name: list(value) if value is not None else None for name, value in values.items()}
 
 
+def check_thread_status(status, *, turn=None, finished=False):
+    require(any(json_equal(status, value) for value in (
+        {'type': 'idle'}, {'type': 'active', 'activeFlags': []}, {'type': 'notLoaded'})),
+        'native thread error or unsupported status')
+    require(status['type'] != 'active' or not finished, 'native active status after completion')
+    require(status['type'] != 'notLoaded' or turn is None, 'native unloaded status after turn start')
+
+
 def check_turn_start(value: dict):
     """固定診断の開始turnだけを検査し、状態がない合成値で失敗証拠を補完しない。"""
     require(isinstance(value, dict) and {'id', 'status', 'items'} <= set(value) <= {
@@ -154,6 +162,11 @@ def completed_items(frames: list) -> list:
             require(set(frame) == {'id', 'result'} and type(frame['id']) is int and frame['id'] in {1, 2, 3}, 'native response fields')
             require(frame['id'] not in responses and isinstance(frame['result'], dict), 'native response repeated')
             responses[frame['id']] = frame['result']
+            if frame['id'] == 2:
+                value = frame['result'].get('thread')
+                require(isinstance(value, dict), 'native thread response object')
+                if 'status' in value:
+                    check_thread_status(value['status'])
             if frame['id'] == 3:
                 require(set(frame['result']) == {'turn'}, 'native turn response fields')
                 check_turn_start(frame['result']['turn'])
@@ -163,6 +176,9 @@ def completed_items(frames: list) -> list:
         require(isinstance(params, dict), 'native notification params')
         if method == 'thread/started':
             require(thread is None and turn is None, 'multiple native threads')
+            require(isinstance(params.get('thread'), dict), 'native thread start object')
+            if 'status' in params['thread']:
+                check_thread_status(params['thread']['status'])
             thread = params['thread']['id']
             require(isinstance(thread, str) and bool(thread), 'thread id required')
             require(('threadId' not in params or params['threadId'] == thread) and 'turnId' not in params,
@@ -208,12 +224,7 @@ def completed_items(frames: list) -> list:
             continue
         if method == 'thread/status/changed':
             require(set(params) == {'threadId', 'status'}, 'native thread status fields')
-            status = params['status']
-            require(any(json_equal(status, value) for value in (
-                {'type': 'idle'}, {'type': 'active', 'activeFlags': []}, {'type': 'notLoaded'})),
-                'native thread error or unsupported status')
-            require(status['type'] != 'active' or not finished, 'native active status after completion')
-            require(status['type'] != 'notLoaded' or turn is None, 'native unloaded status after turn start')
+            check_thread_status(params['status'], turn=turn, finished=finished)
             continue
         if method in NEUTRAL:
             if 'turnId' in params:

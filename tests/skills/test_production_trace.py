@@ -97,6 +97,18 @@ class ProductionTraceTests(unittest.TestCase):
                 frame('item/completed', item={**item, 'summary': ['既存要約追記', '新規要約'],
                                              'content': ['既存本文追記', '新規本文']})]
 
+    def test_thread_start_objects_reject_error_status_in_response_and_notification(self):
+        for index in (1, 2):
+            for status in ({'type': 'systemError'}, {'type': 'unknown'},
+                           {'type': 'active', 'activeFlags': ['waitingOnUserInput']}, None):
+                frames = copy.deepcopy(self.frames)
+                frames[index]['result' if index == 1 else 'params']['thread']['status'] = status
+                with self.subTest(index=index, status=status), self.assertRaisesRegex(ValueError, 'native thread error or unsupported status'):
+                    self.run_audit(frames=frames)
+            frames = copy.deepcopy(self.frames)
+            frames[index]['result' if index == 1 else 'params']['thread']['status'] = {'type': 'idle'}
+            self.assertEqual(self.run_audit(frames=frames)['status'], 'measurement_integrity_passed')
+
     def test_thread_status_rejects_system_errors_unknown_states_and_waiting_flags(self):
         for status in ({'type': 'idle'}, {'type': 'active', 'activeFlags': []}):
             event = {'method': 'thread/status/changed', 'params': {'threadId': 't', 'status': status}}

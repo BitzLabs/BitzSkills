@@ -154,3 +154,11 @@ source `57f47199bd81a799ad1401c06b232872fe988cf1` の同6ファイルの別SOL�
 thread状態は専用分岐で字段と状態を検査し、idle・待機flagなしactive・開始前notLoadedだけを許可する。
 systemError・未知状態・待機flag・余分な字段・終了後activeを拒否する。
 完了後idle正常系を保持し、共通監査/SDKの回帰を追加する。原指摘と消費枠を保持する。
+
+## 15回目の静的検分からの是正候補
+
+source `6150f7686b0dfb060b76d2c4d9275fa3283f2fab` の同6ファイルの別SOLはP2=1。
+親が同sourceでthread/start応答とthread/startedオブジェクトにsystemErrorを指定して通過する条件を再現した。
+Thread.statusがある場合は、開始応答・開始通知・状態変更通知に同じ共通検査を適用する。
+欠落statusの従来合成形式は保持し、存在するエラー/未知/待機状態を捨てず拒否する。
+各開始経路と両経路同時の回帰を追加する。原指摘と消費枠を保持する。
