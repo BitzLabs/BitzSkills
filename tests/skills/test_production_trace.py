@@ -97,6 +97,24 @@ class ProductionTraceTests(unittest.TestCase):
                 frame('item/completed', item={**item, 'summary': ['既存要約追記', '新規要約'],
                                              'content': ['既存本文追記', '新規本文']})]
 
+    def test_thread_status_rejects_system_errors_unknown_states_and_waiting_flags(self):
+        for status in ({'type': 'idle'}, {'type': 'active', 'activeFlags': []}):
+            event = {'method': 'thread/status/changed', 'params': {'threadId': 't', 'status': status}}
+            self.assertEqual(self.run_audit(frames=self.frames[:5] + [event] + self.frames[5:])['status'],
+                             'measurement_integrity_passed')
+        for status in ({'type': 'systemError'}, {'type': 'unknown'}, {'type': 'active'},
+                       {'type': 'active', 'activeFlags': ['waitingOnApproval']},
+                       {'type': 'active', 'activeFlags': ['waitingOnUserInput']},
+                       {'type': 'idle', 'error': 'failure'}, None):
+            for location in (5, len(self.frames)):
+                event = {'method': 'thread/status/changed', 'params': {'threadId': 't', 'status': status}}
+                with self.subTest(status=status, location=location), \
+                        self.assertRaisesRegex(ValueError, 'native thread error or unsupported status'):
+                    self.run_audit(frames=self.frames[:location] + [event] + self.frames[location:])
+        event = {'method': 'thread/status/changed', 'params': {'threadId': 't', 'status': {'type': 'active', 'activeFlags': []}}}
+        with self.assertRaisesRegex(ValueError, 'native active status after completion'):
+            self.run_audit(frames=self.frames + [event])
+
     def test_turn_start_response_and_notification_reject_failed_or_incomplete_state(self):
         for index in (3, 4):
             for field, value in (('status', 'failed'), ('status', 'interrupted'), ('status', 'completed'),

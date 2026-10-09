@@ -146,3 +146,11 @@ source `143c27ecc41d6cc73bef14cb96c2b25471cc1a40` の同6ファイルの別SOL�
 ただし親はSDKの既知warningをturn完了後に2件追加して通過する条件を同sourceで再現した。
 固定SDK warningも本文1種類・開始前1件だけへ限定し、重複/開始後/終了後と不正allowlistを拒否する。
 原通知を消さず側記録し、CLI起動エラーのhash許容をこの警告へ流用しない。原指摘と消費枠は保持する。
+
+## 14回目の静的検分からの是正候補
+
+source `57f47199bd81a799ad1401c06b232872fe988cf1` の同6ファイルの別SOLはP2=1。
+親が同sourceでturn完了後にthread/status/changedのsystemErrorを追加して通過する条件を再現した。
+thread状態は専用分岐で字段と状態を検査し、idle・待機flagなしactive・開始前notLoadedだけを許可する。
+systemError・未知状態・待機flag・余分な字段・終了後activeを拒否する。
+完了後idle正常系を保持し、共通監査/SDKの回帰を追加する。原指摘と消費枠を保持する。

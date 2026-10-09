@@ -66,6 +66,13 @@ class ProductionSdkTraceTests(unittest.TestCase):
         self.assertEqual(result['status'], 'sdk_child_trace_diagnostic_passed')
         self.assertIs(result['eligibleForMeasurement'], False)
 
+    def test_sdk_thread_system_error_is_rejected_even_after_turn_completion(self):
+        error = {'method': 'thread/status/changed', 'params': {'threadId': 't', 'status': {'type': 'systemError'}}}
+        with self.assertRaisesRegex(ValueError, 'native thread error or unsupported status'):
+            self.run_diagnostic(received=self.frames + [error])
+        idle = {'method': 'thread/status/changed', 'params': {'threadId': 't', 'status': {'type': 'idle'}}}
+        self.assertEqual(self.run_diagnostic(received=self.frames + [idle])['status'], 'sdk_child_trace_diagnostic_passed')
+
     def test_telemetry_preview_truncation_is_typed_and_recorded_without_body_certification(self):
         events = self.parent_events()
         before = copy.deepcopy(events)

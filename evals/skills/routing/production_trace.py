@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[3]
 SERVER = 'production-routing'
 PATHS = {'bitz-core': 'operate', 'sdd-plan': 'plan', 'sdd-implement': 'implement',
          'sdd-converge': 'converge', 'quality-plan': 'plan', 'quality-review': 'review'}
-NEUTRAL = {'thread/tokenUsage/updated', 'thread/status/changed'}
+NEUTRAL = {'thread/tokenUsage/updated'}
 INCREMENTS = {
     'item/agentMessage/delta': ('agentMessage', None, True),
     'item/reasoning/textDelta': ('reasoning', 'contentIndex', True),
@@ -205,6 +205,15 @@ def completed_items(frames: list) -> list:
                     require(index < len(values), 'native reasoning index lifecycle')
                     values[index] += params['delta']
                 streamed[ident].add(field)
+            continue
+        if method == 'thread/status/changed':
+            require(set(params) == {'threadId', 'status'}, 'native thread status fields')
+            status = params['status']
+            require(any(json_equal(status, value) for value in (
+                {'type': 'idle'}, {'type': 'active', 'activeFlags': []}, {'type': 'notLoaded'})),
+                'native thread error or unsupported status')
+            require(status['type'] != 'active' or not finished, 'native active status after completion')
+            require(status['type'] != 'notLoaded' or turn is None, 'native unloaded status after turn start')
             continue
         if method in NEUTRAL:
             if 'turnId' in params:
