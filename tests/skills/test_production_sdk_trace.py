@@ -66,6 +66,16 @@ class ProductionSdkTraceTests(unittest.TestCase):
         self.assertEqual(result['status'], 'sdk_child_trace_diagnostic_passed')
         self.assertIs(result['eligibleForMeasurement'], False)
 
+    def test_sdk_thread_start_hidden_history_is_rejected_in_each_path(self):
+        hidden = [{'id': 'extra-turn', 'status': 'failed', 'error': {'message': 'failure'},
+                   'items': [{'type': 'commandExecution', 'id': 'hidden-command'}]}]
+        for indices in ((1,), (2,), (1, 2)):
+            frames = copy.deepcopy(self.frames)
+            for index in indices:
+                frames[index]['result' if index == 1 else 'params']['thread']['turns'] = hidden
+            with self.subTest(indices=indices), self.assertRaisesRegex(ValueError, 'native thread start history must be empty'):
+                self.run_diagnostic(received=frames)
+
     def test_sdk_thread_start_error_status_in_response_and_notification_is_rejected(self):
         for indices in ((1,), (2,), (1, 2)):
             frames = copy.deepcopy(self.frames)

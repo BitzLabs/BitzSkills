@@ -97,6 +97,20 @@ class ProductionTraceTests(unittest.TestCase):
                 frame('item/completed', item={**item, 'summary': ['既存要約追記', '新規要約'],
                                              'content': ['既存本文追記', '新規本文']})]
 
+    def test_new_thread_start_history_and_ephemeral_state_are_checked(self):
+        hidden = [{'id': 'extra-turn', 'status': 'failed', 'error': {'message': 'failure'},
+                   'items': [{'type': 'commandExecution', 'id': 'hidden-command'}]}]
+        for index in (1, 2):
+            for field, value in (('turns', hidden), ('turns', None), ('turns', {}), ('turns', False),
+                                 ('ephemeral', False), ('ephemeral', 1)):
+                frames = copy.deepcopy(self.frames)
+                frames[index]['result' if index == 1 else 'params']['thread'][field] = value
+                with self.subTest(index=index, field=field, value=value), self.assertRaisesRegex(ValueError, 'native thread start'):
+                    self.run_audit(frames=frames)
+            frames = copy.deepcopy(self.frames)
+            frames[index]['result' if index == 1 else 'params']['thread'].update(turns=[], ephemeral=True)
+            self.assertEqual(self.run_audit(frames=frames)['status'], 'measurement_integrity_passed')
+
     def test_thread_start_objects_reject_error_status_in_response_and_notification(self):
         for index in (1, 2):
             for status in ({'type': 'systemError'}, {'type': 'unknown'},
