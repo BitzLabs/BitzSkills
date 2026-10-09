@@ -247,10 +247,24 @@ class ProductionSdkTraceTests(unittest.TestCase):
             {'method': 'warning', 'params': {'threadId': 't', 'message': '固定した警告'}},
             {'method': 'mcpServer/startupStatus/updated', 'params': {'threadId': 't', 'name': 'production-routing',
                  'status': 'ready', 'error': None, 'failureReason': None}}]
-        frames = self.frames[:5] + metadata + self.frames[5:]
+        frames = self.frames[:3] + metadata + self.frames[3:]
         result = self.run_diagnostic(received=frames, allowed_warnings=('固定した警告',))
         retained = result['nativeEvidence']['retainedNotifications']
         self.assertEqual([r['sha256'] for r in retained[:4]], [sdk.digest(m) for m in metadata])
+
+    def test_fixed_warning_is_limited_to_one_pre_turn_notification(self):
+        warning = {'method': 'warning', 'params': {'threadId': 't', 'message': '固定した警告'}}
+        allowed = ('固定した警告',)
+        self.assertEqual(self.run_diagnostic(received=self.frames[:3] + [warning] + self.frames[3:],
+                                            allowed_warnings=allowed)['status'], 'sdk_child_trace_diagnostic_passed')
+        for frames in (self.frames[:3] + [warning, warning] + self.frames[3:],
+                       self.frames[:5] + [warning] + self.frames[5:], self.frames + [warning],
+                       self.frames + [warning, warning]):
+            with self.assertRaisesRegex(ValueError, 'SDK warning timing or count'):
+                self.run_diagnostic(received=frames, allowed_warnings=allowed)
+        for allowed in (('固定した警告', '別の警告'), ('',), (False,)):
+            with self.subTest(allowed=allowed), self.assertRaisesRegex(ValueError, 'fixed warning allowlist required'):
+                self.run_diagnostic(allowed_warnings=allowed)
 
     def test_unapproved_warnings_and_unknown_notifications_are_rejected(self):
         for notification in [

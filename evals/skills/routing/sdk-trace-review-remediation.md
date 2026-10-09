@@ -138,3 +138,11 @@ source `5d12e6590fa5f91c1dd3f777abb750329e70e883` の同6ファイルの別SOL�
 trueのcall IDを結果へ側記録し、certifiesTelemetryOutputBodies=falseを明示する。
 親子ID・順序は完全保存したtarget原行で検査し、本文はhost/native/provider原通信を使う。
 プレビューから本文完全性を認定せず、原ログのtrueをfalseへ変更しない。型/true/falseの回帰を含める。
+
+## 13回目の静的検分からの是正候補
+
+source `143c27ecc41d6cc73bef14cb96c2b25471cc1a40` の同6ファイルの別SOLはP2=1。
+上のCode Mode無効化エラーの限定はreviewer CLIの起動イベントであり、SDK warning通知とは別である。
+ただし親はSDKの既知warningをturn完了後に2件追加して通過する条件を同sourceで再現した。
+固定SDK warningも本文1種類・開始前1件だけへ限定し、重複/開始後/終了後と不正allowlistを拒否する。
+原通知を消さず側記録し、CLI起動エラーのhash許容をこの警告へ流用しない。原指摘と消費枠は保持する。

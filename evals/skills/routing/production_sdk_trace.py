@@ -65,7 +65,8 @@ def normalized(sent: list, received: list, *, allowed_warnings: tuple[str, ...] 
     """原フレームを変更せず、検査済みの入力・環境通知を側記録へ分離する。"""
     bindings, expected = requests(sent)
     require(isinstance(received, list), 'SDK received frames required')
-    require(isinstance(allowed_warnings, tuple) and all(isinstance(v, str) for v in allowed_warnings),
+    require(isinstance(allowed_warnings, tuple) and len(allowed_warnings) <= 1 and
+            all(isinstance(v, str) and bool(v) for v in allowed_warnings),
             'fixed warning allowlist required')
     responses = {}
     for frame in received:
@@ -93,6 +94,7 @@ def normalized(sent: list, received: list, *, allowed_warnings: tuple[str, ...] 
     user_id = None
     user_done = False
     turn_started = False
+    warning_seen = False
     response_order = []
     for index, original in enumerate(received):
         if 'id' in original:
@@ -131,8 +133,10 @@ def normalized(sent: list, received: list, *, allowed_warnings: tuple[str, ...] 
             else:
                 require(params.get('threadId') == thread, 'SDK environment thread mismatch')
                 if method == 'warning':
+                    require(not turn_started and not warning_seen, 'SDK warning timing or count')
                     require(set(params) == {'threadId', 'message'} and params['message'] in allowed_warnings,
                             'SDK unapproved warning')
+                    warning_seen = True
                 else:
                     require(set(params) == {'threadId', 'name', 'status', 'error', 'failureReason'} and
                             params['name'] == trace.SERVER and params['status'] in {'starting', 'ready'} and
