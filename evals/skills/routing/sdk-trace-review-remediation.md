@@ -124,3 +124,17 @@ source `e2241395027e514cca1a64e6cb1a554006781e8f` の同6ファイルの別SOL�
 共通検査をSDK開始応答とnative開始応答/通知へ適用し、inProgress・空items・errorなしを要求する。
 開始turnの未知字段、完了時刻/所要時間、非整数開始時刻、欠落statusも拒否する。
 合成fixtureの開始状態を明示し、原SDK応答を作り直さず照合する。原指摘と有限消費枠は保持する。
+
+## 12回目の静的検分の再検証と限定
+
+source `5d12e6590fa5f91c1dd3f777abb750329e70e883` の同6ファイルの別SOLはP2=1。
+指摘はoutput_truncated=trueを出力本文の欠落と解釈し、一律拒否を提案した。
+しかし原read-06の3件はすべてtrueで、SDK native/host/providerの結果本文を別経路で全文照合している。
+同版の公式実装はこの値をログ表示用preview.truncatedから取り、output_lengthは元output.len()から取る。
+参照: https://github.com/openai/codex/blob/rust-v0.160.1/codex-rs/otel/src/tool_result.rs
+このため「trueなら本文が欠ける」という指摘の前提と一律拒否案は採用しない。原指摘・消費1/残0は保持する。
+
+親が同sourceで文字列falseも通る型の欠落を再現した。字段がある場合は厳密なboolを要求する。
+trueのcall IDを結果へ側記録し、certifiesTelemetryOutputBodies=falseを明示する。
+親子ID・順序は完全保存したtarget原行で検査し、本文はhost/native/provider原通信を使う。
+プレビューから本文完全性を認定せず、原ログのtrueをfalseへ変更しない。型/true/falseの回帰を含める。

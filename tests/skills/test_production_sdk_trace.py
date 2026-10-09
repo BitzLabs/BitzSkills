@@ -66,6 +66,25 @@ class ProductionSdkTraceTests(unittest.TestCase):
         self.assertEqual(result['status'], 'sdk_child_trace_diagnostic_passed')
         self.assertIs(result['eligibleForMeasurement'], False)
 
+    def test_telemetry_preview_truncation_is_typed_and_recorded_without_body_certification(self):
+        events = self.parent_events()
+        before = copy.deepcopy(events)
+        for index in (3, 7, 10):
+            events[index]['fields']['output_truncated'] = True
+        result = sdk.audit_parent_links(events, self.frames, 'probe-call')
+        self.assertEqual(result['telemetryTruncatedPreviewCallIds'], ['call-0', 'call-1', 'probe-call'])
+        self.assertIs(result['certifiesTelemetryOutputBodies'], False)
+        self.assertIs(result['eligibleForMeasurement'], False)
+        for index in (3, 7, 10):
+            for value in ('true', 'false', 0, 1, None, []):
+                changed = copy.deepcopy(before)
+                changed[index]['fields']['output_truncated'] = value
+                with self.subTest(index=index, value=value), self.assertRaisesRegex(ValueError, 'telemetry preview truncation type'):
+                    sdk.audit_parent_links(changed, self.frames, 'probe-call')
+        for index in (3, 7, 10):
+            events[index]['fields']['output_truncated'] = False
+        self.assertEqual(sdk.audit_parent_links(events, self.frames, 'probe-call')['telemetryTruncatedPreviewCallIds'], [])
+
     def test_failed_turn_start_rpc_is_rejected_even_with_normal_completion(self):
         for status, error in (('failed', {'message': 'failure'}), ('interrupted', None),
                               ('completed', None), ('inProgress', {'message': 'failure'})):

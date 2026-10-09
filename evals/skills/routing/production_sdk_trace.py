@@ -417,6 +417,7 @@ def audit_parent_links(events: list, received: list, provider_call_id: str) -> d
     timing = None
     cell = None
     runtime_ids = set()
+    truncated_previews = []
     neutral = {'codex.conversation_starts', 'codex.startup_phase', 'codex.user_prompt',
                'codex.api_request', 'codex.turn_ttft'}
     base_fields = {'event.name', 'conversation.id', 'call_id'}
@@ -496,6 +497,10 @@ def audit_parent_links(events: list, received: list, provider_call_id: str) -> d
             ready[ident] = index
         else:
             require(ident not in results and fields.get('success') == 'true', 'tool result failed or duplicate')
+            if 'output_truncated' in fields:
+                require(type(fields['output_truncated']) is bool, 'telemetry preview truncation type')
+                if fields['output_truncated']:
+                    truncated_previews.append(ident)
             for key, value in (('tool_origin', 'builtin' if source == 'direct' else 'mcp'),
                                ('mcp_tool', source == 'code_mode'), ('tool_result_seq', len(results) + 1)):
                 require(key not in fields or type(fields[key]) is type(value) and fields[key] == value,
@@ -522,6 +527,7 @@ def audit_parent_links(events: list, received: list, provider_call_id: str) -> d
     return {'status': 'scripted_parent_cell_child_ids_matched', 'scope': 'one-scripted-exec-two-mcp-calls',
             'parentCallId': provider_call_id, 'cellId': cell, 'nativeChildIds': [c['id'] for c in children],
             'traceEventCount': len(events), 'traceValueSha256': digest(events),
+            'telemetryTruncatedPreviewCallIds': truncated_previews, 'certifiesTelemetryOutputBodies': False,
             'certifiesMultipleOrYieldedCells': False, 'eligibleForMeasurement': False}
 
 
