@@ -107,3 +107,12 @@ source `7ce4113a7f4a2170d1222d79e436ccc829fdee15` の同6ファイルの別SOL�
 親が同sourceでuserMessage開始/完了のIDを空文字列へ置換して診断通過する条件を再現した。
 共通監査へ渡す前に保持通知へ分離される入力にも、SDK入口で非空文字列IDを要求する。
 原review_findings・消費1/残0を保持し、空IDの両通知を含む回帰を追加する。
+
+## 10回目の静的検分からの是正候補
+
+source `28c32c4afb206fcc227dce58448a59e43d72f526` の同6ファイルの別SOLはP2=1。
+親が同sourceで固定SSEのresponse.completedへ非nullのerrorを追加して交換診断通過する条件を再現した。
+呼出し/最終応答のcreated/completed両境界でerrorとincomplete_detailsの未指定/nullだけを許可する。
+固定SSEとして列挙したevent・response・最終item字段以外も拒否し、未知の失敗証拠を捨てない。
+non-nullの真偽値・空文字・空配列も拒否し、null正常系と未知字段の回帰を含める。
+実provider一般形式へ拡張せず、原review_findings・消費1/残0を保持する。

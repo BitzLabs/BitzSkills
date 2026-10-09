@@ -1,0 +1,64 @@
+{
+  "version": "sdk-trace-review-0.11.0",
+  "phase": 4,
+  "scope": "public-sdk-trace-component-static-review-only",
+  "model": "gpt-6.1-sol",
+  "timeoutSeconds": 300,
+  "maximumInvocations": 1,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 1,
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "outputRelativeRoot": ".venv/sdk-trace-independent-review-11",
+  "payloadFiles": [
+    "evals/skills/routing/production_sdk_trace.py",
+    "evals/skills/routing/production_trace.py",
+    "tests/skills/test_production_sdk_trace.py",
+    "evals/skills/results/2026-10-08-sdk-trace-connection/verify-parent-links.py",
+    "evals/skills/routing/sdk-trace-review-remediation.md",
+    "tests/skills/test_production_trace.py"
+  ],
+  "sourceFiles": [
+    "evals/skills/routing/production_sdk_trace.py",
+    "evals/skills/routing/production_trace.py",
+    "tests/skills/test_production_sdk_trace.py",
+    "evals/skills/results/2026-10-08-sdk-trace-connection/verify-parent-links.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/sdk-trace-review-v0.1.json",
+    "evals/skills/routing/sdk-trace-review.schema.json",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "evals/skills/routing/sdk-trace-review-v0.2.json",
+    "evals/skills/routing/sdk-trace-review-remediation.md",
+    "evals/skills/routing/sdk-trace-review-v0.3.json",
+    "evals/skills/routing/sdk-trace-review-v0.4.json",
+    "evals/skills/routing/sdk-trace-review-v0.5.json",
+    "tests/skills/test_production_trace.py",
+    "evals/skills/routing/sdk-trace-review-v0.6.json",
+    "evals/skills/routing/sdk-trace-review-v0.7.json",
+    "evals/skills/routing/sdk-trace-review-v0.8.json",
+    "evals/skills/routing/sdk-trace-review-v0.9.json",
+    "evals/skills/routing/sdk-trace-review-v0.10.json",
+    "evals/skills/routing/sdk-trace-review-v0.11.json"
+  ],
+  "constraints": [
+    "親が最初の入力読取り前と呼出し前後に確定sourceを照合して送信する。検分者が自らGitを読んだ検分とは扱わない。",
+    "モデルへ渡すのは列挙した公開コードの確定bytesだけ。保持入力・期待値・過去の作業者判断を渡さない。",
+    "単一の独立CLI文脈で静的検分する。追加モデル・委譲・tool実行・私的領域読取り・自動retryは禁止。",
+    "親子IDの固定1exec診断を任意複数/待機/実provider/一次採点の認定へ拡張していないか確認する。",
+    "独立静的検分だけ。試験実行・全証拠検分・Phase完了を認定しない。原stdio・source・入力hash・実exitを保持する。"
+  ],
+  "previousFailure": {
+    "sourceCommit": "28c32c4afb206fcc227dce58448a59e43d72f526",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-10",
+    "receiptSha256": "1e67bd564b40183513c8ce104fd77398ab9929ae263a5f6bff474350284bb475",
+    "responseSha256": "e338c87d050c7f7dc7cc9df2e619e52c768af00a3cc1143ec1c000ca3be44301",
+    "oldInvocationsConsumed": 1,
+    "oldRemaining": 0,
+    "findings": {
+      "P2": 1,
+      "P3": 0
+    },
+    "reason": "Non-null SSE response error reproduced by parent"
+  }
+}

@@ -236,7 +236,22 @@ def scripted_response(raw: bytes) -> dict:
     final_types = ['response.created', 'response.output_item.added', 'response.output_text.delta',
                    'response.output_item.done', 'response.completed']
     require(types in (call_types, final_types), 'unsupported diagnostic response events')
+    fields = {
+        'response.created': {'type', 'response'},
+        'response.completed': {'type', 'response'},
+        'response.output_item.added': {'type', 'output_index', 'item'},
+        'response.output_item.done': {'type', 'output_index', 'item'},
+        'response.output_text.delta': {'type', 'item_id', 'output_index', 'content_index', 'delta'},
+    }
+    require(all(set(e) == fields[e['type']] for e in events), 'unknown diagnostic SSE event fields')
     first, last = events[0].get('response'), events[-1].get('response')
+    for response in (first, last):
+        require(isinstance(response, dict) and
+                {'id', 'status', 'output'} <= set(response) <= {'id', 'object', 'status', 'output', 'error', 'incomplete_details'} and
+                response.get('object', 'response') == 'response',
+                'unknown or missing diagnostic SSE response fields')
+        require(response.get('error') is None and response.get('incomplete_details') is None,
+                'SSE error or incomplete response')
     require(isinstance(first, dict) and isinstance(last, dict) and first.get('status') == 'in_progress' and
             first.get('output') == [] and isinstance(first.get('id'), str) and bool(first['id']) and
             first['id'] == last.get('id') and last.get('status') == 'completed', 'SSE response lifecycle')
@@ -247,7 +262,8 @@ def scripted_response(raw: bytes) -> dict:
             'SSE response output mismatch')
     if types == final_types:
         content = item.get('content')
-        require(item.get('type') == 'message' and item.get('role') == 'assistant' and
+        require(set(item) == {'type', 'id', 'role', 'phase', 'status', 'content'} and
+                item.get('type') == 'message' and item.get('role') == 'assistant' and
                 item.get('phase') == 'final_answer' and item.get('status') == 'completed' and
                 isinstance(item.get('id'), str) and bool(item['id']) and
                 isinstance(content, list) and len(content) == 1 and

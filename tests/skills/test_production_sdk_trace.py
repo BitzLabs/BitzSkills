@@ -369,6 +369,41 @@ class ProductionSdkTraceTests(unittest.TestCase):
                 with self.subTest(field=field, value=value), self.assertRaisesRegex(ValueError, 'SSE (response output|final start|final delta) mismatch'):
                     sdk.scripted_response(('\n'.join(lines) + '\n').encode())
 
+    def test_sse_errors_and_incomplete_details_are_rejected_at_both_boundaries(self):
+        for which in (0, 1):
+            for boundary in (0, -1):
+                for field in ('error', 'incomplete_details'):
+                    for value in ({'code': 'server_error'}, False, '', []):
+                        args = self.exchange()
+                        events = [json.loads(line[6:]) for line in args['provider_responses'][which].decode().splitlines()
+                                  if line.startswith('data: ')]
+                        events[boundary]['response'][field] = value
+                        args['provider_responses'][which] = ''.join(
+                            'event: ' + e['type'] + '\ndata: ' + json.dumps(e) + '\n\n' for e in events).encode()
+                        with self.subTest(which=which, boundary=boundary, field=field, value=value), \
+                                self.assertRaisesRegex(ValueError, 'SSE error or incomplete response'):
+                            sdk.diagnose_exchange(**args)
+        args = self.exchange()
+        for which, raw in enumerate(args['provider_responses']):
+            events = [json.loads(line[6:]) for line in raw.decode().splitlines() if line.startswith('data: ')]
+            for boundary in (0, -1):
+                events[boundary]['response'].update(error=None, incomplete_details=None)
+            args['provider_responses'][which] = ''.join(
+                'event: ' + e['type'] + '\ndata: ' + json.dumps(e) + '\n\n' for e in events).encode()
+        self.assertEqual(sdk.diagnose_exchange(**args)['status'], 'sdk_scripted_exchange_diagnostic_passed')
+
+    def test_unknown_sse_event_response_and_final_item_fields_are_rejected(self):
+        for which, target in ((0, 'event'), (1, 'event'), (0, 'response'), (1, 'response'), (1, 'item')):
+            args = self.exchange()
+            events = [json.loads(line[6:]) for line in args['provider_responses'][which].decode().splitlines()
+                      if line.startswith('data: ')]
+            obj = events[-1] if target == 'event' else events[-1]['response'] if target == 'response' else events[-2]['item']
+            obj['unrecognized'] = 'hidden'
+            args['provider_responses'][which] = ''.join(
+                'event: ' + e['type'] + '\ndata: ' + json.dumps(e) + '\n\n' for e in events).encode()
+            with self.subTest(which=which, target=target), self.assertRaises(ValueError):
+                sdk.diagnose_exchange(**args)
+
     def test_sse_response_ids_cannot_be_empty(self):
         lines = sdk.cli.simulation_reply().decode().splitlines()
         for index, line in enumerate(lines):
