@@ -60,6 +60,52 @@ def raw_values(outgoing, delivered):
     return raw
 
 
+def check_terminal(value, incoming, outgoing):
+    """成功フラグを要求し、固定模擬終端を開始RPCと原通知から再計算する。"""
+    require(value.get('mockTurnCompleted') is True and value.get('mockFinalMatched') is True,
+            'capture success flags')
+    bindings = {}
+    indices = []
+    request_ids = []
+    for method, key in [('thread/start', 'thread'), ('turn/start', 'turn')]:
+        requests = [f for f in incoming if f.get('method') == method]
+        require(len(requests) == 1, 'capture start request count')
+        request = requests[0]
+        request_id = request.get('id')
+        require(type(request_id) in {int, str} and (not isinstance(request_id, str) or bool(request_id)) and
+                not any(trace.json_equal(request_id, old) for old in request_ids), 'capture start request binding')
+        request_ids.append(request_id)
+        replies = [(i, f) for i, f in enumerate(outgoing) if 'id' in f and
+                   trace.json_equal(f['id'], request['id'])]
+        require(len(replies) == 1 and set(replies[0][1]) == {'id', 'result'} and
+                isinstance(replies[0][1]['result'], dict) and
+                isinstance(replies[0][1]['result'].get(key), dict), 'capture start response binding')
+        item = replies[0][1]['result'][key]
+        require(isinstance(item.get('id'), str) and bool(item['id']), 'capture start context ID')
+        if key == 'thread':
+            trace.check_thread_start(item)
+        else:
+            require(set(replies[0][1]['result']) == {'turn'}, 'capture turn start response fields')
+            trace.check_turn_start(item)
+        bindings[key] = item['id']
+        indices.append(replies[0][0])
+    turn_request = next(f for f in incoming if f.get('method') == 'turn/start')
+    started = [(i, f.get('params')) for i, f in enumerate(outgoing) if f.get('method') == 'turn/started']
+    require(isinstance(turn_request.get('params'), dict) and
+            turn_request['params'].get('threadId') == bindings['thread'] and len(started) == 1 and
+            isinstance(started[0][1], dict) and started[0][1].get('threadId') == bindings['thread'] and
+            isinstance(started[0][1].get('turn'), dict) and
+            started[0][1]['turn'].get('id') == bindings['turn'] and
+            indices[0] < indices[1] < started[0][0], 'capture started context correlation')
+    trace.check_turn_start(started[0][1]['turn'])
+    require(operation.terminal_matches(outgoing, bindings['thread'], bindings['turn']) == (True, True),
+            'capture final and completion correlation')
+    final_index = next(i for i, f in enumerate(outgoing) if f.get('method') == 'item/completed' and
+                       f.get('params', {}).get('item', {}).get('type') == 'agentMessage')
+    require(started[0][0] < final_index, 'capture start/final order')
+    return bindings['thread'], bindings['turn']
+
+
 def check_capture(base, receipt_sha, *, legacy=False):
     value, digest = helper.receipt(base, expected_sha=receipt_sha)
     require(value['status'] == 'operation_diagnostic_captured' and value['namespaceExitCode'] == 0 and
@@ -71,6 +117,7 @@ def check_capture(base, receipt_sha, *, legacy=False):
             not value['serverRequestStops'] and not value['prohibitedFileExists'] and
             all(value['isolationChecks'].values()), 'capture terminal or finite scope')
     incoming, outgoing = [helper.frames(base, name) for name in ('rpc-in.jsonl', 'rpc-out.jsonl')]
+    ident, turn = check_terminal(value, incoming, outgoing)
     contract = helper.read(str((base / 'contract.json').relative_to(ROOT)))
     contract_name = 'evals/skills/routing/production-operation-probe-v0.' + ('7' if legacy else '8') + '.json'
     require((base / 'contract.json').read_bytes() == cli.encoded(trace.strict_json(
@@ -87,8 +134,6 @@ def check_capture(base, receipt_sha, *, legacy=False):
     items = [f['params']['item'] for f in raw if f['method'] == METHODS[0]]
     require([i['type'] for i in items] == ['message', 'message', 'message',
             'custom_tool_call', 'custom_tool_call_output', 'message'], 'raw item kinds')
-    ident = incoming[3]['params']['threadId']
-    turn = next(f['params']['turn']['id'] for f in outgoing if f.get('method') == 'turn/started')
     for frame in raw:
         params = frame['params']
         fields = {'threadId', 'turnId', 'item'} if frame['method'] == METHODS[0] else {

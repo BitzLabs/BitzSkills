@@ -1,7 +1,7 @@
 {
-  "version": "sdk-raw-response-capture-0.2.0",
+  "version": "sdk-raw-response-capture-0.3.0",
   "phase": 4,
-  "status": "independent_raw_review_findings_local_fix_pending_recheck",
+  "status": "second_independent_raw_review_findings_verifier_fix_pending_recheck",
   "sourceCommit": "4be29c094adb27fe897e72b3d841dcd73b5d0995",
   "priorSdkTraceStaticReviewPassedSource": "a8d0ef2f1398c96affdd54bbdb7bb748efd0c97e",
   "captureTrials": [
@@ -288,8 +288,24 @@
     "newLocalHttpRequests": 0,
     "paidModelCalls": 0
   },
-  "nextReview": {
-    "status": "awaiting_explicit_additional_one_transmission_approval",
+  "rawVerifierRemediation": {
+    "findingPriority": "P2",
+    "findingPath": "evals/skills/results/2026-10-09-sdk-raw-response-capture/verify-artifacts.py",
+    "findingLineAtReviewedSource": 65,
+    "reproductionScope": "固定原ログを改変せず、receipt検証後の関数境界へ成功フラグfalseの合成値を渡し、旧check_captureが受理することを再現した。固定hashを突破した実ログ改変とは主張しない。",
+    "correctedChecks": "成功フラグstrict trueと、開始RPC要求ID→応答ID、開始thread/turn、turn/started、final→完了順、null errorを原RPCから再計算する。旧捕捉にも適用する。",
+    "focusedTests": {"count": 20, "seconds": 0.104, "exitCode": 0},
+    "independentRecheckPassed": false,
+    "newMockTrials": 0,
+    "newLocalHttpRequests": 0,
+    "paidModelCalls": 0
+  },
+  "independentRecheck": {
+    "status": "review_findings",
+    "authorization": "前回答の同8公開ファイルの追加1回送信に対し、ユーザーがOKと回答した。",
+    "receiptSha256": "2da0f8bbb03dbbbc4905fd2ab35349b1030af2a178020a37d9eaf276a27a7ada",
+    "responseSha256": "bc254959efb3a3247dd65460852342d9e8f3b56098b05d62d4301eec228d2eb3",
+    "usage": {"input_tokens": 33566, "cached_input_tokens": 0, "cache_write_input_tokens": 0, "output_tokens": 976, "reasoning_output_tokens": 496},
     "sourceCommit": "1775038798653da9a6801ea0402c22febae2273a",
     "contractPath": "evals/skills/routing/sdk-raw-response-review-v0.2.json",
     "outputRelativeRoot": ".venv/sdk-raw-response-independent-review-02",
@@ -297,7 +313,7 @@
     "payloadFilesCount": 8,
     "payloadBytes": 87851,
     "maximumInvocations": 1,
-    "actualInvocations": 0,
+    "actualInvocations": 1,
     "automaticRetries": 0,
     "primaryModelTrajectories": 0,
     "additionalDelegation": 0
@@ -305,7 +321,7 @@
   "newRawMockTrials": 2,
   "newLocalMockHttpRequests": 4,
   "rawMockPaidModelCalls": 0,
-  "newRawCaptureIndependentReviewerSolInvocations": 1,
+  "newRawCaptureIndependentReviewerSolInvocations": 2,
   "priorSdkTraceIndependentReviewerSolInvocations": 18,
   "independentRawCaptureReviewPassed": false,
   "eligibleForMeasurement": false,

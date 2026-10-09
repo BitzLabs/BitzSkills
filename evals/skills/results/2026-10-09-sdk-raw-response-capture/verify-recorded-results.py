@@ -22,6 +22,42 @@ def sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
+def recheck_review(meta):
+    base = ROOT / meta['outputRelativeRoot']
+    raw = (base / 'receipt.json').read_bytes()
+    require(sha(raw) == meta['receiptSha256'], 'recheck receipt hash')
+    value = trace.strict_json(raw)
+    contract = trace.strict_json(guard.git(ROOT, 'show', meta['sourceCommit'] + ':' + meta['contractPath']))
+    require(value['sourceCommit'] == meta['sourceCommit'] and value['status'] == meta['status'] == 'review_findings' and
+            value['exitCode'] == 0 and value['timedOut'] is False and
+            value['independentReviewerSolInvocations'] == meta['actualInvocations'] == 1 and
+            value['primaryModelTrajectories'] == value['automaticRetries'] == 0, 'recheck terminal')
+    for name, key in [('trace.jsonl', 'stdoutSha256'), ('stderr.bin', 'stderrSha256'),
+                      ('prompt.txt', 'promptSha256'), ('response.json', 'responseSha256')]:
+        require(sha((base / name).read_bytes()) == value[key], 'recheck original bytes')
+    schema = guard.git(ROOT, 'show', meta['sourceCommit'] + ':evals/skills/routing/sdk-trace-review.schema.json')
+    require((base / 'schema.json').read_bytes() == schema, 'recheck schema')
+    response, usage, warnings = review.review_response(base, (base / 'trace.jsonl').read_bytes(),
+                                                      meta['sourceCommit'], schema, contract)
+    require(trace.json_equal(response['findings'], value['findings']) and
+            trace.json_equal(usage, value['usage']) and trace.json_equal(usage, meta['usage']) and
+            warnings == value['acceptedStartupWarningHashes'] and
+            value['responseSha256'] == meta['responseSha256'], 'recheck response fields')
+    stages = list(value['sourceGuards'].values())
+    require(len(stages) == 3 and all(trace.json_equal(g, stages[0]) for g in stages), 'recheck guards')
+    for name, expected in stages[0]['sourceSha256'].items():
+        require(sha(guard.git(ROOT, 'show', meta['sourceCommit'] + ':' + name)) == expected and
+                sha(guard.git(ROOT, 'show', stages[0]['observedHead'] + ':' + name)) == expected,
+                'recheck historical source')
+    reservation = trace.strict_json((base / 'reservation.json').read_bytes())
+    invocation = trace.strict_json((base / 'invocation.json').read_bytes())
+    require(reservation['sourceCommit'] == invocation['sourceCommit'] == meta['sourceCommit'] and
+            reservation['maximumInvocations'] == reservation['attemptReserved'] == invocation['maximumInvocations'] == 1 and
+            reservation['automaticRetry'] is False and invocation['promptSha256'] == value['promptSha256'] and
+            invocation['model'] == contract['model'], 'recheck finite reservation')
+    return response
+
+
 def run():
     summary = trace.strict_json(Path(__file__).with_name('summary.json').read_bytes())
     require(summary['phase'] == 4 and not summary['phaseComplete'] and
@@ -104,14 +140,15 @@ def run():
             reservation['automaticRetry'] is False and invocation['model'] == contract['model'] and
             invocation['promptSha256'] == receipt['promptSha256'], 'review finite reservation')
     require(summary['newRawMockTrials'] == 2 and summary['newLocalMockHttpRequests'] == 4 and
-            summary['rawMockPaidModelCalls'] == 0 and summary['newRawCaptureIndependentReviewerSolInvocations'] == 1,
+            summary['rawMockPaidModelCalls'] == 0 and summary['newRawCaptureIndependentReviewerSolInvocations'] == 2,
             'capture counters')
     counterexample = [{'method': 'turn/completed', 'params': {'threadId': 'other',
                       'turn': {'id': 'other-turn', 'status': 'completed', 'error': {'message': 'failed'}}}},
                       {'method': 'item/completed', 'params': {'threadId': 'other', 'turnId': 'other-turn',
                       'item': {'type': 'agentMessage', 'phase': 'final_answer', 'text': 'LOCAL_SIMULATION_ONLY'}}}]
     require(operation.terminal_matches(counterexample, 'thread', 'turn') == (False, False), 'P2 regression')
-    local = summary['localRemediation'].get('verification')
+    local = (summary.get('rawVerifierRemediation', {}).get('verification') or
+             summary['localRemediation'].get('verification'))
     if local is not None:
         local_base = ROOT / local['outputRelativeRoot']
         local_raw = (local_base / 'summary.json').read_bytes()
@@ -132,7 +169,7 @@ def run():
         for name, key in [('tests.stdout', 'stdoutSha256'), ('tests.stderr', 'stderrSha256')]:
             require(sha((local_base / name).read_bytes()) == local['tests'][key], 'local original test bytes')
         matched = re.search(rb'Ran (\d+) tests in ([0-9.]+)s\s+OK\s*$', (local_base / 'tests.stderr').read_bytes())
-        require(matched and int(matched[1]) == local['tests']['count'] == 466 and
+        require(matched and int(matched[1]) == local['tests']['count'] and local['tests']['count'] in {466, 469} and
                 float(matched[2]) == local['tests']['seconds'] and local['tests']['exitCode'] == 0,
                 'local actual test terminal')
     failed = summary['localRemediation']['failedCleanTreeVerification']
@@ -140,26 +177,33 @@ def run():
     require(sha((failed_base / 'tests.stderr').read_bytes()) == failed['stderrSha256'] and
             not (failed_base / 'summary.json').exists() and failed['exitCode'] == 1,
             'failed clean-tree verification retained')
-    next_review = summary['nextReview']
+    second_response = recheck_review(summary['independentRecheck'])
+    next_review = summary.get('nextReview')
+    if next_review is not None:
+        check_pending(next_review, contract['payloadFiles'])
+    print(json.dumps({'status': 'recorded_raw_capture_results_match_original_bytes',
+                      'tests': tests['count'], 'rawItemsPerCapture': 6, 'rawCompletedPerCapture': 2,
+                      'mockTrials': 2, 'localMockHttpRequests': 4, 'rawMockPaidModelCalls': 0,
+                      'independentReviewInvocations': 2, 'reviewFindings': len(response['findings']),
+                      'recheckFindings': len(second_response['findings']),
+                      'correctedSourceTests': local['tests']['count'] if local is not None else None,
+                      'eligibleForMeasurement': False}, ensure_ascii=False))
+
+
+def check_pending(next_review, payload_files):
     next_contract = trace.strict_json(guard.git(ROOT, 'show', next_review['sourceCommit'] + ':' + next_review['contractPath']))
     require(next_review['actualInvocations'] == 0 and not (ROOT / next_review['outputRelativeRoot']).exists() and
             next_review['maximumInvocations'] == next_contract['maximumInvocations'] == 1 and
             next_review['automaticRetries'] == next_contract['automaticRetries'] == 0 and
             next_review['primaryModelTrajectories'] == next_review['additionalDelegation'] == 0 and
-            next_contract['payloadFiles'] == contract['payloadFiles'], 'next finite review')
+            next_contract['payloadFiles'] == payload_files, 'next finite review')
     total = 0
     for name in next_contract['payloadFiles']:
         raw = guard.git(ROOT, 'show', next_review['sourceCommit'] + ':' + name)
         require(raw == (ROOT / name).read_bytes(), 'next committed payload bytes')
         total += len(raw)
-    require(total == next_review['payloadBytes'] == 87851 and
+    require(total == next_review['payloadBytes'] and
             len(next_contract['payloadFiles']) == next_review['payloadFilesCount'] == 8, 'next payload count')
-    print(json.dumps({'status': 'recorded_raw_capture_results_match_original_bytes',
-                      'tests': tests['count'], 'rawItemsPerCapture': 6, 'rawCompletedPerCapture': 2,
-                      'mockTrials': 2, 'localMockHttpRequests': 4, 'rawMockPaidModelCalls': 0,
-                      'independentReviewInvocations': 1, 'reviewFindings': len(response['findings']),
-                      'correctedSourceTests': local['tests']['count'] if local is not None else None,
-                      'eligibleForMeasurement': False}, ensure_ascii=False))
 
 
 if __name__ == '__main__':

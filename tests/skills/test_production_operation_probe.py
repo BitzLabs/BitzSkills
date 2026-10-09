@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 import unittest
 from types import SimpleNamespace
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'evals/skills/routing'))
@@ -121,6 +122,89 @@ class ProductionOperationProbeTests(unittest.TestCase):
         bad[0]['emittedAtMs'] = True
         with self.assertRaisesRegex(ValueError, 'raw event timestamp'):
             verifier.raw_values(bad, side)
+
+    @staticmethod
+    def terminal_fixture():
+        value = {'status': 'operation_diagnostic_captured', 'namespaceExitCode': 0,
+                 'runtime': {'exitCode': 0, 'forcedShutdown': False},
+                 'localHttpRequestCount': 2, 'hostEventCount': 2, 'paidModelCalls': 0,
+                 'eligibleForMeasurement': False, 'experimentalRawEventsRequested': True,
+                 'localErrors': [], 'sdkErrorType': None, 'serverRequestStops': [],
+                 'prohibitedFileExists': False, 'isolationChecks': {'repo': True},
+                 'mockTurnCompleted': True, 'mockFinalMatched': True}
+        turn = {'id': 'turn', 'status': 'inProgress', 'items': [], 'error': None}
+        incoming = [{'id': 2, 'method': 'thread/start', 'params': {}},
+                    {'id': 3, 'method': 'turn/start', 'params': {'threadId': 'thread'}}]
+        outgoing = [{'id': 2, 'result': {'thread': {'id': 'thread', 'ephemeral': True, 'turns': []}}},
+                    {'id': 3, 'result': {'turn': copy.deepcopy(turn)}},
+                    {'method': 'turn/started', 'params': {'threadId': 'thread', 'turn': turn}},
+                    {'method': 'item/completed', 'params': {'threadId': 'thread', 'turnId': 'turn',
+                     'item': {'type': 'agentMessage', 'phase': 'final_answer', 'text': 'LOCAL_SIMULATION_ONLY'}}},
+                    {'method': 'turn/completed', 'params': {'threadId': 'thread',
+                     'turn': {'id': 'turn', 'status': 'completed', 'error': None}}}]
+        return value, incoming, outgoing
+
+    def test_capture_verifier_requires_true_success_flags_even_with_captured_status(self):
+        verifier = self.raw_verifier()
+        value, incoming, outgoing = self.terminal_fixture()
+        for field in ['mockTurnCompleted', 'mockFinalMatched']:
+            for invalid in [False, 1, None, 'true']:
+                bad = copy.deepcopy(value)
+                bad[field] = invalid
+                with self.subTest(field=field, value=invalid), \
+                     patch.object(verifier.helper, 'receipt', return_value=(bad, 'digest')), \
+                     patch.object(verifier.helper, 'frames', side_effect=[incoming, outgoing]), \
+                     self.assertRaisesRegex(ValueError, 'capture success flags'):
+                    verifier.check_capture(self.base, 'digest')
+
+    def test_capture_terminal_recomputes_rpc_bindings_and_order_without_mutation(self):
+        verifier = self.raw_verifier()
+        value, incoming, outgoing = self.terminal_fixture()
+        before = copy.deepcopy((value, incoming, outgoing))
+        self.assertEqual(verifier.check_terminal(value, incoming, outgoing), ('thread', 'turn'))
+        for mode in ['foreign-thread', 'foreign-turn', 'failed', 'error', 'reverse', 'missing-reply',
+                     'duplicate-reply', 'bool-request-id', 'same-request-id', 'wrong-request-thread',
+                     'wrong-started-turn', 'early-final', 'failed-start', 'started-error']:
+            sent, received = copy.deepcopy((incoming, outgoing))
+            if mode == 'foreign-thread':
+                received[-1]['params']['threadId'] = 'other'
+            elif mode == 'foreign-turn':
+                received[-1]['params']['turn']['id'] = 'other'
+            elif mode in ['failed', 'error']:
+                received[-1]['params']['turn']['status' if mode == 'failed' else 'error'] = (
+                    'failed' if mode == 'failed' else {'message': 'failed'})
+            elif mode == 'reverse':
+                received[-2:] = list(reversed(received[-2:]))
+            elif mode == 'missing-reply':
+                received.pop(1)
+            elif mode == 'duplicate-reply':
+                received.append(copy.deepcopy(received[1]))
+            elif mode == 'bool-request-id':
+                sent[1]['id'] = True
+            elif mode == 'same-request-id':
+                sent[1]['id'] = sent[0]['id']
+            elif mode == 'wrong-request-thread':
+                sent[1]['params']['threadId'] = 'other'
+            elif mode == 'wrong-started-turn':
+                received[2]['params']['turn']['id'] = 'other'
+            elif mode == 'early-final':
+                received[2:4] = list(reversed(received[2:4]))
+            elif mode == 'failed-start':
+                received[1]['result']['turn']['status'] = 'failed'
+            else:
+                received[2]['params']['turn']['error'] = {'message': 'failed'}
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                verifier.check_terminal(value, sent, received)
+        self.assertEqual((value, incoming, outgoing), before)
+
+    def test_capture_verifier_checks_rpc_terminal_even_when_receipt_success_flags_are_true(self):
+        verifier = self.raw_verifier()
+        value, incoming, outgoing = self.terminal_fixture()
+        outgoing[-1]['params']['turn']['error'] = {'message': 'failed'}
+        with patch.object(verifier.helper, 'receipt', return_value=(value, 'digest')), \
+             patch.object(verifier.helper, 'frames', side_effect=[incoming, outgoing]), \
+             self.assertRaisesRegex(ValueError, 'capture final and completion correlation'):
+            verifier.check_capture(self.base, 'digest')
 
     def test_legacy_pretty_stream_is_read_without_claiming_jsonl_or_rewriting(self):
         verifier = self.raw_verifier()

@@ -125,3 +125,23 @@ final→完了順をすべて満たす場合だけ両フラグをtrueにする�
 追加1回の[具体的な送信範囲](public-remediation-code-transmission-approval-request.md)は、
 同8公開パス/確定ref1775038/87851 bytes/OpenAI gpt-6.1-sol/一次0/委譲0/retry0。
 新保存先02は未作成であり、追加の送信・起動・予約0。今回は明示承認された初回1回だけを実施した。
+
+## 是正後の独立再検分と原証拠照合器の是正（2026-10-10）
+
+ユーザーが同8パスの追加1回を承認し、v0.2/source1775038のgpt-6.1-sol検分を実施した。
+CLI exit0/timeoutなし、P2が1件。今回input33566/cached0/output976/reasoning496。
+raw捕捉系列の独立SOLは累計2回、一次0・委譲0・自動retry0。SDK診断旧系列18回と分けて記録する。
+原receipt SHA256 `2da0f8bbb03dbbbc4905fd2ab35349b1030af2a178020a37d9eaf276a27a7ada`、
+原response SHA256 `bc254959efb3a3247dd65460852342d9e8f3b56098b05d62d4301eec228d2eb3`。
+親が原stdio/hash/schema/最終本文とusage、歴史Git、前/起動/後の同一guard、有限予約を再照合した。
+
+P2はcheck_capture自身がmockTurnCompleted/mockFinalMatchedを要求せず、原RPC終端を再計算しない点。
+前回の記録照合器は別途修正判定を適用していたが、送信対象のcheck_captureへ接続されていなかった。
+親が固定原ファイルを改変せず、receipt検証後の関数境界へ両フラグfalseの合成値を渡して旧関数の受理を再現した。
+これは固定receipt/artifact hashを突破した実ログ改変の再現ではなく、関数境界の成功条件不足の再現である。
+
+check_terminalをcheck_captureへ接続し、成功フラグstrict true、開始RPC要求IDと応答の一対一対応、
+開始thread/turnとturn/started、開始→final→完了順、completed状態、null error、固定final本文/phaseを原RPCから照合する。
+raw通知のcontextもこの開始RPCから得たIDへ相関する。新旧捕捉へ同じ検査を適用し、原ファイルは保持する。
+偽フラグ、他context、失敗開始、非null error、逆順、欠落/重複応答、bool/重複要求IDの回帰を追加した。
+20件/0.104s/OK/exit0。是正後の新しい独立再検分は未実施であり、Phase/Gate完了には代用しない。
