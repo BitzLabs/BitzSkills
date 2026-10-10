@@ -789,6 +789,7 @@ class ConfigDiagnosticsTests(unittest.TestCase):
             result, exit_code = _run_context(root, ["REQ-001"])
             self.assertEqual((result["status"], exit_code), ("blocked", 2))
             self.assertEqual(result["diagnostics"][0]["code"], "SPEC-WORKSPACE-MISSING-001")
+            self.assertIsNone(result["workspace"]["id"])
             self.assertEqual(result["diagnostics"][0]["source"], {"kind": "environment", "component": "workspace", "identifier": "."})
 
     def test_config_warning_is_added_to_a_successful_result(self):
