@@ -553,9 +553,7 @@ def _process_single_target(
         return entry_out, needed_pairs
 
     # --- テスト割当て候補の決定（関係・トレースモデル §6.4「規範文のないTECHを起点にした場合は`targetStatements`を空とし、文書単位のテスト割当てを保持する」） ---
-    # ``root_id``は規範文ID（例: "REQ-001:AC-01"）の場合があり、その場合``id_index``には
-    # キーがない。規範文を起点にした場合は`target_statements`が空でなくなるため、文書単位の判定（TECHの文書IDの
-    # キーが必要）に入る前に短絡させる（元の単一ワークスペースの実装と同じ`elif`の規則を保つ）。
+    # ``root_id``は規範文ID（例: "REQ-001:AC-01"）の場合があり、その場合``id_index``にはキーがないので、``root_id in id_index``で判定する。
     # 文書単位のテスト割当ての対象: 規範文のないTECHを起点にした場合はそのTECH、TASKを起点にした場合は`addresses`する規範文のないTECH
     # （ADR-026の`Decision`の7番目の項目、関係・トレースモデル §6.4の規則3、`verify` §3）。そのTECHの`tests[]`をすべて対象にし、
     # 規範文は増やさない（ユーザー決定: TECHを起点にした場合と同じ）。
