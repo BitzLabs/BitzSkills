@@ -14,7 +14,7 @@ import production_trace as trace
 import source_guard
 
 ROOT = Path(__file__).resolve().parents[3]
-CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.18.json'
+CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.19.json'
 RAW_CONTRACTS = {'evals/skills/routing/sdk-raw-response-review-v0.1.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.2.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.3.json'}
@@ -67,7 +67,8 @@ def run(source: str, contract_name: str = CONTRACT):
                              '.venv/sdk-trace-independent-review-11', '.venv/sdk-trace-independent-review-12',
                              '.venv/sdk-trace-independent-review-13', '.venv/sdk-trace-independent-review-14',
                              '.venv/sdk-trace-independent-review-15', '.venv/sdk-trace-independent-review-16',
-                             '.venv/sdk-trace-independent-review-17', '.venv/sdk-raw-response-independent-review-01',
+                             '.venv/sdk-trace-independent-review-17', '.venv/sdk-trace-independent-review-18',
+                             '.venv/sdk-raw-response-independent-review-01',
                              '.venv/sdk-raw-response-independent-review-02'},
                 'unknown previous review')
         old = ROOT / old_name
@@ -95,7 +96,7 @@ def run(source: str, contract_name: str = CONTRACT):
               'あなたが実行していない試験や原証拠の検分を成功と書かないでください。'
               '指定schemaのJSONだけを回答してください。\n'
               f'sourceCommit={source}\nscope={contract["scope"]}\n')
-    if contract_name in RAW_CONTRACTS:
+    if contract_name in RAW_CONTRACTS or contract_name == 'evals/skills/routing/sdk-trace-review-v0.19.json':
         prompt += '\nこの検分の固定制約:\n' + '\n'.join(contract['constraints']) + '\n'
     for name in contract['payloadFiles']:
         raw = source_guard.git(ROOT, 'show', source + ':' + name)

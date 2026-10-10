@@ -384,6 +384,112 @@ class ProductionSdkTraceTests(unittest.TestCase):
         self.assertIs(result['providerParentBindingVerified'], False)
         self.assertIs(result['eligibleForMeasurement'], False)
 
+    def raw_exchange(self):
+        args = copy.deepcopy(self.exchange())
+        args['sent'][2]['params']['experimentalRawEvents'] = True
+        first, second = args['provider_requests']
+        first['input'][0]['id'] = 'raw-input'
+        second['input'][0]['id'] = 'raw-input'
+        final = sdk.scripted_response(args['provider_responses'][1])
+        final_projection = {k: final[k] for k in ('type', 'id', 'role', 'phase')}
+        final_projection['content'] = [{'type': 'output_text', 'text': final['content'][0]['text']}]
+        items = [first['input'][0], *second['input'][-2:], final_projection]
+        raw = []
+        for i, item in enumerate(items):
+            item = copy.deepcopy(item)
+            item['internal_chat_message_metadata_passthrough'] = {'turn_id': 'u'}
+            raw.append({'method': sdk.RAW_METHODS[0], 'emittedAtMs': 1,
+                        'params': {'threadId': 't', 'turnId': 'u', 'item': item}})
+            if i in (1, 3):
+                raw.append({'method': sdk.RAW_METHODS[1], 'emittedAtMs': 1,
+                            'params': {'threadId': 't', 'turnId': 'u', 'responseId': 'probe-response',
+                                       'usage': None, 'usageMetadata': None}})
+        frames = []
+        first_call = False
+        for frame in args['received']:
+            item = frame.get('params', {}).get('item', {})
+            if frame.get('method') == 'item/started' and item.get('type') == 'mcpToolCall' and not first_call:
+                frames.extend(raw[:3])
+                first_call = True
+            if frame.get('method') == 'item/started' and item.get('type') == 'agentMessage':
+                frames.append(raw[3])
+            frames.append(frame)
+            if frame.get('method') == 'item/completed' and item.get('type') == 'agentMessage':
+                frames.extend(raw[4:])
+        args['received'] = frames
+        args['sdk_raw_notifications'] = [{'method': f['method'], 'params': copy.deepcopy(f['params'])} for f in raw]
+        return args
+
+    def test_raw_exchange_correlates_delivery_and_provider_without_modifying_original_input(self):
+        args = self.raw_exchange()
+        before = copy.deepcopy(args)
+        result = sdk.diagnose_raw_exchange(**args)
+        self.assertEqual(args, before)
+        self.assertEqual(result['status'], 'sdk_raw_scripted_exchange_diagnostic_passed')
+        self.assertEqual((result['rawItemCount'], result['rawCompletedCount']), (4, 2))
+        for field in ['sdkRawPayloadsMatchOriginalRpc', 'rawProviderCallOutputBindingVerified']:
+            self.assertIs(result[field], True)
+        for field in ['eligibleForMeasurement', 'providerParentBindingVerified', 'certifiesAllNativeLifecycle',
+                      'rawItemsAreOriginalSseBytes', 'certifiesCompleteRawProviderContext', 'certifiesNativeProvider']:
+            self.assertIs(result[field], False)
+        with self.assertRaisesRegex(ValueError, 'unknown SDK thread params'):
+            sdk.diagnose_exchange(**{k: v for k, v in args.items() if k != 'sdk_raw_notifications'})
+
+    def test_raw_exchange_requires_explicit_true_flag_and_fixed_date(self):
+        for flag in [False, 1, None, 'true']:
+            args = self.raw_exchange()
+            args['sent'][2]['params']['experimentalRawEvents'] = flag
+            with self.subTest(flag=flag), self.assertRaisesRegex(ValueError, 'explicit SDK raw event request'):
+                sdk.diagnose_raw_exchange(**args)
+        for date in ['2026-10-10', '', True]:
+            with self.subTest(date=date), self.assertRaisesRegex(ValueError, 'fixed diagnostic date'):
+                sdk.diagnose_raw_exchange(**self.raw_exchange(), diagnostic_date=date)
+
+    def test_raw_exchange_rejects_missing_modified_foreign_or_reordered_notifications(self):
+        for mode in ['missing-side', 'changed-side', 'extra-side', 'foreign-thread', 'foreign-turn',
+                     'reversed', 'call-output', 'response-id', 'raw-final', 'internal-turn', 'bool-timestamp',
+                     'internal-timestamp', 'unknown-metadata', 'outside-turn', 'duplicate-item-id', 'missing-raw']:
+            args = self.raw_exchange()
+            raw = [f for f in args['received'] if f.get('method') in sdk.RAW_METHODS]
+            if mode == 'missing-side':
+                args['sdk_raw_notifications'].pop()
+            elif mode == 'changed-side':
+                args['sdk_raw_notifications'][0]['params']['item']['content'] = []
+            elif mode == 'extra-side':
+                args['sdk_raw_notifications'].append(copy.deepcopy(args['sdk_raw_notifications'][0]))
+            elif mode in ['foreign-thread', 'foreign-turn']:
+                raw[0]['params']['threadId' if mode == 'foreign-thread' else 'turnId'] = 'other'
+            elif mode == 'reversed':
+                indices = [i for i, f in enumerate(args['received']) if f.get('method') in sdk.RAW_METHODS]
+                for index, frame in zip(indices, reversed(raw)):
+                    args['received'][index] = frame
+            elif mode == 'call-output':
+                raw[3]['params']['item']['output'] = []
+            elif mode == 'response-id':
+                raw[2]['params']['responseId'] = 'other'
+            elif mode == 'raw-final':
+                raw[4]['params']['item']['content'][0]['text'] = 'wrong'
+            elif mode == 'internal-turn':
+                raw[0]['params']['item']['internal_chat_message_metadata_passthrough']['turn_id'] = 'other'
+            elif mode == 'bool-timestamp':
+                raw[0]['emittedAtMs'] = True
+            elif mode == 'internal-timestamp':
+                raw[0]['params']['item']['internal_chat_message_metadata_passthrough']['create_time'] = float('inf')
+            elif mode == 'unknown-metadata':
+                raw[0]['params']['item']['internal_chat_message_metadata_passthrough']['unexpected'] = True
+            elif mode == 'outside-turn':
+                args['received'].remove(raw[0])
+                args['received'].append(raw[0])
+            elif mode == 'duplicate-item-id':
+                raw[1]['params']['item']['id'] = raw[0]['params']['item']['id']
+            else:
+                args['received'].remove(raw[0])
+            if mode not in ['missing-side', 'changed-side', 'extra-side']:
+                args['sdk_raw_notifications'] = [{'method': f['method'], 'params': copy.deepcopy(f['params'])}
+                                                for f in args['received'] if f.get('method') in sdk.RAW_METHODS]
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                sdk.diagnose_raw_exchange(**args)
+
     def test_wire_call_id_program_and_prefix_drift_are_rejected(self):
         for change in ('call-id', 'program', 'prefix', 'extra'):
             args = self.exchange()

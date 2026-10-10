@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import math
 from uuid import UUID
 
 import production_trace as trace
@@ -286,20 +287,23 @@ def scripted_response(raw: bytes) -> dict:
     return item
 
 
-def diagnostic_environment(cwd: str) -> str:
+def diagnostic_environment(cwd: str, diagnostic_date: str = '2026-10-08') -> str:
     """2026-10-08に捕捉した局所診断だけの固定SDK環境文。実provider向けではない。"""
     require(isinstance(cwd, str) and bool(cwd), 'diagnostic cwd required')
+    require(diagnostic_date in {'2026-10-08', '2026-10-09'}, 'fixed diagnostic date required')
     return ('<environment_context>\n  <cwd>' + cwd + '</cwd>\n  <shell>bash</shell>\n'
-            '  <current_date>2026-10-08</current_date>\n  <timezone>Asia/Tokyo</timezone>\n'
+            '  <current_date>' + diagnostic_date + '</current_date>\n  <timezone>Asia/Tokyo</timezone>\n'
             '  <filesystem><workspace_roots><root>' + cwd + '</root></workspace_roots>'
             '<permission_profile type="managed"><file_system type="restricted">'
             '<entry access="read"><special>:root</special></entry></file_system></permission_profile>'
             '</filesystem>\n</environment_context>')
 
 
-def audit_provider_input(sent: list, before: list) -> str:
+def audit_provider_input(sent: list, before: list, diagnostic_date: str = '2026-10-08') -> str:
     """前置文脈も固定形へ照合し、同じprefixへの余分なメッセージ混入を拒否する。"""
     params = sent[2]['params']
+    require(isinstance(diagnostic_date, str) and diagnostic_date in {'2026-10-08', '2026-10-09'},
+            'fixed diagnostic date required')
     expected_input = {'type': 'message', 'role': 'user', 'content': [
         {'type': 'input_text', 'text': sent[3]['params']['input'][0]['text']}]}
     require(isinstance(before, list) and bool(before), 'provider input required')
@@ -329,16 +333,16 @@ def audit_provider_input(sent: list, before: list) -> str:
     expected = [
         {'type': 'message', 'role': 'developer', 'content': [{'type': 'input_text', 'text': params.get('baseInstructions')}]},
         {'type': 'message', 'role': 'developer', 'content': supplement},
-        {'type': 'message', 'role': 'user', 'content': [{'type': 'input_text', 'text': diagnostic_environment(params['cwd'])}]},
+        {'type': 'message', 'role': 'user', 'content': [{'type': 'input_text', 'text': diagnostic_environment(params['cwd'], diagnostic_date)}]},
         expected_input]
     require(trace.json_equal(messages, expected), 'provider/SDK complete input context mismatch')
-    return 'sdk-0.160.1-local-diagnostic-2026-10-08'
+    return 'sdk-0.160.1-local-diagnostic-' + diagnostic_date
 
 
 def diagnose_exchange(manifest_raw: bytes, host_events: list, sent: list, received: list,
                       provider_requests: list, provider_responses: list[bytes], *,
                       expected_program: str, expected_final_text: str, actual_exit_code: int,
-                      allowed_warnings: tuple[str, ...] = ()) -> dict:
+                      allowed_warnings: tuple[str, ...] = (), diagnostic_date: str = '2026-10-08') -> dict:
     """固定1execのwire結果対応を追加診断する。nativeの親ID欠如は解消済みにしない。"""
     result = diagnose(manifest_raw, host_events, sent, received, expected_final_text=expected_final_text,
                       actual_exit_code=actual_exit_code, allowed_warnings=allowed_warnings)
@@ -362,7 +366,7 @@ def diagnose_exchange(manifest_raw: bytes, host_events: list, sent: list, receiv
     before, after = [request.get('input') for request in provider_requests]
     require(isinstance(before, list) and isinstance(after, list) and len(after) == len(before) + 2 and
             trace.json_equal(after[:len(before)], before), 'provider request prefix drift')
-    profile = audit_provider_input(sent, before)
+    profile = audit_provider_input(sent, before, diagnostic_date)
     require(not any(isinstance(i, dict) and i.get('type') in {'custom_tool_call', 'function_call',
                     'custom_tool_call_output', 'function_call_output'} for i in before), 'unexpected earlier provider calls')
     echoed, output = after[-2:]
@@ -402,6 +406,94 @@ def diagnose_exchange(manifest_raw: bytes, host_events: list, sent: list, receiv
                   providerContextProfile=profile,
                   providerResponseSha256=[hashlib.sha256(r).hexdigest() for r in provider_responses],
                   providerRequestValueSha256=[digest(r) for r in provider_requests])
+    return result
+
+
+RAW_METHODS = ('rawResponseItem/completed', 'rawResponse/completed')
+
+
+def diagnose_raw_exchange(manifest_raw: bytes, host_events: list, sent: list, received: list,
+                          provider_requests: list, provider_responses: list[bytes], *,
+                          sdk_raw_notifications: list, expected_program: str, expected_final_text: str,
+                          actual_exit_code: int, allowed_warnings: tuple[str, ...] = (),
+                          diagnostic_date: str = '2026-10-09') -> dict:
+    """固定模擬交換のraw通知だけを追加監査する。原入力を変更せず投影を明示する。"""
+    require(isinstance(sent, list) and len(sent) == 4 and isinstance(sent[2], dict) and
+            isinstance(sent[2].get('params'), dict) and sent[2]['params'].get('experimentalRawEvents') is True,
+            'explicit SDK raw event request required')
+    projected_sent = copy.deepcopy(sent)
+    del projected_sent[2]['params']['experimentalRawEvents']
+    require(isinstance(received, list) and all(isinstance(f, dict) for f in received), 'raw RPC frames required')
+    selected = [(i, f) for i, f in enumerate(received) if f.get('method') in RAW_METHODS]
+    projected_received = [copy.deepcopy(f) for f in received if f.get('method') not in RAW_METHODS]
+    result = diagnose_exchange(manifest_raw, host_events, projected_sent, projected_received,
+        provider_requests, provider_responses, expected_program=expected_program,
+        expected_final_text=expected_final_text, actual_exit_code=actual_exit_code,
+        allowed_warnings=allowed_warnings, diagnostic_date=diagnostic_date)
+    bindings = result['nativeEvidence']['requestIds']
+    replies = {bindings[f['id']]: f['result'] for f in projected_received if 'id' in f}
+    thread, turn = replies[2]['thread']['id'], replies[3]['turn']['id']
+    start_index = next(i for i, f in enumerate(received) if f.get('method') == 'turn/started')
+    end_index = next(i for i, f in enumerate(received) if f.get('method') == 'turn/completed')
+    require(isinstance(sdk_raw_notifications, list), 'SDK raw notification list required')
+    delivered = []
+    for index, frame in selected:
+        require(set(frame) == {'method', 'params', 'emittedAtMs'} and
+                type(frame['emittedAtMs']) is int and frame['emittedAtMs'] >= 0 and
+                start_index < index < end_index and isinstance(frame['params'], dict), 'raw notification lifecycle')
+        params = frame['params']
+        fields = {'threadId', 'turnId', 'item'} if frame['method'] == RAW_METHODS[0] else {
+            'threadId', 'turnId', 'responseId', 'usage', 'usageMetadata'}
+        require(set(params) == fields and params['threadId'] == thread and params['turnId'] == turn,
+                'raw notification context or fields')
+        delivered.append({'method': frame['method'], 'params': copy.deepcopy(params)})
+    require(trace.json_equal(delivered, sdk_raw_notifications), 'RPC/SDK raw notification delivery mismatch')
+    before, after = [r['input'] for r in provider_requests]
+    # raw入力通知はSDK補足文脈と2user入力だけ。additional_tools/baseInstructionsは別途交換監査で検査する。
+    inputs = [before[i] for i in (2, 3, 4)] if result['providerContextProfile'].startswith('sdk-0.160.1-') else before
+    methods = [RAW_METHODS[0]] * (len(inputs) + 1) + [RAW_METHODS[1], RAW_METHODS[0], RAW_METHODS[0], RAW_METHODS[1]]
+    require([f['method'] for _, f in selected] == methods, 'fixed raw notification sequence')
+    items = [f['params']['item'] for _, f in selected if f['method'] == RAW_METHODS[0]]
+    stripped = []
+    ids = set()
+    for item in items:
+        require(isinstance(item, dict) and isinstance(item.get('id'), str) and bool(item['id']) and
+                item['id'] not in ids, 'raw item IDs')
+        ids.add(item['id'])
+        metadata = item.get('internal_chat_message_metadata_passthrough')
+        require(isinstance(metadata, dict) and {'turn_id'} <= set(metadata) <= {
+            'turn_id', 'create_time', 'content_item_kinds'} and metadata['turn_id'] == turn, 'raw internal metadata')
+        if 'create_time' in metadata:
+            timestamp = metadata['create_time']
+            require(type(timestamp) in {int, float} and math.isfinite(timestamp) and timestamp >= 0,
+                    'raw internal timestamp')
+        if 'content_item_kinds' in metadata:
+            require(isinstance(metadata['content_item_kinds'], list) and
+                    all(isinstance(v, str) and bool(v) for v in metadata['content_item_kinds']), 'raw content kinds')
+        stripped.append({k: copy.deepcopy(v) for k, v in item.items() if k != 'internal_chat_message_metadata_passthrough'})
+    require(trace.json_equal(stripped[:-3], inputs), 'raw initial input correlation')
+    require(trace.json_equal(stripped[-3], after[-2]) and trace.json_equal(stripped[-2], after[-1]),
+            'raw provider call/output correlation')
+    final = scripted_response(provider_responses[1])
+    final_projection = {k: final[k] for k in ('type', 'id', 'role', 'phase')}
+    final_projection['content'] = [{'type': 'output_text', 'text': final['content'][0]['text']}]
+    require(trace.json_equal(stripped[-1], final_projection), 'raw fixed final projection')
+    completed = [f['params'] for _, f in selected if f['method'] == RAW_METHODS[1]]
+    for params, response in zip(completed, provider_responses):
+        events = [trace.strict_json(line[6:]) for line in response.splitlines() if line.startswith(b'data: ')]
+        require(params['responseId'] == events[-1]['response']['id'] and
+                params['usage'] is None and params['usageMetadata'] is None, 'fixed raw response completion')
+    result.update(status='sdk_raw_scripted_exchange_diagnostic_passed',
+                  originalSentValueSha256=digest(sent), originalReceivedValueSha256=digest(received),
+                  rawNotificationsValueSha256=digest([f for _, f in selected]),
+                  sdkRawNotificationsValueSha256=digest(sdk_raw_notifications),
+                  rawItemCount=len(items), rawCompletedCount=len(completed),
+                  sdkRawPayloadsMatchOriginalRpc=True, rawProviderCallOutputBindingVerified=True,
+                  rawProjection='explicit-raw-flag-and-raw-notifications-only',
+                  rawInternalMetadataScope='turn-id-and-field-types',
+                  certifiesCompleteRawProviderContext=False,
+                  rawItemsAreOriginalSseBytes=False, certifiesAllNativeLifecycle=False,
+                  certifiesNativeProvider=False, certifiesPhaseCompletion=False)
     return result
 
 

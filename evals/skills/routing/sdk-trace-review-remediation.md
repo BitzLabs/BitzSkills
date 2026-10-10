@@ -181,3 +181,20 @@ measurement_integrity_passedとなる条件を追加で再現した。SDK入口�
 開始/完了turnの未知params、完了turn未知字段、非整数/負時刻も拒否する。
 要約省略の従来合成形式は保持し、隠れた操作・欠落要約・正常要約の回帰を追加する。
 原SOL通過は当該sourceの静的検分だけとして保持し、親の追加再現を否定する材料にはしない。
+
+## Python SDK raw通知の専用交換監査への接続
+
+既存SDK交換監査はexperimentalRawEventsを未知paramsとして停止する入口のまま保持する。
+別入口diagnose_raw_exchangeはstrict trueを要求し、原要求と原通知を変更せず、raw flagと検査済みraw通知だけを
+明示投影で分離して既存nativeライフサイクル・MCP本文・provider交換の監査を実行する。
+raw通知は開始RPCで確定した同thread/turnの開始完了間だけ。固定個数・順序・字段・整数時刻・一意ID・内部turn IDを検査する。
+原RPCのmethod/paramsとSDKへ配送されたraw値は型を保って完全一致を要求する。外側timestampは原RPCへ保持する。
+raw call/outputはproviderのecho/outputへ、raw finalは明示した固定ResponseItem投影へ照合する。
+SDK原文脈は局所試行の既知2日から検査者が明示する。既定の旧10月8日照合を維持し、raw試行は10月9日を選ぶ。
+raw初期入力はSDK補足developer文脈と2user入力であり、additional_tools/baseInstructionsのraw通知網羅を認定しない。
+それらの前置文脈は既存交換監査で別途完全照合する。rawは上流SSE bytesそのものではなく、内部metadataと型変換を持つ。
+内部metadataはturn IDと字段型だけを検査し、create_timeやcontent_item_kindsの意味を認定しない。
+77件/0.725sの局所試験と、新旧2捕捉の原証拠への新入口適用は通過した。
+接続時の最初の停止は固定環境日付の差、次の停止はraw developer入力をbaseInstructionsと取り違えたこと。
+原値の相関を確認して検査者指定日と補足文脈の投影へ修正した。原ファイルの改変や新mock/HTTP/モデル呼出しはない。
+同6公開パスの新有限v0.19で独立静的検分1回を準備する。実provider/親子全般/一次台帳/測定/Phase/Gateは未認定。
