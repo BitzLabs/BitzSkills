@@ -17,7 +17,8 @@ ROOT = Path(__file__).resolve().parents[3]
 CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.19.json'
 RAW_CONTRACTS = {'evals/skills/routing/sdk-raw-response-review-v0.1.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.2.json',
-                 'evals/skills/routing/sdk-raw-response-review-v0.3.json'}
+                 'evals/skills/routing/sdk-raw-response-review-v0.3.json',
+                 'evals/skills/routing/sdk-raw-response-review-v0.4.json'}
 require = trace.require
 
 
@@ -69,7 +70,8 @@ def run(source: str, contract_name: str = CONTRACT):
                              '.venv/sdk-trace-independent-review-15', '.venv/sdk-trace-independent-review-16',
                              '.venv/sdk-trace-independent-review-17', '.venv/sdk-trace-independent-review-18',
                              '.venv/sdk-raw-response-independent-review-01',
-                             '.venv/sdk-raw-response-independent-review-02'},
+                             '.venv/sdk-raw-response-independent-review-02',
+                             '.venv/sdk-raw-response-independent-review-03'},
                 'unknown previous review')
         old = ROOT / old_name
         require(not any(p.is_symlink() for p in (old, *old.parents)), 'old review symlink')
@@ -177,8 +179,10 @@ if __name__ == '__main__':
     raw.add_argument('--raw-capture', action='store_true')
     raw.add_argument('--raw-capture-remediation', action='store_true')
     raw.add_argument('--raw-verifier-remediation', action='store_true')
+    raw.add_argument('--yielded-capture-review', action='store_true')
     args = parser.parse_args()
-    contract_name = ('evals/skills/routing/sdk-raw-response-review-v0.3.json' if args.raw_verifier_remediation else
+    contract_name = ('evals/skills/routing/sdk-raw-response-review-v0.4.json' if args.yielded_capture_review else
+                     'evals/skills/routing/sdk-raw-response-review-v0.3.json' if args.raw_verifier_remediation else
                      'evals/skills/routing/sdk-raw-response-review-v0.2.json' if args.raw_capture_remediation else
                      'evals/skills/routing/sdk-raw-response-review-v0.1.json' if args.raw_capture else CONTRACT)
     run(args.source, contract_name)

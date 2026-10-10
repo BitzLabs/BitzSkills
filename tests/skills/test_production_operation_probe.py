@@ -18,6 +18,57 @@ class ProductionOperationProbeTests(unittest.TestCase):
         self.contract = json.loads((ROOT / probe.CONTRACT).read_bytes())
         self.base = ROOT / '.venv' / 'operation-test'
 
+    def test_yielded_policy_has_one_scenario_three_local_requests_and_no_paid_model(self):
+        contract = json.loads((ROOT / 'evals/skills/routing/production-operation-probe-v0.9.json').read_bytes())
+        self.assertIs(probe.raw_events_enabled(contract), True)
+        self.assertIs(probe.thread_params(self.base, contract)['experimentalRawEvents'], True)
+        for field, value in [('maximumLocalHttpRequestsPerScenario', 2),
+                             ('maximumLocalHttpRequestsPerScenario', 4),
+                             ('maximumLocalHttpRequestsPerScenario', True),
+                             ('maximumScenarios', 2), ('paidModelCalls', 1),
+                             ('outputLabels', {'read': 'x'})]:
+            bad = copy.deepcopy(contract)
+            bad[field] = value
+            with self.subTest(field=field, value=value), self.assertRaises(ValueError):
+                probe.raw_events_enabled(bad)
+
+    def test_yielded_read_lists_before_yield_and_reads_after_bounded_promise(self):
+        code = probe.program('yielded-read', self.base)
+        self.assertLess(code.index('const listed='), code.index('await yield_control()'))
+        self.assertLess(code.index('await yield_control()'), code.index('setTimeout(resolve,200)'))
+        self.assertLess(code.index('setTimeout(resolve,200)'), code.index('const read='))
+        self.assertIn('await new Promise', code)
+        self.assertNotIn('expected', code)
+
+    def test_wait_reply_requires_first_yielded_marker_and_preserves_input(self):
+        request = {'input': [{'type': 'custom_tool_call_output', 'call_id': 'probe-call',
+                             'output': [{'type': 'input_text', 'text': 'Script running with cell ID 1\nOutput:\n'},
+                                        {'type': 'input_text', 'text': '{"kind":"yielded-read","stage":"listed"}'}]}]}
+        before = copy.deepcopy(request)
+        events = [json.loads(l[6:]) for l in probe.wait_reply(request).decode().splitlines()
+                  if l.startswith('data: ')]
+        item = events[1]['item']
+        self.assertEqual((item['type'], item['namespace'], item['name'], item['call_id']),
+                         ('function_call', 'functions', 'wait', 'probe-wait'))
+        self.assertEqual(json.loads(item['arguments']), {'cell_id': '1', 'yield_time_ms': 10000, 'max_tokens': 10000})
+        self.assertEqual(request, before)
+        for text in ['Script completed\n', 'prefix Script running with cell ID 1\n',
+                     'Script running with cell ID 2\n']:
+            bad = copy.deepcopy(request)
+            bad['input'][0]['output'][0]['text'] = text
+            with self.subTest(text=text), self.assertRaises(ValueError):
+                probe.wait_reply(bad)
+        for items in [[], request['input'] * 2]:
+            with self.subTest(items=items), self.assertRaises(ValueError):
+                probe.wait_reply({'input': items})
+
+    def test_wait_output_objects_are_bound_to_followup_call(self):
+        request = {'input': [{'type': 'function_call_output', 'call_id': 'probe-wait',
+                             'output': 'Script completed\n{"kind":"yielded-read","stage":"read"}'}]}
+        self.assertEqual(probe.output_objects(request), [])
+        self.assertEqual(probe.output_objects(request, 'probe-wait'), [{'kind': 'yielded-read', 'stage': 'read'}])
+        self.assertTrue(probe.yielded_output(request, 'probe-wait').startswith('Script completed\n'))
+
     def test_raw_event_policy_preserves_read_only_finite_thread_settings(self):
         contract = json.loads((ROOT / 'evals/skills/routing/production-operation-probe-v0.8.json').read_bytes())
         original = copy.deepcopy(contract)

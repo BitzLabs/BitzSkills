@@ -7,6 +7,7 @@ import hashlib
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import os
+import re
 from pathlib import Path
 import signal
 import subprocess
@@ -21,17 +22,19 @@ import source_guard
 ROOT = Path(__file__).resolve().parents[3]
 CONTRACT = 'evals/skills/routing/production-operation-probe-v0.5.json'
 CODE_FILES = ['production_operation_probe.py', 'production_sdk_probe.py', 'production_cli_probe.py', 'host.py', 'source_guard.py']
-SCENARIOS = ('inventory', 'read', 'path-denied', 'shell-denied', 'patch-denied', 'web-denied', 'agent-denied', 'user-input-stop')
+SCENARIOS = ('inventory', 'read', 'yielded-read', 'path-denied', 'shell-denied', 'patch-denied', 'web-denied', 'agent-denied', 'user-input-stop')
 
 
 def raw_events_enabled(contract: dict) -> bool:
     if 'experimentalRawEvents' not in contract:
         return False
-    if (contract['experimentalRawEvents'] is not True or contract['version'] not in {
-            'production-operation-probe-0.7.0', 'production-operation-probe-0.8.0'} or
-            set(contract['outputLabels']) != {'read'} or type(contract['maximumScenarios']) is not int or
+    profile = {'production-operation-probe-0.7.0': ('read', 2),
+               'production-operation-probe-0.8.0': ('read', 2),
+               'production-operation-probe-0.9.0': ('yielded-read', 3)}.get(contract['version'])
+    if (contract['experimentalRawEvents'] is not True or profile is None or
+            set(contract['outputLabels']) != {profile[0]} or type(contract['maximumScenarios']) is not int or
             contract['maximumScenarios'] != 1 or type(contract['maximumLocalHttpRequestsPerScenario']) is not int or
-            contract['maximumLocalHttpRequestsPerScenario'] != 2 or type(contract['paidModelCalls']) is not int or
+            contract['maximumLocalHttpRequestsPerScenario'] != profile[1] or type(contract['paidModelCalls']) is not int or
             contract['paidModelCalls'] != 0):
         raise ValueError('unknown raw event policy')
     return True
@@ -85,6 +88,13 @@ def program(scenario: str, base: Path) -> str:
     list_call = 'const listed=await tools[find("__list_resources")]({});const listing=JSON.parse(listed.content[0].text);'
     if scenario == 'read':
         return discover + list_call + 'const p=listing.skills.find(s=>s.name==="sdd-plan").path;const read=await tools[find("__read_resource")]({path:p});text(JSON.stringify({kind:"read",listed,read}));'
+    if scenario == 'yielded-read':
+        return (discover + list_call +
+                'text(JSON.stringify({kind:"yielded-read",stage:"listed",listed}));await yield_control();'
+                'await new Promise(resolve=>setTimeout(resolve,200));'
+                'const p=listing.skills.find(s=>s.name==="sdd-plan").path;'
+                'const read=await tools[find("__read_resource")]({path:p});'
+                'text(JSON.stringify({kind:"yielded-read",stage:"read",read}));')
     if scenario == 'path-denied':
         return discover + 'const result=await tools[find("__read_resource")]({path:".spec/expected-canary.txt"});text(JSON.stringify({kind:"path-denied",result}));'
     targets = {'shell-denied': ('exec_command', {'cmd': 'pwd'}),
@@ -108,16 +118,20 @@ def tool_reply(scenario: str, base: Path) -> bytes:
     else:
         item = {'type': 'custom_tool_call', 'call_id': 'probe-call', 'name': 'exec', 'namespace': 'functions',
                 'input': program(scenario, base)}
+    return response_item(item)
+
+
+def response_item(item: dict) -> bytes:
     events = [{'type': 'response.created', 'response': {'id': 'probe-response', 'status': 'in_progress', 'output': []}},
               {'type': 'response.output_item.done', 'output_index': 0, 'item': item},
               {'type': 'response.completed', 'response': {'id': 'probe-response', 'status': 'completed', 'output': [item]}}]
     return ''.join('event: ' + e['type'] + '\ndata: ' + json.dumps(e) + '\n\n' for e in events).encode()
 
 
-def output_objects(request: dict) -> list[dict]:
+def output_objects(request: dict, call_id: str = 'probe-call') -> list[dict]:
     objects = []
     for item in request.get('input', []):
-        if item.get('type') not in {'custom_tool_call_output', 'function_call_output'} or item.get('call_id') != 'probe-call':
+        if item.get('type') not in {'custom_tool_call_output', 'function_call_output'} or item.get('call_id') != call_id:
             continue
         output = item.get('output')
         texts = [output] if isinstance(output, str) else [x.get('text', '') for x in output or [] if isinstance(x, dict)]
@@ -130,6 +144,32 @@ def output_objects(request: dict) -> list[dict]:
                 if isinstance(parsed, dict) and 'kind' in parsed:
                     objects.append(parsed)
     return objects
+
+
+def yielded_output(request: dict, call_id: str) -> str:
+    items = [i for i in request.get('input', []) if isinstance(i, dict) and
+             i.get('type') in {'custom_tool_call_output', 'function_call_output'} and i.get('call_id') == call_id]
+    if len(items) != 1:
+        raise ValueError('one yielded call output required')
+    output = items[0].get('output')
+    if isinstance(output, str):
+        return output
+    if (not isinstance(output, list) or not output or
+            not all(isinstance(i, dict) and i.get('type') == 'input_text' and isinstance(i.get('text'), str) for i in output)):
+        raise ValueError('yielded output text required')
+    return ''.join(i['text'] for i in output)
+
+
+def yielded_cell_id(request: dict) -> str:
+    match = re.match(r'\AScript running with cell ID ([^\s]+)\n', yielded_output(request, 'probe-call'))
+    if match is None or match[1] != '1':
+        raise ValueError('fixed first yielded cell required')
+    return match[1]
+
+
+def wait_reply(request: dict) -> bytes:
+    return response_item({'type': 'function_call', 'call_id': 'probe-wait', 'name': 'wait', 'namespace': 'functions',
+                          'arguments': json.dumps({'cell_id': yielded_cell_id(request), 'yield_time_ms': 10000, 'max_tokens': 10000})})
 
 
 def terminal_matches(frames: list[dict], thread_id: str | None, turn_id: str | None) -> tuple[bool, bool]:
@@ -178,7 +218,8 @@ def isolated(base: Path):
             pass
 
         def do_POST(self):
-            if self.path != '/v1/responses' or len(requests) >= 2:
+            limit = contract['maximumLocalHttpRequestsPerScenario']
+            if self.path != '/v1/responses' or len(requests) >= limit:
                 errors.append('request limit or path')
                 self.send_error(409)
                 return
@@ -193,7 +234,13 @@ def isolated(base: Path):
                 errors.append('model or surface inventory drift')
                 self.send_error(409)
                 return
-            reply = tool_reply(scenario, base) if len(requests) == 1 else cli.simulation_reply()
+            try:
+                reply = (tool_reply(scenario, base) if len(requests) == 1 else
+                         wait_reply(request) if scenario == 'yielded-read' and len(requests) == 2 else cli.simulation_reply())
+            except ValueError as exc:
+                errors.append(str(exc))
+                self.send_error(409)
+                return
             # 生成し直した応答を証拠として扱わず、送信直前の原bytesを保存する。
             cli.exclusive(base / f'response-{len(requests)}.sse', reply)
             self.send_response(200)
@@ -246,7 +293,21 @@ def isolated(base: Path):
     frames = [json.loads(line) for line in (base / 'rpc-out.jsonl').read_bytes().splitlines()]
     host_path = base / 'host.jsonl'
     host_events = [json.loads(line) for line in host_path.read_bytes().splitlines()] if host_path.exists() else []
-    objects = output_objects(requests[-1]) if len(requests) == 2 else []
+    limit = contract['maximumLocalHttpRequestsPerScenario']
+    objects = output_objects(requests[-1]) if len(requests) == limit else []
+    wait_observed = None
+    if scenario == 'yielded-read':
+        try:
+            if len(requests) != 3:
+                raise ValueError('three yielded exchanges required')
+            cell = yielded_cell_id(requests[1])
+            wait_output = yielded_output(requests[2], 'probe-wait')
+            objects += output_objects(requests[2], 'probe-wait')
+            if not wait_output.startswith('Script completed\n') or [o.get('stage') for o in objects] != ['listed', 'read']:
+                raise ValueError('yielded cell did not complete both stages')
+            wait_observed = {'cellId': cell, 'waitCompleted': True, 'stages': ['listed', 'read']}
+        except ValueError as exc:
+            errors.append(str(exc))
     terminal, matched = terminal_matches(frames, thread_id, turn_id)
     value = {'status': 'operation_diagnostic_captured', 'scenario': scenario, 'localHttpRequestCount': len(requests),
              'outputObjects': objects, 'hostEventCount': len(host_events), 'serverRequestStops': denials,
@@ -256,6 +317,8 @@ def isolated(base: Path):
              'isolationChecks': isolation_checks,
              'dialogueStoppedBeforeSdk': (base / 'dialogue-stop.json').exists(),
              'paidModelCalls': 0, 'certifiesNativeProvider': False, 'certifiesSkillGate': False}
+    if scenario == 'yielded-read':
+        value['yieldedCellObservation'] = wait_observed
     if raw_events_enabled(contract):
         value.update(experimentalRawEventsRequested=True,
                      rawResponseItemNotificationCount=sum(f.get('method') == 'rawResponseItem/completed' for f in frames),
@@ -270,7 +333,8 @@ def isolated(base: Path):
 def run(source: str, scenario: str, contract_name: str = CONTRACT):
     if contract_name not in {CONTRACT, 'evals/skills/routing/production-operation-probe-v0.6.json',
                              'evals/skills/routing/production-operation-probe-v0.7.json',
-                             'evals/skills/routing/production-operation-probe-v0.8.json'}:
+                             'evals/skills/routing/production-operation-probe-v0.8.json',
+                             'evals/skills/routing/production-operation-probe-v0.9.json'}:
         raise ValueError('unknown operation contract')
     contract = json.loads(source_guard.git(ROOT, 'show', source + ':' + contract_name))
     raw_events_enabled(contract)
@@ -322,6 +386,7 @@ def main():
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument('--trace-parent', action='store_true')
     mode.add_argument('--raw-events', action='store_true')
+    mode.add_argument('--yielded-cell', action='store_true')
     parser.add_argument('--isolated', type=Path)
     parser.add_argument('--proxy', type=Path)
     args = parser.parse_args()
@@ -332,7 +397,8 @@ def main():
         return 0
     if not args.source or not args.scenario:
         parser.error('--source and --scenario required')
-    contract_name = ('evals/skills/routing/production-operation-probe-v0.8.json' if args.raw_events else
+    contract_name = ('evals/skills/routing/production-operation-probe-v0.9.json' if args.yielded_cell else
+                     'evals/skills/routing/production-operation-probe-v0.8.json' if args.raw_events else
                      'evals/skills/routing/production-operation-probe-v0.6.json' if args.trace_parent else CONTRACT)
     return run(args.source, args.scenario, contract_name)
 
