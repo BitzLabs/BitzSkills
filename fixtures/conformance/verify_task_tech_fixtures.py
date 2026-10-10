@@ -301,14 +301,18 @@ def reference_plan(repository, root, multi):
             raise ValueError("`addresses`の先は、規範文か、規範文を持たない文書でなければなりません")
         for entry in document["frontmatter"].get("tests", []):
             covers = sorted({qualify(document["workspaceId"], item) for item in entry["covers"]})
-            if target not in covers:
+            # 規範文の先は、その規範文を`covers`するテスト対応だけを使う。規範文のない文書の先は、`tests`をすべて使い、`covers`の和集合を取る。
+            if target in known and target not in covers:
                 continue
             name = entry.get("command") or document["frontmatter"].get("verify")
             if name is None:
                 raise ValueError("コマンド名を解決できません")
             bucket = needs.setdefault((document["workspaceId"], name), {"tests": set(), "covers": set()})
             bucket["tests"].add(entry["path"])
-            bucket["covers"].add(target)
+            if target in known:
+                bucket["covers"].add(target)
+            else:
+                bucket["covers"].update(covers)
     commands = []
     for (workspace, name), bucket in sorted(needs.items()):
         config = configs[workspace]
