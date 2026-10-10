@@ -69,6 +69,78 @@ class ProductionOperationProbeTests(unittest.TestCase):
         self.assertEqual(probe.output_objects(request, 'probe-wait'), [{'kind': 'yielded-read', 'stage': 'read'}])
         self.assertTrue(probe.yielded_output(request, 'probe-wait').startswith('Script completed\n'))
 
+    @staticmethod
+    def yielded_fixture():
+        host = [{'tool': tool, 'accepted': True, 'result': {'value': i}} for i, tool in
+                enumerate(('list_resources', 'read_resource'))]
+        outputs = []
+        for stage, header, event in zip(('listed', 'read'),
+                ('Script running with cell ID 1\n', 'Script completed\n'), host):
+            payload = {'kind': 'yielded-read', 'stage': stage, stage: {
+                'isError': False, 'content': [{'type': 'text', 'text': json.dumps(event['result'])}]}}
+            outputs.append(header + json.dumps(payload))
+        initial = {'type': 'message', 'content': 'initial'}
+        call = {'type': 'custom_tool_call', 'call_id': 'probe-call'}
+        result = {'type': 'custom_tool_call_output', 'call_id': 'probe-call', 'output': outputs[0]}
+        wait = {'type': 'function_call', 'call_id': 'probe-wait'}
+        ended = {'type': 'function_call_output', 'call_id': 'probe-wait', 'output': outputs[1]}
+        return [{'input': [initial]}, {'input': [initial, call, result]},
+                {'input': [copy.deepcopy(initial), copy.deepcopy(call), copy.deepcopy(result), wait, ended]}], host
+
+    def test_yielded_observation_binds_original_stages_and_host_bodies_without_mutation(self):
+        requests, host = self.yielded_fixture()
+        before = copy.deepcopy((requests, host))
+        objects, observation = probe.yielded_observation(requests, host)
+        self.assertEqual([o['stage'] for o in objects], ['listed', 'read'])
+        self.assertEqual(observation, {'cellId': '1', 'waitCompleted': True, 'stages': ['listed', 'read']})
+        self.assertEqual((requests, host), before)
+
+    def test_yielded_observation_rejects_reposted_fabrication_from_independent_review(self):
+        requests, host = self.yielded_fixture()
+        requests[1]['input'][-1]['output'] = 'Script running with cell ID 1\n'
+        requests[2]['input'][2]['output'] = '{"kind":"other","stage":"listed"}'
+        requests[2]['input'][-1]['output'] = 'Script completed\n{"kind":"other","stage":"read"}'
+        with self.assertRaises(ValueError):
+            probe.yielded_observation(requests, host)
+
+    def test_yielded_observation_rejects_missing_extra_wrong_or_unbound_payload(self):
+        for stage in (0, 1):
+            for mode in ('missing', 'duplicate', 'kind', 'stage', 'body', 'error', 'type-drift',
+                         'duplicate-key', 'nan', 'wrapper', 'host-tool', 'host-unaccepted'):
+                requests, host = self.yielded_fixture()
+                frame = requests[stage+1]['input'][-1]
+                header, text = frame['output'].split('\n', 1)
+                payload = json.loads(text)
+                key = ('listed', 'read')[stage]
+                if mode == 'missing': text = ''
+                elif mode == 'duplicate': text += '\n' + text
+                elif mode in ('kind', 'stage'): payload[mode] = 'other'
+                elif mode == 'body': payload.pop(key)
+                elif mode == 'error': payload[key]['isError'] = True
+                elif mode == 'type-drift': payload[key]['content'][0]['text'] = '{"value":false}'
+                elif mode == 'duplicate-key': text = text.replace('"kind":', '"kind":"wrong","kind":')
+                elif mode == 'nan': payload[key]['content'][0]['text'] = '{"value":NaN}'
+                elif mode == 'wrapper': payload[key]['content'] = []
+                elif mode == 'host-tool': host[stage]['tool'] = 'wrong'
+                elif mode == 'host-unaccepted': host[stage]['accepted'] = False
+                if mode not in ('missing', 'duplicate', 'duplicate-key'):
+                    text = json.dumps(payload)
+                frame['output'] = header + '\n' + text
+                if stage == 0:
+                    requests[2]['input'][2] = copy.deepcopy(frame)
+                with self.subTest(stage=stage, mode=mode), self.assertRaises(ValueError):
+                    probe.yielded_observation(requests, host)
+
+    def test_yielded_observation_rejects_changed_history_and_incomplete_wait(self):
+        for mode in ('history', 'wait', 'requests', 'hosts'):
+            requests, host = self.yielded_fixture()
+            if mode == 'history': requests[2]['input'][0]['content'] = 'modified'
+            elif mode == 'wait': requests[2]['input'][-1]['output'] = 'Script running with cell ID 1\n'
+            elif mode == 'requests': requests.pop()
+            else: host.pop()
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                probe.yielded_observation(requests, host)
+
     def test_raw_event_policy_preserves_read_only_finite_thread_settings(self):
         contract = json.loads((ROOT / 'evals/skills/routing/production-operation-probe-v0.8.json').read_bytes())
         original = copy.deepcopy(contract)

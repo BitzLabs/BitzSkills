@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "phase": 4,
   "date": "2026-10-10",
   "scope": "fixed-yielded-cell-original-evidence-capture-only",
@@ -40,13 +40,42 @@
   "newMockTrials": 1,
   "newLocalHttpRequests": 3,
   "paidModelCalls": 0,
-  "independentSolInvocations": 0,
-  "independentReviewStatus": "not_started_auto_review_rejected",
+  "independentSolInvocations": 1,
+  "independentReviewStatus": "review_findings",
   "automaticRetries": 0,
   "primaryModelTrajectories": 0,
   "autoReviewRejections": 2,
   "independentReviewContract": "evals/skills/routing/sdk-raw-response-review-v0.4.json",
   "publicPayloadBytes": 102894,
   "phaseComplete": false,
-  "eligibleForMeasurement": false
+  "eligibleForMeasurement": false,
+  "independentReview": {
+    "sourceCommit": "7d7552e271bf2ea96370fa755d0f069e7c6f02a9",
+    "contractPath": "evals/skills/routing/sdk-raw-response-review-v0.4.json",
+    "outputRelativeRoot": ".venv/sdk-raw-response-independent-review-04",
+    "receiptSha256": "3d918bcba7017626c3d705fc3af9ced1babbece845f1ad02702355fc2f01f520",
+    "responseSha256": "673ba24733a27a78be65c16a45545c0febcbc24999da93eaf623fed4da483d3b",
+    "status": "review_findings",
+    "actualInvocations": 1,
+    "usage": {
+      "input_tokens": 37636,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1097,
+      "reasoning_output_tokens": 625
+    }
+  },
+  "initialFindings": [
+    {
+      "priority": "P2",
+      "path": "evals/skills/routing/production_operation_probe.py",
+      "line": 306,
+      "message": "yielded-readのlisted段階を第2要求から検証せず、第3要求に再掲されたprobe-call出力から取得しています。さらにstageだけを比較するため、kindやlisted/read本文が欠落した出力でもwaitCompleted=trueになります。eligibleForMeasurement=falseは維持されますが、固定局所捕捉で両段階が完了したという観測が偽になります。",
+      "reproduction": "静的な再現条件（未実行）：第2要求のprobe-call出力を「Script running with cell ID 1\\n」だけにする。第3要求にはprobe-call出力として「{\"kind\":\"other\",\"stage\":\"listed\"}」、probe-wait出力として「Script completed\\n{\"kind\":\"other\",\"stage\":\"read\"}」を入れる。要求数3、モデル・tool宣言、SDK終端通知などの他条件を正常に保つと、297行と305行で集めるstage列は['listed','read']となり、listedの実出力が第2要求に存在しなくても308行でwaitCompleted=trueを記録し、停止条件に入りません。",
+      "suggestion": "listedは第2要求のprobe-call出力、readは第3要求のprobe-wait出力からそれぞれ検証してください。各段階についてkind='yielded-read'、必須本文、件数を照合し、第3要求に再掲されるprobe-call出力が第2要求から改変されていないことも確認してください。不一致はlocalErrorsへ記録して停止させてください。"
+    }
+  ],
+  "pendingRemediationReviewContract": "evals/skills/routing/sdk-raw-response-review-v0.5.json",
+  "remediationIndependentlyPassed": false,
+  "remediationPublicPayloadBytes": 110091
 }

@@ -172,6 +172,57 @@ def wait_reply(request: dict) -> bytes:
                           'arguments': json.dumps({'cell_id': yielded_cell_id(request), 'yield_time_ms': 10000, 'max_tokens': 10000})})
 
 
+def yielded_observation(requests: list[dict], host_events: list[dict]) -> tuple[list[dict], dict]:
+    """元の中断出力と継続の再掲を照合し、両段階の本文を原ホスト結果へ結ぶ。"""
+    def strict_json(text):
+        def pairs(values):
+            result = {}
+            for key, value in values:
+                if key in result:
+                    raise ValueError('duplicate yielded JSON key')
+                result[key] = value
+            return result
+
+        def constant(_):
+            raise ValueError('nonfinite yielded JSON')
+        return json.loads(text, object_pairs_hook=pairs, parse_constant=constant)
+
+    def canonical(value):
+        return json.dumps(value, sort_keys=True, ensure_ascii=False, allow_nan=False, separators=(',', ':'))
+
+    if (not isinstance(requests, list) or len(requests) != 3 or
+            not all(isinstance(r, dict) and isinstance(r.get('input'), list) for r in requests) or
+            not isinstance(host_events, list) or len(host_events) != 2):
+        raise ValueError('three yielded exchanges and two host results required')
+    if canonical(requests[2]['input'][:-2]) != canonical(requests[1]['input']):
+        raise ValueError('yielded provider history changed')
+    cell = yielded_cell_id(requests[1])
+    texts = [yielded_output(requests[1], 'probe-call'), yielded_output(requests[2], 'probe-wait')]
+    if not texts[1].startswith('Script completed\n'):
+        raise ValueError('yielded cell did not complete')
+    objects = []
+    for text, stage, key, tool, event in zip(texts, ('listed', 'read'), ('listed', 'read'),
+                                          ('list_resources', 'read_resource'), host_events):
+        payloads = [strict_json(line) for line in text.splitlines() if line.startswith('{')]
+        if (len(payloads) != 1 or not isinstance(payloads[0], dict) or
+                set(payloads[0]) != {'kind', 'stage', key} or payloads[0]['kind'] != 'yielded-read' or
+                payloads[0]['stage'] != stage):
+            raise ValueError('one complete yielded stage required')
+        payload = payloads[0]
+        wrapper = payload[key]
+        if (not isinstance(wrapper, dict) or set(wrapper) != {'isError', 'content'} or
+                wrapper['isError'] is not False or not isinstance(wrapper['content'], list) or
+                len(wrapper['content']) != 1 or not isinstance(wrapper['content'][0], dict) or
+                set(wrapper['content'][0]) != {'type', 'text'} or wrapper['content'][0]['type'] != 'text' or
+                not isinstance(wrapper['content'][0]['text'], str) or not isinstance(event, dict) or
+                event.get('tool') != tool or event.get('accepted') is not True or 'result' not in event):
+            raise ValueError('yielded wrapper or host result required')
+        if canonical(strict_json(wrapper['content'][0]['text'])) != canonical(event['result']):
+            raise ValueError('yielded provider/host body mismatch')
+        objects.append(payload)
+    return objects, {'cellId': cell, 'waitCompleted': True, 'stages': ['listed', 'read']}
+
+
 def terminal_matches(frames: list[dict], thread_id: str | None, turn_id: str | None) -> tuple[bool, bool]:
     """固定模擬応答の最終回答と完了を、SDK開始結果と配送順に照合する。"""
     if not isinstance(thread_id, str) or not thread_id or not isinstance(turn_id, str) or not turn_id:
@@ -297,15 +348,9 @@ def isolated(base: Path):
     objects = output_objects(requests[-1]) if len(requests) == limit else []
     wait_observed = None
     if scenario == 'yielded-read':
+        objects = []
         try:
-            if len(requests) != 3:
-                raise ValueError('three yielded exchanges required')
-            cell = yielded_cell_id(requests[1])
-            wait_output = yielded_output(requests[2], 'probe-wait')
-            objects += output_objects(requests[2], 'probe-wait')
-            if not wait_output.startswith('Script completed\n') or [o.get('stage') for o in objects] != ['listed', 'read']:
-                raise ValueError('yielded cell did not complete both stages')
-            wait_observed = {'cellId': cell, 'waitCompleted': True, 'stages': ['listed', 'read']}
+            objects, wait_observed = yielded_observation(requests, host_events)
         except ValueError as exc:
             errors.append(str(exc))
     terminal, matched = terminal_matches(frames, thread_id, turn_id)

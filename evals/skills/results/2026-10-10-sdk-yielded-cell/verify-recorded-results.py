@@ -1,9 +1,13 @@
 """固定yield/wait捕捉を原bytesとGitへ照合する。読取りだけで認定やモデル起動は行わない。"""
+import argparse
+import ast
 import hashlib
 import importlib.util
 import json
 from pathlib import Path
 import re
+import os
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[4]
 BASE = ROOT / '.venv/production-operation-yielded-read-09'
@@ -100,6 +104,9 @@ def check_capture():
             trace.json_equal(stages, value['outputObjects']) and
             trace.json_equal(value['yieldedCellObservation'],
                 {'cellId': '1', 'waitCompleted': True, 'stages': ['listed', 'read']}), 'yielded output stages')
+    corrected_objects, corrected_observation = operation.yielded_observation(requests, host)
+    require(trace.json_equal(corrected_objects, value['outputObjects']) and
+            trace.json_equal(corrected_observation, value['yieldedCellObservation']), 'corrected original yielded observation')
     manifest, resource_count = helper.check_snapshot(contract)
     actual, _, view = trace.manifest_view(manifest)
     trace.audit_host(actual, view, host)
@@ -134,6 +141,67 @@ def check_capture():
             'certifiesNativeProvider': False, 'certifiesSkillGate': False, 'eligibleForMeasurement': False}
 
 
+def check_reproduction():
+    """原Gitの終端分岐だけを合成入力で実行する。SDK・HTTP・原ログは変更しない。"""
+    old_source = '7d7552e271bf2ea96370fa755d0f069e7c6f02a9'
+    source = guard.git(ROOT, 'show', old_source + ':evals/skills/routing/production_operation_probe.py')
+    old = {'__name__': 'historical_yielded_probe', '__file__': str(ROOT / 'evals/skills/routing/production_operation_probe.py')}
+    exec(compile(source, 'historical_probe', 'exec'), old)
+    function = next(n for n in ast.parse(source).body if isinstance(n, ast.FunctionDef) and n.name == 'isolated')
+    branch = next(n for n in function.body if isinstance(n, ast.If) and
+                  ast.unparse(n.test) == "scenario == 'yielded-read'" and isinstance(n.body[0], ast.Try))
+    requests = [{'input': []}, {'input': [{'type': 'custom_tool_call_output', 'call_id': 'probe-call',
+                 'output': 'Script running with cell ID 1\n'}]}, {'input': [
+                 {'type': 'custom_tool_call_output', 'call_id': 'probe-call',
+                  'output': '{"kind":"other","stage":"listed"}'},
+                 {'type': 'function_call_output', 'call_id': 'probe-wait',
+                  'output': 'Script completed\n{"kind":"other","stage":"read"}'}]}]
+    old.update(scenario='yielded-read', requests=requests, errors=[], wait_observed=None,
+               objects=old['output_objects'](requests[-1]))
+    exec(compile(ast.Module(body=[branch], type_ignores=[]), 'historical_yielded_branch', 'exec'), old)
+    require(not old['errors'] and old['wait_observed']['waitCompleted'] is True and
+            old['output_objects'](requests[1]) == [], 'original P2 not reproduced')
+    try:
+        operation.yielded_observation(requests, [{'tool': 'list_resources'}, {'tool': 'read_resource'}])
+    except ValueError:
+        pass
+    else:
+        raise ValueError('corrected probe accepted P2 reproduction')
+    return {'historicalSource': old_source, 'oldTerminalBranchAccepted': True,
+            'originalListedOutputMissing': True, 'correctedBranchRejected': True,
+            'scope': 'synthetic-terminal-branch-only', 'newHttpRequests': 0, 'paidModelCalls': 0}
+
+
+def run_remediation(source):
+    require(guard.git(ROOT, 'status', '--porcelain') == b'' and
+            guard.git(ROOT, 'rev-parse', 'HEAD').decode().strip() == source, 'clean remediation HEAD')
+    contract = trace.strict_json(guard.git(ROOT, 'show', source + ':evals/skills/routing/sdk-raw-response-review-v0.5.json'))
+    before = guard.verify(ROOT, source, contract['sourceFiles'])
+    capture, reproduction = check_capture(), check_reproduction()
+    base = ROOT / '.venv/production-sdk-yielded-cell-remediation-verification-01'
+    require(not any(p.is_symlink() for p in (base, *base.parents)), 'remediation symlink')
+    base.mkdir(mode=0o700)
+    command = ['uv', '--cache-dir', str(ROOT / '.venv/uv-cache'), 'run', '--offline', '--project',
+               'plugins/bitz-core', '--with', 'jsonschema==4.23.0', 'python', '-B', '-m', 'unittest',
+               'discover', '-s', 'tests/skills', '-p', 'test_*.py']
+    process = subprocess.run(command, cwd=ROOT, capture_output=True, timeout=180,
+        env=dict(os.environ, PYTHONPATH=str(ROOT / 'plugins/bitz-core/src'), PYTHONDONTWRITEBYTECODE='1'))
+    raw.cli.exclusive(base / 'tests.stdout', process.stdout)
+    raw.cli.exclusive(base / 'tests.stderr', process.stderr)
+    matched = re.search(rb'Ran (\d+) tests in ([0-9.]+)s\s+OK\s*$', process.stderr)
+    require(process.returncode == 0 and matched, 'yielded remediation full suite')
+    after = guard.verify(ROOT, source, contract['sourceFiles'])
+    require(trace.json_equal(before, after) and guard.git(ROOT, 'status', '--porcelain') == b'', 'remediation source drift')
+    result = {'status': 'yielded_capture_remediation_rechecked', 'sourceCommit': source,
+              'sourceGuards': {'before': before, 'after': after}, 'capture': capture, 'reproduction': reproduction,
+              'newMockTrials': 0, 'newLocalHttpRequests': 0, 'paidModelCalls': 0,
+              'eligibleForMeasurement': False, 'phaseComplete': False,
+              'tests': {'count': int(matched[1]), 'seconds': float(matched[2]), 'exitCode': process.returncode,
+                        'stdoutSha256': sha(process.stdout), 'stderrSha256': sha(process.stderr), 'command': command}}
+    raw.cli.exclusive(base / 'summary.json', raw.cli.encoded(result))
+    print(json.dumps({k: v for k, v in result.items() if k not in {'sourceGuards', 'capture'}}, ensure_ascii=False))
+
+
 def run():
     summary = trace.strict_json(Path(__file__).with_name('summary.json').read_bytes())
     require(trace.json_equal(check_capture(), summary['capture']), 'yielded recorded capture')
@@ -143,15 +211,59 @@ def run():
     match = re.search(rb'Ran (\d+) tests in ([0-9.]+)s\s+OK\s*$', (BASE / 'tests.stderr').read_bytes())
     require(match and int(match[1]) == tests['count'] == 476 and float(match[2]) == tests['seconds'] and
             tests['exitCode'] == 0 and tests['sourceCommit'] == SOURCE, 'yielded actual tests terminal')
-    require(summary['newMockTrials'] == 1 and summary['newLocalHttpRequests'] == 3 and
-            summary['paidModelCalls'] == summary['independentSolInvocations'] == 0 and
-            summary['phaseComplete'] is False and summary['eligibleForMeasurement'] is False and
-            summary['independentReviewStatus'] == 'not_started_auto_review_rejected', 'yielded counters/scope')
+    require(summary['newMockTrials'] == 1 and summary['newLocalHttpRequests'] == 3 and summary['paidModelCalls'] == 0 and
+            summary['phaseComplete'] is False and summary['eligibleForMeasurement'] is False, 'yielded counters/scope')
+    reviewed = 0
+    if 'independentReview' in summary:
+        spec = importlib.util.spec_from_file_location('yielded_review_records',
+            ROOT / 'evals/skills/results/2026-10-09-sdk-raw-response-capture/verify-recorded-results.py')
+        reviews = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(reviews)
+        response = reviews.recheck_review(summary['independentReview'])
+        require(response['verdict'] == 'findings' and len(response['findings']) == 1,
+                'yielded original independent finding')
+        reviewed += 1
+        if 'finalIndependentReview' in summary:
+            final = reviews.recheck_review(summary['finalIndependentReview'])
+            require(final['verdict'] == 'pass' and final['findings'] == [], 'yielded final independent review')
+            reviewed += 1
+    require(summary['independentSolInvocations'] == reviewed, 'yielded review counters')
+    if 'remediationVerification' in summary:
+        meta = summary['remediationVerification']
+        base = ROOT / meta['outputRelativeRoot']
+        private = (base / 'summary.json').read_bytes()
+        require(sha(private) == meta['summarySha256'], 'yielded remediation summary hash')
+        value = trace.strict_json(private)
+        require(value['status'] == 'yielded_capture_remediation_rechecked' and
+                value['sourceCommit'] == meta['sourceCommit'] and trace.json_equal(value['tests'], meta['tests']) and
+                trace.json_equal(value['capture'], summary['capture']) and
+                trace.json_equal(value['reproduction'], check_reproduction()) and
+                value['newMockTrials'] == value['newLocalHttpRequests'] == value['paidModelCalls'] == 0,
+                'yielded remediation original fields')
+        stages = list(value['sourceGuards'].values())
+        require(len(stages) == 2 and trace.json_equal(*stages), 'yielded remediation guards')
+        for name, digest in stages[0]['sourceSha256'].items():
+            require(sha(guard.git(ROOT, 'show', meta['sourceCommit'] + ':' + name)) == digest, 'yielded remediation Git')
+        for name, key in [('tests.stdout', 'stdoutSha256'), ('tests.stderr', 'stderrSha256')]:
+            require(sha((base / name).read_bytes()) == meta['tests'][key], 'yielded remediation original tests')
+        matched = re.search(rb'Ran (\d+) tests in ([0-9.]+)s\s+OK\s*$', (base / 'tests.stderr').read_bytes())
+        require(matched and int(matched[1]) == meta['tests']['count'] == 480 and
+                float(matched[2]) == meta['tests']['seconds'] and meta['tests']['exitCode'] == 0,
+                'yielded remediation actual test terminal')
     print(json.dumps({'status': 'recorded_yielded_capture_matches_original_bytes', 'tests': 476,
                       'rawItems': 8, 'rawCompleted': 3, 'traceRows': 24, 'mockTrials': 1,
-                      'localHttpRequests': 3, 'paidModelCalls': 0, 'independentSolInvocations': 0,
+                      'localHttpRequests': 3, 'paidModelCalls': 0, 'independentSolInvocations': reviewed,
                       'eligibleForMeasurement': False}, ensure_ascii=False))
 
 
 if __name__ == '__main__':
-    run()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--verify-remediation', action='store_true')
+    parser.add_argument('--source')
+    args = parser.parse_args()
+    if args.verify_remediation:
+        if not args.source:
+            parser.error('--source required for remediation verification')
+        run_remediation(args.source)
+    else:
+        run()

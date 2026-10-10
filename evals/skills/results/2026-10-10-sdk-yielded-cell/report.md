@@ -37,3 +37,22 @@ uv --cache-dir .venv/uv-cache run --offline --project plugins/bitz-core --with j
 
 新契約作成時、元v0.8に存在しないconstraintsキーを参照して生成処理が停止した。
 元のlimitationsキーを確認して修正した。SDK試行・課金枠は消費していない。
+
+## 独立検分のP2と局所是正
+
+ユーザーの具体的な許可回答後、source7d7552e/v0.4の同8パスを1回送信した。
+CLI exit0/timeoutなし/review_findings/P2が1件。input37636/cached0/output1097/reasoning625。
+原receipt SHA256 `3d918bcba7017626c3d705fc3af9ced1babbece845f1ad02702355fc2f01f520`、
+原response SHA256 `673ba24733a27a78be65c16a45545c0febcbc24999da93eaf623fed4da483d3b`。
+親が原stdio/hash/schema/最終JSON/usage、確定Git、前・起動・後guardと有限予約を再照合した。
+
+P2は元の第2要求のlistedを確認せず、第3要求の再掲からstageだけを集める点。
+歴史Gitのisolated内の当該終端分岐を合成入力で実行し、元listed欠落・kind改変・本文欠落でもwaitCompleted=trueとなることを再現した。
+これは原ログの改変やSDK全体の実行を再現した主張ではなく、固定終端分岐の合成入力での検査不足を示す。
+
+listedを第2要求、readを第3要求から取り、再掲履歴を型も含めて照合するyielded_observationを終端へ接続した。
+各段階を1件に制限し、kind/stage/本文ラッパー、成功状態、原ホスト結果との本文一致を要求する。
+JSONの重複キー・非有限数も拒否する。欠落・再掲改変・偽kind/段階・重複・本文欠落・エラー・型違い・未完了の回帰を追加した。
+局所28件/0.099s/OK/exit0、合成P2入力の拒否と旧原捕捉への修正判定の適合を確認した。
+新模擬・HTTP・一次・追加モデル0。原v0.4と旧捕捉を保持し、是正後の独立通過はまだ判定していない。
+同8パスの継続許可により、別有限契約v0.5/出力05で修正版を1回再検分する準備をした。
