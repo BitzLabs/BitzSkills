@@ -233,5 +233,65 @@ class NonAcceptedAdrAcrossWorkspacesTests(unittest.TestCase):
             self.assertEqual(result["resolution"]["unresolvedStrongRelations"], 1)
 
 
+
+class DigestCommandMaterialsAcrossWorkspacesTests(unittest.TestCase):
+    """複合ワークスペースでも、ハッシュ値の材料の`commands`と`verifyTimeouts`は、所有ワークスペースの設定で解決した収録したテスト割当てだけから作り、
+    `context --purpose verify`と`verify`で一致する（正規化仕様 §3、複合ワークスペース仕様の許可リスト）。"""
+
+    def _repo(self, root: Path, *, web_argv: str, web_req_extra: str, api_tech: str) -> None:
+        _init_repo(root)
+        _write(root, ".spec/bitz.yaml", ROOT_YAML + "multiWorkspace:\n  members:\n    - id: web\n      path: apps/web\n    - id: api\n      path: services/api\n")
+        _write(root, "apps/web/.spec/bitz.yaml", MEMBER_YAML.format(wid="web")
+               + f'verify:\n  commands:\n    frontend:\n      argv: ["{web_argv}", "{{tests}}"]\n      cwd: .\n')
+        _write(root, "services/api/.spec/bitz.yaml", MEMBER_YAML.format(wid="api")
+               + 'verify:\n  commands:\n    backend:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n')
+        _write(root, "apps/web/.spec/requirements/REQ-001.md",
+               _req("REQ-001").replace("status: approved\n", "status: approved\n" + web_req_extra))
+        _write(root, "apps/web/tests/test_web.py", "def test_x():\n    assert True\n")
+        _write(root, "services/api/.spec/technical/TECH-020.md", api_tech)
+        _write(root, "services/api/tests/test_api.py", "def test_x():\n    assert True\n")
+        _git(root, "add", "-A")
+        _git(root, "commit", "-q", "-m", "base")
+
+    def _digests(self, root: Path) -> tuple:
+        from bitz import verify as verify_mod
+        from bitz.cliargs import parse_argv
+        ctx, _ = _run_context(root, "web::REQ-001", purpose="verify")
+        ver, _ = verify_mod.run(parse_argv(["verify", "web::REQ-001", "--format", "json"]), str(root), dict(os.environ))
+        return ctx["contextDigest"], ver["targetResults"][0]["contextDigest"]
+
+    def _api_tech(self, tests_line: str, verify_line: str = "") -> str:
+        return ("---\nid: TECH-020\ntitle: TECH\nstatus: approved\n" + verify_line + tests_line
+                + "---\n\n# TECH-020 TECH\n\n## Context\n\n本文。\n")
+
+    def test_both_operations_agree_and_the_document_default_is_in_the_digest(self):
+        web_extra = ("relations:\n  requires: [api::TECH-020]\nverify: frontend\n"
+                     "tests:\n  - path: tests/test_web.py\n    covers: [REQ-001:AC-01]\n")
+        cases = {
+            # (a) web の文書の`verify`で`frontend`を解決する
+            "document-default": self._api_tech(""),
+            # (b) api のテスト対応の`command`が未定義
+            "undefined-command": self._api_tech("tests:\n  - path: tests/test_api.py\n    covers: [TECH-020]\n    command: nope\n"),
+            # (c) api の文書の`verify`が、web にだけ定義のある名前
+            "other-member-name": self._api_tech("tests:\n  - path: tests/test_api.py\n    covers: [TECH-020]\n", "verify: frontend\n"),
+        }
+        for name, api_tech in cases.items():
+            with self.subTest(name), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                self._repo(root, web_argv="/bin/true", web_req_extra=web_extra, api_tech=api_tech)
+                ctx_digest, verify_digest = self._digests(root)
+                self.assertIsNotNone(ctx_digest)
+                self.assertEqual(ctx_digest, verify_digest)
+        # (a) の`frontend`の定義を変えると、両操作のハッシュ値が変わる（文書の`verify`で解決したコマンドが材料に入る）。
+        results = []
+        for argv in ("/bin/true", "/usr/bin/true"):
+            with tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                self._repo(root, web_argv=argv, web_req_extra=web_extra, api_tech=cases["document-default"])
+                results.append(self._digests(root))
+        self.assertNotEqual(results[0][0], results[1][0])
+        self.assertNotEqual(results[0][1], results[1][1])
+
+
 if __name__ == "__main__":
     unittest.main()
