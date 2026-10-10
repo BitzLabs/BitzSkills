@@ -71,3 +71,16 @@ P2は第3要求の末尾のwaitを検査せず、違うcellや出力→呼出し
 provider履歴とsettingsを照合する。同じ2条件を拒否し、旧捕捉へも適合した。
 局所31件/0.109s/OK/exit0。新模擬/HTTP/一次0、独立SOL追加は当工程2回、raw静的系列累計5。
 v0.6/出力06で同8公開パスの修正版を1回再検分する。是正後の独立通過・Phase全体は未判定。
+
+## 是正後の原証拠照合と独立検分の通過
+
+確定ref `e4e104538b0ab0e6137e7034276e7681d910c61b` のclean全483件/64.796s/OK/exit0。
+旧原捕捉への修正判定、2件のP2の歴史Gitでの再現と修正後の拒否、前後同一guardも確認した。
+v0.6の同8公開パスの独立SOLはstatic_review_passed/指摘0/CLI exit0/timeoutなし。
+input41396/cached0/output871/reasoning810。親が原stdio/hash/schema/最終応答/usageと歴史Git/guard/予約を再照合した。
+原receipt SHA256 `b2a72e173ef1b476488beba8b45644e9fccde7c028525c265832717654df60c5`、
+原response SHA256 `9f7bbf4f80237ca3014c94d0f4db129d12329e9a031172a985abdb19127199c4`。
+原是正検証summary SHA256 `8213e8324077e863b73ac15fbaf56b19c996f95ccc1da2653034cd376934a679`。
+今回独立SOLは3回、raw静的系列累計6。新模擬/HTTP/一次/委譲/自動retry0。
+v0.4/v0.5の指摘・原応答・消費枠を保持する。全476件の旧結果と480件・483件の是正後結果を区別して原終端へ照合する。
+当該固定捕捉コードの独立静的検分だけが通過した。親セル継続の専用監査・任意複数cell・実provider・一次測定・Phase/Gate全体は未認定。

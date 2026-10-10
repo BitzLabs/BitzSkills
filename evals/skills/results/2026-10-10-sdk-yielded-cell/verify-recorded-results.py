@@ -264,7 +264,11 @@ def run():
             reviewed += 1
         if 'finalIndependentReview' in summary:
             final = reviews.recheck_review(summary['finalIndependentReview'])
-            require(final['verdict'] == 'pass' and final['findings'] == [], 'yielded final independent review')
+            require(final['verdict'] == 'pass' and final['findings'] == [] and
+                    summary['remediationIndependentlyPassed'] is True and
+                    summary['independentReviewStatus'] == 'static_review_passed' and
+                    summary['finalIndependentReview']['sourceCommit'] == summary['waitRemediationVerification']['sourceCommit'],
+                    'yielded final independent review')
             reviewed += 1
     require(summary['independentSolInvocations'] == reviewed, 'yielded review counters')
     for meta in [summary[k] for k in ('remediationVerification', 'waitRemediationVerification') if k in summary]:
@@ -292,6 +296,8 @@ def run():
         if 'waitReproduction' in value:
             require(trace.json_equal(value['waitReproduction'], check_wait_reproduction()), 'wait original reproduction')
     print(json.dumps({'status': 'recorded_yielded_capture_matches_original_bytes', 'tests': 476,
+                      'correctedSourceTests': summary.get('waitRemediationVerification',
+                          summary.get('remediationVerification', {})).get('tests', {}).get('count'),
                       'rawItems': 8, 'rawCompleted': 3, 'traceRows': 24, 'mockTrials': 1,
                       'localHttpRequests': 3, 'paidModelCalls': 0, 'independentSolInvocations': reviewed,
                       'eligibleForMeasurement': False}, ensure_ascii=False))

@@ -1,5 +1,5 @@
 {
-  "version": "0.3.0",
+  "version": "0.4.0",
   "phase": 4,
   "date": "2026-10-10",
   "scope": "fixed-yielded-cell-original-evidence-capture-only",
@@ -40,8 +40,8 @@
   "newMockTrials": 1,
   "newLocalHttpRequests": 3,
   "paidModelCalls": 0,
-  "independentSolInvocations": 2,
-  "independentReviewStatus": "review_findings",
+  "independentSolInvocations": 3,
+  "independentReviewStatus": "static_review_passed",
   "automaticRetries": 0,
   "primaryModelTrajectories": 0,
   "autoReviewRejections": 2,
@@ -75,8 +75,56 @@
       "suggestion": "listedは第2要求のprobe-call出力、readは第3要求のprobe-wait出力からそれぞれ検証してください。各段階についてkind='yielded-read'、必須本文、件数を照合し、第3要求に再掲されるprobe-call出力が第2要求から改変されていないことも確認してください。不一致はlocalErrorsへ記録して停止させてください。"
     }
   ],
-  "pendingRemediationReviewContract": "evals/skills/routing/sdk-raw-response-review-v0.6.json",
-  "remediationIndependentlyPassed": false,
+  "completedRemediationReviewContract": "evals/skills/routing/sdk-raw-response-review-v0.6.json",
+  "remediationIndependentlyPassed": true,
+  "finalIndependentReview": {
+    "sourceCommit": "e4e104538b0ab0e6137e7034276e7681d910c61b",
+    "contractPath": "evals/skills/routing/sdk-raw-response-review-v0.6.json",
+    "outputRelativeRoot": ".venv/sdk-raw-response-independent-review-06",
+    "receiptSha256": "b2a72e173ef1b476488beba8b45644e9fccde7c028525c265832717654df60c5",
+    "responseSha256": "9f7bbf4f80237ca3014c94d0f4db129d12329e9a031172a985abdb19127199c4",
+    "status": "static_review_passed",
+    "actualInvocations": 1,
+    "usage": {
+      "input_tokens": 41396,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 871,
+      "reasoning_output_tokens": 810
+    }
+  },
+  "waitRemediationVerification": {
+    "sourceCommit": "e4e104538b0ab0e6137e7034276e7681d910c61b",
+    "outputRelativeRoot": ".venv/production-sdk-yielded-cell-remediation-verification-02",
+    "summarySha256": "8213e8324077e863b73ac15fbaf56b19c996f95ccc1da2653034cd376934a679",
+    "tests": {
+      "count": 483,
+      "seconds": 64.796,
+      "exitCode": 0,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "9a9414ec9dbef6d712b1f9ac9542f84d607a6d1fefedde8a9d16f9f2000b5a33",
+      "command": [
+        "uv",
+        "--cache-dir",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+        "run",
+        "--offline",
+        "--project",
+        "plugins/bitz-core",
+        "--with",
+        "jsonschema==4.23.0",
+        "python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/skills",
+        "-p",
+        "test_*.py"
+      ]
+    }
+  },
   "secondIndependentReview": {
     "sourceCommit": "4539307f6e10d38e17c6f03d9c32c4676df8cc2e",
     "contractPath": "evals/skills/routing/sdk-raw-response-review-v0.5.json",

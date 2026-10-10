@@ -296,3 +296,13 @@ Python SDKの固定1exec/list/yield/200ms後readとcell_id=1へのwait1回を、
 旧親セル監査はwaitを未知callとして停止する。継続相関の専用監査と独立SOL検分は未実施。
 同8公開パスのSOL検分は自動承認審査が2回拒否し、起動/送信/予約0。ユーザー本人の具体的送信許可を確認する。
 記録は `../results/2026-10-10-sdk-yielded-cell/`。eligibleForMeasurement=false、Phase/Gate全体は未認定。
+
+### Phase 4：固定yield/wait捕捉の是正と独立検分通過（2026-10-10）
+
+具体的な継続送信許可後、同8公開パスのSOL検分v0.4/v0.5でP2が各1件。
+元一覧出力の相関不足とwait呼出しの固定cell/順序の相関不足を歴史Gitと合成入力で再現した。
+元の各段階と原ホスト本文、再掲履歴/settings、保存済みSSE、exec/wait→対応出力、固定cell/args/生成idを検査する。
+原捕捉・旧指摘・原応答・消費枠は保持する。sourcee4e1045のclean全483件/64.796s/OK/exit0と、
+v0.6の独立SOL指摘0/CLI exit0、その原応答/hash/guard/予約の親照合も通過した。
+今回SOL3/raw静的累計6、新模擬/HTTP/一次/委譲/retry0。次は固定yield/waitの親セル継続相関の専用監査。
+eligibleForMeasurement=false、Phase/Gate全体は未認定。
