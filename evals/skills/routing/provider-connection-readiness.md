@@ -23,6 +23,8 @@
 次の無課金故障注入では、認証なしの隔離模擬providerを用い、HTTP失敗・stream切断・接続失敗を別条件にする。
 通常retry0、stream retry0、supports_websockets=false、unbounded_connection_retries=falseの候補設定で
 原要求件数・失敗終端・timeout・子process終了を観測する。正常ケースだけで上限を認定しない。
+固定版のsystem_proxy_fallbackも既定trueであることをfeatures/src/lib.rsで確認した。
+候補設定ではsystem_proxy_fallback/respect_system_proxyもfalseとし、通常経路以外の再接続を別に扱う。
 認証復旧の0回や実providerの上限は、この無認証実験から認定せず別に残す。
 
 rollout traceはHTTP要求直前のJSON値を保存する候補であり、認証ヘッダーを読むproxyは用意しない。

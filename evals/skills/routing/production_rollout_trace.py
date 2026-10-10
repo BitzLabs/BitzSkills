@@ -34,6 +34,7 @@ def compare_requests(manifest_raw, events_raw, payloads, wire_requests, *, threa
         kind = fields.get('type')
         if kind == 'codex_turn_ended':
             require(not ended and active is None and fields.get('codex_turn_id') == turn_id and
+                    event.get('thread_id') == thread_id and event.get('codex_turn_id') == turn_id and
                     fields.get('status') == 'completed', 'inference turn terminal')
             ended = True
         if isinstance(kind, str) and kind.startswith('inference_'):

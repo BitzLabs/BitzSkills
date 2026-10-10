@@ -22,3 +22,12 @@ verify-recorded-results.pyで原receipt hash・全artifact・Git refのsource・
 JSON値一致をwire bytes一致へ拡張しない。原応答traceはprotocol投影であり、final itemのstatusやannotationsに
 元SSEとの差異があることを保持する。要求側の一致から応答の完全性を推定しない。
 原bundle/RPC/SDK通知/host/HTTP/SSEは私的出力のまま保持し、公開記録はref・件数・hash・実exitのみ。
+
+source19df29eのclean全534件/64.168s/OK/exit0、有限SOL31は公開4本文/1回/CLIexit0/P2=2/P3=1。
+終端の外側thread/turn照合不足、使用する原ファイルのhash収載確認不足、roleのみの入力でのKeyErrorを指摘として保持。
+親も別thread終端の受入れを合成入力で再現し、保存済み原receiptに必要ファイルがすべて収載されていることを確認した。
+終端context、必須artifact membership、role/typeの明示分岐を是正した。原捕捉・原SOL・消費1を訂正上書きしない。
+修正の独立再検分は未実施。原traceや実providerの独立適合判定を静的検分で代用しない。
+
+是正後の対象6件/0.007s/OK/exit0、原捕捉とSOL31の原stdio/hash/Git/共通予約再照合もexit0。
+新有限v0.32で是正対象の公開3本文だけを独立検分する。追加mock/HTTP0、一次/委譲/自動retry0。

@@ -1,5 +1,6 @@
 """原receiptのhashから全artifact・source・要求JSON値を再照合する。有料起動0。"""
 import hashlib
+import importlib.util
 from pathlib import Path
 import sys
 import json
@@ -16,6 +17,32 @@ def sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
+def require_artifact_membership(inventory, count):
+    trace.require(isinstance(inventory, dict) and type(count) is int and 1 <= count <= 3,
+                  'bounded capture inventory')
+    required = {'contract.json', 'rpc-out.jsonl', *(f'request-{i}.json' for i in range(1, count + 1))}
+    trace.require(required <= set(inventory), 'required original artifact not hashed')
+
+
+def input_roles(request):
+    items = request.get('input')
+    trace.require(isinstance(items, list) and bool(items), 'original input missing')
+    roles = []
+    for item in items:
+        trace.require(isinstance(item, dict), 'original input item')
+        role = item['role'] if 'role' in item else item.get('type')
+        trace.require(isinstance(role, str) and bool(role), 'original input role or type missing')
+        roles.append(role)
+    return roles
+
+
+def module(name, relative):
+    spec = importlib.util.spec_from_file_location(name, ROOT / relative)
+    value = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(value)
+    return value
+
+
 def run():
     public = trace.strict_json((Path(__file__).parent / 'summary.json').read_bytes())
     base = ROOT / public['outputRelativeRoot']
@@ -23,6 +50,7 @@ def run():
     receipt_raw = (base / 'receipt.json').read_bytes()
     trace.require(sha(receipt_raw) == public['receiptSha256'], 'original receipt drift')
     receipt = trace.strict_json(receipt_raw)
+    require_artifact_membership(receipt['artifactSha256'], public['localHttpRequests'])
     source = public['sourceCommit']
     contract_raw = guard.git(ROOT, 'show', source + ':' + public['contractPath'])
     trace.require((base / 'contract.json').read_bytes() == contract_raw or
@@ -57,7 +85,7 @@ def run():
         {str(p.relative_to(bundle)): p.read_bytes() for p in (bundle / 'payloads').glob('*.json')}, wire,
         thread_id=thread, turn_id=turn, model=contract['model'], provider_name='Isolated local simulator')
     first = trace.strict_json(wire[0])
-    roles = [item.get('role', item['type']) for item in first['input']]
+    roles = input_roles(first)
     completions = sum(e['payload']['type'] == 'inference_completed' for e in events)
     trace.require(projection['requests'] == public['requestValuesMatched'] == public['inferenceRequests'] == 3 and
                   completions == public['inferenceCompletions'] == 3 and len(events) == public['rolloutEvents'] and
@@ -73,9 +101,16 @@ def run():
     trace.require(all(public[key] == 0 for key in ['paidModelCalls', 'primaryModelTrajectories', 'automaticRetries']) and
                   all(public[key] is False for key in ['independentReviewPerformed', 'certifiesWholeTrace',
                       'certifiesProviderWireBodies', 'eligibleForMeasurement', 'phaseComplete']), 'limited local scope')
+    stages = public.get('staticReviewStages', [])
+    if stages:
+        review = module('rollout_raw_review', 'evals/skills/results/2026-10-09-sdk-raw-response-capture/verify-recorded-results.py')
+        preparation = module('rollout_preparation', 'evals/skills/results/2026-10-10-production-canary-design/verify-recorded-results.py')
+        for stage in stages:
+            preparation.check_stage(stage, review)
+    trace.require(public.get('staticSolInvocations', 0) == len(stages), 'finite static review count')
     print(json.dumps(dict(status='recorded_rollout_capture_matches_original_bytes', requests=projection['requests'],
         rolloutEvents=len(events), rolloutArtifacts=len(files), initialInputRoles=roles,
-        paidModelCalls=0, eligibleForMeasurement=False), ensure_ascii=False))
+        staticSolInvocations=len(stages), paidModelCalls=0, eligibleForMeasurement=False), ensure_ascii=False))
 
 
 if __name__ == '__main__':

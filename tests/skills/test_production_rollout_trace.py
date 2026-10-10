@@ -1,5 +1,6 @@
 """要求投影の型・相関・欠落を合成入力で検査する。私的捕捉や実providerは使わない。"""
 import copy
+import importlib.util
 import json
 from pathlib import Path
 import sys
@@ -50,7 +51,8 @@ class RolloutRequestTests(unittest.TestCase):
         with self.assertRaises(ValueError): self.check(payloads={'../outside': b'{}'})
 
     def test_context_sequence_missing_terminal_and_unknown_inference_stop(self):
-        for index, key, value in [(0, 'seq', True), (1, 'seq', 4), (0, 'thread_id', 'other'), (1, 'codex_turn_id', 'other')]:
+        for index, key, value in [(0, 'seq', True), (1, 'seq', 4), (0, 'thread_id', 'other'), (1, 'codex_turn_id', 'other'),
+                                  (2, 'thread_id', 'other'), (2, 'codex_turn_id', 'other')]:
             events = copy.deepcopy(self.events)
             events[index][key] = value
             with self.subTest(key=key), self.assertRaises(ValueError): self.check(events=events)
@@ -72,6 +74,32 @@ class RolloutRequestTests(unittest.TestCase):
             events = copy.deepcopy(order)
             for i, e in enumerate(events, 1): e['seq'] = i
             with self.assertRaises(ValueError): self.check(events=events)
+
+
+class RecordedCaptureTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        path = ROOT / 'evals/skills/results/2026-10-11-sdk-rollout-trace-capture/verify-recorded-results.py'
+        spec = importlib.util.spec_from_file_location('rollout_capture_record_test', path)
+        cls.record = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.record)
+
+    def test_every_used_original_file_must_be_hash_bound(self):
+        inventory = {name: '0' * 64 for name in ['contract.json', 'rpc-out.jsonl', 'request-1.json', 'request-2.json', 'request-3.json']}
+        self.record.require_artifact_membership(inventory, 3)
+        for missing in inventory:
+            bad = dict(inventory)
+            del bad[missing]
+            with self.subTest(missing=missing), self.assertRaises(ValueError):
+                self.record.require_artifact_membership(bad, 3)
+        for count in [True, 0, 4]:
+            with self.assertRaises(ValueError): self.record.require_artifact_membership(inventory, count)
+
+    def test_role_only_input_does_not_require_type_and_unknown_role_stops(self):
+        self.assertEqual(self.record.input_roles({'input': [{'role': 'developer'}, {'role': 'user'}, {'type': 'custom_tool_call'}]}),
+                         ['developer', 'user', 'custom_tool_call'])
+        for item in [{}, {'role': None}, {'role': True}]:
+            with self.assertRaises(ValueError): self.record.input_roles({'input': [item]})
 
 
 if __name__ == '__main__':

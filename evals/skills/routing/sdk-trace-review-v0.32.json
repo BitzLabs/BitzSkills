@@ -1,0 +1,53 @@
+{
+  "version": "sdk-trace-review-0.32.0",
+  "phase": 4,
+  "scope": "public-sdk-trace-component-static-review-only",
+  "target": "rollout-request-terminal-and-required-artifact-binding-remediation",
+  "model": "gpt-6.1-sol",
+  "timeoutSeconds": 300,
+  "maximumInvocations": 1,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 1,
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "outputRelativeRoot": ".venv/sdk-trace-independent-review-32",
+  "payloadFiles": [
+    "evals/skills/routing/production_rollout_trace.py",
+    "tests/skills/test_production_rollout_trace.py",
+    "evals/skills/results/2026-10-11-sdk-rollout-trace-capture/verify-recorded-results.py"
+  ],
+  "sourceFiles": [
+    "evals/skills/routing/production_rollout_trace.py",
+    "tests/skills/test_production_rollout_trace.py",
+    "evals/skills/results/2026-10-11-sdk-rollout-trace-capture/verify-recorded-results.py",
+    "evals/skills/results/2026-10-11-sdk-rollout-trace-capture/summary.json",
+    "evals/skills/routing/production-operation-probe-v0.11.json",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/production_ledger.py",
+    "evals/skills/routing/production_review_ledger.py",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "evals/skills/routing/check_canary_design_preparation.py",
+    "evals/skills/routing/sdk-trace-review.schema.json",
+    "evals/skills/routing/sdk-trace-review-v0.32.json"
+  ],
+  "constraints": [
+    "Phase 4期間の送信は本人許可済み。是正対象の公開3本文のみをSOL1回/300秒で静的検分。一次・委譲・自動retry0。",
+    "前回P2=2/P3=1は終端外側のthread/turn照合不足、読み取る原ファイルのhash収載確認不足、roleのみの入力でのKeyError。親も別thread終端の受入れを再現し、実原receiptの必要5ファイルはすべて収載されていることを確認した。原指摘/応答/消費を保持する。",
+    "是正版はcodex_turn_endedの外側thread_id/codex_turn_idを固定引数へ照合。callerはcontract.json/rpc-out.jsonl/request-1からNのhash一覧収載を読取り前に必須化。input_rolesはroleとtypeを明示分岐し未知形式を拒否する。",
+    "比較器はcallerが原artifact hashを確認してから使う。最大3要求の原JSON値比較だけで、全traceの意味/応答投影/上流wire bytes/測定適格性/行動/Phase/Gateは常に未認定。",
+    "保存済み原捕捉source0d3f281の1試行/局所HTTP3/host2/raw SDK item8/rollout33 events/26 filesは変更しない。今回新mock/HTTP0。新静的検分者へ私的原証拠を渡さず、実原証拠の検分済みと主張しない。",
+    "依存の全文は未提示。過去検分を読取済みへ代用せず、提示された本文と是正範囲の具体的矛盾だけを検分する。",
+    "保持入力・原RPC/stdio/bundle/HTTP/SSE/認証内容を送らない。tools/追加モデル/委譲/ファイル読取り/試験実行は禁止。"
+  ],
+  "previousReview": {
+    "sourceCommit": "19df29e59b0034289271ffc6d1ed14ed7c9fc834",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-31",
+    "receiptSha256": "af292cd905e2f52313bd046af0acbb91ab92fb15ef8b7f874d2199a7fa5e4bbd",
+    "responseSha256": "b3b53c1d36b1a9437ee21b7d29e18e0ff4fdad156dd69e2ad9423133337f0a53",
+    "oldInvocationsConsumed": 1,
+    "oldRemaining": 0
+  }
+}
