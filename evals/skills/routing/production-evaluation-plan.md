@@ -266,3 +266,12 @@ final→完了順とnull errorを原RPCから検査する。旧捕捉にも同�
 v0.3の同8公開パス/95935 bytesの追加1回と以後同パス修正版の同条件送信を
 `../results/2026-10-09-sdk-raw-response-capture/public-verifier-remediation-code-transmission-approval-request.md` で確認待ち。
 追加送信/起動/予約0。指摘解消済み・Phase/Gate完了とは判定しない。
+
+### Phase 4：raw捕捉コード・照合器の静的検分通過（2026-10-10）
+
+ユーザーがv0.3の追加1回と同8公開パス修正版の同条件の継続送信を承認した。
+sourcef8e27f2のSOLはstatic_review_passed/指摘0/CLI exit0。親の原応答・hash・歴史Git・guard・有限予約の照合もexit0。
+同refの保存済み全469件/62.154s/OK/exit0と旧原捕捉2件の修正判定も適合した。
+今回追加SOL1/input35784/output387/reasoning326、raw静的系列累計3。一次0・委譲0・自動retry0。
+旧P2/原結果/消費枠を保持する。この静的検分をPhase全体/Gate/実provider/一次測定へ代用しない。
+次はSDK raw通知の専用交換監査への接続。既存診断の未知params停止は保持する。

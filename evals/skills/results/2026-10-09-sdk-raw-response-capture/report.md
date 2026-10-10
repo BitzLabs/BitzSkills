@@ -157,3 +157,16 @@ raw通知のcontextもこの開始RPCから得たIDへ相関する。新旧捕�
 同じ8公開パスの今後の修正版も同条件で送信する継続範囲を提示したが、まだ承認されていない。
 今回のv0.3は未送信・未起動・未予約、専用出力03は未作成。v0.2枠は消費済みで流用しない。
 raw監査接続・任意複数cell/待機・実provider・一次台帳・公開canary/本測定とPhase全体の認定は残る。
+
+## 原証拠照合器の独立再検分の通過（2026-10-10）
+
+ユーザーが追加1回と同8公開パスの修正版への同条件送信を継続承認した。
+v0.3/sourcef8e27f2のSOLはCLI exit0/timeoutなし/static_review_passed/指摘0。
+今回input35784/cached0/output387/reasoning326、raw静的系列累計3回。一次0・委譲0・自動retry0。
+原receipt SHA256 `5bf135733f4b393e712ebc4ee47490c352f7c3a6baa0c25dc9509e0a5f958adc`、
+原response SHA256 `6f8a66f87c7e461c9eebeb18c9438c19af80a88bc28dd38070656f1853524a18`。
+親が原stdout/schema/最終本文/hash/usage、歴史Git、前/起動/後guardと有限予約を再照合した。
+同じ確定refで原終端を保存した全469件/62.154s/OK/exit0と、旧捕捉2件への修正検査の適合も確認した。
+旧2回のP2・原結果・消費枠を残す。捕捉コード・原証拠照合器の当該静的検分の通過に限り、
+Phase/Gate全体・実provider・全native lifecycle・一次測定は未認定。
+次はPython SDK raw通知を専用の交換監査へ接続する。既存SDK診断の未知params停止は引き続き保持する。

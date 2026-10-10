@@ -1,7 +1,7 @@
 {
-  "version": "sdk-raw-response-capture-0.3.0",
+  "version": "sdk-raw-response-capture-0.4.0",
   "phase": 4,
-  "status": "second_independent_raw_review_findings_verifier_fix_pending_recheck",
+  "status": "raw_capture_components_independently_rechecked",
   "sourceCommit": "4be29c094adb27fe897e72b3d841dcd73b5d0995",
   "priorSdkTraceStaticReviewPassedSource": "a8d0ef2f1398c96affdd54bbdb7bb748efd0c97e",
   "captureTrials": [
@@ -269,7 +269,7 @@
     "originalCapturesMatchCorrectedPredicate": true,
     "firstFullSuiteAttempt": {"count": 466, "seconds": 44.187, "exitCode": 1, "errors": 44, "cause": "検証コマンドでPYTHONPATHを指定し忘れた。標準環境で再実行する。"},
     "correctedEnvironmentFullSuite": {"count": 466, "seconds": 62.463, "exitCode": 0},
-    "independentRecheckPassed": false,
+    "independentRecheckPassed": true,
     "failedCleanTreeVerification": {"outputRelativeRoot": ".venv/production-sdk-raw-response-verification-02", "sourceCommit": "1775038798653da9a6801ea0402c22febae2273a", "testCount": 466, "seconds": 62.137, "testTerminal": "OK", "exitCode": 1, "cause": "最終検証中に記録照合ファイルを更新したためclean tree検査で停止した。", "stderrSha256": "c200f3e3b80da58aac56b0b89888dba2b9bacec2492bdc4e6c80c008178ca297"},
     "verification": {
       "outputRelativeRoot": ".venv/production-sdk-raw-response-verification-03",
@@ -308,7 +308,7 @@
         "stderrSha256": "bba6a61162b42c73c834ad773360c5a77998b31e8fedddf5977509800a61ee8d"
       }
     },
-    "independentRecheckPassed": false,
+    "independentRecheckPassed": true,
     "newMockTrials": 0,
     "newLocalHttpRequests": 0,
     "paidModelCalls": 0
@@ -331,8 +331,12 @@
     "primaryModelTrajectories": 0,
     "additionalDelegation": 0
   },
-  "nextReview": {
-    "status": "awaiting_explicit_additional_transmission_and_same_eight_paths_continuation_approval",
+  "finalIndependentReview": {
+    "status": "static_review_passed",
+    "receiptSha256": "5bf135733f4b393e712ebc4ee47490c352f7c3a6baa0c25dc9509e0a5f958adc",
+    "responseSha256": "6f8a66f87c7e461c9eebeb18c9438c19af80a88bc28dd38070656f1853524a18",
+    "usage": {"input_tokens": 35784, "cached_input_tokens": 0, "cache_write_input_tokens": 0, "output_tokens": 387, "reasoning_output_tokens": 326},
+    "authorization": "ユーザーが今回の追加1回と以後同8公開パスの修正版への同条件送信にOKと回答した。",
     "sourceCommit": "f8e27f2ddf7d003df7f27236b1059557368534d2",
     "contractPath": "evals/skills/routing/sdk-raw-response-review-v0.3.json",
     "outputRelativeRoot": ".venv/sdk-raw-response-independent-review-03",
@@ -340,18 +344,18 @@
     "payloadFilesCount": 8,
     "payloadBytes": 95935,
     "maximumInvocations": 1,
-    "actualInvocations": 0,
+    "actualInvocations": 1,
     "automaticRetries": 0,
     "primaryModelTrajectories": 0,
     "additionalDelegation": 0,
-    "sameEightPathsContinuationAuthorized": false
+    "sameEightPathsContinuationAuthorized": true
   },
   "newRawMockTrials": 2,
   "newLocalMockHttpRequests": 4,
   "rawMockPaidModelCalls": 0,
-  "newRawCaptureIndependentReviewerSolInvocations": 2,
+  "newRawCaptureIndependentReviewerSolInvocations": 3,
   "priorSdkTraceIndependentReviewerSolInvocations": 18,
-  "independentRawCaptureReviewPassed": false,
+  "independentRawCaptureReviewPassed": true,
   "eligibleForMeasurement": false,
   "certifiesExpectedBehavior": false,
   "certifiesNativeProvider": false,

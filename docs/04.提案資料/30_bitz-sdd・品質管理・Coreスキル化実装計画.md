@@ -1423,3 +1423,13 @@ check_capture自身で検査し、原保存物を保持したまま旧捕捉に�
 v0.3の同8公開パス/95935 bytesの追加1回と以後同パス修正版の同条件送信を
 `evals/skills/results/2026-10-09-sdk-raw-response-capture/public-verifier-remediation-code-transmission-approval-request.md` で確認待ち。
 追加送信/起動/予約0。独立指摘解消済み・Phase/Step/Gate完了とは判定しない。
+
+### Phase 4：raw捕捉コード・照合器の静的検分通過（2026-10-10）
+
+ユーザーがv0.3の追加1回と同8公開パス修正版の同条件の継続送信を承認した。
+sourcef8e27f2の独立SOLはstatic_review_passed/指摘0/CLI exit0。
+親が原stdio/schema/最終応答/hash/usage、歴史Git、前/起動/後guardと有限予約を再照合し、exit0を確認した。
+同確定refの全469件/62.154s/OK/exit0と旧原捕捉2件の修正判定も適合した。
+今回追加SOL1/input35784/output387/reasoning326、raw静的系列累計3。一次0・委譲0・自動retry0。
+旧P2/原結果/消費枠は保持。この静的検分はPhase/Step/Gate全体・実provider・一次測定の認定ではない。
+次はPython SDK raw通知の専用交換監査への接続。

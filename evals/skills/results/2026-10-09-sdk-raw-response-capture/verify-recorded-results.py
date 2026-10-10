@@ -28,7 +28,8 @@ def recheck_review(meta):
     require(sha(raw) == meta['receiptSha256'], 'recheck receipt hash')
     value = trace.strict_json(raw)
     contract = trace.strict_json(guard.git(ROOT, 'show', meta['sourceCommit'] + ':' + meta['contractPath']))
-    require(value['sourceCommit'] == meta['sourceCommit'] and value['status'] == meta['status'] == 'review_findings' and
+    require(value['sourceCommit'] == meta['sourceCommit'] and value['status'] == meta['status'] and
+            value['status'] in {'review_findings', 'static_review_passed'} and
             value['exitCode'] == 0 and value['timedOut'] is False and
             value['independentReviewerSolInvocations'] == meta['actualInvocations'] == 1 and
             value['primaryModelTrajectories'] == value['automaticRetries'] == 0, 'recheck terminal')
@@ -61,7 +62,7 @@ def recheck_review(meta):
 def run():
     summary = trace.strict_json(Path(__file__).with_name('summary.json').read_bytes())
     require(summary['phase'] == 4 and not summary['phaseComplete'] and
-            not summary['eligibleForMeasurement'] and not summary['independentRawCaptureReviewPassed'], 'scope')
+            not summary['eligibleForMeasurement'] and summary['independentRawCaptureReviewPassed'] is True, 'scope')
     meta = summary['verification']
     base = ROOT / meta['outputRelativeRoot']
     raw = (base / 'summary.json').read_bytes()
@@ -140,7 +141,7 @@ def run():
             reservation['automaticRetry'] is False and invocation['model'] == contract['model'] and
             invocation['promptSha256'] == receipt['promptSha256'], 'review finite reservation')
     require(summary['newRawMockTrials'] == 2 and summary['newLocalMockHttpRequests'] == 4 and
-            summary['rawMockPaidModelCalls'] == 0 and summary['newRawCaptureIndependentReviewerSolInvocations'] == 2,
+            summary['rawMockPaidModelCalls'] == 0 and summary['newRawCaptureIndependentReviewerSolInvocations'] == 3,
             'capture counters')
     counterexample = [{'method': 'turn/completed', 'params': {'threadId': 'other',
                       'turn': {'id': 'other-turn', 'status': 'completed', 'error': {'message': 'failed'}}}},
@@ -178,14 +179,19 @@ def run():
             not (failed_base / 'summary.json').exists() and failed['exitCode'] == 1,
             'failed clean-tree verification retained')
     second_response = recheck_review(summary['independentRecheck'])
+    final_response = recheck_review(summary['finalIndependentReview'])
+    require(final_response['findings'] == [] and final_response['verdict'] == 'pass' and
+            summary['finalIndependentReview']['status'] == 'static_review_passed' and
+            summary['rawVerifierRemediation']['independentRecheckPassed'] is True, 'final static review')
     next_review = summary.get('nextReview')
     if next_review is not None:
         check_pending(next_review, contract['payloadFiles'])
     print(json.dumps({'status': 'recorded_raw_capture_results_match_original_bytes',
                       'tests': tests['count'], 'rawItemsPerCapture': 6, 'rawCompletedPerCapture': 2,
                       'mockTrials': 2, 'localMockHttpRequests': 4, 'rawMockPaidModelCalls': 0,
-                      'independentReviewInvocations': 2, 'reviewFindings': len(response['findings']),
+                      'independentReviewInvocations': 3, 'reviewFindings': len(response['findings']),
                       'recheckFindings': len(second_response['findings']),
+                      'finalReviewFindings': len(final_response['findings']),
                       'correctedSourceTests': local['tests']['count'] if local is not None else None,
                       'eligibleForMeasurement': False}, ensure_ascii=False))
 
