@@ -19,6 +19,7 @@ YIELDED_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.20.json'
 YIELDED_REMEDIATION_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.21.json'
 SEQUENTIAL_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.22.json'
 RAW_TWO_STAGE_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.23.json'
+CANARY_DESIGN_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.24.json'
 RAW_CONTRACTS = {'evals/skills/routing/sdk-raw-response-review-v0.1.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.2.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.3.json',
@@ -61,7 +62,7 @@ def review_response(base: Path, stdout: bytes, source: str, schema: bytes, contr
 
 
 def run(source: str, contract_name: str = CONTRACT):
-    require(contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, SEQUENTIAL_CONTRACT, RAW_TWO_STAGE_CONTRACT, *RAW_CONTRACTS}, 'unknown static review contract')
+    require(contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, SEQUENTIAL_CONTRACT, RAW_TWO_STAGE_CONTRACT, CANARY_DESIGN_CONTRACT, *RAW_CONTRACTS}, 'unknown static review contract')
     require(source_guard.git(ROOT, 'status', '--porcelain') == b'', 'clean tree required')
     contract = trace.strict_json(source_guard.git(ROOT, 'show', source + ':' + contract_name))
     before = source_guard.verify(ROOT, source, contract['sourceFiles'])
@@ -81,6 +82,7 @@ def run(source: str, contract_name: str = CONTRACT):
                              '.venv/sdk-trace-independent-review-20',
                              '.venv/sdk-trace-independent-review-21',
                              '.venv/sdk-trace-independent-review-22',
+                             '.venv/sdk-trace-independent-review-23',
                              '.venv/sdk-raw-response-independent-review-01',
                              '.venv/sdk-raw-response-independent-review-02',
                              '.venv/sdk-raw-response-independent-review-03',
@@ -114,7 +116,17 @@ def run(source: str, contract_name: str = CONTRACT):
               'あなたが実行していない試験や原証拠の検分を成功と書かないでください。'
               '指定schemaのJSONだけを回答してください。\n'
               f'sourceCommit={source}\nscope={contract["scope"]}\n')
-    if contract_name in RAW_CONTRACTS or contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, SEQUENTIAL_CONTRACT, RAW_TWO_STAGE_CONTRACT}:
+    if contract_name == CANARY_DESIGN_CONTRACT:
+        prompt = ('あなたは作業者と別の独立した設計検分者です。日本語で回答してください。'
+                  '次の確定した公開本文だけから実provider公開canaryと一次台帳の統合設計を静的検分してください。'
+                  'tool、追加モデル、委譲、ファイル読取り、試験実行は禁止です。'
+                  '設計の具体的矛盾、証拠と判定の束縛、有限枠と停止、未知入力の扱いを評価してください。'
+                  '未実装であること自体や未確定と明示して起動を止める前提だけを欠陥にしないでください。'
+                  '再現可能な指摘だけをP1/P2/P3としてpath/line/条件/是正案に示してください。'
+                  'あなたが実行していない試験や原証拠の検分を成功と書かないでください。'
+                  '指定schemaのJSONだけを回答してください。\n'
+                  f'sourceCommit={source}\nscope={contract["scope"]}\n')
+    if contract_name in RAW_CONTRACTS or contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, SEQUENTIAL_CONTRACT, RAW_TWO_STAGE_CONTRACT, CANARY_DESIGN_CONTRACT}:
         prompt += '\nこの検分の固定制約:\n' + '\n'.join(contract['constraints']) + '\n'
     for name in contract['payloadFiles']:
         raw = source_guard.git(ROOT, 'show', source + ':' + name)
@@ -204,8 +216,10 @@ if __name__ == '__main__':
     raw.add_argument('--sequential-capture-remediation', action='store_true')
     raw.add_argument('--sequential-parent-review', action='store_true')
     raw.add_argument('--raw-two-stage-review', action='store_true')
+    raw.add_argument('--canary-design-review', action='store_true')
     args = parser.parse_args()
-    contract_name = (RAW_TWO_STAGE_CONTRACT if args.raw_two_stage_review else
+    contract_name = (CANARY_DESIGN_CONTRACT if args.canary_design_review else
+                     RAW_TWO_STAGE_CONTRACT if args.raw_two_stage_review else
                      SEQUENTIAL_CONTRACT if args.sequential_parent_review else
                      'evals/skills/routing/sdk-raw-response-review-v0.8.json' if args.sequential_capture_remediation else
                      'evals/skills/routing/sdk-raw-response-review-v0.7.json' if args.sequential_capture_review else

@@ -1,0 +1,52 @@
+{
+  "version": "sdk-trace-review-0.24.0",
+  "phase": 4,
+  "scope": "public-sdk-trace-component-static-review-only",
+  "target": "public-production-canary-integration-design",
+  "model": "gpt-6.1-sol",
+  "timeoutSeconds": 300,
+  "maximumInvocations": 1,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 1,
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "outputRelativeRoot": ".venv/sdk-trace-independent-review-24",
+  "payloadFiles": [
+    "evals/skills/routing/production-canary-integration-design.md",
+    "evals/skills/routing/production_ledger.py",
+    "evals/skills/routing/production_sdk_probe.py",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/run_sdk_trace_review.py"
+  ],
+  "sourceFiles": [
+    "evals/skills/routing/production-canary-integration-design.md",
+    "evals/skills/routing/production_ledger.py",
+    "evals/skills/routing/production_sdk_probe.py",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/check_canary_design_preparation.py",
+    "evals/skills/routing/sdk-trace-review.schema.json",
+    "evals/skills/routing/sdk-trace-review-v0.24.json"
+  ],
+  "constraints": [
+    "新しい6公開パスの設計検分だけ。旧6/8パスの送信承認と範囲を混同しない。原捕捉・保持入力・期待値・認証内容は渡さない。",
+    "設計はdraftであり一次起動契約ではない。初回一次4/独立一次検分4は将来案、今回は設計の静的SOL1回だけ。一次・委譲・自動retry0。",
+    "局所模擬の固定ID/日付/program/final/raw/HTTPを実provider認定へ代用しない。未取得層と未確定前提が起動停止条件として明示されているか確認する。",
+    "永続台帳の起動前予約と原証拠の親再照合、モデルと検分の停止後再起動拒否、source/output/campaign/worktreeによる枠回避、retry/要求上限を検分する。",
+    "設計が未実装であること自体を欠陥としない。具体的な矛盾、実装すると証拠のないacceptedや枠超過に至る手順、未取得証拠で認定する設計上の穴を再現条件付きで指摘する。",
+    "正本の評価基準やREQ/TECHを変更しない。初回接続診断をPhase/Gate/5種実地/全分母/第二モデル系統/リリースの認定へ代用しない。",
+    "送信は公開本文と固定scope/source/行番号/hash/schemaだけ。tool実行・追加モデル・委譲・私的領域読取りは禁止。原stdio/hash/Git/source guard/予約/実exitを親が保存する。"
+  ],
+  "previousReview": {
+    "sourceCommit": "d76f002fa8e12d7bcd717c5ccf3945c07cc88500",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-23",
+    "receiptSha256": "f9fa5497605b91c59f58025009d4afe3a34ed8093962fa59db6b60b724d5b7d6",
+    "responseSha256": "25bde0f75e7e6625514a17560a2cbd9445afabcb82b19c0ca302727ed8450253",
+    "oldInvocationsConsumed": 1,
+    "oldRemaining": 0
+  }
+}

@@ -371,3 +371,12 @@ raw入力3/呼出しと出力2組/finalの8件とcompleted3、SDK配送method/pa
 同6公開パス227124 bytesの初回SOL23は指摘0/CLIexit0、親の原stdio/hash/Git/guard/予約と記録照合もexit0。
 当区切りSOL1/SDK静的系列累計23、新模擬/HTTP/一次/委譲/retry0。固定局所診断と静的検分だけの通過。
 次は実providerへ接続する公開canaryの設計と一次台帳統合。任意複数/並列/未知pending・実provider・本測定・Phase/Gateは未認定。
+
+### Phase 4：実provider公開canaryと一次台帳の統合設計着手（2026-10-10）
+
+`production-canary-integration-design.md` に初回2ケース×2反復、一次4/独立一次検分4、retry・委譲0のdraft案を作成した。
+共通台帳の予約前起動禁止、原証拠の親再照合、可変IDの別入口、未取得wire層の非認定を規定する。
+provider retry/要求上限、隔離差分、完全初期入力の証明方法は一次起動前の未解決事項とした。
+公開6パスを対象とする有限v0.24の設計静的SOL1回を準備。従来の6/8パスと異なる送信範囲を混同しない。
+最初の全試験はPYTHONPATH指定漏れで505件/43.919s/44 errors/exit1。環境を修正した確定refの検証を別に記録する。
+この設計文書は一次起動契約ではなく、一次評価・測定適格性・Phase/Step/Gate全体は未認定。

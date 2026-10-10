@@ -1530,3 +1530,12 @@ raw入力3/呼出しと出力2組/finalの8件とcompleted3、生成id/内部tur
 同6公開パス227124 bytesの初回SOL23指摘0/CLIexit0、親の原stdio/hash/Git/guard/予約と記録照合もexit0。
 当区切りSOL1/SDK静的系列累計23、新模擬/HTTP/一次/委譲/retry0。固定局所診断と当該静的検分だけの通過。
 次は実provider公開canaryの設計と一次台帳統合。任意複数/並列/未知pending・本測定・Phase/Step/Gate全体は未認定。
+
+### Phase 4：実provider公開canaryと一次台帳の統合設計着手（2026-10-10）
+
+公開canaryの初回2ケース×2反復と共通一次台帳の接続をdraft設計へ具体化した。
+可変ID/profileを固定模擬の別名置換で認定せず、未知操作・証拠欠落・未解決予約で停止する。
+provider retry/要求上限、隔離差分、完全初期入力の証明を一次起動の前提とし、正本の採点条件は変更しない。
+公開6パスの有限設計検分v0.24を準備。設計静的検分1回、一次0、委譲・自動retry0。
+最初の全試験はPYTHONPATH指定漏れで505件/43.919s/44 errors/exit1。確定refで環境を修正して再検証する。
+設計・実provider・一次起動・測定適格性・Phase/Step/Gate全体の完了は未認定。
