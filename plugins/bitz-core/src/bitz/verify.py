@@ -556,11 +556,21 @@ def _process_single_target(
     # ``root_id``は規範文ID（例: "REQ-001:AC-01"）の場合があり、その場合``id_index``には
     # キーがない。規範文を起点にした場合は`target_statements`が空でなくなるため、文書単位の判定（TECHの文書IDの
     # キーが必要）に入る前に短絡させる（元の単一ワークスペースの実装と同じ`elif`の規則を保つ）。
-    doc_unit = False
-    root_entry: DocEntry | None = None
-    if not target_statements:
-        root_entry = id_index[root_id]
-        doc_unit = root_entry.kind == "TECH" and not root_entry.statements
+    # 文書単位のテスト割当ての対象: 規範文のないTECHを起点にした場合はそのTECH、TASKを起点にした場合は`addresses`する規範文のないTECH
+    # （ADR-026の`Decision`の7番目の項目、関係・トレースモデル §6.4の規則3、`verify` §3）。そのTECHの`tests[]`をすべて対象にし、
+    # 規範文は増やさない（ユーザー決定: TECHを起点にした場合と同じ）。
+    doc_unit_ids: list[str] = []
+    if not target_statements and root_id in id_index:
+        candidate = id_index[root_id]
+        if candidate.kind == "TECH" and not candidate.statements:
+            doc_unit_ids.append(root_id)
+    if root_id in id_index and id_index[root_id].kind == "TASK":
+        for ref in targetexpand._addresses_targets(id_index[root_id], id_index, statement_index):
+            if ref in statement_index or ref not in id_index:
+                continue
+            addressed = id_index[ref]
+            if addressed.kind == "TECH" and not addressed.statements and ref not in doc_unit_ids:
+                doc_unit_ids.append(ref)
 
     # 継続単位`skip-target`（`VERIFY-BINDING-MISSING`）: テストまたはコマンドの定義そのものが不足し、テスト割当てを
     # 構成できない条件。独立した原因（テストのエントリ単位）はそれぞれ診断を返す（同一のエントリを
@@ -581,16 +591,18 @@ def _process_single_target(
             )
         )
 
-    if doc_unit:
-        for idx, t in enumerate(root_entry.frontmatter.get("tests") or []):
-            name = t.get("command") or root_entry.frontmatter.get("verify")
-            cmds = resolved_commands_for(workspace_id)
+    for doc_unit_id in doc_unit_ids:
+        doc_entry = id_index[doc_unit_id]
+        owner = context_mod._owner_of(doc_unit_id, workspace_id) if multi_active else workspace_id
+        for idx, t in enumerate(doc_entry.frontmatter.get("tests") or []):
+            name = t.get("command") or doc_entry.frontmatter.get("verify")
+            cmds = resolved_commands_for(owner)
             if not name or name not in cmds:
-                _add_binding_missing(workspace_id, root_entry.path, idx, name)
+                _add_binding_missing(owner, doc_entry.path, idx, name)
                 continue
             for c in (t.get("covers") or []):
-                needed_pairs.append((workspace_id, name, t["path"], _canon_id(c)))
-    else:
+                needed_pairs.append((owner, name, t["path"], _canon_id(c)))
+    if target_statements:
         cover_ids = list(target_statements)
         for cover_id in cover_ids:
             for doc_entry, idx, t, owner in covering_tests(cover_id):

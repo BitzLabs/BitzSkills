@@ -540,5 +540,53 @@ class DigestCommandMaterialsTests(unittest.TestCase):
             self.assertEqual(materials, ([], []))
 
 
+
+def _tech_without_statements(doc_id: str, command: str = "default") -> str:
+    return (f"---\nid: {doc_id}\ntitle: 技術契約\nstatus: approved\n"
+            f"tests:\n  - path: tests/test_tech.py\n    covers: [{doc_id}]\n    command: {command}\n"
+            f"---\n\n# {doc_id} 技術契約\n\n## Context\n\n規範文を持たない。\n")
+
+
+def _task_addressing(refs: str) -> str:
+    return (f"---\nid: TASK-001\ntitle: 作業\nstatus: open\nrelations:\n  addresses: {refs}\n---\n\n"
+            "# TASK-001 作業\n\n## Objective\n\n作業する。\n")
+
+
+class TaskAddressingTechWithoutStatementsTests(unittest.TestCase):
+    """TASKが規範文のないTECHを`addresses`する場合、そのTECHの文書単位の`tests`を`verify`の実行対象に含め、規範文は増やさない
+    （ADR-026の`Decision`の7番目の項目、関係・トレースモデル §6.4の規則3、`verify` §3）。"""
+
+    def _run(self, tmp: str, argv: str, refs: str, extra=None):
+        _write(tmp, ".spec/bitz.yaml", _bitz_yaml(f'    default:\n      argv: ["{argv}", "{{tests}}"]\n      cwd: .\n'))
+        _write(tmp, ".spec/technical/TECH-001.md", _tech_without_statements("TECH-001"))
+        _write(tmp, ".spec/tasks/TASK-001.md", _task_addressing(refs))
+        _write(tmp, "tests/test_tech.py", "x\n")
+        for path, content in (extra or {}).items():
+            _write(tmp, path, content)
+        _init_repo(tmp)
+        return _run_verify(tmp, ["TASK-001"])
+
+    def test_document_unit_tests_are_run(self):
+        for argv, status in (("/bin/true", "passed"), ("/bin/false", "failed")):
+            with self.subTest(argv=argv), tempfile.TemporaryDirectory() as tmp:
+                result, _exit_code = self._run(tmp, argv, "[TECH-001]")
+                target = result["targetResults"][0]
+                self.assertEqual(target["statements"], [])
+                self.assertEqual(target["bindingRefs"], ["root::default"])
+                self.assertEqual(result["commands"][0]["tests"], ["tests/test_tech.py"])
+                self.assertEqual(result["status"], status)
+
+    def test_statements_and_document_unit_tests_are_combined(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            result, exit_code = self._run(
+                tmp, "/bin/true", "[REQ-001:AC-01, TECH-001]",
+                {".spec/requirements/REQ-001.md": _req("REQ-001"), "tests/test_auth.py": "x\n"},
+            )
+            self.assertEqual((result["status"], exit_code), ("passed", 0), result)
+            target = result["targetResults"][0]
+            self.assertEqual(target["statements"], ["REQ-001:AC-01"])
+            self.assertEqual(result["commands"][0]["tests"], ["tests/test_auth.py", "tests/test_tech.py"])
+
+
 if __name__ == "__main__":
     unittest.main()
