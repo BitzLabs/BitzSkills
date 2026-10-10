@@ -280,6 +280,42 @@ def _resolve_command(name: str | None, config_raw: dict) -> dict | None:
     return resolved
 
 
+def _referenced_command_names(entry: DocEntry) -> list[str]:
+    """文書のテスト対応が参照するコマンド名を返す。`tests[].command`、なければ文書の`verify`の順で解決する
+    （文書・フロントマター・状態仕様 §6。`verify`のテスト割当ての解決と同じ規則）。"""
+
+    default = entry.frontmatter.get("verify")
+    names: set[str] = set()
+    for t in entry.frontmatter.get("tests") or []:
+        if not isinstance(t, dict):
+            continue
+        name = t.get("command") or default
+        if isinstance(name, str) and name:
+            names.add(name)
+    return sorted(names)
+
+
+def digest_command_materials(doc_ids, id_index: dict[str, DocEntry], owner_of, resolve, timeout_for) -> tuple[list, list]:
+    """ハッシュ値の材料の``commands``と``verifyTimeouts``を作る（正規化仕様 §3、`context` §6、複合ワークスペース仕様 §6）。
+
+    収録したテスト割当て（コマンド名を解決でき、そのワークスペースの設定に定義があるもの）が参照するコマンドだけを
+    ``(workspaceId, name)``の順で並べ、``verifyTimeouts``はそのテスト割当てを1件以上持つワークスペースだけを置く。
+    `context --purpose verify`と`verify`で同じ関数を使い、両者のハッシュ値を一致させる。
+    """
+
+    pairs = {(owner_of(d), name) for d in doc_ids for name in _referenced_command_names(id_index[d])}
+    commands: list[dict] = []
+    workspaces: set[str] = set()
+    for wid, name in sorted(pairs):
+        resolved = resolve(wid, name)
+        if resolved is None:
+            continue
+        workspaces.add(wid)
+        commands.append({"workspaceId": wid, "name": name, "argv": list(resolved["argv"]), "cwd": resolved.get("cwd", ".")})
+    timeouts = [{"workspaceId": wid, "timeoutSeconds": timeout_for(wid)} for wid in sorted(workspaces)]
+    return commands, timeouts
+
+
 def _merge_expansions(
     expansions: list, id_index: dict[str, DocEntry], statement_index: dict[str, dict]
 ):
@@ -894,32 +930,16 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
     timeout_seconds = verify_cfg.get("timeoutSeconds", DEFAULT_VERIFY_TIMEOUT)
 
     if multi_active:
-        binding_ws_ids: set[str] = set()
-        referenced_commands_multi: set[tuple[str, str]] = set()
         if purpose == "verify":
-            for doc_id in context_documents:
-                owner = _owner_of(doc_id, workspace_id)
-                for t in id_index[doc_id].frontmatter.get("tests") or []:
-                    name = t.get("command")
-                    if name:
-                        binding_ws_ids.add(owner)
-                        referenced_commands_multi.add((owner, name))
-        verify_timeouts = []
-        for wid in sorted(binding_ws_ids):
-            cfg = _config_for(wid)
-            vcfg = cfg.get("verify") or {}
-            verify_timeouts.append(
-                {"workspaceId": wid, "timeoutSeconds": vcfg.get("timeoutSeconds", DEFAULT_VERIFY_TIMEOUT)}
+            commands_settings, verify_timeouts = digest_command_materials(
+                context_documents,
+                id_index,
+                lambda d: _owner_of(d, workspace_id),
+                lambda wid, name: (_config_for(wid).get("_resolvedCommands") or {}).get(name),
+                lambda wid: (_config_for(wid).get("verify") or {}).get("timeoutSeconds", DEFAULT_VERIFY_TIMEOUT),
             )
-        commands_settings = []
-        for wid, name in sorted(referenced_commands_multi):
-            cfg = _config_for(wid)
-            resolved = (cfg.get("_resolvedCommands") or {}).get(name)
-            if resolved is None:
-                continue
-            commands_settings.append(
-                {"workspaceId": wid, "name": name, "argv": list(resolved["argv"]), "cwd": resolved.get("cwd", ".")}
-            )
+        else:
+            commands_settings, verify_timeouts = [], []
         settings_ws_ids = sorted(set(reached_other) | {workspace_id})
         settings_workspaces = []
         for wid in settings_ws_ids:
@@ -936,30 +956,16 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
             {"id": w, "path": ws_path_by_id.get(w, ".")} for w in reached_other
         ]
     else:
-        has_binding = purpose == "verify" and any(
-            (id_index[d].frontmatter.get("tests") or []) for d in context_documents
-        )
-        referenced_commands: set[str] = set()
         if purpose == "verify":
-            for doc_id in context_documents:
-                for t in id_index[doc_id].frontmatter.get("tests") or []:
-                    name = t.get("command")
-                    if name:
-                        referenced_commands.add(name)
-        commands_settings = []
-        for name in sorted(referenced_commands):
-            resolved = _resolve_command(name, config_raw)
-            if resolved is None:
-                continue
-            commands_settings.append(
-                {
-                    "workspaceId": workspace_id,
-                    "name": name,
-                    "argv": list(resolved["argv"]),
-                    "cwd": resolved.get("cwd", "."),
-                }
+            commands_settings, verify_timeouts = digest_command_materials(
+                context_documents,
+                id_index,
+                lambda d: workspace_id,
+                lambda wid, name: _resolve_command(name, config_raw),
+                lambda wid: timeout_seconds,
             )
-        verify_timeouts = [{"workspaceId": workspace_id, "timeoutSeconds": timeout_seconds}] if has_binding else []
+        else:
+            commands_settings, verify_timeouts = [], []
         settings_workspaces = [
             {
                 "id": workspace_id,

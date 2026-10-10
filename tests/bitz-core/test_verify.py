@@ -480,3 +480,52 @@ class ConfigWarningTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def _req_doc_default(doc_id: str, command_line: str) -> str:
+    """テスト対応が`command`を持たず、文書の`verify`で既定のコマンドを指定するREQ。"""
+    return _req(doc_id, tests_block=f"{command_line}tests:\n  - path: tests/test_auth.py\n    covers: [{doc_id}:AC-01]\n")
+
+
+class DigestCommandMaterialsTests(unittest.TestCase):
+    """ハッシュ値の材料の`commands`と`verifyTimeouts`は、収録したテスト割当て（`tests[].command`、なければ文書の`verify`で解決し、
+    定義があるもの）だけから作り、`context --purpose verify`と`verify`で一致する（正規化仕様 §3、`context` §6、ADR-026）。"""
+
+    def _digests(self, tmp: str, root: str = "REQ-001") -> tuple[str | None, str | None]:
+        from bitz import context as context_mod
+        ctx, _ = context_mod.run(parse_argv(["context", root, "--purpose", "verify", "--format", "json"]), tmp, dict(os.environ))
+        ver, _ = _run_verify(tmp, [root])
+        return ctx["contextDigest"], ver["targetResults"][0]["contextDigest"]
+
+    def _write_base(self, tmp: str, argv: str) -> None:
+        _write(tmp, ".spec/bitz.yaml", _bitz_yaml(f'    default:\n      argv: ["{argv}", "{{tests}}"]\n      cwd: .\n'))
+        _write(tmp, ".spec/requirements/REQ-001.md", _req_doc_default("REQ-001", "verify: default\n"))
+        _write(tmp, "tests/test_auth.py", "def test_x():\n    assert True\n")
+        _init_repo(tmp)
+
+    def test_document_default_command_is_in_the_digest_of_both_operations(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._write_base(tmp, "/bin/true")
+            ctx_digest, verify_digest = self._digests(tmp)
+            self.assertIsNotNone(ctx_digest)
+            self.assertEqual(ctx_digest, verify_digest)
+
+    def test_changing_the_document_default_command_changes_the_digest(self):
+        digests = []
+        for argv in ("/bin/true", "/usr/bin/true"):
+            with tempfile.TemporaryDirectory() as tmp:
+                self._write_base(tmp, argv)
+                digests.append(self._digests(tmp))
+        self.assertNotEqual(digests[0][0], digests[1][0])
+        self.assertNotEqual(digests[0][1], digests[1][1])
+
+    def test_undefined_command_gives_the_same_digest_in_both_operations(self):
+        # 未定義のコマンド名のテスト対応は収録したテスト割当てにならず、`commands`にも`verifyTimeouts`にも入らない（SINGLE-061と同じ読み）。
+        with tempfile.TemporaryDirectory() as tmp:
+            _write(tmp, ".spec/bitz.yaml", _bitz_yaml('    default:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n'))
+            _write(tmp, ".spec/requirements/REQ-001.md", _req_doc_default("REQ-001", "verify: missing\n"))
+            _write(tmp, "tests/test_auth.py", "def test_x():\n    assert True\n")
+            _init_repo(tmp)
+            ctx_digest, verify_digest = self._digests(tmp)
+            self.assertIsNotNone(verify_digest)
+            self.assertEqual(ctx_digest, verify_digest)
