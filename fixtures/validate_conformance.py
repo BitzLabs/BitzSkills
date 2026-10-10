@@ -41,6 +41,7 @@ from conformance.verify_process_fixtures import validate as validate_verify_proc
 from conformance.verify_output_fixtures import validate as validate_verify_output_fixtures
 from conformance.verify_document_fixtures import validate as validate_verify_document_fixtures
 from conformance.verify_task_root_fixtures import validate as validate_verify_task_root_fixtures
+from conformance.verify_task_tech_fixtures import validate as validate_verify_task_tech_fixtures
 from conformance.report_absent_fixtures import validate as validate_report_absent_fixtures
 from conformance.cli_error_fixtures import validate as validate_cli_error_fixtures
 from conformance.report_write_fixtures import validate as validate_report_write_fixtures
@@ -315,6 +316,7 @@ def main():
     checks["verify_output_fixtures"] = validate_verify_output_fixtures()
     checks["verify_document_fixtures"] = validate_verify_document_fixtures()
     checks["verify_task_root_fixtures"] = validate_verify_task_root_fixtures()
+    checks["verify_task_tech_fixtures"] = validate_verify_task_tech_fixtures()
     checks["report_absent_fixtures"] = validate_report_absent_fixtures()
     checks["cli_error_fixtures"] = validate_cli_error_fixtures()
     checks["report_write_fixtures"] = validate_report_write_fixtures()

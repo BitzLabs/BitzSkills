@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0",
+  "operation": "verify",
+  "status": "passed",
+  "scope": "selected",
+  "workspace": {
+    "id": "root",
+    "path": "."
+  },
+  "targetResults": [
+    {
+      "target": "TASK-001",
+      "status": "passed",
+      "contextDigest": "sha256:9fa4bae21abf063fd9f540aadbc644eb7c69cb24247bf033fa055e0d1d9a8405",
+      "statements": [
+        "REQ-001:AC-01"
+      ],
+      "bindingRefs": [
+        "root::default"
+      ],
+      "diagnostics": []
+    }
+  ],
+  "revision": null,
+  "commands": [
+    {
+      "bindingId": "root::default",
+      "workspaceId": "root",
+      "name": "default",
+      "status": "passed",
+      "termination": "exit",
+      "cwd": ".",
+      "argv": [
+        "/bin/true",
+        "tests/test_req.py",
+        "tests/test_tech.py"
+      ],
+      "tests": [
+        "tests/test_req.py",
+        "tests/test_tech.py"
+      ],
+      "covers": [
+        "REQ-001:AC-01",
+        "TECH-001"
+      ],
+      "exitCode": 0,
+      "timeoutSeconds": 300,
+      "stdoutExcerpt": "",
+      "stderrExcerpt": "",
+      "stdoutTruncated": false,
+      "stderrTruncated": false,
+      "durationMs": 0
+    }
+  ],
+  "durationMs": 0,
+  "diagnostics": []
+}

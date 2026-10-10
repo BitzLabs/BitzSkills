@@ -488,3 +488,90 @@ REQ-002は`approved`なので、REQ-002自体の適用可能性（状態の診�
 - `SINGLE-148`は、状態の診断と型制約の診断がどちらも1件の場合だけを固定する。状態の診断が複数の場合は固定しない。
 - 先の追記の「限界」の最後の項目（状態が`accepted`でないADRを起点のTASKの`requires`の閉包に持つ`verify`は固定しない）は、`SINGLE-149`で固定した。
 - `summary`は規範文を持たない。期待値はCoreを実行せずに決めた。Coreとの一致の確認は、期待値を決めた後に行い、Gate Bで判定する。
+
+## 2026-10-11追記: TASKが規範文のないTECHを`addresses`する`verify`（`SINGLE-156`、`SINGLE-157`）
+
+### 追加の理由（実装の確認事項C5）
+
+TASKが規範文のないTECHを`addresses`しても、`verify`はそのTECHの`tests`を実行せず、`statements: []`、`bindingRefs: []`、`commands: []`のまま`passed`を返していた
+（テストを1件も実行せずに検証済みになる）。TECHを起点にした`SINGLE-066`は、規範文のないTECHの文書単位のテスト割当てを固定するが、
+TASKの`addresses`で到達した場合のfixtureはなく、既存のTASK起点の`verify`のfixture（`SINGLE-068`、`137`、`138`、`143`など）の`addresses`の先はすべて規範文を持つREQだった。
+そのため、fixtureが通ったまま欠陥が残った。次の規範文が根拠である。
+
+- [ADR-026](../../../docs/02.設計書/10_決定記録/ADR-026_verifyのテスト割当て・タイムアウト・結果スキーマの確定.md)の`Decision`の7番目の項目
+  （TASKが規範文を持たないTECHのIDを`addresses`する場合、そのTECHの文書単位の`tests`を、TASKを対象とした`verify`の実行対象へ含める。対象規範文は増やさない）、
+  [関係・トレースモデル §6.4](../../../docs/03.詳細設計/02_仕様文書モデル/04_関係・トレースモデル.md#64-targetexpansionroot-purpose)の規則3:
+  TASKを起点にした場合は、そのTASKが`addresses`する規範文と、その具体化文書を含める。規範文のないTECHを`addresses`する場合は規範文を追加せず、
+  文書単位のテスト対応を保持する。
+- [`verify`仕様 §3](../../../docs/03.詳細設計/03_操作仕様/03_verify.md#3-検証対象): TASKは自身の`addresses`先と具体化文書を対象にする。規範文のないTECHは
+  規範文の集合を空にし、文書単位の`tests`を使う。文書単位のテスト割当ては、規範文のないTECHのテスト対応から作るテスト割当てである。
+- `verify` §4の5.と§8: 通過したすべての検証対象の`bindingRefs`を和集合にし、同じ`(workspaceId, commandName)`に属するテストのパスを重複排除して辞書順に並べる。
+  `statements`は検証対象が検証する規範文で、規範文のないTECHは`statements: []`でも文書単位のテストの`bindingRefs`を持てる。
+- 関係・トレースモデル §6.4の規則5と`SINGLE-066`: 規範文のないTECHを起点にした場合も、`targetStatements`を空とし、文書単位のテスト対応を保持する。
+  TECHを起点にした場合と同じ結果を、TASKの`addresses`の先でも返す（ユーザー決定）。
+- [ADR-023](../../../docs/02.設計書/10_決定記録/ADR-023_verifyの明示対象とパスによる入力の確定.md)の`Decision`の5番目の項目:
+  規範文を持たないTECHは、宣言済みの`tests`を文書単位で実行する。
+- [本文テンプレート](../../../docs/03.詳細設計/02_仕様文書モデル/03_文書種別・本文テンプレート.md)のTASKの節: 規範文を持たないTECHだけ、`addresses`に文書IDを指定できる。
+
+### 入力と起動
+
+どちらも`verify TASK-001 --format json`で、設定の`default`（`/bin/true {tests}`）を定義し、`git add .`相当の準備だけを行う。
+原因は、TASK-001が規範文のないTECH-001を`addresses`し、TECH-001が文書単位の`tests`（`covers: [TECH-001]`、`command: default`）を持つことの1つだけで、
+TASK-001は`open`、TECH-001は`approved`、`relations`はTASK-001の`addresses`だけである。文書の`verify`は置かない。
+
+| fixture | TASK-001の`addresses` | ほかの文書 |
+|---|---|---|
+| `SINGLE-156` | `TECH-001` | なし。TECH-001のテストは`tests/test_tech.py` |
+| `SINGLE-157` | `REQ-001:AC-01`、`TECH-001` | REQ-001（`approved`、`MUST`の規範文1件）。そのテストは`tests/test_req.py`で、コマンド名は同じ`default` |
+
+`SINGLE-157`は、規範文を持つ先と持たない先が混在するときに、(1) 規範文のないTECHが規範文の集合を増やさないこと、(2) 2つの対象のテスト対応が
+同じコマンド名なので1つのテスト割当てにまとまり、そのテストのパスが両方のテストを含むことを同時に固定する。2つのテストのパスは異なる
+（`tests/test_req.py`と`tests/test_tech.py`）ので、片方だけを実行する実装を判別できる。
+
+### 期待値の導き方（Coreの出力を根拠にしない）
+
+| 項目 | `SINGLE-156` | `SINGLE-157` | 根拠 |
+|---|---|---|---|
+| 結果の状態／終了コード | `passed`／0 | `passed`／0 | テストは通る（`/bin/true`）。診断は最上位と検証対象のどちらにも置かない |
+| `targetResults[0].statements` | `[]` | `["REQ-001:AC-01"]` | §6.4の規則3。規範文のないTECHは規範文を追加しない。TASKが`addresses`する規範文は`REQ-001:AC-01`だけ |
+| `bindingRefs` | `["root::default"]` | `["root::default"]` | `verify` §3・§4。文書単位のテスト対応のコマンド名`default`を、所有ワークスペースの設定で解決する |
+| `commands`の件数 | 1 | 1 | 同じ`(workspaceId, commandName)`は1つのテスト割当てにまとめて1回だけ実行する（`verify` §4の5.） |
+| `commands[0].tests` | `["tests/test_tech.py"]` | `["tests/test_req.py", "tests/test_tech.py"]` | 重複排除して辞書順（`verify` §4の5.） |
+| `commands[0].covers` | `["TECH-001"]` | `["REQ-001:AC-01", "TECH-001"]` | テスト割当てのテストが対象にする規範文または文書。文書単位のテスト対応は文書IDを挙げる（`SINGLE-066`と同じ）。辞書順 |
+| `commands[0].argv` | `["/bin/true", "tests/test_tech.py"]` | `["/bin/true", "tests/test_req.py", "tests/test_tech.py"]` | `{tests}`を重複排除したパスで1回だけ展開する（`verify` §5） |
+| `timeoutSeconds`、`cwd` | 300、`.` | 300、`.` | 設定にタイムアウトと`cwd`の指定がないので既定値（[ワークスペース・設定仕様](../../../docs/03.詳細設計/02_仕様文書モデル/01_ワークスペース・設定仕様.md)の`verify.timeoutSeconds`の既定値`300`、`verify` §8の`cwd`の既定`.`） |
+| `revision` | `null` | `null` | コミットのないリポジトリ（`git add`だけの準備）。`SINGLE-066`と同じ |
+| `contextDigest` | `sha256:479a2329c47e3f90ae3ba27f5229f1d30f6801209e9bf936dab9925c1b782a1b` | `sha256:9fa4bae21abf063fd9f540aadbc644eb7c69cb24247bf033fa055e0d1d9a8405` | 下の参照計算 |
+
+コンテキスト（目的`verify`）は、関係・トレースモデル §6.3により、起点のTASK-001と、その`addresses`の先を所有する文書（`SINGLE-156`はTECH-001、
+`SINGLE-157`はREQ-001とTECH-001）を含める。ハッシュ値の材料の`documents[]`はコードポイント辞書順（REQ-001 < TASK-001 < TECH-001）、
+`settings.commands`と`settings.verifyTimeouts`は、閉包の文書のテスト対応が使う`root::default`の1件と`root`の300秒の1件である
+（コンテキストのハッシュ値の正規化仕様 §3）。TASK-001の`strongRelations`は`addresses`の宣言どおりの先である。
+
+`contextDigest`は、独立に書いた2系統の参照計算で導く。A（`verify_task_tech_fixtures.reviewed_digest_input`）はリテラルで書いた材料、
+B（`digest_crosscheck.build`）は入力の木構造から導出した材料である。両者の正規JSONがバイト単位で一致することを、監査が隔離した2回の準備のたびに確認する。
+`statements`、`bindingRefs`、`commands`は、さらに第3の導出（`verify_task_tech_fixtures.reference_plan`）で確かめる。入力の木構造から、TASK-001の`addresses`の先の
+うち規範文を対象規範文に加え、規範文のない文書は規範文を足さずその文書の`tests`をすべて使い、規範文の先はその規範文を`covers`するテスト対応だけを使い、
+コマンド名を`tests[].command`で解決し、`(workspaceId, commandName)`ごとにまとめる。結果がこの計画と一致しなければ、監査は拒否する。
+
+### 監査の検査と回帰試験
+
+- `verify_task_tech_fixtures.py`の`check_conditions`: 文書の集合、TASK-001が`open`で指定した先だけを`addresses`し追加のフィールドを持たないこと、
+  TECHが`approved`で規範文を持たず、自身の文書IDを`covers`して設定が定義するコマンドを指すテスト対応を1件だけ持つこと、文書の`verify`を置かないこと、
+  設定が`default`だけを定義しタイムアウトを指定しないこと、`SINGLE-157`はREQ-001が`approved`で`MUST`の1件だけを持ち、TECH-001と異なるテストのパスで同じコマンド名を使うこと。
+- `check_result`と`reference_plan`: `bindingRefs`・`commands`が入力から導いた計画と一致すること。
+- `test_conformance_audit.py`の回帰試験は、`bindingRefs`の消去、`commands`の消去、両方の消去、規範文の追加（`TECH-001`を`statements`へ）、`SINGLE-157`の`statements`の削除、
+  テストの欠落（`tests`、`covers`、`argv`の片方だけ）、`contextDigest`の改変と`null`化、`passed`以外への改変、診断の追加、マニフェストの起点の差替え（TECH-001を起点にする）を拒否する。
+  入力側は、TECHの`tests`・`command`・`covers`の消去と改変、文書の`verify`の追加、TECHの状態と関係の変更、TECHへの規範文の追加、TASKの`addresses`・状態・`requires`・`changes`の変更、
+  設定の改変、REQ-001の改変、ファイルの削除と追加を拒否する。ハッシュ値の材料（参照計算A）の改変は、参照計算Bとの食い違いで拒否する。
+
+### 限界
+
+- 修正前のCore（`targetexpand.py`と`verify.py`をコミット`88896f3a`の版へ戻したもの。作業ツリーの外のコピーで確認した）では、`SINGLE-156`は`commands`と
+  `bindingRefs`が空（`passed`のまま）、`SINGLE-157`は`commands[0]`の`tests`・`covers`・`argv`にTECH-001のテストが入らず、どちらも失敗する（陰性対照）。修正後のCoreは両方通る。
+- 規範文を持たないTECHを具体化する文書の`tests`を含めないことは固定しない（`SINGLE-156`と`157`は具体化文書を持たない）。
+- 規範文のないTECHを`addresses`するTASKが`done`の場合、複数のTECHを`addresses`する場合、文書単位のテスト対応が複数ある場合は固定しない。
+- 規範文のないTECHが`tests`を持たない場合（テスト割当てなしで通過する）と、コマンドを解決できない場合（`SPEC-VERIFY-BLOCKED-001`）は固定しない。
+- `commands[].covers`の並びは、規範文IDと文書IDの混在を含めてコードポイントの辞書順とした。規範文が明記する並びは、`statements`と`bindingRefs`の「重複なし辞書順」だけである（`verify` §8）。
+  `SINGLE-157`はこの並び（`REQ-001:AC-01` < `TECH-001`）に依存する。
+- Coreは実行していない（期待値を決めた後に、一致を確かめるためだけに実行した）。Coreとの一致の判定はGate Bで行う。

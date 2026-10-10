@@ -84,7 +84,7 @@ def paths(values):
 def closure(documents, root):
     """`purpose=verify`のレビュー済みの閉包。起点の文書と、それを具体化する適用対象の文書をたどる。
 
-    このcorpusはTASK起点とdraftを持たない。単一ワークスペースの参照計算Bと同じく、規則で説明できない
+    このcorpusはdraftと、`requires`を持つTASK起点を持たない。単一ワークスペースの参照計算Bと同じく、規則で説明できない
     強いエッジが閉包に触れていれば、黙って取り込まずに拒否する。
     """
     owned = {identifier: [f"{document['workspaceId']}::{statement['id']}"
@@ -95,6 +95,18 @@ def closure(documents, root):
     if root_document not in documents or (root != root_document and root not in known):
         raise ValueError("起点がこのcorpusに存在しません")
     reached, accounted, frontier = {root_document: 0}, set(), [root_document]
+    if documents[root_document]["kind"] == "task":
+        # TASK起点の`verify`は、`addresses`の先と、その先を所有する文書を距離1で閉包へ含める（関係・トレースモデル §6.3）。
+        # 起点のTASKの`requires`の閉包は含めない（§6.3）ので、この参照計算は`requires`を持つTASK起点を扱わない。
+        if relations(documents[root_document])["requires"]:
+            raise ValueError("`requires`を持つTASK起点はこのcorpusの対象外です")
+        for target in relations(documents[root_document])["addresses"]:
+            accounted.add((root_document, "addresses", target))
+            if owner(target) not in documents:
+                raise ValueError("`addresses`の先がこのcorpusに存在しません")
+            if owner(target) not in reached:
+                reached[owner(target)] = 1
+                frontier.append(owner(target))
     while frontier:
         current = frontier.pop(0)
         edges = relations(documents[current])
