@@ -432,6 +432,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-052-02` | 依存先が置換済み | context | blocked／2 | `CTX-STATE-SUPERSEDED-001`、後継へ差替えない |
 | `SINGLE-053` | 有効な後継が複数 | context | failed／1 | `CTX-STATE-SUPERSEDED-002` |
 | `SINGLE-054` | `implement`対象の`MUST`が未`addressed` | context --purpose implement | passed_with_warnings／0 | `CTX-COVERAGE-TASK-001`、カバレッジ5区分 |
+| `SINGLE-154` | テスト対応が`command`を持たず、文書の`verify: default`でコマンド名を解決する（設定に`default`を定義。起点のREQ-001のみ） | context --purpose verify | passed／0 | ハッシュ値の材料の`commands`は`root::default`の1件、`verifyTimeouts`は`root`の1件（既定値300）。ハッシュ値は2系統の参照計算と一致 |
 
 ### 6.6 `verify`
 
@@ -456,6 +457,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-143` | `open`のTASK起点で、TASKが`addresses`するREQ-001を状態`draft`のTECH-005が文書単位で`refines`する（REQ-001とTECH-005のテスト対応はどちらもREQ-001:AC-01を`covers`する） | verify | passed／0 | TECH-005を閉包へ含めず、その状態を検査しないので`CTX-STATE-001`を返さない。テストのコマンドはREQ-001のテスト対応だけで、TECH-005のテストを実行しない |
 | `SINGLE-146` | `done`のTASK起点が、状態`draft`のREQ-002を`requires`する（TASKが`addresses`するREQ-001は`approved`でテスト対応を持つ） | verify | blocked／2 | REQ-002の`CTX-STATE-001`が検証対象の`diagnostics`に1件、`contextDigest: null`、`bindingRefs: []`、テストを開始しない。`requires`の閉包はコンテキストへ含めないが、適用可能性は検査する |
 | `SINGLE-149` | `done`のTASK起点が、状態`approved`のREQ-002を`requires`し、REQ-002が状態`proposed`のADR-001を`requires`する（TASKが`addresses`するREQ-001は`approved`でテスト対応を持つ） | verify | failed／1 | REQ-002の`relations.requires`の`CTX-RELATION-TYPE-001`（`evidence`はADR-001）が検証対象の`diagnostics`に1件、`contextDigest: null`、`bindingRefs: []`、テストを開始しない。`requires`の閉包はコンテキストへ含めないが、強い関係の型制約は検査する |
+| `SINGLE-155` | `SINGLE-154`と同じ入力 | verify | passed／0 | `root::default`を実行し、検証対象の`contextDigest`が`SINGLE-154`と同じ値（`context`と`verify`が同じ材料を作る） |
 | `SINGLE-069-01` | 成功コマンドの標準出力／標準エラー出力が64 KiBを超える | verify | passed／0 | パイプを止めず、伏せ字化したUTF-8末尾65,536バイトと切り詰めフラグを保持 |
 | `SINGLE-069-02` | 非0終了コマンドの標準出力／標準エラー出力が64 KiBを超える | verify | failed／1 | パイプを止めず、伏せ字化したUTF-8末尾65,536バイトと切り詰めフラグを保持 |
 
