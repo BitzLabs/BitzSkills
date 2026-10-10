@@ -1,7 +1,7 @@
 # 修飾IDの解決のfixtureのレビュー記録
 
 [適合fixture仕様 §7](../../../docs/03.詳細設計/00_共通契約/04_適合fixture仕様.md#7-最小matrix-複合ワークスペース)の
-`MULTI-001`、`MULTI-003`、`MULTI-004-01/02`、`MULTI-025-01/02`、`MULTI-027-01/02`を扱う。いずれもレビュー済みの期待値であり、
+`MULTI-001`、`MULTI-003`、`MULTI-004-01/02`、`MULTI-025-01/02`、`MULTI-027-01/02`、`MULTI-028`を扱う。いずれもレビュー済みの期待値であり、
 Coreの挙動を観測したものではない。
 
 ## 4つの結末を1つずつ切り分ける
@@ -136,3 +136,84 @@ TECH-020を見ない。
 - `requires`以外の関係（`refines`など）が、他のメンバーの文書でどこまで検査されるかは固定しない。`verify`のTASK起点で、コンテキストへ
   含めない`requires`の閉包の文書の型制約は、単一ワークスペースの`SINGLE-149`が固定する。
 - 他のメンバーの文書が複数の型制約違反を持つ場合の診断の順序は固定しない。
+
+## 2026-10-11追記: `MULTI-028`（TASKが他のメンバーの規範文のないTECHを`addresses`する`verify`）
+
+### 追加の理由（実装の確認事項C5）
+
+`addresses`の参照が規範文かどうかを`:`の有無で判定していたため、複合ワークスペースの修飾ID（`api::TECH-020`）を規範文と取り違え、
+TASKが他のメンバーの規範文のないTECHを`addresses`する`verify`が、Coreの例外（`KeyError`）で失敗していた。修飾IDは、文書IDでも
+`::`を含むので、`:`の有無では規範文と区別できない。修正後は、索引で規範文か文書かを判定する。単一ワークスペースの
+`SINGLE-156`と`SINGLE-157`（上と[`done`のTASK起点のレビュー記録](../single/doneのTASKが起点のレビュー記録.md)）は`:`を含まない文書IDなので、
+この取り違えを押さえられない。そこで、複合ワークスペースで同じ入力を固定する1件を加える。
+
+### 根拠の規範文
+
+- [ADR-026](../../../docs/02.設計書/10_決定記録/ADR-026_verifyのテスト割当て・タイムアウト・結果スキーマの確定.md)の`Decision`の7番目の項目、
+  関係・トレースモデル §6.4の規則3、`verify` §3: 規範文のないTECHを`addresses`する場合は規範文を追加せず、そのTECHの文書単位の`tests`を実行対象へ含める。
+- 複合ワークスペース仕様 §4: `relations`と`tests[].covers`は、別のワークスペースを参照するとき複合ワークスペースの正規形式（`api::TECH-020`）を必須とする。
+  同じワークスペースを参照するときは非修飾形式を許可する。単独操作の結果は、`roots`、文書ID、`statements`、`covers`などを正規形式で返す。
+- `verify` §4・§8: テスト割当ては所有ワークスペースとコマンド名の組（`api::backend`）で識別し、コマンドの実体は所有ワークスペースの設定で解決する。
+  複合ワークスペースの中では、検証対象、規範文、`covers`のIDを修飾IDで返す。
+- 関係・トレースモデル §6.3: 起点がTASKの場合は、その`addresses`の参照先と、その参照先を所有する文書を`contextDocuments`（ハッシュ値の材料の`documents[]`）へ含める。
+- 複合ワークスペース仕様 §6・§7: 結果の`workspace`は起点ワークスペースである。
+- コンテキストのハッシュ値の正規化仕様 §3: `workspaces`は到達ワークスペースを起点ワークスペースを先頭、以降を`id`の辞書順に並べ、設定の抽出は到達ワークスペースだけを対象にする。
+  横断するエッジは`crossWorkspaceEdges`へ、宣言した強い関係は`strongRelations`へ置く。
+
+### 入力と起動
+
+ルートワークスペース`platform`（仕様文書なし）と、メンバー`web`（`apps/web`）、`api`（`services/api`）を、`MULTI-027`と同じカタログの形で置く。
+リポジトリのルートで`verify web::TASK-001 --format json`を実行する。
+
+| 文書 | 状態 | 内容 |
+|---|---|---|
+| `web`のTASK-001 | `open` | `relations.addresses: [api::TECH-020]`だけ |
+| `api`のTECH-020 | `approved` | 規範文なし。`tests`は`tests/test_audit.py`が`TECH-020`（自身の文書ID）を`covers`し、コマンド`backend`で実行する |
+
+`api`の設定は`backend`（`/bin/true {tests}`）だけを定義し、`web`の設定はコマンドを定義しない。コマンド名を起点のワークスペースで解決する実装は、
+`web`に`backend`がなく失敗するので、所有ワークスペースでの解決を判別できる。原因は、TASKが別のメンバーの規範文のないTECHを修飾IDで
+`addresses`することの1つだけである。
+
+### 期待値の導き方（Coreの出力を根拠にしない）
+
+| 項目 | 期待値 | 根拠 |
+|---|---|---|
+| 結果の状態／終了コード | `passed`／0 | テストは通る（`/bin/true`）。診断は置かない |
+| `workspace` | `web`（`apps/web`） | 結果の`workspace`は起点ワークスペース（`MULTI-027-02`と同じ） |
+| `targetResults[0].target` | `web::TASK-001` | 複合ワークスペースでは修飾ID |
+| `statements` | `[]` | 関係・トレースモデル §6.4の規則3。`api::TECH-020`は規範文を持たないので、対象規範文を追加しない |
+| `bindingRefs` | `["api::backend"]` | テスト割当ての所有者は、テストを宣言した文書を所有する`api`。コマンド名`backend`は`api`の設定で解決する（`verify` §4） |
+| `commands` | 1件。`bindingId: api::backend`、`workspaceId: api`、`tests: ["tests/test_audit.py"]`、`argv: ["/bin/true", "tests/test_audit.py"]`、`covers: ["api::TECH-020"]`、`timeoutSeconds: 300`、`cwd: .` | `tests`は所有ワークスペース相対の宣言パス、`covers`は修飾ID（`verify` §8）、`timeoutSeconds`と`cwd`は`api`の設定の既定値 |
+| `revision` | `{commit: 0×40, dirty: false}` | 複合ワークスペースは`null`にしない（結果・診断・終了コード §2）。`MULTI-027-02`と同じ準備 |
+| `contextDigest` | `sha256:8678b52b4a826ee2a9c6658e58ccf9f105ba7eaf65714ec25cd7215d1b04163e` | 下の参照計算 |
+
+`commands[]`は、選択した対象を1つのワークスペース（`web`）で実行する結果の最上位に置く。`api`が所有するテスト割当ての結果を、最上位の`commands[]`へ置き、
+`workspaceId`で所有者を示すのは、`MULTI-002-02`（横断する具体化のテストを`api`と`web`が所有する`verify`）と同じ形である。`verify` §10は
+`verify --all-workspaces`で所有ワークスペースのメンバーの結果へ置く形を定めるが、明示対象の単独操作で他のメンバーが所有するテスト割当ての置き場所は定めていない
+（下の「固定しない範囲」を参照）。
+
+`contextDigest`は、独立に書いた2系統の参照計算で導く。A（`verify_task_tech_fixtures.reviewed_digest_input`）はリテラルで書いた材料、
+B（`multi_crosscheck.build`）は入力の木構造から導出した材料である。材料は、起点`web::TASK-001`と、`addresses`の先を所有する`api::TECH-020`の2文書
+（`documents[]`は`api::TECH-020` < `web::TASK-001`）、到達した`web`と`api`の2ワークスペース（`workspaces[]`は起点の`web`が先頭）、横断するエッジ1件
+（`addresses`、`web::TASK-001`から`api::TECH-020`）、`api`の`backend`とタイムアウト300秒の各1件を持つ。`web`は閉包にテスト対応を持つ文書がないので、
+コマンドもタイムアウトも収録しない。ルートワークスペース`platform`は到達しないので材料へ入れない。参照計算Bは、TASK起点の`addresses`の先を距離1で閉包へ含める
+規則（関係・トレースモデル §6.3）を`multi_crosscheck.closure`へ加えて導出した（`requires`を持つTASK起点は、辿らない辺の扱いが必要なため、この参照計算の対象外で拒否する）。
+`statements`、`bindingRefs`、`commands`は、`reference_plan`が入力の木構造から導く計画とも照合する。
+
+### 監査の検査と回帰試験
+
+`verify_task_tech_fixtures.py`の`check_conditions`が、TASK-001が`open`で`api::TECH-020`だけを`addresses`すること、TECH-020が`approved`で規範文を持たず、自身の文書IDを
+`covers`して`api`の設定が定義する`backend`を指すテスト対応を1件だけ持つこと、`web`がコマンドを定義しないこと、`api`が`backend`だけを定義することを、入力の木構造から確かめる。
+`test_conformance_audit.py`の回帰試験は、`bindingRefs`・`commands`の消去、`statements`への規範文の追加、`bindingId`・`workspaceId`を`web`へ戻す改変、`covers`の修飾の消去、
+`target`の修飾の消去、`workspace`と`revision`の改変、マニフェストの起点の差替え、入力の改変（TASKの`addresses`を非修飾にする、状態を変える、TECH-020の`tests`・`command`・`covers`を変える、
+`web`に`backend`を足す、`api`の設定を変える）を拒否する。
+
+### 固定しない範囲
+
+- 修正前のCore（`targetexpand.py`と`verify.py`をコミット`88896f3a`の版へ戻したもの。作業ツリーの外のコピーで確認した）は、`KeyError: 'api::TECH-020'`の例外で失敗する
+  （陰性対照。終了コードは1）。修正後のCoreは通る。
+- 明示対象の単独操作で、他のメンバーが所有するテスト割当ての結果（`commands[]`）を、最上位に置くか、所有ワークスペースの結果に置くかは固定しない。`MULTI-002-02`の既存の形（最上位）に従った。
+  規範文の明記を待って固定する。
+- 規範文を持つTECHや、REQの規範文と規範文のないTECHが混在する`addresses`は、複合ワークスペースでは固定しない（単一ワークスペースの`SINGLE-157`が固定する）。
+- 他のメンバーのTECHが具体化文書を持つ場合、`tests`を持たない場合、コマンドを解決できない場合は固定しない。
+- Coreは実行していない（期待値を決めた後に、一致を確かめるためだけに実行した）。Coreとの一致の判定はGate Bで行う。

@@ -1,0 +1,33 @@
+{
+  "fixtureId": "SINGLE-156",
+  "description": "TASKが規範文のないTECHをaddressesするとき、verifyがそのTECHの文書単位のテストを実行する",
+  "setup": {
+    "git": true,
+    "operations": [
+      {
+        "op": "stage",
+        "paths": [
+          "."
+        ]
+      }
+    ]
+  },
+  "invocation": {
+    "runner": "bitz",
+    "cwd": ".",
+    "argv": [
+      "verify",
+      "TASK-001",
+      "--format",
+      "json"
+    ],
+    "env": {}
+  },
+  "expect": {
+    "status": "passed",
+    "exitCode": 0,
+    "stdout": "json",
+    "resultFile": "expected/verify.json",
+    "reportFileCount": 0
+  }
+}

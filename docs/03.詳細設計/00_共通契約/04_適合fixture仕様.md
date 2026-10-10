@@ -458,6 +458,8 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-146` | `done`のTASK起点が、状態`draft`のREQ-002を`requires`する（TASKが`addresses`するREQ-001は`approved`でテスト対応を持つ） | verify | blocked／2 | REQ-002の`CTX-STATE-001`が検証対象の`diagnostics`に1件、`contextDigest: null`、`bindingRefs: []`、テストを開始しない。`requires`の閉包はコンテキストへ含めないが、適用可能性は検査する |
 | `SINGLE-149` | `done`のTASK起点が、状態`approved`のREQ-002を`requires`し、REQ-002が状態`proposed`のADR-001を`requires`する（TASKが`addresses`するREQ-001は`approved`でテスト対応を持つ） | verify | failed／1 | REQ-002の`relations.requires`の`CTX-RELATION-TYPE-001`（`evidence`はADR-001）が検証対象の`diagnostics`に1件、`contextDigest: null`、`bindingRefs: []`、テストを開始しない。`requires`の閉包はコンテキストへ含めないが、強い関係の型制約は検査する |
 | `SINGLE-155` | `SINGLE-154`と同じ入力 | verify | passed／0 | `root::default`を実行し、検証対象の`contextDigest`が`SINGLE-154`と同じ値（`context`と`verify`が同じ材料を作る） |
+| `SINGLE-156` | `open`のTASK起点が、規範文のないTECH-001（文書単位のテストを宣言する）だけを`addresses`する | verify | passed／0 | `statements: []`、`bindingRefs`は`root::default`の1件、`commands`はTECH-001のテストを実行する（TECHを起点にした`SINGLE-066`と同じ文書単位のテスト割当て）。規範文を足さない |
+| `SINGLE-157` | `SINGLE-156`の入力に、テスト対応を持つREQ-001を加え、TASK-001がREQ-001:AC-01とTECH-001を`addresses`する（2つのテスト対応は同じコマンド名`default`） | verify | passed／0 | `statements`はREQ-001:AC-01だけ、`bindingRefs`は`root::default`の1件、`commands`の`tests`と`covers`はREQ-001とTECH-001の両方 |
 | `SINGLE-069-01` | 成功コマンドの標準出力／標準エラー出力が64 KiBを超える | verify | passed／0 | パイプを止めず、伏せ字化したUTF-8末尾65,536バイトと切り詰めフラグを保持 |
 | `SINGLE-069-02` | 非0終了コマンドの標準出力／標準エラー出力が64 KiBを超える | verify | failed／1 | パイプを止めず、伏せ字化したUTF-8末尾65,536バイトと切り詰めフラグを保持 |
 
@@ -684,6 +686,7 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `MULTI-004-02` | `check`時に存在するワークスペース内の参照先が不在 | check | failed／1 | `SPEC-RELATION-MISSING-001`だけ |
 | `MULTI-027-01` | メンバー`web`のREQ-001が、メンバー`api`のTECH-020を`requires`し、TECH-020が状態`proposed`のADR-001を`requires`する（`web`の作業ディレクトリから起点`REQ-001`） | context --purpose implement | failed／1 | 他のメンバーの文書でも、状態の検査の`CTX-STATE-001`ではなく、型制約の`CTX-RELATION-TYPE-001`の1件（発生元は`workspaceId: api`の`.spec/technical/TECH-020.md`の`relations.requires`、`evidence`は`ADR-001`）。`unresolvedStrongRelations`は1、`contextDigest`は`null` |
 | `MULTI-027-02` | `MULTI-027-01`と同じ入力（REQ-001は通るテスト対応を持つ） | verify `web::REQ-001` | failed／1 | 同じ`CTX-RELATION-TYPE-001`が検証対象の`diagnostics`に1件、`contextDigest: null`、`bindingRefs: []`、テストを開始しない |
+| `MULTI-028` | メンバー`web`のTASK-001が、メンバー`api`の規範文のないTECH-020（`api`のコマンド`backend`で文書単位のテストを宣言する）を`addresses`する | verify `web::TASK-001` | passed／0 | `statements: []`、`bindingRefs`は`api::backend`の1件、`commands`は`api`が所有するテストを実行し、`covers`は`api::TECH-020`。修飾IDの`api::TECH-020`を文書として扱い、例外で失敗しない |
 | `MULTI-005` | 未知`--workspace` | check | 結果なし／4 | 標準出力結果なし、レポートなし |
 | `MULTI-006` | Git既知の未登録設定 | check all | blocked／2 | `workspaces: []`、コマンドなし |
 | `MULTI-007-01` | メンバーの入れ子 | doctor all | failed／1 | `SPEC-MULTI-PATH-001` |
