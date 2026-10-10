@@ -58,6 +58,7 @@ from conformance import text_fixtures
 from conformance import frontmatter_fixtures
 from conformance import input_limit_fixtures
 from conformance import registry_closure_fixtures
+from conformance import context_config_fixtures
 from conformance import scanner_fixtures
 from conformance import presentation_fixtures
 from conformance import target_root_fixtures
@@ -768,6 +769,185 @@ class AuditTests(unittest.TestCase):
                 else:
                     path.write_bytes(content)
                 self.assertTrue(input_limit_fixtures.validate(root, [identifier])["errors"])
+
+    def test_context_config_fixtures(self):
+        result = context_config_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-150", "SINGLE-151", "SINGLE-152", "SINGLE-153"])
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+
+    def copy_config_fixture(self, temporary, identifier):
+        root = self.copy_fixture(temporary, identifier)
+        shutil.copy2(schema_path(audit.FIXTURES, "frontmatter"), root)
+        return root
+
+    def test_context_config_audit_rejects_replaced_or_lost_diagnostics(self):
+        """設定の不適合を`SPEC-WORKSPACE-MISSING-001`へ置換する、発生元を改変する、警告を消す、といった期待値を拒否する。"""
+        missing = {"kind": "environment", "component": "workspace", "identifier": "."}
+        mutations = [
+            # 型の不正と値の範囲外は、設定の診断で返す。不在の診断への置換、発生元の`environment`化、`key`の消去・改変を拒否する。
+            ("SINGLE-150", "expected/context.json", lambda v: v["diagnostics"][0].update(
+                code="SPEC-WORKSPACE-MISSING-001", resultStatus="blocked", summary=".spec/bitz.yamlがありません", source=missing)),
+            ("SINGLE-150", "expected/context.json", lambda v: v["diagnostics"][0].update(source=missing)),
+            ("SINGLE-150", "expected/context.json", lambda v: v["diagnostics"][0].update(
+                source={"kind": "file", "workspaceId": None, "path": ".spec/bitz.yaml"})),
+            ("SINGLE-150", "expected/context.json", lambda v: v["diagnostics"][0]["source"].update(key="earsAi")),
+            ("SINGLE-150", "expected/context.json", lambda v: v.update(status="blocked")),
+            ("SINGLE-150", "expected/context.json", lambda v: v.update(status="failed")),
+            ("SINGLE-150", "expected/context.json", lambda v: v.update(diagnostics=[])),
+            ("SINGLE-150", "expected/context.json", lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0]))),
+            ("SINGLE-150", "expected/context.json", lambda v: v["workspace"].update(id="root")),
+            ("SINGLE-150", "expected/context.json", lambda v: v.update(contextDigest="sha256:" + "0" * 64)),
+            ("SINGLE-150", "expected/context.json", lambda v: v["resolution"].update(complete=True)),
+            ("SINGLE-150", "manifest.json", lambda v: v["expect"].update(status="blocked", exitCode=2)),
+            ("SINGLE-150", "manifest.json", lambda v: v["expect"].update(exitCode=2)),
+            ("SINGLE-150", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(0, "check")),
+            ("SINGLE-151", "expected/context.json", lambda v: v["diagnostics"][0].update(
+                code="SPEC-WORKSPACE-MISSING-001", resultStatus="blocked", summary=".spec/bitz.yamlがありません", source=missing)),
+            ("SINGLE-151", "expected/context.json", lambda v: v["diagnostics"][0].update(source=missing)),
+            ("SINGLE-151", "expected/context.json", lambda v: v["diagnostics"][0]["source"].pop("key")),
+            ("SINGLE-151", "expected/context.json", lambda v: v["diagnostics"][0]["source"].update(key="context.maxDocuments")),
+            ("SINGLE-151", "expected/context.json", lambda v: v.update(diagnostics=[])),
+            ("SINGLE-151", "expected/context.json", lambda v: v.update(status="blocked")),
+            ("SINGLE-151", "manifest.json", lambda v: v["expect"].update(exitCode=2)),
+            # 設定の不在は、`environment`を発生元とする`SPEC-WORKSPACE-MISSING-001`（`blocked`）で返す。設定の診断や`file`の発生元へ置換しない。
+            ("SINGLE-152", "expected/context.json", lambda v: v["diagnostics"][0].update(
+                code="SPEC-CONFIG-SCHEMA-001", resultStatus="error", summary="languageはstringで指定してください")),
+            ("SINGLE-152", "expected/context.json", lambda v: v["diagnostics"][0].update(
+                source={"kind": "file", "workspaceId": None, "path": ".spec/bitz.yaml"})),
+            ("SINGLE-152", "expected/context.json", lambda v: v["diagnostics"][0]["source"].update(identifier=".spec")),
+            ("SINGLE-152", "expected/context.json", lambda v: v["diagnostics"][0]["source"].update(component="git")),
+            ("SINGLE-152", "expected/context.json", lambda v: v.update(status="error")),
+            ("SINGLE-152", "expected/context.json", lambda v: v.update(status="failed")),
+            ("SINGLE-152", "expected/context.json", lambda v: v.update(diagnostics=[])),
+            ("SINGLE-152", "expected/context.json", lambda v: v["workspace"].update(id="root")),
+            ("SINGLE-152", "manifest.json", lambda v: v["expect"].update(status="error", exitCode=3)),
+            ("SINGLE-152", "manifest.json", lambda v: v["expect"].update(exitCode=3)),
+            # 警告は成功した結果へ加える。警告の消去、重大度や状態の改変、ハッシュ値の改変、完全解決の取消しを拒否する。
+            ("SINGLE-153", "expected/context.json", lambda v: v.update(diagnostics=[])),
+            ("SINGLE-153", "expected/context.json", lambda v: v.update(status="passed")),
+            ("SINGLE-153", "expected/context.json", lambda v: v.update(status="error")),
+            ("SINGLE-153", "expected/context.json", lambda v: v["diagnostics"][0].update(severity="error")),
+            ("SINGLE-153", "expected/context.json", lambda v: v["diagnostics"][0].update(code="SPEC-CONFIG-SCHEMA-001")),
+            ("SINGLE-153", "expected/context.json", lambda v: v["diagnostics"][0]["source"].pop("key")),
+            ("SINGLE-153", "expected/context.json", lambda v: v["diagnostics"][0]["source"].update(key="profiles")),
+            ("SINGLE-153", "expected/context.json", lambda v: v["diagnostics"].append(copy.deepcopy(v["diagnostics"][0]))),
+            ("SINGLE-153", "expected/context.json", lambda v: v.update(contextDigest=None)),
+            ("SINGLE-153", "expected/context.json", lambda v: v.update(contextDigest="sha256:" + "0" * 64)),
+            ("SINGLE-153", "expected/context.json", lambda v: v["resolution"].update(complete=False)),
+            ("SINGLE-153", "expected/context.json", lambda v: v.update(documents=[])),
+            ("SINGLE-153", "expected/context.json", lambda v: v["constraintLedger"].update(statements=[{"id": "REQ-001:AC-01"}])),
+            ("SINGLE-153", "manifest.json", lambda v: v["expect"].update(status="passed")),
+            ("SINGLE-153", "manifest.json", lambda v: v["expect"].update(exitCode=3)),
+        ]
+        for identifier, relative, mutate in mutations:
+            with self.subTest(identifier=identifier, file=relative, mutation=mutations.index((identifier, relative, mutate))), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_config_fixture(temporary, identifier)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
+                self.assertTrue(context_config_fixtures.validate(root, [identifier])["errors"])
+
+    def test_context_config_audit_rejects_digest_material_changes(self):
+        """正規JSONが参照計算から離れる改変（未知のキーの混入、許可リストの設定値の改変）を拒否する。"""
+        mutations = [
+            lambda text: text.replace('"settings":{', '"settings":{"futureOption":"preserve-me",', 1),
+            lambda text: text.replace('"language":"ja"', '"language":"en"', 1),
+            lambda text: text.replace('"purpose":"interpret"', '"purpose":"verify"', 1),
+            lambda text: text.replace('"verifyTimeouts":[]', '"verifyTimeouts":[{"timeoutSeconds":300,"workspaceId":"root"}]', 1),
+        ]
+        for index, mutate in enumerate(mutations):
+            with self.subTest(index=index), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_config_fixture(temporary, "SINGLE-153")
+                path = root / "single/SINGLE-153/expected/context.canonical.json"
+                changed = mutate(path.read_text())
+                self.assertNotEqual(changed, path.read_text())
+                path.write_text(changed)
+                self.assertTrue(context_config_fixtures.validate(root, ["SINGLE-153"])["errors"])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_config_fixture(temporary, "SINGLE-153")
+            path = root / "single/SINGLE-153/expected/context.canonical.json"
+            path.write_bytes(path.read_bytes() + b"\n")
+            self.assertTrue(context_config_fixtures.validate(root, ["SINGLE-153"])["errors"])
+        # 他のfixtureは、ハッシュ値を計算しないので正規JSONを持てない。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_config_fixture(temporary, "SINGLE-150")
+            (root / "single/SINGLE-150/expected/context.canonical.json").write_bytes(b"{}")
+            self.assertTrue(context_config_fixtures.validate(root, ["SINGLE-150"])["errors"])
+
+    def test_context_config_audit_rejects_repaired_or_confounded_inputs(self):
+        """唯一の原因を直した入力、別の原因を足した入力、起点を消した入力は、期待値と組にならない。"""
+        module = context_config_fixtures
+        config, req = module.CONFIG_PATH, module.REQ_PATH
+        edits = [
+            # 型の不正を直す、値の範囲を満たす、設定を足す
+            ("SINGLE-150", config, lambda text: text.replace("language: 42", "language: ja")),
+            ("SINGLE-150", config, lambda text: text.replace("language: 42", "language: en")),
+            ("SINGLE-151", config, lambda text: text.replace("maxBytes: 100", "maxBytes: 4096")),
+            ("SINGLE-151", config, lambda text: text.replace("maxBytes: 100", "maxBytes: 131072")),
+            ("SINGLE-151", config, lambda text: text.replace("maxBytes: 100", "maxBytes: 5000000")),
+            ("SINGLE-151", config, lambda text: text + "futureOption: x\n"),
+            ("SINGLE-153", config, lambda text: text.replace("futureOption: preserve-me\n", "")),
+            ("SINGLE-153", config, lambda text: text.replace("futureOption", "profiles")),
+            ("SINGLE-153", config, lambda text: text + "otherOption: 1\n"),
+            ("SINGLE-153", config, lambda text: text.replace("preserve-me", "changed")),
+            # 起点の文書を変える。ハッシュ値の材料と本文が変わる
+            ("SINGLE-153", req, lambda text: text.replace("文書構造を検査する。", "文書構造を検査する。\n")),
+            ("SINGLE-153", req, lambda text: text.replace("[MUST]", "[SHOULD] [REASON] 確認のため")),
+            ("SINGLE-150", req, lambda text: text.replace("status: approved", "status: draft")),
+        ]
+        for identifier, relative, edit in edits:
+            with self.subTest(identifier=identifier, file=relative, edit=edits.index((identifier, relative, edit))), \
+                    tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_config_fixture(temporary, identifier)
+                path = root / "single" / identifier / "repo" / relative
+                changed = edit(path.read_text())
+                self.assertNotEqual(changed, path.read_text())
+                path.write_text(changed)
+                self.assertTrue(module.validate(root, [identifier])["errors"])
+        # 起点の文書を消す（起点の不在が原因に混ざる）、設定を消す、設定を足す、不要なファイルを足す
+        for identifier, action in (("SINGLE-150", "remove-req"), ("SINGLE-151", "remove-req"), ("SINGLE-153", "remove-req"),
+                                   ("SINGLE-150", "remove-config"), ("SINGLE-153", "remove-config"),
+                                   ("SINGLE-152", "add-config"), ("SINGLE-152", "add-minimal-config"),
+                                   ("SINGLE-152", "remove-req"), ("SINGLE-150", "add-file")):
+            with self.subTest(identifier=identifier, action=action), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_config_fixture(temporary, identifier)
+                repo = root / "single" / identifier / "repo"
+                if action == "remove-req":
+                    (repo / req).unlink()
+                elif action == "remove-config":
+                    (repo / config).unlink()
+                elif action == "add-config":
+                    (repo / config).write_text(module.CONFIGS["SINGLE-004-01"])
+                elif action == "add-minimal-config":
+                    (repo / config).write_text(module.CONFIGS["SINGLE-001"])
+                else:
+                    (repo / "extra.txt").write_text("x")
+                self.assertTrue(module.validate(root, [identifier])["errors"])
+
+    def test_context_config_audit_rejects_changed_side_effects_and_git_state(self):
+        mutations = [
+            ("SINGLE-150", lambda v: v["after"].update(cache={"ears": {"kind": "directory"}})),
+            ("SINGLE-152", lambda v: v["before"].update(git={"status": "", "index": ""})),
+            ("SINGLE-153", lambda v: v["before"]["repository"][".spec/bitz.yaml"].update(executable=True)),
+            ("SINGLE-153", lambda v: v["after"]["repository"].pop(".spec/bitz.yaml")),
+        ]
+        for identifier, mutate in mutations:
+            with self.subTest(identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_config_fixture(temporary, identifier)
+                path = root / "single" / identifier / "side-effects.json"
+                value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
+                self.assertTrue(context_config_fixtures.validate(root, [identifier])["errors"])
+        # コミットのないリポジトリの作業ツリーだけで準備する。基準のコミットを足すと拒否する。
+        for identifier in context_config_fixtures.CASES:
+            with self.subTest(identifier=identifier, change="baseCommit"), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_config_fixture(temporary, identifier)
+                path = root / "single" / identifier / "manifest.json"
+                value = json.loads(path.read_text())
+                value["setup"]["baseCommit"] = {"message": "base", "paths": ["."]}
+                path.write_text(json.dumps(value))
+                self.assertTrue(context_config_fixtures.validate(root, [identifier])["errors"])
 
     def copy_fixture(self, temporary, identifier):
         root = Path(temporary)

@@ -516,6 +516,10 @@ harnessは、fixtureごとにリポジトリとは別の空ディレクトリを
 | `SINGLE-093` | 単一ワークスペースでGit不在 | doctor | passed_with_warnings／0 | `SPEC-DOCTOR-GIT-001`だけ |
 | `SINGLE-094` | `.spec/bitz.yaml`不在 | check | blocked／2 | `SPEC-WORKSPACE-MISSING-001`だけ |
 | `SINGLE-095` | 未知のEARS-AIメジャーバージョン | check | blocked／2 | `SPEC-EARS-VERSION-001`だけ |
+| `SINGLE-150` | 設定フィールドの型不正（`SINGLE-004-01`と同じ設定。起点のREQ-001は有効） | context | error／3 | `SPEC-CONFIG-SCHEMA-001`（`source.key`は`language`）の1件だけ。`SPEC-WORKSPACE-MISSING-001`を返さない。`contextDigest: null`、`documents: []` |
+| `SINGLE-151` | 設定`context.maxBytes`が値の範囲外（100。下限は4,096。起点のREQ-001は有効） | context | error／3 | `SPEC-CONFIG-SCHEMA-001`（`source.key`は`context.maxBytes`）の1件だけ。`SPEC-WORKSPACE-MISSING-001`を返さない。`contextDigest: null`、`documents: []` |
+| `SINGLE-152` | `.spec/bitz.yaml`不在（仕様文書のREQ-001はある） | context | blocked／2 | `SPEC-WORKSPACE-MISSING-001`の1件だけ。発生元は`environment`（`component: workspace`、`identifier: .`）。`SINGLE-094`の`check`と同じ診断。`contextDigest: null` |
+| `SINGLE-153` | 未知の標準キー`futureOption`を持つ設定（起点のREQ-001は有効、目的`interpret`） | context | passed_with_warnings／0 | 成功した結果に`SPEC-CONFIG-UNKNOWN-001`（`warning`）の1件だけを加える。`complete: true`、`contextDigest`は設定にキーのない同じ入力と同じ値（未知のキーは許可リストにない） |
 
 ### 6.10 EARS-AI文法、走査器、位置
 
