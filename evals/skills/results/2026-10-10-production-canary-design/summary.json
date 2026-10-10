@@ -1,7 +1,7 @@
 {
   "version": "production-canary-design-preparation-0.1.0",
   "phase": 4,
-  "status": "design-review-findings-remediation-in-progress",
+  "status": "design-components-remediated-and-independently-reviewed",
   "sourceCommit": "747c4988536fa61af1e91f9e30853e4ad4de58e6",
   "contractPath": "evals/skills/routing/sdk-trace-review-v0.24.json",
   "verification": {
@@ -31,7 +31,39 @@
     "bypassPerformed": false
   },
   "primaryModelTrajectories": 0,
-  "independentSolInvocations": 1,
+  "independentSolInvocations": 3,
+  "remediationStages": [
+    {
+      "sourceCommit": "e088d5abf7012b0f7310824efd6283d1bcc539d7",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.25.json",
+      "verification": {"outputRelativeRoot": ".venv/production-canary-design-check-02", "summarySha256": "6b610864916e014032ac8add2f1a0bdcfe3b7535030dd4035b3f0fd88f985573", "testCount": 514, "testSeconds": 65.001, "testExitCode": 0},
+      "independentReview": {
+        "sourceCommit": "e088d5abf7012b0f7310824efd6283d1bcc539d7",
+        "contractPath": "evals/skills/routing/sdk-trace-review-v0.25.json",
+        "outputRelativeRoot": ".venv/sdk-trace-independent-review-25",
+        "receiptSha256": "a31e78884f290f5ff546f34fda99bed40c7b74d99d615ae7e7a4cd97f8c8e94d",
+        "responseSha256": "a7ab56e275d5cba87f6a61123c12f3e5b9396c488f5ee51bc1c5d2e2416ea086",
+        "status": "review_findings", "actualInvocations": 1,
+        "usage": {"input_tokens": 25483, "cached_input_tokens": 0, "cache_write_input_tokens": 0, "output_tokens": 1341, "reasoning_output_tokens": 684},
+        "findings": {"P1": 0, "P2": 2, "P3": 0}
+      }
+    },
+    {
+      "sourceCommit": "9b9f8861409c188d2a9dc94428c6e2f3b39bba23",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.26.json",
+      "verification": {"outputRelativeRoot": ".venv/production-canary-design-check-03", "summarySha256": "c885fe8e45292ec0d9e922aebf1ca685eeb5bececf8e3fd0da0d4b1adf3b0b33", "testCount": 517, "testSeconds": 62.872, "testExitCode": 0},
+      "independentReview": {
+        "sourceCommit": "9b9f8861409c188d2a9dc94428c6e2f3b39bba23",
+        "contractPath": "evals/skills/routing/sdk-trace-review-v0.26.json",
+        "outputRelativeRoot": ".venv/sdk-trace-independent-review-26",
+        "receiptSha256": "4c25f2b9de3ec61f6e6f4bdbb274302472faab484f5f81c60f9811c04525af69",
+        "responseSha256": "659a3315fb477e912c4a1cdd18dc69a0f0f8661f5a02e0ac90d4270ea9279d83",
+        "status": "static_review_passed", "actualInvocations": 1,
+        "usage": {"input_tokens": 26201, "cached_input_tokens": 0, "cache_write_input_tokens": 0, "output_tokens": 610, "reasoning_output_tokens": 546},
+        "findings": {"P1": 0, "P2": 0, "P3": 0}
+      }
+    }
+  ],
   "independentReview": {
     "sourceCommit": "747c4988536fa61af1e91f9e30853e4ad4de58e6",
     "contractPath": "evals/skills/routing/sdk-trace-review-v0.24.json",

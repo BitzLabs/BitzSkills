@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT / 'evals/skills/routing'))
 import production_trace as trace
 import source_guard as guard
+import production_ledger as ledger
 
 
 def sha(raw):
@@ -64,14 +65,60 @@ def run():
                       {priority: sum(f['priority'] == priority for f in checked['findings']) for priority in ['P1', 'P2', 'P3']} == review['findings'], 'review finding counts')
     trace.require(public['approvalReview']['status'] == 'rejected-before-process-creation' and
                   all(public['approvalReview'][key] == 0 for key in ['modelReservations', 'modelInvocations', 'payloadTransmissions']), 'pre-start rejection counts')
-    trace.require(public['independentSolInvocations'] == (1 if review else 0) and
+    stages = public.get('remediationStages', [])
+    latest_tests = tests['count']
+    for stage in stages:
+        latest_tests = check_stage(stage, module)
+    trace.require(public['independentSolInvocations'] == (1 if review else 0) + len(stages) and
                   all(public[key] == 0 for key in ['primaryModelTrajectories', 'automaticRetries', 'delegations']) and
                   public['eligibleForMeasurement'] is public['phaseComplete'] is False, 'scope drift')
-    print(json.dumps(dict(status='recorded_canary_design_preparation_matches_original_bytes', tests=tests['count'],
+    print(json.dumps(dict(status='recorded_canary_design_preparation_matches_original_bytes', tests=latest_tests,
                          payloadFiles=len(inventory), payloadBytes=public['payloadBytes'],
                          independentSolInvocations=public['independentSolInvocations'], primaryModelTrajectories=0,
-                         independentReviewFindings=review['findings'] if review else None,
+                         originalReviewFindings=review['findings'] if review else None,
+                         latestReviewFindings=stages[-1]['independentReview']['findings'] if stages else review['findings'] if review else None,
                          eligibleForMeasurement=False), ensure_ascii=False))
+
+
+def check_stage(stage, module):
+    meta = stage['verification']
+    base = ROOT / meta['outputRelativeRoot']
+    ledger.safe_tree(base)
+    raw = (base / 'summary.json').read_bytes()
+    trace.require(sha(raw) == meta['summarySha256'], 'stage summary drift')
+    value = trace.strict_json(raw)
+    source = stage['sourceCommit']
+    trace.require(value['sourceCommit'] == source and value['contractPath'] == stage['contractPath'] and
+                  value['status'] == 'canary_design_preparation_checked', 'stage preparation binding')
+    contract = trace.strict_json(guard.git(ROOT, 'show', source + ':' + stage['contractPath']))
+    expected = {path: sha(guard.git(ROOT, 'show', source + ':' + path)) for path in contract['sourceFiles']}
+    before, after = value['sourceGuards']['before'], value['sourceGuards']['after']
+    trace.require(trace.json_equal(before, after) and before['sourceCommit'] == before['observedHead'] == source and
+                  before['sourceSha256'] == expected, 'stage source guards')
+    for item, path in zip(value['payloadInventory'], contract['payloadFiles'], strict=True):
+        body = guard.git(ROOT, 'show', source + ':' + path)
+        trace.require(trace.json_equal(item, dict(path=path, bytes=len(body), sha256=sha(body))), 'stage payload drift')
+    tests = value['tests']
+    for name, key in [('tests.stdout', 'stdoutSha256'), ('tests.stderr', 'stderrSha256')]:
+        trace.require(sha((base / name).read_bytes()) == tests[key], 'stage original test bytes')
+    matched = re.search(rb'Ran (\d+) tests in ([0-9.]+)s\s+OK\s*$', (base / 'tests.stderr').read_bytes())
+    trace.require(matched is not None and int(matched[1]) == tests['count'] == meta['testCount'] and
+                  float(matched[2]) == tests['seconds'] == meta['testSeconds'] and
+                  tests['exitCode'] == meta['testExitCode'] == 0, 'stage test terminal')
+    review = stage['independentReview']
+    checked = module.recheck_review(review)
+    trace.require(review['sourceCommit'] == source and
+                  {priority: sum(f['priority'] == priority for f in checked['findings']) for priority in ['P1', 'P2', 'P3']} == review['findings'], 'stage review binding')
+    receipt = trace.strict_json((ROOT / review['outputRelativeRoot'] / 'receipt.json').read_bytes())
+    reservation = receipt['sharedReservation']
+    path = ledger.common_ledger_path(ROOT).parent / 'production-routing-static-review-ledger' / Path(stage['contractPath']).name
+    trace.require(reservation['path'] == str(path) and sha(path.read_bytes()) == reservation['sha256'], 'shared static reservation drift')
+    original = ledger.read_owned(path)
+    trace.require(original['contractPath'] == stage['contractPath'] and original['sourceCommit'] == source and
+                  original['contractSha256'] == sha(guard.git(ROOT, 'show', source + ':' + stage['contractPath'])) and
+                  original['consumedReservations'] == original['maximumInvocations'] == 1 and
+                  original['automaticRetry'] is False, 'shared static reservation binding')
+    return tests['count']
 
 
 if __name__ == '__main__':
