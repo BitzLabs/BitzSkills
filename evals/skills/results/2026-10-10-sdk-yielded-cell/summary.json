@@ -1,0 +1,52 @@
+{
+  "version": "0.1.0",
+  "phase": 4,
+  "date": "2026-10-10",
+  "scope": "fixed-yielded-cell-original-evidence-capture-only",
+  "capture": {
+    "status": "fixed_yielded_capture_original_bytes_rechecked",
+    "sourceCommit": "5ddc3c3f1ac052e5990df32e3ed2de806ce6af85",
+    "receiptSha256": "eba92afac912898ffc7fa7e159fd47fd86f67196212ec3d0adfa11128b8f3904",
+    "localHttpRequests": 3,
+    "hostCalls": 2,
+    "snapshotResources": 71,
+    "rawItems": 8,
+    "rawCompleted": 3,
+    "traceEventCount": 24,
+    "cellId": "1",
+    "stages": [
+      "listed",
+      "read"
+    ],
+    "rpcSdkPayloadsMatch": true,
+    "providerHostBodiesMatch": true,
+    "completeTargetTelemetryPreserved": true,
+    "legacyParentAuditStatus": "stopped_unexpected_telemetry_call",
+    "certifiesYieldedParentCorrelation": false,
+    "certifiesAllNativeLifecycle": false,
+    "certifiesNativeProvider": false,
+    "certifiesSkillGate": false,
+    "eligibleForMeasurement": false
+  },
+  "tests": {
+    "count": 476,
+    "seconds": 61.854,
+    "exitCode": 0,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "d7b434352cabca1ffcb174fb3f0e21071a25a3d6301a41807a2efb2d43911cee",
+    "sourceCommit": "5ddc3c3f1ac052e5990df32e3ed2de806ce6af85",
+    "command": "PYTHONPATH=plugins/bitz-core/src uv --cache-dir .venv/uv-cache run --offline --project plugins/bitz-core --with jsonschema==4.23.0 python -B -m unittest discover -s tests/skills -p 'test_*.py'"
+  },
+  "newMockTrials": 1,
+  "newLocalHttpRequests": 3,
+  "paidModelCalls": 0,
+  "independentSolInvocations": 0,
+  "independentReviewStatus": "not_started_auto_review_rejected",
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "autoReviewRejections": 2,
+  "independentReviewContract": "evals/skills/routing/sdk-raw-response-review-v0.4.json",
+  "publicPayloadBytes": 102894,
+  "phaseComplete": false,
+  "eligibleForMeasurement": false
+}

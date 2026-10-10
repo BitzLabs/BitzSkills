@@ -286,3 +286,13 @@ raw flagと既知通知だけを原入力不変の明示投影へ分離し、既
 今回新mock/HTTP/probeモデル0、独立SOL1/input55756/output1047/reasoning991。SDK静的系列累計19、raw捕捉静的系列累計3。
 記録は `../results/2026-10-10-sdk-raw-exchange/`。次は固定yield/waitの原証拠捕捉と親セルの継続相関。
 eligibleForMeasurement=false、Phase/Gate全体は未認定。
+
+### Phase 4：固定yield/waitの原証拠捕捉（2026-10-10）
+
+source5ddc3c3の局所24件/OK、確定ref全476件/61.854s/OK/exit0。
+Python SDKの固定1exec/list/yield/200ms後readとcell_id=1へのwait1回を、新有限契約v0.9で1回捕捉した。
+模擬試行1/局所HTTP3/有料モデル0、原RPC raw item8/完了3、全対象telemetry24行を保持する。
+開始RPC/終端、原SDK配送値、SSE/provider履歴、一覧/読取り本文とsnapshot71資源を原bytes/Gitへ照合した。
+旧親セル監査はwaitを未知callとして停止する。継続相関の専用監査と独立SOL検分は未実施。
+同8公開パスのSOL検分は自動承認審査が2回拒否し、起動/送信/予約0。ユーザー本人の具体的送信許可を確認する。
+記録は `../results/2026-10-10-sdk-yielded-cell/`。eligibleForMeasurement=false、Phase/Gate全体は未認定。
