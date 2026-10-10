@@ -396,3 +396,22 @@ fixtureを追加した後、修正前のCore（コミット`5e70ea3d`の版）�
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は617件がすべて成功した。
+
+## 2026-10-10: ハッシュ値の材料のコマンドとタイムアウトを共通化した後のStep 1〜5の再判定
+
+ハッシュ値の材料の`commands`と`verifyTimeouts`を、文書の`verify`で補完して解決した収録したテスト割当てから、`context`と`verify`で同じ関数で作るようにし
+（`context.py`、`verify.py`）、これを固定する`SINGLE-154`（Step 3）と`SINGLE-155`（Step 4）を追加した。修正の前後で、既存の342件の期待値はすべて変わらないことを確かめた。
+fixtureを追加した後、修正前のCore（コミット`5b61a822`の版）では2件とも失敗し（2件のハッシュ値は互いにも食い違う）、修正後のCoreでは2件とも`passed`となることを確かめた。
+
+コミット`f4a2bcd5e75284a652ac43fabf6c139f54ef8029`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 344件（`SINGLE-154`と`SINGLE-155`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`0fac8044b8b55c603ac0cd91ee6aadab9252ed427068871dba6aa32a2b6b605c` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は621件がすべて成功した。
