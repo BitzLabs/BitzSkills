@@ -13,6 +13,9 @@ PythonからSDK/CLIを操作し、一覧と選択したスキル本文の読取�
 新入口を別に用意し、既存診断の未知入力停止と `eligibleForMeasurement=false` を維持する。
 
 SDK raw通知で観測した初期入力はSDK補足developerと2userだけであり、additional_tools/baseInstructionsを網羅しない。
+2026-10-11の局所診断ではCODEX_ROLLOUT_TRACE_ROOTでdeveloper3/user2を含む原要求JSONを保存し、
+3要求とも模擬HTTP受信JSONとの型付き値一致を確認した。原記録は`../results/2026-10-11-sdk-rollout-trace-capture/`。
+これは完全初期入力を証明する経路の候補であり、実providerでの取得・照合はまだ未実施。
 局所模擬で保存したHTTP/SSEを、実providerのHTTP/SSE取得証拠に代用しない。
 実providerで未取得の層を明示し、全wire本文一致や課金額の確定を主張しない。
 

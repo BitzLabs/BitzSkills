@@ -1,0 +1,58 @@
+{
+  "version": "sdk-trace-review-0.31.0",
+  "phase": 4,
+  "scope": "public-sdk-trace-component-static-review-only",
+  "target": "local-rollout-inference-request-capture-and-original-artifact-binding",
+  "model": "gpt-6.1-sol",
+  "timeoutSeconds": 300,
+  "maximumInvocations": 1,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 1,
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "outputRelativeRoot": ".venv/sdk-trace-independent-review-31",
+  "payloadFiles": [
+    "evals/skills/routing/production_rollout_trace.py",
+    "tests/skills/test_production_rollout_trace.py",
+    "evals/skills/routing/production_operation_probe.py",
+    "evals/skills/results/2026-10-11-sdk-rollout-trace-capture/verify-recorded-results.py"
+  ],
+  "sourceFiles": [
+    "evals/skills/routing/production_rollout_trace.py",
+    "tests/skills/test_production_rollout_trace.py",
+    "evals/skills/routing/production_operation_probe.py",
+    "evals/skills/results/2026-10-11-sdk-rollout-trace-capture/verify-recorded-results.py",
+    "evals/skills/results/2026-10-11-sdk-rollout-trace-capture/summary.json",
+    "evals/skills/routing/production-operation-probe-v0.11.json",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/production_sdk_probe.py",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/production_ledger.py",
+    "evals/skills/routing/production_review_ledger.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/host.py",
+    "tests/skills/test_production_operation_probe.py",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "evals/skills/routing/check_canary_design_preparation.py",
+    "evals/skills/routing/sdk-trace-review.schema.json",
+    "evals/skills/routing/sdk-trace-review-v0.31.json"
+  ],
+  "constraints": [
+    "Phase 4期間中の送信は本人許可済み。公開4本文だけをSOL1回/300秒で静的検分、一次・委譲・自動retry0。",
+    "対象は公式CLI0.160.1のCODEX_ROLLOUT_TRACE_ROOTによる局所模擬の要求捕捉と、原receipt/hash/source/RPCに束縛した要求JSON値比較。有料providerの認証・通信は起動しない。",
+    "比較器はcallerが原artifact hashを確認してから使う。最大3要求の原JSON値だけを比較し、全traceの意味/応答投影/上流wire bytes/測定適格性/行動/Phase/Gateは常に未認定。",
+    "無課金v0.11の原captured sourceは0d3f28150f749010e774539335581728cd578a92。1試行/模擬HTTP3/host2/raw SDK item8。原bundleは33 events/26 files。初期inputはdeveloper3/user2で、要求3件のJSON値が模擬HTTP受信原JSONと一致したことを親が再照合。モデル検分者はこの原私的証拠を読んだと主張しない。",
+    "元SDKproxy/cli policy/host等の全文は未提示。過去の独立検分を今回の読取済みコードへ代用せず、提示本文の具体的矛盾と束縛不足だけを指摘する。",
+    "要求traceのJSON値一致をHTTP bytes一致や応答の完全性へ拡張しない。元SSEとfinal応答投影にはstatus/annotationsの差異があることを未認定のまま保持する。",
+    "保持入力・原RPC/stdio/bundle/host/HTTP/SSE・認証内容を送らない。tools/追加モデル/委譲/ファイル読取り/試験実行は禁止。"
+  ],
+  "previousReview": {
+    "sourceCommit": "a22df60026e535f585197e5cab688d53a1010f60",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-30",
+    "receiptSha256": "b4b08138fd4621b04ed7b914fbe3630e986d4d61ade4f6e2b91d4dbef51ad2f4",
+    "responseSha256": "e98de80625bbce75ad17d0e3a3842867ae363a668d6b023763d80a9c1e0fb0e6",
+    "oldInvocationsConsumed": 1,
+    "oldRemaining": 0
+  }
+}

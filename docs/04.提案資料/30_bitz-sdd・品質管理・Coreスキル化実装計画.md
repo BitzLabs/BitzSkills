@@ -1580,3 +1580,17 @@ source7c532ceのclean全527件/62.901s/OK/exit0、SOL28はP2=1で原stderrの全
 記録は`evals/skills/results/2026-10-10-production-canary-trace/`。当区切りSOL3、一次/委譲/retry0。
 残工程は独立再検分、実providerの要求上限/完全初期入力、公開canary、本測定、5種実地比較とSkill Gate 4。
 Phase 4期間の送信は本人許可済みで、送信許可待ちではない。実装・証拠未充足を完了へ置き換えない。
+
+### Phase 4：実行環境照合の独立通過と推論入力の局所捕捉（2026-10-11）
+
+sourcea22df600のclean全529件/64.124s/OK/exit0、有限SOL30は公開2本文のみ/1回/指摘0/CLIexit0。
+親も原stdio/hash/source/共通予約を再照合してexit0。旧27/28/29の指摘と消費を保持し、この区切りのSOLは計4。
+公式CLI固定版にCODEX_ROLLOUT_TRACE_ROOTを確認し、source0d3f281の無課金v0.11を1回/模擬HTTP3要求で捕捉。
+原イベント33/原artifact26/推論開始完了各3、host2/raw SDK item8、namespace/runtime exit0。
+要求3件の原trace JSONと原HTTP受信JSONが型を含めて一致し、初期developer3/user2を局所で観測した。
+原receipt/hash/Git/SDK turn/原要求の再照合もexit0。比較器4件/0.002s、捕捉入口39件/0.111sはOK/exit0。
+この入力捕捉・比較器の独立検分は未実施。有限SOL31で公開4本文を静的検分する。
+記録は`evals/skills/results/2026-10-11-sdk-rollout-trace-capture/`。
+通常retry0以外の認証復旧・transport fallback・既定有効のunbounded connection retryを固定上流で確認した。
+次は通信隔離・認証なしの故障注入で実効設定を検証する。起動条件は`evals/skills/routing/provider-connection-readiness.md`。
+実provider・要求上限・本測定・5種実地比較・Skill Gate 4・Phase 4完了は未認定。
