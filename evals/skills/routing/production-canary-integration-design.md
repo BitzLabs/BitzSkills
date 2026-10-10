@@ -54,6 +54,10 @@ campaign ID、output、source、別worktreeの変更で枠を作り直さない�
 その確定した親照合結果へreviewを束縛してから台帳へ記録する。欠落・変造をacceptedにしない。
 independentReviewerの起動予約も永続化し、停止後の同枠再起動や別出力への差替えを許さない。
 
+一次共通台帳の `reserve_independent_review()` で直近pending試行の独立入力hashを先に固定する。
+製品接続は `record_verified_review()` を使い、その原予約hashと独立入力hashを親照合結果へ結ぶ。
+既存 `record_review()` の合成証拠用入口を、原証拠を検査済みという製品側の根拠へ使わない。
+
 設計の静的検分も共通repository配下の専用台帳へ起動前に1枠予約する。
 予約identityは有限契約のパス。source、output、worktreeを変更して同契約を再起動できない。
 指摘の是正は別の新有限契約へ固定し、過去の応答・失敗・消費枠を保持する。自動retryとは区別する。
@@ -81,6 +85,10 @@ negativeの期待する観測はスキル本文読取り0。positiveは期待す
 IDの使い回し、交換、欠落、重複、別turn、因果順序の逆転を拒否する。
 許可profileは1exec内の一覧→読取り、2execの一覧→読取り、exec→wait内の一覧→読取り。
 negativeは子操作0または一覧のみを許し、本文読取り0を検査する。最終応答だけの自己申告は証拠にしない。
+
+`production_canary_trace.audit()` はこの可変IDの限定profileに対する別の診断入口。
+callerのモデル入力原bytes・共通指示、SDKの実効設定と正常終端、host引数/全文/hash、親セル/子ID/API順序を照合する。
+原SDKraw全payloadと実provider wire本文はこの入口では未取得として `eligibleForMeasurement=false` を維持する。
 任意program、任意cell数、並列、未知native item、未解決継続は推定で許可しない。
 host引数と出力全文、固定snapshotの原bytes、native完了、SDK原通知、全対象telemetryを検査する。
 呼出し可能な2子操作以外へ到達できないことを、実行環境と拒否試験で確認する。

@@ -657,11 +657,14 @@ def _require_native_parent_context(received: list):
 
 
 def _audit_parent_links(events: list, received: list, provider_call_id: str, *, wait_call_id: str | None = None,
-                        second_exec_call_id: str | None = None) -> dict:
+                        second_exec_call_id: str | None = None, api_auth_attached: bool = False,
+                        child_tools: tuple[str, ...] = ('list_resources', 'read_resource')) -> dict:
     require(isinstance(events, list) and bool(events), 'original parent telemetry required')
+    require(type(api_auth_attached) is bool and child_tools in {('list_resources',), ('list_resources', 'read_resource')},
+            'bounded parent audit policy')
     children = [f['params']['item'] for f in received if f.get('method') == 'item/completed' and
                 f.get('params', {}).get('item', {}).get('type') == 'mcpToolCall']
-    require(len(children) == 2 and [c['tool'] for c in children] == ['list_resources', 'read_resource'],
+    require(len(children) == len(child_tools) and [c['tool'] for c in children] == list(child_tools),
             'two native children required')
     context = next(f['params'] for f in received if f.get('method') == 'turn/started')
     thread, turn = context['threadId'], context['turn']['id']
@@ -669,6 +672,7 @@ def _audit_parent_links(events: list, received: list, provider_call_id: str, *, 
     parents = {provider_call_id: 'exec'}
     require(wait_call_id is None or second_exec_call_id is None, 'one fixed continuation profile required')
     continuation = wait_call_id if wait_call_id is not None else second_exec_call_id
+    require(continuation is None or len(children) == 2, 'continuation requires two children')
     if continuation is not None:
         require(continuation != provider_call_id, 'parent ID collision')
         kind = 'wait' if wait_call_id is not None else 'exec'
@@ -704,7 +708,7 @@ def _audit_parent_links(events: list, received: list, provider_call_id: str, *, 
             require('turn_id' not in fields or fields['turn_id'] == turn,
                     'neutral telemetry turn contradiction')
             if name == 'codex.api_request':
-                require(fields.get('auth.header_attached') is False and type(fields.get('attempt')) is int and
+                require(fields.get('auth.header_attached') is api_auth_attached and type(fields.get('attempt')) is int and
                         fields['attempt'] == 0 and type(fields.get('http.response.status_code')) is int and
                         fields['http.response.status_code'] == 200, 'diagnostic API request drift')
                 api_requests.append(index)
@@ -802,7 +806,8 @@ def _audit_parent_links(events: list, received: list, provider_call_id: str, *, 
         require(len(api_requests) == 3 and api_requests[0] < received_calls[provider_call_id][0] and
                 ready[provider_call_id] < api_requests[1] < received_calls[continuation][0] and
                 ready[continuation] < api_requests[2], 'continuation provider/parent order drift')
-    require(ready[children[0]['id']] < received_calls[children[1]['id']][0], 'sequential discovery/read telemetry order')
+    if len(children) == 2:
+        require(ready[children[0]['id']] < received_calls[children[1]['id']][0], 'sequential discovery/read telemetry order')
     native_order = [(f['method'], f['params']['item']['id']) for f in received if
                     f.get('method') in {'item/started', 'item/completed'} and
                     f.get('params', {}).get('item', {}).get('type') == 'mcpToolCall']

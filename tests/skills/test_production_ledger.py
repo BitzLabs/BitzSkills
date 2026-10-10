@@ -83,6 +83,43 @@ class ProductionLedgerTests(unittest.TestCase):
             with self.assertRaises(OSError): ledger.Ledger(self.storage, self.bound)
         self.assertEqual(list(self.storage.iterdir()), [])
 
+    def test_independent_review_reservation_is_permanent_and_binds_input(self):
+        instance = ledger.Ledger(self.storage, self.bound)
+        attempt = instance.reserve()
+        review_reservation = instance.reserve_independent_review(1, 'b' * 64)
+        self.assertEqual(review_reservation['caseId'], attempt['caseId'])
+        restarted = ledger.Ledger(self.storage, self.bound)
+        for digest in ['b' * 64, 'c' * 64]:
+            with self.subTest(digest=digest), self.assertRaises(FileExistsError):
+                restarted.reserve_independent_review(1, digest)
+        with self.assertRaises(ValueError): restarted.reserve()
+        review = {**self.accepted(attempt), 'reviewInputSha256': 'b' * 64,
+                  'independentReservationSha256': ledger.sha((self.storage / 'independent-0001.json').read_bytes())}
+        for key, value in [('reviewInputSha256', 'c' * 64), ('independentReservationSha256', 'd' * 64)]:
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                restarted.record_verified_review(1, ledger.encoded({**review, key: value}))
+        restarted.record_verified_review(1, ledger.encoded(review))
+        with self.assertRaises(ValueError): restarted.reserve_independent_review(1, 'b' * 64)
+        self.assertEqual(restarted.reserve()['attempt'], 2)
+
+    def test_verified_review_requires_independent_reservation_and_stopped_is_final(self):
+        instance = ledger.Ledger(self.storage, self.bound)
+        attempt = instance.reserve()
+        with self.assertRaises(FileNotFoundError): instance.record_verified_review(1, ledger.encoded(self.accepted(attempt)))
+        instance.reserve_independent_review(1, 'b' * 64)
+        stopped = {**self.accepted(attempt), 'status': 'stopped', 'reviewInputSha256': 'b' * 64,
+                   'independentReservationSha256': ledger.sha((self.storage / 'independent-0001.json').read_bytes())}
+        instance.record_verified_review(1, ledger.encoded(stopped))
+        with self.assertRaises(ValueError): instance.reserve()
+        with self.assertRaises(ValueError): instance.reserve_independent_review(1, 'b' * 64)
+
+    def test_future_review_or_orphan_independent_record_rejected(self):
+        instance = ledger.Ledger(self.storage, self.bound)
+        instance.reserve()
+        with self.assertRaises(ValueError): instance.reserve_independent_review(2, 'b' * 64)
+        ledger.exclusive(self.storage / 'independent-0002.json', b'{}')
+        with self.assertRaises(ValueError): instance.reserve_independent_review(1, 'b' * 64)
+
     def test_each_raw_input_is_hash_bound(self):
         for index in range(5):
             raws = list(self.raw_inputs)

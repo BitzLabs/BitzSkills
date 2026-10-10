@@ -404,3 +404,12 @@ source9b9f886のclean全517件/62.872s/OK/exit0、SOL26指摘0/CLIexit0、親の
 当区切りSOL3、一次/委譲/retry0。原24/25の指摘と消費を消さない。実電源断試験は未実施。
 次は一次と独立一次検分の共通台帳接続と、原証拠の親照合を実行経路へ結ぶ。
 実provider/完全初期入力/要求上限/実地/Phase/Gate全体は未認定。
+
+### Phase 4：一次独立検分予約と可変ID軌跡の限定入口（2026-10-10）
+
+一次台帳に直近pendingの独立入力hashの起動前予約と、原予約hashへ結ぶ製品用記録入口を追加した。
+同枠再起動/入力差替え/未検分/停止/孤立予約は拒否。局所18件/0.298s/OK/exit0。
+可変IDの別SDK診断入口はsingle-exec/two-exec/exec-waitと負例の無操作/一覧だけを検査する。
+最初の負例fixtureのoutcomeが既存enum外で2 errorsとなり、既定not-applicableへ修正。修正後5件/0.055s/OK/exit0。
+旧SDK92件/0.937s/OK/exit0、既存固定入口の既定条件は維持する。新有限v0.27で公開6本文を静的検分する。
+新入口もeligibleForMeasurement=false、wire/raw全payload/実provider実測/一次採点/実地/Phase/Gateは未認定。

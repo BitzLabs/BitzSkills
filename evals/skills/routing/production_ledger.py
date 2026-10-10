@@ -177,18 +177,64 @@ class Ledger:
             exclusive(path, encoded(expected))
         require(read_owned(path) == expected, 'campaign or input change cannot reset ledger')
 
-    def reservations(self):
+    def reservations(self, *, allow_pending_last=False):
         files = sorted(self.storage.glob('attempt-*.json'))
         expected_names = {'lock', 'campaign.json'} | {p.name for p in files}
         expected_names |= {f'review-{i:04d}.json' for i in range(1, len(files) + 1)}
+        expected_names |= {f'independent-{i:04d}.json' for i in range(1, len(files) + 1)}
         require(all(p.name in expected_names for p in self.storage.iterdir()), 'orphan ledger records')
         for i, path in enumerate(files, 1):
             require(path.name == f'attempt-{i:04d}.json' and read_owned(path) == self.bound.attempt(i), 'reservation drift or gap')
             review = self.storage / f'review-{i:04d}.json'
+            independent = self.storage / f'independent-{i:04d}.json'
+            if independent.exists():
+                self.validate_independent_reservation(i, read_owned(independent))
+            if allow_pending_last and i == len(files) and not review.exists():
+                return len(files)
             require(review.is_file(), 'previous attempt awaits independent parent verification')
             self.validate_review(i, read_owned(review))
             require(read_owned(review)['status'] == 'accepted', 'previous attempt stopped')
         return len(files)
+
+    def validate_independent_reservation(self, ordinal, value):
+        require(isinstance(value, dict) and set(value) == set(self.bound.attempt(ordinal)) | {
+            'reviewModel', 'reviewInputSha256', 'maximumInvocations', 'consumedReservations', 'automaticRetry'},
+            'independent reservation fields')
+        for key, expected in self.bound.attempt(ordinal).items():
+            require(type(value[key]) is type(expected) and value[key] == expected, 'independent attempt binding')
+        require(value['reviewModel'] == 'gpt-6.1-sol' and value['automaticRetry'] is False and
+                type(value['maximumInvocations']) is int and value['maximumInvocations'] == 1 and
+                type(value['consumedReservations']) is int and value['consumedReservations'] == 1, 'finite independent reservation')
+        pin(value['reviewInputSha256'])
+
+    def reserve_independent_review(self, ordinal, review_input_sha256):
+        """親が原一次出力を照合した後、独立検分入力を起動前に固定する。"""
+        with self.locked():
+            self.initialize()
+            require(ordinal == self.reservations(allow_pending_last=True), 'only latest pending attempt can reserve review')
+            attempt = self.bound.attempt(ordinal)
+            require(not (self.storage / f'review-{ordinal:04d}.json').exists(), 'attempt already finalized')
+            value = dict(**attempt, reviewModel='gpt-6.1-sol', reviewInputSha256=pin(review_input_sha256),
+                         maximumInvocations=1, consumedReservations=1, automaticRetry=False)
+            self.validate_independent_reservation(ordinal, value)
+            exclusive(self.storage / f'independent-{ordinal:04d}.json', encoded(value))
+            return value
+
+    def record_verified_review(self, ordinal, review_raw: bytes):
+        """製品接続用。原証拠を親で照合済みの結果と独立予約を束縛して記録する。"""
+        with self.locked():
+            self.initialize()
+            require(ordinal == self.reservations(allow_pending_last=True), 'only latest pending attempt can be finalized')
+            attempt = self.bound.attempt(ordinal)
+            require(read_owned(self.storage / f'attempt-{ordinal:04d}.json') == attempt, 'reserved attempt required')
+            independent_path = self.storage / f'independent-{ordinal:04d}.json'
+            independent = read_owned(independent_path)
+            self.validate_independent_reservation(ordinal, independent)
+            review = strict_json(review_raw)
+            self.validate_review(ordinal, review)
+            require(review.get('independentReservationSha256') == sha(independent_path.read_bytes()) and
+                    review.get('reviewInputSha256') == independent['reviewInputSha256'], 'verified review reservation binding')
+            exclusive(self.storage / f'review-{ordinal:04d}.json', review_raw)
 
     def reserve(self):
         with self.locked():
