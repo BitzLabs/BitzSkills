@@ -430,7 +430,6 @@ class EnvironmentTests(unittest.TestCase):
         self.assertIn("[REDACTED]", result["commands"][0]["stdoutExcerpt"])
 
 
-
 class StateAndTypeConstraintTogetherTests(unittest.TestCase):
     """状態の診断と型制約の診断は、独立した元の原因として両方を返す（`context` §3、診断レジストリ）。TASKを起点にした`verify`で、
     先行の`requires`が`draft`のREQ-003を指し、`addresses`の参照先のREQ-001が`proposed`のADRを`requires`する場合。"""
@@ -457,8 +456,16 @@ class StateAndTypeConstraintTogetherTests(unittest.TestCase):
             self.assertEqual(result["commands"], [])
 
 
-
 class ConfigWarningTests(unittest.TestCase):
+    def test_config_warning_is_added_when_there_are_no_targets(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            _write(tmp, ".spec/bitz.yaml", _bitz_yaml('    default:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n') + "futureKey: 1\n")
+            _write(tmp, "README.md", "x\n")
+            _init_repo(tmp)
+            result, exit_code = _run_verify(tmp, [])
+            self.assertEqual((result["status"], exit_code), ("blocked", 2), result)
+            self.assertEqual(sorted(d["code"] for d in result["diagnostics"]), ["SPEC-CONFIG-UNKNOWN-001", "SPEC-VERIFY-BLOCKED-002"])
+
     def test_config_warning_is_added_to_a_successful_verify(self):
         with tempfile.TemporaryDirectory() as tmp:
             _write(tmp, ".spec/bitz.yaml", _bitz_yaml('    default:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n') + "futureKey: 1\n")
