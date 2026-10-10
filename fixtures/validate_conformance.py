@@ -29,6 +29,7 @@ from conformance.task_fixtures import validate as validate_task_fixtures
 from conformance.selection_fixtures import validate as validate_selection_fixtures
 from conformance.git_environment_fixtures import validate as validate_git_environment_fixtures
 from conformance.context_failure_fixtures import validate as validate_context_failure_fixtures
+from conformance.context_config_fixtures import validate as validate_context_config_fixtures
 from conformance.digest_fixtures import validate as validate_digest_fixtures
 from conformance.context_limit_fixtures import validate as validate_context_limit_fixtures
 from conformance.context_coverage_fixtures import validate as validate_context_coverage_fixtures
@@ -301,6 +302,7 @@ def main():
     checks["selection_fixtures"] = validate_selection_fixtures()
     checks["git_environment_fixtures"] = validate_git_environment_fixtures()
     checks["context_failure_fixtures"] = validate_context_failure_fixtures()
+    checks["context_config_fixtures"] = validate_context_config_fixtures()
     checks["digest_fixtures"] = validate_digest_fixtures()
     checks["context_limit_fixtures"] = validate_context_limit_fixtures()
     checks["context_coverage_fixtures"] = validate_context_coverage_fixtures()
