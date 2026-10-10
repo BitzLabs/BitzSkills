@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-153",
-  "description": "contextの成功の結果に設定の未知keyの警告を加える",
+  "description": "contextの成功の結果に設定の未知のキーの警告を加える",
   "setup": {
     "git": true,
     "operations": []

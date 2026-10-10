@@ -62,12 +62,12 @@ CASES = {
         "status": "blocked", "config": None, "workspace": None,
         "code": "SPEC-WORKSPACE-MISSING-001", "severity": "error", "summary": ".spec/bitz.yamlがありません",
         "source": {"kind": "environment", "component": "workspace", "identifier": "."},
-        "description": "contextで設定不在をworkspace不在としてenvironmentの発生元で止める"},
+        "description": "contextで設定の不在をワークスペースの不在としてenvironmentの発生元で止める"},
     "SINGLE-153": {
         "status": "passed_with_warnings", "config": CONFIGS["SINGLE-005-01"], "workspace": "root",
         "code": "SPEC-CONFIG-UNKNOWN-001", "severity": "warning", "summary": "未知の設定keyです",
         "source": config_source("root", "futureOption"),
-        "description": "contextの成功の結果に設定の未知keyの警告を加える"},
+        "description": "contextの成功の結果に設定の未知のキーの警告を加える"},
 }
 
 

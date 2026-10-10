@@ -1,6 +1,6 @@
 {
   "fixtureId": "SINGLE-152",
-  "description": "contextで設定不在をworkspace不在としてenvironmentの発生元で止める",
+  "description": "contextで設定の不在をワークスペースの不在としてenvironmentの発生元で止める",
   "setup": {
     "git": true,
     "operations": []
