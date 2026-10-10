@@ -109,6 +109,22 @@ class CanaryTraceTests(unittest.TestCase):
             events = [events[0]]
         return kept, host, events
 
+    def test_explicit_runtime_contradictions_on_every_original_event_stop(self):
+        for profile in ['single-exec', 'two-exec', 'exec-wait']:
+            original = self.events(profile)
+            for index, event in enumerate(original):
+                for key, wrong in [('model', 'other-model'), ('app.version', 'unknown'), ('provider_name', 'Other provider')]:
+                    events = copy.deepcopy(original)
+                    events[index]['fields'][key] = wrong
+                    with self.subTest(profile=profile, event=event['fields']['event.name'], key=key):
+                        with self.assertRaisesRegex(ValueError, 'canary runtime context contradiction'):
+                            self.check(profile, events=events)
+        events = self.events('single-exec')
+        for event in events:
+            if event['fields']['event.name'] == 'codex.tool_result':
+                event['fields'].update(model='gpt-6.1-sol', **{'app.version': '0.160.1'})
+        self.assertFalse(self.check(events=events)['eligibleForMeasurement'])
+
     def test_negative_no_operation_or_listing_only_keeps_body_read_zero(self):
         for listed in [False, True]:
             received, host, events = self.negative(listed=listed)

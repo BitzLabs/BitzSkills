@@ -30,3 +30,19 @@ source7c532ceのclean全527件/62.901s/OK/exit0、SOL28は初回1回/P2=1/CLIexi
 両原hashを結果へ結び、追加API/未知操作の抽出漏れを拒否する。別targetや上流wire網羅は認定しない。
 明示model/version/providerの矛盾とauth retryも拒否し、1子の負例の限定scope表記も合わせた。
 局所6件/0.070s/OK、旧SDK92件/0.901s/OK、exit0。新有限v0.29で同6公開パスを検分する。
+
+source4510997のclean全528件/62.803s/OK/exit0。通常PUSH後、有限v0.29の独立SOLは1回/CLIexit0/timeoutなし/P2=1。
+指摘は操作結果に明示されたmodel/app.versionの矛盾を見逃すこと。親も合成tool_resultへ別モデルを入れた原ログで、
+診断が通ることを再現した。有料一次0。原応答・消費枠を保持する。
+実行環境の照合を全対象イベントへ移し、各profileの各イベントで明示矛盾を拒否する回帰試験を追加した。
+この是正の独立再検分は未実施。局所修正を解消済み・実provider実測・Phase完了とは扱わない。
+
+修正後の対象7件/0.253s/OK/exit0、作業ツリーの全529件/70.712s/OK/exit0を実行して確認した。
+全試験のコマンドは`PYTHONPATH=plugins/bitz-core/src uv --cache-dir .venv/uv-cache run --offline --project plugins/bitz-core --with jsonschema==4.23.0 python -B -m unittest discover -s tests/skills -p 'test_*.py'`。
+これは変更を含む作業ツリーの回帰結果であり、clean refの独立認定に置き換えない。
+verify-recorded-results.pyはexit0で元525/最新528/独立SOL3/各P2=1/一次0を原bytesから再照合した。
+
+2026-10-11時点の残工程：この修正の独立再検分、実providerの要求上限・完全初期入力の証明、
+有限公開canary、本測定、5種類の実地比較とSkill Gate 4。送信許可待ちではなく、実装・証拠の未充足である。
+5種は局所バグ、新公開動作、仕様/文書、security/未信頼入力、複合workspace。
+時間・人手監督・費用・手戻り・欠陥・誤発火・追跡の比較を未実施として保持する。Phase 4未完了。

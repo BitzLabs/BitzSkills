@@ -46,12 +46,12 @@ def audit(manifest_raw, host_events, sent, received, catalog, *, raw_stderr, sel
                 event.get('target') in {'codex_otel.trace_safe', 'codex_code_mode::timing'} and
                 isinstance(event.get('fields'), dict), 'canary telemetry format')
         fields = event['fields']
+        for key, expected in [('model', 'gpt-6.1-sol'), ('app.version', '0.160.1'), ('provider_name', 'OpenAI')]:
+            require(key not in fields or fields[key] == expected, 'canary runtime context contradiction')
         name = fields.get('event.name')
         if name in NEUTRAL:
             require(event['target'] == 'codex_otel.trace_safe' and fields.get('conversation.id') == thread and
                     ('turn_id' not in fields or fields['turn_id'] == turn), 'canary telemetry context')
-            for key, expected in [('model', 'gpt-6.1-sol'), ('app.version', '0.160.1'), ('provider_name', 'OpenAI')]:
-                require(key not in fields or fields[key] == expected, 'canary runtime context contradiction')
             if name == 'codex.api_request':
                 require(fields.get('auth.header_attached') is True and type(fields.get('attempt')) is int and
                         fields['attempt'] == 0 and type(fields.get('http.response.status_code')) is int and
