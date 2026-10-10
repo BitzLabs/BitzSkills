@@ -123,7 +123,12 @@ def exclusive(path: Path, raw: bytes):
         out.write(raw)
         out.flush()
         os.fsync(out.fileno())
-    directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+    sync_directory(path.parent)
+
+
+def sync_directory(path: Path):
+    safe_tree(path)
+    directory = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
     try:
         os.fsync(directory)
     finally:
@@ -151,6 +156,8 @@ class Ledger:
         info = storage.stat()
         require(stat.S_ISDIR(info.st_mode) and info.st_uid == os.getuid() and stat.S_IMODE(info.st_mode) == 0o700,
                 'ledger directory ownership or mode')
+        # 初回mkdirの名前も同期する。同時初期化で既存となった経路も同期する。
+        sync_directory(storage.parent)
 
     def locked(self):
         safe_tree(self.storage)

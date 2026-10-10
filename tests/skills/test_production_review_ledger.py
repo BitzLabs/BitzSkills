@@ -80,6 +80,15 @@ class StaticReviewTests(unittest.TestCase):
             with self.subTest(name=name, contract=contract), self.assertRaises(ValueError):
                 instance.reserve(name, 'a' * 40, primary.encoded(contract))
 
+    def test_new_and_existing_static_directory_sync_parent_before_reservation(self):
+        for _ in range(2):
+            with patch.object(primary, 'sync_directory', wraps=primary.sync_directory) as sync:
+                ledger.StaticReviewLedger(self.base / 'shared')
+                sync.assert_called_once_with(self.base)
+        with patch.object(primary, 'sync_directory', side_effect=OSError('synthetic fsync failure')):
+            with self.assertRaises(OSError): ledger.StaticReviewLedger(self.base / 'shared')
+        self.assertEqual(list((self.base / 'shared').iterdir()), [])
+
 
 class ReviewLifecycleTests(unittest.TestCase):
     def setUp(self):
@@ -135,6 +144,25 @@ class ReviewLifecycleTests(unittest.TestCase):
         self.assertEqual(len(warnings), 1)
         for events in [self.events[:2] + [warning] + self.events[2:], self.events[:1] + [warning, warning] + self.events[1:]]:
             with self.assertRaises(ValueError): self.check(events)
+
+    def test_message_and_file_schema_and_json_types_are_checked_independently(self):
+        response = {**self.response, 'verdict': 'findings', 'findings': [dict(priority='P2', path='public.py',
+                    line=1, message='condition', reproduction='synthetic', suggestion='correction')]}
+        (self.base / 'response.json').write_bytes(primary.encoded(response))
+        for value in [True, 1.0]:
+            events = copy.deepcopy(self.events)
+            message = copy.deepcopy(response)
+            message['findings'][0]['line'] = value
+            events[2]['item']['text'] = primary.encoded(message).decode()
+            with self.subTest(value=value), self.assertRaises((ValueError, review.trace.jsonschema.exceptions.ValidationError)):
+                self.check(events)
+        events = copy.deepcopy(self.events)
+        events[2]['item']['text'] = primary.encoded(response).decode()
+        self.assertEqual(self.check(events)[0], response)
+        invalid = copy.deepcopy(response)
+        invalid['findings'][0]['line'] = True
+        (self.base / 'response.json').write_bytes(primary.encoded(invalid))
+        with self.assertRaises(review.trace.jsonschema.exceptions.ValidationError): self.check(events)
 
 
 if __name__ == '__main__':

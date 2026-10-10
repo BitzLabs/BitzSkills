@@ -23,6 +23,7 @@ class StaticReviewLedger:
         info = storage.stat()
         require(stat.S_ISDIR(info.st_mode) and info.st_uid == os.getuid() and
                 stat.S_IMODE(info.st_mode) == 0o700, 'static ledger directory ownership or mode')
+        primary.sync_directory(storage.parent)
 
     def reserve(self, contract_name: str, source: str, contract_raw: bytes):
         require(isinstance(contract_name, str) and

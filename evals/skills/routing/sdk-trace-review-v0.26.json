@@ -1,0 +1,53 @@
+{
+  "version": "sdk-trace-review-0.26.0",
+  "phase": 4,
+  "scope": "public-sdk-trace-component-static-review-only",
+  "target": "public-production-canary-integration-json-durability-remediation",
+  "model": "gpt-6.1-sol",
+  "timeoutSeconds": 300,
+  "maximumInvocations": 1,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 1,
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "outputRelativeRoot": ".venv/sdk-trace-independent-review-26",
+  "payloadFiles": [
+    "evals/skills/routing/production-canary-integration-design.md",
+    "evals/skills/routing/production_ledger.py",
+    "evals/skills/routing/production_review_ledger.py",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "tests/skills/test_production_review_ledger.py",
+    "tests/skills/test_production_ledger.py"
+  ],
+  "sourceFiles": [
+    "evals/skills/routing/production-canary-integration-design.md",
+    "evals/skills/routing/production_ledger.py",
+    "evals/skills/routing/production_review_ledger.py",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "tests/skills/test_production_review_ledger.py",
+    "tests/skills/test_production_ledger.py",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/sdk-trace-review.schema.json",
+    "evals/skills/routing/sdk-trace-review-v0.26.json",
+    "evals/skills/routing/check_canary_design_preparation.py"
+  ],
+  "constraints": [
+    "Phase 4期間の送信は本人の明示許可済み。同6公開パスの是正版だけを静的SOL1回/300秒で検分。一次・委譲・自動retry0。",
+    "v0.24はP2=2/P3=1、v0.25は追加P2=2。原結果と消費は保持する。新26は別の有限是正検分枠で共通台帳へ起動前予約する。",
+    "CLIexec JSONの既知短縮profileと初回専用2件×2反復は維持する。原messageとresponse.jsonの双方をschema検査し、trace.json_equalで型を保持して照合する。",
+    "一次台帳と静的台帳はmkdir後に親ディレクトリも同期し、既存/並行初期化経路も同期する。電源断の実試験を通過したとは主張せず、同期失敗なら起動前停止する。",
+    "設計draftの未確定前提は一次起動停止条件。実provider/完全初期入力/要求上限/実地/Phase/Gateは未認定。未実装自体を欠陥とせず、具体的な偽通過や枠回避の条件を示す。",
+    "保持入力・期待値・原ログ・原捕捉・認証内容は送信しない。tool・追加モデル・委譲・私的読取りを禁止する。"
+  ],
+  "previousReview": {
+    "sourceCommit": "e088d5abf7012b0f7310824efd6283d1bcc539d7",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-25",
+    "receiptSha256": "a31e78884f290f5ff546f34fda99bed40c7b74d99d615ae7e7a4cd97f8c8e94d",
+    "responseSha256": "a7ab56e275d5cba87f6a61123c12f3e5b9396c488f5ee51bc1c5d2e2416ea086",
+    "oldInvocationsConsumed": 1,
+    "oldRemaining": 0
+  }
+}

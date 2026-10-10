@@ -22,11 +22,13 @@ def sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
-def run(source, remediation=False):
+def run(source, remediation=False, final_remediation=False):
     trace.require(guard.git(ROOT, 'status', '--porcelain') == b'' and
                   guard.git(ROOT, 'rev-parse', 'HEAD').decode().strip() == source, 'clean fixed HEAD required')
-    contract_name = 'evals/skills/routing/sdk-trace-review-v0.25.json' if remediation else CONTRACT
-    output_name = '.venv/production-canary-design-check-02' if remediation else OUTPUT
+    contract_name = ('evals/skills/routing/sdk-trace-review-v0.26.json' if final_remediation else
+                     'evals/skills/routing/sdk-trace-review-v0.25.json' if remediation else CONTRACT)
+    output_name = ('.venv/production-canary-design-check-03' if final_remediation else
+                   '.venv/production-canary-design-check-02' if remediation else OUTPUT)
     contract = trace.strict_json(guard.git(ROOT, 'show', source + ':' + contract_name))
     before = guard.verify(ROOT, source, contract['sourceFiles'])
     trace.require(contract['maximumInvocations'] == 1 and contract['automaticRetries'] == 0 and
@@ -75,6 +77,8 @@ def run(source, remediation=False):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--source', required=True)
-    parser.add_argument('--remediation', action='store_true')
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--remediation', action='store_true')
+    mode.add_argument('--final-remediation', action='store_true')
     args = parser.parse_args()
-    run(args.source, remediation=args.remediation)
+    run(args.source, remediation=args.remediation, final_remediation=args.final_remediation)

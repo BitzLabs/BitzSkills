@@ -31,3 +31,10 @@ CLIexit0、timeoutなし、P2=2/P3=1。親も原stdio/schema/Git/guard/hash/予�
 共通repositoryに契約pathをidentityとする排他永続予約、CLIの既知短縮profileの厳密検査、初回専用束縛を実装した。
 局所8件/0.022s/OK/exit0、一次台帳14件/0.163s/OK/exit0。
 是正後は新有限v0.25に固定して独立検分する。元指摘と消費1を保持し、共通台帳の未接続起動だった歴史を改変しない。
+
+source e088d5aのclean全514件/65.001s/OK/exit0。SOL25は原共通予約付きで初回1回、CLIexit0/P2=2。
+原応答と共通予約hashも親照合した。追加指摘はJSON lineのbool/int同値見逃しと、台帳mkdirの親同期不足。
+歴史Gitの元検査器へline=1の保存応答とline=trueの原messageを与えると通過し、新検査器は拒否することを親も再現した。
+双方schema/型保持比較、一次・静的両台帳の親directory同期を補強。既存directory経路と同期失敗での起動前停止も試験する。
+局所10件/0.045s/OK、一次台帳15件/0.210s/OK、exit0。実電源断試験は未実施。
+新有限v0.26で是正版を1回検分する。元24/25の指摘と消費計2を保持する。

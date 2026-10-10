@@ -74,6 +74,15 @@ class ProductionLedgerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             ledger.bind_initial_canary_inputs(ledger.encoded(smaller), *self.raw_inputs)
 
+    def test_initialization_syncs_parent_for_new_and_existing_directory(self):
+        for _ in range(2):
+            with patch.object(ledger, 'sync_directory', wraps=ledger.sync_directory) as sync:
+                ledger.Ledger(self.storage, self.bound)
+                sync.assert_called_once_with(self.storage.parent)
+        with patch.object(ledger, 'sync_directory', side_effect=OSError('synthetic fsync failure')):
+            with self.assertRaises(OSError): ledger.Ledger(self.storage, self.bound)
+        self.assertEqual(list(self.storage.iterdir()), [])
+
     def test_each_raw_input_is_hash_bound(self):
         for index in range(5):
             raws = list(self.raw_inputs)
