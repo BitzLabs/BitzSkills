@@ -478,9 +478,6 @@ class ConfigWarningTests(unittest.TestCase):
                              [("SPEC-CONFIG-UNKNOWN-001", "futureKey")])
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 
 def _req_doc_default(doc_id: str, command_line: str) -> str:
     """テスト対応が`command`を持たず、文書の`verify`で既定のコマンドを指定するREQ。"""
@@ -529,3 +526,19 @@ class DigestCommandMaterialsTests(unittest.TestCase):
             ctx_digest, verify_digest = self._digests(tmp)
             self.assertIsNotNone(verify_digest)
             self.assertEqual(ctx_digest, verify_digest)
+            # 両操作が同じ関数を使うので、関数の結果そのものも確かめる（未定義のコマンドは材料に入らない）。
+            from bitz import config as config_mod
+            from bitz import context as context_mod
+            from bitz import document as doc_mod
+            from bitz import relations as rel_mod
+            id_index = rel_mod.build_id_index(doc_mod.build_catalog(tmp, "root").entries)
+            config_raw = config_mod.read_config(os.path.join(tmp, ".spec", "bitz.yaml")).config
+            materials = context_mod.digest_command_materials(
+                ["REQ-001"], id_index, lambda d: "root",
+                lambda wid, name: (config_raw.get("_resolvedCommands") or {}).get(name), lambda wid: 300,
+            )
+            self.assertEqual(materials, ([], []))
+
+
+if __name__ == "__main__":
+    unittest.main()
