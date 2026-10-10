@@ -206,9 +206,9 @@ TASK（`work`）、後継（`replacement`）、要求（`requirement`）、制�
 
 - 到達ワークスペースごとの`schemaVersion`、`earsAi`、`language`
 - 起点ワークスペースだけの`context.maxDocuments`と`context.maxBytes`（既定値を適用した後の値）
-- 目的が`verify`のコンテキスト一式では、テスト対応を1件以上収録したワークスペースの`verify.timeoutSeconds`
+- 目的が`verify`のコンテキスト一式では、テスト割当てを1件以上収録したワークスペースの`verify.timeoutSeconds`
   （既定値を適用した後の値）。目的が`implement`または`interpret`のときは空配列とする
-- 目的が`verify`のコンテキスト一式では、収録したテスト対応が参照するコマンドだけの名前、引数列テンプレート、
+- 目的が`verify`のコンテキスト一式では、収録したテスト割当てのコマンドだけの名前、引数列テンプレート、
   作業ディレクトリ（既定値を適用した後の値）。コマンド名の辞書順とする。目的が`implement`または`interpret`のときは空配列とする
 
 次は含めない。
