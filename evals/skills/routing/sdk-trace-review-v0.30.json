@@ -1,0 +1,53 @@
+{
+  "version": "sdk-trace-review-0.30.0",
+  "phase": 4,
+  "scope": "public-sdk-trace-component-static-review-only",
+  "target": "explicit-runtime-context-on-all-original-events",
+  "model": "gpt-6.1-sol",
+  "timeoutSeconds": 300,
+  "maximumInvocations": 1,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 1,
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "outputRelativeRoot": ".venv/sdk-trace-independent-review-30",
+  "payloadFiles": [
+    "evals/skills/routing/production_canary_trace.py",
+    "tests/skills/test_production_canary_trace.py"
+  ],
+  "sourceFiles": [
+    "evals/skills/routing/production_canary_trace.py",
+    "tests/skills/test_production_canary_trace.py",
+    "evals/skills/routing/production_sdk_trace.py",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/production_ledger.py",
+    "evals/skills/routing/production_review_ledger.py",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "evals/skills/routing/check_canary_design_preparation.py",
+    "evals/skills/routing/sdk-trace-review-v0.30.json",
+    "evals/skills/routing/sdk-trace-review.schema.json",
+    "evals/skills/schemas/decision.schema.json",
+    "tests/skills/test_production_sdk_trace.py",
+    "tests/skills/test_production_trace.py",
+    "tests/skills/test_routing_host.py"
+  ],
+  "constraints": [
+    "Phase 4期間中の送信は本人が明示許可済み。修正対象の公開2本文だけをSOL1回/300秒で静的検分。一次・委譲・自動retry0。",
+    "前回P2=1はNEUTRAL以外のcodex.tool_resultへ別model/app.versionを明示しても診断が通る点。親の合成原ログでも再現済み。今回の焦点は全対象イベントの明示model/version/provider矛盾の拒否とその回帰試験。",
+    "新入口は原stderrと選択ログの全対象2target一致からeventsを得る。各イベントの分岐前に存在するmodel/app.version/provider_nameをgpt-6.1-sol/0.160.1/OpenAIへ照合する。未観測フィールドを捏造しない。",
+    "限定profileはno-exec/single-exec/two-exec/exec-wait。診断は常にeligibleForMeasurement=false。上流wire/raw全payload/実provider/行動/Phase/Skill Gateを未認定とする。",
+    "依存production_sdk_trace/production_traceと合成fixtureの全文は今回送信しない。過去の独立検分を読取済みとして扱わず、今回の本文から証明できる矛盾と是正範囲だけを検分する。依存の実装が未提示であること自体を欠陥にしない。",
+    "保持入力・原捕捉・原ログ・認証内容を送らない。tools/追加モデル/委譲/ファイル読取り/試験実行は禁止。モデルの静的passを全試験や実地認定へ代用しない。"
+  ],
+  "previousReview": {
+    "sourceCommit": "4510997025772068fe8d6196110a5a18ddc56288",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-29",
+    "receiptSha256": "7cf026937a01fdd38f1a441d4d53741cf3dbb206f999b6b39ae8e5316bfc9bf6",
+    "responseSha256": "18a81a9e5416a079f52b9425be61806f13ec0acef3d2541188b2bfba195bd548",
+    "oldInvocationsConsumed": 1,
+    "oldRemaining": 0
+  }
+}

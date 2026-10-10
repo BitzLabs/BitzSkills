@@ -22,15 +22,17 @@ def sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
-def run(source, remediation=False, final_remediation=False, canary_trace=False, canary_trace_remediation=False, canary_trace_projection=False):
+def run(source, remediation=False, final_remediation=False, canary_trace=False, canary_trace_remediation=False, canary_trace_projection=False, canary_trace_runtime=False):
     trace.require(guard.git(ROOT, 'status', '--porcelain') == b'' and
                   guard.git(ROOT, 'rev-parse', 'HEAD').decode().strip() == source, 'clean fixed HEAD required')
-    contract_name = ('evals/skills/routing/sdk-trace-review-v0.29.json' if canary_trace_projection else
+    contract_name = ('evals/skills/routing/sdk-trace-review-v0.30.json' if canary_trace_runtime else
+                     'evals/skills/routing/sdk-trace-review-v0.29.json' if canary_trace_projection else
                      'evals/skills/routing/sdk-trace-review-v0.28.json' if canary_trace_remediation else
                      'evals/skills/routing/sdk-trace-review-v0.27.json' if canary_trace else
                      'evals/skills/routing/sdk-trace-review-v0.26.json' if final_remediation else
                      'evals/skills/routing/sdk-trace-review-v0.25.json' if remediation else CONTRACT)
-    output_name = ('.venv/production-canary-trace-check-03' if canary_trace_projection else
+    output_name = ('.venv/production-canary-trace-check-04' if canary_trace_runtime else
+                   '.venv/production-canary-trace-check-03' if canary_trace_projection else
                    '.venv/production-canary-trace-check-02' if canary_trace_remediation else
                    '.venv/production-canary-trace-check-01' if canary_trace else
                    '.venv/production-canary-design-check-03' if final_remediation else
@@ -39,7 +41,7 @@ def run(source, remediation=False, final_remediation=False, canary_trace=False, 
     before = guard.verify(ROOT, source, contract['sourceFiles'])
     trace.require(contract['maximumInvocations'] == 1 and contract['automaticRetries'] == 0 and
                   contract['primaryModelTrajectories'] == 0, 'finite static review required')
-    trace.require(len(contract['payloadFiles']) == len(set(contract['payloadFiles'])) == 6 and
+    trace.require(len(contract['payloadFiles']) == len(set(contract['payloadFiles'])) == (2 if canary_trace_runtime else 6) and
                   set(contract['payloadFiles']) <= set(contract['sourceFiles']), 'public payload inventory')
     inventory = []
     for name in contract['payloadFiles']:
@@ -89,7 +91,8 @@ if __name__ == '__main__':
     mode.add_argument('--canary-trace', action='store_true')
     mode.add_argument('--canary-trace-remediation', action='store_true')
     mode.add_argument('--canary-trace-projection', action='store_true')
+    mode.add_argument('--canary-trace-runtime', action='store_true')
     args = parser.parse_args()
     run(args.source, remediation=args.remediation, final_remediation=args.final_remediation,
         canary_trace=args.canary_trace, canary_trace_remediation=args.canary_trace_remediation,
-        canary_trace_projection=args.canary_trace_projection)
+        canary_trace_projection=args.canary_trace_projection, canary_trace_runtime=args.canary_trace_runtime)
