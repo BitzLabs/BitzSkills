@@ -740,6 +740,28 @@ class ProductionSdkTraceTests(unittest.TestCase):
         self.assertFalse(result['eligibleForMeasurement'])
         self.assertEqual((events, self.frames), before)
 
+    def test_yielded_parent_checks_explicit_neutral_turn_without_requiring_omitted_turn(self):
+        for index in range(3):
+            for value in ('u', 'other', None, '', False):
+                events = self.yielded_parent_events()
+                api = [e for e in events if e['fields']['event.name'] == 'codex.api_request'][index]
+                api['fields']['turn_id'] = value
+                with self.subTest(index=index, value=value):
+                    if value == 'u':
+                        sdk.audit_yielded_parent_links(events, self.frames, 'probe-call', 'probe-wait', '1')
+                    else:
+                        with self.assertRaisesRegex(ValueError, 'neutral telemetry turn contradiction'):
+                            sdk.audit_yielded_parent_links(events, self.frames, 'probe-call', 'probe-wait', '1')
+        for name in ('codex.conversation_starts', 'codex.startup_phase', 'codex.user_prompt', 'codex.turn_ttft'):
+            events = self.yielded_parent_events()
+            event = copy.deepcopy(events[0])
+            event['fields'].update({'event.name': name, 'turn_id': 'other'})
+            events.insert(0, event)
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                sdk.audit_yielded_parent_links(events, self.frames, 'probe-call', 'probe-wait', '1')
+            event['fields']['turn_id'] = 'u'
+            sdk.audit_yielded_parent_links(events, self.frames, 'probe-call', 'probe-wait', '1')
+
     def test_yielded_parent_rejects_missing_foreign_and_contradictory_wait_milestones(self):
         for mode in ('missing-receipt', 'missing-timing', 'duplicate', 'namespace', 'tool', 'source',
                      'thread', 'turn', 'cell', 'timing-tool', 'timing-cell', 'result-sequence'):

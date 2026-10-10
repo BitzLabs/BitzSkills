@@ -147,13 +147,15 @@ def check_yielded_capture():
             'certifiesNativeProvider': False, 'certifiesSkillGate': False, 'eligibleForMeasurement': False}
 
 
-def run_yielded(source):
+def run_yielded(source, *, remediation=False):
     require(guard.git(ROOT, 'status', '--porcelain') == b'' and
             guard.git(ROOT, 'rev-parse', 'HEAD').decode().strip() == source, 'clean yielded parent HEAD')
-    contract = sdk.trace.strict_json(guard.git(ROOT, 'show', source + ':evals/skills/routing/sdk-trace-review-v0.20.json'))
+    contract_name = 'evals/skills/routing/sdk-trace-review-v0.21.json' if remediation else 'evals/skills/routing/sdk-trace-review-v0.20.json'
+    contract = sdk.trace.strict_json(guard.git(ROOT, 'show', source + ':' + contract_name))
     before = guard.verify(ROOT, source, contract['sourceFiles'])
     capture = check_yielded_capture()
-    output = ROOT / '.venv/production-sdk-yielded-parent-verification-01'
+    output = ROOT / ('.venv/production-sdk-yielded-parent-verification-02' if remediation else
+                     '.venv/production-sdk-yielded-parent-verification-01')
     require(not any(p.is_symlink() for p in (output, *output.parents)), 'yielded parent output symlink')
     output.mkdir(mode=0o700)
     command = ['uv', '--cache-dir', str(ROOT / '.venv/uv-cache'), 'run', '--offline', '--project',
@@ -183,5 +185,9 @@ if __name__ == '__main__':
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument('--raw-exchange', action='store_true')
     mode.add_argument('--yielded-parent', action='store_true')
+    mode.add_argument('--yielded-parent-remediation', action='store_true')
     args = parser.parse_args()
-    (run_yielded if args.yielded_parent else run_raw if args.raw_exchange else run)(args.source)
+    if args.yielded_parent_remediation:
+        run_yielded(args.source, remediation=True)
+    else:
+        (run_yielded if args.yielded_parent else run_raw if args.raw_exchange else run)(args.source)

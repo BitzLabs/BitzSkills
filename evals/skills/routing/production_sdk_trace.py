@@ -563,6 +563,8 @@ def _audit_parent_links(events: list, received: list, provider_call_id: str, *, 
         if name in neutral:
             require(event['target'] == 'codex_otel.trace_safe' and fields.get('conversation.id') == thread,
                     'telemetry context drift')
+            require('turn_id' not in fields or fields['turn_id'] == turn,
+                    'neutral telemetry turn contradiction')
             if name == 'codex.api_request':
                 require(fields.get('auth.header_attached') is False and type(fields.get('attempt')) is int and
                         fields['attempt'] == 0 and type(fields.get('http.response.status_code')) is int and

@@ -16,6 +16,7 @@ import source_guard
 ROOT = Path(__file__).resolve().parents[3]
 CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.19.json'
 YIELDED_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.20.json'
+YIELDED_REMEDIATION_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.21.json'
 RAW_CONTRACTS = {'evals/skills/routing/sdk-raw-response-review-v0.1.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.2.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.3.json',
@@ -56,7 +57,7 @@ def review_response(base: Path, stdout: bytes, source: str, schema: bytes, contr
 
 
 def run(source: str, contract_name: str = CONTRACT):
-    require(contract_name in {CONTRACT, YIELDED_CONTRACT, *RAW_CONTRACTS}, 'unknown static review contract')
+    require(contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, *RAW_CONTRACTS}, 'unknown static review contract')
     require(source_guard.git(ROOT, 'status', '--porcelain') == b'', 'clean tree required')
     contract = trace.strict_json(source_guard.git(ROOT, 'show', source + ':' + contract_name))
     before = source_guard.verify(ROOT, source, contract['sourceFiles'])
@@ -104,7 +105,7 @@ def run(source: str, contract_name: str = CONTRACT):
               'あなたが実行していない試験や原証拠の検分を成功と書かないでください。'
               '指定schemaのJSONだけを回答してください。\n'
               f'sourceCommit={source}\nscope={contract["scope"]}\n')
-    if contract_name in RAW_CONTRACTS or contract_name in {CONTRACT, YIELDED_CONTRACT}:
+    if contract_name in RAW_CONTRACTS or contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT}:
         prompt += '\nこの検分の固定制約:\n' + '\n'.join(contract['constraints']) + '\n'
     for name in contract['payloadFiles']:
         raw = source_guard.git(ROOT, 'show', source + ':' + name)
@@ -189,8 +190,10 @@ if __name__ == '__main__':
     raw.add_argument('--yielded-capture-remediation', action='store_true')
     raw.add_argument('--yielded-wait-remediation', action='store_true')
     raw.add_argument('--yielded-parent-review', action='store_true')
+    raw.add_argument('--yielded-parent-remediation', action='store_true')
     args = parser.parse_args()
-    contract_name = (YIELDED_CONTRACT if args.yielded_parent_review else
+    contract_name = (YIELDED_REMEDIATION_CONTRACT if args.yielded_parent_remediation else
+                     YIELDED_CONTRACT if args.yielded_parent_review else
                      'evals/skills/routing/sdk-raw-response-review-v0.6.json' if args.yielded_wait_remediation else
                      'evals/skills/routing/sdk-raw-response-review-v0.5.json' if args.yielded_capture_remediation else
                      'evals/skills/routing/sdk-raw-response-review-v0.4.json' if args.yielded_capture_review else

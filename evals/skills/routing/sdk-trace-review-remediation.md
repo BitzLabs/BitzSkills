@@ -210,3 +210,13 @@ wire本文やprovider前置文脈は新API自身の認定ではなく、caller�
 全native lifecycle・任意複数cell・実provider・一次測定・Phase/Gateを認定しない。
 局所82件/0.756s/OK/exit0、原捕捉の全target24行とnative子2IDにも適合した。
 新模擬/HTTP/有料モデル0。同6公開パスの有限v0.20/専用出力20で独立静的検分1回を準備する。
+
+## 20回目の静的検分からの親セル継続監査の是正
+
+source `5f874622d77fa10978a2ab56055539af9d28abec` の同6ファイルの別SOLはP2=1。
+親が中央のcodex.api_requestへturn_id=otherを追加し、固定親セル継続の診断が通る条件を再現した。
+neutralイベントは同threadに加え、turn_idが存在する場合は確定turnへの一致を要求する。
+原ログで省略されたturn_idは補完しない。3つのAPI要求と他のneutralイベントに対し、
+正しい明示turn・省略の正常系と、別turn/null/空/別型の拒否回帰を追加する。
+原検分20の応答と消費枠を保持し、新有限v0.21・専用出力21で同6公開パスの修正版を1回検分する。
+任意複数セル・全provider相関・実provider・一次測定・Phase/Gateは未認定のまま。

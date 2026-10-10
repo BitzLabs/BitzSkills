@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "phase": 4,
   "date": "2026-10-10",
   "scope": "fixed-yielded-parent-local-verification-only",
@@ -95,13 +95,32 @@
   "newMockTrials": 0,
   "newLocalHttpRequests": 0,
   "paidModelCalls": 0,
-  "independentSolInvocations": 0,
-  "independentReviewStatus": "not_started_auto_review_rejected",
+  "independentSolInvocations": 1,
+  "independentReviewStatus": "review_findings",
   "independentReviewContract": "evals/skills/routing/sdk-trace-review-v0.20.json",
   "publicPayloadBytes": 189242,
   "autoReviewRejections": 1,
   "primaryModelTrajectories": 0,
   "automaticRetries": 0,
   "phaseComplete": false,
-  "eligibleForMeasurement": false
+  "eligibleForMeasurement": false,
+  "independentReview": {
+    "sourceCommit": "5f874622d77fa10978a2ab56055539af9d28abec",
+    "contractPath": "evals/skills/routing/sdk-trace-review-v0.20.json",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-20",
+    "receiptSha256": "c9d873d6fa9213966690a0631e6a746b833bb5425b22de4b12d92d4db02f9cc8",
+    "responseSha256": "d766c9b71dd06461f5e778bd5fd8c6dd078d21e52fc9dfb0f18fa30604f92b45",
+    "status": "review_findings",
+    "actualInvocations": 1,
+    "usage": {
+      "input_tokens": 59635,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1271,
+      "reasoning_output_tokens": 837
+    }
+  },
+  "reviewFindingCount": 1,
+  "remediationReviewContract": "evals/skills/routing/sdk-trace-review-v0.21.json",
+  "remediationIndependentlyPassed": false
 }
