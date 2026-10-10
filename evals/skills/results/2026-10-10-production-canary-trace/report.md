@@ -46,3 +46,8 @@ verify-recorded-results.pyはexit0で元525/最新528/独立SOL3/各P2=1/一次0
 有限公開canary、本測定、5種類の実地比較とSkill Gate 4。送信許可待ちではなく、実装・証拠の未充足である。
 5種は局所バグ、新公開動作、仕様/文書、security/未信頼入力、複合workspace。
 時間・人手監督・費用・手戻り・欠陥・誤発火・追跡の比較を未実施として保持する。Phase 4未完了。
+
+sourcea22df600のclean全529件/64.124s/OK/exit0。限定v0.30は修正対象の公開2本文16953bytesのみをSOLへ送信した。
+独立SOL1回/CLIexit0/timeoutなし/指摘0、input12761/output231/reasoning173。対象是正の独立静的検分のみ通過。
+原27/28/29の指摘・原応答・消費は保持する。この区切りのSOL計4、一次/委譲/retry0。
+依存全実装、実provider、全初期入力、Phase/Gateを今回の静的検分から認定しない。
