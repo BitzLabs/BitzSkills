@@ -22,10 +22,12 @@ def sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
-def run(source):
+def run(source, remediation=False):
     trace.require(guard.git(ROOT, 'status', '--porcelain') == b'' and
                   guard.git(ROOT, 'rev-parse', 'HEAD').decode().strip() == source, 'clean fixed HEAD required')
-    contract = trace.strict_json(guard.git(ROOT, 'show', source + ':' + CONTRACT))
+    contract_name = 'evals/skills/routing/sdk-trace-review-v0.25.json' if remediation else CONTRACT
+    output_name = '.venv/production-canary-design-check-02' if remediation else OUTPUT
+    contract = trace.strict_json(guard.git(ROOT, 'show', source + ':' + contract_name))
     before = guard.verify(ROOT, source, contract['sourceFiles'])
     trace.require(contract['maximumInvocations'] == 1 and contract['automaticRetries'] == 0 and
                   contract['primaryModelTrajectories'] == 0, 'finite static review required')
@@ -42,7 +44,7 @@ def run(source):
         trace.require(sha((old / name).read_bytes()) == previous[key], 'previous artifact drift')
     trace.require(trace.strict_json((old / 'receipt.json').read_bytes())['sourceCommit'] == previous['sourceCommit'],
                   'previous source mismatch')
-    output = ROOT / OUTPUT
+    output = ROOT / output_name
     trace.require(not any(p.is_symlink() for p in (output, *output.parents)), 'output symlink')
     output.mkdir(mode=0o700)
     command = ['uv', '--cache-dir', str(ROOT / '.venv/uv-cache'), 'run', '--offline', '--project',
@@ -56,7 +58,7 @@ def run(source):
     after = guard.verify(ROOT, source, contract['sourceFiles'])
     passed = process.returncode == 0 and matched is not None and before == after and guard.git(ROOT, 'status', '--porcelain') == b''
     value = dict(status='canary_design_preparation_checked' if passed else 'canary_design_preparation_stopped',
-                 sourceCommit=source, contractPath=CONTRACT, outputRelativeRoot=OUTPUT,
+                 sourceCommit=source, contractPath=contract_name, outputRelativeRoot=output_name,
                  sourceGuards=dict(before=before, after=after), payloadInventory=inventory,
                  payloadBytes=sum(item['bytes'] for item in inventory),
                  previousPinsMatched=True, independentReviewPerformed=False,
@@ -73,4 +75,6 @@ def run(source):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--source', required=True)
-    run(parser.parse_args().source)
+    parser.add_argument('--remediation', action='store_true')
+    args = parser.parse_args()
+    run(args.source, remediation=args.remediation)

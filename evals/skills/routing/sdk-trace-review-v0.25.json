@@ -1,0 +1,54 @@
+{
+  "version": "sdk-trace-review-0.25.0",
+  "phase": 4,
+  "scope": "public-sdk-trace-component-static-review-only",
+  "target": "public-production-canary-integration-design-remediation",
+  "model": "gpt-6.1-sol",
+  "timeoutSeconds": 300,
+  "maximumInvocations": 1,
+  "automaticRetries": 0,
+  "primaryModelTrajectories": 0,
+  "independentReviewerSol": 1,
+  "codexPath": "/home/hide/.nvm/versions/node/v26.5.0/bin/codex",
+  "codexVersion": "codex-cli 0.160.1",
+  "outputRelativeRoot": ".venv/sdk-trace-independent-review-25",
+  "payloadFiles": [
+    "evals/skills/routing/production-canary-integration-design.md",
+    "evals/skills/routing/production_ledger.py",
+    "evals/skills/routing/production_review_ledger.py",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "tests/skills/test_production_review_ledger.py",
+    "tests/skills/test_production_ledger.py"
+  ],
+  "sourceFiles": [
+    "evals/skills/routing/production-canary-integration-design.md",
+    "evals/skills/routing/production_ledger.py",
+    "evals/skills/routing/production_review_ledger.py",
+    "evals/skills/routing/run_sdk_trace_review.py",
+    "tests/skills/test_production_review_ledger.py",
+    "tests/skills/test_production_ledger.py",
+    "evals/skills/routing/production_trace.py",
+    "evals/skills/routing/production_cli_probe.py",
+    "evals/skills/routing/source_guard.py",
+    "evals/skills/routing/sdk-trace-review.schema.json",
+    "evals/skills/routing/sdk-trace-review-v0.25.json",
+    "evals/skills/routing/check_canary_design_preparation.py"
+  ],
+  "constraints": [
+    "Phase 4の検証期間中の送信は本人が明示承認済み。公開6本文の指摘是正だけを静的SOL1回/300秒で検分し、一次・委譲・自動retry0。",
+    "前回は別worktreeの再予約、CLI未知イベントと開始欠落の見逃し、初回構成の検査不足を指摘。親も原応答を照合し、原結果・消費枠は保持する。",
+    "新共通静的台帳は有限契約pathをidentityとしてO_EXCL/fsyncで起動前に予約する。source/output/worktree変更による同契約の再予約を拒否する。過去の台帳未接続起動を接続済みと偽装しない。",
+    "CLI0.160.1の実exec JSONはthread.started/既知warning/turn.started/agent_message completed/turn.completed。item.startedを補完せずこの既知短縮profileを厳密検査する。未知/欠落/重複/終端後を拒否する。",
+    "初回専用bind_initial_canary_inputsで2件/2反復/予算4を要求する。汎用bind_inputsの1件/1反復という有限範囲は維持する。",
+    "設計はdraft、実provider/完全入力/要求上限/一次台帳接続/実地/Phase/Gateは未認定。未実装であること自体を欠陥にせず、具体的な偽通過や枠回避の条件を示す。",
+    "保持入力・期待値・原捕捉・原ログ・認証内容は送らない。追加モデル・tool・委譲・私的ファイル読取りは禁止。"
+  ],
+  "previousReview": {
+    "sourceCommit": "747c4988536fa61af1e91f9e30853e4ad4de58e6",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-24",
+    "receiptSha256": "34962b3d5edfee9d7e697cf1f75c75f5224b62ff9360d745df41906cab6afac2",
+    "responseSha256": "6f72523ce76c774765d35aaf8f90b977c44a069812f4ea6db862362871d24a52",
+    "oldInvocationsConsumed": 1,
+    "oldRemaining": 0
+  }
+}

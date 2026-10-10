@@ -108,6 +108,15 @@ def safe_tree(path: Path):
     require(not any(p.is_symlink() for p in [path, *path.parents]), 'ledger symlink')
 
 
+def bind_initial_canary_inputs(contract_raw, cases_raw, catalog_raw, manifest_raw, instructions_raw, environment_raw):
+    """初回案の2件×2反復・一次4/独立4を汎用束縛の後に要求する。"""
+    bound = bind_inputs(contract_raw, cases_raw, catalog_raw, manifest_raw, instructions_raw, environment_raw)
+    require(len(bound.case_ids) == 2 and bound.repetitions == 2 and
+            bound.contract['budget']['primaryModelTrajectories'] == 4 and
+            bound.contract['budget']['independentReviewerSol'] == 4, 'initial canary requires two cases and two repetitions')
+    return bound
+
+
 def exclusive(path: Path, raw: bytes):
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     with os.fdopen(fd, 'wb') as out:

@@ -39,7 +39,8 @@ code-modeのexec/waitはその2操作への経路として観測し、任意Pyth
 案は公開positive1件と公開negative1件、各2反復。一次4軌跡と独立SOL検分4回、自動retry・委譲0。
 設計の静的検分1回は別枠であり、一次4枠も独立一次検分4枠も消費しない。
 この設計文書は一次起動の契約ではない。全前提が揃った後に原入力hashを持つ有限契約を固定する。
-全ケースを開始する前に、`bind_inputs()` の2件・2反復・予算整合を検査する。
+全ケースを開始する前に、専用 `bind_initial_canary_inputs()` で2件・2反復・予算4を要求する。
+汎用 `bind_inputs()` の1件・1反復も扱う有限束縛と区別する。
 
 製品接続は `open_ledger(repository, bound)` だけを使う。
 git-common-dirから求めた共通repository配下の `.venv/production-routing-primary-ledger` を全worktreeで共有する。
@@ -52,6 +53,13 @@ campaign ID、output、source、別worktreeの変更で枠を作り直さない�
 別の親照合器が原receipt/応答/stdio/SDK通知/host trace/source guardを再読取りし、実hashと内容を照合する。
 その確定した親照合結果へreviewを束縛してから台帳へ記録する。欠落・変造をacceptedにしない。
 independentReviewerの起動予約も永続化し、停止後の同枠再起動や別出力への差替えを許さない。
+
+設計の静的検分も共通repository配下の専用台帳へ起動前に1枠予約する。
+予約identityは有限契約のパス。source、output、worktreeを変更して同契約を再起動できない。
+指摘の是正は別の新有限契約へ固定し、過去の応答・失敗・消費枠を保持する。自動retryとは区別する。
+CLI0.160.1のexec JSONはmessage/reasoningをcompletedだけで通知する既知の短縮profile。
+thread→既知startup警告→turn開始→reasoningまたは最終message→turn完了の順序・一意ID・usageを検査し、
+未知イベント、開始欠落、重複終端、終端後の追加を拒否する。観測していないitem開始を補完しない。
 
 ## 4. 実行上限と停止
 

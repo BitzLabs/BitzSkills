@@ -66,6 +66,14 @@ class ProductionLedgerTests(unittest.TestCase):
         self.assertNotIn('PUBLIC-A', self.bound.payloads[0].decode())
         self.assertNotIn('operator-only', self.bound.payloads[0].decode())
 
+    def test_initial_canary_requires_exact_two_cases_two_repetitions(self):
+        self.assertEqual(ledger.bind_initial_canary_inputs(ledger.encoded(self.contract), *self.raw_inputs), self.bound)
+        smaller = {**self.contract, 'repetitions': 1,
+                   'budget': {**self.contract['budget'], 'primaryModelTrajectories': 2, 'independentReviewerSol': 2}}
+        self.assertEqual(self.bind(smaller).repetitions, 1)
+        with self.assertRaises(ValueError):
+            ledger.bind_initial_canary_inputs(ledger.encoded(smaller), *self.raw_inputs)
+
     def test_each_raw_input_is_hash_bound(self):
         for index in range(5):
             raws = list(self.raw_inputs)

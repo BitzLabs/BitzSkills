@@ -11,6 +11,7 @@ import subprocess
 
 import production_cli_probe as cli
 import production_trace as trace
+import production_review_ledger as review_ledger
 import source_guard
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -20,6 +21,7 @@ YIELDED_REMEDIATION_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.21.json
 SEQUENTIAL_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.22.json'
 RAW_TWO_STAGE_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.23.json'
 CANARY_DESIGN_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.24.json'
+CANARY_DESIGN_REMEDIATION_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.25.json'
 RAW_CONTRACTS = {'evals/skills/routing/sdk-raw-response-review-v0.1.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.2.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.3.json',
@@ -34,37 +36,64 @@ require = trace.require
 def review_response(base: Path, stdout: bytes, source: str, schema: bytes, contract: dict):
     events = [trace.strict_json(line) for line in stdout.splitlines()]
     startup_warnings = []
-    started = False
+    thread = started = finished = final = False
+    ids = set()
+    messages = []
+    usage = None
     allowed_startup_warning = ('Code Mode is unavailable because code-mode host is disabled. '
                               'Code mode will fail closed; enable `features.code_mode_host` and install `codex-code-mode-host`.')
     for event in events:
-        if event.get('type') == 'turn.started':
-            require(not started, 'multiple review turns')
+        require(isinstance(event, dict) and not finished, 'review event outside lifecycle')
+        kind = event.get('type')
+        if kind == 'thread.started':
+            require(set(event) == {'type', 'thread_id'} and not thread and not started and
+                    isinstance(event['thread_id'], str) and bool(event['thread_id'].strip()), 'review thread start')
+            thread = True
+        elif kind == 'turn.started':
+            require(set(event) == {'type'} and thread and not started, 'review turn start')
             started = True
-        if event.get('item', {}).get('type') == 'error':
-            require(event.get('type') == 'item.completed' and not started and
-                    event['item'].get('message') == allowed_startup_warning and not startup_warnings,
-                    'unknown or late review error')
-            startup_warnings.append(hashlib.sha256(cli.encoded(event)).hexdigest())
-    ends = [e for e in events if e.get('type') == 'turn.completed']
-    messages = [e['item'] for e in events if e.get('type') == 'item.completed' and e.get('item', {}).get('type') == 'agent_message']
-    actions = [e for e in events if e.get('type') in {'item.started', 'item.completed'} and
-               e.get('item', {}).get('type') not in {'reasoning', 'agent_message', 'error'}]
-    require(len(ends) == 1 and len(messages) == 1 and not actions and
-            not any(e.get('type') in {'error', 'turn.failed'} for e in events), 'review terminal or forbidden tool action')
+        elif kind == 'item.completed':
+            require(set(event) == {'type', 'item'} and thread and isinstance(event['item'], dict), 'review item fields')
+            item = event['item']
+            ident = item.get('id')
+            require(isinstance(ident, str) and bool(ident.strip()) and ident not in ids, 'review item identity')
+            ids.add(ident)
+            if item.get('type') == 'error':
+                require(set(item) == {'id', 'type', 'message'} and not started and
+                        item['message'] == allowed_startup_warning and not startup_warnings, 'unknown or late review error')
+                startup_warnings.append(hashlib.sha256(cli.encoded(event)).hexdigest())
+            else:
+                # CLI0.160.1 exec --jsonはmessage/reasoningをcompletedだけで通知する。
+                # 未観測のitem.startedを合成せず、この既知の短縮profileだけを許可する。
+                require(started and not final and set(item) == {'id', 'type', 'text'} and
+                        item['type'] in {'agent_message', 'reasoning'} and isinstance(item['text'], str), 'unknown review item')
+                if item['type'] == 'agent_message':
+                    messages.append(item)
+                    final = True
+        elif kind == 'turn.completed':
+            require(set(event) == {'type', 'usage'} and started and final, 'review terminal order')
+            usage = event['usage']
+            require(isinstance(usage, dict) and set(usage) == {'input_tokens', 'cached_input_tokens',
+                    'cache_write_input_tokens', 'output_tokens', 'reasoning_output_tokens'} and
+                    all(type(value) is int and value >= 0 for value in usage.values()), 'review usage fields')
+            finished = True
+        else:
+            raise ValueError('unknown review event')
+    require(thread and started and finished and len(messages) == 1, 'review terminal missing')
     response = trace.strict_json((base / 'response.json').read_bytes())
     require(response == trace.strict_json(messages[0]['text']), 'review final mismatch')
     trace.jsonschema.Draft202012Validator(trace.strict_json(schema)).validate(response)
     require(response['sourceCommit'] == source and response['scope'] == contract['scope'] and
             all(f['path'] in contract['payloadFiles'] for f in response['findings']) and
             response['verdict'] == ('findings' if response['findings'] else 'pass'), 'review response binding')
-    return response, ends[0].get('usage'), startup_warnings
+    return response, usage, startup_warnings
 
 
 def run(source: str, contract_name: str = CONTRACT):
-    require(contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, SEQUENTIAL_CONTRACT, RAW_TWO_STAGE_CONTRACT, CANARY_DESIGN_CONTRACT, *RAW_CONTRACTS}, 'unknown static review contract')
+    require(contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, SEQUENTIAL_CONTRACT, RAW_TWO_STAGE_CONTRACT, CANARY_DESIGN_CONTRACT, CANARY_DESIGN_REMEDIATION_CONTRACT, *RAW_CONTRACTS}, 'unknown static review contract')
     require(source_guard.git(ROOT, 'status', '--porcelain') == b'', 'clean tree required')
-    contract = trace.strict_json(source_guard.git(ROOT, 'show', source + ':' + contract_name))
+    contract_raw = source_guard.git(ROOT, 'show', source + ':' + contract_name)
+    contract = trace.strict_json(contract_raw)
     before = source_guard.verify(ROOT, source, contract['sourceFiles'])
     previous = contract.get('previousReview', contract.get('previousFailure'))
     if previous is not None:
@@ -83,6 +112,7 @@ def run(source: str, contract_name: str = CONTRACT):
                              '.venv/sdk-trace-independent-review-21',
                              '.venv/sdk-trace-independent-review-22',
                              '.venv/sdk-trace-independent-review-23',
+                             '.venv/sdk-trace-independent-review-24',
                              '.venv/sdk-raw-response-independent-review-01',
                              '.venv/sdk-raw-response-independent-review-02',
                              '.venv/sdk-raw-response-independent-review-03',
@@ -101,6 +131,8 @@ def run(source: str, contract_name: str = CONTRACT):
             contract['primaryModelTrajectories'] == 0, 'finite review required')
     base = ROOT / contract['outputRelativeRoot']
     require(not any(p.is_symlink() for p in (base, *base.parents)), 'review path symlink')
+    require(not base.exists(), 'review output already exists')
+    shared_reservation = review_ledger.reserve_static_review(ROOT, contract_name, source, contract_raw)
     base.mkdir(mode=0o700)
     for name in ('work', 'tmp', 'codex-home', 'state', 'logs'):
         (base / name).mkdir(mode=0o700)
@@ -116,7 +148,7 @@ def run(source: str, contract_name: str = CONTRACT):
               'あなたが実行していない試験や原証拠の検分を成功と書かないでください。'
               '指定schemaのJSONだけを回答してください。\n'
               f'sourceCommit={source}\nscope={contract["scope"]}\n')
-    if contract_name == CANARY_DESIGN_CONTRACT:
+    if contract_name in {CANARY_DESIGN_CONTRACT, CANARY_DESIGN_REMEDIATION_CONTRACT}:
         prompt = ('あなたは作業者と別の独立した設計検分者です。日本語で回答してください。'
                   '次の確定した公開本文だけから実provider公開canaryと一次台帳の統合設計を静的検分してください。'
                   'tool、追加モデル、委譲、ファイル読取り、試験実行は禁止です。'
@@ -126,7 +158,7 @@ def run(source: str, contract_name: str = CONTRACT):
                   'あなたが実行していない試験や原証拠の検分を成功と書かないでください。'
                   '指定schemaのJSONだけを回答してください。\n'
                   f'sourceCommit={source}\nscope={contract["scope"]}\n')
-    if contract_name in RAW_CONTRACTS or contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, SEQUENTIAL_CONTRACT, RAW_TWO_STAGE_CONTRACT, CANARY_DESIGN_CONTRACT}:
+    if contract_name in RAW_CONTRACTS or contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, SEQUENTIAL_CONTRACT, RAW_TWO_STAGE_CONTRACT, CANARY_DESIGN_CONTRACT, CANARY_DESIGN_REMEDIATION_CONTRACT}:
         prompt += '\nこの検分の固定制約:\n' + '\n'.join(contract['constraints']) + '\n'
     for name in contract['payloadFiles']:
         raw = source_guard.git(ROOT, 'show', source + ':' + name)
@@ -187,6 +219,7 @@ def run(source: str, contract_name: str = CONTRACT):
              'independentReviewerSolInvocations': 1, 'primaryModelTrajectories': 0, 'automaticRetries': 0,
              'promptSha256': hashlib.sha256(prompt_raw).hexdigest(), 'stdoutSha256': hashlib.sha256(stdout).hexdigest(),
              'stderrSha256': hashlib.sha256(stderr).hexdigest(), 'sourceGuards': {'before': before, 'invoke': invoke_guard, 'after': after},
+             'sharedReservation': shared_reservation,
              'certifiesRuntimeEvidence': False, 'certifiesPhaseCompletion': False}
     if process.returncode == 0 and not timed_out and before == after:
         try:
@@ -217,8 +250,10 @@ if __name__ == '__main__':
     raw.add_argument('--sequential-parent-review', action='store_true')
     raw.add_argument('--raw-two-stage-review', action='store_true')
     raw.add_argument('--canary-design-review', action='store_true')
+    raw.add_argument('--canary-design-remediation', action='store_true')
     args = parser.parse_args()
-    contract_name = (CANARY_DESIGN_CONTRACT if args.canary_design_review else
+    contract_name = (CANARY_DESIGN_REMEDIATION_CONTRACT if args.canary_design_remediation else
+                     CANARY_DESIGN_CONTRACT if args.canary_design_review else
                      RAW_TWO_STAGE_CONTRACT if args.raw_two_stage_review else
                      SEQUENTIAL_CONTRACT if args.sequential_parent_review else
                      'evals/skills/routing/sdk-raw-response-review-v0.8.json' if args.sequential_capture_remediation else

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import re
@@ -51,15 +52,26 @@ def run():
     old = contract['previousReview']
     for name, key in [('receipt.json', 'receiptSha256'), ('response.json', 'responseSha256')]:
         trace.require(sha((ROOT / old['outputRelativeRoot'] / name).read_bytes()) == old[key], 'previous review drift')
-    trace.require(not (ROOT / public['approvalReview']['outputRelativeRoot']).exists(), 'approval pending but model output exists')
+    review = public.get('independentReview')
+    if review is None:
+        trace.require(not (ROOT / public['approvalReview']['outputRelativeRoot']).exists(), 'approval pending but model output exists')
+    else:
+        spec = importlib.util.spec_from_file_location('raw_review_record', ROOT / 'evals/skills/results/2026-10-09-sdk-raw-response-capture/verify-recorded-results.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        checked = module.recheck_review(review)
+        trace.require(checked['verdict'] == 'findings' and
+                      {priority: sum(f['priority'] == priority for f in checked['findings']) for priority in ['P1', 'P2', 'P3']} == review['findings'], 'review finding counts')
     trace.require(public['approvalReview']['status'] == 'rejected-before-process-creation' and
                   all(public['approvalReview'][key] == 0 for key in ['modelReservations', 'modelInvocations', 'payloadTransmissions']), 'pre-start rejection counts')
-    trace.require(all(public[key] == 0 for key in ['primaryModelTrajectories', 'independentSolInvocations', 'automaticRetries', 'delegations']) and
+    trace.require(public['independentSolInvocations'] == (1 if review else 0) and
+                  all(public[key] == 0 for key in ['primaryModelTrajectories', 'automaticRetries', 'delegations']) and
                   public['eligibleForMeasurement'] is public['phaseComplete'] is False, 'scope drift')
     print(json.dumps(dict(status='recorded_canary_design_preparation_matches_original_bytes', tests=tests['count'],
                          payloadFiles=len(inventory), payloadBytes=public['payloadBytes'],
-                         independentSolInvocations=0, primaryModelTrajectories=0,
-                         modelOutputAbsent=True, eligibleForMeasurement=False), ensure_ascii=False))
+                         independentSolInvocations=public['independentSolInvocations'], primaryModelTrajectories=0,
+                         independentReviewFindings=review['findings'] if review else None,
+                         eligibleForMeasurement=False), ensure_ascii=False))
 
 
 if __name__ == '__main__':
