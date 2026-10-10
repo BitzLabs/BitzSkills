@@ -275,3 +275,14 @@ sourcef8e27f2のSOLはstatic_review_passed/指摘0/CLI exit0。親の原応答�
 今回追加SOL1/input35784/output387/reasoning326、raw静的系列累計3。一次0・委譲0・自動retry0。
 旧P2/原結果/消費枠を保持する。この静的検分をPhase全体/Gate/実provider/一次測定へ代用しない。
 次はSDK raw通知の専用交換監査への接続。既存診断の未知params停止は保持する。
+
+### Phase 4：SDK raw通知の専用交換監査への接続（2026-10-10）
+
+確定ref3cc0690のclean全472件/62.714s/OK/exit0と、公開6パスの独立SOL指摘0/CLI exit0を確認した。
+raw flagと既知通知だけを原入力不変の明示投影へ分離し、既存native/MCP本文/provider交換を監査する別入口を追加した。
+原RPCとSDK raw配送値を完全照合し、開始RPCのthread/turn、開始完了間のraw、call/output、固定final投影を検査する。
+旧入口の未知params停止と、全raw文脈/全native lifecycle/実provider/一次測定の未認定は保持する。
+原捕捉2件への適用と原hash/Git/guard/実試験終端/原モデル応答の再照合もexit0。
+今回新mock/HTTP/probeモデル0、独立SOL1/input55756/output1047/reasoning991。SDK静的系列累計19、raw捕捉静的系列累計3。
+記録は `../results/2026-10-10-sdk-raw-exchange/`。次は固定yield/waitの原証拠捕捉と親セルの継続相関。
+eligibleForMeasurement=false、Phase/Gate全体は未認定。

@@ -1433,3 +1433,14 @@ sourcef8e27f2の独立SOLはstatic_review_passed/指摘0/CLI exit0。
 今回追加SOL1/input35784/output387/reasoning326、raw静的系列累計3。一次0・委譲0・自動retry0。
 旧P2/原結果/消費枠は保持。この静的検分はPhase/Step/Gate全体・実provider・一次測定の認定ではない。
 次はPython SDK raw通知の専用交換監査への接続。
+
+### Phase 4：SDK raw通知の専用交換監査への接続（2026-10-10）
+
+確定ref `3cc0690505c64951b06816fd5ae0272051351067` のclean全472件/62.714s/OK/exit0と独立SOL指摘0/CLI exit0を確認した。
+専用入口で原入力を保持し、raw flag/既知通知だけを明示投影へ分離して既存native/MCP本文/provider交換へ接続する。
+SDK raw配送値と原RPC、開始thread/turn、開始完了間のraw、provider call/output、固定final投影を照合する。
+旧SDK交換入口の未知params停止を維持し、全raw文脈/全native lifecycle/実provider/一次測定は認定しない。
+旧原捕捉2件への適用と原hash/Git/guard/実試験終端/原応答の再照合もexit0。
+今回新mock/HTTP/probeモデル0、独立SOL1/input55756/output1047/reasoning991。SDK静的系列累計19、raw捕捉静的系列累計3。
+`evals/skills/results/2026-10-10-sdk-raw-exchange/` に記録する。
+次は固定yield/waitの原証拠捕捉と親セルの継続相関。eligibleForMeasurement=false、Phase/Step/Gate全体は未認定。
