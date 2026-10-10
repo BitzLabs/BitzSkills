@@ -97,10 +97,19 @@ def run():
         tests = 489
     if 'finalIndependentReview' in summary:
         final = reviews.recheck_review(summary['finalIndependentReview'])
+        corrected_source = summary['remediationVerification']['sourceCommit']
+        review_source = summary['finalIndependentReview']['sourceCommit']
+        final_contract = trace.strict_json(guard.git(ROOT, 'show', review_source + ':' + summary['remediationReviewContract']))
+        payloads = [guard.git(ROOT, 'show', review_source + ':' + p) for p in final_contract['payloadFiles']]
+        require(final_contract['payloadFiles'] == contract['payloadFiles'] and
+                sum(map(len, payloads)) == summary['finalPublicPayloadBytes'] == 192114 and
+                all(raw == guard.git(ROOT, 'show', corrected_source + ':' + p) for p, raw in
+                    zip(final_contract['payloadFiles'], payloads)), 'corrected tested and reviewed payloads differ')
         require(final['verdict'] == 'pass' and final['findings'] == [] and
                 summary['finalIndependentReview']['status'] == 'static_review_passed' and
                 summary['independentReviewStatus'] == 'static_review_passed' and
                 summary['remediationIndependentlyPassed'] is True, 'yielded parent corrected independent review')
+        require(summary['finalReviewFindingCount'] == 0, 'corrected finding count')
         invocations += 1
     else:
         require(summary['independentReviewStatus'] == 'review_findings' and

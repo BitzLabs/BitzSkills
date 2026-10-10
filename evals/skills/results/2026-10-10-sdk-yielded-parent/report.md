@@ -37,6 +37,15 @@ neutralイベントの明示turn_idを確定turnへ照合する是正と回帰�
 v0.21の最初の要求は実行器の前回保存先20の許可一覧欠落によりunknown previous reviewでモデル起動前に停止した。
 この停止で出力21・予約・送信・モデル起動は0。保存先を明示追加し、原停止を保持する。
 
+保存先登録後のsource `150066085466344fd3026b675486fa26a729f4a3` はv0.21の初回1回でstatic_review_passed/指摘0/CLIexit0。
+入力60463/cached0/出力1476/推論1420 tokens。原receipt SHA256 `59409d8c4802df380c6df1b358bc90bc57bfae0ba7f4dca78917938e2c1da0c2`、
+原response SHA256 `f5ca7b969a8a5d8c0c74a386696b955aea117bfd70e7319ffcfea5715df44071`。
+親が原stdio/schema/最終JSON/usage/hash、確定Git、前後guard、有限予約を再照合した。
+全489試験sourceと独立検分sourceの同6公開パス本文は完全一致する。後者の追加差分は実行器の保存先登録と原記録。
+公開記録照合器は旧P2の歴史Gitへの原捕捉コピーによる再現と、是正版の拒否・原捕捉正常系も再適用する。
+当区切りのSOL実起動2/SDK静的系列累計21、一次・委譲・自動retry0。模擬・HTTP追加0。
+固定親セル継続の局所是正と当該静的検分のみ通過。任意複数exec/cell、全raw/provider文脈、実provider、一次測定、Phase/Step/Gateは未認定。
+
 記録照合コマンドは以下。新モデル・試行・HTTP・書込みを行わない。
 
 ```text

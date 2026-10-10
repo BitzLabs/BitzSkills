@@ -29,3 +29,16 @@
 この回答後のsource `5f874622d77fa10978a2ab56055539af9d28abec` の起動要求は自動承認審査を通過した。
 原v0.20/専用出力20で初回1回を実行し、P2=1の原応答と消費枠を保持する。
 同6パスの是正版は別の有限v0.21/専用出力21で各確定ref1回とし、追加パスや原ログ本文へ承認を広げない。
+
+是正版はsource `150066085466344fd3026b675486fa26a729f4a3` の同6パス192114 bytesだけを1回送信した。
+全489試験source `1c6aa5f0c937ba418dfa3278f7f0723b05bd9c5d` と同6パス本文は完全一致する。
+以下はその確定refから測定した更新本文。旧表・旧応答・消費枠は保持する。
+
+| パス | bytes | SHA256 |
+|---|---:|---|
+| evals/skills/routing/production_sdk_trace.py | 48124 | `3042916de1ca0c42fdb4b3744751be5afa529b2ec09ed62cf5af37c95082ea18` |
+| evals/skills/routing/production_trace.py | 20872 | `18e5e58331f5420cee0b4047474ee8569775603b7cabd57c24084668fa354aca` |
+| tests/skills/test_production_sdk_trace.py | 60140 | `8185bb7ed692064c956c78249d4e33055f8a0c61db9dbc7ed16f09d390b15be8` |
+| evals/skills/results/2026-10-08-sdk-trace-connection/verify-parent-links.py | 13814 | `decf025e667fa0a988687b79eba002e00d5aa60ea4a7bb41d8d64138c373f507` |
+| evals/skills/routing/sdk-trace-review-remediation.md | 18563 | `418d1587225a984323d293d4f954cfb8aec8a3c92f1b2d91562501a39a6cf43e` |
+| tests/skills/test_production_trace.py | 30601 | `80f1037386cd22ebe02c4c78f27141583cd5ed56e199a60113fbd2f44d2dbd4b` |

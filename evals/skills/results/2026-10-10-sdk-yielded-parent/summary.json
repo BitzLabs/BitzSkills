@@ -1,8 +1,8 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "phase": 4,
   "date": "2026-10-10",
-  "scope": "fixed-yielded-parent-local-verification-only",
+  "scope": "fixed-yielded-parent-remediation-independently-reviewed",
   "sourceCommit": "4ec01ad8e1783dd9596406ac1f11bebaa5b9f7bb",
   "verification": {
     "sourceCommit": "4ec01ad8e1783dd9596406ac1f11bebaa5b9f7bb",
@@ -95,8 +95,8 @@
   "newMockTrials": 0,
   "newLocalHttpRequests": 0,
   "paidModelCalls": 0,
-  "independentSolInvocations": 1,
-  "independentReviewStatus": "review_findings",
+  "independentSolInvocations": 2,
+  "independentReviewStatus": "static_review_passed",
   "independentReviewContract": "evals/skills/routing/sdk-trace-review-v0.20.json",
   "publicPayloadBytes": 189242,
   "autoReviewRejections": 1,
@@ -122,7 +122,7 @@
   },
   "reviewFindingCount": 1,
   "remediationReviewContract": "evals/skills/routing/sdk-trace-review-v0.21.json",
-  "remediationIndependentlyPassed": false,
+  "remediationIndependentlyPassed": true,
   "remediationVerification": {
     "sourceCommit": "1c6aa5f0c937ba418dfa3278f7f0723b05bd9c5d",
     "outputRelativeRoot": ".venv/production-sdk-yielded-parent-verification-02",
@@ -166,5 +166,23 @@
       "transmissions": 0,
       "automaticRetries": 0
     }
-  ]
+  ],
+  "finalIndependentReview": {
+    "sourceCommit": "150066085466344fd3026b675486fa26a729f4a3",
+    "contractPath": "evals/skills/routing/sdk-trace-review-v0.21.json",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-21",
+    "receiptSha256": "59409d8c4802df380c6df1b358bc90bc57bfae0ba7f4dca78917938e2c1da0c2",
+    "responseSha256": "f5ca7b969a8a5d8c0c74a386696b955aea117bfd70e7319ffcfea5715df44071",
+    "status": "static_review_passed",
+    "actualInvocations": 1,
+    "usage": {
+      "input_tokens": 60463,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1476,
+      "reasoning_output_tokens": 1420
+    }
+  },
+  "finalReviewFindingCount": 0,
+  "finalPublicPayloadBytes": 192114
 }

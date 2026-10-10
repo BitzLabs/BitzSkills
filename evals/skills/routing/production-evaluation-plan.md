@@ -323,3 +323,13 @@ eligibleForMeasurement=false、Phase/Gate全体は未認定。
 source5f874622/P2=1/CLIexit0。中央API要求の別turn明示が受理される指摘を親も再現した。
 neutralイベントの明示turnを確定turnへ照合し、局所83件/0.798s/OK/exit0。原指摘と消費枠を保持する。
 新有限v0.21で同6パスの是正版を1回検分する。一次・委譲・自動retry0、Phase/Step/Gate全体は未認定。
+
+### Phase 4：親セル継続監査の是正後の独立検分通過（2026-10-10）
+
+source1c6aa5fのclean全489件/64.437s/OK/exit0と原捕捉24行/2子/cell1の再適用が通過。
+v0.21の最初の要求は前回保存先の許可一覧不足で起動前停止（予約・送信・消費0）し、その原停止を保持した。
+登録を修正したsource1500660の同6パス192114 bytesは全試験sourceの本文と一致し、初回SOL1回は指摘0/CLIexit0。
+親も原stdio/hash/Git/guard/予約を照合した。当区切りのSOL2、SDK静的系列累計21。一次・委譲・自動retry0。
+記録照合は旧P2の再現と新拒否、旧488/新489試験、両独立応答を原bytesへ照合する。
+次は固定の複数exec/cellの原証拠捕捉と局所相関を進める。全raw/provider文脈・実provider・一次台帳統合・canaryは残る。
+固定継続の局所是正と静的検分のみ通過。eligibleForMeasurement=false、Phase/Step/Gate全体は未認定。
