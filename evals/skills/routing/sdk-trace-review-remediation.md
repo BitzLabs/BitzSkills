@@ -235,3 +235,18 @@ wire本文・保存済みSSE/SDK配送値・原ホスト結果はcallerの原証
 原2execの最初の再適用では、runtime IDの全体一意条件が両セルのtool-1再利用を拒否して停止した。
 原telemetryで各execの異なるcell1/2に同名runtime IDが属することを確認し、セルとruntime IDの組へ束縛を是正した。
 正常回帰でも異なるセルでruntime IDを再利用する。旧1セル内の重複とdispatchの別IDは拒否する。
+
+## 固定3交換のSDK原文脈・raw通知への接続
+
+新diagnose_raw_two_stage_exchangeは2026-10-10の固定yield/waitと固定2execの3交換だけを別入口で検査する。
+原flagとraw通知を明示投影で分離して既存native子操作・終端診断へ適用し、モデル資源/前置文脈の完全一致、
+保存SSE・call/output・各stage全文/host引数/結果・再掲履歴/settingsを固定2段階検査へ照合する。
+raw値は原RPC外側timestampを保持してSDK配送method/paramsへ完全一致させ、同thread/turnの開始完了間だけを許す。
+raw入力3・call/output2組・finalの計8とcompleted3を固定順で要求し、生成id/内部turn metadata/各原wire/最終投影へ結ぶ。
+raw通知がadditional_tools/baseInstructionsを網羅するとは扱わず、それらは原provider要求の固定前置文脈として別途検査する。
+metadataの時刻/content kindsは型と有限値だけ、SSE bytesとの同一性・全native lifecycle・実provider・一次測定を認定しない。
+旧2交換入口・旧日付8/9の限定は維持する。新入口だけ日付10の既知2profileを許し、任意3交換へ広げない。
+局所92件/0.898s/OK/exit0、旧原yield/2execの双方にnative/raw/前置文脈/親相関の再適用が通過した。
+合成fixtureの最初の停止は追加tool宣言とtop-level toolsの不正な配置で、原SDKと同じadditional_tools形式へ直した。
+合成補足文脈のfingerprintは局所試験内だけ固定し、実SDKのfingerprintは保存済み原2捕捉へ実定数のまま照合する。
+同6公開パス・有限v0.23・専用出力23で初回1回静的検分する。新模擬/HTTP/一次/委譲/自動retry0。

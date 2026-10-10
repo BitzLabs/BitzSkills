@@ -4,6 +4,7 @@ import json
 import sys
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'evals/skills/routing'))
@@ -419,6 +420,144 @@ class ProductionSdkTraceTests(unittest.TestCase):
         args['received'] = frames
         args['sdk_raw_notifications'] = [{'method': f['method'], 'params': copy.deepcopy(f['params'])} for f in raw]
         return args
+
+    def two_stage_raw_exchange(self, profile):
+        args = copy.deepcopy(self.exchange())
+        args.pop('expected_program')
+        args['profile'] = profile
+        params = args['sent'][2]['params']
+        cwd = str(ROOT / '.venv/two-stage-test/work')
+        params.update(modelProvider='bitz_local_probe', cwd=cwd, experimentalRawEvents=True,
+                      baseInstructions='Local operation diagnostic simulation.',
+                      developerInstructions='LOCAL_SIMULATION_ONLY. No paid model or decision measurement.')
+        args['sent'][3]['params']['input'][0]['text'] = 'LOCAL_SIMULATION_ONLY'
+        frames = args['received']
+        for frame in frames:
+            if frame.get('id') == args['sent'][2]['id']: frame['result']['modelProvider'] = 'bitz_local_probe'
+            item = frame.get('params', {}).get('item', {})
+            if item.get('type') == 'userMessage': item['content'][0]['text'] = 'LOCAL_SIMULATION_ONLY'
+        context_tools = copy.deepcopy(args['provider_requests'][0]['tools'])
+        supplement = [{'type': 'input_text', 'text': params['developerInstructions']}] + [
+            {'type': 'input_text', 'text': 'Synthetic SDK context ' + str(i)} for i in range(3)]
+        # 合成のSDK補足資源を固定する。実SDKのfingerprintは原捕捉の再照合で別途検証する。
+        self.enterContext(patch.object(sdk, 'DIAGNOSTIC_TOOLS_SHA', sdk.digest(context_tools)))
+        self.enterContext(patch.object(sdk, 'DIAGNOSTIC_CONTEXT_SHA', sdk.digest(supplement[1:])))
+        inputs = [{'type': 'additional_tools', 'id': 'additional-tools', 'role': 'developer', 'tools': context_tools},
+                  {'type': 'message', 'id': 'base-context', 'role': 'developer', 'content': [
+                      {'type': 'input_text', 'text': params['baseInstructions']}]},
+                  {'type': 'message', 'id': 'sdk-context', 'role': 'developer', 'content': supplement},
+                  {'type': 'message', 'id': 'environment', 'role': 'user', 'content': [{'type': 'input_text',
+                      'text': sdk._diagnostic_environment(cwd, '2026-10-10', {'2026-10-10'})}]},
+                  {'type': 'message', 'id': 'request', 'role': 'user', 'content': [
+                      {'type': 'input_text', 'text': 'LOCAL_SIMULATION_ONLY'}]}]
+        settings = {'model': params['model'], 'tool_choice': 'auto',
+                    'parallel_tool_calls': True, 'reasoning': {'effort': 'medium'}, 'store': False, 'stream': True,
+                    'include': [], 'prompt_cache_key': 'synthetic', 'text': {}, 'client_metadata': {}}
+        requests = [{**copy.deepcopy(settings), 'input': inputs}]
+        responses = [operation.tool_reply(profile, Path(cwd).parent)]
+        for index, stage in enumerate(('listed', 'read')):
+            call = sdk.scripted_response(responses[index])
+            payload = {'kind': profile, 'stage': stage, stage: {'isError': False, 'content': [
+                {'type': 'text', 'text': json.dumps(args['host_events'][index]['result'])}]}}
+            header = 'Script running with cell ID 1\n' if profile == 'yielded-read' and index == 0 else 'Script completed\n'
+            requests.append({**copy.deepcopy(settings), 'input': copy.deepcopy(requests[-1]['input']) + [
+                {**call, 'id': 'provider-call-' + str(index)},
+                {'type': 'custom_tool_call_output' if call['type'] == 'custom_tool_call' else 'function_call_output',
+                 'id': 'provider-output-' + str(index), 'call_id': call['call_id'], 'output': header + json.dumps(payload)}]})
+            if index == 0:
+                responses.append(operation.wait_reply(requests[1]) if profile == 'yielded-read' else
+                                 operation.sequential_reply(requests[1]))
+        responses.append(sdk.cli.simulation_reply())
+        final = sdk.scripted_response(responses[-1])
+        final_projection = {k: final[k] for k in ('type', 'id', 'role', 'phase')}
+        final_projection['content'] = [{'type': 'output_text', 'text': final['content'][0]['text']}]
+        items = [*inputs[2:5], *requests[1]['input'][-2:], *requests[2]['input'][-2:], final_projection]
+        raw = []
+        for index, item in enumerate(items):
+            item = copy.deepcopy(item)
+            item['internal_chat_message_metadata_passthrough'] = {'turn_id': 'u'}
+            raw.append({'method': sdk.RAW_METHODS[0], 'emittedAtMs': 1,
+                        'params': {'threadId': 't', 'turnId': 'u', 'item': item}})
+            if index in (3, 5, 7):
+                raw.append({'method': sdk.RAW_METHODS[1], 'emittedAtMs': 1, 'params': {
+                    'threadId': 't', 'turnId': 'u', 'responseId': 'probe-response', 'usage': None, 'usageMetadata': None}})
+        projected = []
+        for frame in frames:
+            item = frame.get('params', {}).get('item', {})
+            if frame.get('method') == 'item/started' and item.get('tool') == 'list_resources': projected.extend(raw[:5])
+            if frame.get('method') == 'item/started' and item.get('tool') == 'read_resource': projected.extend(raw[5:8])
+            if frame.get('method') == 'item/started' and item.get('type') == 'agentMessage': projected.append(raw[8])
+            projected.append(frame)
+            if frame.get('method') == 'item/completed' and item.get('type') == 'agentMessage': projected.extend(raw[9:])
+        args.update(provider_requests=requests, provider_responses=responses, received=projected,
+                    sdk_raw_notifications=[{'method': f['method'], 'params': copy.deepcopy(f['params'])} for f in raw])
+        return args
+
+    def test_two_stage_raw_exchange_binds_context_delivery_calls_and_final_without_mutation(self):
+        for profile in ('yielded-read', 'sequential-read'):
+            args = self.two_stage_raw_exchange(profile)
+            before = copy.deepcopy(args)
+            result = sdk.diagnose_raw_two_stage_exchange(**args)
+            self.assertEqual(result['status'], 'sdk_raw_two_stage_exchange_diagnostic_passed')
+            self.assertEqual(result['fixedProfile'], profile)
+            self.assertEqual((result['rawItemCount'], result['rawCompletedCount']), (8, 3))
+            self.assertTrue(result['sdkRawPayloadsMatchOriginalRpc'])
+            self.assertTrue(result['rawProviderCallOutputBindingVerified'])
+            for field in ('providerParentBindingVerified', 'eligibleForMeasurement', 'rawItemsAreOriginalSseBytes',
+                          'certifiesCompleteRawProviderContext', 'certifiesAllNativeLifecycle', 'certifiesNativeProvider',
+                          'certifiesPhaseCompletion'):
+                self.assertFalse(result[field])
+            self.assertEqual(args, before)
+
+    def test_two_stage_raw_exchange_rejects_foreign_complete_context_and_fixed_profile(self):
+        for mode in ('base', 'supplement', 'environment', 'initial-input', 'extra-initial', 'settings',
+                     'model', 'unknown-request-field', 'profile', 'flag', 'sdk-input', 'final-id'):
+            args = self.two_stage_raw_exchange('sequential-read')
+            first = args['provider_requests'][0]
+            if mode in ('base', 'supplement', 'environment', 'initial-input'):
+                index = {'base': 1, 'supplement': 2, 'environment': 3, 'initial-input': 4}[mode]
+                first['input'][index]['content'][0]['text'] = 'foreign'
+            elif mode == 'extra-initial': first['input'].append({'type': 'message', 'role': 'developer', 'content': []})
+            elif mode == 'settings': args['provider_requests'][2]['store'] = True
+            elif mode == 'model': first['model'] = 'other'
+            elif mode == 'unknown-request-field': first['unexpected'] = True
+            elif mode == 'profile': args['profile'] = 'arbitrary'
+            elif mode == 'flag': args['sent'][2]['params']['experimentalRawEvents'] = 1
+            elif mode == 'sdk-input': args['sent'][3]['params']['input'][0]['text'] = 'foreign'
+            else:
+                for frame in args['received']:
+                    if frame.get('params', {}).get('item', {}).get('type') == 'agentMessage': frame['params']['item']['id'] = 'foreign'
+            with self.subTest(mode=mode), self.assertRaises(ValueError): sdk.diagnose_raw_two_stage_exchange(**args)
+
+    def test_two_stage_raw_exchange_rejects_modified_raw_even_when_delivery_copy_matches(self):
+        for mode in ('foreign-turn', 'output', 'call', 'id-collision', 'final', 'completion', 'metadata',
+                     'timestamp', 'outside-turn', 'missing', 'sdk-only'):
+            args = self.two_stage_raw_exchange('yielded-read')
+            raw = [f for f in args['received'] if f.get('method') in sdk.RAW_METHODS]
+            if mode == 'foreign-turn': raw[0]['params']['turnId'] = 'other'
+            elif mode == 'output': raw[5]['params']['item']['output'] = 'fake'
+            elif mode == 'call': raw[6]['params']['item']['call_id'] = 'other'
+            elif mode == 'id-collision': raw[6]['params']['item']['id'] = raw[3]['params']['item']['id']
+            elif mode == 'final': raw[9]['params']['item']['content'][0]['text'] = 'fake'
+            elif mode == 'completion': raw[7]['params']['responseId'] = 'other'
+            elif mode == 'metadata': raw[0]['params']['item']['internal_chat_message_metadata_passthrough']['create_time'] = float('nan')
+            elif mode == 'timestamp': raw[0]['emittedAtMs'] = True
+            elif mode == 'outside-turn': args['received'].remove(raw[0]); args['received'].append(raw[0])
+            elif mode == 'missing': args['received'].remove(raw[0])
+            else: args['sdk_raw_notifications'][0]['params']['item']['role'] = 'foreign'
+            if mode != 'sdk-only':
+                args['sdk_raw_notifications'] = [{'method': f['method'], 'params': copy.deepcopy(f['params'])}
+                    for f in args['received'] if f.get('method') in sdk.RAW_METHODS]
+            with self.subTest(mode=mode), self.assertRaises(ValueError): sdk.diagnose_raw_two_stage_exchange(**args)
+
+    def test_two_stage_raw_exchange_requires_all_saved_sse_and_successful_native_terminal(self):
+        for mode in ('response-0', 'response-1', 'response-2', 'missing-exchange', 'exit', 'native-turn'):
+            args = self.two_stage_raw_exchange('sequential-read')
+            if mode.startswith('response-'): args['provider_responses'][int(mode[-1])] += b'changed'
+            elif mode == 'missing-exchange': args['provider_requests'].pop()
+            elif mode == 'exit': args['actual_exit_code'] = 1
+            else: args['received'][-1]['params']['turn']['id'] = 'other'
+            with self.subTest(mode=mode), self.assertRaises(ValueError): sdk.diagnose_raw_two_stage_exchange(**args)
 
     def test_raw_exchange_correlates_delivery_and_provider_without_modifying_original_input(self):
         args = self.raw_exchange()

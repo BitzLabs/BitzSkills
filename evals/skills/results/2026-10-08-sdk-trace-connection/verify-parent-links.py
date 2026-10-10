@@ -163,17 +163,46 @@ def check_sequential_capture():
             'certifiesNativeProvider': False, 'certifiesSkillGate': False, 'eligibleForMeasurement': False}
 
 
-def run_yielded(source, *, remediation=False, sequential=False):
-    require(not (remediation and sequential), 'one parent profile required')
+def check_raw_two_stage_captures():
+    profiles = [('yielded-read', '2026-10-10-sdk-yielded-cell/verify-recorded-results.py'),
+                ('sequential-read', '2026-10-10-sdk-sequential-cell/verify-artifacts.py')]
+    results = []
+    for profile, name in profiles:
+        spec = importlib.util.spec_from_file_location('raw_two_stage_original_' + profile,
+            ROOT / 'evals/skills/results' / name)
+        capture = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(capture)
+        audit = capture.check_capture()
+        base = capture.BASE
+        incoming, outgoing, host = [helper.frames(base, name) for name in ('rpc-in.jsonl', 'rpc-out.jsonl', 'host.jsonl')]
+        delivered = helper.frames(base, 'sdk-turn-notifications.jsonl')
+        events = sdk.complete_trace_projection((base / 'runtime-stderr.bin').read_bytes(),
+                                               (base / 'trace-safe.jsonl').read_bytes())
+        links = (sdk.audit_yielded_parent_links(events, outgoing, 'probe-call', 'probe-wait', '1') if
+                 profile == 'yielded-read' else sdk.audit_sequential_parent_links(events, outgoing))
+        manifest = (ROOT / '.venv/production-routing-preparation-01/snapshot/manifest.json').read_bytes()
+        diagnostic = sdk.diagnose_raw_two_stage_exchange(manifest, host, incoming, outgoing,
+            [helper.read(str((base / f'request-{i}.json').relative_to(ROOT))) for i in (1, 2, 3)],
+            [(base / f'response-{i}.sse').read_bytes() for i in (1, 2, 3)],
+            sdk_raw_notifications=[f for f in delivered if f.get('method') in sdk.RAW_METHODS], profile=profile,
+            expected_final_text='LOCAL_SIMULATION_ONLY', actual_exit_code=0, allowed_warnings=(helper.WARNING,))
+        results.append({'profile': profile, 'artifactAudit': audit, 'parentLinks': links, 'rawExchangeAudit': diagnostic})
+    return results
+
+
+def run_yielded(source, *, remediation=False, sequential=False, raw_two_stage=False):
+    require(sum((remediation, sequential, raw_two_stage)) <= 1, 'one parent profile required')
     require(guard.git(ROOT, 'status', '--porcelain') == b'' and
             guard.git(ROOT, 'rev-parse', 'HEAD').decode().strip() == source, 'clean yielded parent HEAD')
-    contract_name = ('evals/skills/routing/sdk-trace-review-v0.22.json' if sequential else
+    contract_name = ('evals/skills/routing/sdk-trace-review-v0.23.json' if raw_two_stage else
+                     'evals/skills/routing/sdk-trace-review-v0.22.json' if sequential else
                      'evals/skills/routing/sdk-trace-review-v0.21.json' if remediation else
                      'evals/skills/routing/sdk-trace-review-v0.20.json')
     contract = sdk.trace.strict_json(guard.git(ROOT, 'show', source + ':' + contract_name))
     before = guard.verify(ROOT, source, contract['sourceFiles'])
-    capture = check_sequential_capture() if sequential else check_yielded_capture()
-    output = ROOT / ('.venv/production-sdk-sequential-parent-verification-01' if sequential else
+    capture = check_raw_two_stage_captures() if raw_two_stage else check_sequential_capture() if sequential else check_yielded_capture()
+    output = ROOT / ('.venv/production-sdk-raw-two-stage-verification-01' if raw_two_stage else
+                     '.venv/production-sdk-sequential-parent-verification-01' if sequential else
                      '.venv/production-sdk-yielded-parent-verification-02' if remediation else
                      '.venv/production-sdk-yielded-parent-verification-01')
     require(not any(p.is_symlink() for p in (output, *output.parents)), 'yielded parent output symlink')
@@ -189,7 +218,8 @@ def run_yielded(source, *, remediation=False, sequential=False):
     require(process.returncode == 0 and matched is not None, 'yielded parent full suite failed')
     after = guard.verify(ROOT, source, contract['sourceFiles'])
     require(before == after and guard.git(ROOT, 'status', '--porcelain') == b'', 'yielded parent source drift')
-    value = {'status': 'sdk_sequential_parent_artifacts_rechecked' if sequential else 'sdk_yielded_parent_artifacts_rechecked',
+    value = {'status': 'sdk_raw_two_stage_artifacts_rechecked' if raw_two_stage else
+                       'sdk_sequential_parent_artifacts_rechecked' if sequential else 'sdk_yielded_parent_artifacts_rechecked',
              'sourceCommit': source, 'capture': capture,
              'newMockTrials': 0, 'newLocalHttpRequests': 0, 'paidModelCalls': 0,
              'independentReviewPerformed': False, 'eligibleForMeasurement': False, 'phaseComplete': False,
@@ -208,8 +238,11 @@ if __name__ == '__main__':
     mode.add_argument('--yielded-parent', action='store_true')
     mode.add_argument('--yielded-parent-remediation', action='store_true')
     mode.add_argument('--sequential-parent', action='store_true')
+    mode.add_argument('--raw-two-stage', action='store_true')
     args = parser.parse_args()
-    if args.sequential_parent:
+    if args.raw_two_stage:
+        run_yielded(args.source, raw_two_stage=True)
+    elif args.sequential_parent:
         run_yielded(args.source, sequential=True)
     elif args.yielded_parent_remediation:
         run_yielded(args.source, remediation=True)

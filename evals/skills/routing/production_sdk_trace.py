@@ -6,6 +6,7 @@ import hashlib
 import json
 import math
 from uuid import UUID
+from pathlib import Path
 
 import production_trace as trace
 import production_cli_probe as cli
@@ -289,8 +290,12 @@ def scripted_response(raw: bytes) -> dict:
 
 def diagnostic_environment(cwd: str, diagnostic_date: str = '2026-10-08') -> str:
     """2026-10-08に捕捉した局所診断だけの固定SDK環境文。実provider向けではない。"""
+    return _diagnostic_environment(cwd, diagnostic_date, {'2026-10-08', '2026-10-09'})
+
+
+def _diagnostic_environment(cwd: str, diagnostic_date: str, allowed_dates: set[str]) -> str:
     require(isinstance(cwd, str) and bool(cwd), 'diagnostic cwd required')
-    require(diagnostic_date in {'2026-10-08', '2026-10-09'}, 'fixed diagnostic date required')
+    require(isinstance(diagnostic_date, str) and diagnostic_date in allowed_dates, 'fixed diagnostic date required')
     return ('<environment_context>\n  <cwd>' + cwd + '</cwd>\n  <shell>bash</shell>\n'
             '  <current_date>' + diagnostic_date + '</current_date>\n  <timezone>Asia/Tokyo</timezone>\n'
             '  <filesystem><workspace_roots><root>' + cwd + '</root></workspace_roots>'
@@ -301,8 +306,12 @@ def diagnostic_environment(cwd: str, diagnostic_date: str = '2026-10-08') -> str
 
 def audit_provider_input(sent: list, before: list, diagnostic_date: str = '2026-10-08') -> str:
     """前置文脈も固定形へ照合し、同じprefixへの余分なメッセージ混入を拒否する。"""
+    return _audit_provider_input(sent, before, diagnostic_date, {'2026-10-08', '2026-10-09'})
+
+
+def _audit_provider_input(sent: list, before: list, diagnostic_date: str, allowed_dates: set[str]) -> str:
     params = sent[2]['params']
-    require(isinstance(diagnostic_date, str) and diagnostic_date in {'2026-10-08', '2026-10-09'},
+    require(isinstance(diagnostic_date, str) and diagnostic_date in allowed_dates,
             'fixed diagnostic date required')
     expected_input = {'type': 'message', 'role': 'user', 'content': [
         {'type': 'input_text', 'text': sent[3]['params']['input'][0]['text']}]}
@@ -333,7 +342,7 @@ def audit_provider_input(sent: list, before: list, diagnostic_date: str = '2026-
     expected = [
         {'type': 'message', 'role': 'developer', 'content': [{'type': 'input_text', 'text': params.get('baseInstructions')}]},
         {'type': 'message', 'role': 'developer', 'content': supplement},
-        {'type': 'message', 'role': 'user', 'content': [{'type': 'input_text', 'text': diagnostic_environment(params['cwd'], diagnostic_date)}]},
+        {'type': 'message', 'role': 'user', 'content': [{'type': 'input_text', 'text': _diagnostic_environment(params['cwd'], diagnostic_date, allowed_dates)}]},
         expected_input]
     require(trace.json_equal(messages, expected), 'provider/SDK complete input context mismatch')
     return 'sdk-0.160.1-local-diagnostic-' + diagnostic_date
@@ -492,6 +501,116 @@ def diagnose_raw_exchange(manifest_raw: bytes, host_events: list, sent: list, re
                   rawProjection='explicit-raw-flag-and-raw-notifications-only',
                   rawInternalMetadataScope='turn-id-and-field-types',
                   certifiesCompleteRawProviderContext=False,
+                  rawItemsAreOriginalSseBytes=False, certifiesAllNativeLifecycle=False,
+                  certifiesNativeProvider=False, certifiesPhaseCompletion=False)
+    return result
+
+
+def diagnose_raw_two_stage_exchange(manifest_raw: bytes, host_events: list, sent: list, received: list,
+                                    provider_requests: list, provider_responses: list[bytes], *,
+                                    sdk_raw_notifications: list, profile: str, expected_final_text: str,
+                                    actual_exit_code: int, allowed_warnings: tuple[str, ...] = ()) -> dict:
+    """2026-10-10の固定yield/waitと2execだけを、原値を保って3交換へ照合する。"""
+    import production_operation_probe as operation
+
+    require(isinstance(profile, str) and profile in {'yielded-read', 'sequential-read'}, 'fixed two-stage profile required')
+    require(isinstance(sent, list) and len(sent) == 4 and isinstance(sent[2], dict) and
+            isinstance(sent[2].get('params'), dict) and sent[2]['params'].get('experimentalRawEvents') is True,
+            'explicit SDK raw event request required')
+    projected_sent = copy.deepcopy(sent)
+    del projected_sent[2]['params']['experimentalRawEvents']
+    require(isinstance(received, list) and all(isinstance(f, dict) for f in received), 'raw RPC frames required')
+    selected = [(i, f) for i, f in enumerate(received) if f.get('method') in RAW_METHODS]
+    projected_received = [copy.deepcopy(f) for f in received if f.get('method') not in RAW_METHODS]
+    result = diagnose(manifest_raw, host_events, projected_sent, projected_received,
+        expected_final_text=expected_final_text, actual_exit_code=actual_exit_code, allowed_warnings=allowed_warnings)
+    params = sent[2]['params']
+    require(params.get('modelProvider') == 'bitz_local_probe' and isinstance(params.get('cwd'), str) and
+            bool(params['cwd']) and params.get('baseInstructions') == 'Local operation diagnostic simulation.' and
+            params.get('developerInstructions') == 'LOCAL_SIMULATION_ONLY. No paid model or decision measurement.' and
+            sent[3]['params']['input'] == [{'type': 'text', 'text': 'LOCAL_SIMULATION_ONLY'}],
+            'fixed local two-stage SDK profile required')
+    require(isinstance(provider_requests, list) and len(provider_requests) == 3 and
+            isinstance(provider_responses, list) and len(provider_responses) == 3, 'three scripted exchanges required')
+    for request in provider_requests:
+        require(isinstance(request, dict) and request.get('model') == params['model'] and
+                cli.declared_tools(request) == ['functions.exec', 'functions.request_user_input_async', 'functions.wait'] and
+                set(request) == {'model', 'input', 'tool_choice', 'parallel_tool_calls', 'reasoning', 'store', 'stream',
+                                 'include', 'prompt_cache_key', 'text', 'client_metadata'}, 'two-stage provider profile drift')
+    context_profile = _audit_provider_input(sent, provider_requests[0].get('input'), '2026-10-10', {'2026-10-10'})
+    base = Path(params['cwd']).parent
+    if profile == 'yielded-read':
+        operation.yielded_observation(provider_requests, host_events, provider_responses,
+                                      operation.program(profile, base))
+    else:
+        operation.sequential_observation(provider_requests, host_events, provider_responses, base)
+    scripted = [scripted_response(response) for response in provider_responses]
+    final = scripted[-1]
+    native_finals = [f['params']['item'] for f in projected_received if f.get('method') == 'item/completed' and
+                     f.get('params', {}).get('item', {}).get('type') == 'agentMessage' and
+                     f['params']['item'].get('phase') == 'final_answer']
+    require(final['type'] == 'message' and final['content'][0]['text'] == expected_final_text and
+            len(native_finals) == 1 and native_finals[0]['id'] == final['id'], 'two-stage provider/native final binding')
+    bindings = result['nativeEvidence']['requestIds']
+    replies = {bindings[f['id']]: f['result'] for f in projected_received if 'id' in f}
+    thread, turn = replies[2]['thread']['id'], replies[3]['turn']['id']
+    start = next(i for i, f in enumerate(received) if f.get('method') == 'turn/started')
+    end = next(i for i, f in enumerate(received) if f.get('method') == 'turn/completed')
+    delivered = []
+    for index, frame in selected:
+        require(set(frame) == {'method', 'params', 'emittedAtMs'} and type(frame['emittedAtMs']) is int and
+                frame['emittedAtMs'] >= 0 and start < index < end and isinstance(frame['params'], dict),
+                'two-stage raw notification lifecycle')
+        p = frame['params']
+        fields = {'threadId', 'turnId', 'item'} if frame['method'] == RAW_METHODS[0] else {
+            'threadId', 'turnId', 'responseId', 'usage', 'usageMetadata'}
+        require(set(p) == fields and p['threadId'] == thread and p['turnId'] == turn, 'two-stage raw context or fields')
+        delivered.append({'method': frame['method'], 'params': copy.deepcopy(p)})
+    require(isinstance(sdk_raw_notifications, list) and trace.json_equal(delivered, sdk_raw_notifications),
+            'two-stage RPC/SDK notification delivery mismatch')
+    require([f['method'] for _, f in selected] == [RAW_METHODS[0]] * 4 + [RAW_METHODS[1]] +
+            [RAW_METHODS[0]] * 2 + [RAW_METHODS[1]] + [RAW_METHODS[0]] * 2 + [RAW_METHODS[1]],
+            'fixed two-stage raw sequence')
+    items = [f['params']['item'] for _, f in selected if f['method'] == RAW_METHODS[0]]
+    stripped, ids = [], set()
+    for item in items:
+        require(isinstance(item, dict) and isinstance(item.get('id'), str) and bool(item['id']) and
+                item['id'] not in ids, 'two-stage raw item IDs')
+        ids.add(item['id'])
+        metadata = item.get('internal_chat_message_metadata_passthrough')
+        require(isinstance(metadata, dict) and {'turn_id'} <= set(metadata) <= {
+            'turn_id', 'create_time', 'content_item_kinds'} and metadata['turn_id'] == turn, 'two-stage raw internal metadata')
+        if 'create_time' in metadata:
+            timestamp = metadata['create_time']
+            require(type(timestamp) in {int, float} and math.isfinite(timestamp) and timestamp >= 0,
+                    'two-stage raw internal timestamp')
+        if 'content_item_kinds' in metadata:
+            require(isinstance(metadata['content_item_kinds'], list) and all(isinstance(v, str) and bool(v)
+                    for v in metadata['content_item_kinds']), 'two-stage raw content kinds')
+        stripped.append({k: copy.deepcopy(v) for k, v in item.items() if k != 'internal_chat_message_metadata_passthrough'})
+    require(trace.json_equal(stripped[:3], provider_requests[0]['input'][2:5]), 'two-stage raw initial context')
+    for offset, request, call in zip((3, 5), provider_requests[1:], scripted[:2]):
+        require(trace.json_equal(stripped[offset:offset+2], request['input'][-2:]) and
+                trace.json_equal({k: v for k, v in stripped[offset].items() if k != 'id'}, call),
+                'two-stage raw call/output binding')
+    final_projection = {k: final[k] for k in ('type', 'id', 'role', 'phase')}
+    final_projection['content'] = [{'type': 'output_text', 'text': final['content'][0]['text']}]
+    require(trace.json_equal(stripped[-1], final_projection), 'two-stage raw final projection')
+    completed = [f['params'] for _, f in selected if f['method'] == RAW_METHODS[1]]
+    for p, response in zip(completed, provider_responses):
+        last = [trace.strict_json(line[6:]) for line in response.splitlines() if line.startswith(b'data: ')][-1]
+        require(p['responseId'] == last['response']['id'] and p['usage'] is None and p['usageMetadata'] is None,
+                'two-stage raw completion')
+    result.update(status='sdk_raw_two_stage_exchange_diagnostic_passed', fixedProfile=profile,
+                  providerContextProfile=context_profile, providerCallOutputBindingVerified=True,
+                  originalSentValueSha256=digest(sent), originalReceivedValueSha256=digest(received),
+                  providerResponseSha256=[hashlib.sha256(r).hexdigest() for r in provider_responses],
+                  providerRequestValueSha256=[digest(r) for r in provider_requests],
+                  rawNotificationsValueSha256=digest([f for _, f in selected]),
+                  sdkRawNotificationsValueSha256=digest(sdk_raw_notifications), rawItemCount=8, rawCompletedCount=3,
+                  sdkRawPayloadsMatchOriginalRpc=True, rawProviderCallOutputBindingVerified=True,
+                  rawProjection='explicit-raw-flag-and-raw-notifications-only',
+                  rawInternalMetadataScope='turn-id-and-field-types', certifiesCompleteRawProviderContext=False,
                   rawItemsAreOriginalSseBytes=False, certifiesAllNativeLifecycle=False,
                   certifiesNativeProvider=False, certifiesPhaseCompletion=False)
     return result
