@@ -122,5 +122,49 @@
   },
   "reviewFindingCount": 1,
   "remediationReviewContract": "evals/skills/routing/sdk-trace-review-v0.21.json",
-  "remediationIndependentlyPassed": false
+  "remediationIndependentlyPassed": false,
+  "remediationVerification": {
+    "sourceCommit": "1c6aa5f0c937ba418dfa3278f7f0723b05bd9c5d",
+    "outputRelativeRoot": ".venv/production-sdk-yielded-parent-verification-02",
+    "summarySha256": "4a36bb668b79203dfbd398a54c223af60ea94d8c098b0858a46ac61f7dc05db7",
+    "tests": {
+      "count": 489,
+      "seconds": 64.437,
+      "exitCode": 0,
+      "command": [
+        "uv",
+        "--cache-dir",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+        "run",
+        "--offline",
+        "--project",
+        "plugins/bitz-core",
+        "--with",
+        "jsonschema==4.23.0",
+        "python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/skills",
+        "-p",
+        "test_*.py"
+      ],
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "956969c609dbea30a57a303ccf0cd41825658fca1de45ee2a83f41a955e7b32e"
+    }
+  },
+  "localPreflightStops": [
+    {
+      "sourceCommit": "1c6aa5f0c937ba418dfa3278f7f0723b05bd9c5d",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.21.json",
+      "exitCode": 1,
+      "reason": "unknown previous review",
+      "maximumInvocationsConsumed": 0,
+      "reservations": 0,
+      "transmissions": 0,
+      "automaticRetries": 0
+    }
+  ]
 }

@@ -74,6 +74,7 @@ def run(source: str, contract_name: str = CONTRACT):
                              '.venv/sdk-trace-independent-review-15', '.venv/sdk-trace-independent-review-16',
                              '.venv/sdk-trace-independent-review-17', '.venv/sdk-trace-independent-review-18',
                              '.venv/sdk-trace-independent-review-19',
+                             '.venv/sdk-trace-independent-review-20',
                              '.venv/sdk-raw-response-independent-review-01',
                              '.venv/sdk-raw-response-independent-review-02',
                              '.venv/sdk-raw-response-independent-review-03',

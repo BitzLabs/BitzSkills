@@ -31,6 +31,12 @@ neutralイベントの明示turn_idを確定turnへ照合する是正と回帰�
 局所83件/0.798s/OK/exit0。原応答・指摘・消費枠を保持し、新有限v0.21で同6パスの修正版を1回静的検分する。
 本段階の是正は独立未検分。Phase/Step/Gate全体は未認定。
 
+是正source `1c6aa5f0c937ba418dfa3278f7f0723b05bd9c5d` のclean全489件/64.437s/OK/exit0。
+原試験stderr SHA256 `956969c609dbea30a57a303ccf0cd41825658fca1de45ee2a83f41a955e7b32e`。
+原捕捉への再適用も24行/2 native子/cell1で適合し、前後のsource guardが一致した。
+v0.21の最初の要求は実行器の前回保存先20の許可一覧欠落によりunknown previous reviewでモデル起動前に停止した。
+この停止で出力21・予約・送信・モデル起動は0。保存先を明示追加し、原停止を保持する。
+
 記録照合コマンドは以下。新モデル・試行・HTTP・書込みを行わない。
 
 ```text
