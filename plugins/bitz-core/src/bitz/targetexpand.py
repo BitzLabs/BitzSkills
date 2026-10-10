@@ -612,7 +612,9 @@ def target_expansion(
         # 3. TASKを起点にした場合: `addresses`する規範文と、その具体化文書の規範文。
         addressed_refs = _addresses_targets(root_entry, id_index, statement_index)
         for ref in addressed_refs:
-            if ":" in ref:
+            # 規範文IDかどうかは索引で判定する（複合ワークスペースの修飾ID`ws::TECH-010`も`:`を含むため）。規範文のないTECHの文書IDは
+            # 対象規範文を増やさず、`verify`の文書単位のテスト割当てとする（§6.4の規則3）。
+            if ref in statement_index:
                 _add_target(ref)
                 for s in _applicable_refinement_statements(ref):
                     _add_target(s)

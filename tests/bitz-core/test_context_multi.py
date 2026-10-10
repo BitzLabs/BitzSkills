@@ -303,5 +303,35 @@ class DigestCommandMaterialsAcrossWorkspacesTests(unittest.TestCase):
         self.assertNotEqual(results[0][1], results[1][1])
 
 
+
+class TaskAddressingQualifiedTechTests(unittest.TestCase):
+    """TASKが他のメンバーの規範文のないTECHを修飾IDで`addresses`する場合も、規範文と取り違えず、そのTECHの文書単位のテスト割当てを
+    所有ワークスペースのコマンドで作る。"""
+
+    def test_qualified_tech_without_statements_is_a_document_unit_binding(self):
+        from bitz import verify as verify_mod
+        from bitz.cliargs import parse_argv
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _init_repo(root)
+            _write(root, ".spec/bitz.yaml", ROOT_YAML + "multiWorkspace:\n  members:\n    - id: web\n      path: apps/web\n    - id: api\n      path: services/api\n")
+            _write(root, "apps/web/.spec/bitz.yaml", MEMBER_YAML.format(wid="web"))
+            _write(root, "services/api/.spec/bitz.yaml", MEMBER_YAML.format(wid="api")
+                   + 'verify:\n  commands:\n    backend:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n')
+            _write(root, "apps/web/.spec/tasks/TASK-001.md",
+                   "---\nid: TASK-001\ntitle: 作業\nstatus: open\nrelations:\n  addresses: [api::TECH-020]\n---\n\n# TASK-001 作業\n\n## Objective\n\n作業する。\n")
+            _write(root, "services/api/.spec/technical/TECH-020.md",
+                   "---\nid: TECH-020\ntitle: TECH\nstatus: approved\ntests:\n  - path: tests/test_api.py\n    covers: [TECH-020]\n    command: backend\n"
+                   "---\n\n# TECH-020 TECH\n\n## Context\n\n規範文を持たない。\n")
+            _write(root, "services/api/tests/test_api.py", "x\n")
+            _git(root, "add", "-A")
+            _git(root, "commit", "-q", "-m", "base")
+            result, exit_code = verify_mod.run(parse_argv(["verify", "web::TASK-001", "--format", "json"]), str(root), dict(os.environ))
+            self.assertEqual((result["status"], exit_code), ("passed", 0), result)
+            target = result["targetResults"][0]
+            self.assertEqual(target["statements"], [])
+            self.assertEqual(target["bindingRefs"], ["api::backend"])
+
+
 if __name__ == "__main__":
     unittest.main()
