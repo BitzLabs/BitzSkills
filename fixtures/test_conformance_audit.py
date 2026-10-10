@@ -59,6 +59,7 @@ from conformance import frontmatter_fixtures
 from conformance import input_limit_fixtures
 from conformance import registry_closure_fixtures
 from conformance import context_config_fixtures
+from conformance import digest_command_fixtures
 from conformance import scanner_fixtures
 from conformance import presentation_fixtures
 from conformance import target_root_fixtures
@@ -948,6 +949,162 @@ class AuditTests(unittest.TestCase):
                 value["setup"]["baseCommit"] = {"message": "base", "paths": ["."]}
                 path.write_text(json.dumps(value))
                 self.assertTrue(context_config_fixtures.validate(root, [identifier])["errors"])
+
+    def copy_command_fixtures(self, temporary):
+        """`SINGLE-155`の検証は`SINGLE-154`の正規JSONを共有するので、2件とも複製する。"""
+        root = self.copy_config_fixture(temporary, "SINGLE-154")
+        other = self.copy_fixture(Path(temporary) / "other", "SINGLE-155")
+        shutil.copytree(other / "single/SINGLE-155", root / "single/SINGLE-155", symlinks=True)
+        return root
+
+    def test_digest_command_fixtures(self):
+        result = digest_command_fixtures.validate()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["prepared"], ["SINGLE-154", "SINGLE-155"])
+        self.assertEqual(result["references"], 2)
+        self.assertEqual(result["core_execution"], "Not run")
+        # 複製した状態でも2件とも通る（以降の拒否の試験が、複製の不備で空振りしていないことの陽性対照）。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_command_fixtures(temporary)
+            self.assertEqual(digest_command_fixtures.validate(root)["errors"], [])
+        canonical = (audit.FIXTURES / "single/SINGLE-154/expected/context.canonical.json").read_bytes()
+        settings = json.loads(canonical)["settings"]
+        self.assertEqual([c["name"] for c in settings["commands"]], ["default"])
+        self.assertEqual(settings["verifyTimeouts"], [{"timeoutSeconds": 300, "workspaceId": "root"}])
+        # 2件のハッシュ値は同じ値である。
+        context = json.loads((audit.FIXTURES / "single/SINGLE-154/expected/context.json").read_text())
+        verify = json.loads((audit.FIXTURES / "single/SINGLE-155/expected/verify.json").read_text())
+        self.assertEqual(context["contextDigest"], verify["targetResults"][0]["contextDigest"])
+        self.assertEqual(context["contextDigest"], digest_command_fixtures.literal_digest())
+
+    def test_digest_command_audit_rejects_changed_expectations(self):
+        """ハッシュ値の食い違い、実行したコマンドの改変、起動条件の改変を拒否する。"""
+        zero = "sha256:" + "0" * 64
+        mutations = [
+            ("SINGLE-154", "expected/context.json", lambda v: v.update(contextDigest=zero)),
+            ("SINGLE-154", "expected/context.json", lambda v: v.update(contextDigest=None)),
+            ("SINGLE-154", "expected/context.json", lambda v: v.update(status="passed_with_warnings")),
+            ("SINGLE-154", "expected/context.json", lambda v: v["documents"][0]["frontmatter"].pop("verify")),
+            ("SINGLE-154", "expected/context.json", lambda v: v["documents"][0]["frontmatter"]["tests"][0].update(command="default")),
+            ("SINGLE-154", "expected/context.json", lambda v: v["coverage"]["must"].update(tested=[], untested=["REQ-001:AC-01"])),
+            ("SINGLE-154", "expected/context.json", lambda v: v.update(purpose="implement")),
+            ("SINGLE-154", "manifest.json", lambda v: v["invocation"]["argv"].__setitem__(3, "implement")),
+            ("SINGLE-154", "manifest.json", lambda v: v["invocation"]["argv"].__delitem__(slice(2, 4))),
+            ("SINGLE-155", "expected/verify.json", lambda v: v["targetResults"][0].update(contextDigest=zero)),
+            ("SINGLE-155", "expected/verify.json", lambda v: v["targetResults"][0].update(contextDigest=None)),
+            ("SINGLE-155", "expected/verify.json", lambda v: v.update(commands=[])),
+            ("SINGLE-155", "expected/verify.json", lambda v: v["targetResults"][0].update(bindingRefs=[])),
+            ("SINGLE-155", "expected/verify.json", lambda v: v["commands"][0].update(argv=["/bin/true"])),
+            ("SINGLE-155", "expected/verify.json", lambda v: v["commands"][0].update(timeoutSeconds=1)),
+            ("SINGLE-155", "expected/verify.json", lambda v: v["commands"][0].update(cwd="src")),
+            ("SINGLE-155", "expected/verify.json", lambda v: v.update(status="failed")),
+            ("SINGLE-155", "manifest.json", lambda v: v["setup"].update(operations=[])),
+            ("SINGLE-155", "manifest.json", lambda v: v["invocation"]["argv"].append("--all-workspaces")),
+        ]
+        for index, (identifier, relative, mutate) in enumerate(mutations):
+            with self.subTest(index=index, identifier=identifier, file=relative), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_command_fixtures(temporary)
+                path = root / "single" / identifier / relative
+                value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
+                self.assertTrue(digest_command_fixtures.validate(root, [identifier])["errors"])
+
+    def test_digest_command_audit_rejects_digest_material_changes(self):
+        """材料から`commands`または`verifyTimeouts`を消す改変、その内容の改変、正規JSONと結果の食い違いを拒否する。"""
+        command = '"commands":[{"argv":["/bin/true","{tests}"],"cwd":".","name":"default","workspaceId":"root"}]'
+        timeout = '"verifyTimeouts":[{"timeoutSeconds":300,"workspaceId":"root"}]'
+        mutations = [
+            lambda text: text.replace(command, '"commands":[]', 1),
+            lambda text: text.replace(timeout, '"verifyTimeouts":[]', 1),
+            lambda text: text.replace(command, '"commands":[]', 1).replace(timeout, '"verifyTimeouts":[]', 1),
+            lambda text: text.replace('"/bin/true","{tests}"', '"/bin/true","tests/test_auth.py"', 1),
+            lambda text: text.replace('"cwd":"."', '"cwd":"src"', 1),
+            lambda text: text.replace('"timeoutSeconds":300', '"timeoutSeconds":301', 1),
+            lambda text: text.replace('"name":"default"', '"name":"other"', 1),
+            lambda text: text.replace('"verify":"default"', '"verify":null', 1),
+            lambda text: text.replace('"command":null', '"command":"default"', 1),
+        ]
+        for index, mutate in enumerate(mutations):
+            for identifier in ("SINGLE-154", "SINGLE-155"):
+                with self.subTest(index=index, identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_command_fixtures(temporary)
+                    path = root / "single/SINGLE-154/expected/context.canonical.json"
+                    changed = mutate(path.read_text())
+                    self.assertNotEqual(changed, path.read_text())
+                    path.write_text(changed)
+                    self.assertTrue(digest_command_fixtures.validate(root, [identifier])["errors"])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_command_fixtures(temporary)
+            path = root / "single/SINGLE-154/expected/context.canonical.json"
+            path.write_bytes(path.read_bytes() + b"\n")
+            self.assertTrue(digest_command_fixtures.validate(root, ["SINGLE-154"])["errors"])
+        # `SINGLE-155`は正規JSONを持たない（`SINGLE-154`のものを共有する）。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_command_fixtures(temporary)
+            (root / "single/SINGLE-155/expected/context.canonical.json").write_bytes(
+                (root / "single/SINGLE-154/expected/context.canonical.json").read_bytes())
+            self.assertTrue(digest_command_fixtures.validate(root, ["SINGLE-155"])["errors"])
+
+    def test_digest_command_audit_rejects_repaired_or_confounded_inputs(self):
+        """コマンド名の与え方（文書の`verify`だけ）を変えた入力、設定やテストを変えた入力は、期待値と組にならない。"""
+        module = digest_command_fixtures
+        config, req, test = module.CONFIG_PATH, module.REQ_PATH, module.TEST_PATH
+        edits = [
+            # 文書の`verify`を消す、テスト対応に`command`を足す（解決の経路が変わる）、別名にする
+            (req, lambda text: text.replace("verify: default\n", "")),
+            (req, lambda text: text.replace("verify: default\n", "").replace(
+                "covers: [REQ-001:AC-01]\n", "covers: [REQ-001:AC-01]\n    command: default\n")),
+            (req, lambda text: text.replace("verify: default", "verify: other")),
+            (req, lambda text: text.replace("covers: [REQ-001:AC-01]\n", "covers: [REQ-001:AC-01]\n    command: default\n")),
+            (req, lambda text: text.replace("文書構造を検査する。", "文書構造を検査する。\n")),
+            (req, lambda text: text.replace("[MUST]", "[SHOULD] [REASON] 確認のため")),
+            (config, lambda text: text.replace("default:", "other:")),
+            (config, lambda text: text.replace("      cwd: .\n", "")),
+            (config, lambda text: text.replace('"/bin/true", "{tests}"', '"/bin/true"')),
+            (config, lambda text: text + "  timeoutSeconds: 60\n"),
+            (test, lambda text: text + "# 変更\n"),
+        ]
+        for index, (relative, edit) in enumerate(edits):
+            for identifier in ("SINGLE-154", "SINGLE-155"):
+                with self.subTest(index=index, identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_command_fixtures(temporary)
+                    path = root / "single" / identifier / "repo" / relative
+                    changed = edit(path.read_text())
+                    self.assertNotEqual(changed, path.read_text())
+                    path.write_text(changed)
+                    self.assertTrue(module.validate(root, [identifier])["errors"])
+        for identifier in ("SINGLE-154", "SINGLE-155"):
+            for action in ("remove-test", "remove-req", "remove-config", "add-file"):
+                with self.subTest(identifier=identifier, action=action), tempfile.TemporaryDirectory() as temporary:
+                    root = self.copy_command_fixtures(temporary)
+                    repo = root / "single" / identifier / "repo"
+                    if action == "add-file":
+                        (repo / "extra.txt").write_text("x")
+                    else:
+                        (repo / {"remove-test": test, "remove-req": req, "remove-config": config}[action]).unlink()
+                    self.assertTrue(module.validate(root, [identifier])["errors"])
+
+    def test_digest_command_audit_rejects_changed_side_effects_and_git_state(self):
+        mutations = [
+            ("SINGLE-154", lambda v: v["after"].update(cache={"ears": {"kind": "directory"}})),
+            ("SINGLE-154", lambda v: v["before"].update(git={"status": "", "index": ""})),
+            ("SINGLE-155", lambda v: v["before"].update(git={"status": "", "index": ""})),
+            ("SINGLE-155", lambda v: v["after"]["repository"].pop("tests/test_auth.py")),
+            ("SINGLE-155", lambda v: v["before"]["repository"][".spec/bitz.yaml"].update(executable=True)),
+        ]
+        for index, (identifier, mutate) in enumerate(mutations):
+            with self.subTest(index=index, identifier=identifier), tempfile.TemporaryDirectory() as temporary:
+                root = self.copy_command_fixtures(temporary)
+                path = root / "single" / identifier / "side-effects.json"
+                value = json.loads(path.read_text()); mutate(value); path.write_text(json.dumps(value))
+                self.assertTrue(digest_command_fixtures.validate(root, [identifier])["errors"])
+        # `SINGLE-154`はコミットのないリポジトリで準備する。基準のコミットを足すと拒否する。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.copy_command_fixtures(temporary)
+            path = root / "single/SINGLE-154/manifest.json"
+            value = json.loads(path.read_text())
+            value["setup"]["baseCommit"] = {"message": "base", "paths": ["."]}
+            path.write_text(json.dumps(value))
+            self.assertTrue(digest_command_fixtures.validate(root, ["SINGLE-154"])["errors"])
 
     def copy_fixture(self, temporary, identifier):
         root = Path(temporary)
