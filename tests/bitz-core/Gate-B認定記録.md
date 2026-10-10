@@ -377,3 +377,22 @@ fixtureを追加した後、修正前のCore（コミット`60c3d849`の版）�
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は609件がすべて成功した。
+
+## 2026-10-10: contextの設定の診断を直した後のStep 1〜5の再判定
+
+`context`の設定の不在と不適合を正しい診断で返し、設定の警告を`context`と`verify`の結果に加えるようにし（`context.py`、`verify.py`、`contextrender.py`）、
+これを固定する`SINGLE-150`〜`153`（Step 3）を追加した。修正の前後で、既存の338件の期待値はすべて変わらないことを確かめた。
+fixtureを追加した後、修正前のCore（コミット`5e70ea3d`の版）では4件とも失敗し、修正後のCoreでは4件とも`passed`となることを確かめた。
+
+コミット`532a9e1d1f7fce797a76d0682376db73f1aa5269`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 342件（`SINGLE-150`〜`153`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`3256b39221e01b3012ddda0366d61ddca936a0d6e3efe774e2e4695f9237395d` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は617件がすべて成功した。

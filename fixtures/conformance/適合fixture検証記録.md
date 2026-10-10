@@ -1300,3 +1300,22 @@ commit `cf98a189af4b48f4279d1457538b0dbd2632b067`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 3〜5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-10: `SINGLE-150`〜`153`を追加した後のGate Aの再認定
+
+`context`が設定の不適合（型、値の範囲、構文、メジャーバージョンなど）でも`SPEC-WORKSPACE-MISSING-001`（発生元`file`）を返していた欠陥を直した（`context.py`。
+実装の確認事項C9）。設定がなければ発生元`environment`の`SPEC-WORKSPACE-MISSING-001`と`workspace.id: null`、不適合なら設定の検査の診断と警告をそのまま返し、
+設定の警告は`context`のすべての結果と`verify`の結果に加える（ワークスペース・設定仕様、診断レジストリ、`context` §6、結果・診断・終了コード §2）。これを固定する
+`SINGLE-150`（型の不適合）、`SINGLE-151`（値の範囲外）、`SINGLE-152`（設定の不在）、`SINGLE-153`（未知のキーの警告）を追加した（ADR-051の追加、新しい群`context_config_fixtures`）。
+matrix、Step 3の割当て、実装計画の完了条件を合わせた。既存のfixtureの入力と期待値は変えていない。
+
+commit `532a9e1d1f7fce797a76d0682376db73f1aa5269`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`f0e7b082ea8e95cb4db552513e3f144be0f039f792b30c56828e65e0de376d2b`。前回から変わったのは次の値だけである: 4件の追加によるmatrixと網羅の件数（338件→342件）、Step 3の件数（84件→88件）、新しい群`context_config_fixtures`、実行ビットを確かめたファイル数（1863件→1870件） |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 3に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
