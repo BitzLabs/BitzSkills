@@ -92,6 +92,9 @@ negativeは子操作0または一覧のみを許し、本文読取り0を検査�
 `production_canary_trace.audit()` はこの可変IDの限定profileに対する別の診断入口。
 callerのモデル入力原bytes・共通指示、SDKの実効設定と正常終端、host引数/全文/hash、親セル/子ID/API順序を照合する。
 原SDKraw全payloadと実provider wire本文はこの入口では未取得として `eligibleForMeasurement=false` を維持する。
+原stderr bytesと選択ログbytesを必須入力にし、既存complete_trace_projectionで全対象2targetの原行を完全一致させる。
+この抽出結果だけを監査し、原stderr/選択ログのhashを診断結果へ結ぶ。除外した追加API/未知操作を配列だけで通さない。
+callerは保存済み原stderrのartifact hashを別に照合する。別targetの全ログ意味や上流wire網羅は認定しない。
 任意program、任意cell数、並列、未知native item、未解決継続は推定で許可しない。
 host引数と出力全文、固定snapshotの原bytes、native完了、SDK原通知、全対象telemetryを検査する。
 呼出し可能な2子操作以外へ到達できないことを、実行環境と拒否試験で確認する。

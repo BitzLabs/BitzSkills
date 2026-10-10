@@ -42,8 +42,10 @@ class CanaryTraceTests(unittest.TestCase):
         return result
 
     def check(self, profile='single-exec', **changes):
+        events = changes.pop('events', self.events(profile))
+        selected = b''.join(json.dumps(event).encode() + b'\n' for event in events)
         args = dict(manifest_raw=self.original.original.raw, host_events=self.host,
-                    sent=self.sent, received=self.received, events=self.events(profile), catalog=self.catalog,
+                    sent=self.sent, received=self.received, raw_stderr=selected, selected_log=selected, catalog=self.catalog,
                     profile=profile, expected_input=self.sent[3]['params']['input'][0]['text'].encode(),
                     base_instructions='Fixed public instructions', developer_instructions='Fixed common context',
                     cwd='/fixed/work', actual_exit_code=0)
@@ -68,12 +70,16 @@ class CanaryTraceTests(unittest.TestCase):
             with self.subTest(args=args), self.assertRaises(ValueError): self.check(**args)
 
     def test_unknown_parent_cell_api_and_original_body_mismatch_stop(self):
-        for fault in ['extra-api', 'retry', 'auth', 'parent-id', 'cell', 'unknown-event', 'body']:
+        for fault in ['extra-api', 'retry', 'auth', 'auth-retry', 'model', 'version', 'provider', 'parent-id', 'cell', 'unknown-event', 'body']:
             events = self.events('two-exec')
             host = copy.deepcopy(self.host)
             if fault == 'extra-api': events.append(copy.deepcopy(events[0]))
             elif fault == 'retry': events[0]['fields']['attempt'] = 1
             elif fault == 'auth': events[0]['fields']['auth.header_attached'] = False
+            elif fault == 'auth-retry': events[0]['fields']['auth.retry_after_unauthorized'] = True
+            elif fault == 'model': events[0]['fields']['model'] = 'other-model'
+            elif fault == 'version': events[0]['fields']['app.version'] = 'unknown'
+            elif fault == 'provider': events[0]['fields']['provider_name'] = 'Other provider'
             elif fault == 'parent-id':
                 next(e['fields'] for e in events if e['fields']['event.name'] == 'codex.code_mode.host_timing')['call_id'] = 'another'
             elif fault == 'cell':
@@ -118,6 +124,20 @@ class CanaryTraceTests(unittest.TestCase):
         unknown.append({'level':'INFO','target':'codex_otel.trace_safe','fields':{'event.name':'codex.tool_call_received',
                        'conversation.id':'t','call_id':'hidden','tool_source':'direct','tool_name':'exec'}})
         with self.assertRaises(ValueError): self.check('no-exec', received=received, host_events=[], events=unknown)
+
+    def test_original_stderr_extra_api_or_unknown_operation_cannot_be_omitted(self):
+        events = self.events('single-exec')
+        original = b''.join(json.dumps(event).encode() + b'\n' for event in events)
+        for extra in [events[0], {'level':'INFO','target':'codex_otel.trace_safe','fields':{
+                'event.name':'codex.tool_call_received','conversation.id':'t','call_id':'hidden-operation'}}]:
+            raw = original + json.dumps(extra).encode() + b'\n'
+            with self.subTest(extra=extra), self.assertRaisesRegex(ValueError, 'selected telemetry incomplete'):
+                self.check(raw_stderr=raw, selected_log=original)
+            with self.subTest(extra=extra), self.assertRaises(ValueError): self.check(raw_stderr=raw, selected_log=raw)
+        non_target = json.dumps({'target':'known.other.logger','message':'unrelated'}).encode() + b'\n'
+        result = self.check(raw_stderr=non_target + original, selected_log=original)
+        self.assertTrue(result['completeTargetProjectionVerified'])
+        self.assertNotEqual(result['rawStderrSha256'], result['selectedLogSha256'])
 
 
 if __name__ == '__main__':

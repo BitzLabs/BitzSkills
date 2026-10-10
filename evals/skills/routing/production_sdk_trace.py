@@ -829,6 +829,8 @@ def _audit_parent_links(events: list, received: list, provider_call_id: str, *, 
                       scope='two-fixed-sequential-exec-two-cells-two-mcp-calls',
                       parentCallIds=list(parents), cellIds=cells,
                       certifiesProviderWireBodies=False, certifiesArbitraryMultipleOrYieldedCells=False)
+    if len(child_tools) == 1:
+        result.update(status='bounded_parent_cell_one_mcp_child_matched', scope='one-exec-one-mcp-list-call')
     return result
 
 

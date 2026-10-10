@@ -12,10 +12,11 @@ NEUTRAL = {'codex.conversation_starts', 'codex.startup_phase', 'codex.user_promp
            'codex.api_request', 'codex.turn_ttft'}
 
 
-def audit(manifest_raw, host_events, sent, received, events, catalog, *, profile, expected_input,
+def audit(manifest_raw, host_events, sent, received, catalog, *, raw_stderr, selected_log, profile, expected_input,
           base_instructions, developer_instructions, cwd, actual_exit_code):
     """原RPC・host本文・全対象telemetryの相関。固定IDへの別名置換は行わない。"""
     require(isinstance(profile, str) and profile in PROFILES, 'bounded canary profile')
+    events = sdk.complete_trace_projection(raw_stderr, selected_log)
     require(isinstance(expected_input, bytes) and isinstance(base_instructions, str) and
             isinstance(developer_instructions, str) and isinstance(cwd, str) and bool(cwd), 'fixed canary inputs')
     _, params = sdk.requests(sent)
@@ -49,10 +50,14 @@ def audit(manifest_raw, host_events, sent, received, events, catalog, *, profile
         if name in NEUTRAL:
             require(event['target'] == 'codex_otel.trace_safe' and fields.get('conversation.id') == thread and
                     ('turn_id' not in fields or fields['turn_id'] == turn), 'canary telemetry context')
+            for key, expected in [('model', 'gpt-6.1-sol'), ('app.version', '0.160.1'), ('provider_name', 'OpenAI')]:
+                require(key not in fields or fields[key] == expected, 'canary runtime context contradiction')
             if name == 'codex.api_request':
                 require(fields.get('auth.header_attached') is True and type(fields.get('attempt')) is int and
                         fields['attempt'] == 0 and type(fields.get('http.response.status_code')) is int and
                         fields['http.response.status_code'] == 200, 'canary API evidence')
+                require('auth.retry_after_unauthorized' not in fields or
+                        fields['auth.retry_after_unauthorized'] is False, 'canary authorization retry')
                 api_indices.append(index)
         elif name == 'codex.tool_call_received' and fields.get('tool_source') == 'direct':
             require(isinstance(fields.get('call_id'), str) and bool(fields['call_id']), 'canary parent ID')
@@ -83,6 +88,9 @@ def audit(manifest_raw, host_events, sent, received, events, catalog, *, profile
                 nativeEvidence={key: value for key, value in native.items() if key != 'frames'},
                 parentLinks=parent_links, childIntegrity=integrity,
                 traceValueSha256=sdk.digest(events), modelInputSha256=hashlib.sha256(expected_input).hexdigest(),
+                rawStderrSha256=hashlib.sha256(raw_stderr).hexdigest(),
+                selectedLogSha256=hashlib.sha256(selected_log).hexdigest(),
+                completeTargetProjectionVerified=True,
                 sdkInputValueSha256=sdk.digest(params['turn']['input']),
                 certifiesProviderWireBodies=False, certifiesRawPayloads=False,
                 eligibleForMeasurement=False, certifiesBehavior=False, certifiesSkillGate=False)

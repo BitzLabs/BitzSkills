@@ -28,7 +28,24 @@
     "reconsideredRequest": "auto-review-approved-on-confirmed-public-bytes",
     "bypassPerformed": false
   },
-  "independentSolInvocations": 1,
+  "remediationStages": [
+    {
+      "sourceCommit": "7c532ce94c66f32541024fa300d800eb2ea53c2f",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.28.json",
+      "verification": {"outputRelativeRoot": ".venv/production-canary-trace-check-02", "summarySha256": "c05ae9ca3c92d8d9320cd1477d024a92cb410adb9c88d7c011d81adac8bd970e", "testCount": 527, "testSeconds": 62.901, "testExitCode": 0},
+      "independentReview": {
+        "sourceCommit": "7c532ce94c66f32541024fa300d800eb2ea53c2f",
+        "contractPath": "evals/skills/routing/sdk-trace-review-v0.28.json",
+        "outputRelativeRoot": ".venv/sdk-trace-independent-review-28",
+        "receiptSha256": "831056e3d58bb7128890cad3b2544f42eb1f100d5376ee6cc50c43ddb00ddadd",
+        "responseSha256": "9dc6bb245b8c0da0583d2e0bc04bb579402b19293d925e84e1390cf1caac887b",
+        "status": "review_findings", "actualInvocations": 1,
+        "usage": {"input_tokens": 39299, "cached_input_tokens": 6528, "cache_write_input_tokens": 0, "output_tokens": 1464, "reasoning_output_tokens": 1034},
+        "findings": {"P1": 0, "P2": 1, "P3": 0}
+      }
+    }
+  ],
+  "independentSolInvocations": 2,
   "primaryModelTrajectories": 0,
   "automaticRetries": 0,
   "delegations": 0,

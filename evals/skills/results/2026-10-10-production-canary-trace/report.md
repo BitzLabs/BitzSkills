@@ -23,3 +23,10 @@ clean全525件/66.033s/OK/exit0。stdout/stderr/source guard/入力本文hashを
 次枠の予約前にも独立予約の原hashと検分入力hashを保存済みreviewへ再照合し、欠落・差替えを拒否する。
 局所20件/0.308s/OK/exit0。新有限v0.28へ是正版を固定して独立検分する。
 元525試験・P2・消費1を保持。一次0、委譲・自動retry0。実provider/完全入力/要求上限/実地/Phase/Gateは未認定。
+
+source7c532ceのclean全527件/62.901s/OK/exit0、SOL28は初回1回/P2=1/CLIexit0、親の原応答・共通予約照合も通過。
+追加P2はevents配列だけでは原stderrの全対象行を証明できない点。元結果と消費を保持する。
+原stderr/選択ログbytesを必須入力にし、全対象2targetの原行から得たeventsだけを監査するように是正した。
+両原hashを結果へ結び、追加API/未知操作の抽出漏れを拒否する。別targetや上流wire網羅は認定しない。
+明示model/version/providerの矛盾とauth retryも拒否し、1子の負例の限定scope表記も合わせた。
+局所6件/0.070s/OK、旧SDK92件/0.901s/OK、exit0。新有限v0.29で同6公開パスを検分する。

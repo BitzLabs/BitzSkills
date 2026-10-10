@@ -22,14 +22,16 @@ def sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
-def run(source, remediation=False, final_remediation=False, canary_trace=False, canary_trace_remediation=False):
+def run(source, remediation=False, final_remediation=False, canary_trace=False, canary_trace_remediation=False, canary_trace_projection=False):
     trace.require(guard.git(ROOT, 'status', '--porcelain') == b'' and
                   guard.git(ROOT, 'rev-parse', 'HEAD').decode().strip() == source, 'clean fixed HEAD required')
-    contract_name = ('evals/skills/routing/sdk-trace-review-v0.28.json' if canary_trace_remediation else
+    contract_name = ('evals/skills/routing/sdk-trace-review-v0.29.json' if canary_trace_projection else
+                     'evals/skills/routing/sdk-trace-review-v0.28.json' if canary_trace_remediation else
                      'evals/skills/routing/sdk-trace-review-v0.27.json' if canary_trace else
                      'evals/skills/routing/sdk-trace-review-v0.26.json' if final_remediation else
                      'evals/skills/routing/sdk-trace-review-v0.25.json' if remediation else CONTRACT)
-    output_name = ('.venv/production-canary-trace-check-02' if canary_trace_remediation else
+    output_name = ('.venv/production-canary-trace-check-03' if canary_trace_projection else
+                   '.venv/production-canary-trace-check-02' if canary_trace_remediation else
                    '.venv/production-canary-trace-check-01' if canary_trace else
                    '.venv/production-canary-design-check-03' if final_remediation else
                    '.venv/production-canary-design-check-02' if remediation else OUTPUT)
@@ -86,6 +88,8 @@ if __name__ == '__main__':
     mode.add_argument('--final-remediation', action='store_true')
     mode.add_argument('--canary-trace', action='store_true')
     mode.add_argument('--canary-trace-remediation', action='store_true')
+    mode.add_argument('--canary-trace-projection', action='store_true')
     args = parser.parse_args()
     run(args.source, remediation=args.remediation, final_remediation=args.final_remediation,
-        canary_trace=args.canary_trace, canary_trace_remediation=args.canary_trace_remediation)
+        canary_trace=args.canary_trace, canary_trace_remediation=args.canary_trace_remediation,
+        canary_trace_projection=args.canary_trace_projection)
