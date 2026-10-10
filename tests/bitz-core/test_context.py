@@ -766,7 +766,6 @@ class AdrTypeConstraintTests(unittest.TestCase):
             self.assertEqual(self._codes(result), [("CTX-RELATION-TYPE-001", ".spec/requirements/REQ-002.md")])
 
 
-
 class ConfigDiagnosticsTests(unittest.TestCase):
     """設定の不在は`SPEC-WORKSPACE-MISSING-001`（発生元`environment`）、不適合は設定の検査の診断（`SPEC-CONFIG-SCHEMA-001`など）を
     そのまま返し、設定の警告はどの結果にも加える（ワークスペース・設定仕様、診断レジストリ、`context` §6）。"""
@@ -791,6 +790,31 @@ class ConfigDiagnosticsTests(unittest.TestCase):
             self.assertEqual(result["diagnostics"][0]["code"], "SPEC-WORKSPACE-MISSING-001")
             self.assertIsNone(result["workspace"]["id"])
             self.assertEqual(result["diagnostics"][0]["source"], {"kind": "environment", "component": "workspace", "identifier": "."})
+
+    def test_config_warning_is_added_to_a_failed_result_without_changing_its_status(self):
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml() + "futureKey: 1\n")
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            result, exit_code = _run_context(root, ["REQ-999"])
+            self.assertEqual((result["status"], exit_code), ("failed", 1))
+            self.assertEqual(sorted(d["code"] for d in result["diagnostics"]), ["CTX-ROOT-MISSING-001", "SPEC-CONFIG-UNKNOWN-001"])
+
+    def test_stopped_config_returns_its_warning_exactly_once(self):
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/bitz.yaml", _bitz_yaml().replace("language: ja", "language: 42") + "futureKey: 1\n")
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            result, exit_code = _run_context(root, ["REQ-001"])
+            self.assertEqual((result["status"], exit_code), ("error", 3))
+            self.assertEqual(sorted(d["code"] for d in result["diagnostics"]), ["SPEC-CONFIG-SCHEMA-001", "SPEC-CONFIG-UNKNOWN-001"])
+
+    def test_markdown_shows_null_workspace_id(self):
+        # 値のないフィールドは`null`と示す（`context` §9.1）。
+        with tempfile.TemporaryDirectory() as root:
+            _write(root, ".spec/requirements/REQ-001.md", _req("REQ-001"))
+            result, _exit_code = _run_context(root, ["REQ-001"])
+            text = render_context_markdown(result)
+            self.assertIn("- workspace: null (.)", text)
+            self.assertNotIn("None", text)
 
     def test_config_warning_is_added_to_a_successful_result(self):
         with tempfile.TemporaryDirectory() as root:
