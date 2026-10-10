@@ -1,0 +1,107 @@
+{
+  "version": "0.1.0",
+  "phase": 4,
+  "date": "2026-10-10",
+  "scope": "fixed-yielded-parent-local-verification-only",
+  "sourceCommit": "4ec01ad8e1783dd9596406ac1f11bebaa5b9f7bb",
+  "verification": {
+    "sourceCommit": "4ec01ad8e1783dd9596406ac1f11bebaa5b9f7bb",
+    "outputRelativeRoot": ".venv/production-sdk-yielded-parent-verification-01",
+    "summarySha256": "b8fa026e7464d72df3b4994680b57268149e15c8f9d1636ce42b68194060ce3c",
+    "tests": {
+      "count": 488,
+      "seconds": 61.897,
+      "exitCode": 0,
+      "command": [
+        "uv",
+        "--cache-dir",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+        "run",
+        "--offline",
+        "--project",
+        "plugins/bitz-core",
+        "--with",
+        "jsonschema==4.23.0",
+        "python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/skills",
+        "-p",
+        "test_*.py"
+      ],
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "62e8cad8be6fb48a3e4d22fff2f5f3a0c86e73f4566b0f070938eaf4a1290635"
+    }
+  },
+  "capture": {
+    "probeSourceCommit": "5ddc3c3f1ac052e5990df32e3ed2de806ce6af85",
+    "receiptSha256": "eba92afac912898ffc7fa7e159fd47fd86f67196212ec3d0adfa11128b8f3904",
+    "artifactAudit": {
+      "status": "fixed_yielded_capture_original_bytes_rechecked",
+      "sourceCommit": "5ddc3c3f1ac052e5990df32e3ed2de806ce6af85",
+      "receiptSha256": "eba92afac912898ffc7fa7e159fd47fd86f67196212ec3d0adfa11128b8f3904",
+      "localHttpRequests": 3,
+      "hostCalls": 2,
+      "snapshotResources": 71,
+      "rawItems": 8,
+      "rawCompleted": 3,
+      "traceEventCount": 24,
+      "cellId": "1",
+      "stages": [
+        "listed",
+        "read"
+      ],
+      "rpcSdkPayloadsMatch": true,
+      "providerHostBodiesMatch": true,
+      "completeTargetTelemetryPreserved": true,
+      "legacyParentAuditStatus": "stopped_unexpected_telemetry_call",
+      "certifiesYieldedParentCorrelation": false,
+      "certifiesAllNativeLifecycle": false,
+      "certifiesNativeProvider": false,
+      "certifiesSkillGate": false,
+      "eligibleForMeasurement": false
+    },
+    "parentLinks": {
+      "status": "scripted_yielded_parent_cell_child_ids_matched",
+      "scope": "one-fixed-yielded-exec-one-wait-two-mcp-calls",
+      "parentCallId": "probe-call",
+      "cellId": "1",
+      "nativeChildIds": [
+        "exec-a2ea2696-22d7-49f3-9372-38bcc3cafd1b",
+        "exec-b59c956f-19ed-4730-bd85-9a52f8d7d1f0"
+      ],
+      "traceEventCount": 24,
+      "traceValueSha256": "a1071dce17c7ec967dcbb13641db81886d53a2737df173fa60ca574c00767793",
+      "telemetryTruncatedPreviewCallIds": [
+        "exec-a2ea2696-22d7-49f3-9372-38bcc3cafd1b",
+        "probe-call",
+        "exec-b59c956f-19ed-4730-bd85-9a52f8d7d1f0",
+        "probe-wait"
+      ],
+      "certifiesTelemetryOutputBodies": false,
+      "certifiesMultipleOrYieldedCells": false,
+      "eligibleForMeasurement": false,
+      "waitCallId": "probe-wait",
+      "certifiesProviderWireBodies": false,
+      "certifiesArbitraryMultipleOrYieldedCells": false
+    },
+    "certifiesNativeProvider": false,
+    "certifiesSkillGate": false,
+    "eligibleForMeasurement": false
+  },
+  "newMockTrials": 0,
+  "newLocalHttpRequests": 0,
+  "paidModelCalls": 0,
+  "independentSolInvocations": 0,
+  "independentReviewStatus": "not_started_auto_review_rejected",
+  "independentReviewContract": "evals/skills/routing/sdk-trace-review-v0.20.json",
+  "publicPayloadBytes": 189242,
+  "autoReviewRejections": 1,
+  "primaryModelTrajectories": 0,
+  "automaticRetries": 0,
+  "phaseComplete": false,
+  "eligibleForMeasurement": false
+}

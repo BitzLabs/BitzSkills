@@ -1464,3 +1464,13 @@ Python SDKの固定1exec/list/yield/200ms後readと同じcell_id=1へのwait1回
 v0.6の独立SOL指摘0/CLI exit0、親の原応答/hash/歴史Git/guard/予約の照合も通過した。
 今回SOL3/raw静的累計6、新模擬/HTTP/一次/委譲/retry0。次は固定yield/waitの親セル継続相関の専用監査。
 Phase/Step/Gate全体・実provider・一次測定は未認定。
+
+### Phase 4：固定yield/waitの親セル継続相関の専用監査（2026-10-10）
+
+旧1exec入口の未知wait停止を維持し、固定exec/wait/cell1/2 native MCP子の親セル継続を検査する専用入口を追加した。
+局所82件/0.756s/OK、確定ref `4ec01ad8e1783dd9596406ac1f11bebaa5b9f7bb` のclean全488件/61.897s/OK/exit0。
+原捕捉の全target24行とnative子2ID、2親timingと開始/dispatch/result/ready、3 provider要求の順序へ適合した。
+原hash/Git/guard/実試験終端と記録照合もexit0。新模擬/HTTP/モデル/一次/委譲/retry0。
+独立検分v0.20の同6公開パス送信は、自動承認審査が本人の具体的な送信許可を確認できないとして拒否した。
+起動/予約/送信0。直前の捕捉側8パスとは別系列であり、この監査側6パスの具体的許可を確認する。
+`evals/skills/results/2026-10-10-sdk-yielded-parent/` に記録する。独立通過・Phase/Step/Gate全体は未認定。

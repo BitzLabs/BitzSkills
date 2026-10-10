@@ -16,3 +16,8 @@
 本文189242 bytes。追加は固定指示・限定条件・source ID・行番号/hash・公開schema。原通知本文・telemetry・provider request/response・snapshot・保持資料・認証情報を送らない。検分者のtool・試験実行・追加モデル・委譲・repo/home読取りを禁止する。source refはコミット後に原invocation/receiptへ記録する。
 
 この送信は固定1exec/1wait/cell1/2読取りの親セル継続相関コードだけの静的検分。原SDK捕捉側の8パスは今回送らない。実provider/任意複数セル/全native lifecycle/一次測定/Phase/Gateは認定しない。元v0.19の原結果と消費枠を保持する。
+
+確定ref `4ec01ad8e1783dd9596406ac1f11bebaa5b9f7bb` の起動要求は自動承認審査に拒否された。
+理由は6パスをOpenAI/gpt-6.1-solへ送る具体的承認を提示ユーザー発言から確認できないこと。
+記録ファイルやエージェント説明だけでは認可できないとされ、起動・予約・送信0。出力20は未作成。
+回避実行をせず、この同6パス・同宛先・各修正版1回・一次0/委譲0/retry0の継続送信について本人の具体的許可回答を確認する。
