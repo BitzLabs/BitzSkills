@@ -1,0 +1,375 @@
+{
+  "version": "0.1.0",
+  "phase": 4,
+  "date": "2026-10-10",
+  "scope": "fixed-three-exchange-raw-diagnostic-independently-reviewed",
+  "sourceCommit": "d76f002fa8e12d7bcd717c5ccf3945c07cc88500",
+  "verification": {
+    "sourceCommit": "d76f002fa8e12d7bcd717c5ccf3945c07cc88500",
+    "outputRelativeRoot": ".venv/production-sdk-raw-two-stage-verification-01",
+    "summarySha256": "f7369d5f26dafca96bbc81bc4fb6f9efcb7167741d016f31963883297a163d82",
+    "tests": {
+      "count": 505,
+      "seconds": 63.868,
+      "exitCode": 0,
+      "command": [
+        "uv",
+        "--cache-dir",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+        "run",
+        "--offline",
+        "--project",
+        "plugins/bitz-core",
+        "--with",
+        "jsonschema==4.23.0",
+        "python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/skills",
+        "-p",
+        "test_*.py"
+      ],
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "db583319626cc6e010d4325f88f2ec33e39bf18ff386301c7c56210b008944f7"
+    }
+  },
+  "captures": [
+    {
+      "profile": "yielded-read",
+      "artifactAudit": {
+        "status": "fixed_yielded_capture_original_bytes_rechecked",
+        "sourceCommit": "5ddc3c3f1ac052e5990df32e3ed2de806ce6af85",
+        "receiptSha256": "eba92afac912898ffc7fa7e159fd47fd86f67196212ec3d0adfa11128b8f3904",
+        "localHttpRequests": 3,
+        "hostCalls": 2,
+        "snapshotResources": 71,
+        "rawItems": 8,
+        "rawCompleted": 3,
+        "traceEventCount": 24,
+        "cellId": "1",
+        "stages": [
+          "listed",
+          "read"
+        ],
+        "rpcSdkPayloadsMatch": true,
+        "providerHostBodiesMatch": true,
+        "completeTargetTelemetryPreserved": true,
+        "legacyParentAuditStatus": "stopped_unexpected_telemetry_call",
+        "certifiesYieldedParentCorrelation": false,
+        "certifiesAllNativeLifecycle": false,
+        "certifiesNativeProvider": false,
+        "certifiesSkillGate": false,
+        "eligibleForMeasurement": false
+      },
+      "parentLinks": {
+        "status": "scripted_yielded_parent_cell_child_ids_matched",
+        "scope": "one-fixed-yielded-exec-one-wait-two-mcp-calls",
+        "parentCallId": "probe-call",
+        "cellId": "1",
+        "nativeChildIds": [
+          "exec-a2ea2696-22d7-49f3-9372-38bcc3cafd1b",
+          "exec-b59c956f-19ed-4730-bd85-9a52f8d7d1f0"
+        ],
+        "traceEventCount": 24,
+        "traceValueSha256": "a1071dce17c7ec967dcbb13641db81886d53a2737df173fa60ca574c00767793",
+        "telemetryTruncatedPreviewCallIds": [
+          "exec-a2ea2696-22d7-49f3-9372-38bcc3cafd1b",
+          "probe-call",
+          "exec-b59c956f-19ed-4730-bd85-9a52f8d7d1f0",
+          "probe-wait"
+        ],
+        "certifiesTelemetryOutputBodies": false,
+        "certifiesMultipleOrYieldedCells": false,
+        "eligibleForMeasurement": false,
+        "waitCallId": "probe-wait",
+        "certifiesProviderWireBodies": false,
+        "certifiesArbitraryMultipleOrYieldedCells": false
+      },
+      "rawExchangeAudit": {
+        "status": "sdk_raw_two_stage_exchange_diagnostic_passed",
+        "hostCalls": 2,
+        "readResources": [
+          "resources/bitz-sdd/skills/sdd-plan/SKILL.md"
+        ],
+        "candidateManifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+        "nativeEvidence": {
+          "retainedNotifications": [
+            {
+              "rawIndex": 1,
+              "kind": "remoteControl/status/changed",
+              "sha256": "90b2f300fa75ba638a1930931be7ba5eaf36ad0d0fe2a38792e3d162b938dddc"
+            },
+            {
+              "rawIndex": 4,
+              "kind": "warning",
+              "sha256": "273c260ddf341d2032463eb1c3cf72ba94e6697dc0073fcd83d9a480cecf171b"
+            },
+            {
+              "rawIndex": 5,
+              "kind": "mcpServer/startupStatus/updated",
+              "sha256": "b12f1ea22a27d7162fcd8a714abe36e238f59560dbb77ce8572ea1dda3138333"
+            },
+            {
+              "rawIndex": 9,
+              "kind": "mcpServer/startupStatus/updated",
+              "sha256": "57367b73dc07af311b6ab8e411c94c9a0ddcf05dfb7394ad6995f7cdb076c8ae"
+            },
+            {
+              "rawIndex": 10,
+              "kind": "item/started/userMessage",
+              "sha256": "2b98f368774bb42aa32f41a850b43694f063181ea5122f3ec3f3db3b20297415"
+            },
+            {
+              "rawIndex": 11,
+              "kind": "item/completed/userMessage",
+              "sha256": "7eb627ec4cd0047da84a5ca68c8533360f0521b80cbcbb6c715ce8e01140da5a"
+            },
+            {
+              "rawIndex": 14,
+              "kind": "account/rateLimits/updated",
+              "sha256": "6bc3fc6c76ed80b27468a6e19faffdff04fa61d99b14804be691bb6f0b11b245"
+            },
+            {
+              "rawIndex": 17,
+              "kind": "account/rateLimits/updated",
+              "sha256": "87928c732e66db69a0210df28ad689f5203d427d990b850157661f4d1a942222"
+            },
+            {
+              "rawIndex": 21,
+              "kind": "account/rateLimits/updated",
+              "sha256": "0838c319d00e4c6e8717a5d7cc60214d476513083bf457bec49014f65ec772b4"
+            }
+          ],
+          "requestIds": {
+            "ed0c6715-98f8-4885-ac52-82ba8e7bbd62": 1,
+            "27bf3c49-de65-4efe-9730-da0710775f8b": 2,
+            "2b0cfd99-9d5f-4f34-969d-17faa210627b": 3
+          },
+          "sentValueSha256": "2b9ad626d53436631eee29d2ea44b5b2e3235dd18eaa669e4deb21d739e9a8b7",
+          "receivedValueSha256": "eb1d0dace0994f2df70f1cd7581f2cea8e762204f1522a4e47b3705716701a45"
+        },
+        "providerParentBindingVerified": false,
+        "eligibleForMeasurement": false,
+        "certifiesExpectedDecision": false,
+        "certifiesBehavior": false,
+        "certifiesSkillGate": false,
+        "fixedProfile": "yielded-read",
+        "providerContextProfile": "sdk-0.160.1-local-diagnostic-2026-10-10",
+        "providerCallOutputBindingVerified": true,
+        "originalSentValueSha256": "860718579556258adaf7242dafcf48d3aa79acc76a5fcabb10c0fee81f7c57fa",
+        "originalReceivedValueSha256": "71e4adefabf9ddb5b2ff344808ae55fba83877f8c391a76f59aadd468dead49d",
+        "providerResponseSha256": [
+          "3061d6cde4a5135232798d3d228f93da252a7de6b2f7cdc93197aa20e0a40139",
+          "53af842bd98f1862a1d2ade66995d755eb08edf726929b423047e0f9049fb885",
+          "2a2c4e8b8a51d34fcf4bd1c7ea6adf605ac212861b76a683ae3943cf3c378cd9"
+        ],
+        "providerRequestValueSha256": [
+          "d3df396364f75a82150a722dacebabd0da3529553d252f083f902c2fcd91ac98",
+          "1fc273d5930da2cae6db55d6a034da941fca3dd75f876c8daec1ed3027ad16bf",
+          "4026ceef85e2ba166488bd9187c392e458dcc884bc75264193b1f712165426cb"
+        ],
+        "rawNotificationsValueSha256": "3707f892ce20a90266fe253dcff83d494e6afb3b6baf385fcfb260b0d7d41bed",
+        "sdkRawNotificationsValueSha256": "b99103d29e6e1eddd2a650e95b163da1df0fe28928a7ebd8889472f068770906",
+        "rawItemCount": 8,
+        "rawCompletedCount": 3,
+        "sdkRawPayloadsMatchOriginalRpc": true,
+        "rawProviderCallOutputBindingVerified": true,
+        "rawProjection": "explicit-raw-flag-and-raw-notifications-only",
+        "rawInternalMetadataScope": "turn-id-and-field-types",
+        "certifiesCompleteRawProviderContext": false,
+        "rawItemsAreOriginalSseBytes": false,
+        "certifiesAllNativeLifecycle": false,
+        "certifiesNativeProvider": false,
+        "certifiesPhaseCompletion": false
+      }
+    },
+    {
+      "profile": "sequential-read",
+      "artifactAudit": {
+        "status": "fixed_sequential_capture_original_bytes_rechecked",
+        "sourceCommit": "27c399431ab09737927914e1b6942775bd229f43",
+        "receiptSha256": "b390a1791cdf06fdce9759f4d56b90cab66e2ce28022f902fd8dff347befb77b",
+        "localHttpRequests": 3,
+        "hostCalls": 2,
+        "snapshotResources": 71,
+        "rawItems": 8,
+        "rawCompleted": 3,
+        "traceEventCount": 24,
+        "observedCellIds": [
+          "1",
+          "2"
+        ],
+        "stages": [
+          "listed",
+          "read"
+        ],
+        "rpcSdkPayloadsMatch": true,
+        "providerHostBodiesMatch": true,
+        "completeTargetTelemetryPreserved": true,
+        "legacyParentAuditStatus": "stopped_unexpected_telemetry_call",
+        "certifiesMultipleCellCorrelation": false,
+        "certifiesAllNativeLifecycle": false,
+        "certifiesNativeProvider": false,
+        "certifiesSkillGate": false,
+        "eligibleForMeasurement": false
+      },
+      "parentLinks": {
+        "status": "scripted_sequential_parent_cells_child_ids_matched",
+        "scope": "two-fixed-sequential-exec-two-cells-two-mcp-calls",
+        "parentCallId": "probe-call",
+        "cellId": "1",
+        "nativeChildIds": [
+          "exec-8ca48034-2964-4cb7-80a9-0c5a3ab1fe5b",
+          "exec-9572041f-adf4-4746-92fa-2c8cc92ef6f8"
+        ],
+        "traceEventCount": 24,
+        "traceValueSha256": "02d32fbfd3029e7324c8c978892a7651130dfb00cd93950cc7b191d979d4937e",
+        "telemetryTruncatedPreviewCallIds": [
+          "exec-8ca48034-2964-4cb7-80a9-0c5a3ab1fe5b",
+          "probe-call",
+          "exec-9572041f-adf4-4746-92fa-2c8cc92ef6f8",
+          "probe-read"
+        ],
+        "certifiesTelemetryOutputBodies": false,
+        "certifiesMultipleOrYieldedCells": false,
+        "eligibleForMeasurement": false,
+        "parentCallIds": [
+          "probe-call",
+          "probe-read"
+        ],
+        "cellIds": [
+          "1",
+          "2"
+        ],
+        "certifiesProviderWireBodies": false,
+        "certifiesArbitraryMultipleOrYieldedCells": false
+      },
+      "rawExchangeAudit": {
+        "status": "sdk_raw_two_stage_exchange_diagnostic_passed",
+        "hostCalls": 2,
+        "readResources": [
+          "resources/bitz-sdd/skills/sdd-plan/SKILL.md"
+        ],
+        "candidateManifestSha256": "603333c4bbe52047b54003183830d989ada91f35bb810f78e7f59a2dd575482b",
+        "nativeEvidence": {
+          "retainedNotifications": [
+            {
+              "rawIndex": 1,
+              "kind": "remoteControl/status/changed",
+              "sha256": "57d2024dc670b539d7c36d1114236c2c8f5548b691aab52a1248d2c784896a43"
+            },
+            {
+              "rawIndex": 4,
+              "kind": "warning",
+              "sha256": "eba55b7c1b2930b0ce33867a642cf8484a494f2bad018de7a3f60083a38616ce"
+            },
+            {
+              "rawIndex": 5,
+              "kind": "mcpServer/startupStatus/updated",
+              "sha256": "fb14ead5c46347319bc1f112947f83894b68496a85421260b3919ee2669f1dc2"
+            },
+            {
+              "rawIndex": 9,
+              "kind": "mcpServer/startupStatus/updated",
+              "sha256": "f6749ee4bfdc611ce6eae96ed479c606e4d1ee6cdcf1e4668298d2642d951c82"
+            },
+            {
+              "rawIndex": 10,
+              "kind": "item/started/userMessage",
+              "sha256": "c0ac6b553c14e0773d22626a684074675877799c33822d5473d65624b24500d6"
+            },
+            {
+              "rawIndex": 11,
+              "kind": "item/completed/userMessage",
+              "sha256": "87fd7e544f3ff31c7653b3e7adc7a69d0acc065188a29b6379a68bb12bc574d2"
+            },
+            {
+              "rawIndex": 14,
+              "kind": "account/rateLimits/updated",
+              "sha256": "140ac7403b1a479f5559e8540c3bdf8650004845c0a876914c3b512a8731055a"
+            },
+            {
+              "rawIndex": 17,
+              "kind": "account/rateLimits/updated",
+              "sha256": "54223e63d34be1c5012bdeab9b8bc01419419e39a174f3df873fdb1b93610198"
+            },
+            {
+              "rawIndex": 21,
+              "kind": "account/rateLimits/updated",
+              "sha256": "b7050d5258829f3f2bb69d38ff3f131a57371a6a717dbe83a867918d7bae1b34"
+            }
+          ],
+          "requestIds": {
+            "ee85dfa3-b773-45f5-b8ac-583f4e2e6ad5": 1,
+            "5d4d6ffd-c973-474d-919b-f66868d5b912": 2,
+            "6e0ba62c-380b-446f-8de0-bd2fb4b3703d": 3
+          },
+          "sentValueSha256": "510db172110fb97cf64c902596a9a50d2a33ab919ebd769fd12cbafc120e98d6",
+          "receivedValueSha256": "9dd3dcff3638acda823eb6a99602cc09c8d4fa977076f887846025a8aaaa99ec"
+        },
+        "providerParentBindingVerified": false,
+        "eligibleForMeasurement": false,
+        "certifiesExpectedDecision": false,
+        "certifiesBehavior": false,
+        "certifiesSkillGate": false,
+        "fixedProfile": "sequential-read",
+        "providerContextProfile": "sdk-0.160.1-local-diagnostic-2026-10-10",
+        "providerCallOutputBindingVerified": true,
+        "originalSentValueSha256": "8e85df29eedbebe76a40883da09b297e5b69db887ecbb1a6f15c506ee67b991f",
+        "originalReceivedValueSha256": "d97fb30dd2c91b32c7bc7608cdddcfd87146b05ac2f9ac0f143899fa097b90e4",
+        "providerResponseSha256": [
+          "20eed0f35665c02a943049a2e35ea2a204aa7d460b7cb8afb1bee48fbff962bc",
+          "a9ae349f5c63ffe1c3b344ad7804bf4bd6284cbda4909a83c41f206687fff109",
+          "2a2c4e8b8a51d34fcf4bd1c7ea6adf605ac212861b76a683ae3943cf3c378cd9"
+        ],
+        "providerRequestValueSha256": [
+          "e9ee024eb4384ac360831a20bd351c9f20ec6a82df6710d132d9bffed18ad4cc",
+          "05061d60c40c428e9e78753474611fb8da578bed2809f6b518270ad6c6ddd9a6",
+          "09467f94323cba17555019faa25357a2a309874e5149894ced3b93e2cee8bd2c"
+        ],
+        "rawNotificationsValueSha256": "23012c57111353f95c4487d014f57d1b35063fa7fe3ac130f2b88d94646d36a3",
+        "sdkRawNotificationsValueSha256": "bc1d52c59a821268b86a159abb228c0d59efd03d2bff45932c265dd47967d026",
+        "rawItemCount": 8,
+        "rawCompletedCount": 3,
+        "sdkRawPayloadsMatchOriginalRpc": true,
+        "rawProviderCallOutputBindingVerified": true,
+        "rawProjection": "explicit-raw-flag-and-raw-notifications-only",
+        "rawInternalMetadataScope": "turn-id-and-field-types",
+        "certifiesCompleteRawProviderContext": false,
+        "rawItemsAreOriginalSseBytes": false,
+        "certifiesAllNativeLifecycle": false,
+        "certifiesNativeProvider": false,
+        "certifiesPhaseCompletion": false
+      }
+    }
+  ],
+  "independentReview": {
+    "sourceCommit": "d76f002fa8e12d7bcd717c5ccf3945c07cc88500",
+    "contractPath": "evals/skills/routing/sdk-trace-review-v0.23.json",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-23",
+    "receiptSha256": "f9fa5497605b91c59f58025009d4afe3a34ed8093962fa59db6b60b724d5b7d6",
+    "responseSha256": "25bde0f75e7e6625514a17560a2cbd9445afabcb82b19c0ca302727ed8450253",
+    "status": "static_review_passed",
+    "actualInvocations": 1,
+    "usage": {
+      "input_tokens": 70472,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1141,
+      "reasoning_output_tokens": 1080
+    }
+  },
+  "reviewFindingCount": 0,
+  "publicPayloadBytes": 227124,
+  "newMockTrials": 0,
+  "newLocalHttpRequests": 0,
+  "paidModelCalls": 0,
+  "independentSolInvocations": 1,
+  "primaryModelTrajectories": 0,
+  "automaticRetries": 0,
+  "phaseComplete": false,
+  "eligibleForMeasurement": false
+}

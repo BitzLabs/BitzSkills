@@ -1,0 +1,30 @@
+# Phase 4：固定3交換のSDK文脈・raw通知監査（2026-10-10）
+
+専用diagnose_raw_two_stage_exchangeは日付2026-10-10の局所SDK0.160.1/LOCAL_SIMULATION_ONLYに限定し、
+yielded-readとsequential-readの保存済み3交換を検査する。旧2交換・旧8/9日付の限定は維持する。
+原flagとraw通知だけを明示投影し、既存native子操作/終端監査へ適用する。原要求・通知を変更しない。
+additional_tools/baseInstructions/SDK補足/環境/要求を固定前置文脈へ完全一致させる。
+保存SSE・call/output・各stage全文/host引数と結果・再掲履歴/settingsを固定2段階検査へ照合する。
+rawは原RPC外側timestampを保存し、SDK配送method/paramsへ一致させ、同thread/turnの開始完了間だけを許す。
+raw入力3/call-output2組/finalの8件とcompleted3件、生成id/内部turn metadata/元wire/最終投影を相関する。
+additional_tools/baseInstructionsのraw通知網羅を認定せず、原provider入力で別照合する。
+内部metadata時刻/content kindsは型と有限値だけを検査し、上流SSE bytesとの同一性を主張しない。
+
+局所92件/0.898s/OK/exit0。合成fixtureの最初の停止は追加tool宣言とtop-level toolsの不正な配置だった。
+原SDKと同じadditional_tools形式へ修正した。合成補足のfingerprintは局所試験だけで固定し、
+実SDKのfingerprintは実定数のまま、保存済みyield/2execの原捕捉へ照合した。
+source `d76f002fa8e12d7bcd717c5ccf3945c07cc88500` のclean全505件/63.868s/OK/exit0。
+原試験stderr SHA256 `db583319626cc6e010d4325f88f2ec33e39bf18ff386301c7c56210b008944f7`、
+原検証summary SHA256 `f7369d5f26dafca96bbc81bc4fb6f9efcb7167741d016f31963883297a163d82`。
+両原捕捉のnative/raw/前置文脈/親相関への再適用も通過し、各rawItems8/rawCompleted3/trace24行を照合した。
+
+同sourceの同6公開パス本文227124 bytesを有限v0.23で初回1回送信し、独立SOL23はstatic_review_passed/指摘0/CLIexit0。
+入力70472/cached0/出力1141/推論1080 tokens。
+原receipt SHA256 `f9fa5497605b91c59f58025009d4afe3a34ed8093962fa59db6b60b724d5b7d6`、
+原response SHA256 `25bde0f75e7e6625514a17560a2cbd9445afabcb82b19c0ca302727ed8450253`。
+親が原stdio/schema/最終JSON/usage/hash、確定Git、前後guard、有限予約を再照合した。
+記録照合はrecorded_raw_two_stage_matches_original_bytes/tests505/capturesReplayed2/rawItemsPerCapture8/exit0。
+当区切りSOL1/SDK静的系列累計23、新模擬/HTTP/一次/委譲/自動retry0。
+共通2段階依存コードは別の公開8パスのSOL08指摘0であり、今回の6パスでその全文を送ったと扱わない。
+固定局所診断と当該静的検分のみ通過。任意複数/並列/未知pending、実provider、一次台帳統合、公開canary、Phase/Step/Gateは未認定。
+eligibleForMeasurement=falseを維持する。

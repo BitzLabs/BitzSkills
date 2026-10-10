@@ -361,3 +361,13 @@ source7d565beのclean全496件/62.272s/OK/exit0と、同8パス130720 bytesの�
 当区切りSOL1/SDK静的系列累計22、新模擬/HTTP/一次/委譲/retry0。旧1exec・固定exec/waitの未知追加exec停止を維持する。
 次は3交換のSDK原文脈とraw通知監査への接続。任意複数/並列/未知pending・実provider・一次台帳統合・canaryは残る。
 固定2セルの局所相関と当該静的検分のみ通過。eligibleForMeasurement=false、Phase/Step/Gate全体は未認定。
+
+### Phase 4：固定3交換のSDK文脈/raw監査と独立検分通過（2026-10-10）
+
+別入口で日付10の局所SDK0.160.1/LOCAL_SIMULATION_ONLY/既知yieldと2execだけを検査し、旧2交換/旧8・9日付の限定を維持する。
+原flagとraw通知だけを明示投影し、native子操作/終端、完全な固定前置文脈、保存SSE/call/output/host引数・本文/再掲履歴を照合する。
+raw入力3/呼出しと出力2組/finalの8件とcompleted3、SDK配送method/params/生成id/内部turn/元wireを相関する。
+局所92件/0.898s/OK/exit0、source d76f002のclean全505件/63.868s/OK/exit0、両原捕捉と親相関への再適用も通過した。
+同6公開パス227124 bytesの初回SOL23は指摘0/CLIexit0、親の原stdio/hash/Git/guard/予約と記録照合もexit0。
+当区切りSOL1/SDK静的系列累計23、新模擬/HTTP/一次/委譲/retry0。固定局所診断と静的検分だけの通過。
+次は実providerへ接続する公開canaryの設計と一次台帳統合。任意複数/並列/未知pending・実provider・本測定・Phase/Gateは未認定。
