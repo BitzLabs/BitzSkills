@@ -1510,3 +1510,13 @@ source7d565beのclean全496件/62.272s/OK/exit0と、同8パス130720 bytesの�
 原捕捉・指摘・応答・消費枠を保持。当区切りのSOL2/raw静的系列累計8、模擬1/局所HTTP3/一次・委譲・retry0。
 捕捉コードの局所是正と当該静的検分だけの通過で、新照合器全文を送った検分ではない。
 次は原セル1/2と各exec/子IDの専用相関監査。Phase/Step/Gate全体と一次測定は未認定。
+
+### Phase 4：固定2セルの親exec相関監査と独立検分通過（2026-10-10）
+
+専用入口で固定probe-call/exec→probe-read/exec、cell1/2、2 native子を親ごとに照合する。
+原再適用の最初の停止でruntime IDがセルごとに再利用されると確認し、セル/runtime IDの組へ束縛を是正した。
+局所88件/0.814s/OK/exit0、source1d72e20のclean全501件/62.274s/OK/exit0と原24行/2子/2セルに適合した。
+同6公開パス202879 bytesの初回SOL22は指摘0/CLIexit0。親の原stdio/hash/Git/guard/予約と記録照合もexit0。
+当区切りSOL1/SDK静的系列累計22、新模擬/HTTP/一次/委譲/retry0。旧1exec・固定exec/waitの未知追加exec停止を維持する。
+次は3交換SDK文脈/raw監査への接続。任意複数/並列/未知pending・実provider・一次台帳統合・canaryは残る。
+固定2セルの局所相関と当該静的検分のみ通過。Phase/Step/Gate全体と一次測定は未認定。
