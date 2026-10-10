@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[3]
 CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.19.json'
 YIELDED_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.20.json'
 YIELDED_REMEDIATION_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.21.json'
+SEQUENTIAL_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.22.json'
 RAW_CONTRACTS = {'evals/skills/routing/sdk-raw-response-review-v0.1.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.2.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.3.json',
@@ -59,7 +60,7 @@ def review_response(base: Path, stdout: bytes, source: str, schema: bytes, contr
 
 
 def run(source: str, contract_name: str = CONTRACT):
-    require(contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, *RAW_CONTRACTS}, 'unknown static review contract')
+    require(contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, SEQUENTIAL_CONTRACT, *RAW_CONTRACTS}, 'unknown static review contract')
     require(source_guard.git(ROOT, 'status', '--porcelain') == b'', 'clean tree required')
     contract = trace.strict_json(source_guard.git(ROOT, 'show', source + ':' + contract_name))
     before = source_guard.verify(ROOT, source, contract['sourceFiles'])
@@ -77,6 +78,7 @@ def run(source: str, contract_name: str = CONTRACT):
                              '.venv/sdk-trace-independent-review-17', '.venv/sdk-trace-independent-review-18',
                              '.venv/sdk-trace-independent-review-19',
                              '.venv/sdk-trace-independent-review-20',
+                             '.venv/sdk-trace-independent-review-21',
                              '.venv/sdk-raw-response-independent-review-01',
                              '.venv/sdk-raw-response-independent-review-02',
                              '.venv/sdk-raw-response-independent-review-03',
@@ -110,7 +112,7 @@ def run(source: str, contract_name: str = CONTRACT):
               'あなたが実行していない試験や原証拠の検分を成功と書かないでください。'
               '指定schemaのJSONだけを回答してください。\n'
               f'sourceCommit={source}\nscope={contract["scope"]}\n')
-    if contract_name in RAW_CONTRACTS or contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT}:
+    if contract_name in RAW_CONTRACTS or contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, SEQUENTIAL_CONTRACT}:
         prompt += '\nこの検分の固定制約:\n' + '\n'.join(contract['constraints']) + '\n'
     for name in contract['payloadFiles']:
         raw = source_guard.git(ROOT, 'show', source + ':' + name)
@@ -198,8 +200,10 @@ if __name__ == '__main__':
     raw.add_argument('--yielded-parent-remediation', action='store_true')
     raw.add_argument('--sequential-capture-review', action='store_true')
     raw.add_argument('--sequential-capture-remediation', action='store_true')
+    raw.add_argument('--sequential-parent-review', action='store_true')
     args = parser.parse_args()
-    contract_name = ('evals/skills/routing/sdk-raw-response-review-v0.8.json' if args.sequential_capture_remediation else
+    contract_name = (SEQUENTIAL_CONTRACT if args.sequential_parent_review else
+                     'evals/skills/routing/sdk-raw-response-review-v0.8.json' if args.sequential_capture_remediation else
                      'evals/skills/routing/sdk-raw-response-review-v0.7.json' if args.sequential_capture_review else
                      YIELDED_REMEDIATION_CONTRACT if args.yielded_parent_remediation else
                      YIELDED_CONTRACT if args.yielded_parent_review else

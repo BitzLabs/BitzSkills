@@ -147,14 +147,34 @@ def check_yielded_capture():
             'certifiesNativeProvider': False, 'certifiesSkillGate': False, 'eligibleForMeasurement': False}
 
 
-def run_yielded(source, *, remediation=False):
+def check_sequential_capture():
+    spec = importlib.util.spec_from_file_location('sequential_original_artifacts',
+        ROOT / 'evals/skills/results/2026-10-10-sdk-sequential-cell/verify-artifacts.py')
+    capture = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(capture)
+    artifact_audit = capture.check_capture()
+    base = capture.BASE
+    outgoing = helper.frames(base, 'rpc-out.jsonl')
+    events = sdk.complete_trace_projection((base / 'runtime-stderr.bin').read_bytes(),
+                                           (base / 'trace-safe.jsonl').read_bytes())
+    links = sdk.audit_sequential_parent_links(events, outgoing)
+    return {'probeSourceCommit': capture.SOURCE, 'receiptSha256': capture.RECEIPT_SHA,
+            'artifactAudit': artifact_audit, 'parentLinks': links,
+            'certifiesNativeProvider': False, 'certifiesSkillGate': False, 'eligibleForMeasurement': False}
+
+
+def run_yielded(source, *, remediation=False, sequential=False):
+    require(not (remediation and sequential), 'one parent profile required')
     require(guard.git(ROOT, 'status', '--porcelain') == b'' and
             guard.git(ROOT, 'rev-parse', 'HEAD').decode().strip() == source, 'clean yielded parent HEAD')
-    contract_name = 'evals/skills/routing/sdk-trace-review-v0.21.json' if remediation else 'evals/skills/routing/sdk-trace-review-v0.20.json'
+    contract_name = ('evals/skills/routing/sdk-trace-review-v0.22.json' if sequential else
+                     'evals/skills/routing/sdk-trace-review-v0.21.json' if remediation else
+                     'evals/skills/routing/sdk-trace-review-v0.20.json')
     contract = sdk.trace.strict_json(guard.git(ROOT, 'show', source + ':' + contract_name))
     before = guard.verify(ROOT, source, contract['sourceFiles'])
-    capture = check_yielded_capture()
-    output = ROOT / ('.venv/production-sdk-yielded-parent-verification-02' if remediation else
+    capture = check_sequential_capture() if sequential else check_yielded_capture()
+    output = ROOT / ('.venv/production-sdk-sequential-parent-verification-01' if sequential else
+                     '.venv/production-sdk-yielded-parent-verification-02' if remediation else
                      '.venv/production-sdk-yielded-parent-verification-01')
     require(not any(p.is_symlink() for p in (output, *output.parents)), 'yielded parent output symlink')
     output.mkdir(mode=0o700)
@@ -169,7 +189,8 @@ def run_yielded(source, *, remediation=False):
     require(process.returncode == 0 and matched is not None, 'yielded parent full suite failed')
     after = guard.verify(ROOT, source, contract['sourceFiles'])
     require(before == after and guard.git(ROOT, 'status', '--porcelain') == b'', 'yielded parent source drift')
-    value = {'status': 'sdk_yielded_parent_artifacts_rechecked', 'sourceCommit': source, 'capture': capture,
+    value = {'status': 'sdk_sequential_parent_artifacts_rechecked' if sequential else 'sdk_yielded_parent_artifacts_rechecked',
+             'sourceCommit': source, 'capture': capture,
              'newMockTrials': 0, 'newLocalHttpRequests': 0, 'paidModelCalls': 0,
              'independentReviewPerformed': False, 'eligibleForMeasurement': False, 'phaseComplete': False,
              'sourceGuards': {'before': before, 'after': after}, 'tests': {
@@ -186,8 +207,11 @@ if __name__ == '__main__':
     mode.add_argument('--raw-exchange', action='store_true')
     mode.add_argument('--yielded-parent', action='store_true')
     mode.add_argument('--yielded-parent-remediation', action='store_true')
+    mode.add_argument('--sequential-parent', action='store_true')
     args = parser.parse_args()
-    if args.yielded_parent_remediation:
+    if args.sequential_parent:
+        run_yielded(args.source, sequential=True)
+    elif args.yielded_parent_remediation:
         run_yielded(args.source, remediation=True)
     else:
         (run_yielded if args.yielded_parent else run_raw if args.raw_exchange else run)(args.source)

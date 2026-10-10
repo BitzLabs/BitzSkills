@@ -727,6 +727,92 @@ class ProductionSdkTraceTests(unittest.TestCase):
                 event['fields']['tool_result_seq'] = number
         return events
 
+    def sequential_parent_events(self):
+        events = self.yielded_parent_events()
+        for event in events:
+            fields = event['fields']
+            if fields.get('call_id') == 'probe-wait':
+                fields['call_id'] = 'probe-read'
+                if 'tool_name' in fields: fields['tool_name'] = 'exec'
+                if 'cell_id' in fields: fields['cell_id'] = '2'
+            if fields.get('call_id') == 'call-1':
+                for key in ('cell.id', 'cell_id'):
+                    if key in fields: fields[key] = '2'
+                if 'runtime_tool_call_id' in fields: fields['runtime_tool_call_id'] = 'tool-0'
+        return events
+
+    def test_sequential_parent_matches_distinct_cells_without_mutating_or_certifying_general_use(self):
+        events = self.sequential_parent_events()
+        before = copy.deepcopy((events, self.frames))
+        result = sdk.audit_sequential_parent_links(events, self.frames)
+        self.assertEqual(result['status'], 'scripted_sequential_parent_cells_child_ids_matched')
+        self.assertEqual(result['parentCallIds'], ['probe-call', 'probe-read'])
+        self.assertEqual(result['cellIds'], ['1', '2'])
+        self.assertEqual(result['nativeChildIds'], ['call-0', 'call-1'])
+        self.assertFalse(result['certifiesProviderWireBodies'])
+        self.assertFalse(result['certifiesArbitraryMultipleOrYieldedCells'])
+        self.assertFalse(result['eligibleForMeasurement'])
+        self.assertEqual((events, self.frames), before)
+
+    def test_sequential_parent_rejects_reused_foreign_swapped_and_aliased_cells(self):
+        for mode in ('reused', 'foreign', 'swapped', 'timing', 'dispatch', 'result', 'alias', 'runtime'):
+            events = self.sequential_parent_events()
+            find = lambda call, name: next(e['fields'] for e in events if e['fields'].get('call_id') == call and
+                                           e['fields']['event.name'] == name)
+            if mode in ('reused', 'foreign', 'swapped'):
+                mapping = {'1': '1', '2': '1' if mode == 'reused' else '3'}
+                if mode == 'swapped': mapping = {'1': '2', '2': '1'}
+                for event in events:
+                    for key in ('cell.id', 'cell_id'):
+                        if key in event['fields']: event['fields'][key] = mapping[event['fields'][key]]
+            elif mode == 'timing': find('probe-read', 'codex.code_mode.host_timing')['cell_id'] = '1'
+            elif mode == 'dispatch': find('call-1', 'codex.code_mode.nested_tool_dispatched')['cell.id'] = '1'
+            elif mode == 'result': find('probe-read', 'codex.tool_result')['cell.id'] = '1'
+            elif mode == 'alias': find('call-1', 'codex.tool_call_received')['cell_id'] = '1'
+            else: find('call-1', 'codex.code_mode.nested_tool_dispatched')['runtime_tool_call_id'] = 'other'
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                sdk.audit_sequential_parent_links(events, self.frames)
+
+    def test_sequential_parent_rejects_foreign_or_missing_second_exec_milestones(self):
+        for mode in ('missing', 'duplicate', 'wait', 'call-id', 'namespace', 'source', 'thread', 'turn', 'sequence'):
+            events = self.sequential_parent_events()
+            receive = next(e for e in events if e['fields'].get('call_id') == 'probe-read' and
+                           e['fields']['event.name'] == 'codex.tool_call_received')
+            if mode == 'missing': events.remove(receive)
+            elif mode == 'duplicate': events.insert(events.index(receive), copy.deepcopy(receive))
+            elif mode == 'wait': receive['fields']['tool_name'] = 'wait'
+            elif mode == 'call-id': receive['fields']['call_id'] = 'other'
+            elif mode == 'namespace': receive['fields']['tool_namespace'] = 'other'
+            elif mode == 'source': receive['fields']['tool_source'] = 'code_mode'
+            elif mode == 'thread': receive['fields']['conversation.id'] = 'other'
+            elif mode == 'turn': receive['fields']['turn_id'] = 'other'
+            else:
+                next(e['fields'] for e in events if e['fields'].get('call_id') == 'probe-read' and
+                     e['fields']['event.name'] == 'codex.tool_result')['tool_result_seq'] = True
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                sdk.audit_sequential_parent_links(events, self.frames)
+
+    def test_sequential_parent_rejects_second_child_before_parent_and_provider_order_drift(self):
+        for mode in ('read-before-parent', 'second-before-first-ready', 'missing-api', 'api-order', 'foreign-api-turn'):
+            events = self.sequential_parent_events()
+            find = lambda call, name: next(e for e in events if e['fields'].get('call_id') == call and
+                                           e['fields']['event.name'] == name)
+            read = find('call-1', 'codex.tool_call_received')
+            second = find('probe-read', 'codex.tool_call_received')
+            api = [e for e in events if e['fields']['event.name'] == 'codex.api_request'][1]
+            if mode == 'read-before-parent': events.remove(read); events.insert(events.index(second), read)
+            elif mode == 'second-before-first-ready': events.remove(second); events.insert(1, second)
+            elif mode == 'foreign-api-turn': api['fields']['turn_id'] = 'other'
+            else:
+                events.remove(api)
+                if mode == 'api-order': events.append(api)
+            with self.subTest(mode=mode), self.assertRaises(ValueError): sdk.audit_sequential_parent_links(events, self.frames)
+
+    def test_legacy_parent_audits_keep_second_exec_and_multiple_cells_unknown(self):
+        with self.assertRaises(ValueError): sdk.audit_parent_links(self.sequential_parent_events(), self.frames, 'probe-call')
+        with self.assertRaises(ValueError):
+            sdk.audit_yielded_parent_links(self.sequential_parent_events(), self.frames, 'probe-call', 'probe-wait', '1')
+
     def test_yielded_parent_matches_two_native_children_through_same_cell_without_certifying_general_use(self):
         events = self.yielded_parent_events()
         before = copy.deepcopy((events, self.frames))

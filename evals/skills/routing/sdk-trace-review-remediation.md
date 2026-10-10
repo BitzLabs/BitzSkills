@@ -220,3 +220,18 @@ neutralイベントは同threadに加え、turn_idが存在する場合は確定
 正しい明示turn・省略の正常系と、別turn/null/空/別型の拒否回帰を追加する。
 原検分20の応答と消費枠を保持し、新有限v0.21・専用出力21で同6公開パスの修正版を1回検分する。
 任意複数セル・全provider相関・実provider・一次測定・Phase/Gateは未認定のまま。
+
+## 固定2exec/2cellの親セル相関の専用監査
+
+audit_sequential_parent_linksはprobe-call/exec→probe-read/exec、cell1→2、一覧→読取りの2子だけを照合する。
+各親ごとに子のcellを束縛し、dispatch/runtime ID・resultのcell alias・host timing・各親完了と3 API要求の順へ結ぶ。
+セルIDと子runtime IDの組を一意に照合し、セルの使い回し・交換・別ID・親timingとの不一致を拒否する。
+旧1exec監査と固定exec/wait監査は追加exec/複数cellを未知として停止し続ける。
+wire本文・保存済みSSE/SDK配送値・原ホスト結果はcallerの原証拠照合で別途確認する。
+新APIは全native lifecycle・任意複数/並列/待機・実provider・一次測定・Phase/Gateを認定しない。
+局所88件/0.813s/OK/exit0、旧yield親記録の再照合もexit0。
+同6公開パスの有限v0.22・専用出力22で初回1回静的検分する。一次・追加委譲・自動retry0。
+
+原2execの最初の再適用では、runtime IDの全体一意条件が両セルのtool-1再利用を拒否して停止した。
+原telemetryで各execの異なるcell1/2に同名runtime IDが属することを確認し、セルとruntime IDの組へ束縛を是正した。
+正常回帰でも異なるセルでruntime IDを再利用する。旧1セル内の重複とdispatchの別IDは拒否する。
