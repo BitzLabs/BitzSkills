@@ -31,13 +31,24 @@ def raw_events_enabled(contract: dict) -> bool:
     profile = {'production-operation-probe-0.7.0': ('read', 2),
                'production-operation-probe-0.8.0': ('read', 2),
                'production-operation-probe-0.9.0': ('yielded-read', 3),
-               'production-operation-probe-0.10.0': ('sequential-read', 3)}.get(contract['version'])
+               'production-operation-probe-0.10.0': ('sequential-read', 3),
+               'production-operation-probe-0.11.0': ('sequential-read', 3)}.get(contract['version'])
     if (contract['experimentalRawEvents'] is not True or profile is None or
             set(contract['outputLabels']) != {profile[0]} or type(contract['maximumScenarios']) is not int or
             contract['maximumScenarios'] != 1 or type(contract['maximumLocalHttpRequestsPerScenario']) is not int or
             contract['maximumLocalHttpRequestsPerScenario'] != profile[1] or type(contract['paidModelCalls']) is not int or
             contract['paidModelCalls'] != 0):
         raise ValueError('unknown raw event policy')
+    return True
+
+
+def rollout_trace_enabled(contract: dict) -> bool:
+    if 'rolloutTrace' not in contract:
+        return False
+    if (contract['version'] != 'production-operation-probe-0.11.0' or
+            contract['rolloutTrace'] != {'rootRelativePath': 'rollout-traces'} or
+            not raw_events_enabled(contract)):
+        raise ValueError('unknown rollout trace policy')
     return True
 
 
@@ -489,10 +500,12 @@ def run(source: str, scenario: str, contract_name: str = CONTRACT):
                              'evals/skills/routing/production-operation-probe-v0.7.json',
                              'evals/skills/routing/production-operation-probe-v0.8.json',
                              'evals/skills/routing/production-operation-probe-v0.9.json',
-                             'evals/skills/routing/production-operation-probe-v0.10.json'}:
+                             'evals/skills/routing/production-operation-probe-v0.10.json',
+                             'evals/skills/routing/production-operation-probe-v0.11.json'}:
         raise ValueError('unknown operation contract')
     contract = json.loads(source_guard.git(ROOT, 'show', source + ':' + contract_name))
     raw_events_enabled(contract)
+    capture_rollout = rollout_trace_enabled(contract)
     before = source_guard.verify(ROOT, source, contract['sourceFiles'])
     if scenario not in SCENARIOS or scenario not in contract['outputLabels']:
         raise ValueError('unknown scenario')
@@ -511,6 +524,10 @@ def run(source: str, scenario: str, contract_name: str = CONTRACT):
     cli.exclusive(base / 'scenario.txt', scenario.encode())
     env = {'PATH': '/home/hide/.nvm/versions/node/v26.5.0/bin:/usr/bin:/bin', 'LANG': 'C.UTF-8',
            'PYTHONDONTWRITEBYTECODE': '1', 'TMPDIR': str(base / 'tmp')}
+    if capture_rollout:
+        root = base / 'rollout-traces'
+        root.mkdir(mode=0o700)
+        env['CODEX_ROLLOUT_TRACE_ROOT'] = str(root)
     if 'diagnosticTracing' in contract:
         tracing = contract['diagnosticTracing']
         if tracing != {'format': 'json', 'rustLog': 'codex_otel.trace_safe=info,codex_code_mode::timing=info'}:
@@ -529,6 +546,14 @@ def run(source: str, scenario: str, contract_name: str = CONTRACT):
     value.update(sourceCommit=source, scenario=scenario, namespaceExitCode=code, paidModelCalls=0,
                  sourceGuards={'before': before, 'after': after},
                  artifactSha256={p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in base.iterdir() if p.is_file()})
+    if capture_rollout:
+        trace_files = sorted((base / 'rollout-traces').rglob('*'))
+        if any(p.is_symlink() for p in trace_files):
+            raise ValueError('rollout artifact symlink')
+        value.update(rolloutTracingRequested=True,
+                     rolloutArtifactSha256={str(p.relative_to(base)): hashlib.sha256(p.read_bytes()).hexdigest()
+                                           for p in trace_files if p.is_file()},
+                     certifiesInferenceInput=False, certifiesProviderWireBodies=False)
     cli.exclusive(base / 'receipt.json', cli.encoded(value))
     print(json.dumps({k: v for k, v in value.items() if k not in {'outputObjects', 'sourceGuards', 'artifactSha256'}}))
     return 0 if code == 0 and value['status'] == 'operation_diagnostic_captured' else 1
@@ -543,6 +568,7 @@ def main():
     mode.add_argument('--raw-events', action='store_true')
     mode.add_argument('--yielded-cell', action='store_true')
     mode.add_argument('--sequential-cells', action='store_true')
+    mode.add_argument('--rollout-trace', action='store_true')
     parser.add_argument('--isolated', type=Path)
     parser.add_argument('--proxy', type=Path)
     args = parser.parse_args()
@@ -553,7 +579,8 @@ def main():
         return 0
     if not args.source or not args.scenario:
         parser.error('--source and --scenario required')
-    contract_name = ('evals/skills/routing/production-operation-probe-v0.10.json' if args.sequential_cells else
+    contract_name = ('evals/skills/routing/production-operation-probe-v0.11.json' if args.rollout_trace else
+                     'evals/skills/routing/production-operation-probe-v0.10.json' if args.sequential_cells else
                      'evals/skills/routing/production-operation-probe-v0.9.json' if args.yielded_cell else
                      'evals/skills/routing/production-operation-probe-v0.8.json' if args.raw_events else
                      'evals/skills/routing/production-operation-probe-v0.6.json' if args.trace_parent else CONTRACT)

@@ -45,6 +45,19 @@ class ProductionOperationProbeTests(unittest.TestCase):
             bad[field] = value
             with self.subTest(field=field), self.assertRaises(ValueError): probe.raw_events_enabled(bad)
 
+    def test_rollout_capture_cannot_change_output_root_or_paid_finite_policy(self):
+        contract = json.loads((ROOT / 'evals/skills/routing/production-operation-probe-v0.11.json').read_bytes())
+        self.assertTrue(probe.rollout_trace_enabled(contract))
+        for key, value in [('rolloutTrace', {'rootRelativePath': '../outside'}),
+                           ('rolloutTrace', {'rootRelativePath': '/tmp/outside'}),
+                           ('version', 'production-operation-probe-0.10.0'),
+                           ('paidModelCalls', 1), ('maximumLocalHttpRequestsPerScenario', 4)]:
+            bad = copy.deepcopy(contract)
+            bad[key] = value
+            with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                probe.rollout_trace_enabled(bad)
+        self.assertFalse(probe.rollout_trace_enabled(self.contract))
+
     def test_sequential_reply_reads_only_original_selected_path_in_a_second_exec(self):
         requests, host, responses = self.sequential_fixture()
         before = copy.deepcopy(requests)
