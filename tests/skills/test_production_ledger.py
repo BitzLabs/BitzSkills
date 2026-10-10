@@ -120,6 +120,30 @@ class ProductionLedgerTests(unittest.TestCase):
         ledger.exclusive(self.storage / 'independent-0002.json', b'{}')
         with self.assertRaises(ValueError): instance.reserve_independent_review(1, 'b' * 64)
 
+    def test_verified_review_dependency_missing_or_changed_stops_next_attempt(self):
+        for fault in ['missing', 'changed']:
+            storage = self.storage.parent / fault
+            instance = ledger.Ledger(storage, self.bound, require_independent_reviews=True)
+            attempt = instance.reserve()
+            independent = instance.reserve_independent_review(1, 'b' * 64)
+            path = storage / 'independent-0001.json'
+            review = {**self.accepted(attempt), 'reviewInputSha256': 'b' * 64,
+                      'independentReservationSha256': ledger.sha(path.read_bytes())}
+            instance.record_verified_review(1, ledger.encoded(review))
+            if fault == 'missing': path.unlink()
+            else: path.write_bytes(ledger.encoded({**independent, 'reviewInputSha256': 'c' * 64}))
+            with self.subTest(fault=fault), self.assertRaises((ValueError, FileNotFoundError)):
+                instance.reserve()
+            self.assertFalse((storage / 'attempt-0002.json').exists())
+
+    def test_production_connection_disables_synthetic_reviews_and_mode_reset(self):
+        with patch.object(ledger, 'common_ledger_path', return_value=self.storage):
+            instance = ledger.open_ledger(ROOT, self.bound)
+        self.assertTrue(instance.require_independent_reviews)
+        attempt = instance.reserve()
+        with self.assertRaises(ValueError): instance.record_review(1, ledger.encoded(self.accepted(attempt)))
+        with self.assertRaises(ValueError): ledger.Ledger(self.storage, self.bound).reserve()
+
     def test_each_raw_input_is_hash_bound(self):
         for index in range(5):
             raws = list(self.raw_inputs)

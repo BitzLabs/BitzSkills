@@ -413,3 +413,11 @@ source9b9f886のclean全517件/62.872s/OK/exit0、SOL26指摘0/CLIexit0、親の
 最初の負例fixtureのoutcomeが既存enum外で2 errorsとなり、既定not-applicableへ修正。修正後5件/0.055s/OK/exit0。
 旧SDK92件/0.937s/OK/exit0、既存固定入口の既定条件は維持する。新有限v0.27で公開6本文を静的検分する。
 新入口もeligibleForMeasurement=false、wire/raw全payload/実provider実測/一次採点/実地/Phase/Gateは未認定。
+
+### Phase 4：可変ID・独立一次予約の検分と再照合是正（2026-10-10）
+
+sourceb83fee8のclean全525件/66.033s/OK/exit0。起動前の送信審査拒否を保持し、公開repo属性と6本文Git blob一致を追加確認した。
+同一v0.27の再審査が通過し、初回SOL1回/P2=1/CLIexit0、親の原結果・共通予約照合も通過した。
+独立予約の欠落・変造後に次枠へ進める条件を歴史Gitの隔離台帳で再現し、製品の独立必須モードと次枠前のhash再照合を是正した。
+局所20件/0.308s/OK/exit0。新有限v0.28で是正版を独立検分する。元P2と消費1を保持、一次/委譲/retry0。
+実provider/完全初期入力/要求上限/実地/Phase/Gate全体は未認定。

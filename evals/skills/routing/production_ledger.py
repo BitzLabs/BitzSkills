@@ -145,8 +145,10 @@ def read_owned(path: Path):
 
 class Ledger:
     """storage引数は隔離試験用。製品接続は共通repositoryのopen_ledgerだけを使う。"""
-    def __init__(self, storage: Path, bound: BoundInputs):
+    def __init__(self, storage: Path, bound: BoundInputs, *, require_independent_reviews=False):
         require(len(bound.raw_inputs) == 5 and bound == bind_inputs(bound.contract_raw, *bound.raw_inputs), 'bound input tampering')
+        require(type(require_independent_reviews) is bool, 'review reservation mode')
+        self.require_independent_reviews = require_independent_reviews
         self.storage, self.bound = storage, bound
         safe_tree(storage)
         try:
@@ -171,6 +173,7 @@ class Ledger:
     def initialize(self):
         path = self.storage / 'campaign.json'
         expected = dict(campaignId=self.bound.contract['campaignId'], **self.bound.identity,
+                        reviewReservationRequired=self.require_independent_reviews,
                         attempts=[self.bound.attempt(i) for i in range(1, len(self.bound.payloads) * self.bound.repetitions + 1)])
         if not path.exists():
             require(set(p.name for p in self.storage.iterdir()) == {'lock'}, 'orphan ledger artifacts')
@@ -192,8 +195,11 @@ class Ledger:
             if allow_pending_last and i == len(files) and not review.exists():
                 return len(files)
             require(review.is_file(), 'previous attempt awaits independent parent verification')
-            self.validate_review(i, read_owned(review))
-            require(read_owned(review)['status'] == 'accepted', 'previous attempt stopped')
+            value = read_owned(review)
+            self.validate_review(i, value)
+            if self.require_independent_reviews or 'independentReservationSha256' in value:
+                self.validate_review_reservation(i, value)
+            require(value['status'] == 'accepted', 'previous attempt stopped')
         return len(files)
 
     def validate_independent_reservation(self, ordinal, value):
@@ -206,6 +212,13 @@ class Ledger:
                 type(value['maximumInvocations']) is int and value['maximumInvocations'] == 1 and
                 type(value['consumedReservations']) is int and value['consumedReservations'] == 1, 'finite independent reservation')
         pin(value['reviewInputSha256'])
+
+    def validate_review_reservation(self, ordinal, review):
+        path = self.storage / f'independent-{ordinal:04d}.json'
+        independent = read_owned(path)
+        self.validate_independent_reservation(ordinal, independent)
+        require(review.get('independentReservationSha256') == sha(path.read_bytes()) and
+                review.get('reviewInputSha256') == independent['reviewInputSha256'], 'verified review reservation binding')
 
     def reserve_independent_review(self, ordinal, review_input_sha256):
         """親が原一次出力を照合した後、独立検分入力を起動前に固定する。"""
@@ -232,8 +245,7 @@ class Ledger:
             self.validate_independent_reservation(ordinal, independent)
             review = strict_json(review_raw)
             self.validate_review(ordinal, review)
-            require(review.get('independentReservationSha256') == sha(independent_path.read_bytes()) and
-                    review.get('reviewInputSha256') == independent['reviewInputSha256'], 'verified review reservation binding')
+            self.validate_review_reservation(ordinal, review)
             exclusive(self.storage / f'review-{ordinal:04d}.json', review_raw)
 
     def reserve(self):
@@ -261,6 +273,7 @@ class Ledger:
                     all(type(v) is int and v == 0 for v in counts.values()), 'independent findings')
 
     def record_review(self, ordinal, review_raw: bytes):
+        require(not self.require_independent_reviews, 'synthetic review entry is disabled in production ledger')
         with self.locked():
             self.initialize()
             require(read_owned(self.storage / f'attempt-{ordinal:04d}.json') == self.bound.attempt(ordinal), 'reserved attempt required')
@@ -281,4 +294,4 @@ def common_ledger_path(repository: Path):
 
 def open_ledger(repository: Path, bound: BoundInputs):
     # 全worktreeで共通の場所。出力先・campaign変更を台帳の切替に使わない。
-    return Ledger(common_ledger_path(repository), bound)
+    return Ledger(common_ledger_path(repository), bound, require_independent_reviews=True)

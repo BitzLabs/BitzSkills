@@ -57,6 +57,9 @@ independentReviewerの起動予約も永続化し、停止後の同枠再起動�
 一次共通台帳の `reserve_independent_review()` で直近pending試行の独立入力hashを先に固定する。
 製品接続は `record_verified_review()` を使い、その原予約hashと独立入力hashを親照合結果へ結ぶ。
 既存 `record_review()` の合成証拠用入口を、原証拠を検査済みという製品側の根拠へ使わない。
+`open_ledger()` は独立予約必須モードをcampaignの原記録へ固定し、合成入口を拒否する。
+各次試行の予約前にも保存済み独立予約の原bytes hashと検分入力hashをreviewへ再照合する。
+予約の欠落・差替え、合成モードへの切替でacceptedを維持しない。
 
 設計の静的検分も共通repository配下の専用台帳へ起動前に1枠予約する。
 予約identityは有限契約のパス。source、output、worktreeを変更して同契約を再起動できない。

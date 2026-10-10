@@ -1,0 +1,37 @@
+{
+  "version": "production-canary-trace-components-0.1.0",
+  "phase": 4,
+  "status": "independent-review-finding-remediated-locally",
+  "originalStage": {
+    "sourceCommit": "b83fee8609f28daf4bab967598b8310f9a55ce04",
+    "contractPath": "evals/skills/routing/sdk-trace-review-v0.27.json",
+    "verification": {
+      "outputRelativeRoot": ".venv/production-canary-trace-check-01",
+      "summarySha256": "6d5929fac584a8a52bf2933b2d70e3b29f31b87e74ea01f7b6056de11a3bb591",
+      "testCount": 525, "testSeconds": 66.033, "testExitCode": 0
+    },
+    "independentReview": {
+      "sourceCommit": "b83fee8609f28daf4bab967598b8310f9a55ce04",
+      "contractPath": "evals/skills/routing/sdk-trace-review-v0.27.json",
+      "outputRelativeRoot": ".venv/sdk-trace-independent-review-27",
+      "receiptSha256": "45a5e16df97972886070ee57b49871e11559cac00a3b0c6d4b307cd10a6b846b",
+      "responseSha256": "3818e578d1b226007133c7fa2578898ff0682a3399dec9f6078087f7bd411320",
+      "status": "review_findings", "actualInvocations": 1,
+      "usage": {"input_tokens": 38563, "cached_input_tokens": 0, "cache_write_input_tokens": 0, "output_tokens": 943, "reasoning_output_tokens": 516},
+      "findings": {"P1": 0, "P2": 1, "P3": 0}
+    }
+  },
+  "approvalHistory": {
+    "firstRequest": "auto-review-rejected-before-process-creation",
+    "firstRequestModelInvocations": 0,
+    "additionalEvidence": "GitHub repo visibility PUBLIC and six Contents API blob IDs matched fixed source",
+    "reconsideredRequest": "auto-review-approved-on-confirmed-public-bytes",
+    "bypassPerformed": false
+  },
+  "independentSolInvocations": 1,
+  "primaryModelTrajectories": 0,
+  "automaticRetries": 0,
+  "delegations": 0,
+  "eligibleForMeasurement": false,
+  "phaseComplete": false
+}

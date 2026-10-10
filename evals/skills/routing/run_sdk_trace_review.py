@@ -24,6 +24,7 @@ CANARY_DESIGN_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.24.json'
 CANARY_DESIGN_REMEDIATION_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.25.json'
 CANARY_DESIGN_FINAL_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.26.json'
 CANARY_TRACE_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.27.json'
+CANARY_TRACE_REMEDIATION_CONTRACT = 'evals/skills/routing/sdk-trace-review-v0.28.json'
 RAW_CONTRACTS = {'evals/skills/routing/sdk-raw-response-review-v0.1.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.2.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.3.json',
@@ -95,7 +96,7 @@ def review_response(base: Path, stdout: bytes, source: str, schema: bytes, contr
 
 
 def run(source: str, contract_name: str = CONTRACT):
-    require(contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, SEQUENTIAL_CONTRACT, RAW_TWO_STAGE_CONTRACT, CANARY_DESIGN_CONTRACT, CANARY_DESIGN_REMEDIATION_CONTRACT, CANARY_DESIGN_FINAL_CONTRACT, CANARY_TRACE_CONTRACT, *RAW_CONTRACTS}, 'unknown static review contract')
+    require(contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, SEQUENTIAL_CONTRACT, RAW_TWO_STAGE_CONTRACT, CANARY_DESIGN_CONTRACT, CANARY_DESIGN_REMEDIATION_CONTRACT, CANARY_DESIGN_FINAL_CONTRACT, CANARY_TRACE_CONTRACT, CANARY_TRACE_REMEDIATION_CONTRACT, *RAW_CONTRACTS}, 'unknown static review contract')
     require(source_guard.git(ROOT, 'status', '--porcelain') == b'', 'clean tree required')
     contract_raw = source_guard.git(ROOT, 'show', source + ':' + contract_name)
     contract = trace.strict_json(contract_raw)
@@ -120,6 +121,7 @@ def run(source: str, contract_name: str = CONTRACT):
                              '.venv/sdk-trace-independent-review-24',
                              '.venv/sdk-trace-independent-review-25',
                              '.venv/sdk-trace-independent-review-26',
+                             '.venv/sdk-trace-independent-review-27',
                              '.venv/sdk-raw-response-independent-review-01',
                              '.venv/sdk-raw-response-independent-review-02',
                              '.venv/sdk-raw-response-independent-review-03',
@@ -155,7 +157,7 @@ def run(source: str, contract_name: str = CONTRACT):
               'あなたが実行していない試験や原証拠の検分を成功と書かないでください。'
               '指定schemaのJSONだけを回答してください。\n'
               f'sourceCommit={source}\nscope={contract["scope"]}\n')
-    if contract_name in {CANARY_DESIGN_CONTRACT, CANARY_DESIGN_REMEDIATION_CONTRACT, CANARY_DESIGN_FINAL_CONTRACT, CANARY_TRACE_CONTRACT}:
+    if contract_name in {CANARY_DESIGN_CONTRACT, CANARY_DESIGN_REMEDIATION_CONTRACT, CANARY_DESIGN_FINAL_CONTRACT, CANARY_TRACE_CONTRACT, CANARY_TRACE_REMEDIATION_CONTRACT}:
         prompt = ('あなたは作業者と別の独立した設計検分者です。日本語で回答してください。'
                   '次の確定した公開本文だけから実provider公開canaryと一次台帳の統合設計・限定コンポーネントを静的検分してください。'
                   'tool、追加モデル、委譲、ファイル読取り、試験実行は禁止です。'
@@ -165,7 +167,7 @@ def run(source: str, contract_name: str = CONTRACT):
                   'あなたが実行していない試験や原証拠の検分を成功と書かないでください。'
                   '指定schemaのJSONだけを回答してください。\n'
                   f'sourceCommit={source}\nscope={contract["scope"]}\n')
-    if contract_name in RAW_CONTRACTS or contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, SEQUENTIAL_CONTRACT, RAW_TWO_STAGE_CONTRACT, CANARY_DESIGN_CONTRACT, CANARY_DESIGN_REMEDIATION_CONTRACT, CANARY_DESIGN_FINAL_CONTRACT, CANARY_TRACE_CONTRACT}:
+    if contract_name in RAW_CONTRACTS or contract_name in {CONTRACT, YIELDED_CONTRACT, YIELDED_REMEDIATION_CONTRACT, SEQUENTIAL_CONTRACT, RAW_TWO_STAGE_CONTRACT, CANARY_DESIGN_CONTRACT, CANARY_DESIGN_REMEDIATION_CONTRACT, CANARY_DESIGN_FINAL_CONTRACT, CANARY_TRACE_CONTRACT, CANARY_TRACE_REMEDIATION_CONTRACT}:
         prompt += '\nこの検分の固定制約:\n' + '\n'.join(contract['constraints']) + '\n'
     for name in contract['payloadFiles']:
         raw = source_guard.git(ROOT, 'show', source + ':' + name)
@@ -260,8 +262,10 @@ if __name__ == '__main__':
     raw.add_argument('--canary-design-remediation', action='store_true')
     raw.add_argument('--canary-design-final-remediation', action='store_true')
     raw.add_argument('--canary-trace-review', action='store_true')
+    raw.add_argument('--canary-trace-remediation', action='store_true')
     args = parser.parse_args()
-    contract_name = (CANARY_TRACE_CONTRACT if args.canary_trace_review else
+    contract_name = (CANARY_TRACE_REMEDIATION_CONTRACT if args.canary_trace_remediation else
+                     CANARY_TRACE_CONTRACT if args.canary_trace_review else
                      CANARY_DESIGN_FINAL_CONTRACT if args.canary_design_final_remediation else
                      CANARY_DESIGN_REMEDIATION_CONTRACT if args.canary_design_remediation else
                      CANARY_DESIGN_CONTRACT if args.canary_design_review else
