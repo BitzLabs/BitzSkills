@@ -499,6 +499,33 @@ def diagnose_raw_exchange(manifest_raw: bytes, host_events: list, sent: list, re
 
 def audit_parent_links(events: list, received: list, provider_call_id: str) -> dict:
     """固定1execの原telemetryの親→cell→native子IDを検査する。複数/待機へ一般化しない。"""
+    return _audit_parent_links(events, received, provider_call_id)
+
+
+def audit_yielded_parent_links(events: list, received: list, provider_call_id: str,
+                              wait_call_id: str, cell_id: str) -> dict:
+    """既にwire本文を検査した固定exec/waitの継続だけを全対象telemetryへ照合する。"""
+    require(provider_call_id == 'probe-call' and wait_call_id == 'probe-wait' and cell_id == '1',
+            'fixed yielded parent profile required')
+    require(isinstance(received, list) and all(isinstance(f, dict) for f in received), 'yielded native frames required')
+    contexts = [f.get('params') for f in received if f.get('method') == 'turn/started']
+    require(len(contexts) == 1 and isinstance(contexts[0], dict) and
+            isinstance(contexts[0].get('threadId'), str) and bool(contexts[0]['threadId']) and
+            isinstance(contexts[0].get('turn'), dict) and
+            isinstance(contexts[0]['turn'].get('id'), str) and bool(contexts[0]['turn']['id']),
+            'one yielded native context required')
+    context = contexts[0]
+    for frame in received:
+        if (frame.get('method') in {'item/started', 'item/completed'} and
+                frame.get('params', {}).get('item', {}).get('type') == 'mcpToolCall'):
+            require(frame['params'].get('threadId') == context['threadId'] and
+                    frame['params'].get('turnId') == context['turn']['id'], 'yielded native child context drift')
+    result = _audit_parent_links(events, received, provider_call_id, wait_call_id=wait_call_id)
+    require(result['cellId'] == cell_id, 'yielded expected cell mismatch')
+    return result
+
+
+def _audit_parent_links(events: list, received: list, provider_call_id: str, *, wait_call_id: str | None = None) -> dict:
     require(isinstance(events, list) and bool(events), 'original parent telemetry required')
     children = [f['params']['item'] for f in received if f.get('method') == 'item/completed' and
                 f.get('params', {}).get('item', {}).get('type') == 'mcpToolCall']
@@ -507,11 +534,17 @@ def audit_parent_links(events: list, received: list, provider_call_id: str) -> d
     context = next(f['params'] for f in received if f.get('method') == 'turn/started')
     thread, turn = context['threadId'], context['turn']['id']
     expected = {provider_call_id: ('exec', 'functions', 'direct')}
+    parents = {provider_call_id: 'exec'}
+    if wait_call_id is not None:
+        require(wait_call_id != provider_call_id, 'exec/wait ID collision')
+        expected[wait_call_id] = ('wait', 'functions', 'direct')
+        parents[wait_call_id] = 'wait'
     for item in children:
         require(item['id'] not in expected, 'parent/child id collision')
         expected[item['id']] = (item['tool'], 'mcp__production_routing', 'code_mode')
     received_calls, dispatched, ready, results = {}, {}, {}, {}
-    timing = None
+    timings = {}
+    api_requests = []
     cell = None
     runtime_ids = set()
     truncated_previews = []
@@ -534,17 +567,19 @@ def audit_parent_links(events: list, received: list, provider_call_id: str) -> d
                 require(fields.get('auth.header_attached') is False and type(fields.get('attempt')) is int and
                         fields['attempt'] == 0 and type(fields.get('http.response.status_code')) is int and
                         fields['http.response.status_code'] == 200, 'diagnostic API request drift')
+                api_requests.append(index)
             continue
         if name == 'codex.code_mode.host_timing':
-            require(event['target'] == 'codex_code_mode::timing' and timing is None and
+            ident = fields.get('call_id')
+            require(event['target'] == 'codex_code_mode::timing' and ident in parents and ident not in timings and
                     set(fields) <= {'event.name', 'message', 'conversation_id', 'turn_id', 'call_id',
                                     'cell_id', 'tool_name', 'code_mode_host_duration_ns'} and
                     fields.get('conversation_id') == thread and fields.get('turn_id') == turn and
-                    fields.get('call_id') == provider_call_id and fields.get('tool_name') == 'exec' and
+                    fields.get('tool_name') == parents[ident] and
                     isinstance(fields.get('cell_id'), str) and bool(fields['cell_id']) and
                     type(fields.get('code_mode_host_duration_ns')) is int and fields['code_mode_host_duration_ns'] >= 0,
                     'parent timing binding drift')
-            timing = (index, fields)
+            timings[ident] = (index, fields)
             continue
         require(event['target'] == 'codex_otel.trace_safe' and fields.get('conversation.id') == thread,
                 'tool telemetry thread mismatch')
@@ -553,7 +588,7 @@ def audit_parent_links(events: list, received: list, provider_call_id: str) -> d
         ident = fields.get('call_id')
         require(ident in expected, 'unexpected telemetry call')
         if name == 'codex.code_mode.nested_tool_dispatched':
-            require(ident != provider_call_id and ident not in dispatched and fields.get('turn_id') == turn,
+            require(ident not in parents and ident not in dispatched and fields.get('turn_id') == turn,
                     'nested dispatch duplicate or context drift')
             for key, value in zip(('tool_name', 'tool_namespace', 'tool_source'), expected[ident]):
                 require(key not in fields or fields[key] == value, 'dispatch tool identity contradiction')
@@ -604,28 +639,40 @@ def audit_parent_links(events: list, received: list, provider_call_id: str) -> d
                         'result origin or sequence contradiction')
             results[ident] = index
     require(set(received_calls) == set(ready) == set(results) == set(expected) and
-            set(dispatched) == {c['id'] for c in children} and timing is not None, 'parent milestones missing')
-    require(timing[1]['cell_id'] == cell, 'parent cell mismatch')
-    parent_start = received_calls[provider_call_id][0]
-    for child in children:
+            set(dispatched) == {c['id'] for c in children} and set(timings) == set(parents), 'parent milestones missing')
+    require(all(t[1]['cell_id'] == cell for t in timings.values()), 'parent cell mismatch')
+    for number, child in enumerate(children):
+        parent = wait_call_id if wait_call_id is not None and number == 1 else provider_call_id
+        timing = timings[parent]
+        parent_start = received_calls[parent][0]
         ident = child['id']
         start, fields = received_calls[ident]
         dispatch, dispatch_fields = dispatched[ident]
         require(dispatch_fields.get('cell.id') == cell and
                 dispatch_fields.get('runtime_tool_call_id') == fields['runtime_tool_call_id'], 'dispatch cell/runtime drift')
         require(parent_start < start < dispatch < results[ident] < ready[ident] < timing[0] <
-                results[provider_call_id] < ready[provider_call_id], 'parent milestone order drift')
+                results[parent] < ready[parent], 'parent milestone order drift')
+    if wait_call_id is not None:
+        require(ready[provider_call_id] < received_calls[wait_call_id][0], 'wait before exec yielded result')
+        require(len(api_requests) == 3 and api_requests[0] < received_calls[provider_call_id][0] and
+                ready[provider_call_id] < api_requests[1] < received_calls[wait_call_id][0] and
+                ready[wait_call_id] < api_requests[2], 'yielded provider/parent order drift')
     require(ready[children[0]['id']] < received_calls[children[1]['id']][0], 'sequential discovery/read telemetry order')
     native_order = [(f['method'], f['params']['item']['id']) for f in received if
                     f.get('method') in {'item/started', 'item/completed'} and
                     f.get('params', {}).get('item', {}).get('type') == 'mcpToolCall']
     require(native_order == [(method, child['id']) for child in children
                             for method in ('item/started', 'item/completed')], 'sequential native child order')
-    return {'status': 'scripted_parent_cell_child_ids_matched', 'scope': 'one-scripted-exec-two-mcp-calls',
+    result = {'status': 'scripted_parent_cell_child_ids_matched', 'scope': 'one-scripted-exec-two-mcp-calls',
             'parentCallId': provider_call_id, 'cellId': cell, 'nativeChildIds': [c['id'] for c in children],
             'traceEventCount': len(events), 'traceValueSha256': digest(events),
             'telemetryTruncatedPreviewCallIds': truncated_previews, 'certifiesTelemetryOutputBodies': False,
             'certifiesMultipleOrYieldedCells': False, 'eligibleForMeasurement': False}
+    if wait_call_id is not None:
+        result.update(status='scripted_yielded_parent_cell_child_ids_matched',
+                      scope='one-fixed-yielded-exec-one-wait-two-mcp-calls', waitCallId=wait_call_id,
+                      certifiesProviderWireBodies=False, certifiesArbitraryMultipleOrYieldedCells=False)
+    return result
 
 
 def complete_trace_projection(raw_stderr: bytes, selected_log: bytes) -> list:

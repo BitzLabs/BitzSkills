@@ -131,9 +131,57 @@ def run_raw(source):
     print(json.dumps({k: v for k, v in value.items() if k not in {'captures', 'sourceGuards'}}, ensure_ascii=False))
 
 
+def check_yielded_capture():
+    spec = importlib.util.spec_from_file_location('yielded_original_artifacts',
+        ROOT / 'evals/skills/results/2026-10-10-sdk-yielded-cell/verify-recorded-results.py')
+    capture = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(capture)
+    artifact_audit = capture.check_capture()
+    base = capture.BASE
+    outgoing = helper.frames(base, 'rpc-out.jsonl')
+    events = sdk.complete_trace_projection((base / 'runtime-stderr.bin').read_bytes(),
+                                           (base / 'trace-safe.jsonl').read_bytes())
+    links = sdk.audit_yielded_parent_links(events, outgoing, 'probe-call', 'probe-wait', '1')
+    return {'probeSourceCommit': capture.SOURCE, 'receiptSha256': capture.RECEIPT_SHA,
+            'artifactAudit': artifact_audit, 'parentLinks': links,
+            'certifiesNativeProvider': False, 'certifiesSkillGate': False, 'eligibleForMeasurement': False}
+
+
+def run_yielded(source):
+    require(guard.git(ROOT, 'status', '--porcelain') == b'' and
+            guard.git(ROOT, 'rev-parse', 'HEAD').decode().strip() == source, 'clean yielded parent HEAD')
+    contract = sdk.trace.strict_json(guard.git(ROOT, 'show', source + ':evals/skills/routing/sdk-trace-review-v0.20.json'))
+    before = guard.verify(ROOT, source, contract['sourceFiles'])
+    capture = check_yielded_capture()
+    output = ROOT / '.venv/production-sdk-yielded-parent-verification-01'
+    require(not any(p.is_symlink() for p in (output, *output.parents)), 'yielded parent output symlink')
+    output.mkdir(mode=0o700)
+    command = ['uv', '--cache-dir', str(ROOT / '.venv/uv-cache'), 'run', '--offline', '--project',
+               'plugins/bitz-core', '--with', 'jsonschema==4.23.0', 'python', '-B', '-m', 'unittest',
+               'discover', '-s', 'tests/skills', '-p', 'test_*.py']
+    process = subprocess.run(command, cwd=ROOT, capture_output=True, timeout=180,
+        env=dict(os.environ, PYTHONPATH=str(ROOT / 'plugins/bitz-core/src'), PYTHONDONTWRITEBYTECODE='1'))
+    cli.exclusive(output / 'tests.stdout', process.stdout)
+    cli.exclusive(output / 'tests.stderr', process.stderr)
+    matched = re.search(rb'Ran (\d+) tests in ([0-9.]+)s\s+OK\s*$', process.stderr)
+    require(process.returncode == 0 and matched is not None, 'yielded parent full suite failed')
+    after = guard.verify(ROOT, source, contract['sourceFiles'])
+    require(before == after and guard.git(ROOT, 'status', '--porcelain') == b'', 'yielded parent source drift')
+    value = {'status': 'sdk_yielded_parent_artifacts_rechecked', 'sourceCommit': source, 'capture': capture,
+             'newMockTrials': 0, 'newLocalHttpRequests': 0, 'paidModelCalls': 0,
+             'independentReviewPerformed': False, 'eligibleForMeasurement': False, 'phaseComplete': False,
+             'sourceGuards': {'before': before, 'after': after}, 'tests': {
+                 'count': int(matched[1]), 'seconds': float(matched[2]), 'exitCode': process.returncode,
+                 'command': command, 'stdoutSha256': helper.sha(process.stdout), 'stderrSha256': helper.sha(process.stderr)}}
+    cli.exclusive(output / 'summary.json', cli.encoded(value))
+    print(json.dumps({k: v for k, v in value.items() if k not in {'capture', 'sourceGuards'}}, ensure_ascii=False))
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--source', required=True)
-    parser.add_argument('--raw-exchange', action='store_true')
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--raw-exchange', action='store_true')
+    mode.add_argument('--yielded-parent', action='store_true')
     args = parser.parse_args()
-    (run_raw if args.raw_exchange else run)(args.source)
+    (run_yielded if args.yielded_parent else run_raw if args.raw_exchange else run)(args.source)

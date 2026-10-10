@@ -198,3 +198,15 @@ raw初期入力はSDK補足developer文脈と2user入力であり、additional_t
 接続時の最初の停止は固定環境日付の差、次の停止はraw developer入力をbaseInstructionsと取り違えたこと。
 原値の相関を確認して検査者指定日と補足文脈の投影へ修正した。原ファイルの改変や新mock/HTTP/モデル呼出しはない。
 同6公開パスの新有限v0.19で独立静的検分1回を準備する。実provider/親子全般/一次台帳/測定/Phase/Gateは未認定。
+
+## 固定yield/waitの親セル継続相関の専用監査
+
+既存audit_parent_linksは1execのみを維持し、waitを未知callとして停止する。
+新audit_yielded_parent_linksはprobe-call/exec→probe-wait/waitの固定1セル=1と、native list/readの2子IDに限定する。
+共通の字段・型・開始/dispatch/result/readyを検査し、2つのhost_timingを同じcellへ結ぶ。
+一覧はexec側、読取りはwait側の開始→結果→timing→親完了の順を要求し、exec完了後にwaitが始まる。
+局所provider要求3件の順序も前の親結果と次の親開始へ相関する。native子のthread/turnも照合する。
+wire本文やprovider前置文脈は新API自身の認定ではなく、callerが原保存物へ照合する別の検査である。
+全native lifecycle・任意複数cell・実provider・一次測定・Phase/Gateを認定しない。
+局所82件/0.756s/OK/exit0、原捕捉の全target24行とnative子2IDにも適合した。
+新模擬/HTTP/有料モデル0。同6公開パスの有限v0.20/専用出力20で独立静的検分1回を準備する。

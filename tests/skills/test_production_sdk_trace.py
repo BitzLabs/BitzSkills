@@ -707,6 +707,100 @@ class ProductionSdkTraceTests(unittest.TestCase):
         self.assertFalse(result['eligibleForMeasurement'])
         self.assertFalse(result['certifiesMultipleOrYieldedCells'])
 
+    def yielded_parent_events(self):
+        old = self.parent_events()
+        def api():
+            return {'level': 'INFO', 'target': 'codex_otel.trace_safe', 'fields': {
+                'event.name': 'codex.api_request', 'conversation.id': 't',
+                'auth.header_attached': False, 'attempt': 0, 'http.response.status_code': 200}}
+        received = copy.deepcopy(old[0])
+        received['fields'].update(call_id='probe-wait', tool_name='wait')
+        timing, result, ready = copy.deepcopy(old[9:12])
+        for event in (timing, result, ready):
+            event['fields'].update(call_id='probe-wait', tool_name='wait')
+        events = [api(), *copy.deepcopy(old[:5]), *copy.deepcopy(old[9:12]), api(), received,
+                  *copy.deepcopy(old[5:9]), timing, result, ready, api()]
+        number = 0
+        for event in events:
+            if event['fields']['event.name'] == 'codex.tool_result':
+                number += 1
+                event['fields']['tool_result_seq'] = number
+        return events
+
+    def test_yielded_parent_matches_two_native_children_through_same_cell_without_certifying_general_use(self):
+        events = self.yielded_parent_events()
+        before = copy.deepcopy((events, self.frames))
+        result = sdk.audit_yielded_parent_links(events, self.frames, 'probe-call', 'probe-wait', '1')
+        self.assertEqual(result['status'], 'scripted_yielded_parent_cell_child_ids_matched')
+        self.assertEqual(result['nativeChildIds'], ['call-0', 'call-1'])
+        self.assertEqual(result['waitCallId'], 'probe-wait')
+        self.assertEqual(result['cellId'], '1')
+        self.assertFalse(result['certifiesProviderWireBodies'])
+        self.assertFalse(result['certifiesArbitraryMultipleOrYieldedCells'])
+        self.assertFalse(result['eligibleForMeasurement'])
+        self.assertEqual((events, self.frames), before)
+
+    def test_yielded_parent_rejects_missing_foreign_and_contradictory_wait_milestones(self):
+        for mode in ('missing-receipt', 'missing-timing', 'duplicate', 'namespace', 'tool', 'source',
+                     'thread', 'turn', 'cell', 'timing-tool', 'timing-cell', 'result-sequence'):
+            events = self.yielded_parent_events()
+            receive = next(e for e in events if e['fields'].get('call_id') == 'probe-wait' and
+                           e['fields']['event.name'] == 'codex.tool_call_received')
+            timing = next(e for e in events if e['fields'].get('call_id') == 'probe-wait' and
+                          e['fields']['event.name'] == 'codex.code_mode.host_timing')
+            result = next(e for e in events if e['fields'].get('call_id') == 'probe-wait' and
+                          e['fields']['event.name'] == 'codex.tool_result')
+            if mode == 'missing-receipt': events.remove(receive)
+            elif mode == 'missing-timing': events.remove(timing)
+            elif mode == 'duplicate': events.insert(events.index(receive), copy.deepcopy(receive))
+            elif mode == 'namespace': receive['fields']['tool_namespace'] = 'other'
+            elif mode == 'tool': receive['fields']['tool_name'] = 'exec_command'
+            elif mode == 'source': receive['fields']['tool_source'] = 'code_mode'
+            elif mode == 'thread': receive['fields']['conversation.id'] = 'other'
+            elif mode == 'turn': receive['fields']['turn_id'] = 'other'
+            elif mode == 'cell': receive['fields']['cell.id'] = 'other'
+            elif mode == 'timing-tool': timing['fields']['tool_name'] = 'exec'
+            elif mode == 'timing-cell': timing['fields']['cell_id'] = '2'
+            else: result['fields']['tool_result_seq'] = True
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                sdk.audit_yielded_parent_links(events, self.frames, 'probe-call', 'probe-wait', '1')
+
+    def test_yielded_parent_rejects_child_outside_stage_or_cell_and_provider_order(self):
+        for mode in ('read-before-wait', 'wait-before-yield', 'read-cell', 'runtime-id', 'api-missing', 'api-order'):
+            events = self.yielded_parent_events()
+            find = lambda call, name: next(e for e in events if e['fields'].get('call_id') == call and
+                                           e['fields']['event.name'] == name)
+            wait = find('probe-wait', 'codex.tool_call_received')
+            read = find('call-1', 'codex.tool_call_received')
+            if mode == 'read-before-wait':
+                events.remove(read); events.insert(events.index(wait), read)
+            elif mode == 'wait-before-yield':
+                events.remove(wait); events.insert(1, wait)
+            elif mode == 'read-cell': read['fields']['cell.id'] = '2'
+            elif mode == 'runtime-id': read['fields']['runtime_tool_call_id'] = 'tool-0'
+            else:
+                api = [e for e in events if e['fields']['event.name'] == 'codex.api_request'][1]
+                events.remove(api)
+                if mode == 'api-order': events.append(api)
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                sdk.audit_yielded_parent_links(events, self.frames, 'probe-call', 'probe-wait', '1')
+
+    def test_yielded_parent_rejects_foreign_native_child_and_unknown_profile(self):
+        for key in ('threadId', 'turnId'):
+            frames = copy.deepcopy(self.frames)
+            child = next(f for f in frames if f.get('method') == 'item/started' and
+                         f.get('params', {}).get('item', {}).get('type') == 'mcpToolCall')
+            child['params'][key] = 'other'
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                sdk.audit_yielded_parent_links(self.yielded_parent_events(), frames, 'probe-call', 'probe-wait', '1')
+        for args in [('other', 'probe-wait', '1'), ('probe-call', 'other', '1'), ('probe-call', 'probe-wait', '2')]:
+            with self.subTest(args=args), self.assertRaises(ValueError):
+                sdk.audit_yielded_parent_links(self.yielded_parent_events(), self.frames, *args)
+
+    def test_legacy_parent_audit_keeps_yielded_wait_unknown(self):
+        with self.assertRaises(ValueError):
+            sdk.audit_parent_links(self.yielded_parent_events(), self.frames, 'probe-call')
+
     def test_parent_timing_missing_or_wrong_call_and_cell_are_rejected(self):
         for change in ('missing', 'cell', 'call', 'duplicate'):
             events = self.parent_events()
