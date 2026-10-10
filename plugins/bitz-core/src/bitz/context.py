@@ -423,7 +423,8 @@ def _run(parsed: ParsedArgs, cwd: str, env: dict[str, str], sink: dict) -> tuple
         if effective_id != requested_workspace:
             raise CliArgError("context", f"指定したworkspaceが見つかりません: {requested_workspace}")
 
-    workspace_id = outcome.workspace_id if outcome is not None else "root"
+    # 設定がない、または不適合で同一性が確定しない場合は null（結果・診断・終了コード §2。`check`、`verify`と同じ）。
+    workspace_id = outcome.workspace_id if outcome is not None else None
 
     multi_active = multi_pre is not None and multi_pre.ok
 
