@@ -282,33 +282,14 @@ def _compute_verify_digest(
     if multi_active:
         assert config_for is not None and ws_path_by_id is not None
         reached = sorted({_owner(d) for d in context_documents} - {workspace_id})
-        referenced_commands_multi: set[tuple[str, str]] = set()
-        for doc_id in context_documents:
-            owner = _owner(doc_id)
-            for t in id_index[doc_id].frontmatter.get("tests") or []:
-                name = t.get("command")
-                if name:
-                    referenced_commands_multi.add((owner, name))
-        # `purpose=verify`のコンテキスト一式がテスト割当てとして実際に収録した場合だけ、コマンドとタイムアウトを含める
-        # （`bitz context`仕様 §6）。コマンド名の定義が未解決（テスト割当てを構成できない）なら含めない。
-        commands_settings = []
-        binding_ws_ids: set[str] = set()
-        for wid, name in sorted(referenced_commands_multi):
-            cfg = config_for(wid)
-            resolved = (cfg.get("_resolvedCommands") or {}).get(name)
-            if resolved is None:
-                continue
-            binding_ws_ids.add(wid)
-            commands_settings.append(
-                {"workspaceId": wid, "name": name, "argv": list(resolved["argv"]), "cwd": resolved.get("cwd", ".")}
-            )
-        verify_timeouts = []
-        for wid in sorted(binding_ws_ids):
-            cfg = config_for(wid)
-            vcfg = cfg.get("verify") or {}
-            verify_timeouts.append(
-                {"workspaceId": wid, "timeoutSeconds": vcfg.get("timeoutSeconds", context_mod.DEFAULT_VERIFY_TIMEOUT)}
-            )
+        # `context --purpose verify`と同じ関数で作る（収録したテスト割当てが参照するコマンドとタイムアウトだけ）。
+        commands_settings, verify_timeouts = context_mod.digest_command_materials(
+            context_documents,
+            id_index,
+            _owner,
+            lambda wid, name: (config_for(wid).get("_resolvedCommands") or {}).get(name),
+            lambda wid: (config_for(wid).get("verify") or {}).get("timeoutSeconds", context_mod.DEFAULT_VERIFY_TIMEOUT),
+        )
         settings_ws_ids = sorted(set(reached) | {workspace_id})
         settings_workspaces = []
         for wid in settings_ws_ids:
@@ -325,27 +306,13 @@ def _compute_verify_digest(
             {"id": w, "path": ws_path_by_id.get(w, ".")} for w in reached
         ]
     else:
-        referenced_commands: set[str] = set()
-        for doc_id in context_documents:
-            for t in id_index[doc_id].frontmatter.get("tests") or []:
-                name = t.get("command")
-                if name:
-                    referenced_commands.add(name)
-        # `purpose=verify`のコンテキスト一式がテスト割当てとして実際に収録した場合だけ、コマンドとタイムアウトを含める
-        # （`bitz context`仕様 §6）。コマンド名の定義が未解決（テスト割当てを構成できない）なら含めない。
-        commands_settings = []
-        for name in sorted(referenced_commands):
-            resolved = resolved_commands.get(name)
-            if resolved is None:
-                continue
-            commands_settings.append(
-                {"workspaceId": workspace_id, "name": name, "argv": list(resolved["argv"]), "cwd": resolved.get("cwd", ".")}
-            )
-        has_binding = bool(commands_settings)
-        verify_timeouts = (
-            [{"workspaceId": workspace_id, "timeoutSeconds": verify_cfg.get("timeoutSeconds", context_mod.DEFAULT_VERIFY_TIMEOUT)}]
-            if has_binding
-            else []
+        # `context --purpose verify`と同じ関数で作る（収録したテスト割当てが参照するコマンドとタイムアウトだけ）。
+        commands_settings, verify_timeouts = context_mod.digest_command_materials(
+            context_documents,
+            id_index,
+            lambda d: workspace_id,
+            lambda wid, name: resolved_commands.get(name),
+            lambda wid: verify_cfg.get("timeoutSeconds", context_mod.DEFAULT_VERIFY_TIMEOUT),
         )
         settings_workspaces = [
             {
