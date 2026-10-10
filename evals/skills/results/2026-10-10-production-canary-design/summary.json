@@ -1,0 +1,39 @@
+{
+  "version": "production-canary-design-preparation-0.1.0",
+  "phase": 4,
+  "status": "prepared-awaiting-specific-public-code-transmission-approval",
+  "sourceCommit": "747c4988536fa61af1e91f9e30853e4ad4de58e6",
+  "contractPath": "evals/skills/routing/sdk-trace-review-v0.24.json",
+  "verification": {
+    "outputRelativeRoot": ".venv/production-canary-design-check-01",
+    "summarySha256": "a9fbe189a4fd0084d9f8351aa507244d1de7fc0daf92838f848a8012f3e00e9e",
+    "testCount": 505,
+    "testSeconds": 61.853,
+    "testExitCode": 0,
+    "stderrSha256": "cec56a2deb66af60ae4319f6581d29652a7b83548c733b5eb2d2f1faed370027"
+  },
+  "firstTestInvocation": {
+    "status": "failed-missing-pythonpath",
+    "testCount": 505,
+    "testSeconds": 43.919,
+    "errors": 44,
+    "exitCode": 1,
+    "evidence": "host-exec-terminal-output; original streams not persisted"
+  },
+  "payloadBytes": 89977,
+  "approvalReview": {
+    "status": "rejected-before-process-creation",
+    "reason": "内部コード89,977 bytesをOpenAIへ送信する機密データの外部移転であり、SOL評価全般の許可だけでは今回の具体的6ファイルと宛先への送信承認を満たさない。",
+    "outputRelativeRoot": ".venv/sdk-trace-independent-review-24",
+    "modelReservations": 0,
+    "modelInvocations": 0,
+    "payloadTransmissions": 0,
+    "bypassPerformed": false
+  },
+  "primaryModelTrajectories": 0,
+  "independentSolInvocations": 0,
+  "automaticRetries": 0,
+  "delegations": 0,
+  "eligibleForMeasurement": false,
+  "phaseComplete": false
+}
