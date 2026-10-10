@@ -35,3 +35,20 @@
 | evals/skills/results/2026-10-09-sdk-raw-response-capture/verify-artifacts.py | 15384 | `50a223766d2aa1168d98b6973c2abd11cae106c567bf43fb1a7eae5fe11826fd` |
 
 修正版本文合計110091 bytesと固定指示・限定条件・行番号/hash・公開schemaを送る。source refはコミットで確定した後、原invocationとreceiptへ記録する。
+
+## v0.6：同じ8公開パスのwait呼出し相関の修正版
+
+v0.5/source4539307の独立検分はCLI exit0/P2が1件。旧原結果を保持した。元の許可と同8パス/OpenAI gpt-6.1-sol/各修正版1回/一次0/委譲0/retry0で、新有限契約v0.6と専用出力06を使う。
+
+| パス | bytes | SHA256 |
+|---|---:|---|
+| evals/skills/routing/production_operation_probe.py | 28111 | `31d16132ee74161a49b4af90b571354582ec472acc508b846d5aca134db7183b` |
+| tests/skills/test_production_operation_probe.py | 30532 | `30c0a675945a139410ac0c7bc6b829721bc0e65363016b261f93f7b9321901b1` |
+| evals/skills/routing/production-operation-probe-v0.7.json | 3415 | `a4591b0315ca2474fa3ca92f17ffd0bb951280bf649fd68b4520a3484e52722f` |
+| evals/skills/routing/production-operation-probe-v0.8.json | 4004 | `5cb8d0848cc001bfa3c0297dd24feba33584b0aa44c2a754ff55f8c69b073f1f` |
+| evals/skills/routing/production_sdk_probe.py | 16846 | `29b0d201bdca9796c9fcbcc6c2b5de282dd9bfc2a579ea7d430d0efa15fb11ae` |
+| evals/skills/routing/production_cli_probe.py | 14738 | `cc64e4fdff0612e0e72072b88b78993e6128a63d0df7aa890b55e939e6757fe7` |
+| evals/skills/routing/source_guard.py | 3044 | `553bfe5c3c2a1aa33b44551da910a4f80c1ba86ea69b13dcedcedf22d1444489` |
+| evals/skills/results/2026-10-09-sdk-raw-response-capture/verify-artifacts.py | 15384 | `50a223766d2aa1168d98b6973c2abd11cae106c567bf43fb1a7eae5fe11826fd` |
+
+公開本文合計116074 bytes。追加は固定指示・限定条件・行番号/hash・schemaのみ。原通信/保持資料/認証/新v0.9本文は送信しない。source refをコミット後に原invocation/receiptへ記録する。

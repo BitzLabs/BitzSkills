@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "phase": 4,
   "date": "2026-10-10",
   "scope": "fixed-yielded-cell-original-evidence-capture-only",
@@ -40,7 +40,7 @@
   "newMockTrials": 1,
   "newLocalHttpRequests": 3,
   "paidModelCalls": 0,
-  "independentSolInvocations": 1,
+  "independentSolInvocations": 2,
   "independentReviewStatus": "review_findings",
   "automaticRetries": 0,
   "primaryModelTrajectories": 0,
@@ -75,7 +75,66 @@
       "suggestion": "listedは第2要求のprobe-call出力、readは第3要求のprobe-wait出力からそれぞれ検証してください。各段階についてkind='yielded-read'、必須本文、件数を照合し、第3要求に再掲されるprobe-call出力が第2要求から改変されていないことも確認してください。不一致はlocalErrorsへ記録して停止させてください。"
     }
   ],
-  "pendingRemediationReviewContract": "evals/skills/routing/sdk-raw-response-review-v0.5.json",
+  "pendingRemediationReviewContract": "evals/skills/routing/sdk-raw-response-review-v0.6.json",
   "remediationIndependentlyPassed": false,
+  "secondIndependentReview": {
+    "sourceCommit": "4539307f6e10d38e17c6f03d9c32c4676df8cc2e",
+    "contractPath": "evals/skills/routing/sdk-raw-response-review-v0.5.json",
+    "outputRelativeRoot": ".venv/sdk-raw-response-independent-review-05",
+    "receiptSha256": "50d77c1884d03c618f18cadb2b87351d4ec2a7a6c4b9da3b4387763da9bda20c",
+    "responseSha256": "890e7c35e70b81a00cdf558a399d1e73edd19792c2623b919c3d93e0b83b5dc9",
+    "status": "review_findings",
+    "actualInvocations": 1,
+    "usage": {
+      "input_tokens": 39691,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 884,
+      "reasoning_output_tokens": 420
+    }
+  },
+  "secondFindings": [
+    {
+      "priority": "P2",
+      "path": "evals/skills/routing/production_operation_probe.py",
+      "line": 197,
+      "message": "継続要求の末尾2項目を履歴比較から除外した後、実際のwait呼出しを検査していません。probe-waitの出力だけでwaitCompleted=trueとなるため、異なるcellへのwaitや呼出し前の完了出力を受理できます。eligibleForMeasurement=falseは維持されますが、固定cell=1へのwaitという局所捕捉条件の偽通過です。",
+      "reproduction": "静的に導出した再現条件（未実行）：提示されたyielded_fixture()のrequests[2]['input'][-2]を、type='function_call', call_id='probe-wait', namespace='functions', name='wait', arguments='{\"cell_id\":\"2\",\"yield_time_ms\":10000,\"max_tokens\":10000}'の項目に置換する。履歴の比較対象と両段階の出力・host本文は変わらず、yielded_observation()はcellId='1', waitCompleted=trueを返す。また、末尾のwait項目と完了出力を入れ替えても同じ判定になります。",
+      "suggestion": "第3要求の末尾2項目を、固定namespace/name/call_id/argumentsを持つcell=1へのwait呼出し、そのcall_idに対応する完了出力の順で厳密に検査してください。原第2応答の保存済みwait項目との照合も行い、違うcell・未知操作・逆順を停止させてください。"
+    }
+  ],
+  "remediationVerification": {
+    "sourceCommit": "4539307f6e10d38e17c6f03d9c32c4676df8cc2e",
+    "outputRelativeRoot": ".venv/production-sdk-yielded-cell-remediation-verification-01",
+    "summarySha256": "cb1e566e4e7155217c7a4bee5c7dc936da7682c80d1e010e39cf16616acd74d5",
+    "tests": {
+      "count": 480,
+      "seconds": 65.521,
+      "exitCode": 0,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "37071f37d76f8155ac963c5b03eaf05c9e35b9fd80b83b6d4b0c4393c111f0a8",
+      "command": [
+        "uv",
+        "--cache-dir",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+        "run",
+        "--offline",
+        "--project",
+        "plugins/bitz-core",
+        "--with",
+        "jsonschema==4.23.0",
+        "python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/skills",
+        "-p",
+        "test_*.py"
+      ]
+    }
+  },
+  "waitRemediationPublicPayloadBytes": 116074,
   "remediationPublicPayloadBytes": 110091
 }

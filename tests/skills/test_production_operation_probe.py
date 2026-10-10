@@ -80,17 +80,32 @@ class ProductionOperationProbeTests(unittest.TestCase):
                 'isError': False, 'content': [{'type': 'text', 'text': json.dumps(event['result'])}]}}
             outputs.append(header + json.dumps(payload))
         initial = {'type': 'message', 'content': 'initial'}
-        call = {'type': 'custom_tool_call', 'call_id': 'probe-call'}
-        result = {'type': 'custom_tool_call_output', 'call_id': 'probe-call', 'output': outputs[0]}
-        wait = {'type': 'function_call', 'call_id': 'probe-wait'}
-        ended = {'type': 'function_call_output', 'call_id': 'probe-wait', 'output': outputs[1]}
+        call = {'type': 'custom_tool_call', 'call_id': 'probe-call', 'id': 'exec-id',
+                'namespace': 'functions', 'name': 'exec', 'input': 'fixed-yielded-program'}
+        result = {'type': 'custom_tool_call_output', 'call_id': 'probe-call', 'id': 'exec-output-id', 'output': outputs[0]}
+        wait = {'type': 'function_call', 'call_id': 'probe-wait', 'id': 'wait-id', 'namespace': 'functions',
+                'name': 'wait', 'arguments': json.dumps({'cell_id': '1', 'yield_time_ms': 10000, 'max_tokens': 10000})}
+        ended = {'type': 'function_call_output', 'call_id': 'probe-wait', 'id': 'wait-output-id', 'output': outputs[1]}
         return [{'input': [initial]}, {'input': [initial, call, result]},
                 {'input': [copy.deepcopy(initial), copy.deepcopy(call), copy.deepcopy(result), wait, ended]}], host
+
+    @staticmethod
+    def yielded_responses():
+        return [probe.response_item({'type': 'custom_tool_call', 'call_id': 'probe-call', 'name': 'exec',
+                                    'namespace': 'functions', 'input': 'fixed-yielded-program'}),
+                probe.response_item({'type': 'function_call', 'call_id': 'probe-wait', 'name': 'wait',
+                                    'namespace': 'functions', 'arguments': json.dumps({
+                                        'cell_id': '1', 'yield_time_ms': 10000, 'max_tokens': 10000})}),
+                probe.cli.simulation_reply()]
+
+    def observe_yielded(self, requests, host, responses=None):
+        return probe.yielded_observation(requests, host, self.yielded_responses() if responses is None else responses,
+                                         'fixed-yielded-program')
 
     def test_yielded_observation_binds_original_stages_and_host_bodies_without_mutation(self):
         requests, host = self.yielded_fixture()
         before = copy.deepcopy((requests, host))
-        objects, observation = probe.yielded_observation(requests, host)
+        objects, observation = self.observe_yielded(requests, host)
         self.assertEqual([o['stage'] for o in objects], ['listed', 'read'])
         self.assertEqual(observation, {'cellId': '1', 'waitCompleted': True, 'stages': ['listed', 'read']})
         self.assertEqual((requests, host), before)
@@ -101,7 +116,7 @@ class ProductionOperationProbeTests(unittest.TestCase):
         requests[2]['input'][2]['output'] = '{"kind":"other","stage":"listed"}'
         requests[2]['input'][-1]['output'] = 'Script completed\n{"kind":"other","stage":"read"}'
         with self.assertRaises(ValueError):
-            probe.yielded_observation(requests, host)
+            self.observe_yielded(requests, host)
 
     def test_yielded_observation_rejects_missing_extra_wrong_or_unbound_payload(self):
         for stage in (0, 1):
@@ -129,7 +144,7 @@ class ProductionOperationProbeTests(unittest.TestCase):
                 if stage == 0:
                     requests[2]['input'][2] = copy.deepcopy(frame)
                 with self.subTest(stage=stage, mode=mode), self.assertRaises(ValueError):
-                    probe.yielded_observation(requests, host)
+                    self.observe_yielded(requests, host)
 
     def test_yielded_observation_rejects_changed_history_and_incomplete_wait(self):
         for mode in ('history', 'wait', 'requests', 'hosts'):
@@ -139,7 +154,48 @@ class ProductionOperationProbeTests(unittest.TestCase):
             elif mode == 'requests': requests.pop()
             else: host.pop()
             with self.subTest(mode=mode), self.assertRaises(ValueError):
-                probe.yielded_observation(requests, host)
+                self.observe_yielded(requests, host)
+
+    def test_yielded_wait_call_must_target_original_cell_before_its_output(self):
+        for mode in ('cell', 'namespace', 'name', 'call-id', 'arguments', 'reverse', 'output-id', 'output-type'):
+            requests, host = self.yielded_fixture()
+            wait, output = requests[2]['input'][-2:]
+            if mode == 'cell': wait['arguments'] = wait['arguments'].replace('"1"', '"2"')
+            elif mode == 'namespace': wait['namespace'] = 'other'
+            elif mode == 'name': wait['name'] = 'exec_command'
+            elif mode == 'call-id': wait['call_id'] = 'other'
+            elif mode == 'arguments': wait['arguments'] = '{}'
+            elif mode == 'reverse': requests[2]['input'][-2:] = [output, wait]
+            elif mode == 'output-id': output['call_id'] = 'other'
+            else: output['type'] = 'custom_tool_call_output'
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                self.observe_yielded(requests, host)
+
+    def test_yielded_calls_are_bound_to_saved_sse_without_mutating_it(self):
+        requests, host = self.yielded_fixture()
+        responses = self.yielded_responses()
+        before = copy.deepcopy(responses)
+        self.observe_yielded(requests, host, responses)
+        self.assertEqual(responses, before)
+        for index in range(3):
+            bad = list(responses)
+            bad[index] += b'changed'
+            with self.subTest(index=index), self.assertRaises(ValueError):
+                self.observe_yielded(requests, host, bad)
+
+    def test_yielded_echoed_exec_and_provider_settings_must_be_unchanged(self):
+        for mode in ('program', 'type', 'call-id', 'namespace', 'id-collision', 'settings'):
+            requests, host = self.yielded_fixture()
+            call = requests[1]['input'][-2]
+            if mode == 'program': call['input'] = 'another program'
+            elif mode == 'type': call['type'] = 'function_call'
+            elif mode == 'call-id': call['call_id'] = 'other'
+            elif mode == 'namespace': call['namespace'] = 'other'
+            elif mode == 'id-collision': call['id'] = requests[1]['input'][-1]['id']
+            else: requests[2]['model'] = 'another model'
+            requests[2]['input'][1] = copy.deepcopy(call)
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                self.observe_yielded(requests, host)
 
     def test_raw_event_policy_preserves_read_only_finite_thread_settings(self):
         contract = json.loads((ROOT / 'evals/skills/routing/production-operation-probe-v0.8.json').read_bytes())

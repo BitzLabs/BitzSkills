@@ -1,6 +1,7 @@
 """固定yield/wait捕捉を原bytesとGitへ照合する。読取りだけで認定やモデル起動は行わない。"""
 import argparse
 import ast
+import copy
 import hashlib
 import importlib.util
 import json
@@ -104,7 +105,8 @@ def check_capture():
             trace.json_equal(stages, value['outputObjects']) and
             trace.json_equal(value['yieldedCellObservation'],
                 {'cellId': '1', 'waitCompleted': True, 'stages': ['listed', 'read']}), 'yielded output stages')
-    corrected_objects, corrected_observation = operation.yielded_observation(requests, host)
+    corrected_objects, corrected_observation = operation.yielded_observation(
+        requests, host, responses, operation.program('yielded-read', BASE))
     require(trace.json_equal(corrected_objects, value['outputObjects']) and
             trace.json_equal(corrected_observation, value['yieldedCellObservation']), 'corrected original yielded observation')
     manifest, resource_count = helper.check_snapshot(contract)
@@ -162,7 +164,8 @@ def check_reproduction():
     require(not old['errors'] and old['wait_observed']['waitCompleted'] is True and
             old['output_objects'](requests[1]) == [], 'original P2 not reproduced')
     try:
-        operation.yielded_observation(requests, [{'tool': 'list_resources'}, {'tool': 'read_resource'}])
+        operation.yielded_observation(requests, [{'tool': 'list_resources'}, {'tool': 'read_resource'}],
+            [(BASE / f'response-{i}.sse').read_bytes() for i in (1, 2, 3)], operation.program('yielded-read', BASE))
     except ValueError:
         pass
     else:
@@ -172,13 +175,43 @@ def check_reproduction():
             'scope': 'synthetic-terminal-branch-only', 'newHttpRequests': 0, 'paidModelCalls': 0}
 
 
-def run_remediation(source):
+def check_wait_reproduction():
+    old_source = '4539307f6e10d38e17c6f03d9c32c4676df8cc2e'
+    source = guard.git(ROOT, 'show', old_source + ':evals/skills/routing/production_operation_probe.py')
+    old = {'__name__': 'historical_wait_probe', '__file__': str(ROOT / 'evals/skills/routing/production_operation_probe.py')}
+    exec(compile(source, 'historical_wait_probe', 'exec'), old)
+    requests = [trace.strict_json((BASE / f'request-{i}.json').read_bytes()) for i in (1, 2, 3)]
+    responses = [(BASE / f'response-{i}.sse').read_bytes() for i in (1, 2, 3)]
+    host = helper.frames(BASE, 'host.jsonl')
+    for mode in ('other-cell', 'reverse'):
+        bad = copy.deepcopy(requests)
+        if mode == 'other-cell':
+            args = trace.strict_json(bad[2]['input'][-2]['arguments'])
+            args['cell_id'] = '2'
+            bad[2]['input'][-2]['arguments'] = json.dumps(args)
+        else:
+            bad[2]['input'][-2:] = list(reversed(bad[2]['input'][-2:]))
+        _, observation = old['yielded_observation'](bad, host)
+        require(observation['cellId'] == '1' and observation['waitCompleted'] is True, 'old wait P2 not reproduced')
+        try:
+            operation.yielded_observation(bad, host, responses, operation.program('yielded-read', BASE))
+        except ValueError:
+            pass
+        else:
+            raise ValueError('corrected probe accepted wrong wait')
+    return {'historicalSource': old_source, 'oldOtherCellAccepted': True, 'oldReverseOrderAccepted': True,
+            'correctedBothRejected': True, 'scope': 'copied-provider-input-function-boundary-only',
+            'newHttpRequests': 0, 'paidModelCalls': 0}
+
+
+def run_remediation(source, wait_binding=False):
     require(guard.git(ROOT, 'status', '--porcelain') == b'' and
             guard.git(ROOT, 'rev-parse', 'HEAD').decode().strip() == source, 'clean remediation HEAD')
-    contract = trace.strict_json(guard.git(ROOT, 'show', source + ':evals/skills/routing/sdk-raw-response-review-v0.5.json'))
+    contract_name = 'evals/skills/routing/sdk-raw-response-review-v0.' + ('6' if wait_binding else '5') + '.json'
+    contract = trace.strict_json(guard.git(ROOT, 'show', source + ':' + contract_name))
     before = guard.verify(ROOT, source, contract['sourceFiles'])
     capture, reproduction = check_capture(), check_reproduction()
-    base = ROOT / '.venv/production-sdk-yielded-cell-remediation-verification-01'
+    base = ROOT / ('.venv/production-sdk-yielded-cell-remediation-verification-0' + ('2' if wait_binding else '1'))
     require(not any(p.is_symlink() for p in (base, *base.parents)), 'remediation symlink')
     base.mkdir(mode=0o700)
     command = ['uv', '--cache-dir', str(ROOT / '.venv/uv-cache'), 'run', '--offline', '--project',
@@ -198,6 +231,8 @@ def run_remediation(source):
               'eligibleForMeasurement': False, 'phaseComplete': False,
               'tests': {'count': int(matched[1]), 'seconds': float(matched[2]), 'exitCode': process.returncode,
                         'stdoutSha256': sha(process.stdout), 'stderrSha256': sha(process.stderr), 'command': command}}
+    if wait_binding:
+        result['waitReproduction'] = check_wait_reproduction()
     raw.cli.exclusive(base / 'summary.json', raw.cli.encoded(result))
     print(json.dumps({k: v for k, v in result.items() if k not in {'sourceGuards', 'capture'}}, ensure_ascii=False))
 
@@ -223,13 +258,16 @@ def run():
         require(response['verdict'] == 'findings' and len(response['findings']) == 1,
                 'yielded original independent finding')
         reviewed += 1
+        if 'secondIndependentReview' in summary:
+            second = reviews.recheck_review(summary['secondIndependentReview'])
+            require(second['verdict'] == 'findings' and len(second['findings']) == 1, 'yielded second independent finding')
+            reviewed += 1
         if 'finalIndependentReview' in summary:
             final = reviews.recheck_review(summary['finalIndependentReview'])
             require(final['verdict'] == 'pass' and final['findings'] == [], 'yielded final independent review')
             reviewed += 1
     require(summary['independentSolInvocations'] == reviewed, 'yielded review counters')
-    if 'remediationVerification' in summary:
-        meta = summary['remediationVerification']
+    for meta in [summary[k] for k in ('remediationVerification', 'waitRemediationVerification') if k in summary]:
         base = ROOT / meta['outputRelativeRoot']
         private = (base / 'summary.json').read_bytes()
         require(sha(private) == meta['summarySha256'], 'yielded remediation summary hash')
@@ -247,9 +285,12 @@ def run():
         for name, key in [('tests.stdout', 'stdoutSha256'), ('tests.stderr', 'stderrSha256')]:
             require(sha((base / name).read_bytes()) == meta['tests'][key], 'yielded remediation original tests')
         matched = re.search(rb'Ran (\d+) tests in ([0-9.]+)s\s+OK\s*$', (base / 'tests.stderr').read_bytes())
-        require(matched and int(matched[1]) == meta['tests']['count'] == 480 and
+        expected_tests = 483 if 'waitReproduction' in value else 480
+        require(matched and int(matched[1]) == meta['tests']['count'] == expected_tests and
                 float(matched[2]) == meta['tests']['seconds'] and meta['tests']['exitCode'] == 0,
                 'yielded remediation actual test terminal')
+        if 'waitReproduction' in value:
+            require(trace.json_equal(value['waitReproduction'], check_wait_reproduction()), 'wait original reproduction')
     print(json.dumps({'status': 'recorded_yielded_capture_matches_original_bytes', 'tests': 476,
                       'rawItems': 8, 'rawCompleted': 3, 'traceRows': 24, 'mockTrials': 1,
                       'localHttpRequests': 3, 'paidModelCalls': 0, 'independentSolInvocations': reviewed,
@@ -259,11 +300,12 @@ def run():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--verify-remediation', action='store_true')
+    parser.add_argument('--wait-remediation', action='store_true')
     parser.add_argument('--source')
     args = parser.parse_args()
-    if args.verify_remediation:
+    if args.verify_remediation or args.wait_remediation:
         if not args.source:
             parser.error('--source required for remediation verification')
-        run_remediation(args.source)
+        run_remediation(args.source, wait_binding=args.wait_remediation)
     else:
         run()

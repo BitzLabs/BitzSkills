@@ -172,7 +172,8 @@ def wait_reply(request: dict) -> bytes:
                           'arguments': json.dumps({'cell_id': yielded_cell_id(request), 'yield_time_ms': 10000, 'max_tokens': 10000})})
 
 
-def yielded_observation(requests: list[dict], host_events: list[dict]) -> tuple[list[dict], dict]:
+def yielded_observation(requests: list[dict], host_events: list[dict], provider_responses: list[bytes],
+                        expected_program: str) -> tuple[list[dict], dict]:
     """元の中断出力と継続の再掲を照合し、両段階の本文を原ホスト結果へ結ぶ。"""
     def strict_json(text):
         def pairs(values):
@@ -192,11 +193,40 @@ def yielded_observation(requests: list[dict], host_events: list[dict]) -> tuple[
 
     if (not isinstance(requests, list) or len(requests) != 3 or
             not all(isinstance(r, dict) and isinstance(r.get('input'), list) for r in requests) or
-            not isinstance(host_events, list) or len(host_events) != 2):
+            not isinstance(host_events, list) or len(host_events) != 2 or
+            not isinstance(provider_responses, list) or len(provider_responses) != 3 or
+            not isinstance(expected_program, str) or not expected_program):
         raise ValueError('three yielded exchanges and two host results required')
-    if canonical(requests[2]['input'][:-2]) != canonical(requests[1]['input']):
-        raise ValueError('yielded provider history changed')
+    if any(isinstance(i, dict) and i.get('type') in {'function_call', 'custom_tool_call',
+            'function_call_output', 'custom_tool_call_output'} for i in requests[0]['input']):
+        raise ValueError('earlier yielded provider call')
     cell = yielded_cell_id(requests[1])
+    calls = [{'type': 'custom_tool_call', 'call_id': 'probe-call', 'name': 'exec',
+              'namespace': 'functions', 'input': expected_program},
+             {'type': 'function_call', 'call_id': 'probe-wait', 'name': 'wait', 'namespace': 'functions',
+              'arguments': json.dumps({'cell_id': cell, 'yield_time_ms': 10000, 'max_tokens': 10000})}]
+    if (provider_responses[0] != response_item(calls[0]) or
+            provider_responses[1] != response_item(calls[1]) or provider_responses[2] != cli.simulation_reply()):
+        raise ValueError('saved yielded provider response mismatch')
+    ids = set()
+    for before, after, call, output_type in zip(requests[:2], requests[1:], calls,
+                                               ('custom_tool_call_output', 'function_call_output')):
+        if (len(after['input']) != len(before['input']) + 2 or
+                canonical(after['input'][:-2]) != canonical(before['input']) or
+                canonical({k: v for k, v in after.items() if k != 'input'}) !=
+                canonical({k: v for k, v in before.items() if k != 'input'})):
+            raise ValueError('yielded provider history or settings changed')
+        echoed, output = after['input'][-2:]
+        if (not isinstance(echoed, dict) or set(echoed) != {*call, 'id'} or
+                canonical({k: v for k, v in echoed.items() if k != 'id'}) != canonical(call) or
+                not isinstance(output, dict) or set(output) != {'type', 'id', 'call_id', 'output'} or
+                output['type'] != output_type or output['call_id'] != call['call_id']):
+            raise ValueError('yielded saved call/output binding or order mismatch')
+        for item in (echoed, output):
+            ident = item['id']
+            if not isinstance(ident, str) or not ident or ident in ids:
+                raise ValueError('yielded provider item ID required')
+            ids.add(ident)
     texts = [yielded_output(requests[1], 'probe-call'), yielded_output(requests[2], 'probe-wait')]
     if not texts[1].startswith('Script completed\n'):
         raise ValueError('yielded cell did not complete')
@@ -350,7 +380,9 @@ def isolated(base: Path):
     if scenario == 'yielded-read':
         objects = []
         try:
-            objects, wait_observed = yielded_observation(requests, host_events)
+            responses = [(base / f'response-{i}.sse').read_bytes() if (base / f'response-{i}.sse').is_file()
+                         else b'' for i in (1, 2, 3)]
+            objects, wait_observed = yielded_observation(requests, host_events, responses, program(scenario, base))
         except ValueError as exc:
             errors.append(str(exc))
     terminal, matched = terminal_matches(frames, thread_id, turn_id)

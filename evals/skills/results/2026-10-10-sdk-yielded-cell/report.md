@@ -56,3 +56,18 @@ JSONの重複キー・非有限数も拒否する。欠落・再掲改変・偽k
 局所28件/0.099s/OK/exit0、合成P2入力の拒否と旧原捕捉への修正判定の適合を確認した。
 新模擬・HTTP・一次・追加モデル0。原v0.4と旧捕捉を保持し、是正後の独立通過はまだ判定していない。
 同8パスの継続許可により、別有限契約v0.5/出力05で修正版を1回再検分する準備をした。
+
+## wait呼出しの相関の是正
+
+確定ref4539307の全480件/65.521s/OK/exit0、旧原捕捉への修正判定と合成P2の拒否を確認した。
+同refのv0.5独立SOLはCLI exit0/P2が1件。input39691/cached0/output884/reasoning420。
+原receipt SHA256 `50d77c1884d03c618f18cadb2b87351d4ec2a7a6c4b9da3b4387763da9bda20c`、
+原response SHA256 `890e7c35e70b81a00cdf558a399d1e73edd19792c2623b919c3d93e0b83b5dc9`。
+親が原応答・schema/hash/usage/歴史Git・guard・有限予約を再照合し、元P2と消費枠を保持した。
+
+P2は第3要求の末尾のwaitを検査せず、違うcellや出力→呼出しの逆順でもwaitCompleted=trueになる点。
+原保存物を変更せず、provider入力のコピーでcell=2と逆順の2条件を歴史Gitのv0.5関数へ適用し、受理を再現した。
+修正版は保存済みSSE3件と固定program、exec/waitの再掲、呼出し→対応出力、固定cell/argsと生成id、
+provider履歴とsettingsを照合する。同じ2条件を拒否し、旧捕捉へも適合した。
+局所31件/0.109s/OK/exit0。新模擬/HTTP/一次0、独立SOL追加は当工程2回、raw静的系列累計5。
+v0.6/出力06で同8公開パスの修正版を1回再検分する。是正後の独立通過・Phase全体は未判定。
