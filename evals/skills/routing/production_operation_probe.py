@@ -22,7 +22,7 @@ import source_guard
 ROOT = Path(__file__).resolve().parents[3]
 CONTRACT = 'evals/skills/routing/production-operation-probe-v0.5.json'
 CODE_FILES = ['production_operation_probe.py', 'production_sdk_probe.py', 'production_cli_probe.py', 'host.py', 'source_guard.py']
-SCENARIOS = ('inventory', 'read', 'yielded-read', 'path-denied', 'shell-denied', 'patch-denied', 'web-denied', 'agent-denied', 'user-input-stop')
+SCENARIOS = ('inventory', 'read', 'yielded-read', 'sequential-read', 'path-denied', 'shell-denied', 'patch-denied', 'web-denied', 'agent-denied', 'user-input-stop')
 
 
 def raw_events_enabled(contract: dict) -> bool:
@@ -30,7 +30,8 @@ def raw_events_enabled(contract: dict) -> bool:
         return False
     profile = {'production-operation-probe-0.7.0': ('read', 2),
                'production-operation-probe-0.8.0': ('read', 2),
-               'production-operation-probe-0.9.0': ('yielded-read', 3)}.get(contract['version'])
+               'production-operation-probe-0.9.0': ('yielded-read', 3),
+               'production-operation-probe-0.10.0': ('sequential-read', 3)}.get(contract['version'])
     if (contract['experimentalRawEvents'] is not True or profile is None or
             set(contract['outputLabels']) != {profile[0]} or type(contract['maximumScenarios']) is not int or
             contract['maximumScenarios'] != 1 or type(contract['maximumLocalHttpRequestsPerScenario']) is not int or
@@ -86,6 +87,8 @@ def program(scenario: str, base: Path) -> str:
         return 'text(JSON.stringify({kind:"inventory",names:ALL_TOOLS.map(t=>t.name).sort()}));'
     discover = 'const find=s=>{const a=ALL_TOOLS.filter(t=>t.name.endsWith(s));if(a.length!==1)throw new Error("resource tool unavailable");return a[0].name;};'
     list_call = 'const listed=await tools[find("__list_resources")]({});const listing=JSON.parse(listed.content[0].text);'
+    if scenario == 'sequential-read':
+        return discover + list_call + 'text(JSON.stringify({kind:"sequential-read",stage:"listed",listed}));'
     if scenario == 'read':
         return discover + list_call + 'const p=listing.skills.find(s=>s.name==="sdd-plan").path;const read=await tools[find("__read_resource")]({path:p});text(JSON.stringify({kind:"read",listed,read}));'
     if scenario == 'yielded-read':
@@ -172,9 +175,42 @@ def wait_reply(request: dict) -> bytes:
                           'arguments': json.dumps({'cell_id': yielded_cell_id(request), 'yield_time_ms': 10000, 'max_tokens': 10000})})
 
 
-def yielded_observation(requests: list[dict], host_events: list[dict], provider_responses: list[bytes],
-                        expected_program: str) -> tuple[list[dict], dict]:
-    """元の中断出力と継続の再掲を照合し、両段階の本文を原ホスト結果へ結ぶ。"""
+def selected_listing_path(listing: dict) -> str:
+    if not isinstance(listing, dict) or not isinstance(listing.get('skills'), list):
+        raise ValueError('sequential resource listing required')
+    selected = [s for s in listing['skills'] if isinstance(s, dict) and s.get('name') == 'sdd-plan']
+    if len(selected) != 1 or not isinstance(selected[0].get('path'), str) or not selected[0]['path']:
+        raise ValueError('one sequential selected resource required')
+    return selected[0]['path']
+
+
+def sequential_read_program(path: str) -> str:
+    discover = 'const find=s=>{const a=ALL_TOOLS.filter(t=>t.name.endsWith(s));if(a.length!==1)throw new Error("resource tool unavailable");return a[0].name;};'
+    return (discover + 'const read=await tools[find("__read_resource")]({path:' + json.dumps(path) + '});'
+            'text(JSON.stringify({kind:"sequential-read",stage:"read",read}));')
+
+
+def sequential_reply(request: dict) -> bytes:
+    text = yielded_output(request, 'probe-call')
+    objects = output_objects(request)
+    if (not text.startswith('Script completed\n') or len(objects) != 1 or
+            set(objects[0]) != {'kind', 'stage', 'listed'} or objects[0]['kind'] != 'sequential-read' or
+            objects[0]['stage'] != 'listed'):
+        raise ValueError('completed sequential listing required')
+    wrapper = objects[0]['listed']
+    if (not isinstance(wrapper, dict) or set(wrapper) != {'isError', 'content'} or wrapper['isError'] is not False or
+            not isinstance(wrapper['content'], list) or len(wrapper['content']) != 1 or
+            not isinstance(wrapper['content'][0], dict) or set(wrapper['content'][0]) != {'type', 'text'} or
+            wrapper['content'][0]['type'] != 'text' or not isinstance(wrapper['content'][0]['text'], str)):
+        raise ValueError('sequential listing wrapper required')
+    path = selected_listing_path(json.loads(wrapper['content'][0]['text']))
+    return response_item({'type': 'custom_tool_call', 'call_id': 'probe-read', 'name': 'exec', 'namespace': 'functions',
+                          'input': sequential_read_program(path)})
+
+
+def _two_stage_observation(requests: list[dict], host_events: list[dict], provider_responses: list[bytes],
+                           calls: list[dict], kind: str, headers: tuple[str, str]) -> list[dict]:
+    """固定2段階の保存済みSSE/再掲履歴/呼出しと出力/本文を原ホストへ結ぶ。"""
     def strict_json(text):
         def pairs(values):
             result = {}
@@ -194,23 +230,17 @@ def yielded_observation(requests: list[dict], host_events: list[dict], provider_
     if (not isinstance(requests, list) or len(requests) != 3 or
             not all(isinstance(r, dict) and isinstance(r.get('input'), list) for r in requests) or
             not isinstance(host_events, list) or len(host_events) != 2 or
-            not isinstance(provider_responses, list) or len(provider_responses) != 3 or
-            not isinstance(expected_program, str) or not expected_program):
+            not isinstance(provider_responses, list) or len(provider_responses) != 3):
         raise ValueError('three yielded exchanges and two host results required')
     if any(isinstance(i, dict) and i.get('type') in {'function_call', 'custom_tool_call',
             'function_call_output', 'custom_tool_call_output'} for i in requests[0]['input']):
         raise ValueError('earlier yielded provider call')
-    cell = yielded_cell_id(requests[1])
-    calls = [{'type': 'custom_tool_call', 'call_id': 'probe-call', 'name': 'exec',
-              'namespace': 'functions', 'input': expected_program},
-             {'type': 'function_call', 'call_id': 'probe-wait', 'name': 'wait', 'namespace': 'functions',
-              'arguments': json.dumps({'cell_id': cell, 'yield_time_ms': 10000, 'max_tokens': 10000})}]
     if (provider_responses[0] != response_item(calls[0]) or
             provider_responses[1] != response_item(calls[1]) or provider_responses[2] != cli.simulation_reply()):
         raise ValueError('saved yielded provider response mismatch')
     ids = set()
-    for before, after, call, output_type in zip(requests[:2], requests[1:], calls,
-                                               ('custom_tool_call_output', 'function_call_output')):
+    for before, after, call in zip(requests[:2], requests[1:], calls):
+        output_type = 'custom_tool_call_output' if call['type'] == 'custom_tool_call' else 'function_call_output'
         if (len(after['input']) != len(before['input']) + 2 or
                 canonical(after['input'][:-2]) != canonical(before['input']) or
                 canonical({k: v for k, v in after.items() if k != 'input'}) !=
@@ -227,15 +257,15 @@ def yielded_observation(requests: list[dict], host_events: list[dict], provider_
             if not isinstance(ident, str) or not ident or ident in ids:
                 raise ValueError('yielded provider item ID required')
             ids.add(ident)
-    texts = [yielded_output(requests[1], 'probe-call'), yielded_output(requests[2], 'probe-wait')]
-    if not texts[1].startswith('Script completed\n'):
+    texts = [yielded_output(request, call['call_id']) for request, call in zip(requests[1:], calls)]
+    if not all(text.startswith(header) for text, header in zip(texts, headers)):
         raise ValueError('yielded cell did not complete')
     objects = []
     for text, stage, key, tool, event in zip(texts, ('listed', 'read'), ('listed', 'read'),
                                           ('list_resources', 'read_resource'), host_events):
         payloads = [strict_json(line) for line in text.splitlines() if line.startswith('{')]
         if (len(payloads) != 1 or not isinstance(payloads[0], dict) or
-                set(payloads[0]) != {'kind', 'stage', key} or payloads[0]['kind'] != 'yielded-read' or
+                set(payloads[0]) != {'kind', 'stage', key} or payloads[0]['kind'] != kind or
                 payloads[0]['stage'] != stage):
             raise ValueError('one complete yielded stage required')
         payload = payloads[0]
@@ -250,7 +280,37 @@ def yielded_observation(requests: list[dict], host_events: list[dict], provider_
         if canonical(strict_json(wrapper['content'][0]['text'])) != canonical(event['result']):
             raise ValueError('yielded provider/host body mismatch')
         objects.append(payload)
-    return objects, {'cellId': cell, 'waitCompleted': True, 'stages': ['listed', 'read']}
+    return objects
+
+
+def yielded_observation(requests: list[dict], host_events: list[dict], provider_responses: list[bytes],
+                        expected_program: str) -> tuple[list[dict], dict]:
+    if not isinstance(expected_program, str) or not expected_program:
+        raise ValueError('fixed yielded program required')
+    calls = [{'type': 'custom_tool_call', 'call_id': 'probe-call', 'name': 'exec', 'namespace': 'functions',
+              'input': expected_program},
+             {'type': 'function_call', 'call_id': 'probe-wait', 'name': 'wait', 'namespace': 'functions',
+              'arguments': json.dumps({'cell_id': '1', 'yield_time_ms': 10000, 'max_tokens': 10000})}]
+    objects = _two_stage_observation(requests, host_events, provider_responses, calls, 'yielded-read',
+                                     ('Script running with cell ID 1\n', 'Script completed\n'))
+    return objects, {'cellId': yielded_cell_id(requests[1]), 'waitCompleted': True, 'stages': ['listed', 'read']}
+
+
+def sequential_observation(requests: list[dict], host_events: list[dict], provider_responses: list[bytes],
+                            base: Path) -> tuple[list[dict], dict]:
+    if not isinstance(host_events, list) or len(host_events) != 2 or not isinstance(host_events[0], dict):
+        raise ValueError('two sequential host results required')
+    path = selected_listing_path(host_events[0].get('result'))
+    calls = [{'type': 'custom_tool_call', 'call_id': 'probe-call', 'name': 'exec', 'namespace': 'functions',
+              'input': program('sequential-read', base)},
+             {'type': 'custom_tool_call', 'call_id': 'probe-read', 'name': 'exec', 'namespace': 'functions',
+              'input': sequential_read_program(path)}]
+    objects = _two_stage_observation(requests, host_events, provider_responses, calls, 'sequential-read',
+                                     ('Script completed\n', 'Script completed\n'))
+    if host_events[1].get('arguments') != {'path': path}:
+        raise ValueError('sequential host selected path mismatch')
+    return objects, {'parentCallIds': ['probe-call', 'probe-read'], 'stages': ['listed', 'read'],
+                     'bothExecCompleted': True, 'certifiesCellCorrelation': False}
 
 
 def terminal_matches(frames: list[dict], thread_id: str | None, turn_id: str | None) -> tuple[bool, bool]:
@@ -317,6 +377,7 @@ def isolated(base: Path):
                 return
             try:
                 reply = (tool_reply(scenario, base) if len(requests) == 1 else
+                         sequential_reply(request) if scenario == 'sequential-read' and len(requests) == 2 else
                          wait_reply(request) if scenario == 'yielded-read' and len(requests) == 2 else cli.simulation_reply())
             except ValueError as exc:
                 errors.append(str(exc))
@@ -385,6 +446,15 @@ def isolated(base: Path):
             objects, wait_observed = yielded_observation(requests, host_events, responses, program(scenario, base))
         except ValueError as exc:
             errors.append(str(exc))
+    sequential_observed = None
+    if scenario == 'sequential-read':
+        objects = []
+        try:
+            responses = [(base / f'response-{i}.sse').read_bytes() if (base / f'response-{i}.sse').is_file()
+                         else b'' for i in (1, 2, 3)]
+            objects, sequential_observed = sequential_observation(requests, host_events, responses, base)
+        except ValueError as exc:
+            errors.append(str(exc))
     terminal, matched = terminal_matches(frames, thread_id, turn_id)
     value = {'status': 'operation_diagnostic_captured', 'scenario': scenario, 'localHttpRequestCount': len(requests),
              'outputObjects': objects, 'hostEventCount': len(host_events), 'serverRequestStops': denials,
@@ -396,6 +466,8 @@ def isolated(base: Path):
              'paidModelCalls': 0, 'certifiesNativeProvider': False, 'certifiesSkillGate': False}
     if scenario == 'yielded-read':
         value['yieldedCellObservation'] = wait_observed
+    if scenario == 'sequential-read':
+        value['sequentialExecObservation'] = sequential_observed
     if raw_events_enabled(contract):
         value.update(experimentalRawEventsRequested=True,
                      rawResponseItemNotificationCount=sum(f.get('method') == 'rawResponseItem/completed' for f in frames),
@@ -411,7 +483,8 @@ def run(source: str, scenario: str, contract_name: str = CONTRACT):
     if contract_name not in {CONTRACT, 'evals/skills/routing/production-operation-probe-v0.6.json',
                              'evals/skills/routing/production-operation-probe-v0.7.json',
                              'evals/skills/routing/production-operation-probe-v0.8.json',
-                             'evals/skills/routing/production-operation-probe-v0.9.json'}:
+                             'evals/skills/routing/production-operation-probe-v0.9.json',
+                             'evals/skills/routing/production-operation-probe-v0.10.json'}:
         raise ValueError('unknown operation contract')
     contract = json.loads(source_guard.git(ROOT, 'show', source + ':' + contract_name))
     raw_events_enabled(contract)
@@ -464,6 +537,7 @@ def main():
     mode.add_argument('--trace-parent', action='store_true')
     mode.add_argument('--raw-events', action='store_true')
     mode.add_argument('--yielded-cell', action='store_true')
+    mode.add_argument('--sequential-cells', action='store_true')
     parser.add_argument('--isolated', type=Path)
     parser.add_argument('--proxy', type=Path)
     args = parser.parse_args()
@@ -474,7 +548,8 @@ def main():
         return 0
     if not args.source or not args.scenario:
         parser.error('--source and --scenario required')
-    contract_name = ('evals/skills/routing/production-operation-probe-v0.9.json' if args.yielded_cell else
+    contract_name = ('evals/skills/routing/production-operation-probe-v0.10.json' if args.sequential_cells else
+                     'evals/skills/routing/production-operation-probe-v0.9.json' if args.yielded_cell else
                      'evals/skills/routing/production-operation-probe-v0.8.json' if args.raw_events else
                      'evals/skills/routing/production-operation-probe-v0.6.json' if args.trace_parent else CONTRACT)
     return run(args.source, args.scenario, contract_name)

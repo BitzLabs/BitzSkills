@@ -18,6 +18,90 @@ class ProductionOperationProbeTests(unittest.TestCase):
         self.contract = json.loads((ROOT / probe.CONTRACT).read_bytes())
         self.base = ROOT / '.venv' / 'operation-test'
 
+    def sequential_fixture(self):
+        requests, host = self.yielded_fixture()
+        path = 'resources/bitz-sdd/skills/sdd-plan/SKILL.md'
+        host[0]['result'] = {'skills': [{'name': 'sdd-plan', 'path': path}]}
+        host[1]['arguments'] = {'path': path}
+        for index, stage in enumerate(('listed', 'read')):
+            payload = {'kind': 'sequential-read', 'stage': stage, stage: {
+                'isError': False, 'content': [{'type': 'text', 'text': json.dumps(host[index]['result'])}]}}
+            requests[index+1]['input'][-1]['output'] = 'Script completed\n' + json.dumps(payload)
+        requests[1]['input'][-2]['input'] = probe.program('sequential-read', self.base)
+        requests[2]['input'][1:3] = copy.deepcopy(requests[1]['input'][-2:])
+        requests[2]['input'][-2] = {'type': 'custom_tool_call', 'call_id': 'probe-read', 'id': 'read-id',
+            'namespace': 'functions', 'name': 'exec', 'input': probe.sequential_read_program(path)}
+        requests[2]['input'][-1].update(type='custom_tool_call_output', call_id='probe-read')
+        responses = [probe.tool_reply('sequential-read', self.base), probe.sequential_reply(requests[1]),
+                     probe.cli.simulation_reply()]
+        return requests, host, responses
+
+    def test_sequential_policy_has_one_scenario_three_requests_and_no_paid_model(self):
+        contract = json.loads((ROOT / 'evals/skills/routing/production-operation-probe-v0.10.json').read_bytes())
+        self.assertIs(probe.raw_events_enabled(contract), True)
+        for field, value in [('maximumScenarios', 2), ('maximumLocalHttpRequestsPerScenario', 2),
+                             ('paidModelCalls', 1), ('outputLabels', {'yielded-read': 'x'})]:
+            bad = copy.deepcopy(contract)
+            bad[field] = value
+            with self.subTest(field=field), self.assertRaises(ValueError): probe.raw_events_enabled(bad)
+
+    def test_sequential_reply_reads_only_original_selected_path_in_a_second_exec(self):
+        requests, host, responses = self.sequential_fixture()
+        before = copy.deepcopy(requests)
+        item = [json.loads(line[6:])['item'] for line in responses[1].decode().splitlines()
+                if line.startswith('data: ') and '"item"' in line][0]
+        self.assertEqual((item['type'], item['name'], item['namespace'], item['call_id']),
+                         ('custom_tool_call', 'exec', 'functions', 'probe-read'))
+        self.assertIn(json.dumps(host[1]['arguments']['path']), item['input'])
+        self.assertNotIn('__list_resources', item['input'])
+        self.assertNotIn('__read_resource', requests[1]['input'][-2]['input'])
+        self.assertEqual(requests, before)
+        requests[1]['input'][-1]['output'] = requests[1]['input'][-1]['output'].replace(
+            'Script completed\n', 'Script running with cell ID 1\n')
+        with self.assertRaises(ValueError): probe.sequential_reply(requests[1])
+
+    def test_sequential_observation_binds_both_completed_execs_and_original_bytes(self):
+        requests, host, responses = self.sequential_fixture()
+        before = copy.deepcopy((requests, host, responses))
+        objects, observation = probe.sequential_observation(requests, host, responses, self.base)
+        self.assertEqual([o['stage'] for o in objects], ['listed', 'read'])
+        self.assertEqual(observation['parentCallIds'], ['probe-call', 'probe-read'])
+        self.assertIs(observation['bothExecCompleted'], True)
+        self.assertIs(observation['certifiesCellCorrelation'], False)
+        self.assertEqual((requests, host, responses), before)
+
+    def test_sequential_observation_rejects_call_echo_output_history_and_host_path_drift(self):
+        for mode in ('wait', 'wrong-id', 'reverse', 'program', 'output-type', 'id-collision',
+                     'history', 'settings', 'host-path', 'host-body', 'missing-stage', 'duplicate-stage', 'yielded'):
+            requests, host, responses = self.sequential_fixture()
+            call, result = requests[2]['input'][-2:]
+            if mode == 'wait': call.update(type='function_call', name='wait')
+            elif mode == 'wrong-id': result['call_id'] = 'probe-wait'
+            elif mode == 'reverse': requests[2]['input'][-2:] = [result, call]
+            elif mode == 'program': call['input'] = 'text("fake")'
+            elif mode == 'output-type': result['type'] = 'function_call_output'
+            elif mode == 'id-collision': result['id'] = call['id']
+            elif mode == 'history': requests[2]['input'][0]['content'] = 'changed'
+            elif mode == 'settings': requests[2]['model'] = 'other'
+            elif mode == 'host-path': host[1]['arguments']['path'] = 'wrong'
+            elif mode == 'host-body': host[1]['result'] = {'value': False}
+            elif mode == 'missing-stage': result['output'] = 'Script completed\n'
+            elif mode == 'duplicate-stage': result['output'] += '\n' + result['output'].split('\n', 1)[1]
+            else: result['output'] = result['output'].replace('Script completed\n', 'Script running with cell ID 2\n')
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                probe.sequential_observation(requests, host, responses, self.base)
+
+    def test_sequential_observation_requires_saved_sse_and_unique_selected_listing(self):
+        requests, host, responses = self.sequential_fixture()
+        for index in range(3):
+            bad = list(responses)
+            bad[index] += b'changed'
+            with self.subTest(index=index), self.assertRaises(ValueError):
+                probe.sequential_observation(requests, host, bad, self.base)
+        for listing in (None, {}, {'skills': []}, {'skills': [{'name': 'sdd-plan', 'path': ''}]},
+                        {'skills': [{'name': 'sdd-plan', 'path': 'p'}] * 2}):
+            with self.subTest(listing=listing), self.assertRaises(ValueError): probe.selected_listing_path(listing)
+
     def test_yielded_policy_has_one_scenario_three_local_requests_and_no_paid_model(self):
         contract = json.loads((ROOT / 'evals/skills/routing/production-operation-probe-v0.9.json').read_bytes())
         self.assertIs(probe.raw_events_enabled(contract), True)
