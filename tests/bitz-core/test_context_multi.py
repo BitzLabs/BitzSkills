@@ -282,6 +282,16 @@ class DigestCommandMaterialsAcrossWorkspacesTests(unittest.TestCase):
                 ctx_digest, verify_digest = self._digests(root)
                 self.assertIsNotNone(ctx_digest)
                 self.assertEqual(ctx_digest, verify_digest)
+        # (c) のコマンド名は、所有ワークスペース（api）の設定だけで解決し、web の設定では解決しない（正規化仕様 §3）。
+        from bitz.document import DocEntry
+        entry = DocEntry.__new__(DocEntry)
+        entry.frontmatter = {"verify": "frontend", "tests": [{"path": "tests/test_api.py", "covers": ["TECH-020"]}]}
+        defined = {("web", "frontend"): {"argv": ["/bin/true", "{tests}"], "cwd": "."}}
+        materials = context_mod.digest_command_materials(
+            ["api::TECH-020"], {"api::TECH-020": entry}, lambda d: "api",
+            lambda wid, name: defined.get((wid, name)), lambda wid: 300,
+        )
+        self.assertEqual(materials, ([], []))
         # (a) の`frontend`の定義を変えると、両操作のハッシュ値が変わる（文書の`verify`で解決したコマンドが材料に入る）。
         results = []
         for argv in ("/bin/true", "/usr/bin/true"):
