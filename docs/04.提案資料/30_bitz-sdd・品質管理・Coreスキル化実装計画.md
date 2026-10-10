@@ -1502,3 +1502,11 @@ host引数と空白付き重複JSONの相関不足を歴史Git/原捕捉コピ�
 局所38件/0.106s/OK/exit0。旧yield原記録と新再現/拒否もexit0。原指摘/応答/消費枠を保持する。
 新有限v0.8で同8パスの是正版を1回検分する。新模擬/HTTP0、一次・委譲・自動retry0。
 複数セル相関の専用監査・全raw/provider文脈・実provider・一次台帳統合・canaryとPhase/Step/Gate全体は未認定。
+
+### Phase 4：固定2exec捕捉の是正後の独立検分通過（2026-10-10）
+
+source7d565beのclean全496件/62.272s/OK/exit0と、同8パス130720 bytesの初回独立SOL08指摘0/CLIexit0が通過した。
+親も原stdio/schema/hash/Git/guard/予約、原494/是正496試験と旧P2再現/新拒否を再照合しexit0。
+原捕捉・指摘・応答・消費枠を保持。当区切りのSOL2/raw静的系列累計8、模擬1/局所HTTP3/一次・委譲・retry0。
+捕捉コードの局所是正と当該静的検分だけの通過で、新照合器全文を送った検分ではない。
+次は原セル1/2と各exec/子IDの専用相関監査。Phase/Step/Gate全体と一次測定は未認定。

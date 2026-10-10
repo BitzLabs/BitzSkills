@@ -11,3 +11,8 @@ production_sdk_probe.py、production_cli_probe.py、source_guard.pyと2026-10-09
 追加は固定指示・限定条件・source/行番号/hash・公開schema。原RPC/SSE/SDK/telemetry/保持入力/snapshot/認証内容を送らない。
 宛先はOpenAI/gpt-6.1-sol、最大300秒、独立1回、一次0・追加委譲0・自動retry0。tool/試験/別ファイル読取りも禁止する。
 複数セル相関全般・実provider・一次測定・Phase/Gateの認定をこの静的検分へ代用しない。
+
+是正版source `7d565bebfc13bd958809f85ee07ae61d103458f3` の同8パス130720 bytesをv0.8で初回1回送信し、自動承認審査を通過した。
+production_operation_probe.pyは33516 bytes/SHA256 `fe5fb94b9e667562d67318981271753eccf4c56958f6ce32450d0952901d407b`、
+test_production_operation_probe.pyは39773 bytes/SHA256 `b48b9f5ff7f2496c434f123e2dbf0243ca098ddfdcefa1b0c487bd47f4c9f720`。
+他6パスは前回確定refと同じ本文。原invocation/prompt/receiptへ全8パスの確定bytes/hashを保持する。

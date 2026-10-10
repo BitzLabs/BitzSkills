@@ -94,6 +94,15 @@ def run():
         tests = 496
     if 'finalIndependentReview' in summary:
         final = reviews.recheck_review(summary['finalIndependentReview'])
+        require(summary['finalIndependentReview']['sourceCommit'] == summary['remediationVerification']['sourceCommit'],
+                'sequential tested and reviewed source')
+        source = summary['finalIndependentReview']['sourceCommit']
+        contract = trace.strict_json(guard.git(ROOT, 'show', source + ':' + summary['remediationReviewContract']))
+        first_source = summary['independentReview']['sourceCommit']
+        previous_contract = trace.strict_json(guard.git(ROOT, 'show', first_source + ':' + summary['independentReviewContract']))
+        require(contract['payloadFiles'] == previous_contract['payloadFiles'] and len(contract['payloadFiles']) == 8 and
+                sum(len(guard.git(ROOT, 'show', source + ':' + p)) for p in contract['payloadFiles']) ==
+                summary['finalPublicPayloadBytes'] == 130720, 'sequential authorized same eight payloads')
         require(final['verdict'] == 'pass' and final['findings'] == [] and
                 summary['finalReviewFindingCount'] == 0 and summary['remediationIndependentlyPassed'] is True,
                 'sequential corrected independent review')

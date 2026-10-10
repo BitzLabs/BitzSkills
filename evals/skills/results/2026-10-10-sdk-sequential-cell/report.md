@@ -30,3 +30,18 @@ P2の2件目は空白付き追加JSONの見逃し。両モードの最後の原�
 同8公開パスの新有限v0.8/専用出力08で是正版を初回1回静的検分する。旧応答/指摘/消費枠は保持する。
 任意複数セル・全raw/provider文脈・全native lifecycle・実provider・一次台帳統合・canary・Phase/Step/Gate全体は未認定。
 eligibleForMeasurement=false、一次・委譲・自動retry0。
+
+## 是正後の全試験と独立検分
+
+source `7d565bebfc13bd958809f85ee07ae61d103458f3` のclean全496件/62.272s/OK/exit0。
+原試験stderr SHA256 `45f4095c90e8962b3e6a435726b2248273163c0202e1df8cbb979bbd4cea3fef`、
+原検証summary SHA256 `c4c3a253df2473227302e9155c392cc10ddf5d9e09bb220d792e036e4ce6077f`。
+同sourceの同8パス130720 bytesに対する初回SOL08はstatic_review_passed/指摘0/CLIexit0。
+入力45230/cached0/出力712/推論655 tokens。
+原receipt SHA256 `88c2df02e38df6651d356bd57fa4ab93acb1608a7b82cdd29f86a2ff571d12f4`、
+原response SHA256 `e1300332af2eb7bc06dec5beb22de8a38eeb3099c0a451da2be80ab59f0825ed`。
+親が原stdio/schema/最終JSON/usage/hash、確定Git/前後guard/有限予約を再照合した。
+公開記録の再照合も、原494/是正496試験、両原独立応答、旧受理/新拒否と旧原捕捉を確認してexit0。
+当区切りの独立SOL実起動2/raw静的系列累計8、原模擬1/局所HTTP3/一次0/委譲0/自動retry0。
+捕捉コードの局所是正と当該静的検分だけが通過した。新照合器全文はこの8パスのモデル入力に含めていない。
+次は原セル1/2と各親exec/子IDの専用相関監査。Phase/Step/Gate全体と一次測定は未認定。

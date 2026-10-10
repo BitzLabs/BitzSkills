@@ -1,8 +1,8 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "phase": 4,
   "date": "2026-10-10",
-  "scope": "fixed-two-exec-capture-remediation-pending",
+  "scope": "fixed-two-exec-capture-remediation-independently-reviewed",
   "sourceCommit": "af35d0b7c9c9c1c6e1e69c76799e72efbecbbd81",
   "capture": {
     "status": "fixed_sequential_capture_original_bytes_rechecked",
@@ -84,13 +84,63 @@
   "independentReviewContract": "evals/skills/routing/sdk-raw-response-review-v0.7.json",
   "remediationReviewContract": "evals/skills/routing/sdk-raw-response-review-v0.8.json",
   "publicPayloadBytes": 127003,
-  "remediationIndependentlyPassed": false,
+  "remediationIndependentlyPassed": true,
   "mockTrials": 1,
   "localHttpRequests": 3,
   "paidModelCalls": 0,
-  "independentSolInvocations": 1,
+  "independentSolInvocations": 2,
   "primaryModelTrajectories": 0,
   "automaticRetries": 0,
   "phaseComplete": false,
-  "eligibleForMeasurement": false
+  "eligibleForMeasurement": false,
+  "remediationVerification": {
+    "sourceCommit": "7d565bebfc13bd958809f85ee07ae61d103458f3",
+    "outputRelativeRoot": ".venv/production-sdk-sequential-capture-verification-02",
+    "summarySha256": "c4c3a253df2473227302e9155c392cc10ddf5d9e09bb220d792e036e4ce6077f",
+    "tests": {
+      "count": 496,
+      "seconds": 62.272,
+      "exitCode": 0,
+      "command": [
+        "uv",
+        "--cache-dir",
+        "/home/hide/BitzLabs/BitzSkills/.venv/skills-integration-worktree/.venv/uv-cache",
+        "run",
+        "--offline",
+        "--project",
+        "plugins/bitz-core",
+        "--with",
+        "jsonschema==4.23.0",
+        "python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/skills",
+        "-p",
+        "test_*.py"
+      ],
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "45f4095c90e8962b3e6a435726b2248273163c0202e1df8cbb979bbd4cea3fef"
+    }
+  },
+  "finalIndependentReview": {
+    "sourceCommit": "7d565bebfc13bd958809f85ee07ae61d103458f3",
+    "contractPath": "evals/skills/routing/sdk-raw-response-review-v0.8.json",
+    "outputRelativeRoot": ".venv/sdk-raw-response-independent-review-08",
+    "receiptSha256": "88c2df02e38df6651d356bd57fa4ab93acb1608a7b82cdd29f86a2ff571d12f4",
+    "responseSha256": "e1300332af2eb7bc06dec5beb22de8a38eeb3099c0a451da2be80ab59f0825ed",
+    "status": "static_review_passed",
+    "actualInvocations": 1,
+    "usage": {
+      "input_tokens": 45230,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 712,
+      "reasoning_output_tokens": 655
+    }
+  },
+  "finalReviewFindingCount": 0,
+  "finalPublicPayloadBytes": 130720
 }
