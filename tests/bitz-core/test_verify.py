@@ -576,6 +576,31 @@ class TaskAddressingTechWithoutStatementsTests(unittest.TestCase):
                 self.assertEqual(result["commands"][0]["tests"], ["tests/test_tech.py"])
                 self.assertEqual(result["status"], status)
 
+    def test_unresolved_command_blocks_with_the_tech_as_source(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            _write(tmp, ".spec/bitz.yaml", _bitz_yaml('    default:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n'))
+            _write(tmp, ".spec/technical/TECH-001.md", _tech_without_statements("TECH-001", command="nope"))
+            _write(tmp, ".spec/tasks/TASK-001.md", _task_addressing("[TECH-001]"))
+            _write(tmp, "tests/test_tech.py", "x\n")
+            _init_repo(tmp)
+            result, exit_code = _run_verify(tmp, ["TASK-001"])
+            self.assertEqual((result["status"], exit_code), ("blocked", 2), result)
+            diags = result["targetResults"][0]["diagnostics"]
+            self.assertEqual([(d["code"], d["source"]["workspaceId"], d["source"]["path"], d["source"]["key"]) for d in diags],
+                             [("SPEC-VERIFY-BLOCKED-001", "root", ".spec/technical/TECH-001.md", "tests[0].command")])
+            self.assertEqual(result["commands"], [])
+
+    def test_tech_without_tests_passes_without_bindings(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            _write(tmp, ".spec/bitz.yaml", _bitz_yaml('    default:\n      argv: ["/bin/true", "{tests}"]\n      cwd: .\n'))
+            _write(tmp, ".spec/technical/TECH-001.md",
+                   "---\nid: TECH-001\ntitle: 技術契約\nstatus: approved\n---\n\n# TECH-001 技術契約\n\n## Context\n\n規範文を持たない。\n")
+            _write(tmp, ".spec/tasks/TASK-001.md", _task_addressing("[TECH-001]"))
+            _init_repo(tmp)
+            result, exit_code = _run_verify(tmp, ["TASK-001"])
+            self.assertEqual((result["status"], exit_code), ("passed", 0), result)
+            self.assertEqual(result["targetResults"][0]["bindingRefs"], [])
+
     def test_statements_and_document_unit_tests_are_combined(self):
         with tempfile.TemporaryDirectory() as tmp:
             result, exit_code = self._run(
