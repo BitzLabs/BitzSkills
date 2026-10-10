@@ -1338,3 +1338,23 @@ commit `f4a2bcd5e75284a652ac43fabf6c139f54ef8029`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 3とStep 4に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-11: `SINGLE-156`、`SINGLE-157`と`MULTI-028`を追加した後のGate Aの再認定
+
+TASKが規範文のないTECHを`addresses`しても、`verify`がそのTECHの`tests`を実行せず、テストを1件も実行しないまま検証済みにしていた欠陥と、
+`addresses`の参照が規範文かどうかを`:`の有無で判定して複合ワークスペースの修飾IDを規範文と取り違えていた欠陥を直した（`targetexpand.py`、`verify.py`。
+実装の確認事項C5。ADR-026の`Decision`の7番目の項目、関係・トレースモデル §6.4の規則3、`verify` §3。ユーザー決定: TECHを起点にした場合と同じ扱い）。
+これを固定する`SINGLE-156`（TASK → 規範文のないTECH）、`SINGLE-157`（規範文との混在）、`MULTI-028`（修飾IDの`api::TECH-020`）を追加した
+（ADR-051の追加、新しい群`verify_task_tech_fixtures`。参照計算Bの`multi_crosscheck`にTASK起点の分岐を加えた）。matrix、Step 4とStep 5の割当て、
+実装計画の完了条件を合わせた。既存のfixtureの入力と期待値は変えていない。
+
+commit `f2a4fa5a804b63ec71a6ff986301215f27f16983`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`53490429d236427531a98ed7660b295546111cc59f1a20bc65860db820aaee27`。前回から変わったのは次の値だけである: 3件の追加によるmatrixと網羅の件数（344件→347件）、Step 4の件数（60件→62件）、Step 5の件数（64件→65件）、新しい群`verify_task_tech_fixtures`、実行ビットを確かめたファイル数（1876件→1892件） |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 4とStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。

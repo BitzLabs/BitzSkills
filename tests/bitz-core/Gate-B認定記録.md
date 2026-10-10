@@ -415,3 +415,23 @@ fixtureを追加した後、修正前のCore（コミット`5b61a822`の版）�
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Core固有の単体試験は621件がすべて成功した。
+
+## 2026-10-11: TASKがaddressesする規範文のないTECHのテスト割当てを作るようにした後のStep 1〜5の再判定
+
+TASKが`addresses`する規範文のないTECHの文書単位のテスト割当てを`verify`で作り、`addresses`の参照が規範文かどうかを索引で判定するようにし
+（`targetexpand.py`、`verify.py`）、これを固定する`SINGLE-156`、`SINGLE-157`（Step 4）と`MULTI-028`（Step 5）を追加した。修正の前後で、
+既存の344件の期待値はすべて変わらないことを確かめた。fixtureを追加した後、修正前のCore（コミット`88896f3a`の版）では3件とも失敗し
+（`MULTI-028`は例外で終了する）、修正後のCoreでは3件とも`passed`となることを確かめた。
+
+コミット`f2a4fa5a804b63ec71a6ff986301215f27f16983`に対して
+`uv run tests/bitz-core/certify_gate_b.py --step 5`を実行し、
+`gateB: {"step": 5, "result": "Passed"}`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 対象 | Step 1〜5の完了fixture 347件（`SINGLE-156`、`SINGLE-157`、`MULTI-028`を含む）と、`parserChecks` 4件 |
+| 参照harness | 2つのクローンで結果が一致した。所要時間と検査対象のパスを除いた結果のSHA-256は両方`7f59a8a18b9a585156d14a6f37cca4929f75a605764ea06e0193ef0434453e37` |
+| 構文解析器のアダプター | 2つのクローンで一致 |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Core固有の単体試験は627件がすべて成功した。
