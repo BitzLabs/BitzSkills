@@ -333,3 +333,13 @@ v0.21の最初の要求は前回保存先の許可一覧不足で起動前停止
 記録照合は旧P2の再現と新拒否、旧488/新489試験、両独立応答を原bytesへ照合する。
 次は固定の複数exec/cellの原証拠捕捉と局所相関を進める。全raw/provider文脈・実provider・一次台帳統合・canaryは残る。
 固定継続の局所是正と静的検分のみ通過。eligibleForMeasurement=false、Phase/Step/Gate全体は未認定。
+
+### Phase 4：固定2execの原証拠捕捉と指摘是正（2026-10-10）
+
+source27c3994/有限v0.10で一覧と本文を別execへ分け、初回模擬1/局所HTTP3/host2/有料0の原証拠を捕捉した。
+rawItems8/rawCompleted3、全target24行、観測cell1/2。元snapshot71と原SDK配送値/SSE/RPC/host本文/終端も親照合した。
+sourceaf35d0bのclean全494件/63.118s/OK/exit0。同8公開パス127003 bytesのSOL07はP2=2/CLIexit0。
+host引数の相関不足と空白付き重複JSONの見逃しを歴史Gitと原捕捉コピーで再現し、共通2段階の引数と全文解析を是正した。
+局所38件/0.106s/OK/exit0、旧yield原記録と新再現/拒否の照合もexit0。原指摘/応答/消費枠は保持する。
+新有限v0.8で同8公開パスの是正版を1回検分する。新模擬/HTTP0、一次・委譲・自動retry0。
+複数セル相関の専用監査・全raw/provider文脈・実provider・一次台帳統合・canaryは残り、Phase/Step/Gate全体は未認定。

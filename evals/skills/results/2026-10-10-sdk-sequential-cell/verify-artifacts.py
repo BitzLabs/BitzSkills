@@ -138,13 +138,15 @@ def check_capture():
             'certifiesNativeProvider': False, 'certifiesSkillGate': False, 'eligibleForMeasurement': False}
 
 
-def run(source):
+def run(source, *, remediation=False):
     require(guard.git(ROOT, 'status', '--porcelain') == b'' and
             guard.git(ROOT, 'rev-parse', 'HEAD').decode().strip() == source, 'clean sequential verification HEAD')
-    contract = trace.strict_json(guard.git(ROOT, 'show', source + ':evals/skills/routing/sdk-raw-response-review-v0.7.json'))
+    contract_name = 'evals/skills/routing/sdk-raw-response-review-v0.8.json' if remediation else 'evals/skills/routing/sdk-raw-response-review-v0.7.json'
+    contract = trace.strict_json(guard.git(ROOT, 'show', source + ':' + contract_name))
     before = guard.verify(ROOT, source, contract['sourceFiles'])
     capture = check_capture()
-    output = ROOT / '.venv/production-sdk-sequential-capture-verification-01'
+    output = ROOT / ('.venv/production-sdk-sequential-capture-verification-02' if remediation else
+                     '.venv/production-sdk-sequential-capture-verification-01')
     require(not any(p.is_symlink() for p in (output, *output.parents)), 'sequential verification output symlink')
     output.mkdir(mode=0o700)
     command = ['uv', '--cache-dir', str(ROOT / '.venv/uv-cache'), 'run', '--offline', '--project',
@@ -171,4 +173,6 @@ def run(source):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--source', required=True)
-    run(parser.parse_args().source)
+    parser.add_argument('--remediation', action='store_true')
+    args = parser.parse_args()
+    run(args.source, remediation=args.remediation)

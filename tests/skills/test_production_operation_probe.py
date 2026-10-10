@@ -157,6 +157,8 @@ class ProductionOperationProbeTests(unittest.TestCase):
     def yielded_fixture():
         host = [{'tool': tool, 'accepted': True, 'result': {'value': i}} for i, tool in
                 enumerate(('list_resources', 'read_resource'))]
+        host[0].update(result={'skills': [{'name': 'sdd-plan', 'path': 'selected.md'}]}, arguments={})
+        host[1]['arguments'] = {'path': 'selected.md'}
         outputs = []
         for stage, header, event in zip(('listed', 'read'),
                 ('Script running with cell ID 1\n', 'Script completed\n'), host):
@@ -185,6 +187,54 @@ class ProductionOperationProbeTests(unittest.TestCase):
     def observe_yielded(self, requests, host, responses=None):
         return probe.yielded_observation(requests, host, self.yielded_responses() if responses is None else responses,
                                          'fixed-yielded-program')
+
+    def test_two_stage_observations_reject_foreign_host_arguments_from_independent_review(self):
+        for mode in ('yielded', 'sequential'):
+            for index, arguments in [(0, {'unknown': True}), (0, None), (1, {'path': 'other'}),
+                                     (1, {}), (1, {'path': 'selected.md', 'unknown': True})]:
+                if mode == 'yielded':
+                    requests, host = self.yielded_fixture()
+                    responses = self.yielded_responses()
+                else:
+                    requests, host, responses = self.sequential_fixture()
+                host[index]['arguments'] = arguments
+                with self.subTest(mode=mode, index=index, arguments=arguments), self.assertRaises(ValueError):
+                    if mode == 'yielded': self.observe_yielded(requests, host, responses)
+                    else: probe.sequential_observation(requests, host, responses, self.base)
+
+    def test_two_stage_outputs_require_one_complete_json_after_known_runtime_header(self):
+        for mode in ('yielded', 'sequential'):
+            for stage in (0, 1):
+                for mutation in ('duplicate-spaced', 'duplicate-indented', 'broken', 'unknown', 'bad-wall'):
+                    if mode == 'yielded':
+                        requests, host = self.yielded_fixture()
+                        responses = self.yielded_responses()
+                    else:
+                        requests, host, responses = self.sequential_fixture()
+                    frame = requests[stage+1]['input'][-1]
+                    header, body = frame['output'].split('\n', 1)
+                    if mutation == 'duplicate-spaced': body += '\n ' + body
+                    elif mutation == 'duplicate-indented': body += '\n\t' + body
+                    elif mutation == 'broken': body += '\n {broken'
+                    elif mutation == 'unknown': body += '\n unknown text'
+                    else: body = 'Wall time -1 seconds\nOutput:\n' + body
+                    frame['output'] = header + '\n' + body
+                    if stage == 0: requests[2]['input'][2] = copy.deepcopy(frame)
+                    with self.subTest(mode=mode, stage=stage, mutation=mutation), self.assertRaises(ValueError):
+                        if mode == 'yielded': self.observe_yielded(requests, host, responses)
+                        else: probe.sequential_observation(requests, host, responses, self.base)
+            if mode == 'yielded':
+                requests, host = self.yielded_fixture()
+                responses = self.yielded_responses()
+            else:
+                requests, host, responses = self.sequential_fixture()
+            for stage in (0, 1):
+                frame = requests[stage+1]['input'][-1]
+                header, body = frame['output'].split('\n', 1)
+                frame['output'] = header + '\nWall time 0.2 seconds\nOutput:\n  ' + body + '\n'
+                if stage == 0: requests[2]['input'][2] = copy.deepcopy(frame)
+            if mode == 'yielded': self.observe_yielded(requests, host, responses)
+            else: probe.sequential_observation(requests, host, responses, self.base)
 
     def test_yielded_observation_binds_original_stages_and_host_bodies_without_mutation(self):
         requests, host = self.yielded_fixture()

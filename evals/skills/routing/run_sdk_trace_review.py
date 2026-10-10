@@ -23,7 +23,8 @@ RAW_CONTRACTS = {'evals/skills/routing/sdk-raw-response-review-v0.1.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.4.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.5.json',
                  'evals/skills/routing/sdk-raw-response-review-v0.6.json',
-                 'evals/skills/routing/sdk-raw-response-review-v0.7.json'}
+                 'evals/skills/routing/sdk-raw-response-review-v0.7.json',
+                 'evals/skills/routing/sdk-raw-response-review-v0.8.json'}
 require = trace.require
 
 
@@ -81,7 +82,8 @@ def run(source: str, contract_name: str = CONTRACT):
                              '.venv/sdk-raw-response-independent-review-03',
                              '.venv/sdk-raw-response-independent-review-04',
                              '.venv/sdk-raw-response-independent-review-05',
-                             '.venv/sdk-raw-response-independent-review-06'},
+                             '.venv/sdk-raw-response-independent-review-06',
+                             '.venv/sdk-raw-response-independent-review-07'},
                 'unknown previous review')
         old = ROOT / old_name
         require(not any(p.is_symlink() for p in (old, *old.parents)), 'old review symlink')
@@ -195,8 +197,10 @@ if __name__ == '__main__':
     raw.add_argument('--yielded-parent-review', action='store_true')
     raw.add_argument('--yielded-parent-remediation', action='store_true')
     raw.add_argument('--sequential-capture-review', action='store_true')
+    raw.add_argument('--sequential-capture-remediation', action='store_true')
     args = parser.parse_args()
-    contract_name = ('evals/skills/routing/sdk-raw-response-review-v0.7.json' if args.sequential_capture_review else
+    contract_name = ('evals/skills/routing/sdk-raw-response-review-v0.8.json' if args.sequential_capture_remediation else
+                     'evals/skills/routing/sdk-raw-response-review-v0.7.json' if args.sequential_capture_review else
                      YIELDED_REMEDIATION_CONTRACT if args.yielded_parent_remediation else
                      YIELDED_CONTRACT if args.yielded_parent_review else
                      'evals/skills/routing/sdk-raw-response-review-v0.6.json' if args.yielded_wait_remediation else

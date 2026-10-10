@@ -261,9 +261,10 @@ def _two_stage_observation(requests: list[dict], host_events: list[dict], provid
     if not all(text.startswith(header) for text, header in zip(texts, headers)):
         raise ValueError('yielded cell did not complete')
     objects = []
-    for text, stage, key, tool, event in zip(texts, ('listed', 'read'), ('listed', 'read'),
-                                          ('list_resources', 'read_resource'), host_events):
-        payloads = [strict_json(line) for line in text.splitlines() if line.startswith('{')]
+    for text, header, stage, key, tool, event in zip(texts, headers, ('listed', 'read'), ('listed', 'read'),
+                                                  ('list_resources', 'read_resource'), host_events):
+        prefix = re.match(re.escape(header) + r'(?:(?:Wall time [0-9]+(?:\.[0-9]+)? seconds\n)?Output:\n)?', text)
+        payloads = [strict_json(text[prefix.end():])]
         if (len(payloads) != 1 or not isinstance(payloads[0], dict) or
                 set(payloads[0]) != {'kind', 'stage', key} or payloads[0]['kind'] != kind or
                 payloads[0]['stage'] != stage):
@@ -280,6 +281,12 @@ def _two_stage_observation(requests: list[dict], host_events: list[dict], provid
         if canonical(strict_json(wrapper['content'][0]['text'])) != canonical(event['result']):
             raise ValueError('yielded provider/host body mismatch')
         objects.append(payload)
+    if not isinstance(host_events[0].get('arguments'), dict) or host_events[0]['arguments'] != {}:
+        raise ValueError('two-stage list arguments mismatch')
+    path = selected_listing_path(host_events[0]['result'])
+    if (not isinstance(host_events[1].get('arguments'), dict) or
+            canonical(host_events[1]['arguments']) != canonical({'path': path})):
+        raise ValueError('two-stage read selected path mismatch')
     return objects
 
 
@@ -307,8 +314,6 @@ def sequential_observation(requests: list[dict], host_events: list[dict], provid
               'input': sequential_read_program(path)}]
     objects = _two_stage_observation(requests, host_events, provider_responses, calls, 'sequential-read',
                                      ('Script completed\n', 'Script completed\n'))
-    if host_events[1].get('arguments') != {'path': path}:
-        raise ValueError('sequential host selected path mismatch')
     return objects, {'parentCallIds': ['probe-call', 'probe-read'], 'stages': ['listed', 'read'],
                      'bothExecCompleted': True, 'certifiesCellCorrelation': False}
 
