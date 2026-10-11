@@ -37,7 +37,7 @@ class CanaryCalibrationTests(unittest.TestCase):
         request['input'][1]['content'][0]['text']=capture.BASE
         request['input'][2]['content'][0]['text']=capture.DEVELOPER
         for item in request['input'][2:]:item['internal_chat_message_metadata_passthrough']['turn_id']='u'
-        request['input'][3]['content'][0]['text']=calibration.sdk._diagnostic_environment(str(self.base/'work'),profile['date'],{profile['date']})
+        request['input'][3]['content'][0]['text']=rollout_fixture.rollout.sdk._diagnostic_environment(str(self.base/'work'),profile['date'],{profile['date']})
         request['input'][4]['content'][0]['text']='public calibration input'
         source_contract=dict(codexPath='/fixed/bin/codex',sdkRelativePath='.venv/sdk',snapshotRelativePath='.venv/snapshot',
             manifestSha256='1'*64,sourceFiles=['evals/skills/routing/production_canary_capture.py'])
@@ -60,10 +60,28 @@ class CanaryCalibrationTests(unittest.TestCase):
         config=capture.config_for(self.base,source_contract,repository=self.repository)
         config.update({'model_providers.bitz_openai_http.base_url':'http://127.0.0.1:1234/v1','model_providers.bitz_openai_http.requires_openai_auth':False})
         enc=calibration.ledger.encoded
+        received=copy.deepcopy(primary.fixture.received)
+        received[1]['result']['modelProvider']='bitz_openai_http'
+        decision=dict(selectedEntry=None,selectedPath=None,outcome='not-applicable',events=[],rejectedEvents=[],
+            readyClaimed=False,evidencePresent=False,reason='LOCAL_CONTEXT_CALIBRATION_ONLY')
+        final=None
+        for frame in received:
+            item=frame.get('params',{}).get('item',{})
+            if item.get('type')=='userMessage':item['content'][0]['text']='public calibration input'
+            if item.get('type')=='agentMessage' and item.get('phase')=='final_answer':item['text']=json.dumps(decision);final=item
+        received=[f for f in received if f.get('params',{}).get('item',{}).get('type')!='mcpToolCall']
+        for frame in received:
+            if f"{frame.get('method')}"=='turn/completed':frame['params']['turn']['items']=[final]
+        raw=[]
+        for item in request['input'][2:]:raw.append(dict(method='rawResponseItem/completed',params=dict(threadId='t',turnId='u',item=copy.deepcopy(item))))
+        final_raw=dict(type='message',id=final['id'],role='assistant',phase='final_answer',content=[dict(type='output_text',text=final['text'])],internal_chat_message_metadata_passthrough=dict(turn_id='u'))
+        raw.append(dict(method='rawResponseItem/completed',params=dict(threadId='t',turnId='u',item=final_raw)))
+        raw.append(dict(method='rawResponse/completed',params=dict(threadId='t',turnId='u',responseId='calibration-response',usage=None,usageMetadata=None)))
+        received[-1:-1]=raw
         self.originals={'request-1.json':enc(request),'receipt.json':enc(receipt),'config.json':enc(config),
             'contract.json':enc(dict(source_contract,sourceCommit=self.source)),
             'invocation.json':enc(dict(argv=argv,maximumLocalRequests=1,paidModelCalls=0,sourceCommit=self.source,timeoutSeconds=60)),
-            'rpc-in.jsonl':b''.join(enc(f)+b'\n' for f in sent),'rpc-out.jsonl':enc(dict(method='turn/started',params=dict(turn=dict(id='u'))))+b'\n',
+            'rpc-in.jsonl':b''.join(enc(f)+b'\n' for f in sent),'rpc-out.jsonl':b''.join(enc(f)+b'\n' for f in received),
             'model-input.json':b'public calibration input','decision-schema.json':enc(primary.schema),
             'runtime-result.json':enc(dict(exitCode=0,forcedShutdown=False)),'isolated-result.json':enc(local),'version.stdout':b'codex-cli 0.160.1\n'}
         self.profile=profile;self.contract={};self.persist()
@@ -94,8 +112,16 @@ class CanaryCalibrationTests(unittest.TestCase):
 
     def test_rehashed_source_network_auth_config_and_context_drift_stop(self):
         baseline=copy.deepcopy(self.originals)
-        for fault in ['source','network','auth','config','tools','supplement','caller','terminal']:
+        for fault in ['source','network','auth','config','tools','supplement','caller','terminal','rpc-unknown','rpc-error','rpc-failed']:
             self.originals=copy.deepcopy(baseline)
+            if fault.startswith('rpc-'):
+                frames=calibration.lines(self.originals['rpc-out.jsonl'])
+                if fault=='rpc-unknown':frames.insert(-1,dict(method='item/completed',params=dict(threadId='t',turnId='u',item=dict(type='commandExecution',id='unknown'))))
+                elif fault=='rpc-error':frames.insert(-1,dict(method='error',params=dict(message='failure')))
+                else:frames[-1]['params']['turn']['status']='failed'
+                self.originals['rpc-out.jsonl']=b''.join(calibration.ledger.encoded(f)+b'\n' for f in frames);self.persist()
+                with self.subTest(fault=fault),self.assertRaises(ValueError):self.verify()
+                continue
             if fault=='source':
                 value=json.loads(self.originals['receipt.json']);value['sourceGuards']['before']['sourceSha256']['evals/skills/routing/production_canary_capture.py']='1'*64;name='receipt.json'
             elif fault in {'network','auth'}:

@@ -18,7 +18,7 @@ import production_trace as trace
 import source_guard as guard
 
 ROOT = Path(__file__).resolve().parents[3]
-OUTPUT = '.venv/primary-context-calibration-03'
+OUTPUT = '.venv/primary-context-calibration-04'
 SOURCES = ['evals/skills/routing/production_canary_context_probe.py']
 CODE = [*capture.CODE, 'production_canary_context_probe.py']
 
@@ -27,7 +27,7 @@ def namespace(base, contract):
     args = ['bwrap', '--unshare-net', '--unshare-pid', '--unshare-ipc', '--new-session', '--die-with-parent',
             '--ro-bind', '/', '/', '--tmpfs', '/home', '--tmpfs', '/root', '--tmpfs', '/tmp', '--tmpfs', '/run',
             '--proc', '/proc', '--dev', '/dev']
-    for path in [ROOT / contract['sdkRelativePath'], ROOT / contract['snapshotRelativePath'],
+    for path in [ROOT / capture.fixed_runtime.MANIFEST, ROOT / contract['sdkRelativePath'], ROOT / contract['snapshotRelativePath'],
                  Path(contract['codexPath']).parents[1], *(ROOT / 'evals/skills/routing' / n for n in CODE)]:
         args += ['--ro-bind', str(path), str(path)]
     return args + ['--bind', str(base), str(base), '--chdir', str(base / 'work'), '--',
@@ -42,6 +42,7 @@ def isolated(base):
     from openai_codex import CodexConfig, __version__
     from openai_codex.client import CodexClient
     trace.require(__version__ == contract['sdkVersion'] and sdk.tree_hash(ROOT / contract['sdkRelativePath']) == contract['sdkTreeSha256'], 'SDK drift')
+    capture.fixed_runtime.verify((ROOT/capture.fixed_runtime.MANIFEST).read_bytes(),contract)
     version = subprocess.run([contract['codexPath'], '--version'], capture_output=True, timeout=10)
     cli.exclusive(base / 'version.stdout', version.stdout)
     trace.require(version.returncode == 0 and version.stdout.decode().strip() == contract['codexVersion'], 'CLI drift')
@@ -97,6 +98,8 @@ def isolated(base):
 def run(source):
     bound, before = capture.prepare(source)
     verify = guard.verify(ROOT,source,[*bound.contract['sourceFiles'],*SOURCES])
+    runtime_raw=guard.git(ROOT,'show',source+':'+capture.fixed_runtime.MANIFEST)
+    runtime_before=capture.fixed_runtime.verify(runtime_raw,bound.contract)
     base = ROOT / OUTPUT
     ledger.safe_tree(base);base.mkdir(mode=0o700)
     for name in ['work','tmp','codex-home','logs','state','rollout-traces']:(base/name).mkdir(mode=0o700)
@@ -111,6 +114,8 @@ def run(source):
     env=dict(PATH=str(Path(bound.contract['codexPath']).parents[1]/'bin')+':/usr/bin:/bin',LANG='C.UTF-8',
              PYTHONDONTWRITEBYTECODE='1',TMPDIR=str(base/'tmp'),LOG_FORMAT='json',
              RUST_LOG='codex_otel.trace_safe=info,codex_code_mode::timing=info',CODEX_ROLLOUT_TRACE_ROOT=str(base/'rollout-traces'))
+    runtime_invoke=capture.fixed_runtime.verify(runtime_raw,bound.contract)
+    trace.require(runtime_invoke==runtime_before,'local calibration runtime drift')
     process=subprocess.Popen(command,env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,start_new_session=True)
     timed_out=False
     try: stdout,stderr=process.communicate(timeout=60)
@@ -120,11 +125,13 @@ def run(source):
         except subprocess.TimeoutExpired:os.killpg(process.pid,signal.SIGKILL);stdout,stderr=process.communicate()
     cli.exclusive(base/'namespace.stdout',stdout);cli.exclusive(base/'namespace.stderr',stderr)
     after=guard.verify(ROOT,source,[*bound.contract['sourceFiles'],*SOURCES])
+    runtime_after=capture.fixed_runtime.verify(runtime_raw,bound.contract)
     result=trace.strict_json((base/'isolated-result.json').read_bytes()) if (base/'isolated-result.json').exists() else None
     ok=process.returncode==0 and not timed_out and result==dict(errorType=None,localRequests=1,errors=[],paidModelCalls=0,
-        networkNamespaceIsolated=True,credentialsHidden=True) and verify==after
+        networkNamespaceIsolated=True,credentialsHidden=True) and verify==after and runtime_before==runtime_invoke==runtime_after
     receipt=dict(status='local_primary_context_captured' if ok else 'local_primary_context_stopped',sourceCommit=source,
         exitCode=process.returncode,timedOut=timed_out,sourceGuards=dict(before=verify,after=after),
+        runtimeGuards=dict(before=runtime_before,invoke=runtime_invoke,after=runtime_after),
         localResult=result,paidModelCalls=0,primaryModelTrajectories=0,eligibleForMeasurement=False)
     cli.exclusive(base/'receipt.json',ledger.encoded(receipt));print(json.dumps({k:v for k,v in receipt.items() if k!='sourceGuards'}))
     return 0 if ok else 1

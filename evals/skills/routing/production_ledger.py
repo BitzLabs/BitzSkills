@@ -209,9 +209,14 @@ class Ledger:
         expected_names = {'lock', 'campaign.json'} | {p.name for p in files}
         expected_names |= {f'review-{i:04d}.json' for i in range(1, len(files) + 1)}
         expected_names |= {f'independent-{i:04d}.json' for i in range(1, len(files) + 1)}
+        expected_names |= {f'stop-{i:04d}.json' for i in range(1,len(files)+1)}
         require(all(p.name in expected_names for p in self.storage.iterdir()), 'orphan ledger records')
         for i, path in enumerate(files, 1):
             require(path.name == f'attempt-{i:04d}.json' and read_owned(path) == self.bound.attempt(i), 'reservation drift or gap')
+            stop=self.storage/f'stop-{i:04d}.json'
+            if stop.exists():
+                self.validate_primary_stop(i,read_owned(stop))
+                require(False,'primary stopped before independent review')
             review = self.storage / f'review-{i:04d}.json'
             independent = self.storage / f'independent-{i:04d}.json'
             if independent.exists():
@@ -225,6 +230,31 @@ class Ledger:
                 self.validate_review_reservation(i, value)
             require(value['status'] == 'accepted', 'previous attempt stopped')
         return len(files)
+
+    def validate_primary_stop(self,ordinal,value):
+        require(isinstance(value,dict) and set(value)==set(self.bound.attempt(ordinal))|{
+            'status','reason','primaryReceiptSha256','independentInvocations','automaticRetry'},'primary stop fields')
+        for key,expected in self.bound.attempt(ordinal).items():
+            require(type(value[key]) is type(expected) and value[key]==expected,'primary stop attempt binding')
+        require(value['status']=='stopped_before_independent_review' and value['reason'] in {
+            'primary-capture-failed','primary-receipt-missing','primary-structure-rejected'} and
+            type(value['independentInvocations']) is int and value['independentInvocations']==0 and
+            value['automaticRetry'] is False,'primary stop finite scope')
+        if value['reason']=='primary-receipt-missing':require(value['primaryReceiptSha256'] is None,'missing primary receipt hash')
+        else:pin(value['primaryReceiptSha256'])
+
+    def record_primary_stop(self,ordinal,reason,receipt_sha256):
+        """取得・構造検査の失敗を記録する。独立採点を実施したことにしない。"""
+        with self.locked():
+            self.initialize()
+            require(ordinal==self.reservations(allow_pending_last=True),'only latest pending primary may stop')
+            require(not (self.storage/f'independent-{ordinal:04d}.json').exists() and
+                not (self.storage/f'review-{ordinal:04d}.json').exists(),'independent already reserved or finalized')
+            value=dict(**self.bound.attempt(ordinal),status='stopped_before_independent_review',reason=reason,
+                primaryReceiptSha256=receipt_sha256,independentInvocations=0,automaticRetry=False)
+            self.validate_primary_stop(ordinal,value)
+            exclusive(self.storage/f'stop-{ordinal:04d}.json',encoded(value))
+            return value
 
     def validate_independent_reservation(self, ordinal, value):
         require(isinstance(value, dict) and set(value) == set(self.bound.attempt(ordinal)) | {

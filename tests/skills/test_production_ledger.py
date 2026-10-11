@@ -59,6 +59,26 @@ class ProductionLedgerTests(unittest.TestCase):
                 'severityCounts': {'P1': 0, 'P2': 0}, 'automaticRetry': False,
                 'certifiesBehavior': False, 'certifiesSkillGate': False}
 
+    def test_primary_capture_stop_does_not_forge_independent_review_and_is_permanent(self):
+        instance=ledger.Ledger(self.storage,self.bound,require_independent_reviews=True)
+        instance.reserve();stopped=instance.record_primary_stop(1,'primary-structure-rejected','1'*64)
+        self.assertEqual(stopped['independentInvocations'],0)
+        self.assertFalse((self.storage/'independent-0001.json').exists())
+        self.assertFalse((self.storage/'review-0001.json').exists())
+        for operation in [instance.reserve,lambda:instance.reserve_independent_review(1,'2'*64),
+                          lambda:instance.record_primary_stop(1,'primary-capture-failed','1'*64)]:
+            with self.assertRaises(ValueError):operation()
+        restarted=ledger.Ledger(self.storage,self.bound,require_independent_reviews=True)
+        with self.assertRaises(ValueError):restarted.reservations(allow_pending_last=True)
+
+    def test_primary_stop_requires_latest_pending_and_cannot_replace_reserved_independent(self):
+        instance=ledger.Ledger(self.storage,self.bound,require_independent_reviews=True);instance.reserve()
+        for reason,digest in [('unknown','1'*64),('primary-receipt-missing','1'*64),('primary-capture-failed',None)]:
+            with self.subTest(reason=reason),self.assertRaises(ValueError):instance.record_primary_stop(1,reason,digest)
+        with self.assertRaises(ValueError):instance.record_primary_stop(2,'primary-capture-failed','1'*64)
+        instance.reserve_independent_review(1,'2'*64)
+        with self.assertRaises(ValueError):instance.record_primary_stop(1,'primary-capture-failed','1'*64)
+
     def test_model_payload_excludes_id_expected_and_control(self):
         payload = json.loads(self.bound.payloads[0])
         self.assertEqual(set(payload), {'instructions', 'eventCatalog', 'case'})

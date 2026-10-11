@@ -38,7 +38,7 @@ class CanaryEvidenceTests(unittest.TestCase):
         self.contract['manifestSha256'] = ledger.sha(manifest_raw)
         self.git_raws = {
             capture.CONTRACT: ledger.encoded(self.contract),
-            evidence.CASES: (ROOT / evidence.CASES).read_bytes(),
+            evidence.CASES: getattr(self,'cases_raw',(ROOT / evidence.CASES).read_bytes()),
             evidence.CATALOG: (ROOT / evidence.CATALOG).read_bytes(),
             evidence.INSTRUCTIONS: (ROOT / evidence.INSTRUCTIONS).read_bytes(),
             evidence.SCHEMA: (ROOT / evidence.SCHEMA).read_bytes(),

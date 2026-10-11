@@ -6,7 +6,6 @@ import re
 
 import production_canary_runtime as runtime
 import production_ledger as ledger
-import production_sdk_trace as sdk
 import production_trace as trace
 import source_guard as guard
 
@@ -29,6 +28,7 @@ def lines(raw):
 
 
 def verify(repository, manifest_raw, profile, contract):
+    import production_sdk_trace as sdk
     require(ledger.sha(manifest_raw)==ledger.pin(contract['calibrationManifestSha256']),'fixed calibration manifest hash')
     manifest=trace.strict_json(manifest_raw)
     require(isinstance(manifest,dict) and set(manifest)=={'version','sourceCommit','artifactSha256'} and
@@ -88,12 +88,30 @@ def verify(repository, manifest_raw, profile, contract):
         sent[2]['params']['developerInstructions']==developer==capture.DEVELOPER and
         sent[2]['params']['cwd']==str(ROOT/'work') and
         sent[3]['params']['input'][0]['text'].encode()==originals['model-input.json'],'original calibration caller input')
+    import production_canary_review as review
+    projected,raw=review.raw_projection(sent,received)
+    native=sdk.normalized(sent,projected,profile='public-canary',output_schema=schema)
+    items=trace.completed_items(native['frames'])
+    require(all(i['type'] in {'userMessage','agentMessage','reasoning'} for i in items),'calibration unknown native action')
+    finals=[i for i in items if i['type']=='agentMessage' and i['phase']=='final_answer']
+    expected_decision=dict(selectedEntry=None,selectedPath=None,outcome='not-applicable',events=[],rejectedEvents=[],
+        readyClaimed=False,evidencePresent=False,reason='LOCAL_CONTEXT_CALIBRATION_ONLY')
+    require(len(finals)==1 and trace.json_equal(trace.strict_json(finals[0]['text']),expected_decision),'calibration original final decision')
+    trace.jsonschema.Draft202012Validator(schema).validate(trace.strict_json(finals[0]['text']))
     turns=[f['params']['turn']['id'] for f in received if f.get('method')=='turn/started']
     require(len(turns)==1,'one original calibration turn')
     request=trace.strict_json(originals['request-1.json'])
     import production_canary_rollout as rollout
     rollout.request_policy(request,sent,thread=sent[3]['params']['threadId'],turn=turns[0])
     rollout.initial_context(request,sent,profile,turn=turns[0])
+    require([f['method'] for f in raw]==[sdk.RAW_METHODS[0]]*4+[sdk.RAW_METHODS[1]],'calibration complete original raw inventory')
+    for frame,item in zip(raw[:3],request['input'][2:]):
+        require(trace.json_equal(rollout.metadata(frame['params']['item'],turns[0]),rollout.metadata(item,turns[0])), 'calibration original initial raw context')
+    final_raw=rollout.metadata(raw[3]['params']['item'],turns[0])
+    require(set(final_raw)=={'type','id','role','content','phase'} and final_raw['type']=='message' and final_raw['role']=='assistant' and
+        final_raw['phase']=='final_answer' and final_raw['id']==finals[0]['id'] and
+        final_raw['content']==[dict(type='output_text',text=finals[0]['text'])] and raw[4]['params']['usage'] is None and
+        raw[4]['params']['usageMetadata'] is None and raw[4]['params']['responseId']=='calibration-response','calibration original raw final/response')
     return dict(status='original_local_calibration_matches',calibrationManifestSha256=ledger.sha(manifest_raw),
         sourceCommit=source,requestSha256=profile['calibrationRequestSha256'],receiptSha256=profile['calibrationReceiptSha256'],
         paidModelCalls=0,primaryModelTrajectories=0,certifiesProviderWireBodies=False)

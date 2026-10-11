@@ -58,7 +58,12 @@
     "tests/skills/test_production_canary_runtime.py",
     "evals/skills/routing/production_canary_calibration.py",
     "evals/skills/routing/production-canary-calibration-v0.1.json",
-    "tests/skills/test_production_canary_calibration.py"
+    "tests/skills/test_production_canary_calibration.py",
+    "evals/skills/routing/production_canary_score.py",
+    "evals/skills/routing/production-canary-score-v0.1.json",
+    "evals/skills/routing/production-canary-score.schema.json",
+    "tests/skills/test_production_canary_score.py",
+    "evals/skills/sol-authorization.json"
   ],
   "limitations": [
     "Phase 4期間の送信/SOL継続許可内の公開正例1・負例1各2反復。共通台帳を各一次/独立検分の起動前に予約し、独立原照合待ちの間は次を起動しない。",
