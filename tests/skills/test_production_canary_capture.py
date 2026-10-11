@@ -189,6 +189,16 @@ class CanaryCaptureTests(unittest.TestCase):
         self.assertFalse(runtime['captureIntegrity'])
         self.assertEqual(json.loads((base / 'proxy-capture-errors.json').read_bytes())['errors'][0]['errorType'], 'AttributeError')
 
+    def test_builtin_skills_disabled_and_cli_inline_table_array_is_toml(self):
+        import tomllib
+        config = capture.config_for(Path('/fixed/base'), self.contract)
+        expected = [dict(name=n, enabled=False) for n in ['imagegen','openai-docs','skill-creator','skill-installer']]
+        self.assertEqual(config['skills.config'], expected)
+        for value in [expected, ['plain','quoted"value','line\nvalue'], True, 3, 'literal']:
+            self.assertEqual(tomllib.loads('value='+capture.sdk.toml_value(value))['value'], value)
+        for value in [None, 1.2, {'bad':None}]:
+            with self.assertRaises(ValueError):capture.sdk.toml_value(value)
+
     def test_configuration_uses_same_provider_without_auth_or_url_override(self):
         config = capture.config_for(Path('/private/canary'), self.contract())
         self.assertEqual(config['model_provider'], 'bitz_openai_http')

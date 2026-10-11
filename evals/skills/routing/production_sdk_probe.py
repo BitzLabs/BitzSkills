@@ -115,6 +115,17 @@ def action_frame(frame: dict) -> bool:
         frame.get('params', {}).get('item', {}).get('type') not in {'userMessage', 'agentMessage', 'reasoning'}
 
 
+def toml_value(value):
+    """CLI -c用のTOML値。JSON objectを文字列へfallbackさせない。"""
+    if type(value) in {bool, int, str}:
+        return json.dumps(value, ensure_ascii=False)
+    if isinstance(value, list):
+        return '[' + ', '.join(toml_value(v) for v in value) + ']'
+    if isinstance(value, dict) and all(isinstance(k, str) for k in value):
+        return '{' + ', '.join(json.dumps(k, ensure_ascii=False) + ' = ' + toml_value(v) for k,v in value.items()) + '}'
+    raise ValueError('unsupported CLI TOML value')
+
+
 def proxy(base: Path, reject_questions: bool = False, reject_actions: bool = False, capture_guard=None):
     """SDKと既存CLIの間を原bytesのまま中継・保存する。内容を書き換えない。"""
     config = json.loads((base / 'config.json').read_bytes())
@@ -124,7 +135,7 @@ def proxy(base: Path, reject_questions: bool = False, reject_actions: bool = Fal
         raise ValueError('known diagnostic tracing policy required before CLI start')
     argv = [contract['codexPath'], 'app-server', '--stdio']
     for key, value in config.items():
-        argv.extend(['-c', key + '=' + json.dumps(value)])
+        argv.extend(['-c', key + '=' + toml_value(value)])
     process = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stop = threading.Event()
     capture_failed = threading.Event()
