@@ -1399,3 +1399,22 @@ commit `a15fcb036089d15da0f21d2e9877c90abb418aa6`に対して`uv run fixtures/ce
 | 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
 
 Gate Bが`Passed`のStep 3とStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
+
+## 2026-10-11: `MULTI-031-01`、`02`と`SINGLE-159`を追加した後のGate Aの再認定
+
+Coreの欠陥の修正を伴わず、欠けていた適合fixtureを追加した（実装の確認事項C7、C13）。`MULTI-031-01`（メンバーの中で`check --workspace platform --full`）と`MULTI-031-02`
+（メンバーの中で`context --workspace platform REQ-001`。ルートとメンバーが同じローカルIDを持つ）は、複合ワークスペース仕様 §3の5の`--workspace`でルートのIDを指定する場合を
+肯定的に固定する（新しい群`multi_workspace_option_fixtures`）。`SINGLE-159`は、状態`done`のTASKを目的`implement`の起点にすると`CTX-STATE-001`（`blocked`）になることを
+固定する（群`context_failure_fixtures`）。Coreのコピーに要点を壊す変異（`--workspace`を無視する、ルートのIDを受け付けない、`done`のTASKを`implement`の起点で通す）を入れると、
+追加したfixtureが失敗し、既存の353件では検出できないことを確かめた。matrix、Step 3とStep 5の割当て、実装計画の完了条件を合わせた。既存のfixtureの入力と期待値は変えていない。
+
+commit `71243ffc71a09e8e25fa06bdaf44d85ef4bc58f6`に対して`uv run fixtures/certify_gate_a.py`を、他の負荷をかけずに実行し、
+`gateA: "Allowed"`、エラー0件を得た。
+
+| 項目 | 結果 |
+|---|---|
+| 監査 | 2つのクローンでReport SHA-256が両方`604ee39a2dce85e6dd29eb7b0bca937b1ac53d9caa99c30f31e2185bc9abdda6`。前回から変わったのは次の値だけである: 3件の追加によるmatrixと網羅の件数（353件→356件）、Step 3の件数（90件→91件）、Step 5の件数（70件→72件）、新しい群`multi_workspace_option_fixtures`、群`context_failure_fixtures`の件数、実行ビットを確かめたファイル数（1927件→1944件） |
+| 規模の検証 | 2つのクローンで24件すべて`Passed`。結果のSHA-256は両方`7de96a35d57e8399fa306499a1485cbf3b67c4b892491e3dd773632fa587fd62`（前回と同じ） |
+| 実行環境 | CPython 3.12.3、uv 0.11.28（x86_64-unknown-linux-gnu）、git 2.43.0、Linux x86_64 |
+
+Gate Bが`Passed`のStep 3とStep 5に属するfixtureを追加したため、ADR-051によりStep 1〜5のGate Bを判定し直した（`tests/bitz-core/Gate-B認定記録.md`）。
