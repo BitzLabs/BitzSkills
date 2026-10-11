@@ -592,8 +592,10 @@ B（`digest_crosscheck.build`）は入力の木構造から導出した材料で
 - 関係・トレースモデル §10・§11: 適用可能でない文書が要求されると`blocked`とする。診断`CTX-STATE-001`は`blocked`で、条件は「起点または強い関係の参照先が目的に適用不能」である。
   関係・トレースモデル §6.2: 先行TASK（起点のTASKの`requires`の参照先）が未完了のときだけ`CTX-TASK-DEPENDENCY-001`であり、先行TASKがなければ返さない。
 - 診断レジストリ`CTX-STATE-INAPPLICABLE`: `context`と`verify`の`CTX-STATE-001`（`error`、`blocked`、発生元の種類は`file`）。
-- `context` §3・§11: 完全解決が成立しない場合は、一部が欠けたコンテキスト一式を成功の結果として返さず、`resolution.complete: true`の場合にだけ書込みを始める。失敗時の結果の形
-  （`resolution.complete: false`、`contextDigest: null`、`documents`・制約台帳・カバレッジが空）は、規範文が各フィールドの値を列挙していないので、既存の`SINGLE-052-01`、`SINGLE-144`と同じ形を使う。
+- `context` §3・§11: 完全解決が成立しない場合は、一部が欠けたコンテキスト一式を成功の結果として返さず、`resolution.complete: true`の場合にだけ書込みを始める。失敗時の結果の形は
+  結果・診断・終了コード §2による（`contextDigest`は完全解決できない場合だけ`null`、処理を始める前に停止した`context`は`contextDigest: null`、
+  `resolution.complete: false`、空の`documents`・制約台帳・カバレッジを返す）。状態の検査で停止した場合をこの形に当てはめ、起点を解決できていても`documentCount`を0とするのは、
+  既存の`SINGLE-052-01`、`SINGLE-144`と同じ扱いである。
 
 ### 入力と起動
 
@@ -614,7 +616,9 @@ B（`digest_crosscheck.build`）は入力の木構造から導出した材料で
 3. 発生元は起点のTASK-001の文書: `{kind: file, workspaceId: root, path: .spec/tasks/TASK-001.md}`。`key`は付けない。診断の原因は`relations`などのフィールドではなく、起点そのものの状態だからである
    （`SINGLE-067`の`cancelled`のTASK、`SINGLE-148`のREQ-002の`CTX-STATE-001`と同じ形）。
 4. 診断の`summary`は`TASK-001は現在のpurposeに適用できません`である。`SINGLE-148`のREQ-002の`CTX-STATE-001`が使う文字列と同じ形（`<文書ID>は現在のpurposeに適用できません`）に合わせた。
-   規範文は`summary`の文字列を定めない（人に向けた短い説明。結果・診断・終了コード §4）。
+   規範文は`summary`の文字列を定めない（人に向けた短い説明。結果・診断・終了コード §4）。起点のTASKの`CTX-STATE-001`には`SINGLE-067`（`verify`の`cancelled`のTASK）の
+   `起点TASK-001はcancelledでありverifyに適用できません`という別の形もあるが、これは`verify`の検証対象の診断の文言であり、`context`の`CTX-STATE-001`の先例は`SINGLE-148`の形だけである。
+   ランナーは`summary`を完全一致で比べるため、この1点は既存の`context`の文言の形に従った値であり、規範文から導いた値ではない（Coreの出力文言の別計画で見直す範囲）。
 
 監査は、`context_failure_fixtures.check_done_root`が、結果の診断が`CTX-STATE-001`の1件だけであること、`blocked`であること、発生元が起点のTASKのファイルであること、起点・目的・ハッシュ値・解決の状態を確かめる。
 `check_done_root_inputs`が、入力が TASK-001とREQ-001の2文書だけで、TASK-001が状態`done`・`requires`なし・`addresses`のみ、REQ-001が`approved`であることを確かめる。
