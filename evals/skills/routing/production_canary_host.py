@@ -1,9 +1,13 @@
 """初回カナリア専用の一覧1・選択SKILL本文1に限定した読取りホスト。"""
 import argparse
+import importlib.util
 from pathlib import Path
 
-import host
 import production_cli_probe as cli
+
+HOST_SPEC = importlib.util.spec_from_file_location('production_canary_readonly_host', Path(__file__).with_name('host.py'))
+host = importlib.util.module_from_spec(HOST_SPEC)
+HOST_SPEC.loader.exec_module(host)
 
 
 class CanaryHost(host.Host):

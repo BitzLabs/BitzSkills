@@ -3,6 +3,7 @@ import copy
 import json
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
 import unittest
 
@@ -14,6 +15,12 @@ import test_routing_host as host_fixture
 
 
 class CanaryCaptureTests(unittest.TestCase):
+    def test_host_import_does_not_register_generic_host_module(self):
+        result = subprocess.run([sys.executable, '-B', '-c',
+            'import sys; sys.path.insert(0, "evals/skills/routing"); import production_canary_host; assert "host" not in sys.modules'],
+            cwd=ROOT, capture_output=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr.decode())
+
     def contract(self):
         return json.loads((ROOT / capture.CONTRACT).read_bytes())
 
